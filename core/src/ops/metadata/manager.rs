@@ -501,10 +501,10 @@ impl UserMetadataManager {
 	}
 
 	/// Set favorite status for an entry
-	pub async fn set_favorite(&self, entry_id: i32, is_favorite: bool) -> Result<(), TagError> {
+	pub async fn set_favorite(&self, entry_uuid: Uuid, is_favorite: bool) -> Result<(), TagError> {
 		let db = &*self.db;
 
-		let metadata = self.get_or_create_metadata(Uuid::new_v4()).await?; // TODO: Look up actual UUID
+		let metadata = self.get_or_create_metadata(entry_uuid).await?;
 
 		let metadata_model = user_metadata::Entity::find()
 			.filter(user_metadata::Column::Uuid.eq(metadata.id))

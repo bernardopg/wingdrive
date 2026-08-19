@@ -1016,6 +1016,7 @@ impl IndexerJob {
 							content_identity: None,
 							alternate_paths: vec![],
 							tags: vec![],
+							favorite: false,
 							sidecars: vec![],
 							image_media_data: None,
 							video_media_data: None,

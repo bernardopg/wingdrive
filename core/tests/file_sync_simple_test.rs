@@ -57,7 +57,7 @@ impl FileSyncTestSetup {
 
 		Ok(Self {
 			_temp_dir: temp_dir,
-			_core: core,
+			core,
 			library,
 		})
 	}

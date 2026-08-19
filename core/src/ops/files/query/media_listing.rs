@@ -9,7 +9,8 @@ use crate::{
 	context::CoreContext,
 	domain::{addressing::SdPath, content_identity::ContentIdentity, file::File, ContentKind},
 	infra::db::entities::{
-		content_identity, directory_paths, entry, image_media_data, sidecar, video_media_data,
+		content_identity, directory_paths, entry, image_media_data, sidecar, user_metadata,
+		video_media_data,
 	},
 	infra::query::LibraryQuery,
 };
@@ -508,6 +509,25 @@ impl LibraryQuery for MediaListingQuery {
 			}
 
 			files.push(file);
+		}
+
+		// Batch-load favorite flags for all listed entries (single query, avoids N+1)
+		if !files.is_empty() {
+			let entry_uuids: Vec<Uuid> = files.iter().map(|f| f.id).collect();
+			let favorite_entries = user_metadata::Entity::find()
+				.filter(user_metadata::Column::EntryUuid.is_in(entry_uuids))
+				.filter(user_metadata::Column::Favorite.eq(true))
+				.all(db.conn())
+				.await?;
+			let favorite_ids: std::collections::HashSet<Uuid> = favorite_entries
+				.iter()
+				.filter_map(|m| m.entry_uuid)
+				.collect();
+			for file in &mut files {
+				if favorite_ids.contains(&file.id) {
+					file.favorite = true;
+				}
+			}
 		}
 
 		let has_more = if let Some(limit) = self.input.limit {

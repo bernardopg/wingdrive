@@ -64,6 +64,9 @@ pub struct File {
 	/// The semantic tags associated with this file
 	pub tags: Vec<Tag>,
 
+	/// Whether the user marked this file as favorite
+	pub favorite: bool,
+
 	/// A list of sidecars associated with this file
 	pub sidecars: Vec<Sidecar>,
 
@@ -479,6 +482,7 @@ impl File {
 			content_identity: None,
 			alternate_paths: Vec::new(),
 			tags: Vec::new(),
+			favorite: false,
 			sidecars: Vec::new(),
 			image_media_data: None,
 			video_media_data: None,
@@ -573,6 +577,7 @@ impl File {
 			content_identity: None,
 			alternate_paths: Vec::new(),
 			tags: Vec::new(),
+			favorite: false,
 			sidecars: Vec::new(),
 			image_media_data: None,
 			video_media_data: None,
