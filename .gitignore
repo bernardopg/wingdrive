@@ -483,3 +483,6 @@ whitepaper/*.log
 
 test_data
 :memory:
+
+.claude
+.serena

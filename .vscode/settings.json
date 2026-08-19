@@ -12,5 +12,6 @@
 	},
 	"[javascriptreact]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	}
+	},
+	"js/ts.experimental.useTsgo": false
 }
