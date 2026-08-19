@@ -1,8 +1,9 @@
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowLeft, ArrowRight } from "@phosphor-icons/react";
+import { X, ArrowLeft, ArrowRight, Info } from "@phosphor-icons/react";
 import { useEffect, useState, useMemo } from "react";
 import { ContentRenderer } from "./ContentRenderer";
+import { MetadataPanel } from "./MetadataPanel";
 import {
 	VideoControls,
 	type VideoControlsState,
@@ -44,11 +45,13 @@ export function QuickPreviewFullscreen({
 	const [showVideoControls, setShowVideoControls] = useState(false);
 	const [videoCallbacks, setVideoCallbacks] =
 		useState<VideoControlsCallbacks | null>(null);
+	const [showMetadata, setShowMetadata] = useState(false);
 	const { currentFiles } = useExplorer();
 
-	// Reset zoom when file changes
+	// Reset zoom and metadata panel when file changes
 	useEffect(() => {
 		setIsZoomed(false);
+		setShowMetadata(false);
 	}, [fileId]);
 
 	// Get file directly from currentFiles - instant, no network request
@@ -147,6 +150,19 @@ export function QuickPreviewFullscreen({
 		[onClose]
 	);
 
+	const infoButton = useMemo(
+		() => (
+			<button
+				onClick={() => setShowMetadata((s) => !s)}
+				className={`rounded-md p-1.5 transition-colors hover:bg-white/10 hover:text-white ${showMetadata ? "bg-white/15 text-white" : "text-white/70"}`}
+				title="Details"
+			>
+				<Info size={16} weight="bold" />
+			</button>
+		),
+		[showMetadata]
+	);
+
 	if (!portalTarget) return null;
 
 	const content = (
@@ -204,14 +220,23 @@ export function QuickPreviewFullscreen({
 									</TopBarItem>
 								}
 								right={
-									<TopBarItem
-										id="preview-close"
-										label="Close"
-										priority="high"
-										onClick={onClose}
-									>
-										{closeButton}
-									</TopBarItem>
+									<>
+										<TopBarItem
+											id="preview-details"
+											label="Details"
+											priority="high"
+										>
+											{infoButton}
+										</TopBarItem>
+										<TopBarItem
+											id="preview-close"
+											label="Close"
+											priority="high"
+											onClick={onClose}
+										>
+											{closeButton}
+										</TopBarItem>
+									</>
 								}
 							/>
 
@@ -282,6 +307,16 @@ export function QuickPreviewFullscreen({
 									)}
 								</div>
 							</div>
+
+							{/* Metadata panel */}
+							<AnimatePresence>
+								{showMetadata && file && (
+									<MetadataPanel
+										file={file}
+										onClose={() => setShowMetadata(false)}
+									/>
+								)}
+							</AnimatePresence>
 						</>
 					)}
 				</motion.div>
