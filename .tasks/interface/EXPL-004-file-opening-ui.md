@@ -54,8 +54,8 @@ See `DESIGN-open-with.md` for complete architecture details.
 - [x] Double-click handlers updated in:
   - [x] GridView (`FileCard.tsx`)
   - [x] ListView (`TableRow.tsx`)
-  - [ ] ColumnView (`Column.tsx`)
-  - [ ] MediaView (if applicable)
+  - [x] ColumnView (`Column.tsx`)
+  - [x] MediaView (if applicable)
 - [x] Open keybind (Cmd+O) wired in `useExplorerKeyboard.ts`
 - [x] Error handling:
   - [x] File not found → toast error

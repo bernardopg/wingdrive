@@ -4,6 +4,9 @@ import type { File } from "@sd/ts-client";
 import { File as FileComponent } from "../../File";
 import { useSelection } from "../../SelectionContext";
 import { useFileContextMenu } from "../../hooks/useFileContextMenu";
+import { useExplorer } from "../../context";
+import { useOpenWith } from "../../../../hooks/useOpenWith";
+import { isVirtualFile } from "@sd/ts-client";
 
 function formatDuration(seconds: number): string {
 	const mins = Math.floor(seconds / 60);
@@ -58,6 +61,28 @@ export const MediaViewItem = memo(function MediaViewItem({
 		await contextMenu.show(e);
 	};
 
+	const { navigateToPath } = useExplorer();
+	const physicalPath =
+		file.kind === "File" && "Physical" in file.sd_path
+			? file.sd_path.Physical.path
+			: null;
+	const { openWithDefault } = useOpenWith(
+		physicalPath ? [physicalPath] : [],
+	);
+
+	const handleDoubleClick = async () => {
+		// Virtual files and directories navigate to their sd_path
+		if (isVirtualFile(file) || file.kind === "Directory") {
+			navigateToPath(file.sd_path);
+			return;
+		}
+
+		// Regular files open with the default application
+		if (physicalPath) {
+			await openWithDefault(physicalPath);
+		}
+	};
+
 	return (
 		<div
 			data-file-id={file.id}
@@ -68,6 +93,7 @@ export const MediaViewItem = memo(function MediaViewItem({
 				focused && !selected && "ring-2 ring-accent/50 ring-inset",
 			)}
 			onClick={handleClick}
+			onDoubleClick={handleDoubleClick}
 			onContextMenu={handleContextMenu}
 		>
 			<FileComponent.Thumb
