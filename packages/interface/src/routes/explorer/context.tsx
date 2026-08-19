@@ -42,6 +42,7 @@ export interface ViewSettings {
 	gridSize: number;
 	gapSize: number;
 	showFileSize: boolean;
+	showHiddenFiles: boolean;
 	columnWidth: number;
 	foldersFirst: boolean;
 	sizeViewItemLimit: number;
@@ -211,6 +212,7 @@ const defaultViewSettings: ViewSettings = {
 	gridSize: 120,
 	gapSize: 16,
 	showFileSize: true,
+	showHiddenFiles: false,
 	columnWidth: 256,
 	foldersFirst: false,
 	sizeViewItemLimit: 500,
@@ -674,6 +676,7 @@ export function ExplorerProvider({
 			gridSize: tabState.gridSize,
 			gapSize: tabState.gapSize,
 			foldersFirst: tabState.foldersFirst,
+			showHiddenFiles: tabState.showHiddenFiles,
 			showFileSize: uiState.viewSettings.showFileSize,
 			columnWidth: uiState.viewSettings.columnWidth,
 			sizeViewItemLimit: uiState.viewSettings.sizeViewItemLimit,
@@ -683,6 +686,7 @@ export function ExplorerProvider({
 			tabState.gridSize,
 			tabState.gapSize,
 			tabState.foldersFirst,
+			tabState.showHiddenFiles,
 			uiState.viewSettings.showFileSize,
 			uiState.viewSettings.columnWidth,
 			uiState.viewSettings.sizeViewItemLimit,
@@ -716,6 +720,7 @@ export function ExplorerProvider({
 				gridSize: settings.gridSize ?? tabState.gridSize,
 				gapSize: settings.gapSize ?? tabState.gapSize,
 				foldersFirst: settings.foldersFirst ?? tabState.foldersFirst,
+				showHiddenFiles: settings.showHiddenFiles ?? tabState.showHiddenFiles,
 			});
 
 			// Update UI state for global settings (showFileSize, sizeViewItemLimit)

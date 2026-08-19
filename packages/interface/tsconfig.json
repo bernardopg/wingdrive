@@ -8,13 +8,16 @@
 		"target": "ES2022",
 		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
-		"baseUrl": ".",
 		"paths": {
 			"~/*": ["./src/*"],
 			"@spacebot/api-client": [
-				"../../../spacebot/packages/api-client/src/index.ts"
+				"../../../spacebot/packages/api-client/src/index.ts",
+				"../../../apps/tauri/node_modules/@spacebot/api-client-stub/index.d.ts"
 			],
-			"@spacebot/api-client/*": ["../../../spacebot/packages/api-client/src/*"]
+			"@spacebot/api-client/*": [
+				"../../../spacebot/packages/api-client/src/*",
+				"../../../apps/tauri/node_modules/@spacebot/api-client-stub/*"
+			]
 		},
 		"types": ["@react-three/fiber"]
 	},

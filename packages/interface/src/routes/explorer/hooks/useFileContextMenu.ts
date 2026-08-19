@@ -136,7 +136,7 @@ export function useFileContextMenu({
 						await openWithDefault(physicalPath);
 					}
 				},
-				keybind: '⌘O',
+				keybindId: 'explorer.openFile',
 				condition: () =>
 					!!file &&
 					(file.kind === 'Directory' || file.kind === 'File')
@@ -188,7 +188,7 @@ export function useFileContextMenu({
 						console.log('Cannot reveal non-physical file');
 					}
 				},
-				keybind: '⌘⇧R',
+				keybindId: 'explorer.revealInNativeExplorer',
 				condition: () =>
 					!!file &&
 					'Physical' in file.sd_path &&
@@ -382,6 +382,7 @@ export function useFileContextMenu({
 							await forEachTarget(targets, (f) =>
 								regenerateThumbnail.mutateAsync({
 									entry_uuid: f.id,
+									variants: null,
 									force: false
 								})
 							);
@@ -397,6 +398,7 @@ export function useFileContextMenu({
 							await forEachTarget(targets, (f) =>
 								regenerateThumbnail.mutateAsync({
 									entry_uuid: f.id,
+									variants: null,
 									force: true
 								})
 							);
@@ -410,12 +412,12 @@ export function useFileContextMenu({
 							await forEachTarget(targets, (f) =>
 								extractText.mutateAsync({
 									entry_uuid: f.id,
+									languages: null,
 									force: false
 								})
 							);
 						},
-						keybind: '⌘⇧T'
-					}
+											}
 				]
 			},
 			{
@@ -432,6 +434,7 @@ export function useFileContextMenu({
 							await forEachTarget(targets, (f) =>
 								generateThumbstrip.mutateAsync({
 									entry_uuid: f.id,
+									variants: null,
 									force: false
 								})
 							);
@@ -448,6 +451,7 @@ export function useFileContextMenu({
 							await forEachTarget(targets, (f) =>
 								regenerateThumbnail.mutateAsync({
 									entry_uuid: f.id,
+									variants: null,
 									force: false
 								})
 							);
@@ -463,6 +467,7 @@ export function useFileContextMenu({
 							await forEachTarget(targets, (f) =>
 								regenerateThumbnail.mutateAsync({
 									entry_uuid: f.id,
+									variants: null,
 									force: true
 								})
 							);
@@ -475,7 +480,9 @@ export function useFileContextMenu({
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
 								transcribeAudio.mutateAsync({
-									entry_uuid: f.id
+									entry_uuid: f.id,
+									model: null,
+									language: null
 								})
 							);
 						}
@@ -488,12 +495,13 @@ export function useFileContextMenu({
 							await forEachTarget(targets, (f) =>
 								generateProxy.mutateAsync({
 									entry_uuid: f.id,
+									resolution: null,
+									use_hardware_accel: null,
 									force: false
 								})
 							);
 						},
-						keybind: '⌘⇧P'
-					}
+											}
 				]
 			},
 			{
@@ -510,12 +518,12 @@ export function useFileContextMenu({
 							await forEachTarget(targets, (f) =>
 								transcribeAudio.mutateAsync({
 									entry_uuid: f.id,
-									model: 'whisper-base'
+									model: 'whisper-base',
+									language: null
 								})
 							);
 						},
-						keybind: '⌘⇧T'
-					}
+											}
 				]
 			},
 			{
@@ -535,12 +543,12 @@ export function useFileContextMenu({
 							await forEachTarget(targets, (f) =>
 								extractText.mutateAsync({
 									entry_uuid: f.id,
+									languages: null,
 									force: false
 								})
 							);
 						},
-						keybind: '⌘⇧T'
-					},
+											},
 					{
 						icon: Crop,
 						label: 'Regenerate Thumbnail',
@@ -549,6 +557,7 @@ export function useFileContextMenu({
 							await forEachTarget(targets, (f) =>
 								regenerateThumbnail.mutateAsync({
 									entry_uuid: f.id,
+									variants: null,
 									force: true
 								})
 							);
@@ -570,6 +579,7 @@ export function useFileContextMenu({
 							await forEachTarget(selectedFiles, (f) =>
 								regenerateThumbnail.mutateAsync({
 									entry_uuid: f.id,
+									variants: null,
 									force: true
 								})
 							);
@@ -582,6 +592,7 @@ export function useFileContextMenu({
 							await forEachTarget(selectedFiles, (f) =>
 								regenerateThumbnail.mutateAsync({
 									entry_uuid: f.id,
+									variants: null,
 									force: false
 								})
 							);
@@ -595,6 +606,7 @@ export function useFileContextMenu({
 							await forEachTarget(selectedFiles, (f) =>
 								extractText.mutateAsync({
 									entry_uuid: f.id,
+									languages: null,
 									force: false
 								})
 							);
@@ -635,7 +647,7 @@ export function useFileContextMenu({
 					const targets = getTargetFiles();
 					await deleteFiles(targets, false);
 				},
-				keybind: '⌘⌫',
+				keybindId: 'explorer.delete',
 				variant: 'danger' as const,
 				condition: () => !hasVirtualFiles
 			}

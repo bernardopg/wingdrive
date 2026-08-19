@@ -76,7 +76,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 				size_range: null,
 				locations: null,
 				content_types: null,
-				include_hidden: null,
+				include_hidden: viewSettings.showHiddenFiles ?? null,
 				include_archived: null,
 				at_risk: null,
 				on_volumes: null,
@@ -216,7 +216,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 			? {
 					path: currentPath,
 					limit: null,
-					include_hidden: false,
+					include_hidden: viewSettings.showHiddenFiles,
 					sort_by: sortBy as DirectorySortBy,
 					folders_first: viewSettings.foldersFirst,
 				}

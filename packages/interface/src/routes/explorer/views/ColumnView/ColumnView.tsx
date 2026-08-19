@@ -189,7 +189,7 @@ export function ColumnView() {
 			? {
 					path: activeColumnPath,
 					limit: null,
-					include_hidden: false,
+					include_hidden: viewSettings.showHiddenFiles,
 					sort_by: sortBy as DirectorySortBy,
 					folders_first: viewSettings.foldersFirst,
 				}

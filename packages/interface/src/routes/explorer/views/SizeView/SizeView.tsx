@@ -349,7 +349,7 @@ export function SizeView() {
 			? {
 					path: currentPath,
 					limit: null,
-					include_hidden: false,
+					include_hidden: viewSettings.showHiddenFiles,
 					sort_by: sortBy as DirectorySortBy,
 					folders_first: viewSettings.foldersFirst
 				}

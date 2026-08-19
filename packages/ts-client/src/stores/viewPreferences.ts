@@ -5,6 +5,7 @@ interface ViewSettings {
 	gridSize: number;
 	gapSize: number;
 	showFileSize: boolean;
+	showHiddenFiles: boolean;
 	columnWidth: number;
 }
 
@@ -23,6 +24,7 @@ const DEFAULT_VIEW_SETTINGS: ViewSettings = {
 	gridSize: 120,
 	gapSize: 16,
 	showFileSize: true,
+	showHiddenFiles: false,
 	columnWidth: 256,
 };
 

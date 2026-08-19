@@ -90,7 +90,7 @@ export function KnowledgeView() {
 			? {
 					path: currentPath,
 					limit: null,
-					include_hidden: false,
+					include_hidden: viewSettings.showHiddenFiles,
 					sort_by: sortBy,
 					folders_first: viewSettings.foldersFirst,
 				}

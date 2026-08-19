@@ -91,6 +91,7 @@ export interface TabExplorerState {
 	gridSize: number;
 	gapSize: number;
 	foldersFirst: boolean;
+	showHiddenFiles: boolean;
 
 	// Column view state (serialized SdPath[] as JSON strings)
 	columnStack: string[];
@@ -110,6 +111,7 @@ const DEFAULT_EXPLORER_STATE: TabExplorerState = {
 	gridSize: 120,
 	gapSize: 16,
 	foldersFirst: true,
+	showHiddenFiles: false,
 	columnStack: [],
 	scrollTop: 0,
 	scrollLeft: 0,

@@ -172,6 +172,30 @@ export function ViewSettingsPanel({
 					/>
 				</button>
 			</div>
+
+			{/* Show Hidden Files Toggle */}
+			<div className="flex items-center justify-between pt-1">
+				<label className="text-xs text-sidebar-inkDull">Show Hidden Files</label>
+				<button
+					onClick={() =>
+						setViewSettings({
+							showHiddenFiles: !viewSettings.showHiddenFiles,
+						})
+					}
+					className={clsx(
+						"relative w-9 h-5 rounded-full transition-colors",
+						viewSettings.showHiddenFiles ? "bg-accent" : "bg-app-line",
+					)}
+				>
+					<motion.div
+						className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full"
+						animate={{
+							x: viewSettings.showHiddenFiles ? 16 : 0,
+						}}
+						transition={{ duration: 0.2 }}
+					/>
+				</button>
+			</div>
 		</div>
 	);
 }
