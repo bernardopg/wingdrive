@@ -6,39 +6,37 @@
     "typecheck": "bun run --filter @sd/tauri typecheck"
   },
   "devDependencies": {
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
-    "@babel/plugin-syntax-import-assertions": "^7.24.0",
-    "@cspell/dict-rust": "^4.0.2",
-    "@cspell/dict-typescript": "^3.1.2",
-    "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
+    "@babel/plugin-syntax-import-assertions": "^7.29.7",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@cspell/dict-rust": "^4.1.2",
+    "@cspell/dict-typescript": "^3.2.3",
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@taplo/cli": "^0.7.0",
-    "cspell": "^8.6.0",
-    "node-gyp": "^12.1.0",
-    "prettier": "^3.3.3",
-    "prettier-plugin-tailwindcss": "^0.6.6",
-    "turbo": "^1.12.5",
-    "turbo-ignore": "^1.12.5",
-    "typescript": "^5.6.2",
-    "vite": "^5.4.9"
+    "cspell": "^8.19.4",
+    "node-gyp": "^12.4.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "turbo": "^2.10.10",
+    "turbo-ignore": "^2.10.10",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1"
   },
   "engines": {
-    "bun": ">=1.3.0",
-    "node": ">=18.18 <19 || >=20.1"
+    "bun": ">=1.3.14",
+    "node": ">=20.1"
   },
   "eslintConfig": {
     "root": true
   },
-  "packageManager": "bun@1.3.0",
+  "packageManager": "bun@1.3.14",
   "overrides": {
     "@types/node": ">18.18.x",
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-router": "=6.20.1",
-    "react-router-dom": "=6.20.1",
-    "@remix-run/router": "=1.13.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "react-hook-form": "^7.85.0",
+    "react-router": "^7.18.2",
+    "react-router-dom": "^7.18.2",
     "@contentlayer/cli": "=0.3.4",
     "tailwindcss-animate": "=1.0.7",
     "@sinclair/typebox": "^0.34.41"
@@ -52,7 +50,7 @@
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "gray-matter": "^4.0.3",
-    "maplibre-gl": "^4.7.1",
-    "react": "19.1.0"
+    "maplibre-gl": "^6.4.0",
+    "react": "19.2.8"
   }
 }

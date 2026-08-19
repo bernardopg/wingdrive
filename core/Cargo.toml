@@ -138,7 +138,7 @@ rubato     = { version = "0.16", optional = true }  # Audio resampling to 16kHz
 
 # Networking
 # Iroh P2P networking
-iroh = { version = "0.95.1", features = ["discovery-local-network"] }
+iroh = { version = "0.98.2", features = ["address-lookup-mdns"] }
 
 # Serialization for protocols
 serde_cbor = "0.11"

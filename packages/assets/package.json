@@ -12,12 +12,13 @@
 		"./icons/*": "./icons/*",
 		"./images": "./images/index.ts",
 		"./images/*": "./images/*",
-		"./svgs/*": "./svgs/*",
+		"./lottie/*": "./lottie/*",
 		"./sounds": "./sounds/index.ts",
 		"./sounds/*": "./sounds/*",
-		"./videos/*": "./videos/*",
-		"./lottie/*": "./lottie/*",
-		"./util": "./util/index.ts"
+		"./svgs/*": "./svgs/*",
+		"./util": "./util/index.ts",
+		"./util/mobile": "./util/mobile.ts",
+		"./videos/*": "./videos/*"
 	},
 	"files": [
 		"icons",
@@ -33,6 +34,6 @@
 		"gen": "node ./scripts/generate.mjs"
 	},
 	"dependencies": {
-		"react": "^19.0.0"
+		"react": "^19.1.0"
 	}
 }
