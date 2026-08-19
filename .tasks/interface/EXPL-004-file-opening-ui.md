@@ -1,13 +1,13 @@
 ---
 id: EXPL-004
 title: File Opening UI Integration
-status: To Do
+status: In Progress
 assignee: jamiepine
 parent: EXPL-000
 priority: High
 tags: [explorer, file-operations, ui]
 whitepaper: DESIGN-open-with.md
-last_updated: 2025-12-24
+last_updated: 2026-08-19
 related_tasks: [CORE-014]
 ---
 
@@ -34,35 +34,36 @@ See `DESIGN-open-with.md` for complete architecture details.
 
 ## Acceptance Criteria
 
-- [ ] Platform interface extended with:
-  - [ ] `getAppsForPaths(paths: string[]): Promise<OpenWithApp[]>`
-  - [ ] `openPathDefault(path: string): Promise<OpenResult>`
-  - [ ] `openPathWithApp(path, appId): Promise<OpenResult>`
-  - [ ] `openPathsWithApp(paths, appId): Promise<OpenResult[]>`
-- [ ] `useOpenWith` hook created with:
-  - [ ] React Query integration for fetching apps
-  - [ ] `openWithDefault(path)` function
-  - [ ] `openWithApp(path, appId)` function
-  - [ ] `openMultipleWithApp(paths, appId)` function
-  - [ ] Proper error handling with toast notifications
-- [ ] Context menu integration:
-  - [ ] "Open" menu item works for files and folders
-  - [ ] "Open With" submenu appears for files
-  - [ ] Shows list of compatible applications
-  - [ ] For multi-select, only shows apps that can open ALL files
-  - [ ] Apps are sorted alphabetically
-- [ ] Double-click handlers updated in:
-  - [ ] GridView (`FileCard.tsx`)
-  - [ ] ListView (`TableRow.tsx`)
+- [x] Platform interface extended with:
+- [x] `getAppsForPaths(paths: string[]): Promise<OpenWithApp[]>`
+- [x] `openPathDefault(path: string): Promise<OpenResult>`
+- [x] `openPathWithApp(path, appId): Promise<OpenResult>`
+- [x] `openPathsWithApp(paths, appId): Promise<OpenResult[]>`
+- [x] `useOpenWith` hook created with:
+- [x] React Query integration fetching apps
+- [x] `openWithDefault(path)` function
+- [x] `openWithApp(path, appId)` function
+- [x] `openMultipleWithApp(paths, appId)` function
+- [x] Proper error handling toast notifications
+- [x] Context menu integration:
+  - [x] "Open" menu item works for files and folders
+  - [x] "Open With" submenu appears for files
+  - [x] Shows list of compatible applications
+  - [x] For multi-select, only shows apps that can open ALL files
+  - [x] Apps are sorted alphabetically
+- [x] Double-click handlers updated in:
+  - [x] GridView (`FileCard.tsx`)
+  - [x] ListView (`TableRow.tsx`)
   - [ ] ColumnView (`Column.tsx`)
   - [ ] MediaView (if applicable)
-- [ ] Error handling:
-  - [ ] File not found → toast error
-  - [ ] App not found → toast error
-  - [ ] Permission denied → toast error
-  - [ ] Platform errors → toast with message
-- [ ] Loading states shown while querying apps
-- [ ] TODO at `useFileContextMenu.ts:82-83` is removed
+- [x] Open keybind (Cmd+O) wired in `useExplorerKeyboard.ts`
+- [x] Error handling:
+  - [x] File not found → toast error
+  - [x] App not found → toast error
+  - [x] Permission denied → toast error
+  - [x] Platform errors → toast with message
+- [x] Loading states shown while querying apps
+- [x] TODO at `useFileContextMenu.ts:82-83` is removed
 
 ## Implementation Files
 

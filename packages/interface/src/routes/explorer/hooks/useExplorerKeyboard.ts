@@ -3,12 +3,15 @@ import { useExplorer } from "../context";
 import { useSelection } from "../SelectionContext";
 import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";
 import type { DirectorySortBy } from "@sd/ts-client";
+import { isVirtualFile } from "@sd/ts-client";
 import { useTypeaheadSearch } from "./useTypeaheadSearch";
 import { useKeybind } from "../../../hooks/useKeybind";
 import { useKeybindScope } from "../../../hooks/useKeybindScope";
 import { useClipboard } from "../../../hooks/useClipboard";
 import { useFileOperationDialog } from "../../../components/modals/FileOperationModal";
 import { useDeleteFiles } from "./useDeleteFiles";
+import { useDuplicateFiles } from "./useDuplicateFiles";
+import { useOpenWith } from "../../../hooks/useOpenWith";
 import { isInputFocused } from "../../../util/keybinds/platform";
 
 export function useExplorerKeyboard() {
@@ -37,6 +40,15 @@ export function useExplorerKeyboard() {
 	const clipboard = useClipboard();
 	const openFileOperation = useFileOperationDialog();
 	const { deleteFiles, isPending: isDeleting } = useDeleteFiles();
+	const { duplicateFiles, isPending: isDuplicating } = useDuplicateFiles();
+
+	// Physical paths of selected files for opening with the default app
+	const selectedPhysicalPaths = selectedFiles.flatMap((f) =>
+		f.kind === "File" && "Physical" in f.sd_path
+			? [f.sd_path.Physical.path]
+			: [],
+	);
+	const { openWithDefault } = useOpenWith(selectedPhysicalPaths);
 
 	// Activate explorer keybind scope when this hook is active
 	useKeybindScope("explorer");
@@ -159,6 +171,37 @@ export function useExplorerKeyboard() {
 			}
 		},
 		{ enabled: selectedFiles.length === 1 },
+	);
+
+	// Open: Cmd+O opens the selected item (directory or file)
+	useKeybind(
+		"explorer.openFile",
+		() => {
+			if (selectedFiles.length !== 1) return;
+			const file = selectedFiles[0];
+			if (isVirtualFile(file) || file.kind === "Directory") {
+				navigateToPath(file.sd_path);
+				return;
+			}
+			if (file.kind === "File" && "Physical" in file.sd_path) {
+				void openWithDefault(file.sd_path.Physical.path);
+			}
+		},
+		{ enabled: selectedFiles.length === 1 },
+	);
+
+	// Duplicate: Cmd+D duplicates selected files in place
+	useKeybind(
+		"explorer.duplicate",
+		async () => {
+			await duplicateFiles(selectedFiles);
+		},
+		{
+			enabled:
+				selectedFiles.length > 0 &&
+				!isDuplicating &&
+				selectedFiles.every((f) => "Physical" in f.sd_path),
+		},
 	);
 
 	// Delete: Move to trash

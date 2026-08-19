@@ -35,6 +35,7 @@ import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
 import {useExplorer} from '../context';
 import {useSelection} from '../SelectionContext';
 import {useDeleteFiles} from './useDeleteFiles';
+import {useDuplicateFiles} from './useDuplicateFiles';
 
 interface UseFileContextMenuProps {
 	file?: File | null;
@@ -52,6 +53,7 @@ export function useFileContextMenu({
 	const refetchTagQueries = useRefetchTagQueries();
 
 	const {deleteFiles} = useDeleteFiles();
+	const {duplicateFiles} = useDuplicateFiles();
 	const unapplyTags = useLibraryMutation('tags.unapply', {
 		onSuccess: refetchTagQueries
 	});
@@ -366,6 +368,20 @@ export function useFileContextMenu({
 				},
 				keybindId: 'explorer.paste',
 				condition: () => clipboard.hasClipboard()
+			},
+			{
+				icon: Copy,
+				label:
+					selected && selectedFiles.length > 1
+						? `Duplicate ${selectedFiles.length} items`
+						: 'Duplicate',
+				onClick: async () => {
+					const targets = getTargetFiles();
+					if (targets.length === 0) return;
+					await duplicateFiles(targets);
+				},
+				keybindId: 'explorer.duplicate',
+				condition: () => !hasVirtualFiles
 			},
 			// Media Processing submenu
 			{
