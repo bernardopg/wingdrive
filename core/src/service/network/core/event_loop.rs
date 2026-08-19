@@ -12,11 +12,24 @@ use crate::service::network::{
 };
 use iroh::endpoint::Connection;
 use iroh::EndpointId;
-use iroh::{Endpoint, EndpointAddr};
+use iroh::{Endpoint, EndpointAddr, Watcher};
 use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tokio::sync::{broadcast, mpsc, RwLock};
 use uuid::Uuid;
+
+/// Round-trip time of the path iroh currently uses for this connection.
+///
+/// Replaces `Endpoint::latency()`, removed in iroh 0.98. A `None` result means no
+/// live path is selected, which callers treat as "not connected" the same way the
+/// old API's `None` was treated.
+fn selected_path_rtt(conn: &Connection) -> Option<std::time::Duration> {
+	conn.paths()
+		.get()
+		.iter()
+		.find(|path| path.is_selected() && !path.is_closed())
+		.and_then(|path| path.rtt())
+}
 
 /// Commands that can be sent to the event loop
 #[derive(Debug)]
@@ -900,15 +913,23 @@ impl NetworkingEventLoop {
 
 		// Get all tracked connections
 		let active_connections = self.active_connections.read().await;
-		let connected_node_ids: std::collections::HashSet<EndpointId> = active_connections
-			.keys()
-			.map(|(node_id, _alpn)| *node_id)
-			.collect();
+
+		// iroh 0.98 removed Endpoint::latency(), so round-trip time now comes from the
+		// selected path of each live Connection. Keep one connection per node to read it.
+		let mut connections_by_node: std::collections::HashMap<EndpointId, &Connection> =
+			std::collections::HashMap::new();
+		for ((node_id, _alpn), conn) in active_connections.iter() {
+			connections_by_node.entry(*node_id).or_insert(conn);
+		}
+		let connected_node_ids: std::collections::HashSet<EndpointId> =
+			connections_by_node.keys().copied().collect();
 
 		// Update devices that we have active connections to
 		for node_id in &connected_node_ids {
 			// Check if connection is still alive via latency
-			let latency = self.endpoint.latency(*node_id);
+			let latency = connections_by_node
+				.get(node_id)
+				.and_then(|conn| selected_path_rtt(conn));
 			let is_connected = latency.is_some();
 
 			if is_connected {
@@ -938,8 +959,10 @@ impl NetworkingEventLoop {
 				// Get the node_id for this device
 				if let Ok(node_id) = info.network_fingerprint.node_id.parse::<EndpointId>() {
 					// Check if this node still has an active connection
-					let has_active_connection = connected_node_ids.contains(&node_id)
-						&& self.endpoint.latency(node_id).is_some();
+					let has_active_connection = connections_by_node
+						.get(&node_id)
+						.and_then(|conn| selected_path_rtt(conn))
+						.is_some();
 
 					if !has_active_connection {
 						self.logger

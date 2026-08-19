@@ -30,18 +30,18 @@ async fn test_actor() {
 	let (actor, mut actor_idle_rx) =
 		SampleActor::new(data_dir.path(), "test".to_string(), system.get_dispatcher()).await;
 
-	let mut rng = rand::thread_rng();
+	let mut rng = rand::rng();
 
 	for i in 0..=250 {
-		if rng.gen_bool(0.1) {
+		if rng.random_bool(0.1) {
 			info!("dispatching priority task {i}");
 			actor
-				.process_with_priority(Duration::from_millis(rng.gen_range(50..150)))
+				.process_with_priority(Duration::from_millis(rng.random_range(50..150)))
 				.await;
 		} else {
 			info!("dispatching task {i}");
 			actor
-				.process(Duration::from_millis(rng.gen_range(200..500)))
+				.process(Duration::from_millis(rng.random_range(200..500)))
 				.await;
 		}
 	}

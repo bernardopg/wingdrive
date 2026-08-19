@@ -622,6 +622,9 @@ impl<E: RunError> Dispatcher<E> for BaseDispatcher<E> {
 	type DispatchError = DispatcherShutdownError<E>;
 
 	#[allow(clippy::missing_panics_doc)]
+	// `fetch_update` is soft-deprecated ahead of a future rename to `try_update` (stabilized
+	// after our MSRV); keep the stable-since-1.0 name so this builds across supported toolchains.
+	#[allow(deprecated_in_future)]
 	async fn dispatch_boxed(
 		&self,
 		task: Box<dyn Task<E>>,

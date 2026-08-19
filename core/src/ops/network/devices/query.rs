@@ -67,7 +67,7 @@ impl CoreQuery for ListPairedDevicesQuery {
 			// Verify actual connection status with Iroh endpoint
 			// This is the source of truth, not the cached DeviceState
 			let is_actually_connected = if let Some(ep) = endpoint {
-				registry.is_node_connected(ep, device_id)
+				registry.is_node_connected(ep, device_id).await
 			} else {
 				// No endpoint available, fall back to cached state
 				matches!(state, DeviceState::Connected { .. })

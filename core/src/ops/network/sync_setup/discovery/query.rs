@@ -70,7 +70,7 @@ impl CoreQuery for DiscoverRemoteLibrariesQuery {
 			.endpoint()
 			.ok_or_else(|| QueryError::Internal("Network endpoint not initialized".to_string()))?;
 
-		let is_online = registry.is_node_connected(endpoint, self.device_id);
+		let is_online = registry.is_node_connected(endpoint, self.device_id).await;
 
 		drop(registry);
 

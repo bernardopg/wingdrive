@@ -1,4 +1,10 @@
 //! Test helper modules for integration tests
+//!
+//! These helpers are shared across many integration test binaries. Each binary
+//! only exercises a subset, so allow dead code to keep the harness buildable
+//! without per-test allow attributes.
+
+#![allow(dead_code, unused_imports)]
 
 pub mod event_collector;
 pub mod indexing_harness;

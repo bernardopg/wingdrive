@@ -25,6 +25,7 @@ use tokio::fs;
 use uuid::Uuid;
 
 /// Helper to create test files with content
+#[allow(dead_code)]
 async fn create_test_file(path: &std::path::Path, content: &str) -> anyhow::Result<()> {
 	if let Some(parent) = path.parent() {
 		fs::create_dir_all(parent).await?;
@@ -319,11 +320,11 @@ async fn test_mirror_sync_with_files() {
 
 	// Create source directory with files
 	let source = setup.create_entry("source_dir", 1, None, 0).await.unwrap();
-	let file1 = setup
+	let _file1 = setup
 		.create_entry("file1.txt", 0, Some(source.id), 100)
 		.await
 		.unwrap();
-	let file2 = setup
+	let _file2 = setup
 		.create_entry("file2.txt", 0, Some(source.id), 200)
 		.await
 		.unwrap();

@@ -274,7 +274,7 @@ pub struct NameRef {
 	/// Pointer to string in NameCache (stable reference)
 	/// Serialized as 0, reconstructed during snapshot load
 	#[serde(skip)]
-	#[serde(default)]
+	#[serde(default = "std::ptr::null")]
 	ptr: *const u8,
 	/// String length
 	len: u32,

@@ -156,18 +156,15 @@ impl LibraryQuery for ListLibraryDevicesQuery {
 				let (is_actually_connected, connection_method) = if let Some(ep) = endpoint {
 					// Get node ID for this device
 					if let Some(node_id) = registry.get_node_id_for_device(device_id) {
-						// Use conn_type() API (replaces remote_info() removed in v0.93+)
-						if let Some(mut conn_type_watcher) = ep.conn_type(node_id) {
-							// Get current connection type from watcher using the Watcher trait's get() method
-							let conn_type = conn_type_watcher.get();
-							// Check connection status first (before conn_type is moved)
-							let is_connected =
-								!matches!(conn_type, iroh::endpoint::ConnectionType::None);
+						// iroh 0.98 removed conn_type(); remote_info() exposes the per-remote
+						// transport addresses that replaced it.
+						if let Some(remote_info) = ep.remote_info(node_id).await {
 							let conn_method =
-								crate::domain::device::ConnectionMethod::from_iroh_connection_type(
-									conn_type,
+								crate::domain::device::ConnectionMethod::from_remote_info(
+									&remote_info,
 								);
-							(is_connected, conn_method)
+							// No active transport address means the remote is known but unreachable.
+							(conn_method.is_some(), conn_method)
 						} else {
 							// No address information exists for this endpoint (never connected)
 							(false, None)

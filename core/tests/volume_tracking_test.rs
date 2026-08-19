@@ -82,7 +82,7 @@ async fn test_volume_tracking_lifecycle() {
 		.await
 		.expect("Failed to check tracking status");
 
-	let mut tracked_volume_id = None;
+	let mut tracked_volume_id;
 
 	if initial_tracked {
 		info!("Volume is already tracked (from auto-tracking), getting volume_id for untracking");

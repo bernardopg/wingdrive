@@ -10,8 +10,8 @@
 use base64::Engine;
 use blake3;
 use chacha20poly1305::{
-	aead::{Aead, AeadCore, KeyInit},
-	ChaCha20Poly1305, Key,
+	aead::{Aead, Generate, KeyInit},
+	ChaCha20Poly1305, Key, Nonce,
 };
 use std::convert::TryFrom;
 use tracing::{debug, error};
@@ -67,7 +67,9 @@ impl CookieCipher {
 	pub fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, CryptoCookieError> {
 		debug!("Starting encryption of {} bytes", data.len());
 
-		let nonce = ChaCha20Poly1305::generate_nonce().map_err(|e| {
+		// aead 0.6 moved nonce generation onto the `Generate` trait; `try_generate` surfaces
+		// ambient RNG failures instead of panicking like `generate`.
+		let nonce = Nonce::try_generate().map_err(|e| {
 			error!("Nonce generation failed: {}", e);
 			CryptoCookieError::Encryption(e.to_string())
 		})?;
@@ -106,9 +108,9 @@ impl CookieCipher {
 	/// * `nonce_bytes` - The bytes containing the nonce
 	///
 	/// # Returns
-	/// * `Result<chacha20poly1305::Nonce, CryptoCookieError>` - The extracted nonce or an error
-	fn extract_nonce(nonce_bytes: &[u8]) -> Result<chacha20poly1305::Nonce, CryptoCookieError> {
-		chacha20poly1305::Nonce::try_from(nonce_bytes).map_err(|e| {
+	/// * `Result<Nonce, CryptoCookieError>` - The extracted nonce or an error
+	fn extract_nonce(nonce_bytes: &[u8]) -> Result<Nonce, CryptoCookieError> {
+		Nonce::try_from(nonce_bytes).map_err(|e| {
 			error!("Failed to create nonce: {}", e);
 			CryptoCookieError::Decryption(e.to_string())
 		})
@@ -124,7 +126,7 @@ impl CookieCipher {
 	/// * `Result<Vec<u8>, CryptoCookieError>` - The decrypted data or an error
 	fn perform_decryption(
 		&self,
-		nonce: &chacha20poly1305::Nonce,
+		nonce: &Nonce,
 		ciphertext: &[u8],
 	) -> Result<Vec<u8>, CryptoCookieError> {
 		self.cipher.decrypt(nonce, ciphertext).map_err(|e| {
@@ -297,7 +299,7 @@ mod tests {
 			.expect("Failed to generate key");
 		let cipher = CookieCipher::new(&key).expect("Failed to create cipher");
 
-		let nonce = chacha20poly1305::Nonce::default();
+		let nonce = Nonce::default();
 		let ciphertext = vec![0; 1024];
 		let result = cipher.perform_decryption(&nonce, &ciphertext);
 

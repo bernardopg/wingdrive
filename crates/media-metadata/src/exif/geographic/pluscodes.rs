@@ -100,20 +100,23 @@ impl TryFrom<String> for PlusCode {
 	type Error = Error;
 
 	fn try_from(value: String) -> Result<Self, Self::Error> {
-		let mut pc_value = value.clone();
-		pc_value.retain(|c| !c.is_whitespace());
+		// Google renders short codes as "<code> <locality>" (e.g. "WR2C+2C Bibra Lake"),
+		// so only the leading token is the code; the locality is kept for display.
+		let code = value.split_whitespace().next().unwrap_or_default();
 
-		if pc_value.len() > 11 {
-			pc_value.truncate(11);
+		let Some(plus_position) = code.find('+') else {
+			return Err(Error::Conversion);
+		};
+
+		// A full code is 8 digits, '+', then up to 2 more; shorter Google codes drop
+		// leading digits but never push '+' past position 8.
+		if code.len() < 2 || code.len() > 11 || plus_position > 8 {
+			return Err(Error::Conversion);
 		}
 
-		if pc_value.len() < 2
-			|| (pc_value.len() < 8 && pc_value.chars().nth(7) != Some('+'))
-			// this covers Google's shorter format
-			|| (pc_value.len() == 7 && pc_value.chars().nth(4) != Some('+'))
-		|| PLUSCODE_DIGITS
-			.iter()
-			.any(|x| pc_value.chars().any(|y| y != '+' && x != &y))
+		if code
+			.chars()
+			.any(|c| c != '+' && !PLUSCODE_DIGITS.contains(&c))
 		{
 			return Err(Error::Conversion);
 		}

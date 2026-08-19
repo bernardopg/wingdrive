@@ -9,8 +9,10 @@ use crate::service::network::{
 	utils::{logging::NetworkLogger, NetworkIdentity},
 	NetworkingError, Result,
 };
-use iroh::discovery::{dns::DnsDiscovery, mdns::MdnsDiscovery, pkarr::PkarrPublisher, Discovery};
-use iroh::endpoint::Connection;
+use iroh::address_lookup::{
+	dns::DnsAddressLookup, mdns::MdnsAddressLookup, pkarr::PkarrPublisher, AddressLookup,
+};
+use iroh::endpoint::{presets, Connection};
 use iroh::{Endpoint, EndpointAddr, EndpointId, RelayMode, RelayUrl, Watcher};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, RwLock};
@@ -86,7 +88,7 @@ pub struct NetworkingService {
 	node_id: EndpointId,
 
 	/// Discovery service for finding peers
-	discovery: Option<Box<dyn Discovery>>,
+	discovery: Option<Box<dyn AddressLookup>>,
 
 	/// Shutdown sender for stopping the event loop
 	shutdown_sender: Arc<RwLock<Option<mpsc::UnboundedSender<()>>>>,
@@ -220,7 +222,9 @@ impl NetworkingService {
 		// pkarr + DNS-only discovery in that case — remote pairing via node ID
 		// continues to work, we just lose local-network auto-discovery.
 		let build_endpoint = |with_mdns: bool| {
-			let mut builder = Endpoint::builder()
+			// `Minimal` only installs the TLS crypto provider that iroh 0.98 made mandatory;
+			// relay and address lookup stay explicit below so behaviour is unchanged.
+			let mut builder = Endpoint::builder(presets::Minimal)
 				.secret_key(secret_key.clone())
 				.alpns(vec![
 					PAIRING_ALPN.to_vec(),
@@ -230,20 +234,12 @@ impl NetworkingService {
 					JOB_ACTIVITY_ALPN.to_vec(),
 				])
 				.relay_mode(iroh::RelayMode::Default)
-				.discovery(PkarrPublisher::n0_dns())
-				.discovery(DnsDiscovery::n0_dns())
-				.bind_addr_v4(std::net::SocketAddrV4::new(
-					std::net::Ipv4Addr::UNSPECIFIED,
-					0,
-				))
-				.bind_addr_v6(std::net::SocketAddrV6::new(
-					std::net::Ipv6Addr::UNSPECIFIED,
-					0,
-					0,
-					0,
-				));
+				.address_lookup(PkarrPublisher::n0_dns())
+				.address_lookup(DnsAddressLookup::n0_dns());
+			// Default IP transports already bind both address families on a random port,
+			// which is what the removed bind_addr_v4/v6 calls requested.
 			if with_mdns {
-				builder = builder.discovery(MdnsDiscovery::builder());
+				builder = builder.address_lookup(MdnsAddressLookup::builder());
 			}
 			builder.bind()
 		};
@@ -1122,9 +1118,11 @@ impl NetworkingService {
 		// Create mDNS discovery service to subscribe to events
 		// Note: In v0.95+, we need to get discovery services individually and subscribe
 		let endpoint_id = endpoint.id();
-		let mdns_discovery = MdnsDiscovery::builder().build(endpoint_id).map_err(|e| {
-			NetworkingError::ConnectionFailed(format!("Failed to create mDNS discovery: {}", e))
-		})?;
+		let mdns_discovery = MdnsAddressLookup::builder()
+			.build(endpoint_id)
+			.map_err(|e| {
+				NetworkingError::ConnectionFailed(format!("Failed to create mDNS discovery: {}", e))
+			})?;
 		let mut discovery_stream = mdns_discovery.subscribe().await;
 		let session_id_str = session_id.to_string();
 		let timeout = tokio::time::Duration::from_secs(5); // Shorter timeout for mDNS
@@ -1141,7 +1139,7 @@ impl NetworkingService {
 			tokio::select! {
 				Some(event) = discovery_stream.next() => {
 					match event {
-						iroh::discovery::mdns::DiscoveryEvent::Discovered { endpoint_info, .. } => {
+						iroh::address_lookup::mdns::DiscoveryEvent::Discovered { endpoint_info, .. } => {
 							// Check if this node is broadcasting our session_id
 							if let Some(user_data) = endpoint_info.data.user_data() {
 								if user_data.as_ref() == session_id_str {
@@ -1169,9 +1167,11 @@ impl NetworkingService {
 								}
 							}
 						}
-						iroh::discovery::mdns::DiscoveryEvent::Expired { .. } => {
+						iroh::address_lookup::mdns::DiscoveryEvent::Expired { .. } => {
 							// Node expired, continue searching
 						}
+						// DiscoveryEvent is non_exhaustive; ignore variants added upstream.
+						_ => {}
 					}
 				}
 				_ = tokio::time::sleep(tokio::time::Duration::from_millis(100)) => {
@@ -1343,7 +1343,7 @@ impl NetworkingService {
 		let user_data = iroh::endpoint_info::UserData::try_from(session_id.to_string())
 			.map_err(|e| NetworkingError::Protocol(format!("Failed to create user data: {}", e)))?;
 
-		endpoint.set_user_data_for_discovery(Some(user_data));
+		endpoint.set_user_data_for_address_lookup(Some(user_data));
 
 		self.logger
 			.info(&format!(

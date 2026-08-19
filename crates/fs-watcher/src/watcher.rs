@@ -609,8 +609,13 @@ mod tests {
 			create_event.kind
 		);
 
-		// Give a moment for any additional events to settle
+		// Give a moment for any additional events to settle, then drain them. Writing the
+		// file emits IN_CREATE *and* IN_MODIFY; leaving the latter queued would make the
+		// post-delete assertion below read the stale write event instead of the deletion.
 		tokio::time::sleep(Duration::from_millis(200)).await;
+		while let Ok(event) = rx.try_recv() {
+			println!("Draining pre-delete event: {:?}", event.kind);
+		}
 
 		// Delete the file
 		std::fs::remove_file(&test_file).unwrap();

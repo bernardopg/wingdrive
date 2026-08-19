@@ -7,7 +7,7 @@ use anyhow::{anyhow, Context, Result};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tracing::{debug, info};
+use tracing::info;
 
 /// Supported filesystems for test volumes
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

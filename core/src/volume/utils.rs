@@ -101,6 +101,11 @@ pub fn is_virtual_filesystem(filesystem: &str) -> bool {
 /// Covers the standard Linux filesystem hierarchy plus TrueNAS Scale's
 /// additional split-root datasets (it uses separate ZFS datasets for
 /// `/usr`, `/var`, `/etc`, etc. to support atomic updates).
+///
+/// `/` and `/home` are deliberately absent. They are the Linux equivalents of
+/// Macintosh HD, which macOS classifies as `VolumeType::Primary` and shows;
+/// the Linux classifier agrees (`/` => Primary, `/home` => UserData). Hiding
+/// them left a desktop install with no way to reach the user's own files.
 #[cfg(target_os = "linux")]
 pub fn is_system_mount_point(mount_point: &Path) -> bool {
 	let path_str = mount_point.to_string_lossy();
@@ -108,14 +113,12 @@ pub fn is_system_mount_point(mount_point: &Path) -> bool {
 	// Exact matches for system paths
 	matches!(
 		path_str.as_ref(),
-		"/" | "/usr"
-			| "/var"
+		"/usr" | "/var"
 			| "/etc"
 			| "/opt"
 			| "/srv"
 			| "/root"
 			| "/boot"
-			| "/home"
 			| "/run"
 			| "/dev"
 			| "/proc"
@@ -365,11 +368,9 @@ mod tests {
 	#[test]
 	fn test_should_hide_by_mount_path_linux() {
 		// System mounts — always hidden
-		assert!(should_hide_by_mount_path(Path::new("/")));
 		assert!(should_hide_by_mount_path(Path::new("/usr")));
 		assert!(should_hide_by_mount_path(Path::new("/var")));
 		assert!(should_hide_by_mount_path(Path::new("/etc")));
-		assert!(should_hide_by_mount_path(Path::new("/home")));
 		assert!(should_hide_by_mount_path(Path::new("/boot/grub")));
 		assert!(should_hide_by_mount_path(Path::new("/var/log/journal")));
 		assert!(should_hide_by_mount_path(Path::new(
@@ -388,6 +389,10 @@ mod tests {
 		assert!(should_hide_by_mount_path(Path::new(
 			"/mnt/pool/ix-applications/releases/plex/volumes/ix_volumes/ix-plex_data"
 		)));
+
+		// The desktop's own drives — the whole point of a file browser
+		assert!(!should_hide_by_mount_path(Path::new("/")));
+		assert!(!should_hide_by_mount_path(Path::new("/home")));
 
 		// User data — not hidden
 		assert!(!should_hide_by_mount_path(Path::new("/mnt/pool")));

@@ -18,7 +18,9 @@ mod helpers;
 
 use helpers::{
 	add_and_index_location, create_snapshot_dir, init_test_tracing, register_device,
-	set_all_devices_synced, MockTransport, TestConfigBuilder, TestDataDir,
+	#[allow(deprecated)]
+	set_all_devices_synced,
+	MockTransport, TestConfigBuilder, TestDataDir,
 };
 use sd_core::{
 	infra::{db::entities, sync::NetworkTransport},
@@ -36,7 +38,7 @@ struct BackfillRaceHarness {
 	_test_data_alice: TestDataDir,
 	_test_data_bob: TestDataDir,
 	core_alice: Core,
-	core_bob: Core,
+	_core_bob: Core,
 	library_alice: Arc<Library>,
 	library_bob: Arc<Library>,
 	device_alice_id: Uuid,
@@ -174,7 +176,7 @@ impl BackfillRaceHarness {
 			_test_data_alice: test_data_alice,
 			_test_data_bob: test_data_bob,
 			core_alice,
-			core_bob,
+			_core_bob,
 			library_alice,
 			library_bob,
 			device_alice_id,

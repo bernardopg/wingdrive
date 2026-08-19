@@ -197,11 +197,8 @@ async fn test_backfill_session_correlation() -> anyhow::Result<()> {
 
 	tracing::info!(event_count = events.len(), "Events retrieved via query API");
 
-	// Verify query API works (even if no events yet)
-	assert!(
-		events.len() >= 0,
-		"Query API should return results (even if empty)"
-	);
+	// The `?` above is the assertion: the query API must succeed, though an empty
+	// result is valid when no events have been recorded yet.
 
 	Ok(())
 }
@@ -425,9 +422,8 @@ async fn test_buffer_overflow_logging() -> anyhow::Result<()> {
 
 	tracing::info!(error_count = error_events.len(), "Error events logged");
 
-	// Note: Buffer overflow only logs if drops actually occurred
-	// This test verifies the infrastructure exists, even if no drops happened
-	assert!(error_events.len() >= 0, "Error event query should work");
+	// Buffer overflow only logs if drops actually occurred, so an empty result is
+	// expected here; the `?` above already asserts the error query itself works.
 
 	Ok(())
 }

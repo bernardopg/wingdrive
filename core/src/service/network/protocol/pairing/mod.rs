@@ -1175,7 +1175,7 @@ impl PairingProtocolHandler {
 			let mut sent_now = false;
 			if let Some(endpoint) = &self.endpoint {
 				let registry = self.device_registry.read().await;
-				if registry.is_node_connected(endpoint, target_device_id) {
+				if registry.is_node_connected(endpoint, target_device_id).await {
 					if let Some(node_id) = registry.get_node_id_for_device(target_device_id) {
 						let request = PairingMessage::ProxyPairingRequest {
 							session_id,
@@ -1711,7 +1711,9 @@ impl PairingProtocolHandler {
 			let (is_connected, node_id) = {
 				let registry = self.device_registry.read().await;
 				(
-					registry.is_node_connected(endpoint, entry.target_device_id),
+					registry
+						.is_node_connected(endpoint, entry.target_device_id)
+						.await,
 					registry.get_node_id_for_device(entry.target_device_id),
 				)
 			};

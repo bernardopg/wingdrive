@@ -14,13 +14,13 @@ use ffmpeg_sys_next::{
 	av_color_primaries_name, av_color_range_name, av_color_space_name, av_color_transfer_name,
 	av_fourcc_make_string, av_get_bits_per_sample, av_get_bytes_per_sample,
 	av_get_media_type_string, av_get_pix_fmt_name, av_get_sample_fmt_name, av_pix_fmt_desc_get,
-	av_reduce, avcodec_alloc_context3, avcodec_flush_buffers, avcodec_free_context,
-	avcodec_get_name, avcodec_open2, avcodec_parameters_to_context, avcodec_profile_name,
-	avcodec_receive_frame, avcodec_send_packet, AVBPrint, AVChromaLocation, AVCodec,
-	AVCodecContext, AVCodecParameters, AVColorPrimaries, AVColorRange, AVColorSpace,
+	av_reduce, avcodec_alloc_context3, avcodec_descriptor_get, avcodec_flush_buffers,
+	avcodec_free_context, avcodec_get_name, avcodec_open2, avcodec_parameters_to_context,
+	avcodec_profile_name, avcodec_receive_frame, avcodec_send_packet, AVBPrint, AVChromaLocation,
+	AVCodec, AVCodecContext, AVCodecParameters, AVColorPrimaries, AVColorRange, AVColorSpace,
 	AVColorTransferCharacteristic, AVFieldOrder, AVFrame, AVMediaType, AVPacket, AVPixelFormat,
-	AVRational, AVSampleFormat, AVERROR, AVERROR_EOF, AV_FOURCC_MAX_STRING_SIZE,
-	FF_CODEC_PROPERTY_CLOSED_CAPTIONS, FF_CODEC_PROPERTY_FILM_GRAIN, FF_CODEC_PROPERTY_LOSSLESS,
+	AVRational, AVSampleFormat, AVERROR, AVERROR_EOF, AV_CODEC_PROP_LOSSLESS,
+	AV_FOURCC_MAX_STRING_SIZE,
 };
 use libc::EAGAIN;
 
@@ -199,15 +199,15 @@ impl FFmpegCodecContext {
 
 		let (aspect_ratio_num, aspect_ratio_den) = extract_aspect_ratio(ctx, width, height);
 
+		// `AVCodecContext.properties` (the old per-decode FF_CODEC_PROPERTY_* bitmask) was removed
+		// from FFmpeg's public API. Lossless-ness is now a static trait of the codec itself,
+		// exposed through the codec descriptor's AV_CODEC_PROP_* flags.
 		let mut properties = vec![];
-		if ctx.properties & (FF_CODEC_PROPERTY_LOSSLESS.unsigned_abs()) != 0 {
-			properties.push("Closed Captions".to_string());
-		}
-		if ctx.properties & (FF_CODEC_PROPERTY_CLOSED_CAPTIONS.unsigned_abs()) != 0 {
-			properties.push("Film Grain".to_string());
-		}
-		if ctx.properties & (FF_CODEC_PROPERTY_FILM_GRAIN.unsigned_abs()) != 0 {
-			properties.push("lossless".to_string());
+		let descriptor = unsafe { avcodec_descriptor_get(ctx.codec_id) };
+		if let Some(descriptor) = unsafe { descriptor.as_ref() } {
+			if descriptor.props & AV_CODEC_PROP_LOSSLESS != 0 {
+				properties.push("Lossless".to_string());
+			}
 		}
 
 		Some(FFmpegVideoProps {

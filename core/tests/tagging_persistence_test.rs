@@ -18,6 +18,7 @@ use tempfile::TempDir;
 use tokio::fs;
 
 /// Helper: create file with content (ensures parent dirs)
+#[allow(dead_code)]
 async fn write_file(path: &std::path::Path, content: &str) -> Result<(), std::io::Error> {
 	if let Some(parent) = path.parent() {
 		fs::create_dir_all(parent).await?;

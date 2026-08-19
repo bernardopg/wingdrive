@@ -189,14 +189,20 @@ fn parse_btrfs_filesystem_info(output: &str) -> VolumeResult<BtrfsInfo> {
 	for line in output.lines() {
 		let line = line.trim();
 
-		// Parse UUID: "uuid: 12345678-1234-1234-1234-123456789abc"
-		if line.starts_with("uuid:") {
-			if let Some(uuid_str) = line.split_whitespace().nth(1) {
+		// `btrfs filesystem show` emits the uuid on the same line as the label, so scan
+		// every line instead of only those starting with "uuid:".
+		if uuid.is_empty() {
+			if let Some(uuid_str) = line
+				.split("uuid:")
+				.nth(1)
+				.and_then(|rest| rest.split_whitespace().next())
+			{
 				uuid = uuid_str.to_string();
 			}
 		}
+
 		// Parse label: "Label: 'MyVolume'  uuid: ..."
-		else if line.starts_with("Label:") {
+		if line.starts_with("Label:") {
 			if let Some(label_part) = line.split("uuid:").next() {
 				if let Some(label_str) = label_part.strip_prefix("Label:").map(|s| s.trim()) {
 					if label_str != "none" && !label_str.is_empty() {

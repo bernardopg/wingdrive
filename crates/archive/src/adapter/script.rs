@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 use std::future::Future;
 use std::path::{Path, PathBuf};
-use std::pin::Pin;
 use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
@@ -477,7 +476,7 @@ impl Adapter for ScriptAdapter {
 				.stdout
 				.take()
 				.ok_or_else(|| Error::AdapterSync("failed to open stdout".into()))?;
-			let stderr = child
+			let _stderr = child
 				.stderr
 				.take()
 				.ok_or_else(|| Error::AdapterSync("failed to open stderr".into()))?;

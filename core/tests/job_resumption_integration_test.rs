@@ -38,6 +38,7 @@ enum InterruptionPoint {
 	/// Interrupt during content identification after N progress events
 	ContentIdentificationAfterEvents(u32),
 	/// Interrupt during aggregation phase (immediately when detected)
+	#[allow(dead_code)]
 	Aggregation,
 }
 

@@ -93,7 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	// Monitor progress
 	println!("\nMonitoring progress for 5 seconds...");
-	for i in 0..5 {
+	for _ in 0..5 {
 		sleep(Duration::from_secs(1)).await;
 		let job_info = job_manager.get_job_info(job_id.0).await?.unwrap();
 		println!(

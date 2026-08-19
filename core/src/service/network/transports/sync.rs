@@ -412,7 +412,7 @@ impl NetworkTransport for NetworkingService {
 		let device_registry_arc = self.device_registry();
 		let registry = device_registry_arc.read().await;
 
-		registry.is_node_connected(endpoint, device_uuid)
+		registry.is_node_connected(endpoint, device_uuid).await
 	}
 
 	fn transport_name(&self) -> &'static str {

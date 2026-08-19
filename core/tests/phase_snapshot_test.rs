@@ -100,7 +100,7 @@ async fn capture_phase_snapshots() -> Result<(), Box<dyn std::error::Error + Sen
 	let mut last_processed_event_count = 0;
 
 	// Poll for up to 2 minutes
-	for iteration in 0..120 {
+	for _ in 0..120 {
 		tokio::time::sleep(Duration::from_secs(1)).await;
 
 		let events = events_collected.lock().await;
@@ -207,7 +207,7 @@ async fn capture_phase_snapshots() -> Result<(), Box<dyn std::error::Error + Sen
 			if let Event::ResourceChangedBatch {
 				resource_type,
 				resources,
-				metadata,
+				metadata: _,
 			} = event
 			{
 				if resource_type == "file" {

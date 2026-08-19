@@ -725,6 +725,7 @@ impl TestHarness {
 	}
 
 	/// Verify children count using list_directory (catches the orphan bug)
+	#[allow(dead_code)]
 	async fn verify_children_count(
 		&self,
 		expected: usize,

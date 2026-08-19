@@ -687,7 +687,7 @@ async fn carol_transitive_sync_scenario() {
 
 	// Wait for sync to complete
 	let start = tokio::time::Instant::now();
-	let mut carol_final_count = 0;
+	let mut carol_final_count;
 	loop {
 		tokio::time::sleep(Duration::from_secs(3)).await;
 

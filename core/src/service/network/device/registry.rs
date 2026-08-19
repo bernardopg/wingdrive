@@ -648,16 +648,24 @@ impl DeviceRegistry {
 	/// Returns true if:
 	/// - Device UUID is mapped to an EndpointId
 	/// - Iroh reports latency for the connection (indicating active connection)
-	pub fn is_node_connected(&self, endpoint: &iroh::Endpoint, device_id: Uuid) -> bool {
+	pub async fn is_node_connected(&self, endpoint: &iroh::Endpoint, device_id: Uuid) -> bool {
 		// Get EndpointId for this device
 		let node_id = match self.get_node_id_for_device(device_id) {
 			Some(id) => id,
 			None => return false,
 		};
 
-		// Query Iroh for current connection state via latency
-		// latency() returns Some if there's an active connection
-		endpoint.latency(node_id).is_some()
+		// iroh 0.98 removed Endpoint::latency(); an active transport address is now the
+		// equivalent signal that a usable path to the remote exists.
+		let Some(remote_info) = endpoint.remote_info(node_id).await else {
+			return false;
+		};
+
+		let connected = remote_info
+			.addrs()
+			.any(|addr| matches!(addr.usage(), iroh::endpoint::TransportAddrUsage::Active));
+
+		connected
 	}
 
 	/// Get device UUID from node ID

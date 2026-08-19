@@ -174,7 +174,7 @@ impl IndexingHarness {
 	}
 
 	/// Create a test location directory with files
-	pub async fn create_test_location(&self, name: &str) -> anyhow::Result<TestLocation> {
+	pub async fn create_test_location(&self, name: &str) -> anyhow::Result<TestLocation<'_>> {
 		let location_dir = self.temp_path().join(name);
 		tokio::fs::create_dir_all(&location_dir).await?;
 
@@ -190,7 +190,7 @@ impl IndexingHarness {
 		path: impl AsRef<Path>,
 		name: &str,
 		mode: IndexMode,
-	) -> anyhow::Result<LocationHandle> {
+	) -> anyhow::Result<LocationHandle<'_>> {
 		let path = path.as_ref();
 
 		tracing::info!(
@@ -574,7 +574,6 @@ impl<'a> LocationHandle<'a> {
 	/// must remain properly connected via the closure table. Without this, queries
 	/// that traverse the hierarchy will miss entries.
 	pub async fn verify_closure_table_integrity(&self) -> anyhow::Result<()> {
-		use sea_orm::sea_query::Expr;
 		use std::collections::HashSet;
 
 		let db = self.harness.library.db().conn();

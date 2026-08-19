@@ -125,32 +125,43 @@ pub enum ConnectionMethod {
 }
 
 impl ConnectionMethod {
-	/// Convert from Iroh's ConnectionType
+	/// Derive the connection method from Iroh's per-remote transport addresses.
 	///
-	/// For Mixed connections (UDP + relay simultaneously), we report the
-	/// Direct path since that's what Iroh is attempting to use primarily.
-	pub fn from_iroh_connection_type(conn_type: iroh::endpoint::ConnectionType) -> Option<Self> {
-		use iroh::endpoint::ConnectionType;
-		match conn_type {
-			ConnectionType::Direct(addr) => {
-				if is_local_address(&addr) {
-					Some(Self::LocalNetwork)
-				} else {
-					Some(Self::DirectInternet)
-				}
+	/// iroh 0.98 replaced the single `ConnectionType` enum with a list of transport
+	/// addresses, so a remote can report an active UDP path and an active relay path at
+	/// the same time. We report the direct path when one is active because iroh prefers
+	/// UDP and only falls back to the relay when the direct path stops working.
+	///
+	/// Returns `None` when no address is active, which means the remote is not connected.
+	pub fn from_remote_info(info: &iroh::endpoint::RemoteInfo) -> Option<Self> {
+		use iroh::{endpoint::TransportAddrUsage, TransportAddr};
+
+		let mut direct_addr = None;
+		let mut has_relay = false;
+
+		for addr_info in info.addrs() {
+			if !matches!(addr_info.usage(), TransportAddrUsage::Active) {
+				continue;
 			}
-			ConnectionType::Relay(_) => Some(Self::RelayProxy),
-			// Mixed means both UDP and relay are active, but UDP is preferred
-			// Report the UDP path since that's what Iroh will use when confirmed
-			ConnectionType::Mixed(addr, _relay) => {
-				if is_local_address(&addr) {
-					Some(Self::LocalNetwork)
-				} else {
-					Some(Self::DirectInternet)
+
+			match addr_info.addr() {
+				TransportAddr::Ip(socket_addr) => {
+					direct_addr.get_or_insert(*socket_addr);
 				}
+				TransportAddr::Relay(_) => has_relay = true,
+				_ => {}
 			}
-			ConnectionType::None => None,
 		}
+
+		if let Some(addr) = direct_addr {
+			return Some(if is_local_address(&addr) {
+				Self::LocalNetwork
+			} else {
+				Self::DirectInternet
+			});
+		}
+
+		has_relay.then_some(Self::RelayProxy)
 	}
 }
 

@@ -3,12 +3,12 @@
 use sd_core::{
 	infra::{
 		db::entities,
-		event::{Event, EventSubscriber},
+		event::Event,
 	},
 	location::{create_location, IndexMode, LocationCreateArgs},
 	Core,
 };
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
+use sea_orm::{ActiveModelTrait, ColumnTrait, QueryFilter};
 use std::{sync::Arc, time::Duration};
 use tempfile::TempDir;
 
@@ -98,7 +98,7 @@ async fn map_file_structure_per_phase() -> Result<(), Box<dyn std::error::Error 
 		if let Event::ResourceChangedBatch {
 			resource_type,
 			resources,
-			metadata,
+			metadata: _,
 		} = event
 		{
 			if resource_type == "file" {
