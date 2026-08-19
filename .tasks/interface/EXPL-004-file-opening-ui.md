@@ -1,7 +1,7 @@
 ---
 id: EXPL-004
 title: File Opening UI Integration
-status: In Progress
+status: Done
 assignee: jamiepine
 parent: EXPL-000
 priority: High
