@@ -4,60 +4,13 @@ import {
 	useCallback,
 	useMemo,
 	useEffect,
+	useRef,
 	type ReactNode,
 } from "react";
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
+import { deriveTitleFromPath } from "./deriveTitle";
+import { usePlatform } from "../../contexts/PlatformContext";
 type Router = ReturnType<typeof createBrowserRouter>;
-
-/**
- * Derives a tab title from the current route pathname and search params
- */
-function deriveTitleFromPath(pathname: string, search: string): string {
-	const routeTitles: Record<string, string> = {
-		"/": "Overview",
-		"/favorites": "Favorites",
-		"/recents": "Recents",
-		"/file-kinds": "File Kinds",
-		"/search": "Search",
-		"/jobs": "Jobs",
-		"/daemon": "Daemon",
-	};
-
-	if (routeTitles[pathname]) {
-		return routeTitles[pathname];
-	}
-
-	if (pathname.startsWith("/tag/")) {
-		const tagId = pathname.split("/")[2];
-		return tagId ? `Tag: ${tagId.slice(0, 8)}...` : "Tag";
-	}
-
-	if (pathname === "/explorer" && search) {
-		const params = new URLSearchParams(search);
-
-		const view = params.get("view");
-		if (view === "device") {
-			return "This Device";
-		}
-
-		const pathParam = params.get("path");
-		if (pathParam) {
-			try {
-				const sdPath = JSON.parse(decodeURIComponent(pathParam));
-				if (sdPath?.Physical?.path) {
-					const fullPath = sdPath.Physical.path as string;
-					const parts = fullPath.split("/").filter(Boolean);
-					return parts[parts.length - 1] || "Explorer";
-				}
-			} catch {
-				// Fall through
-			}
-		}
-		return "Explorer";
-	}
-
-	return "Spacedrive";
-}
 
 // ============================================================================
 // Types
@@ -104,6 +57,12 @@ export interface TabExplorerState {
 	sizeViewTransform: { k: number; x: number; y: number };
 }
 
+/** A closed tab plus the explorer state it had, so reopening restores context. */
+interface ClosedTab {
+	tab: Tab;
+	explorerState?: TabExplorerState;
+}
+
 /** Default explorer state for new tabs */
 const DEFAULT_EXPLORER_STATE: TabExplorerState = {
 	viewMode: "grid",
@@ -124,6 +83,16 @@ const DEFAULT_EXPLORER_STATE: TabExplorerState = {
 
 const STORAGE_KEY = "sd-tabs-state";
 
+/**
+ * Secondary windows run their own tab manager; sharing one key would make two
+ * windows overwrite each other's tabs on every change.
+ */
+function storageKeyFor(windowLabel?: string): string {
+	return !windowLabel || windowLabel === "main"
+		? STORAGE_KEY
+		: `${STORAGE_KEY}:${windowLabel}`;
+}
+
 interface PersistedState {
 	tabs: Tab[];
 	activeTabId: string;
@@ -131,9 +100,9 @@ interface PersistedState {
 	defaultNewTabPath: string;
 }
 
-function loadPersistedState(): PersistedState | null {
+function loadPersistedState(storageKey: string): PersistedState | null {
 	try {
-		const stored = localStorage.getItem(STORAGE_KEY);
+		const stored = localStorage.getItem(storageKey);
 		if (!stored) return null;
 
 		const parsed = JSON.parse(stored) as PersistedState;
@@ -153,9 +122,9 @@ function loadPersistedState(): PersistedState | null {
 	}
 }
 
-function savePersistedState(state: PersistedState): void {
+function savePersistedState(storageKey: string, state: PersistedState): void {
 	try {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+		localStorage.setItem(storageKey, JSON.stringify(state));
 	} catch {
 		// Silently fail if localStorage is unavailable
 	}
@@ -172,6 +141,8 @@ interface TabManagerContextValue {
 	router: Router;
 	createTab: (title?: string, path?: string) => void;
 	closeTab: (tabId: string) => void;
+	/** Closes several tabs in one state transition (close others / to the right). */
+	closeTabs: (tabIds: string[]) => void;
 	switchTab: (tabId: string) => void;
 	updateTabTitle: (tabId: string, title: string) => void;
 	updateTabPath: (tabId: string, path: string) => void;
@@ -182,8 +153,6 @@ interface TabManagerContextValue {
 	reopenTab: () => void;
 	hasClosedTabs: boolean;
 	setDefaultNewTabPath: (path: string) => void;
-
-	// Explorer state (per-tab)
 
 	// Explorer state (per-tab)
 	getExplorerState: (tabId: string) => TabExplorerState;
@@ -214,16 +183,22 @@ export function TabManagerProvider({
 }: TabManagerProviderProps) {
 	const router = useMemo(() => createBrowserRouter(routes), [routes]);
 
+	// Read localStorage once: four separate initializers meant four JSON parses
+	// and left room for the slices to disagree with each other.
+	const platform = usePlatform();
+	const storageKey = useRef(
+		storageKeyFor(platform.getCurrentWindowLabel?.()),
+	).current;
+	const restored = useRef(loadPersistedState(storageKey)).current;
+
 	const [tabs, setTabs] = useState<Tab[]>(() => {
-		const persisted = loadPersistedState();
-		if (persisted && persisted.tabs.length > 0) {
-			return persisted.tabs;
+		if (restored && restored.tabs.length > 0) {
+			return restored.tabs;
 		}
 
-		const initialTabId = crypto.randomUUID();
 		return [
 			{
-				id: initialTabId,
+				id: crypto.randomUUID(),
 				title: "Overview",
 				icon: null,
 				isPinned: false,
@@ -234,23 +209,15 @@ export function TabManagerProvider({
 	});
 
 	const [activeTabId, setActiveTabId] = useState<string>(() => {
-		const persisted = loadPersistedState();
-		if (persisted && persisted.activeTabId) {
-			// Verify the activeTabId exists in tabs
-			const tabExists = persisted.tabs.some(
-				(t) => t.id === persisted.activeTabId,
-			);
-			if (tabExists) return persisted.activeTabId;
-		}
-		return tabs[0].id;
+		const tabExists = tabs.some((t) => t.id === restored?.activeTabId);
+		return tabExists ? restored!.activeTabId : tabs[0].id;
 	});
 
 	const [explorerStates, setExplorerStates] = useState<
 		Map<string, TabExplorerState>
 	>(() => {
-		const persisted = loadPersistedState();
-		if (persisted && persisted.explorerStates) {
-			return new Map(Object.entries(persisted.explorerStates));
+		if (restored?.explorerStates) {
+			return new Map(Object.entries(restored.explorerStates));
 		}
 
 		const initialMap = new Map<string, TabExplorerState>();
@@ -268,15 +235,21 @@ export function TabManagerProvider({
 		return initialMap;
 	});
 
-	// Recently closed tabs (LIFO, max 10) for Cmd+Shift+T reopen
-	const [closedTabs, setClosedTabs] = useState<Tab[]>([]);
+	// Recently closed tabs (LIFO, max 10) for Cmd+Shift+T reopen. The explorer
+	// state travels with the tab so reopening restores view mode and scroll.
+	const [closedTabs, setClosedTabs] = useState<ClosedTab[]>([]);
 
 	const [defaultNewTabPath, setDefaultNewTabPathState] = useState<string>(
-		() => {
-			const persisted = loadPersistedState();
-			return persisted?.defaultNewTabPath ?? "/";
-		},
+		() => restored?.defaultNewTabPath ?? "/",
 	);
+
+	// Safety net for any path that removes the active tab: keeping the pointer
+	// valid here means no state updater has to reach out and set it.
+	useEffect(() => {
+		if (tabs.length === 0) return;
+		if (tabs.some((t) => t.id === activeTabId)) return;
+		setActiveTabId(tabs[tabs.length - 1].id);
+	}, [tabs, activeTabId]);
 
 	// ========================================================================
 	// Persistence
@@ -285,13 +258,13 @@ export function TabManagerProvider({
 	useEffect(() => {
 		const explorerStatesObject = Object.fromEntries(explorerStates);
 
-		savePersistedState({
+		savePersistedState(storageKey, {
 			tabs,
 			activeTabId,
 			explorerStates: explorerStatesObject,
 			defaultNewTabPath,
 		});
-	}, [tabs, activeTabId, explorerStates, defaultNewTabPath]);
+	}, [storageKey, tabs, activeTabId, explorerStates, defaultNewTabPath]);
 
 	// ========================================================================
 	// Tab management
@@ -307,7 +280,8 @@ export function TabManagerProvider({
 			const [pathname, search = ""] = tabPath.split("?");
 			const derivedTitle =
 				title ||
-				deriveTitleFromPath(pathname, search ? `?${search}` : "");
+				deriveTitleFromPath(pathname, search ? `?${search}` : "") ||
+				"Spacedrive";
 
 			const newTab: Tab = {
 				id: crypto.randomUUID(),
@@ -332,48 +306,65 @@ export function TabManagerProvider({
 		[defaultNewTabPath],
 	);
 
-	const closeTab = useCallback(
-		(tabId: string) => {
-			// Keep the tab for Cmd+Shift+T reopen (LIFO, max 10)
-			const tabToClose = tabs.find((t) => t.id === tabId);
-			if (tabToClose) {
-				setClosedTabs((closed) => [tabToClose, ...closed].slice(0, 10));
+	// Batch close keeps "close others"/"close to the right" atomic. Looping over
+	// a single-tab close ran each iteration against a stale snapshot and could
+	// leave activeTabId pointing at a removed tab.
+	const closeTabs = useCallback(
+		(tabIds: string[]) => {
+			const doomed = new Set(tabIds);
+			const closing = tabs.filter((t) => doomed.has(t.id));
+			if (closing.length === 0) return;
+
+			const remaining = tabs.filter((t) => !doomed.has(t.id));
+			// The window always keeps at least one tab open; closing the last one
+			// would also push it onto the reopen stack and duplicate its id later.
+			if (remaining.length === 0) return;
+
+			setClosedTabs((closed) =>
+				[
+					...closing
+						.map((tab) => ({
+							tab,
+							explorerState: explorerStates.get(tab.id),
+						}))
+						.reverse(),
+					...closed,
+				].slice(0, 10),
+			);
+
+			setTabs(remaining);
+
+			if (doomed.has(activeTabId)) {
+				const activeIndex = tabs.findIndex((t) => t.id === activeTabId);
+				// Prefer the nearest surviving tab on the left, like browsers do.
+				const fallback =
+					tabs
+						.slice(0, activeIndex)
+						.reverse()
+						.find((t) => !doomed.has(t.id)) ??
+					tabs.slice(activeIndex + 1).find((t) => !doomed.has(t.id));
+
+				if (fallback) setActiveTabId(fallback.id);
 			}
 
-			setTabs((prev) => {
-				const filtered = prev.filter((t) => t.id !== tabId);
-
-				if (filtered.length === 0) {
-					return prev;
-				}
-
-				if (tabId === activeTabId) {
-					const currentIndex = prev.findIndex((t) => t.id === tabId);
-					const newIndex = Math.max(0, currentIndex - 1);
-					const newActiveTab = filtered[newIndex] || filtered[0];
-					if (newActiveTab) {
-						setActiveTabId(newActiveTab.id);
-					}
-				}
-
-				return filtered;
-			});
-
-			// Clean up explorer state for closed tab
 			setExplorerStates((prev) => {
 				const next = new Map(prev);
-				next.delete(tabId);
+				for (const id of doomed) next.delete(id);
 				return next;
 			});
 
-			// Clean up selection state for closed tab
 			setSelectionStates((prev) => {
 				const next = new Map(prev);
-				next.delete(tabId);
+				for (const id of doomed) next.delete(id);
 				return next;
 			});
 		},
-		[activeTabId, tabs],
+		[activeTabId, tabs, explorerStates],
+	);
+
+	const closeTab = useCallback(
+		(tabId: string) => closeTabs([tabId]),
+		[closeTabs],
 	);
 
 	const switchTab = useCallback(
@@ -451,19 +442,22 @@ export function TabManagerProvider({
 		const [lastClosed, ...rest] = closedTabs;
 		if (!lastClosed) return;
 
-		// Restore the tab with fresh per-tab state
-		setTabs((prev) => [...prev, lastClosed]);
+		const { tab, explorerState } = lastClosed;
+
+		// Guard against re-adding a tab that is somehow still open, which would
+		// duplicate the React key and the sortable id.
+		setTabs((prev) =>
+			prev.some((t) => t.id === tab.id) ? prev : [...prev, tab],
+		);
 		setExplorerStates((prev) =>
-			new Map(prev).set(lastClosed.id, {
+			new Map(prev).set(tab.id, {
 				...DEFAULT_EXPLORER_STATE,
-				...prev.get(lastClosed.id),
+				...explorerState,
 			}),
 		);
-		setSelectionStates((prev) =>
-			new Map(prev).set(lastClosed.id, []),
-		);
+		setSelectionStates((prev) => new Map(prev).set(tab.id, []));
 		setClosedTabs(rest);
-		setActiveTabId(lastClosed.id);
+		setActiveTabId(tab.id);
 	}, [closedTabs]);
 
 	// ========================================================================
@@ -515,37 +509,39 @@ export function TabManagerProvider({
 			router,
 			createTab,
 			closeTab,
+			closeTabs,
 			switchTab,
 			updateTabTitle,
 			updateTabPath,
 			reorderTabs,
 			nextTab,
 			previousTab,
-selectTabAtIndex,
-		reopenTab,
-		hasClosedTabs: closedTabs.length > 0,
-		setDefaultNewTabPath,
-		getExplorerState,
-		updateExplorerState,
-		getSelectionIds,
-		updateSelectionIds,
-	}),
-	[
-		tabs,
-		activeTabId,
-		router,
-		createTab,
-		closeTab,
-		switchTab,
-		updateTabTitle,
-		updateTabPath,
-		reorderTabs,
-		nextTab,
-		previousTab,
-		selectTabAtIndex,
-		reopenTab,
-		closedTabs,
-		setDefaultNewTabPath,
+			selectTabAtIndex,
+			reopenTab,
+			hasClosedTabs: closedTabs.length > 0,
+			setDefaultNewTabPath,
+			getExplorerState,
+			updateExplorerState,
+			getSelectionIds,
+			updateSelectionIds,
+		}),
+		[
+			tabs,
+			activeTabId,
+			router,
+			createTab,
+			closeTab,
+			closeTabs,
+			switchTab,
+			updateTabTitle,
+			updateTabPath,
+			reorderTabs,
+			nextTab,
+			previousTab,
+			selectTabAtIndex,
+			reopenTab,
+			closedTabs,
+			setDefaultNewTabPath,
 			getExplorerState,
 			updateExplorerState,
 			getSelectionIds,

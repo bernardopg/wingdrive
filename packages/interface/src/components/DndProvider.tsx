@@ -95,22 +95,12 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			active.data.current?.type === "tab" &&
 			over.data.current?.type === "tab"
 		) {
-			console.log("[DnD] Tab reorder:", {
-				activeId: active.id,
-				overId: over.id,
-			});
-
 			reorderTabs(active.id, over.id);
 			return;
 		}
 
 		// Handle sortable reordering (no drag data, just active/over IDs)
 		if (active.id !== over.id && !active.data.current?.type) {
-			console.log("[DnD] Sortable reorder:", {
-				activeId: active.id,
-				overId: over.id,
-			});
-
 			const libraryId = client.getCurrentLibraryId();
 			const currentSpace =
 				spaces?.find((s: any) => s.id === currentSpaceId) ??

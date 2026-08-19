@@ -1,72 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTabManager } from "./useTabManager";
-
-/**
- * Derives a tab title from the current route pathname and search params
- */
-function deriveTitleFromPath(pathname: string, search: string): string | null {
-	// Static route mappings
-	const routeTitles: Record<string, string> = {
-		"/": "Overview",
-		"/favorites": "Favorites",
-		"/recents": "Recents",
-		"/file-kinds": "File Kinds",
-		"/sources": "Sources",
-		"/sources/adapters": "Adapters",
-		"/search": "Search",
-		"/jobs": "Jobs",
-		"/daemon": "Daemon",
-	};
-
-	// Check static routes first
-	if (routeTitles[pathname]) {
-		return routeTitles[pathname];
-	}
-
-	// Handle tag routes: /tag/:tagId
-	if (pathname.startsWith("/tag/")) {
-		const tagId = pathname.split("/")[2];
-		return tagId ? `Tag: ${tagId.slice(0, 8)}...` : "Tag";
-	}
-
-	// Handle source detail routes: /sources/:sourceId
-	// Title is set dynamically by SourceDetail component, return null to skip overwrite
-	if (pathname.startsWith("/sources/") && pathname !== "/sources/adapters") {
-		return null;
-	}
-
-	// Handle explorer routes
-	if (pathname === "/explorer" && search) {
-		const params = new URLSearchParams(search);
-
-		// Handle virtual views: /explorer?view=device&id=abc123
-		const view = params.get("view");
-		if (view === "device") {
-			return "This Device";
-		}
-
-		// Handle path-based navigation
-		const pathParam = params.get("path");
-		if (pathParam) {
-			try {
-				const sdPath = JSON.parse(decodeURIComponent(pathParam));
-				// Extract the last component of the path for the title
-				if (sdPath?.Physical?.path) {
-					const fullPath = sdPath.Physical.path as string;
-					const parts = fullPath.split("/").filter(Boolean);
-					return parts[parts.length - 1] || "Explorer";
-				}
-			} catch {
-				// Fall through to default
-			}
-		}
-		return "Explorer";
-	}
-
-	// Default fallback
-	return "Spacedrive";
-}
+import { deriveTitleFromPath } from "./deriveTitle";
 
 /**
  * TabNavigationSync - Syncs router navigation with active tab

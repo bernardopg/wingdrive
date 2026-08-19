@@ -3,6 +3,32 @@ import { getCurrentPlatform, isInputFocused, normalizeModifiers } from './platfo
 
 export type KeybindHandler = () => void | Promise<void>;
 
+/**
+ * Physical keys that produce a different `event.key` once Shift is held
+ * (Shift+] reports `}`), which silently broke every Shift combo bound to
+ * punctuation. Matching on `event.code` as well keeps those shortcuts working.
+ */
+const CODE_TO_UNSHIFTED_KEY: Record<string, string> = {
+	BracketLeft: '[',
+	BracketRight: ']',
+	Comma: ',',
+	Period: '.',
+	Slash: '/',
+	Semicolon: ';',
+	Quote: "'",
+	Backslash: '\\',
+	Minus: '-',
+	Equal: '=',
+	Backquote: '`'
+};
+
+function unshiftedKeyFromCode(code: string): string | null {
+	if (CODE_TO_UNSHIFTED_KEY[code]) return CODE_TO_UNSHIFTED_KEY[code];
+	if (/^Key[A-Z]$/.test(code)) return code.slice(3).toLowerCase();
+	if (/^Digit[0-9]$/.test(code)) return code.slice(5);
+	return null;
+}
+
 interface RegisteredKeybind {
 	combo: KeyCombo;
 	handler: KeybindHandler;
@@ -120,7 +146,11 @@ class WebKeybindListener {
 		if (requiredShift !== hasShift) return false;
 
 		// Check key
-		return this.normalizeKey(e.key) === this.normalizeKey(combo.key);
+		const target = this.normalizeKey(combo.key);
+		if (this.normalizeKey(e.key) === target) return true;
+
+		const fromCode = unshiftedKeyFromCode(e.code);
+		return fromCode !== null && this.normalizeKey(fromCode) === target;
 	}
 
 	private normalizeKey(key: string): string {

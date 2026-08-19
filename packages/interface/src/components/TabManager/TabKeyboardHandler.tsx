@@ -1,5 +1,6 @@
 import { useTabManager } from "./useTabManager";
 import { useKeybind } from "../../hooks/useKeybind";
+import { usePlatform } from "../../contexts/PlatformContext";
 
 /**
  * TabKeyboardHandler - Handles keyboard shortcuts for tab operations
@@ -9,6 +10,7 @@ import { useKeybind } from "../../hooks/useKeybind";
 export function TabKeyboardHandler() {
 	const { createTab, closeTab, nextTab, previousTab, selectTabAtIndex, reopenTab, tabs, activeTabId } =
 		useTabManager();
+	const platform = usePlatform();
 
 	// New Tab (Cmd+T)
 	useKeybind("global.newTab", () => {
@@ -20,16 +22,17 @@ export function TabKeyboardHandler() {
 		reopenTab();
 	});
 
-	// Close Tab (Cmd+W)
-	useKeybind(
-		"global.closeTab",
-		() => {
-			if (tabs.length > 1) {
-				closeTab(activeTabId);
-			}
-		},
-		{ enabled: tabs.length > 1 },
-	);
+	// Close Tab (Cmd+W). On the last tab this closes the window instead, which
+	// is what every tabbed app does and what the intercepted native shortcut
+	// would otherwise have done.
+	useKeybind("global.closeTab", () => {
+		if (tabs.length > 1) {
+			closeTab(activeTabId);
+			return;
+		}
+
+		void platform.closeCurrentWindow?.();
+	});
 
 	// Next Tab (Cmd+Shift+])
 	useKeybind("global.nextTab", () => {
