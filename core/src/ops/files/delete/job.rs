@@ -144,7 +144,7 @@ impl JobHandler for DeleteJob {
 		let failed_count = results.len() - deleted_count;
 		let total_bytes: u64 = results.iter().map(|r| r.bytes_freed).sum();
 
-		let failed_deletions = results
+		let failed_deletions: Vec<DeleteError> = results
 			.into_iter()
 			.filter(|r| !r.success)
 			.map(|r| DeleteError {
@@ -156,6 +156,16 @@ impl JobHandler for DeleteJob {
 				error: r.error.unwrap_or_default(),
 			})
 			.collect();
+
+		// Per-file reasons were only returned in the output, so a partial failure
+		// looked like a clean run in the logs and gave no clue what went wrong.
+		for failure in &failed_deletions {
+			ctx.log(format!(
+				"Failed to delete {}: {}",
+				failure.path.display(),
+				failure.error
+			));
+		}
 
 		// Phase: Complete
 		ctx.progress(Progress::Generic(
