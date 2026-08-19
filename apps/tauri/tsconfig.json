@@ -5,27 +5,26 @@
 		"lib": ["ES2020", "DOM", "DOM.Iterable"],
 		"module": "ESNext",
 		"skipLibCheck": true,
-
-		/* Bundler mode */
 		"moduleResolution": "bundler",
 		"allowImportingTsExtensions": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
 		"jsx": "react-jsx",
-
-		/* Linting */
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true,
-
-		/* Path aliases */
-		"baseUrl": ".",
 		"paths": {
 			"~/*": ["./src/*"],
-			"@spacebot/api-client": ["../../../spacebot/packages/api-client/src/index.ts"],
-			"@spacebot/api-client/*": ["../../../spacebot/packages/api-client/src/*"]
+			"@spacebot/api-client": [
+				"../../../spacebot/packages/api-client/src/index.ts",
+				"./src/stubs/spacebot-api-client.ts"
+			],
+			"@spacebot/api-client/*": [
+				"../../../spacebot/packages/api-client/src/*",
+				"./src/stubs/spacebot-api-client.ts"
+			]
 		}
 	},
 	"include": ["src", "vite.config.ts"],

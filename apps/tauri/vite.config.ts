@@ -1,16 +1,17 @@
 import path from 'path';
 import fs from 'fs';
 import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 import {defineConfig} from 'vite';
+import commonjs from 'vite-plugin-commonjs';
 
-const spaceui = path.resolve(__dirname, '../../../spaceui/packages');
+const spaceui = path.resolve(import.meta.dirname, '../../../spaceui/packages');
 const hasSpaceui = fs.existsSync(spaceui);
-const spacebot = path.resolve(__dirname, '../../../spacebot/packages');
+const spacebot = path.resolve(import.meta.dirname, '../../../spacebot/packages');
 const hasSpacebot = fs.existsSync(spacebot);
 
 export default defineConfig(() => ({
-	plugins: [react(), tailwindcss()],
+	plugins: [react(), tailwindcss(), commonjs()],
 
 	resolve: {
 		dedupe: ['react', 'react-dom'],
@@ -18,42 +19,42 @@ export default defineConfig(() => ({
 			{
 				find: /^react$/,
 				replacement: path.resolve(
-					__dirname,
+					import.meta.dirname,
 					'./node_modules/react/index.js'
 				)
 			},
 			{
 				find: /^react\/jsx-runtime$/,
 				replacement: path.resolve(
-					__dirname,
+					import.meta.dirname,
 					'./node_modules/react/jsx-runtime.js'
 				)
 			},
 			{
 				find: /^react\/jsx-dev-runtime$/,
 				replacement: path.resolve(
-					__dirname,
+					import.meta.dirname,
 					'./node_modules/react/jsx-dev-runtime.js'
 				)
 			},
 			{
 				find: /^react-dom$/,
 				replacement: path.resolve(
-					__dirname,
+					import.meta.dirname,
 					'./node_modules/react-dom/index.js'
 				)
 			},
 			{
 				find: /^react-dom\/client$/,
 				replacement: path.resolve(
-					__dirname,
+					import.meta.dirname,
 					'./node_modules/react-dom/client.js'
 				)
 			},
 			{
 				find: 'openapi-fetch',
 				replacement: path.resolve(
-					__dirname,
+					import.meta.dirname,
 					'../../packages/interface/node_modules/openapi-fetch/dist/index.mjs'
 				)
 			},
@@ -86,25 +87,26 @@ export default defineConfig(() => ({
 						},
 					]
 				: []),
-			...(hasSpacebot
-				? [
-						{
-							find: /^@spacebot\/api-client$/,
-							replacement: `${spacebot}/api-client/src`,
-						},
-					]
-				: []),
+			// Spacebot lives in a separate private repo. Fall back to a tracked
+			// in-tree stub so the desktop app still builds without it; leaving the
+			// specifier external produced a bare import the webview cannot resolve.
+			{
+				find: /^@spacebot\/api-client$/,
+				replacement: hasSpacebot
+					? `${spacebot}/api-client/src`
+					: path.resolve(import.meta.dirname, './src/stubs/spacebot-api-client.ts'),
+			},
 			{
 				find: '@sd/interface',
 				replacement: path.resolve(
-					__dirname,
+					import.meta.dirname,
 					'../../packages/interface/src'
 				)
 			},
 			{
 				find: '@sd/ts-client',
 				replacement: path.resolve(
-					__dirname,
+					import.meta.dirname,
 					'../../packages/ts-client/src'
 				)
 			}
@@ -112,7 +114,14 @@ export default defineConfig(() => ({
 	},
 
 	optimizeDeps: {
-		exclude: ['@spacedrive/ai', '@spacedrive/primitives', '@spacedrive/tokens']
+		// Only skip pre-bundling when SpaceUI is checked out locally and aliased to
+		// source for HMR. Excluding the published npm builds leaks their whole
+		// transitive tree into the browser unbundled, and the CommonJS members of
+		// that tree (style-to-js, debug via react-markdown) fail with "does not
+		// provide an export named 'default'", which blanks the entire app.
+		exclude: hasSpaceui
+			? ['@spacedrive/ai', '@spacedrive/primitives', '@spacedrive/tokens']
+			: []
 	},
 
 	clearScreen: false,
@@ -121,7 +130,7 @@ export default defineConfig(() => ({
 		strictPort: true,
 		fs: {
 			allow: [
-				path.resolve(__dirname, '../../..'),
+				path.resolve(import.meta.dirname, '../../..'),
 				...(hasSpaceui ? [spaceui] : []),
 			]
 		},
@@ -133,11 +142,6 @@ export default defineConfig(() => ({
 	build: {
 		target: ['es2021', 'chrome100', 'safari13'],
 		minify: !process.env.TAURI_ENV_DEBUG ? ('esbuild' as const) : false,
-		sourcemap: !!process.env.TAURI_ENV_DEBUG,
-		rollupOptions: {
-			external: [
-				...(!hasSpacebot ? ['@spacebot/api-client'] : []),
-			],
-		}
+		sourcemap: !!process.env.TAURI_ENV_DEBUG
 	}
 }));

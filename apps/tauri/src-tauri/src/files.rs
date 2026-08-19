@@ -18,11 +18,11 @@ pub async fn reveal_file(path: String) -> Result<(), String> {
 
 /// Share files using the native system share sheet (macOS/iOS only)
 #[tauri::command]
-pub async fn share_files(paths: Vec<String>) -> Result<(), String> {
+pub async fn share_files(_paths: Vec<String>) -> Result<(), String> {
 	#[cfg(target_os = "macos")]
 	{
 		// Verify all paths exist
-		for path in &paths {
+		for path in &_paths {
 			let path_buf = PathBuf::from(path);
 			if !path_buf.exists() {
 				return Err(format!("Path does not exist: {}", path));
@@ -30,7 +30,7 @@ pub async fn share_files(paths: Vec<String>) -> Result<(), String> {
 		}
 
 		// Join paths with null separator (similar to open_file_paths_with pattern)
-		let joined_paths = paths.join("\0");
+		let joined_paths = _paths.join("\0");
 
 		unsafe {
 			let success = sd_desktop_macos::share_items(&joined_paths.as_str().into());

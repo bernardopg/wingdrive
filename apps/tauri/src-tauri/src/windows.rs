@@ -546,12 +546,12 @@ pub async fn resize_overlay_window(
 
 /// Apply macOS window styling to current window (called from frontend when ready)
 #[tauri::command]
-pub fn apply_macos_styling(app: AppHandle) -> Result<(), String> {
+pub fn apply_macos_styling(_app: AppHandle) -> Result<(), String> {
 	#[cfg(target_os = "macos")]
 	{
-		let window = app
+		let window = _app
 			.get_webview_window(
-				&app.webview_windows()
+				&_app.webview_windows()
 					.keys()
 					.last()
 					.ok_or("No windows found")?

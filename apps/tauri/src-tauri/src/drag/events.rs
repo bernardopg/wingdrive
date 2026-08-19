@@ -43,6 +43,7 @@ pub enum DragResult {
 	},
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DropEvent {

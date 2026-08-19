@@ -1495,14 +1495,14 @@ async fn open_macos_settings() -> Result<(), String> {
 			.arg("x-apple.systempreferences:com.apple.LoginItems-Settings.extension")
 			.spawn()
 			.map_err(|e| format!("Failed to open settings: {}", e))?;
+
+		return Ok(());
 	}
 
 	#[cfg(not(target_os = "macos"))]
 	{
 		return Err("Not supported on this platform".to_string());
 	}
-
-	Ok(())
 }
 
 /// Check if daemon is running by trying to connect and send a ping

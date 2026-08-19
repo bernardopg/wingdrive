@@ -8,18 +8,18 @@ name = "Spacedrive"
 path = "src/main.rs"
 
 [build-dependencies]
-tauri-build = { version = "2.0", features = [] }
+tauri-build = { version = "2.6.3", features = [] }
 
 [dependencies]
 # Tauri
-tauri = { version = "2.1", features = ["macos-private-api", "devtools", "protocol-asset"] }
-tauri-plugin-dialog = "2.0"
-tauri-plugin-fs = "2.0"
-tauri-plugin-shell = "2.0"
-tauri-plugin-clipboard-manager = "2.0"
-tauri-plugin-global-shortcut = "2.0"
-tauri-plugin-os = "2.0"
-tauri-plugin-updater = "2.0"
+tauri = { version = "2.11.5", features = ["macos-private-api", "devtools", "protocol-asset"] }
+tauri-plugin-dialog = "2.7.2"
+tauri-plugin-fs = "2.5.1"
+tauri-plugin-shell = "2.3.5"
+tauri-plugin-clipboard-manager = "2.3.2"
+tauri-plugin-global-shortcut = "2.3.2"
+tauri-plugin-os = "2.3.2"
+tauri-plugin-updater = "2.10.1"
 
 # Core bridge
 sd-tauri-core = { path = "../sd-tauri-core" }
@@ -28,7 +28,7 @@ sd-tauri-core = { path = "../sd-tauri-core" }
 file-opening = { path = "../crates/file-opening" }
 
 # Async runtime
-tokio = { version = "1.40", features = ["full"] }
+tokio = { version = "1.53.1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["io"] }
 
 # HTTP server
