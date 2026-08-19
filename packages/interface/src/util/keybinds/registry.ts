@@ -321,6 +321,14 @@ export const globalKeybinds = {
 		scope: 'global'
 	}),
 
+	reopenTab: defineKeybind({
+		id: 'global.reopenTab',
+		label: 'Reopen Closed Tab',
+		combo: { modifiers: ['Cmd', 'Shift'], key: 't' },
+		scope: 'global',
+		preventDefault: true
+	}),
+
 	selectTab1: defineKeybind({
 		id: 'global.selectTab1',
 		label: 'Go to Tab 1',

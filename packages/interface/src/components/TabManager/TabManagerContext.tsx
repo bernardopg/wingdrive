@@ -179,7 +179,10 @@ interface TabManagerContextValue {
 	nextTab: () => void;
 	previousTab: () => void;
 	selectTabAtIndex: (index: number) => void;
+	reopenTab: () => void;
 	setDefaultNewTabPath: (path: string) => void;
+
+	// Explorer state (per-tab)
 
 	// Explorer state (per-tab)
 	getExplorerState: (tabId: string) => TabExplorerState;
@@ -264,6 +267,9 @@ export function TabManagerProvider({
 		return initialMap;
 	});
 
+	// Recently closed tabs (LIFO, max 10) for Cmd+Shift+T reopen
+	const [closedTabs, setClosedTabs] = useState<Tab[]>([]);
+
 	const [defaultNewTabPath, setDefaultNewTabPathState] = useState<string>(
 		() => {
 			const persisted = loadPersistedState();
@@ -327,6 +333,12 @@ export function TabManagerProvider({
 
 	const closeTab = useCallback(
 		(tabId: string) => {
+			// Keep the tab for Cmd+Shift+T reopen (LIFO, max 10)
+			const tabToClose = tabs.find((t) => t.id === tabId);
+			if (tabToClose) {
+				setClosedTabs((closed) => [tabToClose, ...closed].slice(0, 10));
+			}
+
 			setTabs((prev) => {
 				const filtered = prev.filter((t) => t.id !== tabId);
 
@@ -360,7 +372,7 @@ export function TabManagerProvider({
 				return next;
 			});
 		},
-		[activeTabId],
+		[activeTabId, tabs],
 	);
 
 	const switchTab = useCallback(
@@ -434,6 +446,25 @@ export function TabManagerProvider({
 		[tabs, switchTab],
 	);
 
+	const reopenTab = useCallback(() => {
+		const [lastClosed, ...rest] = closedTabs;
+		if (!lastClosed) return;
+
+		// Restore the tab with fresh per-tab state
+		setTabs((prev) => [...prev, lastClosed]);
+		setExplorerStates((prev) =>
+			new Map(prev).set(lastClosed.id, {
+				...DEFAULT_EXPLORER_STATE,
+				...prev.get(lastClosed.id),
+			}),
+		);
+		setSelectionStates((prev) =>
+			new Map(prev).set(lastClosed.id, []),
+		);
+		setClosedTabs(rest);
+		setActiveTabId(lastClosed.id);
+	}, [closedTabs]);
+
 	// ========================================================================
 	// Explorer state (per-tab)
 	// ========================================================================
@@ -490,6 +521,7 @@ export function TabManagerProvider({
 			nextTab,
 			previousTab,
 			selectTabAtIndex,
+			reopenTab,
 			setDefaultNewTabPath,
 			getExplorerState,
 			updateExplorerState,
@@ -509,6 +541,7 @@ export function TabManagerProvider({
 			nextTab,
 			previousTab,
 			selectTabAtIndex,
+			reopenTab,
 			setDefaultNewTabPath,
 			getExplorerState,
 			updateExplorerState,

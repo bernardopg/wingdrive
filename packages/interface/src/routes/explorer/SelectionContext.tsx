@@ -5,6 +5,7 @@ import {
 	useCallback,
 	useMemo,
 	useEffect,
+	useRef,
 	type ReactNode,
 } from "react";
 import { usePlatform } from "../../contexts/PlatformContext";
@@ -65,6 +66,13 @@ export function SelectionProvider({
 	const [, setLastSelectedIndex] = useState(-1);
 	const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
 
+	// Mirrors selectedFiles so the callback can compute chained updates
+	// without reading stale state between batched re-renders
+	const selectedFilesRef = useRef<File[]>([]);
+	useEffect(() => {
+		selectedFilesRef.current = selectedFiles;
+	}, [selectedFiles]);
+
 	// Track the stored IDs for the active tab (separate from File objects)
 	const storedIds = getSelectionIds(activeTabId);
 
@@ -79,20 +87,21 @@ export function SelectionProvider({
 	// Supports both direct values and updater functions
 	const setSelectedFiles = useCallback(
 		(filesOrUpdater: File[] | ((prev: File[]) => File[])) => {
-			setSelectedFilesInternal((prev) => {
-				const nextFiles =
-					typeof filesOrUpdater === "function"
-						? filesOrUpdater(prev)
-						: filesOrUpdater;
+			// Compute next from the ref, not the updater form, so the TabManager
+			// sync stays in the event handler instead of running inside React's
+			// render phase (updater functions run during render in React 19)
+			const nextFiles =
+				typeof filesOrUpdater === "function"
+					? filesOrUpdater(selectedFilesRef.current)
+					: filesOrUpdater;
 
-				// Sync to TabManager
-				updateSelectionIds(
-					activeTabId,
-					nextFiles.map((f) => f.id),
-				);
+			selectedFilesRef.current = nextFiles;
+			updateSelectionIds(
+				activeTabId,
+				nextFiles.map((f) => f.id),
+			);
 
-				return nextFiles;
-			});
+			setSelectedFilesInternal(nextFiles);
 		},
 		[activeTabId, updateSelectionIds],
 	);
