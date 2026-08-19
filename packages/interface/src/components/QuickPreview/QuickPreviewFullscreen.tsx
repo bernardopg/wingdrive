@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowLeft, ArrowRight, Info } from "@phosphor-icons/react";
+import { X, ArrowLeft, ArrowRight, Info, Play, Pause } from "@phosphor-icons/react";
 import { useEffect, useState, useMemo } from "react";
 import { ContentRenderer } from "./ContentRenderer";
 import { MetadataPanel } from "./MetadataPanel";
@@ -46,6 +46,7 @@ export function QuickPreviewFullscreen({
 	const [videoCallbacks, setVideoCallbacks] =
 		useState<VideoControlsCallbacks | null>(null);
 	const [showMetadata, setShowMetadata] = useState(false);
+	const [isSlideshow, setIsSlideshow] = useState(false);
 	const { currentFiles } = useExplorer();
 
 	// Reset zoom and metadata panel when file changes
@@ -53,6 +54,20 @@ export function QuickPreviewFullscreen({
 		setIsZoomed(false);
 		setShowMetadata(false);
 	}, [fileId]);
+
+	// Auto-advance while slideshow is active
+	useEffect(() => {
+		if (!isSlideshow || !hasNext) return;
+		const timer = setInterval(() => onNext?.(), 3000);
+		return () => clearInterval(timer);
+	}, [isSlideshow, hasNext, onNext]);
+
+	// Stop the slideshow at the last item and when the preview closes
+	useEffect(() => {
+		if ((!hasNext || !isOpen) && isSlideshow) {
+			setIsSlideshow(false);
+		}
+	}, [hasNext, isOpen, isSlideshow]);
 
 	// Get file directly from currentFiles - instant, no network request
 	const file = useMemo(
@@ -163,6 +178,23 @@ export function QuickPreviewFullscreen({
 		[showMetadata]
 	);
 
+	const slideshowButton = useMemo(
+		() => (
+			<button
+				onClick={() => setIsSlideshow((s) => !s)}
+				className={`rounded-md p-1.5 transition-colors hover:bg-white/10 hover:text-white ${isSlideshow ? "bg-white/15 text-white" : "text-white/70"}`}
+				title={isSlideshow ? "Stop slideshow" : "Start slideshow"}
+			>
+				{isSlideshow ? (
+					<Pause size={16} weight="bold" />
+				) : (
+					<Play size={16} weight="fill" />
+				)}
+			</button>
+		),
+		[isSlideshow]
+	);
+
 	if (!portalTarget) return null;
 
 	const content = (
@@ -221,6 +253,15 @@ export function QuickPreviewFullscreen({
 								}
 								right={
 									<>
+										{hasNext && (
+											<TopBarItem
+												id="preview-slideshow"
+												label="Slideshow"
+												priority="high"
+											>
+												{slideshowButton}
+											</TopBarItem>
+										)}
 										<TopBarItem
 											id="preview-details"
 											label="Details"

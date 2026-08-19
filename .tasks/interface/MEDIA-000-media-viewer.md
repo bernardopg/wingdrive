@@ -1,12 +1,13 @@
 ---
 id: MEDIA-000
 title: Media Viewer
-status: To Do
+status: In Progress
 assignee: jamiepine
 parent: UI-000
 priority: Medium
 tags: [media, viewer, photos, videos]
 whitepaper: N/A
+last_updated: 2026-08-19
 ---
 
 ## Description
@@ -33,12 +34,12 @@ Build a full-screen media viewer for photos and videos with support for navigati
 
 ## Acceptance Criteria
 
-- [ ] Open photo in full-screen viewer
-- [ ] Zoom and pan with mouse/touch
-- [ ] Navigate with arrow keys or swipe
-- [ ] Video playback with controls
-- [ ] Display metadata panel
+- [x] Open photo in full-screen viewer
+- [x] Zoom and pan with mouse/touch
+- [x] Navigate with arrow keys or swipe
+- [x] Video playback with controls
+- [x] Display metadata panel
 - [ ] Quick tag/favorite actions
 - [ ] Slideshow mode
 - [ ] Live Photo playback
-- [ ] Smooth transitions between items
+- [x] Smooth transitions between items
