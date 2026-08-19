@@ -10,10 +10,8 @@
 
 /* Tell Tailwind v4 where to scan for utility classes */
 @source "../../../packages/interface/src";
-@source "../../../../spaceui/packages/primitives/src";
-@source "../../../../spaceui/packages/ai/src";
-@source "../../../../spaceui/packages/explorer/src";
-@source "../../../../spaceui/packages/forms/src";
+@source "../../../packages/interface/node_modules/@spacedrive/primitives/dist";
+@source "../../../packages/interface/node_modules/@spacedrive/ai/dist";
 
 @plugin "@tailwindcss/forms";
 @plugin "tailwindcss-animate";

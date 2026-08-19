@@ -78,13 +78,14 @@
   --text-7xl: 5rem;
 }
 
-/* Tell Tailwind v4 where to scan for utility classes */
-@source "../../../packages/ui/src";
+/* Tell Tailwind v4 where to scan for utility classes.
+   The @spacedrive/* packages ship prebuilt dist bundles inside node_modules, which
+   Tailwind skips by default; without these entries every class that only exists in
+   the primitives (dialog overlays, tab pills, buttons) is dropped from the bundle. */
 @source "../../../packages/interface/src";
-@source "../../../../spaceui/packages/primitives/src";
-@source "../../../../spaceui/packages/ai/src";
-@source "../../../../spaceui/packages/explorer/src";
-@source "../../../../spaceui/packages/forms/src";
+@source "../node_modules/@spacedrive/primitives/dist";
+@source "../../../packages/interface/node_modules/@spacedrive/primitives/dist";
+@source "../../../packages/interface/node_modules/@spacedrive/ai/dist";
 
 @plugin "@tailwindcss/forms";
 @plugin "tailwindcss-animate";
