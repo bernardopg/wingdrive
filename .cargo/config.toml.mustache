@@ -1,8 +1,13 @@
 {{#nativeDeps}}
 [env]
 PROTOC = { force = true, value = "{{{protoc}}}" }
+{{^useSystemFfmpeg}}
+# FFMPEG_DIR/CPATH point ffmpeg-sys-next (and other C deps) at the bundled native-deps headers.
+# Skipped when a compatible system FFmpeg was detected (see xtask's has_system_ffmpeg): mixing
+# bundled headers with the system's libc/FFmpeg .so causes bindgen struct-layout mismatches.
 FFMPEG_DIR = { force = true, value = "{{{nativeDeps}}}" }
 CPATH = { force = true, value = "{{{nativeDeps}}}/include" }
+{{/useSystemFfmpeg}}
 {{#isMacOS}}
 BINDGEN_EXTRA_CLANG_ARGS = { force = true, value = "-isysroot {{{sdkPath}}}" }
 {{/isMacOS}}
@@ -13,6 +18,11 @@ OPENSSL_STATIC = { force = true, value = "1" }
 OPENSSL_NO_VENDOR = { force = true, value = "0" }
 OPENSSL_RUST_USE_NASM = { force = true, value = "1" }
 {{/nativeDeps}}
+# Some vendored C deps (e.g. aws-lc-sys's jitterentropy) require exact flags like `-O0` and
+# break if a user's shell exports its own CFLAGS/CXXFLAGS (common on distros like Arch). Force
+# them empty here so cc-rs falls back to each crate's own build.rs defaults.
+CFLAGS = { force = true, value = "" }
+CXXFLAGS = { force = true, value = "" }
 
 {{#isMacOS}}
 [target.x86_64-apple-darwin]

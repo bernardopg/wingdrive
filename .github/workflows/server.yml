@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Maximize build space
         if: ${{ runner.os == 'Linux' }}
-        uses: easimon/maximize-build-space@master
+        uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
         with:
           remove-codeql: 'true'
           remove-dotnet: 'true'
@@ -26,11 +26,11 @@ jobs:
           remove-docker-images: 'true'
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@8f3d1ec8a696b3b9d9a6c3696b6c73033cab69e4 # 2026.08.14.1
 
       - name: Update Podman & crun
         run: |
@@ -102,13 +102,13 @@ jobs:
           echo "repo_ref=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
         with:
           platforms: 'arm64'
 
       - name: Build image
         id: build-image
-        uses: redhat-actions/buildah-build@v2
+        uses: redhat-actions/buildah-build@3a51aade9afa17e5c78256bcbe2e1ee08c7b995b # v3.0.2
         with:
           tags: ${{ steps.image_info.outputs.extra_tag && format('{0} {1}', steps.image_info.outputs.tag, steps.image_info.outputs.extra_tag) || steps.image_info.outputs.tag }}
           archs: amd64, arm64
@@ -122,7 +122,7 @@ jobs:
             ./apps/server/Dockerfile
 
       - name: Push image to ghcr.io
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@94ade333c38ecc0e60e94785125d9a52ca423b37 # v3.0.0
         with:
           tags: ${{ steps.build-image.outputs.tags }}
           image: ${{ steps.build-image.outputs.image }}

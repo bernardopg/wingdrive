@@ -10,6 +10,62 @@ use xz2::read::XzDecoder;
 const NATIVE_DEPS_URL: &str =
 	"https://github.com/spacedriveapp/native-deps/releases/latest/download";
 
+/// Remove the bundled FFmpeg shared libraries from a native-deps directory.
+///
+/// Call this when a compatible system FFmpeg was detected (see `system::has_system_ffmpeg`):
+/// the bundled libs would otherwise shadow the system ones on the linker's `-L` search path
+/// (still needed for heif/onnx/pdfium), reintroducing the header/lib version skew this whole
+/// dance exists to avoid.
+pub fn remove_bundled_ffmpeg_libs(native_deps_dir: &Path) -> Result<()> {
+	let lib_dir = native_deps_dir.join("lib");
+	if !lib_dir.exists() {
+		return Ok(());
+	}
+
+	const PREFIXES: &[&str] = &[
+		"libavutil",
+		"libavcodec",
+		"libavformat",
+		"libavfilter",
+		"libavdevice",
+		"libswscale",
+		"libswresample",
+		"libpostproc",
+	];
+
+	for entry in fs::read_dir(&lib_dir)? {
+		let entry = entry?;
+		let filename = entry.file_name();
+		let filename_str = filename.to_string_lossy();
+		if PREFIXES.iter().any(|p| filename_str.starts_with(p)) {
+			fs::remove_file(entry.path()).with_context(|| {
+				format!("Failed to remove bundled ffmpeg lib {}", filename_str)
+			})?;
+		}
+	}
+
+	// Also drop the bundled headers so nothing can accidentally pick them up via a stray -I.
+	let include_dirs = [
+		"libavutil",
+		"libavcodec",
+		"libavformat",
+		"libavfilter",
+		"libavdevice",
+		"libswscale",
+		"libswresample",
+		"libpostproc",
+	];
+	for dir in include_dirs {
+		let path = native_deps_dir.join("include").join(dir);
+		if path.exists() {
+			fs::remove_dir_all(&path)
+				.with_context(|| format!("Failed to remove bundled ffmpeg headers {}", dir))?;
+		}
+	}
+
+	Ok(())
+}
+
 /// Download native dependencies for the current platform
 pub fn download_native_deps(filename: &str, dest_dir: &Path) -> Result<()> {
 	let url = format!("{}/{}", NATIVE_DEPS_URL, filename);

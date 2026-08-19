@@ -182,3 +182,37 @@ pub fn get_best_linker() -> Option<String> {
 	}
 	None
 }
+
+/// Detect a usable system-installed FFmpeg via pkg-config.
+///
+/// Our bundled native-deps blob pins an FFmpeg release that can drift far behind a rolling-release
+/// distro's glibc (e.g. Arch). Parsing the bundled headers while linking/loading against a newer
+/// glibc, or vice versa, produces bindgen struct-layout mismatches that fail the build in
+/// confusing ways. When the system already provides a full FFmpeg dev environment, prefer it: it's
+/// guaranteed to be internally consistent with the host's own libc.
+pub fn has_system_ffmpeg() -> bool {
+	if !cfg!(target_os = "linux") {
+		return false;
+	}
+
+	if !has_linker("pkg-config") {
+		return false;
+	}
+
+	const REQUIRED_LIBS: &[&str] = &[
+		"libavutil",
+		"libavcodec",
+		"libavformat",
+		"libavfilter",
+		"libavdevice",
+		"libswscale",
+		"libswresample",
+	];
+
+	Command::new("pkg-config")
+		.arg("--exists")
+		.args(REQUIRED_LIBS)
+		.status()
+		.map(|status| status.success())
+		.unwrap_or(false)
+}

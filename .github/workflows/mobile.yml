@@ -27,7 +27,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
@@ -59,7 +59,7 @@ jobs:
           echo "${{ secrets.APPLE_API_KEY_BASE64 }}" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPLE_API_KEY }}.p8
 
       - name: Install Codesigning Certificate
-        uses: apple-actions/import-codesign-certs@v2
+        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466 # v7.0.0
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -137,16 +137,16 @@ jobs:
         shell: bash
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
 
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
@@ -189,7 +189,7 @@ jobs:
         run: ./gradlew bundleRelease
 
       - name: Upload AAB artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: android-aab
           path: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
@@ -198,7 +198,7 @@ jobs:
       # See: https://developers.google.com/android-publisher/getting_started
       # Uncomment when Play Store is configured:
       # - name: Upload to Play Store (internal track)
-      #   uses: r0adkll/upload-google-play@v1
+      #   uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
       #   with:
       #     serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
       #     packageName: com.spacedrive.app

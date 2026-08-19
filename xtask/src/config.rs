@@ -32,6 +32,8 @@ struct ConfigContext {
 	has_lld: Option<LinkerInfo>,
 	#[serde(rename = "sdkPath")]
 	sdk_path: String,
+	#[serde(rename = "useSystemFfmpeg")]
+	use_system_ffmpeg: bool,
 }
 
 #[derive(Serialize)]
@@ -71,6 +73,13 @@ pub fn generate_cargo_config(
 
 	// Get linker info
 	let has_lld = get_best_linker().map(|linker| LinkerInfo { linker });
+
+	// Prefer a system FFmpeg over the bundled native-deps blob when one is available (see
+	// `system::has_system_ffmpeg` for why: version/glibc skew between the two breaks bindgen).
+	let use_system_ffmpeg = matches!(system.os, Os::Linux) && crate::system::has_system_ffmpeg();
+	if use_system_ffmpeg {
+		println!("   ✓ Compatible system FFmpeg found via pkg-config, using it instead of bundled native-deps");
+	}
 
 	// Convert paths to strings and handle Windows backslashes
 	let native_deps =
@@ -135,6 +144,7 @@ pub fn generate_cargo_config(
 		has_android,
 		has_lld,
 		sdk_path,
+		use_system_ffmpeg,
 	};
 
 	// Read template

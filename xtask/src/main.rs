@@ -162,6 +162,12 @@ fn setup() -> Result<()> {
 	let filename = system.native_deps_filename();
 	native_deps::download_native_deps(&filename, &native_deps_dir)?;
 
+	#[cfg(target_os = "linux")]
+	if system::has_system_ffmpeg() {
+		println!("   ✓ Compatible system FFmpeg detected, dropping bundled FFmpeg libs/headers");
+		native_deps::remove_bundled_ffmpeg_libs(&native_deps_dir)?;
+	}
+
 	// Create symlinks for shared libraries
 	#[cfg(target_os = "macos")]
 	{

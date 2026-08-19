@@ -28,7 +28,7 @@ env:
 
 jobs:
   make_cache:
-    if: false # Temporarily disabled
+    if: false && github.repository == 'spacedriveapp/spacedrive' # Temporarily disabled
     strategy:
       fail-fast: true
       matrix:
@@ -53,13 +53,12 @@ jobs:
           #   target: armv7-unknown-linux-gnueabihf
     name: "Make Cache"
     runs-on: ${{ matrix.settings.host }}
-    if: github.repository == 'spacedriveapp/spacedrive'
     permissions: {}
     timeout-minutes: 150 # 2.5 hours
     steps:
       - name: Maximize build space
         if: ${{ runner.os == 'Linux' }}
-        uses: easimon/maximize-build-space@master
+        uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
         with:
           swap-size-mb: 4096
           root-reserve-mb: 6144
@@ -69,7 +68,7 @@ jobs:
           remove-docker-images: "true"
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Symlink target to C:\
         if: ${{ runner.os == 'Windows' }}
