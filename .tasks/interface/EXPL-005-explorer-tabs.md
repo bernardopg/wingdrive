@@ -14,7 +14,9 @@ related_tasks: []
 
 Add browser-like tabs to Spacedrive Explorer, enabling users to browse multiple locations simultaneously. This requires careful integration with the keybind system, proper UI rendering, and preservation of context (selection, view mode, scroll position, navigation history) across tabs.
 
-Phases 1-3 and tab context menu + reopen closed tab shipped (commits 0276b0742, 99b8cfd1c). Remaining: perf (phase 4), persistence (phase 5), drag-reorder and close animations (phase 6).
+Shipped: tab bar, create/close/switch, batch close (others / to the right), reopen closed tab with its explorer state, drag reorder, keybinds, and localStorage persistence scoped per window.
+
+Not shipped: per-tab router isolation. All tabs share one `createBrowserRouter` and a saved path string, so back/forward history is global rather than per tab. `TabView.tsx` is still an unused placeholder for that work. Remaining: phase 2 router isolation, phase 4 perf, phase 6 close animations and cross-tab drag.
 
 ## Dependencies
 
@@ -78,17 +80,18 @@ Synchronized across all tabs:
 ### Phase 1: Core Infrastructure (MVP)
 - [x] `TabManagerContext.tsx` created with core state management
 - [x] `TabBar.tsx` UI component implemented
-- [x] `TabView.tsx` rendering logic implemented
+- [ ] `TabView.tsx` rendering logic implemented (placeholder only, needs phase 2)
 - [x] `useTabManager.ts` hook created
 - [x] `Explorer.tsx` wrapped in TabManagerProvider
-- [x] `context.tsx` updated with `isActiveTab` prop
-- [x] `SelectionContext.tsx` updated with `isActiveTab` prop
+- [ ] `context.tsx` updated with `isActiveTab` prop (prop exists but nothing passes it)
+- [ ] `SelectionContext.tsx` updated with `isActiveTab` prop (same)
 - [x] App launches with single tab, no regressions
 
 ### Phase 2: Multi-Tab State
 - [x] Create/close/switch tabs functional
-- [x] Independent navigation per tab
-- [x] Router type swapping works correctly
+- [x] Saved path per tab restored on switch
+- [ ] Independent navigation history per tab (shared router today)
+- [ ] Router type swapping works correctly
 - [ ] 5+ tabs with isolated state, <50ms tab switching
 
 ### Phase 3: Keybinds
@@ -107,14 +110,14 @@ Synchronized across all tabs:
 - [ ] No memory leaks over 100 tab cycles
 
 ### Phase 5: Persistence
-- [ ] Tabs serialized on app quit
-- [ ] Tabs restored on launch
+- [x] Tabs serialized on change (localStorage, key scoped per window label)
+- [x] Tabs restored on launch
 - [ ] Stale tabs handled gracefully (deleted locations)
-- [ ] `tabPreferences.ts` store created
+- [ ] `tabPreferences.ts` store created (currently inline in TabManagerContext)
 
 ### Phase 6: Polish (Post-MVP)
 - [x] Tab context menu
-- [ ] Drag-to-reorder tabs
+- [x] Drag-to-reorder tabs
 - [ ] Cross-tab file drag-drop
 - [ ] Tab close animations
 - [x] "Reopen Closed Tab" (Cmd+Shift+T)
