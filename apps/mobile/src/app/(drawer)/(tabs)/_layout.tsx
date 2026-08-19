@@ -1,11 +1,11 @@
 import { Platform } from 'react-native';
-import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 export default function TabLayout() {
   return (
     <NativeTabs
-      // CRITICAL: null background enables liquid glass on iOS!
-      backgroundColor={Platform.OS === 'ios' ? null : 'hsl(235, 10%, 6%)'}
+      // CRITICAL: sem background custom no iOS preserva o efeito liquid glass
+      backgroundColor={Platform.OS === 'ios' ? undefined : 'hsl(235, 10%, 6%)'}
       disableTransparentOnScrollEdge={true}
       iconColor={Platform.OS === 'android' ? 'hsl(235, 10%, 55%)' : undefined}
       labelStyle={Platform.OS === 'android' ? {
@@ -13,30 +13,18 @@ export default function TabLayout() {
       } : undefined}
     >
       <NativeTabs.Trigger name="overview">
-        <Label>Overview</Label>
-        {Platform.OS === 'ios' ? (
-          <Icon sf="square.grid.2x2" />
-        ) : (
-          <Icon name="grid" />
-        )}
+        <NativeTabs.Trigger.Label>Overview</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="square.grid.2x2" md="grid_view" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="browse">
-        <Label>Browse</Label>
-        {Platform.OS === 'ios' ? (
-          <Icon sf="folder" />
-        ) : (
-          <Icon name="folder" />
-        )}
+        <NativeTabs.Trigger.Label>Browse</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="folder" md="folder" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings">
-        <Label>Settings</Label>
-        {Platform.OS === 'ios' ? (
-          <Icon sf="gearshape" />
-        ) : (
-          <Icon name="settings" />
-        )}
+        <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="gearshape" md="settings" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

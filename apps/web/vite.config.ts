@@ -4,9 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import fs from "fs";
 
-const spaceui = path.resolve(__dirname, "../../../spaceui/packages");
+const spaceui = path.resolve(import.meta.dirname, "../../../spaceui/packages");
 const hasSpaceui = fs.existsSync(spaceui);
-const spacebot = path.resolve(__dirname, "../../../spacebot/packages");
+const spacebot = path.resolve(import.meta.dirname, "../../../spacebot/packages");
 const hasSpacebot = fs.existsSync(spacebot);
 
 export default defineConfig({
@@ -16,23 +16,23 @@ export default defineConfig({
 		alias: [
 			{
 				find: /^react$/,
-				replacement: path.resolve(__dirname, "./node_modules/react/index.js"),
+				replacement: path.resolve(import.meta.dirname, "./node_modules/react/index.js"),
 			},
 			{
 				find: /^react\/jsx-runtime$/,
-				replacement: path.resolve(__dirname, "./node_modules/react/jsx-runtime.js"),
+				replacement: path.resolve(import.meta.dirname, "./node_modules/react/jsx-runtime.js"),
 			},
 			{
 				find: /^react\/jsx-dev-runtime$/,
-				replacement: path.resolve(__dirname, "./node_modules/react/jsx-dev-runtime.js"),
+				replacement: path.resolve(import.meta.dirname, "./node_modules/react/jsx-dev-runtime.js"),
 			},
 			{
 				find: /^react-dom$/,
-				replacement: path.resolve(__dirname, "./node_modules/react-dom/index.js"),
+				replacement: path.resolve(import.meta.dirname, "./node_modules/react-dom/index.js"),
 			},
 			{
 				find: /^react-dom\/client$/,
-				replacement: path.resolve(__dirname, "./node_modules/react-dom/client.js"),
+				replacement: path.resolve(import.meta.dirname, "./node_modules/react-dom/client.js"),
 			},
 			// SpaceUI — resolve to source for HMR when available locally
 			...(hasSpaceui
@@ -73,16 +73,16 @@ export default defineConfig({
 				: []),
 			{
 				find: "@sd/interface",
-				replacement: path.resolve(__dirname, "../../packages/interface/src"),
+				replacement: path.resolve(import.meta.dirname, "../../packages/interface/src"),
 			},
 			{
 				find: "@sd/ts-client",
-				replacement: path.resolve(__dirname, "../../packages/ts-client/src"),
+				replacement: path.resolve(import.meta.dirname, "../../packages/ts-client/src"),
 			},
 			{
 				find: "openapi-fetch",
 				replacement: path.resolve(
-					__dirname,
+					import.meta.dirname,
 					"../../packages/interface/node_modules/openapi-fetch/dist/index.mjs",
 				),
 			},
@@ -92,7 +92,7 @@ export default defineConfig({
 		port: 3000,
 		fs: {
 			allow: [
-				path.resolve(__dirname, "../../.."),
+				path.resolve(import.meta.dirname, "../../.."),
 				...(hasSpaceui ? [spaceui] : []),
 			],
 		},

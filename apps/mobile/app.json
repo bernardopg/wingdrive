@@ -42,7 +42,9 @@
           }
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-router",
+      "expo-splash-screen"
     ]
   }
 }
