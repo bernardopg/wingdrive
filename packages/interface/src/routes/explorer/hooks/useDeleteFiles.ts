@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { toast } from "@spacedrive/primitives";
 import type { File } from "@sd/ts-client";
 import { useLibraryMutation } from "../../../contexts/SpacedriveContext";
 import { useDeleteConfirmationDialog } from "../../../components/modals/DeleteConfirmationModal";
@@ -36,7 +37,7 @@ export function useDeleteFiles() {
 							resolve(true);
 						} catch (err) {
 							console.error("Failed to delete:", err);
-							alert(`Failed to delete: ${err}`);
+							toast.error(`Failed to delete: ${err}`);
 							resolve(false);
 						}
 					},

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Trash, Warning } from "@phosphor-icons/react";
 import {
@@ -32,6 +33,17 @@ function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
 	const dialog = useDialog(props);
 	const form = useForm();
 
+	// The primitive only invokes onCancelled from the footer button, so ESC and
+	// click-outside would leave the caller's promise pending forever.
+	const settled = useRef(false);
+	useEffect(
+		() => () => {
+			if (!settled.current) props.onCancelled?.();
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
+	);
+
 	const count = props.files.length;
 	const isSingle = count === 1;
 	const label = props.permanent ? "Permanently delete" : "Delete";
@@ -41,10 +53,12 @@ function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
 		: `${label} ${count} items?${suffix}`;
 
 	const handleConfirm = async () => {
+		settled.current = true;
 		await props.onConfirm();
 	};
 
 	const handleCancel = () => {
+		settled.current = true;
 		props.onCancelled?.();
 	};
 
@@ -62,7 +76,7 @@ function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
 			}
 			ctaLabel={label}
 			ctaDanger
-			cancelLabel="Cancel"
+			closeLabel="Cancel"
 			onSubmit={form.handleSubmit(handleConfirm)}
 			onCancelled={handleCancel}
 			formClassName="!min-w-[380px] !max-w-[380px]"
