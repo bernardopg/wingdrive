@@ -162,7 +162,8 @@ impl SpacedriveWindow {
 					(400.0, 600.0),
 					(320.0, 400.0),
 					true,
-					true, // always on top
+					// Not always on top: it would float above unrelated applications.
+					false,
 					false,
 				)?;
 
@@ -201,7 +202,7 @@ impl SpacedriveWindow {
 					(600.0, 500.0),
 					(400.0, 300.0),
 					true,
-					true, // floating
+					false,
 					false,
 				)
 			}
@@ -251,8 +252,8 @@ impl SpacedriveWindow {
 					&label,
 					"/tag-assignment",
 					"Tag Assignment",
-					(0.0, 0.0),
-					(0.0, 0.0),
+					(420.0, 320.0),
+					(320.0, 240.0),
 					false, // no decorations
 					true,  // always on top
 					true,  // transparent
@@ -377,15 +378,18 @@ impl SpacedriveWindow {
 
 			Self::ContextMenu { context_id } => {
 				let url = format!("/contextmenu?context={}", context_id);
+				// Stays hidden until `position_context_menu` has measured the content
+				// and placed it at the cursor, so the menu never flashes centered.
 				let window = WebviewWindowBuilder::new(app, label, WebviewUrl::App(url.into()))
-					.title("Context Menu Debug")
-					.inner_size(250.0, 300.0) // Initial size, will be adjusted by content
+					.title("Context Menu")
+					.inner_size(250.0, 300.0) // Initial size, adjusted by content
 					.resizable(false)
-					.decorations(true) // TEMP: Show decorations for debugging
-					.transparent(false) // TEMP: Not transparent for debugging
+					.decorations(false)
+					.transparent(true)
+					.shadow(false)
 					.always_on_top(true)
-					.skip_taskbar(false) // TEMP: Show in taskbar for debugging
-					.visible(true) // TEMP: Make visible immediately for debugging
+					.skip_taskbar(true)
+					.visible(false)
 					.focused(true)
 					.build()
 					.map_err(|e| format!("Failed to create context menu: {}", e))?;
@@ -420,6 +424,9 @@ fn create_window(
 		.decorations(decorations)
 		.transparent(transparent)
 		.always_on_top(always_on_top)
+		// Stay hidden until the webview calls `app_ready`, otherwise every popout
+		// flashes an empty white frame while React boots.
+		.visible(false)
 		.center();
 
 	// macOS: Hide titlebar but keep traffic lights (like main window)
@@ -441,9 +448,6 @@ fn create_window(
 	// Windows: force dark titlebar + override accent color
 	#[cfg(target_os = "windows")]
 	apply_dark_titlebar(&window);
-
-	window.show().ok();
-	window.set_focus().ok();
 
 	Ok(window)
 }
