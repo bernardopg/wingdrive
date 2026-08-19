@@ -110,7 +110,7 @@ export function ConversationScreen({
 			if (item.type !== 'message') return 80;
 			const base = item.role === 'user' ? 72 : 88;
 			const lines = Math.ceil(
-				item.content.length / (item.role === 'user' ? 42 : 56)
+				(item.content?.length ?? 0) / (item.role === 'user' ? 42 : 56)
 			);
 			return Math.min(480, base + lines * 28);
 		},
@@ -223,16 +223,16 @@ export function ConversationScreen({
 															item.id
 													) ?? {
 														id: item.id,
-														task: item.task,
-														status: item.status,
+														task: item.task ?? '',
+														status: item.status ?? 'running',
 														worker_type: 'builtin',
 														channel_id:
 															conversation.id,
 														channel_name: null,
 														started_at:
-															item.started_at,
+															item.started_at ?? '',
 														completed_at:
-															item.completed_at,
+															item.completed_at ?? null,
 														has_transcript: true,
 														live_status: null,
 														tool_calls: 0,
@@ -251,7 +251,7 @@ export function ConversationScreen({
 										(() => {
 											return (
 												<MessageBubble
-													content={item.content}
+													content={item.content ?? ''}
 													isUser={
 														item.role === 'user'
 													}

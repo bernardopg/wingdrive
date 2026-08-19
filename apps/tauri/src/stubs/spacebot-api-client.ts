@@ -9,6 +9,9 @@
 //!
 //! Only runtime values need stubbing. Every other import from this module in
 //! `packages/interface` is `import type`, which is erased at compile time.
+//! The exported types mirror the real API client surface so the Spacebot UI
+//! typechecks without the private repo; keep them in sync when the UI starts
+//! calling new endpoints.
 
 export interface TtsProfile {
 	id: string;
@@ -37,17 +40,27 @@ export interface WorkerListItem {
 	project_name: string | null;
 }
 
+export interface Subtask {
+	title: string;
+	completed: boolean;
+}
+
 export interface Task {
 	id: string;
 	task_number: number;
 	title: string;
-	description: string;
+	description?: string | null;
 	status: string;
 	priority: string;
-	assignee: string | null;
+	owner_agent_id: string;
+	assigned_agent_id: string;
+	subtasks: Subtask[];
+	metadata: unknown;
+	worker_id?: string | null;
+	created_by: string;
 	created_at: string;
 	updated_at: string;
-	completed_at: string | null;
+	completed_at?: string | null;
 }
 
 export interface UpdateTaskRequest {
@@ -56,18 +69,36 @@ export interface UpdateTaskRequest {
 	status?: string;
 	priority?: string;
 	assignee?: string | null;
+	complete_subtask?: number;
 }
 
 export interface TimelineItem {
-	[key: string]: unknown;
+	id: string;
+	type: 'message' | 'worker_run';
+	role?: 'user' | 'assistant';
+	content?: string;
+	task?: string;
+	status?: string;
+	started_at?: string;
+	completed_at?: string | null;
+	sender_id?: string | null;
+	sender_name?: string | null;
 }
 
 export interface PortalConversationSummary {
-	[key: string]: unknown;
+	id: string;
+	title: string;
+	message_count: number;
+	last_message_preview: string | null;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface PortalHistoryMessage {
-	[key: string]: unknown;
+	id: string;
+	role: 'user' | 'assistant';
+	content: string;
+	created_at: string;
 }
 
 export interface PortalConversationResponse {
@@ -75,36 +106,125 @@ export interface PortalConversationResponse {
 	messages: PortalHistoryMessage[];
 }
 
+export interface WorkerDetail {
+	task: string;
+	status: string;
+	started_at: string;
+	completed_at: string | null;
+	result?: string | null;
+	transcript: unknown[];
+}
+
 export interface InboundMessageEvent {
 	type: 'inbound_message';
-	message: string;
+	agent_id: string;
+	channel_id: string;
+	text: string;
+	sender_id?: string | null;
+	sender_name?: string | null;
 }
 
 export interface OutboundMessageEvent {
 	type: 'outbound_message';
-	message: string;
+	agent_id: string;
+	channel_id: string;
+	text: string;
 }
 
 export interface OutboundMessageDeltaEvent {
 	type: 'outbound_message_delta';
-	delta: string;
+	agent_id: string;
+	channel_id: string;
+	aggregated_text: string;
 }
 
 export interface TypingStateEvent {
 	type: 'typing_state';
+	agent_id: string;
+	channel_id: string;
 	is_typing: boolean;
 }
 
 export const apiClient = {
-	ttsProfiles: async (): Promise<TtsProfile[]> => [],
-	webChatSendAudio: async () => ({ok: false}),
-	listTasks: async () => ({tasks: [] as Task[]}),
-	updateTask: async () => ({ok: true}),
-	deleteTask: async () => ({ok: true}),
-	channelMessages: async () => ({items: [] as TimelineItem[]}),
-	listWorkers: async () => ({workers: [] as WorkerListItem[]}),
-	workerDetail: async (): Promise<unknown> => ({}),
-	cancelProcess: async () => ({ok: true}),
+	ttsProfiles: async (_agentId: string): Promise<TtsProfile[]> => [],
+	ttsGenerate: async (
+		_text: string,
+		_opts: {agentId: string; profileId: string}
+	): Promise<ArrayBuffer> => new ArrayBuffer(0),
+	webChatSendAudio: async (
+		_agentId: string,
+		_sessionId: string,
+		_blob: Blob
+	): Promise<{ok: boolean; status: number}> => ({ok: false, status: 500}),
+	listTasks: async (
+		_agentId: string,
+		_limit?: number
+	): Promise<{tasks: Task[]}> => ({tasks: []}),
+	updateTask: async (
+		_taskNumber: number,
+		_req: UpdateTaskRequest
+	): Promise<{ok: boolean}> => ({ok: true}),
+	deleteTask: async (_taskNumber: number): Promise<{ok: boolean}> => ({
+		ok: true
+	}),
+	channelMessages: async (
+		_conversationId: string,
+		_limit?: number
+	): Promise<{items: TimelineItem[]}> => ({items: []}),
+	listWorkers: async (_params: {
+		agentId: string;
+		limit?: number;
+	}): Promise<{workers: WorkerListItem[]}> => ({workers: []}),
+	workerDetail: async (
+		_agentId: string,
+		_workerId: string
+	): Promise<WorkerDetail> => ({
+		task: '',
+		status: '',
+		started_at: '',
+		completed_at: null,
+		transcript: []
+	}),
+	cancelProcess: async (_params: {
+		channelId: string;
+		processType: string;
+		processId: string;
+	}): Promise<{ok: boolean}> => ({ok: true}),
+	listPortalConversations: async (
+		_agentId: string,
+		_includeDeleted?: boolean,
+		_limit?: number
+	): Promise<{conversations: PortalConversationSummary[]}> => ({
+		conversations: []
+	}),
+	portalHistory: async (
+		_agentId: string,
+		_conversationId: string,
+		_limit?: number
+	): Promise<{messages: PortalHistoryMessage[]; has_more: boolean}> => ({
+		messages: [],
+		has_more: false
+	}),
+	createPortalConversation: async (_input: {
+		agentId: string;
+		title?: string | null;
+	}): Promise<PortalConversationResponse> => ({
+		conversation: {
+			id: '',
+			title: '',
+			message_count: 0,
+			last_message_preview: null,
+			created_at: '',
+			updated_at: ''
+		},
+		messages: []
+	}),
+	portalSend: async (_input: {
+		agentId: string;
+		sessionId: string;
+		senderName: string;
+		message: string;
+	}): Promise<{ok: boolean}> => ({ok: true})
 };
 
 export function getEventsUrl(): string {

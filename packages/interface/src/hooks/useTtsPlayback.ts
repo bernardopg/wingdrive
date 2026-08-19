@@ -84,6 +84,9 @@ export function useTtsPlayback(): UseTtsPlaybackReturn {
 		async (text: string, agentId?: string, profileId?: string) => {
 			stop();
 			if (!text.trim()) return;
+			// TTS needs both an agent and a voice profile; bailing here keeps the
+			// type honest instead of sending undefined ids to the backend.
+			if (!agentId || !profileId) return;
 
 			const requestId = ++requestIdRef.current;
 			const isCurrentRequest = () => requestIdRef.current === requestId;
