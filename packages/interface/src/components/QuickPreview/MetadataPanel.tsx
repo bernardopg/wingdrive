@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
-import { Camera, HardDrive, Plus, Tag, X } from "@phosphor-icons/react";
+import { Camera, HardDrive, Plus, Star, Tag, X } from "@phosphor-icons/react";
+import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { File } from "@sd/ts-client";
 import { getContentKind } from "@sd/ts-client";
 import { TagPill, TagSelectorButton } from "../Tags";
@@ -13,6 +15,8 @@ import { toast } from "@spacedrive/primitives";
 interface MetadataPanelProps {
 	file: File;
 	onClose: () => void;
+	/** Width of the inspector, which renders above the preview layer. */
+	offsetRight?: number;
 }
 
 /**
@@ -21,7 +25,11 @@ interface MetadataPanelProps {
  * Shows dimensions, media data (camera, duration, codecs), timestamps and
  * tags in a dark glass panel so details never distract from the preview.
  */
-export function MetadataPanel({ file, onClose }: MetadataPanelProps) {
+export function MetadataPanel({
+	file,
+	onClose,
+	offsetRight = 0,
+}: MetadataPanelProps) {
 	const refetchTagQueries = useRefetchTagQueries();
 	const applyTag = useLibraryMutation("tags.apply", {
 		onSuccess: refetchTagQueries,
@@ -29,6 +37,30 @@ export function MetadataPanel({ file, onClose }: MetadataPanelProps) {
 	const unapplyTags = useLibraryMutation("tags.unapply", {
 		onSuccess: refetchTagQueries,
 	});
+	const queryClient = useQueryClient();
+	// The star is rendered from listing queries elsewhere (explorer, favorites),
+	// so a local toggle alone would leave those views stale.
+	const refetchFileQueries = useCallback(() => {
+		for (const key of [
+			"query:files.directory_listing",
+			"query:files.media_listing",
+			"query:files.by_id",
+		]) {
+			queryClient.refetchQueries({
+				queryKey: [key],
+				exact: false,
+				type: "all",
+			});
+		}
+	}, [queryClient]);
+	const setFavorite = useLibraryMutation("metadata.set_favorite", {
+		onSuccess: refetchFileQueries,
+	});
+	// Optimistic local flag; resync whenever the file is refetched or swapped.
+	const [isFavorite, setIsFavorite] = useState(file.favorite);
+	useEffect(() => {
+		setIsFavorite(file.favorite);
+	}, [file.id, file.favorite]);
 
 	const kind = getContentKind(file);
 	const isImage = kind === "image" && file.image_media_data;
@@ -76,19 +108,48 @@ export function MetadataPanel({ file, onClose }: MetadataPanelProps) {
 			animate={{ x: 0, opacity: 1 }}
 			exit={{ x: 40, opacity: 0 }}
 			transition={{ duration: 0.18, ease: "easeOut" }}
-			className="absolute right-0 top-0 z-20 flex h-full w-[300px] flex-col border-l border-white/10 bg-black/70 backdrop-blur-2xl"
+			style={{ right: offsetRight }}
+			className="absolute top-0 z-20 flex h-full w-[300px] flex-col border-l border-white/10 bg-black/70 backdrop-blur-2xl"
 		>
 			{/* Header */}
 			<div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
 				<div className="text-sm font-medium text-white/90">
 					Details
 				</div>
-				<button
-					onClick={onClose}
-					className="rounded-md p-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-				>
-					<X size={14} weight="bold" />
-				</button>
+				<div className="flex items-center gap-1">
+					<button
+						onClick={async () => {
+							const next = !isFavorite;
+							setIsFavorite(next);
+							try {
+								await setFavorite.mutateAsync({
+									entry_uuid: file.id,
+									is_favorite: next,
+								});
+							} catch (err) {
+								setIsFavorite(!next);
+								toast.error(`Failed to update favorite: ${err}`);
+							}
+						}}
+						className={`rounded-md p-1.5 transition-colors hover:bg-white/10 ${
+							isFavorite
+								? "text-yellow-400"
+								: "text-white/60 hover:text-white"
+						}`}
+						title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+					>
+						<Star
+							size={14}
+							weight={isFavorite ? "fill" : "regular"}
+						/>
+					</button>
+					<button
+						onClick={onClose}
+						className="rounded-md p-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+					>
+						<X size={14} weight="bold" />
+					</button>
+				</div>
 			</div>
 
 			{/* Scrollable content */}

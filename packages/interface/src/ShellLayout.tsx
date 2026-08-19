@@ -25,6 +25,11 @@ import {SelectionProvider} from './routes/explorer/SelectionContext';
 import {TagAssignmentMode} from './routes/explorer/TagAssignmentMode';
 import {TopBar, TopBarProvider} from './TopBar';
 
+/* Shared chrome metrics. The TopBar, floating tab bar and quick preview all
+   offset themselves by these, and previously drifted 4px apart. */
+const SIDEBAR_WIDTH = 220;
+const INSPECTOR_WIDTH = 280;
+
 function ShellLayoutContent() {
 	const location = useLocation();
 	const params = useParams();
@@ -158,10 +163,10 @@ function ShellLayoutContent() {
 			/>
 
 			<TopBar
-				sidebarWidth={sidebarVisible ? 224 : 0}
+				sidebarWidth={sidebarVisible ? SIDEBAR_WIDTH : 0}
 				inspectorWidth={
 					inspectorVisible && !isOverview && !isKnowledgeView
-						? 284
+						? INSPECTOR_WIDTH
 						: 0
 				}
 				isPreviewActive={isPreviewActive || isSizeViewActive}
@@ -173,10 +178,10 @@ function ShellLayoutContent() {
 					className="pointer-events-none absolute left-0 right-0 z-[45] [&>*]:pointer-events-auto"
 					style={{
 						top: 48, // TopBar height
-						paddingLeft: sidebarVisible ? 220 : 0,
+						paddingLeft: sidebarVisible ? SIDEBAR_WIDTH : 0,
 						paddingRight:
 							inspectorVisible && !isOverview && !isKnowledgeView
-								? 280
+								? INSPECTOR_WIDTH
 								: 0,
 						transition: 'padding 0.3s ease-out'
 					}}
@@ -190,9 +195,9 @@ function ShellLayoutContent() {
 				<AnimatePresence initial={false} mode="popLayout">
 					{sidebarVisible && (
 						<motion.div
-							initial={{x: -220, width: 0}}
-							animate={{x: 0, width: 220}}
-							exit={{x: -220, width: 0}}
+							initial={{x: -SIDEBAR_WIDTH, width: 0}}
+							animate={{x: 0, width: SIDEBAR_WIDTH}}
+							exit={{x: -SIDEBAR_WIDTH, width: 0}}
 							transition={{
 								duration: 0.3,
 								ease: [0.25, 1, 0.5, 1]
@@ -241,7 +246,7 @@ function ShellLayoutContent() {
 					{inspectorVisible && !isOverview && !isKnowledgeView && (
 						<motion.div
 							initial={{width: 0}}
-							animate={{width: 280}}
+							animate={{width: INSPECTOR_WIDTH}}
 							exit={{width: 0}}
 							transition={{
 								duration: 0.3,
@@ -250,6 +255,7 @@ function ShellLayoutContent() {
 							className="relative z-[65] overflow-hidden"
 						>
 							<div className="flex h-full w-[280px] min-w-[280px] flex-col bg-transparent p-2">
+								{/* w-[280px] must match INSPECTOR_WIDTH */}
 								<Inspector
 									currentLocation={currentLocation}
 									onPopOut={handlePopOutInspector}
@@ -265,10 +271,10 @@ function ShellLayoutContent() {
 
 			{/* Quick Preview - isolated component to prevent frame rerenders on selection change */}
 			<QuickPreviewController
-				sidebarWidth={sidebarVisible ? 220 : 0}
+				sidebarWidth={sidebarVisible ? SIDEBAR_WIDTH : 0}
 				inspectorWidth={
 					inspectorVisible && !isOverview && !isKnowledgeView
-						? 280
+						? INSPECTOR_WIDTH
 						: 0
 				}
 			/>

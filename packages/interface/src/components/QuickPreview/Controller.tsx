@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { useExplorer } from "../../routes/explorer";
 import { useSelection } from "../../routes/explorer/SelectionContext";
 import { QuickPreviewFullscreen } from "./QuickPreviewFullscreen";
@@ -20,37 +20,26 @@ export const QuickPreviewController = memo(function QuickPreviewController({
 		useExplorer();
 	const { selectFile } = useSelection();
 
-	// Early return if no preview - this component won't re-render on selection changes
-	// because it's memoized and doesn't read selectedFiles directly
-	if (!quickPreviewFileId) return null;
-
 	const currentIndex = currentFiles.findIndex(
 		(f) => f.id === quickPreviewFileId,
 	);
 	const hasPrevious = currentIndex > 0;
-	const hasNext = currentIndex < currentFiles.length - 1;
+	const hasNext = currentIndex >= 0 && currentIndex < currentFiles.length - 1;
 
-	const handleNext = () => {
-		if (hasNext && currentFiles[currentIndex + 1]) {
-			selectFile(
-				currentFiles[currentIndex + 1],
-				currentFiles,
-				false,
-				false,
-			);
-		}
-	};
+	// Stable identities: the slideshow timer in the preview restarts whenever
+	// these change, so inline closures would stall auto-advance.
+	const handleNext = useCallback(() => {
+		const next = currentFiles[currentIndex + 1];
+		if (next) selectFile(next, currentFiles, false, false);
+	}, [currentFiles, currentIndex, selectFile]);
 
-	const handlePrevious = () => {
-		if (hasPrevious && currentFiles[currentIndex - 1]) {
-			selectFile(
-				currentFiles[currentIndex - 1],
-				currentFiles,
-				false,
-				false,
-			);
-		}
-	};
+	const handlePrevious = useCallback(() => {
+		const previous = currentFiles[currentIndex - 1];
+		if (previous) selectFile(previous, currentFiles, false, false);
+	}, [currentFiles, currentIndex, selectFile]);
+
+	// Hooks above run unconditionally; bail out after them.
+	if (!quickPreviewFileId) return null;
 
 	return (
 		<QuickPreviewFullscreen

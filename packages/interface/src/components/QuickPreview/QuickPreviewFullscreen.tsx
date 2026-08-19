@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, ArrowRight, Info, Play, Pause } from "@phosphor-icons/react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { ContentRenderer } from "./ContentRenderer";
 import { MetadataPanel } from "./MetadataPanel";
 import {
@@ -12,6 +12,7 @@ import {
 import { TopBarPortal, TopBarItem } from "../../TopBar";
 import { getContentKind } from "@sd/ts-client";
 import { useExplorer } from "../../routes/explorer/context";
+import { isInputFocused } from "../../util/keybinds";
 
 interface QuickPreviewFullscreenProps {
 	fileId: string;
@@ -26,6 +27,9 @@ interface QuickPreviewFullscreenProps {
 }
 
 const PREVIEW_LAYER_ID = "quick-preview-layer";
+
+/** Kept in sync with MetadataPanel so the content area can make room for it. */
+const METADATA_PANEL_WIDTH = 300;
 
 export function QuickPreviewFullscreen({
 	fileId,
@@ -49,18 +53,24 @@ export function QuickPreviewFullscreen({
 	const [isSlideshow, setIsSlideshow] = useState(false);
 	const { currentFiles } = useExplorer();
 
-	// Reset zoom and metadata panel when file changes
+	// Zoom is per-file, but the metadata panel stays open across navigation so
+	// browsing a folder with details visible doesn't flicker on every step.
 	useEffect(() => {
 		setIsZoomed(false);
-		setShowMetadata(false);
 	}, [fileId]);
+
+	// Read through a ref so re-renders from the parent don't restart the timer.
+	const onNextRef = useRef(onNext);
+	useEffect(() => {
+		onNextRef.current = onNext;
+	}, [onNext]);
 
 	// Auto-advance while slideshow is active
 	useEffect(() => {
 		if (!isSlideshow || !hasNext) return;
-		const timer = setInterval(() => onNext?.(), 3000);
+		const timer = setInterval(() => onNextRef.current?.(), 3000);
 		return () => clearInterval(timer);
-	}, [isSlideshow, hasNext, onNext]);
+	}, [isSlideshow, hasNext]);
 
 	// Stop the slideshow at the last item and when the preview closes
 	useEffect(() => {
@@ -89,6 +99,17 @@ export function QuickPreviewFullscreen({
 		if (!isOpen) return;
 
 		const handleKeyDown = (e: KeyboardEvent) => {
+			// Typing in the tag search or any other field must not close the preview.
+			if (isInputFocused()) return;
+
+			// Escape peels one layer at a time: metadata panel first, then the preview.
+			if (e.code === "Escape" && showMetadata) {
+				e.preventDefault();
+				e.stopImmediatePropagation();
+				setShowMetadata(false);
+				return;
+			}
+
 			// Only handle close events - let Explorer handle navigation
 			if (e.code === "Escape" || e.code === "Space") {
 				e.preventDefault();
@@ -102,7 +123,7 @@ export function QuickPreviewFullscreen({
 			window.removeEventListener("keydown", handleKeyDown, {
 				capture: true,
 			});
-	}, [isOpen, onClose]);
+	}, [isOpen, onClose, showMetadata]);
 
 	// Get background style based on content type
 	const getBackgroundClass = () => {
@@ -286,7 +307,10 @@ export function QuickPreviewFullscreen({
 								className={`flex-1 pt-14 pb-10 ${isZoomed ? "overflow-visible" : "overflow-hidden"}`}
 								style={{
 									paddingLeft: isZoomed ? 0 : sidebarWidth,
-									paddingRight: isZoomed ? 0 : inspectorWidth,
+									paddingRight: isZoomed
+										? 0
+										: inspectorWidth +
+											(showMetadata ? METADATA_PANEL_WIDTH : 0),
 									transition: "padding 0.3s ease-out",
 								}}
 							>
@@ -349,11 +373,14 @@ export function QuickPreviewFullscreen({
 								</div>
 							</div>
 
-							{/* Metadata panel */}
+							{/* Metadata panel, offset so the inspector (which sits above
+							    this layer) never covers it */}
 							<AnimatePresence>
 								{showMetadata && file && (
 									<MetadataPanel
+										key={file.id}
 										file={file}
+										offsetRight={inspectorWidth}
 										onClose={() => setShowMetadata(false)}
 									/>
 								)}
