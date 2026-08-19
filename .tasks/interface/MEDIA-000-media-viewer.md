@@ -10,6 +10,8 @@ whitepaper: N/A
 last_updated: 2026-08-19
 ---
 
+Quick tag actions and slideshow mode shipped (commits 577c1d56c, f26665d27). Favorite action and Live Photo playback still pending.
+
 ## Description
 
 Build a full-screen media viewer for photos and videos with support for navigation, zoom, and metadata display.
@@ -39,7 +41,8 @@ Build a full-screen media viewer for photos and videos with support for navigati
 - [x] Navigate with arrow keys or swipe
 - [x] Video playback with controls
 - [x] Display metadata panel
-- [ ] Quick tag/favorite actions
-- [ ] Slideshow mode
+- [x] Quick tag actions
+- [x] Slideshow mode
+- [ ] Favorite action
 - [ ] Live Photo playback
 - [x] Smooth transitions between items

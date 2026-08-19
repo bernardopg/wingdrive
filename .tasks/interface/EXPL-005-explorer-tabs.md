@@ -1,18 +1,20 @@
 ---
 id: EXPL-005
 title: Explorer Tabs
-status: To Do
+status: In Progress
 assignee: unassigned
 parent: EXPL-000
 priority: High
 tags: [explorer, tabs, navigation, ui]
-last_updated: 2025-12-24
+last_updated: 2026-08-19
 related_tasks: []
 ---
 
 ## Description
 
 Add browser-like tabs to Spacedrive Explorer, enabling users to browse multiple locations simultaneously. This requires careful integration with the keybind system, proper UI rendering, and preservation of context (selection, view mode, scroll position, navigation history) across tabs.
+
+Phases 1-3 and tab context menu + reopen closed tab shipped (commits 0276b0742, 99b8cfd1c). Remaining: perf (phase 4), persistence (phase 5), drag-reorder and close animations (phase 6).
 
 ## Dependencies
 
@@ -74,28 +76,28 @@ Synchronized across all tabs:
 ## Acceptance Criteria
 
 ### Phase 1: Core Infrastructure (MVP)
-- [ ] `TabManagerContext.tsx` created with core state management
-- [ ] `TabBar.tsx` UI component implemented
-- [ ] `TabView.tsx` rendering logic implemented
-- [ ] `useTabManager.ts` hook created
-- [ ] `Explorer.tsx` wrapped in TabManagerProvider
-- [ ] `context.tsx` updated with `isActiveTab` prop
-- [ ] `SelectionContext.tsx` updated with `isActiveTab` prop
-- [ ] App launches with single tab, no regressions
+- [x] `TabManagerContext.tsx` created with core state management
+- [x] `TabBar.tsx` UI component implemented
+- [x] `TabView.tsx` rendering logic implemented
+- [x] `useTabManager.ts` hook created
+- [x] `Explorer.tsx` wrapped in TabManagerProvider
+- [x] `context.tsx` updated with `isActiveTab` prop
+- [x] `SelectionContext.tsx` updated with `isActiveTab` prop
+- [x] App launches with single tab, no regressions
 
 ### Phase 2: Multi-Tab State
-- [ ] Create/close/switch tabs functional
-- [ ] Independent navigation per tab
-- [ ] Router type swapping works correctly
+- [x] Create/close/switch tabs functional
+- [x] Independent navigation per tab
+- [x] Router type swapping works correctly
 - [ ] 5+ tabs with isolated state, <50ms tab switching
 
 ### Phase 3: Keybinds
-- [ ] `explorer.openInNewTab` keybind removed (conflicts with global)
-- [ ] `tabs.newTab` (Cmd+T) - creates new tab
-- [ ] `tabs.closeTab` (Cmd+W) - closes active tab
-- [ ] `tabs.nextTab` (Cmd+Shift+]) - switches to next tab
-- [ ] `tabs.previousTab` (Cmd+Shift+[) - switches to previous tab
-- [ ] `tabs.selectTab1-9` (Cmd+1-9) - jumps to specific tab
+- [x] `explorer.openInNewTab` keybind removed (conflicts with global)
+- [x] `tabs.newTab` (Cmd+T) - creates new tab
+- [x] `tabs.closeTab` (Cmd+W) - closes active tab
+- [x] `tabs.nextTab` (Cmd+Shift+]) - switches to next tab
+- [x] `tabs.previousTab` (Cmd+Shift+[) - switches to previous tab
+- [x] `tabs.selectTab1-9` (Cmd+1-9) - jumps to specific tab
 
 ### Phase 4: Performance
 - [ ] Lazy mounting (active + 2 recent tabs only)
@@ -111,11 +113,11 @@ Synchronized across all tabs:
 - [ ] `tabPreferences.ts` store created
 
 ### Phase 6: Polish (Post-MVP)
-- [ ] Tab context menu
+- [x] Tab context menu
 - [ ] Drag-to-reorder tabs
 - [ ] Cross-tab file drag-drop
 - [ ] Tab close animations
-- [ ] "Reopen Closed Tab" (Cmd+Shift+T)
+- [x] "Reopen Closed Tab" (Cmd+Shift+T)
 
 ## Implementation Files
 
