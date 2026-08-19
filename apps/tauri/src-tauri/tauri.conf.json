@@ -38,11 +38,18 @@
         "default-src": "'self' customprotocol: asset:",
         "connect-src": "ipc: http://ipc.localhost http://127.0.0.1:* http://localhost:*",
         "img-src": "'self' asset: http://asset.localhost http://127.0.0.1:* http://localhost:* blob: data:",
+        "media-src": "'self' asset: http://asset.localhost http://127.0.0.1:* http://localhost:* blob: data:",
         "style-src": "'self' 'unsafe-inline'"
       },
       "assetProtocol": {
         "enable": true,
-        "scope": ["$HOME/**", "/Volumes/**"]
+        "scope": [
+          "$HOME/**",
+          "/Volumes/**",
+          "/media/**",
+          "/mnt/**",
+          "/run/media/**"
+        ]
       }
     }
   },
