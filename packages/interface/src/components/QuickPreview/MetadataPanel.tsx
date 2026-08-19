@@ -1,9 +1,14 @@
 import { motion } from "framer-motion";
-import { Camera, HardDrive, Tag, X } from "@phosphor-icons/react";
+import { Camera, HardDrive, Plus, Tag, X } from "@phosphor-icons/react";
 import type { File } from "@sd/ts-client";
 import { getContentKind } from "@sd/ts-client";
-import { TagPill } from "../Tags";
+import { TagPill, TagSelectorButton } from "../Tags";
 import { formatBytes } from "../../routes/explorer/utils";
+import {
+	useLibraryMutation,
+} from "../../contexts/SpacedriveContext";
+import { useRefetchTagQueries } from "../../hooks/useRefetchTagQueries";
+import { toast } from "@spacedrive/primitives";
 
 interface MetadataPanelProps {
 	file: File;
@@ -17,6 +22,14 @@ interface MetadataPanelProps {
  * tags in a dark glass panel so details never distract from the preview.
  */
 export function MetadataPanel({ file, onClose }: MetadataPanelProps) {
+	const refetchTagQueries = useRefetchTagQueries();
+	const applyTag = useLibraryMutation("tags.apply", {
+		onSuccess: refetchTagQueries,
+	});
+	const unapplyTags = useLibraryMutation("tags.unapply", {
+		onSuccess: refetchTagQueries,
+	});
+
 	const kind = getContentKind(file);
 	const isImage = kind === "image" && file.image_media_data;
 	const isVideo = kind === "video" && file.video_media_data;
@@ -81,24 +94,73 @@ export function MetadataPanel({ file, onClose }: MetadataPanelProps) {
 			{/* Scrollable content */}
 			<div className="flex-1 space-y-5 overflow-y-auto px-4 py-4 text-sm">
 				{/* Tags */}
-				{file.tags && file.tags.length > 0 && (
-					<section className="space-y-2">
-						<SectionLabel icon={<Tag size={13} weight="fill" />}>
-							Tags
-						</SectionLabel>
-						<div className="flex flex-wrap gap-1.5">
-							{file.tags.map((tag) => (
-								<TagPill
-									key={tag.id}
-									color={tag.color || "#3B82F6"}
-									size="xs"
-								>
-									{tag.canonical_name}
-								</TagPill>
-							))}
-						</div>
-					</section>
-				)}
+				<section className="space-y-2">
+					<SectionLabel icon={<Tag size={13} weight="fill" />}>
+						Tags
+					</SectionLabel>
+					<div className="flex flex-wrap items-center gap-1.5">
+						{file.tags && file.tags.length > 0
+							? file.tags.map((tag) => (
+									<TagPill
+										key={tag.id}
+										color={tag.color || "#3B82F6"}
+										size="xs"
+										onRemove={async () => {
+											try {
+												await unapplyTags.mutateAsync({
+													entry_ids: [file.id],
+													tag_ids: [tag.id],
+												});
+											} catch (err) {
+												toast.error(
+													`Failed to remove tag: ${err}`,
+												);
+											}
+										}}
+									>
+										{tag.canonical_name}
+									</TagPill>
+								))
+							: null}
+						<TagSelectorButton
+							onSelect={async (tag) => {
+								try {
+									await applyTag.mutateAsync({
+										targets: file.content_identity?.uuid
+											? {
+													type: "Content",
+													ids: [
+														file.content_identity.uuid,
+													],
+												}
+											: {
+													type: "EntryUuid",
+													ids: [file.id],
+												},
+										tag_ids: [tag.id],
+										source: "User",
+										confidence: 1.0,
+										applied_context: null,
+										instance_attributes: null,
+									});
+								} catch (err) {
+									toast.error(
+										`Failed to add tag: ${err}`,
+									);
+								}
+							}}
+							contextTags={file.tags || []}
+							fileId={file.id}
+							contentId={file.content_identity?.uuid}
+							trigger={
+								<button className="flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white">
+									<Plus size={10} weight="bold" />
+									Add tags
+								</button>
+							}
+						/>
+					</div>
+				</section>
 
 				{/* Media specifics */}
 				{(dimensionLine || duration || videoCodec || audioCodec) && (
