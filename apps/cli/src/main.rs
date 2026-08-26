@@ -71,13 +71,13 @@ use config_cmd::ConfigCmd;
 
 // OutputFormat is defined in context.rs and shared across domains
 
-/// Safely reset only Spacedrive v2 specific files and directories
+/// Safely reset only WingDrive v2 specific files and directories
 /// This preserves any user data that might be in the data directory (like v1 backups)
 fn reset_spacedrive_v2_data(data_dir: &Path) -> Result<()> {
 	let mut removed_items = Vec::new();
 	let mut errors = Vec::new();
 
-	// List of specific Spacedrive v2 files and directories to remove
+	// List of specific WingDrive v2 files and directories to remove
 	let v2_items = [
 		"spacedrive.json", // Main app config
 		"device.json",     // Device config
@@ -117,7 +117,7 @@ fn reset_spacedrive_v2_data(data_dir: &Path) -> Result<()> {
 			removed_items.join(", ")
 		);
 	} else {
-		println!(" No Spacedrive v2 data found to reset.");
+		println!(" No WingDrive v2 data found to reset.");
 	}
 
 	if !errors.is_empty() {
@@ -132,7 +132,7 @@ fn reset_spacedrive_v2_data(data_dir: &Path) -> Result<()> {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "spacedrive", about = "Spacedrive v2 CLI (daemon client)")]
+#[command(name = "wingdrive", about = "WingDrive v2 CLI (daemon client)")]
 struct Cli {
 	/// Path to spacedrive data directory
 	#[arg(long)]
@@ -152,19 +152,19 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-	/// Start the Spacedrive daemon
+	/// Start the WingDrive daemon
 	Start {
 		/// Run daemon in foreground (show logs)
 		#[arg(long)]
 		foreground: bool,
 	},
-	/// Stop the Spacedrive daemon
+	/// Stop the WingDrive daemon
 	Stop {
 		/// Reset all data (requires confirmation)
 		#[arg(long)]
 		reset: bool,
 	},
-	/// Restart the Spacedrive daemon
+	/// Restart the WingDrive daemon
 	Restart {
 		/// Run daemon in foreground after restart (show logs)
 		#[arg(long)]
@@ -344,7 +344,7 @@ async fn main() -> Result<()> {
 			if reset {
 				use crate::util::confirm::confirm_or_abort;
 				confirm_or_abort(
-					" This will permanently delete Spacedrive v2 data (libraries, settings, logs). Other files in the data directory will be preserved. Are you sure?",
+					" This will permanently delete WingDrive v2 data (libraries, settings, logs). Other files in the data directory will be preserved. Are you sure?",
 					false
 				)?;
 			}
@@ -371,7 +371,7 @@ async fn main() -> Result<()> {
 			}
 
 			if reset {
-				println!("Resetting Spacedrive v2 data...");
+				println!("Resetting WingDrive v2 data...");
 				reset_spacedrive_v2_data(&data_dir)?;
 			}
 		}
@@ -379,7 +379,7 @@ async fn main() -> Result<()> {
 			if reset {
 				use crate::util::confirm::confirm_or_abort;
 				confirm_or_abort(
-					" This will permanently delete Spacedrive v2 data (libraries, settings, logs) before restart. Other files in the data directory will be preserved. Are you sure?",
+					" This will permanently delete WingDrive v2 data (libraries, settings, logs) before restart. Other files in the data directory will be preserved. Are you sure?",
 					false
 				)?;
 			}
@@ -403,7 +403,7 @@ async fn main() -> Result<()> {
 
 			// Reset data if requested
 			if reset {
-				println!("Resetting Spacedrive v2 data...");
+				println!("Resetting WingDrive v2 data...");
 				reset_spacedrive_v2_data(&data_dir)?;
 			}
 

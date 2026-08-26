@@ -47,7 +47,7 @@ pub struct DiscoveredLibrary {
 	pub is_locked: bool,
 }
 
-/// Manages all Spacedrive libraries
+/// Manages all WingDrive libraries
 pub struct LibraryManager {
 	/// Currently open libraries
 	libraries: Arc<RwLock<HashMap<Uuid, Arc<Library>>>>,
@@ -85,7 +85,10 @@ impl LibraryManager {
 
 		// Add user's home directory
 		if let Some(home) = dirs::home_dir() {
-			search_paths.push(home.join("Spacedrive").join("Libraries"));
+			search_paths.push(
+				crate::branding::libraries_dir()
+					.unwrap_or_else(|| home.join(crate::branding::APP_NAME).join("Libraries")),
+			);
 		}
 
 		Self {
@@ -175,10 +178,7 @@ impl LibraryManager {
 
 		// Use default library location
 		let base_path = self.search_paths.first().cloned().unwrap_or_else(|| {
-			dirs::home_dir()
-				.unwrap_or_else(|| PathBuf::from("."))
-				.join("Spacedrive")
-				.join("Libraries")
+			crate::branding::libraries_dir().unwrap_or_else(|| PathBuf::from("."))
 		});
 
 		// Ensure base path exists
@@ -261,10 +261,7 @@ impl LibraryManager {
 
 		// Use default library location
 		let base_path = self.search_paths.first().cloned().unwrap_or_else(|| {
-			dirs::home_dir()
-				.unwrap_or_else(|| PathBuf::from("."))
-				.join("Spacedrive")
-				.join("Libraries")
+			crate::branding::libraries_dir().unwrap_or_else(|| PathBuf::from("."))
 		});
 
 		// Ensure base path exists
@@ -389,10 +386,7 @@ impl LibraryManager {
 		// Determine base path
 		let base_path = location.unwrap_or_else(|| {
 			self.search_paths.first().cloned().unwrap_or_else(|| {
-				dirs::home_dir()
-					.unwrap_or_else(|| PathBuf::from("."))
-					.join("Spacedrive")
-					.join("Libraries")
+				crate::branding::libraries_dir().unwrap_or_else(|| PathBuf::from("."))
 			})
 		});
 

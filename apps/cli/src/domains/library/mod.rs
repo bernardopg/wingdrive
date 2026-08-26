@@ -180,7 +180,7 @@ pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
 				)
 			} else {
 				format!(
-					"This will remove library {} from Spacedrive (data will remain). Continue?",
+					"This will remove library {} from WingDrive (data will remain). Continue?",
 					args.library_id
 				)
 			};

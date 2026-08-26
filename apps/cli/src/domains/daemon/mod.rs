@@ -287,7 +287,7 @@ async fn install_launchd_service(data_dir: PathBuf, instance: Option<String>) ->
 	// Build the systemd service unit file
 	let service_content = format!(
 		r#"[Unit]
-Description=Spacedrive Daemon{}
+Description=WingDrive Daemon{}
 After=network.target
 
 [Service]

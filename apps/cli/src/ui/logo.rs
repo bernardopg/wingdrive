@@ -49,7 +49,7 @@ fn get_purple_color(brightness: f32) -> (u8, u8, u8) {
 	(r, g, b)
 }
 
-/// Print the Spacedrive logo as a purple orb using ANSI colors and Unicode half-blocks
+/// Print the WingDrive logo as a purple orb using ANSI colors and Unicode half-blocks
 pub fn print_logo_colored() {
 	let width = 36;
 	let height = 18;
@@ -109,5 +109,5 @@ pub fn print_logo_colored() {
 
 /// Display a compact version of the logo
 pub fn print_compact_logo() {
-	println!("Spacedrive CLI v2");
+	println!("WingDrive CLI v2");
 }

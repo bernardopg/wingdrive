@@ -125,21 +125,17 @@ impl DeviceConfig {
 
 	/// Get the configuration file path for the current platform
 	pub fn config_path() -> Result<PathBuf, super::DeviceError> {
-		let base_path = if cfg!(target_os = "macos") {
-			dirs::data_dir()
-				.ok_or(super::DeviceError::ConfigPathNotFound)?
-				.join("com.spacedrive")
-		} else if cfg!(target_os = "linux") {
-			dirs::config_dir()
-				.ok_or(super::DeviceError::ConfigPathNotFound)?
-				.join("spacedrive")
-		} else if cfg!(target_os = "windows") {
-			dirs::config_dir()
-				.ok_or(super::DeviceError::ConfigPathNotFound)?
-				.join("Spacedrive")
-		} else {
-			return Err(super::DeviceError::UnsupportedPlatform);
-		};
+		let base_path = crate::branding::device_config_dir().ok_or_else(|| {
+			if cfg!(any(
+				target_os = "macos",
+				target_os = "linux",
+				target_os = "windows"
+			)) {
+				super::DeviceError::ConfigPathNotFound
+			} else {
+				super::DeviceError::UnsupportedPlatform
+			}
+		})?;
 
 		Ok(base_path.join("device.json"))
 	}

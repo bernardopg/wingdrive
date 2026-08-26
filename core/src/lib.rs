@@ -1,8 +1,9 @@
 #![allow(warnings)]
-//! Spacedrive Core v2
+//! WingDrive Core v2
 //!
 //! A Virtual Distributed File System (VDFS) implementation in Rust.
 
+pub mod branding;
 pub mod client;
 pub mod common;
 pub mod config;
@@ -92,7 +93,7 @@ impl Core {
 		config: Option<AppConfig>,
 		system_device_name: Option<String>,
 	) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
-		info!("Initializing Spacedrive at {:?}", data_dir);
+		info!("Initializing WingDrive at {:?}", data_dir);
 
 		// Load or create app config
 		let config = match config {
@@ -612,7 +613,7 @@ impl Core {
 
 	/// Shutdown the core gracefully
 	pub async fn shutdown(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-		info!("Shutting down Spacedrive Core...");
+		info!("Shutting down WingDrive Core...");
 
 		// Networking service is stopped by services.stop_all()
 
@@ -636,7 +637,7 @@ impl Core {
 		// Emit shutdown event
 		self.events.emit(Event::CoreShutdown);
 
-		info!("Spacedrive Core shutdown complete");
+		info!("WingDrive Core shutdown complete");
 		Ok(())
 	}
 }
@@ -725,7 +726,7 @@ async fn register_default_protocol_handlers(
 
 	// Inject context for dynamic location-based path validation
 	// The handler will query all libraries for registered locations at runtime.
-	// This ensures file transfers can only target directories that are managed by Spacedrive.
+	// This ensures file transfers can only target directories that are managed by WingDrive.
 	file_transfer_handler.set_context(context.clone());
 
 	// Get device ID for job activity handler

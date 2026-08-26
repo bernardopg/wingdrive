@@ -178,7 +178,7 @@ fn render_header<B: Backend>(f: &mut Frame<B>, area: Rect, app: &JobMonitorTui) 
     let spinner_char = super::colors::spinner_char(app.spinner_frame);
 
     let title = format!(
-        "{} Spacedrive Job Monitor - {} jobs",
+        "{} WingDrive Job Monitor - {} jobs",
         spinner_char,
         app.jobs.len()
     );

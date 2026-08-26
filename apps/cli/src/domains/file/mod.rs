@@ -45,7 +45,7 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 						println!("{}", serde_json::to_string_pretty(file).unwrap());
 					}
 					None => {
-						println!("File not found or not indexed in Spacedrive");
+						println!("File not found or not indexed in WingDrive");
 					}
 				}
 			});
@@ -80,7 +80,7 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 
 					for file in &listing.files {
 						// Determine if this is a directory by checking if size is None
-						// In Spacedrive, directories typically have size = 0 or None
+						// In WingDrive, directories typically have size = 0 or None
 						let is_directory = file.size == 0;
 						let file_type = if is_directory { "Directory" } else { "File" };
 

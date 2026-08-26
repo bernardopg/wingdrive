@@ -16,7 +16,7 @@ use sd_core::volume::backend::CloudServiceType;
 pub async fn run_interactive(ctx: &Context) -> Result<()> {
 	loop {
 		println!("\n╔════════════════════════════════════════╗");
-		println!("║     Spacedrive Cloud Storage Setup    ║");
+		println!("║     WingDrive Cloud Storage Setup    ║");
 		println!("╚════════════════════════════════════════╝\n");
 
 		let action = select(

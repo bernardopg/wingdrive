@@ -1,6 +1,6 @@
 //! Unified key management system
 //!
-//! Manages all encryption keys in Spacedrive:
+//! Manages all encryption keys in WingDrive:
 //! - Device key: Stored in OS keychain (with file fallback)
 //! - Library keys: Stored encrypted in redb database
 //! - Cloud credentials: Stored encrypted in library database (not in key manager)
@@ -18,7 +18,8 @@ use thiserror::Error;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-const KEYRING_SERVICE: &str = "Spacedrive";
+use crate::branding::{KEYRING_SERVICE, LEGACY_KEYRING_SERVICE};
+
 const DEVICE_KEY_USERNAME: &str = "device_key";
 const KEY_LENGTH: usize = 32; // 256 bits
 
@@ -150,21 +151,21 @@ impl KeyManager {
 
 		match entry.get_password() {
 			Ok(key_hex) => {
-				let key_bytes =
-					hex::decode(key_hex).map_err(|_| KeyManagerError::InvalidKeyFormat)?;
-
-				if key_bytes.len() != KEY_LENGTH {
-					return Err(KeyManagerError::InvalidKeyFormat);
-				}
-
-				let mut key = [0u8; KEY_LENGTH];
-				key.copy_from_slice(&key_bytes);
+				let key = Self::decode_key(&key_hex)?;
 
 				// Cache it
 				*self.device_key.write().await = Some(key);
 				Ok(key)
 			}
 			Err(KeyringError::NoEntry) => {
+				// A pre-fork install stored the key under the Spacedrive service. Adopting it
+				// keeps existing libraries decryptable; generating a fresh key instead would
+				// look identical to data loss from the user's side.
+				if let Some(key) = Self::adopt_legacy_device_key(&entry)? {
+					*self.device_key.write().await = Some(key);
+					return Ok(key);
+				}
+
 				// Generate new device key
 				let key = self.generate_key()?;
 				let key_hex = hex::encode(key);
@@ -176,6 +177,54 @@ impl KeyManager {
 			}
 			Err(e) => Err(KeyManagerError::Keyring(e)),
 		}
+	}
+
+	/// Decodes a hex-encoded device key of exactly [`KEY_LENGTH`] bytes.
+	fn decode_key(key_hex: &str) -> Result<[u8; KEY_LENGTH], KeyManagerError> {
+		let key_bytes =
+			hex::decode(key_hex.trim()).map_err(|_| KeyManagerError::InvalidKeyFormat)?;
+
+		if key_bytes.len() != KEY_LENGTH {
+			return Err(KeyManagerError::InvalidKeyFormat);
+		}
+
+		let mut key = [0u8; KEY_LENGTH];
+		key.copy_from_slice(&key_bytes);
+		Ok(key)
+	}
+
+	/// Copies a pre-fork device key into the WingDrive keychain service.
+	///
+	/// The legacy entry is left untouched so a user can still run the original
+	/// Spacedrive build against the same libraries. A copy that fails to write is
+	/// not fatal: the key was read successfully, so the session proceeds and the
+	/// migration retries on next launch.
+	fn adopt_legacy_device_key(entry: &Entry) -> Result<Option<[u8; KEY_LENGTH]>, KeyManagerError> {
+		let legacy = match Entry::new(LEGACY_KEYRING_SERVICE, DEVICE_KEY_USERNAME) {
+			Ok(legacy) => legacy,
+			Err(_) => return Ok(None),
+		};
+
+		let key_hex = match legacy.get_password() {
+			Ok(key_hex) => key_hex,
+			Err(KeyringError::NoEntry) => return Ok(None),
+			Err(e) => return Err(KeyManagerError::Keyring(e)),
+		};
+
+		let key = Self::decode_key(&key_hex)?;
+
+		if let Err(e) = entry.set_password(&key_hex) {
+			tracing::warn!(
+				error = %e,
+				"Adopted the legacy device key but could not copy it to the {KEYRING_SERVICE} keychain service"
+			);
+		} else {
+			tracing::info!(
+				"Migrated the device key from the {LEGACY_KEYRING_SERVICE} keychain service to {KEYRING_SERVICE}"
+			);
+		}
+
+		Ok(Some(key))
 	}
 
 	/// Get a library encryption key (creates if doesn't exist)
