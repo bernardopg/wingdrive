@@ -22,14 +22,13 @@
  * ```
  */
 
-import { useEffect, useMemo, useState, useRef } from "react";
-import { useQuery, useQueryClient, QueryClient } from "@tanstack/react-query";
-import { useSpacedriveClient } from "./useClient";
-import type { Event } from "../generated/types";
-import type { SdPath } from "../generated/types";
+import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
 import invariant from "tiny-invariant";
-import * as v from "valibot";
 import type { Simplify } from "type-fest";
+import * as v from "valibot";
+import type { Event, SdPath } from "../generated/types";
+import { useSpacedriveClient } from "./useClient";
 
 // Types
 
@@ -48,6 +47,8 @@ export type UseNormalizedQueryOptions<I, O = any, TSelected = O> = Simplify<{
 	includeDescendants?: boolean;
 	/** Resource ID for single-resource queries */
 	resourceId?: string;
+	/** Refetch instead of merging events, for global or filtered collections. */
+	refetchOnResourceChange?: boolean;
 	/** Enable debug logging for this query instance */
 	debug?: boolean;
 	/** Optional select function to transform query data */
@@ -165,7 +166,11 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 		// Skip subscription for file queries without pathScope (prevent overly broad subscriptions)
 		// File resources are too numerous - global subscriptions cause massive event spam
 		// Single-file queries (FileInspector) will use stale-while-revalidate instead
-		if (options.resourceType === "file" && !options.pathScope) {
+		if (
+			options.resourceType === "file" &&
+			!options.pathScope &&
+			!options.refetchOnResourceChange
+		) {
 			return;
 		}
 
@@ -179,7 +184,11 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 		const handleEvent = (event: Event) => {
 			const isDebug = optionsRef.current.debug;
 			if (isDebug) {
-				console.log(`[useNormalizedQuery] RAW EVENT received:`, typeof event, event);
+				console.log(
+					`[useNormalizedQuery] RAW EVENT received:`,
+					typeof event,
+					event,
+				);
 			}
 
 			// Guard: only process events if pathScope hasn't changed since subscription
@@ -188,7 +197,9 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 				JSON.stringify(capturedPathScope)
 			) {
 				if (isDebug) {
-					console.log(`[useNormalizedQuery] STALE pathScope, skipping event`);
+					console.log(
+						`[useNormalizedQuery] STALE pathScope, skipping event`,
+					);
 				}
 				return;
 			}
@@ -203,7 +214,11 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 		};
 
 		if (options.debug) {
-			console.log(`[useNormalizedQuery] SUBSCRIBING: resourceType=${options.resourceType}, pathScope=`, JSON.stringify(options.pathScope), `includeDescendants=${options.includeDescendants ?? false}`);
+			console.log(
+				`[useNormalizedQuery] SUBSCRIBING: resourceType=${options.resourceType}, pathScope=`,
+				JSON.stringify(options.pathScope),
+				`includeDescendants=${options.includeDescendants ?? false}`,
+			);
 		}
 
 		client
@@ -219,7 +234,9 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 			.then((unsub) => {
 				if (isCancelled) {
 					if (options.debug) {
-						console.log(`[useNormalizedQuery] Subscription created but already cancelled`);
+						console.log(
+							`[useNormalizedQuery] Subscription created but already cancelled`,
+						);
 					}
 					unsub();
 				} else {
@@ -231,7 +248,10 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 			})
 			.catch((error) => {
 				if (!isCancelled && options.debug) {
-					console.error("[useNormalizedQuery] Subscription failed", error);
+					console.error(
+						"[useNormalizedQuery] Subscription failed",
+						error,
+					);
 				}
 			});
 
@@ -247,6 +267,7 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 		queryClient,
 		options.resourceType,
 		options.resourceId,
+		options.refetchOnResourceChange,
 		pathScopeSerialized, // Use serialized version for deep comparison
 		options.includeDescendants,
 		libraryId,
@@ -274,6 +295,21 @@ export function handleResourceEvent(
 	const wireMethod = toWireMethod(options.query);
 	// Skip string events (like "CoreStarted", "CoreShutdown")
 	if (typeof event === "string") {
+		return;
+	}
+
+	if (
+		options.refetchOnResourceChange &&
+		typeof event === "object" &&
+		(("ResourceChanged" in event &&
+			event.ResourceChanged.resource_type === options.resourceType) ||
+			("ResourceChangedBatch" in event &&
+				event.ResourceChangedBatch.resource_type ===
+					options.resourceType) ||
+			("ResourceDeleted" in event &&
+				event.ResourceDeleted.resource_type === options.resourceType))
+	) {
+		queryClient.invalidateQueries({ queryKey, exact: true });
 		return;
 	}
 
@@ -436,7 +472,8 @@ export function filterBatchResources(
 				.replace(/\/+$/, "");
 			// Only lower-case for Windows paths (case-insensitive FS)
 			const isWindowsPath =
-				/^[a-zA-Z]:\//.test(scopeNormalized) || scopeNormalized.startsWith("//?/");
+				/^[a-zA-Z]:\//.test(scopeNormalized) ||
+				scopeNormalized.startsWith("//?/");
 			const normalizedScope = isWindowsPath
 				? scopeNormalized.toLowerCase()
 				: scopeNormalized;
@@ -456,8 +493,13 @@ export function filterBatchResources(
 			}
 
 			// Normalize Windows backslashes, only lower-case for Windows paths
-			const pathNormalized = String(physicalPath.path).replace(/\\/g, "/");
-			const pathStr = isWindowsPath ? pathNormalized.toLowerCase() : pathNormalized;
+			const pathNormalized = String(physicalPath.path).replace(
+				/\\/g,
+				"/",
+			);
+			const pathStr = isWindowsPath
+				? pathNormalized.toLowerCase()
+				: pathNormalized;
 
 			// Extract parent directory from file path
 			const lastSlash = pathStr.lastIndexOf("/");
@@ -552,9 +594,16 @@ export function updateBatchResources<O>(
 
 	const wireMethod = toWireMethod(options.query);
 	if (options.debug) {
-		console.log(`[useNormalizedQuery] ${wireMethod} BATCH: ${resources.length} total, ${filteredResources.length} after filter`);
+		console.log(
+			`[useNormalizedQuery] ${wireMethod} BATCH: ${resources.length} total, ${filteredResources.length} after filter`,
+		);
 		if (filteredResources.length === 0 && resources.length > 0) {
-			console.log(`[useNormalizedQuery] ${wireMethod} ALL FILTERED OUT! First resource:`, JSON.stringify(resources[0]?.sd_path), `pathScope:`, JSON.stringify(options.pathScope));
+			console.log(
+				`[useNormalizedQuery] ${wireMethod} ALL FILTERED OUT! First resource:`,
+				JSON.stringify(resources[0]?.sd_path),
+				`pathScope:`,
+				JSON.stringify(options.pathScope),
+			);
 		}
 	}
 
@@ -571,14 +620,24 @@ export function updateBatchResources<O>(
 
 	queryClient.setQueryData<O>(queryKey, (oldData: any) => {
 		if (options.debug) {
-			console.log(`[useNormalizedQuery] ${wireMethod} setQueryData: oldData has`, Array.isArray(oldData) ? oldData.length : Object.keys(oldData || {}).join(','), `adding ${filteredResources.length} resources`);
+			console.log(
+				`[useNormalizedQuery] ${wireMethod} setQueryData: oldData has`,
+				Array.isArray(oldData)
+					? oldData.length
+					: Object.keys(oldData || {}).join(","),
+				`adding ${filteredResources.length} resources`,
+			);
 		}
 		// If the query hasn't returned yet, seed the cache with the event data.
 		// This handles the race where the subscription's buffer replay delivers
 		// events before the initial query response arrives. Without this, the
 		// events would be silently dropped and the UI stays empty.
 		if (!oldData) {
-			return { files: filteredResources, total_count: filteredResources.length, has_more: false } as O;
+			return {
+				files: filteredResources,
+				total_count: filteredResources.length,
+				has_more: false,
+			} as O;
 		}
 
 		// Handle array responses

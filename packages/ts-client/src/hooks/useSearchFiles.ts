@@ -4,8 +4,8 @@ import type {
 	File,
 	FileSearchInput,
 	FileSearchOutput,
-	SearchScope as TSSearchScope,
 	SdPath,
+	SearchScope as TSSearchScope,
 } from "../generated/types";
 import { useNormalizedQuery } from "./useNormalizedQuery";
 
@@ -38,6 +38,7 @@ export interface UseSearchFilesOptions {
 		size_range?: { min?: number | null; max?: number | null } | null;
 		locations?: string[] | null;
 		content_types?: ContentKind[] | null;
+		favorite?: boolean | null;
 		include_hidden?: boolean | null;
 		include_archived?: boolean | null;
 	};
@@ -106,20 +107,21 @@ export function useSearchFiles(
 				file_types: filters?.file_types ?? null,
 				tags: filters?.tags ?? null,
 				date_range: filters?.date_range
-				? {
-						field: filters.date_range.field,
-						start: filters.date_range.start ?? null,
-						end: filters.date_range.end ?? null,
-					}
-				: null,
+					? {
+							field: filters.date_range.field,
+							start: filters.date_range.start ?? null,
+							end: filters.date_range.end ?? null,
+						}
+					: null,
 				size_range: filters?.size_range
-				? {
-						min: filters.size_range.min ?? null,
-						max: filters.size_range.max ?? null,
-					}
-				: null,
+					? {
+							min: filters.size_range.min ?? null,
+							max: filters.size_range.max ?? null,
+						}
+					: null,
 				locations: filters?.locations ?? null,
 				content_types: filters?.content_types ?? null,
+				favorite: filters?.favorite ?? null,
 				include_hidden: filters?.include_hidden ?? null,
 				include_archived: filters?.include_archived ?? null,
 				at_risk: null,
@@ -137,15 +139,7 @@ export function useSearchFiles(
 				offset: 0,
 			},
 		}),
-		[
-			query,
-			tsScope,
-			mode,
-			filters,
-			sortBy,
-			sortDirection,
-			limit,
-		],
+		[query, tsScope, mode, filters, sortBy, sortDirection, limit],
 	);
 
 	// Execute search query

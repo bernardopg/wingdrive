@@ -3627,7 +3627,11 @@ export type SearchFacets = { file_types: { [key in string]: number }; tags: { [k
 /**
  * Container for all structured filters
  */
-export type SearchFilters = { file_types: string[] | null; tags: TagFilter | null; date_range: DateRangeFilter | null; size_range: SizeRangeFilter | null; locations: string[] | null; content_types: ContentKind[] | null; include_hidden: boolean | null; include_archived: boolean | null; 
+export type SearchFilters = { file_types: string[] | null; tags: TagFilter | null; date_range: DateRangeFilter | null; size_range: SizeRangeFilter | null; locations: string[] | null; content_types: ContentKind[] | null;
+/**
+ * Filter by persisted entry-scoped favorite state.
+ */
+favorite: boolean | null; include_hidden: boolean | null; include_archived: boolean | null;
 /**
  * Only return files that are at risk (true) or redundant (false).
  * At risk = content exists on exactly one volume.
