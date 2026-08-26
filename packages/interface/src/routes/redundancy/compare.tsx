@@ -25,6 +25,7 @@ const EMPTY_FILTERS: SearchFilters = {
 	size_range: null,
 	locations: null,
 	content_types: null,
+	favorite: null,
 	include_hidden: null,
 	include_archived: null,
 	at_risk: null,

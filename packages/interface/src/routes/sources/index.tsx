@@ -1,20 +1,35 @@
-import { Plus, ArrowLeft } from "@phosphor-icons/react";
-import { useNavigate } from "react-router-dom";
-import { useLibraryQuery } from "../../contexts/SpacedriveContext";
-import { useTabManager } from "../../components/TabManager/useTabManager";
-import { SourceCard } from "../../components/Sources/SourceCard";
-import { TopBarPortal, TopBarItem } from "../../TopBar";
-import { CircleButton } from "@spacedrive/primitives";
-import { SearchBar } from "@spacedrive/primitives";
+import {ArrowLeft, Plus} from '@phosphor-icons/react';
+import {CircleButton, SearchBar} from '@spacedrive/primitives';
+import {useMemo, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {SourceCard} from '../../components/Sources/SourceCard';
+import {useTabManager} from '../../components/TabManager/useTabManager';
+import {useLibraryQuery} from '../../contexts/SpacedriveContext';
+import {TopBarItem, TopBarPortal} from '../../TopBar';
 
 export function SourcesHome() {
 	const navigate = useNavigate();
-	const { createTab } = useTabManager();
-	const { data: sourcesRaw, isLoading, error } = useLibraryQuery({
-		type: "sources.list",
-		input: { data_type: null },
+	const {createTab} = useTabManager();
+	const [searchValue, setSearchValue] = useState('');
+	const {
+		data: sourcesRaw,
+		isLoading,
+		error
+	} = useLibraryQuery({
+		type: 'sources.list',
+		input: {data_type: null}
 	});
-	const sources = sourcesRaw as any[] | undefined;
+	const sources = sourcesRaw?.slice();
+	const filteredSources = useMemo(() => {
+		const query = searchValue.trim().toLowerCase();
+		if (!sources || !query) return sources;
+
+		return sources.filter((source) =>
+			[source.name, source.adapter_id, source.data_type]
+				.filter(Boolean)
+				.some((value) => value.toLowerCase().includes(query))
+		);
+	}, [searchValue, sources]);
 
 	return (
 		<>
@@ -37,18 +52,24 @@ export function SourcesHome() {
 				right={
 					<>
 						<TopBarItem id="search" label="Search" priority="high">
-								<SearchBar
+							<SearchBar
 								placeholder="Search sources..."
-								value=""
-								onChange={() => {}}
-								onClear={() => {}}
+								value={searchValue}
+								onChange={setSearchValue}
+								onClear={() => setSearchValue('')}
 								className="w-64"
 							/>
 						</TopBarItem>
-						<TopBarItem id="add-source" label="Add Source" priority="high">
+						<TopBarItem
+							id="add-source"
+							label="Add Source"
+							priority="high"
+						>
 							<CircleButton
 								icon={Plus}
-								onClick={() => createTab("Adapters", "/sources/adapters")}
+								onClick={() =>
+									createTab('Adapters', '/sources/adapters')
+								}
 								title="Add Source"
 							/>
 						</TopBarItem>
@@ -56,43 +77,55 @@ export function SourcesHome() {
 				}
 			/>
 			<div className="p-6">
+				{isLoading && (
+					<div className="flex items-center justify-center py-20">
+						<div className="text-ink-faint text-sm">Loading...</div>
+					</div>
+				)}
 
-			{isLoading && (
-				<div className="flex items-center justify-center py-20">
-					<div className="text-ink-faint text-sm">Loading...</div>
-				</div>
-			)}
+				{error && (
+					<div className="rounded-lg border border-red-400/20 p-4">
+						<p className="text-sm text-red-400">
+							Failed to load sources: {String(error)}
+						</p>
+					</div>
+				)}
 
-			{error && (
-				<div className="border-red-400/20 rounded-lg border p-4">
-					<p className="text-sm text-red-400">
-						Failed to load sources: {String(error)}
-					</p>
-				</div>
-			)}
+				{sources && sources.length === 0 && (
+					<div className="flex flex-col items-center justify-center py-20">
+						<p className="text-ink-dull text-sm">No sources yet</p>
+						<p className="text-ink-faint mt-1 text-xs">
+							Add a data source to get started
+						</p>
+						<button
+							onClick={() =>
+								createTab('Adapters', '/sources/adapters')
+							}
+							className="bg-accent hover:bg-accent-deep mt-4 rounded-lg px-3.5 py-1.5 text-sm font-medium text-white transition-colors"
+						>
+							Add Source
+						</button>
+					</div>
+				)}
 
-			{sources && sources.length === 0 && (
-				<div className="flex flex-col items-center justify-center py-20">
-					<p className="text-ink-dull text-sm">No sources yet</p>
-					<p className="text-ink-faint mt-1 text-xs">
-						Add a data source to get started
-					</p>
-					<button
-						onClick={() => createTab("Adapters", "/sources/adapters")}
-						className="bg-accent hover:bg-accent-deep mt-4 rounded-lg px-3.5 py-1.5 text-sm font-medium text-white transition-colors"
-					>
-						Add Source
-					</button>
-				</div>
-			)}
+				{filteredSources &&
+					filteredSources.length === 0 &&
+					sources &&
+					sources.length > 0 && (
+						<div className="flex items-center justify-center py-20">
+							<p className="text-ink-faint text-sm">
+								No matching sources
+							</p>
+						</div>
+					)}
 
-			{sources && sources.length > 0 && (
-				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-					{sources.map((source) => (
-						<SourceCard key={source.id} source={source} />
-					))}
-				</div>
-			)}
+				{filteredSources && filteredSources.length > 0 && (
+					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+						{filteredSources.map((source) => (
+							<SourceCard key={source.id} source={source} />
+						))}
+					</div>
+				)}
 			</div>
 		</>
 	);

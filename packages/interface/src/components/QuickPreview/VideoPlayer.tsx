@@ -8,6 +8,43 @@ import type {
 	VideoControlsCallbacks,
 } from "./VideoControls";
 
+/**
+ * Turns an opaque media failure into something a user and a bug report can act
+ * on. WebKit only reports "not supported" for anything from a blocked URL to a
+ * missing codec, so the numeric code carries the useful distinction.
+ */
+function describeMediaError(
+	video: HTMLVideoElement | null,
+	playError: unknown,
+): string {
+	const error = video?.error;
+
+	if (error) {
+		const reason =
+			{
+				[MediaError.MEDIA_ERR_ABORTED]: "Playback was aborted",
+				[MediaError.MEDIA_ERR_NETWORK]: "The file could not be read",
+				[MediaError.MEDIA_ERR_DECODE]: "The file could not be decoded",
+				[MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]:
+					"The format or source is not supported",
+			}[error.code] ?? "Unknown media error";
+
+		console.error("[VideoPlayer]", reason, {
+			code: error.code,
+			message: error.message,
+			src: video?.currentSrc,
+		});
+
+		return error.message ? `${reason} (${error.message})` : reason;
+	}
+
+	console.error("[VideoPlayer] playback failed", playError, {
+		src: video?.currentSrc,
+	});
+
+	return playError instanceof Error ? playError.message : "Playback failed";
+}
+
 interface VideoPlayerProps {
 	src: string;
 	file: File;
@@ -53,6 +90,12 @@ export function VideoPlayer({
 		percent: number;
 		mouseX: number;
 	} | null>(null);
+	const [loadError, setLoadError] = useState<string | null>(null);
+
+	// A new source deserves a fresh attempt at reporting problems.
+	useEffect(() => {
+		setLoadError(null);
+	}, [src]);
 	const hideControlsTimeout = useRef<number | undefined>(undefined);
 	const { zoom, zoomIn, zoomOut, reset, isZoomed, transform } =
 		useZoomPan(videoContainerRef as React.RefObject<HTMLElement>);
@@ -102,7 +145,11 @@ export function VideoPlayer({
 		if (playing) {
 			videoRef.current.pause();
 		} else {
-			videoRef.current.play();
+			// play() rejects when the source failed to decode; without a catch it
+			// surfaced as an unhandled rejection and the UI stayed blank.
+			videoRef.current.play().catch((err) => {
+				setLoadError(describeMediaError(videoRef.current, err));
+			});
 		}
 	}, [playing]);
 
@@ -312,6 +359,11 @@ export function VideoPlayer({
 						autoPlay
 						playsInline
 						className="max-h-screen max-w-screen"
+						onError={(e) =>
+							setLoadError(
+								describeMediaError(e.currentTarget, null),
+							)
+						}
 						onPlay={() => setPlaying(true)}
 						onPause={() => setPlaying(false)}
 						onTimeUpdate={(e) =>
@@ -326,6 +378,19 @@ export function VideoPlayer({
 						}
 					/>
 				</div>
+
+				{loadError && (
+					<div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 p-8">
+						<div className="max-w-md text-center">
+							<div className="text-sm font-medium text-white/90">
+								This video could not be played
+							</div>
+							<div className="mt-1 text-xs text-white/50">
+								{loadError}
+							</div>
+						</div>
+					</div>
+				)}
 			</div>
 
 			{/* Subtitles */}

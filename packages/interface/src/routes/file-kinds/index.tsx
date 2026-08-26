@@ -1,6 +1,9 @@
-import { useNormalizedQuery } from "../../contexts/SpacedriveContext";
-import type { ContentKind } from "@sd/ts-client";
-import { getIcon } from "@sd/assets/util";
+import {getIcon} from '@sd/assets/util';
+import type {ContentKind, SearchFilters} from '@sd/ts-client';
+import {useEffect, useMemo} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {useNormalizedQuery} from '../../contexts/SpacedriveContext';
+import {ExplorerView, useExplorer} from '../explorer';
 
 interface ContentKindStat {
 	kind: ContentKind;
@@ -16,36 +19,35 @@ interface ContentKindStatsOutput {
 // Map content kind names to icon names and colors
 // Keys must match backend ContentKind variants (lowercase)
 // Icon names must match actual files in packages/assets/icons/
-const CONTENT_KIND_CONFIG: Record<string, { iconName: string; color: string }> =
-	{
-		image: { iconName: "Image", color: "#3B82F6" },
-		video: { iconName: "Video", color: "#8B5CF6" },
-		audio: { iconName: "Audio", color: "#10B981" },
-		document: { iconName: "Document", color: "#F59E0B" },
-		archive: { iconName: "Archive", color: "#6366F1" },
-		code: { iconName: "Text", color: "#EF4444" }, // No Code.png, using Text.png
-		text: { iconName: "Text", color: "#6B7280" },
-		database: { iconName: "Database", color: "#14B8A6" },
-		book: { iconName: "Book", color: "#8B5CF6" },
-		font: { iconName: "Text", color: "#F59E0B" },
-		mesh: { iconName: "Mesh", color: "#06B6D4" },
-		config: { iconName: "Document", color: "#6366F1" },
-		encrypted: { iconName: "Encrypted", color: "#DC2626" },
-		key: { iconName: "Key", color: "#FCD34D" },
-		executable: { iconName: "Executable", color: "#7C3AED" },
-		binary: { iconName: "Executable", color: "#6B7280" },
-		spreadsheet: { iconName: "Document", color: "#10B981" },
-		presentation: { iconName: "Document", color: "#F97316" },
-		email: { iconName: "Document", color: "#3B82F6" },
-		calendar: { iconName: "Document", color: "#06B6D4" },
-		contact: { iconName: "Document", color: "#EC4899" },
-		web: { iconName: "Globe", color: "#3B82F6" },
-		shortcut: { iconName: "Link", color: "#8B5CF6" },
-		package: { iconName: "Package", color: "#F59E0B" },
-		model_entry: { iconName: "Mesh", color: "#06B6D4" },
-		memory: { iconName: "Database", color: "#6366F1" },
-		unknown: { iconName: "Document", color: "#6B7280" },
-	};
+const CONTENT_KIND_CONFIG: Record<string, {iconName: string; color: string}> = {
+	image: {iconName: 'Image', color: '#3B82F6'},
+	video: {iconName: 'Video', color: '#8B5CF6'},
+	audio: {iconName: 'Audio', color: '#10B981'},
+	document: {iconName: 'Document', color: '#F59E0B'},
+	archive: {iconName: 'Archive', color: '#6366F1'},
+	code: {iconName: 'Text', color: '#EF4444'}, // No Code.png, using Text.png
+	text: {iconName: 'Text', color: '#6B7280'},
+	database: {iconName: 'Database', color: '#14B8A6'},
+	book: {iconName: 'Book', color: '#8B5CF6'},
+	font: {iconName: 'Text', color: '#F59E0B'},
+	mesh: {iconName: 'Mesh', color: '#06B6D4'},
+	config: {iconName: 'Document', color: '#6366F1'},
+	encrypted: {iconName: 'Encrypted', color: '#DC2626'},
+	key: {iconName: 'Key', color: '#FCD34D'},
+	executable: {iconName: 'Executable', color: '#7C3AED'},
+	binary: {iconName: 'Executable', color: '#6B7280'},
+	spreadsheet: {iconName: 'Document', color: '#10B981'},
+	presentation: {iconName: 'Document', color: '#F97316'},
+	email: {iconName: 'Document', color: '#3B82F6'},
+	calendar: {iconName: 'Document', color: '#06B6D4'},
+	contact: {iconName: 'Document', color: '#EC4899'},
+	web: {iconName: 'Globe', color: '#3B82F6'},
+	shortcut: {iconName: 'Link', color: '#8B5CF6'},
+	package: {iconName: 'Package', color: '#F59E0B'},
+	model_entry: {iconName: 'Mesh', color: '#06B6D4'},
+	memory: {iconName: 'Database', color: '#6366F1'},
+	unknown: {iconName: 'Document', color: '#6B7280'}
+};
 
 function formatFileCount(count: number): string {
 	if (count >= 1000000) {
@@ -62,53 +64,48 @@ function formatFileCount(count: number): string {
  * Shows content kinds (images, videos, audio, etc.) with file counts
  */
 export function FileKindsView() {
+	const navigate = useNavigate();
 	// Fetch content kind statistics
-	const { data: statsData, isLoading } = useNormalizedQuery<
+	const {data: statsData, isLoading} = useNormalizedQuery<
 		Record<string, never>,
 		ContentKindStatsOutput
 	>({
-		query: "files.content_kind_stats",
+		query: 'files.content_kind_stats',
 		input: {},
-		resourceType: "content_kind",
+		resourceType: 'content_kind'
 	});
 
 	const stats = (statsData?.stats ?? []).sort(
-		(a, b) => Number(b.file_count) - Number(a.file_count),
+		(a, b) => Number(b.file_count) - Number(a.file_count)
 	);
 	const totalFiles = Number(statsData?.total_files ?? 0);
 
 	if (isLoading) {
 		return (
-			<div className="flex items-center justify-center h-full">
+			<div className="flex h-full items-center justify-center">
 				<span className="text-ink-dull">Loading file kinds...</span>
 			</div>
 		);
 	}
 
-	const handleKindClick = (kind: ContentKind) => {
-		// TODO: Navigate to explorer with content kind filter
-		// For now, just log
-		console.log("Content kind clicked:", kind);
-	};
-
 	return (
-		<div className="flex flex-col h-full">
+		<div className="flex h-full flex-col">
 			{/* Header */}
-			<div className="px-6 py-4 border-b border-app-line">
+			<div className="border-app-line border-b px-6 py-4">
 				<div className="flex items-center justify-between">
 					<div>
-						<h1 className="text-2xl font-bold text-ink">
+						<h1 className="text-ink text-2xl font-bold">
 							File Kinds
 						</h1>
-						<p className="text-sm text-ink-dull mt-1">
-							Browse your files by content type
+						<p className="text-ink-dull mt-1 text-sm">
+							File distribution by content type
 						</p>
 					</div>
 					<div className="text-right">
-						<div className="text-2xl font-bold text-ink">
+						<div className="text-ink text-2xl font-bold">
 							{formatFileCount(totalFiles)}
 						</div>
-						<div className="text-xs text-ink-dull">Total Files</div>
+						<div className="text-ink-dull text-xs">Total Files</div>
 					</div>
 				</div>
 			</div>
@@ -119,8 +116,8 @@ export function FileKindsView() {
 					className="grid"
 					style={{
 						gridTemplateColumns:
-							"repeat(auto-fill, minmax(140px, 1fr))",
-						gap: "8px",
+							'repeat(auto-fill, minmax(140px, 1fr))',
+						gap: '8px'
 					}}
 				>
 					{stats.map((stat) => {
@@ -131,31 +128,36 @@ export function FileKindsView() {
 							config.iconName,
 							true,
 							null,
-							false,
+							false
 						);
+
+						const fileCount = Number(stat.file_count);
 
 						return (
 							<button
 								key={stat.name}
-								onClick={() => handleKindClick(stat.kind)}
-								className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-app-box/50 transition-colors group aspect-square"
+								disabled={fileCount === 0}
+								onClick={() =>
+									navigate(`/file-kinds/${stat.name}`)
+								}
+								className="enabled:hover:bg-app-box/50 flex aspect-square flex-col items-center justify-center rounded-lg p-4 transition-colors disabled:cursor-default"
 							>
 								<img
 									src={icon}
 									alt={stat.name}
-									className="w-16 h-16 mb-3"
+									className="mb-3 h-16 w-16"
 								/>
-								<div className="text-center w-full">
-									<div className="text-sm font-medium text-ink capitalize mb-1">
+								<div className="w-full text-center">
+									<div className="text-ink mb-1 text-sm font-medium capitalize">
 										{stat.name}
 									</div>
-									<div className="text-xs text-ink-dull">
+									<div className="text-ink-dull text-xs">
 										{formatFileCount(
-											Number(stat.file_count),
-										)}{" "}
+											Number(stat.file_count)
+										)}{' '}
 										{Number(stat.file_count) === 1
-											? "file"
-											: "files"}
+											? 'file'
+											: 'files'}
 									</div>
 								</div>
 							</button>
@@ -165,4 +167,65 @@ export function FileKindsView() {
 			</div>
 		</div>
 	);
+}
+
+const EMPTY_FILTERS: SearchFilters = {
+	file_types: null,
+	tags: null,
+	date_range: null,
+	size_range: null,
+	locations: null,
+	content_types: null,
+	favorite: null,
+	include_hidden: null,
+	include_archived: null,
+	at_risk: null,
+	on_volumes: null,
+	not_on_volumes: null,
+	min_volume_count: null,
+	max_volume_count: null
+};
+
+export function FileKindFiles() {
+	const {kindName} = useParams();
+	const {enterFilteredMode, exitFilteredMode} = useExplorer();
+	const {data, isLoading} = useNormalizedQuery<
+		Record<string, never>,
+		ContentKindStatsOutput
+	>({
+		query: 'files.content_kind_stats',
+		input: {},
+		resourceType: 'content_kind'
+	});
+	const stat = data?.stats.find(
+		(item) => item.name === kindName && Number(item.file_count) > 0
+	);
+	const filters = useMemo<SearchFilters | null>(
+		() => (stat ? {...EMPTY_FILTERS, content_types: [stat.kind]} : null),
+		[stat]
+	);
+
+	useEffect(() => {
+		if (!filters || !stat) return;
+		enterFilteredMode(filters, `${stat.name} files`);
+		return exitFilteredMode;
+	}, [enterFilteredMode, exitFilteredMode, filters, stat]);
+
+	if (isLoading) {
+		return (
+			<div className="text-ink-dull flex h-full items-center justify-center">
+				Loading files...
+			</div>
+		);
+	}
+
+	if (!stat) {
+		return (
+			<div className="text-ink-dull flex h-full items-center justify-center">
+				No indexed files for this content kind.
+			</div>
+		);
+	}
+
+	return <ExplorerView />;
 }

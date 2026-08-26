@@ -24,7 +24,7 @@ import {
 } from '@phosphor-icons/react';
 import type {File} from '@sd/ts-client';
 import {getContentKind, isVirtualFile} from '@sd/ts-client';
-import { toast } from '@spacedrive/primitives';
+import {toast} from '@spacedrive/primitives';
 import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
 import {usePlatform} from '../../../contexts/PlatformContext';
 import {useLibraryMutation} from '../../../contexts/SpacedriveContext';
@@ -48,7 +48,7 @@ export function useFileContextMenu({
 	selectedFiles,
 	selected
 }: UseFileContextMenuProps) {
-	const {navigateToPath, currentPath, mode} = useExplorer();
+	const {navigateToPath, currentPath, mode, openQuickPreview} = useExplorer();
 	const platform = usePlatform();
 	const refetchTagQueries = useRefetchTagQueries();
 
@@ -88,7 +88,10 @@ export function useFileContextMenu({
 		const targets =
 			selected && selectedFiles.length > 0 ? selectedFiles : [file];
 		return targets
-			.filter((f): f is File => f != null && f.sd_path != null && 'Physical' in f.sd_path)
+			.filter(
+				(f): f is File =>
+					f != null && f.sd_path != null && 'Physical' in f.sd_path
+			)
 			.map((f) => (f.sd_path as any).Physical.path);
 	};
 
@@ -119,8 +122,7 @@ export function useFileContextMenu({
 				label: 'Quick Look',
 				onClick: () => {
 					if (!file) return;
-					console.log('Quick Look:', file.name);
-					// TODO: Implement quick look
+					openQuickPreview(file.id);
 				},
 				keybind: 'Space',
 				condition: () => !!file
@@ -432,8 +434,8 @@ export function useFileContextMenu({
 									force: false
 								})
 							);
-						},
-											}
+						}
+					}
 				]
 			},
 			{
@@ -516,8 +518,8 @@ export function useFileContextMenu({
 									force: false
 								})
 							);
-						},
-											}
+						}
+					}
 				]
 			},
 			{
@@ -538,8 +540,8 @@ export function useFileContextMenu({
 									language: null
 								})
 							);
-						},
-											}
+						}
+					}
 				]
 			},
 			{
@@ -563,8 +565,8 @@ export function useFileContextMenu({
 									force: false
 								})
 							);
-						},
-											},
+						}
+					},
 					{
 						icon: Crop,
 						label: 'Regenerate Thumbnail',

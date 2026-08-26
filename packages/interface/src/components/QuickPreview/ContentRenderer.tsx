@@ -402,6 +402,30 @@ function ImageRenderer({ file, onZoomChange }: ContentRendererProps) {
 	);
 }
 
+/**
+ * Resolves a playable URL for a media file.
+ *
+ * The asset protocol works for images because the webview fetches them, but
+ * video and audio are decoded by the platform media stack (GStreamer on Linux),
+ * which fetches the URL on its own and cannot see the webview's custom scheme.
+ * Platforms that expose a streaming endpoint use it; the rest fall back to the
+ * asset protocol.
+ */
+async function resolveMediaSrc(
+	platform: { getMediaSrc?: (p: string) => Promise<string>; convertFileSrc?: (p: string) => string },
+	physicalPath: string,
+): Promise<string | null> {
+	if (platform.getMediaSrc) {
+		try {
+			return await platform.getMediaSrc(physicalPath);
+		} catch (err) {
+			console.error("[media] streaming URL unavailable, falling back", err);
+		}
+	}
+
+	return platform.convertFileSrc?.(physicalPath) ?? null;
+}
+
 function VideoRenderer({
 	file,
 	onZoomChange,
@@ -429,26 +453,22 @@ function VideoRenderer({
 	}, [videoFileId]);
 
 	useEffect(() => {
-		if (!shouldLoadVideo || !platform.convertFileSrc) {
-			return;
-		}
+		if (!shouldLoadVideo) return;
 
 		const sdPath = file.sd_path as any;
 		const physicalPath = sdPath?.Physical?.path;
 
-		if (!physicalPath) {
-			console.log("[VideoRenderer] No physical path available");
-			return;
-		}
+		if (!physicalPath) return;
 
-		const url = platform.convertFileSrc(physicalPath);
-		console.log(
-			"[VideoRenderer] Loading video from:",
-			physicalPath,
-			"-> URL:",
-			url,
-		);
-		setVideoUrl(url);
+		let cancelled = false;
+
+		resolveMediaSrc(platform, physicalPath).then((url) => {
+			if (!cancelled && url) setVideoUrl(url);
+		});
+
+		return () => {
+			cancelled = true;
+		};
 	}, [shouldLoadVideo, videoFileId, file.sd_path, platform]);
 
 	if (!videoUrl) {
@@ -496,26 +516,22 @@ function AudioRenderer({ file }: ContentRendererProps) {
 	}, [audioFileId]);
 
 	useEffect(() => {
-		if (!shouldLoadAudio || !platform.convertFileSrc) {
-			return;
-		}
+		if (!shouldLoadAudio) return;
 
 		const sdPath = file.sd_path as any;
 		const physicalPath = sdPath?.Physical?.path;
 
-		if (!physicalPath) {
-			console.log("[AudioRenderer] No physical path available");
-			return;
-		}
+		if (!physicalPath) return;
 
-		const url = platform.convertFileSrc(physicalPath);
-		console.log(
-			"[AudioRenderer] Loading audio from:",
-			physicalPath,
-			"-> URL:",
-			url,
-		);
-		setAudioUrl(url);
+		let cancelled = false;
+
+		resolveMediaSrc(platform, physicalPath).then((url) => {
+			if (!cancelled && url) setAudioUrl(url);
+		});
+
+		return () => {
+			cancelled = true;
+		};
 	}, [shouldLoadAudio, audioFileId, file.sd_path, platform]);
 
 	if (!audioUrl) {

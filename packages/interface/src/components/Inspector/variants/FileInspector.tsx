@@ -10,7 +10,6 @@ import {
 	Fingerprint,
 	HardDrive,
 	Hash,
-	Heart,
 	Image,
 	Info,
 	MagnifyingGlass,
@@ -20,34 +19,34 @@ import {
 	PaperPlaneRight,
 	ShareNetwork,
 	Sparkle,
+	Star,
 	Tag as TagIcon,
 	TextAa,
 	Timer,
-	Trash,
 	VideoCamera
 } from '@phosphor-icons/react';
 import {getIcon} from '@sd/assets/util';
 import type {File, SdPath} from '@sd/ts-client';
+import {getContentKind} from '@sd/ts-client';
 import {toast} from '@spacedrive/primitives';
 import clsx from 'clsx';
-import {LocationMap} from '../LocationMap';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useJobsContext} from '../../../components/JobManager/hooks/JobsContext';
 import {TagSelectorButton} from '../../../components/Tags';
 import {usePlatform} from '../../../contexts/PlatformContext';
 import {useServer} from '../../../contexts/ServerContext';
-import {useOptionalExplorer} from '../../../routes/explorer';
-import { getContentKind } from "@sd/ts-client";
 import {
 	getDeviceIcon,
 	useLibraryMutation,
 	useNormalizedQuery
 } from '../../../contexts/SpacedriveContext';
 import {useContextMenu} from '../../../hooks/useContextMenu';
-import {File as FileComponent} from '../../../routes/explorer/File';
-import { formatBytes } from '../../../routes/explorer/utils';
-import {Divider, InfoRow, Section, TabContent, Tabs, Tag} from '../Inspector';
 import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
+import {useOptionalExplorer} from '../../../routes/explorer';
+import {File as FileComponent} from '../../../routes/explorer/File';
+import {formatBytes} from '../../../routes/explorer/utils';
+import {Divider, InfoRow, Section, TabContent, Tabs, Tag} from '../Inspector';
+import {LocationMap} from '../LocationMap';
 
 interface FileInspectorProps {
 	file: File;
@@ -159,13 +158,35 @@ function FileQuickActions({file}: {file: File}) {
 	const platform = usePlatform();
 	// Null in the pop-out inspector window, which has no explorer to overlay.
 	const explorer = useOptionalExplorer();
-	const [isFavorite, setIsFavorite] = useState(false); // TODO: Get from file metadata
+	const [isFavorite, setIsFavorite] = useState(file.favorite);
+	const setFavorite = useLibraryMutation('metadata.set_favorite');
+
+	useEffect(() => setIsFavorite(file.favorite), [file.id, file.favorite]);
+
+	const handleFavorite = async () => {
+		const next = !isFavorite;
+		setIsFavorite(next);
+		try {
+			await setFavorite.mutateAsync({
+				entry_uuid: file.id,
+				is_favorite: next
+			});
+		} catch (error) {
+			setIsFavorite(!next);
+			toast.error({
+				title: 'Favorite Update Failed',
+				body: String(error)
+			});
+		}
+	};
 
 	// AI Processing mutations
 	const extractText = useLibraryMutation('media.ocr.extract');
 	const transcribeAudio = useLibraryMutation('media.speech.transcribe');
 	const generateSplat = useLibraryMutation('media.splat.generate');
-	const regenerateThumbnail = useLibraryMutation('media.thumbnail.regenerate');
+	const regenerateThumbnail = useLibraryMutation(
+		'media.thumbnail.regenerate'
+	);
 	const generateThumbstrip = useLibraryMutation('media.thumbstrip.generate');
 	const generateProxy = useLibraryMutation('media.proxy.generate');
 
@@ -185,11 +206,6 @@ function FileQuickActions({file}: {file: File}) {
 
 	const physicalPath = getPhysicalPath();
 	const canShare = !!physicalPath && !!platform.shareFiles;
-
-	const handleFavorite = async () => {
-		setIsFavorite(!isFavorite);
-		// TODO: Wire up to metadata.set_favorite mutation when available
-	};
 
 	const handleShare = async () => {
 		if (!physicalPath || !platform.shareFiles) {
@@ -296,6 +312,26 @@ function FileQuickActions({file}: {file: File}) {
 
 	return (
 		<div className="flex items-center gap-1.5">
+			<button
+				type="button"
+				onClick={handleFavorite}
+				disabled={setFavorite.isPending}
+				className={clsx(
+					'border-sidebar-line/30 bg-sidebar-box/20 hover:bg-sidebar-box/30 flex size-7 items-center justify-center rounded-full border transition-all active:scale-95 disabled:cursor-wait disabled:opacity-60',
+					isFavorite
+						? 'text-yellow-400'
+						: 'text-sidebar-inkDull hover:text-sidebar-ink'
+				)}
+				title={
+					isFavorite ? 'Remove from favorites' : 'Add to favorites'
+				}
+				aria-label={
+					isFavorite ? 'Remove from favorites' : 'Add to favorites'
+				}
+			>
+				<Star size={14} weight={isFavorite ? 'fill' : 'regular'} />
+			</button>
+
 			{/* Quick Preview Button — spacebar isn't available on touch devices */}
 			{explorer && (
 				<button
@@ -307,21 +343,6 @@ function FileQuickActions({file}: {file: File}) {
 					<Eye size={14} weight="bold" />
 				</button>
 			)}
-
-			{/* Favorite Button */}
-			<button
-				type="button"
-				onClick={handleFavorite}
-				className={clsx(
-					'flex size-7 items-center justify-center rounded-full border transition-all active:scale-95',
-					isFavorite
-						? 'border-accent/30 bg-accent/20 text-accent'
-						: 'border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-inkDull hover:bg-sidebar-box/30 hover:text-sidebar-ink'
-				)}
-				title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
-			>
-				<Heart size={14} weight={isFavorite ? 'fill' : 'bold'} />
-			</button>
 
 			{/* Share Button */}
 			{canShare && (
@@ -522,7 +543,8 @@ function MediaMetadataCard({file}: {file: File}) {
 	};
 
 	const mediaDate = formatMediaDate(
-		imageData?.date_taken?.toString() || videoData?.date_captured?.toString()
+		imageData?.date_taken?.toString() ||
+			videoData?.date_captured?.toString()
 	);
 	const cameraDisplay = getCameraDisplay();
 	const format = getFormat();
@@ -625,13 +647,16 @@ function MediaMetadataCard({file}: {file: File}) {
 			)}
 
 			{/* Location Map */}
-			{hasLocation && imageData && imageData.latitude && imageData.longitude && (
-				<LocationMap
-					latitude={imageData.latitude}
-					longitude={imageData.longitude}
-					className="bg-app-box/60 border-app-line/50 mx-2 overflow-hidden rounded-xl border"
-				/>
-			)}
+			{hasLocation &&
+				imageData &&
+				imageData.latitude &&
+				imageData.longitude && (
+					<LocationMap
+						latitude={imageData.latitude}
+						longitude={imageData.longitude}
+						className="bg-app-box/60 border-app-line/50 mx-2 overflow-hidden rounded-xl border"
+					/>
+				)}
 		</div>
 	);
 }
@@ -648,8 +673,12 @@ function OverviewTab({file}: {file: File}) {
 
 	// Tag mutations — refetch queries on success to update the UI
 	const refetchTagQueries = useRefetchTagQueries();
-	const applyTag = useLibraryMutation('tags.apply', { onSuccess: refetchTagQueries });
-	const unapplyTag = useLibraryMutation('tags.unapply', { onSuccess: refetchTagQueries });
+	const applyTag = useLibraryMutation('tags.apply', {
+		onSuccess: refetchTagQueries
+	});
+	const unapplyTag = useLibraryMutation('tags.unapply', {
+		onSuccess: refetchTagQueries
+	});
 
 	// AI Processing mutations
 	const extractText = useLibraryMutation('media.ocr.extract');
@@ -933,14 +962,19 @@ function OverviewTab({file}: {file: File}) {
 									size="sm"
 									onRemove={async () => {
 										try {
-									await unapplyTag.mutateAsync({
-											entry_ids: [file.id],
-											tag_ids: [tag.id],
-										});
-									} catch (err) {
-										console.error('Failed to remove tag:', err);
-										toast.error(`Failed to remove tag: ${err}`);
-									}
+											await unapplyTag.mutateAsync({
+												entry_ids: [file.id],
+												tag_ids: [tag.id]
+											});
+										} catch (err) {
+											console.error(
+												'Failed to remove tag:',
+												err
+											);
+											toast.error(
+												`Failed to remove tag: ${err}`
+											);
+										}
 									}}
 								>
 									{tag.canonical_name}
@@ -954,7 +988,9 @@ function OverviewTab({file}: {file: File}) {
 									targets: file.content_identity?.uuid
 										? {
 												type: 'Content',
-												ids: [file.content_identity.uuid]
+												ids: [
+													file.content_identity.uuid
+												]
 											}
 										: {
 												type: 'EntryUuid',
@@ -1500,15 +1536,6 @@ function SidecarItem({
 					!!platform.revealFile &&
 					!!file.content_identity &&
 					!!libraryId
-			},
-			{
-				icon: Trash,
-				label: 'Delete Sidecar',
-				onClick: () => {
-					console.log('Delete sidecar:', sidecar);
-					// TODO: Implement sidecar deletion
-				},
-				variant: 'danger' as const
 			}
 		]
 	});
@@ -1597,7 +1624,11 @@ function InstancesTab({file}: {file: File}) {
 		enabled: !!file?.id && !!file?.content_identity
 	});
 
-	const instances = (instancesQuery.data as {instances: File[]; total_count: number} | undefined)?.instances || [];
+	const instances =
+		(
+			instancesQuery.data as
+				{instances: File[]; total_count: number} | undefined
+		)?.instances || [];
 
 	// Query devices to get proper names and icons
 	const devicesQuery = useNormalizedQuery<any, any[]>({

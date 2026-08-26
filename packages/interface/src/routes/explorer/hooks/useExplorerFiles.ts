@@ -1,20 +1,21 @@
+import type {
+	DirectorySortBy,
+	File,
+	FileSearchInput,
+	FileSearchOutput,
+} from "@sd/ts-client";
 import { useMemo } from "react";
-import type { DirectorySortBy, File, FileSearchInput, FileSearchOutput } from "@sd/ts-client";
 import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";
 import { useExplorer } from "../context";
 import { useVirtualListing } from "./useVirtualListing";
 
 export type FileSource =
-	| "search"
-	| "virtual"
-	| "directory"
-	| "recents"
-	| "filtered"
-	| "tag";
+	"search" | "virtual" | "directory" | "recents" | "filtered" | "tag";
 
 export interface ExplorerFilesResult {
 	files: File[];
 	isLoading: boolean;
+	error: Error | null;
 	source: FileSource;
 }
 
@@ -54,7 +55,10 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		// Map explorer sortBy to search SortField
 		const searchSortField = (() => {
 			if (!sortBy) return "Relevance" as const;
-			const sortMap: Record<string, "Relevance" | "Name" | "Size" | "ModifiedAt" | "CreatedAt"> = {
+			const sortMap: Record<
+				string,
+				"Relevance" | "Name" | "Size" | "ModifiedAt" | "CreatedAt"
+			> = {
 				name: "Name",
 				size: "Size",
 				modified: "ModifiedAt",
@@ -76,6 +80,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 				size_range: null,
 				locations: null,
 				content_types: null,
+				favorite: null,
 				include_hidden: viewSettings.showHiddenFiles ?? null,
 				include_archived: null,
 				at_risk: null,
@@ -144,6 +149,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 				size_range: null,
 				locations: null,
 				content_types: null,
+				favorite: null,
 				include_hidden: null,
 				include_archived: null,
 				at_risk: null,
@@ -170,10 +176,16 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		input: searchQueryInput!,
 		resourceType: "file",
 		pathScope:
-			isSearchMode && mode.type === "search" && mode.scope === "folder" && currentPath
+			isSearchMode &&
+			mode.type === "search" &&
+			mode.scope === "folder" &&
+			currentPath
 				? (currentPath as any)
 				: undefined,
-		enabled: isSearchMode && !!searchQueryInput && searchQueryInput.query.length >= 2,
+		enabled:
+			isSearchMode &&
+			!!searchQueryInput &&
+			searchQueryInput.query.length >= 2,
 	});
 
 	// Recents query
@@ -185,12 +197,18 @@ export function useExplorerFiles(): ExplorerFilesResult {
 	});
 
 	// Filtered query (pre-applied SearchFilters)
-	const filteredQuery = useNormalizedQuery<FileSearchInput, FileSearchOutput>({
-		query: "search.files",
-		input: filteredQueryInput!,
-		resourceType: "file",
-		enabled: isFilteredMode && !!filteredQueryInput,
-	});
+	const filteredQuery = useNormalizedQuery<FileSearchInput, FileSearchOutput>(
+		{
+			query: "search.files",
+			input: filteredQueryInput!,
+			resourceType: "file",
+			refetchOnResourceChange:
+				isFilteredMode &&
+				mode.type === "filtered" &&
+				mode.filters.favorite === true,
+			enabled: isFilteredMode && !!filteredQueryInput,
+		},
+	);
 
 	// Tag query — fetches files tagged with a specific tag
 	const tagQueryInput = useMemo(() => {
@@ -248,22 +266,31 @@ export function useExplorerFiles(): ExplorerFilesResult {
 	const files = useMemo(() => {
 		if (isFilteredMode) {
 			return (
-				(filteredQuery.data as FileSearchOutput | undefined)?.files || []
+				(filteredQuery.data as FileSearchOutput | undefined)?.files ||
+				[]
 			);
 		}
 		if (isTagMode) {
-			return (tagQuery.data as { files: File[] } | undefined)?.files ?? [];
+			return (
+				(tagQuery.data as { files: File[] } | undefined)?.files ?? []
+			);
 		}
 		if (isRecentsMode) {
-			return (recentsQuery.data as FileSearchOutput | undefined)?.files || [];
+			return (
+				(recentsQuery.data as FileSearchOutput | undefined)?.files || []
+			);
 		}
 		if (isSearchMode) {
-			return (searchQuery.data as FileSearchOutput | undefined)?.files || [];
+			return (
+				(searchQuery.data as FileSearchOutput | undefined)?.files || []
+			);
 		}
 		if (isVirtualView) {
 			return virtualFiles || [];
 		}
-		return (directoryQuery.data as { files: File[] } | undefined)?.files ?? [];
+		return (
+			(directoryQuery.data as { files: File[] } | undefined)?.files ?? []
+		);
 	}, [
 		isFilteredMode,
 		isTagMode,
@@ -290,5 +317,17 @@ export function useExplorerFiles(): ExplorerFilesResult {
 						? false
 						: directoryQuery.isLoading;
 
-	return { files, isLoading, source };
+	const error = isFilteredMode
+		? filteredQuery.error
+		: isTagMode
+			? tagQuery.error
+			: isRecentsMode
+				? recentsQuery.error
+				: isSearchMode
+					? searchQuery.error
+					: isVirtualView
+						? null
+						: directoryQuery.error;
+
+	return { files, isLoading, error, source };
 }

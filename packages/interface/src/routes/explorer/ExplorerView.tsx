@@ -312,17 +312,6 @@ export function ExplorerView() {
 					'relative flex h-full w-full flex-col overflow-hidden pt-1.5',
 					viewMode === 'size' ? 'bg-transparent' : 'bg-app/80'
 				)}
-		 onDragOver={(e) => e.preventDefault()}
-		 onDragEnter={(e) => e.preventDefault()}
-		 onDragLeave={() => {}}
-		 onDrop={(e) => {
-			 e.preventDefault()
-			 const files = e.dataTransfer?.files
-			 if (files && files.length > 0) {
-				 console.log("Dropped", files.length, "files into Spacedrive")
-				 // TODO: send to Tauri backend
-			 }
-		 }}
 			>
 				{mode.type === 'search' && <SearchToolbar />}
 				<div
