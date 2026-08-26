@@ -15,6 +15,9 @@ mod tests {
 		let empty_input = FileSearchInput::simple("".to_string());
 		assert!(empty_input.validate().is_err());
 
+		let empty_fast_input = FileSearchInput::fast("".to_string());
+		assert!(empty_fast_input.validate().is_ok());
+
 		// Test query too long
 		let long_query = "a".repeat(1001);
 		let long_input = FileSearchInput::simple(long_query);
@@ -98,14 +101,22 @@ mod tests {
 		let query = FileSearchQuery::new(search_input);
 
 		let fts_query = query.build_fts5_query();
-		assert!(fts_query.contains("test"));
-		assert!(fts_query.contains("query"));
+		assert_eq!(fts_query, r#""test" "query"*"#);
 
-		// Test escaping
 		let search_input_special = FileSearchInput::simple("test*query".to_string());
 		let query_special = FileSearchQuery::new(search_input_special);
 		let fts_query_special = query_special.build_fts5_query();
-		assert!(fts_query_special.contains("test\\*query"));
+		assert_eq!(fts_query_special, r#""test*query"*"#);
+
+		let hyphenated = FileSearchQuery::new(FileSearchInput::simple(
+			"README-smoke".to_string(),
+		));
+		assert_eq!(hyphenated.build_fts5_query(), r#""README-smoke"*"#);
+
+		let quoted = FileSearchQuery::new(FileSearchInput::simple(
+			r#"say"hello"#.to_string(),
+		));
+		assert_eq!(quoted.build_fts5_query(), r#""say""hello"*"#);
 	}
 
 	#[test]

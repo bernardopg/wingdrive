@@ -60,6 +60,8 @@ pub struct SearchFilters {
 	pub size_range: Option<SizeRangeFilter>,
 	pub locations: Option<Vec<Uuid>>,
 	pub content_types: Option<Vec<ContentKind>>,
+	/// Filter by persisted entry-scoped favorite state.
+	pub favorite: Option<bool>,
 	pub include_hidden: Option<bool>,
 	pub include_archived: Option<bool>,
 
@@ -199,18 +201,8 @@ impl FileSearchInput {
 
 	/// Validate the search input
 	pub fn validate(&self) -> Result<(), String> {
-		// Allow empty queries when sorting by IndexedAt (for recents view)
-		let is_recents_query =
-			self.query.trim().is_empty() && matches!(self.sort.field, SortField::IndexedAt);
-
-		// Allow empty queries when redundancy filters are active (browsing at-risk files)
-		let has_redundancy_filters = self.filters.at_risk.is_some()
-			|| self.filters.on_volumes.is_some()
-			|| self.filters.not_on_volumes.is_some()
-			|| self.filters.min_volume_count.is_some()
-			|| self.filters.max_volume_count.is_some();
-
-		if self.query.trim().is_empty() && !is_recents_query && !has_redundancy_filters {
+		// Fast mode also powers non-text listings such as recents and filtered views.
+		if self.query.trim().is_empty() && !matches!(self.mode, SearchMode::Fast) {
 			return Err("Query cannot be empty".to_string());
 		}
 

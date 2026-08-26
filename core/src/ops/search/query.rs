@@ -8,7 +8,6 @@ use crate::infra::query::{QueryError, QueryResult};
 use crate::{
 	context::CoreContext,
 	domain::{addressing::SdPath, File},
-	filetype::FileTypeRegistry,
 	infra::db::entities::{
 		content_identity, directory_paths, entry, sidecar, tag, user_metadata, user_metadata_tag,
 	},
@@ -115,10 +114,7 @@ impl LibraryQuery for FileSearchQuery {
 				let execution_time = start_time.elapsed().as_millis() as u64;
 
 				// Get actual total count for pagination
-				let total_count = self
-					.get_total_count(db.conn(), context.file_type_registry())
-					.await
-					.unwrap_or(0);
+				let total_count = self.get_total_count(db.conn()).await.unwrap_or(0);
 
 				// Create output with persistent index type
 				let output = FileSearchOutput::new_persistent(
@@ -213,15 +209,45 @@ impl FileSearchQuery {
 			return Ok(Vec::new());
 		}
 
+		let mut structured_condition = Condition::all();
+		let mut has_structured_filter = false;
+		if let Some(content_types) = &self.input.filters.content_types {
+			if !content_types.is_empty() {
+				structured_condition = structured_condition.add(
+					crate::ops::search::filters::content_kind_condition(content_types),
+				);
+				has_structured_filter = true;
+			}
+		}
+		if let Some(favorite) = self.input.filters.favorite {
+			structured_condition =
+				structured_condition.add(crate::ops::search::filters::favorite_condition(favorite));
+			has_structured_filter = true;
+		}
+		if has_structured_filter {
+			let matching_ids: HashSet<i32> = entry::Entity::find()
+				.select_only()
+				.column(entry::Column::Id)
+				.filter(entry::Column::Id.is_in(fts_results.iter().map(|(id, _)| *id)))
+				.filter(structured_condition)
+				.into_tuple::<i32>()
+				.all(db)
+				.await?
+				.into_iter()
+				.collect();
+			fts_results.retain(|(id, _)| matching_ids.contains(id));
+			if fts_results.is_empty() {
+				return Ok(Vec::new());
+			}
+		}
+
 		// Apply tag filter on FTS results
 		if let Some(tag_filter) = &self.input.filters.tags {
 			let (include_ids, exclude_ids) = self.resolve_tag_filter(db, tag_filter).await?;
-			let include_set: Option<HashSet<i32>> =
-				include_ids.map(|v| v.into_iter().collect());
+			let include_set: Option<HashSet<i32>> = include_ids.map(|v| v.into_iter().collect());
 			let exclude_set: HashSet<i32> = exclude_ids.into_iter().collect();
 			fts_results.retain(|(id, _)| {
-				include_set.as_ref().map_or(true, |s| s.contains(id))
-					&& !exclude_set.contains(id)
+				include_set.as_ref().map_or(true, |s| s.contains(id)) && !exclude_set.contains(id)
 			});
 			if fts_results.is_empty() {
 				return Ok(Vec::new());
@@ -295,6 +321,18 @@ impl FileSearchQuery {
 					.ok()
 					.flatten()
 			})
+			.collect();
+		let entry_uuids: Vec<Uuid> = rows
+			.iter()
+			.filter_map(|row| row.try_get::<Option<Uuid>>("", "entry_uuid").ok().flatten())
+			.collect();
+		let favorite_entry_ids: HashSet<Uuid> = user_metadata::Entity::find()
+			.filter(user_metadata::Column::EntryUuid.is_in(entry_uuids))
+			.filter(user_metadata::Column::Favorite.eq(true))
+			.all(db)
+			.await?
+			.into_iter()
+			.filter_map(|metadata| metadata.entry_uuid)
 			.collect();
 
 		// Batch fetch all sidecars for these content UUIDs
@@ -421,6 +459,7 @@ impl FileSearchQuery {
 
 			// Convert to File
 			let mut file = File::from_entity_model(entity_model, sd_path);
+			file.favorite = entry_uuid.is_some_and(|uuid| favorite_entry_ids.contains(&uuid));
 
 			// Build and set content identity if we have the required fields
 			if let (Some(ci_uuid), Some(ci_hash), Some(ci_first_seen), Some(ci_last_verified)) = (
@@ -597,7 +636,7 @@ impl FileSearchQuery {
 	}
 
 	/// Apply additional filters to the query condition
-	fn apply_filters(&self, mut condition: Condition, registry: &FileTypeRegistry) -> Condition {
+	fn apply_filters(&self, mut condition: Condition) -> Condition {
 		// File type filter
 		if let Some(file_types) = &self.input.filters.file_types {
 			if !file_types.is_empty() {
@@ -637,19 +676,16 @@ impl FileSearchQuery {
 			}
 		}
 
-		// Content type filter using file type registry
+		// Content type filter uses the canonical kind assigned to content identity.
 		if let Some(content_types) = &self.input.filters.content_types {
 			if !content_types.is_empty() {
-				let mut content_condition = Condition::any();
-				for content_type in content_types {
-					let extensions = registry.get_extensions_for_category(*content_type);
-					for extension in extensions {
-						content_condition =
-							content_condition.add(entry::Column::Extension.eq(extension));
-					}
-				}
-				condition = condition.add(content_condition);
+				condition = condition.add(crate::ops::search::filters::content_kind_condition(
+					content_types,
+				));
 			}
+		}
+		if let Some(favorite) = self.input.filters.favorite {
+			condition = condition.add(crate::ops::search::filters::favorite_condition(favorite));
 		}
 
 		// Location filter - join with locations table
@@ -820,11 +856,7 @@ impl FileSearchQuery {
 	}
 
 	/// Get total count of matching entries for pagination
-	async fn get_total_count(
-		&self,
-		db: &DatabaseConnection,
-		registry: &FileTypeRegistry,
-	) -> QueryResult<u64> {
+	async fn get_total_count(&self, db: &DatabaseConnection) -> QueryResult<u64> {
 		let mut condition = Condition::any()
 			.add(entry::Column::Name.contains(&self.input.query))
 			.add(entry::Column::Extension.contains(&self.input.query));
@@ -833,7 +865,7 @@ impl FileSearchQuery {
 		condition = self.apply_scope_filter(condition);
 
 		// Apply additional filters
-		condition = self.apply_filters(condition, registry);
+		condition = self.apply_filters(condition);
 
 		// Build count query
 		let mut query = entry::Entity::find()
@@ -942,6 +974,8 @@ impl FileSearchQuery {
 			.file_types(&self.input.filters.file_types)
 			.date_range(&self.input.filters.date_range)
 			.size_range(&self.input.filters.size_range)
+			.content_types(&self.input.filters.content_types)
+			.favorite(&self.input.filters.favorite)
 			.at_risk(&self.input.filters.at_risk)
 			.on_volumes(&self.input.filters.on_volumes)
 			.not_on_volumes(&self.input.filters.not_on_volumes)
@@ -993,6 +1027,15 @@ impl FileSearchQuery {
 			.collect::<std::collections::HashSet<_>>()
 			.into_iter()
 			.collect();
+		let entry_uuids: Vec<Uuid> = entries.iter().filter_map(|entry| entry.uuid).collect();
+		let favorite_entry_ids: HashSet<Uuid> = user_metadata::Entity::find()
+			.filter(user_metadata::Column::EntryUuid.is_in(entry_uuids))
+			.filter(user_metadata::Column::Favorite.eq(true))
+			.all(db)
+			.await?
+			.into_iter()
+			.filter_map(|metadata| metadata.entry_uuid)
+			.collect();
 
 		let content_identities = if !content_ids.is_empty() {
 			content_identity::Entity::find()
@@ -1024,10 +1067,7 @@ impl FileSearchQuery {
 		};
 
 		// Batch sidecars by content UUID
-		let content_uuids: Vec<Uuid> = content_identities
-			.iter()
-			.filter_map(|ci| ci.uuid)
-			.collect();
+		let content_uuids: Vec<Uuid> = content_identities.iter().filter_map(|ci| ci.uuid).collect();
 
 		let all_sidecars = if !content_uuids.is_empty() {
 			sidecar::Entity::find()
@@ -1060,18 +1100,15 @@ impl FileSearchQuery {
 		}
 
 		// Index content identities by entry content_id for per-entry lookup
-		let identities_by_content_id: std::collections::HashMap<
-			i32,
-			&content_identity::Model,
-		> = content_identities.iter().map(|ci| (ci.id, ci)).collect();
+		let identities_by_content_id: std::collections::HashMap<i32, &content_identity::Model> =
+			content_identities.iter().map(|ci| (ci.id, ci)).collect();
 
 		// Convert entries to FileSearchResult, hydrating each with content_identity
 		let mut results = Vec::new();
 		for entry_model in entries {
 			let content_id = entry_model.content_id;
-			if let Some(mut result) =
-				self.entry_to_search_result(entry_model, db, 1.0).await?
-			{
+			if let Some(mut result) = self.entry_to_search_result(entry_model, db, 1.0).await? {
+				result.file.favorite = favorite_entry_ids.contains(&result.file.id);
 				if let Some(cid) = content_id {
 					if let Some(ci) = identities_by_content_id.get(&cid) {
 						let kind = kinds_by_id
@@ -1108,15 +1145,13 @@ impl FileSearchQuery {
 	}
 
 	pub fn build_fts5_query(&self) -> String {
-		// Escape special FTS5 characters and build query
 		let escaped_query = self
 			.input
 			.query
-			.replace('"', r#"\""#)
-			.replace('\'', r#"\'"#)
-			.replace('*', r#"\*"#)
-			.replace('(', r#"\("#)
-			.replace(')', r#"\)"#);
+			.split_whitespace()
+			.map(|term| format!(r#""{}""#, term.replace('"', "\"\"")))
+			.collect::<Vec<_>>()
+			.join(" ");
 
 		// Add prefix matching for autocomplete if query is long enough
 		if self.input.query.len() > 2 {
@@ -1227,7 +1262,6 @@ impl FileSearchQuery {
 		&self,
 		entry_model: &entry::Model,
 		db: &DatabaseConnection,
-		registry: &FileTypeRegistry,
 	) -> QueryResult<bool> {
 		// File type filter
 		if let Some(file_types) = &self.input.filters.file_types {
@@ -1279,22 +1313,14 @@ impl FileSearchQuery {
 			}
 		}
 
-		// Content type filter using file type registry
+		// Content type filter uses the canonical kind assigned to content identity.
 		if let Some(content_types) = &self.input.filters.content_types {
 			if !content_types.is_empty() {
-				let mut matches_content_type = false;
-
-				for content_type in content_types {
-					let extensions = registry.get_extensions_for_category(*content_type);
-					if let Some(ref extension) = entry_model.extension {
-						if extensions.contains(&extension.as_str()) {
-							matches_content_type = true;
-							break;
-						}
-					}
-				}
-
-				if !matches_content_type {
+				let kind = match entry_model.content_id {
+					Some(content_id) => self.get_content_kind_for_entry(content_id, db).await,
+					None => None,
+				};
+				if !kind.is_some_and(|kind| content_types.contains(&kind)) {
 					return Ok(false);
 				}
 			}
@@ -1617,10 +1643,11 @@ impl FileSearchQuery {
 			.all(db)
 			.await?;
 
-		let entry_uuids: Vec<Uuid> =
-			um_records.iter().filter_map(|um| um.entry_uuid).collect();
-		let ci_uuids: Vec<Uuid> =
-			um_records.iter().filter_map(|um| um.content_identity_uuid).collect();
+		let entry_uuids: Vec<Uuid> = um_records.iter().filter_map(|um| um.entry_uuid).collect();
+		let ci_uuids: Vec<Uuid> = um_records
+			.iter()
+			.filter_map(|um| um.content_identity_uuid)
+			.collect();
 
 		let mut entry_ids: HashSet<i32> = HashSet::new();
 
@@ -1664,8 +1691,11 @@ impl FileSearchQuery {
 		let include_ids = if !tag_filter.include.is_empty() {
 			let mut result_set: Option<HashSet<i32>> = None;
 			for tag_uuid in &tag_filter.include {
-				let ids: HashSet<i32> =
-					self.find_entry_ids_for_tag(db, *tag_uuid).await?.into_iter().collect();
+				let ids: HashSet<i32> = self
+					.find_entry_ids_for_tag(db, *tag_uuid)
+					.await?
+					.into_iter()
+					.collect();
 				result_set = Some(match result_set {
 					None => ids,
 					Some(existing) => existing.intersection(&ids).copied().collect(),

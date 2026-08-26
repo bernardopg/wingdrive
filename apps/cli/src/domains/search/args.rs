@@ -218,6 +218,7 @@ impl From<FileSearchArgs> for FileSearchInput {
 					})
 					.collect()
 			}),
+			favorite: None,
 			include_hidden: Some(args.include_hidden),
 			include_archived: Some(args.include_archived),
 			at_risk: None,

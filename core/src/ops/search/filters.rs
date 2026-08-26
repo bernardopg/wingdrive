@@ -2,7 +2,6 @@
 
 use super::input::*;
 use crate::domain::ContentKind;
-use crate::filetype::FileTypeRegistry;
 use sea_orm::{sea_query::Expr, ColumnTrait, Condition};
 use uuid::Uuid;
 
@@ -91,25 +90,19 @@ impl FilterBuilder {
 		self
 	}
 
-	/// Apply content type filter using the file type registry
-	pub fn content_types(
-		mut self,
-		content_types: &Option<Vec<ContentKind>>,
-		registry: &FileTypeRegistry,
-	) -> Self {
+	/// Filter by the content kind assigned during content identification.
+	pub fn content_types(mut self, content_types: &Option<Vec<ContentKind>>) -> Self {
 		if let Some(types) = content_types {
 			if !types.is_empty() {
-				let mut content_condition = Condition::any();
-				for content_type in types {
-					let extensions = registry.get_extensions_for_category(*content_type);
-					for extension in extensions {
-						content_condition = content_condition.add(
-							crate::infra::db::entities::entry::Column::Extension.eq(extension),
-						);
-					}
-				}
-				self.condition = self.condition.add(content_condition);
+				self.condition = self.condition.add(content_kind_condition(types));
 			}
+		}
+		self
+	}
+
+	pub fn favorite(mut self, favorite: &Option<bool>) -> Self {
+		if let Some(favorite) = favorite {
+			self.condition = self.condition.add(favorite_condition(*favorite));
 		}
 		self
 	}
@@ -223,6 +216,27 @@ impl FilterBuilder {
 	}
 }
 
+pub(crate) fn content_kind_condition(content_types: &[ContentKind]) -> Condition {
+	let kind_ids = content_types
+		.iter()
+		.map(|kind| (*kind as i32).to_string())
+		.collect::<Vec<_>>()
+		.join(",");
+
+	Condition::all().add(Expr::cust(format!(
+		"entries.content_id IN (SELECT id FROM content_identities WHERE kind_id IN ({}))",
+		kind_ids
+	)))
+}
+
+pub(crate) fn favorite_condition(favorite: bool) -> Condition {
+	let operator = if favorite { "IN" } else { "NOT IN" };
+	Condition::all().add(Expr::cust(format!(
+		"entries.uuid {} (SELECT entry_uuid FROM user_metadata WHERE favorite = 1 AND entry_uuid IS NOT NULL)",
+		operator
+	)))
+}
+
 // Removed hardcoded extension mapping - now using FileTypeRegistry
 
 /// Format a UUID as a SQLite BLOB literal (`X'...'`).
@@ -244,5 +258,65 @@ fn uuid_to_sqlite_blob_literal(uuid: &Uuid) -> String {
 impl Default for FilterBuilder {
 	fn default() -> Self {
 		Self::new()
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::infra::db::entities::entry;
+	use sea_orm::{ConnectionTrait, Database, EntityTrait, QueryFilter, QuerySelect};
+
+	#[tokio::test]
+	async fn content_kind_filter_uses_linked_identity() {
+		let db = Database::connect("sqlite::memory:").await.unwrap();
+		db.execute_unprepared(
+			r#"
+			CREATE TABLE content_identities (id INTEGER PRIMARY KEY, kind_id INTEGER NOT NULL);
+			CREATE TABLE entries (id INTEGER PRIMARY KEY, content_id INTEGER, extension TEXT);
+			INSERT INTO content_identities VALUES (1, 1), (2, 2);
+			INSERT INTO entries VALUES (1, 1, 'txt'), (2, NULL, 'jpg'), (3, 2, 'jpg');
+			"#,
+		)
+		.await
+		.unwrap();
+
+		let ids = entry::Entity::find()
+			.select_only()
+			.column(entry::Column::Id)
+			.filter(content_kind_condition(&[ContentKind::Image]))
+			.into_tuple::<i32>()
+			.all(&db)
+			.await
+			.unwrap();
+
+		assert_eq!(ids, vec![1]);
+	}
+
+	#[tokio::test]
+	async fn favorite_filter_uses_persisted_metadata() {
+		let db = Database::connect("sqlite::memory:").await.unwrap();
+		db.execute_unprepared(
+			r#"
+			CREATE TABLE entries (id INTEGER PRIMARY KEY, uuid BLOB);
+			CREATE TABLE user_metadata (entry_uuid BLOB, favorite INTEGER NOT NULL);
+			INSERT INTO entries VALUES (1, X'00000000000000000000000000000001');
+			INSERT INTO entries VALUES (2, X'00000000000000000000000000000002');
+			INSERT INTO user_metadata VALUES (X'00000000000000000000000000000001', 1);
+			"#,
+		)
+		.await
+		.unwrap();
+
+		let ids = entry::Entity::find()
+			.select_only()
+			.column(entry::Column::Id)
+			.filter(favorite_condition(true))
+			.into_tuple::<i32>()
+			.all(&db)
+			.await
+			.unwrap();
+
+		assert_eq!(ids, vec![1]);
 	}
 }

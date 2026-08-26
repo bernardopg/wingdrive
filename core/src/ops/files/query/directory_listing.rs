@@ -309,6 +309,18 @@ impl DirectoryListingQuery {
 			.iter()
 			.filter_map(|row| row.try_get::<Option<Uuid>>("", "entry_uuid").ok().flatten())
 			.collect();
+		let favorite_entry_ids: std::collections::HashSet<Uuid> = if entry_uuids.is_empty() {
+			std::collections::HashSet::new()
+		} else {
+			user_metadata::Entity::find()
+				.filter(user_metadata::Column::EntryUuid.is_in(entry_uuids.clone()))
+				.filter(user_metadata::Column::Favorite.eq(true))
+				.all(db)
+				.await?
+				.into_iter()
+				.filter_map(|metadata| metadata.entry_uuid)
+				.collect()
+		};
 
 		// Batch fetch tags for these entries (both entry-scoped and content-scoped)
 		let mut tags_by_entry: HashMap<Uuid, Vec<crate::domain::tag::Tag>> = HashMap::new();
@@ -529,6 +541,7 @@ impl DirectoryListingQuery {
 
 			// Convert to File using from_entity_model
 			let mut file = File::from_entity_model(entity_model, entry_sd_path);
+			file.favorite = entry_uuid.is_some_and(|uuid| favorite_entry_ids.contains(&uuid));
 
 			// Add content identity if available
 			if let (Some(ci_uuid), Some(ci_hash), Some(ci_first_seen), Some(ci_last_verified)) = (
