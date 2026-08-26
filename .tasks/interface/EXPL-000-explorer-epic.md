@@ -33,11 +33,11 @@ Build the complete Explorer interface for browsing and managing files across all
 
 - [x] Sidebar with library switcher
 - [x] Expanding dropdown menus
-- [ ] Grid view with thumbnails
-- [ ] List view with columns
-- [ ] Media view for photos/videos
-- [ ] File operations (copy, move, delete)
-- [ ] Multi-select with keyboard/mouse
-- [ ] Context menus
-- [ ] Search integration
-- [ ] Inspector panel
+- [x] Grid view with thumbnails
+- [x] List view with columns
+- [x] Media view for photos/videos
+- [x] File operations (copy, move, delete)
+- [x] Multi-select with keyboard/mouse
+- [x] Context menus
+- [x] Search integration
+- [x] Inspector panel

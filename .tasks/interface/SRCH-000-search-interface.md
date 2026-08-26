@@ -1,15 +1,18 @@
 ---
 id: SRCH-000
 title: Search Interface
-status: To Do
+status: In Progress
 assignee: jamiepine
 parent: UI-000
 priority: Medium
 tags: [search, interface]
 whitepaper: Section 6.0
+last_updated: 2026-08-24
 ---
 
 ## Description
+
+Current state: the Explorer top-bar search, debounce, backend query, and shared grid/list/media result rendering are implemented. Structured filters, operators, saved searches, history, semantic mode, and scale validation remain.
 
 Build the search interface with support for full-text search, filters, and semantic search. Displays results in grid/list views with highlighting.
 

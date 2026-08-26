@@ -1,15 +1,18 @@
 ---
 id: SETS-000
 title: "Epic: Settings Interface"
-status: To Do
+status: In Progress
 assignee: jamiepine
 parent: UI-000
 priority: Medium
 tags: [epic, settings, interface]
 whitepaper: N/A
+last_updated: 2026-08-24
 ---
 
 ## Description
+
+Current state: the native Settings window and General, Appearance, Library, Indexer, Services, Privacy, Advanced, and About pages render. Device/data settings are backend-backed; full persistence, sync, updater, encryption, and cross-device coverage remain unverified or incomplete.
 
 Build comprehensive settings pages for configuring libraries, appearance, sync, privacy, and advanced options.
 

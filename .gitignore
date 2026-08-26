@@ -486,3 +486,8 @@ test_data
 
 .claude
 .serena
+# Ferramentas locais de agente
+.codex/
+.obsidian/
+CLAUDE.md
+screenshot-*.png

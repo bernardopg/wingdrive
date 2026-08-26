@@ -1,15 +1,18 @@
 ---
 id: EXPL-002
 title: File List View with Sortable Columns
-status: To Do
+status: In Progress
 assignee: jamiepine
 parent: EXPL-000
 priority: High
 tags: [explorer, views, performance]
 whitepaper: N/A
+last_updated: 2026-08-24
 ---
 
 ## Description
+
+Current state: list rendering, TanStack virtualization, sorting, selection, keyboard navigation, and file opening are implemented. Multi-column sorting and column-resize behavior still need runtime verification.
 
 Implement a list view for files with sortable columns showing name, size, date modified, kind, and tags.
 
