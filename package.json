@@ -1,5 +1,5 @@
 {
-  "name": "spacedrive",
+  "name": "wingdrive",
   "private": true,
   "scripts": {
     "preinstall": "npx only-allow bun",

@@ -1026,7 +1026,7 @@ async fn check_daemon_installed() -> Result<bool, String> {
 		let home =
 			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
 		let plist_path =
-			std::path::PathBuf::from(home).join("Library/LaunchAgents/com.spacedrive.daemon.plist");
+			std::path::PathBuf::from(home).join("Library/LaunchAgents/com.wingdrive.daemon.plist");
 		let exists = plist_path.exists();
 		tracing::info!(
 			"Checking daemon installation at {}: {}",
@@ -1103,7 +1103,7 @@ async fn install_daemon_service(
 		std::fs::create_dir_all(&launch_agents_dir)
 			.map_err(|e| format!("Failed to create LaunchAgents directory: {}", e))?;
 
-		let plist_path = launch_agents_dir.join("com.spacedrive.daemon.plist");
+		let plist_path = launch_agents_dir.join("com.wingdrive.daemon.plist");
 		tracing::info!("Creating plist at: {}", plist_path.display());
 
 		let daemon_path = find_daemon_binary()?;
@@ -1118,7 +1118,7 @@ async fn install_daemon_service(
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.spacedrive.daemon</string>
+	<string>com.wingdrive.daemon</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>{}</string>
@@ -1463,7 +1463,7 @@ async fn uninstall_daemon_service() -> Result<(), String> {
 		let home =
 			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
 		let plist_path = std::path::PathBuf::from(&home)
-			.join("Library/LaunchAgents/com.spacedrive.daemon.plist");
+			.join("Library/LaunchAgents/com.wingdrive.daemon.plist");
 
 		if plist_path.exists() {
 			// Unload the service
@@ -1674,7 +1674,7 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 	let mut menu_items_map = HashMap::new();
 
 	// Application menu (macOS standard)
-	let app_menu = SubmenuBuilder::new(app, "Spacedrive")
+	let app_menu = SubmenuBuilder::new(app, "WingDrive")
 		.item(&PredefinedMenuItem::about(app, None, None)?)
 		.separator()
 		.item(&PredefinedMenuItem::hide(app, None)?)

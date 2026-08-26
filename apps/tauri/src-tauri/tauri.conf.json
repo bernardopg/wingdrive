@@ -1,7 +1,7 @@
 {
-  "productName": "Spacedrive",
+  "productName": "WingDrive",
   "version": "2.0.0-alpha.2",
-  "identifier": "com.spacedrive.desktop",
+  "identifier": "com.wingdrive.desktop",
   "build": {
     "beforeDevCommand": "bun run dev:with-daemon",
     "beforeBuildCommand": "bun run build:daemon:release && bun run build",
@@ -13,7 +13,7 @@
     "macOSPrivateApi": true,
     "windows": [
       {
-        "title": "Spacedrive",
+        "title": "WingDrive",
         "width": 1400,
         "height": 750,
         "minWidth": 768,

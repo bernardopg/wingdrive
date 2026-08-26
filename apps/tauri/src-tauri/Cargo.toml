@@ -1,10 +1,10 @@
 [package]
-name = "spacedrive"
+name = "wingdrive"
 version = "2.0.0-alpha.2"
 edition = "2021"
 
 [[bin]]
-name = "Spacedrive"
+name = "WingDrive"
 path = "src/main.rs"
 
 [build-dependencies]

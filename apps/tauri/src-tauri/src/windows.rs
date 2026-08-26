@@ -113,7 +113,7 @@ impl SpacedriveWindow {
 					app,
 					&label,
 					"/",
-					"Spacedrive",
+					"WingDrive",
 					(1400.0, 750.0),
 					(768.0, 500.0),
 					true,  // decorations

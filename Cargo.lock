@@ -10174,36 +10174,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "spacedrive"
-version = "2.0.0-alpha.2"
-dependencies = [
- "axum",
- "file-opening",
- "file-opening-linux",
- "file-opening-macos",
- "file-opening-windows",
- "parking_lot",
- "sd-desktop-macos",
- "sd-tauri-core",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-clipboard-manager",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-os",
- "tauri-plugin-shell",
- "tauri-plugin-updater",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "spacedrive-sdk"
 version = "0.1.0"
 dependencies = [
@@ -13726,6 +13696,36 @@ name = "windows_x86_64_msvc"
 version = "0.53.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6bbff5f0aada427a1e5a6da5f1f98158182f26556f345ac9e04d36d0ebed650"
+
+[[package]]
+name = "wingdrive"
+version = "2.0.0-alpha.2"
+dependencies = [
+ "axum",
+ "file-opening",
+ "file-opening-linux",
+ "file-opening-macos",
+ "file-opening-windows",
+ "parking_lot",
+ "sd-desktop-macos",
+ "sd-tauri-core",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-clipboard-manager",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-os",
+ "tauri-plugin-shell",
+ "tauri-plugin-updater",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
 
 [[package]]
 name = "winnow"
