@@ -4,9 +4,11 @@ use super::{SetFavoriteInput, SetFavoriteOutput};
 use crate::{
 	context::CoreContext,
 	infra::action::{error::ActionError, LibraryAction},
+	infra::db::entities::entry,
 	library::Library,
 	ops::metadata::manager::UserMetadataManager,
 };
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -34,12 +36,35 @@ impl LibraryAction for SetFavoriteAction {
 		context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
 		let db = library.db();
+		let exists = entry::Entity::find()
+			.filter(entry::Column::Uuid.eq(self.input.entry_uuid))
+			.one(db.conn())
+			.await?
+			.is_some();
+		if !exists {
+			return Err(ActionError::InvalidInput(format!(
+				"Entry {} does not exist",
+				self.input.entry_uuid
+			)));
+		}
 		let metadata_manager = UserMetadataManager::new(Arc::new(db.conn().clone()));
 
-		metadata_manager
+		let (metadata, was_created) = metadata_manager
 			.set_favorite(self.input.entry_uuid, self.input.is_favorite)
 			.await
 			.map_err(|e| ActionError::Internal(format!("Failed to set favorite: {}", e)))?;
+
+		library
+			.sync_model(
+				&metadata,
+				if was_created {
+					crate::infra::sync::ChangeType::Insert
+				} else {
+					crate::infra::sync::ChangeType::Update
+				},
+			)
+			.await
+			.map_err(|e| ActionError::Internal(format!("Failed to sync favorite: {}", e)))?;
 
 		// Emit resource event so the frontend updates the favorite state reactively
 		let resource_manager = crate::domain::ResourceManager::new(
@@ -50,7 +75,10 @@ impl LibraryAction for SetFavoriteAction {
 			.emit_resource_events("file", vec![self.input.entry_uuid])
 			.await
 		{
-			tracing::warn!("Failed to emit resource events after setting favorite: {}", e);
+			tracing::warn!(
+				"Failed to emit resource events after setting favorite: {}",
+				e
+			);
 		}
 
 		Ok(SetFavoriteOutput {

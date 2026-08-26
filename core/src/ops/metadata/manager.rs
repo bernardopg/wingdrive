@@ -501,8 +501,13 @@ impl UserMetadataManager {
 	}
 
 	/// Set favorite status for an entry
-	pub async fn set_favorite(&self, entry_uuid: Uuid, is_favorite: bool) -> Result<(), TagError> {
+	pub async fn set_favorite(
+		&self,
+		entry_uuid: Uuid,
+		is_favorite: bool,
+	) -> Result<(user_metadata::Model, bool), TagError> {
 		let db = &*self.db;
+		let was_created = self.get_metadata_by_entry_uuid(entry_uuid).await?.is_none();
 
 		let metadata = self.get_or_create_metadata(entry_uuid).await?;
 
@@ -519,12 +524,12 @@ impl UserMetadataManager {
 		active_model.favorite = Set(is_favorite);
 		active_model.updated_at = Set(Utc::now());
 
-		active_model
+		let updated = active_model
 			.update(&*db)
 			.await
 			.map_err(|e| TagError::DatabaseError(e.to_string()))?;
 
-		Ok(())
+		Ok((updated, was_created))
 	}
 
 	/// Apply a single semantic tag to an entry

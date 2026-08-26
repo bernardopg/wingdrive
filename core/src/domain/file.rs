@@ -673,7 +673,7 @@ impl File {
 	) -> crate::common::errors::Result<Vec<File>> {
 		use crate::infra::db::entities::{content_identity, entry, location, sidecar};
 		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-		use std::collections::HashMap;
+		use std::collections::{HashMap, HashSet};
 
 		if entry_uuids.is_empty() {
 			return Ok(Vec::new());
@@ -792,6 +792,11 @@ impl File {
 			)
 			.all(db)
 			.await?;
+		let favorite_entry_ids: HashSet<Uuid> = metadata_records
+			.iter()
+			.filter(|metadata| metadata.favorite)
+			.filter_map(|metadata| metadata.entry_uuid)
+			.collect();
 
 		if !metadata_records.is_empty() {
 			let metadata_ids: Vec<i32> = metadata_records.iter().map(|m| m.id).collect();
@@ -1008,6 +1013,7 @@ impl File {
 			if let Some(tags) = tags_by_entry.get(&entry_uuid) {
 				file.tags = tags.clone();
 			}
+			file.favorite = favorite_entry_ids.contains(&entry_uuid);
 
 			files.push(file);
 		}

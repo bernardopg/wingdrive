@@ -1639,13 +1639,15 @@ impl Library {
 			.execute(Statement::from_string(
 				sea_orm::DbBackend::Sqlite,
 				r#"
-					UPDATE content_kinds
-					SET file_count = (
-						SELECT COUNT(*)
-						FROM content_identities
-						WHERE content_identities.kind_id = content_kinds.id
-					)
-				"#
+						UPDATE content_kinds
+						SET file_count = (
+							SELECT COUNT(*)
+							FROM entries
+							INNER JOIN content_identities ON entries.content_id = content_identities.id
+							WHERE entries.kind = 0
+							AND content_identities.kind_id = content_kinds.id
+						)
+					"#
 				.to_owned(),
 			))
 			.await?
