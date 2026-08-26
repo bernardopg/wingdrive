@@ -1,10 +1,4 @@
-import {
-	Brain,
-	CalendarDots,
-	ChatCircleDots,
-	Checks,
-	MoonStars
-} from '@phosphor-icons/react';
+import {ChatCircleDots, Checks} from '@phosphor-icons/react';
 import {Ball, BallBlue} from '@sd/assets/images';
 import {
 	apiClient,
@@ -34,10 +28,7 @@ import {useSpacebotEventSource} from './useSpacebotEventSource';
 
 export const primaryItems = [
 	{icon: ChatCircleDots, label: 'Chat', path: '/spacebot/chat'},
-	{icon: Checks, label: 'Tasks', path: '/spacebot/tasks'},
-	{icon: Brain, label: 'Memories', path: '/spacebot/memories'},
-	{icon: MoonStars, label: 'Dream', path: '/spacebot/autonomy'},
-	{icon: CalendarDots, label: 'Schedule', path: '/spacebot/schedule'}
+	{icon: Checks, label: 'Tasks', path: '/spacebot/tasks'}
 ];
 
 export const projects = [
@@ -144,6 +135,26 @@ export const isMacOS =
 		navigator.userAgent.includes('Mac'));
 
 export function SpacebotProvider({children}: SpacebotProviderProps) {
+	if (import.meta.env.VITE_SPACEBOT_AVAILABLE !== 'true') {
+		return (
+			<div className="bg-app text-ink flex h-full items-center justify-center p-8">
+				<div className="border-app-line bg-app-box max-w-md rounded-2xl border p-6 text-center">
+					<h1 className="text-lg font-semibold">
+						Spacebot unavailable
+					</h1>
+					<p className="text-ink-dull mt-2 text-sm">
+						This build does not include the Spacebot runtime. No
+						messages or tasks were changed.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	return <AvailableSpacebotProvider>{children}</AvailableSpacebotProvider>;
+}
+
+function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 	const platform = usePlatform();
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
@@ -351,7 +362,9 @@ export function SpacebotProvider({children}: SpacebotProviderProps) {
 				// Push the assistant message directly into the timeline cache.
 				queryClient.setQueryData(
 					['spacebot', 'channel-timeline', conversationId],
-					(old: { items: unknown[]; has_more: boolean } | undefined) => {
+					(
+						old: {items: unknown[]; has_more: boolean} | undefined
+					) => {
 						if (!old) return old;
 						return {
 							...old,
@@ -386,7 +399,9 @@ export function SpacebotProvider({children}: SpacebotProviderProps) {
 				// so it appears instantly (like the portal SSE-driven approach).
 				queryClient.setQueryData(
 					['spacebot', 'channel-timeline', conversationId],
-					(old: { items: unknown[]; has_more: boolean } | undefined) => {
+					(
+						old: {items: unknown[]; has_more: boolean} | undefined
+					) => {
 						if (!old) return old;
 						return {
 							...old,

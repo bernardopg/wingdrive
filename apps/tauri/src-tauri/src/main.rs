@@ -84,6 +84,8 @@ struct DaemonState {
 	socket_addr: String,
 	data_dir: PathBuf,
 	server_url: Option<String>,
+	/// Per-session token guarding the local file streaming endpoint
+	server_token: Option<String>,
 	#[allow(dead_code)]
 	server_shutdown: Option<tokio::sync::mpsc::Sender<()>>,
 	daemon_process: Option<std::sync::Arc<tokio::sync::Mutex<Option<std::process::Child>>>>,
@@ -384,6 +386,55 @@ async fn get_server_url(
 		.server_url
 		.clone()
 		.ok_or_else(|| "Server not started".to_string())
+}
+
+/// Builds a loopback URL that streams a local file to the webview.
+///
+/// Media elements cannot use the asset protocol on Linux: playback is handled
+/// by GStreamer, which fetches the URI itself and has no knowledge of the
+/// webview's custom scheme handler. The local HTTP server serves the bytes with
+/// range support instead, which also makes seeking work.
+#[tauri::command]
+async fn get_file_stream_url(
+	path: String,
+	state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
+) -> Result<String, String> {
+	let state = state.read().await;
+
+	let server_url = state
+		.server_url
+		.clone()
+		.ok_or_else(|| "Server not started".to_string())?;
+	let token = state
+		.server_token
+		.clone()
+		.ok_or_else(|| "Server token unavailable".to_string())?;
+
+	let url = format!(
+		"{}/file?path={}&token={}",
+		server_url,
+		percent_encode_query(&path),
+		token
+	);
+
+	tracing::debug!(%url, "Built file stream URL");
+
+	Ok(url)
+}
+
+/// Percent-encodes everything outside the unreserved set so paths with spaces,
+/// `&`, `#` or non-ASCII characters survive the query string.
+fn percent_encode_query(value: &str) -> String {
+	let mut encoded = String::with_capacity(value.len());
+	for byte in value.as_bytes() {
+		match byte {
+			b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' | b'/' => {
+				encoded.push(*byte as char)
+			}
+			_ => encoded.push_str(&format!("%{:02X}", byte)),
+		}
+	}
+	encoded
 }
 
 /// Set the current library ID in the window (legacy - injects into main window only)
@@ -1946,6 +1997,7 @@ fn main() {
 			app_ready,
 			get_daemon_socket,
 			get_server_url,
+			get_file_stream_url,
 			set_library_id,
 			get_current_library_id,
 			set_current_library_id,
@@ -2090,6 +2142,7 @@ fn main() {
 				socket_addr: socket_addr.clone(),
 				data_dir: data_dir.clone(),
 				server_url: None,
+				server_token: None,
 				server_shutdown: None,
 				daemon_process: None,
 			}));
@@ -2142,10 +2195,11 @@ fn main() {
 
 				// Start HTTP server for serving files/sidecars
 				match server::start_server(data_dir_clone.clone()).await {
-					Ok((server_url, shutdown_tx)) => {
+					Ok((server_url, server_token, shutdown_tx)) => {
 						tracing::info!("HTTP server started at {}", server_url);
 						let mut state = daemon_state.write().await;
 						state.server_url = Some(server_url);
+						state.server_token = Some(server_token);
 						state.server_shutdown = Some(shutdown_tx);
 					}
 					Err(e) => {

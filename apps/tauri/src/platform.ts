@@ -79,6 +79,10 @@ export const platform: Platform = {
 		return tauriConvertFileSrc(filePath);
 	},
 
+	async getMediaSrc(filePath: string) {
+		return invoke<string>('get_file_stream_url', {path: filePath});
+	},
+
 	async revealFile(filePath: string) {
 		await invoke('reveal_file', {path: filePath});
 	},

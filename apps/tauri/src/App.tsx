@@ -19,9 +19,6 @@ import {
 	ChatRoute,
 	ConversationRoute,
 	TasksRoute,
-	MemoriesRoute,
-	AutonomyRoute,
-	ScheduleRoute,
 } from "@sd/interface/Spacebot";
 import { VoiceOverlay } from "@sd/interface/windows/VoiceOverlay";
 import {createMemoryRouter, Navigate, Outlet, RouterProvider} from "react-router-dom";
@@ -332,9 +329,6 @@ function App() {
 									],
 								},
 								{path: "tasks", element: <TasksRoute />},
-								{path: "memories", element: <MemoriesRoute />},
-								{path: "autonomy", element: <AutonomyRoute />},
-								{path: "schedule", element: <ScheduleRoute />},
 							],
 						},
 					],

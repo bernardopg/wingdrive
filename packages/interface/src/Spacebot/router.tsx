@@ -3,9 +3,6 @@ import { SpacebotLayout } from './SpacebotLayout';
 import { ChatRoute } from './routes/ChatRoute';
 import { ConversationRoute } from './routes/ConversationRoute';
 import { TasksRoute } from './routes/TasksRoute';
-import { MemoriesRoute } from './routes/MemoriesRoute';
-import { AutonomyRoute } from './routes/AutonomyRoute';
-import { ScheduleRoute } from './routes/ScheduleRoute';
 
 /**
  * Spacebot nested route configuration
@@ -40,18 +37,6 @@ export const spacebotRoutes: RouteObject[] = [
 			{
 				path: 'tasks',
 				element: <TasksRoute />,
-			},
-			{
-				path: 'memories',
-				element: <MemoriesRoute />,
-			},
-			{
-				path: 'autonomy',
-				element: <AutonomyRoute />,
-			},
-			{
-				path: 'schedule',
-				element: <ScheduleRoute />,
 			},
 		],
 	},

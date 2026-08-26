@@ -6,20 +6,27 @@
 
 use axum::{
 	body::Body,
-	extract::{Path, State},
-	http::{header, HeaderValue, Request, Response, StatusCode},
+	extract::{Path, Query, State},
+	http::{header, HeaderMap, HeaderValue, Request, Response, StatusCode},
 	middleware::{self, Next},
 	routing::get,
 	Router,
 };
-use std::{net::Ipv4Addr, path::PathBuf};
-use tokio::{fs::File, io, net::TcpListener};
+use serde::Deserialize;
+use std::{net::Ipv4Addr, path::PathBuf, sync::Arc};
+use tokio::{
+	fs::File,
+	io::{self, AsyncReadExt, AsyncSeekExt},
+	net::TcpListener,
+};
 use tracing::{error, info};
 
 #[derive(Clone)]
 pub struct ServerState {
 	/// Path to the Spacedrive data directory
 	data_dir: PathBuf,
+	/// Random per-session token required by the file endpoint
+	token: Arc<String>,
 }
 
 /// Find library folder by UUID (reads library.json files to match ID)
@@ -148,6 +155,158 @@ async fn serve_sidecar(
 		})
 }
 
+#[derive(Deserialize)]
+pub struct FileQuery {
+	path: String,
+	token: String,
+}
+
+/// Streams an arbitrary local file with HTTP range support.
+///
+/// Media elements on Linux are decoded by GStreamer, which fetches the URI
+/// itself instead of going through the webview's custom scheme handler, so
+/// `asset:`/`http://asset.localhost` URLs never load audio or video there.
+/// Serving media over the loopback HTTP server sidesteps that and gives
+/// seeking for free, since range requests are handled here.
+///
+/// The endpoint would otherwise let any local process read the user's files,
+/// so it requires the per-session token that only the webview receives.
+async fn serve_file(
+	State(state): State<ServerState>,
+	Query(query): Query<FileQuery>,
+	headers: HeaderMap,
+) -> Result<Response<Body>, StatusCode> {
+	if query.token != *state.token {
+		return Err(StatusCode::FORBIDDEN);
+	}
+
+	let path = PathBuf::from(&query.path);
+	if !path.is_absolute() {
+		return Err(StatusCode::BAD_REQUEST);
+	}
+
+	let mut file = File::open(&path).await.map_err(|e| {
+		if e.kind() == io::ErrorKind::NotFound {
+			StatusCode::NOT_FOUND
+		} else {
+			error!("Error opening {:?}: {}", path, e);
+			StatusCode::FORBIDDEN
+		}
+	})?;
+
+	let metadata = file
+		.metadata()
+		.await
+		.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+	if metadata.is_dir() {
+		return Err(StatusCode::BAD_REQUEST);
+	}
+
+	let total = metadata.len();
+	let content_type = content_type_for(&path);
+	let range = headers
+		.get(header::RANGE)
+		.and_then(|v| v.to_str().ok())
+		.and_then(|v| parse_range(v, total));
+
+	let (status, start, end) = match range {
+		Some((start, end)) => (StatusCode::PARTIAL_CONTENT, start, end),
+		None => (StatusCode::OK, 0, total.saturating_sub(1)),
+	};
+
+	if total > 0 && start >= total {
+		return Response::builder()
+			.status(StatusCode::RANGE_NOT_SATISFIABLE)
+			.header(header::CONTENT_RANGE, format!("bytes */{}", total))
+			.body(Body::empty())
+			.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR);
+	}
+
+	file.seek(io::SeekFrom::Start(start))
+		.await
+		.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+	let length = end.saturating_sub(start) + 1;
+	let body = Body::from_stream(tokio_util::io::ReaderStream::new(file.take(length)));
+
+	let mut builder = Response::builder()
+		.status(status)
+		.header(header::CONTENT_TYPE, content_type)
+		.header(header::CONTENT_LENGTH, length)
+		.header(header::ACCEPT_RANGES, HeaderValue::from_static("bytes"))
+		.header(
+			header::ACCESS_CONTROL_ALLOW_ORIGIN,
+			HeaderValue::from_static("*"),
+		);
+
+	if status == StatusCode::PARTIAL_CONTENT {
+		builder = builder.header(
+			header::CONTENT_RANGE,
+			format!("bytes {}-{}/{}", start, end, total),
+		);
+	}
+
+	builder.body(body).map_err(|e| {
+		error!("Error building file response: {}", e);
+		StatusCode::INTERNAL_SERVER_ERROR
+	})
+}
+
+/// Parses a single-range `bytes=` header. Multi-range requests are ignored so
+/// the caller falls back to a full response, which players handle fine.
+fn parse_range(value: &str, total: u64) -> Option<(u64, u64)> {
+	let spec = value.strip_prefix("bytes=")?;
+	if spec.contains(',') {
+		return None;
+	}
+
+	let (start, end) = spec.split_once('-')?;
+	let last = total.saturating_sub(1);
+
+	match (start.trim(), end.trim()) {
+		("", "") => None,
+		// Suffix range: last N bytes.
+		("", n) => {
+			let n: u64 = n.parse().ok()?;
+			Some((total.saturating_sub(n), last))
+		}
+		(s, "") => Some((s.parse().ok()?, last)),
+		(s, e) => {
+			let start: u64 = s.parse().ok()?;
+			let end: u64 = e.parse().ok()?;
+			Some((start, end.min(last)))
+		}
+	}
+}
+
+fn content_type_for(path: &std::path::Path) -> HeaderValue {
+	let ext = path
+		.extension()
+		.and_then(|e| e.to_str())
+		.unwrap_or_default()
+		.to_ascii_lowercase();
+
+	let mime = match ext.as_str() {
+		"mp4" | "m4v" => "video/mp4",
+		"mov" => "video/quicktime",
+		"webm" => "video/webm",
+		"mkv" => "video/x-matroska",
+		"avi" => "video/x-msvideo",
+		"ogv" => "video/ogg",
+		"mp3" => "audio/mpeg",
+		"m4a" => "audio/mp4",
+		"aac" => "audio/aac",
+		"flac" => "audio/flac",
+		"wav" => "audio/wav",
+		"ogg" | "oga" => "audio/ogg",
+		"opus" => "audio/opus",
+		_ => "application/octet-stream",
+	};
+
+	HeaderValue::from_static(mime)
+}
+
 /// CORS middleware to add headers to all responses (including errors)
 async fn add_cors_headers(request: Request<Body>, next: Next) -> Response<Body> {
 	let mut response = next.run(request).await;
@@ -159,14 +318,15 @@ async fn add_cors_headers(request: Request<Body>, next: Next) -> Response<Body> 
 }
 
 /// Create the HTTP router
-fn create_router(data_dir: PathBuf) -> Router {
-	let state = ServerState { data_dir };
+fn create_router(data_dir: PathBuf, token: Arc<String>) -> Router {
+	let state = ServerState { data_dir, token };
 
 	Router::new()
 		.route(
 			"/sidecar/:library_id/:content_uuid/:kind/*variant",
 			get(serve_sidecar),
 		)
+		.route("/file", get(serve_file))
 		.layer(middleware::from_fn(add_cors_headers))
 		.with_state(state)
 }
@@ -176,17 +336,18 @@ fn create_router(data_dir: PathBuf) -> Router {
 /// Returns the server address and a channel to trigger shutdown
 pub async fn start_server(
 	data_dir: PathBuf,
-) -> Result<(String, tokio::sync::mpsc::Sender<()>), String> {
+) -> Result<(String, String, tokio::sync::mpsc::Sender<()>), String> {
 	// Bind to localhost on random port
 	let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
 		.await
 		.map_err(|e| e.to_string())?;
 	let addr = listener.local_addr().map_err(|e| e.to_string())?;
 	let listen_url = format!("http://{}", addr);
+	let token = uuid::Uuid::new_v4().to_string();
 
 	info!("Starting sidecar HTTP server on {}", listen_url);
 
-	let app = create_router(data_dir);
+	let app = create_router(data_dir, Arc::new(token.clone()));
 	let (shutdown_tx, mut shutdown_rx) = tokio::sync::mpsc::channel::<()>(1);
 
 	// Spawn server task
@@ -200,5 +361,5 @@ pub async fn start_server(
 			.expect("HTTP server error");
 	});
 
-	Ok((listen_url, shutdown_tx))
+	Ok((listen_url, token, shutdown_tx))
 }

@@ -145,28 +145,33 @@ export interface TypingStateEvent {
 	is_typing: boolean;
 }
 
+const unavailable = (): Promise<never> =>
+	Promise.reject(
+		new Error(
+			'Spacebot is unavailable in this build; no changes were made.'
+		)
+	);
+
 export const apiClient = {
 	ttsProfiles: async (_agentId: string): Promise<TtsProfile[]> => [],
-	ttsGenerate: async (
+	ttsGenerate: (
 		_text: string,
 		_opts: {agentId: string; profileId: string}
-	): Promise<ArrayBuffer> => new ArrayBuffer(0),
-	webChatSendAudio: async (
+	): Promise<ArrayBuffer> => unavailable(),
+	webChatSendAudio: (
 		_agentId: string,
 		_sessionId: string,
 		_blob: Blob
-	): Promise<{ok: boolean; status: number}> => ({ok: false, status: 500}),
+	): Promise<{ok: boolean; status: number}> => unavailable(),
 	listTasks: async (
 		_agentId: string,
 		_limit?: number
 	): Promise<{tasks: Task[]}> => ({tasks: []}),
-	updateTask: async (
+	updateTask: (
 		_taskNumber: number,
 		_req: UpdateTaskRequest
-	): Promise<{ok: boolean}> => ({ok: true}),
-	deleteTask: async (_taskNumber: number): Promise<{ok: boolean}> => ({
-		ok: true
-	}),
+	): Promise<{ok: boolean}> => unavailable(),
+	deleteTask: (_taskNumber: number): Promise<{ok: boolean}> => unavailable(),
 	channelMessages: async (
 		_conversationId: string,
 		_limit?: number
@@ -185,11 +190,11 @@ export const apiClient = {
 		completed_at: null,
 		transcript: []
 	}),
-	cancelProcess: async (_params: {
+	cancelProcess: (_params: {
 		channelId: string;
 		processType: string;
 		processId: string;
-	}): Promise<{ok: boolean}> => ({ok: true}),
+	}): Promise<{ok: boolean}> => unavailable(),
 	listPortalConversations: async (
 		_agentId: string,
 		_includeDeleted?: boolean,
@@ -205,26 +210,16 @@ export const apiClient = {
 		messages: [],
 		has_more: false
 	}),
-	createPortalConversation: async (_input: {
+	createPortalConversation: (_input: {
 		agentId: string;
 		title?: string | null;
-	}): Promise<PortalConversationResponse> => ({
-		conversation: {
-			id: '',
-			title: '',
-			message_count: 0,
-			last_message_preview: null,
-			created_at: '',
-			updated_at: ''
-		},
-		messages: []
-	}),
-	portalSend: async (_input: {
+	}): Promise<PortalConversationResponse> => unavailable(),
+	portalSend: (_input: {
 		agentId: string;
 		sessionId: string;
 		senderName: string;
 		message: string;
-	}): Promise<{ok: boolean}> => ({ok: true})
+	}): Promise<{ok: boolean}> => unavailable()
 };
 
 export function getEventsUrl(): string {

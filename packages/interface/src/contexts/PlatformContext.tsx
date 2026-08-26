@@ -37,6 +37,15 @@ export type Platform = {
 	/** Convert a file path to a URL that can be loaded in the webview */
 	convertFileSrc?(filePath: string): string;
 
+	/**
+	 * URL for streaming a media file with range support.
+	 *
+	 * Video and audio need this instead of `convertFileSrc`: on Linux playback
+	 * runs through GStreamer, which fetches the URL itself and cannot resolve
+	 * the webview's asset protocol.
+	 */
+	getMediaSrc?(filePath: string): Promise<string>;
+
 	/** Reveal a file in the native file manager (Finder on macOS, Explorer on Windows, etc.) */
 	revealFile?(filePath: string): Promise<void>;
 

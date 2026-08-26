@@ -1,5 +1,5 @@
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import {defineConfig} from 'vite';
@@ -7,10 +7,18 @@ import commonjs from 'vite-plugin-commonjs';
 
 const spaceui = path.resolve(import.meta.dirname, '../../../spaceui/packages');
 const hasSpaceui = fs.existsSync(spaceui);
-const spacebot = path.resolve(import.meta.dirname, '../../../spacebot/packages');
+const spacebot = path.resolve(
+	import.meta.dirname,
+	'../../../spacebot/packages'
+);
 const hasSpacebot = fs.existsSync(spacebot);
 
 export default defineConfig(() => ({
+	define: {
+		'import.meta.env.VITE_SPACEBOT_AVAILABLE': JSON.stringify(
+			String(hasSpacebot)
+		)
+	},
 	plugins: [react(), tailwindcss(), commonjs()],
 
 	resolve: {
@@ -63,28 +71,28 @@ export default defineConfig(() => ({
 				? [
 						{
 							find: /^@spacedrive\/tokens\/css\/themes\/(.+)$/,
-							replacement: `${spaceui}/tokens/src/css/themes/$1.css`,
+							replacement: `${spaceui}/tokens/src/css/themes/$1.css`
 						},
 						{
 							find: /^@spacedrive\/tokens\/theme$/,
-							replacement: `${spaceui}/tokens/src/css/theme.css`,
+							replacement: `${spaceui}/tokens/src/css/theme.css`
 						},
 						{
 							find: /^@spacedrive\/tokens\/css$/,
-							replacement: `${spaceui}/tokens/src/css/base.css`,
+							replacement: `${spaceui}/tokens/src/css/base.css`
 						},
 						{
 							find: /^@spacedrive\/tokens$/,
-							replacement: `${spaceui}/tokens`,
+							replacement: `${spaceui}/tokens`
 						},
 						{
 							find: /^@spacedrive\/ai$/,
-							replacement: `${spaceui}/ai/src/index.ts`,
+							replacement: `${spaceui}/ai/src/index.ts`
 						},
 						{
 							find: /^@spacedrive\/primitives$/,
-							replacement: `${spaceui}/primitives/src/index.ts`,
-						},
+							replacement: `${spaceui}/primitives/src/index.ts`
+						}
 					]
 				: []),
 			// Spacebot lives in a separate private repo. Fall back to a tracked
@@ -94,7 +102,10 @@ export default defineConfig(() => ({
 				find: /^@spacebot\/api-client$/,
 				replacement: hasSpacebot
 					? `${spacebot}/api-client/src`
-					: path.resolve(import.meta.dirname, './src/stubs/spacebot-api-client.ts'),
+					: path.resolve(
+							import.meta.dirname,
+							'./src/stubs/spacebot-api-client.ts'
+						)
 			},
 			{
 				find: '@sd/interface',
@@ -131,7 +142,7 @@ export default defineConfig(() => ({
 		fs: {
 			allow: [
 				path.resolve(import.meta.dirname, '../../..'),
-				...(hasSpaceui ? [spaceui] : []),
+				...(hasSpaceui ? [spaceui] : [])
 			]
 		},
 		watch: {
