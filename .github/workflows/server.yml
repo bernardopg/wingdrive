@@ -1,9 +1,9 @@
-name: Server release
+name: Server release (upstream, inactive)
 
+# Inherited from Spacedrive. Builds on a Blacksmith runner and pushes to the
+# upstream container registry, so the tag trigger is removed to stop it firing
+# on every fork release.
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
 
 jobs:

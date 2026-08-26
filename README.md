@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/logo.svg" alt="WingDrive" width="120" height="120" />
+</p>
+
 <h1 align="center">WingDrive</h1>
 
 <p align="center">

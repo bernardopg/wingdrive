@@ -1,17 +1,12 @@
 # This workflow _produces_ caches which are used to speed up pull request builds.
 # Originally from https://github.com/libp2p/rust-libp2p/blob/master/.github/workflows/cache-factory.yml
 
-name: Cache Factory
+name: Cache Factory (upstream, inactive)
 
+# Inherited from Spacedrive. Warms Blacksmith runner caches, which do not exist
+# for this fork. The nightly schedule is removed so it stops burning minutes on
+# a job that cannot succeed.
 on:
-  push:
-    branches:
-      - main
-  schedule:
-    - cron: "0 0 * * *"
-  pull_request:
-    paths:
-      - ".github/workflows/cache-factory.yaml"
   workflow_dispatch:
 
 # Cancel previous runs of the same workflow on the same branch.

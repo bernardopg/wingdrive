@@ -1,9 +1,9 @@
-name: Release
+name: Release (upstream, inactive)
 
+# Inherited from Spacedrive. Requires Apple notarization and Windows signing
+# secrets the fork does not hold, so the tag trigger is removed. Pushing a tag
+# would otherwise start a build that always fails at the signing step.
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 # From: https://github.com/rust-lang/rust-analyzer/blob/master/.github/workflows/release.yaml#L13-L21

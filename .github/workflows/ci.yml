@@ -1,11 +1,11 @@
-name: CI
+name: CI (upstream, inactive)
 
+# Inherited from Spacedrive. Every job targets Blacksmith or self-hosted runners
+# that this fork cannot reach, and the rustfmt job fails because the upstream
+# tree was never fully formatted. Left on manual trigger as a reference until
+# the jobs are ported. See wingdrive-ci.yml for the workflow that runs.
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-  merge_group:
+  workflow_dispatch:
 
 env:
   SPACEDRIVE_CUSTOM_APT_FLAGS: --no-install-recommends
