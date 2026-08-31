@@ -87,6 +87,25 @@ export const platform: Platform = {
 		await invoke('reveal_file', {path: filePath});
 	},
 
+	async onExternalFileDrop(callback) {
+		const currentWindow = getCurrentWebviewWindow();
+		return await currentWindow.onDragDropEvent((event) => {
+			switch (event.payload.type) {
+				case 'enter':
+					callback({type: 'enter', paths: event.payload.paths});
+					break;
+				case 'drop':
+					callback({type: 'drop', paths: event.payload.paths});
+					break;
+				case 'leave':
+					callback({type: 'leave'});
+					break;
+				default:
+					callback({type: 'over'});
+			}
+		});
+	},
+
 	async shareFiles(filePaths: string[]) {
 		await invoke('share_files', {paths: filePaths});
 	},

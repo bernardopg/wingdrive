@@ -1,5 +1,12 @@
 import { createContext, useContext, PropsWithChildren } from "react";
 
+/** Files dragged from the operating system into a window (Tauri only) */
+export type ExternalFileDropEvent =
+	| { type: "enter"; paths: string[] }
+	| { type: "over" }
+	| { type: "drop"; paths: string[] }
+	| { type: "leave" };
+
 /**
  * Platform abstraction layer
  *
@@ -48,6 +55,9 @@ export type Platform = {
 
 	/** Reveal a file in the native file manager (Finder on macOS, Explorer on Windows, etc.) */
 	revealFile?(filePath: string): Promise<void>;
+
+	/** Subscribe to files dragged from the operating system into this window (Tauri only) */
+	onExternalFileDrop?(callback: (event: ExternalFileDropEvent) => void): Promise<() => void>;
 
 	/** Share files using native system share sheet (macOS/iOS only) */
 	shareFiles?(filePaths: string[]): Promise<void>;

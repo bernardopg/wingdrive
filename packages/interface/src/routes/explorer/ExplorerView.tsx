@@ -13,6 +13,7 @@ import {ExpandableSearchButton} from './components/ExpandableSearchButton';
 import {PathBar} from './components/PathBar';
 import {VirtualPathBar} from './components/VirtualPathBar';
 import {useExplorer, type ViewMode} from './context';
+import {useExternalFileDrop} from './hooks/useExternalFileDrop';
 import {useVirtualListing} from './hooks/useVirtualListing';
 import {SearchToolbar} from './SearchToolbar';
 import {SortMenu, SortMenuPanel} from './SortMenu';
@@ -61,13 +62,14 @@ export function ExplorerView() {
 	const {isVirtualView} = useVirtualListing();
 	const isPreviewActive = !!quickPreviewFileId;
 
-	// In column view, the path bar should reflect the deepest column, not the root
+	// Column view operates on its deepest visible folder rather than the root.
 	const pathBarPath = useMemo(() => {
 		if (viewMode === 'column' && columnStack.length > 1) {
 			return columnStack[columnStack.length - 1];
 		}
 		return currentPath;
 	}, [viewMode, columnStack, currentPath]);
+	useExternalFileDrop(pathBarPath);
 
 	const [searchValue, setSearchValue] = useState('');
 
