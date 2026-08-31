@@ -4,12 +4,13 @@
 # Completed Todo+ history remains recoverable from Git history.
 
 Desktop release blockers:
-☐ TAURI-004 Make Spacebot availability explicit @high
 ☐ TAURI-006 Add native daemon/window smoke regression @high
-☐ TAURI-005 Import external drops through real jobs @medium
 	☐ MEDIA-000 Verify media playback in production bundles @high
+	☐ TAURI-004 Spacebot real-runtime contract test (blocked: private repo) @high
 
 Recently completed:
+☑ TAURI-005 Import external drops through real jobs
+☑ TAURI-007 Fix generated collection array types
 ☑ TAURI-002 Validate Favorites add/remove, two-window events and daemon restart
 ☑ TAURI-002 Implement persisted, reactive Favorites in backend and Tauri UI
 ☑ TAURI-003 Fix content-kind stats/search parity

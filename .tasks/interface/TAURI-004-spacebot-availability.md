@@ -6,7 +6,7 @@ assignee: unassigned
 parent: TAURI-000
 priority: High
 tags: [tauri, spacebot, integration]
-last_updated: 2026-08-24
+last_updated: 2026-08-26
 ---
 
 ## Description
@@ -28,3 +28,4 @@ The tracked fallback `@spacebot/api-client` returns empty data and successful no
 - Placeholder routes for Memories, Autonomy, and Schedule are no longer registered.
 - Typecheck and the production Vite build pass without the private repository.
 - The private `spacebot/packages/api-client` repository is absent on this system, so the real-runtime contract remains pending.
+- All criteria implementable without the private repository are complete (commit 6ccd013bb). The remaining contract test is blocked on access to `spacebot/packages/api-client`; reassign or unblock to finish.
