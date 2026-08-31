@@ -182,6 +182,11 @@ impl FileCopyActionBuilder {
 				}
 			}
 		}
+
+		self.errors.extend(super::safety::recursive_copy_errors(
+			&self.input.sources,
+			&self.input.destination,
+		));
 	}
 
 	/// Replace nil device IDs on Physical paths with the daemon's current device ID

@@ -7,6 +7,7 @@ pub mod job;
 pub mod metadata;
 pub mod output;
 pub mod routing;
+mod safety;
 pub mod strategy;
 
 pub use job::{CopyError, CopyOptions, CopyProgress, FileCopyJob, MoveMode};

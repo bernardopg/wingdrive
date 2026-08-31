@@ -178,6 +178,34 @@ impl JobHandler for FileCopyJob {
 	type Output = FileCopyOutput;
 
 	async fn run(&mut self, ctx: JobContext<'_>) -> JobResult<Self::Output> {
+		let validate_layout = |sources: &SdPathBatch, destination: &SdPath| -> JobResult<()> {
+			let errors = super::safety::recursive_copy_errors(sources, destination);
+			if errors.is_empty() {
+				Ok(())
+			} else {
+				Err(JobError::execution(errors.join("; ")))
+			}
+		};
+
+		validate_layout(&self.sources, &self.destination)?;
+
+		let destination =
+			self.destination.resolve_in_job(&ctx).await.map_err(|e| {
+				JobError::execution(format!("Failed to resolve destination path: {e}"))
+			})?;
+		let mut sources = Vec::with_capacity(self.sources.paths.len());
+		for source in &self.sources.paths {
+			sources.push(
+				source.resolve_in_job(&ctx).await.map_err(|e| {
+					JobError::execution(format!("Failed to resolve source path: {e}"))
+				})?,
+			);
+		}
+
+		let resolved_sources = SdPathBatch::new(sources);
+		validate_layout(&resolved_sources, &destination)?;
+		self.destination = destination;
+
 		ctx.log(format!(
 			"Starting copy operation on {} files",
 			self.sources.paths.len()
@@ -336,14 +364,6 @@ impl JobHandler for FileCopyJob {
 		// Create progress aggregator for tracking overall progress
 		let mut progress_aggregator =
 			ProgressAggregator::new(&ctx, actual_file_count, estimated_total_bytes);
-
-		// Resolve destination path first if it's content-based
-		let resolved_destination = self.destination.resolve_in_job(&ctx).await.map_err(|e| {
-			JobError::execution(format!("Failed to resolve destination path: {}", e))
-		})?;
-
-		// Update destination to the resolved physical path
-		self.destination = resolved_destination;
 
 		// Process each source using the appropriate strategy
 		for (index, source) in self.sources.paths.iter().enumerate() {
