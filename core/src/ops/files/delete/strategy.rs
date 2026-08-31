@@ -9,7 +9,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tokio::fs;
 use uuid::Uuid;
 
@@ -38,6 +38,35 @@ pub trait DeleteStrategy: Send + Sync {
 
 /// Local deletion strategy for same-device operations
 pub struct LocalDeleteStrategy;
+
+fn ensure_secure_overwrite_supported(
+	detector: &super::cow::CowFilesystemDetector,
+	path: &Path,
+) -> Result<(), std::io::Error> {
+	match detector.is_cow_filesystem(path) {
+		Some(false) => Ok(()),
+		Some(true) => {
+			tracing::warn!(
+				path = %path.display(),
+				"Refusing secure delete on a copy-on-write filesystem"
+			);
+			Err(std::io::Error::new(
+				std::io::ErrorKind::Unsupported,
+				"secure delete is ineffective and can exhaust space on copy-on-write filesystems; use permanent delete instead",
+			))
+		}
+		None => {
+			tracing::warn!(
+				path = %path.display(),
+				"Refusing secure delete on an unclassified filesystem"
+			);
+			Err(std::io::Error::new(
+				std::io::ErrorKind::Unsupported,
+				"secure delete requires a filesystem with verified overwrite-in-place behavior; use permanent delete instead",
+			))
+		}
+	}
+}
 
 #[async_trait]
 impl DeleteStrategy for LocalDeleteStrategy {
@@ -257,15 +286,27 @@ impl LocalDeleteStrategy {
 		Ok(())
 	}
 
-	/// Securely delete file by overwriting with random data
+	/// Securely deletes a path when its filesystem supports in-place overwrites.
+	///
+	/// Copy-on-write filesystems return `Unsupported` because overwrite passes allocate
+	/// new extents without erasing the original data and can exhaust filesystem space.
 	pub async fn secure_delete(&self, path: &Path) -> Result<(), std::io::Error> {
-		let metadata = fs::metadata(path).await?;
+		let detector = super::cow::CowFilesystemDetector::new();
+		ensure_secure_overwrite_supported(&detector, path)?;
 
-		if metadata.is_file() {
+		let metadata = fs::symlink_metadata(path).await?;
+
+		if metadata.file_type().is_symlink() {
+			fs::remove_file(path).await?;
+		} else if metadata.is_file() {
 			self.secure_overwrite_file(path, metadata.len()).await?;
 			fs::remove_file(path).await?;
 		} else if metadata.is_dir() {
-			self.secure_delete_directory(path).await?;
+			let files = self.collect_secure_delete_files(path, &detector).await?;
+			for (file, size) in files {
+				self.secure_overwrite_file(&file, size).await?;
+				fs::remove_file(file).await?;
+			}
 			fs::remove_dir_all(path).await?;
 		}
 
@@ -310,28 +351,38 @@ impl LocalDeleteStrategy {
 		Ok(())
 	}
 
-	/// Secure delete directory using iterative approach
-	async fn secure_delete_directory(&self, path: &Path) -> Result<(), std::io::Error> {
+	/// Collects regular files without following symlinks or crossing into CoW mounts.
+	async fn collect_secure_delete_files(
+		&self,
+		path: &Path,
+		detector: &super::cow::CowFilesystemDetector,
+	) -> Result<Vec<(PathBuf, u64)>, std::io::Error> {
 		let mut stack = vec![path.to_path_buf()];
+		let mut files = Vec::new();
 
 		while let Some(current_path) = stack.pop() {
+			ensure_secure_overwrite_supported(detector, &current_path)?;
 			let mut dir = fs::read_dir(&current_path).await?;
 
 			while let Some(entry) = dir.next_entry().await? {
 				let entry_path = entry.path();
+				let file_type = entry.file_type().await?;
 
-				if entry_path.is_file() {
-					let metadata = fs::metadata(&entry_path).await?;
-					self.secure_overwrite_file(&entry_path, metadata.len())
-						.await?;
-					fs::remove_file(&entry_path).await?;
-				} else if entry_path.is_dir() {
+				if file_type.is_symlink() {
+					continue;
+				}
+				if file_type.is_dir() {
 					stack.push(entry_path);
+					continue;
+				}
+				if file_type.is_file() {
+					ensure_secure_overwrite_supported(detector, &entry_path)?;
+					files.push((entry_path, entry.metadata().await?.len()));
 				}
 			}
 		}
 
-		Ok(())
+		Ok(files)
 	}
 }
 

@@ -1,6 +1,7 @@
 //! File delete operations
 
 pub mod action;
+mod cow;
 pub mod input;
 pub mod job;
 pub mod output;
