@@ -47,42 +47,18 @@ pub trait OperationTypeInfo {
 		let input_type = Self::Input::definition(collection);
 		let output_type = Self::Output::definition(collection);
 
-		let input_type_name = extract_type_name(std::any::type_name::<Self::Input>());
-		let output_type_name = extract_type_name(std::any::type_name::<Self::Output>());
-
-		// Debug output for type names
-		if Self::identifier() == "jobs.info" {
-			println!(
-				"DEBUG: jobs.info input type: {} -> {}",
-				std::any::type_name::<Self::Input>(),
-				input_type_name
-			);
-			println!(
-				"DEBUG: jobs.info output type: {} -> {}",
-				std::any::type_name::<Self::Output>(),
-				output_type_name
-			);
-		}
-		if Self::identifier() == "jobs.list" {
-			println!(
-				"DEBUG: jobs.list input type: {} -> {}",
-				std::any::type_name::<Self::Input>(),
-				input_type_name
-			);
-			println!(
-				"DEBUG: jobs.list output type: {} -> {}",
-				std::any::type_name::<Self::Output>(),
-				output_type_name
-			);
-		}
+		let input_raw = std::any::type_name::<Self::Input>();
+		let output_raw = std::any::type_name::<Self::Output>();
 
 		OperationMetadata {
 			identifier: Self::identifier(),
 			wire_method: Self::wire_method(),
 			input_type,
 			output_type,
-			input_type_name,
-			output_type_name,
+			input_type_name: extract_type_name_swift(input_raw),
+			output_type_name: extract_type_name_swift(output_raw),
+			input_type_name_ts: extract_type_name_typescript(input_raw),
+			output_type_name_ts: extract_type_name_typescript(output_raw),
 			scope: Self::scope(),
 		}
 	}
@@ -111,13 +87,18 @@ pub trait QueryTypeInfo {
 		let input_type = Self::Input::definition(collection);
 		let output_type = Self::Output::definition(collection);
 
+		let input_raw = std::any::type_name::<Self::Input>();
+		let output_raw = std::any::type_name::<Self::Output>();
+
 		QueryMetadata {
 			identifier: Self::identifier(),
 			wire_method: Self::wire_method(),
 			input_type,
 			output_type,
-			input_type_name: extract_type_name(std::any::type_name::<Self::Input>()),
-			output_type_name: extract_type_name(std::any::type_name::<Self::Output>()),
+			input_type_name: extract_type_name_swift(input_raw),
+			output_type_name: extract_type_name_swift(output_raw),
+			input_type_name_ts: extract_type_name_typescript(input_raw),
+			output_type_name_ts: extract_type_name_typescript(output_raw),
 			scope: Self::scope(),
 		}
 	}
@@ -132,6 +113,9 @@ pub struct OperationMetadata {
 	pub output_type: DataType,
 	pub input_type_name: String,
 	pub output_type_name: String,
+	/// Same references formatted for TypeScript, where arrays need `T[]` syntax
+	pub input_type_name_ts: String,
+	pub output_type_name_ts: String,
 	pub scope: OperationScope,
 }
 
@@ -144,6 +128,9 @@ pub struct QueryMetadata {
 	pub output_type: DataType,
 	pub input_type_name: String,
 	pub output_type_name: String,
+	/// Same references formatted for TypeScript, where arrays need `T[]` syntax
+	pub input_type_name_ts: String,
+	pub output_type_name_ts: String,
 	pub scope: QueryScope,
 }
 
@@ -219,6 +206,8 @@ pub fn create_spacedrive_api_structure(
 					output_type: op.output_type.clone(),
 					input_type_name: op.input_type_name.clone(),
 					output_type_name: op.output_type_name.clone(),
+					input_type_name_ts: op.input_type_name_ts.clone(),
+					output_type_name_ts: op.output_type_name_ts.clone(),
 				});
 			}
 			OperationScope::Library => {
@@ -229,6 +218,8 @@ pub fn create_spacedrive_api_structure(
 					output_type: op.output_type.clone(),
 					input_type_name: op.input_type_name.clone(),
 					output_type_name: op.output_type_name.clone(),
+					input_type_name_ts: op.input_type_name_ts.clone(),
+					output_type_name_ts: op.output_type_name_ts.clone(),
 				});
 			}
 		}
@@ -245,6 +236,8 @@ pub fn create_spacedrive_api_structure(
 					output_type: query.output_type.clone(),
 					input_type_name: query.input_type_name.clone(),
 					output_type_name: query.output_type_name.clone(),
+					input_type_name_ts: query.input_type_name_ts.clone(),
+					output_type_name_ts: query.output_type_name_ts.clone(),
 				});
 			}
 			QueryScope::Library => {
@@ -255,6 +248,8 @@ pub fn create_spacedrive_api_structure(
 					output_type: query.output_type.clone(),
 					input_type_name: query.input_type_name.clone(),
 					output_type_name: query.output_type_name.clone(),
+					input_type_name_ts: query.input_type_name_ts.clone(),
+					output_type_name_ts: query.output_type_name_ts.clone(),
 				});
 			}
 		}
@@ -285,6 +280,9 @@ pub struct ApiOperationType {
 	pub output_type: specta::datatype::DataType,
 	pub input_type_name: String,
 	pub output_type_name: String,
+	/// Same references formatted for TypeScript, where arrays need `T[]` syntax
+	pub input_type_name_ts: String,
+	pub output_type_name_ts: String,
 }
 
 /// Represents a single API query with actual type information
@@ -296,6 +294,9 @@ pub struct ApiQueryType {
 	pub output_type: specta::datatype::DataType,
 	pub input_type_name: String,
 	pub output_type_name: String,
+	/// Same references formatted for TypeScript, where arrays need `T[]` syntax
+	pub input_type_name_ts: String,
+	pub output_type_name_ts: String,
 }
 
 /// Intermediate struct to hold API function metadata for Swift code generation
@@ -397,90 +398,76 @@ fn to_pascal_case(s: &str) -> String {
 		.join("")
 }
 
-/// Extract just the type name from a full Rust type path
-fn extract_type_name(full_type_name: &str) -> String {
-	// Handle unit type () - use Empty struct for Swift
+/// Target language a generated type reference is rendered for.
+///
+/// The Rust type path is language-neutral; the only formatting difference is
+/// arrays: Swift writes `[T]` while TypeScript reserves `[T]` for one-element
+/// tuples and requires `T[]`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TargetLang {
+	Swift,
+	TypeScript,
+}
+
+/// Extract the generator-facing type reference from a full Rust type path.
+///
+/// Only the outermost generic constructor drives formatting: `Option<T>`
+/// unwraps to `T` because both clients treat missing values as nullable
+/// output, and `Vec<T>` formats as an array per `lang`. Nested generics
+/// recurse, so `Option<Vec<T>>` still produces the array form.
+fn format_type_name(full_type_name: &str, lang: TargetLang) -> String {
 	if full_type_name == "()" {
-		let result = "Empty".to_string();
-		if full_type_name.contains("()") {
-			println!(
-				"DEBUG: Unit case: '{}' -> result: '{}'",
-				full_type_name, result
-			);
-		}
-		return result;
+		return "Empty".to_string();
 	}
 
-	// Handle generic types like Option<T>, Vec<T>, etc.
-	// For Option<T>, we want just T
-	if full_type_name.contains("Option<") && full_type_name.ends_with(">") {
-		// Find the content inside Option<...>
-		let start = full_type_name.find("Option<").unwrap() + 7; // Skip "Option<"
-		let end = full_type_name.rfind(">").unwrap();
-		let inner = &full_type_name[start..end];
-		let result = extract_type_name(inner); // Recursively extract the inner type
-		if full_type_name.contains("JobInfo")
-			|| full_type_name.contains("Vec")
-			|| full_type_name.contains("()")
-		{
-			println!(
-				"DEBUG: Option case: '{}' -> inner: '{}' -> result: '{}'",
-				full_type_name, inner, result
-			);
-		}
-		return result;
+	if let Some((ctor, args)) = split_outer_generic(full_type_name) {
+		let ctor_name = ctor.rsplit("::").next().unwrap_or(ctor);
+		return match ctor_name {
+			"Option" => format_type_name(args, lang),
+			"Vec" => {
+				let inner = format_type_name(args, lang);
+				match lang {
+					TargetLang::Swift => format!("[{inner}]"),
+					TargetLang::TypeScript => format!("{inner}[]"),
+				}
+			}
+			// Other generics keep only the type name; paths like
+			// `std::collections::HashMap` are not valid references in either
+			// target language.
+			_ => ctor_name.to_string(),
+		};
 	}
 
-	// Handle Vec<T> - we want to keep Vec but with proper Swift syntax
-	if full_type_name.contains("Vec<") && full_type_name.ends_with(">") {
-		// Find the content inside Vec<...>
-		let start = full_type_name.find("Vec<").unwrap() + 4; // Skip "Vec<"
-		let end = full_type_name.rfind(">").unwrap();
-		let inner = &full_type_name[start..end];
-		let inner_type = extract_type_name(inner); // Recursively extract the inner type
-		let result = format!("[{}]", inner_type); // Convert to Swift array syntax
-		if full_type_name.contains("JobInfo")
-			|| full_type_name.contains("Vec")
-			|| full_type_name.contains("()")
-		{
-			println!(
-				"DEBUG: Vec case: '{}' -> inner: '{}' -> inner_type: '{}' -> result: '{}'",
-				full_type_name, inner, inner_type, result
-			);
-		}
-		return result;
-	}
+	full_type_name
+		.rsplit("::")
+		.next()
+		.unwrap_or(full_type_name)
+		.to_string()
+}
 
-	// For other generic types, just return the base name
-	if full_type_name.contains('<') {
-		let base_name = full_type_name.split('<').next().unwrap_or(full_type_name);
-		let result = base_name.to_string();
-		if full_type_name.contains("JobInfo")
-			|| full_type_name.contains("Vec")
-			|| full_type_name.contains("()")
-		{
-			println!(
-				"DEBUG: Generic case: '{}' -> base_name: '{}' -> result: '{}'",
-				full_type_name, base_name, result
-			);
-		}
-		return result;
+/// Split `path::Ctor<args>` into `("path::Ctor", "args")`, or `None` when the
+/// type has no outer generic. Matching on the constructor (text before the
+/// first `<`) keeps nested occurrences of `Option`/`Vec` from hijacking the
+/// parse.
+fn split_outer_generic(full_type_name: &str) -> Option<(&str, &str)> {
+	let open = full_type_name.find('<')?;
+	if !full_type_name.ends_with('>') {
+		return None;
 	}
+	Some((
+		&full_type_name[..open],
+		&full_type_name[open + 1..full_type_name.len() - 1],
+	))
+}
 
-	// For simple types, extract just the type name from the path
-	let type_name = full_type_name.split("::").last().unwrap_or(full_type_name);
+/// Type reference in Swift syntax, e.g. `[SourceInfo]`.
+pub fn extract_type_name_swift(full_type_name: &str) -> String {
+	format_type_name(full_type_name, TargetLang::Swift)
+}
 
-	let result = type_name.to_string();
-	if full_type_name.contains("JobInfo")
-		|| full_type_name.contains("Vec")
-		|| full_type_name.contains("()")
-	{
-		println!(
-			"DEBUG: Simple case: '{}' -> type_name: '{}' -> result: '{}'",
-			full_type_name, type_name, result
-		);
-	}
-	result
+/// Type reference in TypeScript syntax, e.g. `SourceInfo[]`.
+pub fn extract_type_name_typescript(full_type_name: &str) -> String {
+	format_type_name(full_type_name, TargetLang::TypeScript)
 }
 
 /// Convert snake_case to camelCase for Swift method names
@@ -589,6 +576,64 @@ fn generate_swift_method(func: &ApiFunction) -> String {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn test_type_name_swift_arrays_use_bracket_syntax() {
+		assert_eq!(
+			extract_type_name_swift("alloc::vec::Vec<core::sources::SourceInfo>"),
+			"[SourceInfo]"
+		);
+		assert_eq!(
+			extract_type_name_swift("core::sources::list::query::ListSourcesQuery"),
+			"ListSourcesQuery"
+		);
+	}
+
+	#[test]
+	fn test_type_name_typescript_arrays_use_suffix_syntax() {
+		assert_eq!(
+			extract_type_name_typescript("alloc::vec::Vec<core::sources::SourceInfo>"),
+			"SourceInfo[]"
+		);
+		// `[T]` is a one-element tuple in TypeScript, never an array.
+		assert!(!extract_type_name_typescript("alloc::vec::Vec<u8>").starts_with('['));
+	}
+
+	#[test]
+	fn test_type_name_nested_generics() {
+		assert_eq!(
+			extract_type_name_typescript(
+				"alloc::vec::Vec<core::option::Option<alloc::string::String>>"
+			),
+			"String[]"
+		);
+		assert_eq!(
+			extract_type_name_typescript(
+				"core::option::Option<alloc::vec::Vec<core::domain::Device>>"
+			),
+			"Device[]"
+		);
+		assert_eq!(
+			extract_type_name_swift("core::option::Option<alloc::vec::Vec<core::domain::Device>>"),
+			"[Device]"
+		);
+		// The constructor decision must come from the outermost generic only;
+		// nested `Option` inside `Vec` used to corrupt the parse.
+		assert_eq!(
+			extract_type_name_typescript("alloc::vec::Vec<core::option::Option<u8>>"),
+			"u8[]"
+		);
+	}
+
+	#[test]
+	fn test_type_name_unit_and_generics() {
+		assert_eq!(extract_type_name_typescript("()"), "Empty");
+		assert_eq!(extract_type_name_swift("()"), "Empty");
+		assert_eq!(
+			extract_type_name_typescript("std::collections::HashMap<alloc::string::String, u8>"),
+			"HashMap"
+		);
+	}
 
 	#[test]
 	fn test_type_extraction_system() {

@@ -12,14 +12,13 @@ export function SourcesHome() {
 	const {createTab} = useTabManager();
 	const [searchValue, setSearchValue] = useState('');
 	const {
-		data: sourcesRaw,
+		data: sources,
 		isLoading,
 		error
 	} = useLibraryQuery({
 		type: 'sources.list',
 		input: {data_type: null}
 	});
-	const sources = sourcesRaw?.slice();
 	const filteredSources = useMemo(() => {
 		const query = searchValue.trim().toLowerCase();
 		if (!sources || !query) return sources;

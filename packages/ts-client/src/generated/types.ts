@@ -5136,7 +5136,7 @@ export type CoreQuery =
   |  { type: 'core.status'; input: Empty; output: CoreStatus }
   |  { type: 'jobs.remote.all_devices'; input: RemoteJobsAllDevicesInput; output: RemoteJobsAllDevicesOutput }
   |  { type: 'jobs.remote.for_device'; input: RemoteJobsForDeviceInput; output: RemoteJobsForDeviceOutput }
-  |  { type: 'libraries.list'; input: ListLibrariesInput; output: [LibraryInfo] }
+  |  { type: 'libraries.list'; input: ListLibrariesInput; output: LibraryInfo[] }
   |  { type: 'models.whisper.list'; input: ListWhisperModelsInput; output: ListWhisperModelsOutput }
   |  { type: 'network.devices.list'; input: ListPairedDevicesInput; output: ListPairedDevicesOutput }
   |  { type: 'network.pair.status'; input: PairStatusQueryInput; output: PairStatusOutput }
@@ -5146,10 +5146,10 @@ export type CoreQuery =
 ;
 
 export type LibraryQuery =
-     { type: 'adapters.config'; input: GetAdapterConfigInput; output: [AdapterConfigField] }
-  |  { type: 'adapters.list'; input: ListAdaptersInput; output: [AdapterInfo] }
+     { type: 'adapters.config'; input: GetAdapterConfigInput; output: AdapterConfigField[] }
+  |  { type: 'adapters.list'; input: ListAdaptersInput; output: AdapterInfo[] }
   |  { type: 'config.library.get'; input: GetLibraryConfigQueryInput; output: LibrarySettingsOutput }
-  |  { type: 'devices.list'; input: ListLibraryDevicesInput; output: [Device] }
+  |  { type: 'devices.list'; input: ListLibraryDevicesInput; output: Device[] }
   |  { type: 'files.alternate_instances'; input: AlternateInstancesInput; output: AlternateInstancesOutput }
   |  { type: 'files.by_id'; input: FileByIdQuery; output: File }
   |  { type: 'files.by_path'; input: FileByPathQuery; output: File }
@@ -5169,8 +5169,8 @@ export type LibraryQuery =
   |  { type: 'redundancy.summary'; input: RedundancySummaryInput; output: RedundancySummaryOutput }
   |  { type: 'search.files'; input: FileSearchInput; output: FileSearchOutput }
   |  { type: 'sources.get'; input: GetSourceInput; output: SourceInfo }
-  |  { type: 'sources.list'; input: ListSourcesInput; output: [SourceInfo] }
-  |  { type: 'sources.list_items'; input: ListSourceItemsInput; output: [SourceItem] }
+  |  { type: 'sources.list'; input: ListSourcesInput; output: SourceInfo[] }
+  |  { type: 'sources.list_items'; input: ListSourceItemsInput; output: SourceItem[] }
   |  { type: 'spaces.get'; input: SpaceGetQueryInput; output: SpaceGetOutput }
   |  { type: 'spaces.get_layout'; input: SpaceLayoutQueryInput; output: SpaceLayout }
   |  { type: 'spaces.list'; input: SpacesListQueryInput; output: SpacesListOutput }

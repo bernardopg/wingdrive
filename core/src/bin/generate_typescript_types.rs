@@ -26,10 +26,10 @@ impl TypeScriptUnionMember for ApiOperationType {
 		&self.identifier
 	}
 	fn input_type_name(&self) -> &str {
-		&self.input_type_name
+		&self.input_type_name_ts
 	}
 	fn output_type_name(&self) -> &str {
-		&self.output_type_name
+		&self.output_type_name_ts
 	}
 }
 
@@ -38,10 +38,10 @@ impl TypeScriptUnionMember for ApiQueryType {
 		&self.identifier
 	}
 	fn input_type_name(&self) -> &str {
-		&self.input_type_name
+		&self.input_type_name_ts
 	}
 	fn output_type_name(&self) -> &str {
-		&self.output_type_name
+		&self.output_type_name_ts
 	}
 }
 
