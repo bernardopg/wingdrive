@@ -16,17 +16,17 @@
 
 mod helpers;
 
+#[allow(deprecated)]
+use helpers::set_all_devices_synced;
 use helpers::{
-	add_and_index_location, create_snapshot_dir, init_test_tracing, register_device,
-	#[allow(deprecated)]
-	set_all_devices_synced,
-	MockTransport, TestConfigBuilder, TestDataDir,
+	MockTransport, TestConfigBuilder, TestDataDir, add_and_index_location, create_snapshot_dir,
+	init_test_tracing, register_device,
 };
 use sd_core::{
+	Core,
 	infra::{db::entities, sync::NetworkTransport},
 	library::Library,
-	service::{sync::state::DeviceSyncState, Service},
-	Core,
+	service::{Service, sync::state::DeviceSyncState},
 };
 use sea_orm::{EntityTrait, PaginatorTrait};
 use std::{path::PathBuf, sync::Arc};
@@ -54,9 +54,12 @@ impl BackfillRaceHarness {
 		let snapshot_dir = create_snapshot_dir(test_name).await?;
 		init_test_tracing(test_name, &snapshot_dir)?;
 
-		// Use TestDataDir helper for proper cross-platform directory management
-		let test_data_alice = TestDataDir::new("backfill_race_alice")?;
-		let test_data_bob = TestDataDir::new("backfill_race_bob")?;
+		// Use TestDataDir helper for proper cross-platform directory management.
+		// TestDataDir paths are deterministic on Linux, so two tests in this binary
+		// running in parallel would otherwise share one persisted device_id and
+		// sync.db, corrupting each other's backfill state.
+		let test_data_alice = TestDataDir::new(format!("{test_name}_alice"))?;
+		let test_data_bob = TestDataDir::new(format!("{test_name}_bob"))?;
 
 		let temp_dir_alice = test_data_alice.core_data_path();
 		let temp_dir_bob = test_data_bob.core_data_path();
@@ -176,7 +179,7 @@ impl BackfillRaceHarness {
 			_test_data_alice: test_data_alice,
 			_test_data_bob: test_data_bob,
 			core_alice,
-			_core_bob,
+			_core_bob: core_bob,
 			library_alice,
 			library_bob,
 			device_alice_id,
