@@ -3,7 +3,7 @@
 //! Configuration for how paths should be watched and events filtered.
 
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 /// Configuration for watching a path
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -62,8 +62,11 @@ pub struct EventFilters {
 	pub skip_system_files: bool,
 	/// Skip temporary files (.tmp, .temp, ~, .swp)
 	pub skip_temp_files: bool,
-	/// Custom patterns to skip (glob patterns)
+	/// Custom patterns to skip (substring matches)
 	pub skip_patterns: Vec<String>,
+	/// Directory trees to skip using component-aware path matching
+	#[serde(default)]
+	pub skip_paths: Vec<PathBuf>,
 	/// Keep these dotfiles even if skip_hidden is true
 	pub important_dotfiles: Vec<String>,
 }
@@ -75,6 +78,7 @@ impl Default for EventFilters {
 			skip_system_files: true,
 			skip_temp_files: true,
 			skip_patterns: Vec::new(),
+			skip_paths: Vec::new(),
 			important_dotfiles: vec![
 				".gitignore".to_string(),
 				".gitkeep".to_string(),
@@ -101,6 +105,7 @@ impl EventFilters {
 			skip_system_files: false,
 			skip_temp_files: false,
 			skip_patterns: Vec::new(),
+			skip_paths: Vec::new(),
 			important_dotfiles: Vec::new(),
 		}
 	}
@@ -108,6 +113,10 @@ impl EventFilters {
 	/// Check if a path should be filtered out
 	pub fn should_skip(&self, path: &std::path::Path) -> bool {
 		let path_str = path.to_string_lossy();
+
+		if self.skip_paths.iter().any(|root| path.starts_with(root)) {
+			return true;
+		}
 
 		// Check temp files
 		if self.skip_temp_files
@@ -245,6 +254,19 @@ mod tests {
 		assert!(!filters.should_skip(&PathBuf::from("/test/.DS_Store")));
 		assert!(!filters.should_skip(&PathBuf::from("/test/.hidden")));
 		assert!(!filters.should_skip(&PathBuf::from("/test/file.tmp")));
+	}
+
+	#[test]
+	fn skip_paths_match_only_the_protected_tree() {
+		let mut filters = EventFilters::allow_all();
+		filters
+			.skip_paths
+			.push(PathBuf::from("/home/user/.wingdrive"));
+
+		assert!(filters.should_skip(&PathBuf::from(
+			"/home/user/.wingdrive/libraries/1/thumbnails/thumb.webp"
+		)));
+		assert!(!filters.should_skip(&PathBuf::from("/home/user/.wingdrive-backup/file.txt")));
 	}
 
 	#[test]

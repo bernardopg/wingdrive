@@ -48,6 +48,21 @@ impl From<FsWatcherServiceConfig> for WatcherConfig {
 	}
 }
 
+fn protect_internal_tree(mut config: WatchConfig, data_dir: &Path) -> WatchConfig {
+	let mut protected_paths = vec![data_dir.to_path_buf()];
+	if let Ok(canonical) = data_dir.canonicalize() {
+		protected_paths.push(canonical);
+	}
+
+	for protected in protected_paths {
+		if !config.filters.skip_paths.contains(&protected) {
+			config.filters.skip_paths.push(protected);
+		}
+	}
+
+	config
+}
+
 /// Filesystem watcher service that wraps sd-fs-watcher
 ///
 /// This service:
@@ -126,6 +141,7 @@ impl FsWatcherService {
 	/// For ephemeral browsing, use `WatchConfig::shallow()`.
 	pub async fn watch_path(&self, path: impl Into<PathBuf>, config: WatchConfig) -> Result<()> {
 		let path = path.into();
+		let config = protect_internal_tree(config, &self.context.data_dir);
 		debug!("Watching path: {}", path.display());
 		self.watcher.watch_path(&path, config).await?;
 		Ok(())
@@ -298,9 +314,7 @@ impl FsWatcherService {
 			.register_for_watching(path.clone());
 
 		// Start OS-level watching (shallow = immediate children only)
-		self.watcher
-			.watch_path(&path, WatchConfig::shallow())
-			.await?;
+		self.watch_path(&path, WatchConfig::shallow()).await?;
 
 		Ok(())
 	}
@@ -392,6 +406,19 @@ mod tests {
 		let config = FsWatcherServiceConfig::default();
 		assert_eq!(config.event_buffer_size, 100_000);
 		assert!(!config.debug_mode);
+	}
+
+	#[test]
+	fn watcher_config_protects_internal_data_tree() {
+		let data_dir = Path::new("/home/user/.wingdrive");
+		let config = protect_internal_tree(WatchConfig::recursive(), data_dir);
+
+		assert!(config
+			.filters
+			.should_skip(&data_dir.join("libraries/library-id/thumbnails/thumb.webp")));
+		assert!(!config
+			.filters
+			.should_skip(Path::new("/home/user/Pictures/photo.webp")));
 	}
 
 	// Note: Full service tests require CoreContext which needs async runtime
