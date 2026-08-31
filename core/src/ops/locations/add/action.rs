@@ -17,7 +17,10 @@ use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use specta::Type;
-use std::{path::PathBuf, sync::Arc};
+use std::{
+	path::{Path, PathBuf},
+	sync::Arc,
+};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
@@ -37,6 +40,26 @@ impl LocationAddAction {
 	pub fn new(input: LocationAddInput) -> Self {
 		Self { input }
 	}
+}
+
+fn protected_location_reason(path: &Path, data_dir: &Path) -> Option<&'static str> {
+	if path.parent().is_none() {
+		return Some("Filesystem roots cannot be indexed as locations");
+	}
+
+	for system_tree in ["/proc", "/sys", "/dev", "/boot"] {
+		if path.starts_with(system_tree) {
+			return Some("Operating-system trees cannot be indexed as locations");
+		}
+	}
+	if path == Path::new("/run") {
+		return Some("The operating-system runtime directory cannot be indexed");
+	}
+	if path.starts_with(data_dir) {
+		return Some("WingDrive's internal data directory cannot be indexed");
+	}
+
+	None
 }
 
 // Implement the new modular ActionType trait
@@ -158,21 +181,44 @@ impl LibraryAction for LocationAddAction {
 		use crate::domain::addressing::SdPath;
 
 		match &self.input.path {
-			SdPath::Physical {
-				device_slug: _,
-				path,
-			} => {
-				// Validate local filesystem path
-				if !path.exists() {
+			SdPath::Physical { path, .. } => {
+				if !self.input.path.is_local() {
 					return Err(ActionError::Validation {
 						field: "path".to_string(),
-						message: "Path does not exist".to_string(),
+						message: "Remote physical paths cannot be added from this device"
+							.to_string(),
 					});
 				}
-				if !path.is_dir() {
+
+				let metadata =
+					tokio::fs::metadata(path)
+						.await
+						.map_err(|_| ActionError::Validation {
+							field: "path".to_string(),
+							message: "Path does not exist or cannot be read".to_string(),
+						})?;
+				if !metadata.is_dir() {
 					return Err(ActionError::Validation {
 						field: "path".to_string(),
 						message: "Path must be a directory".to_string(),
+					});
+				}
+
+				let canonical_path = tokio::fs::canonicalize(path).await.map_err(|error| {
+					ActionError::Validation {
+						field: "path".to_string(),
+						message: format!("Path cannot be resolved: {error}"),
+					}
+				})?;
+				let canonical_data_dir = tokio::fs::canonicalize(&context.data_dir)
+					.await
+					.unwrap_or_else(|_| context.data_dir.clone());
+				if let Some(message) =
+					protected_location_reason(&canonical_path, &canonical_data_dir)
+				{
+					return Err(ActionError::Validation {
+						field: "path".to_string(),
+						message: message.to_string(),
 					});
 				}
 			}
@@ -247,3 +293,40 @@ impl ActionContextProvider for LocationAddAction {
 
 // Register action
 crate::register_library_action!(LocationAddAction, "locations.add");
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn rejects_system_and_internal_location_trees() {
+		let data_dir = Path::new("/home/user/.local/share/wingdrive");
+
+		for path in [
+			Path::new("/"),
+			Path::new("/proc/1"),
+			Path::new("/sys/kernel"),
+			Path::new("/dev/disk"),
+			Path::new("/run"),
+			Path::new("/boot/efi"),
+			data_dir,
+			Path::new("/home/user/.local/share/wingdrive/libraries/1"),
+		] {
+			assert!(protected_location_reason(path, data_dir).is_some());
+		}
+	}
+
+	#[test]
+	fn allows_user_data_and_removable_media() {
+		let data_dir = Path::new("/home/user/.local/share/wingdrive");
+
+		for path in [
+			Path::new("/home/user"),
+			Path::new("/home/user/Pictures"),
+			Path::new("/run/media/user/drive"),
+			Path::new("/mnt/archive"),
+		] {
+			assert!(protected_location_reason(path, data_dir).is_none());
+		}
+	}
+}

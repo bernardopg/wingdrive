@@ -20,11 +20,18 @@ use tracing::{info, warn};
 
 /// Check if we have the required privileges to run volume tests
 async fn check_test_privileges() -> bool {
+	if std::env::var_os("WINGDRIVE_PRIVILEGED_VOLUME_TESTS").as_deref()
+		!= Some(std::ffi::OsStr::new("1"))
+	{
+		return false;
+	}
+
 	let manager = TestVolumeManager::new();
 	manager.check_privileges().await.is_ok()
 }
 
 #[tokio::test]
+#[ignore = "creates and formats privileged test volumes"]
 async fn test_real_volume_tracking_lifecycle() {
 	let _ = tracing_subscriber::fmt::try_init();
 
@@ -144,6 +151,7 @@ async fn test_real_volume_tracking_lifecycle() {
 }
 
 #[tokio::test]
+#[ignore = "creates and formats privileged test volumes"]
 async fn test_different_filesystems() {
 	let _ = tracing_subscriber::fmt::try_init();
 
@@ -254,6 +262,7 @@ async fn test_different_filesystems() {
 }
 
 #[tokio::test]
+#[ignore = "creates and formats privileged test volumes"]
 async fn test_volume_capacity_scenarios() {
 	let _ = tracing_subscriber::fmt::try_init();
 
@@ -366,6 +375,7 @@ async fn test_volume_capacity_scenarios() {
 }
 
 #[tokio::test]
+#[ignore = "mounts a privileged RAM-backed volume"]
 async fn test_ram_disk_performance() {
 	let _ = tracing_subscriber::fmt::try_init();
 
@@ -463,6 +473,7 @@ async fn test_ram_disk_performance() {
 }
 
 #[tokio::test]
+#[ignore = "mounts and unmounts privileged test volumes"]
 async fn test_volume_mount_unmount_tracking() {
 	let _ = tracing_subscriber::fmt::try_init();
 
@@ -574,6 +585,7 @@ async fn test_volume_mount_unmount_tracking() {
 }
 
 #[tokio::test]
+#[ignore = "creates and formats privileged test volumes"]
 async fn test_concurrent_volume_operations() {
 	let _ = tracing_subscriber::fmt::try_init();
 
