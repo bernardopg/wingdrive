@@ -1,0 +1,67 @@
+{
+  "test_cases": [
+    {
+      "name": "directory_view_exact_mode",
+      "query": {
+        "query": "files.directory_listing",
+        "input": { "path": { "Physical": { "device_slug": "test-device", "path": "/library" } } },
+        "resourceType": "file",
+        "pathScope": { "Physical": { "device_slug": "test-device", "path": "/library" } },
+        "includeDescendants": false
+      },
+      "initial_state": { "files": [] },
+      "events": [
+        {
+          "ResourceChangedBatch": {
+            "resource_type": "file",
+            "metadata": { "affected_paths": [], "alternate_ids": [], "no_merge_fields": [] },
+            "resources": [
+              { "id": "direct-1", "name": "direct_child1", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/direct_child1" } } },
+              { "id": "direct-2", "name": "direct_child2", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/direct_child2" } } },
+              { "id": "nested-1", "name": "grandchild1", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/grandchild1" } } },
+              { "id": "nested-2", "name": "grandchild2", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/grandchild2" } } },
+              { "id": "nested-3", "name": "deep_file", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/nested/deep_file" } } }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "media_view_recursive_mode",
+      "query": {
+        "query": "files.media_listing",
+        "input": { "path": { "Physical": { "device_slug": "test-device", "path": "/library" } } },
+        "resourceType": "file",
+        "pathScope": { "Physical": { "device_slug": "test-device", "path": "/library" } },
+        "includeDescendants": true
+      },
+      "initial_state": { "files": [] },
+      "events": [
+        {
+          "ResourceChangedBatch": {
+            "resource_type": "file",
+            "metadata": { "affected_paths": [], "alternate_ids": [], "no_merge_fields": [] },
+            "resources": [
+              { "id": "direct-1", "name": "direct_child1", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/direct_child1" } } },
+              { "id": "nested-1", "name": "grandchild1", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/grandchild1" } } }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "location_updates",
+      "query": { "query": "locations.list", "input": null, "resourceType": "location", "pathScope": null, "includeDescendants": false },
+      "initial_state": { "locations": [] },
+      "events": [
+        {
+          "ResourceChanged": {
+            "resource_type": "location",
+            "resource": { "id": "location-1", "name": "Test Location" },
+            "metadata": { "affected_paths": [] }
+          }
+        }
+      ]
+    }
+  ]
+}

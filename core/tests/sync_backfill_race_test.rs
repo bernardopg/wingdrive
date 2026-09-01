@@ -19,16 +19,16 @@ mod helpers;
 #[allow(deprecated)]
 use helpers::set_all_devices_synced;
 use helpers::{
-	MockTransport, TestConfigBuilder, TestDataDir, add_and_index_location, create_snapshot_dir,
-	init_test_tracing, register_device,
+	add_and_index_location, create_snapshot_dir, init_test_tracing, register_device, MockTransport,
+	TestConfigBuilder, TestDataDir,
 };
 use sd_core::{
-	Core,
 	infra::{db::entities, sync::NetworkTransport},
 	library::Library,
-	service::{Service, sync::state::DeviceSyncState},
+	service::{sync::state::DeviceSyncState, Service},
+	Core,
 };
-use sea_orm::{EntityTrait, PaginatorTrait};
+use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use std::{path::PathBuf, sync::Arc};
 use tokio::{fs, time::Duration};
 use uuid::Uuid;
@@ -338,6 +338,58 @@ impl BackfillRaceHarness {
 
 		Ok(())
 	}
+}
+
+async fn wait_for_device(
+	library: &Arc<Library>,
+	device_id: Uuid,
+	timeout: Duration,
+) -> anyhow::Result<entities::device::Model> {
+	let deadline = std::time::Instant::now() + timeout;
+
+	while std::time::Instant::now() < deadline {
+		if let Some(device) = entities::device::Entity::find()
+			.filter(entities::device::Column::Uuid.eq(device_id))
+			.one(library.db().conn())
+			.await?
+		{
+			return Ok(device);
+		}
+
+		tokio::time::sleep(Duration::from_millis(100)).await;
+	}
+
+	anyhow::bail!("device {device_id} did not arrive through backfill")
+}
+
+/// A device state snapshot must not abort when its slug is already held locally.
+#[tokio::test]
+async fn test_backfill_renames_colliding_device_slug() -> anyhow::Result<()> {
+	let harness = BackfillRaceHarness::new("device_slug_collision").await?;
+	let incoming_device = Uuid::new_v4();
+	let local_holder = Uuid::new_v4();
+
+	register_device(&harness.library_alice, incoming_device, "shared-host").await?;
+	register_device(&harness.library_bob, local_holder, "shared-host").await?;
+
+	harness.trigger_bob_backfill().await?;
+
+	let synced = wait_for_device(
+		&harness.library_bob,
+		incoming_device,
+		Duration::from_secs(30),
+	)
+	.await?;
+	let holder = entities::device::Entity::find()
+		.filter(entities::device::Column::Uuid.eq(local_holder))
+		.one(harness.library_bob.db().conn())
+		.await?
+		.expect("local device holding the slug must remain");
+
+	assert_eq!(holder.slug, "shared-host");
+	assert_eq!(synced.slug, "shared-host-2");
+
+	Ok(())
 }
 
 /// Test: Backfill + concurrent indexing race condition

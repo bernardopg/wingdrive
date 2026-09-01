@@ -329,6 +329,20 @@ impl JobHandler for FileCopyJob {
 		let actual_file_count = self.count_total_files().await?;
 		let estimated_total_bytes = self.calculate_total_size(&ctx).await?;
 
+		// Refuse before writing anything: a copy that runs the destination out of
+		// space leaves truncated files behind, and filling a system volume can take
+		// the machine down with it.
+		if let Some(destination) = self.destination.as_local_path() {
+			if let Err(error) =
+				crate::infra::fs::free_space::ensure_space_for(destination, estimated_total_bytes)
+			{
+				return Err(JobError::execution(format!(
+					"Cannot copy to {}: {error}",
+					destination.display()
+				)));
+			}
+		}
+
 		// Collect file metadata for queryable list
 		self.collect_file_metadata(&ctx).await?;
 

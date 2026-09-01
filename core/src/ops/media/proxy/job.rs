@@ -114,6 +114,13 @@ impl JobHandler for ProxyJob {
 	type Output = ProxyJobOutput;
 
 	async fn run(&mut self, ctx: JobContext<'_>) -> JobResult<Self::Output> {
+		// Derived data has no size estimate up front, so guard on headroom: a full
+		// library volume otherwise fails after writing thousands of files.
+		if let Err(error) = crate::infra::fs::free_space::ensure_headroom(ctx.library().path()) {
+			return Err(JobError::execution(format!(
+				"Cannot generate proxies: {error}"
+			)));
+		}
 		// Discovery phase
 		if self.state.phase == ProxyPhase::Discovery {
 			ctx.log("Starting proxy discovery phase");
