@@ -20,7 +20,7 @@
 		"@tailwindcss/typography": "^0.5.20",
 		"@tailwindcss/vite": "^4.3.3",
 		"@types/react": "^19.2.14",
-		"@types/react-dom": "^19.2.3",
+		"@types/react-dom": "^19.2.5",
 		"@vitejs/plugin-react": "^6.0.5",
 		"tailwindcss": "^4.3.3",
 		"tailwindcss-animate": "^1.0.7",
