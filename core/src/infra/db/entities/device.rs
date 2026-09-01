@@ -195,7 +195,7 @@ impl crate::infra::sync::Syncable for Model {
 				// Check if device already exists
 				let existing_device = Entity::find().filter(Column::Uuid.eq(uuid)).one(db).await?;
 
-				// Determine slug to use: collision avoidance only on INSERT
+				// Determine slug to use: collision avoidance runs for both INSERT and UPDATE
 				let slug_from_data: String = serde_json::from_value(
 					data.get("slug")
 						.cloned()
