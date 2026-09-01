@@ -43,7 +43,7 @@ raw bytes remain.
 
 ## Validation
 
-- 5 unit tests in `free_space.rs` cover available-space lookup, missing
-  destinations, a write that fits, a write larger than the volume, and the
-  reserve.
+- 5 deterministic unit tests in `free_space.rs` cover nested-mount selection,
+  unrelated path prefixes, unknown mounts, a write that fits, and the reserve
+  boundary without depending on the host filesystem.
 - `cargo test -p sd-core --lib` passes 356 tests.

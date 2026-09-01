@@ -9,7 +9,8 @@ const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
 	url: 'http://localhost',
 });
 
-global.document = dom.window.document;
-global.window = dom.window as any;
-global.navigator = dom.window.navigator;
-
+Object.defineProperties(globalThis, {
+	document: { configurable: true, value: dom.window.document },
+	window: { configurable: true, value: dom.window },
+	navigator: { configurable: true, value: dom.window.navigator },
+});

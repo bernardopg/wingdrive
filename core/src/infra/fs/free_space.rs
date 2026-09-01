@@ -9,6 +9,16 @@
 //! fragments badly in the last few percent, btrfs can fail to allocate metadata
 //! block groups while raw bytes remain, and a full root volume takes down
 //! logging and session state with it.
+//!
+//! ## Example
+//!
+//! ```no_run
+//! use std::path::Path;
+//! use sd_core::infra::fs::free_space::ensure_headroom;
+//!
+//! ensure_headroom(Path::new("/library"))?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
 
 use std::path::Path;
 
@@ -30,17 +40,29 @@ pub fn available_bytes(path: &Path) -> Option<u64> {
 	});
 
 	let disks = sysinfo::Disks::new_with_refreshed_list();
+	available_bytes_on_mounts(
+		&target,
+		disks
+			.list()
+			.iter()
+			.map(|disk| (disk.mount_point(), disk.available_space())),
+	)
+}
+
+fn available_bytes_on_mounts<'a>(
+	target: &Path,
+	mounts: impl IntoIterator<Item = (&'a Path, u64)>,
+) -> Option<u64> {
 	let mut best: Option<(usize, u64)> = None;
 
-	for disk in disks.list() {
-		let mount_point = disk.mount_point();
+	for (mount_point, available) in mounts {
 		if !target.starts_with(mount_point) {
 			continue;
 		}
 
 		let depth = mount_point.components().count();
 		if best.is_none_or(|(best_depth, _)| depth > best_depth) {
-			best = Some((depth, disk.available_space()));
+			best = Some((depth, available));
 		}
 	}
 
@@ -53,11 +75,22 @@ pub fn available_bytes(path: &Path) -> Option<u64> {
 /// determined: refusing on an unknown mount would break perfectly valid writes to
 /// network and virtual filesystems that report no capacity.
 pub fn ensure_space_for(path: &Path, required_bytes: u64) -> Result<(), InsufficientSpace> {
-	let Some(available) = available_bytes(path) else {
+	let available = available_bytes(path);
+	if available.is_none() {
 		tracing::debug!(
 			path = %path.display(),
 			"No mount point matched; skipping free space preflight"
 		);
+	}
+
+	ensure_available_space(available, required_bytes)
+}
+
+fn ensure_available_space(
+	available: Option<u64>,
+	required_bytes: u64,
+) -> Result<(), InsufficientSpace> {
+	let Some(available) = available else {
 		return Ok(());
 	};
 
@@ -110,36 +143,46 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn reports_available_space_for_an_existing_path() {
-		let temp = tempfile::tempdir().unwrap();
-		assert!(available_bytes(temp.path()).is_some());
+	fn selects_the_deepest_matching_mount() {
+		let target = Path::new("/workspace/library/files");
+		assert_eq!(
+			available_bytes_on_mounts(
+				target,
+				[
+					(Path::new("/"), 1_000),
+					(Path::new("/workspace"), 2_000),
+					(Path::new("/workspace/library"), 3_000),
+				],
+			),
+			Some(3_000)
+		);
 	}
 
 	#[test]
-	fn resolves_through_a_destination_that_does_not_exist_yet() {
-		let temp = tempfile::tempdir().unwrap();
-		let missing = temp.path().join("not-created-yet/nested");
-		assert_eq!(available_bytes(&missing), available_bytes(temp.path()));
+	fn does_not_match_a_shared_path_prefix() {
+		assert_eq!(
+			available_bytes_on_mounts(
+				Path::new("/workspace2/files"),
+				[(Path::new("/workspace"), 1_000)],
+			),
+			None
+		);
 	}
 
 	#[test]
-	fn accepts_a_write_that_fits() {
-		let temp = tempfile::tempdir().unwrap();
-		assert!(ensure_space_for(temp.path(), 1024).is_ok());
+	fn permits_an_unverifiable_mount() {
+		assert!(ensure_available_space(None, u64::MAX).is_ok());
 	}
 
 	#[test]
-	fn rejects_a_write_larger_than_the_volume() {
-		let temp = tempfile::tempdir().unwrap();
-		let error = ensure_space_for(temp.path(), u64::MAX / 2).unwrap_err();
-		assert!(error.to_string().contains("not enough free space"));
+	fn accepts_a_write_that_preserves_the_reserve() {
+		assert!(ensure_available_space(Some(RESERVE_BYTES + 1_024), 1_024).is_ok());
 	}
 
 	#[test]
-	fn reserve_is_kept_free() {
-		let temp = tempfile::tempdir().unwrap();
-		let available = available_bytes(temp.path()).unwrap();
-		// Asking for everything must fail, because the reserve is added on top.
-		assert!(ensure_space_for(temp.path(), available).is_err());
+	fn rejects_a_write_that_would_consume_the_reserve() {
+		let error = ensure_available_space(Some(RESERVE_BYTES + 1_023), 1_024).unwrap_err();
+		assert_eq!(error.required_bytes, 1_024);
+		assert_eq!(error.available_bytes, RESERVE_BYTES + 1_023);
 	}
 }

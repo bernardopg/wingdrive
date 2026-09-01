@@ -41,5 +41,8 @@ snapshot apply errored, and the peer continued with incomplete shared state.
 - Two unit tests against an in-memory SQLite schema: collision renames to
   `archlinux-2` while the holder keeps `archlinux`; three consecutive applies of
   the same record leave the slug unchanged.
-- `cargo test -p sd-core --test sync_backfill_race_test` passes 4/4 with zero
-  occurrences of the previous UNIQUE constraint warning.
+- `test_backfill_renames_colliding_device_slug` exercises a real state snapshot
+  between two libraries and verifies the incoming device becomes
+  `shared-host-2` while the local holder remains `shared-host`.
+- `cargo test -p sd-core --test sync_backfill_race_test` passes without the
+  previous UNIQUE constraint warning.

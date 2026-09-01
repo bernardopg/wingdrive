@@ -41,7 +41,7 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsc --watch",
-		"test": "jest",
+		"test": "bun test src",
 		"generate-types": "cargo run --bin generate_typescript_types --manifest-path ../../core/Cargo.toml"
 	},
 	"keywords": [

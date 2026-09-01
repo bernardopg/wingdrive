@@ -102,6 +102,7 @@ pub trait JobProgress: Serialize + Send + Sync + 'static {
 }
 
 // Helper function to format bytes
+/// Formats a byte count for user-facing job errors and progress messages.
 pub(crate) fn format_bytes(bytes: u64) -> String {
 	const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];
 	let mut size = bytes as f64;
