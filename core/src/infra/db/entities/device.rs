@@ -161,7 +161,10 @@ impl crate::infra::sync::Syncable for Model {
 	}
 
 	/// Apply shared change with HLC-based conflict resolution
-	/// Slug changes propagate to all devices, with collision avoidance only on initial insert
+	///
+	/// Slug changes propagate between devices, but the slug column is UNIQUE, so an
+	/// incoming slug already held by a different device is renamed instead of
+	/// aborting the apply. Devices named after the same hostname collide otherwise.
 	async fn apply_shared_change(
 		entry: crate::infra::sync::SharedChangeEntry,
 		db: &DatabaseConnection,
@@ -200,39 +203,37 @@ impl crate::infra::sync::Syncable for Model {
 				)
 				.unwrap_or_else(|_| "unknown".to_string());
 
-				let slug_to_use = if let Some(existing) = &existing_device {
-					// Device exists - use incoming slug (allow slug changes to propagate)
+				// Slugs carry a UNIQUE index, so a slug already held by a different
+				// device has to be renamed on both paths. Two devices derived from the
+				// same hostname otherwise abort the whole shared-change apply.
+				let conflicting_slugs: Vec<String> = Entity::find()
+					.filter(Column::Uuid.ne(uuid))
+					.all(db)
+					.await?
+					.iter()
+					.map(|d| d.slug.clone())
+					.collect();
+
+				let slug_to_use = crate::library::Library::ensure_unique_slug(
+					&slug_from_data,
+					&conflicting_slugs,
+				);
+
+				if slug_to_use != slug_from_data {
 					tracing::debug!(
-						"[DEVICE_SYNC] Updating existing device, accepting slug change: {} -> {}",
-						existing.slug,
-						slug_from_data
+						"[DEVICE_SYNC] Slug '{}' is taken by another device, using '{}'",
+						slug_from_data,
+						slug_to_use
 					);
-					slug_from_data
-				} else {
-					// New device - check for slug collisions
-					tracing::debug!("[DEVICE_SYNC] New device, checking for slug collisions");
-					let existing_slugs: Vec<String> = Entity::find()
-						.all(db)
-						.await?
-						.iter()
-						.map(|d| d.slug.clone())
-						.collect();
-
-					let unique_slug = crate::library::Library::ensure_unique_slug(
-						&slug_from_data,
-						&existing_slugs,
-					);
-
-					if unique_slug != slug_from_data {
+				} else if let Some(existing) = &existing_device {
+					if existing.slug != slug_to_use {
 						tracing::debug!(
-							"[DEVICE_SYNC] Slug collision on insert! Using '{}' instead of '{}'",
-							unique_slug,
-							slug_from_data
+							"[DEVICE_SYNC] Updating existing device, accepting slug change: {} -> {}",
+							existing.slug,
+							slug_to_use
 						);
 					}
-
-					unique_slug
-				};
+				}
 
 				// Build ActiveModel for upsert
 				let active = ActiveModel {
@@ -467,3 +468,130 @@ impl crate::infra::sync::Syncable for Model {
 
 // Register with sync system via inventory as shared resource
 crate::register_syncable_shared!(Model, "device", "devices");
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::infra::sync::{ChangeType, SharedChangeEntry, Syncable, HLC};
+	use sea_orm::{ConnectionTrait, Database};
+
+	async fn memory_db() -> DatabaseConnection {
+		let db = Database::connect("sqlite::memory:").await.unwrap();
+		db.execute_unprepared(
+			r#"
+			CREATE TABLE devices (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				uuid BLOB NOT NULL UNIQUE,
+				name TEXT NOT NULL,
+				slug TEXT NOT NULL UNIQUE,
+				os TEXT NOT NULL,
+				os_version TEXT,
+				hardware_model TEXT,
+				cpu_model TEXT,
+				cpu_architecture TEXT,
+				cpu_cores_physical INTEGER,
+				cpu_cores_logical INTEGER,
+				cpu_frequency_mhz INTEGER,
+				memory_total_bytes INTEGER,
+				form_factor TEXT,
+				manufacturer TEXT,
+				gpu_models TEXT,
+				boot_disk_type TEXT,
+				boot_disk_capacity_bytes INTEGER,
+				swap_total_bytes INTEGER,
+				network_addresses TEXT NOT NULL DEFAULT '[]',
+				is_online BOOLEAN NOT NULL DEFAULT 0,
+				last_seen_at TEXT NOT NULL,
+				capabilities TEXT NOT NULL DEFAULT '{}',
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL,
+				sync_enabled BOOLEAN NOT NULL DEFAULT 1
+			);
+			"#,
+		)
+		.await
+		.unwrap();
+		db
+	}
+
+	async fn insert_device(db: &DatabaseConnection, uuid: Uuid, name: &str, slug: &str) {
+		db.execute_unprepared(&format!(
+			"INSERT INTO devices (uuid, name, slug, os, network_addresses, is_online, \
+			 last_seen_at, capabilities, created_at, updated_at, sync_enabled) VALUES \
+			 (x'{uuid}', '{name}', '{slug}', 'Linux', '[]', 0, '2026-01-01 00:00:00', '{{}}', \
+			 '2026-01-01 00:00:00', '2026-01-01 00:00:00', 1)",
+			uuid = uuid.simple()
+		))
+		.await
+		.unwrap();
+	}
+
+	fn shared_change(uuid: Uuid, name: &str, slug: &str) -> SharedChangeEntry {
+		SharedChangeEntry {
+			hlc: HLC {
+				timestamp: 1,
+				counter: 0,
+				device_id: uuid,
+			},
+			model_type: Model::SYNC_MODEL.to_string(),
+			record_uuid: uuid,
+			change_type: ChangeType::Insert,
+			data: serde_json::json!({
+				"uuid": uuid,
+				"name": name,
+				"slug": slug,
+				"os": "Linux",
+				"network_addresses": [],
+				"is_online": false,
+				"last_seen_at": "2026-01-01T00:00:00Z",
+				"capabilities": {},
+				"sync_enabled": true,
+			}),
+		}
+	}
+
+	async fn slug_of(db: &DatabaseConnection, uuid: Uuid) -> String {
+		Entity::find()
+			.filter(Column::Uuid.eq(uuid))
+			.one(db)
+			.await
+			.unwrap()
+			.unwrap()
+			.slug
+	}
+
+	/// Two devices installed on machines with the same hostname share a slug base.
+	/// Accepting the incoming slug verbatim used to violate the UNIQUE index and
+	/// abort the whole shared-change apply, leaving the peer with no data.
+	#[tokio::test]
+	async fn incoming_slug_taken_by_another_device_is_renamed() {
+		let db = memory_db().await;
+		let local = Uuid::new_v4();
+		let remote = Uuid::new_v4();
+
+		insert_device(&db, local, "alice", "archlinux").await;
+		insert_device(&db, remote, "bob", "bob").await;
+
+		Model::apply_shared_change(shared_change(remote, "bob", "archlinux"), &db)
+			.await
+			.expect("apply must not fail on a slug already held by another device");
+
+		assert_eq!(slug_of(&db, local).await, "archlinux");
+		assert_eq!(slug_of(&db, remote).await, "archlinux-2");
+	}
+
+	/// Re-applying the same record must not keep renaming it.
+	#[tokio::test]
+	async fn reapplying_own_slug_is_idempotent() {
+		let db = memory_db().await;
+		let device = Uuid::new_v4();
+		insert_device(&db, device, "alice", "archlinux").await;
+
+		for _ in 0..3 {
+			Model::apply_shared_change(shared_change(device, "alice", "archlinux"), &db)
+				.await
+				.unwrap();
+			assert_eq!(slug_of(&db, device).await, "archlinux");
+		}
+	}
+}
