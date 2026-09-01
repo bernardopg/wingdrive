@@ -205,7 +205,8 @@ impl crate::infra::sync::Syncable for Model {
 
 				// Slugs carry a UNIQUE index, so a slug already held by a different
 				// device has to be renamed on both paths. Two devices derived from the
-				// same hostname otherwise abort the whole shared-change apply.
+				// same hostname would otherwise collide on that constraint and fail the
+				// shared-change apply.
 				let conflicting_slugs: Vec<String> = Entity::find()
 					.filter(Column::Uuid.ne(uuid))
 					.all(db)
