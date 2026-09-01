@@ -102,7 +102,7 @@ pub trait JobProgress: Serialize + Send + Sync + 'static {
 }
 
 // Helper function to format bytes
-fn format_bytes(bytes: u64) -> String {
+pub(crate) fn format_bytes(bytes: u64) -> String {
 	const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];
 	let mut size = bytes as f64;
 	let mut unit_idx = 0;
