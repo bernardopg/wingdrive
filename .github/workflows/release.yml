@@ -30,21 +30,21 @@ jobs:
         run: ./scripts/setup.sh
 
       - name: Build binaries
-        run: cargo build --release --locked --bin sd-server --bin sd-cli
+        run: cargo build --release --locked --bin sd-server --bin sd-cli --bin sd-daemon
 
       - name: Package binaries
         run: |
           mkdir -p dist
-          install -m 755 target/release/sd-server dist/wingdrive-server
-          install -m 755 target/release/sd-cli dist/wingdrive-cli
-          sha256sum dist/wingdrive-server dist/wingdrive-cli > dist/SHA256SUMS
-          tar -C dist -czf wingdrive-server-linux-x86_64.tar.gz wingdrive-server wingdrive-cli SHA256SUMS
+          install -m 755 target/release/sd-server dist/wingdrive-server-linux-x86_64
+          install -m 755 target/release/sd-cli dist/wingdrive-cli-linux-x86_64
+          install -m 755 target/release/sd-daemon dist/wingdrive-daemon-linux-x86_64
+          sha256sum dist/* > dist/SHA256SUMS
 
       - name: Upload server artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: wingdrive-server-linux-x86_64
-          path: wingdrive-server-linux-x86_64.tar.gz
+          path: dist/*
           if-no-files-found: error
 
   desktop:

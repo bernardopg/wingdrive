@@ -103,7 +103,7 @@ pub fn print_logo_colored() {
 	}
 
 	println!();
-	println!("                         SPACEDRIVE");
+	println!("                          WINGDRIVE");
 	println!();
 }
 

@@ -64,24 +64,26 @@ pub async fn run(data_dir: PathBuf, force: bool) -> Result<()> {
 	println!("Platform: {}", platform);
 
 	// Find matching assets
-	let sd_asset = latest_release
+	let cli_asset = latest_release
 		.assets
 		.iter()
-		.find(|a| a.name.contains(&platform) && a.name.contains("sd"))
-		.ok_or_else(|| anyhow::anyhow!("Could not find sd binary for platform: {}", platform))?;
+		.find(|a| a.name.contains(&platform) && a.name.contains("wingdrive-cli"))
+		.ok_or_else(|| {
+			anyhow::anyhow!("Could not find WingDrive CLI for platform: {}", platform)
+		})?;
 
 	let daemon_asset = latest_release
 		.assets
 		.iter()
-		.find(|a| a.name.contains(&platform) && a.name.contains("sd-daemon"))
+		.find(|a| a.name.contains(&platform) && a.name.contains("wingdrive-daemon"))
 		.ok_or_else(|| {
-			anyhow::anyhow!("Could not find sd-daemon binary for platform: {}", platform)
+			anyhow::anyhow!("Could not find WingDrive daemon for platform: {}", platform)
 		})?;
 
 	println!("Downloading updates...");
 
 	// Download binaries
-	let sd_data = download_file(&sd_asset.browser_download_url, sd_asset.size).await?;
+	let cli_data = download_file(&cli_asset.browser_download_url, cli_asset.size).await?;
 	let daemon_data = download_file(&daemon_asset.browser_download_url, daemon_asset.size).await?;
 
 	// Get current binary paths
@@ -90,8 +92,12 @@ pub async fn run(data_dir: PathBuf, force: bool) -> Result<()> {
 		.parent()
 		.ok_or_else(|| anyhow::anyhow!("Could not determine binary directory"))?;
 
-	let sd_path = bin_dir.join("sd");
-	let daemon_path = bin_dir.join("sd-daemon");
+	let cli_path = current_exe.clone();
+	let daemon_path = ["wingdrive-daemon", "sd-daemon"]
+		.iter()
+		.map(|name| bin_dir.join(name))
+		.find(|path| path.exists())
+		.unwrap_or_else(|| bin_dir.join("wingdrive-daemon"));
 
 	println!();
 	println!("Installing updates...");
@@ -104,7 +110,7 @@ pub async fn run(data_dir: PathBuf, force: bool) -> Result<()> {
 	}
 
 	// Perform atomic replacement
-	replace_binary(&sd_path, &sd_data)?;
+	replace_binary(&cli_path, &cli_data)?;
 	replace_binary(&daemon_path, &daemon_data)?;
 
 	println!("Update complete!");

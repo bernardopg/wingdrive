@@ -2,7 +2,7 @@
 
 This document describes the target experience for the Spacebot surface inside WingDrive. It is written for developers building this interface. It covers what exists today, what the interface should become, and how to get there without rewriting everything at once.
 
-For architectural context on how Spacebot integrates with WingDrive at the system level, see `spacedrive/docs/core/design/spacebot-integration.md`. For the broader product direction, see `company/new-direction/2026-03-20-SPACEDRIVE-DIRECTION.md`.
+For architectural context on how Spacebot integrates with WingDrive at the system level, see `../../../../docs/core/design/spacebot-integration.md`. For the broader product direction, see `../../../../plans/wingdrive-independence-migration.md`.
 
 ---
 
@@ -368,7 +368,7 @@ The mobile chat surface should be simpler than desktop. It is the continuation o
 
 ### Remote Execution Across Devices
 
-The same P2P proxy that enables mobile chat also enables Spacebot to operate across the entire device fleet. This is described in detail in `spacedrive/docs/core/design/spacebot-remote-execution.md`.
+The same P2P proxy that enables mobile chat also enables Spacebot to operate across the entire device fleet. This is described in detail in `../../../../docs/core/design/spacebot-remote-execution.md`.
 
 The core idea: when Spacebot spawns a worker, that worker can target any device in the library. The worker's shell and file tools proxy through WingDrive to the target device. The tool interface stays identical from the model's perspective — it still calls `shell` and `file_read` — but the execution happens on a different machine.
 
