@@ -13,6 +13,7 @@ matches="$({
 		':!plans/wingdrive-independence-migration.md' \
 		':!.tasks/core/FORK-001-data-directory-rebrand.md' \
 		':!.tasks/core/FORK-002-wingdrive-independence.md' \
+		':!scripts/check-wingdrive-independence.sh' \
 		':!**/Cargo.lock' || true
 } | grep -vE '^README\.md:[0-9]+:> \*\*WingDrive is a community continuation fork of \[Spacedrive\]' || true)"
 

@@ -108,14 +108,10 @@ mod tests {
 		let fts_query_special = query_special.build_fts5_query();
 		assert_eq!(fts_query_special, r#""test*query"*"#);
 
-		let hyphenated = FileSearchQuery::new(FileSearchInput::simple(
-			"README-smoke".to_string(),
-		));
+		let hyphenated = FileSearchQuery::new(FileSearchInput::simple("README-smoke".to_string()));
 		assert_eq!(hyphenated.build_fts5_query(), r#""README-smoke"*"#);
 
-		let quoted = FileSearchQuery::new(FileSearchInput::simple(
-			r#"say"hello"#.to_string(),
-		));
+		let quoted = FileSearchQuery::new(FileSearchInput::simple(r#"say"hello"#.to_string()));
 		assert_eq!(quoted.build_fts5_query(), r#""say""hello"*"#);
 	}
 

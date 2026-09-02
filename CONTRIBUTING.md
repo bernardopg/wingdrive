@@ -58,7 +58,7 @@ Before you begin, ensure you have the following installed:
 
 ```bash
 git clone https://github.com/bernardopg/wingdrive
-cd spacedrive
+cd wingdrive
 ```
 
 If you plan to work on GUI applications, initialize the submodules:
@@ -192,13 +192,13 @@ For even shorter commands, add a shell alias:
 **Bash/Zsh** (`~/.bashrc` or `~/.zshrc`):
 
 ```bash
-alias sd="~/Projects/spacedrive/target/debug/sd-cli"
+alias sd="~/Projects/wingdrive/target/debug/sd-cli"
 ```
 
 **Fish** (`~/.config/fish/config.fish`):
 
 ```fish
-alias sd="~/Projects/spacedrive/target/debug/sd-cli"
+alias sd="~/Projects/wingdrive/target/debug/sd-cli"
 ```
 
 Then reload your shell (`source ~/.zshrc`) and you can use:
@@ -470,7 +470,7 @@ From a clean clone, follow these steps in order:
 ```bash
 # 1. Clone the repository
 git clone https://github.com/bernardopg/wingdrive
-cd spacedrive
+cd wingdrive
 
 # 2. Install JavaScript dependencies (from repo root)
 bun install

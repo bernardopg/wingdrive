@@ -1,10 +1,7 @@
 //! Test to map exact File structure at each indexing phase
 
 use sd_core::{
-	infra::{
-		db::entities,
-		event::Event,
-	},
+	infra::{db::entities, event::Event},
 	location::{create_location, IndexMode, LocationCreateArgs},
 	Core,
 };

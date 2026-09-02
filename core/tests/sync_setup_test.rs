@@ -140,11 +140,7 @@ async fn alice_sync_setup_scenario() {
 				}
 			}
 
-			std::fs::write(
-				"/tmp/wingdrive-sync-setup-test/alice_paired.txt",
-				"success",
-			)
-			.unwrap();
+			std::fs::write("/tmp/wingdrive-sync-setup-test/alice_paired.txt", "success").unwrap();
 
 			// Give Bob time to process
 			tokio::time::sleep(Duration::from_secs(5)).await;
@@ -205,8 +201,7 @@ async fn bob_sync_setup_scenario() {
 	// Wait for pairing code
 	println!("Bob: Waiting for pairing code...");
 	let pairing_code = loop {
-		if let Ok(code) =
-			std::fs::read_to_string("/tmp/wingdrive-sync-setup-test/pairing_code.txt")
+		if let Ok(code) = std::fs::read_to_string("/tmp/wingdrive-sync-setup-test/pairing_code.txt")
 		{
 			break code.trim().to_string();
 		}
@@ -315,8 +310,7 @@ async fn carol_three_device_scenario() {
 	// Wait for Alice's library ID
 	println!("Carol: Waiting for Alice's library ID...");
 	let library_id = loop {
-		if let Ok(id) = std::fs::read_to_string("/tmp/wingdrive-three-device-test/library_id.txt")
-		{
+		if let Ok(id) = std::fs::read_to_string("/tmp/wingdrive-three-device-test/library_id.txt") {
 			break id.trim().to_string();
 		}
 		tokio::time::sleep(Duration::from_millis(500)).await;
@@ -466,9 +460,8 @@ async fn test_sync_setup_no_constraint_error() {
 
 			// Check if Bob had an error
 			if std::path::Path::new("/tmp/wingdrive-sync-setup-test/bob_error.txt").exists() {
-				let error =
-					std::fs::read_to_string("/tmp/wingdrive-sync-setup-test/bob_error.txt")
-						.unwrap();
+				let error = std::fs::read_to_string("/tmp/wingdrive-sync-setup-test/bob_error.txt")
+					.unwrap();
 				println!("Bob encountered error: {}", error);
 				return false;
 			}

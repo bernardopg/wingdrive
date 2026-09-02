@@ -63,22 +63,18 @@ pub fn is_virtual_filesystem(filesystem: &str) -> bool {
 	matches!(
 		fs_lower.as_str(),
 		"devfs"
-			| "sysfs"
-			| "proc"
-			| "tmpfs"
-			| "ramfs"
+			| "sysfs" | "proc"
+			| "tmpfs" | "ramfs"
 			| "devtmpfs"
 			| "overlay"
 			| "overlayfs"
-			| "fuse"
-			| "fusectl"
+			| "fuse" | "fusectl"
 			| "cgroup"
 			| "cgroup2"
 			| "squashfs"
 			| "efivarfs"
 			| "pstore"
-			| "bpf"
-			| "debugfs"
+			| "bpf" | "debugfs"
 			| "tracefs"
 			| "configfs"
 			| "securityfs"
@@ -87,8 +83,7 @@ pub fn is_virtual_filesystem(filesystem: &str) -> bool {
 			| "mqueue"
 			| "hugetlbfs"
 			| "rpc_pipefs"
-			| "nsfs"
-			| "selinuxfs"
+			| "nsfs" | "selinuxfs"
 			| "pipefs"
 			| "sockfs"
 	) || fs_lower.starts_with("map ")
@@ -380,9 +375,7 @@ mod tests {
 
 		// TrueNAS Scale app-managed datasets
 		assert!(should_hide_by_mount_path(Path::new("/mnt/.ix-apps")));
-		assert!(should_hide_by_mount_path(Path::new(
-			"/mnt/.ix-apps/docker"
-		)));
+		assert!(should_hide_by_mount_path(Path::new("/mnt/.ix-apps/docker")));
 		assert!(should_hide_by_mount_path(Path::new(
 			"/mnt/pool/ix-applications"
 		)));
@@ -396,9 +389,7 @@ mod tests {
 
 		// User data — not hidden
 		assert!(!should_hide_by_mount_path(Path::new("/mnt/pool")));
-		assert!(!should_hide_by_mount_path(Path::new(
-			"/mnt/pool/footage"
-		)));
+		assert!(!should_hide_by_mount_path(Path::new("/mnt/pool/footage")));
 		assert!(!should_hide_by_mount_path(Path::new(
 			"/mnt/pool/calvin-nas"
 		)));

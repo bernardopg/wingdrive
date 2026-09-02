@@ -14,9 +14,9 @@ backward compatibility requires them.
 
 ## Baseline Audit
 
-The repository contains seven workflow files. Only `wingdrive-ci.yml` runs on
-pushes and pull requests. The other six are manual-only inherited definitions,
-and several still target Blacksmith or unavailable self-hosted runners.
+The baseline repository contained seven workflow files. The active workflow
+now lives in `ci.yml`, and the repository retains four workflows: CI, mobile,
+release, and server.
 
 | Workflow | Current state | Migration decision |
 | --- | --- | --- |
