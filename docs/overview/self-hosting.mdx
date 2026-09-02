@@ -12,22 +12,21 @@ The server embeds the full WingDrive daemon with media processing capabilities. 
 
 ### Static Binary
 
-Download the latest release binary for your platform. This method works on any Linux system and requires no container runtime.
+Download the latest x86_64 Linux release binary. This method requires no container runtime.
 
 ```bash
-# Download and extract
-wget https://github.com/bernardopg/wingdrive/releases/latest/download/sd-server-linux-x86_64.tar.gz
-tar -xzf sd-server-linux-x86_64.tar.gz
+# Download the binary and release checksums
+wget https://github.com/bernardopg/wingdrive/releases/latest/download/wingdrive-server-linux-x86_64
+wget https://github.com/bernardopg/wingdrive/releases/latest/download/SHA256SUMS
 
 # Verify checksum
-sha256sum -c sd-server-linux-x86_64.sha256
+grep 'wingdrive-server-linux-x86_64$' SHA256SUMS | sha256sum -c -
 
 # Install to system
-sudo mv sd-server-linux-x86_64 /usr/local/bin/sd-server
-sudo chmod +x /usr/local/bin/sd-server
+sudo install -m 755 wingdrive-server-linux-x86_64 /usr/local/bin/wingdrive-server
 ```
 
-For ARM systems like Raspberry Pi, use `sd-server-linux-aarch64.tar.gz` instead.
+For ARM systems like Raspberry Pi, use the multi-architecture Docker image below.
 
 ### Docker Deployment
 
@@ -86,7 +85,7 @@ User=wingdrive
 Group=wingdrive
 Environment="DATA_DIR=/var/lib/wingdrive"
 Environment="SD_AUTH=admin:your-secure-password"
-ExecStart=/usr/local/bin/sd-server --data-dir /var/lib/wingdrive
+ExecStart=/usr/local/bin/wingdrive-server --data-dir /var/lib/wingdrive
 Restart=on-failure
 RestartSec=5s
 

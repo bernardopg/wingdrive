@@ -1,7 +1,7 @@
 ---
 id: FORK-002
 title: "Complete WingDrive identity and repository independence"
-status: "In Progress"
+status: "Done"
 assignee: "bernardopg"
 priority: "High"
 tags: ["fork", "branding", "github-actions", "documentation", "release"]

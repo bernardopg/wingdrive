@@ -4,7 +4,7 @@ This document explains the changes made to integrate WingDrive server builds int
 
 ## Overview
 
-The server app (`sd-server`) is now built and released in two formats:
+The server app (`sd-server`) is built and released in two formats:
 1. **Static binaries** - For systemd, bare metal, and custom deployments
 2. **Docker images** - For containerized deployments (Docker, Kubernetes, NAS systems)
 
@@ -18,25 +18,23 @@ Both are automatically built and published when a git tag is pushed (e.g., `v2.0
 
 **Added: `server-build` job**
 
-Builds static server binaries for:
-- `linux-x86_64` (Intel/AMD servers)
-- `linux-aarch64` (ARM servers, Raspberry Pi, AWS Graviton)
+Builds the `linux-x86_64` server binary for Intel and AMD servers.
 
 **Features:**
-- Full media processing support (`heif`, `ffmpeg` features enabled)
-- Cross-compilation for ARM using `gcc-aarch64-linux-gnu`
-- Checksums generated for each binary (SHA256)
-- Archives created as `.tar.gz` for easy distribution
+- Installs the shared native dependencies through `setup-system`
+- Builds the server, CLI, and daemon with the locked dependency graph
+- Generates one `SHA256SUMS` file for all release artifacts
 
 **Artifacts uploaded:**
-- `sd-server-linux-x86_64.tar.gz`
-- `sd-server-linux-aarch64.tar.gz`
+- `wingdrive-server-linux-x86_64`
+- `wingdrive-cli-linux-x86_64`
+- `wingdrive-daemon-linux-x86_64`
 
 **Updated: `release` job**
 
 - Added `server-build` to dependencies
 - Server artifacts now included in GitHub releases
-- Pattern updated to include `.tar.gz` files
+- Server and updater artifacts are included in the release
 
 ### 2. Server Docker Workflow (`.github/workflows/server.yml`)
 
@@ -96,8 +94,8 @@ This enables:
    ```
 
 2. **GitHub Actions automatically:**
-   - Builds server binaries (x86_64 + ARM)
-   - Builds desktop apps (macOS + Linux)
+   - Builds the Linux x86_64 server binary
+   - Builds desktop apps and updater binaries for Linux, Windows, and macOS
    - Builds Docker images (amd64 + arm64)
    - Creates draft GitHub release with all artifacts
 
@@ -143,18 +141,17 @@ docker buildx build \
 
 ```bash
 # Download from GitHub release
-wget https://github.com/bernardopg/wingdrive/releases/download/v2.0.0-alpha.2/sd-server-linux-x86_64.tar.gz
-tar -xzf sd-server-linux-x86_64.tar.gz
+wget https://github.com/bernardopg/wingdrive/releases/download/v2.0.0-alpha.2/wingdrive-server-linux-x86_64
+wget https://github.com/bernardopg/wingdrive/releases/download/v2.0.0-alpha.2/SHA256SUMS
 
 # Verify checksum
-sha256sum -c sd-server-linux-x86_64.sha256
+grep 'wingdrive-server-linux-x86_64$' SHA256SUMS | sha256sum -c -
 
 # Install
-sudo mv sd-server-linux-x86_64 /usr/local/bin/sd-server
-sudo chmod +x /usr/local/bin/sd-server
+sudo install -m 755 wingdrive-server-linux-x86_64 /usr/local/bin/wingdrive-server
 
 # Create systemd service
-sudo nano /etc/systemd/system/spacedrive.service
+sudo nano /etc/systemd/system/wingdrive.service
 ```
 
 Example systemd unit:
@@ -165,10 +162,10 @@ After=network.target
 
 [Service]
 Type=simple
-User=spacedrive
-Environment="DATA_DIR=/var/lib/spacedrive"
+User=wingdrive
+Environment="DATA_DIR=/var/lib/wingdrive"
 Environment="SD_AUTH=admin:your-secure-password"
-ExecStart=/usr/local/bin/sd-server --data-dir /var/lib/spacedrive
+ExecStart=/usr/local/bin/wingdrive-server --data-dir /var/lib/wingdrive
 Restart=on-failure
 
 [Install]
@@ -179,7 +176,7 @@ WantedBy=multi-user.target
 
 ```bash
 docker run -d \
-  --name spacedrive \
+  --name wingdrive \
   -p 8080:8080 \
   -p 7373:7373 \
 	-v wingdrive-data:/data \
@@ -201,7 +198,7 @@ Or create your own:
 ```yaml
 version: '3.8'
 services:
-  spacedrive:
+  wingdrive:
     image: ghcr.io/bernardopg/wingdrive/server:latest
     ports:
       - "8080:8080"
@@ -223,7 +220,7 @@ volumes:
 | Platform | Binary | Docker |
 |----------|--------|--------|
 | Linux x86_64 (Intel/AMD) | ✅ | ✅ |
-| Linux ARM64 (Raspberry Pi, AWS Graviton) | ✅ | ✅ |
+| Linux ARM64 (Raspberry Pi, AWS Graviton) | ❌ | ✅ |
 | macOS | ❌ (desktop app only) | ❌ |
 | Windows | ❌ (desktop app only) | ❌ |
 
@@ -232,13 +229,17 @@ volumes:
 After a release is created, verify these files exist:
 
 **Server binaries:**
-- `sd-server-linux-x86_64.tar.gz`
-- `sd-server-linux-aarch64.tar.gz`
+- `wingdrive-server-linux-x86_64`
+- `wingdrive-cli-linux-x86_64`
+- `wingdrive-daemon-linux-x86_64`
+- `wingdrive-cli-windows-x86_64.exe`
+- `wingdrive-daemon-windows-x86_64.exe`
+- `wingdrive-cli-macos-aarch64`
+- `wingdrive-daemon-macos-aarch64`
+- `SHA256SUMS`
 
 **Desktop apps:**
-- `Spacedrive_<version>_aarch64.dmg` (macOS ARM)
-- `Spacedrive_<version>_amd64.deb` (Linux)
-- `dist.tar.xz` (frontend assets)
+- The platform bundles emitted by Tauri for macOS, Windows, and Linux
 
 **Docker images:**
 Check ghcr.io:

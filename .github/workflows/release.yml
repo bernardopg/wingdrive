@@ -21,13 +21,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup Rust
-        uses: ./.github/actions/setup-rust
+      - name: Setup System and Rust
+        uses: ./.github/actions/setup-system
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           target: x86_64-unknown-linux-gnu
-
-      - name: Install system dependencies
-        run: ./scripts/setup.sh
 
       - name: Build binaries
         run: cargo build --release --locked --bin sd-server --bin sd-cli --bin sd-daemon
@@ -57,33 +55,28 @@ jobs:
             runner: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             bundles: deb,appimage
+            updater_platform: linux-x86_64
           - name: Windows x86_64
             runner: windows-latest
             target: x86_64-pc-windows-msvc
             bundles: nsis
+            updater_platform: windows-x86_64
           - name: macOS arm64
             runner: macos-latest
             target: aarch64-apple-darwin
             bundles: dmg,app
+            updater_platform: macos-aarch64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup Rust
-        uses: ./.github/actions/setup-rust
+      - name: Setup System and Rust
+        uses: ./.github/actions/setup-system
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           target: ${{ matrix.target }}
-
-      - name: Install Unix system dependencies
-        if: runner.os != 'Windows'
-        run: ./scripts/setup.sh
-
-      - name: Install Windows system dependencies
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: ./scripts/setup.ps1
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -101,6 +94,25 @@ jobs:
           projectPath: apps/tauri
           args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
 
+      - name: Build updater binaries
+        if: runner.os != 'Linux'
+        run: cargo build --release --locked --target ${{ matrix.target }} --bin sd-cli --bin sd-daemon
+
+      - name: Package macOS updater binaries
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dist/updater
+          install -m 755 target/${{ matrix.target }}/release/sd-cli dist/updater/wingdrive-cli-${{ matrix.updater_platform }}
+          install -m 755 target/${{ matrix.target }}/release/sd-daemon dist/updater/wingdrive-daemon-${{ matrix.updater_platform }}
+
+      - name: Package Windows updater binaries
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force dist/updater
+          Copy-Item target/${{ matrix.target }}/release/sd-cli.exe dist/updater/wingdrive-cli-${{ matrix.updater_platform }}.exe
+          Copy-Item target/${{ matrix.target }}/release/sd-daemon.exe dist/updater/wingdrive-daemon-${{ matrix.updater_platform }}.exe
+
       - name: Upload desktop bundles
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -110,6 +122,7 @@ jobs:
             target/${{ matrix.target }}/release/bundle/**/*.AppImage
             target/${{ matrix.target }}/release/bundle/**/*.deb
             target/${{ matrix.target }}/release/bundle/**/*.exe
+            dist/updater/*
           if-no-files-found: error
 
   publish:
