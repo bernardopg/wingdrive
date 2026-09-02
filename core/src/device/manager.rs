@@ -451,7 +451,7 @@ impl DeviceManager {
 
 /// Get the device name from the system
 fn get_device_name() -> String {
-	whoami::devicename()
+	whoami::devicename().unwrap_or_else(|_| "Unknown Device".to_string())
 }
 
 /// Detect the operating system
