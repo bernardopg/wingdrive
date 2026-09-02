@@ -1,6 +1,6 @@
 # Crypto
 
-This crate contains Spacedrive's cryptographic modules.
+This crate contains WingDrive's cryptographic modules.
 
 This includes things such as:
 

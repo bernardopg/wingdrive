@@ -176,12 +176,10 @@ export async function cleanupKeybindHandler(): Promise<void> {
 
 // Initialize keybind handler on window global (same pattern as context menu)
 export function initializeKeybindGlobal(): void {
-	if (!window.__SPACEDRIVE__) {
-		(window as any).__SPACEDRIVE__ = {};
-	}
-
-	window.__SPACEDRIVE__.registerKeybind = registerTauriKeybind;
-	window.__SPACEDRIVE__.unregisterKeybind = unregisterTauriKeybind;
+	window.__WINGDRIVE__ ??= window.__SPACEDRIVE__ ?? {};
+	window.__SPACEDRIVE__ = window.__WINGDRIVE__;
+	window.__WINGDRIVE__.registerKeybind = registerTauriKeybind;
+	window.__WINGDRIVE__.unregisterKeybind = unregisterTauriKeybind;
 
 	// Initialize the event listener
 	initializeKeybindHandler().catch(console.error);

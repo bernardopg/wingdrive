@@ -3,15 +3,15 @@ title: File Copy Operations
 sidebarTitle: Copy Operations
 ---
 
-Spacedrive uses a strategy-based copy system that automatically selects the optimal method for moving or copying files. The system analyzes your hardware topology, filesystem capabilities, and operation context to choose between instant atomic operations, zero-copy techniques, streaming transfers, or encrypted network transfers.
+WingDrive uses a strategy-based copy system that automatically selects the optimal method for moving or copying files. The system analyzes your hardware topology, filesystem capabilities, and operation context to choose between instant atomic operations, zero-copy techniques, streaming transfers, or encrypted network transfers.
 
 ## Strategy Selection
 
-When you copy or move files, Spacedrive evaluates the source and destination to pick the best approach. The router examines device IDs, volume relationships, and filesystem types to determine which strategy delivers the fastest, most reliable result.
+When you copy or move files, WingDrive evaluates the source and destination to pick the best approach. The router examines device IDs, volume relationships, and filesystem types to determine which strategy delivers the fastest, most reliable result.
 
 You can control strategy selection through three copy methods:
 
-**Auto** - Spacedrive analyzes your system and picks the optimal strategy. This is the default mode and works well for most operations.
+**Auto** - WingDrive analyzes your system and picks the optimal strategy. This is the default mode and works well for most operations.
 
 **Atomic** - Forces instant operations when possible. Moves use `fs::rename()` for metadata-only changes, while copies leverage Copy-on-Write features like APFS clones or Btrfs reflinks.
 

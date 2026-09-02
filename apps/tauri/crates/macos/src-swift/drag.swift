@@ -283,7 +283,7 @@ class NativeDragSource: NSObject, NSDraggingSource, NSFilePromiseProviderDelegat
         overlay.setFrameOrigin(centeredPoint)
 
         NotificationCenter.default.post(
-            name: Notification.Name("spacedrive.drag.moved"),
+            name: Notification.Name("wingdrive.drag.moved"),
             object: nil,
             userInfo: [
                 "sessionId": sessionId,
@@ -316,7 +316,7 @@ class NativeDragSource: NSObject, NSDraggingSource, NSFilePromiseProviderDelegat
         }
 
         NotificationCenter.default.post(
-            name: Notification.Name("spacedrive.drag.ended"),
+            name: Notification.Name("wingdrive.drag.ended"),
             object: nil,
             userInfo: [
                 "sessionId": sessionId,
@@ -360,7 +360,7 @@ class NativeDragSource: NSObject, NSDraggingSource, NSFilePromiseProviderDelegat
         guard let specId = filePromiseProvider.userInfo as? String,
               let spec = filePromises[specId] else {
             completionHandler(NSError(
-                domain: "com.spacedrive.drag",
+                domain: "com.wingdrive.drag",
                 code: -1,
                 userInfo: [NSLocalizedDescriptionKey: "File promise not found"]
             ))
@@ -369,7 +369,7 @@ class NativeDragSource: NSObject, NSDraggingSource, NSFilePromiseProviderDelegat
 
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                let notificationName = Notification.Name("spacedrive.drag.filePromiseRequested")
+                let notificationName = Notification.Name("wingdrive.drag.filePromiseRequested")
                 let userInfo = [
                     "sessionId": self.sessionId,
                     "itemId": spec.id,
@@ -386,7 +386,7 @@ class NativeDragSource: NSObject, NSDraggingSource, NSFilePromiseProviderDelegat
                 var writeError: Error?
 
                 let observer = NotificationCenter.default.addObserver(
-                    forName: Notification.Name("spacedrive.drag.filePromiseWritten"),
+                    forName: Notification.Name("wingdrive.drag.filePromiseWritten"),
                     object: nil,
                     queue: nil
                 ) { notification in
@@ -395,7 +395,7 @@ class NativeDragSource: NSObject, NSDraggingSource, NSFilePromiseProviderDelegat
                        itemId == spec.id {
                         if let error = info["error"] as? String {
                             writeError = NSError(
-                                domain: "com.spacedrive.drag",
+                                domain: "com.wingdrive.drag",
                                 code: -1,
                                 userInfo: [NSLocalizedDescriptionKey: error]
                             )
@@ -409,7 +409,7 @@ class NativeDragSource: NSObject, NSDraggingSource, NSFilePromiseProviderDelegat
 
                 if timeout == .timedOut {
                     throw NSError(
-                        domain: "com.spacedrive.drag",
+                        domain: "com.wingdrive.drag",
                         code: -1,
                         userInfo: [NSLocalizedDescriptionKey: "File promise write timeout"]
                     )

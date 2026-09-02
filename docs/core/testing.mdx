@@ -3,11 +3,11 @@ title: Testing
 sidebarTitle: Testing
 ---
 
-Testing in Spacedrive Core ensures reliability across single-device operations and multi-device networking scenarios. This guide covers the available frameworks, patterns, and best practices.
+Testing in WingDrive Core ensures reliability across single-device operations and multi-device networking scenarios. This guide covers the available frameworks, patterns, and best practices.
 
 ## Testing Infrastructure
 
-Spacedrive Core provides two primary testing approaches:
+WingDrive Core provides two primary testing approaches:
 
 1. **Standard Tests** - For unit and single-core integration testing
 2. **Subprocess Framework** - For multi-device networking and distributed scenarios
@@ -64,7 +64,7 @@ Key features:
 
 ## Multi-Device Testing
 
-Spacedrive provides two approaches for testing multi-device scenarios:
+WingDrive provides two approaches for testing multi-device scenarios:
 
 ### When to Use Subprocess Framework
 
@@ -211,7 +211,7 @@ let temp_dir = TempDir::new()?;
 
 // ✅ Use home directory
 let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
-let test_root = PathBuf::from(home).join(".spacedrive_test_my_test");
+let test_root = PathBuf::from(home).join(".wingdrive_test_my_test");
 
 // Clean up before
 let _ = tokio::fs::remove_dir_all(&test_root).await;
@@ -494,23 +494,23 @@ wait_for_sync(&core_b).await?;
 
 All test data MUST be created in the system temp directory. Never persist data outside temp unless using the snapshot flag.
 
-**Naming convention**: `spacedrive-test-{test_name}`
+**Naming convention**: `wingdrive-test-{test_name}`
 
 ```rust
 // ✅ CORRECT: Platform-aware temp directory
 let test_data = TestDataDir::new("file_operations")?;
-// Creates: /tmp/spacedrive-test-file_operations/ (Unix)
-//      or: %TEMP%\spacedrive-test-file_operations\ (Windows)
+// Creates: /tmp/wingdrive-test-file_operations/ (Unix)
+//      or: %TEMP%\wingdrive-test-file_operations\ (Windows)
 
 // ❌ INCORRECT: Hardcoded paths outside temp
-let test_dir = PathBuf::from("~/Library/Application Support/spacedrive/tests");
+let test_dir = PathBuf::from("~/Library/Application Support/wingdrive/tests");
 let test_dir = PathBuf::from("core/data/test");
 ```
 
 **Standard structure**:
 
 ```
-/tmp/spacedrive-test-{test_name}/
+/tmp/wingdrive-test-{test_name}/
 ├── core_data/       # Core database and state
 ├── locations/       # Test file locations
 └── logs/            # Test execution logs
@@ -535,9 +535,9 @@ SD_TEST_SNAPSHOTS=1 cargo xtask test-core
 **Snapshot location** (when enabled):
 
 ```
-~/Library/Application Support/spacedrive/test_snapshots/  (macOS)
-~/.local/share/spacedrive/test_snapshots/                 (Linux)
-%APPDATA%\spacedrive\test_snapshots\                      (Windows)
+~/Library/Application Support/wingdrive/test_snapshots/  (macOS)
+~/.local/share/wingdrive/test_snapshots/                 (Linux)
+%APPDATA%\wingdrive\test_snapshots\                      (Windows)
 ```
 
 **Structure**:
@@ -727,7 +727,7 @@ test_volumes::cleanup_test_volume(volume).await?;
 
 ## Core Integration Test Suite
 
-Spacedrive maintains a curated suite of core integration tests that run in CI and during local development. These tests are defined in a single source of truth using the `xtask` pattern.
+WingDrive maintains a curated suite of core integration tests that run in CI and during local development. These tests are defined in a single source of truth using the `xtask` pattern.
 
 ### Running the Core Test Suite
 
@@ -745,7 +745,7 @@ cargo xtask test-core --verbose
 
 ```
 ════════════════════════════════════════════════════════════════
-  Spacedrive Core Tests Runner
+  WingDrive Core Tests Runner
   Running 13 test suite(s)
 ════════════════════════════════════════════════════════════════
 
@@ -820,7 +820,7 @@ With `fail-fast: false`, all platforms complete even if one fails.
 
 ### Deterministic Test Data
 
-Core integration tests use the Spacedrive source code itself as test data instead of user directories. This ensures:
+Core integration tests use the WingDrive source code itself as test data instead of user directories. This ensures:
 
 - **Consistent results** across all machines and CI
 - **No user data access** required
@@ -828,14 +828,14 @@ Core integration tests use the Spacedrive source code itself as test data instea
 - **Predictable file structure** for test assertions
 
 ```rust
-// Tests index the Spacedrive project root
+// Tests index the WingDrive project root
 let test_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
     .parent()
     .unwrap()
     .to_path_buf();
 
 let location = harness
-    .add_and_index_location(test_path.to_str().unwrap(), "spacedrive")
+    .add_and_index_location(test_path.to_str().unwrap(), "wingdrive")
     .await?;
 ```
 
@@ -931,12 +931,12 @@ RUST_LOG=debug cargo test test_name --nocapture
 1. **Use descriptive names**: `test_cross_device_file_transfer` over `test_transfer`
 2. **One concern per test**: Focus on a single feature or workflow
 3. **Clean up resources**: Use RAII patterns or explicit cleanup
-4. **Use deterministic test data**: Index Spacedrive source code instead of user directories
+4. **Use deterministic test data**: Index WingDrive source code instead of user directories
 
 ### Test Data
 
 1. **All test data in temp directory**: Use `TestDataDir` or `TempDir` (see Test Data & Snapshot Conventions)
-2. **Prefer project source code**: Use `env!("CARGO_MANIFEST_DIR")` to locate the Spacedrive repo for test indexing
+2. **Prefer project source code**: Use `env!("CARGO_MANIFEST_DIR")` to locate the WingDrive repo for test indexing
 3. **Avoid user directories**: Don't hardcode paths like `$HOME/Desktop` or `$HOME/Downloads`
 4. **Use subdirectories for multiple locations**: `core/`, `apps/`, etc. when testing multi-location scenarios
 5. **Cross-platform paths**: Ensure test paths work on Linux, macOS, and Windows
@@ -1010,7 +1010,7 @@ Common debugging approaches:
 
 When adding a test to the core suite (`cargo xtask test-core`):
 
-- [ ] Test uses deterministic data (Spacedrive source code)
+- [ ] Test uses deterministic data (WingDrive source code)
 - [ ] Test runs reliably on Linux, macOS, and Windows
 - [ ] Test includes `--test-threads=1` if accessing shared resources
 - [ ] Add test definition to `xtask/src/test_core.rs`
@@ -1018,7 +1018,7 @@ When adding a test to the core suite (`cargo xtask test-core`):
 
 ## TypeScript Integration Testing
 
-Spacedrive provides a bridge infrastructure for running TypeScript tests against a real Rust daemon. This enables true end-to-end testing across the Rust backend and TypeScript frontend, verifying that cache updates, WebSocket events, and React hooks work correctly with real data.
+WingDrive provides a bridge infrastructure for running TypeScript tests against a real Rust daemon. This enables true end-to-end testing across the Rust backend and TypeScript frontend, verifying that cache updates, WebSocket events, and React hooks work correctly with real data.
 
 ### Architecture
 
@@ -1027,7 +1027,7 @@ The TypeScript bridge test pattern works as follows:
 1. **Rust test** creates a daemon with indexed locations using `IndexingHarnessBuilder`
 2. **Connection info** (TCP socket address, library ID, paths) written to JSON config file
 3. **Rust spawns** `bun test` with specific TypeScript test file
-4. **TypeScript test** reads config, connects to daemon via `SpacedriveClient.fromTcpSocket()`
+4. **TypeScript test** reads config, connects to daemon via `WingDriveClient.fromTcpSocket()`
 5. **TypeScript test** performs file operations and validates cache updates via React hooks
 6. **Rust validates** test exit code and cleans up
 
@@ -1110,9 +1110,9 @@ Create a test in `packages/ts-client/tests/integration/`:
 ```typescript
 import { describe, test, expect, beforeAll } from "bun:test";
 import { readFile } from "fs/promises";
-import { SpacedriveClient } from "../../src/client";
+import { WingDriveClient } from "../../src/client";
 import { renderHook, waitFor } from "@testing-library/react";
-import { SpacedriveProvider } from "../../src/hooks/useClient";
+import { WingDriveProvider } from "../../src/hooks/useClient";
 import { useNormalizedQuery } from "../../src/hooks/useNormalizedQuery";
 
 interface BridgeConfig {
@@ -1124,7 +1124,7 @@ interface BridgeConfig {
 }
 
 let bridgeConfig: BridgeConfig;
-let client: SpacedriveClient;
+let client: WingDriveClient;
 
 beforeAll(async () => {
 	// Read bridge config from Rust test
@@ -1133,14 +1133,14 @@ beforeAll(async () => {
 	bridgeConfig = JSON.parse(configJson);
 
 	// Connect to daemon via TCP socket
-	client = SpacedriveClient.fromTcpSocket(bridgeConfig.socket_addr);
+	client = WingDriveClient.fromTcpSocket(bridgeConfig.socket_addr);
 	client.setCurrentLibrary(bridgeConfig.library_id);
 });
 
 describe("Cache Update Tests", () => {
 	test("should update cache when files move", async () => {
 		const wrapper = ({ children }) =>
-			React.createElement(SpacedriveProvider, { client }, children);
+			React.createElement(WingDriveProvider, { client }, children);
 
 		// Query directory listing with useNormalizedQuery
 		const { result } = renderHook(
@@ -1180,12 +1180,12 @@ TypeScript tests connect to the daemon via TCP socket using `TcpSocketTransport`
 
 ```typescript
 // Automatic with factory method
-const client = SpacedriveClient.fromTcpSocket("127.0.0.1:6969");
+const client = WingDriveClient.fromTcpSocket("127.0.0.1:6969");
 
 // Manual construction
 import { TcpSocketTransport } from "@sd/ts-client/transports";
 const transport = new TcpSocketTransport("127.0.0.1:6969");
-const client = new SpacedriveClient(transport);
+const client = new WingDriveClient(transport);
 ```
 
 The TCP transport:
@@ -1340,7 +1340,7 @@ For complete examples, refer to:
 
 **Custom Harness (Mock Transport):**
 
-- `tests/sync_realtime_test.rs` - Real-time sync testing with deterministic transport using Spacedrive source code
+- `tests/sync_realtime_test.rs` - Real-time sync testing with deterministic transport using WingDrive source code
 - `tests/sync_backfill_test.rs` - Backfill sync with deterministic test data
 - `tests/sync_backfill_race_test.rs` - Race condition testing with concurrent operations
 - `tests/file_transfer_test.rs` - Cross-device file operations

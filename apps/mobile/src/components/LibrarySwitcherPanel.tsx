@@ -10,7 +10,7 @@ import {
 	ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useCoreQuery, useCoreAction, useSpacedriveClient } from "../client";
+import { useCoreQuery, useCoreAction, useWingDriveClient } from "../client";
 import { useSidebarStore } from "../stores";
 
 interface LibrarySwitcherPanelProps {
@@ -23,7 +23,7 @@ export function LibrarySwitcherPanel({
 	onClose,
 }: LibrarySwitcherPanelProps) {
 	const insets = useSafeAreaInsets();
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const { currentLibraryId, setCurrentLibrary: setStoreLibrary } =
 		useSidebarStore();
 	const [showCreateForm, setShowCreateForm] = useState(false);

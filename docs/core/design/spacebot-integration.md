@@ -2,46 +2,46 @@
 
 ## Purpose
 
-Add first-class Spacebot support to Spacedrive without collapsing the two products into one process model.
+Add first-class Spacebot support to WingDrive without collapsing the two products into one process model.
 
-Spacedrive should be able to:
+WingDrive should be able to:
 
 1. manage a local Spacebot instance for the user
 2. connect to an already running local Spacebot instance
 3. connect to a remote Spacebot instance
 
-This keeps Spacebot as a separate runtime while making it feel native inside Spacedrive.
+This keeps Spacebot as a separate runtime while making it feel native inside WingDrive.
 
 ## Decision
 
-Spacedrive will treat Spacebot as a companion service, not as an embedded subsystem inside the VDFS daemon.
+WingDrive will treat Spacebot as a companion service, not as an embedded subsystem inside the VDFS daemon.
 
 The integration boundary is HTTP plus SSE, using Spacebot's existing API.
 
-Spacedrive will support three connection modes:
+WingDrive will support three connection modes:
 
-1. **Managed Local** — Spacedrive launches and supervises a foreground Spacebot child process.
-2. **External Local** — Spacedrive connects to an existing localhost Spacebot instance.
-3. **Remote** — Spacedrive connects to a Spacebot instance over HTTPS with bearer auth.
+1. **Managed Local** — WingDrive launches and supervises a foreground Spacebot child process.
+2. **External Local** — WingDrive connects to an existing localhost Spacebot instance.
+3. **Remote** — WingDrive connects to a Spacebot instance over HTTPS with bearer auth.
 
 ## Why This Shape
 
 - Spacebot already has a real control plane: HTTP API, health endpoints, status endpoints, SSE, and a stable instance directory model.
-- Spacedrive already treats Spacebot as a separate process in the README, which is the right long-term boundary.
+- WingDrive already treats Spacebot as a separate process in the README, which is the right long-term boundary.
 - Embedding Spacebot directly into `sd-core` would couple two daemon models too early.
 - Spacebot works cleanly as a child process because it has explicit foreground mode and local file-backed state.
 - The same client model can serve local managed, local external, and remote connections.
 
 ## Non-Goals
 
-- Do not merge Spacebot into the Spacedrive daemon process.
-- Do not proxy every Spacebot API through Spacedrive in v1.
-- Do not require Spacedrive core to understand Spacebot internals like channels, branches, workers, or memory schemas.
+- Do not merge Spacebot into the WingDrive daemon process.
+- Do not proxy every Spacebot API through WingDrive in v1.
+- Do not require WingDrive core to understand Spacebot internals like channels, branches, workers, or memory schemas.
 - Do not design a brand-new agent API when Spacebot already has one.
 
 ## Existing Spacebot Capabilities
 
-Spacebot already exposes the pieces Spacedrive needs.
+Spacebot already exposes the pieces WingDrive needs.
 
 ### Runtime
 
@@ -70,7 +70,7 @@ Relevant files:
 - `spacebot/src/api/system.rs`
 - `spacebot/docs/docker.md`
 
-### Minimal endpoints Spacedrive can rely on
+### Minimal endpoints WingDrive can rely on
 
 - `GET /api/health` — liveness
 - `GET /api/status` — version, pid, uptime
@@ -84,7 +84,7 @@ Relevant files:
 
 ### 1. Managed Local
 
-Spacedrive starts Spacebot as a child process in foreground mode and talks to it over localhost HTTP.
+WingDrive starts Spacebot as a child process in foreground mode and talks to it over localhost HTTP.
 
 Recommended command shape:
 
@@ -95,19 +95,19 @@ spacebot start --foreground --config <path>
 Recommended ownership:
 
 - process lifecycle owned by the desktop shell layer, not by `sd-core`
-- status mirrored into Spacedrive config and UI
+- status mirrored into WingDrive config and UI
 - health and warmup polled over HTTP
 
 Why this is the recommended default:
 
 - easiest onboarding
 - strongest first-class user experience
-- least invasive to Spacedrive core
+- least invasive to WingDrive core
 - preserves Spacebot as a separate product and runtime
 
 ### 2. External Local
 
-Spacedrive connects to an already running local Spacebot instance.
+WingDrive connects to an already running local Spacebot instance.
 
 Expected user inputs:
 
@@ -118,11 +118,11 @@ This mode is important for:
 
 - developers already running Spacebot manually
 - advanced users with custom instance directories or configs
-- system-service installs managed outside Spacedrive
+- system-service installs managed outside WingDrive
 
 ### 3. Remote
 
-Spacedrive connects to a remote Spacebot instance over HTTPS.
+WingDrive connects to a remote Spacebot instance over HTTPS.
 
 Expected user inputs:
 
@@ -148,12 +148,12 @@ The smallest honest first-class integration is:
 
 ## Architecture Boundary
 
-### Spacedrive Core responsibilities
+### WingDrive Core responsibilities
 
 - persist Spacebot connection settings in app config
 - expose typed config get/update operations
 - expose lightweight status and health queries if the UI should stay transport-agnostic
-- optionally publish Spacebot connection events onto Spacedrive's own event system later
+- optionally publish Spacebot connection events onto WingDrive's own event system later
 
 ### Desktop shell responsibilities
 
@@ -189,7 +189,7 @@ The right split is:
 - config lives in core
 - process supervision lives in the platform shell
 
-## Proposed Spacedrive Config Shape
+## Proposed WingDrive Config Shape
 
 Add a new block to `AppConfig` in `spacedrive/core/src/config/app_config.rs`.
 
@@ -301,12 +301,12 @@ The first slice does not need to fully replicate the Spacebot dashboard. It only
 
 Recommended default:
 
-- store Spacebot instance data under Spacedrive's data root but in a separate subtree
+- store Spacebot instance data under WingDrive's data root but in a separate subtree
 
 Example:
 
 ```text
-<spacedrive-data-dir>/spacebot/
+<wingdrive-data-dir>/spacebot/
   instance/
   config.toml
   logs/
@@ -334,7 +334,7 @@ V1 recommendation:
 
 - consume it directly in the UI client
 - filter by `agent_id` and `channel_id` client-side
-- do not mirror all Spacebot events into Spacedrive core yet
+- do not mirror all Spacebot events into WingDrive core yet
 
 Why:
 
@@ -344,7 +344,7 @@ Why:
 
 Future:
 
-- if the rest of Spacedrive needs Spacebot events, add a narrow translated event layer later
+- if the rest of WingDrive needs Spacebot events, add a narrow translated event layer later
 
 ## Session Model
 
@@ -352,7 +352,7 @@ Use Spacebot's webchat model as the first integration path.
 
 Suggested mapping:
 
-- one Spacedrive user session or panel maps to one `session_id`
+- one WingDrive user session or panel maps to one `session_id`
 - one chosen Spacebot agent maps to `agent_id`
 - user input goes to `/api/webchat/send`
 - UI state is hydrated from `/api/webchat/history`
@@ -390,11 +390,11 @@ Mitigation:
 
 ### Tight product coupling
 
-If Spacedrive starts depending on too much of Spacebot's internal API surface, upgrades get harder.
+If WingDrive starts depending on too much of Spacebot's internal API surface, upgrades get harder.
 
 Mitigation:
 
-- define a narrow Spacedrive-facing client contract
+- define a narrow WingDrive-facing client contract
 - start with webchat, status, health, and SSE only
 
 ## Phased Plan
@@ -409,7 +409,7 @@ Mitigation:
 
 - add Tauri platform commands to start and stop Spacebot
 - add supervised child-process support
-- create dedicated Spacebot instance directory under Spacedrive data
+- create dedicated Spacebot instance directory under WingDrive data
 
 ### Phase 3: Embedded Chat
 
@@ -425,7 +425,7 @@ The first prototype can ship with a config-gated chat route, handwritten request
 - agent picker
 - worker status and live activity
 - memory and task views if useful
-- cross-link Spacebot with Spacedrive repository and file contexts
+- cross-link Spacebot with WingDrive repository and file contexts
 
 ### Phase 5: Remote Hardening
 
@@ -443,6 +443,6 @@ Start with:
 - **External Local** as the easy advanced path
 - **Remote** as the same client abstraction with a different base URL
 
-Keep the boundary at HTTP plus SSE. Keep process supervision in the desktop shell. Keep settings in Spacedrive core config. Use Spacebot's webchat model first.
+Keep the boundary at HTTP plus SSE. Keep process supervision in the desktop shell. Keep settings in WingDrive core config. Use Spacebot's webchat model first.
 
-That gives Spacedrive deep native Spacebot support without pretending the two runtimes should already be one.
+That gives WingDrive deep native Spacebot support without pretending the two runtimes should already be one.

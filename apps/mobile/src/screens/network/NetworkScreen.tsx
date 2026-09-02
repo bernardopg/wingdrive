@@ -59,7 +59,7 @@ export function NetworkScreen() {
 						</View>
 						<View>
 							<Text className="text-ink font-medium">
-								Spacedrive Mobile
+								WingDrive Mobile
 							</Text>
 							<Text className="text-ink-dull text-sm">
 								Connected

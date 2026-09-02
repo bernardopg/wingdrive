@@ -1,6 +1,6 @@
 //! TypeScript Integration Test Bridge
 //!
-//! This test harness sets up a real Spacedrive daemon with indexed locations,
+//! This test harness sets up a real WingDrive daemon with indexed locations,
 //! then spawns TypeScript tests that interact with it via the ts-client.
 //! This enables true end-to-end testing across the Rust backend and TypeScript frontend.
 //!

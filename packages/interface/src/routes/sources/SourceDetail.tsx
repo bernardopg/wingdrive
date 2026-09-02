@@ -14,7 +14,7 @@ import {
 } from "../../contexts/SpacedriveContext";
 import { useTabManager } from "../../components/TabManager/useTabManager";
 import { TopBarPortal, TopBarItem } from "../../TopBar";
-import { CircleButton, Popover, usePopover } from "@spacedrive/primitives";
+import { CircleButton, Popover, usePopover } from "@wingdrive/primitives";
 import { ExpandableSearchButton } from "../explorer/components/ExpandableSearchButton";
 import { SourcePathBar } from "../../components/Sources/SourcePathBar";
 import { SourceDataRow } from "../../components/Sources/SourceDataRow";

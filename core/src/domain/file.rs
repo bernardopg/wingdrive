@@ -30,7 +30,7 @@ pub enum EntryKind {
 	Symlink,
 }
 
-/// Represents a file within the Spacedrive VDFS.
+/// Represents a file within the WingDrive VDFS.
 ///
 /// This is a computed domain model that aggregates data from Entry, ContentIdentity,
 /// Tags, and Sidecars. It provides a rich, developer-friendly interface without
@@ -40,7 +40,7 @@ pub struct File {
 	/// The unique identifier of the file entry
 	pub id: Uuid,
 
-	/// The universal path to the file in Spacedrive's VDFS
+	/// The universal path to the file in WingDrive's VDFS
 	pub sd_path: SdPath,
 
 	/// The file kind (file, directory, symlink)

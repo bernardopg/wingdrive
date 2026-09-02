@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { usePlatform, type OpenResult } from "../contexts/PlatformContext";
-import { toast } from "@spacedrive/primitives";
+import { toast } from "@wingdrive/primitives";
 
 export function useOpenWith(paths: string[]) {
 	const platform = usePlatform();

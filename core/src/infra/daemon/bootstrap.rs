@@ -28,7 +28,7 @@ pub async fn start_default_server(
 
 	let core = Arc::new(core);
 
-	info!("Starting Spacedrive daemon");
+	info!("Starting WingDrive daemon");
 	info!("Data directory: {:?}", data_dir);
 	info!("Socket address: {}", socket_addr);
 	info!("Networking enabled: {}", enable_networking);

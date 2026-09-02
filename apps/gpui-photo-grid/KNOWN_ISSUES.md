@@ -5,7 +5,7 @@
 **Problem:** The Tauri app starts the HTTP server on a random port (not fixed at 54321).
 
 **Current Workaround:**
-1. Open Spacedrive Tauri app
+1. Open WingDrive Tauri app
 2. Open browser devtools
 3. Find an image thumbnail URL (e.g., in Network tab or inspect an `<img>` tag)
 4. Note the port number (e.g., `127.0.0.1:56851`)
@@ -30,7 +30,7 @@ Query: "core.http_url" -> Returns current HTTP URL
 ### Option 2: Write URL to file
 Have the daemon write the HTTP URL to a known location:
 ```
-~/.spacedrive/http_url.txt
+~/.wingdrive/http_url.txt
 ```
 
 ### Option 3: Use fixed port

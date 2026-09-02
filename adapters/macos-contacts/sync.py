@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-macOS Contacts adapter for Spacedrive.
+macOS Contacts adapter for WingDrive.
 
 Reads the macOS AddressBook SQLite database directly.
 The database is at ~/Library/Application Support/AddressBook/AddressBook-v22.abcddb

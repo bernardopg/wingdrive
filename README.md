@@ -70,11 +70,12 @@ Adapters are a folder with an `adapter.toml` manifest and a sync script in any l
 
 **Shipped adapters:** Gmail, Apple Notes, Chrome Bookmarks, Chrome History, Safari History, Obsidian, OpenCode, Slack, macOS Contacts, macOS Calendar, GitHub.
 
-### Spacebot
+### Agent integration
 
-WingDrive integrates with [Spacebot](https://github.com/spacedriveapp/spacebot), an AI agent runtime maintained upstream. Spacebot runs as an optional separate process. WingDrive provides the data, permission, and execution layer. Spacebot provides the intelligence.
-
-The Spacebot runtime is not bundled with this repository. When it is absent the desktop app renders an explicit unavailable state instead of simulating success.
+WingDrive can connect to an optional agent runtime through its local APIs. No
+external agent service is bundled or required to build, run, or release
+WingDrive. When no runtime is configured, the desktop app reports that the
+agent surface is unavailable instead of simulating success.
 
 Each Spacebot instance pairs with one WingDrive node as its home device. That node authenticates the agent, maintains the device graph, resolves permissions, and forwards operations to peer devices. Every device in your library can reach Spacebot through the paired node over P2P (Iroh/QUIC) without direct network access. One agent runtime serves your entire device fleet.
 
@@ -133,7 +134,7 @@ The implementation is a single Rust crate with CQRS/DDD architecture. Every oper
 | Desktop         | Tauri 2                                      |
 | Mobile          | React Native + Expo                          |
 | Frontend        | React 19, Vite, TanStack Query, Tailwind CSS v4 |
-| Design system   | [SpaceUI](https://github.com/spacedriveapp/spaceui) (upstream component library) |
+| Design system   | Vendored `@wingdrive/primitives`, `@wingdrive/tokens`, and `@wingdrive/ai` workspaces |
 | Type generation | Specta                                       |
 
 ```
@@ -148,7 +149,9 @@ wingdrive/
 ├── packages/
 │   ├── interface/         # Shared React UI
 │   ├── ts-client/         # Auto-generated TypeScript client
-│   ├── ui/                # Component library
+│   ├── wingdrive-primitives/ # Component library
+│   ├── wingdrive-tokens/  # Design tokens
+│   ├── wingdrive-ai/      # Agent interface components
 │   └── assets/            # Icons, images, SVGs
 ├── crates/                # Standalone Rust crates (ffmpeg, crypto, etc.)
 ├── adapters/              # Script-based data source adapters
@@ -159,7 +162,7 @@ wingdrive/
 
 ## Getting Started
 
-Requires [Rust](https://rustup.rs/) 1.81+, [Bun](https://bun.sh) 1.3+, [just](https://github.com/casey/just), and Python 3.9+ (for adapters).
+Requires [Rust](https://rustup.rs/) 1.89+, [Bun](https://bun.sh) 1.3+, [just](https://github.com/casey/just), and Python 3.9+ (for adapters).
 
 ```bash
 git clone https://github.com/bernardopg/wingdrive
@@ -192,7 +195,7 @@ Contributions are welcome from anyone. Open an issue or a pull request.
 
 - **[Contributing Guide](CONTRIBUTING.md)**
 - **[Adapter Guide](docs/ADAPTERS.md)** — write a data source adapter
-- **[SpaceUI](https://github.com/spacedriveapp/spaceui)** — upstream design system (clone alongside WingDrive to work on UI)
+- The design-system workspaces live in this repository under `packages/wingdrive-*`.
 
 By opening a pull request you agree that your contribution is licensed under
 FSL-1.1-ALv2, the same terms as the rest of the project.

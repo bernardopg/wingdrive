@@ -11,7 +11,7 @@ impl Default for BenchConfig {
 	fn default() -> Self {
 		let out_dir = dirs::data_dir()
 			.unwrap_or_else(|| std::env::temp_dir())
-			.join("spacedrive-bench");
+			.join("wingdrive-bench");
 		Self {
 			seed: None,
 			out_dir,

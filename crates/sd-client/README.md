@@ -1,10 +1,10 @@
 # sd-client
 
-Rust client library for connecting to the Spacedrive daemon.
+Rust client library for connecting to the WingDrive daemon.
 
 ## Features
 
-- Unix socket communication with Spacedrive core
+- TCP communication with WingDrive core
 - Type-safe query and action execution
 - Media file listing queries
 - Thumbnail URL construction
@@ -59,7 +59,7 @@ Run the test connection example:
 
 ```bash
 export SD_LIBRARY_ID="your-library-uuid"
-export SD_SOCKET_PATH="$HOME/.spacedrive/daemon.sock"  # optional
+export SD_SOCKET_ADDR="$HOME127.0.0.1:6969"  # optional
 export SD_HTTP_URL="http://127.0.0.1:54321"            # optional
 
 cargo run --example test_connection
@@ -69,7 +69,7 @@ cargo run --example test_connection
 
 ### SpacedriveClient
 
-- `new(socket_path, http_base_url)` - Create a new client
+- `new(socket_addr, http_base_url)` - Create a new client
 - `set_library(library_id)` - Set the current library context
 - `execute(wire_method, input)` - Execute a query or action
 - `media_listing(path, limit)` - Query media files

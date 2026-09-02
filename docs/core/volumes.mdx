@@ -3,7 +3,7 @@ title: Volumes
 sidebarTitle: Volumes
 ---
 
-Spacedrive detects and tracks storage volumes across all platforms, including local drives and cloud storage. The volume system enables intelligent file operations by understanding where data lives and how to move it efficiently.
+WingDrive detects and tracks storage volumes across all platforms, including local drives and cloud storage. The volume system enables intelligent file operations by understanding where data lives and how to move it efficiently.
 
 ## How It Works
 
@@ -12,11 +12,11 @@ The volume system operates in two modes:
 1. **Runtime Detection** - Automatically discovers all mounted storage devices
 2. **Volume Tracking** - Persists volumes you choose to track across sessions
 
-When you connect a drive or add cloud storage, Spacedrive detects it immediately. If you choose to track that volume, it remembers your preferences and recognizes it when reconnected.
+When you connect a drive or add cloud storage, WingDrive detects it immediately. If you choose to track that volume, it remembers your preferences and recognizes it when reconnected.
 
 ## Storage Backends
 
-Spacedrive supports two types of storage backends:
+WingDrive supports two types of storage backends:
 
 - **Local Filesystems** - Physical drives mounted on your system (APFS, NTFS, Ext4, etc.)
 - **Cloud Storage** - S3, Google Drive, Dropbox, OneDrive, and 40+ other services via OpenDAL
@@ -42,7 +42,7 @@ See [Library Sync](/docs/core/library-sync) for details on how ownership flows t
 
 ### Unified Addressing
 
-Spacedrive uses service-native URIs for cloud volumes that match industry tools:
+WingDrive uses service-native URIs for cloud volumes that match industry tools:
 
 ```
 s3://my-bucket/photos/vacation.jpg       ← Amazon S3
@@ -69,7 +69,7 @@ These URIs work identically to local volume paths and enable seamless operations
 - **Virtual** - RAM disks and virtual filesystems
 
 ### Filesystems
-Spacedrive recognizes major filesystems including APFS, NTFS, Ext4, Btrfs, ZFS, FAT32, and ExFAT.
+WingDrive recognizes major filesystems including APFS, NTFS, Ext4, Btrfs, ZFS, FAT32, and ExFAT.
 
 ### Cloud Services
 Supports 40+ cloud services via OpenDAL:
@@ -191,7 +191,7 @@ while let Ok(event) = events.recv().await {
 
 ## Copy-on-Write and Server-Side Operations
 
-Spacedrive uses optimal copy strategies based on the storage backend:
+WingDrive uses optimal copy strategies based on the storage backend:
 
 ```rust
 if volume.supports_cow() {
@@ -427,7 +427,7 @@ These help users understand their storage usage and performance characteristics.
 
 ## Content Deduplication Across Storage
 
-Spacedrive uses consistent content hashing across all storage backends:
+WingDrive uses consistent content hashing across all storage backends:
 
 ```rust
 // Same file gets same content hash regardless of location

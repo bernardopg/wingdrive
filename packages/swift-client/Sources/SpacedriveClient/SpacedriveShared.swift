@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Shared Types for All Platforms
 
-/// Errors that can occur when using the Spacedrive client
+/// Errors that can occur when using the WingDrive client
 public enum SpacedriveError: Error, LocalizedError {
     case connectionFailed(String)
     case serializationError(String)

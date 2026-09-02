@@ -3,7 +3,7 @@ title: Database
 sidebarTitle: Database
 ---
 
-Spacedrive uses SQLite with SeaORM for database operations. The database is embedded within each library, providing fast local queries and simple backup strategies.
+WingDrive uses SQLite with SeaORM for database operations. The database is embedded within each library, providing fast local queries and simple backup strategies.
 
 ## Technology Stack
 
@@ -206,7 +206,7 @@ This creates a compacted backup while the database remains accessible.
 
 ### Crash Recovery
 
-WAL mode provides automatic crash recovery. If Spacedrive crashes, SQLite automatically rolls back incomplete transactions on the next startup.
+WAL mode provides automatic crash recovery. If WingDrive crashes, SQLite automatically rolls back incomplete transactions on the next startup.
 
 The WAL file contains all pending writes. SQLite replays this journal to restore database consistency.
 
@@ -276,7 +276,7 @@ let size_bytes = page_count * page_size;
 
 ## Extension Support
 
-Spacedrive extensions can create custom tables at runtime. The database layer provides APIs for:
+WingDrive extensions can create custom tables at runtime. The database layer provides APIs for:
 
 **Table Creation**: Extensions define tables with proper namespacing.
 

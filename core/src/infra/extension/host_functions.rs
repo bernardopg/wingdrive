@@ -1,6 +1,6 @@
 //! WASM host functions
 //!
-//! This module provides the bridge between WASM extensions and Spacedrive's
+//! This module provides the bridge between WASM extensions and WingDrive's
 //! operation registry. The key function is `host_spacedrive_call()` which routes
 //! generic Wire method calls to the existing `execute_json_operation()` function
 //! used by daemon RPC.
@@ -26,7 +26,7 @@ pub struct PluginEnv {
 
 /// THE MAIN HOST FUNCTION - Generic Wire RPC
 ///
-/// This is the ONLY function WASM extensions need to call Spacedrive operations.
+/// This is the ONLY function WASM extensions need to call WingDrive operations.
 /// It routes calls to the existing Wire operation registry.
 ///
 /// # Arguments

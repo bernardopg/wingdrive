@@ -1,4 +1,4 @@
-# Spacedrive Core
+# WingDrive Core
 
 Rust library implementing the Virtual Distributed File System (VDFS) architecture for local-first, AI-native file management.
 
@@ -132,18 +132,18 @@ cargo build --release
 # With optional features
 cargo build --features ffmpeg,ai,heif
 
-# Specific binary
-cargo build --bin spacedrive
-cargo build --bin daemon
+# Specific binaries
+cargo build --bin sd-cli
+cargo build --bin sd-daemon
 
 # Run CLI
-cargo run --bin spacedrive -- --help
+cargo run --bin sd-cli -- --help
 ```
 
 ## Binaries
 
-- `spacedrive`: CLI interface
-- `daemon`: Background daemon process
+- `sd-cli`: CLI interface
+- `sd-daemon`: Background daemon process
 
 ## Development
 

@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Pressable } from "react-native";
 import { DrawerContentComponentProps } from "@react-navigation/drawer";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSidebarStore } from "../../stores";
-import { useCoreQuery, useSpacedriveClient } from "../../client";
+import { useCoreQuery, useWingDriveClient } from "../../client";
 
 interface SidebarSectionProps {
 	title: string;
@@ -38,7 +38,7 @@ function SidebarSection({
 
 export function SidebarContent({ navigation }: DrawerContentComponentProps) {
 	const insets = useSafeAreaInsets();
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const {
 		currentLibraryId,
 		setCurrentLibrary: setStoreLibrary,
@@ -72,7 +72,7 @@ export function SidebarContent({ navigation }: DrawerContentComponentProps) {
 		>
 			{/* Logo/Title */}
 			<View className="mb-6">
-				<Text className="text-xl font-bold text-ink">Spacedrive</Text>
+				<Text className="text-xl font-bold text-ink">WingDrive</Text>
 				<Text className="text-ink-faint text-sm">Mobile V2</Text>
 			</View>
 

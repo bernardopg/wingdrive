@@ -3,7 +3,7 @@ title: React Hooks
 sidebarTitle: Hooks
 ---
 
-Spacedrive provides type-safe React hooks for data fetching, mutations, and event subscriptions. All types are auto-generated from Rust definitions.
+WingDrive provides type-safe React hooks for data fetching, mutations, and event subscriptions. All types are auto-generated from Rust definitions.
 
 ## Data Fetching Hooks
 
@@ -272,7 +272,7 @@ moveFiles.mutate({ source: '/old/path', destination: '/new/path' });
 
 ### useEvent
 
-Subscribe to specific Spacedrive events.
+Subscribe to specific WingDrive events.
 
 ```tsx
 import { useEvent } from '@sd/interface';
@@ -322,7 +322,7 @@ useEvent('JobCompleted', (event) => {
 
 ### useAllEvents
 
-Subscribe to all Spacedrive events (useful for debugging).
+Subscribe to all WingDrive events (useful for debugging).
 
 ```tsx
 import { useAllEvents } from '@sd/interface';
@@ -376,15 +376,15 @@ libraries?.forEach(lib => {
 
 ## Client Hook
 
-### useSpacedriveClient
+### useWingDriveClient
 
-Access the Spacedrive client instance directly.
+Access the WingDrive client instance directly.
 
 ```tsx
-import { useSpacedriveClient } from '@sd/interface';
+import { useWingDriveClient } from '@sd/interface';
 
 function LibrarySwitcher() {
-  const client = useSpacedriveClient();
+  const client = useWingDriveClient();
   const [currentLibraryId, setCurrentLibraryId] = useState<string | null>(null);
 
   const switchLibrary = (id: string) => {
@@ -621,7 +621,7 @@ const handleCreate = () => {
 
 ## Summary
 
-Spacedrive's React hooks provide:
+WingDrive's React hooks provide:
 
 - **Type safety** - All operations are type-checked against Rust definitions
 - **Auto-generation** - Types are generated from Rust, never manually written

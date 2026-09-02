@@ -21,9 +21,9 @@ async fn alice_pull_source_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-pull-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-pull-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-pull-test/alice");
+	let data_dir = PathBuf::from("/tmp/wingdrive-pull-test/alice");
 	let device_name = "Alice's Test Device";
 
 	println!("Alice: Starting as PULL source (file host)");
@@ -95,9 +95,9 @@ async fn alice_pull_source_scenario() {
 			)
 		})
 		.collect();
-	std::fs::create_dir_all("/tmp/spacedrive-pull-test").unwrap();
+	std::fs::create_dir_all("/tmp/wingdrive-pull-test").unwrap();
 	std::fs::write(
-		"/tmp/spacedrive-pull-test/source_files.txt",
+		"/tmp/wingdrive-pull-test/source_files.txt",
 		file_info.join("\n"),
 	)
 	.unwrap();
@@ -142,7 +142,7 @@ async fn alice_pull_source_scenario() {
 		short_code, expires_in
 	);
 
-	std::fs::write("/tmp/spacedrive-pull-test/pairing_code.txt", &pairing_code).unwrap();
+	std::fs::write("/tmp/wingdrive-pull-test/pairing_code.txt", &pairing_code).unwrap();
 	println!("Alice: Pairing code written");
 
 	// Wait for Bob to connect
@@ -179,14 +179,14 @@ async fn alice_pull_source_scenario() {
 	}
 
 	// Write ready signal for Bob
-	std::fs::write("/tmp/spacedrive-pull-test/alice_ready.txt", "ready").unwrap();
+	std::fs::write("/tmp/wingdrive-pull-test/alice_ready.txt", "ready").unwrap();
 	println!("Alice: Ready for Bob to initiate PULL requests");
 
 	// Wait for Bob to complete PULL transfers
 	println!("Alice: Waiting for Bob to complete PULL transfers...");
 	let mut bob_completed = false;
 	for attempt in 1..=90 {
-		if std::fs::read_to_string("/tmp/spacedrive-pull-test/bob_pull_success.txt")
+		if std::fs::read_to_string("/tmp/wingdrive-pull-test/bob_pull_success.txt")
 			.map(|content| content.starts_with("success"))
 			.unwrap_or(false)
 		{
@@ -206,7 +206,7 @@ async fn alice_pull_source_scenario() {
 
 	if bob_completed {
 		println!("PULL_TEST_SUCCESS: Alice successfully served files for PULL");
-		std::fs::write("/tmp/spacedrive-pull-test/alice_success.txt", "success").unwrap();
+		std::fs::write("/tmp/wingdrive-pull-test/alice_success.txt", "success").unwrap();
 	} else {
 		panic!("Alice: Bob did not complete PULL transfers within timeout");
 	}
@@ -227,9 +227,9 @@ async fn bob_pull_receiver_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-pull-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-pull-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-pull-test/bob");
+	let data_dir = PathBuf::from("/tmp/wingdrive-pull-test/bob");
 	let device_name = "Bob's Test Device";
 
 	println!("Bob: Starting as PULL initiator (will pull files from Alice)");
@@ -267,7 +267,7 @@ async fn bob_pull_receiver_scenario() {
 	// Wait for Alice's pairing code
 	println!("Bob: Looking for pairing code from Alice...");
 	let pairing_code = loop {
-		if let Ok(code) = std::fs::read_to_string("/tmp/spacedrive-pull-test/pairing_code.txt") {
+		if let Ok(code) = std::fs::read_to_string("/tmp/wingdrive-pull-test/pairing_code.txt") {
 			break code.trim().to_string();
 		}
 		tokio::time::sleep(Duration::from_millis(500)).await;
@@ -321,7 +321,7 @@ async fn bob_pull_receiver_scenario() {
 	// Wait for Alice to be ready
 	println!("Bob: Waiting for Alice to be ready...");
 	loop {
-		if std::fs::read_to_string("/tmp/spacedrive-pull-test/alice_ready.txt")
+		if std::fs::read_to_string("/tmp/wingdrive-pull-test/alice_ready.txt")
 			.map(|content| content.starts_with("ready"))
 			.unwrap_or(false)
 		{
@@ -333,7 +333,7 @@ async fn bob_pull_receiver_scenario() {
 
 	// Read source files info
 	let source_files_info = loop {
-		if let Ok(content) = std::fs::read_to_string("/tmp/spacedrive-pull-test/source_files.txt") {
+		if let Ok(content) = std::fs::read_to_string("/tmp/wingdrive-pull-test/source_files.txt") {
 			break content
 				.lines()
 				.map(|line| {
@@ -523,11 +523,11 @@ async fn bob_pull_receiver_scenario() {
 
 		if all_verified {
 			std::fs::write(
-				"/tmp/spacedrive-pull-test/bob_pull_success.txt",
+				"/tmp/wingdrive-pull-test/bob_pull_success.txt",
 				format!("success:{}", chrono::Utc::now().timestamp()),
 			)
 			.unwrap();
-			std::fs::write("/tmp/spacedrive-pull-test/bob_success.txt", "success").unwrap();
+			std::fs::write("/tmp/wingdrive-pull-test/bob_success.txt", "success").unwrap();
 			println!("PULL_TEST_SUCCESS: Bob successfully PULLED all files from Alice");
 		} else {
 			panic!("Bob: Some files failed verification");
@@ -551,8 +551,8 @@ async fn bob_pull_receiver_scenario() {
 #[tokio::test]
 async fn test_file_copy_pull() {
 	// Clean up old test files
-	let _ = std::fs::remove_dir_all("/tmp/spacedrive-pull-test");
-	std::fs::create_dir_all("/tmp/spacedrive-pull-test").unwrap();
+	let _ = std::fs::remove_dir_all("/tmp/wingdrive-pull-test");
+	std::fs::create_dir_all("/tmp/wingdrive-pull-test").unwrap();
 
 	println!("Testing bidirectional file copy - PULL direction");
 	println!("Alice will host files, Bob will PULL them");
@@ -583,10 +583,10 @@ async fn test_file_copy_pull() {
 	let result = runner
 		.wait_for_success(|_outputs| {
 			let alice_success =
-				std::fs::read_to_string("/tmp/spacedrive-pull-test/alice_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-pull-test/alice_success.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
-			let bob_success = std::fs::read_to_string("/tmp/spacedrive-pull-test/bob_success.txt")
+			let bob_success = std::fs::read_to_string("/tmp/wingdrive-pull-test/bob_success.txt")
 				.map(|content| content.trim() == "success")
 				.unwrap_or(false);
 

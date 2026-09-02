@@ -1,13 +1,13 @@
 # TypeScript Integration Tests with Rust Bridge
 
-This directory contains end-to-end integration tests that bridge Rust and TypeScript, enabling real testing of TypeScript React hooks (`useNormalizedQuery`) against an actual Spacedrive daemon with indexed files.
+This directory contains end-to-end integration tests that bridge Rust and TypeScript, enabling real testing of TypeScript React hooks (`useNormalizedQuery`) against an actual WingDrive daemon with indexed files.
 
 ## Architecture
 
 The testing bridge works as follows:
 
 1. **Rust Test Harness** (`core/tests/typescript_bridge_test.rs`)
-   - Sets up a real Spacedrive daemon with RPC server
+   - Sets up a real WingDrive daemon with RPC server
    - Indexes a test location with files
    - Writes connection config to JSON file
    - Spawns `bun test` to run TypeScript tests

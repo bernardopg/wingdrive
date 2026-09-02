@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MagnifyingGlass } from "@phosphor-icons/react";
-import { CircleButton, SearchBar } from "@spacedrive/primitives";
+import { CircleButton, SearchBar } from "@wingdrive/primitives";
 
 interface ExpandableSearchButtonProps {
 	value: string;

@@ -1,4 +1,4 @@
-//! Log analysis system for Spacedrive.
+//! Log analysis system for WingDrive.
 //!
 //! This crate provides tools for parsing, analyzing, and querying large structured log files.
 //! It identifies patterns, collapses repetitions, and enables queryable analysis of log data.

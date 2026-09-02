@@ -3,14 +3,14 @@
 ## What You Just Built
 
 A standalone GPUI application that:
-- Connects to your running Spacedrive daemon
+- Connects to your running WingDrive daemon
 - Queries media files (images/videos)
 - Renders them in a GPU-accelerated grid
-- Loads thumbnails directly from Spacedrive's HTTP server
+- Loads thumbnails directly from WingDrive's HTTP server
 
 ## Prerequisites
 
-1. **Spacedrive must be running** - The daemon needs to be active
+1. **WingDrive must be running** - The daemon needs to be active
 2. **Know your library ID** - The run script will find it automatically
 
 ## Running It
@@ -23,7 +23,7 @@ cd apps/gpui-photo-grid
 ```
 
 This will:
-- Find your Spacedrive library automatically
+- Find your WingDrive library automatically
 - Set all environment variables
 - Run the app in release mode
 
@@ -31,7 +31,7 @@ This will:
 
 ```bash
 # Find your library ID
-cat "$HOME/Library/Application Support/spacedrive/libraries"/*.sdlibrary/library.json | grep '"id"'
+cat "$HOME/WingDrive/Libraries"/*.sdlibrary/library.json | grep '"id"'
 
 # Run with env vars
 export SD_LIBRARY_ID="your-library-uuid-here"
@@ -40,7 +40,7 @@ cargo run --release
 
 ## What You'll See
 
-1. **Window opens** with "Spacedrive Media Grid" title
+1. **Window opens** with "WingDrive Media Grid" title
 2. **Header** showing item count and grid settings
 3. **Loading state** while querying daemon
 4. **Grid of thumbnails** (up to 1000 photos/videos)
@@ -70,8 +70,8 @@ Phase 2 improvements:
 ## Troubleshooting
 
 ### "Error loading files"
-- **Check daemon is running**: Open Spacedrive main app
-- **Check socket exists**: `ls ~/.spacedrive/daemon.sock`
+- **Check daemon is running**: Open WingDrive main app
+- **Check socket exists**: `ls ~127.0.0.1:6969`
 - **Check library ID is correct**: Run `./run.sh` to auto-detect
 
 ### "No media files found"
@@ -87,7 +87,7 @@ Phase 2 improvements:
 ### Images show "✗" (failed to load)
 - HTTP server might not be running on port 54321
 - Check `SD_HTTP_URL` environment variable
-- Thumbnails might not be generated yet (run Spacedrive's indexer)
+- Thumbnails might not be generated yet (run WingDrive's indexer)
 
 ## Architecture Diagram
 
@@ -97,12 +97,12 @@ Your Terminal
     └─> ./run.sh
             │
             ├─ Finds library ID from filesystem
-            ├─ Sets env vars (SD_LIBRARY_ID, SD_SOCKET_PATH, SD_HTTP_URL)
+            ├─ Sets env vars (SD_LIBRARY_ID, SD_SOCKET_ADDR, SD_HTTP_URL)
             └─ Runs: cargo run --release
                     │
                     └─> GPUI App Window
                             │
-                            ├─ Connects to ~/.spacedrive/daemon.sock
+                            ├─ Connects to ~127.0.0.1:6969
                             ├─ Sends: { "Query": { "method": "files.media_listing", ... } }
                             ├─ Receives: [{ file1 }, { file2 }, ...]
                             │
@@ -134,11 +134,11 @@ apps/gpui-photo-grid/
 
 ## Testing Ideas
 
-1. **Open Spacedrive** - Make sure it's running
+1. **Open WingDrive** - Make sure it's running
 2. **Run the grid viewer** - `./run.sh`
 3. **Check console output** - Should show "Loaded N files"
 4. **Scroll the grid** - Should be smooth (all rendered, no virtualization yet)
-5. **Compare with web UI** - Open MediaView in Spacedrive, compare feel
+5. **Compare with web UI** - Open MediaView in WingDrive, compare feel
 6. **Close and reopen** - Should reload fresh from daemon
 
 ## Next Session Goals

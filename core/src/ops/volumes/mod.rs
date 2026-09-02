@@ -1,6 +1,6 @@
 //! Volume operations module
 //!
-//! This module provides operations for managing volumes in Spacedrive:
+//! This module provides operations for managing volumes in WingDrive:
 //! - Tracking/untracking volumes in libraries
 //! - Speed testing volume performance
 //! - Adding/removing cloud volumes

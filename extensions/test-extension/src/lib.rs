@@ -1,6 +1,6 @@
 //! Test Extension
 //!
-//! Demonstrates the Spacedrive extension SDK using procedural macros to simplify
+//! Demonstrates the WingDrive extension SDK using procedural macros to simplify
 //! extension development by abstracting FFI and state management details.
 
 use spacedrive_sdk::prelude::*;

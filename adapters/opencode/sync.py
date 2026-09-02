@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OpenCode adapter for Spacedrive.
+OpenCode adapter for WingDrive.
 
 Indexes coding session transcripts from OpenCode.
 Reads the opencode.db SQLite database and extracts sessions with their

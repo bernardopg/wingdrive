@@ -1,4 +1,4 @@
-# AGENTS.md - Spacedrive Core v2
+# AGENTS.md - WingDrive Core v2
 
 ## Build/Test Commands
 
@@ -34,7 +34,7 @@
 
 ## Daemon Architecture
 
-Spacedrive uses a **daemon-client architecture** where a single daemon process manages the core functionality and multiple client applications (CLI, GraphQL server, desktop app) connect to it via Unix domain sockets.
+WingDrive uses a **daemon-client architecture** where a single daemon process manages the core functionality and multiple client applications (CLI, GraphQL server, desktop app) connect to it via Unix domain sockets.
 
 > **For detailed daemon architecture documentation, see [/docs/core/daemon.md](/docs/core/daemon.md)**
 
@@ -103,4 +103,4 @@ crate::register_core_action!(LibraryCreateAction, "libraries.create");
 ## Debug Instructions
 
 - You can view the logs of a job in the job_logs directory in the root of the data folder
-- When testing the CLI, after compiling you must first use the `restart` command to ensure the Spacedrive daemon is using the latest build.
+- When testing the CLI, after compiling you must first use the `restart` command to ensure the WingDrive daemon is using the latest build.

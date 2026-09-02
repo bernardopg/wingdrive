@@ -1,4 +1,4 @@
-//! # Spacedrive's File Indexing System
+//! # WingDrive's File Indexing System
 //!
 //! `core::ops::indexing` provides a multi-phase indexing pipeline that turns
 //! raw filesystem paths into searchable database entries. The system handles

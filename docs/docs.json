@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Spacedrive",
+  "name": "WingDrive",
   "colors": {
     "primary": "#36A3FF",
     "light": "#36A3FF",
@@ -153,7 +153,7 @@
     ]
   },
   "logo": {
-    "light": "/logo/spacedrive-logo.png",
-    "dark": "/logo/spacedrive-logo.png"
+    "light": "/logo/wingdrive-logo.svg",
+    "dark": "/logo/wingdrive-logo.svg"
   }
 }

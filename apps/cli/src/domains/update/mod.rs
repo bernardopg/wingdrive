@@ -124,7 +124,7 @@ async fn fetch_latest_release(repo: &str) -> Result<GitHubRelease> {
 	let url = format!("https://api.github.com/repos/{}/releases/latest", repo);
 
 	let client = reqwest::Client::builder()
-		.user_agent("spacedrive-cli")
+		.user_agent("wingdrive-cli")
 		.build()?;
 
 	let response = client.get(&url).send().await?;
@@ -142,7 +142,7 @@ async fn fetch_latest_release(repo: &str) -> Result<GitHubRelease> {
 
 async fn download_file(url: &str, expected_size: u64) -> Result<Vec<u8>> {
 	let client = reqwest::Client::builder()
-		.user_agent("spacedrive-cli")
+		.user_agent("wingdrive-cli")
 		.build()?;
 
 	let response = client.get(url).send().await?;

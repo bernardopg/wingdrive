@@ -30,7 +30,7 @@ use std::time::Duration;
 use tokio::time::timeout;
 use uuid::Uuid;
 
-const TEST_DIR: &str = "/tmp/spacedrive-transitive-sync-test";
+const TEST_DIR: &str = "/tmp/wingdrive-transitive-sync-test";
 
 /// Alice's scenario - indexes location, pairs with Bob, sets up sync
 #[tokio::test]
@@ -40,7 +40,7 @@ async fn alice_transitive_sync_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", TEST_DIR);
+	env::set_var("WINGDRIVE_TEST_DIR", TEST_DIR);
 	let data_dir = PathBuf::from(format!("{}/alice", TEST_DIR));
 	let device_name = "Alice's Test Device";
 
@@ -87,7 +87,7 @@ async fn alice_transitive_sync_scenario() {
 		.unwrap();
 	println!("Alice: Volume created: {}", volume);
 
-	// Index Spacedrive source code as test data
+	// Index WingDrive source code as test data
 	println!("Alice: Indexing location with real data...");
 	let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 		.parent()
@@ -96,7 +96,7 @@ async fn alice_transitive_sync_scenario() {
 
 	let location_args = LocationCreateArgs {
 		path: test_path.clone(),
-		name: Some("spacedrive".to_string()),
+		name: Some("wingdrive".to_string()),
 		index_mode: IndexMode::Content,
 	};
 
@@ -295,7 +295,7 @@ async fn bob_transitive_sync_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", TEST_DIR);
+	env::set_var("WINGDRIVE_TEST_DIR", TEST_DIR);
 	let data_dir = PathBuf::from(format!("{}/bob", TEST_DIR));
 	let device_name = "Bob's Test Device";
 
@@ -543,7 +543,7 @@ async fn carol_transitive_sync_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", TEST_DIR);
+	env::set_var("WINGDRIVE_TEST_DIR", TEST_DIR);
 	let data_dir = PathBuf::from(format!("{}/carol", TEST_DIR));
 	let device_name = "Carol's Test Device";
 

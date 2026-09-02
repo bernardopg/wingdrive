@@ -122,7 +122,7 @@ export function GeneralSettings() {
 
         <div className="p-4 bg-app-box rounded-lg border border-app-line">
           <h3 className="text-sm font-medium text-ink mb-1">Data Directory</h3>
-          <p className="text-xs text-ink-dull mb-2">Where Spacedrive stores its data</p>
+					<p className="text-xs text-ink-dull mb-2">Where WingDrive stores its data</p>
           <code className="block text-xs text-ink-dull bg-app rounded px-2 py-1 overflow-x-auto">
             {config?.data_dir || status?.system?.data_directory || "Loading..."}
           </code>

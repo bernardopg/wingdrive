@@ -3,9 +3,9 @@ title: Data Storage
 sidebarTitle: Data Storage
 ---
 
-Extensions get their own database tables and file storage locations. You define data models in Rust, and Spacedrive creates the tables automatically. You declare storage locations, and users choose where files go during installation.
+Extensions get their own database tables and file storage locations. You define data models in Rust, and WingDrive creates the tables automatically. You declare storage locations, and users choose where files go during installation.
 
-Extensions use three storage layers: database tables for domain models, files in user-controlled locations for original data, and sidecars for derivative intelligence. Spacedrive handles sync, indexing, and search automatically.
+Extensions use three storage layers: database tables for domain models, files in user-controlled locations for original data, and sidecars for derivative intelligence. WingDrive handles sync, indexing, and search automatically.
 
 #### Model Definition
 
@@ -44,18 +44,18 @@ CREATE INDEX idx_ext_photos_person_email ON ext_photos_person(email);
 
 ### Linking to Core Systems
 
-Extension models are not isolated silos. They are deeply integrated with Spacedrive's core systems.
+Extension models are not isolated silos. They are deeply integrated with WingDrive's core systems.
 
-- **Tagging and Collections**: By adding the `#[metadata]` attribute to a field, your model is linked to the `user_metadata` table. This allows your custom data models to be tagged, added to collections, and searched just like any other file in Spacedrive.
+- **Tagging and Collections**: By adding the `#[metadata]` attribute to a field, your model is linked to the `user_metadata` table. This allows your custom data models to be tagged, added to collections, and searched just like any other file in WingDrive.
 
-- **Core Entities**: You can define foreign key relationships to core Spacedrive tables like `entries` or `content_identities`. This allows you to, for example, create an `Album` model that has a many-to-many relationship with photos (entries).
+- **Core Entities**: You can define foreign key relationships to core WingDrive tables like `entries` or `content_identities`. This allows you to, for example, create an `Album` model that has a many-to-many relationship with photos (entries).
 
 ### Migrations
 
-As you develop your extension, you will inevitably need to change your data models. The Spacedrive SDK includes a migration system to manage schema changes.
+As you develop your extension, you will inevitably need to change your data models. The WingDrive SDK includes a migration system to manage schema changes.
 
 - **Migration Files**: You can provide SQL migration files with your extension (e.g., `v1.1.0_add_birthdate.sql`).
-- **Automatic Execution**: When a user updates your extension, Spacedrive will automatically run the necessary migrations to bring their database schema up to date.
+- **Automatic Execution**: When a user updates your extension, WingDrive will automatically run the necessary migrations to bring their database schema up to date.
 
 ### Extension Locations
 
@@ -63,20 +63,20 @@ Extensions that create files must declare their storage locations. Users choose 
 
 ```json
 {
-  "extension_id": "com.spacedrive.email",
+  "extension_id": "com.wingdrive.email",
   "locations": [
     {
       "id": "email_archive",
       "name": "Email Archive",
       "purpose": "Store archived emails in .eml format",
-      "suggested_path": "~/Spacedrive/Email Archive",
+      "suggested_path": "~/WingDrive/Email Archive",
       "user_selects_path": true
     }
   ]
 }
 ```
 
-When you write files to this location, Spacedrive indexes them automatically. Query via the core entries table, not a custom cache.
+When you write files to this location, WingDrive indexes them automatically. Query via the core entries table, not a custom cache.
 
 ```rust
 // Write file to extension's location
@@ -103,7 +103,7 @@ let emails = ctx.query_entries()
 **Files:** Original user data in standard formats
 - .eml files, receipt PDFs, research papers
 - User chooses where these go
-- Spacedrive indexes automatically
+- WingDrive indexes automatically
 
 **Sidecars:** Derivative analysis and intelligence
 - OCR text, embeddings, extracted metadata

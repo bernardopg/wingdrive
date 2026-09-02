@@ -1,7 +1,7 @@
 //! API surface types and operation metadata
 //!
 //! Types that represent the public API surface and operation metadata
-//! for applications consuming the Spacedrive API.
+//! for applications consuming the WingDrive API.
 
 use serde::{Deserialize, Serialize};
 use specta::Type;

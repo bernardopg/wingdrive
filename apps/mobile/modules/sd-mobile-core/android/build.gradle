@@ -24,7 +24,7 @@ android {
     jvmTarget = "17"
   }
 
-  namespace "com.spacedrive.core"
+  namespace "com.wingdrive.core"
 }
 
 task buildRustCode(type: Exec) {

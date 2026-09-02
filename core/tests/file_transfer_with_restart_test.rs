@@ -18,9 +18,9 @@ async fn alice_restart_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-restart-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-restart-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-restart-test/alice");
+	let data_dir = PathBuf::from("/tmp/wingdrive-restart-test/alice");
 	let device_name = "Alice's Test Device";
 
 	println!("Alice: Starting Core for initial pairing");
@@ -62,9 +62,9 @@ async fn alice_restart_scenario() {
 	println!("Alice: Pairing code generated (expires in {}s)", expires_in);
 
 	// Write pairing code for Bob
-	std::fs::create_dir_all("/tmp/spacedrive-restart-test").unwrap();
+	std::fs::create_dir_all("/tmp/wingdrive-restart-test").unwrap();
 	std::fs::write(
-		"/tmp/spacedrive-restart-test/pairing_code.txt",
+		"/tmp/wingdrive-restart-test/pairing_code.txt",
 		&pairing_code,
 	)
 	.unwrap();
@@ -103,7 +103,7 @@ async fn alice_restart_scenario() {
 	println!("Alice: Pairing complete with device {}", receiver_id);
 
 	// Signal that pairing is complete
-	std::fs::write("/tmp/spacedrive-restart-test/alice_paired.txt", "paired").unwrap();
+	std::fs::write("/tmp/wingdrive-restart-test/alice_paired.txt", "paired").unwrap();
 
 	// === RESTART SIMULATION ===
 	println!("Alice: ========== RESTARTING DAEMON ==========");
@@ -202,7 +202,7 @@ async fn alice_restart_scenario() {
 		.map(|(name, content)| format!("{}:{}", name, content.len()))
 		.collect();
 	std::fs::write(
-		"/tmp/spacedrive-restart-test/expected_files.txt",
+		"/tmp/wingdrive-restart-test/expected_files.txt",
 		file_list.join("\n"),
 	)
 	.unwrap();
@@ -269,13 +269,13 @@ async fn alice_restart_scenario() {
 			println!("Alice: Waiting for Bob's confirmation...");
 			for attempt in 1..=60 {
 				if std::fs::read_to_string(
-					"/tmp/spacedrive-restart-test/bob_received_confirmation.txt",
+					"/tmp/wingdrive-restart-test/bob_received_confirmation.txt",
 				)
 				.map(|content| content.starts_with("received_and_verified:"))
 				.unwrap_or(false)
 				{
 					println!("Alice: Bob confirmed file receipt!");
-					std::fs::write("/tmp/spacedrive-restart-test/alice_success.txt", "success")
+					std::fs::write("/tmp/wingdrive-restart-test/alice_success.txt", "success")
 						.unwrap();
 					println!("RESTART_TEST_SUCCESS: Files transferred successfully after restart!");
 					return;
@@ -309,9 +309,9 @@ async fn bob_restart_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-restart-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-restart-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-restart-test/bob");
+	let data_dir = PathBuf::from("/tmp/wingdrive-restart-test/bob");
 	let device_name = "Bob's Test Device";
 
 	println!("Bob: Starting Core");
@@ -339,7 +339,7 @@ async fn bob_restart_scenario() {
 	// Wait for Alice's pairing code
 	println!("Bob: Looking for pairing code from Alice...");
 	let pairing_code = loop {
-		if let Ok(code) = std::fs::read_to_string("/tmp/spacedrive-restart-test/pairing_code.txt") {
+		if let Ok(code) = std::fs::read_to_string("/tmp/wingdrive-restart-test/pairing_code.txt") {
 			break code.trim().to_string();
 		}
 		tokio::time::sleep(Duration::from_millis(500)).await;
@@ -372,7 +372,7 @@ async fn bob_restart_scenario() {
 
 	// Wait for Alice to finish pairing
 	loop {
-		if std::fs::read_to_string("/tmp/spacedrive-restart-test/alice_paired.txt")
+		if std::fs::read_to_string("/tmp/wingdrive-restart-test/alice_paired.txt")
 			.map(|content| content == "paired")
 			.unwrap_or(false)
 		{
@@ -391,7 +391,7 @@ async fn bob_restart_scenario() {
 	// Wait for expected files list
 	let expected_files = loop {
 		if let Ok(content) =
-			std::fs::read_to_string("/tmp/spacedrive-restart-test/expected_files.txt")
+			std::fs::read_to_string("/tmp/wingdrive-restart-test/expected_files.txt")
 		{
 			break content
 				.lines()
@@ -472,14 +472,14 @@ async fn bob_restart_scenario() {
 
 		if verification_success {
 			println!("RESTART_TEST_SUCCESS: Bob verified all files after Alice's restart");
-			std::fs::write("/tmp/spacedrive-restart-test/bob_success.txt", "success").unwrap();
+			std::fs::write("/tmp/wingdrive-restart-test/bob_success.txt", "success").unwrap();
 
 			let timestamp = std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap()
 				.as_secs();
 			std::fs::write(
-				"/tmp/spacedrive-restart-test/bob_received_confirmation.txt",
+				"/tmp/wingdrive-restart-test/bob_received_confirmation.txt",
 				format!("received_and_verified:{}", timestamp),
 			)
 			.unwrap();
@@ -499,9 +499,9 @@ async fn bob_restart_scenario() {
 #[tokio::test]
 async fn test_file_transfer_with_restart() {
 	// Clean up
-	let _ = std::fs::remove_dir_all("/tmp/spacedrive-restart-test");
+	let _ = std::fs::remove_dir_all("/tmp/wingdrive-restart-test");
 	let _ = std::fs::remove_dir_all("/tmp/received_files_restart");
-	std::fs::create_dir_all("/tmp/spacedrive-restart-test").unwrap();
+	std::fs::create_dir_all("/tmp/wingdrive-restart-test").unwrap();
 
 	println!("Testing file transfer with daemon restart");
 
@@ -530,11 +530,11 @@ async fn test_file_transfer_with_restart() {
 	let result = runner
 		.wait_for_success(|_outputs| {
 			let alice_success =
-				std::fs::read_to_string("/tmp/spacedrive-restart-test/alice_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-restart-test/alice_success.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 			let bob_success =
-				std::fs::read_to_string("/tmp/spacedrive-restart-test/bob_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-restart-test/bob_success.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 

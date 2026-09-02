@@ -18,8 +18,8 @@ thiserror = "1.0"
 # Logging
 tracing = "0.1"
 
-# Platform directories
-dirs = "5.0"
+# WingDrive path resolution and legacy adoption
+sd-core = { path = "../../../core" }
 
 [lib]
 crate-type = ["lib"]

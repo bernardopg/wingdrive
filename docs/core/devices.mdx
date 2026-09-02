@@ -3,7 +3,7 @@ title: Devices
 sidebarTitle: Devices
 ---
 
-Devices are machines running Spacedrive. Each device has a unique identity, can pair with others, and participates in library synchronization.
+Devices are machines running WingDrive. Each device has a unique identity, can pair with others, and participates in library synchronization.
 
 ## Architecture
 
@@ -21,9 +21,9 @@ let device_id = device_manager.device_id()?;
 
 **Storage locations**:
 
-- macOS: `~/Library/Application Support/com.spacedrive/device.json`
-- Linux: `~/.config/spacedrive/device.json`
-- Windows: `%APPDATA%/Spacedrive/device.json`
+- macOS: `~/Library/Application Support/com.wingdrive/device.json`
+- Linux: `~/.config/wingdrive/device.json`
+- Windows: `%APPDATA%/WingDrive/device.json`
 
 ### Domain Layer
 
@@ -52,7 +52,7 @@ Devices are stored per library, not globally. Each library database contains dev
 
 ### Device Slugs for Unified Addressing
 
-Each device has a unique slug used in Spacedrive's unified addressing scheme. The slug is a URL-safe identifier generated from the device name:
+Each device has a unique slug used in WingDrive's unified addressing scheme. The slug is a URL-safe identifier generated from the device name:
 
 ```rust
 // Slug generation
@@ -70,7 +70,7 @@ Slugs enable human-readable local file URIs:
 ```
 local://jamies-macbook/Users/james/Documents/report.pdf
 local://home-server/mnt/storage/media/movies/Inception.mkv
-local://work-desktop/C:/Projects/spacedrive/README.md
+local://work-desktop/C:/Projects/wingdrive/README.md
 ```
 
 The database enforces slug uniqueness with a UNIQUE constraint. If two devices would have the same slug (e.g., both named "MacBook Pro"), one must be renamed before they can sync.
@@ -151,7 +151,7 @@ See [Library Sync](/docs/core/library-sync) for details on the ownership chain a
 ## Sync Participation
 
 <Info>
-	Spacedrive uses a leaderless sync model. All devices are peers with no central
+	WingDrive uses a leaderless sync model. All devices are peers with no central
 	authority.
 </Info>
 
@@ -298,18 +298,18 @@ If changes aren't syncing between devices:
 
 ```bash
 # Check device registration and sync state in library
-sqlite3 ~/Spacedrive/Libraries/My\ Library.sdlibrary/database.db \
+sqlite3 ~/WingDrive/Libraries/My\ Library.sdlibrary/database.db \
   "SELECT uuid, name, is_online, sync_enabled, last_sync_at
    FROM devices;"
 
 # Check which devices are online and sync-enabled
-sqlite3 ~/Spacedrive/Libraries/My\ Library.sdlibrary/database.db \
+sqlite3 ~/WingDrive/Libraries/My\ Library.sdlibrary/database.db \
   "SELECT uuid, name, is_online, last_seen_at
    FROM devices
    WHERE sync_enabled = 1;"
 
 # View watermarks (stored in sync.db, not devices table)
-sqlite3 ~/Spacedrive/Libraries/My\ Library.sdlibrary/sync.db \
+sqlite3 ~/WingDrive/Libraries/My\ Library.sdlibrary/sync.db \
   "SELECT * FROM device_resource_watermarks;"
 
 # Monitor sync activity

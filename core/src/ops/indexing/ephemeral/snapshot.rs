@@ -269,7 +269,7 @@ pub fn snapshot_path_for(root: &Path, cache_dir: &Path) -> Result<PathBuf> {
 
 /// Get the ephemeral snapshot cache directory
 ///
-/// Returns `~/Library/Application Support/spacedrive/cache/volume-index/` on macOS,
+/// Returns `~/.wingdrive/cache/volume-index/` on macOS,
 /// similar paths on other platforms.
 pub fn get_snapshot_cache_dir() -> Result<PathBuf> {
 	let data_dir = crate::config::default_data_dir().context("Failed to get data directory")?;

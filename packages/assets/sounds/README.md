@@ -1,6 +1,6 @@
 # Sounds
 
-UI sound effects for Spacedrive.
+UI sound effects for WingDrive.
 
 ## Adding New Sounds
 

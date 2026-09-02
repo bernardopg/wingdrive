@@ -5,7 +5,7 @@ import {
 	Stop,
 } from "@phosphor-icons/react";
 import { BallBlue } from "@sd/assets/images";
-import { Popover, usePopover } from "@spacedrive/primitives";
+import { Popover, usePopover } from "@wingdrive/primitives";
 import {
 	apiClient,
 	getEventsUrl,
@@ -25,6 +25,8 @@ const OVERLAY_WINDOW_LABEL = "voice-overlay";
 const OVERLAY_WIDTH = 520;
 const SPACEBOT_URL = "http://127.0.0.1:19898";
 const DEFAULT_AGENT_ID = "main";
+const VOICE_PROFILE_KEY = "wingdrive.voice.profileId";
+const LEGACY_VOICE_PROFILE_KEY = "spacedrive.voice.profileId";
 
 interface SpokenResponseEvent {
 	agent_id: string;
@@ -47,9 +49,14 @@ export function VoiceOverlay() {
 	const [expanded, setExpanded] = useState(false);
 	const [voiceState, setVoiceState] = useState<VoiceState>("idle");
 	const [agentId] = useState(DEFAULT_AGENT_ID);
-	const [profileId, setProfileId] = useState<string>(
-		() => localStorage.getItem("spacedrive.voice.profileId") ?? "",
-	);
+	const [profileId, setProfileId] = useState<string>(() => {
+		const profileId =
+			localStorage.getItem(VOICE_PROFILE_KEY) ??
+			localStorage.getItem(LEGACY_VOICE_PROFILE_KEY) ??
+			"";
+		if (profileId) localStorage.setItem(VOICE_PROFILE_KEY, profileId);
+		return profileId;
+	});
 	const [statusText, setStatusText] = useState(
 		"Press Option+Shift+Space to talk",
 	);
@@ -131,7 +138,7 @@ export function VoiceOverlay() {
 				) {
 					const first = data[0]!.id;
 					setProfileId(first);
-					localStorage.setItem("spacedrive.voice.profileId", first);
+				localStorage.setItem(VOICE_PROFILE_KEY, first);
 				}
 			})
 			.catch(() => {
@@ -404,11 +411,11 @@ export function VoiceOverlay() {
 												{profiles.map((p) => (
 													<button
 														key={p.id}
-														onClick={() => {
-															setProfileId(p.id);
-															localStorage.setItem(
-																"spacedrive.voice.profileId",
-																p.id,
+													onClick={() => {
+														setProfileId(p.id);
+														localStorage.setItem(
+															VOICE_PROFILE_KEY,
+															p.id,
 															);
 															profileSelector.setOpen(
 																false,

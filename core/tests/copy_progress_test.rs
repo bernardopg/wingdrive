@@ -137,7 +137,7 @@ async fn test_copy_progress_with_metadata_tracking() {
 		source_files.push(file_path);
 	}
 
-	println!("Initializing Spacedrive Core...");
+	println!("Initializing WingDrive Core...");
 	let core_data_dir = test_root.join("core_data");
 	let core = Core::new(core_data_dir.clone()).await.unwrap();
 
@@ -466,7 +466,7 @@ async fn test_copy_progress_with_metadata_tracking() {
 	if std::env::var("SD_TEST_SNAPSHOTS").is_ok() {
 		let snapshot_dir = dirs::data_local_dir()
 			.unwrap()
-			.join("spacedrive")
+			.join("wingdrive")
 			.join("test_snapshots")
 			.join("copy_progress_test")
 			.join(chrono::Local::now().format("%Y%m%d_%H%M%S").to_string());

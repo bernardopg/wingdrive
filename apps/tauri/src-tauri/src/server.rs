@@ -23,7 +23,7 @@ use tracing::{error, info};
 
 #[derive(Clone)]
 pub struct ServerState {
-	/// Path to the Spacedrive data directory
+	/// Path to the WingDrive data directory
 	data_dir: PathBuf,
 	/// Random per-session token required by the file endpoint
 	token: Arc<String>,

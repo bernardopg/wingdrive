@@ -1,10 +1,10 @@
 #!/bin/bash
-# Quick start script for running Spacedrive Server in Docker
+# Quick start script for running WingDrive Server in Docker
 # Usage: ./docker-run.sh
 
 set -e
 
-echo "🚀 Starting Spacedrive Server with Docker Compose..."
+echo "🚀 Starting WingDrive Server with Docker Compose..."
 
 # Check if .env exists
 if [ ! -f .env ]; then
@@ -33,14 +33,14 @@ echo "🏗️  Building and starting container..."
 $COMPOSE_CMD up -d --build
 
 echo ""
-echo "✅ Spacedrive Server is running!"
+echo "✅ WingDrive Server is running!"
 echo ""
 echo "📍 Access your server at: http://localhost:8080"
 echo "🔐 Login credentials: Check your .env file (SD_AUTH)"
 echo ""
 echo "Useful commands:"
-echo "  - View logs:    $COMPOSE_CMD logs -f spacedrive"
+echo "  - View logs:    $COMPOSE_CMD logs -f wingdrive"
 echo "  - Stop server:  $COMPOSE_CMD down"
 echo "  - Restart:      $COMPOSE_CMD restart"
-echo "  - Shell access: $COMPOSE_CMD exec spacedrive sh"
+echo "  - Shell access: $COMPOSE_CMD exec wingdrive sh"
 echo ""

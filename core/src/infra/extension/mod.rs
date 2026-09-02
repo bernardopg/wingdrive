@@ -1,12 +1,12 @@
 //! WASM Plugin System
 //!
-//! This module provides a secure WebAssembly-based extension system for Spacedrive.
-//! Extensions are sandboxed WASM modules that can extend Spacedrive's functionality
+//! This module provides a secure WebAssembly-based extension system for WingDrive.
+//! Extensions are sandboxed WASM modules that can extend WingDrive's functionality
 //! while maintaining security and stability.
 //!
 //! ## Architecture
 //!
-//! Extensions communicate with Spacedrive Core via a minimal host function API.
+//! Extensions communicate with WingDrive Core via a minimal host function API.
 //! The key insight: we expose ONE generic `spacedrive_call()` function that routes
 //! to the existing Wire operation registry, reusing all daemon RPC infrastructure.
 //!

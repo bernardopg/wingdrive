@@ -36,7 +36,7 @@ pub struct VectorDocument {
 	/// Document ID (maps to documents table)
 	pub id: i32,
 
-	/// Content UUID (if from Spacedrive)
+	/// Content UUID (if from WingDrive)
 	pub content_uuid: Option<String>,
 
 	/// Document title

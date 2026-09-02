@@ -6,7 +6,7 @@ const path = require("path");
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, "../..");
 const spaceUiTokensRoot = path.dirname(
-	require.resolve("@spacedrive/tokens/raw-colors", { paths: [projectRoot, workspaceRoot] })
+	require.resolve("@wingdrive/tokens/raw-colors", { paths: [projectRoot, workspaceRoot] })
 );
 const spaceUiTokensNodeModules = path.resolve(spaceUiTokensRoot, "node_modules");
 
@@ -50,7 +50,7 @@ config.resolver = {
 
 	// Dynamically resolve React/React Native from wherever the package manager installed them
 	extraNodeModules: {
-		"@spacedrive/tokens": spaceUiTokensRoot,
+		"@wingdrive/tokens": spaceUiTokensRoot,
 		react: path.dirname(require.resolve("react/package.json", { paths: [projectRoot, workspaceRoot] })),
 		"react-native": path.dirname(
 			require.resolve("react-native/package.json", { paths: [projectRoot, workspaceRoot] })

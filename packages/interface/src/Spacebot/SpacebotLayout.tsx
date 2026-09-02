@@ -13,7 +13,7 @@ import {
 	Popover,
 	SearchBar,
 	SelectPill
-} from '@spacedrive/primitives';
+} from '@wingdrive/primitives';
 import {ReactQueryDevtools} from '@tanstack/react-query-devtools';
 import {useEffect, useState} from 'react';
 import {Outlet, useLocation, useNavigate} from 'react-router-dom';

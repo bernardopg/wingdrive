@@ -503,7 +503,7 @@ pub async fn run_processing_phase(
 	// The root entry is loaded from the database but never "discovered" during the directory walk,
 	// so it never goes through the normal processing loop. This ensures the root entry gets
 	// updated with current filesystem metadata, especially important for updating null inodes
-	// from older Spacedrive versions.
+	// from older WingDrive versions.
 	ctx.log("Checking root entry for updates...");
 	if let Ok(metadata) = std::fs::symlink_metadata(location_root_path) {
 		// Get the root entry from the database

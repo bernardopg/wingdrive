@@ -2175,7 +2175,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c54e03a951783e8b327515db3f2a2fd0e3bed362a96b066f341ce66ed49b4ead"
 dependencies = [
  "data-encoding",
- "syn 1.0.109",
+ "syn 3.0.3",
 ]
 
 [[package]]
@@ -3428,7 +3428,7 @@ dependencies = [
  "libc",
  "log 0.4.33",
  "rustversion",
- "windows-link 0.1.3",
+ "windows-link 0.2.1",
  "windows-result 0.4.1",
 ]
 
@@ -7142,8 +7142,9 @@ dependencies = [
 
 [[package]]
 name = "pdfium-render"
-version = "0.8.27"
-source = "git+https://github.com/spacedriveapp/pdfium-render.git?rev=983f8d8#983f8d8ab3f3c9e39110b7442c91187f380da35f"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "826f8f64bc88cb15381cbb5aa245c1500632cd8a453b244bc2b0cbaff7098077"
 dependencies = [
  "bitflags 2.13.1",
  "bytemuck",
@@ -7154,7 +7155,7 @@ dependencies = [
  "image",
  "itertools 0.15.0",
  "js-sys",
- "libloading 0.7.4",
+ "libloading 0.8.9",
  "log 0.4.33",
  "maybe-owned",
  "once_cell",
@@ -9330,7 +9331,7 @@ name = "sd-tauri-core"
 version = "2.0.0-alpha.2"
 dependencies = [
  "anyhow",
- "dirs 5.0.1",
+ "sd-core",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
@@ -11292,7 +11293,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "once_cell",
  "rustix 1.1.4",
  "windows-sys 0.61.2",

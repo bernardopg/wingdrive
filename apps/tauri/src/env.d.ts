@@ -20,7 +20,7 @@ declare module 'qrcode' {
 	export function toString(text: string, options?: any): Promise<string>;
 }
 
-interface SpacedriveGlobal {
+interface WingDriveGlobal {
 	showContextMenu?: (
 		items: import("@sd/interface").ContextMenuItem[],
 		position: { x: number; y: number }
@@ -34,5 +34,6 @@ interface SpacedriveGlobal {
 }
 
 interface Window {
-	__SPACEDRIVE__: SpacedriveGlobal;
+	__WINGDRIVE__: WingDriveGlobal;
+	__SPACEDRIVE__?: WingDriveGlobal;
 }

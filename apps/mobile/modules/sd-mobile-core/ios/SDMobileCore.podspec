@@ -5,10 +5,10 @@ package = JSON.parse(File.read(File.join(__dir__, '../package.json')))
 Pod::Spec.new do |s|
   s.name           = 'SDMobileCore'
   s.version        = package['version']
-  s.summary        = 'Spacedrive Mobile Core - Embedded Rust core for React Native'
+  s.summary        = 'WingDrive Mobile Core - Embedded Rust core for React Native'
   s.license        = 'GPL-3.0'
-  s.authors        = 'Spacedrive Technology Inc.'
-  s.homepage       = 'https://spacedrive.com'
+  s.authors        = 'WingDrive contributors'
+  s.homepage       = 'https://github.com/bernardopg/wingdrive'
   s.platforms      = { :ios => '18.0' }
   s.swift_version  = '5.4'
   s.source         = { git: '' }
@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
   # Build Rust library automatically before compilation
   # Commented out - use `cargo xtask build-mobile` to build manually
   # s.script_phase = {
-  #   :name => "Build Spacedrive Mobile Core",
+  #   :name => "Build WingDrive Mobile Core",
   #   :script => "exec \"${PODS_TARGET_SRCROOT}/build-rust.sh\"",
   #   :execution_position => :before_compile,
   #   :input_files => ["${PODS_TARGET_SRCROOT}/../core/Cargo.toml", "${PODS_TARGET_SRCROOT}/../core/src/lib.rs"],

@@ -62,10 +62,10 @@ pub struct SharingOptions {
 impl Default for SharingOptions {
 	fn default() -> Self {
 		Self {
-			destination_path: std::env::temp_dir().join("spacedrive"),
+			destination_path: std::env::temp_dir().join("wingdrive"),
 			overwrite: false,
 			preserve_timestamps: true,
-			sender_name: "Spacedrive User".to_string(),
+			sender_name: "WingDrive User".to_string(),
 			message: None,
 		}
 	}
@@ -547,7 +547,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_sharing_options_default() {
 		let options = SharingOptions::default();
-		assert_eq!(options.sender_name, "Spacedrive User");
+		assert_eq!(options.sender_name, "WingDrive User");
 		assert!(!options.overwrite);
 		assert!(options.preserve_timestamps);
 		assert!(options.message.is_none());

@@ -1,7 +1,7 @@
 import type { Platform } from "@sd/interface/platform";
 
 /**
- * Web platform implementation for Spacedrive server
+ * Web platform implementation for WingDrive server
  *
  * This provides a minimal platform abstraction for the web client.
  * Unlike Tauri, web platform cannot access native file system or daemon state directly.

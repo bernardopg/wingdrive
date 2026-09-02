@@ -547,7 +547,7 @@ pub static NO_SYSTEM_FILES: Lazy<SystemIndexerRule> = Lazy::new(|| {
     rules: vec![
         RulePerKind::new_reject_files_by_globs_str(
             [
-                vec!["**/.spacedrive"],
+				vec!["**/.wingdrive", "**/.spacedrive"],
                 // Cross-platform: macOS metadata files that can appear on any OS (network shares, USB drives, etc.)
                 vec![
                     "**/.{DS_Store,AppleDouble,LSOverride}",

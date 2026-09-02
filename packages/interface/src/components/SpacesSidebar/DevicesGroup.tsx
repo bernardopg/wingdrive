@@ -72,9 +72,11 @@ export function DevicesGroup({
 		];
 
 		// Show platform-appropriate context menu
-		if ((window as any).__SPACEDRIVE__?.showContextMenu) {
+		const wingdrive =
+			(window as any).__WINGDRIVE__ ?? (window as any).__SPACEDRIVE__;
+		if (wingdrive?.showContextMenu) {
 			// Tauri native menu
-			await (window as any).__SPACEDRIVE__.showContextMenu(items, {
+			await wingdrive.showContextMenu(items, {
 				x: e.clientX,
 				y: e.clientY,
 			});

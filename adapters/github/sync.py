@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GitHub adapter for Spacedrive.
+GitHub adapter for WingDrive.
 
 Indexes issues, pull requests, and comments from GitHub repositories
 using the REST API. Supports incremental sync via `updated_at` cursor.
@@ -47,7 +47,7 @@ def api_get(path: str, token: str, params: dict = None) -> list:
         req.add_header("Authorization", f"Bearer {token}")
         req.add_header("Accept", "application/vnd.github+json")
         req.add_header("X-GitHub-Api-Version", "2022-11-28")
-        req.add_header("User-Agent", "spacedrive-adapter/0.1")
+        req.add_header("User-Agent", "wingdrive-adapter/0.1")
 
         try:
             with urllib.request.urlopen(req) as resp:

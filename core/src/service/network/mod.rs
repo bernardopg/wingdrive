@@ -1,4 +1,4 @@
-//! Spacedrive Networking v2 - Unified Architecture
+//! WingDrive Networking v2 - Unified Architecture
 //!
 //! This is a complete redesign of the networking system that addresses the fundamental
 //! issues in the original implementation:

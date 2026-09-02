@@ -2,7 +2,7 @@ import {apiClient, type WorkerListItem} from '@spacebot/api-client';
 import {
 	InlineWorkerCard as InlineWorkerCardUI,
 	type TranscriptStep
-} from '@spacedrive/ai';
+} from '@wingdrive/ai';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 
 export function InlineWorkerCard({

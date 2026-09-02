@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Chrome History adapter for Spacedrive.
+Chrome History adapter for WingDrive.
 
 Reads the Chromium History SQLite database (works with Chrome, Arc, Brave, Edge).
 Copies the DB to a temp file first since the browser holds a lock on it.

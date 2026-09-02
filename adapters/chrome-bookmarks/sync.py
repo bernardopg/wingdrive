@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Chrome Bookmarks adapter for Spacedrive.
+Chrome Bookmarks adapter for WingDrive.
 
 Reads the Chromium Bookmarks JSON file (works with Chrome, Arc, Brave, Edge).
 Emits folders and bookmarks as JSONL operations.

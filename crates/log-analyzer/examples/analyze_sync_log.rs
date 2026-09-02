@@ -1,4 +1,4 @@
-//! CLI tool for analyzing Spacedrive log files.
+//! CLI tool for analyzing WingDrive log files.
 
 use std::path::PathBuf;
 
@@ -8,7 +8,7 @@ use log_analyzer::LogAnalyzer;
 
 #[derive(Parser)]
 #[command(name = "log-analyzer")]
-#[command(about = "Analyze Spacedrive log files", long_about = None)]
+#[command(about = "Analyze WingDrive log files", long_about = None)]
 struct Cli {
 	#[command(subcommand)]
 	command: Commands,

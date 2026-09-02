@@ -22,11 +22,11 @@ async fn alice_persistence_scenario() {
 		return;
 	}
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-persistence-test/alice");
+	let data_dir = PathBuf::from("/tmp/wingdrive-persistence-test/alice");
 	let device_name = "Alice's Persistent Device";
 
 	// Set test directory for file-based discovery
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-persistence-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-persistence-test");
 
 	// Determine which phase we're in
 	let is_restart = role == "alice_restart";
@@ -98,7 +98,7 @@ async fn alice_persistence_scenario() {
 
 				// Write success marker
 				std::fs::write(
-					"/tmp/spacedrive-persistence-test/alice_restart_success.txt",
+					"/tmp/wingdrive-persistence-test/alice_restart_success.txt",
 					"success",
 				)
 				.unwrap();
@@ -162,9 +162,9 @@ async fn alice_persistence_scenario() {
 		println!("Alice: Pairing code generated (expires in {}s)", expires_in);
 
 		// Write pairing code for Bob
-		std::fs::create_dir_all("/tmp/spacedrive-persistence-test").unwrap();
+		std::fs::create_dir_all("/tmp/wingdrive-persistence-test").unwrap();
 		std::fs::write(
-			"/tmp/spacedrive-persistence-test/pairing_code.txt",
+			"/tmp/wingdrive-persistence-test/pairing_code.txt",
 			&pairing_code,
 		)
 		.unwrap();
@@ -198,7 +198,7 @@ async fn alice_persistence_scenario() {
 
 				// Write success marker
 				std::fs::write(
-					"/tmp/spacedrive-persistence-test/alice_paired.txt",
+					"/tmp/wingdrive-persistence-test/alice_paired.txt",
 					"success",
 				)
 				.unwrap();
@@ -231,11 +231,11 @@ async fn bob_persistence_scenario() {
 		return;
 	}
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-persistence-test/bob");
+	let data_dir = PathBuf::from("/tmp/wingdrive-persistence-test/bob");
 	let device_name = "Bob's Persistent Device";
 
 	// Set test directory for file-based discovery
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-persistence-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-persistence-test");
 
 	// Determine which phase we're in
 	let is_restart = role == "bob_restart";
@@ -306,7 +306,7 @@ async fn bob_persistence_scenario() {
 
 				// Write success marker
 				std::fs::write(
-					"/tmp/spacedrive-persistence-test/bob_restart_success.txt",
+					"/tmp/wingdrive-persistence-test/bob_restart_success.txt",
 					"success",
 				)
 				.unwrap();
@@ -357,7 +357,7 @@ async fn bob_persistence_scenario() {
 		println!("Bob: Looking for pairing code...");
 		let pairing_code = loop {
 			if let Ok(code) =
-				std::fs::read_to_string("/tmp/spacedrive-persistence-test/pairing_code.txt")
+				std::fs::read_to_string("/tmp/wingdrive-persistence-test/pairing_code.txt")
 			{
 				break code.trim().to_string();
 			}
@@ -407,7 +407,7 @@ async fn bob_persistence_scenario() {
 				}
 
 				// Write success marker
-				std::fs::write("/tmp/spacedrive-persistence-test/bob_paired.txt", "success")
+				std::fs::write("/tmp/wingdrive-persistence-test/bob_paired.txt", "success")
 					.unwrap();
 
 				// Keep running for a bit to ensure persistence completes
@@ -435,8 +435,8 @@ async fn test_device_persistence() {
 	println!("Testing device persistence and automatic reconnection");
 
 	// Clean up any previous test artifacts
-	let _ = std::fs::remove_dir_all("/tmp/spacedrive-persistence-test");
-	std::fs::create_dir_all("/tmp/spacedrive-persistence-test").unwrap();
+	let _ = std::fs::remove_dir_all("/tmp/wingdrive-persistence-test");
+	std::fs::create_dir_all("/tmp/wingdrive-persistence-test").unwrap();
 
 	let mut runner = CargoTestRunner::for_test_file("device_persistence_test")
 		.with_timeout(Duration::from_secs(240)) // Longer timeout for restart test
@@ -466,11 +466,11 @@ async fn test_device_persistence() {
 	let pairing_result = runner
 		.wait_for_success(|_| {
 			let alice_paired =
-				std::fs::read_to_string("/tmp/spacedrive-persistence-test/alice_paired.txt")
+				std::fs::read_to_string("/tmp/wingdrive-persistence-test/alice_paired.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 			let bob_paired =
-				std::fs::read_to_string("/tmp/spacedrive-persistence-test/bob_paired.txt")
+				std::fs::read_to_string("/tmp/wingdrive-persistence-test/bob_paired.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 			alice_paired && bob_paired
@@ -494,7 +494,7 @@ async fn test_device_persistence() {
 	println!("\\nPHASE 2: Testing automatic reconnection after restart");
 
 	// Clear the pairing code to ensure devices aren't re-pairing
-	let _ = std::fs::remove_file("/tmp/spacedrive-persistence-test/pairing_code.txt");
+	let _ = std::fs::remove_file("/tmp/wingdrive-persistence-test/pairing_code.txt");
 
 	println!("Restarting Alice...");
 	runner
@@ -518,12 +518,12 @@ async fn test_device_persistence() {
 	let reconnection_result = runner
 		.wait_for_success(|_| {
 			let alice_reconnected = std::fs::read_to_string(
-				"/tmp/spacedrive-persistence-test/alice_restart_success.txt",
+				"/tmp/wingdrive-persistence-test/alice_restart_success.txt",
 			)
 			.map(|content| content.trim() == "success")
 			.unwrap_or(false);
 			let bob_reconnected =
-				std::fs::read_to_string("/tmp/spacedrive-persistence-test/bob_restart_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-persistence-test/bob_restart_success.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 			alice_reconnected && bob_reconnected

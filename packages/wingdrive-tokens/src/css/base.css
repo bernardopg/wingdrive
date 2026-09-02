@@ -1,0 +1,5 @@
+/* Base CSS - SpaceUI Tokens */
+/* Import this in your app's base CSS after theme.css */
+
+@import "./theme.css";
+@import "./themes/dark.css";

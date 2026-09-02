@@ -1,6 +1,6 @@
-# Photos Extension for Spacedrive
+# Photos Extension for WingDrive
 
-A comprehensive photo management extension that brings Apple Photos and Google Photos capabilities to Spacedrive.
+A comprehensive photo management extension that brings Apple Photos and Google Photos capabilities to WingDrive.
 
 ## Features
 
@@ -79,7 +79,7 @@ PhotosMind {
 
 ### Installation
 
-1. Install extension from Spacedrive Extension Store
+1. Install extension from WingDrive Extension Store
 2. Grant permissions to specific photo locations:
    - `/Users/alice/Photos`
    - `/Volumes/External/Family Photos`
@@ -108,7 +108,7 @@ User can search "#person:alice" or "photos from beach"
 ### Data Storage
 
 ```
-~/.spacedrive/
+~/.wingdrive/
   └── models/
       ├── face_detection/
       │   └── photos_v1.onnx (12MB)
@@ -170,9 +170,9 @@ Most features here are aspirational - the SDK is still being built. This serves 
 - Albums
 - Automatic creations (moments)
 - Scene/object detection
-- ️ Cloud backup (Spacedrive handles differently)
+- ️ Cloud backup (WingDrive handles differently)
 
-### Spacedrive Photos Advantages
+### WingDrive Photos Advantages
 - **100% local** - No cloud upload required
 - **Privacy-first** - Face data never leaves devices
 - **Multi-device sync** - Via P2P, not cloud
@@ -190,5 +190,5 @@ cp target/wasm32-unknown-unknown/release/photos_extension.wasm ./photos.wasm
 
 ## License
 
-Same as Spacedrive Core
+Same as WingDrive Core
 

@@ -2,15 +2,15 @@
 
 ## Purpose
 
-Define `File System Intelligence` as a first-class Spacedrive capability.
+Define `File System Intelligence` as a first-class WingDrive capability.
 
 File System Intelligence is the intelligence layer that sits on top of the native filesystem and the VDFS. It turns files, directories, clouds, and devices into a machine-readable, agent-readable, human-readable system with derived knowledge, layered context, and universal policy.
 
-This is one of the clearest explanations for why Spacedrive exists beyond being a file manager.
+This is one of the clearest explanations for why WingDrive exists beyond being a file manager.
 
 ## Definition
 
-`File System Intelligence` is Spacedrive's cross-platform intelligence layer for filesystems.
+`File System Intelligence` is WingDrive's cross-platform intelligence layer for filesystems.
 
 It includes:
 
@@ -20,7 +20,7 @@ It includes:
 
 Native operating systems expose paths, files, folders, metadata, and OS permissions.
 
-Spacedrive adds:
+WingDrive adds:
 
 - meaning
 - structure-aware summaries
@@ -66,11 +66,11 @@ File System Intelligence uses that substrate to attach context and policy to fil
 
 ## Relationship to Spacebot
 
-Spacedrive owns File System Intelligence.
+WingDrive owns File System Intelligence.
 
 Spacebot is the first major producer and consumer of it.
 
-This is important because the intelligence layer should not be framed as only a Spacebot feature. It is a core Spacedrive capability that any agent or automation system can use.
+This is important because the intelligence layer should not be framed as only a Spacebot feature. It is a core WingDrive capability that any agent or automation system can use.
 
 Spacebot can:
 
@@ -83,11 +83,11 @@ Spacebot can:
 This is the short product framing:
 
 - Finder and Explorer show you where files are.
-- Spacedrive understands what they are, why they exist, how they relate, and what agents are allowed to do with them.
+- WingDrive understands what they are, why they exist, how they relate, and what agents are allowed to do with them.
 
 This is the platform framing:
 
-- Spacedrive adds File System Intelligence: derived knowledge, contextual understanding, and universal permissions across every device and cloud.
+- WingDrive adds File System Intelligence: derived knowledge, contextual understanding, and universal permissions across every device and cloud.
 
 ## Core Pillars
 
@@ -135,7 +135,7 @@ Examples:
 - whether a subtree is sensitive
 - whether a cloud source is accessible to a given automation
 
-This allows a user to grant access once through Spacedrive and have that policy apply consistently across devices, clouds, and operating systems.
+This allows a user to grant access once through WingDrive and have that policy apply consistently across devices, clouds, and operating systems.
 
 ## What It Is Not
 
@@ -276,7 +276,7 @@ Possible future direction:
 
 Universal permissions are a major part of File System Intelligence.
 
-These permissions should live above the OS layer and be enforced when agents access files through Spacedrive.
+These permissions should live above the OS layer and be enforced when agents access files through WingDrive.
 
 Examples:
 
@@ -297,7 +297,7 @@ This gives the user one consistent interface for granting agent access across:
 
 ## Agent Experience
 
-When an agent accesses a path through Spacedrive, it should not only receive the raw directory listing.
+When an agent accesses a path through WingDrive, it should not only receive the raw directory listing.
 
 It should receive:
 
@@ -487,7 +487,7 @@ This is enough to demonstrate the full value of File System Intelligence without
 
 ### Phase 3: Agent Integration
 
-- Spacebot reads context while navigating via Spacedrive
+- Spacebot reads context while navigating via WingDrive
 - Spacebot can write facts and notes with attribution
 
 ### Phase 4: Summary Jobs
@@ -510,7 +510,7 @@ This is enough to demonstrate the full value of File System Intelligence without
 
 ## Recommendation
 
-Adopt `File System Intelligence` as the name for Spacedrive's filesystem context and policy layer.
+Adopt `File System Intelligence` as the name for WingDrive's filesystem context and policy layer.
 
 Implement it as:
 
@@ -519,8 +519,8 @@ Implement it as:
 - subtree-aware policy and permission resolution
 - agent-readable context surfaced during navigation
 
-This gives Spacedrive a clear answer to a fundamental product question:
+This gives WingDrive a clear answer to a fundamental product question:
 
-- why should an agent use Spacedrive instead of raw shell access?
+- why should an agent use WingDrive instead of raw shell access?
 
-Because Spacedrive does not just expose files. It exposes file systems with intelligence.
+Because WingDrive does not just expose files. It exposes file systems with intelligence.

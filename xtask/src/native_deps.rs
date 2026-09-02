@@ -8,7 +8,7 @@ use std::path::Path;
 use xz2::read::XzDecoder;
 
 const NATIVE_DEPS_URL: &str =
-	"https://github.com/spacedriveapp/native-deps/releases/latest/download";
+	"https://github.com/bernardopg/wingdrive/releases/download/native-deps-v0.26";
 
 /// Remove the bundled FFmpeg shared libraries from a native-deps directory.
 ///
@@ -38,9 +38,8 @@ pub fn remove_bundled_ffmpeg_libs(native_deps_dir: &Path) -> Result<()> {
 		let filename = entry.file_name();
 		let filename_str = filename.to_string_lossy();
 		if PREFIXES.iter().any(|p| filename_str.starts_with(p)) {
-			fs::remove_file(entry.path()).with_context(|| {
-				format!("Failed to remove bundled ffmpeg lib {}", filename_str)
-			})?;
+			fs::remove_file(entry.path())
+				.with_context(|| format!("Failed to remove bundled ffmpeg lib {}", filename_str))?;
 		}
 	}
 

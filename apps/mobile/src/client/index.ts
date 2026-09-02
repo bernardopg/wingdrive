@@ -1,9 +1,9 @@
 // Core client
-export { SpacedriveClient } from "./SpacedriveClient";
+export { WingDriveClient } from "./WingDriveClient";
 export { ReactNativeTransport } from "./transport";
 
 // Provider and hooks
-export { SpacedriveProvider, useSpacedriveClient } from "./hooks/useClient";
+export { WingDriveProvider, useWingDriveClient } from "./hooks/useClient";
 export {
 	useCoreQuery,
 	useLibraryQuery,

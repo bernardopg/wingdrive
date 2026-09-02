@@ -1,5 +1,5 @@
 import { ListBullets, CircleNotch, FunnelSimple, ArrowsOut } from "@phosphor-icons/react";
-import { Popover, usePopover, CircleButton } from "@spacedrive/primitives";
+import { Popover, usePopover, CircleButton } from "@wingdrive/primitives";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";

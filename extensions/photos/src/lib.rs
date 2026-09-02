@@ -1,4 +1,4 @@
-//! Photos Extension for Spacedrive
+//! Photos Extension for WingDrive
 //!
 //! Mirrors Apple Photos and Google Photos capabilities:
 //! - Automatic face detection and clustering
@@ -27,7 +27,7 @@ pub use queries::*;
 use spacedrive_sdk::{extension, prelude::*};
 
 #[extension(
-    id = "com.spacedrive.photos",
+	id = "com.wingdrive.photos",
     name = "Photos",
     version = "1.0.0",
     description = "Advanced photo management with faces, places, and intelligent organization",

@@ -1,6 +1,6 @@
 # xtask
 
-Build automation tasks for Spacedrive using the xtask pattern.
+Build automation tasks for WingDrive using the xtask pattern.
 
 ## What is xtask?
 

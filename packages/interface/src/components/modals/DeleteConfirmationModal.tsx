@@ -6,7 +6,7 @@ import {
 	dialogManager,
 	useDialog,
 	type UseDialogProps,
-} from "@spacedrive/primitives";
+} from "@wingdrive/primitives";
 import type { File as FileType } from "@sd/ts-client";
 import { File, FileStack } from "../../routes/explorer/File";
 

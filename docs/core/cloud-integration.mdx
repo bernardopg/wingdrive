@@ -3,13 +3,13 @@ title: Cloud Integration
 sidebarTitle: Cloud Integration
 ---
 
-Spacedrive treats cloud storage as native volumes, enabling seamless file management across local and cloud storage. The system leverages OpenDAL to support over 40 cloud services while maintaining consistent performance and behavior.
+WingDrive treats cloud storage as native volumes, enabling seamless file management across local and cloud storage. The system leverages OpenDAL to support over 40 cloud services while maintaining consistent performance and behavior.
 
 ## How Cloud Volumes Work
 
-Cloud volumes appear and function identically to local volumes in Spacedrive. When you connect a cloud service, it becomes a volume with the same capabilities as your local drives. Files are indexed, searchable, and manageable without downloading entire contents.
+Cloud volumes appear and function identically to local volumes in WingDrive. When you connect a cloud service, it becomes a volume with the same capabilities as your local drives. Files are indexed, searchable, and manageable without downloading entire contents.
 
-The key innovation is content identification consistency. Whether a file lives on your SSD or in S3, Spacedrive generates the same content hash, enabling accurate deduplication and tracking across all storage locations.
+The key innovation is content identification consistency. Whether a file lives on your SSD or in S3, WingDrive generates the same content hash, enabling accurate deduplication and tracking across all storage locations.
 
 ### Connecting Cloud Storage
 
@@ -47,14 +47,14 @@ Cloud paths use service-native URIs that match industry standards:
 s3://my-bucket/photos/vacation.jpg
 gdrive://My Drive/Documents/contract.pdf
 onedrive://Documents/budget.xlsx
-dropbox://Apps/Spacedrive/backup.zip
+dropbox://Apps/WingDrive/backup.zip
 azblob://container/data/export.csv
 gcs://bucket/logs/app.log
 ```
 
-These URIs match the format used by AWS CLI, gsutil, and other cloud tools. Copy a path from Spacedrive and paste it directly into cloud provider CLI commands.
+These URIs match the format used by AWS CLI, gsutil, and other cloud tools. Copy a path from WingDrive and paste it directly into cloud provider CLI commands.
 
-Internally, Spacedrive uses the `SdPath` enum with identity-based addressing:
+Internally, WingDrive uses the `SdPath` enum with identity-based addressing:
 
 ```rust
 pub enum SdPath {
@@ -79,7 +79,7 @@ See [Unified Addressing](/docs/core/addressing) for complete details on URI form
 
 ## Supported Services
 
-Spacedrive supports all major cloud providers through OpenDAL:
+WingDrive supports all major cloud providers through OpenDAL:
 
 **Object Storage**: S3, Azure Blob, Google Cloud Storage, MinIO, Backblaze B2, Cloudflare R2
 
@@ -89,11 +89,11 @@ Spacedrive supports all major cloud providers through OpenDAL:
 
 **Regional Services**: Alibaba Cloud OSS, Tencent COS, Huawei OBS, Baidu BOS
 
-Each service maintains its native features while presenting a unified interface through Spacedrive.
+Each service maintains its native features while presenting a unified interface through WingDrive.
 
 ## Content Identification
 
-Spacedrive uses its sampling algorithm for all files, regardless of storage location. For files over 100KB, only 58KB of data transfers to generate the content hash:
+WingDrive uses its sampling algorithm for all files, regardless of storage location. For files over 100KB, only 58KB of data transfers to generate the content hash:
 
 - 8KB header sample
 - 40KB from four evenly-spaced positions
@@ -126,7 +126,7 @@ credential_manager
 API keys and access credentials remain encrypted at rest. Removing a cloud volume purges its credentials from storage immediately.
 
 <Info>
-	Spacedrive never stores credentials in plain text or transmits them outside
+	WingDrive never stores credentials in plain text or transmits them outside
 	the secure credential flow.
 </Info>
 
@@ -353,7 +353,7 @@ For sluggish cloud operations:
 
 ### Sync Conflicts
 
-When files change outside Spacedrive:
+When files change outside WingDrive:
 
 1. Manually refresh the cloud volume
 2. Re-index affected directories
@@ -369,13 +369,13 @@ When files change outside Spacedrive:
 
 **Change Detection**: Cloud files are treated as new on each reindex. The system cannot yet detect modifications using cloud provider metadata. This means reindexing will recreate entries rather than updating them.
 
-**File Watcher**: Cloud volumes do not support real-time file monitoring. Changes made outside Spacedrive require manual refresh or reindexing to appear.
+**File Watcher**: Cloud volumes do not support real-time file monitoring. Changes made outside WingDrive require manual refresh or reindexing to appear.
 
 **OAuth Tokens**: Token refresh is not yet implemented. You must re-authenticate manually when tokens expire.
 
 ## Related Documentation
 
 - [Volumes](/docs/core/volumes) - Volume system fundamentals
-- [Indexing](/docs/core/indexing) - How Spacedrive indexes files
+- [Indexing](/docs/core/indexing) - How WingDrive indexes files
 - [Jobs](/docs/core/jobs) - Monitor long-running operations
 - [Security](/docs/security) - Credential and encryption details

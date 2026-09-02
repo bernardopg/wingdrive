@@ -1,7 +1,7 @@
 {
 	"name": "@sd/ts-client",
 	"version": "0.1.0",
-	"description": "Type-safe TypeScript client for Spacedrive daemon",
+	"description": "Type-safe TypeScript client for WingDrive daemon",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"exports": {
@@ -45,12 +45,12 @@
 		"generate-types": "cargo run --bin generate_typescript_types --manifest-path ../../core/Cargo.toml"
 	},
 	"keywords": [
-		"spacedrive",
+		"wingdrive",
 		"client",
 		"typescript",
 		"daemon"
 	],
-	"author": "Spacedrive",
+	"author": "WingDrive",
 	"license": "GPL-3.0",
 	"peerDependencies": {
 		"@tanstack/react-query": "^5.0.0",

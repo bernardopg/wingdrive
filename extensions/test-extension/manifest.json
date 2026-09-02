@@ -3,8 +3,8 @@
 	"name": "Test Extension",
 	"version": "0.1.0",
 	"description": "Minimal extension demonstrating beautiful SDK API",
-	"author": "Spacedrive Team",
-	"homepage": "https://spacedrive.com",
+	"author": "WingDrive Team",
+	"homepage": "https://github.com/bernardopg/wingdrive",
 	"wasm_file": "test_extension.wasm",
 	"permissions": {
 		"methods": [

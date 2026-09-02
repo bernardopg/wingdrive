@@ -28,7 +28,7 @@ import { useZoomPan } from "./useZoomPan";
 import { TextViewer } from "./TextViewer";
 import { WithPrismTheme } from "./prism";
 import { sounds } from "@sd/assets/sounds";
-import { CircleButton } from "@spacedrive/primitives";
+import { CircleButton } from "@wingdrive/primitives";
 import { DirectoryPreview } from "./DirectoryPreview";
 
 const MeshViewer = lazy(() =>

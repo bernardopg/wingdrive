@@ -2,7 +2,7 @@
 
 ## What is Archive?
 
-Archive is Spacedrive's data archival system that indexes external data sources beyond the filesystem. While the VDFS manages files, Archive handles everything else: emails, notes, messages, bookmarks, calendar events, contacts, and more.
+Archive is WingDrive's data archival system that indexes external data sources beyond the filesystem. While the VDFS manages files, Archive handles everything else: emails, notes, messages, bookmarks, calendar events, contacts, and more.
 
 **Core capabilities:**
 
@@ -34,11 +34,11 @@ Archive sits alongside the VDFS, not inside it. Files live in locations managed 
 
 Fold the `./spacedrive-archive-prototype` prototype into the official `spacedrive` codebase as a new library-scoped archive system without forcing convergence between the VDFS index and the archival engine.
 
-This keeps Spacedrive's file-native architecture intact while adding a second data plane for extracted, adapter-driven sources such as Gmail, Obsidian, Chrome History, Slack, and GitHub.
+This keeps WingDrive's file-native architecture intact while adding a second data plane for extracted, adapter-driven sources such as Gmail, Obsidian, Chrome History, Slack, and GitHub.
 
 ## Decision
 
-Spacedrive will support two storage systems inside a library:
+WingDrive will support two storage systems inside a library:
 
 1. The VDFS library database, which remains the source of truth for files, entries, content identities, tags, spaces, sidecars, sync metadata, and file operations.
 2. A source engine, which manages archived external data sources as isolated sources with their own SQLite database, vector index, schema, cursor state, and processing pipeline.
@@ -55,11 +55,11 @@ These systems are linked at the library boundary, not merged into one database.
 
 ## Goals
 
-- Add archival sources to official Spacedrive without rewriting the VDFS.
+- Add archival sources to official WingDrive without rewriting the VDFS.
 - Reuse the existing daemon, RPC, type generation, ops, job system, and UI infrastructure.
 - Keep each source self-contained on disk.
 - Make sources library-scoped so they can participate in library sync and lifecycle.
-- Translate the prototype's pipeline into Spacedrive's ops and jobs model.
+- Translate the prototype's pipeline into WingDrive's ops and jobs model.
 
 ## Non-Goals
 
@@ -207,7 +207,7 @@ core/src/ops/sources/
   delete.rs            # DeleteSourceAction
 ```
 
-The crate keeps `sqlx` and raw SQL internally (justified for dynamic schemas). The core wrapper integrates with Spacedrive conventions: ops, jobs, events, and typed outputs.
+The crate keeps `sqlx` and raw SQL internally (justified for dynamic schemas). The core wrapper integrates with WingDrive conventions: ops, jobs, events, and typed outputs.
 
 **Benefits:**
 
@@ -222,7 +222,7 @@ The source engine generates tables dynamically from TOML schemas. That fits raw 
 
 The integration rule should be:
 
-- use existing Spacedrive infrastructure for lifecycle, dispatch, jobs, events, sync, and UI
+- use existing WingDrive infrastructure for lifecycle, dispatch, jobs, events, sync, and UI
 - keep raw SQL and schema codegen inside the source engine where it reduces friction
 
 This avoids rewriting working prototype internals just to satisfy the ORM used by the VDFS.
@@ -411,7 +411,7 @@ Both use the same underlying tech. The prototype's adapter categorization can be
 
 ## Safety, Classification, and Trust
 
-These concepts map well to Spacedrive.
+These concepts map well to WingDrive.
 
 - trust tier belongs to the source metadata
 - safety verdict and quality metadata belong to source records
@@ -547,7 +547,7 @@ Start with the smallest honest integration:
 - expose everything through ops and jobs
 - ship source-local search before unified search
 
-This gets the archival product into official Spacedrive quickly without abandoning the VDFS or reopening the whole architecture.
+This gets the archival product into official WingDrive quickly without abandoning the VDFS or reopening the whole architecture.
 
 ---
 
@@ -815,7 +815,7 @@ MyLib.sdlibrary/
 **Copy adapters directory:**
 
 ```bash
-cp -r ~/Projects/spacedriveapp/spacedrive-archive-prototype/adapters ~/Projects/spacedriveapp/spacedrive/adapters
+cp -r ~/Projects/bernardopg/wingdrive-archive-prototype/adapters ~/Projects/bernardopg/wingdrive/adapters
 ```
 
 All 11 adapters are standalone (TOML + Python scripts). They communicate via stdin/stdout JSONL protocol - no Rust dependencies. Work immediately once ScriptAdapter runtime is ported.
@@ -1029,9 +1029,9 @@ pub mod sources;
 
 - `core/src/domain/library.rs` - Domain model + Identifiable
 
-### Spacedrive-Data Source Files
+### WingDrive-Data Source Files
 
-**All source files relative to:** `/Users/jamespine/Projects/spacedriveapp/spacedrive-archive-prototype/core/src/`
+**All source files relative to:** `/Users/jamespine/Projects/bernardopg/wingdrive-archive-prototype/core/src/`
 
 **Core modules:**
 
@@ -1055,7 +1055,7 @@ pub mod sources;
 
 ### Target Paths in V2
 
-**Standalone crate:** `/Users/jamespine/Projects/spacedriveapp/spacedrive/crates/archive/`
+**Standalone crate:** `/Users/jamespine/Projects/bernardopg/wingdrive/crates/archive/`
 
 ```
 crates/archive/
@@ -1086,7 +1086,7 @@ crates/archive/
     └── embedding.rs
 ```
 
-**Core integration wrapper:** `/Users/jamespine/Projects/spacedriveapp/spacedrive/core/src/data/`
+**Core integration wrapper:** `/Users/jamespine/Projects/bernardopg/wingdrive/core/src/data/`
 
 ```
 core/src/data/
@@ -1095,7 +1095,7 @@ core/src/data/
 └── integration.rs          (KeyManager, EventBus bridges)
 ```
 
-**Operations and jobs:** `/Users/jamespine/Projects/spacedriveapp/spacedrive/core/src/ops/sources/`
+**Operations and jobs:** `/Users/jamespine/Projects/bernardopg/wingdrive/core/src/ops/sources/`
 
 ```
 core/src/ops/sources/
@@ -1111,4 +1111,4 @@ core/src/ops/sources/
 └── settings.rs
 ```
 
-**Adapters (copy as-is):** `/Users/jamespine/Projects/spacedriveapp/spacedrive/adapters/`
+**Adapters (copy as-is):** `/Users/jamespine/Projects/bernardopg/wingdrive/adapters/`

@@ -350,7 +350,7 @@ typescript = true
 
 [[file_types]]
 id = "application/x-spacedrive-encrypted"
-name = "Spacedrive Encrypted"
+name = "WingDrive Encrypted"
 extensions = ["bytes"]
 mime_types = ["application/x-spacedrive-encrypted"]
 category = "encrypted"
@@ -362,7 +362,7 @@ encrypted = true
 
 [[file_types]]
 id = "application/x-spacedrive-container"
-name = "Spacedrive Container"
+name = "WingDrive Container"
 extensions = ["container"]
 mime_types = ["application/x-spacedrive-container"]
 category = "encrypted"
@@ -374,7 +374,7 @@ container = true
 
 [[file_types]]
 id = "application/x-spacedrive-block"
-name = "Spacedrive Block Storage"
+name = "WingDrive Block Storage"
 extensions = ["block"]
 mime_types = ["application/x-spacedrive-block"]
 category = "encrypted"

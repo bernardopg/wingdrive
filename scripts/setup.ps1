@@ -75,13 +75,13 @@ $packageJson = Get-Content -Raw -Path "$projectRoot\package.json" | ConvertFrom-
 $wingetValidExit = 0, -1978335189, -1978335153, -1978335135
 
 # Currently LLVM >= 16 is not supported due to incompatibilities with ffmpeg-sys-next
-# See https://github.com/spacedriveapp/spacedrive/issues/677
+# See https://github.com/bernardopg/wingdrive/issues/677
 $llvmVersion = [Version]'15.0.7'
 
-Write-Host 'Spacedrive Development Environment Setup' -ForegroundColor Magenta
+Write-Host 'WingDrive Development Environment Setup' -ForegroundColor Magenta
 Write-Host @"
 
-To set up your machine for Spacedrive development, this script will do the following:
+To set up your machine for WingDrive development, this script will do the following:
 1) Install Windows C++ build tools
 2) Install Edge Webview 2
 3) Install Rust and Cargo
@@ -269,7 +269,7 @@ if (-not $env:CI) {
 
 if (-not $env:CI) {
     Write-Host
-    Write-Host 'Your machine has been setup for Spacedrive development!' -ForegroundColor Green
+    Write-Host 'Your machine has been setup for WingDrive development!' -ForegroundColor Green
     Write-Host
     Read-Host 'Press Enter to continue'
 }

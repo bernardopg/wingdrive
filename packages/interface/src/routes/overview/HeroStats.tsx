@@ -7,7 +7,7 @@ import LocationIcon from '@sd/assets/icons/Location.png';
 import MobileIcon from '@sd/assets/icons/Mobile.png';
 import StorageIcon from '@sd/assets/icons/Storage.png';
 import TagsIcon from '@sd/assets/icons/Tags.png';
-import {CircleButton} from '@spacedrive/primitives';
+import {CircleButton} from '@wingdrive/primitives';
 import {motion} from 'framer-motion';
 import {useEffect, useRef, useState} from 'react';
 

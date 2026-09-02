@@ -1,14 +1,17 @@
 #!/bin/bash
 
 # Test script for sd-client
-# Make sure Spacedrive daemon is running first!
+# Make sure WingDrive daemon is running first!
 
 # Get library ID from the library.json file
-LIBRARY_PATH="$HOME/Library/Application Support/spacedrive/libraries"
+LIBRARY_PATH="$HOME/WingDrive/Libraries"
+if [ ! -d "$LIBRARY_PATH" ] && [ -d "$HOME/Spacedrive/Libraries" ]; then
+    LIBRARY_PATH="$HOME/Spacedrive/Libraries"
+fi
 LIBRARY_FILE=$(find "$LIBRARY_PATH" -name "*.sdlibrary" -type d | head -n 1)
 
 if [ -z "$LIBRARY_FILE" ]; then
-    echo "Error: No Spacedrive library found in $LIBRARY_PATH"
+    echo "Error: No WingDrive library found in $LIBRARY_PATH"
     exit 1
 fi
 
@@ -36,15 +39,8 @@ echo "From: $LIBRARY_FILE"
 echo ""
 
 export SD_LIBRARY_ID="$LIBRARY_ID"
-export SD_SOCKET_PATH="$HOME/Library/Application Support/spacedrive/daemon/daemon.sock"
+export SD_SOCKET_ADDR="${SD_SOCKET_ADDR:-127.0.0.1:6969}"
 export SD_HTTP_URL="http://127.0.0.1:54321"
-
-# Check if daemon socket exists
-if [ ! -S "$SD_SOCKET_PATH" ]; then
-    echo "Warning: Daemon socket not found at $SD_SOCKET_PATH"
-    echo "Make sure Spacedrive daemon is running!"
-    echo ""
-fi
 
 echo "Running test_connection example..."
 echo ""

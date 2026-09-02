@@ -5,6 +5,8 @@ mod types;
 pub use client::SpacedriveClient;
 pub use types::*;
 
+pub type WingDriveClient = SpacedriveClient;
+
 #[cfg(test)]
 mod tests {
 	use super::*;

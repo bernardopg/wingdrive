@@ -1,7 +1,7 @@
 //!
 //! # Task System
 //!
-//! Spacedrive's Task System is a library that provides a way to manage and execute tasks in a concurrent
+//! WingDrive's Task System is a library that provides a way to manage and execute tasks in a concurrent
 //! and parallel environment.
 //!
 //! Just bring your own unified error type and dispatch some tasks, the system will handle enqueueing,

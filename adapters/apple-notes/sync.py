@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Apple Notes adapter for Spacedrive.
+Apple Notes adapter for WingDrive.
 
 Reads the Apple Notes SQLite database on macOS.
 Requires Full Disk Access for the running process.
@@ -69,7 +69,7 @@ def main():
             if os.path.exists(src):
                 shutil.copy2(src, tmp_db + ext)
     except PermissionError:
-        log("error", "Permission denied. Grant Full Disk Access to the app running Spacedrive (System Settings > Privacy & Security > Full Disk Access)")
+        log("error", "Permission denied. Grant Full Disk Access to the app running WingDrive (System Settings > Privacy & Security > Full Disk Access)")
         sys.exit(2)
     except Exception as e:
         log("error", f"Failed to copy Notes database: {e}")

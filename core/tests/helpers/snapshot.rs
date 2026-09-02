@@ -20,7 +20,7 @@ impl SnapshotManager {
 	/// Create new snapshot manager
 	///
 	/// Snapshots are stored in platform-appropriate location:
-	/// - macOS: ~/Library/Application Support/spacedrive/test_snapshots/
+	/// - macOS: ~/.wingdrive/test_snapshots/
 	/// - Linux: ~/.local/share/spacedrive/test_snapshots/
 	/// - Windows: %APPDATA%\spacedrive\test_snapshots\
 	pub fn new(test_name: &str, test_data_path: &Path) -> anyhow::Result<Self> {
@@ -40,7 +40,7 @@ impl SnapshotManager {
 	fn get_snapshot_base_path() -> anyhow::Result<PathBuf> {
 		let base = if cfg!(target_os = "macos") {
 			let home = std::env::var("HOME")?;
-			PathBuf::from(home).join("Library/Application Support/spacedrive/test_snapshots")
+			PathBuf::from(home).join(".wingdrive/test_snapshots")
 		} else if cfg!(target_os = "windows") {
 			let appdata = std::env::var("APPDATA")?;
 			PathBuf::from(appdata).join("spacedrive\\test_snapshots")

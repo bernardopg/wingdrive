@@ -85,7 +85,7 @@ impl LibraryAction for LocationExportAction {
 		};
 
 		// Header
-		sql_output.push_str("-- Spacedrive Location Export\n");
+		sql_output.push_str("-- WingDrive Location Export\n");
 		sql_output.push_str(&format!(
 			"-- Location: {} ({})\n",
 			location.name.as_deref().unwrap_or("Unnamed"),

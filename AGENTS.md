@@ -1,4 +1,4 @@
-# Spacedrive Core v2 Development Guide
+# WingDrive Core v2 Development Guide
 
 ## Quick Start
 
@@ -38,7 +38,7 @@ cargo run --bin sd-cli -- <command>      # Run CLI (binary is sd-cli, not spaced
 
 ## Architecture Overview
 
-Spacedrive uses daemon-client architecture. A single daemon process manages core functionality. Multiple clients (CLI, GraphQL server, desktop app) connect via Unix domain sockets.
+WingDrive uses daemon-client architecture. A single daemon process manages core functionality. Multiple clients (CLI, GraphQL server, desktop app) connect via Unix domain sockets.
 
 ### CQRS and DDD Pattern
 
@@ -95,7 +95,7 @@ impl Action for ShareFileAction {
 
 ## Communication Architecture
 
-Spacedrive supports multiple communication patterns for different platforms and use cases.
+WingDrive supports multiple communication patterns for different platforms and use cases.
 
 ### Daemon-Client Communication (Tauri Desktop, CLI, Web)
 
@@ -127,7 +127,7 @@ Location: `core/src/ops/registry.rs`
 
 ### Tauri Desktop Development
 
-The Tauri app (`apps/tauri/`) is the primary desktop application for Spacedrive. It connects to the daemon via the TypeScript client.
+The Tauri app (`apps/tauri/`) is the primary desktop application for WingDrive. It connects to the daemon via the TypeScript client.
 
 **Development Workflow:**
 
@@ -186,7 +186,7 @@ Output: `packages/swift-client/Sources/SpacedriveClient/`
 
 ### Extension System (WASM)
 
-Extensions run as sandboxed WASM modules that interact with Spacedrive core via host functions. Extensions are distributed as compiled `.wasm` files.
+Extensions run as sandboxed WASM modules that interact with WingDrive core via host functions. Extensions are distributed as compiled `.wasm` files.
 
 **Architecture:**
 
@@ -650,7 +650,7 @@ cargo test -- --nocapture     # Show output
 
 ## Task Tracking
 
-Spacedrive uses a file-based task system in `/.tasks/` to track features, epics, and development work. All task files are version-controlled alongside the code.
+WingDrive uses a file-based task system in `/.tasks/` to track features, epics, and development work. All task files are version-controlled alongside the code.
 
 ### When to Create Tasks
 

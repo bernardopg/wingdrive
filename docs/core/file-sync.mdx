@@ -5,11 +5,11 @@ sidebarTitle: File Sync
 
 <Note>This is provisional documentation describing the planned File Sync implementation.</Note>
 
-File Sync orchestrates content synchronization between locations by leveraging Spacedrive's Virtual Distributed File System (VDFS) index. Unlike traditional sync tools that scan filesystems, File Sync operates entirely through index queries. This makes sync state resolution a simple database operation and ensures perfect consistency with your indexing rules.
+File Sync orchestrates content synchronization between locations by leveraging WingDrive's Virtual Distributed File System (VDFS) index. Unlike traditional sync tools that scan filesystems, File Sync operates entirely through index queries. This makes sync state resolution a simple database operation and ensures perfect consistency with your indexing rules.
 
 ## Architecture
 
-File Sync builds on Spacedrive's core infrastructure. Each sync operation runs as a Job, providing state persistence and progress tracking. The system derives all sync decisions from the VDFS index, eliminating complex state management and ensuring files ignored during indexing remain excluded from sync.
+File Sync builds on WingDrive's core infrastructure. Each sync operation runs as a Job, providing state persistence and progress tracking. The system derives all sync decisions from the VDFS index, eliminating complex state management and ensuring files ignored during indexing remain excluded from sync.
 
 ### Index-Based Design
 
@@ -25,7 +25,7 @@ This approach transforms sync from a complex distributed systems problem into st
 ### Core Principles
 
 **Index as Truth**  
-If a file isn't indexed, it doesn't exist for sync purposes. This ensures consistency between what you see in Spacedrive and what gets synchronized.
+If a file isn't indexed, it doesn't exist for sync purposes. This ensures consistency between what you see in WingDrive and what gets synchronized.
 
 **Push-Based Transfer**
 The device that has files pushes them to devices that need them. This works naturally with iOS background processing and simplifies the protocol.
@@ -48,17 +48,17 @@ When you delete a file from the source, Mirror Mode removes it from the destinat
 ### Bidirectional Mode  
 Keeps two locations identical across different devices. Changes made anywhere propagate everywhere. Ideal for working on the same projects from multiple computers.
 
-The system uses last-write-wins for conflicts. When the same file changes in multiple places, the most recent modification takes precedence. Previous versions remain in your Spacedrive history.
+The system uses last-write-wins for conflicts. When the same file changes in multiple places, the most recent modification takes precedence. Previous versions remain in your WingDrive history.
 
 ### Archive Mode
 Moves completed work to long-term storage. After verifying successful transfer, the source files are removed to free local space. The system performs cryptographic verification before any deletion.
 
-Use this mode when finishing projects. Your files move to cheaper storage while maintaining full Spacedrive search and preview capabilities.
+Use this mode when finishing projects. Your files move to cheaper storage while maintaining full WingDrive search and preview capabilities.
 
 ### Selective Mode
-Intelligently manages limited local storage. Frequently accessed files stay local while older content moves to secondary storage. Files remain visible in Spacedrive and download on-demand when needed.
+Intelligently manages limited local storage. Frequently accessed files stay local while older content moves to secondary storage. Files remain visible in WingDrive and download on-demand when needed.
 
-The algorithm considers access patterns, available space, and manual pins. You control which files always stay local by pinning them in the Spacedrive interface.
+The algorithm considers access patterns, available space, and manual pins. You control which files always stay local by pinning them in the WingDrive interface.
 
 ## Implementation
 
@@ -101,7 +101,7 @@ For bidirectional sync, the system uses timestamps to detect conflicts when both
 ### Index Consistency
 
 <Info>
-Files excluded from indexing (like `node_modules`) are automatically excluded from sync. This matches user expectations - if you told Spacedrive to ignore it, it won't sync either.
+Files excluded from indexing (like `node_modules`) are automatically excluded from sync. This matches user expectations - if you told WingDrive to ignore it, it won't sync either.
 </Info>
 
 For cases requiring full directory sync including normally-ignored files, sync conduits support an index mode override:
@@ -115,7 +115,7 @@ pub enum IndexingMode {
 
 ### Network Protocol
 
-File transfers use Spacedrive's existing P2P infrastructure over QUIC. The protocol supports:
+File transfers use WingDrive's existing P2P infrastructure over QUIC. The protocol supports:
 
 - Resumable transfers for large files
 - Concurrent block transmission  
@@ -240,7 +240,7 @@ Each sync creates a new generation record. For bidirectional sync, this history 
 
 ## Configuration
 
-Create sync relationships through the Spacedrive interface by right-clicking any directory and selecting "Sync to...". The system creates a SyncConduit record linking your source and destination.
+Create sync relationships through the WingDrive interface by right-clicking any directory and selecting "Sync to...". The system creates a SyncConduit record linking your source and destination.
 
 ### Essential Settings
 
@@ -279,7 +279,7 @@ The index-driven architecture provides several advantages over traditional files
 No directory traversal needed. Sync resolution becomes efficient database queries instead of recursive filesystem operations.
 
 **Consistency**  
-Files ignored by indexing rules automatically stay out of sync. No divergence between what Spacedrive shows and what gets synchronized.
+Files ignored by indexing rules automatically stay out of sync. No divergence between what WingDrive shows and what gets synchronized.
 
 **Simplicity**  
 Push-based transfers eliminate complex negotiation protocols. The device with data initiates transfers, making the system predictable and debuggable.

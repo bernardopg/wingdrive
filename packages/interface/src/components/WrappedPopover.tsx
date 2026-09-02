@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Spacedrive-specific Popover wrapper that preserves the usePopover + trigger prop API.
- * Built on top of @spacedrive/primitives Radix Popover.
+ * WingDrive-specific Popover wrapper that preserves the usePopover + trigger prop API.
+ * Built on top of @wingdrive/primitives Radix Popover.
  *
  * Usage:
  *   const popover = usePopover();
@@ -11,7 +11,7 @@
  *   </WrappedPopover>
  */
 
-import { Popover } from "@spacedrive/primitives";
+import { Popover } from "@wingdrive/primitives";
 import clsx from "clsx";
 import React, { useEffect, useRef } from "react";
 

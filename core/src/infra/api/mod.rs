@@ -1,4 +1,4 @@
-//! Unified API layer for Spacedrive operations
+//! Unified API layer for WingDrive operations
 //!
 //! This module provides a clean, unified entry point for all operations
 //! with built-in authentication, authorization, and session management.

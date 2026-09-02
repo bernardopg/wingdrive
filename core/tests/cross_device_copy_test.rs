@@ -24,11 +24,11 @@ async fn alice_cross_device_copy_scenario() {
 
 	// Set test directory for file-based discovery
 	env::set_var(
-		"SPACEDRIVE_TEST_DIR",
-		"/tmp/spacedrive-cross-device-copy-test",
+		"WINGDRIVE_TEST_DIR",
+		"/tmp/wingdrive-cross-device-copy-test",
 	);
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-cross-device-copy-test/alice");
+	let data_dir = PathBuf::from("/tmp/wingdrive-cross-device-copy-test/alice");
 	let device_name = "Alice's Test Device";
 
 	println!("Alice: Starting Core cross-device copy test (sender)");
@@ -92,14 +92,14 @@ async fn alice_cross_device_copy_scenario() {
 	);
 
 	// Write pairing code to shared location for Bob to read
-	std::fs::create_dir_all("/tmp/spacedrive-cross-device-copy-test").unwrap();
+	std::fs::create_dir_all("/tmp/wingdrive-cross-device-copy-test").unwrap();
 	std::fs::write(
-		"/tmp/spacedrive-cross-device-copy-test/pairing_code.txt",
+		"/tmp/wingdrive-cross-device-copy-test/pairing_code.txt",
 		&pairing_code,
 	)
 	.unwrap();
 	println!(
-		"Alice: Pairing code written to /tmp/spacedrive-cross-device-copy-test/pairing_code.txt"
+		"Alice: Pairing code written to /tmp/wingdrive-cross-device-copy-test/pairing_code.txt"
 	);
 
 	// Wait for pairing completion
@@ -168,7 +168,7 @@ async fn alice_cross_device_copy_scenario() {
 		.map(|(name, content)| format!("{}:{}", name, content.len()))
 		.collect();
 	std::fs::write(
-		"/tmp/spacedrive-cross-device-copy-test/expected_files.txt",
+		"/tmp/wingdrive-cross-device-copy-test/expected_files.txt",
 		file_list.join("\n"),
 	)
 	.unwrap();
@@ -249,7 +249,7 @@ async fn alice_cross_device_copy_scenario() {
 	println!("Alice: Waiting for Bob to confirm file receipt...");
 	let mut bob_confirmed = false;
 	for attempt in 1..=60 {
-		if std::fs::read_to_string("/tmp/spacedrive-cross-device-copy-test/bob_verified.txt")
+		if std::fs::read_to_string("/tmp/wingdrive-cross-device-copy-test/bob_verified.txt")
 			.map(|content| content.starts_with("verified:"))
 			.unwrap_or(false)
 		{
@@ -270,7 +270,7 @@ async fn alice_cross_device_copy_scenario() {
 	if bob_confirmed {
 		println!("CROSS_DEVICE_COPY_SUCCESS: Alice successfully dispatched copy actions");
 		std::fs::write(
-			"/tmp/spacedrive-cross-device-copy-test/alice_success.txt",
+			"/tmp/wingdrive-cross-device-copy-test/alice_success.txt",
 			"success",
 		)
 		.unwrap();
@@ -292,11 +292,11 @@ async fn bob_cross_device_copy_scenario() {
 
 	// Set test directory for file-based discovery
 	env::set_var(
-		"SPACEDRIVE_TEST_DIR",
-		"/tmp/spacedrive-cross-device-copy-test",
+		"WINGDRIVE_TEST_DIR",
+		"/tmp/wingdrive-cross-device-copy-test",
 	);
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-cross-device-copy-test/bob");
+	let data_dir = PathBuf::from("/tmp/wingdrive-cross-device-copy-test/bob");
 	let device_name = "Bob's Test Device";
 
 	println!("Bob: Starting Core cross-device copy test (receiver)");
@@ -359,7 +359,7 @@ async fn bob_cross_device_copy_scenario() {
 	println!("Bob: Looking for pairing code from Alice...");
 	let pairing_code = loop {
 		if let Ok(code) =
-			std::fs::read_to_string("/tmp/spacedrive-cross-device-copy-test/pairing_code.txt")
+			std::fs::read_to_string("/tmp/wingdrive-cross-device-copy-test/pairing_code.txt")
 		{
 			break code.trim().to_string();
 		}
@@ -426,7 +426,7 @@ async fn bob_cross_device_copy_scenario() {
 	println!("Bob: Loading expected file list...");
 	let expected_files = loop {
 		if let Ok(content) =
-			std::fs::read_to_string("/tmp/spacedrive-cross-device-copy-test/expected_files.txt")
+			std::fs::read_to_string("/tmp/wingdrive-cross-device-copy-test/expected_files.txt")
 		{
 			break content
 				.lines()
@@ -502,14 +502,14 @@ async fn bob_cross_device_copy_scenario() {
 
 		// Write verification confirmation
 		std::fs::write(
-			"/tmp/spacedrive-cross-device-copy-test/bob_verified.txt",
+			"/tmp/wingdrive-cross-device-copy-test/bob_verified.txt",
 			format!("verified:{}", chrono::Utc::now().timestamp()),
 		)
 		.unwrap();
 
 		// Write success marker
 		std::fs::write(
-			"/tmp/spacedrive-cross-device-copy-test/bob_success.txt",
+			"/tmp/wingdrive-cross-device-copy-test/bob_success.txt",
 			"success",
 		)
 		.unwrap();
@@ -531,9 +531,9 @@ async fn bob_cross_device_copy_scenario() {
 #[tokio::test]
 async fn test_cross_device_copy() {
 	// Clean up any old test files
-	let _ = std::fs::remove_dir_all("/tmp/spacedrive-cross-device-copy-test");
+	let _ = std::fs::remove_dir_all("/tmp/wingdrive-cross-device-copy-test");
 	let _ = std::fs::remove_dir_all("/tmp/received_files");
-	std::fs::create_dir_all("/tmp/spacedrive-cross-device-copy-test").unwrap();
+	std::fs::create_dir_all("/tmp/wingdrive-cross-device-copy-test").unwrap();
 
 	println!("Testing cross-device copy with action system routing");
 
@@ -563,11 +563,11 @@ async fn test_cross_device_copy() {
 	let result = runner
 		.wait_for_success(|_outputs| {
 			let alice_success =
-				std::fs::read_to_string("/tmp/spacedrive-cross-device-copy-test/alice_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-cross-device-copy-test/alice_success.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 			let bob_success =
-				std::fs::read_to_string("/tmp/spacedrive-cross-device-copy-test/bob_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-cross-device-copy-test/bob_success.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 

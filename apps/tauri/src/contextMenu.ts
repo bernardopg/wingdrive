@@ -54,10 +54,8 @@ async function buildMenuItems(items: ContextMenuItem[]): Promise<any[]> {
  * Initialize the context menu handler on the window global
  */
 export function initializeContextMenuHandler() {
-	if (!window.__SPACEDRIVE__) {
-		(window as any).__SPACEDRIVE__ = {};
-	}
-
-	window.__SPACEDRIVE__.showContextMenu = showNativeContextMenu;
+	window.__WINGDRIVE__ ??= window.__SPACEDRIVE__ ?? {};
+	window.__SPACEDRIVE__ = window.__WINGDRIVE__;
+	window.__WINGDRIVE__.showContextMenu = showNativeContextMenu;
 	console.log('[Tauri ContextMenu] Handler initialized');
 }

@@ -1,12 +1,12 @@
 # Custom Mintlify Components
 
-This directory contains reusable React components for Spacedrive documentation.
+This directory contains reusable React components for WingDrive documentation.
 
 ## Available Components
 
 ### FlowDiagram
 
-A flow diagram component for visualizing multi-step processes with Spacedrive styling.
+A flow diagram component for visualizing multi-step processes with WingDrive styling.
 
 **Usage:**
 
@@ -43,4 +43,4 @@ See `docs/react/ui/normalized-cache.mdx` for a real-world example.
 
 ## Styling
 
-Components use Tailwind CSS classes and Spacedrive's accent color (`#36A3FF`).
+Components use Tailwind CSS classes and WingDrive's accent color (`#36A3FF`).

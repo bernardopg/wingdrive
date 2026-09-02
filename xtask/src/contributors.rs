@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-const REPO: &str = "spacedriveapp/spacedrive";
+const REPO: &str = "bernardopg/wingdrive";
 const OUTPUT_PATH: &str = "packages/interface/src/contributors.json";
 const EXCLUDED_LOGINS: &[&str] = &["cursoragent"];
 
@@ -69,7 +69,7 @@ pub fn update(project_root: &Path) -> Result<()> {
 	}
 
 	let client = reqwest::blocking::Client::builder()
-		.user_agent("spacedrive-xtask")
+		.user_agent("wingdrive-xtask")
 		.timeout(std::time::Duration::from_secs(20))
 		.build()
 		.context("Failed to build HTTP client")?;

@@ -685,7 +685,7 @@ export function SettingsScreen() {
 			{/* Footer */}
 			<View className="items-center py-6">
 				<Text className="text-ink-faint text-sm">
-					Spacedrive Mobile v2
+					WingDrive Mobile v2
 				</Text>
 				<Text className="text-ink-faint text-xs mt-1">
 					UI Primitives Showcase

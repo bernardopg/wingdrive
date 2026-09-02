@@ -1,4 +1,4 @@
-//! # sd-archive — Spacedrive's Data Archival System
+//! # sd-archive — WingDrive's Data Archival System
 //!
 //! A standalone crate for indexing external data sources beyond the filesystem.
 //! Handles emails, notes, messages, bookmarks, calendar events, contacts, and more.
@@ -19,7 +19,7 @@
 //!
 //! ## Architecture
 //!
-//! This crate is designed to be embedded in Spacedrive's core. It does not include
+//! This crate is designed to be embedded in WingDrive's core. It does not include
 //! the job system or operation layer — those live in `core/src/ops/sources/`.
 //!
 //! ```

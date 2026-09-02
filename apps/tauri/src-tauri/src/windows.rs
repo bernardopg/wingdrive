@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
-/// Window types in Spacedrive
+/// Window types in WingDrive
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum SpacedriveWindow {
@@ -193,19 +193,17 @@ impl SpacedriveWindow {
 				)
 			}
 
-			Self::JobManager => {
-				create_window(
-					app,
-					&label,
-					"/job-manager",
-					"Job Manager",
-					(600.0, 500.0),
-					(400.0, 300.0),
-					true,
-					false,
-					false,
-				)
-			}
+			Self::JobManager => create_window(
+				app,
+				&label,
+				"/job-manager",
+				"Job Manager",
+				(600.0, 500.0),
+				(400.0, 300.0),
+				true,
+				false,
+				false,
+			),
 
 			Self::DeviceDiscovery => create_window(
 				app,
@@ -555,7 +553,8 @@ pub fn apply_macos_styling(_app: AppHandle) -> Result<(), String> {
 	{
 		let window = _app
 			.get_webview_window(
-				&_app.webview_windows()
+				&_app
+					.webview_windows()
 					.keys()
 					.last()
 					.ok_or("No windows found")?

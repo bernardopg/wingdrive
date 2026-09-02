@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="WingDrive logo">
+	<defs>
+		<linearGradient id="wingdrive-wing" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0%" stop-color="#8b5cf6" />
+			<stop offset="100%" stop-color="#4338ca" />
+		</linearGradient>
+		<linearGradient id="wingdrive-plate" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0%" stop-color="#f5f3ff" />
+			<stop offset="100%" stop-color="#c4b5fd" />
+		</linearGradient>
+	</defs>
+	<rect width="128" height="128" rx="28" fill="#0f0a1f" />
+	<path d="M22 78 C40 46 66 28 104 24 C96 46 78 62 52 70 Z" fill="url(#wingdrive-wing)" />
+	<path d="M26 92 C44 66 68 52 100 48 C92 66 74 79 50 85 Z" fill="url(#wingdrive-wing)" opacity="0.72" />
+	<path d="M30 104 C46 84 66 74 94 71 C87 85 71 95 50 99 Z" fill="url(#wingdrive-wing)" opacity="0.44" />
+	<circle cx="88" cy="88" r="16" fill="url(#wingdrive-plate)" />
+	<circle cx="88" cy="88" r="5.5" fill="#0f0a1f" />
+</svg>

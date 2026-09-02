@@ -12,10 +12,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		.with_env_filter("sd_core=debug")
 		.init();
 
-	println!("=== Spacedrive Core Lifecycle Demo ===\n");
+	println!("=== WingDrive Core Lifecycle Demo ===\n");
 
 	// 1. Initialize core with custom data directory
-	println!("1. Initializing Spacedrive Core...");
+	println!("1. Initializing WingDrive Core...");
 	let data_dir = PathBuf::from("./data/spacedrive-demo-data");
 	let core = Core::new(data_dir.clone()).await?;
 	println!("   ✓ Core initialized with data directory: {:?}", data_dir);

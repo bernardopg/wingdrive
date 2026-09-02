@@ -1,12 +1,12 @@
 ---
-title: Self-Hosting Spacedrive
-description: Deploy Spacedrive server for remote access and headless operation
+title: Self-Hosting WingDrive
+description: Deploy WingDrive server for remote access and headless operation
 sidebarTitle: Self-Hosting
 ---
 
-Self-hosting Spacedrive means running the server component on hardware you control. The server provides HTTP access to your libraries, enabling remote connections from desktop and mobile apps. Unlike the desktop app which requires a GUI, the server runs headless on Linux systems, NAS devices, or cloud instances.
+Self-hosting WingDrive means running the server component on hardware you control. The server provides HTTP access to your libraries, enabling remote connections from desktop and mobile apps. Unlike the desktop app which requires a GUI, the server runs headless on Linux systems, NAS devices, or cloud instances.
 
-The server embeds the full Spacedrive daemon with media processing capabilities. It exposes RPC endpoints over HTTP with optional basic authentication. Your data stays on your infrastructure while remaining accessible from any device with network access.
+The server embeds the full WingDrive daemon with media processing capabilities. It exposes RPC endpoints over HTTP with optional basic authentication. Your data stays on your infrastructure while remaining accessible from any device with network access.
 
 ## Installation Methods
 
@@ -16,7 +16,7 @@ Download the latest release binary for your platform. This method works on any L
 
 ```bash
 # Download and extract
-wget https://github.com/spacedriveapp/spacedrive/releases/latest/download/sd-server-linux-x86_64.tar.gz
+wget https://github.com/bernardopg/wingdrive/releases/latest/download/sd-server-linux-x86_64.tar.gz
 tar -xzf sd-server-linux-x86_64.tar.gz
 
 # Verify checksum
@@ -35,12 +35,12 @@ Docker images are available for both x86_64 and ARM64 architectures. The image i
 
 ```bash
 docker run -d \
-  --name spacedrive \
+  --name wingdrive \
   -p 8080:8080 \
   -p 7373:7373 \
-  -v spacedrive-data:/data \
+  -v wingdrive-data:/data \
   -e SD_AUTH=admin:your-secure-password \
-  ghcr.io/spacedriveapp/spacedrive/server:latest
+  ghcr.io/bernardopg/wingdrive/server:latest
 ```
 
 The server listens on port 8080 for HTTP traffic and port 7373 for peer-to-peer connections. Mount additional volumes to index existing storage.
@@ -52,13 +52,13 @@ For production deployments, use the provided compose file in the repository at `
 ```yaml
 version: '3.8'
 services:
-  spacedrive:
-    image: ghcr.io/spacedriveapp/spacedrive/server:latest
+  wingdrive:
+    image: ghcr.io/bernardopg/wingdrive/server:latest
     ports:
       - "8080:8080"
       - "7373:7373"
     volumes:
-      - spacedrive-data:/data
+      - wingdrive-data:/data
       - /mnt/media:/media:ro
     environment:
       SD_AUTH: "admin:your-password"
@@ -66,27 +66,27 @@ services:
     restart: unless-stopped
 
 volumes:
-  spacedrive-data:
+  wingdrive-data:
 ```
 
 ## System Service Setup
 
 Running the server as a systemd service ensures it starts on boot and restarts on failure.
 
-Create a service file at `/etc/systemd/system/spacedrive.service`:
+Create a service file at `/etc/systemd/system/wingdrive.service`:
 
 ```ini
 [Unit]
-Description=Spacedrive Server
+Description=WingDrive Server
 After=network.target
 
 [Service]
 Type=simple
-User=spacedrive
-Group=spacedrive
-Environment="DATA_DIR=/var/lib/spacedrive"
+User=wingdrive
+Group=wingdrive
+Environment="DATA_DIR=/var/lib/wingdrive"
 Environment="SD_AUTH=admin:your-secure-password"
-ExecStart=/usr/local/bin/sd-server --data-dir /var/lib/spacedrive
+ExecStart=/usr/local/bin/sd-server --data-dir /var/lib/wingdrive
 Restart=on-failure
 RestartSec=5s
 
@@ -97,13 +97,13 @@ WantedBy=multi-user.target
 Create the user and data directory, then enable the service:
 
 ```bash
-sudo useradd -r -s /bin/false spacedrive
-sudo mkdir -p /var/lib/spacedrive
-sudo chown spacedrive:spacedrive /var/lib/spacedrive
-sudo systemctl enable --now spacedrive
+sudo useradd -r -s /bin/false wingdrive
+sudo mkdir -p /var/lib/wingdrive
+sudo chown wingdrive:wingdrive /var/lib/wingdrive
+sudo systemctl enable --now wingdrive
 ```
 
-Check status with `sudo systemctl status spacedrive`.
+Check status with `sudo systemctl status wingdrive`.
 
 ## Configuration
 
@@ -128,10 +128,10 @@ The server binds to all interfaces by default, making it accessible on your loca
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name spacedrive.example.com;
+    server_name wingdrive.example.com;
 
-    ssl_certificate /etc/letsencrypt/live/spacedrive.example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/spacedrive.example.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/wingdrive.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/wingdrive.example.com/privkey.pem;
 
     location / {
         proxy_pass http://localhost:8080;
@@ -149,14 +149,14 @@ server {
 Caddy handles TLS automatically with Let's Encrypt:
 
 ```
-spacedrive.example.com {
+wingdrive.example.com {
     reverse_proxy localhost:8080
 }
 ```
 
 ## NAS Deployment
 
-Network-attached storage devices are ideal for Spacedrive server. The server indexes existing media while providing remote access.
+Network-attached storage devices are ideal for WingDrive server. The server indexes existing media while providing remote access.
 
 ### TrueNAS SCALE
 
@@ -169,7 +169,7 @@ volumes:
   - /mnt/pool2/documents:/documents:ro
 ```
 
-After deployment, create locations in Spacedrive pointing to these mount points. The server indexes files without moving them.
+After deployment, create locations in WingDrive pointing to these mount points. The server indexes files without moving them.
 
 ### Synology NAS
 
@@ -177,7 +177,7 @@ Use Container Manager to deploy the Docker image. Configure port forwarding and 
 
 ### Unraid
 
-Add a custom container template with the image `ghcr.io/spacedriveapp/spacedrive/server:latest`. Map your shares as additional paths in the container configuration.
+Add a custom container template with the image `ghcr.io/bernardopg/wingdrive/server:latest`. Map your shares as additional paths in the container configuration.
 
 ## Storage Considerations
 
@@ -213,7 +213,7 @@ Self-hosted servers face different threats than desktop apps. Follow these guide
 
 Desktop and mobile apps can connect to self-hosted servers by configuring the server URL in settings.
 
-The URL format is `http://your-server:8080` or `https://spacedrive.example.com` if using a reverse proxy. Clients authenticate using credentials set in `SD_AUTH`.
+The URL format is `http://your-server:8080` or `https://wingdrive.example.com` if using a reverse proxy. Clients authenticate using credentials set in `SD_AUTH`.
 
 P2P sync works between the server and other devices without additional configuration. The server appears as a device in your library and participates in sync like any other device.
 
@@ -294,9 +294,9 @@ The server receives updates through new Docker image tags or binary releases. Al
 Pull the new image and recreate the container. Data persists in volumes across container replacements.
 
 ```bash
-docker pull ghcr.io/spacedriveapp/spacedrive/server:latest
-docker stop spacedrive
-docker rm spacedrive
+docker pull ghcr.io/bernardopg/wingdrive/server:latest
+docker stop wingdrive
+docker rm wingdrive
 # Run docker run command with new image
 ```
 
@@ -305,13 +305,13 @@ docker rm spacedrive
 Download the new release, verify checksums, and replace the binary. Restart the systemd service.
 
 ```bash
-sudo systemctl stop spacedrive
+sudo systemctl stop wingdrive
 sudo mv sd-server-new /usr/local/bin/sd-server
-sudo systemctl start spacedrive
+sudo systemctl start wingdrive
 ```
 
 Database migrations run automatically on first start after update. Check logs to confirm successful migration.
 
 ## Support
 
-Report issues on [GitHub](https://github.com/spacedriveapp/spacedrive/issues) with server logs and deployment details. Join [Discord](https://discord.gg/gTaF2Z44f5) for community support and deployment advice.
+Report issues on [GitHub](https://github.com/bernardopg/wingdrive/issues) with server logs and deployment details. Join [Discord](https://discord.gg/gTaF2Z44f5) for community support and deployment advice.

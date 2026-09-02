@@ -3,9 +3,9 @@ title: Filesystems
 sidebarTitle: Filesystems
 ---
 
-Spacedrive treats the native filesystem as the substrate for everything above it. Detection, capacity reporting, copy-on-write, visibility filtering, and same-storage checks all have filesystem-specific behavior because the abstractions leak: `df` lies about ZFS pool sizes, APFS volumes share containers, Btrfs subvolumes look independent but aren't, and Windows mount points rename themselves.
+WingDrive treats the native filesystem as the substrate for everything above it. Detection, capacity reporting, copy-on-write, visibility filtering, and same-storage checks all have filesystem-specific behavior because the abstractions leak: `df` lies about ZFS pool sizes, APFS volumes share containers, Btrfs subvolumes look independent but aren't, and Windows mount points rename themselves.
 
-This page documents what Spacedrive knows about each filesystem, how it detects them, and where the abstraction boundaries are.
+This page documents what WingDrive knows about each filesystem, how it detects them, and where the abstraction boundaries are.
 
 ## Support Matrix
 
@@ -95,7 +95,7 @@ pub trait FilesystemHandler: Send + Sync {
 
 ### ZFS (`core/src/volume/fs/zfs.rs`)
 
-ZFS is the most-developed filesystem integration because TrueNAS Scale is a common Spacedrive server target.
+ZFS is the most-developed filesystem integration because TrueNAS Scale is a common WingDrive server target.
 
 - **Datasets and pools**: `zfs list` output is parsed once per detection pass via `fetch_zfs_list_output()` (not per-volume — important for servers with many datasets). Each volume gets matched to its dataset via `find_dataset_for_path`, and the dataset's pool is extracted from the name (`pool/a/b` → pool `pool`).
 - **Pool root capacity correction**: see [Capacity Reporting](#capacity-reporting).
@@ -118,7 +118,7 @@ Fallback for ext2/3/4, XFS, FAT32, exFAT, HFS+, and anything unrecognized. `same
 
 ## Visibility rules
 
-Spacedrive tracks far more volumes than it shows. Hidden volumes still get stable fingerprints so locations on them survive remounts, but they don't clutter the default UI and aren't eligible for auto-tracking.
+WingDrive tracks far more volumes than it shows. Hidden volumes still get stable fingerprints so locations on them survive remounts, but they don't clutter the default UI and aren't eligible for auto-tracking.
 
 Two flags drive this:
 - `is_user_visible: bool` — shown in the default volume list.

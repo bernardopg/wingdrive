@@ -639,7 +639,7 @@ Multiple files with same content have different IDs:
 
 ```bash
 # Backend logs show subscription lifecycle
-RUST_LOG=sd_core::infra::daemon::rpc=debug cargo run -p spacedrive-tauri
+RUST_LOG=sd_core::infra::daemon::rpc=debug cargo run -p wingdrive
 
 # Look for:
 # "New subscription created: ..." - Subscription started
@@ -650,10 +650,10 @@ RUST_LOG=sd_core::infra::daemon::rpc=debug cargo run -p spacedrive-tauri
 **Frontend subscription stats:**
 
 ```tsx
-import { useSpacedriveClient } from '@sd/ts-client';
+import { useWingDriveClient } from '@sd/ts-client';
 
 function DebugPanel() {
-  const client = useSpacedriveClient();
+  const client = useWingDriveClient();
   const stats = client.getSubscriptionStats();
 
   console.log(`Active subscriptions: ${stats.activeSubscriptions}`);

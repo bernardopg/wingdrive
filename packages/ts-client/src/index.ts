@@ -1,15 +1,15 @@
 /**
- * @sd/ts-client - Type-safe TypeScript client for Spacedrive
+ * @sd/ts-client - Type-safe TypeScript client for WingDrive
  *
- * This package provides a complete type-safe interface to the Spacedrive core,
+ * This package provides a complete type-safe interface to the WingDrive core,
  * automatically generated from the Rust core types using Specta.
  *
  * @example Basic Client Usage
  * ```typescript
- * import { SpacedriveClient } from '@sd/ts-client';
+ * import { WingDriveClient } from '@sd/ts-client';
  *
  * // Create client (Tauri)
- * const client = SpacedriveClient.fromTauri(invoke, listen);
+ * const client = WingDriveClient.fromTauri(invoke, listen);
  *
  * // Direct API calls (type-safe!)
  * const libraries = await client.execute('query:libraries.list', {});
@@ -41,7 +41,7 @@
  */
 
 // Core client
-export { SpacedriveClient } from "./client";
+export { SpacedriveClient, SpacedriveClient as WingDriveClient } from "./client";
 export type { Transport } from "./transport";
 export {
 	UnixSocketTransport,

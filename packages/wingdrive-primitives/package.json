@@ -1,0 +1,64 @@
+{
+  "name": "@wingdrive/primitives",
+  "version": "0.2.4",
+  "description": "Primitive UI components for WingDrive",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup src/index.ts --format esm --dts --sourcemap",
+		"dev": "tsup src/index.ts --format esm --dts --sourcemap --watch",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+    "@headlessui/react": "^1.7.0",
+    "@phosphor-icons/react": "^2.1.0",
+    "@radix-ui/react-checkbox": "^1.1.0",
+    "@radix-ui/react-collapsible": "^1.1.0",
+    "@radix-ui/react-context-menu": "^2.2.0",
+    "@radix-ui/react-dialog": "^1.1.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.0",
+    "@radix-ui/react-popover": "^1.1.0",
+    "@radix-ui/react-progress": "^1.1.0",
+    "@radix-ui/react-radio-group": "^1.2.0",
+    "@radix-ui/react-select": "^2.1.0",
+    "@radix-ui/react-slider": "^1.2.0",
+    "@radix-ui/react-switch": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-toggle-group": "^1.1.0",
+    "@radix-ui/react-tooltip": "^1.1.0",
+    "@react-spring/web": "^9.7.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "framer-motion": "^11.0.0",
+    "react-hook-form": "^7.50.0",
+    "react-loading-icons": "^1.1.0",
+    "react-resizable-layout": "^0.7.0",
+    "sonner": "^1.4.0",
+		"zod": "^3.22.0"
+	},
+	"devDependencies": {
+		"@tanstack/react-virtual": "^3.13.26",
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
+		"tailwindcss": "^4.1.0",
+		"tsup": "^8.0.0",
+		"typescript": "^5.4.0"
+	},
+  "peerDependencies": {
+    "@tanstack/react-virtual": "^3.13.26",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "tailwindcss": "^4.1.0"
+  }
+}

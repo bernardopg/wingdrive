@@ -1,4 +1,4 @@
-# Welcome to the Spacedrive Contributing Guide
+# Welcome to the WingDrive Contributing Guide
 
 Thank you for investing your time in contributing to our project!
 
@@ -6,9 +6,9 @@ Please read our [Code of Conduct](./CODE_OF_CONDUCT.md) to keep our community ap
 
 This guide will provide an overview of the contribution workflow, including opening an issue, creating a pull request (PR), and the review and merge process.
 
-> **Important: Spacedrive V2 Rewrite**
+> **Important: WingDrive V2 Rewrite**
 >
-> Spacedrive underwent a complete architectural rewrite in early 2025. If you contributed to V1, please read the [Migration Guide for V1 Contributors](#migrating-from-v1) section below to understand the major changes.
+> WingDrive underwent a complete architectural rewrite in early 2025. If you contributed to V1, please read the [Migration Guide for V1 Contributors](#migrating-from-v1) section below to understand the major changes.
 >
 > **TL;DR:** V1 used Tauri + React + Prisma. V2 is Rust-first with native Swift apps, SeaORM, and a CLI. Most of the stack was replaced to address fundamental architectural issues detailed in our [history document](docs/overview/history.mdx).
 
@@ -20,7 +20,7 @@ To familiarize yourself with the project, please read the [README](README.md). H
 - [Setting up Git](https://docs.github.com/en/get-started/quickstart/set-up-git)
 - [GitHub flow](https://docs.github.com/en/get-started/quickstart/github-flow)
 - [Collaborating with pull requests](https://docs.github.com/en/github/collaborating-with-pull-requests)
-- [Spacedrive Architecture Documentation](docs/core/architecture.mdx)
+- [WingDrive Architecture Documentation](docs/core/architecture.mdx)
 - [V1 to V2 Migration Guide](#migrating-from-v1) (for returning contributors)
 
 ## Getting Started
@@ -29,15 +29,15 @@ To familiarize yourself with the project, please read the [README](README.md). H
 
 #### Creating a New Issue
 
-If you come across an issue or have a feature request for Spacedrive, please [search if a related issue has already been reported](https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests#search-by-the-title-body-or-comments). If no relevant issue exists, you can open a new issue using the appropriate [issue form](https://github.com/spacedriveapp/spacedrive/issues/new/choose).
+If you come across an issue or have a feature request for WingDrive, please [search if a related issue has already been reported](https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests#search-by-the-title-body-or-comments). If no relevant issue exists, you can open a new issue using the appropriate [issue form](https://github.com/bernardopg/wingdrive/issues/new/choose).
 
 #### Solving an Issue
 
-To find an issue that interests you, you can browse through our [existing issues](https://github.com/spacedriveapp/spacedrive/issues) and use the available `labels` to narrow down your search (See [Labels](https://github.com/spacedriveapp/spacedrive/labels) for more information). As a general rule, if you find an issue you want to work on, you are welcome to open a PR with a fix.
+To find an issue that interests you, you can browse through our [existing issues](https://github.com/bernardopg/wingdrive/issues) and use the available `labels` to narrow down your search (See [Labels](https://github.com/bernardopg/wingdrive/labels) for more information). As a general rule, if you find an issue you want to work on, you are welcome to open a PR with a fix.
 
 ## Development Setup
 
-Spacedrive V2 is built with a **Rust-first architecture**. The core Virtual Distributed File System (VDFS) is pure Rust, with native Swift apps for iOS/macOS maintained as separate submodules to keep Spacedrive recognized as a Rust project on GitHub.
+WingDrive V2 is built with a **Rust-first architecture**. The core Virtual Distributed File System (VDFS) is pure Rust, with native Swift apps for iOS/macOS maintained as separate submodules to keep WingDrive recognized as a Rust project on GitHub.
 
 ### Prerequisites
 
@@ -57,7 +57,7 @@ Before you begin, ensure you have the following installed:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/spacedriveapp/spacedrive
+git clone https://github.com/bernardopg/wingdrive
 cd spacedrive
 ```
 
@@ -134,33 +134,12 @@ cargo cli     # Runs sd-cli with ffmpeg,heif features enabled
 
 **Note:** The release daemon build is required because Tauri's `externalBin` config validates binary paths even in dev mode. The daemon is built once during setup and rebuilt when needed during release builds.
 
-#### Optional: ML-SHARP for Gaussian Splat Generation
-
-Spacedrive can generate 3D Gaussian splats from images using [ml-sharp](https://github.com/spacedriveapp/ml-sharp), which implements Apple's SHARP model. This feature is optional and requires manual installation.
-
-> **Note:** We plan to bundle ml-sharp with Spacedrive's native dependencies in a future release. For now, manual installation is required.
-
-**Installation:**
-
-```bash
-# Clone ml-sharp repository
-git clone https://github.com/spacedriveapp/ml-sharp
-cd ml-sharp
-
-# Install in development mode (requires Python 3.10+)
-pip install -e .
-
-# Verify installation
-sharp --help
-```
-
-Once installed, the `sharp` CLI will be available in your PATH and Spacedrive will automatically detect it. The "Generate 3D Splat" button in the file inspector will become functional for supported image types (JPEG, PNG, WebP, BMP, TIFF).
 
 **What does `cargo build` build?**
 
 Running `cargo build` from the project root builds all core Rust components:
 
-- `sd-cli` - Command-line interface for Spacedrive
+- `sd-cli` - Command-line interface for WingDrive
 - `sd-daemon` - Background service (used by GUI apps)
 - `sd-core` - Core library with VDFS implementation
 - Various helper crates
@@ -188,7 +167,7 @@ The Tauri desktop app **always** includes these features by default, so end user
 
 ## Core Development
 
-The heart of Spacedrive is the Rust core (`core/`). Most contributions will involve working with this codebase.
+The heart of WingDrive is the Rust core (`core/`). Most contributions will involve working with this codebase.
 
 ### Quick Start with CLI
 
@@ -230,7 +209,7 @@ sd location add ~/Documents
 sd search .
 ```
 
-**Note:** Update the path to match your Spacedrive project location. The binary is located at `target/debug/sd-cli` after running `cargo build` (or use `cargo cli` which includes media features).
+**Note:** Update the path to match your WingDrive project location. The binary is located at `target/debug/sd-cli` after running `cargo build` (or use `cargo cli` which includes media features).
 
 ### Running Tests
 
@@ -279,11 +258,11 @@ Examples are a great way to understand how different parts of the system work to
 
 ## GUI Application Development
 
-GUI applications (iOS, macOS, and the upcoming Desktop app) are maintained as **separate Git submodules**. This approach keeps the main repository focused on Rust code, ensuring Spacedrive is properly recognized as a Rust project on GitHub.
+GUI applications (iOS, macOS, and the upcoming Desktop app) are maintained as **separate Git submodules**. This approach keeps the main repository focused on Rust code, ensuring WingDrive is properly recognized as a Rust project on GitHub.
 
 ### Why Submodules?
 
-With 35k+ stars, Spacedrive is one of the top 30 largest Rust projects globally, yet GitHub's language detection can misclassify it as TypeScript/Swift based on lines of code. Submodules solve this by keeping frontend code in separate repositories.
+With 35k+ stars, WingDrive is one of the top 30 largest Rust projects globally, yet GitHub's language detection can misclassify it as TypeScript/Swift based on lines of code. Submodules solve this by keeping frontend code in separate repositories.
 
 ### Working with Submodules
 
@@ -307,7 +286,7 @@ git submodule status
 
 ### Mobile Development (React Native)
 
-The React Native mobile app provides cross-platform iOS and Android support with an embedded Spacedrive core. It uses Expo SDK 53 with React 19 and the New Architecture enabled.
+The React Native mobile app provides cross-platform iOS and Android support with an embedded WingDrive core. It uses Expo SDK 53 with React 19 and the New Architecture enabled.
 
 #### Prerequisites
 
@@ -368,7 +347,7 @@ bun run xcode            # Open iOS project in Xcode
 
 #### Architecture
 
-The mobile app embeds the full Spacedrive core as a native library:
+The mobile app embeds the full WingDrive core as a native library:
 
 ```
 React Native App (Expo SDK 53)
@@ -449,7 +428,7 @@ If you see "database is locked" errors, a previous build is still running. Kill 
 
 ```bash
 pkill -f xcodebuild
-rm -rf ~/Library/Developer/Xcode/DerivedData/Spacedrive-*
+rm -rf ~/Library/Developer/Xcode/DerivedData/WingDrive-*
 ```
 
 **Android build errors:**
@@ -490,7 +469,7 @@ From a clean clone, follow these steps in order:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/spacedriveapp/spacedrive
+git clone https://github.com/bernardopg/wingdrive
 cd spacedrive
 
 # 2. Install JavaScript dependencies (from repo root)
@@ -576,61 +555,21 @@ The Tauri app consists of:
 
 The app connects to `sd-daemon` which manages libraries and P2P connections. In dev mode, the daemon is started automatically by the `dev:with-daemon` script.
 
-## SpaceUI (Design System)
+## WingDrive UI Packages
 
-Spacedrive's UI components come from [SpaceUI](https://github.com/spacedriveapp/spaceui), a standalone design system monorepo. SpaceUI provides shared primitives (Button, Input, Dialog, etc.), design tokens, form components, AI agent UI, and explorer components used across Spacedrive and Spacebot.
-
-### Packages
+WingDrive keeps its UI primitives, tokens, and AI components in this repository. The packages were derived from the MIT-licensed SpaceUI project, and the original copyright and license are preserved in each package directory.
 
 | Package | Description |
 |---------|-------------|
-| `@spacedrive/tokens` | Design tokens, semantic color system, Tailwind v4 theme |
-| `@spacedrive/primitives` | Base UI components built on Radix UI |
-| `@spacedrive/forms` | Form field wrappers for react-hook-form |
-| `@spacedrive/ai` | AI agent interaction components |
-| `@spacedrive/explorer` | File management components |
+| `@wingdrive/tokens` | Design tokens and semantic color themes |
+| `@wingdrive/primitives` | Base UI components built on Radix UI |
+| `@wingdrive/ai` | AI agent interaction components |
 
-### Working on UI Alongside Spacedrive
-
-If you're contributing to both the UI layer and the app, clone SpaceUI as a sibling directory:
-
-```bash
-# From your workspace root (e.g., ~/Projects)
-git clone https://github.com/spacedriveapp/spacedrive
-git clone https://github.com/spacedriveapp/spaceui
-
-# Your directory should look like:
-# ~/Projects/
-# ├── spacedrive/
-# └── spaceui/
-```
-
-Then link SpaceUI for local development:
-
-```bash
-# Register SpaceUI packages globally
-cd spaceui
-bun install
-bun run link
-
-# Link into Spacedrive
-cd ../spacedrive
-bun link @spacedrive/tokens @spacedrive/primitives @spacedrive/ai
-```
-
-With linking active, changes you make in `spaceui/` are picked up immediately by Spacedrive's Vite dev server — no rebuild needed. The Vite configs in `apps/tauri/` and `apps/web/` already have the necessary source aliases, `optimizeDeps.exclude`, and `server.fs.allow` settings configured.
-
-### If You're Only Working on Spacedrive
-
-If you're not modifying SpaceUI itself, you don't need to clone it. Spacedrive consumes published `@spacedrive/*` packages from npm. Just run `bun install` and everything resolves from the registry.
-
-### SpaceUI Integration Guide
-
-For full details on how SpaceUI is integrated (Vite aliases, Tailwind `@source` scanning, React deduplication, publishing workflow), see the [SpaceUI Integration Guide](https://github.com/spacedriveapp/spaceui/blob/main/INTEGRATION.md).
+Run `bun install` at the repository root. Bun resolves these packages from the local workspace, so UI development and CI do not require an external design system repository or package publisher.
 
 ## Extension Development
 
-Spacedrive supports WASM-based extensions for adding custom functionality. Extensions run in sandboxed environments with full access to the Spacedrive SDK.
+WingDrive supports WASM-based extensions for adding custom functionality. Extensions run in sandboxed environments with full access to the WingDrive SDK.
 
 ### Getting Started with Extensions
 
@@ -650,7 +589,7 @@ For comprehensive extension development documentation, see [`docs/extensions/int
 
 ## TypeScript Client Development
 
-The TypeScript client (`packages/ts-client`) provides a type-safe interface to the Spacedrive daemon. Types are automatically generated from Rust definitions.
+The TypeScript client (`packages/ts-client`) provides a type-safe interface to the WingDrive daemon. Types are automatically generated from Rust definitions.
 
 ### Generate TypeScript Types
 
@@ -675,7 +614,7 @@ The TypeScript client is primarily used by the desktop GUI (future) and can be u
 
 ## Architecture Overview
 
-Spacedrive V2 introduces several architectural improvements over V1:
+WingDrive V2 introduces several architectural improvements over V1:
 
 - **Entry-Centric Model**: Files and directories unified as Entries with optional content identity
 - **SdPath Addressing**: Universal file addressing across devices and storage types
@@ -714,7 +653,7 @@ Once you have finished making your changes, create a pull request (PR) to submit
 
 ## Your PR is Merged!
 
-Congratulations! The Spacedrive team thanks you for your contribution!
+Congratulations! The WingDrive team thanks you for your contribution!
 
 Once your PR is merged, your changes will be included in the next release of the application.
 
@@ -917,7 +856,7 @@ cargo test
 
 ## Migrating from V1
 
-If you contributed to Spacedrive V1 (the 35k+ star version visible on GitHub from 2022-2024), welcome back! V2 is a ground-up rewrite that addresses every architectural flaw that made V1 unmaintainable. This section helps you understand what changed and how your V1 knowledge maps to V2.
+If you contributed to WingDrive V1 (the 35k+ star version visible on GitHub from 2022-2024), welcome back! V2 is a ground-up rewrite that addresses every architectural flaw that made V1 unmaintainable. This section helps you understand what changed and how your V1 knowledge maps to V2.
 
 ### Why the Rewrite?
 
@@ -967,7 +906,7 @@ cargo run -p xtask -- setup              # Setup native deps and cargo config
 cargo cli library create "My Library"    # CLI-first (includes media features)
 cargo daemon                             # Or run daemon separately (includes media features)
 cd apps/tauri && bun run tauri:dev       # Desktop app (includes media features by default)
-open apps/ios/Spacedrive.xcodeproj       # Native iOS (submodule)
+open apps/ios/WingDrive.xcodeproj       # Native iOS (submodule)
 ```
 
 ### File Structure Comparison
@@ -1018,13 +957,13 @@ packages/
 **Desktop GUI (`apps/desktop`):**
 
 - **Status:** Will return as a submodule (Tauri + React, like V1)
-- **Why submodule:** Keep Spacedrive categorized as Rust on GitHub
+- **Why submodule:** Keep WingDrive categorized as Rust on GitHub
 - **Migration:** Desktop contributors should wait for submodule or contribute to native apps
 
 **React Native Mobile (`apps/mobile`):**
 
 - **Status:** Ported to V2 with embedded core (Expo SDK 53, React 19)
-- **Why:** Cross-platform support for iOS and Android with embedded Spacedrive core
+- **Why:** Cross-platform support for iOS and Android with embedded WingDrive core
 - **Migration:** V1 React Native knowledge transfers well; see [Mobile Development](#mobile-development-react-native)
 
 **Interface Package (`interface/`):**
@@ -1170,9 +1109,9 @@ packages/
 
 ## Additional Resources
 
-- [Spacedrive Architecture](docs/core/architecture.mdx) - Deep dive into V2 architecture
+- [WingDrive Architecture](docs/core/architecture.mdx) - Deep dive into V2 architecture
 - [Extension Development](docs/extensions/introduction.mdx) - Build WASM extensions
-- [Whitepaper](docs/overview/whitepaper.mdx) - Spacedrive's vision and technical design
+- [Whitepaper](docs/overview/whitepaper.mdx) - WingDrive's vision and technical design
 - [Discord Community](https://discord.gg/gTaF2Z44f5) - Get help and discuss development
 
 ## Credits

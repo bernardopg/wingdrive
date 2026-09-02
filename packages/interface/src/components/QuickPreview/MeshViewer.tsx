@@ -9,7 +9,7 @@ import { File as FileComponent } from "../../routes/explorer/File";
 import { PLYLoader } from "three/examples/jsm/loaders/PLYLoader.js";
 import * as GaussianSplats3D from "@mkkellogg/gaussian-splats-3d";
 import * as THREE from "three";
-import { CircleButton } from "@spacedrive/primitives";
+import { CircleButton } from "@wingdrive/primitives";
 import {
 	Play,
 	Pause,

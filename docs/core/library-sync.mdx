@@ -3,7 +3,7 @@ title: Library Sync
 sidebarTitle: Library Sync
 ---
 
-Spacedrive synchronizes library metadata across all your devices using a leaderless peer-to-peer model. Every device is equal. No central server, no single point of failure.
+WingDrive synchronizes library metadata across all your devices using a leaderless peer-to-peer model. Every device is equal. No central server, no single point of failure.
 
 ## How Sync Works
 
@@ -36,7 +36,7 @@ Sync uses two protocols based on data ownership:
 
 ## Data Ownership
 
-Spacedrive recognizes that some data naturally belongs to specific devices.
+WingDrive recognizes that some data naturally belongs to specific devices.
 
 ### Device-Owned Data
 
@@ -504,7 +504,7 @@ Currently, all models use the default LWW strategy. Custom strategies can be add
 
 ### Dependency Resolution Algorithm
 
-To prevent foreign key violations, the sync system must process models in a specific order (e.g., `Device` records must exist before the `Location` records that depend on them). Spacedrive determines this order automatically at startup using a deterministic algorithm.
+To prevent foreign key violations, the sync system must process models in a specific order (e.g., `Device` records must exist before the `Location` records that depend on them). WingDrive determines this order automatically at startup using a deterministic algorithm.
 
 The process works as follows:
 
@@ -680,7 +680,7 @@ Begin receiving real-time broadcasts.
   See `core/tests/sync_backfill_test.rs` for backfill scenarios.
 </Info>
 
-Spacedrive does not require a direct connection between all devices to keep them in sync. Changes can propagate transitively through intermediaries, ensuring the entire library eventually reaches a consistent state.
+WingDrive does not require a direct connection between all devices to keep them in sync. Changes can propagate transitively through intermediaries, ensuring the entire library eventually reaches a consistent state.
 
 This is made possible by two core architectural principles:
 
@@ -1065,7 +1065,7 @@ The retry queue handles transient network failures without blocking real-time sy
 
 ## Portable Volumes & Ownership Changes
 
-A key feature of Spacedrive is the ability to move external drives between devices without losing track of the data. This is handled through a special sync process that allows the "ownership" of a `Location` to change.
+A key feature of WingDrive is the ability to move external drives between devices without losing track of the data. This is handled through a special sync process that allows the "ownership" of a `Location` to change.
 
 ### Changing Device Ownership
 
@@ -1567,7 +1567,7 @@ Configuration can also be set via environment variables or a TOML file. The load
 
 ## Summary
 
-Library Sync is not traditional multi-leader replication. While multi-leader systems treat all nodes as equal for all data, Spacedrive recognizes a fundamental truth: `/Users/alice/Photos` can only be modified by Alice's laptop. This ownership model eliminates the entire class of filesystem conflicts that plague distributed systems.
+Library Sync is not traditional multi-leader replication. While multi-leader systems treat all nodes as equal for all data, WingDrive recognizes a fundamental truth: `/Users/alice/Photos` can only be modified by Alice's laptop. This ownership model eliminates the entire class of filesystem conflicts that plague distributed systems.
 
 **Hybrid ownership** splits the problem in two. Device-owned data (files, folders, volumes) uses single-leader-per-resource semantics. No CRDTs, no version vectors, no conflict resolution needed. The owner's state is authoritative. Shared resources (tags, collections) use multi-leader semantics with HLC-based ordering. Only this small subset of data requires conflict resolution, and last-write-wins is sufficient.
 

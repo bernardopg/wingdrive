@@ -11,7 +11,7 @@ use tracing::info;
 pub mod entities;
 pub mod migration;
 
-/// Database wrapper for Spacedrive
+/// Database wrapper for WingDrive
 pub struct Database {
 	/// SeaORM database connection
 	conn: DatabaseConnection,
@@ -69,7 +69,8 @@ impl Database {
 			format!("sqlite://{}?mode=rwc", path.display())
 		};
 
-		let pool_size = std::env::var("SPACEDRIVE_DB_POOL_SIZE")
+		let pool_size = std::env::var("WINGDRIVE_DB_POOL_SIZE")
+			.or_else(|_| std::env::var("SPACEDRIVE_DB_POOL_SIZE"))
 			.ok()
 			.and_then(|s| s.parse().ok())
 			.unwrap_or(30);
@@ -92,7 +93,8 @@ impl Database {
 
 		let db_url = format!("sqlite://{}", path.display());
 
-		let pool_size = std::env::var("SPACEDRIVE_DB_POOL_SIZE")
+		let pool_size = std::env::var("WINGDRIVE_DB_POOL_SIZE")
+			.or_else(|_| std::env::var("SPACEDRIVE_DB_POOL_SIZE"))
 			.ok()
 			.and_then(|s| s.parse().ok())
 			.unwrap_or(30);

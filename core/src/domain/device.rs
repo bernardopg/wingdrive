@@ -1,6 +1,6 @@
 //! Unified device model - no more node/device/instance confusion
 //!
-//! A Device represents a machine running Spacedrive. This unifies the old
+//! A Device represents a machine running WingDrive. This unifies the old
 //! concepts of Node, Device, and Instance into one clear model.
 
 use chrono::{DateTime, Utc};
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use uuid::Uuid;
 
-/// A device running Spacedrive
+/// A device running WingDrive
 ///
 /// This is the canonical device type used throughout the application.
 /// It represents both database-registered devices and network-paired devices.

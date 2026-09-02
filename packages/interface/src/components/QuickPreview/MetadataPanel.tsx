@@ -10,7 +10,7 @@ import {
 	useLibraryMutation,
 } from "../../contexts/SpacedriveContext";
 import { useRefetchTagQueries } from "../../hooks/useRefetchTagQueries";
-import { toast } from "@spacedrive/primitives";
+import { toast } from "@wingdrive/primitives";
 
 interface MetadataPanelProps {
 	file: File;

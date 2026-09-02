@@ -12,7 +12,7 @@ speech-to-text = ["sd-core/speech-to-text"]
 ai = ["sd-core/ai"]
 
 [dependencies]
-# Spacedrive core
+# WingDrive core
 sd-core = { path = "../../core" }
 
 # HTTP server

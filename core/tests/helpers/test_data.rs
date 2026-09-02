@@ -15,7 +15,7 @@ impl TestDataDir {
 	///
 	/// Directory structure:
 	/// ```
-	/// /tmp/spacedrive-test-{test_name}/
+	/// /tmp/wingdrive-test-{test_name}/
 	/// ├── core_data/       # Core database and state
 	/// ├── locations/       # Test file locations
 	/// └── logs/            # Test execution logs
@@ -70,11 +70,11 @@ impl TestDataDir {
 					.duration_since(UNIX_EPOCH)
 					.unwrap()
 					.as_secs();
-				format!(".spacedrive_test_{}_{}_{}", test_name, timestamp, id)
+				format!(".wingdrive_test_{}_{}_{}", test_name, timestamp, id)
 			}
 			#[cfg(not(windows))]
 			{
-				format!(".spacedrive_test_{}", test_name)
+				format!(".wingdrive_test_{}", test_name)
 			}
 		} else {
 			#[cfg(windows)]
@@ -87,11 +87,11 @@ impl TestDataDir {
 					.duration_since(UNIX_EPOCH)
 					.unwrap()
 					.as_secs();
-				format!("spacedrive-test-{}-{}-{}", test_name, timestamp, id)
+				format!("wingdrive-test-{}-{}-{}", test_name, timestamp, id)
 			}
 			#[cfg(not(windows))]
 			{
-				format!("spacedrive-test-{}", test_name)
+				format!("wingdrive-test-{}", test_name)
 			}
 		};
 

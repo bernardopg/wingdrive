@@ -1,6 +1,6 @@
-# Spacedrive Extension SDK
+# WingDrive Extension SDK
 
-**Beautiful, type-safe API for building Spacedrive WASM extensions.**
+**Beautiful, type-safe API for building WingDrive WASM extensions.**
 
 ## Installation
 

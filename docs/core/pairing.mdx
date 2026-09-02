@@ -3,7 +3,7 @@ title: Device Pairing
 sidebarTitle: Device Pairing
 ---
 
-Device pairing establishes trust between Spacedrive instances using cryptographic signatures and user-friendly codes. Once paired, devices can communicate securely and share data directly.
+Device pairing establishes trust between WingDrive instances using cryptographic signatures and user-friendly codes. Once paired, devices can communicate securely and share data directly.
 
 ## How Pairing Works
 
@@ -11,7 +11,7 @@ Pairing uses a 12-word code to create a secure connection between two devices. T
 
 ### The Pairing Code
 
-Spacedrive uses BIP39 mnemonic codes for pairing, which come in two formats:
+WingDrive uses BIP39 mnemonic codes for pairing, which come in two formats:
 
 #### Text Format (Local Network Only)
 
@@ -272,7 +272,7 @@ discovery_stream.filter(|item| {
 
 ### Internet (Pkarr/DNS)
 
-For pairing across networks, Spacedrive uses pkarr to publish and resolve node addresses via DNS:
+For pairing across networks, WingDrive uses pkarr to publish and resolve node addresses via DNS:
 
 ```rust
 // Automatic pkarr publishing (done by Iroh)
@@ -297,7 +297,7 @@ Pkarr uses DNS-based discovery backed by the Mainline DHT. It's more reliable th
 
 ### Dual-Path Discovery
 
-When using QR codes (with node_id), Spacedrive races both discovery methods:
+When using QR codes (with node_id), WingDrive races both discovery methods:
 
 ```rust
 tokio::select! {
@@ -372,7 +372,7 @@ let (tx_key, rx_key) = hkdf::expand(
 
 ### Pkarr Implementation
 
-Spacedrive uses pkarr for decentralized node address resolution:
+WingDrive uses pkarr for decentralized node address resolution:
 
 ```rust
 // Automatic publishing (initiator)
@@ -574,7 +574,7 @@ async fn test_full_pairing_flow() {
 Check:
 
 - Both devices have network connectivity
-- Firewalls allow Spacedrive traffic
+- Firewalls allow WingDrive traffic
 - System time is roughly correct (within 5 minutes)
 
 ### Cannot Find Device

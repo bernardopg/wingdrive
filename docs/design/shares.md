@@ -4,7 +4,7 @@ Status: draft for review. Source-of-truth contract between core (this repo) and 
 
 ## What this is
 
-A user picks a Space, file, folder, or multi-selection in their local Spacedrive and creates a public share. They get a link of the form `https://sd.app/s/{token}`. Anyone with the link can open it in a browser, browse the listing, and stream/download files. Bytes are served directly from the user's core through an Iroh QUIC connection over an sd.app-operated relay — sd.app never proxies file content.
+A user picks a Space, file, folder, or multi-selection in their local WingDrive and creates a public share. They get a link of the form `https://sd.app/s/{token}`. Anyone with the link can open it in a browser, browse the listing, and stream/download files. Bytes are served directly from the user's core through an Iroh QUIC connection over an sd.app-operated relay — sd.app never proxies file content.
 
 This document specifies the wire contracts and lifecycle. UX (`SHARE-009` / `SHARE-010`), schema (`SHARE-002`), ops (`SHARE-003`), and protocol handler (`SHARE-005`) tasks build against this spec.
 

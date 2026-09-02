@@ -107,7 +107,7 @@ impl From<String> for SidecarVariant {
 /// MessagePack is preferred for embeddings because:
 /// - 6x smaller than JSON (1.7KB vs 10KB per 384-dim vector)
 /// - 10x faster to parse
-/// - Already used in Spacedrive (job serialization)
+/// - Already used in WingDrive (job serialization)
 /// - Enables sub-30ms semantic search on 1M+ files
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Type)]
 #[serde(rename_all = "snake_case")]

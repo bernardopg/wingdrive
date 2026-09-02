@@ -10,7 +10,7 @@
   },
   "android": {
     "modules": [
-      "com.spacedrive.core.SDMobileCoreModule"
+      "com.wingdrive.core.SDMobileCoreModule"
     ]
   }
 }

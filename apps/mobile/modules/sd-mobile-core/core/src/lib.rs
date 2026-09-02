@@ -1,7 +1,7 @@
-//! Spacedrive Mobile Core FFI Layer
+//! WingDrive Mobile Core FFI Layer
 //!
 //! This module provides the FFI bridge between React Native (via Expo modules)
-//! and the Spacedrive core. It's adapted from the V2 iOS core implementation
+//! and the WingDrive core. It's adapted from the V2 iOS core implementation
 //! to work with both iOS and Android.
 
 use std::{
@@ -64,7 +64,7 @@ struct JsonRpcError {
 	message: String,
 }
 
-/// Initialize the embedded core with full Spacedrive functionality
+/// Initialize the embedded core with full WingDrive functionality
 ///
 /// # Safety
 /// `data_dir` must be a valid null-terminated C string. `device_name` may be null.
@@ -87,7 +87,7 @@ pub unsafe extern "C" fn initialize_core(
 	};
 
 	println!(
-		"Initializing embedded Spacedrive core with data dir: {}, device name: {:?}",
+		"Initializing embedded WingDrive core with data dir: {}, device name: {:?}",
 		data_dir_str, device_name_opt
 	);
 
@@ -503,7 +503,7 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_spacedrive_core_SDMobileCoreModule_initializeCore(
+	pub unsafe extern "C" fn Java_com_wingdrive_core_SDMobileCoreModule_initializeCore(
 		mut env: JNIEnv,
 		_class: JClass,
 		data_dir: JString,
@@ -539,7 +539,7 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_spacedrive_core_SDMobileCoreModule_shutdownCore(
+	pub unsafe extern "C" fn Java_com_wingdrive_core_SDMobileCoreModule_shutdownCore(
 		_env: JNIEnv,
 		_class: JClass,
 	) {
@@ -547,7 +547,7 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_spacedrive_core_SDMobileCoreModule_handleCoreMsg(
+	pub unsafe extern "C" fn Java_com_wingdrive_core_SDMobileCoreModule_handleCoreMsg(
 		mut env: JNIEnv,
 		_class: JClass,
 		query: JString,
@@ -587,7 +587,7 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_spacedrive_core_SDMobileCoreModule_registerCoreEventListener(
+	pub unsafe extern "C" fn Java_com_wingdrive_core_SDMobileCoreModule_registerCoreEventListener(
 		mut env: JNIEnv,
 		module: JObject,
 	) {
@@ -624,7 +624,7 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_spacedrive_core_SDMobileCoreModule_registerCoreLogListener(
+	pub unsafe extern "C" fn Java_com_wingdrive_core_SDMobileCoreModule_registerCoreLogListener(
 		mut env: JNIEnv,
 		module: JObject,
 	) {

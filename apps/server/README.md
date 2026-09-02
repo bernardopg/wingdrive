@@ -1,13 +1,13 @@
-# Spacedrive Server
+# WingDrive Server
 
-HTTP server for Spacedrive with embedded daemon (RPC only, no web UI).
+HTTP server for WingDrive with embedded daemon (RPC only, no web UI).
 
 ## Overview
 
-`sd-server` runs the Spacedrive daemon and exposes RPC endpoints over HTTP. Perfect for:
+`sd-server` runs the WingDrive daemon and exposes RPC endpoints over HTTP. Perfect for:
 - **NAS deployments** (TrueNAS, Unraid, Synology, etc.)
 - **Headless servers**
-- **Remote access** to your Spacedrive libraries
+- **Remote access** to your WingDrive libraries
 - **Docker/container environments**
 - **CLI-only usage** with `sd-cli`
 
@@ -94,7 +94,7 @@ Perfect for TrueNAS, Unraid, or any Docker-compatible NAS.
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `DATA_DIR` | Path to Spacedrive data directory | `/data` (in Docker) | Yes (production) |
+| `DATA_DIR` | Path to WingDrive data directory | `/data` (in Docker) | Yes (production) |
 | `PORT` | HTTP server port | `8080` | No |
 | `SD_AUTH` | Authentication credentials (format: `user:pass,user2:pass2`) | None | Recommended |
 | `SD_P2P` | Enable P2P networking | `true` | No |
@@ -141,7 +141,7 @@ $DATA_DIR/
 3. **Configure:**
    - **Image:** Build locally or use pre-built image
    - **Port:** Map `8080` to host
-   - **Volume:** Mount `/mnt/pool/spacedrive` to `/data`
+   - **Volume:** Mount `/mnt/pool/wingdrive` to `/data`
    - **Environment:**
      - `SD_AUTH=admin:yourpassword`
      - `TZ=America/New_York` (your timezone)
@@ -154,15 +154,15 @@ $DATA_DIR/
 
 ```bash
 docker run -d \
-  --name spacedrive \
+  --name wingdrive \
   -p 8080:8080 \
   -p 7373:7373 \
-  -v /mnt/pool/spacedrive:/data \
+  -v /mnt/pool/wingdrive:/data \
   -v /mnt/pool/media:/media:ro \
   -e SD_AUTH=admin:password \
   -e TZ=UTC \
   --restart unless-stopped \
-  spacedrive/server:latest
+  wingdrive/server:latest
 ```
 
 ## Building
@@ -232,7 +232,7 @@ JSON-RPC proxy to daemon.
 | **Auth** | HTTP Basic Auth | Not needed (local) |
 | **Use Case** | NAS, headless servers, CLI | Desktop workstations |
 
-Both use the same Spacedrive core!
+Both use the same WingDrive core!
 
 ## Troubleshooting
 
@@ -263,7 +263,7 @@ Both use the same Spacedrive core!
 
 ## Contributing
 
-The server app is part of the Spacedrive v2 monorepo.
+The server app is part of the WingDrive v2 monorepo.
 
 **Project structure:**
 ```

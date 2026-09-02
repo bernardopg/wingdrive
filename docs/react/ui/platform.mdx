@@ -3,11 +3,11 @@ title: Platform Abstraction
 sidebarTitle: Platform
 ---
 
-The platform abstraction layer enables the Spacedrive interface to run on multiple platforms (Web, Tauri, React Native) while accessing platform-specific features.
+The platform abstraction layer enables the WingDrive interface to run on multiple platforms (Web, Tauri, React Native) while accessing platform-specific features.
 
 ## Problem
 
-Spacedrive runs on:
+WingDrive runs on:
 - **Desktop** via Tauri (native file pickers, native dialogs)
 - **Web** via browser (limited native APIs)
 - **Mobile** via React Native (different native APIs)
@@ -174,7 +174,7 @@ function HelpButton() {
   const platform = usePlatform();
 
   return (
-    <button onClick={() => platform.openLink('https://spacedrive.com/docs')}>
+    <button onClick={() => platform.openLink('https://github.com/bernardopg/wingdrive/tree/main/docs')}>
       Open Documentation
     </button>
   );

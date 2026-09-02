@@ -1,6 +1,6 @@
 # Archive System
 
-Archive is Spacedrive's data archival system for indexing external data sources beyond the filesystem. While the VDFS manages files, Archive handles everything else: emails, notes, messages, bookmarks, calendar events, contacts, and more.
+Archive is WingDrive's data archival system for indexing external data sources beyond the filesystem. While the VDFS manages files, Archive handles everything else: emails, notes, messages, bookmarks, calendar events, contacts, and more.
 
 ## Features
 
@@ -65,7 +65,7 @@ results.forEach(result => {
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Spacedrive Library                    │
+│                    WingDrive Library                    │
 ├─────────────────────────────────────────────────────────┤
 │  VDFS (Files)              Archive (Everything Else)    │
 │  ├─ Locations              ├─ Sources                   │
@@ -295,7 +295,7 @@ Flagged records are:
 cargo test -p sd-archive
 
 # Test core integration
-cargo test -p spacedrive-core -- sources::
+cargo test -p sd-core -- sources::
 
 # Test specific adapter
 python3 adapters/gmail/test.py
@@ -342,7 +342,7 @@ impl JobHandler for MyJob {
 Enable verbose logging:
 
 ```bash
-RUST_LOG=sd_archive=debug,spacedrive_core::data=debug cargo run
+RUST_LOG=sd_archive=debug,sd_core::data=debug cargo run
 ```
 
 View source database:
@@ -386,7 +386,7 @@ A: Not yet. Currently file search and source search are separate. Unified federa
 
 **Q: How do I handle OAuth secrets?**
 
-A: Secrets are stored encrypted in Spacedrive's KeyManager (OS keychain + redb). Adapters receive decrypted secrets as environment variables during sync.
+A: Secrets are stored encrypted in WingDrive's KeyManager (OS keychain + redb). Adapters receive decrypted secrets as environment variables during sync.
 
 **Q: What's the performance impact?**
 

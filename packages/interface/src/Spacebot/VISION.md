@@ -1,14 +1,14 @@
-# Spacebot in Spacedrive — Interface Vision
+# Spacebot in WingDrive — Interface Vision
 
-This document describes the target experience for the Spacebot surface inside Spacedrive. It is written for developers building this interface. It covers what exists today, what the interface should become, and how to get there without rewriting everything at once.
+This document describes the target experience for the Spacebot surface inside WingDrive. It is written for developers building this interface. It covers what exists today, what the interface should become, and how to get there without rewriting everything at once.
 
-For architectural context on how Spacebot integrates with Spacedrive at the system level, see `spacedrive/docs/core/design/spacebot-integration.md`. For the broader product direction, see `company/new-direction/2026-03-20-SPACEDRIVE-DIRECTION.md`.
+For architectural context on how Spacebot integrates with WingDrive at the system level, see `spacedrive/docs/core/design/spacebot-integration.md`. For the broader product direction, see `company/new-direction/2026-03-20-SPACEDRIVE-DIRECTION.md`.
 
 ---
 
 ## What Exists Today
 
-The current implementation is a first working slice of Spacebot embedded inside Spacedrive. It connects to a local Spacebot instance over HTTP and SSE, and provides a functional chat experience.
+The current implementation is a first working slice of Spacebot embedded inside WingDrive. It connects to a local Spacebot instance over HTTP and SSE, and provides a functional chat experience.
 
 ### Working
 
@@ -42,7 +42,7 @@ The current implementation is a first working slice of Spacebot embedded inside 
 
 ## What This Should Become
 
-The Spacebot surface inside Spacedrive is not a dashboard for monitoring an agent runtime. It is the primary interface where a person works with their AI. The direction doc frames it as the place a person opens in the morning and lives in all day. That means the interface should feel like a workspace, not a control panel.
+The Spacebot surface inside WingDrive is not a dashboard for monitoring an agent runtime. It is the primary interface where a person works with their AI. The direction doc frames it as the place a person opens in the morning and lives in all day. That means the interface should feel like a workspace, not a control panel.
 
 ### The Core Triangle
 
@@ -62,7 +62,7 @@ Technical depth — agent configuration, model routing, memory inspection, worke
 
 ### The Daily Surface
 
-When a person opens the Spacebot section of Spacedrive, they should see:
+When a person opens the Spacebot section of WingDrive, they should see:
 
 - Their ongoing conversations, with the most recent or active one immediately accessible.
 - Active tasks and their current state — who is working on what, what is blocked, what needs approval.
@@ -106,7 +106,7 @@ Tasks are the most important missing surface. The direction doc makes the task t
 - Execution runs with expandable worker transcripts (reuse InlineWorkerCard).
 - Approval state — whether the task is waiting on human input.
 
-**Data source:** Spacebot currently tracks tasks internally. The first slice should query Spacebot's API for task data and render it here. The longer-term model moves toward org-scoped tasks owned by Spacedrive with Spacebot as one executor, but the interface can start with what Spacebot already provides.
+**Data source:** Spacebot currently tracks tasks internally. The first slice should query Spacebot's API for task data and render it here. The longer-term model moves toward org-scoped tasks owned by WingDrive with Spacebot as one executor, but the interface can start with what Spacebot already provides.
 
 **First slice:**
 
@@ -151,7 +151,7 @@ Autonomy controls what the agent is allowed to do without asking. This maps to t
 - Toggle broad autonomy presets.
 - Show pending approval requests if any exist.
 
-**Longer-term:** This surface merges with Spacedrive's File System Intelligence policy UI, where subtree permissions and agent access rules are managed per-location. The Spacebot autonomy view becomes one lens into the broader permission model.
+**Longer-term:** This surface merges with WingDrive's File System Intelligence policy UI, where subtree permissions and agent access rules are managed per-location. The Spacebot autonomy view becomes one lens into the broader permission model.
 
 ### Schedule
 
@@ -236,7 +236,7 @@ SpacebotContext (provider)
 - **Task queries** — fetch task list and detail from Spacebot's API.
 - **Memory queries** — fetch memories with search and filtering.
 - **Cron queries** — fetch scheduled jobs and execution history.
-- **Config integration** — read Spacebot connection settings from Spacedrive's AppConfig via the existing core query system.
+- **Config integration** — read Spacebot connection settings from WingDrive's AppConfig via the existing core query system.
 
 Each new data source should follow the same pattern: TanStack Query for fetching, mutations for writes, SSE for live updates where available.
 
@@ -257,7 +257,7 @@ These apply to everything built in this directory.
 - **Markdown** renderer is complete. Use it for any agent-generated text.
 - **useSpacebotEventSource** handles reconnection well. Extend its handler map for new event types rather than creating parallel SSE connections.
 
-### Follow Spacedrive conventions
+### Follow WingDrive conventions
 
 - Semantic color classes only. No `var()` references. No arbitrary hex values.
 - Radix and @sd/ui primitives for interactive elements.
@@ -314,39 +314,39 @@ Every major view component should work both as a full route and as a panel that 
 
 - Add split-view or panel model for simultaneous chat + tasks.
 - Enrich the sidebar with live worker status, pending approvals, device state.
-- Cross-link Spacebot artifacts with Spacedrive file views.
+- Cross-link Spacebot artifacts with WingDrive file views.
 - Surface File System Intelligence context when the agent references paths.
 
 ---
 
 ## Multi-Device Agent Access
 
-The desktop Spacebot surface connects directly to a Spacebot instance over HTTP and SSE. That works when Spacebot is running on the same machine or reachable over the network. But mobile devices, remote laptops, and other Spacedrive nodes in the library cannot always reach Spacebot directly. Spacedrive's P2P system solves this.
+The desktop Spacebot surface connects directly to a Spacebot instance over HTTP and SSE. That works when Spacebot is running on the same machine or reachable over the network. But mobile devices, remote laptops, and other WingDrive nodes in the library cannot always reach Spacebot directly. WingDrive's P2P system solves this.
 
 ### The Architecture
 
-Spacebot always pairs with exactly one Spacedrive node. That node is Spacebot's home device inside the library. Every other Spacedrive device in the same library can reach Spacebot through that paired node using the existing P2P transport (Iroh/QUIC, hole-punching, local discovery).
+Spacebot always pairs with exactly one WingDrive node. That node is Spacebot's home device inside the library. Every other WingDrive device in the same library can reach Spacebot through that paired node using the existing P2P transport (Iroh/QUIC, hole-punching, local discovery).
 
 ```
-Mobile phone (Spacedrive)
+Mobile phone (WingDrive)
     → P2P connection to library
-        → Paired Spacedrive node
+        → Paired WingDrive node
             → Spacebot instance (localhost HTTP)
                 → Agent runtime
 ```
 
-The mobile app does not need to know Spacebot's HTTP address. It does not need a direct network path. It talks to Spacedrive, and Spacedrive routes the conversation to whichever node is paired with Spacebot. If the paired node is a server in the office, a NAS on the home network, or a hosted instance — the mobile device reaches it through the library graph.
+The mobile app does not need to know Spacebot's HTTP address. It does not need a direct network path. It talks to WingDrive, and WingDrive routes the conversation to whichever node is paired with Spacebot. If the paired node is a server in the office, a NAS on the home network, or a hosted instance — the mobile device reaches it through the library graph.
 
-This is important because it means one Spacebot instance serves the entire device fleet through Spacedrive's existing infrastructure. No separate mobile SDK, no separate authentication flow, no separate API surface.
+This is important because it means one Spacebot instance serves the entire device fleet through WingDrive's existing infrastructure. No separate mobile SDK, no separate authentication flow, no separate API surface.
 
 ### Chat on Mobile
 
-The mobile app (`apps/mobile/`) is an Expo/React Native app with native tabs (Overview, Browse, Settings) and an embedded Spacedrive core communicating over a JSON-RPC transport (`SDMobileCore.sendMessage`). There is currently no Spacebot surface.
+The mobile app (`apps/mobile/`) is an Expo/React Native app with native tabs (Overview, Browse, Settings) and an embedded WingDrive core communicating over a JSON-RPC transport (`SDMobileCore.sendMessage`). There is currently no Spacebot surface.
 
 Adding chat to mobile means:
 
-1. Spacedrive core gains a Spacebot proxy capability — it can forward webchat messages and SSE events between a local client and the paired Spacebot node over the P2P layer.
-2. The mobile app adds a chat tab or modal that uses Spacedrive core queries and actions (not direct HTTP to Spacebot) to send messages and receive responses.
+1. WingDrive core gains a Spacebot proxy capability — it can forward webchat messages and SSE events between a local client and the paired Spacebot node over the P2P layer.
+2. The mobile app adds a chat tab or modal that uses WingDrive core queries and actions (not direct HTTP to Spacebot) to send messages and receive responses.
 3. The proxy handles the transport. The mobile UI handles the conversation experience.
 
 The mobile chat surface should be simpler than desktop. It is the continuation of the same relationship in a smaller form — check what the agent is working on, ask quick questions, review approvals, read documents produced during the day. The direction doc frames it as a first-class portal into the same living system, not a secondary companion.
@@ -354,7 +354,7 @@ The mobile chat surface should be simpler than desktop. It is the continuation o
 **First mobile slice:**
 
 - A chat screen accessible from the tab bar or a floating action button.
-- Send messages to the current agent through Spacedrive core.
+- Send messages to the current agent through WingDrive core.
 - Receive streaming responses proxied from Spacebot.
 - View active tasks and pending approvals.
 - Voice input using the device microphone.
@@ -370,37 +370,37 @@ The mobile chat surface should be simpler than desktop. It is the continuation o
 
 The same P2P proxy that enables mobile chat also enables Spacebot to operate across the entire device fleet. This is described in detail in `spacedrive/docs/core/design/spacebot-remote-execution.md`.
 
-The core idea: when Spacebot spawns a worker, that worker can target any device in the library. The worker's shell and file tools proxy through Spacedrive to the target device. The tool interface stays identical from the model's perspective — it still calls `shell` and `file_read` — but the execution happens on a different machine.
+The core idea: when Spacebot spawns a worker, that worker can target any device in the library. The worker's shell and file tools proxy through WingDrive to the target device. The tool interface stays identical from the model's perspective — it still calls `shell` and `file_read` — but the execution happens on a different machine.
 
 ```
 User asks Spacebot to work on a repo on the MacBook
     → Spacebot spawns worker with execution_target = MacBook
         → Worker calls shell tool
-            → Proxy tool sends request to paired Spacedrive node
+            → Proxy tool sends request to paired WingDrive node
                 → Paired node checks policy (principal + device + path + operation)
-                    → Forwards typed execution request to MacBook's Spacedrive
+                    → Forwards typed execution request to MacBook's WingDrive
                         → MacBook executes locally
                             → Result returns through the chain
 ```
 
-Every operation passes through Spacedrive's permission system. The paired node resolves effective policy for the agent principal, target device, target path, and operation kind before forwarding anything. The target device can enforce a second check for defense in depth.
+Every operation passes through WingDrive's permission system. The paired node resolves effective policy for the agent principal, target device, target path, and operation kind before forwarding anything. The target device can enforce a second check for defense in depth.
 
 ### What This Means for the Interface
 
-The Spacebot surface in Spacedrive should eventually expose the device dimension:
+The Spacebot surface in WingDrive should eventually expose the device dimension:
 
 - **Device awareness in workers** — when a worker targets a remote device, the InlineWorkerCard should show which device it is running on.
 - **Device picker in conversation** — when the agent asks which machine to work on, the UI can present the library's device list with online/offline status instead of requiring the user to type a device name.
 - **Device-scoped permissions in Autonomy** — the autonomy view should show which devices the agent can access, which paths are readable/writable, and which operations require confirmation, per device.
 - **Mobile approvals** — when a worker on a remote device needs human confirmation for a destructive action, that approval request should be pushable to the mobile app. Pull out your phone, review the action, approve or deny, and the worker continues.
 
-### The Spacedrive Proxy Layer
+### The WingDrive Proxy Layer
 
-For all of this to work, Spacedrive core needs a proxy service that:
+For all of this to work, WingDrive core needs a proxy service that:
 
 1. Accepts Spacebot webchat operations (send, history, events) as typed core actions and queries.
 2. Routes them to the paired Spacebot node over the P2P transport.
-3. Proxies SSE events back as Spacedrive core subscription events.
+3. Proxies SSE events back as WingDrive core subscription events.
 4. Handles connection lifecycle — what happens when the paired node goes offline, when the Spacebot instance restarts, when the library topology changes.
 
 This proxy lives in `sd-core`, not in the interface layer. The interface consumes it through the same `useCoreQuery` / `useCoreAction` / `useLibraryQuery` hooks that power the rest of the mobile and desktop apps. The `@spacebot/api-client` package remains useful for desktop direct connections, but mobile and remote devices go through the core proxy.
@@ -413,5 +413,5 @@ The proxy also enables a clean answer to the connection model question on deskto
 
 - This is not a clone of the Spacebot standalone dashboard. That dashboard exposes runtime internals for developers. This interface exposes work for users.
 - This is not a settings-first experience. Configuration lives in settings. The main surface is about work.
-- This is not a separate app. It is a section of Spacedrive that feels native to the rest of the product — same design language, same color system, same interaction patterns.
+- This is not a separate app. It is a section of WingDrive that feels native to the rest of the product — same design language, same color system, same interaction patterns.
 - This is not the final architecture. The direction doc describes a future where tasks are org-scoped and agents are employees in a shared workspace. This interface should evolve toward that without requiring a ground-up rewrite.

@@ -2,7 +2,7 @@
 
 set -euEo pipefail
 
-# This script is used to download test data for Spacedrive e2e tests.
+# This script is used to download test data for WingDrive e2e tests.
 
 _root="$(CDPATH='' cd "$(dirname "$0")/.." && pwd -P)"
 _test_data_dir="${_root}/test-data"

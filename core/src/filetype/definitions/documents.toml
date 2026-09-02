@@ -209,10 +209,10 @@ priority = 100
 [file_types.metadata]
 text_based = true
 
-# Spacedrive Memory Files
+# WingDrive Memory Files
 [[file_types]]
 id = "application/x-spacedrive-memory"
-name = "Spacedrive Memory"
+name = "WingDrive Memory"
 extensions = ["memory"]
 mime_types = ["application/x-spacedrive-memory"]
 category = "document"

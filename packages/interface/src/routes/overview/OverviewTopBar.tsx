@@ -8,7 +8,7 @@ import {
 	Plus
 } from '@phosphor-icons/react';
 import {useLibraryMutation} from '@sd/ts-client';
-import {CircleButton, Popover, usePopover} from '@spacedrive/primitives';
+import {CircleButton, Popover, usePopover} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router-dom';

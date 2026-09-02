@@ -37,7 +37,7 @@ export function PrivacySettings() {
             <div>
               <span className="text-sm text-ink">Anonymous Usage Data</span>
               <p className="text-xs text-ink-dull">
-                Help improve Spacedrive by sharing anonymous usage data
+                Help improve WingDrive by sharing anonymous usage data
               </p>
             </div>
             <input
@@ -49,11 +49,11 @@ export function PrivacySettings() {
 
           <div className="pt-2 border-t border-app-line">
             <p className="text-xs text-ink-dull">
-              We collect anonymous usage statistics to understand how Spacedrive is used
+              We collect anonymous usage statistics to understand how WingDrive is used
               and to prioritize features. No personal data or file contents are ever collected.
             </p>
             <a
-              href="https://spacedrive.com/privacy"
+						href="https://github.com/bernardopg/wingdrive/blob/main/SECURITY.md"
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-accent hover:underline mt-2 inline-block"

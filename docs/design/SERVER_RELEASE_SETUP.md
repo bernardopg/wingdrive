@@ -1,6 +1,6 @@
 # Server Release Setup
 
-This document explains the changes made to integrate Spacedrive server builds into the release workflow.
+This document explains the changes made to integrate WingDrive server builds into the release workflow.
 
 ## Overview
 
@@ -57,8 +57,8 @@ Builds static server binaries for:
 - New: `containerfiles: ./apps/server/Dockerfile` (correct)
 
 **Image tagging:**
-- Git tags (e.g., `v2.0.0-alpha.2`) → `ghcr.io/spacedriveapp/spacedrive/server:v2.0.0-alpha.2` + `latest`
-- Non-tagged commits → `ghcr.io/spacedriveapp/spacedrive/server:<commit-sha>` + `staging`
+- Git tags (e.g., `v2.0.0-alpha.2`) → `ghcr.io/bernardopg/wingdrive/server:v2.0.0-alpha.2` + `latest`
+- Non-tagged commits → `ghcr.io/bernardopg/wingdrive/server:<commit-sha>` + `staging`
 
 ### 3. Server Dockerfile (`apps/server/Dockerfile`)
 
@@ -143,7 +143,7 @@ docker buildx build \
 
 ```bash
 # Download from GitHub release
-wget https://github.com/spacedriveapp/spacedrive/releases/download/v2.0.0-alpha.2/sd-server-linux-x86_64.tar.gz
+wget https://github.com/bernardopg/wingdrive/releases/download/v2.0.0-alpha.2/sd-server-linux-x86_64.tar.gz
 tar -xzf sd-server-linux-x86_64.tar.gz
 
 # Verify checksum
@@ -160,7 +160,7 @@ sudo nano /etc/systemd/system/spacedrive.service
 Example systemd unit:
 ```ini
 [Unit]
-Description=Spacedrive Server
+Description=WingDrive Server
 After=network.target
 
 [Service]
@@ -182,9 +182,9 @@ docker run -d \
   --name spacedrive \
   -p 8080:8080 \
   -p 7373:7373 \
-  -v spacedrive-data:/data \
+	-v wingdrive-data:/data \
   -e SD_AUTH=admin:password \
-  ghcr.io/spacedriveapp/spacedrive/server:latest
+  ghcr.io/bernardopg/wingdrive/server:latest
 ```
 
 ### Option 3: Docker Compose
@@ -202,12 +202,12 @@ Or create your own:
 version: '3.8'
 services:
   spacedrive:
-    image: ghcr.io/spacedriveapp/spacedrive/server:latest
+    image: ghcr.io/bernardopg/wingdrive/server:latest
     ports:
       - "8080:8080"
       - "7373:7373"
     volumes:
-      - spacedrive-data:/data
+		- wingdrive-data:/data
       - /mnt/storage:/storage:ro  # Optional: mount storage
     environment:
       SD_AUTH: "admin:your-password"
@@ -215,7 +215,7 @@ services:
     restart: unless-stopped
 
 volumes:
-  spacedrive-data:
+	wingdrive-data:
 ```
 
 ## Architecture Support
@@ -243,8 +243,8 @@ After a release is created, verify these files exist:
 **Docker images:**
 Check ghcr.io:
 ```bash
-docker pull ghcr.io/spacedriveapp/spacedrive/server:v2.0.0-alpha.2
-docker pull ghcr.io/spacedriveapp/spacedrive/server:latest
+docker pull ghcr.io/bernardopg/wingdrive/server:v2.0.0-alpha.2
+docker pull ghcr.io/bernardopg/wingdrive/server:latest
 ```
 
 ## Next Steps

@@ -47,8 +47,8 @@ case "${OSTYPE:-}" in
 esac
 
 if [ "${CI:-}" != "true" ]; then
-  echo 'Spacedrive Development Environment Setup'
-  echo 'To set up your machine for Spacedrive development, this script will install some required dependencies with your system package manager'
+  echo 'WingDrive Development Environment Setup'
+  echo 'To set up your machine for WingDrive development, this script will install some required dependencies with your system package manager'
   echo
   echo 'Press Enter to continue'
   read -r
@@ -183,7 +183,7 @@ case "$(uname)" in
       if ! { sudo dnf group install "C Development Tools and Libraries" || sudo dnf group install "Development Tools"; }; then
         err 'We were unable to install the "C Development Tools and Libraries"/"Development Tools" package.' \
           'Please open an issue if you feel that this is incorrect.' \
-          'https://github.com/spacedriveapp/spacedrive/issues'
+          'https://github.com/bernardopg/wingdrive/issues'
       fi
 
       # Tauri dependencies
@@ -245,13 +245,13 @@ case "$(uname)" in
       fi
       err "Your Linux distro ${_distro:-}is not supported by this script." \
         'We would welcome a PR or some help adding your OS to this script:' \
-        'https://github.com/spacedriveapp/spacedrive/issues'
+        'https://github.com/bernardopg/wingdrive/issues'
     fi
     ;;
   *)
     err "Your OS ($(uname)) is not supported by this script." \
       'We would welcome a PR or some help adding your OS to this script.' \
-      'https://github.com/spacedriveapp/spacedrive/issues'
+      'https://github.com/bernardopg/wingdrive/issues'
     ;;
 esac
 
@@ -266,4 +266,4 @@ if [ "${CI:-}" != "true" ]; then
   echo "$_tools" | xargs cargo install
 fi
 
-echo 'Your machine has been setup for Spacedrive development!'
+echo 'Your machine has been setup for WingDrive development!'

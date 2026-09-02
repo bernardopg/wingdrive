@@ -1,4 +1,4 @@
-//! Thumbnail generation engine using existing Spacedrive crates
+//! Thumbnail generation engine using existing WingDrive crates
 
 use super::error::{ThumbnailError, ThumbnailResult};
 use sd_media_metadata::exif::Orientation;

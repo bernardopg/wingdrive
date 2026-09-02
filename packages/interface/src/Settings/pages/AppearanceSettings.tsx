@@ -57,7 +57,7 @@ export function AppearanceSettings() {
       <div>
         <h2 className="text-lg font-semibold text-ink mb-2">Appearance</h2>
         <p className="text-sm text-ink-dull">
-          Customize how Spacedrive looks.
+          Customize how WingDrive looks.
         </p>
       </div>
 

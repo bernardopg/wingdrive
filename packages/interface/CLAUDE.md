@@ -1,4 +1,4 @@
-# Spacedrive Interface Development Rules
+# WingDrive Interface Development Rules
 
 **Status:** Living Document - Update as architectural decisions are made
 **Purpose:** Ensure consistent, clean, and maintainable code across the interface package
@@ -81,7 +81,7 @@ The interface is organized into clear separation of concerns:
 
 **Shell Layer** (`Shell.tsx`):
 - Root entry point
-- Provider setup (Spacedrive, Server, TabManager, Platform)
+- Provider setup (WingDrive, Server, TabManager, Platform)
 - Daemon connection management (Tauri-specific)
 
 **Layout Layer** (`ShellLayout.tsx`):
@@ -344,7 +344,7 @@ className="bg-[var(--color-accent)]/10"
 - Example: `DropdownMenu`, `Button`, `Input`
 
 **Feature Components** (@sd/interface):
-- Specific to Spacedrive features
+- Specific to WingDrive features
 - Uses primitives
 - Can have business logic
 - Example: `Explorer`, `Sidebar`, `LibrariesDropdown`

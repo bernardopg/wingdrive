@@ -2,7 +2,7 @@
  * TypeScript Integration Test: useNormalizedQuery with File Deletion
  *
  * This test is spawned by a Rust test harness that provides:
- * - Real Spacedrive daemon running on Unix socket
+ * - Real WingDrive daemon running on Unix socket
  * - Indexed location with test files
  * - Connection configuration via BRIDGE_CONFIG_PATH env var
  *

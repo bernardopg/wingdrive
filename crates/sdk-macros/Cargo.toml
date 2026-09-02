@@ -1,5 +1,5 @@
 [package]
-description = "Proc macros for Spacedrive extension SDK"
+description = "Proc macros for WingDrive extension SDK"
 edition     = "2021"
 name        = "spacedrive-sdk-macros"
 version     = "0.1.0"

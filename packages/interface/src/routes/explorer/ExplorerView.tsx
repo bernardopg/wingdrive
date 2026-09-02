@@ -5,7 +5,7 @@ import {
 	SidebarSimple,
 	Tag as TagIcon
 } from '@phosphor-icons/react';
-import {CircleButton, CircleButtonGroup} from '@spacedrive/primitives';
+import {CircleButton, CircleButtonGroup} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {TopBarItem, TopBarPortal} from '../../TopBar';

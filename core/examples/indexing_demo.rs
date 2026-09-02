@@ -1,7 +1,7 @@
 //! Desktop Indexing Demo - Production Indexer Showcase
 //!
 //! This example demonstrates:
-//! 1. Starting up Spacedrive Core
+//! 1. Starting up WingDrive Core
 //! 2. Creating/opening a library
 //! 3. Adding the user's desktop as a location
 //! 4. Running the production indexer with all features:
@@ -30,10 +30,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		.with_env_filter("sd_core=debug,desktop_indexing_demo=info")
 		.init();
 
-	println!("=== Spacedrive 2 Desktop Indexing Demo ===\n");
+	println!("=== WingDrive 2 Desktop Indexing Demo ===\n");
 
-	// 1. Initialize Spacedrive Core with job logging enabled
-	println!("1. Initializing Spacedrive Core...");
+	// 1. Initialize WingDrive Core with job logging enabled
+	println!("1. Initializing WingDrive Core...");
 	let data_dir = PathBuf::from("./data/spacedrive-desktop-demo");
 
 	// Enable job logging by modifying the config before core initialization
@@ -585,7 +585,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	core.shutdown().await?;
 
 	println!("\n=== Desktop Indexing Demo Complete! ===");
-	println!("Spacedrive 2 Production Job System Working!");
+	println!("WingDrive 2 Production Job System Working!");
 	println!();
 	println!("Demo data stored at: {:?}", data_dir);
 	println!("Job logs stored at: {:?}", job_logs_dir);

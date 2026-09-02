@@ -158,7 +158,7 @@ pub struct MacOSTestVolumeManager {
 #[cfg(target_os = "macos")]
 impl MacOSTestVolumeManager {
 	pub fn new() -> Self {
-		let temp_dir = std::env::temp_dir().join("spacedrive_test_volumes");
+		let temp_dir = std::env::temp_dir().join("wingdrive_test_volumes");
 		std::fs::create_dir_all(&temp_dir).ok();
 
 		Self {
@@ -372,7 +372,7 @@ pub struct WindowsTestVolumeManager {
 #[cfg(target_os = "windows")]
 impl WindowsTestVolumeManager {
 	pub fn new() -> Self {
-		let temp_dir = std::env::temp_dir().join("spacedrive_test_volumes");
+		let temp_dir = std::env::temp_dir().join("wingdrive_test_volumes");
 		std::fs::create_dir_all(&temp_dir).ok();
 
 		Self {
@@ -524,7 +524,7 @@ pub struct LinuxTestVolumeManager {
 #[cfg(target_os = "linux")]
 impl LinuxTestVolumeManager {
 	pub fn new() -> Self {
-		let temp_dir = std::env::temp_dir().join("spacedrive_test_volumes");
+		let temp_dir = std::env::temp_dir().join("wingdrive_test_volumes");
 		std::fs::create_dir_all(&temp_dir).ok();
 
 		Self {

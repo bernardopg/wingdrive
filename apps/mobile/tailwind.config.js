@@ -1,4 +1,4 @@
-const sharedColors = require('@spacedrive/tokens/raw-colors');
+const sharedColors = require('@wingdrive/tokens/raw-colors');
 
 /**
  * Convert shared color format (HSL string) to NativeWind format (hsl() function)

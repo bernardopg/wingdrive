@@ -87,7 +87,7 @@ pub struct DeviceConfig {
 	#[serde(default)]
 	pub swap_total_bytes: Option<i64>,
 
-	/// Spacedrive version that created this config
+	/// WingDrive version that created this config
 	pub version: String,
 }
 

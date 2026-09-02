@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- NO app-sandbox - Spacedrive needs full filesystem access as a file manager -->
+	<!-- NO app-sandbox - WingDrive needs full filesystem access as a file manager -->
 
 	<!-- Network access for daemon communication -->
 	<key>com.apple.security.network.client</key>

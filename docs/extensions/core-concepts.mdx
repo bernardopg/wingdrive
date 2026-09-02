@@ -3,7 +3,7 @@ title: Core Concepts
 sidebarTitle: Core Concepts
 ---
 
-Extensions in Spacedrive are built with Rust macros that generate the integration code for you. Define your data models, jobs, and agents using attributes. The SDK handles sync, permissions, and sandboxing automatically.
+Extensions in WingDrive are built with Rust macros that generate the integration code for you. Define your data models, jobs, and agents using attributes. The SDK handles sync, permissions, and sandboxing automatically.
 
 This page covers the five building blocks: extensions, models, jobs, agents, and actions. Each concept maps to a macro that generates the boilerplate.
 
@@ -13,11 +13,11 @@ The `#[extension]` attribute is the entry point for your extension. It defines m
 
 ```rust
 #[extension(
-    id = "com.spacedrive.photos",  // Unique reverse-DNS ID
+    id = "com.wingdrive.photos",  // Unique reverse-DNS ID
     name = "Photos Manager",
     version = "1.0.0",
     description = "Advanced photo organization with faces and places.",
-    min_core_version = "2.0.0",  // Minimum Spacedrive core version
+    min_core_version = "2.0.0",  // Minimum WingDrive core version
     permissions = [
         Permission::ReadEntries(glob = "**/*.{jpg,png,heic}"),
         Permission::WriteTags,
@@ -54,7 +54,7 @@ struct Person {
 ```
 
 - **Real Tables**: Your models become actual SQL tables, prefixed with your extension's ID (e.g., `ext_photos_person`).
-- **Relationships**: You can define foreign key relationships to core Spacedrive objects or other models in your extension.
+- **Relationships**: You can define foreign key relationships to core WingDrive objects or other models in your extension.
 - **Tagging**: By including a `#[metadata]` field, your models can be tagged and organized just like regular files.
 
 ### 3. Jobs and Tasks (`#[job]`, `#[task]`)

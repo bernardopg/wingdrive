@@ -8,7 +8,7 @@ import {
 	Sparkle,
 	SquaresFour
 } from '@phosphor-icons/react';
-import {CircleButton} from '@spacedrive/primitives';
+import {CircleButton} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
 import {useEffect, useRef, useState} from 'react';

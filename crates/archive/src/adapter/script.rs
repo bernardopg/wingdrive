@@ -370,6 +370,14 @@ impl ScriptAdapter {
 		let mut env = HashMap::new();
 
 		env.insert(
+			"WINGDRIVE_ADAPTER_ID".to_string(),
+			self.manifest.adapter.id.clone(),
+		);
+		env.insert(
+			"WINGDRIVE_ADAPTER_VERSION".to_string(),
+			self.manifest.adapter.version.clone(),
+		);
+		env.insert(
 			"SPACEDRIVE_ADAPTER_ID".to_string(),
 			self.manifest.adapter.id.clone(),
 		);
@@ -380,13 +388,15 @@ impl ScriptAdapter {
 
 		if let Some(obj) = config.as_object() {
 			for (key, value) in obj {
+				let value = value
+					.as_str()
+					.map(|s| s.to_string())
+					.unwrap_or_else(|| value.to_string());
 				env.insert(
-					format!("SPACEDRIVE_CONFIG_{}", key.to_uppercase()),
-					value
-						.as_str()
-						.map(|s| s.to_string())
-						.unwrap_or_else(|| value.to_string()),
+					format!("WINGDRIVE_CONFIG_{}", key.to_uppercase()),
+					value.clone(),
 				);
+				env.insert(format!("SPACEDRIVE_CONFIG_{}", key.to_uppercase()), value);
 			}
 		}
 

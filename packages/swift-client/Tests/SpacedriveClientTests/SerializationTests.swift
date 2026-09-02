@@ -170,10 +170,12 @@ final class SerializationTests: XCTestCase {
 
     func testRealDaemonIntegration() async throws {
         // Skip if daemon is not running
-        let socketPath =
-            "\(NSHomeDirectory())/Library/Application Support/spacedrive/daemon/daemon.sock"
+        let socketPath = [
+            "\(NSHomeDirectory())/.wingdrive/daemon.sock",
+            "\(NSHomeDirectory())/Library/Application Support/spacedrive/daemon/daemon.sock",
+        ].first(where: FileManager.default.fileExists(atPath:))
 
-        guard FileManager.default.fileExists(atPath: socketPath) else {
+        guard let socketPath else {
             throw XCTSkip("Daemon not running - skipping integration test")
         }
 

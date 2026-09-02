@@ -1,19 +1,19 @@
 # TrueNAS SCALE Deployment Guide
 
-Quick reference for deploying Spacedrive Server on TrueNAS SCALE using the GUI.
+Quick reference for deploying WingDrive Server on TrueNAS SCALE using the GUI.
 
 ## Quick Start
 
 ### 1. Build and Transfer (on your Mac)
 
 ```bash
-cd ~/Projects/spacedrive/apps/server
+cd ~/Projects/wingdrive/apps/server
 
 # Build for TrueNAS
 ./build-for-truenas.sh
 
 # Transfer to TrueNAS (replace with your IP)
-scp spacedrive-server-*.tar.gz root@192.168.1.100:/tmp/
+scp wingdrive-server-*.tar.gz root@192.168.1.100:/tmp/
 ```
 
 ### 2. Load Image (on TrueNAS)
@@ -23,11 +23,11 @@ scp spacedrive-server-*.tar.gz root@192.168.1.100:/tmp/
 ssh root@192.168.1.100
 
 # Load the image
-gunzip -c /tmp/spacedrive-server-*.tar.gz | docker load
+gunzip -c /tmp/wingdrive-server-*.tar.gz | docker load
 
 # Verify
-docker images | grep spacedrive
-# Should show: spacedrive-server  latest  ...
+docker images | grep wingdrive
+# Should show: wingdrive-server  latest  ...
 ```
 
 ### 3. Deploy via GUI
@@ -42,7 +42,7 @@ Go to: **Apps** → **Discover Apps** → **Launch Docker Image**
 
 | Field | Value |
 |-------|-------|
-| Image Repository | `spacedrive-server` |
+| Image Repository | `wingdrive-server` |
 | Image Tag | `latest` |
 | **Image Pull Policy** | **Never** ️ (Use local image!) |
 
@@ -50,7 +50,7 @@ Go to: **Apps** → **Discover Apps** → **Launch Docker Image**
 
 | Field | Value |
 |-------|-------|
-| Container Name | `spacedrive` |
+| Container Name | `wingdrive` |
 | Restart Policy | Unless Stopped |
 
 ### Networking
@@ -71,7 +71,7 @@ Go to: **Apps** → **Discover Apps** → **Launch Docker Image**
 | Field | Value |
 |-------|-------|
 | Type | Host Path (or ixVolume) |
-| Host Path | `/mnt/your-pool/spacedrive` |
+| Host Path | `/mnt/your-pool/wingdrive` |
 | Mount Path | `/data` |
 | Read Only | (needs write access) |
 
@@ -145,25 +145,25 @@ Repeat for other datasets:
 ### 1. Verify Container is Running
 
 In TrueNAS GUI:
-- **Apps** → **Installed** → Should see **spacedrive** with green status
+- **Apps** → **Installed** → Should see **wingdrive** with green status
 
 Or via shell:
 ```bash
-docker ps | grep spacedrive
+docker ps | grep wingdrive
 ```
 
 ### 2. Check Logs
 
-In GUI: Click **spacedrive** → **Logs**
+In GUI: Click **wingdrive** → **Logs**
 
 Or via shell:
 ```bash
-docker logs spacedrive
+docker logs wingdrive
 ```
 
 Should see:
 ```
-Spacedrive Server listening on http://localhost:8080
+WingDrive Server listening on http://localhost:8080
 ✓ Daemon started successfully
 ```
 
@@ -184,7 +184,7 @@ When you rebuild on your Mac:
 ### 1. Build new image
 
 ```bash
-cd ~/Projects/spacedrive/apps/server
+cd ~/Projects/wingdrive/apps/server
 ./build-for-truenas.sh
 ```
 
@@ -192,23 +192,23 @@ cd ~/Projects/spacedrive/apps/server
 
 ```bash
 # Transfer new tar
-scp spacedrive-server-*.tar.gz root@TRUENAS-IP:/tmp/
+scp wingdrive-server-*.tar.gz root@TRUENAS-IP:/tmp/
 
 # SSH and load
 ssh root@TRUENAS-IP
-gunzip -c /tmp/spacedrive-server-*.tar.gz | docker load
+gunzip -c /tmp/wingdrive-server-*.tar.gz | docker load
 ```
 
 ### 3. Restart container in GUI
 
-**Apps** → **Installed** → **spacedrive** → **Stop** → **Start**
+**Apps** → **Installed** → **wingdrive** → **Stop** → **Start**
 
 Or via shell:
 ```bash
-docker restart spacedrive
+docker restart wingdrive
 ```
 
-The container will use the updated `spacedrive-server:latest` image.
+The container will use the updated `wingdrive-server:latest` image.
 
 ---
 
@@ -218,7 +218,7 @@ The container will use the updated `spacedrive-server:latest` image.
 
 **Check logs:**
 ```bash
-docker logs spacedrive
+docker logs wingdrive
 ```
 
 **Common issues:**
@@ -228,7 +228,7 @@ docker logs spacedrive
 
 ### Can't connect to web UI
 
-1. Verify container is running: `docker ps | grep spacedrive`
+1. Verify container is running: `docker ps | grep wingdrive`
 2. Check port mapping: Should show `0.0.0.0:8080->8080/tcp`
 3. Test from TrueNAS shell: `curl http://localhost:8080/health`
 4. Check firewall rules (TrueNAS should allow by default)
@@ -237,21 +237,21 @@ docker logs spacedrive
 
 **Check socket:**
 ```bash
-docker exec spacedrive ls -la /data/daemon/
+docker exec wingdrive ls -la /data/daemon/
 ```
 
 Should see `daemon.sock`
 
 **Check daemon logs:**
 ```bash
-docker exec spacedrive cat /data/logs/daemon.log
+docker exec wingdrive cat /data/logs/daemon.log
 ```
 
 ### Wrong architecture error
 
 Make sure you built with `--platform linux/amd64`:
 ```bash
-docker inspect spacedrive-server:latest | grep Architecture
+docker inspect wingdrive-server:latest | grep Architecture
 # Should show: "Architecture": "amd64"
 ```
 
@@ -266,7 +266,7 @@ If not, rebuild:
 
 **On TrueNAS host:**
 ```
-/mnt/your-pool/spacedrive/
+/mnt/your-pool/wingdrive/
 ├── daemon/
 │   └── daemon.sock          # Unix socket
 ├── libraries/
@@ -299,16 +299,16 @@ If port 8080 is taken:
 
 ### Multiple Instances
 
-Run multiple Spacedrive instances with different data dirs:
+Run multiple WingDrive instances with different data dirs:
 
 **Instance 1 (Personal):**
-- Container name: `spacedrive-personal`
-- Host path: `/mnt/pool/spacedrive-personal`
+- Container name: `wingdrive-personal`
+- Host path: `/mnt/pool/wingdrive-personal`
 - Ports: `8080:8080`, `7373:7373`
 
 **Instance 2 (Work):**
-- Container name: `spacedrive-work`
-- Host path: `/mnt/pool/spacedrive-work`
+- Container name: `wingdrive-work`
+- Host path: `/mnt/pool/wingdrive-work`
 - Ports: `8081:8080`, `7374:7373`
 - Env: `INSTANCE=work`
 
@@ -318,7 +318,7 @@ If you want HTTPS access, put behind nginx/Caddy:
 
 **Caddy example:**
 ```
-spacedrive.yourdomain.com {
+wingdrive.yourdomain.com {
     reverse_proxy localhost:8080
     basicauth {
         admin $2a$14$... # hashed password
@@ -335,7 +335,7 @@ spacedrive.yourdomain.com {
 - **Use strong passwords** - not `admin:changeme`
 - Consider **firewall rules** if exposing to internet
 - Run behind **reverse proxy with HTTPS** for public access
-- **Read-only mounts** for media you don't want Spacedrive to modify
+- **Read-only mounts** for media you don't want WingDrive to modify
 
 **Network access:**
 - `8080` → Web UI (needs auth)
@@ -347,7 +347,7 @@ spacedrive.yourdomain.com {
 
 **What to backup:**
 ```
-/mnt/your-pool/spacedrive/libraries/
+/mnt/your-pool/wingdrive/libraries/
 ```
 
 This contains your library databases and metadata.
@@ -366,12 +366,12 @@ This contains your library databases and metadata.
 
 **View logs:**
 ```bash
-docker logs -f spacedrive
+docker logs -f wingdrive
 ```
 
 **Shell access:**
 ```bash
-docker exec -it spacedrive sh
+docker exec -it wingdrive sh
 ```
 
 **Check daemon status:**
@@ -387,15 +387,15 @@ Should return: `OK`
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ TrueNAS SCALE: Spacedrive Server                            │
+│ TrueNAS SCALE: WingDrive Server                            │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│ Image:  spacedrive-server:latest                           │
+│ Image:  wingdrive-server:latest                           │
 │ Pull:   Never (use local image)                            │
 │                                                             │
 │ Ports:  8080 (Web UI), 7373 (P2P)                          │
 │                                                             │
-│ Volume: /mnt/pool/spacedrive → /data                       │
+│ Volume: /mnt/pool/wingdrive → /data                       │
 │                                                             │
 │ Env:    SD_AUTH=admin:password (REQUIRED)                  │
 │         TZ=America/New_York                                 │

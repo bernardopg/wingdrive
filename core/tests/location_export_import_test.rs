@@ -229,7 +229,7 @@ async fn test_location_export_import() -> Result<(), Box<dyn std::error::Error +
 	// Read and verify export file contains expected content
 	let export_content = tokio::fs::read_to_string(&export_file).await?;
 	assert!(
-		export_content.contains("-- Spacedrive Location Export"),
+		export_content.contains("-- WingDrive Location Export"),
 		"Export should have header"
 	);
 	assert!(
@@ -242,6 +242,13 @@ async fn test_location_export_import() -> Result<(), Box<dyn std::error::Error +
 	);
 
 	println!("Export file verified");
+
+	// Pre-fork exports remain importable during the compatibility window.
+	let legacy_export = export_content.replace(
+		"-- WingDrive Location Export",
+		"-- Spacedrive Location Export",
+	);
+	tokio::fs::write(&export_file, legacy_export).await?;
 
 	// Close first library
 	drop(action_manager);

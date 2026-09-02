@@ -15,11 +15,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		.with_env_filter("sd_core=info")
 		.init();
 
-	println!("=== Spacedrive Volume System Demo ===\n");
+	println!("=== WingDrive Volume System Demo ===\n");
 
 	// Initialize core (which includes volume manager)
-	println!("1. Initializing Spacedrive Core with volume detection...");
-	let data_dir = std::env::temp_dir().join("spacedrive-volume-demo");
+	println!("1. Initializing WingDrive Core with volume detection...");
+	let data_dir = std::env::temp_dir().join("wingdrive-volume-demo");
 	let core = Core::new(data_dir).await?;
 	println!("   ✓ Core initialized");
 
