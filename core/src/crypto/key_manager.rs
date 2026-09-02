@@ -5,12 +5,12 @@
 //! - Library keys: Stored encrypted in redb database
 //! - Cloud credentials: Stored encrypted in library database (not in key manager)
 
+use chacha20poly1305::aead::rand_core::RngCore;
 use chacha20poly1305::{
 	aead::{Aead, KeyInit, OsRng},
 	XChaCha20Poly1305, XNonce,
 };
 use keyring::{Entry, Error as KeyringError};
-use rand::RngCore;
 use redb::{Database, ReadableTable, TableDefinition};
 use std::path::PathBuf;
 use std::sync::Arc;

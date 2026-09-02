@@ -153,11 +153,11 @@ async fn test_relay_discovery_flow() {
 #[tokio::test]
 async fn test_pairing_code_with_qr_json_and_relay_info() {
 	use iroh::SecretKey;
-	use rand::RngCore;
+	use rand::Rng;
 
 	// Use from_bytes to avoid CryptoRng trait bound mismatch between rand 0.8 and iroh's rand_core
 	let mut seed = [0u8; 32];
-	rand::thread_rng().fill_bytes(&mut seed);
+	rand::rng().fill_bytes(&mut seed);
 	let secret_key = SecretKey::from_bytes(&seed);
 	let node_id = secret_key.public();
 

@@ -18,9 +18,9 @@ impl NetworkIdentity {
 	/// Create a new random network identity
 	pub async fn new() -> Result<Self> {
 		// Generate random bytes for the secret key
-		use rand::RngCore;
+		use rand::Rng;
 		let mut ed25519_seed = [0u8; 32];
-		rand::thread_rng().fill_bytes(&mut ed25519_seed);
+		rand::rng().fill_bytes(&mut ed25519_seed);
 
 		// Create Iroh secret key from random bytes
 		let secret_key = SecretKey::from_bytes(&ed25519_seed);

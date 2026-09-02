@@ -598,9 +598,9 @@ impl PairingProtocolHandler {
 	}
 
 	fn generate_challenge(&self) -> Result<Vec<u8>> {
-		use rand::RngCore;
+		use rand::Rng;
 		let mut challenge = vec![0u8; 32];
-		rand::thread_rng().fill_bytes(&mut challenge);
+		rand::rng().fill_bytes(&mut challenge);
 		Ok(challenge)
 	}
 

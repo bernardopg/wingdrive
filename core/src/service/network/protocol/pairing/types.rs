@@ -31,11 +31,11 @@ pub struct PairingCode {
 impl PairingCode {
 	/// Generate a new pairing code using BIP39 wordlist
 	pub fn generate() -> crate::service::network::Result<Self> {
-		use rand::RngCore;
+		use rand::Rng;
 
 		// Generate 16 bytes of entropy (enough for 12 BIP39 words)
 		let mut entropy = [0u8; 16];
-		rand::thread_rng().fill_bytes(&mut entropy);
+		rand::rng().fill_bytes(&mut entropy);
 
 		// Derive the full 32-byte secret deterministically from the entropy
 		// This ensures the initiator and joiner have the same secret after BIP39 round-trip
