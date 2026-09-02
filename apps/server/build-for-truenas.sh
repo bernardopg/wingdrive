@@ -1,15 +1,15 @@
 #!/bin/bash
-# Build Spacedrive Server for TrueNAS deployment
+# Build WingDrive Server for TrueNAS deployment
 # Usage: ./build-for-truenas.sh [truenas-ip]
 
 set -e
 
 TRUENAS_IP="${1:-}"
-IMAGE_NAME="spacedrive-server"
+IMAGE_NAME="wingdrive-server"
 IMAGE_TAG="latest"
-TAR_FILE="spacedrive-server-$(date +%Y%m%d-%H%M%S).tar.gz"
+TAR_FILE="wingdrive-server-$(date +%Y%m%d-%H%M%S).tar.gz"
 
-echo "🏗️  Building Spacedrive Server for linux/amd64..."
+echo "🏗️  Building WingDrive Server for linux/amd64..."
 echo ""
 
 # Check if buildx is available
@@ -75,7 +75,7 @@ else
     echo "   gunzip -c /tmp/${TAR_FILE} | docker load"
     echo ""
     echo "4. Verify it loaded:"
-    echo "   docker images | grep spacedrive"
+    echo "   docker images | grep wingdrive"
     echo ""
 fi
 
@@ -91,14 +91,14 @@ echo "2. Container Settings:"
 echo "   • Image Repository: ${IMAGE_NAME}"
 echo "   • Image Tag: ${IMAGE_TAG}"
 echo "   • Image Pull Policy: Never (important - use local image!)"
-echo "   • Container Name: spacedrive"
+echo "   • Container Name: wingdrive"
 echo ""
 echo "3. Port Forwarding:"
 echo "   • Container Port: 8080 → Node Port: 8080"
 echo "   • Container Port: 7373 → Node Port: 7373"
 echo ""
 echo "4. Storage (Host Path Volumes):"
-echo "   • Host Path: /mnt/YOUR-POOL/spacedrive"
+echo "   • Host Path: /mnt/YOUR-POOL/wingdrive"
 echo "     Mount Path: /data"
 echo "     Type: ixVolume (or Host Path)"
 echo ""

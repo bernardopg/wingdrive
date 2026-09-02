@@ -1,11 +1,11 @@
 ---
 title: "CLI Architecture"
-description: "Command-line interface for Spacedrive v2"
+description: "Command-line interface for WingDrive v2"
 ---
 
 ## Overview
 
-The Spacedrive CLI (`sd`) is a command-line interface for interacting with the Spacedrive daemon. It provides a comprehensive set of commands for managing libraries, files, devices, and daemon lifecycle.
+The WingDrive CLI (`sd`) is a command-line interface for interacting with the WingDrive daemon. It provides a comprehensive set of commands for managing libraries, files, devices, and daemon lifecycle.
 
 ## Architecture
 
@@ -41,7 +41,7 @@ sd start --foreground
 
 The daemon:
 - Runs as a background process
-- Listens on a Unix socket at `~/Library/Application Support/spacedrive/daemon/daemon.sock`
+- Listens on a Unix socket at `~/Library/Application Support/wingdrive/daemon/daemon.sock`
 - Manages all libraries and background tasks
 - Can run multiple instances with `--instance` flag
 
@@ -60,10 +60,10 @@ sd daemon status
 sd daemon uninstall
 ```
 
-This creates a LaunchAgent at `~/Library/LaunchAgents/com.spacedrive.daemon.plist` that:
+This creates a LaunchAgent at `~/Library/LaunchAgents/com.wingdrive.daemon.plist` that:
 - Starts daemon on user login
 - Restarts if it crashes
-- Logs to `~/Library/Application Support/spacedrive/logs/`
+- Logs to `~/Library/Application Support/wingdrive/logs/`
 
 ### Multi-Instance Support
 
@@ -81,13 +81,13 @@ sd --instance personal start
 
 ## Configuration
 
-The CLI stores configuration in `~/Library/Application Support/spacedrive/cli.json`:
+The CLI stores configuration in `~/Library/Application Support/wingdrive/cli.json`:
 
 ```json
 {
   "current_library_id": "uuid-here",
   "update": {
-    "repo": "spacedriveapp/spacedrive-cli-releases",
+    "repo": "bernardopg/wingdrive",
     "channel": "stable"
   }
 }
@@ -151,12 +151,12 @@ sd update --force
 
 The update system uses a public GitHub repository containing only releases (no source code):
 
-1. Create public repo: `your-org/spacedrive-cli-releases`
+1. Create public repo: `your-org/wingdrive`
 2. For each release:
    - Create empty commit: `git commit --allow-empty -m "Release v0.1.0"`
    - Tag it: `git tag v0.1.0`
    - Create GitHub release with binaries as assets
-3. Configure CLI: `sd config set update.repo "your-org/spacedrive-cli-releases"`
+3. Configure CLI: `sd config set update.repo "your-org/wingdrive"`
 
 The CI workflow automatically builds binaries for:
 - macOS (arm64, x86_64)
@@ -353,7 +353,7 @@ sd update --force
 
 The daemon socket is located at:
 ```
-~/Library/Application Support/spacedrive/daemon/daemon.sock
+~/Library/Application Support/wingdrive/daemon/daemon.sock
 ```
 
 If connection fails:

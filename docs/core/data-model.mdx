@@ -3,7 +3,7 @@ title: Data Model
 sidebarTitle: Data Model
 ---
 
-Spacedrive's data model powers a Virtual Distributed File System (VDFS) that unifies files across all your devices. It enables instant organization, content deduplication, and powerful semantic search while maintaining performance at scale.
+WingDrive's data model powers a Virtual Distributed File System (VDFS) that unifies files across all your devices. It enables instant organization, content deduplication, and powerful semantic search while maintaining performance at scale.
 
 ## Core Design
 
@@ -20,7 +20,7 @@ The system separates concerns into distinct entities:
 
 ## Domain vs. Database Entity Models
 
-It is critical to understand the distinction between two data modeling layers in Spacedrive:
+It is critical to understand the distinction between two data modeling layers in WingDrive:
 
 - **Domain Models**: These are the rich objects used throughout the application's business logic. They contain computed fields and methods that provide a powerful, high-level interface to the underlying data. For example, the `domain::File` structure represents several database models such as `entities::entry`, `entities::content_identity`, and `entities::user_metadata`.
 - **Database Entity Models**: These are simpler structs that map directly to the database tables (e.g., `entities::entry`). They represent the raw, persisted state of the data and are optimized for storage and query performance.
@@ -65,7 +65,7 @@ This enum enables transparent operations across local filesystems, cloud storage
 
 ### Unified Addressing
 
-Spacedrive displays paths using a unified addressing scheme that matches industry standards:
+WingDrive displays paths using a unified addressing scheme that matches industry standards:
 
 ```rust
 // Display user-friendly URIs
@@ -230,7 +230,7 @@ UserMetadata can be scoped two ways:
 
 ## Semantic Tags
 
-Spacedrive uses a graph-based tagging system that understands context and relationships:
+WingDrive uses a graph-based tagging system that understands context and relationships:
 
 ```rust Expandable theme={null}
 pub struct Tag {
@@ -305,7 +305,7 @@ Tag hierarchies use closure tables for efficient ancestor/descendant queries, si
 
 ## Location
 
-Locations are directories that Spacedrive monitors:
+Locations are directories that WingDrive monitors:
 
 ```rust Expandable theme={null}
 pub struct Location {
@@ -340,7 +340,7 @@ pub struct Location {
 
 ## Device
 
-Devices represent machines in your Spacedrive network:
+Devices represent machines in your WingDrive network:
 
 ```rust Expandable theme={null}
 pub struct Device {

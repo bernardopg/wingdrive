@@ -1,6 +1,6 @@
 import {GearSix, Plus} from '@phosphor-icons/react';
 import type {Space} from '@sd/ts-client';
-import {DropdownMenu, SelectPill} from '@spacedrive/primitives';
+import {DropdownMenu, SelectPill} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {useCreateSpaceDialog} from './CreateSpaceModal';
 

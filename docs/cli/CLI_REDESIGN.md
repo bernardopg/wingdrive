@@ -1,4 +1,4 @@
-# Spacedrive CLI Redesign Plan
+# WingDrive CLI Redesign Plan
 
 ## Overview
 

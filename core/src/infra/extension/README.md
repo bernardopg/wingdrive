@@ -2,7 +2,7 @@
 
 **Status:** Basic structure integrated, compiling successfully
 
-This module provides Spacedrive's WebAssembly-based extension system, enabling secure, sandboxed plugins.
+This module provides WingDrive's WebAssembly-based extension system, enabling secure, sandboxed plugins.
 
 ## What's Implemented
 
@@ -127,7 +127,7 @@ Operation::execute()                  // EXISTING!
 ## Example Usage (Future)
 
 ```rust
-// In Spacedrive Core
+// In WingDrive Core
 let mut plugin_manager = PluginManager::new(core.clone(), plugins_dir);
 plugin_manager.load_plugin("finance").await?;
 
@@ -149,7 +149,7 @@ cd core && cargo check
 cd core && cargo test extension
 
 # Load test plugin (once implemented)
-cargo run --bin spacedrive extension load ./plugins/test-plugin
+cargo run --bin sd-cli -- extension load ./plugins/test-plugin
 ```
 
 ## Notes

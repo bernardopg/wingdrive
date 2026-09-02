@@ -17,6 +17,7 @@ import GoogleDrive from './GoogleDrive.png';
 import iCloud from './iCloud.png';
 import Mega from './Mega.png';
 import Transparent from './Transparent.png';
+import WingDriveLogo from './WingDriveLogo.svg';
 
 export {
 	AlphaBg,
@@ -32,5 +33,6 @@ export {
 	GoogleDrive,
 	Mega,
 	Transparent,
+	WingDriveLogo,
 	iCloud
 };

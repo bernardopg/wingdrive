@@ -5,7 +5,7 @@
 //!
 //! ## Features
 //! - Pre-paired devices (Alice & Bob)
-//! - Indexes Spacedrive source code for deterministic testing
+//! - Indexes WingDrive source code for deterministic testing
 //! - Event-driven architecture
 //! - Captures sync logs, databases, and event bus events
 //! - Timestamped snapshot folders for each run
@@ -39,13 +39,13 @@ async fn test_realtime_sync_alice_to_bob() -> anyhow::Result<()> {
 	// Phase 1: Add location on Alice
 	tracing::info!("=== Phase 1: Adding location on Alice ===");
 
-	// Use Spacedrive source code for deterministic testing across all environments
+	// Use WingDrive source code for deterministic testing across all environments
 	let test_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 		.parent()
 		.unwrap()
 		.to_path_buf();
 	let location_uuid = harness
-		.add_and_index_location_alice(test_path.to_str().unwrap(), "spacedrive")
+		.add_and_index_location_alice(test_path.to_str().unwrap(), "wingdrive")
 		.await?;
 
 	tracing::info!(
@@ -312,7 +312,7 @@ async fn test_realtime_sync_bob_to_alice() -> anyhow::Result<()> {
 		.await?;
 
 	// Add location on Bob (reverse direction)
-	// Use Spacedrive crates directory for deterministic testing
+	// Use WingDrive crates directory for deterministic testing
 	let project_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 		.parent()
 		.unwrap()
@@ -389,7 +389,7 @@ async fn test_concurrent_indexing() -> anyhow::Result<()> {
 		.await?;
 
 	// Add different locations on both devices simultaneously
-	// Use Spacedrive source code for deterministic testing
+	// Use WingDrive source code for deterministic testing
 	let project_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 		.parent()
 		.unwrap()
@@ -490,7 +490,7 @@ async fn test_content_identity_linkage() -> anyhow::Result<()> {
 		.await?;
 
 	// Index on Alice
-	// Use Spacedrive docs directory for deterministic testing
+	// Use WingDrive docs directory for deterministic testing
 	let project_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 		.parent()
 		.unwrap()

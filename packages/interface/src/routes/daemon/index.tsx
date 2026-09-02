@@ -99,7 +99,7 @@ export function DaemonManager() {
 				<div>
 					<h1 className="text-2xl font-semibold text-ink">Daemon Manager</h1>
 					<p className="text-sm text-ink-dull mt-1">
-						Control the Spacedrive daemon process
+						Control the WingDrive daemon process
 					</p>
 				</div>
 			</div>
@@ -216,7 +216,7 @@ export function DaemonManager() {
 						<p className="text-xs text-ink-dull mt-1">
 							On macOS, running background processes requires permission. If the daemon fails to
 							start automatically, check System Settings → General → Login Items & Extensions
-							and allow Spacedrive to run in the background.
+							and allow WingDrive to run in the background.
 						</p>
 						<button
 							onClick={handleOpenSettings}

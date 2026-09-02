@@ -1,6 +1,6 @@
 //! TypeScript Search Integration Test Bridge
 //!
-//! This test sets up a real Spacedrive daemon with indexed locations and ephemeral directories,
+//! This test sets up a real WingDrive daemon with indexed locations and ephemeral directories,
 //! then spawns TypeScript tests that perform search operations via the ts-client.
 //! This enables true end-to-end testing of the search functionality.
 

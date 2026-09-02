@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DotsThree } from "@phosphor-icons/react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { CircleButton } from "@spacedrive/primitives";
+import { CircleButton } from "@wingdrive/primitives";
 import { TopBarItem } from "./Context";
 
 interface OverflowButtonProps {

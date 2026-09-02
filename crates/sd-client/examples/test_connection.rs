@@ -1,27 +1,21 @@
-use sd_client::{SdPath, SpacedriveClient};
+use sd_client::{SdPath, WingDriveClient};
 use std::env;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-	// Get socket path and HTTP URL from environment or use defaults
-	let socket_path = env::var("SD_SOCKET_PATH").unwrap_or_else(|_| {
-		let home = env::var("HOME").expect("HOME not set");
-		format!(
-			"{}/Library/Application Support/spacedrive/daemon/daemon.sock",
-			home
-		)
-	});
+	// Get daemon and HTTP addresses from the environment or use defaults.
+	let socket_addr = env::var("SD_SOCKET_ADDR").unwrap_or_else(|_| "127.0.0.1:6969".to_string());
 
 	let http_url = env::var("SD_HTTP_URL").unwrap_or_else(|_| "http://127.0.0.1:54321".to_string());
 
 	let library_id = env::var("SD_LIBRARY_ID").expect("SD_LIBRARY_ID must be set");
 
-	println!("Connecting to Spacedrive daemon...");
-	println!("  Socket: {}", socket_path);
+	println!("Connecting to WingDrive daemon...");
+	println!("  Daemon: {}", socket_addr);
 	println!("  HTTP: {}", http_url);
 	println!("  Library: {}", library_id);
 
-	let mut client = SpacedriveClient::new(socket_path.into(), http_url);
+	let mut client = WingDriveClient::new(socket_addr, http_url);
 	client.set_library(library_id);
 
 	println!("\nQuerying media files...");

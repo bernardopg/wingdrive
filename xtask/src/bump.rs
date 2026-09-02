@@ -7,7 +7,7 @@ enum FileType {
 	Json,
 }
 
-/// All files that contain the Spacedrive product version
+/// All files that contain the WingDrive product version
 fn version_files(root: &Path) -> Vec<(PathBuf, FileType)> {
 	vec![
 		(root.join("core/Cargo.toml"), FileType::CargoToml),

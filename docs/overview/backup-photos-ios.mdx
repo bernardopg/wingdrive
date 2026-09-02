@@ -3,7 +3,7 @@ title: Back Up Photos from iPhone
 sidebarTitle: Back Up Photos
 ---
 
-Spacedrive provides automatic photo backup from your iPhone to any Mac, PC, or NAS you own. Your photos transfer directly between devices using encrypted peer-to-peer connections, keeping them private and under your control.
+WingDrive provides automatic photo backup from your iPhone to any Mac, PC, or NAS you own. Your photos transfer directly between devices using encrypted peer-to-peer connections, keeping them private and under your control.
 
 This guide covers setting up photo backup, configuring automatic transfers, and managing your photo library across devices.
 
@@ -14,21 +14,21 @@ Before starting, ensure you have:
 - iPhone running iOS 16 or later
 - Mac, Windows PC, or Linux machine as backup destination
 - Both devices on the same WiFi network (for initial setup)
-- Spacedrive installed on both devices
+- WingDrive installed on both devices
 - Sufficient storage space on destination device
 
 <Note>
 Photo backup works completely offline after initial pairing. No internet connection required for transfers.
 </Note>
 
-## Install Spacedrive on iPhone
+## Install WingDrive on iPhone
 
 <Steps>
 <Step title="Download from App Store">
-Search for "Spacedrive" on the App Store or visit [spacedrive.com/ios](https://spacedrive.com/ios) for a direct link.
+Search for "WingDrive" on the App Store or visit [WingDrive releases](https://github.com/bernardopg/wingdrive/releases) for a direct link.
 </Step>
 <Step title="Open the App">
-Launch Spacedrive and grant necessary permissions:
+Launch WingDrive and grant necessary permissions:
 - **Photos access** to read your photo library
 - **Local network** to find and connect to your devices
 - **Notifications** for backup status updates (optional)
@@ -39,7 +39,7 @@ Follow the setup wizard to create your library. Choose "Mobile Library" when pro
 </Steps>
 
 <Warning>
-Without photo access permission, Spacedrive cannot back up your photos. iOS requires explicit permission for privacy protection.
+Without photo access permission, WingDrive cannot back up your photos. iOS requires explicit permission for privacy protection.
 </Warning>
 
 ## Set Up Your Backup Destination
@@ -47,8 +47,8 @@ Without photo access permission, Spacedrive cannot back up your photos. iOS requ
 Configure the computer where photos will be stored:
 
 <Steps>
-<Step title="Open Spacedrive Desktop">
-Launch Spacedrive on your Mac, Windows, or Linux machine. Ensure the daemon is running (check status bar).
+<Step title="Open WingDrive Desktop">
+Launch WingDrive on your Mac, Windows, or Linux machine. Ensure the daemon is running (check status bar).
 </Step>
 <Step title="Create Backup Location">
 Navigate to Settings → Locations and add a folder for photo backups. Name it clearly like "iPhone Photos" or "Mobile Backup".
@@ -68,7 +68,7 @@ Connect your iPhone and computer for secure transfers:
 
 <Steps>
 <Step title="Start Pairing on iPhone">
-In Spacedrive iOS, tap the devices icon and select "Add Device". Your phone begins scanning for nearby Spacedrive instances.
+In WingDrive iOS, tap the devices icon and select "Add Device". Your phone begins scanning for nearby WingDrive instances.
 </Step>
 <Step title="Select Your Computer">
 Choose your computer from the discovered devices list. If not visible, ensure both devices are on the same network.
@@ -125,7 +125,7 @@ View real-time progress showing:
 - Individual file status
 </Step>
 <Step title="Keep App Active">
-For initial backup, keep Spacedrive open. Subsequent backups run in background.
+For initial backup, keep WingDrive open. Subsequent backups run in background.
 </Step>
 </Steps>
 
@@ -135,7 +135,7 @@ First backup may take hours depending on library size. A 10,000 photo library ty
 
 ## Manage Ongoing Backups
 
-Spacedrive handles incremental backups intelligently:
+WingDrive handles incremental backups intelligently:
 
 ### Automatic Detection
 The app identifies new photos since last backup. Only new items transfer, saving time and bandwidth.
@@ -144,7 +144,7 @@ The app identifies new photos since last backup. Only new items transfer, saving
 Content-based deduplication ensures the same photo never backs up twice, even if edited or renamed.
 
 ### Conflict Resolution
-If you organize photos on computer, Spacedrive preserves both versions without overwriting.
+If you organize photos on computer, WingDrive preserves both versions without overwriting.
 
 ### Storage Management
 Monitor backup status and storage usage:
@@ -208,7 +208,7 @@ Only backup:
 ### iPhone can't find computer
 - Verify both devices on same WiFi network
 - Disable VPNs temporarily
-- Check firewall allows Spacedrive
+- Check firewall allows WingDrive
 - Restart both devices
 
 ### Backup seems stuck
@@ -221,7 +221,7 @@ Only backup:
 - Confirm backup completed (check status)
 - Verify correct destination folder
 - Check if filters excluded some photos
-- Look in Spacedrive's trash for accidents
+- Look in WingDrive's trash for accidents
 
 ### Battery draining quickly
 - Enable "While Charging Only" option

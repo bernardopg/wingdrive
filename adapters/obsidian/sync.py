@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Obsidian/Markdown vault adapter for Spacedrive.
+Obsidian/Markdown vault adapter for WingDrive.
 
 Recursively scans a directory for .md files, extracts YAML frontmatter
 and body text, and emits notes. Detects [[wikilinks]] between notes and

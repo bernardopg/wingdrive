@@ -64,7 +64,7 @@ The build process automatically:
 Swift:
 
 ```swift
-let library = try await spacedrive.libraries.create(
+let library = try await wingdrive.libraries.create(
     CreateLibraryInput(name: "My Library", description: nil)
 )
 ```
@@ -72,7 +72,7 @@ let library = try await spacedrive.libraries.create(
 TypeScript:
 
 ```typescript
-const library = await spacedrive.libraries.create({
+const library = await wingdrive.libraries.create({
 	name: "My Library",
 });
 ```
@@ -384,15 +384,15 @@ A binary extracts all registered operations:
 ```rust
 // generate_swift_types binary
 fn main() {
-    let (operations, queries, types) = generate_spacedrive_api();
+    let (operations, queries, types) = generate_wingdrive_api();
 
     // Generate Swift code
     let swift_types = specta_swift::Swift::new().export(&types)?;
     let api_methods = generate_api_methods(&operations, &queries);
 
     // Write to Swift package
-    fs::write("SpacedriveTypes.swift", swift_types)?;
-    fs::write("SpacedriveAPI.swift", api_methods)?;
+    fs::write("WingDriveTypes.swift", swift_types)?;
+    fs::write("WingDriveAPI.swift", api_methods)?;
 }
 ```
 

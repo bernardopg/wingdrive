@@ -3,7 +3,7 @@ title: Unified Addressing
 sidebarTitle: Addressing
 ---
 
-Spacedrive uses a unified addressing scheme that works seamlessly across local devices, cloud storage, and content-addressed files. Every file has a single, intuitive URI that tells you exactly where it lives - whether it's on your laptop, in S3, or stored by content hash.
+WingDrive uses a unified addressing scheme that works seamlessly across local devices, cloud storage, and content-addressed files. Every file has a single, intuitive URI that tells you exactly where it lives - whether it's on your laptop, in S3, or stored by content hash.
 
 **Local devices:**
 
@@ -23,7 +23,7 @@ s3://my-bucket/photos/2024/vacation.jpg
 content://550e8400-e29b-41d4-a716-446655440000
 ```
 
-The same URI format works across all storage types, matching industry-standard cloud tools like AWS CLI and gsutil. Copy a path from Spacedrive and paste it directly into your terminal.
+The same URI format works across all storage types, matching industry-standard cloud tools like AWS CLI and gsutil. Copy a path from WingDrive and paste it directly into your terminal.
 
 ## URI Formats
 
@@ -35,7 +35,7 @@ Cloud files use the same URI format as their native tools:
 s3://my-bucket/photos/2024/vacation/IMG_0123.jpg
 gdrive://My Drive/Documents/Contract 2024.pdf
 onedrive://Documents/Budget Spreadsheet.xlsx
-dropbox://Apps/Spacedrive/backup-2024-10.zip
+dropbox://Apps/WingDrive/backup-2024-10.zip
 azblob://container/data/export-2024.csv
 gcs://my-bucket/logs/application-2024-10-15.log
 ```
@@ -50,7 +50,7 @@ Where:
 
 <Tip>
 	These URIs match AWS CLI, gsutil, and other cloud tools exactly. Copy a path
-	from Spacedrive and paste it into `aws s3 cp` without modification.
+	from WingDrive and paste it into `aws s3 cp` without modification.
 </Tip>
 
 ### Local Files - Device-Aware URIs
@@ -60,7 +60,7 @@ Local files include the device name for multi-device clarity:
 ```
 local://jamies-macbook/Users/james/Documents/report.pdf
 local://home-server/mnt/storage/media/movies/Inception.mkv
-local://work-desktop/C:/Projects/spacedrive/README.md
+local://work-desktop/C:/Projects/wingdrive/README.md
 ```
 
 **Pattern**: `local://{device-slug}/{path}`
@@ -86,11 +86,11 @@ content://550e8400-e29b-41d4-a716-446655440000
 
 **Pattern**: `content://{uuid}`
 
-This enables location-independent operations. The same photo stored on multiple devices and in cloud storage shares one content URI. Spacedrive resolves it to the most efficient available location.
+This enables location-independent operations. The same photo stored on multiple devices and in cloud storage shares one content URI. WingDrive resolves it to the most efficient available location.
 
 ## Device Slug System
 
-Spacedrive generates URL-safe slugs from device names to create stable, human-readable URIs.
+WingDrive generates URL-safe slugs from device names to create stable, human-readable URIs.
 
 ### Slug Generation
 
@@ -113,17 +113,17 @@ Examples:
 
 ### Slug Uniqueness
 
-Each device's slug must be unique within your Spacedrive network. The database enforces this with a unique constraint on the `slug` column. If you try to add a device with a duplicate name, you'll need to rename one device.
+Each device's slug must be unique within your WingDrive network. The database enforces this with a unique constraint on the `slug` column. If you try to add a device with a duplicate name, you'll need to rename one device.
 
 <Warning>
 	If two devices have the same name (e.g., both "MacBook Pro"), you must give
-	them distinct names before they can sync. Spacedrive will warn you during
+	them distinct names before they can sync. WingDrive will warn you during
 	pairing.
 </Warning>
 
 ### Resolution
 
-When parsing a `local://` URI, Spacedrive looks up the device by slug:
+When parsing a `local://` URI, WingDrive looks up the device by slug:
 
 ```rust
 // Parse: local://jamies-macbook/Users/james/file.txt
@@ -135,7 +135,7 @@ Currently, slug resolution only works for the current device. Remote device path
 
 ## How It Works
 
-Spacedrive maintains user-friendly URIs in the display layer while using efficient internal identifiers for operations.
+WingDrive maintains user-friendly URIs in the display layer while using efficient internal identifiers for operations.
 
 ### User-Facing Display
 
@@ -188,14 +188,14 @@ The service and identifier are stored directly in the `SdPath`, making cloud pat
 
 ## Cloud Service Schemes
 
-Spacedrive supports these cloud URI schemes:
+WingDrive supports these cloud URI schemes:
 
 | Service              | Scheme        | Example                                |
 | -------------------- | ------------- | -------------------------------------- |
 | Amazon S3            | `s3://`       | `s3://my-bucket/path/file.jpg`         |
 | Google Drive         | `gdrive://`   | `gdrive://My Drive/Documents/file.pdf` |
 | OneDrive             | `onedrive://` | `onedrive://Documents/file.xlsx`       |
-| Dropbox              | `dropbox://`  | `dropbox://Apps/Spacedrive/file.zip`   |
+| Dropbox              | `dropbox://`  | `dropbox://Apps/WingDrive/file.zip`   |
 | Azure Blob           | `azblob://`   | `azblob://container/data/file.csv`     |
 | Google Cloud Storage | `gcs://`      | `gcs://bucket/logs/file.log`           |
 | Backblaze B2         | `b2://`       | `b2://bucket/backups/file.tar`         |
@@ -328,7 +328,7 @@ let path = SdPath::Content {
 
 ## Industry Standard Alignment
 
-Spacedrive's addressing matches industry tools:
+WingDrive's addressing matches industry tools:
 
 **AWS CLI**:
 
@@ -351,7 +351,7 @@ az storage blob download --container container --name file.csv
 sd cp azblob://container/file.csv local://macbook/Desktop/file.csv
 ```
 
-The alignment eliminates context switching between tools. URIs copy-paste directly between Spacedrive and native cloud tools.
+The alignment eliminates context switching between tools. URIs copy-paste directly between WingDrive and native cloud tools.
 
 ## Benefits
 
@@ -390,7 +390,7 @@ Content URIs enable operations without knowing physical location:
 // Reference by content, not location
 let file = SdPath::Content { content_id };
 
-// Spacedrive finds the best location:
+// WingDrive finds the best location:
 // - Fastest device (SSD vs HDD)
 // - Lowest cost (local vs cloud egress)
 // - Highest availability
@@ -439,7 +439,7 @@ Choose distinct device names to avoid slug collisions. Include location or purpo
 
 ### Cloud Mount Points
 
-Spacedrive ensures cloud mount points are unique by appending `-2`, `-3` if collisions occur:
+WingDrive ensures cloud mount points are unique by appending `-2`, `-3` if collisions occur:
 
 ```
 s3://my-bucket      ← First S3 volume with this bucket

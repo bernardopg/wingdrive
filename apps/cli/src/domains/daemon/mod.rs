@@ -2,6 +2,17 @@ use anyhow::Result;
 use clap::Subcommand;
 use std::path::PathBuf;
 
+fn qualified_service_name(base: &str, instance: Option<&str>) -> String {
+	instance.map_or_else(|| base.to_string(), |instance| format!("{base}.{instance}"))
+}
+
+fn systemd_service_name(base: &str, instance: Option<&str>) -> String {
+	instance.map_or_else(
+		|| format!("{base}.service"),
+		|instance| format!("{base}@{instance}.service"),
+	)
+}
+
 #[derive(Subcommand, Debug)]
 pub enum DaemonCmd {
 	/// Install daemon to start automatically on login
@@ -33,11 +44,8 @@ async fn install_launchd_service(data_dir: PathBuf, instance: Option<String>) ->
 	fs::create_dir_all(&launch_agents_dir)?;
 
 	// Determine plist filename based on instance
-	let plist_name = if let Some(ref inst) = instance {
-		format!("com.spacedrive.daemon.{}.plist", inst)
-	} else {
-		"com.spacedrive.daemon.plist".to_string()
-	};
+	let label = qualified_service_name("com.wingdrive.daemon", instance.as_deref());
+	let plist_name = format!("{label}.plist");
 	let plist_path = launch_agents_dir.join(&plist_name);
 
 	// Get the current daemon binary path
@@ -73,12 +81,6 @@ async fn install_launchd_service(data_dir: PathBuf, instance: Option<String>) ->
 	}
 
 	// Build the plist XML
-	let label = if let Some(ref inst) = instance {
-		format!("com.spacedrive.daemon.{}", inst)
-	} else {
-		"com.spacedrive.daemon".to_string()
-	};
-
 	let plist_content = format!(
 		r#"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -152,35 +154,37 @@ async fn uninstall_launchd_service(instance: Option<String>) -> Result<()> {
 		dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Could not determine home directory"))?;
 	let launch_agents_dir = home.join("Library/LaunchAgents");
 
-	let plist_name = if let Some(ref inst) = instance {
-		format!("com.spacedrive.daemon.{}.plist", inst)
-	} else {
-		"com.spacedrive.daemon.plist".to_string()
-	};
-	let plist_path = launch_agents_dir.join(&plist_name);
+	let mut removed = false;
+	for label in [
+		qualified_service_name("com.wingdrive.daemon", instance.as_deref()),
+		qualified_service_name("com.spacedrive.daemon", instance.as_deref()),
+	] {
+		let plist_path = launch_agents_dir.join(format!("{label}.plist"));
+		if !plist_path.exists() {
+			continue;
+		}
 
-	if !plist_path.exists() {
+		let output = std::process::Command::new("launchctl")
+			.arg("unload")
+			.arg(&plist_path)
+			.output()?;
+
+		if !output.status.success() {
+			let stderr = String::from_utf8_lossy(&output.stderr);
+			println!(
+				"Warning: Failed to unload service (it may not be running): {}",
+				stderr
+			);
+		}
+
+		fs::remove_file(&plist_path)?;
+		removed = true;
+	}
+
+	if !removed {
 		println!("Daemon auto-start is not installed.");
 		return Ok(());
 	}
-
-	// Unload the service
-	let output = std::process::Command::new("launchctl")
-		.arg("unload")
-		.arg(&plist_path)
-		.output()?;
-
-	// Don't fail if unload fails (service might not be running)
-	if !output.status.success() {
-		let stderr = String::from_utf8_lossy(&output.stderr);
-		println!(
-			"Warning: Failed to unload service (it may not be running): {}",
-			stderr
-		);
-	}
-
-	// Remove the plist file
-	fs::remove_file(&plist_path)?;
 
 	println!("Daemon auto-start uninstalled successfully!");
 
@@ -193,30 +197,27 @@ async fn check_launchd_status(instance: Option<String>) -> Result<()> {
 		dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Could not determine home directory"))?;
 	let launch_agents_dir = home.join("Library/LaunchAgents");
 
-	let plist_name = if let Some(ref inst) = instance {
-		format!("com.spacedrive.daemon.{}.plist", inst)
-	} else {
-		"com.spacedrive.daemon.plist".to_string()
-	};
-	let plist_path = launch_agents_dir.join(&plist_name);
+	let service = [
+		qualified_service_name("com.wingdrive.daemon", instance.as_deref()),
+		qualified_service_name("com.spacedrive.daemon", instance.as_deref()),
+	]
+	.into_iter()
+	.find_map(|label| {
+		let path = launch_agents_dir.join(format!("{label}.plist"));
+		path.exists().then_some((label, path))
+	});
 
-	if !plist_path.exists() {
+	let Some((label, plist_path)) = service else {
 		println!("Daemon auto-start: Not installed");
 		println!();
 		println!("To install: sd-cli daemon install");
 		return Ok(());
-	}
+	};
 
 	println!("Daemon auto-start: Installed");
 	println!("LaunchAgent: {}", plist_path.display());
 
 	// Check if the service is loaded
-	let label = if let Some(ref inst) = instance {
-		format!("com.spacedrive.daemon.{}", inst)
-	} else {
-		"com.spacedrive.daemon".to_string()
-	};
-
 	let output = std::process::Command::new("launchctl")
 		.arg("list")
 		.arg(&label)
@@ -253,11 +254,7 @@ async fn install_launchd_service(data_dir: PathBuf, instance: Option<String>) ->
 	fs::create_dir_all(&systemd_user_dir)?;
 
 	// Determine service filename based on instance
-	let service_name = if let Some(ref inst) = instance {
-		format!("spacedrive-daemon@{}.service", inst)
-	} else {
-		"spacedrive-daemon.service".to_string()
-	};
+	let service_name = systemd_service_name("wingdrive-daemon", instance.as_deref());
 	let service_path = systemd_user_dir.join(&service_name);
 
 	// Get the current daemon binary path
@@ -369,34 +366,35 @@ async fn uninstall_launchd_service(instance: Option<String>) -> Result<()> {
 		dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Could not determine home directory"))?;
 	let systemd_user_dir = home.join(".config/systemd/user");
 
-	let service_name = if let Some(ref inst) = instance {
-		format!("spacedrive-daemon@{}.service", inst)
-	} else {
-		"spacedrive-daemon.service".to_string()
-	};
-	let service_path = systemd_user_dir.join(&service_name);
+	let service_names = [
+		systemd_service_name("wingdrive-daemon", instance.as_deref()),
+		systemd_service_name("spacedrive-daemon", instance.as_deref()),
+	];
+	let mut removed = false;
+	for service_name in service_names {
+		let service_path = systemd_user_dir.join(&service_name);
+		if !service_path.exists() {
+			continue;
+		}
 
-	if !service_path.exists() {
+		let _ = std::process::Command::new("systemctl")
+			.arg("--user")
+			.arg("stop")
+			.arg(&service_name)
+			.output();
+		let _ = std::process::Command::new("systemctl")
+			.arg("--user")
+			.arg("disable")
+			.arg(&service_name)
+			.output();
+		fs::remove_file(&service_path)?;
+		removed = true;
+	}
+
+	if !removed {
 		println!("Daemon auto-start is not installed.");
 		return Ok(());
 	}
-
-	// Stop the service
-	let _ = std::process::Command::new("systemctl")
-		.arg("--user")
-		.arg("stop")
-		.arg(&service_name)
-		.output();
-
-	// Disable the service
-	let _ = std::process::Command::new("systemctl")
-		.arg("--user")
-		.arg("disable")
-		.arg(&service_name)
-		.output();
-
-	// Remove the service file
-	fs::remove_file(&service_path)?;
 
 	// Reload systemd daemon
 	let _ = std::process::Command::new("systemctl")
@@ -415,19 +413,22 @@ async fn check_launchd_status(instance: Option<String>) -> Result<()> {
 		dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Could not determine home directory"))?;
 	let systemd_user_dir = home.join(".config/systemd/user");
 
-	let service_name = if let Some(ref inst) = instance {
-		format!("spacedrive-daemon@{}.service", inst)
-	} else {
-		"spacedrive-daemon.service".to_string()
-	};
-	let service_path = systemd_user_dir.join(&service_name);
+	let service = [
+		systemd_service_name("wingdrive-daemon", instance.as_deref()),
+		systemd_service_name("spacedrive-daemon", instance.as_deref()),
+	]
+	.into_iter()
+	.find_map(|service_name| {
+		let path = systemd_user_dir.join(&service_name);
+		path.exists().then_some((service_name, path))
+	});
 
-	if !service_path.exists() {
+	let Some((service_name, service_path)) = service else {
 		println!("Daemon auto-start: Not installed");
 		println!();
 		println!("To install: sd-cli daemon install");
 		return Ok(());
-	}
+	};
 
 	println!("Daemon auto-start: Installed");
 	println!("Service file: {}", service_path.display());
@@ -478,4 +479,21 @@ async fn check_launchd_status(_instance: Option<String>) -> Result<()> {
 	Err(anyhow::anyhow!(
 		"Daemon auto-start is currently only supported on macOS and Linux."
 	))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn preserves_named_service_instances() {
+		assert_eq!(
+			qualified_service_name("com.wingdrive.daemon", Some("photos")),
+			"com.wingdrive.daemon.photos"
+		);
+		assert_eq!(
+			systemd_service_name("wingdrive-daemon", Some("photos")),
+			"wingdrive-daemon@photos.service"
+		);
+	}
 }

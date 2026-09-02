@@ -6,7 +6,7 @@ fn main() {
 	#[cfg(target_os = "macos")]
 	{
 		let project_root = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
-		let icon_source = format!("{}/../Spacedrive.icon", project_root);
+		let icon_source = format!("{}/../WingDrive.icon", project_root);
 		let gen_dir = format!("{}/gen", project_root);
 
 		// Create gen directory
@@ -31,7 +31,7 @@ fn main() {
 					"--output-partial-info-plist",
 					&format!("{}/partial.plist", gen_dir),
 					"--app-icon",
-					"Spacedrive",
+					"WingDrive",
 					"--include-all-app-icons",
 					"--enable-on-demand-resources",
 					"NO",
@@ -50,10 +50,10 @@ fn main() {
 			if !output.status.success() {
 				eprintln!("actool failed: {}", String::from_utf8_lossy(&output.stderr));
 			} else {
-				println!("Successfully compiled Spacedrive.icon to Assets.car");
+				println!("Successfully compiled WingDrive.icon to Assets.car");
 			}
 		} else {
-			println!("cargo:warning=Spacedrive.icon not found at {}", icon_source);
+			println!("cargo:warning=WingDrive.icon not found at {}", icon_source);
 		}
 	}
 

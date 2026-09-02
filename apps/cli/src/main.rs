@@ -79,11 +79,11 @@ fn reset_spacedrive_v2_data(data_dir: &Path) -> Result<()> {
 
 	// List of specific WingDrive v2 files and directories to remove
 	let v2_items = [
-		"spacedrive.json", // Main app config
-		"device.json",     // Device config
-		"libraries",       // All v2 libraries
-		"logs",            // Application logs
-		"job_logs",        // Job logs
+		"wingdrive.json", // Main app config
+		"device.json",    // Device config
+		"libraries",      // All v2 libraries
+		"logs",           // Application logs
+		"job_logs",       // Job logs
 	];
 
 	for item in &v2_items {

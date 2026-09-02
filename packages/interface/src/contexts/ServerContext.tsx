@@ -11,7 +11,7 @@ import { useClient } from "./SpacedriveContext";
 /**
  * Server context provides reactive access to the daemon server URL and current library ID.
  *
- * This replaces the unreliable window.__SPACEDRIVE_SERVER_URL__ and __SPACEDRIVE_LIBRARY_ID__
+ * This replaces the unreliable window.__WINGDRIVE_SERVER_URL__ and __WINGDRIVE_LIBRARY_ID__
  * globals that were injected via Tauri's window.eval(). The old approach had race conditions
  * where components would render before the injection completed, resulting in null values.
  */

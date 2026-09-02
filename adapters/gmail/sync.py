@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Gmail adapter for Spacedrive.
+Gmail adapter for WingDrive.
 
 Syncs threads, messages, labels, and attachments from Gmail via the Gmail API.
 Uses only Python stdlib (no pip dependencies).
@@ -432,7 +432,7 @@ def process_message(msg: dict, user: str, threads_seen: set):
 
 
 def main():
-    # Read input from Spacedrive
+    # Read input from WingDrive
     try:
         input_data = json.loads(sys.stdin.read())
     except json.JSONDecodeError as e:

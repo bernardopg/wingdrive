@@ -4,7 +4,7 @@ import {
 	UseQueryOptions,
 	UseMutationOptions,
 } from "@tanstack/react-query";
-import { useSpacedriveClient } from "./useClient";
+import { useWingDriveClient } from "./useClient";
 
 /**
  * Hook for executing core-level queries (no library context).
@@ -14,7 +14,7 @@ export function useCoreQuery<T = unknown>(
 	input: unknown = {},
 	options?: Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">,
 ) {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 
 	return useQuery<T, Error>({
 		queryKey: ["core", method, input],
@@ -32,7 +32,7 @@ export function useLibraryQuery<T = unknown>(
 	input: unknown = {},
 	options?: Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">,
 ) {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const libraryId = client.getCurrentLibraryId();
 
 	return useQuery<T, Error>({
@@ -50,7 +50,7 @@ export function useCoreAction<TInput = unknown, TOutput = unknown>(
 	method: string,
 	options?: UseMutationOptions<TOutput, Error, TInput>,
 ) {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 
 	return useMutation<TOutput, Error, TInput>({
 		mutationFn: (input: TInput) =>
@@ -66,7 +66,7 @@ export function useLibraryAction<TInput = unknown, TOutput = unknown>(
 	method: string,
 	options?: UseMutationOptions<TOutput, Error, TInput>,
 ) {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 
 	return useMutation<TOutput, Error, TInput>({
 		mutationFn: (input: TInput) =>

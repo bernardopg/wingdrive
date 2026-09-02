@@ -1,6 +1,6 @@
 # Log Analyzer
 
-A powerful log analysis system for Spacedrive that parses, patterns, and collapses repetitive log entries into queryable insights.
+A powerful log analysis system for WingDrive that parses, patterns, and collapses repetitive log entries into queryable insights.
 
 ## Features
 
@@ -12,7 +12,7 @@ A powerful log analysis system for Spacedrive that parses, patterns, and collaps
 - **Queryable Storage**: SQLite database for advanced queries with sequences table
 - **Timeline Generation**: Visual timeline of log activity
 - **Multiple Output Formats**: Markdown reports, JSON export, and phase summaries
-- **Extreme Compression**: 99.5% compression achieved on real Spacedrive logs (73,028 lines → 398 sequences)
+- **Extreme Compression**: 99.5% compression achieved on real WingDrive logs (73,028 lines → 398 sequences)
 
 ## Quick Start
 
@@ -198,7 +198,7 @@ cargo test -p log-analyzer
 
 ## Performance
 
-Real-world results from Spacedrive sync test logs:
+Real-world results from WingDrive sync test logs:
 
 - **Input**: 73,028 log lines (40MB+)
 - **Parsing**: ~1 second

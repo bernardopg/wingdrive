@@ -20,9 +20,9 @@ async fn alice_pairing_scenario() {
 	}
 
 	// Set test directory for file-based discovery
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-pairing-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-pairing-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-pairing-test/alice");
+	let data_dir = PathBuf::from("/tmp/wingdrive-pairing-test/alice");
 	let device_name = "Alice's Test Device";
 
 	println!("Alice: Starting Core pairing test");
@@ -76,13 +76,13 @@ async fn alice_pairing_scenario() {
 	);
 
 	// Write pairing code to shared location for Bob to read
-	std::fs::create_dir_all("/tmp/spacedrive-pairing-test").unwrap();
+	std::fs::create_dir_all("/tmp/wingdrive-pairing-test").unwrap();
 	std::fs::write(
-		"/tmp/spacedrive-pairing-test/pairing_code.txt",
+		"/tmp/wingdrive-pairing-test/pairing_code.txt",
 		&pairing_code,
 	)
 	.unwrap();
-	println!("Alice: Pairing code written to /tmp/spacedrive-pairing-test/pairing_code.txt");
+	println!("Alice: Pairing code written to /tmp/wingdrive-pairing-test/pairing_code.txt");
 
 	// Wait for pairing completion (Alice waits for Bob to connect)
 	println!("Alice: Waiting for pairing to complete...");
@@ -115,7 +115,7 @@ async fn alice_pairing_scenario() {
 			println!("PAIRING_SUCCESS: Alice's Test Device connected to Bob successfully");
 
 			// Write success marker for orchestrator to detect
-			std::fs::write("/tmp/spacedrive-pairing-test/alice_success.txt", "success").unwrap();
+			std::fs::write("/tmp/wingdrive-pairing-test/alice_success.txt", "success").unwrap();
 
 			// Wait a bit longer to give Bob time to detect the connection before Alice exits
 			println!("Alice: Waiting for Bob to also detect the connection...");
@@ -146,9 +146,9 @@ async fn bob_pairing_scenario() {
 	}
 
 	// Set test directory for file-based discovery
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-pairing-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-pairing-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-pairing-test/bob");
+	let data_dir = PathBuf::from("/tmp/wingdrive-pairing-test/bob");
 	let device_name = "Bob's Test Device";
 
 	println!("Bob: Starting Core pairing test");
@@ -180,7 +180,7 @@ async fn bob_pairing_scenario() {
 	// Wait for initiator to create pairing code
 	println!("Bob: Looking for pairing code...");
 	let pairing_code = loop {
-		if let Ok(code) = std::fs::read_to_string("/tmp/spacedrive-pairing-test/pairing_code.txt") {
+		if let Ok(code) = std::fs::read_to_string("/tmp/wingdrive-pairing-test/pairing_code.txt") {
 			break code.trim().to_string();
 		}
 		tokio::time::sleep(Duration::from_millis(500)).await;
@@ -239,7 +239,7 @@ async fn bob_pairing_scenario() {
 			tokio::time::sleep(Duration::from_secs(10)).await;
 
 			// Write success marker for orchestrator to detect
-			std::fs::write("/tmp/spacedrive-pairing-test/bob_success.txt", "success").unwrap();
+			std::fs::write("/tmp/wingdrive-pairing-test/bob_success.txt", "success").unwrap();
 			break;
 		}
 
@@ -259,7 +259,7 @@ async fn bob_pairing_scenario() {
 /// Main test orchestrator - spawns cargo test subprocesses
 #[tokio::test]
 async fn test_device_pairing() {
-	const PAIRING_CODE_PATH: &str = "/tmp/spacedrive-pairing-test/pairing_code.txt";
+	const PAIRING_CODE_PATH: &str = "/tmp/wingdrive-pairing-test/pairing_code.txt";
 
 	// Clean up stale pairing code file from previous test runs
 	// This prevents Bob from reading old data and fixes the file I/O race condition
@@ -270,8 +270,8 @@ async fn test_device_pairing() {
 	println!("Testing Core pairing with cargo test subprocess framework");
 
 	// Clean up any old pairing files to avoid race conditions
-	let _ = std::fs::remove_dir_all("/tmp/spacedrive-pairing-test");
-	std::fs::create_dir_all("/tmp/spacedrive-pairing-test").unwrap();
+	let _ = std::fs::remove_dir_all("/tmp/wingdrive-pairing-test");
+	std::fs::create_dir_all("/tmp/wingdrive-pairing-test").unwrap();
 
 	let mut runner = CargoTestRunner::for_test_file("device_pairing_test")
 		.with_timeout(Duration::from_secs(180))
@@ -299,11 +299,11 @@ async fn test_device_pairing() {
 	let result = runner
 		.wait_for_success(|_outputs| {
 			let alice_success =
-				std::fs::read_to_string("/tmp/spacedrive-pairing-test/alice_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-pairing-test/alice_success.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 			let bob_success =
-				std::fs::read_to_string("/tmp/spacedrive-pairing-test/bob_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-pairing-test/bob_success.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 

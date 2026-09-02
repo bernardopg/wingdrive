@@ -1,9 +1,9 @@
 services:
-  spacedrive:
+  wingdrive:
     build:
       context: ../..
       dockerfile: apps/server/Dockerfile
-    container_name: spacedrive-server
+	container_name: wingdrive-server
     restart: unless-stopped
 
     # Ports
@@ -13,7 +13,7 @@ services:
 
     # Volumes
     volumes:
-      - spacedrive-data:/data
+		- wingdrive-data:/data
       # Optional: Mount your file systems here
       # - /mnt/storage:/storage:ro
 
@@ -56,5 +56,5 @@ services:
           memory: 512M
 
 volumes:
-  spacedrive-data:
+	wingdrive-data:
     driver: local

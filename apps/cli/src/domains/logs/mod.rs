@@ -168,12 +168,7 @@ fn colorize_level(level: &str) -> String {
 
 /// Get the daemon log file path by querying the daemon's data directory
 async fn get_daemon_log_path(_ctx: &Context) -> Result<std::path::PathBuf> {
-	// Try to get the data directory from the daemon
-	// For now, use the standard location
-	let home_dir = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
-	let data_dir =
-		std::path::PathBuf::from(home_dir).join("Library/Application Support/spacedrive");
-
+	let data_dir = sd_core::config::default_data_dir()?;
 	let logs_dir = data_dir.join("logs");
 
 	// Check for today's log file first (with date suffix due to daily rotation)

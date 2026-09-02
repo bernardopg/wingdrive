@@ -7,7 +7,7 @@ export function EmptyChatHero() {
 			<p className="text-ink-dull mt-2 text-sm">
 				Learn how to be productive with Spacebot. {''}
 				<a
-					href="https://github.com/spacedriveapp/spacebot"
+					href="https://github.com/bernardopg/wingdrive/tree/main/docs/core/design"
 					target="_blank"
 					rel="noreferrer"
 					className="text-ink-dull hover:text-ink underline underline-offset-4 transition-colors"

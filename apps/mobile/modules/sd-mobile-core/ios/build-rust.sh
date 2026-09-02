@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-# Build Spacedrive Mobile Core Rust libraries
+# Build WingDrive Mobile Core Rust libraries
 # This script is called by CocoaPods during the build process
 
-echo "Building Spacedrive Mobile Core..."
+echo "Building WingDrive Mobile Core..."
 
 # Navigate to workspace root
 WORKSPACE_ROOT="$PODS_TARGET_SRCROOT/../../../../.."

@@ -1,4 +1,4 @@
-# Spacedrive SDK API Reference
+# WingDrive SDK API Reference
 
 **Status:** Stubs for type-checking (implementations are `todo!()`)
 **Purpose:** Full API surface from `docs/sdk/sdk.md` - allows extensions to compile

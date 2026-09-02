@@ -14,7 +14,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from "@spacedrive/primitives";
+} from "@wingdrive/primitives";
 import type {
   IndexMode,
   LocationAddInput,

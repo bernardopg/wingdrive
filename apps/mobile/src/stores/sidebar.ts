@@ -55,7 +55,7 @@ export const useSidebarStore = create<SidebarStore>()(
 			setDrawerOpen: (open) => set({ isDrawerOpen: open }),
 		}),
 		{
-			name: "spacedrive-sidebar",
+			name: "wingdrive-sidebar",
 			storage: createJSONStorage(() => asyncStorageAdapter),
 			partialize: (state) => ({
 				currentLibraryId: state.currentLibraryId,

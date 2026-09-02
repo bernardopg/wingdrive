@@ -91,7 +91,7 @@ impl ImageHandler for PdfHandler {
 			} else {
 				&LANDSCAPE_CONFIG
 			})?
-			.as_image();
+			.as_image()?;
 
 		Ok(image)
 	}

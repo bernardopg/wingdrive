@@ -1,4 +1,4 @@
-//! Build automation tasks for Spacedrive
+//! Build automation tasks for WingDrive
 //!
 //! This crate provides build tasks using the xtask pattern - a Rust-native
 //! approach to build automation. No bash scripts, no JavaScript, no external tools.
@@ -50,7 +50,7 @@ fn find_workspace_root() -> Result<std::path::PathBuf> {
 
 		if !current.pop() {
 			anyhow::bail!(
-				"Could not find workspace root. Please run from within the Spacedrive workspace."
+				"Could not find workspace root. Please run from within the WingDrive workspace."
 			);
 		}
 	}
@@ -122,7 +122,7 @@ fn main() -> Result<()> {
 /// This replaces the old `pnpm prep` workflow with a pure Rust implementation.
 /// It downloads native dependencies and generates the cargo config.
 fn setup() -> Result<()> {
-	println!("Setting up Spacedrive development environment...");
+	println!("Setting up WingDrive development environment...");
 	println!();
 
 	let project_root = find_workspace_root()?;
@@ -375,7 +375,7 @@ fn setup() -> Result<()> {
 /// The resulting XCFramework is placed in `apps/ios/sd-ios-core/` where
 /// Xcode can automatically use it.
 fn build_ios() -> Result<()> {
-	println!("Building Spacedrive v2 Core XCFramework for iOS...");
+	println!("Building WingDrive v2 Core XCFramework for iOS...");
 	println!();
 
 	let project_root = find_workspace_root()?;
@@ -527,7 +527,7 @@ fn build_ios() -> Result<()> {
 /// For iOS: Builds static libraries for device and simulator targets
 /// For Android: Builds shared libraries for arm64-v8a (and optionally x86_64)
 fn build_mobile() -> Result<()> {
-	println!("Building Spacedrive Mobile Core for React Native...");
+	println!("Building WingDrive Mobile Core for React Native...");
 	println!();
 
 	let project_root = find_workspace_root()?;
@@ -668,7 +668,7 @@ fn create_framework_info_plist(framework_name: &str, platform: &str) -> String {
     <key>CFBundleExecutable</key>
     <string>{}</string>
     <key>CFBundleIdentifier</key>
-    <string>com.spacedrive.core</string>
+	<string>com.wingdrive.core</string>
     <key>CFBundleName</key>
     <string>{}</string>
     <key>CFBundlePackageType</key>

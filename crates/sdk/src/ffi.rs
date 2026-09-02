@@ -1,8 +1,8 @@
-//! Low-level FFI bindings to Spacedrive host functions
+//! Low-level FFI bindings to WingDrive host functions
 //!
 //! This module is internal - extension developers should use the high-level API.
 
-// Import Spacedrive host functions
+// Import WingDrive host functions
 #[link(wasm_import_module = "spacedrive")]
 extern "C" {
 	fn spacedrive_log(level: u32, msg_ptr: *const u8, msg_len: usize);

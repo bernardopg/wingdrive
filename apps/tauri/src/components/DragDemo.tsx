@@ -198,7 +198,7 @@ export function DragDemo() {
 						{isHovered ? "Drop files here" : "Drag files here"}
 					</div>
 					<div className="text-sm text-gray-400 mt-1">
-						This drop zone accepts files from other Spacedrive
+						This drop zone accepts files from other WingDrive
 						windows
 					</div>
 				</div>
@@ -254,7 +254,7 @@ export function DragDemo() {
 						drag
 					</li>
 					<li>
-						Drop zones in other Spacedrive windows can receive the
+						Drop zones in other WingDrive windows can receive the
 						dragged files
 					</li>
 					<li>

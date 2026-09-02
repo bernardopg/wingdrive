@@ -20,7 +20,7 @@ pub async fn boot_isolated_with_core(
 	let bench_data_dir = override_data_dir.unwrap_or_else(|| {
 		dirs::data_dir()
 			.unwrap_or(std::env::temp_dir())
-			.join("spacedrive-bench")
+			.join("wingdrive-bench")
 			.join(scenario_name)
 	});
 	std::fs::create_dir_all(&bench_data_dir)

@@ -1,5 +1,5 @@
 import type {SdPath} from '@sd/ts-client';
-import {toast} from '@spacedrive/primitives';
+import {toast} from '@wingdrive/primitives';
 import {useEffect, useRef} from 'react';
 import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
 import {usePlatform} from '../../../contexts/PlatformContext';
@@ -12,7 +12,7 @@ const REJECTION_MESSAGES: Record<ExternalDropRejectionReason, string> = {
 	'no-files': 'No importable files were dropped.',
 	'no-destination': 'Open a physical folder before dropping files.',
 	'not-physical':
-		'Files from outside Spacedrive can only be dropped into a physical folder.'
+		'Files from outside WingDrive can only be dropped into a physical folder.'
 };
 
 /**

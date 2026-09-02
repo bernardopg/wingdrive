@@ -40,7 +40,7 @@ type PendingRequest = {
 let requestCounter = 0;
 
 /**
- * Transport layer for communicating with the embedded Spacedrive core.
+ * Transport layer for communicating with the embedded WingDrive core.
  * Batches requests for efficiency and handles JSON-RPC protocol.
  */
 export class ReactNativeTransport {

@@ -11,7 +11,7 @@ import {
 	type PortalConversationSummary,
 	type TypingStateEvent
 } from '@spacebot/api-client';
-import {usePopover} from '@spacedrive/primitives';
+import {usePopover} from '@wingdrive/primitives';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {
 	createContext,
@@ -32,19 +32,19 @@ export const primaryItems = [
 ];
 
 export const projects = [
-	{name: 'Spacedrive', detail: 'Main workspace', ball: BallBlue},
+	{name: 'WingDrive', detail: 'Main workspace', ball: BallBlue},
 	{name: 'Spacebot Runtime', detail: 'Remote control plane', ball: Ball},
 	{name: 'Hosted Platform', detail: 'Deploy and observe', ball: Ball}
 ];
 
 export const agents = [
-	{id: 'main', name: 'Star', detail: 'Spacedrive COO'},
+	{id: 'main', name: 'Star', detail: 'WingDrive COO'},
 	{id: 'operations', name: 'Operations', detail: 'Scheduling and triage'},
 	{id: 'builder', name: 'Builder', detail: 'Code and tooling'}
 ];
 
 export const projectOptions = [
-	'Spacedrive v3',
+	'WingDrive v3',
 	'Spacebot Runtime',
 	'Hosted Platform'
 ];

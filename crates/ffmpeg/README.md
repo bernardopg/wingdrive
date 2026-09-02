@@ -3,7 +3,7 @@
 Rust implementation of a thumbnail generation for video files using FFmpeg.
 Based on https://github.com/dirkvdb/ffmpegthumbnailer
 
-For now only implements the minimum API for Spacedrive needs. PRs are welcome
+For now only implements the minimum API for WingDrive needs. PRs are welcome
 
 ## Usage
 

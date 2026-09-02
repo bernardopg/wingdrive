@@ -39,7 +39,7 @@ impl RequestMetadata {
 			timestamp: chrono::Utc::now(),
 			source: RequestSource::Cli,
 			client_ip: None,
-			user_agent: Some("Spacedrive CLI".to_string()),
+			user_agent: Some("WingDrive CLI".to_string()),
 			metadata: std::collections::HashMap::new(),
 		}
 	}
@@ -51,7 +51,7 @@ impl RequestMetadata {
 			timestamp: chrono::Utc::now(),
 			source: RequestSource::Swift,
 			client_ip: None,
-			user_agent: Some("Spacedrive macOS".to_string()),
+			user_agent: Some("WingDrive macOS".to_string()),
 			metadata: std::collections::HashMap::new(),
 		}
 	}

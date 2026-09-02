@@ -1,7 +1,7 @@
 {
 	"$schema": "../gen/schemas/desktop-schema.json",
 	"identifier": "default",
-	"description": "Default permissions for Spacedrive",
+	"description": "Default permissions for WingDrive",
 	"windows": [
 		"main",
 		"spacebot",

@@ -1,6 +1,6 @@
 import {ArrowDown, ArrowUp, DotsThree, EyeSlash} from '@phosphor-icons/react';
 import type {Volume} from '@sd/ts-client';
-import {CircleButton} from '@spacedrive/primitives';
+import {CircleButton} from '@wingdrive/primitives';
 import {motion} from 'framer-motion';
 import {useEffect, useState} from 'react';
 import {useVolumeContextMenu} from '../../components/SpacesSidebar/hooks/useVolumeContextMenu';

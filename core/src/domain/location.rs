@@ -1,6 +1,6 @@
 //! Location - an indexed directory within a library
 //!
-//! Locations are directories that Spacedrive actively monitors and indexes.
+//! Locations are directories that WingDrive actively monitors and indexes.
 //! They can be on any device and are addressed using SdPath.
 
 use crate::domain::addressing::SdPath;
@@ -11,7 +11,7 @@ use specta::Type;
 use std::time::Duration;
 use uuid::Uuid;
 
-/// An indexed directory that Spacedrive monitors
+/// An indexed directory that WingDrive monitors
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct Location {
 	/// Unique identifier

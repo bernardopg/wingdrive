@@ -5,11 +5,11 @@ sidebarTitle: Security & Sync
 
 ## A Secure and Synchronized Ecosystem
 
-Spacedrive extensions are designed to be powerful, but also secure and well-behaved citizens of the user's digital ecosystem. This is achieved through a multi-layered security model and deep integration with Spacedrive's native sync capabilities.
+WingDrive extensions are designed to be powerful, but also secure and well-behaved citizens of the user's digital ecosystem. This is achieved through a multi-layered security model and deep integration with WingDrive's native sync capabilities.
 
 ### Migration Security
 
-When an extension needs to change its database schema, it does so through a migration system that is carefully controlled by the Spacedrive core.
+When an extension needs to change its database schema, it does so through a migration system that is carefully controlled by the WingDrive core.
 
 - **SQL Validation**: All migration SQL is parsed and validated before execution. An extension can only modify its own tables (i.e., those prefixed with `ext_{extension_id}_`).
 - **Restricted Operations**: Extensions are only allowed to perform a specific set of DDL operations (`CREATE TABLE`, `ALTER TABLE`, etc.). Any attempts to modify core tables or other extensions' tables are blocked.
@@ -40,11 +40,11 @@ The SDK's query APIs use prepared statements to prevent SQL injection vulnerabil
 
 ## Extension Model Sync
 
-Extension models are first-class participants in Spacedrive's leaderless, hybrid sync system. This means that data created by an extension on one device will automatically sync to all other devices.
+Extension models are first-class participants in WingDrive's leaderless, hybrid sync system. This means that data created by an extension on one device will automatically sync to all other devices.
 
 ### Sync Strategies
 
-Spacedrive uses two primary sync strategies, and extensions can choose the appropriate one for each of their models:
+WingDrive uses two primary sync strategies, and extensions can choose the appropriate one for each of their models:
 
 1.  **State-Based Sync (`device_owned`)**: Used for data that is owned by a single device. Only the owning device can modify the data, and other devices receive read-only copies. This is useful for device-specific state, like the progress of a local analysis job.
 
@@ -53,6 +53,6 @@ Spacedrive uses two primary sync strategies, and extensions can choose the appro
 ### How It Works
 
 - **`Syncable` Trait**: The `#[model]` macro automatically implements the `Syncable` trait for your models, which integrates them into the sync system.
-- **Shared Infrastructure**: Extension models use the same sync infrastructure (database tables and network protocol) as core Spacedrive models. The `model_type` field in the sync log distinguishes between core models and extension models.
+- **Shared Infrastructure**: Extension models use the same sync infrastructure (database tables and network protocol) as core WingDrive models. The `model_type` field in the sync log distinguishes between core models and extension models.
 - **Dependency Resolution**: The sync system can handle dependencies between models. For example, if a `FaceDetection` model depends on a `Person` model, the `Person` model will be synced first.
 - **Conflict Resolution**: For shared models, conflicts are automatically resolved using HLCs to determine which change came last. Last-write-wins is the default strategy.

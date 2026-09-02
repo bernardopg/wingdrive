@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Input } from "@spacedrive/primitives";
+import { Input } from "@wingdrive/primitives";
 import type { File } from "@sd/ts-client";
 import clsx from "clsx";
 

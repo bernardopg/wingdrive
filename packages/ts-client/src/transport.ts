@@ -1,5 +1,5 @@
 /**
- * Platform-agnostic transport layer for Spacedrive client
+ * Platform-agnostic transport layer for WingDrive client
  * Uses Bun APIs for Unix sockets and Tauri invoke for browser
  */
 

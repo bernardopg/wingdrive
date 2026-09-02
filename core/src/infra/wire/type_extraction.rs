@@ -182,10 +182,10 @@ pub fn generate_spacedrive_api() -> (Vec<OperationMetadata>, Vec<QueryMetadata>,
 	(operations, queries, collection)
 }
 
-/// Generate the complete Spacedrive API structure as a Specta-compatible type
+/// Generate the complete WingDrive API structure as a Specta-compatible type
 ///
 /// This creates a runtime representation of our API structure that Specta can export.
-/// Similar to rspc's approach with TypesOrType, but tailored for Spacedrive's needs.
+/// Similar to rspc's approach with TypesOrType, but tailored for WingDrive's needs.
 pub fn create_spacedrive_api_structure(
 	operations: &[OperationMetadata],
 	queries: &[QueryMetadata],
@@ -263,7 +263,7 @@ pub fn create_spacedrive_api_structure(
 	}
 }
 
-/// Represents the complete Spacedrive API structure for code generation
+/// Represents the complete WingDrive API structure for code generation
 pub struct SpacedriveApiStructure {
 	pub core_actions: Vec<ApiOperationType>,
 	pub library_actions: Vec<ApiOperationType>,

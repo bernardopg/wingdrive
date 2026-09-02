@@ -1,12 +1,12 @@
 # sd-fs-watcher
 
-Platform-agnostic filesystem watcher for Spacedrive.
+Platform-agnostic filesystem watcher for WingDrive.
 
 ## Overview
 
 `sd-fs-watcher` provides a clean, storage-agnostic interface for watching filesystem changes. It handles platform-specific quirks (like macOS rename detection) internally and emits normalized events.
 
-This crate is designed to be the foundation of Spacedrive's filesystem event system, but it has no knowledge of:
+This crate is designed to be the foundation of WingDrive's filesystem event system, but it has no knowledge of:
 
 - Databases or ORM entities
 - Libraries or locations
@@ -161,7 +161,7 @@ if let Some(true) = event.is_dir() {
 }
 ```
 
-## Integration with Spacedrive
+## Integration with WingDrive
 
 This crate is designed to be consumed by higher-level services:
 

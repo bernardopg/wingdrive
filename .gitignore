@@ -173,6 +173,15 @@ out
 .nuxt
 dist
 
+# Vendored WingDrive UI packages ship compiled output so installs never need
+# the original SpaceUI repository or registry packages.
+!packages/wingdrive-ai/dist/
+!packages/wingdrive-ai/dist/**
+!packages/wingdrive-primitives/dist/
+!packages/wingdrive-primitives/dist/**
+!packages/wingdrive-tokens/dist/
+!packages/wingdrive-tokens/dist/**
+
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js

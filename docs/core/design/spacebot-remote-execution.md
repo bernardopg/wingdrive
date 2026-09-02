@@ -1,16 +1,16 @@
-# Spacebot Remote Execution Over Spacedrive
+# Spacebot Remote Execution Over WingDrive
 
 ## Purpose
 
-Define how a single Spacebot instance can operate across many user devices by using Spacedrive as the permission, transport, and execution layer.
+Define how a single Spacebot instance can operate across many user devices by using WingDrive as the permission, transport, and execution layer.
 
 This design assumes the normal long-term deployment model:
 
 - one Spacebot instance
-- one paired Spacedrive node owned by that Spacebot instance
-- many user Spacedrive devices in the same library
+- one paired WingDrive node owned by that Spacebot instance
+- many user WingDrive devices in the same library
 
-Spacedrive becomes the system that decides what the agent can access, on which devices, and for which operations.
+WingDrive becomes the system that decides what the agent can access, on which devices, and for which operations.
 
 ## Decision
 
@@ -18,16 +18,16 @@ Spacebot should never directly own the multi-device graph.
 
 Instead:
 
-- every Spacebot instance must be paired to a Spacedrive node
-- that paired Spacedrive node is Spacebot's portal into the user's library
-- all remote file access, shell access, future computer use, and other device-local execution go through Spacedrive
-- Spacedrive is the source of truth for device identity, library membership, permissions, and remote dispatch
+- every Spacebot instance must be paired to a WingDrive node
+- that paired WingDrive node is Spacebot's portal into the user's library
+- all remote file access, shell access, future computer use, and other device-local execution go through WingDrive
+- WingDrive is the source of truth for device identity, library membership, permissions, and remote dispatch
 
-This means Spacedrive is the permission and execution layer. Spacebot is the agent runtime and scheduler.
+This means WingDrive is the permission and execution layer. Spacebot is the agent runtime and scheduler.
 
 ## Why This Shape
 
-Spacedrive already owns the hard distributed systems primitives:
+WingDrive already owns the hard distributed systems primitives:
 
 - device identity
 - pairing
@@ -48,34 +48,34 @@ Spacebot already owns the hard agent-runtime primitives:
 
 This split is the cleanest one:
 
-- Spacedrive decides whether something may happen and where it runs
+- WingDrive decides whether something may happen and where it runs
 - Spacebot decides what work should be done and how to delegate it
 
 ## Deployment Model
 
 ### Local Install
 
-- Spacedrive runs on the user's machine
-- Spacebot runs as a subprocess of Spacedrive
+- WingDrive runs on the user's machine
+- Spacebot runs as a subprocess of WingDrive
 - both connect to the same local library and device identity
 
 ### Hosted Install
 
-- hosted infrastructure runs one Spacebot instance and one Spacedrive node together
-- that Spacedrive node appears as a device in the user's library
+- hosted infrastructure runs one Spacebot instance and one WingDrive node together
+- that WingDrive node appears as a device in the user's library
 - user devices pair with that library
-- Spacebot uses its paired Spacedrive node to operate across the rest of the fleet
+- Spacebot uses its paired WingDrive node to operate across the rest of the fleet
 
-This avoids any central relay architecture beyond what Spacedrive already needs for peer connectivity.
+This avoids any central relay architecture beyond what WingDrive already needs for peer connectivity.
 
 ## Product Model
 
 The user-facing product model is:
 
-- Spacedrive is installed on all user devices
-- Spacebot is accessed through Spacedrive, not through a separate desktop app
-- Spacebot Desktop is replaced by Spacedrive UI surfaces
-- one Spacebot instance can act across the user's device fleet because Spacedrive provides the device graph and permission system
+- WingDrive is installed on all user devices
+- Spacebot is accessed through WingDrive, not through a separate desktop app
+- Spacebot Desktop is replaced by WingDrive UI surfaces
+- one Spacebot instance can act across the user's device fleet because WingDrive provides the device graph and permission system
 
 This is the long-term convergence point between the two products.
 
@@ -85,7 +85,7 @@ Spacebot should know what devices exist and what it is allowed to do.
 
 Spacebot should not be the final authority that enforces those decisions.
 
-Spacedrive remains the enforcement layer.
+WingDrive remains the enforcement layer.
 
 That gives us:
 
@@ -99,12 +99,12 @@ That gives us:
 
 ```text
 User
-  -> Spacedrive UI
+  -> WingDrive UI
     -> Spacebot runtime
       -> worker with execution_target
-        -> Spacedrive client bound to paired Spacebot node
+        -> WingDrive client bound to paired Spacebot node
           -> permission + routing decision
-            -> target Spacedrive device
+            -> target WingDrive device
               -> local execution on that device
 ```
 
@@ -120,7 +120,7 @@ User
 - model routing
 - deciding which target device should perform a task
 
-#### Spacedrive owns
+#### WingDrive owns
 
 - library authentication
 - device graph
@@ -132,7 +132,7 @@ User
 
 ## Paired Node Model
 
-Every Spacebot instance has exactly one paired Spacedrive node.
+Every Spacebot instance has exactly one paired WingDrive node.
 
 That node is Spacebot's home device inside the library.
 
@@ -182,7 +182,7 @@ Recommended shape:
 
 - keep current worker lifecycle unchanged
 - keep current tool names unchanged
-- swap local shell/file implementations for Spacedrive-backed proxy tools when target is remote
+- swap local shell/file implementations for WingDrive-backed proxy tools when target is remote
 
 This means the model still thinks in terms of ordinary work:
 
@@ -191,13 +191,13 @@ This means the model still thinks in terms of ordinary work:
 - run commands
 - use the computer
 
-But the actual execution happens through Spacedrive according to policy.
+But the actual execution happens through WingDrive according to policy.
 
-## Recommended Spacedrive Integration Shape
+## Recommended WingDrive Integration Shape
 
 Add a new agent principal and remote execution protocol.
 
-Spacedrive should support:
+WingDrive should support:
 
 - identifying a Spacebot instance as a library-scoped principal
 - resolving what devices and subtrees it may access
@@ -208,7 +208,7 @@ This is not just raw file transfer. It is policy-aware remote operation dispatch
 
 ## Principal Model
 
-Spacedrive needs a new principal type for agent access.
+WingDrive needs a new principal type for agent access.
 
 Suggested model:
 
@@ -280,7 +280,7 @@ Examples:
 
 ## Effective Permission Resolution
 
-For every request, Spacedrive should resolve permissions using:
+For every request, WingDrive should resolve permissions using:
 
 - `agent_principal`
 - `library_id`
@@ -298,10 +298,10 @@ That resolution should happen on the paired Spacebot node before forwarding, and
 1. User asks Spacebot to work on a repo on the MacBook
 2. Spacebot spawns a worker with execution_target = MacBook
 3. Worker calls shell tool
-4. Proxy tool sends request to paired Spacedrive node
+4. Proxy tool sends request to paired WingDrive node
 5. Paired node resolves effective policy for principal + MacBook + path + shell
-6. If allowed, paired node forwards typed execution request to MacBook Spacedrive
-7. MacBook Spacedrive executes locally inside its OS context
+6. If allowed, paired node forwards typed execution request to MacBook WingDrive
+7. MacBook WingDrive executes locally inside its OS context
 8. Result returns to paired node
 9. Result returns to Spacebot worker
 10. Worker continues and reports status
@@ -312,14 +312,14 @@ That resolution should happen on the paired Spacebot node before forwarding, and
 ```text
 1. Worker targets NAS device
 2. Worker calls file read/list/edit tool
-3. Spacedrive permission system checks subtree and capability rules
+3. WingDrive permission system checks subtree and capability rules
 4. NAS device executes file operation locally
 5. Response returns with audit metadata
 ```
 
 ## Capability Surface
 
-Spacedrive should model remote execution as typed capabilities, not ad hoc commands.
+WingDrive should model remote execution as typed capabilities, not ad hoc commands.
 
 Initial capability families:
 
@@ -334,7 +334,7 @@ This keeps the permission model explicit and inspectable.
 
 ## Transport Model
 
-The transport should be a new Spacedrive peer execution protocol.
+The transport should be a new WingDrive peer execution protocol.
 
 It should live alongside existing pairing, library sync, file transfer, and remote job activity protocols.
 
@@ -390,15 +390,15 @@ Do not dump the full graph blindly into every prompt.
 
 ## Why This Replaces Spacebot Desktop
 
-If Spacedrive is the permission and execution layer, then Spacedrive is also the right user interface layer.
+If WingDrive is the permission and execution layer, then WingDrive is also the right user interface layer.
 
 That means:
 
-- chat happens in Spacedrive
-- voice and floating panels happen in Spacedrive
-- permission granting happens in Spacedrive
-- device selection happens in Spacedrive
-- file and context views happen in Spacedrive
+- chat happens in WingDrive
+- voice and floating panels happen in WingDrive
+- permission granting happens in WingDrive
+- device selection happens in WingDrive
+- file and context views happen in WingDrive
 
 Spacebot Desktop becomes redundant once this model exists.
 
@@ -408,12 +408,12 @@ This design intentionally keeps local and hosted deployments symmetric.
 
 ### Local
 
-- Spacedrive launches Spacebot locally
+- WingDrive launches Spacebot locally
 - both share one local paired device
 
 ### Hosted
 
-- hosted environment runs one Spacebot and one Spacedrive node together
+- hosted environment runs one Spacebot and one WingDrive node together
 - that node is visible as a device in the user's library
 - user pairs the rest of their devices into the same library
 
@@ -421,7 +421,7 @@ Same architecture, different packaging.
 
 ## What Already Exists
 
-Spacedrive already has:
+WingDrive already has:
 
 - device identity and pairing
 - library-scoped device membership
@@ -442,7 +442,7 @@ The integration does not require rewriting either product from scratch. It requi
 
 ## What Is Missing
 
-### In Spacedrive
+### In WingDrive
 
 - agent principal identity
 - per-device policy model
@@ -454,31 +454,31 @@ The integration does not require rewriting either product from scratch. It requi
 ### In Spacebot
 
 - worker execution target abstraction
-- Spacedrive-backed proxy tools
+- WingDrive-backed proxy tools
 - device/capability awareness in worker scheduling
-- UI that surfaces device targeting and approvals through Spacedrive
+- UI that surfaces device targeting and approvals through WingDrive
 
 ## Recommended Phases
 
 ### Phase 1: Principal and Policy Model
 
-- add Spacebot principal type to Spacedrive
+- add Spacebot principal type to WingDrive
 - add device, subtree, and capability policies
 - add effective-permission resolution
 
 ### Phase 2: Remote File Queries
 
-- allow Spacebot-routed list/read/search against target devices through Spacedrive
+- allow Spacebot-routed list/read/search against target devices through WingDrive
 - wire policy enforcement and audit logging
 
 ### Phase 3: Remote Shell Execution
 
 - add shell capability and remote execution protocol
-- bind worker shell tool to Spacedrive proxy
+- bind worker shell tool to WingDrive proxy
 
-### Phase 4: Spacedrive UI as the Agent Surface
+### Phase 4: WingDrive UI as the Agent Surface
 
-- embed chat, voice, target-device status, and permission controls in Spacedrive
+- embed chat, voice, target-device status, and permission controls in WingDrive
 - remove dependency on Spacebot Desktop
 
 ### Phase 5: Computer Use
@@ -488,7 +488,7 @@ The integration does not require rewriting either product from scratch. It requi
 
 ### Phase 6: Hosted Productization
 
-- ship hosted Spacebot with embedded Spacedrive node
+- ship hosted Spacebot with embedded WingDrive node
 - build onboarding around library pairing
 
 ## Open Questions
@@ -506,13 +506,13 @@ Adopt the paired-node architecture.
 The correct long-term model is:
 
 - one Spacebot instance
-- one paired Spacedrive node for that Spacebot
-- many user Spacedrive devices in the same library
-- Spacedrive as the permission and execution layer
+- one paired WingDrive node for that Spacebot
+- many user WingDrive devices in the same library
+- WingDrive as the permission and execution layer
 - Spacebot as the agent runtime and scheduler
 
 This gives us a clean answer to a core product question:
 
 - how does one agent operate naturally across a user's whole device fleet without centralizing trust?
 
-By operating through Spacedrive.
+By operating through WingDrive.

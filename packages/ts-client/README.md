@@ -1,6 +1,6 @@
-# @spacedrive/client
+# @sd/ts-client
 
-Type-safe TypeScript client for the Spacedrive daemon, automatically generated from Rust core types using Specta.
+Type-safe TypeScript client for the WingDrive daemon, automatically generated from Rust core types using Specta.
 
 ## Features
 
@@ -13,15 +13,15 @@ Type-safe TypeScript client for the Spacedrive daemon, automatically generated f
 ## Installation
 
 ```bash
-npm install @spacedrive/client
+bun add @sd/ts-client
 ```
 
 ## Quick Start
 
 ```typescript
-import { SpacedriveClient } from '@spacedrive/client';
+import { WingDriveClient } from '@sd/ts-client';
 
-const client = new SpacedriveClient();
+const client = new WingDriveClient();
 
 // Test connection
 await client.ping();

@@ -24,7 +24,7 @@ Checks executados:
 - Build Vite de produção do frontend Tauri: passou.
 - `cargo check --manifest-path apps/tauri/src-tauri/Cargo.toml`: passou.
 - `cargo run -p task-validator -- validate`: passou.
-- Aplicativo `target/debug/Spacedrive`: iniciou, abriu janela nativa e exibiu dados do daemon.
+- Aplicativo `target/debug/WingDrive`: iniciou, abriu janela nativa e exibiu dados do daemon.
 
 Evidência observada na janela nativa:
 

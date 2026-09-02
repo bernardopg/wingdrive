@@ -1,4 +1,4 @@
-# Type-Safe Spacedrive Client Usage
+# Type-Safe WingDrive Client Usage
 
 The TypeScript client now mirrors the Swift client with full type safety via auto-generated types.
 
@@ -57,7 +57,7 @@ function LibraryList() {
 
   return (
     <div>
-      <h1>Spacedrive v{status?.version}</h1>
+      <h1>WingDrive v{status?.version}</h1>
       <ul>
         {libraries?.map(lib => (
           <li key={lib.id}>{lib.name}</li>

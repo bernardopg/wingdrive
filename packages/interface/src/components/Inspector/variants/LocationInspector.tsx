@@ -32,7 +32,7 @@ import {
 } from "../Inspector";
 import clsx from "clsx";
 import type { Location } from "@sd/ts-client";
-import { Button, Dialog, dialogManager, useDialog, CircleButton, type UseDialogProps } from "@spacedrive/primitives";
+import { Button, Dialog, dialogManager, useDialog, CircleButton, type UseDialogProps } from "@wingdrive/primitives";
 import { useLibraryMutation } from "../../../contexts/SpacedriveContext";
 import { useContextMenu } from "../../../hooks/useContextMenu";
 import LocationIcon from "@sd/assets/icons/Location.png";

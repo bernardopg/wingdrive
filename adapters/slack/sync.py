@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Slack Export adapter for Spacedrive.
+Slack Export adapter for WingDrive.
 
 Reads a Slack workspace export (the unzipped JSON directory structure).
 Export format: channels.json, users.json, and one folder per channel

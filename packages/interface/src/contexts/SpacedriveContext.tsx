@@ -29,3 +29,4 @@ export type {
 
 // Export icon utilities
 export { getDeviceIcon, getVolumeIcon } from "@sd/ts-client";
+export { WingDriveProvider, useWingDriveClient } from "@sd/ts-client/hooks";

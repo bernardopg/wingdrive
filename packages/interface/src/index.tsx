@@ -1,4 +1,4 @@
-// Platform-agnostic Spacedrive interface
+// Platform-agnostic WingDrive interface
 // This package contains all UI components, routes, and logic that works across
 // Tauri (desktop), Web, and potentially mobile platforms
 
@@ -25,7 +25,7 @@ export type { Platform } from "./contexts/PlatformContext";
 export { PlatformProvider, usePlatform } from "./contexts/PlatformContext";
 
 // Context
-export { SpacedriveProvider } from "./contexts/SpacedriveContext";
+export { SpacedriveProvider, WingDriveProvider } from "./contexts/SpacedriveContext";
 export {
 	ServerProvider,
 	useServer,

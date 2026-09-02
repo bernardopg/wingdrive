@@ -1,6 +1,6 @@
 //! Integration test for job resumption at various interruption points
 //!
-//! This test uses the Spacedrive source code as deterministic test data and tests
+//! This test uses the WingDrive source code as deterministic test data and tests
 //! job resumption by interrupting indexing jobs at different phases and progress
 //! points, then verifying they can resume and complete successfully.
 
@@ -54,7 +54,7 @@ struct TestResult {
 
 /// Main integration test for job resumption with realistic data
 ///
-/// This test uses the Spacedrive core/src directory as deterministic test data to simulate
+/// This test uses the WingDrive core/src directory as deterministic test data to simulate
 /// real-world indexing scenarios where users may interrupt jobs at any point. Each phase
 /// should generate multiple progress events, allowing us to test interruption and resumption
 /// at various points within each phase.
@@ -68,7 +68,7 @@ struct TestResult {
 async fn test_job_resumption_at_various_points() {
 	info!("Starting job resumption integration test");
 
-	// Prepare test data (uses Spacedrive source code)
+	// Prepare test data (uses WingDrive source code)
 	info!("Preparing test data");
 	let indexing_data_path = generate_test_data()
 		.await
@@ -121,9 +121,9 @@ async fn test_job_resumption_at_various_points() {
 	info!("Test logs and data available in: test_data/");
 }
 
-/// Generate test data using Spacedrive source code for deterministic testing
+/// Generate test data using WingDrive source code for deterministic testing
 async fn generate_test_data() -> Result<PathBuf, Box<dyn std::error::Error + Send + Sync>> {
-	// Use Spacedrive core/src directory for deterministic cross-platform testing
+	// Use WingDrive core/src directory for deterministic cross-platform testing
 	let indexing_data_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 		.parent()
 		.ok_or("Failed to get project root")?
@@ -131,14 +131,14 @@ async fn generate_test_data() -> Result<PathBuf, Box<dyn std::error::Error + Sen
 
 	if !indexing_data_path.exists() {
 		return Err(format!(
-			"Spacedrive core/src folder does not exist at: {}",
+			"WingDrive core/src folder does not exist at: {}",
 			indexing_data_path.display()
 		)
 		.into());
 	}
 
 	info!(
-		"Using Spacedrive core/src folder at: {}",
+		"Using WingDrive core/src folder at: {}",
 		indexing_data_path.display()
 	);
 	Ok(indexing_data_path)

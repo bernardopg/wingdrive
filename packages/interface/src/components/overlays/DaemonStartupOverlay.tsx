@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { BallBlue } from "@sd/assets/images";
+import { WingDriveLogo } from "@sd/assets/images";
 import { CircleNotch } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
 import { usePlatform } from "../../contexts/PlatformContext";
@@ -52,8 +52,8 @@ export function DaemonStartupOverlay({ show }: { show: boolean }) {
 						{/* Ball image - behind the orb */}
 						<div className="absolute inset-[8%] z-0">
 							<img
-								src={BallBlue}
-								alt="Spacedrive"
+								src={WingDriveLogo}
+								alt="WingDrive"
 								className="w-full h-full object-contain select-none"
 								draggable={false}
 							/>
@@ -84,7 +84,7 @@ export function DaemonStartupOverlay({ show }: { show: boolean }) {
 						/>
 						<div className="flex flex-col">
 							<p className="text-lg font-bold text-white">
-								Starting Spacedrive
+								Starting WingDrive
 							</p>
 							<p className="text-sm text-white/50">
 								v{versionText}

@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Spacedrive",
-    "slug": "spacedrive",
+    "name": "WingDrive",
+    "slug": "wingdrive",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./icon.png",
     "userInterfaceStyle": "dark",
-    "scheme": "spacedrive",
+    "scheme": "wingdrive",
     "platforms": [
       "ios",
       "android"
@@ -16,13 +16,12 @@
       "typedRoutes": true
     },
     "ios": {
-      "bundleIdentifier": "com.spacedrive.app",
+      "bundleIdentifier": "com.wingdrive.app",
       "supportsTablet": true,
-      "deploymentTarget": "18.0",
-      "appleTeamId": "YB4V2VA9YY"
+      "deploymentTarget": "18.0"
     },
     "android": {
-      "package": "com.spacedrive.app",
+      "package": "com.wingdrive.app",
       "adaptiveIcon": {
         "backgroundColor": "#000000"
       }

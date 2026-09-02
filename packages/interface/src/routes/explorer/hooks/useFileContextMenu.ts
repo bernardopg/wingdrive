@@ -24,7 +24,7 @@ import {
 } from '@phosphor-icons/react';
 import type {File} from '@sd/ts-client';
 import {getContentKind, isVirtualFile} from '@sd/ts-client';
-import {toast} from '@spacedrive/primitives';
+import {toast} from '@wingdrive/primitives';
 import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
 import {usePlatform} from '../../../contexts/PlatformContext';
 import {useLibraryMutation} from '../../../contexts/SpacedriveContext';

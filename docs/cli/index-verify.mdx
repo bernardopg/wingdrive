@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `index verify` command performs a comprehensive integrity check of the Spacedrive index for any given path. It compares the actual filesystem state with what's stored in the database and reports any discrepancies.
+The `index verify` command performs a comprehensive integrity check of the WingDrive index for any given path. It compares the actual filesystem state with what's stored in the database and reports any discrepancies.
 
 ## Usage
 
@@ -34,7 +34,7 @@ Runs a fresh, in-memory index scan of the filesystem path to capture the current
 
 ### 2. Database Query
 
-Queries the Spacedrive database for all indexed entries under the given path:
+Queries the WingDrive database for all indexed entries under the given path:
 
 - Uses closure table for efficient descendant lookup
 - Resolves full paths for all entries
@@ -88,7 +88,7 @@ sd-cli index verify ~/Documents
 
 ### After Manual File Operations
 
-If you've manually modified files outside Spacedrive:
+If you've manually modified files outside WingDrive:
 
 ```bash
 # You edited files manually

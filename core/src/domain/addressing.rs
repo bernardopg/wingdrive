@@ -1,7 +1,7 @@
 //! Core addressing data structures for the Virtual Distributed File System
 //!
 //! This module contains the fundamental "nouns" of the addressing system -
-//! the data structures that represent paths in Spacedrive's distributed
+//! the data structures that represent paths in WingDrive's distributed
 //! file system.
 
 use crate::device::{get_current_device_id, get_current_device_slug};
@@ -12,7 +12,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
-/// A path within the Spacedrive Virtual Distributed File System
+/// A path within the WingDrive Virtual Distributed File System
 ///
 /// This is the core abstraction that enables cross-device operations.
 /// An SdPath can represent:

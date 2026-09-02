@@ -1,3 +1,3 @@
 # @jamiepine/assets
 
-Shared assets for Spacedrive applications.
+Shared assets for WingDrive applications.

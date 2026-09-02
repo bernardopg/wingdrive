@@ -564,8 +564,7 @@ pub async fn add_and_index_location(
 /// Create a timestamped snapshot directory
 pub async fn create_snapshot_dir(test_name: &str) -> anyhow::Result<PathBuf> {
 	let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
-	let test_root =
-		std::path::PathBuf::from(home).join("Library/Application Support/spacedrive/sync_tests");
+	let test_root = std::path::PathBuf::from(home).join(".wingdrive/sync_tests");
 
 	let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
 	let snapshot_dir = test_root

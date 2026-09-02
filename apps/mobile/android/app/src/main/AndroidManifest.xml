@@ -26,8 +26,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="spacedrive"/>
-        <data android:scheme="exp+spacedrive"/>
+        <data android:scheme="wingdrive"/>
+        <data android:scheme="exp+wingdrive"/>
       </intent-filter>
     </activity>
   </application>

@@ -1,4 +1,4 @@
-//! CQRS (Command Query Responsibility Segregation) for Spacedrive Core
+//! CQRS (Command Query Responsibility Segregation) for WingDrive Core
 //!
 //! This module provides a simplified CQRS implementation that leverages existing
 //! infrastructure while providing modular outputs (copying the job system pattern).
@@ -93,7 +93,8 @@ impl QueryManager {
 	pub async fn dispatch_core<Q: CoreQuery>(&self, query: Q) -> Result<Q::Output> {
 		// Create session context for core queries
 		let device_id = self.context.device_manager.device_id()?;
-		let session = crate::infra::api::SessionContext::device_session(device_id, "Core Device".to_string());
+		let session =
+			crate::infra::api::SessionContext::device_session(device_id, "Core Device".to_string());
 		query.execute(self.context.clone(), session).await
 	}
 
@@ -105,7 +106,8 @@ impl QueryManager {
 	) -> Result<Q::Output> {
 		// Create session context for library queries with library context
 		let device_id = self.context.device_manager.device_id()?;
-		let mut session = crate::infra::api::SessionContext::device_session(device_id, "Core Device".to_string());
+		let mut session =
+			crate::infra::api::SessionContext::device_session(device_id, "Core Device".to_string());
 		session = session.with_library(library_id);
 		query.execute(self.context.clone(), session).await
 	}

@@ -1,6 +1,6 @@
-# Spacedrive Swift Client
+# WingDrive Swift Client
 
-A type-safe Swift client for interacting with the Spacedrive daemon.
+A type-safe Swift client for interacting with the WingDrive daemon.
 
 ## Features
 

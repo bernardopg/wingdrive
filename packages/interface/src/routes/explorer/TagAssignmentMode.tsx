@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tag as TagIcon } from '@phosphor-icons/react';
 import clsx from 'clsx';
-import { Button, toast } from '@spacedrive/primitives';
+import { Button, toast } from '@wingdrive/primitives';
 import { useNormalizedQuery, useLibraryMutation } from '../../contexts/SpacedriveContext';
 import { useSelection } from './SelectionContext';
 import { useKeybind } from '../../hooks/useKeybind';

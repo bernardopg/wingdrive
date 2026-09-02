@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Initialize logging
 	tracing_subscriber::fmt().with_env_filter("info").init();
 
-	println!("\nCreating Spacedrive Memory File\n");
+	println!("\nCreating WingDrive Memory File\n");
 
 	// Output path
 	let output_path = PathBuf::from(

@@ -38,7 +38,7 @@ export function SpacedriveProvider({ client, children }: SpacedriveProviderProps
 }
 
 /**
- * Hook to access the Spacedrive client
+ * Hook to access the WingDrive client
  * Must be used within a SpacedriveProvider
  */
 export function useSpacedriveClient(): SpacedriveClient {

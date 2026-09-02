@@ -93,7 +93,7 @@ impl TestLocation {
 	/// Create a new test location
 	async fn new(volume_path: &std::path::Path, mount_type: &MountType) -> VolumeResult<Self> {
 		let (dir, created_dir) = get_writable_directory(volume_path, mount_type).await?;
-		let test_file = dir.join("spacedrive_speed_test.tmp");
+		let test_file = dir.join("wingdrive_speed_test.tmp");
 
 		Ok(Self {
 			test_file,

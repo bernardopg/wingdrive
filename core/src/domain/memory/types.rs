@@ -8,7 +8,7 @@ pub struct Document {
 	/// Internal ID within memory
 	pub id: i32,
 
-	/// Spacedrive content UUID (if file is in VDFS)
+	/// WingDrive content UUID (if file is in VDFS)
 	pub content_uuid: Option<Uuid>,
 
 	/// Physical path (for non-VDFS files or reference)

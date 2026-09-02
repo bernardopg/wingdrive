@@ -1,1 +1,1 @@
-# Spacedrive's EXIF/media data parsing library
+# WingDrive's EXIF/media data parsing library

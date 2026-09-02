@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ShieldWarning } from "@phosphor-icons/react";
-import { CircleButton } from "@spacedrive/primitives";
+import { CircleButton } from "@wingdrive/primitives";
 import type { SearchFilters } from "@sd/ts-client";
 import { TopBarPortal, TopBarItem } from "../../TopBar";
 import { ExplorerView, useExplorer } from "../explorer";

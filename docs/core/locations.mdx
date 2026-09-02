@@ -3,11 +3,11 @@ title: Locations
 sidebarTitle: Locations
 ---
 
-Locations are directories that Spacedrive tracks and monitors. When you add a location, Spacedrive indexes its contents and watches for changes in real-time.
+Locations are directories that WingDrive tracks and monitors. When you add a location, WingDrive indexes its contents and watches for changes in real-time.
 
 ## What is a Location?
 
-A location is any folder on your device that you want Spacedrive to index. Once added:
+A location is any folder on your device that you want WingDrive to index. Once added:
 
 - Files are indexed immediately
 - Changes are detected in real-time
@@ -20,7 +20,7 @@ Locations have a sophisticated relationship with the file index:
 
 ### Root Entry
 
-When you add a location, Spacedrive creates a **root entry** in the entries table for the location directory itself. This root entry:
+When you add a location, WingDrive creates a **root entry** in the entries table for the location directory itself. This root entry:
 
 - Has no parent (`parent_id = NULL`)
 - Gets a self-reference in the `entry_closure` table
@@ -169,7 +169,7 @@ pub struct Location {
 
 ### Index Modes
 
-Choose how deeply Spacedrive analyzes your files:
+Choose how deeply WingDrive analyzes your files:
 
 - **Shallow**: Basic metadata only (name, size, dates)
 - **Content**: Includes content hashing for deduplication
@@ -195,13 +195,13 @@ pub enum ScanState {
 
 ```bash
 # Add a location
-spacedrive location add ~/Documents --name "Documents"
+wingdrive-cli location add ~/Documents --name "Documents"
 
 # Add with deep indexing
-spacedrive location add ~/Photos --name "Photos" --mode deep
+wingdrive-cli location add ~/Photos --name "Photos" --mode deep
 
 # List all locations
-spacedrive location list
+wingdrive-cli location list
 ```
 
 ### Using the API
@@ -368,7 +368,7 @@ When a file changes:
 Temporarily stop monitoring without removing:
 
 ```bash
-spacedrive location pause <location-id>
+wingdrive-cli location pause <location-id>
 ```
 
 ### Update Settings
@@ -377,10 +377,10 @@ Change location configuration:
 
 ```bash
 # Disable watching
-spacedrive location update <location-id> --watch false
+wingdrive-cli location update <location-id> --watch false
 
 # Change index mode
-spacedrive location update <location-id> --mode shallow
+wingdrive-cli location update <location-id> --mode shallow
 ```
 
 ### Remove Location
@@ -388,11 +388,11 @@ spacedrive location update <location-id> --mode shallow
 Stop tracking a directory:
 
 ```bash
-spacedrive location remove <location-id>
+wingdrive-cli location remove <location-id>
 ```
 
 <Warning>
-  Removing a location doesn't delete files. It only stops Spacedrive from
+  Removing a location doesn't delete files. It only stops WingDrive from
   tracking them.
 </Warning>
 
@@ -409,10 +409,10 @@ If watching causes high CPU:
 
 ```bash
 # Find active locations
-spacedrive location list --verbose
+wingdrive-cli location list --verbose
 
 # Disable problematic location
-spacedrive location update <id> --watch false
+wingdrive-cli location update <id> --watch false
 ```
 
 ### Missing Changes
@@ -438,10 +438,10 @@ Enable detailed logging:
 
 ```bash
 # Set debug mode
-export SPACEDRIVE_WATCHER_DEBUG=1
+export WINGDRIVE_WATCHER_DEBUG=1
 
 # Run with verbose logging
-spacedrive --log-level debug
+wingdrive-cli --log-level debug
 ```
 
 ## Platform Limits

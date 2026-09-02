@@ -5,7 +5,7 @@ import {
 	Plus
 } from '@phosphor-icons/react';
 import type {DirectorySortBy, File, SdPath} from '@sd/ts-client';
-import {CircleButton, CircleButtonGroup} from '@spacedrive/primitives';
+import {CircleButton, CircleButtonGroup} from '@wingdrive/primitives';
 import * as d3 from 'd3';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';

@@ -1,11 +1,11 @@
 ---
 title: "Linux Deployment"
-description: "Deploy Spacedrive CLI and daemon on Linux systems"
+description: "Deploy WingDrive CLI and daemon on Linux systems"
 ---
 
 ## Overview
 
-The Spacedrive daemon and CLI can be deployed on Linux systems in several ways:
+The WingDrive daemon and CLI can be deployed on Linux systems in several ways:
 - **Docker** - Recommended for easy deployment and isolation
 - **Native binaries** - Direct installation for TrueNAS, Raspberry Pi, and other Linux systems
 - **Systemd service** - Auto-start on boot with native binaries
@@ -25,19 +25,19 @@ The Spacedrive daemon and CLI can be deployed on Linux systems in several ways:
 version: '3.8'
 
 services:
-  spacedrive:
-    image: spacedrive:latest
-    container_name: spacedrive-daemon
+  wingdrive:
+    image: wingdrive:latest
+    container_name: wingdrive-daemon
     restart: unless-stopped
     volumes:
-      - spacedrive-data:/data
+      - wingdrive-data:/data
       # Mount directories to index
       - /path/to/your/files:/mnt/files:ro
     environment:
-      - SPACEDRIVE_DATA_DIR=/data
+      - WINGDRIVE_DATA_DIR=/data
 
 volumes:
-  spacedrive-data:
+  wingdrive-data:
 ```
 
 2. **Build and start**:
@@ -57,24 +57,24 @@ docker compose logs -f
 
 ```bash
 # Build image
-docker build -t spacedrive:latest .
+docker build -t wingdrive:latest .
 
 # Run daemon
 docker run -d \
-  --name spacedrive-daemon \
+  --name wingdrive-daemon \
   --restart unless-stopped \
-  -v spacedrive-data:/data \
+  -v wingdrive-data:/data \
   -v /path/to/files:/mnt/files:ro \
-  spacedrive:latest
+  wingdrive:latest
 
 # View status
-docker exec spacedrive-daemon sd-cli status
+docker exec wingdrive-daemon sd-cli status
 
 # View logs
-docker logs -f spacedrive-daemon
+docker logs -f wingdrive-daemon
 
 # Execute CLI commands
-docker exec spacedrive-daemon sd-cli library list
+docker exec wingdrive-daemon sd-cli library list
 ```
 
 ### Multi-Architecture Support
@@ -83,15 +83,15 @@ The Dockerfile supports both x86_64 and ARM64:
 
 ```bash
 # Build for ARM64 (Raspberry Pi)
-docker build --platform linux/arm64 -t spacedrive:arm64 .
+docker build --platform linux/arm64 -t wingdrive:arm64 .
 
 # Build for x86_64 (servers, TrueNAS)
-docker build --platform linux/amd64 -t spacedrive:amd64 .
+docker build --platform linux/amd64 -t wingdrive:amd64 .
 
 # Build multi-arch with buildx
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t spacedrive:latest \
+  -t wingdrive:latest \
   --push .
 ```
 
@@ -160,7 +160,7 @@ sd-cli daemon uninstall
 
 This creates a systemd user service at:
 ```
-~/.config/systemd/user/spacedrive-daemon.service
+~/.config/systemd/user/wingdrive-daemon.service
 ```
 
 ### Manual Systemd Setup
@@ -169,14 +169,14 @@ If you prefer manual setup, create the service file:
 
 ```bash
 mkdir -p ~/.config/systemd/user
-cat > ~/.config/systemd/user/spacedrive-daemon.service << 'EOF'
+cat > ~/.config/systemd/user/wingdrive-daemon.service << 'EOF'
 [Unit]
-Description=Spacedrive Daemon
+Description=WingDrive Daemon
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/sd-daemon --data-dir %h/.local/share/spacedrive
+ExecStart=/usr/local/bin/sd-daemon --data-dir %h/.local/share/wingdrive
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal
@@ -194,16 +194,16 @@ Then enable and start:
 systemctl --user daemon-reload
 
 # Enable auto-start
-systemctl --user enable spacedrive-daemon
+systemctl --user enable wingdrive-daemon
 
 # Start now
-systemctl --user start spacedrive-daemon
+systemctl --user start wingdrive-daemon
 
 # Check status
-systemctl --user status spacedrive-daemon
+systemctl --user status wingdrive-daemon
 
 # View logs
-journalctl --user -u spacedrive-daemon -f
+journalctl --user -u wingdrive-daemon -f
 ```
 
 ## TrueNAS Deployment
@@ -271,7 +271,7 @@ sudo chmod +x /usr/local/bin/sd-cli /usr/local/bin/sd-daemon
 sd-cli daemon install
 
 # Start daemon
-sudo systemctl --user start spacedrive-daemon
+sudo systemctl --user start wingdrive-daemon
 ```
 
 ### Performance Tips
@@ -285,13 +285,13 @@ sudo systemctl --user start spacedrive-daemon
 ### Data Directory
 
 By default, data is stored at:
-- Native: `~/.local/share/spacedrive` (Linux)
+- Native: `~/.local/share/wingdrive` (Linux)
 - Docker: `/data` (mapped to volume)
 
 Override with `--data-dir` flag:
 
 ```bash
-sd-cli --data-dir /mnt/external/spacedrive start
+sd-cli --data-dir /mnt/external/wingdrive start
 ```
 
 ### Auto-Update
@@ -300,7 +300,7 @@ Configure update repository:
 
 ```bash
 # Set your releases repo
-sd-cli config set update.repo "your-org/spacedrive-cli-releases"
+sd-cli config set update.repo "your-org/wingdrive-cli-releases"
 
 # Check for updates
 sd-cli update
@@ -315,10 +315,10 @@ Run multiple daemon instances:
 
 ```bash
 # Instance for work files
-sd-cli --instance work --data-dir ~/spacedrive-work start
+sd-cli --instance work --data-dir ~/wingdrive-work start
 
 # Instance for personal files
-sd-cli --instance personal --data-dir ~/spacedrive-personal start
+sd-cli --instance personal --data-dir ~/wingdrive-personal start
 
 # Install both as services
 sd-cli --instance work daemon install
@@ -334,10 +334,10 @@ sd-cli --instance personal daemon install
 sd-cli status
 
 # Check systemd service
-systemctl --user status spacedrive-daemon
+systemctl --user status wingdrive-daemon
 
 # View recent logs
-journalctl --user -u spacedrive-daemon --since "1 hour ago"
+journalctl --user -u wingdrive-daemon --since "1 hour ago"
 
 # Follow logs in real-time
 sd-cli logs follow
@@ -350,7 +350,7 @@ sd-cli logs follow
 ps aux | grep sd-daemon
 
 # Check disk usage
-du -sh ~/.local/share/spacedrive
+du -sh ~/.local/share/wingdrive
 
 # Monitor with htop
 htop -p $(pgrep sd-daemon)
@@ -362,7 +362,7 @@ htop -p $(pgrep sd-daemon)
 
 ```bash
 # Check logs
-journalctl --user -u spacedrive-daemon -n 50
+journalctl --user -u wingdrive-daemon -n 50
 
 # Or with CLI
 sd-cli logs follow
@@ -378,7 +378,7 @@ sd-cli restart --reset
 sudo chmod +x /usr/local/bin/sd-cli /usr/local/bin/sd-daemon
 
 # Fix data directory permissions
-chmod -R u+rw ~/.local/share/spacedrive
+chmod -R u+rw ~/.local/share/wingdrive
 ```
 
 ### Port Conflicts
@@ -387,7 +387,7 @@ If you see "address already in use":
 
 ```bash
 # Check what's using the socket
-lsof ~/.local/share/spacedrive/daemon/daemon.sock
+lsof ~/.local/share/wingdrive/daemon/daemon.sock
 
 # Kill old process
 pkill sd-daemon
@@ -462,7 +462,7 @@ sd-cli daemon uninstall
 sudo rm /usr/local/bin/sd-cli /usr/local/bin/sd-daemon
 
 # Remove data (optional)
-rm -rf ~/.local/share/spacedrive
+rm -rf ~/.local/share/wingdrive
 ```
 
 ### Remove Docker
@@ -472,17 +472,17 @@ rm -rf ~/.local/share/spacedrive
 docker compose down
 
 # Remove volumes
-docker volume rm spacedrive-data
+docker volume rm wingdrive-data
 
 # Remove image
-docker rmi spacedrive:latest
+docker rmi wingdrive:latest
 ```
 
 ## Advanced Configuration
 
 ### Custom Systemd Service Options
 
-Edit `~/.config/systemd/user/spacedrive-daemon.service`:
+Edit `~/.config/systemd/user/wingdrive-daemon.service`:
 
 ```ini
 [Service]
@@ -504,7 +504,7 @@ Then reload and restart:
 
 ```bash
 systemctl --user daemon-reload
-systemctl --user restart spacedrive-daemon
+systemctl --user restart wingdrive-daemon
 ```
 
 ### Docker Resource Limits
@@ -513,7 +513,7 @@ In docker-compose.yml:
 
 ```yaml
 services:
-  spacedrive:
+  wingdrive:
     # ... other config ...
     deploy:
       resources:

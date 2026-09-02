@@ -1,4 +1,4 @@
-//! Job system for Spacedrive
+//! Job system for WingDrive
 //!
 //! Provides a minimal-boilerplate job execution framework built on top of the task-system.
 

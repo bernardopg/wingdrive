@@ -1,4 +1,4 @@
-import { ShinyButton } from "@spacedrive/primitives";
+import { ShinyButton } from "@wingdrive/primitives";
 import { SpacedriveProvider } from "../contexts/SpacedriveContext";
 import { useLibraries } from "../hooks/useLibraries";
 import { useAllEvents } from "../hooks/useEvent";
@@ -71,7 +71,7 @@ function LibrariesView() {
 					<div className="flex items-center justify-between">
 						<div>
 							<h1 className="text-2xl font-bold">
-								Spacedrive V2
+								WingDrive V2
 							</h1>
 							<p className="text-sm text-gray-400">
 								Multi-window Architecture Demo

@@ -1,9 +1,9 @@
-# Spacedrive Server Docker Image
+# WingDrive Server Docker Image
 # Builds sd-server with the apps/web bundle embedded via rust-embed.
 #
 # Prerequisite: `apps/web/dist/` must exist in the build context — run
 # `bun install && bun run build` in `apps/web/` before `docker build`.
-# CI workflows and the unified spacedrive+spacebot image handle this
+# CI workflows and the unified wingdrive+spacebot image handle this
 # automatically; this Dockerfile assumes the dist directory is ready.
 
 FROM debian:bookworm-slim AS builder
@@ -70,7 +70,7 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 	&& rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN useradd -m -u 1000 spacedrive
+RUN useradd -m -u 1000 wingdrive
 
 # Copy binary
 COPY --from=builder /usr/local/bin/sd-server /usr/bin/sd-server
@@ -90,7 +90,7 @@ EXPOSE 7373
 VOLUME ["/data"]
 
 # Run as non-root user
-USER spacedrive:spacedrive
+USER wingdrive:wingdrive
 
 # Start server
 ENTRYPOINT ["/usr/bin/sd-server"]

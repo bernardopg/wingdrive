@@ -452,7 +452,7 @@ async fn set_library_id(
 
 		if let Some(server_url) = server_url {
 			let script = format!(
-				r#"window.__SPACEDRIVE_SERVER_URL__ = "{}"; window.__SPACEDRIVE_LIBRARY_ID__ = "{}";"#,
+				r#"window.__WINGDRIVE_SERVER_URL__ = "{}"; window.__WINGDRIVE_LIBRARY_ID__ = "{}"; window.__SPACEDRIVE_SERVER_URL__ = window.__WINGDRIVE_SERVER_URL__; window.__SPACEDRIVE_LIBRARY_ID__ = window.__WINGDRIVE_LIBRARY_ID__;"#,
 				server_url, library_id
 			);
 
@@ -505,7 +505,7 @@ async fn set_current_library_id(
 
 	if let Some(server_url) = server_url {
 		let script = format!(
-			r#"window.__SPACEDRIVE_SERVER_URL__ = "{}"; window.__SPACEDRIVE_LIBRARY_ID__ = "{}";"#,
+			r#"window.__WINGDRIVE_SERVER_URL__ = "{}"; window.__WINGDRIVE_LIBRARY_ID__ = "{}"; window.__SPACEDRIVE_SERVER_URL__ = window.__WINGDRIVE_SERVER_URL__; window.__SPACEDRIVE_LIBRARY_ID__ = window.__WINGDRIVE_LIBRARY_ID__;"#,
 			server_url, library_id
 		);
 
@@ -1025,35 +1025,36 @@ async fn check_daemon_installed() -> Result<bool, String> {
 	{
 		let home =
 			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
-		let plist_path =
-			std::path::PathBuf::from(home).join("Library/LaunchAgents/com.wingdrive.daemon.plist");
-		let exists = plist_path.exists();
-		tracing::info!(
-			"Checking daemon installation at {}: {}",
-			plist_path.display(),
-			exists
-		);
-		Ok(exists)
+		let launch_agents = std::path::PathBuf::from(home).join("Library/LaunchAgents");
+		Ok(
+			["com.wingdrive.daemon.plist", "com.spacedrive.daemon.plist"]
+				.iter()
+				.any(|name| launch_agents.join(name).exists()),
+		)
 	}
 
 	#[cfg(target_os = "linux")]
 	{
 		let home =
 			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
-		let service_path =
-			std::path::PathBuf::from(home).join(".config/systemd/user/spacedrive-daemon.service");
-		Ok(service_path.exists())
+		let systemd_dir = std::path::PathBuf::from(home).join(".config/systemd/user");
+		Ok(["wingdrive-daemon.service", "spacedrive-daemon.service"]
+			.iter()
+			.any(|name| systemd_dir.join(name).exists()))
 	}
 
 	#[cfg(target_os = "windows")]
 	{
-		// On Windows, check if scheduled task exists
-		let output = std::process::Command::new("schtasks")
-			.args(&["/Query", "/TN", "SpacedriveDaemon", "/FO", "LIST"])
-			.output()
-			.map_err(|e| format!("Failed to query scheduled task: {}", e))?;
-
-		Ok(output.status.success())
+		for task in ["WingDriveDaemon", "SpacedriveDaemon"] {
+			let output = std::process::Command::new("schtasks")
+				.args(["/Query", "/TN", task, "/FO", "LIST"])
+				.output()
+				.map_err(|e| format!("Failed to query scheduled task: {}", e))?;
+			if output.status.success() {
+				return Ok(true);
+			}
+		}
+		Ok(false)
 	}
 
 	#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
@@ -1214,13 +1215,13 @@ async fn install_daemon_service(
 		std::fs::create_dir_all(&systemd_dir)
 			.map_err(|e| format!("Failed to create systemd directory: {}", e))?;
 
-		let service_path = systemd_dir.join("spacedrive-daemon.service");
+		let service_path = systemd_dir.join("wingdrive-daemon.service");
 
 		let daemon_path = find_daemon_binary()?;
 
 		let service_content = format!(
 			r#"[Unit]
-Description=Spacedrive Daemon
+Description=WingDrive Daemon
 After=network.target
 
 [Service]
@@ -1253,7 +1254,7 @@ WantedBy=default.target
 		}
 
 		let output = std::process::Command::new("systemctl")
-			.args(&["--user", "enable", "spacedrive-daemon.service"])
+			.args(&["--user", "enable", "wingdrive-daemon.service"])
 			.output()
 			.map_err(|e| format!("Failed to enable service: {}", e))?;
 
@@ -1263,7 +1264,7 @@ WantedBy=default.target
 		}
 
 		let output = std::process::Command::new("systemctl")
-			.args(&["--user", "start", "spacedrive-daemon.service"])
+			.args(&["--user", "start", "wingdrive-daemon.service"])
 			.output()
 			.map_err(|e| format!("Failed to start service: {}", e))?;
 
@@ -1329,7 +1330,7 @@ WantedBy=default.target
 
 		// Delete existing task if it exists
 		let _ = std::process::Command::new("schtasks")
-			.args(&["/Delete", "/TN", "SpacedriveDaemon", "/F"])
+			.args(&["/Delete", "/TN", "WingDriveDaemon", "/F"])
 			.output();
 
 		// Create XML for scheduled task
@@ -1337,7 +1338,7 @@ WantedBy=default.target
 			r#"<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Description>Spacedrive Daemon Background Service</Description>
+    <Description>WingDrive Daemon Background Service</Description>
   </RegistrationInfo>
   <Triggers>
     <LogonTrigger>
@@ -1378,7 +1379,7 @@ WantedBy=default.target
 
 		// Write XML to temp file
 		let temp_dir = std::env::temp_dir();
-		let xml_path = temp_dir.join("spacedrive-task.xml");
+		let xml_path = temp_dir.join("wingdrive-task.xml");
 		let mut file = std::fs::File::create(&xml_path)
 			.map_err(|e| format!("Failed to create task XML: {}", e))?;
 		file.write_all(task_xml.as_bytes())
@@ -1390,7 +1391,7 @@ WantedBy=default.target
 			.args(&[
 				"/Create",
 				"/TN",
-				"SpacedriveDaemon",
+				"WingDriveDaemon",
 				"/XML",
 				xml_path.to_str().unwrap(),
 			])
@@ -1408,7 +1409,7 @@ WantedBy=default.target
 
 		// Start the task
 		let output = std::process::Command::new("schtasks")
-			.args(&["/Run", "/TN", "SpacedriveDaemon"])
+			.args(&["/Run", "/TN", "WingDriveDaemon"])
 			.output()
 			.map_err(|e| format!("Failed to start scheduled task: {}", e))?;
 
@@ -1462,17 +1463,16 @@ async fn uninstall_daemon_service() -> Result<(), String> {
 	{
 		let home =
 			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
-		let plist_path = std::path::PathBuf::from(&home)
-			.join("Library/LaunchAgents/com.wingdrive.daemon.plist");
-
-		if plist_path.exists() {
-			// Unload the service
-			let _ = std::process::Command::new("launchctl")
-				.args(["unload", plist_path.to_str().unwrap()])
-				.output();
-
-			std::fs::remove_file(&plist_path)
-				.map_err(|e| format!("Failed to remove plist file: {}", e))?;
+		let launch_agents = std::path::PathBuf::from(home).join("Library/LaunchAgents");
+		for name in ["com.wingdrive.daemon.plist", "com.spacedrive.daemon.plist"] {
+			let plist_path = launch_agents.join(name);
+			if plist_path.exists() {
+				let _ = std::process::Command::new("launchctl")
+					.args(["unload", plist_path.to_str().unwrap()])
+					.output();
+				std::fs::remove_file(&plist_path)
+					.map_err(|e| format!("Failed to remove plist file: {}", e))?;
+			}
 		}
 
 		Ok(())
@@ -1482,49 +1482,42 @@ async fn uninstall_daemon_service() -> Result<(), String> {
 	{
 		let home =
 			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
-		let service_path =
-			std::path::PathBuf::from(&home).join(".config/systemd/user/spacedrive-daemon.service");
-
-		if service_path.exists() {
-			// Stop and disable the service
-			let _ = std::process::Command::new("systemctl")
-				.args(&["--user", "stop", "spacedrive-daemon.service"])
-				.output();
-
-			let _ = std::process::Command::new("systemctl")
-				.args(&["--user", "disable", "spacedrive-daemon.service"])
-				.output();
-
-			std::fs::remove_file(&service_path)
-				.map_err(|e| format!("Failed to remove service file: {}", e))?;
-
-			let _ = std::process::Command::new("systemctl")
-				.args(&["--user", "daemon-reload"])
-				.output();
+		let systemd_dir = std::path::PathBuf::from(home).join(".config/systemd/user");
+		for name in ["wingdrive-daemon.service", "spacedrive-daemon.service"] {
+			let service_path = systemd_dir.join(name);
+			if service_path.exists() {
+				let _ = std::process::Command::new("systemctl")
+					.args(["--user", "stop", name])
+					.output();
+				let _ = std::process::Command::new("systemctl")
+					.args(["--user", "disable", name])
+					.output();
+				std::fs::remove_file(&service_path)
+					.map_err(|e| format!("Failed to remove service file: {}", e))?;
+			}
 		}
+		let _ = std::process::Command::new("systemctl")
+			.args(["--user", "daemon-reload"])
+			.output();
 
 		Ok(())
 	}
 
 	#[cfg(target_os = "windows")]
 	{
-		// Stop the task first
-		let _ = std::process::Command::new("schtasks")
-			.args(&["/End", "/TN", "SpacedriveDaemon"])
-			.output();
-
-		// Delete the scheduled task
-		let output = std::process::Command::new("schtasks")
-			.args(&["/Delete", "/TN", "SpacedriveDaemon", "/F"])
-			.output()
-			.map_err(|e| format!("Failed to delete scheduled task: {}", e))?;
-
-		// It's okay if the task doesn't exist
-		if !output.status.success() {
-			let stderr = String::from_utf8_lossy(&output.stderr);
-			// Task not found is okay, other errors should be reported
-			if !stderr.contains("cannot find") && !stderr.is_empty() {
-				tracing::warn!("schtasks delete warning: {:?}", stderr);
+		for task in ["WingDriveDaemon", "SpacedriveDaemon"] {
+			let _ = std::process::Command::new("schtasks")
+				.args(["/End", "/TN", task])
+				.output();
+			let output = std::process::Command::new("schtasks")
+				.args(["/Delete", "/TN", task, "/F"])
+				.output()
+				.map_err(|e| format!("Failed to delete scheduled task: {}", e))?;
+			if !output.status.success() {
+				let stderr = String::from_utf8_lossy(&output.stderr);
+				if !stderr.contains("cannot find") && !stderr.is_empty() {
+					tracing::warn!("schtasks delete warning: {:?}", stderr);
+				}
 			}
 		}
 
@@ -2054,7 +2047,7 @@ fn main() {
 				}
 			}
 
-			tracing::info!("Spacedrive Tauri app starting...");
+			tracing::info!("WingDrive Tauri app starting...");
 
 			// Apply Windows-specific window customizations (dark titlebar)
 			#[cfg(target_os = "windows")]
@@ -2130,7 +2123,7 @@ fn main() {
 				tracing::info!("Drag ended callback registered");
 			}
 
-			// Get data directory (use default Spacedrive location)
+			// Get data directory (use default WingDrive location)
 			let data_dir =
 				sd_tauri_core::default_data_dir().expect("Failed to get default data directory");
 

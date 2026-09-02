@@ -12,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	println!("=== Job Shutdown Demo ===\n");
 
 	// Create Core instance
-	let data_dir = std::env::temp_dir().join("spacedrive-shutdown-demo");
+	let data_dir = std::env::temp_dir().join("wingdrive-shutdown-demo");
 	let core = Core::new(data_dir).await?;
 
 	// Get open libraries
@@ -74,7 +74,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		elapsed.as_secs_f32()
 	);
 	println!("✓ All running jobs have been paused and their state saved");
-	println!("\nThese jobs will automatically resume when Spacedrive restarts.");
+	println!("\nThese jobs will automatically resume when WingDrive restarts.");
 
 	Ok(())
 }

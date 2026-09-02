@@ -62,7 +62,7 @@ export const platform: Platform = {
 		// Use Tauri's native dialog plugin on Windows. macOS/Linux webviews handle it fine.
 		// TODO: Consider using ask() on all platforms for consistent native UX.
 		if (navigator.platform.startsWith('Win')) {
-			void ask(message, {title: 'Spacedrive', kind: 'warning'}).then(
+			void ask(message, {title: 'WingDrive', kind: 'warning'}).then(
 				(result) => {
 					callback(result);
 				},
@@ -350,8 +350,9 @@ export const platform: Platform = {
 
 	async registerKeybind(id, accelerator, handler) {
 		// Use the global handler if available (initialized in keybinds.ts)
-		if (window.__SPACEDRIVE__?.registerKeybind) {
-			await window.__SPACEDRIVE__.registerKeybind(
+		const global = window.__WINGDRIVE__ ?? window.__SPACEDRIVE__;
+		if (global?.registerKeybind) {
+			await global.registerKeybind(
 				id,
 				accelerator,
 				handler
@@ -361,8 +362,9 @@ export const platform: Platform = {
 
 	async unregisterKeybind(id) {
 		// Use the global handler if available (initialized in keybinds.ts)
-		if (window.__SPACEDRIVE__?.unregisterKeybind) {
-			await window.__SPACEDRIVE__.unregisterKeybind(id);
+		const global = window.__WINGDRIVE__ ?? window.__SPACEDRIVE__;
+		if (global?.unregisterKeybind) {
+			await global.unregisterKeybind(id);
 		}
 	}
 };

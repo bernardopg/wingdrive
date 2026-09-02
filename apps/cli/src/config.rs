@@ -18,7 +18,7 @@ pub struct CliConfig {
 /// Update configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateConfig {
-	/// GitHub repository for releases (e.g., "spacedriveapp/spacedrive-cli-releases")
+	/// GitHub repository that publishes WingDrive releases.
 	pub repo: String,
 	/// Update channel (stable, beta, nightly)
 	pub channel: String,
@@ -28,7 +28,7 @@ impl Default for UpdateConfig {
 	fn default() -> Self {
 		Self {
 			// Placeholder - users should set this to their releases repo
-			repo: "spacedriveapp/spacedrive-cli-releases".to_string(),
+			repo: "bernardopg/wingdrive".to_string(),
 			channel: "stable".to_string(),
 		}
 	}

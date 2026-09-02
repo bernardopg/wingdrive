@@ -486,10 +486,7 @@ mod tests {
 	fn analyze_snapshot() {
 		// Analyze a specific snapshot directory
 		let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
-		let snapshot_base_path = format!(
-			"{}/Library/Application Support/spacedrive/sync_tests/snapshots",
-			home
-		);
+		let snapshot_base_path = format!("{}/.wingdrive/sync_tests/snapshots", home);
 		let snapshot_base = std::path::Path::new(&snapshot_base_path);
 
 		if !snapshot_base.exists() {

@@ -398,7 +398,7 @@ async fn test_backfill_with_concurrent_indexing() -> anyhow::Result<()> {
 	let harness = BackfillRaceHarness::new("backfill_race").await?;
 
 	// Step 1: Alice indexes first location
-	// Use Spacedrive crates directory for deterministic testing
+	// Use WingDrive crates directory for deterministic testing
 	let project_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 		.parent()
 		.unwrap()
@@ -442,7 +442,7 @@ async fn test_backfill_with_concurrent_indexing() -> anyhow::Result<()> {
 	// Step 2: Start backfill on Bob while Alice continues indexing
 	tracing::info!("Step 2: Starting Bob's backfill AND Alice's second indexing concurrently");
 
-	// Use Spacedrive source code for deterministic testing across all environments
+	// Use WingDrive source code for deterministic testing across all environments
 	let test_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 		.parent()
 		.unwrap()
@@ -453,7 +453,7 @@ async fn test_backfill_with_concurrent_indexing() -> anyhow::Result<()> {
 		&harness.library_alice,
 		&harness.core_alice.volumes,
 		test_path.to_str().unwrap(),
-		"spacedrive",
+		"wingdrive",
 	);
 
 	// Run concurrently - this is the key to triggering the race
@@ -526,7 +526,7 @@ async fn test_sequential_backfill_control() -> anyhow::Result<()> {
 	let harness = BackfillRaceHarness::new("sequential_control").await?;
 
 	// Alice indexes both locations first
-	// Use Spacedrive source code for deterministic testing
+	// Use WingDrive source code for deterministic testing
 	let project_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 		.parent()
 		.unwrap()

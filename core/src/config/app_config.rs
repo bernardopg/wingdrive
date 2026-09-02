@@ -218,7 +218,13 @@ impl AppConfig {
 
 	/// Load configuration from a specific data directory
 	pub fn load_from(data_dir: &PathBuf) -> Result<Self> {
-		let config_path = data_dir.join("spacedrive.json");
+		let wingdrive_path = data_dir.join("wingdrive.json");
+		let legacy_path = data_dir.join("spacedrive.json");
+		let config_path = if !wingdrive_path.exists() && legacy_path.exists() {
+			legacy_path
+		} else {
+			wingdrive_path
+		};
 
 		if config_path.exists() {
 			info!("Loading config from {:?}", config_path);
@@ -286,7 +292,7 @@ impl AppConfig {
 		// Ensure directory exists
 		fs::create_dir_all(&self.data_dir)?;
 
-		let config_path = self.data_dir.join("spacedrive.json");
+		let config_path = self.data_dir.join("wingdrive.json");
 		let json = serde_json::to_string_pretty(self)?;
 		fs::write(&config_path, json)?;
 		info!("Saved config to {:?}", config_path);
@@ -384,5 +390,25 @@ impl Migrate for AppConfig {
 			6 => Ok(()), // Already at target version
 			v => Err(anyhow!("Unknown config version: {}", v)),
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn reads_legacy_config_but_writes_wingdrive_config() {
+		let root = tempfile::tempdir().unwrap();
+		let data_dir = root.path().to_path_buf();
+		let legacy_path = data_dir.join("spacedrive.json");
+		let config = AppConfig::default_with_dir(data_dir.clone());
+		fs::write(&legacy_path, serde_json::to_vec(&config).unwrap()).unwrap();
+
+		let loaded = AppConfig::load_from(&data_dir).unwrap();
+		loaded.save().unwrap();
+
+		assert!(legacy_path.exists());
+		assert!(data_dir.join("wingdrive.json").exists());
 	}
 }

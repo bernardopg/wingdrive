@@ -53,7 +53,7 @@ async fn basic_auth(State(state): State<AppState>, request: Request, next: Next)
 		else {
 			return Response::builder()
 				.status(401)
-				.header("WWW-Authenticate", "Basic realm=\"Spacedrive\"")
+				.header("WWW-Authenticate", "Basic realm=\"WingDrive\"")
 				.body("Unauthorized".into_response().into_body())
 				.expect("hardcoded response will be valid");
 		};
@@ -67,7 +67,7 @@ async fn basic_auth(State(state): State<AppState>, request: Request, next: Next)
 		{
 			return Response::builder()
 				.status(401)
-				.header("WWW-Authenticate", "Basic realm=\"Spacedrive\"")
+				.header("WWW-Authenticate", "Basic realm=\"WingDrive\"")
 				.body("Unauthorized".into_response().into_body())
 				.expect("hardcoded response will be valid");
 		}
@@ -112,7 +112,7 @@ async fn serve_web(uri: Uri) -> Response {
 		.status(StatusCode::NOT_FOUND)
 		.header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
 		.body(Body::from(
-			"Spacedrive web UI is not bundled in this build. \
+			"WingDrive web UI is not bundled in this build. \
 			 Run `bun run build` in `apps/web/` and rebuild sd-server.",
 		))
 		.expect("missing-bundle response is well-formed")
@@ -183,7 +183,12 @@ async fn serve_sidecar(
 	};
 
 	let path = SidecarPathBuilder::new(&library_folder)
-		.build(&content_uuid, &kind, &SidecarVariant::from(variant), &format)
+		.build(
+			&content_uuid,
+			&kind,
+			&SidecarVariant::from(variant),
+			&format,
+		)
 		.absolute_path;
 
 	let Ok(file) = tokio::fs::File::open(&path).await else {
@@ -353,9 +358,9 @@ async fn daemon_rpc(
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "spacedrive-server", about = "Spacedrive HTTP server")]
+#[command(name = "wingdrive-server", about = "WingDrive HTTP server")]
 struct Args {
-	/// Path to spacedrive data directory
+	/// Path to the WingDrive data directory
 	#[arg(long, env = "DATA_DIR")]
 	data_dir: Option<PathBuf>,
 
@@ -405,17 +410,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		}
 		#[cfg(debug_assertions)]
 		{
-			// Default to `~/.spacedrive` in dev — matches the Tauri desktop app,
+			// Use the WingDrive resolver in dev so existing installations are adopted,
 			// so `just dev-server` and `just dev-desktop` share libraries and
 			// data persists between runs. Falls back to a tempdir only if the
 			// home directory can't be resolved.
 			std::env::var("DATA_DIR")
 				.map(PathBuf::from)
-				.or_else(|_| {
-					dirs::home_dir()
-						.map(|h| h.join(".spacedrive"))
-						.ok_or(())
-				})
+				.or_else(|_| sd_core::config::default_data_dir().map_err(|_| ()))
 				.unwrap_or_else(|_| {
 					warn!("Could not resolve home directory; falling back to tempdir");
 					let temp = tempfile::tempdir().expect("Failed to create temp dir");
@@ -481,7 +482,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	// Start server
 	let listener = tokio::net::TcpListener::bind(addr).await?;
-	info!("Spacedrive Server listening on http://{}", addr);
+	info!("WingDrive Server listening on http://{}", addr);
 	info!("Web UI available at /");
 	info!("RPC endpoint available at /rpc");
 	axum::serve(listener, app)

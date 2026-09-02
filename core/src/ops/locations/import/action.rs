@@ -75,11 +75,13 @@ impl LibraryAction for LocationImportAction {
 				ActionError::io_error(self.input.import_path.to_string_lossy().to_string(), e)
 			})?;
 
-		// Validate it's a Spacedrive export
-		if !sql_content.contains("-- Spacedrive Location Export") {
+		// Accept pre-fork exports while new exports use the WingDrive header.
+		if !sql_content.contains("-- WingDrive Location Export")
+			&& !sql_content.contains("-- Spacedrive Location Export")
+		{
 			return Err(ActionError::Validation {
 				field: "import_path".to_string(),
-				message: "File is not a valid Spacedrive location export".to_string(),
+				message: "File is not a valid WingDrive location export".to_string(),
 			});
 		}
 

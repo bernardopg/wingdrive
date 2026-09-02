@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { toast } from "@spacedrive/primitives";
+import { toast } from "@wingdrive/primitives";
 import type { File } from "@sd/ts-client";
 import { useLibraryMutation } from "../../../contexts/SpacedriveContext";
 import { useDeleteConfirmationDialog } from "../../../components/modals/DeleteConfirmationModal";

@@ -11,6 +11,13 @@ WingDrive is a community continuation fork of [Spacedrive](https://github.com/sp
 The full upstream commit history is preserved in this repository. Authorship of
 every original commit remains with its author.
 
+## Vendored UI Packages
+
+`packages/wingdrive-ai`, `packages/wingdrive-primitives`, and
+`packages/wingdrive-tokens` are derived from the MIT-licensed SpaceUI packages
+originally published by Spacedrive. Their original copyright and MIT license
+are preserved in each package directory.
+
 ## Copyright
 
 Copyright 2026 Spacedrive Technology Inc.

@@ -1,10 +1,10 @@
 [package]
 authors     = ["Spacedrive Technology Inc."]
-description = "SDK for building Spacedrive WASM extensions"
+description = "SDK for building WingDrive WASM extensions"
 edition     = "2021"
 license     = "MIT OR Apache-2.0"
 name        = "spacedrive-sdk"
-repository  = "https://github.com/spacedriveapp/spacedrive"
+repository  = "https://github.com/bernardopg/wingdrive"
 version     = "0.1.0"
 
 [dependencies]

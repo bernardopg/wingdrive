@@ -56,8 +56,8 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "publisher": "Spacedrive Technology Inc.",
-    "createUpdaterArtifacts": true,
+    "publisher": "WingDrive contributors",
+    "createUpdaterArtifacts": false,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -72,10 +72,10 @@
     "fileAssociations": [
       {
         "ext": ["memory"],
-        "name": "Spacedrive Memory",
-        "description": "Spacedrive Memory File",
+        "name": "WingDrive Memory",
+        "description": "WingDrive Memory File",
         "role": "Editor",
-        "mimeType": "application/x-spacedrive-memory"
+        "mimeType": "application/x-wingdrive-memory"
       }
     ],
     "linux": {
@@ -87,7 +87,7 @@
           "libgtk-3-0"
         ],
         "files": {
-          "/usr/lib/spacedrive/": "../../.deps/lib/"
+          "/usr/lib/wingdrive/": "../../.deps/lib/"
         }
       }
     },
@@ -103,14 +103,6 @@
         "type": "embedBootstrapper",
         "silent": true
       }
-    }
-  },
-  "plugins": {
-    "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDA1M0E3REYzMzM3NEM2OEIKUldTTHhuUXo4MzA2QlRaOXVrcmg1Vml2NGNTNXlHK0hXc0tKaFZxMi9oRVhCVmVCSnA5bDg1UzEK",
-      "endpoints": [
-        "https://github.com/spacedriveapp/spacedrive/releases/latest/download/latest.json"
-      ]
     }
   }
 }

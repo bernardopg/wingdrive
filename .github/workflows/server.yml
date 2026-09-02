@@ -1,131 +1,69 @@
-name: Server release (upstream, inactive)
+name: WingDrive Server Image
 
-# Inherited from Spacedrive. Builds on a Blacksmith runner and pushes to the
-# upstream container registry, so the tag trigger is removed to stop it firing
-# on every fork release.
 on:
+  push:
+    tags: ["v*"]
   workflow_dispatch:
 
-jobs:
-  build-server:
-    name: Build a docker image for spacedrive server
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - name: Maximize build space
-        if: ${{ runner.os == 'Linux' }}
-        uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
-        with:
-          remove-codeql: 'true'
-          remove-dotnet: 'true'
-          remove-haskell: 'true'
-          remove-android: 'true'
-          overprovision-lvm: 'true'
-          remove-docker-images: 'true'
+permissions:
+  contents: read
+  packages: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Publish GHCR Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Homebrew
-        id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@8f3d1ec8a696b3b9d9a6c3696b6c73033cab69e4 # 2026.08.14.1
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.0"
 
-      - name: Update Podman & crun
+      - name: Build web frontend
         run: |
-          sudo apt-get remove crun podman
-          brew install crun podman
+          bun install --frozen-lockfile
+          bun run build
+        working-directory: apps/web
 
-      - name: Update buildah
-        shell: bash
-        run: |
-          set -euxo pipefail
-          wget -O- 'https://github.com/HeavenVolkoff/buildah-static/releases/latest/download/buildah-amd64.tar.gz' \
-          | sudo tar -xzf- -C /usr/local/bin
-
-      - name: Install netavark
-        shell: bash
-        run: |
-          set -euxo pipefail
-          sudo mkdir -p /usr/local/lib/podman
-          sudo wget -O- 'https://github.com/containers/netavark/releases/latest/download/netavark.gz' \
-          | gunzip | sudo dd status=none of=/usr/local/lib/podman/netavark
-          sudo chmod +x /usr/local/lib/podman/netavark
-
-      - name: Install passt
-        shell: bash
-        working-directory: /tmp
-        run: |
-          set -euxo pipefail
-
-          deb="$(
-            curl -SsL https://passt.top/builds/latest/x86_64 \
-            | grep -oP 'passt[^\.<>'\''"]+\.deb' | sort -u | head -n1
-          )"
-
-          curl -SsJLO "https://passt.top/builds/latest/x86_64/${deb}"
-          sudo dpkg -i "${deb}"
-
-      - name: Basic sanity check
-        run: |
-          crun --version
-          podman version
-          buildah --version
-
-      - name: Determine image name & tag
-        id: image_info
-        shell: bash
-        run: |
-          set -euxo pipefail
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            IMAGE_TAG="${GITHUB_REF##*/}"
-            # Only tag as "latest" for stable releases (no alpha/beta/rc suffix)
-            if [[ "$IMAGE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              EXTRA_TAG="latest"
-            else
-              EXTRA_TAG=""
-            fi
-          else
-            IMAGE_TAG="$(git rev-parse --short "$GITHUB_SHA")"
-            EXTRA_TAG="staging"
-          fi
-          IMAGE_TAG="${IMAGE_TAG,,}"
-          IMAGE_NAME="${GITHUB_REPOSITORY,,}/server"
-
-          echo "Building ${IMAGE_NAME}:${IMAGE_TAG}"
-
-          echo "tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
-          echo "extra_tag=${EXTRA_TAG}" >> "$GITHUB_OUTPUT"
-          echo "name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
-          echo "repo=${GITHUB_REPOSITORY}" >> "$GITHUB_OUTPUT"
-          echo "repo_ref=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> "$GITHUB_OUTPUT"
-
-      - name: Set up QEMU
+      - name: Setup QEMU
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
-        with:
-          platforms: 'arm64'
 
-      - name: Build image
-        id: build-image
-        uses: redhat-actions/buildah-build@3a51aade9afa17e5c78256bcbe2e1ee08c7b995b # v3.0.2
-        with:
-          tags: ${{ steps.image_info.outputs.extra_tag && format('{0} {1}', steps.image_info.outputs.tag, steps.image_info.outputs.extra_tag) || steps.image_info.outputs.tag }}
-          archs: amd64, arm64
-          image: ${{ steps.image_info.outputs.name }}
-          layers: 'false'
-          context: .
-          build-args: |
-            REPO=${{ steps.image_info.outputs.repo }}
-            REPO_REF=${{ steps.image_info.outputs.repo_ref }}
-          containerfiles: |
-            ./apps/server/Dockerfile
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
-      - name: Push image to ghcr.io
-        uses: redhat-actions/push-to-registry@94ade333c38ecc0e60e94785125d9a52ca423b37 # v3.0.0
+      - name: Login to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
-          tags: ${{ steps.build-image.outputs.tags }}
-          image: ${{ steps.build-image.outputs.image }}
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ghcr.io/${{ github.repository }}/server
+          tags: |
+            type=ref,event=tag
+            type=sha
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
+
+      - name: Build and publish image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: apps/server/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

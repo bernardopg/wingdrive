@@ -1,5 +1,5 @@
 export const NATIVE_DEPS_URL =
-	'https://github.com/spacedriveapp/native-deps/releases/latest/download'
+	'https://github.com/bernardopg/wingdrive/releases/download/native-deps-v0.26'
 
 export const NATIVE_DEPS_ASSETS = {
 	Linux: {

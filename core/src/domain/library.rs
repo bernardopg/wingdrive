@@ -1,6 +1,6 @@
-//! Library - a Spacedrive library (collection of indexed locations)
+//! Library - a WingDrive library (collection of indexed locations)
 //!
-//! Libraries are the top-level organizational unit in Spacedrive.
+//! Libraries are the top-level organizational unit in WingDrive.
 //! Each library has its own database, settings, and set of locations.
 
 use crate::domain::resource::Identifiable;
@@ -11,7 +11,7 @@ use specta::Type;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-/// A Spacedrive library - the canonical domain model
+/// A WingDrive library - the canonical domain model
 ///
 /// This is the resource type sent to the frontend for the normalized cache.
 /// It contains all the information needed to display library info in the UI.

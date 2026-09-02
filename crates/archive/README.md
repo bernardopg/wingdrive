@@ -1,10 +1,10 @@
 # sd-archive
 
-Archive engine for Spacedrive - indexes external data sources beyond the filesystem.
+Archive engine for WingDrive - indexes external data sources beyond the filesystem.
 
 ## Overview
 
-This crate provides the core archival engine that powers Spacedrive's data source integration. It is designed to be used as a standalone library or integrated into Spacedrive's core.
+This crate provides the core archival engine that powers WingDrive's data source integration. It is designed to be used as a standalone library or integrated into WingDrive's core.
 
 **Key features:**
 
@@ -53,9 +53,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### Integrated with Spacedrive
+### Integrated with WingDrive
 
-See `core/src/data/` for the Spacedrive integration wrapper that adds:
+See `core/src/data/` for the WingDrive integration wrapper that adds:
 - Library-scoped lifecycle
 - Job system integration
 - Event bus integration

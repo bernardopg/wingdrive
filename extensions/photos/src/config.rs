@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 /// Extension configuration with user-facing settings
 ///
 /// The `#[setting(...)]` attributes would be processed by a `#[derive(ExtensionConfig)]` macro
-/// to generate metadata for Spacedrive's configuration UI. For the stub implementation,
+/// to generate metadata for WingDrive's configuration UI. For the stub implementation,
 /// we use doc comments to show the intended design.
 #[derive(Serialize, Deserialize)]
 pub struct PhotosConfig {

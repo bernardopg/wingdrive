@@ -281,7 +281,7 @@ export function TabManagerProvider({
 			const derivedTitle =
 				title ||
 				deriveTitleFromPath(pathname, search ? `?${search}` : "") ||
-				"Spacedrive";
+							"WingDrive";
 
 			const newTab: Tab = {
 				id: crypto.randomUUID(),

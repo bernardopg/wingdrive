@@ -1,4 +1,4 @@
-// sd-tauri-core: FFI bridge between Tauri and Spacedrive Core
+// sd-tauri-core: FFI bridge between Tauri and WingDrive Core
 // This crate provides the interface layer for embedding the core in a Tauri application
 
 use serde::{Deserialize, Serialize};
@@ -41,14 +41,8 @@ pub mod commands {
 	// Following the pattern from sd-ios-core but for Tauri's IPC
 }
 
-/// Default data directory: `~/.spacedrive`
+/// Resolves the WingDrive data directory with legacy-install adoption.
+
 pub fn default_data_dir() -> anyhow::Result<std::path::PathBuf> {
-	let dir = dirs::home_dir()
-		.ok_or_else(|| anyhow::anyhow!("Could not determine home directory"))?
-		.join(".spacedrive");
-
-	// Create directory if it doesn't exist
-	std::fs::create_dir_all(&dir)?;
-
-	Ok(dir)
+	sd_core::config::default_data_dir()
 }

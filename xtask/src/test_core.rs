@@ -168,7 +168,7 @@ pub fn run_tests(verbose: bool) -> Result<Vec<TestResult>> {
 	let mut results = Vec::new();
 
 	println!();
-	println!("{}", "Spacedrive Core Tests Runner".bright_cyan().bold());
+	println!("{}", "WingDrive Core Tests Runner".bright_cyan().bold());
 	println!("Running {} test suite(s)\n", total_tests);
 
 	let overall_start = Instant::now();

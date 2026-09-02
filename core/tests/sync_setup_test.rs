@@ -18,9 +18,9 @@ async fn alice_sync_setup_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-sync-setup-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-sync-setup-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-sync-setup-test/alice");
+	let data_dir = PathBuf::from("/tmp/wingdrive-sync-setup-test/alice");
 
 	println!("Alice: Starting sync setup test");
 
@@ -52,14 +52,14 @@ async fn alice_sync_setup_scenario() {
 
 	// Write library ID for Bob
 	std::fs::write(
-		"/tmp/spacedrive-sync-setup-test/library_id.txt",
+		"/tmp/wingdrive-sync-setup-test/library_id.txt",
 		library.id().to_string(),
 	)
 	.unwrap();
 
 	// Write Alice's device ID for Bob
 	std::fs::write(
-		"/tmp/spacedrive-sync-setup-test/alice_device_id.txt",
+		"/tmp/wingdrive-sync-setup-test/alice_device_id.txt",
 		core.device.device_id().unwrap().to_string(),
 	)
 	.unwrap();
@@ -79,7 +79,7 @@ async fn alice_sync_setup_scenario() {
 
 	println!("Alice: Pairing code generated");
 	std::fs::write(
-		"/tmp/spacedrive-sync-setup-test/pairing_code.txt",
+		"/tmp/wingdrive-sync-setup-test/pairing_code.txt",
 		&pairing_code,
 	)
 	.unwrap();
@@ -124,7 +124,7 @@ async fn alice_sync_setup_scenario() {
 				Ok(_) => {
 					println!("Alice: ✅ Share library SUCCEEDED!");
 					std::fs::write(
-						"/tmp/spacedrive-sync-setup-test/alice_success.txt",
+						"/tmp/wingdrive-sync-setup-test/alice_success.txt",
 						"success",
 					)
 					.unwrap();
@@ -132,7 +132,7 @@ async fn alice_sync_setup_scenario() {
 				Err(e) => {
 					println!("Alice: ❌ Share library FAILED: {:?}", e);
 					std::fs::write(
-						"/tmp/spacedrive-sync-setup-test/alice_error.txt",
+						"/tmp/wingdrive-sync-setup-test/alice_error.txt",
 						format!("{:?}", e),
 					)
 					.unwrap();
@@ -140,11 +140,7 @@ async fn alice_sync_setup_scenario() {
 				}
 			}
 
-			std::fs::write(
-				"/tmp/spacedrive-sync-setup-test/alice_paired.txt",
-				"success",
-			)
-			.unwrap();
+			std::fs::write("/tmp/wingdrive-sync-setup-test/alice_paired.txt", "success").unwrap();
 
 			// Give Bob time to process
 			tokio::time::sleep(Duration::from_secs(5)).await;
@@ -169,9 +165,9 @@ async fn bob_sync_setup_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-sync-setup-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-sync-setup-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-sync-setup-test/bob");
+	let data_dir = PathBuf::from("/tmp/wingdrive-sync-setup-test/bob");
 
 	println!("Bob: Starting sync setup test");
 
@@ -195,7 +191,7 @@ async fn bob_sync_setup_scenario() {
 	// Wait for Alice's library ID
 	println!("Bob: Waiting for Alice's library ID...");
 	let library_id = loop {
-		if let Ok(id) = std::fs::read_to_string("/tmp/spacedrive-sync-setup-test/library_id.txt") {
+		if let Ok(id) = std::fs::read_to_string("/tmp/wingdrive-sync-setup-test/library_id.txt") {
 			break id.trim().to_string();
 		}
 		tokio::time::sleep(Duration::from_millis(500)).await;
@@ -205,8 +201,7 @@ async fn bob_sync_setup_scenario() {
 	// Wait for pairing code
 	println!("Bob: Waiting for pairing code...");
 	let pairing_code = loop {
-		if let Ok(code) =
-			std::fs::read_to_string("/tmp/spacedrive-sync-setup-test/pairing_code.txt")
+		if let Ok(code) = std::fs::read_to_string("/tmp/wingdrive-sync-setup-test/pairing_code.txt")
 		{
 			break code.trim().to_string();
 		}
@@ -247,7 +242,7 @@ async fn bob_sync_setup_scenario() {
 				// Check if library was created by Alice's ShareLocalLibrary action
 				if let Some(lib) = core.libraries.get_library(alice_lib_uuid).await {
 					println!("Bob: ✅ Library received from Alice! ID: {}", lib.id());
-					std::fs::write("/tmp/spacedrive-sync-setup-test/bob_success.txt", "success")
+					std::fs::write("/tmp/wingdrive-sync-setup-test/bob_success.txt", "success")
 						.unwrap();
 
 					// Verify sync initialized
@@ -261,7 +256,7 @@ async fn bob_sync_setup_scenario() {
 			if lib_wait_attempts >= 30 {
 				println!("Bob: ❌ Library was never created - UNIQUE constraint may have failed");
 				std::fs::write(
-					"/tmp/spacedrive-sync-setup-test/bob_error.txt",
+					"/tmp/wingdrive-sync-setup-test/bob_error.txt",
 					"Timeout waiting for library from Alice - ShareLocalLibrary may have failed with UNIQUE constraint",
 				)
 				.unwrap();
@@ -289,9 +284,9 @@ async fn carol_three_device_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-three-device-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-three-device-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-three-device-test/carol");
+	let data_dir = PathBuf::from("/tmp/wingdrive-three-device-test/carol");
 
 	println!("Carol: Starting three-device test");
 
@@ -315,8 +310,7 @@ async fn carol_three_device_scenario() {
 	// Wait for Alice's library ID
 	println!("Carol: Waiting for Alice's library ID...");
 	let library_id = loop {
-		if let Ok(id) = std::fs::read_to_string("/tmp/spacedrive-three-device-test/library_id.txt")
-		{
+		if let Ok(id) = std::fs::read_to_string("/tmp/wingdrive-three-device-test/library_id.txt") {
 			break id.trim().to_string();
 		}
 		tokio::time::sleep(Duration::from_millis(500)).await;
@@ -327,7 +321,7 @@ async fn carol_three_device_scenario() {
 	println!("Carol: Waiting for Alice's second pairing code...");
 	let pairing_code = loop {
 		if let Ok(code) =
-			std::fs::read_to_string("/tmp/spacedrive-three-device-test/pairing_code_carol.txt")
+			std::fs::read_to_string("/tmp/wingdrive-three-device-test/pairing_code_carol.txt")
 		{
 			break code.trim().to_string();
 		}
@@ -376,7 +370,7 @@ async fn carol_three_device_scenario() {
 
 					// Read Bob's device ID
 					let bob_device_id = if let Ok(id) = std::fs::read_to_string(
-						"/tmp/spacedrive-three-device-test/bob_device_id.txt",
+						"/tmp/wingdrive-three-device-test/bob_device_id.txt",
 					) {
 						uuid::Uuid::parse_str(id.trim()).ok()
 					} else {
@@ -395,14 +389,14 @@ async fn carol_three_device_scenario() {
 								"Carol: ✅ Bob's device automatically discovered via shared sync!"
 							);
 							std::fs::write(
-								"/tmp/spacedrive-three-device-test/carol_success.txt",
+								"/tmp/wingdrive-three-device-test/carol_success.txt",
 								"success",
 							)
 							.unwrap();
 						} else {
 							println!("Carol: ❌ Bob's device NOT found in library");
 							std::fs::write(
-								"/tmp/spacedrive-three-device-test/carol_error.txt",
+								"/tmp/wingdrive-three-device-test/carol_error.txt",
 								"Bob device not found - shared sync failed",
 							)
 							.unwrap();
@@ -432,8 +426,8 @@ async fn test_sync_setup_no_constraint_error() {
 	println!("Testing sync setup with deterministic spaces...");
 
 	// Clean up
-	let _ = std::fs::remove_dir_all("/tmp/spacedrive-sync-setup-test");
-	std::fs::create_dir_all("/tmp/spacedrive-sync-setup-test").unwrap();
+	let _ = std::fs::remove_dir_all("/tmp/wingdrive-sync-setup-test");
+	std::fs::create_dir_all("/tmp/wingdrive-sync-setup-test").unwrap();
 
 	let mut runner = CargoTestRunner::for_test_file("sync_setup_test")
 		.with_timeout(Duration::from_secs(120))
@@ -455,20 +449,19 @@ async fn test_sync_setup_no_constraint_error() {
 	let result = runner
 		.wait_for_success(|_| {
 			let alice_paired =
-				std::fs::read_to_string("/tmp/spacedrive-sync-setup-test/alice_paired.txt")
+				std::fs::read_to_string("/tmp/wingdrive-sync-setup-test/alice_paired.txt")
 					.map(|c| c.trim() == "success")
 					.unwrap_or(false);
 
 			let bob_success =
-				std::fs::read_to_string("/tmp/spacedrive-sync-setup-test/bob_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-sync-setup-test/bob_success.txt")
 					.map(|c| c.trim() == "success")
 					.unwrap_or(false);
 
 			// Check if Bob had an error
-			if std::path::Path::new("/tmp/spacedrive-sync-setup-test/bob_error.txt").exists() {
-				let error =
-					std::fs::read_to_string("/tmp/spacedrive-sync-setup-test/bob_error.txt")
-						.unwrap();
+			if std::path::Path::new("/tmp/wingdrive-sync-setup-test/bob_error.txt").exists() {
+				let error = std::fs::read_to_string("/tmp/wingdrive-sync-setup-test/bob_error.txt")
+					.unwrap();
 				println!("Bob encountered error: {}", error);
 				return false;
 			}
@@ -486,7 +479,7 @@ async fn test_sync_setup_no_constraint_error() {
 
 			// Print error if it exists
 			if let Ok(error) =
-				std::fs::read_to_string("/tmp/spacedrive-sync-setup-test/bob_error.txt")
+				std::fs::read_to_string("/tmp/wingdrive-sync-setup-test/bob_error.txt")
 			{
 				println!("Bob's error: {}", error);
 			}
@@ -505,8 +498,8 @@ async fn test_three_device_discovery() {
 	println!("Testing three-device automatic discovery via shared sync...");
 
 	// Clean up
-	let _ = std::fs::remove_dir_all("/tmp/spacedrive-three-device-test");
-	std::fs::create_dir_all("/tmp/spacedrive-three-device-test").unwrap();
+	let _ = std::fs::remove_dir_all("/tmp/wingdrive-three-device-test");
+	std::fs::create_dir_all("/tmp/wingdrive-three-device-test").unwrap();
 
 	// This test verifies that:
 	// 1. Alice pairs with Bob and runs sync setup

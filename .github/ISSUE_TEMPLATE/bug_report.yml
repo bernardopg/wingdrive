@@ -1,5 +1,5 @@
 name: 🐞 Bug report
-description: Report a bug affecting Spacedrive's functionality.
+description: Report a bug affecting WingDrive's functionality.
 labels: [kind/bug, status/needs-triage]
 
 body:
@@ -36,16 +36,16 @@ body:
     attributes:
       label: Platform and versions
       description: |
-        Please tell us about your operating system and Spacedrive versions. If on Linux, please provide information about the distribution you are using.
+        Please tell us about your operating system and WingDrive versions. If on Linux, please provide information about the distribution you are using.
 
-        **If you are developing Spacedrive or building it yourself, please include the output of the following command:**
+        **If you are developing WingDrive or building it yourself, please include the output of the following command:**
 
         ```
         pnpm --version && cargo --version && rustc --version
         ```
       value: |
         - OS:
-        - Spacedrive:
+        - WingDrive:
 
         <details><summary> Development tool versions (optional) </summary><pre>
 
@@ -72,7 +72,7 @@ body:
     id: code-of-conduct
     attributes:
       label: Code of Conduct
-      description: By submitting this issue, you agree to follow Spacedrive's [Code of Conduct](https://github.com/spacedriveapp/spacedrive/blob/main/CODE_OF_CONDUCT.md).
+      description: By submitting this issue, you agree to follow WingDrive's [Code of Conduct](https://github.com/bernardopg/wingdrive/blob/main/CODE_OF_CONDUCT.md).
       options:
         - label: I agree to follow the Code of Conduct.
           required: true

@@ -1,8 +1,8 @@
-# Spacedrive Server Architecture
+# WingDrive Server Architecture
 
 ## Overview
 
-The Spacedrive Server is a production-ready HTTP server that embeds the Spacedrive daemon and serves the web interface. It's designed for headless deployments, NAS systems, and container environments.
+The WingDrive Server is a production-ready HTTP server that embeds the WingDrive daemon and serves the web interface. It's designed for headless deployments, NAS systems, and container environments.
 
 ## Design Principles
 
@@ -185,7 +185,7 @@ ENTRYPOINT ["/usr/bin/sd-server"]
 
 ```yaml
 volumes:
-  - spacedrive-data:/data  # Persistent library data
+  - wingdrive-data:/data  # Persistent library data
   - /mnt/storage:/storage:ro  # Optional: Read-only media access
 ```
 
@@ -239,7 +239,7 @@ cargo build --release -p sd-server --features assets
 **Deployment:**
 ```bash
 ./target/release/sd-server \
-  --data-dir /var/lib/spacedrive \
+  --data-dir /var/lib/wingdrive \
   --port 8080
 ```
 
@@ -359,10 +359,10 @@ curl http://localhost:8080/health
 **Logs:**
 ```bash
 # Docker
-docker logs spacedrive -f
+docker logs wingdrive -f
 
 # Systemd
-journalctl -u spacedrive -f
+journalctl -u wingdrive -f
 
 # Native
 RUST_LOG=debug ./sd-server

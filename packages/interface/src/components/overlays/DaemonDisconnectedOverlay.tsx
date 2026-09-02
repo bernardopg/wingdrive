@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Copy } from "@phosphor-icons/react";
 import { useDaemonStatus } from "../../hooks/useDaemonStatus";
 import { usePlatform } from "../../contexts/PlatformContext";
-import { Button } from "@spacedrive/primitives";
+import { Button } from "@wingdrive/primitives";
 import folderIcon from "@sd/assets/icons/FolderNoSpace.png";
 
 function CLICommand({
@@ -114,7 +114,7 @@ export function DaemonDisconnectedOverlay({
 						<div className="flex flex-1 flex-col items-center justify-center gap-6 px-12">
 							<img
 								src={folderIcon}
-								alt="Spacedrive folder icon"
+								alt="WingDrive folder icon"
 								className="size-32 select-none"
 								draggable={false}
 							/>
@@ -124,7 +124,7 @@ export function DaemonDisconnectedOverlay({
 									Daemon Disconnected
 								</h1>
 								<p className="max-w-xs text-sm leading-relaxed text-ink-dull">
-									The Spacedrive daemon is required for the
+									The WingDrive daemon is required for the
 									app to function. It runs in the background,
 									managing your libraries, indexing files, and
 									syncing data across devices.

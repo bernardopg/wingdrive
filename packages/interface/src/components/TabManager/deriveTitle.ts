@@ -64,5 +64,5 @@ export function deriveTitleFromPath(
 		return "Explorer";
 	}
 
-	return "Spacedrive";
+		return "WingDrive";
 }

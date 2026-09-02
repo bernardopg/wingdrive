@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-macOS Calendar adapter for Spacedrive.
+macOS Calendar adapter for WingDrive.
 
 Reads the macOS Calendar SQLite database (CalendarAgent).
 Located at ~/Library/Calendars/Calendar.sqlitedb

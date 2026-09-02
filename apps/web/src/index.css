@@ -1,17 +1,17 @@
 @import "tailwindcss";
-@import "@spacedrive/tokens/theme";
-@import "@spacedrive/tokens/css";
-@import "@spacedrive/tokens/css/themes/light";
-@import "@spacedrive/tokens/css/themes/midnight";
-@import "@spacedrive/tokens/css/themes/noir";
-@import "@spacedrive/tokens/css/themes/slate";
-@import "@spacedrive/tokens/css/themes/nord";
-@import "@spacedrive/tokens/css/themes/mocha";
+@import "@wingdrive/tokens/theme";
+@import "@wingdrive/tokens/css";
+@import "@wingdrive/tokens/css/themes/light";
+@import "@wingdrive/tokens/css/themes/midnight";
+@import "@wingdrive/tokens/css/themes/noir";
+@import "@wingdrive/tokens/css/themes/slate";
+@import "@wingdrive/tokens/css/themes/nord";
+@import "@wingdrive/tokens/css/themes/mocha";
 
 /* Tell Tailwind v4 where to scan for utility classes */
 @source "../../../packages/interface/src";
-@source "../../../packages/interface/node_modules/@spacedrive/primitives/dist";
-@source "../../../packages/interface/node_modules/@spacedrive/ai/dist";
+@source "../../../packages/interface/node_modules/@wingdrive/primitives/dist";
+@source "../../../packages/interface/node_modules/@wingdrive/ai/dist";
 
 @plugin "@tailwindcss/forms";
 @plugin "tailwindcss-animate";

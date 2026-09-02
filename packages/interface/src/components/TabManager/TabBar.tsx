@@ -14,7 +14,7 @@ import {
 import {
 	TabBar as TabBarPrimitive,
 	TabBarItem,
-} from '@spacedrive/primitives';
+} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 import type { Tab } from '.';

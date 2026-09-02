@@ -66,14 +66,14 @@ async fn test_initial_backfill_alice_indexes_first() -> anyhow::Result<()> {
 		.await?
 		.ok_or_else(|| anyhow::anyhow!("Device not found"))?;
 
-	// Use Spacedrive source code for deterministic testing across all environments
+	// Use WingDrive source code for deterministic testing across all environments
 	let test_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 		.parent()
 		.unwrap()
 		.to_path_buf();
 	let location_args = LocationCreateArgs {
 		path: test_path.clone(),
-		name: Some("spacedrive".to_string()),
+		name: Some("wingdrive".to_string()),
 		index_mode: IndexMode::Content,
 	};
 
@@ -861,7 +861,7 @@ async fn test_volume_resource_events_on_sync() -> anyhow::Result<()> {
 	Ok(())
 }
 
-/// Verify that known directories from the Spacedrive source exist on both devices
+/// Verify that known directories from the WingDrive source exist on both devices
 async fn verify_known_directories(
 	library_alice: &Arc<sd_core::library::Library>,
 	library_bob: &Arc<sd_core::library::Library>,
@@ -870,7 +870,7 @@ async fn verify_known_directories(
 
 	tracing::info!("Verifying known directory structure...");
 
-	// Known directories in Spacedrive source tree
+	// Known directories in WingDrive source tree
 	let known_dirs = ["core", "apps", "packages", "interface"];
 
 	for dir_name in known_dirs {

@@ -9,7 +9,7 @@ The Virtual Sidecar System (VSS) manages derivative data associated with your fi
 
 **Content-Scoped**: Sidecars are linked to file content, not paths. Multiple copies of the same file share one set of sidecars.
 
-**Non-Destructive**: Spacedrive never modifies your original files during indexing.
+**Non-Destructive**: WingDrive never modifies your original files during indexing.
 
 **Portable**: All managed sidecars live in `.sdlibrary/sidecars`, making your entire setup portable.
 
@@ -17,7 +17,7 @@ The Virtual Sidecar System (VSS) manages derivative data associated with your fi
 
 The VSS handles two types of sidecars:
 
-**Managed Sidecars** - Spacedrive-generated derivatives stored in `.sdlibrary/sidecars/`:
+**Managed Sidecars** - WingDrive-generated derivatives stored in `.sdlibrary/sidecars/`:
 - Thumbnails (`.webp`)
 - Video proxies (`.mp4`)
 - OCR text (`.json`)
@@ -52,7 +52,7 @@ A typical path looks like this:
 
 ### Database Schema
 
-The VSS uses two tables in the Spacedrive database:
+The VSS uses two tables in the WingDrive database:
 
 - `sidecars`: This table tracks all the sidecars that have been generated or are pending generation. It stores information like the content UUID, kind, variant, format, path, size, and status.
 - `sidecar_availability`: This table tracks which devices in your library have a copy of a particular sidecar. This is used to avoid regenerating sidecars that already exist on another device.
@@ -94,7 +94,7 @@ The VSS is partially implemented. Here is a summary of the current status:
 
 ## How to Use the VSS (API)
 
-The `SidecarManager` provides a set of APIs for interacting with the VSS. These are primarily for internal use by other Spacedrive services, but they can also be used for development and debugging.
+The `SidecarManager` provides a set of APIs for interacting with the VSS. These are primarily for internal use by other WingDrive services, but they can also be used for development and debugging.
 
 - `sidecars.presence(content_uuids, kind, variants)`: Checks for the presence of sidecars for a given set of content UUIDs.
 - `sidecars.path(content_uuid, kind, variant)`: Gets the local path to a sidecar, or enqueues it for generation if it doesn't exist.

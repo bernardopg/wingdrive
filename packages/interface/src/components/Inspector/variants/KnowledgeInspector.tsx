@@ -16,7 +16,7 @@ export function KnowledgeInspector() {
       id: 1,
       role: "assistant",
       content:
-        "Hi! I'm your AI assistant for Spacedrive. I can help you organize files, search your library, and answer questions about your data.",
+        "Hi! I'm your AI assistant for WingDrive. I can help you organize files, search your library, and answer questions about your data.",
       timestamp: new Date(),
     },
   ]);

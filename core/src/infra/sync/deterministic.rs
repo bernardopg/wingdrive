@@ -1,7 +1,7 @@
 //! Deterministic UUID generation for system-provided resources
 //!
 //! Used ONLY for system default tags and built-in resources that need
-//! consistent UUIDs across all Spacedrive installations.
+//! consistent UUIDs across all WingDrive installations.
 //!
 //! WARNING: User-created tags should use random UUIDs to support the
 //! semantic tagging system's polymorphic naming (multiple tags with
@@ -42,7 +42,7 @@ pub const ALBUM_NAMESPACE: Uuid = Uuid::from_bytes([
 /// Generate deterministic UUID for a system default tag
 ///
 /// This should ONLY be used for built-in system tags that ship with
-/// Spacedrive. User-created tags must use random UUIDs.
+/// WingDrive. User-created tags must use random UUIDs.
 ///
 /// # Example
 /// ```rust,ignore
@@ -56,7 +56,7 @@ pub fn deterministic_system_tag_uuid(name: &str) -> Uuid {
 }
 
 /// Generate deterministic UUID for an album name
-/// System default tags that ship with every Spacedrive installation
+/// System default tags that ship with every WingDrive installation
 ///
 /// These tags should be created during library initialization:
 /// ```rust,ignore
@@ -161,7 +161,7 @@ pub fn deterministic_library_default_uuid(library_id: Uuid, entity_type: &str, n
 /// When to use deterministic vs random UUIDs:
 ///
 /// USE DETERMINISTIC UUIDs FOR:
-/// - System default tags that ship with Spacedrive
+/// - System default tags that ship with WingDrive
 /// - Built-in tags referenced by code (e.g., HIDDEN_TAG_UUID)
 /// - System albums like "Recent Imports" or "Quick Access"
 /// - Any resource that needs the SAME UUID across ALL installations

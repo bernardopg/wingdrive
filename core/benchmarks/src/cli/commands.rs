@@ -8,7 +8,7 @@ use crate::generator::DatasetGenerator;
 
 #[derive(Parser, Debug)]
 #[command(name = "sd-bench")]
-#[command(about = "Spacedrive benchmarking harness", long_about = None)]
+#[command(about = "WingDrive benchmarking harness", long_about = None)]
 pub struct Cli {
 	#[command(subcommand)]
 	pub command: Commands,

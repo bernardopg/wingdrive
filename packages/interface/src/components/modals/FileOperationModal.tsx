@@ -14,7 +14,7 @@ import {
 	dialogManager,
 	useDialog,
 	type UseDialogProps,
-} from "@spacedrive/primitives";
+} from "@wingdrive/primitives";
 import type { SdPath, File as FileType } from "@sd/ts-client";
 import { useLibraryMutation, useLibraryQuery } from "../../contexts/SpacedriveContext";
 import { File, FileStack } from "../../routes/explorer/File";

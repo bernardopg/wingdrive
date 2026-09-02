@@ -1,6 +1,6 @@
 //! Device management module
 //!
-//! Handles persistent device identification across Spacedrive installations
+//! Handles persistent device identification across WingDrive installations
 
 pub mod config;
 mod id;

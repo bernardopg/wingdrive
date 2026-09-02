@@ -1,4 +1,4 @@
-//! Spacedrive SDK Macros
+//! WingDrive SDK Macros
 //!
 //! Proc macros that make extension development delightful.
 #![allow(warnings)]
@@ -130,7 +130,7 @@ pub fn persist_strategy(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// Setting attribute for config fields
 ///
 /// Note: This is a helper attribute that gets processed by the struct-level macros.
-/// It provides metadata for Spacedrive's configuration UI.
+/// It provides metadata for WingDrive's configuration UI.
 /// In the current stub implementation, it's used for documentation purposes.
 #[proc_macro_attribute]
 pub fn setting(_args: TokenStream, input: TokenStream) -> TokenStream {

@@ -24,7 +24,7 @@ impl SourceManager {
 
 		// Sync bundled adapters from the source tree into the installed adapters
 		// directory. Uses CARGO_MANIFEST_DIR at compile time to find the workspace
-		// root, matching the pattern from the spacedrive-data prototype.
+		// root, matching the pattern from the original data prototype.
 		let installed_dir = data_dir.join("adapters");
 		Self::sync_bundled_adapters(&installed_dir);
 

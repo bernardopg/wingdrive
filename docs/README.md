@@ -1,8 +1,8 @@
-# Spacedrive Documentation
+# WingDrive Documentation
 
-This repository contains the Mintlify-powered documentation for Spacedrive.
+This repository contains the Mintlify-powered documentation for WingDrive.
 
 ## Structure
 
-- `docs/` - Symlink to main spacedrive repo documentation
+- `docs/` - Symlink to main wingdrive repo documentation
 - `mint.json` - Mintlify configuration

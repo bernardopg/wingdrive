@@ -70,27 +70,27 @@ export default defineConfig(() => ({
 			...(hasSpaceui
 				? [
 						{
-							find: /^@spacedrive\/tokens\/css\/themes\/(.+)$/,
+							find: /^@wingdrive\/tokens\/css\/themes\/(.+)$/,
 							replacement: `${spaceui}/tokens/src/css/themes/$1.css`
 						},
 						{
-							find: /^@spacedrive\/tokens\/theme$/,
+							find: /^@wingdrive\/tokens\/theme$/,
 							replacement: `${spaceui}/tokens/src/css/theme.css`
 						},
 						{
-							find: /^@spacedrive\/tokens\/css$/,
+							find: /^@wingdrive\/tokens\/css$/,
 							replacement: `${spaceui}/tokens/src/css/base.css`
 						},
 						{
-							find: /^@spacedrive\/tokens$/,
+							find: /^@wingdrive\/tokens$/,
 							replacement: `${spaceui}/tokens`
 						},
 						{
-							find: /^@spacedrive\/ai$/,
+							find: /^@wingdrive\/ai$/,
 							replacement: `${spaceui}/ai/src/index.ts`
 						},
 						{
-							find: /^@spacedrive\/primitives$/,
+							find: /^@wingdrive\/primitives$/,
 							replacement: `${spaceui}/primitives/src/index.ts`
 						}
 					]
@@ -131,7 +131,7 @@ export default defineConfig(() => ({
 		// that tree (style-to-js, debug via react-markdown) fail with "does not
 		// provide an export named 'default'", which blanks the entire app.
 		exclude: hasSpaceui
-			? ['@spacedrive/ai', '@spacedrive/primitives', '@spacedrive/tokens']
+			? ['@wingdrive/ai', '@wingdrive/primitives', '@wingdrive/tokens']
 			: []
 	},
 

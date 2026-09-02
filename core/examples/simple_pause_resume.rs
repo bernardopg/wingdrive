@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	println!("=== Simple Pause/Resume Demo ===\n");
 
 	// Create Core instance
-	let data_dir = std::env::temp_dir().join("spacedrive-simple-pause-resume");
+	let data_dir = std::env::temp_dir().join("wingdrive-simple-pause-resume");
 	let core = Core::new(data_dir).await?;
 
 	// Get open libraries

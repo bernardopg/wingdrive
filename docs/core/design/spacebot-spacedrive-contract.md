@@ -1,21 +1,21 @@
-# Spacebot–Spacedrive Integration Contract
+# Spacebot–WingDrive Integration Contract
 
 ## Purpose
 
-Define the exact boundary between Spacebot and Spacedrive so both products remain independently functional while gaining real capabilities when paired together.
+Define the exact boundary between Spacebot and WingDrive so both products remain independently functional while gaining real capabilities when paired together.
 
-Both sides need a flag. Spacebot needs to know whether Spacedrive is present. Spacedrive needs to know which device hosts Spacebot. Neither product should break without the other.
+Both sides need a flag. Spacebot needs to know whether WingDrive is present. WingDrive needs to know which device hosts Spacebot. Neither product should break without the other.
 
 ---
 
 ## Principles
 
-1. **Both products work alone.** Spacebot runs standalone with Discord, Slack, Telegram, webchat. Spacedrive runs standalone as a file manager. Neither requires the other.
+1. **Both products work alone.** Spacebot runs standalone with Discord, Slack, Telegram, webchat. WingDrive runs standalone as a file manager. Neither requires the other.
 2. **Pairing is opt-in.** A configuration flag on each side enables the integration. Disabled by default.
-3. **Spacedrive is the device graph.** Spacebot never owns device identity, library membership, or multi-device topology. It receives that information from Spacedrive.
-4. **Spacebot is the agent runtime.** Spacedrive never runs LLM processes, manages agent memory, or orchestrates workers. It delegates that to Spacebot.
+3. **WingDrive is the device graph.** Spacebot never owns device identity, library membership, or multi-device topology. It receives that information from WingDrive.
+4. **Spacebot is the agent runtime.** WingDrive never runs LLM processes, manages agent memory, or orchestrates workers. It delegates that to Spacebot.
 5. **The library is the boundary.** A Spacebot instance is paired to a library, through a specific device. Every device in that library can access Spacebot through the paired device.
-6. **No leader device.** Spacedrive's P2P system is leaderless. There is no master device. But there is exactly one device that hosts Spacebot — that device has the `spacebot_host` capability, and all other devices route through it.
+6. **No leader device.** WingDrive's P2P system is leaderless. There is no master device. But there is exactly one device that hosts Spacebot — that device has the `spacebot_host` capability, and all other devices route through it.
 
 ---
 
@@ -30,34 +30,34 @@ Add a new top-level section to Spacebot's `config.toml`:
 enabled = false
 ```
 
-That is the minimum. When `enabled = false` (the default), Spacebot operates exactly as it does today. No Spacedrive awareness, no device graph, no remote execution. All tools run locally against the workspace filesystem.
+That is the minimum. When `enabled = false` (the default), Spacebot operates exactly as it does today. No WingDrive awareness, no device graph, no remote execution. All tools run locally against the workspace filesystem.
 
-When `enabled = true`, Spacebot expects a Spacedrive node to be reachable. This unlocks:
+When `enabled = true`, Spacebot expects a WingDrive node to be reachable. This unlocks:
 
 - **Device graph awareness** — Spacebot can see all devices in the paired library.
 - **Remote execution** — workers can target specific devices for shell/file operations.
-- **File System Intelligence** — agents receive context and policy when navigating paths through Spacedrive.
-- **Proxy chat** — Spacedrive devices in the library can reach Spacebot through the P2P layer without a direct HTTP connection.
+- **File System Intelligence** — agents receive context and policy when navigating paths through WingDrive.
+- **Proxy chat** — WingDrive devices in the library can reach Spacebot through the P2P layer without a direct HTTP connection.
 
 ### Config Shape
 
 ```rust
 pub struct SpacedriveIntegrationConfig {
-    /// Master switch. When false, Spacebot has no Spacedrive awareness.
+    /// Master switch. When false, Spacebot has no WingDrive awareness.
     pub enabled: bool,
 
-    /// How to reach the paired Spacedrive node.
+    /// How to reach the paired WingDrive node.
     /// Default: "http://127.0.0.1:7872" (local co-located node).
     pub api_url: Option<String>,
 
-    /// Auth token for the Spacedrive API, if required.
+    /// Auth token for the WingDrive API, if required.
     pub api_key: Option<String>,
 
     /// Library ID this Spacebot instance is paired with.
     /// Set during pairing. Spacebot only operates within this library.
     pub library_id: Option<String>,
 
-    /// Device UUID of the paired Spacedrive node.
+    /// Device UUID of the paired WingDrive node.
     /// This is the device that Spacebot "lives on" in the library graph.
     pub device_id: Option<String>,
 }
@@ -68,7 +68,7 @@ pub struct SpacedriveIntegrationConfig {
 [spacedrive]
 enabled = false
 
-# Paired — co-located Spacebot and Spacedrive on the same machine
+# Paired — co-located Spacebot and WingDrive on the same machine
 [spacedrive]
 enabled = true
 api_url = "http://127.0.0.1:7872"
@@ -88,24 +88,24 @@ device_id = "e5f6g7h8-..."
 - Query the device graph on startup and refresh periodically.
 
 **Worker tool server** (`src/tools.rs`):
-- When Spacedrive is enabled and a worker has an `execution_target` set to a remote device, swap local shell/file tool implementations for Spacedrive-proxied versions.
+- When WingDrive is enabled and a worker has an `execution_target` set to a remote device, swap local shell/file tool implementations for WingDrive-proxied versions.
 - When no `execution_target` is set, tools run locally as they do today.
 - The tool interface stays identical from the model's perspective. Only the backend changes.
 
-**Runtime behavior when `enabled = true` but Spacedrive is unreachable:**
+**Runtime behavior when `enabled = true` but WingDrive is unreachable:**
 - Spacebot should start normally and log a warning.
 - Local tools continue to work.
 - Remote execution tools fail with a clear error if the target device is unreachable.
-- Spacebot retries the Spacedrive connection in the background.
+- Spacebot retries the WingDrive connection in the background.
 - This must not block agent startup or conversation.
 
 ---
 
-## Spacedrive Side
+## WingDrive Side
 
 ### AppConfig: `spacebot`
 
-Spacedrive already has a `SpacebotConfig` in `AppConfig` (`core/src/config/app_config.rs`):
+WingDrive already has a `SpacebotConfig` in `AppConfig` (`core/src/config/app_config.rs`):
 
 ```rust
 pub struct SpacebotConfig {
@@ -144,7 +144,7 @@ pub struct SpacebotConfig {
     /// Instance directory for managed Spacebot data.
     pub instance_dir: Option<PathBuf>,
 
-    /// Auto-start Spacebot when Spacedrive launches (Managed Local mode).
+    /// Auto-start Spacebot when WingDrive launches (Managed Local mode).
     pub auto_start: bool,
 
     /// Default agent to target from the embedded chat.
@@ -155,17 +155,17 @@ pub struct SpacebotConfig {
 }
 
 pub enum SpacebotConnectionMode {
-    /// Spacedrive launches and supervises Spacebot as a child process.
+    /// WingDrive launches and supervises Spacebot as a child process.
     ManagedLocal,
-    /// Spacedrive connects to an already-running local Spacebot.
+    /// WingDrive connects to an already-running local Spacebot.
     ExternalLocal,
-    /// Spacedrive connects to a remote Spacebot via the P2P layer,
+    /// WingDrive connects to a remote Spacebot via the P2P layer,
     /// routing through the device that has `spacebot_host` capability.
     Library,
 }
 ```
 
-The `Library` mode is the new one. In this mode, Spacedrive does not connect to Spacebot over HTTP directly. Instead, it routes messages through the P2P system to whichever device in the library has the `spacebot_host` capability. That device proxies to its local Spacebot instance.
+The `Library` mode is the new one. In this mode, WingDrive does not connect to Spacebot over HTTP directly. Instead, it routes messages through the P2P system to whichever device in the library has the `spacebot_host` capability. That device proxies to its local Spacebot instance.
 
 ### Device Table: `spacebot_host` Capability
 
@@ -199,7 +199,7 @@ This is a boolean flag on the device record. It is set on exactly one device in 
 
 ### What the `spacebot_host` Flag Enables
 
-When a Spacedrive device sees another device in the library with `spacebot_host: true`:
+When a WingDrive device sees another device in the library with `spacebot_host: true`:
 
 1. **It knows Spacebot exists in this library.** The UI can show Spacebot features even if the local device is not the host.
 2. **It knows where to route.** Chat messages, approvals, and status queries route to the host device over P2P.
@@ -217,15 +217,15 @@ When the local device itself has `spacebot_host: true`:
 
 ### Raw HTTP Proxy, Not a Typed Protocol
 
-The proxy is not a typed message contract. It is a raw HTTP proxy. A Spacedrive device sends an HTTP request over the P2P connection to the host device, and the host device forwards it to `127.0.0.1:19898` (or whatever Spacebot's API is bound to) and returns the response verbatim.
+The proxy is not a typed message contract. It is a raw HTTP proxy. A WingDrive device sends an HTTP request over the P2P connection to the host device, and the host device forwards it to `127.0.0.1:19898` (or whatever Spacebot's API is bound to) and returns the response verbatim.
 
 This means:
 
-- No typed message definitions to maintain on the Spacedrive side.
-- No translation layer between Spacedrive's internal types and Spacebot's API.
+- No typed message definitions to maintain on the WingDrive side.
+- No translation layer between WingDrive's internal types and Spacebot's API.
 - Spacebot's API evolves freely — new endpoints, new fields, new event types — and the proxy carries them without changes.
 - The desktop interface can use the `@spacebot/api-client` package directly against the proxy URL the same way it uses it against a local Spacebot instance.
-- Mobile uses the same proxy through Spacedrive core operations that tunnel HTTP over P2P.
+- Mobile uses the same proxy through WingDrive core operations that tunnel HTTP over P2P.
 
 The proxy is transparent. From the client's perspective, it is hitting a Spacebot HTTP API. The only difference is the transport — P2P instead of TCP.
 
@@ -265,14 +265,14 @@ When Spacebot has `[spacedrive] enabled = true`, workers gain the ability to tar
    ```
 
 3. The worker's tool server detects that `execution_target` is set to a remote device. Instead of registering local shell/file tools, it registers proxy versions:
-   - `ShellTool` → `RemoteShellTool` (sends shell commands to the target device through Spacedrive)
+   - `ShellTool` → `RemoteShellTool` (sends shell commands to the target device through WingDrive)
    - `FileReadTool` → `RemoteFileReadTool` (reads files on the target device)
    - `FileWriteTool` → `RemoteFileWriteTool` (writes files on the target device)
    - `FileListTool` → `RemoteFileListTool` (lists files on the target device)
 
-4. The proxy tools send typed execution requests to the paired Spacedrive node, which:
+4. The proxy tools send typed execution requests to the paired WingDrive node, which:
    - Resolves effective policy for the agent principal + target device + path + operation
-   - If allowed, forwards the request to the target Spacedrive device over P2P
+   - If allowed, forwards the request to the target WingDrive device over P2P
    - The target device executes locally and returns the result
    - The result returns to the worker through the proxy chain
 
@@ -280,18 +280,18 @@ When Spacebot has `[spacedrive] enabled = true`, workers gain the ability to tar
 
 ### Policy Enforcement
 
-Every remote operation passes through Spacedrive's permission system:
+Every remote operation passes through WingDrive's permission system:
 
 - **Device access policy** — which devices can Spacebot target?
 - **Subtree policy** — which paths are readable/writable on those devices?
 - **Operation policy** — which operations are allowed (list, read, write, shell, delete)?
 - **Confirmation policy** — which operations require live user approval?
 
-Policy is resolved on the paired Spacedrive node before forwarding. The target device may enforce a second check.
+Policy is resolved on the paired WingDrive node before forwarding. The target device may enforce a second check.
 
 ### When `execution_target` Is Not Set
 
-When a worker has no `execution_target`, it runs locally on the Spacebot host machine using standard local tools. This is the current behavior and remains the default. The Spacedrive integration adds remote execution as an opt-in capability per worker, not a global replacement.
+When a worker has no `execution_target`, it runs locally on the Spacebot host machine using standard local tools. This is the current behavior and remains the default. The WingDrive integration adds remote execution as an opt-in capability per worker, not a global replacement.
 
 ---
 
@@ -299,27 +299,27 @@ When a worker has no `execution_target`, it runs locally on the Spacebot host ma
 
 ### First-Time Setup
 
-The pairing flow connects a Spacebot instance to a Spacedrive library:
+The pairing flow connects a Spacebot instance to a WingDrive library:
 
-1. **User enables Spacebot in Spacedrive settings.** Sets connection mode to Managed Local or External Local.
+1. **User enables Spacebot in WingDrive settings.** Sets connection mode to Managed Local or External Local.
 
-2. **Spacedrive detects or starts Spacebot.** In managed local mode, Spacedrive launches the Spacebot binary. In external local mode, Spacedrive connects to the configured URL.
+2. **WingDrive detects or starts Spacebot.** In managed local mode, WingDrive launches the Spacebot binary. In external local mode, WingDrive connects to the configured URL.
 
-3. **Spacedrive sets `spacebot_host: true` on the local device record.** This propagates to all devices in the library via sync.
+3. **WingDrive sets `spacebot_host: true` on the local device record.** This propagates to all devices in the library via sync.
 
-4. **Spacedrive writes the pairing info to Spacebot's config.** Sets `[spacedrive] enabled = true`, `library_id`, and `device_id` in Spacebot's `config.toml`. If managed local, Spacedrive owns this config file. If external, the user configures it manually or Spacedrive writes it via Spacebot's settings API.
+4. **WingDrive writes the pairing info to Spacebot's config.** Sets `[spacedrive] enabled = true`, `library_id`, and `device_id` in Spacebot's `config.toml`. If managed local, WingDrive owns this config file. If external, the user configures it manually or WingDrive writes it via Spacebot's settings API.
 
-5. **Spacebot reads its config and connects to the Spacedrive API.** It queries the device graph and becomes aware of all devices in the library.
+5. **Spacebot reads its config and connects to the WingDrive API.** It queries the device graph and becomes aware of all devices in the library.
 
 6. **Other devices in the library see the `spacebot_host` flag.** Their UI shows Spacebot as available. They can open the chat surface and route messages through the P2P layer to the host device.
 
 ### Unpairing
 
-1. User disables Spacebot in Spacedrive settings, or removes the host device from the library.
-2. Spacedrive clears `spacebot_host: true` from the device capabilities.
-3. Spacedrive stops the managed Spacebot process (if managed local).
+1. User disables Spacebot in WingDrive settings, or removes the host device from the library.
+2. WingDrive clears `spacebot_host: true` from the device capabilities.
+3. WingDrive stops the managed Spacebot process (if managed local).
 4. Other devices see the flag disappear and remove the Spacebot UI.
-5. Spacebot continues running but loses Spacedrive awareness (reverts to standalone).
+5. Spacebot continues running but loses WingDrive awareness (reverts to standalone).
 
 ---
 
@@ -329,16 +329,16 @@ The mobile app (`apps/mobile/`) reaches Spacebot through the same P2P proxy that
 
 ### How Mobile Finds Spacebot
 
-1. The mobile app is a Spacedrive device in the library. It has its own device UUID and is registered in the library database.
+1. The mobile app is a WingDrive device in the library. It has its own device UUID and is registered in the library database.
 2. When the library syncs, the mobile device receives all device records, including the one with `spacebot_host: true`.
 3. The mobile app establishes a P2P connection to the host device (or routes through another connected device via proxy pairing).
 4. HTTP requests to Spacebot go through the `SpacebotProxy` on the host device, which forwards them to the local Spacebot API and returns the response.
 
 ### Mobile Chat Surface
 
-The mobile app sends HTTP requests to Spacebot through Spacedrive core, which tunnels them over P2P to the host device. From the mobile code's perspective, it is calling a Spacebot API — it does not need to know whether the request traveled over localhost or across the planet.
+The mobile app sends HTTP requests to Spacebot through WingDrive core, which tunnels them over P2P to the host device. From the mobile code's perspective, it is calling a Spacebot API — it does not need to know whether the request traveled over localhost or across the planet.
 
-Spacedrive core handles the routing internally:
+WingDrive core handles the routing internally:
 - If the local device is the Spacebot host → direct HTTP call to `localhost:19898`
 - If another device is the host → HTTP-over-P2P to that device → proxy to Spacebot
 
@@ -361,9 +361,9 @@ Not needed on mobile initially:
 
 ## What Each Side Exposes
 
-### Spacedrive Exposes to Spacebot
+### WingDrive Exposes to Spacebot
 
-When Spacebot queries the Spacedrive API:
+When Spacebot queries the WingDrive API:
 
 - **Device graph** — all devices in the library, with name, slug, form factor, OS, online status, capabilities.
 - **Location list** — indexed locations per device, with paths and metadata.
@@ -371,9 +371,9 @@ When Spacebot queries the Spacedrive API:
 - **Remote execution** — typed shell/file operations forwarded to target devices with policy enforcement.
 - **Audit trail** — every remote operation is logged with agent principal, target device, path, operation, and result.
 
-### Spacebot Exposes to Spacedrive
+### Spacebot Exposes to WingDrive
 
-When Spacedrive queries the Spacebot API (directly or through the proxy):
+When WingDrive queries the Spacebot API (directly or through the proxy):
 
 - **Agent list** — available agents with id, name, role, warmup status.
 - **Webchat** — send messages, fetch history, create conversations.
@@ -391,13 +391,13 @@ When Spacedrive queries the Spacebot API (directly or through the proxy):
 |---|---|---|
 | `SpacedriveIntegrationConfig` struct | `src/config/types.rs` | New config section with `enabled`, `api_url`, `library_id`, `device_id` |
 | TOML parsing for `[spacedrive]` | `src/config/load.rs` | Parse the new section, all fields optional when disabled |
-| `SpacedriveClient` | new module | HTTP client for Spacedrive API (device graph, FSI, remote exec) |
+| `SpacedriveClient` | new module | HTTP client for WingDrive API (device graph, FSI, remote exec) |
 | Device graph query | agent init | Fetch and cache library device list on startup |
 | `execution_target` on workers | `src/agent/worker.rs` | Optional device slug/UUID that routes tools to a remote device |
-| Remote tool variants | `src/tools.rs` | `RemoteShellTool`, `RemoteFileReadTool`, etc. that proxy through Spacedrive |
-| Graceful degradation | agent init | Warn and continue if Spacedrive is unreachable |
+| Remote tool variants | `src/tools.rs` | `RemoteShellTool`, `RemoteFileReadTool`, etc. that proxy through WingDrive |
+| Graceful degradation | agent init | Warn and continue if WingDrive is unreachable |
 
-### Spacedrive Changes
+### WingDrive Changes
 
 | Change | Location | Description |
 |---|---|---|
@@ -425,7 +425,7 @@ Both sides get their flags. No runtime behavior changes yet.
 - Parse `[spacedrive]` section in config loader
 - Default `enabled = false`, no behavior change
 
-**Spacedrive:**
+**WingDrive:**
 - Evolve `SpacebotConfig` with connection mode and new fields
 - Add `spacebot_host` to `DeviceCapabilities` (the typed struct in `session.rs`)
 - Add `spacebot_host` to the capabilities JSON set during device registration
@@ -433,9 +433,9 @@ Both sides get their flags. No runtime behavior changes yet.
 
 ### Phase 2: Direct Connection (Desktop)
 
-Desktop Spacedrive connects to a local Spacebot instance. No P2P proxy yet.
+Desktop WingDrive connects to a local Spacebot instance. No P2P proxy yet.
 
-**Spacedrive:**
+**WingDrive:**
 - Managed local: Tauri spawns Spacebot as a child process
 - External local: connect to existing Spacebot at configured URL
 - Settings UI for connection mode and status
@@ -448,7 +448,7 @@ Desktop Spacedrive connects to a local Spacebot instance. No P2P proxy yet.
 
 Non-host devices reach Spacebot through the host device.
 
-**Spacedrive:**
+**WingDrive:**
 - `SpacebotProxy` on host device — raw HTTP proxy + SSE relay over P2P
 - Core operations that route HTTP to Spacebot transparently (local or via proxy)
 - The host device sets `spacebot_host: true` on its device record
@@ -457,7 +457,7 @@ Non-host devices reach Spacebot through the host device.
 
 Mobile devices use the same P2P proxy.
 
-**Spacedrive mobile:**
+**WingDrive mobile:**
 - Chat screen using `spacebot.send_message` core action
 - Streaming responses via core subscription events
 - Task and approval display
@@ -469,9 +469,9 @@ Spacebot workers can target remote devices.
 **Spacebot:**
 - `SpacedriveClient` queries device graph
 - `execution_target` on worker spawn
-- Remote tool variants that proxy through Spacedrive
+- Remote tool variants that proxy through WingDrive
 
-**Spacedrive:**
+**WingDrive:**
 - Agent principal model
 - Policy resolution (device + subtree + operation + confirmation)
 - Remote execution protocol (typed operations forwarded to target devices)
@@ -481,13 +481,13 @@ Spacebot workers can target remote devices.
 
 Agents receive context and policy when navigating paths.
 
-**Spacedrive:**
+**WingDrive:**
 - Context node storage and queries
 - Policy resolution API
 - Agent-readable context surfaced during navigation
 
 **Spacebot:**
-- Query FSI when listing or reading files through Spacedrive
+- Query FSI when listing or reading files through WingDrive
 - Surface context in worker prompts
 - Write observations back with attribution
 
@@ -495,7 +495,7 @@ Agents receive context and policy when navigating paths.
 
 ## Open Questions
 
-1. **Config ownership in managed local mode.** Should Spacedrive generate Spacebot's `config.toml` entirely, or should it only inject the `[spacedrive]` section and leave the rest to the user?
+1. **Config ownership in managed local mode.** Should WingDrive generate Spacebot's `config.toml` entirely, or should it only inject the `[spacedrive]` section and leave the rest to the user?
 
 2. **Multiple libraries.** Can one Spacebot instance pair with multiple libraries, or is it strictly one-to-one? The current design assumes one library per Spacebot instance. Multiple libraries would require a library selector in the Spacebot config.
 
@@ -503,4 +503,4 @@ Agents receive context and policy when navigating paths.
 
 4. **Offline host.** When the host device is offline, should other devices show a "Spacebot unavailable" state, or should they try to reach Spacebot through relay? The answer depends on whether Spacebot can be reached via Iroh relay when the host device is on a different network.
 
-5. **Auth between Spacebot and Spacedrive.** When both run on the same machine, auth may be unnecessary (loopback only). When remote, they need mutual authentication. Should this use the existing Spacedrive session keys from pairing, or a separate shared secret?
+5. **Auth between Spacebot and WingDrive.** When both run on the same machine, auth may be unnecessary (loopback only). When remote, they need mutual authentication. Should this use the existing WingDrive session keys from pairing, or a separate shared secret?

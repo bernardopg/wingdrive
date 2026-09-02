@@ -1,12 +1,12 @@
 import React, { useEffect, useState, ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
-  SpacedriveClientContext,
+  WingDriveClientContext,
   queryClient,
-  useSpacedriveClient,
+  useWingDriveClient,
 } from "@sd/ts-client/src/hooks/useClient";
 import type { Event } from "@sd/ts-client/src/generated/types";
-import { SpacedriveClient } from "../SpacedriveClient";
+import { WingDriveClient } from "../WingDriveClient";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SDMobileCore } from "sd-mobile-core";
@@ -15,22 +15,22 @@ import { useSidebarStore } from "../../stores/sidebar";
 import { useReactQueryDevTools } from "@dev-plugins/react-query";
 
 // Re-export the shared hook
-export { useSpacedriveClient };
+export { useWingDriveClient };
 
-interface SpacedriveProviderProps {
+interface WingDriveProviderProps {
   children: ReactNode;
   deviceName?: string;
 }
 
 /**
- * Provider component that initializes the Spacedrive core
+ * Provider component that initializes the WingDrive core
  * and provides the client context to children.
  */
-export function SpacedriveProvider({
+export function WingDriveProvider({
   children,
   deviceName,
-}: SpacedriveProviderProps) {
-  const [client] = useState(() => new SpacedriveClient());
+}: WingDriveProviderProps) {
+  const [client] = useState(() => new WingDriveClient());
   const [initialized, setInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,23 +43,23 @@ export function SpacedriveProvider({
 
     async function init() {
       try {
-        await client.initialize(deviceName ?? "Spacedrive Mobile");
+        await client.initialize(deviceName ?? "WingDrive Mobile");
 
         // // Subscribe to core logs AFTER core is initialized
-        // console.log("[SpacedriveProvider] Subscribing to core logs...");
+        // console.log("[WingDriveProvider] Subscribing to core logs...");
         // unsubscribeLogs = SDMobileCore.addLogListener((log) => {
-        // 	console.log("[SpacedriveProvider] RAW LOG RECEIVED:", log);
+        // 	console.log("[WingDriveProvider] RAW LOG RECEIVED:", log);
         // 	try {
         // 		const logData = JSON.parse(log.body);
         // 		console.log(`[CORE ${logData.level}] ${logData.target}: ${logData.message}`);
         // 	} catch (e) {
-        // 		console.error("[SpacedriveProvider] Failed to parse log:", log.body);
+        // 		console.error("[WingDriveProvider] Failed to parse log:", log.body);
         // 	}
         // });
-        // console.log("[SpacedriveProvider] Log listener subscribed");
+        // console.log("[WingDriveProvider] Log listener subscribed");
 
         // Load persisted library ID from storage and validate it exists
-        const storedData = await AsyncStorage.getItem("spacedrive-sidebar");
+        const storedData = await AsyncStorage.getItem("wingdrive-sidebar");
         let storedLibraryId: string | null = null;
 
         if (storedData) {
@@ -81,7 +81,7 @@ export function SpacedriveProvider({
 
             if (storedLibraryExists) {
               console.log(
-                "[SpacedriveProvider] Restoring library ID:",
+                "[WingDriveProvider] Restoring library ID:",
                 storedLibraryId,
               );
               client.setCurrentLibrary(storedLibraryId);
@@ -90,8 +90,8 @@ export function SpacedriveProvider({
               const firstLibrary = libraries[0];
               console.log(
                 storedLibraryId
-                  ? "[SpacedriveProvider] Stored library no longer exists, auto-selecting first library:"
-                  : "[SpacedriveProvider] Auto-selecting first library:",
+                  ? "[WingDriveProvider] Stored library no longer exists, auto-selecting first library:"
+                  : "[WingDriveProvider] Auto-selecting first library:",
                 firstLibrary.name,
                 firstLibrary.id,
               );
@@ -99,7 +99,7 @@ export function SpacedriveProvider({
 
               // Save to AsyncStorage for next time
               await AsyncStorage.setItem(
-                "spacedrive-sidebar",
+                "wingdrive-sidebar",
                 JSON.stringify({
                   state: {
                     currentLibraryId: firstLibrary.id,
@@ -110,12 +110,12 @@ export function SpacedriveProvider({
             }
           } else {
             console.warn(
-              "[SpacedriveProvider] No libraries available to auto-select",
+              "[WingDriveProvider] No libraries available to auto-select",
             );
           }
         } catch (error) {
           console.error(
-            "[SpacedriveProvider] Failed to fetch/validate libraries:",
+            "[WingDriveProvider] Failed to fetch/validate libraries:",
             error,
           );
         }
@@ -159,7 +159,7 @@ export function SpacedriveProvider({
         // Store unsubscribe for cleanup
         return unsubscribeEvents;
       } catch (e) {
-        console.error("[SpacedriveProvider] Failed to initialize:", e);
+        console.error("[WingDriveProvider] Failed to initialize:", e);
         if (mounted) {
           setError(e instanceof Error ? e.message : "Failed to initialize");
         }
@@ -194,16 +194,16 @@ export function SpacedriveProvider({
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#2599FF" />
-        <Text style={styles.loadingText}>Initializing Spacedrive...</Text>
+        <Text style={styles.loadingText}>Initializing WingDrive...</Text>
       </View>
     );
   }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SpacedriveClientContext.Provider value={client}>
+      <WingDriveClientContext.Provider value={client}>
         {children}
-      </SpacedriveClientContext.Provider>
+      </WingDriveClientContext.Provider>
     </QueryClientProvider>
   );
 }

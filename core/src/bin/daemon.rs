@@ -20,7 +20,7 @@ fn validate_instance_name(instance: &str) -> Result<(), String> {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "spacedrive-daemon", about = "Spacedrive daemon")]
+#[command(name = "sd-daemon", about = "WingDrive daemon")]
 struct Args {
 	/// Path to spacedrive data directory
 	#[arg(long)]

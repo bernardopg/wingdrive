@@ -3,7 +3,7 @@ title: Manage Your Libraries
 sidebarTitle: Manage Libraries
 ---
 
-Libraries in Spacedrive organize your digital life into separate, manageable collections. Create libraries for different purposes, sync settings between devices, and maintain clean separation between personal and work files.
+Libraries in WingDrive organize your digital life into separate, manageable collections. Create libraries for different purposes, sync settings between devices, and maintain clean separation between personal and work files.
 
 This guide explains library management from basic operations to advanced multi-library workflows.
 
@@ -38,12 +38,12 @@ Name your library and optionally:
 - Configure default indexing rules
 </Step>
 <Step title="Initialize Library">
-Click "Create" to build the database structure. Spacedrive switches to the new library automatically.
+Click "Create" to build the database structure. WingDrive switches to the new library automatically.
 </Step>
 </Steps>
 
 <Note>
-Each library maintains its own database file. Default location: `~/Library/Application Support/spacedrive/libraries/` on macOS.
+Each library maintains its own database file. Default location: `~/Library/Application Support/wingdrive/libraries/` on macOS.
 </Note>
 
 ## Switch Between Libraries
@@ -198,9 +198,9 @@ Protect your organizational work:
 <Steps>
 <Step title="Locate Library Database">
 Find your library file:
-- macOS: `~/Library/Application Support/spacedrive/libraries/[id]/library.db`
-- Windows: `%APPDATA%\spacedrive\libraries\[id]\library.db`
-- Linux: `~/.config/spacedrive/libraries/[id]/library.db`
+- macOS: `~/Library/Application Support/wingdrive/libraries/[id]/library.db`
+- Windows: `%APPDATA%\wingdrive\libraries\[id]\library.db`
+- Linux: `~/.config/wingdrive/libraries/[id]/library.db`
 </Step>
 <Step title="Create Backup">
 Copy the entire library folder to backup location. Include all `.db` files and thumbnails directory.
@@ -223,13 +223,13 @@ Name backup files with date stamps: `library-personal-2024-01-15.db`
 Recover from backups when needed:
 
 <Steps>
-<Step title="Close Spacedrive">
+<Step title="Close WingDrive">
 Quit the app completely. Ensure daemon stops.
 </Step>
 <Step title="Replace Library Files">
 Copy backup files to the library directory, overwriting existing files.
 </Step>
-<Step title="Restart Spacedrive">
+<Step title="Restart WingDrive">
 Launch app. The restored library appears in the switcher.
 </Step>
 <Step title="Verify Restoration">
@@ -315,7 +315,7 @@ Share libraries safely:
 **Admin Access** - Full control including settings
 
 <Note>
-Multi-user features require Spacedrive Cloud (coming soon) or self-hosted server.
+Multi-user features require WingDrive Cloud (coming soon) or self-hosted server.
 </Note>
 
 ### Library Analytics

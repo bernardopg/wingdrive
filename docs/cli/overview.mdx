@@ -1,6 +1,6 @@
-# Spacedrive CLI
+# WingDrive CLI
 
-A comprehensive command-line interface for managing Spacedrive Core with full daemon architecture, real-time monitoring, and cross-device file management.
+A comprehensive command-line interface for managing WingDrive Core with full daemon architecture, real-time monitoring, and cross-device file management.
 
 ## Features
 
@@ -40,15 +40,15 @@ cd apps/cli && cargo build
 cargo install --path apps/cli
 ```
 
-Also you may create an alias to the cli as `sd` or `spacedrive`.
+Also you may create an alias to the cli as `sd` or `wingdrive`.
 
 Example for `sd`:
 ```bash
 # For release build
-echo 'alias sd="/path/to/spacedrive/target/release/sd-cli"' >> ~/.zshrc
+echo 'alias sd="/path/to/wingdrive/target/release/sd-cli"' >> ~/.zshrc
 
 # For debug build (faster compilation)
-echo 'alias sd="/path/to/spacedrive/target/debug/sd-cli"' >> ~/.zshrc
+echo 'alias sd="/path/to/wingdrive/target/debug/sd-cli"' >> ~/.zshrc
 
 # Reload your shell configuration
 source ~/.zshrc
@@ -57,7 +57,7 @@ source ~/.zshrc
 ## Quick Start
 
 ```bash
-# Start the Spacedrive daemon
+# Start the WingDrive daemon
 sd start
 
 # Create a library and add a location
@@ -109,7 +109,7 @@ sd daemon status
 sd daemon uninstall
 ```
 
-The install command creates a LaunchAgent that starts the daemon on login and restarts it if it crashes. Logs write to your data directory at `~/Library/Application Support/spacedrive/logs/`. This works with multiple instances by passing `--instance` before the daemon command.
+The install command creates a LaunchAgent that starts the daemon on login and restarts it if it crashes. Logs write to your data directory at `~/Library/Application Support/wingdrive/logs/`. This works with multiple instances by passing `--instance` before the daemon command.
 
 <Note>
 Auto-start is currently macOS-only. Linux systemd support is planned.
@@ -328,7 +328,7 @@ sd job monitor
 ### Sample Output
 
 ```
-Spacedrive Job Monitor - Press Ctrl+C to exit
+WingDrive Job Monitor - Press Ctrl+C to exit
 ═══════════════════════════════════════════
 
 ⠚ Indexing Desktop [fdbe777d] [████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 25% | Status: Running
@@ -401,7 +401,7 @@ The CLI follows a modular architecture with clear separation of concerns:
 - **Daemon**: Long-running background service managing Core
 - **Handlers**: Modular command processors for each domain
 - **Transport**: JSON-RPC communication over Unix socket
-- **Core**: Spacedrive Core library for all operations
+- **Core**: WingDrive Core library for all operations
 
 ### Benefits
 

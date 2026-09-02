@@ -243,10 +243,6 @@ objc2-foundation = { version = "0.3", features = [
 objc2-ui-kit = { version = "0.3", features = ["UIDevice"] }
 
 [[bin]]
-name = "spacedrive"
-path = "src/bin/cli.rs"
-
-[[bin]]
 name = "sd-daemon"
 path = "src/bin/daemon.rs"
 

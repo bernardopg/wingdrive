@@ -20,9 +20,9 @@ async fn alice_file_transfer_scenario() {
 	}
 
 	// Set test directory for file-based discovery
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-file-transfer-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-file-transfer-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-file-transfer-test/alice");
+	let data_dir = PathBuf::from("/tmp/wingdrive-file-transfer-test/alice");
 	let device_name = "Alice's Test Device";
 
 	println!("Alice: Starting Core file transfer test (sender)");
@@ -104,13 +104,13 @@ async fn alice_file_transfer_scenario() {
 	);
 
 	// Write pairing code to shared location for Bob to read
-	std::fs::create_dir_all("/tmp/spacedrive-file-transfer-test").unwrap();
+	std::fs::create_dir_all("/tmp/wingdrive-file-transfer-test").unwrap();
 	std::fs::write(
-		"/tmp/spacedrive-file-transfer-test/pairing_code.txt",
+		"/tmp/wingdrive-file-transfer-test/pairing_code.txt",
 		&pairing_code,
 	)
 	.unwrap();
-	println!("Alice: Pairing code written to /tmp/spacedrive-file-transfer-test/pairing_code.txt");
+	println!("Alice: Pairing code written to /tmp/wingdrive-file-transfer-test/pairing_code.txt");
 
 	// Wait for pairing completion
 	println!("Alice: Waiting for Bob to connect...");
@@ -211,7 +211,7 @@ async fn alice_file_transfer_scenario() {
 		.map(|(name, content)| format!("{}:{}", name, content.len()))
 		.collect();
 	std::fs::write(
-		"/tmp/spacedrive-file-transfer-test/expected_files.txt",
+		"/tmp/wingdrive-file-transfer-test/expected_files.txt",
 		file_list.join("\n"),
 	)
 	.unwrap();
@@ -307,7 +307,7 @@ async fn alice_file_transfer_scenario() {
 				for attempt in 1..=60 {
 					// Wait up to 60 seconds for Bob's confirmation
 					if std::fs::read_to_string(
-						"/tmp/spacedrive-file-transfer-test/bob_received_confirmation.txt",
+						"/tmp/wingdrive-file-transfer-test/bob_received_confirmation.txt",
 					)
 					.map(|content| content.starts_with("received_and_verified:"))
 					.unwrap_or(false)
@@ -330,7 +330,7 @@ async fn alice_file_transfer_scenario() {
 					println!("FILE_TRANSFER_SUCCESS: Alice completed all file transfers and Bob confirmed receipt");
 					// Write success marker for orchestrator to detect
 					std::fs::write(
-						"/tmp/spacedrive-file-transfer-test/alice_success.txt",
+						"/tmp/wingdrive-file-transfer-test/alice_success.txt",
 						"success",
 					)
 					.unwrap();
@@ -361,9 +361,9 @@ async fn bob_file_transfer_scenario() {
 	}
 
 	// Set test directory for file-based discovery
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-file-transfer-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-file-transfer-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-file-transfer-test/bob");
+	let data_dir = PathBuf::from("/tmp/wingdrive-file-transfer-test/bob");
 	let device_name = "Bob's Test Device";
 
 	println!("Bob: Starting Core file transfer test (receiver)");
@@ -429,7 +429,7 @@ async fn bob_file_transfer_scenario() {
 	println!("Bob: Looking for pairing code from Alice...");
 	let pairing_code = loop {
 		if let Ok(code) =
-			std::fs::read_to_string("/tmp/spacedrive-file-transfer-test/pairing_code.txt")
+			std::fs::read_to_string("/tmp/wingdrive-file-transfer-test/pairing_code.txt")
 		{
 			break code.trim().to_string();
 		}
@@ -523,7 +523,7 @@ async fn bob_file_transfer_scenario() {
 	// Wait for expected files to arrive
 	let expected_files = loop {
 		if let Ok(content) =
-			std::fs::read_to_string("/tmp/spacedrive-file-transfer-test/expected_files.txt")
+			std::fs::read_to_string("/tmp/wingdrive-file-transfer-test/expected_files.txt")
 		{
 			break content
 				.lines()
@@ -642,7 +642,7 @@ async fn bob_file_transfer_scenario() {
 			println!("FILE_TRANSFER_SUCCESS: Bob verified all received files");
 			// Write success marker for orchestrator to detect
 			std::fs::write(
-				"/tmp/spacedrive-file-transfer-test/bob_success.txt",
+				"/tmp/wingdrive-file-transfer-test/bob_success.txt",
 				"success",
 			)
 			.unwrap();
@@ -653,7 +653,7 @@ async fn bob_file_transfer_scenario() {
 				.unwrap()
 				.as_secs();
 			std::fs::write(
-				"/tmp/spacedrive-file-transfer-test/bob_received_confirmation.txt",
+				"/tmp/wingdrive-file-transfer-test/bob_received_confirmation.txt",
 				format!("received_and_verified:{}", timestamp),
 			)
 			.unwrap();
@@ -677,9 +677,9 @@ async fn bob_file_transfer_scenario() {
 #[tokio::test]
 async fn test_file_transfer() {
 	// Clean up any old test files to avoid race conditions
-	let _ = std::fs::remove_dir_all("/tmp/spacedrive-file-transfer-test");
+	let _ = std::fs::remove_dir_all("/tmp/wingdrive-file-transfer-test");
 	let _ = std::fs::remove_dir_all("/tmp/received_files");
-	std::fs::create_dir_all("/tmp/spacedrive-file-transfer-test").unwrap();
+	std::fs::create_dir_all("/tmp/wingdrive-file-transfer-test").unwrap();
 
 	println!("Testing Core file transfer with cargo test subprocess framework");
 
@@ -709,11 +709,11 @@ async fn test_file_transfer() {
 	let result = runner
 		.wait_for_success(|_outputs| {
 			let alice_success =
-				std::fs::read_to_string("/tmp/spacedrive-file-transfer-test/alice_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-file-transfer-test/alice_success.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 			let bob_success =
-				std::fs::read_to_string("/tmp/spacedrive-file-transfer-test/bob_success.txt")
+				std::fs::read_to_string("/tmp/wingdrive-file-transfer-test/bob_success.txt")
 					.map(|content| content.trim() == "success")
 					.unwrap_or(false);
 

@@ -1,6 +1,6 @@
 //! Library management system
 //!
-//! This module provides the core library functionality for Spacedrive.
+//! This module provides the core library functionality for WingDrive.
 //! Each library is a self-contained directory with its own database,
 //! thumbnails, and other data.
 
@@ -33,7 +33,7 @@ use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 
-/// Represents an open Spacedrive library
+/// Represents an open WingDrive library
 pub struct Library {
 	/// Root directory of the library (the .sdlibrary folder)
 	path: PathBuf,

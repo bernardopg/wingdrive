@@ -3,17 +3,17 @@ title: Indexing
 sidebarTitle: Indexing
 ---
 
-Spacedrive's indexing system solves a specific challenge: How do you build a distributed database that feels as fast as a local file explorer?
+WingDrive's indexing system solves a specific challenge: How do you build a distributed database that feels as fast as a local file explorer?
 
-The answer is a **Hybrid Indexing Engine** that layers an ultra-fast, in-memory ephemeral index over a robust, SQLite-backed persistent index. These two systems operate in tandem, allowing Spacedrive to instantly browse unmanaged locations (like a file manager) while seamlessly upgrading those paths to managed libraries (like a DAM) without UI flicker or state loss.
+The answer is a **Hybrid Indexing Engine** that layers an ultra-fast, in-memory ephemeral index over a robust, SQLite-backed persistent index. These two systems operate in tandem, allowing WingDrive to instantly browse unmanaged locations (like a file manager) while seamlessly upgrading those paths to managed libraries (like a DAM) without UI flicker or state loss.
 
 ## The Hybrid Philosophy
 
-Most file management software forces a choice: fast, dumb directory listing (Explorer/Finder) or slow, heavy database ingestion (Lightroom/Photos). Spacedrive does both simultaneously by decoupling **Discovery** from **Persistence**.
+Most file management software forces a choice: fast, dumb directory listing (Explorer/Finder) or slow, heavy database ingestion (Lightroom/Photos). WingDrive does both simultaneously by decoupling **Discovery** from **Persistence**.
 
 ### The Ephemeral Layer ("File Manager" Mode)
 
-When you open a location that hasn't been added to your library—an external drive, network share, or local directory—Spacedrive runs only Phase 1 (Discovery) of the indexing pipeline:
+When you open a location that hasn't been added to your library—an external drive, network share, or local directory—WingDrive runs only Phase 1 (Discovery) of the indexing pipeline:
 
 - **Memory-Resident**: The index lives entirely in RAM
 - **Highly Optimized**: Custom slab allocators (NodeArena) and string interning (NameCache) compress file entries down to ~50 bytes
@@ -22,7 +22,7 @@ When you open a location that hasn't been added to your library—an external dr
 
 ### The Persistent Layer ("Library" Mode)
 
-For files you want to track across devices, Spacedrive persists data to a synchronized SQLite database using the full multi-phase pipeline with deep content analysis, deduplication, and closure-table hierarchy management.
+For files you want to track across devices, WingDrive persists data to a synchronized SQLite database using the full multi-phase pipeline with deep content analysis, deduplication, and closure-table hierarchy management.
 
 ### Seamless State Promotion
 
@@ -33,7 +33,7 @@ The critical innovation is how these two layers communicate. When you add a loca
 - **Phase Continuation**: The indexer essentially "resumes" from Phase 1, flushing discovered entries to SQLite and proceeding to Phase 2 (Processing) and Phase 3 (Content Analysis)
 
 <Info>
-This architecture allows Spacedrive to act as your daily driver file explorer. You get instant access to files immediately, with the option to progressively "deepen" the index for files that matter.
+This architecture allows WingDrive to act as your daily driver file explorer. You get instant access to files immediately, with the option to progressively "deepen" the index for files that matter.
 </Info>
 
 ## Architecture Overview
@@ -54,7 +54,7 @@ This dual-implementation architecture unifies watcher and job pipelines, elimina
 
 **FileTypeRegistry** identifies files through extensions, magic bytes, and content analysis.
 
-The system integrates deeply with Spacedrive's job infrastructure, which provides automatic state persistence through MessagePack serialization. When you pause an indexing operation, the entire job state is saved to a dedicated jobs database, allowing seamless resumption even after application restarts.
+The system integrates deeply with WingDrive's job infrastructure, which provides automatic state persistence through MessagePack serialization. When you pause an indexing operation, the entire job state is saved to a dedicated jobs database, allowing seamless resumption even after application restarts.
 
 <Note>
 	Indexing jobs can run for hours on large directories. The resumable
@@ -171,7 +171,7 @@ This enables instant directory size display without traversing descendants.
 ### Phase 4: Content Identification
 **Used by: Persistent Only**
 
-Enables Spacedrive's deduplication capabilities through Content Addressable Storage (CAS):
+Enables WingDrive's deduplication capabilities through Content Addressable Storage (CAS):
 
 - **BLAKE3 Hashing**: Generates content hashes for files, linking entries to `content_identity` records
 - **Globally Deterministic UUIDs**: Uses v5 UUIDs (namespace hash of `content_hash` only) so any device can independently identify identical files and arrive at the exact same Content UUID without communicating. This enables offline duplicate detection across all devices and libraries
@@ -242,7 +242,7 @@ The system provides flexible configuration through modes and scopes:
 
 ## Persistence and Ephemeral Indexing
 
-Spacedrive supports both persistent and ephemeral indexing modes:
+WingDrive supports both persistent and ephemeral indexing modes:
 
 ### Persistent Indexing
 
@@ -318,7 +318,7 @@ let output = verify.execute(library, context).await?;
 ```
 
 The verification system detects:
-- **MissingFromIndex**: Files created outside Spacedrive
+- **MissingFromIndex**: Files created outside WingDrive
 - **StaleInIndex**: Deleted files not yet purged from database
 - **SizeMismatch**: Files modified externally
 - **ModifiedTimeMismatch**: Timestamp drift (with 1-second tolerance)
@@ -328,7 +328,7 @@ Verification runs as a library action and returns a detailed `IntegrityReport` w
 
 ## Job System Integration
 
-The indexing system leverages Spacedrive's job infrastructure for reliability and monitoring.
+The indexing system leverages WingDrive's job infrastructure for reliability and monitoring.
 
 ### State Persistence
 
@@ -439,14 +439,14 @@ The indexer is fully accessible through the CLI:
 
 ```bash
 # Quick current directory scan
-spacedrive index quick-scan ~/Documents
+wingdrive-cli index quick-scan ~/Documents
 
 # Browse external drive
-spacedrive index browse /media/usb --ephemeral
+wingdrive-cli index browse /media/usb --ephemeral
 
 # Full location with progress monitoring
-spacedrive index location ~/Pictures --mode deep
-spacedrive job monitor  # Watch progress
+wingdrive-cli index location ~/Pictures --mode deep
+wingdrive-cli job monitor  # Watch progress
 ```
 
 ## Troubleshooting
@@ -464,13 +464,13 @@ spacedrive job monitor  # Watch progress
 Enable detailed logging:
 
 ```bash
-RUST_LOG=sd_core::ops::indexing=debug spacedrive start
+RUST_LOG=sd_core::ops::indexing=debug wingdrive-cli start
 ```
 
 Inspect job state:
 
 ```bash
-spacedrive job info <job-id> --detailed
+wingdrive-cli job info <job-id> --detailed
 ```
 
 ## Platform Notes

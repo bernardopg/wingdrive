@@ -97,13 +97,13 @@ Each popout window needs the same provider stack as the main window:
 
 ```typescript
 <PlatformProvider platform={platform}>
-  <SpacedriveProvider client={client}>
+  <WingDriveProvider client={client}>
     <ServerProvider>
       <JobsProvider>
         {/* Window content */}
       </JobsProvider>
     </ServerProvider>
-  </SpacedriveProvider>
+  </WingDriveProvider>
 </PlatformProvider>
 ```
 

@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { ContextMenu } from "@spacedrive/primitives";
+import { ContextMenu } from "@wingdrive/primitives";
 import type { Icon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 

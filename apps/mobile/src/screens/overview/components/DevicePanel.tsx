@@ -15,7 +15,7 @@ import type {
 	Volume,
 } from "@sd/ts-client";
 import { getDeviceIcon } from "@sd/ts-client";
-import { useNormalizedQuery, useCoreQuery, useLibraryAction, useSpacedriveClient } from "../../../client";
+import { useNormalizedQuery, useCoreQuery, useLibraryAction, useWingDriveClient } from "../../../client";
 import { useVolumeIndexingStore } from "../../../stores";
 
 // Temporary type extension
@@ -620,7 +620,7 @@ interface IndexingProgress {
 function VolumeBar({ volume, index }: VolumeBarProps) {
 	const [indexingProgress, setIndexingProgress] = useState<IndexingProgress | null>(null);
 	const [menuVisible, setMenuVisible] = useState(false);
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 
 	const jobId = useVolumeIndexingStore((state) =>
 		state.getJobId(volume.fingerprint)

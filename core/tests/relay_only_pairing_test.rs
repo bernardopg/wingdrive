@@ -20,9 +20,9 @@ async fn alice_relay_only_pairing() {
 	}
 
 	// Set test directory
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-relay-only-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-relay-only-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-relay-only-test/alice");
+	let data_dir = PathBuf::from("/tmp/wingdrive-relay-only-test/alice");
 	let device_name = "Alice's Relay Test Device";
 
 	println!("Alice: Starting RELAY-ONLY pairing test");
@@ -96,8 +96,8 @@ async fn alice_relay_only_pairing() {
 	}
 
 	// Write QR JSON to shared location for Bob (contains NodeId + relay URL)
-	std::fs::create_dir_all("/tmp/spacedrive-relay-only-test").unwrap();
-	std::fs::write("/tmp/spacedrive-relay-only-test/pairing_qr.json", &qr_json).unwrap();
+	std::fs::create_dir_all("/tmp/wingdrive-relay-only-test").unwrap();
+	std::fs::write("/tmp/wingdrive-relay-only-test/pairing_qr.json", &qr_json).unwrap();
 	println!("Alice: QR JSON written (includes NodeId and relay URL for relay discovery)");
 
 	// Wait for pairing completion
@@ -132,7 +132,7 @@ async fn alice_relay_only_pairing() {
 
 				// Write success marker for orchestrator
 				std::fs::write(
-					"/tmp/spacedrive-relay-only-test/alice_success.txt",
+					"/tmp/wingdrive-relay-only-test/alice_success.txt",
 					"success",
 				)
 				.unwrap();
@@ -169,9 +169,9 @@ async fn bob_relay_only_pairing() {
 	}
 
 	// Set test directory
-	env::set_var("SPACEDRIVE_TEST_DIR", "/tmp/spacedrive-relay-only-test");
+	env::set_var("WINGDRIVE_TEST_DIR", "/tmp/wingdrive-relay-only-test");
 
-	let data_dir = PathBuf::from("/tmp/spacedrive-relay-only-test/bob");
+	let data_dir = PathBuf::from("/tmp/wingdrive-relay-only-test/bob");
 	let device_name = "Bob's Relay Test Device";
 
 	println!("Bob: Starting RELAY-ONLY pairing test");
@@ -203,7 +203,7 @@ async fn bob_relay_only_pairing() {
 	// Wait for Alice's QR JSON with relay info
 	println!("Bob: Looking for QR code JSON with relay info...");
 	let qr_json = loop {
-		if let Ok(json) = std::fs::read_to_string("/tmp/spacedrive-relay-only-test/pairing_qr.json")
+		if let Ok(json) = std::fs::read_to_string("/tmp/wingdrive-relay-only-test/pairing_qr.json")
 		{
 			break json.trim().to_string();
 		}
@@ -271,7 +271,7 @@ async fn bob_relay_only_pairing() {
 				println!("Bob: Pairing test PASSED - relay connection successful!");
 
 				// Write success marker for orchestrator
-				std::fs::write("/tmp/spacedrive-relay-only-test/bob_success.txt", "success")
+				std::fs::write("/tmp/wingdrive-relay-only-test/bob_success.txt", "success")
 					.unwrap();
 				println!("Bob: Success marker written");
 
@@ -298,8 +298,8 @@ async fn bob_relay_only_pairing() {
 #[tokio::test]
 async fn test_relay_only_pairing() {
 	// Clean up any previous test data
-	let _ = std::fs::remove_dir_all("/tmp/spacedrive-relay-only-test");
-	std::fs::create_dir_all("/tmp/spacedrive-relay-only-test").unwrap();
+	let _ = std::fs::remove_dir_all("/tmp/wingdrive-relay-only-test");
+	std::fs::create_dir_all("/tmp/wingdrive-relay-only-test").unwrap();
 
 	println!("Starting RELAY-ONLY pairing integration test");
 	println!("This test verifies pairing works exclusively through Iroh relay");
@@ -326,9 +326,9 @@ async fn test_relay_only_pairing() {
 		.wait_for_success(|_outputs| {
 			// Check for success marker files
 			let alice_done =
-				std::path::Path::new("/tmp/spacedrive-relay-only-test/alice_success.txt").exists();
+				std::path::Path::new("/tmp/wingdrive-relay-only-test/alice_success.txt").exists();
 			let bob_done =
-				std::path::Path::new("/tmp/spacedrive-relay-only-test/bob_success.txt").exists();
+				std::path::Path::new("/tmp/wingdrive-relay-only-test/bob_success.txt").exists();
 
 			println!("Pairing status: Alice={}, Bob={}", alice_done, bob_done);
 			alice_done && bob_done

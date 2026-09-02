@@ -1,5 +1,5 @@
 import {ArrowLeft} from '@phosphor-icons/react';
-import {CircleButton} from '@spacedrive/primitives';
+import {CircleButton} from '@wingdrive/primitives';
 import {useCallback, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {SourceTypeIcon} from '../../components/Sources/SourceTypeIcon';

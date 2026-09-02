@@ -26,7 +26,7 @@ import type {
 	VolumeListOutput,
 	VolumeListQueryInput
 } from '@sd/ts-client';
-import {Tooltip, CircleButton} from '@spacedrive/primitives';
+import {Tooltip, CircleButton} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {useEffect, useRef, useState} from 'react';
 import Masonry from 'react-masonry-css';

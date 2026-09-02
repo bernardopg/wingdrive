@@ -1,6 +1,6 @@
 # Test Extension
 
-**The canonical example of Spacedrive extension development.**
+**The canonical example of WingDrive extension development.**
 
 This extension demonstrates the beautiful, macro-powered API that makes building extensions delightful.
 
@@ -124,4 +124,4 @@ let job_id = job_manager.dispatch_by_name(
 
 ---
 
-**This is what all Spacedrive extensions should look like going forward!** 
+**This is what all WingDrive extensions should look like going forward!**

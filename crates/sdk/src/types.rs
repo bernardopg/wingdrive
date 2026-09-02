@@ -154,7 +154,7 @@ impl Progress {
 	}
 }
 
-/// Spacedrive path
+/// WingDrive path
 pub type SdPath = String;
 
 /// Image type marker

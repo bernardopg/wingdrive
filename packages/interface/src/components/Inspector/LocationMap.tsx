@@ -29,7 +29,7 @@ function hslToHex(hslString: string): string {
 	return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-// Custom vector map style matching Spacedrive's color system
+// Custom vector map style matching WingDrive's color system
 function getMapStyle() {
 	const computedStyle = getComputedStyle(document.documentElement);
 	const getColor = (varName: string) => {
@@ -37,7 +37,7 @@ function getMapStyle() {
 		return hslToHex(`hsl(${hsl})`);
 	};
 
-	// Map Spacedrive colors to map elements
+	// Map WingDrive colors to map elements
 	const colors = {
 		background: getColor('--color-app'), // Base map background
 		water: getColor('--color-app-dark-box'), // Water bodies

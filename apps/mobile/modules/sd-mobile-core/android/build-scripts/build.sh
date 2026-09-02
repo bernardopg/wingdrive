@@ -3,7 +3,7 @@ set -e
 
 cd "$(dirname "$0")/../../core"
 
-echo "Building Spacedrive Mobile Core for Android..."
+echo "Building WingDrive Mobile Core for Android..."
 
 OUTPUT_DIR="../android/src/main/jniLibs"
 mkdir -p "$OUTPUT_DIR"

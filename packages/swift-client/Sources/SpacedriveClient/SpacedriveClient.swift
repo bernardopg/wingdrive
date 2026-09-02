@@ -2,10 +2,10 @@
     import Foundation
     import Darwin
 
-    /// Main client for interacting with the Spacedrive daemon
+    /// Main client for interacting with the WingDrive daemon
     ///
     /// This client provides a clean, type-safe interface for executing queries,
-    /// actions, and subscribing to events from the Spacedrive core.
+    /// actions, and subscribing to events from the WingDrive core.
     public class SpacedriveClient {
         private let socketPath: String
 
@@ -15,9 +15,9 @@
 
         /// Thread-safe access to current library ID
         private let libraryIdQueue = DispatchQueue(
-            label: "com.spacedrive.library-id", attributes: .concurrent)
+		label: "com.wingdrive.library-id", attributes: .concurrent)
 
-        /// Initialize a new Spacedrive client
+        /// Initialize a new WingDrive client
         /// - Parameter socketPath: Path to the Unix domain socket for the daemon
         public init(socketPath: String) {
             self.socketPath = socketPath

@@ -1,0 +1,26 @@
+{
+	"name": "@wingdrive/tokens",
+	"version": "0.2.3",
+	"description": "Design tokens for WingDrive - Pure CSS for Tailwind v4",
+	"type": "module",
+	"exports": {
+		"./theme": "./src/css/theme.css",
+		"./css": "./src/css/base.css",
+		"./css/themes/dark": "./src/css/themes/dark.css",
+		"./css/themes/light": "./src/css/themes/light.css",
+		"./css/themes/midnight": "./src/css/themes/midnight.css",
+		"./css/themes/noir": "./src/css/themes/noir.css",
+		"./css/themes/slate": "./src/css/themes/slate.css",
+		"./css/themes/nord": "./src/css/themes/nord.css",
+		"./css/themes/mocha": "./src/css/themes/mocha.css",
+		"./raw-colors": {
+			"import": "./raw-colors.cjs",
+			"require": "./raw-colors.cjs"
+		}
+	},
+	"files": [
+		"src/css",
+		"raw-colors.cjs",
+		"raw-colors.d.ts"
+	]
+}

@@ -90,7 +90,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
 			setAutoSwitchOnSync: (enabled) => set({ autoSwitchOnSync: enabled }),
 		}),
 		{
-			name: "spacedrive-preferences",
+			name: "wingdrive-preferences",
 			storage: createJSONStorage(() => asyncStorageAdapter),
 		},
 	),

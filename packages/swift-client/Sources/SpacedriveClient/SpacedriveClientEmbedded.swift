@@ -10,10 +10,10 @@
         func shutdown()
     }
 
-    /// Main client for interacting with the embedded Spacedrive core
+    /// Main client for interacting with the embedded WingDrive core
     ///
     /// This client provides a clean, type-safe interface for executing queries,
-    /// actions, and subscribing to events from the Spacedrive core running embedded within the iOS app.
+    /// actions, and subscribing to events from the WingDrive core running embedded within the iOS app.
     public class SpacedriveClient {
         private let embeddedCore: IOSCoreBridge
         private let dataDirectory: String
@@ -24,9 +24,9 @@
 
         /// Thread-safe access to current library ID
         private let libraryIdQueue = DispatchQueue(
-            label: "com.spacedrive.library-id", attributes: .concurrent)
+		label: "com.wingdrive.library-id", attributes: .concurrent)
 
-        /// Initialize a new embedded Spacedrive client
+        /// Initialize a new embedded WingDrive client
         /// - Parameters:
         ///   - core: The iOS core bridge implementation
         ///   - dataDirectory: Path to the data directory for the embedded core

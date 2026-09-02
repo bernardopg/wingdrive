@@ -1,6 +1,6 @@
-# Spacedrive Official Extensions
+# WingDrive Official Extensions
 
-This directory contains the extension SDK and official extensions for Spacedrive.
+This directory contains the extension SDK and official extensions for WingDrive.
 
 ## Structure
 
@@ -122,7 +122,7 @@ fn my_job(ctx: &JobContext, state: &mut MyJobState) -> Result<()> {
 ```rust
 #[extension(
     id = "finance",
-    name = "Spacedrive Finance",
+    name = "WingDrive Finance",
     version = "0.1.0"
 )]
 struct Finance;

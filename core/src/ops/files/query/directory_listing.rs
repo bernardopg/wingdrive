@@ -935,7 +935,7 @@ impl DirectoryListingQuery {
 						// This means the directory hasn't been indexed yet
 						// Return a helpful error message
 						Err(QueryError::Internal(
-						format!("Directory '{}' has not been indexed yet. Please add this location to Spacedrive and wait for indexing to complete.", path_str)
+						format!("Directory '{}' has not been indexed yet. Please add this location to WingDrive and wait for indexing to complete.", path_str)
 					))
 					}
 				}

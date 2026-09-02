@@ -3,11 +3,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: 🙏 Get help
-    url: https://github.com/spacedriveapp/spacedrive/discussions/new?category=help
+    url: https://github.com/bernardopg/wingdrive/discussions/new?category=help
     about: If you can't get something to work the way you expect, please open a discussion thread.
   - name: 💡 Feature request
-    url: https://github.com/spacedriveapp/spacedrive/discussions/new?category=ideas
+    url: https://github.com/bernardopg/wingdrive/discussions/new?category=ideas
     about: Suggest any ideas you have for new features in a discussion thread.
   - name: 💬 Chat on Discord
     url: https://discord.gg/gTaF2Z44f5
-    about: Ask questions and talk to other Spacedrive users and maintainers on Discord.
+    about: Ask questions and talk to other WingDrive users and maintainers on Discord.

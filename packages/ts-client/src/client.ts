@@ -41,7 +41,7 @@ class SimpleEventEmitter {
 }
 
 /**
- * Type-safe TypeScript client for Spacedrive
+ * Type-safe TypeScript client for WingDrive
  *
  * This client mirrors the Swift client architecture with:
  * - Namespaced APIs (libraries, files, jobs, etc.)

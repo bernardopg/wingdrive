@@ -127,7 +127,7 @@ public class SDMobileCoreModule: Module {
                 dir = dataDir
             } else {
                 let paths = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-                dir = paths[0].appendingPathComponent("SpacedriveData").path
+                dir = paths[0].appendingPathComponent("WingDriveData").path
             }
 
             print("[SDMobileCore] Using data directory: \(dir)")

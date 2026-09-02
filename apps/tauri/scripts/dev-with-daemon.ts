@@ -47,7 +47,11 @@ const DAEMON_BIN = join(getCargoTargetDir(), 'debug', BIN_NAME);
 const DAEMON_PORT = 6969;
 const DAEMON_ADDR = `127.0.0.1:${DAEMON_PORT}`;
 
-const DATA_DIR = join(homedir(), '.spacedrive');
+const preferredDataDir = join(homedir(), '.wingdrive');
+const legacyDataDir = join(homedir(), '.spacedrive');
+const DATA_DIR = !existsSync(preferredDataDir) && existsSync(legacyDataDir)
+	? legacyDataDir
+	: preferredDataDir;
 
 let daemonProcess: any = null;
 let viteProcess: any = null;

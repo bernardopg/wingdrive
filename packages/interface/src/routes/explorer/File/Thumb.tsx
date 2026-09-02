@@ -127,7 +127,7 @@ export const Thumb = memo(function Thumb({
       file.kind === "Directory",
     );
 
-  // Check if using generic Document icon (not a Spacedrive variant like Document_pdf)
+  // Check if using generic Document icon (not a WingDrive variant like Document_pdf)
   const genericDocumentIcon = getIcon("Document", true, null, false);
   const isUsingGenericIcon = icon === genericDocumentIcon;
 
@@ -142,7 +142,7 @@ export const Thumb = memo(function Thumb({
   const isSmallIcon = size < smallIconThreshold;
   const badgeSize = isSmallIcon ? iconSize : iconSize * 0.4;
 
-  // Only show bearded badge if using generic Document icon (not Spacedrive variants)
+  // Only show bearded badge if using generic Document icon (not WingDrive variants)
   const showBeardedBadge =
     beardedIconUrl &&
     file.kind === "File" &&

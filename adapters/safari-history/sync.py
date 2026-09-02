@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Safari History adapter for Spacedrive.
+Safari History adapter for WingDrive.
 
 Reads the Safari History.db SQLite database on macOS.
 Copies the DB to a temp file first since Safari holds a lock on it.

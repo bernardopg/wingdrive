@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { BallBlue } from "@sd/assets/images";
+import { WingDriveLogo } from "@sd/assets/images";
 import Orb from "../../components/Orb";
-import { CircleButton } from "@spacedrive/primitives";
+import { CircleButton } from "@wingdrive/primitives";
 import { GlobeHemisphereWest, GithubLogo, DiscordLogo } from "@phosphor-icons/react";
 import contributors from "../../contributors.json";
 
@@ -19,8 +19,8 @@ export function AboutSettings() {
         {/* Ball image - behind the orb */}
         <div className="absolute inset-[8%] z-0">
           <img
-            src={BallBlue}
-            alt="Spacedrive"
+            src={WingDriveLogo}
+            alt="WingDrive"
             className="w-full h-full object-contain select-none"
             draggable={false}
           />
@@ -44,7 +44,7 @@ export function AboutSettings() {
         transition={{ duration: 0.5, delay: 0.3 }}
         className="text-center mb-6"
       >
-        <h3 className="text-2xl font-bold text-white mb-2">Spacedrive</h3>
+        <h3 className="text-2xl font-bold text-white mb-2">WingDrive</h3>
         <p className="text-sm text-white/60">
           A file explorer from the future.
         </p>
@@ -70,7 +70,7 @@ export function AboutSettings() {
         className="flex gap-3 mb-6"
       >
         <a
-          href="https://spacedrive.com"
+          href="https://github.com/bernardopg/wingdrive"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -79,7 +79,7 @@ export function AboutSettings() {
           </CircleButton>
         </a>
         <a
-          href="https://github.com/spacedriveapp/spacedrive"
+          href="https://github.com/bernardopg/wingdrive"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -88,7 +88,7 @@ export function AboutSettings() {
           </CircleButton>
         </a>
         <a
-          href="https://discord.gg/spacedrive"
+          href="https://github.com/bernardopg/wingdrive/discussions"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -131,7 +131,7 @@ export function AboutSettings() {
         className="text-center"
       >
         <a
-          href="https://github.com/spacedriveapp/spacedrive/blob/main/LICENSE"
+          href="https://github.com/bernardopg/wingdrive/blob/main/LICENSE"
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-white/40 hover:text-white/60 transition-colors"

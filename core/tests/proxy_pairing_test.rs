@@ -21,7 +21,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::timeout;
 
-const TEST_DIR: &str = "/tmp/spacedrive-proxy-pairing-test";
+const TEST_DIR: &str = "/tmp/wingdrive-proxy-pairing-test";
 
 /// Alice's scenario - pairs with Carol first, then Bob, then vouches Bob to Carol
 #[tokio::test]
@@ -31,7 +31,7 @@ async fn alice_proxy_pairing_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", TEST_DIR);
+	env::set_var("WINGDRIVE_TEST_DIR", TEST_DIR);
 	let data_dir = PathBuf::from(format!("{}/alice", TEST_DIR));
 	let device_name = "Alice's Test Device";
 
@@ -236,7 +236,7 @@ async fn carol_proxy_pairing_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", TEST_DIR);
+	env::set_var("WINGDRIVE_TEST_DIR", TEST_DIR);
 	let data_dir = PathBuf::from(format!("{}/carol", TEST_DIR));
 	let device_name = "Carol's Test Device";
 
@@ -402,7 +402,7 @@ async fn bob_proxy_pairing_scenario() {
 		return;
 	}
 
-	env::set_var("SPACEDRIVE_TEST_DIR", TEST_DIR);
+	env::set_var("WINGDRIVE_TEST_DIR", TEST_DIR);
 	let data_dir = PathBuf::from(format!("{}/bob", TEST_DIR));
 	let device_name = "Bob's Test Device";
 
