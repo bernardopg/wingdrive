@@ -742,7 +742,7 @@ impl GitIgnoreRules {
 		tokio::task::spawn_blocking(move || {
 			use gix_ignore::{glob::search::pattern::List, search::Ignore};
 			let mut buf = Vec::with_capacity(30);
-			List::from_file(path, None, true, &mut buf)
+			List::from_file(path, None, true, &mut buf, Ignore::default())
 				.map_err(|_| ())?
 				.ok_or(())
 		})
@@ -755,7 +755,7 @@ impl GitIgnoreRules {
 	) -> Result<Vec<gix_ignore::glob::search::pattern::List<gix_ignore::search::Ignore>>, ()> {
 		tokio::task::spawn_blocking(move || {
 			let mut buf = Vec::new();
-			Search::from_git_dir(dot_git.as_ref(), None, &mut buf)
+			Search::from_git_dir(dot_git.as_ref(), None, &mut buf, Default::default())
 				.map(|s| s.patterns)
 				.map_err(|_| ())
 		})
