@@ -185,7 +185,7 @@ parking_lot  = "0.12" # Fast mutex for name cache
 num_cpus     = "1.16" # CPU count for parallel walker
 postcard     = { version = "1", features = ["use-std"] } # Zero-copy binary serialization for snapshots
 zstd         = { version = "0.13", features = ["zstdmt"] } # Multithreaded compression for snapshots
-whoami    = "1.5"
+whoami    = "2.1"
 
 # Secure storage
 keyring = "3.6"  # Only for device key in keychain
