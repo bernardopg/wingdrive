@@ -100,7 +100,6 @@ impl PairingSecurity {
 mod tests {
 	use super::*;
 	use ed25519_dalek::{ed25519::signature::Keypair, SigningKey};
-	use rand::rngs::OsRng;
 
 	#[test]
 	fn test_validate_public_key() {
