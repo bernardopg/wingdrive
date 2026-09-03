@@ -379,7 +379,7 @@ impl Device {
 fn get_device_name() -> String {
 	#[cfg(target_os = "macos")]
 	{
-		return whoami::devicename();
+		return whoami::devicename().unwrap_or_else(|_| "Unknown Device".to_string());
 	}
 
 	#[cfg(any(target_os = "windows", target_os = "linux"))]

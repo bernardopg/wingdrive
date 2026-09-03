@@ -91,7 +91,11 @@ impl IndexingHarnessBuilder {
 		// Use the real device UUID so the watcher can find locations
 		let device_id = sd_core::device::get_current_device_id();
 		// Make device name unique per test to avoid slug collisions in parallel tests
-		let device_name = format!("{}-{}", whoami::devicename(), self.test_name);
+		let device_name = format!(
+			"{}-{}",
+			whoami::devicename().unwrap_or_else(|_| "unknown".to_string()),
+			self.test_name
+		);
 		register_device(&library, device_id, &device_name).await?;
 
 		// Get device record
