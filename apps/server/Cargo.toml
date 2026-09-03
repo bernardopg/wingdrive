@@ -50,7 +50,7 @@ thiserror = "1"
 clap = { version = "4", features = ["derive"] }
 
 # Default data directory resolution in dev mode
-dirs = "5.0"
+dirs = "6.0"
 
 # Dev dependencies
 tempfile = "3"
