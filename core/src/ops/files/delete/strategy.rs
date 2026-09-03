@@ -315,7 +315,7 @@ impl LocalDeleteStrategy {
 
 	/// Securely overwrite a file with random data
 	async fn secure_overwrite_file(&self, path: &Path, size: u64) -> Result<(), std::io::Error> {
-		use rand::RngCore;
+		use rand::Rng;
 		use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 
 		let mut file = fs::OpenOptions::new()
@@ -334,7 +334,7 @@ impl LocalDeleteStrategy {
 				let chunk_size = std::cmp::min(remaining, 64 * 1024) as usize;
 
 				let buffer = {
-					let mut rng = rand::thread_rng();
+					let mut rng = rand::rng();
 					let mut buf = vec![0u8; chunk_size];
 					rng.fill_bytes(&mut buf);
 					buf

@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, RngExt, SeedableRng};
 use std::fs::File;
 use std::path::PathBuf;
 
@@ -13,7 +13,7 @@ fn choose_depth(rng: &mut StdRng, max_depth: usize) -> usize {
 	if max_depth == 0 {
 		1
 	} else {
-		rng.gen_range(1..=max_depth)
+		rng.random_range(1..=max_depth)
 	}
 }
 
@@ -180,14 +180,14 @@ fn choose_fanout_index(rng: &mut StdRng, fanout_per_dir: usize) -> usize {
 	if fanout_per_dir == 0 {
 		0
 	} else {
-		rng.gen_range(0..fanout_per_dir)
+		rng.random_range(0..fanout_per_dir)
 	}
 }
 
 fn pick_size(rng: &mut StdRng, range: [u64; 2]) -> u64 {
 	let [min_b, max_b] = range;
 	if max_b > min_b {
-		rng.gen_range(min_b..=max_b)
+		rng.random_range(min_b..=max_b)
 	} else {
 		min_b
 	}
@@ -219,7 +219,7 @@ impl DatasetGenerator for FileSystemGenerator {
 	async fn generate(&self, recipe: &Recipe) -> Result<()> {
 		let mut rng: StdRng = match recipe.seed {
 			Some(s) => StdRng::seed_from_u64(s),
-			None => StdRng::from_entropy(),
+			None => rand::make_rng(),
 		};
 
 		for loc in &recipe.locations {
@@ -258,8 +258,8 @@ impl DatasetGenerator for FileSystemGenerator {
 					}
 					std::fs::create_dir_all(&dir).with_context(|| format!("mkdir {:?}", dir))?;
 
-					let ext = &extensions[rng.gen_range(0..extensions.len())];
-					let fname = format!("f_{:016x}.{}", rng.gen::<u64>(), ext);
+					let ext = &extensions[rng.random_range(0..extensions.len())];
+					let fname = format!("f_{:016x}.{}", rng.random::<u64>(), ext);
 					let fpath = dir.join(fname);
 					let size = pick_size(&mut rng, bucket.range);
 
@@ -280,7 +280,7 @@ impl DatasetGenerator for FileSystemGenerator {
 				if created_files.is_empty() {
 					break;
 				}
-				let src_idx = rng.gen_range(0..created_files.len());
+				let src_idx = rng.random_range(0..created_files.len());
 				let src = &created_files[src_idx];
 				let mut dir = loc.path.clone();
 				let depth = choose_depth(&mut rng, loc.structure.depth);
@@ -293,7 +293,7 @@ impl DatasetGenerator for FileSystemGenerator {
 					.extension()
 					.map(|e| format!(".{}", e.to_string_lossy()))
 					.unwrap_or_default();
-				let dst = dir.join(format!("dup_{:016x}{}", rng.gen::<u64>(), ext));
+				let dst = dir.join(format!("dup_{:016x}{}", rng.random::<u64>(), ext));
 				match std::fs::hard_link(src, &dst) {
 					Ok(_) => {}
 					Err(_) => {
