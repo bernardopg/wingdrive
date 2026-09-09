@@ -101,7 +101,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # WASM Plugin System
 wasmer             = { version = "4.2", optional = true }
-wasmer-middlewares = { version = "4.2", optional = true }
+wasmer-middlewares = { version = "7.1", optional = true }
 
 # Indexer rules engine
 futures-concurrency = "7.6"
