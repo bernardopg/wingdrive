@@ -65,7 +65,7 @@
 		"zustand": "^5.0.15"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.29.7",
+		"@babel/core": "^8.0.1",
 		"@babel/plugin-transform-runtime": "^7.29.7",
 		"@babel/runtime": "^8.0.0",
 		"babel-preset-expo": "~57.0.0",
