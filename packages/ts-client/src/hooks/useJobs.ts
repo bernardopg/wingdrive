@@ -105,6 +105,18 @@ export function useJobs(options: UseJobsOptions = {}): UseJobsReturn {
 		jobsRef.current = jobs;
 	}, [jobs]);
 
+	// Callbacks are held in a ref so the event subscription below does not
+	// depend on them: inline arrow props from components otherwise recreated
+	// the subscription (and its TCP connection) on every render.
+	const callbacksRef = useRef({
+		onJobCompleted,
+		onJobFailed,
+		onJobCancelled,
+	});
+	useEffect(() => {
+		callbacksRef.current = { onJobCompleted, onJobFailed, onJobCancelled };
+	});
+
 	useEffect(() => {
 		if (data?.jobs) {
 			setJobs(data.jobs as ExtendedJobListItem[]);
@@ -159,11 +171,11 @@ export function useJobs(options: UseJobsOptions = {}): UseJobsReturn {
 						// Call callbacks
 						if ('JobCompleted' in event) {
 							const jobType = event.JobCompleted?.job_type || '';
-							onJobCompleted?.(jobId, jobType);
+							callbacksRef.current.onJobCompleted?.(jobId, jobType);
 						} else if ('JobFailed' in event) {
-							onJobFailed?.(jobId);
+							callbacksRef.current.onJobFailed?.(jobId);
 						} else if ('JobCancelled' in event) {
-							onJobCancelled?.(jobId);
+							callbacksRef.current.onJobCancelled?.(jobId);
 						}
 					}
 				}
@@ -240,7 +252,7 @@ export function useJobs(options: UseJobsOptions = {}): UseJobsReturn {
 			isCancelled = true;
 			unsubscribe?.();
 		};
-	}, [client, onJobCompleted, onJobFailed, onJobCancelled]);
+	}, [client]);
 
 	const pause = async (jobId: string) => {
 		try {

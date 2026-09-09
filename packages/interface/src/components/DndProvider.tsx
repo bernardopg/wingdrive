@@ -320,14 +320,6 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 
 		// Move file into location/volume/folder
 		if (dropData?.action === "move-into") {
-			console.log("[DnD] Move-into action:", {
-				targetType: dropData.targetType,
-				targetId: dropData.targetId,
-				targetPath: dropData.targetPath,
-				hasTargetPath: !!dropData.targetPath,
-				draggedFile: dragData.name,
-			});
-
 			const sources: SdPath[] = dragData.selectedFiles
 				? dragData.selectedFiles.map((f: File) => f.sd_path)
 				: [dragData.sdPath];
@@ -339,9 +331,21 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 				return;
 			}
 
-			// Determine operation based on modifier keys
-			// For now default to copy (user can choose in modal)
-			const operation = "copy";
+			// Native file managers move within a volume and copy across volumes;
+				// copying by default silently duplicated files during reorganization.
+				// "Same volume" is approximated by matching device slugs on physical
+				// paths; the operation can still be switched in the dialog.
+			const sourceDevice =
+				"Physical" in dragData.sdPath
+					? dragData.sdPath.Physical.device_slug
+					: null;
+			const targetDevice =
+				"Physical" in destination
+					? destination.Physical.device_slug
+					: null;
+			const sameVolume =
+				sourceDevice !== null && sourceDevice === targetDevice;
+			const operation: "copy" | "move" = sameVolume ? "move" : "copy";
 
 			openFileOperation({
 				operation,

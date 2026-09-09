@@ -17,6 +17,8 @@ import {
 } from "@wingdrive/primitives";
 import type { SdPath, File as FileType } from "@sd/ts-client";
 import { useLibraryMutation, useLibraryQuery } from "../../contexts/SpacedriveContext";
+import { useWaitForJob } from "../../hooks/useWaitForJob";
+import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
 import { File, FileStack } from "../../routes/explorer/File";
 
 interface FileOperationDialogProps {
@@ -50,15 +52,20 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 	const [conflictResolution, setConflictResolution] = useState<ConflictResolution>("Skip");
 
 	const copyFiles = useLibraryMutation("files.copy");
+	const waitForJob = useWaitForJob();
+	const refetchListings = useRefetchFileListings();
 
-	// Fetch file info for sources (up to 3 for FileStack)
-	const sourcePaths = props.sources.slice(0, 3).map(s =>
-		"Physical" in s ? s.Physical.path : null
-	).filter((p): p is string => p !== null);
+	// Fixed-length slots keep the hook count constant (Rules of Hooks): mapping
+	// over a variable number of sources made React reorder query state whenever
+	// the selection size changed while the dialog was open.
+	const sourceSlots = Array.from({ length: 3 }, (_, i) => {
+		const source = props.sources[i];
+		return source && "Physical" in source ? source.Physical.path : null;
+	});
 
-	const sourceFileQueries = sourcePaths.map(path =>
+	const sourceFileQueries = sourceSlots.map((path) =>
 		useLibraryQuery(
-			{ type: "files.by_path", input: { path } },
+			{ type: "files.by_path", input: { path: path ?? "" } },
 			{ enabled: !!path }
 		)
 	);
@@ -101,7 +108,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 			setPhase({ type: "executing" });
 
 			// Execute with the user's chosen operation and conflict resolution
-			await copyFiles.mutateAsync({
+			const receipt = await copyFiles.mutateAsync({
 				sources: { paths: props.sources },
 				destination: props.destination,
 				overwrite: conflictResolution === "Overwrite",
@@ -112,7 +119,19 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 				on_conflict: conflictResolution,
 			});
 
-			// Close immediately on success
+			// The mutation only queues the job; wait for it to finish so the
+			// listing refresh below actually sees the new files on disk.
+			const result = await waitForJob(receipt.id);
+			refetchListings();
+
+			if (result.status === "failed") {
+				setPhase({
+					type: "error",
+					message: result.error ?? "Operation failed",
+				});
+				return;
+			}
+
 			dialogManager.setState(props.id, { open: false });
 			props.onComplete?.();
 		} catch (error) {

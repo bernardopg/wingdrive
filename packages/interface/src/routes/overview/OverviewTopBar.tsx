@@ -133,7 +133,7 @@ export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 								'flex h-8 items-center gap-2 rounded-full px-3 text-xs font-medium',
 								'backdrop-blur-xl transition-all',
 								'border-sidebar-line/30 border',
-								'bg-sidebar-box/20 text-sidebar-inkDull hover:bg-sidebar-box/30 hover:text-sidebar-ink',
+								'bg-sidebar-box/20 text-sidebar-ink-dull hover:bg-sidebar-box/30 hover:text-sidebar-ink',
 								'active:scale-95',
 								!currentLibrary && 'text-ink-faint'
 							)}

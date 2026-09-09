@@ -254,17 +254,27 @@ function App() {
 	}
 
 	if (route === "/inspector") {
+		// Traffic-light inset only applies on macOS; native decorations cover the
+		// top on Linux/Windows, where that padding + drag region were dead space.
+		const isMacOS = window.navigator.userAgent.includes("Mac");
 		return (
 			<PlatformProvider platform={platform}>
 				<SpacedriveProvider client={client}>
 					<ServerProvider>
 						<JobsProvider>
-							<div className="h-screen bg-app overflow-hidden pt-[52px]">
-								{/* Drag region for macOS traffic lights area */}
-								<div
-									data-tauri-drag-region
-									className="absolute inset-x-0 top-0 h-[52px] z-50"
-								/>
+							<div
+								className={
+									isMacOS
+										? "h-screen bg-app overflow-hidden pt-[52px]"
+										: "h-screen bg-app overflow-hidden"
+								}
+							>
+								{isMacOS && (
+									<div
+										data-tauri-drag-region
+										className="absolute inset-x-0 top-0 h-[52px] z-50"
+									/>
+								)}
 								<PopoutInspector />
 							</div>
 						</JobsProvider>

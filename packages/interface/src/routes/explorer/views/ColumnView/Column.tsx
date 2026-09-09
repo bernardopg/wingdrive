@@ -6,6 +6,7 @@ import { useNormalizedQuery } from "../../../../contexts/SpacedriveContext";
 import { ColumnItem } from "./ColumnItem";
 import { useExplorer } from "../../context";
 import { useFileContextMenu } from "../../hooks/useFileContextMenu";
+import { useOpenWith } from "../../../../hooks/useOpenWith";
 import { useSelection } from "../../SelectionContext";
 
 /**
@@ -48,11 +49,29 @@ const ColumnItemWrapper = memo(
 			[file, files, onSelectFile],
 		);
 
+		const physicalPath =
+			(file.kind === "File" || file.kind === "Symlink") &&
+			"Physical" in file.sd_path
+				? file.sd_path.Physical.path
+				: null;
+		const { openWithDefault } = useOpenWith(
+			physicalPath ? [physicalPath] : [],
+		);
+
 		const handleDoubleClick = useCallback(() => {
 			if (file.kind === "Directory" && file.sd_path) {
 				onNavigate(file.sd_path);
+				return;
 			}
-		}, [file, onNavigate]);
+			// Files (and symlinks) previously did nothing on double-click here;
+			// every other view already opened them with the default application.
+			if (
+				(file.kind === "File" || file.kind === "Symlink") &&
+				"Physical" in file.sd_path
+			) {
+				void openWithDefault(file.sd_path.Physical.path);
+			}
+		}, [file, onNavigate, openWithDefault]);
 
 		const handleContextMenu = useCallback(
 			async (e: React.MouseEvent) => {

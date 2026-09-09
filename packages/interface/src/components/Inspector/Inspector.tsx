@@ -126,7 +126,7 @@ function InspectorView({
 							title="Pop out Inspector"
 						>
 							<ArrowSquareOut
-								className="text-sidebar-inkDull hover:text-sidebar-ink size-4 transition-colors"
+								className="text-sidebar-ink-dull hover:text-sidebar-ink size-4 transition-colors"
 								weight="bold"
 							/>
 						</button>
@@ -140,7 +140,7 @@ function InspectorView({
 function EmptyState() {
 	return (
 		<div className="flex flex-1 items-center justify-center px-4 text-center">
-			<p className="text-sidebar-inkDull text-xs">
+			<p className="text-sidebar-ink-dull text-xs">
 				Select an item to view details
 			</p>
 		</div>
@@ -235,7 +235,7 @@ export function PopoutInspector() {
 		return (
 			<div className="bg-sidebar/65 flex h-full flex-col overflow-hidden rounded-2xl">
 				<div className="flex flex-1 items-center justify-center">
-					<p className="text-sidebar-inkDull text-xs">Loading...</p>
+					<p className="text-sidebar-ink-dull text-xs">Loading...</p>
 				</div>
 			</div>
 		);

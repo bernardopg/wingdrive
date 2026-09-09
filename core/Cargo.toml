@@ -52,7 +52,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # HTTP client (for model downloads)
-reqwest = { version = "0.11", features = ["stream"] }
+reqwest = { version = "0.13", features = ["stream"] }
 specta = { git = "https://github.com/jamiepine/specta", branch = "main", features = [
 	"chrono",
 	"derive",
@@ -85,7 +85,7 @@ notify = "8.2"  # File system watching
 sha2   = "0.10" # SHA-256 hashing for CAS IDs
 
 # Cloud storage integration
-opendal = { version = "0.54", features = [
+opendal = { version = "0.56", features = [
 	"services-s3",
 	"services-gdrive",
 	"services-onedrive",
@@ -100,8 +100,8 @@ tracing-appender   = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # WASM Plugin System
-wasmer             = { version = "4.2", optional = true }
-wasmer-middlewares = { version = "4.2", optional = true }
+wasmer             = { version = "7.1", optional = true }
+wasmer-middlewares = { version = "7.1", optional = true }
 
 # Indexer rules engine
 futures-concurrency = "7.6"
@@ -132,7 +132,7 @@ tokio-rustls     = "0.26"
 webp             = "0.3"
 
 # Speech-to-text dependencies (optional, behind whisper feature)
-whisper-rs = { version = "0.15.1", optional = true }
+whisper-rs = { version = "0.16.0", optional = true }
 hound      = { version = "3.5", optional = true }   # WAV file reading
 rubato     = { version = "0.16", optional = true }  # Audio resampling to 16kHz
 
@@ -194,21 +194,21 @@ redb = "2.2"     # Encrypted KV store for library keys, credentials, etc.
 # CLI dependencies
 clap           = { version = "4.5", features = ["derive", "env"] }
 colored        = "2.1"
-comfy-table    = "7.1"
+comfy-table    = "8.0"
 console        = "0.15"
-dialoguer      = "0.11"
-indicatif      = "0.17"
+dialoguer      = "0.12"
+indicatif      = "0.18"
 owo-colors     = "4.1"
 supports-color = "3.0"
 
 [build-dependencies]
 chrono         = { version = "0.4", features = ["serde"] }
 colored        = "2.1"
-comfy-table    = "7.1"
+comfy-table    = "8.0"
 console        = "0.15"
 crossterm      = "0.28"
-dialoguer      = "0.11"
-indicatif      = "0.17"
+dialoguer      = "0.12"
+indicatif      = "0.18"
 owo-colors     = "4.1"
 ratatui        = "0.29"
 serde_json     = "1.0"
@@ -220,13 +220,13 @@ vergen         = { version = "8", features = ["cargo", "git", "gitcl"] }
 libc = "0.2"
 
 [target.'cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))'.dependencies]
-trash = "3.3" # Native trash/recycle bin support on desktop platforms
+trash = "5.2" # Native trash/recycle bin support on desktop platforms
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.52", features = ["Win32_Storage_FileSystem", "Win32_Foundation", "Win32_Security", "Win32_System_Ioctl", "Win32_System_IO", "Win32_System_Registry", "Win32_System_Power"] }
 
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
-whisper-rs = { version = "0.15.1", features = ["metal"], optional = true }
+whisper-rs = { version = "0.16.0", features = ["metal"], optional = true }
 
 # iOS-specific dependencies for volume detection via Objective-C FFI
 [target.'cfg(target_os = "ios")'.dependencies]

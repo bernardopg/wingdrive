@@ -1,5 +1,6 @@
 import { memo, useCallback } from "react";
 import clsx from "clsx";
+import { useDroppable } from "@dnd-kit/core";
 import type { File } from "@sd/ts-client";
 import { File as FileComponent } from "../../File";
 import { useDraggableFile } from "../../hooks/useDraggableFile";
@@ -41,8 +42,36 @@ export const ColumnItem = memo(
 			file,
 		});
 
+		// Folders accept drops so dragging into a subfolder works in column view
+		// too, not just in the grid (parity with FileCard's move-into target).
+		const isFolder = file.kind === "Directory";
+		const {
+			setNodeRef: setDropNodeRef,
+			isOver: isDropOver,
+		} = useDroppable({
+			id: `folder-drop-${file.id}`,
+			disabled: !isFolder,
+			data: {
+				action: "move-into",
+				targetType: "folder",
+				targetId: file.id,
+				targetPath: file.sd_path,
+			},
+		});
+
+		const setCombinedNodeRef = useCallback(
+			(node: HTMLElement | null) => {
+				setNodeRef(node);
+				if (isFolder) setDropNodeRef(node);
+			},
+			[setNodeRef, setDropNodeRef, isFolder],
+		);
+
 		return (
-			<div ref={setNodeRef} {...listeners} {...attributes} tabIndex={-1} className="outline-none focus:outline-none">
+			<div ref={setCombinedNodeRef} {...listeners} {...attributes} tabIndex={-1} className="outline-none focus:outline-none">
+				{isFolder && isDropOver && (
+					<div className="absolute inset-0 rounded-md ring-2 ring-accent ring-inset pointer-events-none z-10" />
+				)}
 				<FileComponent
 					file={file}
 					selected={selected && !isDragging}
@@ -52,12 +81,13 @@ export const ColumnItem = memo(
 					layout="row"
 					data-file-id={file.id}
 					className={clsx(
-						"flex items-center gap-2 px-3 py-1.5 mx-2 rounded-md cursor-default transition-none",
+						"relative flex items-center gap-2 px-3 py-1.5 mx-2 rounded-md cursor-default transition-none",
 						selected && !isDragging
 							? "bg-accent text-white"
 							: "text-ink",
 						focused && !selected && "ring-2 ring-accent/50",
 						isDragging && "opacity-40",
+						isFolder && isDropOver && "bg-accent/10",
 					)}
 				>
 					<div className="[&_*]:!rounded-[3px] flex-shrink-0">

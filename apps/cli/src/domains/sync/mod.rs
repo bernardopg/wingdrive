@@ -206,7 +206,7 @@ fn display_metrics(
 
 	let mut status_table = Table::new();
 	status_table
-		.load_preset(UTF8_FULL)
+		.load_style(UTF8_FULL)
 		.set_content_arrangement(ContentArrangement::Dynamic)
 		.set_header(Row::from(vec![
 			Cell::new("SYNC STATUS").add_attribute(Attribute::Bold)
@@ -239,7 +239,7 @@ fn display_metrics(
 	if !args.state && !args.operations && !args.errors {
 		let mut grid_table = Table::new();
 		grid_table
-			.load_preset(UTF8_FULL)
+			.load_style(UTF8_FULL)
 			.set_content_arrangement(ContentArrangement::Dynamic);
 
 		grid_table.set_header(Row::from(vec![
@@ -304,7 +304,7 @@ fn display_metrics(
 	if !args.state && !args.errors && !snapshot.data_volume.entries_synced.is_empty() {
 		let mut entries_table = Table::new();
 		entries_table
-			.load_preset(UTF8_FULL)
+			.load_style(UTF8_FULL)
 			.set_content_arrangement(ContentArrangement::Dynamic)
 			.set_header(Row::from(vec![
 				Cell::new("SYNCED ENTRIES").add_attribute(Attribute::Bold)
@@ -347,7 +347,7 @@ fn display_metrics(
 			println!();
 			let mut error_table = Table::new();
 			error_table
-				.load_preset(UTF8_FULL)
+				.load_style(UTF8_FULL)
 				.set_content_arrangement(ContentArrangement::Dynamic)
 				.set_header(Row::from(vec![
 					Cell::new("Time").add_attribute(Attribute::Bold),
@@ -629,7 +629,7 @@ async fn show_partners(ctx: &Context) -> Result<()> {
 
 		let mut table = Table::new();
 		table
-			.load_preset(UTF8_FULL)
+			.load_style(UTF8_FULL)
 			.set_content_arrangement(ContentArrangement::Dynamic)
 			.set_header(Row::from(vec![
 				Cell::new("Device UUID").add_attribute(Attribute::Bold),
@@ -678,7 +678,7 @@ async fn show_partners(ctx: &Context) -> Result<()> {
 	if !output.debug_info.device_details.is_empty() {
 		let mut debug_table = Table::new();
 		debug_table
-			.load_preset(UTF8_FULL)
+			.load_style(UTF8_FULL)
 			.set_content_arrangement(ContentArrangement::Dynamic)
 			.set_header(Row::from(vec![
 				Cell::new("Device")

@@ -112,7 +112,7 @@ export function TagAssignmentMode({ isActive, onExit }: TagAssignmentModeProps) 
 							<TagIcon size={16} weight="bold" className="text-accent" />
 							<span className="text-sm font-semibold text-sidebar-ink">Tag Mode</span>
 							{selectedFiles.length > 0 && (
-								<span className="text-xs text-sidebar-inkDull">
+								<span className="text-xs text-sidebar-ink-dull">
 									{selectedFiles.length} {selectedFiles.length === 1 ? 'item' : 'items'}
 								</span>
 							)}
@@ -164,7 +164,7 @@ export function TagAssignmentMode({ isActive, onExit }: TagAssignmentModeProps) 
 
 					{/* Help Text */}
 					{selectedFiles.length === 0 && (
-						<div className="mt-2 text-xs text-sidebar-inkFaint text-center">
+						<div className="mt-2 text-xs text-sidebar-ink-faint text-center">
 							Select files to start tagging • Press 1-9/0 to toggle tags • Esc to exit
 						</div>
 					)}

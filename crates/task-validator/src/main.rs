@@ -3,7 +3,7 @@
 use clap::{Parser, Subcommand};
 use comfy_table::{Cell, Table};
 use glob::glob;
-use jsonschema::{Draft, JSONSchema};
+use jsonschema::Draft;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashSet;
@@ -250,9 +250,9 @@ fn validate_tasks() -> Result<(), Box<dyn std::error::Error>> {
 	// 1. Load the schema
 	let schema_file = fs::File::open(".tasks/task.schema.json")?;
 	let schema: Value = serde_json::from_reader(schema_file)?;
-	let compiled_schema = JSONSchema::options()
+	let compiled_schema = jsonschema::options()
 		.with_draft(Draft::Draft7)
-		.compile(&schema)
+		.build(&schema)
 		.expect("A valid schema");
 
 	// 2. Get a list of staged markdown files (including subdirectories)
@@ -299,7 +299,8 @@ fn validate_tasks() -> Result<(), Box<dyn std::error::Error>> {
 			if let Some(front_matter_str) = content.split("---").nth(1) {
 				match serde_yaml::from_str::<Value>(front_matter_str) {
 					Ok(yaml_value) => {
-						if let Err(errors) = compiled_schema.validate(&yaml_value) {
+						let errors: Vec<_> = compiled_schema.iter_errors(&yaml_value).collect();
+						if !errors.is_empty() {
 							eprintln!("ERROR in {}:", file_path);
 							for error in errors {
 								eprintln!("   - {}", error);

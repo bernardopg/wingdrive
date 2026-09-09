@@ -29,7 +29,7 @@ pub async fn run(data_dir: PathBuf, cmd: ConfigCmd) -> Result<()> {
 	match cmd {
 		ConfigCmd::Show => {
 			let mut table = Table::new();
-			table.load_preset(UTF8_BORDERS_ONLY);
+			table.load_style(UTF8_BORDERS_ONLY);
 			table.set_header(vec!["Key", "Value"]);
 
 			// Library settings

@@ -159,7 +159,7 @@ function OverviewTab({ location }: { location: Location }) {
 				<h4 className="text-sm font-semibold text-sidebar-ink truncate">
 					{location.name || "Unnamed Location"}
 				</h4>
-				<p className="text-xs text-sidebar-inkDull mt-0.5">
+				<p className="text-xs text-sidebar-ink-dull mt-0.5">
 					Local Storage
 				</p>
 			</div>
@@ -238,7 +238,7 @@ function IndexingTab({ location }: { location: Location }) {
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
 			<Section title="Index Mode" icon={Gear}>
-				<p className="text-xs text-sidebar-inkDull mb-3">
+				<p className="text-xs text-sidebar-ink-dull mb-3">
 					Controls how deeply this location is indexed
 				</p>
 
@@ -268,7 +268,7 @@ function IndexingTab({ location }: { location: Location }) {
 			</Section>
 
 			<Section title="Ignore Rules" icon={FunnelX}>
-				<p className="text-xs text-sidebar-inkDull mb-3">
+				<p className="text-xs text-sidebar-ink-dull mb-3">
 					Files and folders matching these patterns will be ignored
 				</p>
 
@@ -319,7 +319,7 @@ function JobsTab({ location }: { location: Location }) {
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
-			<p className="text-xs text-sidebar-inkDull">
+			<p className="text-xs text-sidebar-ink-dull">
 				Configure which processing jobs run automatically for this
 				location
 			</p>
@@ -466,7 +466,7 @@ function ActivityTab({ location: _location }: { location: Location }) {
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
-			<p className="text-xs text-sidebar-inkDull">
+			<p className="text-xs text-sidebar-ink-dull">
 				Recent indexing activity and job history
 			</p>
 
@@ -477,14 +477,14 @@ function ActivityTab({ location: _location }: { location: Location }) {
 						className="flex items-start gap-3 p-2 hover:bg-app-box/40 rounded-lg transition-colors"
 					>
 						<ClockCounterClockwise
-							className="size-4 text-sidebar-inkDull shrink-0 mt-0.5"
+							className="size-4 text-sidebar-ink-dull shrink-0 mt-0.5"
 							weight="bold"
 						/>
 						<div className="flex-1 min-w-0">
 							<div className="text-xs text-sidebar-ink">
 								{item.action}
 							</div>
-							<div className="text-[11px] text-sidebar-inkDull mt-0.5">
+							<div className="text-[11px] text-sidebar-ink-dull mt-0.5">
 								{item.time}
 								{item.files > 0 &&
 									` · ${item.files.toLocaleString()} files`}
@@ -518,7 +518,7 @@ function DevicesTab({ location: _location }: { location: Location }) {
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
-			<p className="text-xs text-sidebar-inkDull">
+			<p className="text-xs text-sidebar-ink-dull">
 				Devices that have access to this location
 			</p>
 
@@ -537,13 +537,13 @@ function DevicesTab({ location: _location }: { location: Location }) {
 								<div className="text-xs font-medium text-sidebar-ink">
 									{device.name}
 								</div>
-								<div className="text-[11px] text-sidebar-inkDull flex items-center gap-1">
+								<div className="text-[11px] text-sidebar-ink-dull flex items-center gap-1">
 									<div
 										className={clsx(
 											"size-1.5 rounded-full",
 											device.status === "online"
 												? "bg-green-500"
-												: "bg-sidebar-inkDull",
+												: "bg-sidebar-ink-dull",
 										)}
 									/>
 									<span>
@@ -658,7 +658,7 @@ function MoreTab({ location }: { location: Location }) {
 			</Section>
 
 			<Section title="Danger Zone" icon={Trash}>
-				<p className="text-xs text-sidebar-inkDull mb-3">
+				<p className="text-xs text-sidebar-ink-dull mb-3">
 					Removing this location will not delete your files
 				</p>
 				<button
@@ -706,7 +706,7 @@ function RadioOption({
 				<div
 					className={clsx(
 						"size-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center",
-						checked ? "border-accent" : "border-sidebar-inkDull",
+						checked ? "border-accent" : "border-sidebar-ink-dull",
 					)}
 				>
 					{checked && (
@@ -717,7 +717,7 @@ function RadioOption({
 					<div className="text-xs font-medium text-sidebar-ink">
 						{label}
 					</div>
-					<div className="text-[11px] text-sidebar-inkDull mt-0.5">
+					<div className="text-[11px] text-sidebar-ink-dull mt-0.5">
 						{description}
 					</div>
 				</div>
@@ -782,14 +782,14 @@ function JobConfigRow({
 						/>
 					) : (
 						<ToggleLeft
-							className="size-5 text-sidebar-inkDull shrink-0 group-hover:text-sidebar-ink transition-colors"
+							className="size-5 text-sidebar-ink-dull shrink-0 group-hover:text-sidebar-ink transition-colors"
 							weight="fill"
 						/>
 					)}
 					<div className="flex items-center gap-2 flex-1 min-w-0">
 						{Icon && (
 							<Icon
-								className="size-4 text-sidebar-inkDull shrink-0"
+								className="size-4 text-sidebar-ink-dull shrink-0"
 								weight="bold"
 							/>
 						)}
@@ -802,7 +802,7 @@ function JobConfigRow({
 				</button>
 
 				{/* Description */}
-				<p className="text-[11px] text-sidebar-inkDull leading-relaxed pl-7">
+				<p className="text-[11px] text-sidebar-ink-dull leading-relaxed pl-7">
 					{description}
 				</p>
 			</div>

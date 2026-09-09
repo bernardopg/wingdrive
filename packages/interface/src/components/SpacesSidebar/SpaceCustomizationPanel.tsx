@@ -173,14 +173,14 @@ export function SpaceCustomizationPanel({
 						transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
 						className="fixed left-[228px] top-2 bottom-2 w-[220px] z-[70]"
 					>
-						<div className="h-full rounded-2xl bg-sidebar flex flex-col p-2.5">
+						<div className="h-full rounded-2xl bg-sidebar/80 backdrop-blur-2xl border border-sidebar-line/50 flex flex-col p-2.5">
 							{/* Header */}
 							<div className="flex items-center justify-between px-2 py-2 mb-2">
 								<div>
 									<h2 className="text-sm font-semibold text-sidebar-ink">
 										Customize
 									</h2>
-									<p className="text-xs text-sidebar-inkDull mt-0.5">
+									<p className="text-xs text-sidebar-ink-dull mt-0.5">
 										Drag to sidebar
 									</p>
 								</div>
@@ -188,7 +188,7 @@ export function SpaceCustomizationPanel({
 									onClick={onClose}
 									className="p-1 rounded-md hover:bg-sidebar-selected/30 transition-colors"
 								>
-									<X size={14} className="text-sidebar-inkDull" />
+									<X size={14} className="text-sidebar-ink-dull" />
 								</button>
 							</div>
 
@@ -207,7 +207,7 @@ export function SpaceCustomizationPanel({
 								{/* Add Group Section */}
 								<div className="space-y-2 pt-2 border-t border-sidebar-line/50">
 									<div className="flex items-center justify-between px-2">
-										<span className="text-xs font-semibold text-sidebar-inkDull uppercase tracking-wider">
+										<span className="text-xs font-semibold text-sidebar-ink-dull uppercase tracking-wider">
 											Groups
 										</span>
 									</div>
@@ -215,7 +215,7 @@ export function SpaceCustomizationPanel({
 									{!isAddingGroup ? (
 										<button
 											onClick={() => setIsAddingGroup(true)}
-											className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-inkDull hover:text-sidebar-ink hover:bg-sidebar-selected/30 transition-colors"
+											className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-ink-dull hover:text-sidebar-ink hover:bg-sidebar-selected/30 transition-colors"
 										>
 											<Plus size={16} weight="bold" />
 											<span>Add Group</span>
@@ -281,7 +281,7 @@ export function SpaceCustomizationPanel({
 														setGroupName("");
 														setGroupType("Custom");
 													}}
-													className="px-2 py-1 rounded-md text-xs font-medium text-sidebar-inkDull hover:bg-sidebar-selected/30 transition-colors"
+													className="px-2 py-1 rounded-md text-xs font-medium text-sidebar-ink-dull hover:bg-sidebar-selected/30 transition-colors"
 												>
 													Cancel
 												</button>
@@ -293,7 +293,7 @@ export function SpaceCustomizationPanel({
 
 							{/* Footer */}
 							<div className="px-2 py-2 mt-2 border-t border-sidebar-line/50">
-								<p className="text-xs text-sidebar-inkFaint text-center">
+								<p className="text-xs text-sidebar-ink-faint text-center">
 									Drag items to your space
 								</p>
 							</div>

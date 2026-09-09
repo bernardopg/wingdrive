@@ -187,7 +187,7 @@ function FileCopyCardContent({
 
 				{/* Transfer method badge */}
 				{strategyLabel && (
-					<span className="px-1.5 py-0.5 text-[9px] font-medium text-ink-faint bg-app-darkBox rounded-md whitespace-nowrap">
+					<span className="px-1.5 py-0.5 text-[9px] font-medium text-ink-faint bg-app-dark-box rounded-md whitespace-nowrap">
 						{strategyLabel}
 					</span>
 				)}

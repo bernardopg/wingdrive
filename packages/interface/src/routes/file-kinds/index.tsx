@@ -112,6 +112,19 @@ export function FileKindsView() {
 
 			{/* Content Grid */}
 			<div className="flex-1 overflow-auto p-3">
+				{totalFiles === 0 ? (
+					<div className="flex h-full flex-col items-center justify-center text-center px-6">
+						<p className="text-ink text-sm font-medium">
+							No indexed files yet
+						</p>
+						<p className="text-ink-dull mt-1 max-w-sm text-xs">
+							File Kinds is built from your library's indexed
+							locations. Add a folder as a Location from
+							Sources and enable indexing to see files
+							grouped by type here.
+						</p>
+					</div>
+				) : (
 				<div
 					className="grid"
 					style={{
@@ -164,6 +177,7 @@ export function FileKindsView() {
 						);
 					})}
 				</div>
+				)}
 			</div>
 		</div>
 	);

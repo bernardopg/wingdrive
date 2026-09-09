@@ -75,7 +75,7 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 
 					// Create a table to display the results
 					let mut table = comfy_table::Table::new();
-					table.load_preset(UTF8_BORDERS_ONLY);
+					table.load_style(UTF8_BORDERS_ONLY);
 					table.set_header(vec!["Name", "Type", "Size", "Modified"]);
 
 					for file in &listing.files {

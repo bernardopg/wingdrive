@@ -34,6 +34,7 @@ export {
 
 // Hooks
 export { useContextMenu } from "./hooks/useContextMenu";
+export { useLiveFileEvents } from "./hooks/useLiveFileEvents";
 export type {
 	ContextMenuItem,
 	ContextMenuConfig,

@@ -49,7 +49,7 @@ export function SourcesGroup({
 								className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm font-medium ${
 									isActive
 										? "bg-sidebar-selected text-sidebar-ink"
-										: "text-sidebar-inkDull hover:text-sidebar-ink"
+										: "text-sidebar-ink-dull hover:text-sidebar-ink"
 								}`}
 							>
 								{getIcon(source.adapter_id) ? (

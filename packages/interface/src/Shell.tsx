@@ -6,6 +6,7 @@ import { Dialogs, Toaster, TooltipProvider } from "@wingdrive/primitives";
 
 import { explorerRoutes } from "./router";
 import { useDaemonStatus } from "./hooks/useDaemonStatus";
+import { useLiveFileEvents } from "./hooks/useLiveFileEvents";
 import { DaemonDisconnectedOverlay } from "./components/overlays/DaemonDisconnectedOverlay";
 import { DaemonStartupOverlay } from "./components/overlays/DaemonStartupOverlay";
 import { DndProvider } from "./components/DndProvider";
@@ -76,12 +77,19 @@ function ShellWithDaemonCheck() {
 	);
 }
 
+function LiveFileEventsInvalidator() {
+	// Must be inside SpacedriveProvider + QueryClientProvider.
+	useLiveFileEvents();
+	return null;
+}
+
 export function Shell({ client }: ShellProps) {
 	const platform = usePlatform();
 	const isTauri = platform.platform === "tauri";
 
 	return (
 		<SpacedriveProvider client={client}>
+			<LiveFileEventsInvalidator />
 			<ServerProvider>
 				<TooltipProvider>
 					{isTauri ? (

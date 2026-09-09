@@ -78,12 +78,15 @@ export function getJobDisplayName(job: JobListItem): string {
       case "indexing.start":
         return "Indexing Location";
       case "volumes.index": {
+        // This is an ephemeral browse-cache scan (no database persistence), not real
+        // library indexing -- label it distinctly so it isn't mistaken for a location
+        // being added to the library (which is what populates stats and File Kinds).
         const context = job.action_context?.context as Record<string, unknown> | null;
         const volumeName = context?.volume_name;
         if (volumeName && typeof volumeName === 'string') {
-          return `Indexing ${volumeName}`;
+          return `Scanning ${volumeName}`;
         }
-        return "Indexing Volume";
+        return "Scanning Volume";
       }
       default: {
         // Capitalize and format action type

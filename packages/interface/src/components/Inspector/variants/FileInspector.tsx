@@ -320,7 +320,7 @@ function FileQuickActions({file}: {file: File}) {
 					'border-sidebar-line/30 bg-sidebar-box/20 hover:bg-sidebar-box/30 flex size-7 items-center justify-center rounded-full border transition-all active:scale-95 disabled:cursor-wait disabled:opacity-60',
 					isFavorite
 						? 'text-yellow-400'
-						: 'text-sidebar-inkDull hover:text-sidebar-ink'
+						: 'text-sidebar-ink-dull hover:text-sidebar-ink'
 				)}
 				title={
 					isFavorite ? 'Remove from favorites' : 'Add to favorites'
@@ -337,7 +337,7 @@ function FileQuickActions({file}: {file: File}) {
 				<button
 					type="button"
 					onClick={() => explorer.openQuickPreview(file.id)}
-					className="border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-inkDull hover:bg-sidebar-box/30 hover:text-sidebar-ink flex size-7 items-center justify-center rounded-full border transition-all active:scale-95"
+					className="border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-ink-dull hover:bg-sidebar-box/30 hover:text-sidebar-ink flex size-7 items-center justify-center rounded-full border transition-all active:scale-95"
 					title="Quick Preview"
 				>
 					<Eye size={14} weight="bold" />
@@ -349,7 +349,7 @@ function FileQuickActions({file}: {file: File}) {
 				<button
 					type="button"
 					onClick={handleShare}
-					className="border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-inkDull hover:bg-sidebar-box/30 hover:text-sidebar-ink flex size-7 items-center justify-center rounded-full border transition-all active:scale-95"
+					className="border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-ink-dull hover:bg-sidebar-box/30 hover:text-sidebar-ink flex size-7 items-center justify-center rounded-full border transition-all active:scale-95"
 					title="Share"
 				>
 					<ShareNetwork size={14} weight="bold" />
@@ -361,7 +361,7 @@ function FileQuickActions({file}: {file: File}) {
 				<button
 					type="button"
 					onClick={(e) => jobsMenu.show(e)}
-					className="border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-inkDull hover:bg-sidebar-box/30 hover:text-sidebar-ink flex size-7 items-center justify-center rounded-full border transition-all active:scale-95"
+					className="border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-ink-dull hover:bg-sidebar-box/30 hover:text-sidebar-ink flex size-7 items-center justify-center rounded-full border transition-all active:scale-95"
 					title="Processing Jobs"
 				>
 					<Sparkle size={14} weight="bold" />
@@ -564,7 +564,7 @@ function MediaMetadataCard({file}: {file: File}) {
 					<div className="text-sidebar-ink text-sm font-semibold">
 						{mediaDate}
 					</div>
-					<div className="text-sidebar-inkDull mt-0.5 flex items-center gap-1.5 text-xs">
+					<div className="text-sidebar-ink-dull mt-0.5 flex items-center gap-1.5 text-xs">
 						<Image size={12} weight="bold" />
 						<span>{file.name}</span>
 					</div>
@@ -582,12 +582,12 @@ function MediaMetadataCard({file}: {file: File}) {
 							</span>
 							<div className="flex items-center gap-1.5">
 								{format && (
-									<span className="bg-app-box border-app-line text-sidebar-inkDull rounded-md border px-1.5 py-0.5 text-[10px] font-semibold">
+									<span className="bg-app-box border-app-line text-sidebar-ink-dull rounded-md border px-1.5 py-0.5 text-[10px] font-semibold">
 										{format}
 									</span>
 								)}
 								{hasLocation && (
-									<span className="text-sidebar-inkDull">
+									<span className="text-sidebar-ink-dull">
 										<MapPin size={14} weight="fill" />
 									</span>
 								)}
@@ -598,22 +598,22 @@ function MediaMetadataCard({file}: {file: File}) {
 					{/* Camera/Lens Details */}
 					<div className="space-y-1 px-3 py-2.5">
 						{lensInfo && (
-							<div className="text-sidebar-inkDull text-xs">
+							<div className="text-sidebar-ink-dull text-xs">
 								{lensInfo}
 							</div>
 						)}
 						{resolutionLine && (
-							<div className="text-sidebar-inkDull text-xs">
+							<div className="text-sidebar-ink-dull text-xs">
 								{resolutionLine}
 							</div>
 						)}
 						{videoInfo && (
-							<div className="text-sidebar-inkDull text-xs">
+							<div className="text-sidebar-ink-dull text-xs">
 								{videoInfo}
 							</div>
 						)}
 						{duration && (
-							<div className="text-sidebar-inkDull flex items-center gap-1 text-xs">
+							<div className="text-sidebar-ink-dull flex items-center gap-1 text-xs">
 								<Timer size={12} weight="bold" />
 								<span>{duration}</span>
 							</div>
@@ -626,7 +626,7 @@ function MediaMetadataCard({file}: {file: File}) {
 							{techSpecs.map((spec) => (
 								<div
 									key={`${spec.label}-${spec.value}`}
-									className="text-sidebar-inkDull text-center text-[11px]"
+									className="text-sidebar-ink-dull text-center text-[11px]"
 								>
 									{spec.label && (
 										<span className="mr-0.5 font-medium">
@@ -637,7 +637,7 @@ function MediaMetadataCard({file}: {file: File}) {
 								</div>
 							))}
 							{colorProfile && (
-								<span className="bg-app-box border-app-line text-sidebar-inkDull rounded-md border px-1.5 py-0.5 text-[10px] font-medium uppercase">
+								<span className="bg-app-box border-app-line text-sidebar-ink-dull rounded-md border px-1.5 py-0.5 text-[10px] font-medium uppercase">
 									{colorProfile}
 								</span>
 							)}
@@ -731,7 +731,7 @@ function OverviewTab({file}: {file: File}) {
 					{file.name}
 					{file.extension ? `.${file.extension}` : ''}
 				</h4>
-				<p className="text-sidebar-inkDull mt-1 text-center text-xs">
+				<p className="text-sidebar-ink-dull mt-1 text-center text-xs">
 					{fileKind}
 				</p>
 				{/* Quick Actions - Favorite, Share & Jobs */}
@@ -948,7 +948,7 @@ function OverviewTab({file}: {file: File}) {
 			{/* Tags */}
 			<Section title="Tags" icon={TagIcon}>
 				{isEphemeral ? (
-					<p className="text-sidebar-inkDull text-xs italic">
+					<p className="text-sidebar-ink-dull text-xs italic">
 						Tags are available after indexing this location
 					</p>
 				) : (
@@ -1398,7 +1398,7 @@ function OverviewTab({file}: {file: File}) {
 										Extracted Text
 									</span>
 								</div>
-								<pre className="text-sidebar-inkDull no-scrollbar max-h-40 overflow-y-auto whitespace-pre-wrap text-xs">
+								<pre className="text-sidebar-ink-dull no-scrollbar max-h-40 overflow-y-auto whitespace-pre-wrap text-xs">
 									{file.content_identity?.text_content}
 								</pre>
 							</div>
@@ -1429,12 +1429,12 @@ function SidecarsTab({file}: {file: File}) {
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
-			<p className="text-sidebar-inkDull text-xs">
+			<p className="text-sidebar-ink-dull text-xs">
 				Derivative files and associated content generated by WingDrive
 			</p>
 
 			{sidecars.length === 0 ? (
-				<div className="text-sidebar-inkDull flex items-center justify-center py-8 text-xs">
+				<div className="text-sidebar-ink-dull flex items-center justify-center py-8 text-xs">
 					No sidecars generated yet
 				</div>
 			) : (
@@ -1591,10 +1591,10 @@ function SidecarItem({
 				<div className="text-sidebar-ink text-xs font-medium">
 					{String(sidecar.kind)}
 				</div>
-				<div className="text-sidebar-inkDull text-[11px]">
+				<div className="text-sidebar-ink-dull text-[11px]">
 					{String(sidecar.variant)} · {formatBytes(sidecar.size)}
 				</div>
-				<div className="text-sidebar-inkDull/70 mt-0.5 text-[10px]">
+				<div className="text-sidebar-ink-dull/70 mt-0.5 text-[10px]">
 					{String(sidecar.format).toUpperCase()}
 				</div>
 			</div>
@@ -1603,7 +1603,7 @@ function SidecarItem({
 					"text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0",
 					sidecar.status === "ready" && "bg-accent/20 text-accent",
 					sidecar.status === "pending" &&
-						"bg-sidebar-inkDull/20 text-sidebar-inkDull",
+						"bg-sidebar-ink-dull/20 text-sidebar-ink-dull",
 				)}
 			>
 				{String(sidecar.status)}
@@ -1673,7 +1673,7 @@ function InstancesTab({file}: {file: File}) {
 
 	if (instancesQuery.isLoading) {
 		return (
-			<div className="text-sidebar-inkDull flex items-center justify-center py-8 text-xs">
+			<div className="text-sidebar-ink-dull flex items-center justify-center py-8 text-xs">
 				Loading instances...
 			</div>
 		);
@@ -1682,7 +1682,7 @@ function InstancesTab({file}: {file: File}) {
 	if (!file.content_identity) {
 		return (
 			<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
-				<p className="text-sidebar-inkDull text-xs">
+				<p className="text-sidebar-ink-dull text-xs">
 					This file has not been content-hashed yet. Instances will
 					appear after indexing completes.
 				</p>
@@ -1692,12 +1692,12 @@ function InstancesTab({file}: {file: File}) {
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
-			<p className="text-sidebar-inkDull text-xs">
+			<p className="text-sidebar-ink-dull text-xs">
 				All copies of this file across your devices and locations
 			</p>
 
 			{instances.length === 0 || instances.length === 1 ? (
-				<div className="text-sidebar-inkDull flex items-center justify-center py-8 text-xs">
+				<div className="text-sidebar-ink-dull flex items-center justify-center py-8 text-xs">
 					No alternate instances found
 				</div>
 			) : (
@@ -1720,7 +1720,7 @@ function InstancesTab({file}: {file: File}) {
 											{deviceName}
 										</span>
 										<div className="flex-1" />
-										<div className="bg-app-box border-app-line text-sidebar-inkDull flex size-5 items-center justify-center rounded-full border text-[10px] font-semibold">
+										<div className="bg-app-box border-app-line text-sidebar-ink-dull flex size-5 items-center justify-center rounded-full border text-[10px] font-semibold">
 											{deviceInstances.length}
 										</div>
 									</div>
@@ -1809,12 +1809,12 @@ function InstanceRow({instance}: {instance: File}) {
 				)}
 
 				{/* Modified date */}
-				<span className="text-sidebar-inkDull text-[10px]">
+				<span className="text-sidebar-ink-dull text-[10px]">
 					{formatDate(instance.modified_at)}
 				</span>
 
 				{/* Size */}
-				<span className="text-sidebar-inkDull min-w-[50px] text-right text-[10px]">
+				<span className="text-sidebar-ink-dull min-w-[50px] text-right text-[10px]">
 					{formatBytes(instance.size)}
 				</span>
 
@@ -1824,7 +1824,7 @@ function InstanceRow({instance}: {instance: File}) {
 						'size-1.5 rounded-full',
 						instance.is_local
 							? 'bg-accent'
-							: 'bg-sidebar-inkDull/40'
+							: 'bg-sidebar-ink-dull/40'
 					)}
 					title={instance.is_local ? 'Available locally' : 'Remote'}
 				/>
@@ -1904,7 +1904,7 @@ function ChatTab() {
 									? 'bg-accent/20 text-accent'
 									: msg.isUser
 										? 'bg-sidebar-selected text-sidebar-ink'
-										: 'bg-app-box text-sidebar-inkDull'
+										: 'bg-app-box text-sidebar-ink-dull'
 							)}
 						>
 							{msg.avatar}
@@ -1934,7 +1934,7 @@ function ChatTab() {
 											'mb-0.5 text-[10px] font-semibold',
 											msg.isAI
 												? 'text-accent'
-												: 'text-sidebar-inkDull'
+												: 'text-sidebar-ink-dull'
 										)}
 									>
 										{msg.sender}
@@ -1944,7 +1944,7 @@ function ChatTab() {
 									{msg.content}
 								</p>
 							</div>
-							<span className="text-sidebar-inkDull mt-0.5 px-1 text-[10px]">
+							<span className="text-sidebar-ink-dull mt-0.5 px-1 text-[10px]">
 								{msg.time}
 							</span>
 						</div>
@@ -1956,7 +1956,7 @@ function ChatTab() {
 			<div className="border-sidebar-line space-y-2 border-t p-2">
 				<div className="flex items-end gap-1.5">
 					<button
-						className="hover:bg-sidebar-selected text-sidebar-inkDull hover:text-sidebar-ink rounded-lg p-1.5 transition-colors"
+						className="hover:bg-sidebar-selected text-sidebar-ink-dull hover:text-sidebar-ink rounded-lg p-1.5 transition-colors"
 						title="Attach file"
 					>
 						<Paperclip size={4} weight="bold" />
@@ -1968,7 +1968,7 @@ function ChatTab() {
 							value={message}
 							onChange={(e) => setMessage(e.target.value)}
 							placeholder="Type a message..."
-							className="text-sidebar-ink placeholder:text-sidebar-inkDull flex-1 bg-transparent text-xs outline-none"
+							className="text-sidebar-ink placeholder:text-sidebar-ink-dull flex-1 bg-transparent text-xs outline-none"
 						/>
 					</div>
 
@@ -1981,14 +1981,14 @@ function ChatTab() {
 				</div>
 
 				<div className="flex gap-1">
-					<button className="text-sidebar-inkDull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
+					<button className="text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
 						<Sparkle size={3} weight="bold" />
 						Ask AI
 					</button>
-					<button className="text-sidebar-inkDull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
+					<button className="text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
 						Share File
 					</button>
-					<button className="text-sidebar-inkDull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
+					<button className="text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
 						Create Task
 					</button>
 				</div>
@@ -2012,7 +2012,7 @@ function ActivityTab() {
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
-			<p className="text-sidebar-inkDull text-xs">
+			<p className="text-sidebar-ink-dull text-xs">
 				History of changes and sync operations
 			</p>
 
@@ -2022,14 +2022,14 @@ function ActivityTab() {
 						key={i}
 						className="hover:bg-app-box/40 flex items-start gap-3 rounded-lg p-2 transition-colors"
 					>
-						<span className="text-sidebar-inkDull mt-0.5 shrink-0">
+						<span className="text-sidebar-ink-dull mt-0.5 shrink-0">
 							<ClockCounterClockwise size={16} weight="bold" />
 						</span>
 						<div className="min-w-0 flex-1">
 							<div className="text-sidebar-ink text-xs">
 								{item.action}
 							</div>
-							<div className="text-sidebar-inkDull mt-0.5 text-[11px]">
+							<div className="text-sidebar-ink-dull mt-0.5 text-[11px]">
 								{item.time} · {item.device}
 							</div>
 						</div>

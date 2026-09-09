@@ -14,7 +14,7 @@ export function SpeedGraph({ jobId, speedHistory }: SpeedGraphProps) {
   // Early return if no data
   if (speedHistory.length === 0) {
     return (
-      <div className="h-24 bg-app-darkBox rounded-lg flex items-center justify-center">
+      <div className="h-24 bg-app-dark-box rounded-lg flex items-center justify-center">
         <span className="text-xs text-ink-faint">No speed data yet</span>
       </div>
     );
@@ -40,7 +40,7 @@ export function SpeedGraph({ jobId, speedHistory }: SpeedGraphProps) {
       </div>
 
       {/* Speed graph */}
-      <div className="h-24 bg-app-darkBox rounded-lg border border-app-line/30 overflow-hidden">
+      <div className="h-24 bg-app-dark-box rounded-lg border border-app-line/30 overflow-hidden">
         <SpeedGraphVisualization jobId={jobId} speedHistory={speedHistory} maxRate={maxRate} />
       </div>
     </div>

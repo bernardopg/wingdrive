@@ -341,6 +341,23 @@ impl IndexerJob {
 		loop {
 			ctx.check_interrupt().await?;
 
+			// Unattended whole-volume scans (auto-triggered, no user watching a
+			// progress bar for a specific folder) get a hard wall-clock ceiling.
+			// Without this, a worker stuck on a huge/virtual directory tree (or any
+			// other stall) leaves the job spinning at "Running" forever instead of
+			// failing visibly.
+			if self.config.is_volume_indexing {
+				const MAX_VOLUME_SCAN_DURATION: std::time::Duration =
+					std::time::Duration::from_secs(30 * 60);
+				if state.started_at.elapsed() > MAX_VOLUME_SCAN_DURATION {
+					return Err(JobError::execution(format!(
+						"Volume scan of {} exceeded the {}s safety limit and was aborted",
+						root_path.display(),
+						MAX_VOLUME_SCAN_DURATION.as_secs()
+					)));
+				}
+			}
+
 			let current_phase = state.phase.clone();
 			match current_phase {
 				Phase::Discovery => {

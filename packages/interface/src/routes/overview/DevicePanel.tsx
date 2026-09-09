@@ -375,7 +375,7 @@ function DeviceCard({
 	);
 
 	return (
-		<div className="bg-app-darkBox border-app-line mb-4 overflow-hidden rounded-xl border">
+		<div className="bg-app-dark-box border-app-line mb-4 overflow-hidden rounded-xl border">
 			{/* Device Header */}
 			<div className="bg-app-box border-app-line border-b px-6 py-4">
 				<div className="flex items-center gap-4">
@@ -566,7 +566,7 @@ function LocationsScroller({
 				{/* Left fade and button */}
 				{canScrollLeft && (
 					<>
-						<div className="from-app-darkBox pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-12 bg-gradient-to-r to-transparent" />
+						<div className="from-app-dark-box pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-12 bg-gradient-to-r to-transparent" />
 						<div className="absolute left-1 top-1/2 z-20 -translate-y-1/2">
 							<CircleButton
 								icon={CaretLeft}
@@ -631,7 +631,7 @@ function LocationsScroller({
 				{/* Right fade and button */}
 				{canScrollRight && (
 					<>
-						<div className="from-app-darkBox pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-12 bg-gradient-to-l to-transparent" />
+						<div className="from-app-dark-box pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-12 bg-gradient-to-l to-transparent" />
 						<div className="absolute right-1 top-1/2 z-20 -translate-y-1/2">
 							<CircleButton
 								icon={CaretRight}

@@ -13,6 +13,8 @@ import { useFileContextMenu } from "../../hooks/useFileContextMenu";
 import { isVirtualFile } from '@sd/ts-client';
 import { InlineNameEdit } from "../../components/InlineNameEdit";
 import { useOpenWith } from "../../../../hooks/useOpenWith";
+import { useDroppable } from "@dnd-kit/core";
+import { useDraggableFile } from "../../hooks/useDraggableFile";
 
 interface TableRowProps {
 	row: Row<File>;
@@ -56,7 +58,7 @@ export const TableRow = memo(
 
 		// Set up file opening for non-directory files
 		const physicalPath =
-			file.kind === "File" && "Physical" in file.sd_path
+			(file.kind === "File" || file.kind === "Symlink") && "Physical" in file.sd_path
 				? [(file.sd_path as any).Physical.path]
 				: [];
 		const { openWithDefault } = useOpenWith(physicalPath);
@@ -84,7 +86,7 @@ export const TableRow = memo(
 			}
 
 			// Open regular files with default application
-			if (file.kind === "File" && "Physical" in file.sd_path) {
+			if ((file.kind === "File" || file.kind === "Symlink") && "Physical" in file.sd_path) {
 				const physicalPath = (file.sd_path as any).Physical.path;
 				await openWithDefault(physicalPath);
 			}
@@ -106,25 +108,65 @@ export const TableRow = memo(
 
 		const cells = row.getVisibleCells();
 
+		// List view previously had no drag source or drop target at all: rows
+		// could neither start a drag nor receive one, so rearranging files was
+		// only possible in the grid view.
+		const {
+			attributes,
+			listeners,
+			setNodeRef: setDragNodeRef,
+			isDragging,
+		} = useDraggableFile({
+			file,
+			selectedFiles:
+				isSelected && selectedFiles.length > 0 ? selectedFiles : undefined,
+		});
+
+		const isFolder = file.kind === "Directory";
+		const { setNodeRef: setDropNodeRef, isOver: isDropOver } = useDroppable({
+			id: `folder-drop-${file.id}`,
+			disabled: !isFolder,
+			data: {
+				action: "move-into",
+				targetType: "folder",
+				targetId: file.id,
+				targetPath: file.sd_path,
+			},
+		});
+
+		const setCombinedNodeRef = useCallback(
+			(node: HTMLElement | null) => {
+				measureRef(node);
+				setDragNodeRef(node);
+				if (isFolder) setDropNodeRef(node);
+			},
+			[measureRef, setDragNodeRef, setDropNodeRef, isFolder],
+		);
+
 		return (
 			<div
-				ref={measureRef}
+				ref={setCombinedNodeRef}
 				data-index={index}
 				data-file-id={file.id}
 				data-selectable="true"
-				tabIndex={-1}
-				className="relative outline-none focus:outline-none"
+				className={clsx(
+					"relative outline-none focus:outline-none",
+					isDragging && "opacity-40",
+				)}
 				style={{ height: ROW_HEIGHT }}
 				onClick={handleClick}
 				onDoubleClick={handleDoubleClick}
 				onContextMenu={handleContextMenu}
+				{...attributes}
+				{...listeners}
+				tabIndex={-1}
 			>
 				{/* Background layer for alternating colors and selection */}
 				<div
 					className={clsx(
 						"absolute inset-0 rounded-md border",
 						// Alternating background
-						index % 2 === 0 && !isSelected && "bg-app-darkBox/50",
+						index % 2 === 0 && !isSelected && "bg-app-dark-box/50",
 						// Selection styling
 						isSelected
 							? "border-accent bg-accent/10"
@@ -136,6 +178,8 @@ export const TableRow = memo(
 						isSelected &&
 							isNextSelected &&
 							"rounded-b-none border-b-0",
+						// Drop indicator for folders
+						isFolder && isDropOver && !isSelected && "border-accent/60 bg-accent/5",
 					)}
 					style={{
 						left: TABLE_PADDING_X,

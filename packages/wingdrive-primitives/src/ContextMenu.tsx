@@ -19,7 +19,7 @@ interface ContextMenuProps extends RadixCM.ContextMenuContentProps {
 }
 
 export const contextMenuClassNames = clsx(
-	"z-50 max-h-[calc(100vh-20px)] overflow-y-auto",
+	"z-[100] max-h-[calc(100vh-20px)] overflow-y-auto",
 	"my-2 min-w-48 max-w-64 py-0.5",
 	"cool-shadow bg-menu/95 backdrop-blur-lg",
 	"border border-menu-line",

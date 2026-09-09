@@ -51,7 +51,7 @@ async fn list_spaces(ctx: &Context) -> Result<()> {
 		println!("  (no spaces found)");
 	} else {
 		let mut table = Table::new();
-		table.load_preset(UTF8_BORDERS_ONLY);
+		table.load_style(UTF8_BORDERS_ONLY);
 		table.set_header(vec!["ID", "Name", "Icon", "Color", "Order"]);
 
 		for space in result.spaces {

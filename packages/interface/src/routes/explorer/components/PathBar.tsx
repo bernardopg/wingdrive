@@ -439,7 +439,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 						className={clsx(
 							'min-w-0 flex-1 border-0 bg-transparent outline-none ring-0',
 							'text-sidebar-ink text-xs font-medium',
-							'placeholder:text-sidebar-inkFaint',
+							'placeholder:text-sidebar-ink-faint',
 							'focus:outline-none focus:ring-0',
 							editingAsUri && 'font-mono'
 						)}
@@ -457,7 +457,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 						className={clsx(
 							'min-w-0 flex-1 border-0 bg-transparent outline-none ring-0',
 							'text-sidebar-ink text-xs font-medium',
-							'placeholder:text-sidebar-inkFaint',
+							'placeholder:text-sidebar-ink-faint',
 							'cursor-text select-all',
 							'focus:outline-none focus:ring-0'
 						)}
@@ -482,7 +482,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 											'whitespace-nowrap text-xs font-medium transition-colors',
 											isLast
 												? 'text-sidebar-ink cursor-default'
-												: 'text-sidebar-inkDull hover:text-sidebar-ink cursor-pointer'
+												: 'text-sidebar-ink-dull hover:text-sidebar-ink cursor-pointer'
 										)}
 									>
 										{segment.name}
@@ -517,7 +517,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 						className={clsx(
 							'min-w-0 flex-1 border-0 bg-transparent outline-none ring-0',
 							'text-sidebar-ink text-xs font-medium',
-							'placeholder:text-sidebar-inkFaint',
+							'placeholder:text-sidebar-ink-faint',
 							'cursor-text select-all',
 							'focus:outline-none focus:ring-0'
 						)}

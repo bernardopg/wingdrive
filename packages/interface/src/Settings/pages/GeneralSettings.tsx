@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "@wingdrive/primitives";
 import { useCoreQuery, useCoreMutation } from "../../contexts/SpacedriveContext";
 
 interface DeviceSettingsForm {
@@ -16,18 +18,40 @@ export function GeneralSettings() {
   const { data: config } = configQuery;
 
   const deviceForm = useForm<DeviceSettingsForm>({
-    values: {
+    defaultValues: {
       name: status?.device_info?.name || "",
       slug: status?.device_info?.slug || "",
     },
   });
 
-  const onDeviceSubmit = deviceForm.handleSubmit(async (data) => {
-    await updateDevice.mutateAsync({
-      name: data.name,
-      slug: data.slug,
+  // Sync server values into the form, but never while the user has unsaved
+  // edits: react-hook-form's `values` option resets on every reference change,
+  // so any background refetch of core.status wiped in-progress typing and
+  // cleared isDirty, making the Save button disappear mid-edit.
+  useEffect(() => {
+    if (!status?.device_info || deviceForm.formState.isDirty) return;
+    deviceForm.reset({
+      name: status.device_info.name || "",
+      slug: status.device_info.slug || "",
     });
-    statusQuery.refetch();
+  }, [status, deviceForm]);
+
+  const onDeviceSubmit = deviceForm.handleSubmit(async (data) => {
+    try {
+      await updateDevice.mutateAsync({
+        name: data.name,
+        slug: data.slug,
+      });
+      await statusQuery.refetch();
+      deviceForm.reset(data);
+      toast.success("Device settings saved");
+    } catch (error) {
+      toast.error(
+        `Failed to save device settings: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
   });
 
   const handleResetData = () => {
@@ -92,15 +116,13 @@ export function GeneralSettings() {
             />
           </label>
 
-          {deviceForm.formState.isDirty && (
-            <button
-              type="submit"
-              disabled={updateDevice.isPending}
-              className="px-4 py-2 bg-accent hover:bg-accent-deep text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {updateDevice.isPending ? "Saving..." : "Save Changes"}
-            </button>
-          )}
+          <button
+            type="submit"
+            disabled={!deviceForm.formState.isDirty || updateDevice.isPending}
+            className="px-4 py-2 bg-accent hover:bg-accent-deep text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {updateDevice.isPending ? "Saving..." : "Save Changes"}
+          </button>
         </form>
 
         {/* Version Info */}

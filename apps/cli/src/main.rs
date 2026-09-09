@@ -527,7 +527,7 @@ async fn run_client_command(
 
 					// Device Information
 					let mut device_table = Table::new();
-					device_table.load_preset(UTF8_BORDERS_ONLY);
+					device_table.load_style(UTF8_BORDERS_ONLY);
 					device_table.set_header(vec![
 						Cell::new("Device Information").add_attribute(Attribute::Bold),
 						Cell::new(""),
@@ -551,7 +551,7 @@ async fn run_client_command(
 
 					// System Status
 					let mut system_table = Table::new();
-					system_table.load_preset(UTF8_BORDERS_ONLY);
+					system_table.load_style(UTF8_BORDERS_ONLY);
 					system_table.set_header(vec![
 						Cell::new("System Status").add_attribute(Attribute::Bold),
 						Cell::new(""),
@@ -578,7 +578,7 @@ async fn run_client_command(
 
 					// Libraries
 					let mut libraries_table = Table::new();
-					libraries_table.load_preset(UTF8_BORDERS_ONLY);
+					libraries_table.load_style(UTF8_BORDERS_ONLY);
 					libraries_table.set_header(vec![
 						Cell::new(format!("Libraries ({})", status.library_count))
 							.add_attribute(Attribute::Bold),
@@ -616,7 +616,7 @@ async fn run_client_command(
 
 					// Services
 					let mut services_table = Table::new();
-					services_table.load_preset(UTF8_BORDERS_ONLY);
+					services_table.load_style(UTF8_BORDERS_ONLY);
 					services_table.set_header(vec![
 						Cell::new("Services").add_attribute(Attribute::Bold),
 						Cell::new(""),
@@ -655,7 +655,7 @@ async fn run_client_command(
 
 					// Network
 					let mut network_table = Table::new();
-					network_table.load_preset(UTF8_BORDERS_ONLY);
+					network_table.load_style(UTF8_BORDERS_ONLY);
 					network_table.set_header(vec![
 						Cell::new("Network").add_attribute(Attribute::Bold),
 						Cell::new(""),

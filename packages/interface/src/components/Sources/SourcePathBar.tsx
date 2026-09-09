@@ -20,7 +20,7 @@ export function SourcePathBar({
 
 			<button
 				onClick={() => navigate("/sources")}
-				className="text-sidebar-inkDull hover:text-sidebar-ink whitespace-nowrap text-xs font-medium transition-colors"
+				className="text-sidebar-ink-dull hover:text-sidebar-ink whitespace-nowrap text-xs font-medium transition-colors"
 			>
 				Sources
 			</button>

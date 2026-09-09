@@ -10,7 +10,7 @@
 
 /* Default theme variables (dark) - ensures CSS custom properties are defined
    even before theme config loads from daemon. These match @wingdrive/tokens/theme.css */
-:root {
+:root:not(.light):not(.midnight-theme):not(.noir-theme):not(.slate-theme):not(.nord-theme):not(.mocha-theme) {
   --color-accent: hsl(208, 100%, 57%);
   --color-accent-faint: hsl(208, 100%, 64%);
   --color-accent-deep: hsl(208, 100%, 47%);

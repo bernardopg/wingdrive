@@ -28,7 +28,7 @@ function ErrorFallback({
 					<summary className="cursor-pointer text-sm text-ink-faint hover:text-ink-dull">
 						Error details
 					</summary>
-					<pre className="mt-2 overflow-auto rounded bg-app-darkBox p-4 text-xs text-ink-faint">
+					<pre className="mt-2 overflow-auto rounded bg-app-dark-box p-4 text-xs text-ink-faint">
 						{error.toString()}
 						{error.stack}
 					</pre>

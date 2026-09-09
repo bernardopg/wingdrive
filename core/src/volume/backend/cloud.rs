@@ -329,10 +329,7 @@ impl VolumeBackend for CloudBackend {
 				name,
 				kind,
 				size: metadata.content_length(),
-				modified: metadata.last_modified().map(|t| {
-					// Convert chrono::DateTime to SystemTime
-					SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(t.timestamp() as u64)
-				}),
+				modified: metadata.last_modified().map(SystemTime::from),
 				inode: None, // Cloud storage doesn't have inodes
 			});
 		}
@@ -356,10 +353,7 @@ impl VolumeBackend for CloudBackend {
 			EntryKind::File
 		};
 
-		let modified = metadata.last_modified().map(|t| {
-			// Convert chrono::DateTime to SystemTime
-			SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(t.timestamp() as u64)
-		});
+		let modified = metadata.last_modified().map(SystemTime::from);
 
 		Ok(RawMetadata {
 			kind,

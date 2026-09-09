@@ -262,7 +262,7 @@ function SelectDeviceStep({
           <button
             key={device.id}
             onClick={() => onSelect(device)}
-            className="w-full rounded-lg border border-app-line bg-app-box p-4 text-left transition-colors hover:border-accent hover:bg-app-darkBox"
+            className="w-full rounded-lg border border-app-line bg-app-box p-4 text-left transition-colors hover:border-accent hover:bg-app-dark-box"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -352,7 +352,7 @@ function ChooseActionStep({
         {/* Share Local Library */}
         <button
           onClick={() => onSelectAction("share")}
-          className="w-full rounded-lg border border-app-line bg-app-box p-4 text-left transition-colors hover:border-accent hover:bg-app-darkBox"
+          className="w-full rounded-lg border border-app-line bg-app-box p-4 text-left transition-colors hover:border-accent hover:bg-app-dark-box"
         >
           <div className="flex items-start gap-3">
             <Share size={24} className="mt-1 text-accent" />
@@ -378,7 +378,7 @@ function ChooseActionStep({
               <button
                 key={library.id}
                 onClick={() => onSelectAction("join", library)}
-                className="w-full rounded-lg border border-app-line bg-app-box p-4 text-left transition-colors hover:border-accent hover:bg-app-darkBox"
+                className="w-full rounded-lg border border-app-line bg-app-box p-4 text-left transition-colors hover:border-accent hover:bg-app-dark-box"
               >
                 <div className="flex items-start gap-3">
                   <SignIn size={24} className="mt-1 text-accent" />
@@ -434,7 +434,7 @@ function ConfirmStep({
 }: ConfirmStepProps) {
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-app-darkBox p-4">
+      <div className="rounded-lg bg-app-dark-box p-4">
         <h3 className="mb-3 font-medium text-ink">Sync Configuration</h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">

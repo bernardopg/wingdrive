@@ -12,6 +12,8 @@ import { usePlatform } from "../../contexts/PlatformContext";
 import type { File } from "@sd/ts-client";
 import { useClipboard } from "../../hooks/useClipboard";
 import { useLibraryMutation } from "../../contexts/SpacedriveContext";
+import { toast } from "@wingdrive/primitives";
+import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
 import { useTabManager } from "../../components/TabManager";
 
 interface SelectionContextValue {
@@ -59,6 +61,7 @@ export function SelectionProvider({
 	const tabManager = useTabManager();
 	const { activeTabId, getSelectionIds, updateSelectionIds } = tabManager;
 	const renameFile = useLibraryMutation("files.rename");
+	const refetchListings = useRefetchFileListings();
 
 	// Local state for File objects (not serializable, can't be stored in TabManager)
 	const [selectedFiles, setSelectedFilesInternal] = useState<File[]>([]);
@@ -278,12 +281,18 @@ export function SelectionProvider({
 				new_name: newName,
 			});
 			setRenamingFileId(null);
+			// Renames change paths on disk; without a refetch the old name stays
+			// visible until the next navigation.
+			refetchListings();
 		} catch (error) {
 			// Keep in edit mode on error so user can retry
 			console.error('Rename failed:', error);
+			toast.error(
+				`Rename failed: ${error instanceof Error ? error.message : String(error)}`
+			);
 			throw error;
 		}
-	}, [renamingFileId, selectedFiles, renameFile]);
+	}, [renamingFileId, selectedFiles, renameFile, refetchListings]);
 
 	// Cancel rename when selection changes
 	useEffect(() => {

@@ -33,7 +33,7 @@ export function JobManagerPopover({ className }: JobManagerPopoverProps) {
         <button
           className={clsx(
             "w-full relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium",
-            "text-sidebar-inkDull cursor-default",
+            "text-sidebar-ink-dull cursor-default",
             className
           )}
         >

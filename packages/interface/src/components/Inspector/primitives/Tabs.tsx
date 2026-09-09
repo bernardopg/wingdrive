@@ -38,7 +38,7 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
                 "focus:outline-none focus:ring-1 focus:ring-accent",
                 isActive
                   ? "text-sidebar-ink"
-                  : "text-sidebar-inkDull hover:text-sidebar-ink",
+                  : "text-sidebar-ink-dull hover:text-sidebar-ink",
               )}
               title={tab.label}
             >

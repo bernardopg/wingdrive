@@ -53,7 +53,7 @@ export const FileCard = memo(
 
 		// Set up file opening for non-directory files
 		const physicalPath =
-			file.kind === "File" && "Physical" in file.sd_path
+			(file.kind === "File" || file.kind === "Symlink") && "Physical" in file.sd_path
 				? [(file.sd_path as any).Physical.path]
 				: [];
 		const { openWithDefault } = useOpenWith(physicalPath);
@@ -78,7 +78,7 @@ export const FileCard = memo(
 			}
 
 			// Open regular files with default application
-			if (file.kind === "File" && "Physical" in file.sd_path) {
+			if ((file.kind === "File" || file.kind === "Symlink") && "Physical" in file.sd_path) {
 				const physicalPath = (file.sd_path as any).Physical.path;
 				await openWithDefault(physicalPath);
 			}

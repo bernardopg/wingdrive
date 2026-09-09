@@ -2,7 +2,6 @@
 
 use crate::{
 	context::CoreContext,
-	device::DeviceConfig,
 	infra::action::{error::ActionError, CoreAction, ValidationResult},
 };
 use serde::{Deserialize, Serialize};
@@ -76,25 +75,18 @@ impl CoreAction for UpdateDeviceAction {
 	}
 
 	async fn execute(self, context: Arc<CoreContext>) -> Result<Self::Output, ActionError> {
-		// Load current device config
-		let mut device_config = DeviceConfig::load_from(&context.data_dir)
-			.map_err(|e| ActionError::Internal(format!("Failed to load device config: {}", e)))?;
+		info!(
+			"Updating device configuration: name={:?}, slug={:?}",
+			self.input.name, self.input.slug
+		);
 
-		// Apply updates
-		if let Some(name) = self.input.name {
-			info!("Updating device name: {} -> {}", device_config.name, name);
-			device_config.name = name;
-		}
-
-		if let Some(slug) = self.input.slug {
-			info!("Updating device slug: {} -> {}", device_config.slug, slug);
-			device_config.slug = slug;
-		}
-
-		// Save updated config
-		device_config
-			.save_to(&context.data_dir)
-			.map_err(|e| ActionError::Internal(format!("Failed to save device config: {}", e)))?;
+		// Update through DeviceManager so the in-memory config it holds (read
+		// by core.status and everywhere else) reflects the change immediately,
+		// instead of only after the next restart re-reads the config file.
+		let device_config = context
+			.device_manager
+			.update(self.input.name, self.input.slug)
+			.map_err(|e| ActionError::Internal(format!("Failed to update device config: {}", e)))?;
 
 		info!("Device configuration updated successfully");
 

@@ -260,7 +260,7 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 					let stats = &status.index_stats;
 					println!();
 					let mut stats_table = Table::new();
-					stats_table.load_preset(UTF8_BORDERS_ONLY);
+					stats_table.load_style(UTF8_BORDERS_ONLY);
 					stats_table.set_header(vec![
 						Cell::new("SHARED INDEX STATS").add_attribute(Attribute::Bold),
 						Cell::new(""),
@@ -301,7 +301,7 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 					if let Some(ref breakdown) = stats.memory_breakdown {
 						println!();
 						let mut breakdown_table = Table::new();
-						breakdown_table.load_preset(UTF8_BORDERS_ONLY);
+						breakdown_table.load_style(UTF8_BORDERS_ONLY);
 						breakdown_table.set_header(vec![
 							Cell::new("MEMORY BREAKDOWN (DETAILED)").add_attribute(Attribute::Bold),
 							Cell::new("Overhead"),
@@ -385,7 +385,7 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 						if !status.paths_in_progress.is_empty() {
 							println!();
 							let mut progress_table = Table::new();
-							progress_table.load_preset(UTF8_BORDERS_ONLY);
+							progress_table.load_style(UTF8_BORDERS_ONLY);
 							progress_table
 								.set_header(vec![Cell::new("INDEXING IN PROGRESS")
 									.add_attribute(Attribute::Bold)]);
@@ -399,7 +399,7 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 						if !status.indexed_paths.is_empty() {
 							println!();
 							let mut paths_table = Table::new();
-							paths_table.load_preset(UTF8_BORDERS_ONLY);
+							paths_table.load_style(UTF8_BORDERS_ONLY);
 							paths_table.set_header(vec![
 								Cell::new("INDEXED PATHS").add_attribute(Attribute::Bold),
 								Cell::new("Children"),

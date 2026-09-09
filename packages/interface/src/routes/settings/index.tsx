@@ -12,6 +12,7 @@ import {
 } from "../../Settings/pages";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { usePlatform } from "../../contexts/PlatformContext";
+import { getCurrentPlatform } from "../../util/keybinds/platform";
 
 interface SettingsSidebarProps {
   currentPage: string;
@@ -28,6 +29,12 @@ const sections = [
   { id: "advanced", label: "Advanced" },
   { id: "about", label: "About" },
 ];
+
+// The 52px top inset only makes sense on macOS, where the window has no
+// native titlebar and the traffic lights overlay the content. On Linux and
+// Windows the window keeps its native decorations, so that padding showed up
+// as a dead strip and the drag region swallowed clicks on the nav header.
+const isMacOS = getCurrentPlatform() === "macos";
 
 function SettingsSidebar({ currentPage, onPageChange }: SettingsSidebarProps) {
   const isAboutPage = currentPage === "about";
@@ -46,7 +53,7 @@ function SettingsSidebar({ currentPage, onPageChange }: SettingsSidebarProps) {
                 : "bg-sidebar-selected text-sidebar-ink"
               : isAboutPage
               ? "text-white/60 hover:text-white hover:bg-white/10"
-              : "text-sidebar-inkDull hover:text-sidebar-ink hover:bg-sidebar-box"
+              : "text-sidebar-ink-dull hover:text-sidebar-ink hover:bg-sidebar-box"
           )}
         >
           {section.label}
@@ -89,37 +96,50 @@ function SettingsContentWrapper() {
   const [currentPage, setCurrentPage] = useState(initialPage);
 
   return (
-    <div className={clsx(
-      "h-screen flex transition-colors duration-500 relative",
-      currentPage === "about" ? "bg-black" : "bg-app"
-    )}>
+    <div
+      className={clsx(
+        "h-screen flex transition-colors duration-500 relative",
+        currentPage === "about" ? "bg-black" : "bg-app"
+      )}
+    >
       {/* Drag region for macOS traffic lights area */}
-      <div
-        data-tauri-drag-region
-        className="absolute inset-x-0 top-0 h-[52px] z-50"
-      />
+      {isMacOS && (
+        <div
+          data-tauri-drag-region
+          className="absolute inset-x-0 top-0 h-[52px] z-50"
+        />
+      )}
 
       {/* Sidebar */}
-      <nav className={clsx(
-        "w-48 border-r p-4 pt-[52px] transition-all duration-500",
-        currentPage === "about"
-          ? "bg-black border-black"
-          : "bg-sidebar border-sidebar-line"
-      )}>
+      <nav
+        className={clsx(
+          "w-48 border-r p-4 transition-all duration-500",
+          isMacOS && "pt-[52px]",
+          currentPage === "about"
+            ? "bg-black border-black"
+            : "bg-sidebar border-sidebar-line"
+        )}
+      >
         <div className="mb-6">
-          <h1 className={clsx(
-            "text-xl font-semibold transition-colors duration-500",
-            currentPage === "about" ? "text-white" : "text-sidebar-ink"
-          )}>Settings</h1>
+          <h1
+            className={clsx(
+              "text-xl font-semibold transition-colors duration-500",
+              currentPage === "about" ? "text-white" : "text-sidebar-ink"
+            )}
+          >
+            Settings
+          </h1>
         </div>
-        <SettingsSidebar
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-        />
+        <SettingsSidebar currentPage={currentPage} onPageChange={setCurrentPage} />
       </nav>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto p-8 pt-[52px]">
+      <main
+        className={clsx(
+          "flex-1 overflow-auto p-8",
+          isMacOS && "pt-[52px]"
+        )}
+      >
         <SettingsContent page={currentPage} />
       </main>
     </div>

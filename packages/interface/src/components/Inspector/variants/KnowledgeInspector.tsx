@@ -58,7 +58,7 @@ export function KnowledgeInspector() {
             <div className="text-sm font-semibold text-sidebar-ink">
               AI Assistant
             </div>
-            <div className="text-[10px] text-sidebar-inkDull">
+            <div className="text-[10px] text-sidebar-ink-dull">
               Knowledge & Insights
             </div>
           </div>
@@ -110,7 +110,7 @@ export function KnowledgeInspector() {
                   {msg.content}
                 </p>
               </div>
-              <span className="text-[10px] text-sidebar-inkDull mt-1 px-1">
+              <span className="text-[10px] text-sidebar-ink-dull mt-1 px-1">
                 {msg.timestamp.toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -125,7 +125,7 @@ export function KnowledgeInspector() {
       <div className="border-t border-sidebar-line p-3 space-y-2">
         <div className="flex items-end gap-2">
           <button
-            className="p-2 rounded-lg hover:bg-sidebar-selected transition-colors text-sidebar-inkDull hover:text-sidebar-ink"
+            className="p-2 rounded-lg hover:bg-sidebar-selected transition-colors text-sidebar-ink-dull hover:text-sidebar-ink"
             title="Attach file"
           >
             <Paperclip className="size-4" weight="bold" />
@@ -143,7 +143,7 @@ export function KnowledgeInspector() {
                 }
               }}
               placeholder="Ask me anything..."
-              className="flex-1 bg-transparent text-sm text-sidebar-ink placeholder:text-sidebar-inkDull outline-none"
+              className="flex-1 bg-transparent text-sm text-sidebar-ink placeholder:text-sidebar-ink-dull outline-none"
             />
           </div>
 
@@ -154,7 +154,7 @@ export function KnowledgeInspector() {
               "p-2 rounded-lg transition-colors",
               message.trim()
                 ? "bg-accent hover:bg-accent/90 text-white"
-                : "bg-app-box text-sidebar-inkDull cursor-not-allowed",
+                : "bg-app-box text-sidebar-ink-dull cursor-not-allowed",
             )}
             title="Send message"
           >
@@ -164,13 +164,13 @@ export function KnowledgeInspector() {
 
         {/* Quick actions */}
         <div className="flex flex-wrap gap-1.5">
-          <button className="px-2.5 py-1.5 text-[11px] font-medium text-sidebar-inkDull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md transition-colors">
+          <button className="px-2.5 py-1.5 text-[11px] font-medium text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md transition-colors">
             Organize files
           </button>
-          <button className="px-2.5 py-1.5 text-[11px] font-medium text-sidebar-inkDull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md transition-colors">
+          <button className="px-2.5 py-1.5 text-[11px] font-medium text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md transition-colors">
             Find duplicates
           </button>
-          <button className="px-2.5 py-1.5 text-[11px] font-medium text-sidebar-inkDull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md transition-colors">
+          <button className="px-2.5 py-1.5 text-[11px] font-medium text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md transition-colors">
             Smart search
           </button>
         </div>

@@ -91,13 +91,13 @@ export function Spacedrop({ onClose, people = [] }: SpacedropProps) {
 					>
 						<div className="mb-4 flex justify-center">
 							<div className="rounded-full bg-sidebar-box/40 p-6 backdrop-blur-lg">
-								<Users className="size-12 text-sidebar-inkFaint" />
+								<Users className="size-12 text-sidebar-ink-faint" />
 							</div>
 						</div>
 						<h2 className="mb-2 text-lg font-semibold text-sidebar-ink">
 							No devices found
 						</h2>
-						<p className="text-sm text-sidebar-inkFaint">
+						<p className="text-sm text-sidebar-ink-faint">
 							Waiting for nearby devices...
 						</p>
 					</motion.div>
@@ -152,7 +152,7 @@ export function Spacedrop({ onClose, people = [] }: SpacedropProps) {
 												/>
 											</div>
 										) : (
-											<div className="size-4 rounded-full border-2 border-sidebar-box bg-sidebar-inkFaint" />
+											<div className="size-4 rounded-full border-2 border-sidebar-box bg-sidebar-ink-faint" />
 										)}
 									</div>
 								</div>
@@ -162,7 +162,7 @@ export function Spacedrop({ onClose, people = [] }: SpacedropProps) {
 									<p className="text-sm font-medium text-sidebar-ink group-hover:text-accent">
 										{person.name}
 									</p>
-									<p className="text-xs text-sidebar-inkFaint">
+									<p className="text-xs text-sidebar-ink-faint">
 										{person.status === 'online' ? 'Online' : 'Offline'}
 									</p>
 								</div>

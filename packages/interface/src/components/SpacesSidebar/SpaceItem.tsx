@@ -305,7 +305,7 @@ export function SpaceItem({
 						"flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors relative cursor-pointer",
 						isActive
 							? "bg-sidebar-selected/30 text-sidebar-ink"
-							: [className || "text-sidebar-inkDull", "hover:text-sidebar-ink hover:bg-sidebar-selected/20"],
+							: [className || "text-sidebar-ink-dull", "hover:text-sidebar-ink hover:bg-sidebar-selected/20"],
 						showDropHighlight && "bg-accent/10",
 					)}
 				>

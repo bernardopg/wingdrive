@@ -143,7 +143,7 @@ fn render_summary(o: &RedundancySummaryOutput) {
 
 	// Library-wide header
 	let mut overview = Table::new();
-	overview.load_preset(UTF8_BORDERS_ONLY);
+	overview.load_style(UTF8_BORDERS_ONLY);
 	overview.set_header(vec![
 		Cell::new("Redundancy Summary").add_attribute(Attribute::Bold),
 		Cell::new(""),
@@ -192,7 +192,7 @@ fn render_summary(o: &RedundancySummaryOutput) {
 	}
 
 	let mut table = Table::new();
-	table.load_preset(UTF8_BORDERS_ONLY);
+	table.load_style(UTF8_BORDERS_ONLY);
 	table.set_header(vec![
 		Cell::new("Volume").add_attribute(Attribute::Bold),
 		Cell::new("Total").add_attribute(Attribute::Bold),
@@ -260,7 +260,7 @@ fn render_file_list(o: &FileSearchOutput, label: &str) {
 	println!();
 
 	let mut table = Table::new();
-	table.load_preset(UTF8_BORDERS_ONLY);
+	table.load_style(UTF8_BORDERS_ONLY);
 	table.set_header(vec![
 		Cell::new("#").add_attribute(Attribute::Bold),
 		Cell::new("Name").add_attribute(Attribute::Bold),

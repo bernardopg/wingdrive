@@ -53,6 +53,15 @@ export type UseNormalizedQueryOptions<I, O = any, TSelected = O> = Simplify<{
 	debug?: boolean;
 	/** Optional select function to transform query data */
 	select?: (data: O) => TSelected;
+	/**
+	 * Poll interval; only active while the callback returns a number. Use to
+	 * bridge gaps where no event exists yet (e.g. first-visit ephemeral
+	 * indexing returning an empty listing while the indexer warms up).
+	 */
+	refetchInterval?:
+		| number
+		| false
+		| ((query: { state: { data: O | undefined } }) => number | false | undefined);
 }>;
 
 // Runtime Validation Schemas (Valibot)
@@ -138,6 +147,10 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 		},
 		enabled: (options.enabled ?? true) && !!libraryId,
 		select: options.select,
+		// Consumers use this to poll while a background job (e.g. ephemeral
+		// indexing of a folder visited for the first time) is still producing
+		// results, since no event covers that window yet.
+		refetchInterval: options.refetchInterval ?? false,
 	});
 
 	// Refs for stable access to latest values without triggering re-subscription

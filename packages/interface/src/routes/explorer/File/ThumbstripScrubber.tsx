@@ -178,7 +178,7 @@ export const ThumbstripScrubber = memo(function ThumbstripScrubber({
 			{/* Thumbstrip sprite background (only visible on hover) */}
 			{isHovering && (
 				<div
-					className="rounded-lg bg-app-darkBox/95 backdrop-blur-sm overflow-hidden shadow-lg relative"
+					className="rounded-lg bg-app-dark-box/95 backdrop-blur-sm overflow-hidden shadow-lg relative"
 					style={{
 						width: scrubberWidth,
 						height: scrubberHeight,

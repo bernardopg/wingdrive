@@ -65,7 +65,7 @@ function SidebarHistory() {
 
 	if (conversationsLoading) {
 		return (
-			<div className="text-sidebar-inkDull px-3 py-2 text-xs">
+			<div className="text-sidebar-ink-dull px-3 py-2 text-xs">
 				Loading conversations...
 			</div>
 		);
@@ -75,7 +75,7 @@ function SidebarHistory() {
 		return (
 			<div className="px-3 py-2 text-xs">
 				<div className="text-red-400">Could not load conversations.</div>
-				<div className="text-sidebar-inkDull mt-1 break-words font-mono text-[10px] leading-relaxed">
+				<div className="text-sidebar-ink-dull mt-1 break-words font-mono text-[10px] leading-relaxed">
 					{conversationsError.message}
 				</div>
 			</div>
@@ -93,7 +93,7 @@ function SidebarHistory() {
 
 	if (filtered.length === 0) {
 		return (
-			<div className="text-sidebar-inkDull px-3 py-2 text-xs">
+			<div className="text-sidebar-ink-dull px-3 py-2 text-xs">
 				No conversations yet.
 			</div>
 		);
@@ -279,7 +279,7 @@ export function SpacebotLayout() {
 									className={`focus:ring-accent flex w-full flex-row items-center gap-0.5 truncate rounded-lg px-2 py-1.5 text-left text-sm font-medium tracking-wide outline-none ring-inset ring-transparent transition-colors focus:ring-1 ${
 										isActive
 											? 'bg-sidebar-selected/40 text-sidebar-ink'
-											: 'text-sidebar-inkDull hover:text-sidebar-ink'
+											: 'text-sidebar-ink-dull hover:text-sidebar-ink'
 									}`}
 								>
 									<Icon
@@ -297,10 +297,10 @@ export function SpacebotLayout() {
 					<div className="flex-1 overflow-y-auto px-3 pb-4">
 						<section className="mb-5">
 							<div className="mb-2 flex items-center justify-between px-2">
-								<div className="text-sidebar-inkDull text-[11px] font-semibold uppercase tracking-[0.16em]">
+								<div className="text-sidebar-ink-dull text-[11px] font-semibold uppercase tracking-[0.16em]">
 									Projects
 								</div>
-								<DotsThree className="text-sidebar-inkDull size-4" />
+								<DotsThree className="text-sidebar-ink-dull size-4" />
 							</div>
 							<div className="space-y-1">
 								{projects.map((project) => (
@@ -318,7 +318,7 @@ export function SpacebotLayout() {
 											<div className="text-sidebar-ink text-sm font-medium">
 												{project.name}
 											</div>
-											<div className="text-sidebar-inkDull text-xs">
+											<div className="text-sidebar-ink-dull text-xs">
 												{project.detail}
 											</div>
 										</div>
@@ -329,10 +329,10 @@ export function SpacebotLayout() {
 
 						<section>
 							<div className="mb-2 flex items-center justify-between px-2">
-								<div className="text-sidebar-inkDull text-[11px] font-semibold uppercase tracking-[0.16em]">
+								<div className="text-sidebar-ink-dull text-[11px] font-semibold uppercase tracking-[0.16em]">
 									History
 								</div>
-								<ClockCounterClockwise className="text-sidebar-inkDull size-4" />
+								<ClockCounterClockwise className="text-sidebar-ink-dull size-4" />
 							</div>
 							<div className="space-y-1">
 								<SidebarHistory />

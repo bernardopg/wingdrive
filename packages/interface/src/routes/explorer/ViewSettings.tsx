@@ -29,7 +29,7 @@ export function ViewSettingsPanel({
 			{viewMode === "column" && (
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
-						<label className="text-xs text-sidebar-inkDull">
+						<label className="text-xs text-sidebar-ink-dull">
 							Column Width
 						</label>
 						<span className="text-xs text-sidebar-ink font-medium">
@@ -56,7 +56,7 @@ export function ViewSettingsPanel({
 			{(viewMode === "grid" || viewMode === "media") && (
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
-						<label className="text-xs text-sidebar-inkDull">
+						<label className="text-xs text-sidebar-ink-dull">
 							{viewMode === "media" ? "Thumbnail Size" : "Grid Size"}
 						</label>
 						<span className="text-xs text-sidebar-ink font-medium">
@@ -83,7 +83,7 @@ export function ViewSettingsPanel({
 			{viewMode === "grid" && (
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
-						<label className="text-xs text-sidebar-inkDull">Gap Size</label>
+						<label className="text-xs text-sidebar-ink-dull">Gap Size</label>
 						<span className="text-xs text-sidebar-ink font-medium">
 							{viewSettings.gapSize}px
 						</span>
@@ -108,7 +108,7 @@ export function ViewSettingsPanel({
 			{viewMode === "size" && (
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
-						<label className="text-xs text-sidebar-inkDull">Items Shown</label>
+						<label className="text-xs text-sidebar-ink-dull">Items Shown</label>
 						<span className="text-xs text-sidebar-ink font-medium">
 							{Math.min(viewSettings.sizeViewItemLimit || 500, totalFileCount || 500)} / {totalFileCount || 0}
 						</span>
@@ -131,7 +131,7 @@ export function ViewSettingsPanel({
 
 			{/* Show File Size Toggle */}
 			<div className="flex items-center justify-between pt-1">
-				<label className="text-xs text-sidebar-inkDull">Show File Size</label>
+				<label className="text-xs text-sidebar-ink-dull">Show File Size</label>
 				<button
 					onClick={() =>
 						setViewSettings({ showFileSize: !viewSettings.showFileSize })
@@ -153,7 +153,7 @@ export function ViewSettingsPanel({
 
 			{/* Folders First Toggle */}
 			<div className="flex items-center justify-between pt-1">
-				<label className="text-xs text-sidebar-inkDull">Folders First</label>
+				<label className="text-xs text-sidebar-ink-dull">Folders First</label>
 				<button
 					onClick={() =>
 						setViewSettings({ foldersFirst: !viewSettings.foldersFirst })
@@ -175,7 +175,7 @@ export function ViewSettingsPanel({
 
 			{/* Show Hidden Files Toggle */}
 			<div className="flex items-center justify-between pt-1">
-				<label className="text-xs text-sidebar-inkDull">Show Hidden Files</label>
+				<label className="text-xs text-sidebar-ink-dull">Show Hidden Files</label>
 				<button
 					onClick={() =>
 						setViewSettings({

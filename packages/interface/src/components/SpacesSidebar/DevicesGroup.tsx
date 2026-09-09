@@ -127,7 +127,7 @@ export function DevicesGroup({
 									onContextMenu={handleDeviceContextMenu(device)}
 									allowInsertion={false}
 									isLastItem={index === devices.length - 1}
-									className="text-sidebar-inkDull"
+									className="text-sidebar-ink-dull"
 									rightComponent={
 										<div className="flex items-center gap-1">
 											{!device.is_current &&

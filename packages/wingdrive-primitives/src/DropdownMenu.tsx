@@ -21,7 +21,7 @@ const Content = forwardRef<
 			ref={ref}
 			sideOffset={sideOffset}
 			className={clsx(
-				"z-50 min-w-[8rem] overflow-hidden rounded-md p-1",
+				"z-[100] min-w-[8rem] overflow-hidden rounded-md p-1",
 				"border border-menu-line bg-menu/95 backdrop-blur-lg",
 				"text-sm text-menu-ink shadow-xl shadow-menu-shade/30",
 				"animate-in fade-in-0 zoom-in-95",
@@ -172,7 +172,7 @@ const SubContent = forwardRef<
 	<DropdownMenuPrimitive.SubContent
 		ref={ref}
 		className={clsx(
-			"z-50 min-w-[8rem] overflow-hidden rounded-md p-1",
+			"z-[100] min-w-[8rem] overflow-hidden rounded-md p-1",
 			"border border-menu-line bg-menu/95 backdrop-blur-lg",
 			"text-sm text-menu-ink shadow-xl shadow-menu-shade/30",
 			"animate-in fade-in-0 zoom-in-95",

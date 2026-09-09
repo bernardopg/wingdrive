@@ -186,6 +186,19 @@ impl VolumeBackend for LocalBackend {
 				Err(_) => continue, // Skip entries we can't read
 			};
 
+			// Device nodes, sockets, and FIFOs are not real file content: reading or
+			// hashing them can block forever (a FIFO/socket read waits for a peer) or
+			// report a fake "size" equal to the whole backing block device. Exclude
+			// them here so they never reach content identification.
+			#[cfg(unix)]
+			{
+				use std::os::unix::fs::FileTypeExt;
+				let ft = metadata.file_type();
+				if ft.is_block_device() || ft.is_char_device() || ft.is_fifo() || ft.is_socket() {
+					continue;
+				}
+			}
+
 			let kind = if metadata.is_dir() {
 				EntryKind::Directory
 			} else if metadata.is_symlink() {
@@ -215,6 +228,20 @@ impl VolumeBackend for LocalBackend {
 		let metadata = fs::symlink_metadata(&full_path)
 			.await
 			.map_err(|e| VolumeError::Io(e))?;
+
+		// Refuse to report device nodes, sockets, and FIFOs as indexable files: opening
+		// or hashing them can hang forever or read a whole raw block device.
+		#[cfg(unix)]
+		{
+			use std::os::unix::fs::FileTypeExt;
+			let ft = metadata.file_type();
+			if ft.is_block_device() || ft.is_char_device() || ft.is_fifo() || ft.is_socket() {
+				return Err(VolumeError::Io(std::io::Error::new(
+					std::io::ErrorKind::Unsupported,
+					"refusing to index special file (device/socket/fifo)",
+				)));
+			}
+		}
 
 		let kind = if metadata.is_dir() {
 			EntryKind::Directory
@@ -362,6 +389,50 @@ mod tests {
 		assert!(names.contains(&"file1.txt"));
 		assert!(names.contains(&"file2.txt"));
 		assert!(names.contains(&"subdir"));
+	}
+
+	/// Device nodes, sockets, and FIFOs must never be returned by read_dir:
+	/// hashing a FIFO blocks forever and a block device reports its whole raw
+	/// capacity as "size". Both would poison indexing stats or hang the job.
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn test_local_backend_read_dir_skips_special_files() {
+		let temp_dir = TempDir::new().unwrap();
+		let backend = LocalBackend::new(temp_dir.path());
+
+		backend
+			.write(Path::new("regular.txt"), Bytes::from("data"))
+			.await
+			.unwrap();
+
+		let fifo_path = temp_dir.path().join("pipe.fifo");
+		let c_fifo = std::ffi::CString::new(fifo_path.as_os_str().as_encoded_bytes()).unwrap();
+		let rc = unsafe { libc::mkfifo(c_fifo.as_ptr(), 0o600) };
+		assert_eq!(rc, 0, "mkfifo failed: {}", std::io::Error::last_os_error());
+
+		let entries = backend.read_dir(Path::new(".")).await.unwrap();
+		assert_eq!(
+			entries.len(),
+			1,
+			"special files must be skipped; got: {:?}",
+			entries.iter().map(|e| &e.name).collect::<Vec<_>>()
+		);
+		assert_eq!(entries[0].name, "regular.txt");
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn test_local_backend_metadata_rejects_special_file() {
+		let temp_dir = TempDir::new().unwrap();
+		let backend = LocalBackend::new(temp_dir.path());
+
+		let fifo_path = temp_dir.path().join("pipe.fifo");
+		let c_fifo = std::ffi::CString::new(fifo_path.as_os_str().as_encoded_bytes()).unwrap();
+		let rc = unsafe { libc::mkfifo(c_fifo.as_ptr(), 0o600) };
+		assert_eq!(rc, 0, "mkfifo failed: {}", std::io::Error::last_os_error());
+
+		let result = backend.metadata(Path::new("pipe.fifo")).await;
+		assert!(result.is_err(), "metadata on a FIFO must be refused");
 	}
 
 	#[tokio::test]

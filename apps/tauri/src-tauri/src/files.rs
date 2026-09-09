@@ -10,7 +10,7 @@ pub async fn reveal_file(path: String) -> Result<(), String> {
 		return Err(format!("Path does not exist: {}", path.display()));
 	}
 
-	reveal_path(&path).map_err(|e| {
+	reveal_path(&path).await.map_err(|e| {
 		error!("Failed to reveal file: {:#?}", e);
 		format!("Failed to reveal file: {}", e)
 	})
@@ -124,40 +124,75 @@ async fn find_library_folder(data_dir: &Path, library_id: &str) -> Result<PathBu
 }
 
 #[cfg(target_os = "macos")]
-fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
-	std::process::Command::new("open")
+async fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
+	// tokio keeps the async runtime free while the child process runs; the
+	// previous std::process wait() blocked the runtime until the file manager closed.
+	let status = tokio::process::Command::new("open")
 		.arg("-R")
 		.arg(path)
-		.spawn()?
-		.wait()?;
-	Ok(())
+		.status()
+		.await?;
+	if status.success() {
+		Ok(())
+	} else {
+		Err(std::io::Error::new(
+			std::io::ErrorKind::Other,
+			"open -R failed",
+		))
+	}
 }
 
 #[cfg(target_os = "windows")]
-fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
-	std::process::Command::new("explorer")
-		.arg("/select,")
-		.arg(path)
-		.spawn()?
-		.wait()?;
+async fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
+	// explorer.exe requires `/select,<path>` as a single argument; passing
+	// "/select," and the path separately made it ignore the selection and
+	// open the Documents folder instead. explorer.exe exits with 1 even on
+	// success, so any exit code is treated as completion.
+	let select_arg = format!("/select,{}", path.display());
+	tokio::process::Command::new("explorer")
+		.arg(select_arg)
+		.status()
+		.await?;
 	Ok(())
 }
 
 #[cfg(target_os = "linux")]
-fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
-	// On Linux, we'll try to open the parent directory
-	// Different desktop environments have different file managers
+async fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
+	// Prefer the freedesktop file manager interface so the file is actually
+	// selected; fall back to opening the parent directory when no file
+	// manager implements ShowItems.
+	let uri = format!("file://{}", path.display());
+	let dbus_call = tokio::process::Command::new("gdbus")
+		.args([
+			"call",
+			"--session",
+			"--dest",
+			"org.freedesktop.FileManager1",
+			"--object-path",
+			"/org/freedesktop/FileManager1",
+			"--method",
+			"org.freedesktop.FileManager1.ShowItems",
+		])
+		.arg(&uri)
+		.arg("")
+		.status()
+		.await;
+
+	if matches!(dbus_call, Ok(status) if status.success()) {
+		return Ok(());
+	}
+
 	if let Some(parent) = path.parent() {
-		std::process::Command::new("xdg-open")
+		tokio::process::Command::new("xdg-open")
 			.arg(parent)
-			.spawn()?
-			.wait()?;
+			.status()
+			.await?;
 	}
 	Ok(())
 }
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
+async fn reveal_path(_path: &Path) -> Result<(), std::io::Error> {
 	Err(std::io::Error::new(
 		std::io::ErrorKind::Unsupported,
 		"Reveal is not supported on this platform",

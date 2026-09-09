@@ -1679,23 +1679,28 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 
 	// File menu with explorer actions
 	let open_library_item = MenuItemBuilder::with_id("open-library", "Open Library...")
-		.accelerator("Cmd+O")
+		// CmdOrCtrl maps to Command on macOS and Control elsewhere. "Cmd" alone
+		// parses to META, which GTK cannot bind to a real key on Linux: the
+		// accelerator degrades to the bare key and swallows plain "o" typing.
+		.accelerator("CmdOrCtrl+O")
 		.build(app)?;
 
 	let duplicate_item = MenuItemBuilder::with_id("duplicate", "Duplicate")
-		.accelerator("Cmd+D")
+		.accelerator("CmdOrCtrl+D")
 		.enabled(false)
 		.build(app)?;
 	menu_items_map.insert("duplicate".to_string(), duplicate_item.clone());
 
 	let rename_item = MenuItemBuilder::with_id("rename", "Rename")
-		.accelerator("Enter")
+		// No accelerator: Enter must reach text inputs and the inline rename
+		// editor. The web layer binds Enter for explorer rename when a file row
+		// is focused; a native bare-Enter accelerator would steal it everywhere.
 		.enabled(false)
 		.build(app)?;
 	menu_items_map.insert("rename".to_string(), rename_item.clone());
 
 	let delete_item = MenuItemBuilder::with_id("delete", "Move to Trash")
-		.accelerator("Cmd+Backspace")
+		.accelerator("CmdOrCtrl+Backspace")
 		.enabled(false)
 		.build(app)?;
 	menu_items_map.insert("delete".to_string(), delete_item.clone());
@@ -1714,13 +1719,13 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 	// Accelerators are handled smartly: native clipboard for text inputs, file ops for explorer
 	// IMPORTANT: Keep these always enabled so accelerators work in text inputs
 	let cut_item = MenuItemBuilder::with_id("cut", "Cut")
-		.accelerator("Cmd+X")
+		.accelerator("CmdOrCtrl+X")
 		.enabled(true)
 		.build(app)?;
 	menu_items_map.insert("cut".to_string(), cut_item.clone());
 
 	let copy_item = MenuItemBuilder::with_id("copy", "Copy")
-		.accelerator("Cmd+C")
+		.accelerator("CmdOrCtrl+C")
 		.enabled(true)
 		.build(app)?;
 	menu_items_map.insert("copy".to_string(), copy_item.clone());
@@ -1740,12 +1745,12 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 	let view_menu = SubmenuBuilder::new(app, "View")
 		.item(
 			&MenuItemBuilder::with_id("drag-demo", "Drag Demo")
-				.accelerator("Cmd+Shift+D")
+				.accelerator("CmdOrCtrl+Shift+D")
 				.build(app)?,
 		)
 		.item(
 			&MenuItemBuilder::with_id("spacedrop", "Spacedrop")
-				.accelerator("Cmd+Shift+S")
+				.accelerator("CmdOrCtrl+Shift+S")
 				.build(app)?,
 		)
 		.build()?;
@@ -1972,8 +1977,6 @@ fn main() {
 		.plugin(tauri_plugin_updater::Builder::new().build())
 		.plugin(
 			tauri_plugin_global_shortcut::Builder::new()
-				.with_shortcut("Alt+Space")
-				.expect("failed to register Alt+Space global shortcut")
 				.with_handler(|app, _shortcut, event| {
 					if event.state() == ShortcutState::Pressed {
 						if let Err(error) = windows::toggle_voice_overlay_internal(app.clone()) {
@@ -2035,6 +2038,24 @@ fn main() {
 			// Setup native menu
 			if let Err(e) = setup_menu(app.handle()) {
 				tracing::warn!("Failed to setup menu: {}", e);
+			}
+
+			// Register the voice overlay hotkey here instead of via
+			// with_shortcut: a duplicate registration (stale instance, or the
+			// OS already bound it) panics during plugin init and took the whole
+			// app down. Best effort; the overlay remains reachable from the UI.
+			{
+				use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
+				match "Alt+Space".parse::<Shortcut>() {
+					Ok(shortcut) => {
+						if let Err(error) = app.global_shortcut().register(shortcut) {
+							tracing::warn!(?error, "Alt+Space global shortcut unavailable");
+						}
+					}
+					Err(error) => {
+						tracing::warn!(?error, "Failed to parse Alt+Space shortcut");
+					}
+				}
 			}
 
 			// Explicitly remove menu on Windows

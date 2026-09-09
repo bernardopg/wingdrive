@@ -15,7 +15,7 @@ export function InfoRow({ label, value, mono, className }: InfoRowProps) {
         className,
       )}
     >
-      <span className="text-sidebar-inkDull shrink-0">{label}</span>
+      <span className="text-sidebar-ink-dull shrink-0">{label}</span>
       <span
         className={clsx(
           "text-sidebar-ink font-medium text-right truncate",

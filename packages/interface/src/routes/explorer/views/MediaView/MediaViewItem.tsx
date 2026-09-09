@@ -63,7 +63,7 @@ export const MediaViewItem = memo(function MediaViewItem({
 
 	const { navigateToPath } = useExplorer();
 	const physicalPath =
-		file.kind === "File" && "Physical" in file.sd_path
+		(file.kind === "File" || file.kind === "Symlink") && "Physical" in file.sd_path
 			? file.sd_path.Physical.path
 			: null;
 	const { openWithDefault } = useOpenWith(

@@ -402,6 +402,39 @@ impl DeviceManager {
 		Ok(())
 	}
 
+	/// Update device name and/or slug independently, without the automatic
+	/// slug-from-name regeneration that `set_name` performs.
+	///
+	/// Writes through the in-memory config used by `core.status` and other
+	/// queries, then persists to disk, so callers observe the change
+	/// immediately instead of only after a restart re-reads the config file.
+	pub fn update(
+		&self,
+		name: Option<String>,
+		slug: Option<String>,
+	) -> Result<DeviceConfig, DeviceError> {
+		let mut config = self.config.write().map_err(|_| DeviceError::LockPoisoned)?;
+
+		if let Some(name) = name {
+			config.name = name;
+		}
+		if let Some(slug) = slug {
+			config.slug = slug;
+		}
+
+		if let Some(data_dir) = &self.data_dir {
+			config.save_to(data_dir)?;
+		} else {
+			config.save()?;
+		}
+
+		if let Ok(mut slug_guard) = crate::device::id::CURRENT_DEVICE_SLUG.write() {
+			*slug_guard = config.slug.clone();
+		}
+
+		Ok(config.clone())
+	}
+
 	/// Get the effective slug for this device in a specific library context
 	/// Returns library-specific override if set, otherwise returns global slug
 	pub fn slug_for_library(&self, library_id: Uuid) -> Result<String, DeviceError> {
