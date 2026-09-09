@@ -19,7 +19,6 @@ pub mod statistics_listener;
 pub mod sync;
 pub mod volume_monitor;
 pub mod watcher;
-// NOTE: watcher_old/ is kept as reference during migration but not compiled
 
 use device::DeviceService;
 use file_sharing::FileSharingService;
