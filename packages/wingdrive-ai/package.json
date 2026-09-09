@@ -48,7 +48,7 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.0.0",
     "@react-sigma/core": "^4.0.0",
-    "graphology": "^0.25.0",
+    "graphology": "^0.26.0",
 		"sigma": "^3.0.0"
 	}
 }
