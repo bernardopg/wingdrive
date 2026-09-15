@@ -122,6 +122,8 @@ pub enum ConnectionMethod {
 	/// Connection proxied through relay server
 	/// Reliable fallback. Relay hosts the bandwidth.
 	RelayProxy,
+	/// Direct path over the user's Tailscale tailnet (WireGuard mesh)
+	Tailscale,
 }
 
 impl ConnectionMethod {
@@ -154,7 +156,9 @@ impl ConnectionMethod {
 		}
 
 		if let Some(addr) = direct_addr {
-			return Some(if is_local_address(&addr) {
+			return Some(if is_tailscale_address(&addr) {
+				Self::Tailscale
+			} else if is_local_address(&addr) {
 				Self::LocalNetwork
 			} else {
 				Self::DirectInternet
@@ -162,6 +166,23 @@ impl ConnectionMethod {
 		}
 
 		has_relay.then_some(Self::RelayProxy)
+	}
+}
+
+/// Check if a socket address is in Tailscale's CGNAT range (100.64.0.0/10),
+/// which every tailnet assigns from. A direct path on such an address means
+/// the traffic rides the user's WireGuard mesh.
+fn is_tailscale_address(addr: &std::net::SocketAddr) -> bool {
+	match addr.ip() {
+		std::net::IpAddr::V4(ipv4) => {
+			let octets = ipv4.octets();
+			octets[0] == 100 && (octets[1] & 0xc0) == 64
+		}
+		// Tailscale's IPv6 range fd7a:115c:a1e0::/48 is unique-local space.
+		std::net::IpAddr::V6(ipv6) => {
+			let segments = ipv6.segments();
+			segments[0] == 0xfd7a && segments[1] == 0x115c && segments[2] == 0xa1e0
+		}
 	}
 }
 
