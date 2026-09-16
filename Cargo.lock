@@ -9463,7 +9463,7 @@ dependencies = [
  "specta-swift",
  "specta-typescript",
  "sqlx",
- "strum 0.26.3",
+ "strum 0.28.0",
  "supports-color",
  "sysinfo 0.31.4",
  "tempfile",
