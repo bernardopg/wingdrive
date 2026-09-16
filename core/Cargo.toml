@@ -166,7 +166,7 @@ x25519-dalek     = "2.0"
 
 # Network utilities
 if-watch         = "3.0"
-local-ip-address = "0.5"
+local-ip-address = "0.6"
 # colored already defined above
 
 # Utils
