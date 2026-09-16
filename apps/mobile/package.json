@@ -17,7 +17,7 @@
 		"typecheck": "tsc -b"
 	},
 	"dependencies": {
-		"@callstack/liquid-glass": "^0.7.1",
+		"@callstack/liquid-glass": "^0.8.1",
 		"@dev-plugins/react-query": "^0.4.0",
 		"@gorhom/bottom-sheet": "^5.2.14",
 		"@react-native-async-storage/async-storage": "^2.2.0",
