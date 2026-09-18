@@ -29,7 +29,7 @@
   "eslintConfig": {
     "root": true
   },
-  "packageManager": "bun@1.4.0",
+  "packageManager": "bun@1.4.2",
   "overrides": {
     "@types/node": ">18.18.x",
     "@types/react": "19.2.18",

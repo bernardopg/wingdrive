@@ -63,8 +63,7 @@ impl CloudBackend {
 		}
 
 		let operator = opendal::Operator::new(builder)
-			.map_err(|e| VolumeError::Platform(format!("Failed to create S3 operator: {}", e)))?
-			.finish();
+			.map_err(|e| VolumeError::Platform(format!("Failed to create S3 operator: {}", e)))?;
 
 		Ok(Self {
 			operator,
@@ -91,11 +90,9 @@ impl CloudBackend {
 			builder = builder.root(r);
 		}
 
-		let operator = opendal::Operator::new(builder)
-			.map_err(|e| {
-				VolumeError::Platform(format!("Failed to create Google Drive operator: {}", e))
-			})?
-			.finish();
+		let operator = opendal::Operator::new(builder).map_err(|e| {
+			VolumeError::Platform(format!("Failed to create Google Drive operator: {}", e))
+		})?;
 
 		Ok(Self {
 			operator,
@@ -122,11 +119,9 @@ impl CloudBackend {
 			builder = builder.root(r);
 		}
 
-		let operator = opendal::Operator::new(builder)
-			.map_err(|e| {
-				VolumeError::Platform(format!("Failed to create OneDrive operator: {}", e))
-			})?
-			.finish();
+		let operator = opendal::Operator::new(builder).map_err(|e| {
+			VolumeError::Platform(format!("Failed to create OneDrive operator: {}", e))
+		})?;
 
 		Ok(Self {
 			operator,
@@ -155,11 +150,9 @@ impl CloudBackend {
 			builder = builder.root(r);
 		}
 
-		let operator = opendal::Operator::new(builder)
-			.map_err(|e| {
-				VolumeError::Platform(format!("Failed to create Dropbox operator: {}", e))
-			})?
-			.finish();
+		let operator = opendal::Operator::new(builder).map_err(|e| {
+			VolumeError::Platform(format!("Failed to create Dropbox operator: {}", e))
+		})?;
 
 		Ok(Self {
 			operator,
@@ -184,11 +177,9 @@ impl CloudBackend {
 			builder = builder.endpoint(&ep);
 		}
 
-		let operator = opendal::Operator::new(builder)
-			.map_err(|e| {
-				VolumeError::Platform(format!("Failed to create Azure Blob operator: {}", e))
-			})?
-			.finish();
+		let operator = opendal::Operator::new(builder).map_err(|e| {
+			VolumeError::Platform(format!("Failed to create Azure Blob operator: {}", e))
+		})?;
 
 		Ok(Self {
 			operator,
@@ -217,8 +208,7 @@ impl CloudBackend {
 		}
 
 		let operator = opendal::Operator::new(builder)
-			.map_err(|e| VolumeError::Platform(format!("Failed to create GCS operator: {}", e)))?
-			.finish();
+			.map_err(|e| VolumeError::Platform(format!("Failed to create GCS operator: {}", e)))?;
 
 		Ok(Self {
 			operator,

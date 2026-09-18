@@ -8,6 +8,7 @@ use crate::{
 	service::network::{protocol::sync::messages::SyncMessage, NetworkingError},
 };
 use anyhow::Result;
+use iroh::endpoint::TransportAddrUsage;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, warn};
@@ -267,7 +268,10 @@ impl NetworkTransport for NetworkingService {
 				// Try to get connection info (doesn't actually open a connection)
 				// If the node is reachable via our endpoint, return true
 				// Note: This is an optimistic check - actual send might still fail
-				return endpoint.connection_info(node_id.into()).is_some();
+				return endpoint.remote_info(node_id.into()).await.is_some_and(|info| {
+					info.addrs()
+						.any(|addr| matches!(addr.usage(), TransportAddrUsage::Active))
+				});
 			}
 		}
 

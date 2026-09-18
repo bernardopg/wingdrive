@@ -25,10 +25,9 @@ use uuid::Uuid;
 /// old API's `None` was treated.
 fn selected_path_rtt(conn: &Connection) -> Option<std::time::Duration> {
 	conn.paths()
-		.get()
 		.iter()
-		.find(|path| path.is_selected() && !path.is_closed())
-		.and_then(|path| path.rtt())
+		.find(|path| path.is_selected())
+		.map(|path| path.rtt())
 }
 
 /// Commands that can be sent to the event loop

@@ -1,66 +1,159 @@
-# Spacedrive v2 Work Queue
+# WingDrive v2 Work Queue
+# Scope: desktop release first. This is a prioritized index, not the full product backlog.
+# .tasks/ owns implementation scope and acceptance criteria; verify its status against evidence.
+# P0 = release safety and prerequisites; P1 = supported desktop behavior;
+# P2 = optional features and polish. Execute prerequisites before dependent work.
+# [VERIFY] means code exists or the old TODO lacks a reproducible failure.
+# [TRIAGE] means define the remaining scope and create/link a task before implementation.
+# No checkbox is completed solely because code exists or a task says Done.
 
-# `.tasks/` is the source of truth. This file is a prioritized index only.
-# Completed Todo+ history remains recoverable from Git history.
+P0 - Establish a trustworthy release baseline:
+  ☐ Reconcile task status, acceptance criteria, and evidence before selecting release scope
+    - TAURI-000 still describes Favorites as a placeholder; TAURI-002 is Done.
+    - FORK-002 is Done but its final section still requires In Progress and external verification.
+    - 18 Done tasks contain unchecked boxes; distinguish real remaining scope from stale plans.
+    - Do not reopen all of them automatically or treat schema validation as functional proof.
+  ☐ DEV-000 Validate the exact release candidate, including current dependency/network/cloud edits
+    - Run frontend typecheck, focused tests, Rust checks/tests, task validation, and independence guard.
+    - Record commit, commands, outcomes, and any skipped or blocked test targets.
+    - CI passed for 687162731 and ce940398d; neither run covers uncommitted changes.
+  ☑ DEV-002 Isolate development data, device identity, and daemon endpoints from production
+    - `just dev-desktop` uses scripts/dev-isolated.sh and a named, separate daemon instance.
+    - End-to-end verified on Linux: app drove the dev daemon; four distinct device identities;
+      real `~/.wingdrive`/`~/.spacedrive` byte-identical after the session; clean teardown.
+  ☐ TAURI-006 Prepare deterministic physical-location fixtures before native smoke tests
+    - Cover empty folders, enough files for pagination, media, name conflicts, and permission failures.
+    - Use disposable data. Never run destructive tests against a real library or system volume.
 
-Desktop release blockers:
-☐ TAURI-006 Add native daemon/window smoke regression @high
-	☐ MEDIA-000 Verify media playback in production bundles @high
-	☐ TAURI-004 Spacebot real-runtime contract test (blocked: private repo) @high
+P0 - Data safety and native runtime release gates:
+  ☐ TAURI-006 Exercise packaged daemon startup, reconnect/restart, main window, and auxiliary windows
+    - Settings, Inspector, Quick Preview, Job Manager, and Spacedrop.
+    - Cover fresh install and supported legacy-data startup; do not rely only on the dev executable.
+  ☐ TAURI-006 / EXPL-003 Verify file operations through UI, daemon, and real jobs
+    - Validate copy/move conflicts before showing the operation modal; test rename, folder creation,
+      external import, delete confirmation, progress, and failures.
+    - DndProvider currently approximates same volume using device_slug. Verify different mounts on
+      the same device and modifier-key behavior before relying on the default move/copy decision.
+    - Re-run SAFE-001..005 regressions: CoW secure-delete rejection, recursive-copy prevention,
+      internal-data watcher filtering, system-path/eject guards, and free-space preflight.
+    - Guard implementations are Done; packaged end-to-end evidence is still required.
+  ☐ FILE-003 [VERIFY] Reject unsupported cloud copies safely or finish the supported routes
+    - FileCopyJob still contains SdPath::Cloud panic branches; establish reachability and test rejection.
+    - Cloud support can be deferred, but exposed operations must not panic or report false success.
+  ☐ LSYNC-020 / LSYNC-023 / DEV-001 [VERIFY] Prove sync integrity for supported multi-device use
+    - Tags, device-owned tombstones, closure relationships, counts, offline catch-up, and backfill races.
+    - Existing sync implementations and integration tests are not new work to recreate.
+    - Reproduce count/tree mismatches and stale online-device state before specifying fixes.
+    - If multi-device sync is excluded from the release, make its unavailability explicit.
 
-Recently completed:
-☑ TAURI-005 Import external drops through real jobs
-☑ TAURI-007 Fix generated collection array types
-☑ TAURI-002 Validate Favorites add/remove, two-window events and daemon restart
-☑ TAURI-002 Implement persisted, reactive Favorites in backend and Tauri UI
-☑ TAURI-003 Fix content-kind stats/search parity
+P1 - Complete supported desktop behavior:
+  ☐ EXPL-005 Isolate navigation history per tab, then connect scroll restoration in each view
+    - TabManager still shares createBrowserRouter; TabView remains a placeholder.
+    - Scroll state exists in context; Grid/List/Media still lack restoration wiring.
+    - Verify selection/view state, reopen, persistence, and multi-tab performance.
+  ☐ SRCH-000 [TRIAGE] Complete Recents pagination and verify its empty/error states
+    - useExplorerFiles currently requests limit 100 with offset 0 and has no next-page path for Recents.
+    - Verify both fewer than 100 and more than 100 matching records without duplicates or omissions.
+  ☐ TAURI-006 [VERIFY] Verify live Explorer refresh after filesystem and job events
+    - Event hooks now exist; test actual create/rename/move/delete behavior rather than assume they are absent.
+  ☐ EXPL-002 [TRIAGE] Add explicit ascending/descending directory sorting
+    - DirectoryListingInput exposes sort_by, but no sort_direction. Regenerate client types after changes.
+  ☐ EXPL-003 [TRIAGE] Define system file-clipboard interoperability and standard keyboard shortcuts
+    - useClipboard is app-local state, not native file copy/cut/paste integration.
+    - Verify refresh, new-folder, and hidden-file shortcuts, including platform differences.
+  ☐ EXPL-003 [VERIFY] Complete cross-column drag in Column View
+    - ColumnItem already registers a folder drop target; test the full interaction before adding another one.
+  ☐ JOB-001 [VERIFY] Keep remote jobs reactive in Overview
+  ☐ LOC-001 [VERIFY] Validate Location Inspector Run Now and remove-location UX
+    - UI already calls locations.triggerJob and locations.remove; specify any remaining UX defects.
+  ☐ FILE-005 / CORE-014 [VERIFY] Validate remote file access on demand
+    - Distinguish implemented transfer/opening paths from unsupported cases; capture an actual failing scenario.
+  ☐ INDEX-010 / INDEX-011 / VSS-006 Complete ephemeral/indexed identity and sidecar integration
+    - Reconcile UUIDs before merging ephemeral and indexed results, including hidden-file behavior.
+    - Preserve tags and references when promoting ephemeral entries to indexed entries.
+  ☐ CORE-006 / INDEX-010 [TRIAGE] Define remaining ephemeral-entry tag support
+    - Audit existing tag persistence/sync before creating new actions or schema.
+  ☐ RED-000 / VOL-000 [VERIFY] Reproduce and correct unique-byte discrepancies
+    - Calculations already exist; define expected results for duplicates, multiple volumes, and zero bytes.
+  ☐ FILE-005 [TRIAGE] Default remote paste to the destination device's Downloads directory
+    - Resolve the path on that device and handle unavailable or unwritable destinations explicitly.
 
-Later release work:
-	☐ Ensure updater release notes and changelog work @high
-	☐ Sign Windows production builds @high
-	☐ Verify ml-sharp in production bundles @critical
+P1 - Distribution gates after runtime behavior is stable:
+  ☐ TAURI-006 Run packaged smoke matrix on Linux, macOS, and Windows
+    - Include installation, daemon lifecycle, file opening, native dialogs, and supported media codecs.
+    - Record per-platform artifacts and results; building bundles alone does not satisfy this gate.
+  ☐ MEDIA-000 / TAURI-006 Verify media playback and native dependencies in production bundles
+    - MEDIA-000 tracks viewer functionality; packaged playback validation belongs to TAURI-006 too.
+  ☐ [TRIAGE] Validate updater delivery, release notes, and changelog end to end
+    - release.yml already generates GitHub release notes; verify the app consumes the intended release.
+    - Signed updater artifacts are disabled in tauri.conf.json; define signing and manifest publication.
+  ☐ [TRIAGE] Configure Windows signing and macOS signing/notarization for production distribution
+    - Separate OS code signing from updater signing; document WingDrive-owned credential requirements.
+    - Verify a real release workflow run and downloadable/installable artifacts, not only workflow YAML.
+  ☐ FORK-002 [VERIFY] Record outstanding external publication evidence
+    - CI, desktop/server release artifacts, and GHCR; mobile/store publication has separate scope and credentials.
+  ☐ TAURI-006 Capture release screenshots from the deterministic fixtures after checks pass
 
-Desktop functional gaps:
-☐ TAURI-007 Fix generated collection array types
-	☐ EXPL-005 Isolate navigation history and state per tab
-	☐ Complete Recents empty and pagination behavior
-	☐ Add PDF and RAW preview support
-	☐ Replace File Inspector history dummy data
-	☐ Validate copy/move conflicts before showing the operation modal
-	☐ Improve Location Inspector Run Now and delete-location UX
-	☐ Preserve view scroll position per tab
-	☐ Implement sidecar deletion through a backend action
-	☐ Implement adapter installation from a selected directory
+P2 - Optional features and polish, not unconditional desktop blockers:
+  ☐ TAURI-004 Real Spacebot runtime contract test [BLOCKED: private runtime unavailable]
+    - Test conversations/tasks when access exists. Fallback UI and mutation rejection are already implemented.
+    - Gate only a Spacebot-enabled release on this test; keep unavailable features hidden otherwise.
+  ☐ [TRIAGE] Verify ml-sharp availability and behavior in production bundles if splat generation ships
+    - Backend invokes an external sharp CLI; test missing-tool behavior and distribution requirements.
+    - Do not prioritize optional splats above file safety or basic playback.
+  ☐ MEDIA-000 Complete viewer Favorite action and Live Photo playback
+    - Explicitly retain these open acceptance criteria, which the previous TODO omitted.
+  ☐ MEDIA-000 [TRIAGE] Add full PDF preview and define RAW preview coverage
+    - PDF thumbnails already exist; QuickPreview DocumentRenderer is not a document reader.
+    - Separate full preview from thumbnails and specify RAW formats before claiming support is missing.
+  ☐ [TRIAGE] Replace File Inspector Activity/Chat dummy data before exposing those tabs in production
+    - Both tabs are currently DEV-only; this is not a production-visible history bug.
+  ☐ VSS-005 / CORE-008 [TRIAGE] Implement sidecar deletion through a backend action
+    - Scope dependent references, cache invalidation, authorization, and regeneration behavior first.
+  ☐ PLUG-002 / CLOUD-003 [TRIAGE] Define adapter installation from a selected directory
+    - Distinguish adapter installation from configuring an already loaded adapter.
+  ☐ JOB-001 [TRIAGE] Improve Job Manager ordering, metadata presentation, and pop-out UX
 
-Core, indexing, and sync:
-	☐ Remote file access on demand
-	☐ Ephemeral sidecars and desktop ephemeral fixes
-	☐ Merge ephemeral and indexed results, including optional hidden files
-	☐ Sync file tags and device-owned tombstones
-	☐ Support tags on ephemeral entries
-	☐ Reconcile device-owned data counts and missing tree relationships
-	☐ Expand multi-device sync integrity tests
-	☐ Fix stale online-device state and background stale-file discovery
-	☐ Fix unique-byte calculation
-	☐ Default remote paste destination to the device Downloads directory
-	☐ Use a separate data directory for development builds
+Broader roadmap, tracked in .tasks/ rather than silently omitted from product scope:
+  - FILE-003 / CLOUD-003: cloud volume operations beyond safe rejection.
+  - FSYNC-003..005: file-sync service, integration, scheduling, and conflicts.
+  - SEARCH-001..003: asynchronous search, FTS/semantic ranking, and vector repositories.
+  - SHARE-000..011 / SEC-007: public shares, authentication, scope, expiry, and revocation.
+  - SEC-000 / SEC-002 / SEC-004 / SEC-006: security/privacy, encryption, RBAC, and certificate pinning.
+  - PLUG-002..003 / AI-000..002: extension integration and optional AI.
+  - CORE-009 / INDEX-008 / INDEX-009 / INDEX-012: collections, nested locations, stale-file discovery,
+    and ephemeral cache memory efficiency. Background discovery is distinct from online-device status.
+  - Remaining UI, settings, accessibility, networking, and mobile scope stays in the relevant epics.
 
-Jobs and operations:
-	☐ Improve Job Manager ordering and metadata presentation
-	☐ Add a pop-out job viewer
-	☐ Complete cross-column drag in Column View
-	☐ Keep remote jobs reactive in Overview
+Mobile parity, separate from the desktop release gates:
+  ☐ [TRIAGE] Explorer inspector
+  ☐ [TRIAGE] Context menus
+  ☐ [TRIAGE] View settings
+  ☐ [TRIAGE] Job Manager
+  ☐ [TRIAGE] Quick Preview
+  ☐ [TRIAGE] Share flow, dependent on the chosen transfer/public-share backend
+  ☐ [TRIAGE] Custom device name during setup
+  - Link each item to a mobile task and platform-specific validation before implementation.
 
-Mobile parity:
-	☐ Explorer inspector
-	☐ Context menus
-	☐ View settings
-	☐ Job Manager
-	☐ Quick Preview
-	☐ Share flow
-	☐ Custom device name during setup
+Implemented baseline, retain regression coverage rather than duplicate open work:
+  ☑ TAURI-001 Remove false production affordances
+  ☑ TAURI-002 Persisted/reactive Favorites with recorded multi-window and restart validation
+  ☑ TAURI-003 Content-kind stats/search parity
+  ☑ TAURI-005 External drops through real jobs (remaining packaged coverage is in TAURI-006)
+  ☑ TAURI-007 Generated collection array types and regression tests
+  ☑ SAFE-001..005 Filesystem safety guards and free-space preflight
 
-Release evidence:
-	☐ Prepare deterministic demo data and screenshots
-	☐ Run typecheck, Rust check, task validation, and native smoke test
-	☐ Test Linux, macOS, and Windows packaged applications
+Audit evidence and limits:
+  - Static review of TODO, task metadata/checklists, relevant source paths, and CI/release configuration.
+  - Task validator passed after DEV-002 was added and completed.
+  - Environment hazard for DEV-000: Tauri-context builds can leave a stale 44 MB `sd-daemon`
+    in target/debug with pre-rename behavior; rebuild with a single cargo process and smoke-test
+    config naming (`wingdrive.json` on a fresh dir) before validating any release candidate.
+  - CI for initial HEAD 687162731: https://github.com/bernardopg/wingdrive/actions/runs/33753542885
+  - CI for ce940398d: https://github.com/bernardopg/wingdrive/actions/runs/34302883288
+    Local HEAD advanced to ce940398d during review. Relevant current paths were checked again.
+  - docs/design/TAURI_FILEMANAGER_REVIEW_2026-09-03.md is historical evidence, not current status:
+    live event hooks and Column folder drop targets now exist; other findings still need validation.
+  - No release.yml runs were returned by the GitHub query during this review.
+  - This review did not run native apps, packaged tests, or the full Rust/frontend test suites.
+  - P0/P1/P2 are proposed execution order for desktop readiness, not bulk changes to task metadata.

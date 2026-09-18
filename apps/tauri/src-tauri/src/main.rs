@@ -11,7 +11,7 @@ mod windows;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tauri::menu::MenuItem;
 use tauri::Emitter;
@@ -82,13 +82,114 @@ fn get_default_event_subscription() -> Vec<&'static str> {
 struct DaemonState {
 	started_by_us: bool,
 	socket_addr: String,
+	/// Effective directory for this daemon instance.
 	data_dir: PathBuf,
+	/// Root passed to `sd-daemon --data-dir`; named instances derive their own child directory.
+	base_data_dir: PathBuf,
+	instance: Option<String>,
 	server_url: Option<String>,
 	/// Per-session token guarding the local file streaming endpoint
 	server_token: Option<String>,
 	#[allow(dead_code)]
 	server_shutdown: Option<tokio::sync::mpsc::Sender<()>>,
 	daemon_process: Option<std::sync::Arc<tokio::sync::Mutex<Option<std::process::Child>>>>,
+}
+
+const DATA_DIR_ENV: &str = "WINGDRIVE_DATA_DIR";
+const INSTANCE_ENV: &str = "WINGDRIVE_INSTANCE";
+
+struct DaemonRuntimeConfig {
+	base_data_dir: PathBuf,
+	data_dir: PathBuf,
+	socket_addr: String,
+	instance: Option<String>,
+}
+
+fn validate_instance_name(instance: &str) -> Result<(), String> {
+	if instance.is_empty() {
+		return Err("WINGDRIVE_INSTANCE cannot be empty".to_string());
+	}
+	if instance.len() > 64 {
+		return Err("WINGDRIVE_INSTANCE is too long (max 64 characters)".to_string());
+	}
+	if !instance
+		.chars()
+		.all(|character| character.is_alphanumeric() || character == '-' || character == '_')
+	{
+		return Err(
+			"WINGDRIVE_INSTANCE may contain only letters, numbers, hyphens, and underscores"
+				.to_string(),
+		);
+	}
+	Ok(())
+}
+
+fn daemon_runtime_config() -> Result<DaemonRuntimeConfig, String> {
+	let base_data_dir = match std::env::var_os(DATA_DIR_ENV) {
+		Some(value) if !value.is_empty() => PathBuf::from(value),
+		Some(_) => return Err(format!("{DATA_DIR_ENV} cannot be empty")),
+		None => sd_tauri_core::default_data_dir()
+			.map_err(|error| format!("Failed to resolve data directory: {error}"))?,
+	};
+
+	daemon_runtime_config_for(base_data_dir, std::env::var(INSTANCE_ENV).ok())
+}
+
+fn daemon_runtime_config_for(
+	base_data_dir: PathBuf,
+	instance: Option<String>,
+) -> Result<DaemonRuntimeConfig, String> {
+	if let Some(instance) = instance.as_deref() {
+		validate_instance_name(instance)?;
+	}
+
+	let (data_dir, socket_addr) = match instance.as_deref() {
+		Some(instance) => {
+			let port = 6970 + (instance.bytes().map(u16::from).sum::<u16>() % 1000);
+			(
+				base_data_dir.join("instances").join(instance),
+				format!("127.0.0.1:{port}"),
+			)
+		}
+		None => (base_data_dir.clone(), "127.0.0.1:6969".to_string()),
+	};
+
+	Ok(DaemonRuntimeConfig {
+		base_data_dir,
+		data_dir,
+		socket_addr,
+		instance,
+	})
+}
+
+#[cfg(test)]
+mod daemon_runtime_config_tests {
+	use super::*;
+
+	#[test]
+	fn named_instance_uses_its_own_directory_and_port() {
+		let config = daemon_runtime_config_for(
+			PathBuf::from("/tmp/wingdrive-dev"),
+			Some("desktop-dev".to_string()),
+		)
+		.expect("valid runtime configuration");
+
+		assert_eq!(
+			config.data_dir,
+			PathBuf::from("/tmp/wingdrive-dev/instances/desktop-dev")
+		);
+		assert_eq!(config.socket_addr, "127.0.0.1:7096");
+	}
+
+	#[test]
+	fn invalid_instance_is_rejected() {
+		let result = daemon_runtime_config_for(
+			PathBuf::from("/tmp/wingdrive-dev"),
+			Some("../production".to_string()),
+		);
+
+		assert!(matches!(result, Err(error) if error.contains("letters, numbers")));
+	}
 }
 
 /// Daemon connection pool - maintains ONE persistent connection for all subscriptions
@@ -966,13 +1067,7 @@ async fn start_daemon_process(
 	app: tauri::AppHandle,
 	state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
 ) -> Result<(), String> {
-	let (data_dir, socket_addr) = {
-		let daemon_state = state.read().await;
-		(
-			daemon_state.data_dir.clone(),
-			daemon_state.socket_addr.clone(),
-		)
-	};
+	let socket_addr = state.read().await.socket_addr.clone();
 
 	// Check if already running
 	if is_daemon_running(&socket_addr).await {
@@ -983,7 +1078,11 @@ async fn start_daemon_process(
 	let _ = app.emit("daemon-starting", ());
 
 	// Start the daemon
-	let child = start_daemon(&data_dir, &socket_addr).await?;
+	let (base_data_dir, instance) = {
+		let state = state.read().await;
+		(state.base_data_dir.clone(), state.instance.clone())
+	};
+	let child = start_daemon(&base_data_dir, instance.as_deref(), &socket_addr).await?;
 
 	// Store the process handle
 	let mut daemon_state = state.write().await;
@@ -1628,18 +1727,33 @@ fn find_daemon_binary() -> Result<std::path::PathBuf, String> {
 		})
 }
 
+/// Builds the daemon launch command, identical whether invoked from the app
+/// or from tests, so a test never has to duplicate the argument order that
+/// production spawning depends on.
+fn build_daemon_command(
+	daemon_path: &Path,
+	base_data_dir: &PathBuf,
+	instance: Option<&str>,
+) -> std::process::Command {
+	let mut command = std::process::Command::new(daemon_path);
+	command.arg("--data-dir").arg(base_data_dir);
+	if let Some(instance) = instance {
+		command.arg("--instance").arg(instance);
+	}
+	command
+}
+
 /// Start the daemon as a background process
 async fn start_daemon(
-	data_dir: &PathBuf,
+	base_data_dir: &PathBuf,
+	instance: Option<&str>,
 	socket_addr: &str,
 ) -> Result<std::process::Child, String> {
 	let daemon_path = find_daemon_binary()?;
 
-	tracing::info!("Starting daemon from: {:?}", daemon_path);
+	tracing::info!(?daemon_path, ?base_data_dir, ?instance, "Starting daemon");
 
-	let child = std::process::Command::new(daemon_path)
-		.arg("--data-dir")
-		.arg(data_dir)
+	let child = build_daemon_command(&daemon_path, base_data_dir, instance)
 		.stdout(std::process::Stdio::null())
 		.stderr(std::process::Stdio::null())
 		.spawn()
@@ -1658,6 +1772,99 @@ async fn start_daemon(
 	}
 
 	Err("Daemon failed to start (connection not available after 3 seconds)".to_string())
+}
+
+#[cfg(test)]
+mod start_daemon_integration_tests {
+	//! Spawns the real `sd-daemon` binary built by this workspace and proves
+	//! the arguments `daemon_runtime_config_for` derives actually produce an
+	//! isolated, reachable instance, rather than only asserting on the struct.
+	use super::*;
+	use std::net::TcpStream;
+	use std::time::{Duration, Instant};
+
+	/// Locates the `sd-daemon` binary built alongside this crate. Test
+	/// binaries run from `target/<profile>/deps/`, not from the directory
+	/// `find_daemon_binary` searches at runtime, so this mirrors Cargo's own
+	/// output layout instead of reusing that lookup.
+	fn workspace_daemon_binary() -> PathBuf {
+		let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+		let workspace_root = manifest_dir
+			.parent() // apps/tauri
+			.and_then(Path::parent) // apps
+			.and_then(Path::parent) // workspace root
+			.expect("src-tauri is nested three levels under the workspace root");
+		let profile = if cfg!(debug_assertions) {
+			"debug"
+		} else {
+			"release"
+		};
+		let path = workspace_root
+			.join("target")
+			.join(profile)
+			.join(format!("sd-daemon{}", std::env::consts::EXE_SUFFIX));
+		assert!(
+			path.exists(),
+			"expected sd-daemon at {path:?}; run `cargo build --bin sd-daemon` first"
+		);
+		path
+	}
+
+	fn wait_for_port(socket_addr: &str, timeout: Duration) -> bool {
+		let deadline = Instant::now() + timeout;
+		while Instant::now() < deadline {
+			if TcpStream::connect(socket_addr).is_ok() {
+				return true;
+			}
+			std::thread::sleep(Duration::from_millis(100));
+		}
+		false
+	}
+
+	#[test]
+	fn named_instance_spawns_isolated_reachable_daemon() {
+		let daemon_path = workspace_daemon_binary();
+		let base_data_dir = tempfile::tempdir().expect("tempdir");
+		// A unique name per run avoids a port collision with a leftover daemon
+		// from a previous invocation, because the port derives from the name.
+		let instance = format!("integration-test-{}", std::process::id());
+		let config =
+			daemon_runtime_config_for(base_data_dir.path().to_path_buf(), Some(instance.clone()))
+				.expect("valid runtime configuration");
+
+		let mut child = build_daemon_command(&daemon_path, &config.base_data_dir, Some(&instance))
+			.stdout(std::process::Stdio::null())
+			.stderr(std::process::Stdio::null())
+			.spawn()
+			.expect("failed to spawn sd-daemon");
+
+		let reachable = wait_for_port(&config.socket_addr, Duration::from_secs(20));
+		let _ = child.kill();
+		let _ = child.wait();
+
+		assert!(
+			reachable,
+			"daemon did not become reachable on {} within 20s",
+			config.socket_addr
+		);
+		assert!(
+			config.data_dir.exists(),
+			"daemon did not create its instance directory at {:?}",
+			config.data_dir
+		);
+		// Structural isolation: everything the daemon writes must live inside
+		// instances/<name>/, never at the base data directory itself.
+		let stray: Vec<_> = std::fs::read_dir(base_data_dir.path())
+			.expect("read base data dir")
+			.filter_map(|entry| entry.ok())
+			.map(|entry| entry.file_name())
+			.filter(|name| name != "instances")
+			.collect();
+		assert!(
+			stray.is_empty(),
+			"named instance wrote directly under the base data directory: {stray:?}"
+		);
+	}
 }
 
 fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
@@ -2144,17 +2351,29 @@ fn main() {
 				tracing::info!("Drag ended callback registered");
 			}
 
-			// Get data directory (use default WingDrive location)
-			let data_dir =
-				sd_tauri_core::default_data_dir().expect("Failed to get default data directory");
+			let runtime = daemon_runtime_config().expect("Failed to configure daemon runtime");
+			tracing::info!(
+				base_data_dir = %runtime.base_data_dir.display(),
+				data_dir = %runtime.data_dir.display(),
+				instance = ?runtime.instance,
+				socket_addr = %runtime.socket_addr,
+				"Configured daemon runtime"
+			);
 
-			let socket_addr = "127.0.0.1:6969".to_string();
+			let data_dir = runtime.data_dir;
+			let base_data_dir = runtime.base_data_dir;
+			let instance = runtime.instance;
+			let socket_addr = runtime.socket_addr;
+			let daemon_base_data_dir = base_data_dir.clone();
+			let daemon_instance = instance.clone();
 
 			// Initialize state immediately (before async operations)
 			let daemon_state = Arc::new(RwLock::new(DaemonState {
 				started_by_us: false,
 				socket_addr: socket_addr.clone(),
 				data_dir: data_dir.clone(),
+				base_data_dir,
+				instance: instance.clone(),
 				server_url: None,
 				server_token: None,
 				server_shutdown: None,
@@ -2193,6 +2412,8 @@ fn main() {
 			let app_state_current_library_id = app_state.current_library_id.clone();
 			let daemon_state_clone = daemon_state.clone();
 			let data_dir_clone = data_dir.clone();
+			let base_data_dir_clone = daemon_base_data_dir;
+			let instance_clone = daemon_instance;
 
 			app.manage(daemon_state.clone());
 			app.manage(app_state);
@@ -2228,7 +2449,13 @@ fn main() {
 					(false, None)
 				} else {
 					tracing::info!("No daemon running, starting new instance");
-					match start_daemon(&data_dir_clone, &socket_addr).await {
+					match start_daemon(
+						&base_data_dir_clone,
+						instance_clone.as_deref(),
+						&socket_addr,
+					)
+					.await
+					{
 						Ok(child) => (
 							true,
 							Some(std::sync::Arc::new(tokio::sync::Mutex::new(Some(child)))),

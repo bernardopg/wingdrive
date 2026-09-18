@@ -32,16 +32,16 @@ futures       = "0.3"
 tokio         = { version = "1.40", features = ["full"] }
 
 # Database
-sea-orm = { version = "1.1", features = [
+sea-orm = { version = "1.1", default-features = false, features = [
 	"macros",
 	"runtime-tokio-rustls",
 	"sqlx-sqlite",
-	"uuid",
+	"with-uuid",
 	"with-chrono",
 	"with-json"
 ] }
-sea-orm-migration = { version = "1.1", features = ["runtime-tokio-rustls", "sqlx-sqlite"] }
-sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "sqlite"] }
+sea-orm-migration = { version = "1.1", default-features = false, features = ["runtime-tokio-rustls", "sqlx-sqlite"] }
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio-rustls", "sqlite"] }
 
 # API (temporarily disabled)
 # axum = "0.7"
@@ -64,7 +64,7 @@ specta = { git = "https://github.com/jamiepine/specta", branch = "main", feature
 specta-serde = { git = "https://github.com/jamiepine/specta", branch = "main" }
 specta-swift = { git = "https://github.com/jamiepine/specta", branch = "main" }
 specta-typescript = { git = "https://github.com/jamiepine/specta", branch = "main" }
-strum = { version = "0.26", features = ["derive"] }
+strum = { version = "0.28", features = ["derive"] }
 toml = "0.8"
 hostname = "^0.4"
 
@@ -85,7 +85,7 @@ notify = "8.2"  # File system watching
 sha2   = "0.10" # SHA-256 hashing for CAS IDs
 
 # Cloud storage integration
-opendal = { version = "0.56", features = [
+opendal = { version = "0.59", features = [
 	"services-s3",
 	"services-gdrive",
 	"services-onedrive",
@@ -138,7 +138,8 @@ rubato     = { version = "0.16", optional = true }  # Audio resampling to 16kHz
 
 # Networking
 # Iroh P2P networking
-iroh = { version = "0.98.2", features = ["address-lookup-mdns"] }
+iroh                     = "1.1"
+iroh-mdns-address-lookup = "0.5"
 
 # Serialization for protocols
 serde_cbor = "0.11"
@@ -147,7 +148,7 @@ serde_cbor = "0.11"
 ed25519-dalek = "2.1"
 
 # Cryptography and networking utilities
-aes-gcm      = "0.10"                                           # AES-GCM encryption for secure storage
+aes-gcm      = "0.11"                                           # AES-GCM encryption for secure storage
 argon2       = "0.6"                                            # Password derivation
 async-stream = "0.3"                                            # File streaming
 backoff      = "0.4"                                            # Retry logic
@@ -166,7 +167,7 @@ x25519-dalek     = "2.0"
 
 # Network utilities
 if-watch         = "3.0"
-local-ip-address = "0.5"
+local-ip-address = "0.6"
 # colored already defined above
 
 # Utils

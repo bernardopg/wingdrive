@@ -9,8 +9,8 @@
  * 5. Cleans up daemon on exit
  */
 import {execSync, spawn} from 'child_process';
-import {existsSync, unlinkSync} from 'fs';
-import {homedir, platform} from 'os';
+import {existsSync} from 'fs';
+import {platform} from 'os';
 import {dirname, join, resolve} from 'path';
 import {fileURLToPath} from 'url';
 
@@ -44,14 +44,25 @@ function getCargoTargetDir(): string {
 const BIN_NAME = IS_WIN ? 'sd-daemon.exe' : 'sd-daemon';
 const DAEMON_BIN = join(getCargoTargetDir(), 'debug', BIN_NAME);
 
-const DAEMON_PORT = 6969;
-const DAEMON_ADDR = `127.0.0.1:${DAEMON_PORT}`;
+const DATA_DIR = process.env.WINGDRIVE_DATA_DIR;
+const INSTANCE = process.env.WINGDRIVE_INSTANCE;
 
-const preferredDataDir = join(homedir(), '.wingdrive');
-const legacyDataDir = join(homedir(), '.spacedrive');
-const DATA_DIR = !existsSync(preferredDataDir) && existsSync(legacyDataDir)
-	? legacyDataDir
-	: preferredDataDir;
+if (!DATA_DIR || !INSTANCE) {
+	throw new Error(
+		'WINGDRIVE_DATA_DIR and WINGDRIVE_INSTANCE are required. Start development with ./scripts/dev-isolated.sh.'
+	);
+}
+
+if (!/^[A-Za-z0-9_-]{1,64}$/.test(INSTANCE)) {
+	throw new Error(
+		'WINGDRIVE_INSTANCE must contain only letters, numbers, hyphens, and underscores.'
+	);
+}
+
+const DAEMON_PORT =
+	6970 +
+	([...Buffer.from(INSTANCE)].reduce((sum, byte) => sum + byte, 0) % 1000);
+const DAEMON_ADDR = `127.0.0.1:${DAEMON_PORT}`;
 
 let daemonProcess: any = null;
 let viteProcess: any = null;
@@ -133,7 +144,9 @@ async function main() {
 
 		console.log('Daemon built successfully');
 		// Start daemon
-		console.log('Starting daemon...');
+		console.log(
+			`Starting isolated daemon instance ${INSTANCE} in ${DATA_DIR}...`
+		);
 		startedDaemon = true;
 
 		// Verify binary exists
@@ -144,19 +157,23 @@ async function main() {
 		const depsLibPath = join(PROJECT_ROOT, 'apps/.deps/lib');
 		const depsBinPath = join(PROJECT_ROOT, 'apps/.deps/bin');
 
-		daemonProcess = spawn(DAEMON_BIN, ['--data-dir', DATA_DIR], {
-			cwd: PROJECT_ROOT,
-			stdio: ['ignore', 'pipe', 'pipe'],
-			env: {
-				...process.env,
-				// macOS library path
-				DYLD_LIBRARY_PATH: depsLibPath,
-				// Windows: Add DLLs directory to PATH
-				PATH: IS_WIN
-					? `${depsBinPath};${process.env.PATH || ''}`
-					: process.env.PATH
+		daemonProcess = spawn(
+			DAEMON_BIN,
+			['--data-dir', DATA_DIR, '--instance', INSTANCE],
+			{
+				cwd: PROJECT_ROOT,
+				stdio: ['ignore', 'pipe', 'pipe'],
+				env: {
+					...process.env,
+					// macOS library path
+					DYLD_LIBRARY_PATH: depsLibPath,
+					// Windows: Add DLLs directory to PATH
+					PATH: IS_WIN
+						? `${depsBinPath};${process.env.PATH || ''}`
+						: process.env.PATH
+				}
 			}
-		});
+		);
 
 		// Log daemon output
 		daemonProcess.stdout.on('data', (data: Buffer) => {

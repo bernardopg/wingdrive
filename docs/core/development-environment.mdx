@@ -1,0 +1,63 @@
+---
+title: Isolated Linux Desktop Development
+sidebarTitle: Isolated Desktop Development
+---
+
+Use the isolated launcher for every local desktop session:
+
+```bash
+just dev-desktop
+# or
+./scripts/dev-isolated.sh
+```
+
+The launcher sets `WINGDRIVE_DATA_DIR` to
+`$XDG_STATE_HOME/wingdrive-dev/data`, or
+`~/.local/state/wingdrive-dev/data` when `XDG_STATE_HOME` is unset. It starts
+only the named `desktop-dev` daemon instance. Its effective data directory is:
+
+```text
+<state-root>/data/instances/desktop-dev/
+```
+
+It never uses `~/.wingdrive` or the legacy `~/.spacedrive` directory. Keep
+production WingDrive closed only when you need to avoid network discovery or
+other shared external services. Its local data and daemon port remain separate.
+
+## Custom disposable state
+
+Set `WINGDRIVE_DEV_ROOT` to keep a scenario separate from normal development
+state. Set `WINGDRIVE_DEV_INSTANCE` to use a different daemon instance. Instance
+names allow letters, numbers, hyphens, and underscores only.
+
+```bash
+WINGDRIVE_DEV_ROOT="$(mktemp -d)" \
+WINGDRIVE_DEV_INSTANCE=file-operations \
+./scripts/dev-isolated.sh
+```
+
+The instance determines the TCP port with the same rule as `sd-daemon`. Do not
+run two launchers with the same instance name at once.
+
+## Inspect and remove development state
+
+```bash
+find "${XDG_STATE_HOME:-$HOME/.local/state}/wingdrive-dev" -maxdepth 3 -type f
+rm -rf "${XDG_STATE_HOME:-$HOME/.local/state}/wingdrive-dev"
+```
+
+Only remove the development root shown by the launcher. Never substitute the
+production data directory in that command.
+
+## Running the daemon or CLI directly
+
+Pass both options so the CLI and daemon target the same isolated instance:
+
+```bash
+root="${XDG_STATE_HOME:-$HOME/.local/state}/wingdrive-dev/data"
+cargo run --bin sd-daemon -- --data-dir "$root" --instance desktop-dev
+cargo run --bin sd-cli -- --data-dir "$root" --instance desktop-dev library list
+```
+
+The Tauri runtime reads `WINGDRIVE_DATA_DIR` and `WINGDRIVE_INSTANCE` too. The
+launcher exports them for both the frontend build process and the Rust process.

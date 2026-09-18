@@ -9,11 +9,10 @@ use crate::service::network::{
 	utils::{logging::NetworkLogger, NetworkIdentity},
 	NetworkingError, Result,
 };
-use iroh::address_lookup::{
-	dns::DnsAddressLookup, mdns::MdnsAddressLookup, pkarr::PkarrPublisher, AddressLookup,
-};
+use iroh::address_lookup::{dns::DnsAddressLookup, pkarr::PkarrPublisher, AddressLookup};
 use iroh::endpoint::{presets, Connection};
 use iroh::{Endpoint, EndpointAddr, EndpointId, RelayMode, RelayUrl, Watcher};
+use iroh_mdns_address_lookup::{DiscoveryEvent, MdnsAddressLookup};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, RwLock};
 use uuid::Uuid;
@@ -222,7 +221,7 @@ impl NetworkingService {
 		// pkarr + DNS-only discovery in that case — remote pairing via node ID
 		// continues to work, we just lose local-network auto-discovery.
 		let build_endpoint = |with_mdns: bool| {
-			// `Minimal` only installs the TLS crypto provider that iroh 0.98 made mandatory;
+			// `Minimal` only installs the TLS crypto provider Iroh requires;
 			// relay and address lookup stay explicit below so behaviour is unchanged.
 			let mut builder = Endpoint::builder(presets::Minimal)
 				.secret_key(secret_key.clone())
@@ -1139,7 +1138,7 @@ impl NetworkingService {
 			tokio::select! {
 				Some(event) = discovery_stream.next() => {
 					match event {
-						iroh::address_lookup::mdns::DiscoveryEvent::Discovered { endpoint_info, .. } => {
+						DiscoveryEvent::Discovered { endpoint_info, .. } => {
 							// Check if this node is broadcasting our session_id
 							if let Some(user_data) = endpoint_info.data.user_data() {
 								if user_data.as_ref() == session_id_str {
@@ -1167,7 +1166,7 @@ impl NetworkingService {
 								}
 							}
 						}
-						iroh::address_lookup::mdns::DiscoveryEvent::Expired { .. } => {
+						DiscoveryEvent::Expired { .. } => {
 							// Node expired, continue searching
 						}
 						// DiscoveryEvent is non_exhaustive; ignore variants added upstream.

@@ -398,6 +398,24 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn fresh_directory_creates_wingdrive_config_not_legacy() {
+		let root = tempfile::tempdir().unwrap();
+		let data_dir = root.path().to_path_buf();
+
+		let loaded = AppConfig::load_from(&data_dir).unwrap();
+
+		assert!(
+			data_dir.join("wingdrive.json").exists(),
+			"a fresh directory must create wingdrive.json"
+		);
+		assert!(
+			!data_dir.join("spacedrive.json").exists(),
+			"a fresh directory must never create the legacy spacedrive.json"
+		);
+		assert_eq!(loaded.data_dir, data_dir);
+	}
+
+	#[test]
 	fn reads_legacy_config_but_writes_wingdrive_config() {
 		let root = tempfile::tempdir().unwrap();
 		let data_dir = root.path().to_path_buf();

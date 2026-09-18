@@ -7,8 +7,8 @@ setup:
 dev-daemon *ARGS:
 	cargo run --features ffmpeg,heif --bin sd-daemon {{ARGS}}
 
-dev-desktop:
-	cd apps/tauri && bun run tauri:dev
+dev-desktop *ARGS:
+	./scripts/dev-isolated.sh {{ARGS}}
 
 dev-mobile:
 	cd apps/mobile && bun run start
