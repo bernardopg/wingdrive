@@ -44,7 +44,7 @@
     "react-hook-form": "^7.50.0",
     "react-loading-icons": "^1.1.0",
     "react-resizable-layout": "^0.7.0",
-    "sonner": "^1.4.0",
+    "sonner": "^2.0.8",
 		"zod": "^3.22.0"
 	},
 	"devDependencies": {
