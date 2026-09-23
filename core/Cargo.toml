@@ -134,7 +134,7 @@ webp             = "0.3"
 # Speech-to-text dependencies (optional, behind whisper feature)
 whisper-rs = { version = "0.16.0", optional = true }
 hound      = { version = "3.5", optional = true }   # WAV file reading
-rubato     = { version = "0.16", optional = true }  # Audio resampling to 16kHz
+rubato     = { version = "5.0", optional = true }  # Audio resampling to 16kHz
 
 # Networking
 # Iroh P2P networking
