@@ -38,7 +38,7 @@
 	},
 	"devDependencies": {
 		"@tanstack/react-virtual": "^3.13.26",
-		"@types/react": "^19.0.0",
+		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.0.0",
 		"tsup": "^8.0.0",
 		"typescript": "^5.4.0"
