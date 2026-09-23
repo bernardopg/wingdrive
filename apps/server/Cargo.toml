@@ -16,7 +16,7 @@ ai = ["sd-core/ai"]
 sd-core = { path = "../../core" }
 
 # HTTP server
-axum       = "0.7"
+axum       = "0.8"
 axum-extra = { version = "0.9", features = ["typed-header"] }
 http       = "1.1"
 tokio      = { version = "1", features = ["rt-multi-thread", "signal", "sync", "io-util", "fs"] }
