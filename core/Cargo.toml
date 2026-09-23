@@ -189,7 +189,7 @@ zstd         = { version = "0.13", features = ["zstdmt"] } # Multithreaded compr
 whoami    = "2.1"
 
 # Secure storage
-keyring = "3.6"  # Only for device key in keychain
+keyring = "4.2"  # Only for device key in keychain
 redb = "2.2"     # Encrypted KV store for library keys, credentials, etc.
 
 # CLI dependencies
