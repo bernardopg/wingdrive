@@ -13,7 +13,6 @@ ai = ["sd-core/ai"]
 
 [dependencies]
 anyhow      = "1"
-bincode     = { version = "2.0.0-rc.3", features = ["serde"] }
 chrono      = { version = "0.4", features = ["serde"] }
 clap        = { version = "4", features = ["derive"] }
 comfy-table = "8.0"
@@ -22,7 +21,7 @@ dirs        = "6.0"
 indicatif   = "0.18"
 inquire     = "0.9"
 qr2term     = "0.3"
-ratatui     = "0.26"
+ratatui     = "0.30"
 reqwest     = { version = "0.12", features = ["json"] }
 sd-core     = { path = "../../core", features = ["cli"] }
 serde       = { version = "1", features = ["derive"] }

@@ -38,6 +38,9 @@ impl LibraryAction for FileRenameAction {
 	type Output = JobReceipt;
 
 	fn from_input(input: Self::Input) -> Result<Self, String> {
+		if matches!(input.target, SdPath::Cloud { .. }) {
+			return Err("Cloud rename operations are not supported yet".to_string());
+		}
 		Ok(FileRenameAction {
 			target: input.target,
 			new_name: input.new_name,
@@ -57,6 +60,12 @@ impl LibraryAction for FileRenameAction {
 
 		// Validate target is not a Content or Sidecar path (these cannot be renamed directly)
 		match &self.target {
+			SdPath::Cloud { .. } => {
+				return Err(ActionError::Validation {
+					field: "target".to_string(),
+					message: "Cloud rename operations are not supported yet".to_string(),
+				});
+			}
 			SdPath::Content { .. } => {
 				return Err(ActionError::Validation {
 					field: "target".to_string(),
@@ -80,6 +89,12 @@ impl LibraryAction for FileRenameAction {
 		library: Arc<crate::library::Library>,
 		_context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
+		if matches!(&self.target, SdPath::Cloud { .. }) {
+			return Err(ActionError::Validation {
+				field: "target".to_string(),
+				message: "Cloud rename operations are not supported yet".to_string(),
+			});
+		}
 		// Use FileCopyJob::new_rename which handles the rename as a move operation
 		let job = FileCopyJob::new_rename(self.target, self.new_name);
 
@@ -109,5 +124,20 @@ mod tests {
 		let target = SdPath::local(std::path::PathBuf::from("/test/file.txt"));
 		let action = FileRenameAction::new(target, "newname.txt");
 		assert_eq!(action.new_name, "newname.txt");
+	}
+
+	#[test]
+	fn test_cloud_rename_is_rejected() {
+		let input = FileRenameInput::new(
+			SdPath::Cloud {
+				service: crate::volume::backend::CloudServiceType::S3,
+				identifier: "bucket".into(),
+				path: "file.txt".into(),
+			},
+			"renamed.txt",
+		);
+		assert!(FileRenameAction::from_input(input)
+			.unwrap_err()
+			.contains("Cloud"));
 	}
 }

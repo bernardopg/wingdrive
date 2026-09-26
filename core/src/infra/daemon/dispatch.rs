@@ -5,9 +5,17 @@ use futures::future::BoxFuture;
 use tokio::sync::RwLock;
 
 use crate::Core;
-use bincode::config::standard;
-use bincode::serde::{decode_from_slice, encode_to_vec};
 use serde::{de::DeserializeOwned, Serialize};
+
+/// Wire encoding for daemon dispatch (postcard, maintained; replaces unmaintained bincode 2.0.0-rc).
+fn encode_wire<T: Serialize>(v: &T) -> Result<Vec<u8>, String> {
+	postcard::to_allocvec(v).map_err(|e| e.to_string())
+}
+
+/// Wire decoding for daemon dispatch.
+fn decode_wire<T: DeserializeOwned>(bytes: &[u8]) -> Result<T, String> {
+	postcard::from_bytes(bytes).map_err(|e| format!("deserialize: {e}"))
+}
 
 /// Unified handler signature for both actions and queries
 /// Actions return empty Vec<u8>, queries return serialized output
@@ -59,9 +67,7 @@ where
 	std::sync::Arc::new(move |payload, core| {
 		let exec = exec.clone();
 		Box::pin(async move {
-			let val: T = decode_from_slice(&payload, standard())
-				.map_err(|e| format!("deserialize: {}", e))?
-				.0;
+			let val: T = decode_wire(&payload)?;
 			(exec)(val, core).await.map(|_| Vec::new())
 		})
 	})
@@ -83,11 +89,9 @@ where
 	std::sync::Arc::new(move |payload, core| {
 		let exec = exec.clone();
 		Box::pin(async move {
-			let val: Q = decode_from_slice(&payload, standard())
-				.map_err(|e| format!("deserialize: {}", e))?
-				.0;
+			let val: Q = decode_wire(&payload)?;
 			let out = (exec)(val, core).await?;
-			encode_to_vec(&out, standard()).map_err(|e| e.to_string())
+			encode_wire(&out)
 		})
 	})
 }

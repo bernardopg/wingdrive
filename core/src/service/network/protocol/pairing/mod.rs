@@ -41,8 +41,6 @@ use crate::{
 		NetworkingError, Result,
 	},
 };
-use bincode::config::standard;
-use bincode::serde::encode_to_vec;
 use persistence::PairingPersistence;
 use security::PairingSecurity;
 use vouching_queue::{VouchQueueStatus, VouchingQueue, VouchingQueueEntry};
@@ -632,8 +630,8 @@ impl PairingProtocolHandler {
 	}
 
 	fn sign_vouch_payload(&self, payload: &VouchPayload) -> Result<Vec<u8>> {
-		let serialized = encode_to_vec(payload, standard()).map_err(|e| {
-			NetworkingError::Protocol(format!("Failed to serialize vouch payload: {}", e))
+		let serialized = postcard::to_allocvec(payload).map_err(|e| {
+			NetworkingError::Protocol(format!("Failed to serialize vouch payload: {e}"))
 		})?;
 		self.identity.sign(&serialized)
 	}
@@ -646,8 +644,8 @@ impl PairingProtocolHandler {
 	) -> Result<bool> {
 		PairingSecurity::validate_public_key(public_key_bytes)?;
 		PairingSecurity::validate_signature(signature)?;
-		let serialized = encode_to_vec(payload, standard()).map_err(|e| {
-			NetworkingError::Protocol(format!("Failed to serialize vouch payload: {}", e))
+		let serialized = postcard::to_allocvec(payload).map_err(|e| {
+			NetworkingError::Protocol(format!("Failed to serialize vouch payload: {e}"))
 		})?;
 
 		use ed25519_dalek::{Signature, Verifier, VerifyingKey};

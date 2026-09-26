@@ -6,7 +6,7 @@ assignee: unassigned
 parent: UI-000
 priority: High
 tags: [epic, tauri, desktop, quality]
-last_updated: 2026-08-24
+last_updated: 2026-09-25
 ---
 
 ## Description
@@ -15,11 +15,11 @@ Make the Tauri desktop app honest and release-ready. Every visible action must e
 
 ## Current Evidence
 
-- TypeScript typecheck and Tauri Rust check pass.
+- Earlier TypeScript typecheck and Tauri Rust check passed. The current checkout's interface typecheck fails in third-party declarations, missing assets, and the unavailable private Spacebot client.
 - Native Linux window starts and connects to the daemon.
 - Overview, File Kinds, Sources, Redundancy, Settings, tabs, sidebar, inspector, and auxiliary windows render against real runtime state.
-- Favorites and the standalone Search route are placeholders.
-- Spacebot uses a no-op compatibility client when its private runtime is absent.
+- Favorites use persisted state and are covered by TAURI-002.
+- Spacebot is hidden or explicitly unavailable when its private runtime is absent; its real-runtime contract test remains open.
 
 ## Acceptance Criteria
 

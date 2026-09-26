@@ -40,7 +40,6 @@ pub const PDF_PORTRAIT_RENDER_WIDTH: pdfium_render::prelude::Pixels = 794;
 pub const PDF_LANDSCAPE_RENDER_WIDTH: pdfium_render::prelude::Pixels = 1123;
 
 #[cfg_attr(feature = "specta", derive(specta::Type))]
-#[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
 #[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
 #[derive(Debug, Clone, Copy)]
 pub enum ConvertibleExtension {

@@ -493,6 +493,13 @@ whitepaper/*.log
 test_data
 :memory:
 
+# Cargo: single workspace lockfile at repo root. Nested lockfiles
+# (e.g. core/Cargo.lock) are stale build artifacts that generate
+# phantom Dependabot alerts; never commit them.
+core/Cargo.lock
+crates/**/Cargo.lock
+apps/**/Cargo.lock
+
 .claude
 .serena
 # Ferramentas locais de agente

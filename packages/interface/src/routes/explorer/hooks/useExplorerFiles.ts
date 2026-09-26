@@ -5,9 +5,12 @@ import type {
 	FileSearchOutput,
 } from "@sd/ts-client";
 import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";
 import { useExplorer } from "../context";
 import { useVirtualListing } from "./useVirtualListing";
+
+const RECENTS_PAGE_SIZE = 100;
 
 export type FileSource =
 	"search" | "virtual" | "directory" | "recents" | "filtered" | "tag";
@@ -17,6 +20,8 @@ export interface ExplorerFilesResult {
 	isLoading: boolean;
 	error: Error | null;
 	source: FileSource;
+	hasMore?: boolean;
+	page?: number;
 }
 
 /**
@@ -32,6 +37,13 @@ export interface ExplorerFilesResult {
  */
 export function useExplorerFiles(): ExplorerFilesResult {
 	const explorer = useExplorer();
+	const [searchParams] = useSearchParams();
+	const requestedPage = Number(searchParams.get("page") ?? 0);
+	const recentsPage = Number.isSafeInteger(requestedPage) &&
+		requestedPage >= 0 &&
+		requestedPage <= Math.floor(0xffffffff / RECENTS_PAGE_SIZE)
+		? requestedPage
+		: 0;
 	const { mode, currentPath, sortBy, viewSettings } = explorer;
 
 	// Check for virtual listing first
@@ -164,11 +176,11 @@ export function useExplorerFiles(): ExplorerFilesResult {
 				direction: "Desc", // Most recent first
 			},
 			pagination: {
-				limit: 100, // Reasonable limit for recents screen
-				offset: 0,
+				limit: RECENTS_PAGE_SIZE + 1,
+				offset: recentsPage * RECENTS_PAGE_SIZE,
 			},
 		};
-	}, [isRecentsMode]);
+	}, [isRecentsMode, recentsPage]);
 
 	// Search query
 	const searchQuery = useNormalizedQuery<FileSearchInput, FileSearchOutput>({
@@ -276,9 +288,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 			);
 		}
 		if (isRecentsMode) {
-			return (
-				(recentsQuery.data as FileSearchOutput | undefined)?.files || []
-			);
+			return (recentsQuery.data as FileSearchOutput | undefined)?.files.slice(0, RECENTS_PAGE_SIZE) ?? [];
 		}
 		if (isSearchMode) {
 			return (
@@ -329,5 +339,13 @@ export function useExplorerFiles(): ExplorerFilesResult {
 						? null
 						: directoryQuery.error;
 
-	return { files, isLoading, error, source };
+	return {
+		files,
+		isLoading,
+		error,
+		source,
+		hasMore: isRecentsMode &&
+			((recentsQuery.data as FileSearchOutput | undefined)?.files.length ?? 0) > RECENTS_PAGE_SIZE,
+		page: isRecentsMode ? recentsPage : undefined,
+	};
 }

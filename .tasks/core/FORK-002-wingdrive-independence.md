@@ -1,10 +1,11 @@
 ---
 id: FORK-002
 title: "Complete WingDrive identity and repository independence"
-status: "Done"
+status: "In Progress"
 assignee: "bernardopg"
 priority: "High"
 tags: ["fork", "branding", "github-actions", "documentation", "release"]
+last_updated: 2026-09-25
 ---
 
 ## Description
@@ -79,7 +80,8 @@ supported during the migration. No existing user data is moved or deleted.
 
 ## Remaining External Verification
 
-Keep this task `In Progress` until the changes are committed and pushed, then
-record successful GitHub run URLs for CI, mobile validation, release artifacts,
-and GHCR publication. Apple, Google Play, and signed Tauri updater publication
-remain disabled until WingDrive-owned credentials exist.
+Keep this task `In Progress` until successful GitHub run URLs for CI, mobile
+validation, release artifacts, and GHCR publication are recorded. As of
+2026-09-25, GitHub returned no `release.yml` runs. Apple, Google Play, and
+signed Tauri updater publication remain disabled until WingDrive-owned
+credentials exist.

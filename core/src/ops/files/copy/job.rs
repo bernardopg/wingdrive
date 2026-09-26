@@ -203,6 +203,16 @@ impl JobHandler for FileCopyJob {
 		}
 
 		let resolved_sources = SdPathBatch::new(sources);
+		if resolved_sources
+			.paths
+			.iter()
+			.any(|path| matches!(path, SdPath::Cloud { .. }))
+			|| matches!(destination, SdPath::Cloud { .. })
+		{
+			return Err(JobError::execution(
+				"Cloud copy and move operations are not supported yet",
+			));
+		}
 		validate_layout(&resolved_sources, &destination)?;
 		self.destination = destination;
 

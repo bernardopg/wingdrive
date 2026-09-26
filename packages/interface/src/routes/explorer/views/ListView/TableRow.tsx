@@ -1,5 +1,6 @@
 import { memo, useCallback } from "react";
-import { flexRender, type Row } from "@tanstack/react-table";
+import { flexRender } from "@tanstack/react-table";
+import type { LegacyRow as Row } from "@tanstack/react-table/legacy";
 import clsx from "clsx";
 
 import type { File } from "@sd/ts-client";

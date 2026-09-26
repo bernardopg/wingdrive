@@ -136,6 +136,15 @@ impl FileCopyInput {
 		if self.sources.paths.is_empty() {
 			errors.push("At least one source file must be specified".to_string());
 		}
+		if self
+			.sources
+			.paths
+			.iter()
+			.any(|path| matches!(path, SdPath::Cloud { .. }))
+			|| matches!(&self.destination, SdPath::Cloud { .. })
+		{
+			errors.push("Cloud copy and move operations are not supported yet".to_string());
+		}
 
 		if errors.is_empty() {
 			Ok(())
@@ -216,6 +225,26 @@ mod tests {
 		assert!(result.is_err());
 		let errors = result.unwrap_err();
 		assert!(errors.iter().any(|e| e.contains("At least one source")));
+	}
+
+	#[test]
+	fn test_validation_rejects_cloud_paths() {
+		let cloud = SdPath::Cloud {
+			service: crate::volume::backend::CloudServiceType::S3,
+			identifier: "bucket".into(),
+			path: "file.txt".into(),
+		};
+		let local = SdPath::local("/file.txt");
+		for (source, destination) in [(cloud.clone(), local.clone()), (local, cloud)] {
+			let mut input = FileCopyInput::default();
+			input.sources = SdPathBatch::new(vec![source]);
+			input.destination = destination;
+			assert!(input
+				.validate()
+				.unwrap_err()
+				.iter()
+				.any(|error| error.contains("Cloud")));
+		}
 	}
 
 	#[test]

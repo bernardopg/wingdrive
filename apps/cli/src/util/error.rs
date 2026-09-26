@@ -53,12 +53,6 @@ impl From<anyhow::Error> for CliError {
 	}
 }
 
-impl From<bincode::error::DecodeError> for CliError {
-	fn from(err: bincode::error::DecodeError) -> Self {
-		Self::SerializationError(err.to_string())
-	}
-}
-
 /// Result type for CLI operations
 pub type CliResult<T> = Result<T, CliError>;
 

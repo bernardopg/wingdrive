@@ -720,7 +720,7 @@ fn detect_system_info() -> SystemInfo {
 	use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 
 	let mut sys = System::new_with_specifics(
-		RefreshKind::new()
+		RefreshKind::nothing()
 			.with_cpu(CpuRefreshKind::everything())
 			.with_memory(MemoryRefreshKind::everything()),
 	);
@@ -738,7 +738,7 @@ fn detect_system_info() -> SystemInfo {
 
 	let cpu_architecture = Some(std::env::consts::ARCH.to_string());
 
-	let cpu_cores_physical = sys.physical_core_count().map(|c| c as u32);
+	let cpu_cores_physical = System::physical_core_count().map(|c| c as u32);
 
 	let cpu_cores_logical = Some(sys.cpus().len() as u32);
 

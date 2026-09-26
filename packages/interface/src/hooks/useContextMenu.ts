@@ -26,7 +26,7 @@ export interface ContextMenuConfig {
 }
 
 export interface ContextMenuResult {
-	show: (e: React.MouseEvent) => Promise<void>;
+	show: (e: Pick<MouseEvent, 'preventDefault' | 'stopPropagation' | 'clientX' | 'clientY'>) => Promise<void>;
 	menuData: ContextMenuItem[] | null;
 	closeMenu: () => void;
 }
@@ -134,7 +134,7 @@ export function useContextMenu(config: ContextMenuConfig): ContextMenuResult {
 	const webController = useWebContextMenuController();
 
 	const show = useCallback(
-		async (e: React.MouseEvent) => {
+		async (e: Pick<MouseEvent, 'preventDefault' | 'stopPropagation' | 'clientX' | 'clientY'>) => {
 			e.preventDefault();
 			e.stopPropagation();
 

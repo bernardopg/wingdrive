@@ -1,12 +1,12 @@
 ---
 id: DEV-002
 title: "Isolate Linux desktop development runtime"
-status: In Progress
+status: Done
 assignee: unassigned
 priority: High
 parent: DEV-000
 tags: [development, tauri, daemon, safety, linux]
-last_updated: 2026-09-03
+last_updated: 2026-09-25
 ---
 
 ## Description

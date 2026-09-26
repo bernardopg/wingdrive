@@ -301,6 +301,22 @@ impl LibraryAction for FileCopyAction {
 				message: "At least one source file must be specified".to_string(),
 			});
 		}
+		let cloud_source = self
+			.sources
+			.paths
+			.iter()
+			.any(|path| matches!(path, SdPath::Cloud { .. }));
+		if cloud_source || matches!(&self.destination, SdPath::Cloud { .. }) {
+			return Err(ActionError::Validation {
+				field: if cloud_source {
+					"sources"
+				} else {
+					"destination"
+				}
+				.to_string(),
+				message: "Cloud copy and move operations are not supported yet".to_string(),
+			});
+		}
 
 		// Get strategy metadata for rich UI display
 		let first_source = &self.sources.paths[0];

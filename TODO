@@ -9,8 +9,9 @@
 
 P0 - Establish a trustworthy release baseline:
   ☐ Reconcile task status, acceptance criteria, and evidence before selecting release scope
-    - TAURI-000 still describes Favorites as a placeholder; TAURI-002 is Done.
-    - FORK-002 is Done but its final section still requires In Progress and external verification.
+    - TAURI-000 now records Favorites as implemented; TAURI-002 is Done.
+    - FORK-002 remains In Progress pending its listed external publication checks.
+    - DEV-002 is Done after the recorded isolated Linux runtime check.
     - 18 Done tasks contain unchecked boxes; distinguish real remaining scope from stale plans.
     - Do not reopen all of them automatically or treat schema validation as functional proof.
   ☐ DEV-000 Validate the exact release candidate, including current dependency/network/cloud edits
@@ -38,7 +39,7 @@ P0 - Data safety and native runtime release gates:
       internal-data watcher filtering, system-path/eject guards, and free-space preflight.
     - Guard implementations are Done; packaged end-to-end evidence is still required.
   ☐ FILE-003 [VERIFY] Reject unsupported cloud copies safely or finish the supported routes
-    - FileCopyJob still contains SdPath::Cloud panic branches; establish reachability and test rejection.
+    - Copy and rename actions now reject Cloud paths; both focused regression tests pass.
     - Cloud support can be deferred, but exposed operations must not panic or report false success.
   ☐ LSYNC-020 / LSYNC-023 / DEV-001 [VERIFY] Prove sync integrity for supported multi-device use
     - Tags, device-owned tombstones, closure relationships, counts, offline catch-up, and backfill races.
@@ -52,7 +53,7 @@ P1 - Complete supported desktop behavior:
     - Scroll state exists in context; Grid/List/Media still lack restoration wiring.
     - Verify selection/view state, reopen, persistence, and multi-tab performance.
   ☐ SRCH-000 [TRIAGE] Complete Recents pagination and verify its empty/error states
-    - useExplorerFiles currently requests limit 100 with offset 0 and has no next-page path for Recents.
+    - Recents now requests 101 items per page and exposes Previous/Next for 100 visible items.
     - Verify both fewer than 100 and more than 100 matching records without duplicates or omissions.
   ☐ TAURI-006 [VERIFY] Verify live Explorer refresh after filesystem and job events
     - Event hooks now exist; test actual create/rename/move/delete behavior rather than assume they are absent.

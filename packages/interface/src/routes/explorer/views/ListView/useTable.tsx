@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import {
   getCoreRowModel,
-  useReactTable,
-  type ColumnDef,
-  type ColumnSizingState,
-} from "@tanstack/react-table";
+  useLegacyTable as useReactTable,
+  type LegacyColumnDef as ColumnDef,
+} from "@tanstack/react-table/legacy";
+import type { ColumnSizingState } from "@tanstack/react-table";
 import type { File } from "@sd/ts-client";
 
 import { formatBytes, formatRelativeTime } from "../../utils";

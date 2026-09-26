@@ -246,12 +246,12 @@ pub struct VouchPayload {
 
 impl VouchPayload {
     pub fn sign(&self, signing_key: &SigningKey) -> Vec<u8> {
-        let serialized = bincode::serialize(self).unwrap();
+        let serialized = postcard::to_allocvec(self).unwrap();
         signing_key.sign(&serialized).to_bytes().to_vec()
     }
 
     pub fn verify(&self, signature: &[u8], verifying_key: &VerifyingKey) -> bool {
-        let serialized = bincode::serialize(self).unwrap();
+        let serialized = postcard::to_allocvec(self).unwrap();
         let signature = Signature::from_bytes(signature.try_into().unwrap());
         verifying_key.verify(&serialized, &signature).is_ok()
     }

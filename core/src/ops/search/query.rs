@@ -967,7 +967,7 @@ impl FileSearchQuery {
 		);
 
 		// Build query with filters and sorting
-		let mut query = entry::Entity::find();
+		let mut query = entry::Entity::find().filter(entry::Column::VolumeId.is_not_null());
 
 		// Apply filters
 		let filter_builder = FilterBuilder::new()
@@ -1007,6 +1007,7 @@ impl FileSearchQuery {
 				_ => {}
 			}
 		}
+		query = query.order_by(entry::Column::Id, sea_orm::Order::Desc);
 
 		// Apply pagination
 		query = query
