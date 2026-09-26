@@ -5,9 +5,8 @@
 //! - Library keys: Stored encrypted in redb database
 //! - Cloud credentials: Stored encrypted in library database (not in key manager)
 
-use chacha20poly1305::aead::rand_core::RngCore;
 use chacha20poly1305::{
-	aead::{Aead, KeyInit, OsRng},
+	aead::{Aead, Generate, KeyInit},
 	XChaCha20Poly1305, XNonce,
 };
 use keyring::{Entry, Error as KeyringError};
@@ -342,24 +341,20 @@ impl KeyManager {
 
 	/// Generate a new random key
 	fn generate_key(&self) -> Result<[u8; KEY_LENGTH], KeyManagerError> {
-		let mut key = [0u8; KEY_LENGTH];
-		OsRng.fill_bytes(&mut key);
-		Ok(key)
+		Ok(<[u8; KEY_LENGTH] as Generate>::generate())
 	}
 
 	/// Encrypt data with XChaCha20-Poly1305
 	fn encrypt(&self, data: &[u8], key: &[u8; KEY_LENGTH]) -> Result<Vec<u8>, KeyManagerError> {
 		// Generate random nonce
-		let mut nonce_bytes = [0u8; 24];
-		OsRng.fill_bytes(&mut nonce_bytes);
-		let nonce = XNonce::from_slice(&nonce_bytes);
+		let nonce = XNonce::generate();
 
 		// Create cipher
 		let cipher = XChaCha20Poly1305::new(key.into());
 
 		// Encrypt
 		let ciphertext = cipher
-			.encrypt(nonce, data)
+			.encrypt(&nonce, data)
 			.map_err(|e| KeyManagerError::Encryption(e.to_string()))?;
 
 		// Prepend nonce to ciphertext

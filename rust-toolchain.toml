@@ -1,6 +1,6 @@
 [toolchain]
 # Pinned for reproducible builds across local dev and CI.
 # Bump deliberately; workspace MSRV (Cargo.toml rust-version) is 1.89.
-channel    = "1.97.1"
+channel    = "1.98.1"
 components = ["clippy", "rustfmt"]
 profile    = "minimal"

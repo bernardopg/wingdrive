@@ -4,7 +4,7 @@
 //! and stored in the library database.
 
 use chacha20poly1305::{
-	aead::{Aead, KeyInit, OsRng},
+	aead::{Aead, Generate, KeyInit},
 	XChaCha20Poly1305, XNonce,
 };
 use serde::{Deserialize, Serialize};
@@ -196,19 +196,15 @@ impl CloudCredentialManager {
 		data: &[u8],
 		key: &[u8; 32],
 	) -> Result<Vec<u8>, CloudCredentialError> {
-		use chacha20poly1305::aead::rand_core::RngCore;
-
 		// Generate random nonce (192 bits for XChaCha20)
-		let mut nonce_bytes = [0u8; 24];
-		OsRng.fill_bytes(&mut nonce_bytes);
-		let nonce = XNonce::from_slice(&nonce_bytes);
+		let nonce = XNonce::generate();
 
 		// Create cipher
 		let cipher = XChaCha20Poly1305::new(key.into());
 
 		// Encrypt
 		let ciphertext = cipher
-			.encrypt(nonce, data)
+			.encrypt(&nonce, data)
 			.map_err(|e| CloudCredentialError::Encryption(e.to_string()))?;
 
 		// Prepend nonce to ciphertext

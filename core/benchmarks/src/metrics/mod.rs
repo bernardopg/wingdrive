@@ -84,7 +84,7 @@ pub fn collect_host_info() -> Option<HostInfo> {
 		.map(|c| c.brand().to_string())
 		.filter(|s| !s.is_empty());
 
-	let cpu_physical_cores = system.physical_core_count();
+	let cpu_physical_cores = System::physical_core_count();
 
 	// sysinfo >=0.30 reports memory in bytes. Convert to GB (rounded).
 	let memory_total_gb = system

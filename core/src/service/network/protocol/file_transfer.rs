@@ -16,7 +16,7 @@ use uuid::Uuid;
 
 // Encryption imports
 use chacha20poly1305::{
-	aead::{Aead, AeadCore, KeyInit, OsRng},
+	aead::{Aead, Generate, KeyInit},
 	ChaCha20Poly1305, Nonce,
 };
 use hkdf::Hkdf;
@@ -490,7 +490,7 @@ impl FileTransferProtocolHandler {
 			.map_err(|e| NetworkingError::Protocol(format!("Cipher creation failed: {}", e)))?;
 
 		// Generate nonce
-		let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng);
+		let nonce = Nonce::generate();
 
 		// Encrypt data
 		let ciphertext = cipher
