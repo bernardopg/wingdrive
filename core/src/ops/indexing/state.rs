@@ -188,13 +188,14 @@ impl IndexerState {
 		&mut self,
 		ephemeral_cache: &super::ephemeral::EphemeralIndexCache,
 		root_path: &std::path::Path,
+		library_id: Uuid,
 	) -> usize {
 		if let Some(index) = ephemeral_cache.get_for_path(root_path) {
 			let index_read = index.read().await;
 
 			let entries = index_read.entries();
 			for path in entries.keys() {
-				if let Some(entry_uuid) = index_read.get_entry_uuid(path) {
+				if let Some(entry_uuid) = index_read.get_entry_uuid_scoped(library_id, path) {
 					self.ephemeral_uuids.insert(path.clone(), entry_uuid);
 				}
 			}

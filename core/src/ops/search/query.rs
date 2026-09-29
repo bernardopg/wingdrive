@@ -128,7 +128,7 @@ impl LibraryQuery for FileSearchQuery {
 			}
 			crate::ops::search::IndexType::Ephemeral => {
 				// Use ephemeral search
-				self.execute_ephemeral_search(context, search_id, start_time)
+				self.execute_ephemeral_search(context, &library, search_id, start_time)
 					.await
 			}
 			crate::ops::search::IndexType::Hybrid => {
@@ -1572,6 +1572,7 @@ impl FileSearchQuery {
 	async fn execute_ephemeral_search(
 		&self,
 		context: Arc<CoreContext>,
+		library: &crate::library::Library,
 		search_id: Uuid,
 		start_time: std::time::Instant,
 	) -> QueryResult<FileSearchOutput> {
@@ -1585,12 +1586,16 @@ impl FileSearchQuery {
 		};
 
 		let cache = context.ephemeral_cache();
+		let lookup =
+			crate::ops::indexing::ephemeral::DatabaseUuidLookup::new(library.db().conn().clone());
 		let results = crate::ops::search::ephemeral_search::search_ephemeral_index(
 			&self.input.query,
 			path,
 			&self.input.filters,
 			cache,
 			context.file_type_registry(),
+			library.id(),
+			&lookup,
 		)
 		.await?;
 
