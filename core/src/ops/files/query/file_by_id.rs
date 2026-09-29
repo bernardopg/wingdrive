@@ -247,7 +247,7 @@ impl LibraryQuery for FileByIdQuery {
 		let index = ephemeral_cache.get_global_index();
 		let index_read = index.read().await;
 
-		if let Some(path) = index_read.get_path_by_uuid(self.file_id) {
+		if let Some(path) = index_read.get_path_by_uuid_scoped(library_id, self.file_id) {
 			if let Some(metadata) = index_read.get_entry_ref(&path) {
 				let content_kind = index_read.get_content_kind(&path);
 				let sd_path = SdPath::local(path.clone());

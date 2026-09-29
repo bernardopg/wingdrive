@@ -10,6 +10,8 @@ import {
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import { deriveTitleFromPath } from "./deriveTitle";
 import { usePlatform } from "../../contexts/PlatformContext";
+import { useSpacedriveClient } from "@sd/ts-client";
+import { remapSelectionIds } from "./remapSelectionIds";
 type Router = ReturnType<typeof createBrowserRouter>;
 
 // ============================================================================
@@ -186,6 +188,7 @@ export function TabManagerProvider({
 	// Read localStorage once: four separate initializers meant four JSON parses
 	// and left room for the slices to disagree with each other.
 	const platform = usePlatform();
+	const client = useSpacedriveClient();
 	const storageKey = useRef(
 		storageKeyFor(platform.getCurrentWindowLabel?.()),
 	).current;
@@ -234,6 +237,51 @@ export function TabManagerProvider({
 		initialMap.set(tabs[0].id, []);
 		return initialMap;
 	});
+
+	// Remap selections in every tab, including tabs that are not currently open.
+	// The cache handles row identity; the tab manager owns selected IDs.
+	useEffect(() => {
+		let unsubscribe: (() => void) | undefined;
+		let disposed = false;
+		let generation = 0;
+		const subscribe = () => {
+			const current = ++generation;
+			unsubscribe?.();
+			unsubscribe = undefined;
+			const libraryId = client.getCurrentLibraryId();
+			if (!libraryId) return;
+			void client.subscribeFiltered(
+				{ library_id: libraryId, resource_type: "file", event_types: ["ResourceChanged"] },
+				(event) => {
+					if (disposed || current !== generation) return;
+					if (!(typeof event === "object" && event !== null && "ResourceChanged" in event)) return;
+					const { resource_type, resource, metadata } = event.ResourceChanged;
+					if (resource_type !== "file" || !resource || typeof resource !== "object" || Array.isArray(resource)) return;
+					const id = resource.id;
+					if (typeof id === "string" && metadata?.alternate_ids.length) {
+						setSelectionStates((previous) => remapSelectionIds(previous, metadata.alternate_ids, id));
+					}
+				},
+			).then((stop) => {
+				if (disposed || current !== generation) stop();
+				else unsubscribe = stop;
+			}).catch((error: unknown) => {
+				console.error("Failed to subscribe to UUID reconciliation events", error);
+			});
+		};
+		const onLibraryChanged = () => {
+			setSelectionStates(new Map());
+			subscribe();
+		};
+		client.on("library-changed", onLibraryChanged);
+		subscribe();
+		return () => {
+			disposed = true;
+			generation++;
+			client.off("library-changed", onLibraryChanged);
+			unsubscribe?.();
+		};
+	}, [client]);
 
 	// Recently closed tabs (LIFO, max 10) for Cmd+Shift+T reopen. The explorer
 	// state travels with the tab so reopening restores view mode and scroll.

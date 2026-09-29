@@ -687,9 +687,29 @@ impl DirectoryListingQuery {
 						local_path.display()
 					);
 
-					// Convert cached entries to File objects with lazy UUID assignment
+					let library = context.get_library(library_id).await;
+					let persistent_uuids = if let Some(library) = &library {
+						match crate::ops::indexing::ephemeral::lookup_direct_child_uuids(
+							library.db().conn(),
+							&local_path,
+							&children,
+						)
+						.await
+						{
+							Ok(uuids) => uuids,
+							Err(error) => {
+								tracing::warn!(%error, "Persistent UUID lookup failed; continuing ephemeral browse");
+								Default::default()
+							}
+						}
+					} else {
+						Default::default()
+					};
+
+					// Resolve identities after the scan, before returning cached entries.
 					let mut index_write = index.write().await;
 					let mut files = Vec::new();
+					let mut changes = Vec::new();
 
 					for child_path in children {
 						if let Some(metadata) = index_write.get_entry_ref(&child_path) {
@@ -697,7 +717,26 @@ impl DirectoryListingQuery {
 								continue;
 							}
 
-							let entry_uuid = index_write.get_or_assign_uuid(&child_path);
+							let scan_uuid =
+								index_write.get_or_assign_uuid_scoped(library_id, &child_path);
+							let entry_uuid =
+								if let Some(&persistent_uuid) = persistent_uuids.get(&child_path) {
+									if scan_uuid != persistent_uuid {
+										index_write.set_entry_uuid_scoped(
+											library_id,
+											&child_path,
+											persistent_uuid,
+										);
+										changes.push((
+											child_path.clone(),
+											Some(scan_uuid),
+											persistent_uuid,
+										));
+									}
+									persistent_uuid
+								} else {
+									scan_uuid
+								};
 
 							let entry_sd_path = SdPath::Physical {
 								device_slug: match &self.input.path {
@@ -716,6 +755,48 @@ impl DirectoryListingQuery {
 						}
 					}
 					drop(index_write);
+
+					// The ephemeral index owns filesystem metadata, while the library
+					// database owns tags, favorites, content and sidecars for matched UUIDs.
+					let mut persistent_files = Vec::new();
+					if let Some(library) = &library {
+						let ids: Vec<_> = files.iter().map(|file| file.id).collect();
+						for chunk in ids.chunks(250) {
+							match File::from_entry_uuids(library.db().conn(), chunk).await {
+								Ok(persistent) => persistent_files.extend(persistent),
+								Err(error) => {
+									tracing::warn!(%error, "Could not enrich ephemeral listing")
+								}
+							}
+						}
+						let by_id: std::collections::HashMap<_, _> = persistent_files
+							.iter()
+							.map(|file| (file.id, file))
+							.collect();
+						for file in &mut files {
+							if let Some(stored) = by_id.get(&file.id) {
+								file.tags = stored.tags.clone();
+								file.favorite = stored.favorite;
+								file.content_identity = stored.content_identity.clone();
+								file.sidecars = stored.sidecars.clone();
+								file.image_media_data = stored.image_media_data.clone();
+								file.video_media_data = stored.video_media_data.clone();
+								file.audio_media_data = stored.audio_media_data.clone();
+							}
+						}
+					}
+					if !changes.is_empty() {
+						let index_read = index.read().await;
+						crate::ops::indexing::ephemeral::emit_uuid_reconciled_events(
+							library
+								.as_ref()
+								.expect("UUID changes require a library")
+								.event_bus(),
+							&index_read,
+							&changes,
+							&persistent_files,
+						);
+					}
 
 					self.sort_files(&mut files);
 
@@ -746,17 +827,14 @@ impl DirectoryListingQuery {
 			}
 		}
 
-		// No cached index or index doesn't cover this path
-		// Check if indexing is already in progress
-		if cache.is_indexing(&local_path) {
-			tracing::debug!(
-				"Ephemeral indexing already in progress for {}",
-				local_path.display()
-			);
-			return Ok(DirectoryListingOutput {
-				files: Vec::new(),
-				total_count: 0,
-				has_more: false,
+		// No cached index or index doesn't cover this path.
+		// Surface unreadable directories (e.g. /boot as a regular user) now;
+		// the background indexer would only log the failure and the UI would
+		// show an empty folder forever.
+		if let Err(source) = tokio::fs::read_dir(&local_path).await {
+			return Err(QueryError::Io {
+				path: local_path.display().to_string(),
+				source,
 			});
 		}
 
@@ -764,8 +842,18 @@ impl DirectoryListingQuery {
 
 		// Get library to dispatch indexer job
 		if let Some(library) = context.get_library(library_id).await {
-			// Create cache entry and get the index to share with the job
-			let ephemeral_index = cache.create_for_indexing(local_path.clone());
+			// Claim the path atomically so concurrent listings dispatch one job
+			let Some(ephemeral_index) = cache.try_begin_indexing(local_path.clone()) else {
+				tracing::debug!(
+					"Ephemeral indexing already in progress for {}",
+					local_path.display()
+				);
+				return Ok(DirectoryListingOutput {
+					files: Vec::new(),
+					total_count: 0,
+					has_more: false,
+				});
+			};
 
 			// Clear any stale entries from previous indexing (prevents ghost files)
 			let cleared = cache.clear_for_reindex(&local_path).await;

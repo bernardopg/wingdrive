@@ -11,7 +11,7 @@ import {
 import { usePlatform } from "../../contexts/PlatformContext";
 import type { File } from "@sd/ts-client";
 import { useClipboard } from "../../hooks/useClipboard";
-import { useLibraryMutation } from "../../contexts/SpacedriveContext";
+import { useLibraryMutation, useSpacedriveClient } from "../../contexts/SpacedriveContext";
 import { toast } from "@wingdrive/primitives";
 import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
 import { useTabManager } from "../../components/TabManager";
@@ -58,6 +58,7 @@ export function SelectionProvider({
 }: SelectionProviderProps) {
 	const platform = usePlatform();
 	const clipboard = useClipboard();
+	const client = useSpacedriveClient();
 	const tabManager = useTabManager();
 	const { activeTabId, getSelectionIds, updateSelectionIds } = tabManager;
 	const renameFile = useLibraryMutation("files.rename");
@@ -75,6 +76,16 @@ export function SelectionProvider({
 	useEffect(() => {
 		selectedFilesRef.current = selectedFiles;
 	}, [selectedFiles]);
+
+	useEffect(() => {
+		const clearOnLibraryChange = () => {
+			selectedFilesRef.current = [];
+			setSelectedFilesInternal([]);
+			setFocusedIndex(-1);
+		};
+		client.on("library-changed", clearOnLibraryChange);
+		return () => client.off("library-changed", clearOnLibraryChange);
+	}, [client]);
 
 	// Track the stored IDs for the active tab (separate from File objects)
 	const storedIds = getSelectionIds(activeTabId);
@@ -322,10 +333,20 @@ export function SelectionProvider({
 			const matchingFiles: File[] = [];
 
 			for (const id of storedIds) {
-				const file = fileMap.get(id);
-				if (file) {
-					matchingFiles.push(file);
+				let file = fileMap.get(id);
+				if (!file) {
+					// Keep an active selection when reconciliation changes its UUID.
+					const previous = selectedFilesRef.current.find((f) => f.id === id);
+					const path = previous?.sd_path && "Physical" in previous.sd_path
+						? previous.sd_path.Physical.path : undefined;
+					if (path) {
+						file = files.find((f) => f.sd_path && "Physical" in f.sd_path && f.sd_path.Physical.path === path);
+					}
 				}
+				if (file) matchingFiles.push(file);
+			}
+			if (matchingFiles.some((file) => !storedIds.includes(file.id))) {
+				updateSelectionIds(activeTabId, matchingFiles.map((file) => file.id));
 			}
 
 			// Only update if we found matching files and they're different from current
@@ -346,7 +367,7 @@ export function SelectionProvider({
 				});
 			}
 		},
-		[storedIds],
+		[storedIds, activeTabId, updateSelectionIds],
 	);
 
 	const isRenaming = renamingFileId !== null;

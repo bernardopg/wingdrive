@@ -13,6 +13,7 @@ import {ExpandableSearchButton} from './components/ExpandableSearchButton';
 import {PathBar} from './components/PathBar';
 import {VirtualPathBar} from './components/VirtualPathBar';
 import {useExplorer, type ViewMode} from './context';
+import {useExplorerFiles} from './hooks/useExplorerFiles';
 import {useExternalFileDrop} from './hooks/useExternalFileDrop';
 import {useVirtualListing} from './hooks/useVirtualListing';
 import {SearchToolbar} from './SearchToolbar';
@@ -60,6 +61,7 @@ export function ExplorerView() {
 	} = useExplorer();
 
 	const {isVirtualView} = useVirtualListing();
+	const {error: filesError} = useExplorerFiles();
 	const isPreviewActive = !!quickPreviewFileId;
 
 	// Column view operates on its deepest visible folder rather than the root.
@@ -316,6 +318,11 @@ export function ExplorerView() {
 				)}
 			>
 				{mode.type === 'search' && <SearchToolbar />}
+				{mode.type !== 'search' && filesError && (
+					<p role="alert" className="p-2 text-sm text-ink-dull">
+						Could not open this folder: {filesError.message}
+					</p>
+				)}
 				<div
 					className={clsx(
 						'flex-1',

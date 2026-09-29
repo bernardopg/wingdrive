@@ -16,12 +16,18 @@ use std::path::PathBuf;
 use uuid::Uuid;
 
 /// Search the ephemeral index for files matching the query
+///
+/// `lookup` resolves UUIDs that are neither in the index nor in the library's
+/// persistent overlay — typically for indexes restored from snapshots, where
+/// no reconciliation pass has run yet.
 pub async fn search_ephemeral_index(
 	query: &str,
 	path_scope: &SdPath,
 	filters: &SearchFilters,
 	cache: &EphemeralIndexCache,
 	file_type_registry: &FileTypeRegistry,
+	library_id: Uuid,
+	lookup: &dyn crate::ops::indexing::ephemeral::PersistentUuidLookup,
 ) -> Result<Vec<FileSearchResult>, QueryError> {
 	// Get local path from SdPath
 	let local_path = match path_scope {
@@ -98,8 +104,11 @@ pub async fn search_ephemeral_index(
 				continue;
 			}
 
-			// Get or assign UUID (lazy generation)
-			let uuid = index.get_or_assign_uuid(&path);
+			// Get or assign UUID (lazy generation with persistent overlay/DB fallback)
+			let uuid = crate::ops::indexing::ephemeral::get_or_resolve_uuid(
+				&mut index, library_id, &path, lookup,
+			)
+			.await;
 
 			// Build SdPath
 			let sd_path = match path_scope {

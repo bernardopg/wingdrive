@@ -484,7 +484,12 @@ impl DeviceManager {
 
 /// Get the device name from the system
 fn get_device_name() -> String {
-	whoami::devicename().unwrap_or_else(|_| "Unknown Device".to_string())
+	// whoami 2.x only reads PRETTY_HOSTNAME from /etc/machine-info on Linux,
+	// which most installs lack, so fall back to the kernel hostname.
+	whoami::devicename()
+		.ok()
+		.or_else(|| hostname::get().ok()?.into_string().ok())
+		.unwrap_or_else(|| "Unknown Device".to_string())
 }
 
 /// Detect the operating system

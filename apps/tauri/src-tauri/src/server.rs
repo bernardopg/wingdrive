@@ -323,7 +323,7 @@ fn create_router(data_dir: PathBuf, token: Arc<String>) -> Router {
 
 	Router::new()
 		.route(
-			"/sidecar/:library_id/:content_uuid/:kind/*variant",
+			"/sidecar/{library_id}/{content_uuid}/{kind}/{*variant}",
 			get(serve_sidecar),
 		)
 		.route("/file", get(serve_file))

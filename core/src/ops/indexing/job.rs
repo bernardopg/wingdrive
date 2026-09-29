@@ -33,6 +33,8 @@ use super::{
 	PathResolver,
 };
 
+use crate::library::Library;
+
 /// Whether to index just one directory level or recurse through subdirectories.
 ///
 /// Current scope is used for UI navigation where users expand folders on-demand,
@@ -641,6 +643,69 @@ impl IndexerJob {
 }
 
 // JobHandler trait implementation
+impl IndexerJob {
+	/// Reconcile scan-time v4 UUIDs with persistent entries in the background.
+	///
+	/// Runs after ephemeral indexing completes (or a snapshot is restored) so
+	/// browsing a managed path surfaces stable persistent UUIDs instead of
+	/// orphans. Spawned as a task because the extraction queries the library
+	/// database and must never block job completion; tag/sidebar updates arrive
+	/// via the ResourceChanged events emitted for swapped UUIDs.
+	fn spawn_uuid_reconciliation(library: &Library, root: PathBuf) {
+		let library_id = library.id();
+		let conn = library.db().conn().clone();
+		let event_bus = library.event_bus().clone();
+		let cache = library.core_context().ephemeral_cache().clone();
+
+		tokio::spawn(async move {
+			let overlay =
+				match super::ephemeral::extract_persistent_uuids_for_path(&conn, &root).await {
+					Ok(overlay) => overlay,
+					Err(e) => {
+						tracing::warn!("UUID reconciliation skipped for {}: {}", root.display(), e);
+						return;
+					}
+				};
+
+			let result = cache
+				.reconcile_with_persistent(library_id, &root, overlay)
+				.await;
+
+			if result.stats.uuid_changed == 0 {
+				return;
+			}
+
+			tracing::info!(
+				"Reconciled {} ephemeral UUIDs ({} matched, {} orphans) for {}",
+				result.stats.uuid_changed,
+				result.stats.matched,
+				result.stats.orphans_detected,
+				root.display()
+			);
+
+			let mut persistent_files = Vec::new();
+			for chunk in result.changes.chunks(250) {
+				let ids: Vec<_> = chunk.iter().map(|(_, _, uuid)| *uuid).collect();
+				match crate::domain::file::File::from_entry_uuids(&conn, &ids).await {
+					Ok(files) => persistent_files.extend(files),
+					Err(error) => {
+						tracing::warn!(%error, "Could not load metadata for reconciled UUIDs")
+					}
+				}
+			}
+
+			let index = cache.get_global_index();
+			let index_guard = index.read().await;
+			super::ephemeral::emit_uuid_reconciled_events(
+				&event_bus,
+				&index_guard,
+				&result.changes,
+				&persistent_files,
+			);
+		});
+	}
+}
+
 #[async_trait::async_trait]
 impl JobHandler for IndexerJob {
 	type Output = IndexerOutput;
@@ -740,6 +805,10 @@ impl JobHandler for IndexerJob {
 								));
 							}
 						}
+
+						// Swap scan-time v4 UUIDs for persistent identities where the
+						// browsed path overlaps an indexed location.
+						Self::spawn_uuid_reconciliation(ctx.library(), local_path.to_path_buf());
 					}
 					Err(e) => ctx.log(format!(
 						"Marked ephemeral indexing complete (job failed: {}) for: {}",
@@ -972,20 +1041,28 @@ impl IndexerJob {
 			// This allows the task to be interrupted even during blocking operations
 			let index_clone = ephemeral_index.clone();
 			let entries_clone = entries_with_metadata.clone();
-			let content_kinds = tokio::task::spawn_blocking(move || {
+			let library_id = ctx.library().id();
+			let (content_kinds, uuid_map) = tokio::task::spawn_blocking(move || {
 				let rt = tokio::runtime::Handle::current();
 				let mut index = rt.block_on(index_clone.write());
-				index.add_entries_batch(entries_clone)
+				let paths: Vec<_> = entries_clone
+					.iter()
+					.filter_map(|(path, uuid, _)| uuid.map(|_| path.clone()))
+					.collect();
+				let content_kinds = index.add_entries_batch(entries_clone)?;
+				// Claim UUIDs for the scanning library before emitting UI events.
+				// Otherwise a second library can inherit the first library's v4.
+				let uuids = paths
+					.into_iter()
+					.map(|path| {
+						let uuid = index.get_or_assign_uuid_scoped(library_id, &path);
+						(path, uuid)
+					})
+					.collect::<std::collections::HashMap<_, _>>();
+				Ok::<_, std::io::Error>((content_kinds, uuids))
 			})
 			.await
 			.map_err(|e| JobError::execution(format!("Failed to add entries to index: {}", e)))??;
-
-			// Build UUID lookup map for directory browsing (only contains Some values)
-			// Volume indexing has None values so map will be empty (no events emitted anyway)
-			let uuid_map: std::collections::HashMap<PathBuf, Uuid> = entries_with_metadata
-				.iter()
-				.filter_map(|(path, uuid, _)| uuid.map(|u| (path.clone(), u)))
-				.collect();
 
 			// Only emit file events for directory browsing, not volume indexing
 			// Volume indexing only needs job progress events (emitted above)
