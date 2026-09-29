@@ -155,3 +155,8 @@ codegen-units = 16       # Allow parallel compilation (vs 1 in release)
 lto           = false    # Disable link-time optimization (saves 15-20 min per arch)
 opt-level     = 2        # Good optimization without extreme size focus
 strip         = true     # Still remove debug symbols
+
+[patch.crates-io]
+# GHSA-wrw7-89jp-8q8g backport for the GTK3 stack used by Tauri on Linux.
+# See patches/README.md.
+glib = { path = "patches/glib-0.18.5" }
