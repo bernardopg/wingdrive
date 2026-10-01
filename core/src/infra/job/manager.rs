@@ -1714,8 +1714,21 @@ impl JobManager {
 						}
 					}
 					Err(e) => {
-						warn!("DEBUG: Failed to deserialize job {}: {:?}", job_id, e);
 						error!("Failed to create job {} for resumption: {}", job_id, e);
+						// A state saved by an incompatible build can never resume;
+						// fail it so it stops showing as paused forever.
+						if let Err(db_err) = self
+							.db
+							.update_status_and_progress(
+								job_id,
+								JobStatus::Failed,
+								None,
+								Some(format!("Cannot resume: saved job state is incompatible ({e})")),
+							)
+							.await
+						{
+							error!("Failed to mark job {} as failed: {}", job_id, db_err);
+						}
 					}
 				}
 			}
