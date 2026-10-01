@@ -29,17 +29,18 @@ export function useDuplicateFiles() {
 				files.map(async (file) => {
 					const destination = buildDuplicateTarget(file);
 					if (!destination) return;
-					const receipt = await mutation.mutateAsync({
-						sources: { paths: [file.sd_path] },
-						destination,
-						overwrite: false,
-						verify_checksum: false,
-						preserve_timestamps: true,
-						move_files: false,
-						copy_method: "Auto",
-						on_conflict: "AutoModifyName",
-					});
-					await waitForJob(receipt.id);
+					await waitForJob(() =>
+						mutation.mutateAsync({
+							sources: { paths: [file.sd_path] },
+							destination,
+							overwrite: false,
+							verify_checksum: false,
+							preserve_timestamps: true,
+							move_files: false,
+							copy_method: "Auto",
+							on_conflict: "AutoModifyName",
+						}),
+					);
 				}),
 			);
 

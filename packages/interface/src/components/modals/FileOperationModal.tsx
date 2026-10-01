@@ -108,20 +108,20 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 			setPhase({ type: "executing" });
 
 			// Execute with the user's chosen operation and conflict resolution
-			const receipt = await copyFiles.mutateAsync({
-				sources: { paths: props.sources },
-				destination: props.destination,
-				overwrite: conflictResolution === "Overwrite",
-				verify_checksum: false,
-				preserve_timestamps: true,
-				move_files: operation === "move",
-				copy_method: "Auto",
-				on_conflict: conflictResolution,
-			});
-
 			// The mutation only queues the job; wait for it to finish so the
 			// listing refresh below actually sees the new files on disk.
-			const result = await waitForJob(receipt.id);
+			const { result } = await waitForJob(() =>
+				copyFiles.mutateAsync({
+					sources: { paths: props.sources },
+					destination: props.destination,
+					overwrite: conflictResolution === "Overwrite",
+					verify_checksum: false,
+					preserve_timestamps: true,
+					move_files: operation === "move",
+					copy_method: "Auto",
+					on_conflict: conflictResolution,
+				}),
+			);
 			refetchListings();
 
 			if (result.status === "failed") {

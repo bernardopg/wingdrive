@@ -2,7 +2,7 @@ import { useState } from "react";
 import { DotsThree } from "@phosphor-icons/react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { CircleButton } from "@wingdrive/primitives";
-import { TopBarItem } from "./Context";
+import { TopBarItem, useTopBar } from "./Context";
 
 interface OverflowButtonProps {
 	items: TopBarItem[];
@@ -10,6 +10,9 @@ interface OverflowButtonProps {
 
 export function OverflowButton({ items }: OverflowButtonProps) {
 	const [isOpen, setIsOpen] = useState(false);
+	// The overflow list holds snapshots taken at layout time; read element and
+	// submenu content from the live registry so open menus reflect new state.
+	const { items: liveItems } = useTopBar();
 
 	if (items.length === 0) return null;
 
@@ -28,7 +31,8 @@ export function OverflowButton({ items }: OverflowButtonProps) {
 					sideOffset={8}
 					align="start"
 				>
-					{items.map((item) => {
+					{items.map((snapshot) => {
+						const item = liveItems.get(snapshot.id) ?? snapshot;
 						const isSimpleAction = !!item.onClick;
 
 						if (isSimpleAction) {

@@ -38,13 +38,13 @@ export function useDeleteFiles() {
 					permanent,
 					onConfirm: async () => {
 						try {
-							const receipt = await mutation.mutateAsync({
-								targets: { paths: files.map((f) => f.sd_path) },
-								permanent,
-								recursive: true,
-							});
-
-							const result = await waitForJob(receipt.id);
+							const { result } = await waitForJob(() =>
+								mutation.mutateAsync({
+									targets: { paths: files.map((f) => f.sd_path) },
+									permanent,
+									recursive: true,
+								}),
+							);
 							refetchListings();
 
 							if (result.status === "failed") {

@@ -48,13 +48,17 @@ function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
 	const isSingle = count === 1;
 	const label = props.permanent ? "Permanently delete" : "Delete";
 	const suffix = props.permanent ? " This cannot be undone." : "";
+	const first = props.files[0];
+	const firstName = first.extension ? `${first.name}.${first.extension}` : first.name;
 	const message = isSingle
-		? `${label} "${props.files[0].name}"?${suffix}`
+		? `${label} "${firstName}"?${suffix}`
 		: `${label} ${count} items?${suffix}`;
 
 	const handleConfirm = async () => {
 		settled.current = true;
 		await props.onConfirm();
+		// The Dialog primitive does not close itself on submit
+		dialogManager.setState(props.id, { open: false });
 	};
 
 	const handleCancel = () => {
