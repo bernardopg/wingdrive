@@ -117,7 +117,7 @@ mod tests {
 
 	#[test]
 	fn test_build_path() {
-		let library_path = PathBuf::from("/tmp/test.sdlibrary");
+		let library_path = PathBuf::from("/tmp/test.winglibrary");
 		let builder = SidecarPathBuilder::new(&library_path);
 
 		let uuid = Uuid::parse_str("abcd1234-5678-90ab-cdef-123456789012").unwrap();
@@ -134,7 +134,7 @@ mod tests {
 
 		assert_eq!(
             path.absolute_path,
-            PathBuf::from("/tmp/test.sdlibrary/sidecars/content/ab/cd/abcd1234-5678-90ab-cdef-123456789012/thumbs/grid@2x.webp")
+            PathBuf::from("/tmp/test.winglibrary/sidecars/content/ab/cd/abcd1234-5678-90ab-cdef-123456789012/thumbs/grid@2x.webp")
         );
 
 		assert_eq!(path.shards, ("ab".to_string(), "cd".to_string()));
@@ -142,7 +142,7 @@ mod tests {
 
 	#[test]
 	fn test_build_manifest_path() {
-		let library_path = PathBuf::from("/tmp/test.sdlibrary");
+		let library_path = PathBuf::from("/tmp/test.winglibrary");
 		let builder = SidecarPathBuilder::new(&library_path);
 
 		let uuid = Uuid::parse_str("abcd1234-5678-90ab-cdef-123456789012").unwrap();
@@ -150,7 +150,7 @@ mod tests {
 
 		assert_eq!(
             manifest_path,
-            PathBuf::from("/tmp/test.sdlibrary/sidecars/content/ab/cd/abcd1234-5678-90ab-cdef-123456789012/manifest.json")
+            PathBuf::from("/tmp/test.winglibrary/sidecars/content/ab/cd/abcd1234-5678-90ab-cdef-123456789012/manifest.json")
         );
 	}
 }

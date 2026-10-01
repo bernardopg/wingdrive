@@ -25,7 +25,6 @@ use tracing::{debug, error, info, instrument, warn};
 use uuid::Uuid;
 
 /// Filename for Spacedrive volume identifier files
-const SPACEDRIVE_VOLUME_ID_FILE: &str = ".spacedrive-volume-id";
 
 /// Get platform-specific directories to watch for volume mount changes
 fn get_volume_watch_paths() -> Vec<PathBuf> {
@@ -2101,7 +2100,7 @@ impl VolumeManager {
 			return None;
 		}
 
-		let id_file_path = volume.mount_point.join(SPACEDRIVE_VOLUME_ID_FILE);
+		let id_file_path = crate::branding::volume_id_file(&volume.mount_point);
 
 		// Try to read existing identifier file
 		if let Ok(content) = fs::read_to_string(&id_file_path).await {
@@ -2161,7 +2160,7 @@ impl VolumeManager {
 		&self,
 		mount_point: &Path,
 	) -> Option<SpacedriveVolumeId> {
-		let id_file_path = mount_point.join(SPACEDRIVE_VOLUME_ID_FILE);
+		let id_file_path = crate::branding::volume_id_file(mount_point);
 
 		if let Ok(content) = fs::read_to_string(&id_file_path).await {
 			if let Ok(spacedrive_id) = serde_json::from_str::<SpacedriveVolumeId>(&content) {

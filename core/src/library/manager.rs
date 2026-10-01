@@ -841,7 +841,7 @@ impl LibraryManager {
 		Ok(discovered)
 	}
 
-	/// Count .sdlibrary directories in search paths without attempting to load them
+	/// Count .winglibrary directories in search paths without attempting to load them
 	pub async fn count_library_directories(&self) -> usize {
 		let mut count = 0;
 
@@ -993,7 +993,7 @@ impl LibraryManager {
 		let config: LibraryConfig = serde_json::from_str(&config_data)?;
 
 		// Check if locked (but ignore stale locks)
-		let lock_path = path.join(".sdlibrary.lock");
+		let lock_path = path.join(".winglibrary.lock");
 		let is_locked = if lock_path.exists() {
 			// Use the LibraryLock's stale detection logic
 			!LibraryLock::is_lock_stale(&lock_path).unwrap_or(true)
@@ -1724,7 +1724,7 @@ impl LibraryManager {
 						let now = std::time::Instant::now();
 
 						for path in &event.paths {
-							// Only process .sdlibrary directories
+							// Only process .winglibrary directories
 							if !is_library_directory(path) {
 								continue;
 							}
@@ -1909,10 +1909,7 @@ impl LibraryManager {
 
 /// Check if a path is a library directory
 fn is_library_directory(path: &Path) -> bool {
-	path.extension()
-		.and_then(|ext| ext.to_str())
-		.map(|ext| ext == LIBRARY_EXTENSION)
-		.unwrap_or(false)
+	crate::branding::is_library_dir_name(path)
 }
 
 /// Sanitize a filename for safe filesystem usage
@@ -1965,7 +1962,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_is_library_directory() {
 		assert!(is_library_directory(Path::new(
-			"/path/to/My Library.sdlibrary"
+			"/path/to/My Library.winglibrary"
 		)));
 		assert!(!is_library_directory(Path::new("/path/to/My Library")));
 		assert!(!is_library_directory(Path::new("/path/to/My Library.txt")));

@@ -11,13 +11,13 @@ The Virtual Sidecar System (VSS) manages derivative data associated with your fi
 
 **Non-Destructive**: WingDrive never modifies your original files during indexing.
 
-**Portable**: All managed sidecars live in `.sdlibrary/sidecars`, making your entire setup portable.
+**Portable**: All managed sidecars live in `.winglibrary/sidecars`, making your entire setup portable.
 
 ## Sidecar Types
 
 The VSS handles two types of sidecars:
 
-**Managed Sidecars** - WingDrive-generated derivatives stored in `.sdlibrary/sidecars/`:
+**Managed Sidecars** - WingDrive-generated derivatives stored in `.winglibrary/sidecars/`:
 - Thumbnails (`.webp`)
 - Video proxies (`.mp4`)
 - OCR text (`.json`)
@@ -31,12 +31,12 @@ The VSS handles two types of sidecars:
 
 ### Filesystem Layout
 
-All sidecars are stored in a `sidecars` directory within the `.sdlibrary`. The path to a sidecar is deterministic and is derived from the content UUID of the file it is associated with, the kind of sidecar, and a variant.
+All sidecars are stored in a `sidecars` directory within the `.winglibrary`. The path to a sidecar is deterministic and is derived from the content UUID of the file it is associated with, the kind of sidecar, and a variant.
 
 A typical path looks like this:
 
 ```
-.sdlibrary/
+.winglibrary/
   sidecars/
     content/
       {h0}/{h1}/{content_uuid}/
@@ -103,7 +103,7 @@ The `SidecarManager` provides a set of APIs for interacting with the VSS. These 
 ## Benefits
 
 - **Non-Destructive**: Reference sidecars preserve original file locations
-- **Portable**: All managed sidecars in `.sdlibrary` can be moved/backed up as one unit
+- **Portable**: All managed sidecars in `.winglibrary` can be moved/backed up as one unit
 - **Efficient**: One sidecar per content hash, shared across devices
 - **Extensible**: New sidecar kinds can be added without schema changes
 - **AI-Ready**: Provides structured data for semantic search and intelligent organization

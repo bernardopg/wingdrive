@@ -38,7 +38,7 @@ pub struct LibraryLock {
 impl LibraryLock {
 	/// Attempt to acquire a lock on the library
 	pub fn acquire(library_path: &Path) -> Result<Self> {
-		let lock_path = library_path.join(".sdlibrary.lock");
+		let lock_path = library_path.join(".winglibrary.lock");
 
 		// Try to create the lock file exclusively
 		match OpenOptions::new()
@@ -108,7 +108,7 @@ impl LibraryLock {
 
 	/// Try to read lock information (for debugging)
 	pub fn read_lock_info(library_path: &Path) -> Result<Option<LockInfo>> {
-		let lock_path = library_path.join(".sdlibrary.lock");
+		let lock_path = library_path.join(".winglibrary.lock");
 
 		if !lock_path.exists() {
 			return Ok(None);
@@ -174,7 +174,7 @@ mod tests {
 	#[test]
 	fn test_library_lock() {
 		let temp_dir = TempDir::new().unwrap();
-		let library_path = temp_dir.path().join("test.sdlibrary");
+		let library_path = temp_dir.path().join("test.winglibrary");
 		std::fs::create_dir_all(&library_path).unwrap();
 
 		// First lock should succeed
@@ -187,21 +187,21 @@ mod tests {
 		}
 
 		// Lock file should exist
-		assert!(library_path.join(".sdlibrary.lock").exists());
+		assert!(library_path.join(".winglibrary.lock").exists());
 	}
 
 	#[test]
 	fn test_lock_cleanup() {
 		let temp_dir = TempDir::new().unwrap();
-		let library_path = temp_dir.path().join("test.sdlibrary");
+		let library_path = temp_dir.path().join("test.winglibrary");
 		std::fs::create_dir_all(&library_path).unwrap();
 
 		{
 			let _lock = LibraryLock::acquire(&library_path).unwrap();
-			assert!(library_path.join(".sdlibrary.lock").exists());
+			assert!(library_path.join(".winglibrary.lock").exists());
 		}
 
 		// Lock file should be cleaned up after drop
-		assert!(!library_path.join(".sdlibrary.lock").exists());
+		assert!(!library_path.join(".winglibrary.lock").exists());
 	}
 }

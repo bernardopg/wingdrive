@@ -69,7 +69,7 @@ CREATE INDEX idx_peer_acks_hlc ON peer_acks(last_acked_hlc);
 Each library has:
 
 ```
-Jamie's Library.sdlibrary/
+Jamie's Library.winglibrary/
   ├── database.db  ← Shared state (all devices)
   └── sync.db      ← MY pending shared changes (pruned)
 ```

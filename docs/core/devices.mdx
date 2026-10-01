@@ -298,18 +298,18 @@ If changes aren't syncing between devices:
 
 ```bash
 # Check device registration and sync state in library
-sqlite3 ~/WingDrive/Libraries/My\ Library.sdlibrary/database.db \
+sqlite3 ~/WingDrive/Libraries/My\ Library.winglibrary/database.db \
   "SELECT uuid, name, is_online, sync_enabled, last_sync_at
    FROM devices;"
 
 # Check which devices are online and sync-enabled
-sqlite3 ~/WingDrive/Libraries/My\ Library.sdlibrary/database.db \
+sqlite3 ~/WingDrive/Libraries/My\ Library.winglibrary/database.db \
   "SELECT uuid, name, is_online, last_seen_at
    FROM devices
    WHERE sync_enabled = 1;"
 
 # View watermarks (stored in sync.db, not devices table)
-sqlite3 ~/WingDrive/Libraries/My\ Library.sdlibrary/sync.db \
+sqlite3 ~/WingDrive/Libraries/My\ Library.winglibrary/sync.db \
   "SELECT * FROM device_resource_watermarks;"
 
 # Monitor sync activity

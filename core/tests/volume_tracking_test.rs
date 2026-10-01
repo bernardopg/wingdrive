@@ -879,7 +879,7 @@ async fn test_volume_tracking_persistence() {
 			.expect("Failed to create core"),
 	);
 
-	let library_path = data_path.join("libraries").join("persist-test.sdlibrary");
+	let library_path = data_path.join("libraries").join("persist-test.winglibrary");
 	let library = core
 		.libraries
 		.create_library(

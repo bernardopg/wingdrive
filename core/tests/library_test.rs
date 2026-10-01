@@ -158,7 +158,7 @@ async fn test_library_name_sanitization() {
 
 	// Verify directory name was sanitized
 	let dir_name = library.path().file_name().unwrap().to_str().unwrap();
-	assert!(dir_name.ends_with(".sdlibrary"));
+	assert!(dir_name.ends_with(".winglibrary"));
 	assert!(!dir_name.contains('/'));
 	assert!(!dir_name.contains(':'));
 	assert!(!dir_name.contains('*'));

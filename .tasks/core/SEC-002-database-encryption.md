@@ -11,7 +11,7 @@ whitepaper: Section 8.1
 
 ## Description
 
-Implement transparent, at-rest encryption for all library databases (`.sdlibrary/database.db`) using SQLCipher. Keys should be derived from a user-provided password using PBKDF2 to protect against brute-force attacks.
+Implement transparent, at-rest encryption for all library databases (`.winglibrary/database.db`) using SQLCipher. Keys should be derived from a user-provided password using PBKDF2 to protect against brute-force attacks.
 
 ## Implementation Steps
 

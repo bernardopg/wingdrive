@@ -1,7 +1,7 @@
 //! Shared utilities for volume detection across platforms
 
 use crate::{
-	domain::volume::{SpacedriveVolumeId, SPACEDRIVE_VOLUME_ID_FILE},
+	domain::volume::SpacedriveVolumeId,
 	volume::{
 		error::{VolumeError, VolumeResult},
 		types::FileSystem,
@@ -204,7 +204,7 @@ pub async fn read_or_create_dotfile(
 	device_id: Uuid,
 	library_id: Option<Uuid>,
 ) -> Option<Uuid> {
-	let id_file_path = mount_point.join(SPACEDRIVE_VOLUME_ID_FILE);
+	let id_file_path = crate::branding::volume_id_file(mount_point);
 
 	// Try to read existing dotfile
 	if let Ok(content) = tokio::fs::read_to_string(&id_file_path).await {
@@ -266,7 +266,7 @@ pub fn read_or_create_dotfile_sync(
 	device_id: Uuid,
 	library_id: Option<Uuid>,
 ) -> Option<Uuid> {
-	let id_file_path = mount_point.join(SPACEDRIVE_VOLUME_ID_FILE);
+	let id_file_path = crate::branding::volume_id_file(mount_point);
 
 	// Try to read existing dotfile
 	if let Ok(content) = std::fs::read_to_string(&id_file_path) {

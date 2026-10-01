@@ -13,7 +13,6 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 /// Dotfile name for persistent volume identification
-pub const SPACEDRIVE_VOLUME_ID_FILE: &str = ".spacedrive-volume-id";
 
 /// Unique fingerprint for a storage volume
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Type)]

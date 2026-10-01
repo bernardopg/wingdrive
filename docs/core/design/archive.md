@@ -88,10 +88,10 @@ Examples:
 
 ## Storage Layout
 
-Each library gets a sources root inside `.sdlibrary`.
+Each library gets a sources root inside `.winglibrary`.
 
 ```text
-.sdlibrary/
+.winglibrary/
   library.db
   sidecars/
   sources/
@@ -470,7 +470,7 @@ This keeps one product and one navigation model.
 ### Phase 2: Library Registration
 
 - add library models and migrations for source metadata
-- create source folders under `.sdlibrary/sources/`
+- create source folders under `.winglibrary/sources/`
 - expose create/list/get/delete ops
 
 ### Phase 3: Sync and Pipeline Jobs
@@ -559,7 +559,7 @@ Libraries in v2 follow this ownership structure:
 
 ```rust
 pub struct Library {
-    path: PathBuf,                          // Root .sdlibrary folder
+    path: PathBuf,                          // Root .winglibrary folder
     config: Arc<RwLock<LibraryConfig>>,
     core_context: Arc<CoreContext>,
     db: Arc<Database>,                      // SeaORM
@@ -795,7 +795,7 @@ library.core_context().key_manager()
 **Resolution:** **Per-library** (matches v2 design):
 
 ```
-MyLib.sdlibrary/
+MyLib.winglibrary/
   ├─ library.db
   ├─ sources/               ← NEW
   │   ├─ registry.db        ← Optional separate DB, or use library.db

@@ -115,7 +115,7 @@ User can search "#person:alice" or "photos from beach"
       └── scene_classification/
           └── resnet50.onnx (95MB)
 
-.sdlibrary/
+.winglibrary/
   └── sidecars/
       ├── content/{uuid}/
       │   └── extensions/photos/

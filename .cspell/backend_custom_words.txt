@@ -24,7 +24,7 @@ thumbstrip
 repr
 Deque
 oneshot
-sdlibrary
+winglibrary
 sdconfig
 DOTFILE
 sysinfo

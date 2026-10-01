@@ -70,7 +70,7 @@ Results:
 - Dev daemon reachable on 127.0.0.1:7096; production stand-in healthy on 6969
   for the whole session; vite on 1420; `WingDrive` process alive and connected.
 - The app drove the dev daemon end to end: bundled adapters were installed into
-  `.../instances/desktop-dev/libraries/My Library.sdlibrary`, and
+  `.../instances/desktop-dev/libraries/My Library.winglibrary`, and
   `wing-cli --data-dir <dev-root>/data --instance desktop-dev library list`
   returned the dev library UUID.
 - Device identities: real `~/.wingdrive`, real `~/.spacedrive`, the production

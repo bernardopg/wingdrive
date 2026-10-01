@@ -125,7 +125,7 @@ $DATA_DIR/
 ├── daemon/
 │   └── daemon.sock          # Unix socket for RPC
 ├── libraries/
-│   └── *.sdlibrary/         # Library databases
+│   └── *.winglibrary/         # Library databases
 ├── logs/                     # Application logs
 └── current_library_id.txt   # Last opened library
 ```

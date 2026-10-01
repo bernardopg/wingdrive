@@ -90,7 +90,7 @@ results.forEach(result => {
 Each library contains a `sources/` directory alongside the VDFS:
 
 ```
-.sdlibrary/
+.winglibrary/
 ├─ library.db              # VDFS + source metadata
 ├─ sidecars/               # VDFS sidecars
 └─ sources/                # Archive sources
@@ -348,7 +348,7 @@ RUST_LOG=wing_archive=debug,wing_core::data=debug cargo run
 View source database:
 
 ```bash
-sqlite3 ~/.sdlibrary/MyLibrary/sources/{source-uuid}/data.db
+sqlite3 ~/.winglibrary/MyLibrary/sources/{source-uuid}/data.db
 .schema
 SELECT * FROM records LIMIT 10;
 ```
@@ -357,7 +357,7 @@ Inspect vector index:
 
 ```python
 import lancedb
-db = lancedb.connect("~/.sdlibrary/MyLibrary/sources/{source-uuid}/embeddings.lance")
+db = lancedb.connect("~/.winglibrary/MyLibrary/sources/{source-uuid}/embeddings.lance")
 table = db.open_table("embeddings")
 print(table.schema)
 ```

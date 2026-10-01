@@ -31,7 +31,7 @@ src/
 
 **Library** (`library/`)
 
-- File-based storage (`.sdlibrary` directories)
+- File-based storage (`.winglibrary` directories)
 - SQLite database with SeaORM
 - Job management and thumbnail generation
 - Device registration and sync coordination

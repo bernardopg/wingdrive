@@ -31,7 +31,7 @@ This will:
 
 ```bash
 # Find your library ID
-cat "$HOME/WingDrive/Libraries"/*.sdlibrary/library.json | grep '"id"'
+cat "$HOME/WingDrive/Libraries"/*.winglibrary/library.json | grep '"id"'
 
 # Run with env vars
 export WING_LIBRARY_ID="your-library-uuid-here"

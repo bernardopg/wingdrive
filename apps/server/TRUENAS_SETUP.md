@@ -76,7 +76,7 @@ Go to: **Apps** → **Discover Apps** → **Launch Docker Image**
 | Read Only | (needs write access) |
 
 **This stores:**
-- Library databases (`.sdlibrary/`)
+- Library databases (`.winglibrary/`)
 - Daemon socket
 - Logs
 - Thumbnails/sidecars
@@ -270,7 +270,7 @@ If not, rebuild:
 ├── daemon/
 │   └── daemon.sock          # Unix socket
 ├── libraries/
-│   └── My Library.sdlibrary/
+│   └── My Library.winglibrary/
 │       ├── library.db       # SQLite database
 │       └── sidecars/        # Thumbnails
 └── logs/

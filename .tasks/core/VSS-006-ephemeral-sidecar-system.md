@@ -18,7 +18,7 @@ Implement an ephemeral sidecar system for generating and managing derivative fil
 
 The current sidecar system (VSS) works exclusively with managed locations:
 - **Content-addressed:** Sidecars are stored by content hash (`content_uuid`)
-- **Library-scoped:** Stored in `~/.sdlibrary/sidecars/`
+- **Library-scoped:** Stored in `~/.winglibrary/sidecars/`
 - **Database-tracked:** All sidecars have database records
 - **Batch generation:** Thumbnails generated for entire folders during indexing
 

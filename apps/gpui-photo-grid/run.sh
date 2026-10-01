@@ -8,7 +8,7 @@ LIBRARY_PATH="$HOME/WingDrive/Libraries"
 if [ ! -d "$LIBRARY_PATH" ] && [ -d "$HOME/Spacedrive/Libraries" ]; then
     LIBRARY_PATH="$HOME/Spacedrive/Libraries"
 fi
-LIBRARY_FILE=$(find "$LIBRARY_PATH" -name "*.sdlibrary" -type d | head -n 1)
+LIBRARY_FILE=$(find "$LIBRARY_PATH" \( -name "*.winglibrary" -o -name "*.sdlibrary" \) -type d | head -n 1)
 
 if [ -z "$LIBRARY_FILE" ]; then
     echo "Error: No WingDrive library found in $LIBRARY_PATH"

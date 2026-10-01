@@ -192,10 +192,10 @@ impl Core {
 		// Set filesystem watcher in context so it can be accessed by jobs (for ephemeral watch registration)
 		context.set_fs_watcher(services.fs_watcher.clone()).await;
 
-		// Scan for .sdlibrary directories before attempting to load
+		// Scan for .winglibrary directories before attempting to load
 		info!("Scanning for library directories...");
 		let library_dir_count = libraries.count_library_directories().await;
-		info!("Found {} .sdlibrary directories", library_dir_count);
+		info!("Found {} .winglibrary directories", library_dir_count);
 
 		// Auto-load all libraries with context for job manager initialization
 		info!("Loading existing libraries...");
@@ -211,7 +211,7 @@ impl Core {
 				}
 			};
 
-		// Only create default library if NO .sdlibrary directories exist
+		// Only create default library if NO .winglibrary directories exist
 		if library_dir_count == 0 {
 			info!("No library directories found, creating default library 'My Library'");
 			match libraries

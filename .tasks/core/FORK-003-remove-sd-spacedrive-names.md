@@ -20,7 +20,7 @@ Scope measured at `29c564b02`: about 20 Rust crates named `sd-*` or `spacedrive-
 ## Rules
 
 - Keep legally required upstream attribution only (license headers, NOTICE/README credit that WingDrive derives from Spacedrive).
-- On-disk names (`.sdlibrary`, data directories, `SD_*` environment variables) get the new name, and the old one is still read with a one-time migration or a fallback, so existing libraries keep working.
+- On-disk names (`.winglibrary`, data directories, `SD_*` environment variables) get the new name, and the old one is still read with a one-time migration or a fallback, so existing libraries keep working.
 - Wire method strings and serialized enum tags that do not contain `sd` stay unchanged.
 
 ## Phases
@@ -29,7 +29,7 @@ Scope measured at `29c564b02`: about 20 Rust crates named `sd-*` or `spacedrive-
 - [ ] 2. Rust identifiers: `WingPath*` -> `WingPath*`, `sd_*` functions/modules -> `wing_*`
 - [ ] 3. JS packages: `@sd/*` -> `@wingdrive/*` (or `@wing/*`), imports, Vite aliases, tsconfig paths
 - [ ] 4. Generated TS/Swift types regenerated
-- [ ] 5. Env vars `SD_*` -> `WING_*` with fallback; `.sdlibrary` -> `.winglibrary` with migration
+- [ ] 5. Env vars `SD_*` -> `WING_*` with fallback; `.winglibrary` -> `.winglibrary` with migration
 - [ ] 6. Scripts, justfile, xtask, CI workflows, mobile modules (`wing-mobile-core`)
 - [ ] 7. Docs, comments, and user-facing strings
 - [ ] 8. `git grep -iE 'spacedrive|\bsd[-_]|\bSd[A-Z]'` returns only allowed attribution and migration code

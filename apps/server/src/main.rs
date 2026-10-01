@@ -124,7 +124,7 @@ async fn find_library_folder(data_dir: &std::path::Path, library_id: &str) -> Op
 	let mut entries = tokio::fs::read_dir(data_dir.join("libraries")).await.ok()?;
 	while let Ok(Some(entry)) = entries.next_entry().await {
 		let path = entry.path();
-		if path.extension().and_then(|s| s.to_str()) != Some("sdlibrary") {
+		if !wing_core::branding::is_library_dir_name(&path) {
 			continue;
 		}
 		let Ok(contents) = tokio::fs::read_to_string(path.join("library.json")).await else {

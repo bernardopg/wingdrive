@@ -35,7 +35,7 @@ use uuid::Uuid;
 
 /// Represents an open WingDrive library
 pub struct Library {
-	/// Root directory of the library (the .sdlibrary folder)
+	/// Root directory of the library (the .winglibrary folder)
 	path: PathBuf,
 
 	/// Library configuration
@@ -1887,4 +1887,4 @@ impl Library {
 pub const LIBRARY_CONFIG_VERSION: u32 = 2;
 
 /// Library directory extension
-pub const LIBRARY_EXTENSION: &str = "sdlibrary";
+pub use crate::branding::LIBRARY_EXTENSION;

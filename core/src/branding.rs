@@ -42,6 +42,19 @@ pub const BUNDLE_PREFIX: &str = "com.wingdrive";
 /// Reverse-DNS prefix used before the fork.
 pub const LEGACY_BUNDLE_PREFIX: &str = "com.spacedrive";
 
+/// Extension of library directories created by WingDrive.
+pub const LIBRARY_EXTENSION: &str = "winglibrary";
+
+/// Library directory extension used before the fork. Existing libraries keep
+/// it on disk and are still recognized.
+pub const LEGACY_LIBRARY_EXTENSION: &str = "sdlibrary";
+
+/// Marker file that identifies a removable volume across mounts.
+pub const VOLUME_ID_FILE: &str = ".wingdrive-volume-id";
+
+/// Volume marker written before the fork.
+pub const LEGACY_VOLUME_ID_FILE: &str = ".spacedrive-volume-id";
+
 const DATA_DIR_NAME: &str = ".wingdrive";
 const LEGACY_DATA_DIR_NAME: &str = ".spacedrive";
 
@@ -63,6 +76,26 @@ pub fn resolve_with_legacy(preferred: impl AsRef<Path>, legacy: impl AsRef<Path>
 	}
 
 	preferred.to_path_buf()
+}
+
+/// Returns true when `path` names a library directory, current or legacy.
+pub fn is_library_dir_name(path: impl AsRef<Path>) -> bool {
+	path.as_ref()
+		.extension()
+		.and_then(|ext| ext.to_str())
+		.is_some_and(|ext| ext == LIBRARY_EXTENSION || ext == LEGACY_LIBRARY_EXTENSION)
+}
+
+/// Volume marker file on `mount_point`, the legacy one when only it exists.
+///
+/// Reading the legacy marker keeps a removable drive's identity across the
+/// rename instead of registering it as a new volume.
+pub fn volume_id_file(mount_point: impl AsRef<Path>) -> PathBuf {
+	let mount_point = mount_point.as_ref();
+	resolve_with_legacy(
+		mount_point.join(VOLUME_ID_FILE),
+		mount_point.join(LEGACY_VOLUME_ID_FILE),
+	)
 }
 
 /// Returns true when the resolved path is a legacy Spacedrive location.
@@ -221,5 +254,29 @@ mod tests {
 	fn does_not_flag_unrelated_substrings() {
 		assert!(!is_legacy_path("/home/user/spacedrive-backup"));
 		assert!(!is_legacy_path("/home/myspacedrive/data"));
+	}
+
+	#[test]
+	fn recognizes_current_and_legacy_library_dirs() {
+		assert!(is_library_dir_name(
+			"/data/libraries/My Library.winglibrary"
+		));
+		assert!(is_library_dir_name("/data/libraries/Old.sdlibrary"));
+		assert!(!is_library_dir_name("/data/libraries/notes.txt"));
+	}
+
+	#[test]
+	fn volume_marker_prefers_legacy_only_when_alone() {
+		let root = tempdir().unwrap();
+		assert_eq!(
+			volume_id_file(root.path()),
+			root.path().join(VOLUME_ID_FILE)
+		);
+
+		std::fs::write(root.path().join(LEGACY_VOLUME_ID_FILE), "{}").unwrap();
+		assert_eq!(
+			volume_id_file(root.path()),
+			root.path().join(LEGACY_VOLUME_ID_FILE)
+		);
 	}
 }

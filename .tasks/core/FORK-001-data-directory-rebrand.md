@@ -56,7 +56,7 @@ machines.
   reading `XDG_CONFIG_HOME` instead of `$HOME`.
 - The daemon was started against the real machine and logged
   `Initializing WingDrive at "/home/bitter/.spacedrive"`, then opened the
-  existing `My Library.sdlibrary` and its database.
+  existing `My Library.winglibrary` and its database.
 
 ## Follow-up
 

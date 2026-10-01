@@ -36,7 +36,7 @@ async fn find_library_folder(
 ) -> Result<PathBuf, StatusCode> {
 	let libraries_dir = data_dir.join("libraries");
 
-	// Read all .sdlibrary folders
+	// Read all library folders
 	let mut entries = tokio::fs::read_dir(&libraries_dir)
 		.await
 		.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -47,7 +47,11 @@ async fn find_library_folder(
 		.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
 	{
 		let path = entry.path();
-		if path.extension().and_then(|s| s.to_str()) == Some("sdlibrary") {
+		// "sdlibrary" is the extension libraries had before the fork
+		if matches!(
+			path.extension().and_then(|s| s.to_str()),
+			Some("winglibrary" | "sdlibrary")
+		) {
 			// Try to read library.json
 			let library_json_path = path.join("library.json");
 			if let Ok(contents) = tokio::fs::read_to_string(&library_json_path).await {

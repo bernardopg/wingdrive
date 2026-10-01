@@ -195,7 +195,7 @@ volumes:
 ├── daemon/
 │   └── daemon.sock        # Unix socket for RPC
 ├── libraries/
-│   └── *.sdlibrary/       # SQLite databases
+│   └── *.winglibrary/       # SQLite databases
 │       ├── library.db
 │       └── sidecars/      # Thumbnails, previews
 ├── logs/

@@ -92,18 +92,11 @@ impl CoreAction for LibraryOpenAction {
 		}
 
 		// Check if it's a valid library directory
-		if !self
-			.input
-			.path
-			.extension()
-			.and_then(|e| e.to_str())
-			.map(|e| e == "sdlibrary")
-			.unwrap_or(false)
-		{
+		if !crate::branding::is_library_dir_name(&self.input.path) {
 			return Err(ActionError::Validation {
 				field: "path".to_string(),
 				message: format!(
-					"Path {:?} is not a library directory (.sdlibrary)",
+					"Path {:?} is not a library directory (.winglibrary)",
 					self.input.path
 				),
 			});
