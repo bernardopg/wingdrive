@@ -375,23 +375,20 @@ impl Device {
 	}
 }
 
-/// Get the device name from the system
-fn get_device_name() -> String {
-	#[cfg(target_os = "macos")]
-	{
-		return whoami::devicename().unwrap_or_else(|_| "Unknown Device".to_string());
-	}
-
-	#[cfg(any(target_os = "windows", target_os = "linux"))]
-	{
-		if let Ok(name) = hostname::get() {
-			if let Ok(name_str) = name.into_string() {
-				return name_str;
-			}
-		}
-	}
-
-	"Unknown Device".to_string()
+/// Get the device name from the system: the user-facing device name when the
+/// OS has one (macOS computer name, Linux pretty hostname), else the hostname.
+pub(crate) fn get_device_name() -> String {
+	let pretty = whoami::devicename()
+		.ok()
+		.filter(|name| !name.trim().is_empty());
+	pretty
+		.or_else(|| {
+			hostname::get()
+				.ok()
+				.and_then(|name| name.into_string().ok())
+				.filter(|name| !name.trim().is_empty())
+		})
+		.unwrap_or_else(|| "Unknown Device".to_string())
 }
 
 /// Detect the operating system

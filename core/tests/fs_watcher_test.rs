@@ -1078,7 +1078,11 @@ async fn run_test_scenarios(
 	println!("This tests for the duplicate entry bug when files are restored after deletion");
 
 	// Create a temporary "trash" directory outside the watched directory
-	let trash_dir = std::env::temp_dir().join("wing_location_test_trash");
+	// Beside the watched directory, not in temp_dir: /tmp is often a separate
+	// tmpfs, and rename(2) cannot move files across filesystems.
+	let trash_dir =
+		std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "/tmp".into()))
+			.join(".wing_location_test_trash");
 	if trash_dir.exists() {
 		tokio::fs::remove_dir_all(&trash_dir).await?;
 	}

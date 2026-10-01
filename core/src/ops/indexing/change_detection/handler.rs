@@ -363,7 +363,20 @@ pub async fn handle_create<H: ChangeHandler>(
 	}
 
 	let parent_path = path.parent().unwrap_or(Path::new("/"));
-	let entry = handler.create(&metadata, parent_path).await?;
+	let entry = match handler.create(&metadata, parent_path).await {
+		Ok(entry) => entry,
+		// A concurrent Create event for the same path won the insert; the unique
+		// index rejected this one, so the entry already exists.
+		Err(e)
+			if format!("{e:#}")
+				.to_lowercase()
+				.contains("unique constraint") =>
+		{
+			tracing::debug!("Entry created concurrently, skipping: {}", path.display());
+			return Ok(());
+		}
+		Err(e) => return Err(e),
+	};
 
 	if entry.is_directory() {
 		handler.handle_new_directory(path).await?;

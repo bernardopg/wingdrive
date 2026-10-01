@@ -138,7 +138,9 @@ impl DeviceManager {
 			Err(DeviceError::NotInitialized) => {
 				// Create new device configuration
 				let os = detect_os();
-				let name = device_name.clone().unwrap_or_else(get_device_name);
+				let name = device_name
+					.clone()
+					.unwrap_or_else(crate::domain::device::get_device_name);
 				let mut config = DeviceConfig::new(name, os);
 
 				// Try to detect hardware model and OS version
@@ -480,11 +482,6 @@ impl DeviceManager {
 		let key = self.master_key().await?;
 		Ok(hex::encode(key))
 	}
-}
-
-/// Get the device name from the system
-fn get_device_name() -> String {
-	whoami::devicename().unwrap_or_else(|_| "Unknown Device".to_string())
 }
 
 /// Detect the operating system
