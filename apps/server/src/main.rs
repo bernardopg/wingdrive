@@ -467,7 +467,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.route("/rpc", post(daemon_rpc))
 		.route("/events", get(events_sse))
 		.route(
-			"/sidecar/:library_id/:content_uuid/:kind/*variant",
+			"/sidecar/{library_id}/{content_uuid}/{kind}/{*variant}",
 			get(serve_sidecar),
 		)
 		.fallback(serve_web)
