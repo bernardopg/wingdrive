@@ -41,7 +41,7 @@ generic-array    = { version = "=0.14.7", features = ["serde", "zeroize"] } # Up
 hex              = "0.4.3"
 rand_chacha      = "0.9.0-alpha.2"
 rand_core        = "0.9.0-alpha.2"
-serdect          = "0.3.0-pre.0"
+serdect          = "0.4.3"
 typenum          = "1.17"
 
 old-rand-core = { package = "rand_core", version = "0.6.4" }
