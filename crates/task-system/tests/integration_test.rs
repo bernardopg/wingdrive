@@ -3,7 +3,7 @@ use wing_task_system::{TaskHandle, TaskOutput, TaskStatus, TaskSystem};
 use std::{collections::VecDeque, time::Duration};
 
 use futures_concurrency::future::Join;
-use rand::Rng;
+use rand::RngExt;
 use tempfile::tempdir;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
@@ -167,7 +167,8 @@ fn many_pauses_test() {
 		.with_file(true)
 		.with_line_number(true)
 		.with_env_filter(EnvFilter::from_default_env())
-		.init();
+		.try_init()
+		.ok();
 
 	std::thread::spawn(|| {
 		tokio::runtime::Builder::new_multi_thread()

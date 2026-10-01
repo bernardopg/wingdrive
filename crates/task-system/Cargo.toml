@@ -25,7 +25,6 @@ uuid                = { workspace = true, features = ["v4"] }
 downcast-rs = "1.2"
 
 [dev-dependencies]
-lending-stream     = { workspace = true }
 rand               = { workspace = true }
 rmp-serde          = { workspace = true }
 serde              = { workspace = true, features = ["derive"] }

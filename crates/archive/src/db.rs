@@ -587,11 +587,11 @@ impl SourceDb {
 
 		if let Some(ref temp) = temporal {
 			if self.schema.search.date_field.is_some() {
-				if temp.date_after.is_some() {
-					q = q.bind(temp.date_after.unwrap());
+				if let Some(after) = temp.date_after {
+					q = q.bind(after);
 				}
-				if temp.date_before.is_some() {
-					q = q.bind(temp.date_before.unwrap());
+				if let Some(before) = temp.date_before {
+					q = q.bind(before);
 				}
 			}
 		}

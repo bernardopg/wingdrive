@@ -86,19 +86,19 @@ pub fn generate_ddl(schema: &DataTypeSchema) -> Vec<String> {
 		sql.push_str("    external_id TEXT UNIQUE,\n");
 
 		for (field_name, field_type) in &model.fields {
-			let _ = write!(sql, "    \"{field_name}\" {},\n", field_type.sql_type());
+			let _ = writeln!(sql, "    \"{field_name}\" {},", field_type.sql_type());
 		}
 
 		for target in &model.relations.belongs_to {
 			let target_table = pluralize(target);
-			let _ = write!(
+			let _ = writeln!(
 				sql,
-				"    \"{target}_id\" TEXT REFERENCES \"{target_table}\"(id),\n"
+				"    \"{target}_id\" TEXT REFERENCES \"{target_table}\"(id),"
 			);
 		}
 
 		if let Some(ref col) = model.relations.self_referential {
-			let _ = write!(sql, "    \"{col}\" TEXT REFERENCES \"{table_name}\"(id),\n");
+			let _ = writeln!(sql, "    \"{col}\" TEXT REFERENCES \"{table_name}\"(id),");
 		}
 
 		sql.push_str("    indexed_at TEXT NOT NULL DEFAULT (datetime('now')),\n");
@@ -106,7 +106,7 @@ pub fn generate_ddl(schema: &DataTypeSchema) -> Vec<String> {
 		sql.push_str("    _safety_score INTEGER,\n");
 		sql.push_str("    _safety_verdict TEXT DEFAULT 'unscreened',\n");
 		sql.push_str("    _safety_version TEXT\n");
-		sql.push_str(")");
+		sql.push(')');
 
 		statements.push(sql);
 	}

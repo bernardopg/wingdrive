@@ -93,6 +93,9 @@ jobs:
       - name: Check workspace
         run: cargo check --workspace --locked
 
+      - name: Clippy
+        run: cargo clippy --workspace --locked -- -D warnings
+
       - name: Test branding and legacy path resolution
         run: |
           cargo test -p wing-core --lib branding:: --locked

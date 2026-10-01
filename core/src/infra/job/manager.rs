@@ -1723,7 +1723,9 @@ impl JobManager {
 								job_id,
 								JobStatus::Failed,
 								None,
-								Some(format!("Cannot resume: saved job state is incompatible ({e})")),
+								Some(format!(
+									"Cannot resume: saved job state is incompatible ({e})"
+								)),
 							)
 							.await
 						{

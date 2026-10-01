@@ -42,7 +42,6 @@ pub mod commands {
 }
 
 /// Resolves the WingDrive data directory with legacy-install adoption.
-
 pub fn default_data_dir() -> anyhow::Result<std::path::PathBuf> {
 	wing_core::config::default_data_dir()
 }

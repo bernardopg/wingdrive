@@ -1,6 +1,6 @@
 use async_trait::async_trait;
+use futures::StreamExt;
 use futures_concurrency::future::FutureGroup;
-use lending_stream::{LendingStream, StreamExt};
 use tracing::trace;
 use wing_task_system::{
 	BaseTaskDispatcher, ExecStatus, Interrupter, IntoAnyTaskOutput, Task, TaskDispatcher,
@@ -43,10 +43,9 @@ impl SampleJob {
 				.await
 				.unwrap()
 				.into_iter(),
-		)
-		.lend_mut();
+		);
 
-		while let Some((group, res)) = group.next().await {
+		while let Some(res) = group.next().await {
 			match res.unwrap() {
 				TaskStatus::Done((_task_id, TaskOutput::Out(out))) => {
 					group.insert(

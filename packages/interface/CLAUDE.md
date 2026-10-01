@@ -22,6 +22,7 @@
 ### What Lives Where
 
 **@wingdrive/interface** (this package):
+
 - Route components and layouts
 - Feature components (Explorer, Settings, etc.)
 - React Query hook wrappers
@@ -31,12 +32,14 @@
 - NO platform APIs (use platform prop)
 
 **@wingdrive/ts-client**:
+
 - Client implementation
 - Transport layer
 - Auto-generated types from Rust
 - State stores (if needed)
 
 **@wingdrive/primitives**:
+
 - Primitive components (Button, Input, DropdownMenu, etc.)
 - Reusable, unstyled or minimally styled
 - No business logic
@@ -80,27 +83,32 @@ packages/interface/
 The interface is organized into clear separation of concerns:
 
 **Shell Layer** (`Shell.tsx`):
+
 - Root entry point
 - Provider setup (WingDrive, Server, TabManager, Platform)
 - Daemon connection management (Tauri-specific)
 
 **Layout Layer** (`ShellLayout.tsx`):
+
 - Chrome/frame (sidebar, inspector, TopBar containers)
 - Provider setup (TopBar, Selection, Explorer)
 - Tab bar positioning
 - QuickPreview coordination
 
 **View Layer** (routes like `ExplorerView.tsx`):
+
 - Actual content rendering
 - TopBar button registration (via portal)
 - Feature-specific logic
 
 **Coordination Layer**:
+
 - `DndProvider.tsx` - Global drag-and-drop
 - `QuickPreview/Controller.tsx` - Preview navigation
 - `QuickPreview/Syncer.tsx` - Selection-to-preview sync
 
 **Visual Hierarchy:**
+
 ```
 Shell (providers) → DndProvider → Router
                                     ↓
@@ -122,6 +130,7 @@ Shell (providers) → DndProvider → Router
 **Effects are an escape hatch** - only use them to sync with external systems (network, DOM, browser APIs).
 
 **DON'T use Effects for:**
+
 - Transforming data for rendering (calculate during render instead)
 - Handling user events (use event handlers)
 - Updating state based on props (calculate during render or use `key`)
@@ -130,6 +139,7 @@ Shell (providers) → DndProvider → Router
 - Notifying parent of changes (pass callback, call in event handler)
 
 **DO use Effects for:**
+
 - Subscribing to external systems (WebSocket, browser events)
 - Syncing with non-React widgets
 - Network requests with proper cleanup
@@ -137,137 +147,148 @@ Shell (providers) → DndProvider → Router
 ### Examples
 
 **Wrong - Don't use Effect to transform data:**
+
 ```tsx
-function TodoList({ todos, filter }) {
-  const [visibleTodos, setVisibleTodos] = useState([]);
-  useEffect(() => {
-    setVisibleTodos(getFilteredTodos(todos, filter));
-  }, [todos, filter]);
-  // Extra render pass!
+function TodoList({todos, filter}) {
+	const [visibleTodos, setVisibleTodos] = useState([]);
+	useEffect(() => {
+		setVisibleTodos(getFilteredTodos(todos, filter));
+	}, [todos, filter]);
+	// Extra render pass!
 }
 ```
 
 **Correct - Calculate during render:**
+
 ```tsx
-function TodoList({ todos, filter }) {
-  const visibleTodos = getFilteredTodos(todos, filter);
-  // Or use useMemo if expensive:
-  const visibleTodos = useMemo(
-    () => getFilteredTodos(todos, filter),
-    [todos, filter]
-  );
+function TodoList({todos, filter}) {
+	const visibleTodos = getFilteredTodos(todos, filter);
+	// Or use useMemo if expensive:
+	const visibleTodos = useMemo(
+		() => getFilteredTodos(todos, filter),
+		[todos, filter]
+	);
 }
 ```
 
 **Wrong - Don't use Effect for user events:**
+
 ```tsx
-function ProductPage({ product, addToCart }) {
-  useEffect(() => {
-    if (product.isInCart) {
-      showNotification('Added to cart!');
-    }
-  }, [product]);
+function ProductPage({product, addToCart}) {
+	useEffect(() => {
+		if (product.isInCart) {
+			showNotification('Added to cart!');
+		}
+	}, [product]);
 }
 ```
 
 **Correct - Use event handler:**
+
 ```tsx
-function ProductPage({ product, addToCart }) {
-  function buyProduct() {
-    addToCart(product);
-    showNotification('Added to cart!');
-  }
+function ProductPage({product, addToCart}) {
+	function buyProduct() {
+		addToCart(product);
+		showNotification('Added to cart!');
+	}
 }
 ```
 
 **Wrong - Don't use Effect to update parent:**
+
 ```tsx
-function Toggle({ onChange }) {
-  const [isOn, setIsOn] = useState(false);
-  useEffect(() => {
-    onChange(isOn); // Too late! Extra render.
-  }, [isOn, onChange]);
+function Toggle({onChange}) {
+	const [isOn, setIsOn] = useState(false);
+	useEffect(() => {
+		onChange(isOn); // Too late! Extra render.
+	}, [isOn, onChange]);
 }
 ```
 
 **Correct - Call in event handler:**
+
 ```tsx
-function Toggle({ onChange }) {
-  const [isOn, setIsOn] = useState(false);
-  function updateToggle(nextIsOn) {
-    setIsOn(nextIsOn);
-    onChange(nextIsOn); // Same render pass!
-  }
+function Toggle({onChange}) {
+	const [isOn, setIsOn] = useState(false);
+	function updateToggle(nextIsOn) {
+		setIsOn(nextIsOn);
+		onChange(nextIsOn); // Same render pass!
+	}
 }
 ```
 
 **Wrong - Don't chain Effects:**
+
 ```tsx
 useEffect(() => {
-  if (card.gold) setGoldCardCount(c => c + 1);
+	if (card.gold) setGoldCardCount((c) => c + 1);
 }, [card]);
 
 useEffect(() => {
-  if (goldCardCount > 3) setRound(r => r + 1);
+	if (goldCardCount > 3) setRound((r) => r + 1);
 }, [goldCardCount]);
 // Multiple render passes!
 ```
 
 **Correct - Calculate in event handler:**
+
 ```tsx
 function handlePlaceCard(nextCard) {
-  setCard(nextCard);
-  if (nextCard.gold) {
-    if (goldCardCount < 3) {
-      setGoldCardCount(goldCardCount + 1);
-    } else {
-      setGoldCardCount(0);
-      setRound(round + 1);
-    }
-  }
-  // Single render pass!
+	setCard(nextCard);
+	if (nextCard.gold) {
+		if (goldCardCount < 3) {
+			setGoldCardCount(goldCardCount + 1);
+		} else {
+			setGoldCardCount(0);
+			setRound(round + 1);
+		}
+	}
+	// Single render pass!
 }
 ```
 
-### Function components only:
+### Function components only
+
 ```tsx
 // Correct
-function Component({ name }: { name: string }) {
-  return <div>{name}</div>;
+function Component({name}: {name: string}) {
+	return <div>{name}</div>;
 }
 
 // Wrong
-const Component: React.FC<{ name: string }> = ({ name }) => {
-  return <div>{name}</div>;
+const Component: React.FC<{name: string}> = ({name}) => {
+	return <div>{name}</div>;
 };
 ```
 
 **Hooks must follow rules:**
+
 ```tsx
 // Correct - proper cleanup
 useEffect(() => {
-  const subscription = subscribe();
-  return () => subscription.unsubscribe();
+	const subscription = subscribe();
+	return () => subscription.unsubscribe();
 }, [dependency]);
 
 // Wrong - missing cleanup
 useEffect(() => {
-  subscribe();
+	subscribe();
 }, []);
 ```
 
 **Use TypeScript strictly:**
+
 ```tsx
 // Correct - explicit types
 interface ButtonProps {
-  label: string;
-  onClick: () => void;
+	label: string;
+	onClick: () => void;
 }
 
-function Button({ label, onClick }: ButtonProps) { }
+function Button({label, onClick}: ButtonProps) {}
 
 // Wrong - implicit any
-function Button(props) { }
+function Button(props) {}
 ```
 
 ---
@@ -279,20 +300,23 @@ function Button(props) { }
 Never use `var()` syntax directly. Always use Tailwind's semantic color classes.
 
 **WRONG:**
+
 ```tsx
-className="bg-[var(--color-sidebar)]"
-className="text-[var(--color-sidebar-ink)]"
-className="border-[var(--color-accent)]"
+className = 'bg-[var(--color-sidebar)]';
+className = 'text-[var(--color-sidebar-ink)]';
+className = 'border-[var(--color-accent)]';
 ```
 
 **CORRECT:**
+
 ```tsx
-className="bg-sidebar"
-className="text-sidebar-ink"
-className="border-accent"
+className = 'bg-sidebar';
+className = 'text-sidebar-ink';
+className = 'border-accent';
 ```
 
 **IMPORTANT:** CSS variables must be defined as comma-separated HSL values (not wrapped in `hsl()`):
+
 ```css
 /* CORRECT - bare values for Tailwind */
 --color-sidebar: 235, 15%, 7%;
@@ -306,29 +330,34 @@ This is because Tailwind uses `hsla(var(--color-sidebar), <alpha-value>)` which 
 ### Color Categories
 
 **Accent:** `accent`, `accent-faint`, `accent-deep`
+
 - Use for: Primary actions, selections, focus states
 
 **Text (Ink):** `ink`, `ink-dull`, `ink-faint`
+
 - Use for: Text hierarchy (primary, secondary, tertiary)
 
 **Sidebar:** `sidebar`, `sidebar-box`, `sidebar-line`, `sidebar-ink`, `sidebar-selected`, etc.
+
 - Use for: Sidebar-specific elements
 
 **App:** `app`, `app-box`, `app-line`, `app-hover`, `app-selected`, etc.
+
 - Use for: Main content area elements
 
 **Menu:** `menu`, `menu-line`, `menu-hover`, `menu-ink`, etc.
+
 - Use for: Dropdowns, context menus
 
 ### Opacity Modifiers
 
 ```tsx
 // Use Tailwind opacity
-className="bg-accent/10"
-className="bg-sidebar/65"
+className = 'bg-accent/10';
+className = 'bg-sidebar/65';
 
 // Don't use manual alpha
-className="bg-[var(--color-accent)]/10"
+className = 'bg-[var(--color-accent)]/10';
 ```
 
 ---
@@ -338,12 +367,14 @@ className="bg-[var(--color-accent)]/10"
 ### Primitive vs Feature Components
 
 **Primitives** (@wingdrive/primitives):
+
 - Generic, reusable
 - Minimal styling (or unstyled)
 - No business logic
 - Example: `DropdownMenu`, `Button`, `Input`
 
 **Feature Components** (@wingdrive/interface):
+
 - Specific to WingDrive features
 - Uses primitives
 - Can have business logic
@@ -353,29 +384,25 @@ className="bg-[var(--color-accent)]/10"
 
 ```tsx
 // Correct structure
-import { Primitive } from '@wingdrive/primitives';
-import { useSomeQuery } from '../context';
+import {Primitive} from '@wingdrive/primitives';
+import {useSomeQuery} from '../context';
 
 interface ComponentProps {
-  // Props interface
+	// Props interface
 }
 
-function Component({ prop }: ComponentProps) {
-  // Hooks first
-  const data = useSomeQuery();
+function Component({prop}: ComponentProps) {
+	// Hooks first
+	const data = useSomeQuery();
 
-  // Logic
-  const derived = useMemo(() => transform(data), [data]);
+	// Logic
+	const derived = useMemo(() => transform(data), [data]);
 
-  // Render
-  return (
-    <Primitive className="semantic-colors">
-      {/* Content */}
-    </Primitive>
-  );
+	// Render
+	return <Primitive className="semantic-colors">{/* Content */}</Primitive>;
 }
 
-export { Component };
+export {Component};
 ```
 
 ### Naming Conventions
@@ -395,17 +422,20 @@ export { Component };
 **NEVER** use `<style>`, `<style jsx>`, or any inline style tags. Always use Tailwind utility classes.
 
 **WRONG:**
+
 ```tsx
 <style jsx>{`
-  .slider::-webkit-slider-thumb {
-    background: var(--color-accent);
-  }
+	.slider::-webkit-slider-thumb {
+		background: var(--color-accent);
+	}
 `}</style>
 ```
 
 **CORRECT:**
+
 ```tsx
-className="[&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:rounded-full"
+className =
+	'[&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:rounded-full';
 ```
 
 Use Tailwind's arbitrary variant syntax for pseudo-elements and other edge cases.
@@ -413,6 +443,7 @@ Use Tailwind's arbitrary variant syntax for pseudo-elements and other edge cases
 ### Tailwind Class Order
 
 Follow this order for readability:
+
 1. Layout (`flex`, `grid`, `w-full`, `h-screen`)
 2. Spacing (`p-4`, `m-2`, `gap-2`)
 3. Typography (`text-sm`, `font-medium`)
@@ -425,6 +456,7 @@ Follow this order for readability:
 ### Rounding (V2 Style)
 
 V2 is more rounded than V1. Use:
+
 - `rounded-lg` for most containers (8px)
 - `rounded-md` for smaller elements (6px)
 - `rounded-full` for pills/badges
@@ -433,21 +465,22 @@ V2 is more rounded than V1. Use:
 ### Animation
 
 Use framer-motion for complex animations:
+
 ```tsx
-import { motion, AnimatePresence } from 'framer-motion';
+import {AnimatePresence, motion} from 'framer-motion';
 
 <AnimatePresence>
-  {isOpen && (
-    <motion.div
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: 'auto', opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={{ duration: 0.15, ease: [0.25, 1, 0.5, 1] }}
-    >
-      {content}
-    </motion.div>
-  )}
-</AnimatePresence>
+	{isOpen && (
+		<motion.div
+			initial={{height: 0, opacity: 0}}
+			animate={{height: 'auto', opacity: 1}}
+			exit={{height: 0, opacity: 0}}
+			transition={{duration: 0.15, ease: [0.25, 1, 0.5, 1]}}
+		>
+			{content}
+		</motion.div>
+	)}
+</AnimatePresence>;
 ```
 
 ---
@@ -457,28 +490,31 @@ import { motion, AnimatePresence } from 'framer-motion';
 ### Use Type-Safe Hooks
 
 **Core queries** (no library required):
-```tsx
-import { useCoreQuery } from '../context';
 
-const { data: libraries } = useCoreQuery({
-  type: 'libraries.list',
-  input: { include_stats: false },
+```tsx
+import {useCoreQuery} from '../context';
+
+const {data: libraries} = useCoreQuery({
+	type: 'libraries.list',
+	input: {include_stats: false}
 });
 ```
 
 **Library queries** (requires library context):
-```tsx
-import { useLibraryQuery } from '../context';
 
-const { data: files } = useLibraryQuery({
-  type: 'files.directory_listing',
-  input: { path: '/' },
+```tsx
+import {useLibraryQuery} from '../context';
+
+const {data: files} = useLibraryQuery({
+	type: 'files.directory_listing',
+	input: {path: '/'}
 });
 ```
 
 **Mutations:**
+
 ```tsx
-import { useCoreMutation, useLibraryMutation } from '../context';
+import {useCoreMutation, useLibraryMutation} from '../context';
 
 const createLib = useCoreMutation('libraries.create');
 const applyTags = useLibraryMutation('tags.apply');
@@ -486,31 +522,33 @@ const copyFiles = useLibraryMutation('files.copy');
 const deleteFiles = useLibraryMutation('files.delete');
 
 // Use mutations, not client.execute()
-createLib.mutate({ name: 'New Library', path: null });
+createLib.mutate({name: 'New Library', path: null});
 await copyFiles.mutateAsync({
-  sources: { paths: [path1, path2] },
-  destination: destPath,
-  overwrite: false,
-  verify_checksum: false,
-  preserve_timestamps: true,
-  move_files: false,
-  copy_method: "Auto"
+	sources: {paths: [path1, path2]},
+	destination: destPath,
+	overwrite: false,
+	verify_checksum: false,
+	preserve_timestamps: true,
+	move_files: false,
+	copy_method: 'Auto'
 });
 ```
 
 ### Never Fetch Manually
 
 **Wrong:**
+
 ```tsx
 const [data, setData] = useState();
 useEffect(() => {
-  fetchData().then(setData);
+	fetchData().then(setData);
 }, []);
 ```
 
 **Correct:**
+
 ```tsx
-const { data } = useCoreQuery({ type: 'operation', input: {} });
+const {data} = useCoreQuery({type: 'operation', input: {}});
 ```
 
 ---
@@ -520,36 +558,36 @@ const { data } = useCoreQuery({ type: 'operation', input: {} });
 ### Virtual Scrolling
 
 Use for lists > 100 items:
+
 ```tsx
-import { useVirtualizer } from '@tanstack/react-virtual';
+import {useVirtualizer} from '@tanstack/react-virtual';
 
 const virtualizer = useVirtualizer({
-  count: items.length,
-  getScrollElement: () => parentRef.current,
-  estimateSize: () => 50,
+	count: items.length,
+	getScrollElement: () => parentRef.current,
+	estimateSize: () => 50
 });
 ```
 
 ### Code Splitting
 
 Lazy load routes:
+
 ```tsx
 const SettingsPage = lazy(() => import('./Settings'));
 
 <Suspense fallback={<Spinner />}>
-  <SettingsPage />
-</Suspense>
+	<SettingsPage />
+</Suspense>;
 ```
 
 ### Memoization
 
 Only when actually needed:
+
 ```tsx
 // Expensive computation
-const sorted = useMemo(
-  () => items.sort(expensiveCompare),
-  [items]
-);
+const sorted = useMemo(() => items.sort(expensiveCompare), [items]);
 
 // Premature optimization
 const greeting = useMemo(() => `Hello ${name}`, [name]);
@@ -596,6 +634,7 @@ export const DropdownMenu = {
 ```
 
 **Key principles:**
+
 1. Primitive has minimal/no styling
 2. All visual styling applied via className prop
 3. Business logic (filtering, selecting) in parent component
@@ -608,11 +647,13 @@ export const DropdownMenu = {
 ### Use Generated Types
 
 All types are auto-generated from Rust:
+
 ```tsx
-import type { LibraryInfo, CoreQuery, LibraryAction } from '@wingdrive/ts-client';
+import type {CoreQuery, LibraryAction, LibraryInfo} from '@wingdrive/ts-client';
 ```
 
 **Never:**
+
 - Define manual type interfaces that duplicate Rust types
 - Use `any` (use `unknown` with type guards if needed)
 - Ignore TypeScript errors
@@ -620,11 +661,12 @@ import type { LibraryInfo, CoreQuery, LibraryAction } from '@wingdrive/ts-client
 ### Query Type Safety
 
 The hooks automatically infer types:
+
 ```tsx
 // TypeScript knows data is LibraryInfo[]
-const { data } = useCoreQuery({
-  type: 'libraries.list',
-  input: { include_stats: false },
+const {data} = useCoreQuery({
+	type: 'libraries.list',
+	input: {include_stats: false}
 });
 
 // data is automatically typed based on the operation!
@@ -648,10 +690,11 @@ Explorer/
 ### Exports
 
 Only export what's needed:
+
 ```tsx
 // index.tsx
-export { Shell } from './Shell';
-export { DemoWindow } from './DemoWindow';
+export {Shell} from './Shell';
+export {DemoWindow} from './DemoWindow';
 // Don't export everything
 ```
 
@@ -662,6 +705,7 @@ export { DemoWindow } from './DemoWindow';
 ### Native Traffic Lights
 
 The window uses **native** macOS traffic lights positioned by Swift code:
+
 - Traffic lights are real, functional native controls
 - Content must have `pt-[52px]` to avoid overlap
 - No fake CSS traffic lights
@@ -684,8 +728,9 @@ The window uses **native** macOS traffic lights positioned by Swift code:
 ### Blur Effects
 
 Use backdrop blur for macOS native feel:
+
 ```tsx
-className="backdrop-blur-lg bg-sidebar/65"
+className = 'backdrop-blur-lg bg-sidebar/65';
 ```
 
 ---
@@ -697,6 +742,7 @@ className="backdrop-blur-lg bg-sidebar/65"
 Decision: Dropdowns should expand inline and push content down, not overlay it.
 
 Implementation:
+
 - Use `framer-motion` for smooth height animation
 - No Radix Portal (renders inline in DOM)
 - Pushes surrounding content naturally
@@ -706,6 +752,7 @@ Implementation:
 Decision: Show/hide current library based on count.
 
 Rules:
+
 - **1 library:** Hide current from dropdown (no point showing it)
 - **2+ libraries:** Show all including current (with highlight)
 - Always show "New Library" and "Library Settings"
@@ -716,10 +763,10 @@ Decision: Use Tailwind semantic classes, never `var()` directly.
 
 ```tsx
 // Correct
-className="bg-sidebar-box text-sidebar-ink border-sidebar-line"
+className = 'bg-sidebar-box text-sidebar-ink border-sidebar-line';
 
 // Wrong
-className="bg-[var(--color-sidebar-box)]"
+className = 'bg-[var(--color-sidebar-box)]';
 ```
 
 ### 4. Rounded Style (V2)
@@ -766,21 +813,21 @@ The app entry point follows a clean provider hierarchy:
 
 ```tsx
 // Shell.tsx
-export function Shell({ client }: { client: WingDriveClient }) {
-  const platform = usePlatform();
+export function Shell({client}: {client: WingDriveClient}) {
+	const platform = usePlatform();
 
-  return (
-    <WingDriveProvider client={client}>
-      <ServerProvider>
-        <TabManagerProvider routes={explorerRoutes}>
-          <TabKeyboardHandler />
-          <DndProvider>
-            <RouterProvider router={router} />
-          </DndProvider>
-        </TabManagerProvider>
-      </ServerProvider>
-    </WingDriveProvider>
-  );
+	return (
+		<WingDriveProvider client={client}>
+			<ServerProvider>
+				<TabManagerProvider routes={explorerRoutes}>
+					<TabKeyboardHandler />
+					<DndProvider>
+						<RouterProvider router={router} />
+					</DndProvider>
+				</TabManagerProvider>
+			</ServerProvider>
+		</WingDriveProvider>
+	);
 }
 
 // ShellLayout renders inside router, provides layout chrome
@@ -793,19 +840,19 @@ Views register their TopBar buttons via portal:
 
 ```tsx
 // ExplorerView.tsx
-import { TopBarPortal } from '../../TopBar';
+import {TopBarPortal} from '../../TopBar';
 
 function ExplorerView() {
-  return (
-    <>
-      <TopBarPortal
-        left={<BackButton />}
-        center={<PathBar />}
-        right={<ViewControls />}
-      />
-      <div>{/* View content */}</div>
-    </>
-  );
+	return (
+		<>
+			<TopBarPortal
+				left={<BackButton />}
+				center={<PathBar />}
+				right={<ViewControls />}
+			/>
+			<div>{/* View content */}</div>
+		</>
+	);
 }
 ```
 
@@ -813,41 +860,41 @@ function ExplorerView() {
 
 ```tsx
 const client = useWingDriveClient();
-const { data: libraries } = useLibraries();
+const {data: libraries} = useLibraries();
 const [currentLibraryId, setCurrentLibraryId] = useState<string | null>(null);
 
 // Auto-select first library
 useEffect(() => {
-  if (libraries && libraries.length > 0 && !currentLibraryId) {
-    client.setCurrentLibrary(libraries[0].id);
-    setCurrentLibraryId(libraries[0].id);
-  }
+	if (libraries && libraries.length > 0 && !currentLibraryId) {
+		client.setCurrentLibrary(libraries[0].id);
+		setCurrentLibraryId(libraries[0].id);
+	}
 }, [libraries, currentLibraryId, client]);
 
 // Switch library
 const handleSwitch = (id: string) => {
-  client.setCurrentLibrary(id);
-  setCurrentLibraryId(id);
+	client.setCurrentLibrary(id);
+	setCurrentLibraryId(id);
 };
 ```
 
 ### Sidebar Item Pattern
 
 ```tsx
-function SidebarItem({ icon: Icon, label, active }: Props) {
-  return (
-    <button
-      className={clsx(
-        "flex items-center gap-2 px-2 py-1 rounded-md text-sm font-medium",
-        active
-          ? "bg-sidebar-selected text-sidebar-ink"
-          : "text-sidebar-inkDull hover:text-sidebar-ink"
-      )}
-    >
-      <Icon className="size-4" weight={active ? "fill" : "bold"} />
-      <span className="truncate">{label}</span>
-    </button>
-  );
+function SidebarItem({icon: Icon, label, active}: Props) {
+	return (
+		<button
+			className={clsx(
+				'flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium',
+				active
+					? 'bg-sidebar-selected text-sidebar-ink'
+					: 'text-sidebar-inkDull hover:text-sidebar-ink'
+			)}
+		>
+			<Icon className="size-4" weight={active ? 'fill' : 'bold'} />
+			<span className="truncate">{label}</span>
+		</button>
+	);
 }
 ```
 
@@ -855,16 +902,16 @@ function SidebarItem({ icon: Icon, label, active }: Props) {
 
 ```tsx
 <DropdownMenu.Root
-  trigger={<button className="...">Trigger</button>}
-  className="bg-sidebar-box border-sidebar-line rounded-lg"
+	trigger={<button className="...">Trigger</button>}
+	className="bg-sidebar-box border-sidebar-line rounded-lg"
 >
-  <DropdownMenu.Item
-    className="px-2 py-1 hover:bg-sidebar-selected"
-    onClick={() => action()}
-  >
-    Item content
-  </DropdownMenu.Item>
-  <DropdownMenu.Separator className="border-sidebar-line" />
+	<DropdownMenu.Item
+		className="hover:bg-sidebar-selected px-2 py-1"
+		onClick={() => action()}
+	>
+		Item content
+	</DropdownMenu.Item>
+	<DropdownMenu.Separator className="border-sidebar-line" />
 </DropdownMenu.Root>
 ```
 
@@ -873,53 +920,57 @@ function SidebarItem({ icon: Icon, label, active }: Props) {
 Use `useContextMenu` hook for platform-agnostic context menus:
 
 ```tsx
-import { useContextMenu } from '../hooks/useContextMenu';
-import { Copy, Trash } from '@phosphor-icons/react';
+import {Copy, Trash} from '@phosphor-icons/react';
+import {useContextMenu} from '../hooks/useContextMenu';
 
-const { selectedFiles } = useExplorer();
+const {selectedFiles} = useExplorer();
 const copyFiles = useLibraryMutation('files.copy');
 const deleteFiles = useLibraryMutation('files.delete');
 
 const contextMenu = useContextMenu({
-  items: [
-    {
-      icon: Copy,
-      label: selectedFiles.length > 1 ? `Copy ${selectedFiles.length} items` : "Copy",
-      onClick: async () => {
-        await copyFiles.mutateAsync({
-          sources: { paths: selectedFiles.map(f => f.wing_path) },
-          destination: currentPath,
-          overwrite: false,
-          verify_checksum: false,
-          preserve_timestamps: true,
-          move_files: false,
-          copy_method: "Auto"
-        });
-      },
-      keybind: "⌘C",
-      condition: () => selectedFiles.length > 0, // Only show if files selected
-    },
-    { type: "separator" },
-    {
-      icon: Trash,
-      label: "Delete",
-      onClick: async () => {
-        await deleteFiles.mutateAsync({
-          targets: { paths: selectedFiles.map(f => f.wing_path) },
-          permanent: false,
-          recursive: true
-        });
-      },
-      keybind: "⌘⌫",
-      variant: "danger"
-    }
-  ]
+	items: [
+		{
+			icon: Copy,
+			label:
+				selectedFiles.length > 1
+					? `Copy ${selectedFiles.length} items`
+					: 'Copy',
+			onClick: async () => {
+				await copyFiles.mutateAsync({
+					sources: {paths: selectedFiles.map((f) => f.wing_path)},
+					destination: currentPath,
+					overwrite: false,
+					verify_checksum: false,
+					preserve_timestamps: true,
+					move_files: false,
+					copy_method: 'Auto'
+				});
+			},
+			keybind: '⌘C',
+			condition: () => selectedFiles.length > 0 // Only show if files selected
+		},
+		{type: 'separator'},
+		{
+			icon: Trash,
+			label: 'Delete',
+			onClick: async () => {
+				await deleteFiles.mutateAsync({
+					targets: {paths: selectedFiles.map((f) => f.wing_path)},
+					permanent: false,
+					recursive: true
+				});
+			},
+			keybind: '⌘⌫',
+			variant: 'danger'
+		}
+	]
 });
 
 return <div onContextMenu={contextMenu.show}>Content</div>;
 ```
 
 **Key features:**
+
 - Platform-agnostic (native on Tauri, Radix on web)
 - Conditional items via `condition` callback
 - Smart labels that update based on state
@@ -933,22 +984,23 @@ return <div onContextMenu={contextMenu.show}>Content</div>;
 ### Query Keys
 
 Use descriptive, hierarchical keys:
+
 ```tsx
 // Good
-queryKey: ['libraries', 'list']
-queryKey: ['files', 'directory', libraryId, path]
+queryKey: ['libraries', 'list'];
+queryKey: ['files', 'directory', libraryId, path];
 
 // Bad
-queryKey: ['getLibraries']
-queryKey: ['data']
+queryKey: ['getLibraries'];
+queryKey: ['data'];
 ```
 
 ### Using Queries
 
 ```tsx
-const { data, isLoading, error } = useCoreQuery({
-  type: 'libraries.list',
-  input: { include_stats: true },
+const {data, isLoading, error} = useCoreQuery({
+	type: 'libraries.list',
+	input: {include_stats: true}
 });
 
 // data is automatically typed as LibraryInfo[]!
@@ -968,15 +1020,15 @@ const { data, isLoading, error } = useCoreQuery({
 ### Test Pattern
 
 ```tsx
-import { render, screen } from '@testing-library/react';
-import { Shell } from './Shell';
+import {render, screen} from '@testing-library/react';
+import {Shell} from './Shell';
 
 test('switches libraries', async () => {
-  const user = userEvent.setup();
-  render(<Shell client={mockClient} />);
+	const user = userEvent.setup();
+	render(<Shell client={mockClient} />);
 
-  await user.click(screen.getByText('Switch Library'));
-  // ...
+	await user.click(screen.getByText('Switch Library'));
+	// ...
 });
 ```
 
@@ -1013,16 +1065,15 @@ When porting V1 components:
 
 ```tsx
 // 1. External libraries
-import { useState } from 'react';
-import { motion } from 'framer-motion';
 
 // 2. @wingdrive packages
-import { Button, DropdownMenu } from '@wingdrive/primitives';
-import { useCoreQuery } from '@wingdrive/ts-client';
-
-// 3. Local imports
-import { useLibraries } from './hooks/useLibraries';
+import {Button, DropdownMenu} from '@wingdrive/primitives';
+import {useCoreQuery} from '@wingdrive/ts-client';
 import clsx from 'clsx';
+import {motion} from 'framer-motion';
+import {useState} from 'react';
+// 3. Local imports
+import {useLibraries} from './hooks/useLibraries';
 ```
 
 ### Common Mistakes
@@ -1060,6 +1111,7 @@ Before writing code:
 ## Status: Current Implementation
 
 **Complete:**
+
 - Type-safe client with auto-generated types
 - Native macOS traffic lights
 - V1 color system as CSS variables
@@ -1072,6 +1124,7 @@ Before writing code:
 - TopBar portal system for view-specific controls
 
 **In Progress:**
+
 - Port remaining V1 components
 - Build complete Explorer (file grid/list views)
 - Settings pages

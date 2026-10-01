@@ -21,6 +21,8 @@ trait TypeScriptUnionMember {
 	fn output_type_name(&self) -> &str;
 }
 
+// The trait exposes the TypeScript names, so the getters read the `_ts` fields
+#[allow(clippy::misnamed_getters)]
 impl TypeScriptUnionMember for ApiOperationType {
 	fn identifier(&self) -> &str {
 		&self.identifier
@@ -33,6 +35,8 @@ impl TypeScriptUnionMember for ApiOperationType {
 	}
 }
 
+// The trait exposes the TypeScript names, so the getters read the `_ts` fields
+#[allow(clippy::misnamed_getters)]
 impl TypeScriptUnionMember for ApiQueryType {
 	fn identifier(&self) -> &str {
 		&self.identifier

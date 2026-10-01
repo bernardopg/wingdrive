@@ -109,7 +109,7 @@ pub async fn begin_drag(
 
 	#[cfg(not(target_os = "macos"))]
 	{
-		return Err("Drag and drop is only supported on macOS currently".to_string());
+		Err("Drag and drop is only supported on macOS currently".to_string())
 	}
 }
 

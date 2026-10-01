@@ -584,13 +584,10 @@ impl Engine {
 			Some(self.config.data_dir.join("bundled_adapters")),
 		];
 
-		for candidate in candidates.into_iter().flatten() {
-			if candidate.is_dir() {
-				return Some(candidate);
-			}
-		}
-
-		None
+		candidates
+			.into_iter()
+			.flatten()
+			.find(|candidate| candidate.is_dir())
 	}
 
 	/// Update an installed adapter from a source directory.

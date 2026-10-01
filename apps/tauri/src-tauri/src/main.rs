@@ -636,7 +636,7 @@ async fn validate_and_reset_library_if_needed(
 	app: AppHandle,
 	current_library_id_arc: &Arc<RwLock<Option<String>>>,
 	daemon_state: &Arc<RwLock<DaemonState>>,
-	data_dir: &PathBuf,
+	data_dir: &std::path::Path,
 ) -> Result<(), String> {
 	let current_library_id = {
 		let library_id = current_library_id_arc.read().await;
@@ -980,9 +980,11 @@ async fn subscribe_to_events(
 			);
 		}
 
-		// Explicitly shutdown and drop the stream to close the TCP connection
-		drop(writer);
+		// Shut down the write half and drop the stream to close the TCP
+		// connection (the borrowed halves themselves own nothing)
+		let _ = writer.shutdown().await;
 		drop(reader);
+		drop(stream);
 		tracing::info!(subscription_id = subscription_id, "TCP connection closed");
 	});
 
@@ -1343,7 +1345,7 @@ WantedBy=default.target
 
 		// Enable and start the service
 		let output = std::process::Command::new("systemctl")
-			.args(&["--user", "daemon-reload"])
+			.args(["--user", "daemon-reload"])
 			.output()
 			.map_err(|e| format!("Failed to reload systemd: {}", e))?;
 
@@ -1353,7 +1355,7 @@ WantedBy=default.target
 		}
 
 		let output = std::process::Command::new("systemctl")
-			.args(&["--user", "enable", "wingdrive-daemon.service"])
+			.args(["--user", "enable", "wingdrive-daemon.service"])
 			.output()
 			.map_err(|e| format!("Failed to enable service: {}", e))?;
 
@@ -1363,7 +1365,7 @@ WantedBy=default.target
 		}
 
 		let output = std::process::Command::new("systemctl")
-			.args(&["--user", "start", "wingdrive-daemon.service"])
+			.args(["--user", "start", "wingdrive-daemon.service"])
 			.output()
 			.map_err(|e| format!("Failed to start service: {}", e))?;
 
@@ -1644,7 +1646,7 @@ async fn open_macos_settings() -> Result<(), String> {
 
 	#[cfg(not(target_os = "macos"))]
 	{
-		return Err("Not supported on this platform".to_string());
+		Err("Not supported on this platform".to_string())
 	}
 }
 

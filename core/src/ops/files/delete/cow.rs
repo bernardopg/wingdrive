@@ -11,8 +11,9 @@
 //! metadata block groups and force the filesystem read-only, which on a root
 //! filesystem means an unbootable machine.
 //!
-//! Detection runs against the mount table rather than a syscall so the same code
-//! path works on every platform the daemon targets.
+//! On Linux the path's own filesystem comes from `statfs`, because the disk list
+//! skips virtual mounts such as tmpfs and would attribute `/tmp` to the root
+//! filesystem. Other platforms resolve the path against the mount table.
 
 use std::path::Path;
 use tracing::debug;
@@ -44,6 +45,12 @@ impl CowFilesystemDetector {
 	/// can fail closed instead of claiming an unknown filesystem supports overwrites.
 	pub(super) fn is_cow_filesystem(&self, path: &Path) -> Option<bool> {
 		let target = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+
+		#[cfg(target_os = "linux")]
+		if let Some(is_cow) = linux_statfs_is_cow(&target) {
+			return Some(is_cow);
+		}
+
 		let mut best_match: Option<(usize, String)> = None;
 
 		for disk in self.disks.list() {
@@ -83,6 +90,39 @@ impl CowFilesystemDetector {
 	}
 }
 
+/// Asks the kernel which filesystem holds `path` (or its parent, when the path
+/// itself is gone). Returns `None` when `statfs` fails.
+#[cfg(target_os = "linux")]
+fn linux_statfs_is_cow(path: &Path) -> Option<bool> {
+	use std::{ffi::CString, os::unix::ffi::OsStrExt};
+
+	// Magic numbers from linux/magic.h and the ZFS/bcachefs sources
+	const BTRFS_SUPER_MAGIC: i64 = 0x9123_683E;
+	const ZFS_SUPER_MAGIC: i64 = 0x2FC1_2FC1;
+	const BCACHEFS_SUPER_MAGIC: i64 = 0xCA45_1A4E;
+
+	let probe = path
+		.ancestors()
+		.find(|p| p.exists())
+		.unwrap_or(Path::new("/"));
+	let c_path = CString::new(probe.as_os_str().as_bytes()).ok()?;
+	let mut stat = std::mem::MaybeUninit::<libc::statfs>::uninit();
+	// SAFETY: `c_path` is a valid NUL-terminated string and `stat` is a valid
+	// out-pointer for one `statfs` struct.
+	if unsafe { libc::statfs(c_path.as_ptr(), stat.as_mut_ptr()) } != 0 {
+		return None;
+	}
+	// SAFETY: `statfs` returned 0, so it filled `stat`.
+	#[allow(clippy::unnecessary_cast)]
+	let f_type = unsafe { stat.assume_init() }.f_type as i64;
+	let is_cow = matches!(
+		f_type,
+		BTRFS_SUPER_MAGIC | ZFS_SUPER_MAGIC | BCACHEFS_SUPER_MAGIC
+	);
+	debug!(path = %path.display(), f_type, is_cow, "Resolved filesystem for secure delete");
+	Some(is_cow)
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -93,6 +133,13 @@ mod tests {
 			assert!(filesystem_is_cow(name));
 		}
 		assert!(filesystem_is_cow("BTRFS"));
+	}
+
+	#[cfg(target_os = "linux")]
+	#[test]
+	fn tmpfs_is_not_reported_as_cow() {
+		// /dev/shm is tmpfs on every mainstream distro
+		assert_eq!(linux_statfs_is_cow(Path::new("/dev/shm")), Some(false));
 	}
 
 	#[test]

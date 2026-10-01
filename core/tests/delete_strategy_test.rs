@@ -196,7 +196,7 @@ async fn test_delete_modes_all_types() {
 		.await
 		.unwrap();
 	let result = strategy.secure_delete(&secure_file).await;
-	assert!(result.is_ok());
+	assert!(result.is_ok(), "secure_delete failed: {:?}", result);
 	assert!(!secure_file.exists());
 
 	println!("test_delete_modes_all_types passed!");
@@ -222,8 +222,7 @@ async fn test_strategy_error_handling() {
 async fn test_cloud_backend_delete_file() {
 	// Create a memory-based cloud backend for testing
 	let operator = opendal::Operator::new(opendal::services::Memory::default())
-		.expect("Failed to create memory operator")
-		.finish();
+		.expect("Failed to create memory operator");
 
 	let backend = CloudBackend::from_operator(operator, CloudServiceType::S3);
 
@@ -250,8 +249,7 @@ async fn test_cloud_backend_delete_file() {
 async fn test_cloud_backend_delete_directory() {
 	// Create a memory-based cloud backend for testing
 	let operator = opendal::Operator::new(opendal::services::Memory::default())
-		.expect("Failed to create memory operator")
-		.finish();
+		.expect("Failed to create memory operator");
 
 	let backend = CloudBackend::from_operator(operator, CloudServiceType::S3);
 

@@ -1,4 +1,13 @@
 {
+	"files": [],
+	"references": [
+		{
+			"path": "apps/tauri/tsconfig.json"
+		},
+		{
+			"path": "packages/config/tsconfig.json"
+		}
+	],
 	"editor.formatOnSave": true,
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"[typescript]": {
@@ -13,5 +22,9 @@
 	"[javascriptreact]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
-	"js/ts.experimental.useTsgo": false
+	"js/ts.experimental.useTsgo": false,
+	"mdx-preview.preview.enableScripts": true,
+	"[rust]": {
+		"editor.defaultFormatter": "rust-lang.rust-analyzer"
+	}
 }
