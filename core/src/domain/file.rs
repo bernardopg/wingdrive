@@ -882,53 +882,34 @@ impl File {
 				))
 			})?;
 
-			// Build WingPath - use Content path if content_id exists, otherwise use Physical path
-			// Physical paths are needed for newly created files that don't have content_id yet
-			let wing_path = if let Some(content_id) = entry_model.content_id {
-				if let Some(ci) = content_by_id.get(&content_id) {
-					if let Some(ci_uuid) = ci.uuid {
-						WingPath::Content {
-							content_id: ci_uuid,
-						}
-					} else {
-						tracing::warn!("Entry {} has ContentIdentity without UUID", entry_model.id);
-						continue;
-					}
-				} else {
-					// Fallback: use entry UUID as synthetic path
-					// This shouldn't normally happen but provides a fallback
-					tracing::warn!(
-						"Entry {} has content_id but ContentIdentity not found",
-						entry_model.id
-					);
-					continue;
-				}
-			} else {
-				// No content identity yet - build Physical path from filesystem
-				// This is common for newly created files before content hash runs
+			// An entry is a concrete file, so address it by its own physical path.
+			// File operations (copy, move, delete, rename) act on that path; a
+			// content address picks an arbitrary copy and fails when duplicates
+			// exist. The content stays reachable through `content_identity` and
+			// `alternate_paths`. Content addressing is only the fallback when the
+			// entry has no resolvable path.
+			let wing_path =
 				match crate::ops::indexing::PathResolver::get_full_path(db, entry_model.id).await {
-					Ok(physical_path) => {
-						let device_slug = crate::device::get_current_device_slug();
-						tracing::debug!(
-							"Using Physical path for entry {} without content_id: {}",
-							entry_model.id,
-							physical_path.display()
-						);
-						WingPath::Physical {
-							device_slug,
-							path: physical_path,
-						}
-					}
+					Ok(physical_path) => WingPath::Physical {
+						device_slug: crate::device::get_current_device_slug(),
+						path: physical_path,
+					},
 					Err(e) => {
-						tracing::warn!(
-							"Failed to resolve physical path for entry {}: {}",
-							entry_model.id,
-							e
-						);
-						continue;
+						let content_uuid = entry_model
+							.content_id
+							.and_then(|id| content_by_id.get(&id))
+							.and_then(|ci| ci.uuid);
+						let Some(content_id) = content_uuid else {
+							tracing::warn!(
+								"Failed to resolve path for entry {}: {}",
+								entry_model.id,
+								e
+							);
+							continue;
+						};
+						WingPath::Content { content_id }
 					}
-				}
-			};
+				};
 
 			// Start with basic File from entity
 			let mut file = File::from_entity_model(entry_model.clone(), wing_path.clone());
@@ -940,18 +921,6 @@ impl File {
 					device_slug: device_slug.clone(),
 					path: path.clone(),
 				});
-			} else if let WingPath::Content { .. } = &wing_path {
-				// For Content paths, we'll populate from entries_by_content_id below
-				// But we should still try to add the current entry's physical path
-				if let Ok(physical_path) =
-					crate::ops::indexing::PathResolver::get_full_path(db, entry_model.id).await
-				{
-					let device_slug = crate::device::get_current_device_slug();
-					file.alternate_paths.push(WingPath::Physical {
-						device_slug,
-						path: physical_path,
-					});
-				}
 			}
 
 			// Enrich with content identity and alternate paths from duplicates

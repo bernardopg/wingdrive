@@ -28,6 +28,19 @@ use tracing::{debug, error, info, warn};
 use wing_task_system::{TaskDispatcher, TaskHandle, TaskSystem};
 
 /// Manages job execution for a library
+/// The reason a failed job recorded, for the `JobFailed` event.
+///
+/// The status channel only carries the state, so the executor's error message
+/// is read back from the job database; it is written before the status flips.
+async fn failure_reason(db: &JobDb, job_id: JobId) -> String {
+	match db.get_job(job_id).await {
+		Ok(Some(job)) => job
+			.error_message
+			.unwrap_or_else(|| "Job failed".to_string()),
+		_ => "Job failed".to_string(),
+	}
+}
+
 pub struct JobManager {
 	db: Arc<JobDb>,
 	dispatcher: Arc<TaskSystem<JobError>>,
@@ -219,6 +232,7 @@ impl JobManager {
 		let broadcast_tx_clone = broadcast_tx.clone();
 		let latest_progress_clone = latest_progress.clone();
 		let event_bus = self.context.events.clone();
+		let failure_db = self.db.clone();
 		let job_id_clone = job_id.clone();
 		let job_type_str = job_name.to_string();
 		let should_emit_events_clone = should_emit_events;
@@ -377,6 +391,7 @@ impl JobManager {
 				let running_jobs = self.running_jobs.clone();
 				let job_id_clone = job_id.clone();
 				let event_bus = self.context.events.clone();
+				let failure_db = self.db.clone();
 				let job_type_str = job_name.to_string();
 				let library_id_clone = self.library_id;
 				let context = self.context.clone();
@@ -507,7 +522,7 @@ impl JobManager {
 										job_id: job_id_clone.to_string(),
 										job_type: job_type_str.to_string(),
 										device_id,
-										error: "Job failed".to_string(),
+										error: failure_reason(&failure_db, job_id_clone).await,
 									});
 								}
 								// Remove from running jobs
@@ -627,6 +642,7 @@ impl JobManager {
 		let broadcast_tx_clone = broadcast_tx.clone();
 		let latest_progress_clone = latest_progress.clone();
 		let event_bus = self.context.events.clone();
+		let failure_db = self.db.clone();
 		let job_id_clone = job_id.clone();
 		let job_type_str = J::NAME;
 		let job_db_clone = self.db.clone();
@@ -812,6 +828,7 @@ impl JobManager {
 				let running_jobs = self.running_jobs.clone();
 				let job_id_clone = job_id.clone();
 				let event_bus = self.context.events.clone();
+				let failure_db = self.db.clone();
 				let job_type_str = J::NAME;
 				let library_id_clone = self.library_id;
 				let context = self.context.clone();
@@ -942,7 +959,7 @@ impl JobManager {
 										job_id: job_id_clone.to_string(),
 										job_type: job_type_str.to_string(),
 										device_id,
-										error: "Job failed".to_string(),
+										error: failure_reason(&failure_db, job_id_clone).await,
 									});
 								}
 								// Remove from running jobs
@@ -1377,6 +1394,7 @@ impl JobManager {
 						let broadcast_tx_clone = broadcast_tx.clone();
 						let latest_progress_clone = latest_progress.clone();
 						let event_bus = self.context.events.clone();
+						let failure_db = self.db.clone();
 						let job_id_clone = job_id;
 						let job_type_str = job_record.name.clone();
 						let job_db_clone = self.db.clone();
@@ -1558,6 +1576,7 @@ impl JobManager {
 								let running_jobs = self.running_jobs.clone();
 								let job_id_clone = job_id.clone();
 								let event_bus = self.context.events.clone();
+								let failure_db = self.db.clone();
 								let job_type_str = job_record.name.to_string();
 								let library_id_clone = self.library_id;
 								let context = self.context.clone();
@@ -1647,7 +1666,11 @@ impl JobManager {
 													job_id: job_id_clone.to_string(),
 													job_type: job_type_str.clone(),
 													device_id,
-													error: "Job failed".to_string(),
+													error: failure_reason(
+														&failure_db,
+														job_id_clone,
+													)
+													.await,
 												});
 												// Remove from running jobs
 												running_jobs.write().await.remove(&job_id_clone);
@@ -1953,6 +1976,7 @@ impl JobManager {
 			let broadcast_tx_clone = broadcast_tx.clone();
 			let latest_progress_clone = latest_progress.clone();
 			let event_bus = self.context.events.clone();
+			let failure_db = self.db.clone();
 			let job_id_clone = job_id.clone();
 			let job_type_str = job_name.clone();
 			let device_id = self
@@ -2066,6 +2090,7 @@ impl JobManager {
 			let running_jobs = self.running_jobs.clone();
 			let job_id_clone = job_id.clone();
 			let event_bus = self.context.events.clone();
+			let failure_db = self.db.clone();
 			let job_type_str = job_name.clone();
 			let library_id_clone = self.library_id;
 			let context = self.context.clone();
@@ -2136,7 +2161,7 @@ impl JobManager {
 								job_id: job_id_clone.to_string(),
 								job_type: job_type_str.clone(),
 								device_id,
-								error: "Job failed".to_string(),
+								error: failure_reason(&failure_db, job_id_clone).await,
 							});
 							running_jobs.write().await.remove(&job_id_clone);
 							info!("Resumed job {} failed", job_id_clone);
