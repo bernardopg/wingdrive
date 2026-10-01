@@ -44,7 +44,7 @@ impl LibraryAction for LocationRescanAction {
 	async fn execute(
 		self,
 		library: std::sync::Arc<crate::library::Library>,
-		_context: Arc<CoreContext>,
+		context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
 		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
@@ -91,10 +91,22 @@ impl LibraryAction for LocationRescanAction {
 			.await
 			.map_err(ActionError::Job)?;
 
+		let job_id = job_handle.id();
+
+		// Record the outcome on the location (scan state, counts, events)
+		tokio::spawn(crate::location::monitor_indexing_job(
+			job_handle,
+			(*context.events).clone(),
+			library.clone(),
+			location.id,
+			self.input.location_id,
+			location_path_buf,
+		));
+
 		Ok(super::output::LocationRescanOutput {
 			location_id: self.input.location_id,
 			location_path: location_path_str,
-			job_id: job_handle.id().into(),
+			job_id: job_id.into(),
 			full_rescan: self.input.full_rescan,
 		})
 	}

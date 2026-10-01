@@ -124,9 +124,9 @@ async function main() {
 		console.log('Project root:', PROJECT_ROOT);
 		console.log('Daemon binary:', DAEMON_BIN);
 
-		// Build daemon
+		// Build daemon with media support; without ffmpeg no thumbnails are generated
 		// On Windows, the binary target name is still just "wing-daemon" (Cargo handles the .exe)
-		const build = spawn('cargo', ['build', '--bin', 'wing-daemon'], {
+		const build = spawn('cargo', ['build', '--bin', 'wing-daemon', '--features', 'ffmpeg,heif'], {
 			cwd: PROJECT_ROOT,
 			stdio: 'inherit',
 			shell: IS_WIN // shell: true is often needed on Windows for spawn to work correctly

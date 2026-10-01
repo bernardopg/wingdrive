@@ -448,10 +448,26 @@ impl LocationManager {
 			job_id, location.name, location_wing_path
 		);
 
-		// The job system will handle:
-		// - Progress updates via the event bus
-		// - Updating scan state when complete/failed
-		// - Emitting appropriate events
+		// Nothing else records the outcome: without this monitor the location
+		// stays "scanning" with zero files after the job finishes.
+		let location_db_id = entities::location::Entity::find()
+			.filter(entities::location::Column::Uuid.eq(location.id))
+			.one(library.db().conn())
+			.await?
+			.map(|model| model.id)
+			.ok_or(LocationError::LocationNotFound { id: location.id })?;
+		let display_path = location_wing_path
+			.as_local_path()
+			.map(std::path::Path::to_path_buf)
+			.unwrap_or_default();
+		tokio::spawn(super::monitor_indexing_job(
+			job_handle,
+			self.events.clone(),
+			library,
+			location_db_id,
+			location.id,
+			display_path,
+		));
 
 		Ok(job_id.to_string())
 	}

@@ -28,7 +28,7 @@ jobs:
           target: x86_64-unknown-linux-gnu
 
       - name: Build binaries
-        run: cargo build --release --locked --bin wing-server --bin wing --bin wing-daemon
+        run: cargo build --release --locked --features wing-core/ffmpeg,wing-core/heif --bin wing-server --bin wing --bin wing-daemon
 
       - name: Package binaries
         run: |
@@ -96,7 +96,7 @@ jobs:
 
       - name: Build updater binaries
         if: runner.os != 'Linux'
-        run: cargo build --release --locked --target ${{ matrix.target }} --bin wing --bin wing-daemon
+        run: cargo build --release --locked --target ${{ matrix.target }} --features wing-core/ffmpeg,wing-core/heif --bin wing --bin wing-daemon
 
       - name: Package macOS updater binaries
         if: runner.os == 'macOS'

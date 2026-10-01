@@ -31,7 +31,7 @@ import {
 	TabContent,
 } from "../Inspector";
 import clsx from "clsx";
-import type { Location } from "@wingdrive/ts-client";
+import type { Location, ScanState } from "@wingdrive/ts-client";
 import { Button, Dialog, dialogManager, useDialog, CircleButton, type UseDialogProps } from "@wingdrive/primitives";
 import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { useContextMenu } from "../../../hooks/useContextMenu";
@@ -138,12 +138,11 @@ function OverviewTab({ location }: { location: Location }) {
 		});
 	};
 
-	const formatScanState = (scanState: any) => {
+	// Unit variants serialize as plain strings; only Scanning carries data
+	const formatScanState = (scanState: ScanState | null | undefined) => {
 		if (!scanState) return "Unknown";
-		if (scanState.Idle) return "Idle";
-		if (scanState.Scanning) return `Scanning ${scanState.Scanning.progress}%`;
-		if (scanState.Completed) return "Completed";
-		if (scanState.Failed) return "Failed";
+		if (typeof scanState === "string") return scanState;
+		if ("Scanning" in scanState) return `Scanning ${scanState.Scanning.progress}%`;
 		return "Unknown";
 	};
 

@@ -368,8 +368,8 @@ async fn start_location_indexing(
 ) -> LocationResult<()> {
 	info!("Starting indexing for location: {}", path.display());
 
-	// Update scan state to "running"
-	update_location_scan_state(library.clone(), location_db_id, "running", None).await?;
+	// Update scan state to "scanning"
+	update_location_scan_state(library.clone(), location_db_id, "scanning", None).await?;
 
 	// Emit indexing started event
 	events.emit(Event::IndexingStarted {
@@ -454,7 +454,7 @@ async fn start_location_indexing(
 }
 
 /// Monitor indexing job progress and update location state accordingly
-async fn monitor_indexing_job(
+pub(crate) async fn monitor_indexing_job(
 	job_handle: JobHandle,
 	events: EventBus,
 	library: Arc<Library>,
@@ -597,7 +597,7 @@ async fn update_location_scan_state(
 	active_location.error_message = Set(error_message);
 	active_location.updated_at = Set(chrono::Utc::now());
 
-	if state == "running" {
+	if state == "completed" {
 		active_location.last_scan_at = Set(Some(chrono::Utc::now()));
 	}
 
