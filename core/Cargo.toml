@@ -192,7 +192,7 @@ whoami    = "2.1"
 
 # Secure storage
 keyring = "4.2"  # Only for device key in keychain
-redb = "2.2"     # Encrypted KV store for library keys, credentials, etc.
+redb = "4.3"     # Encrypted KV store for library keys, credentials, etc.
 
 # CLI dependencies
 clap           = { version = "4.5", features = ["derive", "env"] }
