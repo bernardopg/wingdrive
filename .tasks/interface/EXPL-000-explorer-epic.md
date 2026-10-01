@@ -5,6 +5,7 @@ status: In Progress
 assignee: jamiepine
 parent: UI-000
 priority: High
+milestone: M1
 tags: [epic, explorer, interface]
 whitepaper: N/A
 last_updated: 2025-12-02

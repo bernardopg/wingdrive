@@ -4,6 +4,7 @@ title: "Complete WingDrive identity and repository independence"
 status: "In Progress"
 assignee: "bernardopg"
 priority: "High"
+milestone: M2
 tags: ["fork", "branding", "github-actions", "documentation", "release"]
 last_updated: 2026-09-25
 ---

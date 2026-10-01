@@ -30,6 +30,10 @@ enum Commands {
 		priority: Option<String>,
 		#[arg(long)]
 		tag: Option<String>,
+		#[arg(long, help = "Filter by milestone (e.g. M1)")]
+		milestone: Option<String>,
+		#[arg(long, help = "Filter by sprint (e.g. S01)")]
+		sprint: Option<String>,
 		#[arg(long, help = "Sort by field (id, title, status, priority, assignee)")]
 		sort_by: Option<String>,
 		#[arg(short, long, help = "Reverse sort order")]
@@ -55,6 +59,8 @@ struct TaskFrontMatter {
 	priority: String,
 	tags: Option<Vec<String>>,
 	whitepaper: Option<String>,
+	milestone: Option<String>,
+	sprint: Option<String>,
 }
 
 /// Exportable task with description for JSON output.
@@ -90,10 +96,20 @@ fn main() {
 			assignee,
 			priority,
 			tag,
+			milestone,
+			sprint,
 			sort_by,
 			reverse,
 		} => {
-			if let Err(e) = list_tasks(status, assignee, priority, tag, sort_by, *reverse) {
+			let filters = Filters {
+				status,
+				assignee,
+				priority,
+				tag,
+				milestone,
+				sprint,
+			};
+			if let Err(e) = list_tasks(&filters, sort_by, *reverse) {
 				eprintln!("Error listing tasks: {}", e);
 				process::exit(1);
 			}
@@ -113,11 +129,24 @@ fn main() {
 	}
 }
 
+/// Optional `list` filters; each one matches case-insensitively.
+struct Filters<'a> {
+	status: &'a Option<String>,
+	assignee: &'a Option<String>,
+	priority: &'a Option<String>,
+	tag: &'a Option<String>,
+	milestone: &'a Option<String>,
+	sprint: &'a Option<String>,
+}
+
+fn matches(filter: &Option<String>, value: Option<&str>) -> bool {
+	filter
+		.as_ref()
+		.map_or(true, |f| value.is_some_and(|v| v.eq_ignore_ascii_case(f)))
+}
+
 fn list_tasks(
-	status_filter: &Option<String>,
-	assignee_filter: &Option<String>,
-	priority_filter: &Option<String>,
-	tag_filter: &Option<String>,
+	filters: &Filters,
 	sort_by: &Option<String>,
 	reverse: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -148,22 +177,18 @@ fn list_tasks(
 	let mut filtered_tasks = tasks
 		.into_iter()
 		.filter(|task| {
-			let status_match = status_filter
-				.as_ref()
-				.map_or(true, |s| task.status.to_lowercase() == s.to_lowercase());
-			let assignee_match = assignee_filter
-				.as_ref()
-				.map_or(true, |a| task.assignee.to_lowercase() == a.to_lowercase());
-			let priority_match = priority_filter
-				.as_ref()
-				.map_or(true, |p| task.priority.to_lowercase() == p.to_lowercase());
-			let tag_match = tag_filter.as_ref().map_or(true, |t| {
+			let tag_match = filters.tag.as_ref().map_or(true, |t| {
 				task.tags.as_ref().map_or(false, |tags| {
 					tags.iter()
 						.any(|tag| tag.to_lowercase() == t.to_lowercase())
 				})
 			});
-			status_match && assignee_match && priority_match && tag_match
+			matches(filters.status, Some(&task.status))
+				&& matches(filters.assignee, Some(&task.assignee))
+				&& matches(filters.priority, Some(&task.priority))
+				&& matches(filters.milestone, task.milestone.as_deref())
+				&& matches(filters.sprint, task.sprint.as_deref())
+				&& tag_match
 		})
 		.collect::<Vec<_>>();
 
@@ -227,7 +252,13 @@ fn list_tasks(
 
 	let mut table = Table::new();
 	table.set_header(vec![
-		"ID", "Title", "Status", "Assignee", "Priority", "Tags",
+		"ID",
+		"Title",
+		"Status",
+		"Priority",
+		"Milestone",
+		"Sprint",
+		"Tags",
 	]);
 
 	for task in filtered_tasks {
@@ -235,8 +266,9 @@ fn list_tasks(
 			Cell::new(&task.id),
 			Cell::new(&task.title),
 			Cell::new(&task.status),
-			Cell::new(&task.assignee),
 			Cell::new(&task.priority),
+			Cell::new(task.milestone.as_deref().unwrap_or("")),
+			Cell::new(task.sprint.as_deref().unwrap_or("")),
 			Cell::new(task.tags.unwrap_or_default().join(", ")),
 		]);
 	}

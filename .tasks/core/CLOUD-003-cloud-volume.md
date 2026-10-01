@@ -5,6 +5,7 @@ status: In Progress
 assignee: jamiepine
 parent: CLOUD-000
 priority: High
+milestone: M4
 tags: [cloud, storage, volume, s3]
 whitepaper: Section 5.2
 last_updated: 2025-10-14

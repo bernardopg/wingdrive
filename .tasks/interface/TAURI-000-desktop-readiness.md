@@ -5,6 +5,7 @@ status: In Progress
 assignee: unassigned
 parent: UI-000
 priority: High
+milestone: M1
 tags: [epic, tauri, desktop, quality]
 last_updated: 2026-09-25
 ---
@@ -28,5 +29,5 @@ Make the Tauri desktop app honest and release-ready. Every visible action must e
 - [x] Wire the file context-menu Quick Look action to Quick Preview
 - [x] Wire Sources search to the loaded source list
 - [ ] Complete TAURI-002 through TAURI-007
-- [ ] Run the desktop regression matrix on Linux, macOS, and Windows
+- [ ] Run the desktop regression matrix on Linux (TAURI-006), macOS and Windows (TAURI-012)
 - [ ] Verify a production bundle, not only the dev executable

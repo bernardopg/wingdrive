@@ -5,6 +5,7 @@ status: In Progress
 assignee: jamiepine
 parent: EXPL-000
 priority: High
+milestone: M1
 tags: [explorer, views, performance]
 whitepaper: N/A
 last_updated: 2026-08-24

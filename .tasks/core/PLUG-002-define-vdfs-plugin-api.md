@@ -5,6 +5,7 @@ status: In Progress
 assignee: jamiepine
 parent: PLUG-000
 priority: High
+milestone: M4
 tags: [plugins, wasm, api, vdfs, wire]
 whitepaper: Section 6.8
 last_updated: 2025-10-14

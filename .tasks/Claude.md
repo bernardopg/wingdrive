@@ -1,5 +1,9 @@
 # Task Tracking Cheatsheet
 
+> **Planning entry point:** read [PLANNING.md](PLANNING.md) (method, hierarchy, Definition of Done),
+> [ROADMAP.md](ROADMAP.md) (milestones), and the current sprint in [sprints/](sprints/).
+> Tasks carry `parent` (epic), `milestone` (M1..), and `sprint` (S01..) in front matter.
+
 Hi Claude, Claude here. Your owner has pointed you here with absolutely no context. This document is your prompt.
 
 This directory tracks the complete development of Spacedrive. Tasks are organized into subdirectories:

@@ -4,6 +4,7 @@ title: "Epic: WASM Extension System"
 status: In Progress
 assignee: jamiepine
 priority: High
+milestone: M4
 tags: [epic, plugins, wasm, extensibility, extensions]
 whitepaper: Section 6.7
 last_updated: 2025-11-05

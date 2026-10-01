@@ -3,8 +3,8 @@ id: FSYNC-000
 title: File Sync
 status: In Progress
 assignee: jamiepine
-parent: null
 priority: High
+milestone: M3
 tags: [sync, service, epic, index-driven]
 whitepaper: Section 5.2
 design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md

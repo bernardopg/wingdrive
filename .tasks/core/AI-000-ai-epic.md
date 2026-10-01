@@ -4,6 +4,7 @@ title: "Local AI & Intelligence"
 status: To Do
 assignee: jamiepine
 priority: High
+milestone: M4
 tags: [epic, ai, agent]
 whitepaper: Section 4.6
 ---

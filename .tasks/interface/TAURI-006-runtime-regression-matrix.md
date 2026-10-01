@@ -5,8 +5,10 @@ status: In Progress
 assignee: unassigned
 parent: TAURI-000
 priority: High
+sprint: S01
+milestone: M1
 tags: [tauri, testing, ci]
-last_updated: 2026-08-24
+last_updated: 2026-10-01
 ---
 
 ## Description
@@ -20,7 +22,7 @@ Test the daemon-client path and native windows. A Vite build or typecheck alone 
 - [ ] Exercise grid, list, media, column, search, and recents
 - [ ] Open Settings, Inspector, Quick Preview, Job Manager, and Spacedrop windows
 - [ ] Verify copy, rename, folder creation, delete confirmation, and job progress
-- [ ] Capture terminal state on Linux, macOS, and Windows CI runners
+- [ ] Capture terminal state on Linux (macOS and Windows moved to TAURI-012)
 
 ## Linux Runtime Validation
 

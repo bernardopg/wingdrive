@@ -5,6 +5,7 @@ status: In Progress
 assignee: jamiepine
 parent: SHARE-000
 priority: High
+milestone: M3
 tags: [sharing, design, protocol, cloud]
 last_updated: 2026-05-25
 ---

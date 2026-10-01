@@ -652,6 +652,8 @@ cargo test -- --nocapture     # Show output
 
 WingDrive uses a file-based task system in `/.tasks/` to track features, epics, and development work. All task files are version-controlled alongside the code.
 
+Planning follows the hierarchy roadmap, milestone, epic, task, with two-week sprints. Read `.tasks/PLANNING.md` for the method and Definition of Done, `.tasks/ROADMAP.md` for milestone order, and `.tasks/sprints/` for the current sprint. Tasks set `parent` (epic), `milestone` (`M1`, `M2`, ...), and, once committed to a sprint, `sprint` (`S01`, ...).
+
 ### When to Create Tasks
 
 Create tasks for work that:
@@ -679,6 +681,8 @@ title: "Implement file sharing API"
 status: "In Progress"
 assignee: "james"
 priority: "High"
+milestone: "M1"
+sprint: "S01"
 tags: ["core", "networking"]
 whitepaper: "Section 4.2" # And/or design_doc: DESIGN_DOC_NAME.md
 ---
@@ -705,6 +709,10 @@ cargo run -p task-validator -- list --assignee "yourname" --status "In Progress"
 
 # List high priority tasks
 cargo run -p task-validator -- list --priority "High" --sort-by id
+
+# Show the current sprint board or a milestone backlog
+cargo run -p task-validator -- list --sprint S01
+cargo run -p task-validator -- list --milestone M1 --status "To Do"
 
 # Validate before committing (automatic via git hook)
 cargo run -p task-validator -- validate

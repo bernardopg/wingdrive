@@ -5,6 +5,8 @@ status: In Progress
 assignee: unassigned
 parent: EXPL-000
 priority: High
+sprint: S03
+milestone: M1
 tags: [explorer, tabs, navigation, ui]
 last_updated: 2026-08-19
 related_tasks: []
