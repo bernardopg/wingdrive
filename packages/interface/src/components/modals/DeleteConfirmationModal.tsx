@@ -1,3 +1,4 @@
+import { fileDisplayName } from "@wingdrive/ts-client";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Trash, Warning } from "@phosphor-icons/react";
@@ -48,8 +49,7 @@ function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
 	const isSingle = count === 1;
 	const label = props.permanent ? "Permanently delete" : "Delete";
 	const suffix = props.permanent ? " This cannot be undone." : "";
-	const first = props.files[0];
-	const firstName = first.extension ? `${first.name}.${first.extension}` : first.name;
+	const firstName = fileDisplayName(props.files[0]);
 	const message = isSingle
 		? `${label} "${firstName}"?${suffix}`
 		: `${label} ${count} items?${suffix}`;

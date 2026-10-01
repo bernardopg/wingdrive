@@ -22,3 +22,8 @@ export function getFileKindForIcon(file: File | null | undefined): string {
 				: file?.kind || "File";
 	return fileKind.charAt(0).toUpperCase() + fileKind.slice(1);
 }
+
+/** Name as shown to the user: `name` excludes the extension, so add it back. */
+export function fileDisplayName(file: Pick<File, "name" | "extension">): string {
+	return file.extension ? `${file.name}.${file.extension}` : file.name;
+}

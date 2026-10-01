@@ -1,3 +1,4 @@
+import { fileDisplayName } from "@wingdrive/ts-client";
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, ArrowRight } from '@phosphor-icons/react';
 import { useEffect } from 'react';
@@ -117,7 +118,7 @@ export function QuickPreviewModal({
 
 										<div className="h-4 w-px bg-app-line" />
 
-										<div className="truncate text-sm font-medium">{file.name}</div>
+										<div className="truncate text-sm font-medium">{fileDisplayName(file)}</div>
 									</div>
 
 									<button

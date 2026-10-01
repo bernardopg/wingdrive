@@ -10,12 +10,17 @@ export function JobsScreen() {
 	const { jobs, pause, resume, cancel } = useJobsContext();
 	const [showOnlyRunning, setShowOnlyRunning] = useState(false);
 
+	// Newest first: the daemon returns history in insertion order
+	const byRecency = (a: { created_at?: string | null; completed_at?: string | null }, b: typeof a) =>
+		new Date(b.completed_at ?? b.created_at ?? 0).getTime() -
+		new Date(a.completed_at ?? a.created_at ?? 0).getTime();
+
 	// Filter jobs based on toggle
 	const filteredJobs = showOnlyRunning
 		? jobs.filter(
 				(job) => job.status === "running" || job.status === "paused",
 			)
-		: jobs;
+		: [...jobs].sort(byRecency);
 
 	// Group jobs by status
 	const runningJobs = filteredJobs.filter((j) => j.status === "running");

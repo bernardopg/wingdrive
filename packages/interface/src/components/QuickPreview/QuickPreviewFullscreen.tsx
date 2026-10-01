@@ -1,3 +1,4 @@
+import { fileDisplayName } from "@wingdrive/ts-client";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, ArrowRight, Info, Play, Pause } from "@phosphor-icons/react";
@@ -168,10 +169,10 @@ export function QuickPreviewFullscreen({
 	const filenameDisplay = useMemo(
 		() => (
 			<div className="truncate text-sm font-medium text-white/90">
-				{file?.name}
+				{file ? fileDisplayName(file) : null}
 			</div>
 		),
-		[file?.name]
+		[file]
 	);
 
 	const closeButton = useMemo(

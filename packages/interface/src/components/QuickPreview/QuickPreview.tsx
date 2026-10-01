@@ -1,3 +1,4 @@
+import { fileDisplayName } from "@wingdrive/ts-client";
 import { useNormalizedQuery } from "../../contexts/WingDriveContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 import type { File } from "@wingdrive/ts-client";
@@ -140,7 +141,7 @@ export function QuickPreview() {
 			{/* Header */}
 			<div className="flex items-center justify-between px-4 py-3 border-b border-app-line">
 				<div className="text-sm font-medium truncate flex-1">
-					{file.name}
+					{fileDisplayName(file)}
 				</div>
 				<button
 					onClick={handleClose}

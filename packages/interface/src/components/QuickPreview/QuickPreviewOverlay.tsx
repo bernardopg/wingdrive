@@ -1,3 +1,4 @@
+import { fileDisplayName } from "@wingdrive/ts-client";
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, ArrowRight } from '@phosphor-icons/react';
 import { useEffect } from 'react';
@@ -103,7 +104,7 @@ export function QuickPreviewOverlay({
 											<div className="h-4 w-px bg-app-line/50" />
 										</>
 									)}
-									<div className="truncate text-sm font-medium text-ink">{file.name}</div>
+									<div className="truncate text-sm font-medium text-ink">{fileDisplayName(file)}</div>
 								</div>
 
 								<button

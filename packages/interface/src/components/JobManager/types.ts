@@ -161,6 +161,7 @@ export function getStatusBadge(job: JobListItem): string {
  * Formats duration in milliseconds to human-readable string
  */
 export function formatDuration(ms: number): string {
+  if (ms > 0 && ms < 1000) return "<1s";
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
