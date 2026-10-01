@@ -187,7 +187,7 @@ smallvec     = { version = "1.13", features = ["serde"] } # Small vector optimiz
 parking_lot  = "0.12" # Fast mutex for name cache
 num_cpus     = "1.16" # CPU count for parallel walker
 postcard     = { version = "1", default-features = false, features = ["use-std"] } # Zero-copy binary serialization for snapshots/wire (heapless off: drops unmaintained atomic-polyfill)
-zstd         = { version = "0.13", features = ["zstdmt"] } # Multithreaded compression for snapshots
+zstd         = { version = "0.14", features = ["zstdmt"] } # Multithreaded compression for snapshots
 whoami    = "2.1"
 
 # Secure storage
