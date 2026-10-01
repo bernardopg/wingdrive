@@ -17,7 +17,7 @@ pub struct FileSearchArgs {
 	#[arg(long, value_enum, default_value = "normal")]
 	pub mode: SearchModeArg,
 
-	/// SD path to narrow search to a specific directory
+	/// WingPath to narrow search to a specific directory
 	#[arg(long)]
 	pub wing_path: Option<String>,
 
@@ -145,12 +145,12 @@ impl From<FileSearchArgs> for FileSearchInput {
 		};
 
 		let scope = if let Some(wing_path_str) = args.wing_path {
-			// Parse SD path from string
+			// Parse WingPath from string
 			match wing_core::domain::addressing::WingPath::from_uri(&wing_path_str) {
 				Ok(wing_path) => SearchScope::Path { path: wing_path },
 				Err(_) => {
 					eprintln!(
-						"Warning: Invalid SD path '{}', falling back to library search",
+						"Warning: Invalid WingPath '{}', falling back to library search",
 						wing_path_str
 					);
 					SearchScope::Library

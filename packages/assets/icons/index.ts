@@ -160,7 +160,7 @@ import Screenshot_Light from './Screenshot_Light.png';
 import Screenshot20 from './Screenshot-20.png';
 import Screenshot from './Screenshot.png';
 import ScreenshotAlt from './ScreenshotAlt.png';
-import Wing_Light from './Wing_Light.png';
+import SD_Light from './SD_Light.png';
 import SD from './SD.png';
 import Search_Light from './Search_Light.png';
 import Search from './Search.png';
@@ -354,7 +354,7 @@ export {
 	Package,
 	Package_Light,
 	SD,
-	Wing_Light,
+	SD_Light,
 	Scrapbook,
 	Scrapbook_Light,
 	Screenshot20,

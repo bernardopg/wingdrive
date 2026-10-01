@@ -144,7 +144,7 @@ function getItemPath(
 	if (isRedundancyItem(itemType)) return "/redundancy";
 
 	if (isLocationItem(itemType)) {
-		// Use explorer route with location's SD path (passed from item.wing_path)
+		// Use explorer route with location's WingPath (passed from item.wing_path)
 		if (itemWingPath) {
 			return `/explorer?path=${encodeURIComponent(JSON.stringify(itemWingPath))}`;
 		}
@@ -170,7 +170,7 @@ function getItemPath(
 	}
 
 	if (isPathItem(itemType)) {
-		// Navigate to explorer with the SD path
+		// Navigate to explorer with the WingPath
 		return `/explorer?path=${encodeURIComponent(JSON.stringify(itemType.Path.wing_path))}`;
 	}
 

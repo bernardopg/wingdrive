@@ -27,7 +27,8 @@ Epics: `TAURI-000`, `EXPL-000`, `CLI-000` (estendido por `CLI-001`).
 
 Backlog M1 sem sprint: `EXPL-001`, `EXPL-002`, `EXPL-003` (critérios herdados do upstream,
 revisar e fechar ou quebrar em tasks novas), bugs que o `TAURI-006` encontrar, e `DEV-003`
-(clippy do workspace quebrado com toolchain 1.98).
+(clippy do workspace quebrado com toolchain 1.98), `WATCH-004` (pasta nova duplicada no índice) e
+`BRAND-001` (trocar a identidade visual antiga: orb, ícones, vídeos, screenshots).
 
 ## Next — M2: Desktop multiplataforma e release
 

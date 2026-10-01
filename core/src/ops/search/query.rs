@@ -880,7 +880,7 @@ impl FileSearchQuery {
 			);
 		}
 
-		// Apply SD path filtering if specified in scope
+		// Apply WingPath filtering if specified in scope
 		if let SearchScope::Path { path } = &self.input.scope {
 			if let Some(device_id) = path.device_id() {
 				if let Some(path_str) = path.path() {
@@ -933,7 +933,7 @@ impl FileSearchQuery {
 		// Construct full path
 		let full_path = self.construct_full_path(&entry_model, db).await?;
 
-		// Build SD path
+		// Build WingPath
 		let wing_path = crate::domain::addressing::WingPath::Physical {
 			device_slug: device.slug,
 			path: full_path.into(),

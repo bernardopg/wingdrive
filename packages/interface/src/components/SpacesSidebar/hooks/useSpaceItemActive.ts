@@ -13,7 +13,7 @@ interface UseSpaceItemActiveOptions {
  *
  * Active state is determined by matching the current route/view to the item:
  * - Virtual views (devices) match by view type and ID
- * - Explorer routes match by comparing SD paths
+ * - Explorer routes match by comparing WingPaths
  * - Special routes (/, /recents, etc.) match by exact pathname
  */
 export function useSpaceItemActive({
@@ -80,7 +80,7 @@ export function useSpaceItemActive({
 		return location.pathname === path;
 	}
 
-	// Explorer routes: compare SD paths via URL
+	// Explorer routes: compare WingPaths via URL
 	if (location.pathname === "/explorer") {
 		const currentSearchParams = new URLSearchParams(location.search);
 		const currentPathParam = currentSearchParams.get("path");
