@@ -5,7 +5,7 @@
 
 use super::{database::CopyDatabaseQuery, input::CopyMethod, routing::CopyStrategyRouter};
 use crate::{
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	infra::job::generic_progress::{GenericProgress, ToGenericProgress},
 	infra::job::prelude::*,
 };
@@ -145,8 +145,8 @@ impl Default for CopyOptions {
 /// File copy job using the Strategy Pattern
 #[derive(Debug, Serialize, Deserialize, Job)]
 pub struct FileCopyJob {
-	pub sources: SdPathBatch,
-	pub destination: SdPath,
+	pub sources: WingPathBatch,
+	pub destination: WingPath,
 	#[serde(default)]
 	pub options: CopyOptions,
 
@@ -178,7 +178,7 @@ impl JobHandler for FileCopyJob {
 	type Output = FileCopyOutput;
 
 	async fn run(&mut self, ctx: JobContext<'_>) -> JobResult<Self::Output> {
-		let validate_layout = |sources: &SdPathBatch, destination: &SdPath| -> JobResult<()> {
+		let validate_layout = |sources: &WingPathBatch, destination: &WingPath| -> JobResult<()> {
 			let errors = super::safety::recursive_copy_errors(sources, destination);
 			if errors.is_empty() {
 				Ok(())
@@ -202,12 +202,12 @@ impl JobHandler for FileCopyJob {
 			);
 		}
 
-		let resolved_sources = SdPathBatch::new(sources);
+		let resolved_sources = WingPathBatch::new(sources);
 		if resolved_sources
 			.paths
 			.iter()
-			.any(|path| matches!(path, SdPath::Cloud { .. }))
-			|| matches!(destination, SdPath::Cloud { .. })
+			.any(|path| matches!(path, WingPath::Cloud { .. }))
+			|| matches!(destination, WingPath::Cloud { .. })
 		{
 			return Err(JobError::execution(
 				"Cloud copy and move operations are not supported yet",
@@ -241,7 +241,7 @@ impl JobHandler for FileCopyJob {
 		ctx.progress(Progress::generic(progress.to_generic_progress()));
 
 		// Group by device for efficient processing
-		let by_device: HashMap<String, Vec<SdPath>> = self
+		let by_device: HashMap<String, Vec<WingPath>> = self
 			.sources
 			.by_device()
 			.into_iter()
@@ -430,7 +430,9 @@ impl JobHandler for FileCopyJob {
 				if dest_path.exists() && dest_path.is_file() {
 					// User dropped onto a file - use its parent directory
 					if let Some(parent) = dest_path.parent() {
-						SdPath::local(parent.join(resolved_source.file_name().unwrap_or_default()))
+						WingPath::local(
+							parent.join(resolved_source.file_name().unwrap_or_default()),
+						)
 					} else {
 						// No parent directory (root?), fallback to destination
 						self.destination.clone()
@@ -571,7 +573,7 @@ impl JobHandler for FileCopyJob {
 						if let Some(dest_path) = final_destination.as_local_path() {
 							if dest_path.exists() {
 								let unique_dest = self.generate_unique_name(&dest_path).await?;
-								SdPath::Physical {
+								WingPath::Physical {
 									device_slug: final_destination
 										.device_slug()
 										.unwrap_or_default()
@@ -765,7 +767,7 @@ pub struct CopyProgress {
 	pub current_file: String,
 	/// Current source path being processed (for GenericProgress.current_path)
 	#[serde(default)]
-	pub current_source_path: Option<SdPath>,
+	pub current_source_path: Option<WingPath>,
 	pub files_copied: usize,
 	pub total_files: usize,
 	pub bytes_copied: u64,
@@ -795,7 +797,7 @@ struct ProgressAggregator<'a> {
 	bytes_completed_before_current: Arc<Mutex<u64>>,
 	total_bytes: u64,
 	current_file_path: String,
-	current_source_path: Arc<Mutex<Option<SdPath>>>,
+	current_source_path: Arc<Mutex<Option<WingPath>>>,
 	current_operation: String,
 	error_count: usize,
 	files_completed: Arc<Mutex<usize>>,
@@ -822,7 +824,7 @@ impl<'a> ProgressAggregator<'a> {
 	}
 
 	/// Start processing a new file with strategy metadata
-	fn start_file(&mut self, file_path: String, source_path: SdPath, current_operation: String) {
+	fn start_file(&mut self, file_path: String, source_path: WingPath, current_operation: String) {
 		self.current_file_path = file_path;
 		*self.current_source_path.lock().unwrap() = Some(source_path);
 		self.current_operation = current_operation;
@@ -1027,7 +1029,7 @@ pub struct CopyError {
 
 impl FileCopyJob {
 	/// Create a new file copy job with sources and destination
-	pub fn new(sources: SdPathBatch, destination: SdPath) -> Self {
+	pub fn new(sources: WingPathBatch, destination: WingPath) -> Self {
 		Self {
 			sources,
 			destination,
@@ -1041,8 +1043,8 @@ impl FileCopyJob {
 	/// Create an empty job (used by derive macro)
 	pub fn empty() -> Self {
 		Self {
-			sources: SdPathBatch::new(Vec::new()),
-			destination: SdPath::local(PathBuf::new()),
+			sources: WingPathBatch::new(Vec::new()),
+			destination: WingPath::local(PathBuf::new()),
 			options: Default::default(),
 			completed_indices: Vec::new(),
 			started_at: Instant::now(),
@@ -1051,8 +1053,8 @@ impl FileCopyJob {
 	}
 
 	/// Create from individual paths
-	pub fn from_paths(sources: Vec<SdPath>, destination: SdPath) -> Self {
-		Self::new(SdPathBatch::new(sources), destination)
+	pub fn from_paths(sources: Vec<WingPath>, destination: WingPath) -> Self {
+		Self::new(WingPathBatch::new(sources), destination)
 	}
 
 	/// Set copy options
@@ -1062,7 +1064,7 @@ impl FileCopyJob {
 	}
 
 	/// Create a move job using the copy job with delete_after_copy
-	pub fn new_move(sources: SdPathBatch, destination: SdPath, move_mode: MoveMode) -> Self {
+	pub fn new_move(sources: WingPathBatch, destination: WingPath, move_mode: MoveMode) -> Self {
 		let mut options = CopyOptions::default();
 		options.delete_after_copy = true;
 		options.move_mode = Some(move_mode);
@@ -1077,19 +1079,19 @@ impl FileCopyJob {
 	}
 
 	/// Create a rename operation
-	pub fn new_rename(source: SdPath, new_name: String) -> Self {
+	pub fn new_rename(source: WingPath, new_name: String) -> Self {
 		let destination = match &source {
-			SdPath::Physical { device_slug, path } => SdPath::Physical {
+			WingPath::Physical { device_slug, path } => WingPath::Physical {
 				device_slug: device_slug.clone(),
 				path: path.with_file_name(&new_name),
 			},
-			SdPath::Cloud { .. } => panic!("Cloud storage operations are not yet implemented"),
-			SdPath::Content { .. } => panic!("Cannot rename a content-addressed path"),
-			SdPath::Sidecar { .. } => panic!("Cannot rename a sidecar path"),
+			WingPath::Cloud { .. } => panic!("Cloud storage operations are not yet implemented"),
+			WingPath::Content { .. } => panic!("Cannot rename a content-addressed path"),
+			WingPath::Sidecar { .. } => panic!("Cannot rename a sidecar path"),
 		};
 
 		Self::new_move(
-			SdPathBatch::new(vec![source]),
+			WingPathBatch::new(vec![source]),
 			destination,
 			MoveMode::Rename,
 		)
@@ -1434,8 +1436,8 @@ impl From<FileCopyOutput> for JobOutput {
 /// Backward compatibility wrapper for move operations
 #[derive(Debug, Serialize, Deserialize, Job)]
 pub struct MoveJob {
-	pub sources: SdPathBatch,
-	pub destination: SdPath,
+	pub sources: WingPathBatch,
+	pub destination: WingPath,
 	pub mode: MoveMode,
 	pub overwrite: bool,
 	pub preserve_timestamps: bool,
@@ -1498,7 +1500,7 @@ impl JobHandler for MoveJob {
 
 impl MoveJob {
 	/// Create a new move job
-	pub fn new(sources: SdPathBatch, destination: SdPath, mode: MoveMode) -> Self {
+	pub fn new(sources: WingPathBatch, destination: WingPath, mode: MoveMode) -> Self {
 		Self {
 			sources,
 			destination,
@@ -1511,8 +1513,8 @@ impl MoveJob {
 	/// Create an empty job (used by derive macro)
 	pub fn empty() -> Self {
 		Self {
-			sources: SdPathBatch::new(Vec::new()),
-			destination: SdPath::local(PathBuf::new()),
+			sources: WingPathBatch::new(Vec::new()),
+			destination: WingPath::local(PathBuf::new()),
 			mode: MoveMode::Move,
 			overwrite: false,
 			preserve_timestamps: true,
@@ -1520,19 +1522,19 @@ impl MoveJob {
 	}
 
 	/// Create a rename operation
-	pub fn rename(source: SdPath, new_name: String) -> Self {
+	pub fn rename(source: WingPath, new_name: String) -> Self {
 		let destination = match &source {
-			SdPath::Physical { device_slug, path } => SdPath::Physical {
+			WingPath::Physical { device_slug, path } => WingPath::Physical {
 				device_slug: device_slug.clone(),
 				path: path.with_file_name(&new_name),
 			},
-			SdPath::Cloud { .. } => panic!("Cloud storage operations are not yet implemented"),
-			SdPath::Content { .. } => panic!("Cannot rename a content-addressed path"),
-			SdPath::Sidecar { .. } => panic!("Cannot rename a sidecar path"),
+			WingPath::Cloud { .. } => panic!("Cloud storage operations are not yet implemented"),
+			WingPath::Content { .. } => panic!("Cannot rename a content-addressed path"),
+			WingPath::Sidecar { .. } => panic!("Cannot rename a sidecar path"),
 		};
 
 		Self::new(
-			SdPathBatch::new(vec![source]),
+			WingPathBatch::new(vec![source]),
 			destination,
 			MoveMode::Rename,
 		)

@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo, useRef } from "react";
-import type { SdPath, File } from "@sd/ts-client";
+import type { WingPath, File } from "@sd/ts-client";
 import { useExplorer } from "../../context";
 import { useSelection } from "../../SelectionContext";
 import { useNormalizedQuery } from "../../../../contexts/SpacedriveContext";
@@ -10,8 +10,8 @@ import { useVirtualListing } from "../../hooks/useVirtualListing";
 import { isVirtualFile } from '@sd/ts-client';
 import { useExplorerFiles } from "../../hooks/useExplorerFiles";
 
-/** Get path string from SdPath for comparison */
-function getPathString(path: SdPath | null | undefined): string {
+/** Get path string from WingPath for comparison */
+function getPathString(path: WingPath | null | undefined): string {
 	if (!path) return "";
 	if ("Physical" in path) return path.Physical?.path || "";
 	return JSON.stringify(path);
@@ -131,7 +131,7 @@ export function ColumnView() {
 					// Truncate columns after current and add new one
 					const newStack = [
 						...columnStack.slice(0, columnIndex + 1),
-						file.sd_path,
+						file.wing_path,
 					];
 					setColumnStack(newStack);
 				} else {
@@ -145,7 +145,7 @@ export function ColumnView() {
 	);
 
 	const handleNavigate = useCallback(
-		(path: SdPath) => {
+		(path: WingPath) => {
 			navigateToPath(path);
 		},
 		[navigateToPath],
@@ -168,8 +168,8 @@ export function ColumnView() {
 		}
 
 		const filePath =
-			"Physical" in firstSelected.sd_path
-				? firstSelected.sd_path.Physical?.path
+			"Physical" in firstSelected.wing_path
+				? firstSelected.wing_path.Physical?.path
 				: null;
 		if (!filePath) return columnStack.length - 1;
 
@@ -398,7 +398,7 @@ export function ColumnView() {
 		const paths = new Set<string>();
 		for (const file of selectedFiles) {
 			const filePath =
-				"Physical" in file.sd_path ? file.sd_path.Physical?.path : null;
+				"Physical" in file.wing_path ? file.wing_path.Physical?.path : null;
 			if (!filePath) continue;
 			const fileParent = filePath.substring(0, filePath.lastIndexOf("/"));
 			paths.add(fileParent);
@@ -453,9 +453,9 @@ export function ColumnView() {
 
 						// Only update columns for single selection (not multi/range)
 						if (!multi && !range) {
-							if (file.kind === "Directory" && file.sd_path) {
+							if (file.kind === "Directory" && file.wing_path) {
 								// Start a new column stack with the selected directory
-								setColumnStack([file.sd_path]);
+								setColumnStack([file.wing_path]);
 							} else {
 								// For files, clear the stack
 								setColumnStack([]);

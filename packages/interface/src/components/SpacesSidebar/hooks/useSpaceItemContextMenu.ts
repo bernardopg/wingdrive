@@ -87,7 +87,7 @@ export function useSpaceItemContextMenu({
 			label: "Show in Finder",
 			onClick: async () => {
 				if (isPathItem(item.item_type)) {
-					const sdPath = item.item_type.Path.sd_path;
+					const sdPath = item.item_type.Path.wing_path;
 					if (typeof sdPath === "object" && "Physical" in sdPath) {
 						const physicalPath = (
 							sdPath as { Physical: { path: string } }
@@ -105,7 +105,7 @@ export function useSpaceItemContextMenu({
 			keybind: "⌘⇧R",
 			condition: () => {
 				if (!isPathItem(item.item_type)) return false;
-				const sdPath = item.item_type.Path.sd_path;
+				const sdPath = item.item_type.Path.wing_path;
 				return (
 					typeof sdPath === "object" &&
 					"Physical" in sdPath &&

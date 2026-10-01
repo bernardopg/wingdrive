@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 
 use wing_core::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	ops::core::ephemeral_status::EphemeralCacheStatusInput,
 	ops::indexing::{
 		input::IndexInput,
@@ -46,7 +46,7 @@ impl From<IndexScopeArg> for IndexScope {
 
 #[derive(Args, Debug, Clone)]
 pub struct IndexStartArgs {
-	/// Addresses to index (SdPath URIs or local paths)
+	/// Addresses to index (WingPath URIs or local paths)
 	pub paths: Vec<String>,
 
 	/// Library ID to run indexing in (defaults to the only library if just one exists)
@@ -74,7 +74,7 @@ impl IndexStartArgs {
 	pub fn to_input(&self, library_id: Uuid) -> anyhow::Result<IndexInput> {
 		let mut local_paths: Vec<PathBuf> = Vec::new();
 		for s in &self.paths {
-			let sd = SdPath::from_uri(s).unwrap_or_else(|_| SdPath::local(s));
+			let sd = WingPath::from_uri(s).unwrap_or_else(|_| WingPath::local(s));
 			if let Some(p) = sd.as_local_path() {
 				local_paths.push(p.to_path_buf());
 			} else {
@@ -105,7 +105,7 @@ pub struct QuickScanArgs {
 
 impl QuickScanArgs {
 	pub fn to_input(&self, library_id: Uuid) -> anyhow::Result<IndexInput> {
-		let sd = SdPath::from_uri(&self.path).unwrap_or_else(|_| SdPath::local(&self.path));
+		let sd = WingPath::from_uri(&self.path).unwrap_or_else(|_| WingPath::local(&self.path));
 		let p = sd
 			.as_local_path()
 			.ok_or_else(|| anyhow::anyhow!("Non-local path not supported yet"))?;
@@ -127,7 +127,7 @@ pub struct BrowseArgs {
 
 impl BrowseArgs {
 	pub fn to_input(&self, library_id: Uuid) -> anyhow::Result<IndexInput> {
-		let sd = SdPath::from_uri(&self.path).unwrap_or_else(|_| SdPath::local(&self.path));
+		let sd = WingPath::from_uri(&self.path).unwrap_or_else(|_| WingPath::local(&self.path));
 		let p = sd
 			.as_local_path()
 			.ok_or_else(|| anyhow::anyhow!("Non-local path not supported yet"))?;

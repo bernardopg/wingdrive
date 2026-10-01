@@ -1710,7 +1710,7 @@ fn find_daemon_binary() -> Result<std::path::PathBuf, String> {
 	// Try that first, then fall back to the plain name for dev builds
 	let daemon_with_triple = format!(
 		"wing-daemon-{}{}",
-		env!("SD_TARGET_TRIPLE"),
+		env!("WING_TARGET_TRIPLE"),
 		std::env::consts::EXE_SUFFIX
 	);
 	let daemon_plain = format!("wing-daemon{}", std::env::consts::EXE_SUFFIX);

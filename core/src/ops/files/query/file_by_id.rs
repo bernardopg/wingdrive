@@ -3,7 +3,7 @@
 use crate::infra::query::{QueryError, QueryResult};
 use crate::{
 	context::CoreContext,
-	domain::{addressing::SdPath, File},
+	domain::{addressing::WingPath, File},
 	infra::db::entities::{
 		audio_media_data, content_identity, device, directory_paths, entry, image_media_data,
 		location, sidecar, tag, user_metadata, user_metadata_tag, video_media_data,
@@ -69,7 +69,7 @@ impl LibraryQuery for FileByIdQuery {
 			let (entry_model, content_identity_model_opt) = entry_with_relations;
 
 			// Resolve the full absolute path for this file
-			let sd_path = self.resolve_file_path(&entry_model, db.conn()).await?;
+			let wing_path = self.resolve_file_path(&entry_model, db.conn()).await?;
 
 			// Process content identity and load media data
 			let (content_identity_domain, sidecars, image_media, video_media, audio_media) =
@@ -167,7 +167,7 @@ impl LibraryQuery for FileByIdQuery {
 				};
 
 			// Convert to File using from_entity_model
-			let mut file = File::from_entity_model(entry_model.clone(), sd_path.clone());
+			let mut file = File::from_entity_model(entry_model.clone(), wing_path.clone());
 			file.sidecars = sidecars;
 			file.content_identity = content_identity_domain;
 			file.image_media_data = image_media;
@@ -250,9 +250,9 @@ impl LibraryQuery for FileByIdQuery {
 		if let Some(path) = index_read.get_path_by_uuid(self.file_id) {
 			if let Some(metadata) = index_read.get_entry_ref(&path) {
 				let content_kind = index_read.get_content_kind(&path);
-				let sd_path = SdPath::local(path.clone());
+				let wing_path = WingPath::local(path.clone());
 
-				let mut file = File::from_ephemeral(self.file_id, &metadata, sd_path);
+				let mut file = File::from_ephemeral(self.file_id, &metadata, wing_path);
 				file.content_kind = content_kind;
 
 				return Ok(Some(file));
@@ -270,7 +270,7 @@ impl FileByIdQuery {
 		content_id: i32,
 		current_entry_id: i32,
 		db: &DatabaseConnection,
-	) -> QueryResult<Vec<SdPath>> {
+	) -> QueryResult<Vec<WingPath>> {
 		// Find all entries with the same content_id (excluding current entry)
 		let alternate_entries = entry::Entity::find()
 			.filter(entry::Column::ContentId.eq(content_id))
@@ -290,12 +290,12 @@ impl FileByIdQuery {
 		Ok(alternate_paths)
 	}
 
-	/// Resolve the full absolute SdPath for a file entry
+	/// Resolve the full absolute WingPath for a file entry
 	async fn resolve_file_path(
 		&self,
 		entry: &entry::Model,
 		db: &DatabaseConnection,
-	) -> QueryResult<SdPath> {
+	) -> QueryResult<WingPath> {
 		// Walk up the entry hierarchy to build the full path
 		let mut path_components = Vec::new();
 
@@ -360,7 +360,7 @@ impl FileByIdQuery {
 			absolute_path.push(component);
 		}
 
-		Ok(SdPath::Physical {
+		Ok(WingPath::Physical {
 			device_slug: device_model.slug,
 			path: absolute_path.into(),
 		})

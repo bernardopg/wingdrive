@@ -2,7 +2,7 @@
 
 use crate::{
 	context::CoreContext,
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::{
 		action::{error::ActionError, LibraryAction},
 		db::entities,
@@ -66,7 +66,7 @@ impl LibraryAction for LocationRescanAction {
 			.await
 			.map_err(|e| ActionError::Internal(format!("Failed to get location path: {}", e)))?;
 		let location_path_str = location_path_buf.to_string_lossy().to_string();
-		let location_path = SdPath::from_uri(&location_path_str)
+		let location_path = WingPath::from_uri(&location_path_str)
 			.map_err(|e| ActionError::Internal(format!("Failed to parse location path: {}", e)))?;
 
 		// Determine index mode based on full_rescan flag

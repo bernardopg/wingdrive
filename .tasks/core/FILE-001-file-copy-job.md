@@ -11,7 +11,7 @@ whitepaper: Section 4.4.6
 
 ## Description
 
-A flexible `FileCopyJob` will be implemented to handle all copy and move operations. It uses a strategy pattern to select the optimal file transfer method (e.g., local move, cross-volume stream, remote transfer) based on the source and destination `SdPath`.
+A flexible `FileCopyJob` will be implemented to handle all copy and move operations. It uses a strategy pattern to select the optimal file transfer method (e.g., local move, cross-volume stream, remote transfer) based on the source and destination `WingPath`.
 
 ## Implementation Notes
 

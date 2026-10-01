@@ -32,7 +32,7 @@ Implement support for a cloud storage provider (e.g., S3-compatible service) as 
     - CLI commands: `sd volume add-cloud`, `sd volume remove-cloud`
     - Support for custom endpoints (R2, MinIO, etc.)
 5.  Update query system to support cloud paths.
-    - `Entry::try_from` supports `SdPath::Cloud`
+    - `Entry::try_from` supports `WingPath::Cloud`
     - `DirectoryListingQuery` supports cloud directories
     - `FileByPathQuery` supports cloud files
 6.  Update indexer to use VolumeBackend for I/O operations.

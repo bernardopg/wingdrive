@@ -99,7 +99,7 @@ cargo build
 
 ### `build-ios`
 
-Builds the `sd-ios-core` library for iOS (macOS only):
+Builds the `wing-ios-core` library for iOS (macOS only):
 
 1. Compiles for `aarch64-apple-ios` (physical devices)
 2. Compiles for `aarch64-apple-ios-sim` (M1/M2 simulator)
@@ -107,12 +107,12 @@ Builds the `sd-ios-core` library for iOS (macOS only):
 4. Creates universal simulator library (ARM64 + x86_64) using `lipo`
 5. Updates the existing XCFramework that Xcode is already using
 
-**Output:** `apps/ios/sd-ios-core/sd_ios_core.xcframework/`
+**Output:** `apps/ios/wing-ios-core/wing_ios_core.xcframework/`
 
 The XCFramework structure looks like:
 
 ```
-sd_ios_core.xcframework/
+wing_ios_core.xcframework/
 ├── Info.plist                           # Top-level XCFramework metadata
 ├── ios-arm64/
 │   ├── libsd_ios_core.a                 # Device library

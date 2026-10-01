@@ -1,4 +1,4 @@
-use crate::domain::SdPath;
+use crate::domain::WingPath;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::path::PathBuf;
@@ -7,7 +7,7 @@ use std::path::PathBuf;
 pub struct SuggestedLocation {
 	pub name: String,
 	pub path: PathBuf,
-	pub sd_path: SdPath,
+	pub wing_path: WingPath,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]

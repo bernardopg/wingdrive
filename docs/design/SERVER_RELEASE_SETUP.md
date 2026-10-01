@@ -113,7 +113,7 @@ This enables:
 cargo build --release -p wing-server --features wing-core/heif,wing-core/ffmpeg
 
 # Test locally
-./target/release/wing-server --data-dir /tmp/sd-test
+./target/release/wing-server --data-dir /tmp/wing-test
 ```
 
 **Test Docker build:**
@@ -122,7 +122,7 @@ cargo build --release -p wing-server --features wing-core/heif,wing-core/ffmpeg
 docker build -f apps/server/Dockerfile -t wing-server-test .
 
 # Run locally
-docker run -p 8080:8080 -e SD_AUTH=admin:test wing-server-test
+docker run -p 8080:8080 -e WING_AUTH=admin:test wing-server-test
 ```
 
 **Test multi-arch Docker build:**
@@ -164,7 +164,7 @@ After=network.target
 Type=simple
 User=wingdrive
 Environment="DATA_DIR=/var/lib/wingdrive"
-Environment="SD_AUTH=admin:your-secure-password"
+Environment="WING_AUTH=admin:your-secure-password"
 ExecStart=/usr/local/bin/wingdrive-server --data-dir /var/lib/wingdrive
 Restart=on-failure
 
@@ -180,7 +180,7 @@ docker run -d \
   -p 8080:8080 \
   -p 7373:7373 \
 	-v wingdrive-data:/data \
-  -e SD_AUTH=admin:password \
+  -e WING_AUTH=admin:password \
   ghcr.io/bernardopg/wingdrive/server:latest
 ```
 
@@ -207,7 +207,7 @@ services:
 		- wingdrive-data:/data
       - /mnt/storage:/storage:ro  # Optional: mount storage
     environment:
-      SD_AUTH: "admin:your-password"
+      WING_AUTH: "admin:your-password"
       TZ: "America/New_York"
     restart: unless-stopped
 

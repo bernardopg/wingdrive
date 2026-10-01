@@ -100,7 +100,7 @@ export function MetadataPanel({
 	const audioCodec = isAudio ? file.audio_media_data!.codec : null;
 
 	const physicalPath =
-		"Physical" in file.sd_path ? file.sd_path.Physical.path : null;
+		"Physical" in file.wing_path ? file.wing_path.Physical.path : null;
 
 	return (
 		<motion.aside

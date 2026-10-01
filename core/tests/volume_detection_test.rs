@@ -7,7 +7,7 @@ use std::{path::PathBuf, sync::Arc};
 use uuid::Uuid;
 use wing_core::{
 	device::get_current_device_slug,
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::event::EventBus,
 	ops::files::copy::{input::CopyMethod, routing::CopyStrategyRouter},
 	volume::{
@@ -289,10 +289,10 @@ async fn test_copy_strategy_selection() {
 
 		// Only test if both paths exist
 		if source_path.exists() && dest_path.exists() {
-			// Create SdPath instances (using current device slug)
+			// Create WingPath instances (using current device slug)
 			let device_slug = get_current_device_slug();
-			let source_sdpath = SdPath::new(device_slug.clone(), source_path.clone());
-			let dest_sdpath = SdPath::new(device_slug, dest_path.clone());
+			let source_sdpath = WingPath::new(device_slug.clone(), source_path.clone());
+			let dest_sdpath = WingPath::new(device_slug, dest_path.clone());
 
 			// Test strategy selection
 			let strategy = CopyStrategyRouter::select_strategy(
@@ -466,8 +466,8 @@ async fn test_full_copy_workflow_simulation() {
 
 					// Step 3: Select copy strategy
 					let device_slug = get_current_device_slug();
-					let source_sdpath = SdPath::new(device_slug.clone(), source_path.clone());
-					let dest_sdpath = SdPath::new(device_slug, dest_path.clone());
+					let source_sdpath = WingPath::new(device_slug.clone(), source_path.clone());
+					let dest_sdpath = WingPath::new(device_slug, dest_path.clone());
 
 					let description = CopyStrategyRouter::describe_strategy(
 						&source_sdpath,

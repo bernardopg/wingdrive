@@ -1,17 +1,17 @@
 import clsx from "clsx";
-import type { SdPath } from "@sd/ts-client";
+import type { WingPath } from "@sd/ts-client";
 
 interface BreadcrumbProps {
-  path: SdPath;
-  onNavigate: (path: SdPath) => void;
+  path: WingPath;
+  onNavigate: (path: WingPath) => void;
 }
 
 interface PathSegment {
   name: string;
-  path: SdPath;
+  path: WingPath;
 }
 
-function parseSdPathSegments(sdPath: SdPath): PathSegment[] {
+function parseWingPathSegments(sdPath: WingPath): PathSegment[] {
   if ("Physical" in sdPath) {
     const { device_slug, path } = sdPath.Physical;
     const parts = path.split("/").filter(Boolean);
@@ -47,7 +47,7 @@ function parseSdPathSegments(sdPath: SdPath): PathSegment[] {
 }
 
 export function Breadcrumb({ path, onNavigate }: BreadcrumbProps) {
-  const segments = parseSdPathSegments(path);
+  const segments = parseWingPathSegments(path);
 
   return (
     <div className="flex items-center gap-1 text-sm">

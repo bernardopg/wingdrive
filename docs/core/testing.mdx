@@ -230,7 +230,7 @@ Ephemeral paths must be **indexed before watching**:
 ```rust
 // 1. Index the directory (ephemeral mode)
 let config = IndexerJobConfig::ephemeral_browse(
-    SdPath::local(dest_dir.clone()),
+    WingPath::local(dest_dir.clone()),
     IndexScope::Current
 );
 let job = IndexerJob::new(config);
@@ -526,10 +526,10 @@ Snapshots preserve test state for post-mortem debugging. They are optional and c
 
 ```bash
 # Single test
-SD_TEST_SNAPSHOTS=1 cargo test file_move_test --nocapture
+WING_TEST_SNAPSHOTS=1 cargo test file_move_test --nocapture
 
 # Entire suite
-SD_TEST_SNAPSHOTS=1 cargo xtask test-core
+WING_TEST_SNAPSHOTS=1 cargo xtask test-core
 ```
 
 **Snapshot location** (when enabled):
@@ -575,7 +575,7 @@ Some tests generate fixtures used by other test suites (e.g., TypeScript tests c
 
 ```bash
 # Single fixture test
-SD_REGENERATE_FIXTURES=1 cargo test normalized_cache_fixtures_test --nocapture
+WING_REGENERATE_FIXTURES=1 cargo test normalized_cache_fixtures_test --nocapture
 ```
 
 **Fixture location** (when enabled):
@@ -590,7 +590,7 @@ packages/ts-client/src/__fixtures/backend_events.json  (TypeScript test fixtures
 - Test validates generation works
 - No modification of source tree
 
-**When `SD_REGENERATE_FIXTURES=1` is set**:
+**When `WING_REGENERATE_FIXTURES=1` is set**:
 
 - Fixtures generated in temp first (validation)
 - Copied to source tree for commit
@@ -611,7 +611,7 @@ async fn generate_typescript_fixtures() -> Result<()> {
     std::fs::write(&temp_fixture_path, serde_json::to_string_pretty(&fixture_data)?)?;
 
     // Only copy to source if explicitly requested
-    if std::env::var("SD_REGENERATE_FIXTURES").is_ok() {
+    if std::env::var("WING_REGENERATE_FIXTURES").is_ok() {
         let source_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .parent().unwrap()
             .join("packages/ts-client/src/__fixtures__/backend_events.json");

@@ -24,7 +24,7 @@ Extend the file copy job system to support cloud volumes, enabling users to copy
    - Handle chunked transfers for large files
 
 2. Update `CopyStrategyRouter` to detect and route cloud paths
-   - Detect `SdPath::Cloud` variant
+   - Detect `WingPath::Cloud` variant
    - Route local-to-cloud, cloud-to-local, and cloud-to-cloud transfers
    - Consider cloud backend capabilities (streaming, resumption)
 
@@ -40,7 +40,7 @@ Extend the file copy job system to support cloud volumes, enabling users to copy
    - Support resume for interrupted transfers (if backend supports)
 
 5. Integrate with existing `FileCopyJob` and `CopyAction`
-   - Ensure `CopyAction` accepts cloud `SdPath` inputs
+   - Ensure `CopyAction` accepts cloud `WingPath` inputs
    - Update validation to allow cloud paths
    - Test end-to-end with CLI and future UI
 

@@ -4,7 +4,7 @@ use super::input::DuplicateDetectionInput;
 use super::job::{DetectionMode, DuplicateDetectionJob};
 use crate::{
 	context::CoreContext,
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	infra::{
 		action::{error::ActionError, LibraryAction},
 		job::handle::JobHandle,
@@ -16,14 +16,14 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DuplicateDetectionAction {
-	pub paths: SdPathBatch,
+	pub paths: WingPathBatch,
 	pub algorithm: String,
 	pub threshold: f64,
 }
 
 impl DuplicateDetectionAction {
 	/// Create a new duplicate detection action
-	pub fn new(paths: SdPathBatch, algorithm: String, threshold: f64) -> Self {
+	pub fn new(paths: WingPathBatch, algorithm: String, threshold: f64) -> Self {
 		Self {
 			paths,
 			algorithm,
@@ -46,13 +46,13 @@ impl LibraryAction for DuplicateDetectionAction {
 	type Output = crate::infra::job::handle::JobReceipt;
 
 	fn from_input(i: Self::Input) -> Result<Self, String> {
-		let sd_paths = i
+		let wing_paths = i
 			.paths
 			.into_iter()
-			.map(|p| SdPath::local(p))
+			.map(|p| WingPath::local(p))
 			.collect::<Vec<_>>();
 		Ok(DuplicateDetectionAction {
-			paths: SdPathBatch { paths: sd_paths },
+			paths: WingPathBatch { paths: wing_paths },
 			algorithm: i.algorithm,
 			threshold: i.threshold,
 		})

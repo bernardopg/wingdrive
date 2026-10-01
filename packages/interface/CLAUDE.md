@@ -887,7 +887,7 @@ const contextMenu = useContextMenu({
       label: selectedFiles.length > 1 ? `Copy ${selectedFiles.length} items` : "Copy",
       onClick: async () => {
         await copyFiles.mutateAsync({
-          sources: { paths: selectedFiles.map(f => f.sd_path) },
+          sources: { paths: selectedFiles.map(f => f.wing_path) },
           destination: currentPath,
           overwrite: false,
           verify_checksum: false,
@@ -905,7 +905,7 @@ const contextMenu = useContextMenu({
       label: "Delete",
       onClick: async () => {
         await deleteFiles.mutateAsync({
-          targets: { paths: selectedFiles.map(f => f.sd_path) },
+          targets: { paths: selectedFiles.map(f => f.wing_path) },
           permanent: false,
           recursive: true
         });

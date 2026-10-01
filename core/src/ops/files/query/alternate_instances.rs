@@ -6,7 +6,7 @@
 use crate::infra::query::{QueryError, QueryResult};
 use crate::{
 	context::CoreContext,
-	domain::{addressing::SdPath, content_identity::ContentIdentity, file::File},
+	domain::{addressing::WingPath, content_identity::ContentIdentity, file::File},
 	infra::db::entities::{
 		content_identity, device, directory_paths, entry, location, sidecar, tag, user_metadata,
 		user_metadata_tag, video_media_data,
@@ -241,7 +241,7 @@ impl LibraryQuery for AlternateInstancesQuery {
 		let mut instances = Vec::new();
 		for entry_model in alternate_entries {
 			// Resolve full path for this entry
-			let sd_path = match self.resolve_entry_path(&entry_model, db.conn()).await {
+			let wing_path = match self.resolve_entry_path(&entry_model, db.conn()).await {
 				Ok(path) => path,
 				Err(e) => {
 					tracing::warn!("Failed to resolve path for entry {}: {}", entry_model.id, e);
@@ -250,7 +250,7 @@ impl LibraryQuery for AlternateInstancesQuery {
 			};
 
 			// Create File from entry model
-			let mut file = File::from_entity_model(entry_model.clone(), sd_path);
+			let mut file = File::from_entity_model(entry_model.clone(), wing_path);
 
 			// Add content identity, sidecars, and media data
 			file.content_identity = Some(content_identity_domain.clone());
@@ -279,12 +279,12 @@ impl LibraryQuery for AlternateInstancesQuery {
 }
 
 impl AlternateInstancesQuery {
-	/// Resolve the full absolute SdPath for an entry
+	/// Resolve the full absolute WingPath for an entry
 	async fn resolve_entry_path(
 		&self,
 		entry: &entry::Model,
 		db: &DatabaseConnection,
-	) -> QueryResult<SdPath> {
+	) -> QueryResult<WingPath> {
 		// Walk up the entry hierarchy to build the full path
 		let mut path_components = Vec::new();
 
@@ -349,7 +349,7 @@ impl AlternateInstancesQuery {
 			absolute_path.push(component);
 		}
 
-		Ok(SdPath::Physical {
+		Ok(WingPath::Physical {
 			device_slug: device_model.slug,
 			path: absolute_path.into(),
 		})

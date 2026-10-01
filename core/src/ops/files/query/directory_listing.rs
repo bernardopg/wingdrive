@@ -6,7 +6,7 @@
 use crate::infra::query::{QueryError, QueryResult};
 use crate::{
 	context::CoreContext,
-	domain::{addressing::SdPath, content_identity::ContentIdentity, file::File, tag::Tag},
+	domain::{addressing::WingPath, content_identity::ContentIdentity, file::File, tag::Tag},
 	infra::db::entities::{
 		content_identity, directory_paths, entry, sidecar, tag, user_metadata, user_metadata_tag,
 		video_media_data,
@@ -28,7 +28,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct DirectoryListingInput {
 	/// The directory path to list contents for
-	pub path: SdPath,
+	pub path: WingPath,
 	/// Optional limit on number of results (default: 1000)
 	pub limit: Option<u32>,
 	/// Whether to include hidden files (default: false)
@@ -75,7 +75,7 @@ pub struct DirectoryListingQuery {
 }
 
 impl DirectoryListingQuery {
-	pub fn new(path: SdPath) -> Self {
+	pub fn new(path: WingPath) -> Self {
 		Self {
 			input: DirectoryListingInput {
 				path,
@@ -89,7 +89,7 @@ impl DirectoryListingQuery {
 	}
 
 	pub fn with_options(
-		path: SdPath,
+		path: WingPath,
 		limit: Option<u32>,
 		include_hidden: Option<bool>,
 		sort_by: DirectorySortBy,
@@ -510,7 +510,7 @@ impl DirectoryListingQuery {
 			let video_width: Option<i32> = row.try_get("", "video_width").ok();
 			let video_height: Option<i32> = row.try_get("", "video_height").ok();
 
-			// Build SdPath for this entry (child of the parent path)
+			// Build WingPath for this entry (child of the parent path)
 			// IMPORTANT: Include extension in the path for files
 			let full_name = if let Some(ext) = &entry_extension {
 				format!("{}.{}", entry_name, ext)
@@ -518,27 +518,27 @@ impl DirectoryListingQuery {
 				entry_name.clone()
 			};
 
-			let entry_sd_path = match &self.input.path {
-				SdPath::Physical { device_slug, path } => SdPath::Physical {
+			let entry_wing_path = match &self.input.path {
+				WingPath::Physical { device_slug, path } => WingPath::Physical {
 					device_slug: device_slug.clone(),
 					path: path.join(&full_name).into(),
 				},
-				SdPath::Cloud {
+				WingPath::Cloud {
 					service,
 					identifier,
 					path,
-				} => SdPath::Cloud {
+				} => WingPath::Cloud {
 					service: *service,
 					identifier: identifier.clone(),
 					path: format!("{}/{}", path, full_name),
 				},
-				SdPath::Content { content_id } => {
+				WingPath::Content { content_id } => {
 					// This shouldn't happen since we error on Content paths earlier
-					SdPath::Content {
+					WingPath::Content {
 						content_id: *content_id,
 					}
 				}
-				SdPath::Sidecar { .. } => {
+				WingPath::Sidecar { .. } => {
 					// This shouldn't happen since we error on Sidecar paths earlier
 					return Err(QueryError::Internal(
 						"Sidecar paths not supported for directory listing".to_string(),
@@ -570,7 +570,7 @@ impl DirectoryListingQuery {
 			};
 
 			// Convert to File using from_entity_model
-			let mut file = File::from_entity_model(entity_model, entry_sd_path);
+			let mut file = File::from_entity_model(entity_model, entry_wing_path);
 			file.favorite = entry_uuid.is_some_and(|uuid| favorite_entry_ids.contains(&uuid));
 
 			// Add content identity if available
@@ -670,7 +670,7 @@ impl DirectoryListingQuery {
 
 		// Get the local path for cache lookup
 		let local_path = match &self.input.path {
-			SdPath::Physical { path, .. } => path.clone(),
+			WingPath::Physical { path, .. } => path.clone(),
 			_ => {
 				tracing::warn!(
 					"Ephemeral indexing only supported for physical paths: {:?}",
@@ -729,9 +729,9 @@ impl DirectoryListingQuery {
 
 							let entry_uuid = index_write.get_or_assign_uuid(&child_path);
 
-							let entry_sd_path = SdPath::Physical {
+							let entry_wing_path = WingPath::Physical {
 								device_slug: match &self.input.path {
-									SdPath::Physical { device_slug, .. } => device_slug.clone(),
+									WingPath::Physical { device_slug, .. } => device_slug.clone(),
 									_ => String::new(),
 								},
 								path: child_path.clone(),
@@ -740,7 +740,7 @@ impl DirectoryListingQuery {
 							let content_kind = index_write.get_content_kind(&child_path);
 
 							let mut file =
-								File::from_ephemeral(entry_uuid, &metadata, entry_sd_path);
+								File::from_ephemeral(entry_uuid, &metadata, entry_wing_path);
 							file.content_kind = content_kind;
 							files.push(file);
 						}
@@ -895,7 +895,7 @@ impl DirectoryListingQuery {
 		use crate::infra::db::entities::location;
 
 		match &self.input.path {
-			SdPath::Physical { device_slug, path } => {
+			WingPath::Physical { device_slug, path } => {
 				// Find all locations for this device
 				let path_str = path.to_string_lossy().to_string();
 
@@ -918,7 +918,7 @@ impl DirectoryListingQuery {
 				}
 				None
 			}
-			SdPath::Cloud { .. } => {
+			WingPath::Cloud { .. } => {
 				// Similar logic for cloud paths
 				// For now, assume cloud paths should check their location too
 				None
@@ -927,7 +927,7 @@ impl DirectoryListingQuery {
 		}
 	}
 
-	/// Find the parent directory entry for the given SdPath
+	/// Find the parent directory entry for the given WingPath
 	async fn find_parent_directory(&self, db: &DatabaseConnection) -> QueryResult<entry::Model> {
 		tracing::debug!(
 			" find_parent_directory called with path: {:?}",
@@ -935,7 +935,7 @@ impl DirectoryListingQuery {
 		);
 
 		match &self.input.path {
-			SdPath::Physical { device_slug, path } => {
+			WingPath::Physical { device_slug, path } => {
 				// For directory browsing, we need to find the directory entry
 				// by matching the path in the directory_paths table
 				let path_str = path.to_string_lossy().to_string();
@@ -976,7 +976,7 @@ impl DirectoryListingQuery {
 					}
 				}
 			}
-			SdPath::Cloud {
+			WingPath::Cloud {
 				service,
 				identifier,
 				path,
@@ -1022,13 +1022,13 @@ impl DirectoryListingQuery {
 					}
 				}
 			}
-			SdPath::Sidecar { .. } => {
+			WingPath::Sidecar { .. } => {
 				// Sidecar paths are not supported for directory browsing
 				Err(QueryError::Internal(
 					"Sidecar paths not supported for directory browsing".to_string(),
 				))
 			}
-			SdPath::Content { .. } => {
+			WingPath::Content { .. } => {
 				// Content-addressed paths are not supported for directory browsing
 				Err(QueryError::Internal(
 					"Content-addressed paths not supported for directory browsing".to_string(),
@@ -1060,11 +1060,11 @@ mod tests {
 			permissions: None,
 			is_hidden: false,
 		};
-		File::from_ephemeral(Uuid::new_v4(), &metadata, SdPath::local(path))
+		File::from_ephemeral(Uuid::new_v4(), &metadata, WingPath::local(path))
 	}
 
 	fn sorted_names(sort_by: DirectorySortBy, direction: Option<SortDirection>) -> Vec<String> {
-		let mut query = DirectoryListingQuery::new(SdPath::local("/tmp"));
+		let mut query = DirectoryListingQuery::new(WingPath::local("/tmp"));
 		query.input.sort_by = sort_by;
 		query.input.sort_direction = direction;
 		let mut files = vec![file("b.txt", 1), file("c.txt", 3), file("a.txt", 2)];

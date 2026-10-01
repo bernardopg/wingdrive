@@ -5,16 +5,16 @@
 
 use std::path::PathBuf;
 use wing_core::{
-	domain::SdPath,
+	domain::WingPath,
 	infra::event::{Event, ResourceMetadata},
 };
 
 /// Helper to create a test event with affected_paths
-fn create_test_batch_event(affected_paths: Vec<SdPath>, file_names: Vec<&str>) -> Event {
+fn create_test_batch_event(affected_paths: Vec<WingPath>, file_names: Vec<&str>) -> Event {
 	let metadata = Some(ResourceMetadata {
 		affected_paths,
 		alternate_ids: vec![],
-		no_merge_fields: vec!["sd_path".to_string()],
+		no_merge_fields: vec!["wing_path".to_string()],
 	});
 
 	// Create mock file resources
@@ -64,7 +64,7 @@ fn test_path_strip_logic() {
 
 #[test]
 fn test_exact_mode_direct_children_only() {
-	let scope = SdPath::Physical {
+	let scope = WingPath::Physical {
 		device_slug: "test-mac".to_string(),
 		path: PathBuf::from("/Desktop"),
 	};
@@ -72,15 +72,15 @@ fn test_exact_mode_direct_children_only() {
 	// Event with only direct children
 	let event = create_test_batch_event(
 		vec![
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop/file1.txt"),
 			},
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop/file2.txt"),
 			},
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop"), // The directory itself
 			},
@@ -97,7 +97,7 @@ fn test_exact_mode_direct_children_only() {
 
 #[test]
 fn test_exact_mode_subdirectory_only() {
-	let scope = SdPath::Physical {
+	let scope = WingPath::Physical {
 		device_slug: "test-mac".to_string(),
 		path: PathBuf::from("/Desktop"),
 	};
@@ -105,11 +105,11 @@ fn test_exact_mode_subdirectory_only() {
 	// Event with only subdirectory files
 	let event = create_test_batch_event(
 		vec![
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop/Subfolder/file1.txt"),
 			},
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop/Subfolder"), // Subdirectory
 			},
@@ -126,7 +126,7 @@ fn test_exact_mode_subdirectory_only() {
 
 #[test]
 fn test_exact_mode_mixed_batch() {
-	let scope = SdPath::Physical {
+	let scope = WingPath::Physical {
 		device_slug: "test-mac".to_string(),
 		path: PathBuf::from("/Desktop"),
 	};
@@ -134,19 +134,19 @@ fn test_exact_mode_mixed_batch() {
 	// Mixed batch: some direct, some subdirectory
 	let event = create_test_batch_event(
 		vec![
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop/direct.txt"), // Direct child
 			},
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop/Subfolder/nested.txt"), // Subdirectory
 			},
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop"), // Root
 			},
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop/Subfolder"), // Subdirectory
 			},
@@ -163,7 +163,7 @@ fn test_exact_mode_mixed_batch() {
 
 #[test]
 fn test_recursive_mode_all_descendants() {
-	let scope = SdPath::Physical {
+	let scope = WingPath::Physical {
 		device_slug: "test-mac".to_string(),
 		path: PathBuf::from("/Desktop"),
 	};
@@ -171,11 +171,11 @@ fn test_recursive_mode_all_descendants() {
 	// Event with deeply nested files
 	let event = create_test_batch_event(
 		vec![
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop/Subfolder/Nested/Deep/file.txt"),
 			},
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "test-mac".to_string(),
 				path: PathBuf::from("/Desktop/Subfolder/Nested/Deep"),
 			},
@@ -192,14 +192,14 @@ fn test_recursive_mode_all_descendants() {
 
 #[test]
 fn test_recursive_mode_direct_children() {
-	let scope = SdPath::Physical {
+	let scope = WingPath::Physical {
 		device_slug: "test-mac".to_string(),
 		path: PathBuf::from("/Desktop"),
 	};
 
 	// Event with direct children
 	let event = create_test_batch_event(
-		vec![SdPath::Physical {
+		vec![WingPath::Physical {
 			device_slug: "test-mac".to_string(),
 			path: PathBuf::from("/Desktop/file.txt"),
 		}],
@@ -215,14 +215,14 @@ fn test_recursive_mode_direct_children() {
 
 #[test]
 fn test_device_mismatch() {
-	let scope = SdPath::Physical {
+	let scope = WingPath::Physical {
 		device_slug: "alice-mac".to_string(),
 		path: PathBuf::from("/Desktop"),
 	};
 
 	// Event from different device
 	let event = create_test_batch_event(
-		vec![SdPath::Physical {
+		vec![WingPath::Physical {
 			device_slug: "bob-mac".to_string(),
 			path: PathBuf::from("/Desktop/file.txt"),
 		}],
@@ -239,10 +239,10 @@ fn test_device_mismatch() {
 #[test]
 fn test_content_id_matching() {
 	let content_id = uuid::Uuid::new_v4();
-	let scope = SdPath::Content { content_id };
+	let scope = WingPath::Content { content_id };
 
 	// Event with matching content ID
-	let event = create_test_batch_event(vec![SdPath::Content { content_id }], vec!["file"]);
+	let event = create_test_batch_event(vec![WingPath::Content { content_id }], vec!["file"]);
 
 	// Should match by content ID
 	assert!(
@@ -253,7 +253,7 @@ fn test_content_id_matching() {
 
 #[test]
 fn test_empty_affected_paths_global_resource() {
-	let scope = SdPath::Physical {
+	let scope = WingPath::Physical {
 		device_slug: "test-mac".to_string(),
 		path: PathBuf::from("/Desktop"),
 	};

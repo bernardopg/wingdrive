@@ -9,7 +9,7 @@ import type { Event } from "@sd/ts-client/src/generated/types";
 import { WingDriveClient } from "../WingDriveClient";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SDMobileCore } from "wing-mobile-core";
+import { WingMobileCore } from "wing-mobile-core";
 import { usePreferencesStore } from "../../stores/preferences";
 import { useSidebarStore } from "../../stores/sidebar";
 import { useReactQueryDevTools } from "@dev-plugins/react-query";
@@ -47,7 +47,7 @@ export function WingDriveProvider({
 
         // // Subscribe to core logs AFTER core is initialized
         // console.log("[WingDriveProvider] Subscribing to core logs...");
-        // unsubscribeLogs = SDMobileCore.addLogListener((log) => {
+        // unsubscribeLogs = WingMobileCore.addLogListener((log) => {
         // 	console.log("[WingDriveProvider] RAW LOG RECEIVED:", log);
         // 	try {
         // 		const logData = JSON.parse(log.body);

@@ -1,14 +1,14 @@
 //! Strategy router for selecting the optimal delete method
 
 use super::strategy::{DeleteStrategy, LocalDeleteStrategy, RemoteDeleteStrategy};
-use crate::{domain::addressing::SdPath, volume::VolumeManager};
+use crate::{domain::addressing::WingPath, volume::VolumeManager};
 
 pub struct DeleteStrategyRouter;
 
 impl DeleteStrategyRouter {
 	/// Select optimal delete strategy based on path locations
 	pub async fn select_strategy(
-		paths: &[SdPath],
+		paths: &[WingPath],
 		_volume_manager: Option<&VolumeManager>,
 	) -> Box<dyn DeleteStrategy> {
 		// Check if all paths are local
@@ -23,7 +23,7 @@ impl DeleteStrategyRouter {
 	}
 
 	/// Describe the strategy that will be used
-	pub async fn describe_strategy(paths: &[SdPath]) -> String {
+	pub async fn describe_strategy(paths: &[WingPath]) -> String {
 		let local_count = paths.iter().filter(|p| p.is_local()).count();
 		let remote_count = paths.len() - local_count;
 

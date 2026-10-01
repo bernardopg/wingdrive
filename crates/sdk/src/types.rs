@@ -155,7 +155,7 @@ impl Progress {
 }
 
 /// WingDrive path
-pub type SdPath = String;
+pub type WingPath = String;
 
 /// Image type marker
 pub struct Image;

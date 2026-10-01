@@ -244,7 +244,7 @@ export class SpacedriveClient extends SimpleEventEmitter {
 	async subscribeFiltered(
 		filter: {
 			resource_type?: string;
-			path_scope?: import("./generated/types").SdPath;
+			path_scope?: import("./generated/types").WingPath;
 			library_id?: string;
 			include_descendants?: boolean;
 			event_types?: string[];

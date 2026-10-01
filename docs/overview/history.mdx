@@ -172,10 +172,10 @@ Development speed increased 10x. Adding new file operations went from weeks to h
 
 **Problem**: Indexed files vs. ephemeral files created two incompatible worlds. Copying between them was impossible.
 
-**Solution**: **Universal `SdPath` addressing**
+**Solution**: **Universal `WingPath` addressing**
 
 ```rust
-pub enum SdPath {
+pub enum WingPath {
     Physical { device_id: Uuid, path: PathBuf },
     Cloud { volume_id: Uuid, path: String },
     Content { content_id: Uuid },

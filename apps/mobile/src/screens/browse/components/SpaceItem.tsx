@@ -1,7 +1,7 @@
 import React from "react";
 import { Image } from "react-native";
 import { useRouter } from "expo-router";
-import type { SpaceItem as SpaceItemType, ItemType, SdPath } from "@sd/ts-client";
+import type { SpaceItem as SpaceItemType, ItemType, WingPath } from "@sd/ts-client";
 import { SettingsLink } from "../../../components/primitive";
 import FolderIcon from "@sd/assets/icons/Folder.png";
 import { MagnifyingGlass, Clock, Heart, Folders, HardDrive, Tag } from "phosphor-react-native";
@@ -35,12 +35,12 @@ function isTagItem(t: ItemType): t is { Tag: { tag_id: string } } {
 	return typeof t === "object" && "Tag" in t;
 }
 
-function isPathItem(t: ItemType): t is { Path: { sd_path: SdPath } } {
+function isPathItem(t: ItemType): t is { Path: { wing_path: WingPath } } {
 	return typeof t === "object" && "Path" in t;
 }
 
 function isRawLocation(item: SpaceItemType | Record<string, unknown>): boolean {
-	return "name" in item && "sd_path" in item && !("item_type" in item);
+	return "name" in item && "wing_path" in item && !("item_type" in item);
 }
 
 // Get icon for item type
@@ -92,7 +92,7 @@ function getItemLabel(itemType: ItemType, resolvedFile?: any): string {
 	if (isTagItem(itemType)) return itemType.Tag.name || "Unnamed Tag";
 	if (isPathItem(itemType)) {
 		if (resolvedFile?.name) return resolvedFile.name;
-		const sdPath = itemType.Path.sd_path;
+		const sdPath = itemType.Path.wing_path;
 		if (typeof sdPath === "object" && "Physical" in sdPath) {
 			const parts = (sdPath as { Physical: { path: string } }).Physical.path.split("/");
 			return parts[parts.length - 1] || "Path";
@@ -103,7 +103,7 @@ function getItemLabel(itemType: ItemType, resolvedFile?: any): string {
 }
 
 // Get navigation params for item (mobile uses different format)
-function getItemNavigation(itemType: ItemType, itemSdPath?: SdPath): { pathname: string; params?: any } | null {
+function getItemNavigation(itemType: ItemType, itemWingPath?: WingPath): { pathname: string; params?: any } | null {
 	if (isOverviewItem(itemType)) {
 		return { pathname: "/" };
 	}
@@ -118,12 +118,12 @@ function getItemNavigation(itemType: ItemType, itemSdPath?: SdPath): { pathname:
 	}
 
 	if (isLocationItem(itemType)) {
-		if (itemSdPath) {
+		if (itemWingPath) {
 			return {
 				pathname: "/explorer",
 				params: {
 					type: "path",
-					path: JSON.stringify(itemSdPath),
+					path: JSON.stringify(itemWingPath),
 				},
 			};
 		}
@@ -151,7 +151,7 @@ function getItemNavigation(itemType: ItemType, itemSdPath?: SdPath): { pathname:
 			pathname: "/explorer",
 			params: {
 				type: "path",
-				path: JSON.stringify(itemType.Path.sd_path),
+				path: JSON.stringify(itemType.Path.wing_path),
 			},
 		};
 	}
@@ -168,7 +168,7 @@ export function SpaceItem({ item }: SpaceItemProps) {
 
 	// Handle raw location (legacy format)
 	if (isRawLocation(item)) {
-		const rawItem = item as { name?: string; sd_path?: SdPath };
+		const rawItem = item as { name?: string; wing_path?: WingPath };
 		const label = rawItem.name || "Unnamed Location";
 
 		return (
@@ -182,12 +182,12 @@ export function SpaceItem({ item }: SpaceItemProps) {
 				}
 				label={label}
 				onPress={() => {
-					if (rawItem.sd_path) {
+					if (rawItem.wing_path) {
 						router.push({
 							pathname: "/explorer",
 							params: {
 								type: "path",
-								path: JSON.stringify(rawItem.sd_path),
+								path: JSON.stringify(rawItem.wing_path),
 							},
 						});
 					}
@@ -200,7 +200,7 @@ export function SpaceItem({ item }: SpaceItemProps) {
 	const itemType = item.item_type;
 	const icon = getItemIcon(itemType);
 	const label = getItemLabel(itemType, item.resolved_file);
-	const navigation = getItemNavigation(itemType, item.sd_path);
+	const navigation = getItemNavigation(itemType, item.wing_path);
 
 	// Handle volume items specially
 	if (isVolumeItem(itemType)) {

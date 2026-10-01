@@ -16,7 +16,7 @@ import type {
 } from "../../components/TabManager/TabManagerContext";
 
 import type {
-	SdPath,
+	WingPath,
 	File,
 	Device,
 	ListLibraryDevicesInput,
@@ -81,7 +81,7 @@ export type ExplorerMode =
 	| { type: "filtered"; filters: ApiSearchFilters; label: string };
 
 export type NavigationTarget =
-	| { type: "path"; path: SdPath }
+	| { type: "path"; path: WingPath }
 	| {
 			type: "view";
 			view: string;
@@ -362,7 +362,7 @@ function urlToTarget(search: string): NavigationTarget | null {
 	const pathParam = params.get("path");
 	if (pathParam) {
 		try {
-			const path = JSON.parse(decodeURIComponent(pathParam)) as SdPath;
+			const path = JSON.parse(decodeURIComponent(pathParam)) as WingPath;
 			return { type: "path", path };
 		} catch {
 			return null;
@@ -405,14 +405,14 @@ function getPathKey(target: NavigationTarget | null): string {
 
 interface ExplorerContextValue {
 	currentTarget: NavigationTarget | null;
-	currentPath: SdPath | null;
+	currentPath: WingPath | null;
 	currentView: {
 		view: string;
 		id?: string;
 		params?: Record<string, string>;
 	} | null;
 
-	navigateToPath: (path: SdPath) => void;
+	navigateToPath: (path: WingPath) => void;
 	navigateToView: (
 		view: string,
 		id?: string,
@@ -433,8 +433,8 @@ interface ExplorerContextValue {
 	setViewSettings: (settings: Partial<ViewSettings>) => void;
 
 	// Column view state (per-tab, stored in TabManager)
-	columnStack: SdPath[];
-	setColumnStack: (columns: SdPath[]) => void;
+	columnStack: WingPath[];
+	setColumnStack: (columns: WingPath[]) => void;
 
 	// Scroll position (per-tab, stored in TabManager)
 	scrollPosition: { top: number; left: number };
@@ -518,19 +518,19 @@ export function ExplorerProvider({
 
 	// Parse columnStack from TabManager (stored as JSON strings)
 	// Must depend on activeTabId to recalculate when switching tabs
-	const columnStack = useMemo((): SdPath[] => {
+	const columnStack = useMemo((): WingPath[] => {
 		if (!tabState.columnStack || tabState.columnStack.length === 0) {
 			return [];
 		}
 		try {
-			return tabState.columnStack.map((s) => JSON.parse(s) as SdPath);
+			return tabState.columnStack.map((s) => JSON.parse(s) as WingPath);
 		} catch {
 			return [];
 		}
 	}, [activeTabId, tabState.columnStack]);
 
 	const setColumnStack = useCallback(
-		(columns: SdPath[]) => {
+		(columns: WingPath[]) => {
 			updateExplorerState(activeTabId, {
 				columnStack: columns.map((c) => JSON.stringify(c)),
 			});
@@ -634,7 +634,7 @@ export function ExplorerProvider({
 	}, [uiState.viewMode, uiState.sortBy, pathKey, sortPrefs]);
 
 	const navigateToPath = useCallback(
-		(path: SdPath) => {
+		(path: WingPath) => {
 			const target: NavigationTarget = { type: "path", path };
 			navDispatch({ type: "NAVIGATE", target });
 			routerNavigate(targetToUrl(target));

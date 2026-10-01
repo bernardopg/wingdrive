@@ -550,7 +550,7 @@ mod tests {
 
 		// Use home directory instead of temp - macOS FSEvents doesn't watch temp dirs
 		let home = std::env::var("HOME").unwrap();
-		let test_dir = PathBuf::from(home).join("SD_FS_WATCHER_TEST");
+		let test_dir = PathBuf::from(home).join("WING_FS_WATCHER_TEST");
 		if test_dir.exists() {
 			std::fs::remove_dir_all(&test_dir).unwrap();
 		}
@@ -678,7 +678,7 @@ mod tests {
 
 		// Use home directory instead of temp - macOS FSEvents doesn't watch temp dirs
 		let home = std::env::var("HOME").unwrap();
-		let test_dir = PathBuf::from(home).join("SD_FS_WATCHER_TEST_2");
+		let test_dir = PathBuf::from(home).join("WING_FS_WATCHER_TEST_2");
 		if test_dir.exists() {
 			std::fs::remove_dir_all(&test_dir).unwrap();
 		}

@@ -182,7 +182,7 @@ describe("useNormalizedQuery - Client-Side Filtering", () => {
 			{
 				id: "1",
 				name: "direct_child",
-				sd_path: {
+				wing_path: {
 					Physical: {
 						device_slug: "test-mac",
 						path: "/Desktop/direct_child.txt",
@@ -192,7 +192,7 @@ describe("useNormalizedQuery - Client-Side Filtering", () => {
 			{
 				id: "2",
 				name: "subdirectory_file",
-				sd_path: {
+				wing_path: {
 					Physical: {
 						device_slug: "test-mac",
 						path: "/Desktop/Subfolder/file.txt",
@@ -210,7 +210,7 @@ describe("useNormalizedQuery - Client-Side Filtering", () => {
 
 		// Filter logic (extracted from updateBatchResources)
 		const filtered = resources.filter((resource) => {
-			const filePath = resource.sd_path;
+			const filePath = resource.wing_path;
 			if (!filePath?.Physical) return false;
 
 			const pathStr = filePath.Physical.path;

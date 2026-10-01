@@ -245,7 +245,7 @@ Research systems like IPFS~\cite{ipfs} and production systems like Ceph~\cite{ce
 \subsection{Virtual Distributed File Systems in the Datacenter}
 The concept of a Virtual Distributed File System (VDFS) has been explored in the context of large-scale data analytics. Alluxio (formerly Tachyon)~\cite{alluxio_vdfs} introduced a memory-centric VDFS designed to sit between computation frameworks like Apache Spark and various storage systems (e.g., HDFS, S3). Alluxio's primary goal is to accelerate data analytics jobs by providing a consolidated, high-throughput data access layer, effectively decoupling computation from storage in a datacenter environment.
 
-While Spacedrive shares the VDFS terminology, its architectural goals and target domain are fundamentally different. Where Alluxio optimizes for performance in large, multi-tenant analytics clusters, Spacedrive is designed as a local-first, privacy-preserving data space for an individual's complete digital life. Spacedrive's innovations in universal addressing (\texttt{SdPath}), an entry-centric model with immediate metadata, and Library Sync are tailored to the challenges of personal data fragmentation across a heterogeneous collection of consumer devices, a problem space distinct from the performance and data-sharing challenges in large-scale analytics that Alluxio addresses.
+While Spacedrive shares the VDFS terminology, its architectural goals and target domain are fundamentally different. Where Alluxio optimizes for performance in large, multi-tenant analytics clusters, Spacedrive is designed as a local-first, privacy-preserving data space for an individual's complete digital life. Spacedrive's innovations in universal addressing (\texttt{WingPath}), an entry-centric model with immediate metadata, and Library Sync are tailored to the challenges of personal data fragmentation across a heterogeneous collection of consumer devices, a problem space distinct from the performance and data-sharing challenges in large-scale analytics that Alluxio addresses.
 
 \subsection{Personal Knowledge Management}
 Tools like Obsidian and Logseq excel at managing structured knowledge through markdown files but lack general file management capabilities. They demonstrate the value of local-first architectures~\cite{kleppmann_localfirst_2019} and portable data formats, principles that Spacedrive extends to all file types. Our work generalizes their approach from text-centric knowledge graphs to general-purpose file management.
@@ -303,7 +303,7 @@ The development of v1 provided invaluable insights that shaped the v2 architectu
 
 \subsection{Spacedrive v2 as an Architectural Solution}
 
-The v2 architecture directly addresses these challenges. The universal \textbf{SdPath} addressing system eliminates the dual file system problem entirely. A decoupled \textbf{Event Bus} provides reliable state propagation, and a simpler domain-separated \textbf{Library Sync} model ensures consistency without CRDT complexity by employing a leaderless, hybrid architecture. This model uses efficient state-based replication for device-authoritative data and a lightweight, HLC-ordered log for shared metadata, eliminating single points of failure. The new job system reduces boilerplate by over 90\%, while a consolidated networking layer powered by \textbf{Iroh} unifies all P2P communication, improving reliability and connection performance~\cite{iroh_networking}. The technology stack was also modernized, replacing abandoned libraries with community-trusted alternatives like \textbf{SeaORM}.
+The v2 architecture directly addresses these challenges. The universal \textbf{WingPath} addressing system eliminates the dual file system problem entirely. A decoupled \textbf{Event Bus} provides reliable state propagation, and a simpler domain-separated \textbf{Library Sync} model ensures consistency without CRDT complexity by employing a leaderless, hybrid architecture. This model uses efficient state-based replication for device-authoritative data and a lightweight, HLC-ordered log for shared metadata, eliminating single points of failure. The new job system reduces boilerplate by over 90\%, while a consolidated networking layer powered by \textbf{Iroh} unifies all P2P communication, improving reliability and connection performance~\cite{iroh_networking}. The technology stack was also modernized, replacing abandoned libraries with community-trusted alternatives like \textbf{SeaORM}.
 
 By learning from real-world challenges of the initial version, Spacedrive v2 delivers on the original promise with an architecture that is simpler, more fault-tolerant, and designed for the long term.
 
@@ -318,7 +318,7 @@ Version 1's monolithic architecture limited community contributions. Version 2's
 \begin{keytakeaways}
 \begin{itemize}[noitemsep, topsep=0pt]
 \item \textbf{Core Innovation}: Integrated virtual layer that makes distributed storage feel like a single filesystem through content-aware addressing
-\item \textbf{Key Components}: VDFS model with SdPath addressing • Entry-centric metadata • Content Identity deduplication • Transactional Actions • AI-native design
+\item \textbf{Key Components}: VDFS model with WingPath addressing • Entry-centric metadata • Content Identity deduplication • Transactional Actions • AI-native design
 \item \textbf{Design Philosophy}: Local-first for privacy, peer-to-peer for resilience, AI-assisted analysis---while preserving user control
 \end{itemize}
 \end{keytakeaways}
@@ -372,7 +372,7 @@ The fundamental unit within a Library is the \textbf{Entry}---a universal repres
 \textbf{Field} & \textbf{Purpose} \\
 \midrule
 Unique ID & Globally unique, immutable identifier \\
-Universal Path & Complete location addressing (SdPath) \\
+Universal Path & Complete location addressing (WingPath) \\
 Parent ID & Direct hierarchical relationship \\
 Metadata ID & Links to user-assigned metadata \\
 Content ID & Links to content identity (for deduplication) \\
@@ -436,12 +436,12 @@ Beyond basic labeling, tags function as rich metadata objects:
 
 This architecture treats tags as first-class metadata that capture relationships in personal data organization, scaling from basic keyword tagging to organizational knowledge management.
 
-\subsubsection{SdPath: Universal File Addressing}
-Central to the VDFS abstraction is \textbf{SdPath}---a universal addressing system that makes device boundaries transparent. While the primary form provides a direct physical coordinate (device identifier + local path), Spacedrive also supports a content-aware addressing mode that transforms SdPath from a simple pointer into a content resolver.
+\subsubsection{WingPath: Universal File Addressing}
+Central to the VDFS abstraction is \textbf{WingPath}---a universal addressing system that makes device boundaries transparent. While the primary form provides a direct physical coordinate (device identifier + local path), Spacedrive also supports a content-aware addressing mode that transforms WingPath from a simple pointer into a content resolver.
 
-\begin{lstlisting}[language=Rust, caption={SdPath supports both physical and content-aware addressing}]
+\begin{lstlisting}[language=Rust, caption={WingPath supports both physical and content-aware addressing}]
 #[derive(Clone, Debug)]
-pub enum SdPath {
+pub enum WingPath {
     // Physical addressing: device + path
     Physical {
         device_id: DeviceId,
@@ -463,7 +463,7 @@ pub enum SdPath {
 
 Content-aware addressing allows Spacedrive to automatically find the best available copy of a file across all devices. Instead of failing when a specific device is offline, the system automatically locates and uses alternative copies---turning device-specific file paths into content handles that continue to function.
 
-When an operation is initiated with a content-aware \texttt{SdPath}, Spacedrive performs an \textbf{optimal path resolution} query against the Library index:
+When an operation is initiated with a content-aware \texttt{WingPath}, Spacedrive performs an \textbf{optimal path resolution} query against the Library index:
 
 \begin{enumerate}[noitemsep, topsep=0pt]
     \item \textbf{Content Lookup}: Query the \texttt{Content Identity} table to find all instances of the file content across all devices
@@ -479,7 +479,7 @@ When an operation is initiated with a content-aware \texttt{SdPath}, Spacedrive 
     \item \textbf{Path Selection}: Select the lowest-cost valid path and proceed transparently
 \end{enumerate}
 
-This mechanism makes file operations more resilient. If a user requests a file from an offline laptop, Spacedrive can source the identical content from a NAS on the local network. This elevates \texttt{SdPath} from a simple address to an abstract, location-independent handle for content.
+This mechanism makes file operations more resilient. If a user requests a file from an offline laptop, Spacedrive can source the identical content from a NAS on the local network. This elevates \texttt{WingPath} from a simple address to an abstract, location-independent handle for content.
 
 \textbf{Practical Applications}
 
@@ -1052,7 +1052,7 @@ This architecture transforms operation planning from a slow, I/O-bound process i
 
 \paragraph{Content-Aware Path Resolution}
 
-For operations using \texttt{SdPath::Content} addressing, the simulation engine performs optimal path resolution through a cost function evaluation:
+For operations using \texttt{WingPath::Content} addressing, the simulation engine performs optimal path resolution through a cost function evaluation:
 
 \begin{enumerate}[noitemsep, topsep=0pt]
  \item \textbf{Content Lookup}: Query Content Identity table for all file instances across all devices
@@ -1214,7 +1214,7 @@ The detailed audit trail provides the foundation for reliable operation reversal
 
 \subsubsection{Remote Action Dispatch}
 
-A key benefit of combining the Action System with the \texttt{SdPath} universal addressing scheme is the ability to dispatch actions where the execution occurs transparently on a remote device. For example, a \texttt{FileCopyAction} can specify a source \texttt{SdPath} on Device A and a destination \texttt{SdPath} on Device B. When this action is committed, the Job System routes the work to the appropriate device. It creates a sender job on Device A and a corresponding receiver job on Device B, which coordinate the transfer over the secure P2P network. This architecture makes complex cross-device workflows trivial to express and execute, as the underlying network communication and state management are handled automatically by the core engine. All remote operations are still subject to the same validation, preview, and audit logging as local actions, ensuring a consistent security model across the entire VDFS.
+A key benefit of combining the Action System with the \texttt{WingPath} universal addressing scheme is the ability to dispatch actions where the execution occurs transparently on a remote device. For example, a \texttt{FileCopyAction} can specify a source \texttt{WingPath} on Device A and a destination \texttt{WingPath} on Device B. When this action is committed, the Job System routes the work to the appropriate device. It creates a sender job on Device A and a corresponding receiver job on Device B, which coordinate the transfer over the secure P2P network. This architecture makes complex cross-device workflows trivial to express and execute, as the underlying network communication and state management are handled automatically by the core engine. All remote operations are still subject to the same validation, preview, and audit logging as local actions, ensuring a consistent security model across the entire VDFS.
 
 \subsubsection{Handling File Ingestion and Uploads}
 \label{sec:ingestion-workflow}
@@ -1737,7 +1737,7 @@ For any given file, the VDFS determines its \textbf{Effective StorageClass} by t
 The Effective \texttt{StorageClass} informs the behavior of the entire VDFS:
 \begin{itemize}[noitemsep, topsep=0pt]
  \item \textbf{Action System}: The simulation engine uses this to generate warnings when there is a mismatch between logical and physical classes, preventing user frustration (Section~\ref{sec:action-system}).
- \item \textbf{SdPath Resolver}: When resolving a content-addressed path, the system prioritizes sources with a \texttt{Hot} Effective StorageClass to ensure optimal performance.
+ \item \textbf{WingPath Resolver}: When resolving a content-addressed path, the system prioritizes sources with a \texttt{Hot} Effective StorageClass to ensure optimal performance.
  \item \textbf{Data Guardian}: The AI can enforce redundancy policies based on the Effective StorageClass, such as requiring at least one \texttt{Hot} copy of critical files before allowing any to be moved to \texttt{Cold} storage.
 \end{itemize}
 
@@ -1794,7 +1794,7 @@ This platform-aware approach transforms the overwhelming technical complexity of
 
 Spacedrive's VDFS extends beyond local filesystems to natively integrate traditional protocols like FTP, SMB, and WebDAV, as well as modern cloud storage. Third-party cloud storage services (S3, Google Drive, Dropbox, etc.) are implemented as first-class \textbf{volumes} within the VDFS, distinct from device-local locations. This architectural decision reflects the fundamental difference between cloud services (which are API-accessed storage backends) and local filesystems.
 
-The system leverages OpenDAL to provide unified access to over 40 cloud providers. Each cloud service appears as a volume with its own dedicated \texttt{SdPath::Cloud} addressing variant, enabling the full power of the Spacedrive Indexing Engine—including adaptive hashing via ranged reads for efficient content identification—without downloading entire files. This is separate from the Spacedrive Cloud Core concept (Section~\ref{sec:native-cloud-service}), which refers to hosting Spacedrive itself as a managed service.
+The system leverages OpenDAL to provide unified access to over 40 cloud providers. Each cloud service appears as a volume with its own dedicated \texttt{WingPath::Cloud} addressing variant, enabling the full power of the Spacedrive Indexing Engine—including adaptive hashing via ranged reads for efficient content identification—without downloading entire files. This is separate from the Spacedrive Cloud Core concept (Section~\ref{sec:native-cloud-service}), which refers to hosting Spacedrive itself as a managed service.
 
 This cloud-as-volume architecture ensures:
 \begin{itemize}[noitemsep, topsep=0pt]
@@ -1816,20 +1816,20 @@ This design offers profound architectural advantages:
 \begin{itemize}[noitemsep, topsep=0pt]
     \item \textbf{Zero Custom APIs}: All interactions with the Cloud Core, from file transfers to metadata sync, use the exact same Iroh-powered protocols as any other peer-to-peer connection. There is no separate "cloud API".
     \item \textbf{Native Device Semantics}: The Cloud Core is cryptographically a standard device. It must be paired and trusted just like a user's phone or laptop, inheriting the entire security and trust model of the core architecture.
-    \item \textbf{Location Abstraction}: Cloud storage is not a special case. It is simply a Location (e.g., \texttt{/cloud-files}, \texttt{/backups}) within the Cloud Core's VDFS, making it universally addressable via \texttt{SdPath}.
+    \item \textbf{Location Abstraction}: Cloud storage is not a special case. It is simply a Location (e.g., \texttt{/cloud-files}, \texttt{/backups}) within the Cloud Core's VDFS, making it universally addressable via \texttt{WingPath}.
 \end{itemize}
 
 \subsection{Integration and User Experience}
 From the user's perspective, integrating cloud storage is indistinguishable from adding a new physical device. The connection flow leverages the same native pairing process: a user's local Spacedrive client initiates pairing, and the newly provisioned Cloud Core joins the session using the provided code.
 
-Once paired, the Cloud Core appears in the user's device list alongside their other machines. Operations that span local and cloud storage become trivial. For example, copying a local file to the cloud is a standard \texttt{FileCopyAction} where the destination \texttt{SdPath} simply references the Cloud Core's device ID:
+Once paired, the Cloud Core appears in the user's device list alongside their other machines. Operations that span local and cloud storage become trivial. For example, copying a local file to the cloud is a standard \texttt{FileCopyAction} where the destination \texttt{WingPath} simply references the Cloud Core's device ID:
 
 \begin{lstlisting}[language=Rust, caption={A cross-device copy to the cloud uses the same native operation}]
 // Copy a local document to the "Cloud Files" location
 // on the user's provisioned cloud device.
 copy_files(
-    vec![SdPath::local("~/Documents/report.pdf")],
-    SdPath::new(cloud_device_id, "/data/cloud-files/")
+    vec![WingPath::local("~/Documents/report.pdf")],
+    WingPath::new(cloud_device_id, "/data/cloud-files/")
 ).await?;
 \end{lstlisting}
 
@@ -2904,7 +2904,7 @@ This work transforms personal file management through five innovations: AI-nativ
 The impact is practical. Users manage millions of files across dozens of devices through a single interface, eliminating storage waste while maintaining sub-second response times. Data remains portable, privacy is preserved through local-first design, and AI enhancement comes without sacrificing user control. Our Rust implementation validates these concepts at scale.
 
 \subsection{System Integration}
-These innovations work together to create powerful combined capabilities. The Library abstraction makes backup and migration trivial (copy a directory), while SdPath enables seamless operations across that distributed storage. Content addressing works transparently with the sync system to maintain deduplication relationships even as files move between devices. The Temporal-Semantic Search architecture leverages both the content addressing and metadata systems to provide semantic discovery at traditional keyword search speeds.
+These innovations work together to create powerful combined capabilities. The Library abstraction makes backup and migration trivial (copy a directory), while WingPath enables seamless operations across that distributed storage. Content addressing works transparently with the sync system to maintain deduplication relationships even as files move between devices. The Temporal-Semantic Search architecture leverages both the content addressing and metadata systems to provide semantic discovery at traditional keyword search speeds.
 
 \subsection{Validation in Production}
 Spacedrive's architecture has been validated through production implementation in Rust, demonstrating that these concepts work reliably in practice. The system handles millions of files across multiple devices while maintaining sub-second response times for user operations. The extensive test framework, including multi-process distributed testing, ensures that the complex interactions between networking, synchronization, and file operations remain stable across diverse deployment scenarios.
@@ -2955,7 +2955,7 @@ The authors acknowledge the use of generative AI tools for assistance in draftin
 
 \textbf{Temporal-Semantic Search}: Spacedrive's two-stage hybrid search architecture combining temporal-first filtering with vector-enhanced semantic discovery.
 
-\textbf{SdPath}: Spacedrive's universal path abstraction that transparently addresses files across devices, volumes, and cloud storage.
+\textbf{WingPath}: Spacedrive's universal path abstraction that transparently addresses files across devices, volumes, and cloud storage.
 
 \textbf{VDFS (Virtual Distributed File System)}: A unified index of all user data across devices while keeping files in their original locations.
 
@@ -2967,7 +2967,7 @@ The authors acknowledge the use of generative AI tools for assistance in draftin
 
 \textbf{FTS (Full-Text Search)}: Traditional keyword-based search capability integrated into Spacedrive's Temporal-Semantic Search system.
 
-\textbf{Phantom Path}: A special SdPath variant representing files that may not currently exist but are referenced in the Library index.
+\textbf{Phantom Path}: A special WingPath variant representing files that may not currently exist but are referenced in the Library index.
 
 \textbf{Virtual Sidecar System}: A system for managing derivative data (e.g., thumbnails, OCR text, transcripts) associated with a file Entry. These sidecar files are stored within the Spacedrive Library and linked to the original file via the VDFS index, ensuring the original file is never modified.
 

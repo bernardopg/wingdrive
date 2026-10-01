@@ -141,7 +141,7 @@ The existing `IndexerJobConfig` works as-is - just pass `IndexMode::Stale(...)`:
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct IndexerJobConfig {
     pub location_id: Option<Uuid>,
-    pub path: SdPath,
+    pub path: WingPath,
     pub mode: IndexMode, // Can now be IndexMode::Stale(Box<IndexMode>)
     pub scope: IndexScope,
     pub persistence: IndexPersistence,
@@ -357,7 +357,7 @@ impl StaleDetectionService {
         // Spawn IndexerJob with Stale mode (wraps location's mode)
         let config = IndexerJobConfig {
             location_id: Some(location_id),
-            path: SdPath::from_path(&location_path)?,
+            path: WingPath::from_path(&location_path)?,
             mode: IndexMode::Stale(Box::new(location.index_mode)), // Respects location setting!
             scope: IndexScope::Recursive,
             persistence: IndexPersistence::Persistent,

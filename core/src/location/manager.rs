@@ -2,7 +2,7 @@
 
 use super::{IndexMode, LocationError, LocationResult, ManagedLocation};
 use crate::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::{
 		db::entities::{self, entry::EntryKind},
 		event::{Event, EventBus},
@@ -38,7 +38,7 @@ impl LocationManager {
 	pub async fn add_location(
 		&self,
 		library: Arc<Library>,
-		sd_path: crate::domain::addressing::SdPath,
+		wing_path: crate::domain::addressing::WingPath,
 		name: Option<String>,
 		device_id: i32,
 		index_mode: IndexMode,
@@ -49,8 +49,8 @@ impl LocationManager {
 		// Canonicalize local physical paths to absolute form before storing.
 		// Relative paths break the watcher, volume resolution, and indexer.
 		// Only for local device — remote paths can't be resolved locally.
-		let sd_path = if sd_path.is_local() {
-			if let crate::domain::addressing::SdPath::Physical { device_slug, path } = sd_path {
+		let wing_path = if wing_path.is_local() {
+			if let crate::domain::addressing::WingPath::Physical { device_slug, path } = wing_path {
 				let canonical = tokio::fs::canonicalize(&path).await.map_err(|e| {
 					LocationError::InvalidPath(format!(
 						"Failed to resolve path {}: {}",
@@ -59,25 +59,25 @@ impl LocationManager {
 					))
 				})?;
 				let canonical = crate::common::utils::strip_windows_extended_prefix(canonical);
-				crate::domain::addressing::SdPath::Physical {
+				crate::domain::addressing::WingPath::Physical {
 					device_slug,
 					path: canonical,
 				}
 			} else {
-				sd_path
+				wing_path
 			}
 		} else {
-			sd_path
+			wing_path
 		};
 
-		info!("Adding location: {}", sd_path);
+		info!("Adding location: {}", wing_path);
 
 		// Validate the path based on type
-		match &sd_path {
-			crate::domain::addressing::SdPath::Physical { path, .. } => {
+		match &wing_path {
+			crate::domain::addressing::WingPath::Physical { path, .. } => {
 				self.validate_physical_path(path).await?;
 			}
-			crate::domain::addressing::SdPath::Cloud {
+			crate::domain::addressing::WingPath::Cloud {
 				service,
 				identifier,
 				..
@@ -85,12 +85,12 @@ impl LocationManager {
 				self.validate_cloud_path(&library, *service, identifier)
 					.await?;
 			}
-			crate::domain::addressing::SdPath::Content { .. } => {
+			crate::domain::addressing::WingPath::Content { .. } => {
 				return Err(LocationError::InvalidPath(
 					"Content paths cannot be used as locations".to_string(),
 				));
 			}
-			crate::domain::addressing::SdPath::Sidecar { .. } => {
+			crate::domain::addressing::WingPath::Sidecar { .. } => {
 				return Err(LocationError::InvalidPath(
 					"Sidecar paths cannot be used as locations".to_string(),
 				));
@@ -100,9 +100,9 @@ impl LocationManager {
 		// Begin transaction
 		let txn = library.db().conn().begin().await?;
 
-		// Get directory name, path string, and inode from SdPath
-		let (directory_name, path_str, inode) = match &sd_path {
-			crate::domain::addressing::SdPath::Physical { path, .. } => {
+		// Get directory name, path string, and inode from WingPath
+		let (directory_name, path_str, inode) = match &wing_path {
+			crate::domain::addressing::WingPath::Physical { path, .. } => {
 				let name = path
 					.file_name()
 					.and_then(|n| n.to_str())
@@ -141,7 +141,7 @@ impl LocationManager {
 
 				(name, path_str, inode)
 			}
-			crate::domain::addressing::SdPath::Cloud {
+			crate::domain::addressing::WingPath::Cloud {
 				service,
 				identifier,
 				path,
@@ -161,7 +161,7 @@ impl LocationManager {
 		// Resolve volume for this location path BEFORE creating the entry
 		// Volume detection is required - all locations must have a volume
 		let volume_id = match volume_manager
-			.resolve_volume_for_sdpath(&sd_path, &library)
+			.resolve_volume_for_sdpath(&wing_path, &library)
 			.await
 		{
 			Ok(Some(volume)) => {
@@ -177,7 +177,7 @@ impl LocationManager {
 			Ok(None) => {
 				return Err(LocationError::Other(format!(
 					"No volume found for location path: {}. Volume detection is required for all locations.",
-					sd_path
+					wing_path
 				)));
 			}
 			Err(e) => {
@@ -284,9 +284,9 @@ impl LocationManager {
 
 		// Create managed location with path
 		// For cloud locations, use the actual cloud path string for proper watcher filtering
-		let location_path = match &sd_path {
-			crate::domain::addressing::SdPath::Physical { path, .. } => path.clone(),
-			crate::domain::addressing::SdPath::Cloud { .. } => PathBuf::from(&path_str),
+		let location_path = match &wing_path {
+			crate::domain::addressing::WingPath::Physical { path, .. } => path.clone(),
+			crate::domain::addressing::WingPath::Cloud { .. } => PathBuf::from(&path_str),
 			_ => unreachable!(),
 		};
 
@@ -336,7 +336,7 @@ impl LocationManager {
 				.start_indexing_with_context_and_path(
 					library,
 					&managed_location,
-					sd_path.clone(),
+					wing_path.clone(),
 					action_context,
 				)
 				.await
@@ -394,30 +394,30 @@ impl LocationManager {
 		location: &ManagedLocation,
 		action_context: Option<crate::infra::action::context::ActionContext>,
 	) -> LocationResult<String> {
-		// Construct SdPath from location
+		// Construct WingPath from location
 		let device_slug = self.get_device_slug(&library, location.device_id).await?;
-		let location_sd_path = SdPath::new(device_slug, location.path.clone());
+		let location_wing_path = WingPath::new(device_slug, location.path.clone());
 
 		self.start_indexing_with_context_and_path(
 			library,
 			location,
-			location_sd_path,
+			location_wing_path,
 			action_context,
 		)
 		.await
 	}
 
-	/// Start indexing for a location with action context and explicit SdPath
+	/// Start indexing for a location with action context and explicit WingPath
 	pub async fn start_indexing_with_context_and_path(
 		&self,
 		library: Arc<Library>,
 		location: &ManagedLocation,
-		location_sd_path: SdPath,
+		location_wing_path: WingPath,
 		action_context: Option<crate::infra::action::context::ActionContext>,
 	) -> LocationResult<String> {
 		info!(
 			"Starting indexing for location '{}' at {} in mode {:?}",
-			location.name, location_sd_path, location.index_mode
+			location.name, location_wing_path, location.index_mode
 		);
 
 		// Update scan state to "scanning"
@@ -427,7 +427,7 @@ impl LocationManager {
 		// Create indexer job using new configuration pattern
 		let config = IndexerJobConfig::new(
 			location.id,
-			location_sd_path.clone(),
+			location_wing_path.clone(),
 			location.index_mode.into(),
 		);
 		let indexer_job = IndexerJob::new(config);
@@ -445,7 +445,7 @@ impl LocationManager {
 
 		info!(
 			"Started indexing job {} for location '{}' at {}",
-			job_id, location.name, location_sd_path
+			job_id, location.name, location_wing_path
 		);
 
 		// The job system will handle:

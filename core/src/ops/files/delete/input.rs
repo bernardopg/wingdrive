@@ -1,7 +1,7 @@
 //! Input types for file deletion operations
 
 use super::action::FileDeleteAction;
-use crate::domain::SdPathBatch;
+use crate::domain::WingPathBatch;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
@@ -9,7 +9,7 @@ use specta::Type;
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct FileDeleteInput {
 	/// Files or directories to delete
-	pub targets: SdPathBatch,
+	pub targets: WingPathBatch,
 
 	/// Whether to permanently delete (true) or move to trash (false)
 	pub permanent: bool,
@@ -20,7 +20,7 @@ pub struct FileDeleteInput {
 
 impl FileDeleteInput {
 	/// Create a new file deletion input
-	pub fn new(targets: SdPathBatch) -> Self {
+	pub fn new(targets: WingPathBatch) -> Self {
 		Self {
 			targets,
 			permanent: false,

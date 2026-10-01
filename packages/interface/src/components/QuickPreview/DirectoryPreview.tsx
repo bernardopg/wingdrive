@@ -17,14 +17,14 @@ export function DirectoryPreview({ file }: DirectoryPreviewProps) {
 	const directoryQuery = useNormalizedQuery({
 		query: "files.directory_listing",
 		input: {
-			path: file.sd_path,
+			path: file.wing_path,
 			limit: null,
 			include_hidden: showHiddenFiles,
 			sort_by: "modified" as any,
 			folders_first: true,
 		},
 		resourceType: "file",
-		pathScope: file.sd_path,
+		pathScope: file.wing_path,
 		enabled: true,
 	});
 

@@ -174,12 +174,12 @@ export function DevicePanel({onLocationSelect}: DevicePanelProps = {}) {
 	// Group locations by device slug
 	const locationsByDeviceSlug = locations.reduce(
 		(acc, location) => {
-			// Extract device_slug from sd_path
+			// Extract device_slug from wing_path
 			if (
-				typeof location.sd_path === 'object' &&
-				'Physical' in location.sd_path
+				typeof location.wing_path === 'object' &&
+				'Physical' in location.wing_path
 			) {
-				const deviceSlug = location.sd_path.Physical.device_slug;
+				const deviceSlug = location.wing_path.Physical.device_slug;
 				if (!acc[deviceSlug]) {
 					acc[deviceSlug] = [];
 				}

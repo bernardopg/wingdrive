@@ -4,7 +4,7 @@
 //! This metadata is stored in the job during the preparation phase and can be
 //! queried separately from progress events.
 
-use crate::domain::addressing::SdPath;
+use crate::domain::addressing::WingPath;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
@@ -35,9 +35,9 @@ impl Default for CopyFileStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct CopyFileEntry {
 	/// Source path
-	pub source_path: SdPath,
+	pub source_path: WingPath,
 	/// Destination path
-	pub dest_path: SdPath,
+	pub dest_path: WingPath,
 	/// Total size in bytes (for directories, this is the recursive total)
 	pub size_bytes: u64,
 	/// Whether this entry is a directory
@@ -110,7 +110,7 @@ impl CopyJobMetadata {
 	}
 
 	/// Update status of a file by source path
-	pub fn update_status(&mut self, source_path: &SdPath, status: CopyFileStatus) {
+	pub fn update_status(&mut self, source_path: &WingPath, status: CopyFileStatus) {
 		if let Some(entry) = self
 			.files
 			.iter_mut()
@@ -121,7 +121,7 @@ impl CopyJobMetadata {
 	}
 
 	/// Set error for a file by source path
-	pub fn set_error(&mut self, source_path: &SdPath, error: String) {
+	pub fn set_error(&mut self, source_path: &WingPath, error: String) {
 		if let Some(entry) = self
 			.files
 			.iter_mut()

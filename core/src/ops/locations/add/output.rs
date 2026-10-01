@@ -1,6 +1,6 @@
 //! Location add operation output types
 
-use crate::{domain::addressing::SdPath, infra::action::output::ActionOutputTrait};
+use crate::{domain::addressing::WingPath, infra::action::output::ActionOutputTrait};
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -10,13 +10,13 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct LocationAddOutput {
 	pub location_id: Uuid,
-	pub path: SdPath,
+	pub path: WingPath,
 	pub name: Option<String>,
 	pub job_id: Option<Uuid>,
 }
 
 impl LocationAddOutput {
-	pub fn new(location_id: Uuid, path: SdPath, name: Option<String>) -> Self {
+	pub fn new(location_id: Uuid, path: WingPath, name: Option<String>) -> Self {
 		Self {
 			location_id,
 			path,

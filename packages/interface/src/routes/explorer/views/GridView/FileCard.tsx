@@ -53,8 +53,8 @@ export const FileCard = memo(
 
 		// Set up file opening for non-directory files
 		const physicalPath =
-			(file.kind === "File" || file.kind === "Symlink") && "Physical" in file.sd_path
-				? [(file.sd_path as any).Physical.path]
+			(file.kind === "File" || file.kind === "Symlink") && "Physical" in file.wing_path
+				? [(file.wing_path as any).Physical.path]
 				: [];
 		const { openWithDefault } = useOpenWith(physicalPath);
 
@@ -65,21 +65,21 @@ export const FileCard = memo(
 		};
 
 		const handleDoubleClick = async () => {
-			// Virtual files (locations, volumes, devices) always navigate to their sd_path
-			if (isVirtualFile(file) && file.sd_path) {
-				navigateToPath(file.sd_path);
+			// Virtual files (locations, volumes, devices) always navigate to their wing_path
+			if (isVirtualFile(file) && file.wing_path) {
+				navigateToPath(file.wing_path);
 				return;
 			}
 
 			// Regular directories navigate normally
 			if (file.kind === "Directory") {
-				navigateToPath(file.sd_path);
+				navigateToPath(file.wing_path);
 				return;
 			}
 
 			// Open regular files with default application
-			if ((file.kind === "File" || file.kind === "Symlink") && "Physical" in file.sd_path) {
-				const physicalPath = (file.sd_path as any).Physical.path;
+			if ((file.kind === "File" || file.kind === "Symlink") && "Physical" in file.wing_path) {
+				const physicalPath = (file.wing_path as any).Physical.path;
 				await openWithDefault(physicalPath);
 			}
 		};
@@ -115,7 +115,7 @@ export const FileCard = memo(
 				action: "move-into",
 				targetType: "folder",
 				targetId: file.id,
-				targetPath: file.sd_path,
+				targetPath: file.wing_path,
 			},
 		});
 

@@ -34,7 +34,7 @@ This will:
 cat "$HOME/WingDrive/Libraries"/*.sdlibrary/library.json | grep '"id"'
 
 # Run with env vars
-export SD_LIBRARY_ID="your-library-uuid-here"
+export WING_LIBRARY_ID="your-library-uuid-here"
 cargo run --release
 ```
 
@@ -77,7 +77,7 @@ Phase 2 improvements:
 ### "No media files found"
 - The query looks for images/videos in path `/`
 - Your media might be in a specific location
-- Edit `SD_INITIAL_PATH` to point to your photos directory
+- Edit `WING_INITIAL_PATH` to point to your photos directory
 
 ### Window doesn't appear
 - GPUI needs Metal (macOS) / Vulkan (Linux) / DirectX (Windows)
@@ -86,7 +86,7 @@ Phase 2 improvements:
 
 ### Images show "✗" (failed to load)
 - HTTP server might not be running on port 54321
-- Check `SD_HTTP_URL` environment variable
+- Check `WING_HTTP_URL` environment variable
 - Thumbnails might not be generated yet (run WingDrive's indexer)
 
 ## Architecture Diagram
@@ -97,7 +97,7 @@ Your Terminal
     └─> ./run.sh
             │
             ├─ Finds library ID from filesystem
-            ├─ Sets env vars (SD_LIBRARY_ID, SD_SOCKET_ADDR, SD_HTTP_URL)
+            ├─ Sets env vars (WING_LIBRARY_ID, WING_SOCKET_ADDR, WING_HTTP_URL)
             └─ Runs: cargo run --release
                     │
                     └─> GPUI App Window

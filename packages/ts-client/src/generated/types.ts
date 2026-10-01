@@ -304,11 +304,11 @@ export type CopyFileEntry = {
 /**
  * Source path
  */
-source_path: SdPath; 
+source_path: WingPath; 
 /**
  * Destination path
  */
-dest_path: SdPath; 
+dest_path: WingPath; 
 /**
  * Total size in bytes (for directories, this is the recursive total)
  */
@@ -461,7 +461,7 @@ export type CreateFolderInput = {
 /**
  * Parent directory where the folder will be created
  */
-parent: SdPath; 
+parent: WingPath; 
 /**
  * Name for the new folder
  */
@@ -469,7 +469,7 @@ name: string;
 /**
  * Optional items to move into the new folder after creation
  */
-items?: SdPath[] };
+items?: WingPath[] };
 
 /**
  * Output from creating a folder
@@ -478,7 +478,7 @@ export type CreateFolderOutput = {
 /**
  * Path to the created folder
  */
-folder_path: SdPath; 
+folder_path: WingPath; 
 /**
  * Job receipt if items were moved into the folder
  */
@@ -792,7 +792,7 @@ export type DirectoryListingInput = {
 /**
  * The directory path to list contents for
  */
-path: SdPath; 
+path: WingPath; 
 /**
  * Optional limit on number of results (default: 1000)
  */
@@ -1231,7 +1231,7 @@ id: string;
 /**
  * The universal path to the file in WingDrive's VDFS
  */
-sd_path: SdPath; 
+wing_path: WingPath; 
 /**
  * The file kind (file, directory, symlink)
  */
@@ -1255,7 +1255,7 @@ content_identity: ContentIdentity | null;
 /**
  * A list of other paths that share the same content identity
  */
-alternate_paths: SdPath[]; 
+alternate_paths: WingPath[]; 
 /**
  * The semantic tags associated with this file
  */
@@ -1308,11 +1308,11 @@ export type FileCopyInput = {
 /**
  * Source files or directories to copy (domain addressing)
  */
-sources: SdPathBatch; 
+sources: WingPathBatch; 
 /**
  * Destination path (domain addressing)
  */
-destination: SdPath; 
+destination: WingPath; 
 /**
  * Whether to overwrite existing files
  */
@@ -1345,7 +1345,7 @@ export type FileDeleteInput = {
 /**
  * Files or directories to delete
  */
-targets: SdPathBatch; 
+targets: WingPathBatch; 
 /**
  * Whether to permanently delete (true) or move to trash (false)
  */
@@ -1367,7 +1367,7 @@ export type FileRenameInput = {
 /**
  * The file or directory to rename
  */
-target: SdPath; 
+target: WingPath; 
 /**
  * The new name (filename only, no path separators)
  */
@@ -1576,7 +1576,7 @@ phase: string;
 /**
  * Current path being processed (if applicable)
  */
-current_path: SdPath | null; 
+current_path: WingPath | null; 
 /**
  * Human-readable message describing current activity
  */
@@ -2115,7 +2115,7 @@ export type ItemType =
 /**
  * Any arbitrary path (dragged from explorer)
  */
-{ Path: { sd_path: SdPath } } | 
+{ Path: { wing_path: WingPath } } | 
 /**
  * All archive data sources screen
  */
@@ -2793,7 +2793,7 @@ library_id: string;
 /**
  * Root path of this location (includes device!)
  */
-sd_path: SdPath; 
+wing_path: WingPath; 
 /**
  * Human-friendly name
  */
@@ -2831,12 +2831,12 @@ ignore_patterns: string[];
  */
 job_policies?: JobPolicies };
 
-export type LocationAddInput = { path: SdPath; name: string | null; mode: IndexMode; job_policies: JsonValue | null };
+export type LocationAddInput = { path: WingPath; name: string | null; mode: IndexMode; job_policies: JsonValue | null };
 
 /**
  * Output from location add action dispatch
  */
-export type LocationAddOutput = { location_id: string; path: SdPath; name: string | null; job_id: string | null };
+export type LocationAddOutput = { location_id: string; path: WingPath; name: string | null; job_id: string | null };
 
 /**
  * Input for exporting a location
@@ -2972,7 +2972,7 @@ export type MediaListingInput = {
 /**
  * The directory path to list media for
  */
-path: SdPath; 
+path: WingPath; 
 /**
  * Whether to include media from descendant directories (default: false)
  */
@@ -3494,7 +3494,7 @@ alternate_ids: string[];
 /**
  * Paths affected by this resource event (for path-scoped filtering)
  */
-affected_paths?: SdPath[] };
+affected_paths?: WingPath[] };
 
 /**
  * Risk level for adding a path as a location
@@ -3551,7 +3551,7 @@ export type ScoreBreakdown = { temporal_score: number; semantic_score: number | 
  * A path within the WingDrive Virtual Distributed File System
  * 
  * This is the core abstraction that enables cross-device operations.
- * An SdPath can represent:
+ * An WingPath can represent:
  * - A physical file at a specific path on a specific device
  * - A content-addressed file that can be sourced from any device
  * - A sidecar (derivative data) attached to content
@@ -3559,7 +3559,7 @@ export type ScoreBreakdown = { temporal_score: number; semantic_score: number | 
  * This enum-based approach enables resilient file operations by allowing
  * content-based paths to be resolved to optimal physical locations at runtime.
  */
-export type SdPath = 
+export type WingPath = 
 /**
  * A direct pointer to a file at a specific path on a specific device
  */
@@ -3619,9 +3619,9 @@ variant: SidecarVariant;
 format: SidecarFormat } };
 
 /**
- * A batch of SdPaths, useful for operations on multiple files
+ * A batch of WingPaths, useful for operations on multiple files
  */
-export type SdPathBatch = { paths: SdPath[] };
+export type WingPathBatch = { paths: WingPath[] };
 
 /**
  * Search facets for filtering UI
@@ -3690,7 +3690,7 @@ export type SearchScope =
 /**
  * Restrict search to a specific directory path and all its descendants
  */
-{ Path: { path: SdPath } };
+{ Path: { path: WingPath } };
 
 export type SearchTagsInput = { 
 /**
@@ -4010,7 +4010,7 @@ export type SpaceUpdateOutput = { space: Space };
  */
 export type SpacebotConfigOutput = { enabled: boolean; base_url: string; auth_token: string | null; default_agent_id: string; default_sender_name: string };
 
-export type SpacedropSendInput = { device_id: string; paths: SdPath[]; sender: string | null };
+export type SpacedropSendInput = { device_id: string; paths: WingPath[]; sender: string | null };
 
 export type SpacedropSendOutput = { job_id: string | null; session_id: string | null };
 
@@ -4044,7 +4044,7 @@ reprocess: boolean };
  */
 export type StateTransition = { from: DeviceSyncState; to: DeviceSyncState; timestamp: string; reason: string | null };
 
-export type SuggestedLocation = { name: string; path: string; sd_path: SdPath };
+export type SuggestedLocation = { name: string; path: string; wing_path: WingPath };
 
 export type SuggestedLocationsOutput = { locations: SuggestedLocation[] };
 
@@ -4643,7 +4643,7 @@ message: string };
 /**
  * Input for location path validation
  */
-export type ValidateLocationPathInput = { path: SdPath };
+export type ValidateLocationPathInput = { path: WingPath };
 
 /**
  * Output from location path validation
@@ -4689,7 +4689,7 @@ export type VideoMediaData = { uuid: string; width: number; height: number; blur
  */
 export type Volume = { 
 /**
- * Unique identifier (used in SdPath addressing)
+ * Unique identifier (used in WingPath addressing)
  */
 id: string; 
 /**

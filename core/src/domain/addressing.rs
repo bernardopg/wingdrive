@@ -15,7 +15,7 @@ use uuid::Uuid;
 /// A path within the WingDrive Virtual Distributed File System
 ///
 /// This is the core abstraction that enables cross-device operations.
-/// An SdPath can represent:
+/// An WingPath can represent:
 /// - A physical file at a specific path on a specific device
 /// - A content-addressed file that can be sourced from any device
 /// - A sidecar (derivative data) attached to content
@@ -23,7 +23,7 @@ use uuid::Uuid;
 /// This enum-based approach enables resilient file operations by allowing
 /// content-based paths to be resolved to optimal physical locations at runtime.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Type)]
-pub enum SdPath {
+pub enum WingPath {
 	/// A direct pointer to a file at a specific path on a specific device
 	Physical {
 		/// The device slug (e.g., "jamies-macbook")
@@ -59,31 +59,31 @@ pub enum SdPath {
 	},
 }
 
-impl<'de> Deserialize<'de> for SdPath {
+impl<'de> Deserialize<'de> for WingPath {
 	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
 	where
 		D: serde::Deserializer<'de>,
 	{
 		#[derive(Deserialize)]
-		struct SdPathPhysicalHelper {
+		struct WingPathPhysicalHelper {
 			device_slug: String,
 			path: String,
 		}
 
 		#[derive(Deserialize)]
-		struct SdPathCloudHelper {
+		struct WingPathCloudHelper {
 			service: String,
 			identifier: String,
 			path: String,
 		}
 
 		#[derive(Deserialize)]
-		struct SdPathContentHelper {
+		struct WingPathContentHelper {
 			content_id: String,
 		}
 
 		#[derive(Deserialize)]
-		struct SdPathSidecarHelper {
+		struct WingPathSidecarHelper {
 			content_id: String,
 			kind: String,
 			variant: String,
@@ -92,21 +92,21 @@ impl<'de> Deserialize<'de> for SdPath {
 
 		#[derive(Deserialize)]
 		#[serde(untagged)]
-		enum SdPathHelper {
-			Physical { Physical: SdPathPhysicalHelper },
-			Cloud { Cloud: SdPathCloudHelper },
-			Content { Content: SdPathContentHelper },
-			Sidecar { Sidecar: SdPathSidecarHelper },
+		enum WingPathHelper {
+			Physical { Physical: WingPathPhysicalHelper },
+			Cloud { Cloud: WingPathCloudHelper },
+			Content { Content: WingPathContentHelper },
+			Sidecar { Sidecar: WingPathSidecarHelper },
 		}
 
-		let helper = SdPathHelper::deserialize(deserializer)?;
+		let helper = WingPathHelper::deserialize(deserializer)?;
 
 		match helper {
-			SdPathHelper::Physical { Physical: physical } => Ok(SdPath::Physical {
+			WingPathHelper::Physical { Physical: physical } => Ok(WingPath::Physical {
 				device_slug: physical.device_slug,
 				path: PathBuf::from(physical.path),
 			}),
-			SdPathHelper::Cloud { Cloud: cloud } => {
+			WingPathHelper::Cloud { Cloud: cloud } => {
 				let service = crate::volume::backend::CloudServiceType::from_scheme(&cloud.service)
 					.ok_or_else(|| {
 						serde::de::Error::custom(format!(
@@ -114,18 +114,18 @@ impl<'de> Deserialize<'de> for SdPath {
 							cloud.service
 						))
 					})?;
-				Ok(SdPath::Cloud {
+				Ok(WingPath::Cloud {
 					service,
 					identifier: cloud.identifier,
 					path: cloud.path,
 				})
 			}
-			SdPathHelper::Content { Content: content } => {
+			WingPathHelper::Content { Content: content } => {
 				let content_id =
 					Uuid::parse_str(&content.content_id).map_err(serde::de::Error::custom)?;
-				Ok(SdPath::Content { content_id })
+				Ok(WingPath::Content { content_id })
 			}
-			SdPathHelper::Sidecar { Sidecar: sidecar } => {
+			WingPathHelper::Sidecar { Sidecar: sidecar } => {
 				let content_id =
 					Uuid::parse_str(&sidecar.content_id).map_err(serde::de::Error::custom)?;
 				let kind = SidecarKind::try_from(sidecar.kind.as_str())
@@ -133,7 +133,7 @@ impl<'de> Deserialize<'de> for SdPath {
 				let variant = SidecarVariant::new(sidecar.variant);
 				let format = SidecarFormat::try_from(sidecar.format.as_str())
 					.map_err(serde::de::Error::custom)?;
-				Ok(SdPath::Sidecar {
+				Ok(WingPath::Sidecar {
 					content_id,
 					kind,
 					variant,
@@ -144,13 +144,13 @@ impl<'de> Deserialize<'de> for SdPath {
 	}
 }
 
-impl SdPath {
-	/// Create a new physical SdPath
+impl WingPath {
+	/// Create a new physical WingPath
 	pub fn new(device_slug: String, path: impl Into<PathBuf>) -> Self {
 		Self::physical(device_slug, path)
 	}
 
-	/// Create a physical SdPath with specific device and path
+	/// Create a physical WingPath with specific device and path
 	pub fn physical(device_slug: String, path: impl Into<PathBuf>) -> Self {
 		Self::Physical {
 			device_slug,
@@ -158,7 +158,7 @@ impl SdPath {
 		}
 	}
 
-	/// Create a cloud storage SdPath
+	/// Create a cloud storage WingPath
 	pub fn cloud(
 		service: crate::volume::backend::CloudServiceType,
 		identifier: String,
@@ -171,12 +171,12 @@ impl SdPath {
 		}
 	}
 
-	/// Create a content-addressed SdPath
+	/// Create a content-addressed WingPath
 	pub fn content(content_id: Uuid) -> Self {
 		Self::Content { content_id }
 	}
 
-	/// Create a sidecar SdPath
+	/// Create a sidecar WingPath
 	pub fn sidecar(
 		content_id: Uuid,
 		kind: SidecarKind,
@@ -191,7 +191,7 @@ impl SdPath {
 		}
 	}
 
-	/// Create an SdPath for a local file on this device
+	/// Create an WingPath for a local file on this device
 	pub fn local(path: impl Into<PathBuf>) -> Self {
 		// Client processes such as the CLI never register a device, so the
 		// slug is empty there. An empty slug would be routed as a remote
@@ -292,8 +292,8 @@ impl SdPath {
 		}
 	}
 
-	/// Get the parent directory as an SdPath
-	pub fn parent(&self) -> Option<SdPath> {
+	/// Get the parent directory as an WingPath
+	pub fn parent(&self) -> Option<WingPath> {
 		match self {
 			Self::Physical { device_slug, path } => path.parent().map(|p| Self::Physical {
 				device_slug: device_slug.clone(),
@@ -318,7 +318,7 @@ impl SdPath {
 
 	/// Join with another path component
 	/// Panics if called on a Content variant
-	pub fn join(&self, path: impl AsRef<Path>) -> SdPath {
+	pub fn join(&self, path: impl AsRef<Path>) -> WingPath {
 		match self {
 			Self::Physical {
 				device_slug,
@@ -378,7 +378,7 @@ impl SdPath {
 	/// Check if this path is on the same volume as another path
 	pub async fn same_volume(
 		&self,
-		other: &SdPath,
+		other: &WingPath,
 		volume_manager: &crate::volume::VolumeManager,
 	) -> bool {
 		match (self, other) {
@@ -414,7 +414,7 @@ impl SdPath {
 		}
 	}
 
-	/// Parse an SdPath from a URI string (unified addressing format)
+	/// Parse an WingPath from a URI string (unified addressing format)
 	/// Examples:
 	/// - "local://device-slug/path/to/file" -> Physical path
 	/// - "s3://bucket/path/to/file" -> Cloud path
@@ -424,7 +424,7 @@ impl SdPath {
 	///
 	/// Note: This is a synchronous version that doesn't require context.
 	/// For resolving slugs/identifiers to actual volumes/devices, use from_uri_with_context()
-	pub fn from_uri(uri: &str) -> Result<Self, SdPathParseError> {
+	pub fn from_uri(uri: &str) -> Result<Self, WingPathParseError> {
 		let parts: Vec<&str> = uri.splitn(2, "://").collect();
 
 		if parts.len() != 2 {
@@ -438,7 +438,7 @@ impl SdPath {
 		match scheme {
 			"content" => {
 				let content_id =
-					Uuid::parse_str(rest).map_err(|_| SdPathParseError::InvalidContentId)?;
+					Uuid::parse_str(rest).map_err(|_| WingPathParseError::InvalidContentId)?;
 				Ok(Self::Content { content_id })
 			}
 
@@ -457,16 +457,16 @@ impl SdPath {
 				// Parse: sidecar://550e8400-e29b-41d4-a716-446655440000/thumbs/grid@2x.webp
 				let path_parts: Vec<&str> = rest.splitn(2, '/').collect();
 				if path_parts.len() != 2 {
-					return Err(SdPathParseError::InvalidSidecarPath);
+					return Err(WingPathParseError::InvalidSidecarPath);
 				}
 
 				let content_id = Uuid::parse_str(path_parts[0])
-					.map_err(|_| SdPathParseError::InvalidContentId)?;
+					.map_err(|_| WingPathParseError::InvalidContentId)?;
 
 				let sidecar_path = path_parts[1];
 				let sidecar_parts: Vec<&str> = sidecar_path.split('/').collect();
 				if sidecar_parts.len() != 2 {
-					return Err(SdPathParseError::InvalidSidecarPath);
+					return Err(WingPathParseError::InvalidSidecarPath);
 				}
 
 				let kind_dir = sidecar_parts[0];
@@ -479,17 +479,17 @@ impl SdPath {
 					"embeddings" => SidecarKind::Embeddings,
 					"ocr" => SidecarKind::Ocr,
 					"transcript" => SidecarKind::Transcript,
-					_ => return Err(SdPathParseError::InvalidSidecarKind),
+					_ => return Err(WingPathParseError::InvalidSidecarKind),
 				};
 
 				// Parse variant and extension from filename
 				let (variant_str, ext) = file_name
 					.rsplit_once('.')
-					.ok_or(SdPathParseError::MissingExtension)?;
+					.ok_or(WingPathParseError::MissingExtension)?;
 
 				let variant = SidecarVariant::new(variant_str);
 				let format = SidecarFormat::try_from(ext)
-					.map_err(|_| SdPathParseError::InvalidSidecarFormat)?;
+					.map_err(|_| WingPathParseError::InvalidSidecarFormat)?;
 
 				Ok(Self::Sidecar {
 					content_id,
@@ -502,7 +502,7 @@ impl SdPath {
 			_ => {
 				// Try to parse as cloud service scheme
 				let service = crate::volume::backend::CloudServiceType::from_scheme(scheme)
-					.ok_or(SdPathParseError::UnknownScheme)?;
+					.ok_or(WingPathParseError::UnknownScheme)?;
 
 				let parts: Vec<&str> = rest.splitn(2, '/').collect();
 				let identifier = parts[0].to_string();
@@ -521,7 +521,7 @@ impl SdPath {
 		}
 	}
 
-	/// Parse URI into SdPath with context validation (kept for backwards compatibility)
+	/// Parse URI into WingPath with context validation (kept for backwards compatibility)
 	///
 	/// # Examples
 	/// - "local://jamies-macbook/Users/james/file.txt" -> Physical path
@@ -533,7 +533,7 @@ impl SdPath {
 	pub async fn from_uri_with_context(
 		uri: &str,
 		_context: &crate::context::CoreContext,
-	) -> Result<Self, SdPathParseError> {
+	) -> Result<Self, WingPathParseError> {
 		Self::from_uri(uri)
 	}
 
@@ -674,7 +674,7 @@ impl SdPath {
 	pub async fn resolve(
 		&self,
 		context: &crate::context::CoreContext,
-	) -> Result<SdPath, PathResolutionError> {
+	) -> Result<WingPath, PathResolutionError> {
 		let resolver = crate::ops::addressing::PathResolver;
 		resolver.resolve(self, context).await
 	}
@@ -683,7 +683,7 @@ impl SdPath {
 	pub async fn resolve_in_job<'a>(
 		&self,
 		job_ctx: &crate::infra::job::context::JobContext<'a>,
-	) -> Result<SdPath, PathResolutionError> {
+	) -> Result<WingPath, PathResolutionError> {
 		// For now, if it's already physical or cloud, just return it
 		// TODO: Implement proper resolution using job context's library and networking
 		match self {
@@ -751,7 +751,7 @@ impl SdPath {
 								)));
 							};
 
-							return Ok(SdPath::Physical {
+							return Ok(WingPath::Physical {
 								device_slug: current_device_slug,
 								path,
 							});
@@ -813,9 +813,9 @@ impl From<sea_orm::DbErr> for PathResolutionError {
 	}
 }
 
-/// Error type for SdPath parsing
+/// Error type for WingPath parsing
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SdPathParseError {
+pub enum WingPathParseError {
 	InvalidFormat,
 	InvalidDeviceId,
 	InvalidVolumeId,
@@ -829,13 +829,13 @@ pub enum SdPathParseError {
 	MissingExtension,
 }
 
-impl fmt::Display for SdPathParseError {
+impl fmt::Display for WingPathParseError {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
-			Self::InvalidFormat => write!(f, "Invalid SdPath URI format"),
-			Self::InvalidDeviceId => write!(f, "Invalid device ID in SdPath URI"),
-			Self::InvalidVolumeId => write!(f, "Invalid volume ID in SdPath URI"),
-			Self::InvalidContentId => write!(f, "Invalid content ID in SdPath URI"),
+			Self::InvalidFormat => write!(f, "Invalid WingPath URI format"),
+			Self::InvalidDeviceId => write!(f, "Invalid device ID in WingPath URI"),
+			Self::InvalidVolumeId => write!(f, "Invalid volume ID in WingPath URI"),
+			Self::InvalidContentId => write!(f, "Invalid content ID in WingPath URI"),
 			Self::UnknownScheme => write!(f, "Unknown URI scheme"),
 			Self::VolumeNotFound => write!(f, "Cloud volume not found"),
 			Self::DeviceNotFound => write!(f, "Device not found by slug"),
@@ -847,23 +847,23 @@ impl fmt::Display for SdPathParseError {
 	}
 }
 
-impl std::error::Error for SdPathParseError {}
+impl std::error::Error for WingPathParseError {}
 
-impl fmt::Display for SdPath {
+impl fmt::Display for WingPath {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.display())
 	}
 }
 
-/// A batch of SdPaths, useful for operations on multiple files
+/// A batch of WingPaths, useful for operations on multiple files
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq, Type)]
-pub struct SdPathBatch {
-	pub paths: Vec<SdPath>,
+pub struct WingPathBatch {
+	pub paths: Vec<WingPath>,
 }
 
-impl SdPathBatch {
+impl WingPathBatch {
 	/// Create a new batch
-	pub fn new(paths: Vec<SdPath>) -> Self {
+	pub fn new(paths: Vec<WingPath>) -> Self {
 		Self { paths }
 	}
 
@@ -876,7 +876,7 @@ impl SdPathBatch {
 	}
 
 	/// Group by device slug
-	pub fn by_device(&self) -> std::collections::HashMap<String, Vec<&SdPath>> {
+	pub fn by_device(&self) -> std::collections::HashMap<String, Vec<&WingPath>> {
 		let mut map = std::collections::HashMap::new();
 		for path in &self.paths {
 			if let Some(device_slug) = path.device_slug() {
@@ -889,7 +889,7 @@ impl SdPathBatch {
 	}
 
 	/// add multiple paths
-	pub fn extend(&mut self, paths: Vec<SdPath>) {
+	pub fn extend(&mut self, paths: Vec<WingPath>) {
 		self.paths.extend(paths);
 	}
 }
@@ -901,10 +901,10 @@ mod tests {
 	#[test]
 	fn test_sdpath_physical_creation() {
 		let device_slug = "test-device-abc123".to_string();
-		let path = SdPath::new(device_slug.clone(), "/home/user/file.txt");
+		let path = WingPath::new(device_slug.clone(), "/home/user/file.txt");
 
 		match path {
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: slug,
 				path: p,
 			} => {
@@ -918,10 +918,10 @@ mod tests {
 	#[test]
 	fn test_sdpath_content_creation() {
 		let content_id = Uuid::new_v4();
-		let path = SdPath::content(content_id);
+		let path = WingPath::content(content_id);
 
 		match path {
-			SdPath::Content { content_id: cid } => {
+			WingPath::Content { content_id: cid } => {
 				assert_eq!(cid, content_id);
 			}
 			_ => panic!("Expected Content variant"),
@@ -931,7 +931,7 @@ mod tests {
 	#[test]
 	fn test_sdpath_display() {
 		let device_slug = "test-device-abc123".to_string();
-		let path = SdPath::new(device_slug.clone(), "/home/user/file.txt");
+		let path = WingPath::new(device_slug.clone(), "/home/user/file.txt");
 
 		let display = path.display();
 		assert!(display.contains(&device_slug));
@@ -944,18 +944,18 @@ mod tests {
 		// Test content URI
 		let content_id = Uuid::new_v4();
 		let uri = format!("content://{}", content_id);
-		let path = SdPath::from_uri(&uri).unwrap();
+		let path = WingPath::from_uri(&uri).unwrap();
 		match path {
-			SdPath::Content { content_id: cid } => assert_eq!(cid, content_id),
+			WingPath::Content { content_id: cid } => assert_eq!(cid, content_id),
 			_ => panic!("Expected Content variant"),
 		}
 
 		// Test physical URI
 		let device_slug = "test-device-abc123";
 		let uri = format!("local://{}/home/user/file.txt", device_slug);
-		let path = SdPath::from_uri(&uri).unwrap();
+		let path = WingPath::from_uri(&uri).unwrap();
 		match path {
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: slug,
 				path: p,
 			} => {
@@ -967,9 +967,9 @@ mod tests {
 
 		// Test cloud URI
 		let uri = "s3://my-bucket/photos/vacation.jpg";
-		let path = SdPath::from_uri(uri).unwrap();
+		let path = WingPath::from_uri(uri).unwrap();
 		match path {
-			SdPath::Cloud {
+			WingPath::Cloud {
 				service,
 				identifier,
 				path,
@@ -982,14 +982,14 @@ mod tests {
 		}
 
 		// Test local path without scheme
-		let path = SdPath::from_uri("/local/path").unwrap();
+		let path = WingPath::from_uri("/local/path").unwrap();
 		assert!(path.is_local());
 	}
 
 	#[test]
 	fn test_sdpath_sidecar_creation() {
 		let content_id = Uuid::new_v4();
-		let path = SdPath::sidecar(
+		let path = WingPath::sidecar(
 			content_id,
 			SidecarKind::Thumb,
 			"grid@2x",
@@ -997,7 +997,7 @@ mod tests {
 		);
 
 		match path {
-			SdPath::Sidecar {
+			WingPath::Sidecar {
 				content_id: cid,
 				kind,
 				variant,
@@ -1015,7 +1015,7 @@ mod tests {
 	#[test]
 	fn test_sdpath_sidecar_display() {
 		let content_id = Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap();
-		let path = SdPath::sidecar(
+		let path = WingPath::sidecar(
 			content_id,
 			SidecarKind::Thumb,
 			"grid@2x",
@@ -1032,10 +1032,10 @@ mod tests {
 	#[test]
 	fn test_sdpath_sidecar_uri_parsing() {
 		let uri = "sidecar://550e8400-e29b-41d4-a716-446655440000/thumbs/grid@2x.webp";
-		let path = SdPath::from_uri(uri).unwrap();
+		let path = WingPath::from_uri(uri).unwrap();
 
 		match path {
-			SdPath::Sidecar {
+			WingPath::Sidecar {
 				content_id,
 				kind,
 				variant,
@@ -1055,9 +1055,9 @@ mod tests {
 		// Test other sidecar kinds
 		let uri =
 			"sidecar://550e8400-e29b-41d4-a716-446655440000/embeddings/all-MiniLM-L6-v2.msgpack";
-		let path = SdPath::from_uri(uri).unwrap();
+		let path = WingPath::from_uri(uri).unwrap();
 		match path {
-			SdPath::Sidecar { kind, format, .. } => {
+			WingPath::Sidecar { kind, format, .. } => {
 				assert_eq!(kind, SidecarKind::Embeddings);
 				assert_eq!(format, SidecarFormat::MessagePack);
 			}
@@ -1066,9 +1066,9 @@ mod tests {
 
 		// Test OCR
 		let uri = "sidecar://550e8400-e29b-41d4-a716-446655440000/ocr/default.json";
-		let path = SdPath::from_uri(uri).unwrap();
+		let path = WingPath::from_uri(uri).unwrap();
 		match path {
-			SdPath::Sidecar { kind, .. } => {
+			WingPath::Sidecar { kind, .. } => {
 				assert_eq!(kind, SidecarKind::Ocr);
 			}
 			_ => panic!("Expected Sidecar variant"),
@@ -1078,7 +1078,7 @@ mod tests {
 	#[test]
 	fn test_sdpath_sidecar_is_sidecar() {
 		let content_id = Uuid::new_v4();
-		let path = SdPath::sidecar(
+		let path = WingPath::sidecar(
 			content_id,
 			SidecarKind::Thumb,
 			"grid@2x",

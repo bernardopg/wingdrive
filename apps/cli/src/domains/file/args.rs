@@ -2,7 +2,7 @@ use clap::Args;
 use std::path::PathBuf;
 
 use wing_core::{
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	ops::files::{
 		copy::input::{CopyMethod, FileCopyInput},
 		create_folder::input::CreateFolderInput,
@@ -11,13 +11,13 @@ use wing_core::{
 	},
 };
 
-/// Builds a local SdPath resolved against the CLI's working directory.
+/// Builds a local WingPath resolved against the CLI's working directory.
 ///
 /// The daemon runs with its own working directory, so a relative path sent
 /// unchanged would point somewhere else. Symlinks are not followed, so
 /// deleting or renaming a link acts on the link itself.
-pub fn local_path(path: PathBuf) -> SdPath {
-	SdPath::local(std::path::absolute(&path).unwrap_or(path))
+pub fn local_path(path: PathBuf) -> WingPath {
+	WingPath::local(std::path::absolute(&path).unwrap_or(path))
 }
 
 #[derive(Args, Debug, Clone)]
@@ -59,7 +59,7 @@ impl From<FileCopyArgs> for FileCopyInput {
 			.collect::<Vec<_>>();
 		let destination = local_path(args.destination);
 		Self {
-			sources: SdPathBatch { paths: sources },
+			sources: WingPathBatch { paths: sources },
 			destination,
 			overwrite: args.overwrite,
 			verify_checksum: args.verify_checksum,
@@ -128,7 +128,7 @@ pub struct FileDeleteArgs {
 impl From<FileDeleteArgs> for FileDeleteInput {
 	fn from(args: FileDeleteArgs) -> Self {
 		let paths = args.paths.into_iter().map(local_path).collect();
-		Self::new(SdPathBatch { paths }).with_permanent(args.permanent)
+		Self::new(WingPathBatch { paths }).with_permanent(args.permanent)
 	}
 }
 

@@ -107,7 +107,7 @@ impl FileDeleteProtocolHandler {
 	async fn execute_deletion_with_strategy(
 		&self,
 		strategy: &LocalDeleteStrategy,
-		paths: &[crate::domain::addressing::SdPath],
+		paths: &[crate::domain::addressing::WingPath],
 		mode: DeleteMode,
 	) -> anyhow::Result<Vec<crate::ops::files::delete::strategy::DeleteResult>> {
 		let mut results = Vec::new();

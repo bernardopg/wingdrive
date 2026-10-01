@@ -1,5 +1,5 @@
 use super::output::LocationsListOutput;
-use crate::domain::{addressing::SdPath, Location};
+use crate::domain::{addressing::WingPath, Location};
 use crate::infra::query::{QueryError, QueryResult};
 use crate::{context::CoreContext, infra::query::LibraryQuery};
 use sea_orm::EntityTrait;
@@ -80,7 +80,7 @@ impl LibraryQuery for LocationsListQuery {
 						))
 					})?;
 
-			let sd_path = SdPath::Physical {
+			let wing_path = WingPath::Physical {
 				device_slug: device.slug.clone(),
 				path: directory_path.path.clone().into(),
 			};
@@ -88,7 +88,7 @@ impl LibraryQuery for LocationsListQuery {
 			out.push(Location::from_db_model(
 				&location_model,
 				library_id,
-				sd_path,
+				wing_path,
 			));
 		}
 

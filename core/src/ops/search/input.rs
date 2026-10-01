@@ -1,6 +1,6 @@
 //! Input for file search operations
 
-use crate::domain::{ContentKind, SdPath};
+use crate::domain::{ContentKind, WingPath};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -37,7 +37,7 @@ pub enum SearchScope {
 	/// Restrict search to a specific location by its ID
 	Location { location_id: Uuid },
 	/// Restrict search to a specific directory path and all its descendants
-	Path { path: SdPath },
+	Path { path: WingPath },
 }
 
 /// Defines the search mode and performance characteristics

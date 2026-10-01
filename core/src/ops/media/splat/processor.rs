@@ -112,7 +112,7 @@ impl GaussianSplatProcessor {
 			.map_err(|e| anyhow::anyhow!("Failed to compute path: {}", e))?;
 
 		// Create temporary output directory
-		let temp_dir = std::env::temp_dir().join(format!("sd_splat_{}", content_uuid));
+		let temp_dir = std::env::temp_dir().join(format!("wing_splat_{}", content_uuid));
 		tokio::fs::create_dir_all(&temp_dir).await?;
 
 		// Generate splat using SHARP

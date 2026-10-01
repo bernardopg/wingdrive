@@ -25,7 +25,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct LocationAddInput {
-	pub path: crate::domain::addressing::SdPath,
+	pub path: crate::domain::addressing::WingPath,
 	pub name: Option<String>,
 	pub mode: IndexMode,
 	pub job_policies: Option<serde_json::Value>,
@@ -178,10 +178,10 @@ impl LibraryAction for LocationAddAction {
 		library: &std::sync::Arc<crate::library::Library>,
 		context: std::sync::Arc<crate::context::CoreContext>,
 	) -> Result<crate::infra::action::ValidationResult, ActionError> {
-		use crate::domain::addressing::SdPath;
+		use crate::domain::addressing::WingPath;
 
 		match &self.input.path {
-			SdPath::Physical { path, .. } => {
+			WingPath::Physical { path, .. } => {
 				if !self.input.path.is_local() {
 					return Err(ActionError::Validation {
 						field: "path".to_string(),
@@ -222,7 +222,7 @@ impl LibraryAction for LocationAddAction {
 					});
 				}
 			}
-			SdPath::Cloud {
+			WingPath::Cloud {
 				service,
 				identifier,
 				path: cloud_path,
@@ -245,13 +245,13 @@ impl LibraryAction for LocationAddAction {
 				// This would require accessing the VolumeBackend, which isn't available in validation
 				// For now, we trust the user's input
 			}
-			SdPath::Content { .. } => {
+			WingPath::Content { .. } => {
 				return Err(ActionError::Validation {
 					field: "path".to_string(),
 					message: "Content paths cannot be used as locations".to_string(),
 				});
 			}
-			SdPath::Sidecar { .. } => {
+			WingPath::Sidecar { .. } => {
 				return Err(ActionError::Validation {
 					field: "path".to_string(),
 					message: "Sidecar paths cannot be used as locations".to_string(),

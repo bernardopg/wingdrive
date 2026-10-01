@@ -1,7 +1,7 @@
 //! # Indexing Action Handler
 //!
 //! Bridges user-facing indexing requests (from CLI, API, UI) to the internal IndexerJob system.
-//! Actions validate inputs, convert paths to SdPaths, dispatch jobs to the library's job queue,
+//! Actions validate inputs, convert paths to WingPaths, dispatch jobs to the library's job queue,
 //! and track execution context for observability. Each action can spawn multiple jobs (one per
 //! path), but returns only the last handle for API simplicity.
 
@@ -86,17 +86,17 @@ impl LibraryAction for IndexingAction {
 		let mut last_handle: Option<JobHandle> = None;
 
 		for path in &self.input.paths {
-			let sd_path = crate::domain::addressing::SdPath::local(path.clone());
+			let wing_path = crate::domain::addressing::WingPath::local(path.clone());
 
 			let mut config = match self.input.persistence {
 				IndexPersistence::Ephemeral => {
 					// Directory browsing, not volume indexing
-					IndexerJobConfig::ephemeral_browse(sd_path, self.input.scope, false)
+					IndexerJobConfig::ephemeral_browse(wing_path, self.input.scope, false)
 				}
 				IndexPersistence::Persistent => {
 					// Persistent mode stores entries in the database but doesn't require a location binding yet.
 					let mut c =
-						IndexerJobConfig::ephemeral_browse(sd_path, self.input.scope, false);
+						IndexerJobConfig::ephemeral_browse(wing_path, self.input.scope, false);
 					c.persistence = IndexPersistence::Persistent;
 					c
 				}

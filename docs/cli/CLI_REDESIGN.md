@@ -7,7 +7,7 @@ Redesign the CLI structure to be more intuitive, consistent, and user-friendly w
 ## Core Design Principles
 
 1. **Interactive by Default**: Commands without args enter interactive mode
-2. **Hybrid SdPath Support**: Accept both traditional paths and SdPath URIs (`local://`, `s3://`, `content://`)
+2. **Hybrid WingPath Support**: Accept both traditional paths and WingPath URIs (`local://`, `s3://`, `content://`)
 3. **Consistent Patterns**: Every resource type has predictable subcommands (list, create, remove, etc.)
 4. **Smart Context Awareness**: Commands adapt based on context (e.g., browse uses index when available)
 5. **Scriptable**: All interactive flows have direct command equivalents with `--format json` support
@@ -62,9 +62,9 @@ sd browse [path|uri]              # Smart browsing with interactive TUI
 
 - Inside managed location: instant (uses existing index)
 - Outside locations: ephemeral index (temporary, not persisted)
-- Supports SdPath URIs for remote browsing
+- Supports WingPath URIs for remote browsing
 
-### File Operations (Hybrid SdPath)
+### File Operations (Hybrid WingPath)
 
 ```bash
 sd ls [path|uri]                  # List files (simple output)
@@ -74,13 +74,13 @@ sd rm <path|uri>                  # Delete (with confirmation)
 sd info <path|uri>                # Show file metadata
 ```
 
-**SdPath Examples:**
+**WingPath Examples:**
 
 ```bash
 # Traditional paths
 sd cp /Users/me/file.txt /backup/
 
-# SdPath URIs
+# WingPath URIs
 sd cp local://macbook/Users/me/file.txt s3://my-bucket/backup/
 sd info content://550e8400-e29b-41d4-a716-446655440000
 ```
@@ -249,7 +249,7 @@ sd logs follow                    # Follow logs in real-time
    - Preview panel
    - Reference existing location wizard UX
 
-3. Support SdPath URIs for remote browsing:
+3. Support WingPath URIs for remote browsing:
    - `sd browse local://device/path`
    - `sd browse s3://bucket/prefix`
 
@@ -290,20 +290,20 @@ sd logs follow                    # Follow logs in real-time
 - Maintain direct command paths for scripting
 - Pattern: detect when called with no subcommand/args
 
-### Phase 5: Hybrid SdPath Support
+### Phase 5: Hybrid WingPath Support
 
-**Goal**: Support both traditional paths and SdPath URIs
+**Goal**: Support both traditional paths and WingPath URIs
 
 **Tasks:**
 
 1. Create URI parser that accepts both formats
 2. Update file operations (ls, cp, mv, rm, info, browse):
    - Parse traditional paths: `/Users/me/file.txt`
-   - Parse SdPath URIs: `local://device/path`, `s3://bucket/key`, `content://uuid`
+   - Parse WingPath URIs: `local://device/path`, `s3://bucket/key`, `content://uuid`
    - Support shortcut flags: `--device`, `--cloud`
 
 3. Add resolution logic:
-   - Convert traditional paths to SdPath internally
+   - Convert traditional paths to WingPath internally
    - Resolve URIs to actual storage locations
    - Handle cross-device operations
 
@@ -330,7 +330,7 @@ sd logs follow                    # Follow logs in real-time
 - All commands follow consistent patterns
 - Interactive mode works for all designated commands
 - Direct command paths work for scripting
-- SdPath URIs work across file operations
+- WingPath URIs work across file operations
 - Browse intelligently uses location index when available
 - Search provides powerful filtering
 - Documentation is comprehensive

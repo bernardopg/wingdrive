@@ -69,11 +69,11 @@ export function VideoPlayer({
 	const [currentTime, setCurrentTime] = useState(0);
 	const [duration, setDuration] = useState(0);
 	const [volume, setVolume] = useState(() => {
-		const saved = localStorage.getItem("sd-video-volume");
+		const saved = localStorage.getItem("wing-video-volume");
 		return saved ? parseFloat(saved) : 1;
 	});
 	const [muted, setMuted] = useState(() => {
-		const saved = localStorage.getItem("sd-video-muted");
+		const saved = localStorage.getItem("wing-video-muted");
 		return saved === "true";
 	});
 	const [loop, setLoop] = useState(false);
@@ -317,13 +317,13 @@ export function VideoPlayer({
 	useEffect(() => {
 		if (!videoRef.current) return;
 		videoRef.current.volume = volume;
-		localStorage.setItem("sd-video-volume", volume.toString());
+		localStorage.setItem("wing-video-volume", volume.toString());
 	}, [volume]);
 
 	useEffect(() => {
 		if (!videoRef.current) return;
 		videoRef.current.muted = muted;
-		localStorage.setItem("sd-video-muted", muted.toString());
+		localStorage.setItem("wing-video-muted", muted.toString());
 	}, [muted]);
 
 	useEffect(() => {

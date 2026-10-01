@@ -38,9 +38,9 @@ echo "Using library: $LIBRARY_ID"
 echo "From: $LIBRARY_FILE"
 echo ""
 
-export SD_LIBRARY_ID="$LIBRARY_ID"
-export SD_SOCKET_ADDR="${SD_SOCKET_ADDR:-127.0.0.1:6969}"
-export SD_HTTP_URL="http://127.0.0.1:54321"
+export WING_LIBRARY_ID="$LIBRARY_ID"
+export WING_SOCKET_ADDR="${WING_SOCKET_ADDR:-127.0.0.1:6969}"
+export WING_HTTP_URL="http://127.0.0.1:54321"
 
 echo "Running test_connection example..."
 echo ""

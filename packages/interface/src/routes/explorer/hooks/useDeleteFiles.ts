@@ -27,7 +27,7 @@ export function useDeleteFiles() {
 	const deleteFiles = useCallback(
 		async (files: File[], permanent: boolean) => {
 			if (files.length === 0) return false;
-			if (files.some((f) => !f.sd_path)) return false;
+			if (files.some((f) => !f.wing_path)) return false;
 			if (mutation.isPending) return false;
 
 			// Ask for confirmation in a dialog; resolves true if the user
@@ -40,7 +40,7 @@ export function useDeleteFiles() {
 						try {
 							const { result } = await waitForJob(() =>
 								mutation.mutateAsync({
-									targets: { paths: files.map((f) => f.sd_path) },
+									targets: { paths: files.map((f) => f.wing_path) },
 									permanent,
 									recursive: true,
 								}),

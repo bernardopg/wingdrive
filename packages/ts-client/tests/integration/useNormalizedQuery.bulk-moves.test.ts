@@ -190,19 +190,19 @@ describe("useNormalizedQuery - Bulk Moves Integration", () => {
 		const contentAddressedFiles = initialSubfolderData.files.filter(
 			(f: any) =>
 				f.kind === "File" &&
-				f.sd_path?.Content &&
+				f.wing_path?.Content &&
 				f.alternate_paths?.length > 0,
 		);
 		const physicalOnlyFiles = initialSubfolderData.files.filter(
-			(f: any) => f.kind === "File" && f.sd_path?.Physical,
+			(f: any) => f.kind === "File" && f.wing_path?.Physical,
 		);
 
 		console.log(
-			"[TS] Content-addressed files (sd_path.Content):",
+			"[TS] Content-addressed files (wing_path.Content):",
 			contentAddressedFiles.length,
 		);
 		console.log(
-			"[TS] Physical-only files (sd_path.Physical):",
+			"[TS] Physical-only files (wing_path.Physical):",
 			physicalOnlyFiles.length,
 		);
 
@@ -211,7 +211,7 @@ describe("useNormalizedQuery - Bulk Moves Integration", () => {
 			const example = contentAddressedFiles[0];
 			console.log("[TS] Example content-addressed file:", {
 				name: example.name,
-				sd_path: example.sd_path,
+				wing_path: example.wing_path,
 				alternate_paths: example.alternate_paths,
 			});
 		}
@@ -223,7 +223,7 @@ describe("useNormalizedQuery - Bulk Moves Integration", () => {
 				"[TS] ⚠️  WARNING: No content-addressed files found! This test won't catch the production bug.",
 			);
 			console.warn(
-				"[TS] ⚠️  The cache update bug only affects files with sd_path.Content + alternate_paths.",
+				"[TS] ⚠️  The cache update bug only affects files with wing_path.Content + alternate_paths.",
 			);
 		}
 
@@ -322,7 +322,7 @@ describe("useNormalizedQuery - Bulk Moves Integration", () => {
 				expect(fileInRoot.id).toBe(originalFile.id);
 
 				// Track what type of file was moved successfully
-				if (fileInRoot.sd_path?.Content) {
+				if (fileInRoot.wing_path?.Content) {
 					contentAddressedMovedCount++;
 
 					// For content-addressed files, check alternate_paths
@@ -337,17 +337,17 @@ describe("useNormalizedQuery - Bulk Moves Integration", () => {
 					expect(physicalPath).toBeDefined();
 					expect(physicalPath).toContain(rootPath);
 					expect(physicalPath).not.toContain("bulk_test");
-				} else if (fileInRoot.sd_path?.Physical) {
+				} else if (fileInRoot.wing_path?.Physical) {
 					physicalOnlyMovedCount++;
 
-					// For physical-only files, check sd_path directly
-					expect(fileInRoot.sd_path.Physical.path).toContain(
+					// For physical-only files, check wing_path directly
+					expect(fileInRoot.wing_path.Physical.path).toContain(
 						rootPath,
 					);
-					expect(fileInRoot.sd_path.Physical.path).not.toContain(
+					expect(fileInRoot.wing_path.Physical.path).not.toContain(
 						"bulk_test",
 					);
-					expect(fileInRoot.sd_path.Physical.path).toContain(
+					expect(fileInRoot.wing_path.Physical.path).toContain(
 						fileName,
 					);
 				}
@@ -358,13 +358,13 @@ describe("useNormalizedQuery - Bulk Moves Integration", () => {
 					inRoot: !!fileInRoot,
 					inSubfolder: !!fileInSubfolder,
 					hasOriginal: !!originalFile,
-					originalType: originalFile?.sd_path?.Content
+					originalType: originalFile?.wing_path?.Content
 						? "Content"
 						: "Physical",
 				});
 
 				// Extra debugging for content-addressed files
-				if (originalFile?.sd_path?.Content) {
+				if (originalFile?.wing_path?.Content) {
 					console.error(
 						`[TS] ⚠️  This was a content-addressed file - the cache update bug!`,
 					);

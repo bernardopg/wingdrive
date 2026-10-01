@@ -223,20 +223,20 @@ async fn run_copy_with_confirmation(
 async fn check_for_simple_conflicts(
 	action: &wing_core::ops::files::copy::action::FileCopyAction,
 ) -> Result<bool> {
-	use wing_core::domain::addressing::SdPath;
+	use wing_core::domain::addressing::WingPath;
 
-	// Extract the physical path from the destination SdPath
+	// Extract the physical path from the destination WingPath
 	let dest_path = match &action.destination {
-		SdPath::Physical { path, .. } => path,
-		SdPath::Cloud { .. } => {
+		WingPath::Physical { path, .. } => path,
+		WingPath::Cloud { .. } => {
 			// Cloud paths are not yet supported for copy operations
 			return Ok(false);
 		}
-		SdPath::Content { .. } => {
+		WingPath::Content { .. } => {
 			// Content paths cannot be destinations for copy operations
 			return Ok(false);
 		}
-		SdPath::Sidecar { .. } => {
+		WingPath::Sidecar { .. } => {
 			// Sidecar paths cannot be destinations for copy operations
 			return Ok(false);
 		}
@@ -255,12 +255,12 @@ fn resolve_final_destination_path(
 	action: &wing_core::ops::files::copy::action::FileCopyAction,
 	dest_path: &std::path::PathBuf,
 ) -> Result<std::path::PathBuf> {
-	use wing_core::domain::addressing::SdPath;
+	use wing_core::domain::addressing::WingPath;
 
 	if action.sources.paths.len() > 1 {
 		// Multiple sources: destination must be a directory
 		if let Some(first_source) = action.sources.paths.first() {
-			if let SdPath::Physical {
+			if let WingPath::Physical {
 				path: source_path, ..
 			} = first_source
 			{
@@ -276,7 +276,7 @@ fn resolve_final_destination_path(
 		if dest_path.is_dir() {
 			// Destination is a directory, join with source filename
 			if let Some(source) = action.sources.paths.first() {
-				if let SdPath::Physical {
+				if let WingPath::Physical {
 					path: source_path, ..
 				} = source
 				{
@@ -322,12 +322,12 @@ async fn list_directory(
 ) -> Result<wing_core::ops::files::query::DirectoryListingOutput> {
 	use wing_core::ops::files::query::DirectoryListingQuery;
 
-	// Create the SdPath for the directory
-	let sd_path = self::args::local_path(path.to_path_buf());
+	// Create the WingPath for the directory
+	let wing_path = self::args::local_path(path.to_path_buf());
 
 	// Create the query input
 	let input = wing_core::ops::files::query::DirectoryListingInput {
-		path: sd_path,
+		path: wing_path,
 		limit,
 		include_hidden: Some(include_hidden),
 		sort_by,

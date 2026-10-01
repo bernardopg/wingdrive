@@ -32,7 +32,7 @@ export function LocationsGroup() {
 
 	// Helper to get device name from device_slug
 	const getDeviceName = (location: any) => {
-		const deviceSlug = location.sd_path?.Physical?.device_slug;
+		const deviceSlug = location.wing_path?.Physical?.device_slug;
 		if (!deviceSlug) return "Unknown device";
 		const device = devices?.find((d) => d.slug === deviceSlug);
 		return device?.name || "Unknown device";
@@ -57,7 +57,7 @@ export function LocationsGroup() {
 							pathname: "/explorer",
 							params: {
 								type: "path",
-								path: JSON.stringify(location.sd_path),
+								path: JSON.stringify(location.wing_path),
 							},
 						});
 					}}

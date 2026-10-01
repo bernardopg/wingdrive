@@ -181,7 +181,7 @@ let location_model = location::ActiveModel {
 
 ```rust
 // Always spawns indexer job
-let job = IndexerJob::from_location(location_id, sd_path, mode);
+let job = IndexerJob::from_location(location_id, wing_path, mode);
 library.jobs().dispatch(job).await?;
 ```
 
@@ -203,12 +203,12 @@ if entry.indexed_at.is_some() {
     // But we might still want to apply THIS location's index_mode
     // if it's different from the parent location's mode
     if should_reindex_with_different_mode(entry_id, mode, db).await? {
-        let job = IndexerJob::from_location(location_id, sd_path, mode);
+        let job = IndexerJob::from_location(location_id, wing_path, mode);
         library.jobs().dispatch(job).await?;
     }
 } else {
     // Not yet indexed, spawn job as normal
-    let job = IndexerJob::from_location(location_id, sd_path, mode);
+    let job = IndexerJob::from_location(location_id, wing_path, mode);
     library.jobs().dispatch(job).await?;
 }
 ```

@@ -5,7 +5,7 @@
 //! full. Paths are resolved through existing ancestors so the check also catches a
 //! missing destination below a symlink into the source.
 
-use crate::domain::addressing::{SdPath, SdPathBatch};
+use crate::domain::addressing::{WingPath, WingPathBatch};
 use std::{
 	ffi::OsString,
 	io,
@@ -13,7 +13,10 @@ use std::{
 };
 
 /// Returns validation errors for directory copies that would write into themselves.
-pub(super) fn recursive_copy_errors(sources: &SdPathBatch, destination: &SdPath) -> Vec<String> {
+pub(super) fn recursive_copy_errors(
+	sources: &WingPathBatch,
+	destination: &WingPath,
+) -> Vec<String> {
 	let Some(destination) = destination.as_local_path() else {
 		return Vec::new();
 	};
@@ -102,8 +105,8 @@ mod tests {
 	use super::*;
 	use std::fs;
 
-	fn batch(path: &Path) -> SdPathBatch {
-		SdPathBatch::new(vec![SdPath::local(path.to_path_buf())])
+	fn batch(path: &Path) -> WingPathBatch {
+		WingPathBatch::new(vec![WingPath::local(path.to_path_buf())])
 	}
 
 	#[test]
@@ -112,7 +115,8 @@ mod tests {
 		let source = temp.path().join("source");
 		fs::create_dir(&source).unwrap();
 
-		let errors = recursive_copy_errors(&batch(&source), &SdPath::local(source.join("backup")));
+		let errors =
+			recursive_copy_errors(&batch(&source), &WingPath::local(source.join("backup")));
 
 		assert_eq!(errors.len(), 1);
 		assert!(errors[0].contains("would recurse"));
@@ -124,7 +128,7 @@ mod tests {
 		let source = temp.path().join("source");
 		fs::create_dir(&source).unwrap();
 
-		let errors = recursive_copy_errors(&batch(&source), &SdPath::local(source.clone()));
+		let errors = recursive_copy_errors(&batch(&source), &WingPath::local(source.clone()));
 
 		assert_eq!(errors.len(), 1);
 	}
@@ -136,7 +140,7 @@ mod tests {
 		fs::create_dir(&source).unwrap();
 
 		let errors =
-			recursive_copy_errors(&batch(&source), &SdPath::local(temp.path().join("copy")));
+			recursive_copy_errors(&batch(&source), &WingPath::local(temp.path().join("copy")));
 
 		assert!(errors.is_empty());
 	}
@@ -152,7 +156,7 @@ mod tests {
 		fs::create_dir(&source).unwrap();
 		symlink(&source, &alias).unwrap();
 
-		let errors = recursive_copy_errors(&batch(&source), &SdPath::local(alias.join("backup")));
+		let errors = recursive_copy_errors(&batch(&source), &WingPath::local(alias.join("backup")));
 
 		assert_eq!(errors.len(), 1);
 	}

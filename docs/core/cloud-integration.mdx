@@ -54,10 +54,10 @@ gcs://bucket/logs/app.log
 
 These URIs match the format used by AWS CLI, gsutil, and other cloud tools. Copy a path from WingDrive and paste it directly into cloud provider CLI commands.
 
-Internally, WingDrive uses the `SdPath` enum with identity-based addressing:
+Internally, WingDrive uses the `WingPath` enum with identity-based addressing:
 
 ```rust
-pub enum SdPath {
+pub enum WingPath {
     Physical {
         device_slug: String,  // URL-safe device identifier
         path: PathBuf,
@@ -148,7 +148,7 @@ Cloud indexing supports the same modes as local indexing:
 
 ```rust
 // Quick scan for navigation
-let path = SdPath::from_uri_with_context(
+let path = WingPath::from_uri_with_context(
     "s3://my-bucket/",
     &context
 ).await?;
@@ -156,7 +156,7 @@ let path = SdPath::from_uri_with_context(
 let config = IndexerJobConfig::ui_navigation(path, IndexMode::Shallow);
 
 // Deep scan with content identification
-let path = SdPath::from_uri_with_context(
+let path = WingPath::from_uri_with_context(
     "s3://my-bucket/",
     &context
 ).await?;
@@ -170,12 +170,12 @@ Standard file operations work transparently across cloud volumes:
 
 ```rust
 // Copy from cloud to local
-let src = SdPath::from_uri_with_context(
+let src = WingPath::from_uri_with_context(
     "gdrive://Work/photos/vacation.jpg",
     &context
 ).await?;
 
-let dst = SdPath::from_uri_with_context(
+let dst = WingPath::from_uri_with_context(
     "local://macbook/backup/",
     &context
 ).await?;
@@ -187,18 +187,18 @@ let result = dispatcher.execute_library_action::<FileCopyAction>(
 ).await?;
 
 // Move between cloud services
-let src = SdPath::from_uri_with_context(
+let src = WingPath::from_uri_with_context(
     "s3://archive/report.pdf",
     &context
 ).await?;
 
-let dst = SdPath::from_uri_with_context(
+let dst = WingPath::from_uri_with_context(
     "gdrive://Work/documents/",
     &context
 ).await?;
 
 let job = FileCopyJob::new(
-    SdPathBatch::new(vec![src]),
+    WingPathBatch::new(vec![src]),
     dst
 ).with_move(true);
 
@@ -275,18 +275,18 @@ let backup_volume = volume_manager
     .await?;
 
 // Create backup job
-let src = SdPath::from_uri_with_context(
+let src = WingPath::from_uri_with_context(
     "local://macbook/Users/james/Documents/important/",
     &context
 ).await?;
 
-let dst = SdPath::from_uri_with_context(
+let dst = WingPath::from_uri_with_context(
     "s3://backup-bucket/backups/",
     &context
 ).await?;
 
 let backup_job = FileCopyJob::new(
-    SdPathBatch::new(vec![src]),
+    WingPathBatch::new(vec![src]),
     dst
 ).with_options(CopyOptions {
     preserve_timestamps: true,
@@ -315,12 +315,12 @@ Combine local and cloud storage:
 
 ```rust
 // Move old projects to cloud archive
-let src = SdPath::from_uri_with_context(
+let src = WingPath::from_uri_with_context(
     "local://macbook/Users/james/projects/MyVideoProject",
     &context
 ).await?;
 
-let dst = SdPath::from_uri_with_context(
+let dst = WingPath::from_uri_with_context(
     "s3://archive/projects/archived/",
     &context
 ).await?;

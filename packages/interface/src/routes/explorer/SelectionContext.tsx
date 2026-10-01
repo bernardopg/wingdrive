@@ -277,7 +277,7 @@ export function SelectionProvider({
 
 		try {
 			await renameFile.mutateAsync({
-				target: file.sd_path,
+				target: file.wing_path,
 				new_name: newName,
 			});
 			setRenamingFileId(null);

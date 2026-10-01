@@ -2,7 +2,7 @@
 
 use super::action::{FileCopyAction, FileCopyActionBuilder};
 use super::job::CopyOptions;
-use crate::domain::addressing::{SdPath, SdPathBatch};
+use crate::domain::addressing::{WingPath, WingPathBatch};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::path::PathBuf;
@@ -41,10 +41,10 @@ impl std::fmt::Display for CopyMethod {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
 pub struct FileCopyInput {
 	/// Source files or directories to copy (domain addressing)
-	pub sources: SdPathBatch,
+	pub sources: WingPathBatch,
 
 	/// Destination path (domain addressing)
-	pub destination: SdPath,
+	pub destination: WingPath,
 
 	/// Whether to overwrite existing files
 	pub overwrite: bool,
@@ -68,10 +68,10 @@ pub struct FileCopyInput {
 impl FileCopyInput {
 	/// Create a new FileCopyInput with default options from local filesystem paths
 	pub fn new<D: Into<PathBuf>>(sources: Vec<PathBuf>, destination: D) -> Self {
-		let paths = sources.into_iter().map(|p| SdPath::local(p)).collect();
+		let paths = sources.into_iter().map(|p| WingPath::local(p)).collect();
 		Self {
-			sources: SdPathBatch { paths },
-			destination: SdPath::local(destination.into()),
+			sources: WingPathBatch { paths },
+			destination: WingPath::local(destination.into()),
 			overwrite: false,
 			verify_checksum: false,
 			preserve_timestamps: true,
@@ -140,8 +140,8 @@ impl FileCopyInput {
 			.sources
 			.paths
 			.iter()
-			.any(|path| matches!(path, SdPath::Cloud { .. }))
-			|| matches!(&self.destination, SdPath::Cloud { .. })
+			.any(|path| matches!(path, WingPath::Cloud { .. }))
+			|| matches!(&self.destination, WingPath::Cloud { .. })
 		{
 			errors.push("Cloud copy and move operations are not supported yet".to_string());
 		}
@@ -170,8 +170,8 @@ impl FileCopyInput {
 impl Default for FileCopyInput {
 	fn default() -> Self {
 		Self {
-			sources: SdPathBatch { paths: Vec::new() },
-			destination: SdPath::local(PathBuf::new()),
+			sources: WingPathBatch { paths: Vec::new() },
+			destination: WingPath::local(PathBuf::new()),
 			overwrite: false,
 			verify_checksum: false,
 			preserve_timestamps: true,
@@ -229,15 +229,15 @@ mod tests {
 
 	#[test]
 	fn test_validation_rejects_cloud_paths() {
-		let cloud = SdPath::Cloud {
+		let cloud = WingPath::Cloud {
 			service: crate::volume::backend::CloudServiceType::S3,
 			identifier: "bucket".into(),
 			path: "file.txt".into(),
 		};
-		let local = SdPath::local("/file.txt");
+		let local = WingPath::local("/file.txt");
 		for (source, destination) in [(cloud.clone(), local.clone()), (local, cloud)] {
 			let mut input = FileCopyInput::default();
-			input.sources = SdPathBatch::new(vec![source]);
+			input.sources = WingPathBatch::new(vec![source]);
 			input.destination = destination;
 			assert!(input
 				.validate()

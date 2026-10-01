@@ -172,7 +172,7 @@ function OverviewTab({ location }: { location: Location }) {
 					<CircleButton
 						icon={FolderOpen}
 						onClick={() => {
-							const encodedPath = encodeURIComponent(JSON.stringify(location.sd_path));
+							const encodedPath = encodeURIComponent(JSON.stringify(location.wing_path));
 							navigate(`/explorer?path=${encodedPath}`);
 						}}
 						className="flex-1"
@@ -190,7 +190,7 @@ function OverviewTab({ location }: { location: Location }) {
 
 			{/* Details */}
 			<Section title="Details" icon={Info}>
-				<InfoRow label="Path" value={'Physical' in location.sd_path ? location.sd_path.Physical.path : 'Cloud' in location.sd_path ? location.sd_path.Cloud.path : location.name} mono />
+				<InfoRow label="Path" value={'Physical' in location.wing_path ? location.wing_path.Physical.path : 'Cloud' in location.wing_path ? location.wing_path.Cloud.path : location.name} mono />
 			{location.file_count != null && (
 				<InfoRow
 					label="Total Files"

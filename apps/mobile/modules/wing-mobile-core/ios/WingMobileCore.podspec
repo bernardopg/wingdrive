@@ -3,7 +3,7 @@ require 'json'
 package = JSON.parse(File.read(File.join(__dir__, '../package.json')))
 
 Pod::Spec.new do |s|
-  s.name           = 'SDMobileCore'
+  s.name           = 'WingMobileCore'
   s.version        = package['version']
   s.summary        = 'WingDrive Mobile Core - Embedded Rust core for React Native'
   s.license        = 'GPL-3.0'

@@ -38,7 +38,7 @@ docker run -d \
   -p 8080:8080 \
   -p 7373:7373 \
   -v wingdrive-data:/data \
-  -e SD_AUTH=admin:your-secure-password \
+  -e WING_AUTH=admin:your-secure-password \
   ghcr.io/bernardopg/wingdrive/server:latest
 ```
 
@@ -60,7 +60,7 @@ services:
       - wingdrive-data:/data
       - /mnt/media:/media:ro
     environment:
-      SD_AUTH: "admin:your-password"
+      WING_AUTH: "admin:your-password"
       TZ: "America/New_York"
     restart: unless-stopped
 
@@ -84,7 +84,7 @@ Type=simple
 User=wingdrive
 Group=wingdrive
 Environment="DATA_DIR=/var/lib/wingdrive"
-Environment="SD_AUTH=admin:your-secure-password"
+Environment="WING_AUTH=admin:your-secure-password"
 ExecStart=/usr/local/bin/wingdrive-server --data-dir /var/lib/wingdrive
 Restart=on-failure
 RestartSec=5s
@@ -108,14 +108,14 @@ Check status with `sudo systemctl status wingdrive`.
 
 The server accepts configuration via environment variables or command-line flags.
 
-**Authentication** is controlled by `SD_AUTH`. The format supports multiple users separated by commas: `user1:pass1,user2:pass2`. Set to `disabled` to disable authentication, though this is not recommended for network-accessible deployments.
+**Authentication** is controlled by `WING_AUTH`. The format supports multiple users separated by commas: `user1:pass1,user2:pass2`. Set to `disabled` to disable authentication, though this is not recommended for network-accessible deployments.
 
 **Data directory** defaults to `/data` in Docker or a temporary directory in development. In production, always set `DATA_DIR` to a persistent location. The server creates library databases, thumbnails, and logs in this directory.
 
 **Port configuration** defaults to 8080. Change with `--port` flag or `PORT` environment variable. The P2P port (7373) is fixed and required for device sync.
 
 <Warning>
-Production deployments must set `SD_AUTH`. The server refuses to start without authentication unless explicitly disabled. This prevents accidental exposure of your libraries.
+Production deployments must set `WING_AUTH`. The server refuses to start without authentication unless explicitly disabled. This prevents accidental exposure of your libraries.
 </Warning>
 
 ## Network Access
@@ -212,7 +212,7 @@ Self-hosted servers face different threats than desktop apps. Follow these guide
 
 Desktop and mobile apps can connect to self-hosted servers by configuring the server URL in settings.
 
-The URL format is `http://your-server:8080` or `https://wingdrive.example.com` if using a reverse proxy. Clients authenticate using credentials set in `SD_AUTH`.
+The URL format is `http://your-server:8080` or `https://wingdrive.example.com` if using a reverse proxy. Clients authenticate using credentials set in `WING_AUTH`.
 
 P2P sync works between the server and other devices without additional configuration. The server appears as a device in your library and participates in sync like any other device.
 
@@ -238,7 +238,7 @@ Check that the data directory exists and is writable by the server user. Verify 
 
 **Authentication failures:**
 
-Ensure `SD_AUTH` format is correct. Test credentials with curl: `curl -u admin:password http://localhost:8080/health`. Browser authentication dialogs require exact username and password.
+Ensure `WING_AUTH` format is correct. Test credentials with curl: `curl -u admin:password http://localhost:8080/health`. Browser authentication dialogs require exact username and password.
 
 **Clients can't connect:**
 

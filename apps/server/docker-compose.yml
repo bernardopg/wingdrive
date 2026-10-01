@@ -28,10 +28,10 @@ services:
       # Authentication (REQUIRED for security!)
       # Format: "username:password,username2:password2"
       # Or set to "disabled" to disable auth (NOT RECOMMENDED)
-      - SD_AUTH=${SD_AUTH:-admin:changeme}
+      - WING_AUTH=${WING_AUTH:-admin:changeme}
 
       # Enable P2P networking
-      - SD_P2P=true
+      - WING_P2P=true
 
       # Logging
       - RUST_LOG=info,wing_core=debug

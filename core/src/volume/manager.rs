@@ -1042,11 +1042,11 @@ impl VolumeManager {
 		self.volumes.read().await.get(fingerprint).cloned()
 	}
 
-	/// Resolve a volume for an SdPath (unified method for cloud and local paths)
+	/// Resolve a volume for an WingPath (unified method for cloud and local paths)
 	/// This abstracts away the cloud/local path distinction
 	pub async fn resolve_volume_for_sdpath(
 		&self,
-		sdpath: &crate::domain::addressing::SdPath,
+		sdpath: &crate::domain::addressing::WingPath,
 		_library: &crate::library::Library,
 	) -> VolumeResult<Option<Volume>> {
 		info!("resolve_volume_for_sdpath called with: {}", sdpath);

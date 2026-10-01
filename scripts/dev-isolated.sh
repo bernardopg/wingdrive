@@ -13,7 +13,7 @@ fi
 
 export WINGDRIVE_DATA_DIR="$state_root/data"
 export WINGDRIVE_INSTANCE="$instance"
-export RUST_LOG="${RUST_LOG:-wing_core=info,sd_tauri=info}"
+export RUST_LOG="${RUST_LOG:-wing_core=info,wing_tauri=info}"
 
 mkdir -p "$WINGDRIVE_DATA_DIR"
 printf 'WingDrive development state: %s\nDaemon instance: %s\n' \

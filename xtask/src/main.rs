@@ -66,7 +66,7 @@ fn main() -> Result<()> {
 		eprintln!(
 			"  setup        Setup development environment (downloads deps, generates config)"
 		);
-		eprintln!("  build-ios    Build sd-ios-core XCFramework for iOS devices and simulator");
+		eprintln!("  build-ios    Build wing-ios-core XCFramework for iOS devices and simulator");
 		eprintln!("  build-mobile Build wing-mobile-core for React Native iOS/Android");
 		eprintln!("  test-core    Run all core integration tests with progress tracking");
 		eprintln!("  bump <ver>   Bump version across all packages (e.g. bump 2.0.0-alpha.2)");
@@ -362,7 +362,7 @@ fn setup() -> Result<()> {
 	Ok(())
 }
 
-/// Build sd-ios-core for iOS devices and simulator, creating an XCFramework
+/// Build wing-ios-core for iOS devices and simulator, creating an XCFramework
 ///
 /// This task:
 /// 1. Builds for aarch64-apple-ios (physical devices)
@@ -372,15 +372,15 @@ fn setup() -> Result<()> {
 /// 5. Copies the static libraries to the correct locations
 /// 6. Generates all required Info.plist files
 ///
-/// The resulting XCFramework is placed in `apps/ios/sd-ios-core/` where
+/// The resulting XCFramework is placed in `apps/ios/wing-ios-core/` where
 /// Xcode can automatically use it.
 fn build_ios() -> Result<()> {
 	println!("Building WingDrive v2 Core XCFramework for iOS...");
 	println!();
 
 	let project_root = find_workspace_root()?;
-	let ios_core_dir = project_root.join("apps/ios/sd-ios-core");
-	let framework_name = "sd_ios_core";
+	let ios_core_dir = project_root.join("apps/ios/wing-ios-core");
+	let framework_name = "wing_ios_core";
 
 	// Target triple and corresponding XCFramework architecture directory
 	let targets = [

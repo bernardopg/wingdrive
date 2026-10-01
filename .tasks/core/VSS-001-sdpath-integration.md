@@ -1,6 +1,6 @@
 ---
 id: VSS-001
-title: "SdPath::Sidecar Variant Integration"
+title: "WingPath::Sidecar Variant Integration"
 status: To Do
 assignee: jamiepine
 parent: CORE-008
@@ -13,9 +13,9 @@ related_tasks: [CORE-002, CORE-008]
 
 ## Description
 
-Integrate sidecars as a first-class `SdPath` variant, enabling unified addressing and standard file operations. This elevates sidecars from specialized infrastructure to full VDFS citizens.
+Integrate sidecars as a first-class `WingPath` variant, enabling unified addressing and standard file operations. This elevates sidecars from specialized infrastructure to full VDFS citizens.
 
-See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` Section "SdPath Integration" for complete specification.
+See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` Section "WingPath Integration" for complete specification.
 
 ## Implementation Files
 
@@ -27,9 +27,9 @@ See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` Section "SdPath Integr
 
 ## Tasks
 
-### Add SdPath Variant
-- [ ] Add `Sidecar { content_id, kind, variant, format }` to `SdPath` enum
-- [ ] Implement `SdPath::sidecar()` helper method
+### Add WingPath Variant
+- [ ] Add `Sidecar { content_id, kind, variant, format }` to `WingPath` enum
+- [ ] Implement `WingPath::sidecar()` helper method
 - [ ] Add `is_sidecar()` predicate method
 - [ ] Update `Clone`, `Debug`, `PartialEq` derives
 
@@ -61,7 +61,7 @@ See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` Section "SdPath Integr
 
 ## Acceptance Criteria
 
-- [x] `SdPath::Sidecar` variant exists with all required fields
+- [x] `WingPath::Sidecar` variant exists with all required fields
 - [x] Can parse `sidecar://uuid/kind/variant.ext` strings
 - [x] Display format matches specification
 - [x] Helper methods work ergonomically
@@ -75,7 +75,7 @@ See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` Section "SdPath Integr
 
 ```rust
 // Create sidecar path
-let thumb = SdPath::sidecar(
+let thumb = WingPath::sidecar(
     content_uuid,
     SidecarKind::Thumb,
     "grid@2x",
@@ -83,7 +83,7 @@ let thumb = SdPath::sidecar(
 );
 
 // Parse from URI
-let parsed = SdPath::from_uri("sidecar://550e8400.../thumbs/grid@2x.webp")?;
+let parsed = WingPath::from_uri("sidecar://550e8400.../thumbs/grid@2x.webp")?;
 assert_eq!(parsed, thumb);
 
 // Display as URI
@@ -139,14 +139,14 @@ pub enum SidecarResolveMode {
 
 ### Integration with Existing Code
 
-The `SidecarManager` service already exists with all the path computation logic. This task integrates it with the SdPath abstraction:
+The `SidecarManager` service already exists with all the path computation logic. This task integrates it with the WingPath abstraction:
 
 ```rust
 // Before: Direct SidecarManager usage
 let path = sidecar_manager.compute_path(uuid, kind, variant, format)?;
 
-// After: Through SdPath
-let sidecar = SdPath::sidecar(uuid, kind, variant, format);
+// After: Through WingPath
+let sidecar = WingPath::sidecar(uuid, kind, variant, format);
 let resolved = resolver.resolve(sidecar)?;
 ```
 

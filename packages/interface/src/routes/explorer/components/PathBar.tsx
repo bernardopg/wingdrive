@@ -6,7 +6,7 @@ import {
 	Folder
 } from '@phosphor-icons/react';
 import LaptopIcon from '@sd/assets/icons/Laptop.png';
-import type {Device, SdPath} from '@sd/ts-client';
+import type {Device, WingPath} from '@sd/ts-client';
 import {
 	getDeviceIcon,
 	useLibraryMutation,
@@ -22,17 +22,17 @@ import {sdPathToUri} from '../utils';
 import {useAddStorageDialog} from './AddStorageModal';
 
 interface PathBarProps {
-	path: SdPath;
+	path: WingPath;
 	devices: Map<string, Device>;
-	onNavigate: (path: SdPath) => void;
+	onNavigate: (path: WingPath) => void;
 }
 
 interface PathSegment {
 	name: string;
-	path: SdPath;
+	path: WingPath;
 }
 
-function getCurrentDirectoryName(sdPath: SdPath): string {
+function getCurrentDirectoryName(sdPath: WingPath): string {
 	if ('Physical' in sdPath) {
 		const parts = sdPath.Physical.path.split('/').filter(Boolean);
 		return parts[parts.length - 1] || '/';
@@ -50,7 +50,7 @@ function getCurrentDirectoryName(sdPath: SdPath): string {
 	return '';
 }
 
-function parsePathSegments(sdPath: SdPath): PathSegment[] {
+function parsePathSegments(sdPath: WingPath): PathSegment[] {
 	if ('Physical' in sdPath) {
 		const {device_slug, path} = sdPath.Physical;
 		const parts = path.split('/').filter(Boolean);
@@ -108,7 +108,7 @@ function parsePathSegments(sdPath: SdPath): PathSegment[] {
 	return [];
 }
 
-function IndexIndicator({path}: {path: SdPath}) {
+function IndexIndicator({path}: {path: WingPath}) {
 	const popover = usePopover();
 	const enableIndexing = useLibraryMutation('locations.enable_indexing');
 	const {clearSelection} = useSelection();
@@ -130,19 +130,19 @@ function IndexIndicator({path}: {path: SdPath}) {
 			// Find location with longest matching prefix
 			return locations
 				.filter((loc: any) => {
-					if (!loc.sd_path || !('Physical' in loc.sd_path))
+					if (!loc.wing_path || !('Physical' in loc.wing_path))
 						return false;
-					const locPath = loc.sd_path.Physical.path;
+					const locPath = loc.wing_path.Physical.path;
 					return pathStr.startsWith(locPath);
 				})
 				.sort((a: any, b: any) => {
 					const aPath =
-						'Physical' in a.sd_path!
-							? a.sd_path!.Physical.path
+						'Physical' in a.wing_path!
+							? a.wing_path!.Physical.path
 							: '';
 					const bPath =
-						'Physical' in b.sd_path!
-							? b.sd_path!.Physical.path
+						'Physical' in b.wing_path!
+							? b.wing_path!.Physical.path
 							: '';
 					return bPath.length - aPath.length;
 				})[0];
@@ -325,13 +325,13 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 
 		try {
 			if (editingAsUri) {
-				// Try to parse as SdPath JSON
-				const parsed = JSON.parse(trimmed) as SdPath;
+				// Try to parse as WingPath JSON
+				const parsed = JSON.parse(trimmed) as WingPath;
 				onNavigate(parsed);
 			} else {
 				// Parse as file path string
 				if ('Physical' in path) {
-					const newPath: SdPath = {
+					const newPath: WingPath = {
 						Physical: {
 							device_slug: path.Physical.device_slug,
 							path: trimmed.startsWith('/')
@@ -445,7 +445,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 						)}
 						placeholder={
 							editingAsUri
-								? 'Enter SdPath JSON...'
+								? 'Enter WingPath JSON...'
 								: 'Enter path...'
 						}
 					/>

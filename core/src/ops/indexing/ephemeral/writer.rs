@@ -83,22 +83,22 @@ impl MemoryAdapter {
 		content_kind: crate::domain::ContentKind,
 	) {
 		use crate::device::get_current_device_slug;
-		use crate::domain::addressing::SdPath;
+		use crate::domain::addressing::WingPath;
 		use crate::domain::file::File;
 		use crate::infra::event::{Event, ResourceMetadata};
 
 		let device_slug = get_current_device_slug();
 
-		let sd_path = SdPath::Physical {
+		let wing_path = WingPath::Physical {
 			device_slug: device_slug.clone(),
 			path: path.to_path_buf(),
 		};
 
-		let mut file = File::from_ephemeral(uuid, metadata, sd_path);
+		let mut file = File::from_ephemeral(uuid, metadata, wing_path);
 		file.content_kind = content_kind;
 
-		let parent_path = path.parent().map(|p| SdPath::Physical {
-			device_slug: file.sd_path.device_slug().unwrap_or("local").to_string(),
+		let parent_path = path.parent().map(|p| WingPath::Physical {
+			device_slug: file.wing_path.device_slug().unwrap_or("local").to_string(),
 			path: p.to_path_buf(),
 		});
 
@@ -109,7 +109,7 @@ impl MemoryAdapter {
 				resource_type: "file".to_string(),
 				resource: resource_json,
 				metadata: Some(ResourceMetadata {
-					no_merge_fields: vec!["sd_path".to_string()],
+					no_merge_fields: vec!["wing_path".to_string()],
 					alternate_ids: vec![],
 					affected_paths,
 				}),

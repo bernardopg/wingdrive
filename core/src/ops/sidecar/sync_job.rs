@@ -1,5 +1,5 @@
 use crate::{
-	domain::{addressing::SdPath, ResourceManager, SdPathBatch},
+	domain::{addressing::WingPath, ResourceManager, WingPathBatch},
 	infra::{
 		db::entities::sidecar_availability,
 		job::prelude::*,
@@ -153,7 +153,7 @@ impl JobHandler for SidecarSyncJob {
 			}
 
 			// Build source and destination paths
-			let source = SdPath::Sidecar {
+			let source = WingPath::Sidecar {
 				content_id: plan.sidecar.content_uuid,
 				kind: plan.sidecar.kind.clone(),
 				variant: plan.sidecar.variant.clone(),
@@ -169,7 +169,7 @@ impl JobHandler for SidecarSyncJob {
 				plan.sidecar.format
 			);
 
-			let destination = SdPath::Physical {
+			let destination = WingPath::Physical {
 				device_slug: get_current_device_slug(),
 				path: destination_base.join(&filename),
 			};

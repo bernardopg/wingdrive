@@ -9,7 +9,7 @@ use helpers::*;
 use tempfile::TempDir;
 use tokio::{fs, time::Duration};
 use wing_core::{
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	location::IndexMode,
 	ops::files::copy::{
 		input::CopyMethod,
@@ -64,11 +64,11 @@ async fn test_copy_with_persistent_index() -> anyhow::Result<()> {
 	tokio::time::sleep(Duration::from_millis(100)).await;
 
 	let copy_job = FileCopyJob::new(
-		SdPathBatch::new(vec![
-			SdPath::local(source_dir.join("file1.txt")),
-			SdPath::local(source_dir.join("file2.txt")),
+		WingPathBatch::new(vec![
+			WingPath::local(source_dir.join("file1.txt")),
+			WingPath::local(source_dir.join("file2.txt")),
 		]),
-		SdPath::local(dest_dir.clone()),
+		WingPath::local(dest_dir.clone()),
 	)
 	.with_options(CopyOptions {
 		conflict_resolution: None,
@@ -138,13 +138,13 @@ async fn test_copy_with_ephemeral_index() -> anyhow::Result<()> {
 
 	// Index the destination directory in ephemeral mode first
 	use wing_core::{
-		domain::addressing::SdPath,
+		domain::addressing::WingPath,
 		ops::indexing::{IndexScope, IndexerJob, IndexerJobConfig},
 	};
 
-	let dest_sd_path = SdPath::local(dest_dir.clone());
+	let dest_wing_path = WingPath::local(dest_dir.clone());
 	let indexer_config =
-		IndexerJobConfig::ephemeral_browse(dest_sd_path, IndexScope::Current, false);
+		IndexerJobConfig::ephemeral_browse(dest_wing_path, IndexScope::Current, false);
 	let indexer_job = IndexerJob::new(indexer_config);
 
 	tracing::info!("Indexing destination directory (ephemeral)");
@@ -179,11 +179,11 @@ async fn test_copy_with_ephemeral_index() -> anyhow::Result<()> {
 	tokio::time::sleep(Duration::from_millis(100)).await;
 
 	let copy_job = FileCopyJob::new(
-		SdPathBatch::new(vec![
-			SdPath::local(source_dir.join("file1.txt")),
-			SdPath::local(source_dir.join("file2.txt")),
+		WingPathBatch::new(vec![
+			WingPath::local(source_dir.join("file1.txt")),
+			WingPath::local(source_dir.join("file2.txt")),
 		]),
-		SdPath::local(dest_dir.clone()),
+		WingPath::local(dest_dir.clone()),
 	)
 	.with_options(CopyOptions {
 		conflict_resolution: None,
@@ -252,11 +252,11 @@ async fn test_copy_action_construction() {
 		.unwrap();
 
 	let copy_job = FileCopyJob::new(
-		SdPathBatch::new(vec![
-			SdPath::local(source_file1.clone()),
-			SdPath::local(source_file2.clone()),
+		WingPathBatch::new(vec![
+			WingPath::local(source_file1.clone()),
+			WingPath::local(source_file2.clone()),
 		]),
-		SdPath::local(dest_dir.clone()),
+		WingPath::local(dest_dir.clone()),
 	)
 	.with_options(CopyOptions {
 		conflict_resolution: None,
@@ -285,8 +285,8 @@ async fn test_move_action_construction() {
 	create_test_file(&source_file, "Move me!").await.unwrap();
 
 	let move_job = FileCopyJob::new_move(
-		SdPathBatch::new(vec![SdPath::local(source_file.clone())]),
-		SdPath::local(dest_file.clone()),
+		WingPathBatch::new(vec![WingPath::local(source_file.clone())]),
+		WingPath::local(dest_file.clone()),
 		MoveMode::Move,
 	);
 

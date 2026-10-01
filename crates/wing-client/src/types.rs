@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 // Re-export types from wing-core
-pub use wing_core::domain::addressing::SdPath;
+pub use wing_core::domain::addressing::WingPath;
 pub use wing_core::domain::content_identity::ContentIdentity;
 pub use wing_core::domain::file::{File, Sidecar};
 

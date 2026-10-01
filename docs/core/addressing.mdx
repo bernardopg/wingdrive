@@ -141,7 +141,7 @@ WingDrive maintains user-friendly URIs in the display layer while using efficien
 
 ```rust
 // Display path to user
-let display_uri = sd_path.display_with_context(&context).await;
+let display_uri = wing_path.display_with_context(&context).await;
 println!("{}", display_uri);
 // Output: "s3://media-bucket/videos/demo.mp4"
 ```
@@ -149,7 +149,7 @@ println!("{}", display_uri);
 ### Internal Representation
 
 ```rust
-pub enum SdPath {
+pub enum WingPath {
     Physical {
         device_slug: String,       // URL-safe device identifier
         path: PathBuf,
@@ -175,7 +175,7 @@ Parse Scheme:   "s3" → CloudServiceType::S3
 Parse Identity: identifier = "my-bucket"
                 path = "file.jpg"
                      ↓
-Create SdPath:  SdPath::Cloud { service: S3, identifier: "my-bucket", path: "file.jpg" }
+Create WingPath:  WingPath::Cloud { service: S3, identifier: "my-bucket", path: "file.jpg" }
                      ↓
 Find Volume:    VolumeManager::find_cloud_volume(S3, "my-bucket")
                      ↓
@@ -184,7 +184,7 @@ Mount Cache:    "s3://my-bucket" → VolumeFingerprint (O(1) lookup)
 Operations:     Use volume backend for I/O operations
 ```
 
-The service and identifier are stored directly in the `SdPath`, making cloud paths self-contained. The VolumeManager maintains a mount point cache for fast volume lookups.
+The service and identifier are stored directly in the `WingPath`, making cloud paths self-contained. The VolumeManager maintains a mount point cache for fast volume lookups.
 
 ## Cloud Service Schemes
 
@@ -209,22 +209,22 @@ S3-compatible services (MinIO, Cloudflare R2, Wasabi, etc.) use the `s3://` sche
 ### From User Input
 
 ```rust
-use wing_core::domain::addressing::SdPath;
+use wing_core::domain::addressing::WingPath;
 
 // Parse cloud URI
-let path = SdPath::from_uri_with_context(
+let path = WingPath::from_uri_with_context(
     "s3://my-bucket/photos/vacation.jpg",
     &context
 ).await?;
 
 // Parse local URI
-let path = SdPath::from_uri_with_context(
+let path = WingPath::from_uri_with_context(
     "local://jamies-macbook/Users/james/file.txt",
     &context
 ).await?;
 
 // Parse content URI
-let path = SdPath::from_uri_with_context(
+let path = WingPath::from_uri_with_context(
     "content://550e8400-e29b-41d4-a716-446655440000",
     &context
 ).await?;
@@ -233,15 +233,15 @@ let path = SdPath::from_uri_with_context(
 ### Error Handling
 
 ```rust
-match SdPath::from_uri_with_context(uri, &context).await {
+match WingPath::from_uri_with_context(uri, &context).await {
     Ok(path) => { /* Use path */ }
-    Err(SdPathParseError::UnknownScheme) => {
+    Err(WingPathParseError::UnknownScheme) => {
         // Invalid URI scheme
     }
-    Err(SdPathParseError::VolumeNotFound) => {
+    Err(WingPathParseError::VolumeNotFound) => {
         // Cloud volume doesn't exist or isn't added
     }
-    Err(SdPathParseError::DeviceNotFound) => {
+    Err(WingPathParseError::DeviceNotFound) => {
         // Device slug not found
     }
     Err(_) => {
@@ -278,12 +278,12 @@ sd sync local://macbook/Photos/ s3://backup/photos/
 
 ```rust
 // Copy from cloud to local
-let src = SdPath::from_uri_with_context(
+let src = WingPath::from_uri_with_context(
     "gdrive://Work/presentation.pptx",
     &context
 ).await?;
 
-let dst = SdPath::from_uri_with_context(
+let dst = WingPath::from_uri_with_context(
     "local://macbook/Desktop/",
     &context
 ).await?;
@@ -295,7 +295,7 @@ copy_action.execute(src, dst).await?;
 
 ```rust
 // Get user-friendly URI for display
-let uri = sd_path.display_with_context(&context).await;
+let uri = wing_path.display_with_context(&context).await;
 println!("File location: {}", uri);
 
 // Examples:
@@ -308,20 +308,20 @@ println!("File location: {}", uri);
 
 ```rust
 // Create cloud path
-let path = SdPath::Cloud {
+let path = WingPath::Cloud {
     service: CloudServiceType::S3,
     identifier: "my-bucket".to_string(),
     path: "photos/vacation.jpg".to_string(),
 };
 
 // Create local path
-let path = SdPath::Physical {
+let path = WingPath::Physical {
     device_slug: "jamies-macbook".to_string(),
     path: PathBuf::from("/Users/james/file.txt"),
 };
 
 // Create content path
-let path = SdPath::Content {
+let path = WingPath::Content {
     content_id: Uuid::new_v4(),
 };
 ```
@@ -388,7 +388,7 @@ Content URIs enable operations without knowing physical location:
 
 ```rust
 // Reference by content, not location
-let file = SdPath::Content { content_id };
+let file = WingPath::Content { content_id };
 
 // WingDrive finds the best location:
 // - Fastest device (SSD vs HDD)
@@ -422,7 +422,7 @@ If two devices would generate the same slug, the second device must be renamed. 
 
 ### URI Display
 
-Use `display()` to convert SdPath to a user-facing URI string. The method generates the appropriate format automatically based on the path type.
+Use `display()` to convert WingPath to a user-facing URI string. The method generates the appropriate format automatically based on the path type.
 
 ### URI Parsing
 
@@ -453,4 +453,4 @@ This enables multiple configurations for the same cloud resource.
 - [Devices](/docs/core/devices) - Device management and pairing
 - [Volumes](/docs/core/volumes) - Volume system and cloud integration
 - [Cloud Integration](/docs/core/cloud-integration) - Cloud storage details
-- [Data Model](/docs/core/data-model) - SdPath internal representation
+- [Data Model](/docs/core/data-model) - WingPath internal representation

@@ -3,7 +3,7 @@
 use super::{input::IndexVerifyInput, output::*};
 use crate::{
 	context::CoreContext,
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::{
 		action::{error::ActionError, LibraryAction},
 		db::entities,
@@ -111,7 +111,7 @@ impl IndexVerifyAction {
 		// Create indexer job config for ephemeral scanning
 		let config = IndexerJobConfig {
 			location_id: None, // Ephemeral - no location
-			path: SdPath::local(path),
+			path: WingPath::local(path),
 			mode: IndexMode::Deep, // Full metadata extraction including inodes
 			scope: IndexScope::Recursive,
 			persistence: IndexPersistence::Ephemeral,

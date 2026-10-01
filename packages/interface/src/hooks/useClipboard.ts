@@ -1,17 +1,17 @@
 import { create } from "zustand";
-import type { SdPath } from "@sd/ts-client";
+import type { WingPath } from "@sd/ts-client";
 
 export interface ClipboardState {
 	operation: "copy" | "cut" | null;
-	files: SdPath[];
-	sourcePath: SdPath | null;
+	files: WingPath[];
+	sourcePath: WingPath | null;
 }
 
 interface ClipboardStore extends ClipboardState {
 	setClipboard: (
 		operation: "copy" | "cut",
-		files: SdPath[],
-		sourcePath: SdPath | null,
+		files: WingPath[],
+		sourcePath: WingPath | null,
 	) => void;
 	clearClipboard: () => void;
 	hasClipboard: () => boolean;
@@ -51,12 +51,12 @@ export function useClipboard() {
 		hasClipboard: store.hasClipboard,
 
 		// Helper to copy files
-		copyFiles: (files: SdPath[], sourcePath: SdPath | null = null) => {
+		copyFiles: (files: WingPath[], sourcePath: WingPath | null = null) => {
 			store.setClipboard("copy", files, sourcePath);
 		},
 
 		// Helper to cut files
-		cutFiles: (files: SdPath[], sourcePath: SdPath | null = null) => {
+		cutFiles: (files: WingPath[], sourcePath: WingPath | null = null) => {
 			store.setClipboard("cut", files, sourcePath);
 		},
 	};

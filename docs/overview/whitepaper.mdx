@@ -27,7 +27,7 @@ The whitepaper presents the complete architecture of WingDrive V2, a local-first
 
 Key architectural pillars covered in detail include:
 
-- **A Virtual Distributed File System (VDFS)**: A unified, virtual layer that provides a single view of all your data across every device and cloud, while the files themselves stay in their original locations. This is made possible by a universal addressing system called **`SdPath`**.
+- **A Virtual Distributed File System (VDFS)**: A unified, virtual layer that provides a single view of all your data across every device and cloud, while the files themselves stay in their original locations. This is made possible by a universal addressing system called **`WingPath`**.
 - **An AI-Native Architecture**: The system is designed from the ground up for intelligent management, enabling natural language commands ("find my tax documents from last year") and proactive assistance from a data guardian that respects user privacy.
 - **A Transactional Action System**: All file operations are treated as transactions that can be previewed before they are committed, preventing conflicts and guaranteeing completion even across offline devices.
 - **Domain-Separated Library Sync**: A novel synchronization method that maintains consistency across devices without the complexity of distributed consensus algorithms like CRDTs.
@@ -44,7 +44,7 @@ This whitepaper is more than a technical document; it's an invitation to our com
 
 - **Understand the Vision**: Before diving into the code, read the whitepaper to understand the "why" behind the architecture. It provides the context for our design choices and the problems we are solving.
 - **Guide Your Contributions**: Use this document alongside the **Roadmap** as a guide. The architecture detailed here is the blueprint for all new features. Whether you're fixing a bug or building a new operation, it should align with these core principles.
-- **Build with Confidence**: The paper explains the core abstractions like `SdPath`, the `ActionManager`, and the `JobManager`. Understanding these will help you build new features that integrate seamlessly and reliably with the rest of the system.
+- **Build with Confidence**: The paper explains the core abstractions like `WingPath`, the `ActionManager`, and the `JobManager`. Understanding these will help you build new features that integrate seamlessly and reliably with the rest of the system.
 
 #### **For System Architects & Designers:**
 

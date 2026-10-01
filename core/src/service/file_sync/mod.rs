@@ -1,6 +1,6 @@
 use crate::{
 	context::CoreContext,
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	infra::{
 		db::entities::{sync_conduit, sync_generation},
 		job::types::JobId,
@@ -194,8 +194,8 @@ impl FileSyncService {
 			// In production, this should be more robust
 			let device_slug = crate::device::get_current_device_slug();
 
-			// Create SdPaths from entries
-			let source_paths: Vec<SdPath> = operations
+			// Create WingPaths from entries
+			let source_paths: Vec<WingPath> = operations
 				.to_copy
 				.iter()
 				.map(|e| e.to_sdpath(device_slug.clone()))
@@ -209,7 +209,7 @@ impl FileSyncService {
 				return Err(anyhow::anyhow!("No paths to copy"));
 			};
 
-			let mut job = FileCopyJob::new(SdPathBatch::new(source_paths), destination);
+			let mut job = FileCopyJob::new(WingPathBatch::new(source_paths), destination);
 			job = job.with_options(CopyOptions {
 				overwrite: true, // File sync should overwrite
 				..Default::default()
@@ -230,13 +230,13 @@ impl FileSyncService {
 
 			let device_slug = crate::device::get_current_device_slug();
 
-			let paths: Vec<SdPath> = operations
+			let paths: Vec<WingPath> = operations
 				.to_delete
 				.iter()
 				.map(|e| e.to_sdpath(device_slug.clone()))
 				.collect();
 
-			let mut job = DeleteJob::new(SdPathBatch::new(paths), DeleteMode::Permanent);
+			let mut job = DeleteJob::new(WingPathBatch::new(paths), DeleteMode::Permanent);
 			job.confirm_permanent = true; // File sync requires confirmation
 
 			let handle = jobs.dispatch(job).await?;

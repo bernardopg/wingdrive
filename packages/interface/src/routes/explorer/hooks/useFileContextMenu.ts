@@ -90,9 +90,9 @@ export function useFileContextMenu({
 		return targets
 			.filter(
 				(f): f is File =>
-					f != null && f.sd_path != null && 'Physical' in f.sd_path
+					f != null && f.wing_path != null && 'Physical' in f.wing_path
 			)
-			.map((f) => (f.sd_path as any).Physical.path);
+			.map((f) => (f.wing_path as any).Physical.path);
 	};
 
 	const physicalPaths = getPhysicalPaths();
@@ -133,9 +133,9 @@ export function useFileContextMenu({
 				onClick: async () => {
 					if (!file) return;
 					if (file.kind === 'Directory') {
-						navigateToPath(file.sd_path);
-					} else if ('Physical' in file.sd_path) {
-						const physicalPath = (file.sd_path as any).Physical
+						navigateToPath(file.wing_path);
+					} else if ('Physical' in file.wing_path) {
+						const physicalPath = (file.wing_path as any).Physical
 							.path;
 						await openWithDefault(physicalPath);
 					}
@@ -152,7 +152,7 @@ export function useFileContextMenu({
 				condition: () =>
 					!!file &&
 					file.kind === 'File' &&
-					'Physical' in file.sd_path &&
+					'Physical' in file.wing_path &&
 					apps.length > 0,
 				submenu: apps.map((app) => ({
 					label: app.name,
@@ -160,8 +160,8 @@ export function useFileContextMenu({
 						if (!file) return;
 						if (selected && selectedFiles.length > 1) {
 							await openMultipleWithApp(physicalPaths, app.id);
-						} else if ('Physical' in file.sd_path) {
-							const physicalPath = (file.sd_path as any).Physical
+						} else if ('Physical' in file.wing_path) {
+							const physicalPath = (file.wing_path as any).Physical
 								.path;
 							await openWithApp(physicalPath, app.id);
 						}
@@ -173,9 +173,9 @@ export function useFileContextMenu({
 				label: 'Show in Finder',
 				onClick: async () => {
 					if (!file) return;
-					// Extract the physical path from SdPath
-					if ('Physical' in file.sd_path) {
-						const physicalPath = file.sd_path.Physical.path;
+					// Extract the physical path from WingPath
+					if ('Physical' in file.wing_path) {
+						const physicalPath = file.wing_path.Physical.path;
 						if (platform.revealFile) {
 							try {
 								await platform.revealFile(physicalPath);
@@ -195,7 +195,7 @@ export function useFileContextMenu({
 				keybindId: 'explorer.revealInNativeExplorer',
 				condition: () =>
 					!!file &&
-					'Physical' in file.sd_path &&
+					'Physical' in file.wing_path &&
 					!!platform.revealFile
 			},
 			{
@@ -268,7 +268,7 @@ export function useFileContextMenu({
 						const result = await createFolder.mutateAsync({
 							parent: currentPath,
 							name: 'New Folder',
-							items: targets.map((f) => f.sd_path)
+							items: targets.map((f) => f.wing_path)
 						});
 						console.log('Created folder with items:', result);
 					} catch (err) {
@@ -297,7 +297,7 @@ export function useFileContextMenu({
 						console.warn('Cannot copy virtual files');
 						return;
 					}
-					const sdPaths = targets.map((f) => f.sd_path);
+					const sdPaths = targets.map((f) => f.wing_path);
 					clipboard.copyFiles(sdPaths, currentPath);
 				},
 				keybindId: 'explorer.copy',
@@ -315,7 +315,7 @@ export function useFileContextMenu({
 						console.warn('Cannot cut virtual files');
 						return;
 					}
-					const sdPaths = targets.map((f) => f.sd_path);
+					const sdPaths = targets.map((f) => f.wing_path);
 					clipboard.cutFiles(sdPaths, currentPath);
 				},
 				keybindId: 'explorer.cut',
@@ -340,7 +340,7 @@ export function useFileContextMenu({
 					);
 					console.log('Operation:', operation);
 					console.log('Destination:', currentPath);
-					console.log('Source files (SdPath objects):');
+					console.log('Source files (WingPath objects):');
 					clipboard.files.forEach((file, index) => {
 						console.log(
 							`  [${index}]:`,

@@ -10,7 +10,7 @@ use super::{
 		RemoteTransferStrategy,
 	},
 };
-use crate::{domain::addressing::SdPath, volume::VolumeManager};
+use crate::{domain::addressing::WingPath, volume::VolumeManager};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::sync::Arc;
@@ -38,8 +38,8 @@ pub struct CopyStrategyRouter;
 impl CopyStrategyRouter {
 	/// Selects the optimal copy strategy based on source, destination, and volume info
 	pub async fn select_strategy(
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		is_move: bool,
 		copy_method: &CopyMethod,
 		volume_manager: Option<&VolumeManager>,
@@ -135,8 +135,8 @@ impl CopyStrategyRouter {
 	/// Select strategy with full metadata about the operation.
 	/// Returns both the strategy and metadata for UI display.
 	pub async fn select_strategy_with_metadata(
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		is_move: bool,
 		copy_method: &CopyMethod,
 		volume_manager: Option<&VolumeManager>,
@@ -326,8 +326,8 @@ impl CopyStrategyRouter {
 
 	/// Provides a human-readable description of the selected strategy
 	pub async fn describe_strategy(
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		is_move: bool,
 		copy_method: &CopyMethod,
 		volume_manager: Option<&VolumeManager>,
@@ -424,8 +424,8 @@ impl CopyStrategyRouter {
 
 	/// Estimates the performance characteristics of the selected strategy
 	pub async fn estimate_performance(
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		is_move: bool,
 		copy_method: &CopyMethod,
 		volume_manager: Option<&VolumeManager>,

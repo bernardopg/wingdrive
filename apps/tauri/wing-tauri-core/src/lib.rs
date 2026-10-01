@@ -38,7 +38,7 @@ pub struct JsonRpcError {
 
 pub mod commands {
 	// Tauri command implementations will go here
-	// Following the pattern from sd-ios-core but for Tauri's IPC
+	// Following the pattern from wing-ios-core but for Tauri's IPC
 }
 
 /// Resolves the WingDrive data directory with legacy-install adoption.

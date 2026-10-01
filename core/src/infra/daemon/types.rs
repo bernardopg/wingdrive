@@ -45,7 +45,7 @@ pub struct EventFilter {
 	/// Filter by resource type (e.g., "file", "location")
 	pub resource_type: Option<String>,
 	/// Filter by path scope (only for resource events)
-	pub path_scope: Option<crate::domain::SdPath>,
+	pub path_scope: Option<crate::domain::WingPath>,
 	/// Whether to include descendants (recursive) or only exact path matches (direct children)
 	/// Default: false (exact match only for directory listings)
 	pub include_descendants: Option<bool>,

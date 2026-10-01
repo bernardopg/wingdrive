@@ -4,7 +4,7 @@ use super::input::CreateFolderInput;
 use super::output::CreateFolderOutput;
 use crate::{
 	context::CoreContext,
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	infra::action::{error::ActionError, LibraryAction, ValidationResult},
 	ops::files::{
 		copy::job::{FileCopyJob, MoveMode},
@@ -20,16 +20,16 @@ use tracing::debug;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateFolderAction {
 	/// Parent directory where the folder will be created
-	pub parent: SdPath,
+	pub parent: WingPath,
 	/// Name for the new folder
 	pub name: String,
 	/// Optional items to move into the new folder after creation
-	pub items: Vec<SdPath>,
+	pub items: Vec<WingPath>,
 }
 
 impl CreateFolderAction {
 	/// Create a new folder action
-	pub fn new(parent: SdPath, name: impl Into<String>) -> Self {
+	pub fn new(parent: WingPath, name: impl Into<String>) -> Self {
 		Self {
 			parent,
 			name: name.into(),
@@ -38,7 +38,7 @@ impl CreateFolderAction {
 	}
 
 	/// Create a folder action with items to move
-	pub fn with_items(parent: SdPath, name: impl Into<String>, items: Vec<SdPath>) -> Self {
+	pub fn with_items(parent: WingPath, name: impl Into<String>, items: Vec<WingPath>) -> Self {
 		Self {
 			parent,
 			name: name.into(),
@@ -72,14 +72,14 @@ impl LibraryAction for CreateFolderAction {
 
 		// Validate parent is a physical or cloud path (not Content/Sidecar)
 		match &self.parent {
-			SdPath::Physical { .. } | SdPath::Cloud { .. } => {}
-			SdPath::Content { .. } => {
+			WingPath::Physical { .. } | WingPath::Cloud { .. } => {}
+			WingPath::Content { .. } => {
 				return Err(ActionError::Validation {
 					field: "parent".to_string(),
 					message: "Cannot create folders in content-addressed storage".to_string(),
 				});
 			}
-			SdPath::Sidecar { .. } => {
+			WingPath::Sidecar { .. } => {
 				return Err(ActionError::Validation {
 					field: "parent".to_string(),
 					message: "Cannot create folders in sidecar storage".to_string(),
@@ -106,14 +106,14 @@ impl LibraryAction for CreateFolderAction {
 
 		// Create the directory based on path type
 		match &folder_path {
-			SdPath::Physical { path, .. } => {
+			WingPath::Physical { path, .. } => {
 				// Use LocalBackend to create the directory
 				let backend = LocalBackend::new(path.parent().unwrap_or(path));
 				backend.create_directory(path, false).await.map_err(|e| {
 					ActionError::Internal(format!("Failed to create directory: {}", e))
 				})?;
 			}
-			SdPath::Cloud { .. } => {
+			WingPath::Cloud { .. } => {
 				// Cloud folder creation would use CloudBackend
 				// For now, return an error as cloud support needs more infrastructure
 				return Err(ActionError::Internal(
@@ -136,7 +136,7 @@ impl LibraryAction for CreateFolderAction {
 			);
 
 			let job = FileCopyJob::new_move(
-				SdPathBatch::new(self.items),
+				WingPathBatch::new(self.items),
 				folder_path.clone(),
 				MoveMode::Move,
 			);
@@ -171,7 +171,7 @@ mod tests {
 
 	#[test]
 	fn test_action_creation() {
-		let parent = SdPath::local(PathBuf::from("/test"));
+		let parent = WingPath::local(PathBuf::from("/test"));
 		let action = CreateFolderAction::new(parent, "new_folder");
 		assert_eq!(action.name, "new_folder");
 		assert!(action.items.is_empty());
@@ -179,10 +179,10 @@ mod tests {
 
 	#[test]
 	fn test_action_with_items() {
-		let parent = SdPath::local(PathBuf::from("/test"));
+		let parent = WingPath::local(PathBuf::from("/test"));
 		let items = vec![
-			SdPath::local(PathBuf::from("/test/file1.txt")),
-			SdPath::local(PathBuf::from("/test/file2.txt")),
+			WingPath::local(PathBuf::from("/test/file1.txt")),
+			WingPath::local(PathBuf::from("/test/file2.txt")),
 		];
 		let action = CreateFolderAction::with_items(parent, "new_folder", items);
 		assert_eq!(action.name, "new_folder");

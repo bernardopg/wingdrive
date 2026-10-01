@@ -1,5 +1,5 @@
 use crate::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::db::entities::{entry, sync_conduit, sync_generation},
 };
 use anyhow::Result;
@@ -22,9 +22,9 @@ pub struct EntryWithPath {
 }
 
 impl EntryWithPath {
-	/// Convert to SdPath for job operations
-	pub fn to_sdpath(&self, device_slug: String) -> SdPath {
-		SdPath::physical(device_slug, self.full_path.clone())
+	/// Convert to WingPath for job operations
+	pub fn to_sdpath(&self, device_slug: String) -> WingPath {
+		WingPath::physical(device_slug, self.full_path.clone())
 	}
 }
 

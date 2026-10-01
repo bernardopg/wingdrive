@@ -1,16 +1,16 @@
-import type {SdPath} from '@sd/ts-client';
+import type {WingPath} from '@sd/ts-client';
 import {describe, expect, it} from 'bun:test';
 import {resolveExternalDrop} from './resolveExternalDrop';
 
-const physicalFolder = (path: string): SdPath => ({
+const physicalFolder = (path: string): WingPath => ({
 	Physical: {device_slug: 'local', path}
 });
 
-const remoteDestination = (path: string): SdPath => ({
+const remoteDestination = (path: string): WingPath => ({
 	Physical: {device_slug: 'other-device', path}
 });
 
-const cloudDestination = (path: string): SdPath => ({
+const cloudDestination = (path: string): WingPath => ({
 	Cloud: {
 		service: 'S3',
 		identifier: 'bucket',
@@ -66,7 +66,7 @@ describe('resolveExternalDrop', () => {
 			cloudDestination('reports'),
 			{
 				Content: {content_id: '00000000-0000-0000-0000-000000000000'}
-			} satisfies SdPath
+			} satisfies WingPath
 		]) {
 			const decision = resolveExternalDrop(destination, ['/tmp/a.png']);
 

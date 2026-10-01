@@ -12,7 +12,7 @@
 5. Run the GPUI app with that port:
 
 ```bash
-SD_HTTP_URL="http://127.0.0.1:56851" ./run.sh
+WING_HTTP_URL="http://127.0.0.1:56851" ./run.sh
 ```
 
 **Why This Happens:**

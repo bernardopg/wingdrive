@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 pub struct SpacedropSendAction {
 	pub device_id: uuid::Uuid,
-	pub paths: Vec<crate::domain::addressing::SdPath>,
+	pub paths: Vec<crate::domain::addressing::WingPath>,
 	pub sender: Option<String>,
 }
 

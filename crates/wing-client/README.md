@@ -13,7 +13,7 @@ Rust client library for connecting to the WingDrive daemon.
 ## Usage
 
 ```rust
-use wing_client::{SpacedriveClient, SdPath};
+use wing_client::{SpacedriveClient, WingPath};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -28,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Query media files
     let files = client.media_listing(
-        SdPath::Physical {
+        WingPath::Physical {
             device_id: "local".to_string(),
             path: "/Users/you/Photos".to_string(),
         },
@@ -58,9 +58,9 @@ async fn main() -> anyhow::Result<()> {
 Run the test connection example:
 
 ```bash
-export SD_LIBRARY_ID="your-library-uuid"
-export SD_SOCKET_ADDR="$HOME127.0.0.1:6969"  # optional
-export SD_HTTP_URL="http://127.0.0.1:54321"            # optional
+export WING_LIBRARY_ID="your-library-uuid"
+export WING_SOCKET_ADDR="$HOME127.0.0.1:6969"  # optional
+export WING_HTTP_URL="http://127.0.0.1:54321"            # optional
 
 cargo run --example test_connection
 ```
@@ -81,6 +81,6 @@ cargo run --example test_connection
 - `File` - File metadata with content identity and sidecars
 - `ContentIdentity` - Content hash and UUID for deduplication
 - `Sidecar` - Generated derivatives (thumbnails, proxies, etc.)
-- `SdPath` - Location-independent file reference
+- `WingPath` - Location-independent file reference
 - `ImageMediaData` - Image-specific metadata (dimensions, date taken)
 - `VideoMediaData` - Video-specific metadata (dimensions, duration)

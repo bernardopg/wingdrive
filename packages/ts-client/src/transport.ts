@@ -4,14 +4,14 @@
  */
 
 import { DEFAULT_EVENT_SUBSCRIPTION } from "./event-filter";
-import type { SdPath } from "./generated/types";
+import type { WingPath } from "./generated/types";
 
 export interface EventFilter {
 	library_id?: string;
 	job_id?: string;
 	device_id?: string;
 	resource_type?: string;
-	path_scope?: SdPath;
+	path_scope?: WingPath;
 	include_descendants?: boolean;
 }
 

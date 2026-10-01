@@ -16,7 +16,7 @@ use helpers::*;
 use std::path::PathBuf;
 use tokio::time::Duration;
 use wing_core::{
-	domain::{addressing::SdPath, ContentKind},
+	domain::{addressing::WingPath, ContentKind},
 	infra::{api::SessionContext, query::LibraryQuery},
 	location::IndexMode,
 	ops::{
@@ -53,10 +53,10 @@ async fn index_ephemeral(
 	path: PathBuf,
 	scope: IndexScope,
 ) -> anyhow::Result<()> {
-	let sd_path = SdPath::local(path.clone());
+	let wing_path = WingPath::local(path.clone());
 	let global_index = harness.core.context.ephemeral_cache().get_global_index();
 
-	let indexer_config = IndexerJobConfig::ephemeral_browse(sd_path, scope, false);
+	let indexer_config = IndexerJobConfig::ephemeral_browse(wing_path, scope, false);
 	let mut indexer_job = IndexerJob::new(indexer_config);
 	indexer_job.set_ephemeral_index(global_index);
 
@@ -325,7 +325,7 @@ async fn test_persistent_search_by_path() -> anyhow::Result<()> {
 	// Search within folder_a only
 	let folder_a_path = test_location.path().join("folder_a");
 	let device_slug = wing_core::device::get_current_device_slug();
-	let folder_a_sd = SdPath::Physical {
+	let folder_a_sd = WingPath::Physical {
 		device_slug,
 		path: folder_a_path.to_path_buf(),
 	};
@@ -410,7 +410,7 @@ async fn test_ephemeral_search_basic() -> anyhow::Result<()> {
 	let search_input = FileSearchInput {
 		query: "document".to_string(),
 		scope: SearchScope::Path {
-			path: SdPath::local(search_dir.clone()),
+			path: WingPath::local(search_dir.clone()),
 		},
 		mode: SearchMode::Normal,
 		filters: SearchFilters::default(),
@@ -487,7 +487,7 @@ async fn test_ephemeral_search_with_filters() -> anyhow::Result<()> {
 	let txt_search = FileSearchInput {
 		query: "a".to_string(), // Broad query to test filtering
 		scope: SearchScope::Path {
-			path: SdPath::local(search_dir.clone()),
+			path: WingPath::local(search_dir.clone()),
 		},
 		mode: SearchMode::Normal,
 		filters: SearchFilters {
@@ -518,7 +518,7 @@ async fn test_ephemeral_search_with_filters() -> anyhow::Result<()> {
 	let size_search = FileSearchInput {
 		query: "a".to_string(), // Broad query to test filtering
 		scope: SearchScope::Path {
-			path: SdPath::local(search_dir.clone()),
+			path: WingPath::local(search_dir.clone()),
 		},
 		mode: SearchMode::Normal,
 		filters: SearchFilters {
@@ -549,7 +549,7 @@ async fn test_ephemeral_search_with_filters() -> anyhow::Result<()> {
 	let code_search = FileSearchInput {
 		query: "a".to_string(), // Broad query to test filtering
 		scope: SearchScope::Path {
-			path: SdPath::local(search_dir.clone()),
+			path: WingPath::local(search_dir.clone()),
 		},
 		mode: SearchMode::Normal,
 		filters: SearchFilters {
@@ -608,7 +608,7 @@ async fn test_ephemeral_search_date_filter() -> anyhow::Result<()> {
 	let date_search = FileSearchInput {
 		query: "a".to_string(), // Broad query to test filtering
 		scope: SearchScope::Path {
-			path: SdPath::local(search_dir.clone()),
+			path: WingPath::local(search_dir.clone()),
 		},
 		mode: SearchMode::Normal,
 		filters: SearchFilters {
@@ -668,7 +668,7 @@ async fn test_ephemeral_search_substring_matching() -> anyhow::Result<()> {
 	let search_input = FileSearchInput {
 		query: "test".to_string(),
 		scope: SearchScope::Path {
-			path: SdPath::local(search_dir.clone()),
+			path: WingPath::local(search_dir.clone()),
 		},
 		mode: SearchMode::Normal,
 		filters: SearchFilters::default(),
@@ -762,7 +762,7 @@ async fn test_search_routing_indexed_vs_ephemeral() -> anyhow::Result<()> {
 	let ephemeral_search = FileSearchInput {
 		query: "ephemeral".to_string(),
 		scope: SearchScope::Path {
-			path: SdPath::local(ephemeral_dir.clone()),
+			path: WingPath::local(ephemeral_dir.clone()),
 		},
 		mode: SearchMode::Normal,
 		filters: SearchFilters::default(),
@@ -814,7 +814,7 @@ async fn test_ephemeral_search_result_limit() -> anyhow::Result<()> {
 	let search_input = FileSearchInput {
 		query: "file".to_string(),
 		scope: SearchScope::Path {
-			path: SdPath::local(search_dir.clone()),
+			path: WingPath::local(search_dir.clone()),
 		},
 		mode: SearchMode::Normal,
 		filters: SearchFilters::default(),

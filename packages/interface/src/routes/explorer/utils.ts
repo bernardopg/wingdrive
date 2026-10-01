@@ -2,7 +2,7 @@ import LaptopIcon from "@sd/assets/icons/Laptop.png";
 import MobileIcon from "@sd/assets/icons/Mobile.png";
 import ServerIcon from "@sd/assets/icons/Server.png";
 import PCIcon from "@sd/assets/icons/PC.png";
-import type { SdPath } from "@sd/ts-client";
+import type { WingPath } from "@sd/ts-client";
 
 export function formatBytes(bytes: number | bigint | null): string {
 	if (bytes === null) return "0 B";
@@ -49,7 +49,7 @@ export function getDeviceIcon(os: string, model?: string): string {
 	return LaptopIcon;
 }
 
-export function sdPathToUri(sdPath: SdPath): string {
+export function sdPathToUri(sdPath: WingPath): string {
 	if ("Physical" in sdPath) {
 		const { device_slug, path } = sdPath.Physical;
 		return `local://${device_slug}${path}`;

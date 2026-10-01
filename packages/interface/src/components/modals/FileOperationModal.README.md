@@ -69,8 +69,8 @@ function FolderGrid({ folders, selectedFiles }) {
   const openFileOperation = useFileOperationDialog();
 
   const handleFilesDropped = (
-    sources: SdPath[],
-    destination: SdPath,
+    sources: WingPath[],
+    destination: WingPath,
     operation: "copy" | "move"
   ) => {
     openFileOperation({
@@ -208,7 +208,7 @@ const openFileOp = useFileOperationDialog();
 
 openFileOp({
   operation: "copy",
-  sources: selectedFiles.map(f => f.sd_path),
+  sources: selectedFiles.map(f => f.wing_path),
   destination: folderPath,
 });
 ```

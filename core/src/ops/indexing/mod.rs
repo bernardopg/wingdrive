@@ -9,10 +9,10 @@
 //! ## Example
 //! ```rust,no_run
 //! use spacedrive_core::ops::indexing::{IndexerJob, IndexerJobConfig, IndexMode};
-//! use spacedrive_core::domain::addressing::SdPath;
+//! use spacedrive_core::domain::addressing::WingPath;
 //! use uuid::Uuid;
 //!
-//! # async fn example(library: &spacedrive_core::library::Library, location_id: Uuid, path: SdPath) -> Result<(), Box<dyn std::error::Error>> {
+//! # async fn example(library: &spacedrive_core::library::Library, location_id: Uuid, path: WingPath) -> Result<(), Box<dyn std::error::Error>> {
 //! let config = IndexerJobConfig::new(location_id, path, IndexMode::Content);
 //! let job = IndexerJob::new(config);
 //! library.jobs().dispatch(job).await?;

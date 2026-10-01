@@ -55,7 +55,7 @@ export const ColumnItem = memo(
 				action: "move-into",
 				targetType: "folder",
 				targetId: file.id,
-				targetPath: file.sd_path,
+				targetPath: file.wing_path,
 			},
 		});
 

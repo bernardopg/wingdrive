@@ -4,7 +4,7 @@
 //! sortable items, and context-based filtering. Each Space defines how the
 //! sidebar is organized and what items are visible.
 
-use crate::domain::addressing::SdPath;
+use crate::domain::addressing::WingPath;
 use crate::domain::resource::Identifiable;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -314,14 +314,14 @@ impl SpaceItem {
 		Self::new(space_id, group_id, ItemType::Location { location_id })
 	}
 
-	/// Create a Path item (arbitrary SdPath)
-	pub fn create_path(space_id: Uuid, group_id: Uuid, sd_path: SdPath) -> Self {
-		Self::new(space_id, group_id, ItemType::Path { sd_path })
+	/// Create a Path item (arbitrary WingPath)
+	pub fn create_path(space_id: Uuid, group_id: Uuid, wing_path: WingPath) -> Self {
+		Self::new(space_id, group_id, ItemType::Path { wing_path })
 	}
 
 	/// Create a space-level Path item (pinned shortcut)
-	pub fn create_space_level_path(space_id: Uuid, sd_path: SdPath) -> Self {
-		Self::new_space_level(space_id, ItemType::Path { sd_path })
+	pub fn create_space_level_path(space_id: Uuid, wing_path: WingPath) -> Self {
+		Self::new_space_level(space_id, ItemType::Path { wing_path })
 	}
 }
 
@@ -438,7 +438,7 @@ pub enum ItemType {
 	Tag { tag_id: Uuid },
 
 	/// Any arbitrary path (dragged from explorer)
-	Path { sd_path: SdPath },
+	Path { wing_path: WingPath },
 
 	/// All archive data sources screen
 	Sources,
@@ -762,12 +762,12 @@ mod tests {
 	#[test]
 	fn test_space_level_item() {
 		let space_id = Uuid::new_v4();
-		let sd_path = crate::domain::SdPath::Physical {
+		let wing_path = crate::domain::WingPath::Physical {
 			device_slug: "macbook".to_string(),
 			path: "/Users/me/Documents".into(),
 		};
 
-		let item = SpaceItem::create_space_level_path(space_id, sd_path);
+		let item = SpaceItem::create_space_level_path(space_id, wing_path);
 		assert_eq!(item.space_id, space_id);
 		assert_eq!(item.group_id, None);
 		assert!(matches!(item.item_type, ItemType::Path { .. }));

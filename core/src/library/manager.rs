@@ -1476,7 +1476,7 @@ impl LibraryManager {
 
 	/// Create default OS-specific locations with IndexMode::None
 	async fn create_default_locations(&self, context: Arc<CoreContext>, library: Arc<Library>) {
-		use crate::domain::addressing::SdPath;
+		use crate::domain::addressing::WingPath;
 		use crate::location::{manager::LocationManager, IndexMode};
 		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 		use std::path::PathBuf;
@@ -1528,7 +1528,7 @@ impl LibraryManager {
 				continue;
 			}
 
-			let sd_path = SdPath::Physical {
+			let wing_path = WingPath::Physical {
 				device_slug: device_slug.clone(),
 				path: path.clone(),
 			};
@@ -1536,7 +1536,7 @@ impl LibraryManager {
 			match location_manager
 				.add_location(
 					library.clone(),
-					sd_path,
+					wing_path,
 					Some(name.clone()),
 					device_id,
 					IndexMode::None,

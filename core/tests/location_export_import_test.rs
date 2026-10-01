@@ -9,7 +9,7 @@ use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use tempfile::TempDir;
 use tokio::time::Duration;
 use wing_core::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::{action::LibraryAction, db::entities, job::JobStatus},
 	ops::{
 		indexing::IndexMode,
@@ -143,7 +143,7 @@ async fn test_location_export_import() -> Result<(), Box<dyn std::error::Error +
 
 	// Add location using action
 	let location_input = LocationAddInput {
-		path: SdPath::local(test_location.clone()),
+		path: WingPath::local(test_location.clone()),
 		name: Some("Test Location".to_string()),
 		mode: IndexMode::Content,
 		job_policies: None,
@@ -516,7 +516,7 @@ async fn test_import_links_existing_content_identities(
 		.await?;
 
 	let location_input = LocationAddInput {
-		path: SdPath::local(test_location.clone()),
+		path: WingPath::local(test_location.clone()),
 		name: Some("Source Location".to_string()),
 		mode: IndexMode::Content,
 		job_policies: None,
@@ -591,7 +591,7 @@ async fn test_import_links_existing_content_identities(
 
 	// Add and index this location in library2
 	let location_input2 = LocationAddInput {
-		path: SdPath::local(test_location2.clone()),
+		path: WingPath::local(test_location2.clone()),
 		name: Some("Existing Location".to_string()),
 		mode: IndexMode::Content,
 		job_policies: None,

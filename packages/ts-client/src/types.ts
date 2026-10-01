@@ -188,7 +188,7 @@ phase: string;
 /**
  * Current path being processed (if applicable)
  */
-current_path: SdPath | null; 
+current_path: WingPath | null; 
 /**
  * Human-readable message describing current activity
  */
@@ -467,14 +467,14 @@ total_bytes: number | null };
  * A path within the WingDrive Virtual Distributed File System
  * 
  * This is the core abstraction that enables cross-device operations.
- * An SdPath can represent:
+ * An WingPath can represent:
  * - A physical file at a specific path on a specific device
  * - A content-addressed file that can be sourced from any device
  * 
  * This enum-based approach enables resilient file operations by allowing
  * content-based paths to be resolved to optimal physical locations at runtime.
  */
-export type SdPath = 
+export type WingPath = 
 /**
  * A direct pointer to a file at a specific path on a specific device
  */
@@ -497,9 +497,9 @@ path: string } } |
 content_id: string } };
 
 /**
- * A batch of SdPaths, useful for operations on multiple files
+ * A batch of WingPaths, useful for operations on multiple files
  */
-export type SdPathBatch = { paths: SdPath[] };
+export type WingPathBatch = { paths: WingPath[] };
 
 /**
  * Represents a physical or virtual storage volume in the system

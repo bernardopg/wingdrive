@@ -6,7 +6,7 @@ use super::{
 };
 use crate::{
 	context::CoreContext,
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	infra::{
 		action::{
 			builder::{ActionBuildError, ActionBuilder},
@@ -57,8 +57,8 @@ impl FileConflictResolution {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileCopyAction {
-	pub sources: SdPathBatch,
-	pub destination: SdPath,
+	pub sources: WingPathBatch,
+	pub destination: WingPath,
 	pub options: CopyOptions,
 	/// Conflict resolution strategy set after user confirmation
 	#[serde(skip_serializing_if = "Option::is_none")]
@@ -95,9 +95,9 @@ impl FileCopyActionBuilder {
 		I: IntoIterator<Item = P>,
 		P: Into<PathBuf>,
 	{
-		let paths: Vec<SdPath> = sources
+		let paths: Vec<WingPath> = sources
 			.into_iter()
-			.map(|p| SdPath::local(p.into()))
+			.map(|p| WingPath::local(p.into()))
 			.collect();
 		self.input.sources.extend(paths);
 		self
@@ -105,13 +105,16 @@ impl FileCopyActionBuilder {
 
 	/// Add a single local source file
 	pub fn source<P: Into<PathBuf>>(mut self, source: P) -> Self {
-		self.input.sources.paths.push(SdPath::local(source.into()));
+		self.input
+			.sources
+			.paths
+			.push(WingPath::local(source.into()));
 		self
 	}
 
 	/// Set the local destination path
 	pub fn destination<P: Into<PathBuf>>(mut self, dest: P) -> Self {
-		self.input.destination = SdPath::local(dest.into());
+		self.input.destination = WingPath::local(dest.into());
 		self
 	}
 
@@ -194,14 +197,14 @@ impl FileCopyActionBuilder {
 		let current_slug = crate::device::get_current_device_slug();
 		// Sources
 		for path in &mut self.input.sources.paths {
-			if let crate::domain::addressing::SdPath::Physical { device_slug, .. } = path {
+			if let crate::domain::addressing::WingPath::Physical { device_slug, .. } = path {
 				if device_slug.is_empty() {
 					*device_slug = current_slug.clone();
 				}
 			}
 		}
 		// Destination
-		if let crate::domain::addressing::SdPath::Physical { device_slug, .. } =
+		if let crate::domain::addressing::WingPath::Physical { device_slug, .. } =
 			&mut self.input.destination
 		{
 			if device_slug.is_empty() {
@@ -305,8 +308,8 @@ impl LibraryAction for FileCopyAction {
 			.sources
 			.paths
 			.iter()
-			.any(|path| matches!(path, SdPath::Cloud { .. }));
-		if cloud_source || matches!(&self.destination, SdPath::Cloud { .. }) {
+			.any(|path| matches!(path, WingPath::Cloud { .. }));
+		if cloud_source || matches!(&self.destination, WingPath::Cloud { .. }) {
 			return Err(ActionError::Validation {
 				field: if cloud_source {
 					"sources"
@@ -540,10 +543,10 @@ impl FileCopyAction {
 	}
 
 	/// Generate a unique destination path by appending a number if the original exists
-	async fn generate_unique_destination(&self) -> Result<SdPath, ActionError> {
+	async fn generate_unique_destination(&self) -> Result<WingPath, ActionError> {
 		use std::path::Path;
 
-		let SdPath::Physical { device_slug, path } = &self.destination else {
+		let WingPath::Physical { device_slug, path } = &self.destination else {
 			// For non-physical paths, just return the original
 			return Ok(self.destination.clone());
 		};
@@ -594,7 +597,7 @@ impl FileCopyAction {
 			}
 		}
 
-		Ok(SdPath::Physical {
+		Ok(WingPath::Physical {
 			device_slug: device_slug.clone(),
 			path: new_path,
 		})
@@ -609,7 +612,7 @@ impl FileCopyAction {
 		if self.sources.paths.len() > 1 {
 			// Multiple sources: destination must be a directory
 			if let Some(first_source) = self.sources.paths.first() {
-				if let SdPath::Physical {
+				if let WingPath::Physical {
 					path: source_path, ..
 				} = first_source
 				{
@@ -625,7 +628,7 @@ impl FileCopyAction {
 			if dest_path.is_dir() {
 				// Destination is a directory, join with source filename
 				if let Some(source) = self.sources.paths.first() {
-					if let SdPath::Physical {
+					if let WingPath::Physical {
 						path: source_path, ..
 					} = source
 					{

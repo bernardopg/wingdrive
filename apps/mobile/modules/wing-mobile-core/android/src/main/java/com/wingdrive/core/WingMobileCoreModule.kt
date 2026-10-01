@@ -4,7 +4,7 @@ import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import expo.modules.kotlin.Promise
 
-class SDMobileCoreModule : Module() {
+class WingMobileCoreModule : Module() {
     private var listeners = 0
     private var logListeners = 0
     private var registeredWithRust = false
@@ -14,59 +14,59 @@ class SDMobileCoreModule : Module() {
         try {
             System.loadLibrary("wing_mobile_core")
         } catch (e: UnsatisfiedLinkError) {
-            android.util.Log.e("SDMobileCore", "Failed to load native library: ${e.message}")
+            android.util.Log.e("WingMobileCore", "Failed to load native library: ${e.message}")
         }
     }
 
     override fun definition() = ModuleDefinition {
-        Name("SDMobileCore")
+        Name("WingMobileCore")
 
-        Events("SDCoreEvent", "SDCoreLog")
+        Events("WingCoreEvent", "WingCoreLog")
 
-        OnStartObserving("SDCoreEvent") {
-            android.util.Log.i("SDMobileCore", "📡 OnStartObserving SDCoreEvent triggered")
+        OnStartObserving("WingCoreEvent") {
+            android.util.Log.i("WingMobileCore", "📡 OnStartObserving WingCoreEvent triggered")
 
             if (!registeredWithRust) {
                 try {
-                    android.util.Log.i("SDMobileCore", "🚀 Registering event listener...")
+                    android.util.Log.i("WingMobileCore", "🚀 Registering event listener...")
                     registerCoreEventListener()
                     registeredWithRust = true
-                    android.util.Log.i("SDMobileCore", "✅ Event listener registered with Rust")
+                    android.util.Log.i("WingMobileCore", "✅ Event listener registered with Rust")
                 } catch (e: Exception) {
-                    android.util.Log.e("SDMobileCore", "Failed to register event listener: ${e.message}")
+                    android.util.Log.e("WingMobileCore", "Failed to register event listener: ${e.message}")
                 }
             }
 
             listeners++
-            android.util.Log.i("SDMobileCore", "📊 SDCoreEvent listeners: $listeners")
+            android.util.Log.i("WingMobileCore", "📊 WingCoreEvent listeners: $listeners")
         }
 
-        OnStopObserving("SDCoreEvent") {
+        OnStopObserving("WingCoreEvent") {
             listeners--
-            android.util.Log.i("SDMobileCore", "📉 SDCoreEvent listeners: $listeners")
+            android.util.Log.i("WingMobileCore", "📉 WingCoreEvent listeners: $listeners")
         }
 
-        OnStartObserving("SDCoreLog") {
-            android.util.Log.i("SDMobileCore", "📡 OnStartObserving SDCoreLog triggered")
+        OnStartObserving("WingCoreLog") {
+            android.util.Log.i("WingMobileCore", "📡 OnStartObserving WingCoreLog triggered")
 
             if (!logRegisteredWithRust) {
                 try {
-                    android.util.Log.i("SDMobileCore", "🚀 Registering log listener...")
+                    android.util.Log.i("WingMobileCore", "🚀 Registering log listener...")
                     registerCoreLogListener()
                     logRegisteredWithRust = true
-                    android.util.Log.i("SDMobileCore", "✅ Log listener registered with Rust")
+                    android.util.Log.i("WingMobileCore", "✅ Log listener registered with Rust")
                 } catch (e: Exception) {
-                    android.util.Log.e("SDMobileCore", "Failed to register log listener: ${e.message}")
+                    android.util.Log.e("WingMobileCore", "Failed to register log listener: ${e.message}")
                 }
             }
 
             logListeners++
-            android.util.Log.i("SDMobileCore", "📊 SDCoreLog listeners: $logListeners")
+            android.util.Log.i("WingMobileCore", "📊 WingCoreLog listeners: $logListeners")
         }
 
-        OnStopObserving("SDCoreLog") {
+        OnStopObserving("WingCoreLog") {
             logListeners--
-            android.util.Log.i("SDMobileCore", "📉 SDCoreLog listeners: $logListeners")
+            android.util.Log.i("WingMobileCore", "📉 WingCoreLog listeners: $logListeners")
         }
 
         Function("initialize") { dataDir: String?, deviceName: String? ->
@@ -76,14 +76,14 @@ class SDMobileCoreModule : Module() {
             try {
                 initializeCore(dir, deviceName)
             } catch (e: Exception) {
-                android.util.Log.e("SDMobileCore", "Failed to initialize core: ${e.message}")
+                android.util.Log.e("WingMobileCore", "Failed to initialize core: ${e.message}")
                 -1
             }
         }
 
         AsyncFunction("sendMessage") { query: String, promise: Promise ->
             try {
-                handleCoreMsg(query, SDCorePromise(promise))
+                handleCoreMsg(query, WingCorePromise(promise))
             } catch (e: Exception) {
                 promise.reject("CORE_ERROR", e.message ?: "Unknown error", e)
             }
@@ -93,7 +93,7 @@ class SDMobileCoreModule : Module() {
             try {
                 shutdownCore()
             } catch (e: Exception) {
-                android.util.Log.e("SDMobileCore", "Failed to shutdown core: ${e.message}")
+                android.util.Log.e("WingMobileCore", "Failed to shutdown core: ${e.message}")
             }
         }
     }
@@ -104,13 +104,13 @@ class SDMobileCoreModule : Module() {
 
     fun sendCoreEvent(body: String) {
         if (listeners > 0) {
-            this@SDMobileCoreModule.sendEvent("SDCoreEvent", mapOf("body" to body))
+            this@WingMobileCoreModule.sendEvent("WingCoreEvent", mapOf("body" to body))
         }
     }
 
     fun sendCoreLog(body: String) {
         if (logListeners > 0) {
-            this@SDMobileCoreModule.sendEvent("SDCoreLog", mapOf("body" to body))
+            this@WingMobileCoreModule.sendEvent("WingCoreLog", mapOf("body" to body))
         }
     }
 
@@ -118,11 +118,11 @@ class SDMobileCoreModule : Module() {
     private external fun registerCoreEventListener()
     private external fun registerCoreLogListener()
     private external fun initializeCore(dataDir: String, deviceName: String?): Int
-    private external fun handleCoreMsg(query: String, promise: SDCorePromise)
+    private external fun handleCoreMsg(query: String, promise: WingCorePromise)
     private external fun shutdownCore()
 }
 
-class SDCorePromise(private val promise: Promise) {
+class WingCorePromise(private val promise: Promise) {
     fun resolve(msg: String) {
         promise.resolve(msg)
     }

@@ -12,7 +12,7 @@ import { House, Clock, Heart, Folders } from "@phosphor-icons/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLibraryMutation, useSpacedriveClient } from "../contexts/SpacedriveContext";
 import { useSidebarStore } from "@sd/ts-client";
-import type { File, SdPath } from "@sd/ts-client";
+import type { File, WingPath } from "@sd/ts-client";
 import { useSpaces } from "./SpacesSidebar/hooks/useSpaces";
 import { useFileOperationDialog } from "./modals/FileOperationModal";
 import { File as FileComponent } from "../routes/explorer/File";
@@ -35,7 +35,7 @@ import { useTabManager } from "./TabManager/useTabManager";
  *    - Shows a blue ring around the target
  *    - Data: { action, targetType, targetId, targetPath? }
  *    - targetType: "location" | "volume" | "folder"
- *    - targetPath: SdPath (for locations, directly usable)
+ *    - targetPath: WingPath (for locations, directly usable)
  *
  * 3. type: "space" | "group"
  *    - Legacy: Drops on the space root or group area (no specific item)
@@ -258,7 +258,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 				await addItem.mutateAsync({
 					space_id: dropData.spaceId,
 					group_id: null,
-					item_type: { Path: { sd_path: dragData.sdPath } },
+					item_type: { Path: { wing_path: dragData.sdPath } },
 				});
 				console.log("[DnD] Successfully added to space root");
 			} catch (err) {
@@ -281,7 +281,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 				await addItem.mutateAsync({
 					space_id: dropData.spaceId,
 					group_id: dropData.groupId,
-					item_type: { Path: { sd_path: dragData.sdPath } },
+					item_type: { Path: { wing_path: dragData.sdPath } },
 				});
 				console.log("[DnD] Successfully added to group");
 			} catch (err) {
@@ -308,7 +308,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 				await addItem.mutateAsync({
 					space_id: dropData.spaceId,
 					group_id: dropData.groupId || null,
-					item_type: { Path: { sd_path: dragData.sdPath } },
+					item_type: { Path: { wing_path: dragData.sdPath } },
 				});
 				console.log("[DnD] Successfully inserted item");
 				// TODO: Implement proper ordering relative to itemId
@@ -320,11 +320,11 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 
 		// Move file into location/volume/folder
 		if (dropData?.action === "move-into") {
-			const sources: SdPath[] = dragData.selectedFiles
-				? dragData.selectedFiles.map((f: File) => f.sd_path)
+			const sources: WingPath[] = dragData.selectedFiles
+				? dragData.selectedFiles.map((f: File) => f.wing_path)
 				: [dragData.sdPath];
 
-			const destination: SdPath = dropData.targetPath;
+			const destination: WingPath = dropData.targetPath;
 
 			if (!destination) {
 				console.error("[DnD] No target path for move-into action");
@@ -366,7 +366,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 				await addItem.mutateAsync({
 					space_id: dropData.spaceId,
 					group_id: null,
-					item_type: { Path: { sd_path: dragData.sdPath } },
+					item_type: { Path: { wing_path: dragData.sdPath } },
 				});
 				console.log("[DnD] Successfully added to space");
 			} catch (err) {
@@ -386,7 +386,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 				await addItem.mutateAsync({
 					space_id: dropData.spaceId,
 					group_id: dropData.groupId,
-					item_type: { Path: { sd_path: dragData.sdPath } },
+					item_type: { Path: { wing_path: dragData.sdPath } },
 				});
 				console.log("[DnD] Successfully added to group");
 			} catch (err) {

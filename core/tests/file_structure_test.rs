@@ -120,9 +120,9 @@ async fn map_file_structure_per_phase() -> Result<(), Box<dyn std::error::Error 
 							file.get("name").unwrap_or(&serde_json::Value::Null)
 						);
 
-						if let Some(sd_path) = file.get("sd_path") {
-							eprintln!("\n   sd_path:");
-							if let Some(phys) = sd_path.get("Physical") {
+						if let Some(wing_path) = file.get("wing_path") {
+							eprintln!("\n   wing_path:");
+							if let Some(phys) = wing_path.get("Physical") {
 								eprintln!("     Type: Physical");
 								eprintln!(
 									"     device_slug: {}",
@@ -132,7 +132,7 @@ async fn map_file_structure_per_phase() -> Result<(), Box<dyn std::error::Error 
 									"     path: {}",
 									phys.get("path").unwrap_or(&serde_json::Value::Null)
 								);
-							} else if let Some(content) = sd_path.get("Content") {
+							} else if let Some(content) = wing_path.get("Content") {
 								eprintln!("     Type: Content");
 								eprintln!(
 									"     content_id: {}",
@@ -140,7 +140,7 @@ async fn map_file_structure_per_phase() -> Result<(), Box<dyn std::error::Error 
 										.get("content_id")
 										.unwrap_or(&serde_json::Value::Null)
 								);
-							} else if let Some(cloud) = sd_path.get("Cloud") {
+							} else if let Some(cloud) = wing_path.get("Cloud") {
 								eprintln!("     Type: Cloud");
 								eprintln!(
 									"     service: {}",
@@ -225,10 +225,10 @@ async fn map_file_structure_per_phase() -> Result<(), Box<dyn std::error::Error 
 	eprintln!("{}", "=".repeat(80));
 	eprintln!("\nEvent files use:");
 	eprintln!("  - id = entry.uuid");
-	eprintln!("  - sd_path = Content {{content_id}}");
+	eprintln!("  - wing_path = Content {{content_id}}");
 	eprintln!("\nDirectory query SHOULD use:");
 	eprintln!("  - id = entry.uuid (SAME)");
-	eprintln!("  - sd_path = Physical {{path}} (DIFFERENT)");
+	eprintln!("  - wing_path = Physical {{path}} (DIFFERENT)");
 	eprintln!("\n️  If IDs match, normalized cache should work!");
 	eprintln!("️  If IDs don't match, we have a bigger problem.");
 	eprintln!();

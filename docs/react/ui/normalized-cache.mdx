@@ -68,7 +68,7 @@ import { FlowDiagram } from '/snippets/FlowDiagram.mdx';
 ```tsx
 import { useNormalizedQuery } from "@sd/ts-client";
 
-function DirectoryView({ path }: { path: SdPath }) {
+function DirectoryView({ path }: { path: WingPath }) {
 	const { data, isLoading } = useNormalizedQuery({
 		query: "files.directory_listing",
 		input: { path },
@@ -98,7 +98,7 @@ function DirectoryView({ path }: { path: SdPath }) {
 ### Media View (Recursive)
 
 ```tsx
-function MediaGallery({ path }: { path: SdPath }) {
+function MediaGallery({ path }: { path: WingPath }) {
 	const { data } = useNormalizedQuery({
 		query: "files.media_listing",
 		input: { path, include_descendants: true },
@@ -174,7 +174,7 @@ interface UseNormalizedQueryOptions<I> {
 	enabled?: boolean;
 
 	// Optional path scope for server-side filtering
-	pathScope?: SdPath;
+	pathScope?: WingPath;
 
 	// Whether to include descendants (recursive) or only direct children (exact)
 	// Default: false (exact matching)
@@ -307,7 +307,7 @@ This ensures correctness even if server-side filtering has edge cases.
       // ... full resource data
     },
     metadata: {
-      no_merge_fields: ["sd_path"],
+      no_merge_fields: ["wing_path"],
       affected_paths: [],
       alternate_ids: []
     }
@@ -326,7 +326,7 @@ This ensures correctness even if server-side filtering has edge cases.
       { id: "2", name: "photo2.jpg", ... }
     ],
     metadata: {
-      no_merge_fields: ["sd_path"],
+      no_merge_fields: ["wing_path"],
       affected_paths: [
         { Physical: { device_slug: "mac", path: "/Desktop/photo1.jpg" } },
         { Physical: { device_slug: "mac", path: "/Desktop" } },
@@ -393,10 +393,10 @@ Some fields should be replaced entirely, not merged:
 
 ```tsx
 metadata: {
-	no_merge_fields: ["sd_path"];
+	no_merge_fields: ["wing_path"];
 }
 
-// sd_path is replaced entirely, not deep merged
+// wing_path is replaced entirely, not deep merged
 // This prevents incorrect path combinations
 ```
 
@@ -596,12 +596,12 @@ const { data } = useNormalizedQuery({
 
 ### Content-Addressed Files
 
-Files use Content-based `sd_path` but have Physical paths in `alternate_paths`:
+Files use Content-based `wing_path` but have Physical paths in `alternate_paths`:
 
 ```tsx
 // File structure
 {
-  sd_path: { Content: { content_id: "uuid" } },
+  wing_path: { Content: { content_id: "uuid" } },
   alternate_paths: [
     { Physical: { device_slug: "mac", path: "/Desktop/file.txt" } }
   ]

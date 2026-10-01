@@ -2,7 +2,7 @@
 
 pub mod log_emitter;
 
-use crate::domain::SdPath;
+use crate::domain::WingPath;
 use crate::infra::job::{generic_progress::GenericProgress, output::JobOutput};
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -21,7 +21,7 @@ pub struct ResourceMetadata {
 	pub alternate_ids: Vec<Uuid>,
 	/// Paths affected by this resource event (for path-scoped filtering)
 	#[serde(default)]
-	pub affected_paths: Vec<SdPath>,
+	pub affected_paths: Vec<WingPath>,
 }
 
 /// Filter for event subscriptions to enable path-scoped event delivery
@@ -32,7 +32,7 @@ pub enum SubscriptionFilter {
 	/// Path-scoped subscription - only events affecting this path
 	PathScoped {
 		resource_type: String,
-		path_scope: SdPath,
+		path_scope: WingPath,
 	},
 }
 
@@ -393,7 +393,7 @@ impl Event {
 	/// # Arguments
 	/// * `scope` - The path scope to check against
 	/// * `include_descendants` - If true, match all descendants (recursive). If false, only exact matches (direct children)
-	pub fn affects_path(&self, scope: &SdPath, include_descendants: bool) -> bool {
+	pub fn affects_path(&self, scope: &WingPath, include_descendants: bool) -> bool {
 		let affected_paths = match self {
 			Event::ResourceChanged { metadata, .. }
 			| Event::ResourceChangedBatch { metadata, .. } => metadata.as_ref().map(|m| &m.affected_paths),
@@ -418,40 +418,40 @@ impl Event {
 			match (scope, affected_path) {
 				// Content ID matching - exact match
 				(
-					SdPath::Content {
+					WingPath::Content {
 						content_id: scope_id,
 					},
-					SdPath::Content {
+					WingPath::Content {
 						content_id: file_id,
 					},
 				) => scope_id == file_id,
 				// Sidecar matching - match by content ID
 				(
-					SdPath::Content {
+					WingPath::Content {
 						content_id: scope_id,
 					},
-					SdPath::Sidecar {
+					WingPath::Sidecar {
 						content_id: file_id,
 						..
 					},
 				)
 				| (
-					SdPath::Sidecar {
+					WingPath::Sidecar {
 						content_id: scope_id,
 						..
 					},
-					SdPath::Content {
+					WingPath::Content {
 						content_id: file_id,
 					},
 				) => scope_id == file_id,
 				// Cloud path matching
 				(
-					SdPath::Cloud {
+					WingPath::Cloud {
 						service: scope_service,
 						identifier: scope_id,
 						path: scope_path,
 					},
-					SdPath::Cloud {
+					WingPath::Cloud {
 						service: file_service,
 						identifier: file_id,
 						path: file_path,
@@ -475,7 +475,7 @@ impl Event {
 
 		// Handle Physical scope against Content/Sidecar paths by checking alternate_paths
 		// This prevents unnecessary events when content exists outside the subscribed scope
-		if matches!(scope, SdPath::Physical { .. }) {
+		if matches!(scope, WingPath::Physical { .. }) {
 			let has_content_with_alternate_match =
 				self.check_alternate_paths(scope, include_descendants);
 			if has_content_with_alternate_match {
@@ -488,11 +488,11 @@ impl Event {
 			// Exact mode: find if there's at least one file that's a direct child
 			let has_direct_child = paths.iter().any(|affected_path| {
 				if let (
-					SdPath::Physical {
+					WingPath::Physical {
 						device_slug: scope_device,
 						path: scope_path,
 					},
-					SdPath::Physical {
+					WingPath::Physical {
 						device_slug: file_device,
 						path: file_path,
 					},
@@ -517,11 +517,11 @@ impl Event {
 			match (scope, affected_path) {
 				// Physical path matching - recursive mode
 				(
-					SdPath::Physical {
+					WingPath::Physical {
 						device_slug: scope_device,
 						path: scope_path,
 					},
-					SdPath::Physical {
+					WingPath::Physical {
 						device_slug: file_device,
 						path: file_path,
 					},
@@ -562,7 +562,7 @@ impl Event {
 	/// For Content/Sidecar events, alternate_paths contains all Physical locations
 	/// where that content exists. This allows filtering to only forward events
 	/// when the content has a physical presence in the subscribed path scope.
-	fn check_alternate_paths(&self, scope: &SdPath, include_descendants: bool) -> bool {
+	fn check_alternate_paths(&self, scope: &WingPath, include_descendants: bool) -> bool {
 		// Extract resource(s) from the event
 		let resources = match self {
 			Event::ResourceChanged { resource, .. } => vec![resource],
@@ -585,14 +585,14 @@ impl Event {
 			if let Some(paths_array) = alternate_paths {
 				// Deserialize each path and check if it matches the scope
 				for path_value in paths_array {
-					if let Ok(alt_path) = serde_json::from_value::<SdPath>(path_value.clone()) {
+					if let Ok(alt_path) = serde_json::from_value::<WingPath>(path_value.clone()) {
 						// Check if this alternate path matches the scope
 						if let (
-							SdPath::Physical {
+							WingPath::Physical {
 								device_slug: scope_device,
 								path: scope_path,
 							},
-							SdPath::Physical {
+							WingPath::Physical {
 								device_slug: alt_device,
 								path: alt_path,
 							},
@@ -628,20 +628,22 @@ impl Event {
 					}
 				}
 			} else {
-				// No alternate_paths - fall back to checking sd_path.Physical
+				// No alternate_paths - fall back to checking wing_path.Physical
 				// This handles newly created files before content hashing completes
-				if let Some(sd_path_value) = resource.get("sd_path") {
-					if let Ok(sd_path) = serde_json::from_value::<SdPath>(sd_path_value.clone()) {
+				if let Some(wing_path_value) = resource.get("wing_path") {
+					if let Ok(wing_path) =
+						serde_json::from_value::<WingPath>(wing_path_value.clone())
+					{
 						if let (
-							SdPath::Physical {
+							WingPath::Physical {
 								device_slug: scope_device,
 								path: scope_path,
 							},
-							SdPath::Physical {
+							WingPath::Physical {
 								device_slug: res_device,
 								path: res_path,
 							},
-						) = (scope, &sd_path)
+						) = (scope, &wing_path)
 						{
 							if scope_device != res_device {
 								continue;
@@ -659,7 +661,7 @@ impl Event {
 
 							if matches {
 								tracing::debug!(
-									"sd_path match (no alternate_paths): scope={}, path={}, include_descendants={}",
+									"wing_path match (no alternate_paths): scope={}, path={}, include_descendants={}",
 									scope_path.display(),
 									res_path.display(),
 									include_descendants

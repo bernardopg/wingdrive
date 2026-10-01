@@ -87,7 +87,7 @@ export function useVirtualListing(
 
 			// Filter locations by device_slug
 			const deviceLocations = locations.filter(
-				(loc: any) => loc.sd_path?.Physical?.device_slug === device.slug,
+				(loc: any) => loc.wing_path?.Physical?.device_slug === device.slug,
 			);
 
 			// Filter volumes by device_id

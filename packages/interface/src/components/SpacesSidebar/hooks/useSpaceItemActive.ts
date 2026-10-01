@@ -59,11 +59,11 @@ export function useSpaceItemActive({
 		);
 		if (itemPathParam) {
 			try {
-				const itemSdPath = JSON.parse(
+				const itemWingPath = JSON.parse(
 					decodeURIComponent(itemPathParam),
 				);
 				if (
-					JSON.stringify(currentPath) === JSON.stringify(itemSdPath)
+					JSON.stringify(currentPath) === JSON.stringify(itemWingPath)
 				) {
 					return true;
 				}
@@ -90,14 +90,14 @@ export function useSpaceItemActive({
 
 		if (currentPathParam && itemPathParam) {
 			try {
-				const currentSdPath = JSON.parse(
+				const currentWingPath = JSON.parse(
 					decodeURIComponent(currentPathParam),
 				);
-				const itemSdPath = JSON.parse(
+				const itemWingPath = JSON.parse(
 					decodeURIComponent(itemPathParam),
 				);
 				return (
-					JSON.stringify(currentSdPath) === JSON.stringify(itemSdPath)
+					JSON.stringify(currentWingPath) === JSON.stringify(itemWingPath)
 				);
 			} catch {
 				return currentPathParam === itemPathParam;

@@ -3,7 +3,7 @@
 //! This module provides search functionality for the in-memory ephemeral index,
 //! enabling search in unindexed locations and external drives.
 
-use crate::domain::{File, SdPath};
+use crate::domain::{File, WingPath};
 use crate::filetype::FileTypeRegistry;
 use crate::infra::query::QueryError;
 use crate::ops::indexing::database_storage::EntryMetadata;
@@ -18,14 +18,14 @@ use uuid::Uuid;
 /// Search the ephemeral index for files matching the query
 pub async fn search_ephemeral_index(
 	query: &str,
-	path_scope: &SdPath,
+	path_scope: &WingPath,
 	filters: &SearchFilters,
 	cache: &EphemeralIndexCache,
 	file_type_registry: &FileTypeRegistry,
 ) -> Result<Vec<FileSearchResult>, QueryError> {
-	// Get local path from SdPath
+	// Get local path from WingPath
 	let local_path = match path_scope {
-		SdPath::Physical { path, .. } => path.clone(),
+		WingPath::Physical { path, .. } => path.clone(),
 		_ => {
 			return Ok(Vec::new()); // Only physical paths supported for ephemeral
 		}
@@ -101,9 +101,9 @@ pub async fn search_ephemeral_index(
 			// Get or assign UUID (lazy generation)
 			let uuid = index.get_or_assign_uuid(&path);
 
-			// Build SdPath
-			let sd_path = match path_scope {
-				SdPath::Physical { device_slug, .. } => SdPath::Physical {
+			// Build WingPath
+			let wing_path = match path_scope {
+				WingPath::Physical { device_slug, .. } => WingPath::Physical {
 					device_slug: device_slug.clone(),
 					path: path.clone(),
 				},
@@ -114,7 +114,7 @@ pub async fn search_ephemeral_index(
 			let content_kind = index.get_content_kind(&path);
 
 			// Convert to File
-			let mut file = File::from_ephemeral(uuid, &metadata, sd_path);
+			let mut file = File::from_ephemeral(uuid, &metadata, wing_path);
 			file.content_kind = content_kind;
 
 			// Score by relevance

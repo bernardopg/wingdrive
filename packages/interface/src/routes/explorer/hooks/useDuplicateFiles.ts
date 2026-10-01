@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { File, SdPath } from "@sd/ts-client";
+import type { File, WingPath } from "@sd/ts-client";
 import { useLibraryMutation } from "../../../contexts/SpacedriveContext";
 import { useWaitForJob } from "../../../hooks/useWaitForJob";
 import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
@@ -31,7 +31,7 @@ export function useDuplicateFiles() {
 					if (!destination) return;
 					await waitForJob(() =>
 						mutation.mutateAsync({
-							sources: { paths: [file.sd_path] },
+							sources: { paths: [file.wing_path] },
 							destination,
 							overwrite: false,
 							verify_checksum: false,
@@ -52,10 +52,10 @@ export function useDuplicateFiles() {
 	return { duplicateFiles, isPending: mutation.isPending };
 }
 
-function buildDuplicateTarget(file: File): SdPath | null {
-	if (!("Physical" in file.sd_path)) return null;
+function buildDuplicateTarget(file: File): WingPath | null {
+	if (!("Physical" in file.wing_path)) return null;
 
-	const { path, device_slug } = file.sd_path.Physical;
+	const { path, device_slug } = file.wing_path.Physical;
 	const parent = getParentDir(path);
 	const copyName = `${file.name} copy${file.extension ? `.${file.extension}` : ""}`;
 

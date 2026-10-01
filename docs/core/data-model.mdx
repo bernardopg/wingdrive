@@ -9,7 +9,7 @@ WingDrive's data model powers a Virtual Distributed File System (VDFS) that unif
 
 The system separates concerns into distinct entities:
 
-- **SdPath** - Address any file; local, peer device, cloud, or by content ID
+- **WingPath** - Address any file; local, peer device, cloud, or by content ID
 - **Entry** - File and directory representation
 - **ContentIdentity** - Unique file content for deduplication
 - **UserMetadata** - Organization data (tags, notes, favorites)
@@ -27,12 +27,12 @@ It is critical to understand the distinction between two data modeling layers in
 
 The code examples in this document generally refer to the database entity models to accurately represent what is stored on disk. The domain models provide a convenient abstraction over this raw data.
 
-## SdPath
+## WingPath
 
-The `SdPath` enum is the universal addressing system for files across all storage backends:
+The `WingPath` enum is the universal addressing system for files across all storage backends:
 
 ```rust
-pub enum SdPath {
+pub enum WingPath {
     /// A direct pointer to a file on a specific local device
     Physical {
         device_slug: String,  // The device slug (e.g., "jamies-macbook")
@@ -69,7 +69,7 @@ WingDrive displays paths using a unified addressing scheme that matches industry
 
 ```rust
 // Display user-friendly URIs
-let uri = sd_path.display_with_context(&context).await;
+let uri = wing_path.display_with_context(&context).await;
 
 // Examples:
 // Physical: "local://jamies-macbook/Users/james/Documents/report.pdf"

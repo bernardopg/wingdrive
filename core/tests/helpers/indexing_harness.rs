@@ -15,7 +15,7 @@ use std::{
 use tokio::time::Duration;
 use uuid::Uuid;
 use wing_core::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::db::entities::{self, entry_closure},
 	location::{IndexMode, LocationManager},
 	Core,
@@ -175,7 +175,7 @@ impl IndexingHarness {
 		self.test_data.path()
 	}
 
-	/// Get access to the snapshot manager (if snapshots enabled via SD_TEST_SNAPSHOTS=1)
+	/// Get access to the snapshot manager (if snapshots enabled via WING_TEST_SNAPSHOTS=1)
 	pub fn snapshot_manager(&self) -> Option<&super::SnapshotManager> {
 		self.test_data.snapshot_manager()
 	}
@@ -213,13 +213,13 @@ impl IndexingHarness {
 		);
 
 		let device_slug = wing_core::device::get_current_device_slug();
-		let sd_path = SdPath::new(device_slug, path.to_path_buf());
+		let wing_path = WingPath::new(device_slug, path.to_path_buf());
 
 		let location_manager = LocationManager::new((*self.core.events).clone());
 		let (location_uuid, _display_path) = location_manager
 			.add_location(
 				self.library.clone(),
-				sd_path,
+				wing_path,
 				Some(name.to_string()),
 				self.device_db_id,
 				mode,
@@ -545,7 +545,7 @@ impl<'a> LocationHandle<'a> {
 	/// Re-index this location and wait for completion
 	pub async fn reindex(&self) -> anyhow::Result<()> {
 		use wing_core::{
-			domain::addressing::SdPath,
+			domain::addressing::WingPath,
 			ops::indexing::{IndexerJob, IndexerJobConfig},
 		};
 
@@ -568,7 +568,7 @@ impl<'a> LocationHandle<'a> {
 		};
 
 		// Create and dispatch indexer job
-		let config = IndexerJobConfig::new(self.uuid, SdPath::local(&self.path), index_mode);
+		let config = IndexerJobConfig::new(self.uuid, WingPath::local(&self.path), index_mode);
 		let job = IndexerJob::new(config);
 
 		let handle = self.harness.library.jobs().dispatch(job).await?;

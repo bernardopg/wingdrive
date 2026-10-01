@@ -37,13 +37,13 @@ pub trait DeleteStrategy: Send + Sync {
     async fn execute(
         &self,
         ctx: &JobContext<'_>,
-        paths: &[SdPath],
+        paths: &[WingPath],
         mode: DeleteMode,
     ) -> Result<Vec<DeleteResult>>;
 }
 
 pub struct DeleteResult {
-    pub path: SdPath,
+    pub path: WingPath,
     pub success: bool,
     pub bytes_freed: u64,
     pub error: Option<String>,
@@ -79,7 +79,7 @@ impl DeleteStrategy for RemoteDeleteStrategy {
 ```rust
 pub enum FileDeleteMessage {
     Request {
-        paths: Vec<SdPath>,
+        paths: Vec<WingPath>,
         mode: DeleteMode,
         request_id: Uuid,
     },
@@ -99,7 +99,7 @@ pub struct DeleteStrategyRouter;
 
 impl DeleteStrategyRouter {
     pub async fn select_strategy(
-        paths: &[SdPath],
+        paths: &[WingPath],
         volume_manager: Option<&VolumeManager>,
     ) -> Box<dyn DeleteStrategy> {
         let all_local = paths.iter().all(|p| p.is_local());

@@ -1,7 +1,7 @@
 use super::{input::AddItemInput, output::AddItemOutput};
 use crate::{
 	context::CoreContext,
-	domain::{addressing::SdPath, ItemType, SpaceItem},
+	domain::{addressing::WingPath, ItemType, SpaceItem},
 	infra::action::{
 		error::{ActionError, ActionResult},
 		LibraryAction,
@@ -84,9 +84,9 @@ impl LibraryAction for AddItemAction {
 		let now = Utc::now();
 
 		// Resolve entry_uuid if this is a Path item
-		let entry_uuid = if let ItemType::Path { ref sd_path } = self.input.item_type {
-			tracing::info!("Resolving SdPath to entry_uuid: {:?}", sd_path);
-			let resolved = resolve_sd_path_to_entry_uuid(sd_path, db).await;
+		let entry_uuid = if let ItemType::Path { ref wing_path } = self.input.item_type {
+			tracing::info!("Resolving WingPath to entry_uuid: {:?}", wing_path);
+			let resolved = resolve_wing_path_to_entry_uuid(wing_path, db).await;
 			tracing::info!("Resolved entry_uuid: {:?}", resolved);
 			resolved
 		} else {
@@ -154,13 +154,13 @@ impl LibraryAction for AddItemAction {
 
 crate::register_library_action!(AddItemAction, "spaces.add_item");
 
-/// Resolve an SdPath to an entry UUID by looking up the entry in the database
-async fn resolve_sd_path_to_entry_uuid(
-	sd_path: &SdPath,
+/// Resolve an WingPath to an entry UUID by looking up the entry in the database
+async fn resolve_wing_path_to_entry_uuid(
+	wing_path: &WingPath,
 	db: &sea_orm::DatabaseConnection,
 ) -> Option<uuid::Uuid> {
-	match sd_path {
-		SdPath::Physical { path, .. } => {
+	match wing_path {
+		WingPath::Physical { path, .. } => {
 			let path_str = path.to_string_lossy();
 			let path_buf = std::path::Path::new(path_str.as_ref());
 
@@ -214,7 +214,7 @@ async fn resolve_sd_path_to_entry_uuid(
 			None
 		}
 		_ => {
-			tracing::warn!("Non-Physical SdPath not supported for entry resolution");
+			tracing::warn!("Non-Physical WingPath not supported for entry resolution");
 			None
 		}
 	}

@@ -95,7 +95,7 @@ export function ExplorerScreen() {
 				pathname: "/explorer",
 				params: {
 					type: "path",
-					path: JSON.stringify(file.sd_path),
+					path: JSON.stringify(file.wing_path),
 				},
 			});
 		}

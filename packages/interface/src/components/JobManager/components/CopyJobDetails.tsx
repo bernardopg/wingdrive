@@ -178,7 +178,7 @@ export function CopyJobDetails({ job, speedHistory }: CopyJobDetailsProps) {
   );
 }
 
-// Extract filename from SdPath
+// Extract filename from WingPath
 function extractFileName(path: any): string {
   if (typeof path === "string") {
     return path.split("/").pop() || path;
@@ -192,7 +192,7 @@ function extractFileName(path: any): string {
   return "Unknown";
 }
 
-// Format SdPath to readable string for subtext
+// Format WingPath to readable string for subtext
 function formatPath(path: any): string {
   if (typeof path === "string") {
     return path.replace(/^\/Users\/[^/]+/, "~");

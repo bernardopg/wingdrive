@@ -13,7 +13,7 @@ import type {
 	SpaceItem as SpaceItemType,
 	ItemType,
 	File,
-	SdPath,
+	WingPath,
 } from "@sd/ts-client";
 import type { Icon } from "@phosphor-icons/react";
 
@@ -62,7 +62,7 @@ export function isTagItem(t: ItemType): t is { Tag: { tag_id: string } } {
 	return typeof t === "object" && "Tag" in t;
 }
 
-export function isPathItem(t: ItemType): t is { Path: { sd_path: SdPath } } {
+export function isPathItem(t: ItemType): t is { Path: { wing_path: WingPath } } {
 	return typeof t === "object" && "Path" in t;
 }
 
@@ -80,11 +80,11 @@ export function isSourceItem(
 	return typeof t === "object" && "Source" in t;
 }
 
-// Check if item is a "raw" location (legacy format with name/sd_path but no item_type)
+// Check if item is a "raw" location (legacy format with name/wing_path but no item_type)
 export function isRawLocation(
 	item: SpaceItemType | Record<string, unknown>,
 ): boolean {
-	return "name" in item && "sd_path" in item && !("item_type" in item);
+	return "name" in item && "wing_path" in item && !("item_type" in item);
 }
 
 // Get icon data for an item type
@@ -117,7 +117,7 @@ function getItemLabel(itemType: ItemType, resolvedFile?: File | null): string {
 	if (isPathItem(itemType)) {
 		// Use resolved file name if available, otherwise extract from path
 		if (resolvedFile?.name) return resolvedFile.name;
-		const sdPath = itemType.Path.sd_path;
+		const sdPath = itemType.Path.wing_path;
 		if (typeof sdPath === "object" && "Physical" in sdPath) {
 			const parts = (
 				sdPath as { Physical: { path: string } }
@@ -134,7 +134,7 @@ function getItemLabel(itemType: ItemType, resolvedFile?: File | null): string {
 function getItemPath(
 	itemType: ItemType,
 	volumeData?: { device_slug: string; mount_path: string },
-	itemSdPath?: SdPath,
+	itemWingPath?: WingPath,
 ): string | null {
 	if (isOverviewItem(itemType)) return "/";
 	if (isRecentsItem(itemType)) return "/recents";
@@ -144,9 +144,9 @@ function getItemPath(
 	if (isRedundancyItem(itemType)) return "/redundancy";
 
 	if (isLocationItem(itemType)) {
-		// Use explorer route with location's SD path (passed from item.sd_path)
-		if (itemSdPath) {
-			return `/explorer?path=${encodeURIComponent(JSON.stringify(itemSdPath))}`;
+		// Use explorer route with location's SD path (passed from item.wing_path)
+		if (itemWingPath) {
+			return `/explorer?path=${encodeURIComponent(JSON.stringify(itemWingPath))}`;
 		}
 		return null;
 	}
@@ -171,7 +171,7 @@ function getItemPath(
 
 	if (isPathItem(itemType)) {
 		// Navigate to explorer with the SD path
-		return `/explorer?path=${encodeURIComponent(JSON.stringify(itemType.Path.sd_path))}`;
+		return `/explorer?path=${encodeURIComponent(JSON.stringify(itemType.Path.wing_path))}`;
 	}
 
 	if (isSourceItem(itemType)) {
@@ -197,10 +197,10 @@ export function resolveItemMetadata(
 
 	// Handle raw location object (legacy format)
 	if (isRawLocation(item)) {
-		const rawItem = item as { name?: string; sd_path?: SdPath };
+		const rawItem = item as { name?: string; wing_path?: WingPath };
 		const label = customLabel || rawItem.name || "Unnamed Location";
-		const path = rawItem.sd_path
-			? `/explorer?path=${encodeURIComponent(JSON.stringify(rawItem.sd_path))}`
+		const path = rawItem.wing_path
+			? `/explorer?path=${encodeURIComponent(JSON.stringify(rawItem.wing_path))}`
 			: null;
 
 		return {
@@ -215,8 +215,8 @@ export function resolveItemMetadata(
 	// Handle proper SpaceItem
 	const spaceItem = item as SpaceItemType;
 	const resolvedFile = spaceItem.resolved_file;
-	const itemSdPath = (spaceItem as SpaceItemType & { sd_path?: SdPath })
-		.sd_path;
+	const itemWingPath = (spaceItem as SpaceItemType & { wing_path?: WingPath })
+		.wing_path;
 
 	const icon: IconData = customIcon
 		? { type: "image", icon: customIcon }
@@ -227,7 +227,7 @@ export function resolveItemMetadata(
 		resolvedFile?.name ||
 		getItemLabel(spaceItem.item_type, resolvedFile);
 
-	const path = getItemPath(spaceItem.item_type, volumeData, itemSdPath);
+	const path = getItemPath(spaceItem.item_type, volumeData, itemWingPath);
 
 	return { icon, label, path };
 }
@@ -273,18 +273,18 @@ export function getDropTargetType(
 export function buildDropTargetPath(
 	item: SpaceItemType | Record<string, unknown>,
 	volumeData?: { device_slug: string; mount_path: string },
-): SdPath | undefined {
+): WingPath | undefined {
 	if (isRawLocation(item)) {
-		return (item as { sd_path?: SdPath }).sd_path;
+		return (item as { wing_path?: WingPath }).wing_path;
 	}
 
 	const spaceItem = item as SpaceItemType;
 	const itemType = spaceItem.item_type;
-	const itemSdPath = (spaceItem as SpaceItemType & { sd_path?: SdPath })
-		.sd_path;
+	const itemWingPath = (spaceItem as SpaceItemType & { wing_path?: WingPath })
+		.wing_path;
 
 	if (isPathItem(itemType)) {
-		return itemType.Path.sd_path;
+		return itemType.Path.wing_path;
 	}
 
 	if (isVolumeItem(itemType) && volumeData) {
@@ -296,8 +296,8 @@ export function buildDropTargetPath(
 		};
 	}
 
-	if (isLocationItem(itemType) && itemSdPath) {
-		return itemSdPath;
+	if (isLocationItem(itemType) && itemWingPath) {
+		return itemWingPath;
 	}
 
 	return undefined;

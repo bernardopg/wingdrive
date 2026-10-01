@@ -26,7 +26,7 @@ import {
 	VideoCamera
 } from '@phosphor-icons/react';
 import {getIcon} from '@sd/assets/util';
-import type {File, SdPath} from '@sd/ts-client';
+import type {File, WingPath} from '@sd/ts-client';
 import {getContentKind} from '@sd/ts-client';
 import {toast} from '@wingdrive/primitives';
 import clsx from 'clsx';
@@ -57,30 +57,30 @@ export function FileInspector({file}: FileInspectorProps) {
 	const isDev = import.meta.env.DEV;
 
 	// Extract parent directory for pathScope to enable reactive sidecar updates
-	const getParentPath = (): SdPath | undefined => {
-		if (!file.sd_path) return undefined;
+	const getParentPath = (): WingPath | undefined => {
+		if (!file.wing_path) return undefined;
 
-		if ('Physical' in file.sd_path) {
-			const fullPath = file.sd_path.Physical.path;
+		if ('Physical' in file.wing_path) {
+			const fullPath = file.wing_path.Physical.path;
 			const lastSlash = fullPath.lastIndexOf('/');
 			if (lastSlash === -1) return undefined;
 
 			return {
 				Physical: {
-					...file.sd_path.Physical,
+					...file.wing_path.Physical,
 					path: fullPath.substring(0, lastSlash)
 				}
 			};
 		}
 
-		if ('Cloud' in file.sd_path) {
-			const fullPath = file.sd_path.Cloud.path;
+		if ('Cloud' in file.wing_path) {
+			const fullPath = file.wing_path.Cloud.path;
 			const lastSlash = fullPath.lastIndexOf('/');
 			if (lastSlash === -1) return undefined;
 
 			return {
 				Cloud: {
-					...file.sd_path.Cloud,
+					...file.wing_path.Cloud,
 					path: fullPath.substring(0, lastSlash)
 				}
 			};
@@ -198,8 +198,8 @@ function FileQuickActions({file}: {file: File}) {
 
 	// Get physical path for sharing
 	const getPhysicalPath = (): string | null => {
-		if (file.sd_path && 'Physical' in file.sd_path) {
-			return (file.sd_path as {Physical: {path: string}}).Physical.path;
+		if (file.wing_path && 'Physical' in file.wing_path) {
+			return (file.wing_path as {Physical: {path: string}}).Physical.path;
 		}
 		return null;
 	};
@@ -935,10 +935,10 @@ function OverviewTab({file}: {file: File}) {
 				<InfoRow
 					label="Path"
 					value={
-						'Physical' in file.sd_path
-							? String(file.sd_path.Physical.path)
-							: 'Cloud' in file.sd_path
-								? String(file.sd_path.Cloud.path)
+						'Physical' in file.wing_path
+							? String(file.wing_path.Physical.path)
+							: 'Cloud' in file.wing_path
+								? String(file.wing_path.Cloud.path)
 								: 'Content'
 					}
 				/>
@@ -1647,9 +1647,9 @@ function InstancesTab({file}: {file: File}) {
 	const instancesByDevice = instances.reduce(
 		(acc, instance) => {
 			let deviceSlug = 'unknown';
-			if ('Physical' in instance.sd_path) {
-				deviceSlug = instance.sd_path.Physical.device_slug;
-			} else if ('Cloud' in instance.sd_path) {
+			if ('Physical' in instance.wing_path) {
+				deviceSlug = instance.wing_path.Physical.device_slug;
+			} else if ('Cloud' in instance.wing_path) {
 				deviceSlug = 'cloud';
 			}
 
@@ -1745,7 +1745,7 @@ function InstancesTab({file}: {file: File}) {
 }
 
 function InstanceRow({instance}: {instance: File}) {
-	const getPathDisplay = (sdPath: typeof instance.sd_path) => {
+	const getPathDisplay = (sdPath: typeof instance.wing_path) => {
 		if ('Physical' in sdPath) {
 			return sdPath.Physical.path;
 		} else if ('Cloud' in sdPath) {
@@ -1766,7 +1766,7 @@ function InstanceRow({instance}: {instance: File}) {
 	return (
 		<div
 			className="hover:bg-app-box/40 flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 transition-colors"
-			title={getPathDisplay(instance.sd_path)}
+			title={getPathDisplay(instance.wing_path)}
 		>
 			{/* Thumbnail */}
 			<div className="flex-shrink-0 [&_*]:!rounded-[3px]">

@@ -4,7 +4,7 @@
  */
 
 import Fda from './Fda.mp4';
-import SdIntro from './SdIntro.mp4';
-import SdMobIntro from './SdMobIntro.mp4';
+import WingIntro from './WingIntro.mp4';
+import WingMobIntro from './WingMobIntro.mp4';
 
-export {Fda, SdIntro, SdMobIntro};
+export {Fda, WingIntro, WingMobIntro};

@@ -21,10 +21,10 @@ cargo build --release
 Make sure WingDrive daemon is running, then:
 
 ```bash
-export SD_LIBRARY_ID="your-library-uuid"
-export SD_SOCKET_ADDR="$HOME127.0.0.1:6969"  # optional
-export SD_HTTP_URL="http://127.0.0.1:54321"            # optional
-export SD_INITIAL_PATH="/"                              # optional
+export WING_LIBRARY_ID="your-library-uuid"
+export WING_SOCKET_ADDR="$HOME127.0.0.1:6969"  # optional
+export WING_HTTP_URL="http://127.0.0.1:54321"            # optional
+export WING_INITIAL_PATH="/"                              # optional
 
 cargo run
 ```
@@ -39,10 +39,10 @@ Use the included script to automatically find your library and run:
 
 ## Environment Variables
 
-- `SD_LIBRARY_ID` (required) - Your WingDrive library UUID
-- `SD_SOCKET_ADDR` (optional) - Daemon TCP address (default: `~127.0.0.1:6969`)
-- `SD_HTTP_URL` (optional) - HTTP server URL (default: `http://127.0.0.1:54321`)
-- `SD_INITIAL_PATH` (optional) - Initial directory path (default: `/`)
+- `WING_LIBRARY_ID` (required) - Your WingDrive library UUID
+- `WING_SOCKET_ADDR` (optional) - Daemon TCP address (default: `~127.0.0.1:6969`)
+- `WING_HTTP_URL` (optional) - HTTP server URL (default: `http://127.0.0.1:54321`)
+- `WING_INITIAL_PATH` (optional) - Initial directory path (default: `/`)
 
 ## Architecture
 

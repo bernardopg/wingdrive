@@ -75,7 +75,7 @@ impl MemoryVariant for PhotoKnowledge {
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct AnalysisPlan {
-	pub pending_locations: Vec<SdPath>,
+	pub pending_locations: Vec<WingPath>,
 	pub photos_needing_faces: Vec<Uuid>,
 	pub photos_needing_clustering: Vec<Uuid>,
 	pub moments_to_generate: Vec<DateRange>,

@@ -26,7 +26,7 @@ last_updated: 2026-10-01
 
 ## Fixes Found During Validation
 
-- Every CLI `SdPath::local` carried an empty device slug because client processes never register a device, so the daemon routed CLI paths as remote: delete ran "Remote deletion (0 devices)" and rename did nothing. This also affected the existing `file copy`, `file list`, `index`, `location`, and `network` commands. `SdPath::local` now falls back to the `"local"` placeholder.
+- Every CLI `WingPath::local` carried an empty device slug because client processes never register a device, so the daemon routed CLI paths as remote: delete ran "Remote deletion (0 devices)" and rename did nothing. This also affected the existing `file copy`, `file list`, `index`, `location`, and `network` commands. `WingPath::local` now falls back to the `"local"` placeholder.
 - CLI file paths are made absolute before they reach the daemon, which has its own working directory.
 - `files.delete` with `permanent: true` always failed with "Permanent deletion requires explicit confirmation" because the action never set `confirm_permanent`. This broke "Delete permanently" in the desktop UI too. The action now carries the confirmation its client already obtained.
 

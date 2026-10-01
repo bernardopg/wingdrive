@@ -7,7 +7,7 @@
 use crate::infra::query::{QueryError, QueryResult};
 use crate::{
 	context::CoreContext,
-	domain::{addressing::SdPath, content_identity::ContentIdentity, file::File, ContentKind},
+	domain::{addressing::WingPath, content_identity::ContentIdentity, file::File, ContentKind},
 	infra::db::entities::{
 		content_identity, directory_paths, entry, image_media_data, sidecar, user_metadata,
 		video_media_data,
@@ -24,7 +24,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct MediaListingInput {
 	/// The directory path to list media for
-	pub path: SdPath,
+	pub path: WingPath,
 	/// Whether to include media from descendant directories (default: false)
 	pub include_descendants: Option<bool>,
 	/// Which media types to include (default: both Image and Video)
@@ -69,7 +69,7 @@ pub struct MediaListingQuery {
 }
 
 impl MediaListingQuery {
-	pub fn new(path: SdPath) -> Self {
+	pub fn new(path: WingPath) -> Self {
 		Self {
 			input: MediaListingInput {
 				path,
@@ -82,7 +82,7 @@ impl MediaListingQuery {
 	}
 
 	pub fn with_options(
-		path: SdPath,
+		path: WingPath,
 		include_descendants: Option<bool>,
 		media_types: Option<Vec<ContentKind>>,
 		limit: Option<u32>,
@@ -363,7 +363,7 @@ impl LibraryQuery for MediaListingQuery {
 			};
 
 			// Construct full file path
-			let entry_sd_path = if let Some(dir_path) = directory_path {
+			let entry_wing_path = if let Some(dir_path) = directory_path {
 				let full_path = if dir_path.ends_with('/') {
 					format!("{}{}", dir_path, full_name)
 				} else {
@@ -371,23 +371,23 @@ impl LibraryQuery for MediaListingQuery {
 				};
 
 				match &self.input.path {
-					SdPath::Physical { device_slug, .. } => SdPath::Physical {
+					WingPath::Physical { device_slug, .. } => WingPath::Physical {
 						device_slug: device_slug.clone(),
 						path: full_path.into(),
 					},
-					SdPath::Cloud {
+					WingPath::Cloud {
 						service,
 						identifier,
 						..
-					} => SdPath::Cloud {
+					} => WingPath::Cloud {
 						service: *service,
 						identifier: identifier.clone(),
 						path: full_path,
 					},
-					SdPath::Content { content_id } => SdPath::Content {
+					WingPath::Content { content_id } => WingPath::Content {
 						content_id: *content_id,
 					},
-					SdPath::Sidecar { .. } => {
+					WingPath::Sidecar { .. } => {
 						return Err(QueryError::Internal(
 							"Sidecar paths not supported for media listing".to_string(),
 						));
@@ -396,23 +396,23 @@ impl LibraryQuery for MediaListingQuery {
 			} else {
 				// Fallback to constructing path from parent
 				match &self.input.path {
-					SdPath::Physical { device_slug, path } => SdPath::Physical {
+					WingPath::Physical { device_slug, path } => WingPath::Physical {
 						device_slug: device_slug.clone(),
 						path: path.join(&full_name).into(),
 					},
-					SdPath::Cloud {
+					WingPath::Cloud {
 						service,
 						identifier,
 						path,
-					} => SdPath::Cloud {
+					} => WingPath::Cloud {
 						service: *service,
 						identifier: identifier.clone(),
 						path: format!("{}/{}", path, full_name),
 					},
-					SdPath::Content { content_id } => SdPath::Content {
+					WingPath::Content { content_id } => WingPath::Content {
 						content_id: *content_id,
 					},
-					SdPath::Sidecar { .. } => {
+					WingPath::Sidecar { .. } => {
 						return Err(QueryError::Internal(
 							"Sidecar paths not supported for media listing".to_string(),
 						));
@@ -444,7 +444,7 @@ impl LibraryQuery for MediaListingQuery {
 			};
 
 			// Convert to File using from_entity_model
-			let mut file = File::from_entity_model(entity_model, entry_sd_path);
+			let mut file = File::from_entity_model(entity_model, entry_wing_path);
 
 			// Add content identity if available
 			if let (Some(ci_uuid), Some(ci_hash), Some(ci_first_seen), Some(ci_last_verified)) = (
@@ -545,7 +545,7 @@ impl LibraryQuery for MediaListingQuery {
 }
 
 impl MediaListingQuery {
-	/// Find the parent directory entry for the given SdPath
+	/// Find the parent directory entry for the given WingPath
 	async fn find_parent_directory(&self, db: &DatabaseConnection) -> QueryResult<entry::Model> {
 		tracing::debug!(
 			"find_parent_directory called with path: {:?}",
@@ -553,7 +553,7 @@ impl MediaListingQuery {
 		);
 
 		match &self.input.path {
-			SdPath::Physical { device_slug, path } => {
+			WingPath::Physical { device_slug, path } => {
 				let path_str = path.to_string_lossy().to_string();
 				tracing::debug!("Looking for directory path: '{}'", path_str);
 
@@ -586,7 +586,7 @@ impl MediaListingQuery {
 					}
 				}
 			}
-			SdPath::Cloud {
+			WingPath::Cloud {
 				service,
 				identifier,
 				path,
@@ -627,10 +627,10 @@ impl MediaListingQuery {
 					}
 				}
 			}
-			SdPath::Sidecar { .. } => Err(QueryError::Internal(
+			WingPath::Sidecar { .. } => Err(QueryError::Internal(
 				"Sidecar paths not supported for media listing".to_string(),
 			)),
-			SdPath::Content { .. } => Err(QueryError::Internal(
+			WingPath::Content { .. } => Err(QueryError::Internal(
 				"Content-addressed paths not supported for media listing".to_string(),
 			)),
 		}

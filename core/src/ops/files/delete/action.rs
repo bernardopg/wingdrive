@@ -4,7 +4,7 @@ use super::input::FileDeleteInput;
 use super::job::{DeleteJob, DeleteOptions};
 use crate::{
 	context::CoreContext,
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	infra::{
 		action::{error::ActionError, LibraryAction},
 		job::handle::JobHandle,
@@ -15,18 +15,18 @@ use std::{path::PathBuf, sync::Arc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileDeleteAction {
-	pub targets: SdPathBatch,
+	pub targets: WingPathBatch,
 	pub options: DeleteOptions,
 }
 
 impl FileDeleteAction {
 	/// Create a new file delete action
-	pub fn new(targets: SdPathBatch, options: DeleteOptions) -> Self {
+	pub fn new(targets: WingPathBatch, options: DeleteOptions) -> Self {
 		Self { targets, options }
 	}
 
 	/// Create a delete action with default options
-	pub fn with_defaults(targets: SdPathBatch) -> Self {
+	pub fn with_defaults(targets: WingPathBatch) -> Self {
 		Self::new(targets, DeleteOptions::default())
 	}
 }

@@ -52,8 +52,8 @@ export function useExplorerKeyboard() {
 
 	// Physical paths of selected files for opening with the default app
 	const selectedPhysicalPaths = selectedFiles.flatMap((f) =>
-		f.kind === "File" && "Physical" in f.sd_path
-			? [f.sd_path.Physical.path]
+		f.kind === "File" && "Physical" in f.wing_path
+			? [f.wing_path.Physical.path]
 			: [],
 	);
 	const { openWithDefault } = useOpenWith(selectedPhysicalPaths);
@@ -125,7 +125,7 @@ export function useExplorerKeyboard() {
 		"explorer.copy",
 		() => {
 			if (selectedFiles.length === 0) return;
-			const sdPaths = selectedFiles.map((f) => f.sd_path);
+			const sdPaths = selectedFiles.map((f) => f.wing_path);
 			clipboard.copyFiles(sdPaths, currentPath);
 		},
 		{ enabled: selectedFiles.length > 0 },
@@ -136,7 +136,7 @@ export function useExplorerKeyboard() {
 		"explorer.cut",
 		() => {
 			if (selectedFiles.length === 0) return;
-			const sdPaths = selectedFiles.map((f) => f.sd_path);
+			const sdPaths = selectedFiles.map((f) => f.wing_path);
 			clipboard.cutFiles(sdPaths, currentPath);
 		},
 		{ enabled: selectedFiles.length > 0 },
@@ -203,11 +203,11 @@ export function useExplorerKeyboard() {
 			if (selectedFiles.length !== 1) return;
 			const file = selectedFiles[0];
 			if (isVirtualFile(file) || file.kind === "Directory") {
-				navigateToPath(file.sd_path);
+				navigateToPath(file.wing_path);
 				return;
 			}
-			if (file.kind === "File" && "Physical" in file.sd_path) {
-				void openWithDefault(file.sd_path.Physical.path);
+			if (file.kind === "File" && "Physical" in file.wing_path) {
+				void openWithDefault(file.wing_path.Physical.path);
 			}
 		},
 		{ enabled: selectedFiles.length === 1 },
@@ -223,7 +223,7 @@ export function useExplorerKeyboard() {
 			enabled:
 				selectedFiles.length > 0 &&
 				!isDuplicating &&
-				selectedFiles.every((f) => "Physical" in f.sd_path),
+				selectedFiles.every((f) => "Physical" in f.wing_path),
 		},
 	);
 

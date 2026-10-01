@@ -16,7 +16,7 @@ use std::{
 use tempfile::TempDir;
 use tokio::{fs, time::timeout};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use wing_core::domain::addressing::{SdPath, SdPathBatch};
+use wing_core::domain::addressing::{WingPath, WingPathBatch};
 use wing_core::{
 	infra::{action::manager::ActionManager, event::Event},
 	ops::files::copy::{action::FileCopyAction, input::CopyMethod, job::CopyOptions},
@@ -157,13 +157,13 @@ async fn test_copy_progress_with_metadata_tracking() {
 
 	// Build the copy action
 	let copy_action = FileCopyAction {
-		sources: SdPathBatch::new(
+		sources: WingPathBatch::new(
 			source_files
 				.iter()
-				.map(|p| SdPath::local(p.clone()))
+				.map(|p| WingPath::local(p.clone()))
 				.collect(),
 		),
-		destination: SdPath::local(dest_dir.clone()),
+		destination: WingPath::local(dest_dir.clone()),
 		options: CopyOptions {
 			conflict_resolution: None,
 			overwrite: true,
@@ -463,7 +463,7 @@ async fn test_copy_progress_with_metadata_tracking() {
 	};
 
 	// Save snapshot if enabled
-	if std::env::var("SD_TEST_SNAPSHOTS").is_ok() {
+	if std::env::var("WING_TEST_SNAPSHOTS").is_ok() {
 		let snapshot_dir = dirs::data_local_dir()
 			.unwrap()
 			.join("wingdrive")
@@ -487,7 +487,7 @@ async fn test_copy_progress_with_metadata_tracking() {
 			"\n📄 Snapshot written to temp: {}",
 			temp_snapshot_path.display()
 		);
-		println!("   (Set SD_TEST_SNAPSHOTS=1 to save to permanent location)");
+		println!("   (Set WING_TEST_SNAPSHOTS=1 to save to permanent location)");
 	}
 
 	// Print summary

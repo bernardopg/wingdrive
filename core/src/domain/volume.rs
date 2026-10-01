@@ -299,7 +299,7 @@ fn is_unknown_file_system(file_system: &FileSystem) -> bool {
 /// A volume in Spacedrive - unified model for runtime and database
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct Volume {
-	/// Unique identifier (used in SdPath addressing)
+	/// Unique identifier (used in WingPath addressing)
 	pub id: Uuid,
 
 	/// Volume fingerprint for identification

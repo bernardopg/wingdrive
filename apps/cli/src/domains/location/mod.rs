@@ -41,14 +41,14 @@ pub async fn run(ctx: &Context, cmd: LocationCmd) -> Result<()> {
 				run_interactive_add(ctx).await?
 			} else {
 				// Non-interactive mode
-				let sd_path = args.build_sd_path()?;
+				let wing_path = args.build_wing_path()?;
 				let mode = args
 					.mode
 					.map(|m| m.into())
 					.unwrap_or(wing_core::ops::indexing::IndexMode::Content);
 
 				LocationAddInput {
-					path: sd_path,
+					path: wing_path,
 					name: args.name,
 					mode,
 					job_policies: None,
@@ -69,7 +69,7 @@ pub async fn run(ctx: &Context, cmd: LocationCmd) -> Result<()> {
 					return;
 				}
 				for loc in &o.locations {
-					println!("- {} {}", loc.id, loc.sd_path);
+					println!("- {} {}", loc.id, loc.wing_path);
 				}
 			});
 		}
@@ -134,7 +134,7 @@ pub async fn run(ctx: &Context, cmd: LocationCmd) -> Result<()> {
 
 async fn run_interactive_add(ctx: &Context) -> Result<LocationAddInput> {
 	use crate::util::confirm::{select, text};
-	use wing_core::domain::addressing::SdPath;
+	use wing_core::domain::addressing::WingPath;
 	use wing_core::ops::indexing::IndexMode;
 
 	println!("\n=== Add New Location ===\n");
@@ -145,7 +145,7 @@ async fn run_interactive_add(ctx: &Context) -> Result<LocationAddInput> {
 		&["Local filesystem".to_string(), "Cloud storage".to_string()],
 	)?;
 
-	let sd_path = if location_type == 0 {
+	let wing_path = if location_type == 0 {
 		// Local filesystem
 		let path_str = text("Enter the local path", false)?.unwrap();
 		let path_buf = std::path::PathBuf::from(path_str);
@@ -158,7 +158,7 @@ async fn run_interactive_add(ctx: &Context) -> Result<LocationAddInput> {
 			anyhow::bail!("Path must be a directory: {}", path_buf.display());
 		}
 
-		SdPath::local(path_buf)
+		WingPath::local(path_buf)
 	} else {
 		// Cloud storage
 		use wing_core::ops::volumes::list::VolumeListQueryInput;
@@ -217,8 +217,8 @@ async fn run_interactive_add(ctx: &Context) -> Result<LocationAddInput> {
 			format!("{}/{}", mount_point_str, cloud_path)
 		};
 
-		// Parse the URI to create SdPath
-		SdPath::from_uri(&full_uri)
+		// Parse the URI to create WingPath
+		WingPath::from_uri(&full_uri)
 			.map_err(|e| anyhow::anyhow!("Failed to parse cloud path: {}", e))?
 	};
 
@@ -245,7 +245,7 @@ async fn run_interactive_add(ctx: &Context) -> Result<LocationAddInput> {
 	println!();
 
 	Ok(LocationAddInput {
-		path: sd_path,
+		path: wing_path,
 		name,
 		mode,
 		job_policies: None,

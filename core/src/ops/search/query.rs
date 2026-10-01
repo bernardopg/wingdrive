@@ -7,7 +7,7 @@ use super::{
 use crate::infra::query::{QueryError, QueryResult};
 use crate::{
 	context::CoreContext,
-	domain::{addressing::SdPath, File},
+	domain::{addressing::WingPath, File},
 	infra::db::entities::{
 		content_identity, directory_paths, entry, sidecar, tag, user_metadata, user_metadata_tag,
 	},
@@ -427,8 +427,8 @@ impl FileSearchQuery {
 				format!("/{}", entry_name)
 			};
 
-			// Create SdPath with device_slug from join
-			let sd_path = SdPath::Physical {
+			// Create WingPath with device_slug from join
+			let wing_path = WingPath::Physical {
 				device_slug: device_slug
 					.unwrap_or_else(|| crate::device::get_current_device_slug()),
 				path: file_path.into(),
@@ -458,7 +458,7 @@ impl FileSearchQuery {
 			};
 
 			// Convert to File
-			let mut file = File::from_entity_model(entity_model, sd_path);
+			let mut file = File::from_entity_model(entity_model, wing_path);
 			file.favorite = entry_uuid.is_some_and(|uuid| favorite_entry_ids.contains(&uuid));
 
 			// Build and set content identity if we have the required fields
@@ -934,13 +934,13 @@ impl FileSearchQuery {
 		let full_path = self.construct_full_path(&entry_model, db).await?;
 
 		// Build SD path
-		let sd_path = crate::domain::addressing::SdPath::Physical {
+		let wing_path = crate::domain::addressing::WingPath::Physical {
 			device_slug: device.slug,
 			path: full_path.into(),
 		};
 
 		// Use File::from_entity_model to properly construct the file
-		let file = crate::domain::File::from_entity_model(entry_model, sd_path);
+		let file = crate::domain::File::from_entity_model(entry_model, wing_path);
 
 		Ok(Some(crate::ops::search::output::FileSearchResult {
 			file,
@@ -1461,7 +1461,7 @@ impl FileSearchQuery {
 						// Path not indexed - check if ephemeral cache has it
 						let cache = context.ephemeral_cache();
 						let local_path = match path {
-							SdPath::Physical { path, .. } => path.clone(),
+							WingPath::Physical { path, .. } => path.clone(),
 							_ => return Ok(IndexType::Persistent), // Default to persistent for non-physical
 						};
 
@@ -1493,13 +1493,13 @@ impl FileSearchQuery {
 	/// Check if a location has IndexMode::None (should use ephemeral)
 	async fn check_location_index_mode(
 		&self,
-		path: &SdPath,
+		path: &WingPath,
 		db: &DatabaseConnection,
 	) -> Option<bool> {
 		use crate::infra::db::entities::location;
 
 		match path {
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: _,
 				path,
 			} => {
@@ -1531,11 +1531,11 @@ impl FileSearchQuery {
 	/// Find parent directory entry for a given path
 	async fn find_parent_directory(
 		&self,
-		path: &SdPath,
+		path: &WingPath,
 		db: &DatabaseConnection,
 	) -> QueryResult<entry::Model> {
 		match path {
-			SdPath::Physical { path, .. } => {
+			WingPath::Physical { path, .. } => {
 				// Get the directory path string
 				let path_str = path.to_string_lossy().to_string();
 

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 
 use wing_core::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	ops::{
 		indexing::job::IndexMode,
 		locations::{
@@ -36,15 +36,15 @@ pub struct LocationAddArgs {
 }
 
 impl LocationAddArgs {
-	/// Build an SdPath from the args (non-interactive mode)
-	pub fn build_sd_path(&self) -> anyhow::Result<SdPath> {
+	/// Build an WingPath from the args (non-interactive mode)
+	pub fn build_wing_path(&self) -> anyhow::Result<WingPath> {
 		let path_str = self
 			.path
 			.as_ref()
 			.ok_or_else(|| anyhow::anyhow!("Path is required in non-interactive mode"))?;
 
-		// Use SdPath::from_uri() to parse service-based paths or local paths
-		SdPath::from_uri(path_str).map_err(|e| anyhow::anyhow!("Invalid path: {}", e))
+		// Use WingPath::from_uri() to parse service-based paths or local paths
+		WingPath::from_uri(path_str).map_err(|e| anyhow::anyhow!("Invalid path: {}", e))
 	}
 
 	/// Check if interactive mode should be triggered

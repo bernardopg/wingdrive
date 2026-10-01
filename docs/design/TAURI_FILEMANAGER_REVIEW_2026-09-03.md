@@ -148,7 +148,7 @@ Em ambos: `.spawn()?.wait()?` síncrono dentro de `async fn` bloqueia a thread d
 `routes/explorer/views/GridView/FileCard.tsx:81`
 
 ```tsx
-if (file.kind === "File" && "Physical" in file.sd_path) { ... }
+if (file.kind === "File" && "Physical" in file.wing_path) { ... }
 ```
 
 `EntryKind` (`core/src/domain/file.rs:22`) tem `File | Directory | Symlink`. Duplo clique em symlink não faz nada, sem feedback.
@@ -169,7 +169,7 @@ subscription_id=26, 27, 28, 32, 33, 41, 42, 43, 46, 47 ...
 
 ### 16. `console.log` de produção no caminho do clipboard
 
-`useClipboard.ts`, `useExplorerKeyboard.ts:112-130`, `useEmptySpaceContextMenu.ts:44-56` e `DndProvider.tsx` fazem `console.groupCollapsed` com dump JSON completo dos `SdPath` a cada copy/cut/paste. Ruído e custo de serialização em operação quente.
+`useClipboard.ts`, `useExplorerKeyboard.ts:112-130`, `useEmptySpaceContextMenu.ts:44-56` e `DndProvider.tsx` fazem `console.groupCollapsed` com dump JSON completo dos `WingPath` a cada copy/cut/paste. Ruído e custo de serialização em operação quente.
 
 ---
 

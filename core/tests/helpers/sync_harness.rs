@@ -1059,7 +1059,7 @@ pub struct TwoDeviceHarness {
 }
 
 impl TwoDeviceHarness {
-	/// Get access to the snapshot manager (if snapshots enabled via SD_TEST_SNAPSHOTS=1)
+	/// Get access to the snapshot manager (if snapshots enabled via WING_TEST_SNAPSHOTS=1)
 	pub fn snapshot_manager(&self) -> Option<&super::SnapshotManager> {
 		self.test_data.snapshot_manager()
 	}

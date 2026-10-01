@@ -4,7 +4,7 @@ pub mod backfill;
 pub mod manager;
 
 use crate::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::{
 		db::entities::{self, entry::EntryKind},
 		event::{Event, EventBus},
@@ -376,14 +376,14 @@ async fn start_location_indexing(
 		location_id: location_uuid,
 	});
 
-	// Get device slug for SdPath
+	// Get device slug for WingPath
 	let device_slug = get_device_slug(library.clone()).await?;
-	let location_sd_path = SdPath::new(device_slug, path.clone());
+	let location_wing_path = WingPath::new(device_slug, path.clone());
 
 	// Create and dispatch indexer job through the proper job manager
 	let lib_cfg = library.config().await;
 	let idx_cfg = lib_cfg.settings.indexer;
-	let mut config = IndexerJobConfig::new(location_uuid, location_sd_path, index_mode.into());
+	let mut config = IndexerJobConfig::new(location_uuid, location_wing_path, index_mode.into());
 	config.rule_toggles = RuleToggles {
 		no_system_files: idx_cfg.no_system_files,
 		no_hidden: idx_cfg.no_hidden,

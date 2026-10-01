@@ -27,7 +27,7 @@ Navigation history stores a union type that supports both real paths and virtual
 
 ```typescript
 type NavigationEntry = 
-  | { type: "path"; path: SdPath }
+  | { type: "path"; path: WingPath }
   | { type: "view"; view: string; id?: string; params?: Record<string, string> };
 ```
 
@@ -47,7 +47,7 @@ export function mapLocationToFile(location: Location, iconUrl?: string): File {
     id: `virtual:location:${location.id}`,
     kind: "Directory",
     name: location.name,
-    sd_path: location.sd_path,
+    wing_path: location.wing_path,
     // ... standard File fields
     _virtual: {
       type: "location",
@@ -69,7 +69,7 @@ The `useVirtualListing` hook detects virtual view parameters in the URL and fetc
 if (view === "device" && id) {
   // Fetch locations and volumes for this device
   const locations = locationsData?.locations.filter(
-    loc => loc.sd_path.Physical?.device_slug === device.slug
+    loc => loc.wing_path.Physical?.device_slug === device.slug
   );
   
   const volumes = volumesData?.volumes.filter(
@@ -102,14 +102,14 @@ if (isVirtualView && virtualFiles) {
       
       {/* Real content column when directory selected */}
       {selectedDirectory && (
-        <Column path={selectedDirectory.sd_path} />
+        <Column path={selectedDirectory.wing_path} />
       )}
     </div>
   );
 }
 ```
 
-The first column displays virtual files. When you select one, the second column queries the backend for real directory contents using the virtual file's `sd_path`.
+The first column displays virtual files. When you select one, the second column queries the backend for real directory contents using the virtual file's `wing_path`.
 
 <Warning>Virtual files must never be passed to file operations like copy, move, or delete. Always check `isVirtualFile()` before backend mutations.</Warning>
 

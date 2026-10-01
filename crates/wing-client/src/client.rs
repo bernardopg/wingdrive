@@ -56,10 +56,10 @@ impl SpacedriveClient {
 		self.transport.send_request(request_json).await
 	}
 
-	pub async fn media_listing(&self, path: SdPath, limit: Option<usize>) -> Result<Vec<File>> {
+	pub async fn media_listing(&self, path: WingPath, limit: Option<usize>) -> Result<Vec<File>> {
 		#[derive(Serialize)]
 		struct MediaListingInput {
-			path: SdPath,
+			path: WingPath,
 			include_descendants: bool,
 			media_types: Option<Vec<String>>,
 			limit: Option<usize>,

@@ -143,7 +143,7 @@ core/src/ops/files/rename/
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct FileRenameInput {
-    pub target: SdPath,
+    pub target: WingPath,
     pub new_name: String,
 }
 ```
@@ -158,7 +158,7 @@ pub struct FileRenameInput {
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileRenameAction {
-    pub target: SdPath,
+    pub target: WingPath,
     pub new_name: String,
 }
 
@@ -203,10 +203,10 @@ core/src/ops/files/create_folder/
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct CreateFolderInput {
-    pub parent: SdPath,
+    pub parent: WingPath,
     pub name: String,
     #[serde(default)]
-    pub items: Vec<SdPath>,  // Optional items to move into folder
+    pub items: Vec<WingPath>,  // Optional items to move into folder
 }
 ```
 
@@ -215,7 +215,7 @@ pub struct CreateFolderInput {
 ```rust
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateFolderOutput {
-    pub folder_path: SdPath,
+    pub folder_path: WingPath,
     pub job_handle: Option<JobReceipt>,  // Present if items were provided
 }
 ```
@@ -244,7 +244,7 @@ impl LibraryAction for CreateFolderAction {
         // 3. If items provided, dispatch FileCopyJob
         let job_handle = if !self.items.is_empty() {
             let job = FileCopyJob::new(
-                SdPathBatch::new(self.items),
+                WingPathBatch::new(self.items),
                 folder_path.clone()
             );
             Some(library.jobs().dispatch(job).await?)
@@ -310,7 +310,7 @@ const saveRename = useCallback(
 
 		try {
 			await renameFile.mutateAsync({
-				target: file.sd_path,
+				target: file.wing_path,
 				new_name: newName,
 			});
 			setRenamingFileId(null);
@@ -521,7 +521,7 @@ const createFolderWithItems = async () => {
 	const result = await createFolderMutation.mutateAsync({
 		parent: currentPath,
 		name: "New Folder",
-		items: selectedFiles.map((f) => f.sd_path),
+		items: selectedFiles.map((f) => f.wing_path),
 	});
 	// result.job_handle tracks copy progress
 };

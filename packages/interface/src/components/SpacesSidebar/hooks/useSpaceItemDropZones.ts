@@ -1,5 +1,5 @@
 import { useDroppable, useDndContext } from "@dnd-kit/core";
-import type { SpaceItem as SpaceItemType, SdPath } from "@sd/ts-client";
+import type { SpaceItem as SpaceItemType, WingPath } from "@sd/ts-client";
 import {
 	isDropTargetItem,
 	getDropTargetType,
@@ -27,7 +27,7 @@ interface DropZoneState {
 	isOverMiddle: boolean;
 	isDropTarget: boolean;
 	targetType: DropTargetType;
-	targetPath: SdPath | undefined;
+	targetPath: WingPath | undefined;
 	isDraggingSortableItem: boolean;
 }
 

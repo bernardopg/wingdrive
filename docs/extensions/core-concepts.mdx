@@ -68,7 +68,7 @@ async fn detect_faces(ctx: &TaskContext, entry: &Entry) -> TaskResult<Vec<FaceDe
 }
 
 #[job(parallelism = 4, trigger = "user_initiated")]
-async fn analyze_photos(ctx: &JobContext, location: SdPath) -> JobResult<()> {
+async fn analyze_photos(ctx: &JobContext, location: WingPath) -> JobResult<()> {
     // ... logic to find photos and run detect_faces task ...
 }
 ```
@@ -100,12 +100,12 @@ Actions are user-invokable operations that can be previewed before execution. Th
 
 ```rust
 #[action]
-async fn organize_photos(ctx: &ActionContext, location: SdPath) -> ActionResult<ActionPreview> {
+async fn organize_photos(ctx: &ActionContext, location: WingPath) -> ActionResult<ActionPreview> {
     // Works with any storage type
     match location {
-        SdPath::Physical { .. } => organize_local_photos(ctx, location).await,
-        SdPath::Cloud { .. } => organize_cloud_photos(ctx, location).await,
-        SdPath::Content { .. } => {
+        WingPath::Physical { .. } => organize_local_photos(ctx, location).await,
+        WingPath::Cloud { .. } => organize_cloud_photos(ctx, location).await,
+        WingPath::Content { .. } => {
             // Resolve content path to physical location first
             let resolved = location.resolve(ctx).await?;
             organize_photos(ctx, resolved).await

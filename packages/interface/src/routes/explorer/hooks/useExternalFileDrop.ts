@@ -1,4 +1,4 @@
-import type {SdPath} from '@sd/ts-client';
+import type {WingPath} from '@sd/ts-client';
 import {toast} from '@wingdrive/primitives';
 import {useEffect, useRef} from 'react';
 import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
@@ -23,7 +23,7 @@ const REJECTION_MESSAGES: Record<ExternalDropRejectionReason, string> = {
  * dialog so conflicts are resolved before the copy job starts; job progress
  * and per-file failures are then reported through the Job Manager.
  */
-export function useExternalFileDrop(destination: SdPath | null) {
+export function useExternalFileDrop(destination: WingPath | null) {
 	const platform = usePlatform();
 	const openFileOperation = useFileOperationDialog();
 

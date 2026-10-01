@@ -4,7 +4,7 @@
 //! Spacedrive's indexed data, enabling immediate progress feedback.
 
 use crate::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::db::entities::{entry, location, Entry},
 	ops::indexing::PathResolver,
 };
@@ -23,7 +23,7 @@ impl CopyDatabaseQuery {
 	}
 
 	/// Get instant estimates for multiple source paths
-	pub async fn get_estimates_for_paths(&self, sources: &[SdPath]) -> Result<PathEstimates> {
+	pub async fn get_estimates_for_paths(&self, sources: &[WingPath]) -> Result<PathEstimates> {
 		use crate::ops::indexing::PathResolver;
 
 		let mut total_files = 0u64;

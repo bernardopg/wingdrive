@@ -213,11 +213,11 @@ impl ChangeHandler for DatabaseAdapter {
 	}
 
 	async fn create(&mut self, metadata: &DirEntry, parent_path: &Path) -> Result<EntryRef> {
-		use crate::domain::addressing::SdPath;
+		use crate::domain::addressing::WingPath;
 		use crate::ops::indexing::database_storage::DatabaseStorage;
 		use crate::ops::indexing::state::IndexerState;
 
-		let mut state = IndexerState::new(&SdPath::local(&metadata.path));
+		let mut state = IndexerState::new(&WingPath::local(&metadata.path));
 		let library = self.context.get_library(self.library_id).await;
 
 		// Cache Management: Check cache first, then query DB if needed
@@ -279,11 +279,11 @@ impl ChangeHandler for DatabaseAdapter {
 		new_path: &Path,
 		new_parent_path: &Path,
 	) -> Result<()> {
-		use crate::domain::addressing::SdPath;
+		use crate::domain::addressing::WingPath;
 		use crate::ops::indexing::database_storage::DatabaseStorage;
 		use crate::ops::indexing::state::IndexerState;
 
-		let mut state = IndexerState::new(&SdPath::local(old_path));
+		let mut state = IndexerState::new(&WingPath::local(old_path));
 
 		// Cache Management: Check cache first, then query DB if needed
 		if let Some(&parent_id) = self.entry_id_cache.get(new_parent_path) {
@@ -667,7 +667,7 @@ impl ChangeHandler for DatabaseAdapter {
 	}
 
 	async fn handle_new_directory(&self, path: &Path) -> Result<()> {
-		use crate::domain::addressing::SdPath;
+		use crate::domain::addressing::WingPath;
 		use crate::ops::indexing::{IndexMode, IndexerJob, IndexerJobConfig};
 
 		let Some(library) = self.context.get_library(self.library_id).await else {
@@ -689,7 +689,7 @@ impl ChangeHandler for DatabaseAdapter {
 			IndexMode::Content
 		};
 
-		let mut config = IndexerJobConfig::new(self.location_id, SdPath::local(path), index_mode);
+		let mut config = IndexerJobConfig::new(self.location_id, WingPath::local(path), index_mode);
 		config.run_in_background = true;
 
 		let indexer_job = IndexerJob::new(config);
@@ -751,11 +751,11 @@ impl<'a> IndexPersistence for DatabaseAdapterForJob<'a> {
 		_location_id: Option<i32>,
 		location_root_path: &Path,
 	) -> JobResult<i32> {
-		use crate::domain::addressing::SdPath;
+		use crate::domain::addressing::WingPath;
 		use crate::ops::indexing::database_storage::DatabaseStorage;
 		use crate::ops::indexing::state::IndexerState;
 
-		let mut state = IndexerState::new(&SdPath::local(&entry.path));
+		let mut state = IndexerState::new(&WingPath::local(&entry.path));
 
 		// Cache Management: Resolve parent ID if needed (for job pipeline)
 		// The job processes entries in hierarchy order, but we still need to ensure

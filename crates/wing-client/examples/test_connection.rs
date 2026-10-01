@@ -1,14 +1,15 @@
 use std::env;
-use wing_client::{SdPath, WingDriveClient};
+use wing_client::{WingDriveClient, WingPath};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 	// Get daemon and HTTP addresses from the environment or use defaults.
-	let socket_addr = env::var("SD_SOCKET_ADDR").unwrap_or_else(|_| "127.0.0.1:6969".to_string());
+	let socket_addr = env::var("WING_SOCKET_ADDR").unwrap_or_else(|_| "127.0.0.1:6969".to_string());
 
-	let http_url = env::var("SD_HTTP_URL").unwrap_or_else(|_| "http://127.0.0.1:54321".to_string());
+	let http_url =
+		env::var("WING_HTTP_URL").unwrap_or_else(|_| "http://127.0.0.1:54321".to_string());
 
-	let library_id = env::var("SD_LIBRARY_ID").expect("SD_LIBRARY_ID must be set");
+	let library_id = env::var("WING_LIBRARY_ID").expect("WING_LIBRARY_ID must be set");
 
 	println!("Connecting to WingDrive daemon...");
 	println!("  Daemon: {}", socket_addr);
@@ -23,7 +24,7 @@ async fn main() -> anyhow::Result<()> {
 	// Query for media files in root
 	let files = client
 		.media_listing(
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: "james-s-macbook-pro".to_string(),
 				path: "/Users/jamespine/Desktop".into(),
 			},

@@ -994,7 +994,7 @@ export function MeshViewer({
 			return;
 		}
 
-		const sdPath = file.sd_path as any;
+		const sdPath = file.wing_path as any;
 		const physicalPath = sdPath?.Physical?.path;
 
 		if (!physicalPath) {
@@ -1054,7 +1054,7 @@ export function MeshViewer({
 		return () => {
 			abortController.abort();
 		};
-	}, [shouldLoad, fileId, file.sd_path, platform, splatUrl]);
+	}, [shouldLoad, fileId, file.wing_path, platform, splatUrl]);
 
 	if (!meshUrl || loading) {
 		return (

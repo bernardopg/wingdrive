@@ -3,7 +3,7 @@
 use crate::{
 	domain::content_identity::ContentHashGenerator,
 	infra::job::prelude::*,
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -30,7 +30,7 @@ pub enum DetectionMode {
 /// Duplicate detection job for finding duplicate files
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DuplicateDetectionJob {
-	pub search_paths: SdPathBatch,
+	pub search_paths: WingPathBatch,
 	pub mode: DetectionMode,
 	pub min_file_size: u64,
 	pub max_file_size: Option<u64>,
@@ -48,7 +48,7 @@ pub struct DuplicateDetectionJob {
 /// File information for duplicate detection
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileInfo {
-	pub path: SdPath,
+	pub path: WingPath,
 	pub size: u64,
 	pub content_hash: Option<String>,
 	pub modified: Option<std::time::SystemTime>,
@@ -140,7 +140,7 @@ impl JobHandler for DuplicateDetectionJob {
 
 impl DuplicateDetectionJob {
 	/// Create a new duplicate detection job
-	pub fn new(search_paths: SdPathBatch, mode: DetectionMode) -> Self {
+	pub fn new(search_paths: WingPathBatch, mode: DetectionMode) -> Self {
 		Self {
 			search_paths,
 			mode,
@@ -191,13 +191,13 @@ impl DuplicateDetectionJob {
 	async fn collect_files_recursive(
 		&self,
 		path: &std::path::Path,
-		sd_path: &SdPath,
+		wing_path: &WingPath,
 		files: &mut Vec<FileInfo>,
 		ctx: &JobContext<'_>,
 	) -> JobResult<()> {
-		let mut stack = vec![(path.to_path_buf(), sd_path.clone())];
+		let mut stack = vec![(path.to_path_buf(), wing_path.clone())];
 
-		while let Some((current_path, current_sd_path)) = stack.pop() {
+		while let Some((current_path, current_wing_path)) = stack.pop() {
 			ctx.check_interrupt().await?;
 
 			let metadata = fs::metadata(&current_path).await?;
@@ -205,7 +205,7 @@ impl DuplicateDetectionJob {
 			if metadata.is_file() {
 				if self.should_include_file(&current_path, metadata.len()) {
 					files.push(FileInfo {
-						path: current_sd_path,
+						path: current_wing_path,
 						size: metadata.len(),
 						content_hash: None,
 						modified: metadata.modified().ok(),
@@ -216,8 +216,8 @@ impl DuplicateDetectionJob {
 
 				while let Some(entry) = dir.next_entry().await? {
 					let entry_path = entry.path();
-					let entry_sd_path = current_sd_path.join(entry.file_name());
-					stack.push((entry_path, entry_sd_path));
+					let entry_wing_path = current_wing_path.join(entry.file_name());
+					stack.push((entry_path, entry_wing_path));
 				}
 			}
 		}

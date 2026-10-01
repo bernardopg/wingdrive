@@ -1,4 +1,4 @@
-import { SDMobileCore } from "wing-mobile-core";
+import { WingMobileCore } from "wing-mobile-core";
 import { ReactNativeTransport } from "./transport";
 import { WIRE_METHODS } from "@sd/ts-client";
 import type { Event } from "@sd/ts-client/generated/types";
@@ -63,7 +63,7 @@ export class WingDriveClient extends SimpleEventEmitter {
   async initialize(deviceName?: string): Promise<void> {
     if (this.initialized) return;
 
-    const result = await SDMobileCore.initialize(undefined, deviceName);
+    const result = await WingMobileCore.initialize(undefined, deviceName);
     if (result !== 0) {
       throw new Error(`Failed to initialize core: error code ${result}`);
     }
@@ -230,7 +230,7 @@ export class WingDriveClient extends SimpleEventEmitter {
   destroy() {
     this.subscriptionManager.destroy();
     this.transport.destroy();
-    SDMobileCore.shutdown();
+    WingMobileCore.shutdown();
     this.initialized = false;
   }
 }

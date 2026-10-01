@@ -49,7 +49,7 @@ export interface TabExplorerState {
 	foldersFirst: boolean;
 	showHiddenFiles: boolean;
 
-	// Column view state (serialized SdPath[] as JSON strings)
+	// Column view state (serialized WingPath[] as JSON strings)
 	columnStack: string[];
 
 	// Scroll position
@@ -85,7 +85,7 @@ const DEFAULT_EXPLORER_STATE: TabExplorerState = {
 // Persistence
 // ============================================================================
 
-const STORAGE_KEY = "sd-tabs-state";
+const STORAGE_KEY = "wing-tabs-state";
 
 /**
  * Secondary windows run their own tab manager; sharing one key would make two

@@ -45,79 +45,79 @@ private func messageCallback(data: UnsafeMutableRawPointer?, result: UnsafePoint
 // Callback for events
 private func eventCallback(data: UnsafeMutableRawPointer?, event: UnsafePointer<CChar>) {
     guard let data = data else { return }
-    let module = Unmanaged<SDMobileCoreModule>.fromOpaque(data).takeUnretainedValue()
+    let module = Unmanaged<WingMobileCoreModule>.fromOpaque(data).takeUnretainedValue()
     let eventStr = String(cString: event)
     if module.listeners > 0 {
-        module.sendEvent("SDCoreEvent", ["body": eventStr])
+        module.sendEvent("WingCoreEvent", ["body": eventStr])
     }
 }
 
 // Callback for logs
 private func logCallback(data: UnsafeMutableRawPointer?, log: UnsafePointer<CChar>) {
     guard let data = data else { return }
-    let module = Unmanaged<SDMobileCoreModule>.fromOpaque(data).takeUnretainedValue()
+    let module = Unmanaged<WingMobileCoreModule>.fromOpaque(data).takeUnretainedValue()
     let logStr = String(cString: log)
     if module.logListeners > 0 {
-        module.sendEvent("SDCoreLog", ["body": logStr])
+        module.sendEvent("WingCoreLog", ["body": logStr])
     }
 }
 
 // Expo Module
-public class SDMobileCoreModule: Module {
+public class WingMobileCoreModule: Module {
     var listeners = 0
     var logListeners = 0
     private var registeredWithRust = false
     private var logRegisteredWithRust = false
 
     public func definition() -> ModuleDefinition {
-        Name("SDMobileCore")
+        Name("WingMobileCore")
 
-        Events("SDCoreEvent", "SDCoreLog")
+        Events("WingCoreEvent", "WingCoreLog")
 
-        OnStartObserving("SDCoreEvent") {
-            NSLog("[SDMobileCore] 📡 OnStartObserving SDCoreEvent triggered")
+        OnStartObserving("WingCoreEvent") {
+            NSLog("[WingMobileCore] 📡 OnStartObserving WingCoreEvent triggered")
 
             // Register event listener if not already done
             if !self.registeredWithRust {
-                NSLog("[SDMobileCore] 🚀 Registering event listener...")
+                NSLog("[WingMobileCore] 🚀 Registering event listener...")
                 spawn_core_event_listener(
                     callback: eventCallback,
                     callback_data: Unmanaged.passUnretained(self).toOpaque()
                 )
                 self.registeredWithRust = true
-                NSLog("[SDMobileCore] ✅ Event listener registered with Rust")
+                NSLog("[WingMobileCore] ✅ Event listener registered with Rust")
             }
 
             self.listeners += 1
-            NSLog("[SDMobileCore] 📊 SDCoreEvent listeners: \(self.listeners)")
+            NSLog("[WingMobileCore] 📊 WingCoreEvent listeners: \(self.listeners)")
         }
 
-        OnStopObserving("SDCoreEvent") {
+        OnStopObserving("WingCoreEvent") {
             self.listeners -= 1
-            NSLog("[SDMobileCore] 📉 SDCoreEvent listeners: \(self.listeners)")
+            NSLog("[WingMobileCore] 📉 WingCoreEvent listeners: \(self.listeners)")
         }
 
-        OnStartObserving("SDCoreLog") {
-            NSLog("[SDMobileCore] 📡 OnStartObserving SDCoreLog triggered")
+        OnStartObserving("WingCoreLog") {
+            NSLog("[WingMobileCore] 📡 OnStartObserving WingCoreLog triggered")
 
             // Register log listener if not already done
             if !self.logRegisteredWithRust {
-                NSLog("[SDMobileCore] 🚀 Registering log listener...")
+                NSLog("[WingMobileCore] 🚀 Registering log listener...")
                 spawn_core_log_listener(
                     callback: logCallback,
                     callback_data: Unmanaged.passUnretained(self).toOpaque()
                 )
                 self.logRegisteredWithRust = true
-                NSLog("[SDMobileCore] ✅ Log listener registered with Rust")
+                NSLog("[WingMobileCore] ✅ Log listener registered with Rust")
             }
 
             self.logListeners += 1
-            NSLog("[SDMobileCore] 📊 SDCoreLog listeners: \(self.logListeners)")
+            NSLog("[WingMobileCore] 📊 WingCoreLog listeners: \(self.logListeners)")
         }
 
-        OnStopObserving("SDCoreLog") {
+        OnStopObserving("WingCoreLog") {
             self.logListeners -= 1
-            NSLog("[SDMobileCore] 📉 SDCoreLog listeners: \(self.logListeners)")
+            NSLog("[WingMobileCore] 📉 WingCoreLog listeners: \(self.logListeners)")
         }
 
         Function("initialize") { (dataDir: String?, deviceName: String?) throws -> Int in
@@ -130,15 +130,15 @@ public class SDMobileCoreModule: Module {
                 dir = paths[0].appendingPathComponent("WingDriveData").path
             }
 
-            print("[SDMobileCore] Using data directory: \(dir)")
+            print("[WingMobileCore] Using data directory: \(dir)")
 
             // Ensure directory exists
             do {
                 try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true, attributes: nil)
-                NSLog("[SDMobileCore] ✅ Data directory created/verified: %@", dir)
+                NSLog("[WingMobileCore] ✅ Data directory created/verified: %@", dir)
             } catch {
-                NSLog("[SDMobileCore] ❌ FAILED to create directory: %@", error.localizedDescription)
-                throw NSError(domain: "SDMobileCore", code: -2, userInfo: [
+                NSLog("[WingMobileCore] ❌ FAILED to create directory: %@", error.localizedDescription)
+                throw NSError(domain: "WingMobileCore", code: -2, userInfo: [
                     NSLocalizedDescriptionKey: "Failed to create data directory: \(error.localizedDescription)"
                 ])
             }
@@ -148,15 +148,15 @@ public class SDMobileCoreModule: Module {
             do {
                 try "test".write(toFile: testFile, atomically: true, encoding: .utf8)
                 try FileManager.default.removeItem(atPath: testFile)
-                NSLog("[SDMobileCore] ✅ Directory is writable")
+                NSLog("[WingMobileCore] ✅ Directory is writable")
             } catch {
-                NSLog("[SDMobileCore] ❌ Directory is NOT writable: %@", error.localizedDescription)
-                throw NSError(domain: "SDMobileCore", code: -3, userInfo: [
+                NSLog("[WingMobileCore] ❌ Directory is NOT writable: %@", error.localizedDescription)
+                throw NSError(domain: "WingMobileCore", code: -3, userInfo: [
                     NSLocalizedDescriptionKey: "Data directory is not writable: \(error.localizedDescription)"
                 ])
             }
 
-            NSLog("[SDMobileCore] 🚀 Calling Rust initialize_core...")
+            NSLog("[WingMobileCore] 🚀 Calling Rust initialize_core...")
             let result = dir.withCString { dirPtr in
                 if let deviceName = deviceName {
                     return Int(deviceName.withCString { namePtr in
@@ -166,10 +166,10 @@ public class SDMobileCoreModule: Module {
                     return Int(initialize_core(data_dir: dirPtr, device_name: nil))
                 }
             }
-            NSLog("[SDMobileCore] 📊 Rust initialize_core returned: %d", result)
+            NSLog("[WingMobileCore] 📊 Rust initialize_core returned: %d", result)
 
             if result != 0 {
-                throw NSError(domain: "SDMobileCore", code: result, userInfo: [
+                throw NSError(domain: "WingMobileCore", code: result, userInfo: [
                     NSLocalizedDescriptionKey: "Rust core initialization failed with code \(result). Check console logs for details from Core::new_with_config()"
                 ])
             }

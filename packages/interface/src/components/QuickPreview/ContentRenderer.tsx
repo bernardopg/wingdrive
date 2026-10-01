@@ -119,13 +119,13 @@ function ImageRenderer({ file, onZoomChange }: ContentRendererProps) {
 			return;
 		}
 
-		const sdPath = file.sd_path as any;
+		const sdPath = file.wing_path as any;
 		const physicalPath = sdPath?.Physical?.path;
 
 		if (!physicalPath) {
 			console.log(
-				"[ImageRenderer] No physical path available, sd_path:",
-				file.sd_path,
+				"[ImageRenderer] No physical path available, wing_path:",
+				file.wing_path,
 			);
 			return;
 		}
@@ -138,7 +138,7 @@ function ImageRenderer({ file, onZoomChange }: ContentRendererProps) {
 			url,
 		);
 		setOriginalUrl(url);
-	}, [shouldLoadOriginal, imageFileId, file.sd_path, platform]);
+	}, [shouldLoadOriginal, imageFileId, file.wing_path, platform]);
 
 	// Get highest resolution thumbnail first
 	const getHighestResThumbnail = () => {
@@ -455,7 +455,7 @@ function VideoRenderer({
 	useEffect(() => {
 		if (!shouldLoadVideo) return;
 
-		const sdPath = file.sd_path as any;
+		const sdPath = file.wing_path as any;
 		const physicalPath = sdPath?.Physical?.path;
 
 		if (!physicalPath) return;
@@ -469,7 +469,7 @@ function VideoRenderer({
 		return () => {
 			cancelled = true;
 		};
-	}, [shouldLoadVideo, videoFileId, file.sd_path, platform]);
+	}, [shouldLoadVideo, videoFileId, file.wing_path, platform]);
 
 	if (!videoUrl) {
 		return (
@@ -518,7 +518,7 @@ function AudioRenderer({ file }: ContentRendererProps) {
 	useEffect(() => {
 		if (!shouldLoadAudio) return;
 
-		const sdPath = file.sd_path as any;
+		const sdPath = file.wing_path as any;
 		const physicalPath = sdPath?.Physical?.path;
 
 		if (!physicalPath) return;
@@ -532,7 +532,7 @@ function AudioRenderer({ file }: ContentRendererProps) {
 		return () => {
 			cancelled = true;
 		};
-	}, [shouldLoadAudio, audioFileId, file.sd_path, platform]);
+	}, [shouldLoadAudio, audioFileId, file.wing_path, platform]);
 
 	if (!audioUrl) {
 		return (
@@ -592,7 +592,7 @@ function TextRenderer({ file }: ContentRendererProps) {
 			return;
 		}
 
-		const sdPath = file.sd_path as any;
+		const sdPath = file.wing_path as any;
 		const physicalPath = sdPath?.Physical?.path;
 
 		if (!physicalPath) {
@@ -608,7 +608,7 @@ function TextRenderer({ file }: ContentRendererProps) {
 			url,
 		);
 		setTextUrl(url);
-	}, [shouldLoadText, textFileId, file.sd_path, platform]);
+	}, [shouldLoadText, textFileId, file.wing_path, platform]);
 
 	const extension = file.name.split(".").pop()?.toLowerCase();
 

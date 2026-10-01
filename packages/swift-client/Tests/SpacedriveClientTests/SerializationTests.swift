@@ -47,23 +47,23 @@ final class SerializationTests: XCTestCase {
 
     func testUnionTypeSerialization() throws {
         // Test union types (enums with associated values)
-        let physicalPath = SdPath.physical(
-            SdPathPhysicalData(deviceId: "device-123", path: "/test/file.txt"))
-        let contentPath = SdPath.content(SdPathContentData(contentId: "content-456"))
+        let physicalPath = WingPath.physical(
+            WingPathPhysicalData(deviceId: "device-123", path: "/test/file.txt"))
+        let contentPath = WingPath.content(WingPathContentData(contentId: "content-456"))
 
         // Test physical path serialization
         let physicalData = try JSONEncoder().encode(physicalPath)
         let physicalJson = String(data: physicalData, encoding: .utf8)!
-        print("Physical SdPath JSON: \(physicalJson)")
+        print("Physical WingPath JSON: \(physicalJson)")
 
         // Test content path serialization
         let contentData = try JSONEncoder().encode(contentPath)
         let contentJson = String(data: contentData, encoding: .utf8)!
-        print("Content SdPath JSON: \(contentJson)")
+        print("Content WingPath JSON: \(contentJson)")
 
         // Test round-trip
-        let decodedPhysical = try JSONDecoder().decode(SdPath.self, from: physicalData)
-        let decodedContent = try JSONDecoder().decode(SdPath.self, from: contentData)
+        let decodedPhysical = try JSONDecoder().decode(WingPath.self, from: physicalData)
+        let decodedContent = try JSONDecoder().decode(WingPath.self, from: contentData)
 
         // Verify the decoded values match
         switch decodedPhysical {

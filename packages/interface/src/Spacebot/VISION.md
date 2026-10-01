@@ -341,7 +341,7 @@ This is important because it means one Spacebot instance serves the entire devic
 
 ### Chat on Mobile
 
-The mobile app (`apps/mobile/`) is an Expo/React Native app with native tabs (Overview, Browse, Settings) and an embedded WingDrive core communicating over a JSON-RPC transport (`SDMobileCore.sendMessage`). There is currently no Spacebot surface.
+The mobile app (`apps/mobile/`) is an Expo/React Native app with native tabs (Overview, Browse, Settings) and an embedded WingDrive core communicating over a JSON-RPC transport (`WingMobileCore.sendMessage`). There is currently no Spacebot surface.
 
 Adding chat to mobile means:
 

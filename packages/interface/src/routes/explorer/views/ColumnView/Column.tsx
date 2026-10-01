@@ -1,7 +1,7 @@
 import { useRef, memo, useCallback } from "react";
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 import clsx from "clsx";
-import type { File, SdPath } from "@sd/ts-client";
+import type { File, WingPath } from "@sd/ts-client";
 import { useNormalizedQuery } from "../../../../contexts/SpacedriveContext";
 import { ColumnItem } from "./ColumnItem";
 import { useExplorer } from "../../context";
@@ -34,7 +34,7 @@ const ColumnItemWrapper = memo(
 			multi?: boolean,
 			range?: boolean,
 		) => void;
-		onNavigate: (path: SdPath) => void;
+		onNavigate: (path: WingPath) => void;
 	}) {
 		const contextMenu = useFileContextMenu({
 			file,
@@ -51,25 +51,25 @@ const ColumnItemWrapper = memo(
 
 		const physicalPath =
 			(file.kind === "File" || file.kind === "Symlink") &&
-			"Physical" in file.sd_path
-				? file.sd_path.Physical.path
+			"Physical" in file.wing_path
+				? file.wing_path.Physical.path
 				: null;
 		const { openWithDefault } = useOpenWith(
 			physicalPath ? [physicalPath] : [],
 		);
 
 		const handleDoubleClick = useCallback(() => {
-			if (file.kind === "Directory" && file.sd_path) {
-				onNavigate(file.sd_path);
+			if (file.kind === "Directory" && file.wing_path) {
+				onNavigate(file.wing_path);
 				return;
 			}
 			// Files (and symlinks) previously did nothing on double-click here;
 			// every other view already opened them with the default application.
 			if (
 				(file.kind === "File" || file.kind === "Symlink") &&
-				"Physical" in file.sd_path
+				"Physical" in file.wing_path
 			) {
-				void openWithDefault(file.sd_path.Physical.path);
+				void openWithDefault(file.wing_path.Physical.path);
 			}
 		}, [file, onNavigate, openWithDefault]);
 
@@ -119,7 +119,7 @@ const ColumnItemWrapper = memo(
 );
 
 interface ColumnProps {
-	path: SdPath | null;
+	path: WingPath | null;
 	isSelected: (fileId: string) => boolean;
 	selectedFileIds: Set<string>;
 	onSelectFile: (
@@ -128,8 +128,8 @@ interface ColumnProps {
 		multi?: boolean,
 		range?: boolean,
 	) => void;
-	onNavigate: (path: SdPath) => void;
-	nextColumnPath?: SdPath;
+	onNavigate: (path: WingPath) => void;
+	nextColumnPath?: WingPath;
 	columnIndex: number;
 	isActive: boolean;
 	virtualFiles?: File[];
@@ -209,8 +209,8 @@ export const Column = memo(function Column({
 
 					// Check if this file is part of the navigation path
 					const isInPath =
-						nextColumnPath && file.sd_path
-							? JSON.stringify(file.sd_path) ===
+						nextColumnPath && file.wing_path
+							? JSON.stringify(file.wing_path) ===
 								JSON.stringify(nextColumnPath)
 							: false;
 

@@ -4,7 +4,7 @@ import type {
 	File,
 	FileSearchInput,
 	FileSearchOutput,
-	SdPath,
+	WingPath,
 	SearchScope as TSSearchScope,
 } from "../generated/types";
 import { useNormalizedQuery } from "./useNormalizedQuery";
@@ -17,7 +17,7 @@ export interface UseSearchFilesOptions {
 	/** Search scope: "folder" (current path), "location", or "library" */
 	scope: SearchScopeUI;
 	/** Current path (required for "folder" scope) */
-	currentPath?: SdPath | null;
+	currentPath?: WingPath | null;
 	/** Location ID (required for "location" scope) */
 	locationId?: string | null;
 	/** Sort field: "Relevance", "Name", "Size", "ModifiedAt", "CreatedAt" */

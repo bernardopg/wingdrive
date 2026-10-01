@@ -6,7 +6,7 @@
 
 use super::state::{IndexPhase, IndexerProgress};
 use crate::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::job::generic_progress::{GenericProgress, ToGenericProgress},
 };
 use std::path::PathBuf;
@@ -73,7 +73,7 @@ impl ToGenericProgress for IndexerProgress {
 		// Always use phase-based percentage for accurate progress tracking
 		let percentage = phase_based_pct;
 
-		// Filter out status messages from current_path - only convert real filesystem paths to SdPath.
+		// Filter out status messages from current_path - only convert real filesystem paths to WingPath.
 		let current_path = if !self.current_path.is_empty()
 			&& !self.current_path.starts_with("Aggregating directory")
 			&& !self.current_path.starts_with("Finalizing")
@@ -83,9 +83,9 @@ impl ToGenericProgress for IndexerProgress {
 				|| self.current_path.contains('/')
 				|| self.current_path.contains('\\')
 			{
-				SdPath::from_uri(&self.current_path)
+				WingPath::from_uri(&self.current_path)
 					.ok()
-					.or_else(|| Some(SdPath::local(path_buf)))
+					.or_else(|| Some(WingPath::local(path_buf)))
 			} else {
 				None
 			}

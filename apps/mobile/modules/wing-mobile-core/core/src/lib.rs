@@ -503,7 +503,7 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_wingdrive_core_SDMobileCoreModule_initializeCore(
+	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_initializeCore(
 		mut env: JNIEnv,
 		_class: JClass,
 		data_dir: JString,
@@ -539,7 +539,7 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_wingdrive_core_SDMobileCoreModule_shutdownCore(
+	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_shutdownCore(
 		_env: JNIEnv,
 		_class: JClass,
 	) {
@@ -547,7 +547,7 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_wingdrive_core_SDMobileCoreModule_handleCoreMsg(
+	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_handleCoreMsg(
 		mut env: JNIEnv,
 		_class: JClass,
 		query: JString,
@@ -587,7 +587,7 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_wingdrive_core_SDMobileCoreModule_registerCoreEventListener(
+	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_registerCoreEventListener(
 		mut env: JNIEnv,
 		module: JObject,
 	) {
@@ -624,7 +624,7 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_wingdrive_core_SDMobileCoreModule_registerCoreLogListener(
+	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_registerCoreLogListener(
 		mut env: JNIEnv,
 		module: JObject,
 	) {

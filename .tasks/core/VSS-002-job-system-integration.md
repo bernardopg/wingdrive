@@ -229,4 +229,4 @@ Estimated: 1 week focused work
 
 ## Dependencies
 
-Requires VSS-001 (SdPath integration) to be complete for full testing, but can be developed in parallel.
+Requires VSS-001 (WingPath integration) to be complete for full testing, but can be developed in parallel.

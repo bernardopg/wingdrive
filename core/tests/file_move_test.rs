@@ -16,7 +16,7 @@ mod helpers;
 use helpers::*;
 use tokio::time::Duration;
 use wing_core::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	location::IndexMode,
 	ops::indexing::{IndexScope, IndexerJob, IndexerJobConfig},
 };
@@ -302,7 +302,7 @@ async fn test_ephemeral_file_move_via_reindex() -> anyhow::Result<()> {
 	tokio::fs::write(source_folder.join("file2.rs"), "fn main() {}").await?;
 
 	// Index in ephemeral mode
-	let test_root_sd = SdPath::local(test_root.clone());
+	let test_root_sd = WingPath::local(test_root.clone());
 	let indexer_config =
 		IndexerJobConfig::ephemeral_browse(test_root_sd, IndexScope::Recursive, false);
 	let indexer_job = IndexerJob::new(indexer_config);
@@ -329,7 +329,7 @@ async fn test_ephemeral_file_move_via_reindex() -> anyhow::Result<()> {
 
 	// Manual reindex to detect the change
 	let reindex_config = IndexerJobConfig::ephemeral_browse(
-		SdPath::local(test_root.clone()),
+		WingPath::local(test_root.clone()),
 		IndexScope::Recursive,
 		false,
 	);
@@ -384,7 +384,7 @@ async fn test_ephemeral_file_move_via_watcher() -> anyhow::Result<()> {
 	tokio::fs::write(source_folder.join("file2.rs"), "fn main() {}").await?;
 
 	// Index in ephemeral mode
-	let test_root_sd = SdPath::local(test_root.clone());
+	let test_root_sd = WingPath::local(test_root.clone());
 	let indexer_config =
 		IndexerJobConfig::ephemeral_browse(test_root_sd, IndexScope::Recursive, false);
 	let indexer_job = IndexerJob::new(indexer_config);

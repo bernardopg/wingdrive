@@ -1,4 +1,4 @@
-import { SDMobileCore, CoreEvent } from "wing-mobile-core";
+import { WingMobileCore, CoreEvent } from "wing-mobile-core";
 import type { Event } from "@sd/ts-client/src/generated/types";
 
 export interface EventFilter {
@@ -84,7 +84,7 @@ export class ReactNativeTransport {
 				const query = JSON.stringify(
 					currentBatch.length === 1 ? currentBatch[0] : currentBatch,
 				);
-				const resultStr = await SDMobileCore.sendMessage(query);
+				const resultStr = await WingMobileCore.sendMessage(query);
 				const result = JSON.parse(resultStr);
 
 				if (Array.isArray(result)) {
@@ -140,7 +140,7 @@ export class ReactNativeTransport {
 		callback: (event: Event) => void,
 		_options?: SubscriptionOptions,
 	): Promise<() => void> {
-		const unlisten = SDMobileCore.addListener((coreEvent: CoreEvent) => {
+		const unlisten = WingMobileCore.addListener((coreEvent: CoreEvent) => {
 			try {
 				const event = JSON.parse(coreEvent.body) as Event;
 				callback(event);

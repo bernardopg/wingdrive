@@ -188,8 +188,8 @@ impl JobHandler for FileCopyJob {
 struct CopyFileTask {
     id: TaskId,
     index: usize,
-    source: SdPath,
-    destination: SdPath,
+    source: WingPath,
+    destination: WingPath,
     options: CopyOptions,
 }
 

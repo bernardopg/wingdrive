@@ -69,13 +69,13 @@ Perfect for TrueNAS, Unraid, or any Docker-compatible NAS.
 1. **Create a `.env` file:**
    ```bash
    # REQUIRED: Set your credentials
-   SD_AUTH=admin:your-secure-password
+   WING_AUTH=admin:your-secure-password
 
    # Optional: Change port
    PORT=8080
 
    # Optional: Disable auth (NOT RECOMMENDED)
-   # SD_AUTH=disabled
+   # WING_AUTH=disabled
    ```
 
 2. **Start with docker-compose:**
@@ -96,23 +96,23 @@ Perfect for TrueNAS, Unraid, or any Docker-compatible NAS.
 |----------|-------------|---------|----------|
 | `DATA_DIR` | Path to WingDrive data directory | `/data` (in Docker) | Yes (production) |
 | `PORT` | HTTP server port | `8080` | No |
-| `SD_AUTH` | Authentication credentials (format: `user:pass,user2:pass2`) | None | Recommended |
-| `SD_P2P` | Enable P2P networking | `true` | No |
+| `WING_AUTH` | Authentication credentials (format: `user:pass,user2:pass2`) | None | Recommended |
+| `WING_P2P` | Enable P2P networking | `true` | No |
 | `RUST_LOG` | Log level | `info,wing_core=debug` | No |
 
 ### Authentication
 
-**IMPORTANT:** Always set `SD_AUTH` in production!
+**IMPORTANT:** Always set `WING_AUTH` in production!
 
 ```bash
 # Single user
-SD_AUTH=admin:securepassword123
+WING_AUTH=admin:securepassword123
 
 # Multiple users
-SD_AUTH=admin:pass1,user:pass2,readonly:pass3
+WING_AUTH=admin:pass1,user:pass2,readonly:pass3
 
 # Disable (NOT RECOMMENDED - only for trusted networks)
-SD_AUTH=disabled
+WING_AUTH=disabled
 ```
 
 Uses HTTP Basic Authentication. The server will return `401 Unauthorized` if credentials don't match.
@@ -143,7 +143,7 @@ $DATA_DIR/
    - **Port:** Map `8080` to host
    - **Volume:** Mount `/mnt/pool/wingdrive` to `/data`
    - **Environment:**
-     - `SD_AUTH=admin:yourpassword`
+     - `WING_AUTH=admin:yourpassword`
      - `TZ=America/New_York` (your timezone)
 
 4. **Add storage pools** (optional):
@@ -159,7 +159,7 @@ docker run -d \
   -p 7373:7373 \
   -v /mnt/pool/wingdrive:/data \
   -v /mnt/pool/media:/media:ro \
-  -e SD_AUTH=admin:password \
+  -e WING_AUTH=admin:password \
   -e TZ=UTC \
   --restart unless-stopped \
   wingdrive/server:latest
@@ -247,7 +247,7 @@ Both use the same WingDrive core!
 - Try removing stale socket: `rm $DATA_DIR/daemon/daemon.sock`
 
 ### Authentication failing
-- Verify `SD_AUTH` format: `username:password`
+- Verify `WING_AUTH` format: `username:password`
 - Check browser is sending Basic Auth header
 - Test with curl:
   ```bash

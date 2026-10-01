@@ -1,7 +1,7 @@
 //! Delete job implementation
 
 use crate::{
-	domain::addressing::SdPathBatch,
+	domain::addressing::WingPathBatch,
 	infra::job::{generic_progress::GenericProgress, prelude::*},
 };
 use serde::{Deserialize, Serialize};
@@ -43,7 +43,7 @@ impl Default for DeleteOptions {
 /// Delete job for removing files and directories
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeleteJob {
-	pub targets: SdPathBatch,
+	pub targets: WingPathBatch,
 	pub mode: DeleteMode,
 	pub confirm_permanent: bool,
 
@@ -115,7 +115,7 @@ impl JobHandler for DeleteJob {
 					.map_err(|e| JobError::execution(format!("Failed to resolve path: {e}")))?,
 			);
 		}
-		self.targets = SdPathBatch::new(resolved);
+		self.targets = WingPathBatch::new(resolved);
 
 		// Select strategy based on path topology
 		let volume_manager = ctx.volume_manager();
@@ -198,7 +198,7 @@ impl JobHandler for DeleteJob {
 
 impl DeleteJob {
 	/// Create a new delete job
-	pub fn new(targets: SdPathBatch, mode: DeleteMode) -> Self {
+	pub fn new(targets: WingPathBatch, mode: DeleteMode) -> Self {
 		Self {
 			targets,
 			mode,
@@ -209,19 +209,19 @@ impl DeleteJob {
 	}
 
 	/// Create a trash operation
-	pub fn trash(targets: SdPathBatch) -> Self {
+	pub fn trash(targets: WingPathBatch) -> Self {
 		Self::new(targets, DeleteMode::Trash)
 	}
 
 	/// Create a permanent delete operation (requires confirmation)
-	pub fn permanent(targets: SdPathBatch, confirmed: bool) -> Self {
+	pub fn permanent(targets: WingPathBatch, confirmed: bool) -> Self {
 		let mut job = Self::new(targets, DeleteMode::Permanent);
 		job.confirm_permanent = confirmed;
 		job
 	}
 
 	/// Create a secure delete operation (requires confirmation)
-	pub fn secure(targets: SdPathBatch, confirmed: bool) -> Self {
+	pub fn secure(targets: WingPathBatch, confirmed: bool) -> Self {
 		let mut job = Self::new(targets, DeleteMode::Secure);
 		job.confirm_permanent = confirmed;
 		job

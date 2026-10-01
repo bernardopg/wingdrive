@@ -44,12 +44,12 @@ COPY apps/server ./apps/server
 COPY apps/web/dist ./apps/web/dist
 
 # Build server with media processing features.
-# SD_SKIP_WEB_BUILD tells build.rs to use the pre-built apps/web/dist instead
+# WING_SKIP_WEB_BUILD tells build.rs to use the pre-built apps/web/dist instead
 # of trying to run `bun run build` (bun isn't installed in this stage).
 RUN --mount=type=cache,target=/root/.cargo/registry \
 	--mount=type=cache,target=/root/.cargo/git \
 	--mount=type=cache,target=/build/target \
-	SD_SKIP_WEB_BUILD=1 cargo build --release -p wing-server --features wing-core/heif,wing-core/ffmpeg && \
+	WING_SKIP_WEB_BUILD=1 cargo build --release -p wing-server --features wing-core/heif,wing-core/ffmpeg && \
 	cp target/release/wing-server /usr/local/bin/wing-server
 
 #--

@@ -9,7 +9,7 @@
 //! To update the source fixtures used by TypeScript tests, run with:
 //!
 //! ```bash
-//! SD_REGENERATE_FIXTURES=1 cargo test normalized_cache_fixtures_test --nocapture
+//! WING_REGENERATE_FIXTURES=1 cargo test normalized_cache_fixtures_test --nocapture
 //! ```
 
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
@@ -229,7 +229,7 @@ async fn capture_event_fixtures_for_typescript(
 	tracing::info!("Device registered, creating location via LocationAddAction");
 
 	// Build the path scope (using device_slug from above)
-	let test_location_path = wing_core::domain::SdPath::Physical {
+	let test_location_path = wing_core::domain::WingPath::Physical {
 		device_slug: device_slug.clone(),
 		path: test_dir.clone().into(),
 	};
@@ -505,7 +505,7 @@ async fn capture_event_fixtures_for_typescript(
 	);
 
 	// Only copy to source if explicitly requested (similar to snapshot system)
-	if std::env::var("SD_REGENERATE_FIXTURES").is_ok() {
+	if std::env::var("WING_REGENERATE_FIXTURES").is_ok() {
 		let source_fixtures_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 			.parent()
 			.unwrap()
@@ -517,14 +517,14 @@ async fn capture_event_fixtures_for_typescript(
 
 		tracing::info!(
 			source_path = %source_fixtures_path.display(),
-			"Fixtures copied to source tree (SD_REGENERATE_FIXTURES=1)"
+			"Fixtures copied to source tree (WING_REGENERATE_FIXTURES=1)"
 		);
 		println!("\n=== FIXTURES COPIED TO SOURCE ===");
 		println!("Source path: {}", source_fixtures_path.display());
 	} else {
 		println!("\n=== FIXTURE GENERATION COMPLETE ===");
 		println!("Note: Fixtures written to temp directory only.");
-		println!("To update source fixtures, run with: SD_REGENERATE_FIXTURES=1");
+		println!("To update source fixtures, run with: WING_REGENERATE_FIXTURES=1");
 	}
 
 	println!("\nTest cases generated: 3");

@@ -3,7 +3,7 @@
 use super::output::*;
 use crate::{
 	context::CoreContext,
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::query::{LibraryQuery, QueryError, QueryResult},
 	volume::types::VolumeType,
 };
@@ -14,7 +14,7 @@ use std::{path::PathBuf, sync::Arc};
 /// Input for location path validation
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct ValidateLocationPathInput {
-	pub path: SdPath,
+	pub path: WingPath,
 }
 
 /// Query to validate if a path is suitable for use as a location
@@ -38,8 +38,8 @@ impl LibraryQuery for ValidateLocationPathQuery {
 	) -> QueryResult<Self::Output> {
 		// Cloud paths are always safe - no system directory concerns
 		let path = match &self.input.path {
-			SdPath::Physical { path, .. } => path,
-			SdPath::Cloud { .. } => {
+			WingPath::Physical { path, .. } => path,
+			WingPath::Cloud { .. } => {
 				return Ok(ValidateLocationPathOutput {
 					is_recommended: true,
 					risk_level: RiskLevel::Low,
@@ -49,7 +49,7 @@ impl LibraryQuery for ValidateLocationPathQuery {
 					is_on_primary_volume: false,
 				})
 			}
-			SdPath::Content { .. } | SdPath::Sidecar { .. } => {
+			WingPath::Content { .. } | WingPath::Sidecar { .. } => {
 				return Err(QueryError::Internal(
 					"Content and Sidecar paths cannot be validated as locations".to_string(),
 				))

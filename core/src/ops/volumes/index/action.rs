@@ -3,7 +3,7 @@
 use super::{IndexVolumeInput, IndexVolumeOutput};
 use crate::{
 	context::CoreContext,
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::{
 		action::{context::ActionContext, error::ActionError, LibraryAction},
 		job::types::JobPriority,
@@ -56,7 +56,7 @@ impl LibraryAction for IndexVolumeAction {
 			volume.name, fingerprint.0
 		);
 
-		// 2. Get device info for SdPath construction
+		// 2. Get device info for WingPath construction
 		let device_uuid = context
 			.device_manager
 			.device_id()
@@ -71,17 +71,17 @@ impl LibraryAction for IndexVolumeAction {
 			.map_err(ActionError::SeaOrm)?
 			.ok_or_else(|| ActionError::Internal(format!("Device not found: {}", device_uuid)))?;
 
-		// 3. Construct SdPath for the volume's mount point
-		let sd_path = if let Some((service, identifier)) = volume.parse_cloud_identity() {
+		// 3. Construct WingPath for the volume's mount point
+		let wing_path = if let Some((service, identifier)) = volume.parse_cloud_identity() {
 			// Cloud volume
-			SdPath::Cloud {
+			WingPath::Cloud {
 				service,
 				identifier,
 				path: String::new(), // Root of cloud volume
 			}
 		} else {
 			// Local volume - use mount point
-			SdPath::Physical {
+			WingPath::Physical {
 				device_slug: device_record.slug,
 				path: volume.mount_point.clone(),
 			}
@@ -89,7 +89,7 @@ impl LibraryAction for IndexVolumeAction {
 
 		// 4. Create ephemeral indexing job
 		// Volume indexing always indexes from the mount point root, so is_volume = true
-		let indexer_config = IndexerJobConfig::ephemeral_browse(sd_path, self.input.scope, true);
+		let indexer_config = IndexerJobConfig::ephemeral_browse(wing_path, self.input.scope, true);
 		let mut indexer_job = IndexerJob::new(indexer_config);
 
 		// 5. Get ephemeral cache and create/reuse index for this volume

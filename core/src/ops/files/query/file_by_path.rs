@@ -3,7 +3,7 @@
 use crate::infra::query::{QueryError, QueryResult};
 use crate::{
 	context::CoreContext,
-	domain::{addressing::SdPath, File},
+	domain::{addressing::WingPath, File},
 	infra::db::entities::{
 		audio_media_data, content_identity, entry, image_media_data, sidecar, tag,
 		user_metadata_tag, video_media_data,
@@ -57,11 +57,11 @@ impl LibraryQuery for FileByPathQuery {
 
 		let db = library.db();
 
-		// Convert the local path to SdPath internally
-		let sd_path = SdPath::local(self.path.clone());
+		// Convert the local path to WingPath internally
+		let wing_path = WingPath::local(self.path.clone());
 
-		// Find the entry by SdPath
-		let entry_result = self.find_entry_by_sd_path(&sd_path, db.conn()).await;
+		// Find the entry by WingPath
+		let entry_result = self.find_entry_by_wing_path(&wing_path, db.conn()).await;
 
 		// If found in database, process and return it
 		if let Ok(entry_model) = entry_result {
@@ -177,7 +177,7 @@ impl LibraryQuery for FileByPathQuery {
 				};
 
 			// Convert to File using from_entity_model
-			let mut file = File::from_entity_model(entry_model.clone(), sd_path);
+			let mut file = File::from_entity_model(entry_model.clone(), wing_path);
 			file.sidecars = sidecars;
 			file.content_identity = content_identity_domain;
 			file.image_media_data = image_media;
@@ -206,9 +206,9 @@ impl LibraryQuery for FileByPathQuery {
 		if let Some(entry_uuid) = index_read.get_entry_uuid(&self.path) {
 			if let Some(metadata) = index_read.get_entry_ref(&self.path) {
 				let content_kind = index_read.get_content_kind(&self.path);
-				let sd_path = SdPath::local(self.path.clone());
+				let wing_path = WingPath::local(self.path.clone());
 
-				let mut file = File::from_ephemeral(entry_uuid, &metadata, sd_path);
+				let mut file = File::from_ephemeral(entry_uuid, &metadata, wing_path);
 				file.content_kind = content_kind;
 
 				return Ok(Some(file));
@@ -226,7 +226,7 @@ impl FileByPathQuery {
 		content_id: i32,
 		current_entry_id: i32,
 		db: &DatabaseConnection,
-	) -> QueryResult<Vec<SdPath>> {
+	) -> QueryResult<Vec<WingPath>> {
 		use crate::infra::db::entities::{device, directory_paths, location};
 
 		// Find all entries with the same content_id (excluding current entry)
@@ -292,7 +292,7 @@ impl FileByPathQuery {
 								absolute_path.push(component);
 							}
 
-							alternate_paths.push(SdPath::Physical {
+							alternate_paths.push(WingPath::Physical {
 								device_slug: device_model.slug,
 								path: absolute_path.into(),
 							});
@@ -305,19 +305,19 @@ impl FileByPathQuery {
 		Ok(alternate_paths)
 	}
 
-	/// Find entry by SdPath using canonical PathResolver
-	async fn find_entry_by_sd_path(
+	/// Find entry by WingPath using canonical PathResolver
+	async fn find_entry_by_wing_path(
 		&self,
-		sd_path: &SdPath,
+		wing_path: &WingPath,
 		db: &DatabaseConnection,
 	) -> QueryResult<entry::Model> {
 		use crate::ops::indexing::PathResolver;
 
-		PathResolver::resolve_to_entry(db, sd_path)
+		PathResolver::resolve_to_entry(db, wing_path)
 			.await
 			.map_err(|e| QueryError::Internal(format!("Database error: {}", e)))?
 			.ok_or_else(|| {
-				QueryError::Internal(format!("Entry not found for path: {}", sd_path.display()))
+				QueryError::Internal(format!("Entry not found for path: {}", wing_path.display()))
 			})
 	}
 }

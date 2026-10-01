@@ -63,17 +63,17 @@ export const MediaViewItem = memo(function MediaViewItem({
 
 	const { navigateToPath } = useExplorer();
 	const physicalPath =
-		(file.kind === "File" || file.kind === "Symlink") && "Physical" in file.sd_path
-			? file.sd_path.Physical.path
+		(file.kind === "File" || file.kind === "Symlink") && "Physical" in file.wing_path
+			? file.wing_path.Physical.path
 			: null;
 	const { openWithDefault } = useOpenWith(
 		physicalPath ? [physicalPath] : [],
 	);
 
 	const handleDoubleClick = async () => {
-		// Virtual files and directories navigate to their sd_path
+		// Virtual files and directories navigate to their wing_path
 		if (isVirtualFile(file) || file.kind === "Directory") {
-			navigateToPath(file.sd_path);
+			navigateToPath(file.wing_path);
 			return;
 		}
 

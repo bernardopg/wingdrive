@@ -51,7 +51,7 @@ See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` Section "Cross-Device 
 - [ ] User-configurable prefetch settings
 
 ### Resolution Integration
-- [ ] Update `SdPathResolver` to check remote availability
+- [ ] Update `WingPathResolver` to check remote availability
 - [ ] Implement fetch-or-generate decision logic
 - [ ] Add device preference strategies (fetch vs generate)
 - [ ] Handle offline devices gracefully
@@ -163,7 +163,7 @@ pub struct SidecarTransferJob {
 impl SidecarTransferJob {
     async fn execute(&self, ctx: JobContext) -> Result<()> {
         // 1. Request sidecar from source device
-        let sidecar_path = SdPath::sidecar(
+        let sidecar_path = WingPath::sidecar(
             self.content_uuid,
             self.kind,
             self.variant,
@@ -181,7 +181,7 @@ impl SidecarTransferJob {
         // 3. Transfer file via P2P
         ctx.file_transfer.execute(
             source_physical,
-            SdPath::Physical {
+            WingPath::Physical {
                 device_slug: ctx.current_device_slug(),
                 path: dest_path.absolute_path,
             },
@@ -270,7 +270,7 @@ async fn test_cross_device_sidecar_fetch() {
     sync_availability(alice, bob).await;
 
     // Bob requests thumbnail
-    let sidecar = SdPath::sidecar(content_uuid, Thumb, "grid@2x", Webp);
+    let sidecar = WingPath::sidecar(content_uuid, Thumb, "grid@2x", Webp);
     let resolved = bob.resolver.resolve(sidecar).await?;
 
     // Should resolve to Alice

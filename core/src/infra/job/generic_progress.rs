@@ -4,7 +4,7 @@
 //! their domain-specific progress into, making progress data compatible
 //! with the job monitoring system while preserving rich information.
 
-use crate::domain::addressing::SdPath;
+use crate::domain::addressing::WingPath;
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -20,7 +20,7 @@ pub struct GenericProgress {
 	pub phase: String,
 
 	/// Current path being processed (if applicable)
-	pub current_path: Option<SdPath>,
+	pub current_path: Option<WingPath>,
 
 	/// Human-readable message describing current activity
 	pub message: String,
@@ -97,7 +97,7 @@ impl GenericProgress {
 	}
 
 	/// Set the current path being processed
-	pub fn with_current_path(mut self, path: SdPath) -> Self {
+	pub fn with_current_path(mut self, path: WingPath) -> Self {
 		self.current_path = Some(path);
 		self
 	}

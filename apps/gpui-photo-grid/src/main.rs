@@ -9,16 +9,16 @@ fn main() {
 	env_logger::init();
 
 	// Get configuration from environment
-	let socket_addr = env::var("SD_SOCKET_ADDR").unwrap_or_else(|_| "127.0.0.1:6969".to_string());
+	let socket_addr = env::var("WING_SOCKET_ADDR").unwrap_or_else(|_| "127.0.0.1:6969".to_string());
 
 	let http_url =
-		env::var("SD_HTTP_URL").unwrap_or_else(|_e| "http://127.0.0.1:56851".to_string());
+		env::var("WING_HTTP_URL").unwrap_or_else(|_e| "http://127.0.0.1:56851".to_string());
 
 	let library_id =
-		env::var("SD_LIBRARY_ID").expect("SD_LIBRARY_ID environment variable must be set");
+		env::var("WING_LIBRARY_ID").expect("WING_LIBRARY_ID environment variable must be set");
 
 	let initial_path =
-		env::var("SD_INITIAL_PATH").unwrap_or_else(|_e| "/Users/jamespine/Desktop".to_string());
+		env::var("WING_INITIAL_PATH").unwrap_or_else(|_e| "/Users/jamespine/Desktop".to_string());
 
 	println!("Starting GPUI Photo Grid");
 	println!("  Socket: {}", socket_addr);

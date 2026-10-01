@@ -4,10 +4,10 @@ use std::process::Command;
 
 fn main() {
 	println!("cargo:rerun-if-changed=build.rs");
-	println!("cargo:rerun-if-env-changed=SD_SKIP_WEB_BUILD");
+	println!("cargo:rerun-if-env-changed=WING_SKIP_WEB_BUILD");
 
-	if env::var_os("SD_SKIP_WEB_BUILD").is_some() {
-		println!("cargo:warning=SD_SKIP_WEB_BUILD set — using existing apps/web/dist");
+	if env::var_os("WING_SKIP_WEB_BUILD").is_some() {
+		println!("cargo:warning=WING_SKIP_WEB_BUILD set — using existing apps/web/dist");
 		return;
 	}
 
@@ -30,7 +30,7 @@ fn main() {
 	if !repo_root.join("node_modules").exists() {
 		panic!(
 			"node_modules missing at {} — run `bun install` (or `just setup`) before building wing-server, \
-			 or set SD_SKIP_WEB_BUILD=1 to skip the embedded UI build.",
+			 or set WING_SKIP_WEB_BUILD=1 to skip the embedded UI build.",
 			repo_root.display()
 		);
 	}

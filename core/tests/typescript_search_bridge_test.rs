@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tokio::time::Duration;
 use wing_core::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	location::IndexMode,
 	ops::indexing::{IndexScope, IndexerJob, IndexerJobConfig},
 };
@@ -112,7 +112,7 @@ async fn test_typescript_search_persistent_and_ephemeral() -> anyhow::Result<()>
 
 	// Index ephemeral directory using global cache
 	tracing::info!("Indexing ephemeral directory...");
-	let ephemeral_sd = SdPath::local(ephemeral_dir.clone());
+	let ephemeral_sd = WingPath::local(ephemeral_dir.clone());
 	let global_index = harness.core.context.ephemeral_cache().get_global_index();
 
 	let indexer_config =

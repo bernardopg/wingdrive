@@ -4,7 +4,7 @@ import {
 	Minus,
 	Plus
 } from '@phosphor-icons/react';
-import type {DirectorySortBy, File, SdPath} from '@sd/ts-client';
+import type {DirectorySortBy, File, WingPath} from '@sd/ts-client';
 import {CircleButton, CircleButtonGroup} from '@wingdrive/primitives';
 import * as d3 from 'd3';
 import {useEffect, useMemo, useRef, useState} from 'react';
@@ -256,7 +256,7 @@ function ThumbOverlay({
 
 				// Navigate if directory
 				if (overlay.file.kind === 'Directory') {
-					navigateToPathRef.current(overlay.file.sd_path);
+					navigateToPathRef.current(overlay.file.wing_path);
 				}
 			}}
 			onContextMenu={async (event) => {
@@ -341,7 +341,7 @@ export function SizeView() {
 	// Track which path+tab the current data belongs to
 	const [dataSource, setDataSource] = useState<{
 		tabId: string;
-		path: SdPath | null;
+		path: WingPath | null;
 	} | null>(null);
 
 	const directoryQuery = useNormalizedQuery({
@@ -408,7 +408,7 @@ export function SizeView() {
 		unknown
 	> | null>(null);
 	const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const lastContextRef = useRef<{tabId: string, path: SdPath | null} | null>(null);
+	const lastContextRef = useRef<{tabId: string, path: WingPath | null} | null>(null);
 	const lastAppliedZoomRef = useRef<{tabId: string, zoom: number} | null>(null);
 	// Track which tab we just switched to (allows one path update from TabNavigationSync)
 	const justSwitchedToTabRef = useRef<string | null>(null);
@@ -843,7 +843,7 @@ export function SizeView() {
 
 				// Navigate if directory
 				if (d.data.file!.kind === 'Directory') {
-					navigateToPathRef.current(d.data.file!.sd_path);
+					navigateToPathRef.current(d.data.file!.wing_path);
 				}
 			})
 			.on('contextmenu', async (event, d) => {

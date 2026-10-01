@@ -618,10 +618,10 @@ impl ThumbnailJob {
 					ThumbnailError::other("VolumeManager not available for cloud file")
 				})?;
 
-				// Parse the cloud path to get an SdPath
-				use crate::domain::addressing::SdPath;
+				// Parse the cloud path to get an WingPath
+				use crate::domain::addressing::WingPath;
 				let sdpath =
-					SdPath::from_uri_with_context(&entry.relative_path, &library.core_context())
+					WingPath::from_uri_with_context(&entry.relative_path, &library.core_context())
 						.await
 						.map_err(|e| {
 							ThumbnailError::other(format!("Failed to parse cloud path: {}", e))

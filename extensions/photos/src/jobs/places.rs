@@ -17,7 +17,7 @@ pub async fn identify_places_in_location(
 	ctx: &JobContext,
 	state: &mut IdentifyPlacesState,
 ) -> JobResult<()> {
-	let location = SdPath::from(&state.location);
+	let location = WingPath::from(&state.location);
 	ctx.progress(Progress::indeterminate("Finding photos with GPS..."));
 
 	let photos = ctx

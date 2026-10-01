@@ -16,11 +16,11 @@
             "resource_type": "file",
             "metadata": { "affected_paths": [], "alternate_ids": [], "no_merge_fields": [] },
             "resources": [
-              { "id": "direct-1", "name": "direct_child1", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/direct_child1" } } },
-              { "id": "direct-2", "name": "direct_child2", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/direct_child2" } } },
-              { "id": "nested-1", "name": "grandchild1", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/grandchild1" } } },
-              { "id": "nested-2", "name": "grandchild2", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/grandchild2" } } },
-              { "id": "nested-3", "name": "deep_file", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/nested/deep_file" } } }
+              { "id": "direct-1", "name": "direct_child1", "wing_path": { "Physical": { "device_slug": "test-device", "path": "/library/direct_child1" } } },
+              { "id": "direct-2", "name": "direct_child2", "wing_path": { "Physical": { "device_slug": "test-device", "path": "/library/direct_child2" } } },
+              { "id": "nested-1", "name": "grandchild1", "wing_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/grandchild1" } } },
+              { "id": "nested-2", "name": "grandchild2", "wing_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/grandchild2" } } },
+              { "id": "nested-3", "name": "deep_file", "wing_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/nested/deep_file" } } }
             ]
           }
         }
@@ -42,8 +42,8 @@
             "resource_type": "file",
             "metadata": { "affected_paths": [], "alternate_ids": [], "no_merge_fields": [] },
             "resources": [
-              { "id": "direct-1", "name": "direct_child1", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/direct_child1" } } },
-              { "id": "nested-1", "name": "grandchild1", "sd_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/grandchild1" } } }
+              { "id": "direct-1", "name": "direct_child1", "wing_path": { "Physical": { "device_slug": "test-device", "path": "/library/direct_child1" } } },
+              { "id": "nested-1", "name": "grandchild1", "wing_path": { "Physical": { "device_slug": "test-device", "path": "/library/subfolder/grandchild1" } } }
             ]
           }
         }

@@ -48,15 +48,17 @@ impl ResourceManager {
 	}
 
 	/// Extract affected paths from File resources for path-scoped filtering
-	fn extract_file_paths(resources: &[serde_json::Value]) -> Vec<crate::domain::SdPath> {
+	fn extract_file_paths(resources: &[serde_json::Value]) -> Vec<crate::domain::WingPath> {
 		use std::collections::HashSet;
 
 		let mut paths = HashSet::new();
 
 		for resource in resources {
-			// Extract sd_path (primary path)
-			if let Some(sd_path) = resource.get("sd_path") {
-				if let Ok(path) = serde_json::from_value::<crate::domain::SdPath>(sd_path.clone()) {
+			// Extract wing_path (primary path)
+			if let Some(wing_path) = resource.get("wing_path") {
+				if let Ok(path) =
+					serde_json::from_value::<crate::domain::WingPath>(wing_path.clone())
+				{
 					// For physical paths, add the parent directory
 					// This ensures directory views get notified of child changes
 					if let Some(parent) = path.parent() {
@@ -69,7 +71,7 @@ impl ResourceManager {
 			// Extract alternate_paths (all other physical locations)
 			if let Some(alt_paths) = resource.get("alternate_paths") {
 				if let Ok(path_list) =
-					serde_json::from_value::<Vec<crate::domain::SdPath>>(alt_paths.clone())
+					serde_json::from_value::<Vec<crate::domain::WingPath>>(alt_paths.clone())
 				{
 					for path in path_list {
 						// Add parent directories for alternate paths too
@@ -306,10 +308,10 @@ mod tests {
 	}
 
 	#[test]
-	fn test_extract_file_paths_with_sd_path() {
+	fn test_extract_file_paths_with_wing_path() {
 		let resource = serde_json::json!({
 			"id": "550e8400-e29b-41d4-a716-446655440000",
-			"sd_path": {
+			"wing_path": {
 				"Physical": {
 					"device_slug": "macbook",
 					"path": "/Users/test/Documents/file.txt"

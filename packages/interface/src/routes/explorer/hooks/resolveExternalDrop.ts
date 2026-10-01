@@ -1,11 +1,11 @@
-import type {SdPath} from '@sd/ts-client';
+import type {WingPath} from '@sd/ts-client';
 
 /** Outcome of mapping an OS file drop onto the current Explorer destination */
 export type ExternalDropRejectionReason =
 	'no-files' | 'no-destination' | 'not-physical';
 
 export type ExternalDropDecision =
-	| {kind: 'copy'; destination: SdPath; sources: SdPath[]}
+	| {kind: 'copy'; destination: WingPath; sources: WingPath[]}
 	| {kind: 'reject'; reason: ExternalDropRejectionReason};
 
 /**
@@ -14,7 +14,7 @@ export type ExternalDropDecision =
  * else must be rejected explicitly so drops are never silently swallowed.
  */
 export function resolveExternalDrop(
-	destination: SdPath | null,
+	destination: WingPath | null,
 	paths: string[]
 ): ExternalDropDecision {
 	if (paths.length === 0) {
@@ -29,7 +29,7 @@ export function resolveExternalDrop(
 	return {
 		kind: 'copy',
 		destination,
-		sources: paths.map((path): SdPath => ({
+		sources: paths.map((path): WingPath => ({
 			Physical: {device_slug: 'local', path}
 		}))
 	};

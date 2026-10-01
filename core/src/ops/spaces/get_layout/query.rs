@@ -1,6 +1,6 @@
 use super::output::SpaceLayoutOutput;
 use crate::domain::{
-	addressing::SdPath, ContentKind, File, GroupType, ItemType, Space, SpaceGroup,
+	addressing::WingPath, ContentKind, File, GroupType, ItemType, Space, SpaceGroup,
 	SpaceGroupWithItems, SpaceItem, SpaceLayout,
 };
 use crate::infra::db::entities::{content_identity, entry, sidecar, space_item};
@@ -223,9 +223,9 @@ async fn build_file_from_entry(
 	item_type: &ItemType,
 	db: &DatabaseConnection,
 ) -> Option<File> {
-	// Get the SdPath from item_type
-	let sd_path = match item_type {
-		ItemType::Path { sd_path } => sd_path.clone(),
+	// Get the WingPath from item_type
+	let wing_path = match item_type {
+		ItemType::Path { wing_path } => wing_path.clone(),
 		_ => return None,
 	};
 
@@ -281,7 +281,7 @@ async fn build_file_from_entry(
 		Vec::new()
 	};
 
-	let mut file = File::from_entity_model(entry_model, sd_path);
+	let mut file = File::from_entity_model(entry_model, wing_path);
 	file.content_identity = content_identity;
 	file.sidecars = sidecars;
 	if let Some(ref ci) = file.content_identity {

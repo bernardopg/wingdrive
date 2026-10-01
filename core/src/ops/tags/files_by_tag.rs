@@ -2,7 +2,7 @@
 
 use crate::{
 	context::CoreContext,
-	domain::{addressing::SdPath, File},
+	domain::{addressing::WingPath, File},
 	infra::{
 		db::entities::{content_identity, entry, tag, user_metadata, user_metadata_tag},
 		query::{LibraryQuery, QueryError, QueryResult},
@@ -210,7 +210,7 @@ impl LibraryQuery for GetFilesByTagQuery {
 				format!("/{}", file_name)
 			};
 
-			let sd_path = SdPath::Physical {
+			let wing_path = WingPath::Physical {
 				device_slug: device_slug
 					.unwrap_or_else(|| crate::device::get_current_device_slug()),
 				path: PathBuf::from(file_path),
@@ -240,7 +240,7 @@ impl LibraryQuery for GetFilesByTagQuery {
 				volume_id: None,
 			};
 
-			let mut file = File::from_entity_model(entity_model, sd_path);
+			let mut file = File::from_entity_model(entity_model, wing_path);
 
 			if let Some(kind_name) = content_kind_name {
 				file.content_kind = crate::domain::ContentKind::from(kind_name.as_str());

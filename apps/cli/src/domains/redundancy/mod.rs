@@ -277,7 +277,7 @@ fn render_file_list(o: &FileSearchOutput, label: &str) {
 			Cell::new(format_bytes_u64(f.size)),
 			Cell::new(f.extension.clone().unwrap_or_default()),
 			Cell::new(f.modified_at.format("%Y-%m-%d %H:%M").to_string()),
-			Cell::new(truncate(&f.sd_path.display().to_string(), 60)),
+			Cell::new(truncate(&f.wing_path.display().to_string(), 60)),
 		]);
 	}
 

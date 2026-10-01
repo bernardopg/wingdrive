@@ -448,7 +448,7 @@ dev.db-journal
 .build/
 .swiftpm
 /core/migration_test
-sd_init.json
+wing_init.json
 
 .cargo/config
 .cargo/config.toml
@@ -471,8 +471,8 @@ combined_cli_rust_files.txt
 
 
 # iOS build artifacts
-apps/ios/sd-ios-core/sd_ios_core.xcframework/
-apps/ios/sd-ios-core/sd_ios_core.xcframework/**
+apps/ios/wing-ios-core/wing_ios_core.xcframework/
+apps/ios/wing-ios-core/wing_ios_core.xcframework/**
 
 # LaTeX build artifacts
 *.aux

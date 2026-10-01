@@ -138,7 +138,7 @@ use wing_core::infra::event::SubscriptionFilter;
 // Subscribe to changes in a specific directory
 let filter = SubscriptionFilter::PathScoped {
     resource_type: "file".to_string(),
-    path_scope: SdPath::physical(device_slug, "/Users/james/Photos"),
+    path_scope: WingPath::physical(device_slug, "/Users/james/Photos"),
 };
 
 let mut subscriber = event_bus.subscribe_filtered(vec![filter]);
@@ -155,7 +155,7 @@ The `ResourceMetadata` field includes `affected_paths` that indicate which direc
 pub struct ResourceMetadata {
     pub no_merge_fields: Vec<String>,  // Fields to replace, not merge
     pub alternate_ids: Vec<Uuid>,       // Alternate IDs for matching
-    pub affected_paths: Vec<SdPath>,    // Paths affected by this event
+    pub affected_paths: Vec<WingPath>,    // Paths affected by this event
 }
 ```
 

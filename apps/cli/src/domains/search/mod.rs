@@ -49,7 +49,7 @@ pub async fn run(ctx: &Context, cmd: SearchCmd) -> Result<()> {
 						"   Modified: {}",
 						result.file.modified_at.format("%Y-%m-%d %H:%M:%S")
 					);
-					println!("   Path: {}", result.file.sd_path.display());
+					println!("   Path: {}", result.file.wing_path.display());
 
 					if !result.highlights.is_empty() {
 						println!("   Highlights:");

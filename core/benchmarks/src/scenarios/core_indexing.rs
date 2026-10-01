@@ -35,7 +35,7 @@ impl Scenario for CoreIndexingScenario {
 
 		for loc in &recipe.locations {
 			let input = wing_core::ops::locations::add::action::LocationAddInput {
-				path: wing_core::domain::addressing::SdPath::local(loc.path.clone()),
+				path: wing_core::domain::addressing::WingPath::local(loc.path.clone()),
 				name: Some(format!("bench:{}", recipe.name)),
 				mode: wing_core::ops::indexing::IndexMode::Shallow,
 				job_policies: None,

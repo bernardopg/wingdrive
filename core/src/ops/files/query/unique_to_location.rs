@@ -7,7 +7,7 @@
 use crate::infra::query::{QueryError, QueryResult};
 use crate::{
 	context::CoreContext,
-	domain::{addressing::SdPath, File},
+	domain::{addressing::WingPath, File},
 	infra::db::entities::{content_identity, entry, location},
 	infra::query::LibraryQuery,
 };
@@ -250,13 +250,13 @@ impl UniqueToLocationQuery {
 				volume_id: None,
 			};
 
-			// Create placeholder SdPath
-			let sd_path = SdPath::Physical {
+			// Create placeholder WingPath
+			let wing_path = WingPath::Physical {
 				device_slug: format!("placeholder-{}", Uuid::new_v4()),
 				path: format!("/unknown/path/{}", name).into(),
 			};
 
-			let file = File::from_entity_model(entity_model, sd_path);
+			let file = File::from_entity_model(entity_model, wing_path);
 			files.push(file);
 		}
 

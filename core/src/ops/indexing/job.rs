@@ -6,7 +6,7 @@
 //!
 
 use crate::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::db::entities,
 	infra::job::{prelude::*, traits::DynJob},
 };
@@ -102,7 +102,7 @@ impl Default for IndexPersistence {
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct IndexerJobConfig {
 	pub location_id: Option<Uuid>,
-	pub path: SdPath,
+	pub path: WingPath,
 	pub mode: IndexMode,
 	pub scope: IndexScope,
 	pub persistence: IndexPersistence,
@@ -118,7 +118,7 @@ pub struct IndexerJobConfig {
 }
 
 impl IndexerJobConfig {
-	pub fn new(location_id: Uuid, path: SdPath, mode: IndexMode) -> Self {
+	pub fn new(location_id: Uuid, path: WingPath, mode: IndexMode) -> Self {
 		Self {
 			location_id: Some(location_id),
 			path,
@@ -132,7 +132,7 @@ impl IndexerJobConfig {
 		}
 	}
 
-	pub fn ui_navigation(location_id: Uuid, path: SdPath) -> Self {
+	pub fn ui_navigation(location_id: Uuid, path: WingPath) -> Self {
 		Self {
 			location_id: Some(location_id),
 			path,
@@ -146,7 +146,7 @@ impl IndexerJobConfig {
 		}
 	}
 
-	pub fn ephemeral_browse(path: SdPath, scope: IndexScope, is_volume: bool) -> Self {
+	pub fn ephemeral_browse(path: WingPath, scope: IndexScope, is_volume: bool) -> Self {
 		Self {
 			location_id: None,
 			path,
@@ -801,23 +801,23 @@ impl IndexerJob {
 		}
 	}
 
-	pub fn from_location(location_id: Uuid, root_path: SdPath, mode: IndexMode) -> Self {
+	pub fn from_location(location_id: Uuid, root_path: WingPath, mode: IndexMode) -> Self {
 		Self::new(IndexerJobConfig::new(location_id, root_path, mode))
 	}
 
-	pub fn shallow(location_id: Uuid, root_path: SdPath) -> Self {
+	pub fn shallow(location_id: Uuid, root_path: WingPath) -> Self {
 		Self::from_location(location_id, root_path, IndexMode::Shallow)
 	}
 
-	pub fn with_content(location_id: Uuid, root_path: SdPath) -> Self {
+	pub fn with_content(location_id: Uuid, root_path: WingPath) -> Self {
 		Self::from_location(location_id, root_path, IndexMode::Content)
 	}
 
-	pub fn deep(location_id: Uuid, root_path: SdPath) -> Self {
+	pub fn deep(location_id: Uuid, root_path: WingPath) -> Self {
 		Self::from_location(location_id, root_path, IndexMode::Deep)
 	}
 
-	pub fn ui_navigation(location_id: Uuid, path: SdPath) -> Self {
+	pub fn ui_navigation(location_id: Uuid, path: WingPath) -> Self {
 		Self::new(IndexerJobConfig::ui_navigation(location_id, path))
 	}
 
@@ -831,7 +831,7 @@ impl IndexerJob {
 		self.ephemeral_index = Some(index);
 	}
 
-	pub fn ephemeral_browse(path: SdPath, scope: IndexScope, is_volume: bool) -> Self {
+	pub fn ephemeral_browse(path: WingPath, scope: IndexScope, is_volume: bool) -> Self {
 		Self::new(IndexerJobConfig::ephemeral_browse(path, scope, is_volume))
 	}
 
@@ -1012,7 +1012,9 @@ impl IndexerJob {
 
 						Some(File {
 							id: uuid,
-							sd_path: crate::domain::addressing::SdPath::local(entry.path.clone()),
+							wing_path: crate::domain::addressing::WingPath::local(
+								entry.path.clone(),
+							),
 							kind: match entry.kind {
 								StateEntryKind::File => DomainEntryKind::File,
 								StateEntryKind::Directory => DomainEntryKind::Directory,
@@ -1067,7 +1069,7 @@ impl IndexerJob {
 							alternate_ids: vec![],
 							affected_paths: files_for_event
 								.iter()
-								.map(|f| f.sd_path.clone())
+								.map(|f| f.wing_path.clone())
 								.collect(),
 						}),
 					});

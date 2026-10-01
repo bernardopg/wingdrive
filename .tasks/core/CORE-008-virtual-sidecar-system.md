@@ -15,7 +15,7 @@ related_tasks: [CORE-002, VSS-001, VSS-002, VSS-004]
 
 Implement the Virtual Sidecar System (VSS) for managing derivative data—thumbnails, OCR text, video transcripts, embeddings, and agent-generated intelligence—as first-class addressable files within the VDFS.
 
-**V2 Design (Nov 2025):** Sidecars integrated as native `SdPath::Sidecar` variant, enabling unified addressing, standard file operations, and cross-device semantics. See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` for complete specification.
+**V2 Design (Nov 2025):** Sidecars integrated as native `WingPath::Sidecar` variant, enabling unified addressing, standard file operations, and cross-device semantics. See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` for complete specification.
 
 ## Current Implementation Status
 
@@ -35,8 +35,8 @@ Implement the Virtual Sidecar System (VSS) for managing derivative data—thumbn
 
 ### Not Implemented (Integration)
 
-1. `SdPath::Sidecar` variant and URI parsing
-2. Resolution integration with SdPathResolver
+1. `WingPath::Sidecar` variant and URI parsing
+2. Resolution integration with WingPathResolver
 3. Job system dispatch (TODO at line 273)
 4. Filesystem watcher for sidecars directory (TODO at line 708)
 5. Checksum computation (TODO at line 696)
@@ -46,16 +46,16 @@ Implement the Virtual Sidecar System (VSS) for managing derivative data—thumbn
 
 ## Implementation Steps
 
-### Phase 1: SdPath Integration
+### Phase 1: WingPath Integration
 
-- [ ] Add `SdPath::Sidecar { content_id, kind, variant, format }` enum variant
+- [ ] Add `WingPath::Sidecar { content_id, kind, variant, format }` enum variant
 - [ ] Implement `sidecar://` URI parsing
 - [ ] Add display formatting for sidecar URIs
 - [ ] Write unit tests for parsing/display
 
 ### Phase 2: Resolution
 
-- [ ] Implement `resolve_sidecar()` in SdPathResolver
+- [ ] Implement `resolve_sidecar()` in WingPathResolver
 - [ ] Add resolution mode support (blocking, async, fetch-only)
 - [ ] Integrate with existing SidecarManager
 - [ ] Handle pending/missing sidecars gracefully

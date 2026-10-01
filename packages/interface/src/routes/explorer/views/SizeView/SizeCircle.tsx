@@ -105,14 +105,14 @@ export function SizeCircle({
 
 			const dragData: SidebarDragData = {
 				type: "explorer-file",
-				sdPath: file.sd_path,
+				sdPath: file.wing_path,
 				name: file.name,
 			};
 			setDragData(dragData);
 
 			let filePath = "";
-			if ("Physical" in file.sd_path) {
-				filePath = file.sd_path.Physical.path;
+			if ("Physical" in file.wing_path) {
+				filePath = file.wing_path.Physical.path;
 			}
 
 			try {

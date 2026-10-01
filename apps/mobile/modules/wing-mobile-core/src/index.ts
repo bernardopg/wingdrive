@@ -19,9 +19,9 @@ export interface CoreLog {
   body: string;
 }
 
-type SDMobileCoreEvents = {
-  SDCoreEvent: (event: CoreEvent) => void;
-  SDCoreLog: (log: CoreLog) => void;
+type WingMobileCoreEvents = {
+  WingCoreEvent: (event: CoreEvent) => void;
+  WingCoreLog: (log: CoreLog) => void;
 };
 
 export interface CoreModule {
@@ -32,7 +32,7 @@ export interface CoreModule {
   addLogListener(callback: (log: CoreLog) => void): () => void;
 }
 
-interface SDMobileCoreNativeModule extends NativeModule<SDMobileCoreEvents> {
+interface WingMobileCoreNativeModule extends NativeModule<WingMobileCoreEvents> {
   initialize(
     dataDir: string | null,
     deviceName: string | null,
@@ -43,31 +43,31 @@ interface SDMobileCoreNativeModule extends NativeModule<SDMobileCoreEvents> {
   addLogListener(callback: (log: CoreLog) => void): () => void;
 }
 
-const SDMobileCoreModule =
-  requireNativeModule<SDMobileCoreNativeModule>("SDMobileCore");
+const WingMobileCoreModule =
+  requireNativeModule<WingMobileCoreNativeModule>("WingMobileCore");
 
-if (!SDMobileCoreModule) {
-  throw new Error("SDMobileCoreModule has not been initialized. Did you run 'cargo xtask build-mobile' and rebuild the app?")
+if (!WingMobileCoreModule) {
+  throw new Error("WingMobileCoreModule has not been initialized. Did you run 'cargo xtask build-mobile' and rebuild the app?")
 }
 
-const emitter = new EventEmitter<SDMobileCoreEvents>(SDMobileCoreModule as any);
+const emitter = new EventEmitter<WingMobileCoreEvents>(WingMobileCoreModule as any);
 
-export const SDMobileCore: CoreModule = {
+export const WingMobileCore: CoreModule = {
   initialize: async (dataDir?: string, deviceName?: string) => {
-    return SDMobileCoreModule.initialize(dataDir ?? null, deviceName ?? null);
+    return WingMobileCoreModule.initialize(dataDir ?? null, deviceName ?? null);
   },
   sendMessage: async (query: string) => {
-    return SDMobileCoreModule.sendMessage(query);
+    return WingMobileCoreModule.sendMessage(query);
   },
   shutdown: () => {
-    SDMobileCoreModule.shutdown();
+    WingMobileCoreModule.shutdown();
   },
   addListener: (callback: (event: CoreEvent) => void) => {
-    const subscription = emitter.addListener("SDCoreEvent", callback);
+    const subscription = emitter.addListener("WingCoreEvent", callback);
     return () => subscription.remove();
   },
   addLogListener: (callback: (log: CoreLog) => void) => {
-    const subscription = emitter.addListener("SDCoreLog", callback);
+    const subscription = emitter.addListener("WingCoreLog", callback);
     return () => subscription.remove();
   },
 };

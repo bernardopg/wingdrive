@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use sea_orm::{prelude::*, ConnectionTrait, QuerySelect, Statement};
 
 use crate::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	infra::db::entities::{
 		device, directory_paths, entry, location, volume, DirectoryPaths, Entry,
 	},
@@ -213,28 +213,28 @@ impl PathResolver {
 		Ok(result.rows_affected())
 	}
 
-	/// Resolve an SdPath to its entry in the database (reverse lookup)
+	/// Resolve an WingPath to its entry in the database (reverse lookup)
 	/// Returns the entry with full metadata (size, file_count, aggregate_size, etc.)
 	pub async fn resolve_to_entry<C: ConnectionTrait>(
 		db: &C,
-		path: &SdPath,
+		path: &WingPath,
 	) -> Result<Option<entry::Model>, DbErr> {
 		match path {
-			SdPath::Physical { device_slug, path } => {
+			WingPath::Physical { device_slug, path } => {
 				Self::resolve_physical_to_entry(db, device_slug, path).await
 			}
-			SdPath::Cloud { .. } => {
+			WingPath::Cloud { .. } => {
 				// TODO: Implement cloud path resolution
 				Ok(None)
 			}
-			SdPath::Content { content_id } => {
+			WingPath::Content { content_id } => {
 				// Query by content_id
 				entry::Entity::find()
 					.filter(entry::Column::ContentId.eq(*content_id))
 					.one(db)
 					.await
 			}
-			SdPath::Sidecar { .. } => {
+			WingPath::Sidecar { .. } => {
 				// Sidecars don't have entries
 				Ok(None)
 			}

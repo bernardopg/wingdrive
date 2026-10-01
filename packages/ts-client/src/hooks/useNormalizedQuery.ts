@@ -27,7 +27,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 import type { Simplify } from "type-fest";
 import * as v from "valibot";
-import type { Event, SdPath } from "../generated/types";
+import type { Event, WingPath } from "../generated/types";
 import { useSpacedriveClient } from "./useClient";
 
 // Types
@@ -42,7 +42,7 @@ export type UseNormalizedQueryOptions<I, O = any, TSelected = O> = Simplify<{
 	/** Whether query is enabled (default: true) */
 	enabled?: boolean;
 	/** Optional path scope for server-side filtering */
-	pathScope?: SdPath;
+	pathScope?: WingPath;
 	/** Whether to include descendants (recursive) or only direct children (exact) */
 	includeDescendants?: boolean;
 	/** Resource ID for single-resource queries */
@@ -491,15 +491,15 @@ export function filterBatchResources(
 				? scopeNormalized.toLowerCase()
 				: scopeNormalized;
 
-			// Try to find a Physical path - check alternate_paths first, then sd_path
+			// Try to find a Physical path - check alternate_paths first, then wing_path
 			const alternatePaths = resource.alternate_paths || [];
 			const physicalFromAlternate = alternatePaths.find(
 				(p: any) => p.Physical,
 			);
-			const physicalFromSdPath = resource.sd_path?.Physical;
+			const physicalFromWingPath = resource.wing_path?.Physical;
 
 			const physicalPath =
-				physicalFromAlternate?.Physical || physicalFromSdPath;
+				physicalFromAlternate?.Physical || physicalFromWingPath;
 
 			if (!physicalPath?.path) {
 				return false; // No physical path found
@@ -613,7 +613,7 @@ export function updateBatchResources<O>(
 		if (filteredResources.length === 0 && resources.length > 0) {
 			console.log(
 				`[useNormalizedQuery] ${wireMethod} ALL FILTERED OUT! First resource:`,
-				JSON.stringify(resources[0]?.sd_path),
+				JSON.stringify(resources[0]?.wing_path),
 				`pathScope:`,
 				JSON.stringify(options.pathScope),
 			);
@@ -738,7 +738,7 @@ function updateArrayCache(
 	// When content identification happens, a new Content entry is created with a different ID
 	// We need to merge it into the existing Physical entry by matching paths
 	for (const resource of newResources) {
-		if (!seenIds.has(resource.id) && resource.sd_path?.Content) {
+		if (!seenIds.has(resource.id) && resource.wing_path?.Content) {
 			// Try to find existing Physical entry by matching alternate_paths
 			const physicalPath = resource.alternate_paths?.find(
 				(p: any) => p.Physical,
@@ -746,7 +746,7 @@ function updateArrayCache(
 			if (physicalPath) {
 				const existingIndex = newData.findIndex((item: any) => {
 					const itemPath =
-						item.sd_path?.Physical?.path ||
+						item.wing_path?.Physical?.path ||
 						item.alternate_paths?.find((p: any) => p.Physical)
 							?.Physical?.path;
 					return itemPath === physicalPath;
@@ -772,7 +772,7 @@ function updateArrayCache(
 			// Content paths without matching Physical entries are either:
 			// 1. Files moved into this directory (have alternate_paths but no match) → ADD
 			// 2. Metadata updates for files elsewhere (no relevant alternate_paths) → SKIP
-			if (resource.sd_path?.Content) {
+			if (resource.wing_path?.Content) {
 				// Skip if no alternate_paths (pure metadata update)
 				if (
 					!resource.alternate_paths ||
@@ -825,7 +825,7 @@ function updateWrappedCache(
 
 		// Handle Content entries that represent the same file as an existing Physical entry
 		for (const resource of newResources) {
-			if (!seenIds.has(resource.id) && resource.sd_path?.Content) {
+			if (!seenIds.has(resource.id) && resource.wing_path?.Content) {
 				// Try to find existing Physical entry by matching alternate_paths
 				const physicalPath = resource.alternate_paths?.find(
 					(p: any) => p.Physical,
@@ -833,7 +833,7 @@ function updateWrappedCache(
 				if (physicalPath) {
 					const existingIndex = array.findIndex((item: any) => {
 						const itemPath =
-							item.sd_path?.Physical?.path ||
+							item.wing_path?.Physical?.path ||
 							item.alternate_paths?.find((p: any) => p.Physical)
 								?.Physical?.path;
 						return itemPath === physicalPath;
@@ -859,7 +859,7 @@ function updateWrappedCache(
 				// Content paths without matching Physical entries are either:
 				// 1. Files moved into this directory (have alternate_paths but no match) → ADD
 				// 2. Metadata updates for files elsewhere (no relevant alternate_paths) → SKIP
-				if (resource.sd_path?.Content) {
+				if (resource.wing_path?.Content) {
 					// Skip if no alternate_paths (pure metadata update)
 					if (
 						!resource.alternate_paths ||

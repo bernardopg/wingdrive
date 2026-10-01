@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { File, SdPath } from "@sd/ts-client";
+import type { File, WingPath } from "@sd/ts-client";
 import { useNormalizedQuery } from "@sd/ts-client";
 import { useVirtualListing } from "./useVirtualListing";
 
@@ -29,10 +29,10 @@ export function useExplorerFiles(
 		useVirtualListing(params);
 
 	// Parse path for directory listing
-	const currentPath: SdPath | null = useMemo(() => {
+	const currentPath: WingPath | null = useMemo(() => {
 		if (params?.type === "path") {
 			try {
-				return JSON.parse(params.path) as SdPath;
+				return JSON.parse(params.path) as WingPath;
 			} catch (e) {
 				console.error("[useExplorerFiles] Failed to parse path:", e);
 				return null;

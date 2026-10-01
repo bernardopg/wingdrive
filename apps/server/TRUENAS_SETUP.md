@@ -102,7 +102,7 @@ Repeat for other datasets:
 
 | Name | Value | Description |
 |------|-------|-------------|
-| `SD_AUTH` | `admin:CHANGE_THIS_PASSWORD` | Authentication (username:password) |
+| `WING_AUTH` | `admin:CHANGE_THIS_PASSWORD` | Authentication (username:password) |
 
 **Recommended:**
 
@@ -116,7 +116,7 @@ Repeat for other datasets:
 | Name | Value | Description |
 |------|-------|-------------|
 | `PORT` | `8080` | HTTP port (if you want to change it) |
-| `SD_P2P` | `true` | Enable P2P (default: true) |
+| `WING_P2P` | `true` | Enable P2P (default: true) |
 
 ### Health Check (Optional)
 
@@ -171,7 +171,7 @@ WingDrive Server listening on http://localhost:8080
 
 Open browser: `http://YOUR-TRUENAS-IP:8080`
 
-Login with credentials from `SD_AUTH`:
+Login with credentials from `WING_AUTH`:
 - Username: `admin`
 - Password: (whatever you set)
 
@@ -224,7 +224,7 @@ docker logs wingdrive
 **Common issues:**
 - Permission denied on `/data` → Check host path exists and is writable
 - Port already in use → Change `8080` to something else
-- Auth error → Verify `SD_AUTH` format is `username:password`
+- Auth error → Verify `WING_AUTH` format is `username:password`
 
 ### Can't connect to web UI
 
@@ -331,7 +331,7 @@ wingdrive.yourdomain.com {
 ## Security Notes
 
 **️ IMPORTANT:**
-- **Always set SD_AUTH** - never use `SD_AUTH=disabled` on a network-accessible server
+- **Always set WING_AUTH** - never use `WING_AUTH=disabled` on a network-accessible server
 - **Use strong passwords** - not `admin:changeme`
 - Consider **firewall rules** if exposing to internet
 - Run behind **reverse proxy with HTTPS** for public access
@@ -397,7 +397,7 @@ Should return: `OK`
 │                                                             │
 │ Volume: /mnt/pool/wingdrive → /data                       │
 │                                                             │
-│ Env:    SD_AUTH=admin:password (REQUIRED)                  │
+│ Env:    WING_AUTH=admin:password (REQUIRED)                  │
 │         TZ=America/New_York                                 │
 │                                                             │
 │ Access: http://TRUENAS-IP:8080                             │

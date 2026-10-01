@@ -104,7 +104,7 @@ pub trait Identifiable: Serialize + for<'de> Deserialize<'de> + Type {
 	/// list them here and they'll always be replaced with incoming value.
 	///
 	/// Example:
-	/// - File: `&["sd_path"]` (paths are atomic, can't merge Physical + Content)
+	/// - File: `&["wing_path"]` (paths are atomic, can't merge Physical + Content)
 	///
 	/// Default: merge all fields
 	fn no_merge_fields() -> &'static [&'static str]

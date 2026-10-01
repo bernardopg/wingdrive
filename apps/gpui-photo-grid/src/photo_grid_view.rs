@@ -1,5 +1,5 @@
 use gpui::*;
-use wing_client::{File, SdPath, WingDriveClient};
+use wing_client::{File, WingPath, WingDriveClient};
 use std::sync::Arc;
 
 pub struct PhotoGridView {
@@ -55,7 +55,7 @@ impl PhotoGridView {
 				rt.block_on(async {
 					client
 						.media_listing(
-							SdPath::Physical {
+							WingPath::Physical {
 								device_slug: "james-s-macbook-pro".to_string(),
 								path: path.clone().into(),
 							},

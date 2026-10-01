@@ -25,7 +25,7 @@
 //! ## Example
 //! ```rust,no_run
 //! use spacedrive_core::ops::files::copy::strategy::{CopyStrategy, LocalMoveStrategy};
-//! use spacedrive_core::domain::addressing::SdPath;
+//! use spacedrive_core::domain::addressing::WingPath;
 //!
 //! let strategy = LocalMoveStrategy;
 //! let bytes_moved = strategy.execute(
@@ -38,7 +38,7 @@
 //! ```
 
 use crate::{
-	domain::addressing::SdPath, infra::job::prelude::*, ops::files::copy::job::CopyPhase,
+	domain::addressing::WingPath, infra::job::prelude::*, ops::files::copy::job::CopyPhase,
 	volume::VolumeManager,
 };
 use anyhow::Result;
@@ -64,8 +64,8 @@ pub trait CopyStrategy: Send + Sync {
 	async fn execute<'a>(
 		&self,
 		ctx: &JobContext<'a>,
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		verify_checksum: bool,
 		progress_callback: Option<&ProgressCallback<'a>>,
 	) -> Result<u64>;
@@ -79,8 +79,8 @@ impl CopyStrategy for LocalMoveStrategy {
 	async fn execute<'a>(
 		&self,
 		ctx: &JobContext<'a>,
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		verify_checksum: bool,
 		progress_callback: Option<&ProgressCallback<'a>>,
 	) -> Result<u64> {
@@ -132,8 +132,8 @@ impl CopyStrategy for LocalStreamCopyStrategy {
 	async fn execute<'a>(
 		&self,
 		ctx: &JobContext<'a>,
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		verify_checksum: bool,
 		progress_callback: Option<&ProgressCallback<'a>>,
 	) -> Result<u64> {
@@ -191,8 +191,8 @@ impl CopyStrategy for FastCopyStrategy {
 	async fn execute<'a>(
 		&self,
 		ctx: &JobContext<'a>,
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		verify_checksum: bool,
 		progress_callback: Option<&ProgressCallback<'a>>,
 	) -> Result<u64> {
@@ -259,8 +259,8 @@ impl RemoteTransferStrategy {
 	/// Returns Push if source is local and destination is remote.
 	/// Returns Pull if source is remote and destination is local.
 	fn detect_direction(
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 	) -> crate::service::network::protocol::TransferDirection {
 		use crate::service::network::protocol::TransferDirection;
 
@@ -289,8 +289,8 @@ impl RemoteTransferStrategy {
 	async fn execute_push<'a>(
 		&self,
 		ctx: &JobContext<'a>,
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		_verify_checksum: bool,
 		progress_callback: Option<&ProgressCallback<'a>>,
 	) -> Result<u64> {
@@ -418,8 +418,8 @@ impl RemoteTransferStrategy {
 	async fn execute_pull<'a>(
 		&self,
 		ctx: &JobContext<'a>,
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		verify_checksum: bool,
 		progress_callback: Option<&ProgressCallback<'a>>,
 	) -> Result<u64> {
@@ -775,8 +775,8 @@ impl CopyStrategy for RemoteTransferStrategy {
 	async fn execute<'a>(
 		&self,
 		ctx: &JobContext<'a>,
-		source: &SdPath,
-		destination: &SdPath,
+		source: &WingPath,
+		destination: &WingPath,
 		verify_checksum: bool,
 		progress_callback: Option<&ProgressCallback<'a>>,
 	) -> Result<u64> {

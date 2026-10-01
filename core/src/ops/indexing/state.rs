@@ -5,7 +5,7 @@
 //! allowing indexing to resume from the last completed phase rather than starting
 //! over from scratch.
 
-use crate::domain::addressing::SdPath;
+use crate::domain::addressing::WingPath;
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -143,7 +143,7 @@ pub struct IndexerState {
 }
 
 impl IndexerState {
-	pub fn new(root_path: &SdPath) -> Self {
+	pub fn new(root_path: &WingPath) -> Self {
 		let mut dirs_to_walk = VecDeque::new();
 		if let Some(path) = root_path.as_local_path() {
 			dirs_to_walk.push_back(path.to_path_buf());
@@ -291,15 +291,15 @@ impl IndexerState {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::domain::addressing::SdPath;
+	use crate::domain::addressing::WingPath;
 
 	#[test]
 	fn test_ephemeral_uuid_lookup() {
-		let sd_path = SdPath::Physical {
+		let wing_path = WingPath::Physical {
 			device_slug: "local".to_string(),
 			path: PathBuf::from("/test"),
 		};
-		let mut state = IndexerState::new(&sd_path);
+		let mut state = IndexerState::new(&wing_path);
 
 		// Initially no ephemeral UUIDs
 		assert!(state
@@ -330,11 +330,11 @@ mod tests {
 		// When ephemeral_uuids is populated, the same UUID should be used
 		// instead of generating a new one
 
-		let sd_path = SdPath::Physical {
+		let wing_path = WingPath::Physical {
 			device_slug: "local".to_string(),
 			path: PathBuf::from("/test"),
 		};
-		let mut state = IndexerState::new(&sd_path);
+		let mut state = IndexerState::new(&wing_path);
 
 		// Simulate an ephemeral UUID from previous browsing
 		let preserved_uuid = Uuid::new_v4();

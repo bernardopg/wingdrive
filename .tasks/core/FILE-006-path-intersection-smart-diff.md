@@ -39,7 +39,7 @@ Heuristic first, then content-verify ambiguous cases (same name, different size 
 ### Operation Flow
 
 ```
-Input: source_path (SdPath), target_path (SdPath), strategy
+Input: source_path (WingPath), target_path (WingPath), strategy
                           ↓
       Ensure both paths are indexed (ephemeral or persistent)
       Use complete scan if needed (INDEX-011)
@@ -69,8 +69,8 @@ let diff = path_intersection(source, target, Strategy::Heuristic).await?;
 
 // Copy only what's missing
 let copy_input = FileCopyInput {
-    sources: SdPathBatch::from_paths(
-        diff.only_in_source.iter().map(|e| e.sd_path.clone())
+    sources: WingPathBatch::from_paths(
+        diff.only_in_source.iter().map(|e| e.wing_path.clone())
     ),
     destination: target_path,
     overwrite: false,
@@ -86,8 +86,8 @@ let copy_input = FileCopyInput {
 // core/src/ops/files/diff/mod.rs
 
 pub struct PathDiffInput {
-    pub source: SdPath,
-    pub target: SdPath,
+    pub source: WingPath,
+    pub target: WingPath,
     pub strategy: DiffStrategy,
     pub use_index_rules: bool,  // false = complete scan for full coverage
 }
@@ -118,7 +118,7 @@ pub struct PathDiffResult {
 
 pub struct DiffEntry {
     pub relative_path: PathBuf,
-    pub sd_path: SdPath,
+    pub wing_path: WingPath,
     pub uuid: Option<Uuid>,
     pub size: u64,
     pub modified_at: DateTime<Utc>,
@@ -135,7 +135,7 @@ Before diffing, ensure both paths are indexed. Check ephemeral cache first, then
 // core/src/ops/files/diff/resolver.rs
 
 async fn ensure_indexed(
-    path: &SdPath,
+    path: &WingPath,
     use_rules: bool,
     ctx: &ActionContext,
 ) -> Result<()> {

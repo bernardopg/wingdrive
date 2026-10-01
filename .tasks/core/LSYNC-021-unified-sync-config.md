@@ -379,13 +379,13 @@ impl SyncConfig {
     }
 
     fn apply_env_overrides(mut self) -> Self {
-        if let Ok(val) = std::env::var("SD_SYNC_BATCH_SIZE") {
+        if let Ok(val) = std::env::var("WING_SYNC_BATCH_SIZE") {
             if let Ok(size) = val.parse() {
                 self.batching.backfill_batch_size = size;
             }
         }
 
-        if let Ok(val) = std::env::var("SD_TOMBSTONE_RETENTION_DAYS") {
+        if let Ok(val) = std::env::var("WING_TOMBSTONE_RETENTION_DAYS") {
             if let Ok(days) = val.parse() {
                 self.retention.tombstone_max_retention_days = days;
             }
@@ -650,10 +650,10 @@ metrics_log_interval_secs = 300
 
 ```bash
 # Override any config value via environment
-export SD_SYNC_BATCH_SIZE=5000
-export SD_TOMBSTONE_RETENTION_DAYS=14
-export SD_SYNC_LOOP_INTERVAL_SECS=10
-export SD_PRUNING_STRATEGY=conservative
+export WING_SYNC_BATCH_SIZE=5000
+export WING_TOMBSTONE_RETENTION_DAYS=14
+export WING_SYNC_LOOP_INTERVAL_SECS=10
+export WING_PRUNING_STRATEGY=conservative
 ```
 
 ## Migration Plan

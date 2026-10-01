@@ -1,5 +1,5 @@
 use super::output::{SuggestedLocation, SuggestedLocationsOutput};
-use crate::domain::addressing::SdPath;
+use crate::domain::addressing::WingPath;
 use crate::infra::query::{QueryError, QueryResult};
 use crate::{context::CoreContext, infra::query::LibraryQuery};
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
@@ -89,7 +89,7 @@ impl LibraryQuery for SuggestedLocationsQuery {
 				continue;
 			}
 
-			let sd_path = SdPath::Physical {
+			let wing_path = WingPath::Physical {
 				device_slug: device.slug.clone(),
 				path: path.clone(),
 			};
@@ -97,7 +97,7 @@ impl LibraryQuery for SuggestedLocationsQuery {
 			result.push(SuggestedLocation {
 				name,
 				path,
-				sd_path,
+				wing_path,
 			});
 		}
 

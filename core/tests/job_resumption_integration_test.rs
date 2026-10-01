@@ -19,7 +19,7 @@ use tokio::{
 use tracing::{info, warn};
 use uuid::Uuid;
 use wing_core::{
-	domain::SdPath,
+	domain::WingPath,
 	infra::action::LibraryAction,
 	ops::{
 		indexing::IndexMode,
@@ -274,7 +274,7 @@ async fn start_and_interrupt_job(
 
 	// Create location add action to automatically trigger indexing
 	let location_input = LocationAddInput {
-		path: SdPath::local(indexing_data_path.clone()),
+		path: WingPath::local(indexing_data_path.clone()),
 		name: Some("Test Location".to_string()),
 		mode: IndexMode::Content,
 		job_policies: None,

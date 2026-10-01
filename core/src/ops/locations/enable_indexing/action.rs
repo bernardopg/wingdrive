@@ -107,7 +107,7 @@ impl LibraryAction for EnableIndexingAction {
 				))
 			})?;
 
-		// Get device for constructing SdPath
+		// Get device for constructing WingPath
 		let device = entities::device::Entity::find_by_id(updated_location.device_id)
 			.one(db)
 			.await
@@ -119,8 +119,8 @@ impl LibraryAction for EnableIndexingAction {
 				))
 			})?;
 
-		// Construct SdPath
-		let sd_path = crate::domain::addressing::SdPath::Physical {
+		// Construct WingPath
+		let wing_path = crate::domain::addressing::WingPath::Physical {
 			device_slug: device.slug.clone(),
 			path: directory_path.path.clone().into(),
 		};
@@ -146,7 +146,7 @@ impl LibraryAction for EnableIndexingAction {
 			.start_indexing_with_context_and_path(
 				library.clone(),
 				&managed_location,
-				sd_path.clone(),
+				wing_path.clone(),
 				Some(self.create_action_context()),
 			)
 			.await

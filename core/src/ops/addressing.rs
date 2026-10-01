@@ -1,6 +1,6 @@
 //! Path resolution operations for the Virtual Distributed File System
 //!
-//! This module contains the active logic (verbs) that operates on SdPath
+//! This module contains the active logic (verbs) that operates on WingPath
 //! data structures to resolve content-based paths to optimal physical locations.
 
 use sea_orm::{prelude::*, QuerySelect};
@@ -9,39 +9,39 @@ use uuid::Uuid;
 
 use crate::{
 	context::CoreContext,
-	domain::addressing::{PathResolutionError, SdPath},
+	domain::addressing::{PathResolutionError, WingPath},
 	infra::db::entities::{
 		content_identity, device, entry, location, ContentIdentity, Device, Entry, Location,
 	},
 };
 
-/// The PathResolver service handles resolution of SdPath instances
+/// The PathResolver service handles resolution of WingPath instances
 /// to optimal physical locations based on device availability and
 /// performance characteristics.
 pub struct PathResolver;
 
 impl PathResolver {
-	/// Resolve a single SdPath to an optimal physical location
+	/// Resolve a single WingPath to an optimal physical location
 	pub async fn resolve(
 		&self,
-		path: &SdPath,
+		path: &WingPath,
 		context: &CoreContext,
-	) -> Result<SdPath, PathResolutionError> {
+	) -> Result<WingPath, PathResolutionError> {
 		match path {
 			// If already physical, just verify the device is online
-			SdPath::Physical { device_slug, .. } => {
+			WingPath::Physical { device_slug, .. } => {
 				// For now, physical paths are assumed accessible
 				// TODO: Verify device is online using device_slug
 				Ok(path.clone())
 			}
 			// Cloud paths are already resolved (no additional resolution needed)
-			SdPath::Cloud { .. } => Ok(path.clone()),
+			WingPath::Cloud { .. } => Ok(path.clone()),
 			// If content-based, find the optimal physical path
-			SdPath::Content { content_id } => {
+			WingPath::Content { content_id } => {
 				Err(PathResolutionError::NoOnlineInstancesFound(*content_id))
 			}
 			// Sidecar paths need to be resolved to physical locations
-			SdPath::Sidecar {
+			WingPath::Sidecar {
 				content_id,
 				kind,
 				variant,
@@ -53,12 +53,12 @@ impl PathResolver {
 		}
 	}
 
-	/// Resolve multiple SdPaths efficiently in batch
+	/// Resolve multiple WingPaths efficiently in batch
 	// pub async fn resolve_batch(
 	// 	&self,
-	// 	paths: Vec<SdPath>,
+	// 	paths: Vec<WingPath>,
 	// 	context: &CoreContext,
-	// ) -> HashMap<SdPath, Result<SdPath, PathResolutionError>> {
+	// ) -> HashMap<WingPath, Result<WingPath, PathResolutionError>> {
 	// 	let mut results = HashMap::new();
 
 	// 	// Partition paths by type
@@ -67,8 +67,8 @@ impl PathResolver {
 
 	// 	for path in paths {
 	// 		match &path {
-	// 			SdPath::Physical { .. } => physical_paths.push(path),
-	// 			SdPath::Content { .. } => content_paths.push(path),
+	// 			WingPath::Physical { .. } => physical_paths.push(path),
+	// 			WingPath::Content { .. } => content_paths.push(path),
 	// 		}
 	// 	}
 
@@ -78,7 +78,7 @@ impl PathResolver {
 
 	// 	// Verify physical paths
 	// 	for path in physical_paths {
-	// 		if let SdPath::Physical { device_id, .. } = &path {
+	// 		if let WingPath::Physical { device_id, .. } = &path {
 	// 			let result = if online_devices.contains(device_id) {
 	// 				Ok(path.clone())
 	// 			} else {
@@ -100,7 +100,7 @@ impl PathResolver {
 	// 			.await;
 
 	// 		for path in content_paths {
-	// 			if let SdPath::Content { content_id } = &path {
+	// 			if let WingPath::Content { content_id } = &path {
 	// 				let result = resolved_content
 	// 					.get(content_id)
 	// 					.cloned()
@@ -206,7 +206,7 @@ impl PathResolver {
 		kind: &crate::ops::sidecar::types::SidecarKind,
 		variant: &crate::ops::sidecar::types::SidecarVariant,
 		_format: &crate::ops::sidecar::types::SidecarFormat,
-	) -> Result<SdPath, PathResolutionError> {
+	) -> Result<WingPath, PathResolutionError> {
 		// TODO: Implement full sidecar resolution
 		// For now, return not found to avoid breaking existing code
 		Err(PathResolutionError::SidecarNotFound {
@@ -221,7 +221,7 @@ impl PathResolver {
 	// 	&self,
 	// 	context: &CoreContext,
 	// 	content_id: Uuid,
-	// ) -> Result<SdPath, PathResolutionError> {
+	// ) -> Result<WingPath, PathResolutionError> {
 	// 	// Get the current library
 	// 	let library = context
 	// 		.libraries()
@@ -264,7 +264,7 @@ impl PathResolver {
 	// 	content_ids: Vec<Uuid>,
 	// 	online_devices: &[Uuid],
 	// 	device_metrics: &HashMap<Uuid, DeviceMetrics>,
-	// ) -> HashMap<Uuid, Result<SdPath, PathResolutionError>> {
+	// ) -> HashMap<Uuid, Result<WingPath, PathResolutionError>> {
 	// 	let mut results = HashMap::new();
 
 	// 	// Get the current library
@@ -487,7 +487,7 @@ impl PathResolver {
 		online_devices: &[Uuid],
 		device_metrics: &HashMap<Uuid, DeviceMetrics>,
 		device_slug_map: &HashMap<Uuid, String>,
-	) -> Option<SdPath> {
+	) -> Option<WingPath> {
 		let current_device_id = crate::device::get_current_device_id();
 
 		let mut candidates: Vec<(f64, &ContentInstance)> = instances
@@ -506,7 +506,7 @@ impl PathResolver {
 		candidates.first().and_then(|(_, inst)| {
 			device_slug_map
 				.get(&inst.device_id)
-				.map(|device_slug| SdPath::Physical {
+				.map(|device_slug| WingPath::Physical {
 					device_slug: device_slug.clone(),
 					path: inst.path.clone(),
 				})
@@ -552,14 +552,14 @@ struct DeviceMetrics {
 	bandwidth_mbps: u32,
 }
 
-/// Integrate resolve method directly into SdPath
-impl SdPath {
+/// Integrate resolve method directly into WingPath
+impl WingPath {
 	/// Resolve this path using the provided PathResolver
 	pub async fn resolve_with(
 		&self,
 		resolver: &PathResolver,
 		context: &CoreContext,
-	) -> Result<SdPath, PathResolutionError> {
+	) -> Result<WingPath, PathResolutionError> {
 		resolver.resolve(self, context).await
 	}
 }

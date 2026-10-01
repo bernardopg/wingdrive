@@ -367,7 +367,7 @@ struct Args {
 	/// Address to bind HTTP server. The wildcard default suits containers;
 	/// bind a specific address (e.g. 127.0.0.1) when a reverse proxy such as
 	/// `tailscale serve` owns the same port on other interfaces.
-	#[arg(long, env = "SD_HOST", default_value = "::")]
+	#[arg(long, env = "WING_HOST", default_value = "::")]
 	host: std::net::IpAddr,
 
 	/// Port to bind HTTP server (default: 8080)
@@ -376,7 +376,7 @@ struct Args {
 
 	/// Authentication credentials (format: "username:password,username2:password2")
 	/// Set to "disabled" to disable auth (not recommended in production)
-	#[arg(long, env = "SD_AUTH")]
+	#[arg(long, env = "WING_AUTH")]
 	auth: Option<String>,
 
 	/// Daemon instance name (for running multiple instances)
@@ -384,7 +384,7 @@ struct Args {
 	instance: Option<String>,
 
 	/// Enable P2P networking
-	#[arg(long, env = "SD_P2P", default_value = "true")]
+	#[arg(long, env = "WING_P2P", default_value = "true")]
 	p2p: bool,
 }
 
@@ -445,9 +445,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// Require credentials in production builds (unless explicitly disabled)
 	#[cfg(not(debug_assertions))]
 	if auth.is_empty() && !_disabled {
-		warn!("The 'SD_AUTH' environment variable is not set!");
-		warn!("If you want to disable auth set 'SD_AUTH=disabled', or");
-		warn!("Provide your credentials in the following format 'SD_AUTH=username:password,username2:password2'");
+		warn!("The 'WING_AUTH' environment variable is not set!");
+		warn!("If you want to disable auth set 'WING_AUTH=disabled', or");
+		warn!("Provide your credentials in the following format 'WING_AUTH=username:password,username2:password2'");
 		std::process::exit(1);
 	}
 

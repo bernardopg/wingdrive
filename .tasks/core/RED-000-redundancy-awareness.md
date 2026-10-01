@@ -32,7 +32,7 @@ This feature builds on the existing Content Identity system (CORE-003) which alr
 |-----------|----------|--------------|
 | Content Identity | `core/src/domain/content_identity.rs` | BLAKE3 content hashing, deterministic UUIDs, `entry_count` |
 | Alternate Instances | `core/src/ops/files/query/alternate_instances.rs` | Given a file, find all other copies |
-| File.alternate_paths | `core/src/domain/file.rs` | `Vec<SdPath>` of all locations with same content |
+| File.alternate_paths | `core/src/domain/file.rs` | `Vec<WingPath>` of all locations with same content |
 | Volume.unique_bytes | `core/src/volume/manager.rs` | Deduplicated byte count per volume |
 | Entry.content_id FK | `core/src/infra/db/entities/entry.rs` | Links entries to shared ContentIdentity |
 | Entry.volume_id FK | `core/src/infra/db/entities/entry.rs` | Links entries to their volume |

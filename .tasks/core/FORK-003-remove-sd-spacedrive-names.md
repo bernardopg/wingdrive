@@ -15,7 +15,7 @@ last_updated: 2026-10-01
 
 Project rule (2026-10-01): nothing in WingDrive is named "Spacedrive" or carries an `sd`/`sd-` prefix. Use `wingdrive` or `wing`. This covers crates, binaries, packages, scripts, functions, types, environment variables, CLI messages, and docs.
 
-Scope measured at `29c564b02`: about 20 Rust crates named `sd-*` or `spacedrive-*`, 8 `@sd/*` packages, about 1,275 "Spacedrive" mentions in 350 files, about 1,500 `sd_`/`sd-` identifiers in 380 files, and `SdPath` with about 1,000 uses.
+Scope measured at `29c564b02`: about 20 Rust crates named `sd-*` or `spacedrive-*`, 8 `@sd/*` packages, about 1,275 "Spacedrive" mentions in 350 files, about 1,500 `sd_`/`sd-` identifiers in 380 files, and `WingPath` with about 1,000 uses.
 
 ## Rules
 
@@ -26,7 +26,7 @@ Scope measured at `29c564b02`: about 20 Rust crates named `sd-*` or `spacedrive-
 ## Phases
 
 - [ ] 1. Rust crates and binaries: `wing-core` -> `wing-core`, `wing-cli` -> `wing-cli` (binary `wing`), `wing-daemon` -> `wing-daemon`, `wing-server` -> `wing-server`, `sd-*` libs -> `wing-*`, `wingdrive-sdk*` -> `wingdrive-sdk*`
-- [ ] 2. Rust identifiers: `SdPath*` -> `WingPath*`, `sd_*` functions/modules -> `wing_*`
+- [ ] 2. Rust identifiers: `WingPath*` -> `WingPath*`, `sd_*` functions/modules -> `wing_*`
 - [ ] 3. JS packages: `@sd/*` -> `@wingdrive/*` (or `@wing/*`), imports, Vite aliases, tsconfig paths
 - [ ] 4. Generated TS/Swift types regenerated
 - [ ] 5. Env vars `SD_*` -> `WING_*` with fallback; `.sdlibrary` -> `.winglibrary` with migration

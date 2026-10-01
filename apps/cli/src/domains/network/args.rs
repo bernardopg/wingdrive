@@ -2,7 +2,7 @@ use clap::{Args, Subcommand};
 use uuid::Uuid;
 
 use wing_core::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	ops::network::{
 		pair::{
 			cancel::input::PairCancelInput, generate::input::PairGenerateInput,
@@ -98,7 +98,7 @@ impl From<SpacedropArgs> for SpacedropSendInput {
 		let paths = args
 			.paths
 			.iter()
-			.map(|s| SdPath::from_uri(s).unwrap_or_else(|_| SdPath::local(s)))
+			.map(|s| WingPath::from_uri(s).unwrap_or_else(|_| WingPath::local(s)))
 			.collect();
 		Self {
 			device_id: args.device_id,

@@ -3,7 +3,7 @@
 use super::job::{ValidationJob, ValidationMode};
 use crate::{
 	context::CoreContext,
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	infra::{
 		action::{error::ActionError, LibraryAction},
 		job::handle::JobHandle,
@@ -14,14 +14,14 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ValidationAction {
-	pub targets: SdPathBatch,
+	pub targets: WingPathBatch,
 	pub verify_checksums: bool,
 	pub deep_scan: bool,
 }
 
 impl ValidationAction {
 	/// Create a new file validation action
-	pub fn new(targets: SdPathBatch, verify_checksums: bool, deep_scan: bool) -> Self {
+	pub fn new(targets: WingPathBatch, verify_checksums: bool, deep_scan: bool) -> Self {
 		Self {
 			targets,
 			verify_checksums,
@@ -39,10 +39,10 @@ impl LibraryAction for ValidationAction {
 		let paths = input
 			.paths
 			.into_iter()
-			.map(|p| SdPath::local(p))
+			.map(|p| WingPath::local(p))
 			.collect::<Vec<_>>();
 		Ok(ValidationAction {
-			targets: SdPathBatch { paths },
+			targets: WingPathBatch { paths },
 			verify_checksums: input.verify_checksums,
 			deep_scan: input.deep_scan,
 		})

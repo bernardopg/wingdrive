@@ -15,7 +15,7 @@ import {
 	useDialog,
 	type UseDialogProps,
 } from "@wingdrive/primitives";
-import type { SdPath, File as FileType } from "@sd/ts-client";
+import type { WingPath, File as FileType } from "@sd/ts-client";
 import { useLibraryMutation, useLibraryQuery } from "../../contexts/SpacedriveContext";
 import { useWaitForJob } from "../../hooks/useWaitForJob";
 import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
@@ -24,8 +24,8 @@ import { File, FileStack } from "../../routes/explorer/File";
 interface FileOperationDialogProps {
 	id: number;
 	operation: "copy" | "move";
-	sources: SdPath[];
-	destination: SdPath;
+	sources: WingPath[];
+	destination: WingPath;
 	onComplete?: () => void;
 }
 
@@ -396,7 +396,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 }
 
 // Utility functions
-function getFileName(path: SdPath): string {
+function getFileName(path: WingPath): string {
 	if (!path || typeof path !== "object") {
 		return "Unknown";
 	}

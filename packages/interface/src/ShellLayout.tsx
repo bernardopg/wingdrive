@@ -73,19 +73,19 @@ function ShellLayoutContent() {
 			return (
 				locations
 					.filter((loc) => {
-						if (!loc.sd_path || !('Physical' in loc.sd_path))
+						if (!loc.wing_path || !('Physical' in loc.wing_path))
 							return false;
-						const locPath = loc.sd_path.Physical.path;
+						const locPath = loc.wing_path.Physical.path;
 						return pathStr.startsWith(locPath);
 					})
 					.sort((a, b) => {
 						const aPath =
-							'Physical' in a.sd_path!
-								? a.sd_path!.Physical.path
+							'Physical' in a.wing_path!
+								? a.wing_path!.Physical.path
 								: '';
 						const bPath =
-							'Physical' in b.sd_path!
-								? b.sd_path!.Physical.path
+							'Physical' in b.wing_path!
+								? b.wing_path!.Physical.path
 								: '';
 						return bPath.length - aPath.length;
 					})[0] || null

@@ -1,9 +1,9 @@
-import type { SdPath } from "@sd/ts-client";
+import type { WingPath } from "@sd/ts-client";
 
 // Data transferred during drag operations
 export interface SidebarDragData {
 	type: "explorer-file";
-	sdPath: SdPath;
+	sdPath: WingPath;
 	name: string;
 }
 

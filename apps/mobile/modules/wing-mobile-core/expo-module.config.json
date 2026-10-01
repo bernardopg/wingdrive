@@ -5,12 +5,12 @@
   ],
   "ios": {
     "modules": [
-      "SDMobileCoreModule"
+      "WingMobileCoreModule"
     ]
   },
   "android": {
     "modules": [
-      "com.wingdrive.core.SDMobileCoreModule"
+      "com.wingdrive.core.WingMobileCoreModule"
     ]
   }
 }

@@ -10,7 +10,7 @@ use tempfile::TempDir;
 use tokio::fs;
 use wing_core::infra::db::entities::{directory_paths, entry, user_metadata, user_metadata_tag};
 use wing_core::{
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	infra::action::LibraryAction,
 	ops::{
 		files::copy::{action::FileCopyAction, input::FileCopyInput},
@@ -101,7 +101,7 @@ async fn test_entry_metadata_preservation_on_move() {
 		.dispatch_library(
 			Some(library_id),
 			LocationAddAction::from_input(LocationAddInput {
-				path: SdPath::local(source_dir.clone()),
+				path: WingPath::local(source_dir.clone()),
 				name: Some("Source".to_string()),
 				mode: IndexMode::Deep,
 				job_policies: None,
@@ -191,8 +191,8 @@ async fn test_entry_metadata_preservation_on_move() {
 
 	// 7. Dispatch the Move Action
 	let move_input = FileCopyInput {
-		sources: SdPathBatch::new(vec![SdPath::local(parent_dir.clone())]),
-		destination: SdPath::local(dest_dir.join("moved_parent_dir")),
+		sources: WingPathBatch::new(vec![WingPath::local(parent_dir.clone())]),
+		destination: WingPath::local(dest_dir.join("moved_parent_dir")),
 		overwrite: false,
 		verify_checksum: false,
 		preserve_timestamps: true,
@@ -409,7 +409,7 @@ async fn test_child_entry_metadata_preservation_on_parent_move() {
 
 	// Index the location
 	let add_loc_input = LocationAddInput {
-		path: SdPath::local(source_dir.clone()),
+		path: WingPath::local(source_dir.clone()),
 		name: Some("Source".to_string()),
 		mode: IndexMode::Deep,
 		job_policies: None,
@@ -475,8 +475,8 @@ async fn test_child_entry_metadata_preservation_on_parent_move() {
 
 	// Move the parent directory
 	let move_input = FileCopyInput {
-		sources: SdPathBatch::new(vec![SdPath::local(parent_dir.clone())]),
-		destination: SdPath::local(dest_dir.join("moved_parent")),
+		sources: WingPathBatch::new(vec![WingPath::local(parent_dir.clone())]),
+		destination: WingPath::local(dest_dir.join("moved_parent")),
 		overwrite: false,
 		verify_checksum: false,
 		preserve_timestamps: true,

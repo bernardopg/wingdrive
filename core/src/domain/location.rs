@@ -1,9 +1,9 @@
 //! Location - an indexed directory within a library
 //!
 //! Locations are directories that WingDrive actively monitors and indexes.
-//! They can be on any device and are addressed using SdPath.
+//! They can be on any device and are addressed using WingPath.
 
-use crate::domain::addressing::SdPath;
+use crate::domain::addressing::WingPath;
 use crate::domain::resource::Identifiable;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -21,7 +21,7 @@ pub struct Location {
 	pub library_id: Uuid,
 
 	/// Root path of this location (includes device!)
-	pub sd_path: SdPath,
+	pub wing_path: WingPath,
 
 	/// Human-friendly name
 	pub name: String,
@@ -96,12 +96,12 @@ pub enum ScanState {
 
 impl Location {
 	/// Create a new location
-	pub fn new(library_id: Uuid, name: String, sd_path: SdPath, index_mode: IndexMode) -> Self {
+	pub fn new(library_id: Uuid, name: String, wing_path: WingPath, index_mode: IndexMode) -> Self {
 		let now = Utc::now();
 		Self {
 			id: Uuid::new_v4(),
 			library_id,
-			sd_path,
+			wing_path,
 			name,
 			index_mode,
 			scan_interval: None,
@@ -210,7 +210,7 @@ impl Identifiable for Location {
 	where
 		Self: Sized,
 	{
-		use crate::domain::addressing::SdPath;
+		use crate::domain::addressing::WingPath;
 		use crate::infra::db::entities::{device, directory_paths, entry, location};
 		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
@@ -251,12 +251,12 @@ impl Identifiable for Location {
 			// context when needed, here we use Uuid::nil as a placeholder.
 			let library_id = Uuid::nil();
 
-			let sd_path = SdPath::Physical {
+			let wing_path = WingPath::Physical {
 				device_slug: device_model.slug.clone(),
 				path: dir_path.path.clone().into(),
 			};
 
-			results.push(Location::from_db_model(&loc, library_id, sd_path));
+			results.push(Location::from_db_model(&loc, library_id, wing_path));
 		}
 
 		Ok(results)
@@ -271,7 +271,7 @@ impl Location {
 	pub fn from_db_model(
 		model: &crate::infra::db::entities::location::Model,
 		library_id: Uuid,
-		sd_path: SdPath,
+		wing_path: WingPath,
 	) -> Self {
 		let index_mode = match model.index_mode.as_str() {
 			"none" => IndexMode::None,
@@ -298,7 +298,7 @@ impl Location {
 		Self {
 			id: model.uuid,
 			library_id,
-			sd_path,
+			wing_path,
 			name: model.name.clone().unwrap_or_else(|| "Unknown".to_string()),
 			index_mode,
 			scan_interval: None,
@@ -584,15 +584,15 @@ impl Default for ObjectDetectionPolicy {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::domain::addressing::SdPath;
+	use crate::domain::addressing::WingPath;
 
 	#[test]
 	fn test_location_creation() {
-		let sd_path = SdPath::local("/Users/test/Documents");
+		let wing_path = WingPath::local("/Users/test/Documents");
 		let location = Location::new(
 			Uuid::new_v4(),
 			"My Documents".to_string(),
-			sd_path,
+			wing_path,
 			IndexMode::Deep,
 		);
 
@@ -604,11 +604,11 @@ mod tests {
 
 	#[test]
 	fn test_ignore_patterns() {
-		let sd_path = SdPath::local("/test");
+		let wing_path = WingPath::local("/test");
 		let location = Location::new(
 			Uuid::new_v4(),
 			"Test".to_string(),
-			sd_path,
+			wing_path,
 			IndexMode::Shallow,
 		);
 

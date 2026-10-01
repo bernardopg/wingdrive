@@ -6,7 +6,7 @@
 //! individual pieces on demand.
 
 use crate::domain::{
-	addressing::SdPath,
+	addressing::WingPath,
 	content_identity::{ContentIdentity, ContentKind},
 	media_data::{AudioMediaData, ImageMediaData, VideoMediaData},
 	tag::Tag,
@@ -41,7 +41,7 @@ pub struct File {
 	pub id: Uuid,
 
 	/// The universal path to the file in WingDrive's VDFS
-	pub sd_path: SdPath,
+	pub wing_path: WingPath,
 
 	/// The file kind (file, directory, symlink)
 	pub kind: EntryKind,
@@ -59,7 +59,7 @@ pub struct File {
 	pub content_identity: Option<ContentIdentity>,
 
 	/// A list of other paths that share the same content identity
-	pub alternate_paths: Vec<SdPath>,
+	pub alternate_paths: Vec<WingPath>,
 
 	/// The semantic tags associated with this file
 	pub tags: Vec<Tag>,
@@ -82,7 +82,7 @@ pub struct File {
 
 	/// Additional computed fields
 	pub content_kind: ContentKind, // Populated by the ephemeral indexer, for when a File does not have a ContentIdentity
-	pub is_local: bool, // this is redundant with SdPath
+	pub is_local: bool, // this is redundant with WingPath
 
 	/// Video duration (for grid display optimization)
 	pub duration_seconds: Option<f64>,
@@ -135,7 +135,7 @@ impl crate::domain::resource::Identifiable for File {
 	}
 
 	fn no_merge_fields() -> &'static [&'static str] {
-		&["sd_path"]
+		&["wing_path"]
 	}
 
 	async fn route_from_dependency(
@@ -374,18 +374,18 @@ impl File {
 	/// Build a File from an entry model and item type (for space item resolution)
 	///
 	/// This is used by SpaceItem resolution where we know the ItemType
-	/// and need to construct a File with the appropriate SdPath.
+	/// and need to construct a File with the appropriate WingPath.
 	pub async fn from_entry_model_with_item_type(
 		entry_model: crate::infra::db::entities::entry::Model,
 		item_type: &crate::domain::ItemType,
 		db: &sea_orm::DatabaseConnection,
 	) -> Option<Self> {
-		use crate::domain::{ContentIdentity, ContentKind, ItemType, SdPath, Sidecar};
+		use crate::domain::{ContentIdentity, ContentKind, ItemType, Sidecar, WingPath};
 		use crate::infra::db::entities::{content_identity, sidecar};
 		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
-		let sd_path = match item_type {
-			ItemType::Path { sd_path } => sd_path.clone(),
+		let wing_path = match item_type {
+			ItemType::Path { wing_path } => wing_path.clone(),
 			_ => return None,
 		};
 
@@ -435,7 +435,7 @@ impl File {
 			Vec::new()
 		};
 
-		let mut file = File::from_entity_model(entry_model, sd_path);
+		let mut file = File::from_entity_model(entry_model, wing_path);
 		file.content_identity = content_identity;
 		file.sidecars = sidecars;
 		if let Some(ref ci) = file.content_identity {
@@ -445,15 +445,15 @@ impl File {
 		Some(file)
 	}
 
-	/// Construct a File directly from entity model and SdPath
+	/// Construct a File directly from entity model and WingPath
 	///
 	/// This is the preferred method for converting database entities to File objects,
 	/// bypassing the Entry domain model entirely.
 	pub fn from_entity_model(
 		model: crate::infra::db::entities::entry::Model,
-		sd_path: SdPath,
+		wing_path: WingPath,
 	) -> Self {
-		let is_local = sd_path.is_local();
+		let is_local = wing_path.is_local();
 
 		// Convert entity kind to domain EntryKind
 		let kind = match model.kind {
@@ -476,7 +476,7 @@ impl File {
 
 		Self {
 			id,
-			sd_path,
+			wing_path,
 			name: model.name,
 			size: model.aggregate_size.max(model.size) as u64,
 			content_identity: None,
@@ -504,9 +504,9 @@ impl File {
 	pub fn from_ephemeral(
 		id: Uuid,
 		metadata: &crate::ops::indexing::database_storage::EntryMetadata,
-		sd_path: SdPath,
+		wing_path: WingPath,
 	) -> Self {
-		let is_local = sd_path.is_local();
+		let is_local = wing_path.is_local();
 
 		// Extract name and extension from path
 		let file_name = metadata
@@ -571,7 +571,7 @@ impl File {
 
 		Self {
 			id,
-			sd_path,
+			wing_path,
 			name,
 			size: metadata.size,
 			content_identity: None,
@@ -636,7 +636,7 @@ impl File {
 
 	/// Get a display-friendly path string
 	pub fn display_path(&self) -> String {
-		self.sd_path.display()
+		self.wing_path.display()
 	}
 
 	/// Check if this is a media file
@@ -692,7 +692,7 @@ impl File {
 		// Collect content_ids and location_ids for batch loading
 		let content_ids: Vec<i32> = entries.iter().filter_map(|e| e.content_id).collect();
 
-		// Load locations to build SdPaths
+		// Load locations to build WingPaths
 		// For now, we need to build a path from the entry. The challenge is that entries
 		// don't store full paths - we need to traverse up to the location root.
 		// This is a simplified version that creates Content-based paths when content_id exists
@@ -882,12 +882,12 @@ impl File {
 				))
 			})?;
 
-			// Build SdPath - use Content path if content_id exists, otherwise use Physical path
+			// Build WingPath - use Content path if content_id exists, otherwise use Physical path
 			// Physical paths are needed for newly created files that don't have content_id yet
-			let sd_path = if let Some(content_id) = entry_model.content_id {
+			let wing_path = if let Some(content_id) = entry_model.content_id {
 				if let Some(ci) = content_by_id.get(&content_id) {
 					if let Some(ci_uuid) = ci.uuid {
-						SdPath::Content {
+						WingPath::Content {
 							content_id: ci_uuid,
 						}
 					} else {
@@ -914,7 +914,7 @@ impl File {
 							entry_model.id,
 							physical_path.display()
 						);
-						SdPath::Physical {
+						WingPath::Physical {
 							device_slug,
 							path: physical_path,
 						}
@@ -931,23 +931,23 @@ impl File {
 			};
 
 			// Start with basic File from entity
-			let mut file = File::from_entity_model(entry_model.clone(), sd_path.clone());
+			let mut file = File::from_entity_model(entry_model.clone(), wing_path.clone());
 
 			// ALWAYS populate alternate_paths with at least the current file's physical path
 			// This ensures server-side filtering works even for files without content_id
-			if let SdPath::Physical { device_slug, path } = &sd_path {
-				file.alternate_paths.push(SdPath::Physical {
+			if let WingPath::Physical { device_slug, path } = &wing_path {
+				file.alternate_paths.push(WingPath::Physical {
 					device_slug: device_slug.clone(),
 					path: path.clone(),
 				});
-			} else if let SdPath::Content { .. } = &sd_path {
+			} else if let WingPath::Content { .. } = &wing_path {
 				// For Content paths, we'll populate from entries_by_content_id below
 				// But we should still try to add the current entry's physical path
 				if let Ok(physical_path) =
 					crate::ops::indexing::PathResolver::get_full_path(db, entry_model.id).await
 				{
 					let device_slug = crate::device::get_current_device_slug();
-					file.alternate_paths.push(SdPath::Physical {
+					file.alternate_paths.push(WingPath::Physical {
 						device_slug,
 						path: physical_path,
 					});
@@ -998,7 +998,7 @@ impl File {
 								{
 									let device_slug = crate::device::get_current_device_slug();
 
-									file.alternate_paths.push(SdPath::Physical {
+									file.alternate_paths.push(WingPath::Physical {
 										device_slug,
 										path: physical_path,
 									});

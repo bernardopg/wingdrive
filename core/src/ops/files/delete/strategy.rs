@@ -4,7 +4,7 @@
 //! 1. **LocalDeleteStrategy** - Local file deletion (trash, permanent, secure)
 //! 2. **RemoteDeleteStrategy** - Cross-device deletion via network
 
-use crate::{domain::addressing::SdPath, infra::job::prelude::*};
+use crate::{domain::addressing::WingPath, infra::job::prelude::*};
 use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -18,7 +18,7 @@ use super::job::DeleteMode;
 /// Result of a delete operation for a single path
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteResult {
-	pub path: SdPath,
+	pub path: WingPath,
 	pub success: bool,
 	pub bytes_freed: u64,
 	pub error: Option<String>,
@@ -31,7 +31,7 @@ pub trait DeleteStrategy: Send + Sync {
 	async fn execute(
 		&self,
 		ctx: &JobContext<'_>,
-		paths: &[SdPath],
+		paths: &[WingPath],
 		mode: DeleteMode,
 	) -> Result<Vec<DeleteResult>>;
 }
@@ -73,7 +73,7 @@ impl DeleteStrategy for LocalDeleteStrategy {
 	async fn execute(
 		&self,
 		ctx: &JobContext<'_>,
-		paths: &[SdPath],
+		paths: &[WingPath],
 		mode: DeleteMode,
 	) -> Result<Vec<DeleteResult>> {
 		let mut results = Vec::new();
@@ -126,7 +126,7 @@ impl LocalDeleteStrategy {
 	async fn delete_cloud_path(
 		&self,
 		ctx: &JobContext<'_>,
-		path: &SdPath,
+		path: &WingPath,
 		mode: DeleteMode,
 	) -> DeleteResult {
 		// Only permanent deletion is supported for cloud paths
@@ -394,11 +394,11 @@ impl DeleteStrategy for RemoteDeleteStrategy {
 	async fn execute(
 		&self,
 		ctx: &JobContext<'_>,
-		paths: &[SdPath],
+		paths: &[WingPath],
 		mode: DeleteMode,
 	) -> Result<Vec<DeleteResult>> {
 		// Group paths by target device
-		let mut by_device: HashMap<Uuid, Vec<SdPath>> = HashMap::new();
+		let mut by_device: HashMap<Uuid, Vec<WingPath>> = HashMap::new();
 		for path in paths {
 			if let Some(device_id) = path.device_id() {
 				by_device.entry(device_id).or_default().push(path.clone());
@@ -424,7 +424,7 @@ impl RemoteDeleteStrategy {
 		&self,
 		ctx: &JobContext<'_>,
 		device_id: Uuid,
-		paths: &[SdPath],
+		paths: &[WingPath],
 		mode: DeleteMode,
 	) -> Result<Vec<DeleteResult>> {
 		let networking = ctx
@@ -482,7 +482,7 @@ impl RemoteDeleteStrategy {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FileDeleteMessage {
 	Request {
-		paths: Vec<SdPath>,
+		paths: Vec<WingPath>,
 		mode: DeleteMode,
 		request_id: Uuid,
 	},

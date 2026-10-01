@@ -7,7 +7,7 @@
 use std::{env, path::PathBuf, time::Duration};
 use tokio::time::timeout;
 use wing_core::{
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	ops::files::copy::{action::FileCopyAction, CopyOptions},
 	testing::CargoTestRunner,
 	Core,
@@ -395,16 +395,16 @@ async fn bob_pull_receiver_scenario() {
 	for (i, (filename, _size, remote_path)) in source_files_info.iter().enumerate() {
 		println!("Bob: PULL action {} - pulling {}", i + 1, filename);
 
-		// Source SdPath is on Alice's device (remote from Bob's perspective)
+		// Source WingPath is on Alice's device (remote from Bob's perspective)
 		// Device slug is derived from "Alice's Test Device" → "alice-s-test-device"
-		let source_sdpath = SdPath::physical(
+		let source_sdpath = WingPath::physical(
 			"alice-s-test-device".to_string(),
 			PathBuf::from(remote_path),
 		);
 
-		// Destination SdPath is on Bob's device (local)
+		// Destination WingPath is on Bob's device (local)
 		let dest_path = pull_dest_dir.join(filename);
-		let dest_sdpath = SdPath::physical("bob-s-test-device".to_string(), &dest_path);
+		let dest_sdpath = WingPath::physical("bob-s-test-device".to_string(), &dest_path);
 
 		println!("  Source (remote): {}", source_sdpath.display());
 		println!("  Destination (local): {}", dest_sdpath.display());
@@ -412,7 +412,7 @@ async fn bob_pull_receiver_scenario() {
 		// Build and dispatch PULL action
 		// The RemoteTransferStrategy should detect this as PULL direction
 		let copy_action = FileCopyAction {
-			sources: SdPathBatch::new(vec![source_sdpath]),
+			sources: WingPathBatch::new(vec![source_sdpath]),
 			destination: dest_sdpath,
 			options: CopyOptions {
 				overwrite: true,

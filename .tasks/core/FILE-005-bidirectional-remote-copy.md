@@ -56,7 +56,7 @@ pub enum TransferDirection {
 }
 
 impl RemoteTransferStrategy {
-    fn detect_direction(source: &SdPath, dest: &SdPath) -> TransferDirection {
+    fn detect_direction(source: &WingPath, dest: &WingPath) -> TransferDirection {
         match (source.is_local_to_current_device(), dest.is_local_to_current_device()) {
             (true, false) => TransferDirection::Push,
             (false, true) => TransferDirection::Pull,
@@ -148,7 +148,7 @@ Device A (local):  Receives chunks, writes to destination
 1. Refactor `RemoteTransferStrategy::execute()` to detect direction:
 
    ```rust
-   async fn execute(&self, ctx: &JobContext, source: &SdPath, dest: &SdPath, ...) -> Result<()> {
+   async fn execute(&self, ctx: &JobContext, source: &WingPath, dest: &WingPath, ...) -> Result<()> {
        let direction = Self::detect_direction(source, dest, ctx)?;
 
        match direction {
@@ -166,8 +166,8 @@ Device A (local):  Receives chunks, writes to destination
    async fn execute_pull(
        &self,
        ctx: &JobContext,
-       source: &SdPath,  // Remote path
-       dest: &SdPath,    // Local path
+       source: &WingPath,  // Remote path
+       dest: &WingPath,    // Local path
        verify_checksum: bool,
        progress_callback: Option<&ProgressCallback>,
    ) -> Result<()> {

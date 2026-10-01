@@ -1,13 +1,13 @@
 //! Cross-device copy test using the action system
 //!
 //! This test demonstrates the copy system's routing capabilities by having Alice
-//! create files and then dispatch copy actions where the source SdPath is on
+//! create files and then dispatch copy actions where the source WingPath is on
 //! Alice's device and the destination is on Bob's device.
 
 use std::{env, path::PathBuf, time::Duration};
 use tokio::time::timeout;
 use wing_core::{
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	ops::files::copy::{action::FileCopyAction, CopyOptions},
 	testing::CargoTestRunner,
 	Core,
@@ -191,15 +191,15 @@ async fn alice_cross_device_copy_scenario() {
 	for (i, (source_path, (filename, _))) in source_paths.iter().zip(&test_files).enumerate() {
 		println!("Alice: Preparing copy action {} for {}", i + 1, filename);
 
-		// Create source SdPath (on Alice's device)
+		// Create source WingPath (on Alice's device)
 		// Note: slug is generated from device name "Alice's Test Device" → "alice-s-test-device"
-		let source_sdpath = SdPath::physical("alice-s-test-device".to_string(), source_path);
+		let source_sdpath = WingPath::physical("alice-s-test-device".to_string(), source_path);
 
-		// Create destination SdPath (on Bob's device) - use directory, not full path
+		// Create destination WingPath (on Bob's device) - use directory, not full path
 		// The job will automatically join the filename for cross-device copies
 		// Note: slug is generated from device name "Bob's Test Device" → "bob-s-test-device"
 		let dest_dir = PathBuf::from("/tmp/received_files");
-		let dest_sdpath = SdPath::physical("bob-s-test-device".to_string(), &dest_dir);
+		let dest_sdpath = WingPath::physical("bob-s-test-device".to_string(), &dest_dir);
 
 		println!(
 			"  Source: {} (device: {})",
@@ -213,9 +213,9 @@ async fn alice_cross_device_copy_scenario() {
 			filename
 		);
 
-		// Build the copy action directly with SdPath
+		// Build the copy action directly with WingPath
 		let copy_action = FileCopyAction {
-			sources: SdPathBatch::new(vec![source_sdpath]),
+			sources: WingPathBatch::new(vec![source_sdpath]),
 			destination: dest_sdpath,
 			options: CopyOptions {
 				overwrite: true,

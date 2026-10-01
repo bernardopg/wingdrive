@@ -441,8 +441,8 @@ If you haven't already, you'll need to install NDK (26.1.10909125) and CMake fro
 To add new native functionality exposed to JavaScript:
 
 1. Add Rust FFI function in `modules/wing-mobile-core/core/src/lib.rs`
-2. Add Swift bridge in `modules/wing-mobile-core/ios/SDMobileCoreModule.swift`
-3. Add Kotlin bridge in `modules/wing-mobile-core/android/.../SDMobileCoreModule.kt`
+2. Add Swift bridge in `modules/wing-mobile-core/ios/WingMobileCoreModule.swift`
+3. Add Kotlin bridge in `modules/wing-mobile-core/android/.../WingMobileCoreModule.kt`
 4. Export from `modules/wing-mobile-core/src/index.ts`
 5. Rebuild the Rust core: `cargo xtask build-mobile` (from project root)
 6. Regenerate native projects: `cd apps/mobile && bun run prebuild:clean`
@@ -617,7 +617,7 @@ The TypeScript client is primarily used by the desktop GUI (future) and can be u
 WingDrive V2 introduces several architectural improvements over V1:
 
 - **Entry-Centric Model**: Files and directories unified as Entries with optional content identity
-- **SdPath Addressing**: Universal file addressing across devices and storage types
+- **WingPath Addressing**: Universal file addressing across devices and storage types
 - **Event-Driven**: EventBus eliminates coupling between core subsystems
 - **CQRS Pattern**: Actions (mutations) and Queries (reads) with preview-commit-verify flow
 - **Durable Jobs**: Long-running operations survive app restarts via MessagePack serialization
@@ -820,7 +820,7 @@ git commit -m "Update iOS submodule"
 
 #### Core library not found
 
-**Error:** `sd-ios-core` framework not found
+**Error:** `wing-ios-core` framework not found
 
 **Solution:**
 
@@ -879,7 +879,7 @@ Read the full analysis in [docs/overview/history.mdx](docs/overview/history.mdx)
 | **Desktop**         | Tauri + React (in repo)           | Swift (native macOS submodule) / Tauri + React (cross platform submodule, coming soon) |
 | **Mobile**          | React Native                      | Native Swift (iOS/macOS submodules)                                                    |
 | **P2P Networking**  | libp2p                            | Iroh (QUIC-based)                                                                      |
-| **File Model**      | Dual system (indexed + ephemeral) | Unified Entry + SdPath                                                                 |
+| **File Model**      | Dual system (indexed + ephemeral) | Unified Entry + WingPath                                                                 |
 | **RPC**             | rspc procedures                   | Specta-generated types                                                                 |
 | **Extensibility**   | None                              | WASM SDK                                                                               |
 | **CLI**             | Planned                           | Production-ready (`wing-cli`)                                                            |
@@ -1027,8 +1027,8 @@ packages/
 #### File Operations
 
 - **V1:** Dual system (indexed `FilePath` vs ephemeral)
-- **V2:** Unified `Entry` model with `SdPath` addressing
-- **Learn:** Read `core/src/domain/entry.rs` and SdPath in docs
+- **V2:** Unified `Entry` model with `WingPath` addressing
+- **Learn:** Read `core/src/domain/entry.rs` and WingPath in docs
 
 ### Where Should V1 Contributors Focus?
 

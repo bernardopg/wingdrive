@@ -21,7 +21,7 @@ impl TestDataDir {
 	/// └── logs/            # Test execution logs
 	/// ```
 	///
-	/// Snapshots are enabled if SD_TEST_SNAPSHOTS=1 environment variable is set.
+	/// Snapshots are enabled if WING_TEST_SNAPSHOTS=1 environment variable is set.
 	pub fn new(test_name: impl Into<String>) -> anyhow::Result<Self> {
 		Self::with_mode(test_name, false)
 	}
@@ -127,7 +127,7 @@ impl TestDataDir {
 		std::fs::create_dir_all(temp_path.join("logs"))?;
 
 		// Check if snapshots are enabled
-		let snapshot_enabled = std::env::var("SD_TEST_SNAPSHOTS")
+		let snapshot_enabled = std::env::var("WING_TEST_SNAPSHOTS")
 			.map(|v| v == "1" || v.to_lowercase() == "true")
 			.unwrap_or(false);
 

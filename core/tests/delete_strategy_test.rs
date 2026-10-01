@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 use tokio::fs;
 use wing_core::{
-	domain::addressing::SdPath,
+	domain::addressing::WingPath,
 	ops::files::delete::{routing::DeleteStrategyRouter, strategy::LocalDeleteStrategy},
 	volume::backend::{CloudBackend, CloudServiceType, VolumeBackend},
 };
@@ -137,8 +137,8 @@ async fn test_delete_strategy_router_local_paths() {
 
 	// Create local paths
 	let paths = vec![
-		SdPath::local(test_file.clone()),
-		SdPath::local(temp_dir.path().join("test2.txt")),
+		WingPath::local(test_file.clone()),
+		WingPath::local(temp_dir.path().join("test2.txt")),
 	];
 
 	// Select strategy - should return LocalDeleteStrategy for local paths
@@ -155,8 +155,8 @@ async fn test_delete_strategy_router_local_paths() {
 async fn test_delete_strategy_router_description() {
 	// Test local paths
 	let local_paths = vec![
-		SdPath::local(PathBuf::from("/tmp/test1.txt")),
-		SdPath::local(PathBuf::from("/tmp/test2.txt")),
+		WingPath::local(PathBuf::from("/tmp/test1.txt")),
+		WingPath::local(PathBuf::from("/tmp/test2.txt")),
 	];
 
 	let description = DeleteStrategyRouter::describe_strategy(&local_paths).await;

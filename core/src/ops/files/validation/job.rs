@@ -1,7 +1,7 @@
 //! File validation and integrity checking job
 
 use crate::{
-	domain::addressing::{SdPath, SdPathBatch},
+	domain::addressing::{WingPath, WingPathBatch},
 	domain::content_identity::ContentHashGenerator,
 	infra::job::prelude::*,
 };
@@ -39,7 +39,7 @@ pub enum ValidationSeverity {
 /// File validation issue
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationIssue {
-	pub path: SdPath,
+	pub path: WingPath,
 	pub issue_type: String,
 	pub severity: ValidationSeverity,
 	pub description: String,
@@ -49,7 +49,7 @@ pub struct ValidationIssue {
 /// File validation job
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ValidationJob {
-	pub targets: SdPathBatch,
+	pub targets: WingPathBatch,
 	pub mode: ValidationMode,
 	pub verify_against_index: bool,
 	pub check_permissions: bool,
@@ -183,7 +183,7 @@ impl JobHandler for ValidationJob {
 /// File information for validation
 #[derive(Debug, Clone)]
 struct FileValidationInfo {
-	path: SdPath,
+	path: WingPath,
 	size: u64,
 	modified: Option<std::time::SystemTime>,
 	permissions: Option<std::fs::Permissions>,
@@ -191,7 +191,7 @@ struct FileValidationInfo {
 
 impl ValidationJob {
 	/// Create a new validation job
-	pub fn new(targets: SdPathBatch, mode: ValidationMode) -> Self {
+	pub fn new(targets: WingPathBatch, mode: ValidationMode) -> Self {
 		Self {
 			targets,
 			mode,
@@ -234,20 +234,20 @@ impl ValidationJob {
 	async fn collect_files_recursive(
 		&self,
 		path: &std::path::Path,
-		sd_path: &SdPath,
+		wing_path: &WingPath,
 		files: &mut Vec<FileValidationInfo>,
 		ctx: &JobContext<'_>,
 	) -> JobResult<()> {
-		let mut stack = vec![(path.to_path_buf(), sd_path.clone())];
+		let mut stack = vec![(path.to_path_buf(), wing_path.clone())];
 
-		while let Some((current_path, current_sd_path)) = stack.pop() {
+		while let Some((current_path, current_wing_path)) = stack.pop() {
 			ctx.check_interrupt().await?;
 
 			let metadata = fs::metadata(&current_path).await?;
 
 			if metadata.is_file() {
 				files.push(FileValidationInfo {
-					path: current_sd_path,
+					path: current_wing_path,
 					size: metadata.len(),
 					modified: metadata.modified().ok(),
 					permissions: std::fs::metadata(&current_path)
@@ -259,8 +259,8 @@ impl ValidationJob {
 
 				while let Some(entry) = dir.next_entry().await? {
 					let entry_path = entry.path();
-					let entry_sd_path = current_sd_path.join(entry.file_name());
-					stack.push((entry_path, entry_sd_path));
+					let entry_wing_path = current_wing_path.join(entry.file_name());
+					stack.push((entry_path, entry_wing_path));
 				}
 			}
 		}

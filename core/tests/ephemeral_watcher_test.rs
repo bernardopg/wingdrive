@@ -406,7 +406,7 @@ impl TestHarness {
 			std::env::var("HOME").expect("HOME environment variable not set")
 		};
 
-		let test_dir = PathBuf::from(home_dir).join("SD_EPHEMERAL_TEST_DIR");
+		let test_dir = PathBuf::from(home_dir).join("WING_EPHEMERAL_TEST_DIR");
 
 		// Clear and recreate test directory
 		if test_dir.exists() {
@@ -436,8 +436,8 @@ impl TestHarness {
 		println!("✓ Started Core event collector");
 
 		// Run ephemeral indexing job
-		let sd_path = wing_core::domain::addressing::SdPath::local(test_dir.clone());
-		let config = IndexerJobConfig::ephemeral_browse(sd_path, IndexScope::Current, false);
+		let wing_path = wing_core::domain::addressing::WingPath::local(test_dir.clone());
+		let config = IndexerJobConfig::ephemeral_browse(wing_path, IndexScope::Current, false);
 		let mut indexer_job = IndexerJob::new(config);
 
 		// Get the global ephemeral index to share with the job
@@ -1011,7 +1011,7 @@ async fn run_test_scenarios(
 	println!("This tests for the duplicate entry bug when files are restored after deletion");
 
 	// Create a temporary "trash" directory outside the watched directory
-	let trash_dir = std::env::temp_dir().join("sd_test_trash");
+	let trash_dir = std::env::temp_dir().join("wing_test_trash");
 	if trash_dir.exists() {
 		tokio::fs::remove_dir_all(&trash_dir).await?;
 	}

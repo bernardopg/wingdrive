@@ -56,7 +56,7 @@ The ephemeral indexer already accepts `RuleToggles` via `IndexerJobConfig`. Comp
 impl IndexerJobConfig {
     /// Ephemeral scan with no filtering rules.
     /// Returns complete filesystem state for sync and diff operations.
-    pub fn complete_scan(path: SdPath, scope: IndexScope) -> Self {
+    pub fn complete_scan(path: WingPath, scope: IndexScope) -> Self {
         Self {
             persistence: IndexPersistence::Ephemeral,
             rule_toggles: RuleToggles::complete(),
@@ -111,7 +111,7 @@ impl SyncResolver {
     async fn ensure_index_coverage(
         &self,
         conduit: &sync_conduit::Model,
-        path: &SdPath,
+        path: &WingPath,
     ) -> Result<()> {
         if !conduit.use_index_rules {
             // Request complete ephemeral scan

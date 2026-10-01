@@ -86,10 +86,10 @@ export function useVirtualListing(): VirtualListingResult {
 			const virtualFiles: File[] = [];
 
 			// Add locations for this device
-			// Filter locations that belong to this device (match by device in sd_path)
+			// Filter locations that belong to this device (match by device in wing_path)
 			const deviceLocations = locations.filter((loc: any) => {
-				if (!loc.sd_path || !("Physical" in loc.sd_path)) return false;
-				return loc.sd_path.Physical.device_slug === device.slug;
+				if (!loc.wing_path || !("Physical" in loc.wing_path)) return false;
+				return loc.wing_path.Physical.device_slug === device.slug;
 			});
 
 			virtualFiles.push(

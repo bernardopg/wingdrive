@@ -12,7 +12,7 @@ use tokio::time::timeout;
 use uuid::Uuid;
 use wing_core::{
 	context::CoreContext,
-	domain::SdPath,
+	domain::WingPath,
 	infra::{
 		action::LibraryAction,
 		db::entities::{self, entry_closure},
@@ -475,7 +475,7 @@ impl TestHarness {
 			std::env::var("HOME").expect("HOME environment variable not set")
 		};
 
-		let test_dir = PathBuf::from(home_dir).join("SD_LOCATION_WATCHER_TEST_DIR");
+		let test_dir = PathBuf::from(home_dir).join("WING_LOCATION_WATCHER_TEST_DIR");
 
 		// Clear and recreate test directory
 		if test_dir.exists() {
@@ -506,8 +506,8 @@ impl TestHarness {
 
 		// Create location using LocationAddAction (persistent indexing)
 		let input = LocationAddInput {
-			path: SdPath::local(test_dir.clone()),
-			name: Some("SD_FS_WATCHER_TEST_DIR".to_string()),
+			path: WingPath::local(test_dir.clone()),
+			name: Some("WING_FS_WATCHER_TEST_DIR".to_string()),
 			mode: IndexMode::Deep,
 			job_policies: None,
 		};
@@ -1078,7 +1078,7 @@ async fn run_test_scenarios(
 	println!("This tests for the duplicate entry bug when files are restored after deletion");
 
 	// Create a temporary "trash" directory outside the watched directory
-	let trash_dir = std::env::temp_dir().join("sd_location_test_trash");
+	let trash_dir = std::env::temp_dir().join("wing_location_test_trash");
 	if trash_dir.exists() {
 		tokio::fs::remove_dir_all(&trash_dir).await?;
 	}

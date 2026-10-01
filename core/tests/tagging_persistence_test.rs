@@ -4,7 +4,7 @@ use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use std::sync::Arc;
 use tempfile::TempDir;
 use tokio::fs;
-use wing_core::domain::SdPath;
+use wing_core::domain::WingPath;
 use wing_core::infra::db::entities::{entry, tag, user_metadata, user_metadata_tag};
 use wing_core::{
 	infra::action::LibraryAction,
@@ -70,7 +70,7 @@ async fn test_tagging_persists_to_database() {
 
 	// Index the location (deep)
 	let add_loc = LocationAddAction::from_input(LocationAddInput {
-		path: SdPath::local(source_dir.clone()),
+		path: WingPath::local(source_dir.clone()),
 		name: Some("Source".to_string()),
 		mode: IndexMode::Deep,
 		job_policies: None,

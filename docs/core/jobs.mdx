@@ -359,7 +359,7 @@ ctx.wait_for_children(child_ids).await?;
 Enable file-based logging for troubleshooting:
 
 ```rust
-std::env::set_var("SD_JOBS_FILE_LOG", "1");
+std::env::set_var("WING_JOBS_FILE_LOG", "1");
 ```
 
 Logs write to `.wingdrive/jobs/{job_id}.log` with detailed execution traces.
