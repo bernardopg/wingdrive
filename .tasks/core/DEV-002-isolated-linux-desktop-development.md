@@ -71,7 +71,7 @@ Results:
   for the whole session; vite on 1420; `WingDrive` process alive and connected.
 - The app drove the dev daemon end to end: bundled adapters were installed into
   `.../instances/desktop-dev/libraries/My Library.winglibrary`, and
-  `wing-cli --data-dir <dev-root>/data --instance desktop-dev library list`
+  `wing --data-dir <dev-root>/data --instance desktop-dev library list`
   returned the dev library UUID.
 - Device identities: real `~/.wingdrive`, real `~/.spacedrive`, the production
   stand-in, and the dev instance produced four distinct `device_id` UUIDs.

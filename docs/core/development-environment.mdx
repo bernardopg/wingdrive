@@ -56,7 +56,7 @@ Pass both options so the CLI and daemon target the same isolated instance:
 ```bash
 root="${XDG_STATE_HOME:-$HOME/.local/state}/wingdrive-dev/data"
 cargo run --bin wing-daemon -- --data-dir "$root" --instance desktop-dev
-cargo run --bin wing-cli -- --data-dir "$root" --instance desktop-dev library list
+cargo run --bin wing -- --data-dir "$root" --instance desktop-dev library list
 ```
 
 The Tauri runtime reads `WINGDRIVE_DATA_DIR` and `WINGDRIVE_INSTANCE` too. The

@@ -17,42 +17,42 @@ Redesign the CLI structure to be more intuitive, consistent, and user-friendly w
 ### Daemon Lifecycle (No Wizards)
 
 ```bash
-sd start [--foreground]           # Start daemon
-sd stop [--reset]                 # Stop daemon (optional data reset)
+wing start [--foreground]           # Start daemon
+wing stop [--reset]                 # Stop daemon (optional data reset)
 ```
 
 ### Configuration
 
 ```bash
-sd config                         # Interactive: show current config, prompt to edit
-sd config get <key>              # Get specific config value
-sd config set <key> <value>      # Set config value
+wing config                         # Interactive: show current config, prompt to edit
+wing config get <key>              # Get specific config value
+wing config set <key> <value>      # Set config value
 ```
 
 ### Library Management
 
 ```bash
-sd library                        # Show current library status (name, locations, stats, devices)
-sd library create                 # Interactive: name, path, settings
-sd library switch                 # Interactive: select from list
-sd library list                   # List all libraries
-sd library delete                 # Interactive: select + confirm
+wing library                        # Show current library status (name, locations, stats, devices)
+wing library create                 # Interactive: name, path, settings
+wing library switch                 # Interactive: select from list
+wing library list                   # List all libraries
+wing library delete                 # Interactive: select + confirm
 ```
 
 ### Location Management (Managed Directories)
 
 ```bash
-sd location                       # Interactive: list → add/remove/rescan
-sd location add                   # Interactive wizard (already implemented)
-sd location remove                # Interactive: select from list
-sd location rescan [id]          # Interactive: select location if no ID
-sd location list                  # List all locations
+wing location                       # Interactive: list → add/remove/rescan
+wing location add                   # Interactive wizard (already implemented)
+wing location remove                # Interactive: select from list
+wing location rescan [id]          # Interactive: select location if no ID
+wing location list                  # List all locations
 ```
 
 ### Universal Browsing (Location-Aware)
 
 ```bash
-sd browse [path|uri]              # Smart browsing with interactive TUI
+wing browse [path|uri]              # Smart browsing with interactive TUI
                                   # - Uses location index if path is managed
                                   # - Falls back to ephemeral index if outside locations
                                   # - No path = interactive root picker
@@ -67,63 +67,63 @@ sd browse [path|uri]              # Smart browsing with interactive TUI
 ### File Operations (Hybrid WingPath)
 
 ```bash
-sd ls [path|uri]                  # List files (simple output)
-sd cp <src> <dst>                 # Copy (supports URIs + --device/--cloud flags)
-sd mv <src> <dst>                 # Move
-sd rm <path|uri>                  # Delete (with confirmation)
-sd info <path|uri>                # Show file metadata
+wing ls [path|uri]                  # List files (simple output)
+wing cp <src> <dst>                 # Copy (supports URIs + --device/--cloud flags)
+wing mv <src> <dst>                 # Move
+wing rm <path|uri>                  # Delete (with confirmation)
+wing info <path|uri>                # Show file metadata
 ```
 
 **WingPath Examples:**
 
 ```bash
 # Traditional paths
-sd cp /Users/me/file.txt /backup/
+wing cp /Users/me/file.txt /backup/
 
 # WingPath URIs
-sd cp local://macbook/Users/me/file.txt s3://my-bucket/backup/
-sd info content://550e8400-e29b-41d4-a716-446655440000
+wing cp local://macbook/Users/me/file.txt s3://my-bucket/backup/
+wing info content://550e8400-e29b-41d4-a716-446655440000
 ```
 
 ### Global Search
 
 ```bash
-sd search                         # Interactive: query builder with filters
-sd search <query>                 # Direct search
-sd search --tag <tag>            # Filter by tag
-sd search --type <type>          # Filter by file type
-sd search --content <text>       # Content search
-sd search --size <range>         # Size filter
-sd search --date <range>         # Date filter
+wing search                         # Interactive: query builder with filters
+wing search <query>                 # Direct search
+wing search --tag <tag>            # Filter by tag
+wing search --type <type>          # Filter by file type
+wing search --content <text>       # Content search
+wing search --size <range>         # Size filter
+wing search --date <range>         # Date filter
 ```
 
 ### Organization - Tags
 
 ```bash
-sd tag                            # Interactive: select file → add tags
-sd tag create                     # Interactive: name, color, namespace
-sd tag apply <target> <tags>     # Direct apply tags
-sd tag remove <target> <tags>    # Remove tags
-sd tag list                       # List all tags
-sd tag search <query>            # Search tag names (different from sd search)
+wing tag                            # Interactive: select file → add tags
+wing tag create                     # Interactive: name, color, namespace
+wing tag apply <target> <tags>     # Direct apply tags
+wing tag remove <target> <tags>    # Remove tags
+wing tag list                       # List all tags
+wing tag search <query>            # Search tag names (different from wing search)
 ```
 
 ### Organization - Collections
 
 ```bash
-sd collection                     # Interactive: list → create/add/remove
-sd collection create              # Interactive: name, description
-sd collection add <id>           # Interactive: select files to add
-sd collection remove <id>        # Interactive: select files to remove
-sd collection list                # List all collections
+wing collection                     # Interactive: list → create/add/remove
+wing collection create              # Interactive: name, description
+wing collection add <id>           # Interactive: select files to add
+wing collection remove <id>        # Interactive: select files to remove
+wing collection list                # List all collections
 ```
 
 ### Network - Pairing
 
 ```bash
-sd pair                           # Interactive: initiate or join
-sd pair initiate                  # Generate pairing code
-sd pair join [code]              # Interactive: enter code if not provided
+wing pair                           # Interactive: initiate or join
+wing pair initiate                  # Generate pairing code
+wing pair join [code]              # Interactive: enter code if not provided
 ```
 
 ### Network - Devices
@@ -131,9 +131,9 @@ sd pair join [code]              # Interactive: enter code if not provided
 Note: These are paired devices, not devices registered in a library, for clarity we should show which libraries these devices are participating in by quering the devices table for all libraries!
 
 ```bash
-sd devices                        # Interactive: list → revoke/manage
-sd devices list                   # List paired devices
-sd devices remove <id>           # Remove/revoke device
+wing devices                        # Interactive: list → revoke/manage
+wing devices list                   # List paired devices
+wing devices remove <id>           # Remove/revoke device
 ```
 
 ### Network - File Sharing
@@ -141,72 +141,72 @@ sd devices remove <id>           # Remove/revoke device
 This doesn't exist yet so we can implement as a stub
 
 ```bash
-sd share                          # Interactive: select device → select file
-sd share <device> <file>         # Direct share via Spacedrop
+wing share                          # Interactive: select device → select file
+wing share <device> <file>         # Direct share via Spacedrop
 ```
 
 ### Cloud Storage
 
 ```bash
-sd cloud                          # Interactive wizard (already implemented)
-sd cloud add                      # Interactive: service type → credentials
-sd cloud remove                   # Interactive: select volume
-sd cloud list                     # List cloud volumes
+wing cloud                          # Interactive wizard (already implemented)
+wing cloud add                      # Interactive: service type → credentials
+wing cloud remove                   # Interactive: select volume
+wing cloud list                     # List cloud volumes
 ```
 
 ### Volumes
 
 ```bash
-sd volume                         # Interactive: list → manage
-sd volume list                    # List all volumes (local + cloud)
+wing volume                         # Interactive: list → manage
+wing volume list                    # List all volumes (local + cloud)
 ```
 
 ### Sync Conduits (WIP Feature)
 
 ```bash
-sd sync                           # Interactive: conduit management
-sd sync status                    # Show sync state
-sd sync create                    # Interactive: create sync conduit
+wing sync                           # Interactive: conduit management
+wing sync status                    # Show sync state
+wing sync create                    # Interactive: create sync conduit
 ```
 
 ### Jobs & Monitoring
 
 ```bash
-sd job                            # Interactive: list → monitor/pause/cancel
-sd job list                       # List all jobs
-sd job monitor [id]              # Monitor jobs with TUI (all or specific)
-sd job pause <id>                # Pause job
-sd job resume <id>               # Resume job
-sd job cancel <id>               # Cancel job
+wing job                            # Interactive: list → monitor/pause/cancel
+wing job list                       # List all jobs
+wing job monitor [id]              # Monitor jobs with TUI (all or specific)
+wing job pause <id>                # Pause job
+wing job resume <id>               # Resume job
+wing job cancel <id>               # Cancel job
 ```
 
 ### Logs
 
 ```bash
-sd logs                           # Interactive: show or follow
-sd logs show [--tail N]          # Show recent logs
-sd logs follow                    # Follow logs in real-time
+wing logs                           # Interactive: show or follow
+wing logs show [--tail N]          # Show recent logs
+wing logs follow                    # Follow logs in real-time
 ```
 
 ## Removed/Merged Commands
 
 ### Removed
 
-- `sd index` → Functionality absorbed into `sd location` and `sd browse`
-- `sd status` → Replaced by `sd library` (shows current state)
-- `sd network` → Split into `sd pair`, `sd devices`, `sd share`
-- `sd restart` → Can be achieved with `sd stop && sd start`
-- `sd update` → Can be system-level or `sd daemon update` if needed
+- `wing index` → Functionality absorbed into `wing location` and `wing browse`
+- `wing status` → Replaced by `wing library` (shows current state)
+- `wing network` → Split into `wing pair`, `wing devices`, `wing share`
+- `wing restart` → Can be achieved with `wing stop && wing start`
+- `wing update` → Can be system-level or `wing daemon update` if needed
 
 ### Merged/Reorganized
 
-- `sd location browse` → `sd browse` (root level, location-aware)
-- `sd index quick-scan` → `sd browse` (ephemeral mode automatic)
-- `sd index start` → `sd location add` (with mode flags)
-- `sd index verify` → `sd location rescan --verify`
-- `sd network pair` → `sd pair`
-- `sd network devices` → `sd devices`
-- `sd network spacedrop` → `sd share`
+- `wing location browse` → `wing browse` (root level, location-aware)
+- `wing index quick-scan` → `wing browse` (ephemeral mode automatic)
+- `wing index start` → `wing location add` (with mode flags)
+- `wing index verify` → `wing location rescan --verify`
+- `wing network pair` → `wing pair`
+- `wing network devices` → `wing devices`
+- `wing network spacedrop` → `wing share`
 
 ## Implementation Plan
 
@@ -250,8 +250,8 @@ sd logs follow                    # Follow logs in real-time
    - Reference existing location wizard UX
 
 3. Support WingPath URIs for remote browsing:
-   - `sd browse local://device/path`
-   - `sd browse s3://bucket/prefix`
+   - `wing browse local://device/path`
+   - `wing browse s3://bucket/prefix`
 
 ### Phase 3: Enhanced Search
 
@@ -271,17 +271,17 @@ sd logs follow                    # Follow logs in real-time
 
 **Commands requiring wizards:**
 
-- `sd config` - show/edit flow
-- `sd browse` - TUI navigator
-- `sd search` - query builder
-- `sd tag` - tagging workflow
-- `sd collection` - collection management
-- `sd pair` - pairing flow
-- `sd devices` - device management
-- `sd share` - file sharing picker
-- `sd volume` - volume management
-- `sd job` - job list → actions
-- `sd logs` - show/follow picker
+- `wing config` - show/edit flow
+- `wing browse` - TUI navigator
+- `wing search` - query builder
+- `wing tag` - tagging workflow
+- `wing collection` - collection management
+- `wing pair` - pairing flow
+- `wing devices` - device management
+- `wing share` - file sharing picker
+- `wing volume` - volume management
+- `wing job` - job list → actions
+- `wing logs` - show/follow picker
 
 **Implementation approach:**
 
@@ -343,10 +343,10 @@ sd logs follow                    # Follow logs in real-time
 
 Breaking changes:
 
-- `sd index` removed → use `sd location add` or `sd browse`
-- `sd network pair` → `sd pair`
-- `sd network spacedrop` → `sd share`
-- `sd status` → `sd library`
+- `wing index` removed → use `wing location add` or `wing browse`
+- `wing network pair` → `wing pair`
+- `wing network spacedrop` → `wing share`
+- `wing status` → `wing library`
 
 Non-breaking:
 
@@ -365,8 +365,8 @@ Non-breaking:
 
 ### Why `search` is global while `tag search` exists
 
-- `sd search` searches file content, names, metadata across entire library
-- `sd tag search` searches for tag names themselves
+- `wing search` searches file content, names, metadata across entire library
+- `wing tag search` searches for tag names themselves
 - Different domains: files vs tags
 
 ### Why split `network` into `pair`, `devices`, `share`
@@ -376,13 +376,13 @@ Non-breaking:
 - Devices is for ongoing management
 - Share is a frequent operation that should be quick
 
-### Why remove `sd status`
+### Why remove `wing status`
 
-- `sd library` provides library-level status (the most common query)
-- System-level status can be `sd daemon status` if needed
+- `wing library` provides library-level status (the most common query)
+- System-level status can be `wing daemon status` if needed
 - Reduces command clutter
 
-### Why keep `sd config` separate
+### Why keep `wing config` separate
 
 - Global configuration spans libraries
 - Different scope than library-specific settings

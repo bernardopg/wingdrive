@@ -66,7 +66,7 @@ async fn run_single_query(
 ) -> Result<()> {
 	// Check if we have a library ID
 	let library_id = ctx.library_id.ok_or_else(|| {
-		anyhow::anyhow!("No library selected. Use 'sd library switch' to select a library first.")
+		anyhow::anyhow!("No library selected. Use 'wing library switch' to select a library first.")
 	})?;
 
 	// Call the sync metrics API
@@ -100,7 +100,7 @@ async fn run_watch_mode(
 ) -> Result<()> {
 	// Check if we have a library ID
 	let library_id = ctx.library_id.ok_or_else(|| {
-		anyhow::anyhow!("No library selected. Use 'sd library switch' to select a library first.")
+		anyhow::anyhow!("No library selected. Use 'wing library switch' to select a library first.")
 	})?;
 
 	println!(
@@ -417,7 +417,7 @@ fn format_bytes(bytes: u64) -> String {
 
 async fn export_events(ctx: &Context, args: SyncEventsArgs) -> Result<()> {
 	let library_id = ctx.library_id.ok_or_else(|| {
-		anyhow::anyhow!("No library selected. Use 'sd library switch' to select a library first.")
+		anyhow::anyhow!("No library selected. Use 'wing library switch' to select a library first.")
 	})?;
 
 	// Build query
@@ -597,7 +597,7 @@ fn format_events_markdown(
 
 async fn show_partners(ctx: &Context) -> Result<()> {
 	let library_id = ctx.library_id.ok_or_else(|| {
-		anyhow::anyhow!("No library selected. Use 'sd library switch' to select a library first.")
+		anyhow::anyhow!("No library selected. Use 'wing library switch' to select a library first.")
 	})?;
 
 	// Create input for the operation

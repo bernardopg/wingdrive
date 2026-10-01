@@ -18,7 +18,7 @@ Library operations for managing shares from the desktop client. Each action is r
    - `CreateShareAction` (`shares.create`) — generate token, hash password, persist row, trigger publish (SHARE-008)
    - `ListSharesAction` (`shares.list`) — filter by space / by device / all
    - `UpdateShareAction` (`shares.update`) — change expiry, password, permissions, metadata
-   - `RevokeShareAction` (`shares.revoke`) — set `revoked_at`, push revocation to sd.app
+   - `RevokeShareAction` (`shares.revoke`) — set `revoked_at`, push revocation to wingdrive.app
 2. Token generation: 128-bit CSPRNG → base32, collision-check at insert
 3. Password handling: argon2id — add a `password` module to `crates/crypto` (the crate currently exposes only BLAKE3); thin wrapper over the `argon2` crate exposing `hash(password) -> PasswordHash` and `verify(password, hash) -> bool`
 4. Register each action with `register_library_action!`; type metadata is picked up automatically by the inventory-based extractor

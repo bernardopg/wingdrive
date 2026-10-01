@@ -34,9 +34,9 @@ impl fmt::Display for CliError {
             Self::DaemonNotRunning => {
                 write!(f, "WingDrive daemon is not running\n\n")?;
                 write!(f, "To start the daemon, run:\n")?;
-                write!(f, "   sd start\n\n")?;
+                write!(f, "   wing start\n\n")?;
                 write!(f, "   Or start with networking enabled:\n")?;
-                write!(f, "   sd start")
+                write!(f, "   wing start")
             },
             Self::CoreError(msg) => write!(f, "Core operation failed: {}", msg),
             Self::SerializationError(msg) => write!(f, "Serialization error: {}", msg),

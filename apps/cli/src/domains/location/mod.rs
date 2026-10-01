@@ -172,7 +172,7 @@ async fn run_interactive_add(ctx: &Context) -> Result<LocationAddInput> {
 
 		if volumes.volumes.is_empty() {
 			anyhow::bail!(
-				"No cloud volumes found. Add a cloud volume first with:\n  sd volume add-cloud"
+				"No cloud volumes found. Add a cloud volume first with:\n  wing volume add-cloud"
 			);
 		}
 

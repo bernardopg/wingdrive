@@ -595,23 +595,23 @@ async fn prune_sync_coordination_data(
 
 ```bash
 # View current config
-sd sync config show
+wing sync config show
 
 # Use preset
-sd sync config set --preset aggressive
-sd sync config set --preset conservative
-sd sync config set --preset mobile
+wing sync config set --preset aggressive
+wing sync config set --preset conservative
+wing sync config set --preset mobile
 
 # Set individual values
-sd sync config set --batch-size 5000
-sd sync config set --retention-days 14
-sd sync config set --pruning-strategy time-based
+wing sync config set --batch-size 5000
+wing sync config set --retention-days 14
+wing sync config set --pruning-strategy time-based
 
 # Reset to defaults
-sd sync config reset
+wing sync config reset
 
 # Per-library override
-sd library "My Library" sync config set --preset conservative
+wing library "My Library" sync config set --preset conservative
 ```
 
 ### Config File Format

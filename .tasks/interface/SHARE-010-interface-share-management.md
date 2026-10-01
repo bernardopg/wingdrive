@@ -17,7 +17,7 @@ Per-Space and global "My Shares" view to inspect, edit, and revoke shares.
 1. "Active shares" tab on Space settings
 2. Global "Shares" route in settings, listing across all spaces
 3. Per-row actions: copy link, edit password/expiry, regenerate token (revoke old, mint new), revoke
-4. Show: created date, expiry, last accessed, access count (when sd.app provides them)
+4. Show: created date, expiry, last accessed, access count (when wingdrive.app provides them)
 5. Sync indicator per row: published / pending / failed (visualizes SHARE-008 state)
 
 ## Acceptance Criteria

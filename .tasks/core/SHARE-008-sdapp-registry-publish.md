@@ -1,6 +1,6 @@
 ---
 id: SHARE-008
-title: Publish Shares to sd.app Registry
+title: Publish Shares to wingdrive.app Registry
 status: To Do
 assignee: jamiepine
 parent: SHARE-000
@@ -11,7 +11,7 @@ related_tasks: [CLOUD-002]
 
 ## Description
 
-Core publishes share metadata to sd.app's registry so `sd.app/s/{token}` can resolve to a dial target. Re-publishes on relay address changes; revokes on lifecycle changes.
+Core publishes share metadata to wingdrive.app's registry so `wingdrive.app/s/{token}` can resolve to a dial target. Re-publishes on relay address changes; revokes on lifecycle changes.
 
 ## Implementation Steps
 
@@ -26,7 +26,7 @@ Core publishes share metadata to sd.app's registry so `sd.app/s/{token}` can res
 
 ## Acceptance Criteria
 
-- [ ] Created shares appear in the sd.app registry within seconds (online case)
+- [ ] Created shares appear in the wingdrive.app registry within seconds (online case)
 - [ ] Relay URL changes are reflected in the registry on next heartbeat
 - [ ] Revocations are pushed immediately
 - [ ] Cloud outages do not block local share creation; queued publishes drain when cloud returns

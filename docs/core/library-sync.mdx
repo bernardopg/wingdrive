@@ -1147,7 +1147,7 @@ Debug commands:
 sqlite3 sync.db "SELECT COUNT(*) FROM shared_changes"
 
 # Verify peer connections
-sd sync status
+wing sync status
 
 # Monitor sync activity
 RUST_LOG=wing_core::sync=debug cargo run
@@ -1554,13 +1554,13 @@ SyncConfig {
 
 ```bash
 # Use a preset
-sd sync config set --preset aggressive
+wing sync config set --preset aggressive
 
 # Customize individual settings
-sd sync config set --batch-size 5000 --retention-days 14
+wing sync config set --batch-size 5000 --retention-days 14
 
 # Per-library configuration
-sd library "Photos" sync config set --preset mobile
+wing library "Photos" sync config set --preset mobile
 ```
 
 Configuration can also be set via environment variables or a TOML file. The loading priority is: environment variables, config file, database, then defaults.

@@ -138,7 +138,7 @@ Add cloud volumes from the command line:
 
 ```bash
 # Amazon S3
-sd volume add-cloud "My S3 Bucket" \
+wing volume add-cloud "My S3 Bucket" \
   --service s3 \
   --bucket my-bucket \
   --region us-west-2 \
@@ -146,7 +146,7 @@ sd volume add-cloud "My S3 Bucket" \
   --secret-access-key secret123
 
 # Cloudflare R2
-sd volume add-cloud "R2 Storage" \
+wing volume add-cloud "R2 Storage" \
   --service s3 \
   --bucket my-r2-bucket \
   --region auto \
@@ -155,7 +155,7 @@ sd volume add-cloud "R2 Storage" \
   --endpoint https://account.r2.cloudflarestorage.com
 
 # MinIO (self-hosted)
-sd volume add-cloud "MinIO Local" \
+wing volume add-cloud "MinIO Local" \
   --service s3 \
   --bucket test \
   --region us-east-1 \
@@ -164,7 +164,7 @@ sd volume add-cloud "MinIO Local" \
   --endpoint http://localhost:9000
 
 # Remove cloud volume
-sd volume remove-cloud <fingerprint> -y
+wing volume remove-cloud <fingerprint> -y
 ```
 
 Cloud volumes work identically to local volumes for indexing, searching, and file operations.

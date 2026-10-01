@@ -278,7 +278,7 @@ async fn run_interactive_sync_setup(ctx: &Context) -> Result<LibrarySyncSetupInp
 
 	if libraries.is_empty() {
 		anyhow::bail!(
-			"No libraries found. Create a library first with:\n  sd library create <name>"
+			"No libraries found. Create a library first with:\n  wing library create <name>"
 		);
 	}
 
@@ -307,8 +307,8 @@ async fn run_interactive_sync_setup(ctx: &Context) -> Result<LibrarySyncSetupInp
 		anyhow::bail!(
 			"No paired devices found.\n\
 			Pair a device first with:\n\
-			  sd network pair generate  # on this device\n\
-			  sd network pair join <code>  # on the other device"
+			  wing network pair generate  # on this device\n\
+			  wing network pair join <code>  # on the other device"
 		);
 	}
 

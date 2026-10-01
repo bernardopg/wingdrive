@@ -256,20 +256,20 @@ The unified addressing scheme makes CLI operations intuitive:
 
 ```bash
 # Copy from Google Drive to S3
-sd cp gdrive://Work/report.pdf s3://backup/documents/
+wing cp gdrive://Work/report.pdf s3://backup/documents/
 
 # List files on remote device
-sd ls local://home-server/mnt/media/movies/
+wing ls local://home-server/mnt/media/movies/
 
 # Search across all storage
-sd search "*.mp4"
+wing search "*.mp4"
 # Results show unified URIs:
 #   gdrive://Videos/vacation.mp4
 #   s3://media/clips/demo.mp4
 #   local://macbook/Users/james/Downloads/tutorial.mp4
 
 # Sync local to cloud
-sd sync local://macbook/Photos/ s3://backup/photos/
+wing sync local://macbook/Photos/ s3://backup/photos/
 ```
 
 ## Code Examples
@@ -334,21 +334,21 @@ WingDrive's addressing matches industry tools:
 
 ```bash
 aws s3 cp s3://bucket/file.jpg local-file.jpg
-sd cp s3://bucket/file.jpg local://macbook/Desktop/file.jpg
+wing cp s3://bucket/file.jpg local://macbook/Desktop/file.jpg
 ```
 
 **gsutil**:
 
 ```bash
 gsutil cp gs://bucket/file.jpg local-file.jpg
-sd cp gcs://bucket/file.jpg local://macbook/Desktop/file.jpg
+wing cp gcs://bucket/file.jpg local://macbook/Desktop/file.jpg
 ```
 
 **Azure CLI**:
 
 ```bash
 az storage blob download --container container --name file.csv
-sd cp azblob://container/file.csv local://macbook/Desktop/file.csv
+wing cp azblob://container/file.csv local://macbook/Desktop/file.csv
 ```
 
 The alignment eliminates context switching between tools. URIs copy-paste directly between WingDrive and native cloud tools.

@@ -3,6 +3,10 @@ edition = "2021"
 name    = "wing-cli"
 version = "2.0.0-alpha.2"
 
+[[bin]]
+name = "wing"
+path = "src/main.rs"
+
 [features]
 default = []
 heif = ["wing-core/heif"]

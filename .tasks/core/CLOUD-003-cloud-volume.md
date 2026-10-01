@@ -29,7 +29,7 @@ Implement support for a cloud storage provider (e.g., S3-compatible service) as 
     - Credentials encrypted with XChaCha20-Poly1305 and stored in OS keyring
     - `VolumeAddCloudAction` and `VolumeRemoveCloudAction` implemented
 4.  Develop the CLI/UI flow for adding and configuring a cloud storage volume.
-    - CLI commands: `sd volume add-cloud`, `sd volume remove-cloud`
+    - CLI commands: `wing volume add-cloud`, `wing volume remove-cloud`
     - Support for custom endpoints (R2, MinIO, etc.)
 5.  Update query system to support cloud paths.
     - `Entry::try_from` supports `WingPath::Cloud`

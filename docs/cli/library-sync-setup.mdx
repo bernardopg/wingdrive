@@ -6,10 +6,10 @@ After pairing two devices, use these commands to set up library synchronization 
 
 ## Prerequisites
 
-1. **Devices must be paired** - Use `sd network pair generate` and `sd network pair join` first
-2. **At least one library exists** - Use `sd library list` to see available libraries
-3. **Networking must be running** - Check with `sd network status`
-4. **Know the device IDs** - Use `sd network devices` to list paired devices
+1. **Devices must be paired** - Use `wing network pair generate` and `wing network pair join` first
+2. **At least one library exists** - Use `wing library list` to see available libraries
+3. **Networking must be running** - Check with `wing network status`
+4. **Know the device IDs** - Use `wing network devices` to list paired devices
 
 ## Commands
 
@@ -18,7 +18,7 @@ After pairing two devices, use these commands to set up library synchronization 
 First, you need to know the device ID of the paired device.
 
 ```bash
-sd network devices
+wing network devices
 ```
 
 **Options**:
@@ -26,7 +26,7 @@ sd network devices
 
 **Example**:
 ```bash
-$ sd network devices
+$ wing network devices
 
 Paired Devices (2 total, 1 connected):
 ─────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ Paired Devices (2 total, 1 connected):
 
 **JSON Output**:
 ```bash
-$ sd network devices --output json
+$ wing network devices --output json
 {
   "devices": [
     {
@@ -70,7 +70,7 @@ $ sd network devices --output json
 
 **Filter Connected Only**:
 ```bash
-$ sd network devices --connected
+$ wing network devices --connected
 
 Paired Devices (1 total, 1 connected):
 ─────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ Paired Devices (1 total, 1 connected):
 Discover what libraries are available on a paired device.
 
 ```bash
-sd library sync-setup discover <DEVICE_ID>
+wing library sync-setup discover <DEVICE_ID>
 ```
 
 **Arguments**:
@@ -93,7 +93,7 @@ sd library sync-setup discover <DEVICE_ID>
 
 **Example**:
 ```bash
-$ sd library sync-setup discover 550e8400-e29b-41d4-a716-446655440000
+$ wing library sync-setup discover 550e8400-e29b-41d4-a716-446655440000
 
 Device: Bob's MacBook (550e8400-e29b-41d4-a716-446655440000)
 Online: true
@@ -121,7 +121,7 @@ Remote Libraries (2):
 
 **JSON Output**:
 ```bash
-$ sd library sync-setup discover <DEVICE_ID> --output json
+$ wing library sync-setup discover <DEVICE_ID> --output json
 {
   "device_id": "550e8400-e29b-41d4-a716-446655440000",
   "device_name": "Bob's MacBook",
@@ -148,7 +148,7 @@ $ sd library sync-setup discover <DEVICE_ID> --output json
 Configure library sync between local and remote devices.
 
 ```bash
-sd library sync-setup setup \
+wing library sync-setup setup \
   --local-library <LOCAL_LIBRARY_ID> \
   --remote-device <REMOTE_DEVICE_ID> \
   [--remote-library <REMOTE_LIBRARY_ID>] \
@@ -175,7 +175,7 @@ sd library sync-setup setup \
 
 **Example**:
 ```bash
-$ sd library sync-setup setup \
+$ wing library sync-setup setup \
   --local-library 3f8cb26f-de79-4d87-88dd-01be5f024041 \
   --remote-device 550e8400-e29b-41d4-a716-446655440000 \
   --remote-library 7a9c2d1e-5f84-4b23-a567-1234567890ab \
@@ -196,10 +196,10 @@ Here's a complete workflow for pairing devices and setting up library sync:
 
 ```bash
 # 1. Start the daemon
-$ sd start --foreground
+$ wing start --foreground
 
 # 2. Generate a pairing code
-$ sd network pair generate
+$ wing network pair generate
 Pairing code: word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12
 Session: 2369763d-e205-a344-6341-dbfa2ec8a709
 Expires at: 2025-10-05 03:28:44
@@ -208,7 +208,7 @@ Expires at: 2025-10-05 03:28:44
 # (Pairing completes)
 
 # 4. List paired devices (get device IDs)
-$ sd network devices
+$ wing network devices
 
 Paired Devices (1 total, 1 connected):
 ─────────────────────────────────────────────────────
@@ -219,11 +219,11 @@ Paired Devices (1 total, 1 connected):
   Status: Connected
 
 # 5. List local libraries
-$ sd library list
+$ wing library list
 - 3f8cb26f-de79-4d87-88dd-01be5f024041 /Users/alice/Library/Application Support/wingdrive/libraries/My Library.winglibrary
 
 # 6. Discover libraries on Device B (iOS)
-$ sd library sync-setup discover e1054ba9-2e8b-4847-9644-a7fb764d4221
+$ wing library sync-setup discover e1054ba9-2e8b-4847-9644-a7fb764d4221
 Device: iOS Device (e1054ba9-2e8b-4847-9644-a7fb764d4221)
 Online: true
 
@@ -237,7 +237,7 @@ Remote Libraries (1):
   Devices: 1
 
 # 7. Set up library sync
-$ sd library sync-setup setup \
+$ wing library sync-setup setup \
   --local-library 3f8cb26f-de79-4d87-88dd-01be5f024041 \
   --remote-device e1054ba9-2e8b-4847-9644-a7fb764d4221 \
   --remote-library d9828b35-6618-4d56-a37a-84ef03617d1e \
@@ -249,7 +249,7 @@ $ sd library sync-setup setup \
   Devices successfully registered for library access
 
 # 8. Verify devices are registered
-$ sd library info
+$ wing library info
 # You should see the remote device in the devices list
 ```
 
@@ -271,13 +271,13 @@ All commands support `--output` flag:
 
 ```bash
 # Human-readable (default)
-$ sd library sync-setup discover <DEVICE_ID>
+$ wing library sync-setup discover <DEVICE_ID>
 
 # JSON output
-$ sd library sync-setup discover <DEVICE_ID> --output json
+$ wing library sync-setup discover <DEVICE_ID> --output json
 
 # YAML output
-$ sd library sync-setup discover <DEVICE_ID> --output yaml
+$ wing library sync-setup discover <DEVICE_ID> --output yaml
 ```
 
 ## Common Use Cases
@@ -288,12 +288,12 @@ You have a desktop and a phone, both with "My Library" auto-created.
 
 ```bash
 # On Desktop
-sd pair generate
+wing pair generate
 # Share code with phone
 
 # After phone joins:
-sd library sync-setup discover <PHONE_DEVICE_ID>
-sd library sync-setup setup \
+wing library sync-setup discover <PHONE_DEVICE_ID>
+wing library sync-setup setup \
   --local-library <DESKTOP_LIBRARY_ID> \
   --remote-device <PHONE_DEVICE_ID> \
   --remote-library <PHONE_LIBRARY_ID>
@@ -305,16 +305,16 @@ You want to choose which libraries to sync.
 
 ```bash
 # Discover what libraries the remote device has
-sd library sync-setup discover <REMOTE_DEVICE_ID>
+wing library sync-setup discover <REMOTE_DEVICE_ID>
 
 # Set up sync for specific library pair
-sd library sync-setup setup \
+wing library sync-setup setup \
   --local-library <PHOTOS_LIBRARY_ID> \
   --remote-device <REMOTE_DEVICE_ID> \
   --remote-library <THEIR_PHOTOS_LIBRARY_ID>
 
 # Optionally set up another pair
-sd library sync-setup setup \
+wing library sync-setup setup \
   --local-library <WORK_LIBRARY_ID> \
   --remote-device <REMOTE_DEVICE_ID> \
   --remote-library <THEIR_WORK_LIBRARY_ID>
@@ -325,7 +325,7 @@ sd library sync-setup setup \
 Register your device in their library without syncing data.
 
 ```bash
-sd library sync-setup setup \
+wing library sync-setup setup \
   --local-library <MY_LIBRARY_ID> \
   --remote-device <THEIR_DEVICE_ID> \
   --action register-only
@@ -340,8 +340,8 @@ sd library sync-setup setup \
 Error: Device must be paired before setting up library sync
 
 Solution:
-1. Check pairing status: sd pair status
-2. Pair devices if needed: sd pair generate / sd pair join
+1. Check pairing status: wing pair status
+2. Pair devices if needed: wing pair generate / wing pair join
 3. Retry sync setup after pairing completes
 ```
 
@@ -366,9 +366,9 @@ Solution:
 Error: Library not found: <UUID>
 
 Solution:
-1. List local libraries: sd library list
+1. List local libraries: wing library list
 2. Verify library ID is correct
-3. Create library if needed: sd library create <NAME>
+3. Create library if needed: wing library create <NAME>
 ```
 
 ### "Context not available"
@@ -377,7 +377,7 @@ Solution:
 Error: Context not available for library operations
 
 Solution:
-1. Restart the daemon: sd restart
+1. Restart the daemon: wing restart
 2. Wait for initialization to complete
 3. Check logs for networking initialization errors
 ```
@@ -388,7 +388,7 @@ Solution:
 
 ```bash
 # See all paired devices with details
-$ sd network devices
+$ wing network devices
 
 Paired Devices (2 total, 1 connected):
   Name: Bob's MacBook
@@ -396,10 +396,10 @@ Paired Devices (2 total, 1 connected):
   Status: Connected
 
 # See only connected devices
-$ sd network devices --connected
+$ wing network devices --connected
 
 # Check network status summary
-$ sd network status
+$ wing network status
 Networking: running
 Paired: 2 | Connected: 1
 ```
@@ -410,7 +410,7 @@ After setup, the remote device should appear in your library's device list:
 
 ```bash
 # Get library info (when UI supports it)
-$ sd library info
+$ wing library info
 # Device list will include the remote device
 ```
 
@@ -421,7 +421,7 @@ $ sd library info
 If you need to override the auto-detected local device ID:
 
 ```bash
-sd library sync-setup setup \
+wing library sync-setup setup \
   --local-library <LIBRARY_ID> \
   --remote-device <REMOTE_DEVICE_ID> \
   --local-device <CUSTOM_LOCAL_DEVICE_ID> \
@@ -433,7 +433,7 @@ sd library sync-setup setup \
 If the remote device should be the sync leader:
 
 ```bash
-sd library sync-setup setup \
+wing library sync-setup setup \
   --local-library <LIBRARY_ID> \
   --remote-device <REMOTE_DEVICE_ID> \
   --remote-library <REMOTE_LIBRARY_ID> \
@@ -446,7 +446,7 @@ When full sync is implemented, additional actions will be available:
 
 ```bash
 # Merge remote library into local
-sd library sync-setup setup \
+wing library sync-setup setup \
   --local-library <LOCAL_ID> \
   --remote-device <DEVICE_ID> \
   --remote-library <REMOTE_ID> \
@@ -454,7 +454,7 @@ sd library sync-setup setup \
   --leader local
 
 # Merge local library into remote
-sd library sync-setup setup \
+wing library sync-setup setup \
   --local-library <LOCAL_ID> \
   --remote-device <DEVICE_ID> \
   --remote-library <REMOTE_ID> \
@@ -462,7 +462,7 @@ sd library sync-setup setup \
   --leader remote
 
 # Create new shared library
-sd library sync-setup setup \
+wing library sync-setup setup \
   --remote-device <DEVICE_ID> \
   --action create-shared \
   --leader local
@@ -470,29 +470,29 @@ sd library sync-setup setup \
 
 ## See Also
 
-- **Pairing**: `sd network pair --help`
-- **Devices**: `sd network devices --help`
-- **Libraries**: `sd library --help`
-- **Networking**: `sd network --help`
+- **Pairing**: `wing network pair --help`
+- **Devices**: `wing network devices --help`
+- **Libraries**: `wing library --help`
+- **Networking**: `wing network --help`
 - **Design**: `docs/core/LIBRARY_SYNC_SETUP.md`
 
 ## Quick Command Reference
 
 ```bash
 # Pairing
-sd network pair generate          # Generate pairing code
-sd network pair join <CODE>       # Join with code
-sd network pair status            # Show pairing sessions
+wing network pair generate          # Generate pairing code
+wing network pair join <CODE>       # Join with code
+wing network pair status            # Show pairing sessions
 
 # Devices
-sd network devices                # List all paired devices
-sd network devices --connected    # List connected devices only
+wing network devices                # List all paired devices
+wing network devices --connected    # List connected devices only
 
 # Library Sync Setup
-sd library sync-setup discover <DEVICE_ID>
-sd library sync-setup setup --local-library <ID> --remote-device <ID> [OPTIONS]
+wing library sync-setup discover <DEVICE_ID>
+wing library sync-setup setup --local-library <ID> --remote-device <ID> [OPTIONS]
 
 # Libraries
-sd library list                   # List local libraries
-sd library info                   # Show library details
+wing library list                   # List local libraries
+wing library info                   # Show library details
 ```

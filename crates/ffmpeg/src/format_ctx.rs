@@ -107,7 +107,7 @@ impl FFmpegFormatContext {
 				AVPacketSideDataType::AV_PKT_DATA_DISPLAYMATRIX,
 			)
 			.as_ref()
-			.map_or(ptr::null(), |sd| sd.data as *const i32)
+			.map_or(ptr::null(), |side_data| side_data.data as *const i32)
 		};
 
 		if matrix.is_null() {

@@ -186,23 +186,23 @@ export function DaemonDisconnectedOverlay({
 
 							<div className="space-y-2">
 								<CLICommand
-									command="sd start"
+									command="wing start"
 									description="Start the daemon in background mode"
 								/>
 								<CLICommand
-									command="sd start --foreground"
+									command="wing start --foreground"
 									description="Start the daemon in foreground mode (see logs)"
 								/>
 								<CLICommand
-									command="sd stop"
+									command="wing stop"
 									description="Stop the daemon gracefully"
 								/>
 								<CLICommand
-									command="sd restart"
+									command="wing restart"
 									description="Restart the daemon"
 								/>
 								<CLICommand
-									command="sd daemon install"
+									command="wing daemon install"
 									description="Install daemon to start automatically on login (macOS/Linux)"
 								/>
 							</div>

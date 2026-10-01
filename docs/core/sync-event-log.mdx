@@ -120,31 +120,31 @@ CREATE INDEX idx_sync_event_log_correlation ON sync_event_log(correlation_id);
 
 ```bash
 # Export as JSON (default)
-sd sync events
+wing sync events
 
 # Export to file
-sd sync events --output sync_events.json
+wing sync events --output sync_events.json
 
 # Export last hour only
-sd sync events --since "1 hour ago" -o recent_events.json
+wing sync events --since "1 hour ago" -o recent_events.json
 
 # Export as SQL (for database import)
-sd sync events --format sql -o events.sql
+wing sync events --format sql -o events.sql
 
 # Export as Markdown
-sd sync events --format markdown -o events.md
+wing sync events --format markdown -o events.md
 
 # Filter by event type
-sd sync events --event-type state_transition
+wing sync events --event-type state_transition
 
 # Filter by severity (errors only)
-sd sync events --severity error
+wing sync events --severity error
 
 # Trace specific backfill session
-sd sync events --correlation-id abc-123-def
+wing sync events --correlation-id abc-123-def
 
 # Limit results
-sd sync events --limit 500
+wing sync events --limit 500
 ```
 
 ### Cross-Device Timeline
@@ -153,10 +153,10 @@ To debug sync issues across multiple devices, export logs from each device and m
 
 ```bash
 # On Device A
-sd sync events --since "2 hours ago" --output device_a.json
+wing sync events --since "2 hours ago" --output device_a.json
 
 # On Device B
-sd sync events --since "2 hours ago" --output device_b.json
+wing sync events --since "2 hours ago" --output device_b.json
 
 # Merge chronologically (requires jq)
 jq -s 'add | sort_by(.timestamp)' device_a.json device_b.json > timeline.json
@@ -169,8 +169,8 @@ jq '.[] | "\(.timestamp) | \(.device_id[0:8]) | \(.event_type) | \(.summary)"' t
 
 ```bash
 # Export as SQL from both devices
-sd sync events --format sql -o device_a.sql
-sd sync events --format sql -o device_b.sql
+wing sync events --format sql -o device_a.sql
+wing sync events --format sql -o device_b.sql
 
 # Create combined database
 sqlite3 timeline.db < device_a.sql

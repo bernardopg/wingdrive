@@ -113,7 +113,7 @@ impl Context {
 	/// Require a current library (error if none set)
 	pub fn require_current_library(&self) -> Result<Uuid> {
 		self.library_id.ok_or_else(|| {
-			anyhow::anyhow!("No library selected. Use 'sd library switch' to select a library.")
+			anyhow::anyhow!("No library selected. Use 'wing library switch' to select a library.")
 		})
 	}
 

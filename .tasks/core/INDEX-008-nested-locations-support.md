@@ -34,8 +34,8 @@ Filesystem:
 └── Personal/
 
 User actions:
-1. sd location add "/Users/jamespine/Documents"
-2. sd location add "/Users/jamespine/Documents/Work"
+1. wing location add "/Users/jamespine/Documents"
+2. wing location add "/Users/jamespine/Documents/Work"
 
 Database result (BROKEN):
 entries:

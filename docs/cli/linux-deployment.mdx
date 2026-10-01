@@ -103,11 +103,11 @@ docker buildx build \
 
 ```bash
 # For x86_64 Linux
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/sd-linux-x86_64
+curl -LO https://github.com/YOUR_ORG/releases/latest/download/wingdrive-cli-linux-x86_64
 curl -LO https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-x86_64
 
 # For ARM64 (Raspberry Pi)
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/sd-linux-aarch64
+curl -LO https://github.com/YOUR_ORG/releases/latest/download/wingdrive-cli-linux-aarch64
 curl -LO https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-aarch64
 ```
 
@@ -115,14 +115,14 @@ curl -LO https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-
 
 ```bash
 # Move to PATH
-sudo mv sd-linux-* /usr/local/bin/wing-cli
+sudo mv wingdrive-cli-linux-* /usr/local/bin/wing-cli
 sudo mv wing-daemon-linux-* /usr/local/bin/wing-daemon
 
 # Set permissions
 sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
 
 # Test installation
-wing-cli --version
+wing --version
 ```
 
 ### Running the Daemon
@@ -149,13 +149,13 @@ The CLI includes built-in systemd service management:
 
 ```bash
 # Install and enable auto-start
-wing-cli daemon install
+wing daemon install
 
 # Check status
-wing-cli daemon status
+wing daemon status
 
 # Uninstall auto-start
-wing-cli daemon uninstall
+wing daemon uninstall
 ```
 
 This creates a systemd user service at:
@@ -225,15 +225,15 @@ TrueNAS SCALE supports Docker, so you can use either method:
 ssh admin@truenas
 
 # Download and install binaries
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/sd-linux-x86_64
+curl -LO https://github.com/YOUR_ORG/releases/latest/download/wingdrive-cli-linux-x86_64
 curl -LO https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-x86_64
 
-sudo mv sd-linux-x86_64 /usr/local/bin/wing-cli
+sudo mv wingdrive-cli-linux-x86_64 /usr/local/bin/wing-cli
 sudo mv wing-daemon-linux-x86_64 /usr/local/bin/wing-daemon
 sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
 
 # Set up systemd service
-wing-cli daemon install
+wing daemon install
 
 # Index your pools
 wing-cli location add /mnt/pool1
@@ -259,16 +259,16 @@ Currently unsupported. Use TrueNAS SCALE (recommended) or run in a Linux VM.
 sudo apt-get update && sudo apt-get upgrade -y
 
 # Download ARM64 binaries
-wget https://github.com/YOUR_ORG/releases/latest/download/sd-linux-aarch64
+wget https://github.com/YOUR_ORG/releases/latest/download/wingdrive-cli-linux-aarch64
 wget https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-aarch64
 
 # Install
-sudo mv sd-linux-aarch64 /usr/local/bin/wing-cli
+sudo mv wingdrive-cli-linux-aarch64 /usr/local/bin/wing-cli
 sudo mv wing-daemon-linux-aarch64 /usr/local/bin/wing-daemon
 sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
 
 # Install auto-start
-wing-cli daemon install
+wing daemon install
 
 # Start daemon
 sudo systemctl --user start wingdrive-daemon
@@ -291,7 +291,7 @@ By default, data is stored at:
 Override with `--data-dir` flag:
 
 ```bash
-wing-cli --data-dir /mnt/external/wingdrive start
+wing --data-dir /mnt/external/wingdrive start
 ```
 
 ### Auto-Update
@@ -315,14 +315,14 @@ Run multiple daemon instances:
 
 ```bash
 # Instance for work files
-wing-cli --instance work --data-dir ~/wingdrive-work start
+wing --instance work --data-dir ~/wingdrive-work start
 
 # Instance for personal files
-wing-cli --instance personal --data-dir ~/wingdrive-personal start
+wing --instance personal --data-dir ~/wingdrive-personal start
 
 # Install both as services
-wing-cli --instance work daemon install
-wing-cli --instance personal daemon install
+wing --instance work daemon install
+wing --instance personal daemon install
 ```
 
 ## Monitoring
@@ -456,7 +456,7 @@ chmod -R u+r /path/to/index
 wing-cli stop
 
 # Remove auto-start
-wing-cli daemon uninstall
+wing daemon uninstall
 
 # Remove binaries
 sudo rm /usr/local/bin/wing-cli /usr/local/bin/wing-daemon

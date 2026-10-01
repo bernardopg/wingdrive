@@ -5,13 +5,13 @@ description: "Command-line interface for WingDrive v2"
 
 ## Overview
 
-The WingDrive CLI (`sd`) is a command-line interface for interacting with the WingDrive daemon. It provides a comprehensive set of commands for managing libraries, files, devices, and daemon lifecycle.
+The WingDrive CLI (`wing`) is a command-line interface for interacting with the WingDrive daemon. It provides a comprehensive set of commands for managing libraries, files, devices, and daemon lifecycle.
 
 ## Architecture
 
 The CLI follows a client-daemon architecture:
 
-- **CLI Binary** (`wing-cli` / `sd`) - The client that sends commands
+- **CLI Binary** (`wing`) - The client that sends commands
 - **Daemon Binary** (`wing-daemon`) - The background service that does the actual work
 - **Unix Socket** - Communication channel between CLI and daemon
 
@@ -33,10 +33,10 @@ The CLI follows a client-daemon architecture:
 
 ```bash
 # Start in background
-sd start
+wing start
 
 # Start in foreground (see logs)
-sd start --foreground
+wing start --foreground
 ```
 
 The daemon:
@@ -51,13 +51,13 @@ Install the daemon to start automatically on system boot:
 
 ```bash
 # Install LaunchAgent (macOS)
-sd daemon install
+wing daemon install
 
 # Check status
-sd daemon status
+wing daemon status
 
 # Uninstall
-sd daemon uninstall
+wing daemon uninstall
 ```
 
 This creates a LaunchAgent at `~/Library/LaunchAgents/com.wingdrive.daemon.plist` that:
@@ -97,13 +97,13 @@ The CLI stores configuration in `~/Library/Application Support/wingdrive/cli.jso
 
 ```bash
 # View all configuration
-sd config show
+wing config show
 
 # Get specific value
-sd config get update.repo
+wing config get update.repo
 
 # Set value
-sd config set update.repo "your-org/releases-repo"
+wing config set update.repo "your-org/releases-repo"
 ```
 
 ## Auto-Update System
@@ -114,13 +114,13 @@ The CLI includes a built-in update mechanism that fetches releases from a public
 
 ```
 ┌─────────┐                          ┌────────────┐
-│sd update│ ──── GitHub API ────────►│  Releases  │
+│wing update│ ──── GitHub API ────────►│  Releases  │
 └─────────┘                          │ Repository │
      │                               └────────────┘
      │ Download binaries                   │
      ▼                                     │
 ┌─────────────────┐                       │
-│ sd-macos-arm64  │◄──────────────────────┘
+│ wingdrive-cli-macos-arm64  │◄──────────────────────┘
 │ wing-daemon-...   │
 └─────────────────┘
      │
@@ -141,10 +141,10 @@ The CLI includes a built-in update mechanism that fetches releases from a public
 
 ```bash
 # Check and install updates
-sd update
+wing update
 
 # Force reinstall current version
-sd update --force
+wing update --force
 ```
 
 ### Release Repository Setup
@@ -156,7 +156,7 @@ The update system uses a public GitHub repository containing only releases (no s
    - Create empty commit: `git commit --allow-empty -m "Release v0.1.0"`
    - Tag it: `git tag v0.1.0`
    - Create GitHub release with binaries as assets
-3. Configure CLI: `sd config set update.repo "your-org/wingdrive"`
+3. Configure CLI: `wing config set update.repo "your-org/wingdrive"`
 
 The CI workflow automatically builds binaries for:
 - macOS (arm64, x86_64)
@@ -181,29 +181,29 @@ sd [--data-dir PATH] [--instance NAME] [--format FORMAT] <command> [args]
 
 | Command | Description |
 |---------|-------------|
-| `sd start` | Start the daemon |
-| `sd stop` | Stop the daemon |
-| `sd restart` | Restart the daemon |
-| `sd status` | Show system status |
-| `sd update` | Update CLI and daemon |
+| `wing start` | Start the daemon |
+| `wing stop` | Stop the daemon |
+| `wing restart` | Restart the daemon |
+| `wing status` | Show system status |
+| `wing update` | Update CLI and daemon |
 
 ### Domain Commands
 
 | Command | Description |
 |---------|-------------|
-| `sd library` | Manage libraries |
-| `sd location` | Manage indexed locations |
-| `sd file` | File operations |
-| `sd index` | Indexing operations |
-| `sd search` | Search files |
-| `sd tag` | Tag management |
-| `sd volume` | Volume operations |
-| `sd device` | Device management |
-| `sd job` | Job control |
-| `sd network` | Networking and pairing |
-| `sd logs` | View daemon logs |
-| `sd config` | Configuration management |
-| `sd daemon` | Daemon lifecycle |
+| `wing library` | Manage libraries |
+| `wing location` | Manage indexed locations |
+| `wing file` | File operations |
+| `wing index` | Indexing operations |
+| `wing search` | Search files |
+| `wing tag` | Tag management |
+| `wing volume` | Volume operations |
+| `wing device` | Device management |
+| `wing job` | Job control |
+| `wing network` | Networking and pairing |
+| `wing logs` | View daemon logs |
+| `wing config` | Configuration management |
+| `wing daemon` | Daemon lifecycle |
 
 ## Binary Distribution
 
@@ -211,23 +211,23 @@ For development and testing, binaries can be distributed without building from s
 
 1. **Build release binaries**:
    ```bash
-   cargo build --release --bin wing-cli --bin wing-daemon
+   cargo build --release --bin wing --bin wing-daemon
    ```
 
 2. **Copy both binaries** to target machine:
-   - `wing-cli` → rename to `sd`
+   - `wing` → keep as `wing`
    - `wing-daemon` → keep as `wing-daemon`
 
 3. **Place in PATH**:
    ```bash
-   mv sd ~/.local/bin/
+   mv wing ~/.local/bin/
    mv wing-daemon ~/.local/bin/
-   chmod +x ~/.local/bin/sd ~/.local/bin/wing-daemon
+   chmod +x ~/.local/bin/wing ~/.local/bin/wing-daemon
    ```
 
 4. **Remove quarantine** (macOS):
    ```bash
-   xattr -d com.apple.quarantine ~/.local/bin/sd
+   xattr -d com.apple.quarantine ~/.local/bin/wing
    xattr -d com.apple.quarantine ~/.local/bin/wing-daemon
    ```
 
@@ -242,10 +242,10 @@ Both binaries must be in the same directory as the CLI expects to find the daemo
 cargo build --package wing-cli
 
 # Build both CLI and daemon
-cargo build --bin wing-cli --bin wing-daemon
+cargo build --bin wing --bin wing-daemon
 
 # Release build
-cargo build --release --bin wing-cli --bin wing-daemon
+cargo build --release --bin wing --bin wing-daemon
 ```
 
 ### Code Structure
@@ -327,26 +327,26 @@ The Unix socket is created with restrictive permissions (user-only access).
 
 ```bash
 # Check if already running
-sd status
+wing status
 
 # View logs
-sd logs follow
+wing logs follow
 
 # Reset data and restart
-sd restart --reset
+wing restart --reset
 ```
 
 ### Update Fails
 
 ```bash
 # Check configuration
-sd config show
+wing config show
 
 # Verify repo is accessible
 curl https://api.github.com/repos/YOUR_ORG/YOUR_REPO/releases/latest
 
 # Force clean reinstall
-sd update --force
+wing update --force
 ```
 
 ### Socket Connection Errors
@@ -359,4 +359,4 @@ The daemon socket is located at:
 If connection fails:
 1. Verify daemon is running: `ps aux | grep wing-daemon`
 2. Check socket exists: `ls -la <socket-path>`
-3. Restart daemon: `sd restart`
+3. Restart daemon: `wing restart`

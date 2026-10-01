@@ -31,7 +31,7 @@ The refactored daemon architecture provides:
 
 ```bash
 # Build the CLI
-cargo build --release --package wing-cli --package wing-core
+cargo build --release --package wing --package wing-core
 
 # Or build just the CLI for development
 cd apps/cli && cargo build
@@ -40,15 +40,15 @@ cd apps/cli && cargo build
 cargo install --path apps/cli
 ```
 
-Also you may create an alias to the cli as `sd` or `wingdrive`.
+The binary is already called `wing`; you can also alias it.
 
-Example for `sd`:
+Example:
 ```bash
 # For release build
-echo 'alias sd="/path/to/wingdrive/target/release/wing-cli"' >> ~/.zshrc
+echo 'alias wing="/path/to/wingdrive/target/release/wing"' >> ~/.zshrc
 
 # For debug build (faster compilation)
-echo 'alias sd="/path/to/wingdrive/target/debug/wing-cli"' >> ~/.zshrc
+echo 'alias wing="/path/to/wingdrive/target/debug/wing"' >> ~/.zshrc
 
 # Reload your shell configuration
 source ~/.zshrc
@@ -58,20 +58,20 @@ source ~/.zshrc
 
 ```bash
 # Start the WingDrive daemon
-sd start
+wing start
 
 # Create a library and add a location
-sd library create "Personal"
-sd location add ~/Desktop --name "Desktop"
+wing library create "Personal"
+wing location add ~/Desktop --name "Desktop"
 
 # Monitor indexing progress
-sd job monitor
+wing job monitor
 
 # Check system status
-sd status
+wing status
 ```
 
-**Note**: If you haven't set up the alias, use `./target/debug/wing-cli` or `./target/release/wing-cli` instead of `sd`.
+**Note**: If you haven't set up the alias, use `./target/debug/wing` or `./target/release/wing` instead of `wing`.
 
 ## Usage
 
@@ -79,19 +79,19 @@ sd status
 
 ```bash
 # Start daemon in background
-sd start
+wing start
 
 # Start daemon with networking enabled
-sd start
+wing start
 
 # Start daemon in foreground (for debugging)
-sd start --foreground
+wing start --foreground
 
 # Stop the daemon
-sd stop
+wing stop
 
 # Check daemon status
-sd status
+wing status
 ```
 
 ### Daemon Auto-Start (macOS)
@@ -100,13 +100,13 @@ Set up the daemon to start automatically on login:
 
 ```bash
 # Install auto-start service
-sd daemon install
+wing daemon install
 
 # Check installation status
-sd daemon status
+wing daemon status
 
 # Remove auto-start service
-sd daemon uninstall
+wing daemon uninstall
 ```
 
 The install command creates a LaunchAgent that starts the daemon on login and restarts it if it crashes. Logs write to your data directory at `~/Library/Application Support/wingdrive/logs/`. This works with multiple instances by passing `--instance` before the daemon command.
@@ -135,7 +135,7 @@ sd --instance test daemon install
 
 ```bash
 # Show help
-sd --help
+wing --help
 
 # Enable verbose logging
 sd -v <command>
@@ -148,42 +148,42 @@ sd --data-dir /path/to/data <command>
 
 ```bash
 # Create a new library
-sd library create "My Library"
-sd library create "My Library" --path /custom/path
+wing library create "My Library"
+wing library create "My Library" --path /custom/path
 
 # List all libraries
-sd library list
+wing library list
 
 # Open an existing library
-sd library open /path/to/library
+wing library open /path/to/library
 
 # Switch to a library by name or ID
-sd library switch "My Library"
-sd library switch 12345678-1234-1234-1234-123456789012
+wing library switch "My Library"
+wing library switch 12345678-1234-1234-1234-123456789012
 
 # Show current library
-sd library current
+wing library current
 
 # Close current library
-sd library close
+wing library close
 ```
 
 ### Location Management
 
 ```bash
 # Add a location to index (automatically starts watching)
-sd location add ~/Documents
-sd location add ~/Pictures --name "My Photos" --mode deep
+wing location add ~/Documents
+wing location add ~/Pictures --name "My Photos" --mode deep
 
 # List all locations with status
-sd location list
+wing location list
 
 # Remove a location (stops watching and indexing)
-sd location remove <location-id>
+wing location remove <location-id>
 
 # Rescan a location (triggers re-indexing)
-sd location rescan <location-id>
-sd location rescan <location-id> --force  # Full rescan, ignore change detection
+wing location rescan <location-id>
+wing location rescan <location-id> --force  # Full rescan, ignore change detection
 ```
 
 **Note**: Location IDs are UUIDs displayed in the list command. All location operations work with the daemon automatically.
@@ -194,21 +194,21 @@ The new indexing system supports different scopes and persistence modes:
 
 ```bash
 # Quick scan of current directory only (no subdirectories)
-sd index quick-scan /path/to/directory --scope current
+wing index quick-scan /path/to/directory --scope current
 
 # Quick scan with ephemeral mode (no database writes)
-sd index quick-scan /path/to/directory --scope current --ephemeral
+wing index quick-scan /path/to/directory --scope current --ephemeral
 
 # Browse external paths without adding to managed locations
-sd index browse /media/external-drive --scope current
-sd index browse /network/drive --scope recursive --content
+wing index browse /media/external-drive --scope current
+wing index browse /network/drive --scope recursive --content
 
 # Index managed locations with specific scope
-sd index location /managed/location --scope current --mode shallow
-sd index location <location-uuid> --scope recursive --mode deep
+wing index location /managed/location --scope current --mode shallow
+wing index location <location-uuid> --scope recursive --mode deep
 
 # Legacy full location indexing (backward compatibility)
-sd scan /path/to/directory --mode content --watch
+wing scan /path/to/directory --mode content --watch
 ```
 
 **Index Scopes:**
@@ -229,20 +229,20 @@ sd scan /path/to/directory --mode content --watch
 
 ```bash
 # List all jobs with colored status and progress
-sd job list
-sd job list --status running      # Filter by status
+wing job list
+wing job list --status running      # Filter by status
 
 # Show detailed job information
-sd job info <job-id>
+wing job info <job-id>
 
 # Monitor jobs in real-time with live progress bars
-sd job monitor
-sd job monitor --job-id <job-id>  # Monitor specific job
+wing job monitor
+wing job monitor --job-id <job-id>  # Monitor specific job
 
 # Control jobs (planned features)
-sd job pause <job-id>
-sd job resume <job-id>
-sd job cancel <job-id>
+wing job pause <job-id>
+wing job resume <job-id>
+wing job cancel <job-id>
 ```
 
 **Job Monitor Features:**
@@ -256,14 +256,14 @@ sd job cancel <job-id>
 
 ```bash
 # Copy files with progress tracking
-sd file copy ~/source.txt ~/destination.txt
-sd file copy ~/Photos/*.jpg ~/Backup/ --verify
+wing file copy ~/source.txt ~/destination.txt
+wing file copy ~/Photos/*.jpg ~/Backup/ --verify
 
 # Move files
-sd file move ~/Downloads/*.pdf ~/Documents/ --preserve-timestamps
+wing file move ~/Downloads/*.pdf ~/Documents/ --preserve-timestamps
 
 # Advanced copy options
-sd file copy ~/Project/ ~/Backup/Project/ \
+wing file copy ~/Project/ ~/Backup/Project/ \
   --overwrite \
   --verify \
   --preserve-timestamps
@@ -273,39 +273,39 @@ sd file copy ~/Project/ ~/Backup/Project/ \
 
 ```bash
 # Show system status
-sd status
+wing status
 
 # Monitor all system activity (TUI)
-sd monitor
+wing monitor
 
 # View daemon logs
-sd system logs
-sd system logs --tail 50
+wing system logs
+wing system logs --tail 50
 ```
 
 ### Networking & Device Management
 
 ```bash
 # Initialize networking (if daemon wasn't started with)
-sd network init
+wing network init
 
 # Start/stop networking
-sd network start
-sd network stop
+wing network start
+wing network stop
 
 # List connected devices
-sd network devices
+wing network devices
 
 # Device pairing
-sd network pair --initiate              # Generate pairing code
-sd network pair --join <code>           # Join using code
-sd network pair --status                # Check pairing status
+wing network pair --initiate              # Generate pairing code
+wing network pair --join <code>           # Join using code
+wing network pair --status                # Check pairing status
 
 # Spacedrop (file sharing)
-sd network spacedrop <device-id> /path/to/file --sender "Your Name"
+wing network spacedrop <device-id> /path/to/file --sender "Your Name"
 
 # Remove paired device
-sd network revoke <device-id>
+wing network revoke <device-id>
 ```
 
 ## Real-time Job Monitor
@@ -313,7 +313,7 @@ sd network revoke <device-id>
 The job monitor provides live progress tracking with beautiful visual indicators:
 
 ```bash
-sd job monitor
+wing job monitor
 ```
 
 ### Monitor Features
@@ -348,49 +348,49 @@ WingDrive Job Monitor - Press Ctrl+C to exit
 
 ```bash
 # 1. Start the daemon
-sd start
+wing start
 
 # 2. Create a library
-sd library create "Personal"
+wing library create "Personal"
 
 # 3. Add locations with different index modes
-sd location add ~/Desktop --name "Desktop" --mode content
-sd location add ~/Documents --name "Documents" --mode content
-sd location add ~/Pictures --name "Photos" --mode deep
+wing location add ~/Desktop --name "Desktop" --mode content
+wing location add ~/Documents --name "Documents" --mode content
+wing location add ~/Pictures --name "Photos" --mode deep
 
 # 4. Add cloud storage
-sd volume add-cloud "S3 Backup" --service s3 --bucket my-backup --region us-west-2
+wing volume add-cloud "S3 Backup" --service s3 --bucket my-backup --region us-west-2
 
 # 5. Monitor the indexing progress
-sd job monitor
+wing job monitor
 
 # 6. Copy files to cloud using unified URIs
-sd cp local://macbook/Desktop/important.pdf s3://my-backup/documents/
+wing cp local://macbook/Desktop/important.pdf s3://my-backup/documents/
 
 # 7. Check the results
-sd location list
-sd job list
+wing location list
+wing job list
 ```
 
 ### Multiple Libraries
 
 ```bash
 # Work with multiple libraries
-sd library create "Work"
-sd library create "Personal"
-sd library list
-sd library switch "Work"
-sd location add ~/Work/Projects
+wing library create "Work"
+wing library create "Personal"
+wing library list
+wing library switch "Work"
+wing location add ~/Work/Projects
 ```
 
 ### Batch Indexing
 
 ```bash
 # Index multiple locations
-sd location add ~/Documents --name "Docs"
-sd location add ~/Pictures --name "Photos" --mode deep
-sd location add ~/Downloads --name "Downloads" --mode shallow
-sd job list --status running
+wing location add ~/Documents --name "Docs"
+wing location add ~/Pictures --name "Photos" --mode deep
+wing location add ~/Downloads --name "Downloads" --mode shallow
+wing job list --status running
 ```
 
 ## Architecture

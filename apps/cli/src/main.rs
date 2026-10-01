@@ -132,7 +132,7 @@ fn reset_wingdrive_v2_data(data_dir: &Path) -> Result<()> {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "wingdrive", about = "WingDrive v2 CLI (daemon client)")]
+#[command(name = "wing", about = "WingDrive v2 CLI (daemon client)")]
 struct Cli {
 	/// Path to wingdrive data directory
 	#[arg(long)]
@@ -328,11 +328,11 @@ async fn main() -> Result<()> {
 						{
 							Ok(wing_core::infra::daemon::types::DaemonResponse::Pong) => {
 								println!("Daemon is ready and responding");
-								println!("Use 'sd logs follow' to view daemon logs");
+								println!("Use 'wing logs follow' to view daemon logs");
 							}
 							_ => {
 								println!("Warning: Daemon may not be fully initialized yet");
-								println!("Use 'sd logs follow' to check daemon status");
+								println!("Use 'wing logs follow' to check daemon status");
 							}
 						}
 					}
@@ -361,7 +361,7 @@ async fn main() -> Result<()> {
 				Ok(_) => {
 					println!("Daemon shutdown initiated.");
 					println!("Note: If jobs are running, the daemon will wait for them to pause before fully shutting down.");
-					println!("Use 'sd logs follow' to monitor shutdown progress.");
+					println!("Use 'wing logs follow' to monitor shutdown progress.");
 				}
 				Err(_) => {
 					if reset {
@@ -467,7 +467,7 @@ async fn main() -> Result<()> {
 					Ok(_) => println!("Daemon restart successful"),
 					Err(e) => {
 						println!(" Warning: Could not verify daemon status: {}", e);
-						println!("Use 'sd status' to check daemon status");
+						println!("Use 'wing status' to check daemon status");
 					}
 				}
 			}

@@ -43,4 +43,4 @@ fmt:
 	cargo fmt
 
 cli *ARGS:
-	cargo run --bin wing-cli {{ARGS}}
+	cargo run --bin wing {{ARGS}}

@@ -34,7 +34,7 @@ Integrate the OpenDAL library to enable indexing of remote storage services like
     - Query system supports remote paths
     - Indexer uses VolumeBackend abstraction for all I/O operations
 5.  Develop the CLI/UI flow for adding and configuring a remote storage volume.
-    - CLI: `sd volume add-cloud` and `sd volume remove-cloud`
+    - CLI: `wing volume add-cloud` and `wing volume remove-cloud`
     - Secure credential storage in OS keyring
 
 ## Acceptance Criteria

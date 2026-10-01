@@ -85,7 +85,7 @@ Implement the Virtual Sidecar System (VSS) for managing derivative data—thumbn
 
 ### Phase 6: CLI & SDK
 
-- [ ] Add `sd sidecars` command family
+- [ ] Add `wing sidecars` command family
 - [ ] Implement sidecar glob patterns
 - [ ] Add SDK APIs for extensions
 - [ ] Document patterns and examples

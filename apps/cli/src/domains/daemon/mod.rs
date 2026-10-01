@@ -57,7 +57,7 @@ async fn install_launchd_service(data_dir: PathBuf, instance: Option<String>) ->
 
 	if !daemon_path.exists() {
 		return Err(anyhow::anyhow!(
-			"Daemon binary not found at {}. Ensure both 'wing-cli' and 'wing-daemon' are in the same directory.",
+			"Daemon binary not found at {}. Ensure both 'wing' and 'wing-daemon' are in the same directory.",
 			daemon_path.display()
 		));
 	}
@@ -210,7 +210,7 @@ async fn check_launchd_status(instance: Option<String>) -> Result<()> {
 	let Some((label, plist_path)) = service else {
 		println!("Daemon auto-start: Not installed");
 		println!();
-		println!("To install: wing-cli daemon install");
+		println!("To install: wing daemon install");
 		return Ok(());
 	};
 
@@ -266,7 +266,7 @@ async fn install_launchd_service(data_dir: PathBuf, instance: Option<String>) ->
 
 	if !daemon_path.exists() {
 		return Err(anyhow::anyhow!(
-			"Daemon binary not found at {}. Ensure both 'wing-cli' and 'wing-daemon' are in the same directory.",
+			"Daemon binary not found at {}. Ensure both 'wing' and 'wing-daemon' are in the same directory.",
 			daemon_path.display()
 		));
 	}
@@ -426,7 +426,7 @@ async fn check_launchd_status(instance: Option<String>) -> Result<()> {
 	let Some((service_name, service_path)) = service else {
 		println!("Daemon auto-start: Not installed");
 		println!();
-		println!("To install: wing-cli daemon install");
+		println!("To install: wing daemon install");
 		return Ok(());
 	};
 

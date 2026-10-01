@@ -133,11 +133,11 @@ cargo build --release
 cargo build --features ffmpeg,ai,heif
 
 # Specific binaries
-cargo build --bin wing-cli
+cargo build --bin wing
 cargo build --bin wing-daemon
 
 # Run CLI
-cargo run --bin wing-cli -- --help
+cargo run --bin wing -- --help
 ```
 
 ## Binaries

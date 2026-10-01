@@ -96,7 +96,7 @@ The typical execution flow follows these steps:
 
 ### Startup Sequence
 
-1. **Daemon Launch**: The daemon starts when you launch the GUI app or run `sd start`. CLI users can optionally configure auto-start on login using `sd daemon install` on macOS.
+1. **Daemon Launch**: The daemon starts when you launch the GUI app or run `wing start`. CLI users can optionally configure auto-start on login using `wing daemon install` on macOS.
 2. **Library Load**: SQLite database opens and VDFS core initializes
 3. **Service Activation**: Background services start and announce on the network
 4. **Client Connection**: UI applications connect via RPC socket

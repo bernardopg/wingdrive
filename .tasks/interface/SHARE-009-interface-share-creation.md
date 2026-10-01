@@ -20,7 +20,7 @@ Desktop UI for creating shares from Spaces, files, and folder selections.
    - Optional password
    - Optional expiry — presets (1 day / 7 days / 30 days / never) plus custom datetime
    - Cover image picker (defaults to space icon)
-3. On create: show generated `sd.app/s/{token}` link with copy and QR code
+3. On create: show generated `wingdrive.app/s/{token}` link with copy and QR code
 4. Inline status if cloud is unreachable — share is created locally, link will resolve once SHARE-008 publishes
 5. Reuse existing component primitives in `packages/interface`
 

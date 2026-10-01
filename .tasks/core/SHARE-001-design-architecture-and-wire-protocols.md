@@ -12,12 +12,12 @@ last_updated: 2026-05-25
 
 ## Description
 
-Produce the contracts between core, sd.app, and the browser viewer. This is the source-of-truth design that both repos build against.
+Produce the contracts between core, wingdrive.app, and the browser viewer. This is the source-of-truth design that both repos build against.
 
 ## Scope
 
 1. **Sequence diagrams** for: share creation, share resolution (visitor lands on link), file listing, file streaming, share revocation, share expiry.
-2. **Wire protocol: core ↔ sd.app registry** (HTTPS / signed requests)
+2. **Wire protocol: core ↔ wingdrive.app registry** (HTTPS / signed requests)
    - `POST /api/shares` — `{token, node_id, relay_url, public_metadata, password_required, expires_at}`
    - `POST /api/shares/{token}/heartbeat` — refresh relay address
    - `DELETE /api/shares/{token}` — revoke
@@ -29,7 +29,7 @@ Produce the contracts between core, sd.app, and the browser viewer. This is the 
    - `get_metadata(path)` — file metadata
    - `read_range(path, offset, length)` — byte range stream
    - All requests gated by share scope on the core side
-4. **Token format**: 128-bit CSPRNG → base32 (no padding, no ambiguous chars). URL shape: `https://sd.app/s/{token}`. Optional `#k={key}` fragment reserved for client-side decryption keys (never sent to server).
+4. **Token format**: 128-bit CSPRNG → base32 (no padding, no ambiguous chars). URL shape: `https://wingdrive.app/s/{token}`. Optional `#k={key}` fragment reserved for client-side decryption keys (never sent to server).
 5. **Password handling**: argon2id hash stored on core. Password proof = HMAC over server-issued challenge nonce; password never sent in cleartext.
 6. **Public metadata**: name, item count, optional cover image, password_required flag. Owner identity is NOT exposed by default.
 
@@ -37,7 +37,7 @@ Produce the contracts between core, sd.app, and the browser viewer. This is the 
 
 - `docs/design/shares.md` with diagrams and protocol specs
 - ALPN string reserved for guest protocol
-- API schema (typed Rust structs + JSON schema) shared between core and sd.app
+- API schema (typed Rust structs + JSON schema) shared between core and wingdrive.app
 
 ## Acceptance Criteria
 

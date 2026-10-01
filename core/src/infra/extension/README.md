@@ -149,7 +149,7 @@ cd core && cargo check
 cd core && cargo test extension
 
 # Load test plugin (once implemented)
-cargo run --bin wing-cli -- extension load ./plugins/test-plugin
+cargo run --bin wing -- extension load ./plugins/test-plugin
 ```
 
 ## Notes

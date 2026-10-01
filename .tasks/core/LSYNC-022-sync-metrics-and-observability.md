@@ -65,7 +65,7 @@ Users and developers need comprehensive metrics to understand what the sync syst
                ▼
 ┌─────────────────────────────────────────┐
 │      Query Interfaces                    │
-│  - CLI: `sd sync metrics`               │
+│  - CLI: `wing sync metrics`               │
 │  - API: GraphQL/REST endpoint           │
 │  - Events: Real-time updates            │
 └─────────────────────────────────────────┘
@@ -257,28 +257,28 @@ struct ErrorEvent {
 
 ```bash
 # Get current metrics snapshot
-sd sync metrics
+wing sync metrics
 
 # Get metrics for specific time range
-sd sync metrics --since "1 hour ago"
-sd sync metrics --since "2025-10-23 10:00:00"
+wing sync metrics --since "1 hour ago"
+wing sync metrics --since "2025-10-23 10:00:00"
 
 # Watch metrics in real-time
-sd sync metrics --watch
+wing sync metrics --watch
 
 # Get metrics for specific peer
-sd sync metrics --peer <device-id>
+wing sync metrics --peer <device-id>
 
 # Get metrics for specific model type
-sd sync metrics --model entry
+wing sync metrics --model entry
 
 # Export metrics as JSON
-sd sync metrics --json
+wing sync metrics --json
 
 # Show only specific categories
-sd sync metrics --state      # State transitions only
-sd sync metrics --operations # Operation counters only
-sd sync metrics --errors     # Recent errors only
+wing sync metrics --state      # State transitions only
+wing sync metrics --operations # Operation counters only
+wing sync metrics --errors     # Recent errors only
 ```
 
 **Output format:**
@@ -449,7 +449,7 @@ ON sync_metrics_snapshots(library_id, timestamp);
 - [ ] `SyncMetricsCollector` integrated into sync components
 - [ ] State transitions tracked and recorded
 - [ ] Operation counters updated in real-time
-- [ ] CLI command `sd sync metrics` displays formatted metrics
+- [ ] CLI command `wing sync metrics` displays formatted metrics
 - [ ] CLI supports time range filtering (`--since`)
 - [ ] CLI supports real-time watching (`--watch`)
 - [ ] CLI supports per-device and per-model filtering

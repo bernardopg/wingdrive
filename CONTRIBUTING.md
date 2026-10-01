@@ -180,7 +180,7 @@ cargo cli location add ~/Documents
 cargo cli search .
 
 # Or use the long form with features
-cargo run --features wing-core/ffmpeg,wing-core/heif --bin wing-cli -- library create "Dev Library"
+cargo run --features wing-core/ffmpeg,wing-core/heif --bin wing -- library create "Dev Library"
 ```
 
 **Tip:** The `cargo cli` alias is created by `xtask setup` and automatically includes `ffmpeg,heif` features.
@@ -192,24 +192,24 @@ For even shorter commands, add a shell alias:
 **Bash/Zsh** (`~/.bashrc` or `~/.zshrc`):
 
 ```bash
-alias sd="~/Projects/wingdrive/target/debug/wing-cli"
+alias wing="~/Projects/wingdrive/target/debug/wing"
 ```
 
 **Fish** (`~/.config/fish/config.fish`):
 
 ```fish
-alias sd="~/Projects/wingdrive/target/debug/wing-cli"
+alias wing="~/Projects/wingdrive/target/debug/wing"
 ```
 
 Then reload your shell (`source ~/.zshrc`) and you can use:
 
 ```bash
-sd library create "Dev Library"
-sd location add ~/Documents
-sd search .
+wing library create "Dev Library"
+wing location add ~/Documents
+wing search .
 ```
 
-**Note:** Update the path to match your WingDrive project location. The binary is located at `target/debug/wing-cli` after running `cargo build` (or use `cargo cli` which includes media features).
+**Note:** Update the path to match your WingDrive project location. The binary is located at `target/debug/wing` after running `cargo build` (or use `cargo cli` which includes media features).
 
 ### Running Tests
 
@@ -688,8 +688,8 @@ cargo build --features wing-core/ffmpeg,wing-core/heif
 cargo daemon
 
 # Then restart your daemon
-sd stop
-sd start
+wing stop
+wing start
 ```
 
 **Why does this happen?**

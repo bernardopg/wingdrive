@@ -1849,7 +1849,7 @@ This architectural approach provides the benefits of both local-first and cloud-
 \begin{itemize}[noitemsep, topsep=0pt]
     \item \textbf{High Availability}: The Cloud Core can act as an online peer, enabling asynchronous operations like backups or file sharing even when local devices are offline.
     \item \textbf{Centralized Backup Target}: Users can configure local Locations to automatically back up to a Location on their Cloud Core.
-    \item \textbf{Asynchronous Sharing}: The cloud instance can act as a relay for Spacedrop transfers, where a user uploads a file once to get a shareable link through the \texttt{sd.app} domain (or custom domains for self-hosted instances).
+    \item \textbf{Asynchronous Sharing}: The cloud instance can act as a relay for Spacedrop transfers, where a user uploads a file once to get a shareable link through the \texttt{wingdrive.app} domain (or custom domains for self-hosted instances).
 \end{itemize}
 
 \subsection{Enterprise Deployment and Data Sovereignty}
@@ -1921,12 +1921,12 @@ Spacedrive's architecture allows any core to serve files publicly. The distincti
 \begin{itemize}
     \item \textbf{Personal Device Core}: A user can serve files directly from their laptop or NAS, but this requires manual setup like port forwarding on their router and configuring Dynamic DNS to handle changing IP addresses.
     \item \textbf{Self-Hosted Core}: An organization can deploy a core on their own server with a static IP and manage their own SSL certificates and web server configuration.
-    \item \textbf{Spacedrive Cloud (Managed Core)}: For convenience, the Spacedrive Cloud service automates this. It runs the user's core behind a managed load balancer that handles SSL termination and provides a stable public URL (e.g., \texttt{https://\allowbreak sd.app/\allowbreak user/\allowbreak file.pdf}). This is a feature of the managed service, not a special capability of the core software itself.
+    \item \textbf{Spacedrive Cloud (Managed Core)}: For convenience, the Spacedrive Cloud service automates this. It runs the user's core behind a managed load balancer that handles SSL termination and provides a stable public URL (e.g., \texttt{https://\allowbreak wingdrive.app/\allowbreak user/\allowbreak file.pdf}). This is a feature of the managed service, not a special capability of the core software itself.
 \end{itemize}
 
 \begin{lstlisting}[style=shellstyle, language=text, caption=Public sharing URL examples]
 # Via Spacedrive Cloud (automatic SSL + CDN)
-https://sd.app/user/file.pdf
+https://wingdrive.app/user/file.pdf
 
 # Via self-hosted server core
 https://files.company.com/public/presentation.pdf

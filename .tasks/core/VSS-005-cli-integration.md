@@ -29,12 +29,12 @@ See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` Section "CLI Integrati
 ## Tasks
 
 ### Command Structure
-- [ ] Create `sd sidecars` subcommand family
-- [ ] Add `sd sidecars list <content_uuid>` - list all sidecars for content
-- [ ] Add `sd sidecars usage` - show storage usage by kind
-- [ ] Add `sd sidecars pending` - show generation queue
-- [ ] Add `sd sidecars cleanup` - clean up old/orphaned sidecars
-- [ ] Add `sd sidecars regenerate <content_uuid>` - force regeneration
+- [ ] Create `wing sidecars` subcommand family
+- [ ] Add `wing sidecars list <content_uuid>` - list all sidecars for content
+- [ ] Add `wing sidecars usage` - show storage usage by kind
+- [ ] Add `wing sidecars pending` - show generation queue
+- [ ] Add `wing sidecars cleanup` - clean up old/orphaned sidecars
+- [ ] Add `wing sidecars regenerate <content_uuid>` - force regeneration
 
 ### Glob Pattern Support
 - [ ] Support wildcard content UUIDs in copy/list operations
@@ -43,19 +43,19 @@ See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` Section "CLI Integrati
 - [ ] Smart defaults (warn before processing millions of files)
 
 ### Standard File Operations
-- [ ] Ensure `sd cp sidecar://...` works
-- [ ] Ensure `sd ls sidecar://...` works
-- [ ] Ensure `sd rm sidecar://...` works with confirmation
-- [ ] Ensure `sd cat sidecar://.../ocr.json` works
-- [ ] Add `sd info sidecar://...` for detailed status
+- [ ] Ensure `wing cp sidecar://...` works
+- [ ] Ensure `wing ls sidecar://...` works
+- [ ] Ensure `wing rm sidecar://...` works with confirmation
+- [ ] Ensure `wing cat sidecar://.../ocr.json` works
+- [ ] Add `wing info sidecar://...` for detailed status
 
 ## Commands Specification
 
-### `sd sidecars list`
+### `wing sidecars list`
 
 ```bash
 # List all sidecars for a content item
-sd sidecars list 550e8400-e29b-41d4-a716-446655440000
+wing sidecars list 550e8400-e29b-41d4-a716-446655440000
 
 # Output:
 # Sidecars for content 550e8400-e29b-41d4-a716-446655440000
@@ -70,17 +70,17 @@ sd sidecars list 550e8400-e29b-41d4-a716-446655440000
 # Total: 176.7 KB across 4 sidecars
 
 # List specific kind
-sd sidecars list 550e8400... --kind thumb
+wing sidecars list 550e8400... --kind thumb
 
 # List with paths
-sd sidecars list 550e8400... --show-paths
+wing sidecars list 550e8400... --show-paths
 ```
 
-### `sd sidecars usage`
+### `wing sidecars usage`
 
 ```bash
 # Show overall sidecar storage usage
-sd sidecars usage
+wing sidecars usage
 
 # Output:
 # Sidecar Storage Usage
@@ -97,17 +97,17 @@ sd sidecars usage
 # └──────────────┴───────┴──────────┴──────────┘
 
 # Show usage for specific kind
-sd sidecars usage --kind proxy
+wing sidecars usage --kind proxy
 
 # Show usage by variant
-sd sidecars usage --by-variant
+wing sidecars usage --by-variant
 ```
 
-### `sd sidecars pending`
+### `wing sidecars pending`
 
 ```bash
 # Show pending sidecar generation jobs
-sd sidecars pending
+wing sidecars pending
 
 # Output:
 # Pending Sidecar Generation
@@ -120,14 +120,14 @@ sd sidecars pending
 # └──────────────┴─────────┴─────────┴──────────┘
 
 # Show details for failed jobs
-sd sidecars pending --failed
+wing sidecars pending --failed
 ```
 
-### `sd sidecars cleanup`
+### `wing sidecars cleanup`
 
 ```bash
 # Clean up orphaned sidecars
-sd sidecars cleanup
+wing sidecars cleanup
 
 # Output:
 # Scanning for orphaned sidecars...
@@ -137,17 +137,17 @@ sd sidecars cleanup
 # Deleted 45 sidecars, freed 234 MB
 
 # Dry run mode
-sd sidecars cleanup --dry-run
+wing sidecars cleanup --dry-run
 
 # Clean specific kind
-sd sidecars cleanup --kind proxy --older-than 180d
+wing sidecars cleanup --kind proxy --older-than 180d
 ```
 
-### `sd sidecars regenerate`
+### `wing sidecars regenerate`
 
 ```bash
 # Regenerate all sidecars for a content item
-sd sidecars regenerate 550e8400-e29b-41d4-a716-446655440000
+wing sidecars regenerate 550e8400-e29b-41d4-a716-446655440000
 
 # Output:
 # Regenerating sidecars for 550e8400...
@@ -157,32 +157,32 @@ sd sidecars regenerate 550e8400-e29b-41d4-a716-446655440000
 # Jobs queued: 5
 
 # Regenerate specific kind
-sd sidecars regenerate 550e8400... --kind thumb --variant grid@2x
+wing sidecars regenerate 550e8400... --kind thumb --variant grid@2x
 ```
 
 ### Standard Operations with Sidecars
 
 ```bash
 # Copy thumbnail to local file
-sd cp sidecar://550e8400.../thumbs/grid@2x.webp ~/Desktop/thumb.webp
+wing cp sidecar://550e8400.../thumbs/grid@2x.webp ~/Desktop/thumb.webp
 
 # List all thumbnails
-sd ls "sidecar://*/thumbs/*" --limit 100
+wing ls "sidecar://*/thumbs/*" --limit 100
 
 # Export all OCR text
-sd cp "sidecar://*/ocr/ocr.json" ~/ocr-exports/
+wing cp "sidecar://*/ocr/ocr.json" ~/ocr-exports/
 
 # Delete large proxies
-sd rm "sidecar://*/proxies/2160p"
+wing rm "sidecar://*/proxies/2160p"
 # Output:
 # ️  This will delete 1,247 files totaling 45.2GB
 # Continue? [y/N]
 
 # View OCR text directly
-sd cat sidecar://550e8400.../ocr/ocr.json | jq .text
+wing cat sidecar://550e8400.../ocr/ocr.json | jq .text
 
 # Check sidecar info
-sd info sidecar://550e8400.../thumbs/grid@2x.webp
+wing info sidecar://550e8400.../thumbs/grid@2x.webp
 # Output:
 # Path: sidecar://550e8400-e29b-41d4-a716-446655440000/thumbs/grid@2x.webp
 # Status: Ready
@@ -197,18 +197,18 @@ sd info sidecar://550e8400.../thumbs/grid@2x.webp
 ## Acceptance Criteria
 
 ### Commands Implemented
-- [ ] `sd sidecars list` shows all sidecars for content
-- [ ] `sd sidecars usage` shows storage breakdown
-- [ ] `sd sidecars pending` shows generation queue
-- [ ] `sd sidecars cleanup` removes orphaned sidecars
-- [ ] `sd sidecars regenerate` triggers regeneration
+- [ ] `wing sidecars list` shows all sidecars for content
+- [ ] `wing sidecars usage` shows storage breakdown
+- [ ] `wing sidecars pending` shows generation queue
+- [ ] `wing sidecars cleanup` removes orphaned sidecars
+- [ ] `wing sidecars regenerate` triggers regeneration
 
 ### Standard Operations
-- [ ] `sd cp sidecar://...` copies sidecars
-- [ ] `sd ls sidecar://...` lists sidecar directories
-- [ ] `sd rm sidecar://...` deletes with confirmation
-- [ ] `sd cat sidecar://...` displays content
-- [ ] `sd info sidecar://...` shows detailed status
+- [ ] `wing cp sidecar://...` copies sidecars
+- [ ] `wing ls sidecar://...` lists sidecar directories
+- [ ] `wing rm sidecar://...` deletes with confirmation
+- [ ] `wing cat sidecar://...` displays content
+- [ ] `wing info sidecar://...` shows detailed status
 
 ### User Experience
 - [ ] Clear, formatted output with tables

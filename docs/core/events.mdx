@@ -222,22 +222,22 @@ Monitor events in real-time using the CLI:
 
 ```bash
 # Monitor all events
-sd events monitor
+wing events monitor
 
 # Filter by event type
-sd events monitor --event-type JobProgress,JobCompleted
+wing events monitor --event-type JobProgress,JobCompleted
 
 # Filter by library
-sd events monitor --library-id <uuid>
+wing events monitor --library-id <uuid>
 
 # Filter by job
-sd events monitor --job-id <id>
+wing events monitor --job-id <id>
 
 # Show timestamps
-sd events monitor --timestamps
+wing events monitor --timestamps
 
 # Verbose mode (full JSON)
-sd events monitor --verbose --pretty
+wing events monitor --verbose --pretty
 ```
 
 **Available Filters**:

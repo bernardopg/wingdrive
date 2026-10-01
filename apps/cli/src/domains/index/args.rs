@@ -74,8 +74,8 @@ impl IndexStartArgs {
 	pub fn to_input(&self, library_id: Uuid) -> anyhow::Result<IndexInput> {
 		let mut local_paths: Vec<PathBuf> = Vec::new();
 		for s in &self.paths {
-			let sd = WingPath::from_uri(s).unwrap_or_else(|_| WingPath::local(s));
-			if let Some(p) = sd.as_local_path() {
+			let wing_path = WingPath::from_uri(s).unwrap_or_else(|_| WingPath::local(s));
+			if let Some(p) = wing_path.as_local_path() {
 				local_paths.push(p.to_path_buf());
 			} else {
 				anyhow::bail!("Non-local address not supported for indexing yet: {}", s);
@@ -105,8 +105,9 @@ pub struct QuickScanArgs {
 
 impl QuickScanArgs {
 	pub fn to_input(&self, library_id: Uuid) -> anyhow::Result<IndexInput> {
-		let sd = WingPath::from_uri(&self.path).unwrap_or_else(|_| WingPath::local(&self.path));
-		let p = sd
+		let wing_path =
+			WingPath::from_uri(&self.path).unwrap_or_else(|_| WingPath::local(&self.path));
+		let p = wing_path
 			.as_local_path()
 			.ok_or_else(|| anyhow::anyhow!("Non-local path not supported yet"))?;
 		Ok(IndexInput::new(library_id, vec![p.to_path_buf()])
@@ -127,8 +128,9 @@ pub struct BrowseArgs {
 
 impl BrowseArgs {
 	pub fn to_input(&self, library_id: Uuid) -> anyhow::Result<IndexInput> {
-		let sd = WingPath::from_uri(&self.path).unwrap_or_else(|_| WingPath::local(&self.path));
-		let p = sd
+		let wing_path =
+			WingPath::from_uri(&self.path).unwrap_or_else(|_| WingPath::local(&self.path));
+		let p = wing_path
 			.as_local_path()
 			.ok_or_else(|| anyhow::anyhow!("Non-local path not supported yet"))?;
 		Ok(IndexInput::new(library_id, vec![p.to_path_buf()])

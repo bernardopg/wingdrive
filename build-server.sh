@@ -16,9 +16,9 @@ export OPENSSL_INCLUDE_DIR="$SR/usr/include"
 export OPENSSL_LIB_DIR="$SR/usr/lib/x86_64-linux-gnu"
 
 cd /mnt/pool/wingdrive
-cargo build --release --bin wing-server --bin wing-cli \
+cargo build --release --bin wing-server --bin wing \
   --features wing-core/heif,wing-core/ffmpeg \
   -j10 "$@"
 
 echo "Binaries at:"
-ls -lh target/release/wing-server target/release/wing-cli 2>/dev/null
+ls -lh target/release/wing-server target/release/wing 2>/dev/null

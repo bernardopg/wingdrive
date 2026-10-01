@@ -194,7 +194,7 @@ WIRE_METHODS.libraryActions['files.copy']  // => 'action:files.copy.input'
 
 ### Swift (Auto-Generated API)
 ```swift
-let client = WingDriveClient(socketPath: "/tmp/sd.sock")
+let client = WingDriveClient(socketPath: "/tmp/wing.sock")
 
 // Auto-generated methods
 let libraries = try await client.libraries.list()
@@ -203,7 +203,7 @@ let files = try await client.files.directoryListing(input)
 
 ### TypeScript (React Query + Auto-Generated Types)
 ```typescript
-const client = WingDriveClient.fromSocket('/tmp/sd.sock');
+const client = WingDriveClient.fromSocket('/tmp/wing.sock');
 
 // React Query hooks with auto-generated types
 const { data: libraries } = useCoreQuery({ type: 'libraries.list', input: {} });

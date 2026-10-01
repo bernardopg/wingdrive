@@ -17,7 +17,7 @@ When a volume is indexed ephemerally (recursive scan), browsing a subdirectory w
 ## Observed Behavior
 
 ```
-$ sd index ephemeral-cache
+$ wing index ephemeral-cache
 
 INDEXED PATHS            Children
 ○ /System/Volumes/Data   11
@@ -263,7 +263,7 @@ pub fn mark_indexing_complete(&self, path: &Path, scope: IndexScope) {
 - [ ] Only recursive scans provide parent coverage (shallow browses don't)
 - [ ] `indexed_paths` stores scope per path
 - [ ] No redundant ephemeral scan triggered when browsing under a volume-indexed path on macOS
-- [ ] Volume index + browse child shows single entry in `sd index ephemeral-cache`
+- [ ] Volume index + browse child shows single entry in `wing index ephemeral-cache`
 - [ ] Existing tests updated, new tests for symlink resolution and parent coverage
 
 ## Tests

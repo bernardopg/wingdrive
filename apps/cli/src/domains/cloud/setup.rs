@@ -356,7 +356,7 @@ async fn execute_add_cloud(ctx: &Context, input: VolumeAddCloudInput) -> Result<
 	);
 	println!("   Fingerprint: {}", output.fingerprint);
 	println!("   Service:     {:?}", output.service);
-	println!("\nYou can now add a location with interactive mode:\n  sd location add");
+	println!("\nYou can now add a location with interactive mode:\n  wing location add");
 
 	std::process::exit(0);
 }

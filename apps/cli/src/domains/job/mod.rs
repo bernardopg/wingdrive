@@ -401,6 +401,6 @@ async fn run_polling_job_monitor(ctx: &Context, args: JobMonitorArgs) -> Result<
 async fn run_tui_job_monitor(_ctx: &Context, _args: JobMonitorArgs) -> Result<()> {
 	println!("TUI Job Monitor");
 	println!("TUI implementation is being refined. Use --simple for now:");
-	println!("  sd job monitor --simple");
+	println!("  wing job monitor --simple");
 	Ok(())
 }

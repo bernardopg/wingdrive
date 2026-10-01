@@ -25,7 +25,7 @@ pub async fn exec(cmd: SpacesCmd, ctx: &Context) -> Result<()> {
 async fn list_spaces(ctx: &Context) -> Result<()> {
 	// Get current library ID
 	let library_id = ctx.library_id.ok_or_else(|| {
-		anyhow::anyhow!("No library selected. Run 'sd library list' to see available libraries")
+		anyhow::anyhow!("No library selected. Run 'wing library list' to see available libraries")
 	})?;
 
 	println!("Library ID: {}", library_id);

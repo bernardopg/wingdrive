@@ -7,8 +7,8 @@
 1. Start daemon: `cargo run --bin wing-daemon`
 2. Make code changes
 3. Run tests: `cargo test`
-4. Rebuild and restart: `cargo run --bin wing-cli -- restart`
-5. Test via CLI: `cargo run --bin wing-cli -- <command>`
+4. Rebuild and restart: `cargo run --bin wing -- restart`
+5. Test via CLI: `cargo run --bin wing -- <command>`
 
 ### Common Commands
 
@@ -18,7 +18,7 @@ cargo test                               # Run all tests
 cargo test <test_name>                   # Run specific test
 cargo clippy                             # Lint code
 cargo fmt                                # Format code
-cargo run --bin wing-cli -- <command>      # Run CLI (binary is wing-cli, not wingdrive)
+cargo run --bin wing -- <command>      # Run CLI (binary is `wing`)
 ```
 
 ### Common Mistakes
@@ -607,7 +607,7 @@ impl Job for MyJob {
 Use `RUST_LOG` environment variable:
 
 ```bash
-RUST_LOG=debug cargo run --bin wing-cli
+RUST_LOG=debug cargo run --bin wing
 RUST_LOG=wing_core=trace cargo run
 RUST_LOG=wing_core::ops=debug cargo run
 ```
@@ -743,7 +743,7 @@ After rebuilding, restart the daemon to use the latest code:
 
 ```bash
 cargo build
-cargo run --bin wing-cli -- restart
+cargo run --bin wing -- restart
 ```
 
 ### Verbose Logging
