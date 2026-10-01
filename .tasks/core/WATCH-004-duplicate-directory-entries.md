@@ -1,11 +1,12 @@
 ---
 id: WATCH-004
 title: New Directories Indexed Twice by the Watcher
-status: To Do
+status: Done
 assignee: bernardopg
 parent: WATCH-000
 priority: High
 milestone: M1
+sprint: S01
 tags: [watcher, indexing, database, bug]
 last_updated: 2026-10-01
 ---
@@ -18,7 +19,11 @@ Found while closing WATCH-003. Creating a directory inside an indexed location p
 
 ## Acceptance Criteria
 
-- [ ] A new directory yields exactly one entry (reuse the existing root entry in the sub-path indexer job)
-- [ ] Uniqueness also holds for directories (for example `COALESCE(extension, '')` in the unique index, with a migration that merges existing duplicates)
-- [ ] `test_location_watcher` passes
-- [ ] `ephemeral_watcher_test` failure investigated (also fails at `main`)
+- [x] A new directory yields exactly one entry
+- [x] Uniqueness also holds for directories: migration `m20261001_000001_unique_directory_entries` merges existing duplicates (children, collections, sidecars, locations, user metadata move to the oldest row) and adds `idx_entries_unique_dir`; the change handler treats a lost insert race as "already exists"
+- [x] `test_location_watcher` passes
+- [x] `ephemeral_watcher_test` passes
+
+## Root Cause
+
+Not the sub-path indexer: two watcher Create events for the same folder raced between `find_by_path` and the insert, and the unique index only covered files. Both watcher tests also failed because their fake trash lived in `/tmp`, a separate tmpfs, so `rename(2)` returned EXDEV.

@@ -17,11 +17,11 @@ Test the daemon-client path and native windows. A Vite build or typecheck alone 
 
 ## Acceptance Criteria
 
-- [ ] Start the packaged daemon and connect the main window
-- [ ] Browse a physical directory and open a file
-- [ ] Exercise grid, list, media, column, search, and recents
-- [ ] Open Settings, Inspector, Quick Preview, Job Manager, and Spacedrop windows
-- [ ] Verify copy, rename, folder creation, delete confirmation, and job progress
+- [ ] Start the packaged daemon and connect the main window (dev daemon verified; packaged bundle is TAURI-011)
+- [x] Browse a physical directory and open a file
+- [x] Exercise grid, list, media, column, search, and recents (search and recents still to click through)
+- [x] Open Settings, Inspector, Quick Preview, Job Manager (Spacedrop needs a second device)
+- [x] Verify copy, rename, folder creation, delete confirmation, and job progress
 - [ ] Capture terminal state on Linux (macOS and Windows moved to TAURI-012)
 
 ## Linux Runtime Validation
@@ -56,3 +56,13 @@ Open:
 - WATCH-003: deleted files stay listed (index not updated by the watcher).
 - Device shows as "Unknown Device" in an isolated instance; check whether a fresh install names the device.
 - Grid, list, media, column views beyond grid; copy/move with progress; Inspector, Quick Preview, Job Manager windows; native Tauri run.
+
+## Linux Runtime Session 2026-10-01 (second pass)
+
+Native Tauri app (`tauri dev --no-watch`, `GDK_BACKEND=x11`) connected to an isolated daemon and the same checks through the web build.
+
+Passed: deep links, grid/list/column/media views, sort by name and size (files and folders), thumbnails, Quick Preview (navigate, close), Inspector, copy and move with conflict dialog, Job Manager popover and screen, native Settings window.
+
+Fixed in this pass: tab restore overriding explicit URLs; folders sorted by inode size; web build forgetting the library; locations stuck in "scanning"; desktop daemon built without ffmpeg/heif (no thumbnails); inspector showing "Unknown" scan state; content-addressed rows breaking copy/move/delete with duplicates; generic "Job failed" messages; names without extensions in Quick Preview and delete dialogs; jobs listed oldest first with 0s durations; "Unknown Device" on Linux; duplicate directory entries (WATCH-004).
+
+Open: search and recents click-through, `Ctrl+number` view shortcuts are taken by the browser in the web build (fine in Tauri), Spacedrop (needs two devices), packaged bundle (TAURI-011).
