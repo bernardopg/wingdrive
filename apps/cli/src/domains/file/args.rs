@@ -3,8 +3,22 @@ use std::path::PathBuf;
 
 use sd_core::{
 	domain::addressing::{SdPath, SdPathBatch},
-	ops::files::copy::input::{CopyMethod, FileCopyInput},
+	ops::files::{
+		copy::input::{CopyMethod, FileCopyInput},
+		create_folder::input::CreateFolderInput,
+		delete::input::FileDeleteInput,
+		rename::input::FileRenameInput,
+	},
 };
+
+/// Builds a local SdPath resolved against the CLI's working directory.
+///
+/// The daemon runs with its own working directory, so a relative path sent
+/// unchanged would point somewhere else. Symlinks are not followed, so
+/// deleting or renaming a link acts on the link itself.
+pub fn local_path(path: PathBuf) -> SdPath {
+	SdPath::local(std::path::absolute(&path).unwrap_or(path))
+}
 
 #[derive(Args, Debug, Clone)]
 pub struct FileCopyArgs {
@@ -41,9 +55,9 @@ impl From<FileCopyArgs> for FileCopyInput {
 		let sources = args
 			.sources
 			.iter()
-			.map(|p| SdPath::local(p.clone()))
+			.map(|p| local_path(p.clone()))
 			.collect::<Vec<_>>();
-		let destination = SdPath::local(args.destination);
+		let destination = local_path(args.destination);
 		Self {
 			sources: SdPathBatch { paths: sources },
 			destination,
@@ -79,4 +93,56 @@ pub struct FileListArgs {
 	/// Sort order for the results (name, modified, size, type)
 	#[arg(long, default_value = "name")]
 	pub sort_by: String,
+}
+
+#[derive(Args, Debug, Clone)]
+pub struct FileRenameArgs {
+	/// File or directory to rename
+	pub path: PathBuf,
+
+	/// New name (file name only, not a path)
+	pub new_name: String,
+}
+
+impl From<FileRenameArgs> for FileRenameInput {
+	fn from(args: FileRenameArgs) -> Self {
+		Self::new(local_path(args.path), args.new_name)
+	}
+}
+
+#[derive(Args, Debug, Clone)]
+pub struct FileDeleteArgs {
+	/// Files or directories to delete (moved to trash unless --permanent)
+	#[arg(required = true)]
+	pub paths: Vec<PathBuf>,
+
+	/// Delete permanently instead of moving to trash
+	#[arg(long, default_value_t = false)]
+	pub permanent: bool,
+
+	/// Skip the confirmation prompt for permanent deletion
+	#[arg(long, short = 'y', default_value_t = false)]
+	pub yes: bool,
+}
+
+impl From<FileDeleteArgs> for FileDeleteInput {
+	fn from(args: FileDeleteArgs) -> Self {
+		let paths = args.paths.into_iter().map(local_path).collect();
+		Self::new(SdPathBatch { paths }).with_permanent(args.permanent)
+	}
+}
+
+#[derive(Args, Debug, Clone)]
+pub struct FileMkdirArgs {
+	/// Directory to create the folder in
+	pub parent: PathBuf,
+
+	/// Name of the new folder
+	pub name: String,
+}
+
+impl From<FileMkdirArgs> for CreateFolderInput {
+	fn from(args: FileMkdirArgs) -> Self {
+		Self::new(local_path(args.parent), args.name)
+	}
 }

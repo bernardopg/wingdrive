@@ -21,6 +21,12 @@ pub enum FileCmd {
 	Info(FileInfoArgs),
 	/// List directory contents
 	List(FileListArgs),
+	/// Rename a file or directory
+	Rename(FileRenameArgs),
+	/// Move files to trash, or delete them permanently with --permanent
+	Delete(FileDeleteArgs),
+	/// Create a folder
+	Mkdir(FileMkdirArgs),
 }
 
 pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
@@ -36,6 +42,43 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 			print_output!(ctx, &receipt, |receipt: &JobReceipt| {
 				println!("Dispatched copy job {}", receipt.id);
 			});
+		}
+		FileCmd::Rename(args) => {
+			let input: sd_core::ops::files::rename::input::FileRenameInput = args.into();
+			let receipt: JobReceipt = execute_action!(ctx, input);
+			print_output!(ctx, &receipt, |receipt: &JobReceipt| {
+				println!("Dispatched rename job {}", receipt.id);
+			});
+		}
+		FileCmd::Delete(args) => {
+			let (permanent, yes, count) = (args.permanent, args.yes, args.paths.len());
+			let input: sd_core::ops::files::delete::input::FileDeleteInput = args.into();
+			if let Err(errors) = input.validate() {
+				anyhow::bail!(errors.join("; "))
+			}
+			if permanent {
+				crate::util::confirm::confirm_or_abort(
+					&format!("Permanently delete {count} item(s)? This cannot be undone."),
+					yes,
+				)?;
+			}
+			let receipt: JobReceipt = execute_action!(ctx, input);
+			print_output!(ctx, &receipt, |receipt: &JobReceipt| {
+				let verb = if permanent { "delete" } else { "trash" };
+				println!("Dispatched {verb} job {}", receipt.id);
+			});
+		}
+		FileCmd::Mkdir(args) => {
+			let input: sd_core::ops::files::create_folder::input::CreateFolderInput = args.into();
+			let output: sd_core::ops::files::create_folder::output::CreateFolderOutput =
+				execute_action!(ctx, input);
+			print_output!(
+				ctx,
+				&output,
+				|output: &sd_core::ops::files::create_folder::output::CreateFolderOutput| {
+					println!("Created {}", output.folder_path);
+				}
+			);
 		}
 		FileCmd::Info(args) => {
 			let file_info = get_file_info(ctx, &args.path).await?;
@@ -253,7 +296,8 @@ async fn get_file_info(
 	use sd_core::ops::files::query::FileByPathQuery;
 
 	// Create the query with the local path
-	let query = FileByPathQuery::new(path.to_path_buf());
+	let query =
+		FileByPathQuery::new(std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf()));
 
 	// Execute the query using the core client
 	let json_response = ctx.core.query(&query, ctx.library_id).await?;
@@ -270,11 +314,10 @@ async fn list_directory(
 	include_hidden: bool,
 	sort_by: sd_core::ops::files::query::DirectorySortBy,
 ) -> Result<sd_core::ops::files::query::DirectoryListingOutput> {
-	use sd_core::domain::addressing::SdPath;
 	use sd_core::ops::files::query::DirectoryListingQuery;
 
 	// Create the SdPath for the directory
-	let sd_path = SdPath::local(path.to_path_buf());
+	let sd_path = self::args::local_path(path.to_path_buf());
 
 	// Create the query input
 	let input = sd_core::ops::files::query::DirectoryListingInput {
@@ -283,6 +326,7 @@ async fn list_directory(
 		include_hidden: Some(include_hidden),
 		sort_by,
 		folders_first: None,
+		sort_direction: None,
 	};
 
 	// Execute the query using the core client

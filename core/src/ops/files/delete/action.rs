@@ -1,7 +1,7 @@
 //! File delete action handler
 
 use super::input::FileDeleteInput;
-use super::job::{DeleteJob, DeleteMode, DeleteOptions};
+use super::job::{DeleteJob, DeleteOptions};
 use crate::{
 	context::CoreContext,
 	domain::addressing::{SdPath, SdPathBatch},
@@ -51,13 +51,13 @@ impl LibraryAction for FileDeleteAction {
 		library: std::sync::Arc<crate::library::Library>,
 		context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
-		let mode = if self.options.permanent {
-			DeleteMode::Permanent
+		// `permanent` arrives only after the client confirmed it (the UI
+		// dialog or the CLI prompt), so the action carries that confirmation.
+		let job = if self.options.permanent {
+			DeleteJob::permanent(self.targets, true)
 		} else {
-			DeleteMode::Trash
+			DeleteJob::trash(self.targets)
 		};
-
-		let job = DeleteJob::new(self.targets, mode);
 
 		let job_handle = library
 			.jobs()

@@ -25,7 +25,8 @@ Epics: `TAURI-000`, `EXPL-000`, `CLI-000` (estendido por `CLI-001`).
 | 9 | EXPL-005 | Abas com estado isolado | S03 |
 
 Backlog M1 sem sprint: `EXPL-001`, `EXPL-002`, `EXPL-003` (critérios herdados do upstream,
-revisar e fechar ou quebrar em tasks novas) e bugs que o `TAURI-006` encontrar.
+revisar e fechar ou quebrar em tasks novas), bugs que o `TAURI-006` encontrar, e `DEV-003`
+(clippy do workspace quebrado com toolchain 1.98).
 
 ## Next — M2: Desktop multiplataforma e release
 

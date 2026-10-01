@@ -193,8 +193,16 @@ impl SdPath {
 
 	/// Create an SdPath for a local file on this device
 	pub fn local(path: impl Into<PathBuf>) -> Self {
+		// Client processes such as the CLI never register a device, so the
+		// slug is empty there. An empty slug would be routed as a remote
+		// device by the daemon; the "local" placeholder resolves to the
+		// daemon's own device instead.
+		let mut device_slug = get_current_device_slug();
+		if device_slug.is_empty() {
+			device_slug = "local".to_string();
+		}
 		Self::Physical {
-			device_slug: get_current_device_slug(),
+			device_slug,
 			path: path.into(),
 		}
 	}
