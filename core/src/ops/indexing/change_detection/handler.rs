@@ -191,6 +191,32 @@ pub async fn build_dir_entry(
 ///
 /// Processes events in the correct order: removes first, then renames,
 /// creates, and finally modifies.
+/// SQLite reports write conflicts between pooled connections as "database is
+/// locked" (including SQLITE_BUSY_SNAPSHOT, which `busy_timeout` does not
+/// wait on). The handlers are idempotent, so retrying is safe.
+fn is_db_busy(err: &anyhow::Error) -> bool {
+	let msg = format!("{err:#}");
+	msg.contains("database is locked") || msg.contains("database is busy")
+}
+
+const BUSY_RETRIES: u32 = 4;
+
+/// Runs one change handler call, retrying with backoff while SQLite is busy.
+macro_rules! retry_busy {
+	($call:expr) => {{
+		let mut attempt = 0;
+		loop {
+			match $call.await {
+				Err(e) if attempt < BUSY_RETRIES && is_db_busy(&e) => {
+					attempt += 1;
+					tokio::time::sleep(std::time::Duration::from_millis(25 << attempt)).await;
+				}
+				result => break result,
+			}
+		}
+	}};
+}
+
 pub async fn apply_batch<H: ChangeHandler>(
 	handler: &mut H,
 	events: Vec<sd_fs_watcher::FsEvent>,
@@ -234,13 +260,13 @@ pub async fn apply_batch<H: ChangeHandler>(
 
 	// Process in order: removes, renames, creates, modifies
 	for path in removes {
-		if let Err(e) = handle_remove(handler, &path).await {
+		if let Err(e) = retry_busy!(handle_remove(handler, &path)) {
 			tracing::error!("Failed to handle remove for {}: {}", path.display(), e);
 		}
 	}
 
 	for (from, to) in renames {
-		if let Err(e) = handle_rename(handler, &from, &to, config).await {
+		if let Err(e) = retry_busy!(handle_rename(handler, &from, &to, config)) {
 			tracing::error!(
 				"Failed to handle rename from {} to {}: {}",
 				from.display(),
@@ -251,13 +277,13 @@ pub async fn apply_batch<H: ChangeHandler>(
 	}
 
 	for path in creates {
-		if let Err(e) = handle_create(handler, &path, config).await {
+		if let Err(e) = retry_busy!(handle_create(handler, &path, config)) {
 			tracing::error!("Failed to handle create for {}: {}", path.display(), e);
 		}
 	}
 
 	for path in modifies {
-		if let Err(e) = handle_modify(handler, &path, config).await {
+		if let Err(e) = retry_busy!(handle_modify(handler, &path, config)) {
 			tracing::error!("Failed to handle modify for {}: {}", path.display(), e);
 		}
 	}

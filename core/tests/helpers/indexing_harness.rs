@@ -62,8 +62,14 @@ impl IndexingHarnessBuilder {
 		// Initialize tracing
 		init_test_tracing(&self.test_name, &snapshot_dir)?;
 
+		// Keep the core's data directory beside the test locations, not above
+		// them: the watcher ignores everything under the data directory, so
+		// locations nested in it never report filesystem events.
+		let data_dir = test_root.join("data");
+		tokio::fs::create_dir_all(&data_dir).await?;
+
 		// Create config with configurable watcher
-		let mut config = TestConfigBuilder::new(test_root.clone())
+		let mut config = TestConfigBuilder::new(data_dir)
 			.build()
 			.context("Failed to create test config")?;
 

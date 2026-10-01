@@ -1,7 +1,7 @@
 ---
 id: WATCH-003
 title: Watcher Does Not Sync Creates and Deletes on Linux
-status: To Do
+status: Done
 assignee: bernardopg
 parent: WATCH-000
 priority: High
@@ -24,8 +24,25 @@ Found during TAURI-006 on 2026-10-01. In an indexed location on Linux, files del
 
 ## Acceptance Criteria
 
-- [ ] Reproduce with debug logging (`RUST_LOG` must reach the daemon started by `sd-cli start`) and find where events stop
-- [ ] Deleting a file in an indexed location removes its entry and the row disappears from the explorer
-- [ ] Creating a file in an indexed location adds it without leaving the directory
-- [ ] Holds after a daemon restart
-- [ ] Integration test covers create and delete on Linux
+- [x] Reproduce with debug logging and find where events stop
+- [x] Deleting a file in an indexed location removes its entry (rm, move out, and trash)
+- [x] Creating a file in an indexed location adds it without leaving the directory (20 concurrent files: 20/20)
+- [x] Holds after a daemon restart
+- [x] Tests: `sd-fs-watcher` unit tests for move out, move in, and paired rename; `indexing_responder_reindex_test` (folder moved into a location) now passes
+
+## Root Cause
+
+- Plain `rm` already worked. Trash and "move out of the location" are renames to a path outside the watched tree. inotify reports only the source half, and the Linux handler buffered it as a modify, which the change handler skipped because the path no longer existed. The entry stayed in the index forever.
+- The reverse case (moving a folder in from outside) was buffered as a modify of an unknown path and skipped too, so moved-in content was never indexed.
+- Concurrent creates sometimes failed with SQLite `database is locked` (SQLITE_BUSY_SNAPSHOT, code 517), which `busy_timeout` does not wait on, and the file was silently left out of the index.
+- The "created after restart was not indexed" observation was an artifact of the investigation: a `sqlite3 database.db` call created an empty `database.db`, and the daemon refuses to load a library that has both `database.db` and `library.db`.
+
+## Fix
+
+- `crates/fs-watcher/src/platform/linux.rs`: unpaired rename halves wait one tick. A source that no paired rename claims and whose path is gone becomes `Remove`. A target that exists becomes `Create`. Paired renames cancel both, so in-tree renames keep their entry and UUID.
+- `core/src/ops/indexing/change_detection/handler.rs`: change handlers retry with backoff on "database is locked/busy"; the handlers are idempotent.
+- `core/tests/helpers/indexing_harness.rs`: the core data directory moved to `<test_root>/data`. Locations were nested in the data directory, which the watcher ignores, so the watcher integration tests never saw events.
+
+## Follow-up
+
+WATCH-004: new directories get two entries (pre-existing, fails `test_location_watcher` at `main`).
