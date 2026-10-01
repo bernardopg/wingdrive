@@ -34,6 +34,12 @@ milestone: M1       # milestone do roadmap
 sprint: S01         # só quando comprometida num sprint
 ```
 
+## Convenção de nomes
+
+Nada no projeto se chama "Spacedrive" nem usa prefixo `sd`/`sd-`. Use `wingdrive` ou `wing`
+(crates, binários, pacotes, scripts, funções, tipos, variáveis de ambiente, textos). Exceção:
+atribuição legal ao upstream. Ver `FORK-003`.
+
 ## Definition of Ready (entra no sprint)
 
 - Critérios de aceite verificáveis escritos na task.

@@ -648,6 +648,10 @@ cargo test --lib              # Library tests only
 cargo test -- --nocapture     # Show output
 ```
 
+## Naming
+
+Never name anything "Spacedrive" or with an `sd`/`sd-` prefix: crates, binaries, packages, scripts, functions, types, environment variables, or user-facing text. Use `wingdrive` or `wing`. The only exception is legally required upstream attribution. Existing `sd` names are being removed under `FORK-003`; do not add new ones.
+
 ## Task Tracking
 
 WingDrive uses a file-based task system in `/.tasks/` to track features, epics, and development work. All task files are version-controlled alongside the code.
