@@ -220,7 +220,7 @@ impl LibraryQuery for MediaListingQuery {
 					" ORDER BY COALESCE(imd.date_taken, vmd.date_captured, e.modified_at) DESC",
 				)
 			}
-			MediaSortBy::Name => sql_query.push_str(" ORDER BY e.name ASC"),
+			MediaSortBy::Name => sql_query.push_str(" ORDER BY e.name COLLATE NOCASE ASC"),
 			MediaSortBy::Size => sql_query.push_str(" ORDER BY e.size DESC"),
 		}
 

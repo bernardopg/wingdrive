@@ -41,8 +41,14 @@ export function TabNavigationSync() {
 		}
 	}, [currentPath, activeTab, activeTabId, updateTabPath, updateTabTitle, location.pathname, location.search]);
 
-	// Navigate to saved location when switching tabs
+	// Navigate to saved location when switching tabs. On first mount the
+	// saved path is only restored when the app opened at its root; an explicit
+	// deep link (a pasted or reloaded URL) wins over the remembered location.
+	const isFirstRunRef = useRef(true);
 	useEffect(() => {
+		const isFirstRun = isFirstRunRef.current;
+		isFirstRunRef.current = false;
+		if (isFirstRun && location.pathname !== "/") return;
 		if (activeTab && currentPath !== activeTab.savedPath) {
 			navigate(activeTab.savedPath, { replace: true });
 		}

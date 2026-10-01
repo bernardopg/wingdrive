@@ -256,7 +256,10 @@ impl DirectoryListingQuery {
 		match self.input.sort_by {
 			DirectorySortBy::Name => sql_query.push_str(&format!("e.name COLLATE NOCASE {dir}")),
 			DirectorySortBy::Modified => sql_query.push_str(&format!("e.modified_at {dir}")),
-			DirectorySortBy::Size => sql_query.push_str(&format!("e.size {dir}")),
+			// Same value File::size reports: directories use their aggregate size
+			DirectorySortBy::Size => {
+				sql_query.push_str(&format!("MAX(e.aggregate_size, e.size) {dir}"))
+			}
 			DirectorySortBy::Type => {
 				if !folders_first {
 					// Only add kind sorting if folders_first isn't already set

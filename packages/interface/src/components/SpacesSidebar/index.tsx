@@ -429,9 +429,11 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 		};
 	}, [client]);
 
-	// Auto-select first library on mount if none selected
+	// Auto-select the first library when none (or an unknown one) is selected
 	useEffect(() => {
-		if (libraries && libraries.length > 0 && !currentLibraryId) {
+		// Also covers a remembered library that no longer exists
+		const known = libraries?.some((lib) => lib.id === currentLibraryId);
+		if (libraries && libraries.length > 0 && !known) {
 			const firstLib = libraries[0];
 
 			// Set library ID via platform (syncs to all windows on Tauri)
