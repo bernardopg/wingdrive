@@ -21,13 +21,6 @@ export function FloatingControls() {
       >
         <div className="flex items-center gap-3">
           <button
-            className="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 transition-colors flex items-center justify-center"
-            style={{ WebkitAppRegion: "no-drag" } as any}
-            onClick={() => alert("Stop!")}
-          >
-            <div className="w-3 h-3 bg-white rounded-sm" />
-          </button>
-          <button
             className="w-8 h-8 rounded-full bg-gray-600 hover:bg-gray-500 transition-colors flex items-center justify-center"
             style={{ WebkitAppRegion: "no-drag" } as any}
             onClick={handleClose}

@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { toast } from "@wingdrive/primitives";
 import { useCoreQuery, useCoreMutation } from "../../contexts/SpacedriveContext";
 
 interface ServicesSettingsForm {
@@ -26,7 +27,7 @@ export function ServicesSettings() {
     refetch();
 
     if (result.requires_restart) {
-      alert("Some changes require a daemon restart to take effect.");
+      toast.info("Some changes require a daemon restart to take effect.");
     }
   });
 

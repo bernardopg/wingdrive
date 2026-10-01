@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "@wingdrive/primitives";
 import { useCoreQuery, useCoreMutation } from "../../contexts/SpacedriveContext";
+import { usePlatform } from "../../contexts/PlatformContext";
 
 interface DeviceSettingsForm {
   name: string;
@@ -13,6 +14,7 @@ export function GeneralSettings() {
   const configQuery = useCoreQuery({ type: "config.app.get", input: null as any });
   const updateDevice = useCoreMutation("device.update");
   const resetData = useCoreMutation("core.reset");
+  const platform = usePlatform();
 
   const { data: status } = statusQuery;
   const { data: config } = configQuery;
@@ -54,26 +56,28 @@ export function GeneralSettings() {
     }
   });
 
+  // platform.confirm, not window.confirm: WebView2 returns true from
+  // window.confirm without showing anything, which would wipe data unasked.
   const handleResetData = () => {
-    const confirmed = window.confirm(
-      "Reset All Data\n\nThis will permanently delete all libraries, settings, and cached data. The app will need to be restarted. Are you sure?"
+    platform.confirm(
+      "Reset All Data\n\nThis will permanently delete all libraries, settings, and cached data. The app will need to be restarted. Are you sure?",
+      (confirmed) => {
+        if (!confirmed) return;
+        resetData.mutate(
+          { confirm: true },
+          {
+            onSuccess: (result) => {
+              toast.success(
+                result.message || "Data has been reset. Please restart the application."
+              );
+            },
+            onError: (error) => {
+              toast.error(error.message || "Failed to reset data");
+            },
+          }
+        );
+      }
     );
-
-    if (confirmed) {
-      resetData.mutate(
-        { confirm: true },
-        {
-          onSuccess: (result) => {
-            alert(
-              result.message || "Data has been reset. Please restart the application."
-            );
-          },
-          onError: (error) => {
-            alert("Error: " + (error.message || "Failed to reset data"));
-          },
-        }
-      );
-    }
   };
 
   return (

@@ -1,7 +1,7 @@
 ---
 id: TAURI-009
 title: Replace Native alert() Calls with Toasts
-status: To Do
+status: Done
 assignee: bernardopg
 parent: TAURI-000
 priority: Medium
@@ -17,7 +17,13 @@ Native `alert()` blocks the webview and looks foreign in the desktop app. Remain
 
 ## Acceptance Criteria
 
-- [ ] `Settings/pages/GeneralSettings.tsx` reset success and error use toasts
-- [ ] `Settings/pages/ServicesSettings.tsx` restart notice uses a toast
-- [ ] `windows/FloatingControls.tsx` placeholder `alert("Stop!")` is wired to a real action or removed
-- [ ] No `alert(` remains in `packages/interface/src`
+- [x] `Settings/pages/GeneralSettings.tsx` reset success and error use toasts
+- [x] `Settings/pages/ServicesSettings.tsx` restart notice uses a toast
+- [x] `windows/FloatingControls.tsx` placeholder `alert("Stop!")` removed (demo window, no real action)
+- [x] No `alert(` or `window.confirm` remains in `packages/interface/src`
+
+## Safety Fix
+
+"Reset All Data" used `window.confirm`, which returns `true` on WebView2 (Windows) without showing a dialog, so a single click would have wiped all libraries. It now uses `platform.confirm`, which the Tauri platform implements with a real dialog.
+
+Verified with `bun run typecheck`.
