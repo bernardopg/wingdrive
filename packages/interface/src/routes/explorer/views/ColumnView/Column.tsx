@@ -145,7 +145,7 @@ export const Column = memo(function Column({
 	virtualFiles,
 }: ColumnProps) {
 	const parentRef = useRef<HTMLDivElement>(null);
-	const { viewSettings, sortBy } = useExplorer();
+	const { viewSettings, sortBy, sortDirection } = useExplorer();
 	const { selectedFiles } = useSelection();
 
 	const directoryQuery = useNormalizedQuery({
@@ -156,6 +156,7 @@ export const Column = memo(function Column({
 			include_hidden: viewSettings.showHiddenFiles,
 			sort_by: sortBy as any,
 			folders_first: viewSettings.foldersFirst,
+			sort_direction: sortDirection,
 		},
 		resourceType: "file",
 		pathScope: path ?? undefined,

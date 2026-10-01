@@ -8,19 +8,26 @@ import {
   FileText,
   Check,
   Camera,
+  ArrowUp,
+  ArrowDown,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { CircleButton } from "@wingdrive/primitives";
-import type { DirectorySortBy, MediaSortBy } from "@sd/ts-client";
+import type { DirectorySortBy, MediaSortBy, SortDirection } from "@sd/ts-client";
 
 interface SortMenuPanelProps {
   sortBy: DirectorySortBy | MediaSortBy;
+  /** Shown on the active option; selecting it again flips the direction. */
+  sortDirection: SortDirection;
   onSortChange: (sort: DirectorySortBy | MediaSortBy) => void;
   viewMode: "grid" | "list" | "media" | "column";
 }
 
-export function SortMenuPanel({ sortBy, onSortChange, viewMode }: SortMenuPanelProps) {
+export function SortMenuPanel({ sortBy, sortDirection, onSortChange, viewMode }: SortMenuPanelProps) {
+  // Media listings have their own fixed ordering and ignore the direction.
+  const ActiveIcon =
+    viewMode === "media" ? Check : sortDirection === "Asc" ? ArrowUp : ArrowDown;
   const sortOptions = viewMode === "media"
     ? [
         { value: "datetaken", label: "Date Taken", icon: Camera },
@@ -60,7 +67,7 @@ export function SortMenuPanel({ sortBy, onSortChange, viewMode }: SortMenuPanelP
             >
               <Icon className="size-4" weight="bold" />
               <span className="flex-1 text-left">{option.label}</span>
-              {isActive && <Check className="size-4" weight="bold" />}
+              {isActive && <ActiveIcon className="size-4" weight="bold" />}
             </button>
           );
         })}
@@ -71,12 +78,13 @@ export function SortMenuPanel({ sortBy, onSortChange, viewMode }: SortMenuPanelP
 
 interface SortMenuProps {
   sortBy: DirectorySortBy | MediaSortBy;
+  sortDirection: SortDirection;
   onSortChange: (sort: DirectorySortBy | MediaSortBy) => void;
   viewMode: "grid" | "list" | "media" | "column";
   className?: string;
 }
 
-export function SortMenu({ sortBy, onSortChange, viewMode, className }: SortMenuProps) {
+export function SortMenu({ sortBy, sortDirection, onSortChange, viewMode, className }: SortMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -142,6 +150,7 @@ export function SortMenu({ sortBy, onSortChange, viewMode, className }: SortMenu
             >
               <SortMenuPanel
                 sortBy={sortBy}
+                sortDirection={sortDirection}
                 onSortChange={onSortChange}
                 viewMode={viewMode}
               />

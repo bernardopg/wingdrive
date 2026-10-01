@@ -41,6 +41,7 @@ export function ExplorerView() {
 		setViewMode,
 		sortBy,
 		setSortBy,
+		sortDirection,
 		viewSettings,
 		setViewSettings,
 		goBack,
@@ -143,11 +144,12 @@ export function ExplorerView() {
 		() => (
 			<SortMenuPanel
 				sortBy={sortBy}
+				sortDirection={sortDirection}
 				onSortChange={setSortBy}
 				viewMode={viewMode as any}
 			/>
 		),
-		[sortBy, setSortBy, viewMode]
+		[sortBy, sortDirection, setSortBy, viewMode]
 	);
 
 	// Allow rendering if we have a currentPath, a virtual view, or a special mode
@@ -284,6 +286,7 @@ export function ExplorerView() {
 							>
 								<SortMenu
 									sortBy={sortBy}
+									sortDirection={sortDirection}
 									onSortChange={setSortBy}
 									viewMode={viewMode as any}
 								/>

@@ -44,7 +44,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		requestedPage <= Math.floor(0xffffffff / RECENTS_PAGE_SIZE)
 		? requestedPage
 		: 0;
-	const { mode, currentPath, sortBy, viewSettings } = explorer;
+	const { mode, currentPath, sortBy, sortDirection, viewSettings } = explorer;
 
 	// Check for virtual listing first
 	const { files: virtualFiles, isVirtualView } = useVirtualListing();
@@ -249,6 +249,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 					include_hidden: viewSettings.showHiddenFiles,
 					sort_by: sortBy as DirectorySortBy,
 					folders_first: viewSettings.foldersFirst,
+					sort_direction: sortDirection,
 				}
 			: null!,
 		resourceType: "file",

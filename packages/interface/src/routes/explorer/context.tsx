@@ -22,6 +22,7 @@ import type {
 	ListLibraryDevicesInput,
 	DirectorySortBy,
 	MediaSortBy,
+	SortDirection,
 	SearchFilters as ApiSearchFilters,
 } from "@sd/ts-client";
 import {
@@ -30,6 +31,18 @@ import {
 } from "@sd/ts-client";
 
 export type SortBy = DirectorySortBy | MediaSortBy;
+
+/**
+ * Direction actually applied for a sort key. Mirrors the core default:
+ * names ascend, dates and sizes show the newest and largest first.
+ */
+export function effectiveSortDirection(
+	sortBy: SortBy,
+	direction: SortDirection | null | undefined,
+): SortDirection {
+	if (direction) return direction;
+	return sortBy === "name" || sortBy === "type" ? "Asc" : "Desc";
+}
 export type ViewMode =
 	| "grid"
 	| "list"
@@ -413,7 +426,9 @@ interface ExplorerContextValue {
 	viewMode: ViewMode;
 	setViewMode: (mode: ViewMode) => void;
 	sortBy: SortBy;
+	/** Selecting the active sort again flips its direction. */
 	setSortBy: (sort: SortBy) => void;
+	sortDirection: SortDirection;
 	viewSettings: ViewSettings;
 	setViewSettings: (settings: Partial<ViewSettings>) => void;
 
@@ -671,6 +686,10 @@ export function ExplorerProvider({
 	// View settings from TabManager (per-tab)
 	const viewMode = tabState.viewMode as ViewMode;
 	const sortByValue = tabState.sortBy as SortBy;
+	const sortDirection = effectiveSortDirection(
+		sortByValue,
+		tabState.sortDirection,
+	);
 	const viewSettings: ViewSettings = useMemo(
 		() => ({
 			gridSize: tabState.gridSize,
@@ -705,12 +724,21 @@ export function ExplorerProvider({
 
 	const setSortBy = useCallback(
 		(sort: SortBy) => {
+			const flip: SortDirection = sortDirection === "Asc" ? "Desc" : "Asc";
 			updateExplorerState(activeTabId, {
 				sortBy: sort as TabSortBy,
+				sortDirection: sort === sortByValue ? flip : null,
 			});
 			sortPrefs.setPreferences(pathKey, sort);
 		},
-		[activeTabId, updateExplorerState, pathKey, sortPrefs],
+		[
+			activeTabId,
+			updateExplorerState,
+			pathKey,
+			sortPrefs,
+			sortByValue,
+			sortDirection,
+		],
 	);
 
 	const setViewSettings = useCallback(
@@ -837,6 +865,7 @@ export function ExplorerProvider({
 			setViewMode,
 			sortBy: sortByValue,
 			setSortBy,
+			sortDirection,
 			viewSettings,
 			setViewSettings,
 			columnStack,
@@ -885,6 +914,7 @@ export function ExplorerProvider({
 			setViewMode,
 			sortByValue,
 			setSortBy,
+			sortDirection,
 			viewSettings,
 			setViewSettings,
 			columnStack,

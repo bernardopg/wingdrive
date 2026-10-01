@@ -18,6 +18,7 @@ export function useExplorerKeyboard() {
 	const {
 		currentPath,
 		sortBy,
+		sortDirection,
 		navigateToPath,
 		viewMode,
 		viewSettings,
@@ -62,6 +63,8 @@ export function useExplorerKeyboard() {
 					limit: null,
 					include_hidden: viewSettings.showHiddenFiles,
 					sort_by: sortBy as DirectorySortBy,
+					folders_first: viewSettings.foldersFirst,
+					sort_direction: sortDirection,
 				}
 			: null!,
 		resourceType: "file",

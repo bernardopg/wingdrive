@@ -10,6 +10,7 @@ import {
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import { deriveTitleFromPath } from "./deriveTitle";
 import { usePlatform } from "../../contexts/PlatformContext";
+import type { SortDirection } from "@sd/ts-client";
 type Router = ReturnType<typeof createBrowserRouter>;
 
 // ============================================================================
@@ -41,6 +42,8 @@ export interface TabExplorerState {
 	// View settings
 	viewMode: ViewMode;
 	sortBy: SortBy;
+	/** Explicit direction; null uses the natural default for `sortBy`. */
+	sortDirection: SortDirection | null;
 	gridSize: number;
 	gapSize: number;
 	foldersFirst: boolean;
@@ -67,6 +70,7 @@ interface ClosedTab {
 const DEFAULT_EXPLORER_STATE: TabExplorerState = {
 	viewMode: "grid",
 	sortBy: "name",
+	sortDirection: null,
 	gridSize: 120,
 	gapSize: 16,
 	foldersFirst: true,

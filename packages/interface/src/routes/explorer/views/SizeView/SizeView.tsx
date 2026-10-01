@@ -310,6 +310,7 @@ export function SizeView() {
 	const {
 		currentPath,
 		sortBy,
+		sortDirection,
 		navigateToPath,
 		viewSettings,
 		sidebarVisible,
@@ -351,7 +352,8 @@ export function SizeView() {
 					limit: null,
 					include_hidden: viewSettings.showHiddenFiles,
 					sort_by: sortBy as DirectorySortBy,
-					folders_first: viewSettings.foldersFirst
+					folders_first: viewSettings.foldersFirst,
+					sort_direction: sortDirection,
 				}
 			: null!,
 		resourceType: 'file',

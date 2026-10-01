@@ -12,6 +12,7 @@ use crate::{
 		video_media_data,
 	},
 	infra::query::LibraryQuery,
+	ops::search::input::SortDirection,
 };
 use sea_orm::{
 	ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, JoinType, QueryFilter,
@@ -36,6 +37,10 @@ pub struct DirectoryListingInput {
 	pub sort_by: DirectorySortBy,
 	/// Whether to show folders before files (default: false)
 	pub folders_first: Option<bool>,
+	/// Sort direction; when absent each `sort_by` uses its natural default
+	#[serde(default)]
+	#[specta(optional)]
+	pub sort_direction: Option<SortDirection>,
 }
 
 /// Sort options for directory listing
@@ -78,6 +83,7 @@ impl DirectoryListingQuery {
 				include_hidden: Some(false),
 				sort_by: DirectorySortBy::Type,
 				folders_first: Some(false),
+				sort_direction: None,
 			},
 		}
 	}
@@ -95,8 +101,28 @@ impl DirectoryListingQuery {
 				include_hidden,
 				sort_by,
 				folders_first: Some(false),
+				sort_direction: None,
 			},
 		}
+	}
+}
+
+impl DirectorySortBy {
+	/// Direction used when the caller does not choose one: names ascend,
+	/// dates and sizes show the newest and largest first.
+	fn default_direction(&self) -> SortDirection {
+		match self {
+			Self::Name | Self::Type => SortDirection::Asc,
+			Self::Modified | Self::Size => SortDirection::Desc,
+		}
+	}
+}
+
+impl DirectoryListingInput {
+	fn sort_direction(&self) -> SortDirection {
+		self.sort_direction
+			.clone()
+			.unwrap_or_else(|| self.sort_by.default_direction())
 	}
 }
 
@@ -223,16 +249,20 @@ impl DirectoryListingQuery {
 			sql_query.push_str("e.kind DESC, ");
 		}
 
+		let dir = match self.input.sort_direction() {
+			SortDirection::Asc => "ASC",
+			SortDirection::Desc => "DESC",
+		};
 		match self.input.sort_by {
-			DirectorySortBy::Name => sql_query.push_str("e.name ASC"),
-			DirectorySortBy::Modified => sql_query.push_str("e.modified_at DESC"),
-			DirectorySortBy::Size => sql_query.push_str("e.size DESC"),
+			DirectorySortBy::Name => sql_query.push_str(&format!("e.name {dir}")),
+			DirectorySortBy::Modified => sql_query.push_str(&format!("e.modified_at {dir}")),
+			DirectorySortBy::Size => sql_query.push_str(&format!("e.size {dir}")),
 			DirectorySortBy::Type => {
 				if !folders_first {
 					// Only add kind sorting if folders_first isn't already set
 					sql_query.push_str("e.kind DESC, ");
 				}
-				sql_query.push_str("e.name ASC");
+				sql_query.push_str(&format!("e.name {dir}"));
 			}
 		}
 
@@ -820,6 +850,7 @@ impl DirectoryListingQuery {
 		use crate::domain::file::EntryKind;
 
 		let folders_first = self.input.folders_first.unwrap_or(false);
+		let descending = matches!(self.input.sort_direction(), SortDirection::Desc);
 
 		files.sort_by(|a, b| {
 			// Folders first if enabled
@@ -831,11 +862,11 @@ impl DirectoryListingQuery {
 				}
 			}
 
-			// Then apply sort order
-			match self.input.sort_by {
+			// Then apply sort order; keys compare ascending and flip for descending
+			let ordering = match self.input.sort_by {
 				DirectorySortBy::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-				DirectorySortBy::Modified => b.modified_at.cmp(&a.modified_at),
-				DirectorySortBy::Size => b.size.cmp(&a.size),
+				DirectorySortBy::Modified => a.modified_at.cmp(&b.modified_at),
+				DirectorySortBy::Size => a.size.cmp(&b.size),
 				DirectorySortBy::Type => {
 					// Sort by kind (directories first), then name
 					if !folders_first {
@@ -847,6 +878,11 @@ impl DirectoryListingQuery {
 					}
 					a.name.to_lowercase().cmp(&b.name.to_lowercase())
 				}
+			};
+			if descending {
+				ordering.reverse()
+			} else {
+				ordering
 			}
 		});
 	}
@@ -1004,3 +1040,50 @@ impl DirectoryListingQuery {
 
 // Register the query
 crate::register_library_query!(DirectoryListingQuery, "files.directory_listing");
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::ops::indexing::{database_storage::EntryMetadata, state::EntryKind};
+	use std::path::PathBuf;
+
+	fn file(name: &str, size: u64) -> File {
+		let path = PathBuf::from("/tmp").join(name);
+		let metadata = EntryMetadata {
+			path: path.clone(),
+			kind: EntryKind::File,
+			size,
+			modified: None,
+			accessed: None,
+			created: None,
+			inode: None,
+			permissions: None,
+			is_hidden: false,
+		};
+		File::from_ephemeral(Uuid::new_v4(), &metadata, SdPath::local(path))
+	}
+
+	fn sorted_names(sort_by: DirectorySortBy, direction: Option<SortDirection>) -> Vec<String> {
+		let mut query = DirectoryListingQuery::new(SdPath::local("/tmp"));
+		query.input.sort_by = sort_by;
+		query.input.sort_direction = direction;
+		let mut files = vec![file("b.txt", 1), file("c.txt", 3), file("a.txt", 2)];
+		query.sort_files(&mut files);
+		files.into_iter().map(|f| f.name).collect()
+	}
+
+	#[test]
+	fn sort_direction_defaults_and_overrides() {
+		assert_eq!(sorted_names(DirectorySortBy::Name, None), ["a", "b", "c"]);
+		assert_eq!(
+			sorted_names(DirectorySortBy::Name, Some(SortDirection::Desc)),
+			["c", "b", "a"]
+		);
+		// Size defaults to largest first
+		assert_eq!(sorted_names(DirectorySortBy::Size, None), ["c", "a", "b"]);
+		assert_eq!(
+			sorted_names(DirectorySortBy::Size, Some(SortDirection::Asc)),
+			["b", "a", "c"]
+		);
+	}
+}

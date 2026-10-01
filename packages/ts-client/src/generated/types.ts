@@ -808,7 +808,11 @@ sort_by: DirectorySortBy;
 /**
  * Whether to show folders before files (default: false)
  */
-folders_first: boolean | null };
+folders_first: boolean | null; 
+/**
+ * Sort direction; when absent each `sort_by` uses its natural default
+ */
+sort_direction?: SortDirection | null };
 
 /**
  * Output containing directory contents

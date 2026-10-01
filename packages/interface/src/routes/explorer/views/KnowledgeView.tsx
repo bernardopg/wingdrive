@@ -81,7 +81,7 @@ const CONTENT_KIND_LABELS: Record<ContentKind, string> = {
 };
 
 export function KnowledgeView() {
-	const { inspectorVisible, currentPath, sortBy, viewSettings } =
+	const { inspectorVisible, currentPath, sortBy, sortDirection, viewSettings } =
 		useExplorer();
 
 	const directoryQuery = useNormalizedQuery({
@@ -93,6 +93,7 @@ export function KnowledgeView() {
 					include_hidden: viewSettings.showHiddenFiles,
 					sort_by: sortBy,
 					folders_first: viewSettings.foldersFirst,
+					sort_direction: sortDirection,
 				}
 			: null,
 		resourceType: "file",

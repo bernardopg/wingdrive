@@ -1,7 +1,7 @@
 import { useCallback, useRef, useEffect, memo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { flexRender } from "@tanstack/react-table";
-import { CaretDown } from "@phosphor-icons/react";
+import { CaretDown, CaretUp } from "@phosphor-icons/react";
 import clsx from "clsx";
 
 import { useExplorer } from "../../context";
@@ -20,7 +20,7 @@ import { DragSelect } from "./DragSelect";
 import { useEmptySpaceContextMenu } from "../../hooks/useEmptySpaceContextMenu";
 
 export const ListView = memo(function ListView() {
-	const { sortBy, setSortBy, setCurrentFiles } = useExplorer();
+	const { sortBy, setSortBy, sortDirection, setCurrentFiles } = useExplorer();
 	const {
 		focusedIndex,
 		setFocusedIndex,
@@ -192,9 +192,12 @@ export const ListView = memo(function ListView() {
 											)}
 										</span>
 
-										{isSorted && (
-											<CaretDown className="size-3 flex-shrink-0 text-ink-faint" />
-										)}
+										{isSorted &&
+											(sortDirection === "Asc" ? (
+												<CaretUp className="size-3 flex-shrink-0 text-ink-faint" />
+											) : (
+												<CaretDown className="size-3 flex-shrink-0 text-ink-faint" />
+											))}
 
 										{/* Resize handle */}
 										{canResize && (

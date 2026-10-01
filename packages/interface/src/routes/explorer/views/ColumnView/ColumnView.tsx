@@ -22,6 +22,7 @@ export function ColumnView() {
 		currentPath,
 		navigateToPath,
 		sortBy,
+		sortDirection,
 		viewSettings,
 		columnStack,
 		setColumnStack,
@@ -192,6 +193,7 @@ export function ColumnView() {
 					include_hidden: viewSettings.showHiddenFiles,
 					sort_by: sortBy as DirectorySortBy,
 					folders_first: viewSettings.foldersFirst,
+					sort_direction: sortDirection,
 				}
 			: null!,
 		resourceType: "file",
@@ -242,6 +244,7 @@ export function ColumnView() {
 					include_hidden: false,
 					sort_by: sortBy as DirectorySortBy,
 					folders_first: viewSettings.foldersFirst,
+					sort_direction: sortDirection,
 				}
 			: null!,
 		resourceType: "file",
