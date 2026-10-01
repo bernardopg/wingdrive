@@ -63,14 +63,18 @@ export default defineConfig({
 						},
 					]
 				: []),
-			...(hasSpacebot
-				? [
-						{
-							find: "@spacebot/api-client",
-							replacement: `${spacebot}/api-client/src`,
-						},
-					]
-				: []),
+			// Spacebot lives in a separate private repo. Without it, reuse the
+			// desktop app's stub; an external specifier left a bare import that
+			// the browser cannot resolve, so the web UI rendered a blank page.
+			{
+				find: /^@spacebot\/api-client$/,
+				replacement: hasSpacebot
+					? `${spacebot}/api-client/src`
+					: path.resolve(
+							import.meta.dirname,
+							"../tauri/src/stubs/spacebot-api-client.ts",
+						),
+			},
 			{
 				find: "@sd/interface",
 				replacement: path.resolve(import.meta.dirname, "../../packages/interface/src"),
@@ -111,10 +115,5 @@ export default defineConfig({
 		outDir: "dist",
 		emptyOutDir: true,
 		sourcemap: true,
-		rollupOptions: {
-			external: [
-				...(!hasSpacebot ? ["@spacebot/api-client"] : []),
-			],
-		},
 	},
 });
