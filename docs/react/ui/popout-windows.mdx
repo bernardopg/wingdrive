@@ -119,7 +119,7 @@ When a popout window closes, it can notify the main window. The Inspector window
 
 ## Implementation Details
 
-Window creation happens in the Rust backend. The `SpacedriveWindow` enum defines all window types, each with its own configuration. The `show_window` command creates or focuses windows based on their type.
+Window creation happens in the Rust backend. The `WingDriveWindow` enum defines all window types, each with its own configuration. The `show_window` command creates or focuses windows based on their type.
 
 State synchronization uses Tauri's `emit` system. When state changes, the backend emits events that all windows receive. Frontend code subscribes to these events and updates local state accordingly.
 
@@ -131,6 +131,6 @@ Popout windows only work on Tauri desktop builds. The web version shows componen
 
 ## Adding New Popout Windows
 
-To add a new popout window type, define it in the `SpacedriveWindow` enum with its configuration. Add routing logic in the App component to render the appropriate component. Ensure the component has the full provider stack and handles state synchronization if needed.
+To add a new popout window type, define it in the `WingDriveWindow` enum with its configuration. Add routing logic in the App component to render the appropriate component. Ensure the component has the full provider stack and handles state synchronization if needed.
 
 The window will automatically benefit from single-instance behavior, state synchronization, and platform-specific styling if configured correctly.

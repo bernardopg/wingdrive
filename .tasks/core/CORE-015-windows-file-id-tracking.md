@@ -90,7 +90,7 @@ Modern NTFS File IDs are stable and reliable. The comment is outdated and overly
 ```
 User action: Rename "Project.mp4" → "Final Project.mp4"
 
-Spacedrive sees:
+WingDrive sees:
 - DELETE: Project.mp4 (UUID: abc-123)
 - CREATE: Final Project.mp4 (UUID: def-456) ← New UUID!
 
@@ -106,7 +106,7 @@ Result:
 ```
 User action: Rename "Project.mp4" → "Final Project.mp4"
 
-Spacedrive sees:
+WingDrive sees:
 - MOVE: File ID 0x123ABC from "Project.mp4" to "Final Project.mp4"
 - UUID: abc-123 (preserved)
 
@@ -243,7 +243,7 @@ pub fn get_inode(metadata: &std::fs::Metadata) -> Option<u64> {
 File IDs are volume-specific. When files are **copied** between volumes:
 - Source file keeps original File ID
 - Destination file gets new File ID (correct behavior)
-- Spacedrive creates new UUID for destination (expected)
+- WingDrive creates new UUID for destination (expected)
 
 ### 2. Non-NTFS Filesystems
 FAT32 and exFAT don't support File IDs:
@@ -260,7 +260,7 @@ File IDs can theoretically change during defragmentation:
 ### 4. Hard Links
 NTFS supports hard links for files (not directories):
 - Multiple paths → same File ID (correct behavior)
-- Spacedrive treats as same file with multiple locations (desired)
+- WingDrive treats as same file with multiple locations (desired)
 
 ## Success Metrics
 
@@ -323,7 +323,7 @@ NTFS supports hard links for files (not directories):
 **Medium Priority** because:
 - ✅ System works without it (path-only fallback)
 - ⚠️ Significant UX degradation on Windows (lost metadata on rename)
-- ⚠️ Windows is a major platform for Spacedrive users
+- ⚠️ Windows is a major platform for WingDrive users
 - ⚠️ Competitive gap (competitors handle this correctly)
 
 **Should be elevated to High if:**

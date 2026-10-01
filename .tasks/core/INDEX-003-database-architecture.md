@@ -206,13 +206,13 @@ In practice, filesystem hierarchies are relatively balanced, keeping storage ove
 
 ```bash
 # Index a deep directory
-spacedrive index location ~/Documents --mode shallow
+wingdrive index location ~/Documents --mode shallow
 
 # Check closure table populated
-spacedrive db query "SELECT COUNT(*) FROM entry_closure"
+wingdrive db query "SELECT COUNT(*) FROM entry_closure"
 
 # Verify O(1) descendant query
-spacedrive db query "
+wingdrive db query "
   SELECT COUNT(*)
   FROM entry_closure
   WHERE ancestor_id = (SELECT id FROM entry WHERE name = 'Documents')
@@ -222,7 +222,7 @@ spacedrive db query "
 mv ~/Documents/Work ~/Documents/Archive/Work
 
 # Verify closures rebuilt correctly
-spacedrive db query "
+wingdrive db query "
   SELECT * FROM entry_closure
   WHERE descendant_id = (SELECT id FROM entry WHERE name = 'Work')
 "

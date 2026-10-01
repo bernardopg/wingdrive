@@ -3,10 +3,10 @@ id = "chrome-history"
 name = "Chrome History"
 description = "Index browsing history from any Chromium-based browser (Chrome, Arc, Brave, Edge)"
 version = "0.1.0"
-author = "spacedrive"
+author = "wingdrive"
 license = "MIT"
 icon = "globe"
-min_spacedrive = "0.1.0"
+min_wingdrive = "0.1.0"
 trust_tier = "external"
 
 [adapter.runtime]

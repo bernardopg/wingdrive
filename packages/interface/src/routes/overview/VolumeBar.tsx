@@ -5,8 +5,8 @@ import {motion} from 'framer-motion';
 import {useEffect, useState} from 'react';
 import {useVolumeContextMenu} from '../../components/SpacesSidebar/hooks/useVolumeContextMenu';
 import {
-	useSpacedriveClient
-} from '../../contexts/SpacedriveContext';
+	useWingDriveClient
+} from '../../contexts/WingDriveContext';
 import {useVolumeIndexingStore} from '../../stores/volumeIndexingStore';
 import {formatBytes, getVolumeIcon} from './DevicePanel';
 
@@ -29,7 +29,7 @@ interface IndexingProgress {
 export function VolumeBar({volume, index}: VolumeBarProps) {
 	const [indexingProgress, setIndexingProgress] =
 		useState<IndexingProgress | null>(null);
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 
 	const contextMenu = useVolumeContextMenu({volume: volume as any});
 

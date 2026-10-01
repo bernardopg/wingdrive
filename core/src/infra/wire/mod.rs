@@ -33,6 +33,6 @@ pub use registry::{
 	CORE_QUERIES, LIBRARY_ACTIONS, LIBRARY_QUERIES,
 };
 pub use type_extraction::{
-	create_spacedrive_api_structure, generate_spacedrive_api, OperationScope, OperationTypeInfo,
+	create_wingdrive_api_structure, generate_wingdrive_api, OperationScope, OperationTypeInfo,
 	QueryScope, QueryTypeInfo,
 };

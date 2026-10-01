@@ -3,9 +3,9 @@
 //! This module is internal - extension developers should use the high-level API.
 
 // Import WingDrive host functions
-#[link(wasm_import_module = "spacedrive")]
+#[link(wasm_import_module = "wingdrive")]
 extern "C" {
-	fn spacedrive_log(level: u32, msg_ptr: *const u8, msg_len: usize);
+	fn wingdrive_log(level: u32, msg_ptr: *const u8, msg_len: usize);
 	fn register_job(
 		job_name_ptr: *const u8,
 		job_name_len: u32,
@@ -18,28 +18,28 @@ extern "C" {
 /// Log a message (info level)
 pub fn log_info(message: &str) {
 	unsafe {
-		spacedrive_log(1, message.as_ptr(), message.len());
+		wingdrive_log(1, message.as_ptr(), message.len());
 	}
 }
 
 /// Log a message (debug level)
 pub fn log_debug(message: &str) {
 	unsafe {
-		spacedrive_log(0, message.as_ptr(), message.len());
+		wingdrive_log(0, message.as_ptr(), message.len());
 	}
 }
 
 /// Log a message (warn level)
 pub fn log_warn(message: &str) {
 	unsafe {
-		spacedrive_log(2, message.as_ptr(), message.len());
+		wingdrive_log(2, message.as_ptr(), message.len());
 	}
 }
 
 /// Log a message (error level)
 pub fn log_error(message: &str) {
 	unsafe {
-		spacedrive_log(3, message.as_ptr(), message.len());
+		wingdrive_log(3, message.as_ptr(), message.len());
 	}
 }
 

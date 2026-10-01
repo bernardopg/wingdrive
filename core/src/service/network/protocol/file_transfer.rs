@@ -467,7 +467,7 @@ impl FileTransferProtocolHandler {
 		chunk_index: u32,
 	) -> Result<[u8; 32]> {
 		let hk = Hkdf::<Sha256>::new(None, session_send_key);
-		let info = format!("spacedrive-chunk-{}-{}", transfer_id, chunk_index);
+		let info = format!("wingdrive-chunk-{}-{}", transfer_id, chunk_index);
 		let mut key = [0u8; 32];
 		hk.expand(info.as_bytes(), &mut key)
 			.map_err(|e| NetworkingError::Protocol(format!("Key derivation failed: {}", e)))?;
@@ -1904,7 +1904,7 @@ mod tests {
 		let handler = FileTransferProtocolHandler::new_default(logger);
 
 		// Create a temp directory as the only allowed location
-		let temp_dir = std::env::temp_dir().join("spacedrive_test_allowed");
+		let temp_dir = std::env::temp_dir().join("wingdrive_test_allowed");
 		std::fs::create_dir_all(&temp_dir).ok();
 		handler.set_allowed_paths(vec![temp_dir.clone()]);
 
@@ -1935,7 +1935,7 @@ mod tests {
 		let handler = FileTransferProtocolHandler::new_default(logger);
 
 		// Create a temp directory as the allowed location
-		let temp_dir = std::env::temp_dir().join("spacedrive_test_allowed_inner");
+		let temp_dir = std::env::temp_dir().join("wingdrive_test_allowed_inner");
 		let inner_path = temp_dir.join("subdir").join("file.txt");
 		std::fs::create_dir_all(inner_path.parent().unwrap()).ok();
 		std::fs::write(&inner_path, "test content").ok();
@@ -1958,7 +1958,7 @@ mod tests {
 		let handler = FileTransferProtocolHandler::new_default(logger);
 
 		// Create a temp directory as the only allowed location
-		let temp_dir = std::env::temp_dir().join("spacedrive_test_traversal");
+		let temp_dir = std::env::temp_dir().join("wingdrive_test_traversal");
 		std::fs::create_dir_all(&temp_dir).ok();
 		handler.set_allowed_paths(vec![temp_dir.clone()]);
 
@@ -1992,7 +1992,7 @@ mod tests {
 		let logger = Arc::new(SilentLogger);
 		let handler = FileTransferProtocolHandler::new_default(logger);
 
-		let temp_dir = std::env::temp_dir().join("spacedrive_test_add_path");
+		let temp_dir = std::env::temp_dir().join("wingdrive_test_add_path");
 		std::fs::create_dir_all(&temp_dir).ok();
 		let file_path = temp_dir.join("test_file.txt");
 		std::fs::write(&file_path, "content").ok();

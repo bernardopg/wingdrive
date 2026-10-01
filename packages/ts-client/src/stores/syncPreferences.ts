@@ -17,7 +17,7 @@ export const useSyncPreferencesStore = create<SyncPreferencesStore>()(
 			setAutoSwitchOnSync: (enabled) => set({ autoSwitchOnSync: enabled }),
 		}),
 		{
-			name: 'spacedrive-sync-preferences',
+			name: 'wingdrive-sync-preferences',
 		}
 	)
 );

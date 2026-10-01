@@ -75,10 +75,10 @@ To be modified:
 ## Reference Implementation
 
 v1 implementation can be found at:
-- `~/Projects/spacedrive_v1/apps/desktop/src-tauri/src/file.rs`
-- `~/Projects/spacedrive_v1/apps/desktop/crates/macos/src-swift/files.swift`
-- `~/Projects/spacedrive_v1/apps/desktop/crates/windows/src/lib.rs`
-- `~/Projects/spacedrive_v1/apps/desktop/crates/linux/src/app_info.rs`
+- `~/Projects/wingdrive_v1/apps/desktop/src-tauri/src/file.rs`
+- `~/Projects/wingdrive_v1/apps/desktop/crates/macos/src-swift/files.swift`
+- `~/Projects/wingdrive_v1/apps/desktop/crates/windows/src/lib.rs`
+- `~/Projects/wingdrive_v1/apps/desktop/crates/linux/src/app_info.rs`
 
 ## Testing
 

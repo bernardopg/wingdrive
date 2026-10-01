@@ -387,7 +387,7 @@ mod tests {
 		let handler = FileDeleteProtocolHandler::new();
 
 		// Create a temp directory as the allowed location
-		let temp_dir = std::env::temp_dir().join("spacedrive_delete_test_allowed");
+		let temp_dir = std::env::temp_dir().join("wingdrive_delete_test_allowed");
 		let inner_path = temp_dir.join("subdir").join("file.txt");
 		std::fs::create_dir_all(inner_path.parent().unwrap()).ok();
 		std::fs::write(&inner_path, "test content").ok();

@@ -10,8 +10,8 @@ use std::path::Path;
 // Import our type extraction system (same as Swift)
 use specta_typescript::Typescript;
 use wing_core::infra::wire::type_extraction::{
-	create_spacedrive_api_structure, generate_spacedrive_api, ApiOperationType, ApiQueryType,
-	SpacedriveApiStructure,
+	create_wingdrive_api_structure, generate_wingdrive_api, ApiOperationType, ApiQueryType,
+	WingDriveApiStructure,
 };
 
 /// Trait for types that can generate TypeScript union members
@@ -121,7 +121,7 @@ fn generate_wire_methods<T: WireMethodMember + Clone>(
 }
 
 /// Print summary statistics for API structure
-fn print_summary(api_structure: &SpacedriveApiStructure) {
+fn print_summary(api_structure: &WingDriveApiStructure) {
 	println!("\nSummary:");
 	println!(
 		"   • Core Actions: {} operations",
@@ -146,7 +146,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	// Use our automatic type extraction system to discover all operations and queries
 	// This is the SAME system used for Swift generation!
-	let (operations, queries, types) = generate_spacedrive_api();
+	let (operations, queries, types) = generate_wingdrive_api();
 
 	println!(
 		"Discovered {} operations and {} queries",
@@ -155,7 +155,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	);
 
 	// Create the API structure
-	let api_structure = create_spacedrive_api_structure(&operations, &queries);
+	let api_structure = create_wingdrive_api_structure(&operations, &queries);
 
 	println!("API Structure Summary:");
 	println!("  • Core Actions: {}", api_structure.core_actions.len());

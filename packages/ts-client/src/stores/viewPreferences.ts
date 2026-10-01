@@ -58,7 +58,7 @@ export const useViewPreferencesStore = create<ViewPreferencesStore>()(
 				})),
 		}),
 		{
-			name: 'spacedrive-view-preferences',
+			name: 'wingdrive-view-preferences',
 		}
 	)
 );

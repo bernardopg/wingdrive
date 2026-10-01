@@ -13,7 +13,7 @@ related_tasks: [CLOUD-003]
 
 ## Description
 
-Integrate the OpenDAL library to enable indexing of remote storage services like S3, FTP, and SMB as native Spacedrive Volumes.
+Integrate the OpenDAL library to enable indexing of remote storage services like S3, FTP, and SMB as native WingDrive Volumes.
 
 **Note**: This task is being implemented in conjunction with CLOUD-003 (Cloud Storage Provider as a Volume).
 

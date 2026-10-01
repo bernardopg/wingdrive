@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, ArrowRight } from '@phosphor-icons/react';
 import { useEffect } from 'react';
 import type { File } from '@wingdrive/ts-client';
-import { useNormalizedQuery } from '../../contexts/SpacedriveContext';
+import { useNormalizedQuery } from '../../contexts/WingDriveContext';
 import { ContentRenderer } from './ContentRenderer';
 
 interface QuickPreviewOverlayProps {

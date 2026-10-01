@@ -25,7 +25,7 @@ export const useSortPreferencesStore = create<SortPreferencesStore>()(
 				})),
 		}),
 		{
-			name: 'spacedrive-sort-preferences',
+			name: 'wingdrive-sort-preferences',
 		}
 	)
 );

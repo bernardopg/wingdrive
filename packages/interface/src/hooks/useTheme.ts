@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useCoreQuery, useSpacedriveClient } from '../contexts/SpacedriveContext';
+import { useCoreQuery, useWingDriveClient } from '../contexts/WingDriveContext';
 
 const THEME_CLASS_MAP: Record<string, string> = {
 	light: 'vanilla-theme',
@@ -40,7 +40,7 @@ export function applyTheme(theme: string) {
 }
 
 export function useTheme() {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const { data: config, refetch } = useCoreQuery({ type: 'config.app.get', input: null as any });
 
 	// Apply theme on mount and when config changes

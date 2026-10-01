@@ -33,7 +33,7 @@ import {
 import clsx from "clsx";
 import type { Location } from "@wingdrive/ts-client";
 import { Button, Dialog, dialogManager, useDialog, CircleButton, type UseDialogProps } from "@wingdrive/primitives";
-import { useLibraryMutation } from "../../../contexts/SpacedriveContext";
+import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { useContextMenu } from "../../../hooks/useContextMenu";
 import LocationIcon from "@wingdrive/assets/icons/Location.png";
 

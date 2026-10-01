@@ -9,7 +9,7 @@ Updated: 2026-09-02
 
 Operate WingDrive without relying on Spacedrive-owned runners, registries,
 release endpoints, support channels, package metadata, or product identity.
-Keep Spacedrive references only where the license, attribution, history, or
+Keep WingDrive references only where the license, attribution, history, or
 backward compatibility requires them.
 
 ## Baseline Audit
@@ -43,8 +43,8 @@ documentation examples. These are migration targets, not attribution.
 The following legacy names remain until a separately authorized data
 contraction removes them:
 
-- `.spacedrive`, `Spacedrive/Libraries`, and platform config directories used by existing installs
-- `Spacedrive` keyring service reads used to adopt existing device keys
+- `.wingdrive`, `WingDrive/Libraries`, and platform config directories used by existing installs
+- `WingDrive` keyring service reads used to adopt existing device keys
 - `com.spacedrive` identifiers used only to locate legacy data
 - stable internal wire names, database values, MIME types, and crate names when renaming would break compatibility without user benefit
 - copyright, license, NOTICE, fork history, and explicit upstream credit
@@ -73,14 +73,14 @@ new and legacy paths exist.
 ### 3. Operational autonomy
 
 - Replace active `spacedriveapp` repository, release, updater, issue, registry, and download endpoints.
-- Replace or vendor build dependencies hosted only by Spacedrive before removing their URLs.
+- Replace or vendor build dependencies hosted only by WingDrive before removing their URLs.
 - Disable optional features whose required models or services are not controlled by WingDrive, rather than silently downloading upstream assets.
 - Generate release metadata and checksums inside this repository.
 
 ### 4. Content and documentation
 
 - Make WingDrive the subject of current guides, setup commands, screenshots, examples, issue templates, and support instructions.
-- Move historical Spacedrive material into an explicitly labeled history or attribution context.
+- Move historical WingDrive material into an explicitly labeled history or attribution context.
 - Keep the FSL license and original copyright statements unchanged.
 
 ### 5. Guard and verification
@@ -118,15 +118,15 @@ but does not prove GitHub permissions, publication, signing, or installation.
   integration test passed.
 - Expo configuration and a clean Android prebuild generated the WingDrive
   application ID in an isolated workspace copy.
-- The independence guard found no active Spacedrive-owned endpoint or package
+- The independence guard found no active WingDrive-owned endpoint or package
   dependency outside attribution, history, and compatibility boundaries.
 - The WingDrive native dependency release exposes 27 assets, including source
   archives and `SHA256SUMS`; a Linux asset download returned HTTP 200.
 - New writers now use WingDrive for daemon services, `wingdrive.json`, location
   export headers, container names, user agents, extension IDs, local storage,
   framework bundle IDs, and active examples. Each reader that must preserve an
-  installed base still accepts the reviewed Spacedrive value.
-- Removed unused Spacedrive-named placeholder CLI, updater, daemon test, and DEB
+  installed base still accepts the reviewed WingDrive value.
+- Removed unused WingDrive-named placeholder CLI, updater, daemon test, and DEB
   repackaging scripts rather than carrying dead operational paths and an
   external manpage download.
 - Final local rerun passed workspace and Tauri Rust checks, CLI and config tests,

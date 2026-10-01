@@ -2,7 +2,7 @@ import { Pause, Play, X, CaretDown } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import type { JobRenderer, JobRendererProps, JobDetailsRendererProps } from "./index";
 import { CopyJobDetails } from "../components/CopyJobDetails";
-import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";
+import { useNormalizedQuery } from "../../../contexts/WingDriveContext";
 import type { Device } from "@wingdrive/ts-client";
 
 /**

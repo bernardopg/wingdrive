@@ -2,7 +2,7 @@ import {getIcon} from '@wingdrive/assets/util';
 import type {ContentKind, SearchFilters} from '@wingdrive/ts-client';
 import {useEffect, useMemo} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {useNormalizedQuery} from '../../contexts/SpacedriveContext';
+import {useNormalizedQuery} from '../../contexts/WingDriveContext';
 import {ExplorerView, useExplorer} from '../explorer';
 
 interface ContentKindStat {

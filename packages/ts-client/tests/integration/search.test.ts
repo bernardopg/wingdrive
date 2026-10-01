@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
 import { readFile } from 'fs/promises';
-import { SpacedriveClient } from '../../src/client';
+import { WingDriveClient } from '../../src/client';
 
 interface SearchBridgeConfig {
 	socket_addr: string;
@@ -13,7 +13,7 @@ interface SearchBridgeConfig {
 }
 
 let bridgeConfig: SearchBridgeConfig;
-let client: SpacedriveClient;
+let client: WingDriveClient;
 
 beforeAll(async () => {
 	// Read bridge config from Rust test
@@ -33,7 +33,7 @@ beforeAll(async () => {
 	});
 
 	// Connect to daemon via TCP socket
-	client = SpacedriveClient.fromTcpSocket(bridgeConfig.socket_addr);
+	client = WingDriveClient.fromTcpSocket(bridgeConfig.socket_addr);
 	client.setCurrentLibrary(bridgeConfig.library_id);
 
 	console.log('[TS] Connected to daemon');

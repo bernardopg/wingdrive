@@ -35,5 +35,4 @@ interface WingDriveGlobal {
 
 interface Window {
 	__WINGDRIVE__: WingDriveGlobal;
-	__SPACEDRIVE__?: WingDriveGlobal;
 }

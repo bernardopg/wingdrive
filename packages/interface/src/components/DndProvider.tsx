@@ -10,7 +10,7 @@ import type { CollisionDetection } from "@dnd-kit/core";
 import { useState } from "react";
 import { House, Clock, Heart, Folders } from "@phosphor-icons/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLibraryMutation, useSpacedriveClient } from "../contexts/SpacedriveContext";
+import { useLibraryMutation, useWingDriveClient } from "../contexts/WingDriveContext";
 import { useSidebarStore } from "@wingdrive/ts-client";
 import type { File, WingPath } from "@wingdrive/ts-client";
 import { useSpaces } from "./SpacesSidebar/hooks/useSpaces";
@@ -55,7 +55,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 	const reorderGroups = useLibraryMutation("spaces.reorder_groups");
 	const openFileOperation = useFileOperationDialog();
 	const [activeItem, setActiveItem] = useState<any>(null);
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const queryClient = useQueryClient();
 	const { currentSpaceId } = useSidebarStore();
 	const { data: spacesData } = useSpaces();

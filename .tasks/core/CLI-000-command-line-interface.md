@@ -10,14 +10,14 @@ last_updated: 2025-12-02
 
 ## Description
 
-This epic covers the development of the Spacedrive command-line interface (CLI), providing users with a way to interact with the system from the terminal.
+This epic covers the development of the WingDrive command-line interface (CLI), providing users with a way to interact with the system from the terminal.
 
 ## Implementation Notes
 
 - The CLI should be built using the `clap` crate for parsing arguments and subcommands.
 - It should have a clear and consistent command structure.
 - Commands should be implemented for core functionalities such as:
-  - `status`: Displaying the status of the Spacedrive daemon.
+  - `status`: Displaying the status of the WingDrive daemon.
   - `index`: Triggering indexing of locations.
   - `add-location`: Adding new locations to be indexed.
   - `list-locations`: Listing all indexed locations.

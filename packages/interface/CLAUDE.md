@@ -766,11 +766,11 @@ The app entry point follows a clean provider hierarchy:
 
 ```tsx
 // Shell.tsx
-export function Shell({ client }: { client: SpacedriveClient }) {
+export function Shell({ client }: { client: WingDriveClient }) {
   const platform = usePlatform();
 
   return (
-    <SpacedriveProvider client={client}>
+    <WingDriveProvider client={client}>
       <ServerProvider>
         <TabManagerProvider routes={explorerRoutes}>
           <TabKeyboardHandler />
@@ -779,7 +779,7 @@ export function Shell({ client }: { client: SpacedriveClient }) {
           </DndProvider>
         </TabManagerProvider>
       </ServerProvider>
-    </SpacedriveProvider>
+    </WingDriveProvider>
   );
 }
 
@@ -812,7 +812,7 @@ function ExplorerView() {
 ### Library Switcher Pattern
 
 ```tsx
-const client = useSpacedriveClient();
+const client = useWingDriveClient();
 const { data: libraries } = useLibraries();
 const [currentLibraryId, setCurrentLibraryId] = useState<string | null>(null);
 
@@ -1016,7 +1016,7 @@ When porting V1 components:
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
-// 2. @sd packages
+// 2. @wingdrive packages
 import { Button, DropdownMenu } from '@wingdrive/primitives';
 import { useCoreQuery } from '@wingdrive/ts-client';
 
@@ -1053,7 +1053,7 @@ Before writing code:
 - **Type Generation:** `cargo run --bin generate_typescript_types`
 - **Color System:** `/docs/react/ui/colors.mdx`
 - **Workbench Docs:** `/workbench/interface/`
-- **V1 Reference:** `/Users/jamespine/Projects/spacedrive_v1`
+- **V1 Reference:** `/Users/jamespine/Projects/wingdrive_v1`
 
 ---
 

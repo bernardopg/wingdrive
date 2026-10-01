@@ -39,7 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	if running_jobs.is_empty() {
 		println!("No running jobs found.");
 		println!("\nTo test pause/resume:");
-		println!("1. Start an indexing job: spacedrive location add /path/to/folder");
+		println!("1. Start an indexing job: wingdrive location add /path/to/folder");
 		println!("2. Run this demo again while indexing is in progress");
 		return Ok(());
 	}

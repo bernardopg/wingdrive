@@ -1,4 +1,4 @@
-//! Initial database schema for Spacedrive V2
+//! Initial database schema for WingDrive V2
 //!
 //! This migration creates all the tables needed for the pure hierarchical
 //! virtual location model with closure table support.

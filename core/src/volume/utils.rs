@@ -1,7 +1,7 @@
 //! Shared utilities for volume detection across platforms
 
 use crate::{
-	domain::volume::SpacedriveVolumeId,
+	domain::volume::WingDriveVolumeId,
 	volume::{
 		error::{VolumeError, VolumeResult},
 		types::FileSystem,
@@ -196,7 +196,7 @@ pub fn parse_filesystem_type(fs_type: &str) -> FileSystem {
 	}
 }
 
-/// Read or create .spacedrive-volume-id file on external volumes (async version)
+/// Read or create .wingdrive-volume-id file on external volumes (async version)
 /// This file provides persistent identification for removable drives
 /// Returns the UUID from the file, or None if the volume is read-only
 pub async fn read_or_create_dotfile(
@@ -208,13 +208,13 @@ pub async fn read_or_create_dotfile(
 
 	// Try to read existing dotfile
 	if let Ok(content) = tokio::fs::read_to_string(&id_file_path).await {
-		if let Ok(spacedrive_id) = serde_json::from_str::<SpacedriveVolumeId>(&content) {
+		if let Ok(wingdrive_id) = serde_json::from_str::<WingDriveVolumeId>(&content) {
 			debug!(
 				"Found existing dotfile ID: {} at {}",
-				spacedrive_id.id,
+				wingdrive_id.id,
 				id_file_path.display()
 			);
-			return Some(spacedrive_id.id);
+			return Some(wingdrive_id.id);
 		}
 	}
 
@@ -223,7 +223,7 @@ pub async fn read_or_create_dotfile(
 		return None;
 	}
 
-	let spacedrive_id = SpacedriveVolumeId {
+	let wingdrive_id = WingDriveVolumeId {
 		id: Uuid::new_v4(),
 		created: chrono::Utc::now(),
 		device_name: None,
@@ -235,15 +235,15 @@ pub async fn read_or_create_dotfile(
 		library_id: library_id.unwrap_or(Uuid::nil()),
 	};
 
-	if let Ok(content) = serde_json::to_string_pretty(&spacedrive_id) {
+	if let Ok(content) = serde_json::to_string_pretty(&wingdrive_id) {
 		match tokio::fs::write(&id_file_path, content).await {
 			Ok(()) => {
 				info!(
 					"Created dotfile with ID: {} at {}",
-					spacedrive_id.id,
+					wingdrive_id.id,
 					id_file_path.display()
 				);
-				return Some(spacedrive_id.id);
+				return Some(wingdrive_id.id);
 			}
 			Err(e) => {
 				debug!(
@@ -258,7 +258,7 @@ pub async fn read_or_create_dotfile(
 	None
 }
 
-/// Read or create .spacedrive-volume-id file on external volumes (sync version)
+/// Read or create .wingdrive-volume-id file on external volumes (sync version)
 /// This file provides persistent identification for removable drives
 /// Returns the UUID from the file, or None if the volume is read-only
 pub fn read_or_create_dotfile_sync(
@@ -270,13 +270,13 @@ pub fn read_or_create_dotfile_sync(
 
 	// Try to read existing dotfile
 	if let Ok(content) = std::fs::read_to_string(&id_file_path) {
-		if let Ok(spacedrive_id) = serde_json::from_str::<SpacedriveVolumeId>(&content) {
+		if let Ok(wingdrive_id) = serde_json::from_str::<WingDriveVolumeId>(&content) {
 			debug!(
 				"Found existing dotfile ID: {} at {}",
-				spacedrive_id.id,
+				wingdrive_id.id,
 				id_file_path.display()
 			);
-			return Some(spacedrive_id.id);
+			return Some(wingdrive_id.id);
 		}
 	}
 
@@ -285,7 +285,7 @@ pub fn read_or_create_dotfile_sync(
 		return None;
 	}
 
-	let spacedrive_id = SpacedriveVolumeId {
+	let wingdrive_id = WingDriveVolumeId {
 		id: Uuid::new_v4(),
 		created: chrono::Utc::now(),
 		device_name: None,
@@ -297,15 +297,15 @@ pub fn read_or_create_dotfile_sync(
 		library_id: library_id.unwrap_or(Uuid::nil()),
 	};
 
-	if let Ok(content) = serde_json::to_string_pretty(&spacedrive_id) {
+	if let Ok(content) = serde_json::to_string_pretty(&wingdrive_id) {
 		match std::fs::write(&id_file_path, content) {
 			Ok(()) => {
 				info!(
 					"Created dotfile with ID: {} at {}",
-					spacedrive_id.id,
+					wingdrive_id.id,
 					id_file_path.display()
 				);
-				return Some(spacedrive_id.id);
+				return Some(wingdrive_id.id);
 			}
 			Err(e) => {
 				debug!(

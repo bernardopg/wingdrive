@@ -41,7 +41,7 @@ impl NetworkIdentity {
 
 		let hk = Hkdf::<Sha256>::new(None, device_key);
 		let mut ed25519_seed = [0u8; 32];
-		hk.expand(b"spacedrive-network-identity", &mut ed25519_seed)
+		hk.expand(b"wingdrive-network-identity", &mut ed25519_seed)
 			.map_err(|e| {
 				NetworkingError::Protocol(format!("Failed to derive network key: {}", e))
 			})?;

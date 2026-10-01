@@ -10,7 +10,7 @@ related_tasks: [CLOUD-000, CLOUD-002, SEC-007, NET-001]
 
 ## Description
 
-Public sharing of Spacedrive Spaces (and individual files/folders) via sd.app. A user creates a share from their local instance, gets a `sd.app/s/{token}` link, and visitors browse/download content in a web viewer. sd.app provides the Iroh relay, share registry, viewer SPA, and account management. Bytes never transit sd.app — the browser dials the user's core directly through our relay over QUIC.
+Public sharing of WingDrive Spaces (and individual files/folders) via sd.app. A user creates a share from their local instance, gets a `sd.app/s/{token}` link, and visitors browse/download content in a web viewer. sd.app provides the Iroh relay, share registry, viewer SPA, and account management. Bytes never transit sd.app — the browser dials the user's core directly through our relay over QUIC.
 
 ## Architecture (decided)
 

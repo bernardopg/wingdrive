@@ -350,7 +350,7 @@ export const platform: Platform = {
 
 	async registerKeybind(id, accelerator, handler) {
 		// Use the global handler if available (initialized in keybinds.ts)
-		const global = window.__WINGDRIVE__ ?? window.__SPACEDRIVE__;
+		const global = window.__WINGDRIVE__;
 		if (global?.registerKeybind) {
 			await global.registerKeybind(
 				id,
@@ -362,7 +362,7 @@ export const platform: Platform = {
 
 	async unregisterKeybind(id) {
 		// Use the global handler if available (initialized in keybinds.ts)
-		const global = window.__WINGDRIVE__ ?? window.__SPACEDRIVE__;
+		const global = window.__WINGDRIVE__;
 		if (global?.unregisterKeybind) {
 			await global.unregisterKeybind(id);
 		}

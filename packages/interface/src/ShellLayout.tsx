@@ -17,7 +17,7 @@ import {
 	TabNavigationSync
 } from './components/TabManager';
 import {usePlatform} from './contexts/PlatformContext';
-import {useNormalizedQuery} from './contexts/SpacedriveContext';
+import {useNormalizedQuery} from './contexts/WingDriveContext';
 import {WebContextMenuProvider} from './contexts/WebContextMenuContext';
 import {ExplorerProvider, useExplorer} from './routes/explorer';
 import {KeyboardHandler} from './routes/explorer/KeyboardHandler';

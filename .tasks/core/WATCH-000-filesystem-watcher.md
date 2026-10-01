@@ -10,7 +10,7 @@ last_updated: 2025-12-16
 
 ## Description
 
-The `wing-fs-watcher` crate provides a platform-agnostic filesystem watcher that serves as the foundation for Spacedrive's real-time file monitoring. It handles platform-specific quirks internally and emits normalized events to higher-level services.
+The `wing-fs-watcher` crate provides a platform-agnostic filesystem watcher that serves as the foundation for WingDrive's real-time file monitoring. It handles platform-specific quirks internally and emits normalized events to higher-level services.
 
 ## Architecture
 
@@ -32,7 +32,7 @@ The watcher is designed to be storage-agnostic - it has no knowledge of database
 - **Backpressure Management**: Broadcast channel for multiple consumers
 - **Watch Modes**: Recursive (full tree) and Shallow (immediate children only)
 
-## Integration with Spacedrive
+## Integration with WingDrive
 
 The watcher is consumed by higher-level services in `wing-core`:
 

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSpacedriveClient } from "@wingdrive/ts-client";
+import { useWingDriveClient } from "@wingdrive/ts-client";
 
 /**
  * Query keys invalidated when the filesystem changes underneath the app.
@@ -39,7 +39,7 @@ function isListingEvent(event: Record<string, unknown>): boolean {
  * single bulk operation can emit hundreds of FsRawChange events).
  */
 export function useLiveFileEvents() {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const queryClient = useQueryClient();
 
 	useEffect(() => {

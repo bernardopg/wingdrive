@@ -459,7 +459,7 @@ async fn app_ready(window: tauri::Window) {
 	// if window.label() == "main" && window.app_handle().get_webview_window("spacebot").is_none() {
 	// 	if let Err(error) = windows::show_window(
 	// 		window.app_handle().clone(),
-	// 		windows::SpacedriveWindow::Spacebot,
+	// 		windows::WingDriveWindow::Spacebot,
 	// 	)
 	// 	.await
 	// 	{
@@ -553,7 +553,7 @@ async fn set_library_id(
 
 		if let Some(server_url) = server_url {
 			let script = format!(
-				r#"window.__WINGDRIVE_SERVER_URL__ = "{}"; window.__WINGDRIVE_LIBRARY_ID__ = "{}"; window.__SPACEDRIVE_SERVER_URL__ = window.__WINGDRIVE_SERVER_URL__; window.__SPACEDRIVE_LIBRARY_ID__ = window.__WINGDRIVE_LIBRARY_ID__;"#,
+				r#"window.__WINGDRIVE_SERVER_URL__ = "{}"; window.__WINGDRIVE_LIBRARY_ID__ = "{}";"#,
 				server_url, library_id
 			);
 
@@ -606,7 +606,7 @@ async fn set_current_library_id(
 
 	if let Some(server_url) = server_url {
 		let script = format!(
-			r#"window.__WINGDRIVE_SERVER_URL__ = "{}"; window.__WINGDRIVE_LIBRARY_ID__ = "{}"; window.__SPACEDRIVE_SERVER_URL__ = window.__WINGDRIVE_SERVER_URL__; window.__SPACEDRIVE_LIBRARY_ID__ = window.__WINGDRIVE_LIBRARY_ID__;"#,
+			r#"window.__WINGDRIVE_SERVER_URL__ = "{}"; window.__WINGDRIVE_LIBRARY_ID__ = "{}";"#,
 			server_url, library_id
 		);
 
@@ -2122,7 +2122,7 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 				let app_clone = app_handle.clone();
 				tauri::async_runtime::spawn(async move {
 					if let Err(e) =
-						windows::show_window(app_clone, windows::SpacedriveWindow::DragDemo).await
+						windows::show_window(app_clone, windows::WingDriveWindow::DragDemo).await
 					{
 						tracing::error!("Failed to show drag demo: {}", e);
 					}
@@ -2132,7 +2132,7 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 				let app_clone = app_handle.clone();
 				tauri::async_runtime::spawn(async move {
 					if let Err(e) =
-						windows::show_window(app_clone, windows::SpacedriveWindow::Spacedrop).await
+						windows::show_window(app_clone, windows::WingDriveWindow::Spacedrop).await
 					{
 						tracing::error!("Failed to show spacedrop: {}", e);
 					}

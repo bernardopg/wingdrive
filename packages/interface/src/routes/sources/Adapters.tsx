@@ -6,7 +6,7 @@ import {SourceTypeIcon} from '../../components/Sources/SourceTypeIcon';
 import {
 	useLibraryMutation,
 	useLibraryQuery
-} from '../../contexts/SpacedriveContext';
+} from '../../contexts/WingDriveContext';
 import {TopBarItem, TopBarPortal} from '../../TopBar';
 import {ExpandableSearchButton} from '../explorer/components/ExpandableSearchButton';
 

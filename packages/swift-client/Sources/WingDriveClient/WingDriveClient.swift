@@ -6,7 +6,7 @@
     ///
     /// This client provides a clean, type-safe interface for executing queries,
     /// actions, and subscribing to events from the WingDrive core.
-    public class SpacedriveClient {
+    public class WingDriveClient {
         private let socketPath: String
 
         /// The currently active library ID
@@ -83,14 +83,14 @@
 
         /// Switch to a library by ID
         /// - Parameter libraryId: The ID of the library to switch to
-        /// - Throws: SpacedriveError if the library doesn't exist or can't be accessed
+        /// - Throws: WingDriveError if the library doesn't exist or can't be accessed
         public func switchToLibrary(_ libraryId: String) async throws {
             // Check if the library exists in the list (core-scoped query)
             let libraries = try await getLibraries()
             let libraryExists = libraries.contains { $0.id == libraryId }
 
             if !libraryExists {
-                throw SpacedriveError.invalidResponse("Library with ID '\(libraryId)' not found")
+                throw WingDriveError.invalidResponse("Library with ID '\(libraryId)' not found")
             }
 
             // Set as current library
@@ -99,18 +99,18 @@
 
         /// Switch to a library by name
         /// - Parameter libraryName: The name of the library to switch to
-        /// - Throws: SpacedriveError if the library doesn't exist or multiple libraries have the same name
+        /// - Throws: WingDriveError if the library doesn't exist or multiple libraries have the same name
         public func switchToLibrary(named libraryName: String) async throws {
             let libraries = try await getLibraries()
             let matchingLibraries = libraries.filter { $0.name == libraryName }
 
             switch matchingLibraries.count {
             case 0:
-                throw SpacedriveError.invalidResponse("No library found with name '\(libraryName)'")
+                throw WingDriveError.invalidResponse("No library found with name '\(libraryName)'")
             case 1:
                 setCurrentLibrary(matchingLibraries[0].id)
             default:
-                throw SpacedriveError.invalidResponse(
+                throw WingDriveError.invalidResponse(
                     "Multiple libraries found with name '\(libraryName)'. Use switchToLibrary(id:) instead."
                 )
             }
@@ -118,7 +118,7 @@
 
         /// Get information about the currently active library
         /// - Returns: LibraryInfo for the current library, or nil if no library is active
-        /// - Throws: SpacedriveError if the library can't be accessed
+        /// - Throws: WingDriveError if the library can't be accessed
         public func getCurrentLibraryInfo() async throws -> LibraryInfo? {
             guard let libraryId = getCurrentLibraryId() else {
                 return nil
@@ -129,10 +129,10 @@
         }
 
         /// Check if a library operation can be performed (requires current library)
-        /// - Throws: SpacedriveError if no library is currently active
+        /// - Throws: WingDriveError if no library is currently active
         private func requireCurrentLibrary() throws {
             guard getCurrentLibraryId() != nil else {
-                throw SpacedriveError.invalidResponse(
+                throw WingDriveError.invalidResponse(
                     "This operation requires an active library. Use switchToLibrary() or createAndSwitchToLibrary() first."
                 )
             }
@@ -140,10 +140,10 @@
 
         /// Get the current library ID or throw an error if none is set
         /// - Returns: The current library ID
-        /// - Throws: SpacedriveError if no library is currently active
+        /// - Throws: WingDriveError if no library is currently active
         private func getCurrentLibraryIdOrThrow() throws -> String {
             guard let libraryId = getCurrentLibraryId() else {
-                throw SpacedriveError.invalidResponse(
+                throw WingDriveError.invalidResponse(
                     "This operation requires an active library. Use switchToLibrary() or createAndSwitchToLibrary() first."
                 )
             }
@@ -175,7 +175,7 @@
                 do {
                     requestData = try JSONEncoder().encode(requestPayload)
                 } catch {
-                    throw SpacedriveError.serializationError("Failed to encode request: \(error)")
+                    throw WingDriveError.serializationError("Failed to encode request: \(error)")
                 }
                 jsonPayload = try JSONSerialization.jsonObject(with: requestData) as? [String: Any]
             }
@@ -193,7 +193,7 @@
                 request = DaemonRequest.action(
                     method: method, libraryId: effectiveLibraryId, payload: jsonPayload ?? [:])
             } else {
-                throw SpacedriveError.invalidResponse("Invalid method format: \(method)")
+                throw WingDriveError.invalidResponse("Invalid method format: \(method)")
             }
 
             // 4. Send to daemon and get response
@@ -207,15 +207,15 @@
                         withJSONObject: jsonData.value)
                     return try JSONDecoder().decode(responseType, from: jsonResponseData)
                 } catch {
-                    throw SpacedriveError.serializationError(
+                    throw WingDriveError.serializationError(
                         "Failed to decode JSON response: \(error)")
                 }
             case .error(let error):
                 print("Daemon error: \(error)")
-                throw SpacedriveError.daemonError(error)
+                throw WingDriveError.daemonError(error)
             case .pong, .event, .subscribed, .unsubscribed:
                 print("Unexpected response: \(response)")
-                throw SpacedriveError.invalidResponse("Unexpected response to operation")
+                throw WingDriveError.invalidResponse("Unexpected response to operation")
             }
         }
 
@@ -284,7 +284,7 @@
                         let socketFD = socket(AF_UNIX, SOCK_STREAM, 0)
                         guard socketFD != -1 else {
                             continuation.resume(
-                                throwing: SpacedriveError.connectionFailed(
+                                throwing: WingDriveError.connectionFailed(
                                     "Failed to create socket"))
                             return
                         }
@@ -297,7 +297,7 @@
                         guard pathBytes.count <= pathSize else {
                             close(socketFD)
                             continuation.resume(
-                                throwing: SpacedriveError.connectionFailed("Socket path too long"))
+                                throwing: WingDriveError.connectionFailed("Socket path too long"))
                             return
                         }
 
@@ -322,7 +322,7 @@
                             let errorMsg = String(cString: strerror(errno))
                             close(socketFD)
                             continuation.resume(
-                                throwing: SpacedriveError.connectionFailed(
+                                throwing: WingDriveError.connectionFailed(
                                     "Failed to connect: \(errorMsg)"))
                             return
                         }
@@ -401,7 +401,7 @@
                     if sendResult == -1 {
                         let errorMsg = String(cString: strerror(errno))
                         continuation.resume(
-                            throwing: SpacedriveError.connectionFailed("Send failed: \(errorMsg)"))
+                            throwing: WingDriveError.connectionFailed("Send failed: \(errorMsg)"))
                     } else {
                         continuation.resume()
                     }
@@ -431,7 +431,7 @@
                             let errorMsg = String(cString: strerror(errno))
                             print("Socket read failed: \(errorMsg)")
                             continuation.resume(
-                                throwing: SpacedriveError.connectionFailed(
+                                throwing: WingDriveError.connectionFailed(
                                     "Receive failed: \(errorMsg)"))
                             return
                         }
@@ -452,7 +452,7 @@
                         if totalBytesRead > 10 * 1024 * 1024 {  // 10MB limit
                             print("Response too large, stopping read")
                             continuation.resume(
-                                throwing: SpacedriveError.invalidResponse("Response too large"))
+                                throwing: WingDriveError.invalidResponse("Response too large"))
                             return
                         }
                     }
@@ -490,19 +490,19 @@
                             } else {
                                 print("No valid response line found")
                                 continuation.resume(
-                                    throwing: SpacedriveError.invalidResponse(
+                                    throwing: WingDriveError.invalidResponse(
                                         "No valid response line"))
                             }
                         } else {
                             print("Invalid UTF-8 response")
                             continuation.resume(
-                                throwing: SpacedriveError.invalidResponse("Invalid UTF-8 response"))
+                                throwing: WingDriveError.invalidResponse("Invalid UTF-8 response"))
                         }
                     } catch {
                         print("JSON decoding failed: \(error)")
                         print("Error details: \(error.localizedDescription)")
                         continuation.resume(
-                            throwing: SpacedriveError.serializationError(
+                            throwing: WingDriveError.serializationError(
                                 "Failed to decode response: \(error)"))
                     }
                 }
@@ -527,7 +527,7 @@
                             let errorMsg = String(cString: strerror(errno))
                             print("Stream receive failed: \(errorMsg)")
                             continuation.resume(
-                                throwing: SpacedriveError.connectionFailed(
+                                throwing: WingDriveError.connectionFailed(
                                     "Stream receive failed: \(errorMsg)"))
                             return
                         }
@@ -551,7 +551,7 @@
                                         print("Failed to decode JSON line: \(error)")
                                         print("Raw line: \(trimmedLine)")
                                         continuation.resume(
-                                            throwing: SpacedriveError.serializationError(
+                                            throwing: WingDriveError.serializationError(
                                                 "Failed to decode JSON: \(error)"))
                                         return
                                     }
@@ -559,7 +559,7 @@
                             } else {
                                 print("Invalid UTF-8 in line buffer")
                                 continuation.resume(
-                                    throwing: SpacedriveError.invalidResponse(
+                                    throwing: WingDriveError.invalidResponse(
                                         "Invalid UTF-8 in response"))
                                 return
                             }
@@ -571,7 +571,7 @@
                             if lineBuffer.count > 10 * 1024 * 1024 {  // 10MB limit
                                 print("JSON line too large (\(lineBuffer.count) bytes)")
                                 continuation.resume(
-                                    throwing: SpacedriveError.invalidResponse("JSON line too large")
+                                    throwing: WingDriveError.invalidResponse("JSON line too large")
                                 )
                                 return
                             }
@@ -689,11 +689,11 @@
     }
 
     // MARK: - Convenience Types
-    // (Shared types are now in SpacedriveShared.swift)
+    // (Shared types are now in WingDriveShared.swift)
 
     // MARK: - API Namespace Structs
     // These are automatically generated by the Rust build process
-    // See SpacedriveAPI.swift for the actual implementations
+    // See WingDriveAPI.swift for the actual implementations
 
     /// Helper for decoding Any values from JSON
     internal struct AnyCodable: Codable {
@@ -731,7 +731,7 @@
 
     // MARK: - Convenience Methods
 
-    extension SpacedriveClient {
+    extension WingDriveClient {
 
         /// Create a library using generated types
         public func createLibrary(name: String, path: String? = nil) async throws
@@ -752,7 +752,7 @@
         ///   - path: Optional path for the library
         ///   - setAsCurrent: Whether to automatically set the new library as current (default: true)
         /// - Returns: The created library information
-        /// - Throws: SpacedriveError if creation fails
+        /// - Throws: WingDriveError if creation fails
         public func createAndSwitchToLibrary(
             name: String, path: String? = nil, setAsCurrent: Bool = true
         ) async throws -> LibraryCreateOutput {
@@ -798,7 +798,7 @@
         /// Get jobs for the current library
         /// - Parameter status: Optional job status filter
         /// - Returns: List of jobs for the current library
-        /// - Throws: SpacedriveError if no library is active or operation fails
+        /// - Throws: WingDriveError if no library is active or operation fails
         public func getCurrentLibraryJobs(status: JobStatus? = nil) async throws -> JobListOutput {
             let libraryId = try getCurrentLibraryIdOrThrow()
 
@@ -854,9 +854,9 @@
                 let result = try JSONDecoder().decode(T.self, from: data)
                 return result
             case .error(let error):
-                throw SpacedriveError.daemonError("Query failed: \(error)")
+                throw WingDriveError.daemonError("Query failed: \(error)")
             default:
-                throw SpacedriveError.invalidResponse("Unexpected response to query")
+                throw WingDriveError.invalidResponse("Unexpected response to query")
             }
         }
 
@@ -884,12 +884,12 @@
                 } catch {
                     print("Failed to decode File: \(error)")
                     print("JSON data: \(jsonData.value)")
-                    throw SpacedriveError.invalidResponse("Failed to decode File: \(error)")
+                    throw WingDriveError.invalidResponse("Failed to decode File: \(error)")
                 }
             case .error(let error):
-                throw SpacedriveError.daemonError("Query failed: \(error)")
+                throw WingDriveError.daemonError("Query failed: \(error)")
             default:
-                throw SpacedriveError.invalidResponse("Unexpected response to query")
+                throw WingDriveError.invalidResponse("Unexpected response to query")
             }
         }
 
@@ -904,10 +904,10 @@
                 return
             case .error(let error):
                 print("Ping failed with daemon error: \(error)")
-                throw SpacedriveError.daemonError("Ping failed: \(error)")
+                throw WingDriveError.daemonError("Ping failed: \(error)")
             case .jsonOk, .event, .subscribed, .unsubscribed:
                 print("Ping received unexpected response")
-                throw SpacedriveError.invalidResponse("Unexpected response to ping")
+                throw WingDriveError.invalidResponse("Unexpected response to ping")
             }
         }
     }

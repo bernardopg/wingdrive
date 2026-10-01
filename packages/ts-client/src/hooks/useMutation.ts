@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useMutation, type UseMutationOptions, type UseMutationResult } from "@tanstack/react-query";
-import { useSpacedriveClient } from "./useClient";
+import { useWingDriveClient } from "./useClient";
 import type { CoreAction, LibraryAction } from "../generated/types";
 import { WIRE_METHODS } from "../generated/types";
 
@@ -35,7 +35,7 @@ export function useCoreMutation<T extends CoreAction["type"]>(
 	Error,
 	Extract<CoreAction, { type: T }>["input"]
 > {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const wireMethod = WIRE_METHODS.coreActions[type];  // ← Auto-generated!
 
 	return useMutation({
@@ -81,7 +81,7 @@ export function useLibraryMutation<T extends LibraryAction["type"]>(
 	Error,
 	Extract<LibraryAction, { type: T }>["input"]
 > {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const wireMethod = WIRE_METHODS.libraryActions[type];  // ← Auto-generated!
 
 	return useMutation({

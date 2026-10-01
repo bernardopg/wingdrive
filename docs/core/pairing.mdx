@@ -365,7 +365,7 @@ let shared_secret = hkdf::extract(
 // Generate session keys
 let (tx_key, rx_key) = hkdf::expand(
     &shared_secret,
-    b"spacedrive-session-keys",
+    b"wingdrive-session-keys",
     64
 );
 ```

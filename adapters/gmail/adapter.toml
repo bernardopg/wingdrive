@@ -3,10 +3,10 @@ id = "gmail"
 name = "Gmail"
 description = "Index emails, threads, labels, and attachments from Gmail via the Gmail API"
 version = "0.1.0"
-author = "spacedrive"
+author = "wingdrive"
 license = "MIT"
 icon = "mail"
-min_spacedrive = "0.1.0"
+min_wingdrive = "0.1.0"
 trust_tier = "external"
 
 [adapter.runtime]

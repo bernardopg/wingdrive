@@ -15,7 +15,7 @@ last_updated: 2026-10-01
 
 Project rule (2026-10-01): nothing in WingDrive is named "Spacedrive" or carries an `sd`/`sd-` prefix. Use `wingdrive` or `wing`. This covers crates, binaries, packages, scripts, functions, types, environment variables, CLI messages, and docs.
 
-Scope measured at `29c564b02`: about 20 Rust crates named `sd-*` or `spacedrive-*`, 8 `@sd/*` packages, about 1,275 "Spacedrive" mentions in 350 files, about 1,500 `sd_`/`sd-` identifiers in 380 files, and `WingPath` with about 1,000 uses.
+Scope measured at `29c564b02`: about 20 Rust crates named `sd-*` or `wingdrive-*`, 8 `@sd/*` packages, about 1,275 "WingDrive" mentions in 350 files, about 1,500 `sd_`/`sd-` identifiers in 380 files, and `WingPath` with about 1,000 uses.
 
 ## Rules
 
@@ -32,5 +32,5 @@ Scope measured at `29c564b02`: about 20 Rust crates named `sd-*` or `spacedrive-
 - [ ] 5. Env vars `SD_*` -> `WING_*` with fallback; `.winglibrary` -> `.winglibrary` with migration
 - [ ] 6. Scripts, justfile, xtask, CI workflows, mobile modules (`wing-mobile-core`)
 - [ ] 7. Docs, comments, and user-facing strings
-- [ ] 8. `git grep -iE 'spacedrive|\bsd[-_]|\bSd[A-Z]'` returns only allowed attribution and migration code
+- [ ] 8. `git grep -iE 'wingdrive|\bsd[-_]|\bSd[A-Z]'` returns only allowed attribution and migration code
 - [ ] 9. `cargo check --workspace`, `bun run typecheck`, tests, and a runtime smoke pass

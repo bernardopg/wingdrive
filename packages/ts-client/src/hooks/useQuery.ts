@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useQuery, type UseQueryOptions, type UseQueryResult } from "@tanstack/react-query";
-import { useSpacedriveClient } from "./useClient";
+import { useWingDriveClient } from "./useClient";
 import type { CoreQuery, LibraryQuery } from "../generated/types";
 import { WIRE_METHODS } from "../generated/types";
 
@@ -26,7 +26,7 @@ export function useCoreQuery<T extends CoreQuery["type"]>(
 		"queryKey" | "queryFn"
 	>
 ): UseQueryResult<Extract<CoreQuery, { type: T }>["output"]> {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const wireMethod = WIRE_METHODS.coreQueries[query.type];  // ← Auto-generated!
 
 	return useQuery({
@@ -65,7 +65,7 @@ export function useLibraryQuery<T extends LibraryQuery["type"]>(
 		"queryKey" | "queryFn"
 	>
 ): UseQueryResult<Extract<LibraryQuery, { type: T }>["output"]> {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const wireMethod = WIRE_METHODS.libraryQueries[query.type];  // ← Auto-generated!
 	const libraryId = client.getCurrentLibraryId();
 

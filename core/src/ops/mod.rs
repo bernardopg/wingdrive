@@ -1,6 +1,6 @@
 //! Operations module - contains all business operations and use cases
 //!
-//! This module organizes all business operations for Spacedrive:
+//! This module organizes all business operations for WingDrive:
 //! - Addressing operations (path resolution)
 //! - File operations (copy, move, delete, validate, duplicate detection)
 //! - Indexing operations

@@ -1,6 +1,6 @@
 import XCTest
 
-@testable import SpacedriveClient
+@testable import WingDriveClient
 
 final class SerializationTests: XCTestCase {
 
@@ -172,14 +172,14 @@ final class SerializationTests: XCTestCase {
         // Skip if daemon is not running
         let socketPath = [
             "\(NSHomeDirectory())/.wingdrive/daemon.sock",
-            "\(NSHomeDirectory())/Library/Application Support/spacedrive/daemon/daemon.sock",
+            "\(NSHomeDirectory())/Library/Application Support/wingdrive/daemon/daemon.sock",
         ].first(where: FileManager.default.fileExists(atPath:))
 
         guard let socketPath else {
             throw XCTSkip("Daemon not running - skipping integration test")
         }
 
-        let client = SpacedriveClient(socketPath: socketPath)
+        let client = WingDriveClient(socketPath: socketPath)
 
         // Test real API call with generated types
         do {

@@ -1,6 +1,6 @@
 use super::*;
 #[cfg(target_os = "macos")]
-use crate::windows::SpacedriveWindow;
+use crate::windows::WingDriveWindow;
 use tauri::{AppHandle, Manager};
 
 #[tauri::command]
@@ -30,7 +30,7 @@ pub async fn begin_drag(
 			.get_webview_window(&source_window_label)
 			.ok_or("Source window not found")?;
 
-		let _overlay_window = SpacedriveWindow::DragOverlay {
+		let _overlay_window = WingDriveWindow::DragOverlay {
 			session_id: session_id.clone(),
 		}
 		.show(&app)

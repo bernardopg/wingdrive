@@ -1,5 +1,5 @@
 ---
-title: Spacedrive - A Historical Chronicle
+title: WingDrive - A Historical Chronicle
 sidebarTitle: History
 ---
 
@@ -19,7 +19,7 @@ sidebarTitle: History
 
 ## Introduction
 
-Spacedrive is a cross-platform file manager built to unify file access across devices and cloud services. This document tracks the project's evolution from initial development through its V1 challenges and V2 rewrite.
+WingDrive is a cross-platform file manager built to unify file access across devices and cloud services. This document tracks the project's evolution from initial development through its V1 challenges and V2 rewrite.
 
 ## Origins (2021-2022)
 
@@ -87,7 +87,7 @@ By early 2025, V1 became unmaintainable. The decision to rewrite wasn't driven b
 
 **No SDK**: The community couldn't extend functionality. In a file manager where everyone has unique workflows, this was fatal. Users wanted custom integrations but had no way to build them.
 
-**No CLI**: Automated workflows and scripting were impossible. Power users—the core audience—couldn't integrate Spacedrive into their existing tooling.
+**No CLI**: Automated workflows and scripting were impossible. Power users—the core audience—couldn't integrate WingDrive into their existing tooling.
 
 **Incomplete search**: Despite positioning as a search-focused tool, only basic SQL `LIKE` queries worked. No full-text indexing, no content search, no semantic search. The core value proposition was half-built.
 
@@ -182,7 +182,7 @@ pub enum WingPath {
 }
 ```
 
-Every file in Spacedrive—indexed or not, local, cloud, or remote—has a single address. Operations work uniformly across all storage. Device and cloud boundaries disappeared.
+Every file in WingDrive—indexed or not, local, cloud, or remote—has a single address. Operations work uniformly across all storage. Device and cloud boundaries disappeared.
 
 ### Sync: Domain Separation That Works
 
@@ -248,7 +248,7 @@ Enterprise capabilities running on consumer hardware.
 
 ## Development Approach
 
-Spacedrive’s rewrite from scratch, despite limited resources, was made feasible by advancements in AI-driven code generation for Rust in 2025. Tools like Claude 3.5 Opus, GPT-5, and Gemini’s expansive context window enabled translating detailed specifications into robust implementations across the entire codebase. The workflow centered on iteratively refining specs and test cases, ensuring implementations adhered to strict code style guidelines and passed all tests. This AI-accelerated, spec-first, test-driven approach enabled rapid development with a single-person team.
+WingDrive’s rewrite from scratch, despite limited resources, was made feasible by advancements in AI-driven code generation for Rust in 2025. Tools like Claude 3.5 Opus, GPT-5, and Gemini’s expansive context window enabled translating detailed specifications into robust implementations across the entire codebase. The workflow centered on iteratively refining specs and test cases, ensuring implementations adhered to strict code style guidelines and passed all tests. This AI-accelerated, spec-first, test-driven approach enabled rapid development with a single-person team.
 
 **Why this worked:**
 

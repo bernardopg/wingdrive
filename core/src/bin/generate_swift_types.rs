@@ -7,14 +7,14 @@ use std::path::Path;
 
 // Import our type extraction system
 use wing_core::infra::wire::type_extraction::{
-	create_spacedrive_api_structure, generate_spacedrive_api,
+	create_wingdrive_api_structure, generate_wingdrive_api,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 	println!("️Generating Swift types using Specta + rspc-inspired type extraction...");
 
 	// Use our automatic type extraction system to discover all operations and queries
-	let (operations, queries, types) = generate_spacedrive_api();
+	let (operations, queries, types) = generate_wingdrive_api();
 
 	println!(
 		"Discovered {} operations and {} queries",
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	);
 
 	// Create the API structure
-	let api_structure = create_spacedrive_api_structure(&operations, &queries);
+	let api_structure = create_wingdrive_api_structure(&operations, &queries);
 
 	println!("API Structure Summary:");
 	println!("  • Core Actions: {}", api_structure.core_actions.len());
@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	// Export to the Swift client package
 	let output_path =
-		Path::new("packages/swift-client/Sources/SpacedriveClient/SpacedriveTypes.swift");
+		Path::new("packages/swift-client/Sources/WingDriveClient/WingDriveTypes.swift");
 	std::fs::write(output_path, &generated_content)?;
 
 	println!("Generated Swift types to: {}", output_path.display());
@@ -54,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	// Write API code to a separate file
 	let api_output_path =
-		Path::new("packages/swift-client/Sources/SpacedriveClient/SpacedriveAPI.swift");
+		Path::new("packages/swift-client/Sources/WingDriveClient/WingDriveAPI.swift");
 	std::fs::write(api_output_path, &api_code)?;
 
 	println!("Generated Swift API code to: {}", api_output_path.display());
@@ -70,7 +70,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 /// Generate Swift code directly from the API structure (similar to rspc's TypeScript generation)
 fn generate_swift_api_code(
-	api_structure: &wing_core::infra::wire::type_extraction::SpacedriveApiStructure,
+	api_structure: &wing_core::infra::wire::type_extraction::WingDriveApiStructure,
 	types: &specta::TypeCollection,
 ) -> Result<String, Box<dyn std::error::Error>> {
 	let mut swift_code = String::new();
@@ -146,15 +146,15 @@ fn generate_swift_api_code(
 
 	// Generate the main API enum
 	swift_code.push_str("/// Complete WingDrive API structure\n");
-	swift_code.push_str("public enum SpacedriveApi {\n");
+	swift_code.push_str("public enum WingDriveApi {\n");
 	swift_code.push_str("    case CoreAction(CoreAction)\n");
 	swift_code.push_str("    case LibraryAction(LibraryAction)\n");
 	swift_code.push_str("    case CoreQuery(CoreQuery)\n");
 	swift_code.push_str("    case LibraryQuery(LibraryQuery)\n");
 	swift_code.push_str("}\n\n");
 
-	// Add Codable conformance for SpacedriveApi
-	swift_code.push_str("extension SpacedriveApi: Codable {\n");
+	// Add Codable conformance for WingDriveApi
+	swift_code.push_str("extension WingDriveApi: Codable {\n");
 	swift_code.push_str("    public var wireMethod: String {\n");
 	swift_code.push_str("        switch self {\n");
 	swift_code.push_str("        case .CoreAction: return \"core_action\"\n");

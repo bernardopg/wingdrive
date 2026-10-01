@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { Event, JobOutput } from "@wingdrive/ts-client";
-import { useSpacedriveClient } from "../contexts/SpacedriveContext";
+import { useWingDriveClient } from "../contexts/WingDriveContext";
 
 /**
  * # Waiting on a dispatched job
@@ -56,7 +56,7 @@ function terminalEvent(event: Event): TerminalEvent | null {
  * arrive before the receipt are buffered and matched once the id is known.
  */
 export function useWaitForJob() {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 
 	return useCallback(
 		async <R extends { id: string }>(

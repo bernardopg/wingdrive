@@ -1,7 +1,7 @@
 import { CheckCircle, Circle, X, Spinner } from "@phosphor-icons/react";
 import clsx from "clsx";
 import { useEffect, useRef } from "react";
-import { useLibraryQuery } from "../../../contexts/SpacedriveContext";
+import { useLibraryQuery } from "../../../contexts/WingDriveContext";
 import type { JobListItem } from "../types";
 import type { SpeedSample } from "../hooks/useJobs";
 import type { File } from "@wingdrive/ts-client";

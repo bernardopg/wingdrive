@@ -144,7 +144,7 @@ import { SpacedriveClient } from "@wingdrive/ts-client";
 const bridgeConfig = JSON.parse(await readFile(process.env.BRIDGE_CONFIG_PATH));
 
 // Connect via TCP
-const client = SpacedriveClient.fromTcpSocket(bridgeConfig.socket_addr);
+const client = WingDriveClient.fromTcpSocket(bridgeConfig.socket_addr);
 
 // Set library context
 await client.setLibrary(bridgeConfig.library_id);
@@ -229,7 +229,7 @@ import { renderHook } from "@testing-library/react";
 
 test("my feature works", async () => {
     const bridgeConfig = JSON.parse(/* read from env */);
-    const client = SpacedriveClient.fromTcpSocket(bridgeConfig.socket_addr);
+    const client = WingDriveClient.fromTcpSocket(bridgeConfig.socket_addr);
 
     // Test your feature!
     const { result } = renderHook(() => useMyFeature(...));

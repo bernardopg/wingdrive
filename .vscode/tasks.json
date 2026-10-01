@@ -64,7 +64,7 @@
 			},
 			"problemMatcher": ["$rustc"],
 			"group": "build",
-			"label": "rust: run spacedrive",
+			"label": "rust: run wingdrive",
 			"dependsOn": ["ui:dev"]
 		},
 		{
@@ -76,7 +76,7 @@
 			},
 			"problemMatcher": ["$rustc"],
 			"group": "build",
-			"label": "rust: run spacedrive release",
+			"label": "rust: run wingdrive release",
 			"dependsOn": ["ui:build"]
 		}
 	]

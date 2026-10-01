@@ -12,7 +12,7 @@ last_updated: 2025-11-05
 
 ## Description
 
-This epic covers the implementation of the WebAssembly (WASM) based extension system. Extensions can define custom data models, create AI agents, and integrate seamlessly with Spacedrive's sync, search, and action systems.
+This epic covers the implementation of the WebAssembly (WASM) based extension system. Extensions can define custom data models, create AI agents, and integrate seamlessly with WingDrive's sync, search, and action systems.
 
 **Architecture Clarification (Nov 5, 2025):** Extensions get BOTH:
 - Their own database tables for domain models (managed by core, auto-sync)

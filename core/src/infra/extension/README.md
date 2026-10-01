@@ -9,7 +9,7 @@ This module provides WingDrive's WebAssembly-based extension system, enabling se
 ### Core Infrastructure
 
 - **`manager.rs`** - PluginManager for loading/unloading WASM modules (Wasmer integration)
-- **`host_functions.rs`** - Skeleton for `host_spacedrive_call()` and `host_spacedrive_log()`
+- **`host_functions.rs`** - Skeleton for `host_wingdrive_call()` and `host_wingdrive_log()`
 - **`permissions.rs`** - Capability-based security with rate limiting
 - **`types.rs`** - Extension manifest format and types
 
@@ -27,11 +27,11 @@ wasmer-middlewares = "4.2"
 ```rust
 // WASM extensions import:
 extern "C" {
-    fn spacedrive_call(method, library_id, payload) -> result;
+    fn wingdrive_call(method, library_id, payload) -> result;
 }
 
 // Host function routes to existing registry:
-host_spacedrive_call()
+host_wingdrive_call()
   ↓
 RpcServer::execute_json_operation()  // EXISTING!
   ↓
@@ -69,13 +69,13 @@ Operation::execute()                  // EXISTING!
 **4. Test WASM Module**
 
 - Simple "hello world" .wasm file
-- Calls `spacedrive_call()` to test integration
+- Calls `wingdrive_call()` to test integration
 - Validates permission system
 
 **5. Extension SDK** (separate crate)
 
 - `wingdrive-sdk` Rust crate
-- Type-safe wrapper around `spacedrive_call()`
+- Type-safe wrapper around `wingdrive_call()`
 - Ergonomic API for extension developers
 
 ## Next Steps
@@ -88,14 +88,14 @@ Operation::execute()                  // EXISTING!
    - Implement `write_json_to_wasm()`
    - Test with simple WASM module
 
-2. **Complete `host_spacedrive_call()`**
+2. **Complete `host_wingdrive_call()`**
    - Bridge to `execute_json_operation()`
    - Add permission checking
    - Error handling
 
 3. **Create Test WASM Module**
    - Rust project that compiles to WASM
-   - Calls `spacedrive_call()` with test payload
+   - Calls `wingdrive_call()` with test payload
    - Validates round-trip works
 
 ### Week 2-3
@@ -132,7 +132,7 @@ let mut plugin_manager = PluginManager::new(core.clone(), plugins_dir);
 plugin_manager.load_plugin("finance").await?;
 
 // Extension (WASM) calls:
-let result = spacedrive_call(
+let result = wingdrive_call(
     "query:ai.ocr",
     library_id,
     json!({ "data": pdf_bytes, "options": { "language": "eng" } })
@@ -156,7 +156,7 @@ cargo run --bin wing-cli -- extension load ./plugins/test-plugin
 
 - **Memory Management:** WASM modules must export `wasm_alloc(size: i32) -> *mut u8`
 - **Error Handling:** Errors returned as JSON `{ "error": "message" }`
-- **Permissions:** Checked on every `spacedrive_call()`
+- **Permissions:** Checked on every `wingdrive_call()`
 - **Rate Limiting:** 1000 requests/minute default
 
 ---

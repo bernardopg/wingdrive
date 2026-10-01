@@ -19,7 +19,7 @@ import type {
   IndexMode,
   LocationAddInput,
 } from "@wingdrive/ts-client";
-import { useLibraryMutation, useLibraryQuery } from "../../../contexts/SpacedriveContext";
+import { useLibraryMutation, useLibraryQuery } from "../../../contexts/WingDriveContext";
 import { usePlatform } from "../../../contexts/PlatformContext";
 import { NewLocation } from "@wingdrive/assets/icons";
 

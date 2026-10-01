@@ -14,7 +14,7 @@ import type {
   RemoteLibraryInfo,
 } from "@wingdrive/ts-client";
 import { Button, Dialog, dialogManager, useDialog } from "@wingdrive/primitives";
-import { useCoreQuery, useCoreMutation, useSpacedriveClient } from "../../contexts/SpacedriveContext";
+import { useCoreQuery, useCoreMutation, useWingDriveClient } from "../../contexts/WingDriveContext";
 
 interface SyncSetupDialogProps {
   id: number;
@@ -30,7 +30,7 @@ export function useSyncSetupDialog() {
 
 function SyncSetupDialog(props: SyncSetupDialogProps) {
   const dialog = useDialog(props);
-  const client = useSpacedriveClient();
+  const client = useWingDriveClient();
   const [step, setStep] = useState<SyncStep>("select-device");
   const [selectedDevice, setSelectedDevice] = useState<PairedDeviceInfo | null>(
     null,

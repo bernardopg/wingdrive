@@ -19,7 +19,7 @@ This task also establishes a **service-per-location configuration architecture**
 
 ## Problem Statement
 
-The real-time change detection system (ChangeHandler trait) only captures events while Spacedrive is running and actively watching locations. When the app is:
+The real-time change detection system (ChangeHandler trait) only captures events while WingDrive is running and actively watching locations. When the app is:
 
 - Stopped/offline
 - Crashed unexpectedly
@@ -1124,7 +1124,7 @@ Create an animated SVG/video showing:
 
 4. **Scene 4**: Performance comparison
    - "Traditional: 10,000 directories scanned"
-   - "Spacedrive: 247 directories scanned (97% pruned)"
+   - "WingDrive: 247 directories scanned (97% pruned)"
    - "Speedup: 40x faster"
 
 ### Documentation Sections

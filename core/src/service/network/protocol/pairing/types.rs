@@ -44,7 +44,7 @@ impl PairingCode {
 
 		// Derive the remaining 16 bytes using BLAKE3 (same as decode_from_bip39_words)
 		let mut hasher = blake3::Hasher::new();
-		hasher.update(b"spacedrive-pairing-entropy-extension-v1");
+		hasher.update(b"wingdrive-pairing-entropy-extension-v1");
 		hasher.update(&entropy);
 		let derived_bytes = hasher.finalize();
 		secret[16..].copy_from_slice(&derived_bytes.as_bytes()[..16]);
@@ -264,7 +264,7 @@ impl PairingCode {
 
 		// Derive the remaining 16 bytes using BLAKE3 for deterministic padding
 		let mut hasher = blake3::Hasher::new();
-		hasher.update(b"spacedrive-pairing-entropy-extension-v1");
+		hasher.update(b"wingdrive-pairing-entropy-extension-v1");
 		hasher.update(&entropy);
 		let derived_bytes = hasher.finalize();
 		full_secret[16..].copy_from_slice(&derived_bytes.as_bytes()[..16]);

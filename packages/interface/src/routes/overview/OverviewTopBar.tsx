@@ -16,7 +16,7 @@ import {useCreateLibraryDialog} from '../../components/modals/CreateLibraryModal
 import {PairingModal} from '../../components/modals/PairingModal';
 import {useSyncSetupDialog} from '../../components/modals/SyncSetupModal';
 import {usePlatform} from '../../contexts/PlatformContext';
-import {useSpacedriveClient} from '../../contexts/SpacedriveContext';
+import {useWingDriveClient} from '../../contexts/WingDriveContext';
 import {useLibraries} from '../../hooks/useLibraries';
 import {TopBarItem, TopBarPortal} from '../../TopBar';
 import {useAddStorageDialog} from '../explorer/components/AddStorageModal';
@@ -28,7 +28,7 @@ interface OverviewTopBarProps {
 export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 	const [isPairingOpen, setIsPairingOpen] = useState(false);
 	const navigate = useNavigate();
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const platform = usePlatform();
 	const {data: libraries} = useLibraries();
 	const [currentLibraryId, setCurrentLibraryId] = useState<string | null>(

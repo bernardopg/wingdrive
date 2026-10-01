@@ -2,15 +2,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "SpacedriveClient",
+    name: "WingDriveClient",
     platforms: [
         .macOS(3),
         .iOS(6),
     ],
     products: [
         .library(
-            name: "SpacedriveClient",
-            targets: ["SpacedriveClient"]
+            name: "WingDriveClient",
+            targets: ["WingDriveClient"]
         )
     ],
     dependencies: [
@@ -18,14 +18,14 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SpacedriveClient",
+            name: "WingDriveClient",
             dependencies: [],
-            path: "Sources/SpacedriveClient"
+            path: "Sources/WingDriveClient"
         ),
         .testTarget(
-            name: "SpacedriveClientTests",
-            dependencies: ["SpacedriveClient"],
-            path: "Tests/SpacedriveClientTests"
+            name: "WingDriveClientTests",
+            dependencies: ["WingDriveClient"],
+            path: "Tests/WingDriveClientTests"
         ),
     ]
 )

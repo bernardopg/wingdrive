@@ -13,7 +13,7 @@ related_tasks: [FSYNC-003]
 
 ## Description
 
-Wire FileSyncService into Spacedrive infrastructure - add service to CoreContext, implement API routes for UI integration, and set up event handling for real-time updates.
+Wire FileSyncService into WingDrive infrastructure - add service to CoreContext, implement API routes for UI integration, and set up event handling for real-time updates.
 
 **Goal:** Make File Sync accessible from UI with full CRUD, sync triggering, and status monitoring.
 

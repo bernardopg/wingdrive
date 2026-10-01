@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useCoreQuery, useCoreMutation } from "../../contexts/SpacedriveContext";
+import { useCoreQuery, useCoreMutation } from "../../contexts/WingDriveContext";
 
 interface PrivacySettingsForm {
   telemetry_enabled: boolean;

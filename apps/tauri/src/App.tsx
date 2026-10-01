@@ -9,7 +9,7 @@ import {
 	JobsScreen,
 	Settings,
 	PlatformProvider,
-	SpacedriveProvider,
+	WingDriveProvider,
 	ServerProvider,
 	JobsProvider,
 } from "@wingdrive/interface";
@@ -23,7 +23,7 @@ import {
 import { VoiceOverlay } from "@wingdrive/interface/windows/VoiceOverlay";
 import {createMemoryRouter, Navigate, Outlet, RouterProvider} from "react-router-dom";
 import {
-	SpacedriveClient,
+	WingDriveClient,
 	TauriTransport,
 	useSyncPreferencesStore,
 } from "@wingdrive/ts-client";
@@ -56,7 +56,7 @@ function getInitialRoute() {
 }
 
 function App() {
-	const [client, setClient] = useState<SpacedriveClient | null>(null);
+	const [client, setClient] = useState<WingDriveClient | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [route, setRoute] = useState<string>(getInitialRoute);
 
@@ -107,8 +107,8 @@ function App() {
 		// Create Tauri-based client
 		try {
 			const transport = new TauriTransport(invoke, listen);
-			const spacedrive = new SpacedriveClient(transport);
-			setClient(spacedrive);
+			const wingdrive = new WingDriveClient(transport);
+			setClient(wingdrive);
 
 			// Query current library ID from platform state (for popout windows)
 			if (platform.getCurrentLibraryId) {
@@ -116,7 +116,7 @@ function App() {
 					.getCurrentLibraryId()
 					.then((libraryId) => {
 						if (libraryId) {
-							spacedrive.setCurrentLibrary(libraryId, false); // Don't emit - already in sync
+							wingdrive.setCurrentLibrary(libraryId, false); // Don't emit - already in sync
 						}
 					})
 					.catch(() => {
@@ -127,12 +127,12 @@ function App() {
 			// Listen for library-changed events via platform (emitted when library switches)
 			if (platform.onLibraryIdChanged) {
 				platform.onLibraryIdChanged((newLibraryId) => {
-					spacedrive.setCurrentLibrary(newLibraryId, true); // DO emit - hooks need to know!
+					wingdrive.setCurrentLibrary(newLibraryId, true); // DO emit - hooks need to know!
 				});
 			}
 
 			// Subscribe to core events for auto-switching on synced library creation
-			unsubscribePromise = spacedrive.subscribe((event: CoreEvent) => {
+			unsubscribePromise = wingdrive.subscribe((event: CoreEvent) => {
 				// Check if this is a LibraryCreated event from sync
 				if (
 					typeof event === "object" &&
@@ -160,7 +160,7 @@ function App() {
 							});
 						} else {
 							// Fallback: just update the client
-							spacedrive.setCurrentLibrary(id);
+							wingdrive.setCurrentLibrary(id);
 						}
 					} else {
 						console.log(
@@ -244,11 +244,11 @@ function App() {
 	if (route === "/settings") {
 		return (
 			<PlatformProvider platform={platform}>
-				<SpacedriveProvider client={client}>
+				<WingDriveProvider client={client}>
 					<ServerProvider>
 						<Settings />
 					</ServerProvider>
-				</SpacedriveProvider>
+				</WingDriveProvider>
 			</PlatformProvider>
 		);
 	}
@@ -259,7 +259,7 @@ function App() {
 		const isMacOS = window.navigator.userAgent.includes("Mac");
 		return (
 			<PlatformProvider platform={platform}>
-				<SpacedriveProvider client={client}>
+				<WingDriveProvider client={client}>
 					<ServerProvider>
 						<JobsProvider>
 							<div
@@ -279,7 +279,7 @@ function App() {
 							</div>
 						</JobsProvider>
 					</ServerProvider>
-				</SpacedriveProvider>
+				</WingDriveProvider>
 			</PlatformProvider>
 		);
 	}
@@ -287,13 +287,13 @@ function App() {
 	if (route === "/quick-preview") {
 		return (
 			<PlatformProvider platform={platform}>
-				<SpacedriveProvider client={client}>
+				<WingDriveProvider client={client}>
 					<ServerProvider>
 						<div className="h-screen bg-app overflow-hidden">
 							<QuickPreview />
 						</div>
 					</ServerProvider>
-				</SpacedriveProvider>
+				</WingDriveProvider>
 			</PlatformProvider>
 		);
 	}
@@ -301,13 +301,13 @@ function App() {
 	if (route === "/job-manager") {
 		return (
 			<PlatformProvider platform={platform}>
-				<SpacedriveProvider client={client}>
+				<WingDriveProvider client={client}>
 					<ServerProvider>
 						<div className="h-screen bg-app overflow-hidden rounded-[10px] border border-transparent frame">
 							<JobsScreen />
 						</div>
 					</ServerProvider>
-				</SpacedriveProvider>
+				</WingDriveProvider>
 			</PlatformProvider>
 		);
 	}
@@ -351,13 +351,13 @@ function App() {
 
 		return (
 			<PlatformProvider platform={platform}>
-				<SpacedriveProvider client={client}>
+				<WingDriveProvider client={client}>
 					<ServerProvider>
 						<div className="h-screen overflow-hidden bg-app rounded-[10px] border border-transparent frame">
 							<RouterProvider router={spacebotRouter} />
 						</div>
 					</ServerProvider>
-				</SpacedriveProvider>
+				</WingDriveProvider>
 			</PlatformProvider>
 		);
 	}

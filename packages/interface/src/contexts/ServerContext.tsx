@@ -6,7 +6,7 @@ import {
 	type ReactNode,
 } from "react";
 import { usePlatform } from "./PlatformContext";
-import { useClient } from "./SpacedriveContext";
+import { useClient } from "./WingDriveContext";
 
 /**
  * Server context provides reactive access to the daemon server URL and current library ID.
@@ -45,7 +45,7 @@ export interface ServerProviderProps {
  * Provider that manages server URL and library ID state.
  *
  * Gets initial values from the platform and listens for changes.
- * Must be rendered inside PlatformProvider and SpacedriveProvider.
+ * Must be rendered inside PlatformProvider and WingDriveProvider.
  */
 export function ServerProvider({ children }: ServerProviderProps) {
 	const platform = usePlatform();

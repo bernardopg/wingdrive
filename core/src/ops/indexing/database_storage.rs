@@ -25,7 +25,7 @@
 //!
 //! ## Example
 //! ```rust,no_run
-//! use spacedrive_core::ops::indexing::{DatabaseStorage, state::DirEntry};
+//! use wingdrive_core::ops::indexing::{DatabaseStorage, state::DirEntry};
 //!
 //! let entry = DirEntry { /* ... */ };
 //! let entry_id = DatabaseStorage::create_entry(

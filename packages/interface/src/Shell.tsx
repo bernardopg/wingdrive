@@ -1,4 +1,4 @@
-import { SpacedriveProvider, type SpacedriveClient } from "./contexts/SpacedriveContext";
+import { WingDriveProvider, type WingDriveClient } from "./contexts/WingDriveContext";
 import { ServerProvider } from "./contexts/ServerContext";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { RouterProvider } from "react-router-dom";
@@ -19,7 +19,7 @@ import { usePlatform } from "./contexts/PlatformContext";
 import { useTheme } from "./hooks/useTheme";
 
 interface ShellProps {
-	client: SpacedriveClient;
+	client: WingDriveClient;
 }
 
 function ThemeApplier() {
@@ -78,7 +78,7 @@ function ShellWithDaemonCheck() {
 }
 
 function LiveFileEventsInvalidator() {
-	// Must be inside SpacedriveProvider + QueryClientProvider.
+	// Must be inside WingDriveProvider + QueryClientProvider.
 	useLiveFileEvents();
 	return null;
 }
@@ -88,7 +88,7 @@ export function Shell({ client }: ShellProps) {
 	const isTauri = platform.platform === "tauri";
 
 	return (
-		<SpacedriveProvider client={client}>
+		<WingDriveProvider client={client}>
 			<LiveFileEventsInvalidator />
 			<ServerProvider>
 				<TooltipProvider>
@@ -112,6 +112,6 @@ export function Shell({ client }: ShellProps) {
 					)}
 				</TooltipProvider>
 			</ServerProvider>
-		</SpacedriveProvider>
+		</WingDriveProvider>
 	);
 }

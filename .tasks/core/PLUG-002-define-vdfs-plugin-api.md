@@ -15,7 +15,7 @@ last_updated: 2025-10-14
 
 Define and implement the VDFS Plugin API bridge. This will be a secure, capability-based API that exposes a subset of the VDFS functionality to the sandboxed WASM plugins.
 
-The key architectural insight: expose ONE generic `spacedrive_call()` function that routes to the existing Wire operation registry, reusing all daemon RPC infrastructure.
+The key architectural insight: expose ONE generic `wingdrive_call()` function that routes to the existing Wire operation registry, reusing all daemon RPC infrastructure.
 
 ## Implementation Steps
 
@@ -34,7 +34,7 @@ The key architectural insight: expose ONE generic `spacedrive_call()` function t
 
 ## Remaining Work
 
-- [ ] Complete host_spacedrive_call() implementation
+- [ ] Complete host_wingdrive_call() implementation
 - [ ] Add WASM memory read/write helpers
 - [ ] Connect to RpcServer::execute_json_operation()
 - [ ] Add extension-specific operations (ai.ocr, credentials.store, vdfs.write_sidecar)

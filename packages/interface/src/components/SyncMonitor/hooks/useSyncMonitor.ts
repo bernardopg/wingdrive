@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLibraryQuery, useSpacedriveClient } from '../../../contexts/SpacedriveContext';
+import { useLibraryQuery, useWingDriveClient } from '../../../contexts/WingDriveContext';
 import type { SyncPeerActivity, SyncActivity, SyncState } from '../types';
 
 interface SyncMonitorState {
@@ -19,7 +19,7 @@ export function useSyncMonitor() {
 		hasActivity: false,
 	});
 
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 
 	const { data, refetch } = useLibraryQuery({
 		type: 'sync.activity',

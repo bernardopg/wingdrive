@@ -77,7 +77,7 @@ impl LibraryAction for LocationImportAction {
 
 		// Accept pre-fork exports while new exports use the WingDrive header.
 		if !sql_content.contains("-- WingDrive Location Export")
-			&& !sql_content.contains("-- Spacedrive Location Export")
+			&& !sql_content.contains("-- WingDrive Location Export")
 		{
 			return Err(ActionError::Validation {
 				field: "import_path".to_string(),

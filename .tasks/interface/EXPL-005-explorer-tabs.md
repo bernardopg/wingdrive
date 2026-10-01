@@ -14,7 +14,7 @@ related_tasks: []
 
 ## Description
 
-Add browser-like tabs to Spacedrive Explorer, enabling users to browse multiple locations simultaneously. This requires careful integration with the keybind system, proper UI rendering, and preservation of context (selection, view mode, scroll position, navigation history) across tabs.
+Add browser-like tabs to WingDrive Explorer, enabling users to browse multiple locations simultaneously. This requires careful integration with the keybind system, proper UI rendering, and preservation of context (selection, view mode, scroll position, navigation history) across tabs.
 
 Shipped: tab bar, create/close/switch, batch close (others / to the right), reopen closed tab with its explorer state, drag reorder, keybinds, and localStorage persistence scoped per window.
 

@@ -102,7 +102,7 @@
       "signingIdentity": "-",
       "entitlements": "Entitlements.plist",
       "infoPlist": "Info.plist",
-      "frameworks": ["../../.deps/Spacedrive.framework"]
+      "frameworks": ["../../.deps/WingDrive.framework"]
     },
     "windows": {
       "webviewInstallMode": {

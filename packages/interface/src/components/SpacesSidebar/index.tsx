@@ -26,7 +26,7 @@ import {motion} from 'framer-motion';
 import {memo, useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {usePlatform} from '../../contexts/PlatformContext';
-import {useSpacedriveClient} from '../../contexts/SpacedriveContext';
+import {useWingDriveClient} from '../../contexts/WingDriveContext';
 import {useLibraries} from '../../hooks/useLibraries';
 import {JobList} from '../JobManager/components/JobList';
 import {useJobsContext} from '../JobManager/hooks/JobsContext';
@@ -392,7 +392,7 @@ interface SpacesSidebarProps {
 }
 
 export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const platform = usePlatform();
 	const navigate = useNavigate();
 	const {data: libraries} = useLibraries();

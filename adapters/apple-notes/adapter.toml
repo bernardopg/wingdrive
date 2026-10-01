@@ -3,10 +3,10 @@ id = "apple-notes"
 name = "Apple Notes"
 description = "Index notes from the Apple Notes app (macOS). Requires Full Disk Access for the running process."
 version = "0.1.0"
-author = "spacedrive"
+author = "wingdrive"
 license = "MIT"
 icon = "note"
-min_spacedrive = "0.1.0"
+min_wingdrive = "0.1.0"
 trust_tier = "authored"
 
 [adapter.runtime]
@@ -16,7 +16,7 @@ schedule = "*/10 * * * *"
 requires = ["python3 >= 3.9"]
 
 # No config fields — uses the standard macOS path automatically.
-# Full Disk Access must be granted to the process running Spacedrive.
+# Full Disk Access must be granted to the process running WingDrive.
 
 # ── Data type schema ────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Tag as TagIcon } from '@phosphor-icons/react';
 import clsx from 'clsx';
 import { Button, toast } from '@wingdrive/primitives';
-import { useNormalizedQuery, useLibraryMutation } from '../../contexts/SpacedriveContext';
+import { useNormalizedQuery, useLibraryMutation } from '../../contexts/WingDriveContext';
 import { useSelection } from './SelectionContext';
 import { useKeybind } from '../../hooks/useKeybind';
 import type { Tag } from '@wingdrive/ts-client';

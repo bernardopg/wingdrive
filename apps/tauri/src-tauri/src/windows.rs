@@ -4,7 +4,7 @@ use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindo
 /// Window types in WingDrive
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
-pub enum SpacedriveWindow {
+pub enum WingDriveWindow {
 	/// Main application window
 	Main,
 
@@ -58,7 +58,7 @@ pub enum SpacedriveWindow {
 	},
 }
 
-impl SpacedriveWindow {
+impl WingDriveWindow {
 	/// Generate unique label for this window
 	pub fn label(&self) -> String {
 		match self {
@@ -486,7 +486,7 @@ fn position_overlay_window(window: &WebviewWindow, width: f64, height: f64) -> R
 
 /// Tauri command to show a window
 #[tauri::command]
-pub async fn show_window(app: AppHandle, window: SpacedriveWindow) -> Result<String, String> {
+pub async fn show_window(app: AppHandle, window: WingDriveWindow) -> Result<String, String> {
 	let label = window.label();
 	window.show(&app).await?;
 	Ok(label)
@@ -502,7 +502,7 @@ pub async fn close_window(app: AppHandle, label: String) -> Result<(), String> {
 }
 
 pub fn toggle_voice_overlay_internal(app: AppHandle) -> Result<(), String> {
-	let window = SpacedriveWindow::VoiceOverlay;
+	let window = WingDriveWindow::VoiceOverlay;
 	let label = window.label();
 
 	if let Some(existing) = app.get_webview_window(&label) {

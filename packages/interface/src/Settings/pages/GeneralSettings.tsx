@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "@wingdrive/primitives";
-import { useCoreQuery, useCoreMutation } from "../../contexts/SpacedriveContext";
+import { useCoreQuery, useCoreMutation } from "../../contexts/WingDriveContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 
 interface DeviceSettingsForm {

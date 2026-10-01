@@ -56,9 +56,9 @@ fn process_receipt(ctx: &ExtensionContext, pdf_data: &[u8]) -> Result<Uuid> {
 
 **Before (raw C bindings):**
 ```rust
-#[link(wasm_import_module = "spacedrive")]
+#[link(wasm_import_module = "wingdrive")]
 extern "C" {
-    fn spacedrive_call(
+    fn wingdrive_call(
         method_ptr: *const u8,
         method_len: usize,
         library_id_ptr: u32,

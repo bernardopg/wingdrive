@@ -28,7 +28,7 @@ import invariant from "tiny-invariant";
 import type { Simplify } from "type-fest";
 import * as v from "valibot";
 import type { Event, WingPath } from "../generated/types";
-import { useSpacedriveClient } from "./useClient";
+import { useWingDriveClient } from "./useClient";
 
 // Types
 
@@ -109,7 +109,7 @@ const ResourceDeletedSchema = v.object({
 export function useNormalizedQuery<I, O = any, TSelected = O>(
 	options: UseNormalizedQueryOptions<I, O, TSelected>,
 ) {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const queryClient = useQueryClient();
 	const [libraryId, setLibraryId] = useState<string | null>(
 		client.getCurrentLibraryId(),

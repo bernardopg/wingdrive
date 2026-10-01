@@ -203,7 +203,7 @@ impl Default for ProxyPairingConfig {
 impl Default for LoggingConfig {
 	fn default() -> Self {
 		Self {
-			main_filter: "wing_core=info,spacedrive=info".to_string(),
+			main_filter: "wing_core=info,wingdrive=info".to_string(),
 			streams: vec![],
 		}
 	}

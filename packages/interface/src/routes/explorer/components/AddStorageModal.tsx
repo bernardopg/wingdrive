@@ -30,7 +30,7 @@ import type {
 	ValidationWarning as PathValidationWarning,
 	VolumeIndexingSuggestion,
 } from "@wingdrive/ts-client";
-import { useLibraryMutation, useLibraryQuery, useSpacedriveClient } from "../../../contexts/SpacedriveContext";
+import { useLibraryMutation, useLibraryQuery, useWingDriveClient } from "../../../contexts/WingDriveContext";
 import { usePlatform } from "../../../contexts/PlatformContext";
 import clsx from "clsx";
 
@@ -400,7 +400,7 @@ function AddStorageDialog(props: {
 
 	console.log("AddStorageDialog render:", { validationResult, step });
 
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const addLocation = useLibraryMutation("locations.add");
 	const addCloudVolume = useLibraryMutation("volumes.add_cloud");
 	const trackVolume = useLibraryMutation("volumes.track");

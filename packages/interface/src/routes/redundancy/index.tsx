@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Warning, ArrowRight } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { TopBarPortal, TopBarItem } from "../../TopBar";
-import { useLibraryQuery } from "../../contexts/SpacedriveContext";
+import { useLibraryQuery } from "../../contexts/WingDriveContext";
 import { RedundancyVolumeBar } from "./components/RedundancyVolumeBar";
 
 function formatBytes(bytes: number): string {

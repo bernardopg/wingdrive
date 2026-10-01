@@ -13,7 +13,7 @@ edition = "2021"
 ffmpeg = ["dep:wing-ffmpeg"]
 
 [dependencies]
-# Spacedrive Sub-crates
+# WingDrive Sub-crates
 wing-ffmpeg = { path = "../ffmpeg", optional = true }
 wing-utils  = { path = "../utils" }
 

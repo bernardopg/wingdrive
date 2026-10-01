@@ -8,8 +8,8 @@ use crate::volume::{
 	detection,
 	error::{VolumeError, VolumeResult},
 	types::{
-		SpacedriveVolumeId, TrackedVolume, Volume, VolumeDetectionConfig, VolumeFingerprint,
-		VolumeInfo,
+		TrackedVolume, Volume, VolumeDetectionConfig, VolumeFingerprint, VolumeInfo,
+		WingDriveVolumeId,
 	},
 	VolumeExt,
 };
@@ -24,7 +24,7 @@ use tokio::{fs, sync::RwLock, time::Duration};
 use tracing::{debug, error, info, instrument, warn};
 use uuid::Uuid;
 
-/// Filename for Spacedrive volume identifier files
+/// Filename for WingDrive volume identifier files
 
 /// Get platform-specific directories to watch for volume mount changes
 fn get_volume_watch_paths() -> Vec<PathBuf> {
@@ -1341,17 +1341,17 @@ impl VolumeManager {
 		};
 
 		// Try to create/read identifier file for this volume
-		if let Some(spacedrive_id) = self.manage_spacedrive_identifier(&volume).await {
+		if let Some(wingdrive_id) = self.manage_wingdrive_identifier(&volume).await {
 			info!(
-				"Created/found Spacedrive ID {} for manually tracked volume {}",
-				spacedrive_id, volume.name
+				"Created/found WingDrive ID {} for manually tracked volume {}",
+				wingdrive_id, volume.name
 			);
 
-			// Check if we should upgrade to Spacedrive ID-based fingerprint
-			let spacedrive_fingerprint = VolumeFingerprint::from_spacedrive_id(spacedrive_id);
-			if spacedrive_fingerprint != volume.fingerprint {
+			// Check if we should upgrade to WingDrive ID-based fingerprint
+			let wingdrive_fingerprint = VolumeFingerprint::from_wingdrive_id(wingdrive_id);
+			if wingdrive_fingerprint != volume.fingerprint {
 				info!(
-					"Upgrading fingerprint for volume {} from content-based to Spacedrive ID-based",
+					"Upgrading fingerprint for volume {} from content-based to WingDrive ID-based",
 					volume.name
 				);
 				// Note: In a full implementation, we'd want to update the volume's fingerprint
@@ -1480,7 +1480,7 @@ impl VolumeManager {
 	/// Unlike `track_volume`, this method:
 	/// - Takes a `Volume` directly instead of requiring fingerprint lookup
 	/// - Returns the integer database ID (for FK relationships) not the Model
-	/// - Skips Spacedrive ID file management (that's for explicit user tracking)
+	/// - Skips WingDrive ID file management (that's for explicit user tracking)
 	/// - Is designed for internal indexer use, not user-facing operations
 	pub async fn ensure_volume_in_db(
 		&self,
@@ -1811,10 +1811,10 @@ impl VolumeManager {
 
 		for volume in eligible_volumes {
 			// Try to create/read identifier file for better fingerprinting
-			if let Some(spacedrive_id) = self.manage_spacedrive_identifier(&volume).await {
+			if let Some(wingdrive_id) = self.manage_wingdrive_identifier(&volume).await {
 				info!(
-					"Using Spacedrive ID {} for volume {} fingerprinting",
-					spacedrive_id, volume.name
+					"Using WingDrive ID {} for volume {} fingerprinting",
+					wingdrive_id, volume.name
 				);
 				// We could update the fingerprint here, but for now we'll keep using the existing one
 				// to maintain compatibility with already tracked volumes
@@ -2084,9 +2084,9 @@ impl VolumeManager {
 			.collect()
 	}
 
-	/// Create or read Spacedrive identifier file for a volume
+	/// Create or read WingDrive identifier file for a volume
 	/// Returns the UUID from the identifier file if successfully created/read
-	async fn manage_spacedrive_identifier(&self, volume: &Volume) -> Option<Uuid> {
+	async fn manage_wingdrive_identifier(&self, volume: &Volume) -> Option<Uuid> {
 		// Skip cloud volumes - they don't have filesystem mount points
 		if matches!(
 			volume.volume_type,
@@ -2094,7 +2094,7 @@ impl VolumeManager {
 		) && matches!(volume.mount_type, crate::volume::types::MountType::Network)
 		{
 			debug!(
-				"Skipping Spacedrive identifier management for cloud volume: {}",
+				"Skipping WingDrive identifier management for cloud volume: {}",
 				volume.name
 			);
 			return None;
@@ -2104,18 +2104,18 @@ impl VolumeManager {
 
 		// Try to read existing identifier file
 		if let Ok(content) = fs::read_to_string(&id_file_path).await {
-			if let Ok(spacedrive_id) = serde_json::from_str::<SpacedriveVolumeId>(&content) {
+			if let Ok(wingdrive_id) = serde_json::from_str::<WingDriveVolumeId>(&content) {
 				debug!(
-					"Found existing Spacedrive ID {} for volume {}",
-					spacedrive_id.id, volume.name
+					"Found existing WingDrive ID {} for volume {}",
+					wingdrive_id.id, volume.name
 				);
-				return Some(spacedrive_id.id);
+				return Some(wingdrive_id.id);
 			}
 		}
 
 		// Try to create new identifier file if volume is writable
 		if !volume.is_read_only && volume.mount_point.exists() {
-			let spacedrive_id = SpacedriveVolumeId {
+			let wingdrive_id = WingDriveVolumeId {
 				id: Uuid::new_v4(),
 				created: chrono::Utc::now(),
 				device_name: None, // TODO: Get from DeviceManager when available
@@ -2124,20 +2124,20 @@ impl VolumeManager {
 				library_id: Uuid::nil(), // TODO: Populate from library context when available
 			};
 
-			if let Ok(content) = serde_json::to_string_pretty(&spacedrive_id) {
+			if let Ok(content) = serde_json::to_string_pretty(&wingdrive_id) {
 				match fs::write(&id_file_path, content).await {
 					Ok(()) => {
 						info!(
-							"Created Spacedrive ID {} for volume {} at {}",
-							spacedrive_id.id,
+							"Created WingDrive ID {} for volume {} at {}",
+							wingdrive_id.id,
 							volume.name,
 							id_file_path.display()
 						);
-						return Some(spacedrive_id.id);
+						return Some(wingdrive_id.id);
 					}
 					Err(e) => {
 						debug!(
-							"Failed to write Spacedrive ID file to {}: {}",
+							"Failed to write WingDrive ID file to {}: {}",
 							id_file_path.display(),
 							e
 						);
@@ -2147,7 +2147,7 @@ impl VolumeManager {
 		}
 
 		debug!(
-			"Could not create or read Spacedrive identifier for volume {} (read_only: {}, exists: {})",
+			"Could not create or read WingDrive identifier for volume {} (read_only: {}, exists: {})",
 			volume.name,
 			volume.is_read_only,
 			volume.mount_point.exists()
@@ -2155,16 +2155,13 @@ impl VolumeManager {
 		None
 	}
 
-	/// Read Spacedrive identifier file from a volume if it exists
-	pub async fn read_spacedrive_identifier(
-		&self,
-		mount_point: &Path,
-	) -> Option<SpacedriveVolumeId> {
+	/// Read WingDrive identifier file from a volume if it exists
+	pub async fn read_wingdrive_identifier(&self, mount_point: &Path) -> Option<WingDriveVolumeId> {
 		let id_file_path = crate::branding::volume_id_file(mount_point);
 
 		if let Ok(content) = fs::read_to_string(&id_file_path).await {
-			if let Ok(spacedrive_id) = serde_json::from_str::<SpacedriveVolumeId>(&content) {
-				return Some(spacedrive_id);
+			if let Ok(wingdrive_id) = serde_json::from_str::<WingDriveVolumeId>(&content) {
+				return Some(wingdrive_id);
 			}
 		}
 

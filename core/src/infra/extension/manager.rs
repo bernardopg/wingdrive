@@ -13,7 +13,7 @@ use wasmer::{imports, Function, FunctionEnv, Instance, Memory, Module, Store};
 
 use crate::{context::CoreContext, infra::api::ApiDispatcher};
 
-use super::host_functions::{self, host_spacedrive_call, host_spacedrive_log, PluginEnv};
+use super::host_functions::{self, host_wingdrive_call, host_wingdrive_log, PluginEnv};
 use super::job_registry::ExtensionJobRegistry;
 use super::permissions::ExtensionPermissions;
 use super::types::{ExtensionManifest, LoadedPlugin};
@@ -143,17 +143,17 @@ impl PluginManager {
 
 		// 5. Create imports (host functions exposed to WASM)
 		let import_object = imports! {
-			"spacedrive" => {
+			"wingdrive" => {
 				// Core functions
-				"spacedrive_call" => Function::new_typed_with_env(
+				"wingdrive_call" => Function::new_typed_with_env(
 					&mut self.store,
 					&env,
-					host_spacedrive_call
+					host_wingdrive_call
 				),
-				"spacedrive_log" => Function::new_typed_with_env(
+				"wingdrive_log" => Function::new_typed_with_env(
 					&mut self.store,
 					&env,
-					host_spacedrive_log
+					host_wingdrive_log
 				),
 
 				// Job-specific functions

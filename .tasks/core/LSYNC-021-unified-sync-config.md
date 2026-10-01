@@ -617,9 +617,9 @@ sd library "My Library" sync config set --preset conservative
 ### Config File Format
 
 ```toml
-# ~/.config/spacedrive/sync.toml (global)
+# ~/.config/wingdrive/sync.toml (global)
 # or
-# ~/Spacedrive/libraries/{library-id}/sync_config.toml (per-library)
+# ~/WingDrive/libraries/{library-id}/sync_config.toml (per-library)
 
 [batching]
 backfill_batch_size = 10000

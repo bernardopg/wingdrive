@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLibraryQuery } from '../../../contexts/SpacedriveContext';
+import { useLibraryQuery } from '../../../contexts/WingDriveContext';
 
 export function useSyncCount() {
 	const [onlinePeerCount, setOnlinePeerCount] = useState(0);

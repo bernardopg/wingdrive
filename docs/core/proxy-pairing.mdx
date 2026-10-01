@@ -272,7 +272,7 @@ pub fn derive_proxied_session_keys(
     voucher_vouchee_shared_secret: &[u8],
 ) -> SessionKeys {
     let context = format!(
-        "spacedrive-proxy-pairing-{}:{}:{}",
+        "wingdrive-proxy-pairing-{}:{}:{}",
         voucher_device_id,
         vouchee_device_id,
         hex::encode(vouchee_public_key)

@@ -217,10 +217,10 @@ async fn handle_filesystem_event(&self, event: Event) -> Result<()> {
 ```bash
 # Test batch change detection (stale detection)
 # 1. Index a directory
-spacedrive index location ~/Documents --mode shallow
+wingdrive index location ~/Documents --mode shallow
 
-# 2. Stop Spacedrive
-spacedrive stop
+# 2. Stop WingDrive
+wingdrive stop
 
 # 3. Make changes while offline
 touch ~/Documents/new_file.txt
@@ -229,8 +229,8 @@ mv ~/Documents/old.txt ~/Documents/renamed.txt
 rm ~/Documents/deleted.txt
 
 # 4. Restart and verify detection
-spacedrive start
-spacedrive index location ~/Documents --mode shallow
+wingdrive start
+wingdrive index location ~/Documents --mode shallow
 
 # Should detect: 1 new, 1 modified, 1 moved, 1 deleted
 ```

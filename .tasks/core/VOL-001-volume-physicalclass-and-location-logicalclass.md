@@ -11,7 +11,7 @@ whitepaper: Section 4.8
 
 ## Description
 
-Implement the `PhysicalClass` for Volumes and `LogicalClass` for Locations. This is the foundation of the intelligent storage tiering system, allowing Spacedrive to understand the physical characteristics of storage devices and the user's intent for the data stored on them.
+Implement the `PhysicalClass` for Volumes and `LogicalClass` for Locations. This is the foundation of the intelligent storage tiering system, allowing WingDrive to understand the physical characteristics of storage devices and the user's intent for the data stored on them.
 
 ## Implementation Steps
 

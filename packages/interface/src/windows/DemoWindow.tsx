@@ -1,9 +1,9 @@
 import { ShinyButton } from "@wingdrive/primitives";
-import { SpacedriveProvider } from "../contexts/SpacedriveContext";
+import { WingDriveProvider } from "../contexts/WingDriveContext";
 import { useLibraries } from "../hooks/useLibraries";
 import { useAllEvents } from "../hooks/useEvent";
 import { useState } from "react";
-import type { SpacedriveClient } from "../contexts/SpacedriveContext";
+import type { WingDriveClient } from "../contexts/WingDriveContext";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { usePlatform } from "../contexts/PlatformContext";
 
@@ -20,7 +20,7 @@ interface LibraryInfo {
 }
 
 interface AppProps {
-	client: SpacedriveClient;
+	client: WingDriveClient;
 }
 
 function LibrariesView() {
@@ -244,13 +244,13 @@ function LibrariesView() {
 
 export function DemoWindow({ client }: AppProps) {
 	return (
-		<SpacedriveProvider client={client}>
+		<WingDriveProvider client={client}>
 			<LibrariesView />
 			<ReactQueryDevtools
 				initialIsOpen={false}
 				buttonPosition="bottom-right"
 			/>
-		</SpacedriveProvider>
+		</WingDriveProvider>
 	);
 }
 

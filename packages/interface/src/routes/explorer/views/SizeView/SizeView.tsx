@@ -9,7 +9,7 @@ import {CircleButton, CircleButtonGroup} from '@wingdrive/primitives';
 import * as d3 from 'd3';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
-import {useNormalizedQuery} from '../../../../contexts/SpacedriveContext';
+import {useNormalizedQuery} from '../../../../contexts/WingDriveContext';
 import {useExplorer} from '../../context';
 import {Thumb} from '../../File/Thumb';
 import {useFileContextMenu} from '../../hooks/useFileContextMenu';

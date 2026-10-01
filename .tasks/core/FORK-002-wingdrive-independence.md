@@ -24,13 +24,13 @@ The execution plan is versioned in
 - [x] Replace inherited inactive workflows with WingDrive-owned CI, release, container, and mobile workflows
 - [x] Move active repository, updater, support, package, and documentation links to WingDrive
 - [x] Rebrand desktop, web, mobile, server, CLI, generated clients, and visible assets
-- [x] Remove active build and runtime downloads from Spacedrive-owned infrastructure
+- [x] Remove active build and runtime downloads from WingDrive-owned infrastructure
 - [x] Keep original authorship and license notices intact
 - [x] Add an automated autonomy check with an explicit legacy and attribution allowlist
 - [x] Validate task metadata, workflow syntax, types, core tests, and release inputs
 - [x] Make new CLI services, config files, exports, containers, user agents, and storage keys write WingDrive names
 - [x] Preserve tested reads for legacy services, config, exports, data directories, keyring entries, and storage keys
-- [x] Remove unused Spacedrive-named packaging and placeholder CLI scripts
+- [x] Remove unused WingDrive-named packaging and placeholder CLI scripts
 
 ## Acceptance Criteria
 

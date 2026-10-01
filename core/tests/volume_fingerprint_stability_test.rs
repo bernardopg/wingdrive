@@ -66,13 +66,13 @@ fn test_fingerprint_differs_with_different_inputs() {
 #[test]
 fn test_fingerprint_stable_across_volume_types() {
 	let device_id = Uuid::parse_str("12345678-1234-5678-1234-567812345678").unwrap();
-	let spacedrive_id = Uuid::parse_str("abcd1234-5678-90ab-cdef-1234567890ab").unwrap();
+	let wingdrive_id = Uuid::parse_str("abcd1234-5678-90ab-cdef-1234567890ab").unwrap();
 
 	// Primary volume fingerprint uses mount point + device (both stable across reboots)
 	let fp_primary = VolumeFingerprint::from_primary_volume(std::path::Path::new("/"), device_id);
 
 	// External volume fingerprint uses dotfile UUID + device (both stable)
-	let fp_external = VolumeFingerprint::from_external_volume(spacedrive_id, device_id);
+	let fp_external = VolumeFingerprint::from_external_volume(wingdrive_id, device_id);
 
 	// Network volume fingerprint uses backend ID + URI (both stable)
 	let fp_network = VolumeFingerprint::from_network_volume("smb", "//nas.local/share");
@@ -117,9 +117,9 @@ fn test_fingerprint_stable_despite_disk_id_changes() {
 	);
 
 	// External volume with dotfile UUID is also stable across reboots
-	let spacedrive_id = Uuid::parse_str("aabbccdd-1234-5678-9012-aabbccddeeff").unwrap();
-	let fp_ext_before = VolumeFingerprint::from_external_volume(spacedrive_id, device_id);
-	let fp_ext_after = VolumeFingerprint::from_external_volume(spacedrive_id, device_id);
+	let wingdrive_id = Uuid::parse_str("aabbccdd-1234-5678-9012-aabbccddeeff").unwrap();
+	let fp_ext_before = VolumeFingerprint::from_external_volume(wingdrive_id, device_id);
+	let fp_ext_after = VolumeFingerprint::from_external_volume(wingdrive_id, device_id);
 
 	assert_eq!(
 		fp_ext_before, fp_ext_after,

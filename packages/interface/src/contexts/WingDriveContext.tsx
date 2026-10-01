@@ -7,8 +7,8 @@
 
 // Re-export hooks from @wingdrive/ts-client (no longer duplicated!)
 export {
-	SpacedriveProvider,
-	useSpacedriveClient,
+	WingDriveProvider,
+	useWingDriveClient,
 	useClient,
 	useCoreQuery,
 	useLibraryQuery,
@@ -18,7 +18,7 @@ export {
 } from "@wingdrive/ts-client/hooks";
 
 // Export client type
-export type { SpacedriveClient } from "@wingdrive/ts-client";
+export type { WingDriveClient } from "@wingdrive/ts-client";
 
 // Export commonly used types for convenience
 export type {
@@ -29,4 +29,3 @@ export type {
 
 // Export icon utilities
 export { getDeviceIcon, getVolumeIcon } from "@wingdrive/ts-client";
-export { WingDriveProvider, useWingDriveClient } from "@wingdrive/ts-client/hooks";

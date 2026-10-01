@@ -216,7 +216,7 @@ impl Task<JobError> for CopyFileTask {
 2. **No Architecture Changes**: Leverages existing task-system infrastructure
 3. **Backward Compatible**: Existing sequential jobs continue to work
 4. **Simple Implementation**: No wrappers, adapters, or special traits needed
-5. **Proven Pattern**: Based on Spacedrive v1's task-system design
+5. **Proven Pattern**: Based on WingDrive v1's task-system design
 
 ## Performance Expectations
 

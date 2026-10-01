@@ -11,7 +11,7 @@ import type {
 } from '@wingdrive/ts-client';
 import {useMemo, useState} from 'react';
 import {Inspector} from '../../components/Inspector/Inspector';
-import {useNormalizedQuery} from '../../contexts/SpacedriveContext';
+import {useNormalizedQuery} from '../../contexts/WingDriveContext';
 import {DevicePanel} from './DevicePanel';
 import {HeroStats} from './HeroStats';
 import {OverviewTopBar} from './OverviewTopBar';

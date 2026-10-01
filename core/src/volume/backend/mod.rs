@@ -22,7 +22,7 @@ pub use local::LocalBackend;
 ///
 /// This trait provides only low-level filesystem operations. All domain logic
 /// (Entry creation, content identification, etc.) is handled by existing
-/// Spacedrive infrastructure that consumes these raw operations.
+/// WingDrive infrastructure that consumes these raw operations.
 #[async_trait]
 pub trait VolumeBackend: Send + Sync + Debug {
 	/// Read entire file content

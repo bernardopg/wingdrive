@@ -1,4 +1,4 @@
-import {useLibraryMutation} from "../contexts/SpacedriveContext";
+import {useLibraryMutation} from "../contexts/WingDriveContext";
 
 export interface JobConfig {
 	job_type: "thumbnail" | "ocr" | "speech_to_text" | "thumbstrip" | "proxy";

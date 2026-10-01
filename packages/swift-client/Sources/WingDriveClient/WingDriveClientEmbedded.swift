@@ -14,7 +14,7 @@
     ///
     /// This client provides a clean, type-safe interface for executing queries,
     /// actions, and subscribing to events from the WingDrive core running embedded within the iOS app.
-    public class SpacedriveClient {
+    public class WingDriveClient {
         private let embeddedCore: IOSCoreBridge
         private let dataDirectory: String
 
@@ -46,7 +46,7 @@
 
             guard embeddedCore.initialize(dataDirectory: dataDirectory, deviceName: finalDeviceName)
             else {
-                throw SpacedriveError.connectionFailed("Failed to initialize embedded core")
+                throw WingDriveError.connectionFailed("Failed to initialize embedded core")
             }
         }
 
@@ -110,14 +110,14 @@
 
         /// Switch to a library by ID
         /// - Parameter libraryId: The ID of the library to switch to
-        /// - Throws: SpacedriveError if the library doesn't exist or can't be accessed
+        /// - Throws: WingDriveError if the library doesn't exist or can't be accessed
         public func switchToLibrary(_ libraryId: String) async throws {
             // Check if the library exists in the list (core-scoped query)
             let libraries = try await getLibraries()
             let libraryExists = libraries.contains { $0.id == libraryId }
 
             if !libraryExists {
-                throw SpacedriveError.invalidResponse("Library with ID '\(libraryId)' not found")
+                throw WingDriveError.invalidResponse("Library with ID '\(libraryId)' not found")
             }
 
             // Set as current library
@@ -126,18 +126,18 @@
 
         /// Switch to a library by name
         /// - Parameter libraryName: The name of the library to switch to
-        /// - Throws: SpacedriveError if the library doesn't exist or multiple libraries have the same name
+        /// - Throws: WingDriveError if the library doesn't exist or multiple libraries have the same name
         public func switchToLibrary(named libraryName: String) async throws {
             let libraries = try await getLibraries()
             let matchingLibraries = libraries.filter { $0.name == libraryName }
 
             switch matchingLibraries.count {
             case 0:
-                throw SpacedriveError.invalidResponse("No library found with name '\(libraryName)'")
+                throw WingDriveError.invalidResponse("No library found with name '\(libraryName)'")
             case 1:
                 setCurrentLibrary(matchingLibraries[0].id)
             default:
-                throw SpacedriveError.invalidResponse(
+                throw WingDriveError.invalidResponse(
                     "Multiple libraries found with name '\(libraryName)'. Use switchToLibrary(id:) instead."
                 )
             }
@@ -145,7 +145,7 @@
 
         /// Get information about the currently active library
         /// - Returns: LibraryInfo for the current library, or nil if no library is active
-        /// - Throws: SpacedriveError if the library can't be accessed
+        /// - Throws: WingDriveError if the library can't be accessed
         public func getCurrentLibraryInfo() async throws -> LibraryInfo? {
             guard let libraryId = getCurrentLibraryId() else {
                 return nil
@@ -156,10 +156,10 @@
         }
 
         /// Check if a library operation can be performed (requires current library)
-        /// - Throws: SpacedriveError if no library is currently active
+        /// - Throws: WingDriveError if no library is currently active
         private func requireCurrentLibrary() throws {
             guard getCurrentLibraryId() != nil else {
-                throw SpacedriveError.invalidResponse(
+                throw WingDriveError.invalidResponse(
                     "This operation requires an active library. Use switchToLibrary() or createAndSwitchToLibrary() first."
                 )
             }
@@ -167,10 +167,10 @@
 
         /// Get the current library ID or throw an error if none is set
         /// - Returns: The current library ID
-        /// - Throws: SpacedriveError if no library is currently active
+        /// - Throws: WingDriveError if no library is currently active
         private func getCurrentLibraryIdOrThrow() throws -> String {
             guard let libraryId = getCurrentLibraryId() else {
-                throw SpacedriveError.invalidResponse(
+                throw WingDriveError.invalidResponse(
                     "This operation requires an active library. Use switchToLibrary() or createAndSwitchToLibrary() first."
                 )
             }
@@ -225,14 +225,14 @@
                 if let result = jsonRpcResponse.result {
                     return result
                 } else if let error = jsonRpcResponse.error {
-                    throw SpacedriveError.daemonError(error.message)
+                    throw WingDriveError.daemonError(error.message)
                 } else {
-                    throw SpacedriveError.invalidResponse("No result or error in JSON-RPC response")
+                    throw WingDriveError.invalidResponse("No result or error in JSON-RPC response")
                 }
-            } catch let error as SpacedriveError {
+            } catch let error as WingDriveError {
                 throw error
             } catch {
-                throw SpacedriveError.serializationError("Failed to execute request: \(error)")
+                throw WingDriveError.serializationError("Failed to execute request: \(error)")
             }
         }
 
@@ -261,7 +261,7 @@
                                 }
                             } catch {
                                 continuation.finish(
-                                    throwing: SpacedriveError.serializationError(
+                                    throwing: WingDriveError.serializationError(
                                         "Failed to decode event: \(error)"))
                             }
                         }
@@ -300,7 +300,7 @@
         ///   - path: Optional path for the library
         ///   - setAsCurrent: Whether to automatically set the new library as current (default: true)
         /// - Returns: The created library information
-        /// - Throws: SpacedriveError if creation fails
+        /// - Throws: WingDriveError if creation fails
         public func createAndSwitchToLibrary(
             name: String, path: String? = nil, setAsCurrent: Bool = true
         ) async throws -> LibraryCreateOutput {
@@ -346,7 +346,7 @@
         /// Get jobs for the current library
         /// - Parameter status: Optional job status filter
         /// - Returns: List of jobs for the current library
-        /// - Throws: SpacedriveError if no library is active or operation fails
+        /// - Throws: WingDriveError if no library is active or operation fails
         public func getCurrentLibraryJobs(status: JobStatus? = nil) async throws -> JobListOutput {
             let libraryId = try getCurrentLibraryIdOrThrow()
 

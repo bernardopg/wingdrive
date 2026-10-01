@@ -10,4 +10,4 @@ whitepaper: Section 7
 
 ## Description
 
-This epic covers the implementation of features that ensure Spacedrive is a "responsible citizen" on all user devices, especially those with constrained resources like mobile phones and laptops running on battery.
+This epic covers the implementation of features that ensure WingDrive is a "responsible citizen" on all user devices, especially those with constrained resources like mobile phones and laptops running on battery.

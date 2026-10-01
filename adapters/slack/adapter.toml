@@ -3,10 +3,10 @@ id = "slack"
 name = "Slack Export"
 description = "Index messages, channels, and users from a Slack workspace export (JSON). Download your export from Slack admin settings."
 version = "0.1.0"
-author = "spacedrive"
+author = "wingdrive"
 license = "MIT"
 icon = "message-square"
-min_spacedrive = "0.1.0"
+min_wingdrive = "0.1.0"
 trust_tier = "collaborative"
 
 [adapter.runtime]

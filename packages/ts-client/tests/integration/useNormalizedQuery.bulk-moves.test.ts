@@ -11,8 +11,8 @@ import { readFile } from "fs/promises";
 import { rename } from "fs/promises";
 import { join } from "path";
 import { hostname } from "os";
-import { SpacedriveClient } from "../../src/client";
-import { SpacedriveProvider } from "../../src/hooks/useClient";
+import { WingDriveClient } from "../../src/client";
+import { WingDriveProvider } from "../../src/hooks/useClient";
 import { useNormalizedQuery } from "../../src/hooks/useNormalizedQuery";
 import { renderHook, waitFor, act, cleanup } from "@testing-library/react";
 import React from "react";
@@ -28,7 +28,7 @@ interface BridgeConfig {
 
 describe("useNormalizedQuery - Bulk Moves Integration", () => {
 	let bridgeConfig: BridgeConfig;
-	let client: SpacedriveClient;
+	let client: WingDriveClient;
 	const allEventsReceived: any[] = []; // Collect all events for debugging
 
 	beforeAll(async () => {
@@ -45,7 +45,7 @@ describe("useNormalizedQuery - Bulk Moves Integration", () => {
 		console.log(`[TS] Bridge config:`, bridgeConfig);
 
 		// Connect to daemon via TCP socket
-		client = SpacedriveClient.fromTcpSocket(bridgeConfig.socket_addr);
+		client = WingDriveClient.fromTcpSocket(bridgeConfig.socket_addr);
 
 		console.log(`[TS] Connected to daemon`);
 
@@ -103,9 +103,9 @@ describe("useNormalizedQuery - Bulk Moves Integration", () => {
 		// Get device slug from hostname
 		const deviceSlug = hostname().toLowerCase().replace(/\s+/g, "-");
 
-		// Create wrapper for React hooks with SpacedriveProvider
+		// Create wrapper for React hooks with WingDriveProvider
 		const wrapper = ({ children }: { children: React.ReactNode }) =>
-			React.createElement(SpacedriveProvider, { client }, children);
+			React.createElement(WingDriveProvider, { client }, children);
 
 		// Query root directory listing
 		const { result: rootResult } = renderHook(

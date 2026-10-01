@@ -157,7 +157,7 @@ async fn uninstall_launchd_service(instance: Option<String>) -> Result<()> {
 	let mut removed = false;
 	for label in [
 		qualified_service_name("com.wingdrive.daemon", instance.as_deref()),
-		qualified_service_name("com.spacedrive.daemon", instance.as_deref()),
+		qualified_service_name("com.wingdrive.daemon", instance.as_deref()),
 	] {
 		let plist_path = launch_agents_dir.join(format!("{label}.plist"));
 		if !plist_path.exists() {
@@ -199,7 +199,7 @@ async fn check_launchd_status(instance: Option<String>) -> Result<()> {
 
 	let service = [
 		qualified_service_name("com.wingdrive.daemon", instance.as_deref()),
-		qualified_service_name("com.spacedrive.daemon", instance.as_deref()),
+		qualified_service_name("com.wingdrive.daemon", instance.as_deref()),
 	]
 	.into_iter()
 	.find_map(|label| {
@@ -368,7 +368,7 @@ async fn uninstall_launchd_service(instance: Option<String>) -> Result<()> {
 
 	let service_names = [
 		systemd_service_name("wingdrive-daemon", instance.as_deref()),
-		systemd_service_name("spacedrive-daemon", instance.as_deref()),
+		systemd_service_name("wingdrive-daemon", instance.as_deref()),
 	];
 	let mut removed = false;
 	for service_name in service_names {
@@ -415,7 +415,7 @@ async fn check_launchd_status(instance: Option<String>) -> Result<()> {
 
 	let service = [
 		systemd_service_name("wingdrive-daemon", instance.as_deref()),
-		systemd_service_name("spacedrive-daemon", instance.as_deref()),
+		systemd_service_name("wingdrive-daemon", instance.as_deref()),
 	]
 	.into_iter()
 	.find_map(|service_name| {

@@ -11,7 +11,7 @@ whitepaper: Section 8
 
 ## Description
 
-Implement a secure credential vault for storing API keys and other secrets for cloud services. This will allow users to safely connect their Spacedrive library to their cloud storage accounts.
+Implement a secure credential vault for storing API keys and other secrets for cloud services. This will allow users to safely connect their WingDrive library to their cloud storage accounts.
 
 ## Implementation Steps
 

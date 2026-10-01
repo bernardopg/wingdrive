@@ -1,7 +1,7 @@
 //! Database query support for copy operations
 //!
 //! Provides instant size and file count estimates by querying
-//! Spacedrive's indexed data, enabling immediate progress feedback.
+//! WingDrive's indexed data, enabling immediate progress feedback.
 
 use crate::{
 	domain::addressing::WingPath,

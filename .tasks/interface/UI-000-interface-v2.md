@@ -10,7 +10,7 @@ last_updated: 2025-12-02
 
 ## Description
 
-Complete rewrite of the Spacedrive interface using React 19, TypeScript, and a clean component architecture. The interface is platform-agnostic and works across Tauri (desktop), web, and mobile.
+Complete rewrite of the WingDrive interface using React 19, TypeScript, and a clean component architecture. The interface is platform-agnostic and works across Tauri (desktop), web, and mobile.
 
 ## Key Principles
 

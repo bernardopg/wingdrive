@@ -54,7 +54,7 @@ This doesn't work for ephemeral locations because:
 ### Storage Structure
 
 ```
-/tmp/spacedrive-ephemeral-{library_id}/
+/tmp/wingdrive-ephemeral-{library_id}/
 ├── sidecars/
 │   └── entry/
 │       ├── {entry_uuid}/
@@ -169,7 +169,7 @@ impl EphemeralSidecarCache {
 
 **Path structure:**
 ```
-/tmp/spacedrive-ephemeral-{library_id}/sidecars/entry/{entry_uuid}/{kind}s/{variant}.{format}
+/tmp/wingdrive-ephemeral-{library_id}/sidecars/entry/{entry_uuid}/{kind}s/{variant}.{format}
 ```
 
 **Bootstrap on startup:**
@@ -297,9 +297,9 @@ async fn serve_ephemeral_sidecar(
     kind: &str,
     variant_and_ext: &str,
 ) -> Result<Response<Body>, StatusCode> {
-    // Construct path: /tmp/spacedrive-ephemeral-{library_id}/sidecars/entry/{entry_uuid}/{kind}s/{variant}.{ext}
+    // Construct path: /tmp/wingdrive-ephemeral-{library_id}/sidecars/entry/{entry_uuid}/{kind}s/{variant}.{ext}
     let temp_root = std::env::temp_dir()
-        .join(format!("spacedrive-ephemeral-{}", library_id));
+        .join(format!("wingdrive-ephemeral-{}", library_id));
 
     let kind_dir = if kind == "transcript" {
         kind.to_string()
@@ -903,7 +903,7 @@ LRU eviction when limits are reached.
 If multiple users browse the same network share, share temp sidecars:
 
 ```
-/tmp/spacedrive-ephemeral-shared/{path_hash}/sidecars/...
+/tmp/wingdrive-ephemeral-shared/{path_hash}/sidecars/...
 ```
 
 Requires coordination mechanism (lock file, shared cache).
@@ -933,8 +933,8 @@ pub struct EphemeralThumbnailConfig {
 
 ## Related Documentation
 
-- [CORE-008: Virtual Sidecar System](/Users/jamespine/Projects/spacedrive/.tasks/core/CORE-008-virtual-sidecar-system.md)
-- [INDEX-000: Indexing & File Management](/Users/jamespine/Projects/spacedrive/.tasks/core/INDEX-000-indexing-file-management.md)
+- [CORE-008: Virtual Sidecar System](/Users/jamespine/Projects/wingdrive/.tasks/core/CORE-008-virtual-sidecar-system.md)
+- [INDEX-000: Indexing & File Management](/Users/jamespine/Projects/wingdrive/.tasks/core/INDEX-000-indexing-file-management.md)
 - Whitepaper: Section 4.1.5 (Virtual Sidecars)
 - Workbench: `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md`
 

@@ -24,9 +24,9 @@ fn main() {
 
 	// Test 2: External volume with dotfile UUID
 	println!("Test 2: External volume - Dotfile UUID provides stability");
-	let spacedrive_id = Uuid::new_v4();
-	let fp_ext1 = VolumeFingerprint::from_external_volume(spacedrive_id, device_id);
-	let fp_ext2 = VolumeFingerprint::from_external_volume(spacedrive_id, device_id);
+	let wingdrive_id = Uuid::new_v4();
+	let fp_ext1 = VolumeFingerprint::from_external_volume(wingdrive_id, device_id);
+	let fp_ext2 = VolumeFingerprint::from_external_volume(wingdrive_id, device_id);
 
 	println!(
 		"  With same dotfile UUID: {} == {}",

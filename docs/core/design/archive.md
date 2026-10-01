@@ -32,7 +32,7 @@ Archive sits alongside the VDFS, not inside it. Files live in locations managed 
 
 ## Purpose
 
-Fold the `./spacedrive-archive-prototype` prototype into the official `spacedrive` codebase as a new library-scoped archive system without forcing convergence between the VDFS index and the archival engine.
+Fold the `./wingdrive-archive-prototype` prototype into the official `wingdrive` codebase as a new library-scoped archive system without forcing convergence between the VDFS index and the archival engine.
 
 This keeps WingDrive's file-native architecture intact while adding a second data plane for extracted, adapter-driven sources such as Gmail, Obsidian, Chrome History, Slack, and GitHub.
 
@@ -711,19 +711,19 @@ Box::new(mXXXXXXXXXX_create_library_sources::Migration),
 
 | Module             | Lines | File Path                                    | Notes                |
 | ------------------ | ----- | -------------------------------------------- | -------------------- |
-| Schema parser      | 250   | spacedrive-archive-prototype/core/src/schema/parser.rs    | Pure TOML logic      |
-| Schema codegen     | 562   | spacedrive-archive-prototype/core/src/schema/codegen.rs   | SQL DDL generation   |
-| Schema migration   | 1,101 | spacedrive-archive-prototype/core/src/schema/migration.rs | Diff and apply logic |
-| SourceDb       | 1,397 | spacedrive-archive-prototype/core/src/db.rs               | SQLite operations    |
-| Source manager | 299   | spacedrive-archive-prototype/core/src/source.rs       | Folder lifecycle     |
-| Registry           | 516   | spacedrive-archive-prototype/core/src/registry.rs         | Metadata management  |
-| Adapter trait      | 169   | spacedrive-archive-prototype/core/src/adapter/mod.rs      | Interface definition |
-| Script adapter     | 1,432 | spacedrive-archive-prototype/core/src/adapter/script.rs   | Subprocess runtime   |
-| Search router      | 459   | spacedrive-archive-prototype/core/src/search/router.rs    | Hybrid search        |
-| FTS search         | 13    | spacedrive-archive-prototype/core/src/search/fts.rs       | Query sanitization   |
-| Vector search      | 294   | spacedrive-archive-prototype/core/src/search/vector.rs    | LanceDB integration  |
-| Embedding model    | 80    | spacedrive-archive-prototype/core/src/embed.rs            | FastEmbed wrapper    |
-| Safety model       | 568   | spacedrive-archive-prototype/core/src/safety.rs           | Prompt Guard 2       |
+| Schema parser      | 250   | wingdrive-archive-prototype/core/src/schema/parser.rs    | Pure TOML logic      |
+| Schema codegen     | 562   | wingdrive-archive-prototype/core/src/schema/codegen.rs   | SQL DDL generation   |
+| Schema migration   | 1,101 | wingdrive-archive-prototype/core/src/schema/migration.rs | Diff and apply logic |
+| SourceDb       | 1,397 | wingdrive-archive-prototype/core/src/db.rs               | SQLite operations    |
+| Source manager | 299   | wingdrive-archive-prototype/core/src/source.rs       | Folder lifecycle     |
+| Registry           | 516   | wingdrive-archive-prototype/core/src/registry.rs         | Metadata management  |
+| Adapter trait      | 169   | wingdrive-archive-prototype/core/src/adapter/mod.rs      | Interface definition |
+| Script adapter     | 1,432 | wingdrive-archive-prototype/core/src/adapter/script.rs   | Subprocess runtime   |
+| Search router      | 459   | wingdrive-archive-prototype/core/src/search/router.rs    | Hybrid search        |
+| FTS search         | 13    | wingdrive-archive-prototype/core/src/search/fts.rs       | Query sanitization   |
+| Vector search      | 294   | wingdrive-archive-prototype/core/src/search/vector.rs    | LanceDB integration  |
+| Embedding model    | 80    | wingdrive-archive-prototype/core/src/embed.rs            | FastEmbed wrapper    |
+| Safety model       | 568   | wingdrive-archive-prototype/core/src/safety.rs           | Prompt Guard 2       |
 
 ### Modules Requiring Adaptation (~1,800 lines)
 
@@ -765,21 +765,21 @@ library.core_context().key_manager()
 
 - Delete `apps/gpui-photo-grid/` prototype (not used)
 - Uncomment `lancedb = "0.15"` in `core/Cargo.toml` line 119
-- Port spacedrive-data's vector search as-is (uses LanceDB)
+- Port wingdrive-data's vector search as-is (uses LanceDB)
 
 ### 2. Search Type Name Conflicts
 
-**Problem:** Both v2 and spacedrive-data have `SearchResult` and `SearchFilter` types with different structures.
+**Problem:** Both v2 and wingdrive-data have `SearchResult` and `SearchFilter` types with different structures.
 
 **Resolution:**
 
-- Namespace spacedrive-data types: `source::SearchResult`, `source::SearchFilter`
+- Namespace wingdrive-data types: `source::SearchResult`, `source::SearchFilter`
 - Keep v2's file search types unchanged
 - Create separate ops: `ops/source_search/` vs `ops/search/`
 
 ### 3. Database Architecture Mismatch
 
-**Problem:** spacedrive-data uses raw SQLx, v2 uses SeaORM.
+**Problem:** wingdrive-data uses raw SQLx, v2 uses SeaORM.
 
 **Resolution:**
 

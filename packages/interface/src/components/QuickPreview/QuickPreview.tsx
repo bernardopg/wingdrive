@@ -1,4 +1,4 @@
-import { useNormalizedQuery } from "../../contexts/SpacedriveContext";
+import { useNormalizedQuery } from "../../contexts/WingDriveContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 import type { File } from "@wingdrive/ts-client";
 import { getContentKind } from "@wingdrive/ts-client";

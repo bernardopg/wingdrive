@@ -118,10 +118,10 @@ fn parse_df_line(
 	let fingerprint = match volume_type {
 		crate::volume::types::VolumeType::External => {
 			// Try to read/create dotfile for external volumes
-			if let Some(spacedrive_id) =
+			if let Some(wingdrive_id) =
 				utils::read_or_create_dotfile_sync(&mount_path, device_id, None)
 			{
-				VolumeFingerprint::from_external_volume(spacedrive_id, device_id)
+				VolumeFingerprint::from_external_volume(wingdrive_id, device_id)
 			} else {
 				// Fallback to mount_point + device_id for read-only external volumes
 				VolumeFingerprint::from_primary_volume(&mount_path, device_id)
@@ -322,10 +322,10 @@ pub fn create_volume_from_mount(mount: MountInfo, device_id: Uuid) -> VolumeResu
 	let fingerprint = match volume_type {
 		crate::volume::types::VolumeType::External => {
 			// Try to read/create dotfile for external volumes
-			if let Some(spacedrive_id) =
+			if let Some(wingdrive_id) =
 				utils::read_or_create_dotfile_sync(&mount_path, device_id, None)
 			{
-				VolumeFingerprint::from_external_volume(spacedrive_id, device_id)
+				VolumeFingerprint::from_external_volume(wingdrive_id, device_id)
 			} else {
 				// Fallback to mount_point + device_id for read-only external volumes
 				VolumeFingerprint::from_primary_volume(&mount_path, device_id)

@@ -1,7 +1,7 @@
 //! WASM host functions
 //!
 //! This module provides the bridge between WASM extensions and WingDrive's
-//! operation registry. The key function is `host_spacedrive_call()` which routes
+//! operation registry. The key function is `host_wingdrive_call()` which routes
 //! generic Wire method calls to the existing `execute_json_operation()` function
 //! used by daemon RPC.
 
@@ -36,7 +36,7 @@ pub struct PluginEnv {
 ///
 /// # Returns
 /// Pointer to result JSON string in WASM memory (or 0 on error)
-pub fn host_spacedrive_call(
+pub fn host_wingdrive_call(
 	mut env: FunctionEnvMut<PluginEnv>,
 	method_ptr: WasmPtr<u8>,
 	method_len: u32,
@@ -156,7 +156,7 @@ pub fn host_spacedrive_call(
 }
 
 /// Optional logging helper for extensions
-pub fn host_spacedrive_log(
+pub fn host_wingdrive_log(
 	mut env: FunctionEnvMut<PluginEnv>,
 	level: u32,
 	msg_ptr: WasmPtr<u8>,

@@ -17,13 +17,13 @@
  *
  * @example React Hooks Usage
  * ```typescript
- * import { SpacedriveProvider, useLibraryQuery, useCoreMutation } from '@wingdrive/ts-client/hooks';
+ * import { WingDriveProvider, useLibraryQuery, useCoreMutation } from '@wingdrive/ts-client/hooks';
  *
  * function App() {
  *   return (
- *     <SpacedriveProvider client={client}>
+ *     <WingDriveProvider client={client}>
  *       <FileExplorer />
- *     </SpacedriveProvider>
+ *     </WingDriveProvider>
  *   );
  * }
  *
@@ -41,7 +41,7 @@
  */
 
 // Core client
-export { SpacedriveClient, SpacedriveClient as WingDriveClient } from "./client";
+export { WingDriveClient } from "./client";
 export type { Transport } from "./transport";
 export {
 	UnixSocketTransport,

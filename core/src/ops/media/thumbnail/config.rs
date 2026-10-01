@@ -27,7 +27,7 @@ impl ThumbnailVariantConfig {
 	}
 }
 
-/// Standard thumbnail variants used across Spacedrive
+/// Standard thumbnail variants used across WingDrive
 pub struct ThumbnailVariants;
 
 impl ThumbnailVariants {

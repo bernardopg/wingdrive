@@ -7,7 +7,7 @@
 //! ## Architecture
 //!
 //! Extensions communicate with WingDrive Core via a minimal host function API.
-//! The key insight: we expose ONE generic `spacedrive_call()` function that routes
+//! The key insight: we expose ONE generic `wingdrive_call()` function that routes
 //! to the existing Wire operation registry, reusing all daemon RPC infrastructure.
 //!
 //! ## Components

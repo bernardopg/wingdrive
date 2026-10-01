@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	// 1. Initialize WingDrive Core with job logging enabled
 	println!("1. Initializing WingDrive Core...");
-	let data_dir = PathBuf::from("./data/spacedrive-desktop-demo");
+	let data_dir = PathBuf::from("./data/wingdrive-desktop-demo");
 
 	// Enable job logging by modifying the config before core initialization
 	{
@@ -301,8 +301,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		// Check checkpoint progress by querying actual checkpoint data
 		let checkpoint_estimate = {
 			// Try to get the latest checkpoint size from the jobs database
-			if let Ok(metadata) =
-				tokio::fs::metadata("./data/spacedrive-desktop-demo/jobs.db").await
+			if let Ok(metadata) = tokio::fs::metadata("./data/wingdrive-desktop-demo/jobs.db").await
 			{
 				metadata.len()
 			} else {

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useNormalizedQuery, getDeviceIcon } from "../../../contexts/SpacedriveContext";
+import { useNormalizedQuery, getDeviceIcon } from "../../../contexts/WingDriveContext";
 import {
 	getVolumeIcon,
 	mapLocationToFile,

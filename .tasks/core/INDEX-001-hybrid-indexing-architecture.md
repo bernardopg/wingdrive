@@ -12,7 +12,7 @@ last_updated: 2025-12-16
 
 ## Description
 
-Implement the dual-layer indexing architecture that enables Spacedrive to act as both a fast file explorer (ephemeral mode) and a managed library system (persistent mode). This architecture allows instant browsing of unmanaged locations while seamlessly upgrading them to fully-indexed locations without UI disruption.
+Implement the dual-layer indexing architecture that enables WingDrive to act as both a fast file explorer (ephemeral mode) and a managed library system (persistent mode). This architecture allows instant browsing of unmanaged locations while seamlessly upgrading them to fully-indexed locations without UI disruption.
 
 ## Architecture
 
@@ -93,14 +93,14 @@ The critical innovation is UUID preservation during ephemeral-to-persistent tran
 
 ```bash
 # Test ephemeral browsing
-spacedrive index browse /media/usb --ephemeral
+wingdrive index browse /media/usb --ephemeral
 
 # Verify in-memory only (no database writes)
-spacedrive db query "SELECT COUNT(*) FROM entry WHERE name LIKE '%usb%'"
+wingdrive db query "SELECT COUNT(*) FROM entry WHERE name LIKE '%usb%'"
 # Should return 0
 
 # Add location while browsing (test promotion)
-spacedrive location add /media/usb
+wingdrive location add /media/usb
 
 # Verify UUIDs preserved (no UI flicker)
 ```

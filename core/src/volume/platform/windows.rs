@@ -67,10 +67,10 @@ pub async fn detect_volumes(
 			// Generate stable fingerprint based on volume type
 			let fingerprint = match volume_type {
 				crate::volume::types::VolumeType::External => {
-					if let Some(spacedrive_id) =
+					if let Some(wingdrive_id) =
 						utils::read_or_create_dotfile_sync(&mount_point, device_id, None)
 					{
-						VolumeFingerprint::from_external_volume(spacedrive_id, device_id)
+						VolumeFingerprint::from_external_volume(wingdrive_id, device_id)
 					} else {
 						VolumeFingerprint::from_primary_volume(&mount_point, device_id)
 					}

@@ -11,7 +11,7 @@ last_updated: 2026-02-07
 
 ## Description
 
-The hybrid indexing engine is Spacedrive's core filesystem discovery and processing system. It layers an ultra-fast, in-memory ephemeral index over a robust SQLite-backed persistent index, enabling instant browsing of unmanaged locations (like a file manager) while seamlessly upgrading paths to managed libraries (like a DAM) without UI flicker.
+The hybrid indexing engine is WingDrive's core filesystem discovery and processing system. It layers an ultra-fast, in-memory ephemeral index over a robust SQLite-backed persistent index, enabling instant browsing of unmanaged locations (like a file manager) while seamlessly upgrading paths to managed libraries (like a DAM) without UI flicker.
 
 ## Architecture
 

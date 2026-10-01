@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { motion } from "framer-motion";
-import { getDeviceIcon } from "../../../contexts/SpacedriveContext";
+import { getDeviceIcon } from "../../../contexts/WingDriveContext";
 import LaptopIcon from "@wingdrive/assets/icons/Laptop.png";
 import type { VirtualView } from "../context";
 

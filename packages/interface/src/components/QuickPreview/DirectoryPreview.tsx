@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { File } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../routes/explorer/File";
-import { useNormalizedQuery } from "../../contexts/SpacedriveContext";
+import { useNormalizedQuery } from "../../contexts/WingDriveContext";
 import { useOptionalExplorer } from "../../routes/explorer/context";
 import { Folder } from "@wingdrive/assets/icons";
 

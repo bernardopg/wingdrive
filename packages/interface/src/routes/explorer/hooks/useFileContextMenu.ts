@@ -27,7 +27,7 @@ import {getContentKind, isVirtualFile} from '@wingdrive/ts-client';
 import {toast} from '@wingdrive/primitives';
 import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
 import {usePlatform} from '../../../contexts/PlatformContext';
-import {useLibraryMutation} from '../../../contexts/SpacedriveContext';
+import {useLibraryMutation} from '../../../contexts/WingDriveContext';
 import {useClipboard} from '../../../hooks/useClipboard';
 import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useOpenWith} from '../../../hooks/useOpenWith';

@@ -13,7 +13,7 @@ import { ArrowLeft, ArrowsLeftRight, ShieldCheck } from "@phosphor-icons/react";
 import { CircleButton } from "@wingdrive/primitives";
 import type { SearchFilters } from "@wingdrive/ts-client";
 import { TopBarPortal, TopBarItem } from "../../TopBar";
-import { useLibraryQuery } from "../../contexts/SpacedriveContext";
+import { useLibraryQuery } from "../../contexts/WingDriveContext";
 import { ExplorerView, useExplorer } from "../explorer";
 
 type CompareMode = "unique_a" | "shared" | "unique_b";

@@ -12,7 +12,7 @@ last_updated: 2025-10-14
 
 ## Description
 
-Integrate a WebAssembly runtime (e.g., Wasmer or Wasmtime) into the Spacedrive core. This will be the foundation for running sandboxed plugin code.
+Integrate a WebAssembly runtime (e.g., Wasmer or Wasmtime) into the WingDrive core. This will be the foundation for running sandboxed plugin code.
 
 ## Implementation Steps
 
@@ -34,7 +34,7 @@ Integrate a WebAssembly runtime (e.g., Wasmer or Wasmtime) into the Spacedrive c
 
 ## Acceptance Criteria
 
-- [x] A WASM runtime is successfully integrated into the Spacedrive core.
+- [x] A WASM runtime is successfully integrated into the WingDrive core.
 - [x] The `PluginManager` can load and run a WASM module from a file.
 - [x] The "hello world" plugin executes successfully and returns the expected output.
 

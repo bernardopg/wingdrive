@@ -4,7 +4,7 @@ import {useMemo, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {SourceCard} from '../../components/Sources/SourceCard';
 import {useTabManager} from '../../components/TabManager/useTabManager';
-import {useLibraryQuery} from '../../contexts/SpacedriveContext';
+import {useLibraryQuery} from '../../contexts/WingDriveContext';
 import {TopBarItem, TopBarPortal} from '../../TopBar';
 
 export function SourcesHome() {

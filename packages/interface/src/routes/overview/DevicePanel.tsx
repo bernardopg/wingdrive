@@ -36,7 +36,7 @@ import {
 	getDeviceIcon,
 	useCoreQuery,
 	useNormalizedQuery
-} from '../../contexts/SpacedriveContext';
+} from '../../contexts/WingDriveContext';
 import {VolumeBar} from './VolumeBar';
 
 // Temporary type extension until types are regenerated

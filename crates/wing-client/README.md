@@ -13,12 +13,12 @@ Rust client library for connecting to the WingDrive daemon.
 ## Usage
 
 ```rust
-use wing_client::{SpacedriveClient, WingPath};
+use wing_client::{WingDriveClient, WingPath};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Create client
-    let mut client = SpacedriveClient::new(
+    let mut client = WingDriveClient::new(
         "/path/to/daemon.sock".into(),
         "http://localhost:54321".into(),
     );
@@ -67,7 +67,7 @@ cargo run --example test_connection
 
 ## API
 
-### SpacedriveClient
+### WingDriveClient
 
 - `new(socket_addr, http_base_url)` - Create a new client
 - `set_library(library_id)` - Set the current library context

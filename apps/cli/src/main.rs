@@ -73,7 +73,7 @@ use config_cmd::ConfigCmd;
 
 /// Safely reset only WingDrive v2 specific files and directories
 /// This preserves any user data that might be in the data directory (like v1 backups)
-fn reset_spacedrive_v2_data(data_dir: &Path) -> Result<()> {
+fn reset_wingdrive_v2_data(data_dir: &Path) -> Result<()> {
 	let mut removed_items = Vec::new();
 	let mut errors = Vec::new();
 
@@ -134,7 +134,7 @@ fn reset_spacedrive_v2_data(data_dir: &Path) -> Result<()> {
 #[derive(Parser, Debug)]
 #[command(name = "wingdrive", about = "WingDrive v2 CLI (daemon client)")]
 struct Cli {
-	/// Path to spacedrive data directory
+	/// Path to wingdrive data directory
 	#[arg(long)]
 	data_dir: Option<std::path::PathBuf>,
 
@@ -374,7 +374,7 @@ async fn main() -> Result<()> {
 
 			if reset {
 				println!("Resetting WingDrive v2 data...");
-				reset_spacedrive_v2_data(&data_dir)?;
+				reset_wingdrive_v2_data(&data_dir)?;
 			}
 		}
 		Commands::Restart { foreground, reset } => {
@@ -406,7 +406,7 @@ async fn main() -> Result<()> {
 			// Reset data if requested
 			if reset {
 				println!("Resetting WingDrive v2 data...");
-				reset_spacedrive_v2_data(&data_dir)?;
+				reset_wingdrive_v2_data(&data_dir)?;
 			}
 
 			// Wait a moment for cleanup

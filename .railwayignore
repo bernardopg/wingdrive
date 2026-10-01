@@ -1,4 +1,4 @@
-# Ignore root Dockerfile (Spacedrive core)
+# Ignore root Dockerfile (WingDrive core)
 /Dockerfile
 
 # Ignore Rust/core stuff

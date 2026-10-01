@@ -13,7 +13,7 @@ last_updated: 2025-12-02
 
 ## Description
 
-Build the complete Explorer interface for browsing and managing files across all devices and locations. The Explorer is the primary interface for interacting with files in Spacedrive.
+Build the complete Explorer interface for browsing and managing files across all devices and locations. The Explorer is the primary interface for interacting with files in WingDrive.
 
 ## Components
 

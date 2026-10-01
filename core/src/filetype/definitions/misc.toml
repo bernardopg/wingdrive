@@ -349,39 +349,39 @@ text_file = true
 typescript = true
 
 [[file_types]]
-id = "application/x-spacedrive-encrypted"
+id = "application/x-wingdrive-encrypted"
 name = "WingDrive Encrypted"
 extensions = ["bytes"]
-mime_types = ["application/x-spacedrive-encrypted"]
+mime_types = ["application/x-wingdrive-encrypted"]
 category = "encrypted"
 priority = 100
 
 [file_types.metadata]
-spacedrive = true
+wingdrive = true
 encrypted = true
 
 [[file_types]]
-id = "application/x-spacedrive-container"
+id = "application/x-wingdrive-container"
 name = "WingDrive Container"
 extensions = ["container"]
-mime_types = ["application/x-spacedrive-container"]
+mime_types = ["application/x-wingdrive-container"]
 category = "encrypted"
 priority = 100
 
 [file_types.metadata]
-spacedrive = true
+wingdrive = true
 container = true
 
 [[file_types]]
-id = "application/x-spacedrive-block"
+id = "application/x-wingdrive-block"
 name = "WingDrive Block Storage"
 extensions = ["block"]
-mime_types = ["application/x-spacedrive-block"]
+mime_types = ["application/x-wingdrive-block"]
 category = "encrypted"
 priority = 100
 
 [file_types.metadata]
-spacedrive = true
+wingdrive = true
 block_storage = true
 
 # Keys

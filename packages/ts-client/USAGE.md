@@ -7,7 +7,7 @@ The TypeScript client now mirrors the Swift client with full type safety via aut
 ```
 Auto-Generated Types (Specta)
   ↓
-SpacedriveClient (low-level execution)
+WingDriveClient (low-level execution)
   ↓
 React Query Hooks (useCoreQuery, useLibraryQuery)
   ↓
@@ -22,14 +22,14 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
 // Create client
-const client = SpacedriveClient.fromTauri(invoke, listen);
+const client = WingDriveClient.fromTauri(invoke, listen);
 
 // Wrap your app
 function App() {
   return (
-    <SpacedriveProvider client={client}>
+    <WingDriveProvider client={client}>
       <YourApp />
-    </SpacedriveProvider>
+    </WingDriveProvider>
   );
 }
 ```
@@ -76,7 +76,7 @@ import { useLibraryQuery, useSpacedriveClient } from '@wingdrive/ts-client';
 import { useEffect } from 'react';
 
 function FileExplorer() {
-  const client = useSpacedriveClient();
+  const client = useWingDriveClient();
 
   // Set current library
   useEffect(() => {
@@ -194,7 +194,7 @@ WIRE_METHODS.libraryActions['files.copy']  // => 'action:files.copy.input'
 
 ### Swift (Auto-Generated API)
 ```swift
-let client = SpacedriveClient(socketPath: "/tmp/sd.sock")
+let client = WingDriveClient(socketPath: "/tmp/sd.sock")
 
 // Auto-generated methods
 let libraries = try await client.libraries.list()
@@ -203,7 +203,7 @@ let files = try await client.files.directoryListing(input)
 
 ### TypeScript (React Query + Auto-Generated Types)
 ```typescript
-const client = SpacedriveClient.fromSocket('/tmp/sd.sock');
+const client = WingDriveClient.fromSocket('/tmp/sd.sock');
 
 // React Query hooks with auto-generated types
 const { data: libraries } = useCoreQuery({ type: 'libraries.list', input: {} });
@@ -218,7 +218,7 @@ const { data: files } = useLibraryQuery({ type: 'files.directory_listing', input
 import { useSpacedriveClient } from '@wingdrive/ts-client';
 
 function CustomComponent() {
-  const client = useSpacedriveClient();
+  const client = useWingDriveClient();
 
   const handleCustomOperation = async () => {
     // Direct execute method if you need more control
@@ -239,7 +239,7 @@ import { useSpacedriveClient } from '@wingdrive/ts-client';
 import { useEffect } from 'react';
 
 function EventListener() {
-  const client = useSpacedriveClient();
+  const client = useWingDriveClient();
 
   useEffect(() => {
     const unlisten = client.subscribe((event) => {

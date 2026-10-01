@@ -1,4 +1,4 @@
-//! Core domain models - the heart of Spacedrive's VDFS
+//! Core domain models - the heart of WingDrive's VDFS
 //!
 //! These models implement the new file data model design where:
 //! - File represents any file/directory with rich metadata

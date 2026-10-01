@@ -8,7 +8,7 @@ mod tests {
 
 	#[test]
 	fn test_working_operations() {
-		let (operations, queries, collection) = generate_spacedrive_api();
+		let (operations, queries, collection) = generate_wingdrive_api();
 
 		println!(
 			"RSPC Magic: Discovered {} operations and {} queries",

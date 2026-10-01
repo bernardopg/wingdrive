@@ -1,9 +1,9 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { SpacedriveClient } from "../client";
+import type { WingDriveClient } from "../client";
 
 // Export context so platforms can provide their own wrappers
-export const SpacedriveClientContext = createContext<SpacedriveClient | null>(null);
+export const WingDriveClientContext = createContext<WingDriveClient | null>(null);
 
 // Create a singleton query client
 export const queryClient = new QueryClient({
@@ -18,34 +18,34 @@ export const queryClient = new QueryClient({
 	},
 });
 
-export interface SpacedriveProviderProps {
-	client: SpacedriveClient;
+export interface WingDriveProviderProps {
+	client: WingDriveClient;
 	children: ReactNode;
 }
 
 /**
- * Provider for SpacedriveClient + TanStack Query
+ * Provider for WingDriveClient + TanStack Query
  * Wrap your app with this to make the client available via hooks
  */
-export function SpacedriveProvider({ client, children }: SpacedriveProviderProps) {
+export function WingDriveProvider({ client, children }: WingDriveProviderProps) {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<SpacedriveClientContext.Provider value={client}>
+			<WingDriveClientContext.Provider value={client}>
 				{children}
-			</SpacedriveClientContext.Provider>
+			</WingDriveClientContext.Provider>
 		</QueryClientProvider>
 	);
 }
 
 /**
  * Hook to access the WingDrive client
- * Must be used within a SpacedriveProvider
+ * Must be used within a WingDriveProvider
  */
-export function useSpacedriveClient(): SpacedriveClient {
-	const client = useContext(SpacedriveClientContext);
+export function useWingDriveClient(): WingDriveClient {
+	const client = useContext(WingDriveClientContext);
 
 	if (!client) {
-		throw new Error("useSpacedriveClient must be used within SpacedriveProvider");
+		throw new Error("useWingDriveClient must be used within WingDriveProvider");
 	}
 
 	return client;
@@ -54,5 +54,5 @@ export function useSpacedriveClient(): SpacedriveClient {
 // Also export for direct use
 export { useClient };
 function useClient() {
-	return useSpacedriveClient();
+	return useWingDriveClient();
 }

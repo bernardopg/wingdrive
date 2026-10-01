@@ -64,7 +64,7 @@ pub enum KeyManagerError {
 	Io(#[from] std::io::Error),
 }
 
-/// Unified key manager for all Spacedrive encryption keys
+/// Unified key manager for all WingDrive encryption keys
 pub struct KeyManager {
 	/// Path to encrypted secrets database
 	db_path: PathBuf,

@@ -1,4 +1,4 @@
-//! Volume management for Spacedrive Core v2
+//! Volume management for WingDrive Core v2
 //!
 //! This module provides functionality for detecting, monitoring, and managing storage volumes
 //! across different platforms. It's designed to integrate with the copy system for optimal

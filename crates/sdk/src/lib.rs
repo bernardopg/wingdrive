@@ -7,7 +7,7 @@
 //! ```no_run
 //! use wingdrive_sdk::{ExtensionContext, prelude::*};
 //!
-//! #[spacedrive_extension]
+//! #[wingdrive_extension]
 //! fn init(ctx: &mut ExtensionContext) -> Result<()> {
 //!     ctx.log("Finance extension starting...");
 //!

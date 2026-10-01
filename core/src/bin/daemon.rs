@@ -22,7 +22,7 @@ fn validate_instance_name(instance: &str) -> Result<(), String> {
 #[derive(Parser, Debug)]
 #[command(name = "wing-daemon", about = "WingDrive daemon")]
 struct Args {
-	/// Path to spacedrive data directory
+	/// Path to wingdrive data directory
 	#[arg(long)]
 	data_dir: Option<PathBuf>,
 

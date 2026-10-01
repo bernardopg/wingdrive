@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useExplorer } from "../context";
 import { useSelection } from "../SelectionContext";
-import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";
+import { useNormalizedQuery } from "../../../contexts/WingDriveContext";
 import type { DirectorySortBy, File } from "@wingdrive/ts-client";
 import { isVirtualFile } from "@wingdrive/ts-client";
 import { useTypeaheadSearch } from "./useTypeaheadSearch";

@@ -3,10 +3,10 @@ id = "obsidian"
 name = "Obsidian Vault"
 description = "Index markdown notes from an Obsidian vault or any directory of .md files"
 version = "0.1.0"
-author = "spacedrive"
+author = "wingdrive"
 license = "MIT"
 icon = "note"
-min_spacedrive = "0.1.0"
+min_wingdrive = "0.1.0"
 trust_tier = "authored"
 
 [adapter.runtime]

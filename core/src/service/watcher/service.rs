@@ -1,4 +1,4 @@
-//! FsWatcher Service - wraps the wing-fs-watcher crate for use in Spacedrive
+//! FsWatcher Service - wraps the wing-fs-watcher crate for use in WingDrive
 //!
 //! This service manages the lifecycle of the filesystem watcher and provides
 //! the event stream that handlers subscribe to. It owns and starts the

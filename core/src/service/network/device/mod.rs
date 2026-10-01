@@ -121,14 +121,14 @@ impl SessionKeys {
 		let hk_send = Hkdf::<Sha256>::new(None, &shared_secret);
 		let mut send_key = [0u8; 32];
 		hk_send
-			.expand(b"spacedrive-send-key", &mut send_key)
+			.expand(b"wingdrive-send-key", &mut send_key)
 			.unwrap();
 
 		// Derive receive key with fresh HKDF instance
 		let hk_recv = Hkdf::<Sha256>::new(None, &shared_secret);
 		let mut receive_key = [0u8; 32];
 		hk_recv
-			.expand(b"spacedrive-receive-key", &mut receive_key)
+			.expand(b"wingdrive-receive-key", &mut receive_key)
 			.unwrap();
 
 		Self {

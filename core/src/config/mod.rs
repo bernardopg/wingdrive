@@ -18,7 +18,7 @@ pub use migration::Migrate;
 /// Default data directory: `~/.wingdrive` on desktop, platform data dir on mobile.
 ///
 /// Delegates to [`crate::branding`] so an install predating the fork keeps
-/// reading from its `Spacedrive` directory instead of silently starting empty.
+/// reading from its `WingDrive` directory instead of silently starting empty.
 pub fn default_data_dir() -> Result<PathBuf> {
 	crate::branding::data_dir()
 }

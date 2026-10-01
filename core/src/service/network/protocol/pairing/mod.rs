@@ -673,7 +673,7 @@ impl PairingProtocolHandler {
 		use sha2::Sha256;
 
 		let context = format!(
-			"spacedrive-proxy-pairing-{}:{}:{}:{}",
+			"wingdrive-proxy-pairing-{}:{}:{}:{}",
 			voucher_device_id,
 			target_device_id,
 			vouchee_device_id,
@@ -1897,7 +1897,7 @@ impl PairingProtocolHandler {
 		registry.get_device_by_node(node_id).unwrap_or_else(|| {
 			// Generate a deterministic UUID from the node ID
 			let mut hasher = blake3::Hasher::new();
-			hasher.update(b"spacedrive-device-id");
+			hasher.update(b"wingdrive-device-id");
 			hasher.update(node_id.as_bytes());
 			let hash = hasher.finalize();
 			let mut uuid_bytes = [0u8; 16];

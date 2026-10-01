@@ -1,5 +1,5 @@
 import XCTest
-@testable import SpacedriveClient
+@testable import WingDriveClient
 
 final class EventDecodingTests: XCTestCase {
 

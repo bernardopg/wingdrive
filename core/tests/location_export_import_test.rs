@@ -246,7 +246,7 @@ async fn test_location_export_import() -> Result<(), Box<dyn std::error::Error +
 	// Pre-fork exports remain importable during the compatibility window.
 	let legacy_export = export_content.replace(
 		"-- WingDrive Location Export",
-		"-- Spacedrive Location Export",
+		"-- WingDrive Location Export",
 	);
 	tokio::fs::write(&export_file, legacy_export).await?;
 
@@ -440,8 +440,8 @@ async fn test_import_invalid_file() -> Result<(), Box<dyn std::error::Error + Se
 
 	tokio::fs::create_dir_all(&core_dir).await?;
 
-	// Create an invalid SQL file (not a Spacedrive export)
-	tokio::fs::write(&invalid_file, "-- Not a Spacedrive export\nSELECT 1;").await?;
+	// Create an invalid SQL file (not a WingDrive export)
+	tokio::fs::write(&invalid_file, "-- Not a WingDrive export\nSELECT 1;").await?;
 
 	let core = Core::new(core_dir).await?;
 

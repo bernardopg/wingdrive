@@ -2,7 +2,7 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {JobListItem, GenericProgress} from '../generated/types';
 import {useLibraryMutation} from './useMutation';
 import {useLibraryQuery} from './useQuery';
-import {useSpacedriveClient} from './useClient';
+import {useWingDriveClient} from './useClient';
 
 // Speed sample for historical graph
 export interface SpeedSample {
@@ -76,7 +76,7 @@ export interface UseJobsReturn {
 export function useJobs(options: UseJobsOptions = {}): UseJobsReturn {
 	const {onJobCompleted, onJobFailed, onJobCancelled} = options;
 	const [jobs, setJobs] = useState<ExtendedJobListItem[]>([]);
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 
 	// Speed history for graphing (job_id -> samples)
 	const speedHistoryRef = useRef<Map<string, SpeedSample[]>>(new Map());

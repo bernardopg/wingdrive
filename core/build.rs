@@ -40,8 +40,8 @@ fn generate_swift_api_code() -> Result<(), Box<dyn std::error::Error>> {
 	// Note: We need to use a different approach since we can't import from the main crate
 	// We'll use the existing generate_swift_types binary as a reference
 
-	let swift_client_path = Path::new("packages/swift-client/Sources/SpacedriveClient");
-	let api_file_path = swift_client_path.join("SpacedriveAPI.swift");
+	let swift_client_path = Path::new("packages/swift-client/Sources/WingDriveClient");
+	let api_file_path = swift_client_path.join("WingDriveAPI.swift");
 
 	// Check if the Swift client directory exists
 	if !swift_client_path.exists() {
@@ -64,7 +64,7 @@ fn generate_swift_api_code() -> Result<(), Box<dyn std::error::Error>> {
 	}
 
 	// Read the generated types file to extract the API structure
-	let types_file_path = swift_client_path.join("SpacedriveTypes.swift");
+	let types_file_path = swift_client_path.join("WingDriveTypes.swift");
 	if !types_file_path.exists() {
 		println!("cargo:warning=Types.swift not found, skipping API generation");
 		return Ok(());
@@ -78,7 +78,7 @@ fn generate_swift_api_code() -> Result<(), Box<dyn std::error::Error>> {
 	fs::write(&api_file_path, api_code)?;
 
 	println!(
-		"cargo:rerun-if-changed=packages/swift-client/Sources/SpacedriveClient/SpacedriveAPI.swift"
+		"cargo:rerun-if-changed=packages/swift-client/Sources/WingDriveClient/WingDriveAPI.swift"
 	);
 
 	Ok(())
@@ -96,7 +96,7 @@ import Foundation
 // MARK: - API Namespace Extensions
 // These extensions will be automatically generated based on the Rust API structure
 
-extension SpacedriveClient {
+extension WingDriveClient {
     // API methods will be generated here automatically
 }
 "#

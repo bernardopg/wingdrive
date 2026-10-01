@@ -17,17 +17,17 @@ Add this to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(path: "path/to/spacedrive/packages/swift-client")
+    .package(path: "path/to/wingdrive/packages/swift-client")
 ]
 ```
 
 ## Usage
 
 ```swift
-import SpacedriveClient
+import WingDriveClient
 
 // Initialize the client
-let client = SpacedriveClient(socketPath: "/path/to/daemon.sock")
+let client = WingDriveClient(socketPath: "/path/to/daemon.sock")
 
 // Execute a query
 let status = try await client.executeQuery(
@@ -78,6 +78,6 @@ After making changes to Rust types in the core:
 The client uses a two-layer architecture:
 
 1. **Generated Types Layer**: `types.swift` contains all the generated types from quicktype
-2. **Client API Layer**: `SpacedriveClient.swift` provides the clean, user-facing API
+2. **Client API Layer**: `WingDriveClient.swift` provides the clean, user-facing API
 
 This separation ensures that the generated types don't pollute the main API and can be regenerated without affecting user code.

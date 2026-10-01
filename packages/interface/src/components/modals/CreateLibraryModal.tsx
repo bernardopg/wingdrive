@@ -17,7 +17,7 @@ import {
 } from "@wingdrive/primitives";
 import { queryClient } from "@wingdrive/ts-client/hooks";
 import type { Event } from "@wingdrive/ts-client";
-import { useCoreMutation, useSpacedriveClient } from "../../contexts/SpacedriveContext";
+import { useCoreMutation, useWingDriveClient } from "../../contexts/WingDriveContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 
 interface CreateLibraryDialogProps {
@@ -54,7 +54,7 @@ export function useCreateLibraryDialog(
 
 function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 	const dialog = useDialog(props);
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const platform = usePlatform();
 
 	const [step, setStep] = useState<DialogStep>("form");

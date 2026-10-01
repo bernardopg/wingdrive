@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useSpacedriveClient } from '../contexts/SpacedriveContext';
+import { useWingDriveClient } from '../contexts/WingDriveContext';
 
 /**
  * Subscribe to core events
@@ -7,7 +7,7 @@ import { useSpacedriveClient } from '../contexts/SpacedriveContext';
  * @param handler - Callback when event is received
  */
 export function useEvent(eventType: string, handler: (event: any) => void) {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 
 	useEffect(() => {
 		if (!client) return;
@@ -21,10 +21,10 @@ export function useEvent(eventType: string, handler: (event: any) => void) {
 		};
 
 		// Listen to all events from the client
-		client.on('spacedrive-event', handleEvent);
+		client.on('wingdrive-event', handleEvent);
 
 		return () => {
-			client.off('spacedrive-event', handleEvent);
+			client.off('wingdrive-event', handleEvent);
 		};
 	}, [eventType, client]);
 }

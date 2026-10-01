@@ -16,7 +16,7 @@ import {
 	type UseDialogProps,
 } from "@wingdrive/primitives";
 import type { WingPath, File as FileType } from "@wingdrive/ts-client";
-import { useLibraryMutation, useLibraryQuery } from "../../contexts/SpacedriveContext";
+import { useLibraryMutation, useLibraryQuery } from "../../contexts/WingDriveContext";
 import { useWaitForJob } from "../../hooks/useWaitForJob";
 import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
 import { File, FileStack } from "../../routes/explorer/File";

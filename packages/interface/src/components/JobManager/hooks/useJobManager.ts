@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { useLibraryQuery, useLibraryMutation, useSpacedriveClient } from "../../../contexts/SpacedriveContext";
+import { useLibraryQuery, useLibraryMutation, useWingDriveClient } from "../../../contexts/WingDriveContext";
 import type { JobListItem } from "../types";
 
 export function useJobManager() {
   const [jobs, setJobs] = useState<JobListItem[]>([]);
-  const client = useSpacedriveClient();
+  const client = useWingDriveClient();
 
   const { data, isLoading, error, refetch } = useLibraryQuery({
     type: "jobs.list",

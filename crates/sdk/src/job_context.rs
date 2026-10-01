@@ -7,7 +7,7 @@ use serde::Serialize;
 use crate::types::Result;
 
 /// Job-specific imports (will be implemented in core)
-#[link(wasm_import_module = "spacedrive")]
+#[link(wasm_import_module = "wingdrive")]
 extern "C" {
 	fn job_report_progress(
 		job_id_ptr: *const u8,

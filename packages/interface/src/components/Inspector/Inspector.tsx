@@ -3,7 +3,7 @@ import type {File, Location} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {useEffect, useMemo, useState} from 'react';
 import {usePlatform} from '../../contexts/PlatformContext';
-import {useLibraryQuery} from '../../contexts/SpacedriveContext';
+import {useLibraryQuery} from '../../contexts/WingDriveContext';
 import {useSelection} from '../../routes/explorer/SelectionContext';
 import {isVirtualFile} from '@wingdrive/ts-client';
 import {FileInspector} from './variants/FileInspector';

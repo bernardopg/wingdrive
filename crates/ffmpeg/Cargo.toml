@@ -11,7 +11,7 @@ repository.workspace   = true
 rust-version.workspace = true
 
 [dependencies]
-# Spacedrive Sub-crates
+# WingDrive Sub-crates
 wing-utils = { path = "../utils" }
 
 # Workspace dependencies

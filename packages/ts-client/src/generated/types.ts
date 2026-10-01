@@ -3548,82 +3548,6 @@ progress: number } } |
 export type ScoreBreakdown = { temporal_score: number; semantic_score: number | null; metadata_score: number; recency_boost: number; user_preference_boost: number; final_score: number };
 
 /**
- * A path within the WingDrive Virtual Distributed File System
- * 
- * This is the core abstraction that enables cross-device operations.
- * An WingPath can represent:
- * - A physical file at a specific path on a specific device
- * - A content-addressed file that can be sourced from any device
- * - A sidecar (derivative data) attached to content
- * 
- * This enum-based approach enables resilient file operations by allowing
- * content-based paths to be resolved to optimal physical locations at runtime.
- */
-export type WingPath = 
-/**
- * A direct pointer to a file at a specific path on a specific device
- */
-{ Physical: { 
-/**
- * The device slug (e.g., "jamies-macbook")
- */
-device_slug: string; 
-/**
- * The local path on that device
- */
-path: string } } | 
-/**
- * A cloud storage path within a cloud volume
- */
-{ Cloud: { 
-/**
- * The cloud service type (S3, GoogleDrive, etc.)
- */
-service: CloudServiceType; 
-/**
- * The cloud identifier (bucket name, drive name, etc.)
- */
-identifier: string; 
-/**
- * The cloud-native path (e.g., "bucket/key" for S3)
- */
-path: string } } | 
-/**
- * An abstract, location-independent handle that refers to file content
- */
-{ Content: { 
-/**
- * The unique content identifier
- */
-content_id: string } } | 
-/**
- * A derivative data file (thumbnail, OCR text, embedding, etc.)
- * Sidecars are content-scoped and addressed by content + kind + variant
- */
-{ Sidecar: { 
-/**
- * The content this sidecar is derived from
- */
-content_id: string; 
-/**
- * The type of sidecar (thumb, ocr, embeddings, etc.)
- */
-kind: SidecarKind; 
-/**
- * The specific variant (e.g., "grid@2x", "1080p", "all-MiniLM-L6-v2")
- */
-variant: SidecarVariant; 
-/**
- * The storage format (webp, json, msgpack, etc.)
- */
-format: SidecarFormat } };
-
-/**
- * A batch of WingPaths, useful for operations on multiple files
- */
-export type WingPathBatch = { paths: WingPath[] };
-
-/**
  * Search facets for filtering UI
  */
 export type SearchFacets = { file_types: { [key in string]: number }; tags: { [key in string]: number }; locations: { [key in string]: number }; date_ranges: { [key in string]: number }; size_ranges: { [key in string]: number } };
@@ -3631,11 +3555,11 @@ export type SearchFacets = { file_types: { [key in string]: number }; tags: { [k
 /**
  * Container for all structured filters
  */
-export type SearchFilters = { file_types: string[] | null; tags: TagFilter | null; date_range: DateRangeFilter | null; size_range: SizeRangeFilter | null; locations: string[] | null; content_types: ContentKind[] | null;
+export type SearchFilters = { file_types: string[] | null; tags: TagFilter | null; date_range: DateRangeFilter | null; size_range: SizeRangeFilter | null; locations: string[] | null; content_types: ContentKind[] | null; 
 /**
  * Filter by persisted entry-scoped favorite state.
  */
-favorite: boolean | null; include_hidden: boolean | null; include_archived: boolean | null;
+favorite: boolean | null; include_hidden: boolean | null; include_archived: boolean | null; 
 /**
  * Only return files that are at risk (true) or redundant (false).
  * At risk = content exists on exactly one volume.
@@ -4858,6 +4782,7 @@ export type VolumeFilter =
 "All";
 
 /**
+ * Dotfile name for persistent volume identification
  * Unique fingerprint for a storage volume
  */
 export type VolumeFingerprint = string;
@@ -5052,6 +4977,82 @@ export type VouchingSessionInput = { session_id: string };
 export type VouchingSessionOutput = { session: VouchingSession | null };
 
 export type VouchingSessionState = "Pending" | "InProgress" | "Completed";
+
+/**
+ * A path within the WingDrive Virtual Distributed File System
+ * 
+ * This is the core abstraction that enables cross-device operations.
+ * An WingPath can represent:
+ * - A physical file at a specific path on a specific device
+ * - A content-addressed file that can be sourced from any device
+ * - A sidecar (derivative data) attached to content
+ * 
+ * This enum-based approach enables resilient file operations by allowing
+ * content-based paths to be resolved to optimal physical locations at runtime.
+ */
+export type WingPath = 
+/**
+ * A direct pointer to a file at a specific path on a specific device
+ */
+{ Physical: { 
+/**
+ * The device slug (e.g., "jamies-macbook")
+ */
+device_slug: string; 
+/**
+ * The local path on that device
+ */
+path: string } } | 
+/**
+ * A cloud storage path within a cloud volume
+ */
+{ Cloud: { 
+/**
+ * The cloud service type (S3, GoogleDrive, etc.)
+ */
+service: CloudServiceType; 
+/**
+ * The cloud identifier (bucket name, drive name, etc.)
+ */
+identifier: string; 
+/**
+ * The cloud-native path (e.g., "bucket/key" for S3)
+ */
+path: string } } | 
+/**
+ * An abstract, location-independent handle that refers to file content
+ */
+{ Content: { 
+/**
+ * The unique content identifier
+ */
+content_id: string } } | 
+/**
+ * A derivative data file (thumbnail, OCR text, embedding, etc.)
+ * Sidecars are content-scoped and addressed by content + kind + variant
+ */
+{ Sidecar: { 
+/**
+ * The content this sidecar is derived from
+ */
+content_id: string; 
+/**
+ * The type of sidecar (thumb, ocr, embeddings, etc.)
+ */
+kind: SidecarKind; 
+/**
+ * The specific variant (e.g., "grid@2x", "1080p", "all-MiniLM-L6-v2")
+ */
+variant: SidecarVariant; 
+/**
+ * The storage format (webp, json, msgpack, etc.)
+ */
+format: SidecarFormat } };
+
+/**
+ * A batch of WingPaths, useful for operations on multiple files
+ */
+export type WingPathBatch = { paths: WingPath[] };
 // ===== API Type Unions =====
 
 export type CoreAction =

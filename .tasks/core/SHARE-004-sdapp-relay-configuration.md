@@ -11,7 +11,7 @@ related_tasks: [CLOUD-002, NET-001]
 
 ## Description
 
-Replace Iroh's default relay with sd.app-operated relays for hosted Spacedrive clients. Self-hosted users retain the option to point at Iroh defaults or their own relay.
+Replace Iroh's default relay with sd.app-operated relays for hosted WingDrive clients. Self-hosted users retain the option to point at Iroh defaults or their own relay.
 
 ## Implementation Steps
 

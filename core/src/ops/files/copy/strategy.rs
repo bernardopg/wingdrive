@@ -24,8 +24,8 @@
 //!
 //! ## Example
 //! ```rust,no_run
-//! use spacedrive_core::ops::files::copy::strategy::{CopyStrategy, LocalMoveStrategy};
-//! use spacedrive_core::domain::addressing::WingPath;
+//! use wingdrive_core::ops::files::copy::strategy::{CopyStrategy, LocalMoveStrategy};
+//! use wingdrive_core::domain::addressing::WingPath;
 //!
 //! let strategy = LocalMoveStrategy;
 //! let bytes_moved = strategy.execute(
@@ -493,7 +493,7 @@ impl RemoteTransferStrategy {
 		// Connect to remote device
 		let node_addr = iroh::EndpointAddr::new(node_id);
 		let connection = endpoint
-			.connect(node_addr, b"spacedrive/filetransfer/1")
+			.connect(node_addr, b"wingdrive/filetransfer/1")
 			.await
 			.map_err(|e| anyhow::anyhow!("Failed to connect to device: {}", e))?;
 
@@ -1131,7 +1131,7 @@ async fn stream_file_data<'a>(
 
 	let node_addr = iroh::EndpointAddr::new(node_id);
 	let connection = endpoint
-		.connect(node_addr, b"spacedrive/filetransfer/1")
+		.connect(node_addr, b"wingdrive/filetransfer/1")
 		.await
 		.map_err(|e| anyhow::anyhow!("Failed to connect to device: {}", e))?;
 

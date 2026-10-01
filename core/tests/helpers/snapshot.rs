@@ -21,8 +21,8 @@ impl SnapshotManager {
 	///
 	/// Snapshots are stored in platform-appropriate location:
 	/// - macOS: ~/.wingdrive/test_snapshots/
-	/// - Linux: ~/.local/share/spacedrive/test_snapshots/
-	/// - Windows: %APPDATA%\spacedrive\test_snapshots\
+	/// - Linux: ~/.local/share/wingdrive/test_snapshots/
+	/// - Windows: %APPDATA%\wingdrive\test_snapshots\
 	pub fn new(test_name: &str, test_data_path: &Path) -> anyhow::Result<Self> {
 		let snapshot_base = Self::get_snapshot_base_path()?;
 		let timestamp = Utc::now().format("%Y%m%d_%H%M%S").to_string();
@@ -43,11 +43,11 @@ impl SnapshotManager {
 			PathBuf::from(home).join(".wingdrive/test_snapshots")
 		} else if cfg!(target_os = "windows") {
 			let appdata = std::env::var("APPDATA")?;
-			PathBuf::from(appdata).join("spacedrive\\test_snapshots")
+			PathBuf::from(appdata).join("wingdrive\\test_snapshots")
 		} else {
 			// Linux and other Unix-like systems
 			let home = std::env::var("HOME")?;
-			PathBuf::from(home).join(".local/share/spacedrive/test_snapshots")
+			PathBuf::from(home).join(".local/share/wingdrive/test_snapshots")
 		};
 
 		fs::create_dir_all(&base)?;

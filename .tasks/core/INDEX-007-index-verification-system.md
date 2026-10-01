@@ -195,7 +195,7 @@ async fn compare_entries(
 After app has been offline, verify index integrity:
 
 ```bash
-spacedrive verify ~/Documents
+wingdrive verify ~/Documents
 ```
 
 **Expected Issues**:
@@ -208,7 +208,7 @@ spacedrive verify ~/Documents
 If real-time updates seem broken, verify state:
 
 ```bash
-spacedrive verify /media/usb
+wingdrive verify /media/usb
 ```
 
 **Expected Issues**:
@@ -221,7 +221,7 @@ spacedrive verify /media/usb
 Before migrating to new library version, verify current state:
 
 ```bash
-spacedrive verify --all-locations
+wingdrive verify --all-locations
 ```
 
 Ensures clean state before schema migrations.
@@ -230,16 +230,16 @@ Ensures clean state before schema migrations.
 
 ```bash
 # Verify specific path
-spacedrive verify ~/Documents
+wingdrive verify ~/Documents
 
 # Verify all locations
-spacedrive verify --all-locations
+wingdrive verify --all-locations
 
 # Verify with detailed output
-spacedrive verify ~/Pictures --verbose
+wingdrive verify ~/Pictures --verbose
 
 # Output JSON for scripting
-spacedrive verify ~/Videos --json > report.json
+wingdrive verify ~/Videos --json > report.json
 ```
 
 ## Output Format
@@ -343,7 +343,7 @@ cd ~/test-verify
 touch file1.txt file2.txt file3.txt
 
 # Index it
-spacedrive index location ~/test-verify --mode shallow
+wingdrive index location ~/test-verify --mode shallow
 
 # Make external changes
 touch external_new.txt
@@ -351,7 +351,7 @@ rm file2.txt
 echo "modified" >> file3.txt
 
 # Verify (should detect issues)
-spacedrive verify ~/test-verify
+wingdrive verify ~/test-verify
 
 # Expected output:
 # - Missing: external_new.txt

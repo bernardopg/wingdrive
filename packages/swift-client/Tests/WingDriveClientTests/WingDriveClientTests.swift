@@ -1,15 +1,15 @@
 import XCTest
-@testable import SpacedriveClient
+@testable import WingDriveClient
 
-final class SpacedriveClientTests: XCTestCase {
+final class WingDriveClientTests: XCTestCase {
 
     func testClientInitialization() {
-        let client = SpacedriveClient(socketPath: "/tmp/test.sock")
+        let client = WingDriveClient(socketPath: "/tmp/test.sock")
         XCTAssertNotNil(client)
     }
 
     func testErrorTypes() {
-        let error = SpacedriveError.connectionFailed("Test error")
+        let error = WingDriveError.connectionFailed("Test error")
         XCTAssertNotNil(error.errorDescription)
         XCTAssertTrue(error.errorDescription!.contains("Test error"))
     }

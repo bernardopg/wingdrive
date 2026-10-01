@@ -211,10 +211,10 @@ text_based = true
 
 # WingDrive Memory Files
 [[file_types]]
-id = "application/x-spacedrive-memory"
+id = "application/x-wingdrive-memory"
 name = "WingDrive Memory"
 extensions = ["memory"]
-mime_types = ["application/x-spacedrive-memory"]
+mime_types = ["application/x-wingdrive-memory"]
 category = "document"
 priority = 100
 
@@ -224,6 +224,6 @@ offset = 0
 priority = 100
 
 [file_types.metadata]
-spacedrive = true
+wingdrive = true
 ai_knowledge = true
 memory_file = true

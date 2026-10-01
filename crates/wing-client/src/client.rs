@@ -3,13 +3,13 @@ use crate::types::*;
 use anyhow::Result;
 use serde::Serialize;
 
-pub struct SpacedriveClient {
+pub struct WingDriveClient {
 	transport: TcpTransport,
 	library_id: Option<String>,
 	http_base_url: String,
 }
 
-impl SpacedriveClient {
+impl WingDriveClient {
 	pub fn new(socket_addr: String, http_base_url: String) -> Self {
 		Self {
 			transport: TcpTransport::new(socket_addr),

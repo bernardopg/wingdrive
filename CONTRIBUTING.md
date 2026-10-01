@@ -530,7 +530,7 @@ bun run tauri:dev  # Starts dev server with hot reload
 ```bash
 cd apps/tauri
 bun run build      # Creates dist/ folder
-cargo build -p spacedrive-tauri  # Now succeeds
+cargo build -p wingdrive-tauri  # Now succeeds
 ```
 
 #### Development Commands
@@ -850,7 +850,7 @@ If tests fail locally:
 cargo test test_name -- --nocapture
 
 # Check for database issues
-rm -rf ~/.local/share/spacedrive  # Remove test databases
+rm -rf ~/.local/share/wingdrive  # Remove test databases
 cargo test
 ```
 

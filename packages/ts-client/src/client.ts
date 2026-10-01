@@ -49,7 +49,7 @@ class SimpleEventEmitter {
  * - Library context management
  * - Event subscription system
  */
-export class SpacedriveClient extends SimpleEventEmitter {
+export class WingDriveClient extends SimpleEventEmitter {
 	private transport: Transport;
 	private currentLibraryId: string | null = null;
 	private subscriptionManager: SubscriptionManager;
@@ -63,16 +63,16 @@ export class SpacedriveClient extends SimpleEventEmitter {
 	/**
 	 * Create client for Bun/Node.js using Unix socket
 	 */
-	static fromSocket(socketPath: string): SpacedriveClient {
-		return new SpacedriveClient(new UnixSocketTransport(socketPath));
+	static fromSocket(socketPath: string): WingDriveClient {
+		return new WingDriveClient(new UnixSocketTransport(socketPath));
 	}
 
 	/**
 	 * Create client for Bun/Node.js using TCP socket
 	 * @param socketAddr - TCP address (e.g., "127.0.0.1:6969")
 	 */
-	static fromTcpSocket(socketAddr: string): SpacedriveClient {
-		return new SpacedriveClient(new TcpSocketTransport(socketAddr));
+	static fromTcpSocket(socketAddr: string): WingDriveClient {
+		return new WingDriveClient(new TcpSocketTransport(socketAddr));
 	}
 
 	/**
@@ -84,8 +84,8 @@ export class SpacedriveClient extends SimpleEventEmitter {
 			event: string,
 			handler: (event: any) => void,
 		) => Promise<() => void>,
-	): SpacedriveClient {
-		const client = new SpacedriveClient(new TauriTransport(invoke, listen));
+	): WingDriveClient {
+		const client = new WingDriveClient(new TauriTransport(invoke, listen));
 		client.setupEventLogging();
 		return client;
 	}

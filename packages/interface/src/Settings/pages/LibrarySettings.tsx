@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useLibraryQuery, useLibraryMutation, useSpacedriveClient } from "../../contexts/SpacedriveContext";
+import { useLibraryQuery, useLibraryMutation, useWingDriveClient } from "../../contexts/WingDriveContext";
 
 interface LibrarySettingsForm {
   generate_thumbnails: boolean;
@@ -12,7 +12,7 @@ interface LibrarySettingsForm {
 }
 
 export function LibrarySettings() {
-  const client = useSpacedriveClient();
+  const client = useWingDriveClient();
   const libraryId = client.getCurrentLibraryId();
   const { data: config, refetch, isLoading } = useLibraryQuery(
     { type: "config.library.get", input: null as any },

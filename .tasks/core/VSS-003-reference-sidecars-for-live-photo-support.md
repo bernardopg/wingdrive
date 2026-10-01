@@ -24,7 +24,7 @@ Live Photo detection will be reimplemented in the Photos extension using these c
 
 ## Original Description
 
-Implement the "Reference Sidecar" feature as described in **REFERENCE_SIDECARS.md**. This allows Spacedrive to track pre-existing files (like the video component of a Live Photo) as virtual sidecars without moving them from their original locations.
+Implement the "Reference Sidecar" feature as described in **REFERENCE_SIDECARS.md**. This allows WingDrive to track pre-existing files (like the video component of a Live Photo) as virtual sidecars without moving them from their original locations.
 
 ## Implementation Notes
 

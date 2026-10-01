@@ -30,7 +30,7 @@ Implement File Sync system - an index-driven service that orchestrates content s
 
 **Why FileSyncService (not FileSyncJob):**
 
-- Jobs cannot spawn child jobs in Spacedrive's architecture
+- Jobs cannot spawn child jobs in WingDrive's architecture
 - FileSyncJob would duplicate FileCopyJob's complex routing logic
 - Bidirectional sync needs persistent state management beyond job lifecycle
 - Service orchestrates, jobs execute operations

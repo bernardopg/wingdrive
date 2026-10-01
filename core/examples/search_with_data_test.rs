@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
 	println!("=== End-to-End Search Test with Real Data ===\n");
 
 	// Initialize core
-	let data_dir = PathBuf::from("./data/spacedrive-search-test");
+	let data_dir = PathBuf::from("./data/wingdrive-search-test");
 	let core = Core::new(data_dir.clone())
 		.await
 		.map_err(|e| anyhow::anyhow!("Failed to initialize core: {}", e))?;

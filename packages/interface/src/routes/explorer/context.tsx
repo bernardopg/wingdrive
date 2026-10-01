@@ -8,7 +8,7 @@ import {
 	type ReactNode,
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useNormalizedQuery } from "../../contexts/SpacedriveContext";
+import { useNormalizedQuery } from "../../contexts/WingDriveContext";
 import { useTabManager } from "../../components/TabManager/useTabManager";
 import type {
 	ViewMode as TabViewMode,

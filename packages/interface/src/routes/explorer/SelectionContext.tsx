@@ -11,7 +11,7 @@ import {
 import { usePlatform } from "../../contexts/PlatformContext";
 import type { File } from "@wingdrive/ts-client";
 import { useClipboard } from "../../hooks/useClipboard";
-import { useLibraryMutation } from "../../contexts/SpacedriveContext";
+import { useLibraryMutation } from "../../contexts/WingDriveContext";
 import { toast } from "@wingdrive/primitives";
 import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
 import { useTabManager } from "../../components/TabManager";

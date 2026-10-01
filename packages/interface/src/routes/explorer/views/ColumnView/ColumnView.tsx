@@ -2,7 +2,7 @@ import { useEffect, useCallback, useMemo, useRef } from "react";
 import type { WingPath, File } from "@wingdrive/ts-client";
 import { useExplorer } from "../../context";
 import { useSelection } from "../../SelectionContext";
-import { useNormalizedQuery } from "../../../../contexts/SpacedriveContext";
+import { useNormalizedQuery } from "../../../../contexts/WingDriveContext";
 import type { DirectorySortBy } from "@wingdrive/ts-client";
 import { Column } from "./Column";
 import { useTypeaheadSearch } from "../../hooks/useTypeaheadSearch";

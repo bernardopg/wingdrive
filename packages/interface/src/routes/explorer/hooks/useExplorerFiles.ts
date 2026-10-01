@@ -6,7 +6,7 @@ import type {
 } from "@wingdrive/ts-client";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";
+import { useNormalizedQuery } from "../../../contexts/WingDriveContext";
 import { useExplorer } from "../context";
 import { useVirtualListing } from "./useVirtualListing";
 

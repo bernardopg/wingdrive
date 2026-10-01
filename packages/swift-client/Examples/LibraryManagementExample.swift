@@ -1,11 +1,11 @@
 import Foundation
-import SpacedriveClient
+import WingDriveClient
 
 /// Example demonstrating the new library management features
 @main
 struct LibraryManagementExample {
     static func main() async {
-        let client = SpacedriveClient(socketPath: "/tmp/spacedrive.sock")
+        let client = WingDriveClient(socketPath: "/tmp/wingdrive.sock")
 
         do {
             // Check initial state

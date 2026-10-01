@@ -170,7 +170,7 @@ inventory::collect!(QueryExtractorEntry);
 ///
 /// This is the rspc-inspired magic: we iterate over compile-time registered
 /// extractors rather than runtime data, solving the timeline problem.
-pub fn generate_spacedrive_api() -> (Vec<OperationMetadata>, Vec<QueryMetadata>, TypeCollection) {
+pub fn generate_wingdrive_api() -> (Vec<OperationMetadata>, Vec<QueryMetadata>, TypeCollection) {
 	let mut collection = TypeCollection::default();
 	let mut operations = Vec::new();
 	let mut queries = Vec::new();
@@ -199,10 +199,10 @@ pub fn generate_spacedrive_api() -> (Vec<OperationMetadata>, Vec<QueryMetadata>,
 ///
 /// This creates a runtime representation of our API structure that Specta can export.
 /// Similar to rspc's approach with TypesOrType, but tailored for WingDrive's needs.
-pub fn create_spacedrive_api_structure(
+pub fn create_wingdrive_api_structure(
 	operations: &[OperationMetadata],
 	queries: &[QueryMetadata],
-) -> SpacedriveApiStructure {
+) -> WingDriveApiStructure {
 	let mut core_actions = Vec::new();
 	let mut library_actions = Vec::new();
 	let mut core_queries = Vec::new();
@@ -260,7 +260,7 @@ pub fn create_spacedrive_api_structure(
 		}
 	}
 
-	SpacedriveApiStructure {
+	WingDriveApiStructure {
 		core_actions,
 		library_actions,
 		core_queries,
@@ -269,7 +269,7 @@ pub fn create_spacedrive_api_structure(
 }
 
 /// Represents the complete WingDrive API structure for code generation
-pub struct SpacedriveApiStructure {
+pub struct WingDriveApiStructure {
 	pub core_actions: Vec<ApiOperationType>,
 	pub library_actions: Vec<ApiOperationType>,
 	pub core_queries: Vec<ApiQueryType>,
@@ -520,9 +520,9 @@ pub fn generate_swift_api_code(functions: &[ApiFunction]) -> String {
 
 		swift_code.push_str(&format!("/// {} operations\n", to_pascal_case(&namespace)));
 		swift_code.push_str(&format!("public struct {} {{\n", namespace_struct_name));
-		swift_code.push_str("    private let client: SpacedriveClient\n");
+		swift_code.push_str("    private let client: WingDriveClient\n");
 		swift_code.push_str("\n");
-		swift_code.push_str("    init(client: SpacedriveClient) {\n");
+		swift_code.push_str("    init(client: WingDriveClient) {\n");
 		swift_code.push_str("        self.client = client\n");
 		swift_code.push_str("    }\n");
 		swift_code.push_str("\n");
@@ -590,7 +590,7 @@ mod tests {
 
 	#[test]
 	fn test_type_extraction_system() {
-		let (operations, queries, collection) = generate_spacedrive_api();
+		let (operations, queries, collection) = generate_wingdrive_api();
 
 		println!(
 			"Discovered {} operations and {} queries",
@@ -624,7 +624,7 @@ mod tests {
 
 	#[test]
 	fn test_api_functions_extraction() {
-		let (operations, queries, _collection) = generate_spacedrive_api();
+		let (operations, queries, _collection) = generate_wingdrive_api();
 		let functions = extract_api_functions(&operations, &queries);
 
 		println!("Extracted {} API functions", functions.len());
@@ -667,7 +667,7 @@ mod tests {
 
 	#[test]
 	fn test_swift_code_generation() {
-		let (operations, queries, _collection) = generate_spacedrive_api();
+		let (operations, queries, _collection) = generate_wingdrive_api();
 		let functions = extract_api_functions(&operations, &queries);
 		let swift_code = generate_swift_api_code(&functions);
 

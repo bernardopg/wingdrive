@@ -243,10 +243,10 @@ In typical filesystems with repeated names:
 
 ```bash
 # Index large directory in ephemeral mode
-spacedrive index browse /usr --ephemeral
+wingdrive index browse /usr --ephemeral
 
 # Check memory usage
-ps aux | grep spacedrive
+ps aux | grep wingdrive
 
 # For 500K files, should use ~25 MB RAM for index
 # (50 bytes/entry * 500K = 25 MB)

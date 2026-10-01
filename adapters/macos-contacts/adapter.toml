@@ -3,10 +3,10 @@ id = "macos-contacts"
 name = "macOS Contacts"
 description = "Index contacts from the macOS Address Book. Requires Contacts access permission for the running process."
 version = "0.1.0"
-author = "spacedrive"
+author = "wingdrive"
 license = "MIT"
 icon = "user"
-min_spacedrive = "0.1.0"
+min_wingdrive = "0.1.0"
 trust_tier = "authored"
 
 [adapter.runtime]
@@ -16,7 +16,7 @@ schedule = "0 * * * *"
 requires = ["python3 >= 3.9"]
 
 # No config fields — uses the standard macOS AddressBook database.
-# Contacts permission must be granted to the process running Spacedrive.
+# Contacts permission must be granted to the process running WingDrive.
 
 # ── Data type schema ────────────────────────────────────────────────────
 

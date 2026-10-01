@@ -25,7 +25,7 @@ export type { Platform } from "./contexts/PlatformContext";
 export { PlatformProvider, usePlatform } from "./contexts/PlatformContext";
 
 // Context
-export { SpacedriveProvider, WingDriveProvider } from "./contexts/SpacedriveContext";
+export { WingDriveProvider } from "./contexts/WingDriveContext";
 export {
 	ServerProvider,
 	useServer,

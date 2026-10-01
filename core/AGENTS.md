@@ -7,7 +7,7 @@
 - `cargo test <test_name>` - Run specific test (e.g., `cargo test library_test`)
 - `cargo clippy` - Lint code
 - `cargo fmt` - Format code
-- `cargo run --bin wing-cli -- <command>` - Run CLI (note: binary is `wing-cli`, not `spacedrive`)
+- `cargo run --bin wing-cli -- <command>` - Run CLI (note: binary is `wing-cli`, not `wingdrive`)
 
 ## Code Style
 

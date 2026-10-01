@@ -443,7 +443,7 @@ playwright-report
 
 /sdserver_data
 /sdserver_data2
-.spacedrive
+.wingdrive
 dev.db-journal
 .build/
 .swiftpm

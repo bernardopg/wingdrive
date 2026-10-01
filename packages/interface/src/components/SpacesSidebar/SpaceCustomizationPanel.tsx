@@ -6,7 +6,7 @@ import type { ItemType, SpaceItem as SpaceItemType, GroupType } from "@wingdrive
 import { SpaceItem } from "./SpaceItem";
 import { createPortal } from "react-dom";
 import { useState } from "react";
-import { useLibraryMutation } from "../../contexts/SpacedriveContext";
+import { useLibraryMutation } from "../../contexts/WingDriveContext";
 import { Input } from "@wingdrive/primitives";
 
 interface PaletteItem {

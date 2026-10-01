@@ -25,10 +25,10 @@ async function link(origin, target, rename) {
  * @returns {Promise<void>}
  */
 export async function symlinkSharedLibsLinux(root, nativeDeps) {
-	// rpath=${ORIGIN}/../lib/spacedrive
+	// rpath=${ORIGIN}/../lib/wingdrive
 	const targetLib = path.join(root, 'target', 'lib')
-	const targetShare = path.join(root, 'target', 'share', 'spacedrive')
-	const targetRPath = path.join(targetLib, 'spacedrive')
+	const targetShare = path.join(root, 'target', 'share', 'wingdrive')
+	const targetRPath = path.join(targetLib, 'wingdrive')
 	const targetModelShare = path.join(targetShare, 'models')
 	await Promise.all([
 		...[targetRPath, targetModelShare].map(path => fs.unlink(path).catch(() => {})),
@@ -44,16 +44,16 @@ export async function symlinkSharedLibsLinux(root, nativeDeps) {
  * @param {string} nativeDeps
  */
 export async function symlinkSharedLibsMacOS(root, nativeDeps) {
-	// rpath=@executable_path/../Frameworks/Spacedrive.framework
+	// rpath=@executable_path/../Frameworks/WingDrive.framework
 	const targetFrameworks = path.join(root, 'target', 'Frameworks')
 
 	// Framework
-	const framework = path.join(nativeDeps, 'Spacedrive.framework')
+	const framework = path.join(nativeDeps, 'WingDrive.framework')
 
-	// Link Spacedrive.framework to target folder so wing-server can work ootb
+	// Link WingDrive.framework to target folder so wing-server can work ootb
 	await fs.rm(targetFrameworks, { recursive: true }).catch(() => {})
 	await fs.mkdir(targetFrameworks, { recursive: true })
-	await link(framework, path.join(targetFrameworks, 'Spacedrive.framework'))
+	await link(framework, path.join(targetFrameworks, 'WingDrive.framework'))
 
 	// Sign dylibs (Required for them to work on macOS 13+)
 	await fs

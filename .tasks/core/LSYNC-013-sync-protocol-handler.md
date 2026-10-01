@@ -113,7 +113,7 @@ pub enum SyncMessage {
 4. Create `sync/shared.rs` - Log-based sync with HLC
 5. Integrate with DeviceRegistry for peer lookup
 6. Add per-peer connection management
-7. Register protocol with ALPN: `/spacedrive/sync/2.0.0` (version bump!)
+7. Register protocol with ALPN: `/wingdrive/sync/2.0.0` (version bump!)
 
 ## Protocol Handler Structure
 
@@ -129,7 +129,7 @@ pub struct SyncProtocolHandler {
 }
 
 impl ProtocolHandler for SyncProtocolHandler {
-    const ALPN: &'static [u8] = b"/spacedrive/sync/2.0.0";
+    const ALPN: &'static [u8] = b"/wingdrive/sync/2.0.0";
 
     async fn handle_stream(
         &self,

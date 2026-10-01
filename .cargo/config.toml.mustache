@@ -81,7 +81,7 @@ rustc-link-lib = ["heif"]
 linker = "clang"
 {{/hasLLD}}
 rustflags = [
-	"-L", "{{{nativeDeps}}}/lib", "-C", "link-arg=-Wl,-rpath=${ORIGIN}/../lib/spacedrive",
+	"-L", "{{{nativeDeps}}}/lib", "-C", "link-arg=-Wl,-rpath=${ORIGIN}/../lib/wingdrive",
 	{{#hasLLD}}
 	"-C", "link-arg=-fuse-ld={{{linker}}}",
 	{{/hasLLD}}
@@ -96,7 +96,7 @@ rustc-link-lib = ["heif"]
 linker = "clang"
 {{/hasLLD}}
 rustflags = [
-	"-L", "{{{nativeDeps}}}/lib", "-C", "link-arg=-Wl,-rpath=${ORIGIN}/../lib/spacedrive",
+	"-L", "{{{nativeDeps}}}/lib", "-C", "link-arg=-Wl,-rpath=${ORIGIN}/../lib/wingdrive",
 	{{#hasLLD}}
 	"-C", "link-arg=-fuse-ld={{{linker}}}",
 	{{/hasLLD}}
@@ -122,4 +122,4 @@ rustflags = ["-L", "{{{mobileNativeDeps}}}/x86_64-linux-android/lib"]
 xtask = "run --package xtask --"
 ios = "run --package xtask -- build-ios"
 daemon = "run --package wing-core --bin wing-daemon --features wing-core/ffmpeg,wing-core/heif"
-cli = "run --package wing-core --bin spacedrive --features wing-core/ffmpeg,wing-core/heif"
+cli = "run --package wing-core --bin wingdrive --features wing-core/ffmpeg,wing-core/heif"

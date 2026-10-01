@@ -17,9 +17,9 @@ use tracing::error;
 const BINDING_LOCATION: &str = ".";
 #[cfg(unix)]
 const BINDING_LOCATION: &str = if cfg!(target_os = "macos") {
-	"../Frameworks/Spacedrive.framework/Libraries"
+	"../Frameworks/WingDrive.framework/Libraries"
 } else {
-	"../lib/spacedrive"
+	"../lib/wingdrive"
 };
 
 static PDFIUM_LIB: LazyLock<String> = LazyLock::new(|| {

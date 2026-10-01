@@ -191,7 +191,7 @@ The right split is:
 
 ## Proposed WingDrive Config Shape
 
-Add a new block to `AppConfig` in `spacedrive/core/src/config/app_config.rs`.
+Add a new block to `AppConfig` in `wingdrive/core/src/config/app_config.rs`.
 
 Suggested shape:
 
@@ -276,7 +276,7 @@ This should be HTTP plus SSE based, independent of whether the instance is local
 
 Best fit:
 
-- extend `spacedrive/packages/interface/src/Settings/pages/ServicesSettings.tsx`
+- extend `wingdrive/packages/interface/src/Settings/pages/ServicesSettings.tsx`
 
 Add a Spacebot section with:
 

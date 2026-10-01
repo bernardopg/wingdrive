@@ -18,12 +18,12 @@ cargo test                               # Run all tests
 cargo test <test_name>                   # Run specific test
 cargo clippy                             # Lint code
 cargo fmt                                # Format code
-cargo run --bin wing-cli -- <command>      # Run CLI (binary is wing-cli, not spacedrive)
+cargo run --bin wing-cli -- <command>      # Run CLI (binary is wing-cli, not wingdrive)
 ```
 
 ### Common Mistakes
 
-- Running `spacedrive` instead of `wing-cli` (the binary name is `wing-cli`)
+- Running `wingdrive` instead of `wing-cli` (the binary name is `wing-cli`)
 - Forgetting to restart daemon after rebuilding
 - Using `println!` instead of `tracing` macros (`info!`, `debug!`, etc)
 - Implementing `Wire` manually instead of using `register_*` macros
@@ -182,7 +182,7 @@ For the prototypes, Swift types can be generated:
 cargo run --bin generate_swift_types
 ```
 
-Output: `packages/swift-client/Sources/SpacedriveClient/`
+Output: `packages/swift-client/Sources/WingDriveClient/`
 
 ### Extension System (WASM)
 
@@ -261,9 +261,9 @@ fn test_counter(ctx: &JobContext, state: &mut CounterState) -> Result<()> {
 Extensions import minimal FFI functions:
 
 ```rust
-#[link(wasm_import_module = "spacedrive")]
+#[link(wasm_import_module = "wingdrive")]
 extern "C" {
-    fn spacedrive_log(level: u32, msg_ptr: *const u8, msg_len: usize);
+    fn wingdrive_log(level: u32, msg_ptr: *const u8, msg_len: usize);
     fn register_job(
         job_name_ptr: *const u8,
         job_name_len: u32,
@@ -428,7 +428,7 @@ impl Job for FileCopyJob {
 //!
 //! ## Example
 //! ```rust,no_run
-//! use spacedrive_core::ops::files::share::{ShareFileAction, ShareFileInput};
+//! use wingdrive_core::ops::files::share::{ShareFileAction, ShareFileInput};
 //!
 //! let input = ShareFileInput { file_id: 123, recipient: "user@example.com" };
 //! let output = ShareFileAction::run(input, &ctx).await?;

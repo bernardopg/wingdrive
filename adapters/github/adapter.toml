@@ -3,10 +3,10 @@ id = "github"
 name = "GitHub"
 description = "Index issues, pull requests, and discussions from GitHub repositories via the REST API. Requires a personal access token."
 version = "0.1.0"
-author = "spacedrive"
+author = "wingdrive"
 license = "MIT"
 icon = "git-branch"
-min_spacedrive = "0.1.0"
+min_wingdrive = "0.1.0"
 trust_tier = "collaborative"
 
 [adapter.runtime]

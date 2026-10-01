@@ -16,7 +16,7 @@ import "./setup";
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { readFile } from "fs/promises";
 import { hostname } from "os";
-import { SpacedriveClient } from "../../src/client";
+import { WingDriveClient } from "../../src/client";
 import { TcpSocketTransport } from "../../src/transport";
 
 interface BridgeConfig {
@@ -28,7 +28,7 @@ interface BridgeConfig {
 }
 
 let bridgeConfig: BridgeConfig;
-let client: SpacedriveClient;
+let client: WingDriveClient;
 let deviceSlug: string;
 
 beforeAll(async () => {
@@ -42,7 +42,7 @@ beforeAll(async () => {
 
 	console.log(`[TS] Bridge config:`, bridgeConfig);
 
-	client = SpacedriveClient.fromTcpSocket(bridgeConfig.socket_addr);
+	client = WingDriveClient.fromTcpSocket(bridgeConfig.socket_addr);
 	client.setCurrentLibrary(bridgeConfig.library_id);
 
 	// Use the device slug from the daemon, not hostname() which may differ

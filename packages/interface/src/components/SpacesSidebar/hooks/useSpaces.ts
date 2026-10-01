@@ -1,5 +1,5 @@
 import { useNormalizedQuery } from '@wingdrive/ts-client';
-import { useSpacedriveClient } from '../../../contexts/SpacedriveContext';
+import { useWingDriveClient } from '../../../contexts/WingDriveContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import type { Event } from '@wingdrive/ts-client';
@@ -13,7 +13,7 @@ export function useSpaces() {
 }
 
 export function useSpaceLayout(spaceId: string | null) {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 	const queryClient = useQueryClient();
 	const libraryId = client.getCurrentLibraryId();
 

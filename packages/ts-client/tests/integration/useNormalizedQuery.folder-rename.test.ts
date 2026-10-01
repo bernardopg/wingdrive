@@ -28,9 +28,9 @@ import { readFile } from "fs/promises";
 import { rename } from "fs/promises";
 import { join } from "path";
 import { hostname } from "os";
-import { SpacedriveClient } from "../../src/client";
+import { WingDriveClient } from "../../src/client";
 import { renderHook, waitFor, cleanup } from "@testing-library/react";
-import { SpacedriveProvider } from "../../src/hooks/useClient";
+import { WingDriveProvider } from "../../src/hooks/useClient";
 import { useNormalizedQuery } from "../../src/hooks/useNormalizedQuery";
 import React from "react";
 
@@ -44,7 +44,7 @@ interface BridgeConfig {
 }
 
 let bridgeConfig: BridgeConfig;
-let client: SpacedriveClient;
+let client: WingDriveClient;
 const allEventsReceived: any[] = []; // Collect all events for debugging
 
 beforeAll(async () => {
@@ -61,7 +61,7 @@ beforeAll(async () => {
 	console.log(`[TS] Bridge config:`, bridgeConfig);
 
 	// Connect to daemon via TCP socket
-	client = SpacedriveClient.fromTcpSocket(bridgeConfig.socket_addr);
+	client = WingDriveClient.fromTcpSocket(bridgeConfig.socket_addr);
 
 	console.log(`[TS] Connected to daemon`);
 
@@ -120,9 +120,9 @@ describe("useNormalizedQuery - Folder Rename Integration", () => {
 		// Get device slug from hostname
 		const deviceSlug = hostname().toLowerCase().replace(/\s+/g, "-");
 
-		// Create wrapper for React hooks with SpacedriveProvider
+		// Create wrapper for React hooks with WingDriveProvider
 		const wrapper = ({ children }: { children: React.ReactNode }) =>
-			React.createElement(SpacedriveProvider, { client }, children);
+			React.createElement(WingDriveProvider, { client }, children);
 
 		// Query root directory listing (should contain original_folder)
 		const { result: rootResult } = renderHook(

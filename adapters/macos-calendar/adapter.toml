@@ -3,10 +3,10 @@ id = "macos-calendar"
 name = "macOS Calendar"
 description = "Index events from the macOS Calendar app. Requires Calendar access permission (or Full Disk Access) for the running process."
 version = "0.1.0"
-author = "spacedrive"
+author = "wingdrive"
 license = "MIT"
 icon = "calendar"
-min_spacedrive = "0.1.0"
+min_wingdrive = "0.1.0"
 trust_tier = "authored"
 
 [adapter.runtime]

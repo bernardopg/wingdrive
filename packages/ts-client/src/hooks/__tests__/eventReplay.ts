@@ -52,7 +52,7 @@ export class EventReplaySimulator {
 }
 
 /**
- * Create a mock SpacedriveClient for testing
+ * Create a mock WingDriveClient for testing
  */
 export function createMockClient(initialData: any) {
 	const subscriptions = new Map<number, (event: Event) => void>();

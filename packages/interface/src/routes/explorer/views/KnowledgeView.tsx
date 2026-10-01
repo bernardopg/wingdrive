@@ -13,7 +13,7 @@ import {
 } from "@phosphor-icons/react";
 import { KnowledgeInspector } from "../../../components/Inspector/variants/KnowledgeInspector";
 import { useExplorer } from "../context";
-import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";
+import { useNormalizedQuery } from "../../../contexts/WingDriveContext";
 import type { File, ContentKind } from "@wingdrive/ts-client";
 import { getContentKind } from "@wingdrive/ts-client";
 import { useMemo } from "react";

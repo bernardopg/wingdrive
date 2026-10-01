@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { toast } from "@wingdrive/primitives";
-import { useCoreQuery, useCoreMutation } from "../../contexts/SpacedriveContext";
+import { useCoreQuery, useCoreMutation } from "../../contexts/WingDriveContext";
 
 interface ServicesSettingsForm {
   networking_enabled: boolean;

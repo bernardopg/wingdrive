@@ -195,8 +195,8 @@ pub fn symlink_libs_macos(root: &Path, native_deps: &Path) -> Result<()> {
 	{
 		use std::os::unix::fs as unix_fs;
 
-		// Create Spacedrive.framework symlink for dylibs (matches v1 behavior)
-		let framework = native_deps.join("Spacedrive.framework");
+		// Create WingDrive.framework symlink for dylibs (matches v1 behavior)
+		let framework = native_deps.join("WingDrive.framework");
 		if framework.exists() {
 			// Sign all dylibs in the framework (required for macOS 13+)
 			let libs_dir = framework.join("Libraries");
@@ -228,7 +228,7 @@ pub fn symlink_libs_macos(root: &Path, native_deps: &Path) -> Result<()> {
 			let target_frameworks = root.join("target").join("Frameworks");
 			fs::create_dir_all(&target_frameworks)?;
 
-			let framework_link = target_frameworks.join("Spacedrive.framework");
+			let framework_link = target_frameworks.join("WingDrive.framework");
 
 			// Remove existing symlink or directory if present
 			if framework_link.is_symlink() {
@@ -238,9 +238,9 @@ pub fn symlink_libs_macos(root: &Path, native_deps: &Path) -> Result<()> {
 			}
 
 			unix_fs::symlink(&framework, &framework_link)
-				.context("Failed to symlink Spacedrive.framework")?;
+				.context("Failed to symlink WingDrive.framework")?;
 
-			println!("   ✓ Linked Spacedrive.framework (includes libheif)");
+			println!("   ✓ Linked WingDrive.framework (includes libheif)");
 		}
 
 		// Also symlink individual dylibs from lib/ to target/ for easier access
@@ -311,7 +311,7 @@ pub fn symlink_libs_linux(root: &Path, native_deps: &Path) -> Result<()> {
 		}
 
 		// Create lib directory in root
-		let target_lib = root.join("target").join("lib").join("spacedrive");
+		let target_lib = root.join("target").join("lib").join("wingdrive");
 		fs::create_dir_all(&target_lib)?;
 
 		for entry in fs::read_dir(&lib_dir)? {

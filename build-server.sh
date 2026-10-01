@@ -15,7 +15,7 @@ export CPLUS_INCLUDE_PATH="$C_INCLUDE_PATH"
 export OPENSSL_INCLUDE_DIR="$SR/usr/include"
 export OPENSSL_LIB_DIR="$SR/usr/lib/x86_64-linux-gnu"
 
-cd /mnt/pool/spacedrive
+cd /mnt/pool/wingdrive
 cargo build --release --bin wing-server --bin wing-cli \
   --features wing-core/heif,wing-core/ffmpeg \
   -j10 "$@"

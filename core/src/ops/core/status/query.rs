@@ -139,10 +139,10 @@ impl CoreQuery for CoreStatusQuery {
 		let system = SystemInfo {
 			uptime: None, // TODO: Calculate uptime from service start time
 			data_directory: std::env::var("WINGDRIVE_DATA_DIR")
-				.or_else(|_| std::env::var("SPACEDRIVE_DATA_DIR"))
+				.or_else(|_| std::env::var("WINGDRIVE_DATA_DIR"))
 				.unwrap_or_else(|_| "default".to_string()),
 			instance_name: std::env::var("WINGDRIVE_INSTANCE")
-				.or_else(|_| std::env::var("SPACEDRIVE_INSTANCE"))
+				.or_else(|_| std::env::var("WINGDRIVE_INSTANCE"))
 				.ok(),
 			current_library,
 		};

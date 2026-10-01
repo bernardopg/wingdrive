@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useCoreQuery, useCoreMutation } from "../../contexts/SpacedriveContext";
+import { useCoreQuery, useCoreMutation } from "../../contexts/WingDriveContext";
 
 interface AdvancedSettingsForm {
   job_logging_enabled: boolean;

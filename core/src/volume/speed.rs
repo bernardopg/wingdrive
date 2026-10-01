@@ -181,7 +181,7 @@ fn generate_test_data(size_mb: usize) -> Vec<u8> {
 	let size_bytes = size_mb * 1024 * 1024;
 
 	// Use a pattern instead of zeros to avoid compression optimizations
-	let pattern = b"SpacedriveSpeedTest0123456789ABCDEF";
+	let pattern = b"WingDriveSpeedTest0123456789ABCDEF";
 	let mut data = Vec::with_capacity(size_bytes);
 
 	for i in 0..size_bytes {
@@ -240,7 +240,7 @@ async fn get_writable_directory(
 			// For external volumes, try to write in the root or create a temp directory
 			let candidates = [
 				volume_path.join("tmp"),
-				volume_path.join(".spacedrive_temp"),
+				volume_path.join(".wingdrive_temp"),
 				volume_path.to_path_buf(),
 			];
 
@@ -255,7 +255,7 @@ async fn get_writable_directory(
 						// If we created a directory specifically for this test, mark it for cleanup
 						let created_dir = if candidate
 							.file_name()
-							.map_or(false, |name| name == "tmp" || name == ".spacedrive_temp")
+							.map_or(false, |name| name == "tmp" || name == ".wingdrive_temp")
 						{
 							Some(candidate.clone())
 						} else {

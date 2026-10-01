@@ -25,7 +25,7 @@ Create the Swift ResourceTypeRegistry that enables generic deserialization of re
 
 ## Technical Details
 
-- Location: `packages/client-swift/Sources/SpacedriveCore/Cache/ResourceTypeRegistry.swift`
+- Location: `packages/client-swift/Sources/WingDriveCore/Cache/ResourceTypeRegistry.swift`
 - Protocol: `CacheableResource: Identifiable, Codable`
 - Registry: `[String: (Data) throws -> any CacheableResource]`
 - Auto-generated via specta codegen

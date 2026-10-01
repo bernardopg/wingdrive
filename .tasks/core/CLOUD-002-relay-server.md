@@ -11,7 +11,7 @@ whitepaper: Section 5.3
 
 ## Description
 
-Implement the relay server functionality that enables asynchronous communication between Spacedrive peers. This is critical for features like shareable links and asynchronous Spacedrop transfers, where peers may not be online at the same time.
+Implement the relay server functionality that enables asynchronous communication between WingDrive peers. This is critical for features like shareable links and asynchronous Spacedrop transfers, where peers may not be online at the same time.
 
 ## Implementation Steps
 

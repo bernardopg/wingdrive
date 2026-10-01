@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useLibraryQuery, useSpacedriveClient } from "../../../contexts/SpacedriveContext";
+import { useLibraryQuery, useWingDriveClient } from "../../../contexts/WingDriveContext";
 
 /**
  * Lightweight hook for job count indicator.
@@ -7,7 +7,7 @@ import { useLibraryQuery, useSpacedriveClient } from "../../../contexts/Spacedri
  * Events trigger a refetch rather than incrementing/decrementing counts manually.
  */
 export function useJobCount() {
-	const client = useSpacedriveClient();
+	const client = useWingDriveClient();
 
 	const { data, refetch } = useLibraryQuery({
 		type: "jobs.list",

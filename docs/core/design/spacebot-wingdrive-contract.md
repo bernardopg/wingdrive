@@ -21,12 +21,12 @@ Both sides need a flag. Spacebot needs to know whether WingDrive is present. Win
 
 ## Spacebot Side
 
-### Config: `[spacedrive]`
+### Config: `[wingdrive]`
 
 Add a new top-level section to Spacebot's `config.toml`:
 
 ```toml
-[spacedrive]
+[wingdrive]
 enabled = false
 ```
 
@@ -42,7 +42,7 @@ When `enabled = true`, Spacebot expects a WingDrive node to be reachable. This u
 ### Config Shape
 
 ```rust
-pub struct SpacedriveIntegrationConfig {
+pub struct WingDriveIntegrationConfig {
     /// Master switch. When false, Spacebot has no WingDrive awareness.
     pub enabled: bool,
 
@@ -65,11 +65,11 @@ pub struct SpacedriveIntegrationConfig {
 
 ```toml
 # Minimal — disabled, standalone Spacebot
-[spacedrive]
+[wingdrive]
 enabled = false
 
 # Paired — co-located Spacebot and WingDrive on the same machine
-[spacedrive]
+[wingdrive]
 enabled = true
 api_url = "http://127.0.0.1:7872"
 library_id = "a1b2c3d4-..."
@@ -79,11 +79,11 @@ device_id = "e5f6g7h8-..."
 ### Where It Plugs In
 
 **Config types** (`src/config/types.rs`):
-- Add `spacedrive: SpacedriveIntegrationConfig` to the top-level `Config` struct, alongside `llm`, `defaults`, `agents`, `messaging`, etc.
+- Add `wingdrive: WingDriveIntegrationConfig` to the top-level `Config` struct, alongside `llm`, `defaults`, `agents`, `messaging`, etc.
 - Default is `enabled: false`. All other fields are `Option` and only relevant when enabled.
 
 **Agent initialization** (`src/main.rs`):
-- When `spacedrive.enabled`, create a `SpacedriveClient` that connects to the paired node.
+- When `wingdrive.enabled`, create a `WingDriveClient` that connects to the paired node.
 - Pass the client into `AgentDeps` so branches and workers can access it.
 - Query the device graph on startup and refresh periodically.
 
@@ -253,7 +253,7 @@ This service only runs on the device with `spacebot_host: true`. Other devices d
 
 ## Remote Execution
 
-When Spacebot has `[spacedrive] enabled = true`, workers gain the ability to target specific devices.
+When Spacebot has `[wingdrive] enabled = true`, workers gain the ability to target specific devices.
 
 ### How It Works
 
@@ -389,8 +389,8 @@ When WingDrive queries the Spacebot API (directly or through the proxy):
 
 | Change | Location | Description |
 |---|---|---|
-| `SpacedriveIntegrationConfig` struct | `src/config/types.rs` | New config section with `enabled`, `api_url`, `library_id`, `device_id` |
-| TOML parsing for `[spacedrive]` | `src/config/load.rs` | Parse the new section, all fields optional when disabled |
+| `WingDriveIntegrationConfig` struct | `src/config/types.rs` | New config section with `enabled`, `api_url`, `library_id`, `device_id` |
+| TOML parsing for `[wingdrive]` | `src/config/load.rs` | Parse the new section, all fields optional when disabled |
 | `SpacedriveClient` | new module | HTTP client for WingDrive API (device graph, FSI, remote exec) |
 | Device graph query | agent init | Fetch and cache library device list on startup |
 | `execution_target` on workers | `src/agent/worker.rs` | Optional device slug/UUID that routes tools to a remote device |
@@ -421,8 +421,8 @@ When WingDrive queries the Spacebot API (directly or through the proxy):
 Both sides get their flags. No runtime behavior changes yet.
 
 **Spacebot:**
-- Add `SpacedriveIntegrationConfig` to config types
-- Parse `[spacedrive]` section in config loader
+- Add `WingDriveIntegrationConfig` to config types
+- Parse `[wingdrive]` section in config loader
 - Default `enabled = false`, no behavior change
 
 **WingDrive:**
@@ -467,7 +467,7 @@ Mobile devices use the same P2P proxy.
 Spacebot workers can target remote devices.
 
 **Spacebot:**
-- `SpacedriveClient` queries device graph
+- `WingDriveClient` queries device graph
 - `execution_target` on worker spawn
 - Remote tool variants that proxy through WingDrive
 

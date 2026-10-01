@@ -23,7 +23,7 @@ Develop a production-ready extension as a real-world validation of the WASM exte
 ## Implementation Steps
 
 1.  Complete PLUG-002 (VDFS Plugin API Bridge) first
-    - Ensure host_spacedrive_call() is fully functional
+    - Ensure host_wingdrive_call() is fully functional
     - Add required operations: ai.ocr, ai.classify_text, vdfs.write_sidecar
 2.  Develop the extension as a Rust project using wingdrive-sdk
     - Use #[extension], #[job], #[agent] macros

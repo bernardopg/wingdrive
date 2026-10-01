@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Shared Types for All Platforms
 
 /// Errors that can occur when using the WingDrive client
-public enum SpacedriveError: Error, LocalizedError {
+public enum WingDriveError: Error, LocalizedError {
     case connectionFailed(String)
     case serializationError(String)
     case daemonError(String)
@@ -29,7 +29,7 @@ public struct Empty: Codable {
 }
 
 /// Type alias for the generated Event type from types.swift
-public typealias SpacedriveEvent = Event
+public typealias WingDriveEvent = Event
 
 /// Connection status for clients
 public enum ConnectionStatus: Equatable {

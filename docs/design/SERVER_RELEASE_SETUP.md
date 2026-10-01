@@ -70,7 +70,7 @@ Builder stage:
 Runtime stage:
 - Changed from `distroless/cc` to `debian:bookworm-slim`
 - Installed runtime libraries: `libavcodec59`, `libavformat59`, `libavutil57`, `libswscale6`, `libheif1`
-- Created `spacedrive` user (UID 1000) for security
+- Created `wingdrive` user (UID 1000) for security
 
 **Enabled features in build:**
 ```dockerfile
@@ -291,7 +291,7 @@ ARM builds can be slow via QEMU emulation. Options:
 
 ### Permission denied in container
 
-The container runs as user `spacedrive` (UID 1000). If mounting volumes:
+The container runs as user `wingdrive` (UID 1000). If mounting volumes:
 ```bash
 # Fix permissions
 sudo chown -R 1000:1000 /path/to/data

@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useNormalizedQuery } from "../../contexts/SpacedriveContext";
+import { useNormalizedQuery } from "../../contexts/WingDriveContext";
 import { useTabManager } from "./useTabManager";
 import type { ListLibraryDevicesInput, Device } from "@wingdrive/ts-client";
 

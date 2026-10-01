@@ -47,7 +47,7 @@ pub struct AdapterMeta {
 	#[serde(default)]
 	pub icon: Option<String>,
 	#[serde(default)]
-	pub min_spacedrive: Option<String>,
+	pub min_wingdrive: Option<String>,
 	#[serde(default)]
 	pub trust_tier: Option<String>,
 	pub runtime: RuntimeConfig,
@@ -378,11 +378,11 @@ impl ScriptAdapter {
 			self.manifest.adapter.version.clone(),
 		);
 		env.insert(
-			"SPACEDRIVE_ADAPTER_ID".to_string(),
+			"WINGDRIVE_ADAPTER_ID".to_string(),
 			self.manifest.adapter.id.clone(),
 		);
 		env.insert(
-			"SPACEDRIVE_ADAPTER_VERSION".to_string(),
+			"WINGDRIVE_ADAPTER_VERSION".to_string(),
 			self.manifest.adapter.version.clone(),
 		);
 
@@ -396,7 +396,7 @@ impl ScriptAdapter {
 					format!("WINGDRIVE_CONFIG_{}", key.to_uppercase()),
 					value.clone(),
 				);
-				env.insert(format!("SPACEDRIVE_CONFIG_{}", key.to_uppercase()), value);
+				env.insert(format!("WINGDRIVE_CONFIG_{}", key.to_uppercase()), value);
 			}
 		}
 

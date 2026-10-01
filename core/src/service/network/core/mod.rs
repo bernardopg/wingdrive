@@ -20,11 +20,11 @@ use uuid::Uuid;
 pub use event_loop::{EventLoopCommand, NetworkingEventLoop};
 
 /// Protocol ALPN identifiers
-pub const PAIRING_ALPN: &[u8] = b"spacedrive/pairing/1";
-pub const FILE_TRANSFER_ALPN: &[u8] = b"spacedrive/filetransfer/1";
-pub const MESSAGING_ALPN: &[u8] = b"spacedrive/messaging/1";
-pub const SYNC_ALPN: &[u8] = b"spacedrive/sync/1";
-pub const JOB_ACTIVITY_ALPN: &[u8] = b"spacedrive/jobactivity/1";
+pub const PAIRING_ALPN: &[u8] = b"wingdrive/pairing/1";
+pub const FILE_TRANSFER_ALPN: &[u8] = b"wingdrive/filetransfer/1";
+pub const MESSAGING_ALPN: &[u8] = b"wingdrive/messaging/1";
+pub const SYNC_ALPN: &[u8] = b"wingdrive/sync/1";
+pub const JOB_ACTIVITY_ALPN: &[u8] = b"wingdrive/jobactivity/1";
 
 /// Central networking event types
 #[derive(Debug, Clone)]

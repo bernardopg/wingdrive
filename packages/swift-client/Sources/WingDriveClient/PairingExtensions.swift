@@ -1,6 +1,6 @@
 //
 //  PairingExtensions.swift
-//  SpacedriveClient
+//  WingDriveClient
 //
 //  Device pairing functionality built on top of the core NetworkAPI
 //
@@ -97,9 +97,9 @@ extension SerializablePairingState {
     }
 }
 
-// MARK: - SpacedriveClient Pairing Extensions
+// MARK: - WingDriveClient Pairing Extensions
 
-extension SpacedriveClient {
+extension WingDriveClient {
 
     // MARK: - High-Level Pairing Methods
 
@@ -191,7 +191,7 @@ extension SpacedriveClient {
             try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
         }
 
-        throw SpacedriveError.operationTimeout("Pairing session timed out after \(timeout) seconds")
+        throw WingDriveError.operationTimeout("Pairing session timed out after \(timeout) seconds")
     }
 
     /// Parse a pairing code string into individual words
@@ -206,7 +206,7 @@ extension SpacedriveClient {
             }
 
         guard words.count == 12 else {
-            throw SpacedriveError.invalidInput("Pairing code must contain exactly 12 words, got \(words.count)")
+            throw WingDriveError.invalidInput("Pairing code must contain exactly 12 words, got \(words.count)")
         }
 
         return words
@@ -232,12 +232,12 @@ extension SpacedriveClient {
 
 // MARK: - Error Extensions
 
-extension SpacedriveError {
-    public static func operationTimeout(_ message: String) -> SpacedriveError {
+extension WingDriveError {
+    public static func operationTimeout(_ message: String) -> WingDriveError {
         return .invalidResponse(message)
     }
 
-    public static func invalidInput(_ message: String) -> SpacedriveError {
+    public static func invalidInput(_ message: String) -> WingDriveError {
         return .invalidResponse(message)
     }
 }

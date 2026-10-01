@@ -1,6 +1,6 @@
 //! Volume domain model - unified volume representation
 //!
-//! This represents volumes in Spacedrive, combining runtime detection capabilities
+//! This represents volumes in WingDrive, combining runtime detection capabilities
 //! with database tracking and user preferences. Supports local, network, and cloud volumes.
 
 use crate::domain::resource::Identifiable;
@@ -48,11 +48,11 @@ impl VolumeFingerprint {
 	}
 
 	/// Create fingerprint for external volume using dotfile UUID
-	/// This is used for removable drives with a .spacedrive-volume-id file
-	pub fn from_external_volume(spacedrive_id: Uuid, device_id: Uuid) -> Self {
+	/// This is used for removable drives with a .wingdrive-volume-id file
+	pub fn from_external_volume(wingdrive_id: Uuid, device_id: Uuid) -> Self {
 		let mut hasher = blake3::Hasher::new();
 		hasher.update(b"stable_external_v1:");
-		hasher.update(spacedrive_id.as_bytes());
+		hasher.update(wingdrive_id.as_bytes());
 		hasher.update(device_id.as_bytes());
 		Self(hasher.finalize().to_hex().to_string())
 	}
@@ -67,12 +67,12 @@ impl VolumeFingerprint {
 		Self(hasher.finalize().to_hex().to_string())
 	}
 
-	/// Create a fingerprint from a Spacedrive identifier UUID
+	/// Create a fingerprint from a WingDrive identifier UUID
 	/// Deprecated: Use from_external_volume instead for proper device binding
-	pub fn from_spacedrive_id(spacedrive_id: Uuid) -> Self {
+	pub fn from_wingdrive_id(wingdrive_id: Uuid) -> Self {
 		let mut hasher = blake3::Hasher::new();
-		hasher.update(b"spacedrive_id:");
-		hasher.update(spacedrive_id.as_bytes());
+		hasher.update(b"wingdrive_id:");
+		hasher.update(wingdrive_id.as_bytes());
 		Self(hasher.finalize().to_hex().to_string())
 	}
 
@@ -181,10 +181,10 @@ pub struct PathMapping {
 	pub actual_path: PathBuf,
 }
 
-/// Spacedrive volume identifier file content
+/// WingDrive volume identifier file content
 /// This file is created in the root of writable volumes for persistent identification
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SpacedriveVolumeId {
+pub struct WingDriveVolumeId {
 	pub id: Uuid,
 	pub created: DateTime<Utc>,
 	pub device_name: Option<String>,
@@ -295,7 +295,7 @@ fn is_unknown_file_system(file_system: &FileSystem) -> bool {
 	matches!(file_system, FileSystem::Other(s) if s.eq_ignore_ascii_case("unknown"))
 }
 
-/// A volume in Spacedrive - unified model for runtime and database
+/// A volume in WingDrive - unified model for runtime and database
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct Volume {
 	/// Unique identifier (used in WingPath addressing)
@@ -313,7 +313,7 @@ pub struct Volume {
 	/// Library this volume belongs to (None for untracked volumes)
 	pub library_id: Option<Uuid>,
 
-	/// Whether this volume is being tracked by Spacedrive
+	/// Whether this volume is being tracked by WingDrive
 	pub is_tracked: bool,
 
 	/// Primary mount point

@@ -170,16 +170,16 @@ By rejecting files at discovery, we avoid:
 
 ```bash
 # Skip all hidden files and dev directories
-spacedrive index location ~/Projects \
+wingdrive index location ~/Projects \
   --skip-hidden \
   --skip-dev-dirs
 
 # Use .gitignore patterns
-spacedrive index location ~/code/my-app \
+wingdrive index location ~/code/my-app \
   --use-gitignore
 
 # Custom rule
-spacedrive index location ~/Documents \
+wingdrive index location ~/Documents \
   --exclude "*.tmp" \
   --exclude "~*"
 ```
@@ -224,13 +224,13 @@ echo "*.tmp" > .gitignore
 touch test.tmp test.txt
 
 # Index with rules
-spacedrive index location ~/test-rules \
+wingdrive index location ~/test-rules \
   --skip-hidden \
   --skip-dev-dirs \
   --use-gitignore
 
 # Verify filtered correctly
-spacedrive db query "SELECT name FROM entry WHERE parent_id IN (
+wingdrive db query "SELECT name FROM entry WHERE parent_id IN (
   SELECT id FROM entry WHERE name = 'test-rules'
 )"
 

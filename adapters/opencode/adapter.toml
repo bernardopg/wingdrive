@@ -3,10 +3,10 @@ id = "opencode"
 name = "OpenCode"
 description = "Index coding session transcripts from OpenCode (Claude Code). Captures session context, conversation history, tool usage, and code changes."
 version = "0.1.0"
-author = "spacedrive"
+author = "wingdrive"
 license = "MIT"
 icon = "terminal"
-min_spacedrive = "0.1.0"
+min_wingdrive = "0.1.0"
 trust_tier = "authored"
 
 [adapter.runtime]

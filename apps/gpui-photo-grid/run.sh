@@ -5,8 +5,8 @@
 
 # Get library ID from the library.json file
 LIBRARY_PATH="$HOME/WingDrive/Libraries"
-if [ ! -d "$LIBRARY_PATH" ] && [ -d "$HOME/Spacedrive/Libraries" ]; then
-    LIBRARY_PATH="$HOME/Spacedrive/Libraries"
+if [ ! -d "$LIBRARY_PATH" ] && [ -d "$HOME/WingDrive/Libraries" ]; then
+    LIBRARY_PATH="$HOME/WingDrive/Libraries"
 fi
 LIBRARY_FILE=$(find "$LIBRARY_PATH" \( -name "*.winglibrary" -o -name "*.sdlibrary" \) -type d | head -n 1)
 

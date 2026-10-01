@@ -11,7 +11,7 @@ whitepaper: "Section 4.3.5"
 
 ## Description
 
-Implement a feature for the macOS build that detects a physically connected iPhone and presents it as a "virtual volume" within the Spacedrive UI. This will allow users to browse photos and videos directly from the device and import them into a Spacedrive Location without needing to use the system's Photos app.
+Implement a feature for the macOS build that detects a physically connected iPhone and presents it as a "virtual volume" within the WingDrive UI. This will allow users to browse photos and videos directly from the device and import them into a WingDrive Location without needing to use the system's Photos app.
 
 ## Implementation Notes
 
@@ -24,7 +24,7 @@ Implement a feature for the macOS build that detects a physically connected iPho
 
 ## Acceptance Criteria
 
-- [ ] When an iPhone is connected to a Mac, it appears as a new, browsable volume in Spacedrive.
+- [ ] When an iPhone is connected to a Mac, it appears as a new, browsable volume in WingDrive.
 - [ ] The contents of the iPhone's camera roll (photos and videos) are displayed correctly.
-- [ ] A user can select items from the iPhone volume and import them into a standard Spacedrive Location.
-- [ ] The import operation shows progress and is resumable, like other Spacedrive jobs.
+- [ ] A user can select items from the iPhone volume and import them into a standard WingDrive Location.
+- [ ] The import operation shows progress and is resumable, like other WingDrive jobs.

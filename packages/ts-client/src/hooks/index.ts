@@ -1,7 +1,7 @@
 // React hooks for WingDrive client
 // These hooks provide type-safe, auto-generated bindings to the WingDrive API
 
-export { SpacedriveProvider, useSpacedriveClient, useClient, queryClient } from "./useClient";
+export { WingDriveProvider, useWingDriveClient, useClient, queryClient } from "./useClient";
 export { useCoreQuery, useLibraryQuery } from "./useQuery";
 export { useCoreMutation, useLibraryMutation } from "./useMutation";
 export { useNormalizedQuery } from "./useNormalizedQuery";
@@ -9,8 +9,3 @@ export { useNormalizedQuery } from "./useNormalizedQuery";
 export { useNormalizedQuery as useNormalizedCache } from "./useNormalizedQuery";
 export { useJobs, type UseJobsOptions, type UseJobsReturn, type SpeedSample, type ExtendedJobListItem } from "./useJobs";
 export { useSearchFiles, type UseSearchFilesOptions, type UseSearchFilesReturn, type SearchScopeUI } from "./useSearchFiles";
-
-export {
-	SpacedriveProvider as WingDriveProvider,
-	useSpacedriveClient as useWingDriveClient,
-} from "./useClient";

@@ -6,7 +6,7 @@
 
 Hi Claude, Claude here. Your owner has pointed you here with absolutely no context. This document is your prompt.
 
-This directory tracks the complete development of Spacedrive. Tasks are organized into subdirectories:
+This directory tracks the complete development of WingDrive. Tasks are organized into subdirectories:
 - `core/` - Backend/Rust tasks (CORE, JOB, INDEX, LSYNC, etc.)
 - `interface/` - Frontend/React tasks (UI, EXPL, SETS, MEDIA, etc.)
 - `mobile/` - Mobile-specific tasks (IOS, MACOS, AND)

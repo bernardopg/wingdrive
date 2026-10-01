@@ -16,7 +16,7 @@ upgrading would see an empty app and unreachable encryption keys.
 
 `core::branding` now owns every on-disk name. Each resolver prefers the
 WingDrive location and falls back to the legacy `Spacedrive` one only when it
-already exists. Nothing is moved or deleted, so the original Spacedrive build
+already exists. Nothing is moved or deleted, so the original WingDrive build
 keeps working against the same data.
 
 Existence on disk is the tiebreaker rather than a stored migration flag,
@@ -30,7 +30,7 @@ machines.
 - [x] Route `config::default_data_dir`, `DeviceConfig::config_path` and `LibraryManager` through it
 - [x] Adopt a pre-fork device key from the `Spacedrive` keyring service on first run
 - [x] Rebrand user-facing log lines and CLI output
-- [x] Cover upgrade-from-Spacedrive in an integration test
+- [x] Cover upgrade-from-WingDrive in an integration test
 
 ## Deliberately Not Done
 
@@ -43,7 +43,7 @@ machines.
 ## Acceptance Criteria
 
 - [x] A fresh install writes only to WingDrive paths.
-- [x] An existing Spacedrive install keeps its libraries, keys and device identity.
+- [x] An existing WingDrive install keeps its libraries, keys and device identity.
 - [x] No silent data loss when the keyring entry is missing; the failure is explicit and actionable.
 
 ## Validation

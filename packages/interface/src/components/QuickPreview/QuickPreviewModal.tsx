@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, ArrowRight } from '@phosphor-icons/react';
 import { useEffect } from 'react';
-import { useLibraryQuery } from '../../contexts/SpacedriveContext';
+import { useLibraryQuery } from '../../contexts/WingDriveContext';
 import { Inspector } from '../Inspector/Inspector';
 import { ContentRenderer } from './ContentRenderer';
 

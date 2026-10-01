@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useExplorer } from "../../context";
 import { useSelection } from "../../SelectionContext";
-import { useNormalizedQuery } from "../../../../contexts/SpacedriveContext";
+import { useNormalizedQuery } from "../../../../contexts/WingDriveContext";
 import type { File } from "@wingdrive/ts-client";
 import { MediaViewItem } from "./MediaViewItem";
 import { DateHeader } from "./DateHeader";

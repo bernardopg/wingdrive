@@ -13,7 +13,7 @@ last_updated: 2025-10-14
 
 ## Description
 
-Implement support for a cloud storage provider (e.g., S3-compatible service) as a native Spacedrive Volume. This will allow users to add cloud storage as a location in their library, just like a local disk.
+Implement support for a cloud storage provider (e.g., S3-compatible service) as a native WingDrive Volume. This will allow users to add cloud storage as a location in their library, just like a local disk.
 
 ## Implementation Steps
 

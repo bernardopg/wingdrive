@@ -20,8 +20,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	if libraries.is_empty() {
 		println!("No open libraries found.");
 		println!("\nTo test shutdown behavior:");
-		println!("1. Create a library: spacedrive library create \"Test Library\"");
-		println!("2. Start an indexing job: spacedrive location add /path/to/large/folder");
+		println!("1. Create a library: wingdrive library create \"Test Library\"");
+		println!("2. Start an indexing job: wingdrive location add /path/to/large/folder");
 		println!("3. Run this demo while indexing is in progress");
 		return Ok(());
 	}

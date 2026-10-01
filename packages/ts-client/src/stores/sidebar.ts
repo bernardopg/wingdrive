@@ -52,7 +52,7 @@ export const useSidebarStore = create<SidebarStore>()(
 			setDraggedItem: (item) => set({ draggedItem: item }),
 		}),
 		{
-			name: 'spacedrive-sidebar',
+			name: 'wingdrive-sidebar',
 			partialize: (state) => ({
 				currentSpaceId: state.currentSpaceId,
 			}),

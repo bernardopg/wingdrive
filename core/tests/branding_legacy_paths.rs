@@ -1,7 +1,7 @@
 //! # Legacy Spacedrive Path Adoption
 //!
 //! Proves that a WingDrive build started against a pre-fork install keeps
-//! reading the existing `Spacedrive` directories instead of silently starting
+//! reading the existing `WingDrive` directories instead of silently starting
 //! from an empty state, which would present as total data loss to the user.
 //!
 //! `$HOME` is overridden for the whole process, so every scenario lives in one
@@ -50,7 +50,7 @@ fn resolves_paths_against_legacy_and_fresh_installs() {
 	assert_eq!(
 		data_dir,
 		legacy_home.path().join(".spacedrive"),
-		"an existing Spacedrive install must keep its data directory"
+		"an existing WingDrive install must keep its data directory"
 	);
 	assert!(branding::is_legacy_path(&data_dir));
 
@@ -93,7 +93,7 @@ fn resolves_paths_against_legacy_and_fresh_installs() {
 
 	// Once a WingDrive directory exists it wins, even beside a legacy one.
 	let both_home = tempdir().unwrap();
-	fs::create_dir_all(both_home.path().join(".spacedrive")).unwrap();
+	fs::create_dir_all(both_home.path().join(".wingdrive")).unwrap();
 	fs::create_dir_all(both_home.path().join(".wingdrive")).unwrap();
 	set_home(both_home.path());
 
