@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useExplorer } from "../context";
 import { useSelection } from "../SelectionContext";
 import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";
-import type { DirectorySortBy } from "@sd/ts-client";
+import type { DirectorySortBy, File } from "@sd/ts-client";
 import { isVirtualFile } from "@sd/ts-client";
 import { useTypeaheadSearch } from "./useTypeaheadSearch";
 import { useKeybind } from "../../../hooks/useKeybind";
@@ -11,6 +11,8 @@ import { useClipboard } from "../../../hooks/useClipboard";
 import { useFileOperationDialog } from "../../../components/modals/FileOperationModal";
 import { useDeleteFiles } from "./useDeleteFiles";
 import { useDuplicateFiles } from "./useDuplicateFiles";
+import { useCreateFolder } from "./useCreateFolder";
+import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
 import { useOpenWith } from "../../../hooks/useOpenWith";
 import { isInputFocused } from "../../../util/keybinds/platform";
 
@@ -22,6 +24,7 @@ export function useExplorerKeyboard() {
 		navigateToPath,
 		viewMode,
 		viewSettings,
+		setViewSettings,
 		sidebarVisible,
 		inspectorVisible,
 		openQuickPreview,
@@ -42,6 +45,10 @@ export function useExplorerKeyboard() {
 	const openFileOperation = useFileOperationDialog();
 	const { deleteFiles, isPending: isDeleting } = useDeleteFiles();
 	const { duplicateFiles, isPending: isDuplicating } = useDuplicateFiles();
+	const createFolder = useCreateFolder();
+	const refetchListings = useRefetchFileListings();
+	// Name of a folder created from the keyboard, renamed once it is listed
+	const [pendingRename, setPendingRename] = useState<string | null>(null);
 
 	// Physical paths of selected files for opening with the default app
 	const selectedPhysicalPaths = selectedFiles.flatMap((f) =>
@@ -87,6 +94,31 @@ export function useExplorerKeyboard() {
 		},
 		enabled: viewMode !== "column",
 	});
+
+	useKeybind("explorer.refresh", refetchListings);
+
+	useKeybind("explorer.newFolder", async () => {
+		const name = await createFolder();
+		if (name) setPendingRename(name);
+	});
+
+	useKeybind("explorer.toggleHiddenFiles", () => {
+		setViewSettings({ showHiddenFiles: !viewSettings.showHiddenFiles });
+	});
+
+	useEffect(() => {
+		if (!pendingRename) return;
+		const folder = files.find((f: File) => f.name === pendingRename);
+		if (!folder) return;
+		// startRename only accepts a single selection, so select first and
+		// start the rename on the next run once the selection is committed.
+		if (selectedFiles.length !== 1 || selectedFiles[0].id !== folder.id) {
+			setSelectedFiles([folder]);
+			return;
+		}
+		setPendingRename(null);
+		startRename(folder.id);
+	}, [files, pendingRename, selectedFiles, setSelectedFiles, startRename]);
 
 	// Copy: Store selected files in clipboard
 	useKeybind(

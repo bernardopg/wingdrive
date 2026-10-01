@@ -1,16 +1,13 @@
 import { FolderPlus, Copy } from "@phosphor-icons/react";
 import { useContextMenu } from "../../../hooks/useContextMenu";
-import { useLibraryMutation } from "../../../contexts/SpacedriveContext";
-import { toast } from "@wingdrive/primitives";
-import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
 import { useExplorer } from "../context";
+import { useCreateFolder } from "./useCreateFolder";
 import { useClipboard } from "../../../hooks/useClipboard";
 import { useFileOperationDialog } from "../../../components/modals/FileOperationModal";
 
 export function useEmptySpaceContextMenu() {
 	const { currentPath } = useExplorer();
-	const createFolder = useLibraryMutation("files.createFolder");
-	const refetchListings = useRefetchFileListings();
+	const createFolder = useCreateFolder();
 	const clipboard = useClipboard();
 	const openFileOperation = useFileOperationDialog();
 
@@ -19,23 +16,8 @@ export function useEmptySpaceContextMenu() {
 			{
 				icon: FolderPlus,
 				label: "New Folder",
-				onClick: async () => {
-					if (!currentPath) return;
-					try {
-						await createFolder.mutateAsync({
-							parent: currentPath,
-							name: "Untitled Folder",
-							items: [],
-						});
-						// The mutation creates the folder without emitting a
-						// listing event; without the manual refetch the new
-						// folder only appeared after leaving and re-entering.
-						refetchListings();
-					} catch (err) {
-						console.error("Failed to create folder:", err);
-						toast.error(`Failed to create folder: ${err}`);
-					}
-				},
+				onClick: createFolder,
+				keybindId: "explorer.newFolder",
 				condition: () => !!currentPath,
 			},
 			{

@@ -84,6 +84,37 @@ export const explorerKeybinds = {
 		scope: 'explorer'
 	}),
 
+	// View
+	refresh: defineKeybind({
+		id: 'explorer.refresh',
+		label: 'Refresh',
+		combo: {
+			macos: { modifiers: ['Cmd'], key: 'r' },
+			default: { modifiers: [], key: 'F5' }
+		},
+		scope: 'explorer',
+		preventDefault: true
+	}),
+
+	newFolder: defineKeybind({
+		id: 'explorer.newFolder',
+		label: 'New Folder',
+		combo: { modifiers: ['Cmd', 'Shift'], key: 'n' },
+		scope: 'explorer',
+		preventDefault: true
+	}),
+
+	toggleHiddenFiles: defineKeybind({
+		id: 'explorer.toggleHiddenFiles',
+		label: 'Show Hidden Files',
+		combo: {
+			macos: { modifiers: ['Cmd', 'Shift'], key: '.' },
+			default: { modifiers: ['Ctrl'], key: 'h' }
+		},
+		scope: 'explorer',
+		preventDefault: true
+	}),
+
 	// Navigation
 	navigateBack: defineKeybind({
 		id: 'explorer.navigateBack',
