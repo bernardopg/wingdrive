@@ -1,8 +1,8 @@
-import { useNormalizedQuery } from '@sd/ts-client';
+import { useNormalizedQuery } from '@wingdrive/ts-client';
 import { useSpacedriveClient } from '../../../contexts/SpacedriveContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { Event } from '@sd/ts-client';
+import type { Event } from '@wingdrive/ts-client';
 
 export function useSpaces() {
 	return useNormalizedQuery({

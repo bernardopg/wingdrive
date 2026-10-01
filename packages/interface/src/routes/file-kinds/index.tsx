@@ -1,5 +1,5 @@
-import {getIcon} from '@sd/assets/util';
-import type {ContentKind, SearchFilters} from '@sd/ts-client';
+import {getIcon} from '@wingdrive/assets/util';
+import type {ContentKind, SearchFilters} from '@wingdrive/ts-client';
 import {useEffect, useMemo} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {useNormalizedQuery} from '../../contexts/SpacedriveContext';

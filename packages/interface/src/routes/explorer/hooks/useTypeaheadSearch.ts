@@ -1,5 +1,5 @@
 import { useRef, useCallback } from "react";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 
 interface UseTypeaheadSearchProps {
 	files: File[];

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@wingdrive/primitives";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import clsx from "clsx";
 
 interface InlineNameEditProps {

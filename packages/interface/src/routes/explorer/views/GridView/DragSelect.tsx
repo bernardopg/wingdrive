@@ -1,6 +1,6 @@
 import { useRef, useEffect, type ReactNode } from "react";
 import Selecto from "react-selecto";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { useSelection } from "../../SelectionContext";
 import { SELECTABLE_DATA_ATTRIBUTE } from "../../components/DragSelect/utils";
 

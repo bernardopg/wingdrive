@@ -15,8 +15,8 @@ import {
 	dialogManager,
 	useDialog,
 } from "@wingdrive/primitives";
-import { queryClient } from "@sd/ts-client/hooks";
-import type { Event } from "@sd/ts-client";
+import { queryClient } from "@wingdrive/ts-client/hooks";
+import type { Event } from "@wingdrive/ts-client";
 import { useCoreMutation, useSpacedriveClient } from "../../contexts/SpacedriveContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 

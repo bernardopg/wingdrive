@@ -138,7 +138,7 @@ The daemon runs in a background task, sharing the same `Core` instance with the 
 ### TypeScript Connection
 
 ```typescript
-import { SpacedriveClient } from "@sd/ts-client";
+import { SpacedriveClient } from "@wingdrive/ts-client";
 
 // Read config from Rust bridge
 const bridgeConfig = JSON.parse(await readFile(process.env.BRIDGE_CONFIG_PATH));
@@ -224,7 +224,7 @@ async fn test_typescript_my_new_feature() -> anyhow::Result<()> {
 2. Create corresponding TypeScript test:
 
 ```typescript
-import { SpacedriveClient } from "@sd/ts-client";
+import { SpacedriveClient } from "@wingdrive/ts-client";
 import { renderHook } from "@testing-library/react";
 
 test("my feature works", async () => {

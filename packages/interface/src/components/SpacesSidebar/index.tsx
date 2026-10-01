@@ -14,12 +14,12 @@ import {
 	ListBullets,
 	Palette,
 } from '@phosphor-icons/react';
-import {useSidebarStore} from '@sd/ts-client';
+import {useSidebarStore} from '@wingdrive/ts-client';
 import type {
 	Space,
 	SpaceGroup as SpaceGroupType,
 	SpaceItem as SpaceItemType
-} from '@sd/ts-client';
+} from '@wingdrive/ts-client';
 import {CircleButton, Popover, usePopover} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {motion} from 'framer-motion';

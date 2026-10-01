@@ -14,7 +14,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { CircleButton } from "@wingdrive/primitives";
-import type { DirectorySortBy, MediaSortBy, SortDirection } from "@sd/ts-client";
+import type { DirectorySortBy, MediaSortBy, SortDirection } from "@wingdrive/ts-client";
 
 interface SortMenuPanelProps {
   sortBy: DirectorySortBy | MediaSortBy;

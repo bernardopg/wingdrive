@@ -1,8 +1,8 @@
 import type {
 	SpaceGroup as SpaceGroupType,
 	SpaceItem as SpaceItemType,
-} from "@sd/ts-client";
-import { useSidebarStore, useLibraryMutation } from "@sd/ts-client";
+} from "@wingdrive/ts-client";
+import { useSidebarStore, useLibraryMutation } from "@wingdrive/ts-client";
 import { SpaceItem } from "./SpaceItem";
 import { DevicesGroup } from "./DevicesGroup";
 import { LocationsGroup } from "./LocationsGroup";

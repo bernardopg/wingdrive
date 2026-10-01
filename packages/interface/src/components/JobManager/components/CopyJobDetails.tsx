@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useLibraryQuery } from "../../../contexts/SpacedriveContext";
 import type { JobListItem } from "../types";
 import type { SpeedSample } from "../hooks/useJobs";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { SpeedGraph } from "./SpeedGraph";
 import { Thumb } from "../../../routes/explorer/File/Thumb";
 import { formatBytes } from "../../../routes/explorer/utils";

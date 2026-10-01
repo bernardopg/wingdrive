@@ -1,5 +1,5 @@
 import {Star} from '@phosphor-icons/react';
-import type {SearchFilters} from '@sd/ts-client';
+import type {SearchFilters} from '@wingdrive/ts-client';
 import {useEffect, type ReactNode} from 'react';
 import {ExplorerView, useExplorer} from '../explorer';
 import {useExplorerFiles} from '../explorer/hooks/useExplorerFiles';

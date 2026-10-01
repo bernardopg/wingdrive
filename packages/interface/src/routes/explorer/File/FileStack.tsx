@@ -1,4 +1,4 @@
-import type { File as FileType } from "@sd/ts-client";
+import type { File as FileType } from "@wingdrive/ts-client";
 import { File } from "./File";
 
 interface FileStackProps {

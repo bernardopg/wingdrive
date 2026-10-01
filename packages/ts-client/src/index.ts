@@ -1,12 +1,12 @@
 /**
- * @sd/ts-client - Type-safe TypeScript client for WingDrive
+ * @wingdrive/ts-client - Type-safe TypeScript client for WingDrive
  *
  * This package provides a complete type-safe interface to the WingDrive core,
  * automatically generated from the Rust core types using Specta.
  *
  * @example Basic Client Usage
  * ```typescript
- * import { WingDriveClient } from '@sd/ts-client';
+ * import { WingDriveClient } from '@wingdrive/ts-client';
  *
  * // Create client (Tauri)
  * const client = WingDriveClient.fromTauri(invoke, listen);
@@ -17,7 +17,7 @@
  *
  * @example React Hooks Usage
  * ```typescript
- * import { SpacedriveProvider, useLibraryQuery, useCoreMutation } from '@sd/ts-client/hooks';
+ * import { SpacedriveProvider, useLibraryQuery, useCoreMutation } from '@wingdrive/ts-client/hooks';
  *
  * function App() {
  *   return (

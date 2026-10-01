@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { Subtitles, type SubtitleSettings } from "./Subtitles";
 import { SubtitleSettingsMenu } from "./SubtitleSettingsMenu";
 import { useZoomPan } from "./useZoomPan";

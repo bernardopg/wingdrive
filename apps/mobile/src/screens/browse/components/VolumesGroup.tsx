@@ -2,8 +2,8 @@ import React from "react";
 import { Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useNormalizedQuery } from "../../../client";
-import type { Volume, Device } from "@sd/ts-client";
-import { getVolumeIcon } from "@sd/ts-client";
+import type { Volume, Device } from "@wingdrive/ts-client";
+import { getVolumeIcon } from "@wingdrive/ts-client";
 import { SettingsGroup, SettingsLink } from "../../../components/primitive";
 
 export function VolumesGroup() {

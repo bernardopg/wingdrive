@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 import { Input, Label, dialogManager, useDialog, Dialog } from '@wingdrive/primitives';
-import { useLibraryMutation } from '@sd/ts-client';
+import { useLibraryMutation } from '@wingdrive/ts-client';
 import { useForm } from 'react-hook-form';
 
 interface FormData {

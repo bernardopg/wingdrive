@@ -22,8 +22,8 @@ import {
 	Video,
 	Waveform
 } from '@phosphor-icons/react';
-import type {File} from '@sd/ts-client';
-import {getContentKind, isVirtualFile} from '@sd/ts-client';
+import type {File} from '@wingdrive/ts-client';
+import {getContentKind, isVirtualFile} from '@wingdrive/ts-client';
 import {toast} from '@wingdrive/primitives';
 import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
 import {usePlatform} from '../../../contexts/PlatformContext';

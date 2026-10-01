@@ -1,5 +1,5 @@
 import {ChatCircleDots, Checks} from '@phosphor-icons/react';
-import {Ball, BallBlue} from '@sd/assets/images';
+import {Ball, BallBlue} from '@wingdrive/assets/images';
 import {
 	apiClient,
 	getEventsUrl,

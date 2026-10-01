@@ -5,13 +5,13 @@ import {
 	Eye,
 	Folder
 } from '@phosphor-icons/react';
-import LaptopIcon from '@sd/assets/icons/Laptop.png';
-import type {Device, WingPath} from '@sd/ts-client';
+import LaptopIcon from '@wingdrive/assets/icons/Laptop.png';
+import type {Device, WingPath} from '@wingdrive/ts-client';
 import {
 	getDeviceIcon,
 	useLibraryMutation,
 	useNormalizedQuery
-} from '@sd/ts-client';
+} from '@wingdrive/ts-client';
 import {Button, CircleButton, Popover, usePopover} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {motion} from 'framer-motion';

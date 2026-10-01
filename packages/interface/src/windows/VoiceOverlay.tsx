@@ -4,7 +4,7 @@ import {
 	SpeakerHigh,
 	Stop,
 } from "@phosphor-icons/react";
-import { BallBlue } from "@sd/assets/images";
+import { BallBlue } from "@wingdrive/assets/images";
 import { Popover, usePopover } from "@wingdrive/primitives";
 import {
 	apiClient,

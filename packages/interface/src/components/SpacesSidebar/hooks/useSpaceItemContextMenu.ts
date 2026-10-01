@@ -5,7 +5,7 @@ import {
 	Trash,
 	Database,
 } from "@phosphor-icons/react";
-import type { SpaceItem as SpaceItemType } from "@sd/ts-client";
+import type { SpaceItem as SpaceItemType } from "@wingdrive/ts-client";
 import {
 	useContextMenu,
 	type ContextMenuItem,

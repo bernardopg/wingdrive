@@ -77,7 +77,7 @@ type Platform = {
 Wrap your app with `PlatformProvider`:
 
 ```tsx
-import { PlatformProvider, Platform } from '@sd/interface';
+import { PlatformProvider, Platform } from '@wingdrive/interface';
 
 // Tauri implementation
 const tauriPlatform: Platform = {
@@ -136,7 +136,7 @@ function App() {
 ### Using in Components
 
 ```tsx
-import { usePlatform } from '@sd/interface';
+import { usePlatform } from '@wingdrive/interface';
 
 function AddLocationButton() {
   const platform = usePlatform();

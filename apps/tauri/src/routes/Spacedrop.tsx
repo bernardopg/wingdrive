@@ -1,4 +1,4 @@
-import { Spacedrop } from '@sd/interface';
+import { Spacedrop } from '@wingdrive/interface';
 
 const samplePeople = [
 	{ id: '1', name: 'Jamie', initials: 'JP', status: 'online' as const },

@@ -11,7 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowsLeftRight, ShieldCheck } from "@phosphor-icons/react";
 import { CircleButton } from "@wingdrive/primitives";
-import type { SearchFilters } from "@sd/ts-client";
+import type { SearchFilters } from "@wingdrive/ts-client";
 import { TopBarPortal, TopBarItem } from "../../TopBar";
 import { useLibraryQuery } from "../../contexts/SpacedriveContext";
 import { ExplorerView, useExplorer } from "../explorer";

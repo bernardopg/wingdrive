@@ -1,11 +1,11 @@
 import {ArrowSquareOut} from '@phosphor-icons/react';
-import type {File, Location} from '@sd/ts-client';
+import type {File, Location} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {useEffect, useMemo, useState} from 'react';
 import {usePlatform} from '../../contexts/PlatformContext';
 import {useLibraryQuery} from '../../contexts/SpacedriveContext';
 import {useSelection} from '../../routes/explorer/SelectionContext';
-import {isVirtualFile} from '@sd/ts-client';
+import {isVirtualFile} from '@wingdrive/ts-client';
 import {FileInspector} from './variants/FileInspector';
 import {LocationInspector} from './variants/LocationInspector';
 import {MultiFileInspector} from './variants/MultiFileInspector';

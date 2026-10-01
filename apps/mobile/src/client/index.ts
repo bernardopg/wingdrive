@@ -12,5 +12,5 @@ export {
 } from "./hooks/useQuery";
 
 // Re-export shared hooks from ts-client
-export { useNormalizedQuery } from "@sd/ts-client/src/hooks/useNormalizedQuery";
-export { useSearchFiles } from "@sd/ts-client";
+export { useNormalizedQuery } from "@wingdrive/ts-client/src/hooks/useNormalizedQuery";
+export { useSearchFiles } from "@wingdrive/ts-client";

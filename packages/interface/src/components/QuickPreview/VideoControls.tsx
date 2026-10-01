@@ -12,7 +12,7 @@ import {
 	Repeat,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { TimelineScrubber } from "./TimelineScrubber";
 
 export interface VideoControlsState {

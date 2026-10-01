@@ -1,26 +1,26 @@
-// Type declarations for @sd/assets
+// Type declarations for @wingdrive/assets
 
-declare module "@sd/assets/icons/*.png" {
+declare module "@wingdrive/assets/icons/*.png" {
 	const value: number; // React Native uses numeric IDs for local images
 	export default value;
 }
 
-declare module "@sd/assets/icons/*.jpg" {
+declare module "@wingdrive/assets/icons/*.jpg" {
 	const value: number;
 	export default value;
 }
 
-declare module "@sd/assets/images/*.png" {
+declare module "@wingdrive/assets/images/*.png" {
 	const value: number;
 	export default value;
 }
 
-declare module "@sd/assets/images/*.jpg" {
+declare module "@wingdrive/assets/images/*.jpg" {
 	const value: number;
 	export default value;
 }
 
-declare module "@sd/assets/svgs/*.svg" {
+declare module "@wingdrive/assets/svgs/*.svg" {
 	import type { FC } from "react";
 	const content: FC<Record<string, unknown>>;
 	export default content;
@@ -32,17 +32,17 @@ declare module "*.svg" {
 	export const ReactComponent: React.FC<React.SVGProps<SVGSVGElement>>;
 }
 
-declare module "@sd/assets/videos/*.mp4" {
+declare module "@wingdrive/assets/videos/*.mp4" {
 	const value: number;
 	export default value;
 }
 
-declare module "@sd/assets/sounds/*.mp3" {
+declare module "@wingdrive/assets/sounds/*.mp3" {
 	const value: number | string; // number on React Native (asset ID), string on web (URL)
 	export default value;
 }
 
-declare module "@sd/assets/lottie/*.json" {
+declare module "@wingdrive/assets/lottie/*.json" {
 	const value: object;
 	export default value;
 }

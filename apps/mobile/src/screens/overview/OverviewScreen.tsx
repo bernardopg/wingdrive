@@ -14,7 +14,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import { useNormalizedQuery } from "../../client";
-import type { Library } from "@sd/ts-client";
+import type { Library } from "@wingdrive/ts-client";
 import { HeroStats, DevicePanel, ActionButtons } from "./components";
 import { PairingPanel } from "../../components/PairingPanel";
 import { LibrarySwitcherPanel } from "../../components/LibrarySwitcherPanel";

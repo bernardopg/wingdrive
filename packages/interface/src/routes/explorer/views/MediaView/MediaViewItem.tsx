@@ -1,12 +1,12 @@
 import clsx from "clsx";
 import { memo } from "react";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../File";
 import { useSelection } from "../../SelectionContext";
 import { useFileContextMenu } from "../../hooks/useFileContextMenu";
 import { useExplorer } from "../../context";
 import { useOpenWith } from "../../../../hooks/useOpenWith";
-import { isVirtualFile } from "@sd/ts-client";
+import { isVirtualFile } from "@wingdrive/ts-client";
 
 function formatDuration(seconds: number): string {
 	const mins = Math.floor(seconds / 60);

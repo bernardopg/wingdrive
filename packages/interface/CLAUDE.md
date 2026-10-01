@@ -2,14 +2,14 @@
 
 **Status:** Living Document - Update as architectural decisions are made
 **Purpose:** Ensure consistent, clean, and maintainable code across the interface package
-**Audience:** AI assistants and developers working on @sd/interface
+**Audience:** AI assistants and developers working on @wingdrive/interface
 
 ---
 
 ## Core Principles
 
 1. **Platform Agnostic** - This package works on Tauri, Web, and React Native
-2. **Clean Separation** - UI components here, state in @sd/ts-client, primitives in @sd/ui
+2. **Clean Separation** - UI components here, state in @wingdrive/ts-client, primitives in @wingdrive/primitives
 3. **Type Safety First** - Use auto-generated types, no `any`, strict TypeScript
 4. **Performance Matters** - Virtual scrolling, code splitting, memoization when needed
 5. **Accessible** - Radix primitives, proper ARIA labels, keyboard navigation
@@ -21,22 +21,22 @@
 
 ### What Lives Where
 
-**@sd/interface** (this package):
+**@wingdrive/interface** (this package):
 - Route components and layouts
 - Feature components (Explorer, Settings, etc.)
 - React Query hook wrappers
 - UI composition and interactivity
-- NO state management (use @sd/ts-client)
-- NO primitive components (use @sd/ui)
+- NO state management (use @wingdrive/ts-client)
+- NO primitive components (use @wingdrive/primitives)
 - NO platform APIs (use platform prop)
 
-**@sd/ts-client**:
+**@wingdrive/ts-client**:
 - Client implementation
 - Transport layer
 - Auto-generated types from Rust
 - State stores (if needed)
 
-**@sd/ui**:
+**@wingdrive/primitives**:
 - Primitive components (Button, Input, DropdownMenu, etc.)
 - Reusable, unstyled or minimally styled
 - No business logic
@@ -337,13 +337,13 @@ className="bg-[var(--color-accent)]/10"
 
 ### Primitive vs Feature Components
 
-**Primitives** (@sd/ui):
+**Primitives** (@wingdrive/primitives):
 - Generic, reusable
 - Minimal styling (or unstyled)
 - No business logic
 - Example: `DropdownMenu`, `Button`, `Input`
 
-**Feature Components** (@sd/interface):
+**Feature Components** (@wingdrive/interface):
 - Specific to WingDrive features
 - Uses primitives
 - Can have business logic
@@ -353,7 +353,7 @@ className="bg-[var(--color-accent)]/10"
 
 ```tsx
 // Correct structure
-import { Primitive } from '@sd/ui';
+import { Primitive } from '@wingdrive/primitives';
 import { useSomeQuery } from '../context';
 
 interface ComponentProps {
@@ -564,7 +564,7 @@ const greeting = useMemo(() => `Hello ${name}`, [name]);
 The `DropdownMenu` primitive provides minimal base functionality. Explorer customizes it:
 
 ```tsx
-// Primitive (in @sd/ui/DropdownMenu.tsx)
+// Primitive (in @wingdrive/primitives/DropdownMenu.tsx)
 export const DropdownMenu = {
   Root: ({ trigger, children, className }) => (
     // Minimal expanding container with motion
@@ -609,7 +609,7 @@ export const DropdownMenu = {
 
 All types are auto-generated from Rust:
 ```tsx
-import type { LibraryInfo, CoreQuery, LibraryAction } from '@sd/ts-client';
+import type { LibraryInfo, CoreQuery, LibraryAction } from '@wingdrive/ts-client';
 ```
 
 **Never:**
@@ -737,15 +737,15 @@ Decision: V2 is more rounded than V1.
 
 ### Before Writing Code
 
-1. Check if primitive exists in @sd/ui
+1. Check if primitive exists in @wingdrive/primitives
 2. Check if types are auto-generated (they probably are)
 3. Plan component composition (primitive + styling)
 4. Use semantic color classes
 
 ### When Adding Features
 
-1. Create minimal primitive in @sd/ui if needed
-2. Use primitive in @sd/interface with styling
+1. Create minimal primitive in @wingdrive/primitives if needed
+2. Use primitive in @wingdrive/interface with styling
 3. Use type-safe queries/mutations
 4. Add to this document if architectural decision made
 
@@ -987,8 +987,8 @@ test('switches libraries', async () => {
 When porting V1 components:
 
 1. **Update colors:** `bg-gray-900` → `bg-app`, `text-gray-400` → `text-ink-dull`
-2. **Use primitives:** Extract reusable parts to @sd/ui
-3. **Remove state:** Move to @sd/ts-client if global, use local state if component-specific
+2. **Use primitives:** Extract reusable parts to @wingdrive/primitives
+3. **Remove state:** Move to @wingdrive/ts-client if global, use local state if component-specific
 4. **Update queries:** Use new type-safe hooks
 5. **Add rounding:** V1 used `rounded-md`, V2 uses `rounded-lg`
 
@@ -997,7 +997,7 @@ When porting V1 components:
 ## Checklist Before PR
 
 - [ ] All colors use semantic classes (no `var()` directly)
-- [ ] Component uses primitives from @sd/ui where applicable
+- [ ] Component uses primitives from @wingdrive/primitives where applicable
 - [ ] Type-safe queries/mutations (no manual fetch)
 - [ ] Follows V2 rounded style
 - [ ] No `any` types
@@ -1017,8 +1017,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 // 2. @sd packages
-import { Button, DropdownMenu } from '@sd/ui';
-import { useCoreQuery } from '@sd/ts-client';
+import { Button, DropdownMenu } from '@wingdrive/primitives';
+import { useCoreQuery } from '@wingdrive/ts-client';
 
 // 3. Local imports
 import { useLibraries } from './hooks/useLibraries';
@@ -1032,7 +1032,7 @@ import clsx from 'clsx';
 `bg-gray-900` → `bg-app`
 `rounded-md` everywhere → `rounded-lg` for V2
 Manual fetch → Use type-safe hooks
-State in component → Use @sd/ts-client or local state
+State in component → Use @wingdrive/ts-client or local state
 
 ---
 
@@ -1040,8 +1040,8 @@ State in component → Use @sd/ts-client or local state
 
 Before writing code:
 
-1. **Is this a primitive?** → Should it be in @sd/ui?
-2. **Is this state global?** → Should it be in @sd/ts-client?
+1. **Is this a primitive?** → Should it be in @wingdrive/primitives?
+2. **Is this state global?** → Should it be in @wingdrive/ts-client?
 3. **Are the types auto-generated?** → Don't duplicate them!
 4. **Can I use a semantic color?** → Yes, always!
 5. **Is this accessible?** → Keyboard nav? ARIA labels?

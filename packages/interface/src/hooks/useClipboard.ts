@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { WingPath } from "@sd/ts-client";
+import type { WingPath } from "@wingdrive/ts-client";
 
 export interface ClipboardState {
 	operation: "copy" | "cut" | null;

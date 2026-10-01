@@ -1,8 +1,8 @@
-import LaptopIcon from "@sd/assets/icons/Laptop.png";
-import MobileIcon from "@sd/assets/icons/Mobile.png";
-import ServerIcon from "@sd/assets/icons/Server.png";
-import PCIcon from "@sd/assets/icons/PC.png";
-import type { WingPath } from "@sd/ts-client";
+import LaptopIcon from "@wingdrive/assets/icons/Laptop.png";
+import MobileIcon from "@wingdrive/assets/icons/Mobile.png";
+import ServerIcon from "@wingdrive/assets/icons/Server.png";
+import PCIcon from "@wingdrive/assets/icons/PC.png";
+import type { WingPath } from "@wingdrive/ts-client";
 
 export function formatBytes(bytes: number | bigint | null): string {
 	if (bytes === null) return "0 B";

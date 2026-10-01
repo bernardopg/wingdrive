@@ -923,7 +923,7 @@ apps/
   storybook/      # Component docs
 interface/        # Shared React components
 packages/
-  client/         # rspc client (@sd/client)
+  client/         # rspc client (@wingdrive/ts-client)
   ui/             # Shared UI components
   config/         # ESLint/TS configs
 core/

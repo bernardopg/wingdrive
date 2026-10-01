@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useJobs } from './useJobsDesktop';
-import type { SpeedSample, ExtendedJobListItem } from '@sd/ts-client';
+import type { SpeedSample, ExtendedJobListItem } from '@wingdrive/ts-client';
 
 interface JobsContextValue {
 	jobs: ExtendedJobListItem[];

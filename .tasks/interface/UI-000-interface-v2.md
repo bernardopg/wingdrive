@@ -17,7 +17,7 @@ Complete rewrite of the Spacedrive interface using React 19, TypeScript, and a c
 - Platform agnostic architecture
 - Type-safe client with auto-generated types from Rust
 - Semantic color system with Tailwind
-- Clean separation: @sd/interface (features) + @sd/ui (primitives) + @sd/ts-client (state)
+- Clean separation: @wingdrive/interface (features) + @wingdrive/primitives (primitives) + @wingdrive/ts-client (state)
 - Accessible, performant, production-ready
 
 ## Implementation Notes

@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import type { SpaceItem as SpaceItemType } from "@sd/ts-client";
+import type { SpaceItem as SpaceItemType } from "@wingdrive/ts-client";
 import { useExplorer } from "../../../routes/explorer/context";
 
 interface UseSpaceItemActiveOptions {

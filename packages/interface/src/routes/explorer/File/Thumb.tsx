@@ -1,11 +1,11 @@
 import { useState, memo, useEffect } from "react";
 import clsx from "clsx";
-import { getIcon, getBeardedIcon } from "@sd/assets/util";
+import { getIcon, getBeardedIcon } from "@wingdrive/assets/util";
 // @ts-expect-error - Vite glob import, resolved at build time
-import { beardedIconUrls } from "@sd/assets/svgs/ext/Extras/urls";
-import type { File } from "@sd/ts-client";
+import { beardedIconUrls } from "@wingdrive/assets/svgs/ext/Extras/urls";
+import type { File } from "@wingdrive/ts-client";
 import { ThumbstripScrubber } from "./ThumbstripScrubber";
-import { getFileKindForIcon, getVirtualMetadata, getContentKind } from "@sd/ts-client";
+import { getFileKindForIcon, getVirtualMetadata, getContentKind } from "@wingdrive/ts-client";
 import { useServer } from "../../../contexts/ServerContext";
 
 interface ThumbProps {

@@ -9,8 +9,8 @@ import {
 	type File,
 	type Device,
 	type Volume,
-} from "@sd/ts-client";
-import FolderIcon from "@sd/assets/icons/Folder.png";
+} from "@wingdrive/ts-client";
+import FolderIcon from "@wingdrive/assets/icons/Folder.png";
 
 export type VirtualViewType = "device" | "devices" | null;
 

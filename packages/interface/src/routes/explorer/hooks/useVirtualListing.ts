@@ -7,8 +7,8 @@ import {
 	mapVolumeToFile,
 	mapDeviceToFile,
 	type File,
-} from "@sd/ts-client";
-import { Location } from "@sd/assets/icons";
+} from "@wingdrive/ts-client";
+import { Location } from "@wingdrive/assets/icons";
 
 export type VirtualViewType = "device" | "devices" | null;
 

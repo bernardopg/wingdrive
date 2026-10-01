@@ -17,7 +17,7 @@ React Components (fully type-safe!)
 ## Setup
 
 ```typescript
-import { SpacedriveClient, SpacedriveProvider } from '@sd/ts-client';
+import { SpacedriveClient, SpacedriveProvider } from '@wingdrive/ts-client';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
@@ -39,7 +39,7 @@ function App() {
 ### Core Queries (no library required)
 
 ```typescript
-import { useCoreQuery } from '@sd/ts-client';
+import { useCoreQuery } from '@wingdrive/ts-client';
 
 function LibraryList() {
   // Fully type-safe! Input and output types are inferred
@@ -72,7 +72,7 @@ function LibraryList() {
 ### Library Queries (requires library context)
 
 ```typescript
-import { useLibraryQuery, useSpacedriveClient } from '@sd/ts-client';
+import { useLibraryQuery, useSpacedriveClient } from '@wingdrive/ts-client';
 import { useEffect } from 'react';
 
 function FileExplorer() {
@@ -111,7 +111,7 @@ function FileExplorer() {
 ### Mutations
 
 ```typescript
-import { useCoreMutation, useLibraryMutation } from '@sd/ts-client';
+import { useCoreMutation, useLibraryMutation } from '@wingdrive/ts-client';
 
 function CreateLibraryButton() {
   const createLibrary = useCoreMutation('libraries.create');
@@ -183,7 +183,7 @@ files?.cursor  // string | null
 
 ### Wire Methods (Auto-Generated)
 ```typescript
-import { WIRE_METHODS } from '@sd/ts-client';
+import { WIRE_METHODS } from '@wingdrive/ts-client';
 
 // All wire methods are in the WIRE_METHODS constant
 WIRE_METHODS.coreQueries['libraries.list']  // => 'query:libraries.list'
@@ -215,7 +215,7 @@ const { data: files } = useLibraryQuery({ type: 'files.directory_listing', input
 ## Low-Level API (if needed)
 
 ```typescript
-import { useSpacedriveClient } from '@sd/ts-client';
+import { useSpacedriveClient } from '@wingdrive/ts-client';
 
 function CustomComponent() {
   const client = useSpacedriveClient();
@@ -235,7 +235,7 @@ function CustomComponent() {
 ## Event Subscription
 
 ```typescript
-import { useSpacedriveClient } from '@sd/ts-client';
+import { useSpacedriveClient } from '@wingdrive/ts-client';
 import { useEffect } from 'react';
 
 function EventListener() {

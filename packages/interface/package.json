@@ -1,5 +1,5 @@
 {
-	"name": "@sd/interface",
+	"name": "@wingdrive/interface",
 	"version": "0.0.0",
 	"private": true,
 	"license": "GPL-3.0-only",
@@ -39,8 +39,8 @@
 		"@radix-ui/react-tooltip": "^1.2.16",
 		"@react-three/drei": "^10.7.8",
 		"@react-three/fiber": "^9.7.0",
-		"@sd/assets": "workspace:*",
-		"@sd/ts-client": "workspace:*",
+		"@wingdrive/assets": "workspace:*",
+		"@wingdrive/ts-client": "workspace:*",
 		"@wingdrive/ai": "^0.2.5",
 		"@wingdrive/primitives": "^0.2.4",
 		"@wingdrive/tokens": "^0.2.3",

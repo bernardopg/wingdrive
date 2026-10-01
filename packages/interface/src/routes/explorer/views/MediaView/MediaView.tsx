@@ -9,7 +9,7 @@ import {
 import { useExplorer } from "../../context";
 import { useSelection } from "../../SelectionContext";
 import { useNormalizedQuery } from "../../../../contexts/SpacedriveContext";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { MediaViewItem } from "./MediaViewItem";
 import { DateHeader } from "./DateHeader";
 import { formatDate, getItemDate, normalizeDateToMidnight } from "./utils";

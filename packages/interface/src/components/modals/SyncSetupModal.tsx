@@ -12,7 +12,7 @@ import type {
   LibrarySyncAction,
   PairedDeviceInfo,
   RemoteLibraryInfo,
-} from "@sd/ts-client";
+} from "@wingdrive/ts-client";
 import { Button, Dialog, dialogManager, useDialog } from "@wingdrive/primitives";
 import { useCoreQuery, useCoreMutation, useSpacedriveClient } from "../../contexts/SpacedriveContext";
 

@@ -25,9 +25,9 @@ import {
 	Timer,
 	VideoCamera
 } from '@phosphor-icons/react';
-import {getIcon} from '@sd/assets/util';
-import type {File, WingPath} from '@sd/ts-client';
-import {getContentKind} from '@sd/ts-client';
+import {getIcon} from '@wingdrive/assets/util';
+import type {File, WingPath} from '@wingdrive/ts-client';
+import {getContentKind} from '@wingdrive/ts-client';
 import {toast} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {useEffect, useState} from 'react';

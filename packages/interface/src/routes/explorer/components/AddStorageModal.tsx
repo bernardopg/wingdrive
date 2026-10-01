@@ -29,24 +29,24 @@ import type {
 	RiskLevel,
 	ValidationWarning as PathValidationWarning,
 	VolumeIndexingSuggestion,
-} from "@sd/ts-client";
+} from "@wingdrive/ts-client";
 import { useLibraryMutation, useLibraryQuery, useSpacedriveClient } from "../../../contexts/SpacedriveContext";
 import { usePlatform } from "../../../contexts/PlatformContext";
 import clsx from "clsx";
 
 // Import icons
-import FolderIcon from "@sd/assets/icons/Folder.png";
-import DriveIcon from "@sd/assets/icons/Drive.png";
-import HDDIcon from "@sd/assets/icons/HDD.png";
-import ServerIcon from "@sd/assets/icons/Server.png";
-import DriveAmazonS3 from "@sd/assets/icons/Drive-AmazonS3.png";
-import DriveGoogleDrive from "@sd/assets/icons/Drive-GoogleDrive.png";
-import DriveDropbox from "@sd/assets/icons/Drive-Dropbox.png";
-import DriveOneDrive from "@sd/assets/icons/Drive-OneDrive.png";
-import DriveBackBlaze from "@sd/assets/icons/Drive-BackBlaze.png";
-import DrivePCloud from "@sd/assets/icons/Drive-PCloud.png";
-import DriveDAV from "@sd/assets/icons/Drive-DAV.png";
-import DriveBox from "@sd/assets/icons/Drive-Box.png";
+import FolderIcon from "@wingdrive/assets/icons/Folder.png";
+import DriveIcon from "@wingdrive/assets/icons/Drive.png";
+import HDDIcon from "@wingdrive/assets/icons/HDD.png";
+import ServerIcon from "@wingdrive/assets/icons/Server.png";
+import DriveAmazonS3 from "@wingdrive/assets/icons/Drive-AmazonS3.png";
+import DriveGoogleDrive from "@wingdrive/assets/icons/Drive-GoogleDrive.png";
+import DriveDropbox from "@wingdrive/assets/icons/Drive-Dropbox.png";
+import DriveOneDrive from "@wingdrive/assets/icons/Drive-OneDrive.png";
+import DriveBackBlaze from "@wingdrive/assets/icons/Drive-BackBlaze.png";
+import DrivePCloud from "@wingdrive/assets/icons/Drive-PCloud.png";
+import DriveDAV from "@wingdrive/assets/icons/Drive-DAV.png";
+import DriveBox from "@wingdrive/assets/icons/Drive-Box.png";
 
 type StorageCategory = "local" | "cloud" | "network" | "external";
 type ModalStep = "category" | "provider" | "local-config" | "cloud-config";

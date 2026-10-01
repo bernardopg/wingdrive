@@ -1,5 +1,5 @@
 {
-	"name": "@sd/ts-client",
+	"name": "@wingdrive/ts-client",
 	"version": "0.1.0",
 	"description": "Type-safe TypeScript client for WingDrive daemon",
 	"main": "dist/index.js",
@@ -79,7 +79,7 @@
 	},
 	"dependencies": {
 		"@types/ws": "^8.0.0",
-		"@sd/assets": "workspace:*",
+		"@wingdrive/assets": "workspace:*",
 		"ws": "^8.0.0",
 		"zustand": "^5.0.8",
 		"ts-deepmerge": "^8.0.0",

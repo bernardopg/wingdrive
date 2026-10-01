@@ -1,5 +1,5 @@
 import { CircleNotch } from "@phosphor-icons/react";
-import type { JobListItem } from "@sd/ts-client";
+import type { JobListItem } from "@wingdrive/ts-client";
 
 interface DeviceJobActivityProps {
 	jobs: JobListItem[];

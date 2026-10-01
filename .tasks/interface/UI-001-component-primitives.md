@@ -12,7 +12,7 @@ last_updated: 2025-12-02
 
 ## Description
 
-Build a complete set of reusable UI primitives in @sd/ui that follow the V2 design system. These are platform-agnostic, accessible components used throughout the interface.
+Build a complete set of reusable UI primitives in @wingdrive/primitives that follow the V2 design system. These are platform-agnostic, accessible components used throughout the interface.
 
 ## Components
 

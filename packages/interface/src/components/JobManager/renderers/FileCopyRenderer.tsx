@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import type { JobRenderer, JobRendererProps, JobDetailsRendererProps } from "./index";
 import { CopyJobDetails } from "../components/CopyJobDetails";
 import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";
-import type { Device } from "@sd/ts-client";
+import type { Device } from "@wingdrive/ts-client";
 
 /**
  * Map strategy name to display label (enables i18n in future)

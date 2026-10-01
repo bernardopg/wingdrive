@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../routes/explorer/File";
 import { useNormalizedQuery } from "../../contexts/SpacedriveContext";
 import { useOptionalExplorer } from "../../routes/explorer/context";
-import { Folder } from "@sd/assets/icons";
+import { Folder } from "@wingdrive/assets/icons";
 
 interface DirectoryPreviewProps {
 	file: File;

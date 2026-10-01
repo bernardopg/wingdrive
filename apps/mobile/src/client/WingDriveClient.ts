@@ -1,7 +1,7 @@
 import { WingMobileCore } from "wing-mobile-core";
 import { ReactNativeTransport } from "./transport";
-import { WIRE_METHODS } from "@sd/ts-client";
-import type { Event } from "@sd/ts-client/generated/types";
+import { WIRE_METHODS } from "@wingdrive/ts-client";
+import type { Event } from "@wingdrive/ts-client/generated/types";
 import { SubscriptionManager } from "./subscriptionManager";
 
 /**

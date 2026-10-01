@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Input, Label, dialogManager, useDialog, Dialog } from '@wingdrive/primitives';
-import { useLibraryMutation } from '@sd/ts-client';
+import { useLibraryMutation } from '@wingdrive/ts-client';
 import { useForm } from 'react-hook-form';
-import type { GroupType } from '@sd/ts-client';
+import type { GroupType } from '@wingdrive/ts-client';
 
 interface FormData {
 	groupName: string;

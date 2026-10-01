@@ -24,7 +24,7 @@ The File Operation Modal provides a clean, interactive UI for copying and moving
 ### Programmatic
 
 ```tsx
-import { useFileOperationDialog } from '@sd/interface';
+import { useFileOperationDialog } from '@wingdrive/interface';
 
 function MyComponent() {
   const openFileOperation = useFileOperationDialog();
@@ -63,7 +63,7 @@ The `LocationsSection` component already has drag-drop enabled:
 Use `DropZoneFile` for folders that can receive drops:
 
 ```tsx
-import { DropZoneFile, useFileOperationDialog } from '@sd/interface';
+import { DropZoneFile, useFileOperationDialog } from '@wingdrive/interface';
 
 function FolderGrid({ folders, selectedFiles }) {
   const openFileOperation = useFileOperationDialog();
@@ -103,7 +103,7 @@ function FolderGrid({ folders, selectedFiles }) {
 The `File` component is already draggable by default:
 
 ```tsx
-import { File } from '@sd/interface';
+import { File } from '@wingdrive/interface';
 
 // Files are draggable by default
 <File file={file} selectedFiles={allSelectedFiles}>

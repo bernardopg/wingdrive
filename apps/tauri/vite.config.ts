@@ -108,14 +108,14 @@ export default defineConfig(() => ({
 						)
 			},
 			{
-				find: '@sd/interface',
+				find: '@wingdrive/interface',
 				replacement: path.resolve(
 					import.meta.dirname,
 					'../../packages/interface/src'
 				)
 			},
 			{
-				find: '@sd/ts-client',
+				find: '@wingdrive/ts-client',
 				replacement: path.resolve(
 					import.meta.dirname,
 					'../../packages/ts-client/src'

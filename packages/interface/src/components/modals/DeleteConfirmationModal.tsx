@@ -7,7 +7,7 @@ import {
 	useDialog,
 	type UseDialogProps,
 } from "@wingdrive/primitives";
-import type { File as FileType } from "@sd/ts-client";
+import type { File as FileType } from "@wingdrive/ts-client";
 import { File, FileStack } from "../../routes/explorer/File";
 
 interface DeleteConfirmationDialogProps {

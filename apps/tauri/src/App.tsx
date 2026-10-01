@@ -12,22 +12,22 @@ import {
 	SpacedriveProvider,
 	ServerProvider,
 	JobsProvider,
-} from "@sd/interface";
+} from "@wingdrive/interface";
 import {
 	SpacebotProvider,
 	SpacebotLayout,
 	ChatRoute,
 	ConversationRoute,
 	TasksRoute,
-} from "@sd/interface/Spacebot";
-import { VoiceOverlay } from "@sd/interface/windows/VoiceOverlay";
+} from "@wingdrive/interface/Spacebot";
+import { VoiceOverlay } from "@wingdrive/interface/windows/VoiceOverlay";
 import {createMemoryRouter, Navigate, Outlet, RouterProvider} from "react-router-dom";
 import {
 	SpacedriveClient,
 	TauriTransport,
 	useSyncPreferencesStore,
-} from "@sd/ts-client";
-import type { Event as CoreEvent } from "@sd/ts-client";
+} from "@wingdrive/ts-client";
+import type { Event as CoreEvent } from "@wingdrive/ts-client";
 import { useEffect, useState } from "react";
 import { DragOverlay } from "./routes/DragOverlay";
 import { ContextMenuWindow } from "./routes/ContextMenuWindow";

@@ -159,7 +159,7 @@ cargo run --bin generate_typescript_types
 ```
 Tauri App (React)
     ↓
-@sd/ts-client (TypeScript)
+@wingdrive/ts-client (TypeScript)
     ↓
 Daemon (Unix Socket / IPC)
     ↓

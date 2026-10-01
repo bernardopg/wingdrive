@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import QRCode from "qrcode";
 import { useCoreMutation, useCoreQuery } from "../../contexts/SpacedriveContext";
-import { sounds } from "@sd/assets/sounds";
+import { sounds } from "@wingdrive/assets/sounds";
 
 interface PairingModalProps {
   isOpen: boolean;

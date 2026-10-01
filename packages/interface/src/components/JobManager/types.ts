@@ -1,4 +1,4 @@
-import type { JsonValue, ExtendedJobListItem, GenericProgress } from "@sd/ts-client";
+import type { JsonValue, ExtendedJobListItem, GenericProgress } from "@wingdrive/ts-client";
 
 // Re-export for backwards compatibility
 export type JobListItem = ExtendedJobListItem;

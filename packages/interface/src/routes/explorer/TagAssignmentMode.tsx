@@ -5,7 +5,7 @@ import { Button, toast } from '@wingdrive/primitives';
 import { useNormalizedQuery, useLibraryMutation } from '../../contexts/SpacedriveContext';
 import { useSelection } from './SelectionContext';
 import { useKeybind } from '../../hooks/useKeybind';
-import type { Tag } from '@sd/ts-client';
+import type { Tag } from '@wingdrive/ts-client';
 
 interface TagAssignmentModeProps {
 	isActive: boolean;

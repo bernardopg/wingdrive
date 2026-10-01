@@ -3,7 +3,7 @@ import { useNormalizedQuery, getDeviceIcon, useCoreMutation } from "../../contex
 import { useExplorer } from "../../routes/explorer/context";
 import { SpaceItem } from "./SpaceItem";
 import { GroupHeader } from "./GroupHeader";
-import type { ListLibraryDevicesInput, Device } from "@sd/ts-client";
+import type { ListLibraryDevicesInput, Device } from "@wingdrive/ts-client";
 
 interface DevicesGroupProps {
 	isCollapsed: boolean;

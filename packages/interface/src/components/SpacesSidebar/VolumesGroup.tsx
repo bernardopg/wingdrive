@@ -1,6 +1,6 @@
 import {EyeSlash} from '@phosphor-icons/react';
-import {getVolumeIcon, useNormalizedQuery} from '@sd/ts-client';
-import type {Device, Volume} from '@sd/ts-client';
+import {getVolumeIcon, useNormalizedQuery} from '@wingdrive/ts-client';
+import type {Device, Volume} from '@wingdrive/ts-client';
 import {GroupHeader} from './GroupHeader';
 import {SpaceItem} from './SpaceItem';
 import {useVolumeContextMenu} from './hooks/useVolumeContextMenu';

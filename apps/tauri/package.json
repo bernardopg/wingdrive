@@ -1,5 +1,5 @@
 {
-	"name": "@sd/tauri",
+	"name": "@wingdrive/tauri",
 	"private": true,
 	"version": "2.0.0-alpha.2",
 	"type": "module",
@@ -21,9 +21,9 @@
 	},
 	"dependencies": {
 		"@phosphor-icons/react": "^2.1.10",
-		"@sd/assets": "workspace:*",
-		"@sd/interface": "workspace:*",
-		"@sd/ts-client": "workspace:*",
+		"@wingdrive/assets": "workspace:*",
+		"@wingdrive/interface": "workspace:*",
+		"@wingdrive/ts-client": "workspace:*",
 		"@wingdrive/primitives": "^0.2.4",
 		"@tauri-apps/api": "^2.11.1",
 		"@tauri-apps/plugin-dialog": "^2.7.2",

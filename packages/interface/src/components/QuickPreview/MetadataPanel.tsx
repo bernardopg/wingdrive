@@ -2,8 +2,8 @@ import { motion } from "framer-motion";
 import { Camera, HardDrive, Plus, Star, Tag, X } from "@phosphor-icons/react";
 import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { File } from "@sd/ts-client";
-import { getContentKind } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
+import { getContentKind } from "@wingdrive/ts-client";
 import { TagPill, TagSelectorButton } from "../Tags";
 import { formatBytes } from "../../routes/explorer/utils";
 import {

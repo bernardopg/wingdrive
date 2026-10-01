@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import clsx from "clsx";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 
 interface TitleProps {
   file: File;

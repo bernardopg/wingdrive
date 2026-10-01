@@ -1,4 +1,4 @@
-import type {WingPath} from '@sd/ts-client';
+import type {WingPath} from '@wingdrive/ts-client';
 import {describe, expect, it} from 'bun:test';
 import {resolveExternalDrop} from './resolveExternalDrop';
 

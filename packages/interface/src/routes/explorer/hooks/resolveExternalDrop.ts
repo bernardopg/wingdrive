@@ -1,4 +1,4 @@
-import type {WingPath} from '@sd/ts-client';
+import type {WingPath} from '@wingdrive/ts-client';
 
 /** Outcome of mapping an OS file drop onto the current Explorer destination */
 export type ExternalDropRejectionReason =

@@ -1,5 +1,5 @@
 import { WingMobileCore, CoreEvent } from "wing-mobile-core";
-import type { Event } from "@sd/ts-client/src/generated/types";
+import type { Event } from "@wingdrive/ts-client/src/generated/types";
 
 export interface EventFilter {
 	library_id?: string;

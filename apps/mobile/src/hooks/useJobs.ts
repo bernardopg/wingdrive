@@ -1,4 +1,4 @@
-import {useJobs as useJobsCore, type UseJobsReturn} from '@sd/ts-client';
+import {useJobs as useJobsCore, type UseJobsReturn} from '@wingdrive/ts-client';
 // TODO: Add native notifications when jobs complete
 // import * as Notifications from 'expo-notifications';
 
@@ -35,4 +35,4 @@ export function useJobs(): UseJobsReturn {
 }
 
 // Re-export types for convenience
-export type {SpeedSample, ExtendedJobListItem, GenericProgress} from '@sd/ts-client';
+export type {SpeedSample, ExtendedJobListItem, GenericProgress} from '@wingdrive/ts-client';

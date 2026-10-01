@@ -1,5 +1,5 @@
-import type { File } from "@sd/ts-client";
-import { getContentKind } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
+import { getContentKind } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../routes/explorer/File";
 import { formatBytes } from "../../routes/explorer/utils";
 import { usePlatform } from "../../contexts/PlatformContext";
@@ -27,7 +27,7 @@ import { AudioPlayer } from "./AudioPlayer";
 import { useZoomPan } from "./useZoomPan";
 import { TextViewer } from "./TextViewer";
 import { WithPrismTheme } from "./prism";
-import { sounds } from "@sd/assets/sounds";
+import { sounds } from "@wingdrive/assets/sounds";
 import { CircleButton } from "@wingdrive/primitives";
 import { DirectoryPreview } from "./DirectoryPreview";
 

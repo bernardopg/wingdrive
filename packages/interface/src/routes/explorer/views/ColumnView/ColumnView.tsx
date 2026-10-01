@@ -1,13 +1,13 @@
 import { useEffect, useCallback, useMemo, useRef } from "react";
-import type { WingPath, File } from "@sd/ts-client";
+import type { WingPath, File } from "@wingdrive/ts-client";
 import { useExplorer } from "../../context";
 import { useSelection } from "../../SelectionContext";
 import { useNormalizedQuery } from "../../../../contexts/SpacedriveContext";
-import type { DirectorySortBy } from "@sd/ts-client";
+import type { DirectorySortBy } from "@wingdrive/ts-client";
 import { Column } from "./Column";
 import { useTypeaheadSearch } from "../../hooks/useTypeaheadSearch";
 import { useVirtualListing } from "../../hooks/useVirtualListing";
-import { isVirtualFile } from '@sd/ts-client';
+import { isVirtualFile } from '@wingdrive/ts-client';
 import { useExplorerFiles } from "../../hooks/useExplorerFiles";
 
 /** Get path string from WingPath for comparison */

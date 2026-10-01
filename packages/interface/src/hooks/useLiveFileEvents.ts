@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSpacedriveClient } from "@sd/ts-client";
+import { useSpacedriveClient } from "@wingdrive/ts-client";
 
 /**
  * Query keys invalidated when the filesystem changes underneath the app.

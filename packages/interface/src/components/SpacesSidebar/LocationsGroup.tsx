@@ -1,4 +1,4 @@
-import { useNormalizedQuery } from "@sd/ts-client";
+import { useNormalizedQuery } from "@wingdrive/ts-client";
 import { SpaceItem } from "./SpaceItem";
 import { GroupHeader } from "./GroupHeader";
 

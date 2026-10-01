@@ -1,4 +1,4 @@
-import type {Platform} from '@sd/interface';
+import type {Platform} from '@wingdrive/interface';
 import {
 	invoke,
 	convertFileSrc as tauriConvertFileSrc

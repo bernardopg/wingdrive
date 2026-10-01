@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
-import type { SpaceGroup, SpaceItem } from "@sd/ts-client";
+import type { SpaceGroup, SpaceItem } from "@wingdrive/ts-client";
 import { SettingsGroup } from "../../../components/primitive";
 import { SpaceItem as SpaceItemComponent } from "./SpaceItem";
 import { DevicesGroup } from "./DevicesGroup";

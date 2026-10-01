@@ -4,8 +4,8 @@ import {
   WingDriveClientContext,
   queryClient,
   useWingDriveClient,
-} from "@sd/ts-client/src/hooks/useClient";
-import type { Event } from "@sd/ts-client/src/generated/types";
+} from "@wingdrive/ts-client/src/hooks/useClient";
+import type { Event } from "@wingdrive/ts-client/src/generated/types";
 import { WingDriveClient } from "../WingDriveClient";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";

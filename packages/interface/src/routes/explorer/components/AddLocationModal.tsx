@@ -18,10 +18,10 @@ import {
 import type {
   IndexMode,
   LocationAddInput,
-} from "@sd/ts-client";
+} from "@wingdrive/ts-client";
 import { useLibraryMutation, useLibraryQuery } from "../../../contexts/SpacedriveContext";
 import { usePlatform } from "../../../contexts/PlatformContext";
-import { NewLocation } from "@sd/assets/icons";
+import { NewLocation } from "@wingdrive/assets/icons";
 
 interface AddLocationFormData {
   path: string;

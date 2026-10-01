@@ -5,7 +5,7 @@ import {
   type LegacyColumnDef as ColumnDef,
 } from "@tanstack/react-table/legacy";
 import type { ColumnSizingState } from "@tanstack/react-table";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 
 import { formatBytes, formatRelativeTime } from "../../utils";
 

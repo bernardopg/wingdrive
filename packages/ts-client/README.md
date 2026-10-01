@@ -1,4 +1,4 @@
-# @sd/ts-client
+# @wingdrive/ts-client
 
 Type-safe TypeScript client for the WingDrive daemon, automatically generated from Rust core types using Specta.
 
@@ -13,13 +13,13 @@ Type-safe TypeScript client for the WingDrive daemon, automatically generated fr
 ## Installation
 
 ```bash
-bun add @sd/ts-client
+bun add @wingdrive/ts-client
 ```
 
 ## Quick Start
 
 ```typescript
-import { WingDriveClient } from '@sd/ts-client';
+import { WingDriveClient } from '@wingdrive/ts-client';
 
 const client = new WingDriveClient();
 

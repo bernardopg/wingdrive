@@ -1,7 +1,7 @@
 import { useRef, memo, useCallback } from "react";
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 import clsx from "clsx";
-import type { File, WingPath } from "@sd/ts-client";
+import type { File, WingPath } from "@wingdrive/ts-client";
 import { useNormalizedQuery } from "../../../../contexts/SpacedriveContext";
 import { ColumnItem } from "./ColumnItem";
 import { useExplorer } from "../../context";

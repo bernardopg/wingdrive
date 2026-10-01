@@ -24,11 +24,11 @@ import type {
 	MediaSortBy,
 	SortDirection,
 	SearchFilters as ApiSearchFilters,
-} from "@sd/ts-client";
+} from "@wingdrive/ts-client";
 import {
 	useViewPreferencesStore,
 	useSortPreferencesStore,
-} from "@sd/ts-client";
+} from "@wingdrive/ts-client";
 
 export type SortBy = DirectorySortBy | MediaSortBy;
 

@@ -3,7 +3,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useExplorer } from "../../context";
 import { useSelection } from "../../SelectionContext";
 import { FileCard } from "./FileCard";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { useExplorerFiles } from "../../hooks/useExplorerFiles";
 import { DragSelect } from "./DragSelect";
 import { useEmptySpaceContextMenu } from "../../hooks/useEmptySpaceContextMenu";

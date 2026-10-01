@@ -58,7 +58,7 @@ config.resolver = {
 	},
 };
 
-// SVG transformer for @sd/assets SVGs
+// SVG transformer for @wingdrive/assets SVGs
 config.transformer = {
 	...config.transformer,
 	babelTransformerPath: require.resolve("react-native-svg-transformer"),

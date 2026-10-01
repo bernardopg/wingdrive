@@ -1,2 +1,2 @@
 export { useJobs } from "./useJobsDesktop";
-export type { SpeedSample } from "@sd/ts-client";
+export type { SpeedSample } from "@wingdrive/ts-client";

@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
 import type { SelectoEvents } from "react-selecto";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { useSelection } from "../../SelectionContext";
 import { getElementFileId } from "./utils";
 

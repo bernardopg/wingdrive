@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useNormalizedQuery } from "../../contexts/SpacedriveContext";
 import { useTabManager } from "./useTabManager";
-import type { ListLibraryDevicesInput, Device } from "@sd/ts-client";
+import type { ListLibraryDevicesInput, Device } from "@wingdrive/ts-client";
 
 /**
  * TabDefaultsSync - Sets the default new tab path to the current device

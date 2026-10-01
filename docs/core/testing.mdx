@@ -1183,7 +1183,7 @@ TypeScript tests connect to the daemon via TCP socket using `TcpSocketTransport`
 const client = WingDriveClient.fromTcpSocket("127.0.0.1:6969");
 
 // Manual construction
-import { TcpSocketTransport } from "@sd/ts-client/transports";
+import { TcpSocketTransport } from "@wingdrive/ts-client/transports";
 const transport = new TcpSocketTransport("127.0.0.1:6969");
 const client = new WingDriveClient(transport);
 ```

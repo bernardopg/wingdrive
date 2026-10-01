@@ -10,7 +10,7 @@ import {
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import { deriveTitleFromPath } from "./deriveTitle";
 import { usePlatform } from "../../contexts/PlatformContext";
-import type { SortDirection } from "@sd/ts-client";
+import type { SortDirection } from "@wingdrive/ts-client";
 type Router = ReturnType<typeof createBrowserRouter>;
 
 // ============================================================================

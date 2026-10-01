@@ -3,7 +3,7 @@ import { LayeredIcons } from "../svgs/ext";
 import beardedIconsMapping from "../svgs/ext/icons.json";
 
 // Note: beardedIconUrls is not exported from here for React Native compatibility
-// Web/Desktop should import directly from: @sd/assets/svgs/ext/Extras/urls
+// Web/Desktop should import directly from: @wingdrive/assets/svgs/ext/Extras/urls
 
 // Define a type for icon names. This filters out any names with underscores in them.
 // The use of 'never' is to make sure that icon types with underscores are not included.

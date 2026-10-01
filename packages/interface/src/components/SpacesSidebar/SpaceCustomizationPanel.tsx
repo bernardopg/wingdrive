@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus } from "@phosphor-icons/react";
 import { useDraggable } from "@dnd-kit/core";
 import clsx from "clsx";
-import type { ItemType, SpaceItem as SpaceItemType, GroupType } from "@sd/ts-client";
+import type { ItemType, SpaceItem as SpaceItemType, GroupType } from "@wingdrive/ts-client";
 import { SpaceItem } from "./SpaceItem";
 import { createPortal } from "react-dom";
 import { useState } from "react";

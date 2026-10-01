@@ -2,8 +2,8 @@ import { CaretRight, DotsSixVertical, PencilSimple, Trash } from "@phosphor-icon
 import clsx from "clsx";
 import { useState } from "react";
 import { useContextMenu } from "../../hooks/useContextMenu";
-import { useLibraryMutation } from "@sd/ts-client";
-import type { SpaceGroup } from "@sd/ts-client";
+import { useLibraryMutation } from "@wingdrive/ts-client";
+import type { SpaceGroup } from "@wingdrive/ts-client";
 
 interface GroupHeaderProps {
   label: string;

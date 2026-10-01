@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { Event, JobOutput } from "@sd/ts-client";
+import type { Event, JobOutput } from "@wingdrive/ts-client";
 import { useSpacedriveClient } from "../contexts/SpacedriveContext";
 
 /**

@@ -1,7 +1,7 @@
 import { memo, useCallback } from "react";
 import clsx from "clsx";
 import { useDroppable } from "@dnd-kit/core";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../File";
 import { useDraggableFile } from "../../hooks/useDraggableFile";
 

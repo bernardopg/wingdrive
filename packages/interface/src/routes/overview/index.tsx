@@ -8,7 +8,7 @@ import type {
 	Library,
 	LocationsListOutput,
 	LocationsListQueryInput
-} from '@sd/ts-client';
+} from '@wingdrive/ts-client';
 import {useMemo, useState} from 'react';
 import {Inspector} from '../../components/Inspector/Inspector';
 import {useNormalizedQuery} from '../../contexts/SpacedriveContext';

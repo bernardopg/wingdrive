@@ -13,7 +13,7 @@
  */
 
 import type { ReactNativeTransport } from "./transport";
-import type { Event } from "@sd/ts-client/src/generated/types";
+import type { Event } from "@wingdrive/ts-client/src/generated/types";
 
 interface EventFilter {
 	library_id?: string;

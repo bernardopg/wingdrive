@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "preinstall": "npx only-allow bun",
-    "typecheck": "bun run --filter @sd/tauri typecheck"
+    "typecheck": "bun run --filter @wingdrive/tauri typecheck"
   },
   "devDependencies": {
     "@babel/plugin-syntax-import-assertions": "^7.29.7",

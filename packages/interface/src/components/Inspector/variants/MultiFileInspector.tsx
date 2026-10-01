@@ -7,8 +7,8 @@ import {
 import { useMemo } from "react";
 import { InfoRow, Section, Divider, Tag } from "../Inspector";
 import clsx from "clsx";
-import type { File } from "@sd/ts-client";
-import { getContentKind } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
+import { getContentKind } from "@wingdrive/ts-client";
 import { formatBytes } from "../../../routes/explorer/utils";
 import { File as FileComponent } from "../../../routes/explorer/File";
 

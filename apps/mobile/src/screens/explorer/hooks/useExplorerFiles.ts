@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import type { File, WingPath } from "@sd/ts-client";
-import { useNormalizedQuery } from "@sd/ts-client";
+import type { File, WingPath } from "@wingdrive/ts-client";
+import { useNormalizedQuery } from "@wingdrive/ts-client";
 import { useVirtualListing } from "./useVirtualListing";
 
 export type FileSource = "virtual" | "directory";

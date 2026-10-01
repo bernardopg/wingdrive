@@ -1,4 +1,4 @@
-import type {WingPath} from '@sd/ts-client';
+import type {WingPath} from '@wingdrive/ts-client';
 import {toast} from '@wingdrive/primitives';
 import {useEffect, useRef} from 'react';
 import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';

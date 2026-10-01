@@ -1,5 +1,5 @@
 // @wingdrive/primitives
-// Faithful extraction of the original project's @sd/ui components.
+// Faithful extraction of the original project's @wingdrive/primitives components.
 
 // Button
 export { Button, buttonStyles, buttonStyles as buttonVariants } from "./Button";

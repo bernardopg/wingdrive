@@ -1,6 +1,6 @@
 import { memo } from "react";
 import clsx from "clsx";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../File";
 import { useExplorer } from "../../context";
 import { useSelection } from "../../SelectionContext";
@@ -9,7 +9,7 @@ import { TagDot } from "../../../../components/Tags";
 import { useDroppable } from "@dnd-kit/core";
 import { useFileContextMenu } from "../../hooks/useFileContextMenu";
 import { useDraggableFile } from "../../hooks/useDraggableFile";
-import { isVirtualFile } from '@sd/ts-client';
+import { isVirtualFile } from '@wingdrive/ts-client';
 import { VolumeSizeBar } from "../../components/VolumeSizeBar";
 import { InlineNameEdit } from "../../components/InlineNameEdit";
 import { useOpenWith } from "../../../../hooks/useOpenWith";

@@ -1,4 +1,4 @@
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 
 export function formatDate(
 	date: Date | { from: Date; to: Date },

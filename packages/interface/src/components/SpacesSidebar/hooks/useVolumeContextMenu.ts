@@ -5,7 +5,7 @@ import {
 	Gauge,
 	EjectSimple
 } from '@phosphor-icons/react';
-import type { Volume } from '@sd/ts-client';
+import type { Volume } from '@wingdrive/ts-client';
 import {
 	useContextMenu,
 	type ContextMenuItem,

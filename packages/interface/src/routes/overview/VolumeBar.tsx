@@ -1,5 +1,5 @@
 import {ArrowDown, ArrowUp, DotsThree, EyeSlash} from '@phosphor-icons/react';
-import type {Volume} from '@sd/ts-client';
+import type {Volume} from '@wingdrive/ts-client';
 import {CircleButton} from '@wingdrive/primitives';
 import {motion} from 'framer-motion';
 import {useEffect, useState} from 'react';

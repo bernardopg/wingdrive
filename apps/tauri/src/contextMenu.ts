@@ -1,5 +1,5 @@
 import { Menu, MenuItem, Submenu, PredefinedMenuItem } from '@tauri-apps/api/menu';
-import type { ContextMenuItem } from '@sd/interface';
+import type { ContextMenuItem } from '@wingdrive/interface';
 
 /**
  * Convert platform-agnostic menu items to Tauri's native Menu API

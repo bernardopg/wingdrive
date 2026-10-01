@@ -1,5 +1,5 @@
 {
-	"name": "@sd/web",
+	"name": "@wingdrive/web",
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
@@ -9,7 +9,7 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
-		"@sd/interface": "workspace:*",
+		"@wingdrive/interface": "workspace:*",
 		"@wingdrive/tokens": "^0.2.3",
 		"react": "^19.3.0",
 		"react-dom": "^19.3.0"

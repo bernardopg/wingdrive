@@ -260,7 +260,7 @@ These apply to everything built in this directory.
 ### Follow WingDrive conventions
 
 - Semantic color classes only. No `var()` references. No arbitrary hex values.
-- Radix and @sd/ui primitives for interactive elements.
+- Radix and @wingdrive/primitives primitives for interactive elements.
 - TanStack Query for all data fetching. No manual `useEffect` + `fetch`.
 - Function components. Explicit TypeScript interfaces. No `any`.
 - See the interface `CLAUDE.md` for the full rulebook.

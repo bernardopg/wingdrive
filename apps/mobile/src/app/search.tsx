@@ -7,8 +7,8 @@ import { ListView } from "../screens/explorer/views/ListView";
 import { GridView } from "../screens/explorer/views/GridView";
 import { GlassButton } from "../components/GlassButton";
 import { useSearchStore } from "../screens/explorer/context/SearchContext";
-import { useSearchFiles } from "@sd/ts-client";
-import type { File } from "@sd/ts-client";
+import { useSearchFiles } from "@wingdrive/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import type { TextInput } from "react-native";
 import { X } from "phosphor-react-native";
 

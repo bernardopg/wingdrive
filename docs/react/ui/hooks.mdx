@@ -12,7 +12,7 @@ WingDrive provides type-safe React hooks for data fetching, mutations, and event
 Type-safe hook for core-scoped queries (operations that don't require a library).
 
 ```tsx
-import { useCoreQuery } from '@sd/interface';
+import { useCoreQuery } from '@wingdrive/interface';
 
 function LibraryList() {
   const { data: libraries, isLoading, error } = useCoreQuery({
@@ -72,7 +72,7 @@ const { data: libraries } = useCoreQuery(
 Type-safe hook for library-scoped queries (operations within a specific library).
 
 ```tsx
-import { useLibraryQuery } from '@sd/interface';
+import { useLibraryQuery } from '@wingdrive/interface';
 
 function FileExplorer({ path }: { path: string }) {
   const { data, isLoading } = useLibraryQuery({
@@ -131,7 +131,7 @@ const { data: results } = useLibraryQuery({
 Event-driven cache updates for real-time sync across devices. See [Normalized Cache](/react/ui/normalized-cache) for full documentation.
 
 ```tsx
-import { useNormalizedCache } from '@sd/interface';
+import { useNormalizedCache } from '@wingdrive/interface';
 
 function LocationsList() {
   const { data: locations } = useNormalizedCache({
@@ -163,7 +163,7 @@ function LocationsList() {
 Type-safe hook for core-scoped mutations (operations that don't require a library).
 
 ```tsx
-import { useCoreMutation } from '@sd/interface';
+import { useCoreMutation } from '@wingdrive/interface';
 
 function CreateLibraryButton() {
   const createLib = useCoreMutation('libraries.create');
@@ -217,7 +217,7 @@ updateConfig.mutate({ theme: 'dark', port: 8080 });
 Type-safe hook for library-scoped mutations (operations within a specific library).
 
 ```tsx
-import { useLibraryMutation } from '@sd/interface';
+import { useLibraryMutation } from '@wingdrive/interface';
 
 function ApplyTagsButton({ fileIds, tagIds }: { fileIds: number[], tagIds: string[] }) {
   const applyTags = useLibraryMutation('tags.apply');
@@ -275,7 +275,7 @@ moveFiles.mutate({ source: '/old/path', destination: '/new/path' });
 Subscribe to specific WingDrive events.
 
 ```tsx
-import { useEvent } from '@sd/interface';
+import { useEvent } from '@wingdrive/interface';
 
 function JobProgress() {
   const [progress, setProgress] = useState(0);
@@ -325,7 +325,7 @@ useEvent('JobCompleted', (event) => {
 Subscribe to all WingDrive events (useful for debugging).
 
 ```tsx
-import { useAllEvents } from '@sd/interface';
+import { useAllEvents } from '@wingdrive/interface';
 
 function EventDebugger() {
   useAllEvents((event) => {
@@ -345,7 +345,7 @@ function EventDebugger() {
 Convenience hook for fetching all libraries.
 
 ```tsx
-import { useLibraries } from '@sd/interface';
+import { useLibraries } from '@wingdrive/interface';
 
 function LibraryDropdown() {
   const { data: libraries, isLoading } = useLibraries();
@@ -381,7 +381,7 @@ libraries?.forEach(lib => {
 Access the WingDrive client instance directly.
 
 ```tsx
-import { useWingDriveClient } from '@sd/interface';
+import { useWingDriveClient } from '@wingdrive/interface';
 
 function LibrarySwitcher() {
   const client = useWingDriveClient();

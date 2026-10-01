@@ -19,7 +19,7 @@ import { useNormalizedQuery } from "../../client";
 import { PageIndicator } from "../../components/PageIndicator";
 import { GlassSearchBar } from "../../components/GlassSearchBar";
 import { useRouter } from "expo-router";
-import type { SpaceItem, SpaceGroup } from "@sd/ts-client";
+import type { SpaceItem, SpaceGroup } from "@wingdrive/ts-client";
 import { SpaceItem as SpaceItemComponent, SpaceGroupComponent } from "./components";
 import { SettingsGroup } from "../../components/primitive";
 

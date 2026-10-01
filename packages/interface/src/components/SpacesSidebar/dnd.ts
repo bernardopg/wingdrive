@@ -1,4 +1,4 @@
-import type { WingPath } from "@sd/ts-client";
+import type { WingPath } from "@wingdrive/ts-client";
 
 // Data transferred during drag operations
 export interface SidebarDragData {

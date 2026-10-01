@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import { getDeviceIcon } from "../../../contexts/SpacedriveContext";
-import LaptopIcon from "@sd/assets/icons/Laptop.png";
+import LaptopIcon from "@wingdrive/assets/icons/Laptop.png";
 import type { VirtualView } from "../context";
 
 interface VirtualPathBarProps {

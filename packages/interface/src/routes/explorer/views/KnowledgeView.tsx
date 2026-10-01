@@ -14,8 +14,8 @@ import {
 import { KnowledgeInspector } from "../../../components/Inspector/variants/KnowledgeInspector";
 import { useExplorer } from "../context";
 import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";
-import type { File, ContentKind } from "@sd/ts-client";
-import { getContentKind } from "@sd/ts-client";
+import type { File, ContentKind } from "@wingdrive/ts-client";
+import { getContentKind } from "@wingdrive/ts-client";
 import { useMemo } from "react";
 import clsx from "clsx";
 import { File as FileComponent } from "../File";

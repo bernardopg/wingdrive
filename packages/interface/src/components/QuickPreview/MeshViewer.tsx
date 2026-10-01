@@ -3,7 +3,7 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { useState, useEffect, useRef, Suspense, useCallback } from "react";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { File as FileComponent } from "../../routes/explorer/File";
 import { PLYLoader } from "three/examples/jsm/loaders/PLYLoader.js";

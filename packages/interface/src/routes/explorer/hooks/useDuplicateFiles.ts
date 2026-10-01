@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { File, WingPath } from "@sd/ts-client";
+import type { File, WingPath } from "@wingdrive/ts-client";
 import { useLibraryMutation } from "../../../contexts/SpacedriveContext";
 import { useWaitForJob } from "../../../hooks/useWaitForJob";
 import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";

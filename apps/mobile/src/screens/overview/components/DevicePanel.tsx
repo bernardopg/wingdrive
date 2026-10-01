@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Image, ScrollView, Pressable, Modal } from "react-native";
-import DatabaseIcon from "@sd/assets/icons/Database.png";
-import DriveAmazonS3Icon from "@sd/assets/icons/Drive-AmazonS3.png";
-import DriveDropboxIcon from "@sd/assets/icons/Drive-Dropbox.png";
-import DriveGoogleDriveIcon from "@sd/assets/icons/Drive-GoogleDrive.png";
-import DriveIcon from "@sd/assets/icons/Drive.png";
-import HDDIcon from "@sd/assets/icons/HDD.png";
-import LocationIcon from "@sd/assets/icons/Location.png";
-import ServerIcon from "@sd/assets/icons/Server.png";
+import DatabaseIcon from "@wingdrive/assets/icons/Database.png";
+import DriveAmazonS3Icon from "@wingdrive/assets/icons/Drive-AmazonS3.png";
+import DriveDropboxIcon from "@wingdrive/assets/icons/Drive-Dropbox.png";
+import DriveGoogleDriveIcon from "@wingdrive/assets/icons/Drive-GoogleDrive.png";
+import DriveIcon from "@wingdrive/assets/icons/Drive.png";
+import HDDIcon from "@wingdrive/assets/icons/HDD.png";
+import LocationIcon from "@wingdrive/assets/icons/Location.png";
+import ServerIcon from "@wingdrive/assets/icons/Server.png";
 import type {
 	Device,
 	JobListItem,
 	Location,
 	Volume,
-} from "@sd/ts-client";
-import { getDeviceIcon } from "@sd/ts-client";
+} from "@wingdrive/ts-client";
+import { getDeviceIcon } from "@wingdrive/ts-client";
 import { useNormalizedQuery, useCoreQuery, useLibraryAction, useWingDriveClient } from "../../../client";
 import { useVolumeIndexingStore } from "../../../stores";
 

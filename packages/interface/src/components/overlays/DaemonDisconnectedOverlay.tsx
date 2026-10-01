@@ -4,7 +4,7 @@ import { Copy } from "@phosphor-icons/react";
 import { useDaemonStatus } from "../../hooks/useDaemonStatus";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { Button } from "@wingdrive/primitives";
-import folderIcon from "@sd/assets/icons/FolderNoSpace.png";
+import folderIcon from "@wingdrive/assets/icons/FolderNoSpace.png";
 
 function CLICommand({
 	command,

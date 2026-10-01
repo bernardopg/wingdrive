@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Copy, Trash, Eye, Share } from "@phosphor-icons/react";
 import { useDragOperation } from "../hooks/useDragOperation";
 import { useDropZone } from "../hooks/useDropZone";
-import { useContextMenu } from "@sd/interface";
+import { useContextMenu } from "@wingdrive/interface";
 import type { DragItem } from "../lib/drag";
 
 export function DragDemo() {

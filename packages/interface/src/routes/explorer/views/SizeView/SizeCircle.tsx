@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { useRef } from "react";
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 import { formatBytes } from "../../utils";
 import {
 	setDragData,

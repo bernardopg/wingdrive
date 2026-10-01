@@ -63,7 +63,7 @@ Implement file rename, new folder creation, and new folder with items operations
   - [x] Auto-focus and select text on mount
   - [x] Split filename into name + extension (only edit name)
   - [x] Handle Enter (save), Escape (cancel), Blur (cancel)
-  - [x] Use Input from @sd/ui with transparent variant
+  - [x] Use Input from @wingdrive/primitives with transparent variant
   - [x] Match styling of static file name display
 - [x] FileCard (GridView) integrates inline editing
   - [x] Conditionally renders InlineNameEdit when `renamingFileId === file.id`
@@ -330,8 +330,8 @@ const saveRename = useCallback(
 
 ```typescript
 import { useState, useEffect, useRef } from 'react';
-import { Input } from '@sd/ui';
-import type { File } from '@sd/ts-client';
+import { Input } from '@wingdrive/primitives';
+import type { File } from '@wingdrive/ts-client';
 
 interface InlineNameEditProps {
   file: File;

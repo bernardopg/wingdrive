@@ -3,8 +3,8 @@ import { Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useNormalizedQuery } from "../../../client";
 import { SettingsGroup, SettingsLink } from "../../../components/primitive";
-import FolderIcon from "@sd/assets/icons/Folder.png";
-import type { Device } from "@sd/ts-client";
+import FolderIcon from "@wingdrive/assets/icons/Folder.png";
+import type { Device } from "@wingdrive/ts-client";
 
 export function LocationsGroup() {
 	const router = useRouter();

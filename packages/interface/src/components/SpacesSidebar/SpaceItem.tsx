@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import clsx from "clsx";
-import type { SpaceItem as SpaceItemType } from "@sd/ts-client";
+import type { SpaceItem as SpaceItemType } from "@wingdrive/ts-client";
 import { Thumb } from "../../routes/explorer/File/Thumb";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";

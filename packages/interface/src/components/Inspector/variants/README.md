@@ -20,7 +20,7 @@ Inspector.tsx                  # Generic container
 ### Basic Example
 
 ```tsx
-import { Inspector, type InspectorVariant } from '@sd/interface';
+import { Inspector, type InspectorVariant } from '@wingdrive/interface';
 
 function MyComponent() {
   const [variant, setVariant] = useState<InspectorVariant>(null);
@@ -102,7 +102,7 @@ type InspectorVariant =
 // inspectors/DeviceInspector.tsx
 import { useState } from 'react';
 import { Info, HardDrive } from '@phosphor-icons/react';
-import type { DeviceInfo } from '@sd/ts-client';
+import type { DeviceInfo } from '@wingdrive/ts-client';
 
 export function DeviceInspector({ device }: { device: DeviceInfo }) {
   const [activeTab, setActiveTab] = useState('overview');

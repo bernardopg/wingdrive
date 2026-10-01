@@ -14,7 +14,7 @@ import {
 	TABLE_PADDING_Y,
 	TABLE_HEADER_HEIGHT,
 } from "./useTable";
-import type { DirectorySortBy } from "@sd/ts-client";
+import type { DirectorySortBy } from "@wingdrive/ts-client";
 import { useExplorerFiles } from "../../hooks/useExplorerFiles";
 import { DragSelect } from "./DragSelect";
 import { useEmptySpaceContextMenu } from "../../hooks/useEmptySpaceContextMenu";

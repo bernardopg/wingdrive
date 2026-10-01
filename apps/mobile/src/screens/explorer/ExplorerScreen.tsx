@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useExplorerFiles } from "./hooks/useExplorerFiles";
 import { ListView } from "./views/ListView";
 import { GridView } from "./views/GridView";
-import type { Device } from "@sd/ts-client";
+import type { Device } from "@wingdrive/ts-client";
 import { useNormalizedQuery } from "../../client";
 import { GlassButton } from "../../components/GlassButton";
 import { GlassContextMenu } from "../../components/GlassContextMenu";

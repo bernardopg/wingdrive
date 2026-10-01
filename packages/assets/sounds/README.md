@@ -39,7 +39,7 @@ export const sounds = {
 ### 3. Use in Components
 
 ```typescript
-import { sounds } from "@sd/assets/sounds";
+import { sounds } from "@wingdrive/assets/sounds";
 
 // Play the sound
 sounds.copy();

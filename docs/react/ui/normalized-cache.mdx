@@ -66,7 +66,7 @@ import { FlowDiagram } from '/snippets/FlowDiagram.mdx';
 ### Directory Listing
 
 ```tsx
-import { useNormalizedQuery } from "@sd/ts-client";
+import { useNormalizedQuery } from "@wingdrive/ts-client";
 
 function DirectoryView({ path }: { path: WingPath }) {
 	const { data, isLoading } = useNormalizedQuery({
@@ -650,7 +650,7 @@ RUST_LOG=wing_core::infra::daemon::rpc=debug cargo run -p wingdrive
 **Frontend subscription stats:**
 
 ```tsx
-import { useWingDriveClient } from '@sd/ts-client';
+import { useWingDriveClient } from '@wingdrive/ts-client';
 
 function DebugPanel() {
   const client = useWingDriveClient();
@@ -703,8 +703,8 @@ The old `useNormalizedCache` name is aliased:
 
 ```tsx
 // Both work identically
-import { useNormalizedQuery } from "@sd/ts-client";
-import { useNormalizedCache } from "@sd/ts-client"; // Alias
+import { useNormalizedQuery } from "@wingdrive/ts-client";
+import { useNormalizedCache } from "@wingdrive/ts-client"; // Alias
 
 // Prefer useNormalizedQuery for new code
 ```
@@ -723,7 +723,7 @@ import {
 	deleteResource, // Remove from cache
 	safeMerge, // Deep merge utility
 	handleResourceEvent, // Event dispatcher
-} from "@sd/ts-client/hooks/useNormalizedQuery";
+} from "@wingdrive/ts-client/hooks/useNormalizedQuery";
 ```
 
 ### Runtime Dependencies

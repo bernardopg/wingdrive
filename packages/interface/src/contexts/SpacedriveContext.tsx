@@ -1,11 +1,11 @@
 /**
- * Convenience re-exports from @sd/ts-client
+ * Convenience re-exports from @wingdrive/ts-client
  *
- * You can import from here OR directly from @sd/ts-client/hooks
+ * You can import from here OR directly from @wingdrive/ts-client/hooks
  * Both work identically!
  */
 
-// Re-export hooks from @sd/ts-client (no longer duplicated!)
+// Re-export hooks from @wingdrive/ts-client (no longer duplicated!)
 export {
 	SpacedriveProvider,
 	useSpacedriveClient,
@@ -15,18 +15,18 @@ export {
 	useCoreMutation,
 	useLibraryMutation,
 	useNormalizedQuery,
-} from "@sd/ts-client/hooks";
+} from "@wingdrive/ts-client/hooks";
 
 // Export client type
-export type { SpacedriveClient } from "@sd/ts-client";
+export type { SpacedriveClient } from "@wingdrive/ts-client";
 
 // Export commonly used types for convenience
 export type {
 	Location,
 	LocationsListOutput,
 	LibraryInfo,
-} from "@sd/ts-client";
+} from "@wingdrive/ts-client";
 
 // Export icon utilities
-export { getDeviceIcon, getVolumeIcon } from "@sd/ts-client";
-export { WingDriveProvider, useWingDriveClient } from "@sd/ts-client/hooks";
+export { getDeviceIcon, getVolumeIcon } from "@wingdrive/ts-client";
+export { WingDriveProvider, useWingDriveClient } from "@wingdrive/ts-client/hooks";

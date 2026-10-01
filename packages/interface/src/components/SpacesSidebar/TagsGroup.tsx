@@ -1,5 +1,5 @@
 import {CaretRight, Plus, Tag as TagIcon, Trash} from '@phosphor-icons/react';
-import type {Tag} from '@sd/ts-client';
+import type {Tag} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {useState} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';

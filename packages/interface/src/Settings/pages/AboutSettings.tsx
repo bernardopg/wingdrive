@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { WingDriveLogo } from "@sd/assets/images";
+import { WingDriveLogo } from "@wingdrive/assets/images";
 import Orb from "../../components/Orb";
 import { CircleButton } from "@wingdrive/primitives";
 import { GlobeHemisphereWest, GithubLogo, DiscordLogo } from "@phosphor-icons/react";

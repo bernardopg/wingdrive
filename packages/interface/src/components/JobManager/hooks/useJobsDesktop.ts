@@ -1,5 +1,5 @@
-import {sounds} from '@sd/assets/sounds';
-import {useJobs as useJobsCore, type UseJobsReturn} from '@sd/ts-client';
+import {sounds} from '@wingdrive/assets/sounds';
+import {useJobs as useJobsCore, type UseJobsReturn} from '@wingdrive/ts-client';
 import {useVolumeIndexingStore} from '../../../stores/volumeIndexingStore';
 import {useEffect, useRef} from 'react';
 

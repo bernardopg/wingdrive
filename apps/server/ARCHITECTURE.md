@@ -8,7 +8,7 @@ The WingDrive Server is a production-ready HTTP server that embeds the WingDrive
 
 1. **Embedded Daemon** - No separate process management needed
 2. **Single Binary** - Web assets bundled via `include_dir` when built with `--features assets`
-3. **Platform Abstraction** - Uses same `@sd/interface` as Tauri, with web-specific platform impl
+3. **Platform Abstraction** - Uses same `@wingdrive/interface` as Tauri, with web-specific platform impl
 4. **Security First** - HTTP Basic Auth for all endpoints (except health check)
 5. **Container Native** - Docker-first design with distroless runtime image
 
@@ -60,7 +60,7 @@ tokio::spawn(async move {
 
 ### 3. Web Client (`apps/web/`)
 
-Minimal React app using `@sd/interface`:
+Minimal React app using `@wingdrive/interface`:
 
 ```tsx
 // apps/web/src/main.tsx
@@ -245,7 +245,7 @@ cargo build --release -p wing-server --features assets
 
 ## Platform Abstraction
 
-Both Tauri and Web use `@sd/interface`, but with different platform implementations:
+Both Tauri and Web use `@wingdrive/interface`, but with different platform implementations:
 
 ### Tauri Platform (`apps/tauri/src/platform.ts`)
 

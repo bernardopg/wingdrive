@@ -22,7 +22,7 @@ declare module 'qrcode' {
 
 interface WingDriveGlobal {
 	showContextMenu?: (
-		items: import("@sd/interface").ContextMenuItem[],
+		items: import("@wingdrive/interface").ContextMenuItem[],
 		position: { x: number; y: number }
 	) => Promise<void>;
 	registerKeybind?: (

@@ -1,14 +1,14 @@
 // @ts-nocheck
 import type { CloudServiceType } from "./generated/types";
-import DriveAmazonS3 from "@sd/assets/icons/Drive-AmazonS3.png";
-import DriveGoogleDrive from "@sd/assets/icons/Drive-GoogleDrive.png";
-import DriveDropbox from "@sd/assets/icons/Drive-Dropbox.png";
-import DriveOneDrive from "@sd/assets/icons/Drive-OneDrive.png";
-import DriveBackBlaze from "@sd/assets/icons/Drive-BackBlaze.png";
-import DrivePCloud from "@sd/assets/icons/Drive-PCloud.png";
-import DriveBox from "@sd/assets/icons/Drive-Box.png";
-import HDDIcon from "@sd/assets/icons/HDD.png";
-import DriveIcon from "@sd/assets/icons/Drive.png";
+import DriveAmazonS3 from "@wingdrive/assets/icons/Drive-AmazonS3.png";
+import DriveGoogleDrive from "@wingdrive/assets/icons/Drive-GoogleDrive.png";
+import DriveDropbox from "@wingdrive/assets/icons/Drive-Dropbox.png";
+import DriveOneDrive from "@wingdrive/assets/icons/Drive-OneDrive.png";
+import DriveBackBlaze from "@wingdrive/assets/icons/Drive-BackBlaze.png";
+import DrivePCloud from "@wingdrive/assets/icons/Drive-PCloud.png";
+import DriveBox from "@wingdrive/assets/icons/Drive-Box.png";
+import HDDIcon from "@wingdrive/assets/icons/HDD.png";
+import DriveIcon from "@wingdrive/assets/icons/Drive.png";
 
 export type VolumeIcon = string;
 

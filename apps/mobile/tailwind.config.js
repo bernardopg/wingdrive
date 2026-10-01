@@ -32,7 +32,7 @@ module.exports = {
 	theme: {
 		extend: {
 			colors: {
-				// Use shared colors from @sd/ui
+				// Use shared colors from @wingdrive/primitives
 				accent: toHSL(sharedColors.accent),
 				ink: toHSL(sharedColors.ink),
 				sidebar: toHSL(sharedColors.sidebar),

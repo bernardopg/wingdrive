@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { WingDriveLogo } from "@sd/assets/images";
+import { WingDriveLogo } from "@wingdrive/assets/images";
 import { CircleNotch } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
 import { usePlatform } from "../../contexts/PlatformContext";

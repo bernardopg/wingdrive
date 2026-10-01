@@ -1,5 +1,5 @@
 {
-	"name": "@sd/config",
+	"name": "@wingdrive/config",
 	"version": "0.0.0",
 	"private": true,
 	"exports": {

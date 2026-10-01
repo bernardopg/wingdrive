@@ -1,5 +1,5 @@
 import {MagnifyingGlass, Plus} from '@phosphor-icons/react';
-import type {Tag} from '@sd/ts-client';
+import type {Tag} from '@wingdrive/ts-client';
 import {Popover, usePopover} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {useEffect, useState} from 'react';

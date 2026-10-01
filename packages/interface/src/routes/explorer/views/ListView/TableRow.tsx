@@ -3,7 +3,7 @@ import { flexRender } from "@tanstack/react-table";
 import type { LegacyRow as Row } from "@tanstack/react-table/legacy";
 import clsx from "clsx";
 
-import type { File } from "@sd/ts-client";
+import type { File } from "@wingdrive/ts-client";
 
 import { File as FileComponent } from "../../File";
 import { useExplorer } from "../../context";
@@ -11,7 +11,7 @@ import { useSelection } from "../../SelectionContext";
 import { TagPill } from "../../../../components/Tags";
 import { ROW_HEIGHT, TABLE_PADDING_X } from "./useTable";
 import { useFileContextMenu } from "../../hooks/useFileContextMenu";
-import { isVirtualFile } from '@sd/ts-client';
+import { isVirtualFile } from '@wingdrive/ts-client';
 import { InlineNameEdit } from "../../components/InlineNameEdit";
 import { useOpenWith } from "../../../../hooks/useOpenWith";
 import { useDroppable } from "@dnd-kit/core";

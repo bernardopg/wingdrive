@@ -1,6 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
-import type { File } from "@sd/ts-client";
-import { isVirtualFile } from '@sd/ts-client';
+import type { File } from "@wingdrive/ts-client";
+import { isVirtualFile } from '@wingdrive/ts-client';
 
 interface UseDraggableFileProps {
 	file: File;

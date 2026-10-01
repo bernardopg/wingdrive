@@ -1,4 +1,4 @@
-import type {Location} from '@sd/ts-client';
+import type {Location} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
 import {useEffect, useMemo} from 'react';

@@ -3,7 +3,7 @@ import type {
 	File,
 	FileSearchInput,
 	FileSearchOutput,
-} from "@sd/ts-client";
+} from "@wingdrive/ts-client";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useNormalizedQuery } from "../../../contexts/SpacedriveContext";

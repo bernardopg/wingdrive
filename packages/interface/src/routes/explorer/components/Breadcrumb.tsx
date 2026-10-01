@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import type { WingPath } from "@sd/ts-client";
+import type { WingPath } from "@wingdrive/ts-client";
 
 interface BreadcrumbProps {
   path: WingPath;

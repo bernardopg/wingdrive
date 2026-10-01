@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, FlatList, Pressable, Image } from "react-native";
-import type { File } from "@sd/ts-client";
-import { getVirtualMetadata, isVirtualFile, getFileKindForIcon } from "@sd/ts-client";
-import { getIcon } from "@sd/assets/util/mobile";
+import type { File } from "@wingdrive/ts-client";
+import { getVirtualMetadata, isVirtualFile, getFileKindForIcon } from "@wingdrive/ts-client";
+import { getIcon } from "@wingdrive/assets/util/mobile";
 
 interface ListViewProps {
 	files: File[];

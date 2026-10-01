@@ -8,13 +8,13 @@ import {
 	Database,
 	ShieldCheck,
 } from "@phosphor-icons/react";
-import { Location } from "@sd/assets/icons";
+import { Location } from "@wingdrive/assets/icons";
 import type {
 	SpaceItem as SpaceItemType,
 	ItemType,
 	File,
 	WingPath,
-} from "@sd/ts-client";
+} from "@wingdrive/ts-client";
 import type { Icon } from "@phosphor-icons/react";
 
 // Icon data returned from metadata resolution
