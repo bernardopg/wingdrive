@@ -1,7 +1,7 @@
 ---
 id: EXPL-006
 title: Ascending and Descending Sort in Directory Listings
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: EXPL-000
 priority: High
@@ -24,7 +24,7 @@ last_updated: 2026-10-01
 - [x] Grid, list, column, size, and knowledge views pass the same direction (media uses `files.media_listing`, which has its own ordering; out of scope)
 - [x] Direction persists per tab with the other explorer state (TabManager)
 - [x] Rust test covers default and explicit ascending/descending order
-- [ ] Runtime check in the Linux desktop app (done together with TAURI-006)
+- [x] Runtime check in the Linux desktop app (web UI on the same interface, 2026-10-01; see TAURI-006)
 
 ## Notes
 

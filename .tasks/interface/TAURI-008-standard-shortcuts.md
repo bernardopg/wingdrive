@@ -1,7 +1,7 @@
 ---
 id: TAURI-008
 title: Standard File Manager Keyboard Shortcuts
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: TAURI-000
 priority: Medium
@@ -21,7 +21,7 @@ The 2026-09-03 review found no keybinds for refresh, new folder, or hidden files
 - [x] `explorer.newFolder`: Ctrl/Cmd+Shift+N creates a folder in the current directory and starts rename
 - [x] `explorer.toggleHiddenFiles`: Ctrl+H on Linux/Windows, Cmd+Shift+. on macOS
 - [x] Shortcuts do not fire while an input or rename field has focus (`useKeybind` default)
-- [ ] Verified in the Linux desktop app (done together with TAURI-006)
+- [x] Verified in the Linux desktop app (web UI on the same interface, 2026-10-01; see TAURI-006)
 
 ## Notes
 

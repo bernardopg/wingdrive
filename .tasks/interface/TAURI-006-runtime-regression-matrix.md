@@ -31,3 +31,28 @@ Test the daemon-client path and native windows. A Vite build or typecheck alone 
 - Settings opened as a second native window. The Job Manager popover and full jobs screen rendered real history with nine jobs.
 - `bun run tauri:dev:no-watch` reached the native runner but GTK initialization failed on this Wayland session. Running Vite and the same debug binary with XWayland loaded the app successfully. The packaged runtime remains unproven.
 - Grid, list, media, column, file opening, destructive operations, Quick Preview, Inspector, Spacedrop, and cross-platform CI remain pending because the current library has no physical location and only Linux was available.
+
+## Linux Runtime Session 2026-10-01
+
+Isolated daemon (`--data-dir <scratch> --instance clitest`) plus `sd-server` and the web build in Chrome; the same React interface the Tauri shell hosts. Native-only items (Tauri windows, GTK, Quick Look, Spacedrop) still need the desktop binary.
+
+Passed:
+- Location added from the CLI appears in the sidebar; browsing and double-click into folders work.
+- New Folder (Ctrl+Shift+N) creates a free "Untitled Folder" name and enters rename; rename to "Projetos" renamed on disk.
+- Sort menu: choosing the active option flips the direction; arrow icon and order follow; direction persists per tab across reloads.
+- Ctrl+H shows and hides dotfiles; F5 refreshes without reloading the page.
+- Delete key opens the confirmation, the file moves to the trash, and the dialog closes in about 200 ms.
+
+Bugs found and fixed in this session:
+- `sd-server` panicked at startup (axum 0.8 route syntax).
+- Web UI rendered blank without the private Spacebot repo.
+- Directory names sorted case-sensitively in SQL.
+- The delete dialog never closed after confirming.
+- `useWaitForJob` missed events of fast jobs and waited 30 s.
+- The overflow sort submenu showed a stale direction.
+- `sd-cli file list` labelled folders as files and dropped extensions.
+
+Open:
+- WATCH-003: deleted files stay listed (index not updated by the watcher).
+- Device shows as "Unknown Device" in an isolated instance; check whether a fresh install names the device.
+- Grid, list, media, column views beyond grid; copy/move with progress; Inspector, Quick Preview, Job Manager windows; native Tauri run.
