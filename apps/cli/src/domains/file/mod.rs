@@ -122,19 +122,25 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 					table.set_header(vec!["Name", "Type", "Size", "Modified"]);
 
 					for file in &listing.files {
-						// Determine if this is a directory by checking if size is None
-						// In WingDrive, directories typically have size = 0 or None
-						let is_directory = file.size == 0;
-						let file_type = if is_directory { "Directory" } else { "File" };
+						use sd_core::domain::file::EntryKind;
 
-						let size_str = if is_directory {
-							"-".to_string()
-						} else {
-							format_bytes(file.size)
+						let file_type = match file.kind {
+							EntryKind::File => "File",
+							EntryKind::Directory => "Directory",
+							EntryKind::Symlink => "Symlink",
+						};
+						let size_str = match file.kind {
+							EntryKind::Directory => "-".to_string(),
+							_ => format_bytes(file.size),
+						};
+						// `name` excludes the extension
+						let name = match &file.extension {
+							Some(ext) if !ext.is_empty() => format!("{}.{ext}", file.name),
+							_ => file.name.clone(),
 						};
 
 						table.add_row(vec![
-							file.name.clone(),
+							name,
 							file_type.to_string(),
 							size_str,
 							file.modified_at.format("%Y-%m-%d %H:%M:%S").to_string(),

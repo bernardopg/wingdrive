@@ -254,7 +254,7 @@ impl DirectoryListingQuery {
 			SortDirection::Desc => "DESC",
 		};
 		match self.input.sort_by {
-			DirectorySortBy::Name => sql_query.push_str(&format!("e.name {dir}")),
+			DirectorySortBy::Name => sql_query.push_str(&format!("e.name COLLATE NOCASE {dir}")),
 			DirectorySortBy::Modified => sql_query.push_str(&format!("e.modified_at {dir}")),
 			DirectorySortBy::Size => sql_query.push_str(&format!("e.size {dir}")),
 			DirectorySortBy::Type => {
@@ -262,7 +262,7 @@ impl DirectoryListingQuery {
 					// Only add kind sorting if folders_first isn't already set
 					sql_query.push_str("e.kind DESC, ");
 				}
-				sql_query.push_str(&format!("e.name {dir}"));
+				sql_query.push_str(&format!("e.name COLLATE NOCASE {dir}"));
 			}
 		}
 
