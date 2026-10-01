@@ -11,23 +11,23 @@
 //!    - Multi-phase processing
 //! 5. Showing detailed results and metrics
 
-use sd_core::{
-	config::{AppConfig, JobLoggingConfig},
-	infra::{db::entities, event::Event, job::types::JobStatus},
-	location::{create_location, IndexMode, LocationCreateArgs},
-	Core,
-};
 use sea_orm::{
 	ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QuerySelect,
 };
 use std::path::PathBuf;
 use tokio::time::{sleep, Duration};
+use wing_core::{
+	config::{AppConfig, JobLoggingConfig},
+	infra::{db::entities, event::Event, job::types::JobStatus},
+	location::{create_location, IndexMode, LocationCreateArgs},
+	Core,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Initialize logging with more detail
 	tracing_subscriber::fmt()
-		.with_env_filter("sd_core=debug,desktop_indexing_demo=info")
+		.with_env_filter("wing_core=debug,desktop_indexing_demo=info")
 		.init();
 
 	println!("=== WingDrive 2 Desktop Indexing Demo ===\n");

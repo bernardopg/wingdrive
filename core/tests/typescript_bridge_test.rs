@@ -22,10 +22,10 @@
 mod helpers;
 
 use helpers::*;
-use sd_core::location::IndexMode;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tokio::time::Duration;
+use wing_core::location::IndexMode;
 
 /// Connection info passed from Rust test harness to TypeScript tests
 #[derive(Debug, Serialize, Deserialize)]

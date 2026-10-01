@@ -67,7 +67,7 @@ fn main() -> Result<()> {
 			"  setup        Setup development environment (downloads deps, generates config)"
 		);
 		eprintln!("  build-ios    Build sd-ios-core XCFramework for iOS devices and simulator");
-		eprintln!("  build-mobile Build sd-mobile-core for React Native iOS/Android");
+		eprintln!("  build-mobile Build wing-mobile-core for React Native iOS/Android");
 		eprintln!("  test-core    Run all core integration tests with progress tracking");
 		eprintln!("  bump <ver>   Bump version across all packages (e.g. bump 2.0.0-alpha.2)");
 		eprintln!(
@@ -267,9 +267,9 @@ fn setup() -> Result<()> {
 		"build",
 		"--release",
 		"--features",
-		"sd-core/ffmpeg,sd-core/heif",
+		"wing-core/ffmpeg,wing-core/heif",
 		"--bin",
-		"sd-daemon",
+		"wing-daemon",
 		"--target",
 		&target_triple,
 	];
@@ -289,18 +289,18 @@ fn setup() -> Result<()> {
 	// Tauri's externalBin appends the target triple to binary names
 	let exe_ext = if cfg!(windows) { ".exe" } else { "" };
 	let daemon_source = project_root.join(format!(
-		"target/{}/release/sd-daemon{}",
+		"target/{}/release/wing-daemon{}",
 		target_triple, exe_ext
 	));
 	let daemon_target = project_root.join(format!(
-		"target/release/sd-daemon-{}{}",
+		"target/release/wing-daemon-{}{}",
 		target_triple, exe_ext
 	));
 
 	if daemon_source.exists() {
 		fs::copy(&daemon_source, &daemon_target)
 			.context("Failed to create target-suffixed daemon binary")?;
-		println!("   ✓ Created sd-daemon-{}{}", target_triple, exe_ext);
+		println!("   ✓ Created wing-daemon-{}{}", target_triple, exe_ext);
 	}
 
 	// On Windows, copy DLLs to target directories so executables can find them at runtime
@@ -521,7 +521,7 @@ fn build_ios() -> Result<()> {
 	Ok(())
 }
 
-/// Build sd-mobile-core for React Native (iOS and Android)
+/// Build wing-mobile-core for React Native (iOS and Android)
 ///
 /// This task builds the mobile core for use with Expo/React Native.
 /// For iOS: Builds static libraries for device and simulator targets
@@ -556,7 +556,7 @@ fn build_mobile() -> Result<()> {
 						"build",
 						"--release",
 						"-p",
-						"sd-mobile-core",
+						"wing-mobile-core",
 						"--target",
 						target,
 					])
@@ -600,7 +600,7 @@ fn build_mobile() -> Result<()> {
 					"build",
 					"--release",
 					"-p",
-					"sd-mobile-core",
+					"wing-mobile-core",
 					"--target",
 					target,
 				])
@@ -621,7 +621,7 @@ fn build_mobile() -> Result<()> {
 	}
 
 	// Copy built libraries to the iOS module directory
-	let ios_module_dir = project_root.join("apps/mobile/modules/sd-mobile-core/ios");
+	let ios_module_dir = project_root.join("apps/mobile/modules/wing-mobile-core/ios");
 	let target_dir = project_root.join("target");
 
 	// Create libs directory structure
@@ -741,7 +741,7 @@ fn create_xcframework_info_plist(framework_name: &str) -> String {
 
 /// Run all core integration tests with progress tracking
 ///
-/// This command runs all sd-core integration tests defined in test_core.rs.
+/// This command runs all wing-core integration tests defined in test_core.rs.
 /// Tests are run sequentially with --test-threads=1 to avoid conflicts.
 /// Use --verbose to see full test output.
 fn test_core_command(verbose: bool) -> Result<()> {

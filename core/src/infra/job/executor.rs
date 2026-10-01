@@ -13,10 +13,10 @@ use super::{
 };
 use crate::{config::JobLoggingConfig, library::Library};
 use async_trait::async_trait;
-use sd_task_system::{ExecStatus, Interrupter, Task, TaskId};
 use std::{path::PathBuf, sync::Arc};
 use tokio::sync::{broadcast, mpsc, watch, Mutex};
 use tracing::{debug, error, info, span, warn, Level};
+use wing_task_system::{ExecStatus, Interrupter, Task, TaskId};
 
 /// Executor that wraps a job for task system execution
 pub struct JobExecutor<J: JobHandler> {
@@ -323,7 +323,7 @@ impl<J: JobHandler> JobExecutor<J> {
 						" (ephemeral, no DB)"
 					},
 				);
-				Ok(ExecStatus::Done(sd_task_system::TaskOutput::Empty))
+				Ok(ExecStatus::Done(wing_task_system::TaskOutput::Empty))
 			}
 			Err(ref e) => {
 				if e.is_interrupted() {
@@ -489,7 +489,7 @@ impl<J: JobHandler + std::fmt::Debug> ErasedJob for JobExecutor<J> {
 		job_logs_dir: Option<std::path::PathBuf>,
 		persistence_complete_tx: Option<tokio::sync::oneshot::Sender<()>>,
 		should_persist: bool,
-	) -> Box<dyn sd_task_system::Task<JobError>> {
+	) -> Box<dyn wing_task_system::Task<JobError>> {
 		// Update the executor's state with the new parameters
 		let mut executor = *self;
 		// Create file logger if job logging is enabled

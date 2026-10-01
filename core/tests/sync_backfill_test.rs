@@ -9,16 +9,16 @@ use helpers::{
 	create_snapshot_dir, create_test_volume, init_test_tracing, register_device, wait_for_indexing,
 	wait_for_sync, MockTransport, TestConfigBuilder, TestDataDir,
 };
-use sd_core::{
+use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QuerySelect};
+use std::sync::Arc;
+use tokio::time::Duration;
+use uuid::Uuid;
+use wing_core::{
 	infra::{db::entities, sync::NetworkTransport},
 	location::{create_location, IndexMode, LocationCreateArgs},
 	service::Service,
 	Core,
 };
-use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QuerySelect};
-use std::sync::Arc;
-use tokio::time::Duration;
-use uuid::Uuid;
 
 #[tokio::test]
 async fn test_initial_backfill_alice_indexes_first() -> anyhow::Result<()> {
@@ -705,7 +705,7 @@ async fn test_volume_resource_events_on_sync() -> anyhow::Result<()> {
 
 	// Spawn event listener task
 	let event_listener = tokio::spawn(async move {
-		use sd_core::infra::event::Event;
+		use wing_core::infra::event::Event;
 
 		tracing::info!("Bob's event listener started, waiting for volume ResourceChanged...");
 
@@ -863,8 +863,8 @@ async fn test_volume_resource_events_on_sync() -> anyhow::Result<()> {
 
 /// Verify that known directories from the WingDrive source exist on both devices
 async fn verify_known_directories(
-	library_alice: &Arc<sd_core::library::Library>,
-	library_bob: &Arc<sd_core::library::Library>,
+	library_alice: &Arc<wing_core::library::Library>,
+	library_bob: &Arc<wing_core::library::Library>,
 ) -> anyhow::Result<()> {
 	use sea_orm::EntityTrait;
 
@@ -924,8 +924,8 @@ async fn verify_known_directories(
 
 /// Verify closure table integrity by checking ancestor-descendant relationships
 async fn verify_closure_table_integrity(
-	library_alice: &Arc<sd_core::library::Library>,
-	library_bob: &Arc<sd_core::library::Library>,
+	library_alice: &Arc<wing_core::library::Library>,
+	library_bob: &Arc<wing_core::library::Library>,
 ) -> anyhow::Result<()> {
 	use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
@@ -1032,8 +1032,8 @@ async fn verify_closure_table_integrity(
 
 /// Verify parent-child relationships match between Alice and Bob
 async fn verify_parent_child_relationships(
-	library_alice: &Arc<sd_core::library::Library>,
-	library_bob: &Arc<sd_core::library::Library>,
+	library_alice: &Arc<wing_core::library::Library>,
+	library_bob: &Arc<wing_core::library::Library>,
 ) -> anyhow::Result<()> {
 	use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
@@ -1133,8 +1133,8 @@ async fn verify_parent_child_relationships(
 
 /// Verify file metadata matches for sample files
 async fn verify_file_metadata_accuracy(
-	library_alice: &Arc<sd_core::library::Library>,
-	library_bob: &Arc<sd_core::library::Library>,
+	library_alice: &Arc<wing_core::library::Library>,
+	library_bob: &Arc<wing_core::library::Library>,
 ) -> anyhow::Result<()> {
 	use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
@@ -1250,8 +1250,8 @@ async fn verify_file_metadata_accuracy(
 
 /// Verify nested file structure and ancestor chains
 async fn verify_nested_file_structure(
-	library_alice: &Arc<sd_core::library::Library>,
-	library_bob: &Arc<sd_core::library::Library>,
+	library_alice: &Arc<wing_core::library::Library>,
+	library_bob: &Arc<wing_core::library::Library>,
 ) -> anyhow::Result<()> {
 	use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 

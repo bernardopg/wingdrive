@@ -6,7 +6,9 @@
 mod helpers;
 
 use helpers::*;
-use sd_core::{
+use tempfile::TempDir;
+use tokio::{fs, time::Duration};
+use wing_core::{
 	domain::addressing::{SdPath, SdPathBatch},
 	location::IndexMode,
 	ops::files::copy::{
@@ -14,8 +16,6 @@ use sd_core::{
 		job::{CopyOptions, FileCopyJob, MoveMode},
 	},
 };
-use tempfile::TempDir;
-use tokio::{fs, time::Duration};
 
 /// Helper to create test files with content
 async fn create_test_file(path: &std::path::Path, content: &str) -> Result<(), std::io::Error> {
@@ -137,7 +137,7 @@ async fn test_copy_with_ephemeral_index() -> anyhow::Result<()> {
 	create_test_file(&source_dir.join("file2.txt"), "Ephemeral content 2").await?;
 
 	// Index the destination directory in ephemeral mode first
-	use sd_core::{
+	use wing_core::{
 		domain::addressing::SdPath,
 		ops::indexing::{IndexScope, IndexerJob, IndexerJobConfig},
 	};
@@ -300,7 +300,7 @@ async fn test_move_action_construction() {
 // Jobs are constructed directly, and validation happens during execution
 // #[tokio::test]
 // async fn test_action_validation_logic() {
-// 	let result = sd_core::ops::files::copy::action::FileCopyAction::builder()
+// 	let result = wing_core::ops::files::copy::action::FileCopyAction::builder()
 // 		.destination("/tmp/dest")
 // 		.build();
 // 	assert!(result.is_err());

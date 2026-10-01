@@ -7,7 +7,7 @@ use crate as bench;
 use crate::generator::DatasetGenerator;
 
 #[derive(Parser, Debug)]
-#[command(name = "sd-bench")]
+#[command(name = "wing-bench")]
 #[command(about = "WingDrive benchmarking harness", long_about = None)]
 pub struct Cli {
 	#[command(subcommand)]
@@ -173,7 +173,7 @@ async fn mkdata(recipe_path: PathBuf, dataset_root: Option<PathBuf>) -> Result<(
 	let all_ready = recipe
 		.locations
 		.iter()
-		.all(|loc| loc.path.join(".sd-bench-generated").exists());
+		.all(|loc| loc.path.join(".wing-bench-generated").exists());
 	if all_ready {
 		println!("Dataset already present (markers found), skipping generation.");
 		return Ok(());
@@ -533,7 +533,7 @@ async fn run_all(
 					let all_marked = parsed
 						.locations
 						.iter()
-						.all(|loc| loc.path.join(".sd-bench-generated").exists());
+						.all(|loc| loc.path.join(".wing-bench-generated").exists());
 
 					if !all_marked {
 						println!("Generating dataset at {}", location_path.display());

@@ -1,6 +1,6 @@
-use spacedrive_sdk::{action, action_execute};
+use wingdrive_sdk::{action, action_execute};
 
-use spacedrive_sdk::prelude::*;
+use wingdrive_sdk::prelude::*;
 use uuid::Uuid;
 
 use crate::models::Album;

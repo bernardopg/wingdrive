@@ -2,7 +2,7 @@ use crate::{context::Context, util::prelude::*};
 use anyhow::Result;
 use clap::Subcommand;
 use comfy_table::{presets::UTF8_BORDERS_ONLY, Cell, Table};
-use sd_core::ops::spaces::{SpacesListQuery, SpacesListQueryInput};
+use wing_core::ops::spaces::{SpacesListQuery, SpacesListQueryInput};
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum SpacesCmd {
@@ -41,7 +41,7 @@ async fn list_spaces(ctx: &Context) -> Result<()> {
 		serde_json::to_string_pretty(&response)?
 	);
 
-	let result: sd_core::ops::spaces::SpacesListOutput = serde_json::from_value(response)
+	let result: wing_core::ops::spaces::SpacesListOutput = serde_json::from_value(response)
 		.map_err(|e| anyhow::anyhow!("Failed to parse response: {}", e))?;
 
 	println!("\nQuery executed successfully!");
@@ -71,8 +71,8 @@ async fn list_spaces(ctx: &Context) -> Result<()> {
 }
 
 async fn get_layout(ctx: &Context, space_id: String) -> Result<()> {
-	use sd_core::ops::spaces::{SpaceLayoutQuery, SpaceLayoutQueryInput};
 	use uuid::Uuid;
+	use wing_core::ops::spaces::{SpaceLayoutQuery, SpaceLayoutQueryInput};
 
 	let library_id = ctx
 		.library_id

@@ -15,8 +15,8 @@
 use std::fs;
 use std::path::Path;
 
-use sd_core::branding;
 use tempfile::tempdir;
+use wing_core::branding;
 
 /// Points every home-relative lookup at `home` for the current process.
 fn set_home(home: &Path) {

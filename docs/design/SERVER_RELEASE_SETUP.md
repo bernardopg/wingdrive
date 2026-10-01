@@ -4,7 +4,7 @@ This document explains the changes made to integrate WingDrive server builds int
 
 ## Overview
 
-The server app (`sd-server`) is built and released in two formats:
+The server app (`wing-server`) is built and released in two formats:
 1. **Static binaries** - For systemd, bare metal, and custom deployments
 2. **Docker images** - For containerized deployments (Docker, Kubernetes, NAS systems)
 
@@ -74,7 +74,7 @@ Runtime stage:
 
 **Enabled features in build:**
 ```dockerfile
-cargo build --release -p sd-server --features sd-core/heif,sd-core/ffmpeg
+cargo build --release -p wing-server --features wing-core/heif,wing-core/ffmpeg
 ```
 
 This enables:
@@ -110,19 +110,19 @@ This enables:
 **Test static binary build:**
 ```bash
 # From project root
-cargo build --release -p sd-server --features sd-core/heif,sd-core/ffmpeg
+cargo build --release -p wing-server --features wing-core/heif,wing-core/ffmpeg
 
 # Test locally
-./target/release/sd-server --data-dir /tmp/sd-test
+./target/release/wing-server --data-dir /tmp/sd-test
 ```
 
 **Test Docker build:**
 ```bash
 # From project root
-docker build -f apps/server/Dockerfile -t sd-server-test .
+docker build -f apps/server/Dockerfile -t wing-server-test .
 
 # Run locally
-docker run -p 8080:8080 -e SD_AUTH=admin:test sd-server-test
+docker run -p 8080:8080 -e SD_AUTH=admin:test wing-server-test
 ```
 
 **Test multi-arch Docker build:**
@@ -131,7 +131,7 @@ docker buildx create --use
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -f apps/server/Dockerfile \
-  -t sd-server-multiarch \
+  -t wing-server-multiarch \
   .
 ```
 
@@ -252,7 +252,7 @@ docker pull ghcr.io/bernardopg/wingdrive/server:latest
 
 ### Potential Enhancements
 
-1. **Add Windows server binary** - Build `sd-server.exe` for Windows Server deployments
+1. **Add Windows server binary** - Build `wing-server.exe` for Windows Server deployments
 2. **Package formats** - Create `.deb` and `.rpm` packages for easier installation
 3. **ARM macOS** - Server binary for macOS (though desktop app is preferred)
 4. **Static linking** - Fully static binaries using `musl` for maximum compatibility
@@ -269,7 +269,7 @@ docker pull ghcr.io/bernardopg/wingdrive/server:latest
 
 ### Build fails with "media features not found"
 
-The workflow now automatically includes `sd-core/heif` and `sd-core/ffmpeg` features. If this fails:
+The workflow now automatically includes `wing-core/heif` and `wing-core/ffmpeg` features. If this fails:
 - Check native dependencies are installed (cmake, nasm, FFmpeg dev packages)
 - Verify setup-system action runs successfully
 

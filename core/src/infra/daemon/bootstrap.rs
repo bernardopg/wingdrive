@@ -159,7 +159,7 @@ fn initialize_tracing_with_file_logging(
 
 		// Set up layered subscriber with all streams plus the log event streaming layer.
 		// If a tracing subscriber is already installed (e.g. when the daemon is embedded
-		// inside sd-server which sets up its own basic subscriber first), fall back to
+		// inside wing-server which sets up its own basic subscriber first), fall back to
 		// the existing one — losing the daemon's file logging is preferable to crashing.
 		if let Err(e) = tracing_subscriber::registry()
 			.with(layers)

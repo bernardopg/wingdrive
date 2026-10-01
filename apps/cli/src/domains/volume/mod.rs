@@ -6,7 +6,7 @@ use clap::Subcommand;
 use crate::util::prelude::*;
 
 use crate::context::Context;
-use sd_core::ops::volumes::{
+use wing_core::ops::volumes::{
 	add_cloud::VolumeAddCloudOutput, remove_cloud::VolumeRemoveCloudOutput,
 };
 
@@ -55,7 +55,7 @@ pub async fn run(ctx: &Context, cmd: VolumeCmd) -> Result<()> {
 				args.yes,
 			)?;
 
-			let input: sd_core::ops::volumes::remove_cloud::VolumeRemoveCloudInput =
+			let input: wing_core::ops::volumes::remove_cloud::VolumeRemoveCloudInput =
 				args.try_into().map_err(|e: String| anyhow::anyhow!(e))?;
 
 			let out: VolumeRemoveCloudOutput = execute_action!(ctx, input);
@@ -67,10 +67,10 @@ pub async fn run(ctx: &Context, cmd: VolumeCmd) -> Result<()> {
 		VolumeCmd::List => {
 			ctx.require_current_library()?;
 
-			let input = sd_core::ops::volumes::list::query::VolumeListQueryInput {
-				filter: sd_core::ops::volumes::VolumeFilter::TrackedOnly,
+			let input = wing_core::ops::volumes::list::query::VolumeListQueryInput {
+				filter: wing_core::ops::volumes::VolumeFilter::TrackedOnly,
 			};
-			let output: sd_core::ops::volumes::list::output::VolumeListOutput =
+			let output: wing_core::ops::volumes::list::output::VolumeListOutput =
 				execute_query!(ctx, input);
 
 			if output.volumes.is_empty() {

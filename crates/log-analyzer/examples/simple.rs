@@ -6,12 +6,12 @@ use log_analyzer::LogAnalyzer;
 fn main() -> Result<()> {
 	// Example log content
 	let log_content = r#"
-2025-11-16T07:19:57.232531Z DEBUG ThreadId(02) sd_core::service::sync::peer: Recorded ACK from peer peer=1817e146 hlc=HLC(1763277539319,1,:1817e146)
-2025-11-16T07:19:57.232532Z DEBUG ThreadId(02) sd_core::service::sync::peer: Recorded ACK from peer peer=1817e146 hlc=HLC(1763277539319,2,:1817e146)
-2025-11-16T07:19:57.232533Z DEBUG ThreadId(02) sd_core::service::sync::peer: Recorded ACK from peer peer=1817e146 hlc=HLC(1763277539320,1,:1817e146)
-2025-11-16T07:19:57.232534Z INFO sd_core::service::sync: Sync completed successfully
-2025-11-16T07:19:57.232535Z DEBUG ThreadId(03) sd_core::service::sync::protocol_handler: Handling shared change content_identity
-2025-11-16T07:19:57.232536Z DEBUG ThreadId(03) sd_core::service::sync::protocol_handler: Handling shared change content_identity
+2025-11-16T07:19:57.232531Z DEBUG ThreadId(02) wing_core::service::sync::peer: Recorded ACK from peer peer=1817e146 hlc=HLC(1763277539319,1,:1817e146)
+2025-11-16T07:19:57.232532Z DEBUG ThreadId(02) wing_core::service::sync::peer: Recorded ACK from peer peer=1817e146 hlc=HLC(1763277539319,2,:1817e146)
+2025-11-16T07:19:57.232533Z DEBUG ThreadId(02) wing_core::service::sync::peer: Recorded ACK from peer peer=1817e146 hlc=HLC(1763277539320,1,:1817e146)
+2025-11-16T07:19:57.232534Z INFO wing_core::service::sync: Sync completed successfully
+2025-11-16T07:19:57.232535Z DEBUG ThreadId(03) wing_core::service::sync::protocol_handler: Handling shared change content_identity
+2025-11-16T07:19:57.232536Z DEBUG ThreadId(03) wing_core::service::sync::protocol_handler: Handling shared change content_identity
 "#;
 
 	// Parse and analyze

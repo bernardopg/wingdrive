@@ -4,14 +4,14 @@
 //! create files and then dispatch copy actions where the source SdPath is on
 //! Alice's device and the destination is on Bob's device.
 
-use sd_core::{
+use std::{env, path::PathBuf, time::Duration};
+use tokio::time::timeout;
+use wing_core::{
 	domain::addressing::{SdPath, SdPathBatch},
 	ops::files::copy::{action::FileCopyAction, CopyOptions},
 	testing::CargoTestRunner,
 	Core,
 };
-use std::{env, path::PathBuf, time::Duration};
-use tokio::time::timeout;
 
 /// Alice's cross-device copy scenario - sender role
 #[tokio::test]
@@ -336,10 +336,11 @@ async fn bob_cross_device_copy_scenario() {
 		let protocol_registry = networking.protocol_registry();
 		let registry_guard = protocol_registry.read().await;
 		if let Some(file_transfer_handler) = registry_guard.get_handler("file_transfer") {
-			if let Some(handler) = file_transfer_handler
-				.as_any()
-				.downcast_ref::<sd_core::service::network::protocol::FileTransferProtocolHandler>(
-			) {
+			if let Some(handler) =
+				file_transfer_handler
+					.as_any()
+					.downcast_ref::<wing_core::service::network::protocol::FileTransferProtocolHandler>(
+				) {
 				handler.add_allowed_path(received_dir.to_path_buf());
 				println!("Bob: Added {} to allowed paths", received_dir.display());
 			}

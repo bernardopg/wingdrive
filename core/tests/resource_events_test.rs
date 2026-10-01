@@ -3,7 +3,11 @@
 //! This test indexes a directory and collects all ResourceChanged events
 //! to verify the normalized cache event system works end-to-end.
 
-use sd_core::{
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
+use std::{collections::HashMap, sync::Arc, time::Duration};
+use tempfile::TempDir;
+use tokio::time::timeout;
+use wing_core::{
 	infra::{
 		db::entities,
 		event::{Event, EventSubscriber},
@@ -11,10 +15,6 @@ use sd_core::{
 	location::{create_location, IndexMode, LocationCreateArgs},
 	Core,
 };
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
-use std::{collections::HashMap, sync::Arc, time::Duration};
-use tempfile::TempDir;
-use tokio::time::timeout;
 
 /// Test fixture that tracks all ResourceChanged events
 struct EventCollector {
@@ -23,7 +23,7 @@ struct EventCollector {
 }
 
 impl EventCollector {
-	fn new(event_bus: &Arc<sd_core::infra::event::EventBus>) -> Self {
+	fn new(event_bus: &Arc<wing_core::infra::event::EventBus>) -> Self {
 		Self {
 			events: Arc::new(tokio::sync::Mutex::new(Vec::new())),
 			subscriber: event_bus.subscribe(),

@@ -67,7 +67,7 @@ pub async fn begin_drag(
 					.map_err(|e| format!("Failed to get overlay NSWindow: {}", e))?;
 
 				let success = unsafe {
-					sd_desktop_macos::begin_native_drag(
+					wing_desktop_macos::begin_native_drag(
 						&source_ns_window,
 						&items_json.as_str().into(),
 						&overlay_ns_window,
@@ -131,7 +131,7 @@ pub async fn end_drag(
 	#[cfg(target_os = "macos")]
 	{
 		unsafe {
-			sd_desktop_macos::end_native_drag(&session_id.as_str().into());
+			wing_desktop_macos::end_native_drag(&session_id.as_str().into());
 		}
 
 		let overlay_label = format!("drag-overlay-{}", session_id);

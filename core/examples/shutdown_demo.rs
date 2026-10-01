@@ -1,8 +1,8 @@
 //! Demonstration of jobs being paused during shutdown
 
-use sd_core::{infra::job::types::JobStatus, Core};
 use std::time::Duration;
 use tokio::time::sleep;
+use wing_core::{infra::job::types::JobStatus, Core};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

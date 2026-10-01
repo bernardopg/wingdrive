@@ -1,15 +1,15 @@
 //! Library demo using full core lifecycle
 
-use sd_core::{infra::db::entities, Core};
 use sea_orm::{ActiveModelTrait, ActiveValue::NotSet, EntityTrait, PaginatorTrait, Set};
 use std::path::PathBuf;
 use uuid::Uuid;
+use wing_core::{infra::db::entities, Core};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Initialize logging
 	tracing_subscriber::fmt()
-		.with_env_filter("sd_core=debug")
+		.with_env_filter("wing_core=debug")
 		.init();
 
 	println!("=== WingDrive Core Lifecycle Demo ===\n");

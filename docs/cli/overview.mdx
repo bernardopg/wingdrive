@@ -31,7 +31,7 @@ The refactored daemon architecture provides:
 
 ```bash
 # Build the CLI
-cargo build --release --package sd-cli --package sd-core
+cargo build --release --package wing-cli --package wing-core
 
 # Or build just the CLI for development
 cd apps/cli && cargo build
@@ -45,10 +45,10 @@ Also you may create an alias to the cli as `sd` or `wingdrive`.
 Example for `sd`:
 ```bash
 # For release build
-echo 'alias sd="/path/to/wingdrive/target/release/sd-cli"' >> ~/.zshrc
+echo 'alias sd="/path/to/wingdrive/target/release/wing-cli"' >> ~/.zshrc
 
 # For debug build (faster compilation)
-echo 'alias sd="/path/to/wingdrive/target/debug/sd-cli"' >> ~/.zshrc
+echo 'alias sd="/path/to/wingdrive/target/debug/wing-cli"' >> ~/.zshrc
 
 # Reload your shell configuration
 source ~/.zshrc
@@ -71,7 +71,7 @@ sd job monitor
 sd status
 ```
 
-**Note**: If you haven't set up the alias, use `./target/debug/sd-cli` or `./target/release/sd-cli` instead of `sd`.
+**Note**: If you haven't set up the alias, use `./target/debug/wing-cli` or `./target/release/wing-cli` instead of `sd`.
 
 ## Usage
 

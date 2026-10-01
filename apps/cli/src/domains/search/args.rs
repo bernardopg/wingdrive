@@ -2,8 +2,8 @@ use chrono::{DateTime, Utc};
 use clap::Args;
 use uuid::Uuid;
 
-use sd_core::domain::ContentKind;
-use sd_core::ops::search::input::{
+use wing_core::domain::ContentKind;
+use wing_core::ops::search::input::{
 	DateField, DateRangeFilter, FileSearchInput, PaginationOptions, SearchFilters, SearchMode,
 	SearchScope, SizeRangeFilter, SortDirection, SortField, SortOptions, TagFilter,
 };
@@ -146,7 +146,7 @@ impl From<FileSearchArgs> for FileSearchInput {
 
 		let scope = if let Some(sd_path_str) = args.sd_path {
 			// Parse SD path from string
-			match sd_core::domain::addressing::SdPath::from_uri(&sd_path_str) {
+			match wing_core::domain::addressing::SdPath::from_uri(&sd_path_str) {
 				Ok(sd_path) => SearchScope::Path { path: sd_path },
 				Err(_) => {
 					eprintln!(

@@ -7,7 +7,7 @@ use comfy_table::{presets::UTF8_BORDERS_ONLY, Attribute, Cell, Table};
 use crate::util::prelude::*;
 
 use crate::{context::Context, util::error::CliError};
-use sd_core::{infra::job::handle::JobReceipt, ops::libraries::list::query::ListLibrariesQuery};
+use wing_core::{infra::job::handle::JobReceipt, ops::libraries::list::query::ListLibrariesQuery};
 
 use self::args::*;
 
@@ -33,9 +33,9 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 			let library_id = if let Some(id) = args.library {
 				id
 			} else {
-				let libs: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
+				let libs: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
 					ctx,
-					sd_core::ops::libraries::list::query::ListLibrariesInput {
+					wing_core::ops::libraries::list::query::ListLibrariesInput {
 						include_stats: false
 					}
 				);
@@ -57,9 +57,9 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 			});
 		}
 		IndexCmd::QuickScan(args) => {
-			let libs: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
+			let libs: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
 				ctx,
-				sd_core::ops::libraries::list::query::ListLibrariesInput {
+				wing_core::ops::libraries::list::query::ListLibrariesInput {
 					include_stats: false
 				}
 			);
@@ -77,9 +77,9 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 			});
 		}
 		IndexCmd::Browse(args) => {
-			let libs: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
+			let libs: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
 				ctx,
-				sd_core::ops::libraries::list::query::ListLibrariesInput {
+				wing_core::ops::libraries::list::query::ListLibrariesInput {
 					include_stats: false
 				}
 			);
@@ -96,13 +96,13 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 		}
 		IndexCmd::Verify(args) => {
 			let input = args.to_input();
-			let out: sd_core::ops::indexing::verify::output::IndexVerifyOutput =
+			let out: wing_core::ops::indexing::verify::output::IndexVerifyOutput =
 				execute_action!(ctx, input);
 
 			print_output!(
 				ctx,
 				&out,
-				|result: &sd_core::ops::indexing::verify::output::IndexVerifyOutput| {
+				|result: &wing_core::ops::indexing::verify::output::IndexVerifyOutput| {
 					println!("\n╔══════════════════════════════════════════════════════════════╗");
 					println!("║          INDEX INTEGRITY VERIFICATION REPORT                ║");
 					println!("╠══════════════════════════════════════════════════════════════╣");
@@ -239,13 +239,13 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 		}
 		IndexCmd::EphemeralCache(args) => {
 			let input = args.to_input();
-			let out: sd_core::ops::core::ephemeral_status::EphemeralCacheStatus =
+			let out: wing_core::ops::core::ephemeral_status::EphemeralCacheStatus =
 				execute_core_query!(ctx, input);
 
 			print_output!(
 				ctx,
 				&out,
-				|status: &sd_core::ops::core::ephemeral_status::EphemeralCacheStatus| {
+				|status: &wing_core::ops::core::ephemeral_status::EphemeralCacheStatus| {
 					println!();
 					println!("╔══════════════════════════════════════════════════════════════╗");
 					println!("║           UNIFIED EPHEMERAL INDEX CACHE                      ║");
@@ -419,14 +419,14 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 		}
 		IndexCmd::ResetCache => {
 			let input =
-				sd_core::ops::core::ephemeral_status::EphemeralCacheResetInput { confirm: true };
-			let out: sd_core::ops::core::ephemeral_status::EphemeralCacheResetOutput =
+				wing_core::ops::core::ephemeral_status::EphemeralCacheResetInput { confirm: true };
+			let out: wing_core::ops::core::ephemeral_status::EphemeralCacheResetOutput =
 				execute_action!(ctx, input);
 
 			print_output!(
 				ctx,
 				&out,
-				|result: &sd_core::ops::core::ephemeral_status::EphemeralCacheResetOutput| {
+				|result: &wing_core::ops::core::ephemeral_status::EphemeralCacheResetOutput| {
 					println!();
 					println!("╔══════════════════════════════════════════════════════════════╗");
 					println!("║           EPHEMERAL CACHE RESET                              ║");

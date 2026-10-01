@@ -1,7 +1,7 @@
 use clap::Args;
 use uuid::Uuid;
 
-use sd_core::ops::redundancy::summary::RedundancySummaryInput;
+use wing_core::ops::redundancy::summary::RedundancySummaryInput;
 
 #[derive(Args, Debug)]
 pub struct SummaryArgs {

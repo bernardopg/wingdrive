@@ -4,18 +4,18 @@ HTTP server for WingDrive with embedded daemon (RPC only, no web UI).
 
 ## Overview
 
-`sd-server` runs the WingDrive daemon and exposes RPC endpoints over HTTP. Perfect for:
+`wing-server` runs the WingDrive daemon and exposes RPC endpoints over HTTP. Perfect for:
 - **NAS deployments** (TrueNAS, Unraid, Synology, etc.)
 - **Headless servers**
 - **Remote access** to your WingDrive libraries
 - **Docker/container environments**
-- **CLI-only usage** with `sd-cli`
+- **CLI-only usage** with `wing-cli`
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────┐
-│         sd-server (HTTP Server)         │
+│         wing-server (HTTP Server)         │
 │  ┌───────────────────────────────────┐  │
 │  │  Axum HTTP Server (Port 8080)     │  │
 │  │  ├─ /health (healthcheck)         │  │
@@ -45,16 +45,16 @@ Unlike Tauri (desktop app), the server:
 
 1. **Build the server:**
    ```bash
-   cargo build -p sd-server
+   cargo build -p wing-server
    ```
 
 2. **Run the server:**
    ```bash
    # Development mode (creates temp data dir)
-   cargo run -p sd-server
+   cargo run -p wing-server
 
    # Production mode (requires DATA_DIR)
-   DATA_DIR=/path/to/data cargo run -p sd-server --release
+   DATA_DIR=/path/to/data cargo run -p wing-server --release
    ```
 
 3. **Access the RPC endpoint:**
@@ -98,7 +98,7 @@ Perfect for TrueNAS, Unraid, or any Docker-compatible NAS.
 | `PORT` | HTTP server port | `8080` | No |
 | `SD_AUTH` | Authentication credentials (format: `user:pass,user2:pass2`) | None | Recommended |
 | `SD_P2P` | Enable P2P networking | `true` | No |
-| `RUST_LOG` | Log level | `info,sd_core=debug` | No |
+| `RUST_LOG` | Log level | `info,wing_core=debug` | No |
 
 ### Authentication
 
@@ -169,14 +169,14 @@ docker run -d \
 
 ```bash
 # Build server (RPC only)
-cargo build --release -p sd-server
+cargo build --release -p wing-server
 
 # Run server
-./target/release/sd-server --data-dir /path/to/data
+./target/release/wing-server --data-dir /path/to/data
 ```
 
 You can connect with:
-- `sd-cli` (CLI client)
+- `wing-cli` (CLI client)
 - Custom HTTP clients via `/rpc`
 - Tauri desktop app configured to connect to this server
 - Future web UI (not yet implemented)
@@ -185,10 +185,10 @@ You can connect with:
 
 ```bash
 # Run server in dev mode
-cargo run -p sd-server
+cargo run -p wing-server
 
 # Server starts on http://localhost:8080
-# Use sd-cli or custom client to interact with RPC endpoint
+# Use wing-cli or custom client to interact with RPC endpoint
 ```
 
 ## API Endpoints
@@ -239,7 +239,7 @@ Both use the same WingDrive core!
 ### Server won't start
 - Check `DATA_DIR` exists and is writable
 - Verify port 8080 is not in use: `lsof -i :8080`
-- Check logs: `RUST_LOG=debug cargo run -p sd-server`
+- Check logs: `RUST_LOG=debug cargo run -p wing-server`
 
 ### Can't connect to daemon
 - Ensure `daemon.sock` exists in `$DATA_DIR/daemon/`

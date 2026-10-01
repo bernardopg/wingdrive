@@ -49,7 +49,7 @@ This installs:
 
 ```bash
 cd core
-cargo test --package sd-core --test typescript_bridge_test -- --nocapture
+cargo test --package wing-core --test typescript_bridge_test -- --nocapture
 ```
 
 This will:
@@ -67,7 +67,7 @@ If you need to debug the TypeScript side independently:
 ```bash
 # Terminal 1: Start a daemon manually
 cd core
-cargo run --bin sd-daemon
+cargo run --bin wing-daemon
 
 # Terminal 2: Run TypeScript tests with manual config
 export BRIDGE_CONFIG_PATH=/path/to/bridge/config.json

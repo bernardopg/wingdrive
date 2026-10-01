@@ -403,7 +403,7 @@ For all of this to work, WingDrive core needs a proxy service that:
 3. Proxies SSE events back as WingDrive core subscription events.
 4. Handles connection lifecycle — what happens when the paired node goes offline, when the Spacebot instance restarts, when the library topology changes.
 
-This proxy lives in `sd-core`, not in the interface layer. The interface consumes it through the same `useCoreQuery` / `useCoreAction` / `useLibraryQuery` hooks that power the rest of the mobile and desktop apps. The `@spacebot/api-client` package remains useful for desktop direct connections, but mobile and remote devices go through the core proxy.
+This proxy lives in `wing-core`, not in the interface layer. The interface consumes it through the same `useCoreQuery` / `useCoreAction` / `useLibraryQuery` hooks that power the rest of the mobile and desktop apps. The `@spacebot/api-client` package remains useful for desktop direct connections, but mobile and remote devices go through the core proxy.
 
 The proxy also enables a clean answer to the connection model question on desktop: instead of three explicit modes (managed local, external local, remote), the desktop app could also route through the core proxy when Spacebot is paired at the library level. Direct HTTP remains available as an optimization for the co-located case.
 

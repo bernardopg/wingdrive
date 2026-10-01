@@ -13,7 +13,9 @@
 mod helpers;
 
 use helpers::*;
-use sd_core::{
+use std::path::PathBuf;
+use tokio::time::Duration;
+use wing_core::{
 	domain::{addressing::SdPath, ContentKind},
 	infra::{api::SessionContext, query::LibraryQuery},
 	location::IndexMode,
@@ -29,17 +31,15 @@ use sd_core::{
 		},
 	},
 };
-use std::path::PathBuf;
-use tokio::time::Duration;
 
 // Helper function to execute search queries
 async fn execute_search(
 	harness: &IndexingHarness,
 	input: FileSearchInput,
-) -> anyhow::Result<sd_core::ops::search::output::FileSearchOutput> {
+) -> anyhow::Result<wing_core::ops::search::output::FileSearchOutput> {
 	let query = FileSearchQuery::new(input);
-	let device_id = sd_core::device::get_current_device_id();
-	let device_name = sd_core::device::get_current_device_slug();
+	let device_id = wing_core::device::get_current_device_id();
+	let device_name = wing_core::device::get_current_device_slug();
 	let mut session = SessionContext::device_session(device_id, device_name);
 	session.current_library_id = Some(harness.library.id());
 
@@ -324,7 +324,7 @@ async fn test_persistent_search_by_path() -> anyhow::Result<()> {
 
 	// Search within folder_a only
 	let folder_a_path = test_location.path().join("folder_a");
-	let device_slug = sd_core::device::get_current_device_slug();
+	let device_slug = wing_core::device::get_current_device_slug();
 	let folder_a_sd = SdPath::Physical {
 		device_slug,
 		path: folder_a_path.to_path_buf(),

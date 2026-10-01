@@ -2,9 +2,9 @@
 //!
 //! Run with: cargo run --example fingerprint_test
 
-use sd_core::domain::volume::VolumeFingerprint;
 use std::path::PathBuf;
 use uuid::Uuid;
+use wing_core::domain::volume::VolumeFingerprint;
 
 fn main() {
 	println!("\n=== Volume Fingerprint Stability Tests ===\n");

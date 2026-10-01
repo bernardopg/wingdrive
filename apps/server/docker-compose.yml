@@ -34,7 +34,7 @@ services:
       - SD_P2P=true
 
       # Logging
-      - RUST_LOG=info,sd_core=debug
+      - RUST_LOG=info,wing_core=debug
 
       # Timezone
       - TZ=UTC

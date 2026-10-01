@@ -2,9 +2,9 @@
 //!
 //! Tests that we can actually load and run WASM extensions.
 
-use sd_core::Core;
 use std::path::PathBuf;
 use tempfile::TempDir;
+use wing_core::Core;
 
 #[tokio::test]
 async fn test_load_wasm_extension() {

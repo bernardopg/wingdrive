@@ -4,15 +4,6 @@
 //! job resumption by interrupting indexing jobs at different phases and progress
 //! points, then verifying they can resume and complete successfully.
 
-use sd_core::{
-	domain::SdPath,
-	infra::action::LibraryAction,
-	ops::{
-		indexing::IndexMode,
-		locations::add::action::{LocationAddAction, LocationAddInput},
-	},
-	testing::integration_utils::IntegrationTestSetup,
-};
 use std::{
 	path::PathBuf,
 	sync::{
@@ -27,6 +18,15 @@ use tokio::{
 };
 use tracing::{info, warn};
 use uuid::Uuid;
+use wing_core::{
+	domain::SdPath,
+	infra::action::LibraryAction,
+	ops::{
+		indexing::IndexMode,
+		locations::add::action::{LocationAddAction, LocationAddInput},
+	},
+	testing::integration_utils::IntegrationTestSetup,
+};
 
 /// Different interruption points to test
 #[derive(Debug, Clone)]
@@ -155,7 +155,7 @@ async fn test_single_interruption_point(
 	// Create test environment with custom tracing
 	let test_setup = match IntegrationTestSetup::with_tracing(
 		&test_name,
-		"warn,sd_core=info,job_resumption_integration_test=info",
+		"warn,wing_core=info,job_resumption_integration_test=info",
 	)
 	.await
 	{
@@ -321,7 +321,7 @@ async fn start_and_interrupt_job(
 
 	tokio::spawn(async move {
 		while let Ok(event) = event_rx.recv().await {
-			if let sd_core::infra::event::Event::JobProgress {
+			if let wing_core::infra::event::Event::JobProgress {
 				job_id: event_job_id,
 				progress: _,
 				message,
@@ -519,7 +519,7 @@ async fn resume_and_complete_job(
 		info!("Job {} current status: {:?}", job_id, job_status);
 
 		match job_status {
-			sd_core::infra::job::types::JobStatus::Completed => {
+			wing_core::infra::job::types::JobStatus::Completed => {
 				info!(
 					"Job {} already completed during startup, no need to wait for events",
 					job_id
@@ -536,7 +536,7 @@ async fn resume_and_complete_job(
 
 				return Ok((job_log_path, test_log_path));
 			}
-			sd_core::infra::job::types::JobStatus::Failed => {
+			wing_core::infra::job::types::JobStatus::Failed => {
 				core.shutdown().await?;
 				return Err(format!("Job {} failed during startup", job_id).into());
 			}
@@ -571,7 +571,7 @@ async fn resume_and_complete_job(
 	tokio::spawn(async move {
 		while let Ok(event) = event_rx.recv().await {
 			match event {
-				sd_core::infra::event::Event::JobCompleted {
+				wing_core::infra::event::Event::JobCompleted {
 					job_id: event_job_id,
 					..
 				} => {
@@ -582,7 +582,7 @@ async fn resume_and_complete_job(
 						break;
 					}
 				}
-				sd_core::infra::event::Event::JobFailed {
+				wing_core::infra::event::Event::JobFailed {
 					job_id: event_job_id,
 					error,
 					..
@@ -593,7 +593,7 @@ async fn resume_and_complete_job(
 						break;
 					}
 				}
-				sd_core::infra::event::Event::JobProgress {
+				wing_core::infra::event::Event::JobProgress {
 					job_id: event_job_id,
 					message,
 					generic_progress,

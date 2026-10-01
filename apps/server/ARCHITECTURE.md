@@ -34,11 +34,11 @@ Browser → HTTP Request → Axum Router → Basic Auth Middleware → Handler
 
 ### 2. Embedded Daemon
 
-Unlike Tauri (which spawns `sd-daemon` as a child process), the server runs the daemon in-process:
+Unlike Tauri (which spawns `wing-daemon` as a child process), the server runs the daemon in-process:
 
 ```rust
 tokio::spawn(async move {
-    sd_core::infra::daemon::bootstrap::start_default_server(
+    wing_core::infra::daemon::bootstrap::start_default_server(
         socket_path,
         data_dir,
         enable_p2p,
@@ -171,8 +171,8 @@ RUN cargo build --release --features assets
 
 # Stage 2: Runtime (Distroless)
 FROM gcr.io/distroless/cc-debian12:nonroot
-COPY --from=builder /build/target/release/sd-server
-ENTRYPOINT ["/usr/bin/sd-server"]
+COPY --from=builder /build/target/release/wing-server
+ENTRYPOINT ["/usr/bin/wing-server"]
 ```
 
 **Benefits:**
@@ -214,7 +214,7 @@ cd apps/web
 pnpm dev  # → http://localhost:3000
 
 # Terminal 2: API server
-cargo run -p sd-server
+cargo run -p wing-server
 # → http://localhost:8080
 # Vite proxies /rpc to 8080
 ```
@@ -228,7 +228,7 @@ cargo run -p sd-server
 
 ```bash
 # Build with bundled assets
-cargo build --release -p sd-server --features assets
+cargo build --release -p wing-server --features assets
 
 # Single binary contains:
 # - Axum HTTP server
@@ -238,7 +238,7 @@ cargo build --release -p sd-server --features assets
 
 **Deployment:**
 ```bash
-./target/release/sd-server \
+./target/release/wing-server \
   --data-dir /var/lib/wingdrive \
   --port 8080
 ```
@@ -365,7 +365,7 @@ docker logs wingdrive -f
 journalctl -u wingdrive -f
 
 # Native
-RUST_LOG=debug ./sd-server
+RUST_LOG=debug ./wing-server
 ```
 
 **Metrics:** (TODO)

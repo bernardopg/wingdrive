@@ -14,12 +14,12 @@
 mod helpers;
 
 use helpers::*;
-use sd_core::{
+use tokio::time::Duration;
+use wing_core::{
 	domain::addressing::SdPath,
 	location::IndexMode,
 	ops::indexing::{IndexScope, IndexerJob, IndexerJobConfig},
 };
-use tokio::time::Duration;
 
 // ============================================================================
 // PERSISTENT INDEXING TESTS

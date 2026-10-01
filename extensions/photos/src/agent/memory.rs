@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use spacedrive_sdk::prelude::*;
-use spacedrive_sdk::{agent_memory, memory_config};
+use wingdrive_sdk::prelude::*;
+use wingdrive_sdk::{agent_memory, memory_config};
 use uuid::Uuid;
 
 use crate::models::*;

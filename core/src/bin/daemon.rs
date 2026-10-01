@@ -20,7 +20,7 @@ fn validate_instance_name(instance: &str) -> Result<(), String> {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "sd-daemon", about = "WingDrive daemon")]
+#[command(name = "wing-daemon", about = "WingDrive daemon")]
 struct Args {
 	/// Path to spacedrive data directory
 	#[arg(long)]
@@ -38,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Resolve base data directory
 	let base_data_dir = args
 		.data_dir
-		.unwrap_or(sd_core::config::default_data_dir()?);
+		.unwrap_or(wing_core::config::default_data_dir()?);
 
 	// Calculate instance-specific data directory and socket address
 	let (data_dir, socket_addr) = if let Some(instance) = args.instance {
@@ -79,7 +79,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 	// Run the daemon server with signal handling
 	tokio::select! {
-		result = sd_core::infra::daemon::bootstrap::start_default_server(
+		result = wing_core::infra::daemon::bootstrap::start_default_server(
 			socket_addr,
 			data_dir,
 			true, // Always enable networking

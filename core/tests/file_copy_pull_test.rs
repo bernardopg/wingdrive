@@ -4,14 +4,14 @@
 //! pull files from Alice's device (the reverse of the standard PUSH operation).
 //! Alice hosts files, Bob initiates a PULL request to copy them locally.
 
-use sd_core::{
+use std::{env, path::PathBuf, time::Duration};
+use tokio::time::timeout;
+use wing_core::{
 	domain::addressing::{SdPath, SdPathBatch},
 	ops::files::copy::{action::FileCopyAction, CopyOptions},
 	testing::CargoTestRunner,
 	Core,
 };
-use std::{env, path::PathBuf, time::Duration};
-use tokio::time::timeout;
 
 /// Alice's role in PULL test - file host (source device)
 #[tokio::test]
@@ -110,7 +110,7 @@ async fn alice_pull_source_scenario() {
 			if let Some(ft_handler) =
 				handler
 					.as_any()
-					.downcast_ref::<sd_core::service::network::protocol::FileTransferProtocolHandler>(
+					.downcast_ref::<wing_core::service::network::protocol::FileTransferProtocolHandler>(
 					) {
 				ft_handler.add_allowed_path(test_files_dir.clone());
 				println!("Alice: Added {} as allowed path", test_files_dir.display());
@@ -373,7 +373,7 @@ async fn bob_pull_receiver_scenario() {
 			if let Some(ft_handler) =
 				handler
 					.as_any()
-					.downcast_ref::<sd_core::service::network::protocol::FileTransferProtocolHandler>(
+					.downcast_ref::<wing_core::service::network::protocol::FileTransferProtocolHandler>(
 					) {
 				ft_handler.add_allowed_path(pull_dest_dir.clone());
 				println!("Bob: Added {} as allowed path", pull_dest_dir.display());

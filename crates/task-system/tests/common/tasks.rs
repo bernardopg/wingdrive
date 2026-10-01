@@ -3,7 +3,7 @@ use std::{
 	time::Duration,
 };
 
-use sd_task_system::{
+use wing_task_system::{
 	ExecStatus, Interrupter, InterruptionKind, IntoAnyTaskOutput, Task, TaskId, TaskOutput,
 };
 

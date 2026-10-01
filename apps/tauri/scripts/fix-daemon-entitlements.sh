@@ -17,7 +17,7 @@ if [ -z "$BUNDLE_PATH" ]; then
     exit 1
 fi
 
-DAEMON_PATH="$BUNDLE_PATH/Contents/MacOS/sd-daemon"
+DAEMON_PATH="$BUNDLE_PATH/Contents/MacOS/wing-daemon"
 ENTITLEMENTS_PATH="$(dirname "$0")/../src-tauri/DaemonEntitlements.plist"
 
 if [ ! -f "$DAEMON_PATH" ]; then

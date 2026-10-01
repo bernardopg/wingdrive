@@ -5,7 +5,7 @@
 //! # Example
 //!
 //! ```no_run
-//! use spacedrive_sdk::{ExtensionContext, prelude::*};
+//! use wingdrive_sdk::{ExtensionContext, prelude::*};
 //!
 //! #[spacedrive_extension]
 //! fn init(ctx: &mut ExtensionContext) -> Result<()> {
@@ -71,7 +71,7 @@ pub mod prelude {
 }
 
 // Re-export macros
-pub use spacedrive_sdk_macros::{
+pub use wingdrive_sdk_macros::{
 	action, action_execute, agent, agent_memory, agent_trail, extension, filter, job,
 	memory_config, model, on_event, on_startup, persist_strategy, query, scheduled, setting, task,
 };

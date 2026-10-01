@@ -3,7 +3,9 @@
 //! These tests verify that the volume detection system correctly identifies volumes,
 //! resolves paths to their storage locations, and selects optimal copy strategies.
 
-use sd_core::{
+use std::{path::PathBuf, sync::Arc};
+use uuid::Uuid;
+use wing_core::{
 	device::get_current_device_slug,
 	domain::addressing::SdPath,
 	infra::event::EventBus,
@@ -13,8 +15,6 @@ use sd_core::{
 		VolumeManager,
 	},
 };
-use std::{path::PathBuf, sync::Arc};
-use uuid::Uuid;
 
 /// Test volume detection on macOS
 #[cfg(target_os = "macos")]
@@ -78,7 +78,7 @@ async fn test_macos_volume_detection() {
 	// On macOS, we should have APFS volumes
 	let apfs_volumes: Vec<_> = volumes
 		.iter()
-		.filter(|v| matches!(v.file_system, sd_core::volume::types::FileSystem::APFS))
+		.filter(|v| matches!(v.file_system, wing_core::volume::types::FileSystem::APFS))
 		.collect();
 
 	assert!(
@@ -340,7 +340,7 @@ async fn test_copy_strategy_selection() {
 #[cfg(target_os = "macos")]
 #[tokio::test]
 async fn test_apfs_container_detection() {
-	use sd_core::volume::fs::apfs;
+	use wing_core::volume::fs::apfs;
 
 	println!("Testing APFS container detection:");
 
@@ -378,7 +378,7 @@ async fn test_apfs_container_detection() {
 		container
 			.volumes
 			.iter()
-			.any(|volume| matches!(volume.role, sd_core::volume::types::ApfsVolumeRole::Data))
+			.any(|volume| matches!(volume.role, wing_core::volume::types::ApfsVolumeRole::Data))
 	});
 
 	assert!(has_data_volume, "No APFS Data volume found");
@@ -388,7 +388,7 @@ async fn test_apfs_container_detection() {
 /// Test filesystem handler selection
 #[tokio::test]
 async fn test_filesystem_handler_selection() {
-	use sd_core::volume::{fs, types::FileSystem};
+	use wing_core::volume::{fs, types::FileSystem};
 
 	println!("Testing filesystem handler selection:");
 
@@ -484,7 +484,7 @@ async fn test_full_copy_workflow_simulation() {
 					if same_storage
 						&& matches!(
 							src_vol.file_system,
-							sd_core::volume::types::FileSystem::APFS
+							wing_core::volume::types::FileSystem::APFS
 						) {
 						assert!(
 							description.contains("Fast copy") || description.contains("APFS clone"),

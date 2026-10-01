@@ -1,5 +1,5 @@
 # WingDrive Server Docker Image
-# Builds sd-server with the apps/web bundle embedded via rust-embed.
+# Builds wing-server with the apps/web bundle embedded via rust-embed.
 #
 # Prerequisite: `apps/web/dist/` must exist in the build context — run
 # `bun install && bun run build` in `apps/web/` before `docker build`.
@@ -49,8 +49,8 @@ COPY apps/web/dist ./apps/web/dist
 RUN --mount=type=cache,target=/root/.cargo/registry \
 	--mount=type=cache,target=/root/.cargo/git \
 	--mount=type=cache,target=/build/target \
-	SD_SKIP_WEB_BUILD=1 cargo build --release -p sd-server --features sd-core/heif,sd-core/ffmpeg && \
-	cp target/release/sd-server /usr/local/bin/sd-server
+	SD_SKIP_WEB_BUILD=1 cargo build --release -p wing-server --features wing-core/heif,wing-core/ffmpeg && \
+	cp target/release/wing-server /usr/local/bin/wing-server
 
 #--
 # Runtime image
@@ -73,12 +73,12 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 RUN useradd -m -u 1000 wingdrive
 
 # Copy binary
-COPY --from=builder /usr/local/bin/sd-server /usr/bin/sd-server
+COPY --from=builder /usr/local/bin/wing-server /usr/bin/wing-server
 
 # Environment
 ENV DATA_DIR=/data \
 	PORT=8080 \
-	RUST_LOG=info,sd_core=debug
+	RUST_LOG=info,wing_core=debug
 
 # Expose HTTP port
 EXPOSE 8080
@@ -93,5 +93,5 @@ VOLUME ["/data"]
 USER wingdrive:wingdrive
 
 # Start server
-ENTRYPOINT ["/usr/bin/sd-server"]
+ENTRYPOINT ["/usr/bin/wing-server"]
 CMD ["--data-dir", "/data"]

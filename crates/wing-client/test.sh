@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Test script for sd-client
+# Test script for wing-client
 # Make sure WingDrive daemon is running first!
 
 # Get library ID from the library.json file

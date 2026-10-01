@@ -7,7 +7,7 @@
 - `cargo test <test_name>` - Run specific test (e.g., `cargo test library_test`)
 - `cargo clippy` - Lint code
 - `cargo fmt` - Format code
-- `cargo run --bin sd-cli -- <command>` - Run CLI (note: binary is `sd-cli`, not `spacedrive`)
+- `cargo run --bin wing-cli -- <command>` - Run CLI (note: binary is `wing-cli`, not `spacedrive`)
 
 ## Code Style
 
@@ -91,7 +91,7 @@ crate::register_core_action!(LibraryCreateAction, "libraries.create");
 - **Structured**: Include relevant context fields: `debug!(job_id = %self.id, "message")`
 - **Levels**: debug for detailed flow, info for user-relevant events, warn for recoverable issues, error for failures
 - **Format**: `tracing_subscriber::fmt().with_env_filter(env_filter).init()` in main/examples
-- **Environment**: Respect `RUST_LOG` env var, fallback to module-specific filters like `sd_core=info`
+- **Environment**: Respect `RUST_LOG` env var, fallback to module-specific filters like `wing_core=info`
 
 ## Documentation
 

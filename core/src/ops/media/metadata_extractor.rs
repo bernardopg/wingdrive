@@ -24,14 +24,14 @@ pub async fn extract_image_metadata_with_blurhash(
 	blurhash: Option<String>,
 ) -> Result<image_media_data::ActiveModel, Box<dyn std::error::Error + Send + Sync>> {
 	// Extract EXIF metadata
-	let exif = sd_media_metadata::exif::ExifMetadata::from_path(path)
+	let exif = wing_media_metadata::exif::ExifMetadata::from_path(path)
 		.await?
 		.ok_or("No EXIF data found")?;
 
 	// Convert MediaDate to DateTime<Utc>
 	let date_taken = exif.date_taken.map(|d| match d {
-		sd_media_metadata::exif::MediaDate::Utc(dt) => dt.with_timezone(&chrono::Utc),
-		sd_media_metadata::exif::MediaDate::Naive(dt) => dt.and_utc(),
+		wing_media_metadata::exif::MediaDate::Utc(dt) => dt.with_timezone(&chrono::Utc),
+		wing_media_metadata::exif::MediaDate::Naive(dt) => dt.and_utc(),
 	});
 
 	// Extract GPS coordinates from location data
@@ -92,7 +92,7 @@ pub async fn extract_video_metadata_with_blurhash(
 	blurhash: Option<String>,
 ) -> Result<video_media_data::ActiveModel, Box<dyn std::error::Error + Send + Sync>> {
 	// Probe with FFmpeg
-	let metadata = sd_ffmpeg::probe(path).await?;
+	let metadata = wing_ffmpeg::probe(path).await?;
 
 	// Get first video stream for dimensions
 	let video_stream = metadata
@@ -101,7 +101,7 @@ pub async fn extract_video_metadata_with_blurhash(
 		.flat_map(|p| &p.streams)
 		.find(|s| s.codec.as_ref().map(|c| c.kind.as_deref()) == Some(Some("video")));
 
-	use sd_ffmpeg::model::FFmpegProps;
+	use wing_ffmpeg::model::FFmpegProps;
 
 	let (width, height) = video_stream
 		.and_then(|s| s.codec.as_ref())
@@ -250,10 +250,10 @@ pub async fn extract_audio_metadata(
 	path: &Path,
 	uuid: Uuid,
 ) -> Result<audio_media_data::ActiveModel, Box<dyn std::error::Error + Send + Sync>> {
-	use sd_ffmpeg::model::FFmpegProps;
+	use wing_ffmpeg::model::FFmpegProps;
 
 	// Probe with FFmpeg
-	let metadata = sd_ffmpeg::probe(path).await?;
+	let metadata = wing_ffmpeg::probe(path).await?;
 
 	// Get first audio stream
 	let audio_stream = metadata

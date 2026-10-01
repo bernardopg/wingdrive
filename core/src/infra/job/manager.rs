@@ -21,11 +21,11 @@ use crate::{
 };
 use async_trait::async_trait;
 use chrono::Utc;
-use sd_task_system::{TaskDispatcher, TaskHandle, TaskSystem};
 use sea_orm::{ActiveModelTrait, ActiveValue::Set, DatabaseConnection, EntityTrait};
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tokio::sync::{broadcast, mpsc, watch, Mutex, RwLock};
 use tracing::{debug, error, info, warn};
+use wing_task_system::{TaskDispatcher, TaskHandle, TaskSystem};
 
 /// Manages job execution for a library
 pub struct JobManager {

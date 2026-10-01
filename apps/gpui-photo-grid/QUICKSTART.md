@@ -116,7 +116,7 @@ Your Terminal
 
 ```
 apps/gpui-photo-grid/
-├── Cargo.toml                  # Dependencies (gpui, sd-client)
+├── Cargo.toml                  # Dependencies (gpui, wing-client)
 ├── src/
 │   ├── main.rs                 # Entry point, window setup
 │   └── photo_grid_view.rs      # Main view component
@@ -129,7 +129,7 @@ apps/gpui-photo-grid/
 
 **Loading files:** `photo_grid_view.rs:37` - `load_files()` method
 **Grid rendering:** `photo_grid_view.rs:140` - `render_grid()` method
-**Thumbnail URLs:** Uses `sd-client`'s `thumbnail_url()` method
+**Thumbnail URLs:** Uses `wing-client`'s `thumbnail_url()` method
 **GPUI setup:** `main.rs:25` - Application creation with HTTP client
 
 ## Testing Ideas

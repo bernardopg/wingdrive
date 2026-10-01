@@ -1,5 +1,5 @@
 [package]
-name    = "sd-images"
+name    = "wing-images"
 version = "0.1.0"
 
 authors              = ["Jake Robinson <jake@spacedrive.com>", "Vítor Vasconcellos <vitor@spacedrive.com>"]

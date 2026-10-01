@@ -102,7 +102,7 @@ Each instance has completely isolated:
 
 - **Socket paths**: `wingdrive.sock`, `wingdrive-alice.sock`, `wingdrive-bob.sock`
 - **PID files**: `wingdrive.pid`, `wingdrive-alice.pid`, `wingdrive-bob.pid`
-- **Data directories**: `data/sd-cli-data/`, `data/sd-cli-data/instance-alice/`
+- **Data directories**: `data/wing-cli-data/`, `data/wing-cli-data/instance-alice/`
 - **CLI state**: Separate `cli_state.json` per instance
 
 ### File Structure
@@ -116,17 +116,17 @@ $runtime_dir/               # /tmp or $XDG_RUNTIME_DIR
 ├── wingdrive-bob.sock     # Bob instance socket
 └── wingdrive-bob.pid      # Bob instance PID
 
-data/sd-cli-data/                    # Default instance data
+data/wing-cli-data/                    # Default instance data
 ├── wingdrive.json
 ├── libraries/
 └── cli_state.json
 
-data/sd-cli-data/instance-alice/     # Alice instance data
+data/wing-cli-data/instance-alice/     # Alice instance data
 ├── wingdrive.json
 ├── libraries/
 └── cli_state.json
 
-data/sd-cli-data/instance-bob/       # Bob instance data
+data/wing-cli-data/instance-bob/       # Bob instance data
 ├── wingdrive.json
 ├── libraries/
 └── cli_state.json

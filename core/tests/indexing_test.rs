@@ -11,7 +11,7 @@ mod helpers;
 
 use anyhow::Result;
 use helpers::IndexingHarnessBuilder;
-use sd_core::location::IndexMode;
+use wing_core::location::IndexMode;
 
 #[tokio::test]
 async fn test_basic_indexing() -> Result<()> {

@@ -133,7 +133,7 @@ but does not prove GitHub permissions, publication, signing, or installation.
   location integration target checking, task validation, workflow lint, shell
   syntax, JSON/YAML parsing, Expo config, frontend typechecks/builds/tests, the
   expanded independence guard, and `git diff --check`.
-- A full `sd-core` integration test binary still cannot link locally because of
+- A full `wing-core` integration test binary still cannot link locally because of
   the pre-existing `__rust_probestack`/Wasmer native linker conflict. This does
   not affect the passing focused library test or `cargo check` evidence.
 

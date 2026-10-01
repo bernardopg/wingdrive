@@ -6,7 +6,11 @@
 mod helpers;
 
 use helpers::{MockTransport, TestDataDir};
-use sd_core::{
+use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
+use std::{path::PathBuf, sync::Arc};
+use tokio::{fs, time::Duration};
+use uuid::Uuid;
+use wing_core::{
 	infra::{
 		db::entities,
 		sync::{EventCategory, EventSeverity, NetworkTransport, SyncEventQuery, SyncEventType},
@@ -15,10 +19,6 @@ use sd_core::{
 	service::{sync::state::DeviceSyncState, Service},
 	Core,
 };
-use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
-use std::{path::PathBuf, sync::Arc};
-use tokio::{fs, time::Duration};
-use uuid::Uuid;
 
 /// Test harness for event log testing
 struct EventLogTestHarness {
@@ -47,7 +47,9 @@ impl EventLogTestHarness {
 		// Initialize tracing
 		let _ = tracing_subscriber::fmt()
 			.with_test_writer()
-			.with_env_filter("sd_core::service::sync=debug,sd_core::infra::sync::event_log=trace")
+			.with_env_filter(
+				"wing_core::service::sync=debug,wing_core::infra::sync::event_log=trace",
+			)
 			.try_init();
 
 		tracing::info!(
@@ -125,7 +127,7 @@ impl EventLogTestHarness {
 	async fn query_events_api(
 		&self,
 		query: SyncEventQuery,
-	) -> anyhow::Result<Vec<sd_core::infra::sync::SyncEventLog>> {
+	) -> anyhow::Result<Vec<wing_core::infra::sync::SyncEventLog>> {
 		let sync_service = self.library_alice.sync_service().unwrap();
 		sync_service.event_logger().query(query).await
 	}
@@ -509,7 +511,7 @@ async fn test_correlation_id_tracking() -> anyhow::Result<()> {
 	let event_logger = sync_service.event_logger();
 	let session_id = Uuid::new_v4();
 
-	use sd_core::infra::sync::SyncEventLog;
+	use wing_core::infra::sync::SyncEventLog;
 
 	// Event 1: Session started
 	let event1 = SyncEventLog::new(
@@ -592,7 +594,7 @@ async fn test_query_pagination() -> anyhow::Result<()> {
 
 	// Insert 10 events
 	for i in 0..10 {
-		use sd_core::infra::sync::SyncEventLog;
+		use wing_core::infra::sync::SyncEventLog;
 		let event = SyncEventLog::new(
 			harness.device_alice_id,
 			SyncEventType::StateTransition,
@@ -643,7 +645,7 @@ async fn test_severity_filtering() -> anyhow::Result<()> {
 	let event_logger = sync_service.event_logger();
 
 	// Insert events with different severities
-	use sd_core::infra::sync::SyncEventLog;
+	use wing_core::infra::sync::SyncEventLog;
 
 	let error_event = SyncEventLog::new(
 		harness.device_alice_id,

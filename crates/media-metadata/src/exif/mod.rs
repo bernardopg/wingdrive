@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use exif::Tag;
-use sd_utils::error::FileIOError;
 use tokio::task::spawn_blocking;
+use wing_utils::error::FileIOError;
 
 mod composite;
 mod consts;

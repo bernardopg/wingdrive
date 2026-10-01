@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name    = "sd-bench"
+name    = "wing-bench"
 version = "0.1.0"
 
 [dependencies]
@@ -15,7 +15,7 @@ humantime-serde    = "1.1"
 indicatif          = "0.18"
 rand               = "0.10"
 regex              = "1.10"
-sd-core            = { path = ".." }
+wing-core            = { path = ".." }
 serde              = { version = "1.0", features = ["derive"] }
 serde_json         = "1.0"
 serde_with         = { version = "3.9", features = ["json"] }
@@ -29,9 +29,9 @@ uuid               = { version = "1.11", features = ["serde", "v4"] }
 walkdir            = "2.5"
 
 [lib]
-name = "sd_bench"
+name = "wing_bench"
 path = "src/lib.rs"
 
 [[bin]]
-name = "sd-bench"
-path = "src/bin/sd-bench-new.rs"
+name = "wing-bench"
+path = "src/bin/wing-bench-new.rs"

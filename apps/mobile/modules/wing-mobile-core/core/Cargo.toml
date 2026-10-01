@@ -1,15 +1,15 @@
 [package]
-name = "sd-mobile-core"
+name = "wing-mobile-core"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "sd_mobile_core"
+name = "wing_mobile_core"
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
 # Import the real WingDrive core (FFmpeg and HEIF disabled for iOS build issues)
-sd-core = { path = "../../../../../core", default-features = false }
+wing-core = { path = "../../../../../core", default-features = false }
 
 # Minimal dependencies for mobile
 anyhow.workspace = true

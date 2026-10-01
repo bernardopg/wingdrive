@@ -50,7 +50,7 @@ export async function symlinkSharedLibsMacOS(root, nativeDeps) {
 	// Framework
 	const framework = path.join(nativeDeps, 'Spacedrive.framework')
 
-	// Link Spacedrive.framework to target folder so sd-server can work ootb
+	// Link Spacedrive.framework to target folder so wing-server can work ootb
 	await fs.rm(targetFrameworks, { recursive: true }).catch(() => {})
 	await fs.mkdir(targetFrameworks, { recursive: true })
 	await link(framework, path.join(targetFrameworks, 'Spacedrive.framework'))

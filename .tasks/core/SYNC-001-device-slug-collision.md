@@ -44,5 +44,5 @@ snapshot apply errored, and the peer continued with incomplete shared state.
 - `test_backfill_renames_colliding_device_slug` exercises a real state snapshot
   between two libraries and verifies the incoming device becomes
   `shared-host-2` while the local holder remains `shared-host`.
-- `cargo test -p sd-core --test sync_backfill_race_test` passes without the
+- `cargo test -p wing-core --test sync_backfill_race_test` passes without the
   previous UNIQUE constraint warning.

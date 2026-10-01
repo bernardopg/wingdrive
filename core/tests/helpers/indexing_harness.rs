@@ -7,12 +7,6 @@ use super::{
 	init_test_tracing, register_device, wait_for_indexing, TestConfigBuilder, TestDataDir,
 };
 use anyhow::Context;
-use sd_core::{
-	domain::addressing::SdPath,
-	infra::db::entities::{self, entry_closure},
-	location::{IndexMode, LocationManager},
-	Core,
-};
 use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use std::{
 	path::{Path, PathBuf},
@@ -20,6 +14,12 @@ use std::{
 };
 use tokio::time::Duration;
 use uuid::Uuid;
+use wing_core::{
+	domain::addressing::SdPath,
+	infra::db::entities::{self, entry_closure},
+	location::{IndexMode, LocationManager},
+	Core,
+};
 
 /// Builder for creating indexing test harness
 pub struct IndexingHarnessBuilder {
@@ -95,7 +95,7 @@ impl IndexingHarnessBuilder {
 			.await?;
 
 		// Use the real device UUID so the watcher can find locations
-		let device_id = sd_core::device::get_current_device_id();
+		let device_id = wing_core::device::get_current_device_id();
 		// Make device name unique per test to avoid slug collisions in parallel tests
 		let device_name = format!(
 			"{}-{}",
@@ -129,8 +129,10 @@ impl IndexingHarnessBuilder {
 
 			// Spawn daemon server in background
 			tokio::spawn(async move {
-				let mut server =
-					sd_core::infra::daemon::rpc::RpcServer::new(socket_addr_clone, core_for_daemon);
+				let mut server = wing_core::infra::daemon::rpc::RpcServer::new(
+					socket_addr_clone,
+					core_for_daemon,
+				);
 				if let Err(e) = server.start().await {
 					tracing::error!("Daemon RPC server error: {}", e);
 				}
@@ -161,7 +163,7 @@ pub struct IndexingHarness {
 	test_data: TestDataDir,
 	pub snapshot_dir: PathBuf,
 	pub core: Arc<Core>,
-	pub library: Arc<sd_core::library::Library>,
+	pub library: Arc<wing_core::library::Library>,
 	pub device_id: Uuid,
 	pub device_db_id: i32,
 	daemon_socket_addr: Option<String>,
@@ -210,7 +212,7 @@ impl IndexingHarness {
 			"Creating and indexing location"
 		);
 
-		let device_slug = sd_core::device::get_current_device_slug();
+		let device_slug = wing_core::device::get_current_device_slug();
 		let sd_path = SdPath::new(device_slug, path.to_path_buf());
 
 		let location_manager = LocationManager::new((*self.core.events).clone());
@@ -240,7 +242,7 @@ impl IndexingHarness {
 
 		// Register location with watcher so it can detect changes
 		if let Some(watcher) = self.core.context.get_fs_watcher().await {
-			use sd_core::ops::indexing::{handlers::LocationMeta, rules::RuleToggles};
+			use wing_core::ops::indexing::{handlers::LocationMeta, rules::RuleToggles};
 
 			let lib_cfg = self.library.config().await;
 			let idx_cfg = lib_cfg.settings.indexer;
@@ -542,7 +544,7 @@ impl<'a> LocationHandle<'a> {
 
 	/// Re-index this location and wait for completion
 	pub async fn reindex(&self) -> anyhow::Result<()> {
-		use sd_core::{
+		use wing_core::{
 			domain::addressing::SdPath,
 			ops::indexing::{IndexerJob, IndexerJobConfig},
 		};
@@ -559,10 +561,10 @@ impl<'a> LocationHandle<'a> {
 			.ok_or_else(|| anyhow::anyhow!("Location not found"))?;
 
 		let index_mode = match location_record.index_mode.as_str() {
-			"shallow" => sd_core::domain::IndexMode::Shallow,
-			"content" => sd_core::domain::IndexMode::Content,
-			"deep" => sd_core::domain::IndexMode::Deep,
-			_ => sd_core::domain::IndexMode::Content,
+			"shallow" => wing_core::domain::IndexMode::Shallow,
+			"content" => wing_core::domain::IndexMode::Content,
+			"deep" => wing_core::domain::IndexMode::Deep,
+			_ => wing_core::domain::IndexMode::Content,
 		};
 
 		// Create and dispatch indexer job

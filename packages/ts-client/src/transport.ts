@@ -224,10 +224,10 @@ export class TcpSocketTransport implements Transport {
 }
 
 /**
- * HTTP transport for browser environments talking to sd-server.
+ * HTTP transport for browser environments talking to wing-server.
  *
  * RPC requests are POSTed to `${baseUrl}/rpc` as JSON. Subscriptions open
- * an EventSource against `${baseUrl}/events` — sd-server bridges the
+ * an EventSource against `${baseUrl}/events` — wing-server bridges the
  * daemon's event stream into SSE messages so the browser receives Event
  * and LogMessage payloads in real time.
  */

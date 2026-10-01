@@ -1,4 +1,4 @@
-import { SDMobileCore } from "sd-mobile-core";
+import { SDMobileCore } from "wing-mobile-core";
 import { ReactNativeTransport } from "./transport";
 import { WIRE_METHODS } from "@sd/ts-client";
 import type { Event } from "@sd/ts-client/generated/types";

@@ -8,8 +8,8 @@ use crate::format_bytes;
 use crate::util::prelude::*;
 
 use crate::context::Context;
-use sd_core::infra::job::handle::JobReceipt;
-use sd_core::infra::query::LibraryQuery;
+use wing_core::infra::job::handle::JobReceipt;
+use wing_core::infra::query::LibraryQuery;
 
 use self::args::*;
 
@@ -32,7 +32,7 @@ pub enum FileCmd {
 pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 	match cmd {
 		FileCmd::Copy(args) => {
-			let input: sd_core::ops::files::copy::input::FileCopyInput = args.into();
+			let input: wing_core::ops::files::copy::input::FileCopyInput = args.into();
 			if let Err(errors) = input.validate() {
 				anyhow::bail!(errors.join("; "))
 			}
@@ -44,7 +44,7 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 			});
 		}
 		FileCmd::Rename(args) => {
-			let input: sd_core::ops::files::rename::input::FileRenameInput = args.into();
+			let input: wing_core::ops::files::rename::input::FileRenameInput = args.into();
 			let receipt: JobReceipt = execute_action!(ctx, input);
 			print_output!(ctx, &receipt, |receipt: &JobReceipt| {
 				println!("Dispatched rename job {}", receipt.id);
@@ -52,7 +52,7 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 		}
 		FileCmd::Delete(args) => {
 			let (permanent, yes, count) = (args.permanent, args.yes, args.paths.len());
-			let input: sd_core::ops::files::delete::input::FileDeleteInput = args.into();
+			let input: wing_core::ops::files::delete::input::FileDeleteInput = args.into();
 			if let Err(errors) = input.validate() {
 				anyhow::bail!(errors.join("; "))
 			}
@@ -69,20 +69,20 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 			});
 		}
 		FileCmd::Mkdir(args) => {
-			let input: sd_core::ops::files::create_folder::input::CreateFolderInput = args.into();
-			let output: sd_core::ops::files::create_folder::output::CreateFolderOutput =
+			let input: wing_core::ops::files::create_folder::input::CreateFolderInput = args.into();
+			let output: wing_core::ops::files::create_folder::output::CreateFolderOutput =
 				execute_action!(ctx, input);
 			print_output!(
 				ctx,
 				&output,
-				|output: &sd_core::ops::files::create_folder::output::CreateFolderOutput| {
+				|output: &wing_core::ops::files::create_folder::output::CreateFolderOutput| {
 					println!("Created {}", output.folder_path);
 				}
 			);
 		}
 		FileCmd::Info(args) => {
 			let file_info = get_file_info(ctx, &args.path).await?;
-			print_output!(ctx, &file_info, |info: &Option<sd_core::domain::File>| {
+			print_output!(ctx, &file_info, |info: &Option<wing_core::domain::File>| {
 				match info {
 					Some(file) => {
 						println!("{}", serde_json::to_string_pretty(file).unwrap());
@@ -95,10 +95,10 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 		}
 		FileCmd::List(args) => {
 			let sort_by = match args.sort_by.to_lowercase().as_str() {
-				"name" => sd_core::ops::files::query::DirectorySortBy::Name,
-				"modified" => sd_core::ops::files::query::DirectorySortBy::Modified,
-				"size" => sd_core::ops::files::query::DirectorySortBy::Size,
-				"type" => sd_core::ops::files::query::DirectorySortBy::Type,
+				"name" => wing_core::ops::files::query::DirectorySortBy::Name,
+				"modified" => wing_core::ops::files::query::DirectorySortBy::Modified,
+				"size" => wing_core::ops::files::query::DirectorySortBy::Size,
+				"type" => wing_core::ops::files::query::DirectorySortBy::Type,
 				_ => {
 					anyhow::bail!(
 						"Invalid sort option: {}. Valid options are: name, modified, size, type",
@@ -111,7 +111,7 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 			print_output!(
 				ctx,
 				&directory_listing,
-				|listing: &sd_core::ops::files::query::DirectoryListingOutput| {
+				|listing: &wing_core::ops::files::query::DirectoryListingOutput| {
 					println!("Directory: {}", args.path.display());
 					println!("Found {} items:", listing.files.len());
 					println!();
@@ -122,7 +122,7 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 					table.set_header(vec!["Name", "Type", "Size", "Modified"]);
 
 					for file in &listing.files {
-						use sd_core::domain::file::EntryKind;
+						use wing_core::domain::file::EntryKind;
 
 						let file_type = match file.kind {
 							EntryKind::File => "File",
@@ -158,11 +158,11 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 /// Run file copy with confirmation handling
 async fn run_copy_with_confirmation(
 	ctx: &Context,
-	mut input: sd_core::ops::files::copy::input::FileCopyInput,
+	mut input: wing_core::ops::files::copy::input::FileCopyInput,
 ) -> Result<JobReceipt> {
 	use crate::util::confirm::prompt_for_choice;
-	use sd_core::infra::action::LibraryAction;
-	use sd_core::ops::files::copy::action::FileCopyAction;
+	use wing_core::infra::action::LibraryAction;
+	use wing_core::ops::files::copy::action::FileCopyAction;
 
 	// Build the action from input for validation purposes
 	let action = FileCopyAction::from_input(input.clone())
@@ -176,7 +176,7 @@ async fn run_copy_with_confirmation(
 	if !input.overwrite {
 		let has_conflict = check_for_simple_conflicts(&action).await?;
 		if has_conflict {
-			use sd_core::infra::action::ConfirmationRequest;
+			use wing_core::infra::action::ConfirmationRequest;
 
 			let request = ConfirmationRequest {
 				message: "Destination file(s) already exist. What would you like to do?"
@@ -195,12 +195,12 @@ async fn run_copy_with_confirmation(
 			match choice_index {
 				0 => {
 					// Overwrite: set conflict resolution in input
-					use sd_core::ops::files::copy::action::FileConflictResolution;
+					use wing_core::ops::files::copy::action::FileConflictResolution;
 					input.on_conflict = Some(FileConflictResolution::Overwrite);
 				}
 				1 => {
 					// Auto-rename: set conflict resolution in input
-					use sd_core::ops::files::copy::action::FileConflictResolution;
+					use wing_core::ops::files::copy::action::FileConflictResolution;
 					input.on_conflict = Some(FileConflictResolution::AutoModifyName);
 				}
 				2 => {
@@ -221,9 +221,9 @@ async fn run_copy_with_confirmation(
 
 /// Simple conflict detection for CLI
 async fn check_for_simple_conflicts(
-	action: &sd_core::ops::files::copy::action::FileCopyAction,
+	action: &wing_core::ops::files::copy::action::FileCopyAction,
 ) -> Result<bool> {
-	use sd_core::domain::addressing::SdPath;
+	use wing_core::domain::addressing::SdPath;
 
 	// Extract the physical path from the destination SdPath
 	let dest_path = match &action.destination {
@@ -252,10 +252,10 @@ async fn check_for_simple_conflicts(
 /// Resolve the final destination path using the same logic as the core copy job
 /// This handles the case where destination is a directory vs a file path
 fn resolve_final_destination_path(
-	action: &sd_core::ops::files::copy::action::FileCopyAction,
+	action: &wing_core::ops::files::copy::action::FileCopyAction,
 	dest_path: &std::path::PathBuf,
 ) -> Result<std::path::PathBuf> {
-	use sd_core::domain::addressing::SdPath;
+	use wing_core::domain::addressing::SdPath;
 
 	if action.sources.paths.len() > 1 {
 		// Multiple sources: destination must be a directory
@@ -298,8 +298,8 @@ fn resolve_final_destination_path(
 async fn get_file_info(
 	ctx: &Context,
 	path: &std::path::Path,
-) -> Result<Option<sd_core::domain::File>> {
-	use sd_core::ops::files::query::FileByPathQuery;
+) -> Result<Option<wing_core::domain::File>> {
+	use wing_core::ops::files::query::FileByPathQuery;
 
 	// Create the query with the local path
 	let query =
@@ -307,7 +307,7 @@ async fn get_file_info(
 
 	// Execute the query using the core client
 	let json_response = ctx.core.query(&query, ctx.library_id).await?;
-	let result: Option<sd_core::domain::File> = serde_json::from_value(json_response)?;
+	let result: Option<wing_core::domain::File> = serde_json::from_value(json_response)?;
 
 	Ok(result)
 }
@@ -318,15 +318,15 @@ async fn list_directory(
 	path: &std::path::Path,
 	limit: Option<u32>,
 	include_hidden: bool,
-	sort_by: sd_core::ops::files::query::DirectorySortBy,
-) -> Result<sd_core::ops::files::query::DirectoryListingOutput> {
-	use sd_core::ops::files::query::DirectoryListingQuery;
+	sort_by: wing_core::ops::files::query::DirectorySortBy,
+) -> Result<wing_core::ops::files::query::DirectoryListingOutput> {
+	use wing_core::ops::files::query::DirectoryListingQuery;
 
 	// Create the SdPath for the directory
 	let sd_path = self::args::local_path(path.to_path_buf());
 
 	// Create the query input
-	let input = sd_core::ops::files::query::DirectoryListingInput {
+	let input = wing_core::ops::files::query::DirectoryListingInput {
 		path: sd_path,
 		limit,
 		include_hidden: Some(include_hidden),
@@ -337,7 +337,7 @@ async fn list_directory(
 
 	// Execute the query using the core client
 	let json_response = ctx.core.query(&input, ctx.library_id).await?;
-	let result: sd_core::ops::files::query::DirectoryListingOutput =
+	let result: wing_core::ops::files::query::DirectoryListingOutput =
 		serde_json::from_value(json_response)?;
 
 	Ok(result)

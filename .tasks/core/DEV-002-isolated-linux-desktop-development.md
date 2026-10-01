@@ -29,7 +29,7 @@ named daemon instance before it can connect or create state.
 
 ## Validation
 
-2026-09-03 (first pass, stale binary): `target/debug/sd-daemon` ran a
+2026-09-03 (first pass, stale binary): `target/debug/wing-daemon` ran a
 disposable default-style daemon on port 6969 and `desktop-dev` on port 7096;
 directories stayed separate. The binary in use was later found stale.
 
@@ -41,17 +41,17 @@ reachable simultaneously.
 
 2026-09-03 (tests):
 
-- `cargo test -p sd-core --lib config::app_config` — 2 passed, including the
+- `cargo test -p wing-core --lib config::app_config` — 2 passed, including the
   new `fresh_directory_creates_wingdrive_config_not_legacy` regression test.
 - `cargo test --manifest-path apps/tauri/src-tauri/Cargo.toml --bin WingDrive`
   — 3 passed, including the new integration test that spawns the real
-  `sd-daemon` through the Tauri command builder and asserts reachability on the
+  `wing-daemon` through the Tauri command builder and asserts reachability on the
   derived port plus structural isolation under `instances/<name>/`.
 - Task validator, Tauri typecheck, `cargo fmt --check`, JSON parsing of docs
   navigation, and `git diff --check` all passed.
 
 Environment lesson recorded for DEV-000: running two cargo invocations
-concurrently against one target directory produced a stale-looking `sd-daemon`
+concurrently against one target directory produced a stale-looking `wing-daemon`
 artefact whose behavior did not match current source (it still wrote the
 legacy config name on fresh directories). Rebuilding with a single cargo
 process restored correct behavior. Always rebuild before validating, and never
@@ -71,7 +71,7 @@ Results:
   for the whole session; vite on 1420; `WingDrive` process alive and connected.
 - The app drove the dev daemon end to end: bundled adapters were installed into
   `.../instances/desktop-dev/libraries/My Library.sdlibrary`, and
-  `sd-cli --data-dir <dev-root>/data --instance desktop-dev library list`
+  `wing-cli --data-dir <dev-root>/data --instance desktop-dev library list`
   returned the dev library UUID.
 - Device identities: real `~/.wingdrive`, real `~/.spacedrive`, the production
   stand-in, and the dev instance produced four distinct `device_id` UUIDs.
@@ -80,11 +80,11 @@ Results:
 - Teardown via process-group SIGTERM/SIGKILL freed ports 6969, 7096, and 1420
   and left no leftover processes.
 
-Second Environment lesson, recorded for DEV-000: a stale 44 MB `sd-daemon`
+Second Environment lesson, recorded for DEV-000: a stale 44 MB `wing-daemon`
 artefact with pre-rename behavior (writes `spacedrive.json` on fresh
 directories) reappears in `target/debug` after builds in the Tauri app context
 (observed after `cargo test --manifest-path apps/tauri/src-tauri/Cargo.toml`
-and again during a `tauri dev` session). Mitigation: `rm target/debug/sd-daemon && cargo build --bin sd-daemon` (single cargo process) restores the correct
+and again during a `tauri dev` session). Mitigation: `rm target/debug/wing-daemon && cargo build --bin wing-daemon` (single cargo process) restores the correct
 cached artefact; smoke-test with `--data-dir <tmp> --instance t` and confirm
 `wingdrive.json` before trusting the binary. The session's own daemon and the
 rebuilt artefact both behaved correctly; the production stand-in launched from

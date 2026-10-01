@@ -61,7 +61,7 @@
 		"react-native-screens": "~4.28.0",
 		"react-native-svg": "15.15.5",
 		"react-native-worklets": "0.13.0",
-		"sd-mobile-core": "file:./modules/sd-mobile-core",
+		"wing-mobile-core": "file:./modules/wing-mobile-core",
 		"zustand": "^5.0.15"
 	},
 	"devDependencies": {

@@ -29,7 +29,7 @@ fn main() {
 	// Refuse to proceed if workspace dependencies aren't installed.
 	if !repo_root.join("node_modules").exists() {
 		panic!(
-			"node_modules missing at {} — run `bun install` (or `just setup`) before building sd-server, \
+			"node_modules missing at {} — run `bun install` (or `just setup`) before building wing-server, \
 			 or set SD_SKIP_WEB_BUILD=1 to skip the embedded UI build.",
 			repo_root.display()
 		);

@@ -1,8 +1,8 @@
 //! Simple migration test to verify the schema works
 
-use sd_core::infra::db::migration::Migrator;
 use sea_orm::{ConnectionTrait, Database, Statement};
 use sea_orm_migration::MigratorTrait;
+use wing_core::infra::db::migration::Migrator;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

@@ -11,7 +11,7 @@ whitepaper: Section 5.1
 
 ## Description
 
-Design the infrastructure for provisioning and running isolated `sd-core` instances for users in a cloud environment. This involves creating a scalable and secure architecture, likely using containerization and orchestration technologies like Kubernetes.
+Design the infrastructure for provisioning and running isolated `wing-core` instances for users in a cloud environment. This involves creating a scalable and secure architecture, likely using containerization and orchestration technologies like Kubernetes.
 
 ## Implementation Steps
 

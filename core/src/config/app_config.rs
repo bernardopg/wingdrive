@@ -153,9 +153,9 @@ pub struct LogStreamConfig {
 
 	/// RUST_LOG-style filter for this stream
 	/// Examples:
-	/// - "sd_core::service::watcher=debug" - all watcher logs at debug+
-	/// - "sd_core::infra::event=trace" - event system at trace level
-	/// - "sd_core::service::watcher=debug,sd_core::service::watcher::platform=trace" - multiple targets
+	/// - "wing_core::service::watcher=debug" - all watcher logs at debug+
+	/// - "wing_core::infra::event=trace" - event system at trace level
+	/// - "wing_core::service::watcher=debug,wing_core::service::watcher::platform=trace" - multiple targets
 	pub filter: String,
 
 	/// Whether this stream is enabled
@@ -203,7 +203,7 @@ impl Default for ProxyPairingConfig {
 impl Default for LoggingConfig {
 	fn default() -> Self {
 		Self {
-			main_filter: "sd_core=info,spacedrive=info".to_string(),
+			main_filter: "wing_core=info,spacedrive=info".to_string(),
 			streams: vec![],
 		}
 	}

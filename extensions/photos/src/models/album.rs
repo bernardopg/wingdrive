@@ -1,8 +1,8 @@
-use spacedrive_sdk::model;
+use wingdrive_sdk::model;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use spacedrive_sdk::prelude::*;
+use wingdrive_sdk::prelude::*;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Clone)]

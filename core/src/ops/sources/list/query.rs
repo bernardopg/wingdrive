@@ -66,7 +66,7 @@ impl LibraryQuery for ListSourcesQuery {
 			.source_manager()
 			.ok_or_else(|| QueryError::Internal("Source manager not available".to_string()))?;
 
-		// List sources via sd-archive
+		// List sources via wing-archive
 		let sources = source_manager
 			.list_sources()
 			.await

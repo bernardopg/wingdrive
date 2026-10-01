@@ -313,7 +313,7 @@ sqlite3 ~/WingDrive/Libraries/My\ Library.sdlibrary/sync.db \
   "SELECT * FROM device_resource_watermarks;"
 
 # Monitor sync activity
-RUST_LOG=sd_core::sync=debug,sd_core::service::sync=debug cargo run
+RUST_LOG=wing_core::sync=debug,wing_core::service::sync=debug cargo run
 ```
 
 ## Implementation Details
@@ -323,7 +323,7 @@ RUST_LOG=sd_core::sync=debug,sd_core::service::sync=debug cargo run
 For performance, the current device ID is cached globally:
 
 ```rust
-use sd_core::device::get_current_device_id;
+use wing_core::device::get_current_device_id;
 
 let device_id = get_current_device_id(); // Fast lookup
 ```

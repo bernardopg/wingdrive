@@ -1,5 +1,5 @@
 use anyhow::Result;
-use sd_core::infra::action::ConfirmationRequest;
+use wing_core::infra::action::ConfirmationRequest;
 
 /// Prompt the user for confirmation before executing a dangerous action.
 ///

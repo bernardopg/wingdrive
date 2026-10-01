@@ -1,7 +1,7 @@
 use clap::Args;
 use uuid::Uuid;
 
-use sd_core::ops::tags::{
+use wing_core::ops::tags::{
 	apply::input::{ApplyTagsInput, TagTargets},
 	create::input::CreateTagInput,
 	search::input::SearchTagsInput,

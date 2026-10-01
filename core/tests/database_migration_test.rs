@@ -1,7 +1,7 @@
 //! Test database migration functionality
 
-use sd_core::infra::db::Database;
 use tempfile::TempDir;
+use wing_core::infra::db::Database;
 
 #[tokio::test]
 async fn test_database_creation_and_migration() {

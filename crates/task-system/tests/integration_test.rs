@@ -1,4 +1,4 @@
-use sd_task_system::{TaskHandle, TaskOutput, TaskStatus, TaskSystem};
+use wing_task_system::{TaskHandle, TaskOutput, TaskStatus, TaskSystem};
 
 use std::{collections::VecDeque, time::Duration};
 
@@ -161,7 +161,7 @@ async fn pause_test() {
 
 #[test]
 fn many_pauses_test() {
-	std::env::set_var("RUST_LOG", "info,sd_task_system=error");
+	std::env::set_var("RUST_LOG", "info,wing_task_system=error");
 
 	tracing_subscriber::fmt()
 		.with_file(true)

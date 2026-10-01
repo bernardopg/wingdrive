@@ -1,6 +1,6 @@
 //! Thumbstrip generation engine
 //!
-//! Generates grid-based storyboard thumbnails from video files using the sd-ffmpeg crate.
+//! Generates grid-based storyboard thumbnails from video files using the wing-ffmpeg crate.
 
 use super::{
 	error::{ThumbstripError, ThumbstripResult},
@@ -25,7 +25,7 @@ pub struct ThumbstripInfo {
 	pub format: String,
 }
 
-/// Video frame data (from sd-ffmpeg)
+/// Video frame data (from wing-ffmpeg)
 pub struct VideoFrame {
 	pub data: Vec<u8>,
 	pub width: u32,
@@ -51,7 +51,7 @@ impl ThumbstripGenerator {
 		video_path: impl AsRef<Path> + Send,
 		output_path: impl AsRef<Path> + Send,
 	) -> ThumbstripResult<ThumbstripInfo> {
-		use sd_ffmpeg::{FrameDecoder, ThumbnailSize};
+		use wing_ffmpeg::{FrameDecoder, ThumbnailSize};
 
 		let config = self.config.clone();
 		let video_path = video_path.as_ref().to_path_buf();

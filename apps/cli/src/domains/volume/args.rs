@@ -1,5 +1,5 @@
 use clap::Args;
-use sd_core::{
+use wing_core::{
 	ops::volumes::{
 		add_cloud::{CloudStorageConfig, VolumeAddCloudInput},
 		remove_cloud::VolumeRemoveCloudInput,

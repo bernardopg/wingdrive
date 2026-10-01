@@ -1,5 +1,5 @@
 [package]
-name    = "sd-ffmpeg"
+name    = "wing-ffmpeg"
 version = "0.1.0"
 
 authors                = ["Ericson Soares <ericson@spacedrive.com>", "Vítor Vasconcellos <vitor@spacedrive.com>"]
@@ -12,7 +12,7 @@ rust-version.workspace = true
 
 [dependencies]
 # Spacedrive Sub-crates
-sd-utils = { path = "../utils" }
+wing-utils = { path = "../utils" }
 
 # Workspace dependencies
 chrono    = { workspace = true, features = ["serde"] }

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use sd_bench::cli::commands::{self as cli, Cli};
+use wing_bench::cli::commands::{self as cli, Cli};
 
 #[tokio::main]
 async fn main() -> Result<()> {

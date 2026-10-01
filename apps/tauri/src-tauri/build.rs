@@ -76,11 +76,11 @@ fn main() {
 
 	for source_profile in [profile.as_str(), "release"] {
 		let daemon_source = format!(
-			"{}/target/{}/sd-daemon{}",
+			"{}/target/{}/wing-daemon{}",
 			workspace_dir, source_profile, exe_ext
 		);
 		let daemon_target = format!(
-			"{}/target/{}/sd-daemon-{}{}",
+			"{}/target/{}/wing-daemon-{}{}",
 			workspace_dir, source_profile, target_triple, exe_ext
 		);
 

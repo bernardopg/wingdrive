@@ -13,9 +13,9 @@
 mod helpers;
 
 use helpers::*;
-use sd_core::device::get_current_device_slug;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use wing_core::device::get_current_device_slug;
 
 /// Connection info passed from Rust test harness to TypeScript tests
 #[derive(Debug, Serialize, Deserialize)]

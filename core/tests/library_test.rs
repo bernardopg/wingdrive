@@ -1,7 +1,7 @@
 //! Integration tests for the library system
 
-use sd_core::Core;
 use tempfile::TempDir;
+use wing_core::Core;
 
 #[tokio::test]
 async fn test_library_lifecycle() {

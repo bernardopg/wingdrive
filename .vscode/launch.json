@@ -45,16 +45,16 @@
 		{
 			"type": "lldb",
 			"request": "launch",
-			"name": "Debug unit tests in library 'sd-core'",
+			"name": "Debug unit tests in library 'wing-core'",
 			"cargo": {
 				"args": [
 					"test",
 					"--no-run",
 					"--lib",
-					"--package=sd-core"
+					"--package=wing-core"
 				],
 				"filter": {
-					"name": "sd-core",
+					"name": "wing-core",
 					"kind": "lib"
 				}
 			},
@@ -64,16 +64,16 @@
 		{
 			"type": "lldb",
 			"request": "launch",
-			"name": "Debug unit tests in library 'sd-crypto'",
+			"name": "Debug unit tests in library 'wing-crypto'",
 			"cargo": {
 				"args": [
 					"test",
 					"--no-run",
 					"--lib",
-					"--package=sd-crypto"
+					"--package=wing-crypto"
 				],
 				"filter": {
-					"name": "sd-crypto",
+					"name": "wing-crypto",
 					"kind": "lib"
 				}
 			},

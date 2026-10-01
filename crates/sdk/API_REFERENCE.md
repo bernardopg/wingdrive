@@ -12,7 +12,7 @@ The SDK now includes **all APIs** documented in the specification as type-checke
 ### Modules
 
 ```
-spacedrive-sdk/
+wingdrive-sdk/
 ├── actions.rs       - Action preview/execute system
 ├── agent.rs         - Agent context and memory
 ├── ai.rs            - AI models and inference
@@ -335,7 +335,7 @@ pub trait ExtensionModel: Serialize + DeserializeOwned + Send + Sync {
 
 ---
 
-## Macros (spacedrive-sdk-macros)
+## Macros (wingdrive-sdk-macros)
 
 All macros are currently pass-through stubs:
 

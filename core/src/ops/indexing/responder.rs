@@ -8,10 +8,10 @@ use crate::context::CoreContext;
 use crate::ops::indexing::change_detection::{self, ChangeConfig, DatabaseAdapter};
 use crate::ops::indexing::rules::RuleToggles;
 use anyhow::Result;
-use sd_fs_watcher::FsEvent;
 use std::path::Path;
 use std::sync::Arc;
 use uuid::Uuid;
+use wing_fs_watcher::FsEvent;
 
 /// Translates a single filesystem event into database mutations.
 ///

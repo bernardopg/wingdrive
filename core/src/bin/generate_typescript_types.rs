@@ -8,11 +8,11 @@
 use std::path::Path;
 
 // Import our type extraction system (same as Swift)
-use sd_core::infra::wire::type_extraction::{
+use specta_typescript::Typescript;
+use wing_core::infra::wire::type_extraction::{
 	create_spacedrive_api_structure, generate_spacedrive_api, ApiOperationType, ApiQueryType,
 	SpacedriveApiStructure,
 };
-use specta_typescript::Typescript;
 
 /// Trait for types that can generate TypeScript union members
 trait TypeScriptUnionMember {

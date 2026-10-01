@@ -68,13 +68,13 @@ docker run -d \
   wingdrive:latest
 
 # View status
-docker exec wingdrive-daemon sd-cli status
+docker exec wingdrive-daemon wing-cli status
 
 # View logs
 docker logs -f wingdrive-daemon
 
 # Execute CLI commands
-docker exec wingdrive-daemon sd-cli library list
+docker exec wingdrive-daemon wing-cli library list
 ```
 
 ### Multi-Architecture Support
@@ -104,41 +104,41 @@ docker buildx build \
 ```bash
 # For x86_64 Linux
 curl -LO https://github.com/YOUR_ORG/releases/latest/download/sd-linux-x86_64
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/sd-daemon-linux-x86_64
+curl -LO https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-x86_64
 
 # For ARM64 (Raspberry Pi)
 curl -LO https://github.com/YOUR_ORG/releases/latest/download/sd-linux-aarch64
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/sd-daemon-linux-aarch64
+curl -LO https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-aarch64
 ```
 
 2. **Install binaries**:
 
 ```bash
 # Move to PATH
-sudo mv sd-linux-* /usr/local/bin/sd-cli
-sudo mv sd-daemon-linux-* /usr/local/bin/sd-daemon
+sudo mv sd-linux-* /usr/local/bin/wing-cli
+sudo mv wing-daemon-linux-* /usr/local/bin/wing-daemon
 
 # Set permissions
-sudo chmod +x /usr/local/bin/sd-cli /usr/local/bin/sd-daemon
+sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
 
 # Test installation
-sd-cli --version
+wing-cli --version
 ```
 
 ### Running the Daemon
 
 ```bash
 # Start in foreground (for testing)
-sd-cli start --foreground
+wing-cli start --foreground
 
 # Start in background
-sd-cli start
+wing-cli start
 
 # Check status
-sd-cli status
+wing-cli status
 
 # Stop daemon
-sd-cli stop
+wing-cli stop
 ```
 
 ## Systemd Service (Auto-Start)
@@ -149,13 +149,13 @@ The CLI includes built-in systemd service management:
 
 ```bash
 # Install and enable auto-start
-sd-cli daemon install
+wing-cli daemon install
 
 # Check status
-sd-cli daemon status
+wing-cli daemon status
 
 # Uninstall auto-start
-sd-cli daemon uninstall
+wing-cli daemon uninstall
 ```
 
 This creates a systemd user service at:
@@ -176,7 +176,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/sd-daemon --data-dir %h/.local/share/wingdrive
+ExecStart=/usr/local/bin/wing-daemon --data-dir %h/.local/share/wingdrive
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal
@@ -226,18 +226,18 @@ ssh admin@truenas
 
 # Download and install binaries
 curl -LO https://github.com/YOUR_ORG/releases/latest/download/sd-linux-x86_64
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/sd-daemon-linux-x86_64
+curl -LO https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-x86_64
 
-sudo mv sd-linux-x86_64 /usr/local/bin/sd-cli
-sudo mv sd-daemon-linux-x86_64 /usr/local/bin/sd-daemon
-sudo chmod +x /usr/local/bin/sd-cli /usr/local/bin/sd-daemon
+sudo mv sd-linux-x86_64 /usr/local/bin/wing-cli
+sudo mv wing-daemon-linux-x86_64 /usr/local/bin/wing-daemon
+sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
 
 # Set up systemd service
-sd-cli daemon install
+wing-cli daemon install
 
 # Index your pools
-sd-cli location add /mnt/pool1
-sd-cli location add /mnt/pool2
+wing-cli location add /mnt/pool1
+wing-cli location add /mnt/pool2
 ```
 
 ### TrueNAS CORE (FreeBSD)
@@ -260,15 +260,15 @@ sudo apt-get update && sudo apt-get upgrade -y
 
 # Download ARM64 binaries
 wget https://github.com/YOUR_ORG/releases/latest/download/sd-linux-aarch64
-wget https://github.com/YOUR_ORG/releases/latest/download/sd-daemon-linux-aarch64
+wget https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-aarch64
 
 # Install
-sudo mv sd-linux-aarch64 /usr/local/bin/sd-cli
-sudo mv sd-daemon-linux-aarch64 /usr/local/bin/sd-daemon
-sudo chmod +x /usr/local/bin/sd-cli /usr/local/bin/sd-daemon
+sudo mv sd-linux-aarch64 /usr/local/bin/wing-cli
+sudo mv wing-daemon-linux-aarch64 /usr/local/bin/wing-daemon
+sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
 
 # Install auto-start
-sd-cli daemon install
+wing-cli daemon install
 
 # Start daemon
 sudo systemctl --user start wingdrive-daemon
@@ -277,7 +277,7 @@ sudo systemctl --user start wingdrive-daemon
 ### Performance Tips
 
 - Use external SSD for better I/O performance
-- Limit concurrent indexing jobs: `sd-cli config set jobs.max_concurrent 2`
+- Limit concurrent indexing jobs: `wing-cli config set jobs.max_concurrent 2`
 - Disable thumbnail generation for large libraries to save RAM
 
 ## Configuration
@@ -291,7 +291,7 @@ By default, data is stored at:
 Override with `--data-dir` flag:
 
 ```bash
-sd-cli --data-dir /mnt/external/wingdrive start
+wing-cli --data-dir /mnt/external/wingdrive start
 ```
 
 ### Auto-Update
@@ -300,13 +300,13 @@ Configure update repository:
 
 ```bash
 # Set your releases repo
-sd-cli config set update.repo "your-org/wingdrive-cli-releases"
+wing-cli config set update.repo "your-org/wingdrive-cli-releases"
 
 # Check for updates
-sd-cli update
+wing-cli update
 
 # Auto-update on schedule (cron)
-echo "0 2 * * * /usr/local/bin/sd-cli update --force" | crontab -
+echo "0 2 * * * /usr/local/bin/wing-cli update --force" | crontab -
 ```
 
 ### Multiple Instances
@@ -315,14 +315,14 @@ Run multiple daemon instances:
 
 ```bash
 # Instance for work files
-sd-cli --instance work --data-dir ~/wingdrive-work start
+wing-cli --instance work --data-dir ~/wingdrive-work start
 
 # Instance for personal files
-sd-cli --instance personal --data-dir ~/wingdrive-personal start
+wing-cli --instance personal --data-dir ~/wingdrive-personal start
 
 # Install both as services
-sd-cli --instance work daemon install
-sd-cli --instance personal daemon install
+wing-cli --instance work daemon install
+wing-cli --instance personal daemon install
 ```
 
 ## Monitoring
@@ -331,7 +331,7 @@ sd-cli --instance personal daemon install
 
 ```bash
 # Check daemon status
-sd-cli status
+wing-cli status
 
 # Check systemd service
 systemctl --user status wingdrive-daemon
@@ -340,20 +340,20 @@ systemctl --user status wingdrive-daemon
 journalctl --user -u wingdrive-daemon --since "1 hour ago"
 
 # Follow logs in real-time
-sd-cli logs follow
+wing-cli logs follow
 ```
 
 ### Resource Usage
 
 ```bash
 # Check memory usage
-ps aux | grep sd-daemon
+ps aux | grep wing-daemon
 
 # Check disk usage
 du -sh ~/.local/share/wingdrive
 
 # Monitor with htop
-htop -p $(pgrep sd-daemon)
+htop -p $(pgrep wing-daemon)
 ```
 
 ## Troubleshooting
@@ -365,17 +365,17 @@ htop -p $(pgrep sd-daemon)
 journalctl --user -u wingdrive-daemon -n 50
 
 # Or with CLI
-sd-cli logs follow
+wing-cli logs follow
 
 # Reset data and restart
-sd-cli restart --reset
+wing-cli restart --reset
 ```
 
 ### Permission Issues
 
 ```bash
 # Fix binary permissions
-sudo chmod +x /usr/local/bin/sd-cli /usr/local/bin/sd-daemon
+sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
 
 # Fix data directory permissions
 chmod -R u+rw ~/.local/share/wingdrive
@@ -390,10 +390,10 @@ If you see "address already in use":
 lsof ~/.local/share/wingdrive/daemon/daemon.sock
 
 # Kill old process
-pkill sd-daemon
+pkill wing-daemon
 
 # Restart
-sd-cli start
+wing-cli start
 ```
 
 ### Out of Memory (Raspberry Pi)
@@ -403,10 +403,10 @@ sd-cli start
 free -h
 
 # Reduce concurrent jobs
-sd-cli config set jobs.max_concurrent 1
+wing-cli config set jobs.max_concurrent 1
 
 # Restart daemon
-sd-cli restart
+wing-cli restart
 ```
 
 ## Security Considerations
@@ -417,10 +417,10 @@ Always run as a regular user, never as root:
 
 ```bash
 # DON'T do this
-sudo sd-cli start  # ❌
+sudo wing-cli start  # ❌
 
 # DO this instead
-sd-cli start  # ✓
+wing-cli start  # ✓
 ```
 
 ### Firewall Configuration
@@ -453,13 +453,13 @@ chmod -R u+r /path/to/index
 
 ```bash
 # Stop daemon
-sd-cli stop
+wing-cli stop
 
 # Remove auto-start
-sd-cli daemon uninstall
+wing-cli daemon uninstall
 
 # Remove binaries
-sudo rm /usr/local/bin/sd-cli /usr/local/bin/sd-daemon
+sudo rm /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
 
 # Remove data (optional)
 rm -rf ~/.local/share/wingdrive

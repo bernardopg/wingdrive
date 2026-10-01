@@ -1,10 +1,10 @@
 //! Test for enhanced pairing with relay fallback functionality
 
-use sd_core::service::network::protocol::pairing::PairingCode;
-use sd_core::Core;
 use std::time::Duration;
 use tempfile::TempDir;
 use tokio::time::timeout;
+use wing_core::service::network::protocol::pairing::PairingCode;
+use wing_core::Core;
 
 #[tokio::test]
 async fn test_enhanced_pairing_code_with_relay_info() {

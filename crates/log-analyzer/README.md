@@ -70,13 +70,13 @@ cargo run --example analyze_sync_log --features cli -- analyze test.log \
 Extracts structured components from each log line:
 
 ```
-2025-11-16T07:19:57.232531Z DEBUG ThreadId(02) sd_core::sync::peer: Recorded ACK peer=1817e146
+2025-11-16T07:19:57.232531Z DEBUG ThreadId(02) wing_core::sync::peer: Recorded ACK peer=1817e146
                  ↓
 {
   timestamp: 2025-11-16T07:19:57.232531Z,
   level: DEBUG,
   thread: ThreadId(02),
-  module: "sd_core::sync::peer",
+  module: "wing_core::sync::peer",
   message: "Recorded ACK peer=1817e146"
 }
 ```
@@ -138,8 +138,8 @@ cargo run --example analyze_sync_log --features cli -- phases test.log --duratio
 
 ### By Module
 
-  sd_core::service::sync: 8,450 events
-  sd_core::infra::sync: 2,100 events
+  wing_core::service::sync: 8,450 events
+  wing_core::infra::sync: 2,100 events
   sync_realtime_integration_test::helpers: 1,900 events
 ```
 

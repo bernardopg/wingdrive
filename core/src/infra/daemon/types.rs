@@ -60,7 +60,7 @@ pub struct LogFilter {
 	pub job_id: Option<String>,
 	/// Filter by log level (e.g., "INFO", "WARN", "ERROR")
 	pub level: Option<String>,
-	/// Filter by target/component (e.g., "sd_core::ops")
+	/// Filter by target/component (e.g., "wing_core::ops")
 	pub target: Option<String>,
 }
 

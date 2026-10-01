@@ -28,7 +28,7 @@ WingDrive will support three connection modes:
 
 - Spacebot already has a real control plane: HTTP API, health endpoints, status endpoints, SSE, and a stable instance directory model.
 - WingDrive already treats Spacebot as a separate process in the README, which is the right long-term boundary.
-- Embedding Spacebot directly into `sd-core` would couple two daemon models too early.
+- Embedding Spacebot directly into `wing-core` would couple two daemon models too early.
 - Spacebot works cleanly as a child process because it has explicit foreground mode and local file-backed state.
 - The same client model can serve local managed, local external, and remote connections.
 
@@ -94,7 +94,7 @@ spacebot start --foreground --config <path>
 
 Recommended ownership:
 
-- process lifecycle owned by the desktop shell layer, not by `sd-core`
+- process lifecycle owned by the desktop shell layer, not by `wing-core`
 - status mirrored into WingDrive config and UI
 - health and warmup polled over HTTP
 
@@ -174,11 +174,11 @@ The smallest honest first-class integration is:
 - own agent runtime, messaging, memory, tools, and control API
 - remain independently deployable and independently upgradeable
 
-## Why Not Manage Spacebot in `sd-core`
+## Why Not Manage Spacebot in `wing-core`
 
-`sd-core` is the VDFS daemon. Spacebot is its own daemon-like runtime with its own process lifecycle, logs, warmup state, secrets, agent graph, and HTTP UI model.
+`wing-core` is the VDFS daemon. Spacebot is its own daemon-like runtime with its own process lifecycle, logs, warmup state, secrets, agent graph, and HTTP UI model.
 
-Putting child-process management directly into `sd-core` would:
+Putting child-process management directly into `wing-core` would:
 
 - blur product boundaries
 - complicate server and mobile targets unnecessarily
@@ -237,7 +237,7 @@ These can begin as thin wrappers around app config and platform commands.
 
 ## Proposed Desktop Platform Commands
 
-The Tauri layer already manages `sd-daemon`. Reuse that pattern for Spacebot.
+The Tauri layer already manages `wing-daemon`. Reuse that pattern for Spacebot.
 
 Recommended commands:
 

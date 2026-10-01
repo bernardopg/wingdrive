@@ -235,7 +235,7 @@ cloud_manager.store_credential(
 ## Error Handling
 
 ```rust
-use sd_core::crypto::key_manager::KeyManagerError;
+use wing_core::crypto::key_manager::KeyManagerError;
 
 match key_manager.get_secret("my_key").await {
     Ok(secret) => println!("Secret: {:?}", secret),

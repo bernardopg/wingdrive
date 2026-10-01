@@ -2,11 +2,11 @@
 //!
 //! Run with: cargo run --example debug_volumes
 
-use sd_core::volume::{
+use uuid::Uuid;
+use wing_core::volume::{
 	detection::detect_volumes,
 	types::{VolumeDetectionConfig, VolumeType},
 };
-use uuid::Uuid;
 
 #[tokio::main]
 async fn main() {

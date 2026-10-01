@@ -3,12 +3,12 @@
 //! This test demonstrates cross-device file sharing functionality where Alice
 //! (sender) pairs with Bob (receiver) and transfers multiple test files.
 
-use sd_core::{
+use std::{env, path::PathBuf, time::Duration};
+use tokio::time::timeout;
+use wing_core::{
 	domain::content_identity::ContentHashGenerator, service::file_sharing::TransferState,
 	testing::CargoTestRunner, Core,
 };
-use std::{env, path::PathBuf, time::Duration};
-use tokio::time::timeout;
 
 /// Alice's file transfer scenario - sender role
 #[tokio::test]
@@ -62,7 +62,7 @@ async fn alice_file_transfer_scenario() {
 			if let Some(ft_handler) =
 				handler
 					.as_any()
-					.downcast_ref::<sd_core::service::network::protocol::FileTransferProtocolHandler>(
+					.downcast_ref::<wing_core::service::network::protocol::FileTransferProtocolHandler>(
 					) {
 				ft_handler.add_allowed_path(std::path::PathBuf::from("/tmp/received_files"));
 				println!("Alice: Added /tmp/received_files as allowed path");
@@ -408,7 +408,7 @@ async fn bob_file_transfer_scenario() {
 			if let Some(ft_handler) =
 				handler
 					.as_any()
-					.downcast_ref::<sd_core::service::network::protocol::FileTransferProtocolHandler>(
+					.downcast_ref::<wing_core::service::network::protocol::FileTransferProtocolHandler>(
 					) {
 				ft_handler.add_allowed_path(std::path::PathBuf::from("/tmp/received_files"));
 				println!("Bob: Added /tmp/received_files as allowed path");

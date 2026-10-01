@@ -239,7 +239,7 @@ If multiple devices are connected, the host fans out the same event stream to ea
 
 ### What the Host Device Runs
 
-The Spacebot host device runs a `SpacebotProxy` inside `sd-core` that:
+The Spacebot host device runs a `SpacebotProxy` inside `wing-core` that:
 
 1. Accepts inbound HTTP-over-P2P requests from peer devices.
 2. Forwards them to the local Spacebot instance and returns the response.

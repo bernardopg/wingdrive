@@ -6,8 +6,8 @@ This directory contains the extension SDK and official extensions for WingDrive.
 
 ```
 extensions/
-├── spacedrive-sdk/          # Core SDK library
-├── spacedrive-sdk-macros/   # Proc macros for beautiful API
+├── wingdrive-sdk/          # Core SDK library
+├── wingdrive-sdk-macros/   # Proc macros for beautiful API
 ├── test-extension/          # Example extension with beautiful API
 └── finance/                 # (Future) First revenue-generating extension
 ```
@@ -33,14 +33,14 @@ cd my-extension
 crate-type = ["cdylib"]
 
 [dependencies]
-spacedrive-sdk = { path = "../spacedrive-sdk" }
+wingdrive-sdk = { path = "../wingdrive-sdk" }
 serde = { version = "1.0", features = ["derive"] }
 ```
 
 **src/lib.rs:**
 ```rust
-use spacedrive_sdk::prelude::*;
-use spacedrive_sdk::{extension, job};
+use wingdrive_sdk::prelude::*;
+use wingdrive_sdk::{extension, job};
 
 #[extension(
     id = "my-extension",

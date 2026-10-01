@@ -1,15 +1,15 @@
 //! Test for job pausing during shutdown
 
-use sd_core::{
+use sea_orm::ActiveModelTrait;
+use std::time::Duration;
+use tempfile::TempDir;
+use tokio::time::sleep;
+use wing_core::{
 	infra::db::entities,
 	infra::job::types::{JobId, JobStatus},
 	location::{create_location, IndexMode, LocationCreateArgs},
 	Core,
 };
-use sea_orm::ActiveModelTrait;
-use std::time::Duration;
-use tempfile::TempDir;
-use tokio::time::sleep;
 
 #[tokio::test]
 async fn test_jobs_paused_on_shutdown() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

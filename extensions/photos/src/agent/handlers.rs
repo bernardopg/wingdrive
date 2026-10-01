@@ -1,6 +1,6 @@
 use chrono::Duration;
-use spacedrive_sdk::prelude::*;
-use spacedrive_sdk::{agent, agent_trail, filter, on_event, on_startup, scheduled};
+use wingdrive_sdk::prelude::*;
+use wingdrive_sdk::{agent, agent_trail, filter, on_event, on_startup, scheduled};
 
 use crate::agent::{PhotoEvent, PhotosMind};
 use crate::jobs::*;

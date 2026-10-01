@@ -25,7 +25,7 @@ fn write_magic_header_if_needed(
 	if !enable_magic {
 		return Ok(0);
 	}
-	let registry = sd_core::filetype::FileTypeRegistry::new();
+	let registry = wing_core::filetype::FileTypeRegistry::new();
 	let mut candidates = registry.get_by_extension(extension);
 	if candidates.is_empty() {
 		return Ok(0);
@@ -52,9 +52,9 @@ fn write_magic_header_if_needed(
 			.bytes
 			.iter()
 			.map(|b| match b {
-				sd_core::filetype::MagicByte::Exact(v) => *v,
-				sd_core::filetype::MagicByte::Any => 0u8,
-				sd_core::filetype::MagicByte::Range { min, .. } => *min,
+				wing_core::filetype::MagicByte::Exact(v) => *v,
+				wing_core::filetype::MagicByte::Any => 0u8,
+				wing_core::filetype::MagicByte::Range { min, .. } => *min,
 			})
 			.collect();
 		file.write_all(&bytes)?;
@@ -96,7 +96,7 @@ fn write_content_for_hashing(
 			const HEADER_OR_FOOTER_SIZE: u64 = 8 * 1024;
 			const SAMPLE_COUNT: u64 = 4;
 			let sample_size = sample_block_size.max(1);
-			if total_size <= sd_core::domain::content_identity::MINIMUM_FILE_SIZE {
+			if total_size <= wing_core::domain::content_identity::MINIMUM_FILE_SIZE {
 				// small file: write full content deterministically but lighter (10KiB chunks)
 				let mut remaining = total_size;
 				let mut pos = wrote_up_to;
@@ -303,7 +303,7 @@ impl DatasetGenerator for FileSystemGenerator {
 				}
 			}
 			// After generation for this location, write a marker file
-			let marker = loc.path.join(".sd-bench-generated");
+			let marker = loc.path.join(".wing-bench-generated");
 			if let Err(e) = std::fs::write(&marker, b"ok") {
 				eprintln!(
 					"Warning: failed to write generation marker at {}: {}",

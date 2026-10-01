@@ -1,4 +1,4 @@
-# sd-archive
+# wing-archive
 
 Archive engine for WingDrive - indexes external data sources beyond the filesystem.
 
@@ -19,7 +19,7 @@ This crate provides the core archival engine that powers WingDrive's data source
 ### Standalone
 
 ```rust
-use sd_archive::{Engine, EngineConfig};
+use wing_archive::{Engine, EngineConfig};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -222,16 +222,16 @@ The engine persists cursor state and provides it on next sync.
 
 ```bash
 # Run all tests
-cargo test -p sd-archive
+cargo test -p wing-archive
 
 # Run with safety features
-cargo test -p sd-archive --features safety-screening
+cargo test -p wing-archive --features safety-screening
 
 # Run specific test
-cargo test -p sd-archive schema::tests::parse_simple_schema
+cargo test -p wing-archive schema::tests::parse_simple_schema
 
 # Benchmark
-cargo bench -p sd-archive
+cargo bench -p wing-archive
 ```
 
 ## License

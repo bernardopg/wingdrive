@@ -1,13 +1,13 @@
 //! Common utilities and structures for benchmark scenarios
 use anyhow::{anyhow, Result};
-use sd_core::infra::event::{Event, EventSubscriber};
-use sd_core::infra::job::output::JobOutput;
-use sd_core::library::Library;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use uuid::Uuid;
+use wing_core::infra::event::{Event, EventSubscriber};
+use wing_core::infra::job::output::JobOutput;
+use wing_core::library::Library;
 
 /// Base state for scenarios that run and monitor jobs.
 #[derive(Default)]

@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 chrono         = { version = "0.4", features = ["serde"] }
 serde          = { version = "1.0", features = ["derive"] }
 serde_json     = "1.0"
-spacedrive-sdk = { path = "../../crates/sdk" }
+wingdrive-sdk = { path = "../../crates/sdk" }
 thiserror      = "1.0"
 tracing        = "0.1"
 uuid           = { version = "1.0", features = ["js", "serde", "v4"] }

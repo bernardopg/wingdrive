@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 use uuid::Uuid;
 
-use sd_core::{
+use wing_core::{
 	infra::daemon::rpc::RpcServer,
 	infra::daemon::types::{DaemonError, DaemonRequest, DaemonResponse},
 	infra::event::log_emitter::{set_global_log_bus, LogEventLayer},
@@ -103,7 +103,7 @@ pub unsafe extern "C" fn initialize_core(
 	let _ = tracing_subscriber::registry()
 		.with(
 			tracing_subscriber::EnvFilter::try_from_default_env()
-				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info,sd_core=debug")),
+				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info,wing_core=debug")),
 		)
 		.with(tracing_subscriber::fmt::layer().with_ansi(false))
 		.with(LogEventLayer::new())

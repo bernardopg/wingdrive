@@ -441,7 +441,7 @@ Job events:
 Query the database directly to verify state:
 
 ```rust
-use sd_core::entities;
+use wing_core::entities;
 
 let entries = entities::entry::Entity::find()
     .filter(entities::entry::Column::Name.contains("test"))
@@ -783,11 +783,11 @@ All core integration tests are defined in `xtask/src/test_core.rs` in the `CORE_
 pub const CORE_TESTS: &[TestSuite] = &[
     TestSuite {
         name: "Library tests",
-        args: &["test", "-p", "sd-core", "--lib", "--", "--test-threads=1"],
+        args: &["test", "-p", "wing-core", "--lib", "--", "--test-threads=1"],
     },
     TestSuite {
         name: "Indexing test",
-        args: &["test", "-p", "sd-core", "--test", "indexing_test", "--", "--test-threads=1"],
+        args: &["test", "-p", "wing-core", "--test", "indexing_test", "--", "--test-threads=1"],
     },
     // ... more tests
 ];
@@ -865,7 +865,7 @@ pub const CORE_TESTS: &[TestSuite] = &[
         args: &[
             "test",
             "-p",
-            "sd-core",
+            "wing-core",
             "--test",
             "your_test",
             "--",
@@ -1245,7 +1245,7 @@ const originalCreateSubscription = (client as any).subscriptionManager
 
 ```bash
 # Run all TypeScript bridge tests
-cargo test --package sd-core --test typescript_bridge_test -- --nocapture
+cargo test --package wing-core --test typescript_bridge_test -- --nocapture
 
 # Run specific bridge test
 cargo test test_typescript_use_normalized_query_with_file_moves -- --nocapture

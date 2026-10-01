@@ -1,7 +1,7 @@
 use clap::{Args, Subcommand};
 use uuid::Uuid;
 
-use sd_core::{
+use wing_core::{
 	domain::addressing::SdPath,
 	ops::network::{
 		pair::{

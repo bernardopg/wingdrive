@@ -2,8 +2,8 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use comfy_table::{presets::UTF8_BORDERS_ONLY, Attribute, Cell, Table};
-use sd_core::client::CoreClient;
 use std::path::Path;
+use wing_core::client::CoreClient;
 
 fn format_bytes(bytes: u64) -> String {
 	const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];
@@ -239,7 +239,9 @@ enum Commands {
 #[tokio::main]
 async fn main() -> Result<()> {
 	let cli = Cli::parse();
-	let data_dir = cli.data_dir.unwrap_or(sd_core::config::default_data_dir()?);
+	let data_dir = cli
+		.data_dir
+		.unwrap_or(wing_core::config::default_data_dir()?);
 	let instance = cli.instance;
 
 	// Validate instance name for security
@@ -263,10 +265,10 @@ async fn main() -> Result<()> {
 			// Check if daemon is already running
 			let client = CoreClient::new(socket_addr.clone());
 			match client
-				.send_raw_request(&sd_core::infra::daemon::types::DaemonRequest::Ping)
+				.send_raw_request(&wing_core::infra::daemon::types::DaemonRequest::Ping)
 				.await
 			{
-				Ok(sd_core::infra::daemon::types::DaemonResponse::Pong) => {
+				Ok(wing_core::infra::daemon::types::DaemonResponse::Pong) => {
 					println!("Daemon is already running");
 					return Ok(());
 				}
@@ -275,7 +277,7 @@ async fn main() -> Result<()> {
 
 			// Start daemon using std::process::Command
 			let current_exe = std::env::current_exe()?;
-			let daemon_path = current_exe.parent().unwrap().join("sd-daemon");
+			let daemon_path = current_exe.parent().unwrap().join("wing-daemon");
 			let mut command = std::process::Command::new(daemon_path);
 
 			// Pass data directory
@@ -321,10 +323,10 @@ async fn main() -> Result<()> {
 
 						// Verify daemon is responding
 						match client
-							.send_raw_request(&sd_core::infra::daemon::types::DaemonRequest::Ping)
+							.send_raw_request(&wing_core::infra::daemon::types::DaemonRequest::Ping)
 							.await
 						{
-							Ok(sd_core::infra::daemon::types::DaemonResponse::Pong) => {
+							Ok(wing_core::infra::daemon::types::DaemonResponse::Pong) => {
 								println!("Daemon is ready and responding");
 								println!("Use 'sd logs follow' to view daemon logs");
 							}
@@ -352,7 +354,7 @@ async fn main() -> Result<()> {
 			println!("Stopping daemon...");
 			let core = CoreClient::new(socket_addr.clone());
 			let stop_result = core
-				.send_raw_request(&sd_core::infra::daemon::types::DaemonRequest::Shutdown)
+				.send_raw_request(&wing_core::infra::daemon::types::DaemonRequest::Shutdown)
 				.await;
 
 			match stop_result {
@@ -388,7 +390,7 @@ async fn main() -> Result<()> {
 			println!("Stopping daemon...");
 			let core = CoreClient::new(socket_addr.clone());
 			let stop_result = core
-				.send_raw_request(&sd_core::infra::daemon::types::DaemonRequest::Shutdown)
+				.send_raw_request(&wing_core::infra::daemon::types::DaemonRequest::Shutdown)
 				.await;
 
 			match stop_result {
@@ -413,7 +415,7 @@ async fn main() -> Result<()> {
 			// Start the daemon again
 			println!("Starting daemon...");
 			let current_exe = std::env::current_exe()?;
-			let daemon_path = current_exe.parent().unwrap().join("sd-daemon");
+			let daemon_path = current_exe.parent().unwrap().join("wing-daemon");
 			let mut cmd = std::process::Command::new(daemon_path);
 
 			// Pass data directory
@@ -459,7 +461,7 @@ async fn main() -> Result<()> {
 				// Try to connect to verify it started successfully
 				let core = CoreClient::new(socket_addr.clone());
 				match core
-					.send_raw_request(&sd_core::infra::daemon::types::DaemonRequest::Ping)
+					.send_raw_request(&wing_core::infra::daemon::types::DaemonRequest::Ping)
 					.await
 				{
 					Ok(_) => println!("Daemon restart successful"),
@@ -501,11 +503,11 @@ async fn run_client_command(
 		if let Ok(device_json) = serde_json::from_str::<serde_json::Value>(&device_config) {
 			if let Some(device_id_str) = device_json.get("id").and_then(|v| v.as_str()) {
 				if let Ok(device_id) = uuid::Uuid::parse_str(device_id_str) {
-					sd_core::device::set_current_device_id(device_id);
+					wing_core::device::set_current_device_id(device_id);
 				}
 			}
 			if let Some(device_slug) = device_json.get("slug").and_then(|v| v.as_str()) {
-				sd_core::device::set_current_device_slug(device_slug.to_string());
+				wing_core::device::set_current_device_slug(device_slug.to_string());
 			}
 		}
 	}
@@ -517,7 +519,7 @@ async fn run_client_command(
 
 	match command {
 		Commands::Status => {
-			let status: sd_core::ops::core::status::output::CoreStatus =
+			let status: wing_core::ops::core::status::output::CoreStatus =
 				execute_core_query!(ctx, ());
 			match ctx.format {
 				OutputFormat::Human => {

@@ -43,7 +43,7 @@ pub fn parse_string(content: &str) -> Result<Vec<ParsedLog>> {
 /// Parse a single log line.
 ///
 /// Expected format:
-/// `2025-11-16T07:19:57.232531Z DEBUG ThreadId(02) sd_core::service::sync::peer: Message`
+/// `2025-11-16T07:19:57.232531Z DEBUG ThreadId(02) wing_core::service::sync::peer: Message`
 pub fn parse_line(line: &str) -> Option<ParsedLog> {
 	// Regex to match tracing logs
 	// Format: TIMESTAMP LEVEL ThreadId(XX) module::path: message
@@ -84,32 +84,33 @@ mod tests {
 
 	#[test]
 	fn test_parse_line_with_thread() {
-		let line = "2025-11-16T07:19:57.232531Z DEBUG ThreadId(02) sd_core::service::sync::peer: Recorded ACK from peer peer=1817e146";
+		let line = "2025-11-16T07:19:57.232531Z DEBUG ThreadId(02) wing_core::service::sync::peer: Recorded ACK from peer peer=1817e146";
 
 		let log = parse_line(line).expect("Failed to parse");
 
 		assert_eq!(log.level, LogLevel::Debug);
 		assert_eq!(log.thread_id, Some("02".to_string()));
-		assert_eq!(log.module, "sd_core::service::sync::peer");
+		assert_eq!(log.module, "wing_core::service::sync::peer");
 		assert!(log.message.contains("Recorded ACK"));
 	}
 
 	#[test]
 	fn test_parse_line_without_thread() {
-		let line = "2025-11-16T07:19:57.232531Z INFO sd_core::service::sync: Starting sync service";
+		let line =
+			"2025-11-16T07:19:57.232531Z INFO wing_core::service::sync: Starting sync service";
 
 		let log = parse_line(line).expect("Failed to parse");
 
 		assert_eq!(log.level, LogLevel::Info);
 		assert_eq!(log.thread_id, None);
-		assert_eq!(log.module, "sd_core::service::sync");
+		assert_eq!(log.module, "wing_core::service::sync");
 	}
 
 	#[test]
 	fn test_parse_string() {
-		let content = r#"2025-11-16T07:19:57.232531Z DEBUG ThreadId(02) sd_core::service::sync::peer: Message 1
-2025-11-16T07:19:57.232532Z INFO sd_core::service::sync: Message 2
-2025-11-16T07:19:57.232533Z ERROR sd_core::service::sync::peer: Message 3"#;
+		let content = r#"2025-11-16T07:19:57.232531Z DEBUG ThreadId(02) wing_core::service::sync::peer: Message 1
+2025-11-16T07:19:57.232532Z INFO wing_core::service::sync: Message 2
+2025-11-16T07:19:57.232533Z ERROR wing_core::service::sync::peer: Message 3"#;
 
 		let logs = parse_string(content).expect("Failed to parse");
 

@@ -5,7 +5,10 @@
 //! - Import the exported location into a new library
 //! - Verify data integrity after import
 
-use sd_core::{
+use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+use tempfile::TempDir;
+use tokio::time::Duration;
+use wing_core::{
 	domain::addressing::SdPath,
 	infra::{action::LibraryAction, db::entities, job::JobStatus},
 	ops::{
@@ -18,12 +21,9 @@ use sd_core::{
 	},
 	Core,
 };
-use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-use tempfile::TempDir;
-use tokio::time::Duration;
 
 async fn wait_for_job_completion(
-	library: &std::sync::Arc<sd_core::library::Library>,
+	library: &std::sync::Arc<wing_core::library::Library>,
 	job_id: uuid::Uuid,
 	timeout_secs: u64,
 ) -> Result<(), String> {
@@ -67,7 +67,7 @@ async fn wait_for_job_completion(
 }
 
 async fn wait_for_indexing_stable(
-	library: &std::sync::Arc<sd_core::library::Library>,
+	library: &std::sync::Arc<wing_core::library::Library>,
 	timeout_secs: u64,
 ) -> Result<u64, String> {
 	let start = tokio::time::Instant::now();

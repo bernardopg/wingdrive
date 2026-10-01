@@ -6,7 +6,10 @@
 mod helpers;
 use helpers::test_volumes::{TestFileSystem, TestVolumeBuilder, TestVolumeManager};
 
-use sd_core::{
+use std::sync::Arc;
+use tempfile::tempdir;
+use tracing::{info, warn};
+use wing_core::{
 	ops::volumes::{
 		speed_test::action::{VolumeSpeedTestAction, VolumeSpeedTestInput},
 		track::{VolumeTrackAction, VolumeTrackInput},
@@ -14,9 +17,6 @@ use sd_core::{
 	},
 	Core,
 };
-use std::sync::Arc;
-use tempfile::tempdir;
-use tracing::{info, warn};
 
 /// Check if we have the required privileges to run volume tests
 async fn check_test_privileges() -> bool {
@@ -348,7 +348,7 @@ async fn test_volume_capacity_scenarios() {
 				.dispatch_library(Some(library.id()), speed_action)
 				.await
 			{
-				Ok(sd_core::ops::volumes::speed_test::output::VolumeSpeedTestOutput {
+				Ok(wing_core::ops::volumes::speed_test::output::VolumeSpeedTestOutput {
 					read_speed_mbps,
 					write_speed_mbps,
 					..
@@ -447,7 +447,7 @@ async fn test_ram_disk_performance() {
 			.dispatch_library(Some(library.id()), speed_action)
 			.await
 		{
-			Ok(sd_core::ops::volumes::speed_test::output::VolumeSpeedTestOutput {
+			Ok(wing_core::ops::volumes::speed_test::output::VolumeSpeedTestOutput {
 				read_speed_mbps,
 				write_speed_mbps,
 				..

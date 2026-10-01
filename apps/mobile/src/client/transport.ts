@@ -1,4 +1,4 @@
-import { SDMobileCore, CoreEvent } from "sd-mobile-core";
+import { SDMobileCore, CoreEvent } from "wing-mobile-core";
 import type { Event } from "@sd/ts-client/src/generated/types";
 
 export interface EventFilter {

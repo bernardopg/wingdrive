@@ -6,12 +6,12 @@
 //! 3. After both devices restart, they automatically reconnect
 //! 4. The reconnection happens without manual intervention
 
-use sd_core::testing::CargoTestRunner;
-use sd_core::Core;
 use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::timeout;
+use wing_core::testing::CargoTestRunner;
+use wing_core::Core;
 
 /// Alice's device persistence scenario - handles both initial pairing and restart
 #[tokio::test]

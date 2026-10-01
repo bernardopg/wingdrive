@@ -1,15 +1,15 @@
 //! Mock network transport for sync integration tests
 
-use sd_core::{
-	infra::sync::{NetworkTransport, SystemTimeSource},
-	service::{network::protocol::sync::messages::SyncMessage, sync::SyncService},
-};
 use std::{
 	collections::HashMap,
 	sync::{Arc, Weak},
 };
 use tokio::sync::Mutex;
 use uuid::Uuid;
+use wing_core::{
+	infra::sync::{NetworkTransport, SystemTimeSource},
+	service::{network::protocol::sync::messages::SyncMessage, sync::SyncService},
+};
 
 /// Unified mock transport for N-device sync tests
 pub struct MockTransport {
@@ -123,7 +123,7 @@ impl MockTransport {
 	/// Process incoming messages by delivering them to the sync service
 	pub async fn process_incoming_messages(
 		&self,
-		sync_service: &sd_core::service::sync::SyncService,
+		sync_service: &wing_core::service::sync::SyncService,
 	) -> anyhow::Result<usize> {
 		let mut queues = self.queues.lock().await;
 		let messages = queues.entry(self.my_device_id).or_insert_with(Vec::new);
@@ -146,7 +146,7 @@ impl MockTransport {
 					sync_service
 						.peer_sync()
 						.on_state_change_received(
-							sd_core::service::sync::state::StateChangeMessage {
+							wing_core::service::sync::state::StateChangeMessage {
 								model_type,
 								record_uuid,
 								device_id,
@@ -220,7 +220,9 @@ impl MockTransport {
 
 					// Apply current_state snapshot if provided (polymorphic via registry)
 					if let Some(state) = current_state {
-						use sd_core::infra::sync::{registry, ChangeType, SharedChangeEntry, HLC};
+						use wing_core::infra::sync::{
+							registry, ChangeType, SharedChangeEntry, HLC,
+						};
 
 						// Iterate all model types in the state snapshot
 						if let Some(state_obj) = state.as_object() {
@@ -439,11 +441,11 @@ impl MockTransport {
 	/// This handles all fire-and-forget message types. Request/response pairs
 	/// (StateRequest, SharedChangeRequest) are handled by send_sync_request instead.
 	async fn deliver_message(
-		sync_service: &sd_core::service::sync::SyncService,
+		sync_service: &wing_core::service::sync::SyncService,
 		_sender: Uuid,
 		message: SyncMessage,
 	) -> anyhow::Result<()> {
-		use sd_core::service::sync::state::StateChangeMessage;
+		use wing_core::service::sync::state::StateChangeMessage;
 
 		match message {
 			SyncMessage::StateChange {
@@ -532,7 +534,7 @@ impl MockTransport {
 			} => {
 				// Process batch of state changes
 				for record in records {
-					use sd_core::service::sync::state::StateChangeMessage;
+					use wing_core::service::sync::state::StateChangeMessage;
 					let change = StateChangeMessage {
 						model_type: model_type.clone(),
 						record_uuid: record.uuid,

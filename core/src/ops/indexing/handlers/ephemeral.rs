@@ -15,11 +15,11 @@ use crate::ops::indexing::ephemeral::responder;
 use crate::ops::indexing::rules::RuleToggles;
 use crate::service::watcher::FsWatcherService;
 use anyhow::Result;
-use sd_fs_watcher::FsEvent;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
 use tracing::{debug, error, trace, warn};
+use wing_fs_watcher::FsEvent;
 
 /// Handler for ephemeral (in-memory) filesystem events
 ///

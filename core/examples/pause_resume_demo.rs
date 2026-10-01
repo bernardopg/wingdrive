@@ -1,6 +1,10 @@
 //! Demonstration of job pause/resume functionality
 
-use sd_core::{
+use sea_orm::{ActiveModelTrait, EntityTrait};
+use std::time::Duration;
+use tempfile::TempDir;
+use tokio::time::sleep;
+use wing_core::{
 	infra::{
 		db::entities,
 		job::types::{JobId, JobStatus},
@@ -8,10 +12,6 @@ use sd_core::{
 	location::{create_location, IndexMode, LocationCreateArgs},
 	Core,
 };
-use sea_orm::{ActiveModelTrait, EntityTrait};
-use std::time::Duration;
-use tempfile::TempDir;
-use tokio::time::sleep;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

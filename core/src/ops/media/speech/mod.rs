@@ -101,9 +101,9 @@ pub async fn transcribe_audio_file(
 /// Uses FFmpeg libraries directly (no subprocess)
 #[cfg(feature = "speech-to-text")]
 fn load_audio_samples(path: &Path) -> Result<Vec<f32>> {
-	// Use sd-ffmpeg to extract audio samples directly
+	// Use wing-ffmpeg to extract audio samples directly
 	// This returns 16kHz mono f32 PCM samples, exactly what Whisper needs
-	Ok(sd_ffmpeg::extract_audio_samples(path)?)
+	Ok(wing_ffmpeg::extract_audio_samples(path)?)
 }
 
 /// Format a single SRT subtitle segment

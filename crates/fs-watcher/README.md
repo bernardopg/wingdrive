@@ -1,10 +1,10 @@
-# sd-fs-watcher
+# wing-fs-watcher
 
 Platform-agnostic filesystem watcher for WingDrive.
 
 ## Overview
 
-`sd-fs-watcher` provides a clean, storage-agnostic interface for watching filesystem changes. It handles platform-specific quirks (like macOS rename detection) internally and emits normalized events.
+`wing-fs-watcher` provides a clean, storage-agnostic interface for watching filesystem changes. It handles platform-specific quirks (like macOS rename detection) internally and emits normalized events.
 
 This crate is designed to be the foundation of WingDrive's filesystem event system, but it has no knowledge of:
 
@@ -17,7 +17,7 @@ It just watches paths and emits events.
 ## Usage
 
 ```rust
-use sd_fs_watcher::{FsWatcher, WatchConfig, WatcherConfig};
+use wing_fs_watcher::{FsWatcher, WatchConfig, WatcherConfig};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -34,16 +34,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Process events
     while let Ok(event) = rx.recv().await {
         match event.kind {
-            sd_fs_watcher::FsEventKind::Create => {
+            wing_fs_watcher::FsEventKind::Create => {
                 println!("Created: {}", event.path.display());
             }
-            sd_fs_watcher::FsEventKind::Modify => {
+            wing_fs_watcher::FsEventKind::Modify => {
                 println!("Modified: {}", event.path.display());
             }
-            sd_fs_watcher::FsEventKind::Remove => {
+            wing_fs_watcher::FsEventKind::Remove => {
                 println!("Removed: {}", event.path.display());
             }
-            sd_fs_watcher::FsEventKind::Rename { from, to } => {
+            wing_fs_watcher::FsEventKind::Rename { from, to } => {
                 println!("Renamed: {} -> {}", from.display(), to.display());
             }
         }
@@ -168,7 +168,7 @@ This crate is designed to be consumed by higher-level services:
 - **PersistentIndexService**: Subscribes to events, filters by location scope, writes to database
 - **EphemeralIndexService**: Subscribes to events, filters by session scope, writes to memory
 
-These services are not part of this crate - they live in `sd-core` and consume events from `FsWatcher`.
+These services are not part of this crate - they live in `wing-core` and consume events from `FsWatcher`.
 
 ### Backpressure Management
 

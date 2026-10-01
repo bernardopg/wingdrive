@@ -1,4 +1,4 @@
-use sd_crypto::{erase::erase_sync, rng::CryptoRng};
+use wing_crypto::{erase::erase_sync, rng::CryptoRng};
 
 use std::io::{Seek, Write};
 

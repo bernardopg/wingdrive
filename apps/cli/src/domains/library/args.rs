@@ -1,11 +1,11 @@
 use clap::{Args, Subcommand};
 use uuid::Uuid;
 
-use sd_core::ops::libraries::{
+use wing_core::ops::libraries::{
 	create::input::LibraryCreateInput, delete::input::LibraryDeleteInput,
 	info::query::LibraryInfoQueryInput,
 };
-use sd_core::ops::network::sync_setup::{
+use wing_core::ops::network::sync_setup::{
 	discovery::query::DiscoverRemoteLibrariesInput, input::LibrarySyncAction,
 	input::LibrarySyncSetupInput,
 };
@@ -150,7 +150,8 @@ impl SetupArgs {
 				anyhow::bail!("Device config not found. Please specify --local-device");
 			}
 			let config_data = std::fs::read_to_string(&config_path)?;
-			let device_config: sd_core::device::DeviceConfig = serde_json::from_str(&config_data)?;
+			let device_config: wing_core::device::DeviceConfig =
+				serde_json::from_str(&config_data)?;
 			device_config.id
 		};
 

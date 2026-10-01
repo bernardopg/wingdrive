@@ -1,8 +1,12 @@
 //! Focused integration test: verifies tag creation and application persist to DB
 
-use sd_core::domain::SdPath;
-use sd_core::infra::db::entities::{entry, tag, user_metadata, user_metadata_tag};
-use sd_core::{
+use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+use std::sync::Arc;
+use tempfile::TempDir;
+use tokio::fs;
+use wing_core::domain::SdPath;
+use wing_core::infra::db::entities::{entry, tag, user_metadata, user_metadata_tag};
+use wing_core::{
 	infra::action::LibraryAction,
 	ops::indexing::IndexMode,
 	ops::locations::add::action::{LocationAddAction, LocationAddInput},
@@ -12,10 +16,6 @@ use sd_core::{
 	},
 	Core,
 };
-use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-use std::sync::Arc;
-use tempfile::TempDir;
-use tokio::fs;
 
 /// Helper: create file with content (ensures parent dirs)
 #[allow(dead_code)]

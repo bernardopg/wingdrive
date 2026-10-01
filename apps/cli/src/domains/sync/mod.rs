@@ -11,9 +11,9 @@ use tokio::time::sleep;
 
 use crate::context::Context;
 use crate::util::prelude::*;
-use sd_core::infra::sync::{EventSeverity, SyncEventQuery, SyncEventType};
-use sd_core::ops::sync::get_metrics::GetSyncMetricsInput;
-use sd_core::service::sync::state::DeviceSyncState;
+use wing_core::infra::sync::{EventSeverity, SyncEventQuery, SyncEventType};
+use wing_core::ops::sync::get_metrics::GetSyncMetricsInput;
+use wing_core::service::sync::state::DeviceSyncState;
 
 use self::args::*;
 
@@ -80,7 +80,7 @@ async fn run_single_query(
 	};
 
 	let json_response = ctx.core.query(&input, Some(library_id)).await?;
-	let output: sd_core::ops::sync::get_metrics::GetSyncMetricsOutput =
+	let output: wing_core::ops::sync::get_metrics::GetSyncMetricsOutput =
 		serde_json::from_value(json_response)?;
 
 	if args.json {
@@ -174,7 +174,7 @@ fn parse_duration(duration_str: &str) -> Result<chrono::Duration> {
 }
 
 fn display_metrics(
-	snapshot: &sd_core::service::sync::metrics::snapshot::SyncMetricsSnapshot,
+	snapshot: &wing_core::service::sync::metrics::snapshot::SyncMetricsSnapshot,
 	args: &SyncMetricsArgs,
 ) {
 	// Status header box
@@ -454,7 +454,7 @@ async fn export_events(ctx: &Context, args: SyncEventsArgs) -> Result<()> {
 	}
 
 	// Call the API
-	let input = sd_core::ops::sync::get_event_log::GetSyncEventLogInput {
+	let input = wing_core::ops::sync::get_event_log::GetSyncEventLogInput {
 		start_time: query.time_range.map(|(start, _)| start),
 		end_time: query.time_range.map(|(_, end)| end),
 		event_types: query.event_types,
@@ -469,7 +469,7 @@ async fn export_events(ctx: &Context, args: SyncEventsArgs) -> Result<()> {
 	};
 
 	let json_response = ctx.core.query(&input, Some(library_id)).await?;
-	let output: sd_core::ops::sync::get_event_log::GetSyncEventLogOutput =
+	let output: wing_core::ops::sync::get_event_log::GetSyncEventLogOutput =
 		serde_json::from_value(json_response)?;
 
 	// Format output
@@ -497,7 +497,7 @@ async fn export_events(ctx: &Context, args: SyncEventsArgs) -> Result<()> {
 }
 
 fn format_events_json(
-	events: &[sd_core::infra::sync::SyncEventLog],
+	events: &[wing_core::infra::sync::SyncEventLog],
 	with_device: bool,
 ) -> Result<String> {
 	if with_device {
@@ -524,7 +524,7 @@ fn format_events_json(
 	}
 }
 
-fn format_events_sql(events: &[sd_core::infra::sync::SyncEventLog]) -> String {
+fn format_events_sql(events: &[wing_core::infra::sync::SyncEventLog]) -> String {
 	let mut output = String::from("-- Sync Event Log Export\n");
 	output.push_str("-- Generated: ");
 	output.push_str(&Utc::now().to_rfc3339());
@@ -564,7 +564,7 @@ fn format_events_sql(events: &[sd_core::infra::sync::SyncEventLog]) -> String {
 }
 
 fn format_events_markdown(
-	events: &[sd_core::infra::sync::SyncEventLog],
+	events: &[wing_core::infra::sync::SyncEventLog],
 	with_device: bool,
 ) -> String {
 	let mut output = String::from("# Sync Event Log\n\n");
@@ -601,10 +601,10 @@ async fn show_partners(ctx: &Context) -> Result<()> {
 	})?;
 
 	// Create input for the operation
-	let input = sd_core::ops::sync::get_sync_partners::GetSyncPartnersInput {};
+	let input = wing_core::ops::sync::get_sync_partners::GetSyncPartnersInput {};
 
 	let json_response = ctx.core.query(&input, Some(library_id)).await?;
-	let output: sd_core::ops::sync::get_sync_partners::GetSyncPartnersOutput =
+	let output: wing_core::ops::sync::get_sync_partners::GetSyncPartnersOutput =
 		serde_json::from_value(json_response)?;
 
 	println!("\n{}", "Sync Partners for Current Library".bold());

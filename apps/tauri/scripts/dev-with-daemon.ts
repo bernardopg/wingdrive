@@ -41,7 +41,7 @@ function getCargoTargetDir(): string {
 	}
 }
 
-const BIN_NAME = IS_WIN ? 'sd-daemon.exe' : 'sd-daemon';
+const BIN_NAME = IS_WIN ? 'wing-daemon.exe' : 'wing-daemon';
 const DAEMON_BIN = join(getCargoTargetDir(), 'debug', BIN_NAME);
 
 const DATA_DIR = process.env.WINGDRIVE_DATA_DIR;
@@ -125,8 +125,8 @@ async function main() {
 		console.log('Daemon binary:', DAEMON_BIN);
 
 		// Build daemon
-		// On Windows, the binary target name is still just "sd-daemon" (Cargo handles the .exe)
-		const build = spawn('cargo', ['build', '--bin', 'sd-daemon'], {
+		// On Windows, the binary target name is still just "wing-daemon" (Cargo handles the .exe)
+		const build = spawn('cargo', ['build', '--bin', 'wing-daemon'], {
 			cwd: PROJECT_ROOT,
 			stdio: 'inherit',
 			shell: IS_WIN // shell: true is often needed on Windows for spawn to work correctly

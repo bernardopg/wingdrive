@@ -665,7 +665,7 @@ The window uses **native** macOS traffic lights positioned by Swift code:
 - Traffic lights are real, functional native controls
 - Content must have `pt-[52px]` to avoid overlap
 - No fake CSS traffic lights
-- Transparent titlebar + invisible toolbar trick (see sd-desktop-macos crate)
+- Transparent titlebar + invisible toolbar trick (see wing-desktop-macos crate)
 
 ### Window Styling
 

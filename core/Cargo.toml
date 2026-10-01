@@ -1,21 +1,21 @@
 [package]
 edition = "2021"
-name    = "sd-core"
+name    = "wing-core"
 version = "2.0.0-alpha.2"
 autobins = true
 
 [features]
 default = ["wasm"]
 # FFmpeg support for video thumbnails and audio extraction
-ffmpeg = ["dep:sd-ffmpeg"]
+ffmpeg = ["dep:wing-ffmpeg"]
 # Whisper speech recognition engine (internal dependency)
 whisper = ["dep:whisper-rs", "dep:hound", "dep:rubato"]
 # Speech-to-text transcription (requires audio extraction + recognition)
 speech-to-text = ["ffmpeg", "whisper"]
 # AI features umbrella (heavy deps, can be disabled for lite builds or mobile)
 ai = ["speech-to-text"]
-# HEIF image support (extends sd-images with HEIF format)
-heif = ["sd-images/heif"]
+# HEIF image support (extends wing-images with HEIF format)
+heif = ["wing-images/heif"]
 # Mobile platform support (excludes wasm which doesn't work on iOS)
 mobile = []
 # CLI support (clap is now always available)
@@ -115,10 +115,10 @@ inventory      = "0.3"                              # Automatic job registration
 job-derive     = { path = "../crates/job-derive" }  # Job derive macros
 rmp            = "0.8"                              # MessagePack core types
 rmp-serde      = "1.3"                              # MessagePack serialization for job state
-sd-task-system = { path = "../crates/task-system" }
+wing-task-system = { path = "../crates/task-system" }
 
 # Archive system - indexes external data sources (emails, notes, etc.)
-sd-archive = { path = "../crates/archive" }
+wing-archive = { path = "../crates/archive" }
 
 # Vector database for memory files (optional for now)
 # lancedb = "0.15"  # Embedded vector database (conflicts with gpui)
@@ -126,10 +126,10 @@ sd-archive = { path = "../crates/archive" }
 # Media processing dependencies
 blurhash         = "0.2"
 image            = "0.25"
-sd-ffmpeg        = { path = "../crates/ffmpeg", optional = true }
-sd-fs-watcher    = { path = "../crates/fs-watcher" }
-sd-images        = { path = "../crates/images" }
-sd-media-metadata = { path = "../crates/media-metadata" }
+wing-ffmpeg        = { path = "../crates/ffmpeg", optional = true }
+wing-fs-watcher    = { path = "../crates/fs-watcher" }
+wing-images        = { path = "../crates/images" }
+wing-media-metadata = { path = "../crates/media-metadata" }
 tokio-rustls     = "0.26"
 webp             = "0.3"
 
@@ -236,7 +236,7 @@ objc2-foundation = { version = "0.3", features = [
 objc2-ui-kit = { version = "0.3", features = ["UIDevice"] }
 
 [[bin]]
-name = "sd-daemon"
+name = "wing-daemon"
 path = "src/bin/daemon.rs"
 
 

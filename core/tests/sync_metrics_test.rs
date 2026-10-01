@@ -5,18 +5,18 @@
 //!
 //! ## Running Tests
 //! ```bash
-//! cargo test -p sd-core --test sync_metrics_test -- --test-threads=1 --nocapture
+//! cargo test -p wing-core --test sync_metrics_test -- --test-threads=1 --nocapture
 //! ```
 
 mod helpers;
 
 use helpers::TwoDeviceHarnessBuilder;
-use sd_core::{
-	infra::db::entities, library::Library, service::sync::metrics::snapshot::SyncMetricsSnapshot,
-};
 use sea_orm::{EntityTrait, PaginatorTrait};
 use std::sync::Arc;
 use tokio::{fs, time::Duration};
+use wing_core::{
+	infra::db::entities, library::Library, service::sync::metrics::snapshot::SyncMetricsSnapshot,
+};
 
 /// Get metrics snapshot for a library
 async fn get_metrics_snapshot(library: &Arc<Library>) -> SyncMetricsSnapshot {

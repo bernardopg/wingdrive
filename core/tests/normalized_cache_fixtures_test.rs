@@ -12,16 +12,16 @@
 //! SD_REGENERATE_FIXTURES=1 cargo test normalized_cache_fixtures_test --nocapture
 //! ```
 
-use sd_core::{
-	infra::{db::entities, event::Event, job::types::JobStatus},
-	library::Library,
-	Core,
-};
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use serde_json::json;
 use std::{path::PathBuf, sync::Arc, time::Duration};
 use tempfile::TempDir;
 use tokio::sync::Mutex;
+use wing_core::{
+	infra::{db::entities, event::Event, job::types::JobStatus},
+	library::Library,
+	Core,
+};
 
 /// Event collector for capturing real backend events
 struct EventCollector {
@@ -157,7 +157,7 @@ async fn capture_event_fixtures_for_typescript(
 	let _ = tracing_subscriber::fmt()
 		.with_env_filter(
 			tracing_subscriber::EnvFilter::try_from_default_env()
-				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("sd_core=debug")),
+				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("wing_core=debug")),
 		)
 		.try_init();
 
@@ -229,13 +229,13 @@ async fn capture_event_fixtures_for_typescript(
 	tracing::info!("Device registered, creating location via LocationAddAction");
 
 	// Build the path scope (using device_slug from above)
-	let test_location_path = sd_core::domain::SdPath::Physical {
+	let test_location_path = wing_core::domain::SdPath::Physical {
 		device_slug: device_slug.clone(),
 		path: test_dir.clone().into(),
 	};
 
 	// Use the actual production LocationAddAction to get real ResourceChanged events
-	use sd_core::{
+	use wing_core::{
 		infra::action::LibraryAction,
 		ops::locations::add::action::{LocationAddAction, LocationAddInput},
 	};
@@ -243,7 +243,7 @@ async fn capture_event_fixtures_for_typescript(
 	let location_input = LocationAddInput {
 		path: test_location_path.clone(),
 		name: Some("Test Location".to_string()),
-		mode: sd_core::ops::indexing::IndexMode::Deep,
+		mode: wing_core::ops::indexing::IndexMode::Deep,
 		job_policies: None,
 	};
 
@@ -312,7 +312,7 @@ async fn capture_event_fixtures_for_typescript(
 	}
 
 	// Query the directory using the actual LibraryQuery (same as frontend)
-	use sd_core::{
+	use wing_core::{
 		infra::query::LibraryQuery,
 		ops::files::query::directory_listing::{
 			DirectoryListingInput, DirectoryListingQuery, DirectorySortBy,
@@ -321,7 +321,7 @@ async fn capture_event_fixtures_for_typescript(
 
 	// Create session context with library (using device_id and device_name from above)
 	let base_session =
-		sd_core::infra::api::SessionContext::device_session(device_id, device_name.clone());
+		wing_core::infra::api::SessionContext::device_session(device_id, device_name.clone());
 	let session = base_session.with_library(library.id());
 
 	// Execute the actual directory listing query (same as frontend)
@@ -375,7 +375,7 @@ async fn capture_event_fixtures_for_typescript(
 	});
 
 	// Query locations list for location event test case
-	use sd_core::ops::locations::list::{LocationsListQuery, LocationsListQueryInput};
+	use wing_core::ops::locations::list::{LocationsListQuery, LocationsListQueryInput};
 
 	let locations_query = LocationsListQuery::from_input(LocationsListQueryInput)?;
 	let locations_response = locations_query

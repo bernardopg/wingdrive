@@ -6,7 +6,7 @@
 use std::path::Path;
 
 // Import our type extraction system
-use sd_core::infra::wire::type_extraction::{
+use wing_core::infra::wire::type_extraction::{
 	create_spacedrive_api_structure, generate_spacedrive_api,
 };
 
@@ -49,8 +49,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	// Generate API code using our new functions
 	let functions =
-		sd_core::infra::wire::type_extraction::extract_api_functions(&operations, &queries);
-	let api_code = sd_core::infra::wire::type_extraction::generate_swift_api_code(&functions);
+		wing_core::infra::wire::type_extraction::extract_api_functions(&operations, &queries);
+	let api_code = wing_core::infra::wire::type_extraction::generate_swift_api_code(&functions);
 
 	// Write API code to a separate file
 	let api_output_path =
@@ -70,7 +70,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 /// Generate Swift code directly from the API structure (similar to rspc's TypeScript generation)
 fn generate_swift_api_code(
-	api_structure: &sd_core::infra::wire::type_extraction::SpacedriveApiStructure,
+	api_structure: &wing_core::infra::wire::type_extraction::SpacedriveApiStructure,
 	types: &specta::TypeCollection,
 ) -> Result<String, Box<dyn std::error::Error>> {
 	let mut swift_code = String::new();

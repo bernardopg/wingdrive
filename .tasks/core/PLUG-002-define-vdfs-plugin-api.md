@@ -26,7 +26,7 @@ The key architectural insight: expose ONE generic `spacedrive_call()` function t
     - Skeleton exists in core/src/infra/extension/host_functions.rs
     - Needs: WASM memory interaction, full Wire bridge, error handling
 3.  Implement the guest-side bindings for the API.
-    - spacedrive-sdk with #[extension], #[job] macros
+    - wingdrive-sdk with #[extension], #[job] macros
     - Beautiful API in extensions/test-extension/
 4.  Ensure that plugins can only access the data and functionality they have been granted permission for.
     - Permission system in core/src/infra/extension/permissions.rs
@@ -51,4 +51,4 @@ The key architectural insight: expose ONE generic `spacedrive_call()` function t
 - core/src/infra/extension/host_functions.rs - Host function skeleton
 - core/src/infra/extension/permissions.rs - Capability-based security
 - core/src/infra/extension/README.md - Architecture documentation
-- extensions/spacedrive-sdk/ - Guest-side SDK (referenced)
+- extensions/wingdrive-sdk/ - Guest-side SDK (referenced)

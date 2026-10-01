@@ -6,7 +6,7 @@ use clap::Subcommand;
 use crate::util::prelude::*;
 
 use crate::context::Context;
-use sd_core::ops::network::{
+use wing_core::ops::network::{
 	devices::{output::ListPairedDevicesOutput, query::ListPairedDevicesInput},
 	pair::{
 		cancel::output::PairCancelOutput,
@@ -44,14 +44,14 @@ pub enum NetworkCmd {
 pub async fn run(ctx: &Context, cmd: NetworkCmd) -> Result<()> {
 	match cmd {
 		NetworkCmd::Status => {
-			let status: sd_core::ops::network::status::NetworkStatus = execute_core_query!(
+			let status: wing_core::ops::network::status::NetworkStatus = execute_core_query!(
 				ctx,
-				sd_core::ops::network::status::query::NetworkStatusQueryInput
+				wing_core::ops::network::status::query::NetworkStatusQueryInput
 			);
 			print_output!(
 				ctx,
 				&status,
-				|s: &sd_core::ops::network::status::NetworkStatus| {
+				|s: &wing_core::ops::network::status::NetworkStatus| {
 					println!(
 						"Networking: {}",
 						if s.running { "running" } else { "stopped" }
@@ -121,7 +121,7 @@ pub async fn run(ctx: &Context, cmd: NetworkCmd) -> Result<()> {
 			PairCmd::Status => {
 				let out: PairStatusOutput = execute_core_query!(
 					ctx,
-					sd_core::ops::network::pair::status::query::PairStatusQueryInput
+					wing_core::ops::network::pair::status::query::PairStatusQueryInput
 				);
 				print_output!(ctx, &out, |o: &PairStatusOutput| {
 					if o.sessions.is_empty() {
@@ -210,7 +210,7 @@ pub async fn run(ctx: &Context, cmd: NetworkCmd) -> Result<()> {
 async fn run_interactive_pair_join(
 	ctx: &Context,
 	code: Option<&str>,
-) -> Result<sd_core::ops::network::pair::join::input::PairJoinInput> {
+) -> Result<wing_core::ops::network::pair::join::input::PairJoinInput> {
 	use crate::util::confirm::{select, text};
 
 	println!("\n=== Interactive Pairing ===\n");
@@ -223,9 +223,9 @@ async fn run_interactive_pair_join(
 	};
 
 	// Get network status to check for relay URL
-	let status: sd_core::ops::network::status::NetworkStatus = execute_core_query!(
+	let status: wing_core::ops::network::status::NetworkStatus = execute_core_query!(
 		ctx,
-		sd_core::ops::network::status::query::NetworkStatusQueryInput
+		wing_core::ops::network::status::query::NetworkStatusQueryInput
 	);
 
 	// Ask if they want to use relay for internet pairing
@@ -275,7 +275,7 @@ async fn run_interactive_pair_join(
 		(code, None)
 	};
 
-	Ok(sd_core::ops::network::pair::join::input::PairJoinInput {
+	Ok(wing_core::ops::network::pair::join::input::PairJoinInput {
 		code: final_code,
 		node_id,
 	})

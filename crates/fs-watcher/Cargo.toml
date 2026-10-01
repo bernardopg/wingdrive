@@ -1,5 +1,5 @@
 [package]
-name = "sd-fs-watcher"
+name = "wing-fs-watcher"
 version = "0.1.0"
 
 authors = ["Spacedrive Technology Inc. <engineering@spacedrive.com>"]

@@ -19,7 +19,7 @@
 //! ## Usage
 //!
 //! ```rust,ignore
-//! use sd_core::ops::indexing::ephemeral::EphemeralIndex;
+//! use wing_core::ops::indexing::ephemeral::EphemeralIndex;
 //!
 //! // Create a unified index (supports multiple directory trees)
 //! let mut index = EphemeralIndex::new();

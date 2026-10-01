@@ -3,12 +3,12 @@
 //! This test forces both devices to connect only via relay (no direct/mDNS connections)
 //! to ensure the relay fallback mechanism works correctly for cross-network pairing.
 
-use sd_core::testing::CargoTestRunner;
-use sd_core::Core;
 use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::timeout;
+use wing_core::testing::CargoTestRunner;
+use wing_core::Core;
 
 /// Alice's relay-only pairing scenario - initiator
 #[tokio::test]
@@ -213,7 +213,7 @@ async fn bob_relay_only_pairing() {
 	println!("Bob: QR JSON content: {}", qr_json);
 
 	// Parse QR JSON to get PairingCode with NodeId and relay URL
-	use sd_core::service::network::protocol::pairing::PairingCode;
+	use wing_core::service::network::protocol::pairing::PairingCode;
 	let pairing_code = PairingCode::from_qr_json(&qr_json).unwrap();
 	println!("Bob: Parsed session_id: {}", pairing_code.session_id());
 	println!(

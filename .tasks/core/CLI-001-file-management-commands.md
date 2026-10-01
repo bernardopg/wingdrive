@@ -1,6 +1,6 @@
 ---
 id: CLI-001
-title: File Management Commands in sd-cli
+title: File Management Commands in wing-cli
 status: Done
 assignee: bernardopg
 parent: CLI-000
@@ -13,14 +13,14 @@ last_updated: 2026-10-01
 
 ## Description
 
-`sd-cli file` only exposes `copy` (with `--move`), `info`, and `list`. The core already registers `files.rename`, `files.delete`, and `files.createFolder`, so the CLI cannot manage files on its own. Add thin subcommands that call the existing actions.
+`wing-cli file` only exposes `copy` (with `--move`), `info`, and `list`. The core already registers `files.rename`, `files.delete`, and `files.createFolder`, so the CLI cannot manage files on its own. Add thin subcommands that call the existing actions.
 
 ## Acceptance Criteria
 
-- [x] `sd-cli file rename <path> <new-name>` calls `files.rename`
-- [x] `sd-cli file delete <paths...>` moves to trash by default (recursive, like the UI); `--permanent` maps to `FileDeleteInput`
-- [x] `sd-cli file delete --permanent` asks for confirmation unless `--yes` is passed
-- [x] `sd-cli file mkdir <parent> <name>` calls `files.createFolder`
+- [x] `wing-cli file rename <path> <new-name>` calls `files.rename`
+- [x] `wing-cli file delete <paths...>` moves to trash by default (recursive, like the UI); `--permanent` maps to `FileDeleteInput`
+- [x] `wing-cli file delete --permanent` asks for confirmation unless `--yes` is passed
+- [x] `wing-cli file mkdir <parent> <name>` calls `files.createFolder`
 - [x] Each command prints a clear success line or the daemon error
 - [x] Verified against a running daemon on Linux
 

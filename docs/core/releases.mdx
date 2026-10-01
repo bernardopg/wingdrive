@@ -21,7 +21,7 @@ The version string lives in 7 files across the repo:
 - `apps/server/Cargo.toml`
 - `apps/cli/Cargo.toml`
 - `apps/tauri/src-tauri/Cargo.toml`
-- `apps/tauri/sd-tauri-core/Cargo.toml`
+- `apps/tauri/wing-tauri-core/Cargo.toml`
 - `apps/tauri/src-tauri/tauri.conf.json`
 - `apps/tauri/package.json`
 
@@ -59,7 +59,7 @@ Runs on every pull request and push to `main`. Handles formatting checks, lintin
 
 ### Core Tests (`core_tests.yml`)
 
-Runs `sd-core` integration tests on push to `main` across macOS, Linux, and Windows. Tests run on real hardware including self-hosted macOS ARM64 and Windows runners.
+Runs `wing-core` integration tests on push to `main` across macOS, Linux, and Windows. Tests run on real hardware including self-hosted macOS ARM64 and Windows runners.
 
 ### Release (`release.yml`)
 
@@ -72,7 +72,7 @@ Triggered by pushing a `v*` tag or manual dispatch. Builds all release artifacts
 | Linux | x86_64 |
 | Linux | aarch64 |
 
-Server binaries are compiled with `sd-core/heif`, `sd-core/ffmpeg`, and `sd-core/ai` features enabled. Each produces a tarball with the binary and a SHA256 checksum.
+Server binaries are compiled with `wing-core/heif`, `wing-core/ffmpeg`, and `wing-core/ai` features enabled. Each produces a tarball with the binary and a SHA256 checksum.
 
 **Desktop builds (Tauri):**
 
@@ -111,11 +111,11 @@ The `latest` tag only moves for stable releases (tags matching `vX.Y.Z` with no 
 
 Manual dispatch only. Builds the React Native app for iOS and/or Android. A platform picker lets you build `ios`, `android`, or `all`.
 
-The mobile app bundles `sd-mobile-core`, a native Expo module that wraps the WingDrive Rust core. This means mobile builds require the full Cargo workspace and Rust cross-compilation toolchain, not just JavaScript bundling.
+The mobile app bundles `wing-mobile-core`, a native Expo module that wraps the WingDrive Rust core. This means mobile builds require the full Cargo workspace and Rust cross-compilation toolchain, not just JavaScript bundling.
 
 **iOS (TestFlight):**
 
-1. Compiles `sd-mobile-core` for `aarch64-apple-ios` via `cargo xtask build-mobile`
+1. Compiles `wing-mobile-core` for `aarch64-apple-ios` via `cargo xtask build-mobile`
 2. Runs `expo prebuild` to generate the Xcode project
 3. Archives with `xcodebuild` using manual code signing
 4. Exports IPA with `app-store-connect` distribution method
@@ -125,7 +125,7 @@ Runs on a self-hosted macOS ARM64 runner (same as desktop macOS builds). TestFli
 
 **Android (Play Store Internal):**
 
-1. Compiles `sd-mobile-core` for `aarch64-linux-android` via `cargo xtask build-mobile`
+1. Compiles `wing-mobile-core` for `aarch64-linux-android` via `cargo xtask build-mobile`
 2. Runs `expo prebuild` to generate the Android project
 3. Builds a signed AAB with `./gradlew bundleRelease`
 4. Uploads to Play Store internal testing track

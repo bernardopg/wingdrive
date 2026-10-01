@@ -3,12 +3,12 @@
 //! Tests that sync setup works without UNIQUE constraint errors when both devices
 //! have the same deterministic default spaces.
 
-use sd_core::testing::CargoTestRunner;
-use sd_core::Core;
 use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::timeout;
+use wing_core::testing::CargoTestRunner;
+use wing_core::Core;
 
 /// Alice's sync setup scenario
 #[tokio::test]
@@ -101,8 +101,8 @@ async fn alice_sync_setup_scenario() {
 				bob_device_id
 			);
 
-			use sd_core::infra::action::CoreAction;
-			use sd_core::ops::network::sync_setup::{
+			use wing_core::infra::action::CoreAction;
+			use wing_core::ops::network::sync_setup::{
 				LibrarySyncAction, LibrarySyncSetupAction, LibrarySyncSetupInput,
 			};
 
@@ -365,8 +365,8 @@ async fn carol_three_device_scenario() {
 					tokio::time::sleep(Duration::from_secs(3)).await;
 
 					// Check if Bob's device is in the library (via shared sync)
-					use sd_core::infra::db::entities;
 					use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+					use wing_core::infra::db::entities;
 
 					// Read Bob's device ID
 					let bob_device_id = if let Ok(id) = std::fs::read_to_string(

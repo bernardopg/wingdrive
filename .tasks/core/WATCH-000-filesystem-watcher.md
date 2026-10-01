@@ -10,7 +10,7 @@ last_updated: 2025-12-16
 
 ## Description
 
-The `sd-fs-watcher` crate provides a platform-agnostic filesystem watcher that serves as the foundation for Spacedrive's real-time file monitoring. It handles platform-specific quirks internally and emits normalized events to higher-level services.
+The `wing-fs-watcher` crate provides a platform-agnostic filesystem watcher that serves as the foundation for Spacedrive's real-time file monitoring. It handles platform-specific quirks internally and emits normalized events to higher-level services.
 
 ## Architecture
 
@@ -34,7 +34,7 @@ The watcher is designed to be storage-agnostic - it has no knowledge of database
 
 ## Integration with Spacedrive
 
-The watcher is consumed by higher-level services in `sd-core`:
+The watcher is consumed by higher-level services in `wing-core`:
 
 - **PersistentIndexService**: Subscribes to events, writes to database via ChangeHandler
 - **EphemeralIndexService**: Subscribes to events, updates in-memory index

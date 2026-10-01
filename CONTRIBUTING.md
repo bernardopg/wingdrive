@@ -115,7 +115,7 @@ cargo run -p xtask -- setup
 cargo build
 
 # OR build with media processing features (recommended for development)
-cargo build --features sd-core/ffmpeg,sd-core/heif
+cargo build --features wing-core/ffmpeg,wing-core/heif
 ```
 
 The `xtask setup` command:
@@ -128,8 +128,8 @@ The `xtask setup` command:
 
 **Important:** After running `xtask setup`, you can use convenient aliases:
 ```bash
-cargo daemon  # Runs sd-daemon with ffmpeg,heif features enabled
-cargo cli     # Runs sd-cli with ffmpeg,heif features enabled
+cargo daemon  # Runs wing-daemon with ffmpeg,heif features enabled
+cargo cli     # Runs wing-cli with ffmpeg,heif features enabled
 ```
 
 **Note:** The release daemon build is required because Tauri's `externalBin` config validates binary paths even in dev mode. The daemon is built once during setup and rebuilt when needed during release builds.
@@ -139,9 +139,9 @@ cargo cli     # Runs sd-cli with ffmpeg,heif features enabled
 
 Running `cargo build` from the project root builds all core Rust components:
 
-- `sd-cli` - Command-line interface for WingDrive
-- `sd-daemon` - Background service (used by GUI apps)
-- `sd-core` - Core library with VDFS implementation
+- `wing-cli` - Command-line interface for WingDrive
+- `wing-daemon` - Background service (used by GUI apps)
+- `wing-core` - Core library with VDFS implementation
 - Various helper crates
 
 **Important: Media Processing Features**
@@ -154,11 +154,11 @@ By default, `cargo build` compiles without optional features to speed up builds 
 **For development, use:**
 ```bash
 # Build with all media features (recommended)
-cargo build --features sd-core/ffmpeg,sd-core/heif
+cargo build --features wing-core/ffmpeg,wing-core/heif
 
 # Or use the convenient aliases (after running `xtask setup`)
-cargo daemon  # Automatically includes sd-core/ffmpeg,sd-core/heif features
-cargo cli     # Automatically includes sd-core/ffmpeg,sd-core/heif features
+cargo daemon  # Automatically includes wing-core/ffmpeg,wing-core/heif features
+cargo cli     # Automatically includes wing-core/ffmpeg,wing-core/heif features
 ```
 
 The Tauri desktop app **always** includes these features by default, so end users get full functionality. This design keeps the test suite fast while giving developers easy access to full features when needed.
@@ -180,7 +180,7 @@ cargo cli location add ~/Documents
 cargo cli search .
 
 # Or use the long form with features
-cargo run --features sd-core/ffmpeg,sd-core/heif --bin sd-cli -- library create "Dev Library"
+cargo run --features wing-core/ffmpeg,wing-core/heif --bin wing-cli -- library create "Dev Library"
 ```
 
 **Tip:** The `cargo cli` alias is created by `xtask setup` and automatically includes `ffmpeg,heif` features.
@@ -192,13 +192,13 @@ For even shorter commands, add a shell alias:
 **Bash/Zsh** (`~/.bashrc` or `~/.zshrc`):
 
 ```bash
-alias sd="~/Projects/wingdrive/target/debug/sd-cli"
+alias sd="~/Projects/wingdrive/target/debug/wing-cli"
 ```
 
 **Fish** (`~/.config/fish/config.fish`):
 
 ```fish
-alias sd="~/Projects/wingdrive/target/debug/sd-cli"
+alias sd="~/Projects/wingdrive/target/debug/wing-cli"
 ```
 
 Then reload your shell (`source ~/.zshrc`) and you can use:
@@ -209,7 +209,7 @@ sd location add ~/Documents
 sd search .
 ```
 
-**Note:** Update the path to match your WingDrive project location. The binary is located at `target/debug/sd-cli` after running `cargo build` (or use `cargo cli` which includes media features).
+**Note:** Update the path to match your WingDrive project location. The binary is located at `target/debug/wing-cli` after running `cargo build` (or use `cargo cli` which includes media features).
 
 ### Running Tests
 
@@ -218,7 +218,7 @@ sd search .
 cargo test
 
 # Run tests for a specific package
-cargo test -p sd-core
+cargo test -p wing-core
 
 # Run tests with output
 cargo test -- --nocapture
@@ -354,7 +354,7 @@ React Native App (Expo SDK 53)
     ↓
 TypeScript Client (src/client/)
     ↓
-Expo Native Module (modules/sd-mobile-core/)
+Expo Native Module (modules/wing-mobile-core/)
     ↓
 Swift/Kotlin FFI Bridge
     ↓
@@ -364,10 +364,10 @@ Rust Core (libsd_mobile_core.a)
 **Key directories:**
 
 - `apps/mobile/src/` - React Native TypeScript code
-- `apps/mobile/modules/sd-mobile-core/` - Expo native module
-- `apps/mobile/modules/sd-mobile-core/core/` - Rust FFI layer
-- `apps/mobile/modules/sd-mobile-core/ios/` - Swift bridge
-- `apps/mobile/modules/sd-mobile-core/android/` - Kotlin bridge
+- `apps/mobile/modules/wing-mobile-core/` - Expo native module
+- `apps/mobile/modules/wing-mobile-core/core/` - Rust FFI layer
+- `apps/mobile/modules/wing-mobile-core/ios/` - Swift bridge
+- `apps/mobile/modules/wing-mobile-core/android/` - Kotlin bridge
 
 #### Building the Rust Core
 
@@ -380,12 +380,12 @@ cargo xtask build-mobile
 # Libraries are output to:
 
 # iOS
-# apps/mobile/modules/sd-mobile-core/ios/libs/device/libsd_mobile_core.a
-# apps/mobile/modules/sd-mobile-core/ios/libs/simulator/libsd_mobile_core.a
+# apps/mobile/modules/wing-mobile-core/ios/libs/device/libsd_mobile_core.a
+# apps/mobile/modules/wing-mobile-core/ios/libs/simulator/libsd_mobile_core.a
 
 # Android
-# apps/mobile/modules/sd-mobile-core/android/src/main/jniLibs/arm64-v8a/libsd_mobile_core.so
-# apps/mobile/modules/sd-mobile-core/android/src/main/jniLibs/x86_64/libsd_mobile_core.so
+# apps/mobile/modules/wing-mobile-core/android/src/main/jniLibs/arm64-v8a/libsd_mobile_core.so
+# apps/mobile/modules/wing-mobile-core/android/src/main/jniLibs/x86_64/libsd_mobile_core.so
 ```
 
 #### Known Issues and Fixes
@@ -440,10 +440,10 @@ If you haven't already, you'll need to install NDK (26.1.10909125) and CMake fro
 
 To add new native functionality exposed to JavaScript:
 
-1. Add Rust FFI function in `modules/sd-mobile-core/core/src/lib.rs`
-2. Add Swift bridge in `modules/sd-mobile-core/ios/SDMobileCoreModule.swift`
-3. Add Kotlin bridge in `modules/sd-mobile-core/android/.../SDMobileCoreModule.kt`
-4. Export from `modules/sd-mobile-core/src/index.ts`
+1. Add Rust FFI function in `modules/wing-mobile-core/core/src/lib.rs`
+2. Add Swift bridge in `modules/wing-mobile-core/ios/SDMobileCoreModule.swift`
+3. Add Kotlin bridge in `modules/wing-mobile-core/android/.../SDMobileCoreModule.kt`
+4. Export from `modules/wing-mobile-core/src/index.ts`
 5. Rebuild the Rust core: `cargo xtask build-mobile` (from project root)
 6. Regenerate native projects: `cd apps/mobile && bun run prebuild:clean`
 
@@ -486,7 +486,7 @@ bun run tauri:dev
 The `tauri:dev` command will:
 
 1. Start the Vite dev server (serves the React frontend)
-2. Start the sd-daemon (Rust backend)
+2. Start the wing-daemon (Rust backend)
 3. Compile and launch the Tauri app
 4. Connect the app to the dev server with hot reload
 
@@ -494,9 +494,9 @@ The `tauri:dev` command will:
 
 As of the V2 rewrite, `cargo build` from the project root **no longer builds the Tauri app** - it's excluded from the default workspace members to prevent frontend dependency issues.
 
-**Error: `resource path '../../../target/release/sd-daemon-{target}' doesn't exist`**
+**Error: `resource path '../../../target/release/wing-daemon-{target}' doesn't exist`**
 
-This occurs when Tauri tries to validate the `externalBin` path but the release daemon hasn't been built yet. Tauri expects the daemon binary with a target triple suffix (e.g., `sd-daemon-aarch64-apple-darwin`, `sd-daemon-x86_64-pc-windows-msvc`).
+This occurs when Tauri tries to validate the `externalBin` path but the release daemon hasn't been built yet. Tauri expects the daemon binary with a target triple suffix (e.g., `wing-daemon-aarch64-apple-darwin`, `wing-daemon-x86_64-pc-windows-msvc`).
 
 Solution:
 
@@ -551,9 +551,9 @@ The Tauri app consists of:
 
 - `apps/tauri/` - React frontend (Vite + React)
 - `apps/tauri/src-tauri/` - Rust Tauri shell
-- `apps/tauri/sd-tauri-core/` - Tauri-specific core bindings
+- `apps/tauri/wing-tauri-core/` - Tauri-specific core bindings
 
-The app connects to `sd-daemon` which manages libraries and P2P connections. In dev mode, the daemon is started automatically by the `dev:with-daemon` script.
+The app connects to `wing-daemon` which manages libraries and P2P connections. In dev mode, the daemon is started automatically by the `dev:with-daemon` script.
 
 ## WingDrive UI Packages
 
@@ -661,7 +661,7 @@ Once your PR is merged, your changes will be included in the next release of the
 
 ### Rust Compilation Issues
 
-**Error: Could not compile `sd-core`**
+**Error: Could not compile `wing-core`**
 
 - Ensure you're using Rust 1.81+ (`rustup update`)
 - Clean build artifacts: `cargo clean`
@@ -682,7 +682,7 @@ Once your PR is merged, your changes will be included in the next release of the
 
 ```bash
 # Build with media features enabled
-cargo build --features sd-core/ffmpeg,sd-core/heif
+cargo build --features wing-core/ffmpeg,wing-core/heif
 
 # Or use the convenient alias (recommended)
 cargo daemon
@@ -838,7 +838,7 @@ If you've updated Rust types, regenerate Swift bindings:
 ```bash
 # The swift-client uses generated types from specta
 # Rebuild the core to regenerate types
-cargo build -p sd-core
+cargo build -p wing-core
 ```
 
 ### Test Failures
@@ -882,7 +882,7 @@ Read the full analysis in [docs/overview/history.mdx](docs/overview/history.mdx)
 | **File Model**      | Dual system (indexed + ephemeral) | Unified Entry + SdPath                                                                 |
 | **RPC**             | rspc procedures                   | Specta-generated types                                                                 |
 | **Extensibility**   | None                              | WASM SDK                                                                               |
-| **CLI**             | Planned                           | Production-ready (`sd-cli`)                                                            |
+| **CLI**             | Planned                           | Production-ready (`wing-cli`)                                                            |
 | **Job System**      | 1000+ lines boilerplate           | ~50 lines with macros                                                                  |
 | **Sync**            | Custom CRDT (incomplete)          | HLC timestamps (works)                                                                 |
 
@@ -895,7 +895,7 @@ bun install
 bun prep  # Generate Prisma client + rspc types
 bun tauri dev  # Desktop
 bun mobile ios  # React Native mobile
-cargo run -p sd-server  # Backend server
+cargo run -p wing-server  # Backend server
 ```
 
 **V2 Workflow:**
@@ -1082,7 +1082,7 @@ packages/
 | `bun tauri dev`          | `cd apps/tauri && bun run tauri:dev`                     |
 | `bun mobile ios`         | `cd apps/mobile && bun run ios`                          |
 | `bun mobile android`     | `cd apps/mobile && bun run android`                      |
-| `cargo run -p sd-server` | `cargo cli` or `cargo daemon` (includes media features)  |
+| `cargo run -p wing-server` | `cargo cli` or `cargo daemon` (includes media features)  |
 | `bun dev:web`            | Not yet available (web in progress)                      |
 
 ### Getting Help with Migration

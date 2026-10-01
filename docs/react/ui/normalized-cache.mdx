@@ -639,7 +639,7 @@ Multiple files with same content have different IDs:
 
 ```bash
 # Backend logs show subscription lifecycle
-RUST_LOG=sd_core::infra::daemon::rpc=debug cargo run -p wingdrive
+RUST_LOG=wing_core::infra::daemon::rpc=debug cargo run -p wingdrive
 
 # Look for:
 # "New subscription created: ..." - Subscription started

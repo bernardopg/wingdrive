@@ -93,7 +93,7 @@ pub async fn run(data_dir: PathBuf, force: bool) -> Result<()> {
 		.ok_or_else(|| anyhow::anyhow!("Could not determine binary directory"))?;
 
 	let cli_path = current_exe.clone();
-	let daemon_path = ["wingdrive-daemon", "sd-daemon"]
+	let daemon_path = ["wingdrive-daemon", "wing-daemon"]
 		.iter()
 		.map(|name| bin_dir.join(name))
 		.find(|path| path.exists())
@@ -235,22 +235,22 @@ fn get_platform_string() -> String {
 
 async fn check_daemon_running(data_dir: &PathBuf) -> bool {
 	let socket_addr = "127.0.0.1:6969".to_string();
-	let client = sd_core::client::CoreClient::new(socket_addr);
+	let client = wing_core::client::CoreClient::new(socket_addr);
 
 	matches!(
 		client
-			.send_raw_request(&sd_core::infra::daemon::types::DaemonRequest::Ping)
+			.send_raw_request(&wing_core::infra::daemon::types::DaemonRequest::Ping)
 			.await,
-		Ok(sd_core::infra::daemon::types::DaemonResponse::Pong)
+		Ok(wing_core::infra::daemon::types::DaemonResponse::Pong)
 	)
 }
 
 async fn stop_daemon(data_dir: &PathBuf) -> Result<()> {
 	let socket_addr = "127.0.0.1:6969".to_string();
-	let client = sd_core::client::CoreClient::new(socket_addr);
+	let client = wing_core::client::CoreClient::new(socket_addr);
 
 	client
-		.send_raw_request(&sd_core::infra::daemon::types::DaemonRequest::Shutdown)
+		.send_raw_request(&wing_core::infra::daemon::types::DaemonRequest::Shutdown)
 		.await?;
 
 	// Wait for shutdown
@@ -261,7 +261,7 @@ async fn stop_daemon(data_dir: &PathBuf) -> Result<()> {
 
 async fn start_daemon(data_dir: &PathBuf) -> Result<()> {
 	let current_exe = std::env::current_exe()?;
-	let daemon_path = current_exe.parent().unwrap().join("sd-daemon");
+	let daemon_path = current_exe.parent().unwrap().join("wing-daemon");
 
 	let mut command = std::process::Command::new(daemon_path);
 	command.arg("--data-dir").arg(data_dir);

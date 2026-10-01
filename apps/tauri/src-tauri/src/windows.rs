@@ -564,7 +564,7 @@ pub fn apply_macos_styling(_app: AppHandle) -> Result<(), String> {
 
 		match window.ns_window() {
 			Ok(ns_window) => unsafe {
-				sd_desktop_macos::set_titlebar_style(&ns_window, false);
+				wing_desktop_macos::set_titlebar_style(&ns_window, false);
 				Ok(())
 			},
 			Err(e) => Err(format!("Could not get NSWindow: {}", e)),

@@ -7,7 +7,7 @@ use crate::ui::create_simple_progress;
 use crate::util::prelude::*;
 
 use crate::context::Context;
-use sd_core::ops::{
+use wing_core::ops::{
 	jobs::{
 		control::{
 			cancel::{JobCancelInput, JobCancelOutput},
@@ -41,9 +41,9 @@ pub enum JobCmd {
 pub async fn run(ctx: &Context, cmd: JobCmd) -> Result<()> {
 	match cmd {
 		JobCmd::List(args) => {
-			let libs: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
+			let libs: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
 				ctx,
-				sd_core::ops::libraries::list::query::ListLibrariesInput {
+				wing_core::ops::libraries::list::query::ListLibrariesInput {
 					include_stats: false
 				}
 			);
@@ -68,9 +68,9 @@ pub async fn run(ctx: &Context, cmd: JobCmd) -> Result<()> {
 			}
 		}
 		JobCmd::Info(args) => {
-			let libs: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
+			let libs: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
 				ctx,
-				sd_core::ops::libraries::list::query::ListLibrariesInput {
+				wing_core::ops::libraries::list::query::ListLibrariesInput {
 					include_stats: false
 				}
 			);
@@ -148,9 +148,9 @@ async fn run_job_monitor(ctx: &Context, args: JobMonitorArgs) -> Result<()> {
 
 /// Run simple progress bar monitoring with real-time events
 async fn run_simple_job_monitor(ctx: &Context, args: JobMonitorArgs) -> Result<()> {
-	use sd_core::infra::daemon::types::EventFilter;
-	use sd_core::infra::event::Event;
 	use std::collections::HashMap;
+	use wing_core::infra::daemon::types::EventFilter;
+	use wing_core::infra::event::Event;
 
 	println!("Monitoring jobs (real-time mode) - Press Ctrl+C to exit");
 	println!("═══════════════════════════════════════════════════════");
@@ -183,9 +183,9 @@ async fn run_simple_job_monitor(ctx: &Context, args: JobMonitorArgs) -> Result<(
 			let mut progress_bars = HashMap::new();
 
 			// Preload currently running jobs so we see in-progress jobs that started earlier
-			let libs: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_query!(
+			let libs: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_query!(
 				ctx,
-				sd_core::ops::libraries::list::query::ListLibrariesInput {
+				wing_core::ops::libraries::list::query::ListLibrariesInput {
 					include_stats: false
 				}
 			);
@@ -195,7 +195,7 @@ async fn run_simple_job_monitor(ctx: &Context, args: JobMonitorArgs) -> Result<(
 					status: args.status.clone(),
 				}
 				.to_input(lib.id);
-				let job_list: sd_core::ops::jobs::list::output::JobListOutput =
+				let job_list: wing_core::ops::jobs::list::output::JobListOutput =
 					execute_query!(ctx, input);
 
 				for job in job_list.jobs {
@@ -342,9 +342,9 @@ async fn run_polling_job_monitor(ctx: &Context, args: JobMonitorArgs) -> Result<
 
 	loop {
 		// Get current jobs
-		let libs: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
+		let libs: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
 			ctx,
-			sd_core::ops::libraries::list::query::ListLibrariesInput {
+			wing_core::ops::libraries::list::query::ListLibrariesInput {
 				include_stats: false
 			}
 		);

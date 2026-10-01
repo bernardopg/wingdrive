@@ -1,7 +1,7 @@
-use spacedrive_sdk::{model, persist_strategy};
+use wingdrive_sdk::{model, persist_strategy};
 
 use serde::{Deserialize, Serialize};
-use spacedrive_sdk::prelude::*;
+use wingdrive_sdk::prelude::*;
 use uuid::Uuid;
 
 pub type PlaceId = Uuid;

@@ -7,12 +7,12 @@ use super::{
 	types::{JobId, JobMetrics},
 };
 use crate::{library::Library, service::network::NetworkingService};
-use sd_task_system::Interrupter;
 use sea_orm::DatabaseConnection;
 use serde::{de::DeserializeOwned, Serialize};
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex, RwLock};
 use tracing::{debug, info, warn};
+use wing_task_system::Interrupter;
 
 /// Context provided to jobs during execution
 pub struct JobContext<'a> {

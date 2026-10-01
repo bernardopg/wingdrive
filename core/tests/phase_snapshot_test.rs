@@ -5,14 +5,14 @@
 //! - Directory listing query results after each phase
 //! - Saves snapshots to disk for manual inspection
 
-use sd_core::{
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
+use std::{sync::Arc, time::Duration};
+use tempfile::TempDir;
+use wing_core::{
 	infra::{db::entities, event::Event},
 	location::{create_location, IndexMode, LocationCreateArgs},
 	Core,
 };
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
-use std::{sync::Arc, time::Duration};
-use tempfile::TempDir;
 
 #[tokio::test]
 async fn capture_phase_snapshots() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -246,7 +246,7 @@ async fn capture_phase_snapshots() -> Result<(), Box<dyn std::error::Error + Sen
 	// Query directory listing and save snapshot
 	eprintln!("\nQuerying final directory listing state...\n");
 
-	use sd_core::infra::db::entities::entry;
+	use wing_core::infra::db::entities::entry;
 
 	// Just load all entries and construct Files to see what query would return
 	let entries_with_content = entry::Entity::find()

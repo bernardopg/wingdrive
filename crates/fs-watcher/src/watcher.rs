@@ -166,7 +166,7 @@ impl FsWatcherInner {
 /// # Example
 ///
 /// ```ignore
-/// use sd_fs_watcher::{FsWatcher, WatchConfig};
+/// use wing_fs_watcher::{FsWatcher, WatchConfig};
 ///
 /// let watcher = FsWatcher::new(Default::default());
 /// watcher.start().await?;
@@ -542,7 +542,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_file_deletion_events() {
 		let _ = tracing_subscriber::fmt()
-			.with_env_filter("sd_fs_watcher=debug")
+			.with_env_filter("wing_fs_watcher=debug")
 			.try_init();
 
 		let watcher = FsWatcher::new(WatcherConfig::default());
@@ -670,7 +670,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_file_modify_then_delete() {
 		let _ = tracing_subscriber::fmt()
-			.with_env_filter("sd_fs_watcher=debug")
+			.with_env_filter("wing_fs_watcher=debug")
 			.try_init();
 
 		let watcher = FsWatcher::new(WatcherConfig::default());

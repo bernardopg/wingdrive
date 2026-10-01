@@ -23,7 +23,7 @@ Replace the Favorites placeholder with a backend-backed collection. Favorite sta
 
 ## Validation
 
-- Typecheck, `sd-core` check, Tauri build and task validation pass.
+- Typecheck, `wing-core` check, Tauri build and task validation pass.
 - SQLite tests cover persisted favorite filtering.
 - The normalized-query test covers invalidation when a file changes favorite state.
 - A disposable indexed location proved add, remove, filtered listing and persistence after daemon restart.

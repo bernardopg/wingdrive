@@ -75,7 +75,7 @@ supported during the migration. No existing user data is moved or deleted.
   focused config test, task validator, guard, `actionlint`, shell syntax,
   maintained JSON/YAML parsing, Expo config, frontend typecheck/builds, and 8
   focused frontend tests pass after the final residual identity audit.
-- The full `sd-core` integration test link remains blocked by the existing
+- The full `wing-core` integration test link remains blocked by the existing
   `__rust_probestack`/Wasmer native linker conflict. The affected integration
   test target passes `cargo check`; focused library tests pass.
 

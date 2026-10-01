@@ -9,7 +9,9 @@
 mod helpers;
 
 use helpers::*;
-use sd_core::{
+use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+use tokio::time::Duration;
+use wing_core::{
 	infra::{
 		action::LibraryAction,
 		db::entities::{entry, tag, user_metadata, user_metadata_tag},
@@ -20,8 +22,6 @@ use sd_core::{
 		create::{action::CreateTagAction, input::CreateTagInput},
 	},
 };
-use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-use tokio::time::Duration;
 
 #[tokio::test]
 async fn test_tag_creation_and_application_with_events() -> anyhow::Result<()> {

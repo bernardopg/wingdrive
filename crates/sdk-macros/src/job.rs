@@ -103,11 +103,11 @@ pub fn job_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 				::std::str::from_utf8(slice).unwrap_or("{}")
 			};
 
-			let job_ctx = match ::spacedrive_sdk::job_context::JobContext::from_params(ctx_json) {
+			let job_ctx = match ::wingdrive_sdk::job_context::JobContext::from_params(ctx_json) {
 				Ok(ctx) => ctx,
 				Err(e) => {
-					::spacedrive_sdk::ffi::log_error(&format!("Failed to parse job context: {}", e));
-					return ::spacedrive_sdk::job_context::JobResult::Failed("Invalid context".into()).to_exit_code();
+					::wingdrive_sdk::ffi::log_error(&format!("Failed to parse job context: {}", e));
+					return ::wingdrive_sdk::job_context::JobResult::Failed("Invalid context".into()).to_exit_code();
 				}
 			};
 
@@ -125,7 +125,7 @@ pub fn job_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 					Ok(s) => s,
 					Err(e) => {
 						job_ctx.log_error(&format!("Failed to deserialize state: {}", e));
-						return ::spacedrive_sdk::job_context::JobResult::Failed("Invalid state".into()).to_exit_code();
+						return ::wingdrive_sdk::job_context::JobResult::Failed("Invalid state".into()).to_exit_code();
 					}
 				}
 			} else {
@@ -136,13 +136,13 @@ pub fn job_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 			// STUB: Real implementation needs proper async/await support in WASM FFI boundary
 			// For now, just return success as this is demonstration code
 			let _ = &#fn_name; // Keep function reference to avoid unused warnings
-			let result: ::std::result::Result<(), ::spacedrive_sdk::Error> = Ok(());
+			let result: ::std::result::Result<(), ::wingdrive_sdk::Error> = Ok(());
 
 			// Handle result
 			match result {
 				Ok(_) => {
 					job_ctx.log(&format!("Job {} completed successfully", stringify!(#fn_name)));
-					::spacedrive_sdk::job_context::JobResult::Completed.to_exit_code()
+					::wingdrive_sdk::job_context::JobResult::Completed.to_exit_code()
 				}
 				Err(e) => {
 					// Check if it's an interrupt
@@ -150,10 +150,10 @@ pub fn job_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 					if error_str.contains("interrupt") || error_str.contains("Interrupt") {
 						job_ctx.log("Job interrupted, checkpoint saved");
 						let _ = job_ctx.checkpoint(&state);
-						::spacedrive_sdk::job_context::JobResult::Interrupted.to_exit_code()
+						::wingdrive_sdk::job_context::JobResult::Interrupted.to_exit_code()
 					} else {
 						job_ctx.log_error(&format!("Job failed: {}", e));
-						::spacedrive_sdk::job_context::JobResult::Failed(error_str).to_exit_code()
+						::wingdrive_sdk::job_context::JobResult::Failed(error_str).to_exit_code()
 					}
 				}
 			}

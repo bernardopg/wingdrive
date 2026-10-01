@@ -1,9 +1,9 @@
 use crate::config::CliConfig;
 use crate::util::prelude::*;
 use anyhow::Result;
-use sd_core::client::CoreClient;
 use std::path::PathBuf;
 use uuid::Uuid;
+use wing_core::client::CoreClient;
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum OutputFormat {
@@ -79,9 +79,9 @@ impl Context {
 
 	/// Switch to a library by name
 	pub async fn switch_to_library_named(&mut self, name: &str) -> Result<()> {
-		let libs: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
+		let libs: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
 			self,
-			sd_core::ops::libraries::list::query::ListLibrariesInput {
+			wing_core::ops::libraries::list::query::ListLibrariesInput {
 				include_stats: false
 			}
 		);
@@ -99,10 +99,10 @@ impl Context {
 	/// Get current library info
 	pub async fn get_current_library_info(
 		&self,
-	) -> Result<Option<sd_core::ops::libraries::info::output::LibraryInfoOutput>> {
+	) -> Result<Option<wing_core::ops::libraries::info::output::LibraryInfoOutput>> {
 		if let Some(_library_id) = self.library_id {
-			let input = sd_core::ops::libraries::info::query::LibraryInfoQueryInput {};
-			let info: sd_core::ops::libraries::info::output::LibraryInfoOutput =
+			let input = wing_core::ops::libraries::info::query::LibraryInfoQueryInput {};
+			let info: wing_core::ops::libraries::info::output::LibraryInfoOutput =
 				execute_query!(self, input);
 			Ok(Some(info))
 		} else {
@@ -129,11 +129,11 @@ impl Context {
 		path: PathBuf,
 		set_as_current: bool,
 	) -> Result<Uuid> {
-		let input = sd_core::ops::libraries::create::input::LibraryCreateInput {
+		let input = wing_core::ops::libraries::create::input::LibraryCreateInput {
 			name: name.clone(),
 			path: Some(path),
 		};
-		let output: sd_core::ops::libraries::create::output::LibraryCreateOutput =
+		let output: wing_core::ops::libraries::create::output::LibraryCreateOutput =
 			execute_action!(self, input);
 
 		if set_as_current {
@@ -146,18 +146,18 @@ impl Context {
 	/// Get current library jobs with optional status filter
 	pub async fn get_current_library_jobs(
 		&self,
-		status: Option<sd_core::infra::job::types::JobStatus>,
-	) -> Result<Vec<sd_core::ops::jobs::list::output::JobListItem>> {
+		status: Option<wing_core::infra::job::types::JobStatus>,
+	) -> Result<Vec<wing_core::ops::jobs::list::output::JobListItem>> {
 		let library_id = self.require_current_library()?;
-		let input = sd_core::ops::jobs::list::query::JobListInput { status };
-		let output: sd_core::ops::jobs::list::output::JobListOutput = execute_query!(self, input);
+		let input = wing_core::ops::jobs::list::query::JobListInput { status };
+		let output: wing_core::ops::jobs::list::output::JobListOutput = execute_query!(self, input);
 		Ok(output.jobs)
 	}
 
 	/// Get current library status
 	pub async fn get_current_library_status(
 		&self,
-	) -> Result<Option<sd_core::ops::libraries::info::output::LibraryInfoOutput>> {
+	) -> Result<Option<wing_core::ops::libraries::info::output::LibraryInfoOutput>> {
 		self.get_current_library_info().await
 	}
 
@@ -169,11 +169,11 @@ impl Context {
 	/// List all available libraries
 	pub async fn list_libraries(
 		&self,
-	) -> Result<Vec<sd_core::ops::libraries::list::output::LibraryInfo>> {
-		let input = sd_core::ops::libraries::list::query::ListLibrariesInput {
+	) -> Result<Vec<wing_core::ops::libraries::list::output::LibraryInfo>> {
+		let input = wing_core::ops::libraries::list::query::ListLibrariesInput {
 			include_stats: false,
 		};
-		let output: Vec<sd_core::ops::libraries::list::output::LibraryInfo> =
+		let output: Vec<wing_core::ops::libraries::list::output::LibraryInfo> =
 			execute_core_query!(self, input);
 		Ok(output)
 	}

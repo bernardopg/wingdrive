@@ -8,7 +8,7 @@ use std::{
 };
 
 use exif::{Exif, In, Tag};
-use sd_utils::error::FileIOError;
+use wing_utils::error::FileIOError;
 
 /// An [`ExifReader`]. This can get exif tags from images (either files or slices).
 pub struct ExifReader(Exif);

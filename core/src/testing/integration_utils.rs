@@ -10,7 +10,7 @@
 //!
 //! ### Basic Setup
 //! ```rust,no_run
-//! use sd_core::testing::integration_utils::IntegrationTestSetup;
+//! use wing_core::testing::integration_utils::IntegrationTestSetup;
 //!
 //! #[tokio::test]
 //! async fn my_integration_test() {
@@ -32,7 +32,7 @@
 //!
 //! ### Custom Configuration
 //! ```rust,no_run
-//! use sd_core::testing::integration_utils::IntegrationTestSetup;
+//! use wing_core::testing::integration_utils::IntegrationTestSetup;
 //!
 //! #[tokio::test]
 //! async fn test_with_custom_config() {
@@ -50,13 +50,13 @@
 //!
 //! ### Custom Tracing
 //! ```rust,no_run
-//! use sd_core::testing::integration_utils::IntegrationTestSetup;
+//! use wing_core::testing::integration_utils::IntegrationTestSetup;
 //!
 //! #[tokio::test]
 //! async fn test_with_debug_logging() {
 //!     let setup = IntegrationTestSetup::with_tracing(
 //!         "debug_test",
-//!         "debug,sd_core=trace,my_module=info"
+//!         "debug,wing_core=trace,my_module=info"
 //!     ).await.unwrap();
 //!
 //!     // Test with detailed debug logging...
@@ -276,7 +276,7 @@ pub fn initialize_test_tracing(
 			.or_else(|| std::env::var("RUST_LOG").ok())
 			.unwrap_or_else(|| {
 				format!(
-					"warn,sd_core=info,{}=info,iroh::magicsock::transports::relay=error",
+					"warn,wing_core=info,{}=info,iroh::magicsock::transports::relay=error",
 					test_env.test_name
 				)
 			});

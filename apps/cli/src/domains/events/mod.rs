@@ -7,9 +7,9 @@ pub use args::*;
 use crate::context::Context;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use sd_core::infra::daemon::types::EventFilter;
-use sd_core::infra::event::Event;
 use std::collections::HashSet;
+use wing_core::infra::daemon::types::EventFilter;
+use wing_core::infra::event::Event;
 
 /// Run events command
 pub async fn run(ctx: &Context, cmd: EventsCmd) -> Result<()> {

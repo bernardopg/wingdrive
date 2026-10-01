@@ -7,16 +7,16 @@
 //!
 //! Run with: cargo test --test volume_fingerprint_stability_test -- --nocapture
 
-use sd_core::domain::volume::VolumeFingerprint;
 use uuid::Uuid;
+use wing_core::domain::volume::VolumeFingerprint;
 
 #[cfg(target_os = "macos")]
-use sd_core::{
+use std::{collections::HashMap, sync::Arc, thread, time::Duration};
+#[cfg(target_os = "macos")]
+use wing_core::{
 	infra::event::EventBus,
 	volume::{types::VolumeDetectionConfig, VolumeManager},
 };
-#[cfg(target_os = "macos")]
-use std::{collections::HashMap, sync::Arc, thread, time::Duration};
 
 /// Test that identical volume properties produce identical fingerprints
 #[test]

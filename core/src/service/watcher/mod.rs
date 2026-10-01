@@ -1,6 +1,6 @@
 //! Filesystem Watcher Service
 //!
-//! Wraps `sd-fs-watcher` for platform-agnostic filesystem event detection.
+//! Wraps `wing-fs-watcher` for platform-agnostic filesystem event detection.
 //!
 //! ## Architecture
 //!

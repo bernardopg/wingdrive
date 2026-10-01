@@ -42,7 +42,7 @@ cargo ios
 
 **Single source of truth for core integration tests!**
 
-Runs all sd-core integration tests with progress tracking and result summary.
+Runs all wing-core integration tests with progress tracking and result summary.
 This command is used by both CI and local development, ensuring consistency.
 
 **Usage:**

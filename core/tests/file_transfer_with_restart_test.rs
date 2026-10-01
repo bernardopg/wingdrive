@@ -3,12 +3,12 @@
 //! This test demonstrates that session keys survive a daemon restart.
 //! Alice and Bob pair, then Alice restarts her daemon, and finally transfers files.
 
-use sd_core::{
+use std::{env, path::PathBuf, time::Duration};
+use tokio::time::timeout;
+use wing_core::{
 	domain::content_identity::ContentHashGenerator, service::file_sharing::TransferState,
 	testing::CargoTestRunner, Core,
 };
-use std::{env, path::PathBuf, time::Duration};
-use tokio::time::timeout;
 
 /// Alice's scenario - pairs, restarts, then sends files
 #[tokio::test]

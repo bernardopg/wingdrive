@@ -40,7 +40,7 @@ impl TimeSource for SystemTimeSource {
 ///
 /// ## Example
 /// ```rust,no_run
-/// use sd_core::infra::sync::time_source::FakeTimeSource;
+/// use wing_core::infra::sync::time_source::FakeTimeSource;
 ///
 /// let time = FakeTimeSource::new(1000);
 /// assert_eq!(time.current_time_ms(), 1000);

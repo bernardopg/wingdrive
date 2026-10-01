@@ -1,18 +1,18 @@
 //! Volume system demonstration
 
-use sd_core::{
+use std::time::Duration;
+use tokio::time::timeout;
+use wing_core::{
 	infra::event::EventFilter,
 	volume::types::{FileSystem, MountType},
 	Core,
 };
-use std::time::Duration;
-use tokio::time::timeout;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Initialize logging
 	tracing_subscriber::fmt()
-		.with_env_filter("sd_core=info")
+		.with_env_filter("wing_core=info")
 		.init();
 
 	println!("=== WingDrive Volume System Demo ===\n");

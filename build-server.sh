@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build sd-server + sd-cli natively on TrueNAS Scale
+# Build wing-server + wing-cli natively on TrueNAS Scale
 # Uses zig cc as C compiler (since gcc/clang not installed)
 # Dev tools at /mnt/pool/dev-tools/
 
@@ -16,9 +16,9 @@ export OPENSSL_INCLUDE_DIR="$SR/usr/include"
 export OPENSSL_LIB_DIR="$SR/usr/lib/x86_64-linux-gnu"
 
 cd /mnt/pool/spacedrive
-cargo build --release --bin sd-server --bin sd-cli \
-  --features sd-core/heif,sd-core/ffmpeg \
+cargo build --release --bin wing-server --bin wing-cli \
+  --features wing-core/heif,wing-core/ffmpeg \
   -j10 "$@"
 
 echo "Binaries at:"
-ls -lh target/release/sd-server target/release/sd-cli 2>/dev/null
+ls -lh target/release/wing-server target/release/wing-cli 2>/dev/null

@@ -74,7 +74,7 @@ Operation::execute()                  // EXISTING!
 
 **5. Extension SDK** (separate crate)
 
-- `spacedrive-sdk` Rust crate
+- `wingdrive-sdk` Rust crate
 - Type-safe wrapper around `spacedrive_call()`
 - Ergonomic API for extension developers
 
@@ -106,7 +106,7 @@ Operation::execute()                  // EXISTING!
    - Implement `vdfs.write_sidecar`
 
 5. **Build Extension SDK**
-   - Create `spacedrive-sdk` crate
+   - Create `wingdrive-sdk` crate
    - Type-safe wrappers
    - Documentation
 
@@ -149,7 +149,7 @@ cd core && cargo check
 cd core && cargo test extension
 
 # Load test plugin (once implemented)
-cargo run --bin sd-cli -- extension load ./plugins/test-plugin
+cargo run --bin wing-cli -- extension load ./plugins/test-plugin
 ```
 
 ## Notes

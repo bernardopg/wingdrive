@@ -2,15 +2,15 @@
 //!
 //! Tests that we can dispatch and execute WASM jobs
 
-use sd_core::Core;
 use std::path::PathBuf;
 use tempfile::TempDir;
+use wing_core::Core;
 
 #[tokio::test]
 async fn test_dispatch_wasm_job() {
 	// Initialize tracing
 	let _ = tracing_subscriber::fmt()
-		.with_env_filter("info,sd_core::infra::extension=debug")
+		.with_env_filter("info,wing_core::infra::extension=debug")
 		.with_test_writer()
 		.try_init();
 

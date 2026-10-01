@@ -17,18 +17,18 @@
 mod helpers;
 
 use helpers::{create_test_volume, register_device};
-use sd_core::testing::CargoTestRunner;
-use sd_core::{
-	location::{create_location, IndexMode, LocationCreateArgs},
-	service::Service,
-	Core,
-};
 use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::timeout;
 use uuid::Uuid;
+use wing_core::testing::CargoTestRunner;
+use wing_core::{
+	location::{create_location, IndexMode, LocationCreateArgs},
+	service::Service,
+	Core,
+};
 
 const TEST_DIR: &str = "/tmp/wingdrive-transitive-sync-test";
 
@@ -101,7 +101,7 @@ async fn alice_transitive_sync_scenario() {
 	};
 
 	// Get device record
-	let device_record = sd_core::infra::db::entities::device::Entity::find()
+	let device_record = wing_core::infra::db::entities::device::Entity::find()
 		.one(library.db().conn())
 		.await
 		.unwrap()
@@ -119,17 +119,17 @@ async fn alice_transitive_sync_scenario() {
 	println!("Alice: Location created, ID: {}", location_db_id);
 
 	// Link location to volume
-	let first_volume = sd_core::infra::db::entities::volume::Entity::find()
-		.filter(sd_core::infra::db::entities::volume::Column::DeviceId.eq(device_id))
+	let first_volume = wing_core::infra::db::entities::volume::Entity::find()
+		.filter(wing_core::infra::db::entities::volume::Column::DeviceId.eq(device_id))
 		.one(library.db().conn())
 		.await
 		.unwrap()
 		.expect("Volume not found");
 
-	sd_core::infra::db::entities::location::Entity::update_many()
-		.filter(sd_core::infra::db::entities::location::Column::Id.eq(location_db_id))
+	wing_core::infra::db::entities::location::Entity::update_many()
+		.filter(wing_core::infra::db::entities::location::Column::Id.eq(location_db_id))
 		.col_expr(
-			sd_core::infra::db::entities::location::Column::VolumeId,
+			wing_core::infra::db::entities::location::Column::VolumeId,
 			sea_orm::sea_query::Expr::value(first_volume.id),
 		)
 		.exec(library.db().conn())
@@ -142,8 +142,8 @@ async fn alice_transitive_sync_scenario() {
 	loop {
 		tokio::time::sleep(Duration::from_secs(2)).await;
 
-		let location = sd_core::infra::db::entities::location::Entity::find()
-			.filter(sd_core::infra::db::entities::location::Column::Id.eq(location_db_id))
+		let location = wing_core::infra::db::entities::location::Entity::find()
+			.filter(wing_core::infra::db::entities::location::Column::Id.eq(location_db_id))
 			.one(library.db().conn())
 			.await
 			.unwrap()
@@ -160,7 +160,7 @@ async fn alice_transitive_sync_scenario() {
 	}
 
 	// Record entry count for verification
-	let alice_entry_count = sd_core::infra::db::entities::entry::Entity::find()
+	let alice_entry_count = wing_core::infra::db::entities::entry::Entity::find()
 		.count(library.db().conn())
 		.await
 		.unwrap();
@@ -433,7 +433,7 @@ async fn bob_transitive_sync_scenario() {
 	loop {
 		tokio::time::sleep(Duration::from_secs(2)).await;
 
-		let bob_entries = sd_core::infra::db::entities::entry::Entity::find()
+		let bob_entries = wing_core::infra::db::entities::entry::Entity::find()
 			.count(library.db().conn())
 			.await
 			.unwrap();
@@ -691,7 +691,7 @@ async fn carol_transitive_sync_scenario() {
 	loop {
 		tokio::time::sleep(Duration::from_secs(3)).await;
 
-		carol_final_count = sd_core::infra::db::entities::entry::Entity::find()
+		carol_final_count = wing_core::infra::db::entities::entry::Entity::find()
 			.count(library.db().conn())
 			.await
 			.unwrap();

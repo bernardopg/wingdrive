@@ -14,8 +14,8 @@ use comfy_table::{presets::UTF8_BORDERS_ONLY, Attribute, Cell, Table};
 use crate::context::Context;
 use crate::util::prelude::*;
 
-use sd_core::ops::redundancy::summary::{RedundancySummaryInput, RedundancySummaryOutput};
-use sd_core::ops::search::{
+use wing_core::ops::redundancy::summary::{RedundancySummaryInput, RedundancySummaryOutput};
+use wing_core::ops::search::{
 	input::{
 		FileSearchInput, PaginationOptions, SearchFilters, SearchMode, SearchScope, SortDirection,
 		SortField, SortOptions,

@@ -22,16 +22,16 @@ use helpers::{
 	add_and_index_location, create_snapshot_dir, init_test_tracing, register_device, MockTransport,
 	TestConfigBuilder, TestDataDir,
 };
-use sd_core::{
+use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+use std::{path::PathBuf, sync::Arc};
+use tokio::{fs, time::Duration};
+use uuid::Uuid;
+use wing_core::{
 	infra::{db::entities, sync::NetworkTransport},
 	library::Library,
 	service::{sync::state::DeviceSyncState, Service},
 	Core,
 };
-use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-use std::{path::PathBuf, sync::Arc};
-use tokio::{fs, time::Duration};
-use uuid::Uuid;
 
 /// Test harness for backfill race condition testing
 struct BackfillRaceHarness {
@@ -213,7 +213,7 @@ impl BackfillRaceHarness {
 
 		let backfill_manager = sync_service.backfill_manager();
 
-		let peer_info = sd_core::service::sync::state::PeerInfo {
+		let peer_info = wing_core::service::sync::state::PeerInfo {
 			device_id: self.device_alice_id,
 			is_online: true,
 			latency_ms: 1.0,

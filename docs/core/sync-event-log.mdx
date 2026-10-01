@@ -206,7 +206,7 @@ ORDER BY started DESC
 ### Rust API
 
 ```rust
-use sd_core::infra::sync::{SyncEventQuery, SyncEventType, EventSeverity};
+use wing_core::infra::sync::{SyncEventQuery, SyncEventType, EventSeverity};
 
 // Get all events from last hour
 let events = sync_service.event_logger()
@@ -507,7 +507,7 @@ Events are categorized for filtering:
 Run the event log test suite:
 
 ```bash
-cargo test -p sd-core --test sync_event_log_test
+cargo test -p wing-core --test sync_event_log_test
 ```
 
 Tests verify:

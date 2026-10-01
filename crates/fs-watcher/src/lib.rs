@@ -1,6 +1,6 @@
 //! Platform-agnostic filesystem watcher
 //!
-//! `sd-fs-watcher` provides a clean, storage-agnostic interface for watching
+//! `wing-fs-watcher` provides a clean, storage-agnostic interface for watching
 //! filesystem changes. It handles platform-specific quirks (like macOS rename
 //! detection) internally and emits normalized events.
 //!
@@ -23,7 +23,7 @@
 //! # Example
 //!
 //! ```ignore
-//! use sd_fs_watcher::{FsWatcher, WatchConfig, WatcherConfig};
+//! use wing_fs_watcher::{FsWatcher, WatchConfig, WatcherConfig};
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -40,10 +40,10 @@
 //!     // Process events
 //!     while let Ok(event) = rx.recv().await {
 //!         match event.kind {
-//!             sd_fs_watcher::FsEventKind::Create => println!("Created: {}", event.path.display()),
-//!             sd_fs_watcher::FsEventKind::Modify => println!("Modified: {}", event.path.display()),
-//!             sd_fs_watcher::FsEventKind::Remove => println!("Removed: {}", event.path.display()),
-//!             sd_fs_watcher::FsEventKind::Rename { from, to } => {
+//!             wing_fs_watcher::FsEventKind::Create => println!("Created: {}", event.path.display()),
+//!             wing_fs_watcher::FsEventKind::Modify => println!("Modified: {}", event.path.display()),
+//!             wing_fs_watcher::FsEventKind::Remove => println!("Removed: {}", event.path.display()),
+//!             wing_fs_watcher::FsEventKind::Rename { from, to } => {
 //!                 println!("Renamed: {} -> {}", from.display(), to.display())
 //!             }
 //!         }

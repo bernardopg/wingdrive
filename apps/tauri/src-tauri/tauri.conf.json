@@ -71,7 +71,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["../../../target/release/sd-daemon"],
+    "externalBin": ["../../../target/release/wing-daemon"],
     "resources": {
       "gen/**/*": "./"
     },

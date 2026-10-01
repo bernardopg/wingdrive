@@ -1,5 +1,5 @@
 [package]
-name    = "sd-crypto"
+name    = "wing-crypto"
 version = "0.0.1"
 
 authors = [

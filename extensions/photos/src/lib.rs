@@ -24,7 +24,7 @@ pub use config::*;
 pub use models::*;
 pub use queries::*;
 
-use spacedrive_sdk::{extension, prelude::*};
+use wingdrive_sdk::{extension, prelude::*};
 
 #[extension(
 	id = "com.wingdrive.photos",

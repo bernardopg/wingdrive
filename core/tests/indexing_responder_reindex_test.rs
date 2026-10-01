@@ -10,9 +10,9 @@
 mod helpers;
 
 use helpers::IndexingHarnessBuilder;
-use sd_core::{infra::db::entities, location::IndexMode};
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use tokio::{fs, time::Duration};
+use wing_core::{infra::db::entities, location::IndexMode};
 
 /// Verifies watcher correctly handles moving external folders into managed locations
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

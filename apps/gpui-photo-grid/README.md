@@ -46,7 +46,7 @@ Use the included script to automatically find your library and run:
 
 ## Architecture
 
-- Uses `sd-client` crate to communicate with WingDrive daemon
+- Uses `wing-client` crate to communicate with WingDrive daemon
 - Queries files via Unix socket
 - Loads thumbnails via HTTP from sidecar server
 - GPUI handles image loading, caching, and GPU rendering

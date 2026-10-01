@@ -1,4 +1,3 @@
-use sd_utils::error::FileIOError;
 use std::{
 	ffi::{c_int, NulError},
 	num::TryFromIntError,
@@ -6,6 +5,7 @@ use std::{
 };
 use thiserror::Error;
 use tokio::task::JoinError;
+use wing_utils::error::FileIOError;
 
 use ffmpeg_sys_next::{
 	AVERROR_BSF_NOT_FOUND, AVERROR_BUFFER_TOO_SMALL, AVERROR_BUG, AVERROR_BUG2,

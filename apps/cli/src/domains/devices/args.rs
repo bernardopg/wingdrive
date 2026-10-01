@@ -1,6 +1,6 @@
 use clap::Args;
 
-use sd_core::ops::devices::list::query::ListLibraryDevicesInput;
+use wing_core::ops::devices::list::query::ListLibraryDevicesInput;
 
 #[derive(Args, Debug, Clone)]
 pub struct DevicesListArgs {

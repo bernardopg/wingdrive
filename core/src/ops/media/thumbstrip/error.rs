@@ -51,10 +51,10 @@ impl ThumbstripError {
 	}
 }
 
-// Conversion from sd-ffmpeg errors
+// Conversion from wing-ffmpeg errors
 #[cfg(feature = "ffmpeg")]
-impl From<sd_ffmpeg::Error> for ThumbstripError {
-	fn from(err: sd_ffmpeg::Error) -> Self {
+impl From<wing_ffmpeg::Error> for ThumbstripError {
+	fn from(err: wing_ffmpeg::Error) -> Self {
 		Self::FFmpeg(err.to_string())
 	}
 }

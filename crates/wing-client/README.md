@@ -1,4 +1,4 @@
-# sd-client
+# wing-client
 
 Rust client library for connecting to the WingDrive daemon.
 
@@ -13,7 +13,7 @@ Rust client library for connecting to the WingDrive daemon.
 ## Usage
 
 ```rust
-use sd_client::{SpacedriveClient, SdPath};
+use wing_client::{SpacedriveClient, SdPath};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

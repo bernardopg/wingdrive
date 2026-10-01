@@ -1,15 +1,15 @@
 [package]
 edition = "2021"
-name    = "sd-cli"
+name    = "wing-cli"
 version = "2.0.0-alpha.2"
 
 [features]
 default = []
-heif = ["sd-core/heif"]
-ffmpeg = ["sd-core/ffmpeg"]
-whisper = ["sd-core/whisper"]
-speech-to-text = ["sd-core/speech-to-text"]
-ai = ["sd-core/ai"]
+heif = ["wing-core/heif"]
+ffmpeg = ["wing-core/ffmpeg"]
+whisper = ["wing-core/whisper"]
+speech-to-text = ["wing-core/speech-to-text"]
+ai = ["wing-core/ai"]
 
 [dependencies]
 anyhow      = "1"
@@ -23,7 +23,7 @@ inquire     = "0.9"
 qr2term     = "0.3"
 ratatui     = "0.30"
 reqwest     = { version = "0.12", features = ["json"] }
-sd-core     = { path = "../../core", features = ["cli"] }
+wing-core     = { path = "../../core", features = ["cli"] }
 serde       = { version = "1", features = ["derive"] }
 serde_json  = "1"
 tokio       = { version = "1", features = ["full"] }

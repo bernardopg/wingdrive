@@ -3,8 +3,8 @@
 //! Demonstrates the WingDrive extension SDK using procedural macros to simplify
 //! extension development by abstracting FFI and state management details.
 
-use spacedrive_sdk::prelude::*;
-use spacedrive_sdk::{extension, job};
+use wingdrive_sdk::prelude::*;
+use wingdrive_sdk::{extension, job};
 
 // Extension Definition
 // The #[extension] macro generates plugin_init() and plugin_cleanup().

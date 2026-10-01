@@ -34,7 +34,7 @@ Test the daemon-client path and native windows. A Vite build or typecheck alone 
 
 ## Linux Runtime Session 2026-10-01
 
-Isolated daemon (`--data-dir <scratch> --instance clitest`) plus `sd-server` and the web build in Chrome; the same React interface the Tauri shell hosts. Native-only items (Tauri windows, GTK, Quick Look, Spacedrop) still need the desktop binary.
+Isolated daemon (`--data-dir <scratch> --instance clitest`) plus `wing-server` and the web build in Chrome; the same React interface the Tauri shell hosts. Native-only items (Tauri windows, GTK, Quick Look, Spacedrop) still need the desktop binary.
 
 Passed:
 - Location added from the CLI appears in the sidebar; browsing and double-click into folders work.
@@ -44,13 +44,13 @@ Passed:
 - Delete key opens the confirmation, the file moves to the trash, and the dialog closes in about 200 ms.
 
 Bugs found and fixed in this session:
-- `sd-server` panicked at startup (axum 0.8 route syntax).
+- `wing-server` panicked at startup (axum 0.8 route syntax).
 - Web UI rendered blank without the private Spacebot repo.
 - Directory names sorted case-sensitively in SQL.
 - The delete dialog never closed after confirming.
 - `useWaitForJob` missed events of fast jobs and waited 30 s.
 - The overflow sort submenu showed a stale direction.
-- `sd-cli file list` labelled folders as files and dropped extensions.
+- `wing-cli file list` labelled folders as files and dropped extensions.
 
 Open:
 - WATCH-003: deleted files stay listed (index not updated by the watcher).

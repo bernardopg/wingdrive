@@ -1,20 +1,20 @@
 //! Simple test for job logging functionality
 
-use sd_core::{
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
+use std::path::PathBuf;
+use tokio::time::{sleep, Duration};
+use wing_core::{
 	config::{AppConfig, JobLoggingConfig},
 	infra::{db::entities, event::Event},
 	location::{create_location, IndexMode, LocationCreateArgs},
 	Core,
 };
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
-use std::path::PathBuf;
-use tokio::time::{sleep, Duration};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// Initialize logging
 	tracing_subscriber::fmt()
-		.with_env_filter("sd_core=debug")
+		.with_env_filter("wing_core=debug")
 		.init();
 
 	println!("Job Logging Test\n");

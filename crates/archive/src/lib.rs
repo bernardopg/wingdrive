@@ -1,4 +1,4 @@
-//! # sd-archive — WingDrive's Data Archival System
+//! # wing-archive — WingDrive's Data Archival System
 //!
 //! A standalone crate for indexing external data sources beyond the filesystem.
 //! Handles emails, notes, messages, bookmarks, calendar events, contacts, and more.
@@ -25,7 +25,7 @@
 //! ```
 //! Core
 //!   -> Library
-//!     -> SourceManager (wraps sd-archive Engine)
+//!     -> SourceManager (wraps wing-archive Engine)
 //!       -> Engine
 //!         -> AdapterRegistry
 //!         -> SourceDb

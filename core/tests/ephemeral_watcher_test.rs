@@ -4,7 +4,11 @@
 //! through a comprehensive "story" of file operations, verifying that the watcher
 //! correctly detects and updates the in-memory ephemeral index for all filesystem changes.
 
-use sd_core::{
+use std::{path::PathBuf, sync::Arc, time::Duration};
+use tempfile::TempDir;
+use tokio::sync::Mutex;
+use tokio::time::timeout;
+use wing_core::{
 	context::CoreContext,
 	infra::event::Event,
 	library::Library,
@@ -15,11 +19,7 @@ use sd_core::{
 	service::{watcher::FsWatcherService, watcher::FsWatcherServiceConfig, Service},
 	Core,
 };
-use sd_fs_watcher::FsEvent;
-use std::{path::PathBuf, sync::Arc, time::Duration};
-use tempfile::TempDir;
-use tokio::sync::Mutex;
-use tokio::time::timeout;
+use wing_fs_watcher::FsEvent;
 
 // ============================================================================
 // FsWatcher Event Collector (raw filesystem events)
@@ -106,10 +106,10 @@ impl FsEventCollector {
 
 		for (_, event) in events.iter() {
 			match &event.kind {
-				sd_fs_watcher::FsEventKind::Create => creates += 1,
-				sd_fs_watcher::FsEventKind::Modify => modifies += 1,
-				sd_fs_watcher::FsEventKind::Remove => removes += 1,
-				sd_fs_watcher::FsEventKind::Rename { .. } => renames += 1,
+				wing_fs_watcher::FsEventKind::Create => creates += 1,
+				wing_fs_watcher::FsEventKind::Modify => modifies += 1,
+				wing_fs_watcher::FsEventKind::Remove => removes += 1,
+				wing_fs_watcher::FsEventKind::Rename { .. } => renames += 1,
 			}
 		}
 
@@ -374,7 +374,7 @@ impl TestHarness {
 	async fn setup() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
 		// Setup logging
 		let _ = tracing_subscriber::fmt()
-			.with_env_filter("sd_core=debug,ephemeral_watcher_test=debug")
+			.with_env_filter("wing_core=debug,ephemeral_watcher_test=debug")
 			.try_init();
 
 		// Create core
@@ -436,7 +436,7 @@ impl TestHarness {
 		println!("✓ Started Core event collector");
 
 		// Run ephemeral indexing job
-		let sd_path = sd_core::domain::addressing::SdPath::local(test_dir.clone());
+		let sd_path = wing_core::domain::addressing::SdPath::local(test_dir.clone());
 		let config = IndexerJobConfig::ephemeral_browse(sd_path, IndexScope::Current, false);
 		let mut indexer_job = IndexerJob::new(config);
 

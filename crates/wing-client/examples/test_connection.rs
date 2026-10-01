@@ -1,5 +1,5 @@
-use sd_client::{SdPath, WingDriveClient};
 use std::env;
+use wing_client::{SdPath, WingDriveClient};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

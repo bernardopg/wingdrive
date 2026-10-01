@@ -13,16 +13,16 @@
 //! Note: These tests should be run with --test-threads=1 to avoid
 //! potential conflicts between tests
 
-use sd_core::{
-	infra::event::{Event, EventFilter},
-	location::{create_location, IndexMode, LocationCreateArgs},
-	Core,
-};
 use std::collections::HashSet;
 use std::sync::Arc;
 use tempfile::TempDir;
 use tokio::sync::Mutex;
 use tokio::time::{timeout, Duration};
+use wing_core::{
+	infra::event::{Event, EventFilter},
+	location::{create_location, IndexMode, LocationCreateArgs},
+	Core,
+};
 
 #[tokio::test]
 async fn test_core_and_library_events() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -162,8 +162,8 @@ async fn test_location_and_job_events() -> Result<(), Box<dyn std::error::Error 
 	let db = library.db();
 	let device = core.device.to_device()?;
 
-	use sd_core::infra::db::entities;
 	use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
+	use wing_core::infra::db::entities;
 
 	let device_record = match entities::device::Entity::find()
 		.filter(entities::device::Column::Uuid.eq(device.id))

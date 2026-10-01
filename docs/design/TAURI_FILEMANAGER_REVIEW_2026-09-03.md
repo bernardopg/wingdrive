@@ -2,7 +2,7 @@
 
 Data: 2026-09-03
 Escopo: `apps/tauri`, `packages/interface/src/routes/explorer`, `core/src/ops/files`
-Ambiente: Linux, `GDK_BACKEND=x11`, daemon `sd-daemon` em `127.0.0.1:6969`, biblioteca `My Library` com 0 locations e 2 volumes.
+Ambiente: Linux, `GDK_BACKEND=x11`, daemon `wing-daemon` em `127.0.0.1:6969`, biblioteca `My Library` com 0 locations e 2 volumes.
 
 ## Resumo
 

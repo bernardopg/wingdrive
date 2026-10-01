@@ -14,7 +14,7 @@
 //!
 //! ```no_run
 //! use std::path::Path;
-//! use sd_core::infra::fs::free_space::ensure_headroom;
+//! use wing_core::infra::fs::free_space::ensure_headroom;
 //!
 //! ensure_headroom(Path::new("/library"))?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())

@@ -163,7 +163,7 @@ impl CopyDatabaseQuery {
 		use crate::infra::db::entities::{device, volume};
 
 		tracing::debug!(
-			target: "sd_core::copy_size_query",
+			target: "wing_core::copy_size_query",
 			"[SIZE QUERY] Starting query for device '{}' path '{}'",
 			device_slug,
 			path.display()
@@ -177,7 +177,7 @@ impl CopyDatabaseQuery {
 
 		let Some(device) = device else {
 			tracing::warn!(
-				target: "sd_core::copy_size_query",
+				target: "wing_core::copy_size_query",
 				"[SIZE QUERY] Device not found: '{}'",
 				device_slug
 			);
@@ -185,7 +185,7 @@ impl CopyDatabaseQuery {
 		};
 
 		tracing::debug!(
-			target: "sd_core::copy_size_query",
+			target: "wing_core::copy_size_query",
 			"[SIZE QUERY] Found device: id={} name={} uuid={}",
 			device.id,
 			device.name,
@@ -199,7 +199,7 @@ impl CopyDatabaseQuery {
 			.await?;
 
 		tracing::debug!(
-			target: "sd_core::copy_size_query",
+			target: "wing_core::copy_size_query",
 			"[SIZE QUERY] Found {} volumes for device",
 			volumes.len()
 		);
@@ -214,7 +214,7 @@ impl CopyDatabaseQuery {
 				.await?;
 
 			tracing::debug!(
-				target: "sd_core::copy_size_query",
+				target: "wing_core::copy_size_query",
 				"[SIZE QUERY] Volume {} has {} locations",
 				volume.id,
 				locations.len()
@@ -223,7 +223,7 @@ impl CopyDatabaseQuery {
 			for location in locations {
 				let Some(entry_id) = location.entry_id else {
 					tracing::debug!(
-						target: "sd_core::copy_size_query",
+						target: "wing_core::copy_size_query",
 						"[SIZE QUERY] Location id={} has no entry_id, skipping",
 						location.id
 					);
@@ -235,7 +235,7 @@ impl CopyDatabaseQuery {
 					Ok(path) => path,
 					Err(e) => {
 						tracing::warn!(
-							target: "sd_core::copy_size_query",
+							target: "wing_core::copy_size_query",
 							"[SIZE QUERY] Failed to get path for location id={}: {}",
 							location.id,
 							e
@@ -247,7 +247,7 @@ impl CopyDatabaseQuery {
 				let location_path_str = location_path.to_string_lossy().to_string();
 
 				tracing::debug!(
-					target: "sd_core::copy_size_query",
+					target: "wing_core::copy_size_query",
 					"[SIZE QUERY] Checking location id={} with path '{}'",
 					location.id,
 					location_path_str
@@ -256,7 +256,7 @@ impl CopyDatabaseQuery {
 				// Check if the target path is within this location
 				if path_str.starts_with(&location_path_str) {
 					tracing::debug!(
-						target: "sd_core::copy_size_query",
+						target: "wing_core::copy_size_query",
 						"[SIZE QUERY] Path matches location! Target: '{}', Location: '{}'",
 						path_str,
 						location_path_str
@@ -265,7 +265,7 @@ impl CopyDatabaseQuery {
 					// If querying the entire location root, use cached stats
 					if path == &location_path {
 						tracing::info!(
-							target: "sd_core::copy_size_query",
+							target: "wing_core::copy_size_query",
 							"[SIZE QUERY] ✓ Using location stats: {} files, {} bytes",
 							location.total_file_count,
 							location.total_byte_size
@@ -281,7 +281,7 @@ impl CopyDatabaseQuery {
 						Ok(rel) => rel,
 						Err(e) => {
 							tracing::warn!(
-								target: "sd_core::copy_size_query",
+								target: "wing_core::copy_size_query",
 								"[SIZE QUERY] Failed to strip prefix: {}",
 								e
 							);
@@ -296,14 +296,14 @@ impl CopyDatabaseQuery {
 
 					if components.is_empty() {
 						tracing::debug!(
-							target: "sd_core::copy_size_query",
+							target: "wing_core::copy_size_query",
 							"[SIZE QUERY] No relative components, skipping"
 						);
 						continue;
 					}
 
 					tracing::debug!(
-						target: "sd_core::copy_size_query",
+						target: "wing_core::copy_size_query",
 						"[SIZE QUERY] Traversing {} components: {:?}",
 						components.len(),
 						components
@@ -339,7 +339,7 @@ impl CopyDatabaseQuery {
 							match child {
 								Some(c) => {
 									tracing::debug!(
-										target: "sd_core::copy_size_query",
+										target: "wing_core::copy_size_query",
 										"[SIZE QUERY] Found component '{}' (id={})",
 										component,
 										c.id
@@ -349,7 +349,7 @@ impl CopyDatabaseQuery {
 								}
 								None => {
 									tracing::warn!(
-										target: "sd_core::copy_size_query",
+										target: "wing_core::copy_size_query",
 										"[SIZE QUERY] Component '{}' not found under parent_id={}",
 										component,
 										parent_id
@@ -371,7 +371,7 @@ impl CopyDatabaseQuery {
 						};
 
 						tracing::info!(
-							target: "sd_core::copy_size_query",
+							target: "wing_core::copy_size_query",
 							"[SIZE QUERY] ✓ Found entry '{}': {} files, {} bytes",
 							entry.name,
 							file_count,
@@ -385,7 +385,7 @@ impl CopyDatabaseQuery {
 					}
 				} else {
 					tracing::debug!(
-						target: "sd_core::copy_size_query",
+						target: "wing_core::copy_size_query",
 						"[SIZE QUERY] Path mismatch - Target: '{}', Location: '{}'",
 						path_str,
 						location_path_str
@@ -395,7 +395,7 @@ impl CopyDatabaseQuery {
 		}
 
 		tracing::warn!(
-			target: "sd_core::copy_size_query",
+			target: "wing_core::copy_size_query",
 			"[SIZE QUERY] ✗ No matching entry found for '{}'",
 			path_str
 		);

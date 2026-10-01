@@ -6,8 +6,8 @@ import { platform } from "./platform";
 import "./index.css";
 import "@sd/interface/styles.css";
 
-// Talk to sd-server's /rpc endpoint on the same origin the page was loaded from.
-// This works both standalone (browser → sd-server) and embedded inside an iframe.
+// Talk to wing-server's /rpc endpoint on the same origin the page was loaded from.
+// This works both standalone (browser → wing-server) and embedded inside an iframe.
 const client = new SpacedriveClient(new HttpTransport());
 
 function App() {

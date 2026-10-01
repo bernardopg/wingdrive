@@ -5,7 +5,7 @@ setup:
 	cargo xtask setup
 
 dev-daemon *ARGS:
-	cargo run --features ffmpeg,heif --bin sd-daemon {{ARGS}}
+	cargo run --features ffmpeg,heif --bin wing-daemon {{ARGS}}
 
 dev-desktop *ARGS:
 	./scripts/dev-isolated.sh {{ARGS}}
@@ -23,7 +23,7 @@ build-mobile:
 	cargo xtask build-mobile
 
 dev-server *ARGS:
-	cargo run --bin sd-server {{ARGS}}
+	cargo run --bin wing-server {{ARGS}}
 
 test:
 	cargo test --workspace
@@ -43,4 +43,4 @@ fmt:
 	cargo fmt
 
 cli *ARGS:
-	cargo run --bin sd-cli {{ARGS}}
+	cargo run --bin wing-cli {{ARGS}}

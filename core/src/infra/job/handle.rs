@@ -6,11 +6,11 @@ use super::{
 	progress::Progress,
 	types::{JobId, JobStatus},
 };
-use sd_task_system::TaskHandle;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::sync::Arc;
 use tokio::sync::{broadcast, watch, Mutex};
+use wing_task_system::TaskHandle;
 
 /// Handle to a running job
 #[derive(Debug)]

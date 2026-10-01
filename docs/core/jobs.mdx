@@ -53,7 +53,7 @@ The job system consists of several interconnected parts:
 Jobs implement two traits: `Job` for metadata and `JobHandler` for execution logic.
 
 ```rust
-use sd_task_system::TaskId;
+use wing_task_system::TaskId;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -1,4 +1,4 @@
-//! Error types for the sd-archive crate.
+//! Error types for the wing-archive crate.
 
 use std::path::PathBuf;
 

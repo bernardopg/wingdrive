@@ -1,7 +1,7 @@
 use clap::Args;
 use std::path::PathBuf;
 
-use sd_core::{
+use wing_core::{
 	domain::addressing::{SdPath, SdPathBatch},
 	ops::files::{
 		copy::input::{CopyMethod, FileCopyInput},

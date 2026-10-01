@@ -1,6 +1,6 @@
-use spacedrive_sdk::query;
+use wingdrive_sdk::query;
 
-use spacedrive_sdk::prelude::*;
+use wingdrive_sdk::prelude::*;
 
 use crate::agent::PhotosMind;
 use crate::models::*;

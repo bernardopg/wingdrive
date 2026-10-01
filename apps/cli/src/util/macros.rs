@@ -115,7 +115,7 @@ macro_rules! get_current_library {
 #[macro_export]
 macro_rules! execute_action_with_confirmation {
 	($ctx:expr, $input:expr) => {{
-		use sd_core::infra::action::{LibraryAction, ValidationResult};
+		use wing_core::infra::action::{LibraryAction, ValidationResult};
 		use $crate::util::confirm::prompt_for_choice;
 
 		// Build the action from input

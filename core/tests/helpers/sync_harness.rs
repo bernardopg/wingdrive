@@ -3,7 +3,11 @@
 //! Provides reusable components to reduce duplication across sync tests.
 
 use super::MockTransport;
-use sd_core::{
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, Set};
+use std::{path::PathBuf, sync::Arc};
+use tokio::{fs, io::AsyncWriteExt, sync::Mutex, time::Duration};
+use uuid::Uuid;
+use wing_core::{
 	infra::{
 		db::entities,
 		event::Event,
@@ -13,10 +17,6 @@ use sd_core::{
 	service::{sync::state::DeviceSyncState, Service},
 	Core,
 };
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, Set};
-use std::{path::PathBuf, sync::Arc};
-use tokio::{fs, io::AsyncWriteExt, sync::Mutex, time::Duration};
-use uuid::Uuid;
 
 /// Builder for creating common test configurations
 pub struct TestConfigBuilder {
@@ -28,14 +28,14 @@ impl TestConfigBuilder {
 	pub fn new(data_dir: PathBuf) -> Self {
 		Self {
 			data_dir,
-			sync_log_filter: "sd_core::service::sync=trace,\
-				sd_core::service::network::protocol::sync=trace,\
-				sd_core::infra::sync=trace,\
-				sd_core::service::sync::peer=trace,\
-				sd_core::service::sync::backfill=trace,\
-				sd_core::infra::db::entities::entry=debug,\
-				sd_core::infra::db::entities::device=debug,\
-				sd_core::infra::db::entities::location=debug"
+			sync_log_filter: "wing_core::service::sync=trace,\
+				wing_core::service::network::protocol::sync=trace,\
+				wing_core::infra::sync=trace,\
+				wing_core::service::sync::peer=trace,\
+				wing_core::service::sync::backfill=trace,\
+				wing_core::infra::db::entities::entry=debug,\
+				wing_core::infra::db::entities::device=debug,\
+				wing_core::infra::db::entities::location=debug"
 				.to_string(),
 		}
 	}
@@ -46,10 +46,10 @@ impl TestConfigBuilder {
 		self
 	}
 
-	pub fn build(self) -> anyhow::Result<sd_core::config::AppConfig> {
-		let logging_config = sd_core::config::LoggingConfig {
-			main_filter: "sd_core=info".to_string(),
-			streams: vec![sd_core::config::LogStreamConfig {
+	pub fn build(self) -> anyhow::Result<wing_core::config::AppConfig> {
+		let logging_config = wing_core::config::LoggingConfig {
+			main_filter: "wing_core=info".to_string(),
+			streams: vec![wing_core::config::LogStreamConfig {
 				name: "sync".to_string(),
 				file_name: "sync.log".to_string(),
 				filter: self.sync_log_filter,
@@ -57,22 +57,22 @@ impl TestConfigBuilder {
 			}],
 		};
 
-		let config = sd_core::config::AppConfig {
+		let config = wing_core::config::AppConfig {
 			version: 4,
 			logging: logging_config,
 			data_dir: self.data_dir.clone(),
 			log_level: "debug".to_string(),
 			telemetry_enabled: false,
-			preferences: sd_core::config::Preferences::default(),
-			job_logging: sd_core::config::JobLoggingConfig::default(),
-			services: sd_core::config::ServiceConfig {
+			preferences: wing_core::config::Preferences::default(),
+			job_logging: wing_core::config::JobLoggingConfig::default(),
+			services: wing_core::config::ServiceConfig {
 				networking_enabled: false,
 				volume_monitoring_enabled: false,
 				fs_watcher_enabled: false,
 				statistics_listener_enabled: false,
 			},
-			proxy_pairing: sd_core::config::app_config::ProxyPairingConfig::default(),
-			spacebot: sd_core::config::app_config::SpacebotConfig::default(),
+			proxy_pairing: wing_core::config::app_config::ProxyPairingConfig::default(),
+			spacebot: wing_core::config::app_config::SpacebotConfig::default(),
 		};
 
 		config.save()?;
@@ -97,12 +97,12 @@ pub fn init_test_tracing(test_name: &str, snapshot_dir: &std::path::Path) -> any
 		.with(fmt::layer().with_target(true).with_thread_ids(true))
 		.with(EnvFilter::try_from_default_env().unwrap_or_else(|_| {
 			EnvFilter::new(
-				"sd_core::service::sync=debug,\
-				 sd_core::service::sync::peer=debug,\
-				 sd_core::service::sync::backfill=debug,\
-				 sd_core::service::sync::dependency=debug,\
-				 sd_core::infra::sync=debug,\
-				 sd_core::infra::db::entities=debug,\
+				"wing_core::service::sync=debug,\
+				 wing_core::service::sync::peer=debug,\
+				 wing_core::service::sync::backfill=debug,\
+				 wing_core::service::sync::dependency=debug,\
+				 wing_core::infra::sync=debug,\
+				 wing_core::infra::db::entities=debug,\
 				 helpers=trace",
 			)
 		}))
@@ -238,7 +238,7 @@ pub async fn wait_for_indexing(
 	_location_id: i32,
 	timeout: Duration,
 ) -> anyhow::Result<()> {
-	use sd_core::infra::job::JobStatus;
+	use wing_core::infra::job::JobStatus;
 
 	let start_time = tokio::time::Instant::now();
 	let mut job_seen = false;
@@ -465,11 +465,11 @@ pub async fn wait_for_sync(
 /// Add a location and wait for indexing to complete
 pub async fn add_and_index_location(
 	library: &Arc<Library>,
-	volume_manager: &Arc<sd_core::volume::VolumeManager>,
+	volume_manager: &Arc<wing_core::volume::VolumeManager>,
 	path: &str,
 	name: &str,
 ) -> anyhow::Result<Uuid> {
-	use sd_core::location::{
+	use wing_core::location::{
 		create_location, manager::update_location_volume_id, IndexMode, LocationCreateArgs,
 	};
 

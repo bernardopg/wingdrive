@@ -1,4 +1,4 @@
-//! FsWatcher Service - wraps the sd-fs-watcher crate for use in Spacedrive
+//! FsWatcher Service - wraps the wing-fs-watcher crate for use in Spacedrive
 //!
 //! This service manages the lifecycle of the filesystem watcher and provides
 //! the event stream that handlers subscribe to. It owns and starts the
@@ -10,13 +10,13 @@ use crate::ops::indexing::handlers::{EphemeralEventHandler, LocationMeta, Persis
 use crate::ops::indexing::rules::RuleToggles;
 use crate::service::Service;
 use anyhow::Result;
-use sd_fs_watcher::{FsEvent, FsWatcher, WatchConfig, WatcherConfig};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tracing::{debug, info, warn};
+use wing_fs_watcher::{FsEvent, FsWatcher, WatchConfig, WatcherConfig};
 
 /// Configuration for the FsWatcher service
 #[derive(Debug, Clone)]
@@ -63,7 +63,7 @@ fn protect_internal_tree(mut config: WatchConfig, data_dir: &Path) -> WatchConfi
 	config
 }
 
-/// Filesystem watcher service that wraps sd-fs-watcher
+/// Filesystem watcher service that wraps wing-fs-watcher
 ///
 /// This service:
 /// - Manages the lifecycle of the underlying FsWatcher

@@ -219,10 +219,10 @@ macro_rules! retry_busy {
 
 pub async fn apply_batch<H: ChangeHandler>(
 	handler: &mut H,
-	events: Vec<sd_fs_watcher::FsEvent>,
+	events: Vec<wing_fs_watcher::FsEvent>,
 	config: &ChangeConfig<'_>,
 ) -> Result<()> {
-	use sd_fs_watcher::FsEventKind;
+	use wing_fs_watcher::FsEventKind;
 
 	if events.is_empty() {
 		return Ok(());

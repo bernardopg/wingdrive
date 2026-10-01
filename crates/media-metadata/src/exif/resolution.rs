@@ -17,7 +17,7 @@ impl Resolution {
 	/// # Examples
 	///
 	/// ```
-	/// use sd_media_metadata::image::Resolution;
+	/// use wing_media_metadata::image::Resolution;
 	///
 	/// Resolution::new(1920, 1080);
 	/// ```

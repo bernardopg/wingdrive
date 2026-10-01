@@ -1,4 +1,4 @@
-use sd_utils::error::FileIOError;
+use wing_utils::error::FileIOError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -6,7 +6,7 @@ pub enum Error {
 	Exif(#[from] exif::Error),
 	#[cfg(feature = "ffmpeg")]
 	#[error("error from the ffmpeg crate: {0}")]
-	FFmpeg(#[from] sd_ffmpeg::Error),
+	FFmpeg(#[from] wing_ffmpeg::Error),
 	#[cfg(not(feature = "ffmpeg"))]
 	#[error("ffmpeg not available")]
 	NoFFmpeg,

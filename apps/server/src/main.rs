@@ -107,13 +107,13 @@ async fn serve_web(uri: Uri) -> Response {
 			.expect("index.html response is well-formed");
 	}
 
-	// Web bundle is missing entirely — sd-server was built without `apps/web/dist`.
+	// Web bundle is missing entirely — wing-server was built without `apps/web/dist`.
 	Response::builder()
 		.status(StatusCode::NOT_FOUND)
 		.header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
 		.body(Body::from(
 			"WingDrive web UI is not bundled in this build. \
-			 Run `bun run build` in `apps/web/` and rebuild sd-server.",
+			 Run `bun run build` in `apps/web/` and rebuild wing-server.",
 		))
 		.expect("missing-bundle response is well-formed")
 }
@@ -150,7 +150,7 @@ fn plain_status(status: StatusCode, message: &'static str) -> Response {
 
 /// Serve a sidecar file (thumbnail, thumbstrip, proxy, …) from the library's
 /// sidecars tree — the HTTP twin of the desktop app's local sidecar server,
-/// built on sd-core's canonical path scheme.
+/// built on wing-core's canonical path scheme.
 async fn serve_sidecar(
 	State(state): State<AppState>,
 	axum::extract::Path((library_id, content_uuid, kind, variant_and_ext)): axum::extract::Path<(
@@ -160,7 +160,7 @@ async fn serve_sidecar(
 		String,
 	)>,
 ) -> Response {
-	use sd_core::ops::sidecar::{SidecarFormat, SidecarKind, SidecarPathBuilder, SidecarVariant};
+	use wing_core::ops::sidecar::{SidecarFormat, SidecarKind, SidecarPathBuilder, SidecarVariant};
 
 	let Ok(content_uuid) = content_uuid.parse::<uuid::Uuid>() else {
 		return plain_status(StatusCode::BAD_REQUEST, "invalid content uuid");
@@ -394,7 +394,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	tracing_subscriber::fmt()
 		.with_env_filter(
 			tracing_subscriber::EnvFilter::try_from_default_env()
-				.unwrap_or_else(|_| "info,sd_core=debug,sd_server=debug".into()),
+				.unwrap_or_else(|_| "info,wing_core=debug,wing_server=debug".into()),
 		)
 		.init();
 
@@ -416,7 +416,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 			// home directory can't be resolved.
 			std::env::var("DATA_DIR")
 				.map(PathBuf::from)
-				.or_else(|_| sd_core::config::default_data_dir().map_err(|_| ()))
+				.or_else(|_| wing_core::config::default_data_dir().map_err(|_| ()))
 				.unwrap_or_else(|_| {
 					warn!("Could not resolve home directory; falling back to tempdir");
 					let temp = tempfile::tempdir().expect("Failed to create temp dir");
@@ -546,7 +546,7 @@ async fn start_daemon_if_needed(
 	let data_dir_clone = data_dir.clone();
 
 	let handle = tokio::spawn(async move {
-		if let Err(e) = sd_core::infra::daemon::bootstrap::start_default_server(
+		if let Err(e) = wing_core::infra::daemon::bootstrap::start_default_server(
 			socket_addr_clone,
 			data_dir_clone,
 			enable_p2p,

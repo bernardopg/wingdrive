@@ -7,12 +7,6 @@
 //!
 //! The test captures all events and queries metadata for post-mortem analysis.
 
-use sd_core::domain::addressing::{SdPath, SdPathBatch};
-use sd_core::{
-	infra::{action::manager::ActionManager, event::Event},
-	ops::files::copy::{action::FileCopyAction, input::CopyMethod, job::CopyOptions},
-	Core,
-};
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::HashMap,
@@ -22,6 +16,12 @@ use std::{
 use tempfile::TempDir;
 use tokio::{fs, time::timeout};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use wing_core::domain::addressing::{SdPath, SdPathBatch};
+use wing_core::{
+	infra::{action::manager::ActionManager, event::Event},
+	ops::files::copy::{action::FileCopyAction, input::CopyMethod, job::CopyOptions},
+	Core,
+};
 
 /// Create a large test file with specified size
 async fn create_large_test_file(
@@ -190,7 +190,7 @@ async fn test_copy_progress_with_metadata_tracking() {
 
 	// Start monitoring task BEFORE dispatching to avoid missing events
 	let (job_id_tx, job_id_rx) =
-		tokio::sync::oneshot::channel::<sd_core::infra::job::types::JobId>();
+		tokio::sync::oneshot::channel::<wing_core::infra::job::types::JobId>();
 
 	let monitor_handle = tokio::spawn(async move {
 		// Wait for job ID to be sent
@@ -291,20 +291,20 @@ async fn test_copy_progress_with_metadata_tracking() {
 					// Timeout - query metadata
 					if metadata_query_count < 20 {
 						// Limit queries
-						use sd_core::infra::query::LibraryQuery;
+						use wing_core::infra::query::LibraryQuery;
 
 						let query_input =
-							sd_core::ops::jobs::copy_metadata::query::CopyMetadataQueryInput {
+							wing_core::ops::jobs::copy_metadata::query::CopyMetadataQueryInput {
 								job_id: job_id.into(),
 							};
 
 						let query =
-							sd_core::ops::jobs::copy_metadata::query::CopyMetadataQuery::from_input(
+							wing_core::ops::jobs::copy_metadata::query::CopyMetadataQuery::from_input(
 								query_input,
 							)
 							.unwrap();
 
-						let mut session = sd_core::infra::api::SessionContext::device_session(
+						let mut session = wing_core::infra::api::SessionContext::device_session(
 							uuid::Uuid::new_v4(),
 							"test-device".to_string(),
 						);
@@ -377,14 +377,14 @@ async fn test_copy_progress_with_metadata_tracking() {
 
 	// Query final metadata state
 	println!("\nQuerying final job metadata...");
-	use sd_core::infra::query::LibraryQuery;
-	let query_input = sd_core::ops::jobs::copy_metadata::query::CopyMetadataQueryInput {
+	use wing_core::infra::query::LibraryQuery;
+	let query_input = wing_core::ops::jobs::copy_metadata::query::CopyMetadataQueryInput {
 		job_id: job_id.into(),
 	};
 	let query =
-		sd_core::ops::jobs::copy_metadata::query::CopyMetadataQuery::from_input(query_input)
+		wing_core::ops::jobs::copy_metadata::query::CopyMetadataQuery::from_input(query_input)
 			.unwrap();
-	let mut session = sd_core::infra::api::SessionContext::device_session(
+	let mut session = wing_core::infra::api::SessionContext::device_session(
 		uuid::Uuid::new_v4(),
 		"test-device".to_string(),
 	);

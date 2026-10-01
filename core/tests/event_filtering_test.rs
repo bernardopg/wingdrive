@@ -3,11 +3,11 @@
 //! Tests the affects_path logic with real event data from fixtures.
 //! Validates exact mode vs recursive mode path matching.
 
-use sd_core::{
+use std::path::PathBuf;
+use wing_core::{
 	domain::SdPath,
 	infra::event::{Event, ResourceMetadata},
 };
-use std::path::PathBuf;
 
 /// Helper to create a test event with affected_paths
 fn create_test_batch_event(affected_paths: Vec<SdPath>, file_names: Vec<&str>) -> Event {

@@ -36,7 +36,7 @@ WINGDRIVE_DEV_INSTANCE=file-operations \
 ./scripts/dev-isolated.sh
 ```
 
-The instance determines the TCP port with the same rule as `sd-daemon`. Do not
+The instance determines the TCP port with the same rule as `wing-daemon`. Do not
 run two launchers with the same instance name at once.
 
 ## Inspect and remove development state
@@ -55,8 +55,8 @@ Pass both options so the CLI and daemon target the same isolated instance:
 
 ```bash
 root="${XDG_STATE_HOME:-$HOME/.local/state}/wingdrive-dev/data"
-cargo run --bin sd-daemon -- --data-dir "$root" --instance desktop-dev
-cargo run --bin sd-cli -- --data-dir "$root" --instance desktop-dev library list
+cargo run --bin wing-daemon -- --data-dir "$root" --instance desktop-dev
+cargo run --bin wing-cli -- --data-dir "$root" --instance desktop-dev library list
 ```
 
 The Tauri runtime reads `WINGDRIVE_DATA_DIR` and `WINGDRIVE_INSTANCE` too. The

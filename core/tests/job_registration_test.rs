@@ -1,11 +1,11 @@
 //! Tests for job registration system
 
-use sd_core::{
+use uuid::Uuid;
+use wing_core::{
 	domain::addressing::SdPath,
 	infra::job::{prelude::*, registry::REGISTRY},
 	ops::files::copy::job::FileCopyJob,
 };
-use uuid::Uuid;
 
 #[tokio::test]
 async fn test_job_registration() {

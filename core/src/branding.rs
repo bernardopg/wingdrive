@@ -13,7 +13,7 @@
 //!
 //! ## Example
 //! ```rust,no_run
-//! use sd_core::branding;
+//! use wing_core::branding;
 //!
 //! // `~/.wingdrive`, or `~/.spacedrive` when only the legacy install exists.
 //! let dir = branding::data_dir()?;

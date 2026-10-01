@@ -7,7 +7,7 @@
 //! ## Usage
 //!
 //! ```rust,ignore
-//! use sd_core::ops::indexing::ephemeral::responder;
+//! use wing_core::ops::indexing::ephemeral::responder;
 //!
 //! // Check if an event should be handled by the ephemeral system
 //! if let Some(root) = responder::find_ephemeral_root(&path, &context) {
@@ -19,9 +19,9 @@ use crate::context::CoreContext;
 use crate::ops::indexing::change_detection::{self, ChangeConfig};
 use crate::ops::indexing::rules::RuleToggles;
 use anyhow::Result;
-use sd_fs_watcher::{FsEvent, FsEventKind};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use wing_fs_watcher::{FsEvent, FsEventKind};
 
 use super::MemoryAdapter;
 

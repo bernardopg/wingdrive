@@ -1,5 +1,5 @@
 [package]
-name = "sd-tauri-core"
+name = "wing-tauri-core"
 version = "2.0.0-alpha.2"
 edition = "2021"
 
@@ -19,7 +19,7 @@ thiserror = "1.0"
 tracing = "0.1"
 
 # WingDrive path resolution and legacy adoption
-sd-core = { path = "../../../core" }
+wing-core = { path = "../../../core" }
 
 [lib]
 crate-type = ["lib"]

@@ -6,7 +6,7 @@ use super::{hardware_hint_to_label, infer_hardware_label, Scenario};
 use crate::core_boot::CoreBoot;
 use crate::metrics::{collect_host_info, BenchmarkRun, Durations, RunMeta};
 use crate::recipe::Recipe;
-use sd_core::infra::job::output::JobOutput;
+use wing_core::infra::job::output::JobOutput;
 
 #[derive(Default)]
 pub struct CoreIndexingScenario {
@@ -24,7 +24,7 @@ impl Scenario for CoreIndexingScenario {
 	}
 
 	async fn prepare(&mut self, boot: &CoreBoot, recipe: &Recipe) -> Result<()> {
-		use sd_core::infra::action::LibraryAction;
+		use wing_core::infra::action::LibraryAction;
 		let core = &boot.core;
 		let context = core.context.clone();
 		let library = core
@@ -34,14 +34,15 @@ impl Scenario for CoreIndexingScenario {
 		self.base.library = Some(library.clone());
 
 		for loc in &recipe.locations {
-			let input = sd_core::ops::locations::add::action::LocationAddInput {
-				path: sd_core::domain::addressing::SdPath::local(loc.path.clone()),
+			let input = wing_core::ops::locations::add::action::LocationAddInput {
+				path: wing_core::domain::addressing::SdPath::local(loc.path.clone()),
 				name: Some(format!("bench:{}", recipe.name)),
-				mode: sd_core::ops::indexing::IndexMode::Shallow,
+				mode: wing_core::ops::indexing::IndexMode::Shallow,
 				job_policies: None,
 			};
-			let action = sd_core::ops::locations::add::action::LocationAddAction::from_input(input)
-				.map_err(|e| anyhow::anyhow!(e))?;
+			let action =
+				wing_core::ops::locations::add::action::LocationAddAction::from_input(input)
+					.map_err(|e| anyhow::anyhow!(e))?;
 			let out = action
 				.execute(library.clone(), context.clone())
 				.await

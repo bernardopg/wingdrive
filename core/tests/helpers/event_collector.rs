@@ -2,9 +2,9 @@
 //!
 //! Provides utilities for collecting and analyzing events from the event bus
 
-use sd_core::infra::event::{Event, EventBus, EventSubscriber};
 use std::{collections::HashMap, path::Path, sync::Arc};
 use tokio::time::Duration;
+use wing_core::infra::event::{Event, EventBus, EventSubscriber};
 
 /// Event collector that tracks all events during tests
 pub struct EventCollector {

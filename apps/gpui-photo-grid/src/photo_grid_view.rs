@@ -1,5 +1,5 @@
 use gpui::*;
-use sd_client::{File, SdPath, WingDriveClient};
+use wing_client::{File, SdPath, WingDriveClient};
 use std::sync::Arc;
 
 pub struct PhotoGridView {

@@ -8,18 +8,18 @@ Add to your extension's `Cargo.toml`:
 
 ```toml
 [dependencies]
-spacedrive-sdk = { path = "../spacedrive-sdk" }
+wingdrive-sdk = { path = "../wingdrive-sdk" }
 ```
 
 ## Quick Start
 
 ```rust
-use spacedrive_sdk::prelude::*;
-use spacedrive_sdk::ExtensionContext;
+use wingdrive_sdk::prelude::*;
+use wingdrive_sdk::ExtensionContext;
 
 #[no_mangle]
 pub extern "C" fn plugin_init() -> i32 {
-    spacedrive_sdk::ffi::log_info("Extension started!");
+    wingdrive_sdk::ffi::log_info("Extension started!");
     0 // Success
 }
 
@@ -184,13 +184,13 @@ Your extension must export these functions:
 ```rust
 #[no_mangle]
 pub extern "C" fn plugin_init() -> i32 {
-    spacedrive_sdk::ffi::log_info("Extension starting!");
+    wingdrive_sdk::ffi::log_info("Extension starting!");
     0 // Return 0 for success
 }
 
 #[no_mangle]
 pub extern "C" fn plugin_cleanup() -> i32 {
-    spacedrive_sdk::ffi::log_info("Extension cleanup");
+    wingdrive_sdk::ffi::log_info("Extension cleanup");
     0 // Return 0 for success
 }
 ```
@@ -223,7 +223,7 @@ The SDK automatically provides `wasm_alloc` and `wasm_free` - you don't need to 
 All operations return `Result<T, Error>`:
 
 ```rust
-use spacedrive_sdk::prelude::*;
+use wingdrive_sdk::prelude::*;
 
 fn my_operation(ctx: &ExtensionContext) -> Result<()> {
     let entry = ctx.vdfs().create_entry(...)?;  // ? operator works!
@@ -239,10 +239,10 @@ ctx.log("Info message");
 ctx.log_error("Error message");
 
 // Or directly:
-spacedrive_sdk::ffi::log_info("Message");
-spacedrive_sdk::ffi::log_debug("Debug");
-spacedrive_sdk::ffi::log_warn("Warning");
-spacedrive_sdk::ffi::log_error("Error");
+wingdrive_sdk::ffi::log_info("Message");
+wingdrive_sdk::ffi::log_debug("Debug");
+wingdrive_sdk::ffi::log_warn("Warning");
+wingdrive_sdk::ffi::log_error("Error");
 ```
 
 ## Examples

@@ -14,7 +14,6 @@ use crate::ops::indexing::responder;
 use crate::ops::indexing::rules::RuleToggles;
 use crate::service::watcher::FsWatcherService;
 use anyhow::Result;
-use sd_fs_watcher::FsEvent;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -23,6 +22,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::{broadcast, mpsc, RwLock};
 use tracing::{debug, error, info, trace, warn};
 use uuid::Uuid;
+use wing_fs_watcher::FsEvent;
 
 /// Metadata for a watched location
 #[derive(Debug, Clone)]
@@ -151,7 +151,7 @@ impl PersistentEventHandler {
 				root_path.display()
 			);
 			fs_watcher
-				.watch_path(&root_path, sd_fs_watcher::WatchConfig::recursive())
+				.watch_path(&root_path, wing_fs_watcher::WatchConfig::recursive())
 				.await?;
 			info!(
 				"Successfully registered {} with FsWatcher for location {}",
@@ -240,7 +240,7 @@ impl PersistentEventHandler {
 				meta.id
 			);
 			if let Err(e) = fs_watcher
-				.watch_path(&meta.root_path, sd_fs_watcher::WatchConfig::recursive())
+				.watch_path(&meta.root_path, wing_fs_watcher::WatchConfig::recursive())
 				.await
 			{
 				error!(
@@ -407,8 +407,8 @@ impl PersistentEventHandler {
 		context: Arc<CoreContext>,
 		config: PersistentHandlerConfig,
 	) -> Result<()> {
-		use sd_fs_watcher::FsEventKind;
 		use std::collections::HashMap;
+		use wing_fs_watcher::FsEventKind;
 
 		info!("Location worker started for {}", meta.id);
 
@@ -534,7 +534,7 @@ impl PersistentEventHandler {
 		events: Vec<FsEvent>,
 		pending_removes: &mut std::collections::HashMap<u64, (PathBuf, Instant, Option<bool>)>,
 	) -> Vec<FsEvent> {
-		use sd_fs_watcher::FsEventKind;
+		use wing_fs_watcher::FsEventKind;
 
 		let Some(library) = context.get_library(library_id).await else {
 			return events;

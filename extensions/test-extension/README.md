@@ -16,8 +16,8 @@ This extension demonstrates the beautiful, macro-powered API that makes building
 **Complete extension in 76 lines:**
 
 ```rust
-use spacedrive_sdk::prelude::*;
-use spacedrive_sdk::{extension, job};
+use wingdrive_sdk::prelude::*;
+use wingdrive_sdk::{extension, job};
 
 // Extension definition
 #[extension(

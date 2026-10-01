@@ -19,7 +19,7 @@ use uuid::Uuid;
 /// # Example
 ///
 /// ```rust,ignore
-/// use sd_core::infra::sync::Syncable;
+/// use wing_core::infra::sync::Syncable;
 /// use sea_orm::entity::prelude::*;
 ///
 /// #[derive(Clone, Debug, DeriveEntityModel, Serialize, Deserialize)]

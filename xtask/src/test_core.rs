@@ -1,6 +1,6 @@
 //! Core integration tests runner
 //!
-//! Single source of truth for all sd-core integration tests. This module defines
+//! Single source of truth for all wing-core integration tests. This module defines
 //! which tests should run when testing the core, used both by CI and local development.
 
 use anyhow::{Context, Result};
@@ -19,7 +19,7 @@ pub struct TestSuite {
 impl TestSuite {
 	/// Build complete cargo test command arguments
 	pub fn build_args(&self) -> Vec<&str> {
-		let mut args = vec!["test", "-p", "sd-core"];
+		let mut args = vec!["test", "-p", "wing-core"];
 		args.extend_from_slice(self.test_args);
 		args.extend_from_slice(&["--", "--test-threads=1", "--nocapture"]);
 		args

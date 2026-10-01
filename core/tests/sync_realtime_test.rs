@@ -12,15 +12,15 @@
 //!
 //! ## Running Tests
 //! ```bash
-//! cargo test -p sd-core --test sync_realtime_test -- --test-threads=1 --nocapture
+//! cargo test -p wing-core --test sync_realtime_test -- --test-threads=1 --nocapture
 //! ```
 
 mod helpers;
 
 use helpers::TwoDeviceHarnessBuilder;
-use sd_core::infra::db::entities;
 use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use tokio::time::Duration;
+use wing_core::infra::db::entities;
 
 //
 // TEST SCENARIOS

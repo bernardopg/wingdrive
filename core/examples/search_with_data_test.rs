@@ -8,16 +8,16 @@
 //! 5. Display results with highlights and facets
 
 use anyhow::Result;
-use sd_core::{
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
+use sea_orm_migration::MigratorTrait;
+use std::path::PathBuf;
+use wing_core::{
 	infra::db::entities,
 	infra::db::migration::Migrator,
 	location::{create_location, IndexMode, LocationCreateArgs},
 	ops::search::{FileSearchInput, FileSearchQuery, SearchMode, SearchScope},
 	Core,
 };
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
-use sea_orm_migration::MigratorTrait;
-use std::path::PathBuf;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -116,9 +116,9 @@ async fn main() -> Result<()> {
 			query: "screenshot".to_string(),
 			scope: SearchScope::Library,
 			mode,
-			filters: sd_core::ops::search::input::SearchFilters::default(),
-			sort: sd_core::ops::search::input::SortOptions::default(),
-			pagination: sd_core::ops::search::input::PaginationOptions {
+			filters: wing_core::ops::search::input::SearchFilters::default(),
+			sort: wing_core::ops::search::input::SortOptions::default(),
+			pagination: wing_core::ops::search::input::PaginationOptions {
 				limit: 10,
 				offset: 0,
 			},
@@ -204,9 +204,9 @@ async fn main() -> Result<()> {
 		query: "screenshot".to_string(),
 		scope: location_scope,
 		mode: SearchMode::Normal,
-		filters: sd_core::ops::search::input::SearchFilters::default(),
-		sort: sd_core::ops::search::input::SortOptions::default(),
-		pagination: sd_core::ops::search::input::PaginationOptions {
+		filters: wing_core::ops::search::input::SearchFilters::default(),
+		sort: wing_core::ops::search::input::SortOptions::default(),
+		pagination: wing_core::ops::search::input::PaginationOptions {
 			limit: 5,
 			offset: 0,
 		},
@@ -236,7 +236,7 @@ async fn main() -> Result<()> {
 	// Test with file type filters
 	println!("\nTesting with file type filters...");
 
-	let mut filters = sd_core::ops::search::input::SearchFilters::default();
+	let mut filters = wing_core::ops::search::input::SearchFilters::default();
 	filters.file_types = Some(vec![
 		"png".to_string(),
 		"jpg".to_string(),
@@ -248,8 +248,8 @@ async fn main() -> Result<()> {
 		scope: SearchScope::Library,
 		mode: SearchMode::Normal,
 		filters,
-		sort: sd_core::ops::search::input::SortOptions::default(),
-		pagination: sd_core::ops::search::input::PaginationOptions {
+		sort: wing_core::ops::search::input::SortOptions::default(),
+		pagination: wing_core::ops::search::input::PaginationOptions {
 			limit: 5,
 			offset: 0,
 		},

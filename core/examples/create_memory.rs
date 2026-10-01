@@ -3,8 +3,8 @@
 //! This example creates a real .memory file demonstrating the format.
 //! Run with: cargo run --example create_memory
 
-use sd_core::domain::memory::{DocumentType, FactType, MemoryFile, MemoryScope};
 use std::path::PathBuf;
+use wing_core::domain::memory::{DocumentType, FactType, MemoryFile, MemoryScope};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

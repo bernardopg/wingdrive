@@ -4,8 +4,12 @@
 //! all user-assigned metadata and correctly updates the hierarchical structure and
 //! path cache in the database using the high-level Action System.
 
-use sd_core::infra::db::entities::{directory_paths, entry, user_metadata, user_metadata_tag};
-use sd_core::{
+use sea_orm::{ColumnTrait, DbConn, EntityTrait, PaginatorTrait, QueryFilter};
+use std::sync::Arc;
+use tempfile::TempDir;
+use tokio::fs;
+use wing_core::infra::db::entities::{directory_paths, entry, user_metadata, user_metadata_tag};
+use wing_core::{
 	domain::addressing::{SdPath, SdPathBatch},
 	infra::action::LibraryAction,
 	ops::{
@@ -19,10 +23,6 @@ use sd_core::{
 	},
 	Core,
 };
-use sea_orm::{ColumnTrait, DbConn, EntityTrait, PaginatorTrait, QueryFilter};
-use std::sync::Arc;
-use tempfile::TempDir;
-use tokio::fs;
 
 /// Helper function to create test files with content
 async fn create_test_file(path: &std::path::Path, content: &str) -> Result<(), std::io::Error> {
@@ -197,7 +197,7 @@ async fn test_entry_metadata_preservation_on_move() {
 		verify_checksum: false,
 		preserve_timestamps: true,
 		move_files: true, // This makes it a move operation
-		copy_method: sd_core::ops::files::copy::input::CopyMethod::Auto,
+		copy_method: wing_core::ops::files::copy::input::CopyMethod::Auto,
 		on_conflict: None,
 	};
 	let move_action = FileCopyAction::from_input(move_input).unwrap();
@@ -481,7 +481,7 @@ async fn test_child_entry_metadata_preservation_on_parent_move() {
 		verify_checksum: false,
 		preserve_timestamps: true,
 		move_files: true,
-		copy_method: sd_core::ops::files::copy::input::CopyMethod::Auto,
+		copy_method: wing_core::ops::files::copy::input::CopyMethod::Auto,
 		on_conflict: None,
 	};
 	let move_action = FileCopyAction::from_input(move_input).unwrap();

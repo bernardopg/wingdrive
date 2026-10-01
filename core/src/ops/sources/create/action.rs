@@ -50,7 +50,7 @@ impl LibraryAction for CreateSourceAction {
 			.source_manager()
 			.ok_or_else(|| ActionError::Internal("Source manager not available".to_string()))?;
 
-		// Create the source via sd-archive
+		// Create the source via wing-archive
 		let source_info = source_manager
 			.create_source(&self.input.name, &self.input.adapter_id, self.input.config)
 			.await

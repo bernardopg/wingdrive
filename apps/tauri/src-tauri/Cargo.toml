@@ -22,7 +22,7 @@ tauri-plugin-os = "2.3.2"
 tauri-plugin-updater = "2.11.0"
 
 # Core bridge
-sd-tauri-core = { path = "../sd-tauri-core" }
+wing-tauri-core = { path = "../wing-tauri-core" }
 
 # File opening
 file-opening = { path = "../crates/file-opening" }
@@ -50,7 +50,7 @@ parking_lot = "0.12"
 tempfile = "3.27.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-sd-desktop-macos = { path = "../crates/macos" }
+wing-desktop-macos = { path = "../crates/macos" }
 file-opening-macos = { path = "../crates/file-opening-macos" }
 
 [target.'cfg(target_os = "windows")'.dependencies]

@@ -109,7 +109,7 @@ Repeat for other datasets:
 | Name | Value | Description |
 |------|-------|-------------|
 | `TZ` | `America/New_York` | Your timezone |
-| `RUST_LOG` | `info,sd_core=debug` | Log level |
+| `RUST_LOG` | `info,wing_core=debug` | Log level |
 
 **Optional:**
 

@@ -6,7 +6,7 @@ use std::time::Duration;
 use uuid::Uuid;
 
 use super::colors::{job_status_color, job_status_icon, Colors};
-use sd_core::infra::job::types::JobStatus;
+use wing_core::infra::job::types::JobStatus;
 
 /// Configuration for progress bars
 #[derive(Debug, Clone)]

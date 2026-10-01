@@ -1,9 +1,9 @@
-//! SourceManager: library-scoped wrapper around sd-archive Engine.
+//! SourceManager: library-scoped wrapper around wing-archive Engine.
 
 use std::path::PathBuf;
 
-use sd_archive::{Engine, EngineConfig};
 use tracing::info;
+use wing_archive::{Engine, EngineConfig};
 
 /// Manages archive data sources for a single library.
 pub struct SourceManager {
@@ -107,7 +107,7 @@ impl SourceManager {
 	}
 
 	/// List all sources.
-	pub async fn list_sources(&self) -> Result<Vec<sd_archive::SourceInfo>, String> {
+	pub async fn list_sources(&self) -> Result<Vec<wing_archive::SourceInfo>, String> {
 		self.engine
 			.list_sources()
 			.await
@@ -120,7 +120,7 @@ impl SourceManager {
 		name: &str,
 		adapter_id: &str,
 		config: serde_json::Value,
-	) -> Result<sd_archive::SourceInfo, String> {
+	) -> Result<wing_archive::SourceInfo, String> {
 		self.engine
 			.create_source(name, adapter_id, config)
 			.await
@@ -136,7 +136,7 @@ impl SourceManager {
 	}
 
 	/// Sync a source.
-	pub async fn sync_source(&self, source_id: &str) -> Result<sd_archive::SyncReport, String> {
+	pub async fn sync_source(&self, source_id: &str) -> Result<wing_archive::SyncReport, String> {
 		self.engine
 			.sync(source_id)
 			.await
@@ -149,7 +149,7 @@ impl SourceManager {
 		source_id: &str,
 		limit: usize,
 		offset: usize,
-	) -> Result<Vec<sd_archive::db::ItemRow>, String> {
+	) -> Result<Vec<wing_archive::db::ItemRow>, String> {
 		self.engine
 			.list_items(source_id, limit, offset)
 			.await
@@ -157,7 +157,7 @@ impl SourceManager {
 	}
 
 	/// List available adapters with update status.
-	pub fn list_adapters(&self) -> Vec<sd_archive::AdapterInfo> {
+	pub fn list_adapters(&self) -> Vec<wing_archive::AdapterInfo> {
 		let source_dir = self.engine.source_adapters_dir();
 		self.engine
 			.list_adapters_with_updates(source_dir.as_deref())
@@ -167,7 +167,7 @@ impl SourceManager {
 	pub fn update_adapter(
 		&self,
 		adapter_id: &str,
-	) -> Result<sd_archive::AdapterUpdateResult, String> {
+	) -> Result<wing_archive::AdapterUpdateResult, String> {
 		let source_dir = self
 			.engine
 			.source_adapters_dir()
@@ -187,7 +187,7 @@ impl SourceManager {
 	pub fn adapter_config_fields(
 		&self,
 		adapter_id: &str,
-	) -> Result<Vec<sd_archive::adapter::script::ConfigField>, String> {
+	) -> Result<Vec<wing_archive::adapter::script::ConfigField>, String> {
 		self.engine
 			.adapter_config_fields(adapter_id)
 			.map_err(|e| format!("Failed to get adapter config: {e}"))

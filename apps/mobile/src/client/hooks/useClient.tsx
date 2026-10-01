@@ -9,7 +9,7 @@ import type { Event } from "@sd/ts-client/src/generated/types";
 import { WingDriveClient } from "../WingDriveClient";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SDMobileCore } from "sd-mobile-core";
+import { SDMobileCore } from "wing-mobile-core";
 import { usePreferencesStore } from "../../stores/preferences";
 import { useSidebarStore } from "../../stores/sidebar";
 import { useReactQueryDevTools } from "@dev-plugins/react-query";

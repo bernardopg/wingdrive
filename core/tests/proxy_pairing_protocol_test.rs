@@ -4,11 +4,11 @@
 //! full Core instances.
 
 use chrono::Utc;
-use sd_core::service::network::device::{DeviceInfo, PairingType, SessionKeys};
-use sd_core::service::network::protocol::pairing::{
+use uuid::Uuid;
+use wing_core::service::network::device::{DeviceInfo, PairingType, SessionKeys};
+use wing_core::service::network::protocol::pairing::{
 	VouchPayload, VouchState, VouchStatus, VouchingSession, VouchingSessionState,
 };
-use uuid::Uuid;
 
 #[test]
 fn test_vouching_session_creation() {
@@ -176,10 +176,10 @@ fn test_vouch_payload_structure() {
 		device_id: vouchee_device_id,
 		device_name: "Test Device".to_string(),
 		device_slug: "test-device".to_string(),
-		device_type: sd_core::service::network::device::DeviceType::Desktop,
+		device_type: wing_core::service::network::device::DeviceType::Desktop,
 		os_version: "Test OS 1.0".to_string(),
 		app_version: "1.0.0".to_string(),
-		network_fingerprint: sd_core::service::network::utils::identity::NetworkFingerprint {
+		network_fingerprint: wing_core::service::network::utils::identity::NetworkFingerprint {
 			node_id: "test_node_id".to_string(),
 			public_key_hash: "abcdef1234567890".to_string(),
 		},

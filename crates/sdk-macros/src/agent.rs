@@ -24,7 +24,7 @@ pub fn agent_memory_impl(_args: TokenStream, input: TokenStream) -> TokenStream 
 	let expanded = quote! {
 		#input
 
-		impl ::spacedrive_sdk::agent::AgentMemory for #name {}
+		impl ::wingdrive_sdk::agent::AgentMemory for #name {}
 	};
 
 	TokenStream::from(expanded)

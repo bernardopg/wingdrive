@@ -18,10 +18,10 @@ pub fn model_impl(_args: TokenStream, input: TokenStream) -> TokenStream {
 	let expanded = quote! {
 		#input
 
-		impl ::spacedrive_sdk::models::ExtensionModel for #name {
+		impl ::wingdrive_sdk::models::ExtensionModel for #name {
 			const MODEL_TYPE: &'static str = stringify!(#name);
 
-			fn uuid(&self) -> ::spacedrive_sdk::types::Uuid {
+			fn uuid(&self) -> ::wingdrive_sdk::types::Uuid {
 				self.#uuid_field
 			}
 

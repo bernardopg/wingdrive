@@ -6,7 +6,7 @@ use clap::Subcommand;
 use crate::util::prelude::*;
 
 use crate::context::Context;
-use sd_core::ops::locations::{
+use wing_core::ops::locations::{
 	add::{action::LocationAddInput, output::LocationAddOutput},
 	export::LocationExportOutput,
 	import::LocationImportOutput,
@@ -45,7 +45,7 @@ pub async fn run(ctx: &Context, cmd: LocationCmd) -> Result<()> {
 				let mode = args
 					.mode
 					.map(|m| m.into())
-					.unwrap_or(sd_core::ops::indexing::IndexMode::Content);
+					.unwrap_or(wing_core::ops::indexing::IndexMode::Content);
 
 				LocationAddInput {
 					path: sd_path,
@@ -61,7 +61,7 @@ pub async fn run(ctx: &Context, cmd: LocationCmd) -> Result<()> {
 			});
 		}
 		LocationCmd::List => {
-			let out: sd_core::ops::locations::list::output::LocationsListOutput =
+			let out: wing_core::ops::locations::list::output::LocationsListOutput =
 				execute_query!(ctx, LocationsListQueryInput {});
 			print_output!(ctx, &out, |o: &LocationsListOutput| {
 				if o.locations.is_empty() {
@@ -81,14 +81,14 @@ pub async fn run(ctx: &Context, cmd: LocationCmd) -> Result<()> {
 				),
 				args.yes,
 			)?;
-			let input: sd_core::ops::locations::remove::action::LocationRemoveInput = args.into();
+			let input: wing_core::ops::locations::remove::action::LocationRemoveInput = args.into();
 			let out: LocationRemoveOutput = execute_action!(ctx, input);
 			print_output!(ctx, &out, |o: &LocationRemoveOutput| {
 				println!("Removed location {}", o.location_id);
 			});
 		}
 		LocationCmd::Rescan(args) => {
-			let input: sd_core::ops::locations::rescan::action::LocationRescanInput = args.into();
+			let input: wing_core::ops::locations::rescan::action::LocationRescanInput = args.into();
 			let out: LocationRescanOutput = execute_action!(ctx, input);
 			print_output!(ctx, &out, |o: &LocationRescanOutput| {
 				println!("Rescan requested for {}", o.location_id);
@@ -96,7 +96,7 @@ pub async fn run(ctx: &Context, cmd: LocationCmd) -> Result<()> {
 		}
 		LocationCmd::Export(args) => {
 			let output_path = args.output.clone();
-			let input: sd_core::ops::locations::export::LocationExportInput = args.into();
+			let input: wing_core::ops::locations::export::LocationExportInput = args.into();
 			let out: LocationExportOutput = execute_action!(ctx, input);
 			print_output!(ctx, &out, |o: &LocationExportOutput| {
 				println!(
@@ -111,7 +111,7 @@ pub async fn run(ctx: &Context, cmd: LocationCmd) -> Result<()> {
 			});
 		}
 		LocationCmd::Import(args) => {
-			let input: sd_core::ops::locations::import::LocationImportInput = args.into();
+			let input: wing_core::ops::locations::import::LocationImportInput = args.into();
 			let out: LocationImportOutput = execute_action!(ctx, input);
 			print_output!(ctx, &out, |o: &LocationImportOutput| {
 				println!(
@@ -134,8 +134,8 @@ pub async fn run(ctx: &Context, cmd: LocationCmd) -> Result<()> {
 
 async fn run_interactive_add(ctx: &Context) -> Result<LocationAddInput> {
 	use crate::util::confirm::{select, text};
-	use sd_core::domain::addressing::SdPath;
-	use sd_core::ops::indexing::IndexMode;
+	use wing_core::domain::addressing::SdPath;
+	use wing_core::ops::indexing::IndexMode;
 
 	println!("\n=== Add New Location ===\n");
 
@@ -161,12 +161,12 @@ async fn run_interactive_add(ctx: &Context) -> Result<LocationAddInput> {
 		SdPath::local(path_buf)
 	} else {
 		// Cloud storage
-		use sd_core::ops::volumes::list::VolumeListQueryInput;
+		use wing_core::ops::volumes::list::VolumeListQueryInput;
 
-		let volumes: sd_core::ops::volumes::list::VolumeListOutput = execute_query!(
+		let volumes: wing_core::ops::volumes::list::VolumeListOutput = execute_query!(
 			ctx,
 			VolumeListQueryInput {
-				filter: sd_core::ops::volumes::VolumeFilter::TrackedOnly
+				filter: wing_core::ops::volumes::VolumeFilter::TrackedOnly
 			}
 		);
 

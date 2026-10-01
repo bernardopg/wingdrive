@@ -147,7 +147,7 @@ Implemented baseline, retain regression coverage rather than duplicate open work
 Audit evidence and limits:
   - Static review of TODO, task metadata/checklists, relevant source paths, and CI/release configuration.
   - Task validator passed after DEV-002 was added and completed.
-  - Environment hazard for DEV-000: Tauri-context builds can leave a stale 44 MB `sd-daemon`
+  - Environment hazard for DEV-000: Tauri-context builds can leave a stale 44 MB `wing-daemon`
     in target/debug with pre-rename behavior; rebuild with a single cargo process and smoke-test
     config naming (`wingdrive.json` on a fresh dir) before validating any release candidate.
   - CI for initial HEAD 687162731: https://github.com/bernardopg/wingdrive/actions/runs/33753542885

@@ -11,13 +11,13 @@ The WingDrive CLI (`sd`) is a command-line interface for interacting with the Wi
 
 The CLI follows a client-daemon architecture:
 
-- **CLI Binary** (`sd-cli` / `sd`) - The client that sends commands
-- **Daemon Binary** (`sd-daemon`) - The background service that does the actual work
+- **CLI Binary** (`wing-cli` / `sd`) - The client that sends commands
+- **Daemon Binary** (`wing-daemon`) - The background service that does the actual work
 - **Unix Socket** - Communication channel between CLI and daemon
 
 ```
 ┌─────────┐      Unix Socket      ┌──────────┐
-│   sd    │ ◄──────────────────► │ sd-daemon│
+│   sd    │ ◄──────────────────► │ wing-daemon│
 │ (client)│                       │ (server) │
 └─────────┘                       └──────────┘
                                        │
@@ -121,7 +121,7 @@ The CLI includes a built-in update mechanism that fetches releases from a public
      ▼                                     │
 ┌─────────────────┐                       │
 │ sd-macos-arm64  │◄──────────────────────┘
-│ sd-daemon-...   │
+│ wing-daemon-...   │
 └─────────────────┘
      │
      │ Atomic replacement
@@ -211,24 +211,24 @@ For development and testing, binaries can be distributed without building from s
 
 1. **Build release binaries**:
    ```bash
-   cargo build --release --bin sd-cli --bin sd-daemon
+   cargo build --release --bin wing-cli --bin wing-daemon
    ```
 
 2. **Copy both binaries** to target machine:
-   - `sd-cli` → rename to `sd`
-   - `sd-daemon` → keep as `sd-daemon`
+   - `wing-cli` → rename to `sd`
+   - `wing-daemon` → keep as `wing-daemon`
 
 3. **Place in PATH**:
    ```bash
    mv sd ~/.local/bin/
-   mv sd-daemon ~/.local/bin/
-   chmod +x ~/.local/bin/sd ~/.local/bin/sd-daemon
+   mv wing-daemon ~/.local/bin/
+   chmod +x ~/.local/bin/sd ~/.local/bin/wing-daemon
    ```
 
 4. **Remove quarantine** (macOS):
    ```bash
    xattr -d com.apple.quarantine ~/.local/bin/sd
-   xattr -d com.apple.quarantine ~/.local/bin/sd-daemon
+   xattr -d com.apple.quarantine ~/.local/bin/wing-daemon
    ```
 
 Both binaries must be in the same directory as the CLI expects to find the daemon binary in its parent directory.
@@ -239,13 +239,13 @@ Both binaries must be in the same directory as the CLI expects to find the daemo
 
 ```bash
 # Build CLI only
-cargo build --package sd-cli
+cargo build --package wing-cli
 
 # Build both CLI and daemon
-cargo build --bin sd-cli --bin sd-daemon
+cargo build --bin wing-cli --bin wing-daemon
 
 # Release build
-cargo build --release --bin sd-cli --bin sd-daemon
+cargo build --release --bin wing-cli --bin wing-daemon
 ```
 
 ### Code Structure
@@ -357,6 +357,6 @@ The daemon socket is located at:
 ```
 
 If connection fails:
-1. Verify daemon is running: `ps aux | grep sd-daemon`
+1. Verify daemon is running: `ps aux | grep wing-daemon`
 2. Check socket exists: `ls -la <socket-path>`
 3. Restart daemon: `sd restart`

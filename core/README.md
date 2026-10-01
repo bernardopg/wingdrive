@@ -118,7 +118,7 @@ src/
 - **Database**: SQLite via SeaORM
 - **Serialization**: serde, Specta for type generation
 - **Networking**: Iroh (P2P), mdns-sd (local discovery)
-- **WASM**: wasmer runtime, spacedrive-sdk
+- **WASM**: wasmer runtime, wingdrive-sdk
 - **Jobs**: inventory for registration, rmp-serde for state
 - **Crypto**: blake3 (content addressing), ed25519 (signing)
 - **Indexing**: notify (fs watcher), globset (rules)
@@ -133,17 +133,17 @@ cargo build --release
 cargo build --features ffmpeg,ai,heif
 
 # Specific binaries
-cargo build --bin sd-cli
-cargo build --bin sd-daemon
+cargo build --bin wing-cli
+cargo build --bin wing-daemon
 
 # Run CLI
-cargo run --bin sd-cli -- --help
+cargo run --bin wing-cli -- --help
 ```
 
 ## Binaries
 
-- `sd-cli`: CLI interface
-- `sd-daemon`: Background daemon process
+- `wing-cli`: CLI interface
+- `wing-daemon`: Background daemon process
 
 ## Development
 

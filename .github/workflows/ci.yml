@@ -95,5 +95,5 @@ jobs:
 
       - name: Test branding and legacy path resolution
         run: |
-          cargo test -p sd-core --lib branding:: --locked
-          cargo test -p sd-core --test branding_legacy_paths --locked
+          cargo test -p wing-core --lib branding:: --locked
+          cargo test -p wing-core --test branding_legacy_paths --locked

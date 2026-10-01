@@ -113,14 +113,14 @@ pub fn extension_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 		quote! {
 			{
 				let (name, export_fn, resumable) = #register_fn();
-				::spacedrive_sdk::ffi::log_info(&format!("Registering job: {}", name));
+				::wingdrive_sdk::ffi::log_info(&format!("Registering job: {}", name));
 
-				if let Err(_) = ::spacedrive_sdk::ffi::register_job_with_host(
+				if let Err(_) = ::wingdrive_sdk::ffi::register_job_with_host(
 					name,
 					export_fn,
 					resumable
 				) {
-					::spacedrive_sdk::ffi::log_error(&format!("Failed to register job: {}", name));
+					::wingdrive_sdk::ffi::log_error(&format!("Failed to register job: {}", name));
 					return 1;
 				}
 			}
@@ -133,7 +133,7 @@ pub fn extension_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 		// Generate plugin_init with auto-registration
 		#[no_mangle]
 		pub extern "C" fn plugin_init() -> i32 {
-			::spacedrive_sdk::ffi::log_info(&format!(
+			::wingdrive_sdk::ffi::log_info(&format!(
 				"{} v{} initializing...",
 				#ext_name,
 				#ext_version
@@ -142,7 +142,7 @@ pub fn extension_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 			// Register all jobs
 			#(#job_registrations)*
 
-			::spacedrive_sdk::ffi::log_info(&format!(
+			::wingdrive_sdk::ffi::log_info(&format!(
 				"✓ {} v{} initialized!",
 				#ext_name,
 				#ext_version
@@ -154,7 +154,7 @@ pub fn extension_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 		// Generate plugin_cleanup
 		#[no_mangle]
 		pub extern "C" fn plugin_cleanup() -> i32 {
-			::spacedrive_sdk::ffi::log_info(&format!(
+			::wingdrive_sdk::ffi::log_info(&format!(
 				"{} cleanup",
 				#ext_name
 			));

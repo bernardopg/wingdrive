@@ -6,12 +6,12 @@ use crate::{
 	util::confirm::{confirm_or_abort, password, select, text},
 };
 use anyhow::Result;
-use sd_core::ops::volumes::{
+use wing_core::ops::volumes::{
 	add_cloud::{CloudStorageConfig, VolumeAddCloudInput},
 	list::VolumeListQueryInput,
 	remove_cloud::VolumeRemoveCloudInput,
 };
-use sd_core::volume::backend::CloudServiceType;
+use wing_core::volume::backend::CloudServiceType;
 
 pub async fn run_interactive(ctx: &Context) -> Result<()> {
 	loop {
@@ -346,7 +346,7 @@ async fn execute_add_cloud(ctx: &Context, input: VolumeAddCloudInput) -> Result<
 	print!("Connecting to cloud storage... ");
 	std::io::Write::flush(&mut std::io::stdout())?;
 
-	let output: sd_core::ops::volumes::add_cloud::VolumeAddCloudOutput =
+	let output: wing_core::ops::volumes::add_cloud::VolumeAddCloudOutput =
 		execute_action!(ctx, input);
 
 	println!("✓");
@@ -362,10 +362,10 @@ async fn execute_add_cloud(ctx: &Context, input: VolumeAddCloudInput) -> Result<
 }
 
 async fn list_volumes(ctx: &Context) -> Result<()> {
-	let volumes: sd_core::ops::volumes::list::VolumeListOutput = execute_query!(
+	let volumes: wing_core::ops::volumes::list::VolumeListOutput = execute_query!(
 		ctx,
 		VolumeListQueryInput {
-			filter: sd_core::ops::volumes::VolumeFilter::TrackedOnly
+			filter: wing_core::ops::volumes::VolumeFilter::TrackedOnly
 		}
 	);
 
@@ -388,10 +388,10 @@ async fn list_volumes(ctx: &Context) -> Result<()> {
 }
 
 async fn remove_volume_interactive(ctx: &Context) -> Result<()> {
-	let volumes: sd_core::ops::volumes::list::VolumeListOutput = execute_query!(
+	let volumes: wing_core::ops::volumes::list::VolumeListOutput = execute_query!(
 		ctx,
 		VolumeListQueryInput {
-			filter: sd_core::ops::volumes::VolumeFilter::TrackedOnly
+			filter: wing_core::ops::volumes::VolumeFilter::TrackedOnly
 		}
 	);
 

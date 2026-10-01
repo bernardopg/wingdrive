@@ -1,7 +1,7 @@
-use spacedrive_sdk::job;
+use wingdrive_sdk::job;
 
 use serde::{Deserialize, Serialize};
-use spacedrive_sdk::prelude::*;
+use wingdrive_sdk::prelude::*;
 use uuid::Uuid;
 
 use crate::jobs::clustering::{cluster_faces_into_people, generate_face_tags};

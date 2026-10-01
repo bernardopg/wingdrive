@@ -1,5 +1,5 @@
 [package]
-name    = "sd-media-metadata"
+name    = "wing-media-metadata"
 version = "0.1.0"
 
 authors = [
@@ -10,12 +10,12 @@ authors = [
 edition = "2021"
 
 [features]
-ffmpeg = ["dep:sd-ffmpeg"]
+ffmpeg = ["dep:wing-ffmpeg"]
 
 [dependencies]
 # Spacedrive Sub-crates
-sd-ffmpeg = { path = "../ffmpeg", optional = true }
-sd-utils  = { path = "../utils" }
+wing-ffmpeg = { path = "../ffmpeg", optional = true }
+wing-utils  = { path = "../utils" }
 
 # Workspace dependencies
 chrono     = { workspace = true, features = ["serde"] }

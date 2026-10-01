@@ -4,14 +4,14 @@
 //! including local deletion and strategy routing.
 
 use bytes::Bytes;
-use sd_core::{
+use std::path::{Path, PathBuf};
+use tempfile::TempDir;
+use tokio::fs;
+use wing_core::{
 	domain::addressing::SdPath,
 	ops::files::delete::{routing::DeleteStrategyRouter, strategy::LocalDeleteStrategy},
 	volume::backend::{CloudBackend, CloudServiceType, VolumeBackend},
 };
-use std::path::{Path, PathBuf};
-use tempfile::TempDir;
-use tokio::fs;
 
 /// Helper to create test files with content
 async fn create_test_file(path: &Path, content: &str) -> Result<(), std::io::Error> {

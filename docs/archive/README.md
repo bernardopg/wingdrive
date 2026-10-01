@@ -292,10 +292,10 @@ Flagged records are:
 
 ```bash
 # Test the archive crate
-cargo test -p sd-archive
+cargo test -p wing-archive
 
 # Test core integration
-cargo test -p sd-core -- sources::
+cargo test -p wing-core -- sources::
 
 # Test specific adapter
 python3 adapters/gmail/test.py
@@ -342,7 +342,7 @@ impl JobHandler for MyJob {
 Enable verbose logging:
 
 ```bash
-RUST_LOG=sd_archive=debug,sd_core::data=debug cargo run
+RUST_LOG=wing_archive=debug,wing_core::data=debug cargo run
 ```
 
 View source database:

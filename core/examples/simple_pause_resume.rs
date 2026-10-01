@@ -1,11 +1,11 @@
 //! Simple demonstration of pause/resume functionality
 
-use sd_core::{
+use std::time::Duration;
+use tokio::time::sleep;
+use wing_core::{
 	infra::job::types::{JobId, JobStatus},
 	Core,
 };
-use std::time::Duration;
-use tokio::time::sleep;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

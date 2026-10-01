@@ -2,7 +2,7 @@ use clap::{Args, ValueEnum};
 use std::path::PathBuf;
 use uuid::Uuid;
 
-use sd_core::{
+use wing_core::{
 	domain::addressing::SdPath,
 	ops::core::ephemeral_status::EphemeralCacheStatusInput,
 	ops::indexing::{

@@ -8,16 +8,16 @@ The `index verify` command performs a comprehensive integrity check of the WingD
 
 ```bash
 # Basic usage - verify a location
-sd-cli index verify /path/to/check
+wing-cli index verify /path/to/check
 
 # Verify with content hash checking (slower but more thorough)
-sd-cli index verify /path/to/check --verify-content
+wing-cli index verify /path/to/check --verify-content
 
 # Verify without detailed output (just summary)
-sd-cli index verify /path/to/check --detailed=false
+wing-cli index verify /path/to/check --detailed=false
 
 # Future: Auto-fix issues (not yet implemented)
-sd-cli index verify /path/to/check --auto-fix
+wing-cli index verify /path/to/check --auto-fix
 ```
 
 ## How It Works
@@ -83,7 +83,7 @@ Compares the two datasets and categorizes differences:
 If you suspect the index is out of sync with the filesystem:
 
 ```bash
-sd-cli index verify ~/Documents
+wing-cli index verify ~/Documents
 ```
 
 ### After Manual File Operations
@@ -92,7 +92,7 @@ If you've manually modified files outside WingDrive:
 
 ```bash
 # You edited files manually
-sd-cli index verify /path/that/changed
+wing-cli index verify /path/that/changed
 ```
 
 ### Performance Testing
@@ -103,7 +103,7 @@ To verify the watcher is working correctly:
 # Make changes, then verify
 touch /test/newfile.txt
 sleep 1
-sd-cli index verify /test
+wing-cli index verify /test
 ```
 
 ### Pre-Sync Validation
@@ -111,7 +111,7 @@ sd-cli index verify /test
 Before syncing a library to ensure data integrity:
 
 ```bash
-sd-cli index verify /  # Verify entire library
+wing-cli index verify /  # Verify entire library
 ```
 
 ## Exit Codes
@@ -128,11 +128,11 @@ sd-cli index verify /  # Verify entire library
 #!/bin/bash
 # Automated integrity check
 
-if sd-cli index verify /data/important --detailed=false; then
+if wing-cli index verify /data/important --detailed=false; then
     echo "Index is valid"
 else
     echo "Index has issues - running rescan"
-    sd-cli location rescan <location-id>
+    wing-cli location rescan <location-id>
 fi
 ```
 
@@ -155,23 +155,23 @@ With `--verify-content`:
 ### 1. Verify Location After Import
 
 ```bash
-sd-cli location add ~/Photos --name "Photos"
+wing-cli location add ~/Photos --name "Photos"
 # Wait for indexing to complete
-sd-cli index verify ~/Photos
+wing-cli index verify ~/Photos
 ```
 
 ### 2. Debug Watcher Issues
 
 ```bash
 # Monitor filesystem
-watch -n 5 'sd-cli index verify /watched/path --detailed=false'
+watch -n 5 'wing-cli index verify /watched/path --detailed=false'
 ```
 
 ### 3. Find Orphaned Entries
 
 ```bash
 # Check for stale entries
-sd-cli index verify / | grep "Stale in index"
+wing-cli index verify / | grep "Stale in index"
 ```
 
 ### 4. Validate After Bulk Operations
@@ -179,7 +179,7 @@ sd-cli index verify / | grep "Stale in index"
 ```bash
 # After moving many files
 mv ~/old-location/* ~/new-location/
-sd-cli index verify ~/new-location
+wing-cli index verify ~/new-location
 ```
 
 ## Troubleshooting
@@ -192,13 +192,13 @@ sd-cli index verify ~/new-location
 ### "No entries found in database"
 
 - Path might not be part of a managed location
-- Run `sd-cli location list` to see indexed locations
+- Run `wing-cli location list` to see indexed locations
 
 ### High number of "Missing from Index"
 
 - Location watcher might be disabled
 - Files were added manually without indexing
-- Run `sd-cli location rescan <location-id>` to fix
+- Run `wing-cli location rescan <location-id>` to fix
 
 ### High number of "Stale in Index"
 
@@ -211,7 +211,7 @@ sd-cli index verify ~/new-location
 The verification can also be triggered programmatically:
 
 ```rust
-use sd_core::ops::indexing::verify::{IndexVerifyAction, IndexVerifyInput};
+use wing_core::ops::indexing::verify::{IndexVerifyAction, IndexVerifyInput};
 
 let input = IndexVerifyInput::new(PathBuf::from("/path/to/verify"));
 let result = IndexVerifyAction::from_input(input)?

@@ -16,7 +16,7 @@ Epics: `TAURI-000`, `EXPL-000`, `CLI-000` (estendido por `CLI-001`).
 |---|---|---|---|
 | 0 | WATCH-003 | Watcher sincronizar criação/remoção (P0) | S01 |
 | 1 | TAURI-006 | Matriz de regressão em runtime (Linux) | S01 |
-| 2 | CLI-001 | `sd-cli file rename/delete/mkdir` | S01 |
+| 2 | CLI-001 | `wing-cli file rename/delete/mkdir` | S01 |
 | 3 | EXPL-006 | Direção de ordenação (asc/desc) | S01 |
 | 4 | TAURI-008 | Atalhos padrão: refresh, nova pasta, ocultos | S01 |
 | 5 | TAURI-009 | Trocar `alert()` nativo por toast | S01 |

@@ -223,7 +223,7 @@ tokio::spawn(async move {
 ## Usage Example
 
 ```rust
-use sd_fs_watcher::{FsWatcher, WatchConfig, WatcherConfig};
+use wing_fs_watcher::{FsWatcher, WatchConfig, WatcherConfig};
 
 #[tokio::main]
 async fn main() -> Result<()> {

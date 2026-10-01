@@ -1,19 +1,19 @@
 [package]
-name    = "sd-server"
+name    = "wing-server"
 version = "2.0.0-alpha.2"
 edition = "2021"
 
 [features]
 default = []
-heif = ["sd-core/heif"]
-ffmpeg = ["sd-core/ffmpeg"]
-whisper = ["sd-core/whisper"]
-speech-to-text = ["sd-core/speech-to-text"]
-ai = ["sd-core/ai"]
+heif = ["wing-core/heif"]
+ffmpeg = ["wing-core/ffmpeg"]
+whisper = ["wing-core/whisper"]
+speech-to-text = ["wing-core/speech-to-text"]
+ai = ["wing-core/ai"]
 
 [dependencies]
 # WingDrive core
-sd-core = { path = "../../core" }
+wing-core = { path = "../../core" }
 
 # HTTP server
 axum       = "0.8.9"
@@ -56,5 +56,5 @@ dirs = "6.0"
 tempfile = "3"
 
 [[bin]]
-name = "sd-server"
+name = "wing-server"
 path = "src/main.rs"

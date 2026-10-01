@@ -3,7 +3,7 @@ authors     = ["Spacedrive Technology Inc."]
 description = "SDK for building WingDrive WASM extensions"
 edition     = "2021"
 license     = "MIT OR Apache-2.0"
-name        = "spacedrive-sdk"
+name        = "wingdrive-sdk"
 repository  = "https://github.com/bernardopg/wingdrive"
 version     = "0.1.0"
 
@@ -11,7 +11,7 @@ version     = "0.1.0"
 chrono                = { version = "0.4", default-features = false, features = ["serde"] }
 serde                 = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 serde_json            = { version = "1.0", default-features = false, features = ["alloc"] }
-spacedrive-sdk-macros = { path = "../sdk-macros" }
+wingdrive-sdk-macros = { path = "../sdk-macros" }
 thiserror             = { version = "1.0", default-features = false }
 uuid                  = { version = "1.0", default-features = false, features = ["serde", "v4"] }
 

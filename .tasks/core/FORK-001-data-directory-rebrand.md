@@ -48,9 +48,9 @@ machines.
 
 ## Validation
 
-- `cargo test -p sd-core --lib branding::` covers the four resolution cases and
+- `cargo test -p wing-core --lib branding::` covers the four resolution cases and
   legacy path detection. 7 tests pass.
-- `cargo test -p sd-core --test branding_legacy_paths` overrides `$HOME` and the
+- `cargo test -p wing-core --test branding_legacy_paths` overrides `$HOME` and the
   XDG variables to assert legacy adoption, fresh-install behaviour, and that a
   completed migration stops falling back. This test caught `dirs::config_dir`
   reading `XDG_CONFIG_HOME` instead of `$HOME`.

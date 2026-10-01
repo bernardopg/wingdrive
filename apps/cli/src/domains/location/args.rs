@@ -2,7 +2,7 @@ use clap::Args;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-use sd_core::{
+use wing_core::{
 	domain::addressing::SdPath,
 	ops::{
 		indexing::job::IndexMode,

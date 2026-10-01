@@ -1,13 +1,13 @@
 //! Test to map exact File structure at each indexing phase
 
-use sd_core::{
+use sea_orm::{ActiveModelTrait, ColumnTrait, QueryFilter};
+use std::{sync::Arc, time::Duration};
+use tempfile::TempDir;
+use wing_core::{
 	infra::{db::entities, event::Event},
 	location::{create_location, IndexMode, LocationCreateArgs},
 	Core,
 };
-use sea_orm::{ActiveModelTrait, ColumnTrait, QueryFilter};
-use std::{sync::Arc, time::Duration};
-use tempfile::TempDir;
 
 #[tokio::test]
 async fn map_file_structure_per_phase() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -202,8 +202,8 @@ async fn map_file_structure_per_phase() -> Result<(), Box<dyn std::error::Error 
 	eprintln!("\n\nCHECKING DATABASE ENTRIES:\n");
 	eprintln!("{}", "=".repeat(80));
 
-	use sd_core::infra::db::entities::entry;
 	use sea_orm::EntityTrait;
+	use wing_core::infra::db::entities::entry;
 
 	let db_entries = entry::Entity::find().all(db.conn()).await?;
 

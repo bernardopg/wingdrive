@@ -3,10 +3,10 @@ use crate::{frame_decoder::ThumbnailSize, Error, FrameDecoder};
 use std::{io, ops::Deref, path::Path};
 
 use image::{imageops, DynamicImage, RgbImage};
-use sd_utils::error::FileIOError;
 use tokio::{fs, io::AsyncWriteExt, task::spawn_blocking};
 use tracing::error;
 use webp::Encoder;
+use wing_utils::error::FileIOError;
 
 /// `Thumbnailer` struct holds data from a `ThumbnailerBuilder`, exposing methods
 /// to generate thumbnails from video files.

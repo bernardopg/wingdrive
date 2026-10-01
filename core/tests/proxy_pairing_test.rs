@@ -14,12 +14,12 @@
 //!
 //! Config: auto_vouch_to_all=true, auto_accept_vouched=true
 
-use sd_core::testing::CargoTestRunner;
-use sd_core::Core;
 use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::timeout;
+use wing_core::testing::CargoTestRunner;
+use wing_core::Core;
 
 const TEST_DIR: &str = "/tmp/wingdrive-proxy-pairing-test";
 

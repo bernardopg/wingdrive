@@ -20,7 +20,7 @@ Found during TAURI-006 on 2026-10-01. In an indexed location on Linux, files del
 - Location `play` registered: "Location worker started for da68b27f..." in the daemon log, after both starts.
 - `entries` still holds `external`, `external2`, `del-me` after the files were trashed; `w2` created after restart never appeared.
 - No watcher or remove lines in the log for those files at `info` level.
-- `cargo test -p sd-fs-watcher` passes (18 tests), so the gap is between the inotify backend and the persistent handler, or in the handler.
+- `cargo test -p wing-fs-watcher` passes (18 tests), so the gap is between the inotify backend and the persistent handler, or in the handler.
 
 ## Acceptance Criteria
 
@@ -28,7 +28,7 @@ Found during TAURI-006 on 2026-10-01. In an indexed location on Linux, files del
 - [x] Deleting a file in an indexed location removes its entry (rm, move out, and trash)
 - [x] Creating a file in an indexed location adds it without leaving the directory (20 concurrent files: 20/20)
 - [x] Holds after a daemon restart
-- [x] Tests: `sd-fs-watcher` unit tests for move out, move in, and paired rename; `indexing_responder_reindex_test` (folder moved into a location) now passes
+- [x] Tests: `wing-fs-watcher` unit tests for move out, move in, and paired rename; `indexing_responder_reindex_test` (folder moved into a location) now passes
 
 ## Root Cause
 

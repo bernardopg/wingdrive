@@ -28,14 +28,14 @@ jobs:
           target: x86_64-unknown-linux-gnu
 
       - name: Build binaries
-        run: cargo build --release --locked --bin sd-server --bin sd-cli --bin sd-daemon
+        run: cargo build --release --locked --bin wing-server --bin wing-cli --bin wing-daemon
 
       - name: Package binaries
         run: |
           mkdir -p dist
-          install -m 755 target/release/sd-server dist/wingdrive-server-linux-x86_64
-          install -m 755 target/release/sd-cli dist/wingdrive-cli-linux-x86_64
-          install -m 755 target/release/sd-daemon dist/wingdrive-daemon-linux-x86_64
+          install -m 755 target/release/wing-server dist/wingdrive-server-linux-x86_64
+          install -m 755 target/release/wing-cli dist/wingdrive-cli-linux-x86_64
+          install -m 755 target/release/wing-daemon dist/wingdrive-daemon-linux-x86_64
           sha256sum dist/* > dist/SHA256SUMS
 
       - name: Upload server artifact
@@ -96,22 +96,22 @@ jobs:
 
       - name: Build updater binaries
         if: runner.os != 'Linux'
-        run: cargo build --release --locked --target ${{ matrix.target }} --bin sd-cli --bin sd-daemon
+        run: cargo build --release --locked --target ${{ matrix.target }} --bin wing-cli --bin wing-daemon
 
       - name: Package macOS updater binaries
         if: runner.os == 'macOS'
         run: |
           mkdir -p dist/updater
-          install -m 755 target/${{ matrix.target }}/release/sd-cli dist/updater/wingdrive-cli-${{ matrix.updater_platform }}
-          install -m 755 target/${{ matrix.target }}/release/sd-daemon dist/updater/wingdrive-daemon-${{ matrix.updater_platform }}
+          install -m 755 target/${{ matrix.target }}/release/wing-cli dist/updater/wingdrive-cli-${{ matrix.updater_platform }}
+          install -m 755 target/${{ matrix.target }}/release/wing-daemon dist/updater/wingdrive-daemon-${{ matrix.updater_platform }}
 
       - name: Package Windows updater binaries
         if: runner.os == 'Windows'
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force dist/updater
-          Copy-Item target/${{ matrix.target }}/release/sd-cli.exe dist/updater/wingdrive-cli-${{ matrix.updater_platform }}.exe
-          Copy-Item target/${{ matrix.target }}/release/sd-daemon.exe dist/updater/wingdrive-daemon-${{ matrix.updater_platform }}.exe
+          Copy-Item target/${{ matrix.target }}/release/wing-cli.exe dist/updater/wingdrive-cli-${{ matrix.updater_platform }}.exe
+          Copy-Item target/${{ matrix.target }}/release/wing-daemon.exe dist/updater/wingdrive-daemon-${{ matrix.updater_platform }}.exe
 
       - name: Upload desktop bundles
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

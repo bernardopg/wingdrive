@@ -155,13 +155,13 @@ This means source operations should mostly be library actions and library querie
 
 ## Proposed Code Shape
 
-Build as a standalone crate in `/crates/archive/` (package: `sd-archive`) for better caching and reusability.
+Build as a standalone crate in `/crates/archive/` (package: `wing-archive`) for better caching and reusability.
 
 **Crate structure:**
 
 ```text
 crates/archive/
-  Cargo.toml           # Package name: sd-archive; Heavy deps: lancedb, fastembed, ort (optional)
+  Cargo.toml           # Package name: wing-archive; Heavy deps: lancedb, fastembed, ort (optional)
   src/
     lib.rs             # Public API exports
     engine.rs          # Core engine (no job system)
@@ -190,7 +190,7 @@ crates/archive/
 
 ```text
 core/src/data/
-  mod.rs               # Re-exports from sd-archive
+  mod.rs               # Re-exports from wing-archive
   manager.rs           # Library-scoped wrapper
   integration.rs       # Bridges engine with KeyManager, EventBus
 ```
@@ -829,14 +829,14 @@ All 11 adapters are standalone (TOML + Python scripts). They communicate via std
 ```bash
 mkdir -p crates/archive/src
 cd crates/archive
-cargo init --lib --name sd-archive
+cargo init --lib --name wing-archive
 ```
 
 **1.2: Setup Cargo.toml**
 
 ```toml
 [package]
-name = "sd-archive"
+name = "wing-archive"
 version = "0.1.0"
 edition = "2021"
 
@@ -881,7 +881,7 @@ pub use search::{SearchResult, SearchFilter};
 // ... other exports
 ```
 
-**Verification:** `cargo check -p sd-archive` passes
+**Verification:** `cargo check -p wing-archive` passes
 
 ### Phase 2: Core Integration
 
@@ -890,14 +890,14 @@ pub use search::{SearchResult, SearchFilter};
 ```toml
 # core/Cargo.toml
 [dependencies]
-sd-archive = { path = "../crates/sd-archive" }
+wing-archive = { path = "../crates/wing-archive" }
 ```
 
 **2.2: Create wrapper layer**
 
 ```rust
 // core/src/data/mod.rs
-pub use sd_archive::{
+pub use wing_archive::{
     Engine, EngineConfig, SearchResult, SearchFilter,
     SourceInfo, AdapterInfo, SyncReport,
 };
@@ -911,16 +911,16 @@ pub mod integration;
 ```rust
 // core/src/data/manager.rs
 pub struct SourceManager {
-    engine: Arc<sd_archive::Engine>,
+    engine: Arc<wing_archive::Engine>,
     library: Arc<Library>,
 }
 
 impl SourceManager {
     pub async fn new(library: Arc<Library>) -> Result<Self> {
-        let config = sd_archive::EngineConfig {
+        let config = wing_archive::EngineConfig {
             data_dir: library.path().join("sources"),
         };
-        let engine = sd_archive::Engine::new(config).await?;
+        let engine = wing_archive::Engine::new(config).await?;
         Ok(Self { engine: Arc::new(engine), library })
     }
 
@@ -944,7 +944,7 @@ pub struct Library {
 **2.5: Database Migration**
 
 - Create migration for `library_sources` metadata table (if tracking in library.db)
-- Or let sd-archive manage its own registry.db
+- Or let wing-archive manage its own registry.db
 
 **Verification:** `cargo check` passes, can instantiate manager
 
@@ -1059,7 +1059,7 @@ pub mod sources;
 
 ```
 crates/archive/
-├── Cargo.toml              (Package: sd-archive; Heavy deps: lancedb, fastembed, ort)
+├── Cargo.toml              (Package: wing-archive; Heavy deps: lancedb, fastembed, ort)
 └── src/
     ├── lib.rs              (Public API exports)
     ├── error.rs
@@ -1090,7 +1090,7 @@ crates/archive/
 
 ```
 core/src/data/
-├── mod.rs                  (Re-exports from sd-archive)
+├── mod.rs                  (Re-exports from wing-archive)
 ├── manager.rs              (Library-scoped wrapper)
 └── integration.rs          (KeyManager, EventBus bridges)
 ```

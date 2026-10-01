@@ -1,4 +1,4 @@
-// sd-tauri-core: FFI bridge between Tauri and WingDrive Core
+// wing-tauri-core: FFI bridge between Tauri and WingDrive Core
 // This crate provides the interface layer for embedding the core in a Tauri application
 
 use serde::{Deserialize, Serialize};
@@ -44,5 +44,5 @@ pub mod commands {
 /// Resolves the WingDrive data directory with legacy-install adoption.
 
 pub fn default_data_dir() -> anyhow::Result<std::path::PathBuf> {
-	sd_core::config::default_data_dir()
+	wing_core::config::default_data_dir()
 }

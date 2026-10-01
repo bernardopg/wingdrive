@@ -114,7 +114,7 @@ Tracked volumes persist across sessions and can have custom names, colors, and i
 Add cloud storage as a tracked volume:
 
 ```rust
-use sd_core::ops::volumes::add_cloud::{CloudStorageConfig, VolumeAddCloudInput};
+use wing_core::ops::volumes::add_cloud::{CloudStorageConfig, VolumeAddCloudInput};
 
 // Add S3 bucket via action
 let input = VolumeAddCloudInput {
@@ -342,7 +342,7 @@ match volume_manager.track_volume(&library, &fingerprint, None).await {
 Cloud volumes may encounter additional error conditions:
 
 ```rust
-use sd_core::crypto::cloud_credentials::CloudCredentialError;
+use wing_core::crypto::cloud_credentials::CloudCredentialError;
 
 match credential_manager.get_credential(library_id, &fingerprint) {
     Ok(cred) => { /* Use credentials */ }

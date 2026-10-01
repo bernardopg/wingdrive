@@ -18,7 +18,7 @@ fn version_files(root: &Path) -> Vec<(PathBuf, FileType)> {
 			FileType::CargoToml,
 		),
 		(
-			root.join("apps/tauri/sd-tauri-core/Cargo.toml"),
+			root.join("apps/tauri/wing-tauri-core/Cargo.toml"),
 			FileType::CargoToml,
 		),
 		(

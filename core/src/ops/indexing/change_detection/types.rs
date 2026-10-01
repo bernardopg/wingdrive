@@ -62,8 +62,8 @@ impl Change {
 
 	/// Create a Change from an FsEvent (for watcher integration).
 	/// Note: These variants don't have entry_ids since they come from the watcher.
-	pub fn from_fs_event(event: sd_fs_watcher::FsEvent) -> Self {
-		use sd_fs_watcher::FsEventKind;
+	pub fn from_fs_event(event: wing_fs_watcher::FsEvent) -> Self {
+		use wing_fs_watcher::FsEventKind;
 
 		match event.kind {
 			FsEventKind::Create => Change::New(event.path),

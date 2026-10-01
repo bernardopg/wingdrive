@@ -1,7 +1,7 @@
 use clap::Args;
 use uuid::Uuid;
 
-use sd_core::{
+use wing_core::{
 	infra::job::types::JobStatus,
 	ops::jobs::{info::query::JobInfoQueryInput, list::query::JobListInput},
 };

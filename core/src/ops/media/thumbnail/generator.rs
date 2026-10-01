@@ -1,9 +1,9 @@
 //! Thumbnail generation engine using existing WingDrive crates
 
 use super::error::{ThumbnailError, ThumbnailResult};
-use sd_media_metadata::exif::Orientation;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use wing_media_metadata::exif::Orientation;
 
 /// Information about a generated thumbnail
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -60,7 +60,7 @@ impl ThumbnailGenerator {
 	}
 }
 
-/// Image thumbnail generator using sd-images crate
+/// Image thumbnail generator using wing-images crate
 #[derive(Debug)]
 pub struct ImageGenerator;
 
@@ -90,8 +90,8 @@ impl ImageGenerator {
 		let output_path = output_path.to_path_buf();
 
 		let thumbnail_info = tokio::task::spawn_blocking(move || {
-			// Use sd-images to load and process the image
-			let mut img = sd_images::format_image(&source_path)
+			// Use wing-images to load and process the image
+			let mut img = wing_images::format_image(&source_path)
 				.map_err(|e| ThumbnailError::other(format!("Failed to load image: {}", e)))?;
 
 			// Apply EXIF orientation correction if available
@@ -154,7 +154,7 @@ impl ImageGenerator {
 	}
 }
 
-/// Video thumbnail generator using sd-ffmpeg crate
+/// Video thumbnail generator using wing-ffmpeg crate
 #[derive(Debug)]
 pub struct VideoGenerator;
 
@@ -179,11 +179,11 @@ impl VideoGenerator {
 			// Blurhash generation disabled for performance
 			let blurhash: Option<String> = None;
 
-			// Use sd-ffmpeg helper function to generate thumbnail
-			sd_ffmpeg::to_thumbnail(
+			// Use wing-ffmpeg helper function to generate thumbnail
+			wing_ffmpeg::to_thumbnail(
 				source_path,
 				output_path,
-				sd_ffmpeg::ThumbnailSize::Scale(size),
+				wing_ffmpeg::ThumbnailSize::Scale(size),
 				quality as f32,
 			)
 			.await
@@ -215,7 +215,7 @@ impl VideoGenerator {
 	}
 }
 
-/// Document thumbnail generator using sd-images crate (PDF support)
+/// Document thumbnail generator using wing-images crate (PDF support)
 #[derive(Debug)]
 pub struct DocumentGenerator;
 
@@ -245,8 +245,8 @@ impl DocumentGenerator {
 		let output_path = output_path.to_path_buf();
 
 		let thumbnail_info = tokio::task::spawn_blocking(move || {
-			// Use sd-images to handle PDF (it supports PDF through pdfium-render)
-			let mut img = sd_images::format_image(&source_path)
+			// Use wing-images to handle PDF (it supports PDF through pdfium-render)
+			let mut img = wing_images::format_image(&source_path)
 				.map_err(|e| ThumbnailError::other(format!("Failed to load PDF: {}", e)))?;
 
 			// Apply EXIF orientation correction if available

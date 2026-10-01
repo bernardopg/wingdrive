@@ -11,18 +11,18 @@
 //! ## Running Tests
 //!
 //! ```bash
-//! cargo test -p sd-core --test file_sync_test -- --test-threads=1
+//! cargo test -p wing-core --test file_sync_test -- --test-threads=1
 //! ```
 
-use sd_core::{
-	infra::db::entities::{entry, sync_conduit},
-	Core,
-};
 use sea_orm::{ActiveModelTrait, Set};
 use std::sync::Arc;
 use tempfile::TempDir;
 use tokio::fs;
 use uuid::Uuid;
+use wing_core::{
+	infra::db::entities::{entry, sync_conduit},
+	Core,
+};
 
 /// Helper to create test files with content
 #[allow(dead_code)]
@@ -38,35 +38,35 @@ async fn create_test_file(path: &std::path::Path, content: &str) -> anyhow::Resu
 struct FileSyncTestSetup {
 	_temp_dir: TempDir,
 	core: Core,
-	library: Arc<sd_core::library::Library>,
+	library: Arc<wing_core::library::Library>,
 }
 
 impl FileSyncTestSetup {
 	/// Create a new test setup
 	async fn new() -> anyhow::Result<Self> {
 		let _ = tracing_subscriber::fmt()
-			.with_env_filter("sd_core=debug,file_sync_test=debug")
+			.with_env_filter("wing_core=debug,file_sync_test=debug")
 			.with_test_writer()
 			.try_init();
 
 		let temp_dir = TempDir::new()?;
 
-		let config = sd_core::config::AppConfig {
+		let config = wing_core::config::AppConfig {
 			version: 3,
 			data_dir: temp_dir.path().to_path_buf(),
 			log_level: "info".to_string(),
 			telemetry_enabled: false,
-			preferences: sd_core::config::Preferences::default(),
-			job_logging: sd_core::config::JobLoggingConfig::default(),
-			services: sd_core::config::ServiceConfig {
+			preferences: wing_core::config::Preferences::default(),
+			job_logging: wing_core::config::JobLoggingConfig::default(),
+			services: wing_core::config::ServiceConfig {
 				networking_enabled: false,
 				volume_monitoring_enabled: false,
 				fs_watcher_enabled: false,
 				statistics_listener_enabled: false,
 			},
-			logging: sd_core::config::LoggingConfig::default(),
-			proxy_pairing: sd_core::config::ProxyPairingConfig::default(),
-			spacebot: sd_core::config::SpacebotConfig::default(),
+			logging: wing_core::config::LoggingConfig::default(),
+			proxy_pairing: wing_core::config::ProxyPairingConfig::default(),
+			spacebot: wing_core::config::SpacebotConfig::default(),
 		};
 		config.save()?;
 

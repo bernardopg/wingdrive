@@ -6,7 +6,7 @@ use clap::Subcommand;
 use crate::context::Context;
 use crate::util::prelude::*;
 
-use sd_core::ops::devices::list::{output::LibraryDeviceInfo, query::ListLibraryDevicesInput};
+use wing_core::ops::devices::list::{output::LibraryDeviceInfo, query::ListLibraryDevicesInput};
 
 use self::args::*;
 

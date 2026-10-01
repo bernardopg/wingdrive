@@ -24,7 +24,7 @@ use std::{
 use uuid::Uuid;
 
 use super::colors::{job_status_color, job_status_icon};
-use sd_core::{infra::job::types::JobStatus, ops::jobs::list::output::JobListItem};
+use wing_core::{infra::job::types::JobStatus, ops::jobs::list::output::JobListItem};
 
 /// Job monitor TUI state
 pub struct JobMonitorTui {

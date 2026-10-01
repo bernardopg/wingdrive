@@ -263,16 +263,16 @@ impl Action for PathDiffAction {
 
 ```bash
 # Show what's missing on the NAS
-sd-cli files diff /Volumes/ExtDrive/Photos /Volumes/NAS/Photos
+wing-cli files diff /Volumes/ExtDrive/Photos /Volumes/NAS/Photos
 
 # Copy only what's missing
-sd-cli files diff /Volumes/ExtDrive/Photos /Volumes/NAS/Photos --copy
+wing-cli files diff /Volumes/ExtDrive/Photos /Volumes/NAS/Photos --copy
 
 # Content-based matching (catches renames)
-sd-cli files diff /Volumes/ExtDrive /Volumes/NAS --strategy content
+wing-cli files diff /Volumes/ExtDrive /Volumes/NAS --strategy content
 
 # Include normally-filtered files
-sd-cli files diff /path/a /path/b --no-rules
+wing-cli files diff /path/a /path/b --no-rules
 ```
 
 ## Files to Create

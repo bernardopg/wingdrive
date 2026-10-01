@@ -46,8 +46,8 @@ async fn run_logs_show(ctx: &Context, args: LogsShowArgs) -> Result<()> {
 
 /// Follow logs in real-time
 async fn run_logs_follow(ctx: &Context, args: LogsFollowArgs) -> Result<()> {
-	use sd_core::infra::daemon::types::EventFilter;
-	use sd_core::infra::event::Event;
+	use wing_core::infra::daemon::types::EventFilter;
+	use wing_core::infra::event::Event;
 
 	println!("Following logs in real-time - Press Ctrl+C to exit");
 	if let Some(ref level) = args.level {
@@ -168,7 +168,7 @@ fn colorize_level(level: &str) -> String {
 
 /// Get the daemon log file path by querying the daemon's data directory
 async fn get_daemon_log_path(_ctx: &Context) -> Result<std::path::PathBuf> {
-	let data_dir = sd_core::config::default_data_dir()?;
+	let data_dir = wing_core::config::default_data_dir()?;
 	let logs_dir = data_dir.join("logs");
 
 	// Check for today's log file first (with date suffix due to daily rotation)
@@ -244,7 +244,7 @@ fn read_last_lines(file_path: &std::path::Path, n: usize) -> Result<Vec<String>>
 /// Format a log line based on user preferences
 fn format_log_line(line: &str, args: &LogsShowArgs) -> Option<String> {
 	// Parse the log line format: timestamp LEVEL ThreadId(N) target: message
-	// Example: 2025-09-19T02:25:54.897283Z DEBUG ThreadId(13) sd_core::infra::event: Event emitted to subscribers
+	// Example: 2025-09-19T02:25:54.897283Z DEBUG ThreadId(13) wing_core::infra::event: Event emitted to subscribers
 
 	let parts: Vec<&str> = line.splitn(5, ' ').collect();
 	if parts.len() < 5 {

@@ -84,7 +84,7 @@ struct DaemonState {
 	socket_addr: String,
 	/// Effective directory for this daemon instance.
 	data_dir: PathBuf,
-	/// Root passed to `sd-daemon --data-dir`; named instances derive their own child directory.
+	/// Root passed to `wing-daemon --data-dir`; named instances derive their own child directory.
 	base_data_dir: PathBuf,
 	instance: Option<String>,
 	server_url: Option<String>,
@@ -128,7 +128,7 @@ fn daemon_runtime_config() -> Result<DaemonRuntimeConfig, String> {
 	let base_data_dir = match std::env::var_os(DATA_DIR_ENV) {
 		Some(value) if !value.is_empty() => PathBuf::from(value),
 		Some(_) => return Err(format!("{DATA_DIR_ENV} cannot be empty")),
-		None => sd_tauri_core::default_data_dir()
+		None => wing_tauri_core::default_data_dir()
 			.map_err(|error| format!("Failed to resolve data directory: {error}"))?,
 	};
 
@@ -1706,14 +1706,14 @@ fn find_daemon_binary() -> Result<std::path::PathBuf, String> {
 		std::env::current_exe().map_err(|e| format!("Failed to get current exe: {}", e))?;
 	let bin_dir = exe_path.parent().ok_or("No parent directory for exe")?;
 
-	// Tauri's externalBin bundles with a target triple suffix (e.g. sd-daemon-x86_64-pc-windows-msvc.exe)
+	// Tauri's externalBin bundles with a target triple suffix (e.g. wing-daemon-x86_64-pc-windows-msvc.exe)
 	// Try that first, then fall back to the plain name for dev builds
 	let daemon_with_triple = format!(
-		"sd-daemon-{}{}",
+		"wing-daemon-{}{}",
 		env!("SD_TARGET_TRIPLE"),
 		std::env::consts::EXE_SUFFIX
 	);
-	let daemon_plain = format!("sd-daemon{}", std::env::consts::EXE_SUFFIX);
+	let daemon_plain = format!("wing-daemon{}", std::env::consts::EXE_SUFFIX);
 
 	[&daemon_with_triple, &daemon_plain]
 		.iter()
@@ -1776,14 +1776,14 @@ async fn start_daemon(
 
 #[cfg(test)]
 mod start_daemon_integration_tests {
-	//! Spawns the real `sd-daemon` binary built by this workspace and proves
+	//! Spawns the real `wing-daemon` binary built by this workspace and proves
 	//! the arguments `daemon_runtime_config_for` derives actually produce an
 	//! isolated, reachable instance, rather than only asserting on the struct.
 	use super::*;
 	use std::net::TcpStream;
 	use std::time::{Duration, Instant};
 
-	/// Locates the `sd-daemon` binary built alongside this crate. Test
+	/// Locates the `wing-daemon` binary built alongside this crate. Test
 	/// binaries run from `target/<profile>/deps/`, not from the directory
 	/// `find_daemon_binary` searches at runtime, so this mirrors Cargo's own
 	/// output layout instead of reusing that lookup.
@@ -1802,10 +1802,10 @@ mod start_daemon_integration_tests {
 		let path = workspace_root
 			.join("target")
 			.join(profile)
-			.join(format!("sd-daemon{}", std::env::consts::EXE_SUFFIX));
+			.join(format!("wing-daemon{}", std::env::consts::EXE_SUFFIX));
 		assert!(
 			path.exists(),
-			"expected sd-daemon at {path:?}; run `cargo build --bin sd-daemon` first"
+			"expected wing-daemon at {path:?}; run `cargo build --bin wing-daemon` first"
 		);
 		path
 	}
@@ -1836,7 +1836,7 @@ mod start_daemon_integration_tests {
 			.stdout(std::process::Stdio::null())
 			.stderr(std::process::Stdio::null())
 			.spawn()
-			.expect("failed to spawn sd-daemon");
+			.expect("failed to spawn wing-daemon");
 
 		let reachable = wait_for_port(&config.socket_addr, Duration::from_secs(20));
 		let _ = child.kill();
@@ -2170,7 +2170,7 @@ fn main() {
 	tracing_subscriber::registry()
 		.with(
 			tracing_subscriber::EnvFilter::try_from_default_env()
-				.unwrap_or_else(|_| "info,sd_core=debug".into()),
+				.unwrap_or_else(|_| "info,wing_core=debug".into()),
 		)
 		.with(tracing_subscriber::fmt::layer())
 		.init();
@@ -2293,9 +2293,9 @@ fn main() {
 					match window.ns_window() {
 						Ok(ns_window) => unsafe {
 							tracing::debug!("Setting titlebar style...");
-							sd_desktop_macos::set_titlebar_style(&ns_window, false);
+							wing_desktop_macos::set_titlebar_style(&ns_window, false);
 							tracing::debug!("Locking app theme...");
-							sd_desktop_macos::lock_app_theme(1); // 1 = Dark theme
+							wing_desktop_macos::lock_app_theme(1); // 1 = Dark theme
 							tracing::info!("macOS customizations applied successfully");
 						},
 						Err(e) => {
@@ -2306,7 +2306,7 @@ fn main() {
 
 				// Setup drag ended callback
 				let app_handle = app.handle().clone();
-				sd_desktop_macos::set_drag_ended_callback(
+				wing_desktop_macos::set_drag_ended_callback(
 					move |session_id: &str, was_dropped: bool| {
 						tracing::info!(
 							"[DRAG] Swift callback: session_id={}, was_dropped={}",
@@ -2515,7 +2515,7 @@ fn main() {
 				if let Ok(is_fullscreen) = window.is_fullscreen() {
 					if let Ok(ns_window) = window.ns_window() {
 						unsafe {
-							sd_desktop_macos::set_titlebar_style(&ns_window, is_fullscreen);
+							wing_desktop_macos::set_titlebar_style(&ns_window, is_fullscreen);
 						}
 					}
 				}

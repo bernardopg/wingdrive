@@ -3,43 +3,43 @@
 //! This tests the file sync service initialization and basic operations
 //! without requiring full database setup or actual file indexing.
 
-use sd_core::{infra::db::entities::sync_conduit, Core};
 use std::sync::Arc;
 use tempfile::TempDir;
+use wing_core::{infra::db::entities::sync_conduit, Core};
 
 /// Test setup with a core and library
 struct FileSyncTestSetup {
 	_temp_dir: TempDir,
 	core: Core,
-	library: Arc<sd_core::library::Library>,
+	library: Arc<wing_core::library::Library>,
 }
 
 impl FileSyncTestSetup {
 	/// Create a new test setup
 	async fn new() -> anyhow::Result<Self> {
 		let _ = tracing_subscriber::fmt()
-			.with_env_filter("sd_core=info")
+			.with_env_filter("wing_core=info")
 			.with_test_writer()
 			.try_init();
 
 		let temp_dir = TempDir::new()?;
 
-		let config = sd_core::config::AppConfig {
+		let config = wing_core::config::AppConfig {
 			version: 3,
 			data_dir: temp_dir.path().to_path_buf(),
 			log_level: "info".to_string(),
 			telemetry_enabled: false,
-			preferences: sd_core::config::Preferences::default(),
-			job_logging: sd_core::config::JobLoggingConfig::default(),
-			services: sd_core::config::ServiceConfig {
+			preferences: wing_core::config::Preferences::default(),
+			job_logging: wing_core::config::JobLoggingConfig::default(),
+			services: wing_core::config::ServiceConfig {
 				networking_enabled: false,
 				volume_monitoring_enabled: false,
 				fs_watcher_enabled: false,
 				statistics_listener_enabled: false,
 			},
-			logging: sd_core::config::LoggingConfig::default(),
-			proxy_pairing: sd_core::config::ProxyPairingConfig::default(),
-			spacebot: sd_core::config::SpacebotConfig::default(),
+			logging: wing_core::config::LoggingConfig::default(),
+			proxy_pairing: wing_core::config::ProxyPairingConfig::default(),
+			spacebot: wing_core::config::SpacebotConfig::default(),
 		};
 		config.save()?;
 

@@ -1,10 +1,10 @@
 //! Integration tests for the indexing rules engine
 
-use sd_core::ops::indexing::rules::{
-	build_default_ruler, IndexerRule, IndexerRuler, RulePerKind, RuleToggles, RulerDecision,
-};
 use std::collections::HashSet;
 use tempfile::TempDir;
+use wing_core::ops::indexing::rules::{
+	build_default_ruler, IndexerRule, IndexerRuler, RulePerKind, RuleToggles, RulerDecision,
+};
 
 fn touch(path: &std::path::Path) {
 	std::fs::create_dir_all(path.parent().unwrap()).ok();
@@ -110,7 +110,7 @@ async fn test_conflict_precedence_and_children_rules() {
 		.apply_all(&dir, &std::fs::metadata(&dir).unwrap())
 		.await
 		.unwrap();
-	assert!(sd_core::ops::indexing::rules::IndexerRuler::rejected_by_children_directories(&acc));
+	assert!(wing_core::ops::indexing::rules::IndexerRuler::rejected_by_children_directories(&acc));
 
 	// A directory without the child should be accepted
 	let other = root.join("other");
@@ -120,7 +120,9 @@ async fn test_conflict_precedence_and_children_rules() {
 		.await
 		.unwrap();
 	assert!(
-		!sd_core::ops::indexing::rules::IndexerRuler::rejected_by_children_directories(&acc_other)
+		!wing_core::ops::indexing::rules::IndexerRuler::rejected_by_children_directories(
+			&acc_other
+		)
 	);
 }
 

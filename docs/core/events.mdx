@@ -133,7 +133,7 @@ event_bus.emit(Event::JobStarted {
 Subscribe to events affecting specific directories or files:
 
 ```rust
-use sd_core::infra::event::SubscriptionFilter;
+use wing_core::infra::event::SubscriptionFilter;
 
 // Subscribe to changes in a specific directory
 let filter = SubscriptionFilter::PathScoped {

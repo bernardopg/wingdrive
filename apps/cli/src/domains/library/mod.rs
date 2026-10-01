@@ -6,13 +6,13 @@ use clap::Subcommand;
 use crate::util::prelude::*;
 
 use crate::context::Context;
-use sd_core::ops::libraries::{
+use wing_core::ops::libraries::{
 	create::{input::LibraryCreateInput, output::LibraryCreateOutput},
 	delete::output::LibraryDeleteOutput,
 	info::{output::LibraryInfoOutput, query::LibraryInfoQuery},
 	list::query::ListLibrariesQuery,
 };
-use sd_core::ops::network::sync_setup::{
+use wing_core::ops::network::sync_setup::{
 	discovery::{output::DiscoverRemoteLibrariesOutput, query::DiscoverRemoteLibrariesInput},
 	input::{LibrarySyncAction, LibrarySyncSetupInput},
 	output::LibrarySyncSetupOutput,
@@ -58,14 +58,14 @@ pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
 			});
 		}
 		LibraryCmd::List => {
-			let out: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
+			let out: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
 				ctx,
-				sd_core::ops::libraries::list::query::ListLibrariesInput {
+				wing_core::ops::libraries::list::query::ListLibrariesInput {
 					include_stats: false
 				}
 			);
 			print_output!(ctx, &out, |libs: &Vec<
-				sd_core::ops::libraries::list::output::LibraryInfo,
+				wing_core::ops::libraries::list::output::LibraryInfo,
 			>| {
 				if libs.is_empty() {
 					println!("No libraries found");
@@ -185,7 +185,7 @@ pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
 				)
 			};
 			confirm_or_abort(&msg, args.yes)?;
-			let input: sd_core::ops::libraries::delete::input::LibraryDeleteInput = args.into();
+			let input: wing_core::ops::libraries::delete::input::LibraryDeleteInput = args.into();
 			let out: LibraryDeleteOutput = execute_action!(ctx, input);
 			print_output!(ctx, &out, |o: &LibraryDeleteOutput| {
 				println!("Deleted library {}", o.library_id);
@@ -251,7 +251,7 @@ pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
 
 async fn run_interactive_sync_setup(ctx: &Context) -> Result<LibrarySyncSetupInput> {
 	use crate::util::confirm::{select, text};
-	use sd_core::ops::network::devices::{
+	use wing_core::ops::network::devices::{
 		output::ListPairedDevicesOutput, query::ListPairedDevicesInput,
 	};
 
@@ -265,13 +265,13 @@ async fn run_interactive_sync_setup(ctx: &Context) -> Result<LibrarySyncSetupInp
 		);
 	}
 	let config_data = std::fs::read_to_string(&config_path)?;
-	let device_config: sd_core::device::DeviceConfig = serde_json::from_str(&config_data)?;
+	let device_config: wing_core::device::DeviceConfig = serde_json::from_str(&config_data)?;
 	let local_device_id = device_config.id;
 
 	// Step 1: Select local library
-	let libraries: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
+	let libraries: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
 		ctx,
-		sd_core::ops::libraries::list::query::ListLibrariesInput {
+		wing_core::ops::libraries::list::query::ListLibrariesInput {
 			include_stats: false
 		}
 	);

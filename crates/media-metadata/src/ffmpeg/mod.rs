@@ -40,7 +40,7 @@ impl FFmpegMetadata {
 
 		#[cfg(feature = "ffmpeg")]
 		{
-			sd_ffmpeg::probe(path)
+			wing_ffmpeg::probe(path)
 				.await
 				.map(Into::into)
 				.map_err(Into::into)
@@ -51,11 +51,11 @@ impl FFmpegMetadata {
 #[cfg(feature = "ffmpeg")]
 mod extract_data {
 
-	use sd_ffmpeg::model::{
+	use wing_ffmpeg::model::{
 		FFmpegAudioProps, FFmpegChapter, FFmpegCodec, FFmpegMediaData, FFmpegMetadata,
 		FFmpegProgram, FFmpegProps, FFmpegStream, FFmpegSubtitleProps, FFmpegVideoProps,
 	};
-	use sd_utils::i64_to_frontend;
+	use wing_utils::i64_to_frontend;
 
 	impl From<FFmpegMediaData> for super::FFmpegMetadata {
 		fn from(

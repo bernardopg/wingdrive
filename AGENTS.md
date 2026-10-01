@@ -4,11 +4,11 @@
 
 ### Development Workflow
 
-1. Start daemon: `cargo run --bin sd-daemon`
+1. Start daemon: `cargo run --bin wing-daemon`
 2. Make code changes
 3. Run tests: `cargo test`
-4. Rebuild and restart: `cargo run --bin sd-cli -- restart`
-5. Test via CLI: `cargo run --bin sd-cli -- <command>`
+4. Rebuild and restart: `cargo run --bin wing-cli -- restart`
+5. Test via CLI: `cargo run --bin wing-cli -- <command>`
 
 ### Common Commands
 
@@ -18,12 +18,12 @@ cargo test                               # Run all tests
 cargo test <test_name>                   # Run specific test
 cargo clippy                             # Lint code
 cargo fmt                                # Format code
-cargo run --bin sd-cli -- <command>      # Run CLI (binary is sd-cli, not spacedrive)
+cargo run --bin wing-cli -- <command>      # Run CLI (binary is wing-cli, not spacedrive)
 ```
 
 ### Common Mistakes
 
-- Running `spacedrive` instead of `sd-cli` (the binary name is `sd-cli`)
+- Running `spacedrive` instead of `wing-cli` (the binary name is `wing-cli`)
 - Forgetting to restart daemon after rebuilding
 - Using `println!` instead of `tracing` macros (`info!`, `debug!`, etc)
 - Implementing `Wire` manually instead of using `register_*` macros
@@ -193,7 +193,7 @@ Extensions run as sandboxed WASM modules that interact with WingDrive core via h
 ```
 Extension.wasm (compiled Rust)
     ↓
-spacedrive-sdk (Rust crate)
+wingdrive-sdk (Rust crate)
     ↓
 Host Functions (FFI boundary)
     ↓
@@ -213,7 +213,7 @@ Core (VDFS, Jobs, AI, etc.)
 Extensions use procedural macros to minimize boilerplate:
 
 ```rust
-use spacedrive_sdk::prelude::*;
+use wingdrive_sdk::prelude::*;
 
 #[extension(
     id = "test-extension",
@@ -541,7 +541,7 @@ fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("sd_core=info"))
+                .unwrap_or_else(|_| EnvFilter::new("wing_core=info"))
         )
         .init();
 }
@@ -607,9 +607,9 @@ impl Job for MyJob {
 Use `RUST_LOG` environment variable:
 
 ```bash
-RUST_LOG=debug cargo run --bin sd-cli
-RUST_LOG=sd_core=trace cargo run
-RUST_LOG=sd_core::ops=debug cargo run
+RUST_LOG=debug cargo run --bin wing-cli
+RUST_LOG=wing_core=trace cargo run
+RUST_LOG=wing_core::ops=debug cargo run
 ```
 
 ## Testing
@@ -743,14 +743,14 @@ After rebuilding, restart the daemon to use the latest code:
 
 ```bash
 cargo build
-cargo run --bin sd-cli -- restart
+cargo run --bin wing-cli -- restart
 ```
 
 ### Verbose Logging
 
 ```bash
-RUST_LOG=debug cargo run --bin sd-daemon
-RUST_LOG=sd_core::jobs=trace cargo run
+RUST_LOG=debug cargo run --bin wing-daemon
+RUST_LOG=wing_core::jobs=trace cargo run
 ```
 
 ## Documentation Locations

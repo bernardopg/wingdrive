@@ -1,7 +1,7 @@
 //! Color definitions and utilities for consistent CLI styling
 
 use crossterm::style::{Color, Stylize};
-use sd_core::infra::job::types::JobStatus;
+use wing_core::infra::job::types::JobStatus;
 
 /// Color scheme for the CLI
 pub struct Colors;

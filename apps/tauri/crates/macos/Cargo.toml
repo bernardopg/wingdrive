@@ -1,5 +1,5 @@
 [package]
-name    = "sd-desktop-macos"
+name    = "wing-desktop-macos"
 version = "0.1.0"
 
 edition.workspace    = true
