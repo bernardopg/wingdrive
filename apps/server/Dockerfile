@@ -19,9 +19,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
 	ca-certificates \
 	cmake \
 	nasm \
+	libclang-dev \
 	libavcodec-dev \
+	libavdevice-dev \
+	libavfilter-dev \
 	libavformat-dev \
 	libavutil-dev \
+	libswresample-dev \
 	libswscale-dev \
 	libheif-dev
 
@@ -62,8 +66,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
 	libssl3 \
 	ca-certificates \
 	libavcodec59 \
+	libavdevice59 \
+	libavfilter8 \
 	libavformat59 \
 	libavutil57 \
+	libswresample4 \
 	libswscale6 \
 	libheif1 \
 	&& rm -rf /var/lib/apt/lists/*
