@@ -9,7 +9,7 @@
 FROM debian:bookworm-slim AS builder
 
 # Install build dependencies
-RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked \
 	apt-get update && apt-get install -y \
 	build-essential \
 	curl \
@@ -58,7 +58,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 FROM debian:bookworm-slim
 
 # Install runtime dependencies only
-RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked \
 	apt-get update && apt-get install -y \
 	libssl3 \
 	ca-certificates \
