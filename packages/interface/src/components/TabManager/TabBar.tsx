@@ -215,7 +215,7 @@ export function TabBar() {
 				items={tabs.map((tab) => tab.id)}
 				strategy={horizontalListSortingStrategy}
 			>
-				<AnimatePresence>
+				<AnimatePresence initial={false}>
 					{tabs.map((tab, index) => (
 						<SortableTab
 							key={tab.id}

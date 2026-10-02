@@ -206,10 +206,12 @@ const { chromium } = require('playwright');
     await cdp.send('HeapProfiler.collectGarbage');
     const memoryAfter = (await cdp.send('Runtime.getHeapUsage')).usedSize;
     const browserMemoryAfter = await browserMemory();
+    const switchMedian = timings.slice().sort((a,b)=>a-b)[50];
+    const switchBudget = Number(process.env.WINGDRIVE_TAB_SWITCH_BUDGET_MS || 50);
     console.log('Memory', {heapBefore: memoryBefore/1048576, heapAfter: memoryAfter/1048576,
       browserBefore: browserMemoryBefore.total/1048576, browserAfter: browserMemoryAfter.total/1048576,
       rendererBefore: browserMemoryBefore.renderer/1048576, rendererAfter: browserMemoryAfter.renderer/1048576,
-      switchMedian: timings.slice().sort((a,b)=>a-b)[50]});
+      switchMedian});
     assert(browserMemoryAfter.renderer < 500 * 1024 * 1024, '15 tabs exceeded 500 MB renderer memory');
     assert(memoryAfter - memoryBefore < 100 * 1024 * 1024, '100 tab switches retained excessive memory');
     console.log('Missing location');
@@ -234,6 +236,8 @@ const { chromium } = require('playwright');
       assertions: 'file icons, selection, range, keyboard, 10k virtualization, multi-sort, resize, tab history/selection/scroll, cross-tab file move, close/reopen, missing location'};
     fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report, null, 2));
+    assert(Number.isFinite(switchBudget) && switchBudget > 0 && switchMedian < switchBudget,
+      `Tab switch median ${switchMedian.toFixed(1)} ms exceeded ${switchBudget} ms budget`);
   } catch (error) {
     await page.screenshot({path: path.join(output, "failure.png")});
     console.log("Failure state", page.url(), (await page.locator("body").innerText()).slice(-2400));

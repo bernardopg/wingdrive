@@ -18,7 +18,7 @@ Add browser-like tabs to WingDrive Explorer, enabling users to browse multiple l
 
 Shipped: tab bar, create/close/switch, batch close (others / to the right), reopen closed tab with its explorer state, drag reorder, keybinds, and localStorage persistence scoped per window.
 
-Each tab now owns an independent memory router. Only the active view is mounted; the active and two recent routers remain cached. The browser URL mirrors the active router. Selection, sorting and scroll persist per tab, and history survives switching and reloads.
+Each tab now owns an independent memory router. Only the active view is mounted; open tabs retain their small routers. The browser URL mirrors the active router. Selection, sorting and scroll persist per tab, and history survives switching and reloads.
 
 ## Dependencies
 
@@ -53,7 +53,7 @@ Each tab will have **isolated contexts** created through React's `key` prop mech
 
 ### Router Strategy
 
-Use a memory router for every tab and mirror only the active route to the browser URL. Dispose routers outside the three-entry cache. Inactive views unmount, releasing their query subscriptions; query data follows the existing TanStack cache lifetime.
+Use a memory router for every tab and mirror only the active route to the browser URL. Dispose each router when its tab closes. Inactive views unmount, releasing their query subscriptions; query data follows the existing TanStack cache lifetime.
 
 ### Per-Tab State (Isolated)
 
@@ -100,10 +100,10 @@ Synchronized across all tabs:
 - [x] `tabs.selectTab1-9` (Cmd+1-9) - jumps to specific tab
 
 ### Phase 4: Performance
-- [x] Only active view mounts; active plus two recent routers are cached
+- [x] Only active view mounts; open-tab routers are reused without mounting inactive views
 - [x] Inactive views release query subscriptions and use existing query GC
 - [x] Scroll position preservation per tab
-- [ ] 15 tabs <500MB memory
+- [ ] 15 tabs <500 MiB native session PSS (desktop and children)
 - [x] No memory leaks over 100 tab cycles
 
 ### Phase 5: Persistence
@@ -183,4 +183,4 @@ Synchronized across all tabs:
 
 ## Verification (2026-10-02)
 
-Production Playwright passes independent history, selection and scroll, a real move between tabs, close/reopen, last-tab protection and deleted-location recovery. After 100 switches with 15 tabs, renderer PSS was 236.7 MiB and JS heap was 20.1 MiB. Whole Chromium PSS was 517.4 MiB including browser/GPU services. Native memory and uncontended latency checks remain pending.
+Production Playwright passes independent history, selection and scroll, a real move between tabs, close/reopen, last-tab protection and deleted-location recovery. After 100 switches with 15 tabs, renderer PSS was 236.7 MiB and JS heap was 20.1 MiB. Whole Chromium PSS was 517.4 MiB including browser/GPU services. A native 15-tab session with bounded glibc arenas measured 493.6 MiB including desktop, WebKit and daemon. Median switch latency remains 61.4 ms on this host versus the inherited 50 ms target. Final native verification and the GitHub runner benchmark remain pending.

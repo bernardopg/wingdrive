@@ -81,7 +81,20 @@ with tempfile.TemporaryDirectory(prefix="wingdrive-bundle-") as directory:
         windows = subprocess.check_output(["xdotool", "search", "--onlyvisible", "--name", "WingDrive"], text=True)
         assert windows.strip(), "Main window not visible"
         assert process.poll() is None, "Desktop exited after connection"
-        print(f"Native desktop and children PSS: {process_memory(process.pid) / 1048576:.1f} MiB")
+        window = windows.splitlines()[0]
+        time.sleep(10)
+        subprocess.run(['xdotool', 'windowfocus', '--sync', window], check=True)
+        subprocess.run(['xdotool', 'key', '--clearmodifiers', '--repeat', '14',
+                        '--repeat-delay', '200', 'ctrl+t'], check=True)
+        time.sleep(20)
+        memory = process_memory(process.pid)
+        print(f"Native desktop with 15 tabs and children PSS: {memory / 1048576:.1f} MiB")
+        if output := os.environ.get('WINGDRIVE_TEST_OUTPUT'):
+            evidence = Path(output)
+            evidence.mkdir(parents=True, exist_ok=True)
+            subprocess.run(['import', '-window', window, str(evidence / 'native-15-tabs.png')], check=True)
+            (evidence / 'native-memory.json').write_text(json.dumps({'tabs': 15, 'pssMiB': memory / 1048576}))
+        assert memory < 500 * 1048576, 'Native desktop and children exceeded 500 MiB'
         print("PASS: isolated packaged daemon replies and WingDrive window is visible")
     finally:
         os.killpg(process.pid, signal.SIGTERM)

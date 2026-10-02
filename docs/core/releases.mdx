@@ -78,7 +78,7 @@ the argument with your release version. Push the matching `v` tag to start
 
 The workflow checks types, native code, safe undo and secrets migration. It
 builds both packages, starts the extracted AppImage with an isolated daemon,
-and runs the explorer browser tests against the production server. GitHub
+opens 15 tabs and checks native PSS below 500 MiB, then runs the explorer browser tests against the production server. GitHub
 publication starts after those checks pass. Prerelease versions retain their
 alpha, beta or rc label.
 

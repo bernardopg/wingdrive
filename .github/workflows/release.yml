@@ -55,7 +55,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           ./scripts/setup.sh
-          sudo apt-get install -y xvfb xdotool python3
+          sudo apt-get install -y xvfb xdotool python3 imagemagick
       - name: Setup native libraries and daemon
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -76,10 +76,12 @@ jobs:
           bun run --cwd apps/web build
           cargo build --locked --release --target x86_64-unknown-linux-gnu --features wing-core/ffmpeg,wing-core/heif --bin wing-server --bin wing
       - name: Verify extracted AppImage
+        env:
+          WINGDRIVE_TEST_OUTPUT: /tmp/wingdrive-browser-evidence
         run: |
           mapfile -t images < <(find target/x86_64-unknown-linux-gnu/release/bundle -name '*.AppImage')
           test "${#images[@]}" -eq 1
-          xvfb-run -a python3 scripts/release/smoke.py "${images[0]}"
+          xvfb-run -a -s '-screen 0 1920x1080x24' python3 scripts/release/smoke.py "${images[0]}"
       - name: Verify explorer in Chromium with the production backend
         env:
           BASE_URL: http://127.0.0.1:18765

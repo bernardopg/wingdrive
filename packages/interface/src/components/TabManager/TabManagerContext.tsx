@@ -283,21 +283,15 @@ export function TabManagerProvider({
 		return created;
 	}, [activeTabId, routes, tabs]);
 	useEffect(() => {
-		const recent = new Set(
-			tabs
-				.slice()
-				.sort((a, b) => b.lastActive - a.lastActive)
-				.slice(0, 3)
-				.map((tab) => tab.id)
-		);
-		recent.add(activeTabId);
+		// ponytail: routers use O(open tabs) memory; evict cold routers if very large sessions need a cap.
+		const open = new Set(tabs.map((tab) => tab.id));
 		for (const [id, router] of routers.current) {
-			if (!recent.has(id)) {
+			if (!open.has(id)) {
 				router.dispose();
 				routers.current.delete(id);
 			}
 		}
-	}, [tabs, activeTabId]);
+	}, [tabs]);
 	const mounted = useRef(false);
 	useEffect(() => {
 		mounted.current = true;
@@ -579,6 +573,7 @@ export function TabManagerProvider({
 				const current = prev.get(tabId) ?? {
 					...DEFAULT_EXPLORER_STATE
 				};
+				if (Object.entries(updates).every(([key, value]) => Object.is(current[key as keyof TabExplorerState], value))) return prev;
 				return new Map(prev).set(tabId, {...current, ...updates});
 			});
 		},
@@ -598,7 +593,11 @@ export function TabManagerProvider({
 
 	const updateSelectionIds = useCallback(
 		(tabId: string, fileIds: string[]) => {
-			setSelectionStates((prev) => new Map(prev).set(tabId, fileIds));
+			setSelectionStates((prev) => {
+				const current = prev.get(tabId) ?? [];
+				if (current.length === fileIds.length && current.every((id, index) => id === fileIds[index])) return prev;
+				return new Map(prev).set(tabId, fileIds);
+			});
 		},
 		[]
 	);
