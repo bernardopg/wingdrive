@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 
 // @ts-ignore - SCSS imports
-import oneDarkCss from './one-dark.scss?url';
+import oneDarkCss from './one-dark.css?url';
 // @ts-ignore - SCSS imports
-import oneLightCss from './one-light.scss?url';
+import oneLightCss from './one-light.css?url';
 
 export const languageMapping = Object.entries({
 	applescript: ['scpt', 'scptd'],

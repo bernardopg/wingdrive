@@ -2177,10 +2177,10 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 fn main() {
 	#[cfg(all(target_os = "linux", target_env = "gnu"))]
 	if std::env::var_os("MALLOC_ARENA_MAX").is_none() {
-		// ponytail: four glibc arenas bound fragmentation; raise if allocation contention limits throughput.
-		std::env::set_var("MALLOC_ARENA_MAX", "4");
+		// ponytail: one glibc arena bounds fragmentation; raise if allocation contention limits throughput.
+		std::env::set_var("MALLOC_ARENA_MAX", "1");
 		// Apply to this process too, since the loader can initialize malloc before main.
-		unsafe { libc::mallopt(libc::M_ARENA_MAX, 4) };
+		unsafe { libc::mallopt(libc::M_ARENA_MAX, 1) };
 	}
 	#[cfg(target_os = "linux")]
 	if let Some(app_dir) = std::env::var_os("APPDIR") {
