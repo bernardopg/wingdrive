@@ -165,6 +165,7 @@ async function main() {
 				stdio: ['ignore', 'pipe', 'pipe'],
 				env: {
 					...process.env,
+					LD_LIBRARY_PATH: [depsLibPath, process.env.LD_LIBRARY_PATH].filter(Boolean).join(':'),
 					// macOS library path
 					DYLD_LIBRARY_PATH: depsLibPath,
 					// Windows: Add DLLs directory to PATH
