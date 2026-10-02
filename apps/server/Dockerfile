@@ -7,6 +7,7 @@
 # automatically; this Dockerfile assumes the dist directory is ready.
 
 FROM ubuntu:24.04 AS builder
+ARG TARGETARCH
 
 # Install build dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -19,6 +20,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
 	ca-certificates \
 	cmake \
 	nasm \
+	zlib1g-dev \
 	libclang-dev \
 	libavcodec-dev \
 	libavdevice-dev \
@@ -51,7 +53,7 @@ COPY patches ./patches
 # of trying to run `bun run build` (bun isn't installed in this stage).
 RUN --mount=type=cache,target=/root/.cargo/registry \
 	--mount=type=cache,target=/root/.cargo/git \
-	--mount=type=cache,target=/build/target \
+	--mount=type=cache,id=wingdrive-server-target-${TARGETARCH},target=/build/target \
 	WING_SKIP_WEB_BUILD=1 cargo build --locked --release -p wing-server --features wing-core/heif,wing-core/ffmpeg && \
 	cp target/release/wing-server /usr/local/bin/wing-server
 
