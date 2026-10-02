@@ -62,6 +62,7 @@ runs:
       with:
         key: ${{ inputs.target }}
         save-if: ${{ inputs.save-cache }}
+        cache-on-failure: true
         shared-key: stable-cache-v6
 
     # TODO: Re-enable cargo config generation when preprep.mjs is ported
