@@ -1,11 +1,11 @@
-import { createContext, useContext, PropsWithChildren } from "react";
+import {createContext, PropsWithChildren, useContext} from 'react';
 
 /** Files dragged from the operating system into a window (Tauri only) */
 export type ExternalFileDropEvent =
-	| { type: "enter"; paths: string[] }
-	| { type: "over" }
-	| { type: "drop"; paths: string[] }
-	| { type: "leave" };
+	| {type: 'enter'; paths: string[]}
+	| {type: 'over'}
+	| {type: 'drop'; paths: string[]}
+	| {type: 'leave'};
 
 /**
  * Platform abstraction layer
@@ -15,7 +15,7 @@ export type ExternalFileDropEvent =
  */
 export type Platform = {
 	/** Platform discriminator */
-	platform: "web" | "tauri";
+	platform: 'web' | 'tauri';
 
 	/** Open native directory picker dialog (Tauri only) */
 	openDirectoryPickerDialog?(opts?: {
@@ -57,7 +57,9 @@ export type Platform = {
 	revealFile?(filePath: string): Promise<void>;
 
 	/** Subscribe to files dragged from the operating system into this window (Tauri only) */
-	onExternalFileDrop?(callback: (event: ExternalFileDropEvent) => void): Promise<() => void>;
+	onExternalFileDrop?(
+		callback: (event: ExternalFileDropEvent) => void
+	): Promise<() => void>;
 
 	/** Share files using native system share sheet (macOS/iOS only) */
 	shareFiles?(filePaths: string[]): Promise<void>;
@@ -67,6 +69,16 @@ export type Platform = {
 
 	/** Open file with system default application */
 	openPathDefault?(path: string): Promise<OpenResult>;
+	resolveSymlink?(path: string): Promise<[string, boolean]>;
+	writeFileClipboard?(paths: string[], cut: boolean): Promise<void>;
+	readFileClipboard?(): Promise<[string[], boolean]>;
+	fileIdentity?(path: string): Promise<[string, string]>;
+	undoMove?(
+		source: string,
+		destination: string,
+		expected: [string, string]
+	): Promise<void>;
+	undoEmptyFolder?(path: string, expected: [string, string]): Promise<void>;
 
 	/** Open file with specific application */
 	openPathWithApp?(path: string, appId: string): Promise<OpenResult>;
@@ -93,7 +105,9 @@ export type Platform = {
 	setCurrentLibraryId?(libraryId: string): Promise<void>;
 
 	/** Listen for library ID changes across all windows (Tauri only) */
-	onLibraryIdChanged?(callback: (libraryId: string) => void): Promise<() => void>;
+	onLibraryIdChanged?(
+		callback: (libraryId: string) => void
+	): Promise<() => void>;
 
 	/** Show a specific window type (Tauri only) */
 	showWindow?(window: any): Promise<void>;
@@ -120,7 +134,9 @@ export type Platform = {
 	setSelectedFileIds?(fileIds: string[]): Promise<void>;
 
 	/** Listen for selected file changes across all windows (Tauri only) */
-	onSelectedFilesChanged?(callback: (fileIds: string[]) => void): Promise<() => void>;
+	onSelectedFilesChanged?(
+		callback: (fileIds: string[]) => void
+	): Promise<() => void>;
 
 	/** Get app version (Tauri only) */
 	getAppVersion?(): Promise<string>;
@@ -172,14 +188,15 @@ export type Platform = {
 	startDrag?(config: {
 		items: Array<{
 			id: string;
-			kind: { type: "file"; path: string } | { type: "text"; content: string };
+			kind:
+				{type: 'file'; path: string} | {type: 'text'; content: string};
 		}>;
-		allowedOperations: Array<"copy" | "move" | "link">;
+		allowedOperations: Array<'copy' | 'move' | 'link'>;
 	}): Promise<string>;
 
 	/** Listen for drag events */
 	onDragEvent?(
-		event: "began" | "moved" | "entered" | "left" | "ended",
+		event: 'began' | 'moved' | 'entered' | 'left' | 'ended',
 		callback: (payload: any) => void
 	): Promise<() => void>;
 
@@ -211,11 +228,11 @@ export interface OpenWithApp {
 
 /** Result of opening a file */
 export type OpenResult =
-	| { status: "success" }
-	| { status: "file_not_found"; path: string }
-	| { status: "app_not_found"; app_id: string }
-	| { status: "permission_denied"; path: string }
-	| { status: "platform_error"; message: string };
+	| {status: 'success'}
+	| {status: 'file_not_found'; path: string}
+	| {status: 'app_not_found'; app_id: string}
+	| {status: 'permission_denied'; path: string}
+	| {status: 'platform_error'; message: string};
 
 /** Menu item state for native menus */
 export interface MenuItemState {
@@ -231,7 +248,7 @@ export function usePlatform(): Platform {
 	const ctx = useContext(PlatformContext);
 	if (!ctx) {
 		throw new Error(
-			"usePlatform must be used within a PlatformProvider. Make sure PlatformProvider is mounted above this component."
+			'usePlatform must be used within a PlatformProvider. Make sure PlatformProvider is mounted above this component.'
 		);
 	}
 	return ctx;
@@ -239,7 +256,11 @@ export function usePlatform(): Platform {
 
 export function PlatformProvider({
 	platform,
-	children,
-}: PropsWithChildren<{ platform: Platform }>) {
-	return <PlatformContext.Provider value={platform}>{children}</PlatformContext.Provider>;
+	children
+}: PropsWithChildren<{platform: Platform}>) {
+	return (
+		<PlatformContext.Provider value={platform}>
+			{children}
+		</PlatformContext.Provider>
+	);
 }

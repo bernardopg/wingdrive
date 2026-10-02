@@ -241,7 +241,7 @@ impl LibraryQuery for MediaListingQuery {
 		// Execute the query
 		let rows = if let Some(path_pattern) = parent_path_pattern {
 			db.conn()
-				.query_all(sea_orm::Statement::from_sql_and_values(
+				.query_all_raw(sea_orm::Statement::from_sql_and_values(
 					sea_orm::DatabaseBackend::Sqlite,
 					&sql_query,
 					[parent_id.into(), path_pattern.into()],
@@ -249,7 +249,7 @@ impl LibraryQuery for MediaListingQuery {
 				.await?
 		} else {
 			db.conn()
-				.query_all(sea_orm::Statement::from_sql_and_values(
+				.query_all_raw(sea_orm::Statement::from_sql_and_values(
 					sea_orm::DatabaseBackend::Sqlite,
 					&sql_query,
 					[parent_id.into()],

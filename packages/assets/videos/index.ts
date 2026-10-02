@@ -3,8 +3,4 @@
  * To regenerate this file, run: pnpm assets gen
  */
 
-import Fda from './Fda.mp4';
-import WingIntro from './WingIntro.mp4';
-import WingMobIntro from './WingMobIntro.mp4';
-
-export {Fda, WingIntro, WingMobIntro};
+export {};

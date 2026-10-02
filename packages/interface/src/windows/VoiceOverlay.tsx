@@ -4,7 +4,7 @@ import {
 	SpeakerHigh,
 	Stop,
 } from "@phosphor-icons/react";
-import { BallBlue } from "@wingdrive/assets/images";
+import { WingDriveLogo } from "@wingdrive/assets/images";
 import { Popover, usePopover } from "@wingdrive/primitives";
 import {
 	apiClient,
@@ -13,7 +13,6 @@ import {
 	type TtsProfile,
 } from "@spacebot/api-client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Orb from "../components/Orb";
 import { usePlatform } from "../contexts/PlatformContext";
 import { useAudioRecorder } from "../hooks/useAudioRecorder";
 import { useTtsPlayback } from "../hooks/useTtsPlayback";
@@ -512,7 +511,7 @@ export function VoiceOverlay() {
 						}}
 					/>
 					<div className="relative z-10 flex h-7 w-7 items-center justify-center text-ink">
-						<BullLogoOrb />
+						<WingLogo />
 					</div>
 				</div>
 
@@ -595,7 +594,7 @@ export function VoiceOverlay() {
 	);
 }
 
-function BullLogoOrb() {
+function WingLogo() {
 	return (
 		<>
 			<div
@@ -603,19 +602,10 @@ function BullLogoOrb() {
 				aria-hidden="true"
 			>
 				<img
-					src={BallBlue}
+					src={WingDriveLogo}
 					alt=""
 					className="h-full w-full object-contain"
 					draggable={false}
-				/>
-			</div>
-			<div className="absolute inset-0 z-10" aria-hidden="true">
-				<Orb
-					palette="blue"
-					hue={0}
-					hoverIntensity={0}
-					rotateOnHover={false}
-					forceHoverState
 				/>
 			</div>
 		</>

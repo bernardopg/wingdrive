@@ -112,7 +112,7 @@ impl LibraryAction for LocationImportAction {
 		let txn = db.begin().await.map_err(ActionError::SeaOrm)?;
 
 		// Disable foreign keys for import
-		txn.execute(Statement::from_string(
+		txn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"PRAGMA foreign_keys = OFF;".to_string(),
 		))
@@ -214,7 +214,7 @@ impl LibraryAction for LocationImportAction {
 
 			// Execute the statement
 			let result = txn
-				.execute(Statement::from_string(
+				.execute_raw(Statement::from_string(
 					DbBackend::Sqlite,
 					modified_statement.clone(),
 				))
@@ -260,7 +260,7 @@ impl LibraryAction for LocationImportAction {
 		let mut iterations = 0;
 		loop {
 			let result = txn
-				.execute(Statement::from_string(
+				.execute_raw(Statement::from_string(
 					DbBackend::Sqlite,
 					r#"
 					INSERT OR IGNORE INTO entry_closure (ancestor_id, descendant_id, depth)
@@ -286,7 +286,7 @@ impl LibraryAction for LocationImportAction {
 		}
 
 		// Re-enable foreign keys
-		txn.execute(Statement::from_string(
+		txn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"PRAGMA foreign_keys = ON;".to_string(),
 		))

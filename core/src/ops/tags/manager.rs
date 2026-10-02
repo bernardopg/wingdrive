@@ -12,6 +12,7 @@ use crate::infra::db::entities::*;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use sea_orm::DatabaseConnection;
+use sea_orm::ExprTrait;
 use sea_orm::{
 	ActiveModelTrait, ColumnTrait, ConnectionTrait, DbConn, DbErr, EntityTrait, NotSet,
 	QueryFilter, QuerySelect, Set, TransactionTrait,
@@ -342,7 +343,7 @@ impl TagManager {
 			],
 		);
 
-		db.execute(stmt)
+		db.execute_raw(stmt)
 			.await
 			.map_err(|e| TagError::DatabaseError(e.to_string()))?;
 
@@ -721,7 +722,7 @@ impl TagManager {
 		} else {
 			// Try FTS5 search first, fall back to LIKE patterns if FTS5 is not available
 			// Attempt FTS5 search (skip if FTS5 table doesn't exist)
-			if let Ok(fts_results) = db.query_all(
+			if let Ok(fts_results) = db.query_all_raw(
 	            sea_orm::Statement::from_sql_and_values(
 	                sea_orm::DatabaseBackend::Sqlite,
 	                "SELECT rowid FROM tag_search_fts WHERE tag_search_fts MATCH ? ORDER BY bm25(tag_search_fts)",
@@ -752,7 +753,7 @@ impl TagManager {
 					OR abbreviation LIKE ? ESCAPE '\\' \
 					OR description LIKE ? ESCAPE '\\'";
 				let like_results = db
-					.query_all(sea_orm::Statement::from_sql_and_values(
+					.query_all_raw(sea_orm::Statement::from_sql_and_values(
 						sea_orm::DatabaseBackend::Sqlite,
 						like_sql,
 						[

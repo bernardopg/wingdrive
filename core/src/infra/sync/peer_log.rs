@@ -49,7 +49,7 @@ impl PeerLog {
 	/// Create sync.db tables
 	async fn create_tables(conn: &DatabaseConnection) -> Result<(), PeerLogError> {
 		// shared_changes table
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			r#"
 			CREATE TABLE IF NOT EXISTS shared_changes (
@@ -67,14 +67,14 @@ impl PeerLog {
 		.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
 
 		// Indexes for efficient queries
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_shared_changes_hlc ON shared_changes(hlc)".to_string(),
 		))
 		.await
 		.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
 
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_shared_changes_model ON shared_changes(model_type)"
 				.to_string(),
@@ -83,7 +83,7 @@ impl PeerLog {
 		.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
 
 		// peer_acks table
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			r#"
 			CREATE TABLE IF NOT EXISTS peer_acks (
@@ -113,7 +113,7 @@ impl PeerLog {
 			.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
 
 		// sync_event_log table (persistent event logging)
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			r#"
 			CREATE TABLE IF NOT EXISTS sync_event_log (
@@ -138,7 +138,7 @@ impl PeerLog {
 		.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
 
 		// Indexes for efficient event queries
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_sync_event_log_timestamp ON sync_event_log(timestamp)"
 				.to_string(),
@@ -146,7 +146,7 @@ impl PeerLog {
 		.await
 		.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
 
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_sync_event_log_device ON sync_event_log(device_id)"
 				.to_string(),
@@ -154,7 +154,7 @@ impl PeerLog {
 		.await
 		.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
 
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_sync_event_log_type ON sync_event_log(event_type)"
 				.to_string(),
@@ -162,7 +162,7 @@ impl PeerLog {
 		.await
 		.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
 
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_sync_event_log_correlation ON sync_event_log(correlation_id)"
 				.to_string(),
@@ -170,7 +170,7 @@ impl PeerLog {
 		.await
 		.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
 
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_sync_event_log_peer ON sync_event_log(peer_device_id)"
 				.to_string(),
@@ -190,7 +190,7 @@ impl PeerLog {
 		let created_at = chrono::Utc::now().to_rfc3339();
 
 		self.conn
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				INSERT INTO shared_changes (hlc, model_type, record_uuid, change_type, data, created_at)
@@ -248,7 +248,7 @@ impl PeerLog {
 
 		let rows = self
 			.conn
-			.query_all(query)
+			.query_all_raw(query)
 			.await
 			.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
 
@@ -300,7 +300,7 @@ impl PeerLog {
 	pub async fn get_max_hlc(&self) -> Result<Option<HLC>, PeerLogError> {
 		let result = self
 			.conn
-			.query_one(Statement::from_string(
+			.query_one_raw(Statement::from_string(
 				DbBackend::Sqlite,
 				"SELECT MAX(hlc) as max_hlc FROM shared_changes".to_string(),
 			))
@@ -329,7 +329,7 @@ impl PeerLog {
 		let acked_at = chrono::Utc::now().to_rfc3339();
 
 		self.conn
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				INSERT OR REPLACE INTO peer_acks (peer_device_id, last_acked_hlc, acked_at)
@@ -351,7 +351,7 @@ impl PeerLog {
 	async fn get_min_acked_hlc(&self) -> Result<Option<HLC>, PeerLogError> {
 		let result = self
 			.conn
-			.query_one(Statement::from_sql_and_values(
+			.query_one_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				"SELECT MIN(last_acked_hlc) as min_hlc FROM peer_acks WHERE peer_device_id != ?",
 				vec![self.device_id.to_string().into()],
@@ -386,7 +386,7 @@ impl PeerLog {
 				let hlc_str = hlc.to_string();
 				let result = self
 					.conn
-					.execute(Statement::from_sql_and_values(
+					.execute_raw(Statement::from_sql_and_values(
 						DbBackend::Sqlite,
 						"DELETE FROM shared_changes WHERE hlc <= ?",
 						vec![hlc_str.into()],
@@ -404,7 +404,7 @@ impl PeerLog {
 	pub async fn count(&self) -> Result<usize, PeerLogError> {
 		let result = self
 			.conn
-			.query_one(Statement::from_string(
+			.query_one_raw(Statement::from_string(
 				DbBackend::Sqlite,
 				"SELECT COUNT(*) as count FROM shared_changes".to_string(),
 			))
@@ -432,7 +432,7 @@ impl PeerLog {
 	) -> Result<Option<HLC>, PeerLogError> {
 		let result = self
 			.conn
-			.query_one(Statement::from_sql_and_values(
+			.query_one_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				"SELECT hlc FROM shared_changes WHERE record_uuid = ? ORDER BY hlc DESC LIMIT 1",
 				vec![record_uuid.to_string().into()],

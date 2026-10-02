@@ -1,8 +1,8 @@
 use crate::Error;
 
-use rand::RngCore;
+use rand::Rng;
+use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
-use rand_core::SeedableRng;
 use zeroize::{Zeroize, Zeroizing};
 
 /// This RNG should be used throughout the entire crate.
@@ -17,7 +17,9 @@ impl CryptoRng {
 	/// (via the [getrandom](https://docs.rs/getrandom) crate).
 	#[inline]
 	pub fn new() -> Result<Self, Error> {
-		ChaCha20Rng::try_from_os_rng()
+		// rand 0.10 removed `try_from_os_rng`; seed from the OS-backed SysRng
+		// via the fallible `try_from_rng` path instead.
+		ChaCha20Rng::try_from_rng(&mut rand::rngs::SysRng)
 			.map(Self)
 			.map_err(|_| Error::Encrypt) // Convert getrandom error to our error type
 	}
@@ -43,22 +45,27 @@ impl CryptoRng {
 	}
 }
 
-impl RngCore for CryptoRng {
+impl rand::TryRng for CryptoRng {
+	type Error = core::convert::Infallible;
+
 	#[inline]
-	fn fill_bytes(&mut self, dest: &mut [u8]) {
+	fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
+		Ok(self.0.next_u32())
+	}
+
+	#[inline]
+	fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
+		Ok(self.0.next_u64())
+	}
+
+	#[inline]
+	fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
 		self.0.fill_bytes(dest);
-	}
-
-	#[inline]
-	fn next_u32(&mut self) -> u32 {
-		self.0.next_u32()
-	}
-
-	#[inline]
-	fn next_u64(&mut self) -> u64 {
-		self.0.next_u64()
+		Ok(())
 	}
 }
+
+impl rand::TryCryptoRng for CryptoRng {}
 
 impl SeedableRng for CryptoRng {
 	type Seed = <ChaCha20Rng as SeedableRng>::Seed;
@@ -78,10 +85,6 @@ impl Zeroize for CryptoRng {
 	}
 }
 
-impl rand::CryptoRng for CryptoRng {}
-
-// impl_try_crypto_rng_from_crypto_rng macro is no longer available in rand_core 0.9
-
 impl Drop for CryptoRng {
 	#[inline]
 	fn drop(&mut self) {
@@ -94,19 +97,19 @@ impl old_rand_core::CryptoRng for CryptoRng {}
 
 impl old_rand_core::RngCore for CryptoRng {
 	fn next_u32(&mut self) -> u32 {
-		<Self as RngCore>::next_u32(self)
+		<Self as Rng>::next_u32(self)
 	}
 
 	fn next_u64(&mut self) -> u64 {
-		<Self as RngCore>::next_u64(self)
+		<Self as Rng>::next_u64(self)
 	}
 
 	fn fill_bytes(&mut self, dest: &mut [u8]) {
-		<Self as RngCore>::fill_bytes(self, dest);
+		<Self as Rng>::fill_bytes(self, dest);
 	}
 
 	fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), old_rand_core::Error> {
-		<Self as RngCore>::fill_bytes(self, dest);
+		<Self as Rng>::fill_bytes(self, dest);
 		Ok(())
 	}
 }

@@ -54,7 +54,7 @@ impl SyncEventLogger {
 		let model_types_str = event.model_types.as_ref().map(|types| types.join(","));
 
 		self.conn
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				INSERT INTO sync_event_log (
@@ -158,7 +158,7 @@ impl SyncEventLogger {
 
 		let stmt = Statement::from_sql_and_values(DbBackend::Sqlite, &sql, param_values);
 
-		let rows = self.conn.query_all(stmt).await?;
+		let rows = self.conn.query_all_raw(stmt).await?;
 
 		let events: Vec<SyncEventLog> = rows
 			.into_iter()
@@ -214,7 +214,7 @@ impl SyncEventLogger {
 	pub async fn cleanup_old_events(&self, older_than: DateTime<Utc>) -> Result<usize> {
 		let result = self
 			.conn
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				"DELETE FROM sync_event_log WHERE timestamp < ?",
 				vec![older_than.to_rfc3339().into()],

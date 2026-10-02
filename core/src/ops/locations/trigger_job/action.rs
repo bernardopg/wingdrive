@@ -296,7 +296,7 @@ async fn query_location_entry_uuids(
 	// Query all entry IDs that are descendants of this location's root entry
 	// using the entry_closure table
 	let entry_ids: Vec<i32> = db
-		.query_all(Statement::from_sql_and_values(
+		.query_all_raw(Statement::from_sql_and_values(
 			sea_orm::DbBackend::Sqlite,
 			"SELECT descendant_id FROM entry_closure WHERE ancestor_id = ?",
 			vec![root_entry_id.into()],

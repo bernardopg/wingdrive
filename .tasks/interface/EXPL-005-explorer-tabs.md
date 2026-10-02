@@ -5,10 +5,10 @@ status: In Progress
 assignee: unassigned
 parent: EXPL-000
 priority: High
-sprint: S03
+sprint: S01
 milestone: M1
 tags: [explorer, tabs, navigation, ui]
-last_updated: 2026-08-19
+last_updated: 2026-10-02
 related_tasks: []
 ---
 
@@ -18,7 +18,7 @@ Add browser-like tabs to WingDrive Explorer, enabling users to browse multiple l
 
 Shipped: tab bar, create/close/switch, batch close (others / to the right), reopen closed tab with its explorer state, drag reorder, keybinds, and localStorage persistence scoped per window.
 
-Not shipped: per-tab router isolation. All tabs share one `createBrowserRouter` and a saved path string, so back/forward history is global rather than per tab. `TabView.tsx` is still an unused placeholder for that work. Remaining: phase 2 router isolation, phase 4 perf, phase 6 close animations and cross-tab drag.
+Each tab now owns an independent memory router. Only the active view is mounted; the active and two recent routers remain cached. The browser URL mirrors the active router. Selection, sorting and scroll persist per tab, and history survives switching and reloads.
 
 ## Dependencies
 
@@ -53,12 +53,7 @@ Each tab will have **isolated contexts** created through React's `key` prop mech
 
 ### Router Strategy
 
-**Challenge:** React Router v6 only supports one browser router per app
-
-**Solution:** Dynamic router type switching
-- **Active tab:** `createBrowserRouter` (syncs to URL bar)
-- **Inactive tabs:** `createMemoryRouter` (in-memory only)
-- **On tab switch:** Swap router types
+Use a memory router for every tab and mirror only the active route to the browser URL. Dispose routers outside the three-entry cache. Inactive views unmount, releasing their query subscriptions; query data follows the existing TanStack cache lifetime.
 
 ### Per-Tab State (Isolated)
 
@@ -82,18 +77,18 @@ Synchronized across all tabs:
 ### Phase 1: Core Infrastructure (MVP)
 - [x] `TabManagerContext.tsx` created with core state management
 - [x] `TabBar.tsx` UI component implemented
-- [ ] `TabView.tsx` rendering logic implemented (placeholder only, needs phase 2)
+- [x] `TabView.tsx` renders the active isolated router
 - [x] `useTabManager.ts` hook created
 - [x] `Explorer.tsx` wrapped in TabManagerProvider
-- [ ] `context.tsx` updated with `isActiveTab` prop (prop exists but nothing passes it)
-- [ ] `SelectionContext.tsx` updated with `isActiveTab` prop (same)
+- [x] Only the mounted active Explorer receives keyboard and platform handlers
+- [x] Selection restores from per-tab state when the active view mounts
 - [x] App launches with single tab, no regressions
 
 ### Phase 2: Multi-Tab State
 - [x] Create/close/switch tabs functional
 - [x] Saved path per tab restored on switch
-- [ ] Independent navigation history per tab (shared router today)
-- [ ] Router type swapping works correctly
+- [x] Independent navigation history per tab
+- [x] Active memory router mirrors its route to the browser URL
 - [ ] 5+ tabs with isolated state, <50ms tab switching
 
 ### Phase 3: Keybinds
@@ -105,43 +100,30 @@ Synchronized across all tabs:
 - [x] `tabs.selectTab1-9` (Cmd+1-9) - jumps to specific tab
 
 ### Phase 4: Performance
-- [ ] Lazy mounting (active + 2 recent tabs only)
-- [ ] Query GC for inactive tabs
-- [ ] Scroll position preservation per tab
+- [x] Only active view mounts; active plus two recent routers are cached
+- [x] Inactive views release query subscriptions and use existing query GC
+- [x] Scroll position preservation per tab
 - [ ] 15 tabs <500MB memory
-- [ ] No memory leaks over 100 tab cycles
+- [x] No memory leaks over 100 tab cycles
 
 ### Phase 5: Persistence
 - [x] Tabs serialized on change (localStorage, key scoped per window label)
 - [x] Tabs restored on launch
-- [ ] Stale tabs handled gracefully (deleted locations)
-- [ ] `tabPreferences.ts` store created (currently inline in TabManagerContext)
+- [x] Stale tabs handled gracefully (deleted locations)
+- [x] Reuse inline persistence with validation in TabManagerContext
 
 ### Phase 6: Polish (Post-MVP)
 - [x] Tab context menu
 - [x] Drag-to-reorder tabs
-- [ ] Cross-tab file drag-drop
-- [ ] Tab close animations
+- [x] Cross-tab file drag-drop
+- [x] Tab close animations
 - [x] "Reopen Closed Tab" (Cmd+Shift+T)
 
 ## Implementation Files
 
-To be created:
-- `packages/interface/src/components/TabManager/TabManagerContext.tsx`
-- `packages/interface/src/components/TabManager/TabBar.tsx`
-- `packages/interface/src/components/TabManager/TabView.tsx`
-- `packages/interface/src/components/TabManager/useTabManager.ts`
-- `packages/interface/src/components/TabManager/TabContextMenu.tsx` (Phase 6)
-- `packages/interface/src/components/TabManager/index.ts`
-- `packages/ts-client/src/stores/tabPreferences.ts`
-
-To be modified:
-- `packages/interface/src/Explorer.tsx`
-- `packages/interface/src/components/Explorer/context.tsx`
-- `packages/interface/src/components/Explorer/SelectionContext.tsx`
-- `packages/interface/src/components/Explorer/views/GridView/GridView.tsx`
-- `packages/interface/src/components/Explorer/views/ListView/ListView.tsx`
-- `packages/interface/src/util/keybinds/registry.ts`
+- `packages/interface/src/components/TabManager/{TabManagerContext,TabBar,TabView,tabRouter}.tsx` (router helper uses `.ts`)
+- `packages/interface/src/routes/explorer/hooks/useTabScroll.ts`
+- Existing Explorer contexts and view components persist state through TabManagerContext.
 
 ## User Experience
 
@@ -198,3 +180,7 @@ To be modified:
 - 15 tabs total memory: <500MB
 - No memory leaks over 100 tab cycles
 
+
+## Verification (2026-10-02)
+
+Production Playwright passes independent history, selection and scroll, a real move between tabs, close/reopen, last-tab protection and deleted-location recovery. After 100 switches with 15 tabs, renderer PSS was 236.7 MiB and JS heap was 20.1 MiB. Whole Chromium PSS was 517.4 MiB including browser/GPU services. Native memory and uncontended latency checks remain pending.

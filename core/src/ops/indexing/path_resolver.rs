@@ -203,7 +203,7 @@ impl PathResolver {
         "#;
 
 		let result = db
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				db.get_database_backend(),
 				sql,
 				vec![old_path.into(), new_path.into(), old_path.into()],

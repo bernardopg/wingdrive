@@ -10,7 +10,7 @@ use xz2::read::XzDecoder;
 const NATIVE_DEPS_URL: &str =
 	"https://github.com/bernardopg/wingdrive/releases/download/native-deps-v0.26";
 
-/// Remove the bundled FFmpeg shared libraries from a native-deps directory.
+/// Remove bundled codec libraries when using the system FFmpeg.
 ///
 /// Call this when a compatible system FFmpeg was detected (see `system::has_system_ffmpeg`):
 /// the bundled libs would otherwise shadow the system ones on the linker's `-L` search path
@@ -31,6 +31,8 @@ pub fn remove_bundled_ffmpeg_libs(native_deps_dir: &Path) -> Result<()> {
 		"libswscale",
 		"libswresample",
 		"libpostproc",
+		// Bundled libheif requires the bundled FFmpeg ABI too.
+		"libheif",
 	];
 
 	for entry in fs::read_dir(&lib_dir)? {

@@ -1,19 +1,20 @@
 ---
 id: EXPL-002
 title: File List View with Sortable Columns
-status: In Progress
+status: Done
 assignee: jamiepine
 parent: EXPL-000
 priority: High
 milestone: M1
+sprint: S01
 tags: [explorer, views, performance]
 whitepaper: N/A
-last_updated: 2026-08-24
+last_updated: 2026-10-02
 ---
 
 ## Description
 
-Current state: list rendering, TanStack virtualization, sorting, selection, keyboard navigation, and file opening are implemented. Multi-column sorting and column-resize behavior still need runtime verification.
+Current state: list rendering, TanStack virtualization, sorting, selection, keyboard navigation, and file opening are implemented. Multi-column sorting and column resize passed runtime verification.
 
 Implement a list view for files with sortable columns showing name, size, date modified, kind, and tags.
 
@@ -27,10 +28,14 @@ Implement a list view for files with sortable columns showing name, size, date m
 
 ## Acceptance Criteria
 
-- [ ] List shows files with columns: Name, Size, Modified, Kind, Tags
-- [ ] Click column header to sort
-- [ ] Multi-column sort with Shift + click
-- [ ] Drag column edges to resize
-- [ ] Virtual scrolling for large lists
-- [ ] Selection works same as grid view
-- [ ] Keyboard navigation (up/down arrows)
+- [x] List shows files with columns: Name, Size, Modified, Kind, Tags
+- [x] Click column header to sort
+- [x] Multi-column sort with Shift + click
+- [x] Drag column edges to resize
+- [x] Virtual scrolling for large lists
+- [x] Selection works same as grid view
+- [x] Keyboard navigation (up/down arrows)
+
+## Verification (2026-10-02)
+
+Production Playwright validates visible columns, numeric/date multi-sort with Shift, column resize, virtual rows and arrow selection.

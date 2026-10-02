@@ -18,6 +18,15 @@ every original commit remains with its author.
 originally published by Spacedrive. Their original copyright and MIT license
 are preserved in each package directory.
 
+## Reused visual assets
+
+WingDrive uses its own wing mark for app branding. Generic file-kind and device
+icons in `packages/assets/icons` remain from upstream under the package's
+GPL-3.0-only license. Generic UI glyphs remain under their existing terms.
+Third-party service logos identify their integrations. These are kept because
+replacing them does not improve file recognition. The GPL text is included in
+`packaging/licenses/assets-GPL-3.0.txt` and distributed with the desktop bundle.
+
 ## Copyright
 
 Copyright 2026 Spacedrive Technology Inc.

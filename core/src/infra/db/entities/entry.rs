@@ -688,7 +688,7 @@ impl Model {
 		// If there's a parent, copy all parent's ancestors
 		// This creates the transitive closure relationships
 		if let Some(parent_id) = parent_id {
-			db.execute(Statement::from_sql_and_values(
+			db.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				INSERT INTO entry_closure (ancestor_id, descendant_id, depth)
@@ -776,7 +776,7 @@ impl Model {
 		super::entry_closure::Entity::delete_many().exec(db).await?;
 
 		// 1. Insert all self-references (depth 0)
-		db.execute(Statement::from_sql_and_values(
+		db.execute_raw(Statement::from_sql_and_values(
 			DbBackend::Sqlite,
 			r#"
 			INSERT INTO entry_closure (ancestor_id, descendant_id, depth)
@@ -791,7 +791,7 @@ impl Model {
 		let mut iteration = 0;
 		loop {
 			let result = db
-				.execute(Statement::from_sql_and_values(
+				.execute_raw(Statement::from_sql_and_values(
 					DbBackend::Sqlite,
 					r#"
 					INSERT OR IGNORE INTO entry_closure (ancestor_id, descendant_id, depth)

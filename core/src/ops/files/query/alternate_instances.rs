@@ -13,6 +13,7 @@ use crate::{
 	},
 	infra::query::LibraryQuery,
 };
+use sea_orm::ExprTrait;
 use sea_orm::{ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use serde::{Deserialize, Serialize};
 use specta::Type;

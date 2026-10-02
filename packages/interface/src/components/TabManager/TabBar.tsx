@@ -1,31 +1,30 @@
+import {useDndContext} from '@dnd-kit/core';
 import {
 	horizontalListSortingStrategy,
 	SortableContext,
-	useSortable,
+	useSortable
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import {CSS} from '@dnd-kit/utilities';
 import {
-	Plus,
-	X,
-	XCircle,
 	ArrowBendUpLeft,
 	ArrowLineRight,
+	Plus,
+	X,
+	XCircle
 } from '@phosphor-icons/react';
-import {
-	TabBar as TabBarPrimitive,
-	TabBarItem,
-} from '@wingdrive/primitives';
+import {TabBarItem, TabBar as TabBarPrimitive} from '@wingdrive/primitives';
 import clsx from 'clsx';
-import { useCallback, useMemo } from 'react';
-import type { Tab } from '.';
-import { useTabManager } from './useTabManager';
-import { useContextMenu } from '../../hooks/useContextMenu';
-import { getKeybind } from '../../util/keybinds/registry';
+import {AnimatePresence, motion} from 'framer-motion';
+import {useCallback, useEffect, useMemo} from 'react';
+import type {Tab} from '.';
+import {useContextMenu} from '../../hooks/useContextMenu';
 import {
 	getComboForPlatform,
 	getCurrentPlatform,
-	toDisplayString,
+	toDisplayString
 } from '../../util/keybinds/platform';
+import {getKeybind} from '../../util/keybinds/registry';
+import {useTabManager} from './useTabManager';
 
 interface SortableTabProps {
 	tab: Tab;
@@ -50,7 +49,7 @@ function SortableTab({
 	onReopen,
 	canReopen,
 	isLastTab,
-	isRightmost,
+	isRightmost
 }: SortableTabProps) {
 	const {
 		attributes,
@@ -59,17 +58,30 @@ function SortableTab({
 		transform,
 		transition,
 		isDragging,
+		isOver
 	} = useSortable({
 		id: tab.id,
 		data: {
 			type: 'tab',
-			tabId: tab.id,
-		},
+			tabId: tab.id
+		}
 	});
+
+	const {active} = useDndContext();
+	useEffect(() => {
+		if (
+			!isOver ||
+			isActive ||
+			active?.data.current?.type !== 'explorer-file'
+		)
+			return;
+		const timer = setTimeout(() => onSwitch(tab.id), 1000);
+		return () => clearTimeout(timer);
+	}, [isOver, isActive, active, onSwitch, tab.id]);
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
-		transition,
+		transition
 	};
 
 	// Tab context menu: right-click for close variants and reopen
@@ -80,29 +92,29 @@ function SortableTab({
 				label: 'Close Tab',
 				keybindId: 'global.closeTab',
 				onClick: () => onClose(tab.id),
-				disabled: isLastTab,
+				disabled: isLastTab
 			},
 			{
 				icon: XCircle,
 				label: 'Close Other Tabs',
 				onClick: () => onCloseOthers(tab.id),
-				disabled: isLastTab,
+				disabled: isLastTab
 			},
 			{
 				icon: ArrowLineRight,
 				label: 'Close Tabs to the Right',
 				onClick: () => onCloseToRight(tab.id),
-				disabled: isRightmost,
+				disabled: isRightmost
 			},
-			{ type: 'separator' },
+			{type: 'separator'},
 			{
 				icon: ArrowBendUpLeft,
 				label: 'Reopen Closed Tab',
 				keybindId: 'global.reopenTab',
 				onClick: onReopen,
-				disabled: !canReopen,
-			},
-		],
+				disabled: !canReopen
+			}
+		]
 	});
 
 	const handleContextMenu = useCallback(
@@ -111,20 +123,26 @@ function SortableTab({
 			e.stopPropagation();
 			await contextMenu.show(e);
 		},
-		[contextMenu],
+		[contextMenu]
 	);
 
 	// The primitive forwards ref/style to its inner button but keeps className on
 	// its wrapper, so sortable measured the wrong box. Own the drag node here.
 	return (
-		<div
+		<motion.div
+			initial={{opacity: 0}}
+			animate={{opacity: 1}}
+			exit={{opacity: 0, width: 0}}
+			transition={{duration: 0.15}}
 			ref={setNodeRef}
+			data-tab-id={tab.id}
+			data-active={isActive}
 			style={style}
 			{...attributes}
 			{...listeners}
 			className={clsx(
 				'flex min-w-0 flex-1',
-				isDragging && 'z-50 opacity-50',
+				isDragging && 'z-50 opacity-50'
 			)}
 		>
 			<TabBarItem
@@ -138,7 +156,7 @@ function SortableTab({
 				onClick={() => onSwitch(tab.id)}
 				onContextMenu={handleContextMenu}
 			/>
-		</div>
+		</motion.div>
 	);
 }
 
@@ -149,7 +167,7 @@ function keybindHint(id: Parameters<typeof getKeybind>[0]): string {
 	const platform = getCurrentPlatform();
 	return toDisplayString(
 		getComboForPlatform(keybind.combo, platform),
-		platform,
+		platform
 	);
 }
 
@@ -162,7 +180,7 @@ export function TabBar() {
 		closeTabs,
 		createTab,
 		reopenTab,
-		hasClosedTabs,
+		hasClosedTabs
 	} = useTabManager();
 
 	// Ensure activeTabId exists in tabs array, fallback to first tab
@@ -197,21 +215,23 @@ export function TabBar() {
 				items={tabs.map((tab) => tab.id)}
 				strategy={horizontalListSortingStrategy}
 			>
-				{tabs.map((tab, index) => (
-					<SortableTab
-						key={tab.id}
-						tab={tab}
-						isActive={tab.id === safeActiveTabId}
-						onSwitch={switchTab}
-						onClose={closeTab}
-						onCloseOthers={closeOthers}
-						onCloseToRight={closeToRight}
-						onReopen={reopenTab}
-						canReopen={hasClosedTabs}
-						isLastTab={tabs.length <= 1}
-						isRightmost={index === tabs.length - 1}
-					/>
-				))}
+				<AnimatePresence>
+					{tabs.map((tab, index) => (
+						<SortableTab
+							key={tab.id}
+							tab={tab}
+							isActive={tab.id === safeActiveTabId}
+							onSwitch={switchTab}
+							onClose={closeTab}
+							onCloseOthers={closeOthers}
+							onCloseToRight={closeToRight}
+							onReopen={reopenTab}
+							canReopen={hasClosedTabs}
+							isLastTab={tabs.length <= 1}
+							isRightmost={index === tabs.length - 1}
+						/>
+					))}
+				</AnimatePresence>
 			</SortableContext>
 		</TabBarPrimitive>
 	);

@@ -1,22 +1,23 @@
-import { WingDriveProvider, type WingDriveClient } from "./contexts/WingDriveContext";
-import { ServerProvider } from "./contexts/ServerContext";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { RouterProvider } from "react-router-dom";
-import { Dialogs, Toaster, TooltipProvider } from "@wingdrive/primitives";
-
-import { explorerRoutes } from "./router";
-import { useDaemonStatus } from "./hooks/useDaemonStatus";
-import { useLiveFileEvents } from "./hooks/useLiveFileEvents";
-import { DaemonDisconnectedOverlay } from "./components/overlays/DaemonDisconnectedOverlay";
-import { DaemonStartupOverlay } from "./components/overlays/DaemonStartupOverlay";
-import { DndProvider } from "./components/DndProvider";
+import {ReactQueryDevtools} from '@tanstack/react-query-devtools';
+import {Dialogs, Toaster, TooltipProvider} from '@wingdrive/primitives';
+import {DndProvider} from './components/DndProvider';
+import {DaemonDisconnectedOverlay} from './components/overlays/DaemonDisconnectedOverlay';
+import {DaemonStartupOverlay} from './components/overlays/DaemonStartupOverlay';
 import {
-	TabManagerProvider,
 	TabKeyboardHandler,
-	useTabManager,
-} from "./components/TabManager";
-import { usePlatform } from "./contexts/PlatformContext";
-import { useTheme } from "./hooks/useTheme";
+	TabManagerProvider,
+	TabView
+} from './components/TabManager';
+import {usePlatform} from './contexts/PlatformContext';
+import {ServerProvider} from './contexts/ServerContext';
+import {
+	WingDriveProvider,
+	type WingDriveClient
+} from './contexts/WingDriveContext';
+import {useDaemonStatus} from './hooks/useDaemonStatus';
+import {useLiveFileEvents} from './hooks/useLiveFileEvents';
+import {useTheme} from './hooks/useTheme';
+import {explorerRoutes} from './router';
 
 interface ShellProps {
 	client: WingDriveClient;
@@ -28,12 +29,10 @@ function ThemeApplier() {
 }
 
 function ShellWithTabs() {
-	const { router } = useTabManager();
-
 	return (
 		<DndProvider>
 			<ThemeApplier />
-			<RouterProvider router={router} />
+			<TabView />
 		</DndProvider>
 	);
 }
@@ -44,7 +43,7 @@ function ShellWithTabs() {
  */
 function ShellWithDaemonCheck() {
 	const daemonStatus = useDaemonStatus();
-	const { isConnected, isStarting } = daemonStatus;
+	const {isConnected, isStarting} = daemonStatus;
 
 	return (
 		<>
@@ -83,9 +82,9 @@ function LiveFileEventsInvalidator() {
 	return null;
 }
 
-export function Shell({ client }: ShellProps) {
+export function Shell({client}: ShellProps) {
 	const platform = usePlatform();
-	const isTauri = platform.platform === "tauri";
+	const isTauri = platform.platform === 'tauri';
 
 	return (
 		<WingDriveProvider client={client}>

@@ -1,5 +1,5 @@
 import {ChatCircleDots, Checks} from '@phosphor-icons/react';
-import {Ball, BallBlue} from '@wingdrive/assets/images';
+import {WingDriveLogo} from '@wingdrive/assets/images';
 import {
 	apiClient,
 	getEventsUrl,
@@ -32,9 +32,9 @@ export const primaryItems = [
 ];
 
 export const projects = [
-	{name: 'WingDrive', detail: 'Main workspace', ball: BallBlue},
-	{name: 'Spacebot Runtime', detail: 'Remote control plane', ball: Ball},
-	{name: 'Hosted Platform', detail: 'Deploy and observe', ball: Ball}
+	{name: 'WingDrive', detail: 'Main workspace', ball: WingDriveLogo},
+	{name: 'Spacebot Runtime', detail: 'Remote control plane', ball: WingDriveLogo},
+	{name: 'Hosted Platform', detail: 'Deploy and observe', ball: WingDriveLogo}
 ];
 
 export const agents = [

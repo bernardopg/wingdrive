@@ -25,7 +25,7 @@ impl ResourceWatermarkStore {
 	/// Initialize the watermarks table in sync.db
 	pub async fn init_table<C: ConnectionTrait>(conn: &C) -> Result<(), WatermarkError> {
 		// Create main watermarks table
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			r#"
 			CREATE TABLE IF NOT EXISTS device_resource_watermarks (
@@ -43,7 +43,7 @@ impl ResourceWatermarkStore {
 		.map_err(|e| WatermarkError::QueryError(e.to_string()))?;
 
 		// Create indexes for efficient queries
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			r#"
 			CREATE INDEX IF NOT EXISTS idx_resource_watermarks_peer
@@ -54,7 +54,7 @@ impl ResourceWatermarkStore {
 		.await
 		.map_err(|e| WatermarkError::QueryError(e.to_string()))?;
 
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			r#"
 			CREATE INDEX IF NOT EXISTS idx_resource_watermarks_resource
@@ -76,7 +76,7 @@ impl ResourceWatermarkStore {
 		resource_type: &str,
 	) -> Result<Option<DateTime<Utc>>, WatermarkError> {
 		let result = conn
-			.query_one(Statement::from_sql_and_values(
+			.query_one_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				SELECT last_watermark FROM device_resource_watermarks
@@ -137,7 +137,7 @@ impl ResourceWatermarkStore {
 		}
 
 		// Upsert (insert or replace)
-		conn.execute(Statement::from_sql_and_values(
+		conn.execute_raw(Statement::from_sql_and_values(
 			DbBackend::Sqlite,
 			r#"
 			INSERT INTO device_resource_watermarks
@@ -169,7 +169,7 @@ impl ResourceWatermarkStore {
 		peer_device_uuid: Uuid,
 	) -> Result<Vec<(String, DateTime<Utc>)>, WatermarkError> {
 		let rows = conn
-			.query_all(Statement::from_sql_and_values(
+			.query_all_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				SELECT resource_type, last_watermark FROM device_resource_watermarks
@@ -213,7 +213,7 @@ impl ResourceWatermarkStore {
 		conn: &C,
 	) -> Result<Option<DateTime<Utc>>, WatermarkError> {
 		let result = conn
-			.query_one(Statement::from_sql_and_values(
+			.query_one_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				SELECT MAX(last_watermark) as max_watermark FROM device_resource_watermarks
@@ -249,7 +249,7 @@ impl ResourceWatermarkStore {
 		peer_device_uuid: Uuid,
 	) -> Result<usize, WatermarkError> {
 		let result = conn
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				DELETE FROM device_resource_watermarks

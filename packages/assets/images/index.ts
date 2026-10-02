@@ -3,15 +3,6 @@
  * To regenerate this file, run: pnpm assets gen
  */
 
-import AlphaBg_Light from './AlphaBg_Light.png';
-import AlphaBg from './AlphaBg.png';
-import AppLogo from './AppLogo.png';
-import AppLogoV2 from './AppLogoV2.png';
-import Ball from './Ball.png';
-import BallBlue from './BallBlue.png';
-import BloomOne from './BloomOne.png';
-import BloomThree from './BloomThree.png';
-import BloomTwo from './BloomTwo.png';
 import Dropbox from './Dropbox.png';
 import GoogleDrive from './GoogleDrive.png';
 import iCloud from './iCloud.png';
@@ -19,20 +10,4 @@ import Mega from './Mega.png';
 import Transparent from './Transparent.png';
 import WingDriveLogo from './WingDriveLogo.svg';
 
-export {
-	AlphaBg,
-	AlphaBg_Light,
-	AppLogo,
-	AppLogoV2,
-	Ball,
-	BallBlue,
-	BloomOne,
-	BloomThree,
-	BloomTwo,
-	Dropbox,
-	GoogleDrive,
-	Mega,
-	Transparent,
-	WingDriveLogo,
-	iCloud
-};
+export {Dropbox, GoogleDrive, Mega, Transparent, WingDriveLogo, iCloud};

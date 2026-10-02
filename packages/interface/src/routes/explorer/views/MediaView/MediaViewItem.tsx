@@ -1,17 +1,15 @@
-import clsx from "clsx";
-import { memo } from "react";
-import type { File } from "@wingdrive/ts-client";
-import { File as FileComponent } from "../../File";
-import { useSelection } from "../../SelectionContext";
-import { useFileContextMenu } from "../../hooks/useFileContextMenu";
-import { useExplorer } from "../../context";
-import { useOpenWith } from "../../../../hooks/useOpenWith";
-import { isVirtualFile } from "@wingdrive/ts-client";
+import type {File} from '@wingdrive/ts-client';
+import clsx from 'clsx';
+import {memo} from 'react';
+import {File as FileComponent} from '../../File';
+import {useFileContextMenu} from '../../hooks/useFileContextMenu';
+import {useOpenFile} from '../../hooks/useOpenFile';
+import {useSelection} from '../../SelectionContext';
 
 function formatDuration(seconds: number): string {
 	const mins = Math.floor(seconds / 60);
 	const secs = Math.floor(seconds % 60);
-	return `${mins}:${String(secs).padStart(2, "0")}`;
+	return `${mins}:${String(secs).padStart(2, '0')}`;
 }
 
 interface MediaViewItemProps {
@@ -23,7 +21,7 @@ interface MediaViewItemProps {
 		file: File,
 		files: File[],
 		multi?: boolean,
-		range?: boolean,
+		range?: boolean
 	) => void;
 	size: number;
 }
@@ -34,14 +32,14 @@ export const MediaViewItem = memo(function MediaViewItem({
 	selected,
 	focused,
 	onSelect,
-	size,
+	size
 }: MediaViewItemProps) {
-	const { selectedFiles } = useSelection();
+	const {selectedFiles} = useSelection();
 
 	const contextMenu = useFileContextMenu({
 		file,
 		selectedFiles,
-		selected,
+		selected
 	});
 
 	const handleClick = (e: React.MouseEvent) => {
@@ -61,36 +59,17 @@ export const MediaViewItem = memo(function MediaViewItem({
 		await contextMenu.show(e);
 	};
 
-	const { navigateToPath } = useExplorer();
-	const physicalPath =
-		(file.kind === "File" || file.kind === "Symlink") && "Physical" in file.wing_path
-			? file.wing_path.Physical.path
-			: null;
-	const { openWithDefault } = useOpenWith(
-		physicalPath ? [physicalPath] : [],
-	);
-
-	const handleDoubleClick = async () => {
-		// Virtual files and directories navigate to their wing_path
-		if (isVirtualFile(file) || file.kind === "Directory") {
-			navigateToPath(file.wing_path);
-			return;
-		}
-
-		// Regular files open with the default application
-		if (physicalPath) {
-			await openWithDefault(physicalPath);
-		}
-	};
+	const openFile = useOpenFile();
+	const handleDoubleClick = () => openFile(file);
 
 	return (
 		<div
 			data-file-id={file.id}
 			tabIndex={-1}
 			className={clsx(
-				"relative overflow-hidden cursor-pointer transition-all w-full h-full group outline-none focus:outline-none",
-				selected && "ring-2 ring-accent ring-inset",
-				focused && !selected && "ring-2 ring-accent/50 ring-inset",
+				'group relative h-full w-full cursor-pointer overflow-hidden transition-all outline-none focus:outline-none',
+				selected && 'ring-accent ring-2 ring-inset',
+				focused && !selected && 'ring-accent/50 ring-2 ring-inset'
 			)}
 			onClick={handleClick}
 			onDoubleClick={handleDoubleClick}
@@ -99,7 +78,7 @@ export const MediaViewItem = memo(function MediaViewItem({
 			<FileComponent.Thumb
 				file={file}
 				size={size}
-				className="w-full h-full"
+				className="h-full w-full"
 				frameClassName="w-full h-full object-cover"
 				iconScale={0.5}
 				squareMode={true}
@@ -107,28 +86,29 @@ export const MediaViewItem = memo(function MediaViewItem({
 
 			{/* Selection overlay */}
 			{selected && (
-				<div className="absolute inset-0 bg-accent/10 pointer-events-none" />
+				<div className="bg-accent/10 pointer-events-none absolute inset-0" />
 			)}
 
 			{/* Video duration badge */}
 			{file.video_media_data?.duration_seconds && (
-				<div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/80 text-white text-[10px] font-medium backdrop-blur-sm tabular-nums">
+				<div className="absolute right-1 bottom-1 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white tabular-nums backdrop-blur-sm">
 					{formatDuration(file.video_media_data.duration_seconds)}
 				</div>
 			)}
 
 			{/* Hover overlay with file name */}
-			<div className="absolute inset-x-0 bottom-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-				<div className="text-white text-xs font-medium truncate">
-					{file.name}{file.extension && `.${file.extension}`}
+			<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+				<div className="truncate text-xs font-medium text-white">
+					{file.name}
+					{file.extension && `.${file.extension}`}
 				</div>
 			</div>
 
 			{/* Selection checkbox (top-left corner, always visible when selected) */}
 			{selected && (
-				<div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
+				<div className="bg-accent absolute top-1 left-1 flex h-5 w-5 items-center justify-center rounded-full">
 					<svg
-						className="w-3 h-3 text-white"
+						className="h-3 w-3 text-white"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"

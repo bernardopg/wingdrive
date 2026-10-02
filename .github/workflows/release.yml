@@ -2,146 +2,201 @@ name: WingDrive Release
 
 on:
   push:
-    tags: ["v*"]
+    tags: ['v*']
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing version tag to verify or republish'
+        required: true
+        type: string
+      publish:
+        description: 'Publish verified assets and update wingdrive-bin on AUR'
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: wingdrive-release-${{ github.event.inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
+env:
+  CARGO_BUILD_JOBS: '2'
+  CARGO_PROFILE_RELEASE_LTO: thin
+  CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '16'
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
 jobs:
-  server:
-    name: Server and CLI
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
+  linux:
+    name: Verify Linux x86_64 bundles
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup System and Rust
-        uses: ./.github/actions/setup-system
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          target: x86_64-unknown-linux-gnu
-
-      - name: Build binaries
-        run: cargo build --release --locked --features wing-core/ffmpeg,wing-core/heif --bin wing-server --bin wing --bin wing-daemon
-
-      - name: Package binaries
+          ref: ${{ env.RELEASE_TAG }}
+          persist-credentials: false
+      - name: Validate tag and product versions
         run: |
-          mkdir -p dist
-          install -m 755 target/release/wing-server dist/wingdrive-server-linux-x86_64
-          install -m 755 target/release/wing dist/wingdrive-cli-linux-x86_64
-          install -m 755 target/release/wing-daemon dist/wingdrive-daemon-linux-x86_64
-          sha256sum dist/* > dist/SHA256SUMS
-
-      - name: Upload server artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+          git rev-parse --verify "refs/tags/$RELEASE_TAG"
+          python3 scripts/release/version.py "$RELEASE_TAG"
+      - name: Free build disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h .
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          name: wingdrive-server-linux-x86_64
-          path: dist/*
-          if-no-files-found: error
-
-  desktop:
-    name: Desktop (${{ matrix.name }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Linux x86_64
-            runner: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            bundles: deb,appimage
-            updater_platform: linux-x86_64
-          - name: Windows x86_64
-            runner: windows-latest
-            target: x86_64-pc-windows-msvc
-            bundles: nsis
-            updater_platform: windows-x86_64
-          - name: macOS arm64
-            runner: macos-latest
-            target: aarch64-apple-darwin
-            bundles: dmg,app
-            updater_platform: macos-aarch64
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 120
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup System and Rust
-        uses: ./.github/actions/setup-system
+          bun-version: '1.4.2'
+      - uses: ./.github/actions/setup-rust
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          target: ${{ matrix.target }}
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: "1.4.2"
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build desktop bundles
-        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1.0.0
+          target: x86_64-unknown-linux-gnu
+          save-cache: 'true'
+      - name: Install Linux dependencies
+        run: |
+          ./scripts/setup.sh
+          sudo apt-get install -y xvfb xdotool python3
+      - name: Setup native libraries and daemon
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          projectPath: apps/tauri
-          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
-
-      - name: Build updater binaries
-        if: runner.os != 'Linux'
-        run: cargo build --release --locked --target ${{ matrix.target }} --features wing-core/ffmpeg,wing-core/heif --bin wing --bin wing-daemon
-
-      - name: Package macOS updater binaries
-        if: runner.os == 'macOS'
+          TARGET_TRIPLE: x86_64-unknown-linux-gnu
+        run: cargo run --locked -p xtask -- setup
+      - name: Check frontend and native changes
         run: |
-          mkdir -p dist/updater
-          install -m 755 target/${{ matrix.target }}/release/wing dist/updater/wingdrive-cli-${{ matrix.updater_platform }}
-          install -m 755 target/${{ matrix.target }}/release/wing-daemon dist/updater/wingdrive-daemon-${{ matrix.updater_platform }}
-
-      - name: Package Windows updater binaries
-        if: runner.os == 'Windows'
-        shell: powershell
+          bun install --frozen-lockfile
+          bun run typecheck
+          bun test packages/interface/src/components/TabManager/tabRouter.test.ts packages/interface/src/hooks/undoStore.test.ts
+          cargo fmt --all --check
+          cargo clippy --locked -p wingdrive -- -D warnings
+          cargo test --locked -p wingdrive --bin WingDrive
+          cargo test --locked -p wing-core --lib crypto::key_manager::tests
+      - name: Build production desktop and command line binaries
         run: |
-          New-Item -ItemType Directory -Force dist/updater
-          Copy-Item target/${{ matrix.target }}/release/wing.exe dist/updater/wingdrive-cli-${{ matrix.updater_platform }}.exe
-          Copy-Item target/${{ matrix.target }}/release/wing-daemon.exe dist/updater/wingdrive-daemon-${{ matrix.updater_platform }}.exe
-
-      - name: Upload desktop bundles
+          bun run --cwd apps/tauri tauri build --target x86_64-unknown-linux-gnu --bundles appimage,deb
+          bun run --cwd apps/web build
+          cargo build --locked --release --target x86_64-unknown-linux-gnu --features wing-core/ffmpeg,wing-core/heif --bin wing-server --bin wing
+      - name: Verify extracted AppImage
+        run: |
+          mapfile -t images < <(find target/x86_64-unknown-linux-gnu/release/bundle -name '*.AppImage')
+          test "${#images[@]}" -eq 1
+          xvfb-run -a python3 scripts/release/smoke.py "${images[0]}"
+      - name: Verify explorer in Chromium with the production backend
+        env:
+          BASE_URL: http://127.0.0.1:18765
+          NODE_PATH: /tmp/wingdrive-playwright/node_modules
+          WINGDRIVE_TEST_OUTPUT: /tmp/wingdrive-browser-evidence
+        run: |
+          npm install --prefix /tmp/wingdrive-playwright playwright@1.62.1
+          /tmp/wingdrive-playwright/node_modules/.bin/playwright install --with-deps chromium
+          export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          target/x86_64-unknown-linux-gnu/release/wing-server --host 127.0.0.1 --port 18765 --auth disabled --data-dir /tmp/wingdrive-browser --instance release-browser > /tmp/wingdrive-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"; cat /tmp/wingdrive-server.log | tail -30' EXIT
+          for _ in {1..120}; do
+            if curl -fsS "$BASE_URL/health" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS "$BASE_URL/health"
+          node scripts/release/explorer.cjs
+      - name: Preserve explorer verification evidence
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: wingdrive-desktop-${{ matrix.target }}
-          path: |
-            target/${{ matrix.target }}/release/bundle/**/*.dmg
-            target/${{ matrix.target }}/release/bundle/**/*.AppImage
-            target/${{ matrix.target }}/release/bundle/**/*.deb
-            target/${{ matrix.target }}/release/bundle/**/*.exe
-            dist/updater/*
+          name: wingdrive-explorer-evidence
+          path: /tmp/wingdrive-browser-evidence/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Prepare release assets
+        run: |
+          version="${RELEASE_TAG#v}"
+          mkdir dist
+          cp target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage "dist/WingDrive-$version-x86_64.AppImage"
+          cp target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb "dist/WingDrive-$version-amd64.deb"
+          cp LICENSE dist/LICENSE
+          python3 scripts/release/aur.py "$version" "dist/WingDrive-$version-x86_64.AppImage" LICENSE packaging/aur
+          cp packaging/aur/PKGBUILD dist/PKGBUILD
+          cd dist
+          sha256sum ./* > SHA256SUMS
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wingdrive-linux-release
+          path: dist/*
           if-no-files-found: error
+          retention-days: 14
 
   publish:
-    name: Publish GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [server, desktop]
-    runs-on: ubuntu-latest
+    name: Publish verified GitHub Release
+    needs: linux
+    if: github.event_name == 'push' || inputs.publish
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: write
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          path: artifacts
-
-      - name: Publish release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+          name: wingdrive-linux-release
+          path: dist
+      - name: Verify artifact checksums
+        run: cd dist && sha256sum --check SHA256SUMS
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: WingDrive ${{ env.RELEASE_TAG }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
           generate_release_notes: true
           fail_on_unmatched_files: true
-          files: artifacts/**/*
+          files: dist/*
+
+  aur:
+    name: Publish wingdrive-bin on AUR
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          persist-credentials: false
+      - name: Download published assets and verify checksums
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist
+          cd dist
+          sha256sum --check SHA256SUMS
+      - name: Generate and validate AUR package in Arch Linux
+        run: |
+          python3 scripts/release/aur.py "${RELEASE_TAG#v}" "dist/WingDrive-${RELEASE_TAG#v}-x86_64.AppImage" dist/LICENSE packaging/aur
+          docker run --rm -v "$PWD:/work" archlinux:base bash -euc '
+            pacman -Syu --noconfirm base-devel git
+            useradd -m builder
+            cp -r /work/packaging/aur /tmp/aur
+            cp /work/dist/*.AppImage /work/dist/LICENSE /tmp/aur/
+            chown -R builder:builder /tmp/aur
+            cd /tmp/aur
+            runuser -u builder -- makepkg --verifysource
+            runuser -u builder -- makepkg --nodeps --noconfirm
+            runuser -u builder -- makepkg --printsrcinfo > /work/packaging/aur/.SRCINFO
+          '
+      - name: Publish package metadata idempotently
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          AUR_KNOWN_HOSTS: ${{ secrets.AUR_KNOWN_HOSTS }}
+        run: |
+          test -n "$AUR_SSH_PRIVATE_KEY"
+          test -n "$AUR_KNOWN_HOSTS"
+          install -d -m700 ~/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur
+          printf '%s\n' "$AUR_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/aur ~/.ssh/known_hosts
+          export GIT_SSH_COMMAND='ssh -i ~/.ssh/aur -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes'
+          trap 'rm -f ~/.ssh/aur' EXIT
+          git clone ssh://aur@aur.archlinux.org/wingdrive-bin.git /tmp/aur-repo
+          cp packaging/aur/PKGBUILD packaging/aur/.SRCINFO /tmp/aur-repo/
+          cd /tmp/aur-repo
+          git add PKGBUILD .SRCINFO
+          if ! git diff --cached --quiet; then
+            git -c user.name=bernardopg -c user.email=bernardopg@users.noreply.github.com commit -m "Update WingDrive to $RELEASE_TAG"
+            git push origin HEAD:master
+          fi

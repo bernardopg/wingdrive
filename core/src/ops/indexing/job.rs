@@ -517,7 +517,7 @@ impl IndexerJob {
 							// Query all entry IDs that are descendants of this location's root entry
 							// using the entry_closure table
 							let entry_ids_result: Result<Vec<i32>, _> = db
-								.query_all(Statement::from_sql_and_values(
+								.query_all_raw(Statement::from_sql_and_values(
 									sea_orm::DbBackend::Sqlite,
 									"SELECT descendant_id FROM entry_closure WHERE ancestor_id = ?",
 									vec![root_entry_id.into()],
@@ -908,8 +908,7 @@ impl IndexerJob {
 		is_volume_indexing: bool,
 	) -> JobResult<()> {
 		use super::database_storage::{is_hidden_path, EntryMetadata};
-		use super::state::EntryKind as StateEntryKind;
-		use crate::domain::{file::EntryKind as DomainEntryKind, File};
+		use crate::domain::File;
 
 		ctx.log("Starting ephemeral processing");
 
@@ -1008,54 +1007,14 @@ impl IndexerJob {
 						// Get UUID from our map (no lock acquisition needed!)
 						let uuid = *uuid_map.get(&entry.path)?;
 
-						use chrono::{DateTime, Utc};
-
-						Some(File {
-							id: uuid,
-							wing_path: crate::domain::addressing::WingPath::local(
-								entry.path.clone(),
-							),
-							kind: match entry.kind {
-								StateEntryKind::File => DomainEntryKind::File,
-								StateEntryKind::Directory => DomainEntryKind::Directory,
-								StateEntryKind::Symlink => DomainEntryKind::Symlink,
-							},
-							name: entry
-								.path
-								.file_name()
-								.unwrap_or_default()
-								.to_string_lossy()
-								.to_string(),
-							extension: entry
-								.path
-								.extension()
-								.and_then(|e| e.to_str())
-								.map(String::from),
-							size: entry.size,
-							content_identity: None,
-							alternate_paths: vec![],
-							tags: vec![],
-							favorite: false,
-							sidecars: vec![],
-							image_media_data: None,
-							video_media_data: None,
-							audio_media_data: None,
-							created_at: Utc::now(),
-							modified_at: entry
-								.modified
-								.and_then(|t| {
-									DateTime::from_timestamp(
-										t.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs()
-											as i64,
-										0,
-									)
-								})
-								.unwrap_or_else(Utc::now),
-							accessed_at: None,
-							content_kind,
-							is_local: true,
-							duration_seconds: None,
-						})
+						let metadata = EntryMetadata::from(entry.clone());
+						let mut file = File::from_ephemeral(
+							uuid,
+							&metadata,
+							crate::domain::addressing::WingPath::local(entry.path.clone()),
+						);
+						file.content_kind = content_kind;
+						Some(file)
 					})
 					.collect();
 

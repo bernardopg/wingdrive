@@ -1,6 +1,6 @@
 {
   "productName": "WingDrive",
-  "version": "2.0.0-alpha.2",
+  "version": "2.0.0-alpha.4",
   "identifier": "com.wingdrive.desktop",
   "plugins": {
     "updater": {
@@ -33,7 +33,9 @@
         "dragDropEnabled": true,
         "decorations": true,
         "windowEffects": {
-          "effects": ["sidebar"],
+          "effects": [
+            "sidebar"
+          ],
           "state": "followsWindowActiveState",
           "radius": 9
         }
@@ -71,13 +73,20 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["../../../target/release/wing-daemon"],
+    "externalBin": [
+      "../../../target/release/wing-daemon"
+    ],
     "resources": {
-      "gen/**/*": "./"
+      "gen/**/*": "./",
+      "../../../LICENSE": "./LICENSE",
+      "../../../NOTICE.md": "./NOTICE.md",
+      "../../../packaging/licenses/": "./licenses/"
     },
     "fileAssociations": [
       {
-        "ext": ["memory"],
+        "ext": [
+          "memory"
+        ],
         "name": "WingDrive Memory",
         "description": "WingDrive Memory File",
         "role": "Editor",
@@ -90,11 +99,14 @@
           "libc6",
           "libxdo3",
           "libwebkit2gtk-4.1-0",
-          "libgtk-3-0"
+          "libgtk-3-0", "libheif1"
         ],
         "files": {
           "/usr/lib/wingdrive/": "../../.deps/lib/"
         }
+      },
+      "appimage": {
+        "bundleMediaFramework": true
       }
     },
     "macOS": {
@@ -102,7 +114,9 @@
       "signingIdentity": "-",
       "entitlements": "Entitlements.plist",
       "infoPlist": "Info.plist",
-      "frameworks": ["../../.deps/WingDrive.framework"]
+      "frameworks": [
+        "../../.deps/WingDrive.framework"
+      ]
     },
     "windows": {
       "webviewInstallMode": {

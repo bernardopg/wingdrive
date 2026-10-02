@@ -1,23 +1,20 @@
-import { memo, useCallback } from "react";
-import { flexRender } from "@tanstack/react-table";
-import type { LegacyRow as Row } from "@tanstack/react-table/legacy";
-import clsx from "clsx";
-
-import type { File } from "@wingdrive/ts-client";
-
-import { File as FileComponent } from "../../File";
-import { useExplorer } from "../../context";
-import { useSelection } from "../../SelectionContext";
-import { TagPill } from "../../../../components/Tags";
-import { ROW_HEIGHT, TABLE_PADDING_X } from "./useTable";
-import { useFileContextMenu } from "../../hooks/useFileContextMenu";
-import { isVirtualFile } from '@wingdrive/ts-client';
-import { InlineNameEdit } from "../../components/InlineNameEdit";
-import { useOpenWith } from "../../../../hooks/useOpenWith";
-import { useDroppable } from "@dnd-kit/core";
-import { useDraggableFile } from "../../hooks/useDraggableFile";
+import {useDroppable} from '@dnd-kit/core';
+import {flexRender} from '@tanstack/react-table';
+import type {LegacyRow as Row} from '@tanstack/react-table/legacy';
+import type {File} from '@wingdrive/ts-client';
+import clsx from 'clsx';
+import {memo, useCallback} from 'react';
+import {TagPill} from '../../../../components/Tags';
+import {InlineNameEdit} from '../../components/InlineNameEdit';
+import {File as FileComponent} from '../../File';
+import {useDraggableFile} from '../../hooks/useDraggableFile';
+import {useFileContextMenu} from '../../hooks/useFileContextMenu';
+import {useOpenFile} from '../../hooks/useOpenFile';
+import {useSelection} from '../../SelectionContext';
+import {ROW_HEIGHT, TABLE_PADDING_X} from './useTable';
 
 interface TableRowProps {
+	columnSizingKey: string;
 	row: Row<File>;
 	file: File;
 	files: File[];
@@ -31,223 +28,186 @@ interface TableRowProps {
 		file: File,
 		files: File[],
 		multi?: boolean,
-		range?: boolean,
+		range?: boolean
 	) => void;
 }
 
-export const TableRow = memo(
-	function TableRow({
-		row,
+export const TableRow = memo(function TableRow({
+	row,
+	file,
+	files,
+	index,
+	isSelected,
+	isFocused: _isFocused,
+	isPreviousSelected,
+	isNextSelected,
+	measureRef,
+	selectFile
+}: TableRowProps) {
+	const {selectedFiles} = useSelection();
+
+	const contextMenu = useFileContextMenu({
 		file,
-		files,
-		index,
-		isSelected,
-		isFocused: _isFocused,
-		isPreviousSelected,
-		isNextSelected,
-		measureRef,
-		selectFile,
-	}: TableRowProps) {
-		const { navigateToPath } = useExplorer();
-		const { selectedFiles } = useSelection();
+		selectedFiles,
+		selected: isSelected
+	});
 
-		const contextMenu = useFileContextMenu({
-			file,
-			selectedFiles,
-			selected: isSelected,
-		});
+	const openFile = useOpenFile();
 
-		// Set up file opening for non-directory files
-		const physicalPath =
-			(file.kind === "File" || file.kind === "Symlink") && "Physical" in file.wing_path
-				? [(file.wing_path as any).Physical.path]
-				: [];
-		const { openWithDefault } = useOpenWith(physicalPath);
+	const handleClick = useCallback(
+		(e: React.MouseEvent) => {
+			const multi = e.metaKey || e.ctrlKey;
+			const range = e.shiftKey;
+			selectFile(file, files, multi, range);
+		},
+		[file, files, selectFile]
+	);
 
-		const handleClick = useCallback(
-			(e: React.MouseEvent) => {
-				const multi = e.metaKey || e.ctrlKey;
-				const range = e.shiftKey;
-				selectFile(file, files, multi, range);
-			},
-			[file, files, selectFile],
-		);
+	const handleDoubleClick = () => openFile(file);
 
-		const handleDoubleClick = useCallback(async () => {
-			// Virtual files (locations, volumes, devices) always navigate to their wing_path
-			if (isVirtualFile(file) && file.wing_path) {
-				navigateToPath(file.wing_path);
-				return;
+	const handleContextMenu = useCallback(
+		async (e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+
+			if (!isSelected) {
+				selectFile(file, files, false, false);
 			}
 
-			// Regular directories navigate normally
-			if (file.kind === "Directory") {
-				navigateToPath(file.wing_path);
-				return;
-			}
+			await contextMenu.show(e);
+		},
+		[file, files, isSelected, selectFile, contextMenu]
+	);
 
-			// Open regular files with default application
-			if ((file.kind === "File" || file.kind === "Symlink") && "Physical" in file.wing_path) {
-				const physicalPath = (file.wing_path as any).Physical.path;
-				await openWithDefault(physicalPath);
-			}
-		}, [file, navigateToPath, openWithDefault]);
+	const cells = row.getVisibleCells();
 
-		const handleContextMenu = useCallback(
-			async (e: React.MouseEvent) => {
-				e.preventDefault();
-				e.stopPropagation();
+	// List view previously had no drag source or drop target at all: rows
+	// could neither start a drag nor receive one, so rearranging files was
+	// only possible in the grid view.
+	const {
+		attributes,
+		listeners,
+		setNodeRef: setDragNodeRef,
+		isDragging
+	} = useDraggableFile({
+		file,
+		selectedFiles:
+			isSelected && selectedFiles.length > 0 ? selectedFiles : undefined
+	});
 
-				if (!isSelected) {
-					selectFile(file, files, false, false);
-				}
+	const isFolder = file.kind === 'Directory';
+	const {setNodeRef: setDropNodeRef, isOver: isDropOver} = useDroppable({
+		id: `folder-drop-${file.id}`,
+		disabled: !isFolder,
+		data: {
+			action: 'move-into',
+			targetType: 'folder',
+			targetId: file.id,
+			targetPath: file.wing_path
+		}
+	});
 
-				await contextMenu.show(e);
-			},
-			[file, files, isSelected, selectFile, contextMenu],
-		);
+	const setCombinedNodeRef = useCallback(
+		(node: HTMLElement | null) => {
+			measureRef(node);
+			setDragNodeRef(node);
+			if (isFolder) setDropNodeRef(node);
+		},
+		[measureRef, setDragNodeRef, setDropNodeRef, isFolder]
+	);
 
-		const cells = row.getVisibleCells();
-
-		// List view previously had no drag source or drop target at all: rows
-		// could neither start a drag nor receive one, so rearranging files was
-		// only possible in the grid view.
-		const {
-			attributes,
-			listeners,
-			setNodeRef: setDragNodeRef,
-			isDragging,
-		} = useDraggableFile({
-			file,
-			selectedFiles:
-				isSelected && selectedFiles.length > 0 ? selectedFiles : undefined,
-		});
-
-		const isFolder = file.kind === "Directory";
-		const { setNodeRef: setDropNodeRef, isOver: isDropOver } = useDroppable({
-			id: `folder-drop-${file.id}`,
-			disabled: !isFolder,
-			data: {
-				action: "move-into",
-				targetType: "folder",
-				targetId: file.id,
-				targetPath: file.wing_path,
-			},
-		});
-
-		const setCombinedNodeRef = useCallback(
-			(node: HTMLElement | null) => {
-				measureRef(node);
-				setDragNodeRef(node);
-				if (isFolder) setDropNodeRef(node);
-			},
-			[measureRef, setDragNodeRef, setDropNodeRef, isFolder],
-		);
-
-		return (
+	return (
+		<div
+			ref={setCombinedNodeRef}
+			data-index={index}
+			data-file-id={file.id}
+			data-selectable="true"
+			aria-selected={isSelected}
+			className={clsx(
+				'relative outline-none focus:outline-none',
+				isDragging && 'opacity-40'
+			)}
+			style={{height: ROW_HEIGHT}}
+			onClick={handleClick}
+			onDoubleClick={handleDoubleClick}
+			onContextMenu={handleContextMenu}
+			{...attributes}
+			{...listeners}
+			tabIndex={-1}
+		>
+			{/* Background layer for alternating colors and selection */}
 			<div
-				ref={setCombinedNodeRef}
-				data-index={index}
-				data-file-id={file.id}
-				data-selectable="true"
 				className={clsx(
-					"relative outline-none focus:outline-none",
-					isDragging && "opacity-40",
+					'absolute inset-0 rounded-md border',
+					// Alternating background
+					index % 2 === 0 && !isSelected && 'bg-app-dark-box/50',
+					// Selection styling
+					isSelected
+						? 'border-accent bg-accent/10'
+						: 'border-transparent',
+					// Connect adjacent selected rows
+					isSelected &&
+						isPreviousSelected &&
+						'rounded-t-none border-t-0',
+					isSelected && isNextSelected && 'rounded-b-none border-b-0',
+					// Drop indicator for folders
+					isFolder &&
+						isDropOver &&
+						!isSelected &&
+						'border-accent/60 bg-accent/5'
 				)}
-				style={{ height: ROW_HEIGHT }}
-				onClick={handleClick}
-				onDoubleClick={handleDoubleClick}
-				onContextMenu={handleContextMenu}
-				{...attributes}
-				{...listeners}
-				tabIndex={-1}
+				style={{
+					left: TABLE_PADDING_X,
+					right: TABLE_PADDING_X
+				}}
 			>
-				{/* Background layer for alternating colors and selection */}
-				<div
-					className={clsx(
-						"absolute inset-0 rounded-md border",
-						// Alternating background
-						index % 2 === 0 && !isSelected && "bg-app-dark-box/50",
-						// Selection styling
-						isSelected
-							? "border-accent bg-accent/10"
-							: "border-transparent",
-						// Connect adjacent selected rows
-						isSelected &&
-							isPreviousSelected &&
-							"rounded-t-none border-t-0",
-						isSelected &&
-							isNextSelected &&
-							"rounded-b-none border-b-0",
-						// Drop indicator for folders
-						isFolder && isDropOver && !isSelected && "border-accent/60 bg-accent/5",
-					)}
-					style={{
-						left: TABLE_PADDING_X,
-						right: TABLE_PADDING_X,
-					}}
-				>
-					{/* Subtle separator between connected selected rows */}
-					{isSelected && isPreviousSelected && (
-						<div className="absolute inset-x-3 top-0 h-px bg-accent/20" />
-					)}
-				</div>
-
-				{/* Row content */}
-				<div
-					className="relative flex h-full items-center"
-					style={{
-						paddingLeft: TABLE_PADDING_X,
-						paddingRight: TABLE_PADDING_X,
-					}}
-				>
-					{cells.map((cell) => {
-						const isNameColumn = cell.column.id === "name";
-
-						return (
-							<div
-								key={cell.id}
-								className={clsx(
-									"flex h-full items-center px-2 text-sm",
-									isNameColumn
-										? "min-w-0 flex-1"
-										: "text-ink-dull",
-								)}
-								style={{ width: cell.column.getSize() }}
-							>
-								{isNameColumn ? (
-									<NameCell file={file} />
-								) : (
-									<span className="truncate">
-										{flexRender(
-											cell.column.columnDef.cell,
-											cell.getContext(),
-										)}
-									</span>
-								)}
-							</div>
-						);
-					})}
-				</div>
+				{/* Subtle separator between connected selected rows */}
+				{isSelected && isPreviousSelected && (
+					<div className="bg-accent/20 absolute inset-x-3 top-0 h-px" />
+				)}
 			</div>
-		);
-	},
-	(prev, next) => {
-		// Only re-render if these specific props changed
-		if (prev.isSelected !== next.isSelected) return false;
-		if (prev.isFocused !== next.isFocused) return false;
-		if (prev.isPreviousSelected !== next.isPreviousSelected) return false;
-		if (prev.isNextSelected !== next.isNextSelected) return false;
-		if (prev.file !== next.file) return false;
-		if (prev.index !== next.index) return false;
-		// Ignore: row, files, measureRef, selectFile (function references)
-		return true;
-	},
-);
+
+			{/* Row content */}
+			<div
+				className="relative flex h-full items-center"
+				style={{
+					paddingLeft: TABLE_PADDING_X,
+					paddingRight: TABLE_PADDING_X
+				}}
+			>
+				{cells.map((cell) => {
+					const isNameColumn = cell.column.id === 'name';
+
+					return (
+						<div
+							key={cell.id}
+							className={clsx(
+								'flex h-full items-center px-2 text-sm',
+								isNameColumn ? 'min-w-0' : 'text-ink-dull'
+							)}
+							style={{width: cell.column.getSize()}}
+						>
+							{isNameColumn ? (
+								<NameCell file={file} />
+							) : (
+								<span className="truncate">
+									{flexRender(
+										cell.column.columnDef.cell,
+										cell.getContext()
+									)}
+								</span>
+							)}
+						</div>
+					);
+				})}
+			</div>
+		</div>
+	);
+});
 
 // Name cell with icon and tags
-const NameCell = memo(function NameCell({ file }: { file: File }) {
-	const { renamingFileId, saveRename, cancelRename } = useSelection();
+const NameCell = memo(function NameCell({file}: {file: File}) {
+	const {renamingFileId, saveRename, cancelRename} = useSelection();
 	const isRenaming = renamingFileId === file.id;
 
 	return (
@@ -263,10 +223,13 @@ const NameCell = memo(function NameCell({ file }: { file: File }) {
 					file={file}
 					onSave={saveRename}
 					onCancel={cancelRename}
-					className="flex-1 min-w-0"
+					className="min-w-0 flex-1"
 				/>
 			) : (
-				<span className="truncate text-sm text-ink">{file.name}{file.extension && `.${file.extension}`}</span>
+				<span className="text-ink truncate text-sm">
+					{file.name}
+					{file.extension && `.${file.extension}`}
+				</span>
 			)}
 
 			{/* Tags (inline, compact) - hide when renaming */}
@@ -275,14 +238,14 @@ const NameCell = memo(function NameCell({ file }: { file: File }) {
 					{file.tags.slice(0, 2).map((tag) => (
 						<TagPill
 							key={tag.id}
-							color={tag.color || "#3B82F6"}
+							color={tag.color || '#3B82F6'}
 							size="xs"
 						>
 							{tag.canonical_name}
 						</TagPill>
 					))}
 					{file.tags.length > 2 && (
-						<span className="text-[10px] text-ink-faint">
+						<span className="text-ink-faint text-[10px]">
 							+{file.tags.length - 2}
 						</span>
 					)}

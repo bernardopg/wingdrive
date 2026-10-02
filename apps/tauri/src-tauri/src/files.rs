@@ -1,6 +1,41 @@
 use std::path::{Path, PathBuf};
 use tracing::error;
 
+#[tauri::command]
+pub async fn resolve_symlink(path: PathBuf) -> Result<(PathBuf, bool), String> {
+	let target = tokio::fs::canonicalize(&path)
+		.await
+		.map_err(|e| format!("Cannot resolve link {}: {e}", path.display()))?;
+	let metadata = tokio::fs::metadata(&target)
+		.await
+		.map_err(|e| e.to_string())?;
+	Ok((target, metadata.is_dir()))
+}
+
+#[cfg(all(test, unix))]
+mod symlink_tests {
+	#[tokio::test]
+	async fn resolves_files_directories_and_rejects_broken_links() {
+		let dir = tempfile::tempdir().unwrap();
+		let file = dir.path().join("file");
+		tokio::fs::write(&file, "test").await.unwrap();
+		for (name, target, is_dir) in [
+			("file-link", file, false),
+			("dir-link", dir.path().to_path_buf(), true),
+		] {
+			let link = dir.path().join(name);
+			std::os::unix::fs::symlink(&target, &link).unwrap();
+			assert_eq!(
+				super::resolve_symlink(link).await.unwrap(),
+				(target.canonicalize().unwrap(), is_dir)
+			);
+		}
+		let broken = dir.path().join("broken");
+		std::os::unix::fs::symlink("missing", &broken).unwrap();
+		assert!(super::resolve_symlink(broken).await.is_err());
+	}
+}
+
 /// Reveal a file in the native file manager (Finder on macOS, Explorer on Windows, etc.)
 #[tauri::command]
 pub async fn reveal_file(path: String) -> Result<(), String> {

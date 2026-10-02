@@ -13,6 +13,7 @@ use crate::ops::tags::manager::TagManager;
 use anyhow::Result;
 use chrono::Utc;
 use sea_orm::DatabaseConnection;
+use sea_orm::ExprTrait;
 use sea_orm::{
 	sea_query::{Expr, OnConflict},
 	ActiveModelTrait, ColumnTrait, DbConn, EntityTrait, NotSet, QueryFilter, Set, TransactionTrait,

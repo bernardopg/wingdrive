@@ -5,19 +5,21 @@ import {
 	SidebarSimple,
 	Tag as TagIcon
 } from '@phosphor-icons/react';
+import {useQueryClient} from '@tanstack/react-query';
 import {CircleButton, CircleButtonGroup} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import {TopBarItem, TopBarPortal} from '../../TopBar';
 import {ExpandableSearchButton} from './components/ExpandableSearchButton';
 import {PathBar} from './components/PathBar';
 import {VirtualPathBar} from './components/VirtualPathBar';
 import {useExplorer, type ViewMode} from './context';
+import {useExplorerFiles} from './hooks/useExplorerFiles';
 import {useExternalFileDrop} from './hooks/useExternalFileDrop';
 import {useVirtualListing} from './hooks/useVirtualListing';
 import {SearchToolbar} from './SearchToolbar';
 import {SortMenu, SortMenuPanel} from './SortMenu';
-import {TabNavigationGuard} from './TabNavigationGuard';
 import {ViewModeMenu, ViewModeMenuPanel} from './ViewModeMenu';
 import {ColumnView} from './views/ColumnView';
 import {EmptyView} from './views/EmptyView';
@@ -61,6 +63,9 @@ export function ExplorerView() {
 	} = useExplorer();
 
 	const {isVirtualView} = useVirtualListing();
+	const {error: listingError} = useExplorerFiles();
+	const queryClient = useQueryClient();
+	const routerNavigate = useNavigate();
 	const isPreviewActive = !!quickPreviewFileId;
 
 	// Column view operates on its deepest visible folder rather than the root.
@@ -327,8 +332,28 @@ export function ExplorerView() {
 							: 'overflow-auto'
 					)}
 				>
-					<TabNavigationGuard>
-						{mode.type === 'search' ? (
+					<>
+						{listingError ? (
+							<div
+								className="flex h-full flex-col items-center justify-center gap-3 p-6"
+								role="alert"
+							>
+								<p>
+									Could not open this location:{' '}
+									{listingError.message}
+								</p>
+								<button
+									onClick={() =>
+										void queryClient.invalidateQueries()
+									}
+								>
+									Try again
+								</button>
+								<button onClick={() => routerNavigate('/')}>
+									Go to Overview
+								</button>
+							</div>
+						) : mode.type === 'search' ? (
 							<SearchView />
 						) : viewMode === 'grid' ? (
 							<GridView />
@@ -343,7 +368,7 @@ export function ExplorerView() {
 						) : (
 							<MediaView />
 						)}
-					</TabNavigationGuard>
+					</>
 				</div>
 			</div>
 		</>

@@ -1,11 +1,13 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod clipboard;
 mod drag;
 mod file_opening;
 mod files;
 mod keybinds;
 mod server;
+mod undo;
 mod windows;
 
 use serde::{Deserialize, Serialize};
@@ -1755,14 +1757,17 @@ async fn start_daemon(
 
 	tracing::info!(?daemon_path, ?base_data_dir, ?instance, "Starting daemon");
 
-	let child = build_daemon_command(&daemon_path, base_data_dir, instance)
-		.stdout(std::process::Stdio::null())
-		.stderr(std::process::Stdio::null())
+	let mut child = build_daemon_command(&daemon_path, base_data_dir, instance)
+		.stdout(std::process::Stdio::inherit())
+		.stderr(std::process::Stdio::inherit())
 		.spawn()
 		.map_err(|e| format!("Failed to start daemon: {}", e))?;
 
 	// Wait for daemon to be ready
-	for i in 0..30 {
+	for i in 0..300 {
+		if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
+			return Err(format!("Packaged daemon exited during startup: {status}"));
+		}
 		tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 		if is_daemon_running(socket_addr).await {
 			tracing::info!("Daemon ready at {}", socket_addr);
@@ -1773,7 +1778,9 @@ async fn start_daemon(
 		}
 	}
 
-	Err("Daemon failed to start (connection not available after 3 seconds)".to_string())
+	let _ = child.kill();
+	let _ = child.wait();
+	Err("Daemon failed to start (connection not available after 30 seconds)".to_string())
 }
 
 #[cfg(test)]
@@ -2168,6 +2175,19 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() {
+	#[cfg(target_os = "linux")]
+	if let Some(app_dir) = std::env::var_os("APPDIR") {
+		// linuxdeploy's scanner hook assumes a Debian path that differs on Arch.
+		let scanner = PathBuf::from(app_dir).join("usr/lib/gstreamer-1.0/gst-plugin-scanner");
+		if scanner.is_file() {
+			std::env::set_var("GST_PLUGIN_SCANNER_1_0", scanner);
+		}
+	}
+	#[cfg(target_os = "linux")]
+	if std::env::var_os("GDK_BACKEND").is_none() && std::env::var_os("DISPLAY").is_some() {
+		// GTK/WebKit's Wayland startup failed in runtime validation; prefer available XWayland.
+		std::env::set_var("GDK_BACKEND", "x11,wayland");
+	}
 	// Initialize logging
 	tracing_subscriber::registry()
 		.with(
@@ -2235,6 +2255,12 @@ fn main() {
 			files::reveal_file,
 			files::share_files,
 			files::get_sidecar_path,
+			files::resolve_symlink,
+			clipboard::write_file_clipboard,
+			clipboard::read_file_clipboard,
+			undo::file_identity,
+			undo::undo_move,
+			undo::undo_empty_folder,
 			file_opening::get_apps_for_paths,
 			file_opening::open_path_default,
 			file_opening::open_path_with_app,

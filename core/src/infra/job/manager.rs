@@ -2374,7 +2374,7 @@ impl JobManager {
 		if let Err(e) = self
 			.db
 			.conn()
-			.execute(Statement::from_string(
+			.execute_raw(Statement::from_string(
 				sea_orm::DatabaseBackend::Sqlite,
 				"PRAGMA wal_checkpoint(TRUNCATE)",
 			))

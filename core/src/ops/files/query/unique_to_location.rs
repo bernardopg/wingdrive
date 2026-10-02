@@ -148,7 +148,7 @@ impl UniqueToLocationQuery {
 		"#;
 
 		let unique_content_hashes: Vec<String> = db
-			.query_all(Statement::from_sql_and_values(
+			.query_all_raw(Statement::from_sql_and_values(
 				sea_orm::DatabaseBackend::Sqlite,
 				unique_content_hashes_query,
 				[location_root_entry_id.into()],
@@ -209,7 +209,7 @@ impl UniqueToLocationQuery {
 		};
 
 		let file_rows = db
-			.query_all(Statement::from_sql_and_values(
+			.query_all_raw(Statement::from_sql_and_values(
 				sea_orm::DatabaseBackend::Sqlite,
 				&final_query,
 				[location_root_entry_id.into()],

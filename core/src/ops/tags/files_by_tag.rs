@@ -9,6 +9,7 @@ use crate::{
 	},
 	ops::tags::manager::TagManager,
 };
+use sea_orm::ExprTrait;
 use sea_orm::{
 	ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, QueryFilter, Statement,
 };
@@ -119,7 +120,7 @@ impl LibraryQuery for GetFilesByTagQuery {
 		);
 
 		let rows = conn
-			.query_all(Statement::from_string(
+			.query_all_raw(Statement::from_string(
 				sea_orm::DatabaseBackend::Sqlite,
 				sql_query,
 			))

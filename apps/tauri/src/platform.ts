@@ -1,4 +1,3 @@
-import type {Platform} from '@wingdrive/interface';
 import {
 	invoke,
 	convertFileSrc as tauriConvertFileSrc
@@ -7,6 +6,7 @@ import {listen} from '@tauri-apps/api/event';
 import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {ask, open, save} from '@tauri-apps/plugin-dialog';
 import {open as shellOpen} from '@tauri-apps/plugin-shell';
+import type {Platform} from '@wingdrive/interface';
 import {
 	beginDrag,
 	onDragBegan,
@@ -23,6 +23,25 @@ let _isDragging = false;
  */
 export const platform: Platform = {
 	platform: 'tauri',
+	resolveSymlink: (path) =>
+		invoke<[string, boolean]>('resolve_symlink', {path}),
+	...(navigator.platform.startsWith('Linux')
+		? {
+				fileIdentity: (path: string) =>
+					invoke<[string, string]>('file_identity', {path}),
+				undoMove: (
+					source: string,
+					destination: string,
+					expected: [string, string]
+				) => invoke<void>('undo_move', {source, destination, expected}),
+				undoEmptyFolder: (path: string, expected: [string, string]) =>
+					invoke<void>('undo_empty_folder', {path, expected}),
+				writeFileClipboard: (paths: string[], cut: boolean) =>
+					invoke<void>('write_file_clipboard', {paths, cut}),
+				readFileClipboard: () =>
+					invoke<[string[], boolean]>('read_file_clipboard')
+			}
+		: {}),
 
 	async openDirectoryPickerDialog(opts) {
 		const result = await open({
@@ -352,11 +371,7 @@ export const platform: Platform = {
 		// Use the global handler if available (initialized in keybinds.ts)
 		const global = window.__WINGDRIVE__;
 		if (global?.registerKeybind) {
-			await global.registerKeybind(
-				id,
-				accelerator,
-				handler
-			);
+			await global.registerKeybind(id, accelerator, handler);
 		}
 	},
 

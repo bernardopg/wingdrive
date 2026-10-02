@@ -1,7 +1,7 @@
 {
 	"name": "@wingdrive/tauri",
 	"private": true,
-	"version": "2.0.0-alpha.2",
+	"version": "2.0.0-alpha.4",
 	"type": "module",
 	"engines": {
 		"bun": ">=1.3.0"
@@ -10,14 +10,14 @@
 		"dev": "vite dev",
 		"dev:with-daemon": "bun ./scripts/dev-with-daemon.ts",
 		"build": "vite build",
-		"build:daemon": "bash -c 'cargo build --bin wing-daemon --features ffmpeg,heif --manifest-path ../../Cargo.toml ${CARGO_BUILD_TARGET:+--target $CARGO_BUILD_TARGET}'",
-		"build:daemon:release": "bash -c 'cargo build --release --bin wing-daemon --features ffmpeg,heif --manifest-path ../../Cargo.toml ${CARGO_BUILD_TARGET:+--target $CARGO_BUILD_TARGET}'",
+		"build:daemon": "bun scripts/build-daemon.ts",
+		"build:daemon:release": "bun scripts/build-daemon.ts --release",
 		"preview": "vite preview",
 		"typecheck": "tsc -b",
 		"tauri": "tauri",
 		"tauri:dev": "tauri dev",
 		"tauri:dev:no-watch": "tauri dev --no-watch",
-		"tauri:build": "tauri build && ./scripts/fix-daemon-entitlements.sh ../../target/release/bundle/macos/WingDrive.app || true"
+		"tauri:build": "tauri build"
 	},
 	"dependencies": {
 		"@phosphor-icons/react": "^2.1.10",
@@ -25,13 +25,13 @@
 		"@wingdrive/interface": "workspace:*",
 		"@wingdrive/ts-client": "workspace:*",
 		"@wingdrive/primitives": "^0.2.4",
-		"@tauri-apps/api": "^2.11.1",
-		"@tauri-apps/plugin-dialog": "^2.7.2",
-		"@tauri-apps/plugin-fs": "^2.5.1",
-		"@tauri-apps/plugin-shell": "^2.3.5",
+		"@tauri-apps/api": "^2.12.1",
+		"@tauri-apps/plugin-dialog": "^2.8.1",
+		"@tauri-apps/plugin-fs": "^2.6.0",
+		"@tauri-apps/plugin-shell": "^2.4.0",
 		"react": "^19.3.0",
 		"react-dom": "^19.3.0",
-		"react-router-dom": "^7.18.2",
+		"react-router-dom": "^7.18.4",
 		"react-scan": "^0.5.7",
 		"style-to-js": "1.1.21"
 	},
@@ -41,15 +41,15 @@
 		"@tailwindcss/forms": "^0.5.11",
 		"@tailwindcss/typography": "^0.5.20",
 		"@tailwindcss/vite": "^4.3.3",
-		"@tauri-apps/cli": "^2.11.4",
+		"@tauri-apps/cli": "^2.12.1",
 		"@types/react": "19.3.0",
 		"@types/react-dom": "19.3.0",
-		"@vitejs/plugin-react": "^6.0.5",
+		"@vitejs/plugin-react": "^6.1.1",
 		"tailwindcss": "^4.3.3",
 		"tailwindcss-animate": "^1.0.7",
 		"tailwindcss-radix": "^4.0.2",
 		"typescript": "^7.0.2",
-		"vite": "^8.2.1",
+		"vite": "^8.3.2",
 		"vite-plugin-commonjs": "^0.10.4"
 	}
 }

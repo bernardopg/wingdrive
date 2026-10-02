@@ -242,6 +242,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 	// Directory query
 	const directoryQuery = useNormalizedQuery({
 		query: "files.directory_listing",
+		refetchOnResourceChange: true,
 		input: currentPath
 			? {
 					path: currentPath,

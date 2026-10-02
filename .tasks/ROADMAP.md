@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-10-01. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-10-02. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -20,15 +20,14 @@ Epics: `TAURI-000`, `EXPL-000`, `CLI-000` (estendido por `CLI-001`).
 | 3 | EXPL-006 | Direção de ordenação (asc/desc) | S01 |
 | 4 | TAURI-008 | Atalhos padrão: refresh, nova pasta, ocultos | S01 |
 | 5 | TAURI-009 | Trocar `alert()` nativo por toast | S01 |
-| 6 | TAURI-010 | Clipboard integrado ao sistema | S02 |
-| 7 | EXPL-007 | Abrir symlinks corretamente | S02 |
-| 8 | TAURI-011 | Bundle de produção Linux verificado | S02 |
-| 9 | EXPL-005 | Abas com estado isolado | S03 |
+| 6 | TAURI-010 | Clipboard integrado ao sistema | S01 |
+| 7 | EXPL-007 | Abrir symlinks corretamente | S01 |
+| 8 | TAURI-011 | Bundle de produção Linux verificado | S01 |
+| 9 | EXPL-005 | Abas com estado isolado | S01 |
 
-Backlog M1 sem sprint: `EXPL-001`, `EXPL-002`, `EXPL-003` (critérios herdados do upstream,
-revisar e fechar ou quebrar em tasks novas), bugs que o `TAURI-006` encontrar, e `DEV-003`
-(clippy do workspace quebrado com toolchain 1.98), `WATCH-004` (pasta nova duplicada no índice) e
-`BRAND-001` (trocar a identidade visual antiga: orb, ícones, vídeos, screenshots).
+O usuário incluiu EXPL-001, EXPL-002, EXPL-003 e BRAND-001 no S01; implementação e validação concluídas. EXPL-005, TAURI-011 e FORK-004 seguem na verificação final de produção e publicação. TAURI-006 está adiada por decisão explícita do usuário.
+
+Backlog M1: concluir a matriz TAURI-006 e os bugs que ela encontrar. DEV-003 e WATCH-004 já estão Done.
 
 ## Next — M2: Desktop multiplataforma e release
 

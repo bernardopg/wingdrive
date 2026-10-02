@@ -1,122 +1,90 @@
-import { useRef, memo, useCallback } from "react";
-import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
-import clsx from "clsx";
-import type { File, WingPath } from "@wingdrive/ts-client";
-import { useNormalizedQuery } from "../../../../contexts/WingDriveContext";
-import { ColumnItem } from "./ColumnItem";
-import { useExplorer } from "../../context";
-import { useFileContextMenu } from "../../hooks/useFileContextMenu";
-import { useOpenWith } from "../../../../hooks/useOpenWith";
-import { useSelection } from "../../SelectionContext";
+import {useVirtualizer, type VirtualItem} from '@tanstack/react-virtual';
+import type {File, WingPath} from '@wingdrive/ts-client';
+import clsx from 'clsx';
+import {memo, useCallback, useRef} from 'react';
+import {useNormalizedQuery} from '../../../../contexts/WingDriveContext';
+import {useExplorer} from '../../context';
+import {useFileContextMenu} from '../../hooks/useFileContextMenu';
+import {useOpenFile} from '../../hooks/useOpenFile';
+import {useSelection} from '../../SelectionContext';
+import {ColumnItem} from './ColumnItem';
 
 /**
  * Memoized wrapper for ColumnItem to prevent re-renders when selection changes elsewhere.
  * Only re-renders when this specific item's `selected` state changes.
  */
-const ColumnItemWrapper = memo(
-	function ColumnItemWrapper({
+const ColumnItemWrapper = memo(function ColumnItemWrapper({
+	file,
+	files,
+	virtualRow,
+	selected,
+	selectedFiles,
+	onSelectFile,
+	onNavigate
+}: {
+	file: File;
+	files: File[];
+	virtualRow: VirtualItem;
+	selected: boolean;
+	selectedFiles: File[];
+	onSelectFile: (
+		file: File,
+		files: File[],
+		multi?: boolean,
+		range?: boolean
+	) => void;
+	onNavigate: (path: WingPath) => void;
+}) {
+	const contextMenu = useFileContextMenu({
 		file,
-		files,
-		virtualRow,
-		selected,
 		selectedFiles,
-		onSelectFile,
-		onNavigate,
-	}: {
-		file: File;
-		files: File[];
-		virtualRow: VirtualItem;
-		selected: boolean;
-		selectedFiles: File[];
-		onSelectFile: (
-			file: File,
-			files: File[],
-			multi?: boolean,
-			range?: boolean,
-		) => void;
-		onNavigate: (path: WingPath) => void;
-	}) {
-		const contextMenu = useFileContextMenu({
-			file,
-			selectedFiles,
-			selected,
-		});
+		selected
+	});
 
-		const handleClick = useCallback(
-			(multi: boolean, range: boolean) => {
-				onSelectFile(file, files, multi, range);
-			},
-			[file, files, onSelectFile],
-		);
+	const handleClick = useCallback(
+		(multi: boolean, range: boolean) => {
+			onSelectFile(file, files, multi, range);
+		},
+		[file, files, onSelectFile]
+	);
 
-		const physicalPath =
-			(file.kind === "File" || file.kind === "Symlink") &&
-			"Physical" in file.wing_path
-				? file.wing_path.Physical.path
-				: null;
-		const { openWithDefault } = useOpenWith(
-			physicalPath ? [physicalPath] : [],
-		);
+	const openFile = useOpenFile(onNavigate);
+	const handleDoubleClick = () => openFile(file);
 
-		const handleDoubleClick = useCallback(() => {
-			if (file.kind === "Directory" && file.wing_path) {
-				onNavigate(file.wing_path);
-				return;
+	const handleContextMenu = useCallback(
+		async (e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			if (!selected) {
+				onSelectFile(file, files, false, false);
 			}
-			// Files (and symlinks) previously did nothing on double-click here;
-			// every other view already opened them with the default application.
-			if (
-				(file.kind === "File" || file.kind === "Symlink") &&
-				"Physical" in file.wing_path
-			) {
-				void openWithDefault(file.wing_path.Physical.path);
-			}
-		}, [file, onNavigate, openWithDefault]);
+			await contextMenu.show(e);
+		},
+		[file, files, selected, onSelectFile, contextMenu]
+	);
 
-		const handleContextMenu = useCallback(
-			async (e: React.MouseEvent) => {
-				e.preventDefault();
-				e.stopPropagation();
-				if (!selected) {
-					onSelectFile(file, files, false, false);
-				}
-				await contextMenu.show(e);
-			},
-			[file, files, selected, onSelectFile, contextMenu],
-		);
-
-		return (
-			<div
-				style={{
-					position: "absolute",
-					top: 0,
-					left: 0,
-					width: "100%",
-					height: `${virtualRow.size}px`,
-					transform: `translateY(${virtualRow.start}px)`,
-				}}
-			>
-				<ColumnItem
-					file={file}
-					selected={selected}
-					focused={false}
-					onClick={handleClick}
-					onDoubleClick={handleDoubleClick}
-					onContextMenu={handleContextMenu}
-				/>
-			</div>
-		);
-	},
-	(prev, next) => {
-		// Only re-render if selection state or file changed
-		if (prev.selected !== next.selected) return false;
-		if (prev.file !== next.file) return false;
-		if (prev.virtualRow.start !== next.virtualRow.start) return false;
-		if (prev.virtualRow.size !== next.virtualRow.size) return false;
-		// Ignore: files array, onSelectFile, contextMenu (passed through to handlers)
-		return true;
-	},
-);
+	return (
+		<div
+			style={{
+				position: 'absolute',
+				top: 0,
+				left: 0,
+				width: '100%',
+				height: `${virtualRow.size}px`,
+				transform: `translateY(${virtualRow.start}px)`
+			}}
+		>
+			<ColumnItem
+				file={file}
+				selected={selected}
+				focused={false}
+				onClick={handleClick}
+				onDoubleClick={handleDoubleClick}
+				onContextMenu={handleContextMenu}
+			/>
+		</div>
+	);
+});
 
 interface ColumnProps {
 	path: WingPath | null;
@@ -126,7 +94,7 @@ interface ColumnProps {
 		file: File,
 		files: File[],
 		multi?: boolean,
-		range?: boolean,
+		range?: boolean
 	) => void;
 	onNavigate: (path: WingPath) => void;
 	nextColumnPath?: WingPath;
@@ -142,25 +110,25 @@ export const Column = memo(function Column({
 	onNavigate,
 	nextColumnPath,
 	isActive,
-	virtualFiles,
+	virtualFiles
 }: ColumnProps) {
 	const parentRef = useRef<HTMLDivElement>(null);
-	const { viewSettings, sortBy, sortDirection } = useExplorer();
-	const { selectedFiles } = useSelection();
+	const {viewSettings, sortBy, sortDirection} = useExplorer();
+	const {selectedFiles} = useSelection();
 
 	const directoryQuery = useNormalizedQuery({
-		query: "files.directory_listing",
+		query: 'files.directory_listing',
 		input: {
 			path: path!,
 			limit: null,
 			include_hidden: viewSettings.showHiddenFiles,
 			sort_by: sortBy as any,
 			folders_first: viewSettings.foldersFirst,
-			sort_direction: sortDirection,
+			sort_direction: sortDirection
 		},
-		resourceType: "file",
+		resourceType: 'file',
 		pathScope: path ?? undefined,
-		enabled: !!path && !virtualFiles,
+		enabled: !!path && !virtualFiles
 		// includeDescendants defaults to false for exact directory matching
 	});
 
@@ -170,17 +138,17 @@ export const Column = memo(function Column({
 		count: files.length,
 		getScrollElement: () => parentRef.current,
 		estimateSize: () => 32,
-		overscan: 10,
+		overscan: 10
 	});
 
 	// Only show loading state if we're not using virtual files and the query is actually loading
 	if (!virtualFiles && directoryQuery.isLoading) {
 		return (
 			<div
-				className="shrink-0 border-r border-app-line flex items-center justify-center"
-				style={{ width: `${viewSettings.columnWidth}px` }}
+				className="border-app-line flex shrink-0 items-center justify-center border-r"
+				style={{width: `${viewSettings.columnWidth}px`}}
 			>
-				<div className="text-sm text-ink-dull">Loading...</div>
+				<div className="text-ink-dull text-sm">Loading...</div>
 			</div>
 		);
 	}
@@ -189,16 +157,16 @@ export const Column = memo(function Column({
 		<div
 			ref={parentRef}
 			className={clsx(
-				"shrink-0 border-r border-app-line overflow-auto",
-				isActive && "bg-app-box/30",
+				'border-app-line shrink-0 overflow-auto border-r',
+				isActive && 'bg-app-box/30'
 			)}
-			style={{ width: `${viewSettings.columnWidth}px` }}
+			style={{width: `${viewSettings.columnWidth}px`}}
 		>
 			<div
 				style={{
 					height: `${rowVirtualizer.getTotalSize()}px`,
-					width: "100%",
-					position: "relative",
+					width: '100%',
+					position: 'relative'
 				}}
 			>
 				{rowVirtualizer.getVirtualItems().map((virtualRow) => {

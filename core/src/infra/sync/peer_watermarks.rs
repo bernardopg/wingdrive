@@ -26,7 +26,7 @@ impl PeerWatermarkStore {
 	/// Initialize the peer_received_watermarks table in sync.db
 	pub async fn init_table<C: ConnectionTrait>(conn: &C) -> Result<(), WatermarkError> {
 		// Create main table
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			r#"
 			CREATE TABLE IF NOT EXISTS peer_received_watermarks (
@@ -43,7 +43,7 @@ impl PeerWatermarkStore {
 		.map_err(|e| WatermarkError::QueryError(e.to_string()))?;
 
 		// Create index for efficient peer queries
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_peer_received_watermarks_peer
 			 ON peer_received_watermarks(peer_device_uuid)"
@@ -62,7 +62,7 @@ impl PeerWatermarkStore {
 		peer_device_uuid: Uuid,
 	) -> Result<Option<HLC>, WatermarkError> {
 		let row = conn
-			.query_one(Statement::from_sql_and_values(
+			.query_one_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				"SELECT max_received_hlc FROM peer_received_watermarks
 				 WHERE device_uuid = ? AND peer_device_uuid = ?",
@@ -119,7 +119,7 @@ impl PeerWatermarkStore {
 		}
 
 		// Upsert
-		conn.execute(Statement::from_sql_and_values(
+		conn.execute_raw(Statement::from_sql_and_values(
 			DbBackend::Sqlite,
 			r#"
 			INSERT INTO peer_received_watermarks
@@ -149,7 +149,7 @@ impl PeerWatermarkStore {
 		conn: &C,
 	) -> Result<HashMap<Uuid, HLC>, WatermarkError> {
 		let rows = conn
-			.query_all(Statement::from_sql_and_values(
+			.query_all_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				"SELECT peer_device_uuid, max_received_hlc FROM peer_received_watermarks
 				 WHERE device_uuid = ?",
@@ -182,7 +182,7 @@ impl PeerWatermarkStore {
 		conn: &C,
 	) -> Result<Option<HLC>, WatermarkError> {
 		let row = conn
-			.query_one(Statement::from_sql_and_values(
+			.query_one_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				"SELECT MAX(max_received_hlc) as max_hlc FROM peer_received_watermarks
 				 WHERE device_uuid = ?",

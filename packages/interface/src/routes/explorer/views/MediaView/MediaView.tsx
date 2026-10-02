@@ -14,6 +14,7 @@ import { MediaViewItem } from "./MediaViewItem";
 import { DateHeader } from "./DateHeader";
 import { formatDate, getItemDate, normalizeDateToMidnight } from "./utils";
 import { useExplorerFiles } from "../../hooks/useExplorerFiles";
+import {useTabScroll} from '../../hooks/useTabScroll';
 
 // Helper to check if a file is a media file (image or video)
 function isMediaFile(file: File): boolean {
@@ -25,7 +26,7 @@ function isMediaFile(file: File): boolean {
 }
 
 export function MediaView() {
-	const { currentPath, viewSettings, sortBy, setSortBy, setCurrentFiles, mode } =
+	const { currentPath, viewSettings, sortBy, setSortBy, setCurrentFiles, mode, scrollPosition } =
 		useExplorer();
 	const {
 		selectFile,
@@ -56,8 +57,6 @@ export function MediaView() {
 	const parentRef = useRef<HTMLDivElement>(null);
 	const [containerWidth, setContainerWidth] = useState(0);
 	const [scrollOffset, setScrollOffset] = useState(0);
-
-	// TODO: Preserve scroll position per tab using scrollPosition from context
 
 	// Track when element is ready
 	const [elementReady, setElementReady] = useState(false);
@@ -146,14 +145,13 @@ export function MediaView() {
 		// No resourceFilter needed - the backend query already filters for media
 	});
 
-	// Access files from the query response (reversed for inverted scroll)
 	const files = useMemo(() => {
 		if (isSearchMode) {
 			// In search mode, filter explorerFiles to only show media
-			return [...explorerFiles.filter(isMediaFile)].reverse();
+			return explorerFiles.filter(isMediaFile);
 		}
 		// Normal mode: use media_listing query
-		return [...(mediaQuery.data?.files || [])].reverse();
+		return mediaQuery.data?.files ?? [];
 	}, [isSearchMode, explorerFiles, mediaQuery.data?.files]);
 
 	// Update current files in explorer context for quick preview navigation
@@ -263,24 +261,17 @@ export function MediaView() {
 	// Row virtualizer for vertical scrolling
 	const rowVirtualizer = useVirtualizer({
 		count: rowCount,
+		initialOffset: scrollPosition.top,
 		getScrollElement: () => parentRef.current,
 		estimateSize: () => actualItemSize + gapSize,
 		overscan: overscanCount,
 	});
+	useTabScroll(parentRef, containerWidth > 0 ? rowCount : 0);
 
 	// Force remeasure synchronously when layout changes (before paint)
 	useLayoutEffect(() => {
 		rowVirtualizer.measure();
 	}, [columns, gridSize, rowCount, rowVirtualizer]);
-
-	// Scroll to bottom on mount (inverted scroll - show most recent first)
-	useEffect(() => {
-		if (rowCount > 0 && parentRef.current) {
-			rowVirtualizer.scrollToIndex(rowCount - 1, {
-				align: "end",
-			});
-		}
-	}, [rowCount, rowVirtualizer]);
 
 	const virtualRows = rowVirtualizer.getVirtualItems();
 

@@ -527,7 +527,7 @@ impl Library {
 			.db
 			.as_ref()
 			.conn()
-			.execute(Statement::from_string(
+			.execute_raw(Statement::from_string(
 				sea_orm::DatabaseBackend::Sqlite,
 				"PRAGMA wal_checkpoint(TRUNCATE)",
 			))
@@ -1627,7 +1627,7 @@ impl Library {
 
 		// Reset all counts to 0 first, then update with actual counts in a single query.
 		// This handles both updates and resets efficiently.
-		db.execute(Statement::from_string(
+		db.execute_raw(Statement::from_string(
 			sea_orm::DbBackend::Sqlite,
 			"UPDATE content_kinds SET file_count = 0".to_owned(),
 		))
@@ -1636,7 +1636,7 @@ impl Library {
 		// Use raw SQL with GROUP BY to count efficiently in the database.
 		// This avoids loading all content_identity records into memory.
 		let rows_affected = db
-			.execute(Statement::from_string(
+			.execute_raw(Statement::from_string(
 				sea_orm::DbBackend::Sqlite,
 				r#"
 						UPDATE content_kinds

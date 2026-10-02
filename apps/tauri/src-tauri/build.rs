@@ -74,23 +74,36 @@ fn main() {
 		""
 	};
 
-	for source_profile in [profile.as_str(), "release"] {
-		let daemon_source = format!(
-			"{}/target/{}/wing-daemon{}",
-			workspace_dir, source_profile, exe_ext
-		);
-		let daemon_target = format!(
-			"{}/target/{}/wing-daemon-{}{}",
-			workspace_dir, source_profile, target_triple, exe_ext
-		);
-
-		if std::path::Path::new(&daemon_source).exists() {
-			let _ = std::fs::remove_file(&daemon_target);
-
-			if let Err(e) = std::fs::copy(&daemon_source, &daemon_target) {
-				eprintln!("Warning: Failed to copy daemon: {}", e);
-			}
+	let out_dir = std::path::PathBuf::from(std::env::var_os("OUT_DIR").expect("OUT_DIR not set"));
+	let profile_dir = out_dir
+		.ancestors()
+		.nth(3)
+		.expect("Missing Cargo profile directory");
+	let daemon_source = profile_dir.join(format!("wing-daemon{exe_ext}"));
+	let fallback = std::path::PathBuf::from(format!(
+		"{workspace_dir}/target/{profile}/wing-daemon{exe_ext}"
+	));
+	let daemon_source = if daemon_source.exists() {
+		daemon_source
+	} else {
+		fallback
+	};
+	println!("cargo:rerun-if-changed={}", daemon_source.display());
+	if daemon_source.exists() {
+		let destination = std::path::PathBuf::from(format!(
+			"{workspace_dir}/target/release/wing-daemon-{target_triple}{exe_ext}"
+		));
+		std::fs::create_dir_all(destination.parent().expect("Missing sidecar directory"))
+			.expect("Cannot create sidecar directory");
+		// Debug builds must not replace the daemon used by release bundles.
+		if profile == "release" || !destination.exists() {
+			std::fs::copy(&daemon_source, destination).expect("Cannot stage daemon sidecar");
 		}
+	} else if profile == "release" {
+		panic!(
+			"Release daemon is missing at {}; run the daemon build first",
+			daemon_source.display()
+		);
 	}
 
 	tauri_build::build()

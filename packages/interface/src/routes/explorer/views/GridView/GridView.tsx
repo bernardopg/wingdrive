@@ -1,17 +1,20 @@
-import { useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useExplorer } from "../../context";
-import { useSelection } from "../../SelectionContext";
-import { FileCard } from "./FileCard";
-import type { File } from "@wingdrive/ts-client";
-import { useExplorerFiles } from "../../hooks/useExplorerFiles";
-import { DragSelect } from "./DragSelect";
-import { useEmptySpaceContextMenu } from "../../hooks/useEmptySpaceContextMenu";
+import {useVirtualizer} from '@tanstack/react-virtual';
+import type {File} from '@wingdrive/ts-client';
+import {useEffect, useMemo, useRef, useState} from 'react';
+import {isInputFocused} from '../../../../util/keybinds/platform';
+import {useExplorer} from '../../context';
+import {useEmptySpaceContextMenu} from '../../hooks/useEmptySpaceContextMenu';
+import {useExplorerFiles} from '../../hooks/useExplorerFiles';
+import {useTabScroll} from '../../hooks/useTabScroll';
+import {useSelection} from '../../SelectionContext';
+import {DragSelect} from './DragSelect';
+import {FileCard} from './FileCard';
 
 const VIRTUALIZATION_THRESHOLD = 0; // Disabled - always virtualize
+let lastGridMeasurement: {key: string; width: number; height: number} | null = null;
 
 export function GridView() {
-	const { viewSettings, setCurrentFiles } = useExplorer();
+	const {viewSettings, setCurrentFiles} = useExplorer();
 	const {
 		isSelected,
 		focusedIndex,
@@ -20,13 +23,13 @@ export function GridView() {
 		selectFile,
 		clearSelection,
 		setSelectedFiles,
-		restoreSelectionFromFiles,
+		restoreSelectionFromFiles
 	} = useSelection();
-	const { gridSize, gapSize } = viewSettings;
+	const {gridSize, gapSize} = viewSettings;
 	const emptySpaceContextMenu = useEmptySpaceContextMenu();
 
 	// Get files from centralized hook (handles search, virtual, and directory)
-	const { files, isLoading, source } = useExplorerFiles();
+	const {files, isLoading, source} = useExplorerFiles();
 
 	// Update current files in explorer context for quick preview navigation
 	useEffect(() => {
@@ -57,11 +60,13 @@ export function GridView() {
 	const gridContainerRef = useRef<HTMLDivElement>(null);
 
 	// Empty state for tag view with no tagged files
-	if (source === "tag" && files.length === 0 && !isLoading) {
+	if (source === 'tag' && files.length === 0 && !isLoading) {
 		return (
-			<div className="flex items-center justify-center h-full">
+			<div className="flex h-full items-center justify-center">
 				<div className="text-center">
-					<div className="text-ink-dull text-lg font-medium mb-1">No tagged files</div>
+					<div className="text-ink-dull mb-1 text-lg font-medium">
+						No tagged files
+					</div>
 					<div className="text-ink-dull text-sm">
 						Files tagged with this tag will appear here
 					</div>
@@ -80,11 +85,11 @@ export function GridView() {
 			>
 				<DragSelect files={files} scrollRef={gridContainerRef}>
 					<div
-						className="grid p-3 min-h-full"
+						className="grid min-h-full p-3"
 						style={{
 							gridTemplateColumns: `repeat(auto-fill, minmax(${gridSize}px, 1fr))`,
-							gridAutoRows: "max-content",
-							gap: `${gapSize}px`,
+							gridAutoRows: 'max-content',
+							gap: `${gapSize}px`
 						}}
 					>
 						{files.map((file, index) => (
@@ -134,7 +139,7 @@ interface VirtualizedGridProps {
 		file: File,
 		files: File[],
 		multi?: boolean,
-		range?: boolean,
+		range?: boolean
 	) => void;
 	setSelectedFiles: (files: File[]) => void;
 	onContainerClick: (e: React.MouseEvent) => void;
@@ -152,38 +157,15 @@ function VirtualizedGrid({
 	selectFile,
 	setSelectedFiles,
 	onContainerClick,
-	onContainerContextMenu,
+	onContainerContextMenu
 }: VirtualizedGridProps) {
+	const {sidebarVisible, inspectorVisible, scrollPosition} = useExplorer();
+	const measurementKey = `${window.innerWidth}:${window.innerHeight}:${sidebarVisible}:${inspectorVisible}`;
+	const measurementKeyRef = useRef(measurementKey);
+	measurementKeyRef.current = measurementKey;
 	const parentRef = useRef<HTMLDivElement>(null);
-	const [containerWidth, setContainerWidth] = useState<number | null>(null);
-	const [isInitialized, setIsInitialized] = useState(false);
-
-	// TODO: Preserve scroll position per tab using scrollPosition from context
-
-	// Synchronous measurement before paint to prevent layout shift
-	useLayoutEffect(() => {
-		const element = parentRef.current;
-		if (!element) return;
-
-		const updateWidth = () => {
-			const newWidth = element.offsetWidth;
-
-			if (newWidth > 0) {
-				setContainerWidth(newWidth - 24);
-				setIsInitialized(true);
-			}
-		};
-
-		const resizeObserver = new ResizeObserver(updateWidth);
-		resizeObserver.observe(element);
-
-		// Immediate measurement
-		updateWidth();
-
-		return () => {
-			resizeObserver.disconnect();
-		};
-	}, []);
+	const [containerWidth, setContainerWidth] = useState<number | null>(() => lastGridMeasurement?.key === measurementKey ? lastGridMeasurement.width : null);
+	const [isInitialized, setIsInitialized] = useState(containerWidth !== null);
 
 	// Calculate columns (mimic auto-fill behavior)
 	const columns = useMemo(() => {
@@ -215,19 +197,41 @@ function VirtualizedGrid({
 	// Row virtualizer
 	const rowVirtualizer = useVirtualizer({
 		count: rowCount,
+		initialOffset: scrollPosition.top,
+		initialRect: {width: containerWidth ?? 0, height: lastGridMeasurement?.key === measurementKey ? lastGridMeasurement.height : 0},
 		getScrollElement: () => parentRef.current,
+		observeElementRect(instance, callback) {
+			if (!instance.scrollElement) return;
+			if (lastGridMeasurement?.key === measurementKeyRef.current) {
+				callback({width: lastGridMeasurement.width + 24, height: lastGridMeasurement.height});
+			}
+			// One observer feeds both the grid and virtualizer without forcing layout.
+			const observer = new ResizeObserver(([entry]) => {
+				const width = entry.borderBoxSize[0]?.inlineSize ?? entry.contentRect.width;
+				const height = entry.borderBoxSize[0]?.blockSize ?? entry.contentRect.height;
+				if (width <= 0) return;
+				lastGridMeasurement = {key: measurementKeyRef.current, width: width - 24, height};
+				setContainerWidth(width - 24);
+				setIsInitialized(true);
+				callback({width: Math.round(width), height: Math.round(height)});
+			});
+			observer.observe(instance.scrollElement);
+			return () => observer.disconnect();
+		},
 		estimateSize: () => gridSize + gapSize + rowGap,
-		overscan: 5,
+		overscan: 5
 	});
+	useTabScroll(parentRef, isInitialized ? files.length : 0);
 
 	const virtualRows = rowVirtualizer.getVirtualItems();
 
 	// Keyboard navigation with correct column count
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
+			if (isInputFocused()) return;
 			if (
-				!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
-					e.key,
+				!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(
+					e.key
 				)
 			) {
 				return;
@@ -238,13 +242,13 @@ function VirtualizedGrid({
 
 			let newIndex = focusedIndex < 0 ? 0 : focusedIndex;
 
-			if (e.key === "ArrowUp") {
+			if (e.key === 'ArrowUp') {
 				newIndex = Math.max(0, newIndex - columns);
-			} else if (e.key === "ArrowDown") {
+			} else if (e.key === 'ArrowDown') {
 				newIndex = Math.min(files.length - 1, newIndex + columns);
-			} else if (e.key === "ArrowLeft") {
+			} else if (e.key === 'ArrowLeft') {
 				newIndex = Math.max(0, newIndex - 1);
-			} else if (e.key === "ArrowRight") {
+			} else if (e.key === 'ArrowRight') {
 				newIndex = Math.min(files.length - 1, newIndex + 1);
 			}
 
@@ -254,19 +258,19 @@ function VirtualizedGrid({
 
 				// Scroll into view
 				const element = document.querySelector(
-					`[data-file-id="${files[newIndex].id}"]`,
+					`[data-file-id="${files[newIndex].id}"]`
 				);
 				if (element) {
 					element.scrollIntoView({
-						block: "nearest",
-						behavior: "smooth",
+						block: 'nearest',
+						behavior: 'smooth'
 					});
 				}
 			}
 		};
 
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
 	}, [files, focusedIndex, columns, setFocusedIndex, setSelectedFiles]);
 
 	return (
@@ -281,18 +285,18 @@ function VirtualizedGrid({
 					className="relative"
 					style={{
 						height: `${rowVirtualizer.getTotalSize()}px`,
-						paddingTop: "12px",
-						paddingBottom: "12px",
-						minHeight: "100%",
+						paddingTop: '12px',
+						paddingBottom: '12px',
+						minHeight: '100%',
 						opacity: isInitialized ? 1 : 0,
-						transition: "opacity 0.1s",
+						transition: 'opacity 0.1s'
 					}}
 				>
 					{virtualRows.map((virtualRow) => {
 						const startIndex = virtualRow.index * columns;
 						const endIndex = Math.min(
 							startIndex + columns,
-							files.length,
+							files.length
 						);
 						const rowFiles = files.slice(startIndex, endIndex);
 
@@ -302,7 +306,7 @@ function VirtualizedGrid({
 								className="absolute left-0 w-full px-3"
 								style={{
 									top: `${virtualRow.start}px`,
-									height: `${gridSize + gapSize}px`,
+									height: `${gridSize + gapSize}px`
 								}}
 							>
 								{/* CSS Grid within row - preserves flex-to-fill */}
@@ -310,7 +314,7 @@ function VirtualizedGrid({
 									className="grid h-full"
 									style={{
 										gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-										gap: `${gapSize}px`,
+										gap: `${gapSize}px`
 									}}
 								>
 									{rowFiles.map((file, idx) => {

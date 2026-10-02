@@ -88,11 +88,13 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 		setActiveItem(null);
 
 		if (!over) return;
+		// Switching tabs unmounts the source, so retain its data from drag start.
+		const dragData = activeItem ?? active.data.current;
 
 		// Handle tab reordering
 		if (
 			active.id !== over.id &&
-			active.data.current?.type === "tab" &&
+			dragData?.type === "tab" &&
 			over.data.current?.type === "tab"
 		) {
 			reorderTabs(active.id, over.id);
@@ -100,7 +102,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 		}
 
 		// Handle sortable reordering (no drag data, just active/over IDs)
-		if (active.id !== over.id && !active.data.current?.type) {
+		if (active.id !== over.id && !dragData?.type) {
 			const libraryId = client.getCurrentLibraryId();
 			const currentSpace =
 				spaces?.find((s: any) => s.id === currentSpaceId) ??
@@ -223,7 +225,6 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 
 		if (!active.data.current) return;
 
-		const dragData = active.data.current;
 		const dropData = over.data.current;
 
 		// Handle palette item drops (from customization panel)

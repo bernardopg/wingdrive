@@ -22,7 +22,6 @@ import Audio_Light from './Audio_Light.png';
 import Audio20 from './Audio-20.png';
 import Audio from './Audio.png';
 import BackBlaze from './BackBlaze.png';
-import Ball from './Ball.png';
 import Book_Light from './Book_Light.png';
 import Book20 from './Book-20.png';
 import Book from './Book.png';
@@ -221,7 +220,6 @@ export {
 	Audio,
 	Audio_Light,
 	BackBlaze,
-	Ball,
 	Book20,
 	Book,
 	BookBlue,

@@ -87,7 +87,7 @@ impl VouchingQueue {
 	}
 
 	async fn init_table(conn: &DatabaseConnection) -> Result<()> {
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			r#"
 			CREATE TABLE IF NOT EXISTS vouching_queue (
@@ -116,7 +116,7 @@ impl VouchingQueue {
 			NetworkingError::Protocol(format!("Failed to create vouching queue: {}", e))
 		})?;
 
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_vouching_queue_target ON vouching_queue(target_device_id)"
 				.to_string(),
@@ -124,7 +124,7 @@ impl VouchingQueue {
 		.await
 		.map_err(|e| NetworkingError::Protocol(format!("Failed to index vouching queue: {}", e)))?;
 
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_vouching_queue_expires ON vouching_queue(expires_at)"
 				.to_string(),
@@ -137,7 +137,7 @@ impl VouchingQueue {
 
 	pub async fn upsert_entry(&self, entry: &VouchingQueueEntry) -> Result<()> {
 		self.conn
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				INSERT INTO vouching_queue (
@@ -198,7 +198,7 @@ impl VouchingQueue {
 	pub async fn list_entries(&self) -> Result<Vec<VouchingQueueEntry>> {
 		let rows = self
 			.conn
-			.query_all(Statement::from_string(
+			.query_all_raw(Statement::from_string(
 				DbBackend::Sqlite,
 				r#"
 				SELECT session_id, target_device_id, voucher_device_id, vouchee_device_id,
@@ -299,7 +299,7 @@ impl VouchingQueue {
 		last_attempt_at: Option<DateTime<Utc>>,
 	) -> Result<()> {
 		self.conn
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				UPDATE vouching_queue
@@ -325,7 +325,7 @@ impl VouchingQueue {
 
 	pub async fn remove_entry(&self, session_id: Uuid, target_device_id: Uuid) -> Result<()> {
 		self.conn
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				"DELETE FROM vouching_queue WHERE session_id = ? AND target_device_id = ?",
 				vec![
@@ -342,7 +342,7 @@ impl VouchingQueue {
 	pub async fn remove_expired(&self, now: DateTime<Utc>) -> Result<u64> {
 		let result = self
 			.conn
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				"DELETE FROM vouching_queue WHERE expires_at <= ?",
 				vec![now.to_rfc3339().into()],

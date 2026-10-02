@@ -15,20 +15,12 @@ function ItemWrapper({ id, children }: { id: string; children: React.ReactNode }
 		const element = ref.current;
 		if (!element) return;
 
-		const updateWidth = () => {
-			const width = element.offsetWidth;
+		const resizeObserver = new ResizeObserver(([entry]) => {
+			const width = entry.borderBoxSize[0]?.inlineSize ?? entry.contentRect.width;
 			if (width !== lastWidthRef.current) {
 				lastWidthRef.current = width;
 				updateItemWidth(id, width);
 			}
-		};
-
-		// Initial measurement
-		updateWidth();
-
-		// Observe size changes
-		const resizeObserver = new ResizeObserver(() => {
-			updateWidth();
 		});
 
 		resizeObserver.observe(element);

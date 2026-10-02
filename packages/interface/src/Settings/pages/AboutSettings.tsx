@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { WingDriveLogo } from "@wingdrive/assets/images";
-import Orb from "../../components/Orb";
 import { CircleButton } from "@wingdrive/primitives";
 import { GlobeHemisphereWest, GithubLogo, DiscordLogo } from "@phosphor-icons/react";
 import contributors from "../../contributors.json";
@@ -9,14 +8,14 @@ export function AboutSettings() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[600px]">
-      {/* Animated orb with ball */}
+
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative w-64 h-64 mb-8"
       >
-        {/* Ball image - behind the orb */}
+
         <div className="absolute inset-[8%] z-0">
           <img
             src={WingDriveLogo}
@@ -25,16 +24,7 @@ export function AboutSettings() {
             draggable={false}
           />
         </div>
-        {/* Orb animation - inset to make it smaller */}
-        <div className="absolute inset-[15%] z-10">
-          <Orb
-            palette="blue"
-            hue={0}
-            hoverIntensity={0}
-            rotateOnHover={false}
-            forceHoverState={true}
-          />
-        </div>
+
       </motion.div>
 
       {/* Branding */}

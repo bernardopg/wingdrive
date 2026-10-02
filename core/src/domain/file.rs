@@ -13,6 +13,7 @@ use crate::domain::{
 };
 use crate::ops::sidecar::types::{SidecarFormat, SidecarKind, SidecarStatus, SidecarVariant};
 use chrono::{DateTime, Utc};
+use sea_orm::ExprTrait;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use uuid::Uuid;
@@ -478,7 +479,7 @@ impl File {
 			id,
 			wing_path,
 			name: model.name,
-			size: model.aggregate_size.max(model.size) as u64,
+			size: std::cmp::max(model.aggregate_size, model.size) as u64,
 			content_identity: None,
 			alternate_paths: Vec::new(),
 			tags: Vec::new(),

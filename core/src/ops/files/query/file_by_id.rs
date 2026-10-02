@@ -10,6 +10,7 @@ use crate::{
 	},
 	infra::query::LibraryQuery,
 };
+use sea_orm::ExprTrait;
 use sea_orm::{
 	ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, JoinType, QueryFilter,
 	QuerySelect, RelationTrait,

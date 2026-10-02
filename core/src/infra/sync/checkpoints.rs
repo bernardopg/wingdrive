@@ -17,7 +17,7 @@ impl BackfillCheckpointStore {
 	/// Initialize the checkpoints table in sync.db
 	pub async fn init_table<C: ConnectionTrait>(conn: &C) -> Result<(), CheckpointError> {
 		// Create backfill checkpoints table
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			r#"
 			CREATE TABLE IF NOT EXISTS backfill_checkpoints (
@@ -38,7 +38,7 @@ impl BackfillCheckpointStore {
 		.map_err(|e| CheckpointError::QueryError(e.to_string()))?;
 
 		// Create index for active checkpoints
-		conn.execute(Statement::from_string(
+		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
 			r#"
 			CREATE INDEX IF NOT EXISTS idx_backfill_checkpoints_peer
@@ -59,7 +59,7 @@ impl BackfillCheckpointStore {
 	) -> Result<(), CheckpointError> {
 		let now = Utc::now().to_rfc3339();
 
-		conn.execute(Statement::from_sql_and_values(
+		conn.execute_raw(Statement::from_sql_and_values(
 			DbBackend::Sqlite,
 			r#"
 			INSERT INTO backfill_checkpoints
@@ -97,7 +97,7 @@ impl BackfillCheckpointStore {
 		resource_type: &str,
 	) -> Result<Option<BackfillCheckpoint>, CheckpointError> {
 		let result = conn
-			.query_one(Statement::from_sql_and_values(
+			.query_one_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				SELECT device_uuid, peer_device_uuid, resource_type, resume_token, last_watermark, records_synced, started_at, updated_at
@@ -179,7 +179,7 @@ impl BackfillCheckpointStore {
 		peer_device_uuid: Uuid,
 		resource_type: &str,
 	) -> Result<(), CheckpointError> {
-		conn.execute(Statement::from_sql_and_values(
+		conn.execute_raw(Statement::from_sql_and_values(
 			DbBackend::Sqlite,
 			r#"
 			DELETE FROM backfill_checkpoints
@@ -204,7 +204,7 @@ impl BackfillCheckpointStore {
 		peer_device_uuid: Uuid,
 	) -> Result<usize, CheckpointError> {
 		let result = conn
-			.execute(Statement::from_sql_and_values(
+			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				DELETE FROM backfill_checkpoints
@@ -227,7 +227,7 @@ impl BackfillCheckpointStore {
 		device_uuid: Uuid,
 	) -> Result<Vec<BackfillCheckpoint>, CheckpointError> {
 		let rows = conn
-			.query_all(Statement::from_sql_and_values(
+			.query_all_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
 				SELECT device_uuid, peer_device_uuid, resource_type, resume_token, last_watermark, records_synced, started_at, updated_at

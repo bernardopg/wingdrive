@@ -15,6 +15,7 @@ use crate::volume::{
 };
 use crate::Core;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use sea_orm::ExprTrait;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, Set};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

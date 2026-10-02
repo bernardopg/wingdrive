@@ -22,10 +22,9 @@ import {
 	Video,
 	Waveform
 } from '@phosphor-icons/react';
+import {toast} from '@wingdrive/primitives';
 import type {File} from '@wingdrive/ts-client';
 import {getContentKind, isVirtualFile} from '@wingdrive/ts-client';
-import {toast} from '@wingdrive/primitives';
-import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
 import {usePlatform} from '../../../contexts/PlatformContext';
 import {useLibraryMutation} from '../../../contexts/WingDriveContext';
 import {useClipboard} from '../../../hooks/useClipboard';
@@ -36,6 +35,8 @@ import {useExplorer} from '../context';
 import {useSelection} from '../SelectionContext';
 import {useDeleteFiles} from './useDeleteFiles';
 import {useDuplicateFiles} from './useDuplicateFiles';
+import {useOpenFile} from './useOpenFile';
+import {usePasteFiles} from './usePasteFiles';
 
 interface UseFileContextMenuProps {
 	file?: File | null;
@@ -48,7 +49,7 @@ export function useFileContextMenu({
 	selectedFiles,
 	selected
 }: UseFileContextMenuProps) {
-	const {navigateToPath, currentPath, mode, openQuickPreview} = useExplorer();
+	const {currentPath, mode, openQuickPreview} = useExplorer();
 	const platform = usePlatform();
 	const refetchTagQueries = useRefetchTagQueries();
 
@@ -80,7 +81,8 @@ export function useFileContextMenu({
 		}
 	};
 	const clipboard = useClipboard();
-	const openFileOperation = useFileOperationDialog();
+	const pasteFiles = usePasteFiles();
+	const openFile = useOpenFile();
 	const {startRename} = useSelection();
 
 	// Get physical paths for file opening
@@ -90,14 +92,15 @@ export function useFileContextMenu({
 		return targets
 			.filter(
 				(f): f is File =>
-					f != null && f.wing_path != null && 'Physical' in f.wing_path
+					f != null &&
+					f.wing_path != null &&
+					'Physical' in f.wing_path
 			)
 			.map((f) => (f.wing_path as any).Physical.path);
 	};
 
 	const physicalPaths = getPhysicalPaths();
-	const {apps, openWithDefault, openWithApp, openMultipleWithApp} =
-		useOpenWith(physicalPaths);
+	const {apps, openWithApp, openMultipleWithApp} = useOpenWith(physicalPaths);
 
 	// Get the files to operate on (multi-select or just this file)
 	// Filters out virtual files (they're display-only, not real filesystem entries)
@@ -130,20 +133,16 @@ export function useFileContextMenu({
 			{
 				icon: FolderOpen,
 				label: 'Open',
-				onClick: async () => {
-					if (!file) return;
-					if (file.kind === 'Directory') {
-						navigateToPath(file.wing_path);
-					} else if ('Physical' in file.wing_path) {
-						const physicalPath = (file.wing_path as any).Physical
-							.path;
-						await openWithDefault(physicalPath);
-					}
+				onClick: () => {
+					if (file) void openFile(file);
 				},
 				keybindId: 'explorer.openFile',
 				condition: () =>
 					!!file &&
-					(file.kind === 'Directory' || file.kind === 'File')
+					(isVirtualFile(file) ||
+						file.kind === 'Directory' ||
+						file.kind === 'File' ||
+						file.kind === 'Symlink')
 			},
 			{
 				type: 'submenu',
@@ -161,8 +160,8 @@ export function useFileContextMenu({
 						if (selected && selectedFiles.length > 1) {
 							await openMultipleWithApp(physicalPaths, app.id);
 						} else if ('Physical' in file.wing_path) {
-							const physicalPath = (file.wing_path as any).Physical
-								.path;
+							const physicalPath = (file.wing_path as any)
+								.Physical.path;
 							await openWithApp(physicalPath, app.id);
 						}
 					}
@@ -298,7 +297,11 @@ export function useFileContextMenu({
 						return;
 					}
 					const sdPaths = targets.map((f) => f.wing_path);
-					clipboard.copyFiles(sdPaths, currentPath);
+					clipboard.copyFiles(
+						sdPaths,
+						currentPath,
+						targets.every((file) => file.is_local)
+					);
 				},
 				keybindId: 'explorer.copy',
 				condition: () => !hasVirtualFiles
@@ -316,7 +319,11 @@ export function useFileContextMenu({
 						return;
 					}
 					const sdPaths = targets.map((f) => f.wing_path);
-					clipboard.cutFiles(sdPaths, currentPath);
+					clipboard.cutFiles(
+						sdPaths,
+						currentPath,
+						targets.every((file) => file.is_local)
+					);
 				},
 				keybindId: 'explorer.cut',
 				condition: () => !hasVirtualFiles
@@ -325,51 +332,10 @@ export function useFileContextMenu({
 				icon: Copy,
 				label: 'Paste',
 				onClick: () => {
-					if (!clipboard.hasClipboard() || !currentPath) {
-						console.log(
-							'[Clipboard] Nothing to paste or no destination'
-						);
-						return;
-					}
-
-					const operation =
-						clipboard.operation === 'cut' ? 'move' : 'copy';
-
-					console.groupCollapsed(
-						`[Clipboard] Pasting ${clipboard.files.length} file${clipboard.files.length === 1 ? '' : 's'} (${operation})`
-					);
-					console.log('Operation:', operation);
-					console.log('Destination:', currentPath);
-					console.log('Source files (WingPath objects):');
-					clipboard.files.forEach((file, index) => {
-						console.log(
-							`  [${index}]:`,
-							JSON.stringify(file, null, 2)
-						);
-					});
-					console.groupEnd();
-
-					openFileOperation({
-						operation,
-						sources: clipboard.files,
-						destination: currentPath,
-						onComplete: () => {
-							// Clear clipboard after cut operation completes
-							if (clipboard.operation === 'cut') {
-								console.log(
-									'[Clipboard] Operation completed, clearing clipboard'
-								);
-								clipboard.clearClipboard();
-							} else {
-								console.log(
-									'[Clipboard] Copy operation completed'
-								);
-							}
-						}
-					});
+					void pasteFiles(currentPath);
 				},
 				keybindId: 'explorer.paste',
-				condition: () => clipboard.hasClipboard()
+				condition: () => clipboard.canPaste()
 			},
 			{
 				icon: Copy,

@@ -1,48 +1,43 @@
-import { FolderPlus, Copy } from "@phosphor-icons/react";
-import { useContextMenu } from "../../../hooks/useContextMenu";
-import { useExplorer } from "../context";
-import { useCreateFolder } from "./useCreateFolder";
-import { useClipboard } from "../../../hooks/useClipboard";
-import { useFileOperationDialog } from "../../../components/modals/FileOperationModal";
+import {ArrowCounterClockwise, Copy, FolderPlus} from '@phosphor-icons/react';
+import {useClipboard} from '../../../hooks/useClipboard';
+import {useContextMenu} from '../../../hooks/useContextMenu';
+import {useUndo} from '../../../hooks/useUndo';
+import {useExplorer} from '../context';
+import {useCreateFolder} from './useCreateFolder';
+import {usePasteFiles} from './usePasteFiles';
 
 export function useEmptySpaceContextMenu() {
-	const { currentPath } = useExplorer();
+	const {currentPath} = useExplorer();
 	const createFolder = useCreateFolder();
 	const clipboard = useClipboard();
-	const openFileOperation = useFileOperationDialog();
+	const pasteFiles = usePasteFiles();
+	const undo = useUndo();
 
 	return useContextMenu({
 		items: [
 			{
+				icon: ArrowCounterClockwise,
+				label: 'Undo',
+				onClick: undo.undo,
+				keybindId: 'explorer.undo',
+				condition: () => undo.canUndo
+			},
+			{
 				icon: FolderPlus,
-				label: "New Folder",
+				label: 'New Folder',
 				onClick: createFolder,
-				keybindId: "explorer.newFolder",
-				condition: () => !!currentPath,
+				keybindId: 'explorer.newFolder',
+				condition: () => !!currentPath
 			},
 			{
 				icon: Copy,
-				label: "Paste",
+				label: 'Paste',
 				onClick: () => {
-					if (!clipboard.hasClipboard() || !currentPath) return;
-
-					const operation =
-						clipboard.operation === "cut" ? "move" : "copy";
-
-					openFileOperation({
-						operation,
-						sources: clipboard.files,
-						destination: currentPath,
-						onComplete: () => {
-							if (clipboard.operation === "cut") {
-								clipboard.clearClipboard();
-							}
-						},
-					});
+					void pasteFiles(currentPath);
 				},
-				keybindId: "explorer.paste",
-				condition: () => clipboard.hasClipboard(),
-			},
-		],
+				keybindId: 'explorer.paste',
+				condition: () => clipboard.canPaste()
+			}
+		]
 	});
 }

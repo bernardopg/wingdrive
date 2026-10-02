@@ -138,19 +138,19 @@ async fn create_tables(db: &DatabaseConnection) -> JobResult<()> {
 	// Create jobs table if not exists
 	let mut jobs_statement = schema.create_table_from_entity(jobs::Entity);
 	jobs_statement.if_not_exists();
-	db.execute(db.get_database_backend().build(&jobs_statement))
+	db.execute_raw(db.get_database_backend().build(&jobs_statement))
 		.await?;
 
 	// Create history table if not exists
 	let mut history_statement = schema.create_table_from_entity(history::Entity);
 	history_statement.if_not_exists();
-	db.execute(db.get_database_backend().build(&history_statement))
+	db.execute_raw(db.get_database_backend().build(&history_statement))
 		.await?;
 
 	// Create checkpoint table if not exists
 	let mut checkpoint_statement = schema.create_table_from_entity(checkpoint::Entity);
 	checkpoint_statement.if_not_exists();
-	db.execute(db.get_database_backend().build(&checkpoint_statement))
+	db.execute_raw(db.get_database_backend().build(&checkpoint_statement))
 		.await?;
 
 	Ok(())

@@ -9,6 +9,7 @@ import { useTypeaheadSearch } from "../../hooks/useTypeaheadSearch";
 import { useVirtualListing } from "../../hooks/useVirtualListing";
 import { isVirtualFile } from '@wingdrive/ts-client';
 import { useExplorerFiles } from "../../hooks/useExplorerFiles";
+import {useTabScroll} from '../../hooks/useTabScroll';
 
 /** Get path string from WingPath for comparison */
 function getPathString(path: WingPath | null | undefined): string {
@@ -31,6 +32,8 @@ export function ColumnView() {
 		mode,
 	} = useExplorer();
 	const { files: virtualFiles, isVirtualView } = useVirtualListing();
+	const scrollRef = useRef<HTMLDivElement>(null);
+	useTabScroll(scrollRef, Math.max(1, columnStack.length));
 
 	// Get files from centralized hook (handles search mode automatically)
 	const { files: searchFiles } = useExplorerFiles();
@@ -409,10 +412,10 @@ export function ColumnView() {
 	// In search mode, show a single column with search results
 	if (isSearchMode) {
 		return (
-			<div className="flex h-full overflow-x-auto bg-app">
+			<div ref={scrollRef} className="flex h-full overflow-x-auto bg-app">
 				<Column
 					key="search-results"
-					path={null as any}
+					path={null}
 					isSelected={isSelected}
 					selectedFileIds={selectedFileIds}
 					onSelectFile={(file, files, multi, range) => {
@@ -440,7 +443,7 @@ export function ColumnView() {
 	if (isVirtualView && virtualFiles) {
 		// Render virtual column + all columns in the stack
 		return (
-			<div className="flex h-full overflow-x-auto bg-app">
+			<div ref={scrollRef} className="flex h-full overflow-x-auto bg-app">
 				{/* First column: Virtual listing */}
 				<Column
 					key="virtual-column"
@@ -504,7 +507,7 @@ export function ColumnView() {
 	}
 
 	return (
-		<div className="flex h-full overflow-x-auto bg-app">
+		<div ref={scrollRef} className="flex h-full overflow-x-auto bg-app">
 			{columnStack.map((path, index) => {
 				const columnPath =
 					"Physical" in path ? path.Physical?.path || "" : "";

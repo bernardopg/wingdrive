@@ -63,7 +63,7 @@ impl LibraryAction for LocationExportAction {
 
 		// Collect all entry IDs in this location's tree using entry_closure
 		let entry_ids: Vec<i32> = db
-			.query_all(Statement::from_sql_and_values(
+			.query_all_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				"SELECT descendant_id FROM entry_closure WHERE ancestor_id = ?",
 				vec![root_entry_id.into()],

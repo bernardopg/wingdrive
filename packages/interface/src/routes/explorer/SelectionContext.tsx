@@ -1,20 +1,22 @@
+import {toast} from '@wingdrive/primitives';
+import type {File} from '@wingdrive/ts-client';
 import {
 	createContext,
-	useContext,
-	useState,
 	useCallback,
-	useMemo,
+	useContext,
 	useEffect,
+	useMemo,
 	useRef,
-	type ReactNode,
-} from "react";
-import { usePlatform } from "../../contexts/PlatformContext";
-import type { File } from "@wingdrive/ts-client";
-import { useClipboard } from "../../hooks/useClipboard";
-import { useLibraryMutation } from "../../contexts/WingDriveContext";
-import { toast } from "@wingdrive/primitives";
-import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
-import { useTabManager } from "../../components/TabManager";
+	useState,
+	type ReactNode
+} from 'react';
+import {useTabManager} from '../../components/TabManager';
+import {usePlatform} from '../../contexts/PlatformContext';
+import {useLibraryMutation} from '../../contexts/WingDriveContext';
+import {useClipboard} from '../../hooks/useClipboard';
+import {useRefetchFileListings} from '../../hooks/useRefetchFileListings';
+import {useUndo} from '../../hooks/useUndo';
+import {useWaitForJob} from '../../hooks/useWaitForJob';
 
 interface SelectionContextValue {
 	selectedFiles: File[];
@@ -25,15 +27,15 @@ interface SelectionContextValue {
 		file: File,
 		files: File[],
 		multi?: boolean,
-		range?: boolean,
+		range?: boolean
 	) => void;
 	clearSelection: () => void;
 	selectAll: (files: File[]) => void;
 	focusedIndex: number;
 	setFocusedIndex: (index: number) => void;
 	moveFocus: (
-		direction: "up" | "down" | "left" | "right",
-		files: File[],
+		direction: 'up' | 'down' | 'left' | 'right',
+		files: File[]
 	) => void;
 	// Rename state
 	renamingFileId: string | null;
@@ -54,13 +56,15 @@ interface SelectionProviderProps {
 
 export function SelectionProvider({
 	children,
-	isActiveTab = true,
+	isActiveTab = true
 }: SelectionProviderProps) {
 	const platform = usePlatform();
 	const clipboard = useClipboard();
 	const tabManager = useTabManager();
-	const { activeTabId, getSelectionIds, updateSelectionIds } = tabManager;
-	const renameFile = useLibraryMutation("files.rename");
+	const {activeTabId, getSelectionIds, updateSelectionIds} = tabManager;
+	const renameFile = useLibraryMutation('files.rename');
+	const waitForJob = useWaitForJob();
+	const undo = useUndo();
 	const refetchListings = useRefetchFileListings();
 
 	// Local state for File objects (not serializable, can't be stored in TabManager)
@@ -94,19 +98,19 @@ export function SelectionProvider({
 			// sync stays in the event handler instead of running inside React's
 			// render phase (updater functions run during render in React 19)
 			const nextFiles =
-				typeof filesOrUpdater === "function"
+				typeof filesOrUpdater === 'function'
 					? filesOrUpdater(selectedFilesRef.current)
 					: filesOrUpdater;
 
 			selectedFilesRef.current = nextFiles;
 			updateSelectionIds(
 				activeTabId,
-				nextFiles.map((f) => f.id),
+				nextFiles.map((f) => f.id)
 			);
 
 			setSelectedFilesInternal(nextFiles);
 		},
-		[activeTabId, updateSelectionIds],
+		[activeTabId, updateSelectionIds]
 	);
 
 	// Sync selected file IDs to platform (for cross-window state sharing)
@@ -119,8 +123,8 @@ export function SelectionProvider({
 		if (platform.setSelectedFileIds) {
 			platform.setSelectedFileIds(fileIds).catch((err) => {
 				console.error(
-					"Failed to sync selected files to platform:",
-					err,
+					'Failed to sync selected files to platform:',
+					err
 				);
 			});
 		}
@@ -137,9 +141,9 @@ export function SelectionProvider({
 		platform.updateMenuItems?.([
 			// NOTE: copy/cut/paste are always enabled to support text input operations
 			// They intelligently route to file ops or native clipboard based on focus
-			{ id: "duplicate", enabled: hasSelection },
-			{ id: "rename", enabled: isSingleSelection },
-			{ id: "delete", enabled: hasSelection },
+			{id: 'duplicate', enabled: hasSelection},
+			{id: 'rename', enabled: isSingleSelection},
+			{id: 'delete', enabled: hasSelection}
 		]);
 	}, [selectedFiles, clipboard, platform, isActiveTab]);
 
@@ -154,7 +158,7 @@ export function SelectionProvider({
 			setSelectedFiles([...files]);
 			setLastSelectedIndex(files.length - 1);
 		},
-		[setSelectedFiles],
+		[setSelectedFiles]
 	);
 
 	const selectFile = useCallback(
@@ -173,7 +177,7 @@ export function SelectionProvider({
 							if (prev.length > 1) {
 								// Create a map for O(1) lookup
 								const existingIds = new Set(
-									prev.map((f) => f.id),
+									prev.map((f) => f.id)
 								);
 								const combined = [...prev];
 
@@ -211,29 +215,29 @@ export function SelectionProvider({
 				setLastSelectedIndex(fileIndex);
 			}
 		},
-		[setSelectedFiles],
+		[setSelectedFiles]
 	);
 
 	const moveFocus = useCallback(
-		(direction: "up" | "down" | "left" | "right", files: File[]) => {
+		(direction: 'up' | 'down' | 'left' | 'right', files: File[]) => {
 			if (files.length === 0) return;
 
 			setFocusedIndex((currentFocusedIndex) => {
 				let newIndex = currentFocusedIndex;
 
-				if (direction === "up")
+				if (direction === 'up')
 					newIndex = Math.max(0, currentFocusedIndex - 1);
-				if (direction === "down")
+				if (direction === 'down')
 					newIndex = Math.min(
 						files.length - 1,
-						currentFocusedIndex + 1,
+						currentFocusedIndex + 1
 					);
-				if (direction === "left")
+				if (direction === 'left')
 					newIndex = Math.max(0, currentFocusedIndex - 1);
-				if (direction === "right")
+				if (direction === 'right')
 					newIndex = Math.min(
 						files.length - 1,
-						currentFocusedIndex + 1,
+						currentFocusedIndex + 1
 					);
 
 				if (newIndex !== currentFocusedIndex) {
@@ -244,73 +248,130 @@ export function SelectionProvider({
 				return newIndex;
 			});
 		},
-		[setSelectedFiles],
+		[setSelectedFiles]
 	);
 
 	// Rename functions
-	const startRename = useCallback((fileId: string) => {
-		// Only allow rename when a single file is selected
-		if (selectedFiles.length === 1) {
-			setRenamingFileId(fileId);
-		}
-	}, [selectedFiles.length]);
+	const startRename = useCallback(
+		(fileId: string) => {
+			// Only allow rename when a single file is selected
+			if (selectedFiles.length === 1) {
+				setRenamingFileId(fileId);
+			}
+		},
+		[selectedFiles.length]
+	);
 
 	const cancelRename = useCallback(() => {
 		setRenamingFileId(null);
 	}, []);
 
-	const saveRename = useCallback(async (newName: string) => {
-		if (!renamingFileId) return;
+	const saveRename = useCallback(
+		async (newName: string) => {
+			if (!renamingFileId) return;
 
-		const file = selectedFiles.find(f => f.id === renamingFileId);
-		if (!file) {
-			setRenamingFileId(null);
-			return;
-		}
+			const file = selectedFiles.find((f) => f.id === renamingFileId);
+			if (!file) {
+				setRenamingFileId(null);
+				return;
+			}
 
-		// Don't submit if name is empty or unchanged
-		const currentFullName = file.extension ? `${file.name}.${file.extension}` : file.name;
-		if (!newName.trim() || newName === currentFullName) {
-			setRenamingFileId(null);
-			return;
-		}
+			// Don't submit if name is empty or unchanged
+			const currentFullName = file.extension
+				? `${file.name}.${file.extension}`
+				: file.name;
+			if (!newName.trim() || newName === currentFullName) {
+				setRenamingFileId(null);
+				return;
+			}
 
-		try {
-			await renameFile.mutateAsync({
-				target: file.wing_path,
-				new_name: newName,
-			});
-			setRenamingFileId(null);
-			// Renames change paths on disk; without a refetch the old name stays
-			// visible until the next navigation.
-			refetchListings();
-		} catch (error) {
-			// Keep in edit mode on error so user can retry
-			console.error('Rename failed:', error);
-			toast.error(
-				`Rename failed: ${error instanceof Error ? error.message : String(error)}`
-			);
-			throw error;
-		}
-	}, [renamingFileId, selectedFiles, renameFile, refetchListings]);
+			try {
+				const {result} = await waitForJob(() =>
+					renameFile.mutateAsync({
+						target: file.wing_path,
+						new_name: newName
+					})
+				);
+				if (
+					result.status !== 'completed' ||
+					(result.output.type === 'FileMove' &&
+						result.output.data.failed_count > 0)
+				) {
+					refetchListings();
+					throw new Error(
+						result.status === 'failed'
+							? result.error
+							: 'Rename did not complete successfully'
+					);
+				}
+				if (
+					file.is_local &&
+					'Physical' in file.wing_path &&
+					platform.fileIdentity &&
+					platform.undoMove
+				) {
+					const oldPath = file.wing_path.Physical.path;
+					const newPath =
+						oldPath.slice(
+							0,
+							Math.max(
+								oldPath.lastIndexOf('/'),
+								oldPath.lastIndexOf('\\')
+							) + 1
+						) + newName;
+					const move = platform.undoMove;
+					try {
+						const expected = await platform.fileIdentity(newPath);
+						undo.record('rename', () =>
+							move(newPath, oldPath, expected)
+						);
+					} catch {
+						toast.error(
+							'Renamed successfully, but undo is unavailable'
+						);
+					}
+				}
+				setRenamingFileId(null);
+				// Renames change paths on disk; without a refetch the old name stays
+				// visible until the next navigation.
+				refetchListings();
+			} catch (error) {
+				// Keep in edit mode on error so user can retry
+				console.error('Rename failed:', error);
+				toast.error(
+					`Rename failed: ${error instanceof Error ? error.message : String(error)}`
+				);
+				throw error;
+			}
+		},
+		[
+			renamingFileId,
+			selectedFiles,
+			renameFile,
+			refetchListings,
+			waitForJob,
+			platform,
+			undo
+		]
+	);
 
 	// Cancel rename when selection changes
 	useEffect(() => {
-		if (renamingFileId && !selectedFiles.some(f => f.id === renamingFileId)) {
+		if (
+			renamingFileId &&
+			!selectedFiles.some((f) => f.id === renamingFileId)
+		) {
 			setRenamingFileId(null);
 		}
 	}, [selectedFiles, renamingFileId]);
 
 	// Use stored IDs for selection checking (allows highlighting before File objects are restored)
-	const selectedFileIds = useMemo(
-		() => new Set(storedIds),
-		[storedIds],
-	);
+	const selectedFileIds = useMemo(() => new Set(storedIds), [storedIds]);
 
 	// Stable function for checking if a file is selected
 	const isSelected = useCallback(
 		(fileId: string) => selectedFileIds.has(fileId),
-		[selectedFileIds],
+		[selectedFileIds]
 	);
 
 	// Restore File objects for selected IDs when files become available
@@ -346,7 +407,7 @@ export function SelectionProvider({
 				});
 			}
 		},
-		[storedIds],
+		[storedIds]
 	);
 
 	const isRenaming = renamingFileId !== null;
@@ -370,7 +431,7 @@ export function SelectionProvider({
 			saveRename,
 			isRenaming,
 			// Restore selection
-			restoreSelectionFromFiles,
+			restoreSelectionFromFiles
 		}),
 		[
 			selectedFiles,
@@ -387,8 +448,8 @@ export function SelectionProvider({
 			cancelRename,
 			saveRename,
 			isRenaming,
-			restoreSelectionFromFiles,
-		],
+			restoreSelectionFromFiles
+		]
 	);
 
 	return (
@@ -401,6 +462,6 @@ export function SelectionProvider({
 export function useSelection() {
 	const context = useContext(SelectionContext);
 	if (!context)
-		throw new Error("useSelection must be used within SelectionProvider");
+		throw new Error('useSelection must be used within SelectionProvider');
 	return context;
 }

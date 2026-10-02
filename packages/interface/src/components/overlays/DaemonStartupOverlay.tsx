@@ -3,7 +3,6 @@ import { WingDriveLogo } from "@wingdrive/assets/images";
 import { CircleNotch } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
 import { usePlatform } from "../../contexts/PlatformContext";
-import Orb from "../Orb";
 
 export function DaemonStartupOverlay({ show }: { show: boolean }) {
 	const platform = usePlatform();
@@ -41,7 +40,7 @@ export function DaemonStartupOverlay({ show }: { show: boolean }) {
 					}}
 					className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
 				>
-					{/* Animated orb with ball */}
+
 					<motion.div
 						initial={{ scale: 0.8, opacity: 0 }}
 						animate={{ scale: 1, opacity: 1 }}
@@ -49,7 +48,7 @@ export function DaemonStartupOverlay({ show }: { show: boolean }) {
 						transition={{ duration: 0.6, ease: "easeOut" }}
 						className="relative w-64 h-64"
 					>
-						{/* Ball image - behind the orb */}
+
 						<div className="absolute inset-[8%] z-0">
 							<img
 								src={WingDriveLogo}
@@ -58,16 +57,7 @@ export function DaemonStartupOverlay({ show }: { show: boolean }) {
 								draggable={false}
 							/>
 						</div>
-						{/* Orb animation - inset to make it smaller */}
-						<div className="absolute inset-[15%] z-10">
-							<Orb
-								palette="blue"
-								hue={0}
-								hoverIntensity={0}
-								rotateOnHover={false}
-								forceHoverState={true}
-							/>
-						</div>
+
 					</motion.div>
 
 					{/* Loading text - bottom right */}

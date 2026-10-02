@@ -51,44 +51,50 @@ Pushing the tag triggers the release workflows.
 
 ## Workflows
 
-Five GitHub Actions workflows handle CI and releases.
+GitHub Actions workflows handle CI and releases.
 
 ### CI (`ci.yml`)
 
 Runs on every pull request and push to `main`. Handles formatting checks, linting, and build verification. This is the standard PR gate.
 
-### Core Tests (`core_tests.yml`)
+### Desktop Linux Release (`release.yml`)
 
-Runs `wing-core` integration tests on push to `main` across macOS, Linux, and Windows. Tests run on real hardware including self-hosted macOS ARM64 and Windows runners.
+WingDrive releases provide an x86_64 AppImage and a Debian package. The release
+runner uses Ubuntu 24.04. The AUR package `wingdrive-bin` extracts the AppImage,
+so launching the installed package does not require FUSE.
 
-### Release (`release.yml`)
+Run `scripts/setup.sh` to install native build dependencies, including
+`patchelf` for the bundled GStreamer framework. Build the desktop with:
 
-Triggered by pushing a `v*` tag or manual dispatch. Builds all release artifacts and creates a draft GitHub release.
+```bash
+bun install --frozen-lockfile
+bun run --cwd apps/tauri tauri:build --target x86_64-unknown-linux-gnu --bundles appimage,deb
+```
 
-**Server binary builds:**
+Set the same version in the product manifests and lockfiles. Before creating a
+version tag, run `python3 scripts/release/version.py v2.0.0-alpha.4`, replacing
+the argument with your release version. Push the matching `v` tag to start
+`.github/workflows/release.yml`.
 
-| Platform | Architecture |
-|---|---|
-| Linux | x86_64 |
-| Linux | aarch64 |
+The workflow checks types, native code, safe undo and secrets migration. It
+builds both packages, starts the extracted AppImage with an isolated daemon,
+and runs the explorer browser tests against the production server. GitHub
+publication starts after those checks pass. Prerelease versions retain their
+alpha, beta or rc label.
 
-Server binaries are compiled with `wing-core/heif`, `wing-core/ffmpeg`, and `wing-core/ai` features enabled. Each produces a tarball with the binary and a SHA256 checksum.
+The AUR job verifies the published checksums, builds the package with `makepkg`
+in Arch Linux, generates `.SRCINFO`, and pushes changes using
+`AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS`. Both secrets must be configured in
+the GitHub repository. Repeating the same publication leaves unchanged AUR
+metadata untouched.
 
-**Desktop builds (Tauri):**
+For a verification run, dispatch the workflow with an existing tag and leave
+`publish` disabled. Desktop regression task TAURI-006 remains separate from
+these release checks.
 
-| Platform | Architecture | Bundle |
-|---|---|---|
-| macOS | aarch64 | DMG, App |
-| macOS | x86_64 | DMG, App |
-| Windows | x86_64 | NSIS |
-| Linux | x86_64 | DEB |
-| Linux | aarch64 | DEB |
-
-Desktop builds go through `tauri-action` which handles code signing (macOS), Tauri signing keys (for the updater), and bundle creation. macOS builds run on self-hosted runners with Apple signing certificates.
-
-The final `release` job waits for all builds to complete, downloads all artifacts, and creates a draft release on GitHub. The release is always created as a draft so you can review before publishing.
-
-<Note>The release is created as a **draft**. You must manually publish it on GitHub after verifying the artifacts.</Note>
+Opening an older `secrets.redb` upgrades its redb v2 file format. WingDrive
+keeps a synced `secrets.redb.v2-<id>.backup` beside the database before the
+upgrade. Keep that file until you have verified your libraries and secrets.
 
 ### Server Docker (`server.yml`)
 
@@ -158,20 +164,18 @@ git push --tags
 
 # 3. Wait for workflows to complete on GitHub Actions
 
-# 4. Review the draft release on GitHub, then publish
+# 4. Verify published GitHub assets and wingdrive-bin on AUR
 ```
 
-Both `release.yml` and `server.yml` trigger in parallel from the same tag push. The GitHub release is created as a draft. The Docker image is pushed to ghcr.io immediately.
-
-Mobile releases are decoupled from this flow. Trigger the mobile workflow manually from the Actions tab when you want to push a build to TestFlight or Play Store internal testing.
+Both `release.yml` and `server.yml` trigger from the same tag push. The Linux workflow publishes the GitHub release after verification, then updates AUR. Mobile releases use manual dispatch.
 
 ## Tauri Updater
 
-Desktop builds include `includeUpdaterJson: true` in the Tauri action config. This generates a JSON manifest that the Tauri updater checks against to notify users of new versions. The updater JSON files are included as release artifacts alongside the binaries.
+Desktop updater endpoints and signing keys are not configured. Install new Linux versions through AUR or download the AppImage or Debian package from GitHub Releases.
 
 ## Secrets
 
-The release workflow depends on several repository secrets:
+The Linux release requires `AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS` for AUR publication. Apple secrets apply to the experimental mobile workflow:
 
 | Secret | Purpose |
 |---|---|

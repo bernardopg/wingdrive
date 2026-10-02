@@ -1,13 +1,14 @@
 ---
 id: BRAND-001
 title: Replace the Upstream Visual Identity with WingDrive Branding
-status: To Do
+status: Done
 assignee: bernardopg
 parent: TAURI-000
 priority: Medium
 milestone: M1
+sprint: S01
 tags: [branding, design, assets, fork]
-last_updated: 2026-10-01
+last_updated: 2026-10-02
 ---
 
 ## Description
@@ -52,8 +53,12 @@ Already WingDrive: `apps/tauri/src-tauri/icons/**`, `apps/tauri/WingDrive.icon/`
 
 ## Acceptance Criteria
 
-- [ ] P1 assets replaced with wing artwork
-- [ ] Orb (`Orb.tsx`, `Ball*.png`) replaced or restyled in About, startup, and voice overlays
-- [ ] Unreferenced upstream images and videos deleted or replaced, and `packages/assets/*/index.ts` regenerated
-- [ ] Docs screenshots retaken from WingDrive
-- [ ] Decision recorded for the upstream file-kind icon pack
+- [x] P1 assets replaced with wing artwork
+- [x] Orb (`Orb.tsx`, `Ball*.png`) replaced or restyled in About, startup, and voice overlays
+- [x] Unreferenced upstream images and videos deleted or replaced, and `packages/assets/*/index.ts` regenerated
+- [x] Docs screenshots retaken from WingDrive
+- [x] Decision recorded for the upstream file-kind icon pack
+
+## Verification (2026-10-02)
+
+Wing artwork replaces About, startup, voice, favicon and mobile launch assets. Asset indexes regenerated. Documentation screenshots captured from the running WingDrive UI; old video and Splat captures removed. Generic file-kind artwork retained with attribution and licensing in NOTICE.md and packaging/licenses.

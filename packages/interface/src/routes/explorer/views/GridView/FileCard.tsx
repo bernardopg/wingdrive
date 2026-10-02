@@ -1,18 +1,18 @@
-import { memo } from "react";
-import clsx from "clsx";
-import type { File } from "@wingdrive/ts-client";
-import { File as FileComponent } from "../../File";
-import { useExplorer } from "../../context";
-import { useSelection } from "../../SelectionContext";
-import { formatBytes } from "../../utils";
-import { TagDot } from "../../../../components/Tags";
-import { useDroppable } from "@dnd-kit/core";
-import { useFileContextMenu } from "../../hooks/useFileContextMenu";
-import { useDraggableFile } from "../../hooks/useDraggableFile";
-import { isVirtualFile } from '@wingdrive/ts-client';
-import { VolumeSizeBar } from "../../components/VolumeSizeBar";
-import { InlineNameEdit } from "../../components/InlineNameEdit";
-import { useOpenWith } from "../../../../hooks/useOpenWith";
+import {useDroppable} from '@dnd-kit/core';
+import type {File} from '@wingdrive/ts-client';
+import {isVirtualFile} from '@wingdrive/ts-client';
+import clsx from 'clsx';
+import {memo} from 'react';
+import {TagDot} from '../../../../components/Tags';
+import {InlineNameEdit} from '../../components/InlineNameEdit';
+import {VolumeSizeBar} from '../../components/VolumeSizeBar';
+import {useExplorer} from '../../context';
+import {File as FileComponent} from '../../File';
+import {useDraggableFile} from '../../hooks/useDraggableFile';
+import {useFileContextMenu} from '../../hooks/useFileContextMenu';
+import {useOpenFile} from '../../hooks/useOpenFile';
+import {useSelection} from '../../SelectionContext';
+import {formatBytes} from '../../utils';
 
 interface FileCardProps {
 	file: File;
@@ -25,227 +25,199 @@ interface FileCardProps {
 		file: File,
 		files: File[],
 		multi?: boolean,
-		range?: boolean,
+		range?: boolean
 	) => void;
 }
 
-export const FileCard = memo(
-	function FileCard({
+export const FileCard = memo(function FileCard({
+	file,
+	fileIndex,
+	allFiles,
+	selected,
+	focused: _focused,
+	selectedFiles,
+	selectFile
+}: FileCardProps) {
+	const {viewSettings} = useExplorer();
+	const {gridSize, showFileSize} = viewSettings;
+	const {renamingFileId, saveRename, cancelRename} = useSelection();
+
+	const isRenaming = renamingFileId === file.id;
+
+	const contextMenu = useFileContextMenu({
 		file,
-		fileIndex,
-		allFiles,
-		selected,
-		focused: _focused,
 		selectedFiles,
-		selectFile,
-	}: FileCardProps) {
-		const { viewSettings, navigateToPath } = useExplorer();
-		const { gridSize, showFileSize } = viewSettings;
-		const { renamingFileId, saveRename, cancelRename } = useSelection();
+		selected
+	});
 
-		const isRenaming = renamingFileId === file.id;
+	const openFile = useOpenFile();
 
-		const contextMenu = useFileContextMenu({
-			file,
-			selectedFiles,
-			selected,
-		});
+	const handleClick = (e: React.MouseEvent) => {
+		const multi = e.metaKey || e.ctrlKey;
+		const range = e.shiftKey;
+		selectFile(file, allFiles, multi, range);
+	};
 
-		// Set up file opening for non-directory files
-		const physicalPath =
-			(file.kind === "File" || file.kind === "Symlink") && "Physical" in file.wing_path
-				? [(file.wing_path as any).Physical.path]
-				: [];
-		const { openWithDefault } = useOpenWith(physicalPath);
+	const handleDoubleClick = () => openFile(file);
 
-		const handleClick = (e: React.MouseEvent) => {
-			const multi = e.metaKey || e.ctrlKey;
-			const range = e.shiftKey;
-			selectFile(file, allFiles, multi, range);
-		};
+	const handleContextMenu = async (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
 
-		const handleDoubleClick = async () => {
-			// Virtual files (locations, volumes, devices) always navigate to their wing_path
-			if (isVirtualFile(file) && file.wing_path) {
-				navigateToPath(file.wing_path);
-				return;
-			}
+		if (!selected) {
+			selectFile(file, allFiles, false, false);
+		}
 
-			// Regular directories navigate normally
-			if (file.kind === "Directory") {
-				navigateToPath(file.wing_path);
-				return;
-			}
+		await contextMenu.show(e);
+	};
 
-			// Open regular files with default application
-			if ((file.kind === "File" || file.kind === "Symlink") && "Physical" in file.wing_path) {
-				const physicalPath = (file.wing_path as any).Physical.path;
-				await openWithDefault(physicalPath);
-			}
-		};
+	const {
+		attributes,
+		listeners,
+		setNodeRef: setDragNodeRef,
+		isDragging: dndIsDragging
+	} = useDraggableFile({
+		file,
+		selectedFiles:
+			selected && selectedFiles.length > 0 ? selectedFiles : undefined,
+		gridSize
+	});
 
-		const handleContextMenu = async (e: React.MouseEvent) => {
-			e.preventDefault();
-			e.stopPropagation();
+	// Make folders droppable
+	const isFolder = file.kind === 'Directory';
+	const {setNodeRef: setDropNodeRef, isOver: isDropOver} = useDroppable({
+		id: `folder-drop-${file.id}`,
+		disabled: !isFolder,
+		data: {
+			action: 'move-into',
+			targetType: 'folder',
+			targetId: file.id,
+			targetPath: file.wing_path
+		}
+	});
 
-			if (!selected) {
-				selectFile(file, allFiles, false, false);
-			}
+	// Combine refs for folders that are both draggable and droppable
+	const setNodeRef = (node: HTMLElement | null) => {
+		setDragNodeRef(node);
+		if (isFolder) setDropNodeRef(node);
+	};
 
-			await contextMenu.show(e);
-		};
+	const thumbSize = Math.max(gridSize * 0.6, 60);
 
-		const {
-			attributes,
-			listeners,
-			setNodeRef: setDragNodeRef,
-			isDragging: dndIsDragging,
-		} = useDraggableFile({
-			file,
-			selectedFiles: selected && selectedFiles.length > 0 ? selectedFiles : undefined,
-			gridSize,
-		});
+	// Check if this is a virtual volume file
+	const isVolume =
+		isVirtualFile(file) &&
+		(file as any)._virtual?.type === 'volume' &&
+		(file as any)._virtual?.data;
 
-		// Make folders droppable
-		const isFolder = file.kind === "Directory";
-		const { setNodeRef: setDropNodeRef, isOver: isDropOver } = useDroppable({
-			id: `folder-drop-${file.id}`,
-			disabled: !isFolder,
-			data: {
-				action: "move-into",
-				targetType: "folder",
-				targetId: file.id,
-				targetPath: file.wing_path,
-			},
-		});
+	// Extract volume data
+	const volumeData = isVolume ? (file as any)._virtual.data : null;
+	const hasVolumeCapacity =
+		volumeData?.total_capacity != null &&
+		volumeData?.available_space != null &&
+		volumeData.total_capacity > 0;
 
-		// Combine refs for folders that are both draggable and droppable
-		const setNodeRef = (node: HTMLElement | null) => {
-			setDragNodeRef(node);
-			if (isFolder) setDropNodeRef(node);
-		};
-
-		const thumbSize = Math.max(gridSize * 0.6, 60);
-
-		// Check if this is a virtual volume file
-		const isVolume =
-			isVirtualFile(file) &&
-			(file as any)._virtual?.type === "volume" &&
-			(file as any)._virtual?.data;
-
-		// Extract volume data
-		const volumeData = isVolume ? (file as any)._virtual.data : null;
-		const hasVolumeCapacity =
-			volumeData?.total_capacity != null &&
-			volumeData?.available_space != null &&
-			volumeData.total_capacity > 0;
-
-		return (
-			<div
-				ref={setNodeRef}
-				{...listeners}
-				{...attributes}
-				data-file-id={file.id}
-				data-index={fileIndex}
-				data-selectable="true"
-				tabIndex={-1}
-				className="relative outline-none focus:outline-none"
-			>
-				{/* Drop indicator for folders */}
-				{isFolder && isDropOver && (
-					<div className="absolute inset-0 rounded-lg ring-2 ring-accent ring-inset pointer-events-none z-10" />
+	return (
+		<div
+			ref={setNodeRef}
+			{...listeners}
+			{...attributes}
+			data-file-id={file.id}
+			data-index={fileIndex}
+			data-selectable="true"
+			aria-selected={selected}
+			tabIndex={-1}
+			className="relative outline-none focus:outline-none"
+		>
+			{/* Drop indicator for folders */}
+			{isFolder && isDropOver && (
+				<div className="ring-accent pointer-events-none absolute inset-0 z-10 rounded-lg ring-2 ring-inset" />
+			)}
+			<FileComponent
+				file={file}
+				selected={selected && !dndIsDragging}
+				onClick={handleClick}
+				onDoubleClick={handleDoubleClick}
+				onContextMenu={handleContextMenu}
+				layout="column"
+				className={clsx(
+					'flex flex-col items-center gap-2 rounded-lg p-1 transition-all',
+					dndIsDragging && 'opacity-40',
+					isFolder && isDropOver && 'bg-accent/10'
 				)}
-				<FileComponent
-					file={file}
-					selected={selected && !dndIsDragging}
-					onClick={handleClick}
-					onDoubleClick={handleDoubleClick}
-					onContextMenu={handleContextMenu}
-					layout="column"
+			>
+				<div
 					className={clsx(
-						"flex flex-col items-center gap-2 p-1 rounded-lg transition-all",
-						dndIsDragging && "opacity-40",
-						isFolder && isDropOver && "bg-accent/10",
+						'rounded-lg p-2',
+						selected && !dndIsDragging
+							? 'bg-app-box'
+							: 'bg-transparent'
 					)}
 				>
-					<div
-						className={clsx(
-							"rounded-lg p-2",
-							selected && !dndIsDragging ? "bg-app-box" : "bg-transparent",
-						)}
-					>
-						<FileComponent.Thumb file={file} size={thumbSize} />
-					</div>
-					<div className="w-full flex flex-col items-center">
-						{isRenaming ? (
-							<InlineNameEdit
-								file={file}
-								onSave={saveRename}
-								onCancel={cancelRename}
-								className="max-w-full"
-							/>
-						) : (
-							<div
-								className={clsx(
-									"text-sm truncate px-2 py-0.5 rounded-md inline-block max-w-full",
-									selected && !dndIsDragging ? "bg-accent text-white" : "text-ink",
-								)}
-							>
-								{file.name}{file.extension && `.${file.extension}`}
-							</div>
-						)}
+					<FileComponent.Thumb file={file} size={thumbSize} />
+				</div>
+				<div className="flex w-full flex-col items-center">
+					{isRenaming ? (
+						<InlineNameEdit
+							file={file}
+							onSave={saveRename}
+							onCancel={cancelRename}
+							className="max-w-full"
+						/>
+					) : (
+						<div
+							className={clsx(
+								'inline-block max-w-full truncate rounded-md px-2 py-0.5 text-sm',
+								selected && !dndIsDragging
+									? 'bg-accent text-white'
+									: 'text-ink'
+							)}
+						>
+							{file.name}
+							{file.extension && `.${file.extension}`}
+						</div>
+					)}
 
-						{/* Volume size bar */}
-						{showFileSize && hasVolumeCapacity && (
-							<VolumeSizeBar
-								totalBytes={Number(volumeData.total_capacity)}
-								availableBytes={Number(volumeData.available_space)}
-								className="mt-1.5"
-							/>
-						)}
+					{/* Volume size bar */}
+					{showFileSize && hasVolumeCapacity && (
+						<VolumeSizeBar
+							totalBytes={Number(volumeData.total_capacity)}
+							availableBytes={Number(volumeData.available_space)}
+							className="mt-1.5"
+						/>
+					)}
 
-						{/* Regular file size */}
-						{showFileSize && !hasVolumeCapacity && file.size > 0 && (
-							<div className="text-xs text-ink-dull mt-0.5">
-								{formatBytes(file.size)}
-							</div>
-						)}
+					{/* Regular file size */}
+					{showFileSize && !hasVolumeCapacity && file.size > 0 && (
+						<div className="text-ink-dull mt-0.5 text-xs">
+							{formatBytes(file.size)}
+						</div>
+					)}
 
-						{/* Tag Indicators */}
-						{file.tags && file.tags.length > 0 && (
-							<div
-								className="flex items-center gap-1 mt-1"
-								title={file.tags
-									.map((t) => t.canonical_name)
-									.join(", ")}
-							>
-								{file.tags.slice(0, 3).map((tag) => (
-									<TagDot
-										key={tag.id}
-										color={tag.color || "#3B82F6"}
-										tooltip={tag.canonical_name}
-									/>
-								))}
-								{file.tags.length > 3 && (
-									<span className="text-[10px] text-ink-faint font-medium">
-										+{file.tags.length - 3}
-									</span>
-								)}
-							</div>
-						)}
-					</div>
-				</FileComponent>
-			</div>
-		);
-	},
-	(prev, next) => {
-		// Custom comparison - rerender if file object, selection, or focus changed
-		// Ignore selectedFiles and selectFile function reference changes
-		if (prev.file !== next.file) return false; // File object reference changed
-		if (prev.selected !== next.selected) return false; // Selection state changed
-		if (prev.focused !== next.focused) return false; // Focus state changed
-		if (prev.fileIndex !== next.fileIndex) return false; // Index changed
-		// Ignore: allFiles, selectedFiles, selectFile (passed through to handlers)
-		return true; // Props are equal, skip rerender
-	},
-);
+					{/* Tag Indicators */}
+					{file.tags && file.tags.length > 0 && (
+						<div
+							className="mt-1 flex items-center gap-1"
+							title={file.tags
+								.map((t) => t.canonical_name)
+								.join(', ')}
+						>
+							{file.tags.slice(0, 3).map((tag) => (
+								<TagDot
+									key={tag.id}
+									color={tag.color || '#3B82F6'}
+									tooltip={tag.canonical_name}
+								/>
+							))}
+							{file.tags.length > 3 && (
+								<span className="text-ink-faint text-[10px] font-medium">
+									+{file.tags.length - 3}
+								</span>
+							)}
+						</div>
+					)}
+				</div>
+			</FileComponent>
+		</div>
+	);
+});

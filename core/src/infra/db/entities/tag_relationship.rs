@@ -192,7 +192,7 @@ impl Syncable for Model {
 		tag_closure::Entity::delete_many().exec(db).await?;
 
 		// 1. Insert self-references for all tags (depth 0)
-		db.execute(Statement::from_sql_and_values(
+		db.execute_raw(Statement::from_sql_and_values(
 			DbBackend::Sqlite,
 			r#"
 			INSERT INTO tag_closure (ancestor_id, descendant_id, depth, path_strength)
@@ -204,7 +204,7 @@ impl Syncable for Model {
 		.map_err(|e| sea_orm::DbErr::Custom(format!("Failed to insert self-refs: {}", e)))?;
 
 		// 2. Insert direct relationships from tag_relationship (depth 1)
-		db.execute(Statement::from_sql_and_values(
+		db.execute_raw(Statement::from_sql_and_values(
 			DbBackend::Sqlite,
 			r#"
 			INSERT OR IGNORE INTO tag_closure (ancestor_id, descendant_id, depth, path_strength)
@@ -220,7 +220,7 @@ impl Syncable for Model {
 		let mut iteration = 0;
 		loop {
 			let result = db
-				.execute(Statement::from_sql_and_values(
+				.execute_raw(Statement::from_sql_and_values(
 					DbBackend::Sqlite,
 					r#"
 					INSERT OR IGNORE INTO tag_closure (ancestor_id, descendant_id, depth, path_strength)

@@ -48,7 +48,7 @@ async fn load_file_counts(
 	db: &DatabaseConnection,
 ) -> Result<std::collections::HashMap<i32, i64>, sea_orm::DbErr> {
 	let rows = db
-		.query_all(Statement::from_string(
+		.query_all_raw(Statement::from_string(
 			sea_orm::DatabaseBackend::Sqlite,
 			r#"
 				SELECT ci.kind_id, COUNT(*) AS file_count

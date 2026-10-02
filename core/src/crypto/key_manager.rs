@@ -10,6 +10,7 @@ use chacha20poly1305::{
 	XChaCha20Poly1305, XNonce,
 };
 use keyring::{Entry, Error as KeyringError};
+use redb::ReadableDatabase;
 use redb::{Database, ReadableTable, TableDefinition};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -47,6 +48,9 @@ pub enum KeyManagerError {
 
 	#[error("Database error: {0}")]
 	DatabaseError(#[from] redb::DatabaseError),
+
+	#[error("Secrets database migration failed: {0}")]
+	Migration(String),
 
 	#[error("Encryption error: {0}")]
 	Encryption(String),
@@ -93,7 +97,35 @@ impl KeyManager {
 		let db_path = data_dir.join("secrets.redb");
 
 		// Create or open the redb database
-		let db = Database::create(&db_path)?;
+		let db = match Database::create(&db_path) {
+			Err(redb::DatabaseError::UpgradeRequired(2)) => {
+				let mut legacy = redb_legacy::Database::open(&db_path)
+					.map_err(|error| KeyManagerError::Migration(error.to_string()))?;
+				// Keep a synced recovery copy before changing the secrets file format.
+				let backup = data_dir.join(format!("secrets.redb.v2-{}.backup", Uuid::new_v4()));
+				let mut source = std::fs::File::open(&db_path)?;
+				let mut options = std::fs::OpenOptions::new();
+				options.write(true).create_new(true);
+				#[cfg(unix)]
+				{
+					use std::os::unix::fs::OpenOptionsExt;
+					options.mode(0o600);
+				}
+				let mut destination = options.open(&backup)?;
+				destination.set_permissions(source.metadata()?.permissions())?;
+				std::io::copy(&mut source, &mut destination)?;
+				destination.sync_all()?;
+				#[cfg(unix)]
+				std::fs::File::open(&data_dir)?.sync_all()?;
+				legacy
+					.upgrade()
+					.map_err(|error| KeyManagerError::Migration(error.to_string()))?;
+				drop(legacy);
+				tracing::info!(backup = %backup.display(), "Upgraded secrets database format");
+				Database::open(&db_path)?
+			}
+			result => result?,
+		};
 		let db = Arc::new(RwLock::new(db));
 
 		Ok(Self {
@@ -396,6 +428,63 @@ impl KeyManager {
 mod tests {
 	use super::*;
 	use tempfile::TempDir;
+
+	#[test]
+	fn upgrades_legacy_secrets_without_changing_ciphertext() {
+		let directory = TempDir::new().unwrap();
+		let path = directory.path().join("secrets.redb");
+		let table = redb_legacy::TableDefinition::<&str, &[u8]>::new("secrets");
+		let ciphertext = b"opaque encrypted secret";
+		{
+			let database = redb_legacy::Database::create(&path).unwrap();
+			let transaction = database.begin_write().unwrap();
+			transaction
+				.open_table(table)
+				.unwrap()
+				.insert("library", ciphertext.as_slice())
+				.unwrap();
+			transaction.commit().unwrap();
+		}
+		let manager = KeyManager::new(directory.path().to_path_buf()).unwrap();
+		drop(manager);
+		let database = Database::open(&path).unwrap();
+		let transaction = database.begin_read().unwrap();
+		assert_eq!(
+			transaction
+				.open_table(SECRETS_TABLE)
+				.unwrap()
+				.get("library")
+				.unwrap()
+				.unwrap()
+				.value(),
+			ciphertext
+		);
+		let backup = std::fs::read_dir(directory.path())
+			.unwrap()
+			.map(|entry| entry.unwrap().path())
+			.find(|path| {
+				path.extension()
+					.is_some_and(|extension| extension == "backup")
+			})
+			.unwrap();
+		assert!(matches!(
+			Database::open(&backup),
+			Err(redb::DatabaseError::UpgradeRequired(2))
+		));
+		let backup_database = redb_legacy::Database::open(backup).unwrap();
+		let backup_transaction = backup_database.begin_read().unwrap();
+		use redb_legacy::ReadableTable as _;
+		assert_eq!(
+			backup_transaction
+				.open_table(table)
+				.unwrap()
+				.get("library")
+				.unwrap()
+				.unwrap()
+				.value(),
+			ciphertext
+		);
+	}
 
 	#[tokio::test]
 	async fn test_device_key_persistence() {

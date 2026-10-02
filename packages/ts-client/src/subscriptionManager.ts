@@ -69,7 +69,6 @@ export class SubscriptionManager {
 		// Check if subscription already exists
 		let entry = this.subscriptions.get(key);
 		if (entry) {
-			console.log(`[SubscriptionManager] Reusing existing subscription for key: ${key}, refCount: ${entry.refCount} -> ${entry.refCount + 1}`);
 			entry.listeners.add(callback);
 			entry.refCount++;
 			return this.createCleanup(key, callback);
@@ -78,7 +77,6 @@ export class SubscriptionManager {
 		// Check if subscription is being created (concurrent request)
 		const pending = this.pendingSubscriptions.get(key);
 		if (pending) {
-			console.log(`[SubscriptionManager] Waiting for pending subscription: ${key}`);
 			// Wait for the in-progress subscription to complete
 			entry = await pending;
 			entry.listeners.add(callback);
@@ -89,14 +87,12 @@ export class SubscriptionManager {
 		// Create new subscription.
 		// The initial callback is added to listeners BEFORE transport.subscribe()
 		// so that buffered events replayed during subscription setup are not lost.
-		console.log(`[SubscriptionManager] Creating new subscription for key: ${key}`);
 		const subscriptionPromise = this.createSubscription(key, filter, callback);
 		this.pendingSubscriptions.set(key, subscriptionPromise);
 
 		try {
 			entry = await subscriptionPromise;
 			entry.refCount++;
-			console.log(`[SubscriptionManager] New subscription created, refCount: ${entry.refCount}`);
 			return this.createCleanup(key, callback);
 		} finally {
 			this.pendingSubscriptions.delete(key);
@@ -155,16 +151,13 @@ export class SubscriptionManager {
 		return () => {
 			const currentEntry = this.subscriptions.get(key);
 			if (!currentEntry) {
-				console.log(`[SubscriptionManager] Cleanup called but entry not found for key: ${key}`);
 				return;
 			}
 
 			currentEntry.listeners.delete(callback);
 			currentEntry.refCount--;
-			console.log(`[SubscriptionManager] Cleanup called for key: ${key}, refCount: ${currentEntry.refCount + 1} -> ${currentEntry.refCount}`);
 
 			if (currentEntry.refCount === 0) {
-				console.log(`[SubscriptionManager] RefCount reached 0, unsubscribing from key: ${key}`);
 				currentEntry.unsubscribe();
 				this.subscriptions.delete(key);
 			}
@@ -191,9 +184,6 @@ export class SubscriptionManager {
 	 * Force cleanup all subscriptions (for testing/cleanup)
 	 */
 	destroy() {
-		console.log(
-			`[SubscriptionManager] Destroying ${this.subscriptions.size} subscriptions`,
-		);
 		this.subscriptions.forEach((entry) => entry.unsubscribe());
 		this.subscriptions.clear();
 	}

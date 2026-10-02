@@ -2,7 +2,7 @@ use crate::{rng::CryptoRng, Error};
 
 use std::io::{Read, Seek, Write};
 
-use rand_core::RngCore;
+use rand::Rng;
 use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
 
 /// Erasing in blocks of 1MiB

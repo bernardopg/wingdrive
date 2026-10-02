@@ -331,6 +331,9 @@ DerivedData/
 *.hmap
 
 ## App packaging
+/packaging/aur/
+__pycache__/
+*.pyc
 *.ipa
 *.dSYM.zip
 *.dSYM

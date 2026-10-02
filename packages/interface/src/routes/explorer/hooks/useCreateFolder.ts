@@ -1,10 +1,12 @@
-import { useCallback } from "react";
-import { toast } from "@wingdrive/primitives";
-import { useLibraryMutation } from "../../../contexts/WingDriveContext";
-import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
-import { useExplorer } from "../context";
+import {toast} from '@wingdrive/primitives';
+import {useCallback} from 'react';
+import {usePlatform} from '../../../contexts/PlatformContext';
+import {useLibraryMutation} from '../../../contexts/WingDriveContext';
+import {useRefetchFileListings} from '../../../hooks/useRefetchFileListings';
+import {useUndo} from '../../../hooks/useUndo';
+import {useExplorer} from '../context';
 
-const BASE_NAME = "Untitled Folder";
+const BASE_NAME = 'Untitled Folder';
 
 /** First of "Untitled Folder", "Untitled Folder 2", ... not already taken. */
 export function nextFolderName(existing: Iterable<string>): string {
@@ -20,19 +22,38 @@ export function nextFolderName(existing: Iterable<string>): string {
  * Resolves to the folder name, or null when nothing was created.
  */
 export function useCreateFolder() {
-	const { currentPath, currentFiles } = useExplorer();
-	const createFolder = useLibraryMutation("files.createFolder");
+	const {currentPath, currentFiles} = useExplorer();
+	const createFolder = useLibraryMutation('files.createFolder');
 	const refetchListings = useRefetchFileListings();
+	const platform = usePlatform();
+	const undo = useUndo();
 
 	return useCallback(async (): Promise<string | null> => {
 		if (!currentPath) return null;
 		const name = nextFolderName(currentFiles.map((f) => f.name));
 		try {
-			await createFolder.mutateAsync({
+			const output = await createFolder.mutateAsync({
 				parent: currentPath,
 				name,
-				items: [],
+				items: []
 			});
+			if (
+				'Physical' in output.folder_path &&
+				undo.isLocalPath(output.folder_path) &&
+				platform.fileIdentity &&
+				platform.undoEmptyFolder
+			) {
+				const path = output.folder_path.Physical.path;
+				const remove = platform.undoEmptyFolder;
+				try {
+					const expected = await platform.fileIdentity(path);
+					undo.record('new folder', () => remove(path, expected));
+				} catch {
+					toast.error(
+						'Folder created successfully, but undo is unavailable'
+					);
+				}
+			}
 			// The mutation creates the folder without emitting a listing
 			// event; without the manual refetch the new folder only appeared
 			// after leaving and re-entering.
@@ -42,5 +63,12 @@ export function useCreateFolder() {
 			toast.error(`Failed to create folder: ${err}`);
 			return null;
 		}
-	}, [currentPath, currentFiles, createFolder, refetchListings]);
+	}, [
+		currentPath,
+		currentFiles,
+		createFolder,
+		refetchListings,
+		platform,
+		undo
+	]);
 }

@@ -113,12 +113,4 @@ export const ColumnItem = memo(
 			</div>
 		);
 	},
-	(prev, next) => {
-		// Only re-render if selection state, focus, or file changed
-		if (prev.selected !== next.selected) return false;
-		if (prev.focused !== next.focused) return false;
-		if (prev.file !== next.file) return false;
-		// Ignore onClick, onDoubleClick, onContextMenu function reference changes
-		return true;
-	},
 );

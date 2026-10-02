@@ -14,6 +14,7 @@ use crate::{
 	infra::query::LibraryQuery,
 	ops::search::input::SortDirection,
 };
+use sea_orm::ExprTrait;
 use sea_orm::{
 	ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, JoinType, QueryFilter,
 	QueryOrder, QuerySelect, RelationTrait,
@@ -144,6 +145,13 @@ impl LibraryQuery for DirectoryListingQuery {
 		session: crate::infra::api::SessionContext,
 	) -> QueryResult<Self::Output> {
 		tracing::debug!("DirectoryListingQuery path={:?}", self.input.path);
+		if let Some(path) = self.input.path.as_local_path() {
+			if !tokio::fs::metadata(path).await?.is_dir() {
+				return Err(QueryError::InvalidInput(
+					"Path is not a directory".to_string(),
+				));
+			}
+		}
 
 		let library_id = session
 			.current_library_id
@@ -276,7 +284,7 @@ impl DirectoryListingQuery {
 
 		// Execute the query
 		let rows = db
-			.query_all(sea_orm::Statement::from_sql_and_values(
+			.query_all_raw(sea_orm::Statement::from_sql_and_values(
 				sea_orm::DatabaseBackend::Sqlite,
 				&sql_query,
 				[parent_id.into()],

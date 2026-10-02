@@ -414,7 +414,7 @@ fn create_window(
 	always_on_top: bool,
 	transparent: bool,
 ) -> Result<WebviewWindow, String> {
-	let mut builder = WebviewWindowBuilder::new(app, label, WebviewUrl::App(url.into()))
+	let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::App(url.into()))
 		.title(title)
 		.inner_size(size.0, size.1)
 		.min_inner_size(min_size.0, min_size.1)
@@ -429,15 +429,11 @@ fn create_window(
 
 	// macOS: Hide titlebar but keep traffic lights (like main window)
 	#[cfg(target_os = "macos")]
-	{
-		builder = builder.hidden_title(true);
-	}
+	let builder = builder.hidden_title(true);
 
 	// Enable DevTools in dev mode
 	#[cfg(debug_assertions)]
-	{
-		builder = builder.devtools(true);
-	}
+	let builder = builder.devtools(true);
 
 	let window = builder
 		.build()

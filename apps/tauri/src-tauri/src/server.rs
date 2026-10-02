@@ -327,7 +327,7 @@ fn create_router(data_dir: PathBuf, token: Arc<String>) -> Router {
 
 	Router::new()
 		.route(
-			"/sidecar/:library_id/:content_uuid/:kind/*variant",
+			"/sidecar/{library_id}/{content_uuid}/{kind}/{*variant}",
 			get(serve_sidecar),
 		)
 		.route("/file", get(serve_file))
@@ -366,4 +366,27 @@ pub async fn start_server(
 	});
 
 	Ok((listen_url, token, shutdown_tx))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use tokio::io::AsyncWriteExt;
+
+	#[tokio::test]
+	async fn server_starts_and_rejects_unauthenticated_files() {
+		let directory = tempfile::tempdir().unwrap();
+		let (url, _, shutdown) = start_server(directory.path().to_path_buf()).await.unwrap();
+		let mut connection = tokio::net::TcpStream::connect(url.trim_start_matches("http://"))
+			.await
+			.unwrap();
+		connection
+			.write_all(b"GET /file?path=/test&token=wrong HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
+			.await
+			.unwrap();
+		let mut response = String::new();
+		connection.read_to_string(&mut response).await.unwrap();
+		assert!(response.starts_with("HTTP/1.1 403"), "{response}");
+		shutdown.send(()).await.unwrap();
+	}
 }

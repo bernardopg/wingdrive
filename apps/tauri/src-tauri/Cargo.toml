@@ -1,6 +1,6 @@
 [package]
 name = "wingdrive"
-version = "2.0.0-alpha.2"
+version = "2.0.0-alpha.4"
 edition = "2021"
 
 [[bin]]
@@ -58,6 +58,8 @@ file-opening-windows = { path = "../crates/file-opening-windows" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 file-opening-linux = { path = "../crates/file-opening-linux" }
+gtk = "0.18.2"
+libc = "0.2"
 
 [features]
 default = ["custom-protocol"]

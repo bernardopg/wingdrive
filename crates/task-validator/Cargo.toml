@@ -9,7 +9,7 @@ chrono      = "0.4"
 clap        = { version = "4.5", features = ["derive"] }
 comfy-table = "8.0"
 glob        = "0.3"
-jsonschema  = "0.55"
+jsonschema  = "0.58"
 serde       = { version = "1.0", features = ["derive"] }
 serde_json  = "1.0"
 serde_yaml  = "0.9"

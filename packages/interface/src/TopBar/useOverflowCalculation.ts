@@ -51,6 +51,7 @@ export function useOverflowCalculation() {
 	const { items, leftContainerRef, rightContainerRef } = useTopBar();
 	const { setVisibleItems, setOverflowItems, recalculationTrigger } = useTopBarInternal();
 	const parentContainerRef = useRef<HTMLDivElement>(null);
+	const parentWidthRef = useRef(0);
 
 	const lastVisibleRef = useRef<Set<string>>(new Set());
 	const lastOverflowRef = useRef<Map<TopBarPosition, TopBarItem[]>>(new Map());
@@ -58,7 +59,8 @@ export function useOverflowCalculation() {
 	const calculateOverflow = useCallback(() => {
 		if (!leftContainerRef?.current || !rightContainerRef?.current || !parentContainerRef.current) return;
 
-		const parentWidth = parentContainerRef.current.offsetWidth;
+		const parentWidth = parentWidthRef.current;
+		if (!parentWidth) return;
 		const PADDING = 24; // px-3 = 12px on each side
 		const SECTION_GAPS = 24; // gap-3 between 3 sections = 12px * 2
 
@@ -127,7 +129,8 @@ export function useOverflowCalculation() {
 		const parentEl = parentContainerRef.current;
 		if (!parentEl) return;
 
-		const resizeObserver = new ResizeObserver(() => {
+		const resizeObserver = new ResizeObserver(([entry]) => {
+			parentWidthRef.current = entry.borderBoxSize[0]?.inlineSize ?? entry.contentRect.width;
 			calculateOverflow();
 		});
 

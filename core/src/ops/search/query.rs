@@ -307,7 +307,7 @@ impl FileSearchQuery {
 		);
 
 		let rows = db
-			.query_all(Statement::from_string(
+			.query_all_raw(Statement::from_string(
 				sea_orm::DatabaseBackend::Sqlite,
 				sql_query,
 			))
@@ -739,7 +739,7 @@ impl FileSearchQuery {
 		);
 
 		let result = db
-			.query_one(Statement::from_string(
+			.query_one_raw(Statement::from_string(
 				sea_orm::DatabaseBackend::Sqlite,
 				query,
 			))
@@ -844,7 +844,7 @@ impl FileSearchQuery {
 		);
 
 		let result = db
-			.query_one(Statement::from_string(
+			.query_one_raw(Statement::from_string(
 				sea_orm::DatabaseBackend::Sqlite,
 				query,
 			))
@@ -1241,7 +1241,7 @@ impl FileSearchQuery {
 		};
 
 		let results = db
-			.query_all(Statement::from_sql_and_values(
+			.query_all_raw(Statement::from_sql_and_values(
 				db.get_database_backend(),
 				&statement.sql,
 				params,
