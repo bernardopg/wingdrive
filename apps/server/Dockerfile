@@ -6,7 +6,7 @@
 # CI workflows and the unified wingdrive+spacebot image handle this
 # automatically; this Dockerfile assumes the dist directory is ready.
 
-FROM debian:bookworm-slim AS builder
+FROM ubuntu:24.04 AS builder
 
 # Install build dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -58,20 +58,20 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 #--
 # Runtime image
 #--
-FROM debian:bookworm-slim
+FROM ubuntu:24.04
 
 # Install runtime dependencies only
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked \
 	apt-get update && apt-get install -y \
-	libssl3 \
+	libssl3t64 \
 	ca-certificates \
-	libavcodec59 \
-	libavdevice59 \
-	libavfilter8 \
-	libavformat59 \
-	libavutil57 \
+	libavcodec60 \
+	libavdevice60 \
+	libavfilter9 \
+	libavformat60 \
+	libavutil58 \
 	libswresample4 \
-	libswscale6 \
+	libswscale7 \
 	libheif1 \
 	&& rm -rf /var/lib/apt/lists/*
 
