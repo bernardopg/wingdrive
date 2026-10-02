@@ -70,6 +70,7 @@ jobs:
           bun run --cwd apps/tauri build
           cargo fmt --all --check
           cargo clippy --locked -p wingdrive -- -D warnings
+          export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo test --locked -p wingdrive --bin WingDrive
           cargo test --locked -p wing-core --lib crypto::key_manager::tests
       - name: Build production desktop and command line binaries
