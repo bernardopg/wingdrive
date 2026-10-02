@@ -38,10 +38,9 @@ COPY .cargo ./.cargo
 # Copy source code
 COPY core ./core
 COPY crates ./crates
-COPY apps/server ./apps/server
-
-# Embedded web UI assets — must be pre-built before `docker build` runs.
-COPY apps/web/dist ./apps/web/dist
+COPY apps ./apps
+COPY xtask ./xtask
+COPY patches ./patches
 
 # Build server with media processing features.
 # WING_SKIP_WEB_BUILD tells build.rs to use the pre-built apps/web/dist instead
@@ -49,7 +48,7 @@ COPY apps/web/dist ./apps/web/dist
 RUN --mount=type=cache,target=/root/.cargo/registry \
 	--mount=type=cache,target=/root/.cargo/git \
 	--mount=type=cache,target=/build/target \
-	WING_SKIP_WEB_BUILD=1 cargo build --release -p wing-server --features wing-core/heif,wing-core/ffmpeg && \
+	WING_SKIP_WEB_BUILD=1 cargo build --locked --release -p wing-server --features wing-core/heif,wing-core/ffmpeg && \
 	cp target/release/wing-server /usr/local/bin/wing-server
 
 #--
