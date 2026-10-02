@@ -111,6 +111,13 @@ jobs:
           path: /tmp/wingdrive-browser-evidence/
           if-no-files-found: ignore
           retention-days: 14
+      - name: Checkout release tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: release-tooling
+          sparse-checkout: scripts/release
+          persist-credentials: false
       - name: Prepare release assets
         run: |
           version="${RELEASE_TAG#v}"
@@ -118,7 +125,7 @@ jobs:
           cp target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage "dist/WingDrive-$version-x86_64.AppImage"
           cp target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb "dist/WingDrive-$version-amd64.deb"
           cp LICENSE dist/LICENSE
-          python3 scripts/release/aur.py "$version" "dist/WingDrive-$version-x86_64.AppImage" LICENSE packaging/aur
+          python3 release-tooling/scripts/release/aur.py "$version" "dist/WingDrive-$version-x86_64.AppImage" LICENSE packaging/aur
           cp packaging/aur/PKGBUILD dist/PKGBUILD
           cd dist
           sha256sum ./* > SHA256SUMS
@@ -161,7 +168,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ github.workflow_sha }}
           persist-credentials: false
       - name: Download published assets and verify checksums
         env:
@@ -180,8 +187,10 @@ jobs:
             cp /work/dist/*.AppImage /work/dist/LICENSE /tmp/aur/
             chown -R builder:builder /tmp/aur
             cd /tmp/aur
+            source PKGBUILD
+            pacman -S --needed --noconfirm "${depends[@]}"
             runuser -u builder -- makepkg --verifysource
-            runuser -u builder -- makepkg --nodeps --noconfirm
+            runuser -u builder -- makepkg --noconfirm
             runuser -u builder -- makepkg --printsrcinfo > /work/packaging/aur/.SRCINFO
           '
       - name: Publish package metadata idempotently
