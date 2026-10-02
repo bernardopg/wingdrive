@@ -78,7 +78,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
 	&& rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN useradd -m -u 1000 wingdrive
+RUN usermod -l wingdrive -d /home/wingdrive -m ubuntu && \
+	groupmod -n wingdrive ubuntu && \
+	install -d -o wingdrive -g wingdrive /data
 
 # Copy binary
 COPY --from=builder /usr/local/bin/wing-server /usr/bin/wing-server
