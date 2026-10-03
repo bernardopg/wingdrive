@@ -97,7 +97,7 @@ jobs:
           cargo test --locked -p wing-core --lib crypto::key_manager::tests
       - name: Build production desktop and command line binaries
         run: |
-          bun run --cwd apps/tauri tauri build --target x86_64-unknown-linux-gnu --bundles appimage,deb
+          bun run --cwd apps/tauri tauri build --verbose --target x86_64-unknown-linux-gnu --bundles appimage,deb
           bun run --cwd apps/web build
           cargo build --locked --release --target x86_64-unknown-linux-gnu --features wing-core/ffmpeg,wing-core/heif --bin wing-server --bin wing
       - name: Verify extracted AppImage
