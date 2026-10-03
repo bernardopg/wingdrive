@@ -56,7 +56,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           ./scripts/setup.sh
-          sudo apt-get install -y xvfb xdotool python3 imagemagick
+          sudo apt-get install -y xvfb xdotool python3 imagemagick libva2 libva-drm2
       - name: Setup native libraries and daemon
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -72,6 +72,7 @@ jobs:
       - name: Verify fresh production daemon startup
         run: |
           export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          ldd target/x86_64-unknown-linux-gnu/release/wing-daemon
           python3 release-tooling/scripts/release/daemon_smoke.py target/x86_64-unknown-linux-gnu/release/wing-daemon
       - name: Check frontend types and build
         run: |

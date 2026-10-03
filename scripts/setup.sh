@@ -145,7 +145,7 @@ case "$(uname)" in
 
       # Tauri dependencies
       set -- build-essential curl wget file patchelf openssl libssl-dev libgtk-3-dev librsvg2-dev \
-        libwebkit2gtk-4.1-dev libayatana-appindicator3-dev libxdo-dev libdbus-1-dev libheif-dev
+        libwebkit2gtk-4.1-dev libayatana-appindicator3-dev libxdo-dev libdbus-1-dev libheif-dev libva2 libva-drm2
 
       # Webkit2gtk requires gstreamer plugins for video playback to work
       set -- "$@" gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
