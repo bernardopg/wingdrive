@@ -38,6 +38,7 @@ prepare() {{
 package() {{
   install -d "$pkgdir/opt/wingdrive" "$pkgdir/usr/bin"
   cp -a squashfs-root/. "$pkgdir/opt/wingdrive/"
+  chmod 755 "$pkgdir/opt/wingdrive"
   cat > "$pkgdir/usr/bin/wingdrive" <<'WRAPPER'
 #!/bin/sh
 export APPDIR=/opt/wingdrive

@@ -71,6 +71,8 @@ jobs:
           cargo fmt --all --check
           cargo clippy --locked -p wingdrive -- -D warnings
           export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          cargo build --locked --bin wing-daemon
+          target/debug/wing-daemon --help
           cargo test --locked -p wingdrive --bin WingDrive
           cargo test --locked -p wing-core --lib crypto::key_manager::tests
       - name: Build production desktop and command line binaries
@@ -191,6 +193,9 @@ jobs:
             pacman -S --needed --noconfirm "${depends[@]}"
             runuser -u builder -- makepkg --verifysource
             runuser -u builder -- makepkg --noconfirm
+            pacman -U --noconfirm ./*.pkg.tar.zst
+            runuser -u builder -- test -x /opt/wingdrive/AppRun
+            runuser -u builder -- test -x /opt/wingdrive/usr/bin/WingDrive
             runuser -u builder -- makepkg --printsrcinfo > /work/packaging/aur/.SRCINFO
           '
       - name: Publish package metadata idempotently
