@@ -33,12 +33,12 @@ sha256sums=('{hashes[0]}' '{hashes[1]}')
 prepare() {{
   chmod +x "{filename}"
   "./{filename}" --appimage-extract > /dev/null
+  find squashfs-root -type d -exec chmod 755 {{}} +
 }}
 
 package() {{
   install -d "$pkgdir/opt/wingdrive" "$pkgdir/usr/bin"
   cp -a squashfs-root/. "$pkgdir/opt/wingdrive/"
-  chmod 755 "$pkgdir/opt/wingdrive"
   cat > "$pkgdir/usr/bin/wingdrive" <<'WRAPPER'
 #!/bin/sh
 export APPDIR=/opt/wingdrive
