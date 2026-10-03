@@ -62,17 +62,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TARGET_TRIPLE: x86_64-unknown-linux-gnu
         run: cargo run --locked -p xtask -- setup
-      - name: Check frontend and native changes
+      - name: Check frontend types and build
         run: |
           bun install --frozen-lockfile
           bun run typecheck
           bun test packages/interface/src/components/TabManager/tabRouter.test.ts packages/interface/src/hooks/undoStore.test.ts
           bun run --cwd apps/tauri build
+      - name: Check Rust formatting and lint
+        run: |
           cargo fmt --all --check
           cargo clippy --locked -p wingdrive -- -D warnings
+      - name: Build daemon for native integration tests
+        run: |
           export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo build --locked --bin wing-daemon
           target/debug/wing-daemon --help
+      - name: Test desktop IPC and database migrations
+        run: |
+          export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo test --locked -p wingdrive --bin WingDrive
           cargo test --locked -p wing-core --lib crypto::key_manager::tests
       - name: Build production desktop and command line binaries
