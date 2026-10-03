@@ -1,7 +1,7 @@
 ---
 id: EXPL-005
 title: Explorer Tabs
-status: In Progress
+status: Done
 assignee: unassigned
 parent: EXPL-000
 priority: High
@@ -89,7 +89,7 @@ Synchronized across all tabs:
 - [x] Saved path per tab restored on switch
 - [x] Independent navigation history per tab
 - [x] Active memory router mirrors its route to the browser URL
-- [ ] 5+ tabs with isolated state, <50ms tab switching
+- [x] 5+ tabs with isolated state, <50ms tab switching
 
 ### Phase 3: Keybinds
 - [x] `explorer.openInNewTab` keybind removed (conflicts with global)
@@ -103,7 +103,7 @@ Synchronized across all tabs:
 - [x] Only active view mounts; open-tab routers are reused without mounting inactive views
 - [x] Inactive views release query subscriptions and use existing query GC
 - [x] Scroll position preservation per tab
-- [ ] 15 tabs <500 MiB native session PSS (desktop and children)
+- [x] 15 tabs <500 MiB native session PSS (desktop and children)
 - [x] No memory leaks over 100 tab cycles
 
 ### Phase 5: Persistence
@@ -183,4 +183,4 @@ Synchronized across all tabs:
 
 ## Verification (2026-10-02)
 
-Production Playwright passes independent history, selection and scroll, a real move between tabs, close/reopen, last-tab protection and deleted-location recovery. After 100 switches with 15 tabs, renderer PSS was 236.7 MiB and JS heap was 20.1 MiB. Whole Chromium PSS was 517.4 MiB including browser/GPU services. A native 15-tab session with bounded glibc arenas measured 493.6 MiB including desktop, WebKit and daemon. Median switch latency remains 61.4 ms on this host versus the inherited 50 ms target. Final native verification and the GitHub runner benchmark remain pending.
+Production Playwright passes independent history, selection and scroll, a real move between tabs, close/reopen, last-tab protection and deleted-location recovery. With 15 tabs and 100 switches, median switching time was 35.1 ms, renderer PSS was 252.2 MiB and JS heap was 18.5 MiB. Whole Chromium PSS was 532.7 MiB, including browser and GPU services. The production alpha.5 AppImage measured 472.2 MiB PSS for the desktop, WebKit and daemon with 15 tabs. Linux startup uses one glibc arena by default and preserves an explicit MALLOC_ARENA_MAX override. Reproduce with scripts/release/explorer.cjs and scripts/release/smoke.py. GitHub publication is tracked separately in FORK-004.

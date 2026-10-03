@@ -25,7 +25,7 @@ Epics: `TAURI-000`, `EXPL-000`, `CLI-000` (estendido por `CLI-001`).
 | 8 | TAURI-011 | Bundle de produção Linux verificado | S01 |
 | 9 | EXPL-005 | Abas com estado isolado | S01 |
 
-O usuário incluiu EXPL-001, EXPL-002, EXPL-003 e BRAND-001 no S01; implementação e validação concluídas. EXPL-005, TAURI-011 e FORK-004 seguem na verificação final de produção e publicação. TAURI-006 está adiada por decisão explícita do usuário.
+O usuário incluiu EXPL-001, EXPL-002, EXPL-003 e BRAND-001 no S01; implementação e validação concluídas. EXPL-005 e TAURI-011 foram verificadas em produção. FORK-004 segue na publicação GitHub e AUR. TAURI-006 está adiada por decisão explícita do usuário.
 
 Backlog M1: concluir a matriz TAURI-006 e os bugs que ela encontrar. DEV-003 e WATCH-004 já estão Done.
 
