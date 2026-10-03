@@ -43,8 +43,11 @@ def process_memory(pid):
 
 with tempfile.TemporaryDirectory(prefix="wingdrive-bundle-") as directory:
     root = Path(directory)
-    subprocess.run([str(image), "--appimage-extract"], cwd=root, check=True, stdout=subprocess.DEVNULL)
-    app = root / "squashfs-root"
+    if image.is_dir():
+        app = image
+    else:
+        subprocess.run([str(image), "--appimage-extract"], cwd=root, check=True, stdout=subprocess.DEVNULL)
+        app = root / "squashfs-root"
     assert (app / "usr/bin/wing-daemon").is_file(), "Packaged daemon missing"
     sections = subprocess.check_output(["readelf", "--sections", str(app / "usr/bin/wing-daemon")], text=True)
     assert ".symtab" not in sections, "Packaged daemon contains debug symbols"
@@ -58,7 +61,8 @@ with tempfile.TemporaryDirectory(prefix="wingdrive-bundle-") as directory:
                XDG_CONFIG_HOME=str(root / "xdg/config"))
     env.pop("GDK_BACKEND", None)
     log = open(root / "desktop.log", "w+")
-    process = subprocess.Popen([str(app / "AppRun")], cwd=app, env=env,
+    launcher = os.environ.get("WINGDRIVE_TEST_LAUNCHER", str(app / "AppRun"))
+    process = subprocess.Popen([launcher], cwd=app, env=env,
                                stdout=log, stderr=log, start_new_session=True)
     try:
         deadline = time.monotonic() + 90
