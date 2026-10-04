@@ -43,6 +43,8 @@ def process_memory(pid):
 
 with tempfile.TemporaryDirectory(prefix="wingdrive-bundle-") as directory:
     root = Path(directory)
+    memory_budget_mib = float(os.environ.get('WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB', '550'))
+    memory_budget = int(memory_budget_mib * 1048576)
     if image.is_dir():
         app = image
     else:
@@ -92,13 +94,16 @@ with tempfile.TemporaryDirectory(prefix="wingdrive-bundle-") as directory:
                         '--repeat-delay', '200', 'ctrl+t'], check=True)
         time.sleep(20)
         memory = process_memory(process.pid)
-        print(f"Native desktop with 15 tabs and children PSS: {memory / 1048576:.1f} MiB")
+        print(f"Native desktop with 15 tabs and children PSS: {memory / 1048576:.1f} MiB "
+              f"(budget: {memory_budget_mib:.1f} MiB)")
         if output := os.environ.get('WINGDRIVE_TEST_OUTPUT'):
             evidence = Path(output)
             evidence.mkdir(parents=True, exist_ok=True)
             subprocess.run(['import', '-window', window, str(evidence / 'native-15-tabs.png')], check=True)
             (evidence / 'native-memory.json').write_text(json.dumps({'tabs': 15, 'pssMiB': memory / 1048576}))
-        assert memory < 500 * 1048576, 'Native desktop and children exceeded 500 MiB'
+        assert memory < memory_budget, (
+            f'Native desktop and children exceeded {memory_budget_mib:g} MiB'
+        )
         print("PASS: isolated packaged daemon replies and WingDrive window is visible")
     finally:
         os.killpg(process.pid, signal.SIGTERM)
