@@ -27,6 +27,7 @@ env:
   CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '16'
   RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
   WINGDRIVE_TAB_SWITCH_BUDGET_MS: ${{ vars.WINGDRIVE_TAB_SWITCH_BUDGET_MS || '50' }}
+  WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB: ${{ vars.WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB || '550' }}
 
 jobs:
   linux:
