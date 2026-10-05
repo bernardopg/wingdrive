@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-10-02. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-10-05. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -12,22 +12,20 @@ UI e pelo CLI, sem bug conhecido, rodando de um bundle de produção.
 
 Epics: `TAURI-000`, `EXPL-000`, `CLI-000` (estendido por `CLI-001`).
 
+Concluídas no S01: WATCH-003, WATCH-004, CLI-001, EXPL-001/002/003/005/006/007, TAURI-008/009/010/011,
+DEV-003, FORK-003, BRAND-001. Release `v2.0.0-alpha.6` publicada no GitHub e no AUR (`wingdrive-bin`).
+
+Restante do M1, em ordem:
+
 | Ordem | Task | Título | Sprint |
 |---|---|---|---|
-| 0 | WATCH-003 | Watcher sincronizar criação/remoção (P0) | S01 |
-| 1 | TAURI-006 | Matriz de regressão em runtime (Linux) | S01 |
-| 2 | CLI-001 | `wing-cli file rename/delete/mkdir` | S01 |
-| 3 | EXPL-006 | Direção de ordenação (asc/desc) | S01 |
-| 4 | TAURI-008 | Atalhos padrão: refresh, nova pasta, ocultos | S01 |
-| 5 | TAURI-009 | Trocar `alert()` nativo por toast | S01 |
-| 6 | TAURI-010 | Clipboard integrado ao sistema | S01 |
-| 7 | EXPL-007 | Abrir symlinks corretamente | S01 |
-| 8 | TAURI-011 | Bundle de produção Linux verificado | S01 |
-| 9 | EXPL-005 | Abas com estado isolado | S01 |
+| 1 | TAURI-013 | Estabilização Linux: segurança de dados | S01 |
+| 2 | FORK-004 | Próxima tag atualiza o AUR sem passo manual | S01 |
+| 3 | TAURI-014 | Robustez em runtime e paridade da busca | S02 |
+| 4 | TAURI-006 | Fechar a matriz de regressão Linux | S02 |
+| 5 | BRAND-002 | Wingbot, WingUI, Wingdrop e Wings | S02 |
 
-O usuário incluiu EXPL-001, EXPL-002, EXPL-003 e BRAND-001 no S01; implementação e validação concluídas. EXPL-005 e TAURI-011 foram verificadas em produção. FORK-004 segue na publicação GitHub e AUR. TAURI-006 está adiada por decisão explícita do usuário.
-
-Backlog M1: concluir a matriz TAURI-006 e os bugs que ela encontrar. DEV-003 e WATCH-004 já estão Done.
+O M1 fecha quando essas cinco estiverem Done e uma release sair sem bug conhecido.
 
 ## Next — M2: Desktop multiplataforma e release
 
@@ -54,4 +52,5 @@ mobile (`RES-000`). Só entram depois de M3, salvo decisão explícita.
 
 | Data | Mudança |
 |---|---|
+| 2026-10-05 | Now atualizado: alpha.6 publicada no AUR; TAURI-013 dividida (TAURI-014); BRAND-002 e TAURI-006 no S02 |
 | 2026-10-01 | Roadmap criado; M1 definido a partir da revisão `docs/design/TAURI_FILEMANAGER_REVIEW_2026-09-03.md` |

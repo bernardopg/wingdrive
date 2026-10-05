@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: UI-000
 priority: High
 milestone: M1
+sprint: S02
 tags: [branding, interface, compatibility]
 last_updated: 2026-10-04
 ---
