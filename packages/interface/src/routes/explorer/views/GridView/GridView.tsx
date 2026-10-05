@@ -22,8 +22,7 @@ export function GridView() {
 		selectedFiles,
 		selectFile,
 		clearSelection,
-		setSelectedFiles,
-		restoreSelectionFromFiles
+		setSelectedFiles
 	} = useSelection();
 	const {gridSize, gapSize} = viewSettings;
 	const emptySpaceContextMenu = useEmptySpaceContextMenu();
@@ -31,15 +30,10 @@ export function GridView() {
 	// Get files from centralized hook (handles search, virtual, and directory)
 	const {files, isLoading, source} = useExplorerFiles();
 
-	// Update current files in explorer context for quick preview navigation
+	// Publishing the collection also reconciles the selection against it.
 	useEffect(() => {
 		setCurrentFiles(files);
 	}, [files, setCurrentFiles]);
-
-	// Restore selection when files load (for tab switching)
-	useEffect(() => {
-		restoreSelectionFromFiles(files);
-	}, [files, restoreSelectionFromFiles]);
 
 	const handleContainerClick = (e: React.MouseEvent) => {
 		if (e.target === e.currentTarget) {

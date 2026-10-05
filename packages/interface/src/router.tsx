@@ -100,14 +100,6 @@ export const explorerRoutes = [
 				]
 			},
 			{
-				path: 'search',
-				element: (
-					<div className="text-ink flex h-full items-center justify-center">
-						Search (coming soon)
-					</div>
-				)
-			},
-			{
 				path: 'spacebot',
 				element: <SpacebotRoutes />,
 				children: [

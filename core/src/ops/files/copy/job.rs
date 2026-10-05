@@ -249,6 +249,7 @@ impl JobHandler for FileCopyJob {
 			.collect();
 
 		let mut copied_count = 0;
+		let mut skipped_count = 0;
 		let mut total_bytes = 0u64;
 		let mut failed_copies = Vec::new();
 		let is_move = self.options.delete_after_copy;
@@ -390,13 +391,25 @@ impl JobHandler for FileCopyJob {
 			ProgressAggregator::new(&ctx, actual_file_count, estimated_total_bytes);
 
 		// Process each source using the appropriate strategy
-		for (index, source) in self.sources.paths.iter().enumerate() {
+		let sources = self.sources.paths.clone();
+		for (index, source) in sources.iter().enumerate() {
 			ctx.check_interrupt().await?;
 
-			// Resolve source path if it's content-based
-			let resolved_source = source.resolve_in_job(&ctx).await.map_err(|e| {
-				JobError::execution(format!("Failed to resolve source path: {}", e))
-			})?;
+			// One unresolvable source must not discard the items already copied,
+			// so it is reported as a failure and the batch continues.
+			let resolved_source = match source.resolve_in_job(&ctx).await {
+				Ok(resolved) => resolved,
+				Err(e) => {
+					let error = format!("Failed to resolve source path: {}", e);
+					failed_copies.push(CopyError {
+						source: source.path().cloned().unwrap_or_default(),
+						destination: self.destination.path().cloned().unwrap_or_default(),
+						error: error.clone(),
+					});
+					ctx.add_non_critical_error(format!("{}: {}", source.display(), error));
+					continue;
+				}
+			};
 
 			// Skip files that have already been completed (resume logic)
 			if self.completed_indices.contains(&index) {
@@ -561,7 +574,7 @@ impl JobHandler for FileCopyJob {
 
 								// Skip this file
 								progress_aggregator.complete_source();
-								copied_count += files_in_source;
+								skipped_count += files_in_source;
 								self.completed_indices.push(index);
 								continue;
 							}
@@ -572,7 +585,18 @@ impl JobHandler for FileCopyJob {
 						// Generate unique name if destination exists
 						if let Some(dest_path) = final_destination.as_local_path() {
 							if dest_path.exists() {
-								let unique_dest = self.generate_unique_name(&dest_path).await?;
+								let unique_dest = match self.generate_unique_name(&dest_path).await {
+									Ok(unique) => unique,
+									Err(e) => {
+										failed_copies.push(CopyError {
+											source: resolved_source.path().cloned().unwrap_or_default(),
+											destination: dest_path.to_path_buf(),
+											error: e.to_string(),
+										});
+										self.job_metadata.set_error(&resolved_source, e.to_string());
+										continue;
+									}
+								};
 								WingPath::Physical {
 									device_slug: final_destination
 										.device_slug()
@@ -592,8 +616,27 @@ impl JobHandler for FileCopyJob {
 						final_destination
 					}
 					super::action::FileConflictResolution::Abort => {
-						// Should have been caught earlier
-						return Err(JobError::execution("Operation aborted by user"));
+						// Stop at the first conflict but keep what was already
+						// copied visible: the rest of the batch counts as skipped.
+						let conflict = final_destination
+							.as_local_path()
+							.map(|dest| dest.exists())
+							.unwrap_or(false);
+						if conflict {
+							failed_copies.push(CopyError {
+								source: resolved_source.path().cloned().unwrap_or_default(),
+								destination: final_destination.path().cloned().unwrap_or_default(),
+								error: "Destination already exists; operation aborted".to_string(),
+							});
+							for remaining in &sources[index + 1..] {
+								skipped_count += match remaining.as_local_path() {
+									Some(path) => self.count_files_in_path(path).await.unwrap_or(1),
+									None => 1,
+								};
+							}
+							break;
+						}
+						final_destination
 					}
 				}
 			} else {
@@ -722,14 +765,16 @@ impl JobHandler for FileCopyJob {
 		self.persist_job_state_to_db(&ctx).await?;
 
 		ctx.log(format!(
-			"Copy operation completed: {} copied, {} failed",
+			"Copy operation completed: {} copied, {} failed, {} skipped",
 			copied_count,
-			failed_copies.len()
+			failed_copies.len(),
+			skipped_count
 		));
 
 		Ok(FileCopyOutput {
 			copied_count,
 			failed_count: failed_copies.len(),
+			skipped_count,
 			total_bytes,
 			duration: self.started_at.elapsed(),
 			failed_copies,
@@ -1410,24 +1455,47 @@ impl FileCopyJob {
 pub struct FileCopyOutput {
 	pub copied_count: usize,
 	pub failed_count: usize,
+	#[serde(default)]
+	pub skipped_count: usize,
 	pub total_bytes: u64,
 	pub duration: Duration,
 	pub failed_copies: Vec<CopyError>,
 	pub is_move_operation: bool,
 }
 
+/// Failure messages kept in a job output; the full list stays in the job log.
+const MAX_REPORTED_ERRORS: usize = 20;
+
+fn summarize_errors<'a>(errors: impl Iterator<Item = (&'a PathBuf, &'a str)>) -> Vec<String> {
+	errors
+		.take(MAX_REPORTED_ERRORS)
+		.map(|(source, error)| format!("{}: {}", source.display(), error))
+		.collect()
+}
+
 impl From<FileCopyOutput> for JobOutput {
 	fn from(output: FileCopyOutput) -> Self {
+		let errors = summarize_errors(
+			output
+				.failed_copies
+				.iter()
+				.map(|e| (&e.source, e.error.as_str())),
+		);
 		if output.is_move_operation {
 			JobOutput::FileMove {
 				moved_count: output.copied_count,
 				failed_count: output.failed_count,
+				skipped_count: output.skipped_count,
 				total_bytes: output.total_bytes,
+				errors,
 			}
 		} else {
 			JobOutput::FileCopy {
 				copied_count: output.copied_count,
+				failed_count: output.failed_count,
+				skipped_count: output.skipped_count,
 				total_bytes: output.total_bytes,
+				errors,
 			}
 		}
 	}
@@ -1483,6 +1551,7 @@ impl JobHandler for MoveJob {
 		Ok(MoveOutput {
 			moved_count: copy_output.copied_count,
 			failed_count: copy_output.failed_count,
+			skipped_count: copy_output.skipped_count,
 			total_bytes: copy_output.total_bytes,
 			duration: copy_output.duration,
 			failed_moves: copy_output
@@ -1554,6 +1623,8 @@ pub struct MoveError {
 pub struct MoveOutput {
 	pub moved_count: usize,
 	pub failed_count: usize,
+	#[serde(default)]
+	pub skipped_count: usize,
 	pub total_bytes: u64,
 	pub duration: Duration,
 	pub failed_moves: Vec<MoveError>,
@@ -1564,7 +1635,14 @@ impl From<MoveOutput> for JobOutput {
 		JobOutput::FileMove {
 			moved_count: output.moved_count,
 			failed_count: output.failed_count,
+			skipped_count: output.skipped_count,
 			total_bytes: output.total_bytes,
+			errors: summarize_errors(
+				output
+					.failed_moves
+					.iter()
+					.map(|e| (&e.source, e.error.as_str())),
+			),
 		}
 	}
 }

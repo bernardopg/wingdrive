@@ -320,3 +320,51 @@ fn test_copy_options_defaults() {
 
 	println!("Copy options defaults test passed!");
 }
+
+#[tokio::test]
+async fn test_copy_reports_skipped_items() -> anyhow::Result<()> {
+	use wing_core::{infra::job::output::JobOutput, ops::files::copy::action::FileConflictResolution};
+
+	let harness = IndexingHarnessBuilder::new("copy_skipped").build().await?;
+	let test_location = harness.create_test_location("test_copy_skipped").await?;
+	let source_dir = test_location.path().join("source");
+	let dest_dir = test_location.path().join("destination");
+
+	create_test_file(&source_dir.join("kept.txt"), "new").await?;
+	create_test_file(&source_dir.join("fresh.txt"), "fresh").await?;
+	create_test_file(&dest_dir.join("kept.txt"), "original").await?;
+
+	let copy_job = FileCopyJob::new(
+		WingPathBatch::new(vec![
+			WingPath::local(source_dir.join("kept.txt")),
+			WingPath::local(source_dir.join("fresh.txt")),
+		]),
+		WingPath::local(dest_dir.clone()),
+	)
+	.with_options(CopyOptions {
+		conflict_resolution: Some(FileConflictResolution::Skip),
+		..CopyOptions::default()
+	});
+
+	let output = harness.library.jobs().dispatch(copy_job).await?.wait().await?;
+
+	// A skipped item is not a copied one; reporting it as copied hid conflicts.
+	match output {
+		JobOutput::FileCopy {
+			copied_count,
+			failed_count,
+			skipped_count,
+			..
+		} => {
+			assert_eq!(copied_count, 1);
+			assert_eq!(skipped_count, 1);
+			assert_eq!(failed_count, 0);
+		}
+		other => panic!("expected FileCopy output, got {other:?}"),
+	}
+	assert_eq!(fs::read_to_string(dest_dir.join("kept.txt")).await?, "original");
+	assert_eq!(fs::read_to_string(dest_dir.join("fresh.txt")).await?, "fresh");
+
+	harness.shutdown().await?;
+	Ok(())
+}

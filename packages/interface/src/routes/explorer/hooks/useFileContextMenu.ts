@@ -32,7 +32,9 @@ import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useOpenWith} from '../../../hooks/useOpenWith';
 import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
 import {useExplorer} from '../context';
+import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
+import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
 import {useDuplicateFiles} from './useDuplicateFiles';
 import {useOpenFile} from './useOpenFile';
@@ -49,7 +51,7 @@ export function useFileContextMenu({
 	selectedFiles,
 	selected
 }: UseFileContextMenuProps) {
-	const {currentPath, mode, openQuickPreview} = useExplorer();
+	const {operationalPath, mode, openQuickPreview} = useExplorer();
 	const platform = usePlatform();
 	const refetchTagQueries = useRefetchTagQueries();
 
@@ -59,6 +61,7 @@ export function useFileContextMenu({
 		onSuccess: refetchTagQueries
 	});
 	const createFolder = useLibraryMutation('files.createFolder');
+	const createEmptyFolder = useCreateFolder();
 	const regenerateThumbnail = useLibraryMutation(
 		'media.thumbnail.regenerate'
 	);
@@ -102,21 +105,15 @@ export function useFileContextMenu({
 	const physicalPaths = getPhysicalPaths();
 	const {apps, openWithApp, openMultipleWithApp} = useOpenWith(physicalPaths);
 
-	// Get the files to operate on (multi-select or just this file)
-	// Filters out virtual files (they're display-only, not real filesystem entries)
-	const getTargetFiles = () => {
-		const targets =
-			selected && selectedFiles.length > 0 ? selectedFiles : [file];
-		// Filter out virtual files - they cannot be copied/moved/deleted
-		return targets.filter((f): f is File => f != null && !isVirtualFile(f));
-	};
-
-	// Check if any selected files are virtual (to disable certain operations)
-	const hasVirtualFiles = selected
-		? selectedFiles.some((f) => isVirtualFile(f))
+	// A right-click on an unselected item acts on that item alone.
+	const targetFiles = selected && selectedFiles.length > 0
+		? selectedFiles
 		: file
-			? isVirtualFile(file)
-			: false;
+			? [file]
+			: [];
+	const capabilities = selectionCapabilities(targetFiles);
+	const hasVirtualFiles = capabilities.hasVirtual;
+	const getTargetFiles = () => capabilities.operable;
 
 	return useContextMenu({
 		items: [
@@ -234,38 +231,27 @@ export function useFileContextMenu({
 					!!file &&
 					selected &&
 					selectedFiles.length === 1 &&
-					!hasVirtualFiles
+					capabilities.canRename
 			},
 			{
 				icon: FolderPlus,
 				label: 'New Folder',
-				onClick: async () => {
-					if (!currentPath) return;
-					try {
-						const result = await createFolder.mutateAsync({
-							parent: currentPath,
-							name: 'Untitled Folder',
-							items: []
-						});
-						console.log('Created folder:', result);
-					} catch (err) {
-						console.error('Failed to create folder:', err);
-						toast.error(`Failed to create folder: ${err}`);
-					}
+				onClick: () => {
+					void createEmptyFolder();
 				},
-				condition: () => !!currentPath
+				condition: () => !!operationalPath
 			},
 			{
 				icon: FolderPlus,
 				label: 'New Folder with Items',
 				onClick: async () => {
-					if (!currentPath) return;
+					if (!operationalPath) return;
 					const targets = getTargetFiles();
 					if (targets.length === 0) return;
 
 					try {
 						const result = await createFolder.mutateAsync({
-							parent: currentPath,
+							parent: operationalPath,
 							name: 'New Folder',
 							items: targets.map((f) => f.wing_path)
 						});
@@ -278,10 +264,7 @@ export function useFileContextMenu({
 						toast.error(`Failed to create folder: ${err}`);
 					}
 				},
-				condition: () =>
-					!!currentPath &&
-					selectedFiles.length > 0 &&
-					!hasVirtualFiles
+				condition: () => !!operationalPath && capabilities.canCopy
 			},
 			{type: 'separator'},
 			{
@@ -299,12 +282,12 @@ export function useFileContextMenu({
 					const sdPaths = targets.map((f) => f.wing_path);
 					clipboard.copyFiles(
 						sdPaths,
-						currentPath,
+						operationalPath,
 						targets.every((file) => file.is_local)
 					);
 				},
 				keybindId: 'explorer.copy',
-				condition: () => !hasVirtualFiles
+				condition: () => capabilities.canCopy
 			},
 			{
 				icon: Scissors,
@@ -321,21 +304,21 @@ export function useFileContextMenu({
 					const sdPaths = targets.map((f) => f.wing_path);
 					clipboard.cutFiles(
 						sdPaths,
-						currentPath,
+						operationalPath,
 						targets.every((file) => file.is_local)
 					);
 				},
 				keybindId: 'explorer.cut',
-				condition: () => !hasVirtualFiles
+				condition: () => capabilities.canCopy
 			},
 			{
 				icon: Copy,
 				label: 'Paste',
 				onClick: () => {
-					void pasteFiles(currentPath);
+					void pasteFiles(operationalPath);
 				},
 				keybindId: 'explorer.paste',
-				condition: () => clipboard.canPaste()
+				condition: () => clipboard.canPaste() && !!operationalPath
 			},
 			{
 				icon: Copy,
@@ -349,7 +332,7 @@ export function useFileContextMenu({
 					await duplicateFiles(targets);
 				},
 				keybindId: 'explorer.duplicate',
-				condition: () => !hasVirtualFiles
+				condition: () => capabilities.canDuplicate
 			},
 			// Media Processing submenu
 			{
@@ -554,13 +537,14 @@ export function useFileContextMenu({
 				type: 'submenu',
 				icon: Stack,
 				label: `Process ${selectedFiles.length} Items`,
-				condition: () => selected && selectedFiles.length > 1,
+				condition: () =>
+					selected && selectedFiles.length > 1 && !hasVirtualFiles,
 				submenu: [
 					{
 						icon: Crop,
 						label: 'Regenerate All Thumbnails',
 						onClick: async () => {
-							await forEachTarget(selectedFiles, (f) =>
+							await forEachTarget(getTargetFiles(), (f) =>
 								regenerateThumbnail.mutateAsync({
 									entry_uuid: f.id,
 									variants: null,
@@ -573,7 +557,7 @@ export function useFileContextMenu({
 						icon: Sparkle,
 						label: 'Generate Blurhashes',
 						onClick: async () => {
-							await forEachTarget(selectedFiles, (f) =>
+							await forEachTarget(getTargetFiles(), (f) =>
 								regenerateThumbnail.mutateAsync({
 									entry_uuid: f.id,
 									variants: null,
@@ -587,7 +571,7 @@ export function useFileContextMenu({
 						icon: TextAa,
 						label: 'Extract Text (OCR)',
 						onClick: async () => {
-							await forEachTarget(selectedFiles, (f) =>
+							await forEachTarget(getTargetFiles(), (f) =>
 								extractText.mutateAsync({
 									entry_uuid: f.id,
 									languages: null,
@@ -633,7 +617,7 @@ export function useFileContextMenu({
 				},
 				keybindId: 'explorer.delete',
 				variant: 'danger' as const,
-				condition: () => !hasVirtualFiles
+				condition: () => capabilities.canDelete
 			}
 		]
 	});

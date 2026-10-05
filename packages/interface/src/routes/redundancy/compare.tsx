@@ -65,7 +65,7 @@ export function CompareVolumes() {
 		volumes.find((v) => v.volume_uuid === volumeB)?.display_name ??
 		"Volume B";
 
-	const hasBoth = !!volumeA && !!volumeB;
+	const hasBoth = !!volumeA && !!volumeB && volumeA !== volumeB;
 
 	const filters = useMemo<SearchFilters | null>(() => {
 		if (!hasBoth) return null;
@@ -85,8 +85,8 @@ export function CompareVolumes() {
 			case "shared":
 				return {
 					...EMPTY_FILTERS,
+					// on_volumes requires every listed volume, so this is the intersection.
 					on_volumes: [volumeA!, volumeB!],
-					min_volume_count: 2,
 				};
 		}
 	}, [hasBoth, mode, volumeA, volumeB]);

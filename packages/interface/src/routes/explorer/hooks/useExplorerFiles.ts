@@ -262,6 +262,12 @@ export function useExplorerFiles(): ExplorerFilesResult {
 			!isFilteredMode &&
 			!isTagMode,
 		pathScope: currentPath ?? undefined,
+		// First visit to a non-indexed folder returns an empty listing while
+		// the ephemeral indexer warms up; poll briefly until rows appear.
+		refetchInterval: (query) =>
+			query.state.data && query.state.data.files.length === 0
+				? 750
+				: false,
 	});
 
 	// Priority: filtered > tag > recents > search > virtual > directory

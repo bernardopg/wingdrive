@@ -69,7 +69,7 @@ pub struct SearchFilters {
 	/// Only return files that are at risk (true) or redundant (false).
 	/// At risk = content exists on exactly one volume.
 	pub at_risk: Option<bool>,
-	/// Only return files whose content is present on these volumes
+	/// Only return files whose content is present on all of these volumes
 	pub on_volumes: Option<Vec<Uuid>>,
 	/// Only return files whose content is NOT present on these volumes
 	pub not_on_volumes: Option<Vec<Uuid>>,

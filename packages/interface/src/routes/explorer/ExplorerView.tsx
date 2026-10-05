@@ -59,7 +59,8 @@ export function ExplorerView() {
 		enterSearchMode,
 		exitSearchMode,
 		currentFiles,
-		columnStack
+		columnStack,
+		operationalPath
 	} = useExplorer();
 
 	const {isVirtualView} = useVirtualListing();
@@ -75,7 +76,8 @@ export function ExplorerView() {
 		}
 		return currentPath;
 	}, [viewMode, columnStack, currentPath]);
-	useExternalFileDrop(pathBarPath);
+	// Drops land where New Folder and Paste write, never in a view without a folder.
+	useExternalFileDrop(operationalPath);
 
 	const [searchValue, setSearchValue] = useState('');
 

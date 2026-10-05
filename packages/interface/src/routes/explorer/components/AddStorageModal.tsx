@@ -38,17 +38,15 @@ import clsx from "clsx";
 import FolderIcon from "@wingdrive/assets/icons/Folder.png";
 import DriveIcon from "@wingdrive/assets/icons/Drive.png";
 import HDDIcon from "@wingdrive/assets/icons/HDD.png";
-import ServerIcon from "@wingdrive/assets/icons/Server.png";
 import DriveAmazonS3 from "@wingdrive/assets/icons/Drive-AmazonS3.png";
 import DriveGoogleDrive from "@wingdrive/assets/icons/Drive-GoogleDrive.png";
 import DriveDropbox from "@wingdrive/assets/icons/Drive-Dropbox.png";
 import DriveOneDrive from "@wingdrive/assets/icons/Drive-OneDrive.png";
 import DriveBackBlaze from "@wingdrive/assets/icons/Drive-BackBlaze.png";
 import DrivePCloud from "@wingdrive/assets/icons/Drive-PCloud.png";
-import DriveDAV from "@wingdrive/assets/icons/Drive-DAV.png";
 import DriveBox from "@wingdrive/assets/icons/Drive-Box.png";
 
-type StorageCategory = "local" | "cloud" | "network" | "external";
+type StorageCategory = "local" | "cloud" | "external";
 type ModalStep = "category" | "provider" | "local-config" | "cloud-config";
 type SettingsTab = "preset" | "jobs";
 
@@ -64,13 +62,6 @@ interface CloudProvider {
 	name: string;
 	icon: string;
 	cloudServiceType: CloudServiceType; // Actual type for API
-}
-
-interface NetworkProtocol {
-	id: string;
-	name: string;
-	description: string;
-	icon: string;
 }
 
 interface JobOption {
@@ -109,6 +100,7 @@ interface CloudFormData {
 	credential?: string;
 }
 
+// Network protocols have no backend yet, so the category is not offered.
 const categories: CategoryOption[] = [
 	{
 		id: "local",
@@ -121,12 +113,6 @@ const categories: CategoryOption[] = [
 		label: "Cloud Storage",
 		description: "Connect S3, Google Drive, Dropbox, etc.",
 		icon: DriveIcon,
-	},
-	{
-		id: "network",
-		label: "Network Protocol",
-		description: "SMB, NFS, SFTP, WebDAV",
-		icon: ServerIcon,
 	},
 	{
 		id: "external",
@@ -208,33 +194,6 @@ const cloudProviders: CloudProvider[] = [
 		name: "pCloud",
 		icon: DrivePCloud,
 		cloudServiceType: "cloud",
-	},
-];
-
-const networkProtocols: NetworkProtocol[] = [
-	{
-		id: "smb",
-		name: "SMB / CIFS",
-		description: "Windows file sharing",
-		icon: ServerIcon,
-	},
-	{
-		id: "nfs",
-		name: "NFS",
-		description: "Unix/Linux network file system",
-		icon: ServerIcon,
-	},
-	{
-		id: "sftp",
-		name: "SFTP",
-		description: "SSH file transfer protocol",
-		icon: ServerIcon,
-	},
-	{
-		id: "webdav",
-		name: "WebDAV",
-		description: "Web-based file access",
-		icon: DriveDAV,
 	},
 ];
 
@@ -860,60 +819,6 @@ function AddStorageDialog(props: {
 							</div>
 						</button>
 					))}
-				</div>
-			</StorageDialog>
-		);
-	}
-
-	// Render provider selection for network
-	if (step === "provider" && selectedCategory === "network") {
-		return (
-			<StorageDialog
-				dialog={dialog}
-				form={dummyForm}
-				title="Select Network Protocol"
-				icon={<img src={ServerIcon} className="size-5" alt="" />}
-				description="Choose your network file protocol"
-				hideButtons={true}
-				showBackButton={true}
-				onBack={handleBack}
-			>
-				<div className="space-y-3">
-					<div className="rounded-lg bg-accent/10 border border-accent/20 p-4 text-sm text-ink">
-						<strong>Coming Soon</strong>
-						<p className="mt-1 text-ink-dull">
-							Network protocol support (SMB, NFS, SFTP, WebDAV) is
-							currently in development. Check back in a future
-							update!
-						</p>
-					</div>
-					<div className="grid grid-cols-2 gap-3 opacity-50 pointer-events-none">
-						{networkProtocols.map((protocol) => (
-							<button
-								key={protocol.id}
-								type="button"
-								disabled
-								className={clsx(
-									"flex items-center gap-3 rounded-lg border p-4",
-									"border-app-line bg-app-box",
-								)}
-							>
-								<img
-									src={protocol.icon}
-									className="size-8"
-									alt=""
-								/>
-								<div className="text-left">
-									<div className="text-sm font-medium text-ink">
-										{protocol.name}
-									</div>
-									<div className="text-xs text-ink-faint">
-										{protocol.description}
-									</div>
-								</div>
-							</button>
-						))}
-					</div>
 				</div>
 			</StorageDialog>
 		);

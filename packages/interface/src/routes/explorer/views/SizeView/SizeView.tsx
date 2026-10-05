@@ -319,14 +319,14 @@ export function SizeView() {
 		sizeViewTransform,
 		setSizeViewTransform,
 		setCurrentFiles,
-		mode,
 	} = useExplorer();
 
-	// Get files from centralized hook (handles search mode automatically)
-	const { files: searchFiles } = useExplorerFiles();
-	const isSearchMode = mode.type === "search";
+	// Only a plain folder needs its own listing; every other source already
+	// provides the collection to size.
+	const { files: searchFiles, source } = useExplorerFiles();
+	const usesExplorerFiles = source !== "directory";
 
-	const {selectedFiles, selectFile, restoreSelectionFromFiles} = useSelection();
+	const {selectedFiles, selectFile} = useSelection();
 
 	// Calculate sidebar and inspector widths
 	const sidebarWidth = sidebarVisible ? 220 : 0;
@@ -357,7 +357,7 @@ export function SizeView() {
 				}
 			: null!,
 		resourceType: 'file',
-		enabled: !!currentPath && !isSearchMode,
+		enabled: !!currentPath && !usesExplorerFiles,
 		pathScope: currentPath ?? undefined,
 	});
 
@@ -370,8 +370,7 @@ export function SizeView() {
 
 	// Only show files if they match the current tab and path
 	const files = useMemo(() => {
-		if (isSearchMode) {
-			// In search mode, use files from useExplorerFiles
+		if (usesExplorerFiles) {
 			return searchFiles;
 		}
 
@@ -390,17 +389,13 @@ export function SizeView() {
 		}
 
 		return directoryQuery.data.files;
-	}, [isSearchMode, searchFiles, directoryQuery.data, activeTabId, currentPath, dataSource]);
+	}, [usesExplorerFiles, searchFiles, directoryQuery.data, activeTabId, currentPath, dataSource]);
 
 	// Update explorer context with raw file count (not filtered)
 	useEffect(() => {
 		setCurrentFiles(files);
 	}, [files, setCurrentFiles]);
 
-	// Restore selection when files load (for tab switching)
-	useEffect(() => {
-		restoreSelectionFromFiles(files);
-	}, [files, restoreSelectionFromFiles]);
 
 	const svgRef = useRef<SVGSVGElement>(null);
 	const zoomBehaviorRef = useRef<d3.ZoomBehavior<

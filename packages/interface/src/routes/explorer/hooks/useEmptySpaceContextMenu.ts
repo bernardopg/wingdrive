@@ -7,7 +7,7 @@ import {useCreateFolder} from './useCreateFolder';
 import {usePasteFiles} from './usePasteFiles';
 
 export function useEmptySpaceContextMenu() {
-	const {currentPath} = useExplorer();
+	const {operationalPath} = useExplorer();
 	const createFolder = useCreateFolder();
 	const clipboard = useClipboard();
 	const pasteFiles = usePasteFiles();
@@ -27,16 +27,16 @@ export function useEmptySpaceContextMenu() {
 				label: 'New Folder',
 				onClick: createFolder,
 				keybindId: 'explorer.newFolder',
-				condition: () => !!currentPath
+				condition: () => !!operationalPath
 			},
 			{
 				icon: Copy,
 				label: 'Paste',
 				onClick: () => {
-					void pasteFiles(currentPath);
+					void pasteFiles(operationalPath);
 				},
 				keybindId: 'explorer.paste',
-				condition: () => clipboard.canPaste()
+				condition: () => clipboard.canPaste() && !!operationalPath
 			}
 		]
 	});

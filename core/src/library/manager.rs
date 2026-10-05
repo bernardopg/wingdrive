@@ -618,13 +618,20 @@ impl LibraryManager {
 			);
 		}
 
-		// Auto-track user-relevant volumes for this library
-		info!(
-			"Auto-tracking user-relevant volumes for library {}",
-			config.name
-		);
-		if let Err(e) = self.volume_manager.auto_track_user_volumes(&library).await {
-			warn!("Failed to auto-track user-relevant volumes: {}", e);
+		// The library setting decides; tracking anyway made the Settings toggle a no-op.
+		if config.settings.auto_track_system_volumes {
+			info!(
+				"Auto-tracking user-relevant volumes for library {}",
+				config.name
+			);
+			if let Err(e) = self.volume_manager.auto_track_user_volumes(&library).await {
+				warn!("Failed to auto-track user-relevant volumes: {}", e);
+			}
+		} else {
+			info!(
+				"Volume auto-tracking disabled for library {}",
+				config.name
+			);
 		}
 
 		// Backfill NULL volume_id values for existing locations

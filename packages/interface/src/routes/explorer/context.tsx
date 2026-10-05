@@ -16,9 +16,12 @@ import {
 	createContext,
 	useCallback,
 	useContext,
+	useContext as useReactContext,
 	useEffect,
 	useMemo,
 	useReducer,
+	useRef,
+	useState,
 	type ReactNode
 } from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
@@ -28,6 +31,8 @@ import type {
 } from '../../components/TabManager/TabManagerContext';
 import {useTabManager} from '../../components/TabManager/useTabManager';
 import {useNormalizedQuery} from '../../contexts/WingDriveContext';
+import {SelectionContext} from './SelectionContext';
+import {effectiveViewMode} from './views/effectiveViewMode';
 
 export type SortBy = DirectorySortBy | MediaSortBy;
 
@@ -376,8 +381,22 @@ interface ExplorerContextValue {
 	openQuickPreview: (fileId: string) => void;
 	closeQuickPreview: () => void;
 
+	/**
+	 * Files the active view displays, in display order. Every file command,
+	 * select-all, typeahead and Quick Preview navigation reads this list, so
+	 * the selection can never reach entries the user cannot see.
+	 */
 	currentFiles: File[];
 	setCurrentFiles: (files: File[]) => void;
+
+	/**
+	 * Directory that New Folder, Paste and external drops write into. It is
+	 * the folder of the active column in column view, the current folder when
+	 * browsing, and null when the view shows a collection without a single
+	 * parent (search, recents, tags, filters and device/volume listings).
+	 */
+	operationalPath: WingPath | null;
+	setActiveColumnPath: (path: WingPath | null) => void;
 
 	tagModeActive: boolean;
 	setTagModeActive: (active: boolean) => void;
@@ -403,6 +422,8 @@ interface ExplorerContextValue {
 }
 
 const ExplorerContext = createContext<ExplorerContextValue | null>(null);
+
+const NO_FILES: File[] = [];
 
 interface ExplorerProviderProps {
 	children: ReactNode;
@@ -430,10 +451,6 @@ export function ExplorerProvider({
 	);
 
 	const [uiState, uiDispatch] = useReducer(uiReducer, initialUIState);
-	const [currentFiles, setCurrentFiles] = useReducer(
-		(_: File[], files: File[]) => files,
-		[] as File[]
-	);
 
 	// Parse columnStack from TabManager (stored as JSON strings)
 	// Must depend on activeTabId to recalculate when switching tabs
@@ -514,6 +531,80 @@ export function ExplorerProvider({
 		return null;
 	}, [currentTarget]);
 
+	// Views publish their collection from effects, after a navigation already
+	// rendered. Stamping each publication with the view it came from keeps the
+	// previous folder's files from answering for the new one in between.
+	const collectionKey = [
+		activeTabId,
+		location.pathname,
+		location.search,
+		tabState.viewMode,
+		uiState.mode.type,
+		uiState.mode.type === 'search'
+			? `${uiState.mode.scope}:${uiState.mode.query}`
+			: uiState.mode.type === 'tag'
+				? uiState.mode.tagId
+				: uiState.mode.type === 'filtered'
+					? uiState.mode.label
+					: ''
+	].join('|');
+	const collectionKeyRef = useRef(collectionKey);
+	collectionKeyRef.current = collectionKey;
+
+	const [publishedFiles, setPublishedFiles] = useState<{
+		key: string;
+		files: File[];
+	}>({key: '', files: NO_FILES});
+	const setCurrentFiles = useCallback((files: File[]) => {
+		const key = collectionKeyRef.current;
+		setPublishedFiles((prev) =>
+			prev.key === key &&
+			(prev.files === files ||
+				(prev.files.length === 0 && files.length === 0))
+				? prev
+				: {key, files}
+		);
+	}, []);
+	const currentFiles =
+		publishedFiles.key === collectionKey ? publishedFiles.files : NO_FILES;
+
+	const [publishedColumn, setPublishedColumn] = useState<{
+		key: string;
+		path: WingPath | null;
+	}>({key: '', path: null});
+	const setActiveColumnPath = useCallback((path: WingPath | null) => {
+		const key = collectionKeyRef.current;
+		setPublishedColumn((prev) =>
+			prev.key === key && prev.path === path ? prev : {key, path}
+		);
+	}, []);
+
+	const operationalPath = useMemo((): WingPath | null => {
+		if (uiState.mode.type !== 'browse' || !currentPath) return null;
+		if (tabState.viewMode === 'column') {
+			return publishedColumn.key === collectionKey
+				? publishedColumn.path
+				: null;
+		}
+		return currentPath;
+	}, [
+		uiState.mode.type,
+		currentPath,
+		tabState.viewMode,
+		publishedColumn,
+		collectionKey
+	]);
+
+	// Reconcile only when the displayed collection changes. Reconciling on
+	// every selection change raced column view, which publishes the clicked
+	// column's files one effect after the click selected one of them.
+	const selection = useReactContext(SelectionContext);
+	const restoreSelectionRef = useRef(selection?.restoreSelectionFromFiles);
+	restoreSelectionRef.current = selection?.restoreSelectionFromFiles;
+	useEffect(() => {
+		restoreSelectionRef.current?.(currentFiles);
+	}, [currentFiles]);
+
 	const devicesQuery = useNormalizedQuery<ListLibraryDevicesInput, Device[]>({
 		query: 'devices.list',
 		input: {include_offline: true, include_details: false},
@@ -580,7 +671,10 @@ export function ExplorerProvider({
 	const spaceKey = getSpaceItemKey(location.pathname, location.search);
 
 	// View settings from TabManager (per-tab)
-	const viewMode = tabState.viewMode as ViewMode;
+	const viewMode = effectiveViewMode(
+		tabState.viewMode as ViewMode,
+		import.meta.env.DEV
+	);
 	const sortByValue = tabState.sortBy as SortBy;
 	const sortDirection = effectiveSortDirection(
 		sortByValue,
@@ -784,6 +878,8 @@ export function ExplorerProvider({
 			closeQuickPreview,
 			currentFiles,
 			setCurrentFiles,
+			operationalPath,
+			setActiveColumnPath,
 			tagModeActive: uiState.tagModeActive,
 			setTagModeActive,
 			mode: uiState.mode,
@@ -832,6 +928,9 @@ export function ExplorerProvider({
 			openQuickPreview,
 			closeQuickPreview,
 			currentFiles,
+			setCurrentFiles,
+			operationalPath,
+			setActiveColumnPath,
 			uiState.tagModeActive,
 			setTagModeActive,
 			uiState.mode,

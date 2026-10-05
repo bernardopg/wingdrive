@@ -15,9 +15,21 @@ pub enum JobOutput {
 	Success,
 
 	/// File copy job output
+	///
+	/// A copy job that finishes with failures or skipped items still completes,
+	/// so callers must read the counts to tell a partial copy from a full one.
+	/// The extra fields default to zero so job history stored by older builds
+	/// still deserializes.
 	FileCopy {
 		copied_count: usize,
+		#[serde(default)]
+		failed_count: usize,
+		#[serde(default)]
+		skipped_count: usize,
 		total_bytes: u64,
+		/// First failure messages, capped to keep job history small.
+		#[serde(default)]
+		errors: Vec<String>,
 	},
 
 	/// Indexer job output
@@ -44,7 +56,12 @@ pub enum JobOutput {
 	FileMove {
 		moved_count: usize,
 		failed_count: usize,
+		#[serde(default)]
+		skipped_count: usize,
 		total_bytes: u64,
+		/// First failure messages, capped to keep job history small.
+		#[serde(default)]
+		errors: Vec<String>,
 	},
 
 	/// File delete operation output
@@ -119,6 +136,7 @@ impl JobOutput {
 			Self::FileCopy {
 				copied_count,
 				total_bytes,
+				..
 			} => Some(Progress::generic(
 				crate::infra::job::generic_progress::GenericProgress::new(
 					1.0,
@@ -177,9 +195,16 @@ impl fmt::Display for JobOutput {
 			Self::Success => write!(f, "Success"),
 			Self::FileCopy {
 				copied_count,
+				failed_count,
+				skipped_count,
 				total_bytes,
+				..
 			} => {
-				write!(f, "Copied {} files ({} bytes)", copied_count, total_bytes)
+				write!(
+					f,
+					"Copied {} files ({} failed, {} skipped, {} bytes)",
+					copied_count, failed_count, skipped_count, total_bytes
+				)
 			}
 			Self::Indexed { stats, metrics } => {
 				write!(
@@ -213,12 +238,14 @@ impl fmt::Display for JobOutput {
 			Self::FileMove {
 				moved_count,
 				failed_count,
+				skipped_count,
 				total_bytes,
+				..
 			} => {
 				write!(
 					f,
-					"Moved {} files ({} failed, {} bytes)",
-					moved_count, failed_count, total_bytes
+					"Moved {} files ({} failed, {} skipped, {} bytes)",
+					moved_count, failed_count, skipped_count, total_bytes
 				)
 			}
 			Self::FileDelete {
@@ -289,5 +316,47 @@ impl fmt::Display for JobOutput {
 			}
 			Self::Custom(_) => write!(f, "Custom output"),
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn file_copy_output_from_older_builds_still_deserializes() {
+		let stored = r#"{"type":"FileCopy","data":{"copied_count":2,"total_bytes":10}}"#;
+		let output: JobOutput = serde_json::from_str(stored).unwrap();
+		match output {
+			JobOutput::FileCopy {
+				copied_count,
+				failed_count,
+				skipped_count,
+				errors,
+				..
+			} => {
+				assert_eq!(copied_count, 2);
+				assert_eq!(failed_count, 0);
+				assert_eq!(skipped_count, 0);
+				assert!(errors.is_empty());
+			}
+			other => panic!("unexpected output {other:?}"),
+		}
+	}
+
+	#[test]
+	fn file_move_output_from_older_builds_still_deserializes() {
+		let stored =
+			r#"{"type":"FileMove","data":{"moved_count":1,"failed_count":1,"total_bytes":3}}"#;
+		let output: JobOutput = serde_json::from_str(stored).unwrap();
+		assert!(matches!(
+			output,
+			JobOutput::FileMove {
+				moved_count: 1,
+				failed_count: 1,
+				skipped_count: 0,
+				..
+			}
+		));
 	}
 }

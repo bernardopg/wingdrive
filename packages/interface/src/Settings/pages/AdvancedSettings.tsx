@@ -1,10 +1,10 @@
 import { useForm } from "react-hook-form";
 import { useCoreQuery, useCoreMutation } from "../../contexts/WingDriveContext";
 
+// The daemon always writes job logs and takes its log level from RUST_LOG,
+// so only the debug switch, which the job logger reads at startup, is shown.
 interface AdvancedSettingsForm {
-  job_logging_enabled: boolean;
   job_logging_include_debug: boolean;
-  log_level: string;
 }
 
 export function AdvancedSettings() {
@@ -13,9 +13,7 @@ export function AdvancedSettings() {
 
   const form = useForm<AdvancedSettingsForm>({
     values: {
-      job_logging_enabled: config?.job_logging?.enabled ?? true,
       job_logging_include_debug: config?.job_logging?.include_debug ?? false,
-      log_level: config?.log_level || "info",
     },
   });
 
@@ -40,37 +38,8 @@ export function AdvancedSettings() {
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="p-4 bg-app-box rounded-lg border border-app-line">
-          <h3 className="text-sm font-medium text-ink mb-3">Daemon Log Level</h3>
-          <label className="block">
-            <p className="text-xs text-ink-dull mb-2">Set the verbosity of daemon logs</p>
-            <select
-              {...form.register("log_level")}
-              className="w-full px-3 py-2 bg-app border border-app-line rounded-md text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              <option value="trace">Trace</option>
-              <option value="debug">Debug</option>
-              <option value="info">Info</option>
-              <option value="warn">Warn</option>
-              <option value="error">Error</option>
-            </select>
-          </label>
-        </div>
-
         <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
           <h3 className="text-sm font-medium text-ink">Job Logging</h3>
-
-          <label className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-ink">Enable Job Logging</span>
-              <p className="text-xs text-ink-dull">Write detailed logs for background jobs</p>
-            </div>
-            <input
-              type="checkbox"
-              {...form.register("job_logging_enabled")}
-              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent"
-            />
-          </label>
 
           <label className="flex items-center justify-between">
             <div>
@@ -86,8 +55,9 @@ export function AdvancedSettings() {
 
           <div className="pt-2 border-t border-app-line">
             <p className="text-xs text-ink-dull">
-              Job logs are stored in the library's logs directory. Enabling debug logs
-              will significantly increase log file sizes.
+              Every background job writes a log. Debug entries make those logs much
+              larger and take effect after the daemon restarts. Set the daemon log
+              level with the RUST_LOG environment variable.
             </p>
           </div>
         </div>
