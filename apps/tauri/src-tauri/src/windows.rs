@@ -93,8 +93,11 @@ impl WingDriveWindow {
 
 	/// Show or focus this window
 	pub async fn show(&self, app: &AppHandle) -> Result<WebviewWindow, String> {
-		// If window already exists, just focus it
+		// If window already exists, surface it. It may still be hidden when its
+		// webview never reached `app_ready` (e.g. dev server reload mid-boot).
 		if let Some(window) = self.get(app) {
+			window.unminimize().ok();
+			window.show().ok();
 			window.set_focus().ok();
 			return Ok(window);
 		}
