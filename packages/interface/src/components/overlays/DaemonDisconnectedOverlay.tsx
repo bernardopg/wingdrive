@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy } from "@phosphor-icons/react";
-import { useDaemonStatus } from "../../hooks/useDaemonStatus";
+import { STARTUP_TIMEOUT_MS, useDaemonStatus } from "../../hooks/useDaemonStatus";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { Button } from "@wingdrive/primitives";
 import folderIcon from "@wingdrive/assets/icons/FolderNoSpace.png";
@@ -45,6 +45,7 @@ export function DaemonDisconnectedOverlay({
 		isInstalled,
 		startDaemon,
 		installAndStartDaemon,
+		startupTimedOut,
 	} = daemonStatus;
 	const [installAsService, setInstallAsService] = useState(isInstalled);
 	const platform = usePlatform();
@@ -121,8 +122,21 @@ export function DaemonDisconnectedOverlay({
 
 							<div className="flex flex-col items-center gap-2 text-center">
 								<h1 className="text-2xl font-bold text-ink">
-									Daemon Disconnected
+									{startupTimedOut
+										? "Daemon Did Not Start"
+										: "Daemon Disconnected"}
 								</h1>
+								{startupTimedOut && (
+									<p
+										role="alert"
+										className="max-w-xs text-sm leading-relaxed text-ink"
+									>
+										WingDrive waited{" "}
+										{Math.round(STARTUP_TIMEOUT_MS / 1000)}{" "}
+										seconds without a connection. Start the
+										daemon below or check its log.
+									</p>
+								)}
 								<p className="max-w-xs text-sm leading-relaxed text-ink-dull">
 									The WingDrive daemon is required for the
 									app to function. It runs in the background,

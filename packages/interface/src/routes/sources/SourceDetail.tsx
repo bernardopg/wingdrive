@@ -46,6 +46,8 @@ export function SourceDetail() {
 		data: source,
 		isLoading,
 		error,
+		refetch,
+		isFetching,
 	} = useLibraryQuery({
 		type: "sources.get",
 		input: { source_id: sourceId ?? "" },
@@ -183,6 +185,16 @@ export function SourceDetail() {
 						Failed to load source:{" "}
 						{error ? String(error) : "Not found"}
 					</p>
+					{error && (
+						<button
+							type="button"
+							disabled={isFetching}
+							onClick={() => void refetch()}
+							className="mt-2 text-xs text-ink underline disabled:opacity-50"
+						>
+							{isFetching ? "Retrying..." : "Retry"}
+						</button>
+					)}
 				</div>
 			</div>
 		);
@@ -297,6 +309,16 @@ export function SourceDetail() {
 							<p className="text-xs text-red-400">
 								Sync failed: {String(syncMutation.error)}
 							</p>
+							<button
+								type="button"
+								disabled={syncMutation.isPending}
+								onClick={() =>
+									syncMutation.mutate({ source_id: source.id })
+								}
+								className="mt-1 text-xs text-ink underline disabled:opacity-50"
+							>
+								{syncMutation.isPending ? "Retrying..." : "Retry sync"}
+							</button>
 						</div>
 					)}
 				</div>

@@ -569,6 +569,20 @@ impl PersistentEventHandler {
 					if let Some(inode) = inode {
 						// Check if this matches a pending remove
 						if let Some((old_path, _, is_dir)) = pending_removes.remove(&inode) {
+							// ext4 hands a freed inode to the next new file, so an inode
+							// match alone is not a rename: the file must also keep the
+							// recorded size and modification time.
+							if !Self::matches_recorded_file(db, &old_path, &event.path).await {
+								debug!(
+									"Inode {} reused: {} removed, {} created",
+									inode,
+									old_path.display(),
+									event.path.display()
+								);
+								result.push(FsEvent::remove(old_path));
+								result.push(event);
+								continue;
+							}
 							// Found a match - emit Rename
 							info!(
 								"Detected rename via database inode {}: {} -> {}",
@@ -597,6 +611,63 @@ impl PersistentEventHandler {
 		result
 	}
 
+	/// Whether the file now at `new_path` is the one recorded at `old_path`.
+	///
+	/// A rename keeps size and modification time; a new file that inherited
+	/// the inode almost never matches both. Directories have no stable size, so
+	/// they keep matching on inode alone.
+	async fn matches_recorded_file(
+		db: &sea_orm::DatabaseConnection,
+		old_path: &std::path::Path,
+		new_path: &std::path::Path,
+	) -> bool {
+		let Ok(metadata) = tokio::fs::metadata(new_path).await else {
+			return true;
+		};
+		if metadata.is_dir() {
+			return true;
+		}
+		let Some(entry) = Self::get_file_entry_from_db(db, old_path).await else {
+			return true;
+		};
+		let same_size = entry.size == metadata.len() as i64;
+		let same_mtime = metadata
+			.modified()
+			.ok()
+			.map(chrono::DateTime::<chrono::Utc>::from)
+			.map(|mtime| mtime.timestamp() == entry.modified_at.timestamp())
+			.unwrap_or(true);
+		same_size && same_mtime
+	}
+
+	/// The indexed file entry at `path`, looked up by parent directory and name.
+	async fn get_file_entry_from_db(
+		db: &sea_orm::DatabaseConnection,
+		path: &std::path::Path,
+	) -> Option<crate::infra::db::entities::entry::Model> {
+		use crate::infra::db::entities::{directory_paths, entry};
+		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+
+		let parent = path.parent()?;
+		let name = path.file_stem()?.to_str()?;
+		let ext = path.extension().and_then(|e| e.to_str());
+
+		let parent_dir = directory_paths::Entity::find()
+			.filter(directory_paths::Column::Path.eq(parent.to_string_lossy().to_string()))
+			.one(db)
+			.await
+			.ok()??;
+
+		let mut query = entry::Entity::find()
+			.filter(entry::Column::ParentId.eq(parent_dir.entry_id))
+			.filter(entry::Column::Name.eq(name));
+		query = match ext {
+			Some(e) => query.filter(entry::Column::Extension.eq(e.to_lowercase())),
+			None => query.filter(entry::Column::Extension.is_null()),
+		};
+		query.one(db).await.ok()?
+	}
+
 	/// Get the inode for a path from the database.
 	async fn get_inode_from_db(
 		db: &sea_orm::DatabaseConnection,
@@ -622,29 +693,10 @@ impl PersistentEventHandler {
 		}
 
 		// Try as file (lookup via parent directory + name)
-		let parent = path.parent()?;
-		let name = path.file_stem()?.to_str()?;
-		let ext = path.extension().and_then(|e| e.to_str());
-
-		let parent_str = parent.to_string_lossy().to_string();
-		let parent_dir = directory_paths::Entity::find()
-			.filter(directory_paths::Column::Path.eq(&parent_str))
-			.one(db)
-			.await
-			.ok()??;
-
-		let mut query = entry::Entity::find()
-			.filter(entry::Column::ParentId.eq(parent_dir.entry_id))
-			.filter(entry::Column::Name.eq(name));
-
-		if let Some(e) = ext {
-			query = query.filter(entry::Column::Extension.eq(e.to_lowercase()));
-		} else {
-			query = query.filter(entry::Column::Extension.is_null());
-		}
-
-		let entry_record = query.one(db).await.ok()??;
-		entry_record.inode.map(|i| i as u64)
+		Self::get_file_entry_from_db(db, path)
+			.await?
+			.inode
+			.map(|i| i as u64)
 	}
 
 	/// Get the inode for a path from the filesystem.

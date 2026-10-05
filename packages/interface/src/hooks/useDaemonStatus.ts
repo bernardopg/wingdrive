@@ -7,7 +7,16 @@ export interface DaemonStatus {
 	isInstalled: boolean;
 	/** True during initial app startup while waiting for daemon. Once connected, stays false. */
 	isStarting: boolean;
+	/** Startup waited longer than STARTUP_TIMEOUT_MS without a connection. */
+	startupTimedOut: boolean;
 }
+
+/**
+ * How long the startup screen waits for the daemon. After that the app shows
+ * the disconnected screen with start and install controls instead of a
+ * spinner that never ends when the daemon fails to launch.
+ */
+export const STARTUP_TIMEOUT_MS = 45_000;
 
 export function useDaemonStatus() {
 	const platform = usePlatform();
@@ -18,7 +27,20 @@ export function useDaemonStatus() {
 		isChecking: false,
 		isInstalled: false,
 		isStarting: isTauri, // Only Tauri starts in "starting" state
+		startupTimedOut: false,
 	});
+
+	useEffect(() => {
+		if (!status.isStarting || status.isConnected) return;
+		const timer = setTimeout(() => {
+			setStatus((prev) =>
+				prev.isConnected
+					? prev
+					: { ...prev, isStarting: false, isChecking: false, startupTimedOut: true },
+			);
+		}, STARTUP_TIMEOUT_MS);
+		return () => clearTimeout(timer);
+	}, [status.isStarting, status.isConnected]);
 	
 	// Track if we've ever been connected - once connected, isStarting stays false
 	const hasEverConnected = useRef(!isTauri);
@@ -50,6 +72,7 @@ export function useDaemonStatus() {
 					isChecking: isRunning ? false : prev.isChecking,
 					// Clear isStarting once we're connected
 					isStarting: isRunning ? false : prev.isStarting,
+					startupTimedOut: isRunning ? false : prev.startupTimedOut,
 				}));
 				}
 			} catch (error) {
@@ -73,6 +96,7 @@ export function useDaemonStatus() {
 					isConnected: true,
 					isChecking: false,
 					isStarting: false, // No longer starting once connected
+					startupTimedOut: false,
 				}));
 				}
 			});

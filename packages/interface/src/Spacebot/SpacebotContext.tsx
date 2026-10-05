@@ -333,10 +333,9 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 				) {
 					return;
 				}
+				// Typing can stop before the final message arrives; keep the streamed
+				// text on screen until outbound_message replaces it.
 				setIsTyping(event.is_typing);
-				if (!event.is_typing) {
-					setStreamingAssistantText('');
-				}
 			},
 			outbound_message_delta: (payload) => {
 				const event = payload as OutboundMessageDeltaEvent;
@@ -359,6 +358,12 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 				}
 				setIsTyping(false);
 				setStreamingAssistantText('');
+				const timelineKey = ['spacebot', 'channel-timeline', conversationId];
+				// Without a loaded timeline there is nothing to append to; refetch so
+				// the reply is not lost along with the cleared stream.
+				if (!queryClient.getQueryData(timelineKey)) {
+					void queryClient.invalidateQueries({queryKey: timelineKey});
+				}
 				// Push the assistant message directly into the timeline cache.
 				queryClient.setQueryData(
 					['spacebot', 'channel-timeline', conversationId],

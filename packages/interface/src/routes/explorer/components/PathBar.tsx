@@ -5,6 +5,7 @@ import {
 	Eye,
 	Folder
 } from '@phosphor-icons/react';
+import {useDroppable} from '@dnd-kit/core';
 import LaptopIcon from '@wingdrive/assets/icons/Laptop.png';
 import type {Device, WingPath} from '@wingdrive/ts-client';
 import {
@@ -30,6 +31,50 @@ interface PathBarProps {
 interface PathSegment {
 	name: string;
 	path: WingPath;
+}
+
+/**
+ * One folder of the expanded path bar. Earlier folders accept dropped files,
+ * which gives every view a "move to parent folder" target.
+ */
+function PathSegmentButton({
+	segment,
+	isLast,
+	onNavigate
+}: {
+	segment: PathSegment;
+	isLast: boolean;
+	onNavigate: (path: WingPath) => void;
+}) {
+	const {setNodeRef, isOver} = useDroppable({
+		id: `path-drop-${JSON.stringify(segment.path)}`,
+		disabled: isLast,
+		data: {
+			action: 'move-into',
+			targetType: 'folder',
+			targetPath: segment.path
+		}
+	});
+
+	return (
+		<button
+			ref={setNodeRef}
+			onClick={(e) => {
+				e.stopPropagation();
+				if (!isLast) onNavigate(segment.path);
+			}}
+			disabled={isLast}
+			className={clsx(
+				'whitespace-nowrap rounded text-xs font-medium transition-colors',
+				isLast
+					? 'text-sidebar-ink cursor-default'
+					: 'text-sidebar-ink-dull hover:text-sidebar-ink cursor-pointer',
+				isOver && 'bg-accent/20 text-sidebar-ink'
+			)}
+		>
+			{segment.name}
+		</button>
+	);
 }
 
 function getCurrentDirectoryName(sdPath: WingPath): string {
@@ -472,21 +517,11 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 									key={index}
 									className="flex flex-shrink-0 items-center gap-1"
 								>
-									<button
-										onClick={(e) => {
-											e.stopPropagation();
-											!isLast && onNavigate(segment.path);
-										}}
-										disabled={isLast}
-										className={clsx(
-											'whitespace-nowrap text-xs font-medium transition-colors',
-											isLast
-												? 'text-sidebar-ink cursor-default'
-												: 'text-sidebar-ink-dull hover:text-sidebar-ink cursor-pointer'
-										)}
-									>
-										{segment.name}
-									</button>
+									<PathSegmentButton
+										segment={segment}
+										isLast={isLast}
+										onNavigate={onNavigate}
+									/>
 									{!isLast && (
 										<button
 											onClick={(e) => {

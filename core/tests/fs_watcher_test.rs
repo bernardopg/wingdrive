@@ -737,6 +737,32 @@ impl TestHarness {
 		.into())
 	}
 
+	/// Verify an entry exists with the given stored extension.
+	async fn verify_entry_extension(
+		&self,
+		name: &str,
+		extension: Option<&str>,
+	) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+		let start = std::time::Instant::now();
+		while start.elapsed() < Duration::from_secs(10) {
+			let entries = get_location_entries(&self.library, self.location_id).await?;
+			if entries
+				.iter()
+				.any(|e| e.name == name && e.extension.as_deref() == extension)
+			{
+				return Ok(());
+			}
+			tokio::time::sleep(Duration::from_millis(50)).await;
+		}
+		let entries = get_location_entries(&self.library, self.location_id).await?;
+		let found: Vec<_> = entries
+			.iter()
+			.filter(|e| e.name == name)
+			.map(|e| e.extension.clone())
+			.collect();
+		Err(format!("Entry '{name}' with extension {extension:?} not found; found {found:?}").into())
+	}
+
 	/// Verify entry is a directory (kind = 1 for directory)
 	async fn verify_is_directory(
 		&self,
@@ -1275,6 +1301,32 @@ async fn run_test_scenarios(
 	for file in &restore_files {
 		harness.delete_file(file).await?;
 	}
+	tokio::time::sleep(Duration::from_millis(500)).await;
+
+	// A rename that changes the extension must update the stored extension.
+	harness.create_file("kind-change.txt", "same bytes").await?;
+	harness.verify_entry_extension("kind-change", Some("txt")).await?;
+	harness.rename_file("kind-change.txt", "kind-change.md").await?;
+	harness.verify_entry_extension("kind-change", Some("md")).await?;
+
+	// Directory names keep every dot; "release-v1.2" is not "release-v1".
+	harness.create_dir("release-v1").await?;
+	harness.verify_entry_exists("release-v1").await?;
+	harness.rename_file("release-v1", "release-v1.2").await?;
+	harness.verify_entry_exists("release-v1.2").await?;
+
+	// ext4 hands a freed inode to the next file at once. A new file must not be
+	// taken for a rename of the one just deleted.
+	harness.create_file("reuse-old.txt", "ab").await?;
+	harness.verify_entry_extension("reuse-old", Some("txt")).await?;
+	harness.delete_file("reuse-old.txt").await?;
+	harness.create_file("reuse-new.png", "a different, longer body").await?;
+	harness.verify_entry_extension("reuse-new", Some("png")).await?;
+	harness.verify_entry_not_exists("reuse-old").await?;
+
+	harness.delete_file("kind-change.md").await?;
+	harness.delete_file("reuse-new.png").await?;
+	harness.delete_dir("release-v1.2").await?;
 	tokio::time::sleep(Duration::from_millis(500)).await;
 
 	// Final State Verification

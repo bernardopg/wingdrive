@@ -704,6 +704,7 @@ impl DatabaseStorage {
 			.ok_or_else(|| JobError::execution("Entry not found for move".to_string()))?;
 
 		let is_directory = db_entry.kind == Self::entry_kind_to_int(EntryKind::Directory);
+		let is_file = db_entry.kind == Self::entry_kind_to_int(EntryKind::File);
 		let mut entry_active: entities::entry::ActiveModel = db_entry.into();
 
 		let new_parent_id = if let Some(parent_path) = new_path.parent() {
@@ -714,12 +715,12 @@ impl DatabaseStorage {
 
 		entry_active.parent_id = Set(new_parent_id);
 
-		let mut new_name_value = None;
-		if let Some(new_name) = new_path.file_stem() {
-			let name_string = new_name.to_string_lossy().to_string();
-			new_name_value = Some(name_string.clone());
-			entry_active.name = Set(name_string);
-		}
+		// Rewrite name and extension together; keeping the old extension made a
+		// renamed report.txt -> report.md still read as text.
+		let (name_string, extension) = stored_name_and_extension(new_path, is_file);
+		let new_name_value = Some(name_string.clone());
+		entry_active.name = Set(name_string);
+		entry_active.extension = Set(extension);
 
 		entry_active
 			.update(txn)
@@ -1008,6 +1009,7 @@ impl DatabaseStorage {
 			.map_err(|e| JobError::execution(format!("Failed to find entry: {}", e)))?
 			.ok_or_else(|| JobError::execution("Entry not found for move".to_string()))?;
 
+		let is_file = db_entry.kind == Self::entry_kind_to_int(EntryKind::File);
 		let mut entry_active: entities::entry::ActiveModel = db_entry.into();
 
 		let new_parent_id = if let Some(parent_path) = new_path.parent() {
@@ -1053,20 +1055,9 @@ impl DatabaseStorage {
 
 		entry_active.parent_id = Set(new_parent_id);
 
-		match new_path.extension() {
-			Some(ext) => {
-				if let Some(stem) = new_path.file_stem() {
-					entry_active.name = Set(stem.to_string_lossy().to_string());
-					entry_active.extension = Set(Some(ext.to_string_lossy().to_lowercase()));
-				}
-			}
-			None => {
-				if let Some(name) = new_path.file_name() {
-					entry_active.name = Set(name.to_string_lossy().to_string());
-					entry_active.extension = Set(None);
-				}
-			}
-		}
+		let (name, extension) = stored_name_and_extension(new_path, is_file);
+		entry_active.name = Set(name);
+		entry_active.extension = Set(extension);
 
 		entry_active
 			.update(txn)
@@ -1226,5 +1217,54 @@ impl DatabaseStorage {
 		}
 
 		Ok(())
+	}
+}
+
+/// Name and extension stored for an entry at `path`, matching how entries are
+/// first indexed: files split off a lowercase extension, while directories and
+/// symlinks keep their full name, dots included ("release-v1.2", "Foo.app").
+fn stored_name_and_extension(path: &Path, is_file: bool) -> (String, Option<String>) {
+	let full_name = || {
+		path.file_name()
+			.map(|n| n.to_string_lossy().to_string())
+			.unwrap_or_else(|| "unknown".to_string())
+	};
+	if !is_file {
+		return (full_name(), None);
+	}
+	let name = path
+		.file_stem()
+		.map(|stem| stem.to_string_lossy().to_string())
+		.unwrap_or_else(full_name);
+	let extension = path
+		.extension()
+		.and_then(|ext| ext.to_str())
+		.map(|ext| ext.to_lowercase());
+	(name, extension)
+}
+
+#[cfg(test)]
+mod stored_name_tests {
+	use super::stored_name_and_extension;
+	use std::path::Path;
+
+	#[test]
+	fn files_split_a_lowercase_extension() {
+		assert_eq!(
+			stored_name_and_extension(Path::new("/a/Report.final.MD"), true),
+			("Report.final".to_string(), Some("md".to_string()))
+		);
+		assert_eq!(
+			stored_name_and_extension(Path::new("/a/Makefile"), true),
+			("Makefile".to_string(), None)
+		);
+	}
+
+	#[test]
+	fn directories_keep_their_full_name() {
+		assert_eq!(
+			stored_name_and_extension(Path::new("/a/release-v1.2"), false),
+			("release-v1.2".to_string(), None)
+		);
 	}
 }

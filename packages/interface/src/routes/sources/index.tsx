@@ -14,7 +14,9 @@ export function SourcesHome() {
 	const {
 		data: sources,
 		isLoading,
-		error
+		error,
+		refetch,
+		isFetching
 	} = useLibraryQuery({
 		type: 'sources.list',
 		input: {data_type: null}
@@ -87,6 +89,14 @@ export function SourcesHome() {
 						<p className="text-sm text-red-400">
 							Failed to load sources: {String(error)}
 						</p>
+						<button
+							type="button"
+							disabled={isFetching}
+							onClick={() => void refetch()}
+							className="text-ink mt-2 text-xs underline disabled:opacity-50"
+						>
+							{isFetching ? 'Retrying...' : 'Retry'}
+						</button>
 					</div>
 				)}
 
