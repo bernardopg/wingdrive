@@ -377,8 +377,11 @@ impl DaemonConnectionPool {
 /// Each subscription remembers the window that opened it, so closing or
 /// reloading one window cancels only its own streams instead of silencing
 /// every other window.
+/// Subscription id -> (owning window label, cancellation sender).
+type SubscriptionMap = Arc<RwLock<HashMap<u64, (String, oneshot::Sender<()>)>>>;
+
 struct SubscriptionManager {
-	subscriptions: Arc<RwLock<HashMap<u64, (String, oneshot::Sender<()>)>>>,
+	subscriptions: SubscriptionMap,
 	counter: std::sync::atomic::AtomicU64,
 }
 
@@ -908,11 +911,8 @@ async fn subscribe_to_events(
 			async move {
 				subscriptions.write().await.remove(&subscription_id);
 				if let Some(channel) = channel {
-					let _ = app.emit_to(
-						window_label.as_str(),
-						&format!("{channel}:closed"),
-						reason,
-					);
+					let _ =
+						app.emit_to(window_label.as_str(), &format!("{channel}:closed"), reason);
 				}
 			}
 		};

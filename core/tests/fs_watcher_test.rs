@@ -760,7 +760,10 @@ impl TestHarness {
 			.filter(|e| e.name == name)
 			.map(|e| e.extension.clone())
 			.collect();
-		Err(format!("Entry '{name}' with extension {extension:?} not found; found {found:?}").into())
+		Err(
+			format!("Entry '{name}' with extension {extension:?} not found; found {found:?}")
+				.into(),
+		)
 	}
 
 	/// Verify entry is a directory (kind = 1 for directory)
@@ -1305,9 +1308,15 @@ async fn run_test_scenarios(
 
 	// A rename that changes the extension must update the stored extension.
 	harness.create_file("kind-change.txt", "same bytes").await?;
-	harness.verify_entry_extension("kind-change", Some("txt")).await?;
-	harness.rename_file("kind-change.txt", "kind-change.md").await?;
-	harness.verify_entry_extension("kind-change", Some("md")).await?;
+	harness
+		.verify_entry_extension("kind-change", Some("txt"))
+		.await?;
+	harness
+		.rename_file("kind-change.txt", "kind-change.md")
+		.await?;
+	harness
+		.verify_entry_extension("kind-change", Some("md"))
+		.await?;
 
 	// Directory names keep every dot; "release-v1.2" is not "release-v1".
 	harness.create_dir("release-v1").await?;
@@ -1318,10 +1327,16 @@ async fn run_test_scenarios(
 	// ext4 hands a freed inode to the next file at once. A new file must not be
 	// taken for a rename of the one just deleted.
 	harness.create_file("reuse-old.txt", "ab").await?;
-	harness.verify_entry_extension("reuse-old", Some("txt")).await?;
+	harness
+		.verify_entry_extension("reuse-old", Some("txt"))
+		.await?;
 	harness.delete_file("reuse-old.txt").await?;
-	harness.create_file("reuse-new.png", "a different, longer body").await?;
-	harness.verify_entry_extension("reuse-new", Some("png")).await?;
+	harness
+		.create_file("reuse-new.png", "a different, longer body")
+		.await?;
+	harness
+		.verify_entry_extension("reuse-new", Some("png"))
+		.await?;
 	harness.verify_entry_not_exists("reuse-old").await?;
 
 	harness.delete_file("kind-change.md").await?;
