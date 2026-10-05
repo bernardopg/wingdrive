@@ -8,7 +8,7 @@ import {
 import {useQueryClient} from '@tanstack/react-query';
 import {CircleButton, CircleButtonGroup} from '@wingdrive/primitives';
 import clsx from 'clsx';
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {TopBarItem, TopBarPortal} from '../../TopBar';
 import {ExpandableSearchButton} from './components/ExpandableSearchButton';
@@ -16,6 +16,7 @@ import {PathBar} from './components/PathBar';
 import {VirtualPathBar} from './components/VirtualPathBar';
 import {useExplorer, type ViewMode} from './context';
 import {useExplorerFiles} from './hooks/useExplorerFiles';
+import {MIN_SEARCH_LENGTH, SEARCH_DEBOUNCE_MS} from './hooks/searchQuery';
 import {useExternalFileDrop} from './hooks/useExternalFileDrop';
 import {useVirtualListing} from './hooks/useVirtualListing';
 import {SearchToolbar} from './SearchToolbar';
@@ -81,16 +82,28 @@ export function ExplorerView() {
 
 	const [searchValue, setSearchValue] = useState('');
 
+	// One pending search at a time: each keystroke replaces the timer, so a
+	// slow earlier query can never land after a newer one.
+	const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	useEffect(
+		() => () => {
+			if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+		},
+		[]
+	);
+
 	const handleSearchChange = useCallback(
 		(value: string) => {
 			setSearchValue(value);
+			if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+			searchTimerRef.current = null;
 
-			if (value.length >= 2) {
-				const timeoutId = setTimeout(() => {
+			if (value.length >= MIN_SEARCH_LENGTH) {
+				searchTimerRef.current = setTimeout(() => {
+					searchTimerRef.current = null;
 					enterSearchMode(value);
-				}, 300);
-				return () => clearTimeout(timeoutId);
-			} else if (value.length === 0 && mode.type === 'search') {
+				}, SEARCH_DEBOUNCE_MS);
+			} else if (mode.type === 'search') {
 				exitSearchMode();
 			}
 		},
@@ -98,6 +111,8 @@ export function ExplorerView() {
 	);
 
 	const handleSearchClear = useCallback(() => {
+		if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+		searchTimerRef.current = null;
 		setSearchValue('');
 		exitSearchMode();
 	}, [exitSearchMode]);
