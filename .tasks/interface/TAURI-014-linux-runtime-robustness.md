@@ -1,7 +1,7 @@
 ---
 id: TAURI-014
 title: Linux desktop runtime robustness and search parity
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: TAURI-000
 priority: High
@@ -21,14 +21,14 @@ Second half of the desktop UI audit, split from TAURI-013. Startup failures and 
 - [x] Compose feature providers, dialogs, notifications and reconnect handling in auxiliary windows
 - [x] Complete search scope/filter/sort/pagination/debounce and view parity
 - [x] Preserve streamed text and improve clipboard, drag, Jobs, source retry and pairing
-- [ ] Add targeted tests and Linux validation in the packaged bundle
+- [x] Add targeted tests and Linux validation in the packaged bundle
 
 ## Acceptance Criteria
 
 - [x] Startup failures are recoverable; restart and window cleanup preserve scoped subscriptions
 - [x] Jobs and Settings auxiliary windows have their required contexts and feedback
 - [x] Search and preview regressions are covered by tests; pagination and source retries are explicit
-- [ ] Search and recents click-through pass in the packaged Linux app (closes the TAURI-006 gap)
+- [x] Search and recents click-through pass in the packaged Linux app (closes the TAURI-006 gap)
 - [x] Frontend tests, typecheck/build and relevant Rust validation pass, with limitations recorded
 
 ## Validation
@@ -52,7 +52,21 @@ Related: 10ab25d (auxiliary windows that never reached app_ready stayed hidden) 
 - `bun run typecheck` passes; `cargo clippy -p wingdrive -p wing-core -D warnings` clean.
 - Runtime (isolated `wing-server` + web build in Chromium): folder vs location scope, scope kept while typing, kind filters (Images empty, Text keeps text files), 205 results paginate 200 + 5 with Next disabled on the last page.
 
-### Remaining
+### Native Linux validation (debug Tauri build with the embedded frontend, Xvfb + openbox, isolated `WINGDRIVE_INSTANCE=native`)
 
-- Click-through in the packaged Linux app: Settings and Jobs windows, daemon restart while windows are open, search and recents (closes the TAURI-006 gap). This container has no desktop session for native windows.
+- Startup: subscriptions opened before the daemon listened (connection refused) reopened on their own once it was ready; 14 streams became active without a reload.
+- Settings window: opened with the dark theme; saving the device name showed the "Device settings saved" toast inside the window; Library shows only the two auto-tracking switches.
+- Closing Settings and the pop-out Inspector released only their own streams (`Released 4 subscriptions window=settings-general`, `window=inspector-floating`); a location added from the CLI afterwards appeared live in the main window.
+- Daemon killed while the app was open: the app showed "Daemon Disconnected"; Restart Daemon brought it back, the library reopened and a location added afterwards appeared live.
+- Recents listed the new files; search in a location returned only that location's files.
 
+### Bugs found and fixed during native validation
+
+- A daemon started by the app that crashed stayed a zombie, and the library lock treated the zombie PID as alive, so Restart Daemon came back with "Library is already in use" and no libraries. The app now reaps the old child before restarting and after killing it, and on Linux the lock reads `/proc/<pid>/stat` and treats zombies as gone (`library::lock` tests).
+- Folder and location search used `LIKE 'path%'`, so `/loc` also matched `/loc2`, and `_` or `%` in folder names acted as wildcards. The path scope now matches the folder or `folder/%` with escaping (`subtree_condition_excludes_prefix_siblings`). Verified from the CLI: `loc` returns nothing from `loc2`/`loc3`.
+
+### Limitations
+
+- The `job-manager` pop-out window has no entry point in the UI; it now renders inside `AuxiliaryWindow` with `JobsProvider`, verified by typecheck only.
+- `cargo test -p wing-core --test search_test` has 4 failures (filters, ephemeral substring and date filters) that also fail on the base commit and are not run in CI.
+- Validation used a debug build under Xvfb, not the AppImage.

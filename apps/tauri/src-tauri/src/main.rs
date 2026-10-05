@@ -1140,6 +1140,19 @@ async fn start_daemon_process(
 		return Err("Daemon is already running".to_string());
 	}
 
+	// A daemon we started that crashed stays a zombie until it is waited on,
+	// and its PID still owns the library lock, so the new daemon would open
+	// with no libraries. Reap it before starting a replacement.
+	let previous = state.write().await.daemon_process.take();
+	if let Some(process_arc) = previous {
+		if let Some(mut child) = process_arc.lock().await.take() {
+			if !matches!(child.try_wait(), Ok(Some(_))) {
+				let _ = child.kill();
+				let _ = child.wait();
+			}
+		}
+	}
+
 	// Emit starting event
 	let _ = app.emit("daemon-starting", ());
 
@@ -1175,6 +1188,8 @@ async fn stop_daemon_process(
 			child
 				.kill()
 				.map_err(|e| format!("Failed to kill daemon: {}", e))?;
+			// Waiting reaps the process so its PID stops holding the library lock.
+			let _ = child.wait();
 			tracing::info!("Daemon process killed");
 		}
 	}

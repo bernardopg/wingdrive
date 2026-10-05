@@ -887,10 +887,9 @@ impl FileSearchQuery {
 					// Join with directory_paths to filter by path
 					query = query
 						.join(JoinType::LeftJoin, directory_paths::Relation::Entry.def())
-						.filter(
-							directory_paths::Column::Path
-								.like(&format!("{}%", path_str.to_string_lossy())),
-						);
+						.filter(crate::ops::search::filters::directory_subtree_condition(
+							&path_str.to_string_lossy(),
+						));
 				}
 			}
 		}
@@ -1184,7 +1183,7 @@ impl FileSearchQuery {
 						FROM fts
 						JOIN entries e ON e.id = fts.rowid
 						JOIN directory_paths dp ON dp.entry_id = e.parent_id
-						WHERE dp.path LIKE ?
+						WHERE (dp.path = ? OR dp.path LIKE ? ESCAPE '\')
 						ORDER BY fts.rank
 						LIMIT ? OFFSET ?
 					"#
@@ -1218,7 +1217,8 @@ impl FileSearchQuery {
 		let params = match &self.input.scope {
 			SearchScope::Path { path } if path.path().is_some() => {
 				let path_str = path.path().unwrap().to_string_lossy();
-				let like_pattern = format!("{}%", path_str);
+				let (exact, like_pattern) =
+					crate::ops::search::filters::directory_subtree_patterns(&path_str);
 				tracing::info!(
 					"Path scope FTS5: query='{}', LIKE pattern='{}'",
 					query,
@@ -1226,6 +1226,7 @@ impl FileSearchQuery {
 				);
 				vec![
 					query.into(),
+					exact.into(),
 					like_pattern.into(),
 					self.input.pagination.limit.to_string().into(),
 					self.input.pagination.offset.to_string().into(),

@@ -128,8 +128,35 @@ impl LibraryLock {
 	}
 }
 
+/// Check if a process is still running.
+///
+/// A crashed daemon that its parent never waited on stays a zombie: `ps`
+/// still lists it, but it holds nothing and will never release the lock.
+/// Linux exposes the state directly, so zombies count as gone.
+#[cfg(target_os = "linux")]
+fn is_process_running(pid: u32) -> bool {
+	match std::fs::read_to_string(format!("/proc/{pid}/stat")) {
+		Ok(stat) => process_state_is_alive(&stat),
+		Err(_) => false,
+	}
+}
+
+/// Reads the state field of a /proc/<pid>/stat line. The command name is in
+/// parentheses and may itself contain spaces or parentheses, so the state is
+/// the first field after the last ')'.
+#[cfg(any(target_os = "linux", test))]
+fn process_state_is_alive(stat: &str) -> bool {
+	let Some(rest) = stat.rfind(')').map(|i| &stat[i + 1..]) else {
+		return true;
+	};
+	!matches!(
+		rest.trim_start().chars().next(),
+		Some('Z') | Some('X') | Some('x')
+	)
+}
+
 /// Check if a process is still running (Unix-specific implementation)
-#[cfg(unix)]
+#[cfg(all(unix, not(target_os = "linux")))]
 fn is_process_running(pid: u32) -> bool {
 	use std::process::Command;
 
@@ -170,6 +197,30 @@ impl Drop for LibraryLock {
 mod tests {
 	use super::*;
 	use tempfile::TempDir;
+
+	#[test]
+	fn zombie_and_dead_processes_do_not_hold_the_lock() {
+		assert!(process_state_is_alive("4242 (wing-daemon) S 1 4242"));
+		assert!(process_state_is_alive("4242 (odd) name) R 1 4242"));
+		assert!(!process_state_is_alive("4242 (wing-daemon) Z 1 4242"));
+		assert!(!process_state_is_alive("4242 (wing-daemon) X 1 4242"));
+	}
+
+	#[cfg(target_os = "linux")]
+	#[test]
+	fn reaped_child_is_not_running_but_a_live_one_is() {
+		let mut child = std::process::Command::new("sleep")
+			.arg("30")
+			.spawn()
+			.unwrap();
+		assert!(is_process_running(child.id()));
+		child.kill().unwrap();
+		// Before wait() the child is a zombie and must already count as gone.
+		std::thread::sleep(std::time::Duration::from_millis(200));
+		assert!(!is_process_running(child.id()));
+		child.wait().unwrap();
+		assert!(!is_process_running(child.id()));
+	}
 
 	#[test]
 	fn test_library_lock() {
