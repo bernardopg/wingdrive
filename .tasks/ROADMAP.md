@@ -19,7 +19,7 @@ Restante do M1, em ordem:
 
 | Ordem | Task | Título | Sprint |
 |---|---|---|---|
-| 1 | TAURI-013 | Estabilização Linux: segurança de dados | S01 |
+| 1 | TAURI-013 | Estabilização Linux: segurança de dados (Done) | S01 |
 | 2 | FORK-004 | Próxima tag atualiza o AUR sem passo manual | S01 |
 | 3 | TAURI-014 | Robustez em runtime e paridade da busca | S02 |
 | 4 | TAURI-006 | Fechar a matriz de regressão Linux | S02 |

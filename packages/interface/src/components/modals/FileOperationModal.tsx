@@ -337,6 +337,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 					/>
 				}
 				ctaLabel="Close"
+				onCancelled={false}
 				onSubmit={form.handleSubmit(handleCancel)}
 			>
 				<div className="flex flex-col gap-3 py-4">
