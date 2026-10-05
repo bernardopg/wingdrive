@@ -83,9 +83,8 @@
    Tailwind skips by default; without these entries every class that only exists in
    the primitives (dialog overlays, tab pills, buttons) is dropped from the bundle. */
 @source "../../../packages/interface/src";
-@source "../node_modules/@wingdrive/primitives/dist";
-@source "../../../packages/interface/node_modules/@wingdrive/primitives/dist";
-@source "../../../packages/interface/node_modules/@wingdrive/ai/dist";
+@source "../../../packages/wingdrive-primitives/src";
+@source "../../../packages/wingdrive-ai/src";
 
 @plugin "@tailwindcss/forms";
 @plugin "tailwindcss-animate";

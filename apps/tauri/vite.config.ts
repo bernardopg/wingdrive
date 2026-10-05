@@ -94,7 +94,23 @@ export default defineConfig(() => ({
 							replacement: `${spaceui}/primitives/src/index.ts`
 						}
 					]
-				: []),
+				: [
+					// Resolve in-tree sources so a stale committed dist never ships.
+					{
+						find: /^@wingdrive\/ai$/,
+						replacement: path.resolve(
+							import.meta.dirname,
+							'../../packages/wingdrive-ai/src/index.ts'
+						)
+					},
+					{
+						find: /^@wingdrive\/primitives$/,
+						replacement: path.resolve(
+							import.meta.dirname,
+							'../../packages/wingdrive-primitives/src/index.ts'
+						)
+					}
+				]),
 			// Spacebot lives in a separate private repo. Fall back to a tracked
 			// in-tree stub so the desktop app still builds without it; leaving the
 			// specifier external produced a bare import the webview cannot resolve.

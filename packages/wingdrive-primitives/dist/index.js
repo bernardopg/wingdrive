@@ -867,7 +867,7 @@ var DialogOverlay = ({
   RDialog.Overlay,
   {
     className: clsx6(
-      "fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-[100] bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     ),
     ...props
@@ -884,7 +884,7 @@ var DialogContent = ({
     RDialog.Content,
     {
       className: clsx6(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-app-line bg-app-dark-box p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-app-line bg-app-dark-box p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
         className
       ),
       ...props,
@@ -1077,7 +1077,7 @@ var TooltipContent = ({
   {
     sideOffset,
     className: clsx8(
-      "z-50 overflow-hidden rounded-md border border-app-line bg-app-box px-3 py-1.5 text-sm text-ink shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+      "z-[100] overflow-hidden rounded-md border border-app-line bg-app-box px-3 py-1.5 text-sm text-ink shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
       className
     ),
     ...props
@@ -1142,7 +1142,7 @@ var Content8 = forwardRef7(({ className, sideOffset = 4, ...props }, ref) => /* 
     ref,
     sideOffset,
     className: clsx10(
-      "z-50 min-w-[8rem] overflow-hidden rounded-md p-1",
+      "z-[100] min-w-[8rem] overflow-hidden rounded-md p-1",
       "border border-menu-line bg-menu/95 backdrop-blur-lg",
       "text-sm text-menu-ink shadow-xl shadow-menu-shade/30",
       "animate-in fade-in-0 zoom-in-95",
@@ -1253,7 +1253,7 @@ var SubContent2 = forwardRef7(({ className, ...props }, ref) => /* @__PURE__ */ 
   {
     ref,
     className: clsx10(
-      "z-50 min-w-[8rem] overflow-hidden rounded-md p-1",
+      "z-[100] min-w-[8rem] overflow-hidden rounded-md p-1",
       "border border-menu-line bg-menu/95 backdrop-blur-lg",
       "text-sm text-menu-ink shadow-xl shadow-menu-shade/30",
       "animate-in fade-in-0 zoom-in-95",
@@ -1292,7 +1292,7 @@ import {
 } from "react";
 import { Fragment as Fragment3, jsx as jsx14, jsxs as jsxs9 } from "react/jsx-runtime";
 var contextMenuClassNames = clsx11(
-  "z-50 max-h-[calc(100vh-20px)] overflow-y-auto",
+  "z-[100] max-h-[calc(100vh-20px)] overflow-y-auto",
   "my-2 min-w-48 max-w-64 py-0.5",
   "cool-shadow bg-menu/95 backdrop-blur-lg",
   "border border-menu-line",
@@ -1605,7 +1605,7 @@ var Root16 = (props) => {
               Menu.Items,
               {
                 className: clsx12(
-                  "absolute top-full z-50 w-full min-w-fit space-y-0.5 divide-y divide-menu-line rounded-md border border-menu-line bg-menu text-menu-ink shadow-xl shadow-menu-shade/30 focus:outline-none",
+                  "absolute top-full z-[100] w-full min-w-fit space-y-0.5 divide-y divide-menu-line rounded-md border border-menu-line bg-menu text-menu-ink shadow-xl shadow-menu-shade/30 focus:outline-none",
                   props.itemsClassName,
                   { "left-0": props.align === "left" },
                   { "right-0": props.align === "right" }
@@ -1786,7 +1786,7 @@ var SelectContent = ({
   RS.Content,
   {
     className: clsx13(
-      "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-app-line bg-app-box text-ink shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+      "relative z-[100] max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-app-line bg-app-box text-ink shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
       position === "popper" && "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
       className
     ),

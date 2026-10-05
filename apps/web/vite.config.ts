@@ -62,7 +62,23 @@ export default defineConfig({
 							replacement: `${spaceui}/primitives/src/index.ts`,
 						},
 					]
-				: []),
+				: [
+						// Resolve in-tree sources so a stale committed dist never ships.
+						{
+							find: /^@wingdrive\/ai$/,
+							replacement: path.resolve(
+								import.meta.dirname,
+								"../../packages/wingdrive-ai/src/index.ts",
+							),
+						},
+						{
+							find: /^@wingdrive\/primitives$/,
+							replacement: path.resolve(
+								import.meta.dirname,
+								"../../packages/wingdrive-primitives/src/index.ts",
+							),
+						},
+					]),
 			// Spacebot lives in a separate private repo. Without it, reuse the
 			// desktop app's stub; an external specifier left a bare import that
 			// the browser cannot resolve, so the web UI rendered a blank page.

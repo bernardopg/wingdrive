@@ -10,8 +10,8 @@
 
 /* Tell Tailwind v4 where to scan for utility classes */
 @source "../../../packages/interface/src";
-@source "../../../packages/interface/node_modules/@wingdrive/primitives/dist";
-@source "../../../packages/interface/node_modules/@wingdrive/ai/dist";
+@source "../../../packages/wingdrive-primitives/src";
+@source "../../../packages/wingdrive-ai/src";
 
 @plugin "@tailwindcss/forms";
 @plugin "tailwindcss-animate";
