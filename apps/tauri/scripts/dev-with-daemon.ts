@@ -2,11 +2,14 @@
 
 /**
  * Development script that:
- * 1. Builds the daemon (dev profile)
- * 2. Starts the daemon
- * 3. Waits for it to be ready
- * 4. Starts Vite dev server
+ * 1. Starts Vite dev server
+ * 2. Builds the daemon (dev profile)
+ * 3. Starts the daemon
+ * 4. Waits for it to be ready
  * 5. Cleans up daemon on exit
+ *
+ * Vite starts first because the Tauri CLI gives up on devUrl after a fixed
+ * 180s, which a cold daemon build exceeds.
  */
 import {execSync, spawn} from 'child_process';
 import {existsSync} from 'fs';
@@ -92,6 +95,15 @@ process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
 
 async function main() {
+	// Start Vite
+	console.log('Starting Vite dev server...');
+
+	// Use 'bun' explicitly, with shell true for Windows compatibility
+	viteProcess = spawn('bun', ['run', 'dev'], {
+		stdio: 'inherit',
+		shell: IS_WIN
+	});
+
 	// Check if daemon is already running by trying to connect to TCP port
 	let daemonAlreadyRunning = false;
 	console.log(`Checking if daemon is running on ${DAEMON_ADDR}...`);
@@ -217,15 +229,6 @@ async function main() {
 			}
 		}
 	}
-
-	// Start Vite
-	console.log('Starting Vite dev server...');
-
-	// Use 'bun' explicitly, with shell true for Windows compatibility
-	viteProcess = spawn('bun', ['run', 'dev'], {
-		stdio: 'inherit',
-		shell: IS_WIN
-	});
 
 	// Keep running
 	await new Promise(() => {});
