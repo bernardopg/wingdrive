@@ -1,7 +1,7 @@
 ---
 id: WATCH-005
 title: Watcher takes inode reuse for renames and keeps stale extensions
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: WATCH-000
 priority: High
@@ -26,7 +26,13 @@ Found during the TAURI-014 runtime session. Deleting `dest/report-copy.txt` and 
 
 ## Acceptance Criteria
 
-- [ ] Deleting a file and creating another one that reuses its inode indexes the new file with its own name, extension and size
-- [ ] Renaming `a.txt` to `a.md` stores extension `md`
-- [ ] Renaming a directory to a dotted name stores the full name
-- [ ] `cargo test -p wing-core --test fs_watcher_test` passes
+- [x] Deleting a file and creating another one that reuses its inode indexes the new file with its own name, extension and size
+- [x] Renaming `a.txt` to `a.md` stores extension `md`
+- [x] Renaming a directory to a dotted name stores the full name
+- [x] `cargo test -p wing-core --test fs_watcher_test` passes
+
+## Evidence (2026-10-05)
+
+- `cargo test -p wing-core --test fs_watcher_test`: passes with the three new steps (extension change, dotted directory rename, inode reuse).
+- Without the fix the same test fails: `Entry 'kind-change' with extension Some("md") not found; found [Some("txt")]`.
+- `stored_name_tests` (2) pass; `cargo clippy -p wing-core -D warnings` clean.
