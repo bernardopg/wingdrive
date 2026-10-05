@@ -5,6 +5,9 @@ import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { useDeleteConfirmationDialog } from "../../../components/modals/DeleteConfirmationModal";
 import { useWaitForJob } from "../../../hooks/useWaitForJob";
 import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
+import { summarizeFileOperation } from "../../../hooks/fileOperationOutcome";
+import { reportFileOperation } from "../../../hooks/reportFileOperation";
+import { isOperableFile } from "../fileCapabilities";
 
 /**
  * Shared hook for delete file operations.
@@ -27,7 +30,9 @@ export function useDeleteFiles() {
 	const deleteFiles = useCallback(
 		async (files: File[], permanent: boolean) => {
 			if (files.length === 0) return false;
-			if (files.some((f) => !f.wing_path)) return false;
+			// A virtual entry carries the path of a whole location, volume or
+			// device root; refusing here protects every caller, not just menus.
+			if (!files.every(isOperableFile)) return false;
 			if (mutation.isPending) return false;
 
 			// Ask for confirmation in a dialog; resolves true if the user
@@ -47,29 +52,9 @@ export function useDeleteFiles() {
 							);
 							refetchListings();
 
-							if (result.status === "failed") {
-								toast.error(`Failed to delete: ${result.error}`);
-								resolve(false);
-								return;
-							}
-
-							if (
-								result.status === "completed" &&
-								result.output.type === "FileDelete" &&
-								result.output.data.failed_count > 0
-							) {
-								const { deleted_count, failed_count } =
-									result.output.data;
-								toast.error(
-									deleted_count > 0
-										? `Deleted ${deleted_count}, failed ${failed_count}`
-										: `Failed to delete ${failed_count} item${failed_count > 1 ? "s" : ""}`,
-								);
-								resolve(false);
-								return;
-							}
-
-							resolve(true);
+							const outcome = summarizeFileOperation("delete", result);
+							reportFileOperation(outcome);
+							resolve(outcome.status === "success");
 						} catch (err) {
 							console.error("Failed to delete:", err);
 							toast.error(`Failed to delete: ${err}`);

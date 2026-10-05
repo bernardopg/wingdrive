@@ -18,22 +18,24 @@ export function nextFolderName(existing: Iterable<string>): string {
 }
 
 /**
- * Creates a new folder in the current directory with a free default name.
+ * Creates a new folder in the operational directory with a free default name.
  * Resolves to the folder name, or null when nothing was created.
  */
 export function useCreateFolder() {
-	const {currentPath, currentFiles} = useExplorer();
+	// currentFiles lists the operational directory whenever it is set, so the
+	// free-name check runs against the folder that receives the new one.
+	const {operationalPath, currentFiles} = useExplorer();
 	const createFolder = useLibraryMutation('files.createFolder');
 	const refetchListings = useRefetchFileListings();
 	const platform = usePlatform();
 	const undo = useUndo();
 
 	return useCallback(async (): Promise<string | null> => {
-		if (!currentPath) return null;
+		if (!operationalPath) return null;
 		const name = nextFolderName(currentFiles.map((f) => f.name));
 		try {
 			const output = await createFolder.mutateAsync({
-				parent: currentPath,
+				parent: operationalPath,
 				name,
 				items: []
 			});
@@ -64,7 +66,7 @@ export function useCreateFolder() {
 			return null;
 		}
 	}, [
-		currentPath,
+		operationalPath,
 		currentFiles,
 		createFolder,
 		refetchListings,

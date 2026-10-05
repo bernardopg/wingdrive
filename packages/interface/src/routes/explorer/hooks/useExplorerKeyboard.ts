@@ -1,6 +1,5 @@
-import type {DirectorySortBy, File} from '@wingdrive/ts-client';
+import type {File} from '@wingdrive/ts-client';
 import {useEffect, useState} from 'react';
-import {useNormalizedQuery} from '../../../contexts/WingDriveContext';
 import {useClipboard} from '../../../hooks/useClipboard';
 import {useKeybind} from '../../../hooks/useKeybind';
 import {useKeybindScope} from '../../../hooks/useKeybindScope';
@@ -8,6 +7,7 @@ import {useRefetchFileListings} from '../../../hooks/useRefetchFileListings';
 import {useUndo} from '../../../hooks/useUndo';
 import {isInputFocused} from '../../../util/keybinds/platform';
 import {useExplorer} from '../context';
+import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
 import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
@@ -18,9 +18,8 @@ import {useTypeaheadSearch} from './useTypeaheadSearch';
 
 export function useExplorerKeyboard() {
 	const {
-		currentPath,
-		sortBy,
-		sortDirection,
+		currentFiles,
+		operationalPath,
 		navigateToPath,
 		goBack,
 		goForward,
@@ -62,31 +61,11 @@ export function useExplorerKeyboard() {
 	useKeybind('explorer.navigateBack', goBack, {enabled: canGoBack});
 	useKeybind('explorer.navigateForward', goForward, {enabled: canGoForward});
 
-	// Query files for keyboard operations
-	const directoryQuery = useNormalizedQuery({
-		query: 'files.directory_listing',
-		input: currentPath
-			? {
-					path: currentPath,
-					limit: null,
-					include_hidden: viewSettings.showHiddenFiles,
-					sort_by: sortBy as DirectorySortBy,
-					folders_first: viewSettings.foldersFirst,
-					sort_direction: sortDirection
-				}
-			: null!,
-		resourceType: 'file',
-		enabled: !!currentPath,
-		pathScope: currentPath ?? undefined,
-		// First visit to a non-indexed folder returns an empty listing while
-		// the ephemeral indexer warms up; poll briefly until rows appear.
-		refetchInterval: (query) =>
-			query.state.data && query.state.data.files.length === 0
-				? 750
-				: false
-	});
-
-	const files = (directoryQuery.data as any)?.files || [];
+	// The displayed collection, so select-all and typeahead never reach rows
+	// another view or an older listing would show.
+	const files = currentFiles;
+	const capabilities = selectionCapabilities(selectedFiles);
+	const targets = capabilities.operable;
 
 	// Typeahead search (disabled for column view - it handles its own)
 	const typeahead = useTypeaheadSearch({
@@ -123,49 +102,42 @@ export function useExplorerKeyboard() {
 		startRename(folder.id);
 	}, [files, pendingRename, selectedFiles, setSelectedFiles, startRename]);
 
-	// Copy: Store selected files in clipboard
 	useKeybind(
 		'explorer.copy',
 		() => {
-			if (selectedFiles.length === 0) return;
-			const sdPaths = selectedFiles.map((f) => f.wing_path);
 			clipboard.copyFiles(
-				sdPaths,
-				currentPath,
-				selectedFiles.every((file) => file.is_local)
+				targets.map((f) => f.wing_path),
+				operationalPath,
+				targets.every((file) => file.is_local)
 			);
 		},
-		{enabled: selectedFiles.length > 0}
+		{enabled: capabilities.canCopy}
 	);
 
-	// Cut: Store selected files in clipboard with cut operation
 	useKeybind(
 		'explorer.cut',
 		() => {
-			if (selectedFiles.length === 0) return;
-			const sdPaths = selectedFiles.map((f) => f.wing_path);
 			clipboard.cutFiles(
-				sdPaths,
-				currentPath,
-				selectedFiles.every((file) => file.is_local)
+				targets.map((f) => f.wing_path),
+				operationalPath,
+				targets.every((file) => file.is_local)
 			);
 		},
-		{enabled: selectedFiles.length > 0}
+		{enabled: capabilities.canCopy}
 	);
 
-	useKeybind('explorer.paste', () => pasteFiles(currentPath), {
-		enabled: clipboard.canPaste() && !!currentPath
+	useKeybind('explorer.paste', () => pasteFiles(operationalPath), {
+		enabled: clipboard.canPaste() && !!operationalPath
 	});
 
-	// Rename: Enter key triggers rename mode for any selected file or directory
 	useKeybind(
 		'explorer.renameFile',
 		() => {
-			if (selectedFiles.length === 1 && !isRenaming) {
-				startRename(selectedFiles[0].id);
+			if (capabilities.canRename && !isRenaming) {
+				startRename(targets[0].id);
 			}
 		},
-		{enabled: selectedFiles.length === 1 && !isRenaming}
+		{enabled: capabilities.canRename && !isRenaming}
 	);
 
 	// Tag mode: T key enters tag assignment mode
@@ -196,38 +168,30 @@ export function useExplorerKeyboard() {
 		{enabled: selectedFiles.length === 1}
 	);
 
-	// Duplicate: Cmd+D duplicates selected files in place
 	useKeybind(
 		'explorer.duplicate',
 		async () => {
-			await duplicateFiles(selectedFiles);
+			await duplicateFiles(targets);
 		},
-		{
-			enabled:
-				selectedFiles.length > 0 &&
-				!isDuplicating &&
-				selectedFiles.every((f) => 'Physical' in f.wing_path)
-		}
+		{enabled: capabilities.canDuplicate && !isDuplicating}
 	);
 
-	// Delete: Move to trash
 	useKeybind(
 		'explorer.delete',
 		async () => {
-			const ok = await deleteFiles(selectedFiles, false);
+			const ok = await deleteFiles(targets, false);
 			if (ok) clearSelection();
 		},
-		{enabled: selectedFiles.length > 0 && !isDeleting}
+		{enabled: capabilities.canDelete && !isDeleting}
 	);
 
-	// Permanent Delete: Shift+Delete / Cmd+Alt+Backspace
 	useKeybind(
 		'explorer.permanentDelete',
 		async () => {
-			const ok = await deleteFiles(selectedFiles, true);
+			const ok = await deleteFiles(targets, true);
 			if (ok) clearSelection();
 		},
-		{enabled: selectedFiles.length > 0 && !isDeleting}
+		{enabled: capabilities.canDelete && !isDeleting}
 	);
 
 	useEffect(() => {

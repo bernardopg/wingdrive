@@ -17,6 +17,11 @@ import {useClipboard} from '../../hooks/useClipboard';
 import {useRefetchFileListings} from '../../hooks/useRefetchFileListings';
 import {useUndo} from '../../hooks/useUndo';
 import {useWaitForJob} from '../../hooks/useWaitForJob';
+import {
+	reconcileSelectedFiles,
+	sameFiles,
+	selectionCapabilities
+} from './fileCapabilities';
 
 interface SelectionContextValue {
 	selectedFiles: File[];
@@ -43,11 +48,17 @@ interface SelectionContextValue {
 	cancelRename: () => void;
 	saveRename: (newName: string) => Promise<void>;
 	isRenaming: boolean;
-	// Restore selection from available files (called by views when files load)
+	/**
+	 * Rebuilds the selection from the displayed collection: drops entries that
+	 * left it and refreshes the rest. The explorer calls it whenever the
+	 * collection changes.
+	 */
 	restoreSelectionFromFiles: (files: File[]) => void;
 }
 
-const SelectionContext = createContext<SelectionContextValue | null>(null);
+export const SelectionContext = createContext<SelectionContextValue | null>(
+	null
+);
 
 interface SelectionProviderProps {
 	children: ReactNode;
@@ -135,15 +146,14 @@ export function SelectionProvider({
 	useEffect(() => {
 		if (!isActiveTab) return;
 
-		const hasSelection = selectedFiles.length > 0;
-		const isSingleSelection = selectedFiles.length === 1;
+		const capabilities = selectionCapabilities(selectedFiles);
 
 		platform.updateMenuItems?.([
-			// NOTE: copy/cut/paste are always enabled to support text input operations
-			// They intelligently route to file ops or native clipboard based on focus
-			{id: 'duplicate', enabled: hasSelection},
-			{id: 'rename', enabled: isSingleSelection},
-			{id: 'delete', enabled: hasSelection}
+			// Copy, cut and paste stay enabled so text inputs keep working; they
+			// route to file operations or the native clipboard based on focus.
+			{id: 'duplicate', enabled: capabilities.canDuplicate},
+			{id: 'rename', enabled: capabilities.canRename},
+			{id: 'delete', enabled: capabilities.canDelete}
 		]);
 	}, [selectedFiles, clipboard, platform, isActiveTab]);
 
@@ -254,12 +264,14 @@ export function SelectionProvider({
 	// Rename functions
 	const startRename = useCallback(
 		(fileId: string) => {
-			// Only allow rename when a single file is selected
-			if (selectedFiles.length === 1) {
+			if (
+				selectionCapabilities(selectedFiles).canRename &&
+				selectedFiles[0].id === fileId
+			) {
 				setRenamingFileId(fileId);
 			}
 		},
-		[selectedFiles.length]
+		[selectedFiles]
 	);
 
 	const cancelRename = useCallback(() => {
@@ -374,40 +386,29 @@ export function SelectionProvider({
 		[selectedFileIds]
 	);
 
-	// Restore File objects for selected IDs when files become available
+	const storedIdsRef = useRef(storedIds);
+	storedIdsRef.current = storedIds;
+
 	const restoreSelectionFromFiles = useCallback(
 		(files: File[]) => {
-			if (storedIds.length === 0) return;
+			const ids = storedIdsRef.current;
+			const next = reconcileSelectedFiles(ids, files);
 
-			const fileMap = new Map(files.map((f) => [f.id, f]));
-			const matchingFiles: File[] = [];
-
-			for (const id of storedIds) {
-				const file = fileMap.get(id);
-				if (file) {
-					matchingFiles.push(file);
-				}
+			if (!sameFiles(selectedFilesRef.current, next)) {
+				selectedFilesRef.current = next;
+				setSelectedFilesInternal(next);
 			}
 
-			// Only update if we found matching files and they're different from current
-			if (matchingFiles.length > 0) {
-				setSelectedFilesInternal((prev) => {
-					const prevIds = new Set(prev.map((f) => f.id));
-					const newIds = new Set(matchingFiles.map((f) => f.id));
-
-					// Skip update if selection already matches
-					if (
-						prevIds.size === newIds.size &&
-						[...newIds].every((id) => prevIds.has(id))
-					) {
-						return prev;
-					}
-
-					return matchingFiles;
-				});
+			// An empty collection is usually a listing still loading, so keep the
+			// stored ids for tab restore and only prune against real rows.
+			if (files.length > 0 && next.length !== ids.length) {
+				updateSelectionIds(
+					activeTabId,
+					next.map((f) => f.id)
+				);
 			}
 		},
-		[storedIds]
+		[activeTabId, updateSelectionIds]
 	);
 
 	const isRenaming = renamingFileId !== null;

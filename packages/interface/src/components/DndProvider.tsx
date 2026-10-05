@@ -10,12 +10,14 @@ import type { CollisionDetection } from "@dnd-kit/core";
 import { useState } from "react";
 import { House, Clock, Heart, Folders } from "@phosphor-icons/react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "@wingdrive/primitives";
 import { useLibraryMutation, useWingDriveClient } from "../contexts/WingDriveContext";
 import { useSidebarStore } from "@wingdrive/ts-client";
 import type { File, WingPath } from "@wingdrive/ts-client";
 import { useSpaces } from "./SpacesSidebar/hooks/useSpaces";
 import { useFileOperationDialog } from "./modals/FileOperationModal";
 import { File as FileComponent } from "../routes/explorer/File";
+import { selectionCapabilities } from "../routes/explorer/fileCapabilities";
 import { useTabManager } from "./TabManager/useTabManager";
 
 /**
@@ -321,9 +323,14 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 
 		// Move file into location/volume/folder
 		if (dropData?.action === "move-into") {
-			const sources: WingPath[] = dragData.selectedFiles
-				? dragData.selectedFiles.map((f: File) => f.wing_path)
-				: [dragData.sdPath];
+			const dragged: File[] = dragData.selectedFiles ?? [dragData.file];
+			// A virtual entry stands for a whole location, volume or device root;
+			// dragging it along with real files must not move that root.
+			if (!selectionCapabilities(dragged).canCopy) {
+				toast.error("Locations, volumes and devices cannot be moved.");
+				return;
+			}
+			const sources: WingPath[] = dragged.map((f) => f.wing_path);
 
 			const destination: WingPath = dropData.targetPath;
 

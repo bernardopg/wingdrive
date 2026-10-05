@@ -21,6 +21,10 @@ import {
 	useLibraryMutation,
 	useLibraryQuery
 } from '../../contexts/WingDriveContext';
+import {
+	summarizeFileOperation,
+	type FileOperationOutcome
+} from '../../hooks/fileOperationOutcome';
 import {useRefetchFileListings} from '../../hooks/useRefetchFileListings';
 import {useUndo} from '../../hooks/useUndo';
 import {useWaitForJob} from '../../hooks/useWaitForJob';
@@ -37,7 +41,10 @@ interface FileOperationDialogProps {
 type ConflictResolution = 'Overwrite' | 'AutoModifyName' | 'Skip' | 'Abort';
 
 type DialogPhase =
-	{type: 'form'} | {type: 'executing'} | {type: 'error'; message: string};
+	| {type: 'form'}
+	| {type: 'executing'}
+	| {type: 'error'; message: string}
+	| {type: 'outcome'; outcome: FileOperationOutcome};
 
 export function useFileOperationDialog() {
 	return (options: Omit<FileOperationDialogProps, 'id'>) => {
@@ -179,21 +186,14 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 			);
 			refetchListings();
 
+			const outcome = summarizeFileOperation(operation, result);
+			// Items that did move can be undone even when others failed; the
+			// identity check skips the ones that never arrived.
 			if (
-				result.status !== 'completed' ||
-				(result.output.type === 'FileMove' &&
-					result.output.data.failed_count > 0)
+				move &&
+				identify &&
+				(outcome.status === 'success' || outcome.status === 'partial')
 			) {
-				setPhase({
-					type: 'error',
-					message:
-						result.status === 'failed'
-							? result.error
-							: 'Operation did not complete successfully'
-				});
-				return;
-			}
-			if (move && identify) {
 				for (const candidate of candidates) {
 					if (!candidate) continue;
 					try {
@@ -214,6 +214,13 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 						/* A skipped or cross-volume item has no safe inode-preserving inverse. */
 					}
 				}
+			}
+
+			if (outcome.status !== 'success') {
+				// The clipboard keeps a cut until every item arrived, so the
+				// user can paste again to retry the ones that failed.
+				setPhase({type: 'outcome', outcome});
+				return;
 			}
 
 			dialogManager.setState(props.id, {open: false});
@@ -301,6 +308,56 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 								: 'Moving files...'}
 						</span>
 					</div>
+				</div>
+			</Dialog>
+		);
+	}
+
+	if (phase.type === 'outcome') {
+		const {outcome} = phase;
+		const isError = outcome.status === 'failed';
+		const title =
+			outcome.status === 'partial'
+				? 'Finished with Problems'
+				: outcome.status === 'cancelled'
+					? 'Operation Cancelled'
+					: outcome.status === 'running'
+						? 'Still Running'
+						: 'Operation Failed';
+		return (
+			<Dialog
+				dialog={dialog}
+				form={form}
+				title={title}
+				icon={
+					<Warning
+						size={20}
+						weight="fill"
+						className={isError ? 'text-red-500' : 'text-amber-500'}
+					/>
+				}
+				ctaLabel="Close"
+				onCancelled={false}
+				onSubmit={form.handleSubmit(handleCancel)}
+			>
+				<div className="flex flex-col gap-3 py-4">
+					<p className="text-ink text-sm" role="status">
+						{outcome.message}
+					</p>
+					{outcome.details.length > 0 && (
+						<ul className="border-app-line bg-app-box text-ink-dull max-h-40 space-y-1 overflow-y-auto rounded-md border p-2 text-xs">
+							{outcome.details.map((detail) => (
+								<li key={detail} className="break-all">
+									{detail}
+								</li>
+							))}
+						</ul>
+					)}
+					{outcome.failed > outcome.details.length && (
+						<p className="text-ink-faint text-xs">
+							The job log lists every failed item.
+						</p>
+					)}
 				</div>
 			</Dialog>
 		);

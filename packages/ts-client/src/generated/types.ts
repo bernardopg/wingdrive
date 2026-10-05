@@ -2163,8 +2163,17 @@ export type JobOutput =
 { type: "Success" } | 
 /**
  * File copy job output
+ * 
+ * A copy job that finishes with failures or skipped items still completes,
+ * so callers must read the counts to tell a partial copy from a full one.
+ * The extra fields default to zero so job history stored by older builds
+ * still deserializes.
  */
-{ type: "FileCopy"; data: { copied_count: number; total_bytes: number } } | 
+{ type: "FileCopy"; data: { copied_count: number; failed_count?: number; skipped_count?: number; total_bytes: number; 
+/**
+ * First failure messages, capped to keep job history small.
+ */
+errors?: string[] } } | 
 /**
  * Indexer job output
  */
@@ -2180,7 +2189,11 @@ export type JobOutput =
 /**
  * File move/rename operation output
  */
-{ type: "FileMove"; data: { moved_count: number; failed_count: number; total_bytes: number } } | 
+{ type: "FileMove"; data: { moved_count: number; failed_count: number; skipped_count?: number; total_bytes: number; 
+/**
+ * First failure messages, capped to keep job history small.
+ */
+errors?: string[] } } | 
 /**
  * File delete operation output
  */
@@ -3566,7 +3579,7 @@ favorite: boolean | null; include_hidden: boolean | null; include_archived: bool
  */
 at_risk: boolean | null; 
 /**
- * Only return files whose content is present on these volumes
+ * Only return files whose content is present on all of these volumes
  */
 on_volumes: string[] | null; 
 /**

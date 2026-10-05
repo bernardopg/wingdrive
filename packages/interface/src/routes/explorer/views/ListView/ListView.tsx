@@ -27,8 +27,7 @@ export const ListView = memo(function ListView() {
 		selectedFileIds,
 		isSelected,
 		selectFile,
-		moveFocus,
-		restoreSelectionFromFiles
+		moveFocus
 	} = useSelection();
 
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -43,15 +42,10 @@ export const ListView = memo(function ListView() {
 	const orderedFiles = useMemo(() => rows.map((row) => row.original), [rows]);
 	const columnSizingKey = JSON.stringify(table.getState().columnSizing);
 
-	// Update current files in explorer context for quick preview navigation
+	// Publishing the collection also reconciles the selection against it.
 	useEffect(() => {
 		setCurrentFiles(orderedFiles);
 	}, [orderedFiles, setCurrentFiles]);
-
-	// Restore selection when files load (for tab switching)
-	useEffect(() => {
-		restoreSelectionFromFiles(files);
-	}, [files, restoreSelectionFromFiles]);
 
 	// Virtual row rendering - uses the container as scroll element
 	const rowVirtualizer = useVirtualizer({

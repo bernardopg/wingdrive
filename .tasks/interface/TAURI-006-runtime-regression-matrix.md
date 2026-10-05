@@ -5,10 +5,10 @@ status: In Progress
 assignee: unassigned
 parent: TAURI-000
 priority: High
-sprint: S01
+sprint: S02
 milestone: M1
 tags: [tauri, testing, ci]
-last_updated: 2026-10-01
+last_updated: 2026-10-05
 ---
 
 ## Description
@@ -17,7 +17,7 @@ Test the daemon-client path and native windows. A Vite build or typecheck alone 
 
 ## Acceptance Criteria
 
-- [ ] Start the packaged daemon and connect the main window (dev daemon verified; packaged bundle is TAURI-011)
+- [x] Start the packaged daemon and connect the main window (verified in TAURI-011 and the alpha.6 release smoke)
 - [x] Browse a physical directory and open a file
 - [x] Exercise grid, list, media, column, search, and recents (search and recents still to click through)
 - [x] Open Settings, Inspector, Quick Preview, Job Manager (Spacedrop needs a second device)

@@ -1,8 +1,15 @@
 import { useCallback } from "react";
 import type { File, WingPath } from "@wingdrive/ts-client";
 import { useLibraryMutation } from "../../../contexts/WingDriveContext";
+import {
+	combineFileOperations,
+	summarizeFileOperation,
+	type FileOperationOutcome,
+} from "../../../hooks/fileOperationOutcome";
+import { reportFileOperation } from "../../../hooks/reportFileOperation";
 import { useWaitForJob } from "../../../hooks/useWaitForJob";
 import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
+import { isOperableFile } from "../fileCapabilities";
 
 /**
  * Shared hook for duplicating files in place.
@@ -13,7 +20,9 @@ import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
  * name already exists (file copy.txt -> file copy (1).txt).
  *
  * Copy runs as a job, so the listing is only refreshed once the job reports
- * back; refetching earlier showed the folder without the new file.
+ * back; refetching earlier showed the folder without the new file. The jobs'
+ * counts are merged so a duplicate that failed for some items is reported
+ * instead of passing silently.
  */
 export function useDuplicateFiles() {
 	const mutation = useLibraryMutation("files.copy");
@@ -21,15 +30,25 @@ export function useDuplicateFiles() {
 	const refetchListings = useRefetchFileListings();
 
 	const duplicateFiles = useCallback(
-		async (files: File[]) => {
-			if (files.length === 0) return;
-			if (mutation.isPending) return;
+		async (files: File[]): Promise<FileOperationOutcome | null> => {
+			if (files.length === 0 || !files.every(isOperableFile)) return null;
+			if (mutation.isPending) return null;
 
-			await Promise.all(
-				files.map(async (file) => {
+			const outcomes = await Promise.all(
+				files.map(async (file): Promise<FileOperationOutcome> => {
 					const destination = buildDuplicateTarget(file);
-					if (!destination) return;
-					await waitForJob(() =>
+					if (!destination) {
+						return {
+							status: "failed",
+							message: `${file.name} has no local path to duplicate next to`,
+							details: [],
+							done: 0,
+							failed: 1,
+							skipped: 0,
+						};
+					}
+					try {
+						const { result } = await waitForJob(() =>
 						mutation.mutateAsync({
 							sources: { paths: [file.wing_path] },
 							destination,
@@ -40,11 +59,25 @@ export function useDuplicateFiles() {
 							copy_method: "Auto",
 							on_conflict: "AutoModifyName",
 						}),
-					);
+						);
+						return summarizeFileOperation("duplicate", result);
+					} catch (error) {
+						return {
+							status: "failed",
+							message: `Could not duplicate ${file.name}: ${error}`,
+							details: [],
+							done: 0,
+							failed: 1,
+							skipped: 0,
+						};
+					}
 				}),
 			);
 
 			refetchListings();
+			const outcome = combineFileOperations("duplicate", outcomes);
+			reportFileOperation(outcome);
+			return outcome;
 		},
 		[mutation, waitForJob, refetchListings],
 	);

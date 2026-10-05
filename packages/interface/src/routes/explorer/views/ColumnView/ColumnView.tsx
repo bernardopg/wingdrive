@@ -29,22 +29,22 @@ export function ColumnView() {
 		setColumnStack,
 		activeTabId,
 		setCurrentFiles,
-		mode,
+		setActiveColumnPath,
 	} = useExplorer();
 	const { files: virtualFiles, isVirtualView } = useVirtualListing();
+	// Search, recents, tags and filters have no folder hierarchy, so they
+	// render as a single column of their own results.
+	const { files: collectionFiles, source } = useExplorerFiles();
+	const isCollectionSource = source !== "directory" && source !== "virtual";
 	const scrollRef = useRef<HTMLDivElement>(null);
 	useTabScroll(scrollRef, Math.max(1, columnStack.length));
 
-	// Get files from centralized hook (handles search mode automatically)
-	const { files: searchFiles } = useExplorerFiles();
-	const isSearchMode = mode.type === "search";
 	const {
 		selectedFiles,
 		selectedFileIds,
 		isSelected,
 		selectFile,
 		clearSelection,
-		restoreSelectionFromFiles,
 	} = useSelection();
 
 	// Store clearSelection in ref to avoid effect re-runs
@@ -204,29 +204,28 @@ export function ColumnView() {
 		pathScope: activeColumnPath,
 	});
 
-	// Use virtual files if we're in the virtual column, otherwise use query data
-	const activeColumnFiles =
-		isVirtualView && activeColumnIndex === -1
-			? virtualFiles || []
-			: ((activeColumnQuery.data as any)?.files || []);
+	const activeColumnData = activeColumnQuery.data as
+		| {files: File[]}
+		| undefined;
+	const activeColumnFiles = useMemo<File[]>(
+		() =>
+			isVirtualView && activeColumnIndex === -1
+				? virtualFiles || []
+				: activeColumnData?.files || [],
+		[isVirtualView, activeColumnIndex, virtualFiles, activeColumnData]
+	);
 
-	// Update currentFiles when active column changes (required for QuickPreview)
+	// The active column is the collection file commands act on, and its
+	// folder is where New Folder and Paste write.
 	useEffect(() => {
-		if (isSearchMode) {
-			setCurrentFiles(searchFiles);
-		} else {
-			setCurrentFiles(activeColumnFiles);
-		}
-	}, [isSearchMode, searchFiles, activeColumnFiles, setCurrentFiles]);
+		setCurrentFiles(isCollectionSource ? collectionFiles : activeColumnFiles);
+	}, [isCollectionSource, collectionFiles, activeColumnFiles, setCurrentFiles]);
 
-	// Restore selection when files load (for tab switching)
 	useEffect(() => {
-		if (isSearchMode) {
-			restoreSelectionFromFiles(searchFiles);
-		} else {
-			restoreSelectionFromFiles(activeColumnFiles);
-		}
-	}, [isSearchMode, searchFiles, activeColumnFiles, restoreSelectionFromFiles]);
+		setActiveColumnPath(
+			activeColumnIndex >= 0 ? (columnStack[activeColumnIndex] ?? null) : null
+		);
+	}, [activeColumnIndex, columnStack, setActiveColumnPath]);
 
 	// Typeahead search for active column
 	const typeahead = useTypeaheadSearch({
@@ -409,12 +408,11 @@ export function ColumnView() {
 		return paths;
 	}, [selectedFiles]);
 
-	// In search mode, show a single column with search results
-	if (isSearchMode) {
+	if (isCollectionSource) {
 		return (
 			<div ref={scrollRef} className="flex h-full overflow-x-auto bg-app">
 				<Column
-					key="search-results"
+					key={`${source}-results`}
 					path={null}
 					isSelected={isSelected}
 					selectedFileIds={selectedFileIds}
@@ -425,7 +423,7 @@ export function ColumnView() {
 					nextColumnPath={undefined}
 					columnIndex={0}
 					isActive={true}
-					virtualFiles={searchFiles}
+					virtualFiles={collectionFiles}
 				/>
 			</div>
 		);

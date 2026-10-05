@@ -124,24 +124,15 @@ impl FilterBuilder {
 		self
 	}
 
-	/// Filter to files whose content is present on the specified volumes
+	/// Filter to files whose content is present on every one of the specified volumes.
+	///
+	/// Comparing two volumes asks for content they share, so each volume adds its
+	/// own condition. A single IN over the list would return content found on
+	/// any of them.
 	pub fn on_volumes(mut self, on_volumes: &Option<Vec<Uuid>>) -> Self {
 		if let Some(uuids) = on_volumes {
 			if !uuids.is_empty() {
-				let uuid_list = uuids
-					.iter()
-					.map(uuid_to_sqlite_blob_literal)
-					.collect::<Vec<_>>()
-					.join(",");
-				self.condition = self.condition.add(Expr::cust(format!(
-					"entries.content_id IN (\
-					    SELECT e2.content_id FROM entries e2 \
-					    INNER JOIN volumes v ON e2.volume_id = v.id \
-					    WHERE e2.content_id IS NOT NULL \
-					    AND v.uuid IN ({})\
-					)",
-					uuid_list
-				)));
+				self.condition = self.condition.add(on_volumes_condition(uuids));
 			}
 		}
 		self
@@ -244,6 +235,20 @@ pub(crate) fn favorite_condition(favorite: bool) -> Condition {
 /// `volumes.uuid` is stored as a 16-byte BLOB (SeaORM default for `Uuid`
 /// on SQLite), so comparing against a quoted UUID string silently returns
 /// zero matches. A blob literal compares byte-for-byte.
+pub(crate) fn on_volumes_condition(uuids: &[Uuid]) -> Condition {
+	uuids.iter().fold(Condition::all(), |condition, uuid| {
+		condition.add(Expr::cust(format!(
+			"entries.content_id IN (\
+			    SELECT e2.content_id FROM entries e2 \
+			    INNER JOIN volumes v ON e2.volume_id = v.id \
+			    WHERE e2.content_id IS NOT NULL \
+			    AND v.uuid = {}\
+			)",
+			uuid_to_sqlite_blob_literal(uuid)
+		)))
+	})
+}
+
 fn uuid_to_sqlite_blob_literal(uuid: &Uuid) -> String {
 	let mut out = String::with_capacity(36);
 	out.push_str("X'");
@@ -318,5 +323,49 @@ mod tests {
 			.unwrap();
 
 		assert_eq!(ids, vec![1]);
+	}
+
+	#[tokio::test]
+	async fn on_volumes_filter_requires_every_volume() {
+		let db = Database::connect("sqlite::memory:").await.unwrap();
+		db.execute_unprepared(
+			r#"
+			CREATE TABLE volumes (id INTEGER PRIMARY KEY, uuid BLOB);
+			CREATE TABLE entries (id INTEGER PRIMARY KEY, content_id INTEGER, volume_id INTEGER);
+			INSERT INTO volumes VALUES (1, X'00000000000000000000000000000001');
+			INSERT INTO volumes VALUES (2, X'00000000000000000000000000000002');
+			INSERT INTO volumes VALUES (3, X'00000000000000000000000000000003');
+			-- content 10 on A and B, 20 on A and C, 30 only on B
+			INSERT INTO entries VALUES (1, 10, 1), (2, 10, 2);
+			INSERT INTO entries VALUES (3, 20, 1), (4, 20, 3);
+			INSERT INTO entries VALUES (5, 30, 2);
+			"#,
+		)
+		.await
+		.unwrap();
+
+		let a = Uuid::from_u128(1);
+		let b = Uuid::from_u128(2);
+		let ids = entry::Entity::find()
+			.select_only()
+			.column(entry::Column::Id)
+			.filter(on_volumes_condition(&[a, b]))
+			.into_tuple::<i32>()
+			.all(&db)
+			.await
+			.unwrap();
+
+		assert_eq!(ids, vec![1, 2]);
+
+		let only_a = entry::Entity::find()
+			.select_only()
+			.column(entry::Column::Id)
+			.filter(on_volumes_condition(&[a]))
+			.into_tuple::<i32>()
+			.all(&db)
+			.await
+			.unwrap();
+
+		assert_eq!(only_a, vec![1, 2, 3, 4]);
 	}
 }

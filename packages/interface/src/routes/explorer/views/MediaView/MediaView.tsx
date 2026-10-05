@@ -34,7 +34,6 @@ export function MediaView() {
 		setFocusedIndex,
 		setSelectedFiles,
 		selectedFileIds,
-		restoreSelectionFromFiles,
 	} = useSelection();
 
 	// Set default sort to "datetaken" when entering media view
@@ -122,11 +121,12 @@ export function MediaView() {
 		};
 	}, []);
 
-	// Get files from centralized hook (handles search mode automatically)
-	const { files: explorerFiles } = useExplorerFiles();
-	const isSearchMode = mode.type === "search";
+	// Recents, tags, filters, search and device listings already have a file
+	// collection; only a plain folder needs the recursive media listing.
+	const { files: explorerFiles, source } = useExplorerFiles();
+	const usesExplorerFiles = source !== "directory";
 
-	// Query for all media files from current path with descendants (only when NOT in search mode)
+	// Recursive media listing for a plain folder
 	const mediaQuery = useNormalizedQuery({
 		query: "files.media_listing",
 		input: currentPath
@@ -141,28 +141,23 @@ export function MediaView() {
 		resourceType: "file",
 		pathScope: currentPath ?? undefined,
 		includeDescendants: true, // Recursive - show all media in subdirectories
-		enabled: !!currentPath && !isSearchMode,
+		enabled: !!currentPath && !usesExplorerFiles,
 		// No resourceFilter needed - the backend query already filters for media
 	});
 
 	const files = useMemo(() => {
-		if (isSearchMode) {
-			// In search mode, filter explorerFiles to only show media
+		if (usesExplorerFiles) {
 			return explorerFiles.filter(isMediaFile);
 		}
 		// Normal mode: use media_listing query
 		return mediaQuery.data?.files ?? [];
-	}, [isSearchMode, explorerFiles, mediaQuery.data?.files]);
+	}, [usesExplorerFiles, explorerFiles, mediaQuery.data?.files]);
 
 	// Update current files in explorer context for quick preview navigation
 	useEffect(() => {
 		setCurrentFiles(files);
 	}, [files, setCurrentFiles]);
 
-	// Restore selection when files load (for tab switching)
-	useEffect(() => {
-		restoreSelectionFromFiles(files);
-	}, [files, restoreSelectionFromFiles]);
 
 	// Check if element is ready when files load
 	useEffect(() => {
@@ -352,8 +347,7 @@ export function MediaView() {
 	}, [files, virtualRows, columns, scrollOffset, parentRef]);
 
 	// NOW we can do conditional returns after all hooks are called
-	// Show loading state (only for non-search mode, search uses explorerFiles)
-	if (!isSearchMode && mediaQuery.isLoading) {
+	if (!usesExplorerFiles && mediaQuery.isLoading) {
 		return (
 			<div className="flex items-center justify-center h-full text-ink-dull">
 				Loading media...
@@ -361,8 +355,7 @@ export function MediaView() {
 		);
 	}
 
-	// Show empty state
-	if (!currentPath) {
+	if (!usesExplorerFiles && !currentPath) {
 		return (
 			<div className="flex flex-col items-center justify-center h-full text-ink-dull gap-2">
 				<div className="text-lg">No location selected</div>
@@ -378,9 +371,11 @@ export function MediaView() {
 			<div className="flex flex-col items-center justify-center h-full text-ink-dull gap-2">
 				<div className="text-lg">No media files found</div>
 				<div className="text-sm">
-					{isSearchMode
+					{mode.type === "search"
 						? "No images or videos match your search"
-						: "No images or videos in this location"}
+						: usesExplorerFiles
+							? "No images or videos in this view"
+							: "No images or videos in this location"}
 				</div>
 			</div>
 		);

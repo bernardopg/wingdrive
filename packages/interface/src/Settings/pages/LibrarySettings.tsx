@@ -1,12 +1,10 @@
 import { useForm } from "react-hook-form";
 import { useLibraryQuery, useLibraryMutation, useWingDriveClient } from "../../contexts/WingDriveContext";
 
+// Only settings the daemon reads are shown. Thumbnail, AI tagging, sync and
+// encryption flags are stored in the library config but nothing consumes
+// them, so offering them as switches would promise behavior that does not exist.
 interface LibrarySettingsForm {
-  generate_thumbnails: boolean;
-  thumbnail_quality: number;
-  enable_ai_tagging: boolean;
-  sync_enabled: boolean;
-  encryption_enabled: boolean;
   auto_track_system_volumes: boolean;
   auto_track_external_volumes: boolean;
 }
@@ -22,11 +20,6 @@ export function LibrarySettings() {
 
   const form = useForm<LibrarySettingsForm>({
     values: {
-      generate_thumbnails: config?.generate_thumbnails ?? true,
-      thumbnail_quality: config?.thumbnail_quality ?? 85,
-      enable_ai_tagging: config?.enable_ai_tagging ?? false,
-      sync_enabled: config?.sync_enabled ?? false,
-      encryption_enabled: config?.encryption_enabled ?? false,
       auto_track_system_volumes: config?.auto_track_system_volumes ?? true,
       auto_track_external_volumes: config?.auto_track_external_volumes ?? false,
     },
@@ -71,82 +64,6 @@ export function LibrarySettings() {
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        {/* Media Section */}
-        <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
-          <h3 className="text-sm font-medium text-ink">Media</h3>
-
-          <label className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-ink">Generate Thumbnails</span>
-              <p className="text-xs text-ink-dull">Create preview images for media files</p>
-            </div>
-            <input
-              type="checkbox"
-              {...form.register("generate_thumbnails")}
-              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent"
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-sm text-ink mb-1 block">Thumbnail Quality</span>
-            <p className="text-xs text-ink-dull mb-2">Quality setting for generated thumbnails (1-100)</p>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min="1"
-                max="100"
-                {...form.register("thumbnail_quality", { valueAsNumber: true })}
-                className="flex-1 h-2 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-accent [&::-moz-range-thumb]:border-0"
-                style={{
-                  background: `linear-gradient(to right, var(--color-accent) 0%, var(--color-accent) ${((form.watch("thumbnail_quality") - 1) / 99) * 100}%, var(--color-app) ${((form.watch("thumbnail_quality") - 1) / 99) * 100}%, var(--color-app) 100%)`
-                }}
-              />
-              <span className="text-sm text-ink w-8">{form.watch("thumbnail_quality")}</span>
-            </div>
-          </label>
-
-          <label className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-ink">AI Tagging</span>
-              <p className="text-xs text-ink-dull">Enable AI-powered automatic tagging</p>
-            </div>
-            <input
-              type="checkbox"
-              {...form.register("enable_ai_tagging")}
-              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent"
-            />
-          </label>
-        </div>
-
-        {/* Sync & Security Section */}
-        <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
-          <h3 className="text-sm font-medium text-ink">Sync & Security</h3>
-
-          <label className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-ink">Sync Enabled</span>
-              <p className="text-xs text-ink-dull">Sync this library across devices</p>
-            </div>
-            <input
-              type="checkbox"
-              {...form.register("sync_enabled")}
-              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent"
-            />
-          </label>
-
-          <label className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-ink">Encryption</span>
-              <p className="text-xs text-ink-dull">Encrypt library data at rest</p>
-            </div>
-            <input
-              type="checkbox"
-              {...form.register("encryption_enabled")}
-              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent"
-            />
-          </label>
-        </div>
-
         {/* Auto-Tracking Section */}
         <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
           <h3 className="text-sm font-medium text-ink">Auto-Tracking</h3>
@@ -154,7 +71,7 @@ export function LibrarySettings() {
           <label className="flex items-center justify-between">
             <div>
               <span className="text-sm text-ink">System Volumes</span>
-              <p className="text-xs text-ink-dull">Automatically track system drives</p>
+              <p className="text-xs text-ink-dull">Track internal drives when the library opens</p>
             </div>
             <input
               type="checkbox"

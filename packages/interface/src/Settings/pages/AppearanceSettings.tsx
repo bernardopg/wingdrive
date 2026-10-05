@@ -6,7 +6,6 @@ import clsx from "clsx";
 
 interface AppearanceSettingsForm {
   theme: string;
-  language: string;
 }
 
 const THEMES = [
@@ -32,25 +31,14 @@ export function AppearanceSettings() {
   const form = useForm<AppearanceSettingsForm>({
     values: {
       theme: config?.preferences?.theme || "system",
-      language: config?.preferences?.language || "en",
     },
   });
 
   const handleThemeChange = async (themeId: string) => {
     form.setValue("theme", themeId);
     applyTheme(themeId);
-    await updateConfig.mutateAsync({
-      theme: themeId,
-      language: form.getValues("language"),
-    });
+    await updateConfig.mutateAsync({ theme: themeId });
   };
-
-  const onSubmit = form.handleSubmit(async (data) => {
-    await updateConfig.mutateAsync({
-      theme: data.theme,
-      language: data.language,
-    });
-  });
 
   return (
     <div className="space-y-6">
@@ -61,7 +49,7 @@ export function AppearanceSettings() {
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <div className="space-y-4">
         <div className="p-4 bg-app-box rounded-lg border border-app-line">
           <div className="mb-3">
             <span className="text-sm font-medium text-ink block">Theme</span>
@@ -118,38 +106,10 @@ export function AppearanceSettings() {
           </div>
         </div>
 
-        <div className="p-4 bg-app-box rounded-lg border border-app-line">
-          <label className="block">
-            <span className="text-sm font-medium text-ink mb-1 block">Language</span>
-            <p className="text-xs text-ink-dull mb-2">Select your preferred language</p>
-            <select
-              {...form.register("language")}
-              className="w-full px-3 py-2 bg-app border border-app-line rounded-md text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              <option value="en">English</option>
-              <option value="de">Deutsch</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-              <option value="it">Italiano</option>
-              <option value="ja">日本語</option>
-              <option value="ko">한국어</option>
-              <option value="pt">Português</option>
-              <option value="ru">Русский</option>
-              <option value="zh">中文</option>
-            </select>
-          </label>
-        </div>
-
-        {form.formState.dirtyFields.language && (
-          <button
-            type="submit"
-            disabled={updateConfig.isPending}
-            className="px-4 py-2 bg-accent hover:bg-accent-deep text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            {updateConfig.isPending ? "Saving..." : "Save Changes"}
-          </button>
-        )}
-      </form>
+        <p className="text-xs text-ink-dull">
+          The interface is available in English only.
+        </p>
+      </div>
     </div>
   );
 }
