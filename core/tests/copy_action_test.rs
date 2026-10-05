@@ -323,7 +323,9 @@ fn test_copy_options_defaults() {
 
 #[tokio::test]
 async fn test_copy_reports_skipped_items() -> anyhow::Result<()> {
-	use wing_core::{infra::job::output::JobOutput, ops::files::copy::action::FileConflictResolution};
+	use wing_core::{
+		infra::job::output::JobOutput, ops::files::copy::action::FileConflictResolution,
+	};
 
 	let harness = IndexingHarnessBuilder::new("copy_skipped").build().await?;
 	let test_location = harness.create_test_location("test_copy_skipped").await?;
@@ -346,7 +348,13 @@ async fn test_copy_reports_skipped_items() -> anyhow::Result<()> {
 		..CopyOptions::default()
 	});
 
-	let output = harness.library.jobs().dispatch(copy_job).await?.wait().await?;
+	let output = harness
+		.library
+		.jobs()
+		.dispatch(copy_job)
+		.await?
+		.wait()
+		.await?;
 
 	// A skipped item is not a copied one; reporting it as copied hid conflicts.
 	match output {
@@ -362,8 +370,14 @@ async fn test_copy_reports_skipped_items() -> anyhow::Result<()> {
 		}
 		other => panic!("expected FileCopy output, got {other:?}"),
 	}
-	assert_eq!(fs::read_to_string(dest_dir.join("kept.txt")).await?, "original");
-	assert_eq!(fs::read_to_string(dest_dir.join("fresh.txt")).await?, "fresh");
+	assert_eq!(
+		fs::read_to_string(dest_dir.join("kept.txt")).await?,
+		"original"
+	);
+	assert_eq!(
+		fs::read_to_string(dest_dir.join("fresh.txt")).await?,
+		"fresh"
+	);
 
 	harness.shutdown().await?;
 	Ok(())

@@ -628,10 +628,7 @@ impl LibraryManager {
 				warn!("Failed to auto-track user-relevant volumes: {}", e);
 			}
 		} else {
-			info!(
-				"Volume auto-tracking disabled for library {}",
-				config.name
-			);
+			info!("Volume auto-tracking disabled for library {}", config.name);
 		}
 
 		// Backfill NULL volume_id values for existing locations

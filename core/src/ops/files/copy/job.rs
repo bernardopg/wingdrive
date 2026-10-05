@@ -585,15 +585,20 @@ impl JobHandler for FileCopyJob {
 						// Generate unique name if destination exists
 						if let Some(dest_path) = final_destination.as_local_path() {
 							if dest_path.exists() {
-								let unique_dest = match self.generate_unique_name(&dest_path).await {
+								let unique_dest = match self.generate_unique_name(&dest_path).await
+								{
 									Ok(unique) => unique,
 									Err(e) => {
 										failed_copies.push(CopyError {
-											source: resolved_source.path().cloned().unwrap_or_default(),
+											source: resolved_source
+												.path()
+												.cloned()
+												.unwrap_or_default(),
 											destination: dest_path.to_path_buf(),
 											error: e.to_string(),
 										});
-										self.job_metadata.set_error(&resolved_source, e.to_string());
+										self.job_metadata
+											.set_error(&resolved_source, e.to_string());
 										continue;
 									}
 								};

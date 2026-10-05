@@ -16,7 +16,6 @@ import {
 	createContext,
 	useCallback,
 	useContext,
-	useContext as useReactContext,
 	useEffect,
 	useMemo,
 	useReducer,
@@ -598,7 +597,7 @@ export function ExplorerProvider({
 	// Reconcile only when the displayed collection changes. Reconciling on
 	// every selection change raced column view, which publishes the clicked
 	// column's files one effect after the click selected one of them.
-	const selection = useReactContext(SelectionContext);
+	const selection = useContext(SelectionContext);
 	const restoreSelectionRef = useRef(selection?.restoreSelectionFromFiles);
 	restoreSelectionRef.current = selection?.restoreSelectionFromFiles;
 	useEffect(() => {
