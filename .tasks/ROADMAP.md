@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-10-05. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-10-06. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -21,9 +21,12 @@ Restante do M1, em ordem:
 |---|---|---|---|
 | 1 | TAURI-013 | Estabilização Linux: segurança de dados (Done) | S01 |
 | 2 | FORK-004 | Próxima tag atualiza o AUR sem passo manual | S01 |
-| 3 | TAURI-014 | Robustez em runtime e paridade da busca | S02 |
+| 3 | TAURI-014 | Robustez em runtime e paridade da busca (Done) | S02 |
 | 4 | TAURI-006 | Fechar a matriz de regressão Linux | S02 |
 | 5 | BRAND-002 | Wingbot, WingUI, Wingdrop e Wings | S02 |
+
+Fora da ordem, já Done: FORK-005 (licença Apache-2.0 e port de correções do upstream).
+Release `v2.0.0-alpha.7` sai com TAURI-013, TAURI-014 e FORK-005; ver [CHANGELOG](../CHANGELOG.md).
 
 O M1 fecha quando essas cinco estiverem Done e uma release sair sem bug conhecido.
 
@@ -52,5 +55,6 @@ mobile (`RES-000`). Só entram depois de M3, salvo decisão explícita.
 
 | Data | Mudança |
 |---|---|
+| 2026-10-06 | TAURI-014 e FORK-005 Done; licença Apache-2.0; release `v2.0.0-alpha.7` |
 | 2026-10-05 | Now atualizado: alpha.6 publicada no AUR; TAURI-013 dividida (TAURI-014); BRAND-002 e TAURI-006 no S02 |
 | 2026-10-01 | Roadmap criado; M1 definido a partir da revisão `docs/design/TAURI_FILEMANAGER_REVIEW_2026-09-03.md` |

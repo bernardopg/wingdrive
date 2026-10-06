@@ -1,14 +1,14 @@
 ---
 id: FORK-005
 title: Relicense to Apache-2.0 and port selected upstream fixes
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: FORK-002
 priority: High
 milestone: M1
 sprint: S02
 tags: [fork, upstream, license, port]
-last_updated: 2026-10-05
+last_updated: 2026-10-06
 ---
 
 ## Description
@@ -23,8 +23,7 @@ trailers. Anything WingDrive already fixed on its own keeps the WingDrive
 version.
 
 Upstream relicensed to Apache-2.0 in `bcc124765`, whose only parent is the
-fork point, so WingDrive adopts Apache-2.0 too (branch
-`chore/relicense-apache-2.0`).
+fork point, so WingDrive adopts Apache-2.0 too (#114).
 
 ## Acceptance Criteria
 
@@ -32,9 +31,9 @@ fork point, so WingDrive adopts Apache-2.0 too (branch
       PKGBUILD and About screen say Apache-2.0
 - [x] Every upstream commit classified (port, already fixed, not applicable)
 - [x] Portable fixes applied on `port/upstream-fixes` with authorship kept
-- [ ] `cargo clippy --workspace -D warnings`, `bun run typecheck` and affected
+- [x] `cargo clippy --workspace -D warnings`, `bun run typecheck` and affected
       integration tests pass
-- [ ] Both branches merged to `main`
+- [x] Both branches merged to `main` (#114 license, #115 port)
 
 ## Validation
 
@@ -89,3 +88,10 @@ rework (`f9bdf724b`), nightly CLI channel, NAS/titan ops notes, docs moves.
 - statx birth time on musl builds (`81070270d`, `63ba30edd`)
 - Library join fixes: inverted backfill, reverse registration (`f9bdf724b`), for M3
 - Nightly channel with sha-aware self-update (`5e285d3c9`)
+
+## Follow-ups
+
+- `sync_metrics_test`: `test_metrics_broadcast_counting` and
+  `test_metrics_data_volume` fail on `main` and are not in CI.
+- Re-run this inventory on each upstream fetch: classify new commits as port,
+  already fixed, or not applicable.
