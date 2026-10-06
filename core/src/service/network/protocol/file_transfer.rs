@@ -1540,6 +1540,9 @@ impl super::ProtocolHandler for FileTransferProtocolHandler {
 				// Keep reading messages until stream closes or TransferComplete received
 				// Note: The first type byte (0) was already read above
 				let mut first_message = true;
+				// Why the receiver refused this stream's transfer, reported back on
+				// TransferComplete instead of a misleading "transfer not found".
+				let mut rejection: Option<(TransferErrorType, String)> = None;
 
 				loop {
 					// For messages after the first, read the type byte
@@ -1638,6 +1641,13 @@ impl super::ProtocolHandler for FileTransferProtocolHandler {
 									self.logger
 										.error(&format!("Failed to handle transfer request: {}", e))
 										.await;
+									let message = e.to_string();
+									let error_type = if message.contains("not allowed") {
+										TransferErrorType::PermissionDenied
+									} else {
+										TransferErrorType::ProtocolError
+									};
+									rejection = Some((error_type, message));
 								}
 							}
 							FileTransferMessage::FileChunk {
@@ -1684,10 +1694,14 @@ impl super::ProtocolHandler for FileTransferProtocolHandler {
 										))
 										.await;
 
+									let (error_type, message) =
+										rejection.take().unwrap_or_else(|| {
+											(TransferErrorType::ChecksumMismatch, e.to_string())
+										});
 									let error_message = FileTransferMessage::TransferError {
 										transfer_id,
-										error_type: TransferErrorType::ChecksumMismatch,
-										message: e.to_string(),
+										error_type,
+										message,
 										recoverable: false,
 									};
 									if let Ok(error_data) = rmp_serde::to_vec(&error_message) {
