@@ -1,14 +1,14 @@
 ---
 id: FORK-004
 title: Publish WingDrive Linux releases and AUR package
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: FORK-002
 priority: High
 milestone: M1
 sprint: S01
 tags: [fork, release, linux, aur, packaging]
-last_updated: 2026-10-05
+last_updated: 2026-10-06
 ---
 
 ## Description
@@ -23,7 +23,7 @@ Release tags must match every product manifest. Publishing follows artifact veri
 - [x] Published release includes SHA256SUMS and the license
 - [x] AUR metadata uses the published AppImage with verified checksums
 - [x] wingdrive-bin is published and its package build passes on Arch Linux
-- [ ] Subsequent tagged releases update AUR idempotently
+- [x] Subsequent tagged releases update AUR idempotently
 
 ## Evidence
 
@@ -33,3 +33,8 @@ Release tags must match every product manifest. Publishing follows artifact veri
 - `release.yml` builds the package with makepkg in an Arch container before pushing to AUR.
 
 Open: idempotent AUR update is automated but unproven. Close this task when the next tag (`v2.0.0-alpha.7`) updates `wingdrive-bin` without manual steps.
+
+- Tag `v2.0.0-alpha.7` (5a3e36d): WingDrive Release run 37408850907 succeeded on 2026-10-06.
+  The AUR job built and smoke-tested the package in Arch and pushed `wingdrive-bin` commit
+  `ca47c4e` (`pkgver=2.0.0alpha7`, `license=('Apache-2.0' 'GPL-3.0-only')`) with no manual
+  step. The AppImage sha256 `4569f2da...be49` matches `SHA256SUMS`. Closed.
