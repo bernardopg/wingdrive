@@ -56,6 +56,8 @@ impl CoreContext {
 		key_manager: Arc<KeyManager>,
 		data_dir: PathBuf,
 	) -> Self {
+		crate::config::mark_own_data_dir(&data_dir);
+
 		Self {
 			events,
 			device_manager,

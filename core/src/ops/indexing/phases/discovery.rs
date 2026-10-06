@@ -598,7 +598,7 @@ async fn read_directory_with_backend(
 
 	let entries: Vec<DirEntry> = raw_entries
 		.into_iter()
-		.map(|raw| {
+		.filter_map(|raw| {
 			let full_path = if let Some(base) = cloud_url_base {
 				let relative = path.to_string_lossy();
 				let joined = if relative.is_empty() {
@@ -611,13 +611,20 @@ async fn read_directory_with_backend(
 				path.join(&raw.name)
 			};
 
-			DirEntry {
+			// The daemon's own data dir is never indexed, whatever the
+			// rules say: its journals churn fast enough to poison batches,
+			// and a map that contains its own map is not information.
+			if crate::config::is_own_data(&full_path) {
+				return None;
+			}
+
+			Some(DirEntry {
 				path: full_path,
 				kind: raw.kind,
 				size: raw.size,
 				modified: raw.modified,
 				inode: raw.inode,
-			}
+			})
 		})
 		.collect();
 
