@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://fsl.software/">
-    <img src="https://img.shields.io/static/v1?label=License&message=FSL-1.1-ALv2&color=000" />
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/static/v1?label=License&message=Apache-2.0&color=000" />
   </a>
   <img src="https://img.shields.io/static/v1?label=Core&message=Rust&color=DEA584" />
   <img src="https://img.shields.io/static/v1?label=Status&message=community%20fork&color=7c3aed" />
@@ -33,9 +33,8 @@
 > WingDrive is **not affiliated with, endorsed by, or supported by Spacedrive
 > Technology Inc.** Please do not report WingDrive issues upstream.
 >
-> The code is **source-available under FSL-1.1-ALv2**, not OSI open source. The
-> license forbids relicensing, so this fork cannot change it. It converts to
-> Apache-2.0 in 2028 under the Grant of Future License. See [NOTICE.md](./NOTICE.md).
+> The code is licensed under **Apache-2.0**. Upstream relicensed the exact tree
+> this fork started from, and WingDrive follows it. See [NOTICE.md](./NOTICE.md).
 
 ---
 
@@ -198,18 +197,15 @@ Contributions are welcome from anyone. Open an issue or a pull request.
 - The design-system workspaces live in this repository under `packages/wingdrive-*`.
 
 By opening a pull request you agree that your contribution is licensed under
-FSL-1.1-ALv2, the same terms as the rest of the project.
+Apache-2.0, the same terms as the rest of the project.
 
 ---
 
 ## License
 
-**FSL-1.1-ALv2** — [Functional Source License](https://fsl.software/). Copyright
-2026 Spacedrive Technology Inc.
-
-Source-available, not OSI open source. Free for personal use, internal use,
-non-commercial education and non-commercial research. Offering the software as a
-managed, hosted or SaaS product to third parties is not permitted.
+**Apache-2.0** — see [LICENSE](./LICENSE). Copyright 2026 Spacedrive Technology
+Inc. and WingDrive contributors. File-kind icons in `packages/assets/icons` stay
+under GPL-3.0-only; see [NOTICE.md](./NOTICE.md).
 
 Converts to Apache-2.0 in 2028 under the Grant of Future License.
 

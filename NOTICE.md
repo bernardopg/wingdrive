@@ -33,49 +33,40 @@ Copyright 2026 Spacedrive Technology Inc.
 
 The original Spacedrive source code is the copyright of Spacedrive Technology
 Inc. and its contributors. Modifications made in this fork are the copyright of
-their respective authors and are contributed under the same license terms.
+their respective authors and are licensed under the same terms.
 
 Copyright notices provided in or with the original Software have not been
-removed, as required by the Redistribution clause of the license.
+removed.
 
 ## License
 
-This project is distributed under the **Functional Source License, Version 1.1,
-ALv2 Future License (FSL-1.1-ALv2)**. See [LICENSE](./LICENSE) for the full
-text.
+This project is licensed under the **Apache License, Version 2.0**. See
+[LICENSE](./LICENSE) for the full text.
 
-This license is source-available, not OSI open source. The fork cannot and does
-not relicense the code, because the Redistribution clause states that the terms
-apply to all copies, modifications and derivatives of the Software.
+Spacedrive Technology Inc. relicensed Spacedrive to Apache-2.0 in upstream
+commit `bcc124765c809e115669e770b918625942621bce` ("Relicense to Apache-2.0",
+2026-08-21). That commit's only parent is the WingDrive fork point
+`6dfeccf2113039e35f2ce735f945e70dc3e4ea45`, so the exact tree WingDrive was
+forked from was published by its copyright holder under Apache-2.0. WingDrive
+merges that commit to record this provenance.
 
-### What you may do
+Earlier WingDrive releases (up to `v2.0.0-alpha.7`) were distributed under
+FSL-1.1-ALv2. Upstream states that its releases prior to 2026-03-24 remain
+available under AGPL-3.0.
 
-- Use, copy, modify and redistribute the code for any Permitted Purpose.
-- Use it for internal use and access.
-- Use it for non-commercial education and non-commercial research.
-- Contribute to this repository.
+Exceptions:
 
-### What you may not do
-
-- Relicense the code under MIT, Apache-2.0, GPL or any other terms.
-- Provide the Software as a managed cloud service, hosted service or SaaS
-  offering to third parties.
-- Offer commercial hosting, deployment or management of instances as a service.
-- Provide cloud storage, file synchronization or data management services to
-  third parties based on the Software.
-- Offer managed AI agent services or automation platforms based on the Software.
-
-### Grant of Future License
-
-The license includes an irrevocable grant to use the Software under the Apache
-License, Version 2.0, effective on the second anniversary of the date each
-version was made available. The current tree carries a 2026 copyright notice,
-so it converts to Apache-2.0 in 2028.
+- `packages/assets/icons` remain under the package's GPL-3.0-only license, as
+  described in "Reused visual assets".
+- `packages/wingdrive-ai`, `packages/wingdrive-primitives`, and
+  `packages/wingdrive-tokens` remain under MIT.
+- `crates/sdk` is dual-licensed MIT OR Apache-2.0.
 
 ## Trademarks
 
-"Spacedrive" is a trademark of Spacedrive Technology Inc. The Trademarks clause
-grants no right to use it beyond identifying the origin of the Software.
+"Spacedrive" is a trademark of Spacedrive Technology Inc. Section 6 of the
+Apache License grants no permission to use it beyond identifying the origin of
+the Work.
 
 This fork is named **WingDrive** and is **not affiliated with, endorsed by, or
 supported by Spacedrive Technology Inc.** Do not report WingDrive issues to the
@@ -83,5 +74,6 @@ upstream project.
 
 ## Contributions
 
-Contributions to this repository are accepted under FSL-1.1-ALv2. By opening a
-pull request you agree that your contribution is licensed under those terms.
+Contributions to this repository are accepted under Apache-2.0, per section 5
+of the license. By opening a pull request you agree that your contribution is
+licensed under those terms, including the patent grant in section 3.

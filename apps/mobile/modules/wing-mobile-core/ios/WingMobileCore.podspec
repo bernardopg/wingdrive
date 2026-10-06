@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
   s.name           = 'WingMobileCore'
   s.version        = package['version']
   s.summary        = 'WingDrive Mobile Core - Embedded Rust core for React Native'
-  s.license        = 'GPL-3.0'
+  s.license        = 'Apache-2.0'
   s.authors        = 'WingDrive contributors'
   s.homepage       = 'https://github.com/bernardopg/wingdrive'
   s.platforms      = { :ios => '18.0' }

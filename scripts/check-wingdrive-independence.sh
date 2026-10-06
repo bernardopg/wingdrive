@@ -7,6 +7,7 @@ readonly operational_identity='com\.spacedrive\.(daemon|core|photos)|spacedrive-
 
 matches="$({
 	git grep -nEI "$forbidden" -- \
+		':!NOTICE' \
 		':!NOTICE.md' \
 		':!docs/overview/history.mdx' \
 		':!whitepaper/**' \
