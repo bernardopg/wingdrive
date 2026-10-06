@@ -1,14 +1,14 @@
 ---
 id: TAURI-006
 title: Add Tauri Runtime Regression Matrix
-status: In Progress
+status: Done
 assignee: unassigned
 parent: TAURI-000
 priority: High
 sprint: S02
 milestone: M1
 tags: [tauri, testing, ci]
-last_updated: 2026-10-05
+last_updated: 2026-10-06
 ---
 
 ## Description
@@ -19,10 +19,10 @@ Test the daemon-client path and native windows. A Vite build or typecheck alone 
 
 - [x] Start the packaged daemon and connect the main window (verified in TAURI-011 and the alpha.6 release smoke)
 - [x] Browse a physical directory and open a file
-- [x] Exercise grid, list, media, column, search, and recents (search and recents still to click through)
+- [x] Exercise grid, list, media, column, search, and recents
 - [x] Open Settings, Inspector, Quick Preview, Job Manager (Spacedrop needs a second device)
 - [x] Verify copy, rename, folder creation, delete confirmation, and job progress
-- [ ] Capture terminal state on Linux (macOS and Windows moved to TAURI-012)
+- [x] Capture terminal state on Linux (macOS and Windows moved to TAURI-012)
 
 ## Linux Runtime Validation
 
@@ -66,3 +66,42 @@ Passed: deep links, grid/list/column/media views, sort by name and size (files a
 Fixed in this pass: tab restore overriding explicit URLs; folders sorted by inode size; web build forgetting the library; locations stuck in "scanning"; desktop daemon built without ffmpeg/heif (no thumbnails); inspector showing "Unknown" scan state; content-addressed rows breaking copy/move/delete with duplicates; generic "Job failed" messages; names without extensions in Quick Preview and delete dialogs; jobs listed oldest first with 0s durations; "Unknown Device" on Linux; duplicate directory entries (WATCH-004).
 
 Open: search and recents click-through, `Ctrl+number` view shortcuts are taken by the browser in the web build (fine in Tauri), Spacedrop (needs two devices), packaged bundle (TAURI-011).
+
+## Linux Runtime Session 2026-10-06 (packaged bundle and two devices)
+
+Production AppImage built from `main` plus #116 (INDEX-010), #117 (sync fixes) and #118 (BRAND-002),
+run on Hyprland through XWayland (`GDK_BACKEND=x11`) with an isolated data dir and instance. The release
+smoke script (`scripts/release/smoke.py`) also passed against the same bundle under Xvfb. A second device
+(homesystem: Arch, 2 cores, 942 MB RAM, headless) ran only the packaged daemon (75 MB RSS) with the
+bundle's libraries; it was paired over the LAN and driven through an SSH tunnel to its RPC port.
+
+Passed:
+- Fresh start creates the library; a location added from the CLI appears live with its folder card.
+- Search: "This Folder" covers the subtree; "Library" scope; typing keeps the scope.
+- Recents with image thumbnails.
+- Grid, list, column, media and size views from the toolbar and from the overflow menu.
+- Quick Preview of images, arrow navigation, Esc to close; selection follows.
+- Rename (F2), external create picked up by the watcher, delete to the XDG trash, copy and move with the
+  conflict dialog, results matching the disk.
+- Settings as a native window; About shows Apache-2.0. Job Manager popover and full screen.
+- Pairing with the second device by word code; both sides show Connected; automatic reconnection after
+  restarting both daemons.
+- Cross-device copy in both directions, byte-identical; a transfer to a path outside the receiver's
+  locations fails with "Receiver rejected the transfer (PermissionDenied)".
+
+Fixed in this pass (#119): local copy/move routed over the network when one path said `local` and the other
+the device slug; rename bound to Enter only (now F2 off macOS); macOS ⌘ hints on Linux and false Cmd+1-5 view
+hints; overflow menu under the TopBar/inspector and its flyouts unclickable; receiver rejection reported as
+"transfer not found"; remote JobCompleted events dropped by the job activity decoder; CLI copy could not
+address a paired device; Wingdrop reported success while sending nothing (now an explicit error; the View
+menu that opened its sample-people window is debug-only).
+
+Known limits, not blocking M1:
+- Wingdrop itself is not implemented (`network.spacedrop.send` errors); device-to-device copy works through
+  `files.copy`.
+- A copy job whose every item failed still ends with status Completed; the output carries the failure counts
+  and the UI shows them (TAURI-013), but remote and CLI consumers see "completed".
+- The Wingbot window has no entry point without a configured runtime (TAURI-004).
+- Synthetic keyboard input into XWayland needs `ydotool`; `xdotool type` and `wtype` do not reach the window
+  on Hyprland. Note for future automated sessions.
+
