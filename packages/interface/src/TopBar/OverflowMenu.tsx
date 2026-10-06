@@ -27,9 +27,10 @@ export function OverflowButton({ items }: OverflowButtonProps) {
 
 			<DropdownMenu.Portal>
 				<DropdownMenu.Content
-					className="min-w-[180px] rounded-lg bg-app border border-app-line shadow-2xl py-1 z-[70]"
+					className="min-w-[180px] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto rounded-lg bg-app border border-app-line shadow-2xl py-1 z-[70]"
 					sideOffset={8}
-					align="start"
+					align="end"
+					collisionPadding={8}
 				>
 					{items.map((snapshot) => {
 						const item = liveItems.get(snapshot.id) ?? snapshot;
@@ -47,24 +48,19 @@ export function OverflowButton({ items }: OverflowButtonProps) {
 							);
 						}
 
+						// Panels render inline under their label instead of as a flyout.
+						// A flyout opened to the left of this right-aligned menu, and the
+						// pointer left its safe zone on the way over, closing the menu
+						// before a choice could be clicked.
 						return (
-							<DropdownMenu.Sub key={item.id}>
-								<DropdownMenu.SubTrigger className="px-3 py-2 text-sm text-menu-ink hover:bg-app-hover/50 transition-colors flex items-center justify-between outline-none cursor-pointer">
-									<span>{item.label}</span>
-									<span className="text-menu-faint text-xs">▶</span>
-								</DropdownMenu.SubTrigger>
-								<DropdownMenu.Portal>
-									{/* Above the TopBar (z-60) and the inspector, flush with the
-									    trigger: a gap closed the submenu before the pointer
-									    reached it when it opened to the left. */}
-									<DropdownMenu.SubContent
-										className="z-[70]"
-										sideOffset={0}
-									>
-										{item.submenuContent || item.element}
-									</DropdownMenu.SubContent>
-								</DropdownMenu.Portal>
-							</DropdownMenu.Sub>
+							<DropdownMenu.Group key={item.id}>
+								<DropdownMenu.Label className="px-3 pt-2 pb-1 text-xs font-medium text-menu-faint">
+									{item.label}
+								</DropdownMenu.Label>
+								<div className="px-1 pb-1">
+									{item.submenuContent || item.element}
+								</div>
+							</DropdownMenu.Group>
 						);
 					})}
 				</DropdownMenu.Content>
