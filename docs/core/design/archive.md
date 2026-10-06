@@ -14,7 +14,7 @@ Archive is WingDrive's data archival system that indexes external data sources b
 
 - **Schema-driven sources** - Each data source is a self-contained source with its own SQLite database, vector index, and TOML schema. Schemas auto-generate tables, foreign keys, and search indexes. Sources are portable (copy the folder, it works).
 
-- **AI-ready** - Spacebot queries archived data through structured search APIs with built-in safety metadata. No raw file access, no prompt injection risk.
+- **AI-ready** - Wingbot queries archived data through structured search APIs with built-in safety metadata. No raw file access, no prompt injection risk.
 
 **Use cases:**
 
@@ -212,7 +212,7 @@ The crate keeps `sqlx` and raw SQL internally (justified for dynamic schemas). T
 **Benefits:**
 
 - Heavy dependencies (LanceDB, FastEmbed) cached separately in CI
-- Pure engine reusable by other projects (Spacebot, CLI tools)
+- Pure engine reusable by other projects (Wingbot, CLI tools)
 - Core integration uses v2's job system for orchestration
 - Clean separation: engine logic vs job orchestration
 

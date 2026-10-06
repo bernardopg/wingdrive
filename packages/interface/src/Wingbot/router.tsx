@@ -1,21 +1,21 @@
 import { Navigate, Outlet, type RouteObject } from 'react-router-dom';
-import { SpacebotLayout } from './SpacebotLayout';
+import { WingbotLayout } from './WingbotLayout';
 import { ChatRoute } from './routes/ChatRoute';
 import { ConversationRoute } from './routes/ConversationRoute';
 import { TasksRoute } from './routes/TasksRoute';
 
 /**
- * Spacebot nested route configuration
- * These routes are mounted under /spacebot in the main router
+ * Wingbot nested route configuration
+ * These routes are mounted under /wingbot in the main router
  */
-export const spacebotRoutes: RouteObject[] = [
+export const wingbotRoutes: RouteObject[] = [
 	{
-		path: 'spacebot',
-		element: <SpacebotLayout />,
+		path: 'wingbot',
+		element: <WingbotLayout />,
 		children: [
 			{
 				index: true,
-				element: <Navigate to="/spacebot/chat" replace />,
+				element: <Navigate to="/wingbot/chat" replace />,
 			},
 			{
 				path: 'chat',
@@ -43,9 +43,9 @@ export const spacebotRoutes: RouteObject[] = [
 ];
 
 /**
- * Spacebot Router Provider component that wraps the Outlet
- * Used when Spacebot routes are mounted within the main router
+ * Wingbot Router Provider component that wraps the Outlet
+ * Used when Wingbot routes are mounted within the main router
  */
-export function SpacebotRouter() {
+export function WingbotRouter() {
 	return <Outlet />;
 }

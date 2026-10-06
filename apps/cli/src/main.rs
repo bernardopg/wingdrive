@@ -214,8 +214,8 @@ enum Commands {
 	/// Search operations
 	#[command(subcommand)]
 	Search(SearchCmd),
-	/// Spaces operations
-	#[command(subcommand)]
+	/// Wings operations (sidebar collections)
+	#[command(subcommand, name = "wings", alias = "spaces")]
 	Spaces(SpacesCmd),
 	/// Sync operations and metrics
 	#[command(subcommand)]

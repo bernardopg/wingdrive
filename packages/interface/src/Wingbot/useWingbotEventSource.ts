@@ -8,7 +8,7 @@ type ConnectionState =
 	| 'reconnecting'
 	| 'disconnected';
 
-interface UseSpacebotEventSourceOptions {
+interface UseWingbotEventSourceOptions {
 	handlers: Record<string, EventHandler>;
 	enabled?: boolean;
 	onReconnect?: () => void;
@@ -18,9 +18,9 @@ const INITIAL_RETRY_MS = 1000;
 const MAX_RETRY_MS = 30000;
 const BACKOFF_MULTIPLIER = 2;
 
-export function useSpacebotEventSource(
+export function useWingbotEventSource(
 	url: string,
-	{handlers, enabled = true, onReconnect}: UseSpacebotEventSourceOptions
+	{handlers, enabled = true, onReconnect}: UseWingbotEventSourceOptions
 ) {
 	const handlersRef = useRef(handlers);
 	handlersRef.current = handlers;

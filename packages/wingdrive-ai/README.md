@@ -1,6 +1,6 @@
 # @wingdrive/ai
 
-AI agent interaction components for SpaceUI.
+AI agent interaction components for WingUI, the WingDrive design system.
 
 ## Installation
 

@@ -5,7 +5,7 @@ export function EmptyChatHero() {
 				Let&apos;s get to work, James
 			</h1>
 			<p className="text-ink-dull mt-2 text-sm">
-				Learn how to be productive with Spacebot. {''}
+				Learn how to be productive with Wingbot. {''}
 				<a
 					href="https://github.com/bernardopg/wingdrive/tree/main/docs/core/design"
 					target="_blank"

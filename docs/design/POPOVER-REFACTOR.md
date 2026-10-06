@@ -57,9 +57,9 @@ const popover = usePopover();
 
 ## Files to Refactor
 
-1. `packages/interface/src/Spacebot/ChatComposer.tsx`
-2. `packages/interface/src/Spacebot/SpacebotLayout.tsx`
-3. `packages/interface/src/Spacebot/routes/ChatRoute.tsx`
+1. `packages/interface/src/Wingbot/ChatComposer.tsx`
+2. `packages/interface/src/Wingbot/WingbotLayout.tsx`
+3. `packages/interface/src/Wingbot/routes/ChatRoute.tsx`
 4. `packages/interface/src/routes/explorer/components/PathBar.tsx`
 5. `packages/interface/src/routes/overview/OverviewTopBar.tsx`
 6. `packages/interface/src/components/SyncMonitor/SyncMonitorPopover.tsx`

@@ -12,21 +12,21 @@ import {
 } from '@wingdrive/ai';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useCallback, useState} from 'react';
-import {agents, useSpacebot} from '../SpacebotContext';
+import {agents, useWingbot} from '../WingbotContext';
 
 function resolveAgentName(agentId: string): string {
 	return agents.find((a) => a.id === agentId)?.name ?? agentId;
 }
 
 export function TasksRoute() {
-	const {selectedAgent} = useSpacebot();
+	const {selectedAgent} = useWingbot();
 	const queryClient = useQueryClient();
 	const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 	const [collapsedGroups, setCollapsedGroups] = useState<Set<UiTaskStatus>>(
 		() => new Set()
 	);
 
-	const queryKey = ['spacebot', 'tasks', selectedAgent];
+	const queryKey = ['wingbot', 'tasks', selectedAgent];
 
 	const tasksQuery = useQuery({
 		queryKey,

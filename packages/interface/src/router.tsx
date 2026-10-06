@@ -1,4 +1,4 @@
-import {createBrowserRouter, Navigate, Outlet} from 'react-router-dom';
+import {createBrowserRouter, Navigate, Outlet, useLocation} from 'react-router-dom';
 import {JobsScreen} from './components/JobManager';
 import {DaemonManager} from './routes/daemon';
 import {ExplorerView} from './routes/explorer';
@@ -14,23 +14,29 @@ import {AdaptersScreen} from './routes/sources/Adapters';
 import {SourceDetail} from './routes/sources/SourceDetail';
 import {TagView} from './routes/tag';
 import {ShellLayout} from './ShellLayout';
-import {AutonomyRoute} from './Spacebot/routes/AutonomyRoute';
-import {ChatRoute} from './Spacebot/routes/ChatRoute';
-import {ConversationRoute} from './Spacebot/routes/ConversationRoute';
-import {MemoriesRoute} from './Spacebot/routes/MemoriesRoute';
-import {ScheduleRoute} from './Spacebot/routes/ScheduleRoute';
-import {TasksRoute} from './Spacebot/routes/TasksRoute';
-import {SpacebotProvider} from './Spacebot/SpacebotContext';
-import {SpacebotLayout} from './Spacebot/SpacebotLayout';
+import {AutonomyRoute} from './Wingbot/routes/AutonomyRoute';
+import {ChatRoute} from './Wingbot/routes/ChatRoute';
+import {ConversationRoute} from './Wingbot/routes/ConversationRoute';
+import {MemoriesRoute} from './Wingbot/routes/MemoriesRoute';
+import {ScheduleRoute} from './Wingbot/routes/ScheduleRoute';
+import {TasksRoute} from './Wingbot/routes/TasksRoute';
+import {legacyWingbotPath} from './Wingbot/legacyPath';
+import {WingbotProvider} from './Wingbot/WingbotContext';
+import {WingbotLayout} from './Wingbot/WingbotLayout';
 
 /**
- * Spacebot wrapper component that provides the Spacebot context
+ * Wingbot wrapper component that provides the Wingbot context
  */
-function SpacebotRoutes() {
+function LegacyWingbotRedirect() {
+	const {pathname, search, hash} = useLocation();
+	return <Navigate to={legacyWingbotPath(pathname) + search + hash} replace />;
+}
+
+function WingbotRoutes() {
 	return (
-		<SpacebotProvider>
+		<WingbotProvider>
 			<Outlet />
-		</SpacebotProvider>
+		</WingbotProvider>
 	);
 }
 
@@ -100,15 +106,20 @@ export const explorerRoutes = [
 				]
 			},
 			{
-				path: 'spacebot',
-				element: <SpacebotRoutes />,
+				// Pre-BRAND-002 tabs and deep links.
+				path: 'spacebot/*',
+				element: <LegacyWingbotRedirect />
+			},
+			{
+				path: 'wingbot',
+				element: <WingbotRoutes />,
 				children: [
 					{
 						index: true,
-						element: <Navigate to="/spacebot/chat" replace />
+						element: <Navigate to="/wingbot/chat" replace />
 					},
 					{
-						element: <SpacebotLayout />,
+						element: <WingbotLayout />,
 						children: [
 							{
 								path: 'chat',

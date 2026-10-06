@@ -44,4 +44,25 @@ if [[ -n "$legacy_matches" ]]; then
 	exit 1
 fi
 
+# BRAND-002: old product names must not reach the interface. The external
+# Spacebot runtime keeps its package name (@spacebot/api-client) and the
+# persisted spacebot_* settings keep theirs, so only names a person reads count:
+# string literals and JSX text in the frontend and CLI output.
+readonly old_product_names='\b(Spacebot|Spacedrop|SpaceUI)\b'
+
+brand_matches="$({
+	git grep -nEI "$old_product_names" -- \
+		'packages/interface/src/**' \
+		'apps/tauri/src/**' \
+		'apps/tauri/src-tauri/src/**' \
+		'apps/web/src/**' \
+		'apps/cli/src/**' || true
+} | grep -vE '@spacebot/|spacebot-api-client|SpacebotConfig|Spacedrop(Send|Args)|spacedrop::|// |//! |/// ' || true)"
+
+if [[ -n "$brand_matches" ]]; then
+	echo "Old product names remain in the interface (use Wingbot, Wingdrop, WingUI):" >&2
+	echo "$brand_matches" >&2
+	exit 1
+fi
+
 echo "WingDrive independence check passed."

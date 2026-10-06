@@ -23,7 +23,7 @@ pub enum WingDriveWindow {
 	},
 	JobManager,
 	DeviceDiscovery,
-	Spacebot,
+	Wingbot,
 
 	/// Floating panels (always on top)
 	Inspector {
@@ -44,8 +44,8 @@ pub enum WingDriveWindow {
 	/// Drag demo window
 	DragDemo,
 
-	/// Spacedrop window
-	Spacedrop,
+	/// Wingdrop window
+	Wingdrop,
 
 	/// Drag overlay (cursor-tracking preview during drag operations)
 	DragOverlay {
@@ -70,7 +70,7 @@ impl WingDriveWindow {
 			Self::Settings { page } => format!("settings-{}", page.as_deref().unwrap_or("general")),
 			Self::JobManager => "job-manager".to_string(),
 			Self::DeviceDiscovery => "device-discovery".to_string(),
-			Self::Spacebot => "spacebot".to_string(),
+			Self::Wingbot => "wingbot".to_string(),
 			Self::Inspector { item_id } => {
 				format!("inspector-{}", item_id.as_deref().unwrap_or("floating"))
 			}
@@ -80,7 +80,7 @@ impl WingDriveWindow {
 			Self::FloatingControls => "floating-controls".to_string(),
 			Self::VoiceOverlay => "voice-overlay".to_string(),
 			Self::DragDemo => "drag-demo".to_string(),
-			Self::Spacedrop => "spacedrop".to_string(),
+			Self::Wingdrop => "wingdrop".to_string(),
 			Self::DragOverlay { session_id } => format!("drag-overlay-{}", session_id),
 			Self::ContextMenu { context_id } => format!("context-menu-{}", context_id),
 		}
@@ -220,11 +220,11 @@ impl WingDriveWindow {
 				false,
 			),
 
-			Self::Spacebot => create_window(
+			Self::Wingbot => create_window(
 				app,
 				&label,
-				"/spacebot",
-				"Spacebot",
+				"/wingbot",
+				"Wingbot",
 				(1200.0, 800.0),
 				(800.0, 600.0),
 				true,
@@ -346,11 +346,11 @@ impl WingDriveWindow {
 				false,
 			),
 
-			Self::Spacedrop => create_window(
+			Self::Wingdrop => create_window(
 				app,
 				&label,
-				"/spacedrop",
-				"Spacedrop",
+				"/wingdrop",
+				"Wingdrop",
 				(800.0, 600.0),
 				(600.0, 400.0),
 				true,

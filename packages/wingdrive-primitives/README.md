@@ -1,6 +1,6 @@
 # @wingdrive/primitives
 
-Primitive UI components built on Radix UI with Tailwind CSS styling.
+WingUI primitive components built on Radix UI with Tailwind CSS styling.
 
 ## Installation
 

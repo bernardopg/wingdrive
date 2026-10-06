@@ -33,7 +33,7 @@ function buildSpectrumLevels(
 }
 
 /**
- * Hook for TTS playback via Spacebot's Voicebox proxy endpoint.
+ * Hook for TTS playback via Wingbot's Voicebox proxy endpoint.
  * Fetches audio from /api/tts/generate and plays via Web Audio API.
  */
 export function useTtsPlayback(): UseTtsPlaybackReturn {

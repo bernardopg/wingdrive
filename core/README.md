@@ -68,7 +68,7 @@ src/
 
 - Iroh-based P2P networking
 - Device pairing protocol
-- File transfer (Spacedrop)
+- File transfer (Wingdrop)
 - mDNS local discovery
 
 **Jobs** (`service/jobs/`)

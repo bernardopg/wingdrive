@@ -116,7 +116,7 @@ export function useSpaceItemContextMenu({
 		{ type: "separator" },
 		{
 			icon: Trash,
-			label: "Remove from Space",
+			label: "Remove from Wing",
 			onClick: async () => {
 				try {
 					await deleteItem.mutateAsync({ item_id: item.id });

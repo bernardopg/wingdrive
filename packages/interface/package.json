@@ -10,7 +10,7 @@
 		".": "./src/index.tsx",
 		"./app": "./src/App.tsx",
 		"./styles.css": "./src/styles.css",
-		"./Spacebot": "./src/Spacebot/index.tsx",
+		"./Wingbot": "./src/Wingbot/index.tsx",
 		"./windows/VoiceOverlay": "./src/windows/VoiceOverlay.tsx"
 	},
 	"scripts": {

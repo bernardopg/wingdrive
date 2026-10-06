@@ -10,7 +10,7 @@ A comprehensive command-line interface for managing WingDrive Core with full dae
 - **️ Job Management**: View, monitor, and control background jobs with live progress
 - **Real-time Monitoring**: Beautiful TUI for monitoring job progress and system events
 - **Indexing Control**: Start indexing jobs with different modes (shallow/content/deep)
-- **Networking Support**: Device pairing, file sharing via Spacedrop
+- **Networking Support**: Device pairing, file sharing via Wingdrop
 - **Multiple Instances**: Run isolated daemon instances for different use cases
 - **Comprehensive Logging**: Built-in logging with file output for debugging
 - **️ Cross-platform**: Works on macOS, Linux, and Windows
@@ -301,8 +301,8 @@ wing network pair --initiate              # Generate pairing code
 wing network pair --join <code>           # Join using code
 wing network pair --status                # Check pairing status
 
-# Spacedrop (file sharing)
-wing network spacedrop <device-id> /path/to/file --sender "Your Name"
+# Wingdrop (file sharing)
+wing network wingdrop <device-id> /path/to/file --sender "Your Name"
 
 # Remove paired device
 wing network revoke <device-id>

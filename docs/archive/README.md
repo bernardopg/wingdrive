@@ -8,7 +8,7 @@ Archive is WingDrive's data archival system for indexing external data sources b
 - **Hybrid Search** - Combines full-text search (SQLite FTS5) with semantic vector search (LanceDB + FastEmbed) merged via Reciprocal Rank Fusion
 - **Safety Screening** - Prompt Guard 2 classifies indexed text for injection attacks before it enters the search index
 - **Schema-Driven Sources** - Each data source is self-contained with its own SQLite database, vector index, and TOML schema
-- **AI-Ready** - Spacebot queries archived data through structured search APIs with built-in safety metadata
+- **AI-Ready** - Wingbot queries archived data through structured search APIs with built-in safety metadata
 - **P2P Sync** - Source metadata syncs across devices via library sync
 
 ## Quick Start

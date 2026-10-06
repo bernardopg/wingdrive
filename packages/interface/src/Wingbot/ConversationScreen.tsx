@@ -60,14 +60,14 @@ export function ConversationScreen({
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const previousTimelineLengthRef = useRef(0);
 	const timelineQuery = useQuery({
-		queryKey: ['spacebot', 'channel-timeline', conversation?.id],
+		queryKey: ['wingbot', 'channel-timeline', conversation?.id],
 		queryFn: () => apiClient.channelMessages(conversation!.id, 200),
 		enabled: Boolean(conversation?.id),
 		refetchInterval: 2000
 	});
 	const workersQuery = useQuery({
 		queryKey: [
-			'spacebot',
+			'wingbot',
 			'conversation-workers',
 			agentId,
 			conversation?.id
@@ -286,7 +286,7 @@ export function ConversationScreen({
 				{isTyping && !streamingAssistantText ? (
 					<div className="flex justify-start">
 						<div className="border-app-line bg-app text-ink-dull rounded-2xl border px-4 py-3 text-sm">
-							Spacebot is typing...
+							Wingbot is typing...
 						</div>
 					</div>
 				) : null}

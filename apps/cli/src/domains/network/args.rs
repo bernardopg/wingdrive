@@ -83,7 +83,7 @@ impl PairCmd {
 }
 
 #[derive(Args, Debug, Clone)]
-pub struct SpacedropArgs {
+pub struct WingdropArgs {
 	/// Target device ID
 	pub device_id: Uuid,
 	/// Files or directories to share
@@ -93,8 +93,8 @@ pub struct SpacedropArgs {
 	pub sender: Option<String>,
 }
 
-impl From<SpacedropArgs> for SpacedropSendInput {
-	fn from(args: SpacedropArgs) -> Self {
+impl From<WingdropArgs> for SpacedropSendInput {
+	fn from(args: WingdropArgs) -> Self {
 		let paths = args
 			.paths
 			.iter()

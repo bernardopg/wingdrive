@@ -4,7 +4,7 @@
 	"description": "Default permissions for WingDrive",
 	"windows": [
 		"main",
-		"spacebot",
+		"wingbot",
 		"voice-overlay",
 		"inspector-*",
 		"quick-preview-*",

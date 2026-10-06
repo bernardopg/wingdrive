@@ -35,7 +35,7 @@ function buildSpectrumLevels(
 
 /**
  * Hook for recording audio from the user's microphone via MediaRecorder.
- * Returns a WebM/Opus blob suitable for upload to Spacebot's /api/webchat/send-audio.
+ * Returns a WebM/Opus blob suitable for upload to Wingbot's /api/webchat/send-audio.
  */
 export function useAudioRecorder(): UseAudioRecorderReturn {
 	const [state, setState] = useState<RecordingState>("idle");

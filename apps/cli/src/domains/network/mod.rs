@@ -37,8 +37,9 @@ pub enum NetworkCmd {
 	},
 	/// Revoke a paired device
 	Revoke(RevokeArgs),
-	/// Send files via Spacedrop
-	Spacedrop(SpacedropArgs),
+	/// Send files via Wingdrop
+	#[command(alias = "spacedrop")]
+	Wingdrop(WingdropArgs),
 }
 
 pub async fn run(ctx: &Context, cmd: NetworkCmd) -> Result<()> {
@@ -192,14 +193,14 @@ pub async fn run(ctx: &Context, cmd: NetworkCmd) -> Result<()> {
 				println!("Revoked: {}", o.revoked);
 			});
 		}
-		NetworkCmd::Spacedrop(args) => {
+		NetworkCmd::Wingdrop(args) => {
 			let out: SpacedropSendOutput = execute_action!(ctx, SpacedropSendInput::from(args));
 			print_output!(ctx, &out, |o: &SpacedropSendOutput| {
 				if let Some(j) = o.job_id {
 					println!("Transfer job: {}", j);
 				}
 				if let Some(sid) = o.session_id {
-					println!("Spacedrop session: {}", sid);
+					println!("Wingdrop session: {}", sid);
 				}
 			});
 		}

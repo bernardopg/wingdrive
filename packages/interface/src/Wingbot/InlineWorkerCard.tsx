@@ -14,7 +14,7 @@ export function InlineWorkerCard({
 }) {
 	const queryClient = useQueryClient();
 	const detailQuery = useQuery({
-		queryKey: ['spacebot', 'worker-detail', agentId, worker.id],
+		queryKey: ['wingbot', 'worker-detail', agentId, worker.id],
 		queryFn: () => apiClient.workerDetail(agentId, worker.id),
 		refetchInterval: worker.status === 'running' ? 1500 : false
 	});
@@ -52,17 +52,17 @@ export function InlineWorkerCard({
 			await Promise.all([
 				queryClient.invalidateQueries({
 					queryKey: [
-						'spacebot',
+						'wingbot',
 						'conversation-workers',
 						agentId,
 						worker.channel_id
 					]
 				}),
 				queryClient.invalidateQueries({
-					queryKey: ['spacebot', 'worker-detail', agentId, worker.id]
+					queryKey: ['wingbot', 'worker-detail', agentId, worker.id]
 				}),
 				queryClient.invalidateQueries({
-					queryKey: ['spacebot', 'channel-timeline', worker.channel_id]
+					queryKey: ['wingbot', 'channel-timeline', worker.channel_id]
 				})
 			]);
 		}

@@ -26,7 +26,7 @@ export function SpaceSwitcher({
 						style={{backgroundColor: currentSpace?.color || '#666'}}
 					/>
 					<span className="flex-1 truncate text-left">
-						{currentSpace?.name || 'Select Space'}
+						{currentSpace?.name || 'Select Wing'}
 					</span>
 				</SelectPill>
 			</DropdownMenu.Trigger>

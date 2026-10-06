@@ -1,7 +1,7 @@
 /**
  * Raw color values for NativeWind (mobile app)
  * Note: This file is maintained for mobile app compatibility with Tailwind v3.
- * The main spaceui tokens are now CSS-only for Tailwind v4.
+ * The main WingUI tokens are now CSS-only for Tailwind v4.
  */
 
 const rawColors = {

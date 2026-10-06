@@ -98,7 +98,7 @@ VALUES (remote_device_id, 'Remote Device', 'Desktop', '1.0', ...);
 This enables:
 
 - Future sync operations
-- Device-to-device file operations (Spacedrop)
+- Device-to-device file operations (Wingdrop)
 - Multi-device library awareness
 
 ## Integration Points

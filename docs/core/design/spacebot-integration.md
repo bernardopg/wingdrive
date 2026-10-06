@@ -1,5 +1,11 @@
 # Spacebot Integration Design
 
+> **Naming:** Wingbot is WingDrive's agent surface (UI, routes and windows).
+> In this document "Spacebot" means the external agent runtime it connects to,
+> including its HTTP API and the `@spacebot/api-client` package. Those names
+> belong to that project and are kept. WingDrive's persisted settings still use
+> the `spacebot` key and `spacebot_*` fields for compatibility (BRAND-002).
+
 ## Purpose
 
 Add first-class Spacebot support to WingDrive without collapsing the two products into one process model.

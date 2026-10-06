@@ -1,4 +1,4 @@
-import { Spacedrop } from '@wingdrive/interface';
+import { Wingdrop } from '@wingdrive/interface';
 
 const samplePeople = [
 	{ id: '1', name: 'Jamie', initials: 'JP', status: 'online' as const },
@@ -11,10 +11,10 @@ const samplePeople = [
 	{ id: '8', name: 'Riley', initials: 'RM', status: 'online' as const }
 ];
 
-export function SpacedropWindow() {
+export function WingdropWindow() {
 	return (
 		<div className="h-screen w-screen bg-sidebar">
-			<Spacedrop people={samplePeople} onClose={() => window.close()} />
+			<Wingdrop people={samplePeople} onClose={() => window.close()} />
 		</div>
 	);
 }
