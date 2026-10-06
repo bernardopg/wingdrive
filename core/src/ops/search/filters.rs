@@ -235,6 +235,50 @@ pub(crate) fn favorite_condition(favorite: bool) -> Condition {
 /// `volumes.uuid` is stored as a 16-byte BLOB (SeaORM default for `Uuid`
 /// on SQLite), so comparing against a quoted UUID string silently returns
 /// zero matches. A blob literal compares byte-for-byte.
+/// The directory itself and a LIKE pattern for everything below it.
+///
+/// A bare `path%` also matched sibling folders sharing the prefix (`/loc`
+/// matched `/loc2`), and `_` or `%` in a folder name acted as wildcards, so
+/// the pattern ends at a path separator and escapes LIKE metacharacters.
+pub(crate) fn directory_subtree_patterns(path: &str) -> (String, String) {
+	let exact = if path.len() > 1 {
+		path.trim_end_matches(['/', '\\']).to_string()
+	} else {
+		path.to_string()
+	};
+	let separator = if exact.contains('\\') && !exact.contains('/') {
+		'\\'
+	} else {
+		'/'
+	};
+	let mut pattern = String::with_capacity(exact.len() + 2);
+	for c in exact.chars() {
+		if matches!(c, '%' | '_' | '\\') {
+			pattern.push('\\');
+		}
+		pattern.push(c);
+	}
+	if !pattern.ends_with(separator) {
+		if separator == '\\' {
+			pattern.push('\\');
+		}
+		pattern.push(separator);
+	}
+	pattern.push('%');
+	(exact, pattern)
+}
+
+/// `directory_paths.path` is the directory itself or lies anywhere below it.
+pub(crate) fn directory_subtree_condition(path: &str) -> Condition {
+	use crate::infra::db::entities::directory_paths;
+	use sea_orm::sea_query::LikeExpr;
+
+	let (exact, pattern) = directory_subtree_patterns(path);
+	Condition::any()
+		.add(directory_paths::Column::Path.eq(exact))
+		.add(directory_paths::Column::Path.like(LikeExpr::new(pattern).escape('\\')))
+}
+
 pub(crate) fn on_volumes_condition(uuids: &[Uuid]) -> Condition {
 	uuids.iter().fold(Condition::all(), |condition, uuid| {
 		condition.add(Expr::cust(format!(
@@ -367,5 +411,55 @@ mod tests {
 			.unwrap();
 
 		assert_eq!(only_a, vec![1, 2, 3, 4]);
+	}
+
+	#[test]
+	fn subtree_pattern_stops_at_the_separator_and_escapes_wildcards() {
+		assert_eq!(
+			directory_subtree_patterns("/home/me/loc"),
+			("/home/me/loc".to_string(), "/home/me/loc/%".to_string())
+		);
+		assert_eq!(
+			directory_subtree_patterns("/home/me/my_docs/"),
+			(
+				"/home/me/my_docs".to_string(),
+				"/home/me/my\\_docs/%".to_string()
+			)
+		);
+		assert_eq!(directory_subtree_patterns("/").1, "/%");
+	}
+
+	#[tokio::test]
+	async fn subtree_condition_excludes_prefix_siblings() {
+		use crate::infra::db::entities::directory_paths;
+
+		let db = Database::connect("sqlite::memory:").await.unwrap();
+		db.execute_unprepared(
+			r#"
+			CREATE TABLE directory_paths (entry_id INTEGER PRIMARY KEY, path TEXT NOT NULL);
+			INSERT INTO directory_paths VALUES
+				(1, '/data/loc'), (2, '/data/loc/inner'), (3, '/data/loc2'),
+				(4, '/data/my_docs'), (5, '/data/myXdocs');
+			"#,
+		)
+		.await
+		.unwrap();
+
+		let ids = |path: &'static str| {
+			let db = db.clone();
+			async move {
+				directory_paths::Entity::find()
+					.select_only()
+					.column(directory_paths::Column::EntryId)
+					.filter(directory_subtree_condition(path))
+					.into_tuple::<i32>()
+					.all(&db)
+					.await
+					.unwrap()
+			}
+		};
+
+		assert_eq!(ids("/data/loc").await, vec![1, 2]);
+		assert_eq!(ids("/data/my_docs").await, vec![4]);
 	}
 }

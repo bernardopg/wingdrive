@@ -3,11 +3,18 @@ import type {
 	File,
 	FileSearchInput,
 	FileSearchOutput,
+	WingPath,
 } from "@wingdrive/ts-client";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useNormalizedQuery } from "../../../contexts/WingDriveContext";
 import { useExplorer } from "../context";
+import {
+	buildSearchInput,
+	findLocationRoot,
+	MIN_SEARCH_LENGTH,
+	SEARCH_PAGE_SIZE,
+} from "./searchQuery";
 import { useVirtualListing } from "./useVirtualListing";
 
 const RECENTS_PAGE_SIZE = 100;
@@ -22,6 +29,8 @@ export interface ExplorerFilesResult {
 	source: FileSource;
 	hasMore?: boolean;
 	page?: number;
+	/** The chosen search scope had no folder to search under, so the whole library was searched. */
+	searchScopeFallback?: boolean;
 }
 
 /**
@@ -44,7 +53,15 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		requestedPage <= Math.floor(0xffffffff / RECENTS_PAGE_SIZE)
 		? requestedPage
 		: 0;
-	const { mode, currentPath, sortBy, sortDirection, viewSettings } = explorer;
+	const {
+		mode,
+		currentPath,
+		sortBy,
+		sortDirection,
+		viewSettings,
+		searchFilters,
+		searchPage,
+	} = explorer;
 
 	// Check for virtual listing first
 	const { files: virtualFiles, isVirtualView } = useVirtualListing();
@@ -55,63 +72,47 @@ export function useExplorerFiles(): ExplorerFilesResult {
 	const isFilteredMode = mode.type === "filtered";
 	const isTagMode = mode.type === "tag";
 
-	// Build search query input
+	// Location scope searches under the root of the location being browsed.
+	const isLocationScope = isSearchMode && mode.type === "search" && mode.scope === "location";
+	const locationsQuery = useNormalizedQuery({
+		query: "locations.list",
+		input: null,
+		resourceType: "location",
+		enabled: isLocationScope,
+	});
+	const locationRoot = useMemo(
+		() =>
+			findLocationRoot(
+				currentPath,
+				(locationsQuery.data as { locations: { wing_path: WingPath }[] } | undefined)
+					?.locations ?? [],
+			),
+		[currentPath, locationsQuery.data],
+	);
+
 	const searchQueryInput = useMemo<FileSearchInput | null>(() => {
-		if (!isSearchMode) return null;
-
-		const searchMode = mode;
-		if (searchMode.type !== "search") return null;
-
-		const { query, scope } = searchMode;
-
-		// Map explorer sortBy to search SortField
-		const searchSortField = (() => {
-			if (!sortBy) return "Relevance" as const;
-			const sortMap: Record<
-				string,
-				"Relevance" | "Name" | "Size" | "ModifiedAt" | "CreatedAt"
-			> = {
-				name: "Name",
-				size: "Size",
-				modified: "ModifiedAt",
-				type: "Relevance",
-			};
-			return sortMap[sortBy] || "Relevance";
-		})();
-
-		return {
-			query,
-			scope:
-				scope === "folder" && currentPath
-					? { Path: { path: currentPath } }
-					: "Library",
-			filters: {
-				file_types: null,
-				tags: null,
-				date_range: null,
-				size_range: null,
-				locations: null,
-				content_types: null,
-				favorite: null,
-				include_hidden: viewSettings.showHiddenFiles ?? null,
-				include_archived: null,
-				at_risk: null,
-				on_volumes: null,
-				not_on_volumes: null,
-				min_volume_count: null,
-				max_volume_count: null,
-			},
-			mode: "Normal",
-			sort: {
-				field: searchSortField,
-				direction: "Desc",
-			},
-			pagination: {
-				limit: 1000,
-				offset: 0,
-			},
-		};
-	}, [isSearchMode, mode, currentPath, sortBy]);
+		if (mode.type !== "search") return null;
+		return buildSearchInput({
+			query: mode.query,
+			scope: mode.scope,
+			currentPath,
+			locationRoot,
+			sortBy,
+			sortDirection,
+			includeHidden: viewSettings.showHiddenFiles,
+			contentTypes: searchFilters.contentTypes ?? [],
+			page: searchPage,
+		});
+	}, [
+		mode,
+		currentPath,
+		locationRoot,
+		sortBy,
+		sortDirection,
+		viewSettings.showHiddenFiles,
+		searchFilters.contentTypes,
+		searchPage,
+	]);
 
 	// Build filtered query input (pre-applied SearchFilters, e.g. redundancy views)
 	const filteredQueryInput = useMemo<FileSearchInput | null>(() => {
@@ -192,12 +193,13 @@ export function useExplorerFiles(): ExplorerFilesResult {
 			mode.type === "search" &&
 			mode.scope === "folder" &&
 			currentPath
-				? (currentPath as any)
+				? currentPath
 				: undefined,
 		enabled:
 			isSearchMode &&
 			!!searchQueryInput &&
-			searchQueryInput.query.length >= 2,
+			searchQueryInput.query.length >= MIN_SEARCH_LENGTH &&
+			(!isLocationScope || locationsQuery.isSuccess),
 	});
 
 	// Recents query
@@ -300,7 +302,10 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		}
 		if (isSearchMode) {
 			return (
-				(searchQuery.data as FileSearchOutput | undefined)?.files || []
+				(searchQuery.data as FileSearchOutput | undefined)?.files.slice(
+					0,
+					SEARCH_PAGE_SIZE,
+				) ?? []
 			);
 		}
 		if (isVirtualView) {
@@ -352,8 +357,16 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		isLoading,
 		error,
 		source,
-		hasMore: isRecentsMode &&
-			((recentsQuery.data as FileSearchOutput | undefined)?.files.length ?? 0) > RECENTS_PAGE_SIZE,
-		page: isRecentsMode ? recentsPage : undefined,
+		hasMore: isRecentsMode
+			? ((recentsQuery.data as FileSearchOutput | undefined)?.files.length ?? 0) > RECENTS_PAGE_SIZE
+			: isSearchMode
+				? ((searchQuery.data as FileSearchOutput | undefined)?.files.length ?? 0) > SEARCH_PAGE_SIZE
+				: false,
+		page: isRecentsMode ? recentsPage : isSearchMode ? searchPage : undefined,
+		searchScopeFallback:
+			isSearchMode && mode.type === "search"
+				? (mode.scope === "folder" && !currentPath) ||
+					(mode.scope === "location" && locationsQuery.isSuccess && !locationRoot)
+				: false,
 	};
 }

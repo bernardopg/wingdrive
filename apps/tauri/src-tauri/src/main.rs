@@ -372,9 +372,16 @@ impl DaemonConnectionPool {
 	}
 }
 
-/// Manages active subscriptions and their cancellation channels
+/// Manages active subscriptions and their cancellation channels.
+///
+/// Each subscription remembers the window that opened it, so closing or
+/// reloading one window cancels only its own streams instead of silencing
+/// every other window.
+/// Subscription id -> (owning window label, cancellation sender).
+type SubscriptionMap = Arc<RwLock<HashMap<u64, (String, oneshot::Sender<()>)>>>;
+
 struct SubscriptionManager {
-	subscriptions: Arc<RwLock<HashMap<u64, oneshot::Sender<()>>>>,
+	subscriptions: SubscriptionMap,
 	counter: std::sync::atomic::AtomicU64,
 }
 
@@ -391,15 +398,15 @@ impl SubscriptionManager {
 			.fetch_add(1, std::sync::atomic::Ordering::SeqCst)
 	}
 
-	async fn register(&self, subscription_id: u64, cancel_tx: oneshot::Sender<()>) {
+	async fn register(&self, subscription_id: u64, window: String, cancel_tx: oneshot::Sender<()>) {
 		self.subscriptions
 			.write()
 			.await
-			.insert(subscription_id, cancel_tx);
+			.insert(subscription_id, (window, cancel_tx));
 	}
 
 	async fn cancel(&self, subscription_id: u64) -> bool {
-		if let Some(cancel_tx) = self.subscriptions.write().await.remove(&subscription_id) {
+		if let Some((_, cancel_tx)) = self.subscriptions.write().await.remove(&subscription_id) {
 			// Send cancellation signal (ignore if receiver is already dropped)
 			let _ = cancel_tx.send(());
 			true
@@ -408,13 +415,19 @@ impl SubscriptionManager {
 		}
 	}
 
-	async fn cancel_all(&self) {
+	async fn cancel_window(&self, window: &str) -> usize {
 		let mut subscriptions = self.subscriptions.write().await;
-		let count = subscriptions.len();
-		for (_, cancel_tx) in subscriptions.drain() {
-			let _ = cancel_tx.send(());
+		let ids: Vec<u64> = subscriptions
+			.iter()
+			.filter(|(_, (label, _))| label == window)
+			.map(|(id, _)| *id)
+			.collect();
+		for id in &ids {
+			if let Some((_, cancel_tx)) = subscriptions.remove(id) {
+				let _ = cancel_tx.send(());
+			}
 		}
-		tracing::info!("Cancelled {} subscriptions", count);
+		ids.len()
 	}
 
 	async fn get_active_count(&self) -> usize {
@@ -834,11 +847,26 @@ async fn daemon_request(
 #[allow(non_snake_case)]
 async fn subscribe_to_events(
 	app: tauri::AppHandle,
+	window: tauri::WebviewWindow,
 	daemon_state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
 	app_state: tauri::State<'_, AppState>,
 	eventTypes: Option<Vec<String>>,
 	filter: Option<serde_json::Value>,
+	channel: Option<String>,
 ) -> Result<u64, String> {
+	// A per-subscription channel delivered only to the calling window keeps
+	// filters meaningful; the shared "core-event" name reached every listener
+	// in every window.
+	if let Some(name) = &channel {
+		let valid = !name.is_empty()
+			&& name
+				.chars()
+				.all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '/' | ':' | '_'));
+		if !valid {
+			return Err(format!("Invalid event channel: {name}"));
+		}
+	}
+	let window_label = window.label().to_string();
 	let daemon_state = daemon_state.read().await;
 
 	// Generate unique subscription ID
@@ -863,8 +891,9 @@ async fn subscribe_to_events(
 	// Register the cancellation sender
 	app_state
 		.subscription_manager
-		.register(subscription_id, cancel_tx)
+		.register(subscription_id, window_label.clone(), cancel_tx)
 		.await;
+	let subscriptions = app_state.subscription_manager.subscriptions.clone();
 
 	// Spawn background task to listen for events
 	tauri::async_runtime::spawn(async move {
@@ -872,10 +901,27 @@ async fn subscribe_to_events(
 			subscription_id = subscription_id,
 			"Creating TCP connection for subscription"
 		);
+		// Tells the window its stream ended so the client can resubscribe, for
+		// example after the daemon restarts. Cancellation by the window is quiet.
+		let notify_closed = |reason: String| {
+			let app = app.clone();
+			let subscriptions = subscriptions.clone();
+			let window_label = window_label.clone();
+			let channel = channel.clone();
+			async move {
+				subscriptions.write().await.remove(&subscription_id);
+				if let Some(channel) = channel {
+					let _ =
+						app.emit_to(window_label.as_str(), &format!("{channel}:closed"), reason);
+				}
+			}
+		};
+
 		let mut stream = match TcpStream::connect(&socket_addr).await {
 			Ok(s) => s,
 			Err(e) => {
 				tracing::error!("Failed to connect for events: {}", e);
+				notify_closed(format!("connect failed: {e}")).await;
 				return;
 			}
 		};
@@ -902,6 +948,7 @@ async fn subscribe_to_events(
 		let request_line = format!("{}\n", serde_json::to_string(&subscribe_request).unwrap());
 		if let Err(e) = writer.write_all(request_line.as_bytes()).await {
 			tracing::error!("Failed to send subscription: {}", e);
+			notify_closed(format!("subscribe failed: {e}")).await;
 			return;
 		}
 
@@ -913,6 +960,7 @@ async fn subscribe_to_events(
 		// Listen for events and emit to frontend
 		let mut reader = BufReader::new(reader);
 		let mut buffer = String::new();
+		let mut ended: Option<String> = None;
 
 		loop {
 			buffer.clear();
@@ -929,6 +977,7 @@ async fn subscribe_to_events(
 					match result {
 						Ok(0) => {
 							tracing::warn!(subscription_id = subscription_id, "Event stream closed");
+							ended = Some("event stream closed".to_string());
 							break;
 						}
 						Ok(_) => {
@@ -940,8 +989,11 @@ async fn subscribe_to_events(
 							match serde_json::from_str::<serde_json::Value>(line) {
 								Ok(response) => {
 									if let Some(event) = response.get("Event") {
-										// Emit to frontend via Tauri events
-										if let Err(e) = app.emit("core-event", event) {
+										let emitted = match &channel {
+											Some(channel) => app.emit_to(window_label.as_str(), channel, event),
+											None => app.emit("core-event", event),
+										};
+										if let Err(e) = emitted {
 											tracing::error!(subscription_id = subscription_id, "Failed to emit event: {}", e);
 										}
 									}
@@ -953,6 +1005,7 @@ async fn subscribe_to_events(
 						}
 						Err(e) => {
 							tracing::error!(subscription_id = subscription_id, "Failed to read event: {}", e);
+							ended = Some(format!("read failed: {e}"));
 							break;
 						}
 					}
@@ -988,6 +1041,10 @@ async fn subscribe_to_events(
 		drop(reader);
 		drop(stream);
 		tracing::info!(subscription_id = subscription_id, "TCP connection closed");
+
+		if let Some(reason) = ended {
+			notify_closed(reason).await;
+		}
 	});
 
 	Ok(subscription_id)
@@ -1011,12 +1068,17 @@ async fn unsubscribe_from_events(
 	}
 }
 
-/// Cleanup all active subscriptions (useful for app reloads)
+/// Cancels the calling window's subscriptions (window reload or close).
 #[tauri::command]
-async fn cleanup_all_connections(app_state: tauri::State<'_, AppState>) -> Result<(), String> {
-	let count = app_state.subscription_manager.get_active_count().await;
-	tracing::info!("Cleaning up {} active subscriptions", count);
-	app_state.subscription_manager.cancel_all().await;
+async fn cleanup_all_connections(
+	window: tauri::WebviewWindow,
+	app_state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+	let count = app_state
+		.subscription_manager
+		.cancel_window(window.label())
+		.await;
+	tracing::info!(window = window.label(), "Cancelled {} subscriptions", count);
 	Ok(())
 }
 
@@ -1078,6 +1140,19 @@ async fn start_daemon_process(
 		return Err("Daemon is already running".to_string());
 	}
 
+	// A daemon we started that crashed stays a zombie until it is waited on,
+	// and its PID still owns the library lock, so the new daemon would open
+	// with no libraries. Reap it before starting a replacement.
+	let previous = state.write().await.daemon_process.take();
+	if let Some(process_arc) = previous {
+		if let Some(mut child) = process_arc.lock().await.take() {
+			if !matches!(child.try_wait(), Ok(Some(_))) {
+				let _ = child.kill();
+				let _ = child.wait();
+			}
+		}
+	}
+
 	// Emit starting event
 	let _ = app.emit("daemon-starting", ());
 
@@ -1113,6 +1188,8 @@ async fn stop_daemon_process(
 			child
 				.kill()
 				.map_err(|e| format!("Failed to kill daemon: {}", e))?;
+			// Waiting reaps the process so its PID stops holding the library lock.
+			let _ = child.wait();
 			tracing::info!("Daemon process killed");
 		}
 	}
@@ -2554,6 +2631,18 @@ fn main() {
 						}
 					}
 				}
+			}
+
+			// A destroyed window can no longer receive its events; release its streams.
+			if let tauri::WindowEvent::Destroyed = event {
+				let app = window.app_handle().clone();
+				let label = window.label().to_string();
+				tauri::async_runtime::spawn(async move {
+					if let Some(app_state) = app.try_state::<AppState>() {
+						let count = app_state.subscription_manager.cancel_window(&label).await;
+						tracing::info!(window = %label, "Released {} subscriptions", count);
+					}
+				});
 			}
 
 			if let tauri::WindowEvent::CloseRequested { .. } = event {

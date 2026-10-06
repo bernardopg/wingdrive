@@ -1,5 +1,6 @@
 import type {
 	SearchFilters as ApiSearchFilters,
+	ContentKind,
 	Device,
 	DirectorySortBy,
 	File,
@@ -62,13 +63,7 @@ export interface ViewSettings {
 export type SearchScope = 'folder' | 'location' | 'library';
 
 export interface SearchFilters {
-	fileTypes?: string[];
-	contentTypes?: string[];
-	sizeMin?: number;
-	sizeMax?: number;
-	dateModifiedStart?: Date;
-	dateModifiedEnd?: Date;
-	tags?: string[];
+	contentTypes?: ContentKind[];
 }
 
 export type ExplorerMode =
@@ -119,6 +114,7 @@ interface UIState {
 	tagModeActive: boolean;
 	mode: ExplorerMode;
 	searchFilters: SearchFilters;
+	searchPage: number;
 }
 
 type UIAction =
@@ -129,7 +125,7 @@ type UIAction =
 	| {type: 'SET_INSPECTOR_VISIBLE'; visible: boolean}
 	| {type: 'SET_QUICK_PREVIEW'; fileId: string | null}
 	| {type: 'SET_TAG_MODE'; active: boolean}
-	| {type: 'ENTER_SEARCH_MODE'; query: string; scope: SearchScope}
+	| {type: 'ENTER_SEARCH_MODE'; query: string; scope?: SearchScope}
 	| {type: 'EXIT_SEARCH_MODE'}
 	| {type: 'ENTER_RECENTS_MODE'}
 	| {type: 'EXIT_RECENTS_MODE'}
@@ -138,6 +134,7 @@ type UIAction =
 	| {type: 'ENTER_TAG_MODE'; tagId: string}
 	| {type: 'EXIT_TAG_MODE'}
 	| {type: 'SET_SEARCH_FILTERS'; filters: SearchFilters}
+	| {type: 'SET_SEARCH_PAGE'; page: number}
 	| {
 			type: 'LOAD_PREFERENCES';
 			viewMode: ViewMode;
@@ -181,16 +178,25 @@ function uiReducer(state: UIState, action: UIAction): UIState {
 			return {...state, tagModeActive: action.active};
 
 		case 'ENTER_SEARCH_MODE':
+			// Typing refines the query; it must not reset the scope the user picked.
 			return {
 				...state,
-				mode: {type: 'search', query: action.query, scope: action.scope}
+				mode: {
+					type: 'search',
+					query: action.query,
+					scope:
+						action.scope ??
+						(state.mode.type === 'search' ? state.mode.scope : 'folder')
+				},
+				searchPage: 0
 			};
 
 		case 'EXIT_SEARCH_MODE':
 			return {
 				...state,
 				mode: {type: 'browse'},
-				searchFilters: {}
+				searchFilters: {},
+				searchPage: 0
 			};
 
 		case 'ENTER_RECENTS_MODE':
@@ -236,8 +242,12 @@ function uiReducer(state: UIState, action: UIAction): UIState {
 		case 'SET_SEARCH_FILTERS':
 			return {
 				...state,
-				searchFilters: action.filters
+				searchFilters: action.filters,
+				searchPage: 0
 			};
+
+		case 'SET_SEARCH_PAGE':
+			return {...state, searchPage: Math.max(0, action.page)};
 
 		case 'LOAD_PREFERENCES':
 			return {
@@ -262,7 +272,8 @@ const initialUIState: UIState = {
 	quickPreviewFileId: null,
 	tagModeActive: false,
 	mode: {type: 'browse'},
-	searchFilters: {}
+	searchFilters: {},
+	searchPage: 0
 };
 
 function targetToUrl(target: NavigationTarget): string {
@@ -401,6 +412,7 @@ interface ExplorerContextValue {
 	setTagModeActive: (active: boolean) => void;
 
 	mode: ExplorerMode;
+	/** Keeps the current scope when none is given and search is already open. */
 	enterSearchMode: (query: string, scope?: SearchScope) => void;
 	exitSearchMode: () => void;
 	enterRecentsMode: () => void;
@@ -411,6 +423,8 @@ interface ExplorerContextValue {
 	exitTagMode: () => void;
 	searchFilters: SearchFilters;
 	setSearchFilters: (filters: SearchFilters) => void;
+	searchPage: number;
+	setSearchPage: (page: number) => void;
 
 	devices: Map<string, Device>;
 
@@ -540,7 +554,7 @@ export function ExplorerProvider({
 		tabState.viewMode,
 		uiState.mode.type,
 		uiState.mode.type === 'search'
-			? `${uiState.mode.scope}:${uiState.mode.query}`
+			? `${uiState.mode.scope}:${uiState.mode.query}:${uiState.searchPage}:${(uiState.searchFilters.contentTypes ?? []).join(',')}`
 			: uiState.mode.type === 'tag'
 				? uiState.mode.tagId
 				: uiState.mode.type === 'filtered'
@@ -789,7 +803,7 @@ export function ExplorerProvider({
 	}, []);
 
 	const enterSearchMode = useCallback(
-		(query: string, scope: SearchScope = 'folder') => {
+		(query: string, scope?: SearchScope) => {
 			uiDispatch({type: 'ENTER_SEARCH_MODE', query, scope});
 		},
 		[]
@@ -828,6 +842,10 @@ export function ExplorerProvider({
 
 	const setSearchFilters = useCallback((filters: SearchFilters) => {
 		uiDispatch({type: 'SET_SEARCH_FILTERS', filters});
+	}, []);
+
+	const setSearchPage = useCallback((page: number) => {
+		uiDispatch({type: 'SET_SEARCH_PAGE', page});
 	}, []);
 
 	const loadPreferencesForSpaceItem = useCallback(
@@ -892,6 +910,8 @@ export function ExplorerProvider({
 			exitTagMode,
 			searchFilters: uiState.searchFilters,
 			setSearchFilters,
+			searchPage: uiState.searchPage,
+			setSearchPage,
 			devices,
 			loadPreferencesForSpaceItem,
 			activeTabId
@@ -943,6 +963,8 @@ export function ExplorerProvider({
 			exitTagMode,
 			uiState.searchFilters,
 			setSearchFilters,
+			uiState.searchPage,
+			setSearchPage,
 			devices,
 			loadPreferencesForSpaceItem,
 			activeTabId

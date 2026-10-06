@@ -1,4 +1,7 @@
+import type { ReactNode } from 'react';
 import { useExplorer } from '../../context';
+import { useExplorerFiles } from '../../hooks/useExplorerFiles';
+import { MIN_SEARCH_LENGTH } from '../../hooks/searchQuery';
 import { GridView } from '../GridView';
 import { ListView } from '../ListView';
 import { MediaView } from '../MediaView';
@@ -22,7 +25,8 @@ import { KnowledgeView } from '../KnowledgeView';
  */
 export function SearchView() {
 	const explorer = useExplorer();
-	const { viewMode, mode } = explorer;
+	const { viewMode, mode, setSearchPage } = explorer;
+	const { files, isLoading, error, hasMore, page = 0 } = useExplorerFiles();
 
 	// Only render if we're in search mode
 	if (mode.type !== 'search') {
@@ -30,7 +34,7 @@ export function SearchView() {
 	}
 
 	// Show minimum character hint
-	if (mode.query.length < 2) {
+	if (mode.query.length < MIN_SEARCH_LENGTH) {
 		return (
 			<div className="flex h-full flex-col items-center justify-center p-8 text-center">
 				<p className="text-ink-dull text-sm">
@@ -40,28 +44,64 @@ export function SearchView() {
 		);
 	}
 
-	// Route to the appropriate view based on viewMode
-	// The views will automatically use search results via useExplorerFiles
+	let view: ReactNode;
 	switch (viewMode) {
-		case 'grid':
-			return <GridView />;
 		case 'list':
-			return <ListView />;
+			view = <ListView />;
+			break;
 		case 'media':
-			return <MediaView />;
+			view = <MediaView />;
+			break;
 		case 'column':
-			return <ColumnView />;
+			view = <ColumnView />;
+			break;
 		case 'size':
-			return <SizeView />;
+			view = <SizeView />;
+			break;
 		case 'knowledge':
-			return <KnowledgeView />;
+			view = <KnowledgeView />;
+			break;
 		default:
-			return (
-				<div className="flex h-full flex-col items-center justify-center p-8 text-center">
-					<p className="text-ink-dull text-sm">
-						Search in {viewMode} view coming soon
-					</p>
-				</div>
-			);
+			view = <GridView />;
 	}
+
+	return (
+		<div className="flex h-full flex-col">
+			<div key={page} className="relative min-h-0 flex-1">
+				{view}
+			</div>
+			{error && (
+				<p role="alert" className="text-ink p-2 text-sm">
+					Search failed: {error.message}
+				</p>
+			)}
+			{!isLoading && !error && files.length === 0 && (
+				<p className="text-ink-dull p-2 text-center text-sm">
+					No results{page > 0 ? ' on this page' : ''}.
+				</p>
+			)}
+			{(page > 0 || hasMore) && (
+				<nav
+					aria-label="Search result pages"
+					className="text-ink flex items-center justify-center gap-3 p-2 text-sm"
+				>
+					<button
+						type="button"
+						disabled={page === 0 || isLoading}
+						onClick={() => setSearchPage(page - 1)}
+					>
+						Previous
+					</button>
+					<span>Page {page + 1}</span>
+					<button
+						type="button"
+						disabled={!hasMore || isLoading}
+						onClick={() => setSearchPage(page + 1)}
+					>
+						Next
+					</button>
+				</nav>
+			)}
+		</div>
+	);
 }

@@ -55,42 +55,96 @@ export class TauriTransport implements Transport {
 		return response;
 	}
 
+	/**
+	 * Opens a daemon event stream for this window.
+	 *
+	 * Each subscription gets its own event channel, delivered only to the
+	 * calling window, so a callback sees only the events its filter asked
+	 * for. When the stream ends without being cancelled (daemon restart,
+	 * dropped connection), the subscription reopens with backoff until the
+	 * caller unsubscribes.
+	 */
 	async subscribe(
 		callback: (event: any) => void,
 		options?: SubscriptionOptions,
 	): Promise<() => void> {
+		const channel = `core-event:${newChannelId()}`;
 		const args = {
 			eventTypes: options?.event_types ?? DEFAULT_EVENT_SUBSCRIPTION,
 			filter: options?.filter ?? null,
+			channel,
 		};
 
+		let disposed = false;
+		let subscriptionId: unknown = null;
+		let retry: ReturnType<typeof setTimeout> | null = null;
+		let attempt = 0;
+
 		// Listen FIRST so buffered events replayed by the daemon are not lost.
-		// subscribe_to_events creates a TCP connection that may emit events
-		// before the invoke promise resolves.
-		const unlisten = await this.listen("core-event", (tauriEvent: any) => {
+		const unlistenEvents = await this.listen(channel, (tauriEvent: any) => {
+			attempt = 0;
 			callback(tauriEvent.payload);
 		});
 
-		let subscriptionId: any;
-		try {
+		const open = async () => {
 			subscriptionId = await this.invoke("subscribe_to_events", args);
+		};
+
+		const reopen = () => {
+			if (disposed || retry) return;
+			const delay = Math.min(
+				RESUBSCRIBE_MAX_DELAY_MS,
+				RESUBSCRIBE_BASE_DELAY_MS * 2 ** attempt,
+			);
+			attempt += 1;
+			retry = setTimeout(async () => {
+				retry = null;
+				if (disposed) return;
+				try {
+					await open();
+				} catch {
+					reopen();
+				}
+			}, delay);
+		};
+
+		let unlistenClosed: () => void;
+		try {
+			unlistenClosed = await this.listen(`${channel}:closed`, reopen);
 		} catch (e) {
-			unlisten();
+			unlistenEvents();
 			throw e;
 		}
 
-		// Return cleanup function that properly unsubscribes
+		try {
+			await open();
+		} catch (e) {
+			unlistenEvents();
+			unlistenClosed();
+			throw e;
+		}
+
 		return async () => {
-			unlisten();
+			disposed = true;
+			if (retry) clearTimeout(retry);
+			unlistenEvents();
+			unlistenClosed();
 			try {
-				await this.invoke("unsubscribe_from_events", {
-					subscriptionId,
-				});
-			} catch (e) {
-				console.warn("[TauriTransport] Failed to unsubscribe:", e);
+				await this.invoke("unsubscribe_from_events", { subscriptionId });
+			} catch {
+				// The stream already ended on its own; nothing is left to cancel.
 			}
 		};
 	}
+}
+
+const RESUBSCRIBE_BASE_DELAY_MS = 500;
+const RESUBSCRIBE_MAX_DELAY_MS = 15_000;
+
+function newChannelId(): string {
+	return typeof crypto !== "undefined" && "randomUUID" in crypto
+		? crypto.randomUUID()
+		: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
 /**

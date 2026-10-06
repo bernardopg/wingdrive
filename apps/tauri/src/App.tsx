@@ -9,9 +9,7 @@ import {
 	JobsScreen,
 	Settings,
 	PlatformProvider,
-	WingDriveProvider,
-	ServerProvider,
-	JobsProvider,
+	AuxiliaryWindow,
 } from "@wingdrive/interface";
 import {
 	SpacebotProvider,
@@ -244,11 +242,9 @@ function App() {
 	if (route === "/settings") {
 		return (
 			<PlatformProvider platform={platform}>
-				<WingDriveProvider client={client}>
-					<ServerProvider>
-						<Settings />
-					</ServerProvider>
-				</WingDriveProvider>
+				<AuxiliaryWindow client={client}>
+					<Settings />
+				</AuxiliaryWindow>
 			</PlatformProvider>
 		);
 	}
@@ -259,27 +255,23 @@ function App() {
 		const isMacOS = window.navigator.userAgent.includes("Mac");
 		return (
 			<PlatformProvider platform={platform}>
-				<WingDriveProvider client={client}>
-					<ServerProvider>
-						<JobsProvider>
+				<AuxiliaryWindow client={client}>
+					<div
+						className={
+							isMacOS
+								? "h-screen bg-app overflow-hidden pt-[52px]"
+								: "h-screen bg-app overflow-hidden"
+						}
+					>
+						{isMacOS && (
 							<div
-								className={
-									isMacOS
-										? "h-screen bg-app overflow-hidden pt-[52px]"
-										: "h-screen bg-app overflow-hidden"
-								}
-							>
-								{isMacOS && (
-									<div
-										data-tauri-drag-region
-										className="absolute inset-x-0 top-0 h-[52px] z-50"
-									/>
-								)}
-								<PopoutInspector />
-							</div>
-						</JobsProvider>
-					</ServerProvider>
-				</WingDriveProvider>
+								data-tauri-drag-region
+								className="absolute inset-x-0 top-0 h-[52px] z-50"
+							/>
+						)}
+						<PopoutInspector />
+					</div>
+				</AuxiliaryWindow>
 			</PlatformProvider>
 		);
 	}
@@ -287,13 +279,11 @@ function App() {
 	if (route === "/quick-preview") {
 		return (
 			<PlatformProvider platform={platform}>
-				<WingDriveProvider client={client}>
-					<ServerProvider>
-						<div className="h-screen bg-app overflow-hidden">
-							<QuickPreview />
-						</div>
-					</ServerProvider>
-				</WingDriveProvider>
+				<AuxiliaryWindow client={client}>
+					<div className="h-screen bg-app overflow-hidden">
+						<QuickPreview />
+					</div>
+				</AuxiliaryWindow>
 			</PlatformProvider>
 		);
 	}
@@ -301,13 +291,11 @@ function App() {
 	if (route === "/job-manager") {
 		return (
 			<PlatformProvider platform={platform}>
-				<WingDriveProvider client={client}>
-					<ServerProvider>
-						<div className="h-screen bg-app overflow-hidden rounded-[10px] border border-transparent frame">
-							<JobsScreen />
-						</div>
-					</ServerProvider>
-				</WingDriveProvider>
+				<AuxiliaryWindow client={client}>
+					<div className="h-screen bg-app overflow-hidden rounded-[10px] border border-transparent frame">
+						<JobsScreen />
+					</div>
+				</AuxiliaryWindow>
 			</PlatformProvider>
 		);
 	}
@@ -351,13 +339,11 @@ function App() {
 
 		return (
 			<PlatformProvider platform={platform}>
-				<WingDriveProvider client={client}>
-					<ServerProvider>
-						<div className="h-screen overflow-hidden bg-app rounded-[10px] border border-transparent frame">
-							<RouterProvider router={spacebotRouter} />
-						</div>
-					</ServerProvider>
-				</WingDriveProvider>
+				<AuxiliaryWindow client={client}>
+					<div className="h-screen overflow-hidden bg-app rounded-[10px] border border-transparent frame">
+						<RouterProvider router={spacebotRouter} />
+					</div>
+				</AuxiliaryWindow>
 			</PlatformProvider>
 		);
 	}
