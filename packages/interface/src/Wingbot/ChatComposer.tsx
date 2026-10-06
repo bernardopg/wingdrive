@@ -55,7 +55,7 @@ export function ChatComposer({
 					<span className="text-accent inline-flex size-3.5 shrink-0">
 						<Sparkle size="100%" weight="fill" />
 					</span>
-					What should Spacebot work on?
+					What should Wingbot work on?
 				</div>
 			)}
 
@@ -80,7 +80,7 @@ export function ChatComposer({
 								onSend();
 							}
 						}}
-						placeholder="Ask Spacebot to review a project, plan work, or start a task..."
+						placeholder="Ask Wingbot to review a project, plan work, or start a task..."
 						className="text-ink placeholder:text-ink-faint h-full w-full resize-none border-0 bg-transparent text-base leading-7 outline-none focus:border-0 focus:outline-none focus:ring-0"
 					/>
 				</motion.div>

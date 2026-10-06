@@ -1,7 +1,7 @@
-// Spacebot Router-based exports
-export {SpacebotProvider, useSpacebot} from './SpacebotContext';
-export {SpacebotLayout} from './SpacebotLayout';
-export {spacebotRoutes, SpacebotRouter} from './router';
+// Wingbot Router-based exports
+export {WingbotProvider, useWingbot} from './WingbotContext';
+export {WingbotLayout} from './WingbotLayout';
+export {wingbotRoutes, WingbotRouter} from './router';
 
 // Route components
 export {ChatRoute} from './routes/ChatRoute';
@@ -14,8 +14,8 @@ export {ScheduleRoute} from './routes/ScheduleRoute';
 // Reusable components
 export {ChatComposer} from './ChatComposer';
 export {ConversationScreen} from './ConversationScreen';
-export {useSpacebotEventSource} from './useSpacebotEventSource';
+export {useWingbotEventSource} from './useWingbotEventSource';
 
 // Export types
-export type {SpacebotContextType} from './SpacebotContext';
+export type {WingbotContextType} from './WingbotContext';
 

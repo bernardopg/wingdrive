@@ -1,6 +1,6 @@
 import {ChatComposer} from '../ChatComposer';
 import {EmptyChatHero} from '../EmptyChatHero';
-import {useSpacebot} from '../SpacebotContext';
+import {useWingbot} from '../WingbotContext';
 
 export function ChatRoute() {
 	const {
@@ -16,7 +16,7 @@ export function ChatRoute() {
 		models,
 		composerProjectSelector,
 		openVoiceOverlay
-	} = useSpacebot();
+	} = useWingbot();
 
 	return (
 		<div className="flex h-full w-full items-center justify-center py-10">

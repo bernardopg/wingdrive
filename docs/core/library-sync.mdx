@@ -30,7 +30,7 @@ Sync uses two protocols based on data ownership:
 | Tags           | Shared       | HLC-ordered log | Per-model strategy  |
 | Collections    | Shared       | HLC-ordered log | Per-model strategy  |
 | User Metadata  | Shared       | HLC-ordered log | Per-model strategy  |
-| Spaces         | Shared       | HLC-ordered log | Per-model strategy  |
+| Wings          | Shared       | HLC-ordered log | Per-model strategy  |
 | Media Metadata | Shared       | HLC-ordered log | Per-model strategy  |
 | Content IDs    | Shared       | HLC-ordered log | Per-model strategy  |
 
@@ -55,7 +55,7 @@ Any device can create or modify:
 - **Collections**: Groups of files
 - **User Metadata**: Notes, ratings, custom fields
 - **Content Identities**: Content-hash-based file identification
-- **Spaces**: User-defined workspace containers
+- **Wings**: User-defined workspace containers (`space` in the API and database)
 - **Media Metadata**: Video, audio, and image metadata
 - **Sidecars**: Generated files like thumbnails and previews
 - **Audit Logs**: Action history for compliance

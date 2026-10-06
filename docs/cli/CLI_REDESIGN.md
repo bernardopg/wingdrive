@@ -142,7 +142,7 @@ This doesn't exist yet so we can implement as a stub
 
 ```bash
 wing share                          # Interactive: select device → select file
-wing share <device> <file>         # Direct share via Spacedrop
+wing share <device> <file>         # Direct share via Wingdrop
 ```
 
 ### Cloud Storage

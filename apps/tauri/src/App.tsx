@@ -12,12 +12,12 @@ import {
 	AuxiliaryWindow,
 } from "@wingdrive/interface";
 import {
-	SpacebotProvider,
-	SpacebotLayout,
+	WingbotProvider,
+	WingbotLayout,
 	ChatRoute,
 	ConversationRoute,
 	TasksRoute,
-} from "@wingdrive/interface/Spacebot";
+} from "@wingdrive/interface/Wingbot";
 import { VoiceOverlay } from "@wingdrive/interface/windows/VoiceOverlay";
 import {createMemoryRouter, Navigate, Outlet, RouterProvider} from "react-router-dom";
 import {
@@ -30,7 +30,7 @@ import { useEffect, useState } from "react";
 import { DragOverlay } from "./routes/DragOverlay";
 import { ContextMenuWindow } from "./routes/ContextMenuWindow";
 import { DragDemo } from "./components/DragDemo";
-import { SpacedropWindow } from "./routes/Spacedrop";
+import { WingdropWindow } from "./routes/Wingdrop";
 import { platform } from "./platform";
 import { initializeContextMenuHandler } from "./contextMenu";
 import { initializeKeybindGlobal } from "./keybinds";
@@ -42,12 +42,14 @@ function getInitialRoute() {
 	if (label.startsWith("drag-overlay")) return "/drag-overlay";
 	if (label.startsWith("context-menu")) return "/contextmenu";
 	if (label.startsWith("drag-demo")) return "/drag-demo";
-	if (label.startsWith("spacedrop")) return "/spacedrop";
+	// "spacedrop" is the pre-BRAND-002 label; restored window state can still use it.
+	if (label.startsWith("wingdrop") || label.startsWith("spacedrop")) return "/wingdrop";
 	if (label.startsWith("settings")) return "/settings";
 	if (label.startsWith("inspector")) return "/inspector";
 	if (label.startsWith("quick-preview")) return "/quick-preview";
 	if (label.startsWith("job-manager")) return "/job-manager";
-	if (label.startsWith("spacebot")) return "/spacebot";
+	// "spacebot" is the pre-BRAND-002 label; restored window state can still use it.
+	if (label.startsWith("wingbot") || label.startsWith("spacebot")) return "/wingbot";
 	if (label.startsWith("voice-overlay")) return "/voice-overlay";
 
 	return "/";
@@ -204,8 +206,8 @@ function App() {
 		return <DragDemo />;
 	}
 
-	if (route === "/spacedrop") {
-		return <SpacedropWindow />;
+	if (route === "/wingdrop") {
+		return <WingdropWindow />;
 	}
 
 	if (error) {
@@ -300,23 +302,23 @@ function App() {
 		);
 	}
 
-	if (route === "/spacebot") {
-		const spacebotRouter = createMemoryRouter(
+	if (route === "/wingbot") {
+		const wingbotRouter = createMemoryRouter(
 			[
 				{
-					path: "/spacebot",
+					path: "/wingbot",
 					element: (
-						<SpacebotProvider>
+						<WingbotProvider>
 							<Outlet />
-						</SpacebotProvider>
+						</WingbotProvider>
 					),
 					children: [
 						{
 							index: true,
-							element: <Navigate to="/spacebot/chat" replace />,
+							element: <Navigate to="/wingbot/chat" replace />,
 						},
 						{
-							element: <SpacebotLayout />,
+							element: <WingbotLayout />,
 							children: [
 								{
 									path: "chat",
@@ -333,7 +335,7 @@ function App() {
 				},
 			],
 			{
-				initialEntries: ["/spacebot"],
+				initialEntries: ["/wingbot"],
 			}
 		);
 
@@ -341,7 +343,7 @@ function App() {
 			<PlatformProvider platform={platform}>
 				<AuxiliaryWindow client={client}>
 					<div className="h-screen overflow-hidden bg-app rounded-[10px] border border-transparent frame">
-						<RouterProvider router={spacebotRouter} />
+						<RouterProvider router={wingbotRouter} />
 					</div>
 				</AuxiliaryWindow>
 			</PlatformProvider>

@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 import {apiClient} from './spacebot-api-client.ts';
 
-describe('Spacebot fallback client', () => {
+describe('Wingbot fallback client', () => {
 	test('rejects mutations instead of reporting false success', async () => {
 		const mutations = [
 			apiClient.ttsGenerate('hello', {
@@ -29,7 +29,7 @@ describe('Spacebot fallback client', () => {
 		expect(results).toHaveLength(7);
 		for (const result of results) {
 			expect(result.status).toBe('rejected');
-			expect(String(result.reason)).toContain('Spacebot is unavailable');
+			expect(String(result.reason)).toContain('Wingbot is unavailable');
 		}
 	});
 });

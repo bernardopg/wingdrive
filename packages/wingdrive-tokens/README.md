@@ -1,6 +1,6 @@
 # @wingdrive/tokens
 
-Design tokens for SpaceUI.
+Design tokens for WingUI, the WingDrive design system.
 This package is CSS-first for Tailwind v4, with optional raw color exports for programmatic consumers.
 
 ## Installation

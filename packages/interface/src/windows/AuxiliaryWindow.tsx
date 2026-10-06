@@ -32,7 +32,7 @@ function DaemonGate({children}: {children: ReactNode}) {
 
 /**
  * Shared shell for secondary windows (Settings, Jobs, Inspector, Quick
- * Preview, Spacebot).
+ * Preview, Wingbot).
  *
  * These windows run their own React tree, so without this shell they missed
  * the main window's toasts, dialogs, jobs context, theme and live file

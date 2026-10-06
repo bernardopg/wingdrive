@@ -10,12 +10,12 @@ interface Person {
 	status: 'online' | 'offline';
 }
 
-interface SpacedropProps {
+interface WingdropProps {
 	onClose?: () => void;
 	people?: Person[];
 }
 
-export function Spacedrop({ onClose, people = [] }: SpacedropProps) {
+export function Wingdrop({ onClose, people = [] }: WingdropProps) {
 	const [selectedPerson, setSelectedPerson] = useState<string | null>(null);
 	const [starSpeed, setStarSpeed] = useState(1);
 

@@ -64,15 +64,15 @@ The VDFS gives us:
 
 File System Intelligence uses that substrate to attach context and policy to files and subtrees in a way that is portable across devices and storage backends.
 
-## Relationship to Spacebot
+## Relationship to Wingbot
 
 WingDrive owns File System Intelligence.
 
-Spacebot is the first major producer and consumer of it.
+Wingbot is the first major producer and consumer of it.
 
-This is important because the intelligence layer should not be framed as only a Spacebot feature. It is a core WingDrive capability that any agent or automation system can use.
+This is important because the intelligence layer should not be framed as only a Wingbot feature. It is a core WingDrive capability that any agent or automation system can use.
 
-Spacebot can:
+Wingbot can:
 
 - write user-informed context into the filesystem intelligence layer
 - read that context while navigating files and directories
@@ -380,7 +380,7 @@ Given a home directory with:
 ~/Documents
 ```
 
-The user tells Spacebot:
+The user tells Wingbot:
 
 - "I keep active repositories in Projects"
 - "Archive contains repos I'm not actively working on"
@@ -487,8 +487,8 @@ This is enough to demonstrate the full value of File System Intelligence without
 
 ### Phase 3: Agent Integration
 
-- Spacebot reads context while navigating via WingDrive
-- Spacebot can write facts and notes with attribution
+- Wingbot reads context while navigating via WingDrive
+- Wingbot can write facts and notes with attribution
 
 ### Phase 4: Summary Jobs
 

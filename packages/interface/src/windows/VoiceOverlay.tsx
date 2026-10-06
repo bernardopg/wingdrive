@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlatform } from "../contexts/PlatformContext";
 import { useAudioRecorder } from "../hooks/useAudioRecorder";
 import { useTtsPlayback } from "../hooks/useTtsPlayback";
-import { useSpacebotEventSource } from "../Spacebot/useSpacebotEventSource";
+import { useWingbotEventSource } from "../Wingbot/useWingbotEventSource";
 
 type VoiceState = "idle" | "recording" | "processing" | "speaking";
 
@@ -232,7 +232,7 @@ export function VoiceOverlay() {
 		[sessionId],
 	);
 
-	useSpacebotEventSource(getEventsUrl(), {
+	useWingbotEventSource(getEventsUrl(), {
 		handlers: useMemo(
 			() => ({
 				spoken_response: handleSpokenResponse,
@@ -375,7 +375,7 @@ export function VoiceOverlay() {
 						<div className="flex items-center gap-2">
 							<div className="h-3 w-3 rounded-full bg-accent" />
 							<span className="text-xs font-medium text-ink">
-								Spacebot
+								Wingbot
 							</span>
 						</div>
 						<div className="flex min-w-0 items-center gap-2">
@@ -465,7 +465,7 @@ export function VoiceOverlay() {
 										<span className="text-[11px] font-medium text-ink-faint">
 											{entry.role === "user"
 												? "You"
-												: "Spacebot"}
+												: "Wingbot"}
 										</span>
 										<p className="whitespace-pre-wrap text-xs leading-relaxed text-ink">
 											{entry.text}

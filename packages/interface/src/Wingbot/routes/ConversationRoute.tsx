@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { ConversationScreen } from '../ConversationScreen';
-import { useSpacebot } from '../SpacebotContext';
+import { useWingbot } from '../WingbotContext';
 
 export function ConversationRoute() {
 	const params = useParams();
@@ -24,7 +24,7 @@ export function ConversationRoute() {
 		models,
 		composerProjectSelector,
 		openVoiceOverlay
-	} = useSpacebot();
+	} = useWingbot();
 
 	const conversation = conversationId ? getConversationById(conversationId) : null;
 	const messages = conversationId ? getConversationMessages(conversationId) : [];

@@ -471,14 +471,14 @@ async fn app_ready(window: tauri::Window) {
 	window.set_focus().ok();
 
 	// #[cfg(debug_assertions)]
-	// if window.label() == "main" && window.app_handle().get_webview_window("spacebot").is_none() {
+	// if window.label() == "main" && window.app_handle().get_webview_window("wingbot").is_none() {
 	// 	if let Err(error) = windows::show_window(
 	// 		window.app_handle().clone(),
-	// 		windows::WingDriveWindow::Spacebot,
+	// 		windows::WingDriveWindow::Wingbot,
 	// 	)
 	// 	.await
 	// 	{
-	// 		tracing::warn!(?error, "Failed to auto-open Spacebot window");
+	// 		tracing::warn!(?error, "Failed to auto-open Wingbot window");
 	// 	}
 	// }
 }
@@ -2042,7 +2042,7 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 				.build(app)?,
 		)
 		.item(
-			&MenuItemBuilder::with_id("spacedrop", "Spacedrop")
+			&MenuItemBuilder::with_id("wingdrop", "Wingdrop")
 				.accelerator("CmdOrCtrl+Shift+S")
 				.build(app)?,
 		)
@@ -2214,13 +2214,13 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 					}
 				});
 			}
-			"spacedrop" => {
+			"wingdrop" => {
 				let app_clone = app_handle.clone();
 				tauri::async_runtime::spawn(async move {
 					if let Err(e) =
-						windows::show_window(app_clone, windows::WingDriveWindow::Spacedrop).await
+						windows::show_window(app_clone, windows::WingDriveWindow::Wingdrop).await
 					{
-						tracing::error!("Failed to show spacedrop: {}", e);
+						tracing::error!("Failed to show wingdrop: {}", e);
 					}
 				});
 			}

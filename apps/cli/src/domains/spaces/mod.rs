@@ -6,11 +6,11 @@ use wing_core::ops::spaces::{SpacesListQuery, SpacesListQueryInput};
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum SpacesCmd {
-	/// List all spaces
+	/// List all wings
 	List,
-	/// Get space layout
+	/// Get a wing's layout
 	Layout {
-		/// Space ID
+		/// Wing ID
 		space_id: String,
 	},
 }
@@ -45,10 +45,10 @@ async fn list_spaces(ctx: &Context) -> Result<()> {
 		.map_err(|e| anyhow::anyhow!("Failed to parse response: {}", e))?;
 
 	println!("\nQuery executed successfully!");
-	println!("Found {} spaces:", result.spaces.len());
+	println!("Found {} wings:", result.spaces.len());
 
 	if result.spaces.is_empty() {
-		println!("  (no spaces found)");
+		println!("  (no wings found)");
 	} else {
 		let mut table = Table::new();
 		table.load_style(UTF8_BORDERS_ONLY);

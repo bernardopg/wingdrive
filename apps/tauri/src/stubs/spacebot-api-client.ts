@@ -1,7 +1,7 @@
-//! # Spacebot API Client Stub
+//! # Wingbot API Client Stub
 //!
 //! Stand-in for `@spacebot/api-client` when the private spacebot repo is not
-//! checked out next to this one. The Spacebot UI is optional, so the desktop
+//! checked out next to this one. The Wingbot UI is optional, so the desktop
 //! build must still link without it. Previously the build externalized the
 //! bare specifier, which left an unresolvable `import ... from
 //! "@spacebot/api-client"` in the bundle and killed the whole app at load
@@ -9,7 +9,7 @@
 //!
 //! Only runtime values need stubbing. Every other import from this module in
 //! `packages/interface` is `import type`, which is erased at compile time.
-//! The exported types mirror the real API client surface so the Spacebot UI
+//! The exported types mirror the real API client surface so the Wingbot UI
 //! typechecks without the private repo; keep them in sync when the UI starts
 //! calling new endpoints.
 
@@ -148,7 +148,7 @@ export interface TypingStateEvent {
 const unavailable = (): Promise<never> =>
 	Promise.reject(
 		new Error(
-			'Spacebot is unavailable in this build; no changes were made.'
+			'Wingbot is unavailable in this build; no changes were made.'
 		)
 	);
 

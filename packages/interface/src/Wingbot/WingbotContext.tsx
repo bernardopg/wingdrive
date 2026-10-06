@@ -24,16 +24,16 @@ import {
 } from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {usePlatform} from '../contexts/PlatformContext';
-import {useSpacebotEventSource} from './useSpacebotEventSource';
+import {useWingbotEventSource} from './useWingbotEventSource';
 
 export const primaryItems = [
-	{icon: ChatCircleDots, label: 'Chat', path: '/spacebot/chat'},
-	{icon: Checks, label: 'Tasks', path: '/spacebot/tasks'}
+	{icon: ChatCircleDots, label: 'Chat', path: '/wingbot/chat'},
+	{icon: Checks, label: 'Tasks', path: '/wingbot/tasks'}
 ];
 
 export const projects = [
 	{name: 'WingDrive', detail: 'Main workspace', ball: WingDriveLogo},
-	{name: 'Spacebot Runtime', detail: 'Remote control plane', ball: WingDriveLogo},
+	{name: 'Wingbot Runtime', detail: 'Remote control plane', ball: WingDriveLogo},
 	{name: 'Hosted Platform', detail: 'Deploy and observe', ball: WingDriveLogo}
 ];
 
@@ -45,7 +45,7 @@ export const agents = [
 
 export const projectOptions = [
 	'WingDrive v3',
-	'Spacebot Runtime',
+	'Wingbot Runtime',
 	'Hosted Platform'
 ];
 export const models = [
@@ -64,7 +64,7 @@ export const models = [
 	}
 ];
 
-export interface SpacebotContextType {
+export interface WingbotContextType {
 	// Navigation state
 	search: string;
 	setSearch: (value: string) => void;
@@ -115,17 +115,17 @@ interface PortalHistoryItem {
 	timestamp: string;
 }
 
-const SpacebotContext = createContext<SpacebotContextType | null>(null);
+const WingbotContext = createContext<WingbotContextType | null>(null);
 
-export function useSpacebot() {
-	const context = useContext(SpacebotContext);
+export function useWingbot() {
+	const context = useContext(WingbotContext);
 	if (!context) {
-		throw new Error('useSpacebot must be used within SpacebotProvider');
+		throw new Error('useWingbot must be used within WingbotProvider');
 	}
 	return context;
 }
 
-interface SpacebotProviderProps {
+interface WingbotProviderProps {
 	children: ReactNode;
 }
 
@@ -134,16 +134,16 @@ export const isMacOS =
 	(navigator.platform.toLowerCase().includes('mac') ||
 		navigator.userAgent.includes('Mac'));
 
-export function SpacebotProvider({children}: SpacebotProviderProps) {
+export function WingbotProvider({children}: WingbotProviderProps) {
 	if (import.meta.env.VITE_SPACEBOT_AVAILABLE !== 'true') {
 		return (
 			<div className="bg-app text-ink flex h-full items-center justify-center p-8">
 				<div className="border-app-line bg-app-box max-w-md rounded-2xl border p-6 text-center">
 					<h1 className="text-lg font-semibold">
-						Spacebot unavailable
+						Wingbot unavailable
 					</h1>
 					<p className="text-ink-dull mt-2 text-sm">
-						This build does not include the Spacebot runtime. No
+						This build does not include the Wingbot runtime. No
 						messages or tasks were changed.
 					</p>
 				</div>
@@ -151,10 +151,10 @@ export function SpacebotProvider({children}: SpacebotProviderProps) {
 		);
 	}
 
-	return <AvailableSpacebotProvider>{children}</AvailableSpacebotProvider>;
+	return <AvailableWingbotProvider>{children}</AvailableWingbotProvider>;
 }
 
-function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
+function AvailableWingbotProvider({children}: WingbotProviderProps) {
 	const platform = usePlatform();
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
@@ -207,7 +207,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 
 	// Conversations query
 	const conversationsQuery = useQuery({
-		queryKey: ['spacebot', 'conversations', selectedAgent],
+		queryKey: ['wingbot', 'conversations', selectedAgent],
 		queryFn: () =>
 			apiClient.listPortalConversations(selectedAgent, false, 100),
 		refetchInterval: 4000
@@ -221,7 +221,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 		? decodeURIComponent(params['*'])
 		: undefined;
 	const historyQuery = useQuery({
-		queryKey: ['spacebot', 'portal-history', selectedAgent, conversationId],
+		queryKey: ['wingbot', 'portal-history', selectedAgent, conversationId],
 		queryFn: () =>
 			apiClient.portalHistory(selectedAgent, conversationId!, 200),
 		enabled: Boolean(conversationId),
@@ -252,7 +252,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 		onSuccess: async (response: PortalConversationResponse) => {
 			navigateToConversation(response.conversation.id);
 			await queryClient.invalidateQueries({
-				queryKey: ['spacebot', 'conversations', selectedAgent]
+				queryKey: ['wingbot', 'conversations', selectedAgent]
 			});
 		}
 	});
@@ -283,11 +283,11 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 			}
 			await Promise.all([
 				queryClient.invalidateQueries({
-					queryKey: ['spacebot', 'conversations', selectedAgent]
+					queryKey: ['wingbot', 'conversations', selectedAgent]
 				}),
 				queryClient.invalidateQueries({
 					queryKey: [
-						'spacebot',
+						'wingbot',
 						'portal-history',
 						selectedAgent,
 						targetConversationId
@@ -298,17 +298,17 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 	});
 
 	// SSE event source
-	useSpacebotEventSource(getEventsUrl(), {
+	useWingbotEventSource(getEventsUrl(), {
 		enabled: activeTab === 'Chat',
 		onReconnect: () => {
 			void queryClient.invalidateQueries({
-				queryKey: ['spacebot', 'conversations', selectedAgent]
+				queryKey: ['wingbot', 'conversations', selectedAgent]
 			});
 			if (conversationId) {
 				void Promise.all([
 					queryClient.invalidateQueries({
 						queryKey: [
-							'spacebot',
+							'wingbot',
 							'portal-history',
 							selectedAgent,
 							conversationId
@@ -316,7 +316,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 					}),
 					queryClient.invalidateQueries({
 						queryKey: [
-							'spacebot',
+							'wingbot',
 							'channel-timeline',
 							conversationId
 						]
@@ -358,7 +358,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 				}
 				setIsTyping(false);
 				setStreamingAssistantText('');
-				const timelineKey = ['spacebot', 'channel-timeline', conversationId];
+				const timelineKey = ['wingbot', 'channel-timeline', conversationId];
 				// Without a loaded timeline there is nothing to append to; refetch so
 				// the reply is not lost along with the cleared stream.
 				if (!queryClient.getQueryData(timelineKey)) {
@@ -366,7 +366,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 				}
 				// Push the assistant message directly into the timeline cache.
 				queryClient.setQueryData(
-					['spacebot', 'channel-timeline', conversationId],
+					['wingbot', 'channel-timeline', conversationId],
 					(
 						old: {items: unknown[]; has_more: boolean} | undefined
 					) => {
@@ -389,7 +389,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 					}
 				);
 				void queryClient.invalidateQueries({
-					queryKey: ['spacebot', 'conversations', selectedAgent]
+					queryKey: ['wingbot', 'conversations', selectedAgent]
 				});
 			},
 			inbound_message: (payload) => {
@@ -403,7 +403,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 				// Push the user message directly into the timeline cache
 				// so it appears instantly (like the portal SSE-driven approach).
 				queryClient.setQueryData(
-					['spacebot', 'channel-timeline', conversationId],
+					['wingbot', 'channel-timeline', conversationId],
 					(
 						old: {items: unknown[]; has_more: boolean} | undefined
 					) => {
@@ -426,7 +426,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 					}
 				);
 				void queryClient.invalidateQueries({
-					queryKey: ['spacebot', 'conversations', selectedAgent]
+					queryKey: ['wingbot', 'conversations', selectedAgent]
 				});
 			}
 		}
@@ -467,7 +467,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 		setActiveTab('Chat');
 		setIsTyping(false);
 		setStreamingAssistantText('');
-		navigate('/spacebot/chat');
+		navigate('/wingbot/chat');
 	}, [navigate]);
 
 	const navigateToConversation = useCallback(
@@ -475,7 +475,7 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 			setActiveTab('Chat');
 			setIsTyping(false);
 			setStreamingAssistantText('');
-			navigate(`/spacebot/chat/conversation/${conversationId}`);
+			navigate(`/wingbot/chat/conversation/${conversationId}`);
 		},
 		[navigate]
 	);
@@ -544,8 +544,8 @@ function AvailableSpacebotProvider({children}: SpacebotProviderProps) {
 	);
 
 	return (
-		<SpacebotContext.Provider value={value}>
+		<WingbotContext.Provider value={value}>
 			{children}
-		</SpacebotContext.Provider>
+		</WingbotContext.Provider>
 	);
 }

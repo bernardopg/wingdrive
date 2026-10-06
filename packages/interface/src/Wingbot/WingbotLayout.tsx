@@ -22,8 +22,8 @@ import {
 	isMacOS,
 	primaryItems,
 	projects,
-	useSpacebot
-} from './SpacebotContext';
+	useWingbot
+} from './WingbotContext';
 
 function SidebarHistoryItem({
 	conversation,
@@ -61,7 +61,7 @@ function SidebarHistory() {
 		conversationsError,
 		search,
 		navigateToConversation
-	} = useSpacebot();
+	} = useWingbot();
 
 	if (conversationsLoading) {
 		return (
@@ -119,7 +119,7 @@ function SidebarHistory() {
 	});
 }
 
-export function SpacebotLayout() {
+export function WingbotLayout() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const {
@@ -130,9 +130,9 @@ export function SpacebotLayout() {
 		currentAgent,
 		agentSelector,
 		navigateToChat
-	} = useSpacebot();
+	} = useWingbot();
 
-	const isChatActive = location.pathname.startsWith('/spacebot/chat');
+	const isChatActive = location.pathname.startsWith('/wingbot/chat');
 
 	// Navigation history for back/forward buttons
 	const [historyStack, setHistoryStack] = useState<string[]>([

@@ -76,9 +76,9 @@ external agent service is bundled or required to build, run, or release
 WingDrive. When no runtime is configured, the desktop app reports that the
 agent surface is unavailable instead of simulating success.
 
-Each Spacebot instance pairs with one WingDrive node as its home device. That node authenticates the agent, maintains the device graph, resolves permissions, and forwards operations to peer devices. Every device in your library can reach Spacebot through the paired node over P2P (Iroh/QUIC) without direct network access. One agent runtime serves your entire device fleet.
+Each Wingbot instance pairs with one WingDrive node as its home device. That node authenticates the agent, maintains the device graph, resolves permissions, and forwards operations to peer devices. Every device in your library can reach Wingbot through the paired node over P2P (Iroh/QUIC) without direct network access. One agent runtime serves your entire device fleet.
 
-When Spacebot spawns a worker, that worker can target any device in the library. File reads, shell commands, and operations proxy through WingDrive to the target device. Talk to the agent from your phone while work executes on a server. Read files from a NAS, run commands on a workstation, report to a laptop — all in one task.
+When Wingbot spawns a worker, that worker can target any device in the library. File reads, shell commands, and operations proxy through WingDrive to the target device. Talk to the agent from your phone while work executes on a server. Read files from a NAS, run commands on a workstation, report to a laptop — all in one task.
 
 Every operation passes through WingDrive's permission system: which devices the agent can access, which paths are readable or writable, which operations are allowed, and which require human confirmation. The paired node resolves effective policy before forwarding. One security model, one audit surface across all devices and clouds.
 
