@@ -24,15 +24,14 @@ impl CoreAction for SpacedropSendAction {
 		self,
 		context: Arc<crate::context::CoreContext>,
 	) -> std::result::Result<Self::Output, ActionError> {
-		let _net = context
-			.get_networking()
-			.await
-			.ok_or_else(|| ActionError::Internal("Networking not initialized".to_string()))?;
-		// For now, dispatch a local job-based transfer when possible; placeholder returns none
-		Ok(SpacedropSendOutput {
-			job_id: None,
-			session_id: Some(uuid::Uuid::new_v4()),
-		})
+		let _ = context;
+		// Not implemented: this used to return a random session id and report
+		// success while nothing was sent. Copy to a paired device with
+		// files.copy and a local://<device>/path destination instead.
+		Err(ActionError::Internal(
+			"Wingdrop is not implemented yet; copy to the paired device with files.copy instead"
+				.to_string(),
+		))
 	}
 
 	fn action_kind(&self) -> &'static str {
