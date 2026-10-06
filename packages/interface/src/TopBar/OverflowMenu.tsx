@@ -27,7 +27,7 @@ export function OverflowButton({ items }: OverflowButtonProps) {
 
 			<DropdownMenu.Portal>
 				<DropdownMenu.Content
-					className="min-w-[180px] rounded-lg bg-app border border-app-line shadow-2xl py-1 z-50"
+					className="min-w-[180px] rounded-lg bg-app border border-app-line shadow-2xl py-1 z-[70]"
 					sideOffset={8}
 					align="start"
 				>
@@ -54,9 +54,12 @@ export function OverflowButton({ items }: OverflowButtonProps) {
 									<span className="text-menu-faint text-xs">▶</span>
 								</DropdownMenu.SubTrigger>
 								<DropdownMenu.Portal>
+									{/* Above the TopBar (z-60) and the inspector, flush with the
+									    trigger: a gap closed the submenu before the pointer
+									    reached it when it opened to the left. */}
 									<DropdownMenu.SubContent
-										className="z-50"
-										sideOffset={8}
+										className="z-[70]"
+										sideOffset={0}
 									>
 										{item.submenuContent || item.element}
 									</DropdownMenu.SubContent>

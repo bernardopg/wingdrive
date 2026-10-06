@@ -102,7 +102,7 @@ export function useSpaceItemContextMenu({
 					}
 				}
 			},
-			keybind: "⌘⇧R",
+			keybindId: 'explorer.revealInNativeExplorer',
 			condition: () => {
 				if (!isPathItem(item.item_type)) return false;
 				const sdPath = item.item_type.Path.wing_path;

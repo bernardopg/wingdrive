@@ -21,7 +21,6 @@ interface ViewOption {
 	label: string;
 	icon: Icon;
 	color: string;
-	keybind: string;
 }
 
 const viewOptions: ViewOption[] = [
@@ -30,42 +29,36 @@ const viewOptions: ViewOption[] = [
 		label: 'Grid',
 		icon: GridFour,
 		color: 'bg-accent',
-		keybind: '⌘1'
 	},
 	{
 		id: 'list',
 		label: 'List',
 		icon: Rows,
 		color: 'bg-purple-500',
-		keybind: '⌘2'
 	},
 	{
 		id: 'media',
 		label: 'Media',
 		icon: Camera,
 		color: 'bg-pink-500',
-		keybind: '⌘3'
 	},
 	{
 		id: 'column',
 		label: 'Column',
 		icon: Columns,
 		color: 'bg-orange-500',
-		keybind: '⌘4'
 	},
 	{
 		id: 'size',
 		label: 'Size',
 		icon: ChartPieSlice,
 		color: 'bg-green-500',
-		keybind: '⌘5'
 	},
 	{
 		id: 'knowledge',
 		label: 'Knowledge',
 		icon: Sparkle,
 		color: 'bg-purple-500',
-		keybind: '⌘6'
 	}
 	// {
 	// 	id: "timeline",
@@ -116,13 +109,8 @@ export function ViewModeMenuPanel({
 							className="size-6 text-white"
 							weight={viewMode === option.id ? 'fill' : 'bold'}
 						/>
-						<div className="flex flex-col items-center gap-0.5">
-							<div className="text-menu-ink text-xs font-medium">
-								{option.label}
-							</div>
-							<div className="text-menu-faint text-[10px]">
-								{option.keybind}
-							</div>
+						<div className="text-menu-ink text-xs font-medium">
+							{option.label}
 						</div>
 					</button>
 				))}

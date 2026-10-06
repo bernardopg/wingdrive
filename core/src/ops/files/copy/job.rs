@@ -678,7 +678,7 @@ impl JobHandler for FileCopyJob {
 
 					// If this is a move operation and the strategy didn't handle deletion,
 					// we need to delete the source after successful copy
-					if is_move && resolved_source.device_slug() == final_destination.device_slug() {
+					if is_move && !resolved_source.is_cross_device(&final_destination) {
 						// For same-device moves, LocalMoveStrategy handles deletion atomically
 						// For cross-volume moves, LocalStreamCopyStrategy needs manual deletion
 						if let Some(vm) = volume_manager.as_deref() {

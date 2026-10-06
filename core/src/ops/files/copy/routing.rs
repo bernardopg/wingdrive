@@ -52,10 +52,7 @@ impl CopyStrategyRouter {
 
 		// Cross-device transfer - always use network strategy
 		// Compare device slugs to detect if paths are on different devices
-		let is_cross_device = match (source.device_slug(), destination.device_slug()) {
-			(Some(src_slug), Some(dst_slug)) => src_slug != dst_slug,
-			_ => false, // If either is None (cloud/content paths), not cross-device
-		};
+		let is_cross_device = source.is_cross_device(destination);
 
 		if is_cross_device {
 			info!("[ROUTING] Cross-device detected - selecting RemoteTransferStrategy");
@@ -141,10 +138,7 @@ impl CopyStrategyRouter {
 		copy_method: &CopyMethod,
 		volume_manager: Option<&VolumeManager>,
 	) -> (Box<dyn CopyStrategy>, CopyStrategyMetadata) {
-		let is_cross_device = match (source.device_slug(), destination.device_slug()) {
-			(Some(src_slug), Some(dst_slug)) => src_slug != dst_slug,
-			_ => false,
-		};
+		let is_cross_device = source.is_cross_device(destination);
 
 		if is_cross_device {
 			let description = if is_move {
@@ -333,10 +327,7 @@ impl CopyStrategyRouter {
 		volume_manager: Option<&VolumeManager>,
 	) -> String {
 		// Check if cross-device using device slugs
-		let is_cross_device = match (source.device_slug(), destination.device_slug()) {
-			(Some(src_slug), Some(dst_slug)) => src_slug != dst_slug,
-			_ => false,
-		};
+		let is_cross_device = source.is_cross_device(destination);
 
 		if is_cross_device {
 			return if is_move {
@@ -431,10 +422,7 @@ impl CopyStrategyRouter {
 		volume_manager: Option<&VolumeManager>,
 	) -> PerformanceEstimate {
 		// Cross-device transfers always use network
-		let is_cross_device = match (source.device_slug(), destination.device_slug()) {
-			(Some(src_slug), Some(dst_slug)) => src_slug != dst_slug,
-			_ => false,
-		};
+		let is_cross_device = source.is_cross_device(destination);
 
 		if is_cross_device {
 			return PerformanceEstimate {

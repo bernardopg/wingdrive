@@ -124,7 +124,6 @@ export function useVolumeContextMenu({
 					console.error('Failed to eject volume:', err);
 				}
 			},
-			keybind: '⌘E',
 			condition: () => isRemovable && volume.is_mounted
 		}
 	];

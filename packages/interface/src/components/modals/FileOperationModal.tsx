@@ -17,6 +17,7 @@ import type {File as FileType, WingPath} from '@wingdrive/ts-client';
 import {useEffect, useState} from 'react';
 import {useForm} from 'react-hook-form';
 import {usePlatform} from '../../contexts/PlatformContext';
+import {getCurrentPlatform, toDisplayString} from '../../util/keybinds/platform';
 import {
 	useLibraryMutation,
 	useLibraryQuery
@@ -45,6 +46,11 @@ type DialogPhase =
 	| {type: 'executing'}
 	| {type: 'error'; message: string}
 	| {type: 'outcome'; outcome: FileOperationOutcome};
+
+// The mode shortcuts accept Cmd or Ctrl; show the one this platform uses.
+function modeShortcut(key: '1' | '2'): string {
+	return toDisplayString({modifiers: ['Cmd'], key}, getCurrentPlatform());
+}
 
 export function useFileOperationDialog() {
 	return (options: Omit<FileOperationDialogProps, 'id'>) => {
@@ -517,7 +523,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 						>
 							<CopyIcon className="size-4" weight="bold" />
 							Copy
-							<span className="text-xs opacity-60">⌘1</span>
+							<span className="text-xs opacity-60">{modeShortcut('1')}</span>
 						</button>
 						<button
 							type="button"
@@ -530,7 +536,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 						>
 							<ArrowsLeftRight className="size-4" weight="bold" />
 							Move
-							<span className="text-xs opacity-60">⌘2</span>
+							<span className="text-xs opacity-60">{modeShortcut('2')}</span>
 						</button>
 					</div>
 				</div>

@@ -28,7 +28,11 @@ export const explorerKeybinds = {
 	renameFile: defineKeybind({
 		id: 'explorer.renameFile',
 		label: 'Rename',
-		combo: {modifiers: [], key: 'Enter'},
+		// Enter is Finder's rename key; Linux and Windows file managers use F2.
+		combo: {
+			macos: {modifiers: [], key: 'Enter'},
+			default: {modifiers: [], key: 'F2'}
+		},
 		scope: 'explorer'
 	}),
 

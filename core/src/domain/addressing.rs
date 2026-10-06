@@ -215,6 +215,28 @@ impl WingPath {
 			|| device_slug == get_current_device_id().to_string()
 	}
 
+	/// Whether two physical paths live on different devices.
+	///
+	/// The current device answers to its slug, its UUID and the `local`
+	/// placeholder, so a raw slug comparison called a path recorded as
+	/// `local` and one recorded as `archlinux` cross-device and sent a local
+	/// copy over the network to this same device. Paths without a device
+	/// (cloud, content, sidecar) are never cross-device.
+	pub fn is_cross_device(&self, other: &Self) -> bool {
+		match (self.device_slug(), other.device_slug()) {
+			(Some(a), Some(b)) => {
+				let local_a = Self::is_current_device(a);
+				let local_b = Self::is_current_device(b);
+				if local_a || local_b {
+					local_a != local_b
+				} else {
+					a != b
+				}
+			}
+			_ => false,
+		}
+	}
+
 	/// Check if this path is on the current device
 	pub fn is_local(&self) -> bool {
 		match self {
@@ -897,6 +919,23 @@ impl WingPathBatch {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn current_device_aliases_are_not_cross_device() {
+		let current = crate::device::get_current_device_slug();
+		let by_placeholder = WingPath::new("local".to_string(), "/a/file.txt");
+		let by_slug = WingPath::new(current, "/a/dir");
+		let by_id = WingPath::new(crate::device::get_current_device_id().to_string(), "/a/dir");
+		let elsewhere = WingPath::new("other-device-is-cross-test".to_string(), "/b");
+
+		assert!(!by_placeholder.is_cross_device(&by_slug));
+		assert!(!by_slug.is_cross_device(&by_id));
+		assert!(by_placeholder.is_cross_device(&elsewhere));
+		assert!(elsewhere.is_cross_device(&by_slug));
+		assert!(!elsewhere.is_cross_device(&elsewhere.clone()));
+		assert!(WingPath::new("peer-a".to_string(), "/x")
+			.is_cross_device(&WingPath::new("peer-b".to_string(), "/x")));
+	}
 
 	#[test]
 	fn test_sdpath_physical_creation() {
