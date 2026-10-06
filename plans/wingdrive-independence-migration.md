@@ -81,7 +81,7 @@ new and legacy paths exist.
 
 - Make WingDrive the subject of current guides, setup commands, screenshots, examples, issue templates, and support instructions.
 - Move historical WingDrive material into an explicitly labeled history or attribution context.
-- Keep the FSL license and original copyright statements unchanged.
+- Keep the original copyright statements unchanged. The license moved to Apache-2.0 with upstream; see NOTICE.md.
 
 ### 5. Guard and verification
 
