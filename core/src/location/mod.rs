@@ -9,6 +9,7 @@ use crate::{
 		db::entities::{self, entry::EntryKind},
 		event::{Event, EventBus},
 		job::{handle::JobHandle, output::IndexedOutput, types::JobStatus},
+		sync::ChangeType,
 	},
 	library::Library,
 	ops::indexing::{
@@ -283,31 +284,16 @@ pub async fn create_location(
 
 	info!("Created location '{}' with ID: {}", name, location_db_id);
 
-	// Emit StateChange event for root entry
-	// The raw transaction above doesn't use TransactionManager, so we must manually emit
-	// This ensures the root directory syncs to other devices BEFORE its children
-
-	// Get device UUID from device_id (internal ID)
-	let device_record = entities::device::Entity::find_by_id(device_id)
-		.one(library.db().conn())
-		.await
-		.map_err(|e| LocationError::DatabaseError(e.to_string()))?
-		.ok_or_else(|| LocationError::DatabaseError("Device not found".to_string()))?;
-
-	let root_entry_uuid = entry_record.uuid.expect("Root entry should have UUID");
-	let root_entry_data = serde_json::to_value(&entry_record).map_err(|e| {
-		LocationError::DatabaseError(format!("Failed to serialize root entry: {}", e))
-	})?;
-
+	// Emit StateChange events for the root entry, then the location.
+	// The raw transaction above doesn't use TransactionManager, so we must emit
+	// them ourselves. sync_model_with_db converts local integer FKs (device_id,
+	// entry_id, parent_id) to UUIDs; shipping the raw ids let the receiver write
+	// this device's integers into its own tables, attributing the location to
+	// the wrong device and failing with a FOREIGN KEY error when the location
+	// arrived before its root entry. The root goes first so it syncs before
+	// its children and the location that points at it.
 	library
-		.transaction_manager()
-		.commit_device_owned(
-			library.id(),
-			"entry",
-			root_entry_uuid,
-			device_record.uuid,
-			root_entry_data,
-		)
+		.sync_model_with_db(&entry_record, ChangeType::Insert, library.db().conn())
 		.await
 		.map_err(|e| {
 			LocationError::DatabaseError(format!(
@@ -316,21 +302,8 @@ pub async fn create_location(
 			))
 		})?;
 
-	// Emit StateChange event for location
-	// This ensures the location syncs to other devices with proper entry_id
-	let location_data = serde_json::to_value(&location_record).map_err(|e| {
-		LocationError::DatabaseError(format!("Failed to serialize location: {}", e))
-	})?;
-
 	library
-		.transaction_manager()
-		.commit_device_owned(
-			library.id(),
-			"location",
-			location_id,
-			device_record.uuid,
-			location_data,
-		)
+		.sync_model_with_db(&location_record, ChangeType::Insert, library.db().conn())
 		.await
 		.map_err(|e| {
 			LocationError::DatabaseError(format!("Failed to emit StateChange for location: {}", e))

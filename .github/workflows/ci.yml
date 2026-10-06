@@ -113,3 +113,10 @@ jobs:
         run: |
           cargo test -p wing-core --lib branding:: --locked
           cargo test -p wing-core --test branding_legacy_paths --locked
+
+      - name: Test two-device sync
+        run: |
+          cargo test -p wing-core --locked \
+            --test sync_metrics_test \
+            --test sync_realtime_test \
+            --test sync_backfill_test

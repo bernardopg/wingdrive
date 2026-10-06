@@ -896,7 +896,9 @@ impl DatabaseStorage {
 							Some(mime_record) => (Some(mime_record.id), Some(mime_record), false),
 							None => {
 								let new_mime = entities::mime_type::ActiveModel {
-									uuid: Set(Uuid::new_v4()),
+									uuid: Set(entities::mime_type::Model::deterministic_uuid(
+										mime_str,
+									)),
 									mime_type: Set(mime_str.to_string()),
 									created_at: Set(chrono::Utc::now()),
 									..Default::default()

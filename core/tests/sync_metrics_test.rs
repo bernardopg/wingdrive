@@ -85,17 +85,23 @@ async fn test_metrics_initial_state() -> anyhow::Result<()> {
 		"Initial broadcast counts"
 	);
 
-	// Opening a library broadcasts its own device record as a shared change,
-	// so each side may already have received that one record from its peer.
-	// Nothing else has been synced yet.
+	// Opening a library broadcasts its own device record as a shared change, and
+	// the harness replays each side's volumes in place of backfill. Those are the
+	// only changes either side may have received; nothing else has synced yet.
+	let alice_volumes = entities::volume::Entity::find()
+		.count(harness.library_alice.db().conn())
+		.await?;
+	let bob_volumes = entities::volume::Entity::find()
+		.count(harness.library_bob.db().conn())
+		.await?;
 	assert!(
-		alice.operations.changes_received <= 1,
-		"Alice should have received at most the peer's device record, got {}",
+		alice.operations.changes_received <= 1 + bob_volumes,
+		"Alice should have received at most the peer's device record and volumes, got {}",
 		alice.operations.changes_received
 	);
 	assert!(
-		bob.operations.changes_received <= 1,
-		"Bob should have received at most the peer's device record, got {}",
+		bob.operations.changes_received <= 1 + alice_volumes,
+		"Bob should have received at most the peer's device record and volumes, got {}",
 		bob.operations.changes_received
 	);
 

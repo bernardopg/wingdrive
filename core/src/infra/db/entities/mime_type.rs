@@ -29,6 +29,23 @@ impl Related<super::content_identity::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
+impl Model {
+	/// UUID every device derives for the same MIME string.
+	///
+	/// MIME types are created independently on each device as files are
+	/// indexed. A random UUID per device gave the same `text/plain` two
+	/// identities, so the peer's row hit `UNIQUE(mime_type)` and every
+	/// content identity pointing at it waited forever on a missing
+	/// dependency. A name-derived UUID makes both devices agree.
+	pub fn deterministic_uuid(mime_type: &str) -> Uuid {
+		const MIME_TYPE_NAMESPACE: Uuid = Uuid::from_bytes([
+			0x3c, 0x51, 0x9e, 0x0a, 0x6f, 0x2d, 0x4b, 0x8e, 0x9a, 0x17, 0x5d, 0xc2, 0x40, 0x8b,
+			0x71, 0xe6,
+		]);
+		Uuid::new_v5(&MIME_TYPE_NAMESPACE, mime_type.as_bytes())
+	}
+}
+
 // Syncable Implementation
 //
 // MimeType is a SHARED resource that syncs across devices.
@@ -167,6 +184,25 @@ impl Syncable for Model {
 						.clone(),
 				)
 				.map_err(|e| sea_orm::DbErr::Custom(format!("Invalid mime_type: {}", e)))?;
+
+				// A row created here before deterministic UUIDs, or by an older peer,
+				// can hold the same MIME string under another UUID. Adopt the incoming
+				// UUID so references to it resolve; local FKs use the integer id and
+				// stay intact.
+				if let Some(existing) = Entity::find()
+					.filter(Column::MimeType.eq(&mime_type))
+					.one(db)
+					.await?
+				{
+					if existing.uuid != uuid {
+						Entity::update_many()
+							.col_expr(Column::Uuid, sea_orm::sea_query::Expr::value(uuid))
+							.filter(Column::Id.eq(existing.id))
+							.exec(db)
+							.await?;
+					}
+					return Ok(());
+				}
 
 				let active = ActiveModel {
 					id: NotSet,

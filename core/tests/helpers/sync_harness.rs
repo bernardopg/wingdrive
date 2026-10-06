@@ -11,7 +11,7 @@ use wing_core::{
 	infra::{
 		db::entities,
 		event::Event,
-		sync::{NetworkTransport, SyncEvent},
+		sync::{ChangeType, NetworkTransport, SyncEvent},
 	},
 	library::Library,
 	service::{sync::state::DeviceSyncState, Service},
@@ -304,6 +304,19 @@ pub async fn wait_for_indexing(
 ///
 /// This waits for Alice to stabilize first (no new entries/content), then checks if Bob caught up.
 /// This prevents false positives where counts match at intermediate states.
+/// Broadcast every volume a library already holds, as backfill would for a new peer.
+async fn replay_volumes(library: &Arc<Library>) -> anyhow::Result<()> {
+	let volumes = entities::volume::Entity::find()
+		.all(library.db().conn())
+		.await?;
+	for volume in &volumes {
+		library
+			.sync_model_with_db(volume, ChangeType::Insert, library.db().conn())
+			.await?;
+	}
+	Ok(())
+}
+
 pub async fn wait_for_sync(
 	library_alice: &Arc<Library>,
 	library_bob: &Arc<Library>,
@@ -407,36 +420,6 @@ pub async fn wait_for_sync(
 				alice_content = alice_content,
 				"Waiting for Alice to stabilize before checking sync"
 			);
-		}
-
-		// If we're very close and making very slow/no progress, consider it good enough
-		let entry_diff = (alice_entries as i64 - bob_entries as i64).abs();
-		let content_diff = (alice_content as i64 - bob_content as i64).abs();
-
-		if entry_diff <= 5 && content_diff <= 5 {
-			if no_progress_iterations >= 10 {
-				tracing::warn!(
-					alice_entries = alice_entries,
-					bob_entries = bob_entries,
-					alice_content = alice_content,
-					bob_content = bob_content,
-					entry_diff = entry_diff,
-					content_diff = content_diff,
-					no_progress_iters = no_progress_iterations,
-					"Stopping sync - within tolerance and minimal progress"
-				);
-				return Ok(());
-			} else if start.elapsed() > Duration::from_secs(90) {
-				tracing::warn!(
-					alice_entries = alice_entries,
-					bob_entries = bob_entries,
-					entry_diff = entry_diff,
-					content_diff = content_diff,
-					elapsed_secs = start.elapsed().as_secs(),
-					"Stopping sync - within tolerance after 90+ seconds"
-				);
-				return Ok(());
-			}
 		}
 
 		last_alice_entries = alice_entries;
@@ -978,6 +961,14 @@ impl TwoDeviceHarnessBuilder {
 				.peer_sync()
 				.set_state_for_test(DeviceSyncState::Ready)
 				.await;
+
+			// Ready skips backfill, and init_sync_service starts the sync loop before the
+			// transports are registered, so its first automatic backfill cannot reach the
+			// peer. Volumes are created before sync exists, so without backfill they never
+			// reach the other device and every entry pointing at them waits on a missing
+			// dependency. Send them the way backfill would.
+			replay_volumes(&library_alice).await?;
+			replay_volumes(&library_bob).await?;
 
 			tokio::time::sleep(Duration::from_millis(500)).await;
 
