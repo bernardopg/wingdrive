@@ -36,6 +36,7 @@ pub mod arena;
 pub mod cache;
 pub mod index;
 pub mod name;
+pub mod reconcile;
 pub mod registry;
 pub mod responder;
 pub mod snapshot;
@@ -47,6 +48,11 @@ pub use arena::NodeArena;
 pub use cache::EphemeralIndexCache;
 pub use index::{EphemeralIndex, EphemeralIndexStats};
 pub use name::NameCache;
+pub use reconcile::{
+	emit_uuid_reconciled_events, extract_persistent_uuids_for_path, get_or_resolve_uuid,
+	lookup_direct_child_uuids, DatabaseUuidLookup, PersistentUuidLookup, ReconcileResult,
+	ReconcileStats,
+};
 pub use registry::NameRegistry;
 pub use snapshot::{get_snapshot_cache_dir, snapshot_path_for};
 pub use types::{EntryId, FileNode, FileType, MaybeEntryId, NameRef, NodeState, PackedMetadata};

@@ -37,6 +37,12 @@ pub struct EphemeralIndex {
 	path_index: HashMap<PathBuf, EntryId>,
 	id_to_path: HashMap<EntryId, PathBuf>,
 	entry_uuids: HashMap<EntryId, Uuid>,
+	// Scan-time UUIDs remain shared for snapshots and legacy promotion. Reads
+	// use library-scoped identities so overlapping libraries never overwrite
+	// each other's UUIDs for the same physical entry.
+	entry_uuids_by_library: HashMap<Uuid, HashMap<EntryId, Uuid>>,
+	persistent_uuids_by_library: HashMap<Uuid, std::collections::HashSet<EntryId>>,
+	unscoped_owners: HashMap<EntryId, Uuid>,
 	content_kinds: HashMap<EntryId, ContentKind>,
 	created_at: Instant,
 	last_accessed: Instant,
@@ -116,6 +122,9 @@ impl EphemeralIndex {
 			path_index: HashMap::new(),
 			id_to_path: HashMap::new(),
 			entry_uuids: HashMap::new(),
+			entry_uuids_by_library: HashMap::new(),
+			persistent_uuids_by_library: HashMap::new(),
+			unscoped_owners: HashMap::new(),
 			content_kinds: HashMap::new(),
 			created_at: now,
 			last_accessed: now,
@@ -327,6 +336,17 @@ impl EphemeralIndex {
 		self.entry_uuids.get(entry_id).copied()
 	}
 
+	fn forget_uuid(&mut self, id: EntryId) {
+		self.entry_uuids.remove(&id);
+		self.unscoped_owners.remove(&id);
+		for uuids in self.entry_uuids_by_library.values_mut() {
+			uuids.remove(&id);
+		}
+		for ids in self.persistent_uuids_by_library.values_mut() {
+			ids.remove(&id);
+		}
+	}
+
 	/// Get or assign a UUID for the given path (lazy generation).
 	///
 	/// Returns cached UUID if exists, otherwise generates a new random UUID
@@ -349,6 +369,181 @@ impl EphemeralIndex {
 		let uuid = Uuid::new_v4();
 		self.entry_uuids.insert(entry_id, uuid);
 		uuid
+	}
+
+	/// Return the UUID for this library without falling back to another library's identity.
+	pub fn get_entry_uuid_scoped(&self, library_id: Uuid, path: &Path) -> Option<Uuid> {
+		let id = *self.path_index.get(path)?;
+		self.entry_uuids_by_library
+			.get(&library_id)
+			.and_then(|uuids| uuids.get(&id).copied())
+			.or_else(|| {
+				if self.unscoped_owners.get(&id) == Some(&library_id) {
+					self.entry_uuids.get(&id).copied()
+				} else {
+					None
+				}
+			})
+	}
+
+	/// Assign a temporary identity only to the requesting library.
+	pub fn get_or_assign_uuid_scoped(&mut self, library_id: Uuid, path: &PathBuf) -> Uuid {
+		let Some(&id) = self.path_index.get(path) else {
+			return Uuid::new_v4();
+		};
+		if let Some(&uuid) = self
+			.entry_uuids_by_library
+			.get(&library_id)
+			.and_then(|m| m.get(&id))
+		{
+			return uuid;
+		}
+		// The first library inherits the scan UUID so promotion remains stable.
+		// Other libraries get their own temporary identity for the same path.
+		let uuid = if self
+			.unscoped_owners
+			.get(&id)
+			.is_none_or(|owner| *owner == library_id)
+		{
+			self.unscoped_owners.insert(id, library_id);
+			*self.entry_uuids.entry(id).or_insert_with(Uuid::new_v4)
+		} else {
+			Uuid::new_v4()
+		};
+		self.entry_uuids_by_library
+			.entry(library_id)
+			.or_default()
+			.insert(id, uuid);
+		uuid
+	}
+
+	/// Store a resolved persistent identity for this library only.
+	pub fn set_entry_uuid_scoped(&mut self, library_id: Uuid, path: &Path, uuid: Uuid) {
+		if let Some(&id) = self.path_index.get(path) {
+			self.entry_uuids_by_library
+				.entry(library_id)
+				.or_default()
+				.insert(id, uuid);
+			self.persistent_uuids_by_library
+				.entry(library_id)
+				.or_default()
+				.insert(id);
+		}
+	}
+
+	/// Resolve a library's persisted identity for one path, if already cached.
+	pub fn overlay_uuid(&self, library_id: Uuid, path: &Path) -> Option<Uuid> {
+		let id = self.path_index.get(path)?;
+		if !self
+			.persistent_uuids_by_library
+			.get(&library_id)?
+			.contains(id)
+		{
+			return None;
+		}
+		self.entry_uuids_by_library
+			.get(&library_id)?
+			.get(id)
+			.copied()
+	}
+
+	/// Add persistent identities without discarding those for other scanned roots.
+	pub fn set_uuid_overlay(&mut self, library_id: Uuid, uuids: HashMap<PathBuf, Uuid>) {
+		for (path, uuid) in uuids {
+			self.set_entry_uuid_scoped(library_id, &path, uuid);
+		}
+	}
+
+	pub fn overlay_uuid_count(&self, library_id: Uuid) -> usize {
+		self.persistent_uuids_by_library
+			.get(&library_id)
+			.map_or(0, std::collections::HashSet::len)
+	}
+
+	/// Reconcile a scanned root without changing any other library's UUIDs.
+	pub fn reconcile_with_persistent(
+		&mut self,
+		library_id: Uuid,
+		root: &Path,
+		overlay: &HashMap<PathBuf, Uuid>,
+	) -> super::reconcile::ReconcileResult {
+		use super::reconcile::ReconcileResult;
+		let mut result = ReconcileResult::default();
+		for (path, &persistent_uuid) in overlay {
+			let Some(&id) = self.path_index.get(path) else {
+				continue;
+			};
+			result.stats.matched += 1;
+			let existing = Some(self.get_or_assign_uuid_scoped(library_id, path));
+			if existing == Some(persistent_uuid) {
+				result.stats.already_consistent += 1;
+			} else {
+				self.entry_uuids_by_library
+					.entry(library_id)
+					.or_default()
+					.insert(id, persistent_uuid);
+				result.stats.uuid_changed += 1;
+				result
+					.changes
+					.push((path.clone(), existing, persistent_uuid));
+			}
+			self.persistent_uuids_by_library
+				.entry(library_id)
+				.or_default()
+				.insert(id);
+		}
+		// A previously persistent entry can become unmanaged without disappearing
+		// from disk. Give it a fresh scoped v4 instead of leaking the stale UUID.
+		let stale: Vec<_> = self
+			.persistent_uuids_by_library
+			.get(&library_id)
+			.into_iter()
+			.flat_map(|ids| ids.iter())
+			.filter_map(|id| self.id_to_path.get(id).map(|path| (*id, path.clone())))
+			.filter(|(_, path)| path.starts_with(root) && !overlay.contains_key(path))
+			.collect();
+		for (id, path) in stale {
+			let old = self
+				.entry_uuids_by_library
+				.get(&library_id)
+				.and_then(|m| m.get(&id))
+				.copied();
+			let uuid = Uuid::new_v4();
+			self.entry_uuids_by_library
+				.entry(library_id)
+				.or_default()
+				.insert(id, uuid);
+			self.persistent_uuids_by_library
+				.get_mut(&library_id)
+				.unwrap()
+				.remove(&id);
+			result.stats.uuid_changed += 1;
+			result.changes.push((path, old, uuid));
+		}
+		result.stats.orphans_detected = self
+			.path_index
+			.iter()
+			.filter(|(path, id)| {
+				path.starts_with(root)
+					&& !overlay.contains_key(*path)
+					&& (self.entry_uuids.contains_key(id)
+						|| self
+							.entry_uuids_by_library
+							.get(&library_id)
+							.is_some_and(|m| m.contains_key(id)))
+			})
+			.count();
+		result
+	}
+
+	/// Look up a UUID within one library, including the shared scan UUID only
+	/// while it has not been claimed by another library.
+	pub fn get_path_by_uuid_scoped(&self, library_id: Uuid, uuid: Uuid) -> Option<PathBuf> {
+		self.path_index.iter().find_map(|(path, &id)| {
+			(self.get_entry_uuid_scoped(library_id, path) == Some(uuid))
+				.then(|| self.id_to_path.get(&id).cloned())
+				.flatten()
+		})
 	}
 
 	/// Get the path for an entry by its UUID
@@ -449,7 +644,7 @@ impl EphemeralIndex {
 		for (child_path, child_id) in &children_to_remove {
 			self.path_index.remove(child_path);
 			self.id_to_path.remove(child_id);
-			self.entry_uuids.remove(child_id);
+			self.forget_uuid(*child_id);
 			self.content_kinds.remove(child_id);
 		}
 
@@ -623,7 +818,7 @@ impl EphemeralIndex {
 		// Remove from other HashMaps using EntryId
 		if let Some(id) = entry_id {
 			self.id_to_path.remove(&id);
-			self.entry_uuids.remove(&id);
+			self.forget_uuid(id);
 			self.content_kinds.remove(&id);
 
 			// Also remove from parent's children list in arena
@@ -665,7 +860,7 @@ impl EphemeralIndex {
 			// Get EntryId before removing from path_index
 			if let Some(entry_id) = self.path_index.remove(&key) {
 				self.id_to_path.remove(&entry_id);
-				self.entry_uuids.remove(&entry_id);
+				self.forget_uuid(entry_id);
 				self.content_kinds.remove(&entry_id);
 			}
 		}
@@ -785,6 +980,9 @@ impl EphemeralIndex {
 			path_index,
 			id_to_path,
 			entry_uuids,
+			entry_uuids_by_library: HashMap::new(),
+			persistent_uuids_by_library: HashMap::new(),
+			unscoped_owners: HashMap::new(),
 			content_kinds,
 			created_at: now,
 			last_accessed: now,

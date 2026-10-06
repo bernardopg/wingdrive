@@ -545,6 +545,7 @@ export function updateSingleResource<O>(
 	options?: UseNormalizedQueryOptions<any>,
 ) {
 	const noMergeFields = metadata?.no_merge_fields || [];
+	const alternateIds: string[] = metadata?.alternate_ids || [];
 
 	// Apply client-side filtering if options provided (same as batch)
 	let resourcesToUpdate = [resource];
@@ -552,8 +553,8 @@ export function updateSingleResource<O>(
 		resourcesToUpdate = filterBatchResources(resourcesToUpdate, options);
 		if (resourcesToUpdate.length === 0) {
 			// Resource was filtered out - may have moved out of scope, remove from cache
-			if (resource.id) {
-				deleteResource(resource.id, queryKey, queryClient);
+			for (const id of [resource.id, ...alternateIds]) {
+				if (id) deleteResource(id, queryKey, queryClient);
 			}
 			return;
 		}
@@ -566,22 +567,19 @@ export function updateSingleResource<O>(
 			return undefined;
 		}
 
-		// Handle array responses
-		if (Array.isArray(oldData)) {
-			return updateArrayCache(
-				oldData,
-				resourcesToUpdate,
-				noMergeFields,
-			) as O;
+		// Replace the old scan identity before the ordinary update path sees it.
+		// Otherwise the persistent UUID is appended as a second file.
+		const reconciled = reconcileAlternateIds(
+			oldData,
+			resource,
+			alternateIds,
+			noMergeFields,
+		);
+		if (Array.isArray(reconciled)) {
+			return updateArrayCache(reconciled, resourcesToUpdate, noMergeFields) as O;
 		}
-
-		// Handle wrapped responses { files: [...] }
-		if (oldData && typeof oldData === "object") {
-			return updateWrappedCache(
-				oldData,
-				resourcesToUpdate,
-				noMergeFields,
-			) as O;
+		if (reconciled && typeof reconciled === "object") {
+			return updateWrappedCache(reconciled, resourcesToUpdate, noMergeFields) as O;
 		}
 
 		return oldData;
@@ -716,6 +714,33 @@ export function deleteResource<O>(
 /**
  * Update array cache (direct array response)
  */
+export function reconcileAlternateIds(
+	oldData: any,
+	resource: any,
+	alternateIds: string[],
+	noMergeFields: string[],
+): any {
+	if (!resource?.id || alternateIds.length === 0 || !oldData) return oldData;
+	const aliases = new Set(alternateIds);
+	const replace = (items: any[]) => {
+		const updated = items.map((item) =>
+			aliases.has(item?.id) ? safeMerge(item, resource, noMergeFields) : item,
+		);
+		// A fresh listing may have arrived between the scan and the event.
+		const seen = new Set<string>();
+		return updated.filter((item) => {
+			if (!item?.id || !aliases.has(item.id) && item.id !== resource.id) return true;
+			if (seen.has(item.id)) return false;
+			seen.add(item.id);
+			return true;
+		});
+	};
+	if (Array.isArray(oldData)) return replace(oldData);
+	if (aliases.has(oldData.id)) return safeMerge(oldData, resource, noMergeFields);
+	const field = Object.keys(oldData).find((key) => Array.isArray(oldData[key]));
+	return field ? { ...oldData, [field]: replace(oldData[field]) } : oldData;
+}
+
 function updateArrayCache(
 	oldData: any[],
 	newResources: any[],

@@ -9,7 +9,7 @@
 use super::EphemeralIndex;
 use parking_lot::RwLock;
 use std::{
-	collections::HashSet,
+	collections::{HashMap, HashSet},
 	path::{Path, PathBuf},
 	sync::Arc,
 	time::Instant,
@@ -191,6 +191,20 @@ impl EphemeralIndexCache {
 		self.index.clone()
 	}
 
+	/// Like `create_for_indexing`, but returns `None` if the path is already
+	/// being indexed. The check and the claim happen under one lock, so
+	/// concurrent listings of the same directory dispatch a single job.
+	pub fn try_begin_indexing(&self, path: PathBuf) -> Option<Arc<TokioRwLock<EphemeralIndex>>> {
+		let mut in_progress = self.indexing_in_progress.write();
+		if in_progress.contains(&path) {
+			return None;
+		}
+		self.indexed_paths.write().remove(&path);
+		in_progress.insert(path);
+
+		Some(self.index.clone())
+	}
+
 	/// Clear stale entries for a path before re-indexing (async version)
 	///
 	/// Removes files and unbrowsed subdirectories, preserving subdirectories
@@ -220,6 +234,20 @@ impl EphemeralIndexCache {
 
 		in_progress.remove(path);
 		indexed.insert(path.to_path_buf());
+	}
+
+	/// Swap orphan v4 UUIDs in the global index for their persistent counterparts.
+	///
+	/// Acquires the index write lock and replaces identities only for entries
+	/// found beneath this root. Other roots in the same library retain theirs.
+	pub async fn reconcile_with_persistent(
+		&self,
+		library_id: uuid::Uuid,
+		root: &Path,
+		overlay: HashMap<PathBuf, uuid::Uuid>,
+	) -> super::reconcile::ReconcileResult {
+		let mut index = self.index.write().await;
+		index.reconcile_with_persistent(library_id, root, &overlay)
 	}
 
 	/// Remove a path from the indexed set (e.g., on invalidation)
@@ -435,6 +463,18 @@ mod tests {
 		// Initially no paths are indexed
 		assert!(cache.is_empty());
 		assert!(cache.get_for_path(Path::new("/test")).is_none());
+	}
+
+	#[test]
+	fn test_try_begin_indexing_claims_once() {
+		let cache = EphemeralIndexCache::new().expect("failed to create cache");
+		let path = PathBuf::from("/test/path");
+
+		assert!(cache.try_begin_indexing(path.clone()).is_some());
+		assert!(cache.try_begin_indexing(path.clone()).is_none());
+
+		cache.mark_indexing_complete(&path);
+		assert!(cache.try_begin_indexing(path).is_some());
 	}
 
 	#[test]

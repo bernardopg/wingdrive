@@ -1,12 +1,14 @@
 ---
 id: INDEX-010
 title: Bidirectional UUID Reconciliation (Ephemeral ↔ Persistent)
-status: To Do
+status: In Progress
 assignee: jamiepine
 parent: INDEX-000
 priority: Critical
 tags: [indexing, ephemeral, persistent, uuid, foundation]
-last_updated: 2026-05-10
+last_updated: 2026-10-06
+milestone: M1
+sprint: S02
 related_tasks: [INDEX-001, FSYNC-003, FILE-006]
 ---
 
@@ -299,19 +301,39 @@ This is important because the frontend may have cached the temporary UUID in sel
 
 ## Acceptance Criteria
 
-- [ ] Ephemeral indexing of a persistently-indexed path reuses persistent UUIDs after reconciliation
-- [ ] Volume indexing reuses persistent UUIDs for all overlapping locations
-- [ ] Reconciliation runs as a background task and does not block ephemeral discovery
-- [ ] Lazy fallback resolves persistent UUIDs on demand when reconciliation hasn't completed
-- [ ] ResourceChanged events emitted when ephemeral UUIDs are replaced with persistent ones
-- [ ] Tags and metadata attached to persistent entries are visible in ephemeral views after reconciliation
-- [ ] Multiple loaded libraries with overlapping paths are handled via separate UUID overlays
-- [ ] Reconciliation for one library does not overwrite UUIDs returned for another loaded library
-- [ ] Paths with no persistent overlap are unaffected (keep v4 UUIDs)
-- [ ] Integration test: ephemeral index of persistent location produces same UUIDs
-- [ ] Integration test: two loaded libraries can reconcile the same path to different UUIDs
-- [ ] Integration test: volume index reconciles UUIDs for all persistent locations on volume
-- [ ] Performance: reconciliation of 100K entries completes in under 2 seconds
+- [x] Ephemeral indexing of a persistently-indexed path reuses persistent UUIDs after reconciliation
+- [x] Volume indexing reuses persistent UUIDs for all overlapping locations
+- [x] Reconciliation runs as a background task and does not block ephemeral discovery
+- [x] Lazy fallback resolves persistent UUIDs on demand when reconciliation hasn't completed
+- [x] ResourceChanged events emitted when ephemeral UUIDs are replaced with persistent ones
+- [x] Tags and metadata attached to persistent entries are visible in ephemeral views after reconciliation
+- [x] Multiple loaded libraries with overlapping paths are handled via separate UUID overlays
+- [x] Reconciliation for one library does not overwrite UUIDs returned for another loaded library
+- [x] Paths with no persistent overlap are unaffected (keep v4 UUIDs)
+- [x] Integration test: ephemeral index of persistent location produces same UUIDs
+- [x] Integration test: two loaded libraries can reconcile the same path to different UUIDs
+- [x] Integration test: volume index reconciles UUIDs for all persistent locations on volume
+- [x] Performance: reconciliation of 100K entries completes in under 2 seconds
+
+## Validation
+
+On 2026-09-27, the core library suite passed (370 tests), the UUID reconciliation integration suite passed (6 tests), and 6 Bun cache/selection tests passed. Tauri TypeScript typecheck and `cargo fmt --all -- --check` passed. The explicitly run ignored benchmark extracted 100K persistent entries from indexed SQLite and reconciled their UUIDs in 816 ms in a debug build. A live cached directory listing returned the persistent UUID and emitted the temporary UUID as an alternate before the background reconciliation pass.
+
+On 2026-10-06 the WIP branch was rebased onto `main` (after FORK-003 renames, SeaORM 2,
+TAURI-013/014 and FORK-005). Changes during the rebase:
+
+- `SdPath`/`sd_path`/`sd_core` renamed to `WingPath`/`wing_path`/`wing_core`; raw SQL calls moved
+  to SeaORM 2 `query_all_raw`/`query_one_raw`.
+- Migration renamed to `m20261006_000001_add_directory_paths_path_index` so it orders after
+  `m20261001_000001_unique_directory_entries`.
+- Selection: the path fallback moved into `reconcileSelectedFiles` (TAURI-013's single
+  reconciliation point) with two new unit tests; tab-level remap and library-change clearing kept.
+- `get_device_name` and the explorer listing error kept `main`'s versions, which already cover them.
+
+Results: `uuid_reconciliation_test` 6/6, Bun 14 + 4 tests, typecheck clean. The Bun tests were
+added to CI.
+
+Desktop visual validation of selection, tags, snapshot restoration, and switching libraries is still pending. Keep this task In Progress until that runtime check passes.
 
 ## Technical Notes
 

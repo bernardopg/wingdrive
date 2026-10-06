@@ -42,6 +42,7 @@ mod m20260125_000001_unique_user_metadata_tag;
 mod m20260414_000001_add_redundancy_indexes;
 mod m20260417_000001_add_entries_sync_cursor_index;
 mod m20261001_000001_unique_directory_entries;
+mod m20261006_000001_add_directory_paths_path_index;
 
 pub struct Migrator;
 
@@ -89,6 +90,7 @@ impl MigratorTrait for Migrator {
 			Box::new(m20260414_000001_add_redundancy_indexes::Migration),
 			Box::new(m20260417_000001_add_entries_sync_cursor_index::Migration),
 			Box::new(m20261001_000001_unique_directory_entries::Migration),
+			Box::new(m20261006_000001_add_directory_paths_path_index::Migration),
 		]
 	}
 }

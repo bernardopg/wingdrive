@@ -60,7 +60,7 @@ pub async fn run_processing_phase(
 	// folder to a managed location would orphan all existing user metadata.
 	let ephemeral_cache = ctx.library().core_context().ephemeral_cache();
 	let preserved_count = state
-		.populate_ephemeral_uuids(ephemeral_cache, location_root_path)
+		.populate_ephemeral_uuids(ephemeral_cache, location_root_path, ctx.library().id())
 		.await;
 	if preserved_count > 0 {
 		ctx.log(format!(

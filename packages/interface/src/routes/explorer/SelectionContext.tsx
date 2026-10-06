@@ -12,7 +12,7 @@ import {
 } from 'react';
 import {useTabManager} from '../../components/TabManager';
 import {usePlatform} from '../../contexts/PlatformContext';
-import {useLibraryMutation} from '../../contexts/WingDriveContext';
+import {useLibraryMutation, useWingDriveClient} from '../../contexts/WingDriveContext';
 import {useClipboard} from '../../hooks/useClipboard';
 import {useRefetchFileListings} from '../../hooks/useRefetchFileListings';
 import {useUndo} from '../../hooks/useUndo';
@@ -71,6 +71,7 @@ export function SelectionProvider({
 }: SelectionProviderProps) {
 	const platform = usePlatform();
 	const clipboard = useClipboard();
+	const client = useWingDriveClient();
 	const tabManager = useTabManager();
 	const {activeTabId, getSelectionIds, updateSelectionIds} = tabManager;
 	const renameFile = useLibraryMutation('files.rename');
@@ -90,6 +91,16 @@ export function SelectionProvider({
 	useEffect(() => {
 		selectedFilesRef.current = selectedFiles;
 	}, [selectedFiles]);
+
+	useEffect(() => {
+		const clearOnLibraryChange = () => {
+			selectedFilesRef.current = [];
+			setSelectedFilesInternal([]);
+			setFocusedIndex(-1);
+		};
+		client.on("library-changed", clearOnLibraryChange);
+		return () => client.off("library-changed", clearOnLibraryChange);
+	}, [client]);
 
 	// Track the stored IDs for the active tab (separate from File objects)
 	const storedIds = getSelectionIds(activeTabId);
@@ -392,7 +403,7 @@ export function SelectionProvider({
 	const restoreSelectionFromFiles = useCallback(
 		(files: File[]) => {
 			const ids = storedIdsRef.current;
-			const next = reconcileSelectedFiles(ids, files);
+			const next = reconcileSelectedFiles(ids, files, selectedFilesRef.current);
 
 			if (!sameFiles(selectedFilesRef.current, next)) {
 				selectedFilesRef.current = next;
@@ -401,7 +412,10 @@ export function SelectionProvider({
 
 			// An empty collection is usually a listing still loading, so keep the
 			// stored ids for tab restore and only prune against real rows.
-			if (files.length > 0 && next.length !== ids.length) {
+			if (
+				files.length > 0 &&
+				(next.length !== ids.length || next.some((f, i) => f.id !== ids[i]))
+			) {
 				updateSelectionIds(
 					activeTabId,
 					next.map((f) => f.id)

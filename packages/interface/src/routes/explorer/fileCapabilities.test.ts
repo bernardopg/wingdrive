@@ -95,6 +95,18 @@ describe('reconcileSelectedFiles', () => {
 	it('returns nothing for an empty collection', () => {
 		expect(reconcileSelectedFiles(['a'], [])).toEqual([]);
 	});
+
+	it('follows a file whose id was reconciled to its persistent uuid', () => {
+		const ephemeral = file('temp', '/home/me/photo.jpg');
+		const persistent = file('persistent', '/home/me/photo.jpg');
+		const result = reconcileSelectedFiles(['temp'], [persistent], [ephemeral]);
+		expect(result).toEqual([persistent]);
+	});
+
+	it('drops an unknown id even with a previous selection', () => {
+		const result = reconcileSelectedFiles(['temp'], [file('other')], [file('x')]);
+		expect(result).toEqual([]);
+	});
 });
 
 describe('sameFiles', () => {

@@ -42,7 +42,7 @@ async fn test_database_creation_and_migration() {
 	use sea_orm::{ConnectionTrait, Statement};
 
 	let result = conn
-		.execute(Statement::from_string(
+		.execute_raw(Statement::from_string(
 			sea_orm::DatabaseBackend::Sqlite,
 			"SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;".to_string(),
 		))

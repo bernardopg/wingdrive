@@ -49,16 +49,33 @@ export function selectionCapabilities(files: File[]): SelectionCapabilities {
  */
 export function reconcileSelectedFiles(
 	selectedIds: readonly string[],
-	collection: readonly File[]
+	collection: readonly File[],
+	previous: readonly File[] = []
 ): File[] {
 	if (selectedIds.length === 0 || collection.length === 0) return [];
 	const byId = new Map(collection.map((file) => [file.id, file]));
 	const result: File[] = [];
 	for (const id of selectedIds) {
-		const file = byId.get(id);
+		const file = byId.get(id) ?? findByPreviousPath(id, collection, previous);
 		if (file) result.push(file);
 	}
 	return result;
+}
+
+function physicalPath(file: File): string | undefined {
+	return 'Physical' in file.wing_path ? file.wing_path.Physical.path : undefined;
+}
+
+// UUID reconciliation can swap an ephemeral id for the persistent one while a
+// file stays selected; the path it had last time still finds it.
+function findByPreviousPath(
+	id: string,
+	collection: readonly File[],
+	previous: readonly File[]
+): File | undefined {
+	const known = previous.find((file) => file.id === id);
+	const path = known && physicalPath(known);
+	return path ? collection.find((file) => physicalPath(file) === path) : undefined;
 }
 
 /** True when both lists hold the same File objects in the same order. */
