@@ -471,7 +471,10 @@ impl ProtocolHandler for JobActivityProtocolHandler {
 		// Loop: receive events from channel and write to stream
 		while let Some(message) = event_rx.recv().await {
 			// Serialize
-			let data = match rmp_serde::to_vec(&message) {
+			// Named (map) encoding: JobOutput and progress are adjacently tagged
+			// enums, which cannot be decoded from rmp's default array encoding of
+			// their struct variants, so every remote JobCompleted was dropped.
+			let data = match rmp_serde::to_vec_named(&message) {
 				Ok(d) => d,
 				Err(e) => {
 					error!("Failed to serialize: {}", e);
@@ -505,5 +508,46 @@ impl ProtocolHandler for JobActivityProtocolHandler {
 
 	async fn handle_event(&self, _: ProtocolEvent) -> Result<()> {
 		Ok(())
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn job_completed_with_file_copy_output_round_trips() {
+		let message = JobActivityMessage::JobEvent {
+			library_id: Uuid::new_v4(),
+			device_id: Uuid::new_v4(),
+			event: RemoteJobEvent::JobCompleted {
+				job_id: "job".to_string(),
+				job_type: "file_copy".to_string(),
+				output: JobOutput::FileCopy {
+					copied_count: 1,
+					failed_count: 0,
+					skipped_count: 0,
+					total_bytes: 7,
+					errors: vec![],
+				},
+				timestamp: Utc::now(),
+			},
+		};
+
+		let bytes = rmp_serde::to_vec_named(&message).unwrap();
+		let decoded: JobActivityMessage = rmp_serde::from_slice(&bytes).unwrap();
+		assert!(matches!(
+			decoded,
+			JobActivityMessage::JobEvent {
+				event: RemoteJobEvent::JobCompleted {
+					output: JobOutput::FileCopy {
+						copied_count: 1,
+						..
+					},
+					..
+				},
+				..
+			}
+		));
 	}
 }

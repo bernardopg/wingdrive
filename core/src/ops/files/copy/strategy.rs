@@ -1306,6 +1306,9 @@ async fn stream_file_data<'a>(
 			}
 			ctx.log("Received TransferFinalAck from receiver - transfer confirmed!".to_string());
 		}
+		crate::service::network::protocol::file_transfer::FileTransferMessage::TransferError { error_type, message, .. } => {
+			return Err(anyhow::anyhow!("Receiver rejected the transfer ({:?}): {}", error_type, message));
+		}
 		_ => {
 			return Err(anyhow::anyhow!("Expected TransferFinalAck, got different message type"));
 		}

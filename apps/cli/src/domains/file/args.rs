@@ -17,6 +17,13 @@ use wing_core::{
 /// unchanged would point somewhere else. Symlinks are not followed, so
 /// deleting or renaming a link acts on the link itself.
 pub fn local_path(path: PathBuf) -> WingPath {
+	// `local://<device>/path` addresses a paired device; anything else is a
+	// path on this machine.
+	if let Some(uri) = path.to_str().filter(|p| p.contains("://")) {
+		if let Ok(parsed) = WingPath::from_uri(uri) {
+			return parsed;
+		}
+	}
 	WingPath::local(std::path::absolute(&path).unwrap_or(path))
 }
 

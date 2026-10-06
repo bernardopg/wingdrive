@@ -2035,6 +2035,10 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 		.item(&PredefinedMenuItem::select_all(app, None)?)
 		.build()?;
 
+	// The View menu only holds prototypes: the drag demo and a Spacedrop
+	// window with sample people that sends nothing. Release builds leave it
+	// out until those ship.
+	#[cfg(debug_assertions)]
 	let view_menu = SubmenuBuilder::new(app, "View")
 		.item(
 			&MenuItemBuilder::with_id("drag-demo", "Drag Demo")
@@ -2051,9 +2055,10 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 	let menu = MenuBuilder::new(app)
 		.item(&app_menu)
 		.item(&file_menu)
-		.item(&edit_menu)
-		.item(&view_menu)
-		.build()?;
+		.item(&edit_menu);
+	#[cfg(debug_assertions)]
+	let menu = menu.item(&view_menu);
+	let menu = menu.build()?;
 
 	app.set_menu(menu)?;
 
