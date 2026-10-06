@@ -325,6 +325,7 @@ pub async fn wait_for_sync(
 	let start = tokio::time::Instant::now();
 	let mut last_alice_entries = 0;
 	let mut last_alice_content = 0;
+	let mut last_alice_content_links = 0;
 	let mut last_bob_entries = 0;
 	let mut last_bob_closure = 0;
 	let mut stable_iterations = 0;
@@ -346,9 +347,21 @@ pub async fn wait_for_sync(
 		let bob_content = entities::content_identity::Entity::find()
 			.count(library_bob.db().conn())
 			.await?;
+		// Content identities arrive before the entry updates that link to them.
+		let alice_content_links = entities::entry::Entity::find()
+			.filter(entities::entry::Column::ContentId.is_not_null())
+			.count(library_alice.db().conn())
+			.await?;
+		let bob_content_links = entities::entry::Entity::find()
+			.filter(entities::entry::Column::ContentId.is_not_null())
+			.count(library_bob.db().conn())
+			.await?;
 
 		// Check if Alice has stabilized
-		if alice_entries == last_alice_entries && alice_content == last_alice_content {
+		if alice_entries == last_alice_entries
+			&& alice_content == last_alice_content
+			&& alice_content_links == last_alice_content_links
+		{
 			alice_stable_iterations += 1;
 		} else {
 			alice_stable_iterations = 0;
@@ -382,7 +395,10 @@ pub async fn wait_for_sync(
 
 		// Only check sync completion if Alice has stabilized first
 		if alice_stable_iterations >= 5 {
-			if alice_entries == bob_entries && alice_content == bob_content {
+			if alice_entries == bob_entries
+				&& alice_content == bob_content
+				&& alice_content_links == bob_content_links
+			{
 				// Also check that Bob's entry_closure table has stabilized
 				// This prevents race condition where we check integrity before rebuild completes
 				// The rebuild runs many iterations, so we need several stable checks
@@ -395,6 +411,8 @@ pub async fn wait_for_sync(
 							bob_entries = bob_entries,
 							alice_content = alice_content,
 							bob_content = bob_content,
+							alice_content_links = alice_content_links,
+							bob_content_links = bob_content_links,
 							bob_closure_count = bob_closure_count,
 							"Sync completed - Alice stable, Bob caught up, and closure table rebuilt"
 						);
@@ -424,6 +442,7 @@ pub async fn wait_for_sync(
 
 		last_alice_entries = alice_entries;
 		last_alice_content = alice_content;
+		last_alice_content_links = alice_content_links;
 		last_bob_entries = bob_entries;
 		last_bob_closure = bob_closure_count;
 

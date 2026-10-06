@@ -22,6 +22,43 @@ use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use tokio::time::Duration;
 use wing_core::infra::db::entities;
 
+#[tokio::test]
+async fn test_sync_waits_for_content_links() -> anyhow::Result<()> {
+	use sea_orm::{ActiveModelTrait, Set};
+
+	let harness = TwoDeviceHarnessBuilder::new("content_links")
+		.await?
+		.build()
+		.await?;
+	let files = tempfile::tempdir()?;
+	tokio::fs::write(files.path().join("content.txt"), "content").await?;
+	harness
+		.add_and_index_location_alice(files.path().to_str().unwrap(), "content")
+		.await?;
+	harness.wait_for_sync(Duration::from_secs(30)).await?;
+
+	let entry = entities::entry::Entity::find()
+		.filter(entities::entry::Column::ContentId.is_not_null())
+		.one(harness.library_bob.db().conn())
+		.await?
+		.ok_or_else(|| anyhow::anyhow!("Synced file has no content link"))?;
+	let mut unlinked: entities::entry::ActiveModel = entry.clone().into();
+	unlinked.content_id = Set(None);
+	unlinked.update(harness.library_bob.db().conn()).await?;
+
+	// Matching row counts do not prove that the later content-link updates arrived.
+	let error = harness
+		.wait_for_sync(Duration::from_secs(5))
+		.await
+		.expect_err("Sync completed before the content link arrived");
+	assert!(error.to_string().contains("Sync timeout"));
+	let mut restored: entities::entry::ActiveModel = entry.clone().into();
+	restored.content_id = Set(entry.content_id);
+	restored.update(harness.library_bob.db().conn()).await?;
+	harness.wait_for_sync(Duration::from_secs(30)).await?;
+	Ok(())
+}
+
 //
 // TEST SCENARIOS
 //
