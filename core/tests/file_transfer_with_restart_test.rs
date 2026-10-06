@@ -108,7 +108,7 @@ async fn alice_restart_scenario() {
 	// === RESTART SIMULATION ===
 	println!("Alice: ========== RESTARTING DAEMON ==========");
 	println!("Alice: Shutting down Core to simulate daemon restart...");
-	drop(core);
+	core.shutdown().await.expect("shutdown");
 	tokio::time::sleep(Duration::from_secs(2)).await;
 
 	println!("Alice: Starting fresh Core instance with same data dir...");
@@ -384,9 +384,23 @@ async fn bob_restart_scenario() {
 
 	println!("Bob: Waiting for Alice to restart and send files...");
 
-	// Create directory for received files
+	// Create directory for received files and allow it as a transfer destination
 	let received_dir = std::path::Path::new("/tmp/received_files_restart");
 	std::fs::create_dir_all(received_dir).unwrap();
+	if let Some(networking) = core.networking() {
+		let protocol_registry = networking.protocol_registry();
+		let registry = protocol_registry.read().await;
+		if let Some(handler) = registry.get_handler("file_transfer") {
+			if let Some(ft_handler) =
+				handler
+					.as_any()
+					.downcast_ref::<wing_core::service::network::protocol::FileTransferProtocolHandler>(
+					) {
+				ft_handler.add_allowed_path(received_dir.to_path_buf());
+				println!("Bob: Added {} as allowed path", received_dir.display());
+			}
+		}
+	}
 
 	// Wait for expected files list
 	let expected_files = loop {

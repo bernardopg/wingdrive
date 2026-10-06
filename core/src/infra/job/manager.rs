@@ -52,6 +52,9 @@ pub struct JobManager {
 
 struct RunningJob {
 	handle: JobHandle,
+	/// (name, dedup_key) identifies live work; a second dispatch of the same
+	/// pair reuses this job instead of duplicating it.
+	dedup_key: Option<String>,
 	task_handle: TaskHandle<JobError>,
 	status_tx: watch::Sender<JobStatus>,
 	latest_progress: Arc<Mutex<Option<Progress>>>,
@@ -382,6 +385,7 @@ impl JobManager {
 						latest_progress,
 						persistence_complete_rx: Some(persistence_complete_rx),
 						job_name: job_name.to_string(),
+						dedup_key: None,
 						action_context: action_context.clone(),
 						should_emit_events,
 					},
@@ -408,32 +412,41 @@ impl JobManager {
 						info!("Job {} status changed to: {:?}", job_id_clone, status);
 						match status {
 							JobStatus::Running => {
-								// Emit event for all jobs
-								event_bus.emit(Event::JobStarted {
-									job_id: job_id_clone.to_string(),
-									job_type: job_type_str.to_string(),
-									device_id,
-								});
-								info!("Emitted JobStarted event for job {}", job_id_clone);
+								// Gated like every terminal event below. A job
+								// that announces a start it will never announce
+								// an end for leaves a row in the client that
+								// nothing can clear.
+								if should_emit_events {
+									event_bus.emit(Event::JobStarted {
+										job_id: job_id_clone.to_string(),
+										job_type: job_type_str.to_string(),
+										device_id,
+									});
+									info!("Emitted JobStarted event for job {}", job_id_clone);
+								}
 							}
 							JobStatus::Completed => {
-								// Emit completion event for all jobs
-								if should_emit_events {
-									// Get the final output from the handle before removing the job
-									let output = {
-										let jobs = running_jobs.read().await;
-										if let Some(job) = jobs.get(&job_id_clone) {
-											job.handle
-												.output
-												.lock()
-												.await
-												.clone()
-												.unwrap_or(Ok(JobOutput::Success))
-										} else {
-											Ok(JobOutput::Success)
-										}
-									};
+								// Read the output, then stop being a running job,
+								// *then* announce it. Clients refetch the job list
+								// when they see the completion, so a job still in
+								// the map at that moment comes back in the answer
+								// and nothing further arrives to clear it.
+								let output = {
+									let jobs = running_jobs.read().await;
+									if let Some(job) = jobs.get(&job_id_clone) {
+										job.handle
+											.output
+											.lock()
+											.await
+											.clone()
+											.unwrap_or(Ok(JobOutput::Success))
+									} else {
+										Ok(JobOutput::Success)
+									}
+								};
+								running_jobs.write().await.remove(&job_id_clone);
 
+								if should_emit_events {
 									// Emit final progress event if one exists (may have been throttled)
 									if let Some(final_progress) =
 										latest_progress_for_monitor.lock().await.as_ref()
@@ -507,8 +520,6 @@ impl JobManager {
 									}
 								}
 
-								// Remove from running jobs
-								running_jobs.write().await.remove(&job_id_clone);
 								info!(
 									"Job {} completed and removed from running jobs",
 									job_id_clone
@@ -568,6 +579,28 @@ impl JobManager {
 	where
 		J: Job + JobHandler + DynJob,
 	{
+		// The same work dispatched twice is one job. Checked against live
+		// jobs before anything is persisted, so a re-track cannot stack a
+		// second indexer over a walk already running.
+		let dedup_key = job.dedup_key();
+		if let Some(key) = dedup_key.as_deref() {
+			let running = self.running_jobs.read().await;
+			for existing in running.values() {
+				if existing.job_name == J::NAME
+					&& existing.dedup_key.as_deref() == Some(key)
+					&& !existing.handle.status().is_terminal()
+				{
+					info!(
+						job = %existing.handle.id,
+						name = J::NAME,
+						key,
+						"dispatch deduplicated onto the live job"
+					);
+					return Ok(existing.handle.resubscribe(&existing.status_tx));
+				}
+			}
+		}
+
 		let job_id = JobId::new();
 		let should_persist = job.should_persist();
 		let should_emit_events = job.should_emit_events();
@@ -819,6 +852,7 @@ impl JobManager {
 						latest_progress: latest_progress.clone(),
 						persistence_complete_rx: Some(persistence_complete_rx),
 						job_name: J::NAME.to_string(),
+						dedup_key: dedup_key.clone(),
 						action_context: action_context.clone(),
 						should_emit_events,
 					},
@@ -846,32 +880,41 @@ impl JobManager {
 						info!("Job {} status changed to: {:?}", job_id_clone, status);
 						match status {
 							JobStatus::Running => {
-								// Emit event for all jobs
-								event_bus.emit(Event::JobStarted {
-									job_id: job_id_clone.to_string(),
-									job_type: job_type_str.to_string(),
-									device_id,
-								});
-								info!("Emitted JobStarted event for job {}", job_id_clone);
+								// Gated like every terminal event below. A job
+								// that announces a start it will never announce
+								// an end for leaves a row in the client that
+								// nothing can clear.
+								if should_emit_events {
+									event_bus.emit(Event::JobStarted {
+										job_id: job_id_clone.to_string(),
+										job_type: job_type_str.to_string(),
+										device_id,
+									});
+									info!("Emitted JobStarted event for job {}", job_id_clone);
+								}
 							}
 							JobStatus::Completed => {
-								// Emit completion event for all jobs
-								if should_emit_events {
-									// Get the final output from the handle before removing the job
-									let output = {
-										let jobs = running_jobs.read().await;
-										if let Some(job) = jobs.get(&job_id_clone) {
-											job.handle
-												.output
-												.lock()
-												.await
-												.clone()
-												.unwrap_or(Ok(JobOutput::Success))
-										} else {
-											Ok(JobOutput::Success)
-										}
-									};
+								// Read the output, then stop being a running job,
+								// *then* announce it. Clients refetch the job list
+								// when they see the completion, so a job still in
+								// the map at that moment comes back in the answer
+								// and nothing further arrives to clear it.
+								let output = {
+									let jobs = running_jobs.read().await;
+									if let Some(job) = jobs.get(&job_id_clone) {
+										job.handle
+											.output
+											.lock()
+											.await
+											.clone()
+											.unwrap_or(Ok(JobOutput::Success))
+									} else {
+										Ok(JobOutput::Success)
+									}
+								};
+								running_jobs.write().await.remove(&job_id_clone);
 
+								if should_emit_events {
 									// Emit final progress event if one exists (may have been throttled)
 									if let Some(final_progress) =
 										latest_progress_for_monitor.lock().await.as_ref()
@@ -944,8 +987,6 @@ impl JobManager {
 									}
 								}
 
-								// Remove from running jobs
-								running_jobs.write().await.remove(&job_id_clone);
 								info!(
 									"Job {} completed and removed from running jobs",
 									job_id_clone
@@ -1337,44 +1378,53 @@ impl JobManager {
 	}
 
 	/// Resume interrupted jobs from the last run
+	/// Reconcile every job row left over from the previous process.
+	///
+	/// The contract: after this returns, a row that says Running has a live
+	/// task behind it, and everything else says what actually happened to it.
+	/// A resumable job resumes; anything that cannot (unknown type, not
+	/// resumable, corrupt state, failed dispatch) is marked failed with the
+	/// reason, never left claiming to run. Queued rows are included, since a
+	/// queue does not survive the process that held it.
 	async fn resume_interrupted_jobs(&self) -> JobResult<()> {
-		warn!(
-			"DEBUG: resume_interrupted_jobs called for library {}",
-			self.library_id
+		info!(
+			library = %self.library_id,
+			"Reconciling job rows left over from the previous process"
 		);
-		info!("Checking for interrupted jobs to resume");
 
 		use sea_orm::{ColumnTrait, QueryFilter};
 		let interrupted = database::jobs::Entity::find()
 			.filter(database::jobs::Column::Status.is_in([
 				JobStatus::Running.to_string(),
 				JobStatus::Paused.to_string(),
+				JobStatus::Queued.to_string(),
 			]))
 			.all(self.db.conn())
 			.await?;
 
-		warn!(
-			"DEBUG: Found {} interrupted jobs to resume",
-			interrupted.len()
-		);
+		if !interrupted.is_empty() {
+			info!("{} interrupted job rows to reconcile", interrupted.len());
+		}
 		for job_record in interrupted {
 			if let Ok(job_id) = job_record.id.parse::<Uuid>().map(JobId) {
-				warn!(
-					"DEBUG: Processing interrupted job {}: {} with status {}",
-					job_id, job_record.name, job_record.status
-				);
-				info!("Resuming job {}: {}", job_id, job_record.name);
+				match REGISTRY.resumable(&job_record.name) {
+					None => {
+						self.mark_unresumed(
+							job_id,
+							&format!("job type '{}' unknown to this build", job_record.name),
+						)
+						.await;
+						continue;
+					}
+					Some(false) => {
+						self.mark_unresumed(job_id, "interrupted by restart; not resumable")
+							.await;
+						continue;
+					}
+					Some(true) => {}
+				}
 
-				// Deserialize job from binary data
-				warn!(
-					"DEBUG: Attempting to deserialize job {} of type {}",
-					job_id, job_record.name
-				);
-				info!(
-					"RESUME_STATE_LOAD: Job {} loading {} bytes of state from database",
-					job_id,
-					job_record.state.len()
-				);
+				info!("Resuming job {}: {}", job_id, job_record.name);
 				match REGISTRY.deserialize_job(&job_record.name, &job_record.state) {
 					Ok(erased_job) => {
 						warn!("DEBUG: Successfully deserialized job {}", job_id);
@@ -1567,6 +1617,7 @@ impl JobManager {
 										latest_progress,
 										persistence_complete_rx: Some(persistence_complete_rx),
 										job_name: job_record.name.clone(),
+										dedup_key: None,
 										action_context,
 										should_emit_events: true, // Resumed jobs were persisted, so they should emit events
 									},
@@ -1733,33 +1784,37 @@ impl JobManager {
 							}
 							Err(e) => {
 								error!("Failed to dispatch resumed job {}: {:?}", job_id, e);
+								self.mark_unresumed(
+									job_id,
+									&format!("interrupted by restart; dispatch failed: {e:?}"),
+								)
+								.await;
 							}
 						}
 					}
 					Err(e) => {
-						error!("Failed to create job {} for resumption: {}", job_id, e);
-						// A state saved by an incompatible build can never resume;
-						// fail it so it stops showing as paused forever.
-						if let Err(db_err) = self
-							.db
-							.update_status_and_progress(
-								job_id,
-								JobStatus::Failed,
-								None,
-								Some(format!(
-									"Cannot resume: saved job state is incompatible ({e})"
-								)),
-							)
-							.await
-						{
-							error!("Failed to mark job {} as failed: {}", job_id, db_err);
-						}
+						error!("Failed to deserialize job {} for resumption: {}", job_id, e);
+						self.mark_unresumed(
+							job_id,
+							&format!("interrupted by restart; state unreadable: {e}"),
+						)
+						.await;
 					}
 				}
 			}
 		}
 
 		Ok(())
+	}
+
+	/// Close the book on a row the process cannot continue. Failed with a
+	/// reason is the honest state: the work did not finish, nothing is doing
+	/// it, and re-dispatching it is the caller's decision to make.
+	async fn mark_unresumed(&self, job_id: JobId, reason: &str) {
+		warn!(job = %job_id, reason, "job could not be resumed");
+		if let Err(e) = self.db.mark_failed(job_id, reason).await {
+			error!(job = %job_id, %e, "could not record the failure, row left stale");
+		}
 	}
 
 	/// Pause a running job
@@ -2081,6 +2136,7 @@ impl JobManager {
 					latest_progress,
 					persistence_complete_rx: Some(persistence_complete_rx),
 					job_name: job_name.clone(),
+					dedup_key: None,
 					action_context,
 					should_emit_events: true, // Manually resumed jobs were persisted, so they should emit events
 				},

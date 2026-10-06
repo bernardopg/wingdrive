@@ -164,7 +164,14 @@ impl LibraryQuery for ListLibraryDevicesQuery {
 									&remote_info,
 								);
 							// No active transport address means the remote is known but unreachable.
-							(conn_method.is_some(), conn_method)
+							// The path info can read empty between requests even while the
+							// registry holds a live connection; either source saying connected
+							// is enough.
+							(
+								conn_method.is_some()
+									|| matches!(state, DeviceState::Connected { .. }),
+								conn_method,
+							)
 						} else {
 							// No address information exists for this endpoint (never connected)
 							(false, None)

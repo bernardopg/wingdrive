@@ -110,7 +110,7 @@ impl EventLogTestHarness {
 				.to_string(),
 		);
 
-		let rows = event_logger.conn().query_all(stmt).await?;
+		let rows = event_logger.conn().query_all_raw(stmt).await?;
 
 		let mut events = Vec::new();
 		for row in rows {
@@ -273,6 +273,11 @@ async fn test_event_query_filtering() -> anyhow::Result<()> {
 async fn test_event_retention_cleanup() -> anyhow::Result<()> {
 	let harness = EventLogTestHarness::new("retention_cleanup").await?;
 
+	// The sync service's pruning task runs once at startup and would delete
+	// the old event below before this test can count it. Let that first
+	// tick pass; the next one is an hour away.
+	tokio::time::sleep(Duration::from_secs(1)).await;
+
 	let sync_service = harness.library_alice.sync_service().unwrap();
 	let event_logger = sync_service.event_logger();
 
@@ -298,7 +303,7 @@ async fn test_event_retention_cleanup() -> anyhow::Result<()> {
 		],
 	);
 
-	event_logger.conn().execute(stmt).await?;
+	event_logger.conn().execute_raw(stmt).await?;
 
 	// Verify event exists
 	let before_count = harness.query_events_raw().await?.len();
@@ -566,15 +571,15 @@ async fn test_correlation_id_tracking() -> anyhow::Result<()> {
 		"Expected 3 events with correlation_id"
 	);
 
-	// Verify they're in order
+	// The query API returns newest first, so the session reads in reverse
 	assert_eq!(
 		session_events[0].event_type,
-		SyncEventType::BackfillSessionStarted
+		SyncEventType::BackfillSessionCompleted
 	);
 	assert_eq!(session_events[1].event_type, SyncEventType::BatchIngestion);
 	assert_eq!(
 		session_events[2].event_type,
-		SyncEventType::BackfillSessionCompleted
+		SyncEventType::BackfillSessionStarted
 	);
 
 	// Verify all have same correlation ID

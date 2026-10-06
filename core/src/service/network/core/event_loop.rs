@@ -99,6 +99,9 @@ pub struct NetworkingEventLoop {
 	/// Nodes that already have connection watchers spawned (to prevent duplicates)
 	watched_nodes: Arc<RwLock<std::collections::HashSet<EndpointId>>>,
 
+	/// Devices with a reconnection loop in flight (shared with the service)
+	reconnecting: Arc<RwLock<std::collections::HashSet<Uuid>>>,
+
 	/// Logger for event loop operations
 	logger: Arc<dyn NetworkLogger>,
 }
@@ -114,6 +117,7 @@ impl NetworkingEventLoop {
 		active_connections: Arc<
 			RwLock<std::collections::HashMap<(EndpointId, Vec<u8>), Connection>>,
 		>,
+		reconnecting: Arc<RwLock<std::collections::HashSet<Uuid>>>,
 		logger: Arc<dyn NetworkLogger>,
 	) -> Self {
 		let (command_tx, command_rx) = mpsc::unbounded_channel();
@@ -130,6 +134,7 @@ impl NetworkingEventLoop {
 			shutdown_tx,
 			identity,
 			active_connections,
+			reconnecting,
 			watched_nodes: Arc::new(RwLock::new(std::collections::HashSet::new())),
 			logger,
 		}
@@ -580,18 +585,34 @@ impl NetworkingEventLoop {
 					return;
 				}
 
+				// A closed connection is routine: sync and remote ops open one
+				// per request and drop it. The device is lost only when no
+				// live connection to it remains, so prune the closed ones and
+				// keep the device connected while any survive — the durable
+				// job-activity stream, most of the time.
+				let still_connected = {
+					let mut connections = self.active_connections.write().await;
+					connections.retain(|(nid, _alpn), conn| {
+						*nid != node_id || conn.close_reason().is_none()
+					});
+					connections.keys().any(|(nid, _alpn)| *nid == node_id)
+				};
+				if still_connected {
+					self.logger
+						.debug(&format!(
+							"A connection to device {} closed, but another is live; staying connected",
+							device_id
+						))
+						.await;
+					return;
+				}
+
 				self.logger
 					.info(&format!(
 						"Connection lost to device {} (node: {}): {}",
 						device_id, node_id, reason
 					))
 					.await;
-
-				// Remove from active connections
-				{
-					let mut connections = self.active_connections.write().await;
-					connections.retain(|(nid, _alpn), _conn| *nid != node_id);
-				}
 
 				// Update device registry to mark as disconnected
 				let mut registry = self.device_registry.write().await;
@@ -633,18 +654,21 @@ impl NetworkingEventLoop {
 					{
 						let command_sender = Some(self.command_tx.clone());
 						let endpoint = Some(self.endpoint.clone());
+						let device_registry = self.device_registry.clone();
+						let reconnecting = self.reconnecting.clone();
 						let logger = self.logger.clone();
 
-						// Spawn reconnection with a small delay to prevent immediate retry loops
 						tokio::spawn(async move {
 							crate::service::network::core::NetworkingService::attempt_device_reconnection(
-							device_id,
-							persisted_device,
-							command_sender,
-							endpoint,
-							logger,
-						)
-						.await;
+								device_id,
+								persisted_device,
+								command_sender,
+								endpoint,
+								device_registry,
+								reconnecting,
+								logger,
+							)
+							.await;
 						});
 					}
 				}

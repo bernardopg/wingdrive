@@ -207,6 +207,12 @@ impl DynJob for IndexerJob {
 		Self::NAME
 	}
 
+	/// One walk per root at a time. A second track of the same root while a
+	/// walk is running would race the sweep it is part of.
+	fn dedup_key(&self) -> Option<String> {
+		Some(self.config.path.display())
+	}
+
 	fn should_persist(&self) -> bool {
 		// Database persistence only for truly persistent jobs
 		!self.config.is_ephemeral() && !self.config.run_in_background
