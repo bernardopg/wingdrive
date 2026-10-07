@@ -69,6 +69,9 @@ export type Platform = {
 
 	/** Open file with system default application */
 	openPathDefault?(path: string): Promise<OpenResult>;
+
+	/** Make an application the default for this file's type */
+	setDefaultAppForPath?(path: string, appId: string): Promise<void>;
 	resolveSymlink?(path: string): Promise<[string, boolean]>;
 	writeFileClipboard?(paths: string[], cut: boolean): Promise<void>;
 	readFileClipboard?(): Promise<[string[], boolean]>;
@@ -248,6 +251,8 @@ export interface OpenWithApp {
 	name: string;
 	/** Optional base64-encoded icon */
 	icon?: string;
+	/** The configured default for this file type */
+	is_default?: boolean;
 }
 
 /** Result of opening a file */

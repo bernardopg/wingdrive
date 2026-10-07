@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 file-opening = { path = "../file-opening" }
 open = "5.3"
+
+[dev-dependencies]
+tempfile = "3"

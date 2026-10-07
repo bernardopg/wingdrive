@@ -65,3 +65,13 @@ pub async fn open_paths_with_app(
 ) -> Result<Vec<OpenResult>, String> {
 	service.opener.open_files_with_app(&paths, &app_id)
 }
+
+/// Make `app_id` the default application for files of this file's type
+#[tauri::command]
+pub async fn set_default_app_for_path(
+	path: PathBuf,
+	app_id: String,
+	service: State<'_, FileOpeningService>,
+) -> Result<(), String> {
+	service.opener.set_default_app(&path, &app_id)
+}

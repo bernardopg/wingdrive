@@ -3282,6 +3282,7 @@ version = "0.1.0"
 dependencies = [
  "file-opening",
  "open",
+ "tempfile",
 ]
 
 [[package]]

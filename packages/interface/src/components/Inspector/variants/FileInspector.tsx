@@ -47,6 +47,7 @@ import {File as FileComponent} from '../../../routes/explorer/File';
 import {formatBytes} from '../../../routes/explorer/utils';
 import {Divider, InfoRow, Section, TabContent, Tabs, Tag} from '../Inspector';
 import {LocationMap} from '../LocationMap';
+import {revealLabel} from '../../../util/keybinds/platform';
 
 interface FileInspectorProps {
 	file: File;
@@ -1503,7 +1504,7 @@ function SidecarItem({
 		items: [
 			{
 				icon: MagnifyingGlass,
-				label: 'Show in Finder',
+				label: revealLabel(),
 				onClick: async () => {
 					if (
 						platform.getSidecarPath &&

@@ -15,6 +15,7 @@ import { usePlatform } from "../../../contexts/PlatformContext";
 import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { isVolumeItem, isPathItem } from "./spaceItemUtils";
 import { useExplorer, getSpaceItemKeyFromRoute } from "../../../routes/explorer/context";
+import {revealLabel} from '../../../util/keybinds/platform';
 
 interface UseSpaceItemContextMenuOptions {
 	item: SpaceItemType;
@@ -28,7 +29,7 @@ interface UseSpaceItemContextMenuOptions {
  * Menu items include:
  * - Open: Navigate to the item's path
  * - Index Volume: Trigger indexing for volume items
- * - Show in Finder: Reveal file in OS file manager (Path items only)
+ * - Show in Finder/Folder: Reveal file in OS file manager (Path items only)
  * - Remove from Space: Delete the item from the current space
  */
 export function useSpaceItemContextMenu({
@@ -84,7 +85,7 @@ export function useSpaceItemContextMenu({
 		{ type: "separator" },
 		{
 			icon: MagnifyingGlass,
-			label: "Show in Finder",
+			label: revealLabel(),
 			onClick: async () => {
 				if (isPathItem(item.item_type)) {
 					const sdPath = item.item_type.Path.wing_path;

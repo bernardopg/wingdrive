@@ -130,10 +130,14 @@ export const platform: Platform = {
 	},
 
 	async getAppsForPaths(paths: string[]) {
-		return await invoke<Array<{id: string; name: string; icon?: string}>>(
+		return await invoke<Array<{id: string; name: string; icon?: string; is_default?: boolean}>>(
 			'get_apps_for_paths',
 			{paths}
 		);
+	},
+
+	async setDefaultAppForPath(path: string, appId: string) {
+		await invoke('set_default_app_for_path', {path, appId});
 	},
 
 	async openPathDefault(path: string) {

@@ -39,6 +39,7 @@ import {useDeleteFiles} from './useDeleteFiles';
 import {useDuplicateFiles} from './useDuplicateFiles';
 import {useOpenFile} from './useOpenFile';
 import {usePasteFiles} from './usePasteFiles';
+import {revealLabel} from '../../../util/keybinds/platform';
 
 interface UseFileContextMenuProps {
 	file?: File | null;
@@ -103,7 +104,8 @@ export function useFileContextMenu({
 	};
 
 	const physicalPaths = getPhysicalPaths();
-	const {apps, openWithApp, openMultipleWithApp} = useOpenWith(physicalPaths);
+	const {apps, openWithApp, openMultipleWithApp, canSetDefault, setDefaultApp} =
+		useOpenWith(physicalPaths);
 
 	// A right-click on an unselected item acts on that item alone.
 	const targetFiles = selected && selectedFiles.length > 0
@@ -151,7 +153,7 @@ export function useFileContextMenu({
 					'Physical' in file.wing_path &&
 					apps.length > 0,
 				submenu: apps.map((app) => ({
-					label: app.name,
+					label: app.is_default ? `${app.name} (default)` : app.name,
 					onClick: async () => {
 						if (!file) return;
 						if (selected && selectedFiles.length > 1) {
@@ -165,8 +167,23 @@ export function useFileContextMenu({
 				}))
 			},
 			{
+				type: 'submenu',
+				icon: ArrowSquareOut,
+				label: 'Always Open With',
+				condition: () =>
+					canSetDefault &&
+					!!file &&
+					file.kind === 'File' &&
+					physicalPaths.length === 1 &&
+					apps.some((app) => !app.is_default),
+				submenu: apps.filter((app) => !app.is_default).map((app) => ({
+					label: app.name,
+					onClick: () => setDefaultApp(physicalPaths[0], app.id, app.name)
+				}))
+			},
+			{
 				icon: MagnifyingGlass,
-				label: 'Show in Finder',
+				label: revealLabel(),
 				onClick: async () => {
 					if (!file) return;
 					// Extract the physical path from WingPath
