@@ -9,8 +9,17 @@ version in the workspace manifests and the matching `v*` git tag.
 
 - A peer no longer loses an entry's content link when a discovery-phase state
   for that entry arrives after the content-phase state. The link is kept while
-  size and modification time are unchanged. This made
-  `test_realtime_sync_alice_to_bob` time out on CI with equal entry counts.
+  size and modification time are unchanged.
+- Changes received during a periodic incremental catch-up are applied once it
+  ends. Before, they stayed buffered, and a peer could end with entries
+  missing their content links. (#133)
+
+### Indexing
+
+- The first index of a location without a volume detects and records the
+  volume, instead of failing with "Location volume_id not set". (#133)
+- The root entry update retries when SQLite reports "database is locked"
+  instead of failing the indexing job. (#132)
 
 ## 2.0.0-alpha.8 — 2026-10-06
 
