@@ -57,7 +57,7 @@ with tempfile.TemporaryDirectory(prefix="wingdrive-bundle-") as directory:
     port = 6970 + sum(instance.encode()) % 1000
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", port))
-    env = dict(os.environ, APPDIR=str(app), WINGDRIVE_DATA_DIR=str(root / "data"),
+    env = dict(os.environ, WINGDRIVE_DATA_DIR=str(root / "data"),
                WINGDRIVE_INSTANCE=instance, WEBKIT_DISABLE_COMPOSITING_MODE="1", RUST_LOG="info",
                XDG_DATA_HOME=str(root / "xdg/data"), XDG_CACHE_HOME=str(root / "xdg/cache"),
                XDG_CONFIG_HOME=str(root / "xdg/config"))
