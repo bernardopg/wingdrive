@@ -22,6 +22,7 @@ import {
 	sameFiles,
 	selectionCapabilities
 } from './fileCapabilities';
+import {scrollToRevealed, takeRevealedFiles} from './pendingReveal';
 
 interface SelectionContextValue {
 	selectedFiles: File[];
@@ -402,6 +403,19 @@ export function SelectionProvider({
 
 	const restoreSelectionFromFiles = useCallback(
 		(files: File[]) => {
+			const revealed = takeRevealedFiles(files);
+			if (revealed.length > 0) {
+				selectedFilesRef.current = revealed;
+				setSelectedFilesInternal(revealed);
+				const index = files.indexOf(revealed[0]);
+				setFocusedIndex(index);
+				updateSelectionIds(
+					activeTabId,
+					revealed.map((f) => f.id)
+				);
+				scrollToRevealed({fileId: revealed[0].id, index});
+				return;
+			}
 			const ids = storedIdsRef.current;
 			const next = reconcileSelectedFiles(ids, files, selectedFilesRef.current);
 

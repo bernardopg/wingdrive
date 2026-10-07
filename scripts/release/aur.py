@@ -60,8 +60,21 @@ package() {{
 
   install -d "$pkgdir/usr/bin"
   ln -s /opt/wingdrive/usr/bin/WingDrive "$pkgdir/usr/bin/wingdrive"
-  install -Dm644 squashfs-root/usr/share/applications/*.desktop "$pkgdir/usr/share/applications/wingdrive.desktop"
-  sed -i 's|^Exec=.*|Exec=wingdrive %U|; s|^TryExec=.*|TryExec=wingdrive|' "$pkgdir/usr/share/applications/wingdrive.desktop"
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/wingdrive.desktop" <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=WingDrive
+GenericName=File Manager
+Comment=Browse, organize and sync your files
+Exec=wingdrive %U
+TryExec=wingdrive
+Icon=WingDrive
+Terminal=false
+StartupWMClass=WingDrive
+Categories=System;FileTools;FileManager;
+Keywords=files;folders;file manager;explorer;browser;
+MimeType=inode/directory;application/x-wingdrive-memory;
+DESKTOP
   if [[ -d squashfs-root/usr/share/icons ]]; then
     install -d "$pkgdir/usr/share/icons"
     cp -a squashfs-root/usr/share/icons/. "$pkgdir/usr/share/icons/"

@@ -20,6 +20,7 @@ tauri-plugin-clipboard-manager = "2.3.3"
 tauri-plugin-global-shortcut = "2.3.2"
 tauri-plugin-os = "2.3.2"
 tauri-plugin-updater = "2.11.0"
+tauri-plugin-single-instance = "2.5.2"
 
 # Core bridge
 wing-tauri-core = { path = "../wing-tauri-core" }

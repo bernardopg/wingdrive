@@ -6,6 +6,7 @@ mod drag;
 mod file_opening;
 mod files;
 mod keybinds;
+mod launch;
 mod server;
 mod undo;
 mod windows;
@@ -466,7 +467,10 @@ struct MenuState {
 
 /// Called from frontend when app is ready to be shown
 #[tauri::command]
-async fn app_ready(window: tauri::Window) {
+fn app_ready(window: tauri::Window, start_hidden: tauri::State<'_, launch::StartHidden>) {
+	if window.label() == "main" && start_hidden.consume() {
+		return;
+	}
 	window.show().ok();
 	window.set_focus().ok();
 
@@ -2331,7 +2335,21 @@ fn main() {
 		.with(tracing_subscriber::fmt::layer())
 		.init();
 
-	tauri::Builder::default()
+	let launch_cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
+	let launch_options = launch::parse_args(std::env::args().skip(1), &launch_cwd);
+
+	let mut builder = tauri::Builder::default();
+	// Named instances are isolated test or development runs and must not hand
+	// their launches to the user's everyday WingDrive.
+	if std::env::var_os(INSTANCE_ENV).is_none() {
+		builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+			let options = launch::parse_args(argv.into_iter().skip(1), Path::new(&cwd));
+			launch::deliver(app, options.requests);
+		}));
+	}
+	builder
+		.manage(launch::PendingOpenRequests::new(launch_options.requests))
+		.manage(launch::StartHidden(launch_options.hidden.into()))
 		.plugin(tauri_plugin_clipboard_manager::init())
 		.plugin(tauri_plugin_dialog::init())
 		.plugin(tauri_plugin_fs::init())
@@ -2354,6 +2372,7 @@ fn main() {
 		)
 		.invoke_handler(tauri::generate_handler![
 			app_ready,
+			launch::take_open_requests,
 			get_daemon_socket,
 			get_server_url,
 			get_file_stream_url,

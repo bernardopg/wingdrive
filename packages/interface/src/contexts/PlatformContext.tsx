@@ -121,6 +121,12 @@ export type Platform = {
 	/** Listen for window events (Tauri only) */
 	onWindowEvent?(event: string, callback: () => void): Promise<() => void>;
 
+	/** Take folders queued by launchers, `xdg-open` or other apps (Tauri only) */
+	takeOpenRequests?(): Promise<OpenRequest[]>;
+
+	/** Listen for newly queued open requests (Tauri only) */
+	onOpenRequests?(callback: () => void): Promise<() => void>;
+
 	/** Get current window label (Tauri only) */
 	getCurrentWindowLabel?(): string;
 
@@ -215,6 +221,12 @@ export type Platform = {
 	/** Unregister a keybind handler (Tauri only) */
 	unregisterKeybind?(id: string): Promise<void>;
 };
+
+/** A folder the desktop asked WingDrive to open, with an optional entry to select */
+export interface OpenRequest {
+	directory: string;
+	select: string | null;
+}
 
 /** Application that can open a file */
 export interface OpenWithApp {

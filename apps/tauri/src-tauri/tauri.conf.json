@@ -95,6 +95,7 @@
     ],
     "linux": {
       "deb": {
+        "desktopTemplate": "wingdrive.desktop",
         "depends": [
           "libc6",
           "libxdo3",
