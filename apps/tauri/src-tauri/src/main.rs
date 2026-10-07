@@ -2419,6 +2419,7 @@ fn main() {
 			undo::file_identity,
 			undo::undo_move,
 			undo::undo_empty_folder,
+			undo::undo_new_file,
 			file_opening::get_apps_for_paths,
 			file_opening::open_path_default,
 			file_opening::open_path_with_app,

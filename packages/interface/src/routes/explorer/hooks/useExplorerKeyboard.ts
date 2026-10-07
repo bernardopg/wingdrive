@@ -8,6 +8,7 @@ import {useUndo} from '../../../hooks/useUndo';
 import {isInputFocused} from '../../../util/keybinds/platform';
 import {useExplorer} from '../context';
 import {selectionCapabilities} from '../fileCapabilities';
+import {useCreateEntry} from './useCreateEntry';
 import {useOpenTerminal} from './useOpenTerminal';
 import {useSelection} from '../SelectionContext';
 import {useCreateFolder} from './useCreateFolder';
@@ -83,6 +84,11 @@ export function useExplorerKeyboard() {
 	useKeybind('explorer.newFolder', async () => {
 		const name = await createFolder();
 		if (name) setPendingRename(name);
+	});
+
+	const {newFile} = useCreateEntry();
+	useKeybind('explorer.newFile', () => {
+		void newFile();
 	});
 
 	const openTerminal = useOpenTerminal();

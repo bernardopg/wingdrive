@@ -20,9 +20,10 @@ import {useWaitForJob} from '../../hooks/useWaitForJob';
 import {
 	reconcileSelectedFiles,
 	sameFiles,
+	physicalPath,
 	selectionCapabilities
 } from './fileCapabilities';
-import {scrollToRevealed, takeRevealedFiles} from './pendingReveal';
+import {scrollToRevealed, takeRenameRequest, takeRevealedFiles} from './pendingReveal';
 
 interface SelectionContextValue {
 	selectedFiles: File[];
@@ -422,6 +423,10 @@ export function SelectionProvider({
 					revealed.map((f) => f.id)
 				);
 				scrollToRevealed({fileId: revealed[0].id, index});
+				const path = physicalPath(revealed[0]);
+				if (revealed.length === 1 && path && takeRenameRequest(path)) {
+					setRenamingFileId(revealed[0].id);
+				}
 				return;
 			}
 			const ids = storedIdsRef.current;

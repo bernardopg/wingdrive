@@ -36,6 +36,8 @@ export const platform: Platform = {
 				) => invoke<void>('undo_move', {source, destination, expected}),
 				undoEmptyFolder: (path: string, expected: [string, string]) =>
 					invoke<void>('undo_empty_folder', {path, expected}),
+				undoNewFile: (path: string, expected: [string, string]) =>
+					invoke<void>('undo_new_file', {path, expected}),
 				writeFileClipboard: (paths: string[], cut: boolean) =>
 					invoke<void>('write_file_clipboard', {paths, cut}),
 				readFileClipboard: () =>

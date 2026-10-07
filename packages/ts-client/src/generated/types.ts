@@ -249,7 +249,11 @@ export type ConnectionMethod =
  * Connection proxied through relay server
  * Reliable fallback. Relay hosts the bandwidth.
  */
-"RelayProxy";
+"RelayProxy" | 
+/**
+ * Direct path over the user's Tailscale tailnet (WireGuard mesh)
+ */
+"Tailscale";
 
 /**
  * Domain representation of content identity
@@ -455,6 +459,28 @@ copy_method: CopyMethod };
 export type CoreStatus = { version: string; built_at: string; library_count: number; device_info: DeviceInfo; libraries: LibraryInfo[]; services: ServiceStatus; network: NetworkStatus; system: SystemInfo };
 
 /**
+ * Output from creating a file or link
+ */
+export type CreateEntryOutput = { 
+/**
+ * Path of the created entry
+ */
+path: WingPath };
+
+/**
+ * Input for creating an empty file
+ */
+export type CreateFileInput = { 
+/**
+ * Directory that receives the file
+ */
+parent: WingPath; 
+/**
+ * Name of the new file
+ */
+name: string };
+
+/**
  * Input for creating a new folder
  */
 export type CreateFolderInput = { 
@@ -521,6 +547,23 @@ adapter_id: string;
  * Current status (usually "idle" initially)
  */
 status: string };
+
+/**
+ * Input for creating a symbolic link
+ */
+export type CreateSymlinkInput = { 
+/**
+ * Existing file or folder the link points to
+ */
+target: WingPath; 
+/**
+ * Directory that receives the link
+ */
+parent: WingPath; 
+/**
+ * Name of the new link
+ */
+name: string };
 
 export type CreateTagInput = { 
 /**
@@ -5094,7 +5137,9 @@ export type LibraryAction =
      { type: 'adapters.update'; input: UpdateAdapterInput; output: UpdateAdapterOutput }
   |  { type: 'config.library.update'; input: UpdateLibraryConfigInput; output: UpdateLibraryConfigOutput }
   |  { type: 'files.copy'; input: FileCopyInput; output: JobReceipt }
+  |  { type: 'files.createFile'; input: CreateFileInput; output: CreateEntryOutput }
   |  { type: 'files.createFolder'; input: CreateFolderInput; output: CreateFolderOutput }
+  |  { type: 'files.createSymlink'; input: CreateSymlinkInput; output: CreateEntryOutput }
   |  { type: 'files.delete'; input: FileDeleteInput; output: JobReceipt }
   |  { type: 'files.rename'; input: FileRenameInput; output: JobReceipt }
   |  { type: 'indexing.start'; input: IndexInput; output: JobReceipt }
@@ -5233,7 +5278,9 @@ export const WIRE_METHODS = {
     'adapters.update': 'action:adapters.update.input',
     'config.library.update': 'action:config.library.update.input',
     'files.copy': 'action:files.copy.input',
+    'files.createFile': 'action:files.createFile.input',
     'files.createFolder': 'action:files.createFolder.input',
+    'files.createSymlink': 'action:files.createSymlink.input',
     'files.delete': 'action:files.delete.input',
     'files.rename': 'action:files.rename.input',
     'indexing.start': 'action:indexing.start.input',

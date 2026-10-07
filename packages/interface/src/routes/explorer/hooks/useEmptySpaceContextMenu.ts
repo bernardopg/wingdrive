@@ -1,8 +1,15 @@
-import {ArrowCounterClockwise, Copy, FolderPlus, TerminalWindow} from '@phosphor-icons/react';
+import {
+	ArrowCounterClockwise,
+	Copy,
+	FilePlus,
+	FolderPlus,
+	TerminalWindow
+} from '@phosphor-icons/react';
 import {useClipboard} from '../../../hooks/useClipboard';
 import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useUndo} from '../../../hooks/useUndo';
 import {useExplorer} from '../context';
+import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useOpenTerminal} from './useOpenTerminal';
 import {usePasteFiles} from './usePasteFiles';
@@ -14,6 +21,7 @@ export function useEmptySpaceContextMenu() {
 	const pasteFiles = usePasteFiles();
 	const undo = useUndo();
 	const openTerminal = useOpenTerminal();
+	const {newFile} = useCreateEntry();
 
 	return useContextMenu({
 		items: [
@@ -30,6 +38,15 @@ export function useEmptySpaceContextMenu() {
 				onClick: createFolder,
 				keybindId: 'explorer.newFolder',
 				condition: () => !!operationalPath
+			},
+			{
+				icon: FilePlus,
+				label: 'New File',
+				onClick: () => {
+					void newFile();
+				},
+				keybindId: 'explorer.newFile',
+				condition: () => !!operationalPath && 'Physical' in operationalPath
 			},
 			{
 				icon: Copy,

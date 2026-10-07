@@ -42,12 +42,12 @@ export function GridView() {
 		}
 	};
 
+	// Inner wrappers fill the empty area, so anything that is not an item counts.
 	const handleContainerContextMenu = async (e: React.MouseEvent) => {
-		if (e.target === e.currentTarget) {
-			e.preventDefault();
-			e.stopPropagation();
-			await emptySpaceContextMenu.show(e);
-		}
+		if ((e.target as Element).closest('[data-file-id]')) return;
+		e.preventDefault();
+		e.stopPropagation();
+		await emptySpaceContextMenu.show(e);
 	};
 
 	// Conditional virtualization - use simple grid for small directories

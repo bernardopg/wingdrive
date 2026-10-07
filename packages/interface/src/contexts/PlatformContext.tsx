@@ -85,6 +85,8 @@ export type Platform = {
 		expected: [string, string]
 	): Promise<void>;
 	undoEmptyFolder?(path: string, expected: [string, string]): Promise<void>;
+	/** Remove a file or link this app created, if it is unchanged and empty */
+	undoNewFile?(path: string, expected: [string, string]): Promise<void>;
 
 	/** Open file with specific application */
 	openPathWithApp?(path: string, appId: string): Promise<OpenResult>;

@@ -14,6 +14,8 @@ import {
 	Pencil,
 	Scissors,
 	ShareNetwork,
+	Link,
+	FilePlus,
 	TerminalWindow,
 	Sparkle,
 	Stack,
@@ -35,6 +37,7 @@ import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
 import {useExplorer} from '../context';
 import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
+import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
 import {useDuplicateFiles} from './useDuplicateFiles';
@@ -109,6 +112,7 @@ export function useFileContextMenu({
 	const {apps, openWithApp, openMultipleWithApp, canSetDefault, setDefaultApp} =
 		useOpenWith(physicalPaths);
 	const openTerminal = useOpenTerminal();
+	const {newFile, newLink} = useCreateEntry();
 
 	// A right-click on an unselected item acts on that item alone.
 	const targetFiles = selected && selectedFiles.length > 0
@@ -270,6 +274,27 @@ export function useFileContextMenu({
 					void createEmptyFolder();
 				},
 				condition: () => !!operationalPath
+			},
+			{
+				icon: FilePlus,
+				label: 'New File',
+				onClick: () => {
+					void newFile();
+				},
+				condition: () => !!operationalPath && 'Physical' in operationalPath
+			},
+			{
+				icon: Link,
+				label: 'Create Link',
+				onClick: () => {
+					if (file) void newLink(file);
+				},
+				condition: () =>
+					!!file &&
+					targetFiles.length === 1 &&
+					'Physical' in file.wing_path &&
+					!!operationalPath &&
+					'Physical' in operationalPath
 			},
 			{
 				icon: FolderPlus,

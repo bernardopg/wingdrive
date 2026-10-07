@@ -5,9 +5,17 @@ import {physicalPath} from './fileCapabilities';
 // Paths waiting to be selected once a listing containing them loads, for
 // launches such as `wingdrive ~/file.txt` or FileManager1.ShowItems.
 const pending = new Set<string>();
+const renameOnReveal = new Set<string>();
 
-export function requestReveal(path: string) {
+/** Selects `path` once it appears; `rename` also starts renaming it. */
+export function requestReveal(path: string, options?: {rename?: boolean}) {
 	pending.add(path);
+	if (options?.rename) renameOnReveal.add(path);
+}
+
+/** Whether the revealed path asked to be renamed, consuming the request. */
+export function takeRenameRequest(path: string): boolean {
+	return renameOnReveal.delete(path);
 }
 
 /** Returns the files in `files` that were requested, and forgets them. */
