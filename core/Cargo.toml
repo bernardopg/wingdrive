@@ -141,7 +141,7 @@ rubato     = { version = "5.0", optional = true }  # Audio resampling to 16kHz
 # Networking
 # Iroh P2P networking
 iroh                     = "1.1"
-iroh-mdns-address-lookup = "0.5"
+iroh-mdns-address-lookup = "0.6"
 
 # Serialization for protocols
 # serde_cbor and bincode (2.0.0-rc) removed: both unmaintained
