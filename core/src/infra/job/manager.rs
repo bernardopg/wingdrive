@@ -107,6 +107,47 @@ impl JobManager {
 		Ok(())
 	}
 
+	/// Settles job rows a previous process left running or queued.
+	///
+	/// Jobs are not auto-resumed on startup, but rows still marked running
+	/// made the UI show them as active forever. Resumable jobs become paused,
+	/// so the user can resume them; the rest are recorded as failed.
+	pub async fn reconcile_interrupted_jobs(&self) -> JobResult<()> {
+		use sea_orm::{ColumnTrait, QueryFilter};
+		let stale = database::jobs::Entity::find()
+			.filter(database::jobs::Column::Status.is_in([
+				JobStatus::Running.to_string(),
+				JobStatus::Queued.to_string(),
+			]))
+			.all(self.db.conn())
+			.await?;
+		for record in stale {
+			let Ok(job_id) = record.id.parse::<Uuid>().map(JobId) else {
+				continue;
+			};
+			match REGISTRY.resumable(&record.name) {
+				Some(true) => {
+					info!(job = %job_id, name = %record.name, "Interrupted job left paused");
+					if let Err(e) = self.db.update_status(job_id, JobStatus::Paused).await {
+						error!(job = %job_id, %e, "could not pause interrupted job, row left stale");
+					}
+				}
+				Some(false) => {
+					self.mark_unresumed(job_id, "interrupted by restart; not resumable")
+						.await
+				}
+				None => {
+					self.mark_unresumed(
+						job_id,
+						&format!("job type '{}' unknown to this build", record.name),
+					)
+					.await
+				}
+			}
+		}
+		Ok(())
+	}
+
 	/// Dispatch a job for execution
 	pub async fn dispatch<J>(&self, job: J) -> JobResult<JobHandle>
 	where

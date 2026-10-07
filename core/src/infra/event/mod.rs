@@ -498,7 +498,7 @@ impl Event {
 					},
 				) = (scope, affected_path)
 				{
-					if scope_device != file_device {
+					if WingPath::slugs_name_different_devices(scope_device, file_device) {
 						return false;
 					}
 
@@ -526,7 +526,7 @@ impl Event {
 						path: file_path,
 					},
 				) => {
-					if scope_device != file_device {
+					if WingPath::slugs_name_different_devices(scope_device, file_device) {
 						return false;
 					}
 
@@ -598,7 +598,7 @@ impl Event {
 							},
 						) = (scope, &alt_path)
 						{
-							if scope_device != alt_device {
+							if WingPath::slugs_name_different_devices(scope_device, alt_device) {
 								continue;
 							}
 
@@ -645,7 +645,7 @@ impl Event {
 							},
 						) = (scope, &wing_path)
 						{
-							if scope_device != res_device {
+							if WingPath::slugs_name_different_devices(scope_device, res_device) {
 								continue;
 							}
 
@@ -995,5 +995,41 @@ impl EventFilter for Event {
 			} => *lid == library_id,
 			_ => false,
 		}
+	}
+}
+
+#[cfg(test)]
+mod path_scope_tests {
+	use super::*;
+
+	fn file_event(slug: &str, path: &str) -> Event {
+		Event::ResourceChanged {
+			resource_type: "file".to_string(),
+			resource: serde_json::json!({}),
+			metadata: Some(ResourceMetadata {
+				no_merge_fields: Vec::new(),
+				alternate_ids: Vec::new(),
+				affected_paths: vec![WingPath::Physical {
+					device_slug: slug.to_string(),
+					path: PathBuf::from(path),
+				}],
+			}),
+		}
+	}
+
+	#[test]
+	fn local_placeholder_scope_matches_events_for_this_device() {
+		crate::device::set_current_device_slug("this-machine".to_string());
+		let scope = WingPath::Physical {
+			device_slug: "local".to_string(),
+			path: PathBuf::from("/home/me/work"),
+		};
+		let created = file_event("this-machine", "/home/me/work/new.txt");
+		assert!(created.affects_path(&scope, false));
+		assert!(created.affects_path(&scope, true));
+
+		let elsewhere = file_event("other-machine", "/home/me/work/new.txt");
+		assert!(!elsewhere.affects_path(&scope, false));
+		assert!(!elsewhere.affects_path(&scope, true));
 	}
 }
