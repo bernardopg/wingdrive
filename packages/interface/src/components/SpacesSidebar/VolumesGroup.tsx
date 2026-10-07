@@ -4,6 +4,7 @@ import type {Device, Volume} from '@wingdrive/ts-client';
 import {GroupHeader} from './GroupHeader';
 import {SpaceItem} from './SpaceItem';
 import {useVolumeContextMenu} from './hooks/useVolumeContextMenu';
+import {NetworkSection} from './NetworkSection';
 
 interface VolumesGroupProps {
 	isCollapsed: boolean;
@@ -112,6 +113,7 @@ export function VolumesGroup({
 							/>
 						))
 					)}
+					<NetworkSection />
 				</div>
 			)}
 		</div>

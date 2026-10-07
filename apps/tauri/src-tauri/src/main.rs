@@ -8,6 +8,8 @@ mod file_opening;
 #[cfg(target_os = "linux")]
 mod filemanager1;
 mod files;
+#[cfg(target_os = "linux")]
+mod gvfs;
 mod keybinds;
 mod launch;
 mod server;
@@ -2426,6 +2428,14 @@ fn main() {
 			file_opening::open_paths_with_app,
 			file_opening::set_default_app_for_path,
 			files::open_terminal,
+			#[cfg(target_os = "linux")]
+			gvfs::list_network_mounts,
+			#[cfg(target_os = "linux")]
+			gvfs::list_mountable_volumes,
+			#[cfg(target_os = "linux")]
+			gvfs::mount_network_location,
+			#[cfg(target_os = "linux")]
+			gvfs::unmount_network_location,
 			keybinds::register_keybind,
 			keybinds::unregister_keybind,
 			keybinds::get_registered_keybinds

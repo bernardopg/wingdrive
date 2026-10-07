@@ -70,6 +70,18 @@ export type Platform = {
 	/** Open file with system default application */
 	openPathDefault?(path: string): Promise<OpenResult>;
 
+	/** Network locations and devices mounted through gvfs (Tauri/Linux only) */
+	listNetworkMounts?(): Promise<NetworkMount[]>;
+
+	/** Phones, cameras and other devices gvfs can mount (Tauri/Linux only) */
+	listMountableVolumes?(): Promise<MountableVolume[]>;
+
+	/** Mount a URI such as sftp://user@host/ (Tauri/Linux only) */
+	mountNetworkLocation?(uri: string, password?: string): Promise<NetworkMount>;
+
+	/** Unmount a gvfs location by its folder (Tauri/Linux only) */
+	unmountNetworkLocation?(path: string): Promise<void>;
+
 	/** Open the user's terminal in a folder */
 	openTerminal?(path: string): Promise<void>;
 
@@ -235,6 +247,19 @@ export type Platform = {
 	/** Unregister a keybind handler (Tauri only) */
 	unregisterKeybind?(id: string): Promise<void>;
 };
+
+/** A mounted network location or device, browsed through its folder */
+export interface NetworkMount {
+	name: string;
+	path: string;
+	kind: string;
+}
+
+/** A device that can be mounted, such as a phone */
+export interface MountableVolume {
+	name: string;
+	uri: string;
+}
 
 /** How the desktop app behaves when its window closes and at login */
 export interface DesktopSettings {

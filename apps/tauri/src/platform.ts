@@ -6,7 +6,13 @@ import {listen} from '@tauri-apps/api/event';
 import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {ask, open, save} from '@tauri-apps/plugin-dialog';
 import {open as shellOpen} from '@tauri-apps/plugin-shell';
-import type {DesktopSettings, OpenRequest, Platform} from '@wingdrive/interface';
+import type {
+	DesktopSettings,
+	MountableVolume,
+	NetworkMount,
+	OpenRequest,
+	Platform
+} from '@wingdrive/interface';
 import {
 	beginDrag,
 	onDragBegan,
@@ -38,6 +44,16 @@ export const platform: Platform = {
 					invoke<void>('undo_empty_folder', {path, expected}),
 				undoNewFile: (path: string, expected: [string, string]) =>
 					invoke<void>('undo_new_file', {path, expected}),
+				listNetworkMounts: () => invoke<NetworkMount[]>('list_network_mounts'),
+				listMountableVolumes: () =>
+					invoke<MountableVolume[]>('list_mountable_volumes'),
+				mountNetworkLocation: (uri: string, password?: string) =>
+					invoke<NetworkMount>('mount_network_location', {
+						uri,
+						password: password || null
+					}),
+				unmountNetworkLocation: (path: string) =>
+					invoke<void>('unmount_network_location', {path}),
 				writeFileClipboard: (paths: string[], cut: boolean) =>
 					invoke<void>('write_file_clipboard', {paths, cut}),
 				readFileClipboard: () =>
