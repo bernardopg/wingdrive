@@ -2565,6 +2565,26 @@ impl PeerSync {
 		&self.hlc_generator
 	}
 
+	/// Apply updates buffered while the device was not ready.
+	///
+	/// Call after leaving a buffering state without `transition_to_ready`, such as an
+	/// incremental catch-up; anything left in the buffer is otherwise never applied.
+	pub async fn apply_buffered_updates(&self) {
+		while let Some(update) = self.buffer.pop_ordered().await {
+			let result = match &update {
+				super::state::BufferedUpdate::StateChange(change) => {
+					self.apply_state_change(change.clone()).await
+				}
+				super::state::BufferedUpdate::SharedChange(entry) => {
+					self.apply_shared_change(entry.clone()).await
+				}
+			};
+			if let Err(e) = result {
+				warn!(error = %e, "Failed to apply buffered update after catch-up");
+			}
+		}
+	}
+
 	/// Get dependency tracker for event-driven FK retry
 	pub fn dependency_tracker(&self) -> &Arc<super::dependency::DependencyTracker> {
 		&self.dependency_tracker

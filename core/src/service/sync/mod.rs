@@ -572,6 +572,9 @@ impl SyncService {
 													reason = "catchup_completed",
 													"Sync state transition"
 												);
+												drop(state);
+												// Changes received during the catch-up were buffered.
+												peer_sync.apply_buffered_updates().await;
 											}
 											Err(e) => {
 												warn!(peer = %partner_id, error = %e, "Incremental catch-up failed");
@@ -587,6 +590,9 @@ impl SyncService {
 													reason = "catchup_failed_but_continuing",
 													"Sync state transition"
 												);
+												drop(state);
+												// Changes received during the catch-up were buffered.
+												peer_sync.apply_buffered_updates().await;
 											}
 										}
 
