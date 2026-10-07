@@ -562,7 +562,16 @@ impl Model {
 		let now = chrono::Utc::now();
 
 		let entry_id = if let Some(existing_entry) = existing {
-			// Update existing entry
+			// A discovery-phase state can arrive after the content-phase state that linked
+			// the entry. Unchanged size and mtime mean the bytes are the same, so keep the link.
+			let content_id = if content_id.is_none()
+				&& existing_entry.size == size
+				&& existing_entry.modified_at == modified_at
+			{
+				existing_entry.content_id
+			} else {
+				content_id
+			};
 			let active = ActiveModel {
 				id: Set(existing_entry.id),
 				uuid: Set(Some(entry_uuid)),

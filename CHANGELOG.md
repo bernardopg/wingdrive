@@ -3,6 +3,52 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Sync
+
+- A peer no longer loses an entry's content link when a discovery-phase state
+  for that entry arrives after the content-phase state. The link is kept while
+  size and modification time are unchanged. This made
+  `test_realtime_sync_alice_to_bob` time out on CI with equal entry counts.
+
+## 2.0.0-alpha.8 — 2026-10-06
+
+### Indexing (INDEX-010, #116)
+
+- Ephemeral browsing and volume indexing reuse the persistent UUIDs of paths a
+  library already indexed, instead of minting new ids that orphan tags and
+  metadata. Reconciliation runs in the background after discovery, scoped per
+  library, and `ResourceChanged` carries the temporary id so clients swap it in
+  place.
+
+### Sync (#117)
+
+- Location creation sends its root entry and location with UUID foreign keys,
+  so a peer no longer hits FOREIGN KEY failures when the location arrives
+  before its root.
+- MIME types get one identity across devices instead of a random UUID per
+  device.
+
+### Brand (BRAND-002, #118)
+
+- Spacebot is now Wingbot, Spacedrop is now Wingdrop (`wing network
+  wingdrop`), the in-repo design system is WingUI, and Spaces are Wings in
+  sidebar copy, CLI output and docs. Stored and wire names stay compatible.
+
+### Linux runtime findings (TAURI-006, #119)
+
+- Copy and move between `local` and this device's slug or UUID stay local
+  instead of failing with "Could not find node_id for device".
+- A receiver that refuses a transfer replies with the reason, and the sender
+  shows it. Remote job results now reach the sender.
+- Rename is F2 on Linux and Windows. Menus show the platform's shortcut glyphs.
+- TopBar overflow panels (Views, Sort, View Settings) render inline in the
+  menu, so they no longer close before a choice registers.
+- `network.spacedrop.send` fails with an explicit error instead of reporting
+  a send that never happened. The native View menu with the Wingdrop demo is
+  limited to debug builds.
+
 ## 2.0.0-alpha.7 — 2026-10-06
 
 ### License
