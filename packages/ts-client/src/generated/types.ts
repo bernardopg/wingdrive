@@ -178,6 +178,37 @@ export type ApplyToTargets =
 { type: "EntryUuid"; ids: string[] };
 
 /**
+ * Input for compressing files into a new archive
+ */
+export type ArchiveCompressInput = { 
+/**
+ * Files and folders to include, all on this device
+ */
+sources: WingPath[]; 
+/**
+ * Folder that receives the archive
+ */
+destination: WingPath; 
+/**
+ * Archive name without extension; the format's extension is added
+ */
+name: string; format: ArchiveFormat };
+
+/**
+ * Input for extracting an archive
+ */
+export type ArchiveExtractInput = { archive: WingPath; 
+/**
+ * Folder that receives the extracted content
+ */
+destination: WingPath };
+
+/**
+ * Archive formats WingDrive can read; all but 7-Zip can also be written.
+ */
+export type ArchiveFormat = "zip" | "tar" | "tar_gz" | "tar_bz2" | "tar_xz" | "tar_zst" | "seven_zip";
+
+/**
  * Audio metadata extracted from FFmpeg
  */
 export type AudioMediaData = { uuid: string; duration_seconds: number | null; bit_rate: number | null; sample_rate: number | null; channels: string | null; codec: string | null; title: string | null; artist: string | null; album: string | null; album_artist: string | null; genre: string | null; year: number | null; track_number: number | null; disc_number: number | null; composer: string | null; publisher: string | null; copyright: string | null };
@@ -5188,6 +5219,8 @@ export type CoreAction =
 
 export type LibraryAction =
      { type: 'adapters.update'; input: UpdateAdapterInput; output: UpdateAdapterOutput }
+  |  { type: 'archive.compress'; input: ArchiveCompressInput; output: JobReceipt }
+  |  { type: 'archive.extract'; input: ArchiveExtractInput; output: JobReceipt }
   |  { type: 'config.library.update'; input: UpdateLibraryConfigInput; output: UpdateLibraryConfigOutput }
   |  { type: 'files.copy'; input: FileCopyInput; output: JobReceipt }
   |  { type: 'files.createFile'; input: CreateFileInput; output: CreateEntryOutput }
@@ -5332,6 +5365,8 @@ export const WIRE_METHODS = {
 
   libraryActions: {
     'adapters.update': 'action:adapters.update.input',
+    'archive.compress': 'action:archive.compress.input',
+    'archive.extract': 'action:archive.extract.input',
     'config.library.update': 'action:config.library.update.input',
     'files.copy': 'action:files.copy.input',
     'files.createFile': 'action:files.createFile.input',

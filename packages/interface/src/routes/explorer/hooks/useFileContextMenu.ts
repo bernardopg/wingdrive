@@ -14,6 +14,8 @@ import {
 	Pencil,
 	Scissors,
 	ShareNetwork,
+	FileArchive,
+	Package,
 	Link,
 	FilePlus,
 	TerminalWindow,
@@ -37,6 +39,8 @@ import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
 import {useExplorer} from '../context';
 import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
+import {COMPRESS_FORMATS, isArchiveName} from './archiveName';
+import {useArchiveActions} from './useArchiveActions';
 import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
@@ -113,6 +117,7 @@ export function useFileContextMenu({
 		useOpenWith(physicalPaths);
 	const openTerminal = useOpenTerminal();
 	const {newFile, newLink} = useCreateEntry();
+	const archive = useArchiveActions();
 
 	// A right-click on an unselected item acts on that item alone.
 	const targetFiles = selected && selectedFiles.length > 0
@@ -295,6 +300,45 @@ export function useFileContextMenu({
 					'Physical' in file.wing_path &&
 					!!operationalPath &&
 					'Physical' in operationalPath
+			},
+			{
+				icon: FileArchive,
+				label: 'Extract Here',
+				onClick: () => {
+					if (file) archive.extract(file);
+				},
+				condition: () =>
+					!!file &&
+					targetFiles.length === 1 &&
+					file.kind === 'File' &&
+					'Physical' in file.wing_path &&
+					isArchiveName(file.wing_path.Physical.path)
+			},
+			{
+				icon: FileArchive,
+				label: 'Extract To...',
+				onClick: () => {
+					if (file) void archive.extractTo(file);
+				},
+				condition: () =>
+					archive.canPickDirectory &&
+					!!file &&
+					targetFiles.length === 1 &&
+					file.kind === 'File' &&
+					'Physical' in file.wing_path &&
+					isArchiveName(file.wing_path.Physical.path)
+			},
+			{
+				type: 'submenu',
+				icon: Package,
+				label: 'Compress',
+				condition: () =>
+					targetFiles.length > 0 &&
+					targetFiles.every((f) => 'Physical' in f.wing_path && f.is_local),
+				submenu: COMPRESS_FORMATS.map(({format, label}) => ({
+					label,
+					onClick: () => archive.compress(targetFiles, format)
+				}))
 			},
 			{
 				icon: FolderPlus,
