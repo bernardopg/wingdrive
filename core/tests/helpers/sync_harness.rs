@@ -544,8 +544,34 @@ pub async fn add_and_index_location(
 		.await?
 		.ok_or_else(|| anyhow::anyhow!("Device not found"))?;
 
+	// Record the volume before creating the location: creation starts indexing, which
+	// resolves a missing volume itself and would race this insert.
+	let location_path = std::path::PathBuf::from(path);
+	let Some(volume) = volume_manager.volume_for_path(&location_path).await else {
+		anyhow::bail!(
+			"No volume detected for path '{}' - volume must be mounted for testing",
+			path
+		);
+	};
+	tracing::info!(
+		volume_name = %volume.name,
+		volume_fingerprint = ?volume.fingerprint,
+		volume_uuid = ?volume.id,
+		"Detected volume for location"
+	);
+	// Check by UUID first: test devices share this machine's volumes.
+	use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+	let volume_id = match entities::volume::Entity::find()
+		.filter(entities::volume::Column::Uuid.eq(volume.id))
+		.one(library.db().conn())
+		.await?
+	{
+		Some(existing) => existing.id,
+		None => volume_manager.ensure_volume_in_db(&volume, library).await?,
+	};
+
 	let location_args = LocationCreateArgs {
-		path: std::path::PathBuf::from(path),
+		path: location_path,
 		name: Some(name.to_string()),
 		index_mode: IndexMode::Content,
 	};
@@ -562,60 +588,20 @@ pub async fn add_and_index_location(
 		.one(library.db().conn())
 		.await?
 		.ok_or_else(|| anyhow::anyhow!("Location not found"))?;
-
 	let location_uuid = location_record.uuid;
-	let entry_id = location_record.entry_id;
 
-	// Detect volume for the location path before indexing
-	let location_path = std::path::PathBuf::from(path);
-	if let Some(volume) = volume_manager.volume_for_path(&location_path).await {
-		tracing::info!(
-			location_uuid = %location_uuid,
-			volume_name = %volume.name,
-			volume_fingerprint = ?volume.fingerprint,
-			volume_uuid = ?volume.id,
-			"Detected volume for location"
-		);
-
-		// Check if volume already exists by UUID (for test environments where multiple
-		// "devices" share the same physical machine/volumes)
-		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-		let volume_id = if let Some(existing) = entities::volume::Entity::find()
-			.filter(entities::volume::Column::Uuid.eq(volume.id))
-			.one(library.db().conn())
-			.await?
-		{
-			tracing::info!(
-				volume_uuid = %volume.id,
-				volume_id = existing.id,
-				"Volume already exists in database (shared between test devices)"
-			);
-			existing.id
-		} else {
-			// Ensure volume is in the database
-			let id = volume_manager.ensure_volume_in_db(&volume, library).await?;
-			tracing::info!(
-				volume_uuid = %volume.id,
-				volume_id = id,
-				"Inserted new volume into database"
-			);
-			id
-		};
-
-		// Update location and root entry with volume_id
-		update_location_volume_id(library.db().conn(), location_db_id, entry_id, volume_id).await?;
-
-		tracing::info!(
-			location_uuid = %location_uuid,
-			volume_id = volume_id,
-			"Updated location with volume_id"
-		);
-	} else {
-		anyhow::bail!(
-			"No volume detected for path '{}' - volume must be mounted for testing",
-			path
-		);
-	}
+	update_location_volume_id(
+		library.db().conn(),
+		location_db_id,
+		location_record.entry_id,
+		volume_id,
+	)
+	.await?;
+	tracing::info!(
+		location_uuid = %location_uuid,
+		volume_id = volume_id,
+		"Updated location with volume_id"
+	);
 
 	// Wait for indexing with 120s timeout
 	wait_for_indexing(library, location_db_id, Duration::from_secs(120)).await?;
