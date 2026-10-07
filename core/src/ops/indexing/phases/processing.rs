@@ -35,6 +35,35 @@ fn is_unique_constraint_violation(error: &JobError) -> bool {
 		|| error_msg.contains("constraint failed")
 }
 
+/// Detects the volume holding the location root and records it on the location and its root
+/// entry. Returns `None` when no volume contains the path.
+async fn resolve_location_volume(
+	ctx: &JobContext<'_>,
+	location: &entities::location::Model,
+	location_root_path: &Path,
+) -> Result<Option<i32>, JobError> {
+	let Some(volume_manager) = ctx.volume_manager() else {
+		return Ok(None);
+	};
+	let Some(volume) = volume_manager.volume_for_path(location_root_path).await else {
+		return Ok(None);
+	};
+	let volume_id = volume_manager
+		.ensure_volume_in_db(&volume, ctx.library())
+		.await
+		.map_err(|e| JobError::execution(format!("Failed to record location volume: {}", e)))?;
+	crate::location::manager::update_location_volume_id(
+		ctx.library_db(),
+		location.id,
+		location.entry_id,
+		volume_id,
+	)
+	.await
+	.map_err(|e| JobError::execution(format!("Failed to set location volume: {}", e)))?;
+	ctx.log(format!("Resolved location volume: {}", volume.name));
+	Ok(Some(volume_id))
+}
+
 /// Processes discovered entries into database records with change detection and UUID preservation.
 ///
 /// Sorts all entries by depth (parents before children) to ensure hierarchy integrity, applies
@@ -82,11 +111,17 @@ pub async fn run_processing_phase(
 		.map_err(|e| JobError::execution(format!("Failed to find location: {}", e)))?
 		.ok_or_else(|| JobError::execution("Location not found in database".to_string()))?;
 
-	let volume_id = location_record.volume_id.ok_or_else(|| {
-		JobError::execution(
-			"Location volume_id not set - volume must be detected before indexing can proceed",
-		)
-	})?;
+	let volume_id = match location_record.volume_id {
+		Some(volume_id) => volume_id,
+		// Locations created without volume detection resolve it on first index.
+		None => resolve_location_volume(ctx, &location_record, location_root_path)
+			.await?
+			.ok_or_else(|| {
+				JobError::execution(
+					"Location volume_id not set - volume must be detected before indexing can proceed",
+				)
+			})?,
+	};
 	let location_id_i32 = location_record.id;
 	let location_entry_id = location_record
 		.entry_id
