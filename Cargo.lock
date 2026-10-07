@@ -12074,6 +12074,7 @@ dependencies = [
  "signal-hook-registry",
  "socket2",
  "tokio-macros",
+ "tracing",
  "windows-sys 0.61.2",
 ]
 
@@ -14449,6 +14450,7 @@ dependencies = [
  "uuid",
  "wing-desktop-macos",
  "wing-tauri-core",
+ "zbus",
 ]
 
 [[package]]
@@ -14782,6 +14784,7 @@ dependencies = [
  "rustix 1.1.5",
  "serde",
  "serde_repr",
+ "tokio",
  "tracing",
  "uds_windows",
  "uuid",

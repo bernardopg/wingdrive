@@ -75,7 +75,7 @@ pub fn parse_args(args: impl IntoIterator<Item = String>, cwd: &Path) -> LaunchO
 			options.hidden = true;
 			continue;
 		}
-		let Some(path) = argument_path(&arg, cwd) else {
+		let Some(path) = local_path(&arg, cwd) else {
 			continue;
 		};
 		match std::fs::metadata(&path) {
@@ -83,21 +83,27 @@ pub fn parse_args(args: impl IntoIterator<Item = String>, cwd: &Path) -> LaunchO
 				directory: path,
 				select: None,
 			}),
-			Ok(_) => {
-				if let Some(parent) = path.parent() {
-					options.requests.push(OpenRequest {
-						directory: parent.to_path_buf(),
-						select: Some(path.clone()),
-					});
-				}
-			}
+			Ok(_) => options.requests.push(reveal_request(path)),
 			Err(error) => tracing::warn!(?path, %error, "Ignoring launch path"),
 		}
 	}
 	options
 }
 
-fn argument_path(arg: &str, cwd: &Path) -> Option<PathBuf> {
+/// Opens the parent folder of `path` with `path` selected.
+pub fn reveal_request(path: PathBuf) -> OpenRequest {
+	let directory = path
+		.parent()
+		.map(Path::to_path_buf)
+		.unwrap_or_else(|| path.clone());
+	OpenRequest {
+		directory,
+		select: Some(path),
+	}
+}
+
+/// Resolves a path argument or local `file://` URI against `cwd`.
+pub fn local_path(arg: &str, cwd: &Path) -> Option<PathBuf> {
 	let path = if let Some(rest) = arg.strip_prefix("file://") {
 		// Only local URIs: "file:///path" or "file://localhost/path".
 		let rest = rest.strip_prefix("localhost").unwrap_or(rest);

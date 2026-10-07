@@ -5,6 +5,7 @@ import {isInputFocused} from '../../../../util/keybinds/platform';
 import {useExplorer} from '../../context';
 import {useEmptySpaceContextMenu} from '../../hooks/useEmptySpaceContextMenu';
 import {useExplorerFiles} from '../../hooks/useExplorerFiles';
+import {REVEAL_EVENT, type RevealDetail} from '../../pendingReveal';
 import {useTabScroll} from '../../hooks/useTabScroll';
 import {useSelection} from '../../SelectionContext';
 import {DragSelect} from './DragSelect';
@@ -218,6 +219,31 @@ function VirtualizedGrid({
 	useTabScroll(parentRef, isInitialized ? files.length : 0);
 
 	const virtualRows = rowVirtualizer.getVirtualItems();
+
+	// Rows are virtualized, so scroll the revealed file's row into existence.
+	// The reveal can arrive before the grid has measured its columns, so it
+	// waits in a ref until the layout is ready.
+	const pendingRevealRef = useRef<string | null>(null);
+	const applyRevealRef = useRef(() => {});
+	applyRevealRef.current = () => {
+		const fileId = pendingRevealRef.current;
+		if (!fileId || !isInitialized) return;
+		const index = files.findIndex((file) => file.id === fileId);
+		if (index < 0) return;
+		pendingRevealRef.current = null;
+		rowVirtualizer.scrollToIndex(Math.floor(index / columns), {align: 'center'});
+	};
+	useEffect(() => {
+		const handleReveal = (event: Event) => {
+			pendingRevealRef.current = (event as CustomEvent<RevealDetail>).detail.fileId;
+			applyRevealRef.current();
+		};
+		window.addEventListener(REVEAL_EVENT, handleReveal);
+		return () => window.removeEventListener(REVEAL_EVENT, handleReveal);
+	}, []);
+	useEffect(() => {
+		applyRevealRef.current();
+	}, [files, columns, isInitialized]);
 
 	// Keyboard navigation with correct column count
 	useEffect(() => {

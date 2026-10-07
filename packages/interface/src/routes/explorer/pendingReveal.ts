@@ -29,14 +29,19 @@ export interface RevealDetail {
 }
 
 /**
- * Scrolls a revealed file into view. Views that virtualize rows also listen
- * for REVEAL_EVENT, because their element may not exist yet.
+ * Scrolls a revealed file into view. Large listings render their items a few
+ * frames after the data arrives, so the lookup retries for up to a second.
+ * Views that virtualize rows also listen for REVEAL_EVENT, because their
+ * element may never exist until they scroll.
  */
 export function scrollToRevealed(detail: RevealDetail) {
-	requestAnimationFrame(() => {
-		window.dispatchEvent(new CustomEvent<RevealDetail>(REVEAL_EVENT, {detail}));
-		document
-			.querySelector(`[data-file-id="${CSS.escape(detail.fileId)}"]`)
-			?.scrollIntoView({block: 'center'});
-	});
+	window.dispatchEvent(new CustomEvent<RevealDetail>(REVEAL_EVENT, {detail}));
+	const selector = `[data-file-id="${CSS.escape(detail.fileId)}"]`;
+	let attempts = 0;
+	const tryScroll = () => {
+		const element = document.querySelector(selector);
+		if (element) element.scrollIntoView({block: 'center'});
+		else if (++attempts < 20) setTimeout(tryScroll, 50);
+	};
+	requestAnimationFrame(tryScroll);
 }

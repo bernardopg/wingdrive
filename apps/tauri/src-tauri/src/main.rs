@@ -5,6 +5,8 @@ mod background;
 mod clipboard;
 mod drag;
 mod file_opening;
+#[cfg(target_os = "linux")]
+mod filemanager1;
 mod files;
 mod keybinds;
 mod launch;
@@ -2600,6 +2602,10 @@ fn main() {
 			let instance_clone = daemon_instance;
 
 			app.manage(background::DesktopSettingsState::load(&data_dir));
+			#[cfg(target_os = "linux")]
+			if std::env::var_os(INSTANCE_ENV).is_none() {
+				tauri::async_runtime::spawn(filemanager1::serve(app.handle().clone()));
+			}
 			// Some desktops have no tray host; the app still works, only hiding is lost.
 			if let Err(error) = background::create_tray(app.handle()) {
 				tracing::warn!(%error, "Tray icon unavailable");
