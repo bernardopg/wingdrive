@@ -21,7 +21,10 @@ export function GeneralSettings() {
     platform.getDesktopSettings?.().then(setDesktopSettings).catch(() => setDesktopSettings(null));
   }, [platform]);
 
-  const updateDesktopSetting = async (key: keyof DesktopSettings, value: boolean) => {
+  const updateDesktopSetting = async <K extends keyof DesktopSettings>(
+    key: K,
+    value: DesktopSettings[K],
+  ) => {
     if (!desktopSettings || !platform.setDesktopSettings) return;
     try {
       setDesktopSettings(await platform.setDesktopSettings({ ...desktopSettings, [key]: value }));
@@ -172,6 +175,24 @@ export function GeneralSettings() {
                 className="mt-1 accent-accent"
                 checked={desktopSettings.start_at_login}
                 onChange={(e) => updateDesktopSetting("start_at_login", e.target.checked)}
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium text-ink block">Terminal</span>
+              <span className="text-xs text-ink-dull block mb-2">
+                Command for Open Terminal Here. Leave empty to use xdg-terminal-exec, $TERMINAL or an installed terminal.
+              </span>
+              <input
+                type="text"
+                defaultValue={desktopSettings.terminal_command ?? ""}
+                onBlur={(e) => {
+                  const value = e.target.value.trim();
+                  if (value !== (desktopSettings.terminal_command ?? "")) {
+                    void updateDesktopSetting("terminal_command", value || null);
+                  }
+                }}
+                className="w-full px-3 py-2 bg-app border border-app-line rounded-md text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent font-mono"
+                placeholder="kitty --single-instance"
               />
             </label>
           </div>

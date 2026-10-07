@@ -2424,6 +2424,7 @@ fn main() {
 			file_opening::open_path_with_app,
 			file_opening::open_paths_with_app,
 			file_opening::set_default_app_for_path,
+			files::open_terminal,
 			keybinds::register_keybind,
 			keybinds::unregister_keybind,
 			keybinds::get_registered_keybinds

@@ -45,7 +45,8 @@ interface SelectionContextValue {
 	) => void;
 	// Rename state
 	renamingFileId: string | null;
-	startRename: (fileId: string) => void;
+	/** Starts renaming; passing the file selects it first when it is not selected. */
+	startRename: (fileId: string, file?: File) => void;
 	cancelRename: () => void;
 	saveRename: (newName: string) => Promise<void>;
 	isRenaming: boolean;
@@ -275,15 +276,22 @@ export function SelectionProvider({
 
 	// Rename functions
 	const startRename = useCallback(
-		(fileId: string) => {
-			if (
-				selectionCapabilities(selectedFiles).canRename &&
-				selectedFiles[0].id === fileId
-			) {
+		(fileId: string, file?: File) => {
+			const current = selectedFilesRef.current;
+			const isSoleSelection = current.length === 1 && current[0].id === fileId;
+			// A right-clicked item that is not selected becomes the selection,
+			// as in other file managers.
+			if (file && !isSoleSelection) {
+				if (!selectionCapabilities([file]).canRename) return;
+				setSelectedFiles([file]);
+				setRenamingFileId(fileId);
+				return;
+			}
+			if (selectionCapabilities(current).canRename && current[0].id === fileId) {
 				setRenamingFileId(fileId);
 			}
 		},
-		[selectedFiles]
+		[setSelectedFiles]
 	);
 
 	const cancelRename = useCallback(() => {

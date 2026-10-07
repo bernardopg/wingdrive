@@ -14,6 +14,7 @@ import {
 	Pencil,
 	Scissors,
 	ShareNetwork,
+	TerminalWindow,
 	Sparkle,
 	Stack,
 	Tag as TagIconComponent,
@@ -38,6 +39,7 @@ import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
 import {useDuplicateFiles} from './useDuplicateFiles';
 import {useOpenFile} from './useOpenFile';
+import {useOpenTerminal} from './useOpenTerminal';
 import {usePasteFiles} from './usePasteFiles';
 import {revealLabel} from '../../../util/keybinds/platform';
 
@@ -106,6 +108,7 @@ export function useFileContextMenu({
 	const physicalPaths = getPhysicalPaths();
 	const {apps, openWithApp, openMultipleWithApp, canSetDefault, setDefaultApp} =
 		useOpenWith(physicalPaths);
+	const openTerminal = useOpenTerminal();
 
 	// A right-click on an unselected item acts on that item alone.
 	const targetFiles = selected && selectedFiles.length > 0
@@ -212,6 +215,19 @@ export function useFileContextMenu({
 					!!platform.revealFile
 			},
 			{
+				icon: TerminalWindow,
+				label: 'Open Terminal Here',
+				onClick: () => {
+					void openTerminal?.(file?.wing_path);
+				},
+				condition: () =>
+					!!openTerminal &&
+					!!file &&
+					file.kind === 'Directory' &&
+					'Physical' in file.wing_path &&
+					targetFiles.length === 1
+			},
+			{
 				icon: ShareNetwork,
 				label:
 					selected && selectedFiles.length > 1
@@ -241,14 +257,11 @@ export function useFileContextMenu({
 				label: 'Rename',
 				onClick: () => {
 					if (!file) return;
-					startRename(file.id);
+					startRename(file.id, file);
 				},
 				keybindId: 'explorer.renameFile',
 				condition: () =>
-					!!file &&
-					selected &&
-					selectedFiles.length === 1 &&
-					capabilities.canRename
+					!!file && targetFiles.length === 1 && capabilities.canRename
 			},
 			{
 				icon: FolderPlus,

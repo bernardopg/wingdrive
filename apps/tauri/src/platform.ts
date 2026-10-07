@@ -136,6 +136,10 @@ export const platform: Platform = {
 		);
 	},
 
+	async openTerminal(path: string) {
+		await invoke('open_terminal', {path});
+	},
+
 	async setDefaultAppForPath(path: string, appId: string) {
 		await invoke('set_default_app_for_path', {path, appId});
 	},

@@ -115,6 +115,14 @@ export const explorerKeybinds = {
 		preventDefault: true
 	}),
 
+	openTerminal: defineKeybind({
+		id: 'explorer.openTerminal',
+		label: 'Open Terminal Here',
+		combo: {modifiers: ['Shift'], key: 'F4'},
+		scope: 'explorer',
+		preventDefault: true
+	}),
+
 	toggleHiddenFiles: defineKeybind({
 		id: 'explorer.toggleHiddenFiles',
 		label: 'Show Hidden Files',

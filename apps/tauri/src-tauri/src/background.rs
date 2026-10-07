@@ -27,13 +27,15 @@ const SETTINGS_FILE: &str = "desktop_settings.json";
 const AUTOSTART_FILE: &str = "wingdrive.desktop";
 
 /// Desktop shell preferences, stored next to the app's other per-device state.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct DesktopSettings {
 	/// Closing the main window hides it to the tray instead of quitting.
 	pub keep_in_background: bool,
 	/// Start WingDrive hidden when the user logs in.
 	pub start_at_login: bool,
+	/// Terminal command for "Open Terminal Here"; empty means detect.
+	pub terminal_command: Option<String>,
 }
 
 impl Default for DesktopSettings {
@@ -41,6 +43,7 @@ impl Default for DesktopSettings {
 		Self {
 			keep_in_background: true,
 			start_at_login: false,
+			terminal_command: None,
 		}
 	}
 }
@@ -66,7 +69,7 @@ impl DesktopSettingsState {
 	}
 
 	pub fn get(&self) -> DesktopSettings {
-		*self.settings.lock().unwrap()
+		self.settings.lock().unwrap().clone()
 	}
 
 	fn save(&self, settings: DesktopSettings) -> Result<(), String> {
@@ -152,7 +155,7 @@ pub fn set_desktop_settings(
 	settings: DesktopSettings,
 ) -> Result<DesktopSettings, String> {
 	apply_autostart(settings.start_at_login)?;
-	state.save(settings)?;
+	state.save(settings.clone())?;
 	Ok(settings)
 }
 
@@ -225,8 +228,9 @@ mod tests {
 		let changed = DesktopSettings {
 			keep_in_background: false,
 			start_at_login: true,
+			terminal_command: Some("kitty".into()),
 		};
-		state.save(changed).unwrap();
+		state.save(changed.clone()).unwrap();
 		assert_eq!(DesktopSettingsState::load(dir.path()).get(), changed);
 	}
 

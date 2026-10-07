@@ -70,6 +70,9 @@ export type Platform = {
 	/** Open file with system default application */
 	openPathDefault?(path: string): Promise<OpenResult>;
 
+	/** Open the user's terminal in a folder */
+	openTerminal?(path: string): Promise<void>;
+
 	/** Make an application the default for this file's type */
 	setDefaultAppForPath?(path: string, appId: string): Promise<void>;
 	resolveSymlink?(path: string): Promise<[string, boolean]>;
@@ -235,6 +238,8 @@ export type Platform = {
 export interface DesktopSettings {
 	keep_in_background: boolean;
 	start_at_login: boolean;
+	/** Terminal command for Open Terminal Here; null detects one */
+	terminal_command: string | null;
 }
 
 /** A folder the desktop asked WingDrive to open, with an optional entry to select */

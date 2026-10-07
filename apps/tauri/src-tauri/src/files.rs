@@ -239,3 +239,62 @@ async fn reveal_path(_path: &Path) -> Result<(), std::io::Error> {
 		"Reveal is not supported on this platform",
 	))
 }
+
+/// Opens the user's terminal with `path` as its working directory.
+#[tauri::command]
+pub async fn open_terminal(
+	path: String,
+	settings: tauri::State<'_, crate::background::DesktopSettingsState>,
+) -> Result<(), String> {
+	let path = PathBuf::from(path);
+	if !path.is_dir() {
+		return Err(format!("Not a folder: {}", path.display()));
+	}
+	let terminal_command = settings.get().terminal_command;
+	spawn_terminal(&path, terminal_command.as_deref())
+}
+
+#[cfg(target_os = "linux")]
+fn spawn_terminal(path: &Path, terminal_command: Option<&str>) -> Result<(), String> {
+	let terminal = file_opening_linux::terminal::resolve(terminal_command)
+		.ok_or("No terminal emulator found. Set one in Settings > General.")?;
+	let mut child = terminal
+		.command(path, &[])
+		.stdin(std::process::Stdio::null())
+		.stdout(std::process::Stdio::null())
+		.stderr(std::process::Stdio::null())
+		.spawn()
+		.map_err(|e| format!("Failed to start {}: {e}", terminal.program[0]))?;
+	// Reap the terminal when it closes so it does not linger as a zombie.
+	std::thread::spawn(move || {
+		let _ = child.wait();
+	});
+	Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn spawn_terminal(path: &Path, terminal_command: Option<&str>) -> Result<(), String> {
+	let app = terminal_command
+		.filter(|c| !c.trim().is_empty())
+		.unwrap_or("Terminal");
+	std::process::Command::new("open")
+		.args(["-a", app])
+		.arg(path)
+		.spawn()
+		.map(|_| ())
+		.map_err(|e| e.to_string())
+}
+
+#[cfg(target_os = "windows")]
+fn spawn_terminal(path: &Path, terminal_command: Option<&str>) -> Result<(), String> {
+	let program = terminal_command
+		.filter(|c| !c.trim().is_empty())
+		.unwrap_or("wt");
+	let mut command = std::process::Command::new(program);
+	if program == "wt" {
+		command.arg("-d").arg(path);
+	} else {
+		command.current_dir(path);
+	}
+	command.spawn().map(|_| ()).map_err(|e| e.to_string())
+}
