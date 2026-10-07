@@ -25,6 +25,7 @@ use wing_core::infra::db::entities;
 #[tokio::test]
 async fn test_sync_waits_for_content_links() -> anyhow::Result<()> {
 	use sea_orm::{ActiveModelTrait, Set};
+	use wing_core::infra::sync::{fk_mapper::convert_fk_to_uuid, Syncable};
 
 	let harness = TwoDeviceHarnessBuilder::new("content_links")
 		.await?
@@ -42,6 +43,22 @@ async fn test_sync_waits_for_content_links() -> anyhow::Result<()> {
 		.one(harness.library_bob.db().conn())
 		.await?
 		.ok_or_else(|| anyhow::anyhow!("Synced file has no content link"))?;
+	let mut unhashed = entry.to_sync_json()?;
+	for mapping in entities::entry::Model::foreign_key_mappings() {
+		convert_fk_to_uuid(&mut unhashed, &mapping, harness.library_bob.db().conn()).await?;
+	}
+	unhashed["content_uuid"] = serde_json::Value::Null;
+	entities::entry::Model::apply_state_change(unhashed.clone(), harness.library_bob.db().conn())
+		.await?;
+	assert_eq!(
+		entities::entry::Entity::find_by_id(entry.id)
+			.one(harness.library_bob.db().conn())
+			.await?
+			.unwrap()
+			.content_id,
+		entry.content_id,
+		"Replayed discovery state erased the content link"
+	);
 	let mut unlinked: entities::entry::ActiveModel = entry.clone().into();
 	unlinked.content_id = Set(None);
 	unlinked.update(harness.library_bob.db().conn()).await?;
@@ -56,6 +73,14 @@ async fn test_sync_waits_for_content_links() -> anyhow::Result<()> {
 	restored.content_id = Set(entry.content_id);
 	restored.update(harness.library_bob.db().conn()).await?;
 	harness.wait_for_sync(Duration::from_secs(30)).await?;
+	unhashed["size"] = (entry.size + 1).into();
+	entities::entry::Model::apply_state_change(unhashed, harness.library_bob.db().conn()).await?;
+	assert!(entities::entry::Entity::find_by_id(entry.id)
+		.one(harness.library_bob.db().conn())
+		.await?
+		.unwrap()
+		.content_id
+		.is_none());
 	Ok(())
 }
 
