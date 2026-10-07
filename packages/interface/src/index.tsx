@@ -22,7 +22,7 @@ export { TopBarProvider, TopBarPortal, useTopBar } from "./TopBar";
 export { Overview } from "./routes/overview";
 
 // Platform abstraction
-export type { OpenRequest, Platform } from "./contexts/PlatformContext";
+export type { DesktopSettings, OpenRequest, Platform } from "./contexts/PlatformContext";
 export { PlatformProvider, usePlatform } from "./contexts/PlatformContext";
 
 // Context

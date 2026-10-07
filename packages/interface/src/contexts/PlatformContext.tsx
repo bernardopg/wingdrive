@@ -121,6 +121,12 @@ export type Platform = {
 	/** Listen for window events (Tauri only) */
 	onWindowEvent?(event: string, callback: () => void): Promise<() => void>;
 
+	/** Read desktop shell settings: tray background mode and start at login (Tauri only) */
+	getDesktopSettings?(): Promise<DesktopSettings>;
+
+	/** Save desktop shell settings and apply the login autostart entry (Tauri only) */
+	setDesktopSettings?(settings: DesktopSettings): Promise<DesktopSettings>;
+
 	/** Take folders queued by launchers, `xdg-open` or other apps (Tauri only) */
 	takeOpenRequests?(): Promise<OpenRequest[]>;
 
@@ -221,6 +227,12 @@ export type Platform = {
 	/** Unregister a keybind handler (Tauri only) */
 	unregisterKeybind?(id: string): Promise<void>;
 };
+
+/** How the desktop app behaves when its window closes and at login */
+export interface DesktopSettings {
+	keep_in_background: boolean;
+	start_at_login: boolean;
+}
 
 /** A folder the desktop asked WingDrive to open, with an optional entry to select */
 export interface OpenRequest {

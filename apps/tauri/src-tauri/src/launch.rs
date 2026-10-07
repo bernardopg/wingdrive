@@ -52,6 +52,11 @@ impl PendingOpenRequests {
 pub struct StartHidden(pub AtomicBool);
 
 impl StartHidden {
+	/// Whether the launch asked to stay hidden and has not been consumed yet.
+	pub fn is_set(&self) -> bool {
+		self.0.load(Ordering::SeqCst)
+	}
+
 	/// Returns true the first time it is asked after a hidden launch.
 	pub fn consume(&self) -> bool {
 		self.0.swap(false, Ordering::SeqCst)

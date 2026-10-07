@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod background;
 mod clipboard;
 mod drag;
 mod file_opening;
@@ -2373,6 +2374,8 @@ fn main() {
 		.invoke_handler(tauri::generate_handler![
 			app_ready,
 			launch::take_open_requests,
+			background::get_desktop_settings,
+			background::set_desktop_settings,
 			get_daemon_socket,
 			get_server_url,
 			get_file_stream_url,
@@ -2596,6 +2599,11 @@ fn main() {
 			let base_data_dir_clone = daemon_base_data_dir;
 			let instance_clone = daemon_instance;
 
+			app.manage(background::DesktopSettingsState::load(&data_dir));
+			// Some desktops have no tray host; the app still works, only hiding is lost.
+			if let Err(error) = background::create_tray(app.handle()) {
+				tracing::warn!(%error, "Tray icon unavailable");
+			}
 			app.manage(daemon_state.clone());
 			app.manage(app_state);
 			app.manage(drag::DragCoordinator::new());
@@ -2680,7 +2688,7 @@ fn main() {
 
 			// In dev mode, show window immediately
 			#[cfg(debug_assertions)]
-			{
+			if !app.state::<launch::StartHidden>().is_set() {
 				if let Some(window) = app.get_webview_window("main") {
 					window.show().ok();
 					window.set_focus().ok();
@@ -2699,6 +2707,13 @@ fn main() {
 							wing_desktop_macos::set_titlebar_style(&ns_window, is_fullscreen);
 						}
 					}
+				}
+			}
+
+			if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+				if window.label() == "main" && background::keeps_running(window.app_handle()) {
+					api.prevent_close();
+					let _ = window.hide();
 				}
 			}
 

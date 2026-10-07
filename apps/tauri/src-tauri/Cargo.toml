@@ -12,7 +12,7 @@ tauri-build = { version = "2.6.3", features = [] }
 
 [dependencies]
 # Tauri
-tauri = { version = "2.11.5", features = ["macos-private-api", "devtools", "protocol-asset"] }
+tauri = { version = "2.11.5", features = ["macos-private-api", "devtools", "protocol-asset", "tray-icon", "image-png"] }
 tauri-plugin-dialog = "2.7.3"
 tauri-plugin-fs = "2.5.1"
 tauri-plugin-shell = "2.3.5"

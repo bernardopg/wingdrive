@@ -100,7 +100,8 @@
           "libc6",
           "libxdo3",
           "libwebkit2gtk-4.1-0",
-          "libgtk-3-0", "libheif1"
+          "libgtk-3-0", "libheif1",
+          "libayatana-appindicator3-1"
         ],
         "files": {
           "/usr/lib/wingdrive/": "../../.deps/lib/"

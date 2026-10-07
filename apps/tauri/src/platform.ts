@@ -6,7 +6,7 @@ import {listen} from '@tauri-apps/api/event';
 import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {ask, open, save} from '@tauri-apps/plugin-dialog';
 import {open as shellOpen} from '@tauri-apps/plugin-shell';
-import type {OpenRequest, Platform} from '@wingdrive/interface';
+import type {DesktopSettings, OpenRequest, Platform} from '@wingdrive/interface';
 import {
 	beginDrag,
 	onDragBegan,
@@ -205,6 +205,14 @@ export const platform: Platform = {
 			callback(event.payload);
 		});
 		return unlisten;
+	},
+
+	async getDesktopSettings() {
+		return await invoke<DesktopSettings>('get_desktop_settings');
+	},
+
+	async setDesktopSettings(settings: DesktopSettings) {
+		return await invoke<DesktopSettings>('set_desktop_settings', {settings});
 	},
 
 	async takeOpenRequests() {

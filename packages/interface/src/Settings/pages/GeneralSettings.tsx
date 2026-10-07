@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "@wingdrive/primitives";
 import { useCoreQuery, useCoreMutation } from "../../contexts/WingDriveContext";
-import { usePlatform } from "../../contexts/PlatformContext";
+import { usePlatform, type DesktopSettings } from "../../contexts/PlatformContext";
 
 interface DeviceSettingsForm {
   name: string;
@@ -15,6 +15,20 @@ export function GeneralSettings() {
   const updateDevice = useCoreMutation("device.update");
   const resetData = useCoreMutation("core.reset");
   const platform = usePlatform();
+
+  const [desktopSettings, setDesktopSettings] = useState<DesktopSettings | null>(null);
+  useEffect(() => {
+    platform.getDesktopSettings?.().then(setDesktopSettings).catch(() => setDesktopSettings(null));
+  }, [platform]);
+
+  const updateDesktopSetting = async (key: keyof DesktopSettings, value: boolean) => {
+    if (!desktopSettings || !platform.setDesktopSettings) return;
+    try {
+      setDesktopSettings(await platform.setDesktopSettings({ ...desktopSettings, [key]: value }));
+    } catch (error) {
+      toast.error(`Failed to save: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
 
   const { data: status } = statusQuery;
   const { data: config } = configQuery;
@@ -128,6 +142,40 @@ export function GeneralSettings() {
             {updateDevice.isPending ? "Saving..." : "Save Changes"}
           </button>
         </form>
+
+        {desktopSettings && (
+          <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
+            <h3 className="text-sm font-medium text-ink">Background</h3>
+            <label className="flex items-start justify-between gap-4">
+              <span>
+                <span className="text-sm font-medium text-ink block">Keep running in the background</span>
+                <span className="text-xs text-ink-dull">
+                  Closing the window keeps WingDrive in the tray so folders open instantly
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                className="mt-1 accent-accent"
+                checked={desktopSettings.keep_in_background}
+                onChange={(e) => updateDesktopSetting("keep_in_background", e.target.checked)}
+              />
+            </label>
+            <label className="flex items-start justify-between gap-4">
+              <span>
+                <span className="text-sm font-medium text-ink block">Start at login</span>
+                <span className="text-xs text-ink-dull">
+                  Start WingDrive hidden in the tray when you log in
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                className="mt-1 accent-accent"
+                checked={desktopSettings.start_at_login}
+                onChange={(e) => updateDesktopSetting("start_at_login", e.target.checked)}
+              />
+            </label>
+          </div>
+        )}
 
         {/* Version Info */}
         <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-3">
