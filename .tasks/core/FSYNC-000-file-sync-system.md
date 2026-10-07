@@ -4,7 +4,7 @@ title: File Sync
 status: In Progress
 assignee: jamiepine
 priority: High
-milestone: M3
+milestone: M4
 tags: [sync, service, epic, index-driven]
 whitepaper: Section 5.2
 design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md

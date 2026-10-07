@@ -5,7 +5,7 @@ status: In Progress
 assignee: unassigned
 parent: TAURI-000
 priority: High
-milestone: M4
+milestone: M5
 tags: [tauri, spacebot, integration]
 last_updated: 2026-08-26
 ---

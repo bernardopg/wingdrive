@@ -1,11 +1,11 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-10-06. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-10-07. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
 
-## Now — M1: File manager desktop Linux 1.0
+## Done — M1: File manager desktop Linux 1.0
 
 Resultado: no Linux, navegar, abrir, copiar, mover, renomear, criar pasta e apagar arquivos pela
 UI e pelo CLI, sem bug conhecido, rodando de um bundle de produção.
@@ -30,7 +30,34 @@ Release `v2.0.0-alpha.7` sai com TAURI-013, TAURI-014 e FORK-005; ver [CHANGELOG
 
 O M1 fecha quando essas cinco estiverem Done e uma release sair sem bug conhecido.
 
-## Next — M2: Desktop multiplataforma e release
+## Now — M2: Gerenciador de arquivos padrão no Linux
+
+Prioridade máxima por decisão do usuário (2026-10-07). Resultado: WingDrive substitui Dolphin,
+Nautilus ou Yazi no uso diário. `xdg-open` em pastas e "Mostrar na pasta" de outros apps abrem o
+WingDrive, ele fica residente na bandeja e abre na hora, e tem as operações básicas de um file
+manager. Navegação continua gráfica; modo modal estilo Yazi fica fora.
+
+Epic: `DESK-000`. Sprint S03.
+
+| Ordem | Task | Título |
+|---|---|---|
+| 1 | DESK-001 | Integração XDG, caminhos na linha de comando e instância única |
+| 2 | DESK-003 | Segundo plano na bandeja e início com a sessão |
+| 3 | DESK-002 | Serviço D-Bus `org.freedesktop.FileManager1` |
+| 4 | DESK-004 | "Abrir com" real no Linux |
+| 5 | DESK-005 | "Abrir terminal aqui" |
+| 6 | DESK-006 | Novo arquivo vazio e link simbólico |
+| 7 | DESK-007 | Permissões e dono nas propriedades |
+| 8 | DESK-008 | Compactar e extrair |
+| 9 | DESK-009 | Rede e dispositivos via GIO/gvfs (MTP, SMB, SFTP) |
+| 10 | DESK-010 | Latência de abertura e orçamento de memória |
+
+Pré-requisito: TAURI-015 (pacote AUR com GTK/WebKit do sistema, daemon encerrado ao sair).
+
+O M2 fecha quando o DESK-000 estiver Done com evidência do pacote AUR e um dia inteiro de uso sem
+voltar a outro file manager.
+
+## Next — M3: Desktop multiplataforma e release
 
 Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
 
@@ -38,7 +65,7 @@ Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
 - `FORK-002` identidade e release independentes do WingDrive
 - Assinatura e instaladores por plataforma
 
-## Later — M3: Integração entre dispositivos
+## Later — M4: Integração entre dispositivos
 
 Pairing, Spacedrop, library sync e file sync confiáveis entre desktops.
 
@@ -46,15 +73,16 @@ Pairing, Spacedrop, library sync e file sync confiáveis entre desktops.
 - `SHARE-001` arquitetura de compartilhamento
 - Revalidar `NET-000` e `LSYNC-000` (marcados Done no upstream) em uso real
 
-## Later — M4: Opcionais
+## Later — M5: Opcionais
 
 Cloud (`CLOUD-000`, `CLOUD-003`), extensões (`PLUG-000`), Spacebot (`TAURI-004`), IA (`AI-000`),
-mobile (`RES-000`). Só entram depois de M3, salvo decisão explícita.
+mobile (`RES-000`). Só entram depois de M4, salvo decisão explícita.
 
 ## Histórico
 
 | Data | Mudança |
 |---|---|
+| 2026-10-07 | Novo M2 "Gerenciador de arquivos padrão no Linux" (DESK-000) como prioridade máxima; antigos M2–M4 viram M3–M5 |
 | 2026-10-06 | M1 completo: TAURI-006 e BRAND-002 Done; INDEX-010 integrada; sync multi-device corrigido |
 | 2026-10-06 | FORK-004, TAURI-014 e FORK-005 Done; licença Apache-2.0; release `v2.0.0-alpha.7` |
 | 2026-10-05 | Now atualizado: alpha.6 publicada no AUR; TAURI-013 dividida (TAURI-014); BRAND-002 e TAURI-006 no S02 |

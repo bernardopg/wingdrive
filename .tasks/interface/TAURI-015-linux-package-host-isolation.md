@@ -5,8 +5,8 @@ status: In Progress
 assignee: bernardopg
 parent: TAURI-000
 priority: High
-milestone: M1
-sprint: S02
+milestone: M2
+sprint: S03
 tags: [tauri, linux, aur, packaging, daemon]
 last_updated: 2026-10-07
 ---

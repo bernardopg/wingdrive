@@ -5,7 +5,7 @@ status: To Do
 assignee: bernardopg
 parent: TAURI-000
 priority: Medium
-milestone: M2
+milestone: M3
 tags: [tauri, testing, ci, macos, windows]
 last_updated: 2026-10-01
 ---
