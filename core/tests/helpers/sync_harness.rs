@@ -455,13 +455,75 @@ pub async fn wait_for_sync(
 	let bob_entries = entities::entry::Entity::find()
 		.count(library_bob.db().conn())
 		.await?;
+	let content_link_diff = describe_content_link_diff(library_alice, library_bob).await?;
 
 	anyhow::bail!(
-		"Sync timeout after {:?}. Alice: {} entries, Bob: {} entries",
+		"Sync timeout after {:?}. Alice: {} entries, Bob: {} entries. {}",
 		max_duration,
 		alice_entries,
-		bob_entries
+		bob_entries,
+		content_link_diff
 	);
+}
+
+/// Describe entries linked to content on Alice but not on Bob, so a CI timeout names its cause.
+async fn describe_content_link_diff(
+	library_alice: &Arc<Library>,
+	library_bob: &Arc<Library>,
+) -> anyhow::Result<String> {
+	let linked = |library: &Arc<Library>| {
+		let conn = library.db().conn().clone();
+		async move {
+			entities::entry::Entity::find()
+				.find_also_related(entities::content_identity::Entity)
+				.filter(entities::entry::Column::ContentId.is_not_null())
+				.all(&conn)
+				.await
+		}
+	};
+	let alice = linked(library_alice).await?;
+	let bob_linked: std::collections::HashSet<_> = linked(library_bob)
+		.await?
+		.into_iter()
+		.filter_map(|(entry, _)| entry.uuid)
+		.collect();
+	let missing: Vec<_> = alice
+		.iter()
+		.filter(|(entry, _)| entry.uuid.is_some_and(|uuid| !bob_linked.contains(&uuid)))
+		.collect();
+
+	let mut samples = Vec::new();
+	for (entry, content) in missing.iter().take(5) {
+		let content_uuid = content.as_ref().and_then(|content| content.uuid);
+		let bob_entry = entities::entry::Entity::find()
+			.filter(entities::entry::Column::Uuid.eq(entry.uuid))
+			.one(library_bob.db().conn())
+			.await?;
+		let bob_has_content = match content_uuid {
+			Some(uuid) => entities::content_identity::Entity::find()
+				.filter(entities::content_identity::Column::Uuid.eq(uuid))
+				.one(library_bob.db().conn())
+				.await?
+				.is_some(),
+			None => false,
+		};
+		samples.push(format!(
+			"{} entry={:?} content={:?} bob_entry={} bob_has_content={}",
+			entry.name,
+			entry.uuid,
+			content_uuid,
+			bob_entry.is_some(),
+			bob_has_content
+		));
+	}
+
+	Ok(format!(
+		"Content links: Alice {}, Bob {}; {} missing on Bob: [{}]",
+		alice.len(),
+		bob_linked.len(),
+		missing.len(),
+		samples.join("; ")
+	))
 }
 
 /// Add a location and wait for indexing to complete
