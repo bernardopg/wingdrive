@@ -595,26 +595,53 @@ pub async fn run_processing_phase(
 					inode,
 				};
 
-				let txn = ctx.library_db().begin().await.map_err(|e| {
-					JobError::execution(format!("Failed to begin root update transaction: {}", e))
-				})?;
-
-				if let Err(e) =
-					DatabaseStorage::update_entry_in_conn(location_entry_id, &root_dir_entry, &txn)
-						.await
-				{
-					ctx.add_non_critical_error(format!("Failed to update root entry: {}", e));
-					if let Err(rollback_err) = txn.rollback().await {
-						warn!(
-							"Failed to rollback root update transaction: {}",
-							rollback_err
-						);
-					}
-				} else {
-					txn.commit().await.map_err(|e| {
-						JobError::execution(format!("Failed to commit root update: {}", e))
+				// Another connection committing between this transaction's read and write
+				// fails it with SQLITE_BUSY_SNAPSHOT, which busy_timeout does not wait on.
+				// The update is idempotent, so retry on a fresh snapshot.
+				let mut attempt = 0;
+				loop {
+					let txn = ctx.library_db().begin().await.map_err(|e| {
+						JobError::execution(format!(
+							"Failed to begin root update transaction: {}",
+							e
+						))
 					})?;
-					ctx.log("Root entry updated successfully");
+					let result = DatabaseStorage::update_entry_in_conn(
+						location_entry_id,
+						&root_dir_entry,
+						&txn,
+					)
+					.await;
+					let result = match result {
+						Ok(()) => txn.commit().await.map_err(|e| e.to_string()),
+						Err(e) => {
+							if let Err(rollback_err) = txn.rollback().await {
+								warn!(
+									"Failed to rollback root update transaction: {}",
+									rollback_err
+								);
+							}
+							Err(e.to_string())
+						}
+					};
+					match result {
+						Err(e) if attempt < 4 && e.contains("database is locked") => {
+							attempt += 1;
+							tokio::time::sleep(std::time::Duration::from_millis(25 << attempt))
+								.await;
+						}
+						Err(e) => {
+							ctx.add_non_critical_error(format!(
+								"Failed to update root entry: {}",
+								e
+							));
+							break;
+						}
+						Ok(()) => {
+							ctx.log("Root entry updated successfully");
+							break;
+						}
+					}
 				}
 			}
 		}
