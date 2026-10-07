@@ -59,6 +59,8 @@ file-opening-windows = { path = "../crates/file-opening-windows" }
 [target.'cfg(target_os = "linux")'.dependencies]
 file-opening-linux = { path = "../crates/file-opening-linux" }
 gtk = "0.18.2"
+
+[target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
 [features]

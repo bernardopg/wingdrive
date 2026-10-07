@@ -1,7 +1,12 @@
 #![cfg(target_os = "linux")]
 
-use file_opening::{FileOpener, OpenResult, OpenWithApp};
 use std::path::{Path, PathBuf};
+
+use file_opening::{FileOpener, OpenResult, OpenWithApp};
+
+mod host_env;
+
+pub use host_env::{open_on_host, use_host_environment, PREFERRED_GDK_BACKEND};
 
 pub struct LinuxFileOpener;
 
@@ -19,7 +24,7 @@ impl FileOpener for LinuxFileOpener {
 			});
 		}
 
-		match open::that(path) {
+		match open_on_host(path) {
 			Ok(_) => Ok(OpenResult::Success),
 			Err(e) => Ok(OpenResult::PlatformError {
 				message: e.to_string(),
@@ -34,8 +39,7 @@ impl FileOpener for LinuxFileOpener {
 			});
 		}
 
-		// Use xdg-open with specific app
-		let output = std::process::Command::new("gtk-launch")
+		let output = use_host_environment(&mut std::process::Command::new("gtk-launch"))
 			.arg(app_id)
 			.arg(path)
 			.output()

@@ -201,7 +201,9 @@ async fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
 	// selected; fall back to opening the parent directory when no file
 	// manager implements ShowItems.
 	let uri = format!("file://{}", path.display());
-	let dbus_call = tokio::process::Command::new("gdbus")
+	let mut gdbus = tokio::process::Command::new("gdbus");
+	file_opening_linux::use_host_environment(gdbus.as_std_mut());
+	let dbus_call = gdbus
 		.args([
 			"call",
 			"--session",
@@ -222,10 +224,10 @@ async fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
 	}
 
 	if let Some(parent) = path.parent() {
-		tokio::process::Command::new("xdg-open")
-			.arg(parent)
-			.status()
-			.await?;
+		let parent = parent.to_path_buf();
+		tokio::task::spawn_blocking(move || file_opening_linux::open_on_host(parent))
+			.await
+			.map_err(std::io::Error::other)??;
 	}
 	Ok(())
 }
