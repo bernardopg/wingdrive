@@ -44,7 +44,11 @@ async fn first_listing_of_small_unindexed_folder_has_entries(
 	})?;
 	let listing = query.execute(core.context.clone(), session).await?;
 
-	assert_eq!(listing.files.len(), 20, "first response should list the folder");
+	assert_eq!(
+		listing.files.len(),
+		20,
+		"first response should list the folder"
+	);
 	assert_eq!(listing.files[0].name, "file-00");
 	Ok(())
 }
