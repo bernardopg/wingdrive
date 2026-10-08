@@ -63,6 +63,37 @@ impl StartHidden {
 	}
 }
 
+/// Well-known name and object path that `tauri-plugin-single-instance`
+/// registers for the identifier `com.wingdrive.desktop`.
+#[cfg(target_os = "linux")]
+const SINGLE_INSTANCE_NAME: &str = "com.wingdrive.desktop.SingleInstance";
+#[cfg(target_os = "linux")]
+const SINGLE_INSTANCE_PATH: &str = "/com/wingdrive/desktop/SingleInstance";
+
+/// Hands this launch to a running WingDrive and returns true when it took it.
+///
+/// The single-instance plugin does the same, but only after GTK and the
+/// window system are up, which costs most of a resident open. Calling its
+/// D-Bus method first lets `wingdrive <dir>` return before any of that.
+/// When no instance owns the name the call fails at once and start-up goes on;
+/// the plugin still catches a launch that races a starting instance.
+#[cfg(target_os = "linux")]
+pub fn forward_to_running_instance(cwd: &Path) -> bool {
+	let Ok(connection) = zbus::blocking::Connection::session() else {
+		return false;
+	};
+	let argv: Vec<String> = std::env::args().collect();
+	connection
+		.call_method(
+			Some(SINGLE_INSTANCE_NAME),
+			SINGLE_INSTANCE_PATH,
+			Some("org.SingleInstance.DBus"),
+			"ExecuteCallback",
+			&(argv, cwd.to_string_lossy().into_owned()),
+		)
+		.is_ok()
+}
+
 /// Parses launcher arguments, without the program name.
 ///
 /// Relative paths resolve against `cwd`, which for a forwarded launch is the
