@@ -2350,22 +2350,23 @@ fn main() {
 
 	let launch_cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
 	let launch_options = launch::parse_args(std::env::args().skip(1), &launch_cwd);
+	let single_instance_id =
+		launch::single_instance_id(std::env::var(INSTANCE_ENV).ok().as_deref());
 	#[cfg(target_os = "linux")]
-	if std::env::var_os(INSTANCE_ENV).is_none() && launch::forward_to_running_instance(&launch_cwd)
-	{
+	if launch::forward_to_running_instance(&single_instance_id, &launch_cwd) {
 		tracing::info!("Handed launch to the running WingDrive");
 		return;
 	}
 
-	let mut builder = tauri::Builder::default();
-	// Named instances are isolated test or development runs and must not hand
-	// their launches to the user's everyday WingDrive.
-	if std::env::var_os(INSTANCE_ENV).is_none() {
-		builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
-			let options = launch::parse_args(argv.into_iter().skip(1), Path::new(&cwd));
-			launch::deliver(app, options.requests);
-		}));
-	}
+	let builder = tauri::Builder::default().plugin(
+		tauri_plugin_single_instance::Builder::new()
+			.callback(|app, argv, cwd| {
+				let options = launch::parse_args(argv.into_iter().skip(1), Path::new(&cwd));
+				launch::deliver(app, options.requests);
+			})
+			.dbus_id(single_instance_id)
+			.build(),
+	);
 	builder
 		.manage(launch::PendingOpenRequests::new(launch_options.requests))
 		.manage(launch::StartHidden(launch_options.hidden.into()))

@@ -63,12 +63,25 @@ impl StartHidden {
 	}
 }
 
-/// Well-known name and object path that `tauri-plugin-single-instance`
-/// registers for the identifier `com.wingdrive.desktop`.
-#[cfg(target_os = "linux")]
-const SINGLE_INSTANCE_NAME: &str = "com.wingdrive.desktop.SingleInstance";
-#[cfg(target_os = "linux")]
-const SINGLE_INSTANCE_PATH: &str = "/com/wingdrive/desktop/SingleInstance";
+/// D-Bus base id for the single-instance plugin.
+///
+/// A named instance (`WINGDRIVE_INSTANCE`) gets its own id, so a test or
+/// development run is single-instance among its own launches without handing
+/// them to the user's everyday WingDrive.
+pub fn single_instance_id(instance: Option<&str>) -> String {
+	const BASE: &str = "com.wingdrive.desktop";
+	match instance {
+		None => BASE.to_string(),
+		Some(name) => {
+			// Bus name elements allow only ASCII letters, digits and `_`.
+			let element: String = name
+				.chars()
+				.map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
+				.collect();
+			format!("{BASE}.i{element}")
+		}
+	}
+}
 
 /// Hands this launch to a running WingDrive and returns true when it took it.
 ///
@@ -78,15 +91,16 @@ const SINGLE_INSTANCE_PATH: &str = "/com/wingdrive/desktop/SingleInstance";
 /// When no instance owns the name the call fails at once and start-up goes on;
 /// the plugin still catches a launch that races a starting instance.
 #[cfg(target_os = "linux")]
-pub fn forward_to_running_instance(cwd: &Path) -> bool {
+pub fn forward_to_running_instance(id: &str, cwd: &Path) -> bool {
 	let Ok(connection) = zbus::blocking::Connection::session() else {
 		return false;
 	};
 	let argv: Vec<String> = std::env::args().collect();
 	connection
 		.call_method(
-			Some(SINGLE_INSTANCE_NAME),
-			SINGLE_INSTANCE_PATH,
+			Some(format!("{id}.SingleInstance").as_str()),
+			// The plugin derives its object path from the name the same way.
+			format!("/{}/SingleInstance", id.replace('.', "/")).as_str(),
 			Some("org.SingleInstance.DBus"),
 			"ExecuteCallback",
 			&(argv, cwd.to_string_lossy().into_owned()),
@@ -194,6 +208,7 @@ fn percent_decode(input: &str) -> Option<String> {
 /// while it sits in the tray means the user wants to see it.
 pub fn deliver(app: &AppHandle, requests: Vec<OpenRequest>) {
 	if !requests.is_empty() {
+		tracing::info!(count = requests.len(), "Delivering open requests");
 		if let Some(pending) = app.try_state::<PendingOpenRequests>() {
 			pending.0.lock().unwrap().extend(requests);
 		}
@@ -220,6 +235,21 @@ pub fn take_open_requests(state: tauri::State<'_, PendingOpenRequests>) -> Vec<O
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn named_instances_get_their_own_bus_name() {
+		assert_eq!(single_instance_id(None), "com.wingdrive.desktop");
+		assert_eq!(
+			single_instance_id(Some("release-181741")),
+			"com.wingdrive.desktop.irelease_181741"
+		);
+		// A leading digit would be an invalid bus name element without the prefix.
+		assert!(zbus::names::WellKnownName::try_from(format!(
+			"{}.SingleInstance",
+			single_instance_id(Some("1.dev"))
+		))
+		.is_ok());
+	}
 
 	fn parse(args: &[&str], cwd: &Path) -> LaunchOptions {
 		parse_args(args.iter().map(|a| a.to_string()), cwd)
