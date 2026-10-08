@@ -40,11 +40,11 @@
 //!         builder
 //!             .log_level("debug")
 //!             .networking_enabled(true)
-//!             .volume_monitoring_enabled(true)
+//!             .volume_monitoring_enabled(false)
 //!     }).await.unwrap();
 //!
 //!     let core = setup.create_core().await.unwrap();
-//!     // Test with networking and volume monitoring enabled...
+//!     // Test with networking enabled and volume monitoring disabled...
 //! }
 //! ```
 //!
@@ -148,9 +148,11 @@ impl TestConfigBuilder {
 	pub fn new(data_dir: PathBuf) -> Self {
 		Self {
 			data_dir,
-			log_level: "warn".to_string(),      // Reduce log noise by default
-			networking_enabled: false,          // Disable for faster tests
-			volume_monitoring_enabled: false,   // Disable for faster tests
+			log_level: "warn".to_string(), // Reduce log noise by default
+			networking_enabled: false,     // Disable for faster tests
+			// Locations require a resolved volume, and volumes are only detected when
+			// monitoring is on, so with it off no indexing test could add a location.
+			volume_monitoring_enabled: true,
 			fs_watcher_enabled: true,           // Usually needed for indexing tests
 			statistics_listener_enabled: false, // Disable for faster tests
 			job_logging_enabled: true,          // Usually needed for job tests
@@ -170,7 +172,7 @@ impl TestConfigBuilder {
 		self
 	}
 
-	/// Enable/disable volume monitoring (default: false)
+	/// Enable/disable volume monitoring (default: true)
 	pub fn volume_monitoring_enabled(mut self, enabled: bool) -> Self {
 		self.volume_monitoring_enabled = enabled;
 		self
@@ -495,7 +497,7 @@ mod tests {
 
 		assert_eq!(config.log_level, "debug");
 		assert_eq!(config.services.networking_enabled, true);
-		assert_eq!(config.services.volume_monitoring_enabled, false); // default
+		assert_eq!(config.services.volume_monitoring_enabled, true); // default
 
 		// Cleanup
 		std::fs::remove_dir_all(&temp_dir).ok();
