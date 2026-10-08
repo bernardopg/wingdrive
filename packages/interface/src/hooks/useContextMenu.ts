@@ -9,6 +9,8 @@ import { getComboForPlatform, getCurrentPlatform, toDisplayString } from '../uti
 export interface ContextMenuItem {
 	type?: 'separator' | 'submenu';
 	icon?: Icon;
+	/** Image shown in place of `icon`, such as an app icon `data:` URL */
+	iconUrl?: string;
 	label?: string;
 	onClick?: () => void;
 	/** Legacy: manual keybind display string */

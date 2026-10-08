@@ -45,7 +45,7 @@ import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
 import {useDuplicateFiles} from './useDuplicateFiles';
-import {useOpenFile} from './useOpenFile';
+import {useOpenFiles} from './useOpenFile';
 import {useOpenTerminal} from './useOpenTerminal';
 import {usePasteFiles} from './usePasteFiles';
 import {revealLabel} from '../../../util/keybinds/platform';
@@ -95,7 +95,7 @@ export function useFileContextMenu({
 	};
 	const clipboard = useClipboard();
 	const pasteFiles = usePasteFiles();
-	const openFile = useOpenFile();
+	const openFiles = useOpenFiles();
 	const {startRename} = useSelection();
 
 	// Get physical paths for file opening
@@ -143,10 +143,8 @@ export function useFileContextMenu({
 			},
 			{
 				icon: FolderOpen,
-				label: 'Open',
-				onClick: () => {
-					if (file) void openFile(file);
-				},
+				label: targetFiles.length > 1 ? `Open ${targetFiles.length} Items` : 'Open',
+				onClick: () => void openFiles(targetFiles),
 				keybindId: 'explorer.openFile',
 				condition: () =>
 					!!file &&
@@ -166,14 +164,13 @@ export function useFileContextMenu({
 					apps.length > 0,
 				submenu: apps.map((app) => ({
 					label: app.is_default ? `${app.name} (default)` : app.name,
+					iconUrl: app.icon,
 					onClick: async () => {
 						if (!file) return;
 						if (selected && selectedFiles.length > 1) {
 							await openMultipleWithApp(physicalPaths, app.id);
 						} else if ('Physical' in file.wing_path) {
-							const physicalPath = (file.wing_path as any)
-								.Physical.path;
-							await openWithApp(physicalPath, app.id);
+							await openWithApp(file.wing_path.Physical.path, app.id);
 						}
 					}
 				}))
@@ -190,6 +187,7 @@ export function useFileContextMenu({
 					apps.some((app) => !app.is_default),
 				submenu: apps.filter((app) => !app.is_default).map((app) => ({
 					label: app.name,
+					iconUrl: app.icon,
 					onClick: () => setDefaultApp(physicalPaths[0], app.id, app.name)
 				}))
 			},

@@ -1,4 +1,10 @@
-import { Menu, MenuItem, Submenu, PredefinedMenuItem } from '@tauri-apps/api/menu';
+import {
+	IconMenuItem,
+	Menu,
+	MenuItem,
+	PredefinedMenuItem,
+	Submenu
+} from '@tauri-apps/api/menu';
 import type { ContextMenuItem } from '@wingdrive/interface';
 
 /**
@@ -36,18 +42,53 @@ async function buildMenuItems(items: ContextMenuItem[]): Promise<any[]> {
 			});
 			menuItems.push(submenu);
 		} else {
-			// Add regular menu item
-			const menuItem = await MenuItem.new({
+			const options = {
 				text: item.label || '',
 				enabled: !item.disabled,
 				accelerator: item.keybind,
 				action: item.onClick,
-			});
-			menuItems.push(menuItem);
+			};
+			const icon = item.iconUrl ? await menuIconBytes(item.iconUrl) : null;
+			menuItems.push(
+				icon
+					? await IconMenuItem.new({ ...options, icon })
+					: await MenuItem.new(options)
+			);
 		}
 	}
 
 	return menuItems;
+}
+
+/** Native menu icons rasterized from `data:` URLs, kept for later menus. */
+const iconCache = new Map<string, Promise<Uint8Array | null>>();
+
+/**
+ * Native menus take PNG bytes only, so the webview draws the icon (PNG or
+ * SVG) to a canvas and exports it as PNG.
+ */
+function menuIconBytes(url: string): Promise<Uint8Array | null> {
+	let cached = iconCache.get(url);
+	if (!cached) {
+		cached = rasterize(url).catch(() => null);
+		iconCache.set(url, cached);
+	}
+	return cached;
+}
+
+async function rasterize(url: string): Promise<Uint8Array | null> {
+	const size = 32;
+	const image = new Image(size, size);
+	image.src = url;
+	await image.decode();
+	const canvas = document.createElement('canvas');
+	canvas.width = size;
+	canvas.height = size;
+	canvas.getContext('2d')?.drawImage(image, 0, 0, size, size);
+	const blob = await new Promise<Blob | null>((resolve) =>
+		canvas.toBlob(resolve, 'image/png')
+	);
+	return blob ? new Uint8Array(await blob.arrayBuffer()) : null;
 }
 
 /**
