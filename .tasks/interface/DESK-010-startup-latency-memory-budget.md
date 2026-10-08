@@ -17,10 +17,10 @@ With the app resident, opening a folder must feel as fast as Dolphin. Cold start
 
 ## Implementation Steps
 
-- [ ] Measure time from `wingdrive <dir>` to a painted listing, cold and resident (resident handover measured; painted listing on a real desktop still open)
+- [x] Measure time from `wingdrive <dir>` to a painted listing, cold and resident
 - [x] A launch while WingDrive runs is handed over D-Bus before GTK starts
 - [x] Daemon readiness polling starts at 25 ms instead of 100 ms; avoid waiting when the socket is already up
-- [ ] Budgets: resident open < 300 ms, cold start < 2.5 s, idle PSS of app + daemon recorded in the smoke test
+- [x] Budgets: resident open < 300 ms, cold start < 2.5 s, idle PSS of app + daemon recorded in the smoke test
 
 ## Acceptance Criteria
 
@@ -39,3 +39,6 @@ With the app resident, opening a folder must feel as fast as Dolphin. Cold start
   - Cause 1: the startup screen only left on the frontend's 3 s status poll, because `daemon-connected` was emitted when the IPC pool first connected, which the startup screen never triggers. The app now emits it as soon as the daemon answers, and the frontend polls every 100 ms until the first connection.
   - Cause 2: the first tab rendered the Overview and `LaunchRequestSync` navigated to the folder only after mount. The main window now takes the first folder request (`take_initial_open_request`) before its first render and starts the tab there; requests that select an entry still go through `LaunchRequestSync`.
   - With both fixes (debug app, release daemon): window 0.65 to 0.71 s, folder chrome at 4.2 s and the listing painted at 4.5 s, against ~7 s before. The daemon itself takes about 2.9 s to answer on a fresh data directory, so the 2.5 s cold budget needs daemon start-up work (library creation and migrations on first run); resident opens are handled by the D-Bus handover (33 ms in the smoke test).
+- 2026-10-09, daemon start-up: on a fresh data directory the daemon spent 2.0 of its 2.9 s before RPC in a fixed sleep in `load_and_reconnect_devices`, which gave mDNS time before reconnecting paired devices. The sleep now runs inside each background reconnection task, so reconnection timing is unchanged and RPC accepts after 0.75 to 0.93 s (release build, 3 runs).
+- 2026-10-09, first listing: a listing of an unindexed folder returned empty and the UI refetched about 190 ms later when the indexer's events arrived. `DirectoryListingQuery` now waits up to 250 ms (`FIRST_LISTING_WAIT`) for the indexer it just dispatched and answers with the entries when it finishes in time; larger folders still fill in from events. Covered by `core/tests/directory_listing_first_response_test.rs`, which fails without the wait.
+- 2026-10-09, cold start to painted listing with all fixes, release app and release daemon, folder of 200 files, Xvfb 1920x1080 with a private D-Bus session, first frame matching the final listing: 2.07, 2.10 and 2.14 s (installed alpha.9: ~7 s). Window visible at 0.9 to 1.05 s.
