@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S03
 tags: [desktop, linux, mime]
-last_updated: 2026-10-07
+last_updated: 2026-10-08
 ---
 
 ## Description
@@ -41,3 +41,11 @@ last_updated: 2026-10-07
   `text/plain=probe.desktop` to `mimeapps.list`, and Open With then showed `Probe Viewer (default)` first. With no
   default configured no entry is marked default.
 - Reveal labels read Show in Finder / Show in Explorer / Show in Folder per platform.
+- 2026-10-08, app icons: `file-opening-linux/src/icon_theme.rs` resolves `Icon=` through the current icon theme
+  (gsettings, then GTK `settings.ini`, then `GTK_THEME`), its `Inherits` chain, `hicolor` and `pixmaps`, using only
+  Applications-context directories sized 16-48 or scalable; PNG preferred, SVG accepted, absolute paths allowed.
+  `OpenWithApp.icon` carries a `data:` URL, cached per process. With WhiteSur-dark the lookup builds in ~40 ms
+  and finds Firefox, Nautilus, VS Code, VLC and GIMP; the first index scan took 3.3 s before the INI parse was
+  made linear and limited to the Applications context. The Tauri menu shows them with `IconMenuItem` (rasterized
+  to PNG in the webview, since muda takes PNG only); the web menu renders an `<img>`. Two unit tests use a temp
+  icon theme. Not yet seen in a running native menu.
