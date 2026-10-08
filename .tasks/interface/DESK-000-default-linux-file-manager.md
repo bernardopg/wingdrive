@@ -26,7 +26,7 @@ WingDrive must replace Dolphin, Nautilus or Yazi as the file manager the user op
 - [x] DESK-007 Permissions and ownership in Properties
 - [x] DESK-008 Compress and extract archives
 - [x] DESK-009 Network locations and devices through GIO/gvfs
-- [ ] DESK-010 Startup latency and resident memory budget
+- [x] DESK-010 Startup latency and resident memory budget
 
 ## Acceptance Criteria
 
