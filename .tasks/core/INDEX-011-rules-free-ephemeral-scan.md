@@ -1,12 +1,12 @@
 ---
 id: INDEX-011
 title: Rules-Free Ephemeral Scan Mode
-status: To Do
-assignee: jamiepine
+status: Done
+assignee: bernardopg
 parent: INDEX-000
 priority: High
 tags: [indexing, ephemeral, rules, file-sync, completeness]
-last_updated: 2026-02-07
+last_updated: 2026-10-08
 related_tasks: [INDEX-005, INDEX-010, FSYNC-003, FILE-006]
 ---
 
@@ -162,15 +162,15 @@ Confirm that running a complete scan on an already-indexed path adds new entries
 
 ## Acceptance Criteria
 
-- [ ] `RuleToggles::complete()` disables all filtering rules
-- [ ] `IndexerJobConfig::complete_scan()` creates ephemeral config with no rules
-- [ ] Complete scan indexes files that would be filtered by default rules (node_modules, .git, etc.)
-- [ ] Complete scan after a filtered scan adds missing entries without duplicating existing ones
-- [ ] Existing ephemeral UUIDs are preserved when a complete scan fills gaps
-- [ ] `sync_conduit.use_index_rules = false` triggers complete scan in resolver
-- [ ] Integration test: complete scan includes node_modules directory
-- [ ] Integration test: complete scan includes hidden files and .git
-- [ ] Integration test: complete scan after filtered scan preserves original UUIDs
+- [x] `RuleToggles::complete()` disables all filtering rules
+- [x] `IndexerJobConfig::complete_scan()` creates ephemeral config with no rules
+- [x] Complete scan indexes files that would be filtered by default rules (node_modules, .git, etc.)
+- [x] Complete scan after a filtered scan adds missing entries without duplicating existing ones
+- [x] Existing ephemeral UUIDs are preserved when a complete scan fills gaps
+- [x] `sync_conduit.use_index_rules = false` triggers complete scan in resolver
+- [x] Integration test: complete scan includes node_modules directory
+- [x] Integration test: complete scan includes hidden files and .git
+- [x] Integration test: complete scan after filtered scan preserves original UUIDs
 
 ## Technical Notes
 
@@ -185,6 +185,29 @@ A complete scan of a large project directory will index more entries than a filt
 ### System Files Exception
 
 Even in complete mode, the OS kernel virtual filesystems (`/dev`, `/sys`, `/proc`) should probably still be excluded since they contain pseudo-files that can cause hangs. Consider keeping a minimal `NEVER_INDEX` rule that can't be disabled for truly dangerous paths.
+
+## Implementation Notes (2026-10-08)
+
+- `RuleToggles::complete()` and `IndexerJobConfig::complete_scan()` as designed. Browsing keeps
+  `ephemeral_browse` and its default toggles.
+- `NEVER_INDEX` (`/dev`, `/sys`, `/proc`, unix only) is pushed by `build_default_ruler` regardless of
+  toggles, so a complete scan of `/` cannot walk kernel pseudo-filesystems.
+- `SyncResolver::ensure_index_coverage` runs (and waits for) a recursive complete scan of both conduit
+  roots into the shared ephemeral cache when `use_index_rules = false`; `FileSyncService::sync_now`
+  calls it before `calculate_operations`. The resolver still diffs persistent `entry` rows, so wiring
+  the diff itself onto the ephemeral cache belongs to FSYNC/FILE-006.
+- Additive behaviour needed no change: `add_entry` skips known paths, so existing UUIDs survive.
+
+## Evidence (2026-10-08)
+
+- `cargo test -p wing-core --lib -- rules::tests indexing::job::tests file_sync::resolver ephemeral::index::tests`:
+  pass (`complete_toggles_accept_paths_the_defaults_reject`,
+  `complete_toggles_still_reject_kernel_pseudo_filesystems`, `complete_scan_is_ephemeral_without_rules`,
+  `conduit_without_index_rules_requests_complete_scan`, `add_entry_keeps_existing_uuid_on_repeat_scan`).
+- `cargo test -p wing-core --test ephemeral_coverage_test`: 3/3 pass.
+  `complete_scan_includes_paths_filtered_by_browse_rules` covers `node_modules`, `.git`, hidden files and
+  gitignored files; `complete_scan_after_filtered_scan_fills_gaps_and_keeps_uuids` checks the 8 missing
+  entries are added, the original UUID is kept and `indexed_paths` holds one root.
 
 ## Related Tasks
 

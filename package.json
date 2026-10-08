@@ -14,13 +14,13 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@taplo/cli": "^0.7.0",
     "cspell": "^10.3.6",
-    "node-gyp": "^13.0.2",
+    "node-gyp": "^13.1.0",
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
-    "turbo": "^2.11.6",
-    "turbo-ignore": "^2.11.6",
+    "turbo": "^2.11.7",
+    "turbo-ignore": "^2.11.7",
     "typescript": "^7.0.2",
-    "vite": "^8.3.2"
+    "vite": "^8.3.4"
   },
   "engines": {
     "bun": ">=1.4.0",
@@ -50,7 +50,7 @@
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "gray-matter": "^4.0.3",
-    "maplibre-gl": "^6.11.2",
+    "maplibre-gl": "^6.13.0",
     "react": "19.3.0"
   }
 }

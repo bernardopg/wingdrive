@@ -13,6 +13,10 @@ on:
         description: 'Publish verified assets and update wingdrive-bin on AUR'
         default: false
         type: boolean
+      aur_only:
+        description: 'Only republish wingdrive-bin on AUR from the existing GitHub Release'
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -35,6 +39,7 @@ env:
 jobs:
   linux:
     name: Verify Linux x86_64 bundles
+    if: ${{ !inputs.aur_only }}
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
@@ -159,7 +164,7 @@ jobs:
   publish:
     name: Publish verified GitHub Release
     needs: linux
-    if: github.event_name == 'push' || inputs.publish
+    if: (github.event_name == 'push' || inputs.publish) && !inputs.aur_only
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -183,6 +188,7 @@ jobs:
   aur:
     name: Publish wingdrive-bin on AUR
     needs: publish
+    if: always() && (needs.publish.result == 'success' || inputs.aur_only)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -200,7 +206,8 @@ jobs:
       - name: Generate and validate AUR package in Arch Linux
         run: |
           python3 scripts/release/aur.py "${RELEASE_TAG#v}" "dist/WingDrive-${RELEASE_TAG#v}-x86_64.AppImage" dist/LICENSE packaging/aur
-          docker run --rm -v "$PWD:/work" archlinux:base bash -euc '
+          # Arch's newer system WebKit uses more memory than the bundled one.
+          docker run --rm -e WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB="${{ vars.WINGDRIVE_AUR_MEMORY_BUDGET_MIB || '850' }}" -v "$PWD:/work" archlinux:base bash -euc '
             pacman -Syu --noconfirm base-devel git
             useradd -m builder
             cp -r /work/packaging/aur /tmp/aur
@@ -215,7 +222,7 @@ jobs:
             pacman -U --noconfirm ./*.pkg.tar.zst
             runuser -u builder -- test -x /opt/wingdrive/usr/bin/WingDrive
             runuser -u builder -- test ! -e /opt/wingdrive/usr/lib/libwebkit2gtk-4.1.so.0
-            runuser -u builder -- env WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 WINGDRIVE_TEST_LAUNCHER=/usr/bin/wingdrive xvfb-run -a python /work/scripts/release/smoke.py /opt/wingdrive
+            runuser -u builder -- env WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB="$WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB" WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 WINGDRIVE_TEST_LAUNCHER=/usr/bin/wingdrive xvfb-run -a python /work/scripts/release/smoke.py /opt/wingdrive
             runuser -u builder -- makepkg --printsrcinfo > /work/packaging/aur/.SRCINFO
           '
       - name: Publish package metadata idempotently

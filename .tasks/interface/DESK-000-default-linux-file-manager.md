@@ -17,19 +17,27 @@ WingDrive must replace Dolphin, Nautilus or Yazi as the file manager the user op
 
 ## Implementation Steps
 
-- [ ] DESK-001 XDG integration, command-line paths and single instance
-- [ ] DESK-002 `org.freedesktop.FileManager1` D-Bus service
-- [ ] DESK-003 Background mode in the system tray with autostart
-- [ ] DESK-004 Real "Open With" on Linux
-- [ ] DESK-005 "Open Terminal Here"
-- [ ] DESK-006 New empty file and symbolic link
-- [ ] DESK-007 Permissions and ownership in Properties
-- [ ] DESK-008 Compress and extract archives
-- [ ] DESK-009 Network locations and devices through GIO/gvfs
+- [x] DESK-001 XDG integration, command-line paths and single instance
+- [x] DESK-002 `org.freedesktop.FileManager1` D-Bus service
+- [x] DESK-003 Background mode in the system tray with autostart
+- [x] DESK-004 Real "Open With" on Linux
+- [x] DESK-005 "Open Terminal Here"
+- [x] DESK-006 New empty file and symbolic link
+- [x] DESK-007 Permissions and ownership in Properties
+- [x] DESK-008 Compress and extract archives
+- [x] DESK-009 Network locations and devices through GIO/gvfs
 - [ ] DESK-010 Startup latency and resident memory budget
 
 ## Acceptance Criteria
 
-- [ ] `xdg-mime default wingdrive.desktop inode/directory` makes `xdg-open <dir>` open WingDrive
+- [x] `xdg-mime default wingdrive.desktop inode/directory` makes `xdg-open <dir>` open WingDrive
 - [ ] Every child task is Done with runtime evidence from the AUR package
 - [ ] A full working day on the author's machine without falling back to another file manager
+
+## Evidence
+
+- DESK-001..009 Done in #135 with tests and runtime evidence in each task file; DESK-010 in progress.
+- With isolated `XDG_DATA_HOME`/`XDG_CONFIG_HOME` holding the shipped desktop entry, `xdg-mime default
+  wingdrive.desktop inode/directory` wrote `inode/directory=wingdrive.desktop` and `gio mime inode/directory`
+  reported `wingdrive.desktop` as the default, which is what `xdg-open <dir>` uses.
+- Open: runtime evidence from the published AUR package and a full working day on the author's machine.

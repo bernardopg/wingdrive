@@ -454,7 +454,7 @@ impl TestHarness {
 		// Mark indexing complete and register for watching
 		core.context
 			.ephemeral_cache()
-			.mark_indexing_complete(&test_dir);
+			.mark_indexing_complete(&test_dir, IndexScope::Current);
 
 		// Add ephemeral watch
 		watcher.watch_ephemeral(test_dir.clone()).await?;

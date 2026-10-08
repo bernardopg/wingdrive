@@ -46,7 +46,7 @@ async-stream        = "0.3.6"
 async-trait         = "0.1.92"
 axum                = "0.8.9"
 axum-extra          = "0.12.6"
-base64              = "0.22.1"
+base64              = "0.23.1"
 blake3              = "1.8.6"
 bytes               = "1.12.1"
 chrono              = "0.4.45"
@@ -88,7 +88,7 @@ uhlc                = "0.9.0"                                          # Must fo
 uuid                = "1.24"                                           # Must follow version used by specta
 webp                = "0.3.1"
 zeroize             = "1.9"
-sqlx                = { version = "0.8", default-features = false, features = ["sqlite", "runtime-tokio"] }
+sqlx                = { version = "0.9", default-features = false, features = ["sqlite", "runtime-tokio"] }
 lancedb             = "0.15"
 fastembed           = "4"
 arrow-array         = "53.3"
