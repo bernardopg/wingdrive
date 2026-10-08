@@ -466,3 +466,35 @@ impl PairingAdvertisement {
 		Ok(node_addr)
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	/// Pins the word encoding to the official BIP39 English vectors so a `bip39` upgrade cannot
+	/// silently change the pairing words two devices exchange.
+	#[test]
+	fn bip39_words_match_reference_vectors() {
+		let vectors: [([u8; 16], &str); 2] = [
+			(
+				[0x00; 16],
+				"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+			),
+			(
+				[0x7f; 16],
+				"legal winner thank year wave sausage worth useful legal winner thank yellow",
+			),
+		];
+
+		for (entropy, expected) in vectors {
+			let mut secret = [0u8; 32];
+			secret[..16].copy_from_slice(&entropy);
+
+			let words = PairingCode::encode_to_bip39_words(&secret).unwrap();
+			assert_eq!(words.join(" "), expected);
+
+			let decoded = PairingCode::decode_from_bip39_words(&words).unwrap();
+			assert_eq!(decoded[..16], entropy);
+		}
+	}
+}

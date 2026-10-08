@@ -177,7 +177,7 @@ impl Registry {
 		query.push_str(" WHERE id = ?");
 		binds.push(id.to_string());
 
-		let mut q = sqlx::query(&query);
+		let mut q = sqlx::query(sqlx::AssertSqlSafe(query));
 		for b in &binds {
 			q = q.bind(b);
 		}
