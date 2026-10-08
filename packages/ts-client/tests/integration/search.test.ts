@@ -1,4 +1,5 @@
-import { describe, test, expect, beforeAll } from 'bun:test';
+import { test, expect } from 'bun:test';
+import { beforeAllBridge, describeBridge } from './bridge';
 import { readFile } from 'fs/promises';
 import { WingDriveClient } from '../../src/client';
 
@@ -15,7 +16,7 @@ interface SearchBridgeConfig {
 let bridgeConfig: SearchBridgeConfig;
 let client: WingDriveClient;
 
-beforeAll(async () => {
+beforeAllBridge(async () => {
 	// Read bridge config from Rust test
 	const configPath = process.env.BRIDGE_CONFIG_PATH;
 	if (!configPath) {
@@ -39,7 +40,7 @@ beforeAll(async () => {
 	console.log('[TS] Connected to daemon');
 });
 
-describe('Search - Persistent Location', () => {
+describeBridge('Search - Persistent Location', () => {
 	test('should search by query in persistent location', async () => {
 		console.log('[TS] Testing persistent location search for "report"...');
 
@@ -174,7 +175,7 @@ describe('Search - Persistent Location', () => {
 	});
 });
 
-describe('Search - Ephemeral Directory', () => {
+describeBridge('Search - Ephemeral Directory', () => {
 	test('should search in ephemeral (non-indexed) directory', async () => {
 		console.log('[TS] Testing ephemeral directory search for "video"...');
 
@@ -311,7 +312,7 @@ describe('Search - Ephemeral Directory', () => {
 	});
 });
 
-describe('Search - Index Type Routing', () => {
+describeBridge('Search - Index Type Routing', () => {
 	test('should correctly route to persistent index', async () => {
 		const searchInput = {
 			query: 'test',

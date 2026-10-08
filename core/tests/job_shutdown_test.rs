@@ -1,12 +1,15 @@
 //! Test for job pausing during shutdown
 
-use sea_orm::ActiveModelTrait;
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use std::time::Duration;
 use tempfile::TempDir;
 use tokio::time::sleep;
 use wing_core::{
 	infra::db::entities,
-	infra::job::types::{JobId, JobStatus},
+	infra::job::{
+		database::{init_database, JobDb},
+		types::{JobId, JobStatus},
+	},
 	location::{create_location, IndexMode, LocationCreateArgs},
 	Core,
 };
@@ -30,27 +33,32 @@ async fn test_jobs_paused_on_shutdown() -> Result<(), Box<dyn std::error::Error 
 	let test_location_dir = temp_dir.path().join("test_location");
 	tokio::fs::create_dir_all(&test_location_dir).await?;
 
-	// Create enough files to ensure indexing takes some time
-	for i in 0..200 {
+	// Content identification hashes ~400 files/s in a debug build. 310 entries finished
+	// within about a second, so the job could complete before shutdown and leave nothing
+	// to pause; ~3000 keeps it running for several seconds.
+	for i in 0..2000 {
 		let file_path = test_location_dir.join(format!("test_file_{}.txt", i));
 		tokio::fs::write(&file_path, format!("Test content {}", i)).await?;
 
 		// Create some subdirectories with files
-		if i % 20 == 0 {
+		if i % 200 == 0 {
 			let subdir = test_location_dir.join(format!("subdir_{}", i));
 			tokio::fs::create_dir_all(&subdir).await?;
-			for j in 0..10 {
+			for j in 0..100 {
 				let subfile = subdir.join(format!("subfile_{}.txt", j));
 				tokio::fs::write(&subfile, format!("Subcontent {} {}", i, j)).await?;
 			}
 		}
 	}
 
-	// Register device
-	let db = library.db();
+	// create_library already registers this device, so reuse that row; inserting it
+	// again would violate the unique slug constraint.
 	let device = core.device.to_device()?;
-	let device_model: entities::device::ActiveModel = device.into();
-	let device_record = device_model.insert(db.conn()).await?;
+	let device_record = entities::device::Entity::find()
+		.filter(entities::device::Column::Uuid.eq(device.id))
+		.one(library.db().conn())
+		.await?
+		.ok_or("create_library should register the current device")?;
 
 	// Create location to trigger indexing
 	let location_args = LocationCreateArgs {
@@ -85,18 +93,21 @@ async fn test_jobs_paused_on_shutdown() -> Result<(), Box<dyn std::error::Error 
 	println!("Shutting down core...");
 	core.shutdown().await?;
 
-	// Check that jobs were paused
+	// Shutdown closes the library and its job database pool, so the live job manager
+	// can no longer answer. Paused state only matters if it was persisted for resume,
+	// so read it back from the library's jobs.db.
+	let jobs_db = JobDb::new(init_database(&library.path().join("jobs.db")).await?);
 	for job_id in &job_ids {
-		let job_info = job_manager.get_job_info(job_id.0).await?;
-		if let Some(info) = job_info {
-			assert_eq!(
-				info.status,
-				JobStatus::Paused,
-				"Job {} should be paused after shutdown",
-				job_id.0
-			);
-			println!("✓ Job {} was paused during shutdown", job_id.0);
-		}
+		let job = jobs_db
+			.get_job(*job_id)
+			.await?
+			.ok_or_else(|| format!("Job {} missing from jobs.db", job_id.0))?;
+		assert_eq!(
+			job.status,
+			JobStatus::Paused.to_string(),
+			"Job {} should be persisted as paused after shutdown",
+			job_id.0
+		);
 	}
 
 	Ok(())

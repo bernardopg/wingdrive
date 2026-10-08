@@ -15,12 +15,11 @@
 
 // Setup DOM environment before any other imports
 import "./setup";
+import { beforeAllBridge, describeBridge } from "./bridge";
 
 import {
-	describe,
 	test,
 	expect,
-	beforeAll,
 	afterAll,
 	afterEach,
 } from "bun:test";
@@ -46,7 +45,7 @@ let bridgeConfig: BridgeConfig;
 let client: WingDriveClient;
 const allEventsReceived: any[] = []; // Collect all events for debugging
 
-beforeAll(async () => {
+beforeAllBridge(async () => {
 	// Read bridge config from path provided by Rust test
 	const configPath = process.env.BRIDGE_CONFIG_PATH;
 	if (!configPath) {
@@ -110,7 +109,7 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("useNormalizedQuery - File Deletion Integration", () => {
+describeBridge("useNormalizedQuery - File Deletion Integration", () => {
 	test("should update cache when files are deleted", async () => {
 		const locationPath = bridgeConfig.location_path;
 		const deleteTestPath = join(locationPath, "delete_test");

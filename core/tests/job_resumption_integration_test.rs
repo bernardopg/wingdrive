@@ -5,7 +5,7 @@
 //! points, then verifying they can resume and complete successfully.
 
 use std::{
-	path::PathBuf,
+	path::{Path, PathBuf},
 	sync::{
 		atomic::{AtomicBool, AtomicU32, Ordering},
 		Arc,
@@ -20,7 +20,7 @@ use tracing::{info, warn};
 use uuid::Uuid;
 use wing_core::{
 	domain::WingPath,
-	infra::action::LibraryAction,
+	infra::{action::LibraryAction, job::types::JobId},
 	ops::{
 		indexing::IndexMode,
 		locations::add::action::{LocationAddAction, LocationAddInput},
@@ -32,6 +32,8 @@ use wing_core::{
 #[derive(Debug, Clone)]
 enum InterruptionPoint {
 	/// Interrupt during discovery phase after N progress events
+	// Unused with the core/src dataset; see `interruption_points`.
+	#[allow(dead_code)]
 	DiscoveryAfterEvents(u32),
 	/// Interrupt during processing phase after N progress events
 	ProcessingAfterEvents(u32),
@@ -76,8 +78,10 @@ async fn test_job_resumption_at_various_points() {
 
 	// Define interruption points to test with realistic event counts
 	// Use lower event counts for faster test execution
+	// No discovery point: discovery of core/src finishes in under 100ms, and the job
+	// manager throttles JobProgress to one event per 100ms, so no Discovery event is
+	// ever emitted to interrupt on. Re-add it with a dataset whose walk takes seconds.
 	let interruption_points = vec![
-		InterruptionPoint::DiscoveryAfterEvents(2), // Interrupt early in discovery
 		InterruptionPoint::ProcessingAfterEvents(2), // Interrupt early in processing
 		InterruptionPoint::ContentIdentificationAfterEvents(2), // Interrupt early in content ID
 	];
@@ -146,7 +150,7 @@ async fn generate_test_data() -> Result<PathBuf, Box<dyn std::error::Error + Sen
 
 /// Test a single interruption point scenario
 async fn test_single_interruption_point(
-	indexing_data_path: &PathBuf,
+	indexing_data_path: &Path,
 	interruption_point: InterruptionPoint,
 	test_index: usize,
 ) -> TestResult {
@@ -199,21 +203,19 @@ async fn test_single_interruption_point(
 	let library_dir = test_setup.data_dir().join("libraries");
 	if library_dir.exists() {
 		if let Ok(entries) = std::fs::read_dir(&library_dir) {
-			for entry in entries {
-				if let Ok(entry) = entry {
-					let path = entry.path();
-					if path.is_dir() {
-						// Remove SQLite WAL and SHM files
-						let wal_path = path.join("library.db-wal");
-						let shm_path = path.join("library.db-shm");
+			for entry in entries.flatten() {
+				let path = entry.path();
+				if path.is_dir() {
+					// Remove SQLite WAL and SHM files
+					let wal_path = path.join("library.db-wal");
+					let shm_path = path.join("library.db-shm");
 
-						for lock_file in [wal_path, shm_path] {
-							if lock_file.exists() {
-								if let Err(e) = std::fs::remove_file(&lock_file) {
-									warn!("Failed to remove {}: {}", lock_file.display(), e);
-								} else {
-									info!("Removed lock file: {}", lock_file.display());
-								}
+					for lock_file in [wal_path, shm_path] {
+						if lock_file.exists() {
+							if let Err(e) = std::fs::remove_file(&lock_file) {
+								warn!("Failed to remove {}: {}", lock_file.display(), e);
+							} else {
+								info!("Removed lock file: {}", lock_file.display());
 							}
 						}
 					}
@@ -251,7 +253,7 @@ async fn test_single_interruption_point(
 /// Start indexing job and interrupt at specified point
 async fn start_and_interrupt_job(
 	test_setup: &IntegrationTestSetup,
-	indexing_data_path: &PathBuf,
+	indexing_data_path: &Path,
 	interruption_point: &InterruptionPoint,
 ) -> Result<(Uuid, Uuid), Box<dyn std::error::Error + Send + Sync>> {
 	info!(
@@ -274,7 +276,7 @@ async fn start_and_interrupt_job(
 
 	// Create location add action to automatically trigger indexing
 	let location_input = LocationAddInput {
-		path: WingPath::local(indexing_data_path.clone()),
+		path: WingPath::local(indexing_data_path.to_path_buf()),
 		name: Some("Test Location".to_string()),
 		mode: IndexMode::Content,
 		job_policies: None,
@@ -288,6 +290,10 @@ async fn start_and_interrupt_job(
 	let action_manager = action_manager
 		.as_ref()
 		.ok_or("Action manager not initialized")?;
+
+	// Subscribe before dispatching: discovery of core/src finishes in tens of
+	// milliseconds, so a subscription made after dispatch returns misses it.
+	let mut event_rx = core_context.events.subscribe();
 
 	let location_output = action_manager
 		.dispatch_library(Some(library.id()), location_action)
@@ -307,7 +313,6 @@ async fn start_and_interrupt_job(
 	let phase_order_failed_clone = phase_order_failed.clone();
 
 	// Monitor events for interruption point
-	let mut event_rx = core_context.events.subscribe();
 	let interruption_point_clone = interruption_point.clone();
 
 	// Event counters for each phase
@@ -362,8 +367,10 @@ async fn start_and_interrupt_job(
 							phase_name == "Content Identification" || phase_name == "Finalizing"
 						}
 						InterruptionPoint::ContentIdentificationAfterEvents(_) => {
-							// If we're targeting Content but see Finalizing, we failed
-							phase_name == "Finalizing"
+							// Content identification is the last phase. Aggregation runs
+							// before it and reports itself as "Finalizing", so no phase
+							// seen here means we overshot.
+							false
 						}
 						InterruptionPoint::Aggregation => {
 							// Aggregation is the last phase, no failure condition
@@ -484,7 +491,7 @@ async fn start_and_interrupt_job(
 /// Resume and complete the interrupted job
 async fn resume_and_complete_job(
 	test_setup: &IntegrationTestSetup,
-	_indexing_data_path: &PathBuf,
+	_indexing_data_path: &Path,
 	job_id: Uuid,
 	library_id: Uuid,
 ) -> Result<(PathBuf, PathBuf), Box<dyn std::error::Error + Send + Sync>> {
@@ -513,6 +520,7 @@ async fn resume_and_complete_job(
 	let job_manager = library.jobs();
 
 	// Check if job is already completed
+	let mut needs_resume = false;
 	if let Ok(Some(job_info)) = job_manager.get_job_info(job_id).await {
 		let job_status = job_info.status;
 
@@ -539,6 +547,9 @@ async fn resume_and_complete_job(
 			wing_core::infra::job::types::JobStatus::Failed => {
 				core.shutdown().await?;
 				return Err(format!("Job {} failed during startup", job_id).into());
+			}
+			wing_core::infra::job::types::JobStatus::Paused => {
+				needs_resume = true;
 			}
 			_ => {
 				info!(
@@ -598,33 +609,31 @@ async fn resume_and_complete_job(
 					message,
 					generic_progress,
 					..
-				} => {
-					if event_job_id == job_id.to_string() {
-						// Update last event time when we receive progress events
-						if let Ok(mut last_time) = last_event_time_clone.lock() {
-							*last_time = std::time::Instant::now();
-						}
+				} if event_job_id == job_id.to_string() => {
+					// Update last event time when we receive progress events
+					if let Ok(mut last_time) = last_event_time_clone.lock() {
+						*last_time = std::time::Instant::now();
+					}
 
-						let message_str = message.as_deref().unwrap_or("");
+					let message_str = message.as_deref().unwrap_or("");
 
-						// Extract phase from generic_progress if available
-						let phase_name = if let Some(gp_value) = &generic_progress {
-							if let Ok(gp_json) = serde_json::to_value(gp_value) {
-								gp_json
-									.get("phase")
-									.and_then(|p| p.as_str())
-									.map(|s| s.to_string())
-									.unwrap_or_default()
-							} else {
-								String::new()
-							}
+					// Extract phase from generic_progress if available
+					let phase_name = if let Some(gp_value) = &generic_progress {
+						if let Ok(gp_json) = serde_json::to_value(gp_value) {
+							gp_json
+								.get("phase")
+								.and_then(|p| p.as_str())
+								.map(|s| s.to_string())
+								.unwrap_or_default()
 						} else {
 							String::new()
-						};
+						}
+					} else {
+						String::new()
+					};
 
-						// Debug: Log all progress events during resume to see what we're getting
-						info!("Job progress: {} - {}", phase_name, message_str);
-					}
+					// Debug: Log all progress events during resume to see what we're getting
+					info!("Job progress: {} - {}", phase_name, message_str);
 				}
 				_ => {}
 			}
@@ -663,6 +672,13 @@ async fn resume_and_complete_job(
 			}
 		}
 	});
+
+	// Startup leaves interrupted jobs paused rather than resuming them, so resume
+	// explicitly, after subscribing so the completion event cannot be missed.
+	if needs_resume {
+		info!("Job {} is paused, resuming it", job_id);
+		job_manager.resume_job(JobId(job_id)).await?;
+	}
 
 	// Wait for completion or timeout (increased for large dataset)
 	// Resume phase may need to process remaining files, allow generous time
