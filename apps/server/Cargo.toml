@@ -24,7 +24,7 @@ tokio-stream = "0.1"
 tokio-util = { version = "0.7", features = ["io"] }
 uuid = "1.10"
 tower      = "0.5"
-tower-http = { version = "0.6.11", features = ["fs", "cors"] }
+tower-http = { version = "0.7.1", features = ["fs", "cors"] }
 futures    = "0.3"
 
 # Embedded web UI
@@ -50,7 +50,7 @@ thiserror = "2"
 clap = { version = "4", features = ["derive"] }
 
 # Default data directory resolution in dev mode
-dirs = "6.0"
+dirs = "7.0"
 
 # Dev dependencies
 tempfile = "3"
