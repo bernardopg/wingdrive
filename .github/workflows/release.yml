@@ -34,6 +34,7 @@ env:
   WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB: ${{ vars.WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB || '550' }}
   # Hosted runners lose about 25 s to a D-Bus timeout during GTK start-up.
   WINGDRIVE_STARTUP_BUDGET_SECONDS: ${{ vars.WINGDRIVE_STARTUP_BUDGET_SECONDS || '45' }}
+  WINGDRIVE_RESIDENT_OPEN_BUDGET_MS: ${{ vars.WINGDRIVE_RESIDENT_OPEN_BUDGET_MS || '300' }}
 
 jobs:
   linux:
@@ -65,7 +66,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           ./scripts/setup.sh
-          sudo apt-get install -y xvfb xdotool python3 imagemagick libva2 libva-drm2
+          sudo apt-get install -y xvfb xdotool python3 imagemagick libva2 libva-drm2 dbus-daemon
       - name: Setup native libraries and daemon
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

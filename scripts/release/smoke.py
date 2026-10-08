@@ -2,6 +2,7 @@
 """Start an extracted desktop bundle with a fresh isolated daemon."""
 import json
 import os
+import shutil
 import signal
 import socket
 import subprocess
@@ -11,6 +12,11 @@ import time
 from pathlib import Path
 
 image = Path(sys.argv[1]).resolve()
+
+# The resident-open check goes over the session bus, and GTK waits about 25 s
+# for one that does not exist, so give a headless runner its own.
+if not os.environ.get("DBUS_SESSION_BUS_ADDRESS") and shutil.which("dbus-run-session"):
+    os.execvp("dbus-run-session", ["dbus-run-session", "--", sys.executable, *sys.argv])
 
 
 def process_memory(pid):
@@ -94,6 +100,24 @@ with tempfile.TemporaryDirectory(prefix="wingdrive-bundle-") as directory:
         windows = subprocess.check_output(["xdotool", "search", "--onlyvisible", "--name", "WingDrive"], text=True)
         assert windows.strip(), "Main window not visible"
         assert process.poll() is None, "Desktop exited after connection"
+        # A second launch with a folder must reach this instance and exit
+        # without starting GTK.
+        target = root / "open-target"
+        target.mkdir()
+        resident_budget_ms = float(os.environ.get('WINGDRIVE_RESIDENT_OPEN_BUDGET_MS', '300'))
+        started = time.monotonic()
+        second = subprocess.run([launcher, str(target)], cwd=app, env=env,
+                                capture_output=True, text=True, timeout=60)
+        resident_ms = (time.monotonic() - started) * 1000
+        print(f"Resident open handed over: {resident_ms:.0f} ms (budget: {resident_budget_ms:.0f} ms)")
+        assert second.returncode == 0, second.stdout + second.stderr
+        assert "Handed launch to the running WingDrive" in second.stdout + second.stderr, \
+            "Second launch started its own app instead of handing over"
+        deadline = time.monotonic() + 10
+        while "Delivering open requests" not in (root / "desktop.log").read_text(errors="replace"):
+            assert time.monotonic() < deadline, "Running instance did not receive the folder"
+            time.sleep(.1)
+        assert resident_ms < resident_budget_ms, f"Resident open exceeded {resident_budget_ms:g} ms"
         window = windows.splitlines()[0]
         time.sleep(10)
         subprocess.run(['xdotool', 'windowfocus', '--sync', window], check=True)
