@@ -52,6 +52,7 @@ export function useDaemonStatus() {
 
 		let mounted = true;
 		let listenerCleanup: (() => void) | null = null;
+		let startupInterval: ReturnType<typeof setInterval> | undefined;
 
 		const checkDaemonStatus = async () => {
 			if (!mounted) return;
@@ -63,6 +64,7 @@ export function useDaemonStatus() {
 					
 					if (isRunning) {
 						hasEverConnected.current = true;
+						clearInterval(startupInterval);
 					}
 					
 				setStatus(prev => ({
@@ -170,12 +172,15 @@ export function useDaemonStatus() {
 			});
 
 		// Fallback polling only when disconnected (event listeners should handle normal case)
-		// Start with 3 second interval on startup
 		const fallbackInterval = setInterval(checkDaemonStatus, 3000);
+		// The connected event can fire before the listener above is registered,
+		// so poll quickly until the first connection instead of waiting up to 3 s.
+		if (!hasEverConnected.current) startupInterval = setInterval(checkDaemonStatus, 100);
 
 		return () => {
 			mounted = false;
 			clearInterval(fallbackInterval);
+			clearInterval(startupInterval);
 			listenerCleanup?.();
 		};
 	}, [platform]);

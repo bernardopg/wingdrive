@@ -127,6 +127,10 @@ impl DirectoryListingInput {
 	}
 }
 
+/// How long a listing of an unindexed folder waits for its indexer before
+/// returning an empty result that events fill in.
+const FIRST_LISTING_WAIT: std::time::Duration = std::time::Duration::from_millis(250);
+
 impl LibraryQuery for DirectoryListingQuery {
 	type Input = DirectoryListingInput;
 	type Output = DirectoryListingOutput;
@@ -171,7 +175,7 @@ impl LibraryQuery for DirectoryListingQuery {
 			if should_use_ephemeral {
 				tracing::debug!("IndexMode::None, using ephemeral indexing");
 				return self
-					.query_ephemeral_directory_impl(context, library_id)
+					.query_ephemeral_directory_impl(context, library_id, false)
 					.await;
 			}
 		}
@@ -188,7 +192,7 @@ impl LibraryQuery for DirectoryListingQuery {
 			Err(e) => {
 				// Path not indexed - trigger ephemeral indexing
 				tracing::debug!("Path not indexed, using ephemeral (err={:?})", e);
-				self.query_ephemeral_directory_impl(context, library_id)
+				self.query_ephemeral_directory_impl(context, library_id, false)
 					.await
 			}
 		}
@@ -671,10 +675,14 @@ impl DirectoryListingQuery {
 	}
 
 	/// Query ephemeral directory (not indexed) - check cache first, then trigger on-demand indexing
+	///
+	/// `retried` is true on the second pass after a fast indexer run, so a
+	/// listing waits on the indexer at most once.
 	async fn query_ephemeral_directory_impl(
 		&self,
 		context: Arc<CoreContext>,
 		library_id: Uuid,
+		retried: bool,
 	) -> QueryResult<DirectoryListingOutput> {
 		use crate::domain::file::File;
 		use crate::ops::indexing::{IndexScope, IndexerJob, IndexerJobConfig};
@@ -921,8 +929,22 @@ impl DirectoryListingQuery {
 			// Dispatch job asynchronously
 			// The job will emit ResourceChanged events as files are discovered
 			match library.jobs().dispatch(indexer_job).await {
-				Ok(_) => {
+				Ok(handle) => {
 					tracing::info!("Dispatched ephemeral indexer for {:?}", self.input.path);
+					// Most folders index in milliseconds. Answering with their
+					// entries saves the UI an empty first paint and a refetch;
+					// larger folders still fill in from ResourceChanged events.
+					let finished = tokio::time::timeout(FIRST_LISTING_WAIT, handle.wait())
+						.await
+						.is_ok_and(|result| result.is_ok());
+					if finished && !retried {
+						return Box::pin(self.query_ephemeral_directory_impl(
+							context.clone(),
+							library_id,
+							true,
+						))
+						.await;
+					}
 				}
 				Err(e) => {
 					tracing::warn!(

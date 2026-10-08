@@ -1173,6 +1173,7 @@ async fn start_daemon_process(
 	let mut daemon_state = state.write().await;
 	daemon_state.started_by_us = true;
 	daemon_state.daemon_process = Some(std::sync::Arc::new(tokio::sync::Mutex::new(Some(child))));
+	let _ = app.emit("daemon-connected", ());
 
 	Ok(())
 }
@@ -2393,6 +2394,7 @@ fn main() {
 		.invoke_handler(tauri::generate_handler![
 			app_ready,
 			launch::take_open_requests,
+			launch::take_initial_open_request,
 			background::get_desktop_settings,
 			background::set_desktop_settings,
 			get_daemon_socket,
@@ -2696,6 +2698,9 @@ fn main() {
 				state.daemon_process = child_process;
 
 				tracing::info!("Daemon connection established");
+				// The frontend waits on this event (or its slower poll) before it
+				// leaves the startup screen.
+				let _ = app_handle.emit("daemon-connected", ());
 
 				// Validate persisted library ID in background (non-blocking)
 				// If library no longer exists, reset the state

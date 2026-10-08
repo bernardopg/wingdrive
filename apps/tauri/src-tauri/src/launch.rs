@@ -226,6 +226,23 @@ pub fn show_main_window(app: &AppHandle) {
 	}
 }
 
+/// Takes the first queued request when it only opens a folder.
+///
+/// The main window calls this before its first render, so a cold launch with
+/// a folder paints that folder instead of the overview it would otherwise
+/// show while the frontend drains the queue. A request that selects an entry
+/// stays queued for the frontend, which also handles the reveal.
+#[tauri::command]
+pub fn take_initial_open_request(
+	state: tauri::State<'_, PendingOpenRequests>,
+) -> Option<OpenRequest> {
+	let mut queue = state.0.lock().unwrap();
+	match queue.first() {
+		Some(request) if request.select.is_none() => Some(queue.remove(0)),
+		_ => None,
+	}
+}
+
 /// Returns and clears the queued open requests.
 #[tauri::command]
 pub fn take_open_requests(state: tauri::State<'_, PendingOpenRequests>) -> Vec<OpenRequest> {
