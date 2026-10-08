@@ -12,8 +12,9 @@
  */
 
 import "./setup";
+import { beforeAllBridge, describeBridge } from "./bridge";
 
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { test, expect, afterAll } from "bun:test";
 import { readFile } from "fs/promises";
 import { hostname } from "os";
 import { WingDriveClient } from "../../src/client";
@@ -31,7 +32,7 @@ let bridgeConfig: BridgeConfig;
 let client: WingDriveClient;
 let deviceSlug: string;
 
-beforeAll(async () => {
+beforeAllBridge(async () => {
 	const configPath = process.env.BRIDGE_CONFIG_PATH;
 	if (!configPath) {
 		throw new Error("BRIDGE_CONFIG_PATH environment variable not set");
@@ -51,7 +52,7 @@ beforeAll(async () => {
 	console.log(`[TS] Hostname for comparison: ${hostname().toLowerCase().replace(/\s+/g, "-")}`);
 });
 
-describe("Ephemeral Directory Event Streaming", () => {
+describeBridge("Ephemeral Directory Event Streaming", () => {
 	/**
 	 * Test 1: Raw transport-level event delivery
 	 *
