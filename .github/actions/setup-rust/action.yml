@@ -8,6 +8,10 @@ inputs:
     description: Whether to save the Rust cache
     required: false
     default: 'false'
+  cache-key:
+    description: Separates caches whose builds differ, such as CI debug and release
+    required: false
+    default: ''
   restore-cache:
     description: Whether to restore the Rust cache
     required: false
@@ -60,7 +64,7 @@ runs:
       if: ${{ inputs.restore-cache == 'true' }}
       uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       with:
-        key: ${{ inputs.target }}
+        key: ${{ inputs.target }}${{ inputs.cache-key && format('-{0}', inputs.cache-key) || '' }}
         save-if: ${{ inputs.save-cache }}
         cache-on-failure: true
         shared-key: stable-cache-v6

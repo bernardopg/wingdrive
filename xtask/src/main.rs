@@ -64,7 +64,7 @@ fn main() -> Result<()> {
 		eprintln!();
 		eprintln!("Commands:");
 		eprintln!(
-			"  setup        Setup development environment (downloads deps, generates config)"
+			"  setup        Setup development environment (downloads deps, generates config; --no-daemon skips the release daemon)"
 		);
 		eprintln!("  build-ios    Build wing-ios-core XCFramework for iOS devices and simulator");
 		eprintln!("  build-mobile Build wing-mobile-core for React Native iOS/Android");
@@ -84,7 +84,7 @@ fn main() -> Result<()> {
 	}
 
 	match args[1].as_str() {
-		"setup" => setup()?,
+		"setup" => setup(args.iter().any(|a| a == "--no-daemon"))?,
 		"build-ios" => build_ios()?,
 		"build-mobile" => build_mobile()?,
 		"test-core" => {
@@ -121,7 +121,11 @@ fn main() -> Result<()> {
 ///
 /// This replaces the old `pnpm prep` workflow with a pure Rust implementation.
 /// It downloads native dependencies and generates the cargo config.
-fn setup() -> Result<()> {
+///
+/// `skip_daemon` leaves out the release daemon build, which only Tauri
+/// bundling needs. CI checks and tests use it to save a full release build;
+/// an empty placeholder still satisfies Tauri's `externalBin` path check.
+fn setup(skip_daemon: bool) -> Result<()> {
 	println!("Setting up WingDrive development environment...");
 	println!();
 
@@ -256,51 +260,60 @@ fn setup() -> Result<()> {
 
 	config::generate_cargo_config(&project_root, Some(&native_deps_dir), mobile_deps)?;
 
-	// Build release daemon for Tauri bundler validation
-	// The Tauri config references the release daemon in externalBin, so we need to build it
-	// once even for dev mode to satisfy Tauri's path validation
-	println!();
-	println!("Building release daemon for Tauri (with ffmpeg,heif features)...");
-
 	let target_triple = system.target_triple();
-	let args = vec![
-		"build",
-		"--release",
-		"--features",
-		"wing-core/ffmpeg,wing-core/heif",
-		"--bin",
-		"wing-daemon",
-		"--target",
-		&target_triple,
-	];
-
-	let status = Command::new("cargo")
-		.args(&args)
-		.current_dir(&project_root)
-		.status()
-		.context("Failed to build release daemon")?;
-
-	if !status.success() {
-		anyhow::bail!("Failed to build release daemon");
-	}
-	println!("   ✓ Release daemon built");
-
-	// Create target-suffixed daemon binary for Tauri bundler
-	// Tauri's externalBin appends the target triple to binary names
 	let exe_ext = if cfg!(windows) { ".exe" } else { "" };
-	let daemon_source = project_root.join(format!(
-		"target/{}/release/wing-daemon{}",
-		target_triple, exe_ext
-	));
 	let daemon_target = project_root.join(format!(
 		"target/release/wing-daemon-{}{}",
 		target_triple, exe_ext
 	));
 
-	if daemon_source.exists() {
-		fs::copy(&daemon_source, &daemon_target)
-			.context("Failed to create target-suffixed daemon binary")?;
-		println!("   ✓ Created wing-daemon-{}{}", target_triple, exe_ext);
+	if skip_daemon {
+		if !daemon_target.exists() {
+			fs::create_dir_all(daemon_target.parent().unwrap())?;
+			fs::write(&daemon_target, b"").context("Failed to create placeholder daemon binary")?;
+		}
+		println!();
+		println!("Skipped the release daemon build (--no-daemon)");
+	} else {
+		// Build release daemon for Tauri bundler validation
+		// The Tauri config references the release daemon in externalBin, so we need to build it
+		// once even for dev mode to satisfy Tauri's path validation
+		println!();
+		println!("Building release daemon for Tauri (with ffmpeg,heif features)...");
+
+		let args = vec![
+			"build",
+			"--release",
+			"--features",
+			"wing-core/ffmpeg,wing-core/heif",
+			"--bin",
+			"wing-daemon",
+			"--target",
+			&target_triple,
+		];
+
+		let status = Command::new("cargo")
+			.args(&args)
+			.current_dir(&project_root)
+			.status()
+			.context("Failed to build release daemon")?;
+
+		if !status.success() {
+			anyhow::bail!("Failed to build release daemon");
+		}
+		println!("   ✓ Release daemon built");
+
+		// Create target-suffixed daemon binary for Tauri bundler
+		// Tauri's externalBin appends the target triple to binary names
+		let daemon_source = project_root.join(format!(
+			"target/{}/release/wing-daemon{}",
+			target_triple, exe_ext
+		));
+		if daemon_source.exists() {
+			fs::copy(&daemon_source, &daemon_target)
+				.context("Failed to create target-suffixed daemon binary")?;
+			println!("   ✓ Created wing-daemon-{}{}", target_triple, exe_ext);
+		}
 	}
 
 	// On Windows, copy DLLs to target directories so executables can find them at runtime

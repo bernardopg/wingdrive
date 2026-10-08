@@ -16,6 +16,14 @@ inputs:
     description: Whether to save the System cache
     required: false
     default: 'false'
+  cache-key:
+    description: Rust cache key suffix passed to setup-rust
+    required: false
+    default: ''
+  xtask-setup-args:
+    description: Extra arguments for `cargo xtask setup`, such as --no-daemon
+    required: false
+    default: ''
 runs:
   using: 'composite'
   steps:
@@ -91,6 +99,7 @@ runs:
       with:
         target: ${{ inputs.target }}
         save-cache: ${{ inputs.save-cache }}
+        cache-key: ${{ inputs.cache-key }}
 
     - name: Run setup.sh script
       shell: bash
@@ -107,4 +116,4 @@ runs:
       env:
         TARGET_TRIPLE: ${{ inputs.target }}
         GITHUB_TOKEN: ${{ inputs.token }}
-      run: cargo run -p xtask -- setup
+      run: cargo run -p xtask -- setup ${{ inputs.xtask-setup-args }}
