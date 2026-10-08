@@ -348,9 +348,6 @@ impl NetworkingService {
 
 		drop(device_registry); // Release the lock for async operations
 
-		// Give discovery service time to start up before attempting reconnections
-		tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-
 		// Start background reconnection attempts
 		self.start_background_reconnection(auto_reconnect_devices)
 			.await;
@@ -371,6 +368,10 @@ impl NetworkingService {
 			let logger = self.logger.clone();
 
 			tokio::spawn(async move {
+				// Give the discovery service time to start before dialing. The
+				// wait runs here, not in start-up, so the daemon answers RPC
+				// without waiting on it.
+				tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 				Self::attempt_device_reconnection(
 					device_id,
 					persisted_device,

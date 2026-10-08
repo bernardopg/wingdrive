@@ -6,6 +6,7 @@
 import "./styles.css";
 
 export { Shell } from "./Shell";
+export { explorerUrlForDirectory } from "./components/TabManager/LaunchRequestSync";
 export { DemoWindow } from "./windows/DemoWindow";
 export { ErrorBoundary } from "./components/ErrorBoundary";
 export { FloatingControls } from "./windows/FloatingControls";
