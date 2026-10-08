@@ -14,7 +14,7 @@ import {useSelection} from '../SelectionContext';
 import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
 import {useDuplicateFiles} from './useDuplicateFiles';
-import {useOpenFile} from './useOpenFile';
+import {useOpenFiles} from './useOpenFile';
 import {usePasteFiles} from './usePasteFiles';
 import {useTypeaheadSearch} from './useTypeaheadSearch';
 
@@ -48,7 +48,7 @@ export function useExplorerKeyboard() {
 	} = useSelection();
 	const clipboard = useClipboard();
 	const pasteFiles = usePasteFiles();
-	const openFile = useOpenFile();
+	const openFiles = useOpenFiles();
 	const undo = useUndo();
 	useKeybind('explorer.undo', undo.undo, {enabled: undo.canUndo});
 	const {deleteFiles, isPending: isDeleting} = useDeleteFiles();
@@ -172,12 +172,18 @@ export function useExplorerKeyboard() {
 		{enabled: selectedFiles.length === 1}
 	);
 
+	const openSelection = () => void openFiles(selectedFiles);
+	useKeybind('explorer.openFile', openSelection, {
+		enabled: selectedFiles.length > 0
+	});
 	useKeybind(
-		'explorer.openFile',
+		'explorer.openSelection',
 		() => {
-			if (selectedFiles.length === 1) void openFile(selectedFiles[0]);
+			// Enter on a focused button or menu item belongs to that control.
+			if (focusIsControl()) return;
+			openSelection();
 		},
-		{enabled: selectedFiles.length === 1}
+		{enabled: selectedFiles.length > 0 && !isRenaming}
 	);
 
 	useKeybind(
@@ -270,4 +276,18 @@ export function useExplorerKeyboard() {
 		isRenaming,
 		typeahead
 	]);
+}
+
+/**
+ * Whether keyboard focus is on a control that handles Enter itself.
+ * `[role="button"]` is left out: dnd-kit gives every file item that role.
+ */
+function focusIsControl(): boolean {
+	const active = document.activeElement;
+	return (
+		active instanceof HTMLElement &&
+		active.closest(
+			'button, a[href], [role="menuitem"], [role="columnheader"], [role="tab"]'
+		) !== null
+	);
 }

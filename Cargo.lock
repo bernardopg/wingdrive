@@ -3289,6 +3289,7 @@ dependencies = [
 name = "file-opening-linux"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "file-opening",
  "open",
  "tempfile",

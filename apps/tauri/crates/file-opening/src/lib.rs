@@ -14,7 +14,8 @@ pub struct OpenWithApp {
 	/// Human-readable display name
 	pub name: String,
 
-	/// Optional: app icon as base64-encoded PNG (for future use)
+	/// Optional app icon as a `data:` URL holding base64 PNG or SVG
+	/// (filled on Linux).
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub icon: Option<String>,
 
@@ -80,5 +81,59 @@ pub trait FileOpener: Send + Sync {
 			.iter()
 			.map(|path| self.open_with_app(path, app_id))
 			.collect()
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	/// Apps keyed by extension: `.txt` and `.md` share two editors.
+	struct FakeOpener;
+
+	impl FileOpener for FakeOpener {
+		fn get_apps_for_file(&self, path: &Path) -> Result<Vec<OpenWithApp>, String> {
+			let ids: &[&str] = match path.extension().and_then(|e| e.to_str()) {
+				Some("txt") => &["gedit", "kate", "vim"],
+				Some("md") => &["obsidian", "vim", "kate"],
+				Some("png") => &["gimp"],
+				_ => return Err(format!("unknown {}", path.display())),
+			};
+			Ok(ids
+				.iter()
+				.map(|id| OpenWithApp {
+					id: id.to_string(),
+					name: id.to_string(),
+					icon: None,
+					is_default: false,
+				})
+				.collect())
+		}
+
+		fn open_with_default(&self, _: &Path) -> Result<OpenResult, String> {
+			Ok(OpenResult::Success)
+		}
+
+		fn open_with_app(&self, _: &Path, _: &str) -> Result<OpenResult, String> {
+			Ok(OpenResult::Success)
+		}
+	}
+
+	fn ids(paths: &[&str]) -> Result<Vec<String>, String> {
+		let paths: Vec<PathBuf> = paths.iter().map(PathBuf::from).collect();
+		Ok(FakeOpener
+			.get_apps_for_files(&paths)?
+			.into_iter()
+			.map(|app| app.id)
+			.collect())
+	}
+
+	#[test]
+	fn intersection_keeps_first_files_order_and_shared_apps_only() {
+		assert_eq!(ids(&[]).unwrap(), Vec::<String>::new());
+		assert_eq!(ids(&["a.txt"]).unwrap(), ["gedit", "kate", "vim"]);
+		assert_eq!(ids(&["a.txt", "b.md"]).unwrap(), ["kate", "vim"]);
+		assert_eq!(ids(&["a.txt", "b.png"]).unwrap(), Vec::<String>::new());
+		assert!(ids(&["a.txt", "b.zzz"]).is_err());
 	}
 }

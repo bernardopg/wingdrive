@@ -281,7 +281,7 @@ export interface OpenWithApp {
 	id: string;
 	/** Human-readable display name */
 	name: string;
-	/** Optional base64-encoded icon */
+	/** Optional app icon as a `data:` URL (PNG or SVG) */
 	icon?: string;
 	/** The configured default for this file type */
 	is_default?: boolean;

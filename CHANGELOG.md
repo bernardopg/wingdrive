@@ -53,6 +53,12 @@ version in the workspace manifests and the matching `v*` git tag.
 - The root entry update retries when SQLite reports "database is locked"
   instead of failing the indexing job. (#132)
 
+### Follow-ups
+
+- Integration tests: fixed job shutdown and job resumption test setup; the
+  ts-client daemon bridge suites skip when no bridge is configured. (#136)
+- Open With shows application icons and opens the whole selection at once. (#137)
+
 ## 2.0.0-alpha.8 — 2026-10-06
 
 ### Indexing (INDEX-010, #116)
