@@ -87,9 +87,9 @@ impl SourceDb {
 		for model_name in self.schema.models.keys() {
 			let table = pluralize(model_name);
 			for (col_name, col_type) in &system_columns {
-				let rows = sqlx::query_as::<_, (String,)>(&format!(
+				let rows = sqlx::query_as::<_, (String,)>(sqlx::AssertSqlSafe(format!(
 					"SELECT name FROM pragma_table_info(\"{table}\") WHERE name = ?"
-				))
+				)))
 				.bind(col_name)
 				.fetch_optional(&self.pool)
 				.await?;
@@ -97,7 +97,9 @@ impl SourceDb {
 				if rows.is_none() {
 					let sql =
 						format!("ALTER TABLE \"{table}\" ADD COLUMN \"{col_name}\" {col_type}");
-					sqlx::query(&sql).execute(&self.pool).await?;
+					sqlx::query(sqlx::AssertSqlSafe(sql))
+						.execute(&self.pool)
+						.await?;
 					tracing::info!(table, column = col_name, "added system column");
 				}
 			}
@@ -108,11 +110,12 @@ impl SourceDb {
 
 	/// Resolve an external_id to an internal UUID.
 	async fn resolve_external_id(&self, table: &str, external_id: &str) -> Result<String> {
-		let row: Option<(String,)> =
-			sqlx::query_as(&format!("SELECT id FROM \"{table}\" WHERE external_id = ?"))
-				.bind(external_id)
-				.fetch_optional(&self.pool)
-				.await?;
+		let row: Option<(String,)> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+			"SELECT id FROM \"{table}\" WHERE external_id = ?"
+		)))
+		.bind(external_id)
+		.fetch_optional(&self.pool)
+		.await?;
 
 		row.map(|r| r.0).ok_or_else(|| {
 			Error::Other(format!(
@@ -203,17 +206,18 @@ impl SourceDb {
 			)
 		};
 
-		let mut query = sqlx::query(&sql);
+		let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
 		for v in &values {
 			query = query.bind(v);
 		}
 		query.execute(&self.pool).await?;
 
-		let row: (String,) =
-			sqlx::query_as(&format!("SELECT id FROM \"{table}\" WHERE external_id = ?"))
-				.bind(external_id)
-				.fetch_one(&self.pool)
-				.await?;
+		let row: (String,) = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+			"SELECT id FROM \"{table}\" WHERE external_id = ?"
+		)))
+		.bind(external_id)
+		.fetch_one(&self.pool)
+		.await?;
 
 		Ok(row.0)
 	}
@@ -221,10 +225,12 @@ impl SourceDb {
 	/// Delete a record by external ID.
 	pub async fn delete(&self, model: &str, external_id: &str) -> Result<()> {
 		let table = pluralize(model);
-		let result = sqlx::query(&format!("DELETE FROM \"{table}\" WHERE external_id = ?"))
-			.bind(external_id)
-			.execute(&self.pool)
-			.await?;
+		let result = sqlx::query(sqlx::AssertSqlSafe(format!(
+			"DELETE FROM \"{table}\" WHERE external_id = ?"
+		)))
+		.bind(external_id)
+		.execute(&self.pool)
+		.await?;
 
 		if result.rows_affected() == 0 {
 			return Err(Error::Other(format!(
@@ -262,9 +268,9 @@ impl SourceDb {
 			(format!("{a}_id"), format!("{b}_id"), &id_b, &id_a)
 		};
 
-		sqlx::query(&format!(
+		sqlx::query(sqlx::AssertSqlSafe(format!(
 			"INSERT OR IGNORE INTO \"{junction}\" (\"{col_a}\", \"{col_b}\") VALUES (?, ?)"
-		))
+		)))
 		.bind(val_a)
 		.bind(val_b)
 		.execute(&self.pool)
@@ -301,9 +307,9 @@ impl SourceDb {
 			(format!("{a}_id"), format!("{b}_id"), &id_b, &id_a)
 		};
 
-		sqlx::query(&format!(
+		sqlx::query(sqlx::AssertSqlSafe(format!(
 			"DELETE FROM \"{junction}\" WHERE \"{col_a}\" = ? AND \"{col_b}\" = ?"
-		))
+		)))
 		.bind(val_a)
 		.bind(val_b)
 		.execute(&self.pool)
@@ -337,9 +343,11 @@ impl SourceDb {
 	/// Count records in a model's table.
 	pub async fn count(&self, model: &str) -> Result<i64> {
 		let table = pluralize(model);
-		let row: (i64,) = sqlx::query_as(&format!("SELECT COUNT(*) FROM \"{table}\""))
-			.fetch_one(&self.pool)
-			.await?;
+		let row: (i64,) = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+			"SELECT COUNT(*) FROM \"{table}\""
+		)))
+		.fetch_one(&self.pool)
+		.await?;
 		Ok(row.0)
 	}
 
@@ -377,7 +385,7 @@ impl SourceDb {
 			 LIMIT ?"
 		);
 
-		let rows = sqlx::query_as::<_, (String, String)>(&sql)
+		let rows = sqlx::query_as::<_, (String, String)>(sqlx::AssertSqlSafe(sql))
 			.bind(batch_size as i64)
 			.fetch_all(&self.pool)
 			.await?;
@@ -401,7 +409,7 @@ impl SourceDb {
 			placeholders.join(", ")
 		);
 
-		let mut query = sqlx::query(&sql);
+		let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
 		for id in ids {
 			query = query.bind(id);
 		}
@@ -443,7 +451,7 @@ impl SourceDb {
 			 LIMIT ?"
 		);
 
-		let rows = sqlx::query_as::<_, (String, String)>(&sql)
+		let rows = sqlx::query_as::<_, (String, String)>(sqlx::AssertSqlSafe(sql))
 			.bind(batch_size as i64)
 			.fetch_all(&self.pool)
 			.await?;
@@ -469,7 +477,7 @@ impl SourceDb {
 			 WHERE id = ?"
 		);
 
-		sqlx::query(&sql)
+		sqlx::query(sqlx::AssertSqlSafe(sql))
 			.bind(score as i32)
 			.bind(verdict)
 			.bind(version)
@@ -506,12 +514,13 @@ impl SourceDb {
 			"FROM \"{primary_table}\" t ORDER BY t.rowid DESC LIMIT ? OFFSET ?"
 		);
 
-		let rows =
-			sqlx::query_as::<_, (String, String, String, Option<String>, Option<String>)>(&sql)
-				.bind(limit as i64)
-				.bind(offset as i64)
-				.fetch_all(&self.pool)
-				.await?;
+		let rows = sqlx::query_as::<_, (String, String, String, Option<String>, Option<String>)>(
+			sqlx::AssertSqlSafe(sql),
+		)
+		.bind(limit as i64)
+		.bind(offset as i64)
+		.fetch_all(&self.pool)
+		.await?;
 
 		Ok(rows
 			.into_iter()
@@ -583,7 +592,7 @@ impl SourceDb {
 
 		sql.push_str(" ORDER BY rank LIMIT ?");
 
-		let mut q = sqlx::query_as::<_, FtsHitRow>(&sql).bind(query);
+		let mut q = sqlx::query_as::<_, FtsHitRow>(sqlx::AssertSqlSafe(sql)).bind(query);
 
 		if let Some(ref temp) = temporal {
 			if self.schema.search.date_field.is_some() {

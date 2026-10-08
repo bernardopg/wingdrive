@@ -31,7 +31,9 @@ impl SourceManager {
 		// Apply DDL
 		let ddl = generate_ddl(schema);
 		for sql in &ddl {
-			sqlx::query(sql).execute(&pool).await?;
+			sqlx::query(sqlx::AssertSqlSafe(sql.as_str()))
+				.execute(&pool)
+				.await?;
 		}
 
 		// Store schema version
@@ -111,12 +113,14 @@ impl SourceManager {
 					// for adding new tables, so we run the full DDL and let it no-op for existing tables
 					let ddl = generate_ddl(current_schema);
 					for sql in &ddl {
-						sqlx::query(sql).execute(&pool).await?;
+						sqlx::query(sqlx::AssertSqlSafe(sql.as_str()))
+							.execute(&pool)
+							.await?;
 					}
 				}
 				crate::schema::migration::MigrationAction::AddColumn { table, column } => {
 					let sql = format!("ALTER TABLE \"{table}\" ADD COLUMN \"{column}\" TEXT");
-					sqlx::query(&sql).execute(&pool).await?;
+					sqlx::query(sqlx::AssertSqlSafe(sql)).execute(&pool).await?;
 				}
 				crate::schema::migration::MigrationAction::AddFtsColumn { column: _ } => {
 					// FTS columns are handled by rebuilding the FTS index
