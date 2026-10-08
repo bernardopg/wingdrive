@@ -930,7 +930,7 @@ impl DirectoryListingQuery {
 						self.input.path,
 						e
 					);
-					cache.mark_indexing_complete(&local_path);
+					cache.mark_indexing_complete(&local_path, IndexScope::Current);
 				}
 			}
 		}

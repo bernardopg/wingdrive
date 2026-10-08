@@ -154,7 +154,7 @@ async fn cached_listing_resolves_uuid_before_background_reconciliation() -> Resu
 		.await?;
 
 	let cache = harness.core.context.ephemeral_cache();
-	let index = cache.create_for_indexing(volume.clone());
+	let index = cache.create_for_indexing(volume.clone(), IndexScope::Recursive);
 	let temporary = Uuid::new_v4();
 	let mut root_metadata = metadata(root.clone());
 	root_metadata.kind = EntryKind::Directory;
@@ -162,7 +162,7 @@ async fn cached_listing_resolves_uuid_before_background_reconciliation() -> Resu
 		.write()
 		.await
 		.add_entry(root.clone(), temporary, root_metadata)?;
-	cache.mark_indexing_complete(&volume);
+	cache.mark_indexing_complete(&volume, IndexScope::Recursive);
 	let mut events = harness.library.event_bus().subscribe();
 	let session = SessionContext::device_session(
 		harness.device_id,
@@ -262,7 +262,7 @@ async fn volume_scan_reconciles_two_locations_without_cross_library_leakage() ->
 	assert_ne!(a, other_a);
 
 	let cache = harness.core.context.ephemeral_cache();
-	let index = cache.create_for_indexing(volume.clone());
+	let index = cache.create_for_indexing(volume.clone(), IndexScope::Recursive);
 	for library in [&harness.library, &other] {
 		let mut job = IndexerJob::new(IndexerJobConfig::ephemeral_browse(
 			WingPath::local(volume.clone()),
@@ -336,7 +336,7 @@ async fn live_reconciliation_emits_persistent_uuid_and_tags() -> Result<()> {
 
 	let mut events = harness.library.event_bus().subscribe();
 	let cache = harness.core.context.ephemeral_cache();
-	let index = cache.create_for_indexing(root.clone());
+	let index = cache.create_for_indexing(root.clone(), IndexScope::Recursive);
 	let mut job = IndexerJob::new(IndexerJobConfig::ephemeral_browse(
 		WingPath::local(root.clone()),
 		IndexScope::Recursive,

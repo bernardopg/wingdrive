@@ -1,12 +1,18 @@
+use std::{
+	collections::{HashMap, HashSet},
+	path::{Path, PathBuf},
+	sync::Arc,
+};
+
+use anyhow::Result;
+use sea_orm::{prelude::*, DatabaseConnection, QueryOrder, QuerySelect};
+
 use crate::{
 	domain::addressing::WingPath,
 	infra::db::entities::{entry, sync_conduit, sync_generation},
+	library::Library,
+	ops::indexing::{path_resolver::PathResolver, IndexScope, IndexerJob, IndexerJobConfig},
 };
-use anyhow::Result;
-use sea_orm::{prelude::*, DatabaseConnection, QueryOrder, QuerySelect};
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
-use std::sync::Arc;
 
 /// Calculates sync operations from index queries
 pub struct SyncResolver {
@@ -66,6 +72,56 @@ pub enum ConflictType {
 impl SyncResolver {
 	pub fn new(db: Arc<DatabaseConnection>) -> Self {
 		Self { db }
+	}
+
+	/// The scan a conduit needs before resolving, or `None` to reuse the
+	/// existing (rule-filtered) index.
+	///
+	/// A conduit with `use_index_rules = false` must see every file, otherwise a
+	/// file hidden by a browsing rule looks deleted on one side.
+	pub fn coverage_scan_config(
+		conduit: &sync_conduit::Model,
+		path: &Path,
+	) -> Option<IndexerJobConfig> {
+		(!conduit.use_index_rules)
+			.then(|| IndexerJobConfig::complete_scan(WingPath::local(path), IndexScope::Recursive))
+	}
+
+	/// Run a complete ephemeral scan of both conduit roots when the conduit
+	/// opts out of indexer rules, and wait for it.
+	///
+	/// The scans write into the shared ephemeral cache, which is additive:
+	/// entries a filtered browse already added keep their UUIDs.
+	pub async fn ensure_index_coverage(
+		&self,
+		library: &Library,
+		conduit: &sync_conduit::Model,
+	) -> Result<()> {
+		if conduit.use_index_rules {
+			return Ok(());
+		}
+
+		let cache = library.core_context().ephemeral_cache();
+		for entry_id in [conduit.source_entry_id, conduit.target_entry_id] {
+			let path = PathResolver::get_full_path(&*self.db, entry_id).await?;
+			let Some(config) = Self::coverage_scan_config(conduit, &path) else {
+				continue;
+			};
+
+			let mut job = IndexerJob::new(config);
+			job.set_ephemeral_index(cache.create_for_indexing(path.clone(), IndexScope::Recursive));
+			tracing::debug!(path = %path.display(), conduit = conduit.id, "Running complete scan for sync");
+			library
+				.jobs()
+				.dispatch(job)
+				.await
+				.map_err(|e| anyhow::anyhow!("Failed to dispatch complete scan: {e}"))?
+				.wait()
+				.await
+				.map_err(|e| anyhow::anyhow!("Complete scan of {} failed: {e}", path.display()))?;
+		}
+
+		Ok(())
 	}
 
 	/// Calculate sync operations for a conduit
@@ -332,5 +388,49 @@ impl SyncResolver {
 			.order_by_desc(sync_generation::Column::Generation)
 			.one(&*self.db)
 			.await?)
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	fn conduit(use_index_rules: bool) -> sync_conduit::Model {
+		let now = chrono::Utc::now();
+		sync_conduit::Model {
+			id: 1,
+			uuid: Uuid::new_v4(),
+			source_entry_id: 1,
+			target_entry_id: 2,
+			sync_mode: "mirror".into(),
+			enabled: true,
+			schedule: "manual".into(),
+			use_index_rules,
+			index_mode_override: None,
+			parallel_transfers: 1,
+			bandwidth_limit_mbps: None,
+			last_sync_completed_at: None,
+			sync_generation: 0,
+			last_sync_error: None,
+			total_syncs: 0,
+			files_synced: 0,
+			bytes_transferred: 0,
+			created_at: now,
+			updated_at: now,
+		}
+	}
+
+	#[test]
+	fn conduit_without_index_rules_requests_complete_scan() {
+		let path = Path::new("/sync/source");
+		let config = SyncResolver::coverage_scan_config(&conduit(false), path)
+			.expect("complete scan requested");
+
+		assert!(config.is_ephemeral());
+		assert_eq!(config.scope, IndexScope::Recursive);
+		assert!(!config.rule_toggles.no_dev_dirs && !config.rule_toggles.gitignore);
+		assert_eq!(config.path.as_local_path(), Some(path));
+
+		assert!(SyncResolver::coverage_scan_config(&conduit(true), path).is_none());
 	}
 }

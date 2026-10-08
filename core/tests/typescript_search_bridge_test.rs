@@ -134,7 +134,7 @@ async fn test_typescript_search_persistent_and_ephemeral() -> anyhow::Result<()>
 		.core
 		.context
 		.ephemeral_cache()
-		.mark_indexing_complete(&ephemeral_dir);
+		.mark_indexing_complete(&ephemeral_dir, IndexScope::Recursive);
 	eprintln!("[Rust] Marked ephemeral indexing as complete");
 
 	tokio::time::sleep(Duration::from_secs(1)).await;

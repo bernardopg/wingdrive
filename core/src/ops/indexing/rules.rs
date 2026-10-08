@@ -607,6 +607,17 @@ pub static NO_SYSTEM_FILES: Lazy<SystemIndexerRule> = Lazy::new(|| {
 }
 });
 
+/// Kernel pseudo-filesystems that stay excluded even when every toggle is off.
+///
+/// Their files report sizes that do not match their content and some reads block
+/// forever, so a complete scan must never walk into them.
+#[cfg(target_family = "unix")]
+pub static NEVER_INDEX: Lazy<SystemIndexerRule> = Lazy::new(|| SystemIndexerRule {
+	name: "Never index",
+	default: true,
+	rules: vec![RulePerKind::new_reject_files_by_globs_str(["/{dev,sys,proc}"]).expect("valid")],
+});
+
 pub static NO_HIDDEN: Lazy<SystemIndexerRule> = Lazy::new(|| SystemIndexerRule {
 	name: "No Hidden files",
 	default: false,
@@ -695,6 +706,23 @@ pub struct GitIgnoreRules {
 	rules: RulePerKind,
 }
 
+impl RuleToggles {
+	/// All rules disabled, so the indexer sees every file on disk.
+	///
+	/// File sync and smart copy need this: a file filtered by a browsing rule is
+	/// indistinguishable from a missing one. `NEVER_INDEX` still applies.
+	pub fn complete() -> Self {
+		Self {
+			no_system_files: false,
+			no_hidden: false,
+			no_git: false,
+			gitignore: false,
+			only_images: false,
+			no_dev_dirs: false,
+		}
+	}
+}
+
 impl GitIgnoreRules {
 	pub async fn get_rules_if_in_git_repo(location_root: &Path, current: &Path) -> Option<Self> {
 		let mut git_repo: Option<PathBuf> = None;
@@ -777,6 +805,8 @@ pub async fn build_default_ruler(
 	current: &Path,
 ) -> IndexerRuler {
 	let mut base: Vec<IndexerRule> = Vec::new();
+	#[cfg(target_family = "unix")]
+	base.push((&*NEVER_INDEX).into());
 	if toggles.no_system_files {
 		base.push((&*NO_SYSTEM_FILES).into());
 	}
@@ -806,4 +836,50 @@ pub async fn build_default_ruler(
 		}
 	}
 	IndexerRuler::new(base)
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	struct Meta(bool);
+	impl MetadataForIndexerRules for Meta {
+		fn is_dir(&self) -> bool {
+			self.0
+		}
+	}
+
+	async fn decision(toggles: RuleToggles, path: &str) -> RulerDecision {
+		let root = Path::new("/project");
+		build_default_ruler(toggles, root, root)
+			.await
+			.evaluate_path(path, &Meta(true))
+			.await
+			.expect("rules evaluate")
+	}
+
+	#[tokio::test]
+	async fn complete_toggles_accept_paths_the_defaults_reject() {
+		for path in ["/project/node_modules", "/project/.git", "/project/.hidden"] {
+			assert!(matches!(
+				decision(RuleToggles::complete(), path).await,
+				RulerDecision::Accept
+			));
+		}
+		assert!(matches!(
+			decision(RuleToggles::default(), "/project/node_modules").await,
+			RulerDecision::Reject
+		));
+	}
+
+	#[cfg(target_family = "unix")]
+	#[tokio::test]
+	async fn complete_toggles_still_reject_kernel_pseudo_filesystems() {
+		for path in ["/proc", "/sys", "/dev"] {
+			assert!(matches!(
+				decision(RuleToggles::complete(), path).await,
+				RulerDecision::Reject
+			));
+		}
+	}
 }

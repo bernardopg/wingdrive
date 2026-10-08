@@ -294,9 +294,22 @@ impl EphemeralIndex {
 		Ok(results)
 	}
 
+	/// Resolve a path to its arena id, retrying with the canonical path.
+	///
+	/// A volume walk stores real paths (macOS `/System/Volumes/Data/Users/...`)
+	/// while the Explorer may ask through a symlink (`/Users/...`). The raw
+	/// lookup stays first so stored paths never pay for a `canonicalize` syscall.
+	fn resolve_entry_id(&self, path: &Path) -> Option<EntryId> {
+		if let Some(&id) = self.path_index.get(path) {
+			return Some(id);
+		}
+		let canonical = path.canonicalize().ok()?;
+		self.path_index.get(&canonical).copied()
+	}
+
 	pub fn get_entry(&mut self, path: &PathBuf) -> Option<EntryMetadata> {
-		let id = self.path_index.get(path)?;
-		let node = self.arena.get(*id)?;
+		let id = self.resolve_entry_id(path)?;
+		let node = self.arena.get(id)?;
 
 		self.last_accessed = Instant::now();
 
@@ -315,8 +328,8 @@ impl EphemeralIndex {
 
 	/// Get entry reference for read-only access (doesn't update last_accessed)
 	pub fn get_entry_ref(&self, path: &PathBuf) -> Option<EntryMetadata> {
-		let id = self.path_index.get(path)?;
-		let node = self.arena.get(*id)?;
+		let id = self.resolve_entry_id(path)?;
+		let node = self.arena.get(id)?;
 
 		Some(EntryMetadata {
 			path: path.clone(),
@@ -332,8 +345,8 @@ impl EphemeralIndex {
 	}
 
 	pub fn get_entry_uuid(&self, path: &PathBuf) -> Option<Uuid> {
-		let entry_id = self.path_index.get(path)?;
-		self.entry_uuids.get(entry_id).copied()
+		let entry_id = self.resolve_entry_id(path)?;
+		self.entry_uuids.get(&entry_id).copied()
 	}
 
 	fn forget_uuid(&mut self, id: EntryId) {
@@ -355,8 +368,8 @@ impl EphemeralIndex {
 	/// to persistent indexes.
 	pub fn get_or_assign_uuid(&mut self, path: &PathBuf) -> Uuid {
 		// Look up EntryId for this path
-		let entry_id = match self.path_index.get(path) {
-			Some(&id) => id,
+		let entry_id = match self.resolve_entry_id(path) {
+			Some(id) => id,
 			None => return Uuid::new_v4(), // Path not found, return random UUID
 		};
 
@@ -574,9 +587,11 @@ impl EphemeralIndex {
 			.unwrap_or(ContentKind::Unknown)
 	}
 
+	/// List a directory's children. Children carry the stored (real) paths
+	/// even when `path` was given through a symlink.
 	pub fn list_directory(&self, path: &Path) -> Option<Vec<PathBuf>> {
-		let id = self.path_index.get(path)?;
-		let node = self.arena.get(*id)?;
+		let id = self.resolve_entry_id(path)?;
+		let node = self.arena.get(id)?;
 
 		Some(
 			node.children
@@ -1006,4 +1021,70 @@ pub struct EphemeralIndexStats {
 	pub memory_bytes: usize,
 	pub total_file_bytes: u64,
 	pub uuid_count: usize,
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	fn file(path: PathBuf) -> EntryMetadata {
+		EntryMetadata {
+			path,
+			kind: EntryKind::File,
+			size: 1,
+			modified: None,
+			accessed: None,
+			created: None,
+			inode: None,
+			permissions: None,
+			is_hidden: false,
+		}
+	}
+
+	#[test]
+	fn lookups_resolve_symlinked_paths_to_stored_real_paths() {
+		let temp = tempfile::tempdir().expect("tempdir");
+		let real = temp.path().canonicalize().expect("canonical").join("real");
+		std::fs::create_dir_all(real.join("me")).expect("create dirs");
+		let link = temp.path().join("link");
+		#[cfg(unix)]
+		std::os::unix::fs::symlink(&real, &link).expect("symlink");
+		#[cfg(windows)]
+		std::os::windows::fs::symlink_dir(&real, &link).expect("symlink");
+
+		let mut index = EphemeralIndex::new().expect("index");
+		let stored = real.join("me/a.txt");
+		std::fs::write(&stored, "a").expect("write file");
+		let uuid = Uuid::new_v4();
+		index
+			.add_entry(stored.clone(), uuid, file(stored.clone()))
+			.expect("add entry");
+
+		let via_link = link.join("me");
+		assert_eq!(index.list_directory(&via_link), Some(vec![stored]));
+		let file_via_link = via_link.join("a.txt");
+		assert!(index.get_entry_ref(&file_via_link).is_some());
+		assert_eq!(index.get_entry_uuid(&file_via_link), Some(uuid));
+		assert_eq!(index.get_or_assign_uuid(&file_via_link), uuid);
+		assert!(index.list_directory(&link.join("missing")).is_none());
+	}
+
+	#[test]
+	fn add_entry_keeps_existing_uuid_on_repeat_scan() {
+		let mut index = EphemeralIndex::new().expect("index");
+		let path = PathBuf::from("/project/src/main.rs");
+		let original = Uuid::new_v4();
+		index
+			.add_entry(path.clone(), original, file(path.clone()))
+			.expect("add entry");
+		let before = index.len();
+
+		let added = index
+			.add_entry(path.clone(), Uuid::new_v4(), file(path.clone()))
+			.expect("add entry");
+
+		assert!(added.is_none());
+		assert_eq!(index.len(), before);
+		assert_eq!(index.get_entry_uuid(&path), Some(original));
+	}
 }

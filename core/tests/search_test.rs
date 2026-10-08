@@ -67,7 +67,7 @@ async fn index_ephemeral(
 		.core
 		.context
 		.ephemeral_cache()
-		.mark_indexing_complete(&path);
+		.mark_indexing_complete(&path, scope);
 
 	Ok(())
 }

@@ -156,7 +156,7 @@ async fn test_copy_with_ephemeral_index() -> anyhow::Result<()> {
 		.core
 		.context
 		.ephemeral_cache()
-		.mark_indexing_complete(&dest_dir);
+		.mark_indexing_complete(&dest_dir, IndexScope::Current);
 
 	if let Some(watcher) = harness.core.context.get_fs_watcher().await {
 		watcher.watch_ephemeral(dest_dir.clone()).await?;

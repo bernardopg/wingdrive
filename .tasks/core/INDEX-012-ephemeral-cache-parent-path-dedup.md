@@ -1,12 +1,12 @@
 ---
 id: INDEX-012
 title: Ephemeral Cache Parent Path Deduplication
-status: To Do
-assignee: jamiepine
+status: Done
+assignee: bernardopg
 parent: INDEX-000
 priority: High
 tags: [indexing, ephemeral, cache, deduplication, bug, macos]
-last_updated: 2026-02-07
+last_updated: 2026-10-08
 related_tasks: [INDEX-001, INDEX-010]
 ---
 
@@ -255,16 +255,16 @@ pub fn mark_indexing_complete(&self, path: &Path, scope: IndexScope) {
 
 ## Acceptance Criteria
 
-- [ ] `list_directory("/Users/jamespine")` returns children when arena has `/System/Volumes/Data/Users/jamespine`
-- [ ] `is_indexed()` returns true for symlink paths under a recursively-indexed volume
-- [ ] `get_for_path()` returns the index for symlink paths under a recursively-indexed volume
-- [ ] `create_for_indexing()` is a no-op when the path is covered by a recursive parent (including symlinks)
-- [ ] `mark_indexing_complete()` with Recursive scope subsumes child paths
-- [ ] Only recursive scans provide parent coverage (shallow browses don't)
-- [ ] `indexed_paths` stores scope per path
-- [ ] No redundant ephemeral scan triggered when browsing under a volume-indexed path on macOS
-- [ ] Volume index + browse child shows single entry in `wing index ephemeral-cache`
-- [ ] Existing tests updated, new tests for symlink resolution and parent coverage
+- [x] `list_directory("/Users/jamespine")` returns children when arena has `/System/Volumes/Data/Users/jamespine`
+- [x] `is_indexed()` returns true for symlink paths under a recursively-indexed volume
+- [x] `get_for_path()` returns the index for symlink paths under a recursively-indexed volume
+- [x] `create_for_indexing()` is a no-op when the path is covered by a recursive parent (including symlinks)
+- [x] `mark_indexing_complete()` with Recursive scope subsumes child paths
+- [x] Only recursive scans provide parent coverage (shallow browses don't)
+- [x] `indexed_paths` stores scope per path
+- [x] No redundant ephemeral scan triggered when browsing under a volume-indexed path on macOS
+- [x] Volume index + browse child shows single entry in `wing index ephemeral-cache`
+- [x] Existing tests updated, new tests for symlink resolution and parent coverage
 
 ## Tests
 
@@ -368,6 +368,33 @@ Typically 1-10 entries. Linear iteration is faster than any tree structure at th
 ### `resolve_entry_id` Caching
 
 Consider adding a small `HashMap<PathBuf, PathBuf>` cache for symlink resolutions on the `EphemeralIndex` to avoid repeated `canonicalize()` calls for the same path prefixes. This is optional and can be added later if profiling shows it matters.
+
+## Implementation Notes (2026-10-08)
+
+- `EphemeralIndex::resolve_entry_id` (raw lookup, then `canonicalize`) backs `list_directory`,
+  `get_entry`, `get_entry_ref`, `get_entry_uuid` and `get_or_assign_uuid`. Listing children keep the
+  stored real paths.
+- `indexed_paths` is `HashMap<PathBuf, IndexScope>`; one `covering_root` helper (raw + canonical
+  `starts_with` against `Recursive` roots) serves `is_indexed`, `get_for_path`, `create_for_indexing`
+  and `mark_indexing_complete`.
+- `mark_indexing_complete` subsumes children on a recursive root, skips paths already covered, and never
+  downgrades an existing root. `IndexerJob` registers a failed recursive walk as `Current` so a partial
+  scan cannot claim coverage. Snapshot loads register as `Current` because the snapshot does not record
+  depth.
+- The macOS `/Users` case is covered by the same code path through a temp-dir symlink; there was no
+  macOS host to run `wing index ephemeral-cache` against a real volume.
+
+## Evidence (2026-10-08)
+
+- `cargo test -p wing-core --lib -- ephemeral::cache ephemeral::index::tests`: pass, including the
+  new `test_parent_path_coverage`, `test_shallow_browse_no_parent_coverage`,
+  `test_no_redundant_scan_under_volume`, `test_volume_subsumes_child_paths`,
+  `test_symlink_path_resolution` and `lookups_resolve_symlinked_paths_to_stored_real_paths`.
+- `cargo test -p wing-core --test ephemeral_coverage_test`: `browsing_under_recursive_root_reuses_it`
+  lists a subdirectory of a recursively indexed root through `DirectoryListingQuery`, gets its child,
+  and leaves `indexed_paths == [root]` with nothing in progress.
+- Callers updated: `uuid_reconciliation_test`, `search_test`, `copy_action_test`,
+  `ephemeral_watcher_test` still pass (see PR).
 
 ## Related Tasks
 

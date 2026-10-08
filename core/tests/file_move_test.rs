@@ -315,7 +315,7 @@ async fn test_ephemeral_file_move_via_reindex() -> anyhow::Result<()> {
 		.core
 		.context
 		.ephemeral_cache()
-		.mark_indexing_complete(&test_root);
+		.mark_indexing_complete(&test_root, IndexScope::Recursive);
 
 	tokio::time::sleep(Duration::from_millis(500)).await;
 
@@ -397,7 +397,7 @@ async fn test_ephemeral_file_move_via_watcher() -> anyhow::Result<()> {
 		.core
 		.context
 		.ephemeral_cache()
-		.mark_indexing_complete(&test_root);
+		.mark_indexing_complete(&test_root, IndexScope::Recursive);
 
 	// Register for watching
 	if let Some(watcher) = harness.core.context.get_fs_watcher().await {
