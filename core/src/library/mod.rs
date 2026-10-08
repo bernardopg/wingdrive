@@ -276,11 +276,7 @@ impl Library {
 		let mut config = self.config.write().await;
 		f(&mut config);
 		config.updated_at = chrono::Utc::now();
-
-		// Save to disk
-		let config_path = self.path.join("library.json");
-		let json = serde_json::to_string_pretty(&*config)?;
-		tokio::fs::write(config_path, json).await?;
+		config.save(&self.path.join("library.json")).await?;
 
 		Ok(())
 	}
@@ -302,10 +298,7 @@ impl Library {
 
 	/// Save library configuration to disk
 	pub async fn save_config(&self, config: &LibraryConfig) -> Result<()> {
-		let config_path = self.path.join("library.json");
-		let json = serde_json::to_string_pretty(config)?;
-		tokio::fs::write(config_path, json).await?;
-		Ok(())
+		config.save(&self.path.join("library.json")).await
 	}
 
 	/// Load device cache from library database
@@ -809,14 +802,16 @@ impl Library {
 			"Calculated library statistics"
 		);
 
-		// Update config with new statistics
-		config.statistics = stats.clone();
-		config.statistics.updated_at = chrono::Utc::now();
-
-		// Save config to disk
+		// Write the live config, not the snapshot this task started from: a
+		// config update made meanwhile would otherwise be lost. The lock is
+		// not held across the write because `Library::id` only tries it.
+		{
+			let mut cached_config = config_lock.write().await;
+			cached_config.statistics = stats.clone();
+			config = cached_config.clone();
+		}
 		let config_path = path.join("library.json");
-		let json = serde_json::to_string_pretty(&config)?;
-		tokio::fs::write(&config_path, json).await?;
+		config.save(&config_path).await?;
 
 		debug!(
 			library_id = %library_id,
@@ -824,17 +819,6 @@ impl Library {
 			config_path = %config_path.display(),
 			"Saved updated statistics to library.json"
 		);
-
-		// Update the in-memory config cache
-		{
-			let mut cached_config = config_lock.write().await;
-			cached_config.statistics = stats.clone();
-			debug!(
-				library_id = %library_id,
-				library_name = %config.name,
-				"Updated in-memory config cache with new statistics"
-			);
-		}
 
 		// Emit ResourceChanged event for normalizedCache using EventEmitter trait
 		let library = crate::domain::Library::from_config(&config, path.clone());
