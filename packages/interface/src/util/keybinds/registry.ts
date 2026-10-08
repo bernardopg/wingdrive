@@ -17,6 +17,16 @@ export const explorerKeybinds = {
 		combo: {modifiers: ['Cmd'], key: 'o'},
 		scope: 'explorer'
 	}),
+	// Enter opens on Linux and Windows; Finder uses Enter to rename.
+	openSelection: defineKeybind({
+		id: 'explorer.openSelection',
+		label: 'Open',
+		combo: {
+			macos: {modifiers: ['Cmd'], key: 'ArrowDown'},
+			default: {modifiers: [], key: 'Enter'}
+		},
+		scope: 'explorer'
+	}),
 
 	revealInNativeExplorer: defineKeybind({
 		id: 'explorer.revealInNativeExplorer',

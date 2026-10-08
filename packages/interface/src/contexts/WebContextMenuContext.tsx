@@ -160,7 +160,11 @@ function MenuItemInner({ item }: { item: ContextMenuItem }) {
 	const Icon = item.icon;
 	return (
 		<>
-			{Icon ? <Icon className="size-4 shrink-0" weight="bold" /> : null}
+			{item.iconUrl ? (
+				<img src={item.iconUrl} alt="" className="size-4 shrink-0" />
+			) : Icon ? (
+				<Icon className="size-4 shrink-0" weight="bold" />
+			) : null}
 			<span className="flex-1 truncate text-left">{item.label}</span>
 			{item.keybind ? (
 				<span className="text-menu-faint ml-2 text-xs">

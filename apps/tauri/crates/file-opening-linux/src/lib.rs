@@ -7,6 +7,7 @@ use file_opening::{FileOpener, OpenResult, OpenWithApp};
 
 mod desktop_entry;
 mod host_env;
+mod icon_theme;
 mod mime_apps;
 pub mod terminal;
 
@@ -33,7 +34,7 @@ impl FileOpener for LinuxFileOpener {
 				is_default: default.as_deref() == Some(entry.id.as_str()),
 				id: entry.id,
 				name: entry.name,
-				icon: None,
+				icon: entry.icon.as_deref().and_then(icon_theme::icon_data_url),
 			})
 			.collect())
 	}
