@@ -87,6 +87,9 @@ impl FileSyncService {
 
 		// Calculate sync operations
 		info!("Calculating sync operations for conduit {}", conduit_id);
+		self.resolver
+			.ensure_index_coverage(&self.library, &conduit)
+			.await?;
 		let operations = self.resolver.calculate_operations(&conduit).await?;
 
 		let mode = sync_conduit::SyncMode::from_str(&conduit.sync_mode)

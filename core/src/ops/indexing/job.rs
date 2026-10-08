@@ -166,6 +166,17 @@ impl IndexerJobConfig {
 		}
 	}
 
+	/// Ephemeral scan with every filtering rule disabled.
+	///
+	/// File sync and smart copy need full filesystem state; browsing keeps
+	/// `ephemeral_browse` and its default rules.
+	pub fn complete_scan(path: WingPath, scope: IndexScope) -> Self {
+		Self {
+			rule_toggles: super::rules::RuleToggles::complete(),
+			..Self::ephemeral_browse(path, scope, false)
+		}
+	}
+
 	/// Check if this is an ephemeral (non-persistent) job
 	pub fn is_ephemeral(&self) -> bool {
 		self.persistence == IndexPersistence::Ephemeral
@@ -769,7 +780,16 @@ impl JobHandler for IndexerJob {
 				ctx.library()
 					.core_context()
 					.ephemeral_cache()
-					.mark_indexing_complete(local_path);
+					// A failed recursive walk is partial, so it must not claim
+					// coverage of (and subsume) the paths beneath it.
+					.mark_indexing_complete(
+						local_path,
+						if result.is_ok() {
+							self.config.scope
+						} else {
+							IndexScope::Current
+						},
+					);
 				match &result {
 					Ok(_) => {
 						ctx.log(format!(
@@ -1144,5 +1164,33 @@ impl From<IndexerOutput> for JobOutput {
 			stats: output.stats,
 			metrics: output.metrics.unwrap_or_default(),
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn complete_scan_is_ephemeral_without_rules() {
+		let path = WingPath::local("/project");
+		let config = IndexerJobConfig::complete_scan(path.clone(), IndexScope::Recursive);
+		let toggles = config.rule_toggles;
+
+		assert!(config.is_ephemeral());
+		assert_eq!(config.scope, IndexScope::Recursive);
+		assert_eq!(config.max_depth, None);
+		assert!(!config.is_volume_indexing);
+		assert!(
+			!(toggles.no_system_files
+				|| toggles.no_hidden
+				|| toggles.no_git
+				|| toggles.gitignore
+				|| toggles.only_images
+				|| toggles.no_dev_dirs)
+		);
+
+		let browse = IndexerJobConfig::ephemeral_browse(path, IndexScope::Current, false);
+		assert!(browse.rule_toggles.no_dev_dirs && browse.rule_toggles.gitignore);
 	}
 }
