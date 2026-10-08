@@ -31,13 +31,16 @@ def process_memory(pid):
             break
         descendants |= children
     memory = 0
-    for child in descendants:
+    for child in sorted(descendants):
         try:
             status = Path(f'/proc/{child}/smaps_rollup').read_text()
-            memory += int(next(line for line in status.splitlines()
-                               if line.startswith('Pss:')).split()[1]) * 1024
+            pss = int(next(line for line in status.splitlines()
+                           if line.startswith('Pss:')).split()[1]) * 1024
+            name = Path(f'/proc/{child}/comm').read_text().strip()
         except (OSError, StopIteration):
-            pass
+            continue
+        memory += pss
+        print(f"  {name} ({child}): {pss / 1048576:.1f} MiB")
     return memory
 
 
