@@ -1885,17 +1885,25 @@ async fn start_daemon(
 		.spawn()
 		.map_err(|e| format!("Failed to start daemon: {}", e))?;
 
-	// Wait for daemon to be ready
-	for i in 0..300 {
+	// A short poll interval matters: every launch that starts the daemon
+	// waits on this loop before the first listing can load.
+	let started = std::time::Instant::now();
+	let mut warned = false;
+	while started.elapsed() < std::time::Duration::from_secs(30) {
 		if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
 			return Err(format!("Packaged daemon exited during startup: {status}"));
 		}
-		tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+		tokio::time::sleep(tokio::time::Duration::from_millis(25)).await;
 		if is_daemon_running(socket_addr).await {
-			tracing::info!("Daemon ready at {}", socket_addr);
+			tracing::info!(
+				elapsed_ms = started.elapsed().as_millis() as u64,
+				"Daemon ready at {}",
+				socket_addr
+			);
 			return Ok(child);
 		}
-		if i == 10 {
+		if !warned && started.elapsed() > std::time::Duration::from_secs(1) {
+			warned = true;
 			tracing::warn!("Daemon taking longer than expected to start...");
 		}
 	}
