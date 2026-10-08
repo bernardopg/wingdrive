@@ -19,9 +19,49 @@ env:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Main keeps every run, so a tagged commit always has a finished CI run for the release gate.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    name: Detect Rust changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - name: Checkout repository
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Check whether any changed file can affect a Rust build
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Pushes to main always build, so the main branch keeps a warm cache.
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Files that never reach a Rust compile: docs, task tracking, the
+          # TypeScript packages and app frontends, and release-only scripts.
+          rust_files=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" \
+            | grep -vE '^(\.tasks/|docs/|\.claude/|packages/|apps/web/|apps/tauri/(src|public)/|apps/tauri/[^/]+$|scripts/release/)' \
+            | grep -vE '^apps/mobile/' \
+            | grep -vE '\.(md|mdx)$|^(LICENSE|bun\.lock|package\.json)$' || true)
+          mobile_rust=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" | grep -E '^apps/mobile/modules/' || true)
+          if [ -n "$rust_files$mobile_rust" ]; then
+            printf 'Rust-relevant changes:\n%s\n%s\n' "$rust_files" "$mobile_rust"
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Rust-relevant changes; skipping the Rust workspace job."
+            echo "rust=false" >> "$GITHUB_OUTPUT"
+          fi
+
   repository:
     name: Repository Metadata
     runs-on: ubuntu-latest
@@ -83,6 +123,8 @@ jobs:
 
   core:
     name: Rust Workspace
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -101,20 +143,38 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target: x86_64-unknown-linux-gnu
+          # Only main saves; pull requests restore main's cache read-only.
+          save-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          # Debug builds share nothing with the release workflow's cache.
+          cache-key: ci
+          # Checks and tests never bundle Tauri, so skip the release daemon.
+          xtask-setup-args: --no-daemon
 
       - name: Prepare frontend directories
         run: mkdir -p apps/tauri/dist apps/web/dist
 
-      - name: Check workspace
-        run: cargo check --workspace --locked
-
       - name: Clippy
         run: cargo clippy --workspace --locked -- -D warnings
 
-      - name: Test branding and legacy path resolution
+      # One build of every test binary, so the steps below only run them.
+      - name: Build test binaries
+        run: |
+          cargo build --locked --bin wing-daemon
+          cargo test --locked --no-run -p wing-core --lib \
+            --test branding_legacy_paths \
+            --test sync_metrics_test \
+            --test sync_realtime_test \
+            --test sync_backfill_test
+          cargo test --locked --no-run -p wingdrive --bin WingDrive
+
+      - name: Test branding, key storage and legacy path resolution
         run: |
           cargo test -p wing-core --lib branding:: --locked
+          cargo test -p wing-core --lib crypto::key_manager::tests --locked
           cargo test -p wing-core --test branding_legacy_paths --locked
+
+      - name: Test desktop IPC and launch handling
+        run: cargo test --locked -p wingdrive --bin WingDrive
 
       - name: Test two-device sync
         run: |
