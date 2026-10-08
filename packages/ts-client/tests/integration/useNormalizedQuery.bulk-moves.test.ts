@@ -1,9 +1,8 @@
 import "./setup"; // Ensure DOM environment is loaded first
+import { beforeAllBridge, describeBridge } from "./bridge";
 import {
-	describe,
 	test,
 	expect,
-	beforeAll,
 	afterAll,
 	afterEach,
 } from "bun:test";
@@ -26,12 +25,12 @@ interface BridgeConfig {
 	test_data_path: string;
 }
 
-describe("useNormalizedQuery - Bulk Moves Integration", () => {
+describeBridge("useNormalizedQuery - Bulk Moves Integration", () => {
 	let bridgeConfig: BridgeConfig;
 	let client: WingDriveClient;
 	const allEventsReceived: any[] = []; // Collect all events for debugging
 
-	beforeAll(async () => {
+	beforeAllBridge(async () => {
 		// Read bridge config from path provided by Rust test
 		const configPath = process.env.BRIDGE_CONFIG_PATH;
 		if (!configPath) {
