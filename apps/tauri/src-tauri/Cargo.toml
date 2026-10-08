@@ -1,6 +1,6 @@
 [package]
 name = "wingdrive"
-version = "2.0.0-alpha.8"
+version = "2.0.0-alpha.9"
 edition = "2021"
 
 [[bin]]
@@ -12,7 +12,7 @@ tauri-build = { version = "2.6.3", features = [] }
 
 [dependencies]
 # Tauri
-tauri = { version = "2.11.5", features = ["macos-private-api", "devtools", "protocol-asset"] }
+tauri = { version = "2.11.5", features = ["macos-private-api", "devtools", "protocol-asset", "tray-icon", "image-png"] }
 tauri-plugin-dialog = "2.7.3"
 tauri-plugin-fs = "2.5.1"
 tauri-plugin-shell = "2.3.5"
@@ -20,6 +20,7 @@ tauri-plugin-clipboard-manager = "2.3.3"
 tauri-plugin-global-shortcut = "2.3.2"
 tauri-plugin-os = "2.3.2"
 tauri-plugin-updater = "2.11.0"
+tauri-plugin-single-instance = "2.5.2"
 
 # Core bridge
 wing-tauri-core = { path = "../wing-tauri-core" }
@@ -59,6 +60,9 @@ file-opening-windows = { path = "../crates/file-opening-windows" }
 [target.'cfg(target_os = "linux")'.dependencies]
 file-opening-linux = { path = "../crates/file-opening-linux" }
 gtk = "0.18.2"
+zbus = { version = "5.19", default-features = false, features = ["tokio"] }
+
+[target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
 [features]

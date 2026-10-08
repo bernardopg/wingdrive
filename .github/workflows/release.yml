@@ -210,8 +210,8 @@ jobs:
             runuser -u builder -- makepkg --verifysource
             runuser -u builder -- makepkg --noconfirm
             pacman -U --noconfirm ./*.pkg.tar.zst
-            runuser -u builder -- test -x /opt/wingdrive/AppRun
             runuser -u builder -- test -x /opt/wingdrive/usr/bin/WingDrive
+            runuser -u builder -- test ! -e /opt/wingdrive/usr/lib/libwebkit2gtk-4.1.so.0
             runuser -u builder -- env WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 WINGDRIVE_TEST_LAUNCHER=/usr/bin/wingdrive xvfb-run -a python /work/scripts/release/smoke.py /opt/wingdrive
             runuser -u builder -- makepkg --printsrcinfo > /work/packaging/aur/.SRCINFO
           '

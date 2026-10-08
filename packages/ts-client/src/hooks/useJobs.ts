@@ -99,6 +99,9 @@ export function useJobs(options: UseJobsOptions = {}): UseJobsReturn {
 		refetchRef.current = refetch;
 	}, [refetch]);
 
+	// Throttles refetches triggered by progress for jobs not yet listed
+	const lastUnknownRefetchRef = useRef(0);
+
 	// Ref for stable jobs access to avoid stale closures in event handlers
 	const jobsRef = useRef<ExtendedJobListItem[]>([]);
 	useEffect(() => {
@@ -206,6 +209,17 @@ export function useJobs(options: UseJobsOptions = {}): UseJobsReturn {
 					}
 				}
 
+				// The list can be fetched before a new job's row says "running"
+				// (or before the row exists), and no further lifecycle event
+				// arrives until the job ends, so progress has to fix both.
+				if (!jobsRef.current.some((job) => job.id === progressData.job_id)) {
+					const now = Date.now();
+					if (now - lastUnknownRefetchRef.current > 1000) {
+						lastUnknownRefetchRef.current = now;
+						refetchRef.current();
+					}
+				}
+
 				setJobs((prev) =>
 					prev.map((job) => {
 						if (job.id !== progressData.job_id) return job;
@@ -214,6 +228,9 @@ export function useJobs(options: UseJobsOptions = {}): UseJobsReturn {
 
 						return {
 							...job,
+							// Only queued rows are promoted; a paused job can still
+							// flush one last progress update.
+							status: job.status === 'queued' ? 'running' : job.status,
 							progress: progressData.progress,
 							...(generic && {
 								current_phase: generic.phase,

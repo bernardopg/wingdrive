@@ -62,7 +62,7 @@ export function reconcileSelectedFiles(
 	return result;
 }
 
-function physicalPath(file: File): string | undefined {
+export function physicalPath(file: File): string | undefined {
 	return 'Physical' in file.wing_path ? file.wing_path.Physical.path : undefined;
 }
 

@@ -14,6 +14,11 @@ import {
 	Pencil,
 	Scissors,
 	ShareNetwork,
+	FileArchive,
+	Package,
+	Link,
+	FilePlus,
+	TerminalWindow,
 	Sparkle,
 	Stack,
 	Tag as TagIconComponent,
@@ -34,11 +39,16 @@ import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
 import {useExplorer} from '../context';
 import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
+import {COMPRESS_FORMATS, isArchiveName} from './archiveName';
+import {useArchiveActions} from './useArchiveActions';
+import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
 import {useDuplicateFiles} from './useDuplicateFiles';
 import {useOpenFile} from './useOpenFile';
+import {useOpenTerminal} from './useOpenTerminal';
 import {usePasteFiles} from './usePasteFiles';
+import {revealLabel} from '../../../util/keybinds/platform';
 
 interface UseFileContextMenuProps {
 	file?: File | null;
@@ -103,7 +113,11 @@ export function useFileContextMenu({
 	};
 
 	const physicalPaths = getPhysicalPaths();
-	const {apps, openWithApp, openMultipleWithApp} = useOpenWith(physicalPaths);
+	const {apps, openWithApp, openMultipleWithApp, canSetDefault, setDefaultApp} =
+		useOpenWith(physicalPaths);
+	const openTerminal = useOpenTerminal();
+	const {newFile, newLink} = useCreateEntry();
+	const archive = useArchiveActions();
 
 	// A right-click on an unselected item acts on that item alone.
 	const targetFiles = selected && selectedFiles.length > 0
@@ -151,7 +165,7 @@ export function useFileContextMenu({
 					'Physical' in file.wing_path &&
 					apps.length > 0,
 				submenu: apps.map((app) => ({
-					label: app.name,
+					label: app.is_default ? `${app.name} (default)` : app.name,
 					onClick: async () => {
 						if (!file) return;
 						if (selected && selectedFiles.length > 1) {
@@ -165,8 +179,23 @@ export function useFileContextMenu({
 				}))
 			},
 			{
+				type: 'submenu',
+				icon: ArrowSquareOut,
+				label: 'Always Open With',
+				condition: () =>
+					canSetDefault &&
+					!!file &&
+					file.kind === 'File' &&
+					physicalPaths.length === 1 &&
+					apps.some((app) => !app.is_default),
+				submenu: apps.filter((app) => !app.is_default).map((app) => ({
+					label: app.name,
+					onClick: () => setDefaultApp(physicalPaths[0], app.id, app.name)
+				}))
+			},
+			{
 				icon: MagnifyingGlass,
-				label: 'Show in Finder',
+				label: revealLabel(),
 				onClick: async () => {
 					if (!file) return;
 					// Extract the physical path from WingPath
@@ -193,6 +222,19 @@ export function useFileContextMenu({
 					!!file &&
 					'Physical' in file.wing_path &&
 					!!platform.revealFile
+			},
+			{
+				icon: TerminalWindow,
+				label: 'Open Terminal Here',
+				onClick: () => {
+					void openTerminal?.(file?.wing_path);
+				},
+				condition: () =>
+					!!openTerminal &&
+					!!file &&
+					file.kind === 'Directory' &&
+					'Physical' in file.wing_path &&
+					targetFiles.length === 1
 			},
 			{
 				icon: ShareNetwork,
@@ -224,14 +266,11 @@ export function useFileContextMenu({
 				label: 'Rename',
 				onClick: () => {
 					if (!file) return;
-					startRename(file.id);
+					startRename(file.id, file);
 				},
 				keybindId: 'explorer.renameFile',
 				condition: () =>
-					!!file &&
-					selected &&
-					selectedFiles.length === 1 &&
-					capabilities.canRename
+					!!file && targetFiles.length === 1 && capabilities.canRename
 			},
 			{
 				icon: FolderPlus,
@@ -240,6 +279,66 @@ export function useFileContextMenu({
 					void createEmptyFolder();
 				},
 				condition: () => !!operationalPath
+			},
+			{
+				icon: FilePlus,
+				label: 'New File',
+				onClick: () => {
+					void newFile();
+				},
+				condition: () => !!operationalPath && 'Physical' in operationalPath
+			},
+			{
+				icon: Link,
+				label: 'Create Link',
+				onClick: () => {
+					if (file) void newLink(file);
+				},
+				condition: () =>
+					!!file &&
+					targetFiles.length === 1 &&
+					'Physical' in file.wing_path &&
+					!!operationalPath &&
+					'Physical' in operationalPath
+			},
+			{
+				icon: FileArchive,
+				label: 'Extract Here',
+				onClick: () => {
+					if (file) archive.extract(file);
+				},
+				condition: () =>
+					!!file &&
+					targetFiles.length === 1 &&
+					file.kind === 'File' &&
+					'Physical' in file.wing_path &&
+					isArchiveName(file.wing_path.Physical.path)
+			},
+			{
+				icon: FileArchive,
+				label: 'Extract To...',
+				onClick: () => {
+					if (file) void archive.extractTo(file);
+				},
+				condition: () =>
+					archive.canPickDirectory &&
+					!!file &&
+					targetFiles.length === 1 &&
+					file.kind === 'File' &&
+					'Physical' in file.wing_path &&
+					isArchiveName(file.wing_path.Physical.path)
+			},
+			{
+				type: 'submenu',
+				icon: Package,
+				label: 'Compress',
+				condition: () =>
+					targetFiles.length > 0 &&
+					targetFiles.every((f) => 'Physical' in f.wing_path && f.is_local),
+				submenu: COMPRESS_FORMATS.map(({format, label}) => ({
+					label,
+					onClick: () => archive.compress(targetFiles, format)
+				}))
 			},
 			{
 				icon: FolderPlus,

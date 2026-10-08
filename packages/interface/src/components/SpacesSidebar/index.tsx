@@ -378,13 +378,13 @@ const JobsButton = memo(
 			</Popover.Root>
 		);
 	},
-	(prevProps, nextProps) => {
-		// Only re-render if these specific values change
-		return (
-			prevProps.activeJobCount === nextProps.activeJobCount &&
-			prevProps.hasRunningJobs === nextProps.hasRunningJobs
-		);
-	}
+	(prevProps, nextProps) =>
+		// The job list carries progress; ignoring it froze the open popover on
+		// the first snapshot. The callbacks are recreated every render, so
+		// comparing them would defeat the memo.
+		prevProps.activeJobCount === nextProps.activeJobCount &&
+		prevProps.hasRunningJobs === nextProps.hasRunningJobs &&
+		prevProps.jobs === nextProps.jobs
 );
 
 interface SpacesSidebarProps {

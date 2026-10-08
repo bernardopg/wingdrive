@@ -5,7 +5,7 @@ import { toast } from "@wingdrive/primitives";
 export function useOpenWith(paths: string[]) {
 	const platform = usePlatform();
 
-	const { data: apps, isLoading } = useQuery({
+	const { data: apps, isLoading, refetch } = useQuery({
 		queryKey: ["openWith", ...paths],
 		queryFn: async () => {
 			if (!platform.getAppsForPaths) {
@@ -58,8 +58,21 @@ export function useOpenWith(paths: string[]) {
 		}
 	};
 
+	const setDefaultApp = async (path: string, appId: string, appName: string) => {
+		if (!platform.setDefaultAppForPath) return;
+		try {
+			await platform.setDefaultAppForPath(path, appId);
+			await refetch();
+			toast.success(`${appName} is now the default for this file type`);
+		} catch (e) {
+			toast.error(`Failed to set default application: ${e}`);
+		}
+	};
+
 	return {
 		apps: apps ?? [],
+		canSetDefault: !!platform.setDefaultAppForPath,
+		setDefaultApp,
 		isLoading,
 		openWithDefault,
 		openWithApp,

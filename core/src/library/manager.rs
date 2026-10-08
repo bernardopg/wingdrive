@@ -609,8 +609,16 @@ impl LibraryManager {
 			warn!("Sidecar manager not available during library open");
 		}
 
-		// Now that the library is registered and sidecar manager is initialized, resume interrupted jobs
-		// DISABLED: Jobs will remain paused on startup instead of auto-resuming
+		// Jobs are not auto-resumed, but rows the last process left running must
+		// not stay "running" forever.
+		if let Err(e) = library.jobs.reconcile_interrupted_jobs().await {
+			warn!(
+				"Failed to reconcile interrupted jobs for library {}: {}",
+				config.id, e
+			);
+		}
+
+		// Auto-resume stays off: interrupted resumable jobs wait as paused.
 		// if let Err(e) = library.jobs.resume_interrupted_jobs_after_load().await {
 		// 	warn!(
 		// 		"Failed to resume interrupted jobs for library {}: {}",
@@ -1054,6 +1062,20 @@ impl LibraryManager {
 	}
 
 	/// Ensure the current device is registered in the library
+	/// Re-registers this device in every open library, so a renamed device or
+	/// changed slug reaches their records without reopening them.
+	pub async fn refresh_device_records(&self) {
+		for library in self.get_open_libraries().await {
+			if let Err(e) = self.ensure_device_registered(&library).await {
+				warn!(
+					"Failed to refresh device record in library {}: {}",
+					library.id(),
+					e
+				);
+			}
+		}
+	}
+
 	async fn ensure_device_registered(&self, library: &Arc<Library>) -> Result<()> {
 		let db = library.db();
 		let device = self
@@ -1072,10 +1094,46 @@ impl LibraryManager {
 
 		if let Some(existing_device) = existing {
 			// Update existing device to pick up any changes (e.g., renamed device, hardware upgrades)
+			// The slug can change through device.update while this library is
+			// closed. A stale row made the UI scope listings to a slug no event
+			// carries, so live updates never reached them.
+			let current_slug = self
+				.device_manager
+				.slug_for_library(library.id())
+				.map_err(|e| LibraryError::Other(format!("Failed to get device slug: {}", e)))?;
+			let slug_update = if existing_device.slug == current_slug {
+				None
+			} else if entities::device::Entity::find()
+				.filter(entities::device::Column::Slug.eq(current_slug.clone()))
+				.filter(entities::device::Column::Uuid.ne(device.id))
+				.one(db.conn())
+				.await
+				.map_err(LibraryError::DatabaseError)?
+				.is_some()
+			{
+				warn!(
+					"Device slug '{}' is used by another device in library {}; keeping '{}'",
+					current_slug,
+					library.id(),
+					existing_device.slug
+				);
+				None
+			} else {
+				info!(
+					"Updating device slug in library {} from '{}' to '{}'",
+					library.id(),
+					existing_device.slug,
+					current_slug
+				);
+				Some(current_slug)
+			};
 			let mut device_model: entities::device::ActiveModel = existing_device.into();
 
 			// Update all fields including hardware specs (self-healing for NULL stubs)
 			device_model.name = Set(device.name.clone());
+			if let Some(slug) = slug_update {
+				device_model.slug = Set(slug);
+			}
 			device_model.os_version = Set(device.os_version);
 			device_model.hardware_model = Set(device.hardware_model);
 			device_model.cpu_model = Set(device.cpu_model);

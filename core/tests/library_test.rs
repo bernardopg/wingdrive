@@ -195,3 +195,100 @@ async fn test_default_library_creation() {
 	assert!(lib_path.join("previews").exists());
 	assert!(lib_path.join("exports").exists());
 }
+
+/// A slug changed through device.update must reach the library's device row,
+/// or listings scoped to the stale slug never receive live events.
+#[tokio::test]
+async fn device_slug_change_reaches_open_library_records() {
+	use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+	use wing_core::infra::db::entities::device;
+
+	let temp_dir = TempDir::new().unwrap();
+	let core = Core::new(temp_dir.path().to_path_buf()).await.unwrap();
+	let library = core
+		.libraries
+		.create_library("Slug Library", None, core.context.clone())
+		.await
+		.unwrap();
+	let device_id = core.context.device_manager.device_id().unwrap();
+
+	core.context
+		.device_manager
+		.update(None, Some("renamed-machine".to_string()))
+		.unwrap();
+	core.libraries.refresh_device_records().await;
+
+	let row = device::Entity::find()
+		.filter(device::Column::Uuid.eq(device_id))
+		.one(library.db().conn())
+		.await
+		.unwrap()
+		.unwrap();
+	assert_eq!(row.slug, "renamed-machine");
+}
+
+/// Jobs left running by a previous process must not stay "running" forever.
+/// Auto-resume is off, so resumable jobs wait as paused and others fail.
+#[tokio::test]
+async fn interrupted_jobs_are_settled_on_library_open() {
+	use sea_orm::{ActiveModelTrait, Database, Set};
+	use wing_core::infra::job::database::jobs;
+
+	let temp_dir = TempDir::new().unwrap();
+	let core = Core::new(temp_dir.path().to_path_buf()).await.unwrap();
+	let library = core
+		.libraries
+		.create_library("Jobs Library", None, core.context.clone())
+		.await
+		.unwrap();
+
+	let db = Database::connect(format!(
+		"sqlite://{}?mode=rwc",
+		library.path().join("jobs.db").display()
+	))
+	.await
+	.unwrap();
+	let row = |id: &str, name: &str| jobs::ActiveModel {
+		id: Set(id.to_string()),
+		name: Set(name.to_string()),
+		state: Set(Vec::new()),
+		status: Set("running".to_string()),
+		priority: Set(0),
+		progress_type: Set(None),
+		progress_data: Set(None),
+		parent_job_id: Set(None),
+		created_at: Set(chrono::Utc::now()),
+		started_at: Set(Some(chrono::Utc::now())),
+		completed_at: Set(None),
+		paused_at: Set(None),
+		error_message: Set(None),
+		warnings: Set(None),
+		non_critical_errors: Set(None),
+		metrics: Set(None),
+		action_context: Set(None),
+		action_type: Set(None),
+	};
+	let resumable = uuid::Uuid::new_v4().to_string();
+	let not_resumable = uuid::Uuid::new_v4().to_string();
+	row(&resumable, "file_copy").insert(&db).await.unwrap();
+	row(&not_resumable, "archive_compress")
+		.insert(&db)
+		.await
+		.unwrap();
+
+	library.jobs().reconcile_interrupted_jobs().await.unwrap();
+
+	let statuses: std::collections::HashMap<String, String> = library
+		.jobs()
+		.list_jobs(None)
+		.await
+		.unwrap()
+		.into_iter()
+		.map(|job| (job.id.to_string(), format!("{:?}", job.status)))
+		.collect();
+	assert_eq!(statuses.get(&resumable).map(String::as_str), Some("Paused"));
+	assert_eq!(
+		statuses.get(&not_resumable).map(String::as_str),
+		Some("Failed")
+	);
+}

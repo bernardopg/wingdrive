@@ -148,3 +148,15 @@ export function isInputFocused(): boolean {
 
 	return false;
 }
+
+/** Label for revealing a file in the platform's file manager */
+export function revealLabel(): string {
+	switch (getCurrentPlatform()) {
+		case 'macos':
+			return 'Show in Finder';
+		case 'windows':
+			return 'Show in Explorer';
+		default:
+			return 'Show in Folder';
+	}
+}

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name={{name}}
+GenericName=File Manager
+Comment=Browse, organize and sync your files
+Exec={{exec}} %U
+Icon={{icon}}
+Terminal=false
+StartupWMClass={{exec}}
+Categories=System;FileTools;FileManager;
+Keywords=files;folders;file manager;explorer;browser;
+MimeType=inode/directory;application/x-wingdrive-memory;

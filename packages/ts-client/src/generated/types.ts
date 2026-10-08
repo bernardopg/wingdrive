@@ -178,6 +178,37 @@ export type ApplyToTargets =
 { type: "EntryUuid"; ids: string[] };
 
 /**
+ * Input for compressing files into a new archive
+ */
+export type ArchiveCompressInput = { 
+/**
+ * Files and folders to include, all on this device
+ */
+sources: WingPath[]; 
+/**
+ * Folder that receives the archive
+ */
+destination: WingPath; 
+/**
+ * Archive name without extension; the format's extension is added
+ */
+name: string; format: ArchiveFormat };
+
+/**
+ * Input for extracting an archive
+ */
+export type ArchiveExtractInput = { archive: WingPath; 
+/**
+ * Folder that receives the extracted content
+ */
+destination: WingPath };
+
+/**
+ * Archive formats WingDrive can read; all but 7-Zip can also be written.
+ */
+export type ArchiveFormat = "zip" | "tar" | "tar_gz" | "tar_bz2" | "tar_xz" | "tar_zst" | "seven_zip";
+
+/**
  * Audio metadata extracted from FFmpeg
  */
 export type AudioMediaData = { uuid: string; duration_seconds: number | null; bit_rate: number | null; sample_rate: number | null; channels: string | null; codec: string | null; title: string | null; artist: string | null; album: string | null; album_artist: string | null; genre: string | null; year: number | null; track_number: number | null; disc_number: number | null; composer: string | null; publisher: string | null; copyright: string | null };
@@ -249,7 +280,11 @@ export type ConnectionMethod =
  * Connection proxied through relay server
  * Reliable fallback. Relay hosts the bandwidth.
  */
-"RelayProxy";
+"RelayProxy" | 
+/**
+ * Direct path over the user's Tailscale tailnet (WireGuard mesh)
+ */
+"Tailscale";
 
 /**
  * Domain representation of content identity
@@ -455,6 +490,28 @@ copy_method: CopyMethod };
 export type CoreStatus = { version: string; built_at: string; library_count: number; device_info: DeviceInfo; libraries: LibraryInfo[]; services: ServiceStatus; network: NetworkStatus; system: SystemInfo };
 
 /**
+ * Output from creating a file or link
+ */
+export type CreateEntryOutput = { 
+/**
+ * Path of the created entry
+ */
+path: WingPath };
+
+/**
+ * Input for creating an empty file
+ */
+export type CreateFileInput = { 
+/**
+ * Directory that receives the file
+ */
+parent: WingPath; 
+/**
+ * Name of the new file
+ */
+name: string };
+
+/**
  * Input for creating a new folder
  */
 export type CreateFolderInput = { 
@@ -521,6 +578,23 @@ adapter_id: string;
  * Current status (usually "idle" initially)
  */
 status: string };
+
+/**
+ * Input for creating a symbolic link
+ */
+export type CreateSymlinkInput = { 
+/**
+ * Existing file or folder the link points to
+ */
+target: WingPath; 
+/**
+ * Directory that receives the link
+ */
+parent: WingPath; 
+/**
+ * Name of the new link
+ */
+name: string };
 
 export type CreateTagInput = { 
 /**
@@ -3323,6 +3397,41 @@ warning_count: number };
  */
 export type PerformanceSnapshot = { broadcast_latency: LatencySnapshot; apply_latency: LatencySnapshot; backfill_request_latency: LatencySnapshot; state_watermark: string; shared_watermark: string; watermark_lag_ms: { [key in string]: number }; hlc_physical_drift_ms: number; hlc_counter_max: number; db_query_duration: LatencySnapshot; db_query_count: number };
 
+/**
+ * Result of a permission change
+ */
+export type PermissionsChanged = { 
+/**
+ * Entries changed, including the path itself
+ */
+changed: number; 
+/**
+ * Entries that could not be changed, with the reason
+ */
+failed: string[] };
+
+/**
+ * Mode, owner and group of a path
+ */
+export type PermissionsOutput = { 
+/**
+ * Permission bits, including setuid, setgid and sticky (`0o7777` mask)
+ */
+mode: number; owner: string; group: string; is_dir: boolean; 
+/**
+ * The daemon user owns the path, so it may change mode and group
+ */
+is_owner: boolean; 
+/**
+ * Groups the path can be moved to: those the daemon user belongs to
+ */
+available_groups: string[] };
+
+/**
+ * Input for reading a path's permissions
+ */
+export type PermissionsQuery = { path: WingPath };
+
 export type PingInput = { message: string; count?: number | null };
 
 export type PingOutput = { echo: string; count: number; extension_works: boolean };
@@ -3711,6 +3820,24 @@ entry_uuid: string;
  * The favorite state after the operation
  */
 favorite: boolean };
+
+/**
+ * Input for changing the group
+ */
+export type SetGroupInput = { path: WingPath; group: string };
+
+/**
+ * Input for changing permission bits
+ */
+export type SetPermissionsInput = { path: WingPath; 
+/**
+ * New permission bits (`0o7777` mask)
+ */
+mode: number; 
+/**
+ * Apply to everything inside a folder too
+ */
+recursive?: boolean };
 
 /**
  * Domain representation of a sidecar
@@ -5092,11 +5219,17 @@ export type CoreAction =
 
 export type LibraryAction =
      { type: 'adapters.update'; input: UpdateAdapterInput; output: UpdateAdapterOutput }
+  |  { type: 'archive.compress'; input: ArchiveCompressInput; output: JobReceipt }
+  |  { type: 'archive.extract'; input: ArchiveExtractInput; output: JobReceipt }
   |  { type: 'config.library.update'; input: UpdateLibraryConfigInput; output: UpdateLibraryConfigOutput }
   |  { type: 'files.copy'; input: FileCopyInput; output: JobReceipt }
+  |  { type: 'files.createFile'; input: CreateFileInput; output: CreateEntryOutput }
   |  { type: 'files.createFolder'; input: CreateFolderInput; output: CreateFolderOutput }
+  |  { type: 'files.createSymlink'; input: CreateSymlinkInput; output: CreateEntryOutput }
   |  { type: 'files.delete'; input: FileDeleteInput; output: JobReceipt }
   |  { type: 'files.rename'; input: FileRenameInput; output: JobReceipt }
+  |  { type: 'files.setGroup'; input: SetGroupInput; output: PermissionsChanged }
+  |  { type: 'files.setPermissions'; input: SetPermissionsInput; output: PermissionsChanged }
   |  { type: 'indexing.start'; input: IndexInput; output: JobReceipt }
   |  { type: 'indexing.verify'; input: IndexVerifyInput; output: IndexVerifyOutput }
   |  { type: 'jobs.cancel'; input: JobCancelInput; output: JobCancelOutput }
@@ -5175,6 +5308,7 @@ export type LibraryQuery =
   |  { type: 'files.content_kind_stats'; input: ContentKindStatsInput; output: ContentKindStatsOutput }
   |  { type: 'files.directory_listing'; input: DirectoryListingInput; output: DirectoryListingOutput }
   |  { type: 'files.media_listing'; input: MediaListingInput; output: MediaListingOutput }
+  |  { type: 'files.permissions'; input: PermissionsQuery; output: PermissionsOutput }
   |  { type: 'files.unique_to_location'; input: UniqueToLocationInput; output: UniqueToLocationOutput }
   |  { type: 'jobs.active'; input: ActiveJobsInput; output: ActiveJobsOutput }
   |  { type: 'jobs.get_copy_metadata'; input: CopyMetadataQueryInput; output: CopyMetadataOutput }
@@ -5231,11 +5365,17 @@ export const WIRE_METHODS = {
 
   libraryActions: {
     'adapters.update': 'action:adapters.update.input',
+    'archive.compress': 'action:archive.compress.input',
+    'archive.extract': 'action:archive.extract.input',
     'config.library.update': 'action:config.library.update.input',
     'files.copy': 'action:files.copy.input',
+    'files.createFile': 'action:files.createFile.input',
     'files.createFolder': 'action:files.createFolder.input',
+    'files.createSymlink': 'action:files.createSymlink.input',
     'files.delete': 'action:files.delete.input',
     'files.rename': 'action:files.rename.input',
+    'files.setGroup': 'action:files.setGroup.input',
+    'files.setPermissions': 'action:files.setPermissions.input',
     'indexing.start': 'action:indexing.start.input',
     'indexing.verify': 'action:indexing.verify.input',
     'jobs.cancel': 'action:jobs.cancel.input',
@@ -5314,6 +5454,7 @@ export const WIRE_METHODS = {
     'files.content_kind_stats': 'query:files.content_kind_stats',
     'files.directory_listing': 'query:files.directory_listing',
     'files.media_listing': 'query:files.media_listing',
+    'files.permissions': 'query:files.permissions',
     'files.unique_to_location': 'query:files.unique_to_location',
     'jobs.active': 'query:jobs.active',
     'jobs.get_copy_metadata': 'query:jobs.get_copy_metadata',

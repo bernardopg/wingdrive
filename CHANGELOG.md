@@ -3,7 +3,39 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 2.0.0-alpha.9 — 2026-10-07
+
+### Linux desktop as the default file manager (DESK-000, #135)
+
+- `xdg-open` on folders, launcher arguments and `file://` URIs open WingDrive; a
+  second launch opens a tab in the running window.
+- Background mode in the tray and Start at login (`--hidden`).
+- `org.freedesktop.FileManager1` service, so "Show in folder" from other apps
+  reveals the file in WingDrive.
+- Open With lists the installed applications for the file type, with Always
+  Open With to change the default.
+- Open Terminal Here (Shift+F4), New File (Ctrl+Alt+N), Create Link, and Unix
+  permissions and group in the Inspector.
+- Compress (zip, tar.gz, tar.bz2, tar.xz, tar.zst) and extract (also 7z) as
+  cancellable jobs; hostile archives cannot write outside the destination.
+- Network locations and devices through gvfs (SFTP, SMB, FTP, WebDAV, phones,
+  cameras), with Connect to Server.
+
+### Packaging (TAURI-015)
+
+- `wingdrive-bin` runs on Arch's GTK, WebKit and glib and bundles only FFmpeg,
+  fixing `gdbus` symbol errors and a WebKit abort on exit (477 → 198 MiB).
+- Closing the app stops the daemon it started.
+
+### Fixes
+
+- Folder listings update live again for local folders.
+- Jobs interrupted by a restart no longer stay "running" forever.
+- The Job Manager shows live progress; cancelling an archive job no longer
+  spins the CPU.
+- The empty-space menu opens anywhere outside an item; Rename works on a
+  right-clicked item that is not selected.
+
 
 ### Sync
 

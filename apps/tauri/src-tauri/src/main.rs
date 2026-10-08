@@ -1,11 +1,17 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod background;
 mod clipboard;
 mod drag;
 mod file_opening;
+#[cfg(target_os = "linux")]
+mod filemanager1;
 mod files;
+#[cfg(target_os = "linux")]
+mod gvfs;
 mod keybinds;
+mod launch;
 mod server;
 mod undo;
 mod windows;
@@ -466,7 +472,10 @@ struct MenuState {
 
 /// Called from frontend when app is ready to be shown
 #[tauri::command]
-async fn app_ready(window: tauri::Window) {
+fn app_ready(window: tauri::Window, start_hidden: tauri::State<'_, launch::StartHidden>) {
+	if window.label() == "main" && start_hidden.consume() {
+		return;
+	}
 	window.show().ok();
 	window.set_focus().ok();
 
@@ -1146,10 +1155,7 @@ async fn start_daemon_process(
 	let previous = state.write().await.daemon_process.take();
 	if let Some(process_arc) = previous {
 		if let Some(mut child) = process_arc.lock().await.take() {
-			if !matches!(child.try_wait(), Ok(Some(_))) {
-				let _ = child.kill();
-				let _ = child.wait();
-			}
+			terminate_daemon(&mut child);
 		}
 	}
 
@@ -1185,12 +1191,7 @@ async fn stop_daemon_process(
 	if let Some(process_arc) = daemon_state.daemon_process.take() {
 		let mut process_lock = process_arc.lock().await;
 		if let Some(mut child) = process_lock.take() {
-			child
-				.kill()
-				.map_err(|e| format!("Failed to kill daemon: {}", e))?;
-			// Waiting reaps the process so its PID stops holding the library lock.
-			let _ = child.wait();
-			tracing::info!("Daemon process killed");
+			terminate_daemon(&mut child);
 		}
 	}
 
@@ -1264,7 +1265,7 @@ async fn install_daemon_service(
 			tracing::info!("Stopping existing daemon child process");
 			let mut process_lock = process_arc.lock().await;
 			if let Some(mut child) = process_lock.take() {
-				let _ = child.kill();
+				terminate_daemon(&mut child);
 			}
 		}
 	}
@@ -1423,7 +1424,7 @@ WantedBy=default.target
 			.map_err(|e| format!("Failed to write service file: {}", e))?;
 
 		// Enable and start the service
-		let output = std::process::Command::new("systemctl")
+		let output = host_command("systemctl")
 			.args(["--user", "daemon-reload"])
 			.output()
 			.map_err(|e| format!("Failed to reload systemd: {}", e))?;
@@ -1433,7 +1434,7 @@ WantedBy=default.target
 			return Err(format!("Failed to reload systemd: {}", stderr));
 		}
 
-		let output = std::process::Command::new("systemctl")
+		let output = host_command("systemctl")
 			.args(["--user", "enable", "wingdrive-daemon.service"])
 			.output()
 			.map_err(|e| format!("Failed to enable service: {}", e))?;
@@ -1443,7 +1444,7 @@ WantedBy=default.target
 			return Err(format!("Failed to enable service: {}", stderr));
 		}
 
-		let output = std::process::Command::new("systemctl")
+		let output = host_command("systemctl")
 			.args(["--user", "start", "wingdrive-daemon.service"])
 			.output()
 			.map_err(|e| format!("Failed to start service: {}", e))?;
@@ -1497,7 +1498,7 @@ WantedBy=default.target
 				tracing::info!("Stopping existing daemon child process");
 				let mut process_lock = process_arc.lock().await;
 				if let Some(mut child) = process_lock.take() {
-					let _ = child.kill();
+					terminate_daemon(&mut child);
 				}
 			}
 		}
@@ -1666,17 +1667,17 @@ async fn uninstall_daemon_service() -> Result<(), String> {
 		for name in ["wingdrive-daemon.service", "spacedrive-daemon.service"] {
 			let service_path = systemd_dir.join(name);
 			if service_path.exists() {
-				let _ = std::process::Command::new("systemctl")
+				let _ = host_command("systemctl")
 					.args(["--user", "stop", name])
 					.output();
-				let _ = std::process::Command::new("systemctl")
+				let _ = host_command("systemctl")
 					.args(["--user", "disable", name])
 					.output();
 				std::fs::remove_file(&service_path)
 					.map_err(|e| format!("Failed to remove service file: {}", e))?;
 			}
 		}
-		let _ = std::process::Command::new("systemctl")
+		let _ = host_command("systemctl")
 			.args(["--user", "daemon-reload"])
 			.output();
 
@@ -1817,10 +1818,54 @@ fn build_daemon_command(
 	instance: Option<&str>,
 ) -> std::process::Command {
 	let mut command = std::process::Command::new(daemon_path);
+	// The daemon finds its bundled libraries through its RUNPATH; the bundle's
+	// LD_LIBRARY_PATH would only leak into the host tools it runs, like ffmpeg.
+	#[cfg(target_os = "linux")]
+	file_opening_linux::use_host_environment(&mut command);
 	command.arg("--data-dir").arg(base_data_dir);
 	if let Some(instance) = instance {
 		command.arg("--instance").arg(instance);
 	}
+	command
+}
+
+/// Stops a daemon this app spawned and reaps it.
+///
+/// SIGTERM lets the daemon close its libraries cleanly; a hard kill follows
+/// only if it is still running after the grace period. Reaping matters because
+/// a zombie's PID keeps owning the library lock, so the next daemon would open
+/// with no libraries.
+fn terminate_daemon(child: &mut std::process::Child) {
+	if matches!(child.try_wait(), Ok(Some(_))) {
+		return;
+	}
+	#[cfg(unix)]
+	{
+		let pid = child.id() as libc::pid_t;
+		if unsafe { libc::kill(pid, libc::SIGTERM) } == 0 {
+			for _ in 0..DAEMON_STOP_GRACE_POLLS {
+				if matches!(child.try_wait(), Ok(Some(_))) {
+					tracing::info!("Daemon process stopped");
+					return;
+				}
+				std::thread::sleep(std::time::Duration::from_millis(100));
+			}
+			tracing::warn!("Daemon ignored SIGTERM, killing it");
+		}
+	}
+	let _ = child.kill();
+	let _ = child.wait();
+	tracing::info!("Daemon process killed");
+}
+
+/// Poll count for `terminate_daemon`, 100 ms each.
+const DAEMON_STOP_GRACE_POLLS: u32 = 100;
+
+/// Builds a command for a host tool without the bundle's library paths.
+#[cfg(target_os = "linux")]
+fn host_command(program: &str) -> std::process::Command {
+	let mut command = std::process::Command::new(program);
+	file_opening_linux::use_host_environment(&mut command);
 	command
 }
 
@@ -1840,17 +1885,25 @@ async fn start_daemon(
 		.spawn()
 		.map_err(|e| format!("Failed to start daemon: {}", e))?;
 
-	// Wait for daemon to be ready
-	for i in 0..300 {
+	// A short poll interval matters: every launch that starts the daemon
+	// waits on this loop before the first listing can load.
+	let started = std::time::Instant::now();
+	let mut warned = false;
+	while started.elapsed() < std::time::Duration::from_secs(30) {
 		if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
 			return Err(format!("Packaged daemon exited during startup: {status}"));
 		}
-		tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+		tokio::time::sleep(tokio::time::Duration::from_millis(25)).await;
 		if is_daemon_running(socket_addr).await {
-			tracing::info!("Daemon ready at {}", socket_addr);
+			tracing::info!(
+				elapsed_ms = started.elapsed().as_millis() as u64,
+				"Daemon ready at {}",
+				socket_addr
+			);
 			return Ok(child);
 		}
-		if i == 10 {
+		if !warned && started.elapsed() > std::time::Duration::from_secs(1) {
+			warned = true;
 			tracing::warn!("Daemon taking longer than expected to start...");
 		}
 	}
@@ -1925,13 +1978,22 @@ mod start_daemon_integration_tests {
 			.expect("failed to spawn wing-daemon");
 
 		let reachable = wait_for_port(&config.socket_addr, Duration::from_secs(20));
-		let _ = child.kill();
-		let _ = child.wait();
+		let stopping = Instant::now();
+		terminate_daemon(&mut child);
+		let stop_time = stopping.elapsed();
+		let status = child.try_wait().expect("reaped status");
 
 		assert!(
 			reachable,
 			"daemon did not become reachable on {} within 20s",
 			config.socket_addr
+		);
+		// Exit code 0 means the daemon handled SIGTERM itself instead of being
+		// killed after the grace period.
+		assert_eq!(
+			status.and_then(|status| status.code()),
+			Some(0),
+			"daemon did not shut down gracefully on SIGTERM ({stop_time:?})"
 		);
 		assert!(
 			config.data_dir.exists(),
@@ -2275,7 +2337,7 @@ fn main() {
 	#[cfg(target_os = "linux")]
 	if std::env::var_os("GDK_BACKEND").is_none() && std::env::var_os("DISPLAY").is_some() {
 		// GTK/WebKit's Wayland startup failed in runtime validation; prefer available XWayland.
-		std::env::set_var("GDK_BACKEND", "x11,wayland");
+		std::env::set_var("GDK_BACKEND", file_opening_linux::PREFERRED_GDK_BACKEND);
 	}
 	// Initialize logging
 	tracing_subscriber::registry()
@@ -2286,7 +2348,21 @@ fn main() {
 		.with(tracing_subscriber::fmt::layer())
 		.init();
 
-	tauri::Builder::default()
+	let launch_cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
+	let launch_options = launch::parse_args(std::env::args().skip(1), &launch_cwd);
+
+	let mut builder = tauri::Builder::default();
+	// Named instances are isolated test or development runs and must not hand
+	// their launches to the user's everyday WingDrive.
+	if std::env::var_os(INSTANCE_ENV).is_none() {
+		builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+			let options = launch::parse_args(argv.into_iter().skip(1), Path::new(&cwd));
+			launch::deliver(app, options.requests);
+		}));
+	}
+	builder
+		.manage(launch::PendingOpenRequests::new(launch_options.requests))
+		.manage(launch::StartHidden(launch_options.hidden.into()))
 		.plugin(tauri_plugin_clipboard_manager::init())
 		.plugin(tauri_plugin_dialog::init())
 		.plugin(tauri_plugin_fs::init())
@@ -2309,6 +2385,9 @@ fn main() {
 		)
 		.invoke_handler(tauri::generate_handler![
 			app_ready,
+			launch::take_open_requests,
+			background::get_desktop_settings,
+			background::set_desktop_settings,
 			get_daemon_socket,
 			get_server_url,
 			get_file_stream_url,
@@ -2350,10 +2429,21 @@ fn main() {
 			undo::file_identity,
 			undo::undo_move,
 			undo::undo_empty_folder,
+			undo::undo_new_file,
 			file_opening::get_apps_for_paths,
 			file_opening::open_path_default,
 			file_opening::open_path_with_app,
 			file_opening::open_paths_with_app,
+			file_opening::set_default_app_for_path,
+			files::open_terminal,
+			#[cfg(target_os = "linux")]
+			gvfs::list_network_mounts,
+			#[cfg(target_os = "linux")]
+			gvfs::list_mountable_volumes,
+			#[cfg(target_os = "linux")]
+			gvfs::mount_network_location,
+			#[cfg(target_os = "linux")]
+			gvfs::unmount_network_location,
 			keybinds::register_keybind,
 			keybinds::unregister_keybind,
 			keybinds::get_registered_keybinds
@@ -2532,6 +2622,15 @@ fn main() {
 			let base_data_dir_clone = daemon_base_data_dir;
 			let instance_clone = daemon_instance;
 
+			app.manage(background::DesktopSettingsState::load(&data_dir));
+			#[cfg(target_os = "linux")]
+			if std::env::var_os(INSTANCE_ENV).is_none() {
+				tauri::async_runtime::spawn(filemanager1::serve(app.handle().clone()));
+			}
+			// Some desktops have no tray host; the app still works, only hiding is lost.
+			if let Err(error) = background::create_tray(app.handle()) {
+				tracing::warn!(%error, "Tray icon unavailable");
+			}
 			app.manage(daemon_state.clone());
 			app.manage(app_state);
 			app.manage(drag::DragCoordinator::new());
@@ -2616,7 +2715,7 @@ fn main() {
 
 			// In dev mode, show window immediately
 			#[cfg(debug_assertions)]
-			{
+			if !app.state::<launch::StartHidden>().is_set() {
 				if let Some(window) = app.get_webview_window("main") {
 					window.show().ok();
 					window.set_focus().ok();
@@ -2638,6 +2737,13 @@ fn main() {
 				}
 			}
 
+			if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+				if window.label() == "main" && background::keeps_running(window.app_handle()) {
+					api.prevent_close();
+					let _ = window.hide();
+				}
+			}
+
 			// A destroyed window can no longer receive its events; release its streams.
 			if let tauri::WindowEvent::Destroyed = event {
 				let app = window.app_handle().clone();
@@ -2649,27 +2755,36 @@ fn main() {
 					}
 				});
 			}
-
-			if let tauri::WindowEvent::CloseRequested { .. } = event {
-				// Get daemon state
-				let app = window.app_handle().clone();
-				if let Some(state) = app.try_state::<Arc<RwLock<DaemonState>>>() {
-					let state = state.inner().clone();
-					tauri::async_runtime::spawn(async move {
-						let daemon_state = state.read().await;
-
-						// Only stop daemon if we started it
-						if daemon_state.started_by_us {
-							tracing::info!("App closing, shutting down daemon we started");
-							// Daemon will be stopped when process exits
-							// Could implement graceful shutdown here if needed
-						} else {
-							tracing::info!("App closing, leaving existing daemon running");
-						}
-					});
-				}
-			}
 		})
-		.run(tauri::generate_context!())
-		.expect("error while running tauri application");
+		.build(tauri::generate_context!())
+		.expect("error while building tauri application")
+		.run(|app, event| {
+			if let tauri::RunEvent::Exit = event {
+				stop_owned_daemon(app);
+			}
+		});
+}
+
+/// Stops the daemon on app exit when this app spawned it.
+///
+/// A daemon the user installed as a service, or one that was already running,
+/// is left alone so other clients keep working.
+fn stop_owned_daemon(app: &AppHandle) {
+	let Some(state) = app.try_state::<Arc<RwLock<DaemonState>>>() else {
+		return;
+	};
+	tauri::async_runtime::block_on(async {
+		let mut state = state.write().await;
+		if !state.started_by_us {
+			tracing::info!("App exiting, leaving existing daemon running");
+			return;
+		}
+		if let Some(process) = state.daemon_process.take() {
+			if let Some(mut child) = process.lock().await.take() {
+				tracing::info!("App exiting, stopping daemon we started");
+				terminate_daemon(&mut child);
+			}
+		}
+		state.started_by_us = false;
+	});
 }

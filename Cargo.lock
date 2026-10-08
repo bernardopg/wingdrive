@@ -1362,6 +1362,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7354288c522e7e980fafd2075d63d1285794c3a6a16cdd492f189ea406e5f18b"
 
 [[package]]
+name = "bzip2"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f3a53fac24f34a81bc9954b5d6cfce0c21e18ec6959f44f56e8e90e4bb7c346c"
+dependencies = [
+ "libbz2-rs-sys",
+]
+
+[[package]]
 name = "cairo-rs"
 version = "0.18.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3282,6 +3291,7 @@ version = "0.1.0"
 dependencies = [
  "file-opening",
  "open",
+ "tempfile",
 ]
 
 [[package]]
@@ -5710,6 +5720,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "libbz2-rs-sys"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34b357333733e8260735ba5894eb928c02ecc69c78715f01a8019e7fa7f2db4c"
+
+[[package]]
 name = "libc"
 version = "0.2.189"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5965,6 +5981,12 @@ name = "lru-slab"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4050469837a6ff301cd14c1f8f24f88549e6d548f24f64e2148eb0f72cebc51f"
+
+[[package]]
+name = "lzma-rust2"
+version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fde178a3caf126c440fa15628147772d8ee590a39477d711353fbe2e58a73a5b"
 
 [[package]]
 name = "lzma-sys"
@@ -10351,6 +10373,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sevenz-rust2"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a4f883677093690e91fef8ae81fad8bce9e2c3a079b61054f05ce0d3ecf681e"
+dependencies = [
+ "crc32fast",
+ "js-sys",
+ "lzma-rust2",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11442,6 +11476,7 @@ dependencies = [
  "heck 0.5.0",
  "http",
  "http-range",
+ "image",
  "jni 0.21.1",
  "libc",
  "log 0.4.34",
@@ -11663,6 +11698,22 @@ dependencies = [
  "tauri-plugin",
  "thiserror 2.0.21",
  "tokio",
+]
+
+[[package]]
+name = "tauri-plugin-single-instance"
+version = "2.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee2c8fe2d6b75caed0153f91eda30ea1dea3bfb6710d5adb80456d2c035a569d"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "windows-sys 0.61.2",
+ "zbus",
 ]
 
 [[package]]
@@ -12057,6 +12108,7 @@ dependencies = [
  "signal-hook-registry",
  "socket2",
  "tokio-macros",
+ "tracing",
  "windows-sys 0.61.2",
 ]
 
@@ -14064,7 +14116,7 @@ dependencies = [
 
 [[package]]
 name = "wing-cli"
-version = "2.0.0-alpha.8"
+version = "2.0.0-alpha.9"
 dependencies = [
  "anyhow",
  "chrono",
@@ -14098,7 +14150,7 @@ dependencies = [
 
 [[package]]
 name = "wing-core"
-version = "2.0.0-alpha.8"
+version = "2.0.0-alpha.9"
 dependencies = [
  "aes-gcm 0.11.1",
  "anyhow",
@@ -14110,6 +14162,7 @@ dependencies = [
  "blake3",
  "blurhash",
  "bytes",
+ "bzip2",
  "chacha20poly1305",
  "chrono",
  "clap",
@@ -14119,6 +14172,7 @@ dependencies = [
  "dialoguer",
  "dirs 6.0.0",
  "ed25519-dalek 2.2.0",
+ "flate2",
  "futures",
  "futures-concurrency",
  "gix-ignore",
@@ -14164,6 +14218,7 @@ dependencies = [
  "sea-orm-migration",
  "serde",
  "serde_json",
+ "sevenz-rust2",
  "sha2 0.11.0",
  "smallvec",
  "specta",
@@ -14174,6 +14229,7 @@ dependencies = [
  "strum",
  "supports-color",
  "sysinfo",
+ "tar",
  "tempfile",
  "thiserror 1.0.69",
  "tokio",
@@ -14199,6 +14255,8 @@ dependencies = [
  "wing-media-metadata",
  "wing-task-system",
  "x25519-dalek",
+ "xz2",
+ "zip",
  "zstd",
 ]
 
@@ -14329,7 +14387,7 @@ dependencies = [
 
 [[package]]
 name = "wing-server"
-version = "2.0.0-alpha.8"
+version = "2.0.0-alpha.9"
 dependencies = [
  "anyhow",
  "axum",
@@ -14381,7 +14439,7 @@ dependencies = [
 
 [[package]]
 name = "wing-tauri-core"
-version = "2.0.0-alpha.8"
+version = "2.0.0-alpha.9"
 dependencies = [
  "anyhow",
  "serde",
@@ -14402,7 +14460,7 @@ dependencies = [
 
 [[package]]
 name = "wingdrive"
-version = "2.0.0-alpha.8"
+version = "2.0.0-alpha.9"
 dependencies = [
  "axum",
  "file-opening",
@@ -14422,6 +14480,7 @@ dependencies = [
  "tauri-plugin-global-shortcut",
  "tauri-plugin-os",
  "tauri-plugin-shell",
+ "tauri-plugin-single-instance",
  "tauri-plugin-updater",
  "tempfile",
  "tokio",
@@ -14431,6 +14490,7 @@ dependencies = [
  "uuid",
  "wing-desktop-macos",
  "wing-tauri-core",
+ "zbus",
 ]
 
 [[package]]
@@ -14764,6 +14824,7 @@ dependencies = [
  "rustix 1.1.5",
  "serde",
  "serde_repr",
+ "tokio",
  "tracing",
  "uds_windows",
  "uuid",
@@ -14921,9 +14982,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "caa8cd6af31c3b31c6631b8f483848b91589021b28fffe50adada48d4f4d2ed1"
 dependencies = [
  "arbitrary",
+ "bzip2",
  "crc32fast",
+ "flate2",
  "indexmap 2.14.2",
  "memchr",
+ "time",
+ "zopfli",
 ]
 
 [[package]]
@@ -14937,6 +15002,18 @@ name = "zmij"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
+
+[[package]]
+name = "zopfli"
+version = "0.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f05cd8797d63865425ff89b5c4a48804f35ba0ce8d125800027ad6017d2b5249"
+dependencies = [
+ "bumpalo",
+ "crc32fast",
+ "log 0.4.34",
+ "simd-adler32",
+]
 
 [[package]]
 name = "zstd"

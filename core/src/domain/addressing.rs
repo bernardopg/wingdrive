@@ -215,6 +215,18 @@ impl WingPath {
 			|| device_slug == get_current_device_id().to_string()
 	}
 
+	/// Whether two device slugs name different devices, treating the current
+	/// device's slug, UUID and the `local` placeholder as the same device.
+	pub fn slugs_name_different_devices(a: &str, b: &str) -> bool {
+		let local_a = Self::is_current_device(a);
+		let local_b = Self::is_current_device(b);
+		if local_a || local_b {
+			local_a != local_b
+		} else {
+			a != b
+		}
+	}
+
 	/// Whether two physical paths live on different devices.
 	///
 	/// The current device answers to its slug, its UUID and the `local`
@@ -224,15 +236,7 @@ impl WingPath {
 	/// (cloud, content, sidecar) are never cross-device.
 	pub fn is_cross_device(&self, other: &Self) -> bool {
 		match (self.device_slug(), other.device_slug()) {
-			(Some(a), Some(b)) => {
-				let local_a = Self::is_current_device(a);
-				let local_b = Self::is_current_device(b);
-				if local_a || local_b {
-					local_a != local_b
-				} else {
-					a != b
-				}
-			}
+			(Some(a), Some(b)) => Self::slugs_name_different_devices(a, b),
 			_ => false,
 		}
 	}

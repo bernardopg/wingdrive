@@ -46,7 +46,9 @@ import {useOptionalExplorer} from '../../../routes/explorer';
 import {File as FileComponent} from '../../../routes/explorer/File';
 import {formatBytes} from '../../../routes/explorer/utils';
 import {Divider, InfoRow, Section, TabContent, Tabs, Tag} from '../Inspector';
+import {PermissionsSection} from './PermissionsSection';
 import {LocationMap} from '../LocationMap';
+import {revealLabel} from '../../../util/keybinds/platform';
 
 interface FileInspectorProps {
 	file: File;
@@ -945,6 +947,8 @@ function OverviewTab({file}: {file: File}) {
 				<InfoRow label="Local" value={file.is_local ? 'Yes' : 'No'} />
 			</Section>
 
+			{file.is_local && <PermissionsSection path={file.wing_path} />}
+
 			{/* Tags */}
 			<Section title="Tags" icon={TagIcon}>
 				{isEphemeral ? (
@@ -1503,7 +1507,7 @@ function SidecarItem({
 		items: [
 			{
 				icon: MagnifyingGlass,
-				label: 'Show in Finder',
+				label: revealLabel(),
 				onClick: async () => {
 					if (
 						platform.getSidecarPath &&

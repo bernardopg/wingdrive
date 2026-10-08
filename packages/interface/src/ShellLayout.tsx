@@ -13,6 +13,7 @@ import {
 import {SpacesSidebar} from './components/SpacesSidebar';
 import {
 	TabBar,
+	LaunchRequestSync,
 	TabDefaultsSync,
 	TabNavigationSync
 } from './components/TabManager';
@@ -292,6 +293,7 @@ export function ShellLayout() {
 							{/* Sync tab navigation and defaults with router */}
 							<TabNavigationSync />
 							<TabDefaultsSync />
+							<LaunchRequestSync />
 							<ShellLayoutContent />
 						</WebContextMenuProvider>
 					</ExplorerProvider>

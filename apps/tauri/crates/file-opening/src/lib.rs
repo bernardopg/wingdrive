@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 /// Represents an application that can open a file
@@ -17,6 +17,10 @@ pub struct OpenWithApp {
 	/// Optional: app icon as base64-encoded PNG (for future use)
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub icon: Option<String>,
+
+	/// The user's or system's configured default for this file type
+	#[serde(default)]
+	pub is_default: bool,
 }
 
 /// Result of attempting to open a file
@@ -36,32 +40,28 @@ pub trait FileOpener: Send + Sync {
 	fn get_apps_for_file(&self, path: &Path) -> Result<Vec<OpenWithApp>, String>;
 
 	/// Get list of apps that can open all provided files (intersection)
+	///
+	/// Keeps the first file's order, which platforms use to put the default
+	/// application first.
 	fn get_apps_for_files(&self, paths: &[PathBuf]) -> Result<Vec<OpenWithApp>, String> {
-		if paths.is_empty() {
+		let Some((first, rest)) = paths.split_first() else {
 			return Ok(vec![]);
-		}
-
-		// Get apps for first file
-		let mut common_apps = self
-			.get_apps_for_file(&paths[0])?
-			.into_iter()
-			.map(|app| (app.id.clone(), app))
-			.collect::<HashMap<_, _>>();
-
-		// Intersect with remaining files
-		for path in &paths[1..] {
-			let apps = self
+		};
+		let mut apps = self.get_apps_for_file(first)?;
+		for path in rest {
+			let ids = self
 				.get_apps_for_file(path)?
 				.into_iter()
 				.map(|app| app.id)
 				.collect::<HashSet<_>>();
-
-			common_apps.retain(|id, _| apps.contains(id));
+			apps.retain(|app| ids.contains(&app.id));
 		}
+		Ok(apps)
+	}
 
-		let mut result: Vec<_> = common_apps.into_values().collect();
-		result.sort_by(|a, b| a.name.cmp(&b.name));
-		Ok(result)
+	/// Make `app_id` the default application for files of `path`'s type.
+	fn set_default_app(&self, _path: &Path, _app_id: &str) -> Result<(), String> {
+		Err("Changing the default application is not supported on this platform".to_string())
 	}
 
 	/// Open file with system default application

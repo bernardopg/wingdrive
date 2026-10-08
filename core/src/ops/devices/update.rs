@@ -89,6 +89,7 @@ impl CoreAction for UpdateDeviceAction {
 			.map_err(|e| ActionError::Internal(format!("Failed to update device config: {}", e)))?;
 
 		info!("Device configuration updated successfully");
+		context.libraries().await.refresh_device_records().await;
 
 		Ok(UpdateDeviceOutput {
 			name: device_config.name,

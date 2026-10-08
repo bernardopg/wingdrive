@@ -69,6 +69,24 @@ export type Platform = {
 
 	/** Open file with system default application */
 	openPathDefault?(path: string): Promise<OpenResult>;
+
+	/** Network locations and devices mounted through gvfs (Tauri/Linux only) */
+	listNetworkMounts?(): Promise<NetworkMount[]>;
+
+	/** Phones, cameras and other devices gvfs can mount (Tauri/Linux only) */
+	listMountableVolumes?(): Promise<MountableVolume[]>;
+
+	/** Mount a URI such as sftp://user@host/ (Tauri/Linux only) */
+	mountNetworkLocation?(uri: string, password?: string): Promise<NetworkMount>;
+
+	/** Unmount a gvfs location by its folder (Tauri/Linux only) */
+	unmountNetworkLocation?(path: string): Promise<void>;
+
+	/** Open the user's terminal in a folder */
+	openTerminal?(path: string): Promise<void>;
+
+	/** Make an application the default for this file's type */
+	setDefaultAppForPath?(path: string, appId: string): Promise<void>;
 	resolveSymlink?(path: string): Promise<[string, boolean]>;
 	writeFileClipboard?(paths: string[], cut: boolean): Promise<void>;
 	readFileClipboard?(): Promise<[string[], boolean]>;
@@ -79,6 +97,8 @@ export type Platform = {
 		expected: [string, string]
 	): Promise<void>;
 	undoEmptyFolder?(path: string, expected: [string, string]): Promise<void>;
+	/** Remove a file or link this app created, if it is unchanged and empty */
+	undoNewFile?(path: string, expected: [string, string]): Promise<void>;
 
 	/** Open file with specific application */
 	openPathWithApp?(path: string, appId: string): Promise<OpenResult>;
@@ -120,6 +140,18 @@ export type Platform = {
 
 	/** Listen for window events (Tauri only) */
 	onWindowEvent?(event: string, callback: () => void): Promise<() => void>;
+
+	/** Read desktop shell settings: tray background mode and start at login (Tauri only) */
+	getDesktopSettings?(): Promise<DesktopSettings>;
+
+	/** Save desktop shell settings and apply the login autostart entry (Tauri only) */
+	setDesktopSettings?(settings: DesktopSettings): Promise<DesktopSettings>;
+
+	/** Take folders queued by launchers, `xdg-open` or other apps (Tauri only) */
+	takeOpenRequests?(): Promise<OpenRequest[]>;
+
+	/** Listen for newly queued open requests (Tauri only) */
+	onOpenRequests?(callback: () => void): Promise<() => void>;
 
 	/** Get current window label (Tauri only) */
 	getCurrentWindowLabel?(): string;
@@ -216,6 +248,33 @@ export type Platform = {
 	unregisterKeybind?(id: string): Promise<void>;
 };
 
+/** A mounted network location or device, browsed through its folder */
+export interface NetworkMount {
+	name: string;
+	path: string;
+	kind: string;
+}
+
+/** A device that can be mounted, such as a phone */
+export interface MountableVolume {
+	name: string;
+	uri: string;
+}
+
+/** How the desktop app behaves when its window closes and at login */
+export interface DesktopSettings {
+	keep_in_background: boolean;
+	start_at_login: boolean;
+	/** Terminal command for Open Terminal Here; null detects one */
+	terminal_command: string | null;
+}
+
+/** A folder the desktop asked WingDrive to open, with an optional entry to select */
+export interface OpenRequest {
+	directory: string;
+	select: string | null;
+}
+
 /** Application that can open a file */
 export interface OpenWithApp {
 	/** Platform-specific identifier (bundle ID on macOS, app name on Windows, desktop entry on Linux) */
@@ -224,6 +283,8 @@ export interface OpenWithApp {
 	name: string;
 	/** Optional base64-encoded icon */
 	icon?: string;
+	/** The configured default for this file type */
+	is_default?: boolean;
 }
 
 /** Result of opening a file */

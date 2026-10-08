@@ -156,6 +156,7 @@ fn list_apps_for_extension(ext: &str) -> std::result::Result<Vec<OpenWithApp>, S
 					id: name.clone(),
 					name,
 					icon: None,
+					is_default: false,
 				});
 			}
 		}

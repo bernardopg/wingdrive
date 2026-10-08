@@ -7,6 +7,7 @@ import {isInputFocused} from '../../../../util/keybinds/platform';
 import {useExplorer} from '../../context';
 import {useEmptySpaceContextMenu} from '../../hooks/useEmptySpaceContextMenu';
 import {useExplorerFiles} from '../../hooks/useExplorerFiles';
+import {REVEAL_EVENT, type RevealDetail} from '../../pendingReveal';
 import {useTabScroll} from '../../hooks/useTabScroll';
 import {useSelection} from '../../SelectionContext';
 import {DragSelect} from './DragSelect';
@@ -69,12 +70,12 @@ export const ListView = memo(function ListView() {
 		}
 	}, []);
 
+	// Inner wrappers fill the empty area, so anything that is not an item counts.
 	const handleContainerContextMenu = async (e: React.MouseEvent) => {
-		if (e.target === e.currentTarget) {
-			e.preventDefault();
-			e.stopPropagation();
-			await emptySpaceContextMenu.show(e);
-		}
+		if ((e.target as Element).closest('[data-file-id]')) return;
+		e.preventDefault();
+		e.stopPropagation();
+		await emptySpaceContextMenu.show(e);
 	};
 
 	// Store values in refs to avoid effect re-runs
@@ -82,6 +83,17 @@ export const ListView = memo(function ListView() {
 	rowVirtualizerRef.current = rowVirtualizer;
 	const filesRef = useRef(orderedFiles);
 	filesRef.current = orderedFiles;
+
+	// Rows are virtualized, so a revealed file may not be in the DOM yet.
+	useEffect(() => {
+		const handleReveal = (event: Event) => {
+			const {fileId} = (event as CustomEvent<RevealDetail>).detail;
+			const index = filesRef.current.findIndex((file) => file.id === fileId);
+			if (index >= 0) rowVirtualizerRef.current.scrollToIndex(index, {align: 'center'});
+		};
+		window.addEventListener(REVEAL_EVENT, handleReveal);
+		return () => window.removeEventListener(REVEAL_EVENT, handleReveal);
+	}, []);
 
 	// Keyboard navigation - stable effect, uses refs for changing values
 	useEffect(() => {
