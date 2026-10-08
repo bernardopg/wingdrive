@@ -648,6 +648,29 @@ cargo test --lib              # Library tests only
 cargo test -- --nocapture     # Show output
 ```
 
+## Before every push
+
+CI is the last gate, not the place to find errors: a Rust run costs about an hour.
+Run the same gates locally first, on the warm `target/` directory:
+
+```bash
+just ci-local        # scripts/ci-local.sh; skips Rust steps when no Rust-relevant file changed
+just ci-local --all  # force the Rust steps
+```
+
+Rules for agents and contributors:
+
+- Push only after `just ci-local` passes. Fix failures locally, then push once.
+- Never push to "see what CI says", and never push a series of small fix commits to
+  iterate against CI. Reproduce the CI failure locally (same `cargo test` or `bun test`
+  command from `.github/workflows/ci.yml`), fix it, rerun, then push.
+- Reuse the local `target/`; do not `cargo clean` and do not use a separate `--target-dir`
+  for checks. Run one cargo command at a time (concurrent cargo runs block on the build lock).
+- After a push, check CI once when it finishes (`gh pr checks <n> --watch -R bernardopg/wingdrive`).
+  Rerun only for infrastructure failures (runner timeout, network); a test failure is fixed locally first.
+- Changes limited to `.tasks/`, `docs/`, Markdown, `packages/` or the frontend skip the Rust CI job;
+  `just ci-local` applies the same filter.
+
 ## Naming
 
 Never name anything "Spacedrive" or with an `sd`/`sd-` prefix: crates, binaries, packages, scripts, functions, types, environment variables, or user-facing text. Use `wingdrive` or `wing`. The only exception is legally required upstream attribution. Existing `sd` names are being removed under `FORK-003`; do not add new ones.

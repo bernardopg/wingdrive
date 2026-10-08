@@ -42,5 +42,10 @@ check:
 fmt:
 	cargo fmt
 
+# Same gates as CI, run against the local warm target/ before every push.
+# Rust steps are skipped when no Rust-relevant file changed against origin/main.
+ci-local:
+	./scripts/ci-local.sh
+
 cli *ARGS:
 	cargo run --bin wing {{ARGS}}
