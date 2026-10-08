@@ -37,4 +37,4 @@ Phones (MTP), SMB shares and SFTP servers are reached through gvfs on Linux desk
 - Runtime in a private D-Bus session with its own gvfs: `sftp://homesystem/` mounted, the explorer opened the remote
   root, the sidebar showed `homesystem (SFTP)`, and Unmount removed it. A failing address showed gio's error in the
   dialog ("Conexão falhou") instead of hanging.
-- Known gap: after unmounting, a tab still on the old folder keeps showing its last listing until navigated away.
+- Unmounting while browsing the mount navigates the tab away from the stale folder.

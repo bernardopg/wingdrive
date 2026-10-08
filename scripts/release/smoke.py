@@ -83,6 +83,10 @@ with tempfile.TemporaryDirectory(prefix="wingdrive-bundle-") as directory:
             time.sleep(.25)
         else:
             raise AssertionError("Packaged daemon did not become ready")
+        startup = 90 - (deadline - time.monotonic())
+        startup_budget = float(os.environ.get('WINGDRIVE_STARTUP_BUDGET_SECONDS', '20'))
+        print(f"Cold start to daemon ready: {startup:.1f} s (budget: {startup_budget:.0f} s)")
+        assert startup < startup_budget, f"Cold start exceeded {startup_budget:g} s"
         time.sleep(3)
         windows = subprocess.check_output(["xdotool", "search", "--onlyvisible", "--name", "WingDrive"], text=True)
         assert windows.strip(), "Main window not visible"

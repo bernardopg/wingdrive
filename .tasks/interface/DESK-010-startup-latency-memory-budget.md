@@ -28,4 +28,4 @@ With the app resident, opening a folder must feel as fast as Dolphin. Cold start
 ## Evidence
 
 - Readiness poll is 25 ms instead of 100 ms and the app logs `elapsed_ms` when the daemon answers.
-- Open: release-build timings and the smoke-test budget were not measured yet.
+- `scripts/release/smoke.py` now asserts cold start to daemon ready under `WINGDRIVE_STARTUP_BUDGET_SECONDS` (20 s on CI runners) next to the existing PSS budget; the release run records both numbers.

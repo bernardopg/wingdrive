@@ -121,6 +121,8 @@ export function NetworkSection() {
 		try {
 			await platform.unmountNetworkLocation!(mount.path);
 			refresh();
+			// A tab left on the unmounted folder would keep its stale listing.
+			if (decodeURIComponent(window.location.search).includes(mount.path)) navigate('/');
 		} catch (error) {
 			toast.error(`Could not unmount ${mount.name}: ${error}`);
 		}
