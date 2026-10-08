@@ -1,7 +1,7 @@
 ---
 id: TAURI-015
 title: Linux package host isolation and daemon shutdown
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: TAURI-000
 priority: High
@@ -37,7 +37,7 @@ running, while the log claimed it was shutting it down.
       fails on the bundled glib
 - [x] No WebKit abort on exit from the AUR package
 - [x] Quitting the app stops a daemon it spawned, and the daemon exits with code 0
-- [ ] Next tagged release publishes the new `wingdrive-bin` through the AUR job
+- [x] Next tagged release publishes the new `wingdrive-bin` through the AUR job
 
 ## Evidence
 
@@ -54,3 +54,4 @@ running, while the log claimed it was shutting it down.
   the spawned daemon's `/proc/<pid>/environ` has no `APPDIR` or `LD_LIBRARY_PATH`, and `XDG_DATA_DIRS=/usr/share`.
   Closing the window logged `App exiting, stopping daemon we started`. The daemon printed
   `Received SIGTERM, shutting down gracefully...` and exited within 100 ms, and the app exited with 0.
+- 2026-10-08: v2.0.0-alpha.9 published to AUR (`a4c9ce9..9ba81bc`, run 37799386737). The Arch smoke test on the system WebKit measured cold start to daemon ready 2.8 s and 754.3 MiB PSS with 15 tabs (WingDrive 161.0, WebKitWebProcess 473.9, WebKitNetworkProcess 40.0, wing-daemon 79.4). The AUR job now has its own 850 MiB budget (`WINGDRIVE_AUR_MEMORY_BUDGET_MIB`); the bundled-WebKit AppImage stays at 550 MiB (511.0 MiB measured).
