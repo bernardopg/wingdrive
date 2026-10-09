@@ -1,14 +1,14 @@
 ---
 id: DESK-010
 title: Startup latency and resident memory budget
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
 sprint: S03
 tags: [desktop, performance]
-last_updated: 2026-10-07
+last_updated: 2026-10-09
 ---
 
 ## Description
@@ -24,7 +24,7 @@ With the app resident, opening a folder must feel as fast as Dolphin. Cold start
 
 ## Acceptance Criteria
 
-- [ ] Measured numbers recorded in Evidence and enforced in the release smoke test
+- [x] Measured numbers recorded in Evidence and enforced in the release smoke test
 
 ## Evidence
 

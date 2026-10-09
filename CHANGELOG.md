@@ -3,6 +3,50 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.0.0-alpha.10 — 2026-10-09
+
+### Faster opening (DESK-010, #140, #143)
+
+- A cold `wingdrive <folder>` paints the folder's listing in about 2.1 s, down
+  from about 7 s. The daemon answers in under 1 s on a fresh install, the
+  startup screen leaves as soon as it does, and the window starts on the
+  requested folder instead of the Overview.
+- Small folders that are not indexed yet list in the first response instead of
+  appearing after a refetch; large folders still fill in progressively.
+- With WingDrive running, `wingdrive <folder>` hands the folder to the open
+  window over D-Bus before GTK starts (33 ms in the release smoke test).
+- Test and development instances keep single-instance on with their own bus
+  name, so they never hand launches to the everyday WingDrive.
+
+### Indexing (#138)
+
+- Ephemeral scans index the whole tree without rules for file sync
+  (INDEX-011), and browsing inside a recursively indexed root reuses that index,
+  including through symlinks (INDEX-012).
+
+### Memory on Arch (DESK-011)
+
+- Measured the AUR package on Arch's WebKit 2.54.1: 518 to 538 MiB with 15
+  tabs, within the 550 MiB budget. The release smoke test prints per-process
+  memory.
+
+### Dependencies (#141)
+
+- sqlx 0.9, bip39 3, thiserror 2, x25519-dalek 3, generic-array 1.4,
+  kamadak-exif 0.6, iroh-mdns-address-lookup 0.6, dirs 7, base64 0.23,
+  tower-http 0.7, gix-ignore 0.24, downcast-rs 2, and semver-compatible updates
+  of the Rust and JavaScript dependency trees. Pairing words are pinned to the
+  BIP39 reference vectors by a test.
+
+### Build and release (#142)
+
+- CI saves its Rust cache from `main`, skips the Rust job for changes that
+  cannot affect it, and builds test binaries once (pull requests: about 58 min
+  to about 17 min).
+- The release reuses its own cache, waits for the tagged commit's CI instead
+  of repeating its checks, and can republish to AUR alone (`aur_only`).
+- `just ci-local` runs the CI gates locally before a push.
+
 ## 2.0.0-alpha.9 — 2026-10-07
 
 ### Linux desktop as the default file manager (DESK-000, #135)
