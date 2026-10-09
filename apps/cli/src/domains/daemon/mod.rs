@@ -99,6 +99,11 @@ async fn install_launchd_service(data_dir: PathBuf, instance: Option<String>) ->
 		<key>SuccessfulExit</key>
 		<false/>
 	</dict>
+	<key>SoftResourceLimits</key>
+	<dict>
+		<key>NumberOfFiles</key>
+		<integer>65536</integer>
+	</dict>
 	<key>StandardOutPath</key>
 	<string>{stdout_log}</string>
 	<key>StandardErrorPath</key>
