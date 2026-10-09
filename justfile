@@ -22,14 +22,15 @@ dev-mobile-android:
 build-mobile:
 	cargo xtask build-mobile
 
+# Same features as dev-daemon and Tauri dev, so all three reuse one wing-core build.
 dev-server *ARGS:
-	cargo run --bin wing-server {{ARGS}}
+	cargo run --features ffmpeg,heif --bin wing-server {{ARGS}}
 
 test:
 	cargo test --workspace
 
 build:
-	cargo build
+	cargo build --features ffmpeg,heif
 
 build-release:
 	cargo build --release
@@ -42,10 +43,15 @@ check:
 fmt:
 	cargo fmt
 
+# Drops incremental caches and build artifacts untouched for 7 days; target/ grows past 250 GB otherwise.
+clean-stale:
+	rm -rf target/debug/incremental target/*/debug/incremental
+	cargo sweep --time 7 || echo "cargo-sweep missing: cargo install cargo-sweep"
+
 # Same gates as CI, run against the local warm target/ before every push.
 # Rust steps are skipped when no Rust-relevant file changed against origin/main.
 ci-local:
 	./scripts/ci-local.sh
 
 cli *ARGS:
-	cargo run --bin wing {{ARGS}}
+	cargo run --features ffmpeg,heif --bin wing {{ARGS}}
