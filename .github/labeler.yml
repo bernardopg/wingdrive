@@ -1,0 +1,127 @@
+# Labels for pull requests, applied by .github/workflows/labeler.yml from changed paths.
+# Area labels say which part of the product a change touches; language labels
+# match the ones Dependabot applies, so filters work for both.
+
+# Negated globs only exclude inside all-globs-to-any-file: there a single file must
+# match every glob. Inside any-glob-to-any-file a negated glob matches every other file.
+"area: core":
+  - any:
+      - changed-files:
+          - any-glob-to-any-file: core/**
+      - changed-files:
+          - all-globs-to-any-file:
+              - crates/**
+              - "!crates/sdk/**"
+              - "!crates/sdk-macros/**"
+              - "!crates/task-validator/**"
+
+"area: desktop":
+  - changed-files:
+      - any-glob-to-any-file:
+          - apps/tauri/**
+          - packaging/**
+
+"area: server":
+  - changed-files:
+      - any-glob-to-any-file:
+          - apps/server/**
+          - apps/web/**
+
+"area: cli":
+  - changed-files:
+      - any-glob-to-any-file:
+          - apps/cli/**
+
+"area: mobile":
+  - changed-files:
+      - any-glob-to-any-file:
+          - apps/mobile/**
+          - packages/swift-client/**
+
+"area: interface":
+  - changed-files:
+      - any-glob-to-any-file:
+          - packages/interface/**
+          - packages/ts-client/**
+          - packages/wingdrive-ai/**
+          - packages/wingdrive-primitives/**
+          - packages/wingdrive-tokens/**
+          - packages/assets/**
+          - packages/config/**
+
+"area: extensions":
+  - changed-files:
+      - any-glob-to-any-file:
+          - extensions/**
+          - crates/sdk/**
+          - crates/sdk-macros/**
+          - adapters/**
+
+"area: ci":
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+          - scripts/ci-*.sh
+          - justfile
+          - xtask/**
+
+"area: release":
+  - changed-files:
+      - any-glob-to-any-file:
+          - scripts/release/**
+          - packaging/**
+          - CHANGELOG.md
+
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - crates/crypto/**
+          - core/src/crypto/**
+          - .github/codeql/**
+          - .github/rulesets/**
+          - .github/workflows/codeql.yml
+          - .github/workflows/trufflehog.yml
+          - SECURITY.md
+
+tasks:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .tasks/**
+          - crates/task-validator/**
+
+documentation:
+  - any:
+      - changed-files:
+          - any-glob-to-any-file:
+              - docs/**
+              - whitepaper/**
+      - changed-files:
+          - all-globs-to-any-file:
+              - "**/*.{md,mdx}"
+              - "!.tasks/**"
+              - "!CHANGELOG.md"
+
+rust:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.rs"
+          - "**/Cargo.toml"
+          - Cargo.lock
+          - rust-toolchain.toml
+
+javascript:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.ts"
+          - "**/*.tsx"
+          - "**/*.js"
+          - "**/*.cjs"
+          - "**/*.mjs"
+          - "**/package.json"
+          - bun.lock
+
+github_actions:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/workflows/**
+          - .github/actions/**

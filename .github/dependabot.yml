@@ -1,19 +1,112 @@
+# Dependency updates for every manifest that has a lockfile or pins versions.
+#
+# Left out on purpose:
+# - apps/mobile/android and apps/mobile/ios: `expo prebuild --clean` regenerates them,
+#   so Expo SDK upgrades own their Gradle and CocoaPods versions.
+# - apps/tauri/crates/*/Package.swift: they track the swift-rs `specta` branch, and
+#   Dependabot only updates versioned Swift packages.
+# - apps/server/docker-compose.yml: it builds the local Dockerfile and pins no image.
+# - adapters/*.py: standard library only, no requirements file.
+#
+# Minor and patch releases arrive grouped, one pull request per ecosystem and week.
+# Majors stay separate because they usually need code changes. The cooldown keeps a
+# release out until it has been public for a few days, which skips most yanked or
+# compromised versions; security updates ignore it.
 version: 2
 updates:
   - package-ecosystem: cargo
-    directory: '/'
+    directories:
+      - /
+      # Extensions build to WASM in their own workspaces, outside the root one.
+      - /extensions/test-extension
+      - /extensions/photos
     schedule:
       interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
     open-pull-requests-limit: 10
+    labels: [dependencies, rust]
+    commit-message:
+      prefix: chore(deps)
+    cooldown:
+      default-days: 3
+      semver-major-days: 14
+    groups:
+      cargo-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      # patches/glib-0.18.5 backports GHSA-wrw7-89jp-8q8g for the GTK3 stack Tauri pins to glib 0.18.
+      - dependency-name: glib
 
-  - package-ecosystem: npm
-    directory: '/'
+  # bun.lock is Bun's own format. The npm ecosystem only edits package.json and
+  # leaves bun.lock stale, which fails `bun install --frozen-lockfile` in CI.
+  - package-ecosystem: bun
+    directory: /
     schedule:
       interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
     open-pull-requests-limit: 10
+    labels: [dependencies, javascript]
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+    cooldown:
+      default-days: 3
+      semver-major-days: 14
+    groups:
+      # The Expo SDK pins these together; `bunx expo install --fix` upgrades them as a set.
+      expo:
+        patterns:
+          - expo
+          - expo-*
+          - "@expo/*"
+          - react-native
+          - react-native-*
+          - "@react-native/*"
+        update-types: [minor, patch]
+      bun-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Expo SDK upgrades bring these majors; a lone major bump breaks the native build.
+      - dependency-name: expo
+        update-types: [version-update:semver-major]
+      - dependency-name: expo-*
+        update-types: [version-update:semver-major]
+      - dependency-name: react-native
+        update-types: [version-update:semver-major]
+      - dependency-name: react-native-*
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
-    directory: '/'
+    directories:
+      - /
+      # Composite actions pin their own actions; "/" alone covers only .github/workflows.
+      - /.github/actions/*
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    labels: [dependencies, github_actions]
+    commit-message:
+      prefix: chore(deps)
+    cooldown:
+      default-days: 3
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /apps/server
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    commit-message:
+      prefix: chore(deps)
+    cooldown:
+      default-days: 3
