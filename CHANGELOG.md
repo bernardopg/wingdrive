@@ -3,6 +3,19 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.0.0-alpha.11 — 2026-10-10
+
+### Build (DEV-004, #145)
+
+- Local Rust builds write far less to the SSD. `just dev-server`, `just cli`
+  and `just build` use the same `ffmpeg,heif` features as `just dev-daemon` and
+  Tauri dev, so they share one `wing-core` build instead of a 2.4 GB
+  incremental cache per feature set.
+- `cargo xtask setup` caps parallel build jobs at half the CPUs outside CI.
+- `just clean-stale` removes incremental caches and artifacts untouched for
+  7 days.
+- No changes to the app itself; this release reinstalls alpha.10's behavior.
+
 ## 2.0.0-alpha.10 — 2026-10-09
 
 ### Faster opening (DESK-010, #140, #143)
