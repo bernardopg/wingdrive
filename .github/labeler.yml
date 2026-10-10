@@ -1,9 +1,18 @@
-# Labels for pull requests, applied by .github/workflows/labeler.yml from changed paths.
-# Area labels say which part of the product a change touches; language labels
-# match the ones Dependabot applies, so filters work for both.
+# Labels for pull requests, applied by .github/workflows/labeler.yml from changed
+# paths and the head branch name. Names, colors and descriptions live in
+# .github/labels.yml. Size and title-based type labels come from the same workflow.
+#
+# Matching rules that are easy to get wrong:
+# - Top-level list items AND together. Rules that should OR (paths or branch
+#   name) go inside a single `any`.
+# - A negated glob only excludes inside all-globs-to-any-file, where one file
+#   must match every glob. Inside any-glob-to-any-file it matches every other file.
+#
+# Every tracked file maps to at least one area, docs or tasks label. Check a new
+# top-level directory against this list when you add one.
 
-# Negated globs only exclude inside all-globs-to-any-file: there a single file must
-# match every glob. Inside any-glob-to-any-file a negated glob matches every other file.
+# Areas
+
 "area: core":
   - any:
       - changed-files:
@@ -19,13 +28,17 @@
   - changed-files:
       - any-glob-to-any-file:
           - apps/tauri/**
+          - apps/gpui-photo-grid/**
           - packaging/**
+          - scripts/dev-isolated.sh
 
 "area: server":
   - changed-files:
       - any-glob-to-any-file:
           - apps/server/**
           - apps/web/**
+          - build-server.sh
+          - .railwayignore
 
 "area: cli":
   - changed-files:
@@ -62,26 +75,79 @@
       - any-glob-to-any-file:
           - .github/**
           - scripts/ci-*.sh
-          - justfile
-          - xtask/**
+          - scripts/check-wingdrive-independence.sh
+
+# Toolchains, workspace manifests, editor and formatter settings, and dev scripts.
+"area: build":
+  - any:
+      - changed-files:
+          - any-glob-to-any-file:
+              - Cargo.toml
+              - rust-toolchain.toml
+              - .cargo/**
+              - xtask/**
+              - justfile
+              - patches/**
+              - package.json
+              - bunfig.toml
+              - tsconfig.json
+              - .node-version
+              - .nvmrc
+              - .editorconfig
+              - .gitattributes
+              - .gitignore
+              - .clippy.toml
+              - .rustfmt.toml
+              - .prettierrc
+              - .prettierignore
+              - .eslintignore
+              - .cspell/**
+              - cspell.config.yaml
+              - markdownlint.json
+              - .vscode/**
+              - .zed/**
+      - changed-files:
+          - all-globs-to-any-file:
+              - scripts/**
+              - "!scripts/release/**"
+              - "!scripts/ci-*.sh"
+              - "!scripts/check-wingdrive-independence.sh"
+              - "!scripts/dev-isolated.sh"
 
 "area: release":
-  - changed-files:
-      - any-glob-to-any-file:
-          - scripts/release/**
-          - packaging/**
-          - CHANGELOG.md
+  - any:
+      - changed-files:
+          - any-glob-to-any-file:
+              - scripts/release/**
+              - packaging/**
+              - CHANGELOG.md
+              - .github/workflows/release.yml
+      - head-branch: ["^release/"]
+
+# Cross-cutting
 
 security:
-  - changed-files:
-      - any-glob-to-any-file:
-          - crates/crypto/**
-          - core/src/crypto/**
-          - .github/codeql/**
-          - .github/rulesets/**
-          - .github/workflows/codeql.yml
-          - .github/workflows/trufflehog.yml
-          - SECURITY.md
+  - any:
+      - changed-files:
+          - any-glob-to-any-file:
+              - crates/crypto/**
+              - core/src/crypto/**
+              - patches/**
+              - .github/codeql/**
+              - .github/rulesets/**
+              - .github/workflows/codeql.yml
+              - .github/workflows/trufflehog.yml
+              - SECURITY.md
+      - head-branch: ["^(sec|security)/"]
+
+dependencies:
+  - any:
+      - changed-files:
+          - any-glob-to-any-file:
+              - Cargo.lock
+              - "**/Cargo.lock"
+              - bun.lock
+      - head-branch: ["^dependabot/"]
 
 tasks:
   - changed-files:
@@ -95,11 +161,41 @@ documentation:
           - any-glob-to-any-file:
               - docs/**
               - whitepaper/**
+              - LICENSE
+              - NOTICE
+              - TODO
       - changed-files:
           - all-globs-to-any-file:
               - "**/*.{md,mdx}"
               - "!.tasks/**"
               - "!CHANGELOG.md"
+      - head-branch: ["^docs?/"]
+
+# Change type from the branch prefix. The workflow also reads the conventional
+# commit type from the title, so either one is enough.
+
+bug:
+  - head-branch: ["^(fix|bugfix|hotfix)/"]
+
+enhancement:
+  - head-branch: ["^(feat|feature)/"]
+
+performance:
+  - head-branch: ["^perf/"]
+
+refactor:
+  - head-branch: ["^refactor/"]
+
+tests:
+  - any:
+      - changed-files:
+          - any-glob-to-any-file:
+              - "**/tests/**"
+              - "**/__tests__/**"
+              - "**/*.test.{ts,tsx}"
+      - head-branch: ["^tests?/"]
+
+# Languages, named like the labels Dependabot applies.
 
 rust:
   - changed-files:
@@ -112,11 +208,7 @@ rust:
 javascript:
   - changed-files:
       - any-glob-to-any-file:
-          - "**/*.ts"
-          - "**/*.tsx"
-          - "**/*.js"
-          - "**/*.cjs"
-          - "**/*.mjs"
+          - "**/*.{ts,tsx,js,cjs,mjs}"
           - "**/package.json"
           - bun.lock
 
