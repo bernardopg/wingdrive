@@ -18,7 +18,7 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --sourcemap",
     "dev": "tsup src/index.ts --format esm --dts --sourcemap --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "bun check"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

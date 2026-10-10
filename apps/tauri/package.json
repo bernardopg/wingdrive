@@ -13,7 +13,7 @@
 		"build:daemon": "bun scripts/build-daemon.ts",
 		"build:daemon:release": "bun scripts/build-daemon.ts --release",
 		"preview": "vite preview",
-		"typecheck": "tsc -b",
+		"typecheck": "bun check",
 		"tauri": "tauri",
 		"tauri:dev": "tauri dev",
 		"tauri:dev:no-watch": "tauri dev --no-watch",

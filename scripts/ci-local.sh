@@ -2,11 +2,12 @@
 # Runs the CI gates locally before a push, reusing the warm target/ directory.
 #
 # Mirrors .github/workflows/ci.yml: task validation, independence check,
-# TypeScript typecheck and critical tests, then rustfmt, clippy and the Rust
-# tests CI runs. Rust steps are skipped when nothing Rust-relevant changed
-# against the merge base with origin/main, with the same filter CI uses.
+# TypeScript typecheck and critical tests, then rustfmt and the Rust gates.
+# scripts/ci-scope.sh picks the Rust gates from the files changed against the
+# merge base with origin/main, and scripts/ci-rust.sh runs them, as in CI. A
+# change limited to the desktop app lints and tests only the desktop crates.
 #
-# Usage: scripts/ci-local.sh [--all]   (--all forces the Rust steps)
+# Usage: scripts/ci-local.sh [--all]   (--all forces every Rust gate)
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -14,11 +15,8 @@ step() { printf '\n==> %s\n' "$*"; }
 
 base=$(git merge-base HEAD origin/main 2>/dev/null || echo origin/main)
 changed=$( { git diff --name-only "$base"; git diff --name-only; git diff --name-only --cached; } | sort -u)
-rust_changed=$(printf '%s\n' "$changed" \
-	| grep -vE '^(\.tasks/|docs/|\.claude/|packages/|apps/web/|apps/tauri/(src|public)/|apps/tauri/[^/]+$|scripts/release/)' \
-	| grep -vE '^apps/mobile/' \
-	| grep -vE '\.(md|mdx)$|^(LICENSE|bun\.lock|package\.json)$' || true)
-rust_changed+=$(printf '%s\n' "$changed" | grep -E '^apps/mobile/modules/' || true)
+scope=$(printf '%s\n' "$changed" | scripts/ci-scope.sh | cut -d= -f2)
+[ "${1:-}" = "--all" ] && scope=full
 ts_changed=$(printf '%s\n' "$changed" | grep -E '^(packages/|apps/|bun\.lock|package\.json)' || true)
 
 step "Task files"
@@ -40,25 +38,15 @@ if [ -n "$ts_changed" ] || [ "${1:-}" = "--all" ]; then
 	done
 fi
 
-if [ -z "$rust_changed" ] && [ "${1:-}" != "--all" ]; then
+if [ "$scope" = "none" ]; then
 	step "No Rust-relevant changes; skipping Rust gates (pass --all to force)"
 	exit 0
 fi
 
-mkdir -p apps/tauri/dist apps/web/dist
-
 step "rustfmt"
 cargo fmt --all -- --check
 
-step "clippy"
-cargo clippy --workspace --locked -- -D warnings
-
-step "Rust tests"
-cargo build --locked --bin wing-daemon
-cargo test --locked -p wing-core --lib branding::
-cargo test --locked -p wing-core --lib crypto::key_manager::tests
-cargo test --locked -p wing-core --test branding_legacy_paths
-cargo test --locked -p wingdrive --bin WingDrive
-cargo test --locked -p wing-core --test sync_metrics_test --test sync_realtime_test --test sync_backfill_test
+# shellcheck disable=SC2086 # scope is a list of areas.
+scripts/ci-rust.sh $scope
 
 step "All CI gates passed"

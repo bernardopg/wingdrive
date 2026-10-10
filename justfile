@@ -50,8 +50,12 @@ clean-stale:
 
 # Same gates as CI, run against the local warm target/ before every push.
 # Rust steps are skipped when no Rust-relevant file changed against origin/main.
-ci-local:
-	./scripts/ci-local.sh
+ci-local *ARGS:
+	./scripts/ci-local.sh {{ARGS}}
+
+# Type checks the desktop frontend and the interface package it imports.
+typecheck:
+	bun run typecheck
 
 cli *ARGS:
 	cargo run --features ffmpeg,heif --bin wing {{ARGS}}

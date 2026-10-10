@@ -670,6 +670,11 @@ Rules for agents and contributors:
   Rerun only for infrastructure failures (runner timeout, network); a test failure is fixed locally first.
 - Changes limited to `.tasks/`, `docs/`, Markdown, `packages/` or the frontend skip the Rust CI job;
   `just ci-local` applies the same filter.
+- Changes limited to one app's Rust crates (`apps/tauri/`, `apps/server/`, `apps/cli/`,
+  `apps/mobile/modules/`) lint and test only that app. `scripts/ci-scope.sh` picks the scope and
+  `scripts/ci-rust.sh` runs it, in CI and in `just ci-local`. Pushes to `main` always run every gate.
+- Typecheck with `bun check` (Bun 1.4.3+). It reports the same errors as `tsc` 7 in about a third
+  of the time. Your editor keeps using the `typescript` package for its language server.
 
 ## Naming
 
