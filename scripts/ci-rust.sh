@@ -25,7 +25,22 @@ step() {
 # Tauri's build script and rust-embed need these directories to exist.
 mkdir -p apps/tauri/dist apps/web/dist
 
+# Keeping wing-core out of the desktop shell halves its dependency graph, which
+# keeps `tauri dev` and the release bundle fast.
+check_desktop_shell_deps() {
+	step "Desktop shell does not depend on wing-core"
+	local tree
+	tree=$(cargo tree --locked -p wingdrive -e normal,build --prefix none)
+	if grep -q '^wing-core ' <<< "$tree"; then
+		echo "error: apps/tauri/src-tauri depends on wing-core. Move what it needs into a crate under crates/." >&2
+		cargo tree --locked -p wingdrive -e normal,build -i wing-core >&2
+		exit 1
+	fi
+}
+
 if [ "$1" = "full" ]; then
+	check_desktop_shell_deps
+
 	step "clippy (workspace)"
 	cargo clippy --workspace --locked -- -D warnings
 
@@ -38,9 +53,10 @@ if [ "$1" = "full" ]; then
 		--test sync_realtime_test \
 		--test sync_backfill_test
 	cargo test --locked --no-run -p wingdrive --bin WingDrive
+	cargo test --locked --no-run -p wing-branding
 
 	step "Test branding, key storage and legacy path resolution"
-	cargo test --locked -p wing-core --lib branding::
+	cargo test --locked -p wing-branding
 	cargo test --locked -p wing-core --lib crypto::key_manager::tests
 	cargo test --locked -p wing-core --test branding_legacy_paths
 
@@ -63,6 +79,8 @@ else
 	cargo clippy --locked "${packages[@]}" -- -D warnings
 
 	if [[ " $* " == *" desktop "* ]]; then
+		check_desktop_shell_deps
+
 		step "Test desktop IPC and launch handling"
 		cargo build --locked --bin wing-daemon
 		cargo test --locked -p wingdrive --bin WingDrive

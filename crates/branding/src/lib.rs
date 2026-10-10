@@ -1,6 +1,6 @@
 //! # Brand Identity and Legacy Path Resolution
 //!
-//! `core::branding` owns every on-disk name the product answers to. WingDrive is
+//! `wing_branding` owns every on-disk name the product answers to. WingDrive is
 //! a fork of Spacedrive, so any install predating the rename keeps its config,
 //! libraries and device identity under `Spacedrive` paths.
 //!
@@ -11,12 +11,14 @@
 //! only thing the rename must satisfy is the trademark clause on user-facing
 //! branding.
 //!
+//! It lives outside `wing-core`, which re-exports it as `wing_core::branding`,
+//! so the desktop shell can resolve the data directory without compiling the
+//! whole core.
+//!
 //! ## Example
 //! ```rust,no_run
-//! use wing_core::branding;
-//!
 //! // `~/.wingdrive`, or `~/.spacedrive` when only the legacy install exists.
-//! let dir = branding::data_dir()?;
+//! let dir = wing_branding::data_dir()?;
 //! # Ok::<(), anyhow::Error>(())
 //! ```
 

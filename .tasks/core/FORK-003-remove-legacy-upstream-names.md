@@ -47,7 +47,7 @@ Scope at `29c564b02`: about 20 Rust crates with `sd-*` or upstream-named package
 
 - `LICENSE`, `NOTICE.md`, the README fork attribution, and `authors` in crate manifests (credit to the original authors).
 - `whitepaper/upstream-whitepaper.*`: the upstream paper, renamed but not rewritten.
-- `core/src/branding.rs` and code that reads or cleans up pre-fork data: legacy data directory, config file, keychain service, `.sdlibrary` directories, volume marker, daemon service names, voice profile key, and ignore rules for the legacy data directory.
+- `crates/branding/src/lib.rs` (formerly `core/src/branding.rs`) and code that reads or cleans up pre-fork data: legacy data directory, config file, keychain service, `.sdlibrary` directories, volume marker, daemon service names, voice profile key, and ignore rules for the legacy data directory.
 - `scripts/check-wingdrive-independence.sh`, which lists forbidden upstream endpoints on purpose.
 - Words that only contain the letters, such as `SDK`.
 

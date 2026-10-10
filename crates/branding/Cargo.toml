@@ -1,0 +1,13 @@
+[package]
+name    = "wing-branding"
+version = "0.1.0"
+edition = "2021"
+
+# Std, anyhow and dirs only, so the desktop shell can resolve data paths without
+# compiling wing-core.
+[dependencies]
+anyhow = { workspace = true }
+dirs   = "7.0"
+
+[dev-dependencies]
+tempfile = { workspace = true }

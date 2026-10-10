@@ -1,6 +1,6 @@
 ---
 id: DEV-005
-title: "Scope CI by app, split release jobs, typecheck with bun check"
+title: "Faster CI, release and desktop builds"
 status: Done
 assignee: unassigned
 priority: High
@@ -44,6 +44,22 @@ experimental and ships no Linux arm64 or Windows build.
   Publishing still needs both.
 - [x] Release caches save only from a `workflow_dispatch` on `main`, where tag runs can read them.
 - [x] Typecheck scripts use `bun check`, and every workflow pins Bun 1.4.3.
+- [x] The desktop shell no longer depends on `wing-core`. It used one function,
+  `default_data_dir()`, which now lives in the `wing-branding` crate with the rest of
+  `core::branding`. `wing-core` re-exports it, so `wing_core::branding` paths still work. The Tauri
+  app's dependency graph drops from 947 to 417 crates, which shortens `tauri dev` and the release
+  bundle build.
+- [x] `bun run typecheck` checks tauri, web, interface, ts-client, ai and primitives. `interface` and
+  `web` failed on their own (708 and 680 errors): they lacked the Vite client types, the shared
+  ambient module declarations and the Spacebot stub path. The ambient types moved to
+  `packages/interface/src/env.d.ts`, which both apps reference.
+- [x] The Repository Metadata job caches its Rust build instead of compiling `task-validator` cold
+  (2m10s per run).
+- [x] Disk cleanup on CI and release runners runs in the background during checkout and setup,
+  and the build waits for it (it cost 66 to 106 s in the foreground).
+- [x] Hosted runners drop every toolchain except the pinned one before the cache step, so a runner
+  image update no longer changes the cache key. `core/rust-toolchain.toml`, an upstream leftover
+  that asked for `stable` inside `core/`, is removed.
 
 ## Notes
 

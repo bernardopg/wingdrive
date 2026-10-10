@@ -60,10 +60,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # Cached like the Rust job, so task-validator stops compiling from scratch on every run.
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067 # v1
+        uses: ./.github/actions/setup-rust
         with:
-          toolchain: stable
+          save-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          cache-key: metadata
 
       - name: Validate task files
         run: cargo run -p task-validator -- validate
@@ -118,15 +120,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-            /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup \
-            /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force || true
-
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
+        with:
+          phase: start
 
       - name: Setup System and Rust
         uses: ./.github/actions/setup-system
@@ -139,6 +139,11 @@ jobs:
           cache-key: ci
           # Checks and tests never bundle Tauri, so skip the release daemon.
           xtask-setup-args: --no-daemon
+
+      - name: Wait for disk space
+        uses: ./.github/actions/free-disk-space
+        with:
+          phase: wait
 
       # Same script as `just ci-local`. Scoped runs lint and test only the apps that changed.
       - name: Rust gates (${{ needs.changes.outputs.scope }})

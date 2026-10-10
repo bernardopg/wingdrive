@@ -18,8 +18,8 @@ thiserror = "2.0"
 # Logging
 tracing = "0.1"
 
-# WingDrive path resolution and legacy adoption
-wing-core = { path = "../../../core" }
+# WingDrive path resolution and legacy adoption, without compiling wing-core
+wing-branding = { path = "../../../crates/branding" }
 
 [lib]
 crate-type = ["lib"]

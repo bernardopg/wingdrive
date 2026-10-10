@@ -1,0 +1,44 @@
+name: Free disk space
+description: Deletes unused runner toolchains in the background, then waits for it before a build
+inputs:
+  phase:
+    description: "`start` launches the cleanup in the background; `wait` blocks until it finishes"
+    required: true
+  paths:
+    description: Space-separated directories to delete
+    required: false
+    default: /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+  prune-docker:
+    description: Also remove preinstalled Docker images
+    required: false
+    default: 'true'
+runs:
+  using: composite
+  steps:
+    # Deleting these takes 60 to 110 s. Checkout, toolchain setup and cache restore
+    # fit in the space the runner starts with, so they run while the deletion does.
+    - name: Start disk cleanup
+      if: inputs.phase == 'start'
+      shell: bash
+      env:
+        CLEAN_PATHS: ${{ inputs.paths }}
+        PRUNE_DOCKER: ${{ inputs.prune-docker }}
+      run: |
+        rm -f "$RUNNER_TEMP/disk-cleanup.done"
+        nohup bash -c '
+          # shellcheck disable=SC2086 # CLEAN_PATHS is a list.
+          sudo rm -rf $CLEAN_PATHS
+          if [ "$PRUNE_DOCKER" = "true" ]; then sudo docker image prune --all --force || true; fi
+          touch "$RUNNER_TEMP/disk-cleanup.done"
+        ' > "$RUNNER_TEMP/disk-cleanup.log" 2>&1 &
+
+    - name: Wait for disk cleanup
+      if: inputs.phase == 'wait'
+      shell: bash
+      run: |
+        if ! timeout 600 bash -c 'until [ -f "$RUNNER_TEMP/disk-cleanup.done" ]; do sleep 2; done'; then
+          cat "$RUNNER_TEMP/disk-cleanup.log"
+          echo "::error::Disk cleanup did not finish in 10 minutes."
+          exit 1
+        fi
+        df -h .

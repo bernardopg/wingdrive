@@ -14050,6 +14050,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "wing-branding"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dirs",
+ "tempfile",
+]
+
+[[package]]
 name = "wing-cli"
 version = "2.0.0-alpha.11"
 dependencies = [
@@ -14184,6 +14193,7 @@ dependencies = [
  "whoami",
  "windows-sys 0.52.0",
  "wing-archive",
+ "wing-branding",
  "wing-ffmpeg",
  "wing-fs-watcher",
  "wing-images",
@@ -14382,7 +14392,7 @@ dependencies = [
  "thiserror 2.0.21",
  "tokio",
  "tracing",
- "wing-core",
+ "wing-branding",
 ]
 
 [[package]]

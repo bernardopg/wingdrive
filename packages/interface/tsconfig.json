@@ -2,6 +2,7 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"noEmit": true,
+		"skipLibCheck": true,
 		"jsx": "react-jsx",
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"module": "ESNext",
@@ -12,14 +13,16 @@
 			"~/*": ["./src/*"],
 			"@spacebot/api-client": [
 				"../../../spacebot/packages/api-client/src/index.ts",
-				"../../../apps/tauri/node_modules/@spacebot/api-client-stub/index.d.ts"
+				"../../apps/tauri/src/stubs/spacebot-api-client.ts"
 			],
 			"@spacebot/api-client/*": [
 				"../../../spacebot/packages/api-client/src/*",
-				"../../../apps/tauri/node_modules/@spacebot/api-client-stub/*"
+				"../../apps/tauri/src/stubs/spacebot-api-client.ts"
 			]
 		},
 		"types": ["@react-three/fiber"]
 	},
-	"include": ["src", "src/vite-env.d.ts"]
+	"include": ["src"],
+	// Bun runs the tests; they import bun:test, which has no type package here.
+	"exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

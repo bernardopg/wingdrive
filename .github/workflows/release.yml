@@ -43,7 +43,7 @@ env:
 
 jobs:
   # Desktop bundles and the server binaries build on separate runners in parallel.
-  # Each compiles wing-core with its own feature set, so a shared runner gained nothing.
+  # They share no compiled crates, so one runner only ran them one after the other.
   desktop:
     name: Verify Linux x86_64 desktop bundles
     if: ${{ !inputs.aur_only && inputs.component != 'server' }}
@@ -58,10 +58,13 @@ jobs:
         run: |
           git rev-parse --verify "refs/tags/$RELEASE_TAG"
           python3 scripts/release/version.py "$RELEASE_TAG"
-      - name: Free build disk space
+      # Runs during setup and is awaited before the build. Inline rather than the
+      # free-disk-space action, because local actions load from the checked-out
+      # tag and tags older than that action would fail to republish.
+      - name: Free build disk space in the background
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-          df -h .
+          nohup bash -c 'sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc; touch "$RUNNER_TEMP/disk-cleanup.done"' \
+            > "$RUNNER_TEMP/disk-cleanup.log" 2>&1 &
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.3'
@@ -76,6 +79,11 @@ jobs:
         run: |
           ./scripts/setup.sh
           sudo apt-get install -y xvfb xdotool python3 imagemagick libva2 libva-drm2 dbus-daemon
+      - name: Wait for build disk space
+        run: |
+          timeout 600 bash -c 'until [ -f "$RUNNER_TEMP/disk-cleanup.done" ]; do sleep 2; done' \
+            || { cat "$RUNNER_TEMP/disk-cleanup.log"; exit 1; }
+          df -h .
       # Tauri's beforeBuildCommand builds the release daemon, so a second build here only cost time.
       - name: Setup native libraries
         env:
@@ -153,10 +161,13 @@ jobs:
         run: |
           git rev-parse --verify "refs/tags/$RELEASE_TAG"
           python3 scripts/release/version.py "$RELEASE_TAG"
-      - name: Free build disk space
+      # Runs during setup and is awaited before the build. Inline rather than the
+      # free-disk-space action, because local actions load from the checked-out
+      # tag and tags older than that action would fail to republish.
+      - name: Free build disk space in the background
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-          df -h .
+          nohup bash -c 'sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc; touch "$RUNNER_TEMP/disk-cleanup.done"' \
+            > "$RUNNER_TEMP/disk-cleanup.log" 2>&1 &
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.3'
@@ -167,6 +178,11 @@ jobs:
           cache-key: release-server
       - name: Install Linux dependencies
         run: ./scripts/setup.sh
+      - name: Wait for build disk space
+        run: |
+          timeout 600 bash -c 'until [ -f "$RUNNER_TEMP/disk-cleanup.done" ]; do sleep 2; done' \
+            || { cat "$RUNNER_TEMP/disk-cleanup.log"; exit 1; }
+          df -h .
       - name: Setup native libraries
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

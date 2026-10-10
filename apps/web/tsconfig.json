@@ -18,7 +18,16 @@
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"noFallthroughCasesInSwitch": true
+		"noFallthroughCasesInSwitch": true,
+
+		/* Mirror the aliases in vite.config.ts */
+		"paths": {
+			"@wingdrive/ts-client": ["../../packages/ts-client/src"],
+			"@spacebot/api-client": [
+				"../../../spacebot/packages/api-client/src/index.ts",
+				"../tauri/src/stubs/spacebot-api-client.ts"
+			]
+		}
 	},
 	"include": ["src"],
 	"references": [{ "path": "./tsconfig.node.json" }]
