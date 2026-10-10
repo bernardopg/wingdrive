@@ -34,11 +34,24 @@ struct ConfigContext {
 	sdk_path: String,
 	#[serde(rename = "useSystemFfmpeg")]
 	use_system_ffmpeg: bool,
+	#[serde(rename = "buildJobs")]
+	build_jobs: usize,
 }
 
 #[derive(Serialize)]
 struct LinkerInfo {
 	linker: String,
+}
+
+/// Half the CPUs on developer machines: a full-width build swaps and overheats the NVMe.
+/// CI keeps every CPU. `CARGO_BUILD_JOBS` still overrides the generated value.
+fn build_jobs() -> usize {
+	let cpus = std::thread::available_parallelism().map_or(1, |n| n.get());
+	if std::env::var_os("CI").is_some() {
+		cpus
+	} else {
+		(cpus / 2).max(1)
+	}
 }
 
 /// Generate .cargo/config.toml from the mustache template
@@ -145,6 +158,7 @@ pub fn generate_cargo_config(
 		has_lld,
 		sdk_path,
 		use_system_ffmpeg,
+		build_jobs: build_jobs(),
 	};
 
 	// Read template
@@ -175,4 +189,36 @@ pub fn generate_cargo_config(
 	println!("   ✓ Generated {}", output_path.display());
 
 	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn template_renders_build_jobs() {
+		let template = include_str!("../../.cargo/config.toml.mustache");
+		let context = ConfigContext {
+			native_deps: None,
+			protoc: None,
+			mobile_native_deps: None,
+			android_ndk_home: String::new(),
+			host_tag: "linux-x86_64",
+			is_win: false,
+			is_macos: false,
+			is_linux: true,
+			has_ios: false,
+			has_android: false,
+			has_lld: None,
+			sdk_path: String::new(),
+			use_system_ffmpeg: true,
+			build_jobs: 3,
+		};
+		let rendered = mustache::compile_str(template)
+			.unwrap()
+			.render_to_string(&context)
+			.unwrap();
+		let config: toml::Value = toml::from_str(&rendered).unwrap();
+		assert_eq!(config["build"]["jobs"].as_integer(), Some(3));
+	}
 }

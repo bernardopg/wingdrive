@@ -24,6 +24,9 @@ OPENSSL_RUST_USE_NASM = { force = true, value = "1" }
 CFLAGS = { force = true, value = "" }
 CXXFLAGS = { force = true, value = "" }
 
+[build]
+jobs = {{buildJobs}}
+
 {{#isMacOS}}
 [target.x86_64-apple-darwin]
 rustflags = ["-L", "{{{nativeDeps}}}/lib", "-Csplit-debuginfo=unpacked"]
