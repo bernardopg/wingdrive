@@ -467,4 +467,6 @@ apps/ios/wing-ios-core/wing_ios_core.xcframework/**
 # TypeScript compiled output in source directory
 src/**/*.js
 src/**/*.d.ts
+# Hand-written ambient types shared by the apps that bundle this package.
+!src/env.d.ts
 !src/**/*.d.ts.map

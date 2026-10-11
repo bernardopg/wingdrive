@@ -127,6 +127,7 @@ wing-archive = { path = "../crates/archive" }
 blurhash         = "0.2"
 image            = "0.25"
 wing-ffmpeg        = { path = "../crates/ffmpeg", optional = true }
+wing-branding      = { path = "../crates/branding" }
 wing-fs-watcher    = { path = "../crates/fs-watcher" }
 wing-images        = { path = "../crates/images" }
 wing-media-metadata = { path = "../crates/media-metadata" }

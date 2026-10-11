@@ -1,4 +1,4 @@
-import type { Platform } from "@wingdrive/interface/platform";
+import type { Platform } from "@wingdrive/interface";
 
 /**
  * Web platform implementation for WingDrive server

@@ -60,14 +60,27 @@ runs:
         which rustc
         which cargo
 
+    # rust-cache hashes every installed toolchain into its key, so the image's own
+    # stable would invalidate the cache each time GitHub updates the runner image.
+    - name: Keep only the pinned toolchain
+      if: runner.environment == 'github-hosted'
+      shell: bash
+      run: |
+        pinned=$(rustup show active-toolchain | cut -d' ' -f1)
+        rustup toolchain list | cut -d' ' -f1 | while read -r toolchain; do
+          if [ "$toolchain" != "$pinned" ]; then rustup toolchain uninstall "$toolchain"; fi
+        done
+        rustup toolchain list
+
     - name: Cache Rust Dependencies
       if: ${{ inputs.restore-cache == 'true' }}
       uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       with:
-        key: ${{ inputs.target }}${{ inputs.cache-key && format('-{0}', inputs.cache-key) || '' }}
         save-if: ${{ inputs.save-cache }}
         cache-on-failure: true
-        shared-key: stable-cache-v6
+        # rust-cache leaves `key` out of the final key when shared-key is set, so the
+        # suffix goes here to keep CI, desktop release and server release caches apart.
+        shared-key: stable-cache-v7-${{ inputs.target }}${{ inputs.cache-key && format('-{0}', inputs.cache-key) || '' }}
 
     # TODO: Re-enable cargo config generation when preprep.mjs is ported
     # For now, use cargo's defaults which work fine without native deps

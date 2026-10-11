@@ -3,7 +3,7 @@
 //!
 //! A Virtual Distributed File System (VDFS) implementation in Rust.
 
-pub mod branding;
+pub use wing_branding as branding;
 pub mod client;
 pub mod common;
 pub mod config;

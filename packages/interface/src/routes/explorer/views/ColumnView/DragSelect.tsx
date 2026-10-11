@@ -88,7 +88,7 @@ export function DragSelect({ children, files, scrollRef }: DragSelectProps) {
 					return true;
 				}}
 				scrollOptions={{
-					container: scrollRef.current || undefined,
+					container: scrollRef.current ?? document.body,
 					throttleTime: isChrome ? 30 : 10000,
 					threshold: 0,
 				}}

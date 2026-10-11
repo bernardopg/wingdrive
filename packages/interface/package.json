@@ -15,7 +15,7 @@
 	},
 	"scripts": {
 		"lint": "eslint src --cache",
-		"typecheck": "tsc -b"
+		"typecheck": "bun check"
 	},
 	"dependencies": {
 		"@dnd-kit/core": "^6.3.1",

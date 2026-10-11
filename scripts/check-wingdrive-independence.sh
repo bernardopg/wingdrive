@@ -26,7 +26,7 @@ fi
 
 legacy_matches="$({
 	git grep -nEI "$operational_identity" -- \
-		':!core/src/branding.rs' \
+		':!crates/branding/src/lib.rs' \
 		':!core/src/ops/locations/import/action.rs' \
 		':!core/tests/location_export_import_test.rs' \
 		':!apps/cli/src/domains/daemon/mod.rs' \
