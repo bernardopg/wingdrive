@@ -1,0 +1,124 @@
+# Repository labels. The `sync` job in .github/workflows/labeler.yml creates or
+# updates each one on a push to main that changes this file. It never deletes a
+# label, so renaming one here leaves the old name behind until you remove it.
+#
+# Area labels share a blue, type labels follow GitHub's defaults, and size labels
+# run from green to red.
+labels:
+  # Areas, applied from changed paths
+  - name: "area: core"
+    color: "1d4ed8"
+    description: "wing-core and the shared crates"
+  - name: "area: desktop"
+    color: "2563eb"
+    description: "Tauri desktop app and Linux packaging"
+  - name: "area: server"
+    color: "3b82f6"
+    description: "wing-server and the web frontend"
+  - name: "area: cli"
+    color: "60a5fa"
+    description: "wing command line"
+  - name: "area: mobile"
+    color: "1e40af"
+    description: "Expo app, mobile core and Swift client"
+  - name: "area: interface"
+    color: "0ea5e9"
+    description: "Shared React interface and TypeScript packages"
+  - name: "area: extensions"
+    color: "0284c7"
+    description: "WASM extensions, SDK and adapters"
+  - name: "area: ci"
+    color: "64748b"
+    description: "Workflows, CI scripts and repository automation"
+  - name: "area: build"
+    color: "94a3b8"
+    description: "Toolchains, workspace manifests, editor and dev scripts"
+  - name: "area: release"
+    color: "7c3aed"
+    description: "Release workflow, packaging and changelog"
+
+  # Change types, from the branch prefix or the conventional commit title
+  - name: bug
+    color: "d73a4a"
+    description: "Something isn't working"
+  - name: enhancement
+    color: "a2eeef"
+    description: "New feature or request"
+  - name: performance
+    color: "fbca04"
+    description: "Faster or lighter, with no change in behavior"
+  - name: refactor
+    color: "c5def5"
+    description: "Code change that neither fixes a bug nor adds a feature"
+  - name: tests
+    color: "bfd4f2"
+    description: "Adds or changes tests"
+  - name: "breaking change"
+    color: "b60205"
+    description: "Changes behavior or an interface that callers depend on"
+  - name: security
+    color: "e11d48"
+    description: "Security fix, hardening or scanning"
+  - name: documentation
+    color: "0075ca"
+    description: "Improvements or additions to documentation"
+  - name: tasks
+    color: "c2e0c6"
+    description: "Task tracking files in .tasks"
+
+  # Dependencies and languages. Dependabot applies these names too.
+  - name: dependencies
+    color: "0366d6"
+    description: "Pull requests that update a dependency file"
+  - name: rust
+    color: "000000"
+    description: "Pull requests that update rust code"
+  - name: javascript
+    color: "168700"
+    description: "Pull requests that update javascript code"
+  - name: github_actions
+    color: "000000"
+    description: "Pull requests that update GitHub Actions code"
+  - name: docker
+    color: "21ceff"
+    description: "Pull requests that update Docker code"
+
+  # Size, from changed lines without lockfiles and generated files
+  - name: "size/XS"
+    color: "16a34a"
+    description: "Fewer than 10 changed lines"
+  - name: "size/S"
+    color: "65a30d"
+    description: "10 to 99 changed lines"
+  - name: "size/M"
+    color: "ca8a04"
+    description: "100 to 499 changed lines"
+  - name: "size/L"
+    color: "ea580c"
+    description: "500 to 999 changed lines"
+  - name: "size/XL"
+    color: "dc2626"
+    description: "1000 or more changed lines; consider splitting"
+
+  # Triage, kept from GitHub's defaults
+  - name: accessibility
+    color: "f143ab"
+    description: "Barrier affecting people with disabilities"
+  - name: duplicate
+    color: "cfd3d7"
+    description: "This issue or pull request already exists"
+  - name: "good first issue"
+    color: "7057ff"
+    description: "Good for newcomers"
+  - name: "help wanted"
+    color: "008672"
+    description: "Extra attention is needed"
+  - name: invalid
+    color: "e4e669"
+    description: "This doesn't seem right"
+  - name: question
+    color: "d876e3"
+    description: "Further information is requested"
+  - name: wontfix
+    color: "ffffff"
+    description: "This will not be worked on"

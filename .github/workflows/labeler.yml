@@ -1,0 +1,123 @@
+name: Labeler
+
+# Pull request jobs run on pull_request_target, from the base branch's workflow
+# and config, so pull requests from forks get labels too. That is safe because no
+# job checks out or runs the pull request's code: they read its paths, title and
+# line counts through the API, and the title only ever reaches a script as an
+# environment variable.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+    paths: [.github/labels.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  paths:
+    name: Label by paths and branch
+    if: github.event_name == 'pull_request_target' && github.event.action != 'edited'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      # Creates a label from .github/labeler.yml that the sync job has not made yet.
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
+        with:
+          configuration-path: .github/labeler.yml
+          # Keep labels added by hand or by Dependabot when later pushes stop matching.
+          sync-labels: false
+
+  meta:
+    name: Label size and type
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+      TITLE: ${{ github.event.pull_request.title }}
+    steps:
+      - name: Apply size and conventional commit type labels
+        run: |
+          set -euo pipefail
+
+          # Lockfiles, committed bundles and generated types would make a one-line
+          # dependency bump look like an XL change.
+          lines=$(gh api --paginate "repos/$REPO/pulls/$PR/files" \
+            --jq '.[] | select(.filename | test("(^|/)(Cargo|bun)\\.lock$|(^|/)dist/|^packages/ts-client/src/generated/") | not) | .additions + .deletions' \
+            | awk '{ total += $1 } END { print total + 0 }')
+          if   [ "$lines" -lt 10 ];   then size=XS
+          elif [ "$lines" -lt 100 ];  then size=S
+          elif [ "$lines" -lt 500 ];  then size=M
+          elif [ "$lines" -lt 1000 ]; then size=L
+          else size=XL
+          fi
+          echo "Changed lines: $lines (size/$size)"
+
+          add=("size/$size")
+          # Conventional commit title: type(scope)!: summary
+          type=$(sed -nE 's/^([a-z]+)(\([^)]*\))?!?: .*/\1/p' <<< "$TITLE")
+          case "$type" in
+            feat) add+=(enhancement) ;;
+            fix) add+=(bug) ;;
+            perf) add+=(performance) ;;
+            refactor) add+=(refactor) ;;
+            test) add+=(tests) ;;
+            docs) add+=(documentation) ;;
+          esac
+          if grep -qE '^[a-z]+(\([^)]*\))?!: ' <<< "$TITLE"; then
+            add+=("breaking change")
+          fi
+
+          # A pull request carries one size; drop the one an earlier push set.
+          gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name' | while read -r label; do
+            if [[ "$label" == size/* && "$label" != "size/$size" ]]; then
+              gh api -X DELETE "repos/$REPO/issues/$PR/labels/${label/\//%2F}" > /dev/null
+            fi
+          done
+
+          jq -n '{labels: $ARGS.positional}' --args "${add[@]}" \
+            | gh api -X POST "repos/$REPO/issues/$PR/labels" --input - > /dev/null
+          printf 'Applied: %s\n' "${add[@]}"
+
+  sync:
+    name: Sync label definitions
+    if: github.event_name != 'pull_request_target'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Create or update every label in .github/labels.yml
+        run: |
+          set -euo pipefail
+          yq -o=json '.labels' .github/labels.yml | jq -c '.[]' | while read -r label; do
+            name=$(jq -r .name <<< "$label")
+            gh label create "$name" \
+              --repo "$GITHUB_REPOSITORY" \
+              --color "$(jq -r .color <<< "$label")" \
+              --description "$(jq -r .description <<< "$label")" \
+              --force
+          done
