@@ -6,7 +6,7 @@
 # CI workflows and the unified wingdrive+spacebot image handle this
 # automatically; this Dockerfile assumes the dist directory is ready.
 
-FROM ubuntu:24.04 AS builder
+FROM ubuntu:26.04 AS builder
 ARG TARGETARCH
 
 # Install build dependencies
@@ -60,7 +60,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 #--
 # Runtime image
 #--
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 # Install runtime dependencies only
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked \
