@@ -680,6 +680,13 @@ Rules for agents and contributors:
 - The desktop shell (`apps/tauri/src-tauri`, `wing-tauri-core`) must not depend on `wing-core`.
   Put anything it needs from the core in a small crate under `crates/`, as `wing-branding` does.
 
+## Repository Rules
+
+`main` only changes through pull requests. Its ruleset (`.github/rulesets/main.json`) requires the CI
+jobs, the TruffleHog secret scan and CodeQL merge protection, and blocks force-pushes and deletion.
+`v*` tags cannot be moved or deleted. Change a rule by editing the JSON in a pull request, then run
+`scripts/github-settings.sh` as an admin after it merges.
+
 ## Naming
 
 Never name anything "Spacedrive" or with an `sd`/`sd-` prefix: crates, binaries, packages, scripts, functions, types, environment variables, or user-facing text. Use `wingdrive` or `wing`. The only exception is legally required upstream attribution. Existing `sd` names are being removed under `FORK-003`; do not add new ones.
