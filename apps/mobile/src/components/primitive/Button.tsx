@@ -33,7 +33,7 @@ const button = cva(
 					"bg-accent border-accent shadow-md",
 				],
 				colored: [
-					"shadow-sm",
+					"shadow-xs",
 					// Custom background color should be passed via style prop
 				],
 				bare: "border-transparent bg-transparent",
