@@ -150,7 +150,7 @@ iroh-mdns-address-lookup = "0.6"
 # postcard covers binary wire encoding, JSON covers external clients.
 
 # Cryptography for signing (backward compatibility)
-ed25519-dalek = "2.1"
+ed25519-dalek = "3.0"
 
 # Cryptography and networking utilities
 aes-gcm      = "0.11"                                           # AES-GCM encryption for secure storage
