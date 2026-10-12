@@ -24,4 +24,4 @@ libc.workspace = true
 openssl-sys = { version = "0.9", features = ["vendored"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
-jni = "0.21"
+jni = "0.22"
