@@ -2,7 +2,6 @@ use wingdrive_sdk::model;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use wingdrive_sdk::prelude::*;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Clone)]

@@ -1,7 +1,6 @@
 use wingdrive_sdk::{model, persist_strategy};
 
 use serde::{Deserialize, Serialize};
-use wingdrive_sdk::prelude::*;
 use uuid::Uuid;
 
 pub type PersonId = Uuid;

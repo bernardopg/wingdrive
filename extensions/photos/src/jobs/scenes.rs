@@ -1,11 +1,10 @@
 use wingdrive_sdk::job;
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use wingdrive_sdk::prelude::*;
 use wingdrive_sdk::types::JobResult;
-use uuid::Uuid;
 
-use crate::models::*;
 use crate::tasks::*;
 
 #[derive(Serialize, Deserialize, Default)]

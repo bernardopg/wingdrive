@@ -81,6 +81,6 @@ async fn reverse_geocode(ctx: TaskContext, coords: GpsCoordinates) -> TaskResult
 	Ok(place_name)
 }
 
-async fn find_or_create_place(ctx: &JobContext, cluster: &PlaceCluster) -> JobResult<Place> {
+async fn find_or_create_place(_ctx: &JobContext, _cluster: &PlaceCluster) -> JobResult<Place> {
 	todo!("Implement place matching")
 }

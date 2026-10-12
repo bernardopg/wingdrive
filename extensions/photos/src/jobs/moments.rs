@@ -1,12 +1,11 @@
 use wingdrive_sdk::job;
 
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use wingdrive_sdk::prelude::*;
 use wingdrive_sdk::types::JobResult;
-use uuid::Uuid;
 
-use crate::agent::{PhotoEvent, PhotosMind};
+use crate::agent::PhotoEvent;
 use crate::models::*;
 use crate::utils::*;
 
