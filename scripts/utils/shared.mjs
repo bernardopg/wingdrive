@@ -1,10 +1,10 @@
-import { exec as execCb } from 'node:child_process'
+import { execFile as execFileCb } from 'node:child_process'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { env } from 'node:process'
 import { promisify } from 'node:util'
 
-const exec = promisify(execCb)
+const execFile = promisify(execFileCb)
 const signId = env.APPLE_SIGNING_IDENTITY || '-'
 
 /**
@@ -63,7 +63,7 @@ export async function symlinkSharedLibsMacOS(root, nativeDeps) {
 				files
 					.filter(entry => entry.isFile() && entry.name.endsWith('.dylib'))
 					.map(entry =>
-						exec(`codesign -s "${signId}" -f "${path.join(entry.path, entry.name)}"`)
+						execFile('codesign', ['-s', signId, '-f', path.join(entry.path, entry.name)])
 					)
 			)
 		)

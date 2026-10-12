@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
 
 (async () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'wingdrive-explorer-'));
-  const output = process.env.WINGDRIVE_TEST_OUTPUT || '/tmp/wingdrive-explorer-results';
+  const output = process.env.WINGDRIVE_TEST_OUTPUT || fs.mkdtempSync(path.join(os.tmpdir(), 'wingdrive-explorer-results-'));
   fs.mkdirSync(output, {recursive: true});
   fs.mkdirSync(path.join(fixture, 'folder-A'));
   fs.mkdirSync(path.join(fixture, 'folder-B'));

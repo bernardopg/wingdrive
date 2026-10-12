@@ -29,16 +29,6 @@ prettier.resolveConfig(join(__dirname, '..', '..', '..', '.prettierrc.js')).then
 			const indexFilePath = join(__dirname, '..', folder, 'index.ts');
 			const assetsFolderPath = join(__dirname, '..', folder);
 
-			if (
-				await fs.access(indexFilePath).then(
-					() => true,
-					() => false
-				)
-			) {
-				// Delete the index file if it already exists.
-				await fs.unlink(indexFilePath);
-			}
-
 			const fileNames = await fs.readdir(assetsFolderPath);
 
 			// Generate the import statements for each asset.
