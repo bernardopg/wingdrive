@@ -75,7 +75,9 @@ def main():
         sys.exit(2)
 
     # Copy the database since CalendarAgent holds a lock
-    tmp_db = tempfile.mktemp(suffix=".sqlitedb")
+    # A private directory, so no other user can swap the copy for a symlink.
+    tmp_dir = tempfile.mkdtemp()
+    tmp_db = os.path.join(tmp_dir, "copy.sqlitedb")
     try:
         shutil.copy2(db_path, tmp_db)
         for ext in ["-wal", "-shm"]:
@@ -255,6 +257,7 @@ def main():
         for f in [tmp_db, tmp_db + "-wal", tmp_db + "-shm"]:
             if os.path.exists(f):
                 os.unlink(f)
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":

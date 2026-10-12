@@ -306,10 +306,10 @@ function urlToTarget(search: string): NavigationTarget | null {
 	const view = params.get('view');
 	if (view) {
 		const id = params.get('id') || undefined;
-		const extraParams: Record<string, string> = {};
-		params.forEach((v, k) => {
-			if (k !== 'view' && k !== 'id') extraParams[k] = v;
-		});
+		// fromEntries defines own properties, so a `__proto__` key cannot reach the prototype.
+		const extraParams: Record<string, string> = Object.fromEntries(
+			[...params].filter(([k]) => k !== 'view' && k !== 'id')
+		);
 		return {
 			type: 'view',
 			view,
