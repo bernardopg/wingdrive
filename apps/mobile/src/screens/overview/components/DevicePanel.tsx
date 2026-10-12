@@ -261,7 +261,7 @@ function DeviceCard({
 						)}
 						<View className="flex-1">
 							<View className="flex-row items-center gap-2">
-								<Text className="text-ink text-base font-semibold flex-shrink">
+								<Text className="text-ink text-base font-semibold shrink">
 									{deviceName}
 								</Text>
 								{device?.connection_method && (
@@ -780,31 +780,31 @@ function VolumeBar({ volume, index }: VolumeBarProps) {
 
 					<View className="flex-1">
 						<View className="flex-row items-center gap-2 mb-1">
-							<Text className="text-ink text-sm font-semibold flex-shrink">
+							<Text className="text-ink text-sm font-semibold shrink">
 								{volume.display_name || volume.name}
 							</Text>
 						</View>
 
 						<View className="flex-row flex-wrap items-center gap-1.5">
 							{fileSystem && (
-								<View className="px-1.5 py-0.5 bg-app-box border border-app-line rounded">
+								<View className="px-1.5 py-0.5 bg-app-box border border-app-line rounded-sm">
 									<Text className="text-ink-dull text-[10px]">{fileSystem}</Text>
 								</View>
 							)}
 							{diskType && (
-								<View className="px-1.5 py-0.5 bg-app-box border border-app-line rounded">
+								<View className="px-1.5 py-0.5 bg-app-box border border-app-line rounded-sm">
 									<Text className="text-ink-dull text-[10px]">
 										{getDiskTypeLabel(diskType)}
 									</Text>
 								</View>
 							)}
 							{volumeTypeStr && (
-								<View className="px-1.5 py-0.5 bg-app-box border border-app-line rounded">
+								<View className="px-1.5 py-0.5 bg-app-box border border-app-line rounded-sm">
 									<Text className="text-ink-dull text-[10px]">{volumeTypeStr}</Text>
 								</View>
 							)}
 							{indexingProgress ? (
-								<View className="px-1.5 py-0.5 bg-accent/20 border border-accent/30 rounded">
+								<View className="px-1.5 py-0.5 bg-accent/20 border border-accent/30 rounded-sm">
 									<Text className="text-accent text-[10px] font-medium">
 										{indexingProgress.filesIndexed.toLocaleString()} files
 										{indexingProgress.rate > 0 && (
@@ -816,7 +816,7 @@ function VolumeBar({ volume, index }: VolumeBarProps) {
 								</View>
 							) : (
 								volume.total_files != null && (
-									<View className="px-1.5 py-0.5 bg-accent/10 border border-accent/20 rounded">
+									<View className="px-1.5 py-0.5 bg-accent/10 border border-accent/20 rounded-sm">
 										<Text className="text-accent text-[10px]">
 											{volume.total_files.toLocaleString()} files
 										</Text>
@@ -837,7 +837,7 @@ function VolumeBar({ volume, index }: VolumeBarProps) {
 
 					<Pressable
 						onPress={() => setMenuVisible(true)}
-						className="px-1.5 py-1 active:bg-app-hover rounded self-start"
+						className="px-1.5 py-1 active:bg-app-hover rounded-sm self-start"
 					>
 						<Text className="text-ink-dull text-xl leading-none">⋮</Text>
 					</Pressable>

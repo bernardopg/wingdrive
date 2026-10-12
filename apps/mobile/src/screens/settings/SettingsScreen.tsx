@@ -569,7 +569,7 @@ export function SettingsScreen() {
 
 				<View className="space-y-3">
 					<View className="flex-row items-center gap-3">
-						<View className="w-12 h-12 bg-accent rounded-sm" />
+						<View className="w-12 h-12 bg-accent rounded-xs" />
 						<Text className="text-ink">Small (2px)</Text>
 					</View>
 					<View className="flex-row items-center gap-3">

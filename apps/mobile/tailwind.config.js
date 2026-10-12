@@ -28,7 +28,6 @@ function toHSL(colorValue) {
 /** @type {import('tailwindcss').Config} */
 module.exports = {
 	content: ["./src/**/*.{ts,tsx}", "./index.js"],
-	presets: [require("nativewind/preset")],
 	theme: {
 		extend: {
 			colors: {
