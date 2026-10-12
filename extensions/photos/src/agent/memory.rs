@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use wingdrive_sdk::prelude::*;
 use wingdrive_sdk::{agent_memory, memory_config};
-use uuid::Uuid;
 
 use crate::models::*;
 

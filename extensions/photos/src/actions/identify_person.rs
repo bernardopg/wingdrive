@@ -1,13 +1,13 @@
-use wingdrive_sdk::{action, action_execute};
+use wingdrive_sdk::action;
 
-use wingdrive_sdk::prelude::*;
 use uuid::Uuid;
+use wingdrive_sdk::prelude::*;
 
 use crate::models::FaceDetection;
 
 #[action]
 pub async fn identify_person(
-	ctx: &ActionContext,
+	_ctx: &ActionContext,
 	face_detections: Vec<(Uuid, FaceDetection)>,
 	name: String,
 ) -> ActionResult<ActionPreview> {

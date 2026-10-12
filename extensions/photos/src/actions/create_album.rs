@@ -1,14 +1,14 @@
 use wingdrive_sdk::{action, action_execute};
 
 use chrono::Utc;
-use wingdrive_sdk::prelude::*;
 use uuid::Uuid;
+use wingdrive_sdk::prelude::*;
 
 use crate::models::*;
 
 #[action]
 pub async fn create_album(
-	ctx: &ActionContext,
+	_ctx: &ActionContext,
 	name: String,
 	photo_ids: Vec<Uuid>,
 ) -> ActionResult<ActionPreview> {
@@ -37,7 +37,10 @@ pub async fn create_album_execute(
 ) -> ActionResult<ExecutionResult> {
 	for change in preview.changes {
 		match change {
-			Change::CreateModel { model_type, data } => {
+			Change::CreateModel {
+				model_type: _,
+				data,
+			} => {
 				let album: Album = serde_json::from_value(data)?;
 				ctx.vdfs().create_model(album).await?;
 			}

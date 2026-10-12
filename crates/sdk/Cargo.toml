@@ -15,5 +15,9 @@ wingdrive-sdk-macros = { path = "../sdk-macros" }
 thiserror             = { version = "2.0", default-features = false }
 uuid                  = { version = "1.0", default-features = false, features = ["serde", "v4"] }
 
+# Extensions build for wasm32-unknown-unknown, where uuid's v4 needs a named source of randomness.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+uuid = { version = "1.0", default-features = false, features = ["js"] }
+
 [dev-dependencies]
 tokio = { version = "1.0", features = ["macros", "rt"] }

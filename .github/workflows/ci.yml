@@ -148,3 +148,19 @@ jobs:
       # Same script as `just ci-local`. Scoped runs lint and test only the apps that changed.
       - name: Rust gates (${{ needs.changes.outputs.scope }})
         run: scripts/ci-rust.sh ${{ needs.changes.outputs.scope }}
+
+  extensions:
+    name: WASM Extensions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Each extension is its own workspace, so the Rust Workspace job never compiles them.
+      - name: Build extensions for wasm32
+        run: |
+          rustup target add wasm32-unknown-unknown
+          for dir in extensions/test-extension extensions/photos; do
+            cargo build --locked --release --target wasm32-unknown-unknown --manifest-path "$dir/Cargo.toml"
+          done

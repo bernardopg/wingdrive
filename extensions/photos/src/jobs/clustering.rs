@@ -1,9 +1,10 @@
-use wingdrive_sdk::{job, task};
+use wingdrive_sdk::task;
 
+use uuid::Uuid;
 use wingdrive_sdk::prelude::*;
 use wingdrive_sdk::tasks::TaskContext;
-use uuid::Uuid;
 
+use crate::models::FaceDetection;
 use crate::models::*;
 use crate::utils::*;
 
@@ -65,6 +66,6 @@ pub async fn generate_face_tags(ctx: TaskContext, photo_ids: Vec<Uuid>) -> TaskR
 	Ok(())
 }
 
-async fn find_or_create_person(ctx: &TaskContext, cluster: &FaceCluster) -> TaskResult<PersonId> {
+async fn find_or_create_person(_ctx: &TaskContext, _cluster: &FaceCluster) -> TaskResult<PersonId> {
 	todo!("Implement person matching")
 }

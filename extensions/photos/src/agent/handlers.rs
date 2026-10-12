@@ -2,7 +2,7 @@ use chrono::Duration;
 use wingdrive_sdk::prelude::*;
 use wingdrive_sdk::{agent, agent_trail, filter, on_event, on_startup, scheduled};
 
-use crate::agent::{PhotoEvent, PhotosMind};
+use crate::agent::PhotosMind;
 use crate::jobs::*;
 
 #[agent]
