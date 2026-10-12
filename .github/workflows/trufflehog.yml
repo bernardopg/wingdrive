@@ -1,0 +1,43 @@
+name: Secret Scan
+
+# TruffleHog verifies each candidate against its provider, so a failure here is a
+# live or unverifiable credential, not a pattern match. GitHub secret scanning and
+# push protection stay on as well; TruffleHog adds detectors and blocks the pull
+# request instead of alerting after the fact.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly full-history scan, so a detector added upstream reaches old commits.
+    - cron: '41 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  trufflehog:
+    name: TruffleHog
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Full history: pull requests and pushes scan only their own commits, but
+      # TruffleHog needs the base commit, and the weekly run reads every commit.
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Pull requests and pushes scan their commits; schedule and dispatch scan all history.
+      - name: Scan for verified and unverifiable secrets
+        uses: trufflesecurity/trufflehog@e76dff8a7e57d6df0c60ad8cbf5d5cba505a8fc9 # v3.99.2
+        with:
+          version: 3.99.2
+          extra_args: --results=verified,unknown
