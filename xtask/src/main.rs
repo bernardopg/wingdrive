@@ -29,6 +29,7 @@ mod config;
 mod contributors;
 mod native_deps;
 mod system;
+mod template;
 mod test_core;
 
 use anyhow::{Context, Result};

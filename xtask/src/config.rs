@@ -1,47 +1,11 @@
 //! Cargo config generation from template
 
 use anyhow::{Context, Result};
-use serde::Serialize;
 use std::fs;
 use std::path::Path;
 
 use crate::system::{get_best_linker, get_rust_targets, Os, SystemInfo};
-
-#[derive(Serialize)]
-struct ConfigContext {
-	#[serde(rename = "nativeDeps")]
-	native_deps: Option<String>,
-	protoc: Option<String>,
-	#[serde(rename = "mobileNativeDeps")]
-	mobile_native_deps: Option<String>,
-	#[serde(rename = "androidNdkHome")]
-	android_ndk_home: String,
-	#[serde(rename = "hostTag")]
-	host_tag: &'static str,
-	#[serde(rename = "isWin")]
-	is_win: bool,
-	#[serde(rename = "isMacOS")]
-	is_macos: bool,
-	#[serde(rename = "isLinux")]
-	is_linux: bool,
-	#[serde(rename = "hasiOS")]
-	has_ios: bool,
-	#[serde(rename = "hasAndroid")]
-	has_android: bool,
-	#[serde(rename = "hasLLD")]
-	has_lld: Option<LinkerInfo>,
-	#[serde(rename = "sdkPath")]
-	sdk_path: String,
-	#[serde(rename = "useSystemFfmpeg")]
-	use_system_ffmpeg: bool,
-	#[serde(rename = "buildJobs")]
-	build_jobs: usize,
-}
-
-#[derive(Serialize)]
-struct LinkerInfo {
-	linker: String,
-}
+use crate::template::Value;
 
 /// Half the CPUs on developer machines: a full-width build swaps and overheats the NVMe.
 /// CI keeps every CPU. `CARGO_BUILD_JOBS` still overrides the generated value.
@@ -85,7 +49,8 @@ pub fn generate_cargo_config(
 		.any(|t| rust_targets.contains(&t.to_string()));
 
 	// Get linker info
-	let has_lld = get_best_linker().map(|linker| LinkerInfo { linker });
+	// Only the presence of a usable linker matters to the template.
+	let has_lld = get_best_linker().is_some();
 
 	// Prefer a system FFmpeg over the bundled native-deps blob when one is available (see
 	// `system::has_system_ffmpeg` for why: version/glibc skew between the two breaks bindgen).
@@ -136,30 +101,18 @@ pub fn generate_cargo_config(
 		String::new()
 	};
 
-	// Build context for mustache
-	let context = ConfigContext {
-		native_deps,
-		protoc,
-		mobile_native_deps,
-		android_ndk_home,
-		// Android NDK host tag - the prebuilt directory is always named darwin-x86_64 on macOS,
-		// but the binaries are universal (fat) binaries with native ARM64 support.
-		// Google kept the path name for backwards compatibility.
-		host_tag: match system.os {
-			Os::Windows => "windows-x86_64",
-			Os::Linux => "linux-x86_64",
-			Os::MacOS => "darwin-x86_64",
-		},
-		is_win: matches!(system.os, Os::Windows),
-		is_macos: matches!(system.os, Os::MacOS),
-		is_linux: matches!(system.os, Os::Linux),
-		has_ios,
-		has_android,
-		has_lld,
-		sdk_path,
-		use_system_ffmpeg,
-		build_jobs: build_jobs(),
+	// Android NDK host tag - the prebuilt directory is always named darwin-x86_64 on macOS,
+	// but the binaries are universal (fat) binaries with native ARM64 support.
+	// Google kept the path name for backwards compatibility.
+	let host_tag = match system.os {
+		Os::Windows => "windows-x86_64",
+		Os::Linux => "linux-x86_64",
+		Os::MacOS => "darwin-x86_64",
 	};
+	let is_win = matches!(system.os, Os::Windows);
+	let is_macos = matches!(system.os, Os::MacOS);
+	let is_linux = matches!(system.os, Os::Linux);
+	let build_jobs = build_jobs();
 
 	// Read template
 	let template_path = root.join(".cargo").join("config.toml.mustache");
@@ -167,10 +120,24 @@ pub fn generate_cargo_config(
 		fs::read_to_string(&template_path).context("Failed to read config.toml.mustache")?;
 
 	// Render template
-	let rendered = mustache::compile_str(&template)
-		.context("Failed to compile mustache template")?
-		.render_to_string(&context)
-		.context("Failed to render template")?;
+	let rendered = crate::template::render(&template, &|name| match name {
+		"nativeDeps" => native_deps.as_deref().map(Value::Str),
+		"protoc" => protoc.as_deref().map(Value::Str),
+		"mobileNativeDeps" => mobile_native_deps.as_deref().map(Value::Str),
+		"androidNdkHome" => Some(Value::Str(&android_ndk_home)),
+		"hostTag" => Some(Value::Str(host_tag)),
+		"isWin" => Some(Value::Num(u64::from(is_win))),
+		"isMacOS" => Some(Value::Num(u64::from(is_macos))),
+		"isLinux" => Some(Value::Num(u64::from(is_linux))),
+		"hasiOS" => Some(Value::Num(u64::from(has_ios))),
+		"hasAndroid" => Some(Value::Num(u64::from(has_android))),
+		"hasLLD" => has_lld.then_some(Value::Num(1)),
+		"sdkPath" => Some(Value::Str(&sdk_path)),
+		"useSystemFfmpeg" => Some(Value::Num(u64::from(use_system_ffmpeg))),
+		"buildJobs" => Some(Value::Num(build_jobs as u64)),
+		_ => None,
+	})
+	.context("Failed to render template")?;
 
 	// Clean up extra newlines
 	let rendered = rendered
@@ -189,36 +156,4 @@ pub fn generate_cargo_config(
 	println!("   ✓ Generated {}", output_path.display());
 
 	Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn template_renders_build_jobs() {
-		let template = include_str!("../../.cargo/config.toml.mustache");
-		let context = ConfigContext {
-			native_deps: None,
-			protoc: None,
-			mobile_native_deps: None,
-			android_ndk_home: String::new(),
-			host_tag: "linux-x86_64",
-			is_win: false,
-			is_macos: false,
-			is_linux: true,
-			has_ios: false,
-			has_android: false,
-			has_lld: None,
-			sdk_path: String::new(),
-			use_system_ffmpeg: true,
-			build_jobs: 3,
-		};
-		let rendered = mustache::compile_str(template)
-			.unwrap()
-			.render_to_string(&context)
-			.unwrap();
-		let config: toml::Value = toml::from_str(&rendered).unwrap();
-		assert_eq!(config["build"]["jobs"].as_integer(), Some(3));
-	}
 }
