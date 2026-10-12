@@ -6,7 +6,7 @@
 # CI workflows and the unified wingdrive+spacebot image handle this
 # automatically; this Dockerfile assumes the dist directory is ready.
 
-FROM ubuntu:24.04 AS builder
+FROM ubuntu:26.04 AS builder
 ARG TARGETARCH
 
 # Install build dependencies
@@ -60,20 +60,20 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 #--
 # Runtime image
 #--
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 # Install runtime dependencies only
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked \
 	apt-get update && apt-get install -y \
 	libssl3t64 \
 	ca-certificates \
-	libavcodec60 \
-	libavdevice60 \
-	libavfilter9 \
-	libavformat60 \
-	libavutil58 \
-	libswresample4 \
-	libswscale7 \
+	libavcodec62 \
+	libavdevice62 \
+	libavfilter11 \
+	libavformat62 \
+	libavutil60 \
+	libswresample6 \
+	libswscale9 \
 	libheif1 \
 	&& rm -rf /var/lib/apt/lists/*
 
