@@ -36,6 +36,7 @@ import {useClipboard} from '../../../hooks/useClipboard';
 import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useOpenWith} from '../../../hooks/useOpenWith';
 import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
+import {useBatchRenameDialog} from '../../../components/modals/BatchRenameModal';
 import {useExplorer} from '../context';
 import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
@@ -66,6 +67,7 @@ export function useFileContextMenu({
 	const refetchTagQueries = useRefetchTagQueries();
 
 	const {deleteFiles} = useDeleteFiles();
+	const openBatchRename = useBatchRenameDialog();
 	const {duplicateFiles} = useDuplicateFiles();
 	const unapplyTags = useLibraryMutation('tags.unapply', {
 		onSuccess: refetchTagQueries
@@ -269,6 +271,13 @@ export function useFileContextMenu({
 				keybindId: 'explorer.renameFile',
 				condition: () =>
 					!!file && targetFiles.length === 1 && capabilities.canRename
+			},
+			{
+				icon: Pencil,
+				label: `Rename ${targetFiles.length} Items…`,
+				onClick: () => openBatchRename(getTargetFiles()),
+				// Renaming needs the same rights as deleting: real, writable entries.
+				condition: () => targetFiles.length > 1 && capabilities.canDelete
 			},
 			{
 				icon: FolderPlus,
