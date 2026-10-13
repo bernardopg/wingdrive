@@ -8,6 +8,7 @@ import {
 	FilmStrip,
 	FolderOpen,
 	FolderPlus,
+	GitDiff,
 	Image,
 	MagnifyingGlass,
 	Microphone,
@@ -37,6 +38,7 @@ import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useOpenWith} from '../../../hooks/useOpenWith';
 import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
 import {useBatchRenameDialog} from '../../../components/modals/BatchRenameModal';
+import {useCompareFoldersDialog} from '../../../components/modals/CompareFoldersModal';
 import {useDuplicatesDialog} from '../../../components/modals/DuplicatesModal';
 import {useExplorer} from '../context';
 import {selectionCapabilities} from '../fileCapabilities';
@@ -70,6 +72,7 @@ export function useFileContextMenu({
 	const {deleteFiles} = useDeleteFiles();
 	const openBatchRename = useBatchRenameDialog();
 	const openDuplicates = useDuplicatesDialog();
+	const openCompareFolders = useCompareFoldersDialog();
 	const {duplicateFiles} = useDuplicateFiles();
 	const unapplyTags = useLibraryMutation('tags.unapply', {
 		onSuccess: refetchTagQueries
@@ -132,6 +135,12 @@ export function useFileContextMenu({
 	const capabilities = selectionCapabilities(targetFiles);
 	const hasVirtualFiles = capabilities.hasVirtual;
 	const getTargetFiles = () => capabilities.operable;
+
+	const localFolders = targetFiles.flatMap((f) =>
+		f.kind === 'Directory' && 'Physical' in f.wing_path
+			? [f.wing_path.Physical.path]
+			: []
+	);
 
 	// A single selected folder, or the folder being browsed when nothing is.
 	const duplicateScanRoot =
@@ -292,6 +301,13 @@ export function useFileContextMenu({
 				onClick: () => openBatchRename(getTargetFiles()),
 				// Renaming needs the same rights as deleting: real, writable entries.
 				condition: () => targetFiles.length > 1 && capabilities.canDelete
+			},
+			{
+				icon: GitDiff,
+				label: 'Compare Folders…',
+				onClick: () => openCompareFolders(localFolders[0], localFolders[1]),
+				condition: () =>
+					targetFiles.length === 2 && localFolders.length === 2
 			},
 			{
 				icon: Copy,

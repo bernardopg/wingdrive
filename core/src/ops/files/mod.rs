@@ -1,5 +1,6 @@
 //! File operations - queries and actions for the File domain
 
+pub mod compare;
 pub mod copy;
 pub mod create_entry;
 pub mod create_folder;

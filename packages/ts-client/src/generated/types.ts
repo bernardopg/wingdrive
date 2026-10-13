@@ -236,6 +236,40 @@ export type CloudStorageConfig = { type: "S3"; bucket: string; region: string; a
  */
 { type: "Dropbox"; root: string | null; refresh_token: string; client_id: string; client_secret: string } | { type: "AzureBlob"; container: string; endpoint: string | null; account_name: string; account_key: string } | { type: "GoogleCloudStorage"; bucket: string; root: string | null; endpoint: string | null; credential: string };
 
+export type CompareEntry = { 
+/**
+ * Path below both roots, `/`-separated
+ */
+relative_path: string; status: CompareStatus; left: CompareSide | null; right: CompareSide | null };
+
+export type CompareFoldersInput = { left: string; right: string };
+
+export type CompareFoldersOutput = { 
+/**
+ * Differences only; a folder present on one side is one entry
+ */
+entries: CompareEntry[]; identical: number; 
+/**
+ * Entries that could not be read and were left out
+ */
+unreadable: number };
+
+export type CompareSide = { is_dir: boolean; 
+/**
+ * Bytes; zero for folders
+ */
+size: number; 
+/**
+ * Seconds since the Unix epoch
+ */
+modified: number | null };
+
+export type CompareStatus = "OnlyLeft" | "OnlyRight" | 
+/**
+ * Present on both sides with different content or type
+ */
+"Different";
+
 /**
  * Operators for combining tag attributes
  */
@@ -5372,6 +5406,7 @@ export type CoreQuery =
   |  { type: 'core.ephemeral_status'; input: EphemeralCacheStatusInput; output: EphemeralCacheStatus }
   |  { type: 'core.events.list'; input: ListEventsInput; output: ListEventsOutput }
   |  { type: 'core.status'; input: Empty; output: CoreStatus }
+  |  { type: 'files.compare_folders'; input: CompareFoldersInput; output: CompareFoldersOutput }
   |  { type: 'jobs.remote.all_devices'; input: RemoteJobsAllDevicesInput; output: RemoteJobsAllDevicesOutput }
   |  { type: 'jobs.remote.for_device'; input: RemoteJobsForDeviceInput; output: RemoteJobsForDeviceOutput }
   |  { type: 'libraries.list'; input: ListLibrariesInput; output: LibraryInfo[] }
@@ -5522,6 +5557,7 @@ export const WIRE_METHODS = {
     'core.ephemeral_status': 'query:core.ephemeral_status',
     'core.events.list': 'query:core.events.list',
     'core.status': 'query:core.status',
+    'files.compare_folders': 'query:files.compare_folders',
     'jobs.remote.all_devices': 'query:jobs.remote.all_devices',
     'jobs.remote.for_device': 'query:jobs.remote.for_device',
     'libraries.list': 'query:libraries.list',
