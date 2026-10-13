@@ -1979,7 +1979,15 @@ mod start_daemon_integration_tests {
 			.stdout(std::process::Stdio::null())
 			.stderr(std::process::Stdio::null())
 			.spawn()
-			.expect("failed to spawn wing-daemon");
+			.unwrap_or_else(|e| {
+				let meta = std::fs::metadata(&daemon_path);
+				let probe = std::process::Command::new("sh")
+					.arg("-c")
+					.arg(format!("ls -la {0}; file {0}; head -c 64 {0} | od -c | head -3", daemon_path.display()))
+					.output()
+					.map(|o| String::from_utf8_lossy(&o.stdout).into_owned());
+				panic!("failed to spawn wing-daemon: {e}; meta={meta:?}; probe={probe:?}")
+			});
 
 		let reachable = wait_for_port(&config.socket_addr, Duration::from_secs(20));
 		let stopping = Instant::now();
