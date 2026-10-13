@@ -1,4 +1,4 @@
-//! HTTP server for serving files and sidecars
+//! HTTP server for serving files and sidecars.
 //!
 //! Tauri's custom URI protocols can't be async, so we use an Axum HTTP server
 //! similar to the V1 implementation. The server is bound to localhost on a random
