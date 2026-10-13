@@ -142,17 +142,11 @@ export function useFileContextMenu({
 			: []
 	);
 
-	// A single selected folder, or the folder being browsed when nothing is.
+	// The empty-space menu covers the folder being browsed.
 	const duplicateScanRoot =
-		targetFiles.length === 1 &&
-		targetFiles[0].kind === 'Directory' &&
-		'Physical' in targetFiles[0].wing_path
-			? targetFiles[0].wing_path.Physical.path
-			: targetFiles.length === 0 &&
-				  operationalPath &&
-				  'Physical' in operationalPath
-				? operationalPath.Physical.path
-				: null;
+		targetFiles.length === 1 && localFolders.length === 1
+			? localFolders[0]
+			: null;
 
 	return useContextMenu({
 		items: [

@@ -182,11 +182,14 @@ function DuplicatesDialog(props: DuplicatesDialogProps) {
 											onChange={() => toggle(group, path)}
 										/>
 										<span
+											title={path}
 											className={
 												marked ? "text-ink-dull truncate line-through" : "text-ink truncate"
 											}
 										>
-											{path}
+											{path.startsWith(`${props.folder.replace(/\/$/, "")}/`)
+												? path.slice(props.folder.replace(/\/$/, "").length + 1)
+												: path}
 										</span>
 										{!marked && <span className="text-accent ml-auto shrink-0">keep</span>}
 									</label>
