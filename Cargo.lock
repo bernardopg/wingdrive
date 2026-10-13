@@ -14370,11 +14370,13 @@ name = "wingdrive"
 version = "2.0.0-alpha.12"
 dependencies = [
  "axum",
+ "blake3",
  "file-opening",
  "file-opening-linux",
  "file-opening-macos",
  "file-opening-windows",
  "gtk",
+ "image",
  "libc",
  "parking_lot",
  "serde",
@@ -14395,6 +14397,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+ "webp",
  "wing-desktop-macos",
  "wing-tauri-core",
  "zbus",

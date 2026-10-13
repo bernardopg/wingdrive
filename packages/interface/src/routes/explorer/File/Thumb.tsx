@@ -30,7 +30,7 @@ export const Thumb = memo(function Thumb({
   squareMode = false,
 }: ThumbProps) {
   const cacheKey = `${file.id}-${size}`;
-  const { buildSidecarUrl } = useServer();
+  const { buildSidecarUrl, buildThumbUrl } = useServer();
 
   const [thumbLoaded, setThumbLoaded] = useState(
     () => thumbLoadedCache.get(cacheKey) || false,
@@ -111,10 +111,19 @@ export const Thumb = memo(function Thumb({
     );
   };
 
-  const thumbnailSrc = getThumbnailUrl(size);
-
   // Get content kind for icon resolution
   const contentKind = getContentKind(file);
+
+  // Unindexed images have no sidecar yet; the desktop host renders one on demand.
+  const physicalPath =
+    typeof file.wing_path === "object" && "Physical" in file.wing_path
+      ? file.wing_path.Physical.path
+      : null;
+  const thumbnailSrc =
+    getThumbnailUrl(size) ??
+    (contentKind === "image" && physicalPath
+      ? buildThumbUrl(physicalPath, size)
+      : null);
   const kindCapitalized = getFileKindForIcon(file);
 
   // Use icon override from virtual files (devices, volumes), otherwise use default icon logic

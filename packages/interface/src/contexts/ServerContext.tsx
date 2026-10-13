@@ -33,6 +33,11 @@ export interface ServerContextValue {
 		variant: string,
 		format: string,
 	) => string | null;
+	/**
+	 * Build a URL for an on-demand thumbnail of a local image that has no
+	 * sidecar. Returns null where the host serves no such endpoint (web).
+	 */
+	buildThumbUrl: (physicalPath: string, size: number) => string | null;
 }
 
 export const ServerContext = createContext<ServerContextValue | null>(null);
@@ -52,6 +57,7 @@ export function ServerProvider({ children }: ServerProviderProps) {
 	const client = useClient();
 
 	const [serverUrl, setServerUrl] = useState<string | null>(null);
+	const [serverToken, setServerToken] = useState<string | null>(null);
 	const [libraryId, setLibraryId] = useState<string | null>(() => {
 		// Initialize from client if already set
 		return client.getCurrentLibraryId();
@@ -66,6 +72,7 @@ export function ServerProvider({ children }: ServerProviderProps) {
 					if (status.server_url) {
 						setServerUrl(status.server_url);
 					}
+					setServerToken(status.server_token ?? null);
 				})
 				.catch((err) => {
 					console.warn(
@@ -128,6 +135,7 @@ export function ServerProvider({ children }: ServerProviderProps) {
 					if (status.server_url) {
 						setServerUrl(status.server_url);
 					}
+					setServerToken(status.server_token ?? null);
 				});
 			});
 
@@ -149,11 +157,22 @@ export function ServerProvider({ children }: ServerProviderProps) {
 		return `${serverUrl}/sidecar/${libraryId}/${contentUuid}/${kind}/${variant}.${format}`;
 	};
 
+	const buildThumbUrl = (
+		physicalPath: string,
+		size: number,
+	): string | null => {
+		if (!serverUrl || !serverToken) {
+			return null;
+		}
+		return `${serverUrl}/thumb?path=${encodeURIComponent(physicalPath)}&size=${Math.round(size)}&token=${serverToken}`;
+	};
+
 	const value: ServerContextValue = {
 		serverUrl,
 		libraryId,
 		isReady: serverUrl !== null && libraryId !== null,
 		buildSidecarUrl,
+		buildThumbUrl,
 	};
 
 	return (

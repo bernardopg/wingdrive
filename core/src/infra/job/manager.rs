@@ -1172,6 +1172,12 @@ impl JobManager {
 
 			in_memory_ids.insert(job_id.0.to_string());
 
+			// Silent jobs (ephemeral browsing, background reindex) never emit a
+			// completion event, so a client that lists one can never clear it.
+			if !running_job.should_emit_events {
+				continue;
+			}
+
 			// Check if status matches filter
 			if let Some(filter_status) = status {
 				if current_status != filter_status {

@@ -455,6 +455,8 @@ struct DaemonStatusResponse {
 	is_running: bool,
 	socket_addr: String,
 	server_url: Option<String>,
+	/// Token for the local file and thumbnail endpoints
+	server_token: Option<String>,
 	started_by_us: bool,
 }
 
@@ -1132,6 +1134,7 @@ async fn get_daemon_status(
 		is_running,
 		socket_addr: daemon_state.socket_addr.clone(),
 		server_url: daemon_state.server_url.clone(),
+		server_token: daemon_state.server_token.clone(),
 		started_by_us: daemon_state.started_by_us,
 	})
 }
