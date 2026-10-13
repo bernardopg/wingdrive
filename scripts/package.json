@@ -27,7 +27,7 @@
 		"undici": "^8.11.2"
 	},
 	"devDependencies": {
-		"@babel/core": "^8.0.7",
+		"@babel/core": "^8.0.6",
 		"@babel/eslint-parser": "^8.0.7",
 		"@babel/eslint-plugin": "^8.0.6",
 		"@types/mustache": "^4.2.6",
