@@ -75,10 +75,31 @@ updates:
         update-types: [version-update:semver-major]
       - dependency-name: expo-*
         update-types: [version-update:semver-major]
+      # React Native and its native modules are still 0.x or move in lockstep with the SDK, so
+      # a minor bump is a breaking one: Expo SDK 57 pins react-native 0.86 and reanimated 4.5.
       - dependency-name: react-native
-        update-types: [version-update:semver-major]
+        update-types: [version-update:semver-major, version-update:semver-minor]
       - dependency-name: react-native-*
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      - dependency-name: "@react-native/*"
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      - dependency-name: "@react-native-async-storage/*"
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      - dependency-name: "@react-native-community/*"
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      - dependency-name: "@shopify/flash-list"
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      # Expo SDK 57 runs on Babel 7; Babel 8 and babel-preset-expo 58 come with SDK 58.
+      - dependency-name: babel-preset-expo
         update-types: [version-update:semver-major]
+      - dependency-name: "@babel/core"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@babel/runtime"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@babel/plugin-transform-runtime"
+        update-types: [version-update:semver-major]
+      # Pinned for react-native-css: 1.30.2 is rejected and 1.32+ fails to parse the mobile CSS.
+      - dependency-name: lightningcss
 
   - package-ecosystem: github-actions
     directories:
