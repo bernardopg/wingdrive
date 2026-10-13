@@ -211,6 +211,8 @@ impl WingPath {
 	/// Accepts the slug, the UUID string, or the "local" placeholder.
 	fn is_current_device(device_slug: &str) -> bool {
 		device_slug == "local"
+			// Older builds wrote this fallback for local entries; restored tabs still carry it.
+			|| device_slug == "unknown-device"
 			|| device_slug == get_current_device_slug()
 			|| device_slug == get_current_device_id().to_string()
 	}
@@ -937,6 +939,11 @@ mod tests {
 		assert!(by_placeholder.is_cross_device(&elsewhere));
 		assert!(elsewhere.is_cross_device(&by_slug));
 		assert!(!elsewhere.is_cross_device(&elsewhere.clone()));
+		let legacy = WingPath::Physical {
+			device_slug: "unknown-device".to_string(),
+			path: "/a/dir".into(),
+		};
+		assert_eq!(legacy.as_local_path(), Some(Path::new("/a/dir")));
 		assert!(WingPath::new("peer-a".to_string(), "/x")
 			.is_cross_device(&WingPath::new("peer-b".to_string(), "/x")));
 	}

@@ -306,6 +306,7 @@ export const platform: Platform = {
 			is_running: boolean;
 			socket_path: string;
 			server_url: string | null;
+			server_token?: string | null;
 			started_by_us: boolean;
 		}>('get_daemon_status');
 	},

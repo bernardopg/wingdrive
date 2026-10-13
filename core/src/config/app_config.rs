@@ -347,7 +347,7 @@ impl Migrate for AppConfig {
 	}
 
 	fn target_version() -> u32 {
-		6 // Added Spacebot configuration
+		7 // Renamed legacy log filter targets
 	}
 
 	fn migrate(&mut self) -> Result<()> {
@@ -385,9 +385,20 @@ impl Migrate for AppConfig {
 				// Migration from v5 to v6: Add Spacebot companion configuration
 				self.spacebot = SpacebotConfig::default();
 				self.version = 6;
+				self.migrate()
+			}
+			6 => {
+				// Migration from v6 to v7: crates were renamed, so the old
+				// targets matched nothing and the daemon logged nothing.
+				self.logging.main_filter = self
+					.logging
+					.main_filter
+					.replace("sd_core=", "wing_core=")
+					.replace("spacedrive=", "wingdrive=");
+				self.version = 7;
 				Ok(())
 			}
-			6 => Ok(()), // Already at target version
+			7 => Ok(()), // Already at target version
 			v => Err(anyhow!("Unknown config version: {}", v)),
 		}
 	}
@@ -428,5 +439,21 @@ mod tests {
 
 		assert!(legacy_path.exists());
 		assert!(data_dir.join("wingdrive.json").exists());
+	}
+
+	#[test]
+	fn migration_renames_legacy_log_filter_targets() {
+		let root = tempfile::tempdir().unwrap();
+		let mut config = AppConfig::default_with_dir(root.path().to_path_buf());
+		config.version = 6;
+		config.logging.main_filter = "sd_core=info,spacedrive=info,iroh=warn".to_string();
+
+		config.migrate().unwrap();
+
+		assert_eq!(config.version, 7);
+		assert_eq!(
+			config.logging.main_filter,
+			"wing_core=info,wingdrive=info,iroh=warn"
+		);
 	}
 }

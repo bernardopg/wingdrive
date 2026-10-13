@@ -61,7 +61,9 @@ export type UseNormalizedQueryOptions<I, O = any, TSelected = O> = Simplify<{
 	refetchInterval?:
 		| number
 		| false
-		| ((query: { state: { data: O | undefined } }) => number | false | undefined);
+		| ((query: {
+				state: { data: O | undefined; dataUpdateCount: number };
+		  }) => number | false | undefined);
 }>;
 
 // Runtime Validation Schemas (Valibot)
