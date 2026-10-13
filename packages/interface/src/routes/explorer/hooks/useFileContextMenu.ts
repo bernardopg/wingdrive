@@ -37,6 +37,7 @@ import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useOpenWith} from '../../../hooks/useOpenWith';
 import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
 import {useBatchRenameDialog} from '../../../components/modals/BatchRenameModal';
+import {useDuplicatesDialog} from '../../../components/modals/DuplicatesModal';
 import {useExplorer} from '../context';
 import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
@@ -68,6 +69,7 @@ export function useFileContextMenu({
 
 	const {deleteFiles} = useDeleteFiles();
 	const openBatchRename = useBatchRenameDialog();
+	const openDuplicates = useDuplicatesDialog();
 	const {duplicateFiles} = useDuplicateFiles();
 	const unapplyTags = useLibraryMutation('tags.unapply', {
 		onSuccess: refetchTagQueries
@@ -130,6 +132,18 @@ export function useFileContextMenu({
 	const capabilities = selectionCapabilities(targetFiles);
 	const hasVirtualFiles = capabilities.hasVirtual;
 	const getTargetFiles = () => capabilities.operable;
+
+	// A single selected folder, or the folder being browsed when nothing is.
+	const duplicateScanRoot =
+		targetFiles.length === 1 &&
+		targetFiles[0].kind === 'Directory' &&
+		'Physical' in targetFiles[0].wing_path
+			? targetFiles[0].wing_path.Physical.path
+			: targetFiles.length === 0 &&
+				  operationalPath &&
+				  'Physical' in operationalPath
+				? operationalPath.Physical.path
+				: null;
 
 	return useContextMenu({
 		items: [
@@ -278,6 +292,14 @@ export function useFileContextMenu({
 				onClick: () => openBatchRename(getTargetFiles()),
 				// Renaming needs the same rights as deleting: real, writable entries.
 				condition: () => targetFiles.length > 1 && capabilities.canDelete
+			},
+			{
+				icon: Copy,
+				label: 'Find Duplicates…',
+				onClick: () => {
+					if (duplicateScanRoot) openDuplicates(duplicateScanRoot);
+				},
+				condition: () => duplicateScanRoot !== null
 			},
 			{
 				icon: FolderPlus,

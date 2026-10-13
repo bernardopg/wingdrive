@@ -990,6 +990,32 @@ export type DownloadWhisperModelOutput = {
  */
 job_id: string };
 
+/**
+ * Input for file duplicate detection operations
+ */
+export type DuplicateDetectionInput = { 
+/**
+ * Paths to search for duplicates
+ */
+paths: string[]; 
+/**
+ * Detection algorithm to use
+ */
+algorithm: string; 
+/**
+ * Similarity threshold (0.0 to 1.0)
+ */
+threshold: number };
+
+/**
+ * Files that share the same bytes, verified by a full-content hash.
+ */
+export type DuplicateSet = { 
+/**
+ * Size of each copy in bytes
+ */
+size: number; paths: WingPath[] };
+
 export type EnableIndexingInput = { 
 /**
  * UUID of the location to enable indexing for
@@ -2275,7 +2301,11 @@ errors?: string[] } } |
 /**
  * Duplicate detection output
  */
-{ type: "DuplicateDetection"; data: { duplicate_groups: number; total_duplicates: number; potential_savings: number } } | 
+{ type: "DuplicateDetection"; data: { duplicate_groups: number; total_duplicates: number; potential_savings: number; 
+/**
+ * Files with identical bytes, one entry per set
+ */
+groups?: DuplicateSet[] } } | 
 /**
  * File validation output
  */
@@ -5283,6 +5313,7 @@ export type LibraryAction =
   |  { type: 'files.createFolder'; input: CreateFolderInput; output: CreateFolderOutput }
   |  { type: 'files.createSymlink'; input: CreateSymlinkInput; output: CreateEntryOutput }
   |  { type: 'files.delete'; input: FileDeleteInput; output: JobReceipt }
+  |  { type: 'files.duplicate_detection'; input: DuplicateDetectionInput; output: JobReceipt }
   |  { type: 'files.rename'; input: FileRenameInput; output: JobReceipt }
   |  { type: 'files.setGroup'; input: SetGroupInput; output: PermissionsChanged }
   |  { type: 'files.setPermissions'; input: SetPermissionsInput; output: PermissionsChanged }
@@ -5432,6 +5463,7 @@ export const WIRE_METHODS = {
     'files.createFolder': 'action:files.createFolder.input',
     'files.createSymlink': 'action:files.createSymlink.input',
     'files.delete': 'action:files.delete.input',
+    'files.duplicate_detection': 'action:files.duplicate_detection.input',
     'files.rename': 'action:files.rename.input',
     'files.setGroup': 'action:files.setGroup.input',
     'files.setPermissions': 'action:files.setPermissions.input',

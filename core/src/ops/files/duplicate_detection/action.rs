@@ -93,14 +93,14 @@ impl LibraryAction for DuplicateDetectionAction {
 		&self,
 		_library: &std::sync::Arc<crate::library::Library>,
 		_context: std::sync::Arc<crate::context::CoreContext>,
-	) -> Result<(), ActionError> {
+	) -> Result<crate::infra::action::ValidationResult, ActionError> {
 		if self.paths.paths.is_empty() {
 			return Err(ActionError::Validation {
 				field: "paths".to_string(),
 				message: "At least one path must be specified".to_string(),
 			});
 		}
-		Ok(())
+		Ok(crate::infra::action::ValidationResult::Success { metadata: None })
 	}
 }
 
