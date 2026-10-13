@@ -1,10 +1,14 @@
 import { useCallback } from "react";
 import { toast } from "@wingdrive/primitives";
 import type { File } from "@wingdrive/ts-client";
-import { useLibraryMutation } from "../../../contexts/WingDriveContext";
+import {
+	useCoreMutation,
+	useLibraryMutation,
+} from "../../../contexts/WingDriveContext";
 import { useDeleteConfirmationDialog } from "../../../components/modals/DeleteConfirmationModal";
 import { useWaitForJob } from "../../../hooks/useWaitForJob";
 import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
+import { useUndo } from "../../../hooks/useUndo";
 import { summarizeFileOperation } from "../../../hooks/fileOperationOutcome";
 import { reportFileOperation } from "../../../hooks/reportFileOperation";
 import { isOperableFile } from "../fileCapabilities";
@@ -23,6 +27,8 @@ import { isOperableFile } from "../fileCapabilities";
  */
 export function useDeleteFiles() {
 	const mutation = useLibraryMutation("files.delete");
+	const restore = useCoreMutation("trash.restore");
+	const undo = useUndo();
 	const openConfirmation = useDeleteConfirmationDialog();
 	const waitForJob = useWaitForJob();
 	const refetchListings = useRefetchFileListings();
@@ -54,6 +60,27 @@ export function useDeleteFiles() {
 
 							const outcome = summarizeFileOperation("delete", result);
 							reportFileOperation(outcome);
+							// Trashed local files come back from the system trash by
+							// their original path; permanent deletes have no way back.
+							const trashedPaths = permanent
+								? []
+								: files.flatMap((f) =>
+										undo.isLocalPath(f.wing_path) &&
+										"Physical" in f.wing_path
+											? [f.wing_path.Physical.path]
+											: [],
+									);
+							if (
+								(outcome.status === "success" || outcome.status === "partial") &&
+								trashedPaths.length > 0
+							) {
+								undo.record("delete", async () => {
+									await restore.mutateAsync({
+										ids: [],
+										original_paths: trashedPaths,
+									});
+								});
+							}
 							resolve(outcome.status === "success");
 						} catch (err) {
 							console.error("Failed to delete:", err);
@@ -67,7 +94,7 @@ export function useDeleteFiles() {
 
 			return confirmed;
 		},
-		[mutation, openConfirmation, waitForJob, refetchListings],
+		[mutation, openConfirmation, waitForJob, refetchListings, restore, undo],
 	);
 
 	return { deleteFiles, isPending: mutation.isPending };

@@ -1,9 +1,11 @@
 //! File operations - queries and actions for the File domain
 
+pub mod compare;
 pub mod copy;
 pub mod create_entry;
 pub mod create_folder;
 pub mod delete;
+pub mod duplicate_detection;
 pub mod permissions;
 pub mod query;
 pub mod rename;

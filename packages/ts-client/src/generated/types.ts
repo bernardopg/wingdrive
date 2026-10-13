@@ -236,6 +236,40 @@ export type CloudStorageConfig = { type: "S3"; bucket: string; region: string; a
  */
 { type: "Dropbox"; root: string | null; refresh_token: string; client_id: string; client_secret: string } | { type: "AzureBlob"; container: string; endpoint: string | null; account_name: string; account_key: string } | { type: "GoogleCloudStorage"; bucket: string; root: string | null; endpoint: string | null; credential: string };
 
+export type CompareEntry = { 
+/**
+ * Path below both roots, `/`-separated
+ */
+relative_path: string; status: CompareStatus; left: CompareSide | null; right: CompareSide | null };
+
+export type CompareFoldersInput = { left: string; right: string };
+
+export type CompareFoldersOutput = { 
+/**
+ * Differences only; a folder present on one side is one entry
+ */
+entries: CompareEntry[]; identical: number; 
+/**
+ * Entries that could not be read and were left out
+ */
+unreadable: number };
+
+export type CompareSide = { is_dir: boolean; 
+/**
+ * Bytes; zero for folders
+ */
+size: number; 
+/**
+ * Seconds since the Unix epoch
+ */
+modified: number | null };
+
+export type CompareStatus = "OnlyLeft" | "OnlyRight" | 
+/**
+ * Present on both sides with different content or type
+ */
+"Different";
+
 /**
  * Operators for combining tag attributes
  */
@@ -989,6 +1023,32 @@ export type DownloadWhisperModelOutput = {
  * Job ID for tracking download progress
  */
 job_id: string };
+
+/**
+ * Input for file duplicate detection operations
+ */
+export type DuplicateDetectionInput = { 
+/**
+ * Paths to search for duplicates
+ */
+paths: string[]; 
+/**
+ * Detection algorithm to use
+ */
+algorithm: string; 
+/**
+ * Similarity threshold (0.0 to 1.0)
+ */
+threshold: number };
+
+/**
+ * Files that share the same bytes, verified by a full-content hash.
+ */
+export type DuplicateSet = { 
+/**
+ * Size of each copy in bytes
+ */
+size: number; paths: WingPath[] };
 
 export type EnableIndexingInput = { 
 /**
@@ -2275,7 +2335,11 @@ errors?: string[] } } |
 /**
  * Duplicate detection output
  */
-{ type: "DuplicateDetection"; data: { duplicate_groups: number; total_duplicates: number; potential_savings: number } } | 
+{ type: "DuplicateDetection"; data: { duplicate_groups: number; total_duplicates: number; potential_savings: number; 
+/**
+ * Files with identical bytes, one entry per set
+ */
+groups?: DuplicateSet[] } } | 
 /**
  * File validation output
  */
@@ -4403,6 +4467,60 @@ export type TranscribeAudioOutput = {
 job_id: string };
 
 /**
+ * One item in the system trash.
+ */
+export type TrashEntry = { 
+/**
+ * Platform identifier; pass it back to restore or purge the item
+ */
+id: string; name: string; 
+/**
+ * Where the item lived before it was trashed
+ */
+original_path: string; 
+/**
+ * Seconds since the Unix epoch
+ */
+deleted_at: number; is_dir: boolean; 
+/**
+ * Size in bytes for files, `None` for folders
+ */
+size: number | null };
+
+export type TrashListInput = Record<string, never>;
+
+export type TrashListOutput = { 
+/**
+ * Newest first
+ */
+items: TrashEntry[]; 
+/**
+ * False where the platform offers no way to read its trash
+ */
+supported: boolean };
+
+export type TrashPurgeInput = { 
+/**
+ * Items to delete for good, by `TrashEntry::id`
+ */
+ids: string[] };
+
+export type TrashPurgeOutput = { purged: number };
+
+export type TrashRestoreInput = { 
+/**
+ * Items to restore, by `TrashEntry::id`
+ */
+ids: string[]; 
+/**
+ * Items to restore by their original path; the newest copy of each wins.
+ * Undo uses this, since a delete does not report trash identifiers.
+ */
+original_paths?: string[] };
+
+export type TrashRestoreOutput = { restored: number };
+
+/**
  * What to untag — uses entry UUIDs (matching the File.id exposed to frontend)
  */
 export type UnapplyTagsInput = { 
@@ -5215,6 +5333,8 @@ export type CoreAction =
   |  { type: 'network.start'; input: NetworkStartInput; output: NetworkStartOutput }
   |  { type: 'network.stop'; input: NetworkStopInput; output: NetworkStopOutput }
   |  { type: 'network.sync_setup'; input: LibrarySyncSetupInput; output: LibrarySyncSetupOutput }
+  |  { type: 'trash.purge'; input: TrashPurgeInput; output: TrashPurgeOutput }
+  |  { type: 'trash.restore'; input: TrashRestoreInput; output: TrashRestoreOutput }
 ;
 
 export type LibraryAction =
@@ -5227,6 +5347,7 @@ export type LibraryAction =
   |  { type: 'files.createFolder'; input: CreateFolderInput; output: CreateFolderOutput }
   |  { type: 'files.createSymlink'; input: CreateSymlinkInput; output: CreateEntryOutput }
   |  { type: 'files.delete'; input: FileDeleteInput; output: JobReceipt }
+  |  { type: 'files.duplicate_detection'; input: DuplicateDetectionInput; output: JobReceipt }
   |  { type: 'files.rename'; input: FileRenameInput; output: JobReceipt }
   |  { type: 'files.setGroup'; input: SetGroupInput; output: PermissionsChanged }
   |  { type: 'files.setPermissions'; input: SetPermissionsInput; output: PermissionsChanged }
@@ -5285,6 +5406,7 @@ export type CoreQuery =
   |  { type: 'core.ephemeral_status'; input: EphemeralCacheStatusInput; output: EphemeralCacheStatus }
   |  { type: 'core.events.list'; input: ListEventsInput; output: ListEventsOutput }
   |  { type: 'core.status'; input: Empty; output: CoreStatus }
+  |  { type: 'files.compare_folders'; input: CompareFoldersInput; output: CompareFoldersOutput }
   |  { type: 'jobs.remote.all_devices'; input: RemoteJobsAllDevicesInput; output: RemoteJobsAllDevicesOutput }
   |  { type: 'jobs.remote.for_device'; input: RemoteJobsForDeviceInput; output: RemoteJobsForDeviceOutput }
   |  { type: 'libraries.list'; input: ListLibrariesInput; output: LibraryInfo[] }
@@ -5294,6 +5416,7 @@ export type CoreQuery =
   |  { type: 'network.pair.vouching_session'; input: VouchingSessionInput; output: VouchingSessionOutput }
   |  { type: 'network.status'; input: NetworkStatusQueryInput; output: NetworkStatus }
   |  { type: 'network.sync_setup.discover'; input: DiscoverRemoteLibrariesInput; output: DiscoverRemoteLibrariesOutput }
+  |  { type: 'trash.list'; input: TrashListInput; output: TrashListOutput }
 ;
 
 export type LibraryQuery =
@@ -5361,6 +5484,8 @@ export const WIRE_METHODS = {
     'network.start': 'action:network.start.input',
     'network.stop': 'action:network.stop.input',
     'network.sync_setup': 'action:network.sync_setup.input',
+    'trash.purge': 'action:trash.purge.input',
+    'trash.restore': 'action:trash.restore.input',
   },
 
   libraryActions: {
@@ -5373,6 +5498,7 @@ export const WIRE_METHODS = {
     'files.createFolder': 'action:files.createFolder.input',
     'files.createSymlink': 'action:files.createSymlink.input',
     'files.delete': 'action:files.delete.input',
+    'files.duplicate_detection': 'action:files.duplicate_detection.input',
     'files.rename': 'action:files.rename.input',
     'files.setGroup': 'action:files.setGroup.input',
     'files.setPermissions': 'action:files.setPermissions.input',
@@ -5431,6 +5557,7 @@ export const WIRE_METHODS = {
     'core.ephemeral_status': 'query:core.ephemeral_status',
     'core.events.list': 'query:core.events.list',
     'core.status': 'query:core.status',
+    'files.compare_folders': 'query:files.compare_folders',
     'jobs.remote.all_devices': 'query:jobs.remote.all_devices',
     'jobs.remote.for_device': 'query:jobs.remote.for_device',
     'libraries.list': 'query:libraries.list',
@@ -5440,6 +5567,7 @@ export const WIRE_METHODS = {
     'network.pair.vouching_session': 'query:network.pair.vouching_session',
     'network.status': 'query:network.status',
     'network.sync_setup.discover': 'query:network.sync_setup.discover',
+    'trash.list': 'query:trash.list',
   },
 
   libraryQueries: {

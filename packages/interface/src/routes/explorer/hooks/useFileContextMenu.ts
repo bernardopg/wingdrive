@@ -8,6 +8,7 @@ import {
 	FilmStrip,
 	FolderOpen,
 	FolderPlus,
+	GitDiff,
 	Image,
 	MagnifyingGlass,
 	Microphone,
@@ -36,6 +37,9 @@ import {useClipboard} from '../../../hooks/useClipboard';
 import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useOpenWith} from '../../../hooks/useOpenWith';
 import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
+import {useBatchRenameDialog} from '../../../components/modals/BatchRenameModal';
+import {useCompareFoldersDialog} from '../../../components/modals/CompareFoldersModal';
+import {useDuplicatesDialog} from '../../../components/modals/DuplicatesModal';
 import {useExplorer} from '../context';
 import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
@@ -66,6 +70,9 @@ export function useFileContextMenu({
 	const refetchTagQueries = useRefetchTagQueries();
 
 	const {deleteFiles} = useDeleteFiles();
+	const openBatchRename = useBatchRenameDialog();
+	const openDuplicates = useDuplicatesDialog();
+	const openCompareFolders = useCompareFoldersDialog();
 	const {duplicateFiles} = useDuplicateFiles();
 	const unapplyTags = useLibraryMutation('tags.unapply', {
 		onSuccess: refetchTagQueries
@@ -128,6 +135,18 @@ export function useFileContextMenu({
 	const capabilities = selectionCapabilities(targetFiles);
 	const hasVirtualFiles = capabilities.hasVirtual;
 	const getTargetFiles = () => capabilities.operable;
+
+	const localFolders = targetFiles.flatMap((f) =>
+		f.kind === 'Directory' && 'Physical' in f.wing_path
+			? [f.wing_path.Physical.path]
+			: []
+	);
+
+	// The empty-space menu covers the folder being browsed.
+	const duplicateScanRoot =
+		targetFiles.length === 1 && localFolders.length === 1
+			? localFolders[0]
+			: null;
 
 	return useContextMenu({
 		items: [
@@ -269,6 +288,28 @@ export function useFileContextMenu({
 				keybindId: 'explorer.renameFile',
 				condition: () =>
 					!!file && targetFiles.length === 1 && capabilities.canRename
+			},
+			{
+				icon: Pencil,
+				label: `Rename ${targetFiles.length} Items…`,
+				onClick: () => openBatchRename(getTargetFiles()),
+				// Renaming needs the same rights as deleting: real, writable entries.
+				condition: () => targetFiles.length > 1 && capabilities.canDelete
+			},
+			{
+				icon: GitDiff,
+				label: 'Compare Folders…',
+				onClick: () => openCompareFolders(localFolders[0], localFolders[1]),
+				condition: () =>
+					targetFiles.length === 2 && localFolders.length === 2
+			},
+			{
+				icon: Copy,
+				label: 'Find Duplicates…',
+				onClick: () => {
+					if (duplicateScanRoot) openDuplicates(duplicateScanRoot);
+				},
+				condition: () => duplicateScanRoot !== null
 			},
 			{
 				icon: FolderPlus,

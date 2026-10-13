@@ -13,6 +13,7 @@ import {
 	GearSix,
 	ListBullets,
 	Palette,
+	Trash,
 } from '@phosphor-icons/react';
 import {useSidebarStore} from '@wingdrive/ts-client';
 import type {
@@ -562,6 +563,11 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 								icon={Palette}
 								title="Customize"
 								onClick={() => setCustomizePanelOpen(true)}
+							/>
+							<CircleButton
+								icon={Trash}
+								title="Trash"
+								onClick={() => navigate('/trash')}
 							/>
 						</div>
 						<CircleButton

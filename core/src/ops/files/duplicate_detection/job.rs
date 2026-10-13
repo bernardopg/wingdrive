@@ -1,9 +1,9 @@
 //! Duplicate detection job implementation
 
 use crate::{
+	domain::addressing::{WingPath, WingPathBatch},
 	domain::content_identity::ContentHashGenerator,
 	infra::job::prelude::*,
-	domain::addressing::{WingPath, WingPathBatch},
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -200,7 +200,15 @@ impl DuplicateDetectionJob {
 		while let Some((current_path, current_wing_path)) = stack.pop() {
 			ctx.check_interrupt().await?;
 
-			let metadata = fs::metadata(&current_path).await?;
+			// Symlinks are skipped: following them can loop, and a link listed
+			// beside its own target would offer the original for deletion.
+			let metadata = match fs::symlink_metadata(&current_path).await {
+				Ok(metadata) => metadata,
+				Err(e) => {
+					ctx.add_non_critical_error(format!("{}: {}", current_path.display(), e));
+					continue;
+				}
+			};
 
 			if metadata.is_file() {
 				if self.should_include_file(&current_path, metadata.len()) {
@@ -212,9 +220,15 @@ impl DuplicateDetectionJob {
 					});
 				}
 			} else if metadata.is_dir() {
-				let mut dir = fs::read_dir(&current_path).await?;
+				let mut dir = match fs::read_dir(&current_path).await {
+					Ok(dir) => dir,
+					Err(e) => {
+						ctx.add_non_critical_error(format!("{}: {}", current_path.display(), e));
+						continue;
+					}
+				};
 
-				while let Some(entry) = dir.next_entry().await? {
+				while let Ok(Some(entry)) = dir.next_entry().await {
 					let entry_path = entry.path();
 					let entry_wing_path = current_wing_path.join(entry.file_name());
 					stack.push((entry_path, entry_wing_path));
@@ -361,16 +375,37 @@ impl DuplicateDetectionJob {
 					processed += 1;
 				}
 
-				// Create groups for files with same hash
-				for (hash, hash_files) in hash_groups {
-					if hash_files.len() > 1 {
-						let wasted_space = *size * (hash_files.len() as u64 - 1);
-						groups.push(DuplicateGroup {
-							files: hash_files,
-							total_size: *size * files.len() as u64,
-							wasted_space,
-							detection_method: format!("Content hash: {}", &hash[..8]),
-						});
+				// The content hash samples large files, so a shared sample only
+				// nominates a set. Reading every byte decides it, since these
+				// groups are offered for deletion.
+				for (_, candidates) in hash_groups {
+					if candidates.len() < 2 {
+						continue;
+					}
+					let mut verified: HashMap<String, Vec<FileInfo>> = HashMap::new();
+					for file in candidates {
+						ctx.check_interrupt().await?;
+						let Some(local_path) = file.path.as_local_path() else {
+							continue;
+						};
+						match ContentHashGenerator::generate_integrity_hash(local_path).await {
+							Ok(hash) => verified.entry(hash).or_default().push(file),
+							Err(e) => ctx.add_non_critical_error(format!(
+								"Failed to verify {}: {}",
+								file.path.display(),
+								e
+							)),
+						}
+					}
+					for (hash, copies) in verified {
+						if copies.len() > 1 {
+							groups.push(DuplicateGroup {
+								total_size: *size * copies.len() as u64,
+								wasted_space: *size * (copies.len() as u64 - 1),
+								files: copies,
+								detection_method: format!("Content hash: {}", &hash[..8]),
+							});
+						}
 					}
 				}
 			}
@@ -453,6 +488,14 @@ impl From<DuplicateDetectionOutput> for JobOutput {
 			duplicate_groups: output.duplicate_groups.len(),
 			total_duplicates: output.total_duplicates,
 			potential_savings: output.potential_savings,
+			groups: output
+				.duplicate_groups
+				.into_iter()
+				.map(|group| crate::infra::job::output::DuplicateSet {
+					size: group.files.first().map_or(0, |f| f.size),
+					paths: group.files.into_iter().map(|f| f.path).collect(),
+				})
+				.collect(),
 		}
 	}
 }
