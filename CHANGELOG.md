@@ -3,6 +3,60 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.0.0-alpha.12 — 2026-10-12
+
+### Brand (#172)
+
+- New WingDrive mark: the three stacked wing feathers without the drive
+  spindle. Every icon is regenerated from `.github/logo.svg`: desktop (Linux,
+  macOS, Windows), iOS and Android launchers, the Android splash, the docs
+  favicon and the `wing` CLI banner.
+
+### Mobile (#148, #173)
+
+- Native dependencies are back on the versions Expo SDK 57 pins, so the iOS and
+  Android builds resolve again.
+- NativeWind 5 on Tailwind CSS 4, the same Tailwind major as desktop and web.
+- Mobile bundles build again: `@babel/plugin-transform-runtime` 8 needed Babel 8,
+  while Expo SDK 57 runs on Babel 7.
+
+### Security (#148, #170, #175)
+
+- CodeQL runs in advanced setup with the `security-extended` suite on actions,
+  JavaScript/TypeScript, Python and Rust. Swift returns under SEC-009.
+- TruffleHog scans every pull request and push for leaked secrets, and the full
+  history weekly.
+- `main` and the `v*` release tags are protected by repository rulesets.
+- Fixed CodeQL findings: the macOS and browser adapters copied their databases
+  to a predictable temporary name; an Explorer URL parameter named `__proto__`
+  could reach the object prototype; macOS framework signing passed the signing
+  identity through a shell.
+
+### Extensions (#174)
+
+- The Photos and test extensions build for WASM again, and CI now builds both.
+- The SDK enables `uuid`'s browser randomness on `wasm32`, so every extension
+  can create v4 UUIDs.
+
+### Server (#176)
+
+- The Docker image moves to Ubuntu 26.04 with FFmpeg 8.
+
+### Toolchain and dependencies (#168, #171, #177, #178)
+
+- Rust 1.99.0, with every crate on its latest compatible release.
+- 13 Dependabot updates, including `zip` 8, `ed25519-dalek` 3, `@headlessui/react` 2,
+  ESLint 10 and `react-markdown` 10; JavaScript packages updated within their
+  ranges (Expo 57.0.28, Radix UI, Tauri plugins, Vite 8.3).
+- `cargo xtask setup` renders its config template in-process, which drops the
+  `mustache` crate and the `log` 0.3 it pulled in.
+
+### CI (#147, #149)
+
+- Rust gates run only for the apps a pull request touches; release jobs are
+  split; typecheck uses `bun check`.
+- Pull requests get path, branch, size and type labels.
+
 ## 2.0.0-alpha.11 — 2026-10-10
 
 ### Build (DEV-004, #145)
