@@ -76,6 +76,9 @@ pub enum JobOutput {
 		duplicate_groups: usize,
 		total_duplicates: usize,
 		potential_savings: u64,
+		/// Files with identical bytes, one entry per set
+		#[serde(default)]
+		groups: Vec<DuplicateSet>,
 	},
 
 	/// File validation output
@@ -175,6 +178,14 @@ impl JobOutput {
 	}
 }
 
+/// Files that share the same bytes, verified by a full-content hash.
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct DuplicateSet {
+	/// Size of each copy in bytes
+	pub size: u64,
+	pub paths: Vec<crate::domain::addressing::WingPath>,
+}
+
 /// Typed output for indexed jobs
 #[derive(Debug, Clone)]
 pub struct IndexedOutput {
@@ -263,6 +274,7 @@ impl fmt::Display for JobOutput {
 				duplicate_groups,
 				total_duplicates,
 				potential_savings,
+				..
 			} => {
 				write!(
 					f,

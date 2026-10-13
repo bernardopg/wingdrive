@@ -7,6 +7,7 @@ import {FavoritesView} from './routes/favorites';
 import {FileKindFiles, FileKindsView} from './routes/file-kinds';
 import {Overview} from './routes/overview';
 import {RedundancyDashboard} from './routes/redundancy';
+import {TrashView} from './routes/trash';
 import {AtRiskFiles} from './routes/redundancy/at-risk';
 import {CompareVolumes} from './routes/redundancy/compare';
 import {SourcesHome} from './routes/sources';
@@ -87,6 +88,10 @@ export const explorerRoutes = [
 			{
 				path: 'sources/:sourceId',
 				element: <SourceDetail />
+			},
+			{
+				path: 'trash',
+				element: <TrashView />
 			},
 			{
 				path: 'redundancy',

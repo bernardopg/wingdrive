@@ -3,8 +3,10 @@ import {
 	Copy,
 	FilePlus,
 	FolderPlus,
+	MagnifyingGlass,
 	TerminalWindow
 } from '@phosphor-icons/react';
+import {useDuplicatesDialog} from '../../../components/modals/DuplicatesModal';
 import {useClipboard} from '../../../hooks/useClipboard';
 import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useUndo} from '../../../hooks/useUndo';
@@ -22,6 +24,7 @@ export function useEmptySpaceContextMenu() {
 	const undo = useUndo();
 	const openTerminal = useOpenTerminal();
 	const {newFile} = useCreateEntry();
+	const openDuplicates = useDuplicatesDialog();
 
 	return useContextMenu({
 		items: [
@@ -66,6 +69,16 @@ export function useEmptySpaceContextMenu() {
 				keybindId: 'explorer.openTerminal',
 				condition: () =>
 					!!openTerminal && !!operationalPath && 'Physical' in operationalPath
+			},
+			{
+				icon: MagnifyingGlass,
+				label: 'Find Duplicates…',
+				onClick: () => {
+					if (operationalPath && 'Physical' in operationalPath) {
+						openDuplicates(operationalPath.Physical.path);
+					}
+				},
+				condition: () => !!operationalPath && 'Physical' in operationalPath
 			}
 		]
 	});
