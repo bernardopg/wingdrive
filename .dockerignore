@@ -1,0 +1,5 @@
+# Local build output and generated config never belong in the image context.
+.cargo/config.toml
+target/
+**/node_modules/
+.git/
