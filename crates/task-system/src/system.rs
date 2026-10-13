@@ -621,10 +621,6 @@ impl<E: RunError> Clone for BaseDispatcher<E> {
 impl<E: RunError> Dispatcher<E> for BaseDispatcher<E> {
 	type DispatchError = DispatcherShutdownError<E>;
 
-	#[allow(clippy::missing_panics_doc)]
-	// `fetch_update` is soft-deprecated ahead of a future rename to `try_update` (stabilized
-	// after our MSRV); keep the stable-since-1.0 name so this builds across supported toolchains.
-	#[allow(deprecated_in_future)]
 	async fn dispatch_boxed(
 		&self,
 		task: Box<dyn Task<E>>,
@@ -633,12 +629,8 @@ impl<E: RunError> Dispatcher<E> for BaseDispatcher<E> {
 			return Err(DispatcherShutdownError(vec![task]));
 		}
 
-		let worker_id = self
-				.last_worker_id
-				.fetch_update(Ordering::Release, Ordering::Acquire, |last_worker_id| {
-					Some((last_worker_id + 1) % self.workers.len())
-				})
-				.expect("we hardcoded the update function to always return Some(next_worker_id) through dispatcher");
+		// Round-robin over the workers; the counter wraps at usize::MAX, which only skews one dispatch.
+		let worker_id = self.last_worker_id.fetch_add(1, Ordering::AcqRel) % self.workers.len();
 
 		trace!(%worker_id, task_id = %task.id(), "Dispatching task to worker");
 
