@@ -4403,6 +4403,60 @@ export type TranscribeAudioOutput = {
 job_id: string };
 
 /**
+ * One item in the system trash.
+ */
+export type TrashEntry = { 
+/**
+ * Platform identifier; pass it back to restore or purge the item
+ */
+id: string; name: string; 
+/**
+ * Where the item lived before it was trashed
+ */
+original_path: string; 
+/**
+ * Seconds since the Unix epoch
+ */
+deleted_at: number; is_dir: boolean; 
+/**
+ * Size in bytes for files, `None` for folders
+ */
+size: number | null };
+
+export type TrashListInput = Record<string, never>;
+
+export type TrashListOutput = { 
+/**
+ * Newest first
+ */
+items: TrashEntry[]; 
+/**
+ * False where the platform offers no way to read its trash
+ */
+supported: boolean };
+
+export type TrashPurgeInput = { 
+/**
+ * Items to delete for good, by `TrashEntry::id`
+ */
+ids: string[] };
+
+export type TrashPurgeOutput = { purged: number };
+
+export type TrashRestoreInput = { 
+/**
+ * Items to restore, by `TrashEntry::id`
+ */
+ids: string[]; 
+/**
+ * Items to restore by their original path; the newest copy of each wins.
+ * Undo uses this, since a delete does not report trash identifiers.
+ */
+original_paths?: string[] };
+
+export type TrashRestoreOutput = { restored: number };
+
+/**
  * What to untag — uses entry UUIDs (matching the File.id exposed to frontend)
  */
 export type UnapplyTagsInput = { 
@@ -5215,6 +5269,8 @@ export type CoreAction =
   |  { type: 'network.start'; input: NetworkStartInput; output: NetworkStartOutput }
   |  { type: 'network.stop'; input: NetworkStopInput; output: NetworkStopOutput }
   |  { type: 'network.sync_setup'; input: LibrarySyncSetupInput; output: LibrarySyncSetupOutput }
+  |  { type: 'trash.purge'; input: TrashPurgeInput; output: TrashPurgeOutput }
+  |  { type: 'trash.restore'; input: TrashRestoreInput; output: TrashRestoreOutput }
 ;
 
 export type LibraryAction =
@@ -5294,6 +5350,7 @@ export type CoreQuery =
   |  { type: 'network.pair.vouching_session'; input: VouchingSessionInput; output: VouchingSessionOutput }
   |  { type: 'network.status'; input: NetworkStatusQueryInput; output: NetworkStatus }
   |  { type: 'network.sync_setup.discover'; input: DiscoverRemoteLibrariesInput; output: DiscoverRemoteLibrariesOutput }
+  |  { type: 'trash.list'; input: TrashListInput; output: TrashListOutput }
 ;
 
 export type LibraryQuery =
@@ -5361,6 +5418,8 @@ export const WIRE_METHODS = {
     'network.start': 'action:network.start.input',
     'network.stop': 'action:network.stop.input',
     'network.sync_setup': 'action:network.sync_setup.input',
+    'trash.purge': 'action:trash.purge.input',
+    'trash.restore': 'action:trash.restore.input',
   },
 
   libraryActions: {
@@ -5440,6 +5499,7 @@ export const WIRE_METHODS = {
     'network.pair.vouching_session': 'query:network.pair.vouching_session',
     'network.status': 'query:network.status',
     'network.sync_setup.discover': 'query:network.sync_setup.discover',
+    'trash.list': 'query:trash.list',
   },
 
   libraryQueries: {
