@@ -45,7 +45,7 @@
     "react-loading-icons": "^1.1.0",
     "react-resizable-layout": "^0.7.3",
     "sonner": "^2.0.8",
-    "zod": "^3.25.76"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tanstack/react-virtual": "^3.14.17",
