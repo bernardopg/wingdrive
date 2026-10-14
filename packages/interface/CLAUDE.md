@@ -1049,6 +1049,7 @@ When porting V1 components:
 ## Checklist Before PR
 
 - [ ] All colors use semantic classes (no `var()` directly)
+- [ ] All user-visible text uses i18n keys with `en` and `pt` entries (see AGENTS.md, Internationalization)
 - [ ] Component uses primitives from @wingdrive/primitives where applicable
 - [ ] Type-safe queries/mutations (no manual fetch)
 - [ ] Follows V2 rounded style
