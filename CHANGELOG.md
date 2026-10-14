@@ -3,6 +3,51 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.0.0-alpha.13 — 2026-10-13
+
+### Performance (#193)
+
+- The desktop app no longer idles at full CPU. `jobs.list` returned silent
+  browse indexers, so a client that listed one mid-run kept it at
+  "Indexing 60%" forever and its spinner kept WebKitGTK's compositor busy.
+  Idle webview CPU drops from 60–100% to 1–3%.
+- An empty folder is polled at most 8 times instead of every 750 ms forever.
+- Tabs saved by older builds with the `unknown-device` slug list their folder
+  again instead of failing with "Location root path is not local".
+- `daemon.log` is written again: config v7 moves the log filter off the
+  pre-rename crate names.
+
+### Previews (#193, #195)
+
+- Folders that are not indexed show real previews for images, videos (first
+  representative frame) and PDFs (first page) instead of a generic icon.
+  Previews are cached by path, modification time and size. Videos and PDFs use
+  the host's `ffmpeg` and `pdftoppm`; the AUR package lists `ffmpeg` and
+  `poppler` as optional dependencies.
+
+### File management (#194)
+
+- Trash view: list, restore and permanently delete items in the system trash
+  (Linux and Windows), from the sidebar footer. Moving files to the trash can
+  be undone.
+- Batch rename: find/replace plus a `{name}`/`{n}` pattern with a live
+  preview; empty, slashed or colliding names are blocked; one undo reverts
+  the whole batch.
+- Find duplicates in a folder. Every set is confirmed by reading the files in
+  full, symlinks are skipped, and extra copies move to the trash with undo.
+- Compare two folders and merge their differences. Changed files keep the
+  newer copy; the older one goes to the trash.
+
+### CI (#195)
+
+- Desktop-only pull requests no longer fail the daemon spawn test: the empty
+  `--no-daemon` sidecar placeholder had replaced the debug `wing-daemon`.
+
+### Dependencies (#180, #187, #188, #190, #192)
+
+- Dependabot updates, including `zod` 4.6.5, `style-to-js` 2.0.2 and
+  `eslint-plugin-jsdoc` 65; Expo SDK 57 pins held for mobile (#191).
+
 ## 2.0.0-alpha.12 — 2026-10-12
 
 ### Brand (#172)
