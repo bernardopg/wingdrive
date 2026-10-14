@@ -5,6 +5,7 @@ import {
 	PredefinedMenuItem,
 	Submenu
 } from '@tauri-apps/api/menu';
+import { LogicalPosition } from '@tauri-apps/api/dpi';
 import type { ContextMenuItem } from '@wingdrive/interface';
 
 /**
@@ -20,7 +21,9 @@ export async function showNativeContextMenu(
 	const menu = await Menu.new({ items: menuItems });
 
 	console.log('[Tauri ContextMenu] Showing menu at position:', position);
-	await menu.popup();
+	// Without a position, GTK anchors to the root window and global pointer,
+	// which Wayland lacks, so compositors place the menu as a centered toplevel.
+	await menu.popup(new LogicalPosition(position.x, position.y));
 }
 
 /**
@@ -95,6 +98,9 @@ async function rasterize(url: string): Promise<Uint8Array | null> {
  * Initialize the context menu handler on the window global
  */
 export function initializeContextMenuHandler() {
+	// Linux uses the in-app web menu: GTK menus ignore the app theme and
+	// language, and Wayland compositors may not place them at the cursor.
+	if (navigator.userAgent.includes('Linux')) return;
 	window.__WINGDRIVE__ ??= {};
 	window.__WINGDRIVE__.showContextMenu = showNativeContextMenu;
 	console.log('[Tauri ContextMenu] Handler initialized');
