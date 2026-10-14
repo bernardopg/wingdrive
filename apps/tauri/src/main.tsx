@@ -4,7 +4,15 @@ import { ErrorBoundary, explorerUrlForDirectory } from '@wingdrive/interface';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { configureRendering } from './lib/rendering';
 import './index.css';
+import './rendering.css';
+
+configureRendering(
+	document.documentElement,
+	navigator.platform,
+	getCurrentWebviewWindow().label
+);
 
 // A launch with a folder opens it as the first route, so the tab manager
 // starts there instead of painting the overview and navigating afterwards.

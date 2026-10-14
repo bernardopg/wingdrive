@@ -22,6 +22,7 @@ import {useNormalizedQuery} from './contexts/WingDriveContext';
 import {WebContextMenuProvider} from './contexts/WebContextMenuContext';
 import {ExplorerProvider, useExplorer} from './routes/explorer';
 import {KeyboardHandler} from './routes/explorer/KeyboardHandler';
+import {FileContextMenuProvider} from './routes/explorer/FileContextMenuProvider';
 import {SelectionProvider} from './routes/explorer/SelectionContext';
 import {TagAssignmentMode} from './routes/explorer/TagAssignmentMode';
 import {TopBar, TopBarProvider} from './TopBar';
@@ -290,11 +291,13 @@ export function ShellLayout() {
 				<SelectionProvider>
 					<ExplorerProvider>
 						<WebContextMenuProvider>
-							{/* Sync tab navigation and defaults with router */}
-							<TabNavigationSync />
-							<TabDefaultsSync />
-							<LaunchRequestSync />
-							<ShellLayoutContent />
+							<FileContextMenuProvider>
+								{/* Sync tab navigation and defaults with router */}
+								<TabNavigationSync />
+								<TabDefaultsSync />
+								<LaunchRequestSync />
+								<ShellLayoutContent />
+							</FileContextMenuProvider>
 						</WebContextMenuProvider>
 					</ExplorerProvider>
 				</SelectionProvider>

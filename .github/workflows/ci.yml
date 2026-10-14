@@ -112,6 +112,8 @@ jobs:
           bun test packages/interface/src/Settings/pages/settingsPages.test.tsx
           bun test packages/interface/src/routes/explorer/hooks/searchQuery.test.ts
           bun test packages/ts-client/src/__tests__/tauri-transport.test.ts
+          bun test apps/tauri/src/lib/rendering.test.js
+          bun test packages/interface/src/routes/explorer/FileContextMenuProvider.test.tsx
 
   core:
     name: Rust Workspace

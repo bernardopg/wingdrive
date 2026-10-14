@@ -2,9 +2,8 @@ import type {File} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {memo} from 'react';
 import {File as FileComponent} from '../../File';
-import {useFileContextMenu} from '../../hooks/useFileContextMenu';
+import {useShowFileContextMenu} from '../../FileContextMenuProvider';
 import {useOpenFile} from '../../hooks/useOpenFile';
-import {useSelection} from '../../SelectionContext';
 
 function formatDuration(seconds: number): string {
 	const mins = Math.floor(seconds / 60);
@@ -34,13 +33,7 @@ export const MediaViewItem = memo(function MediaViewItem({
 	onSelect,
 	size
 }: MediaViewItemProps) {
-	const {selectedFiles} = useSelection();
-
-	const contextMenu = useFileContextMenu({
-		file,
-		selectedFiles,
-		selected
-	});
+	const showContextMenu = useShowFileContextMenu();
 
 	const handleClick = (e: React.MouseEvent) => {
 		const multi = e.metaKey || e.ctrlKey;
@@ -56,7 +49,7 @@ export const MediaViewItem = memo(function MediaViewItem({
 			onSelect(file, allFiles, false, false);
 		}
 
-		await contextMenu.show(e);
+		showContextMenu(e, file, selected);
 	};
 
 	const openFile = useOpenFile();

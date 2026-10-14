@@ -4,9 +4,8 @@ import clsx from 'clsx';
 import {memo, useCallback, useRef} from 'react';
 import {useNormalizedQuery} from '../../../../contexts/WingDriveContext';
 import {useExplorer} from '../../context';
-import {useFileContextMenu} from '../../hooks/useFileContextMenu';
+import {useShowFileContextMenu} from '../../FileContextMenuProvider';
 import {useOpenFile} from '../../hooks/useOpenFile';
-import {useSelection} from '../../SelectionContext';
 import {ColumnItem} from './ColumnItem';
 
 /**
@@ -18,7 +17,6 @@ const ColumnItemWrapper = memo(function ColumnItemWrapper({
 	files,
 	virtualRow,
 	selected,
-	selectedFiles,
 	onSelectFile,
 	onNavigate
 }: {
@@ -26,7 +24,6 @@ const ColumnItemWrapper = memo(function ColumnItemWrapper({
 	files: File[];
 	virtualRow: VirtualItem;
 	selected: boolean;
-	selectedFiles: File[];
 	onSelectFile: (
 		file: File,
 		files: File[],
@@ -35,11 +32,7 @@ const ColumnItemWrapper = memo(function ColumnItemWrapper({
 	) => void;
 	onNavigate: (path: WingPath) => void;
 }) {
-	const contextMenu = useFileContextMenu({
-		file,
-		selectedFiles,
-		selected
-	});
+	const showContextMenu = useShowFileContextMenu();
 
 	const handleClick = useCallback(
 		(multi: boolean, range: boolean) => {
@@ -58,9 +51,9 @@ const ColumnItemWrapper = memo(function ColumnItemWrapper({
 			if (!selected) {
 				onSelectFile(file, files, false, false);
 			}
-			await contextMenu.show(e);
+			showContextMenu(e, file, selected);
 		},
-		[file, files, selected, onSelectFile, contextMenu]
+		[file, files, selected, onSelectFile, showContextMenu]
 	);
 
 	return (
@@ -114,7 +107,6 @@ export const Column = memo(function Column({
 }: ColumnProps) {
 	const parentRef = useRef<HTMLDivElement>(null);
 	const {viewSettings, sortBy, sortDirection} = useExplorer();
-	const {selectedFiles} = useSelection();
 
 	const directoryQuery = useNormalizedQuery({
 		query: 'files.directory_listing',
@@ -189,7 +181,6 @@ export const Column = memo(function Column({
 							files={files}
 							virtualRow={virtualRow}
 							selected={fileIsSelected || isInPath}
-							selectedFiles={selectedFiles}
 							onSelectFile={onSelectFile}
 							onNavigate={onNavigate}
 						/>

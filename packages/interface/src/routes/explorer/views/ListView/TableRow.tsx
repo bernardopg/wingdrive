@@ -8,7 +8,7 @@ import {TagPill} from '../../../../components/Tags';
 import {InlineNameEdit} from '../../components/InlineNameEdit';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
-import {useFileContextMenu} from '../../hooks/useFileContextMenu';
+import {useShowFileContextMenu} from '../../FileContextMenuProvider';
 import {useOpenFile} from '../../hooks/useOpenFile';
 import {useSelection} from '../../SelectionContext';
 import {ROW_HEIGHT, TABLE_PADDING_X} from './useTable';
@@ -46,11 +46,7 @@ export const TableRow = memo(function TableRow({
 }: TableRowProps) {
 	const {selectedFiles} = useSelection();
 
-	const contextMenu = useFileContextMenu({
-		file,
-		selectedFiles,
-		selected: isSelected
-	});
+	const showContextMenu = useShowFileContextMenu();
 
 	const openFile = useOpenFile();
 
@@ -74,9 +70,9 @@ export const TableRow = memo(function TableRow({
 				selectFile(file, files, false, false);
 			}
 
-			await contextMenu.show(e);
+			showContextMenu(e, file, isSelected);
 		},
-		[file, files, isSelected, selectFile, contextMenu]
+		[file, files, isSelected, selectFile, showContextMenu]
 	);
 
 	const cells = row.getVisibleCells();

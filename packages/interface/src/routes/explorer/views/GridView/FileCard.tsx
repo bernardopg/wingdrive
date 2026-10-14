@@ -9,7 +9,7 @@ import {VolumeSizeBar} from '../../components/VolumeSizeBar';
 import {useExplorer} from '../../context';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
-import {useFileContextMenu} from '../../hooks/useFileContextMenu';
+import {useShowFileContextMenu} from '../../FileContextMenuProvider';
 import {useOpenFile} from '../../hooks/useOpenFile';
 import {useSelection} from '../../SelectionContext';
 import {formatBytes} from '../../utils';
@@ -44,11 +44,7 @@ export const FileCard = memo(function FileCard({
 
 	const isRenaming = renamingFileId === file.id;
 
-	const contextMenu = useFileContextMenu({
-		file,
-		selectedFiles,
-		selected
-	});
+	const showContextMenu = useShowFileContextMenu();
 
 	const openFile = useOpenFile();
 
@@ -68,7 +64,7 @@ export const FileCard = memo(function FileCard({
 			selectFile(file, allFiles, false, false);
 		}
 
-		await contextMenu.show(e);
+		showContextMenu(e, file, selected);
 	};
 
 	const {

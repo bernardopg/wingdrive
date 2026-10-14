@@ -120,7 +120,7 @@ export function useFileContextMenu({
 	};
 
 	const physicalPaths = getPhysicalPaths();
-	const {apps, openWithApp, openMultipleWithApp, canSetDefault, setDefaultApp} =
+	const {apps, isLoading: appsLoading, openWithApp, openMultipleWithApp, canSetDefault, setDefaultApp} =
 		useOpenWith(physicalPaths);
 	const openTerminal = useOpenTerminal();
 	const {newFile, newLink} = useCreateEntry();
@@ -148,7 +148,7 @@ export function useFileContextMenu({
 			? localFolders[0]
 			: null;
 
-	return useContextMenu({
+	const menu = useContextMenu({
 		items: [
 			{
 				icon: Eye,
@@ -759,4 +759,5 @@ export function useFileContextMenu({
 			}
 		]
 	});
+	return {...menu, appsLoading};
 }
