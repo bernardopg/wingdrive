@@ -3,9 +3,21 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 2.0.0-alpha.14 — 2026-10-14
 
-### Desktop
+### Performance (#199)
+
+- Folder navigation in the Linux desktop app is about 8x faster: the median
+  folder change drops from about 450 ms to about 55 ms, with about 4x less
+  WebKit CPU. On Linux the main window no longer applies backdrop-filter blurs,
+  because WebKitGTK re-blurred 14 controls on every folder change. The TopBar,
+  tab bar and library switcher keep their opaque surfaces. macOS, Windows and
+  the web app are unchanged.
+- File views build the context menu once, when an item is right-clicked. Each
+  visible item had mounted its own menu: a dozen mutations plus an "Open With"
+  lookup over IPC per item on every folder change.
+
+### Desktop (#198)
 
 - Sidebar keyboard focus uses a subtle inset outline that remains fully visible,
   and its footer controls now have equal spacing.
