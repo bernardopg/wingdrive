@@ -275,21 +275,39 @@ fn thumb_bucket(size: u32) -> u32 {
 	}
 }
 
-/// Extensions the `image` crate decodes with its default features.
-fn is_thumbable(path: &std::path::Path) -> bool {
-	path.extension()
-		.and_then(|e| e.to_str())
-		.map(|e| e.to_ascii_lowercase())
-		.is_some_and(|e| {
-			matches!(
-				e.as_str(),
-				"jpg" | "jpeg" | "png" | "gif" | "webp" | "bmp" | "tif" | "tiff" | "ico" | "tga"
-			)
-		})
+#[derive(Clone, Copy)]
+enum ThumbKind {
+	/// Decoded in-process by the `image` crate
+	Image,
+	/// First representative frame, rendered by the host's `ffmpeg`
+	Video,
+	/// First page, rendered by the host's `pdftoppm` (poppler)
+	Pdf,
 }
 
-/// Decode, orient and shrink an image into WebP bytes.
-fn render_thumb(path: &std::path::Path, edge: u32) -> Result<Vec<u8>, String> {
+fn thumb_kind(path: &std::path::Path) -> Option<ThumbKind> {
+	let ext = path.extension()?.to_str()?.to_ascii_lowercase();
+	match ext.as_str() {
+		"jpg" | "jpeg" | "png" | "gif" | "webp" | "bmp" | "tif" | "tiff" | "ico" | "tga" => {
+			Some(ThumbKind::Image)
+		}
+		"mp4" | "m4v" | "mov" | "mkv" | "webm" | "avi" | "wmv" | "flv" | "mpg" | "mpeg" | "ts"
+		| "3gp" | "ogv" => Some(ThumbKind::Video),
+		"pdf" => Some(ThumbKind::Pdf),
+		_ => None,
+	}
+}
+
+/// Shrink a decoded image into WebP bytes.
+fn encode_thumb(img: image::DynamicImage, edge: u32) -> Vec<u8> {
+	let rgba = img.thumbnail(edge, edge).to_rgba8();
+	webp::Encoder::from_rgba(&rgba, rgba.width(), rgba.height())
+		.encode(75.0)
+		.to_vec()
+}
+
+/// Decode and orient a local image.
+fn decode_image(path: &std::path::Path) -> Result<image::DynamicImage, String> {
 	use image::{DynamicImage, ImageDecoder, ImageReader};
 
 	let mut decoder = ImageReader::open(path)
@@ -301,16 +319,103 @@ fn render_thumb(path: &std::path::Path, edge: u32) -> Result<Vec<u8>, String> {
 	let orientation = decoder.orientation().map_err(|e| e.to_string())?;
 	let mut img = DynamicImage::from_decoder(decoder).map_err(|e| e.to_string())?;
 	img.apply_orientation(orientation);
-
-	let rgba = img.thumbnail(edge, edge).to_rgba8();
-	let encoded = webp::Encoder::from_rgba(&rgba, rgba.width(), rgba.height()).encode(75.0);
-	Ok(encoded.to_vec())
+	Ok(img)
 }
 
-/// Serves a small WebP preview of a local image that has no indexed sidecar.
+/// A slow or hung decoder must not hold a permit forever.
+const TOOL_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(15);
+
+/// Run a host tool that writes one PNG to stdout.
+async fn tool_png(program: &str, args: &[&std::ffi::OsStr]) -> Result<Vec<u8>, String> {
+	let child = tokio::process::Command::new(program)
+		.args(args)
+		.stdin(std::process::Stdio::null())
+		.stdout(std::process::Stdio::piped())
+		.stderr(std::process::Stdio::null())
+		.kill_on_drop(true)
+		.spawn()
+		.map_err(|e| format!("{program}: {e}"))?;
+	let output = tokio::time::timeout(TOOL_TIMEOUT, child.wait_with_output())
+		.await
+		.map_err(|_| format!("{program} timed out"))?
+		.map_err(|e| e.to_string())?;
+	if !output.status.success() || output.stdout.is_empty() {
+		return Err(format!("{program} produced no image"));
+	}
+	Ok(output.stdout)
+}
+
+/// Render a thumbnail of any supported kind into WebP bytes.
+async fn render_thumb(path: PathBuf, kind: ThumbKind, edge: u32) -> Result<Vec<u8>, String> {
+	let png = match kind {
+		ThumbKind::Image => None,
+		ThumbKind::Video => {
+			// `thumbnail` picks a representative frame among the first 50,
+			// which skips black openers without seeking past short clips.
+			let filter =
+				format!("thumbnail=50,scale={edge}:{edge}:force_original_aspect_ratio=decrease");
+			Some(
+				tool_png(
+					"ffmpeg",
+					&[
+						"-v".as_ref(),
+						"error".as_ref(),
+						"-nostdin".as_ref(),
+						"-i".as_ref(),
+						path.as_os_str(),
+						"-frames:v".as_ref(),
+						"1".as_ref(),
+						"-vf".as_ref(),
+						filter.as_ref(),
+						"-f".as_ref(),
+						"image2pipe".as_ref(),
+						"-c:v".as_ref(),
+						"png".as_ref(),
+						"-".as_ref(),
+					],
+				)
+				.await?,
+			)
+		}
+		ThumbKind::Pdf => {
+			let edge = edge.to_string();
+			Some(
+				tool_png(
+					"pdftoppm",
+					&[
+						"-png".as_ref(),
+						"-f".as_ref(),
+						"1".as_ref(),
+						"-l".as_ref(),
+						"1".as_ref(),
+						"-singlefile".as_ref(),
+						"-scale-to".as_ref(),
+						edge.as_ref(),
+						path.as_os_str(),
+					],
+				)
+				.await?,
+			)
+		}
+	};
+	tokio::task::spawn_blocking(move || {
+		let img = match png {
+			Some(bytes) => image::load_from_memory(&bytes).map_err(|e| e.to_string())?,
+			None => decode_image(&path)?,
+		};
+		Ok(encode_thumb(img, edge))
+	})
+	.await
+	.map_err(|e| e.to_string())?
+}
+
+/// Serves a small WebP preview of a local image, video or PDF that has no
+/// indexed sidecar.
 ///
 /// Browsing a folder that is not a location never produces content sidecars,
-/// so without this the grid shows only a generic icon. Results are cached by
+/// so without this the grid shows only a generic icon. Videos and PDFs use the
+/// host's `ffmpeg` and `pdftoppm`; without them the request fails and the
+/// client keeps its icon. Results are cached by
 /// path, modification time, length and size bucket, so an edited file gets a
 /// fresh thumbnail and an unchanged one is decoded once.
 async fn serve_thumb(
@@ -325,9 +430,9 @@ async fn serve_thumb(
 	if !path.is_absolute() {
 		return Err(StatusCode::BAD_REQUEST);
 	}
-	if !is_thumbable(&path) {
+	let Some(kind) = thumb_kind(&path) else {
 		return Err(StatusCode::UNSUPPORTED_MEDIA_TYPE);
-	}
+	};
 
 	let metadata = tokio::fs::metadata(&path).await.map_err(|e| {
 		if e.kind() == io::ErrorKind::NotFound {
@@ -362,14 +467,10 @@ async fn serve_thumb(
 				.acquire()
 				.await
 				.map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
-			let source = path.clone();
-			let bytes = tokio::task::spawn_blocking(move || render_thumb(&source, edge))
-				.await
-				.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-				.map_err(|e| {
-					error!("Thumbnail failed for {:?}: {}", path, e);
-					StatusCode::UNPROCESSABLE_ENTITY
-				})?;
+			let bytes = render_thumb(path.clone(), kind, edge).await.map_err(|e| {
+				error!("Thumbnail failed for {:?}: {}", path, e);
+				StatusCode::UNPROCESSABLE_ENTITY
+			})?;
 
 			// A failed cache write only costs a re-decode next time.
 			let tmp = cache_path.with_extension("tmp");
@@ -575,4 +676,55 @@ mod tests {
 		assert_eq!(cached, 1);
 		shutdown.send(()).await.unwrap();
 	}
+
+	fn has_tool(program: &str) -> bool {
+		std::process::Command::new(program)
+			.arg("-v")
+			.stdout(std::process::Stdio::null())
+			.stderr(std::process::Stdio::null())
+			.status()
+			.is_ok()
+	}
+
+	#[tokio::test]
+	async fn renders_video_frame_and_pdf_page_with_host_tools() {
+		let directory = tempfile::tempdir().unwrap();
+		if has_tool("ffmpeg") {
+			let video = directory.path().join("clip.mp4");
+			let made = std::process::Command::new("ffmpeg")
+				.args([
+					"-v",
+					"error",
+					"-f",
+					"lavfi",
+					"-i",
+					"testsrc=duration=1:size=640x360:rate=10",
+				])
+				.arg(&video)
+				.status()
+				.unwrap();
+			assert!(made.success());
+			let webp = render_thumb(video, ThumbKind::Video, 128).await.unwrap();
+			let thumb = image::load_from_memory(&webp).unwrap();
+			assert_eq!((thumb.width(), thumb.height()), (128, 72));
+		}
+		if has_tool("pdftoppm") {
+			// A one-page, 200x100 pt PDF with no content.
+			let pdf = directory.path().join("doc.pdf");
+			std::fs::write(&pdf, MINIMAL_PDF).unwrap();
+			let webp = render_thumb(pdf, ThumbKind::Pdf, 128).await.unwrap();
+			let thumb = image::load_from_memory(&webp).unwrap();
+			assert_eq!(thumb.width(), 128);
+		}
+		let missing = render_thumb(directory.path().join("x.pdf"), ThumbKind::Pdf, 128).await;
+		assert!(missing.is_err());
+	}
+
+	const MINIMAL_PDF: &[u8] = b"%PDF-1.4
+1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
+2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
+3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 100]>>endobj
+trailer<</Root 1 0 R>>
+%%EOF
+";
 }

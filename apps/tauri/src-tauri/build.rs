@@ -95,8 +95,12 @@ fn main() {
 		));
 		std::fs::create_dir_all(destination.parent().expect("Missing sidecar directory"))
 			.expect("Cannot create sidecar directory");
-		// Debug builds must not replace the daemon used by release bundles.
-		if profile == "release" || !destination.exists() {
+		// Debug builds must not replace the daemon used by release bundles, but
+		// they do replace `xtask setup --no-daemon`'s empty placeholder:
+		// tauri-build copies this sidecar next to the debug binary, so an empty
+		// one would overwrite target/debug/wing-daemon with a 0-byte file.
+		let placeholder = std::fs::metadata(&destination).is_ok_and(|m| m.len() == 0);
+		if profile == "release" || !destination.exists() || placeholder {
 			std::fs::copy(&daemon_source, destination).expect("Cannot stage daemon sidecar");
 		}
 	} else if profile == "release" {

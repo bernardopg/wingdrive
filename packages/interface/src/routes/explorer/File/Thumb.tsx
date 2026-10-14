@@ -114,14 +114,17 @@ export const Thumb = memo(function Thumb({
   // Get content kind for icon resolution
   const contentKind = getContentKind(file);
 
-  // Unindexed images have no sidecar yet; the desktop host renders one on demand.
+  // Unindexed media has no sidecar yet; the desktop host renders one on demand.
   const physicalPath =
     typeof file.wing_path === "object" && "Physical" in file.wing_path
       ? file.wing_path.Physical.path
       : null;
   const thumbnailSrc =
     getThumbnailUrl(size) ??
-    (contentKind === "image" && physicalPath
+    ((contentKind === "image" ||
+      contentKind === "video" ||
+      file.extension?.toLowerCase() === "pdf") &&
+    physicalPath
       ? buildThumbUrl(physicalPath, size)
       : null);
   const kindCapitalized = getFileKindForIcon(file);

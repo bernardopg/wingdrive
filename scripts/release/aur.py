@@ -26,7 +26,9 @@ optdepends=('gst-plugins-good: audio and video playback in previews'
             'gvfs: network locations (SFTP, FTP, WebDAV) in the sidebar'
             'gvfs-mtp: Android phones over MTP'
             'gvfs-smb: Windows and Samba shares'
-            'gvfs-gphoto2: cameras')
+            'gvfs-gphoto2: cameras'
+            'ffmpeg: video thumbnails in folders that are not indexed'
+            'poppler: PDF thumbnails in folders that are not indexed')
 provides=('wingdrive')
 conflicts=('wingdrive')
 options=('!strip' '!debug')
