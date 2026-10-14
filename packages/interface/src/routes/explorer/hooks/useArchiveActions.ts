@@ -8,6 +8,7 @@ import {useRefetchFileListings} from '../../../hooks/useRefetchFileListings';
 import {useWaitForJob} from '../../../hooks/useWaitForJob';
 import {physicalPath} from '../fileCapabilities';
 import {archiveBaseName} from './archiveName';
+import {useTranslation} from '../../../i18n';
 
 // Archives can take minutes; the toast still reports the outcome later.
 const ARCHIVE_TIMEOUT_MS = 60 * 60 * 1000;
@@ -26,6 +27,7 @@ function diskName(file: File): string {
 
 /** Compress and extract through archive jobs, refreshing listings when they finish. */
 export function useArchiveActions() {
+	const {t} = useTranslation('explorer');
 	const compressMutation = useLibraryMutation('archive.compress');
 	const extractMutation = useLibraryMutation('archive.extract');
 	const waitForJob = useWaitForJob();
@@ -35,25 +37,25 @@ export function useArchiveActions() {
 	const run = useCallback(
 		async (label: string, dispatch: () => Promise<{id: string}>) => {
 			// Progress shows in the job manager; the toasts bracket the run.
-			toast.info(`${label}...`);
+			toast.info(t('archive.compressingStatus', {label}));
 			try {
 				const {result} = await waitForJob(dispatch, ARCHIVE_TIMEOUT_MS);
-				if (result.status === 'failed') toast.error(`${label} failed: ${result.error}`);
-				else if (result.status === 'cancelled') toast.info(`${label} cancelled`);
-				else toast.success(`${label} finished`);
+				if (result.status === 'failed') toast.error(t('archive.failed', {label, error: result.error}));
+				else if (result.status === 'cancelled') toast.info(t('archive.cancelled', {label}));
+				else toast.success(t('archive.finished', {label}));
 			} catch (error) {
-				toast.error(`${label} failed: ${error}`);
+				toast.error(t('archive.failed', {label, error}));
 			}
 			refetchListings();
 		},
-		[waitForJob, refetchListings]
+		[waitForJob, refetchListings, t]
 	);
 
 	const compress = useCallback(
 		(files: File[], format: ArchiveFormat) => {
 			const destination = files[0] && parentOf(files[0]);
 			if (!destination) return;
-			void run('Compressing', () =>
+			void run(t('archive.compressing'), () =>
 				compressMutation.mutateAsync({
 					sources: files.map((f) => f.wing_path),
 					destination,
@@ -62,31 +64,31 @@ export function useArchiveActions() {
 				})
 			);
 		},
-		[compressMutation, run]
+		[compressMutation, run, t]
 	);
 
 	const extract = useCallback(
 		(file: File, destination?: WingPath) => {
 			const target = destination ?? parentOf(file);
 			if (!target) return;
-			void run('Extracting', () =>
+			void run(t('archive.extracting'), () =>
 				extractMutation.mutateAsync({archive: file.wing_path, destination: target})
 			);
 		},
-		[extractMutation, run]
+		[extractMutation, run, t]
 	);
 
 	const extractTo = useCallback(
 		async (file: File) => {
 			if (!platform.openDirectoryPickerDialog || !('Physical' in file.wing_path)) return;
-			const picked = await platform.openDirectoryPickerDialog({title: 'Extract to'});
+			const picked = await platform.openDirectoryPickerDialog({title: t('archive.extractTo')});
 			const directory = Array.isArray(picked) ? picked[0] : picked;
 			if (!directory) return;
 			extract(file, {
 				Physical: {device_slug: file.wing_path.Physical.device_slug, path: directory}
 			});
 		},
-		[platform, extract]
+		[platform, extract, t]
 	);
 
 	return {compress, extract, extractTo, canPickDirectory: !!platform.openDirectoryPickerDialog};

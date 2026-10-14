@@ -3,6 +3,7 @@ import {Dialog, dialogManager, Input, Label, toast, useDialog} from '@wingdrive/
 import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {useForm} from 'react-hook-form';
 import {useNavigate} from 'react-router-dom';
+import {useTranslation} from '../../i18n';
 
 import {usePlatform, type NetworkMount} from '../../contexts/PlatformContext';
 import {explorerUrlForDirectory} from '../TabManager/LaunchRequestSync';
@@ -24,6 +25,7 @@ function openConnectDialog(connect: Connect) {
 }
 
 function ConnectDialog(props: {id: number; connect: Connect}) {
+	const {t} = useTranslation('navigation');
 	const dialog = useDialog(props);
 	const form = useForm<ConnectForm>({defaultValues: {uri: '', password: ''}});
 
@@ -40,29 +42,29 @@ function ConnectDialog(props: {id: number; connect: Connect}) {
 		<Dialog
 			form={form}
 			dialog={dialog}
-			title="Connect to Server"
+			title={t('network.connectTitle')}
 			onSubmit={onSubmit}
-			ctaLabel="Connect"
+			ctaLabel={t('network.connect')}
 			loading={form.formState.isSubmitting}
 		>
 			<div className="space-y-4">
 				<div>
-					<Label>Server address</Label>
+					<Label>{t('network.address')}</Label>
 					<Input
 						{...form.register('uri', {required: true})}
 						placeholder="sftp://user@server/  ·  smb://server/share  ·  ftp://host/"
 						autoFocus
 					/>
 					<p className="text-ink-faint mt-1 text-xs">
-						Put the user name in the address. For SMB domains use smb://DOMAIN;user@server/share.
+						{t('network.addressHint')}
 					</p>
 					{form.formState.errors.uri?.message && (
 						<p className="mt-1 text-xs text-red-400">{form.formState.errors.uri.message}</p>
 					)}
 				</div>
 				<div>
-					<Label>Password (optional)</Label>
-					<Input {...form.register('password')} type="password" placeholder="Leave empty for keys or guest access" />
+					<Label>{t('network.password')}</Label>
+					<Input {...form.register('password')} type="password" placeholder={t('network.passwordPlaceholder')} />
 				</div>
 			</div>
 		</Dialog>
@@ -75,6 +77,7 @@ function iconFor(mount: NetworkMount) {
 
 /** Network locations and devices from gvfs, shown under Volumes on Linux. */
 export function NetworkSection() {
+	const {t} = useTranslation('navigation');
 	const platform = usePlatform();
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
@@ -107,7 +110,7 @@ export function NetworkSection() {
 			refresh();
 			navigate(explorerUrlForDirectory(mount.path));
 		} catch (error) {
-			toast.error(`Could not mount ${name}: ${error}`);
+			toast.error(t('network.mountFailed', {name, error: String(error)}));
 		}
 	};
 
@@ -124,7 +127,7 @@ export function NetworkSection() {
 			// A tab left on the unmounted folder would keep its stale listing.
 			if (decodeURIComponent(window.location.search).includes(mount.path)) navigate('/');
 		} catch (error) {
-			toast.error(`Could not unmount ${mount.name}: ${error}`);
+			toast.error(t('network.unmountFailed', {name: mount.name, error: String(error)}));
 		}
 	};
 
@@ -147,8 +150,8 @@ export function NetworkSection() {
 						</button>
 						<button
 							type="button"
-							aria-label={`Unmount ${mount.name}`}
-							title="Unmount"
+							aria-label={t('network.unmountNamed', {name: mount.name})}
+							title={t('network.unmount')}
 							className="text-ink-faint hover:text-ink opacity-0 group-hover:opacity-100"
 							onClick={() => void unmount(mount)}
 						>
@@ -162,7 +165,7 @@ export function NetworkSection() {
 					key={volume.uri}
 					type="button"
 					className={rowClass}
-					title={`Mount ${volume.name}`}
+					title={t('network.mountNamed', {name: volume.name})}
 					onClick={() => void mountVolume(volume.uri, volume.name)}
 				>
 					<DeviceMobile className="size-4 shrink-0 opacity-60" weight="bold" />
@@ -171,7 +174,7 @@ export function NetworkSection() {
 			))}
 			<button type="button" className={rowClass} onClick={() => openConnectDialog(connect)}>
 				<Plus className="size-4 shrink-0" weight="bold" />
-				<span className="truncate">Connect to Server...</span>
+				<span className="truncate">{t('network.connectToServer')}</span>
 			</button>
 		</div>
 	);

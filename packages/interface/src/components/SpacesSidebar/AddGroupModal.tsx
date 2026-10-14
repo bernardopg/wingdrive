@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '../../i18n';
 import { Input, Label, dialogManager, useDialog, Dialog } from '@wingdrive/primitives';
 import { useLibraryMutation } from '@wingdrive/ts-client';
 import { useForm } from 'react-hook-form';
@@ -13,6 +14,7 @@ export function useAddGroupDialog(spaceId: string) {
 }
 
 function AddGroupDialog(props: { id: number; spaceId: string }) {
+	const { t } = useTranslation('navigation');
 	const dialog = useDialog(props);
 	const [groupType, setGroupType] = useState<GroupType>('Custom');
 
@@ -25,7 +27,7 @@ function AddGroupDialog(props: { id: number; spaceId: string }) {
 	const onSubmit = form.handleSubmit(async (data) => {
 		await addGroup.mutateAsync({
 			space_id: props.spaceId,
-			name: data.groupName || getDefaultName(groupType),
+			name: data.groupName || getDefaultName(groupType, t),
 			group_type: groupType,
 		});
 		form.reset();
@@ -34,29 +36,29 @@ function AddGroupDialog(props: { id: number; spaceId: string }) {
 	});
 
 	return (
-		<Dialog form={form} dialog={dialog} title="Add Group" onSubmit={onSubmit} ctaLabel="Create">
+		<Dialog form={form} dialog={dialog} title={t('groups.add')} onSubmit={onSubmit} ctaLabel={t('common.create')}>
 			<div className="space-y-4">
 				<div>
-					<Label>Group Type</Label>
+					<Label>{t('groups.type')}</Label>
 					<select
 						value={typeof groupType === 'string' ? groupType : 'Custom'}
 						onChange={(e) => setGroupType(e.target.value as GroupType)}
 						className="w-full rounded-lg border border-app-line bg-app-input px-3 py-2 text-sm text-ink"
 					>
-						<option value="Devices">All Devices</option>
-						<option value="Locations">All Locations</option>
-						<option value="Tags">Tags</option>
-						<option value="Cloud">Cloud Storage</option>
-						<option value="Custom">Custom</option>
+						<option value="Devices">{t('groups.allDevices')}</option>
+						<option value="Locations">{t('groups.allLocations')}</option>
+						<option value="Tags">{t('groups.tags')}</option>
+						<option value="Cloud">{t('groups.cloudStorage')}</option>
+						<option value="Custom">{t('groups.custom')}</option>
 					</select>
 				</div>
 
 				{groupType === 'Custom' && (
 					<div>
-						<Label>Group Name</Label>
+						<Label>{t('groups.name')}</Label>
 						<Input
 							{...form.register('groupName')}
-							placeholder="Enter group name"
+							placeholder={t('groups.namePlaceholder')}
 						/>
 					</div>
 				)}
@@ -65,13 +67,13 @@ function AddGroupDialog(props: { id: number; spaceId: string }) {
 	);
 }
 
-function getDefaultName(groupType: GroupType): string {
-	if (groupType === 'Devices') return 'Devices';
-	if (groupType === 'Locations') return 'Locations';
-	if (groupType === 'Tags') return 'Tags';
-	if (groupType === 'Cloud') return 'Cloud';
-	if (groupType === 'Custom') return 'Custom Group';
-	if (typeof groupType === 'object' && 'Device' in groupType) return 'Device';
-	return 'Group';
+function getDefaultName(groupType: GroupType, t: (key: string) => string): string {
+	if (groupType === 'Devices') return t('groups.devices');
+	if (groupType === 'Locations') return t('groups.locations');
+	if (groupType === 'Tags') return t('groups.tags');
+	if (groupType === 'Cloud') return t('groups.cloud');
+	if (groupType === 'Custom') return t('groups.customGroup');
+	if (typeof groupType === 'object' && 'Device' in groupType) return t('groups.device');
+	return t('groups.group');
 }
 

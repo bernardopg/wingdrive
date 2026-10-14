@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { useAdapterIcons } from "../../hooks/useAdapterIcons";
 import { SourceTypeIcon } from "./SourceTypeIcon";
 import { SourceStatusBadge } from "./SourceStatusBadge";
+import { i18n, useTranslation } from "../../i18n";
+import {uiLocale} from "../../i18n";
 
 interface SourceCardProps {
 	source: {
@@ -23,14 +25,15 @@ function formatRelative(iso: string): string {
 	const diffHr = Math.floor(diffMin / 60);
 	const diffDay = Math.floor(diffHr / 24);
 
-	if (diffMin < 1) return "just now";
-	if (diffMin < 60) return `${diffMin}m ago`;
-	if (diffHr < 24) return `${diffHr}h ago`;
-	if (diffDay < 30) return `${diffDay}d ago`;
-	return date.toLocaleDateString();
+	if (diffMin < 1) return i18n.t("dialogs:sources.justNow");
+	if (diffMin < 60) return i18n.t("dialogs:sources.minutesAgo", { minutes: diffMin });
+	if (diffHr < 24) return i18n.t("dialogs:sources.hoursAgo", { hours: diffHr });
+	if (diffDay < 30) return i18n.t("dialogs:sources.daysAgo", { days: diffDay });
+	return date.toLocaleDateString(uiLocale());
 }
 
 export function SourceCard({ source }: SourceCardProps) {
+	const { t } = useTranslation("dialogs");
 	const navigate = useNavigate();
 	const { getIcon } = useAdapterIcons();
 
@@ -52,13 +55,12 @@ export function SourceCard({ source }: SourceCardProps) {
 
 			<div className="text-ink-faint flex items-center justify-between text-xs">
 				<span>
-					{source.item_count.toLocaleString()} item
-					{source.item_count !== 1 ? "s" : ""}
+					{t("sources.itemCount", { count: source.item_count, formattedCount: source.item_count.toLocaleString() })}
 				</span>
 				<span>
 					{source.last_synced
 						? formatRelative(source.last_synced)
-						: "Never synced"}
+						: t("sources.neverSynced")}
 				</span>
 			</div>
 		</button>

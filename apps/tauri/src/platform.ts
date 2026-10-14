@@ -6,6 +6,7 @@ import {listen} from '@tauri-apps/api/event';
 import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {ask, open, save} from '@tauri-apps/plugin-dialog';
 import {open as shellOpen} from '@tauri-apps/plugin-shell';
+import {i18n} from '@wingdrive/interface';
 import type {
 	DesktopSettings,
 	MountableVolume,
@@ -65,7 +66,7 @@ export const platform: Platform = {
 		const result = await open({
 			directory: true,
 			multiple: opts?.multiple ?? false,
-			title: opts?.title ?? 'Choose a folder'
+			title: opts?.title ?? i18n.t('common:platform.chooseFolder')
 		});
 
 		return result;
@@ -75,7 +76,7 @@ export const platform: Platform = {
 		const result = await open({
 			directory: false,
 			multiple: opts?.multiple ?? false,
-			title: opts?.title ?? 'Choose a file'
+			title: opts?.title ?? i18n.t('common:platform.chooseFile')
 		});
 
 		return result;
@@ -83,7 +84,7 @@ export const platform: Platform = {
 
 	async saveFilePickerDialog(opts) {
 		const result = await save({
-			title: opts?.title ?? 'Save file',
+			title: opts?.title ?? i18n.t('common:platform.saveFile'),
 			defaultPath: opts?.defaultPath
 		});
 

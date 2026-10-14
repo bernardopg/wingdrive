@@ -4,6 +4,7 @@ import { File as FileComponent } from "../../routes/explorer/File";
 import { formatBytes } from "../../routes/explorer/utils";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { useServer } from "../../contexts/ServerContext";
+import { useTranslation } from "../../i18n";
 import {
 	useState,
 	useEffect,
@@ -47,6 +48,7 @@ interface ContentRendererProps {
 }
 
 function ImageRenderer({ file, onZoomChange }: ContentRendererProps) {
+	const { t } = useTranslation("inspector");
 	const platform = usePlatform();
 	const { buildSidecarUrl } = useServer();
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -262,7 +264,7 @@ function ImageRenderer({ file, onZoomChange }: ContentRendererProps) {
 								setShowSplat(false);
 								setSplatLoaded(false);
 							}}
-							title="Show Image"
+title={t("inspector.preview.showImage")}
 							active={true}
 							activeAccent={true}
 						/>
@@ -323,7 +325,7 @@ function ImageRenderer({ file, onZoomChange }: ContentRendererProps) {
 							sounds.splatTrigger();
 							setShowSplat(true);
 						}}
-						title="Show 3D Splat"
+title={t("inspector.preview.showSplat")}
 					/>
 				</div>
 			)}
@@ -333,14 +335,14 @@ function ImageRenderer({ file, onZoomChange }: ContentRendererProps) {
 				<button
 					onClick={zoomIn}
 					className="rounded-lg bg-app-box/80 p-2 text-ink backdrop-blur-xl transition-colors hover:bg-app-hover"
-					title="Zoom in (+)"
+title={t("inspector.preview.zoomIn")}
 				>
 					<MagnifyingGlassPlus size={20} weight="bold" />
 				</button>
 				<button
 					onClick={zoomOut}
 					className="rounded-lg bg-app-box/80 p-2 text-ink backdrop-blur-xl transition-colors hover:bg-app-hover"
-					title="Zoom out (-)"
+title={t("inspector.preview.zoomOut")}
 				>
 					<MagnifyingGlassMinus size={20} weight="bold" />
 				</button>
@@ -348,7 +350,7 @@ function ImageRenderer({ file, onZoomChange }: ContentRendererProps) {
 					<button
 						onClick={reset}
 						className="rounded-lg bg-app-box/80 p-2 text-ink backdrop-blur-xl transition-colors hover:bg-app-hover"
-						title="Reset zoom (0)"
+title={t("inspector.preview.resetZoom")}
 					>
 						<ArrowCounterClockwise size={20} weight="bold" />
 					</button>
@@ -570,6 +572,7 @@ function DocumentRenderer({ file }: ContentRendererProps) {
 }
 
 function TextRenderer({ file }: ContentRendererProps) {
+	const { t } = useTranslation("inspector");
 	const platform = usePlatform();
 	const [textUrl, setTextUrl] = useState<string | null>(null);
 	const [shouldLoadText, setShouldLoadText] = useState(false);
@@ -620,7 +623,7 @@ function TextRenderer({ file }: ContentRendererProps) {
 					<div className="mt-4 text-ink text-lg font-medium">
 						{file.name}
 					</div>
-					<div className="text-ink-dull text-sm mt-2">Loading...</div>
+<div className="text-ink-dull text-sm mt-2">{t("inspector.loading")}</div>
 				</div>
 			</div>
 		);

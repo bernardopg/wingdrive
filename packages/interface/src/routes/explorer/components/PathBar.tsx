@@ -21,6 +21,8 @@ import {useExplorer} from '../context';
 import {useSelection} from '../SelectionContext';
 import {sdPathToUri} from '../utils';
 import {useAddStorageDialog} from './AddStorageModal';
+import {i18n, useTranslation} from '../../../i18n';
+import { ThemedIcon } from '../../../components/ThemedIcon';
 
 interface PathBarProps {
 	path: WingPath;
@@ -89,7 +91,7 @@ function getCurrentDirectoryName(sdPath: WingPath): string {
 	}
 
 	if ('Content' in sdPath) {
-		return 'Content';
+		return i18n.t('explorer:path.content');
 	}
 
 	return '';
@@ -154,6 +156,7 @@ function parsePathSegments(sdPath: WingPath): PathSegment[] {
 }
 
 function IndexIndicator({path}: {path: WingPath}) {
+	const {t} = useTranslation('explorer');
 	const popover = usePopover();
 	const enableIndexing = useLibraryMutation('locations.enable_indexing');
 	const {clearSelection} = useSelection();
@@ -206,7 +209,7 @@ function IndexIndicator({path}: {path: WingPath}) {
 					icon={isIndexed ? CircleIcon : CircleDashedIcon}
 					active={!isIndexed}
 					className={isIndexed ? '!text-accent' : undefined}
-					title={isIndexed ? 'Location is indexed' : 'Not indexed'}
+					title={t(isIndexed ? 'path.indexed' : 'path.notIndexed')}
 				/>
 			</Popover.Trigger>
 			<Popover.Content>
@@ -219,9 +222,9 @@ function IndexIndicator({path}: {path: WingPath}) {
 										{matchingLocation.name}
 									</div>
 									<div className="text-ink-dull mt-0.5 text-xs">
-										{isIndexed
-											? `Indexed (${matchingLocation.index_mode})`
-											: 'Not indexed'}
+						{isIndexed
+							? t('path.indexedMode', {mode: matchingLocation.index_mode})
+							: t('path.notIndexed')}
 									</div>
 								</div>
 							</div>
@@ -241,7 +244,7 @@ function IndexIndicator({path}: {path: WingPath}) {
 										className="text-ink hover:bg-app-hover flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors"
 									>
 										<Eye size={16} />
-										Enable Indexing
+										{t("ui.enableIndexing")}
 									</button>
 								)}
 								<button
@@ -253,7 +256,7 @@ function IndexIndicator({path}: {path: WingPath}) {
 									className="text-ink hover:bg-app-hover flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors"
 								>
 									<Folder size={16} />
-									Open Location Inspector
+									{t("ui.openLocationInspector")}
 								</button>
 							</div>
 						</>
@@ -261,7 +264,7 @@ function IndexIndicator({path}: {path: WingPath}) {
 						<div>
 							<div className="px-2 py-1.5">
 								<div className="text-ink-dull mb-2 text-xs">
-									Path is outside any location
+									{t("ui.pathIsOutsideAnyLocation")}
 								</div>
 								<Button
 									size="sm"
@@ -278,7 +281,7 @@ function IndexIndicator({path}: {path: WingPath}) {
 										popover.setOpen(false);
 									}}
 								>
-									Add Location
+									{t("ui.addLocation")}
 								</Button>
 							</div>
 						</div>
@@ -290,6 +293,7 @@ function IndexIndicator({path}: {path: WingPath}) {
 }
 
 export function PathBar({path, devices, onNavigate}: PathBarProps) {
+	const {t} = useTranslation('explorer');
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isShiftHeld, setIsShiftHeld] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
@@ -456,8 +460,8 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 					disabled={!deviceInfo.device}
 					title={
 						deviceInfo.device
-							? `Go to ${deviceInfo.device.name}`
-							: 'Device'
+							? t('path.goToDevice', {name: deviceInfo.device.name})
+							: t('metadata.device')
 					}
 					className={clsx(
 						'size-5 flex-shrink-0 transition-opacity',
@@ -466,9 +470,9 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 							: 'cursor-default opacity-60'
 					)}
 				>
-					<img
+					<ThemedIcon
 						src={deviceInfo.icon}
-						alt="Device"
+						alt={t('metadata.device')}
 						className="size-full"
 					/>
 				</button>
@@ -490,8 +494,8 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 						)}
 						placeholder={
 							editingAsUri
-								? 'Enter WingPath JSON...'
-								: 'Enter path...'
+							? t('path.enterPathJson')
+							: t('path.enterPath')
 						}
 					/>
 				) : showUri ? (
@@ -506,7 +510,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 							'cursor-text select-all',
 							'focus:outline-none focus:ring-0'
 						)}
-						placeholder="No path selected"
+						placeholder={t('path.noPathSelected')}
 					/>
 				) : isExpanded ? (
 					<div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
@@ -556,7 +560,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 							'cursor-text select-all',
 							'focus:outline-none focus:ring-0'
 						)}
-						placeholder="No path selected"
+						placeholder={t('path.noPathSelected')}
 					/>
 				)}
 			</motion.div>

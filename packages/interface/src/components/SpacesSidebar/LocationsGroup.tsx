@@ -1,6 +1,7 @@
 import { useNormalizedQuery } from "@wingdrive/ts-client";
 import { SpaceItem } from "./SpaceItem";
 import { GroupHeader } from "./GroupHeader";
+import { useTranslation } from "../../i18n";
 
 interface LocationsGroupProps {
   isCollapsed: boolean;
@@ -15,6 +16,7 @@ export function LocationsGroup({
   sortableAttributes,
   sortableListeners,
 }: LocationsGroupProps) {
+  const { t } = useTranslation("navigation");
   const { data: locationsData } = useNormalizedQuery({
     query: "locations.list",
     input: null, // Unit struct serializes as null, not {}
@@ -26,7 +28,7 @@ export function LocationsGroup({
   return (
     <div>
       <GroupHeader
-        label="Locations"
+        label={t("sidebar.locations")}
         isCollapsed={isCollapsed}
         onToggle={onToggle}
         sortableAttributes={sortableAttributes}

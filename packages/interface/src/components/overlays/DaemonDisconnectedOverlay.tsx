@@ -5,6 +5,8 @@ import { STARTUP_TIMEOUT_MS, useDaemonStatus } from "../../hooks/useDaemonStatus
 import { usePlatform } from "../../contexts/PlatformContext";
 import { Button } from "@wingdrive/primitives";
 import folderIcon from "@wingdrive/assets/icons/FolderNoSpace.png";
+import { useTranslation } from "../../i18n";
+import { ThemedIcon } from "../ThemedIcon";
 
 function CLICommand({
 	command,
@@ -13,6 +15,7 @@ function CLICommand({
 	command: string;
 	description: string;
 }) {
+	const { t } = useTranslation("dialogs");
 	const copyToClipboard = () => {
 		navigator.clipboard.writeText(command);
 	};
@@ -24,7 +27,7 @@ function CLICommand({
 			<button
 				onClick={copyToClipboard}
 				className="absolute right-2 top-2 rounded p-1 opacity-0 transition-opacity hover:bg-app-hover group-hover:opacity-100"
-				title="Copy to clipboard"
+				title={t("daemon.copyToClipboard")}
 			>
 				<Copy className="size-3 text-ink-dull" weight="bold" />
 			</button>
@@ -39,6 +42,7 @@ export function DaemonDisconnectedOverlay({
 	forceShow?: boolean;
 	daemonStatus: ReturnType<typeof useDaemonStatus>;
 }) {
+	const { t } = useTranslation("dialogs");
 	const {
 		isConnected,
 		isChecking,
@@ -92,10 +96,10 @@ export function DaemonDisconnectedOverlay({
 							/>
 							<span className="text-ink-dull">
 								{isChecking
-									? "Starting..."
+					? t("daemon.starting")
 									: isConnected
-										? "Connected"
-										: "Disconnected"}
+					? t("daemon.connected")
+					: t("daemon.disconnected")}
 							</span>
 						</div>
 
@@ -106,16 +110,16 @@ export function DaemonDisconnectedOverlay({
 								}`}
 							/>
 							<span className="text-ink-dull">
-								{isInstalled ? "Persistent" : "Temporary"}
+				{isInstalled ? t("daemon.persistent") : t("daemon.temporary")}
 							</span>
 						</div>
 					</div>
 
 					<div className="flex max-w-4xl gap-8 rounded-lg border border-app-line p-8 shadow-2xl">
 						<div className="flex flex-1 flex-col items-center justify-center gap-6 px-12">
-							<img
+							<ThemedIcon
 								src={folderIcon}
-								alt="WingDrive folder icon"
+				alt={t("daemon.folderIconAlt")}
 								className="size-32 select-none"
 								draggable={false}
 							/>
@@ -123,25 +127,19 @@ export function DaemonDisconnectedOverlay({
 							<div className="flex flex-col items-center gap-2 text-center">
 								<h1 className="text-2xl font-bold text-ink">
 									{startupTimedOut
-										? "Daemon Did Not Start"
-										: "Daemon Disconnected"}
+					? t("daemon.didNotStart")
+					: t("daemon.disconnectedTitle")}
 								</h1>
 								{startupTimedOut && (
 									<p
 										role="alert"
 										className="max-w-xs text-sm leading-relaxed text-ink"
 									>
-										WingDrive waited{" "}
-										{Math.round(STARTUP_TIMEOUT_MS / 1000)}{" "}
-										seconds without a connection. Start the
-										daemon below or check its log.
+						{t("daemon.startupTimeout", { seconds: Math.round(STARTUP_TIMEOUT_MS / 1000) })}
 									</p>
 								)}
 								<p className="max-w-xs text-sm leading-relaxed text-ink-dull">
-									The WingDrive daemon is required for the
-									app to function. It runs in the background,
-									managing your libraries, indexing files, and
-									syncing data across devices.
+					{t("daemon.requiredDescription")}
 								</p>
 							</div>
 
@@ -175,19 +173,19 @@ export function DaemonDisconnectedOverlay({
 										}}
 										className="size-4 cursor-pointer rounded border-app-line bg-app accent-accent"
 									/>
-									<span>Install as persistent service</span>
+					<span>{t("daemon.installPersistent")}</span>
 								</label>
 
 								<div className="flex items-center gap-2">
-									<Button variant="gray">Help</Button>
+					<Button variant="gray">{t("common.help")}</Button>
 									<Button
 										onClick={startDaemon}
 										disabled={isChecking}
 										variant="accent"
 									>
 										{isChecking
-											? "Starting daemon..."
-											: "Restart Daemon"}
+						? t("daemon.startingDaemon")
+						: t("daemon.restart")}
 									</Button>
 								</div>
 							</div>
@@ -195,29 +193,29 @@ export function DaemonDisconnectedOverlay({
 
 						<div className="flex w-80 flex-col gap-3 rounded-lg border border-app-line p-4">
 							<span className="text-xs font-medium text-ink-dull">
-								CLI Commands
+							{t("daemon.cliCommands")}
 							</span>
 
 							<div className="space-y-2">
 								<CLICommand
 									command="wing start"
-									description="Start the daemon in background mode"
+					description={t("daemon.startBackground")}
 								/>
 								<CLICommand
 									command="wing start --foreground"
-									description="Start the daemon in foreground mode (see logs)"
+					description={t("daemon.startForeground")}
 								/>
 								<CLICommand
 									command="wing stop"
-									description="Stop the daemon gracefully"
+					description={t("daemon.stopGracefully")}
 								/>
 								<CLICommand
 									command="wing restart"
-									description="Restart the daemon"
+					description={t("daemon.restart")}
 								/>
 								<CLICommand
 									command="wing daemon install"
-									description="Install daemon to start automatically on login (macOS/Linux)"
+					description={t("daemon.installOnLogin")}
 								/>
 							</div>
 						</div>

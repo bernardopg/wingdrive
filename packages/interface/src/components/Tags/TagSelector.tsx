@@ -8,6 +8,7 @@ import {
 	useNormalizedQuery
 } from '../../contexts/WingDriveContext';
 import { useRefetchTagQueries } from '../../hooks/useRefetchTagQueries';
+import { useTranslation } from '../../i18n';
 
 interface TagSelectorProps {
 	onSelect: (tag: Tag) => void;
@@ -34,6 +35,7 @@ export function TagSelector({
 	fileId,
 	contentId
 }: TagSelectorProps) {
+	const { t } = useTranslation("dialogs");
 	const [query, setQuery] = useState('');
 	const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -188,7 +190,7 @@ export function TagSelector({
 					value={query}
 					onChange={(e) => setQuery(e.target.value)}
 					onKeyDown={handleKeyDown}
-					placeholder="Search tags..."
+					placeholder={t("tags.search")}
 					autoFocus={autoFocus}
 					className="text-ink placeholder:text-ink-faint flex-1 bg-transparent text-sm outline-none"
 				/>
@@ -224,7 +226,7 @@ export function TagSelector({
 
 				{filteredTags.length === 0 && !query.trim() ? (
 					<div className="text-ink-dull px-3 py-4 text-center text-sm">
-						No tags yet
+						{t("ui.noTagsYet")}
 					</div>
 				) : filteredTags.length === 0 && query.trim() ? null : (
 					filteredTags.map((tag, index) => (

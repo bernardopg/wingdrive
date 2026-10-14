@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { X, ShareNetwork, Users } from '@phosphor-icons/react';
 import { useState, useMemo } from 'react';
 import { CircleButton } from '@wingdrive/primitives';
+import { useTranslation } from '../i18n';
 
 interface Person {
 	id: string;
@@ -16,6 +17,7 @@ interface WingdropProps {
 }
 
 export function Wingdrop({ onClose, people = [] }: WingdropProps) {
+	const { t } = useTranslation('dialogs');
 	const [selectedPerson, setSelectedPerson] = useState<string | null>(null);
 	const [starSpeed, setStarSpeed] = useState(1);
 
@@ -69,15 +71,15 @@ export function Wingdrop({ onClose, people = [] }: WingdropProps) {
 			<div className="relative z-10 flex items-center justify-between border-b border-app-line/30 bg-app/80 p-3 backdrop-blur-xl">
 				<div className="flex gap-2">
 					<CircleButton icon={X} onClick={onClose}>
-						Close
+						{t('common.close')}
 					</CircleButton>
 				</div>
 
 				<div className="flex items-center gap-2">
 					<CircleButton icon={Users}>
-						{people.length} {people.length === 1 ? 'Device' : 'Devices'}
+						{t('wingdrop.deviceCount', { count: people.length })}
 					</CircleButton>
-					<CircleButton icon={ShareNetwork}>Share</CircleButton>
+					<CircleButton icon={ShareNetwork}>{t('common.share')}</CircleButton>
 				</div>
 			</div>
 
@@ -95,10 +97,10 @@ export function Wingdrop({ onClose, people = [] }: WingdropProps) {
 							</div>
 						</div>
 						<h2 className="mb-2 text-lg font-semibold text-sidebar-ink">
-							No devices found
+							{t('wingdrop.noDevices')}
 						</h2>
 						<p className="text-sm text-sidebar-ink-faint">
-							Waiting for nearby devices...
+							{t('wingdrop.waitingForDevices')}
 						</p>
 					</motion.div>
 				) : (

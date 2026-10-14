@@ -26,6 +26,7 @@ import {
 	VideoCamera
 } from '@phosphor-icons/react';
 import {getIcon} from '@wingdrive/assets/util';
+import {useIsDarkTheme} from '../../../hooks/useTheme';
 import type {File, WingPath} from '@wingdrive/ts-client';
 import {getContentKind} from '@wingdrive/ts-client';
 import {toast} from '@wingdrive/primitives';
@@ -49,12 +50,15 @@ import {Divider, InfoRow, Section, TabContent, Tabs, Tag} from '../Inspector';
 import {PermissionsSection} from './PermissionsSection';
 import {LocationMap} from '../LocationMap';
 import {revealLabel} from '../../../util/keybinds/platform';
+import {useTranslation} from '../../../i18n';
+import {uiLocale} from '../../../i18n';
 
 interface FileInspectorProps {
 	file: File;
 }
 
 export function FileInspector({file}: FileInspectorProps) {
+const {t} = useTranslation('inspector');
 	const [activeTab, setActiveTab] = useState('overview');
 	const isDev = import.meta.env.DEV;
 
@@ -104,16 +108,16 @@ export function FileInspector({file}: FileInspectorProps) {
 	const fileData = fileQuery.data || file;
 
 	const tabs = [
-		{id: 'overview', label: 'Overview', icon: Info},
-		{id: 'sidecars', label: 'Sidecars', icon: Image},
-		{id: 'instances', label: 'Instances', icon: MapPin},
+{id: 'overview', label: t('inspector.tabs.overview'), icon: Info},
+{id: 'sidecars', label: t('inspector.tabs.sidecars'), icon: Image},
+{id: 'instances', label: t('inspector.tabs.instances'), icon: MapPin},
 		...(isDev
-			? [{id: 'chat', label: 'Chat', icon: ChatCircle, badge: 3}]
+? [{id: 'chat', label: t('inspector.tabs.chat'), icon: ChatCircle, badge: 3}]
 			: []),
 		...(isDev
-			? [{id: 'activity', label: 'Activity', icon: ClockCounterClockwise}]
+? [{id: 'activity', label: t('inspector.tabs.activity'), icon: ClockCounterClockwise}]
 			: []),
-		{id: 'details', label: 'More', icon: DotsThree}
+{id: 'details', label: t('inspector.tabs.more'), icon: DotsThree}
 	];
 
 	return (
@@ -157,6 +161,7 @@ export function FileInspector({file}: FileInspectorProps) {
 
 // Quick Actions Component - Favorite, Share & Jobs buttons
 function FileQuickActions({file}: {file: File}) {
+const {t} = useTranslation('inspector');
 	const platform = usePlatform();
 	// Null in the pop-out inspector window, which has no explorer to overlay.
 	const explorer = useOptionalExplorer();
@@ -176,7 +181,7 @@ function FileQuickActions({file}: {file: File}) {
 		} catch (error) {
 			setIsFavorite(!next);
 			toast.error({
-				title: 'Favorite Update Failed',
+				title: t('inspector.file.favoriteUpdateFailed'),
 				body: String(error)
 			});
 		}
@@ -212,8 +217,8 @@ function FileQuickActions({file}: {file: File}) {
 	const handleShare = async () => {
 		if (!physicalPath || !platform.shareFiles) {
 			toast.error({
-				title: 'Cannot Share',
-				body: 'This file cannot be shared from its current location'
+				title: t('inspector.file.cannotShare'),
+				body: t('inspector.file.cannotShareBody')
 			});
 			return;
 		}
@@ -223,7 +228,7 @@ function FileQuickActions({file}: {file: File}) {
 		} catch (err) {
 			console.error('Failed to share file:', err);
 			toast.error({
-				title: 'Share Failed',
+				title: t('inspector.file.shareFailed'),
 				body: String(err)
 			});
 		}
@@ -235,7 +240,7 @@ function FileQuickActions({file}: {file: File}) {
 			// Image actions
 			{
 				icon: TextAa,
-				label: 'Extract Text (OCR)',
+				label: t('inspector.file.extractTextOcr'),
 				onClick: () => {
 					extractText.mutate({
 						entry_uuid: file.id,
@@ -247,7 +252,7 @@ function FileQuickActions({file}: {file: File}) {
 			},
 			{
 				icon: Cube,
-				label: 'Generate 3D Splat',
+				label: t('inspector.file.generateSplat'),
 				onClick: () => {
 					generateSplat.mutate({
 						entry_uuid: file.id,
@@ -259,7 +264,7 @@ function FileQuickActions({file}: {file: File}) {
 			// Video/Audio actions
 			{
 				icon: Microphone,
-				label: 'Generate Subtitles',
+				label: t('inspector.file.generateSubtitles'),
 				onClick: () => {
 					transcribeAudio.mutate({
 						entry_uuid: file.id,
@@ -272,7 +277,7 @@ function FileQuickActions({file}: {file: File}) {
 			// Video-only actions
 			{
 				icon: FilmStrip,
-				label: 'Generate Thumbstrip',
+				label: t('inspector.file.generateThumbstrip'),
 				onClick: () => {
 					generateThumbstrip.mutate({
 						entry_uuid: file.id,
@@ -284,7 +289,7 @@ function FileQuickActions({file}: {file: File}) {
 			},
 			{
 				icon: VideoCamera,
-				label: 'Generate Scrubbing Proxy',
+				label: t('inspector.file.generateScrubbingProxy'),
 				onClick: () => {
 					generateProxy.mutate({
 						entry_uuid: file.id,
@@ -299,7 +304,7 @@ function FileQuickActions({file}: {file: File}) {
 			// Common actions
 			{
 				icon: ArrowsClockwise,
-				label: 'Regenerate Thumbnails',
+				label: t('inspector.file.regenerateThumbnails'),
 				onClick: () => {
 					regenerateThumbnail.mutate({
 						entry_uuid: file.id,
@@ -324,12 +329,12 @@ function FileQuickActions({file}: {file: File}) {
 						? 'text-yellow-400'
 						: 'text-sidebar-ink-dull hover:text-sidebar-ink'
 				)}
-				title={
-					isFavorite ? 'Remove from favorites' : 'Add to favorites'
-				}
-				aria-label={
-					isFavorite ? 'Remove from favorites' : 'Add to favorites'
-				}
+					title={
+						isFavorite ? t('inspector.preview.removeFavorite') : t('inspector.preview.addFavorite')
+					}
+					aria-label={
+						isFavorite ? t('inspector.preview.removeFavorite') : t('inspector.preview.addFavorite')
+					}
 			>
 				<Star size={14} weight={isFavorite ? 'fill' : 'regular'} />
 			</button>
@@ -340,7 +345,7 @@ function FileQuickActions({file}: {file: File}) {
 					type="button"
 					onClick={() => explorer.openQuickPreview(file.id)}
 					className="border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-ink-dull hover:bg-sidebar-box/30 hover:text-sidebar-ink flex size-7 items-center justify-center rounded-full border transition-all active:scale-95"
-					title="Quick Preview"
+title={t('inspector.file.quickPreview')}
 				>
 					<Eye size={14} weight="bold" />
 				</button>
@@ -352,7 +357,7 @@ function FileQuickActions({file}: {file: File}) {
 					type="button"
 					onClick={handleShare}
 					className="border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-ink-dull hover:bg-sidebar-box/30 hover:text-sidebar-ink flex size-7 items-center justify-center rounded-full border transition-all active:scale-95"
-					title="Share"
+title={t('inspector.file.share')}
 				>
 					<ShareNetwork size={14} weight="bold" />
 				</button>
@@ -364,7 +369,7 @@ function FileQuickActions({file}: {file: File}) {
 					type="button"
 					onClick={(e) => jobsMenu.show(e)}
 					className="border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-ink-dull hover:bg-sidebar-box/30 hover:text-sidebar-ink flex size-7 items-center justify-center rounded-full border transition-all active:scale-95"
-					title="Processing Jobs"
+title={t('inspector.file.processingJobs')}
 				>
 					<Sparkle size={14} weight="bold" />
 				</button>
@@ -384,13 +389,13 @@ function MediaMetadataCard({file}: {file: File}) {
 	const formatMediaDate = (dateStr: string | null | undefined) => {
 		if (!dateStr) return null;
 		const date = new Date(dateStr);
-		const weekday = date.toLocaleDateString('en-US', {weekday: 'long'});
-		const monthDay = date.toLocaleDateString('en-US', {
+		const weekday = date.toLocaleDateString(uiLocale(), {weekday: 'long'});
+		const monthDay = date.toLocaleDateString(uiLocale(), {
 			month: 'short',
 			day: 'numeric',
 			year: 'numeric'
 		});
-		const time = date.toLocaleTimeString('en-US', {
+		const time = date.toLocaleTimeString(uiLocale(), {
 			hour: '2-digit',
 			minute: '2-digit',
 			hour12: false
@@ -664,9 +669,10 @@ function MediaMetadataCard({file}: {file: File}) {
 }
 
 function OverviewTab({file}: {file: File}) {
+const {t} = useTranslation('inspector');
 	const formatDate = (dateStr: string) => {
 		const date = new Date(dateStr);
-		return date.toLocaleDateString('en-US', {
+		return date.toLocaleDateString(uiLocale(), {
 			month: 'short',
 			day: 'numeric',
 			year: 'numeric'
@@ -708,12 +714,14 @@ function OverviewTab({file}: {file: File}) {
 	const isEphemeral = !file.content_identity;
 
 	const contentKind = getContentKind(file);
-	const fileKind =
+	const rawKind =
 		contentKind && contentKind !== 'unknown'
 			? contentKind
 			: file.kind === 'File'
 				? file.extension || 'File'
 				: file.kind;
+	// Extensions are shown as-is; known kinds get their translated name
+	const fileKind = t(`kinds.${rawKind}`, {defaultValue: rawKind});
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10">
@@ -754,37 +762,37 @@ function OverviewTab({file}: {file: File}) {
 			<Divider />
 
 			{/* Details */}
-			<Section title="Details" icon={Info}>
-				<InfoRow label="Size" value={formatBytes(file.size)} />
+<Section title={t('inspector.file.details')} icon={Info}>
+<InfoRow label={t('inspector.file.size')} value={formatBytes(file.size)} />
 				{file.kind === 'File' && file.extension && (
-					<InfoRow label="Extension" value={file.extension} />
+<InfoRow label={t('inspector.file.extension')} value={file.extension} />
 				)}
-				<InfoRow label="Kind" value={fileKind} />
+<InfoRow label={t('inspector.file.kind')} value={fileKind} />
 			</Section>
 
 			{/* Dates */}
-			<Section title="Dates" icon={Calendar}>
+<Section title={t('inspector.file.dates')} icon={Calendar}>
 				{/* Show capture date for media files */}
 				{file.video_media_data?.date_captured && (
 					<InfoRow
-						label="Captured"
+label={t('inspector.file.captured')}
 						value={formatDate(file.video_media_data.date_captured)}
 					/>
 				)}
 				{file.image_media_data?.date_taken && (
 					<InfoRow
-						label="Taken"
+label={t('inspector.file.taken')}
 						value={formatDate(file.image_media_data.date_taken)}
 					/>
 				)}
-				<InfoRow label="Created" value={formatDate(file.created_at)} />
+<InfoRow label={t('inspector.file.created')} value={formatDate(file.created_at)} />
 				<InfoRow
-					label="Modified"
+label={t('inspector.file.modified')}
 					value={formatDate(file.modified_at)}
 				/>
 				{file.accessed_at && (
 					<InfoRow
-						label="Accessed"
+label={t('inspector.file.accessed')}
 						value={formatDate(file.accessed_at)}
 					/>
 				)}
@@ -792,44 +800,44 @@ function OverviewTab({file}: {file: File}) {
 
 			{/* Image Metadata */}
 			{file.image_media_data && (
-				<Section title="Image Info" icon={Image}>
+<Section title={t('inspector.file.imageInfo')} icon={Image}>
 					<InfoRow
-						label="Dimensions"
+label={t('inspector.file.dimensions')}
 						value={`${file.image_media_data.width} × ${file.image_media_data.height}`}
 					/>
 					{file.image_media_data.camera_make && (
 						<InfoRow
-							label="Camera"
+label={t('inspector.file.camera')}
 							value={`${file.image_media_data.camera_make} ${file.image_media_data.camera_model || ''}`}
 						/>
 					)}
 					{file.image_media_data.lens_model && (
 						<InfoRow
-							label="Lens"
+label={t('inspector.file.lens')}
 							value={file.image_media_data.lens_model}
 						/>
 					)}
 					{file.image_media_data.iso && (
 						<InfoRow
-							label="ISO"
+label={t('inspector.file.iso')}
 							value={String(file.image_media_data.iso)}
 						/>
 					)}
 					{file.image_media_data.focal_length && (
 						<InfoRow
-							label="Focal Length"
+label={t('inspector.file.focalLength')}
 							value={file.image_media_data.focal_length}
 						/>
 					)}
 					{file.image_media_data.aperture && (
 						<InfoRow
-							label="Aperture"
+label={t('inspector.file.aperture')}
 							value={file.image_media_data.aperture}
 						/>
 					)}
 					{file.image_media_data.shutter_speed && (
 						<InfoRow
-							label="Shutter Speed"
+label={t('inspector.file.shutterSpeed')}
 							value={file.image_media_data.shutter_speed}
 						/>
 					)}
@@ -838,26 +846,26 @@ function OverviewTab({file}: {file: File}) {
 
 			{/* Video Metadata */}
 			{file.video_media_data && (
-				<Section title="Video Info" icon={Image}>
+<Section title={t('inspector.file.videoInfo')} icon={Image}>
 					<InfoRow
-						label="Resolution"
+label={t('inspector.file.resolution')}
 						value={`${file.video_media_data.width} × ${file.video_media_data.height}`}
 					/>
 					{file.video_media_data.duration_seconds && (
 						<InfoRow
-							label="Duration"
+label={t('inspector.file.duration')}
 							value={`${Math.floor(file.video_media_data.duration_seconds / 60)}:${String(Math.floor(file.video_media_data.duration_seconds % 60)).padStart(2, '0')}`}
 						/>
 					)}
 					{file.video_media_data.codec && (
 						<InfoRow
-							label="Codec"
+label={t('inspector.file.codec')}
 							value={file.video_media_data.codec}
 						/>
 					)}
 					{file.video_media_data.bit_rate && (
 						<InfoRow
-							label="Bitrate"
+label={t('inspector.file.bitrate')}
 							value={`${Math.round(file.video_media_data.bit_rate / 1000000)} Mbps`}
 						/>
 					)}
@@ -865,13 +873,13 @@ function OverviewTab({file}: {file: File}) {
 						file.video_media_data.fps_den &&
 						file.video_media_data.fps_den !== 0 && (
 							<InfoRow
-								label="Frame Rate"
+label={t('inspector.file.frameRate')}
 								value={`${Math.round((file.video_media_data.fps_num / file.video_media_data.fps_den) * 100) / 100} fps`}
 							/>
 						)}
 					{file.video_media_data.audio_codec && (
 						<InfoRow
-							label="Audio"
+							label={t('inspector.file.audio')}
 							value={`${file.video_media_data.audio_codec} · ${file.video_media_data.audio_channels || ''}`}
 						/>
 					)}
@@ -880,52 +888,52 @@ function OverviewTab({file}: {file: File}) {
 
 			{/* Audio Metadata */}
 			{file.audio_media_data && (
-				<Section title="Audio Info" icon={Image}>
+<Section title={t('inspector.file.audioInfo')} icon={Image}>
 					{file.audio_media_data.artist && (
 						<InfoRow
-							label="Artist"
+							label={t('inspector.file.artist')}
 							value={file.audio_media_data.artist}
 						/>
 					)}
 					{file.audio_media_data.album && (
 						<InfoRow
-							label="Album"
+							label={t('inspector.file.album')}
 							value={file.audio_media_data.album}
 						/>
 					)}
 					{file.audio_media_data.title && (
 						<InfoRow
-							label="Title"
+							label={t('inspector.file.title')}
 							value={file.audio_media_data.title}
 						/>
 					)}
 					{file.audio_media_data.duration_seconds && (
 						<InfoRow
-							label="Duration"
+							label={t('inspector.file.duration')}
 							value={`${Math.floor(file.audio_media_data.duration_seconds / 60)}:${String(Math.floor(file.audio_media_data.duration_seconds % 60)).padStart(2, '0')}`}
 						/>
 					)}
 					{file.audio_media_data.codec && (
 						<InfoRow
-							label="Codec"
+							label={t('inspector.file.codec')}
 							value={file.audio_media_data.codec}
 						/>
 					)}
 					{file.audio_media_data.bit_rate && (
 						<InfoRow
-							label="Bitrate"
+							label={t('inspector.file.bitrate')}
 							value={`${Math.round(file.audio_media_data.bit_rate / 1000)} kbps`}
 						/>
 					)}
 					{file.audio_media_data.genre && (
 						<InfoRow
-							label="Genre"
+							label={t('inspector.file.genre')}
 							value={file.audio_media_data.genre}
 						/>
 					)}
 					{file.audio_media_data.year && (
 						<InfoRow
-							label="Year"
+							label={t('inspector.file.year')}
 							value={String(file.audio_media_data.year)}
 						/>
 					)}
@@ -933,9 +941,9 @@ function OverviewTab({file}: {file: File}) {
 			)}
 
 			{/* Storage */}
-			<Section title="Storage" icon={HardDrive}>
+<Section title={t('inspector.file.storage')} icon={HardDrive}>
 				<InfoRow
-					label="Path"
+label={t('inspector.file.path')}
 					value={
 						'Physical' in file.wing_path
 							? String(file.wing_path.Physical.path)
@@ -944,16 +952,16 @@ function OverviewTab({file}: {file: File}) {
 								: 'Content'
 					}
 				/>
-				<InfoRow label="Local" value={file.is_local ? 'Yes' : 'No'} />
+<InfoRow label={t('inspector.file.local')} value={file.is_local ? t('inspector.file.yes') : t('inspector.file.no')} />
 			</Section>
 
 			{file.is_local && <PermissionsSection path={file.wing_path} />}
 
 			{/* Tags */}
-			<Section title="Tags" icon={TagIcon}>
+<Section title={t('inspector.file.tags')} icon={TagIcon}>
 				{isEphemeral ? (
 					<p className="text-sidebar-ink-dull text-xs italic">
-						Tags are available after indexing this location
+{t('inspector.file.tagsAfterIndexing')}
 					</p>
 				) : (
 					<div className="flex flex-wrap gap-1.5">
@@ -976,7 +984,7 @@ function OverviewTab({file}: {file: File}) {
 												err
 											);
 											toast.error(
-												`Failed to remove tag: ${err}`
+												t('inspector.file.removeTagFailed', { error: String(err) })
 											);
 										}
 									}}
@@ -1012,7 +1020,7 @@ function OverviewTab({file}: {file: File}) {
 							contentId={file.content_identity?.uuid}
 							trigger={
 								<button className="bg-app-box hover:bg-app-hover border-app-line text-ink-dull hover:text-ink rounded-full border px-2 py-0.5 text-xs font-medium transition-colors">
-									+ Add tags
+										{t('inspector.file.addTags')}
 								</button>
 							}
 						/>
@@ -1022,7 +1030,7 @@ function OverviewTab({file}: {file: File}) {
 
 			{/* AI Processing */}
 			{(isImage || isVideo || isAudio) && (
-				<Section title="AI Processing" icon={Sparkle}>
+<Section title={t('inspector.file.aiProcessing')} icon={Sparkle}>
 					<div className="flex flex-col gap-2">
 						{/* OCR for images */}
 						{isImage && (
@@ -1158,12 +1166,12 @@ function OverviewTab({file}: {file: File}) {
 													)
 												) {
 													toast.error({
-														title: 'Feature Not Available',
-														body: 'Speech-to-text requires FFmpeg. Please rebuild the daemon with --features ffmpeg,heif or use `cargo daemon`'
+														title: t('inspector.file.featureUnavailable'),
+														body: t('inspector.file.speechRequiresFfmpeg')
 													});
 												} else {
 													toast.error({
-														title: 'Transcription Failed',
+														title: t('inspector.file.transcriptionFailed'),
 														body: errorMessage
 													});
 												}
@@ -1240,12 +1248,12 @@ function OverviewTab({file}: {file: File}) {
 													)
 												) {
 													toast.error({
-														title: 'Feature Not Available',
-														body: 'Video thumbnail generation requires FFmpeg. Please rebuild the daemon with --features ffmpeg or use `cargo daemon`'
+														title: t('inspector.file.featureUnavailable'),
+														body: t('inspector.file.thumbnailRequiresFfmpeg')
 													});
 												} else {
 													toast.error({
-														title: 'Thumbnail Generation Failed',
+														title: t('inspector.file.thumbnailFailed'),
 														body: errorMessage
 													});
 												}
@@ -1313,12 +1321,12 @@ function OverviewTab({file}: {file: File}) {
 													)
 												) {
 													toast.error({
-														title: 'Feature Not Available',
-														body: 'Thumbstrip generation requires FFmpeg. Please rebuild the daemon with --features ffmpeg,heif or use `cargo daemon`'
+														title: t('inspector.file.featureUnavailable'),
+														body: t('inspector.file.thumbstripRequiresFfmpeg')
 													});
 												} else {
 													toast.error({
-														title: 'Thumbstrip Generation Failed',
+														title: t('inspector.file.thumbstripFailed'),
 														body: errorMessage
 													});
 												}
@@ -1399,7 +1407,7 @@ function OverviewTab({file}: {file: File}) {
 										<TextAa size={16} weight="bold" />
 									</span>
 									<span className="text-sidebar-ink text-xs font-medium">
-										Extracted Text
+										{t("ui.extractedText")}
 									</span>
 								</div>
 								<pre className="text-sidebar-ink-dull no-scrollbar max-h-40 overflow-y-auto whitespace-pre-wrap text-xs">
@@ -1415,6 +1423,7 @@ function OverviewTab({file}: {file: File}) {
 }
 
 function SidecarsTab({file}: {file: File}) {
+const {t} = useTranslation('inspector');
 	const sidecars = file.sidecars || [];
 	const platform = usePlatform();
 	const {buildSidecarUrl, libraryId} = useServer();
@@ -1434,12 +1443,12 @@ function SidecarsTab({file}: {file: File}) {
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
 			<p className="text-sidebar-ink-dull text-xs">
-				Derivative files and associated content generated by WingDrive
+				{t('inspector.file.derivativeFiles')}
 			</p>
 
 			{sidecars.length === 0 ? (
 				<div className="text-sidebar-ink-dull flex items-center justify-center py-8 text-xs">
-					No sidecars generated yet
+					{t('inspector.file.noSidecars')}
 				</div>
 			) : (
 				<div className="space-y-2">
@@ -1472,6 +1481,7 @@ function SidecarItem({
 	platform: ReturnType<typeof usePlatform>;
 	libraryId: string | null;
 }) {
+	const isDark = useIsDarkTheme();
 	const isImage =
 		(sidecar.kind === 'thumb' || sidecar.kind === 'thumbstrip') &&
 		(sidecar.format === 'webp' ||
@@ -1484,21 +1494,21 @@ function SidecarItem({
 
 		// PLY files (3D mesh) use Mesh icon
 		if (format === 'ply') {
-			return getIcon('Mesh', true);
+			return getIcon('Mesh', isDark);
 		}
 
 		// Text files use Text icon
 		if (format === 'text' || format === 'txt' || format === 'srt') {
-			return getIcon('Text', true);
+			return getIcon('Text', isDark);
 		}
 
 		// Thumbs/thumbstrips use Image icon
 		if (sidecar.kind === 'thumb' || sidecar.kind === 'thumbstrip') {
-			return getIcon('Image', true);
+			return getIcon('Image', isDark);
 		}
 
 		// Default to Document icon
-		return getIcon('Document', true);
+		return getIcon('Document', isDark);
 	};
 
 	const sidecarIcon = getSidecarIcon();
@@ -1617,6 +1627,7 @@ function SidecarItem({
 }
 
 function InstancesTab({file}: {file: File}) {
+	const {t} = useTranslation('inspector');
 	// Query for alternate instances with full File data
 	const instancesQuery = useNormalizedQuery<
 		{entry_uuid: string},
@@ -1678,7 +1689,7 @@ function InstancesTab({file}: {file: File}) {
 	if (instancesQuery.isLoading) {
 		return (
 			<div className="text-sidebar-ink-dull flex items-center justify-center py-8 text-xs">
-				Loading instances...
+				{t("ui.loadingInstances")}
 			</div>
 		);
 	}
@@ -1697,12 +1708,12 @@ function InstancesTab({file}: {file: File}) {
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
 			<p className="text-sidebar-ink-dull text-xs">
-				All copies of this file across your devices and locations
+				{t("ui.allCopiesOfThisFileAcross")}
 			</p>
 
 			{instances.length === 0 || instances.length === 1 ? (
 				<div className="text-sidebar-ink-dull flex items-center justify-center py-8 text-xs">
-					No alternate instances found
+					{t("ui.noAlternateInstancesFound")}
 				</div>
 			) : (
 				<div className="space-y-4">
@@ -1749,6 +1760,7 @@ function InstancesTab({file}: {file: File}) {
 }
 
 function InstanceRow({instance}: {instance: File}) {
+	const {t} = useTranslation('inspector');
 	const getPathDisplay = (sdPath: typeof instance.wing_path) => {
 		if ('Physical' in sdPath) {
 			return sdPath.Physical.path;
@@ -1761,7 +1773,7 @@ function InstanceRow({instance}: {instance: File}) {
 
 	const formatDate = (dateStr: string) => {
 		const date = new Date(dateStr);
-		return date.toLocaleDateString('en-US', {
+		return date.toLocaleDateString(uiLocale(), {
 			month: 'short',
 			day: 'numeric'
 		});
@@ -1830,7 +1842,7 @@ function InstanceRow({instance}: {instance: File}) {
 							? 'bg-accent'
 							: 'bg-sidebar-ink-dull/40'
 					)}
-					title={instance.is_local ? 'Available locally' : 'Remote'}
+					title={instance.is_local ? t('inspector.file.availableLocally') : t('inspector.file.remote')}
 				/>
 			</div>
 		</div>
@@ -1838,51 +1850,52 @@ function InstanceRow({instance}: {instance: File}) {
 }
 
 function ChatTab() {
+const {t} = useTranslation('inspector');
 	const [message, setMessage] = useState('');
 
 	const messages = [
 		{
 			id: 1,
-			sender: 'Sarah',
+			sender: t('sampleChat.sarah'),
 			avatar: 'S',
-			content: 'Can you check if this photo is also on the NAS?',
-			time: '2:34 PM',
+			content: t('sampleChat.question'),
+			time: t('sampleChat.time1'),
 			isUser: false
 		},
 		{
 			id: 2,
-			sender: 'You',
+			sender: t('sampleChat.you'),
 			avatar: 'J',
-			content: "Yeah, it's synced. Shows 3 instances across devices.",
-			time: '2:35 PM',
+			content: t('sampleChat.synced'),
+			time: t('sampleChat.time2'),
 			isUser: true
 		},
 		{
 			id: 3,
-			sender: 'AI Assistant',
+			sender: t('sampleChat.assistant'),
 			avatar: '',
 			content:
-				'I found 2 similar photos in your library from the same location. Would you like me to create a collection?',
-			time: '2:36 PM',
+				t('sampleChat.suggestCollection'),
+			time: t('sampleChat.time3'),
 			isUser: false,
 			isAI: true,
 			unread: true
 		},
 		{
 			id: 4,
-			sender: 'Sarah',
+			sender: t('sampleChat.sarah'),
 			avatar: 'S',
-			content: 'Perfect, thanks! Can you share the collection with me?',
-			time: '2:37 PM',
+			content: t('sampleChat.thanks'),
+			time: t('sampleChat.time4'),
 			isUser: false,
 			unread: true
 		},
 		{
 			id: 5,
-			sender: 'Alex',
+			sender: t('sampleChat.alex'),
 			avatar: 'A',
-			content: 'I just tagged this as Summer 2025 btw',
-			time: '2:38 PM',
+			content: t('sampleChat.tagged'),
+			time: t('sampleChat.time5'),
 			isUser: false,
 			unread: true
 		}
@@ -1961,7 +1974,7 @@ function ChatTab() {
 				<div className="flex items-end gap-1.5">
 					<button
 						className="hover:bg-sidebar-selected text-sidebar-ink-dull hover:text-sidebar-ink rounded-lg p-1.5 transition-colors"
-						title="Attach file"
+						title={t('inspector.preview.attachFile')}
 					>
 						<Paperclip size={4} weight="bold" />
 					</button>
@@ -1971,14 +1984,14 @@ function ChatTab() {
 							type="text"
 							value={message}
 							onChange={(e) => setMessage(e.target.value)}
-							placeholder="Type a message..."
+							placeholder={t('inspector.preview.typeMessage')}
 							className="text-sidebar-ink placeholder:text-sidebar-ink-dull flex-1 bg-transparent text-xs outline-none"
 						/>
 					</div>
 
 					<button
 						className="bg-accent hover:bg-accent/90 rounded-lg p-1.5 text-white transition-colors"
-						title="Send message"
+						title={t('inspector.preview.sendMessage')}
 					>
 						<PaperPlaneRight size={4} weight="bold" />
 					</button>
@@ -1990,10 +2003,10 @@ function ChatTab() {
 						Ask AI
 					</button>
 					<button className="text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
-						Share File
+						{t("ui.shareFile")}
 					</button>
 					<button className="text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
-						Create Task
+						{t("ui.createTask")}
 					</button>
 				</div>
 			</div>
@@ -2002,22 +2015,23 @@ function ChatTab() {
 }
 
 function ActivityTab() {
+	const {t} = useTranslation('inspector');
 	const activity = [
-		{action: 'Synced to NAS', time: '2 min ago', device: 'MacBook Pro'},
-		{action: 'Uploaded to S3', time: '1 hour ago', device: 'MacBook Pro'},
+		{action: t('sampleChat.syncedToNas'), time: t('inspector.location.minutesAgo', { count: 2 }), device: 'MacBook Pro'},
+		{action: t('sampleChat.uploadedToS3'), time: t('inspector.location.hoursAgo', { count: 1 }), device: 'MacBook Pro'},
 		{
-			action: 'Thumbnail generated',
-			time: '2 hours ago',
+			action: t('sampleChat.thumbnailGenerated'),
+			time: t('inspector.location.hoursAgo', { count: 2 }),
 			device: 'MacBook Pro'
 		},
-		{action: "Tagged as 'Travel'", time: '3 hours ago', device: 'iPhone'},
-		{action: 'Created', time: 'Jan 15, 2025', device: 'iPhone'}
+		{action: t('sampleChat.taggedTravel'), time: t('inspector.location.hoursAgo', { count: 3 }), device: 'iPhone'},
+		{action: t('sampleChat.created'), time: t('inspector.location.addedDate'), device: 'iPhone'}
 	];
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
 			<p className="text-sidebar-ink-dull text-xs">
-				History of changes and sync operations
+				{t('sampleChat.history')}
 			</p>
 
 			<div className="space-y-0.5">
@@ -2045,13 +2059,14 @@ function ActivityTab() {
 }
 
 function DetailsTab({file}: {file: File}) {
+const {t} = useTranslation('inspector');
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10">
 			{/* Content Identity */}
 			{file.content_identity && (
-				<Section title="Content Identity" icon={Fingerprint}>
+				<Section title={t('inspector.file.contentIdentity')} icon={Fingerprint}>
 					<InfoRow
-						label="Content Hash"
+						label={t('inspector.file.contentHash')}
 						value={
 							String(file.content_identity.content_hash).slice(
 								0,
@@ -2062,7 +2077,7 @@ function DetailsTab({file}: {file: File}) {
 					/>
 					{file.content_identity.integrity_hash && (
 						<InfoRow
-							label="Integrity Hash"
+							label={t('inspector.file.integrityHash')}
 							value={
 								String(
 									file.content_identity.integrity_hash
@@ -2073,7 +2088,7 @@ function DetailsTab({file}: {file: File}) {
 					)}
 					{file.content_identity.mime_type_id !== null && (
 						<InfoRow
-							label="MIME Type ID"
+							label={t('inspector.file.mimeTypeId')}
 							value={String(file.content_identity.mime_type_id)}
 						/>
 					)}
@@ -2081,27 +2096,27 @@ function DetailsTab({file}: {file: File}) {
 			)}
 
 			{/* Metadata */}
-			<Section title="Metadata" icon={Hash}>
+			<Section title={t('inspector.file.metadata')} icon={Hash}>
 				<InfoRow
-					label="File ID"
+					label={t('inspector.file.fileId')}
 					value={String(file.id).slice(0, 8) + '...'}
 					mono
 				/>
 				<InfoRow
-					label="Content Kind"
+					label={t('inspector.file.contentKind')}
 					value={String(file.content_kind || 'Unknown')}
 				/>
 				{file.extension && (
-					<InfoRow label="Extension" value={String(file.extension)} />
+					<InfoRow label={t('inspector.file.extension')} value={String(file.extension)} />
 				)}
 			</Section>
 
 			{/* System */}
-			<Section title="System" icon={DotsThree}>
-				<InfoRow label="Entry Kind" value={file.kind} />
-				<InfoRow label="Local" value={file.is_local ? 'Yes' : 'No'} />
+			<Section title={t('inspector.file.system')} icon={DotsThree}>
+				<InfoRow label={t('inspector.file.entryKind')} value={t(`kinds.${file.kind}`, {defaultValue: file.kind})} />
+				<InfoRow label={t('inspector.file.local')} value={file.is_local ? t('inspector.file.yes') : t('inspector.file.no')} />
 				<InfoRow
-					label="Instances"
+					label={t('inspector.file.instancesCount')}
 					value={String((file.alternate_paths?.length || 0) + 1)}
 				/>
 			</Section>

@@ -3,6 +3,7 @@ import type { KeybindId } from '../util/keybinds/registry';
 import { getKeybind } from '../util/keybinds/registry';
 import type { KeyCombo, KeybindScope } from '../util/keybinds/types';
 import { getComboForPlatform, getCurrentPlatform, toDisplayString } from '../util/keybinds/platform';
+import { useTranslation } from '../i18n';
 
 export interface KeybindMeta {
 	/** The keybind ID */
@@ -37,6 +38,7 @@ export interface KeybindMeta {
  * ```
  */
 export function useKeybindMeta(keybindId: KeybindId): KeybindMeta | null {
+	const {t} = useTranslation('common');
 	return useMemo(() => {
 		const keybind = getKeybind(keybindId);
 		if (!keybind) return null;
@@ -47,12 +49,12 @@ export function useKeybindMeta(keybindId: KeybindId): KeybindMeta | null {
 
 		return {
 			id: keybind.id,
-			label: keybind.label,
+		label: t(`keybinds.${keybind.id}`),
 			displayString,
 			combo,
 			scope: keybind.scope,
 		};
-	}, [keybindId]);
+	}, [keybindId, t]);
 }
 
 /**

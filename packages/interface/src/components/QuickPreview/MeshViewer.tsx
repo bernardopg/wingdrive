@@ -1,3 +1,4 @@
+import { useTranslation } from "../../i18n";
 /// <reference types="@react-three/fiber" />
 
 import { Canvas } from "@react-three/fiber";
@@ -791,6 +792,7 @@ export function MeshViewerUI({
 	isGaussianSplat,
 	onResetFocalPoint,
 }: MeshViewerUIProps) {
+	const { t } = useTranslation("inspector");
 	const [showSettings, setShowSettings] = useState(false);
 
 	if (!isGaussianSplat) {
@@ -800,9 +802,9 @@ export function MeshViewerUI({
 					3D Mesh
 				</div>
 				<div className="pointer-events-none absolute bottom-4 left-4 rounded-lg bg-black/80 px-3 py-2 text-xs text-white/70 backdrop-blur-xl">
-					<div>Left drag: Rotate</div>
-					<div>Right drag: Pan</div>
-					<div>Scroll: Zoom</div>
+					<div>{t("inspector.preview.leftDragRotate")}</div>
+					<div>{t("inspector.preview.rightDragPan")}</div>
+					<div>{t("inspector.preview.scrollZoom")}</div>
 				</div>
 			</>
 		);
@@ -815,7 +817,7 @@ export function MeshViewerUI({
 				<CircleButton
 					icon={Sliders}
 					onClick={() => setShowSettings(!showSettings)}
-					title="Settings"
+					title={t("inspector.preview.settings")}
 					active={showSettings}
 					activeAccent={true}
 				/>
@@ -823,13 +825,13 @@ export function MeshViewerUI({
 					<CircleButton
 						icon={ArrowCounterClockwise}
 						onClick={onResetFocalPoint}
-						title="Reset focal point"
+						title={t("inspector.preview.resetFocalPoint")}
 					/>
 				)}
 				<CircleButton
 					icon={autoRotate ? Pause : Play}
 					onClick={() => setAutoRotate(!autoRotate)}
-					title={autoRotate ? "Pause" : "Play"}
+					title={autoRotate ? t("inspector.preview.pause") : t("inspector.preview.play")}
 					active={autoRotate}
 					activeAccent={true}
 				/>
@@ -842,7 +844,7 @@ export function MeshViewerUI({
 					<div className="flex flex-col gap-1">
 						<div className="flex items-center justify-between">
 							<label className="text-xs text-ink-dull">
-								Sway Amount
+								{t("ui.swayAmount")}
 							</label>
 							<span className="text-xs text-ink-dull font-mono">
 								{swayAmount.toFixed(2)}
@@ -865,7 +867,7 @@ export function MeshViewerUI({
 					<div className="flex flex-col gap-1">
 						<div className="flex items-center justify-between">
 							<label className="text-xs text-ink-dull">
-								Speed
+								{t("ui.speed")}
 							</label>
 							<span className="text-xs text-ink-dull font-mono">
 								{swaySpeed.toFixed(2)}
@@ -888,7 +890,7 @@ export function MeshViewerUI({
 					<div className="flex flex-col gap-1">
 						<div className="flex items-center justify-between">
 							<label className="text-xs text-ink-dull">
-								Distance
+								{t("ui.distance")}
 							</label>
 							<span className="text-xs text-ink-dull font-mono">
 								{cameraDistance.toFixed(2)}
@@ -923,6 +925,7 @@ export function MeshViewer({
 	cameraDistance: cameraDistanceProp = 0.5,
 	onControlsChange,
 }: MeshViewerProps) {
+	const { t } = useTranslation("inspector");
 	const platform = usePlatform();
 	const [meshUrl, setMeshUrl] = useState<string | null>(splatUrl || null);
 	const [isGaussianSplat, setIsGaussianSplat] = useState(!!splatUrl);
@@ -1063,7 +1066,7 @@ export function MeshViewer({
 					<FileComponent.Thumb file={file} size={200} />
 					{loading && (
 						<div className="mt-4 text-sm text-ink-dull">
-							Loading 3D model...
+							{t("ui.loading3dModel")}
 						</div>
 					)}
 				</div>

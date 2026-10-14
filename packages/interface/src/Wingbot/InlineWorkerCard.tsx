@@ -4,6 +4,7 @@ import {
 	type TranscriptStep
 } from '@wingdrive/ai';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import {useTranslation} from '../i18n';
 
 export function InlineWorkerCard({
 	agentId,
@@ -12,6 +13,7 @@ export function InlineWorkerCard({
 	agentId: string;
 	worker: WorkerListItem;
 }) {
+	const {t} = useTranslation('common');
 	const queryClient = useQueryClient();
 	const detailQuery = useQuery({
 		queryKey: ['wingbot', 'worker-detail', agentId, worker.id],
@@ -28,12 +30,12 @@ export function InlineWorkerCard({
 			.join('\n\n');
 
 		const payload = [
-			`Worker: ${detail.task}`,
-			`Status: ${detail.status}`,
-			`Started: ${detail.started_at}`,
-			detail.completed_at ? `Completed: ${detail.completed_at}` : null,
-			detail.result ? `Result:\n${detail.result}` : null,
-			transcriptText ? `Transcript:\n${transcriptText}` : null
+			t('wingbot.workerLog.worker', {task: detail.task}),
+			t('wingbot.workerLog.status', {status: detail.status}),
+			t('wingbot.workerLog.started', {date: detail.started_at}),
+			detail.completed_at ? t('wingbot.workerLog.completed', {date: detail.completed_at}) : null,
+			detail.result ? t('wingbot.workerLog.result', {result: detail.result}) : null,
+			transcriptText ? t('wingbot.workerLog.transcript', {transcript: transcriptText}) : null
 		]
 			.filter(Boolean)
 			.join('\n\n');

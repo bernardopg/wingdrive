@@ -1,20 +1,45 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Copy, FolderOpen } from "@phosphor-icons/react";
 import { toast } from "@wingdrive/primitives";
+import clsx from "clsx";
 import { useCoreQuery, useCoreMutation } from "../../contexts/WingDriveContext";
 import { usePlatform, type DesktopSettings } from "../../contexts/PlatformContext";
+import { useTranslation } from "../../i18n";
+import {
+  SettingsHeader,
+  SettingsRow,
+  SettingsSection,
+  SwitchRow,
+  buttonClass,
+  errorMessage,
+  inputClass,
+} from "../components";
 
 interface DeviceSettingsForm {
   name: string;
   slug: string;
 }
 
+// Mirrors device.update: letters, numbers and hyphens, at most 50 characters
+function formatBuildDate(value: string, language: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(language === "pt" ? "pt-BR" : "en-US", { dateStyle: "medium", timeStyle: "short" });
+}
+
+const SLUG_PATTERN = /^[\p{L}\p{N}-]{1,50}$/u;
+
 export function GeneralSettings() {
+  const { t, i18n } = useTranslation();
   const statusQuery = useCoreQuery({ type: "core.status", input: null as any });
   const configQuery = useCoreQuery({ type: "config.app.get", input: null as any });
   const updateDevice = useCoreMutation("device.update");
   const resetData = useCoreMutation("core.reset");
   const platform = usePlatform();
+  const nameId = useId();
+  const slugId = useId();
+  const terminalId = useId();
 
   const [desktopSettings, setDesktopSettings] = useState<DesktopSettings | null>(null);
   useEffect(() => {
@@ -29,12 +54,13 @@ export function GeneralSettings() {
     try {
       setDesktopSettings(await platform.setDesktopSettings({ ...desktopSettings, [key]: value }));
     } catch (error) {
-      toast.error(`Failed to save: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(t("general.saveFailed", { error: errorMessage(error) }));
     }
   };
 
   const { data: status } = statusQuery;
   const { data: config } = configQuery;
+  const dataDir = config?.data_dir || status?.system?.data_directory;
 
   const deviceForm = useForm<DeviceSettingsForm>({
     defaultValues: {
@@ -58,26 +84,32 @@ export function GeneralSettings() {
   const onDeviceSubmit = deviceForm.handleSubmit(async (data) => {
     try {
       await updateDevice.mutateAsync({
-        name: data.name,
+        name: data.name.trim(),
         slug: data.slug,
       });
       await statusQuery.refetch();
       deviceForm.reset(data);
-      toast.success("Device settings saved");
+      toast.success(t("general.device.saved"));
     } catch (error) {
-      toast.error(
-        `Failed to save device settings: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      toast.error(t("general.device.saveFailed", { error: errorMessage(error) }));
     }
   });
+
+  const copyDataDir = async () => {
+    if (!dataDir) return;
+    try {
+      await navigator.clipboard.writeText(dataDir);
+      toast.success(t("general.dataDir.copied"));
+    } catch (error) {
+      toast.error(errorMessage(error));
+    }
+  };
 
   // platform.confirm, not window.confirm: WebView2 returns true from
   // window.confirm without showing anything, which would wipe data unasked.
   const handleResetData = () => {
     platform.confirm(
-      "Reset All Data\n\nThis will permanently delete all libraries, settings, and cached data. The app will need to be restarted. Are you sure?",
+      t("general.reset.confirm"),
       (confirmed) => {
         if (!confirmed) return;
         resetData.mutate(
@@ -85,11 +117,11 @@ export function GeneralSettings() {
           {
             onSuccess: (result) => {
               toast.success(
-                result.message || "Data has been reset. Please restart the application."
+                result.message || t("general.reset.done")
               );
             },
             onError: (error) => {
-              toast.error(error.message || "Failed to reset data");
+              toast.error(error.message || t("general.reset.failed"));
             },
           }
         );
@@ -97,151 +129,149 @@ export function GeneralSettings() {
     );
   };
 
+  const { errors, isDirty } = deviceForm.formState;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-ink mb-2">General</h2>
-        <p className="text-sm text-ink-dull">
-          Configure general application settings.
-        </p>
-      </div>
+      <SettingsHeader title={t("sections.general")} description={t("general.description")} />
 
-      <div className="space-y-4">
-        {/* Device Configuration */}
-        <form onSubmit={onDeviceSubmit} className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
-          <h3 className="text-sm font-medium text-ink">Device</h3>
-
-          <label className="block">
-            <span className="text-sm font-medium text-ink mb-1 block">Device Name</span>
-            <p className="text-xs text-ink-dull mb-2">
-              User-friendly name for this device
-            </p>
+      <form onSubmit={onDeviceSubmit}>
+        <SettingsSection title={t("general.device.title")}>
+          <SettingsRow label={t("general.device.name")} hint={t("general.device.nameHint")} controlId={nameId} stacked>
             <input
+              id={nameId}
               type="text"
-              {...deviceForm.register("name")}
-              className="w-full px-3 py-2 bg-app border border-app-line rounded-md text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-              placeholder="My Computer"
+              {...deviceForm.register("name", { required: true, validate: (v) => v.trim().length > 0 })}
+              className={inputClass}
+              placeholder={t("general.device.namePlaceholder")}
             />
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-medium text-ink mb-1 block">Device Slug</span>
-            <p className="text-xs text-ink-dull mb-2">
-              Unique identifier for this device (alphanumeric and hyphens only)
-            </p>
+          </SettingsRow>
+          <SettingsRow label={t("general.device.slug")} hint={t("general.device.slugHint")} controlId={slugId} stacked>
             <input
+              id={slugId}
               type="text"
-              {...deviceForm.register("slug")}
-              className="w-full px-3 py-2 bg-app border border-app-line rounded-md text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent font-mono"
+              aria-invalid={!!errors.slug}
+              {...deviceForm.register("slug", { required: true, pattern: SLUG_PATTERN })}
+              className={clsx(inputClass, "font-mono", errors.slug && "ring-2 ring-status-error")}
               placeholder="my-computer"
             />
-          </label>
-
-          <button
-            type="submit"
-            disabled={!deviceForm.formState.isDirty || updateDevice.isPending}
-            className="px-4 py-2 bg-accent hover:bg-accent-deep text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            {updateDevice.isPending ? "Saving..." : "Save Changes"}
-          </button>
-        </form>
-
-        {desktopSettings && (
-          <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
-            <h3 className="text-sm font-medium text-ink">Background</h3>
-            <label className="flex items-start justify-between gap-4">
-              <span>
-                <span className="text-sm font-medium text-ink block">Keep running in the background</span>
-                <span className="text-xs text-ink-dull">
-                  Closing the window keeps WingDrive in the tray so folders open instantly
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                className="mt-1 accent-accent"
-                checked={desktopSettings.keep_in_background}
-                onChange={(e) => updateDesktopSetting("keep_in_background", e.target.checked)}
-              />
-            </label>
-            <label className="flex items-start justify-between gap-4">
-              <span>
-                <span className="text-sm font-medium text-ink block">Start at login</span>
-                <span className="text-xs text-ink-dull">
-                  Start WingDrive hidden in the tray when you log in
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                className="mt-1 accent-accent"
-                checked={desktopSettings.start_at_login}
-                onChange={(e) => updateDesktopSetting("start_at_login", e.target.checked)}
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-medium text-ink block">Terminal</span>
-              <span className="text-xs text-ink-dull block mb-2">
-                Command for Open Terminal Here. Leave empty to use xdg-terminal-exec, $TERMINAL or an installed terminal.
-              </span>
-              <input
-                type="text"
-                defaultValue={desktopSettings.terminal_command ?? ""}
-                onBlur={(e) => {
-                  const value = e.target.value.trim();
-                  if (value !== (desktopSettings.terminal_command ?? "")) {
-                    void updateDesktopSetting("terminal_command", value || null);
-                  }
-                }}
-                className="w-full px-3 py-2 bg-app border border-app-line rounded-md text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent font-mono"
-                placeholder="kitty --single-instance"
-              />
-            </label>
-          </div>
-        )}
-
-        {/* Version Info */}
-        <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-3">
-          <h3 className="text-sm font-medium text-ink">Version Information</h3>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-ink">Version</span>
-            <span className="text-sm text-ink-dull font-mono">
-              {status?.version || "Loading..."}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-ink">Built</span>
-            <span className="text-sm text-ink-dull font-mono">
-              {status?.built_at || "Loading..."}
-            </span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-app-box rounded-lg border border-app-line">
-          <h3 className="text-sm font-medium text-ink mb-1">Data Directory</h3>
-					<p className="text-xs text-ink-dull mb-2">Where WingDrive stores its data</p>
-          <code className="block text-xs text-ink-dull bg-app rounded px-2 py-1 overflow-x-auto">
-            {config?.data_dir || status?.system?.data_directory || "Loading..."}
-          </code>
-        </div>
-
-        <div className="p-4 bg-app-box rounded-lg border border-app-line">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-ink mb-1">Reset All Data</h3>
-              <p className="text-xs text-ink-dull">
-                Permanently delete all libraries and settings
-              </p>
+            {errors.slug && <p className="mt-1 text-xs text-status-error">{t("general.device.slugInvalid")}</p>}
+          </SettingsRow>
+          {isDirty && (
+            <div className="flex justify-end gap-2 px-4 py-3">
+              <button
+                type="button"
+                onClick={() => deviceForm.reset()}
+                className={clsx(buttonClass, "text-ink-dull hover:bg-app-hover hover:text-ink")}
+              >
+                {t("cancel")}
+              </button>
+              <button
+                type="submit"
+                disabled={updateDevice.isPending}
+                className={clsx(buttonClass, "bg-accent text-white hover:bg-accent-deep")}
+              >
+                {updateDevice.isPending ? t("saving") : t("saveChanges")}
+              </button>
             </div>
+          )}
+        </SettingsSection>
+      </form>
+
+      {desktopSettings && (
+        <SettingsSection title={t("general.background.title")}>
+          <SwitchRow
+            label={t("general.background.keepRunning")}
+            hint={t("general.background.keepRunningHint")}
+            checked={desktopSettings.keep_in_background}
+            onChange={(value) => updateDesktopSetting("keep_in_background", value)}
+          />
+          <SwitchRow
+            label={t("general.background.startAtLogin")}
+            hint={t("general.background.startAtLoginHint")}
+            checked={desktopSettings.start_at_login}
+            onChange={(value) => updateDesktopSetting("start_at_login", value)}
+          />
+          <SettingsRow
+            label={t("general.background.terminal")}
+            hint={t("general.background.terminalHint")}
+            controlId={terminalId}
+            stacked
+          >
+            <input
+              id={terminalId}
+              type="text"
+              defaultValue={desktopSettings.terminal_command ?? ""}
+              onBlur={(e) => {
+                const value = e.target.value.trim();
+                if (value !== (desktopSettings.terminal_command ?? "")) {
+                  void updateDesktopSetting("terminal_command", value || null);
+                }
+              }}
+              className={clsx(inputClass, "font-mono")}
+              placeholder="kitty --single-instance"
+            />
+          </SettingsRow>
+        </SettingsSection>
+      )}
+
+      <SettingsSection title={t("general.version.title")}>
+        <SettingsRow label={t("general.version.version")}>
+          <span className="font-mono text-sm text-ink-dull">{status?.version || t("loading")}</span>
+        </SettingsRow>
+        <SettingsRow label={t("general.version.built")}>
+          <span className="font-mono text-sm text-ink-dull">{status?.built_at ? formatBuildDate(status.built_at, i18n.language) : t("loading")}</span>
+        </SettingsRow>
+        <SettingsRow label={t("general.dataDir.title")} hint={t("general.dataDir.hint")} stacked>
+          <div className="flex items-center gap-2">
+            <code className="min-w-0 flex-1 truncate rounded-md bg-app px-2 py-1.5 text-xs text-ink-dull" title={dataDir}>
+              {dataDir || t("loading")}
+            </code>
             <button
               type="button"
-              onClick={handleResetData}
-              disabled={resetData.isPending}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+              onClick={copyDataDir}
+              disabled={!dataDir}
+              title={t("general.dataDir.copy")}
+              aria-label={t("general.dataDir.copy")}
+              className="rounded-md p-1.5 text-ink-dull hover:bg-app-hover hover:text-ink disabled:opacity-50"
             >
-              {resetData.isPending ? "Resetting..." : "Reset"}
+              <Copy className="size-4" />
             </button>
+            {platform.openPathDefault && (
+              <button
+                type="button"
+                onClick={() => dataDir && platform.openPathDefault?.(dataDir).catch((e) => toast.error(errorMessage(e)))}
+                disabled={!dataDir}
+                title={t("general.dataDir.open")}
+                aria-label={t("general.dataDir.open")}
+                className="rounded-md p-1.5 text-ink-dull hover:bg-app-hover hover:text-ink disabled:opacity-50"
+              >
+                <FolderOpen className="size-4" />
+              </button>
+            )}
           </div>
+        </SettingsRow>
+      </SettingsSection>
+
+      <section className="space-y-2">
+        <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-status-error">
+          {t("general.reset.zone")}
+        </h3>
+        <div className="flex flex-col gap-3 rounded-lg border border-status-error/30 bg-status-error/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-ink">{t("general.reset.title")}</p>
+            <p className="mt-0.5 text-xs text-ink-dull">{t("general.reset.hint")}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleResetData}
+            disabled={resetData.isPending}
+            className={clsx(buttonClass, "shrink-0 bg-status-error text-white hover:bg-status-error/80")}
+          >
+            {resetData.isPending ? t("general.reset.pending") : t("general.reset.button")}
+          </button>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

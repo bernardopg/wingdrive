@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import type { File } from "@wingdrive/ts-client";
 import { formatBytes, formatRelativeTime } from "../utils";
+import { useTranslation } from "../../../i18n";
 
 interface MetadataProps {
   file: File;
@@ -13,6 +14,7 @@ export function Metadata({
   show = ["size"],
   className,
 }: MetadataProps) {
+  const { t } = useTranslation("explorer");
   return (
     <div className={clsx("flex gap-2 text-xs text-ink-dull", className)}>
       {show.includes("size") && file.size > 0 && (
@@ -22,7 +24,7 @@ export function Metadata({
         <span>{formatRelativeTime(file.modified_at)}</span>
       )}
       {show.includes("kind") && (
-        <span>{file.extension || "Folder"}</span>
+        <span>{file.extension || t("general.folder")}</span>
       )}
     </div>
   );

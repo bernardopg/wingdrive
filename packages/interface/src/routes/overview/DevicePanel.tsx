@@ -32,12 +32,14 @@ import {useEffect, useRef, useState} from 'react';
 import Masonry from 'react-masonry-css';
 import {JobCard} from '../../components/JobManager/components/JobCard';
 import {useJobsContext} from '../../components/JobManager/hooks/JobsContext';
+import {useTranslation} from '../../i18n';
 import {
 	getDeviceIcon,
 	useCoreQuery,
 	useNormalizedQuery
 } from '../../contexts/WingDriveContext';
 import {VolumeBar} from './VolumeBar';
+import { ThemedIcon } from '../../components/ThemedIcon';
 
 // Temporary type extension until types are regenerated
 type DeviceWithConnection = Device & {
@@ -81,6 +83,7 @@ interface DevicePanelProps {
 }
 
 export function DevicePanel({onLocationSelect}: DevicePanelProps = {}) {
+	const {t} = useTranslation('navigation');
 	const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
 		null
 	);
@@ -147,8 +150,8 @@ export function DevicePanel({onLocationSelect}: DevicePanelProps = {}) {
 		return (
 			<div className="bg-app-box border-app-line overflow-hidden rounded-xl border">
 				<div className="border-app-line border-b px-6 py-4">
-					<h2 className="text-ink text-base font-semibold">Devices</h2>
-					<p className="text-ink-dull mt-1 text-sm">Loading devices...</p>
+					<h2 className="text-ink text-base font-semibold">{t('sidebar.devices')}</h2>
+					<p className="text-ink-dull mt-1 text-sm">{t('devices.loading')}</p>
 				</div>
 			</div>
 		);
@@ -253,9 +256,9 @@ export function DevicePanel({onLocationSelect}: DevicePanelProps = {}) {
 					<div className="bg-app-box border-app-line overflow-hidden rounded-xl border">
 						<div className="text-ink-faint py-12 text-center">
 							<HardDrive className="mx-auto mb-3 size-12 opacity-20" />
-							<p className="text-sm">No devices detected</p>
+							<p className="text-sm">{t('devices.noneDetected')}</p>
 							<p className="mt-1 text-xs">
-								Pair a device to get started
+								{t('devices.pairToStart')}
 							</p>
 						</div>
 					</div>
@@ -281,37 +284,38 @@ interface ConnectionBadgeProps {
 }
 
 function ConnectionBadge({method, online, current, icon: customIcon, color: customColor}: ConnectionBadgeProps) {
+	const {t} = useTranslation('navigation');
 	const configs: Record<string, ConnectionBadgeConfig> = {
 		LocalNetwork: {
-			label: 'Local',
-			description: 'Connected via local network',
+			label: t('devices.connection.local'),
+			description: t('devices.connection.localDescription'),
 			icon: WifiHigh,
 			color: 'bg-green-500'
 		},
 		DirectInternet: {
-			label: 'Direct',
-			description: 'Connected directly via internet',
+			label: t('devices.connection.direct'),
+			description: t('devices.connection.directDescription'),
 			color: 'bg-blue-500'
 		},
 		Tailscale: {
 			label: 'Tailscale',
-			description: 'Connected directly over your Tailscale network',
+			description: t('devices.connection.tailscaleDescription'),
 			color: 'bg-indigo-400'
 		},
 		RelayProxy: {
-			label: 'Relay',
-			description: 'Connected via relay proxy',
+			label: t('devices.connection.relay'),
+			description: t('devices.connection.relayDescription'),
 			color: 'bg-yellow-500'
 		},
 		Offline: {
-			label: 'Offline',
-			description: 'Device is currently offline',
+			label: t('devices.connection.offline'),
+			description: t('devices.connection.offlineDescription'),
 			icon: WifiSlash,
 			color: 'bg-ink-dull'
 		},
 		Current: {
-			label: 'This device',
-			description: 'This is your current device',
+			label: t('devices.connection.thisDevice'),
+			description: t('devices.connection.thisDeviceDescription'),
 		}
 	};
 
@@ -357,7 +361,8 @@ function DeviceCard({
 	locationsLoading,
 	onLocationSelect
 }: DeviceCardProps) {
-	const deviceName = device?.name || 'Unknown Device';
+	const {t} = useTranslation('navigation');
+	const deviceName = device?.name || t('devices.unknown');
 	const deviceIconSrc = device ? getDeviceIcon(device) : null;
 	const {pause, resume, cancel, getSpeedHistory} = useJobsContext();
 	// Format hardware specs
@@ -392,7 +397,7 @@ function DeviceCard({
 					{/* Left: Device icon and name */}
 					<div className="flex min-w-0 flex-1 items-center gap-3">
 						{deviceIconSrc ? (
-							<img
+							<ThemedIcon
 								src={deviceIconSrc}
 								alt={deviceName}
 								className="size-8 flex-shrink-0 opacity-80"
@@ -416,8 +421,8 @@ function DeviceCard({
 							</div>
 							<p className="text-ink-dull text-sm">
 								{volumesLoading
-									? 'Loading volumes...'
-									: `${volumes.length} ${volumes.length === 1 ? 'volume' : 'volumes'}`}
+								? t('volumes.loading')
+								: t('volumes.count', {count: volumes.length})}
 								{/* {device?.is_online === false && ' • Offline'} */}
 							</p>
 						</div>
@@ -440,7 +445,7 @@ function DeviceCard({
 							{device?.cpu_cores_physical && (
 								<div
 									className="flex items-center gap-1"
-									title={`${device.cpu_cores_physical} Cores / ${device.cpu_cores_logical} Threads`}
+										title={t('devices.coresThreads', {cores: device.cpu_cores_physical, threads: device.cpu_cores_logical})}
 								>
 									<Cpu
 										className="size-3.5 opacity-50"
@@ -457,7 +462,7 @@ function DeviceCard({
 							{ramInfo && (
 								<div
 									className="flex items-center gap-1"
-									title={`${ramInfo} Total Memory`}
+									title={t('devices.totalMemory', {memory: ramInfo})}
 								>
 									<Memory
 										className="size-3.5 opacity-50"
@@ -492,7 +497,7 @@ function DeviceCard({
 				{locationsLoading ? (
 					<div className="border-app-line bg-app/50 border-b px-3 py-3">
 						<div className="text-ink-dull text-center text-xs">
-							Loading locations...
+							{t('locations.loading')}
 						</div>
 					</div>
 				) : (
@@ -509,7 +514,7 @@ function DeviceCard({
 				<div className="space-y-3 px-3 py-3">
 					{volumesLoading ? (
 						<div className="text-ink-dull text-center text-xs">
-							Loading volumes...
+							{t('volumes.loading')}
 						</div>
 					) : volumes.length > 0 ? (
 						volumes.map((volume, idx) => (
@@ -523,7 +528,7 @@ function DeviceCard({
 						<div className="flex flex-col items-center justify-center py-8 text-center">
 							<div className="text-ink-faint">
 								<HardDrive className="mx-auto mb-2 size-8 opacity-20" />
-								<p className="text-xs">No volumes</p>
+								<p className="text-xs">{t('volumes.empty')}</p>
 							</div>
 						</div>
 					)}
@@ -615,7 +620,7 @@ function LocationsScroller({
 											: 'bg-transparent'
 									)}
 								>
-									<img
+									<ThemedIcon
 										src={LocationIcon}
 										alt={location.name}
 										className="size-12 opacity-80"

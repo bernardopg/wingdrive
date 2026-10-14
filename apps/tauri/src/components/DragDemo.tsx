@@ -2,10 +2,11 @@ import { useState, useRef } from "react";
 import { Copy, Trash, Eye, Share } from "@phosphor-icons/react";
 import { useDragOperation } from "../hooks/useDragOperation";
 import { useDropZone } from "../hooks/useDropZone";
-import { useContextMenu } from "@wingdrive/interface";
+import { useContextMenu, useTranslation } from "@wingdrive/interface";
 import type { DragItem } from "../lib/drag";
 
 export function DragDemo() {
+	const { t } = useTranslation("common");
 	const [selectedFiles, setSelectedFiles] = useState<string[]>([
 		"/Users/example/Documents/report.pdf",
 		"/Users/example/Pictures/photo.jpg",
@@ -19,38 +20,38 @@ export function DragDemo() {
 		items: [
 			{
 				icon: Copy,
-				label: "Copy",
-				onClick: () => alert(`Copying: ${selectedFile}`),
+				label: t("contextMenu.copy"),
+				onClick: () => alert(t("dragDemo.copying", {file: selectedFile})),
 				keybind: "⌘C",
 				condition: () => selectedFile !== null,
 			},
 			{
 				icon: Eye,
-				label: "Quick Look",
-				onClick: () => alert(`Quick Look: ${selectedFile}`),
+				label: t("contextMenu.quickLook"),
+				onClick: () => alert(t("dragDemo.quickLook", {file: selectedFile})),
 				keybind: "Space",
 			},
 			{ type: "separator" },
 			{
 				icon: Share,
-				label: "Share",
+				label: t("contextMenu.share"),
 				submenu: [
 					{
 						label: "AirDrop",
-						onClick: () => alert("AirDrop share"),
+						onClick: () => alert(t("dragDemo.airDropShare")),
 					},
 					{
-						label: "Messages",
-						onClick: () => alert("Messages share"),
+						label: t("dragDemo.messages"),
+						onClick: () => alert(t("dragDemo.messagesShare")),
 					},
 				],
 			},
 			{ type: "separator" },
 			{
 				icon: Trash,
-				label: "Delete",
+				label: t("contextMenu.delete"),
 				onClick: () => {
-					if (selectedFile && confirm(`Delete ${selectedFile}?`)) {
+					if (selectedFile && confirm(t("dragDemo.confirmDelete", {file: selectedFile}))) {
 						setSelectedFiles((files) =>
 							files.filter((f) => f !== selectedFile),
 						);
@@ -135,11 +136,11 @@ export function DragDemo() {
 			onMouseUp={handleMouseUp}
 			onMouseLeave={handleMouseUp}
 		>
-			<h1 className="text-3xl font-bold">Native Drag & Drop Demo</h1>
+			<h1 className="text-3xl font-bold">{t("dragDemo.title")}</h1>
 
 			{/* Draggable items */}
 			<div className="space-y-4">
-				<h2 className="text-xl font-semibold">Draggable Files</h2>
+				<h2 className="text-xl font-semibold">{t("dragDemo.files")}</h2>
 				<div className="space-y-2">
 					{selectedFiles.map((file, idx) => (
 						<div
@@ -176,16 +177,15 @@ export function DragDemo() {
 					))}
 				</div>
 				<p className="text-sm text-gray-400">
-					Click and drag these files - move them out of the window to
-					start native drag!
+					{t("dragDemo.dragInstructions")}
 					<br />
-					Right-click on a file to test the native context menu.
+					{t("dragDemo.contextMenuInstructions")}
 				</p>
 			</div>
 
 			{/* Drop zone */}
 			<div className="space-y-4">
-				<h2 className="text-xl font-semibold">Drop Zone</h2>
+				<h2 className="text-xl font-semibold">{t("dragDemo.dropZone")}</h2>
 				<div
 					{...dropZoneProps}
 					className={`
@@ -195,44 +195,43 @@ export function DragDemo() {
 				>
 					<div className="text-4xl mb-2">{isHovered ? "" : ""}</div>
 					<div className="text-lg font-medium">
-						{isHovered ? "Drop files here" : "Drag files here"}
+						{isHovered ? t("dragDemo.dropFiles") : t("dragDemo.dragFiles")}
 					</div>
 					<div className="text-sm text-gray-400 mt-1">
-						This drop zone accepts files from other WingDrive
-						windows
+						{t("dragDemo.dropZoneHint")}
 					</div>
 				</div>
 			</div>
 
 			{/* Status */}
 			<div className="space-y-2">
-				<h2 className="text-xl font-semibold">Status</h2>
+				<h2 className="text-xl font-semibold">{t("dragDemo.status")}</h2>
 				<div className="bg-gray-800 p-4 rounded-lg space-y-2 font-mono text-sm">
 					<div>
-						<span className="text-gray-400">Dragging:</span>{" "}
+						<span className="text-gray-400">{t("dragDemo.dragging")}:</span>{" "}
 						<span
 							className={
 								isDragging ? "text-green-400" : "text-gray-500"
 							}
 						>
-							{isDragging ? "Yes" : "No"}
+							{isDragging ? t("dragDemo.yes") : t("dragDemo.no")}
 						</span>
 					</div>
 					<div>
 						<span className="text-gray-400">
-							Drop zone hovered:
+							{t("dragDemo.dropZoneHovered")}:
 						</span>{" "}
 						<span
 							className={
 								isHovered ? "text-blue-400" : "text-gray-500"
 							}
 						>
-							{isHovered ? "Yes" : "No"}
+							{isHovered ? t("dragDemo.yes") : t("dragDemo.no")}
 						</span>
 					</div>
 					{cursorPosition && (
 						<div>
-							<span className="text-gray-400">Cursor:</span>{" "}
+							<span className="text-gray-400">{t("dragDemo.cursor")}:</span>{" "}
 							<span className="text-gray-300">
 								({Math.round(cursorPosition.x)},{" "}
 								{Math.round(cursorPosition.y)})
@@ -243,29 +242,25 @@ export function DragDemo() {
 			</div>
 
 			<div className="text-sm text-gray-500 border-t border-gray-800 pt-4">
-				<p className="font-semibold mb-2">How it works:</p>
+				<p className="font-semibold mb-2">{t("dragDemo.howItWorks")}</p>
 				<ul className="list-disc list-inside space-y-1">
 					<li>
-						Drag files from the list above to Finder - they'll
-						appear as real files
+						{t("dragDemo.howItWorksItems.nativeFiles")}
 					</li>
 					<li>
-						The custom overlay window follows your cursor during the
-						drag
+						{t("dragDemo.howItWorksItems.overlay")}
 					</li>
 					<li>
-						Drop zones in other WingDrive windows can receive the
-						dragged files
+						{t("dragDemo.howItWorksItems.dropZones")}
 					</li>
 					<li>
-						All drag state is synchronized across windows via Tauri
-						events
+						{t("dragDemo.howItWorksItems.sync")}
 					</li>
 					<li>
 						<strong>
-							Right-click files for native context menu
+							{t("dragDemo.howItWorksItems.contextMenu")}
 						</strong>{" "}
-						- transparent window positioned at cursor
+						{t("dragDemo.howItWorksItems.transparentWindow")}
 					</li>
 				</ul>
 			</div>

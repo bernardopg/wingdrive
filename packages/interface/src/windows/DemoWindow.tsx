@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { WingDriveClient } from "../contexts/WingDriveContext";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { usePlatform } from "../contexts/PlatformContext";
+import { i18n, useTranslation } from "../i18n";
 
 // Type for library info (will be properly typed later)
 interface LibraryInfo {
@@ -24,6 +25,7 @@ interface AppProps {
 }
 
 function LibrariesView() {
+	const { t } = useTranslation("dialogs");
 	const { data: librariesRaw, isLoading, error, refetch } = useLibraries(true);
 	const libraries = librariesRaw as LibraryInfo[] | undefined;
 	const [lastEvent, setLastEvent] = useState<any>(null);
@@ -43,7 +45,7 @@ function LibrariesView() {
 			setWindowError(null);
 			if (!platform.showWindow) {
 				throw new Error(
-					"Window management not available on this platform",
+				i18n.t("dialogs:demo.windowUnavailable"),
 				);
 			}
 
@@ -53,11 +55,11 @@ function LibrariesView() {
 					: { type: windowType, ...params };
 
 			await platform.showWindow(windowDef);
-			setLastEvent({ success: "Window opened", type: windowType });
+		setLastEvent({ success: i18n.t("dialogs:demo.windowOpened"), type: windowType });
 		} catch (err) {
 			const errMsg = err instanceof Error ? err.message : String(err);
 			setWindowError(errMsg);
-			setLastEvent({ error: "Window open failed", message: errMsg });
+		setLastEvent({ error: i18n.t("dialogs:demo.windowOpenFailed"), message: errMsg });
 		}
 	}
 
@@ -74,7 +76,7 @@ function LibrariesView() {
 								WingDrive V2
 							</h1>
 							<p className="text-sm text-gray-400">
-								Multi-window Architecture Demo
+								{t("demo.subtitle")}
 							</p>
 						</div>
 						<div className="flex items-center gap-2">
@@ -89,10 +91,10 @@ function LibrariesView() {
 							/>
 							<span className="text-xs text-gray-400">
 								{status === "connected"
-									? "Connected"
+							? t("daemon.connected")
 									: status === "error"
-										? "Error"
-										: "Loading"}
+							? t("common.error")
+							: t("common.loading")}
 							</span>
 						</div>
 					</div>
@@ -106,13 +108,13 @@ function LibrariesView() {
 					{status === "connected" && libraries && (
 						<div>
 							<h2 className="text-lg font-semibold mb-4">
-								Libraries
+{t("demo.libraries")}
 							</h2>
 							<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 								{libraries.length === 0 ? (
 									<div className="col-span-full bg-gray-900 rounded-lg p-8 border border-gray-800 text-center">
 										<p className="text-gray-400">
-											No libraries found
+{t("demo.noLibraries")}
 										</p>
 									</div>
 								) : (
@@ -126,14 +128,14 @@ function LibrariesView() {
 											</h3>
 											<div className="space-y-2 text-sm">
 												<div className="flex justify-between text-gray-400">
-													<span>Files</span>
+<span>{t("demo.files")}</span>
 													<span className="text-white">
 														{lib.stats?.total_files?.toLocaleString() ||
 															0}
 													</span>
 												</div>
 												<div className="flex justify-between text-gray-400">
-													<span>Size</span>
+<span>{t("demo.size")}</span>
 													<span className="text-white">
 														{formatBytes(
 															lib.stats
@@ -164,10 +166,10 @@ function LibrariesView() {
 					<div>
 						<div className="flex items-center justify-between mb-4">
 							<h2 className="text-lg font-semibold">
-								Live Events
+{t("demo.liveEvents")}
 							</h2>
 							<span className="text-xs bg-gray-800 px-2 py-1 rounded-full">
-								{eventCount} received
+{t("demo.eventsReceived", { count: eventCount })}
 							</span>
 						</div>
 						<div className="bg-gray-900 rounded-lg border border-gray-800 p-4">
@@ -177,7 +179,7 @@ function LibrariesView() {
 								</pre>
 							) : (
 								<p className="text-gray-500 text-sm text-center py-4">
-									Waiting for events...
+{t("demo.waitingForEvents")}
 								</p>
 							)}
 						</div>
@@ -186,21 +188,21 @@ function LibrariesView() {
 					{/* Window Controls */}
 					<div>
 						<h2 className="text-lg font-semibold mb-4">
-							Window Management
+{t("demo.windowManagement")}
 						</h2>
 						<div className="grid grid-cols-2 md:grid-cols-4 gap-3">
 							<ShinyButton
 								onClick={() => refetch()}
 								disabled={isLoading}
 							>
-								Refresh
+{t("common.refresh")}
 							</ShinyButton>
 							<ShinyButton
 								onClick={() =>
 									openWindow("Settings", "general")
 								}
 							>
-								Settings
+{t("demo.settings")}
 							</ShinyButton>
 							<ShinyButton
 								onClick={() =>
@@ -209,12 +211,12 @@ function LibrariesView() {
 									})
 								}
 							>
-								Inspector
+{t("demo.inspector")}
 							</ShinyButton>
 							<ShinyButton
 								onClick={() => openWindow("FloatingControls")}
 							>
-								Floating Controls
+{t("demo.floatingControls")}
 							</ShinyButton>
 						</div>
 						{windowError && (
@@ -232,7 +234,7 @@ function LibrariesView() {
 				<div className="absolute inset-0 bg-black/50 backdrop-blur flex items-center justify-center">
 					<div className="bg-gray-900 rounded-lg p-6 border border-red-500 max-w-md">
 						<h2 className="text-xl font-bold mb-2 text-red-400">
-							Error
+{t("common.error")}
 						</h2>
 						<p className="text-sm text-gray-300">{error.message}</p>
 					</div>

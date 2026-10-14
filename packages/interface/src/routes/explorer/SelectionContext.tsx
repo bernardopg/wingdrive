@@ -1,4 +1,5 @@
 import {toast} from '@wingdrive/primitives';
+import {useTranslation} from '../../i18n';
 import type {File} from '@wingdrive/ts-client';
 import {
 	createContext,
@@ -72,6 +73,7 @@ export function SelectionProvider({
 	children,
 	isActiveTab = true
 }: SelectionProviderProps) {
+	const {t} = useTranslation('explorer');
 	const platform = usePlatform();
 	const clipboard = useClipboard();
 	const client = useWingDriveClient();
@@ -355,12 +357,12 @@ export function SelectionProvider({
 					const move = platform.undoMove;
 					try {
 						const expected = await platform.fileIdentity(newPath);
-						undo.record('rename', () =>
+						undo.record(t('undo.rename'), () =>
 							move(newPath, oldPath, expected)
 						);
 					} catch {
 						toast.error(
-							'Renamed successfully, but undo is unavailable'
+							t('errors.renamedUndoUnavailable')
 						);
 					}
 				}
@@ -371,9 +373,7 @@ export function SelectionProvider({
 			} catch (error) {
 				// Keep in edit mode on error so user can retry
 				console.error('Rename failed:', error);
-				toast.error(
-					`Rename failed: ${error instanceof Error ? error.message : String(error)}`
-				);
+				toast.error(t('errors.renameFailed', {error: error instanceof Error ? error.message : String(error)}));
 				throw error;
 			}
 		},
@@ -384,7 +384,8 @@ export function SelectionProvider({
 			refetchListings,
 			waitForJob,
 			platform,
-			undo
+			undo,
+			t
 		]
 	);
 

@@ -7,27 +7,30 @@ import { useEffect, useState } from "react";
 import { formatBytes } from "../../routes/explorer/utils";
 import { X } from "@phosphor-icons/react";
 import { ContentRenderer } from "./ContentRenderer";
+import { useTranslation } from "../../i18n";
+import {uiLocale} from "../../i18n";
 
 function MetadataPanel({ file }: { file: File }) {
+	const { t } = useTranslation("inspector");
 	return (
 		<div className="w-[280px] min-w-[280px] bg-sidebar-box border-l border-sidebar-line p-4 overflow-y-auto">
 			<div className="space-y-4">
 				<div>
-					<div className="text-xs text-ink-dull mb-1">Name</div>
+					<div className="text-xs text-ink-dull mb-1">{t("inspector.preview.name")}</div>
 					<div className="text-sm text-ink break-words">
 						{file.name}
 					</div>
 				</div>
 
 				<div>
-					<div className="text-xs text-ink-dull mb-1">Kind</div>
+					<div className="text-xs text-ink-dull mb-1">{t("inspector.preview.kind")}</div>
 					<div className="text-sm text-ink capitalize">
 						{getContentKind(file)}
 					</div>
 				</div>
 
 				<div>
-					<div className="text-xs text-ink-dull mb-1">Size</div>
+					<div className="text-xs text-ink-dull mb-1">{t("inspector.preview.size")}</div>
 					<div className="text-sm text-ink">
 						{formatBytes(file.size || 0)}
 					</div>
@@ -36,7 +39,7 @@ function MetadataPanel({ file }: { file: File }) {
 				{file.extension && (
 					<div>
 						<div className="text-xs text-ink-dull mb-1">
-							Extension
+							{t("ui.extension")}
 						</div>
 						<div className="text-sm text-ink">{file.extension}</div>
 					</div>
@@ -45,10 +48,10 @@ function MetadataPanel({ file }: { file: File }) {
 				{file.created_at && (
 					<div>
 						<div className="text-xs text-ink-dull mb-1">
-							Created
+							{t("ui.created")}
 						</div>
 						<div className="text-sm text-ink">
-							{new Date(file.created_at).toLocaleString()}
+							{new Date(file.created_at).toLocaleString(uiLocale())}
 						</div>
 					</div>
 				)}
@@ -56,10 +59,10 @@ function MetadataPanel({ file }: { file: File }) {
 				{file.modified_at && (
 					<div>
 						<div className="text-xs text-ink-dull mb-1">
-							Modified
+							{t("ui.modified")}
 						</div>
 						<div className="text-sm text-ink">
-							{new Date(file.modified_at).toLocaleString()}
+							{new Date(file.modified_at).toLocaleString(uiLocale())}
 						</div>
 					</div>
 				)}
@@ -69,6 +72,7 @@ function MetadataPanel({ file }: { file: File }) {
 }
 
 export function QuickPreview() {
+	const { t } = useTranslation("inspector");
 	const platform = usePlatform();
 	const [fileId, setFileId] = useState<string | null>(null);
 
@@ -118,7 +122,7 @@ export function QuickPreview() {
 	if (isLoading || !file) {
 		return (
 			<div className="h-screen flex items-center justify-center bg-app text-ink">
-				<div className="animate-pulse">Loading...</div>
+				<div className="animate-pulse">{t("inspector.loading")}</div>
 			</div>
 		);
 	}
@@ -128,7 +132,7 @@ export function QuickPreview() {
 			<div className="h-screen flex items-center justify-center bg-app text-red-400">
 				<div>
 					<div className="text-lg font-medium mb-2">
-						Error loading file
+						{t("ui.errorLoadingFile")}
 					</div>
 					<div className="text-sm">{error.message}</div>
 				</div>
@@ -165,7 +169,7 @@ export function QuickPreview() {
 			{/* Footer with keyboard hints */}
 			<div className="px-4 py-2 border-t border-app-line bg-app-box/30">
 				<div className="text-xs text-ink-dull text-center">
-					Press <span className="text-ink">ESC</span> to close
+					{t("inspector.preview.closeSimple")}
 				</div>
 			</div>
 		</div>

@@ -5,6 +5,7 @@ import {useEffect, useMemo, useState} from 'react';
 import {usePlatform} from '../../contexts/PlatformContext';
 import {useLibraryQuery} from '../../contexts/WingDriveContext';
 import {useSelection} from '../../routes/explorer/SelectionContext';
+import {useTranslation} from '../../i18n';
 import {isVirtualFile} from '@wingdrive/ts-client';
 import {FileInspector} from './variants/FileInspector';
 import {LocationInspector} from './variants/LocationInspector';
@@ -88,6 +89,7 @@ function InspectorView({
 	isPreviewActive = false,
 	hideDragRegion = false
 }: InspectorViewProps) {
+	const {t} = useTranslation('inspector');
 	return (
 		<div
 			className={clsx(
@@ -123,7 +125,7 @@ function InspectorView({
 						<button
 							onClick={onPopOut}
 							className="hover:bg-sidebar-selected rounded-lg p-1.5 transition-colors"
-							title="Pop out Inspector"
+title={t('inspector.popOut')}
 						>
 							<ArrowSquareOut
 								className="text-sidebar-ink-dull hover:text-sidebar-ink size-4 transition-colors"
@@ -138,10 +140,11 @@ function InspectorView({
 }
 
 function EmptyState() {
+const {t} = useTranslation('inspector');
 	return (
 		<div className="flex flex-1 items-center justify-center px-4 text-center">
 			<p className="text-sidebar-ink-dull text-xs">
-				Select an item to view details
+{t('inspector.emptyState')}
 			</p>
 		</div>
 	);
@@ -152,6 +155,7 @@ function EmptyState() {
  * This is used when the inspector is opened in a separate window
  */
 export function PopoutInspector() {
+const {t} = useTranslation('inspector');
 	const platform = usePlatform();
 	const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
 
@@ -235,7 +239,7 @@ export function PopoutInspector() {
 		return (
 			<div className="bg-sidebar/65 flex h-full flex-col overflow-hidden rounded-2xl">
 				<div className="flex flex-1 items-center justify-center">
-					<p className="text-sidebar-ink-dull text-xs">Loading...</p>
+<p className="text-sidebar-ink-dull text-xs">{t('inspector.loading')}</p>
 				</div>
 			</div>
 		);

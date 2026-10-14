@@ -12,6 +12,7 @@ import { useUndo } from "../../../hooks/useUndo";
 import { summarizeFileOperation } from "../../../hooks/fileOperationOutcome";
 import { reportFileOperation } from "../../../hooks/reportFileOperation";
 import { isOperableFile } from "../fileCapabilities";
+import { useTranslation } from "../../../i18n";
 
 /**
  * Shared hook for delete file operations.
@@ -26,6 +27,7 @@ import { isOperableFile } from "../fileCapabilities";
  * made users delete the same file twice.
  */
 export function useDeleteFiles() {
+	const {t} = useTranslation("explorer");
 	const mutation = useLibraryMutation("files.delete");
 	const restore = useCoreMutation("trash.restore");
 	const undo = useUndo();
@@ -84,7 +86,7 @@ export function useDeleteFiles() {
 							resolve(outcome.status === "success");
 						} catch (err) {
 							console.error("Failed to delete:", err);
-							toast.error(`Failed to delete: ${err}`);
+							toast.error(t("errors.failedToDelete", {error: err}));
 							resolve(false);
 						}
 					},
@@ -94,7 +96,7 @@ export function useDeleteFiles() {
 
 			return confirmed;
 		},
-		[mutation, openConfirmation, waitForJob, refetchListings, restore, undo],
+		[mutation, openConfirmation, waitForJob, refetchListings, restore, undo, t],
 	);
 
 	return { deleteFiles, isPending: mutation.isPending };

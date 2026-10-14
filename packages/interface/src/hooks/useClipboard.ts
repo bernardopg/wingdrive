@@ -2,6 +2,7 @@ import {toast} from '@wingdrive/primitives';
 import type {WingPath} from '@wingdrive/ts-client';
 import {create} from 'zustand';
 import {usePlatform} from '../contexts/PlatformContext';
+import {i18n} from '../i18n';
 
 export interface ClipboardState {
 	operation: 'copy' | 'cut' | null;
@@ -76,7 +77,7 @@ export function useClipboard() {
 				})
 				.catch((error) =>
 					toast.error(
-						`Could not copy files to the system clipboard: ${error}`
+						i18n.t('common:clipboard.copyFailed', {error: String(error)})
 					)
 				);
 		}

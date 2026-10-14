@@ -1,0 +1,164 @@
+{
+	"title": "Settings",
+	"saving": "Saving...",
+	"saveChanges": "Save Changes",
+	"loading": "Loading...",
+	"noLibrary": "No library selected. Please select a library first.",
+	"sections": {
+		"general": "General",
+		"appearance": "Appearance",
+		"library": "Library",
+		"indexer": "Indexer",
+		"services": "Services",
+		"privacy": "Privacy",
+		"advanced": "Advanced",
+		"about": "About"
+	},
+	"general": {
+		"description": "Configure general application settings.",
+		"saveFailed": "Failed to save: {{error}}",
+		"device": {
+			"title": "Device",
+			"name": "Device Name",
+			"nameHint": "User-friendly name for this device",
+			"namePlaceholder": "My Computer",
+			"slug": "Device Slug",
+			"slugHint": "Unique identifier for this device (alphanumeric and hyphens only)",
+			"saved": "Device settings saved",
+			"saveFailed": "Failed to save device settings: {{error}}",
+			"slugInvalid": "Use only letters, numbers and hyphens, up to 50 characters."
+		},
+		"background": {
+			"title": "Background",
+			"keepRunning": "Keep running in the background",
+			"keepRunningHint": "Closing the window keeps WingDrive in the tray so folders open instantly",
+			"startAtLogin": "Start at login",
+			"startAtLoginHint": "Start WingDrive hidden in the tray when you log in",
+			"terminal": "Terminal",
+			"terminalHint": "Command for Open Terminal Here. Leave empty to use xdg-terminal-exec, $TERMINAL or an installed terminal."
+		},
+		"version": {
+			"title": "Version Information",
+			"version": "Version",
+			"built": "Built"
+		},
+		"dataDir": {
+			"title": "Data Directory",
+			"hint": "Where WingDrive stores its data",
+			"copy": "Copy path",
+			"copied": "Path copied",
+			"open": "Open folder"
+		},
+		"reset": {
+			"title": "Reset All Data",
+			"hint": "Permanently delete all libraries and settings",
+			"confirm": "Reset All Data\n\nThis will permanently delete all libraries, settings, and cached data. The app will need to be restarted. Are you sure?",
+			"done": "Data has been reset. Please restart the application.",
+			"failed": "Failed to reset data",
+			"button": "Reset",
+			"pending": "Resetting...",
+			"zone": "Danger zone"
+		}
+	},
+	"appearance": {
+		"description": "Customize how WingDrive looks.",
+		"theme": "Theme",
+		"themes": {
+			"system": "System",
+			"light": "Light",
+			"dark": "Dark",
+			"midnight": "Midnight",
+			"noir": "Noir",
+			"slate": "Slate",
+			"nord": "Nord",
+			"mocha": "Mocha",
+			"t3-code": "T3 Code",
+			"t3-chat": "T3 Chat",
+			"grove": "Grove",
+			"ocean": "Ocean",
+			"ember": "Ember",
+			"iris": "Iris",
+			"catppuccin": "Catppuccin",
+			"gruvbox": "Gruvbox",
+			"solarized": "Solarized",
+			"rose-pine": "Rosé Pine",
+			"dracula": "Dracula",
+			"tokyo-night": "Tokyo Night"
+		},
+		"language": "Language",
+		"languageHint": "Language of the interface",
+		"themeGroups": {
+			"wingdrive": "WingDrive",
+			"t3": "T3 Code",
+			"community": "Community"
+		},
+		"adaptive": "Follows the system light/dark setting"
+	},
+	"library": {
+		"description": "Configure settings for the current library.",
+		"autoTracking": "Auto-Tracking",
+		"systemVolumes": "System Volumes",
+		"systemVolumesHint": "Track internal drives when the library opens",
+		"externalVolumes": "External Volumes",
+		"externalVolumesHint": "Automatically track external drives when connected"
+	},
+	"indexer": {
+		"description": "Configure what files are indexed in your library.",
+		"exclusions": "Exclusions",
+		"skipSystem": "Skip System Files",
+		"skipSystemHint": "Ignore OS system files and directories",
+		"skipGit": "Skip Git Repositories",
+		"skipGitHint": "Ignore .git directories",
+		"skipDev": "Skip Dev Directories",
+		"skipDevHint": "Ignore node_modules, vendor, target, etc.",
+		"skipHidden": "Skip Hidden Files",
+		"skipHiddenHint": "Ignore files starting with a dot",
+		"filters": "Filters",
+		"gitignore": "Respect .gitignore",
+		"gitignoreHint": "Honor .gitignore files when indexing",
+		"onlyImages": "Only Index Images",
+		"onlyImagesHint": "Only index image files (photos, graphics)",
+		"appliesNextScan": "These rules apply to locations you add from now on. Locations you already added keep their current index."
+	},
+	"services": {
+		"description": "Configure daemon background services.",
+		"restartWarning": "Changes to service settings may require a daemon restart to take effect.",
+		"networking": "Networking",
+		"networkingHint": "Enable P2P networking and device pairing",
+		"volumeMonitoring": "Volume Monitoring",
+		"volumeMonitoringHint": "Monitor for connected and disconnected volumes",
+		"fsWatcher": "Filesystem Watcher",
+		"fsWatcherHint": "Watch for file changes in tracked locations",
+		"statistics": "Statistics Listener",
+		"statisticsHint": "Listen for and update library statistics",
+		"background": "Background services",
+		"pairing": "Device pairing",
+		"pairingDescription": "After you pair two devices directly, a paired device can introduce a new one to the rest of your devices.",
+		"acceptVouched": "Accept introduced devices",
+		"acceptVouchedHint": "Trust devices that one of your paired devices vouches for, without pairing them again",
+		"vouchToAll": "Introduce new devices automatically",
+		"vouchToAllHint": "When you pair a new device, vouch for it to all your other paired devices"
+	},
+	"privacy": {
+		"description": "What WingDrive shares about you.",
+		"telemetry": "Telemetry",
+		"telemetryBody": "WingDrive does not collect usage data. Your files, file names and library contents stay on your devices unless you share them.",
+		"securityPolicy": "Read the security policy"
+	},
+	"advanced": {
+		"description": "Advanced configuration options for power users.",
+		"warning": "These settings are for expert users. Incorrect configuration may affect performance.",
+		"jobLogging": "Job Logging",
+		"debugLogs": "Include Debug Logs",
+		"debugLogsHint": "Include verbose debug information in job logs",
+		"debugLogsBody": "Every background job writes a log. Debug entries make those logs much larger and take effect after the daemon restarts. Set the daemon log level with the RUST_LOG environment variable."
+	},
+	"about": {
+		"tagline": "A file explorer from the future.",
+		"manifesto": "Infrastructure for the next era of computing. An architecture designed for multi-device environments from the ground up—not cloud services retrofitted with offline support, but local-first sync that scales to the cloud when you want it.",
+		"website": "Website"
+	},
+	"cancel": "Cancel",
+	"restartNeeded": "Some changes take effect after the daemon restarts.",
+	"saveFailed": "Failed to save: {{error}}"
+}

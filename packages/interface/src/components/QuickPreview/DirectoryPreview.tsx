@@ -1,15 +1,18 @@
+import { useTranslation } from "../../i18n";
 import { useMemo } from "react";
 import type { File } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../routes/explorer/File";
 import { useNormalizedQuery } from "../../contexts/WingDriveContext";
 import { useOptionalExplorer } from "../../routes/explorer/context";
 import { Folder } from "@wingdrive/assets/icons";
+import { ThemedIcon } from "../ThemedIcon";
 
 interface DirectoryPreviewProps {
 	file: File;
 }
 
 export function DirectoryPreview({ file }: DirectoryPreviewProps) {
+	const { t } = useTranslation("inspector");
 	// Null-safe: the preview can render outside an explorer provider (pop-out window).
 	const explorer = useOptionalExplorer();
 	const showHiddenFiles = explorer?.viewSettings.showHiddenFiles ?? false;
@@ -41,16 +44,16 @@ export function DirectoryPreview({ file }: DirectoryPreviewProps) {
 		return (
 			<div className="w-full h-full flex items-center justify-center">
 				<div className="text-center">
-					<img
+					<ThemedIcon
 						src={Folder}
-						alt="Folder Icon"
+alt={t("inspector.preview.folderIcon")}
 						className="w-16 h-16 mb-4 mx-auto"
 					/>
 					<div className="text-lg font-medium text-ink">
 						{file.name}
 					</div>
 					<div className="text-sm text-ink-dull mt-2">
-						Loading directories...
+						{t("ui.loadingDirectories")}
 					</div>
 				</div>
 			</div>
@@ -61,16 +64,16 @@ export function DirectoryPreview({ file }: DirectoryPreviewProps) {
 		return (
 			<div className="w-full h-full flex items-center justify-center">
 				<div className="text-center">
-					<img
+					<ThemedIcon
 						src={Folder}
-						alt="Folder Icon"
+alt={t("inspector.preview.folderIcon")}
 						className="w-16 h-16 mb-4 mx-auto"
 					/>
 					<div className="text-lg font-medium text-ink">
 						{file.name}
 					</div>
 					<div className="text-sm text-ink-dull mt-2">
-						No subdirectories
+						{t("ui.noSubdirectories")}
 					</div>
 				</div>
 			</div>

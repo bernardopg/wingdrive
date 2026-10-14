@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Power, Check, Warning, CircleNotch } from '@phosphor-icons/react';
 import { usePlatform } from '../../contexts/PlatformContext';
+import { useTranslation } from '../../i18n';
 
 interface DaemonStatus {
 	is_running: boolean;
@@ -10,6 +11,7 @@ interface DaemonStatus {
 }
 
 export function DaemonManager() {
+const { t } = useTranslation('navigation');
 	const platform = usePlatform();
 	const [status, setStatus] = useState<DaemonStatus | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
@@ -97,9 +99,9 @@ export function DaemonManager() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-semibold text-ink">Daemon Manager</h1>
+				<h1 className="text-2xl font-semibold text-ink">{t('daemon.title')}</h1>
 					<p className="text-sm text-ink-dull mt-1">
-						Control the WingDrive daemon process
+						{t('daemon.description')}
 					</p>
 				</div>
 			</div>
@@ -107,7 +109,7 @@ export function DaemonManager() {
 			{/* Status Card */}
 			<div className="bg-app-box border border-app-line rounded-lg p-4">
 				<div className="flex items-center justify-between mb-4">
-					<h2 className="text-lg font-medium text-ink">Status</h2>
+				<h2 className="text-lg font-medium text-ink">{t('daemon.status')}</h2>
 					<div className="flex items-center gap-2">
 						<StatusIcon
 							className={`size-5 ${getStatusColor()} ${
@@ -116,7 +118,7 @@ export function DaemonManager() {
 							weight="fill"
 						/>
 						<span className={`text-sm font-medium ${getStatusColor()}`}>
-							{isLoading ? 'Checking...' : isRunning ? 'Running' : 'Stopped'}
+							{isLoading ? t('daemon.checking') : isRunning ? t('daemon.running') : t('daemon.stopped')}
 						</span>
 					</div>
 				</div>
@@ -129,21 +131,21 @@ export function DaemonManager() {
 
 				<div className="space-y-2 text-sm">
 					<div className="flex justify-between">
-						<span className="text-ink-dull">Socket Path:</span>
+						<span className="text-ink-dull">{t('daemon.socketPath')}</span>
 						<span className="text-ink font-mono text-xs">
-							{status?.socket_path || 'N/A'}
+							{status?.socket_path || t('common.notAvailable')}
 						</span>
 					</div>
 					<div className="flex justify-between">
-						<span className="text-ink-dull">Server URL:</span>
+						<span className="text-ink-dull">{t('daemon.serverUrl')}</span>
 						<span className="text-ink font-mono text-xs">
-							{status?.server_url || 'N/A'}
+							{status?.server_url || t('common.notAvailable')}
 						</span>
 					</div>
 					<div className="flex justify-between">
-						<span className="text-ink-dull">Started by App:</span>
+						<span className="text-ink-dull">{t('daemon.startedByApp')}</span>
 						<span className="text-ink">
-							{status?.started_by_us ? 'Yes' : 'No'}
+							{status?.started_by_us ? t('common.yes') : t('common.no')}
 						</span>
 					</div>
 				</div>
@@ -152,21 +154,21 @@ export function DaemonManager() {
 					onClick={checkDaemonStatus}
 					className="mt-4 w-full px-4 py-2 bg-accent hover:bg-accent-deep text-white rounded-md text-sm font-medium transition-colors"
 				>
-					Refresh Status
+					{t("ui.refreshStatus")}
 				</button>
 			</div>
 
 			{/* Settings Card */}
 			<div className="bg-app-box border border-app-line rounded-lg p-4">
-				<h2 className="text-lg font-medium text-ink mb-4">Settings</h2>
+				<h2 className="text-lg font-medium text-ink mb-4">{t('daemon.settings')}</h2>
 
 				<div className="space-y-4">
 					{/* Auto-start Toggle */}
 					<div className="flex items-center justify-between">
 						<div>
-							<h3 className="text-sm font-medium text-ink">Auto-start Daemon</h3>
+							<h3 className="text-sm font-medium text-ink">{t('daemon.autoStart')}</h3>
 							<p className="text-xs text-ink-dull mt-1">
-								Start daemon automatically when app launches
+								{t("ui.startDaemonAutomaticallyWhenAppLaunches")}
 							</p>
 						</div>
 						<button
@@ -186,9 +188,9 @@ export function DaemonManager() {
 					{/* Run in Process Toggle */}
 					<div className="flex items-center justify-between">
 						<div>
-							<h3 className="text-sm font-medium text-ink">Run in Process</h3>
+							<h3 className="text-sm font-medium text-ink">{t('daemon.runInProcess')}</h3>
 							<p className="text-xs text-ink-dull mt-1">
-								Run daemon in the app process (fallback if background permission denied)
+								{t("ui.runDaemonInTheAppProcess")}
 							</p>
 						</div>
 						<button
@@ -212,7 +214,7 @@ export function DaemonManager() {
 				<div className="flex items-start gap-3">
 					<Warning className="size-5 text-yellow-500 flex-shrink-0 mt-0.5" weight="fill" />
 					<div>
-						<h3 className="text-sm font-medium text-ink">macOS Background Items</h3>
+						<h3 className="text-sm font-medium text-ink">{t('daemon.backgroundItems')}</h3>
 						<p className="text-xs text-ink-dull mt-1">
 							On macOS, running background processes requires permission. If the daemon fails to
 							start automatically, check System Settings → General → Login Items & Extensions
@@ -240,7 +242,7 @@ export function DaemonManager() {
 					) : (
 						<Power className="size-4" weight="bold" />
 					)}
-					{isStarting ? 'Starting...' : 'Start Daemon'}
+					{isStarting ? t('daemon.starting') : t('daemon.start')}
 				</button>
 				<button
 					onClick={handleStopDaemon}
@@ -252,7 +254,7 @@ export function DaemonManager() {
 					) : (
 						<Power className="size-4" weight="bold" />
 					)}
-					{isStopping ? 'Stopping...' : 'Stop Daemon'}
+					{isStopping ? t('daemon.stopping') : t('daemon.stop')}
 				</button>
 			</div>
 		</div>

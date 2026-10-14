@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SubtitleSettings } from './Subtitles';
+import { useTranslation } from '../../i18n';
 
 interface SubtitleSettingsMenuProps {
 	isOpen: boolean;
@@ -14,6 +15,7 @@ export function SubtitleSettingsMenu({
 	onSettingsChange,
 	onClose
 }: SubtitleSettingsMenuProps) {
+const { t } = useTranslation('inspector');
 	return (
 		<AnimatePresence>
 			{isOpen && (
@@ -33,13 +35,13 @@ export function SubtitleSettingsMenu({
 						className="absolute bottom-20 right-6 z-20 w-72 rounded-lg border border-app-line bg-sidebar-box/95 p-4 backdrop-blur-xl shadow-2xl"
 						onClick={(e) => e.stopPropagation()}
 					>
-						<h3 className="mb-4 text-sm font-semibold text-ink">Subtitle Settings</h3>
+<h3 className="mb-4 text-sm font-semibold text-ink">{t('inspector.preview.subtitleSettingsTitle')}</h3>
 
 						<div className="space-y-4">
 							{/* Font Size */}
 							<div>
 								<label className="mb-2 flex items-center justify-between text-xs text-ink-dull">
-									<span>Font Size</span>
+<span>{t('inspector.preview.fontSize')}</span>
 									<span className="text-ink">{Math.round(settings.fontSize * 100)}%</span>
 								</label>
 								<input
@@ -61,7 +63,7 @@ export function SubtitleSettingsMenu({
 							{/* Background Opacity */}
 							<div>
 								<label className="mb-2 flex items-center justify-between text-xs text-ink-dull">
-									<span>Background Opacity</span>
+<span>{t('inspector.preview.backgroundOpacity')}</span>
 									<span className="text-ink">{Math.round(settings.backgroundOpacity * 100)}%</span>
 								</label>
 								<input
@@ -82,7 +84,7 @@ export function SubtitleSettingsMenu({
 
 							{/* Position */}
 							<div>
-								<label className="mb-2 block text-xs text-ink-dull">Position</label>
+<label className="mb-2 block text-xs text-ink-dull">{t('inspector.preview.position')}</label>
 								<div className="flex gap-2">
 									<button
 										onClick={() =>
@@ -97,7 +99,7 @@ export function SubtitleSettingsMenu({
 												: 'bg-sidebar-line/50 text-ink-dull hover:bg-sidebar-line'
 										}`}
 									>
-										Bottom
+										{t("ui.bottom")}
 									</button>
 									<button
 										onClick={() =>
@@ -112,7 +114,7 @@ export function SubtitleSettingsMenu({
 												: 'bg-sidebar-line/50 text-ink-dull hover:bg-sidebar-line'
 										}`}
 									>
-										Top
+										{t("ui.top")}
 									</button>
 								</div>
 							</div>

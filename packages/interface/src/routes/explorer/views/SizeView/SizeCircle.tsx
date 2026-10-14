@@ -8,6 +8,7 @@ import {
 	type SidebarDragData,
 } from "../../../../components/SpacesSidebar/dnd";
 import { usePlatform } from "../../../../contexts/PlatformContext";
+import { i18n } from "../../../../i18n";
 
 interface SizeCircleProps {
 	file: File;
@@ -18,11 +19,11 @@ interface SizeCircleProps {
 
 // Get file extension or type
 function getFileType(file: File): string {
-	if (file.kind === "Directory") return "Folder";
+	if (file.kind === "Directory") return i18n.t("explorer:general.folder");
 
 	const name = file.name;
 	const lastDot = name.lastIndexOf(".");
-	if (lastDot === -1 || lastDot === 0) return "File";
+	if (lastDot === -1 || lastDot === 0) return i18n.t("explorer:general.file");
 
 	return name.slice(lastDot + 1).toUpperCase();
 }

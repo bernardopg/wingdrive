@@ -1,0 +1,164 @@
+{
+	"title": "Configurações",
+	"saving": "Salvando...",
+	"saveChanges": "Salvar alterações",
+	"loading": "Carregando...",
+	"noLibrary": "Nenhuma biblioteca selecionada. Selecione uma biblioteca primeiro.",
+	"sections": {
+		"general": "Geral",
+		"appearance": "Aparência",
+		"library": "Biblioteca",
+		"indexer": "Indexador",
+		"services": "Serviços",
+		"privacy": "Privacidade",
+		"advanced": "Avançado",
+		"about": "Sobre"
+	},
+	"general": {
+		"description": "Configure as opções gerais do aplicativo.",
+		"saveFailed": "Falha ao salvar: {{error}}",
+		"device": {
+			"title": "Dispositivo",
+			"name": "Nome do dispositivo",
+			"nameHint": "Nome amigável para este dispositivo",
+			"namePlaceholder": "Meu computador",
+			"slug": "Slug do dispositivo",
+			"slugHint": "Identificador único deste dispositivo (apenas letras, números e hífens)",
+			"saved": "Configurações do dispositivo salvas",
+			"saveFailed": "Falha ao salvar as configurações do dispositivo: {{error}}",
+			"slugInvalid": "Use apenas letras, números e hífens, com até 50 caracteres."
+		},
+		"background": {
+			"title": "Segundo plano",
+			"keepRunning": "Continuar em execução em segundo plano",
+			"keepRunningHint": "Fechar a janela mantém o WingDrive na bandeja para que as pastas abram instantaneamente",
+			"startAtLogin": "Iniciar ao entrar",
+			"startAtLoginHint": "Iniciar o WingDrive oculto na bandeja quando você entrar na sessão",
+			"terminal": "Terminal",
+			"terminalHint": "Comando para Abrir terminal aqui. Deixe vazio para usar xdg-terminal-exec, $TERMINAL ou um terminal instalado."
+		},
+		"version": {
+			"title": "Informações da versão",
+			"version": "Versão",
+			"built": "Compilado em"
+		},
+		"dataDir": {
+			"title": "Diretório de dados",
+			"hint": "Onde o WingDrive armazena seus dados",
+			"copy": "Copiar caminho",
+			"copied": "Caminho copiado",
+			"open": "Abrir pasta"
+		},
+		"reset": {
+			"title": "Redefinir todos os dados",
+			"hint": "Excluir permanentemente todas as bibliotecas e configurações",
+			"confirm": "Redefinir todos os dados\n\nIsso excluirá permanentemente todas as bibliotecas, configurações e dados em cache. O aplicativo precisará ser reiniciado. Tem certeza?",
+			"done": "Os dados foram redefinidos. Reinicie o aplicativo.",
+			"failed": "Falha ao redefinir os dados",
+			"button": "Redefinir",
+			"pending": "Redefinindo...",
+			"zone": "Zona de perigo"
+		}
+	},
+	"appearance": {
+		"description": "Personalize a aparência do WingDrive.",
+		"theme": "Tema",
+		"themes": {
+			"system": "Sistema",
+			"light": "Claro",
+			"dark": "Escuro",
+			"midnight": "Meia-noite",
+			"noir": "Noir",
+			"slate": "Ardósia",
+			"nord": "Nord",
+			"mocha": "Mocha",
+			"t3-code": "T3 Code",
+			"t3-chat": "T3 Chat",
+			"grove": "Bosque",
+			"ocean": "Oceano",
+			"ember": "Brasa",
+			"iris": "Iris",
+			"catppuccin": "Catppuccin",
+			"gruvbox": "Gruvbox",
+			"solarized": "Solarized",
+			"rose-pine": "Rosé Pine",
+			"dracula": "Dracula",
+			"tokyo-night": "Tokyo Night"
+		},
+		"language": "Idioma",
+		"languageHint": "Idioma da interface",
+		"themeGroups": {
+			"wingdrive": "WingDrive",
+			"t3": "T3 Code",
+			"community": "Comunidade"
+		},
+		"adaptive": "Segue o modo claro/escuro do sistema"
+	},
+	"library": {
+		"description": "Configure as opções da biblioteca atual.",
+		"autoTracking": "Rastreamento automático",
+		"systemVolumes": "Volumes do sistema",
+		"systemVolumesHint": "Rastrear unidades internas quando a biblioteca abrir",
+		"externalVolumes": "Volumes externos",
+		"externalVolumesHint": "Rastrear automaticamente unidades externas quando conectadas"
+	},
+	"indexer": {
+		"description": "Configure quais arquivos são indexados na sua biblioteca.",
+		"exclusions": "Exclusões",
+		"skipSystem": "Ignorar arquivos do sistema",
+		"skipSystemHint": "Ignorar arquivos e diretórios do sistema operacional",
+		"skipGit": "Ignorar repositórios Git",
+		"skipGitHint": "Ignorar diretórios .git",
+		"skipDev": "Ignorar diretórios de desenvolvimento",
+		"skipDevHint": "Ignorar node_modules, vendor, target etc.",
+		"skipHidden": "Ignorar arquivos ocultos",
+		"skipHiddenHint": "Ignorar arquivos que começam com ponto",
+		"filters": "Filtros",
+		"gitignore": "Respeitar .gitignore",
+		"gitignoreHint": "Seguir os arquivos .gitignore ao indexar",
+		"onlyImages": "Indexar apenas imagens",
+		"onlyImagesHint": "Indexar somente arquivos de imagem (fotos, gráficos)",
+		"appliesNextScan": "Estas regras valem para os locais adicionados a partir de agora. Os locais já adicionados mantêm o índice atual."
+	},
+	"services": {
+		"description": "Configure os serviços em segundo plano do daemon.",
+		"restartWarning": "Alterações nos serviços podem exigir reiniciar o daemon para ter efeito.",
+		"networking": "Rede",
+		"networkingHint": "Ativar rede P2P e pareamento de dispositivos",
+		"volumeMonitoring": "Monitoramento de volumes",
+		"volumeMonitoringHint": "Monitorar volumes conectados e desconectados",
+		"fsWatcher": "Observador do sistema de arquivos",
+		"fsWatcherHint": "Observar alterações de arquivos nos locais rastreados",
+		"statistics": "Ouvinte de estatísticas",
+		"statisticsHint": "Ouvir e atualizar as estatísticas da biblioteca",
+		"background": "Serviços em segundo plano",
+		"pairing": "Pareamento de dispositivos",
+		"pairingDescription": "Depois de parear dois dispositivos diretamente, um dispositivo pareado pode apresentar um novo aos seus outros dispositivos.",
+		"acceptVouched": "Aceitar dispositivos apresentados",
+		"acceptVouchedHint": "Confiar em dispositivos que um dos seus dispositivos pareados recomenda, sem parear de novo",
+		"vouchToAll": "Apresentar novos dispositivos automaticamente",
+		"vouchToAllHint": "Ao parear um novo dispositivo, recomendá-lo a todos os seus outros dispositivos pareados"
+	},
+	"privacy": {
+		"description": "O que o WingDrive compartilha sobre você.",
+		"telemetry": "Telemetria",
+		"telemetryBody": "O WingDrive não coleta dados de uso. Seus arquivos, nomes de arquivos e o conteúdo da biblioteca ficam nos seus dispositivos, a menos que você os compartilhe.",
+		"securityPolicy": "Ler a política de segurança"
+	},
+	"advanced": {
+		"description": "Opções de configuração avançadas para usuários experientes.",
+		"warning": "Estas configurações são para usuários experientes. Uma configuração incorreta pode afetar o desempenho.",
+		"jobLogging": "Logs de tarefas",
+		"debugLogs": "Incluir logs de depuração",
+		"debugLogsHint": "Incluir informações detalhadas de depuração nos logs de tarefas",
+		"debugLogsBody": "Cada tarefa em segundo plano grava um log. Entradas de depuração deixam esses logs bem maiores e passam a valer após reiniciar o daemon. Defina o nível de log do daemon com a variável de ambiente RUST_LOG."
+	},
+	"about": {
+		"tagline": "Um explorador de arquivos do futuro.",
+		"manifesto": "Infraestrutura para a próxima era da computação. Uma arquitetura projetada desde o início para ambientes com vários dispositivos — não serviços em nuvem adaptados para funcionar offline, mas sincronização local-first que escala para a nuvem quando você quiser.",
+		"website": "Site"
+	},
+	"cancel": "Cancelar",
+	"restartNeeded": "Algumas alterações passam a valer após reiniciar o daemon.",
+	"saveFailed": "Falha ao salvar: {{error}}"
+}

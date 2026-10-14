@@ -14,6 +14,7 @@ import { useSpaceItemActive } from "./hooks/useSpaceItemActive";
 import { useSpaceItemDropZones } from "./hooks/useSpaceItemDropZones";
 import { useSpaceItemContextMenu } from "./hooks/useSpaceItemContextMenu";
 import { useExplorer, getSpaceItemKeyFromRoute } from "../../routes/explorer/context";
+import { ThemedIcon } from "../ThemedIcon";
 
 // Overrides for customizing item appearance and behavior
 export interface SpaceItemOverrides {
@@ -46,7 +47,7 @@ export interface SpaceItemProps {
 // Icon component that handles both component icons and image icons
 function ItemIcon({ icon }: { icon: IconData }) {
 	if (icon.type === "image") {
-		return <img src={icon.icon} alt="" className="size-4 shrink-0" />;
+		return <ThemedIcon src={icon.icon} alt="" className="size-4 shrink-0" />;
 	}
 	const IconComponent = icon.icon;
 	return (

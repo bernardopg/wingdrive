@@ -10,6 +10,7 @@ import {
 } from "@wingdrive/primitives";
 import type { File as FileType } from "@wingdrive/ts-client";
 import { File, FileStack } from "../../routes/explorer/File";
+import { useTranslation } from "../../i18n";
 
 interface DeleteConfirmationDialogProps {
 	id: number;
@@ -31,6 +32,7 @@ export function useDeleteConfirmationDialog() {
 }
 
 function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
+	const { t } = useTranslation("dialogs");
 	const dialog = useDialog(props);
 	const form = useForm();
 
@@ -47,12 +49,11 @@ function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
 
 	const count = props.files.length;
 	const isSingle = count === 1;
-	const label = props.permanent ? "Permanently delete" : "Delete";
-	const suffix = props.permanent ? " This cannot be undone." : "";
+	const label = props.permanent ? t("deleteConfirmation.permanentDelete") : t("deleteConfirmation.delete");
 	const firstName = fileDisplayName(props.files[0]);
 	const message = isSingle
-		? `${label} "${firstName}"?${suffix}`
-		: `${label} ${count} items?${suffix}`;
+		? t(props.permanent ? "deleteConfirmation.singlePermanent" : "deleteConfirmation.single", { name: firstName })
+		: t(props.permanent ? "deleteConfirmation.multiplePermanent" : "deleteConfirmation.multiple", { count });
 
 	const handleConfirm = async () => {
 		settled.current = true;
@@ -70,7 +71,7 @@ function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
 		<Dialog
 			dialog={dialog}
 			form={form}
-			title={isSingle ? "Delete file" : `Delete ${count} items`}
+			title={isSingle ? t("deleteConfirmation.titleSingle") : t("deleteConfirmation.titleMultiple", { count })}
 			icon={
 				<Trash
 					size={20}
@@ -80,7 +81,7 @@ function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
 			}
 			ctaLabel={label}
 			ctaDanger
-			closeLabel="Cancel"
+			closeLabel={t("common.cancel")}
 			onSubmit={form.handleSubmit(handleConfirm)}
 			onCancelled={handleCancel}
 			formClassName="!min-w-[380px] !max-w-[380px]"
@@ -108,13 +109,13 @@ function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
 						<div className="mt-0.5 text-xs text-ink-dull">
 							{isSingle
 								? props.files[0].kind === "Directory"
-									? "The folder and all its contents will be moved to trash."
-									: "The file will be moved to trash."
-								: "All selected items will be moved to trash."}
+									? t("deleteConfirmation.folderMovedToTrash")
+									: t("deleteConfirmation.fileMovedToTrash")
+								: t("deleteConfirmation.itemsMovedToTrash")}
 						</div>
 						{props.permanent && (
 							<div className="mt-0.5 text-xs text-red-400">
-								Permanent deletion cannot be undone.
+								{t("deleteConfirmation.permanentWarning")}
 							</div>
 						)}
 					</div>

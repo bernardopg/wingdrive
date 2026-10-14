@@ -3,6 +3,7 @@ import { Database } from "@phosphor-icons/react";
 import { useLibraryQuery } from "../../contexts/WingDriveContext";
 import { useAdapterIcons } from "../../hooks/useAdapterIcons";
 import { GroupHeader } from "./GroupHeader";
+import { useTranslation } from "../../i18n";
 
 interface SourcesGroupProps {
 	isCollapsed: boolean;
@@ -17,6 +18,7 @@ export function SourcesGroup({
 	sortableAttributes,
 	sortableListeners,
 }: SourcesGroupProps) {
+	const { t } = useTranslation("navigation");
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { getIcon } = useAdapterIcons();
@@ -31,7 +33,7 @@ export function SourcesGroup({
 	return (
 		<div>
 			<GroupHeader
-				label="Sources"
+				label={t("sidebar.sources")}
 				isCollapsed={isCollapsed}
 				onToggle={onToggle}
 				sortableAttributes={sortableAttributes}

@@ -17,13 +17,13 @@ export const MIN_SEARCH_LENGTH = 2;
 
 /** Content kinds offered as search filters, in display order. */
 export const SEARCH_CONTENT_KINDS: {kind: ContentKind; label: string}[] = [
-	{kind: 'image', label: 'Images'},
-	{kind: 'video', label: 'Videos'},
-	{kind: 'audio', label: 'Audio'},
-	{kind: 'document', label: 'Documents'},
-	{kind: 'text', label: 'Text'},
-	{kind: 'code', label: 'Code'},
-	{kind: 'archive', label: 'Archives'}
+	{kind: 'image', label: 'search.images'},
+	{kind: 'video', label: 'search.videos'},
+	{kind: 'audio', label: 'search.audio'},
+	{kind: 'document', label: 'search.documents'},
+	{kind: 'text', label: 'search.text'},
+	{kind: 'code', label: 'search.code'},
+	{kind: 'archive', label: 'search.archives'}
 ];
 
 export function searchSortField(sortBy: SortBy): SortField {

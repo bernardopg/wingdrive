@@ -1,3 +1,5 @@
+import { i18n } from "../../i18n";
+
 /**
  * Formats a date to time ago (e.g., "2m ago", "1h ago")
  */
@@ -16,8 +18,8 @@ export function timeAgo(date: string | Date | undefined): string {
 	const diffHours = Math.floor(diffMinutes / 60);
 	const diffDays = Math.floor(diffHours / 24);
 
-	if (diffDays > 0) return `${diffDays}d ago`;
-	if (diffHours > 0) return `${diffHours}h ago`;
-	if (diffMinutes > 0) return `${diffMinutes}m ago`;
-	return 'just now';
+	if (diffDays > 0) return i18n.t("dialogs:sync.daysAgo", { days: diffDays });
+	if (diffHours > 0) return i18n.t("dialogs:sync.hoursAgo", { hours: diffHours });
+	if (diffMinutes > 0) return i18n.t("dialogs:sync.minutesAgo", { minutes: diffMinutes });
+	return i18n.t("dialogs:sync.justNow");
 }

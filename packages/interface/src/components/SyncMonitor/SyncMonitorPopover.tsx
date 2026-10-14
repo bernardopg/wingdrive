@@ -13,12 +13,14 @@ import { PeerList } from "./components/PeerList";
 import { ActivityFeed } from "./components/ActivityFeed";
 import { useSyncCount } from "./hooks/useSyncCount";
 import { useSyncMonitor } from "./hooks/useSyncMonitor";
+import { i18n, useTranslation } from "../../i18n";
 
 interface SyncMonitorPopoverProps {
 	className?: string;
 }
 
 export function SyncMonitorPopover({ className }: SyncMonitorPopoverProps) {
+	const { t } = useTranslation("dialogs");
 	const navigate = useNavigate();
 	const popover = usePopover();
 	const [showActivityFeed, setShowActivityFeed] = useState(false);
@@ -52,7 +54,7 @@ export function SyncMonitorPopover({ className }: SyncMonitorPopoverProps) {
 							<ArrowsClockwise weight="bold" size={16} />
 						)}
 					</div>
-					<span>Sync</span>
+					<span>{t("sync.sync")}</span>
 					{onlinePeerCount > 0 && (
 						<span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-accent rounded-full">
 							{onlinePeerCount}
@@ -62,7 +64,7 @@ export function SyncMonitorPopover({ className }: SyncMonitorPopoverProps) {
 			</Popover.Trigger>
 			<Popover.Content side="top" align="start" sideOffset={8} className="w-[380px] max-h-[520px] z-50 !p-0 !bg-app !rounded-xl">
 				<div className="flex items-center justify-between px-4 py-3 border-b border-app-line">
-					<h3 className="text-sm font-semibold text-ink">Sync Monitor</h3>
+					<h3 className="text-sm font-semibold text-ink">{t("sync.monitor")}</h3>
 
 					<div className="flex items-center gap-2">
 						{onlinePeerCount > 0 && (
@@ -75,7 +77,7 @@ export function SyncMonitorPopover({ className }: SyncMonitorPopoverProps) {
 						<CircleButton
 							icon={ArrowsOut}
 							onClick={() => navigate("/sync")}
-							title="Open full sync monitor"
+							title={t("sync.openMonitor")}
 						/>
 
 						<CircleButton
@@ -84,8 +86,8 @@ export function SyncMonitorPopover({ className }: SyncMonitorPopoverProps) {
 							onClick={() => setShowActivityFeed(!showActivityFeed)}
 							title={
 								showActivityFeed
-									? "Show peers"
-									: "Show activity feed"
+									? t("sync.showPeers")
+									: t("sync.showActivity")
 							}
 						/>
 					</div>
@@ -131,7 +133,7 @@ function SyncMonitorContent({
 						className={`size-2 rounded-full ${getStateColor(sync.currentState)}`}
 					/>
 					<span className="text-xs font-medium text-ink-dull">
-						{sync.currentState}
+						{i18n.t(`dialogs:sync.states.${sync.currentState}`)}
 					</span>
 				</div>
 			</div>

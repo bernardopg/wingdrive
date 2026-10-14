@@ -10,6 +10,7 @@ import { reportFileOperation } from "../../../hooks/reportFileOperation";
 import { useWaitForJob } from "../../../hooks/useWaitForJob";
 import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
 import { isOperableFile } from "../fileCapabilities";
+import {i18n} from '../../../i18n';
 
 /**
  * Shared hook for duplicating files in place.
@@ -40,7 +41,7 @@ export function useDuplicateFiles() {
 					if (!destination) {
 						return {
 							status: "failed",
-							message: `${file.name} has no local path to duplicate next to`,
+							message: i18n.t('explorer:errors.noLocalPathToDuplicate', {name: file.name}),
 							details: [],
 							done: 0,
 							failed: 1,
@@ -64,7 +65,7 @@ export function useDuplicateFiles() {
 					} catch (error) {
 						return {
 							status: "failed",
-							message: `Could not duplicate ${file.name}: ${error}`,
+							message: i18n.t('explorer:errors.couldNotDuplicate', {name: file.name, error}),
 							details: [],
 							done: 0,
 							failed: 1,
@@ -90,7 +91,7 @@ function buildDuplicateTarget(file: File): WingPath | null {
 
 	const { path, device_slug } = file.wing_path.Physical;
 	const parent = getParentDir(path);
-	const copyName = `${file.name} copy${file.extension ? `.${file.extension}` : ""}`;
+	const copyName = `${file.name}${i18n.t('explorer:duplicate.copySuffix')}${file.extension ? `.${file.extension}` : ""}`;
 
 	return {
 		Physical: {

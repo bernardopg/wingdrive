@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { useTranslation } from "../i18n";
 
 interface ErrorBoundaryProps {
 	children: ReactNode;
@@ -15,18 +16,19 @@ function ErrorFallback({
 	error: Error;
 	onReset: () => void;
 }) {
+	const { t } = useTranslation("common");
 	return (
 		<div className="flex h-screen items-center justify-center bg-app p-8">
 			<div className="max-w-2xl rounded-lg border border-app-line bg-app-box p-8 shadow-lg">
 				<h1 className="mb-4 text-2xl font-bold text-ink">
-					Something went wrong
+					{t("errorBoundary.title")}
 				</h1>
 				<p className="mb-4 text-ink-dull">
-					The application encountered an error. Please try restarting.
+					{t("errorBoundary.message")}
 				</p>
 				<details className="mb-4">
 					<summary className="cursor-pointer text-sm text-ink-faint hover:text-ink-dull">
-						Error details
+						{t("errorBoundary.details")}
 					</summary>
 					<pre className="mt-2 overflow-auto rounded bg-app-dark-box p-4 text-xs text-ink-faint">
 						{error.toString()}
@@ -37,7 +39,7 @@ function ErrorFallback({
 					onClick={onReset}
 					className="rounded bg-accent px-4 py-2 text-white hover:bg-accent-deep"
 				>
-					Reload Application
+					{t("errorBoundary.reload")}
 				</button>
 			</div>
 		</div>

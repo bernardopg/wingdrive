@@ -26,6 +26,7 @@ import clsx from 'clsx';
 import {motion} from 'framer-motion';
 import {memo, useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
+import {useTranslation} from '../../i18n';
 import {usePlatform} from '../../contexts/PlatformContext';
 import {useWingDriveClient} from '../../contexts/WingDriveContext';
 import {useLibraries} from '../../hooks/useLibraries';
@@ -120,6 +121,7 @@ function SpaceGroupWithDropZone({
 
 // Sync Monitor Button with Popover
 const SyncButton = memo(function SyncButton() {
+const {t} = useTranslation('navigation');
 	const popover = usePopover();
 	const navigate = useNavigate();
 	const [showActivityFeed, setShowActivityFeed] = useState(false);
@@ -163,7 +165,7 @@ const SyncButton = memo(function SyncButton() {
 							<ArrowsClockwise className={className} {...props} />
 						)
 					}
-					title="Sync Monitor"
+					title={t('sync.title')}
 				/>
 			</Popover.Trigger>
 			<Popover.Content
@@ -174,22 +176,20 @@ const SyncButton = memo(function SyncButton() {
 			>
 				<div className="border-app-line flex items-center justify-between border-b px-4 py-3">
 					<h3 className="text-ink text-sm font-semibold">
-						Sync Monitor
+						{t('sync.title')}
 					</h3>
 
 					<div className="flex items-center gap-2">
 						{onlinePeerCount > 0 && (
 							<span className="text-ink-dull text-xs">
-								{onlinePeerCount}{' '}
-								{onlinePeerCount === 1 ? 'peer' : 'peers'}{' '}
-								online
+								{t('sync.onlinePeers', {count: onlinePeerCount})}
 							</span>
 						)}
 
 						<CircleButton
 							icon={ArrowsOut}
 							onClick={() => navigate('/sync')}
-							title="Open full sync monitor"
+							title={t('sync.openFull')}
 						/>
 
 						<CircleButton
@@ -200,8 +200,8 @@ const SyncButton = memo(function SyncButton() {
 							}
 							title={
 								showActivityFeed
-									? 'Show peers'
-									: 'Show activity feed'
+									? t('sync.showPeers')
+									: t('sync.showActivity')
 							}
 						/>
 					</div>
@@ -215,7 +215,7 @@ const SyncButton = memo(function SyncButton() {
 									className={`size-2 rounded-full ${getStateColor(sync.currentState)}`}
 								/>
 								<span className="text-ink-dull text-xs font-medium">
-									{sync.currentState}
+									{t(`sync.states.${sync.currentState}`)}
 								</span>
 							</div>
 						</div>
@@ -275,6 +275,7 @@ const JobsButton = memo(
 		getSpeedHistory: (jobId: string) => any[];
 		navigate: any;
 	}) {
+	const {t} = useTranslation('navigation');
 		const popover = usePopover();
 		const [showOnlyRunning, setShowOnlyRunning] = useState(true);
 
@@ -304,7 +305,7 @@ const JobsButton = memo(
 								<ListBullets className={className} {...props} />
 							)
 						}
-						title="Job Manager"
+						title={t('jobs.title')}
 					/>
 				</Popover.Trigger>
 				<Popover.Content
@@ -315,20 +316,20 @@ const JobsButton = memo(
 				>
 					<div className="border-app-line flex items-center justify-between border-b px-4 py-3">
 						<h3 className="text-ink text-sm font-semibold">
-							Job Manager
+							{t('jobs.title')}
 						</h3>
 
 						<div className="flex items-center gap-2">
 							{activeJobCount > 0 && (
 								<span className="text-ink-dull text-xs">
-									{activeJobCount} active
+									{t('jobs.activeCount', {count: activeJobCount})}
 								</span>
 							)}
 
 							<CircleButton
 								icon={ArrowsOut}
 								onClick={() => navigate('/jobs')}
-								title="Open full jobs screen"
+								title={t('jobs.openFull')}
 							/>
 
 							<CircleButton
@@ -339,8 +340,8 @@ const JobsButton = memo(
 								}
 								title={
 									showOnlyRunning
-										? 'Show all jobs'
-										: 'Show only active jobs'
+										? t('jobs.showAll')
+										: t('jobs.showActive')
 								}
 							/>
 						</div>
@@ -393,6 +394,7 @@ interface SpacesSidebarProps {
 }
 
 export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
+	const {t} = useTranslation('navigation');
 	const client = useWingDriveClient();
 	const platform = usePlatform();
 	const navigate = useNavigate();
@@ -560,17 +562,17 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 							/>
 							<CircleButton
 								icon={Palette}
-								title="Customize"
+								title={t('sidebar.customize')}
 								onClick={() => setCustomizePanelOpen(true)}
 							/>
 						<CircleButton
 							icon={Trash}
-							title="Trash"
+							title={t('sidebar.trash')}
 							onClick={() => navigate('/trash')}
 						/>
 						<CircleButton
 							icon={GearSix}
-							title="Settings"
+							title={t('sidebar.settings')}
 							onClick={() => {
 								if (platform.showWindow) {
 									platform
@@ -584,6 +586,8 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 												err
 											)
 										);
+								} else {
+									window.open('/settings/general', '_blank');
 								}
 							}}
 						/>

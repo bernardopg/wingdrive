@@ -13,6 +13,7 @@ import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
 import {useEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
+import {useTranslation} from '../../i18n';
 
 type ViewMode = 'list' | 'grid' | 'column' | 'media' | 'size' | 'knowledge';
 
@@ -26,37 +27,37 @@ interface ViewOption {
 const viewOptions: ViewOption[] = [
 	{
 		id: 'grid',
-		label: 'Grid',
+		label: 'viewMode.grid',
 		icon: GridFour,
 		color: 'bg-accent',
 	},
 	{
 		id: 'list',
-		label: 'List',
+		label: 'viewMode.list',
 		icon: Rows,
 		color: 'bg-purple-500',
 	},
 	{
 		id: 'media',
-		label: 'Media',
+		label: 'viewMode.media',
 		icon: Camera,
 		color: 'bg-pink-500',
 	},
 	{
 		id: 'column',
-		label: 'Column',
+		label: 'viewMode.column',
 		icon: Columns,
 		color: 'bg-orange-500',
 	},
 	{
 		id: 'size',
-		label: 'Size',
+		label: 'viewMode.size',
 		icon: ChartPieSlice,
 		color: 'bg-green-500',
 	},
 	{
 		id: 'knowledge',
-		label: 'Knowledge',
+		label: 'viewMode.knowledge',
 		icon: Sparkle,
 		color: 'bg-purple-500',
 	}
@@ -80,6 +81,7 @@ export function ViewModeMenuPanel({
 	onViewModeChange,
 	onClose
 }: ViewModeMenuPanelProps) {
+	const { t } = useTranslation('explorer');
 	const availableViews = viewOptions.filter(
 		(option) => option.id !== 'knowledge' || import.meta.env.DEV
 	);
@@ -89,7 +91,7 @@ export function ViewModeMenuPanel({
 			<div className="grid grid-cols-3 gap-1">
 				{availableViews.map((option) => (
 					<button
-						key={`${option.id}-${option.label}`}
+						key={option.id}
 						onClick={() => {
 							if (option.id !== 'timeline') {
 								onViewModeChange(option.id as ViewMode);
@@ -110,7 +112,7 @@ export function ViewModeMenuPanel({
 							weight={viewMode === option.id ? 'fill' : 'bold'}
 						/>
 						<div className="text-menu-ink text-xs font-medium">
-							{option.label}
+							{t(option.label)}
 						</div>
 					</button>
 				))}
@@ -125,6 +127,7 @@ interface ViewModeMenuProps {
 }
 
 export function ViewModeMenu({viewMode, onViewModeChange}: ViewModeMenuProps) {
+	const { t } = useTranslation('explorer');
 	const [isOpen, setIsOpen] = useState(false);
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const panelRef = useRef<HTMLDivElement>(null);
@@ -167,7 +170,7 @@ export function ViewModeMenu({viewMode, onViewModeChange}: ViewModeMenuProps) {
 				onClick={() => setIsOpen(!isOpen)}
 				active={isOpen}
 			>
-				Views
+				{t('viewMode.title')}
 			</CircleButton>
 
 			{isOpen &&

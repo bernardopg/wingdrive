@@ -17,6 +17,7 @@ import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
 import { useUndo } from "../../hooks/useUndo";
 import { useWaitForJob } from "../../hooks/useWaitForJob";
 import { formatBytes } from "../../routes/explorer/utils";
+import { useTranslation } from "../../i18n";
 
 interface DuplicatesDialogProps {
 	id: number;
@@ -50,6 +51,7 @@ function defaultRemovals(groups: DuplicateSet[]): Set<string> {
 }
 
 function DuplicatesDialog(props: DuplicatesDialogProps) {
+	const { t } = useTranslation("dialogs");
 	const dialog = useDialog(props);
 	const form = useForm();
 	const detect = useLibraryMutation("files.duplicate_detection");
@@ -127,9 +129,9 @@ function DuplicatesDialog(props: DuplicatesDialogProps) {
 			undo.record("remove duplicates", async () => {
 				await restore.mutateAsync({ ids: [], original_paths: trashed });
 			});
-			toast.success(`Moved ${trashed.length} duplicates to trash`);
+			toast.success(t("duplicates.movedToTrash", { count: trashed.length }));
 		} catch (err) {
-			toast.error(`Could not remove duplicates: ${err}`);
+			toast.error(t("duplicates.removeFailed", { error: err }));
 		}
 		refetchListings();
 		dialogManager.setState(props.id, { open: false });
@@ -139,15 +141,15 @@ function DuplicatesDialog(props: DuplicatesDialogProps) {
 		<Dialog
 			dialog={dialog}
 			form={form}
-			title="Duplicate files"
+			title={t("duplicates.title")}
 			icon={<Copy size={20} weight="fill" className="text-accent" />}
 			ctaLabel={
 				targets.length > 0
-					? `Move ${targets.length} to Trash (${formatBytes(reclaimed)})`
-					: "Move to Trash"
+					? t("duplicates.moveToTrashCount", { count: targets.length, size: formatBytes(reclaimed) })
+					: t("duplicates.moveToTrash")
 			}
 			submitDisabled={targets.length === 0 || remove.isPending}
-			closeLabel="Close"
+			closeLabel={t("common.close")}
 			onSubmit={form.handleSubmit(apply)}
 			formClassName="!min-w-[600px] !max-w-[600px]"
 		>
@@ -158,15 +160,15 @@ function DuplicatesDialog(props: DuplicatesDialogProps) {
 				) : groups === null ? (
 					<div className="text-ink-dull flex items-center gap-2 py-6 text-sm">
 						<CircleNotch className="animate-spin" size={16} />
-						Comparing file contents…
+						{t("duplicates.comparing")}
 					</div>
 				) : groups.length === 0 ? (
-					<p className="text-ink-dull py-6 text-sm">No duplicates found.</p>
+					<p className="text-ink-dull py-6 text-sm">{t("duplicates.empty")}</p>
 				) : (
 					groups.map((group) => (
 						<div key={localPath(group.paths[0])} className="border-app-line rounded-lg border">
 							<div className="text-ink-faint border-app-line border-b px-3 py-1.5 text-xs">
-								{group.paths.length} copies · {formatBytes(group.size)} each
+										{t("duplicates.copyCount", { count: group.paths.length, size: formatBytes(group.size) })}
 							</div>
 							{group.paths.map((wingPath) => {
 								const path = localPath(wingPath);
@@ -191,7 +193,7 @@ function DuplicatesDialog(props: DuplicatesDialogProps) {
 												? path.slice(props.folder.replace(/\/$/, "").length + 1)
 												: path}
 										</span>
-										{!marked && <span className="text-accent ml-auto shrink-0">keep</span>}
+						{!marked && <span className="text-accent ml-auto shrink-0">{t("duplicates.keep")}</span>}
 									</label>
 								);
 							})}

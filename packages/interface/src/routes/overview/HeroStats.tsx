@@ -9,6 +9,8 @@ import TagsIcon from '@wingdrive/assets/icons/Tags.png';
 import {CircleButton} from '@wingdrive/primitives';
 import {motion} from 'framer-motion';
 import {useEffect, useRef, useState} from 'react';
+import {useTranslation} from '../../i18n';
+import { ThemedIcon } from '../../components/ThemedIcon';
 
 interface HeroStatsProps {
 	totalStorage: number; // bytes
@@ -46,6 +48,7 @@ export function HeroStats({
 	sidecarCount,
 	sidecarSize
 }: HeroStatsProps) {
+	const {t} = useTranslation('navigation');
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [canScrollLeft, setCanScrollLeft] = useState(false);
 	const [canScrollRight, setCanScrollRight] = useState(false);
@@ -110,14 +113,14 @@ export function HeroStats({
 				{/* Total Storage */}
 				<StatCard
 					icon={
-						<img
+						<ThemedIcon
 							src={DevicesIcon}
-							alt="Storage"
+							alt={t('overview.storage')}
 							className="size-10 opacity-80"
 							// style={{ filter: 'drop-shadow(0 0 4px rgba(217, 70, 239, 0.4))' }}
 						/>
 					}
-					label="Total Storage"
+					label={t('overview.totalStorage')}
 					value={
 						<>
 							{storageFormatted.value}{' '}
@@ -134,7 +137,7 @@ export function HeroStats({
 									{usedFormatted.unit}
 								</span>
 							</span>{' '}
-							used
+							{t('overview.used')}
 						</>
 					}
 					progress={usagePercent}
@@ -144,43 +147,43 @@ export function HeroStats({
 				{/* Files */}
 				<StatCard
 					icon={
-						<img
+						<ThemedIcon
 							src={IndexedIcon}
-							alt="Files"
+							alt={t('overview.files')}
 							className="size-10 opacity-80"
 						/>
 					}
-					label="Files Indexed"
+					label={t('overview.filesIndexed')}
 					value={totalFiles.toLocaleString()}
-					subtitle={`${uniqueContentCount.toLocaleString()} unique files`}
+					subtitle={t('overview.uniqueFiles', {count: uniqueContentCount, formattedCount: uniqueContentCount.toLocaleString()})}
 					color="from-purple-500 to-pink-500"
 				/>
 
 				{/* Devices */}
 				<StatCard
 					icon={
-						<img
+						<ThemedIcon
 							src={MobileIcon}
-							alt="Devices"
+							alt={t('sidebar.devices')}
 							className="size-10 opacity-80"
 						/>
 					}
-					label="Connected Devices"
+					label={t('overview.connectedDevices')}
 					value={deviceCount}
-					subtitle={`registered in library`}
+					subtitle={t('overview.registeredInLibrary')}
 					color="from-green-500 to-emerald-500"
 				/>
 
 				{/* Library Size (Database) */}
 				<StatCard
 					icon={
-						<img
+						<ThemedIcon
 							src={DatabaseIcon}
-							alt="Library"
+							alt={t('sidebar.library')}
 							className="size-10 opacity-80"
 						/>
 					}
-					label="Library Size"
+					label={t('overview.librarySize')}
 					value={
 						<>
 							{databaseFormatted.value}{' '}
@@ -189,20 +192,20 @@ export function HeroStats({
 							</span>
 						</>
 					}
-					subtitle="database on disk"
+					subtitle={t('overview.databaseOnDisk')}
 					color="from-blue-500 to-cyan-500"
 				/>
 
 				{/* Sidecar Storage */}
 				<StatCard
 					icon={
-						<img
+						<ThemedIcon
 							src={StorageIcon}
-							alt="Sidecars"
+							alt={t('overview.sidecars')}
 							className="size-10 opacity-80"
 						/>
 					}
-					label="Sidecar Storage"
+					label={t('overview.sidecarStorage')}
 					value={
 						<>
 							{sidecarFormatted.value}{' '}
@@ -211,37 +214,37 @@ export function HeroStats({
 							</span>
 						</>
 					}
-					subtitle={`${sidecarCount.toLocaleString()} files generated`}
+					subtitle={t('overview.filesGenerated', {count: sidecarCount, formattedCount: sidecarCount.toLocaleString()})}
 					color="from-orange-500 to-red-500"
 				/>
 
 				{/* Locations */}
 				<StatCard
 					icon={
-						<img
+						<ThemedIcon
 							src={LocationIcon}
-							alt="Locations"
+							alt={t('sidebar.locations')}
 							className="size-10 opacity-80"
 						/>
 					}
-					label="Locations"
+					label={t('sidebar.locations')}
 					value={locationCount}
-					subtitle="indexed folders"
+					subtitle={t('overview.indexedFolders')}
 					color="from-teal-500 to-green-500"
 				/>
 
 				{/* Tags */}
 				<StatCard
 					icon={
-						<img
+						<ThemedIcon
 							src={TagsIcon}
-							alt="Tags"
+							alt={t('sidebar.tags')}
 							className="size-10 opacity-80"
 						/>
 					}
-					label="Tags"
+					label={t('sidebar.tags')}
 					value={tagCount}
-					subtitle="organization labels"
+					subtitle={t('overview.organizationLabels')}
 					color="from-pink-500 to-rose-500"
 				/>
 			</div>

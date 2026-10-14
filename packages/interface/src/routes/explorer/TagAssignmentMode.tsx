@@ -6,6 +6,7 @@ import { useNormalizedQuery, useLibraryMutation } from '../../contexts/WingDrive
 import { useSelection } from './SelectionContext';
 import { useKeybind } from '../../hooks/useKeybind';
 import type { Tag } from '@wingdrive/ts-client';
+import { useTranslation } from '../../i18n';
 
 interface TagAssignmentModeProps {
 	isActive: boolean;
@@ -22,6 +23,7 @@ interface TagAssignmentModeProps {
  * - Works on selected files
  */
 export function TagAssignmentMode({ isActive, onExit }: TagAssignmentModeProps) {
+	const {t} = useTranslation('explorer');
 	const { selectedFiles } = useSelection();
 	const applyTag = useLibraryMutation('tags.apply');
 
@@ -67,7 +69,7 @@ export function TagAssignmentMode({ isActive, onExit }: TagAssignmentModeProps) 
 			.filter((id): id is string => id != null);
 
 		if (contentIds.length === 0) {
-			toast.error('These files need to be indexed before they can be tagged');
+			toast.error(t('tagMode.indexBeforeTagging'));
 			return;
 		}
 
@@ -82,7 +84,7 @@ export function TagAssignmentMode({ isActive, onExit }: TagAssignmentModeProps) 
 			});
 		} catch (err) {
 			console.error('Failed to apply tag:', err);
-			toast.error(`Failed to apply tag: ${err}`);
+			toast.error(t('errors.failedToApplyTag', {error: err}));
 		}
 	};
 
@@ -110,10 +112,10 @@ export function TagAssignmentMode({ isActive, onExit }: TagAssignmentModeProps) 
 						{/* Mode Label */}
 						<div className="flex items-center gap-2">
 							<TagIcon size={16} weight="bold" className="text-accent" />
-							<span className="text-sm font-semibold text-sidebar-ink">Tag Mode</span>
+							<span className="text-sm font-semibold text-sidebar-ink">{t('tagMode.title')}</span>
 							{selectedFiles.length > 0 && (
 								<span className="text-xs text-sidebar-ink-dull">
-									{selectedFiles.length} {selectedFiles.length === 1 ? 'item' : 'items'}
+									{t('general.item', {count: selectedFiles.length})}
 								</span>
 							)}
 						</div>
@@ -158,14 +160,14 @@ export function TagAssignmentMode({ isActive, onExit }: TagAssignmentModeProps) 
 
 						{/* Exit Button */}
 						<Button size="sm" variant="accent" onClick={onExit}>
-							Done
+							{t('tagMode.done')}
 						</Button>
 					</div>
 
 					{/* Help Text */}
 					{selectedFiles.length === 0 && (
 						<div className="mt-2 text-xs text-sidebar-ink-faint text-center">
-							Select files to start tagging • Press 1-9/0 to toggle tags • Esc to exit
+							{t('tagMode.help')}
 						</div>
 					)}
 				</div>

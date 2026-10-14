@@ -10,6 +10,7 @@ import {useEffect, useMemo, useRef} from 'react';
 import {useTabManager} from '../../../../components/TabManager';
 import {useExplorer} from '../../context';
 import {formatBytes, formatRelativeTime} from '../../utils';
+import {i18n} from '../../../../i18n';
 
 export const ROW_HEIGHT = 36;
 export const TABLE_PADDING_X = 16;
@@ -21,7 +22,7 @@ const columns: ColumnDef<File>[] = [
 	{id: 'created', accessorFn: (row) => new Date(row.created_at).getTime()},
 	{
 		id: 'name',
-		header: 'Name',
+		header: 'list.name',
 		minSize: 200,
 		size: 300,
 		maxSize: 800,
@@ -30,7 +31,7 @@ const columns: ColumnDef<File>[] = [
 	},
 	{
 		id: 'size',
-		header: 'Size',
+		header: 'list.size',
 		size: 80,
 		minSize: 60,
 		maxSize: 120,
@@ -42,7 +43,7 @@ const columns: ColumnDef<File>[] = [
 	},
 	{
 		id: 'modified',
-		header: 'Modified',
+		header: 'list.modified',
 		size: 120,
 		minSize: 80,
 		maxSize: 180,
@@ -51,20 +52,20 @@ const columns: ColumnDef<File>[] = [
 	},
 	{
 		id: 'type',
-		header: 'Kind',
+		header: 'list.kind',
 		size: 80,
 		minSize: 60,
 		maxSize: 120,
 		accessorFn: (row) =>
 			row.kind === 'Directory'
-				? 'Folder'
+				? i18n.t('explorer:list.folder')
 				: row.kind === 'Symlink'
-					? 'Link'
-					: row.extension?.toUpperCase() || 'File'
+					? i18n.t('explorer:list.link')
+					: row.extension?.toUpperCase() || i18n.t('explorer:list.file')
 	},
 	{
 		id: 'tags',
-		header: 'Tags',
+		header: 'list.tags',
 		size: 150,
 		minSize: 80,
 		maxSize: 400,

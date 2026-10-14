@@ -25,6 +25,7 @@ import {
 } from '../../util/keybinds/platform';
 import {getKeybind} from '../../util/keybinds/registry';
 import {useTabManager} from './useTabManager';
+import {useTranslation} from '../../i18n';
 
 interface SortableTabProps {
 	tab: Tab;
@@ -51,6 +52,7 @@ function SortableTab({
 	isLastTab,
 	isRightmost
 }: SortableTabProps) {
+const {t} = useTranslation('dialogs');
 	const {
 		attributes,
 		listeners,
@@ -89,27 +91,27 @@ function SortableTab({
 		items: [
 			{
 				icon: X,
-				label: 'Close Tab',
+ label: t('tabs.closeTab'),
 				keybindId: 'global.closeTab',
 				onClick: () => onClose(tab.id),
 				disabled: isLastTab
 			},
 			{
 				icon: XCircle,
-				label: 'Close Other Tabs',
+ label: t('tabs.closeOtherTabs'),
 				onClick: () => onCloseOthers(tab.id),
 				disabled: isLastTab
 			},
 			{
 				icon: ArrowLineRight,
-				label: 'Close Tabs to the Right',
+ label: t('tabs.closeTabsToRight'),
 				onClick: () => onCloseToRight(tab.id),
 				disabled: isRightmost
 			},
 			{type: 'separator'},
 			{
 				icon: ArrowBendUpLeft,
-				label: 'Reopen Closed Tab',
+ label: t('tabs.reopenClosedTab'),
 				keybindId: 'global.reopenTab',
 				onClick: onReopen,
 				disabled: !canReopen
@@ -178,6 +180,7 @@ function keybindHint(id: Parameters<typeof getKeybind>[0]): string {
 }
 
 export function TabBar() {
+const {t} = useTranslation('dialogs');
 	const {
 		tabs,
 		activeTabId,
@@ -211,7 +214,7 @@ export function TabBar() {
 				<button
 					onClick={() => createTab()}
 					className="hover:bg-app-hover text-ink-dull hover:text-ink flex size-7 shrink-0 items-center justify-center rounded-full transition-colors"
-					title={`New tab (${keybindHint('global.newTab')})`}
+title={t('tabs.newTab', {shortcut: keybindHint('global.newTab')})}
 				>
 					<Plus size={14} weight="bold" />
 				</button>
