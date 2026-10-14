@@ -302,7 +302,7 @@ export function SpaceItem({
 						? { ...sortableAttributes, ...sortableListeners }
 						: {})}
 					className={clsx(
-						"flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors relative cursor-pointer",
+						"relative flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent/70",
 						isActive
 							? "bg-sidebar-selected/30 text-sidebar-ink"
 							: [className || "text-sidebar-ink-dull", "hover:text-sidebar-ink hover:bg-sidebar-selected/20"],

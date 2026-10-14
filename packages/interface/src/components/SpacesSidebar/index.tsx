@@ -546,9 +546,8 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 					</div>
 
 					{/* Sync Monitor, Job Manager, Customize & Settings (pinned to bottom) */}
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-2">
-							<SyncButton />
+					<div className="grid grid-cols-5 items-center justify-items-center">
+						<SyncButton />
 							<JobsButton
 								activeJobCount={activeJobCount}
 								hasRunningJobs={hasRunningJobs}
@@ -564,12 +563,11 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 								title="Customize"
 								onClick={() => setCustomizePanelOpen(true)}
 							/>
-							<CircleButton
-								icon={Trash}
-								title="Trash"
-								onClick={() => navigate('/trash')}
-							/>
-						</div>
+						<CircleButton
+							icon={Trash}
+							title="Trash"
+							onClick={() => navigate('/trash')}
+						/>
 						<CircleButton
 							icon={GearSix}
 							title="Settings"
