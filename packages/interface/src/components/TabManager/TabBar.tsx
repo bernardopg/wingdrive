@@ -154,6 +154,12 @@ function SortableTab({
 				onClose={() => onClose(tab.id)}
 				closeIcon={<X size={10} weight="bold" />}
 				onClick={() => onSwitch(tab.id)}
+				onAuxClick={(e) => {
+					if (e.button !== 1) return;
+					e.preventDefault();
+					e.stopPropagation();
+					onClose(tab.id);
+				}}
 				onContextMenu={handleContextMenu}
 			/>
 		</motion.div>

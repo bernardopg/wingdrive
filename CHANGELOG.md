@@ -3,6 +3,14 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Desktop
+
+- Sidebar keyboard focus uses a subtle inset outline that remains fully visible,
+  and its footer controls now have equal spacing.
+- Middle-clicking a folder tab closes it, matching browser tab behavior.
+
 ## 2.0.0-alpha.13 — 2026-10-13
 
 ### Performance (#193)
