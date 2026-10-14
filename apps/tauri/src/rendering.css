@@ -1,0 +1,7 @@
+/* Per-control backdrop blurs compete with navigation on Linux WebKitGTK. */
+:root[data-reduced-transparency] #root *,
+:root[data-reduced-transparency] #root *::before,
+:root[data-reduced-transparency] #root *::after {
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
