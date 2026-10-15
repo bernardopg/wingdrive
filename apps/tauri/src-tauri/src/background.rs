@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
-use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem};
+use tauri::menu::{MenuBuilder, MenuItem, MenuItemBuilder, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Manager};
 
@@ -83,6 +83,21 @@ impl DesktopSettingsState {
 	}
 }
 
+/// Tray menu items whose text follows the UI language.
+struct TrayMenu {
+	open: MenuItem<tauri::Wry>,
+	new_tab: MenuItem<tauri::Wry>,
+	quit: MenuItem<tauri::Wry>,
+}
+
+/// Tray menu labels in the current UI language, sent by the webview.
+#[derive(Debug, Deserialize)]
+pub struct TrayLabels {
+	open: String,
+	new_tab: String,
+	quit: String,
+}
+
 /// Whether closing the main window should hide it instead of quitting.
 pub fn keeps_running(app: &AppHandle) -> bool {
 	app.try_state::<DesktopSettingsState>()
@@ -139,6 +154,30 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
 		tray = tray.icon(icon.clone());
 	}
 	tray.build(app)?;
+	app.manage(TrayMenu {
+		open,
+		new_tab,
+		quit,
+	});
+	Ok(())
+}
+
+/// Renames the tray menu items after the UI language changes.
+///
+/// The labels start in English, because the tray is built before the webview
+/// knows the user's language.
+#[tauri::command]
+pub fn set_tray_labels(app: AppHandle, labels: TrayLabels) -> Result<(), String> {
+	let Some(menu) = app.try_state::<TrayMenu>() else {
+		return Ok(());
+	};
+	for (item, text) in [
+		(&menu.open, labels.open),
+		(&menu.new_tab, labels.new_tab),
+		(&menu.quit, labels.quit),
+	] {
+		item.set_text(text).map_err(|e| e.to_string())?;
+	}
 	Ok(())
 }
 
