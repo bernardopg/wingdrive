@@ -168,7 +168,7 @@ AI is accelerating this trend. Cloud services offer semantic search and intellig
 
 ---
 
-## Getting Started
+## Installation Guide
 
 WingDrive requires [Rust](https://rustup.rs/) 1.89+, [Bun](https://bun.sh) 1.3+, [just](https://github.com/casey/just), and Python 3.9+ (for adapters).
 
@@ -180,7 +180,31 @@ Get the latest build from [GitHub Releases](https://github.com/bernardopg/wingdr
 - **macOS:** coming as a native bundle
 - **Docker:** `ghcr.io/bernardopg/wingdrive/server` for headless deployments
 
-### Option 2: Build from source
+### Option 2: Arch-based systems (AUR)
+
+WingDrive is available in the AUR for Arch-based systems (Arch Linux, Manjaro, EndeavourOS, etc.).
+
+<p align="center">
+  <a href="https://aur.archlinux.org/packages/wingdrive-bin/">
+    <img src="https://img.shields.io/badge/AUR-wingdrive--bin-0090FF?logo=arch-linux&logoColor=white" alt="AUR wingdrive-bin"/>
+  </a>
+</p>
+
+Install with an AUR helper (e.g. `yay` or `paru`):
+
+```bash
+yay -S wingdrive-bin
+```
+
+Or install manually:
+
+```bash
+git clone https://aur.archlinux.org/wingdrive-bin.git
+cd wingdrive-bin
+makepkg -si
+```
+
+### Option 3: Build from source
 
 ```bash
 git clone https://github.com/bernardopg/wingdrive
@@ -202,6 +226,14 @@ cargo run --bin wing -- <command>
 1. Launch the desktop app.
 2. Add your first library location (a folder, external drive, or cloud volume).
 3. WingDrive indexes the content and makes it searchable across all your devices.
+
+---
+
+## Getting Started
+
+After installation, launch the desktop app, add your first library location (a folder, external drive, or cloud volume), and WingDrive will index the content and make it searchable across all your devices.
+
+For detailed install options (prebuilt releases, AUR, Docker, or build from source), see the [Installation Guide](#installation-guide) above.
 
 ---
 
