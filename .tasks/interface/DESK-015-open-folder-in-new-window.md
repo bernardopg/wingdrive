@@ -1,7 +1,7 @@
 ---
 id: DESK-015
 title: Open a folder in a new window
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: DESK-000
 priority: Medium
@@ -28,9 +28,19 @@ interface opens.
    view state model of the main window.
 4. Translate the new strings (en, pt) and add them to the keybind catalog.
 
+## Implementation Notes
+
+- The `Explorer` window loads the full shell at `/explorer?path=<WingPath JSON>`,
+  built in Rust to match `explorerUrlForDirectory` (unit-tested against
+  `encodeURIComponent`). Tabs persist per window label, so windows do not
+  overwrite each other. `explorer-*` joins the default capability so the
+  window can listen to daemon events.
+- Ctrl+N (Cmd+N on macOS) opens the folder being browsed; the folder context
+  menu opens the clicked folder.
+
 ## Acceptance Criteria
 
-- [ ] Context menu and keybind open the folder in a new window
+- [x] Context menu and keybind open the folder in a new window (#217; runtime check in DESK-017)
 - [ ] Several Explorer windows can stay open at once, each on its own path
 - [ ] Closing an Explorer window does not quit the app or stop the daemon
 - [ ] Verified on the packaged Linux build
