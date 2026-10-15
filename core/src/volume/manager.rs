@@ -1718,6 +1718,29 @@ impl VolumeManager {
 		Ok(())
 	}
 
+	/// Marks this device's tracked volume offline after detection lost it.
+	///
+	/// Unlike [`Self::update_tracked_volume_state`], there is no detected
+	/// volume to copy capacity from, so only the online flag changes.
+	pub async fn mark_tracked_volume_offline(
+		&self,
+		library: &crate::library::Library,
+		fingerprint: &VolumeFingerprint,
+	) -> VolumeResult<()> {
+		entities::volume::Entity::update_many()
+			.col_expr(
+				entities::volume::Column::IsOnline,
+				sea_orm::sea_query::Expr::value(false),
+			)
+			.filter(entities::volume::Column::DeviceId.eq(self.device_id))
+			.filter(entities::volume::Column::Fingerprint.eq(fingerprint.0.clone()))
+			.exec(library.db().conn())
+			.await
+			.map_err(|e| VolumeError::Database(e.to_string()))?;
+
+		Ok(())
+	}
+
 	/// Update display names for tracked volumes that have empty display names
 	pub async fn update_empty_display_names(
 		&self,

@@ -27,6 +27,8 @@ and keep WingDrive's version wherever it already fixed the same bug.
    (`stopping_the_watcher_inside_its_debounce_reopens_nothing`).
 2. `cedc8d6f7` (monitor part only): mark volumes that disappeared as offline, so
    an unplugged USB drive stops showing as online. Medium.
+   Done 2026-10-15: the monitor marks this device's tracked, non-network volumes
+   offline when detection no longer returns them (`volume_offline_test`).
 3. `4d18db0ab` + `bf1ca21a1`: bound thumbnail decoding by available memory and
    downscale video frames, reimplemented in WingDrive's thumbnail job. Medium.
 4. `12cdfa4be`: ship icons as WebP (196 PNGs today) and keep source maps out of
