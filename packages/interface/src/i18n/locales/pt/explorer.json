@@ -50,7 +50,7 @@
 		"failedToAddLocation": "Falha ao adicionar o local",
 		"failedToAddCloudStorage": "Falha ao adicionar o armazenamento na nuvem",
 		"failedToIndexVolume": "Falha ao indexar o volume",
-		"couldNotOpenWindow": "Não foi possível abrir uma nova janela: {{error}}"
+		"couldNotOpenWindow": "Could not open a new window: {{error}}"
 	},
 	"contextMenu": {
 		"quickLook": "Visualização rápida",
@@ -108,7 +108,7 @@
 		"deleteItems_other": "Excluir {{count}} itens",
 		"delete": "Excluir",
 		"undo": "Desfazer",
-		"openInNewWindow": "Abrir em nova janela"
+		"openInNewWindow": "Open in New Window"
 	},
 	"sort": {
 		"dateTaken": "Data da captura",
