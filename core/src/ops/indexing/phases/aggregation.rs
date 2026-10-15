@@ -175,20 +175,29 @@ pub async fn run_aggregation_phase(
 	Ok(())
 }
 
+/// What a directory would count more than once through hard links.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+struct Overcount {
+	bytes: i64,
+	files: i32,
+}
+
 struct DirectoryAggregator {
 	db: DatabaseConnection,
-	/// Bytes each directory would count twice through hard links; see
-	/// [`hard_link_overcounts`].
-	overcounts: HashMap<i32, i64>,
+	/// Per-directory hard-link overcount; see [`hard_link_overcounts`].
+	overcounts: HashMap<i32, Overcount>,
 }
 
 impl DirectoryAggregator {
-	fn new(db: DatabaseConnection, overcounts: HashMap<i32, i64>) -> Self {
+	fn new(db: DatabaseConnection, overcounts: HashMap<i32, Overcount>) -> Self {
 		Self { db, overcounts }
 	}
 
-	fn overcount(&self, directory_id: i32) -> i64 {
-		self.overcounts.get(&directory_id).copied().unwrap_or(0)
+	fn overcount(&self, directory_id: i32) -> Overcount {
+		self.overcounts
+			.get(&directory_id)
+			.copied()
+			.unwrap_or_default()
 	}
 
 	/// Computes aggregate values by summing direct children only.
@@ -197,8 +206,8 @@ impl DirectoryAggregator {
 	/// aggregate_size and file_count (this is why we process deepest-first). Symlinks are
 	/// treated as files for counting purposes.
 	///
-	/// A hard-linked file is stored once on disk, so the bytes its extra links add
-	/// are subtracted. Stored child totals already had their own overcount removed,
+	/// A hard-linked file is stored once on disk, so the bytes and files its extra
+	/// links add are subtracted. Stored child totals already had their own overcount removed,
 	/// so it is added back before the parent's overcount, which covers links that
 	/// span sibling subtrees, is subtracted once.
 	async fn aggregate_directory(
@@ -221,8 +230,9 @@ impl DirectoryAggregator {
 					file_count += 1;
 				}
 				1 => {
-					aggregate_size += child.aggregate_size + self.overcount(child.id);
-					file_count += child.file_count;
+					let overcount = self.overcount(child.id);
+					aggregate_size += child.aggregate_size + overcount.bytes;
+					file_count += child.file_count + overcount.files;
 				}
 				2 => {
 					// Symlinks count as files.
@@ -233,7 +243,9 @@ impl DirectoryAggregator {
 			}
 		}
 
-		aggregate_size -= self.overcount(directory.id);
+		let overcount = self.overcount(directory.id);
+		aggregate_size -= overcount.bytes;
+		file_count -= overcount.files;
 
 		Ok((aggregate_size, child_count, file_count))
 	}
@@ -247,11 +259,11 @@ struct HardLinkedFile {
 	size: i64,
 }
 
-/// Finds the bytes each directory counts more than once because several file
-/// entries under it are hard links to one inode.
+/// Finds the bytes and files each directory counts more than once because
+/// several file entries under it are hard links to one inode.
 ///
 /// For every ancestor directory, a group of `n` links to the same inode inside
-/// it adds `size * (n - 1)` extra bytes. Hard links are rare, so SQL only
+/// it adds `size * (n - 1)` extra bytes and `n - 1` extra files. Hard links are rare, so SQL only
 /// returns files whose inode appears more than once under the location.
 /// Ancestors are walked through `parent_id` (`parents` maps each directory of
 /// the location to its parent) rather than the closure table, which can miss
@@ -260,7 +272,7 @@ async fn hard_link_overcounts(
 	db: &DatabaseConnection,
 	root_entry_id: i32,
 	parents: &HashMap<i32, Option<i32>>,
-) -> Result<HashMap<i32, i64>, DbErr> {
+) -> Result<HashMap<i32, Overcount>, DbErr> {
 	let statement = Statement::from_sql_and_values(
 		DbBackend::Sqlite,
 		r#"
@@ -297,10 +309,12 @@ async fn hard_link_overcounts(
 		}
 	}
 
-	let mut overcounts = HashMap::new();
+	let mut overcounts: HashMap<i32, Overcount> = HashMap::new();
 	for ((directory, _, _), (size, links)) in groups {
 		if links > 1 {
-			*overcounts.entry(directory).or_insert(0) += size * (links - 1);
+			let overcount = overcounts.entry(directory).or_default();
+			overcount.bytes += size * (links - 1);
+			overcount.files += (links - 1) as i32;
 		}
 	}
 	Ok(overcounts)
