@@ -1,4 +1,4 @@
-import { fileDisplayName } from "@wingdrive/ts-client";
+import { fileDisplayName, fileDisplaySize } from "@wingdrive/ts-client";
 import { useNormalizedQuery } from "../../contexts/WingDriveContext";
 import { usePlatform } from "../../contexts/PlatformContext";
 import type { File } from "@wingdrive/ts-client";
@@ -12,6 +12,7 @@ import {uiLocale} from "../../i18n";
 
 function MetadataPanel({ file }: { file: File }) {
 	const { t } = useTranslation("inspector");
+	const displaySize = fileDisplaySize(file);
 	return (
 		<div className="w-[280px] min-w-[280px] bg-sidebar-box border-l border-sidebar-line p-4 overflow-y-auto">
 			<div className="space-y-4">
@@ -32,7 +33,7 @@ function MetadataPanel({ file }: { file: File }) {
 				<div>
 					<div className="text-xs text-ink-dull mb-1">{t("inspector.preview.size")}</div>
 					<div className="text-sm text-ink">
-						{formatBytes(file.size || 0)}
+					{displaySize === null ? "—" : formatBytes(displaySize)}
 					</div>
 				</div>
 

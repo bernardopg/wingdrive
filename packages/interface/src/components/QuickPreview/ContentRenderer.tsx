@@ -1,5 +1,5 @@
 import type { File } from "@wingdrive/ts-client";
-import { getContentKind } from "@wingdrive/ts-client";
+import { fileDisplaySize, getContentKind } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../routes/explorer/File";
 import { formatBytes } from "../../routes/explorer/utils";
 import { usePlatform } from "../../contexts/PlatformContext";
@@ -553,6 +553,7 @@ function AudioRenderer({ file }: ContentRendererProps) {
 }
 
 function DocumentRenderer({ file }: ContentRendererProps) {
+	const displaySize = fileDisplaySize(file);
 	return (
 		<div className="w-full h-full flex items-center justify-center">
 			<div className="text-center">
@@ -563,9 +564,11 @@ function DocumentRenderer({ file }: ContentRendererProps) {
 				<div className="text-ink-dull text-sm mt-2 capitalize">
 					{getContentKind(file) ?? "unknown"}
 				</div>
-				<div className="text-ink-dull text-xs mt-1">
-					{formatBytes(file.size || 0)}
-				</div>
+				{displaySize !== null && (
+					<div className="text-ink-dull text-xs mt-1">
+						{formatBytes(displaySize)}
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -642,6 +645,7 @@ function TextRenderer({ file }: ContentRendererProps) {
 }
 
 function DefaultRenderer({ file }: ContentRendererProps) {
+	const displaySize = fileDisplaySize(file);
 	return (
 		<div className="w-full h-full flex items-center justify-center">
 			<div className="text-center">
@@ -652,9 +656,11 @@ function DefaultRenderer({ file }: ContentRendererProps) {
 				<div className="text-ink-dull text-sm mt-2 capitalize">
 					{getContentKind(file) ?? "unknown"}
 				</div>
-				<div className="text-ink-dull text-xs mt-1">
-					{formatBytes(file.size || 0)}
-				</div>
+				{displaySize !== null && (
+					<div className="text-ink-dull text-xs mt-1">
+						{formatBytes(displaySize)}
+					</div>
+				)}
 			</div>
 		</div>
 	);

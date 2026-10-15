@@ -56,6 +56,12 @@ pub struct File {
 	/// The size of the file in bytes
 	pub size: u64,
 
+	/// Verified recursive content total for directories.
+	///
+	/// `None` means the directory has not been aggregated. Callers must not
+	/// treat `size` as a directory's content total in that case.
+	pub directory_size: Option<u64>,
+
 	/// Information about the file's content, including its content hash
 	pub content_identity: Option<ContentIdentity>,
 
@@ -480,6 +486,10 @@ impl File {
 			wing_path,
 			name: model.name,
 			size: std::cmp::max(model.aggregate_size, model.size) as u64,
+			// aggregate_size starts at 0 and stays there until the aggregation
+			// phase runs, so 0 cannot be told apart from "not aggregated".
+			directory_size: (kind == EntryKind::Directory && model.aggregate_size > 0)
+				.then_some(model.aggregate_size as u64),
 			content_identity: None,
 			alternate_paths: Vec::new(),
 			tags: Vec::new(),
@@ -575,6 +585,7 @@ impl File {
 			wing_path,
 			name,
 			size: metadata.size,
+			directory_size: None,
 			content_identity: None,
 			alternate_paths: Vec::new(),
 			tags: Vec::new(),

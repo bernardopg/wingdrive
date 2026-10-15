@@ -8,7 +8,7 @@ import { useMemo } from "react";
 import { InfoRow, Section, Divider, Tag } from "../Inspector";
 import clsx from "clsx";
 import type { File } from "@wingdrive/ts-client";
-import { getContentKind } from "@wingdrive/ts-client";
+import { fileDisplaySize, getContentKind } from "@wingdrive/ts-client";
 import { formatBytes } from "../../../routes/explorer/utils";
 import { File as FileComponent } from "../../../routes/explorer/File";
 import { useTranslation } from "../../../i18n";
@@ -26,7 +26,7 @@ export function MultiFileInspector({ files }: MultiFileInspectorProps) {
 
 	// Calculate aggregated metadata
 	const aggregatedData = useMemo(() => {
-		const totalSize = files.reduce((sum, file) => sum + (file.size || 0), 0);
+		const totalSize = files.reduce((sum, file) => sum + (fileDisplaySize(file) ?? 0), 0);
 
 		// Group by content kind
 		const kindCounts = new Map<string, number>();

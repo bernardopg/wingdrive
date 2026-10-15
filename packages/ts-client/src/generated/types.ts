@@ -940,6 +940,28 @@ total_count: number;
 has_more: boolean };
 
 /**
+ * Input for calculating recursive content totals of a directory's child folders.
+ */
+export type DirectorySizesInput = {
+/**
+ * Physical directory whose direct child folders should be measured.
+ */
+path: WingPath };
+
+/**
+ * Verified directory totals keyed by their physical paths.
+ */
+export type DirectorySizesOutput = {
+/**
+ * Exact recursive totals for readable direct child directories.
+ */
+sizes: { [key in string]: number };
+/**
+ * Direct child directories that could not be read completely.
+ */
+unavailable_paths: string[] };
+
+/**
  * Sort options for directory listing
  */
 export type DirectorySortBy = 
@@ -1352,7 +1374,7 @@ job_id: string };
 
 /**
  * Represents a file within the WingDrive VDFS.
- * 
+ *
  * This is a computed domain model that aggregates data from Entry, ContentIdentity,
  * Tags, and Sidecars. It provides a rich, developer-friendly interface without
  * duplicating data in the database.
@@ -1382,6 +1404,13 @@ extension: string | null;
  * The size of the file in bytes
  */
 size: number; 
+/**
+ * Verified recursive content total for directories.
+ *
+ * `None` means the directory has not been aggregated. Callers must not
+ * treat `size` as a directory's content total in that case.
+ */
+directory_size: number | null;
 /**
  * Information about the file's content, including its content hash
  */
@@ -5430,6 +5459,7 @@ export type LibraryQuery =
   |  { type: 'files.by_tag'; input: GetFilesByTagInput; output: GetFilesByTagOutput }
   |  { type: 'files.content_kind_stats'; input: ContentKindStatsInput; output: ContentKindStatsOutput }
   |  { type: 'files.directory_listing'; input: DirectoryListingInput; output: DirectoryListingOutput }
+  |  { type: 'files.directory_sizes'; input: DirectorySizesInput; output: DirectorySizesOutput }
   |  { type: 'files.media_listing'; input: MediaListingInput; output: MediaListingOutput }
   |  { type: 'files.permissions'; input: PermissionsQuery; output: PermissionsOutput }
   |  { type: 'files.unique_to_location'; input: UniqueToLocationInput; output: UniqueToLocationOutput }
@@ -5581,6 +5611,7 @@ export const WIRE_METHODS = {
     'files.by_tag': 'query:files.by_tag',
     'files.content_kind_stats': 'query:files.content_kind_stats',
     'files.directory_listing': 'query:files.directory_listing',
+    'files.directory_sizes': 'query:files.directory_sizes',
     'files.media_listing': 'query:files.media_listing',
     'files.permissions': 'query:files.permissions',
     'files.unique_to_location': 'query:files.unique_to_location',

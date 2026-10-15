@@ -4,7 +4,7 @@ import {
 	Minus,
 	Plus
 } from '@phosphor-icons/react';
-import type {DirectorySortBy, File, WingPath} from '@wingdrive/ts-client';
+import {fileDisplaySize, type DirectorySortBy, type File, type WingPath} from '@wingdrive/ts-client';
 import {CircleButton, CircleButtonGroup} from '@wingdrive/primitives';
 import * as d3 from 'd3';
 import {useEffect, useMemo, useRef, useState} from 'react';
@@ -708,16 +708,19 @@ export function SizeView() {
 		// Give folders a minimum size of 2.5% of average file size (so they're visible)
 		const minFolderSize = averageFileSize * 0.025;
 
-		const mapped = combined.map((file) => ({
+		const mapped = combined.map((file) => {
+			const displaySize = fileDisplaySize(file);
+			return {
 			id: file.id,
 			name: file.name,
 			value: file.kind === 'Directory'
-				? Math.max(file.size, minFolderSize)
-				: file.size,
+				? Math.max(displaySize ?? 0, minFolderSize)
+				: displaySize ?? 0,
 			file,
 			color: getFileColor(file),
 			type: getFileType(file)
-		}));
+			};
+		});
 
 		return mapped;
 	}, [files, viewSettings.sizeViewItemLimit]);
