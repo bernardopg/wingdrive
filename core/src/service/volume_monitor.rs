@@ -116,13 +116,31 @@ impl VolumeMonitorService {
                                                 );
 											}
 										}
-									} else {
-										// Volume no longer detected but still tracked
-										debug!(
-											"Tracked volume {} not detected in library {}",
-											tracked.fingerprint,
-											library.id()
-										);
+									} else if vanished_volume_goes_offline(
+										&tracked,
+										volume_manager.device_id,
+									) {
+										// Detection no longer returns it: an unplugged drive,
+										// or one that left while the daemon was down.
+										match volume_manager
+											.mark_tracked_volume_offline(
+												&library,
+												&tracked.fingerprint,
+											)
+											.await
+										{
+											Ok(()) => info!(
+												"Tracked volume {} vanished; marked offline in library {}",
+												tracked.fingerprint,
+												library.id()
+											),
+											Err(e) => error!(
+												"Failed to mark vanished volume {} offline in library {}: {}",
+												tracked.fingerprint,
+												library.id(),
+												e
+											),
+										}
 									}
 								}
 							}
@@ -185,6 +203,19 @@ impl VolumeMonitorService {
 	}
 }
 
+/// Whether a tracked volume that detection no longer returns should go offline.
+///
+/// Only this device's rows are touched: the table holds every paired device's
+/// volumes, and local detection says nothing about a peer's drives. Network and
+/// cloud volumes are skipped because they are restored from the database, not
+/// detected, and stay out of memory while their credentials are unavailable.
+fn vanished_volume_goes_offline(
+	tracked: &crate::volume::types::TrackedVolume,
+	device_id: uuid::Uuid,
+) -> bool {
+	tracked.is_online && tracked.device_id == device_id && tracked.is_network_drive != Some(true)
+}
+
 #[async_trait::async_trait]
 impl Service for VolumeMonitorService {
 	async fn start(&self) -> Result<()> {
@@ -236,5 +267,63 @@ impl Service for VolumeMonitorService {
 
 	fn name(&self) -> &'static str {
 		"volume_monitor"
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::volume::{types::TrackedVolume, VolumeFingerprint};
+
+	fn tracked(device_id: uuid::Uuid, is_online: bool, is_network_drive: bool) -> TrackedVolume {
+		TrackedVolume {
+			id: 1,
+			uuid: uuid::Uuid::new_v4(),
+			device_id,
+			fingerprint: VolumeFingerprint("usb".into()),
+			display_name: None,
+			tracked_at: chrono::Utc::now(),
+			last_seen_at: chrono::Utc::now(),
+			is_online,
+			total_capacity: None,
+			available_capacity: None,
+			read_speed_mbps: None,
+			write_speed_mbps: None,
+			last_speed_test_at: None,
+			file_system: None,
+			mount_point: None,
+			is_removable: Some(true),
+			is_network_drive: is_network_drive.then_some(true),
+			device_model: None,
+			volume_type: "External".into(),
+			is_user_visible: None,
+			auto_track_eligible: None,
+			total_files: None,
+			total_directories: None,
+			last_stats_update: None,
+		}
+	}
+
+	#[test]
+	fn only_this_devices_online_local_volumes_go_offline() {
+		let this = uuid::Uuid::new_v4();
+		let peer = uuid::Uuid::new_v4();
+
+		assert!(vanished_volume_goes_offline(
+			&tracked(this, true, false),
+			this
+		));
+		assert!(!vanished_volume_goes_offline(
+			&tracked(this, false, false),
+			this
+		));
+		assert!(!vanished_volume_goes_offline(
+			&tracked(peer, true, false),
+			this
+		));
+		assert!(!vanished_volume_goes_offline(
+			&tracked(this, true, true),
+			this
+		));
 	}
 }
