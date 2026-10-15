@@ -1318,6 +1318,11 @@ async fn install_daemon_service(
 		<key>SuccessfulExit</key>
 		<false/>
 	</dict>
+	<key>SoftResourceLimits</key>
+	<dict>
+		<key>NumberOfFiles</key>
+		<integer>65536</integer>
+	</dict>
 	<key>StandardOutPath</key>
 	<string>{}</string>
 	<key>StandardErrorPath</key>

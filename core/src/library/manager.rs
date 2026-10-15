@@ -26,7 +26,7 @@ use chrono::Utc;
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 use once_cell::sync::OnceCell;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -76,20 +76,23 @@ pub struct LibraryManager {
 	/// watcher sees a new `.winglibrary` folder before its creator has finished
 	/// initializing and opening it; opening it a second time from the watcher
 	/// runs the migrations twice on one database and fights over the lock, so
-	/// the watcher leaves these paths to their creator.
-	creating: Arc<Mutex<HashSet<PathBuf>>>,
+	/// the watcher leaves these paths to their creator. A finished creation
+	/// keeps the instant it finished: the watcher's debounced create event
+	/// for the folder can land after that, and by then the creator may have
+	/// closed the library on purpose, so events older than it are skipped.
+	creating: Arc<Mutex<HashMap<PathBuf, Option<std::time::Instant>>>>,
 }
 
 /// Marks a library path as being created until dropped.
 struct CreationGuard {
-	creating: Arc<Mutex<HashSet<PathBuf>>>,
+	creating: Arc<Mutex<HashMap<PathBuf, Option<std::time::Instant>>>>,
 	path: PathBuf,
 }
 
 impl Drop for CreationGuard {
 	fn drop(&mut self) {
 		if let Ok(mut creating) = self.creating.lock() {
-			creating.remove(&self.path);
+			creating.insert(self.path.clone(), Some(std::time::Instant::now()));
 		}
 	}
 }
@@ -121,7 +124,7 @@ impl LibraryManager {
 			watcher: Arc::new(RwLock::new(None)),
 			is_watching: Arc::new(RwLock::new(false)),
 			context: Arc::new(RwLock::new(None)),
-			creating: Arc::new(Mutex::new(HashSet::new())),
+			creating: Arc::new(Mutex::new(HashMap::new())),
 		}
 	}
 
@@ -143,7 +146,7 @@ impl LibraryManager {
 			watcher: Arc::new(RwLock::new(None)),
 			is_watching: Arc::new(RwLock::new(false)),
 			context: Arc::new(RwLock::new(None)),
-			creating: Arc::new(Mutex::new(HashSet::new())),
+			creating: Arc::new(Mutex::new(HashMap::new())),
 		}
 	}
 
@@ -395,7 +398,7 @@ impl LibraryManager {
 		self.creating
 			.lock()
 			.expect("creating set poisoned")
-			.insert(path.clone());
+			.insert(path.clone(), None);
 		CreationGuard {
 			creating: self.creating.clone(),
 			path,
@@ -960,9 +963,7 @@ impl LibraryManager {
 		info!("Initialized encryption key for library '{}'", config.name);
 
 		// Save configuration
-		let config_path = path.join("library.json");
-		let json = serde_json::to_string_pretty(&config)?;
-		tokio::fs::write(config_path, json).await?;
+		config.save(&path.join("library.json")).await?;
 
 		// Initialize database
 		let db_path = path.join(LIBRARY_DB_FILENAME);
@@ -1020,9 +1021,7 @@ impl LibraryManager {
 		);
 
 		// Save configuration
-		let config_path = path.join("library.json");
-		let json = serde_json::to_string_pretty(&config)?;
-		tokio::fs::write(config_path, json).await?;
+		config.save(&path.join("library.json")).await?;
 
 		// Initialize database
 		let db_path = path.join(LIBRARY_DB_FILENAME);
@@ -1855,17 +1854,23 @@ impl LibraryManager {
 						let mut to_create = Vec::new();
 						pending_creates.retain(|path, time| {
 							if now.duration_since(*time) >= debounce_duration {
-								to_create.push(path.clone());
+								to_create.push((path.clone(), *time));
 								false
 							} else {
 								true
 							}
 						});
 
-						for path in to_create {
+						for (path, event_time) in to_create {
 							let key = creation_key(&path).await;
-							if creating.lock().is_ok_and(|creating| creating.contains(&key)) {
-								debug!("Library {:?} is being created here, leaving it to its creator", path);
+							// In progress, or finished after this event: either way the
+							// event is the creator's own folder, not one dropped in.
+							let created_here = creating.lock().is_ok_and(|creating| {
+								matches!(creating.get(&key), Some(None))
+									|| matches!(creating.get(&key), Some(Some(done)) if *done >= event_time)
+							});
+							if created_here {
+								debug!("Library {:?} was created here, leaving it to its creator", path);
 								continue;
 							}
 

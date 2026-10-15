@@ -59,6 +59,16 @@ pub struct FileTypeRegistry {
 }
 
 impl FileTypeRegistry {
+	/// The built-in registry, built once for the process.
+	///
+	/// Building one parses every built-in definition, a few milliseconds.
+	/// That is affordable once and not once per entry: browsing a folder adds
+	/// its entries to the ephemeral index one at a time.
+	pub fn builtin() -> &'static Self {
+		static BUILTIN: std::sync::OnceLock<FileTypeRegistry> = std::sync::OnceLock::new();
+		BUILTIN.get_or_init(Self::new)
+	}
+
 	/// Create a new registry with built-in types
 	pub fn new() -> Self {
 		let mut registry = Self {
