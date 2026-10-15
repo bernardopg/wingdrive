@@ -1,7 +1,7 @@
 ---
 id: DESK-017
 title: "Close M2: AUR runtime evidence and a full working day"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: DESK-000
 priority: High
@@ -25,11 +25,16 @@ directory sizes (DESK-014), the translated tray, ephemeral rename events
 2. Run the DESK checklist on the installed package: `xdg-open` on a folder,
    "Show in folder" from a browser download, tray and autostart, Open With,
    terminal here, new file and symlink, permissions, archives, gvfs (SFTP/SMB
-   or MTP), folder sizes, Portuguese UI and tray, renaming a folder in an
+   or MTP), folder sizes, Portuguese UI and tray, open a folder in a new window
+   (DESK-015), renaming a folder in an
    unindexed directory, unplugging a USB drive.
 3. Use WingDrive as the only file manager for a full working day and record
    every fallback or bug as a task.
 4. Record the evidence in DESK-000 and close the epic and the M2 milestone.
+
+## Progress
+
+- 2026-10-15: release 2.0.0-alpha.16 prepared with #205 to #217.
 
 ## Acceptance Criteria
 
