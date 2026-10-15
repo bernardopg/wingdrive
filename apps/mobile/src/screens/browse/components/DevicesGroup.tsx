@@ -5,10 +5,11 @@ import { useNormalizedQuery } from "../../../client";
 import type { Device } from "@wingdrive/ts-client";
 import { getDeviceIcon } from "@wingdrive/ts-client";
 import { SettingsGroup, SettingsLink } from "../../../components/primitive";
+import { imageSource } from "../../../utils/imageSource";
 
 export function DevicesGroup() {
 	const router = useRouter();
-	const { data: devices, isLoading } = useNormalizedQuery<any, Device[]>({
+	const { data: devices, isLoading } = useNormalizedQuery({
 		query: "devices.list",
 		input: {
 			include_offline: true,
@@ -31,7 +32,7 @@ export function DevicesGroup() {
 						key={device.id}
 						icon={
 							<Image
-								source={deviceIconSrc}
+								source={imageSource(deviceIconSrc)}
 								className="w-8 h-8"
 								style={{ resizeMode: "contain" }}
 							/>

@@ -40,10 +40,7 @@ export function useVirtualListing(
 	const id = isVirtualView ? params.id : null;
 
 	// Fetch devices
-	const { data: devices, isLoading: devicesLoading } = useNormalizedQuery<
-		any,
-		Device[]
-	>({
+	const { data: devices, isLoading: devicesLoading } = useNormalizedQuery({
 		query: "devices.list",
 		input: {
 			include_offline: true,
@@ -64,10 +61,7 @@ export function useVirtualListing(
 		});
 
 	// Fetch volumes
-	const { data: volumesData, isLoading: volumesLoading } = useNormalizedQuery<
-		any,
-		{ volumes: Volume[] }
-	>({
+	const { data: volumesData, isLoading: volumesLoading } = useNormalizedQuery({
 		query: "volumes.list",
 		input: { filter: "All" },
 		resourceType: "volume",

@@ -4,21 +4,30 @@ import {
 	UseQueryOptions,
 	UseMutationOptions,
 } from "@tanstack/react-query";
+import type {
+	CoreAction,
+	CoreQuery,
+	LibraryAction,
+	LibraryQuery,
+} from "@wingdrive/ts-client/src/generated/types";
 import { useWingDriveClient } from "./useClient";
+
+type Input<U, T> = Extract<U, { type: T }> extends { input: infer I } ? I : never;
+type Output<U, T> = Extract<U, { type: T }> extends { output: infer O } ? O : never;
 
 /**
  * Hook for executing core-level queries (no library context).
  */
-export function useCoreQuery<T = unknown>(
-	method: string,
-	input: unknown = {},
-	options?: Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">,
+export function useCoreQuery<T extends CoreQuery["type"]>(
+	method: T,
+	input: Input<CoreQuery, T>,
+	options?: Omit<UseQueryOptions<Output<CoreQuery, T>, Error>, "queryKey" | "queryFn">,
 ) {
 	const client = useWingDriveClient();
 
-	return useQuery<T, Error>({
+	return useQuery<Output<CoreQuery, T>, Error>({
 		queryKey: ["core", method, input],
-		queryFn: () => client.coreQuery<T>(method, input),
+		queryFn: () => client.coreQuery<Output<CoreQuery, T>>(method, input),
 		...options,
 	});
 }
@@ -27,17 +36,17 @@ export function useCoreQuery<T = unknown>(
  * Hook for executing library-level queries.
  * Automatically uses the current library context.
  */
-export function useLibraryQuery<T = unknown>(
-	method: string,
-	input: unknown = {},
-	options?: Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">,
+export function useLibraryQuery<T extends LibraryQuery["type"]>(
+	method: T,
+	input: Input<LibraryQuery, T>,
+	options?: Omit<UseQueryOptions<Output<LibraryQuery, T>, Error>, "queryKey" | "queryFn">,
 ) {
 	const client = useWingDriveClient();
 	const libraryId = client.getCurrentLibraryId();
 
-	return useQuery<T, Error>({
+	return useQuery<Output<LibraryQuery, T>, Error>({
 		queryKey: ["library", libraryId, method, input],
-		queryFn: () => client.libraryQuery<T>(method, input),
+		queryFn: () => client.libraryQuery<Output<LibraryQuery, T>>(method, input),
 		enabled: !!libraryId && (options?.enabled ?? true),
 		...options,
 	});
@@ -46,15 +55,14 @@ export function useLibraryQuery<T = unknown>(
 /**
  * Hook for executing core-level actions (mutations).
  */
-export function useCoreAction<TInput = unknown, TOutput = unknown>(
-	method: string,
-	options?: UseMutationOptions<TOutput, Error, TInput>,
+export function useCoreAction<T extends CoreAction["type"]>(
+	method: T,
+	options?: UseMutationOptions<Output<CoreAction, T>, Error, Input<CoreAction, T>>,
 ) {
 	const client = useWingDriveClient();
 
-	return useMutation<TOutput, Error, TInput>({
-		mutationFn: (input: TInput) =>
-			client.coreAction<TOutput>(method, input),
+	return useMutation<Output<CoreAction, T>, Error, Input<CoreAction, T>>({
+		mutationFn: (input) => client.coreAction<Output<CoreAction, T>>(method, input),
 		...options,
 	});
 }
@@ -62,15 +70,14 @@ export function useCoreAction<TInput = unknown, TOutput = unknown>(
 /**
  * Hook for executing library-level actions (mutations).
  */
-export function useLibraryAction<TInput = unknown, TOutput = unknown>(
-	method: string,
-	options?: UseMutationOptions<TOutput, Error, TInput>,
+export function useLibraryAction<T extends LibraryAction["type"]>(
+	method: T,
+	options?: UseMutationOptions<Output<LibraryAction, T>, Error, Input<LibraryAction, T>>,
 ) {
 	const client = useWingDriveClient();
 
-	return useMutation<TOutput, Error, TInput>({
-		mutationFn: (input: TInput) =>
-			client.libraryAction<TOutput>(method, input),
+	return useMutation<Output<LibraryAction, T>, Error, Input<LibraryAction, T>>({
+		mutationFn: (input) => client.libraryAction<Output<LibraryAction, T>>(method, input),
 		...options,
 	});
 }

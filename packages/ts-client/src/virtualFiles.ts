@@ -18,13 +18,14 @@ export type VirtualFileType = "location" | "volume" | "device";
 export interface VirtualMetadata {
 	type: VirtualFileType;
 	data: any;
-	iconUrl?: string; // Custom icon URL override
+	// Custom icon override: a URL on the web, an asset number under Metro.
+	iconUrl?: string | number;
 }
 
 /**
  * Maps a Location to a File-like object for Explorer display
  */
-export function mapLocationToFile(location: any, iconUrl?: string): File {
+export function mapLocationToFile(location: any, iconUrl?: string | number): File {
 	return {
 		id: `virtual:location:${location.id}`,
 		kind: "Directory",
@@ -59,7 +60,7 @@ export function mapLocationToFile(location: any, iconUrl?: string): File {
 export function mapVolumeToFile(
 	volume: any,
 	deviceSlug: string,
-	iconUrl?: string,
+	iconUrl?: string | number,
 ): File {
 	const sdPath = {
 		Physical: {
@@ -99,7 +100,7 @@ export function mapVolumeToFile(
 /**
  * Maps a Device to a File-like object for Explorer display
  */
-export function mapDeviceToFile(device: any, iconUrl?: string): File {
+export function mapDeviceToFile(device: any, iconUrl?: string | number): File {
 	const sdPath = {
 		Physical: {
 			device_slug: device.slug,

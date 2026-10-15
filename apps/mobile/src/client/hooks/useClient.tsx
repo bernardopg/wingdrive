@@ -1,11 +1,11 @@
 import { LocalizedText as Text } from "../../i18n/LocalizedText";
-import React, { useEffect, useState, ReactNode } from "react";
+import React, { useContext, useEffect, useState, ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   WingDriveClientContext,
   queryClient,
-  useWingDriveClient,
 } from "@wingdrive/ts-client/src/hooks/useClient";
+import type { WingDriveClient as SharedClient } from "@wingdrive/ts-client";
 import type { AppConfigOutput, Event } from "@wingdrive/ts-client/src/generated/types";
 import { WingDriveClient } from "../WingDriveClient";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
@@ -16,8 +16,21 @@ import { useSidebarStore } from "../../stores/sidebar";
 import { useReactQueryDevTools } from "@dev-plugins/react-query";
 import { applyLanguage } from "../../i18n";
 
-// Re-export the shared hook
-export { useWingDriveClient };
+/**
+ * Returns the mobile client.
+ *
+ * The context is typed with the desktop client class. The mobile client
+ * provides the members the shared hooks call (`execute`,
+ * `getCurrentLibraryId`, `on`, `off`), so it is stored through a cast here
+ * and read back as the mobile type.
+ */
+export function useWingDriveClient(): WingDriveClient {
+  const client = useContext(WingDriveClientContext);
+  if (!client) {
+    throw new Error("useWingDriveClient must be used within WingDriveProvider");
+  }
+  return client as unknown as WingDriveClient;
+}
 
 interface WingDriveProviderProps {
   children: ReactNode;
@@ -41,7 +54,6 @@ export function WingDriveProvider({
 
   useEffect(() => {
     let mounted = true;
-    let unsubscribeLogs: (() => void) | null = null;
 
     async function init() {
       try {
@@ -182,7 +194,6 @@ export function WingDriveProvider({
 
     return () => {
       mounted = false;
-      if (unsubscribeLogs) unsubscribeLogs();
       initPromise.then((unsubscribe) => {
         if (unsubscribe) unsubscribe();
       });
@@ -212,7 +223,7 @@ export function WingDriveProvider({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <WingDriveClientContext.Provider value={client}>
+      <WingDriveClientContext.Provider value={client as unknown as SharedClient}>
         {children}
       </WingDriveClientContext.Provider>
     </QueryClientProvider>

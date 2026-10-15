@@ -51,8 +51,8 @@ export function LibrarySwitcherPanel({
 			refetch();
 
 			// Auto-select the new library
-			if (result?.id) {
-				handleSelectLibrary(result.id);
+			if (result?.library_id) {
+				handleSelectLibrary(result.library_id);
 			}
 		} catch (error) {
 			Alert.alert(t("Error"), t("Failed to create library"));
@@ -70,7 +70,7 @@ export function LibrarySwitcherPanel({
 					style: "destructive",
 					onPress: async () => {
 						try {
-							await deleteLibrary.mutateAsync({ id: libraryId });
+							await deleteLibrary.mutateAsync({ library_id: libraryId, delete_data: false });
 							refetch();
 
 							// If deleted library was selected, switch to first available

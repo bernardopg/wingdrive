@@ -4,6 +4,7 @@ import { View, FlatList, Pressable, Image } from "react-native";
 import type { File } from "@wingdrive/ts-client";
 import { getVirtualMetadata, isVirtualFile, getFileKindForIcon } from "@wingdrive/ts-client";
 import { getIcon } from "@wingdrive/assets/util/mobile";
+import { imageSource } from "../../../utils/imageSource";
 
 interface ListViewProps {
 	files: File[];
@@ -61,7 +62,7 @@ function FileRow({ file, onPress }: { file: File; onPress: () => void }) {
 		>
 			{/* Icon */}
 			<Image
-				source={iconSource}
+				source={imageSource(iconSource)}
 				className="w-10 h-10 mr-3"
 				style={{ resizeMode: "contain" }}
 			/>

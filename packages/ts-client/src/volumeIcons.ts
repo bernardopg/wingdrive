@@ -1,5 +1,5 @@
 // @ts-nocheck
-import type { CloudServiceType } from "./generated/types";
+import type { CloudServiceType, VolumeType } from "./generated/types";
 import DriveAmazonS3 from "@wingdrive/assets/icons/Drive-AmazonS3.png";
 import DriveGoogleDrive from "@wingdrive/assets/icons/Drive-GoogleDrive.png";
 import DriveDropbox from "@wingdrive/assets/icons/Drive-Dropbox.png";
@@ -70,7 +70,7 @@ function parseCloudService(mountPoint: string | null): CloudServiceType | null {
  */
 export function getVolumeIcon(volume: {
 	mount_point: string | null;
-	volume_type?: "Internal" | "External" | "Removable";
+	volume_type?: VolumeType;
 }): VolumeIcon {
 	// Check if it's a cloud volume
 	const cloudService = parseCloudService(volume.mount_point);

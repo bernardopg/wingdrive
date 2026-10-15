@@ -87,9 +87,9 @@ function getItemLabel(itemType: ItemType, resolvedFile?: any): string {
 	if (isRecentsItem(itemType)) return "Recents";
 	if (isFavoritesItem(itemType)) return "Favorites";
 	if (isFileKindsItem(itemType)) return "File Kinds";
-	if (isLocationItem(itemType)) return itemType.Location.name || "Unnamed Location";
-	if (isVolumeItem(itemType)) return itemType.Volume.name || "Unnamed Volume";
-	if (isTagItem(itemType)) return itemType.Tag.name || "Unnamed Tag";
+	if (isLocationItem(itemType)) return resolvedFile?.name || "Unnamed Location";
+	if (isVolumeItem(itemType)) return resolvedFile?.name || "Unnamed Volume";
+	if (isTagItem(itemType)) return resolvedFile?.name || "Unnamed Tag";
 	if (isPathItem(itemType)) {
 		if (resolvedFile?.name) return resolvedFile.name;
 		const sdPath = itemType.Path.wing_path;
@@ -200,7 +200,7 @@ export function SpaceItem({ item }: SpaceItemProps) {
 	const itemType = item.item_type;
 	const icon = getItemIcon(itemType);
 	const label = getItemLabel(itemType, item.resolved_file);
-	const navigation = getItemNavigation(itemType, item.wing_path);
+	const navigation = getItemNavigation(itemType, item.resolved_file?.wing_path);
 
 	// Handle volume items specially
 	if (isVolumeItem(itemType)) {

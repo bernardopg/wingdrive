@@ -14,7 +14,7 @@ export function LocationsGroup() {
 		resourceType: "location",
 	});
 
-	const { data: devices } = useNormalizedQuery<any, Device[]>({
+	const { data: devices } = useNormalizedQuery({
 		query: "devices.list",
 		input: {
 			include_offline: true,
