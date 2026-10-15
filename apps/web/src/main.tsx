@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { PlatformProvider, Shell } from "@wingdrive/interface";
+import { AuxiliaryWindow, PlatformProvider, Settings, Shell } from "@wingdrive/interface";
 import { WingDriveClient, HttpTransport } from "@wingdrive/ts-client";
 import { platform } from "./platform";
 import "./index.css";
@@ -24,9 +24,17 @@ client.on("library-changed", (id: string) => {
 });
 
 function App() {
+	// Settings opens in its own tab, the browser counterpart of the desktop Settings window
+	const isSettings = window.location.pathname.startsWith("/settings");
 	return (
 		<PlatformProvider platform={platform}>
-			<Shell client={client} />
+			{isSettings ? (
+				<AuxiliaryWindow client={client}>
+					<Settings />
+				</AuxiliaryWindow>
+			) : (
+				<Shell client={client} />
+			)}
 		</PlatformProvider>
 	);
 }

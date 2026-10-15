@@ -1,5 +1,6 @@
 import { CaretRight, Database } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "../../i18n";
 
 interface SourcePathBarProps {
 	sourceName: string;
@@ -10,6 +11,7 @@ export function SourcePathBar({
 	sourceName,
 	itemCount,
 }: SourcePathBarProps) {
+	const { t } = useTranslation("navigation");
 	const navigate = useNavigate();
 
 	return (
@@ -22,7 +24,7 @@ export function SourcePathBar({
 				onClick={() => navigate("/sources")}
 				className="text-sidebar-ink-dull hover:text-sidebar-ink whitespace-nowrap text-xs font-medium transition-colors"
 			>
-				Sources
+				{t("ui.sources")}
 			</button>
 
 			<CaretRight size={12} className="text-ink-faint shrink-0 opacity-50" />

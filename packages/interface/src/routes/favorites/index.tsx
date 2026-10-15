@@ -2,6 +2,7 @@ import {Star} from '@phosphor-icons/react';
 import type {SearchFilters} from '@wingdrive/ts-client';
 import {useEffect, type ReactNode} from 'react';
 import {ExplorerView, useExplorer} from '../explorer';
+import {useTranslation} from '../../i18n';
 import {useExplorerFiles} from '../explorer/hooks/useExplorerFiles';
 
 const FAVORITE_FILTERS: SearchFilters = {
@@ -22,6 +23,7 @@ const FAVORITE_FILTERS: SearchFilters = {
 };
 
 export function FavoritesView() {
+	const {t} = useTranslation('navigation');
 	const {mode, enterFilteredMode, exitFilteredMode} = useExplorer();
 
 	useEffect(() => {
@@ -33,13 +35,13 @@ export function FavoritesView() {
 	const isActive = mode.type === 'filtered' && mode.label === 'Favorites';
 
 	if (!isActive || isLoading) {
-		return <StateMessage>Loading favorites...</StateMessage>;
+		return <StateMessage>{t('favorites.loading')}</StateMessage>;
 	}
 
 	if (error) {
 		return (
 			<StateMessage>
-				Could not load favorites. {error.message}
+				{t('favorites.loadFailed', {error: error.message})}
 			</StateMessage>
 		);
 	}
@@ -48,9 +50,9 @@ export function FavoritesView() {
 		return (
 			<StateMessage>
 				<Star size={36} weight="thin" />
-				<span>No favorites yet.</span>
+				<span>{t('favorites.empty')}</span>
 				<span className="text-xs">
-					Mark a file as favorite from its inspector.
+					{t('favorites.emptyHint')}
 				</span>
 			</StateMessage>
 		);

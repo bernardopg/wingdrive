@@ -33,6 +33,7 @@ import type {
 import { useLibraryMutation, useLibraryQuery, useWingDriveClient } from "../../../contexts/WingDriveContext";
 import { usePlatform } from "../../../contexts/PlatformContext";
 import clsx from "clsx";
+import {useTranslation} from "../../../i18n";
 
 // Import icons
 import FolderIcon from "@wingdrive/assets/icons/Folder.png";
@@ -45,6 +46,7 @@ import DriveOneDrive from "@wingdrive/assets/icons/Drive-OneDrive.png";
 import DriveBackBlaze from "@wingdrive/assets/icons/Drive-BackBlaze.png";
 import DrivePCloud from "@wingdrive/assets/icons/Drive-PCloud.png";
 import DriveBox from "@wingdrive/assets/icons/Drive-Box.png";
+import { ThemedIcon } from "../../../components/ThemedIcon";
 
 type StorageCategory = "local" | "cloud" | "external";
 type ModalStep = "category" | "provider" | "local-config" | "cloud-config";
@@ -104,20 +106,20 @@ interface CloudFormData {
 const categories: CategoryOption[] = [
 	{
 		id: "local",
-		label: "Local Folder",
-		description: "Index a folder on your computer",
+		label: "addStorage.localFolder",
+		description: "addStorage.localFolderDescription",
 		icon: FolderIcon,
 	},
 	{
 		id: "cloud",
-		label: "Cloud Storage",
-		description: "Connect S3, Google Drive, Dropbox, etc.",
+		label: "addStorage.cloudStorage",
+		description: "addStorage.cloudStorageDescription",
 		icon: DriveIcon,
 	},
 	{
 		id: "external",
-		label: "External Drive",
-		description: "Track a connected drive",
+		label: "addStorage.externalDrive",
+		description: "addStorage.externalDriveDescription",
 		icon: HDDIcon,
 	},
 ];
@@ -204,18 +206,18 @@ const indexModes: Array<{
 }> = [
 	{
 		value: "Shallow",
-		label: "Shallow",
-		description: "Just filesystem metadata",
+		label: "addLocation.modeShallow",
+		description: "addLocation.modeShallowDescription",
 	},
 	{
 		value: "Content",
-		label: "Content",
-		description: "Generate content identities",
+		label: "addLocation.modeContent",
+		description: "addLocation.modeContentDescription",
 	},
 	{
 		value: "Deep",
-		label: "Deep",
-		description: "Full indexing + thumbnails",
+		label: "addLocation.modeDeep",
+		description: "addLocation.modeDeepDescription",
 	},
 ];
 
@@ -252,6 +254,7 @@ function StorageDialog({
 	hideButtons,
 	children,
 }: StorageDialogProps) {
+	const {t} = useTranslation('explorer');
 	return (
 		<Dialog
 			dialog={dialog}
@@ -270,7 +273,7 @@ function StorageDialog({
 			buttonsSideContent={
 				showBackButton ? (
 					<Button variant="gray" size="sm" onClick={onBack}>
-						Back
+						{t('actions.back')}
 					</Button>
 				) : undefined
 			}
@@ -283,36 +286,36 @@ function StorageDialog({
 const jobOptions: JobOption[] = [
 	{
 		id: "thumbnail",
-		label: "Generate Thumbnails",
-		description: "Create preview thumbnails for images and videos",
+		label: "addLocation.generateThumbnails",
+		description: "addLocation.generateThumbnailsDescription",
 		presets: ["Content", "Deep"],
 		order: 1,
 	},
 	{
 		id: "thumbstrip",
-		label: "Generate Thumbstrips",
-		description: "Create video storyboard grids (5×5 grid of frames)",
+		label: "addLocation.generateThumbstrips",
+		description: "addLocation.generateThumbstripsDescription",
 		presets: ["Deep"],
 		order: 2,
 	},
 	{
 		id: "proxy",
-		label: "Generate Proxies",
-		description: "Create scrubbing proxies for videos (~8s per video)",
+		label: "addLocation.generateProxies",
+		description: "addLocation.generateProxiesDescription",
 		presets: [],
 		order: 3,
 	},
 	{
 		id: "ocr",
-		label: "Extract Text (OCR)",
-		description: "OCR and text extraction from images/PDFs",
+		label: "addLocation.extractText",
+		description: "addLocation.extractTextDescription",
 		presets: [],
 		order: 4,
 	},
 	{
 		id: "speech_to_text",
-		label: "Speech to Text",
-		description: "Transcribe audio and video files",
+		label: "addLocation.speechToText",
+		description: "addLocation.speechToTextDescription",
 		presets: [],
 		order: 5,
 	},
@@ -336,6 +339,7 @@ function AddStorageDialog(props: {
 	onStorageAdded?: (sdPath: any) => void;
 	initialPath?: string;
 }) {
+	const {t} = useTranslation('explorer');
 	const dialog = useDialog(props);
 	const platform = usePlatform();
 
@@ -458,7 +462,7 @@ function AddStorageDialog(props: {
 		}
 
 		const selected = await platform.openDirectoryPickerDialog({
-			title: "Choose a folder to add",
+			title: t("addLocation.chooseFolder"),
 			multiple: false,
 		});
 
@@ -585,7 +589,7 @@ function AddStorageDialog(props: {
 				message:
 					error instanceof Error
 						? error.message
-						: "Failed to add location",
+						: t("errors.failedToAddLocation"),
 			});
 		}
 	});
@@ -710,7 +714,7 @@ function AddStorageDialog(props: {
 				message:
 					error instanceof Error
 						? error.message
-						: "Failed to add cloud storage",
+						: t("errors.failedToAddCloudStorage"),
 			});
 		}
 	});
@@ -736,7 +740,7 @@ function AddStorageDialog(props: {
 				message:
 					error instanceof Error
 						? error.message
-						: "Failed to index volume",
+						: t("errors.failedToIndexVolume"),
 			});
 		}
 	};
@@ -747,9 +751,9 @@ function AddStorageDialog(props: {
 			<StorageDialog
 				dialog={dialog}
 				form={dummyForm}
-				title="Add Storage"
+				title={t("addStorage.title")}
 				icon={<CloudArrowUp size={20} weight="fill" />}
-				description="Choose the type of storage you want to connect"
+				description={t("addStorage.description")}
 				hideButtons={true}
 			>
 				<div className="grid grid-cols-2 gap-3">
@@ -764,17 +768,17 @@ function AddStorageDialog(props: {
 								"border-app-line bg-app-box hover:bg-app-hover hover:border-accent/50",
 							)}
 						>
-							<img
+							<ThemedIcon
 								src={category.icon}
 								className="size-12"
 								alt=""
 							/>
 							<div className="text-center">
 								<div className="text-sm font-medium text-ink">
-									{category.label}
+									{t(category.label)}
 								</div>
 								<div className="mt-1 text-xs text-ink-faint">
-									{category.description}
+									{t(category.description)}
 								</div>
 							</div>
 						</button>
@@ -790,9 +794,9 @@ function AddStorageDialog(props: {
 			<StorageDialog
 				dialog={dialog}
 				form={dummyForm}
-				title="Select Cloud Provider"
+				title={t("addStorage.selectCloudProvider")}
 				icon={<CloudArrowUp size={20} weight="fill" />}
-				description="Choose your cloud storage service"
+				description={t("addStorage.chooseCloudStorage")}
 				hideButtons={true}
 				showBackButton={true}
 				onBack={handleBack}
@@ -809,7 +813,7 @@ function AddStorageDialog(props: {
 								"border-app-line bg-app-box hover:bg-app-hover hover:border-accent/50",
 							)}
 						>
-							<img
+							<ThemedIcon
 								src={provider.icon}
 								className="size-10"
 								alt=""
@@ -830,9 +834,9 @@ function AddStorageDialog(props: {
 			<StorageDialog
 				dialog={dialog}
 				form={dummyForm}
-				title="Track External Drive"
+				title={t("addStorage.trackExternalDrive")}
 				icon={<HardDrive size={20} weight="fill" />}
-				description="Select a connected drive to track"
+				description={t("addStorage.selectConnectedDrive")}
 				hideButtons={true}
 				showBackButton={true}
 				onBack={handleBack}
@@ -851,7 +855,7 @@ function AddStorageDialog(props: {
 										"border-app-line bg-app-box hover:bg-app-hover hover:border-accent/50",
 									)}
 								>
-									<img
+									<ThemedIcon
 										src={HDDIcon}
 										className="size-8"
 										alt=""
@@ -862,7 +866,7 @@ function AddStorageDialog(props: {
 										</div>
 										<div className="text-xs text-ink-faint">
 											{volume.mount_point} •{" "}
-											{typeof volume.file_system === 'string' ? volume.file_system : (volume.file_system as any)?.Other ?? 'Unknown'}
+											{typeof volume.file_system === 'string' ? volume.file_system : (volume.file_system as any)?.Other ?? t('general.unknown')}
 										</div>
 									</div>
 									<div className="text-xs text-ink-dull">
@@ -879,8 +883,7 @@ function AddStorageDialog(props: {
 					) : (
 						<div className="rounded-lg bg-app-box border border-app-line p-6 text-center">
 							<p className="text-sm text-ink-dull">
-								No untracked external drives found. Connect a
-								drive and refresh to see it here.
+								{t('addStorage.noUntrackedDrives')}
 							</p>
 						</div>
 					)}
@@ -896,17 +899,17 @@ function AddStorageDialog(props: {
 				dialog={dialog}
 				form={localForm}
 				onSubmit={onSubmitManualPath}
-				title="Add Local Folder"
+				title={t("addStorage.addLocalFolder")}
 				icon={<Folder size={20} weight="fill" />}
-				description="Choose a folder to index and manage"
-				ctaLabel="Continue"
+				description={t("addLocation.description")}
+				ctaLabel={t("addStorage.continue")}
 				submitDisabled={!localPathTyped.trim()}
 				showBackButton={true}
 				onBack={handleBack}
 			>
 				<div className="space-y-4 flex flex-col">
 					<div className="space-y-2">
-						<Label>Browse</Label>
+						<Label>{t("addLocation.browse")}</Label>
 						<div className="relative">
 							<Input
 								value={localPathTyped}
@@ -916,7 +919,7 @@ function AddStorageDialog(props: {
 										shouldDirty: true,
 									})
 								}
-								placeholder="Type or paste a folder path"
+								placeholder={t("addStorage.folderPathPlaceholder")}
 								size="lg"
 								className="pr-14"
 							/>
@@ -931,7 +934,7 @@ function AddStorageDialog(props: {
 					{suggestedLocations &&
 						suggestedLocations.locations.length > 0 && (
 							<div className="space-y-2">
-								<Label>Suggested Locations</Label>
+								<Label>{t("addLocation.suggestedLocations")}</Label>
 								<div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto pr-1">
 									{suggestedLocations.locations.map((loc) => (
 										<button
@@ -974,10 +977,10 @@ function AddStorageDialog(props: {
 				dialog={dialog}
 				form={localForm}
 				onSubmit={onSubmitLocal}
-				title="Configure Location"
+				title={t("addStorage.configureLocation")}
 				icon={<Folder size={20} weight="fill" />}
 				description={localForm.watch("path")}
-				ctaLabel={validationResult ? "Proceed Anyway" : "Add Location"}
+				ctaLabel={validationResult ? t("addStorage.proceedAnyway") : t("addLocation.title")}
 				ctaDanger={!!validationResult}
 				loading={addLocation.isPending}
 				showBackButton={true}
@@ -999,8 +1002,8 @@ function AddStorageDialog(props: {
 								<div className="flex-1 space-y-2">
 									<p className="text-sm font-medium text-ink">
 										{validationResult.riskLevel === "high"
-											? "High Risk Path Detected"
-											: "Warning"}
+							? t("addStorage.highRiskPath")
+							: t("addStorage.warning")}
 									</p>
 									{validationResult.warnings.map((warning, i) => (
 										<div key={i} className="space-y-1">
@@ -1016,7 +1019,7 @@ function AddStorageDialog(props: {
 									{validationResult.suggestion && (
 										<div className="mt-3 pt-3 border-t border-app-line/50">
 											<p className="text-xs font-medium text-ink mb-2">
-												Alternative Suggestion
+												{t('addStorage.alternativeSuggestion')}
 											</p>
 											<p className="text-xs text-ink-dull mb-2">
 												{validationResult.suggestion.message}
@@ -1037,11 +1040,11 @@ function AddStorageDialog(props: {
 					)}
 
 					<div className="space-y-2">
-						<Label slug="name">Display Name</Label>
+						<Label slug="name">{t("addLocation.displayName")}</Label>
 						<Input
 							{...localForm.register("name")}
 							size="md"
-							placeholder="My Documents"
+							placeholder={t("addLocation.myDocuments")}
 							className="bg-app-input"
 						/>
 					</div>
@@ -1051,17 +1054,15 @@ function AddStorageDialog(props: {
 						onValueChange={(v) => setTab(v as SettingsTab)}
 					>
 						<TabsList>
-							<TabsTrigger value="preset">Preset</TabsTrigger>
+							<TabsTrigger value="preset">{t("addLocation.preset")}</TabsTrigger>
 							<TabsTrigger value="jobs">
-								Jobs{" "}
-								{selectedJobs.size > 0 &&
-									`(${selectedJobs.size})`}
+								{selectedJobs.size > 0 ? t("addLocation.jobsCount", {count: selectedJobs.size}) : t("addLocation.jobs")}
 							</TabsTrigger>
 						</TabsList>
 
 						<TabsContent value="preset" className="pt-3">
 							<div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-								<Label>Indexing Mode</Label>
+								<Label>{t("addLocation.indexingMode")}</Label>
 								<div className="grid grid-cols-3 gap-2">
 									{indexModes.map((mode) => {
 										const isSelected =
@@ -1081,10 +1082,10 @@ function AddStorageDialog(props: {
 												)}
 											>
 												<div className="text-xs font-medium text-ink">
-													{mode.label}
+													{t(mode.label)}
 												</div>
 												<div className="mt-1 text-[11px] leading-tight text-ink-faint">
-													{mode.description}
+													{t(mode.description)}
 												</div>
 											</button>
 										);
@@ -1096,8 +1097,7 @@ function AddStorageDialog(props: {
 						<TabsContent value="jobs" className="pt-3">
 							<div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
 								<p className="text-xs text-ink-faint">
-									Select which jobs to run after indexing.
-									Extensions can add more jobs.
+								{t("addLocation.jobsDescription")}
 								</p>
 								<div className="grid grid-cols-2 gap-2">
 									{jobOptions.map((job) => {
@@ -1120,10 +1120,10 @@ function AddStorageDialog(props: {
 											>
 												<div className="flex-1 min-w-0">
 													<div className="text-xs font-medium text-ink">
-														{job.label}
+														{t(job.label)}
 													</div>
 													<div className="text-[11px] text-ink-faint mt-1 leading-tight">
-														{job.description}
+														{t(job.description)}
 													</div>
 												</div>
 											</button>
@@ -1164,21 +1164,21 @@ function AddStorageDialog(props: {
 				dialog={dialog}
 				form={cloudForm}
 				onSubmit={onSubmitCloud}
-				title={`Add ${provider.name}`}
-				icon={<img src={provider.icon} className="size-5" alt="" />}
-				description="Configure your cloud storage connection"
-				ctaLabel="Add Storage"
+				title={t("addStorage.addProvider", {name: provider.name})}
+				icon={<ThemedIcon src={provider.icon} className="size-5" alt="" />}
+				description={t("addStorage.configureCloudConnection")}
+				ctaLabel={t("addStorage.title")}
 				loading={addCloudVolume.isPending}
 				showBackButton={true}
 				onBack={handleBack}
 			>
 				<div className="space-y-4 h-full overflow-y-auto pr-1">
 					<div className="space-y-2">
-						<Label>Display Name</Label>
+						<Label>{t("addLocation.displayName")}</Label>
 						<Input
 							{...cloudForm.register("display_name")}
 							size="md"
-							placeholder={`My ${provider.name}`}
+							placeholder={t("addStorage.myProvider", {name: provider.name})}
 							className="bg-app-input"
 						/>
 					</div>
@@ -1186,7 +1186,7 @@ function AddStorageDialog(props: {
 					{isS3Type && (
 						<>
 							<div className="space-y-2">
-								<Label>Bucket</Label>
+								<Label>{t("addStorage.bucket")}</Label>
 								<Input
 									{...cloudForm.register("bucket")}
 									size="md"
@@ -1195,7 +1195,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Region</Label>
+								<Label>{t("addStorage.region")}</Label>
 								<Input
 									{...cloudForm.register("region")}
 									size="md"
@@ -1204,7 +1204,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Access Key ID</Label>
+								<Label>{t("addStorage.accessKeyId")}</Label>
 								<Input
 									{...cloudForm.register("access_key_id")}
 									size="md"
@@ -1213,7 +1213,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Secret Access Key</Label>
+								<Label>{t("addStorage.secretAccessKey")}</Label>
 								<Input
 									{...cloudForm.register("secret_access_key")}
 									type="password"
@@ -1228,11 +1228,11 @@ function AddStorageDialog(props: {
 								provider.id === "spaces") && (
 								<div className="space-y-2">
 									<Label>
-										Endpoint
-										{provider.id === "r2" &&
-											" (e.g., https://account.r2.cloudflarestorage.com)"}
+						{t('addStorage.endpoint')}
+						{provider.id === "r2" &&
+											t('addStorage.endpointExampleR2')}
 										{provider.id === "minio" &&
-											" (e.g., http://localhost:9000)"}
+											t('addStorage.endpointExampleMinio')}
 									</Label>
 									<Input
 										{...cloudForm.register("endpoint")}
@@ -1254,7 +1254,7 @@ function AddStorageDialog(props: {
 					{isOAuthType && (
 						<>
 							<div className="space-y-2">
-								<Label>Client ID</Label>
+								<Label>{t("addStorage.clientId")}</Label>
 								<Input
 									{...cloudForm.register("client_id")}
 									size="md"
@@ -1262,7 +1262,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Client Secret</Label>
+								<Label>{t("addStorage.clientSecret")}</Label>
 								<Input
 									{...cloudForm.register("client_secret")}
 									type="password"
@@ -1271,7 +1271,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Access Token</Label>
+								<Label>{t("addStorage.accessToken")}</Label>
 								<Input
 									{...cloudForm.register("access_token")}
 									size="md"
@@ -1279,7 +1279,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Refresh Token</Label>
+								<Label>{t("addStorage.refreshToken")}</Label>
 								<Input
 									{...cloudForm.register("refresh_token")}
 									size="md"
@@ -1287,7 +1287,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Root Path (Optional)</Label>
+								<Label>{t("addStorage.rootPathOptional")}</Label>
 								<Input
 									{...cloudForm.register("root")}
 									size="md"
@@ -1301,7 +1301,7 @@ function AddStorageDialog(props: {
 					{isAzureType && (
 						<>
 							<div className="space-y-2">
-								<Label>Container</Label>
+								<Label>{t("addStorage.container")}</Label>
 								<Input
 									{...cloudForm.register("container")}
 									size="md"
@@ -1310,7 +1310,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Account Name</Label>
+								<Label>{t("addStorage.accountName")}</Label>
 								<Input
 									{...cloudForm.register("account_name")}
 									size="md"
@@ -1318,7 +1318,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Account Key</Label>
+								<Label>{t("addStorage.accountKey")}</Label>
 								<Input
 									{...cloudForm.register("account_key")}
 									type="password"
@@ -1327,7 +1327,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Endpoint (Optional)</Label>
+								<Label>{t("addStorage.endpointOptional")}</Label>
 								<Input
 									{...cloudForm.register("endpoint")}
 									size="md"
@@ -1341,7 +1341,7 @@ function AddStorageDialog(props: {
 					{isGCSType && (
 						<>
 							<div className="space-y-2">
-								<Label>Bucket</Label>
+								<Label>{t("addStorage.bucket")}</Label>
 								<Input
 									{...cloudForm.register("bucket")}
 									size="md"
@@ -1350,7 +1350,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Service Account Credential (JSON)</Label>
+								<Label>{t("addStorage.serviceAccountCredential")}</Label>
 								<textarea
 									{...cloudForm.register("credential")}
 									rows={6}
@@ -1359,7 +1359,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Root Path (Optional)</Label>
+								<Label>{t("addStorage.rootPathOptional")}</Label>
 								<Input
 									{...cloudForm.register("root")}
 									size="md"
@@ -1368,7 +1368,7 @@ function AddStorageDialog(props: {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Endpoint (Optional)</Label>
+								<Label>{t("addStorage.endpointOptional")}</Label>
 								<Input
 									{...cloudForm.register("endpoint")}
 									size="md"

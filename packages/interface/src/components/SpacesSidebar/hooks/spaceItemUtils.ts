@@ -16,6 +16,7 @@ import type {
 	WingPath,
 } from "@wingdrive/ts-client";
 import type { Icon } from "@phosphor-icons/react";
+import { i18n } from "../../../i18n";
 
 // Icon data returned from metadata resolution
 export type IconData =
@@ -105,15 +106,15 @@ function getItemIcon(itemType: ItemType): IconData {
 
 // Get label for an item type
 function getItemLabel(itemType: ItemType, resolvedFile?: File | null): string {
-	if (isOverviewItem(itemType)) return "Overview";
-	if (isRecentsItem(itemType)) return "Recents";
-	if (isFavoritesItem(itemType)) return "Favorites";
-	if (isFileKindsItem(itemType)) return "File Kinds";
-	if (isSourcesItem(itemType)) return "Sources";
-	if (isRedundancyItem(itemType)) return "Redundancy";
-	if (isLocationItem(itemType)) return resolvedFile?.name || "Unnamed Location";
-	if (isVolumeItem(itemType)) return resolvedFile?.name || (itemType as { Volume: { volume_id: string; name?: string } }).Volume.name || "Unnamed Volume";
-	if (isTagItem(itemType)) return resolvedFile?.name || "Unnamed Tag";
+if (isOverviewItem(itemType)) return i18n.t("navigation:items.overview");
+if (isRecentsItem(itemType)) return i18n.t("navigation:items.recents");
+if (isFavoritesItem(itemType)) return i18n.t("navigation:items.favorites");
+if (isFileKindsItem(itemType)) return i18n.t("navigation:items.fileKinds");
+if (isSourcesItem(itemType)) return i18n.t("navigation:items.sources");
+if (isRedundancyItem(itemType)) return i18n.t("navigation:items.redundancy");
+if (isLocationItem(itemType)) return resolvedFile?.name || i18n.t("navigation:items.unnamedLocation");
+if (isVolumeItem(itemType)) return resolvedFile?.name || (itemType as { Volume: { volume_id: string; name?: string } }).Volume.name || i18n.t("navigation:items.unnamedVolume");
+if (isTagItem(itemType)) return resolvedFile?.name || i18n.t("navigation:items.unnamedTag");
 	if (isPathItem(itemType)) {
 		// Use resolved file name if available, otherwise extract from path
 		if (resolvedFile?.name) return resolvedFile.name;
@@ -122,12 +123,12 @@ function getItemLabel(itemType: ItemType, resolvedFile?: File | null): string {
 			const parts = (
 				sdPath as { Physical: { path: string } }
 			).Physical.path.split("/");
-			return parts[parts.length - 1] || "Path";
+			return parts[parts.length - 1] || i18n.t("navigation:items.path");
 		}
-		return "Path";
+		return i18n.t("navigation:items.path");
 	}
-	if (isSourceItem(itemType)) return "Source";
-	return "Unknown";
+	if (isSourceItem(itemType)) return i18n.t("navigation:items.source");
+	return i18n.t("navigation:items.unknown");
 }
 
 // Build navigation path for an item
@@ -198,7 +199,7 @@ export function resolveItemMetadata(
 	// Handle raw location object (legacy format)
 	if (isRawLocation(item)) {
 		const rawItem = item as { name?: string; wing_path?: WingPath };
-		const label = customLabel || rawItem.name || "Unnamed Location";
+	const label = customLabel || rawItem.name || i18n.t("navigation:items.unnamedLocation");
 		const path = rawItem.wing_path
 			? `/explorer?path=${encodeURIComponent(JSON.stringify(rawItem.wing_path))}`
 			: null;

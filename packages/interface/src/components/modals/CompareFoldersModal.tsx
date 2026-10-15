@@ -13,6 +13,7 @@ import { useCoreQuery, useLibraryMutation } from "../../contexts/WingDriveContex
 import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
 import { useWaitForJob } from "../../hooks/useWaitForJob";
 import { formatBytes } from "../../routes/explorer/utils";
+import { useTranslation } from "../../i18n";
 
 interface CompareFoldersDialogProps {
 	id: number;
@@ -57,6 +58,7 @@ function join(root: string, relative: string): string {
 }
 
 function CompareFoldersDialog(props: CompareFoldersDialogProps) {
+	const { t } = useTranslation("dialogs");
 	const dialog = useDialog(props);
 	const form = useForm();
 	const copy = useLibraryMutation("files.copy");
@@ -135,11 +137,11 @@ function CompareFoldersDialog(props: CompareFoldersDialogProps) {
 				);
 				if (result.status !== "completed") failed += sources.length;
 			}
-			if (failed > 0) toast.error(`${failed} items could not be merged`);
-			else toast.success(`Merged ${planned.length} items`);
+			if (failed > 0) toast.error(t("compareFolders.mergeFailed", { count: failed }));
+			else toast.success(t("compareFolders.merged", { count: planned.length }));
 			dialogManager.setState(props.id, { open: false });
 		} catch (err) {
-			toast.error(`Merge stopped: ${err}`);
+			toast.error(t("compareFolders.mergeStopped", { error: err }));
 		} finally {
 			setBusy(false);
 			refetchListings();
@@ -148,23 +150,23 @@ function CompareFoldersDialog(props: CompareFoldersDialogProps) {
 
 	const name = (path: string) => path.split("/").filter(Boolean).pop() ?? path;
 	const label = (entry: CompareEntry): string => {
-		if (entry.status === "OnlyLeft") return `Only in ${name(props.left)}`;
-		if (entry.status === "OnlyRight") return `Only in ${name(props.right)}`;
+		if (entry.status === "OnlyLeft") return t("compareFolders.onlyIn", { name: name(props.left) });
+		if (entry.status === "OnlyRight") return t("compareFolders.onlyIn", { name: name(props.right) });
 		const direction = mergeDirection(entry);
-		if (!direction) return "File vs folder";
-		return `Newer in ${name(direction === "toRight" ? props.left : props.right)}`;
+		if (!direction) return t("compareFolders.fileVsFolder");
+		return t("compareFolders.newerIn", { name: name(direction === "toRight" ? props.left : props.right) });
 	};
 
 	return (
 		<Dialog
 			dialog={dialog}
 			form={form}
-			title="Compare folders"
+			title={t("compareFolders.title")}
 			icon={<GitDiff size={20} weight="fill" className="text-accent" />}
-			ctaLabel={planned.length > 0 ? `Merge ${planned.length}` : "Merge"}
+			ctaLabel={planned.length > 0 ? t("compareFolders.mergeCount", { count: planned.length }) : t("compareFolders.merge")}
 			submitDisabled={planned.length === 0 || busy}
 			loading={busy}
-			closeLabel="Close"
+			closeLabel={t("common.close")}
 			onSubmit={form.handleSubmit(apply)}
 			formClassName="!min-w-[640px] !max-w-[640px]"
 		>
@@ -178,11 +180,11 @@ function CompareFoldersDialog(props: CompareFoldersDialogProps) {
 				) : isLoading || !data ? (
 					<div className="text-ink-dull flex items-center gap-2 py-6 text-sm">
 						<CircleNotch className="animate-spin" size={16} />
-						Comparing…
+						{t("compareFolders.comparing")}
 					</div>
 				) : entries.length === 0 ? (
 					<p className="text-ink-dull py-6 text-sm">
-						The folders match ({data.identical} identical files).
+						{t("compareFolders.identicalFiles", { count: data.identical })}
 					</p>
 				) : (
 					<>

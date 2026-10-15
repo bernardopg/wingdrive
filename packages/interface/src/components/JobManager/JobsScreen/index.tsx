@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useJobsContext } from "../hooks/JobsContext";
 import { JobRow } from "./JobRow";
+import { useTranslation } from "../../../i18n";
 
 export function JobsScreen() {
+	const { t } = useTranslation("dialogs");
 	const navigate = useNavigate();
 	const { jobs, pause, resume, cancel } = useJobsContext();
 	const [showOnlyRunning, setShowOnlyRunning] = useState(false);
@@ -35,7 +37,7 @@ export function JobsScreen() {
 			<div className="sticky top-0 z-10 backdrop-blur-xl bg-app/80 border-b border-app-line">
 				<div className="flex items-center justify-between px-6 py-4">
 					<div className="flex items-center gap-4">
-						<h1 className="text-2xl font-bold text-ink">Jobs</h1>
+						<h1 className="text-2xl font-bold text-ink">{t("jobs.jobs")}</h1>
 						<div className="flex items-center gap-2 text-sm text-ink-dull">
 							<span>{jobs.length} total</span>
 							{runningJobs.length > 0 && (
@@ -55,8 +57,8 @@ export function JobsScreen() {
 							onClick={() => setShowOnlyRunning(!showOnlyRunning)}
 							title={
 								showOnlyRunning
-									? "Show all jobs"
-									: "Show only active jobs"
+									? t("jobs.showAll")
+									: t("jobs.showActive")
 							}
 						/>
 
@@ -64,7 +66,7 @@ export function JobsScreen() {
 						<CircleButton
 							icon={X}
 							onClick={() => navigate(-1)}
-							title="Go back"
+							title={t("common.goBack")}
 						/>
 					</div>
 				</div>
@@ -73,13 +75,13 @@ export function JobsScreen() {
 				<div className="flex items-center gap-4 px-4 py-2 text-xs font-medium text-ink-dull uppercase tracking-wide bg-app-box/30 border-t border-app-line/30">
 					<div className="flex-shrink-0 w-10" /> {/* Icon spacer */}
 					<div className="flex-1 min-w-0 flex items-center gap-6">
-						<div className="flex-1">Name</div>
-						<div className="flex-shrink-0 w-32">Duration</div>
+						<div className="flex-1">{t("jobs.name")}</div>
+						<div className="flex-shrink-0 w-32">{t("jobs.duration")}</div>
 						<div className="flex-shrink-0 w-24 text-right">
-							Time
+							{t("ui.time")}
 						</div>
 						<div className="flex-shrink-0 w-20 text-right">
-							Status
+							{t("ui.status")}
 						</div>
 					</div>
 					<div className="flex-shrink-0 w-6" />{" "}
@@ -93,7 +95,7 @@ export function JobsScreen() {
 					<div className="flex items-center justify-center h-full">
 						<div className="text-center">
 							<p className="text-sm text-ink-dull">
-								No jobs found
+								{t("ui.noJobsFound")}
 							</p>
 						</div>
 					</div>
@@ -102,7 +104,7 @@ export function JobsScreen() {
 						{/* Running Jobs */}
 						{runningJobs.length > 0 && (
 							<JobSection
-								title="Running"
+								title={t("jobs.running")}
 								count={runningJobs.length}
 							>
 								{runningJobs.map((job) => (
@@ -120,7 +122,7 @@ export function JobsScreen() {
 						{/* Paused Jobs */}
 						{pausedJobs.length > 0 && (
 							<JobSection
-								title="Paused"
+								title={t("jobs.paused")}
 								count={pausedJobs.length}
 							>
 								{pausedJobs.map((job) => (
@@ -138,7 +140,7 @@ export function JobsScreen() {
 						{/* Queued Jobs */}
 						{queuedJobs.length > 0 && (
 							<JobSection
-								title="Queued"
+								title={t("jobs.queued")}
 								count={queuedJobs.length}
 							>
 								{queuedJobs.map((job) => (
@@ -156,7 +158,7 @@ export function JobsScreen() {
 						{/* Completed Jobs */}
 						{completedJobs.length > 0 && (
 							<JobSection
-								title="Completed"
+								title={t("jobs.completed")}
 								count={completedJobs.length}
 							>
 								{completedJobs.map((job) => (
@@ -174,7 +176,7 @@ export function JobsScreen() {
 						{/* Failed Jobs */}
 						{failedJobs.length > 0 && (
 							<JobSection
-								title="Failed"
+								title={t("jobs.failed")}
 								count={failedJobs.length}
 							>
 								{failedJobs.map((job) => (

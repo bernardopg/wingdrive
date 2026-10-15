@@ -2,6 +2,7 @@ import { Pause, Play, X, CaretDown } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import type { JobRenderer, JobRendererProps } from "./index";
 import { getJobDisplayName, getJobSubtext } from "../types";
+import { useTranslation } from "../../../i18n";
 
 /**
  * Generic job card renderer - used for all jobs without custom renderers
@@ -20,6 +21,7 @@ function GenericCardContent({
 	onAction,
 	onCancel,
 }: JobRendererProps) {
+	const { t } = useTranslation("dialogs");
 	const displayName = getJobDisplayName(job);
 	const subtext = getJobSubtext(job);
 
@@ -54,7 +56,7 @@ function GenericCardContent({
 							<button
 								onClick={onAction}
 								className="flex-shrink-0 flex items-center justify-center w-4 h-4 rounded-full bg-app-hover hover:bg-app-selected transition-colors"
-								title={canPause ? "Pause job" : "Resume job"}
+								title={canPause ? t("jobs.pause") : t("jobs.resume")}
 							>
 								{canPause ? (
 									<Pause size={10} weight="fill" className="text-ink" />
@@ -67,7 +69,7 @@ function GenericCardContent({
 							<button
 								onClick={onCancel}
 								className="flex-shrink-0 flex items-center justify-center w-4 h-4 rounded-full bg-app-hover hover:bg-red-500 transition-colors"
-								title="Cancel job"
+								title={t("jobs.cancel")}
 							>
 								<X size={10} weight="bold" className="text-ink hover:text-white" />
 							</button>

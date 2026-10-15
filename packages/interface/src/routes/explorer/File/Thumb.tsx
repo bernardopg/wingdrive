@@ -7,6 +7,8 @@ import type { File } from "@wingdrive/ts-client";
 import { ThumbstripScrubber } from "./ThumbstripScrubber";
 import { getFileKindForIcon, getVirtualMetadata, getContentKind } from "@wingdrive/ts-client";
 import { useServer } from "../../../contexts/ServerContext";
+import { useIsDarkTheme } from "../../../hooks/useTheme";
+import { toLightIcon } from "@wingdrive/assets/util";
 
 interface ThumbProps {
   file: File;
@@ -29,6 +31,7 @@ export const Thumb = memo(function Thumb({
   iconScale = 1,
   squareMode = false,
 }: ThumbProps) {
+  const isDark = useIsDarkTheme();
   const cacheKey = `${file.id}-${size}`;
   const { buildSidecarUrl, buildThumbUrl } = useServer();
 
@@ -131,16 +134,16 @@ export const Thumb = memo(function Thumb({
 
   // Use icon override from virtual files (devices, volumes), otherwise use default icon logic
   const icon =
-    iconOverride ||
+    (iconOverride && (isDark ? iconOverride : toLightIcon(iconOverride))) ||
     getIcon(
       kindCapitalized,
-      true, // Dark theme
+      isDark,
       file.extension,
       file.kind === "Directory",
     );
 
   // Check if using generic Document icon (not a WingDrive variant like Document_pdf)
-  const genericDocumentIcon = getIcon("Document", true, null, false);
+  const genericDocumentIcon = getIcon("Document", isDark, null, false);
   const isUsingGenericIcon = icon === genericDocumentIcon;
 
   // Get bearded icon for extension overlay
@@ -248,6 +251,7 @@ export function Icon({
   size?: number;
   className?: string;
 }) {
+  const isDark = useIsDarkTheme();
   // Check for virtual file icon override
   const virtualMetadata = getVirtualMetadata(file);
   const iconOverride = virtualMetadata?.iconUrl;
@@ -257,10 +261,10 @@ export function Icon({
 
   // Use icon override from virtual files (devices, volumes), otherwise use default icon logic
   const icon =
-    iconOverride ||
+    (iconOverride && (isDark ? iconOverride : toLightIcon(iconOverride))) ||
     getIcon(
       kindCapitalized,
-      true, // Dark theme
+      isDark,
       file.extension,
       file.kind === "Directory",
     );

@@ -1,3 +1,5 @@
+import {useTranslation} from '../../i18n';
+
 const COLOR_GROUPS = [
 	{
 		title: 'Accent',
@@ -88,17 +90,18 @@ function ColorSwatch({name, className}: {name: string; className: string}) {
 }
 
 export function ScheduleRoute() {
+	const {t} = useTranslation('common');
 	return (
 		<div className="border-app-line bg-app-box/90 mx-auto max-h-[calc(100vh-9rem)] w-full max-w-6xl overflow-y-auto rounded-[28px] border p-6 text-left shadow-[0_30px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl">
-			<h1 className="text-ink text-3xl font-semibold">Schedule</h1>
+			<h1 className="text-ink text-3xl font-semibold">{t('wingbot.schedule.title')}</h1>
 			<p className="text-ink-dull mt-2 text-sm">
-				Schedule management UI coming soon. For now this page shows the full token palette in-context.
+				{t('wingbot.schedule.description')}
 			</p>
 
 			<div className="mt-8 space-y-8">
 				{COLOR_GROUPS.map((group) => (
 					<section key={group.title} className="space-y-3">
-						<h2 className="text-ink text-sm font-medium">{group.title}</h2>
+						<h2 className="text-ink text-sm font-medium">{t(`wingbot.schedule.groups.${group.title.toLowerCase()}`)}</h2>
 						<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7">
 							{group.swatches.map((swatch) => (
 								<ColorSwatch key={swatch.name} name={swatch.name} className={swatch.className} />

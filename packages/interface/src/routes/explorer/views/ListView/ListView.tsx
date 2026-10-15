@@ -12,6 +12,7 @@ import {useTabScroll} from '../../hooks/useTabScroll';
 import {useSelection} from '../../SelectionContext';
 import {DragSelect} from './DragSelect';
 import {TableRow} from './TableRow';
+import {useTranslation} from '../../../../i18n';
 import {
 	ROW_HEIGHT,
 	TABLE_HEADER_HEIGHT,
@@ -21,6 +22,7 @@ import {
 } from './useTable';
 
 export const ListView = memo(function ListView() {
+	const {t} = useTranslation('explorer');
 	const {setCurrentFiles, scrollPosition} = useExplorer();
 	const {
 		focusedIndex,
@@ -203,11 +205,9 @@ export const ListView = memo(function ListView() {
 											onClick={header.column.getToggleSortingHandler()}
 										>
 											<span className="truncate">
-												{flexRender(
-													header.column.columnDef
-														.header,
-													header.getContext()
-												)}
+								{typeof header.column.columnDef.header === 'string'
+									? t(header.column.columnDef.header)
+									: flexRender(header.column.columnDef.header, header.getContext())}
 											</span>
 
 											{isSorted &&

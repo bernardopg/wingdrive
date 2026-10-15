@@ -5,6 +5,7 @@ import {JobsProvider} from '../components/JobManager/hooks/JobsContext';
 import {DaemonDisconnectedOverlay} from '../components/overlays/DaemonDisconnectedOverlay';
 import {DaemonStartupOverlay} from '../components/overlays/DaemonStartupOverlay';
 import {usePlatform} from '../contexts/PlatformContext';
+import {WebContextMenuProvider} from '../contexts/WebContextMenuContext';
 import {ServerProvider} from '../contexts/ServerContext';
 import {
 	WingDriveProvider,
@@ -55,13 +56,15 @@ export function AuxiliaryWindow({
 				<TooltipProvider>
 					<WindowEffects />
 					<ErrorBoundary>
-						{platform.platform === 'tauri' ? (
-							<DaemonGate>
+						<WebContextMenuProvider>
+							{platform.platform === 'tauri' ? (
+								<DaemonGate>
+									<JobsProvider>{children}</JobsProvider>
+								</DaemonGate>
+							) : (
 								<JobsProvider>{children}</JobsProvider>
-							</DaemonGate>
-						) : (
-							<JobsProvider>{children}</JobsProvider>
-						)}
+							)}
+						</WebContextMenuProvider>
 					</ErrorBoundary>
 					<Dialogs />
 					<Toaster />

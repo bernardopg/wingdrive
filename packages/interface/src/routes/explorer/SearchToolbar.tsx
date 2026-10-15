@@ -6,8 +6,10 @@ import { useExplorer } from "./context";
 import type { SearchScope } from "./context";
 import { SEARCH_CONTENT_KINDS } from "./hooks/searchQuery";
 import { useExplorerFiles } from "./hooks/useExplorerFiles";
+import { useTranslation } from "../../i18n";
 
 export function SearchToolbar() {
+	const { t } = useTranslation("explorer");
 	const explorer = useExplorer();
 	const { searchScopeFallback } = useExplorerFiles();
 	const [filtersOpen, setFiltersOpen] = useState(false);
@@ -37,26 +39,26 @@ export function SearchToolbar() {
 			<div className="flex items-center gap-3 px-4 py-2">
 				<div className="flex items-center gap-2">
 					<span className="text-xs font-medium text-sidebar-ink-dull">
-						Search in:
+						{t("search.searchIn")}
 					</span>
 					<div className="flex items-center gap-1 rounded-lg bg-sidebar-box/30 p-0.5">
 						<ScopeButton
 							active={scope === "folder"}
 							onClick={() => handleScopeChange("folder")}
 						>
-							This Folder
+							{t("search.thisFolder")}
 						</ScopeButton>
 						<ScopeButton
 							active={scope === "location"}
 							onClick={() => handleScopeChange("location")}
 						>
-							Location
+							{t("search.location")}
 						</ScopeButton>
 						<ScopeButton
 							active={scope === "library"}
 							onClick={() => handleScopeChange("library")}
 						>
-							Library
+							{t("search.library")}
 						</ScopeButton>
 					</div>
 				</div>
@@ -75,13 +77,12 @@ export function SearchToolbar() {
 					)}
 				>
 					<FunnelSimple className="size-3.5" weight="bold" />
-					{activeKinds.length > 0 ? `Filters (${activeKinds.length})` : "Filters"}
+					{activeKinds.length > 0 ? t("search.filtersCount", { count: activeKinds.length }) : t("search.filters")}
 				</button>
 
 				{searchScopeFallback && (
 					<span className="text-xs text-sidebar-ink-dull" role="status">
-						No {scope === "location" ? "location" : "folder"} here; searching the
-						whole library.
+						{t(scope === "location" ? "search.fallbackLocation" : "search.fallbackFolder")}
 					</span>
 				)}
 
@@ -97,7 +98,7 @@ export function SearchToolbar() {
 					)}
 				>
 					<X className="size-3.5" weight="bold" />
-					Clear Search
+					{t("search.clear")}
 				</button>
 			</div>
 
@@ -105,7 +106,7 @@ export function SearchToolbar() {
 				<div
 					className="flex flex-wrap items-center gap-1.5 px-4 pb-2"
 					role="group"
-					aria-label="Filter by kind"
+					aria-label={t("search.filterByKind")}
 				>
 					{SEARCH_CONTENT_KINDS.map(({ kind, label }) => (
 						<ScopeButton
@@ -113,7 +114,7 @@ export function SearchToolbar() {
 							active={activeKinds.includes(kind)}
 							onClick={() => toggleKind(kind)}
 						>
-							{label}
+							{t(label)}
 						</ScopeButton>
 					))}
 					{activeKinds.length > 0 && (
@@ -124,7 +125,7 @@ export function SearchToolbar() {
 							}
 							className="px-2 py-1 text-xs text-sidebar-ink-dull hover:text-sidebar-ink"
 						>
-							Clear filters
+							{t("ui.clearFilters")}
 						</button>
 					)}
 				</div>

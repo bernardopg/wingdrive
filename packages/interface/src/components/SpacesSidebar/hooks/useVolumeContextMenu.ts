@@ -12,6 +12,7 @@ import {
 	type ContextMenuResult
 } from '../../../hooks/useContextMenu';
 import { useLibraryMutation } from '../../../contexts/WingDriveContext';
+import {useTranslation} from '../../../i18n';
 
 interface UseVolumeContextMenuOptions {
 	volume: Volume;
@@ -30,6 +31,7 @@ interface UseVolumeContextMenuOptions {
 export function useVolumeContextMenu({
 	volume
 }: UseVolumeContextMenuOptions): ContextMenuResult {
+const {t} = useTranslation('navigation');
 	const trackVolume = useLibraryMutation('volumes.track');
 	const untrackVolume = useLibraryMutation('volumes.untrack');
 	const speedTestVolume = useLibraryMutation('volumes.speed_test');
@@ -41,7 +43,7 @@ export function useVolumeContextMenu({
 	const items: ContextMenuItem[] = [
 		{
 			icon: Eye,
-			label: 'Track Volume',
+			label: t('contextMenu.trackVolume'),
 			onClick: async () => {
 				try {
 					await trackVolume.mutateAsync({
@@ -56,7 +58,7 @@ export function useVolumeContextMenu({
 		},
 		{
 			icon: EyeSlash,
-			label: 'Untrack Volume',
+			label: t('contextMenu.untrackVolume'),
 			onClick: async () => {
 				try {
 					await untrackVolume.mutateAsync({
@@ -72,7 +74,7 @@ export function useVolumeContextMenu({
 		{ type: 'separator' },
 		{
 			icon: Database,
-			label: 'Index Volume',
+			label: t('contextMenu.indexVolume'),
 			onClick: async () => {
 				try {
 					const result = await indexVolume.mutateAsync({
@@ -88,7 +90,7 @@ export function useVolumeContextMenu({
 		},
 		{
 			icon: Gauge,
-			label: 'Speed Test',
+			label: t('contextMenu.speedTest'),
 			onClick: async () => {
 				try {
 					const result = await speedTestVolume.mutateAsync({
@@ -109,7 +111,7 @@ export function useVolumeContextMenu({
 		},
 		{
 			icon: EjectSimple,
-			label: 'Eject',
+			label: t('contextMenu.eject'),
 			onClick: async () => {
 				try {
 					const result = await ejectVolume.mutateAsync({

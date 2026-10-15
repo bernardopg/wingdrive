@@ -13,6 +13,18 @@
 		"./css/themes/slate": "./src/css/themes/slate.css",
 		"./css/themes/nord": "./src/css/themes/nord.css",
 		"./css/themes/mocha": "./src/css/themes/mocha.css",
+		"./css/themes/t3-code": "./src/css/themes/t3-code.css",
+		"./css/themes/t3-chat": "./src/css/themes/t3-chat.css",
+		"./css/themes/grove": "./src/css/themes/grove.css",
+		"./css/themes/ocean": "./src/css/themes/ocean.css",
+		"./css/themes/ember": "./src/css/themes/ember.css",
+		"./css/themes/iris": "./src/css/themes/iris.css",
+		"./css/themes/catppuccin": "./src/css/themes/catppuccin.css",
+		"./css/themes/gruvbox": "./src/css/themes/gruvbox.css",
+		"./css/themes/solarized": "./src/css/themes/solarized.css",
+		"./css/themes/rose-pine": "./src/css/themes/rose-pine.css",
+		"./css/themes/dracula": "./src/css/themes/dracula.css",
+		"./css/themes/tokyo-night": "./src/css/themes/tokyo-night.css",
 		"./raw-colors": {
 			"import": "./raw-colors.cjs",
 			"require": "./raw-colors.cjs"

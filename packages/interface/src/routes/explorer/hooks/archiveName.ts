@@ -1,4 +1,5 @@
 import type {ArchiveFormat} from '@wingdrive/ts-client';
+import {i18n} from '../../../i18n';
 
 /** Suffixes WingDrive extracts, longest first so `.tar.gz` wins over `.gz`. */
 const ARCHIVE_SUFFIXES = [
@@ -23,16 +24,16 @@ export function isArchiveName(name: string): boolean {
 }
 
 export const COMPRESS_FORMATS: {format: ArchiveFormat; label: string}[] = [
-	{format: 'zip', label: 'ZIP (.zip)'},
-	{format: 'tar_gz', label: 'Gzip tarball (.tar.gz)'},
-	{format: 'tar_xz', label: 'XZ tarball (.tar.xz)'},
-	{format: 'tar_zst', label: 'Zstandard tarball (.tar.zst)'},
-	{format: 'tar_bz2', label: 'Bzip2 tarball (.tar.bz2)'}
+	{format: 'zip', label: 'archive.zip'},
+	{format: 'tar_gz', label: 'archive.tarGz'},
+	{format: 'tar_xz', label: 'archive.tarXz'},
+	{format: 'tar_zst', label: 'archive.tarZst'},
+	{format: 'tar_bz2', label: 'archive.tarBz2'}
 ];
 
 /** Archive name for a selection: the item's own name, or "Archive" for several. */
 export function archiveBaseName(names: string[]): string {
-	if (names.length !== 1) return 'Archive';
+	if (names.length !== 1) return i18n.t('explorer:archive.baseName');
 	const name = names[0];
 	const dot = name.lastIndexOf('.');
 	return dot > 0 ? name.slice(0, dot) : name;

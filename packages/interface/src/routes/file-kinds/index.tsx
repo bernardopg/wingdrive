@@ -1,9 +1,11 @@
 import {getIcon} from '@wingdrive/assets/util';
+import {useIsDarkTheme} from '../../hooks/useTheme';
 import type {ContentKind, SearchFilters} from '@wingdrive/ts-client';
 import {useEffect, useMemo} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {useNormalizedQuery} from '../../contexts/WingDriveContext';
 import {ExplorerView, useExplorer} from '../explorer';
+import {useTranslation} from '../../i18n';
 
 interface ContentKindStat {
 	kind: ContentKind;
@@ -64,6 +66,8 @@ function formatFileCount(count: number): string {
  * Shows content kinds (images, videos, audio, etc.) with file counts
  */
 export function FileKindsView() {
+	const {t} = useTranslation('navigation');
+	const isDark = useIsDarkTheme();
 	const navigate = useNavigate();
 	// Fetch content kind statistics
 	const {data: statsData, isLoading} = useNormalizedQuery<
@@ -83,7 +87,7 @@ export function FileKindsView() {
 	if (isLoading) {
 		return (
 			<div className="flex h-full items-center justify-center">
-				<span className="text-ink-dull">Loading file kinds...</span>
+				<span className="text-ink-dull">{t('fileKinds.loading')}</span>
 			</div>
 		);
 	}
@@ -95,17 +99,17 @@ export function FileKindsView() {
 				<div className="flex items-center justify-between">
 					<div>
 						<h1 className="text-ink text-2xl font-bold">
-							File Kinds
+							{t('items.fileKinds')}
 						</h1>
 						<p className="text-ink-dull mt-1 text-sm">
-							File distribution by content type
+							{t('fileKinds.description')}
 						</p>
 					</div>
 					<div className="text-right">
 						<div className="text-ink text-2xl font-bold">
 							{formatFileCount(totalFiles)}
 						</div>
-						<div className="text-ink-dull text-xs">Total Files</div>
+						<div className="text-ink-dull text-xs">{t('fileKinds.totalFiles')}</div>
 					</div>
 				</div>
 			</div>
@@ -115,13 +119,10 @@ export function FileKindsView() {
 				{totalFiles === 0 ? (
 					<div className="flex h-full flex-col items-center justify-center text-center px-6">
 						<p className="text-ink text-sm font-medium">
-							No indexed files yet
+							{t('fileKinds.emptyTitle')}
 						</p>
 						<p className="text-ink-dull mt-1 max-w-sm text-xs">
-							File Kinds is built from your library's indexed
-							locations. Add a folder as a Location from
-							Sources and enable indexing to see files
-							grouped by type here.
+							{t('fileKinds.emptyDescription')}
 						</p>
 					</div>
 				) : (
@@ -139,7 +140,7 @@ export function FileKindsView() {
 							CONTENT_KIND_CONFIG.unknown;
 						const icon = getIcon(
 							config.iconName,
-							true,
+							isDark,
 							null,
 							false
 						);
@@ -157,20 +158,18 @@ export function FileKindsView() {
 							>
 								<img
 									src={icon}
-									alt={stat.name}
+									alt={t(`fileKinds.types.${stat.name}`, {defaultValue: stat.name})}
 									className="mb-3 h-16 w-16"
 								/>
 								<div className="w-full text-center">
-									<div className="text-ink mb-1 text-sm font-medium capitalize">
-										{stat.name}
+										<div className="text-ink mb-1 text-sm font-medium capitalize">
+											{t(`fileKinds.types.${stat.name}`, {defaultValue: stat.name})}
 									</div>
 									<div className="text-ink-dull text-xs">
 										{formatFileCount(
 											Number(stat.file_count)
 										)}{' '}
-										{Number(stat.file_count) === 1
-											? 'file'
-											: 'files'}
+											{t('fileKinds.fileCount', {count: fileCount})}
 									</div>
 								</div>
 							</button>
@@ -201,6 +200,7 @@ const EMPTY_FILTERS: SearchFilters = {
 };
 
 export function FileKindFiles() {
+	const {t} = useTranslation('navigation');
 	const {kindName} = useParams();
 	const {enterFilteredMode, exitFilteredMode} = useExplorer();
 	const {data, isLoading} = useNormalizedQuery<
@@ -221,14 +221,14 @@ export function FileKindFiles() {
 
 	useEffect(() => {
 		if (!filters || !stat) return;
-		enterFilteredMode(filters, `${stat.name} files`);
+		enterFilteredMode(filters, t('fileKinds.kindFiles', {kind: t(`fileKinds.types.${stat.name}`, {defaultValue: stat.name})}));
 		return exitFilteredMode;
-	}, [enterFilteredMode, exitFilteredMode, filters, stat]);
+	}, [enterFilteredMode, exitFilteredMode, filters, stat, t]);
 
 	if (isLoading) {
 		return (
 			<div className="text-ink-dull flex h-full items-center justify-center">
-				Loading files...
+				{t('fileKinds.loadingFiles')}
 			</div>
 		);
 	}
@@ -236,7 +236,7 @@ export function FileKindFiles() {
 	if (!stat) {
 		return (
 			<div className="text-ink-dull flex h-full items-center justify-center">
-				No indexed files for this content kind.
+				{t('fileKinds.noFilesForKind')}
 			</div>
 		);
 	}

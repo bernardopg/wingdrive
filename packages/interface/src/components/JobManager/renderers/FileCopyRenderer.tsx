@@ -4,6 +4,7 @@ import type { JobRenderer, JobRendererProps, JobDetailsRendererProps } from "./i
 import { CopyJobDetails } from "../components/CopyJobDetails";
 import { useNormalizedQuery } from "../../../contexts/WingDriveContext";
 import type { Device } from "@wingdrive/ts-client";
+import { i18n, useTranslation } from "../../../i18n";
 
 /**
  * Map strategy name to display label (enables i18n in future)
@@ -13,13 +14,13 @@ function getStrategyLabel(strategyName: string | undefined, _isMove: boolean): s
 
 	switch (strategyName) {
 		case "RemoteTransfer":
-			return "Network";
+			return i18n.t("dialogs:jobs.strategyNetwork");
 		case "LocalMove":
-			return "Atomic";
+			return i18n.t("dialogs:jobs.strategyAtomic");
 		case "FastCopy":
-			return "Fast";
+			return i18n.t("dialogs:jobs.strategyFast");
 		case "LocalStream":
-			return "Streaming";
+			return i18n.t("dialogs:jobs.strategyStreaming");
 		default:
 			return strategyName;
 	}
@@ -91,12 +92,12 @@ function formatDurationSeconds(seconds: number): string {
 	const hrs = Math.floor(mins / 60);
 
 	if (hrs > 0) {
-		return `${hrs}h ${mins % 60}m`;
+		return i18n.t("dialogs:jobs.durationHours", { hours: hrs, minutes: mins % 60 });
 	}
 	if (mins > 0) {
-		return `${mins}m`;
+		return i18n.t("dialogs:jobs.durationMinutesOnly", { minutes: mins });
 	}
-	return `${Math.floor(seconds)}s`;
+	return i18n.t("dialogs:jobs.durationSeconds", { seconds: Math.floor(seconds) });
 }
 
 /**
@@ -116,6 +117,7 @@ function FileCopyCardContent({
 	onAction,
 	onCancel,
 }: JobRendererProps) {
+	const { t } = useTranslation("dialogs");
 	const generic = job.generic_progress;
 	const metadata = (generic as any)?.metadata as any;
 	const strategyName = metadata?.strategy?.strategy_name;
@@ -150,8 +152,8 @@ function FileCopyCardContent({
 	const fileCount = generic?.completion?.total || 0;
 	const fileName = extractFirstFileName(job);
 	const baseTitle = fileCount > 1
-		? `${isMove ? "Moving" : "Copying"} ${fileCount} items`
-		: `${isMove ? "Moving" : "Copying"} '${fileName}'`;
+		? t(isMove ? "jobs.movingCount" : "jobs.copyingCount", { count: fileCount })
+		: t(isMove ? "jobs.movingFile" : "jobs.copyingFile", { name: fileName });
 
 	const title = destinationDevice
 		? `${baseTitle} to ${destinationDevice.name}`
@@ -166,16 +168,16 @@ function FileCopyCardContent({
 
 	const subtext =
 		job.status === "running" && speed && eta
-			? `${completed}/${fileCount} files • ${speed} • ${eta} remaining`
+			? t("jobs.copyProgress", { completed, total: fileCount, speed, eta })
 			: job.status === "running"
-			? `${completed}/${fileCount} files`
+			? t("jobs.filesProgress", { completed, total: fileCount })
 			: job.status === "completed"
-			? "Completed"
+			? t("jobs.completed")
 			: job.status === "failed"
-			? "Failed"
+			? t("jobs.failed")
 			: job.status === "paused"
-			? "Paused"
-			: "Preparing...";
+			? t("jobs.paused")
+			: t("jobs.preparing");
 
 	return (
 		<>
@@ -215,7 +217,7 @@ function FileCopyCardContent({
 							<button
 								onClick={onAction}
 								className="flex-shrink-0 flex items-center justify-center w-4 h-4 rounded-full bg-app-hover hover:bg-app-selected transition-colors"
-								title={canPause ? "Pause job" : "Resume job"}
+								title={canPause ? t("jobs.pause") : t("jobs.resume")}
 							>
 								{canPause ? (
 									<Pause size={10} weight="fill" className="text-ink" />
@@ -228,7 +230,7 @@ function FileCopyCardContent({
 							<button
 								onClick={onCancel}
 								className="flex-shrink-0 flex items-center justify-center w-4 h-4 rounded-full bg-app-hover hover:bg-red-500 transition-colors"
-								title="Cancel job"
+								title={t("jobs.cancel")}
 							>
 								<X size={10} weight="bold" className="text-ink hover:text-white" />
 							</button>

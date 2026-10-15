@@ -9,6 +9,8 @@ import {
 } from '../../contexts/WingDriveContext';
 import {useVolumeIndexingStore} from '../../stores/volumeIndexingStore';
 import {formatBytes, getVolumeIcon} from './DevicePanel';
+import {useTranslation} from '../../i18n';
+import { ThemedIcon } from '../../components/ThemedIcon';
 
 function getDiskTypeLabel(diskType: string): string {
 	return diskType === 'SSD' ? 'SSD' : diskType === 'HDD' ? 'HDD' : diskType;
@@ -27,6 +29,7 @@ interface IndexingProgress {
 }
 
 export function VolumeBar({volume, index}: VolumeBarProps) {
+	const {t} = useTranslation('navigation');
 	const [indexingProgress, setIndexingProgress] =
 		useState<IndexingProgress | null>(null);
 	const client = useWingDriveClient();
@@ -180,7 +183,7 @@ export function VolumeBar({volume, index}: VolumeBarProps) {
 			{/* Top row: Info - fixed height */}
 			<div className="flex h-[64px] items-center gap-3 px-3">
 				{/* Icon */}
-				<img
+				<ThemedIcon
 					src={iconSrc}
 					alt={volumeTypeStr ?? undefined}
 					className="size-10 flex-shrink-0 opacity-80"
@@ -270,7 +273,7 @@ export function VolumeBar({volume, index}: VolumeBarProps) {
 						e.stopPropagation();
 						contextMenu.show(e);
 					}}
-					title="Volume actions"
+					title={t('volumes.actions')}
 				/>
 			</div>
 
@@ -288,7 +291,7 @@ export function VolumeBar({volume, index}: VolumeBarProps) {
 								delay: index * 0.05
 							}}
 							className="bg-accent border-accent-deep border-r"
-							title={`Unique: ${formatBytes(uniqueBytes)} (${uniquePercent.toFixed(1)}%)`}
+							title={t('volumes.uniqueTitle', {size: formatBytes(uniqueBytes), percent: uniquePercent.toFixed(1)})}
 						/>
 						<motion.div
 							initial={{width: 0}}
@@ -303,7 +306,7 @@ export function VolumeBar({volume, index}: VolumeBarProps) {
 								backgroundImage:
 									'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.1) 4px, rgba(255,255,255,0.1) 8px)'
 							}}
-							title={`Duplicate: ${formatBytes(duplicateBytes)} (${duplicatePercent.toFixed(1)}%)`}
+							title={t('volumes.duplicateTitle', {size: formatBytes(duplicateBytes), percent: duplicatePercent.toFixed(1)})}
 						/>
 					</div>
 
@@ -316,7 +319,7 @@ export function VolumeBar({volume, index}: VolumeBarProps) {
 							}}
 							transition={{duration: 0.3, ease: 'easeOut'}}
 							className="bg-accent-deep border-accent-deep absolute inset-y-0 left-0 border-r-2"
-							title={`Indexing: ${formatBytes(indexingProgress.bytesIndexed)} / ${formatBytes(totalCapacity)} (${(indexingProgress.percentage * 100).toFixed(1)}%)`}
+							title={t('volumes.indexingTitle', {indexed: formatBytes(indexingProgress.bytesIndexed), total: formatBytes(totalCapacity), percent: (indexingProgress.percentage * 100).toFixed(1)})}
 						>
 							{/* Animated shimmer effect */}
 							<div
@@ -335,7 +338,7 @@ export function VolumeBar({volume, index}: VolumeBarProps) {
 					{indexingProgress && (
 						<div className="absolute inset-0 flex items-center justify-center">
 							<span className="text-ink text-xs font-medium drop-shadow-lg">
-								Indexing:{' '}
+								{t('common.indexing')}:{' '}
 								{(indexingProgress.percentage * 100).toFixed(1)}
 								%
 								<span className="text-ink-dull ml-2">

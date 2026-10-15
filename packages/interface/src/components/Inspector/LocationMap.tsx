@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MapPin, X } from '@phosphor-icons/react';
 import type * as maplibregl from 'maplibre-gl';
+import { useTranslation } from '../../i18n';
 
 interface LocationMapProps {
 	latitude: number;
@@ -264,6 +265,7 @@ function getMapStyle() {
 }
 
 export function LocationMap({ latitude, longitude, className }: LocationMapProps) {
+	const { t } = useTranslation('inspector');
 	const mapContainerRef = useRef<HTMLDivElement>(null);
 	const mapRef = useRef<maplibregl.Map | null>(null);
 	const markerRef = useRef<maplibregl.Marker | null>(null);
@@ -371,7 +373,7 @@ export function LocationMap({ latitude, longitude, className }: LocationMapProps
 				<div ref={mapContainerRef} className="h-full w-full" />
 				<div className="absolute inset-0 flex items-center justify-center bg-app/20 opacity-0 transition-opacity group-hover:opacity-100">
 					<div className="rounded-md bg-app-box/90 px-3 py-2 text-xs font-medium text-ink backdrop-blur-sm">
-						Click to expand
+						{t("ui.clickToExpand")}
 					</div>
 				</div>
 			</div>
@@ -396,7 +398,7 @@ export function LocationMap({ latitude, longitude, className }: LocationMapProps
 					}}
 					className="text-xs font-medium text-accent opacity-60 transition-opacity hover:opacity-100"
 				>
-					Open in Maps
+					{t("ui.openInMaps")}
 				</button>
 			</div>
 		</div>

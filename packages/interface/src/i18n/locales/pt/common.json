@@ -1,0 +1,312 @@
+{
+	"errorBoundary": {
+		"title": "Algo deu errado",
+		"message": "O aplicativo encontrou um erro. Tente reiniciá-lo.",
+		"details": "Detalhes do erro",
+		"reload": "Recarregar aplicativo"
+	},
+	"dnd": {
+		"virtualLocationsCannotMove": "Locais, volumes e dispositivos não podem ser movidos.",
+		"itemTypes": {
+			"overview": "Visão geral",
+			"recents": "Recentes",
+			"favorites": "Favoritos",
+			"fileKinds": "Tipos de arquivo"
+		}
+	},
+	"openWith": {
+		"unsupported": "A abertura de arquivos não é compatível com esta plataforma",
+		"failedFile": "Falha ao abrir o arquivo: {{error}}",
+		"failedFiles": "Falha ao abrir os arquivos: {{error}}",
+		"defaultSet": "{{appName}} agora é o aplicativo padrão para este tipo de arquivo",
+		"defaultFailed": "Falha ao definir o aplicativo padrão: {{error}}",
+		"fileNotFound": "Arquivo não encontrado: {{path}}",
+		"appNotFound": "Aplicativo não encontrado: {{appId}}",
+		"permissionDenied": "Permissão negada: {{path}}",
+		"error": "Erro: {{error}}"
+	},
+	"fileOperation": {
+		"copied": "Copiado",
+		"moved": "Movido",
+		"duplicated": "Duplicado",
+		"deleted": "Excluído",
+		"copy": "cópia",
+		"move": "movimentação",
+		"duplicate": "duplicação",
+		"delete": "exclusão",
+		"items_one": "{{count}} item",
+		"items_other": "{{count}} itens",
+		"couldNot": "Não foi possível concluir a {{operation}}: {{error}}",
+		"deleteCancelled": "Exclusão cancelada. Os itens processados antes do cancelamento já foram removidos.",
+		"cancelled": "Os itens da operação {{operation}} permanecem no local; o restante foi cancelado.",
+		"running": "A {{operation}} continua em execução em segundo plano. Acompanhe em Tarefas.",
+		"completed": "{{operation}} {{items}}",
+		"failedCount_one": "{{count}} falhou",
+		"failedCount_other": "{{count}} falharam",
+		"skippedCount_one": "{{count}} ignorado",
+		"skippedCount_other": "{{count}} ignorados",
+		"someRunning": "alguns ainda estão em execução em Tarefas",
+		"someCancelled": "alguns foram cancelados"
+	},
+	"undo": {
+		"done": "Desfeito: {{label}}",
+		"failed": "Não foi possível desfazer: {{error}}",
+		"labels": {
+			"rename": "renomeação",
+			"batch rename": "renomeação em lote",
+			"move": "movimentação",
+			"remove duplicates": "remoção de duplicatas",
+			"new folder": "nova pasta",
+			"delete": "exclusão"
+		}
+	},
+	"clipboard": {
+		"copyFailed": "Não foi possível copiar os arquivos para a área de transferência do sistema: {{error}}"
+	},
+	"wingbot": {
+		"noMessages": "Ainda não há mensagens",
+		"loadingConversations": "Carregando conversas...",
+		"loadConversationsFailed": "Não foi possível carregar as conversas.",
+		"noConversations": "Ainda não há conversas.",
+		"goBack": "Voltar",
+		"goForward": "Avançar",
+		"agent": "Agente",
+		"search": "Pesquisar",
+		"newChat": "Nova conversa",
+		"projects": "Projetos",
+		"history": "Histórico",
+		"emptyHero": {
+			"title": "Vamos começar, James",
+			"description": "Aprenda a trabalhar com mais produtividade usando o Wingbot.",
+			"readDocs": "Leia a documentação."
+		},
+		"autonomy": {
+			"title": "Autonomia",
+			"description": "As configurações de autonomia chegarão em breve. Configure aqui o comportamento autônomo do seu agente."
+		},
+		"memories": {
+			"title": "Memórias",
+			"description": "A interface de gerenciamento de memórias chegará em breve. Consulte e gerencie aqui as memórias do seu agente."
+		},
+		"schedule": {
+			"title": "Agendamento",
+			"description": "A interface de gerenciamento de agendamentos chegará em breve. Por enquanto, esta página mostra a paleta completa de cores em contexto.",
+			"groups": {
+				"accent": "Destaque",
+				"ink": "Texto",
+				"app": "Aplicativo",
+				"sidebar": "Barra lateral",
+				"menu": "Menu",
+				"legacy": "Legado"
+			}
+		},
+		"chatComposer": {
+			"placeholder": "Peça ao Wingbot para revisar um projeto, planejar o trabalho ou iniciar uma tarefa...",
+			"heading": "Em que o Wingbot deve trabalhar?",
+			"send": "Enviar"
+		},
+		"tasks": {
+			"loading": "Carregando tarefas...",
+			"loadFailed": "Falha ao carregar tarefas.",
+			"emptyTitle": "Ainda não há tarefas.",
+			"emptyHint": "Crie uma para começar."
+		},
+		"unavailable": {
+			"title": "Wingbot indisponível",
+			"description": "Esta versão não inclui o ambiente de execução do Wingbot. Nenhuma mensagem ou tarefa foi alterada."
+		},
+		"workerLog": {
+			"worker": "Trabalhador: {{task}}",
+			"status": "Status: {{status}}",
+			"started": "Iniciado em: {{date}}",
+			"completed": "Concluído em: {{date}}",
+			"result": "Resultado:\n{{result}}",
+			"transcript": "Transcrição:\n{{transcript}}"
+		},
+		"navigation": {
+			"chat": "Conversa",
+			"tasks": "Tarefas"
+		},
+		"agents": {
+			"main": {
+				"name": "Star",
+				"detail": "Diretor de operações do WingDrive"
+			},
+			"operations": {
+				"name": "Operações",
+				"detail": "Agendamento e triagem"
+			},
+			"builder": {
+				"name": "Construtor",
+				"detail": "Código e ferramentas"
+			}
+		},
+		"projectDetails": {
+			"runtime": {
+				"name": "Ambiente de execução do Wingbot",
+				"detail": "Plano de controle remoto"
+			},
+			"hosted": {
+				"name": "Plataforma hospedada",
+				"detail": "Implantação e monitoramento"
+			},
+			"wingdrive": {
+				"detail": "Área de trabalho principal"
+			}
+		},
+		"projectOptions": {
+			"wingdrive": "WingDrive v3",
+			"runtime": "Ambiente de execução do Wingbot",
+			"hosted": "Plataforma hospedada"
+		},
+		"conversation": {
+			"start": "Comece a conversa aqui.",
+			"typing": "Wingbot está digitando..."
+		}
+	},
+	"app": {
+		"error": "Erro",
+		"initializing": "Inicializando o cliente...",
+		"checkConsole": "Consulte os logs no console"
+	},
+	"platform": {
+		"chooseFolder": "Escolher uma pasta",
+		"chooseFile": "Escolher um arquivo",
+		"saveFile": "Salvar arquivo"
+	},
+	"dragOverlay": {
+		"fileCount_one": "{{count}} arquivo",
+		"fileCount_other": "{{count}} arquivos",
+		"dragging": "Arrastando..."
+	},
+	"contextMenu": {
+		"copy": "Copiar",
+		"quickLook": "Visualização rápida",
+		"share": "Compartilhar",
+		"delete": "Excluir"
+	},
+	"dragDemo": {
+		"title": "Demonstração de arrastar e soltar nativo",
+		"files": "Arquivos arrastáveis",
+		"dragInstructions": "Clique e arraste estes arquivos para fora da janela para iniciar o arraste nativo!",
+		"contextMenuInstructions": "Clique com o botão direito em um arquivo para testar o menu de contexto nativo.",
+		"dropZone": "Área de soltura",
+		"dropFiles": "Solte os arquivos aqui",
+		"dragFiles": "Arraste os arquivos aqui",
+		"dropZoneHint": "Esta área aceita arquivos de outras janelas do WingDrive",
+		"status": "Status",
+		"dragging": "Arrastando",
+		"yes": "Sim",
+		"no": "Não",
+		"dropZoneHovered": "Área de soltura sob o cursor",
+		"cursor": "Cursor",
+		"howItWorks": "Como funciona:",
+		"quickLook": "Visualização rápida: {{file}}",
+		"airDropShare": "Compartilhamento via AirDrop",
+		"messages": "Mensagens",
+		"messagesShare": "Compartilhamento via Mensagens",
+		"confirmDelete": "Excluir {{file}}?",
+		"copying": "Copiando: {{file}}",
+		"howItWorksItems": {
+			"nativeFiles": "Arraste arquivos da lista acima para o Finder, onde eles aparecerão como arquivos reais",
+			"overlay": "A janela sobreposta acompanha o cursor durante o arraste",
+			"dropZones": "Áreas de soltura em outras janelas do WingDrive podem receber arquivos arrastados",
+			"sync": "Todo o estado do arraste é sincronizado entre as janelas por eventos do Tauri",
+			"contextMenu": "Clique com o botão direito nos arquivos para abrir o menu de contexto nativo",
+			"transparentWindow": "em uma janela transparente posicionada no cursor"
+		}
+	},
+	"updater": {
+		"latest": "Você está usando a versão mais recente!",
+		"confirm": "Uma nova versão (v{{version}}) está disponível!\n\nVersão atual: v{{currentVersion}}\n\n{{notes}}\n\nDeseja baixá-la e instalá-la agora?",
+		"noReleaseNotes": "Nenhuma nota de versão disponível",
+		"failed": "Falha ao atualizar: {{error}}",
+		"formatBytes": "{{value}} {{unit}}",
+		"units": {
+			"bytes": "bytes",
+			"kb": "KB",
+			"mb": "MB",
+			"gb": "GB"
+		}
+	},
+	"keybinds": {
+		"explorer": {
+			"undo": "Desfazer",
+			"openFile": "Abrir arquivo",
+			"openSelection": "Abrir",
+			"revealInNativeExplorer": "Mostrar no explorador de arquivos",
+			"renameFile": "Renomear",
+			"selectAll": "Selecionar tudo",
+			"cut": "Recortar",
+			"copy": "Copiar",
+			"paste": "Colar",
+			"duplicate": "Duplicar",
+			"delete": "Excluir",
+			"permanentDelete": "Excluir permanentemente",
+			"refresh": "Atualizar",
+			"newFolder": "Nova pasta",
+			"newFile": "Novo arquivo",
+			"openTerminal": "Abrir terminal aqui",
+			"toggleHiddenFiles": "Mostrar arquivos ocultos",
+			"navigateBack": "Voltar",
+			"navigateForward": "Avançar",
+			"navigateToParent": "Abrir pasta pai",
+			"toggleMetadata": "Alternar metadados",
+			"toggleQuickPreview": "Visualização rápida",
+			"moveUp": "Mover para cima",
+			"moveDown": "Mover para baixo",
+			"moveLeft": "Mover para a esquerda",
+			"moveRight": "Mover para a direita",
+			"extendSelectionUp": "Ampliar seleção para cima",
+			"extendSelectionDown": "Ampliar seleção para baixo",
+			"extendSelectionLeft": "Ampliar seleção para a esquerda",
+			"extendSelectionRight": "Ampliar seleção para a direita",
+			"enterTagMode": "Ativar modo de etiquetas",
+			"exitTagMode": "Sair do modo de etiquetas",
+			"toggleTag1": "Alternar etiqueta 1",
+			"toggleTag2": "Alternar etiqueta 2",
+			"toggleTag3": "Alternar etiqueta 3",
+			"toggleTag4": "Alternar etiqueta 4",
+			"toggleTag5": "Alternar etiqueta 5",
+			"toggleTag6": "Alternar etiqueta 6",
+			"toggleTag7": "Alternar etiqueta 7",
+			"toggleTag8": "Alternar etiqueta 8",
+			"toggleTag9": "Alternar etiqueta 9",
+			"toggleTag10": "Alternar etiqueta 10",
+			"clearSelection": "Limpar seleção"
+		},
+		"global": {
+			"openCommandPalette": "Abrir paleta de comandos",
+			"openSettings": "Abrir configurações",
+			"newTab": "Nova aba",
+			"closeTab": "Fechar aba",
+			"nextTab": "Próxima aba",
+			"previousTab": "Aba anterior",
+			"reopenTab": "Reabrir aba fechada",
+			"selectTab1": "Ir para a aba 1",
+			"selectTab2": "Ir para a aba 2",
+			"selectTab3": "Ir para a aba 3",
+			"selectTab4": "Ir para a aba 4",
+			"selectTab5": "Ir para a aba 5",
+			"selectTab6": "Ir para a aba 6",
+			"selectTab7": "Ir para a aba 7",
+			"selectTab8": "Ir para a aba 8",
+			"selectTab9": "Ir para a aba 9",
+			"focusSearchBar": "Focar na barra de pesquisa"
+		},
+		"mediaViewer": {
+			"close": "Fechar visualizador",
+			"nextFile": "Próximo arquivo",
+			"previousFile": "Arquivo anterior"
+		},
+		"quickPreview": {
+			"close": "Fechar visualização",
+			"closeWithSpace": "Fechar visualização"
+		}
+	},
+	"reveal": {
+		"finder": "Mostrar no Finder",
+		"explorer": "Mostrar no Explorer",
+		"folder": "Mostrar na pasta"
+	}
+}

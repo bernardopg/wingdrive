@@ -2,6 +2,7 @@ import {GearSix, Plus} from '@phosphor-icons/react';
 import type {Space} from '@wingdrive/ts-client';
 import {DropdownMenu, SelectPill} from '@wingdrive/primitives';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n';
 import {useCreateSpaceDialog} from './CreateSpaceModal';
 
 interface SpaceSwitcherProps {
@@ -15,6 +16,7 @@ export function SpaceSwitcher({
 	currentSpace,
 	onSwitch
 }: SpaceSwitcherProps) {
+	const { t } = useTranslation('navigation');
 	const createSpaceDialog = useCreateSpaceDialog;
 
 	return (
@@ -26,7 +28,7 @@ export function SpaceSwitcher({
 						style={{backgroundColor: currentSpace?.color || '#666'}}
 					/>
 					<span className="flex-1 truncate text-left">
-						{currentSpace?.name || 'Select Wing'}
+						{currentSpace?.name || t('space.select')}
 					</span>
 				</SelectPill>
 			</DropdownMenu.Trigger>
@@ -61,11 +63,11 @@ export function SpaceSwitcher({
 					className="hover:bg-sidebar-selected text-sidebar-ink rounded-md px-2 py-1 text-sm font-medium"
 				>
 					<Plus className="mr-2 size-4" weight="bold" />
-					New Space
+					{t('space.new')}
 				</DropdownMenu.Item>
 				<DropdownMenu.Item className="hover:bg-sidebar-selected text-sidebar-ink rounded-md px-2 py-1 text-sm font-medium">
 					<GearSix className="mr-2 size-4" weight="bold" />
-					Space Settings
+					{t('space.settings')}
 				</DropdownMenu.Item>
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>

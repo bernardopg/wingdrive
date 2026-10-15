@@ -14,6 +14,7 @@ import { CircleButton } from "@wingdrive/primitives";
 import type { SearchFilters } from "@wingdrive/ts-client";
 import { TopBarPortal, TopBarItem } from "../../TopBar";
 import { ExplorerView, useExplorer } from "../explorer";
+import { useTranslation } from "../../i18n";
 
 const EMPTY_FILTERS: SearchFilters = {
 	file_types: null,
@@ -33,6 +34,7 @@ const EMPTY_FILTERS: SearchFilters = {
 };
 
 export function AtRiskFiles() {
+	const { t } = useTranslation("navigation");
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 	const volumeFilter = searchParams.get("volume");
@@ -41,7 +43,7 @@ export function AtRiskFiles() {
 
 	const { enterFilteredMode, exitFilteredMode, setSortBy } = useExplorer();
 
-	const label = isAtRisk ? "At-Risk Files" : "Redundant Files";
+	const label = isAtRisk ? t("redundancy.atRiskFiles") : t("redundancy.redundantFiles");
 
 	const filters = useMemo<SearchFilters>(
 		() => ({
@@ -77,7 +79,7 @@ export function AtRiskFiles() {
 			<div className="flex items-center gap-2">
 				<CircleButton
 					icon={ArrowLeft}
-					title="Back to Redundancy"
+					title={t("redundancy.back")}
 					onClick={() => navigate("/redundancy")}
 				/>
 				<ShieldWarning
@@ -88,7 +90,7 @@ export function AtRiskFiles() {
 				<span className="text-sm font-semibold text-ink">{label}</span>
 			</div>
 		),
-		[navigate, label],
+		[navigate, label, t],
 	);
 
 	return (

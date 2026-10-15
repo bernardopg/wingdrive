@@ -1,115 +1,124 @@
-import { useForm } from "react-hook-form";
-import { useCoreQuery, useCoreMutation } from "../../contexts/WingDriveContext";
-import { useQueryClient } from "@tanstack/react-query";
-import { applyTheme } from "../../hooks/useTheme";
+import { Check, CircleHalf } from "@phosphor-icons/react";
 import clsx from "clsx";
+import { useId } from "react";
+import { applyTheme, themePreviewClass } from "../../hooks/useTheme";
+import { LANGUAGES, applyLanguage, useTranslation } from "../../i18n";
+import { SettingsHeader, SettingsRow, SettingsSection, inputClass, useAppConfig } from "../components";
 
-interface AppearanceSettingsForm {
-  theme: string;
-}
+// Each entry's preview renders inside its own theme class, so swatches always
+// match the real colors. Adaptive themes follow the system light/dark setting.
+const THEME_GROUPS = [
+  { id: "wingdrive", themes: ["system", "light", "dark", "midnight", "noir", "slate", "nord", "mocha"] },
+  { id: "t3", themes: ["t3-code", "t3-chat", "grove", "ocean", "ember", "iris"] },
+  { id: "community", themes: ["catppuccin", "gruvbox", "solarized", "rose-pine", "dracula", "tokyo-night"] },
+];
 
-const THEMES = [
-  { id: "system", name: "System" },
-  { id: "light", name: "Light" },
-  { id: "dark", name: "Dark" },
-  { id: "midnight", name: "Midnight" },
-  { id: "noir", name: "Noir" },
-  { id: "slate", name: "Slate" },
-  { id: "nord", name: "Nord" },
-  { id: "mocha", name: "Mocha" },
-] as const;
+const ADAPTIVE = new Set(["system", "t3-code", "t3-chat", "grove", "ocean", "ember", "iris", "catppuccin", "gruvbox", "solarized", "rose-pine"]);
 
 export function AppearanceSettings() {
-  const queryClient = useQueryClient();
-  const { data: config } = useCoreQuery({ type: "config.app.get", input: null as any });
-  const updateConfig = useCoreMutation("config.app.update", {
-    onSuccess: () => {
-      queryClient.refetchQueries({ queryKey: ["config.app.get"] });
-    },
-  });
+  const { t } = useTranslation();
+  const { config, save } = useAppConfig();
+  const languageId = useId();
+  const theme = config?.preferences?.theme || "system";
+  const language = config?.preferences?.language || "en";
 
-  const form = useForm<AppearanceSettingsForm>({
-    values: {
-      theme: config?.preferences?.theme || "system",
-    },
-  });
-
-  const handleThemeChange = async (themeId: string) => {
-    form.setValue("theme", themeId);
+  // Apply locally first so the change is instant; the daemon broadcasts it to other windows.
+  const handleThemeChange = (themeId: string) => {
     applyTheme(themeId);
-    await updateConfig.mutateAsync({ theme: themeId });
+    void save({ theme: themeId });
+  };
+
+  const handleLanguageChange = (next: string) => {
+    applyLanguage(next);
+    void save({ language: next });
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-ink mb-2">Appearance</h2>
-        <p className="text-sm text-ink-dull">
-          Customize how WingDrive looks.
-        </p>
-      </div>
+      <SettingsHeader title={t("sections.appearance")} description={t("appearance.description")} />
 
-      <div className="space-y-4">
-        <div className="p-4 bg-app-box rounded-lg border border-app-line">
-          <div className="mb-3">
-            <span className="text-sm font-medium text-ink block">Theme</span>
-            <p className="text-xs text-ink-dull mt-1">Choose your preferred color theme</p>
-          </div>
+      <SettingsSection title={t("appearance.language")}>
+        <SettingsRow label={t("appearance.language")} hint={t("appearance.languageHint")} controlId={languageId}>
+          <select
+            id={languageId}
+            value={language}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            className={clsx(inputClass, "sm:w-56")}
+          >
+            {LANGUAGES.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </SettingsRow>
+      </SettingsSection>
 
-          <div className="grid grid-cols-4 gap-2">
-            {THEMES.map((theme) => (
-              <button
-                key={theme.id}
-                type="button"
-                onClick={() => handleThemeChange(theme.id)}
-                className={clsx(
-                  "relative p-3 rounded-md transition-all text-left group",
-                  form.watch("theme") === theme.id
-                    ? "border-2 border-accent bg-accent/5"
-                    : "border border-app-line bg-app-box hover:border-app-line/80"
-                )}
-              >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="text-xs font-medium text-ink">{theme.name}</div>
-                  {form.watch("theme") === theme.id && (
-                    <div className="shrink-0 size-3 rounded-full bg-accent flex items-center justify-center">
-                      <svg className="size-2 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-
-                <div className="h-12 rounded border border-app-line overflow-hidden flex">
-                  <div className={clsx(
-                    "flex-1 flex flex-col gap-1 p-1.5",
-                    theme.id === "light" && "bg-white",
-                    theme.id === "dark" && "bg-[hsl(235,15%,13%)]",
-                    theme.id === "midnight" && "bg-[hsl(240,30%,4%)]",
-                    theme.id === "noir" && "bg-[hsl(0,0%,3%)]",
-                    theme.id === "slate" && "bg-[hsl(220,8%,9%)]",
-                    theme.id === "nord" && "bg-[hsl(220,18%,12%)]",
-                    theme.id === "mocha" && "bg-[hsl(25,18%,10%)]"
-                  )}>
-                    <div className={clsx(
-                      "h-1 w-3/4 rounded-sm",
-                      theme.id === "light" ? "bg-gray-300" : "bg-gray-700"
-                    )} />
-                    <div className={clsx(
-                      "h-1 w-1/2 rounded-sm",
-                      theme.id === "light" ? "bg-gray-200" : "bg-gray-800"
-                    )} />
-                  </div>
-                </div>
-              </button>
+      {THEME_GROUPS.map((group) => (
+        <section key={group.id} className="space-y-2">
+          <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-faint">
+            {group.id === "wingdrive" ? t("appearance.theme") : t(`appearance.themeGroups.${group.id}`)}
+          </h3>
+          <div role="radiogroup" aria-label={t(`appearance.themeGroups.${group.id}`)} className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {group.themes.map((id) => (
+              <ThemeOption
+                key={id}
+                id={id}
+                label={t(`appearance.themes.${id}`)}
+                adaptiveHint={ADAPTIVE.has(id) ? t("appearance.adaptive") : undefined}
+                selected={theme === id}
+                onSelect={() => handleThemeChange(id)}
+              />
             ))}
           </div>
-        </div>
-
-        <p className="text-xs text-ink-dull">
-          The interface is available in English only.
-        </p>
-      </div>
+        </section>
+      ))}
     </div>
+  );
+}
+
+function ThemeOption({
+  id,
+  label,
+  adaptiveHint,
+  selected,
+  onSelect,
+}: {
+  id: string;
+  label: string;
+  adaptiveHint?: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      title={adaptiveHint}
+      className={clsx(
+        "group rounded-lg border p-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+        selected ? "border-accent bg-accent/10" : "border-app-line bg-app-box hover:border-ink-faint"
+      )}
+    >
+      <div className={clsx("flex h-14 overflow-hidden rounded-md border border-app-line", themePreviewClass(id))}>
+        <div className="w-1/4 space-y-1 border-r border-sidebar-line bg-sidebar p-1">
+          <div className="h-1.5 rounded-sm bg-sidebar-selected" />
+          <div className="h-1 w-3/4 rounded-sm bg-sidebar-ink-faint/50" />
+          <div className="h-1 w-1/2 rounded-sm bg-sidebar-ink-faint/50" />
+        </div>
+        <div className="flex flex-1 flex-col gap-1 bg-app p-1.5">
+          <div className="h-1 w-3/4 rounded-sm bg-ink-dull/60" />
+          <div className="h-1 w-1/2 rounded-sm bg-ink-faint/40" />
+          <div className="mt-auto h-2 w-1/3 rounded-sm bg-accent" />
+        </div>
+      </div>
+      <div className="mt-1.5 flex items-center gap-1 px-0.5">
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink">{label}</span>
+        {adaptiveHint && <CircleHalf className="size-3 shrink-0 text-ink-faint" aria-label={adaptiveHint} />}
+        {selected && <Check className="size-3 shrink-0 text-accent" weight="bold" />}
+      </div>
+    </button>
   );
 }

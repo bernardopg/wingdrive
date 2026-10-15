@@ -1,6 +1,7 @@
 import { CaretRight, DotsSixVertical, PencilSimple, Trash } from "@phosphor-icons/react";
 import clsx from "clsx";
 import { useState } from "react";
+import { useTranslation } from "../../i18n";
 import { useContextMenu } from "../../hooks/useContextMenu";
 import { useLibraryMutation } from "@wingdrive/ts-client";
 import type { SpaceGroup } from "@wingdrive/ts-client";
@@ -26,6 +27,7 @@ export function GroupHeader({
   group,
   allowCustomization = false,
 }: GroupHeaderProps) {
+const { t } = useTranslation("navigation");
   const hasSortable = sortableAttributes && sortableListeners;
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(label);
@@ -68,7 +70,7 @@ export function GroupHeader({
     items: [
       {
         icon: PencilSimple,
-        label: "Rename Group",
+        label: t("groups.rename"),
         onClick: () => {
           setNewName(label);
           setIsRenaming(true);
@@ -78,7 +80,7 @@ export function GroupHeader({
       { type: "separator" },
       {
         icon: Trash,
-        label: "Delete Group",
+        label: t("groups.delete"),
         onClick: handleDelete,
         variant: "danger" as const,
         condition: () => allowCustomization,

@@ -9,12 +9,14 @@ import {
 import clsx from "clsx";
 import type { SyncActivity } from "../types";
 import { timeAgo } from "../utils";
+import { useTranslation } from "../../../i18n";
 
 interface ActivityFeedProps {
 	activities: SyncActivity[];
 }
 
 export function ActivityFeed({ activities }: ActivityFeedProps) {
+	const { t } = useTranslation("dialogs");
 	if (activities.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center py-12 px-4">
@@ -23,10 +25,10 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
 					weight="duotone"
 				/>
 				<p className="text-sm text-ink-dull text-center">
-					No recent activity
+					{t("sync.noRecentActivity")}
 				</p>
 				<p className="text-xs text-ink-faint text-center mt-1">
-					Activity will appear here when syncing
+					{t("sync.activityWhenSyncing")}
 				</p>
 			</div>
 		);

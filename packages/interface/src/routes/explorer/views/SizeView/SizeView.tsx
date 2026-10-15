@@ -17,6 +17,7 @@ import {useDraggableFile} from '../../hooks/useDraggableFile';
 import {useSelection} from '../../SelectionContext';
 import {formatBytes} from '../../utils';
 import {useExplorerFiles} from '../../hooks/useExplorerFiles';
+import {i18n, useTranslation} from '../../../../i18n';
 
 // Cache for computed colors
 const colorCache = new Map<string, string>();
@@ -112,9 +113,9 @@ function getFileColor(file: File): string {
 }
 
 function getFileType(file: File): string {
-	if (file.kind === 'Directory') return 'Folder';
+	if (file.kind === 'Directory') return i18n.t('explorer:general.folder');
 	if (file.extension) return file.extension.toUpperCase();
-	return 'File';
+	return i18n.t('explorer:general.file');
 }
 
 // Thumb overlay component with drag support
@@ -307,6 +308,7 @@ interface TreeNode {
 }
 
 export function SizeView() {
+	const {t} = useTranslation('explorer');
 	const {
 		currentPath,
 		sortBy,
@@ -1085,7 +1087,7 @@ export function SizeView() {
 					dataSource && (
 						<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
 							<p className="text-ink-dull">
-								No files with size data to display
+								{t("ui.noFilesWithSizeDataTo")}
 							</p>
 						</div>
 					)}
@@ -1099,25 +1101,25 @@ export function SizeView() {
 						<CircleButton
 							icon={Minus}
 							onClick={handleZoomOut}
-							title="Zoom Out"
+							title={t('size.zoomOut')}
 							disabled={sizeViewTransform.k <= 0.1}
 						/>
 						<CircleButton
 							icon={Plus}
 							onClick={handleZoomIn}
-							title="Zoom In"
+							title={t('size.zoomIn')}
 							disabled={sizeViewTransform.k >= 100}
 						/>
 					</CircleButtonGroup>
 					<CircleButton
 						icon={ArrowsOut}
 						onClick={handleFitToView}
-						title="Fit to View"
+						title={t('size.fitToView')}
 					/>
 					<CircleButton
 						icon={ArrowCounterClockwise}
 						onClick={handleResetZoom}
-						title="Reset Zoom"
+						title={t('size.resetZoom')}
 					/>
 					<div className="text-ink-dull px-2 text-xs font-medium">
 						{sizeViewTransform.k.toFixed(1)}x

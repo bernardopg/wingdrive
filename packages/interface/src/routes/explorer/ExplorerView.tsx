@@ -31,8 +31,10 @@ import {MediaView} from './views/MediaView';
 import {SearchView} from './views/SearchView';
 import {SizeView} from './views/SizeView';
 import {ViewSettings, ViewSettingsPanel} from './ViewSettings';
+import {useTranslation} from '../../i18n';
 
 export function ExplorerView() {
+	const {t} = useTranslation('explorer');
 	const {
 		sidebarVisible,
 		setSidebarVisible,
@@ -188,7 +190,7 @@ export function ExplorerView() {
 						<>
 							<TopBarItem
 								id="sidebar-toggle"
-								label="Sidebar"
+								label={t('topBar.sidebar')}
 								priority="normal"
 								onClick={() =>
 									setSidebarVisible(!sidebarVisible)
@@ -204,7 +206,7 @@ export function ExplorerView() {
 							</TopBarItem>
 							<TopBarItem
 								id="navigation"
-								label="Navigation"
+								label={t('topBar.navigation')}
 								priority="high"
 							>
 								<CircleButtonGroup>
@@ -223,7 +225,7 @@ export function ExplorerView() {
 							{pathBarPath && (
 								<TopBarItem
 									id="path-bar"
-									label="Path"
+									label={t('topBar.path')}
 									priority="high"
 								>
 									<PathBar
@@ -236,7 +238,7 @@ export function ExplorerView() {
 							{currentView && (
 								<TopBarItem
 									id="virtual-path-bar"
-									label="Path"
+								label={t('topBar.path')}
 									priority="high"
 								>
 									<VirtualPathBar
@@ -251,14 +253,14 @@ export function ExplorerView() {
 						<>
 							<TopBarItem
 								id="search"
-								label="Search"
+								label={t('topBar.search')}
 								priority="high"
 							>
 								<ExpandableSearchButton
 									placeholder={
 										currentPath
-											? 'Search in current folder...'
-											: 'Search...'
+											? t('search.inCurrentFolderPlaceholder')
+											: t('search.placeholder')
 									}
 									value={searchValue}
 									onChange={handleSearchChange}
@@ -267,7 +269,7 @@ export function ExplorerView() {
 							</TopBarItem>
 							<TopBarItem
 								id="tag-mode"
-								label="Tags"
+								label={t('topBar.tags')}
 								priority="low"
 								onClick={() => setTagModeActive(!tagModeActive)}
 							>
@@ -281,7 +283,7 @@ export function ExplorerView() {
 							</TopBarItem>
 							<TopBarItem
 								id="view-mode"
-								label="Views"
+								label={t('viewMode.title')}
 								priority="normal"
 								submenuContent={viewModeSubmenu}
 							>
@@ -292,7 +294,7 @@ export function ExplorerView() {
 							</TopBarItem>
 							<TopBarItem
 								id="view-settings"
-								label="View Settings"
+								label={t('viewSettings.title')}
 								priority="low"
 								submenuContent={viewSettingsSubmenu}
 							>
@@ -302,7 +304,7 @@ export function ExplorerView() {
 							</TopBarItem>
 							<TopBarItem
 								id="sort"
-								label="Sort"
+								label={t('sort.title')}
 								priority="low"
 								submenuContent={sortSubmenu}
 							>
@@ -315,7 +317,7 @@ export function ExplorerView() {
 							</TopBarItem>
 							<TopBarItem
 								id="inspector-toggle"
-								label="Inspector"
+								label={t('topBar.inspector')}
 								priority="high"
 								onClick={() =>
 									setInspectorVisible(!inspectorVisible)
@@ -356,18 +358,17 @@ export function ExplorerView() {
 								role="alert"
 							>
 								<p>
-									Could not open this location:{' '}
-									{listingError.message}
+									{t('errors.couldNotOpenLocation', {error: listingError.message})}
 								</p>
 								<button
 									onClick={() =>
 										void queryClient.invalidateQueries()
 									}
 								>
-									Try again
+									{t('actions.tryAgain')}
 								</button>
 								<button onClick={() => routerNavigate('/')}>
-									Go to Overview
+									{t('actions.goToOverview')}
 								</button>
 							</div>
 						) : mode.type === 'search' ? (

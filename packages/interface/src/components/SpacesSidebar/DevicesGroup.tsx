@@ -4,6 +4,8 @@ import { useExplorer } from "../../routes/explorer/context";
 import { SpaceItem } from "./SpaceItem";
 import { GroupHeader } from "./GroupHeader";
 import type { ListLibraryDevicesInput, Device } from "@wingdrive/ts-client";
+import { useTranslation } from "../../i18n";
+import { useWebContextMenuController } from "../../contexts/WebContextMenuContext";
 
 interface DevicesGroupProps {
 	isCollapsed: boolean;
@@ -18,6 +20,8 @@ export function DevicesGroup({
 	sortableAttributes,
 	sortableListeners,
 }: DevicesGroupProps) {
+const { t } = useTranslation("navigation");
+	const webMenu = useWebContextMenuController();
 	const { navigateToView, loadPreferencesForSpaceItem } = useExplorer();
 
 	// Use normalized query for automatic updates when device events are emitted
@@ -49,7 +53,7 @@ export function DevicesGroup({
 		const items = [
 			{
 				icon: Trash,
-				label: "Unpair Device",
+                label: t("devices.unpair"),
 				onClick: async () => {
 					await revokeDevice.mutateAsync({
 						device_id: device.id,
@@ -60,7 +64,7 @@ export function DevicesGroup({
 			},
 			{
 				icon: Trash,
-				label: "Remove Device Completely",
+                label: t("devices.remove"),
 				onClick: async () => {
 					await revokeDevice.mutateAsync({
 						device_id: device.id,
@@ -80,15 +84,15 @@ export function DevicesGroup({
 				x: e.clientX,
 				y: e.clientY,
 			});
+		} else {
+			webMenu?.show(items, e.clientX, e.clientY);
 		}
-		// For web, we'd need to implement a Radix-based context menu
-		// but for now, just call the action directly or show an alert
 	};
 
 	return (
 		<div>
 			<GroupHeader
-				label="Devices"
+				label={t("sidebar.devices")}
 				isCollapsed={isCollapsed}
 				onToggle={onToggle}
 				sortableAttributes={sortableAttributes}
@@ -100,11 +104,11 @@ export function DevicesGroup({
 				<div className="space-y-0.5">
 					{isLoading ? (
 						<div className="px-2 py-1 text-xs text-sidebar-ink-faint">
-							Loading...
+							{t("common.loading")}
 						</div>
 					) : !devices || devices.length === 0 ? (
 						<div className="px-2 py-1 text-xs text-sidebar-ink-faint">
-							No devices
+							{t("devices.empty")}
 						</div>
 					) : (
 						devices.map((device, index) => {

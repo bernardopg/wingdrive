@@ -10,6 +10,7 @@ import {
 } from '@wingdrive/primitives';
 import {AnimatePresence, motion} from 'framer-motion';
 import {useState} from 'react';
+import {useTranslation} from '../i18n';
 
 interface ChatComposerProps {
 	draft: string;
@@ -42,6 +43,11 @@ export function ChatComposer({
 	showHeading = true,
 	isSending = false
 }: ChatComposerProps) {
+	const {t} = useTranslation('common');
+	const projectLabel = (project: string) =>
+		project === 'WingDrive v3' ? t('wingbot.projectOptions.wingdrive') :
+		project === 'Wingbot Runtime' ? t('wingbot.projectOptions.runtime') :
+		project === 'Hosted Platform' ? t('wingbot.projectOptions.hosted') : project;
 	const [isFocused, setIsFocused] = useState(false);
 	const isExpanded = isFocused || draft.trim().length > 0;
 	const textareaCollapsedHeight = showHeading ? 90 : 48;
@@ -55,7 +61,7 @@ export function ChatComposer({
 					<span className="text-accent inline-flex size-3.5 shrink-0">
 						<Sparkle size="100%" weight="fill" />
 					</span>
-					What should Wingbot work on?
+					{t('wingbot.chatComposer.heading')}
 				</div>
 			)}
 
@@ -80,7 +86,7 @@ export function ChatComposer({
 								onSend();
 							}
 						}}
-						placeholder="Ask Wingbot to review a project, plan work, or start a task..."
+						placeholder={t('wingbot.chatComposer.placeholder')}
 						className="text-ink placeholder:text-ink-faint h-full w-full resize-none border-0 bg-transparent text-base leading-7 outline-none focus:border-0 focus:outline-none focus:ring-0"
 					/>
 				</motion.div>
@@ -93,7 +99,7 @@ export function ChatComposer({
 						>
 							<Popover.Trigger asChild>
 								<SelectPill className="w-full">
-									{selectedProject}
+									{projectLabel(selectedProject)}
 								</SelectPill>
 							</Popover.Trigger>
 							<Popover.Content align="start" sideOffset={8}>
@@ -109,7 +115,7 @@ export function ChatComposer({
 												projectSelector.setOpen(false);
 											}}
 										>
-											{project}
+											{projectLabel(project)}
 										</OptionListItem>
 									))}
 								</OptionList>
@@ -150,7 +156,7 @@ export function ChatComposer({
 										className="border-app-line bg-accent hover:bg-accent-faint flex h-9 w-[76px] items-center justify-center rounded-full border px-4 text-xs font-medium text-white"
 									>
 										<span className="whitespace-nowrap">
-											Send
+											{t('wingbot.chatComposer.send')}
 										</span>
 									</button>
 								</motion.div>

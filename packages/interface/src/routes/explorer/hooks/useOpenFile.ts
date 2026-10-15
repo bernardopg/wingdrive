@@ -4,11 +4,13 @@ import { toast } from "@wingdrive/primitives";
 import { usePlatform } from "../../../contexts/PlatformContext";
 import { useOpenWith } from "../../../hooks/useOpenWith";
 import { useExplorer } from "../context";
+import { useTranslation } from "../../../i18n";
 
 /** Most files one Open launches, so a stray Select All cannot start hundreds of apps. */
 const MAX_FILES_TO_OPEN = 20;
 
 export function useOpenFile(navigate?: (path: WingPath) => void) {
+	const { t } = useTranslation("explorer");
 	const platform = usePlatform();
 	const { navigateToPath } = useExplorer();
 	const { openWithDefault } = useOpenWith([]);
@@ -22,7 +24,7 @@ export function useOpenFile(navigate?: (path: WingPath) => void) {
 		let path = file.wing_path.Physical.path;
 		if (file.kind === "Symlink") {
 			if (!platform.resolveSymlink) {
-				toast.error("Resolving links requires the desktop app");
+				toast.error(t("errors.resolveLinkDesktopOnly"));
 				return;
 			}
 			try {
@@ -33,7 +35,7 @@ export function useOpenFile(navigate?: (path: WingPath) => void) {
 					return;
 				}
 			} catch (error) {
-				toast.error(`Cannot open link: ${error}`);
+				toast.error(t("errors.cannotOpenLink", { error }));
 				return;
 			}
 		}
@@ -47,6 +49,7 @@ export function useOpenFile(navigate?: (path: WingPath) => void) {
  * shown at a time (the first is entered when nothing else opens).
  */
 export function useOpenFiles() {
+	const { t } = useTranslation("explorer");
 	const openFile = useOpenFile();
 	return async (files: File[]) => {
 		const [first] = files;
@@ -61,7 +64,7 @@ export function useOpenFiles() {
 			return;
 		}
 		if (openable.length > MAX_FILES_TO_OPEN) {
-			toast.error(`Select at most ${MAX_FILES_TO_OPEN} files to open at once`);
+			toast.error(t("errors.openFileLimit", { count: MAX_FILES_TO_OPEN }));
 			return;
 		}
 		for (const file of openable) await openFile(file);

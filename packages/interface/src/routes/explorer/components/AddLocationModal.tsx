@@ -22,6 +22,8 @@ import type {
 import { useLibraryMutation, useLibraryQuery } from "../../../contexts/WingDriveContext";
 import { usePlatform } from "../../../contexts/PlatformContext";
 import { NewLocation } from "@wingdrive/assets/icons";
+import { useTranslation } from "../../../i18n";
+import { ThemedIcon } from "../../../components/ThemedIcon";
 
 interface AddLocationFormData {
   path: string;
@@ -47,54 +49,54 @@ const indexModes: Array<{
 }> = [
   {
     value: "Shallow",
-    label: "Shallow",
-    description: "Just filesystem metadata",
+    label: "addLocation.modeShallow",
+    description: "addLocation.modeShallowDescription",
   },
   {
     value: "Content",
-    label: "Content",
-    description: "Generate content identities",
+    label: "addLocation.modeContent",
+    description: "addLocation.modeContentDescription",
   },
   {
     value: "Deep",
-    label: "Deep",
-    description: "Full indexing + thumbnails",
+    label: "addLocation.modeDeep",
+    description: "addLocation.modeDeepDescription",
   },
 ];
 
 const jobOptions: JobOption[] = [
   {
     id: "thumbnail",
-    label: "Generate Thumbnails",
-    description: "Create preview thumbnails for images and videos",
+    label: "addLocation.generateThumbnails",
+    description: "addLocation.generateThumbnailsDescription",
     presets: ["Content", "Deep"],
     order: 1,
   },
   {
     id: "thumbstrip",
-    label: "Generate Thumbstrips",
-    description: "Create video storyboard grids (5×5 grid of frames)",
+    label: "addLocation.generateThumbstrips",
+    description: "addLocation.generateThumbstripsDescription",
     presets: ["Deep"],
     order: 2,
   },
   {
     id: "proxy",
-    label: "Generate Proxies",
-    description: "Create scrubbing proxies for videos (~8s per video)",
+    label: "addLocation.generateProxies",
+    description: "addLocation.generateProxiesDescription",
     presets: [], // Disabled by default
     order: 3,
   },
   {
     id: "ocr",
-    label: "Extract Text (OCR)",
-    description: "OCR and text extraction from images/PDFs",
+    label: "addLocation.extractText",
+    description: "addLocation.extractTextDescription",
     presets: [],
     order: 4,
   },
   {
     id: "speech_to_text",
-    label: "Speech to Text",
-    description: "Transcribe audio and video files",
+    label: "addLocation.speechToText",
+    description: "addLocation.speechToTextDescription",
     presets: [],
     order: 5,
   },
@@ -112,6 +114,7 @@ function AddLocationDialog(props: {
   id: number;
   onLocationAdded?: (locationId: string) => void;
 }) {
+  const { t } = useTranslation("explorer");
   const dialog = useDialog(props);
   const platform = usePlatform();
   const [step, setStep] = useState<ModalStep>("picker");
@@ -166,7 +169,7 @@ function AddLocationDialog(props: {
     }
 
     const selected = await platform.openDirectoryPickerDialog({
-      title: "Choose a folder to add",
+      title: t("addLocation.chooseFolder"),
       multiple: false,
     });
 
@@ -235,7 +238,7 @@ function AddLocationDialog(props: {
       form.setError("root", {
         type: "manual",
         message:
-          error instanceof Error ? error.message : "Failed to add location",
+          error instanceof Error ? error.message : t("errors.failedToAddLocation"),
       });
     }
   });
@@ -245,22 +248,22 @@ function AddLocationDialog(props: {
       <Dialog
         dialog={dialog}
         form={form}
-        title="Add Location"
-        icon={<img src={NewLocation} alt="" className="size-5" />}
-        description="Choose a folder to index and manage"
+        title={t("addLocation.title")}
+        icon={<ThemedIcon src={NewLocation} alt="" className="size-5" />}
+        description={t("addLocation.description")}
         className="w-[520px]"
         onCancelled={true}
       >
         {/* Content */}
         <div className="space-y-4 flex flex-col">
           <div className="space-y-2">
-            <Label>Browse</Label>
+            <Label>{t("addLocation.browse")}</Label>
             <div className="relative">
               <Input
                 value={form.watch("path") || ""}
                 onChange={(e) => form.setValue("path", e.target.value)}
                 onKeyDown={handlePickerKeyDown}
-                placeholder="Select a custom folder"
+                placeholder={t("addLocation.selectCustomFolder")}
                 size="lg"
                 className="pr-14"
               />
@@ -275,7 +278,7 @@ function AddLocationDialog(props: {
           {/* Suggested Locations */}
           {suggestedLocations && suggestedLocations.locations.length > 0 && (
             <div className="space-y-2">
-              <Label>Suggested Locations</Label>
+              <Label>{t("addLocation.suggestedLocations")}</Label>
               <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto pr-1">
                 {suggestedLocations.locations.map((loc) => (
                   <button
@@ -311,27 +314,27 @@ function AddLocationDialog(props: {
       dialog={dialog}
       form={form}
       onSubmit={onSubmit}
-      title="Add Location"
-      icon={<img src={NewLocation} alt="" className="size-5" />}
+      title={t("addLocation.title")}
+      icon={<ThemedIcon src={NewLocation} alt="" className="size-5" />}
       description={form.watch("path")}
-      ctaLabel="Add Location"
+      ctaLabel={t("addLocation.title")}
       onCancelled={true}
       loading={addLocation.isPending}
       className="w-[520px]"
       buttonsSideContent={
         <Button variant="gray" size="sm" onClick={handleCancel}>
-          Back
+          {t("actions.back")}
         </Button>
       }
     >
       <div className="space-y-4">
         {/* Name Input */}
         <div className="space-y-2">
-          <Label slug="name">Display Name</Label>
+          <Label slug="name">{t("addLocation.displayName")}</Label>
           <Input
             {...form.register("name")}
             size="md"
-            placeholder="My Documents"
+            placeholder={t("addLocation.myDocuments")}
             className="bg-app-input"
           />
         </div>
@@ -339,15 +342,15 @@ function AddLocationDialog(props: {
         {/* Tabs */}
         <TabsRoot value={tab} onValueChange={(v) => setTab(v as SettingsTab)}>
           <TabsList>
-            <TabsTrigger value="preset">Preset</TabsTrigger>
+            <TabsTrigger value="preset">{t("addLocation.preset")}</TabsTrigger>
             <TabsTrigger value="jobs">
-              Jobs {selectedJobs.size > 0 && `(${selectedJobs.size})`}
+              {selectedJobs.size > 0 ? t("addLocation.jobsCount", {count: selectedJobs.size}) : t("addLocation.jobs")}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="preset" className="pt-3">
             <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-              <Label>Indexing Mode</Label>
+              <Label>{t("addLocation.indexingMode")}</Label>
               <div className="grid grid-cols-3 gap-2">
                 {indexModes.map((mode) => {
                   const isSelected = currentMode === mode.value;
@@ -366,10 +369,10 @@ function AddLocationDialog(props: {
                         `}
                     >
                       <div className="text-xs font-medium text-ink">
-                        {mode.label}
+                        {t(mode.label)}
                       </div>
                       <div className="mt-1 text-[11px] leading-tight text-ink-faint">
-                        {mode.description}
+                        {t(mode.description)}
                       </div>
                     </button>
                   );
@@ -381,8 +384,7 @@ function AddLocationDialog(props: {
           <TabsContent value="jobs" className="pt-3">
             <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
               <p className="text-xs text-ink-faint">
-                Select which jobs to run after indexing. Extensions can add more
-                jobs.
+                {t("addLocation.jobsDescription")}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {jobOptions.map((job) => {
@@ -403,10 +405,10 @@ function AddLocationDialog(props: {
                     >
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-medium text-ink">
-                          {job.label}
+                          {t(job.label)}
                         </div>
                         <div className="text-[11px] text-ink-faint mt-1 leading-tight">
-                          {job.description}
+                          {t(job.description)}
                         </div>
                       </div>
                     </button>

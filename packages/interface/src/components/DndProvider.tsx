@@ -19,6 +19,7 @@ import { useFileOperationDialog } from "./modals/FileOperationModal";
 import { File as FileComponent } from "../routes/explorer/File";
 import { selectionCapabilities } from "../routes/explorer/fileCapabilities";
 import { useTabManager } from "./TabManager/useTabManager";
+import { useTranslation } from "../i18n";
 
 /**
  * DndProvider - Global drag-and-drop coordinator
@@ -45,6 +46,7 @@ import { useTabManager } from "./TabManager/useTabManager";
  *    - Data: { type, spaceId, groupId? }
  */
 export function DndProvider({ children }: { children: React.ReactNode }) {
+	const { t } = useTranslation("common");
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {
@@ -327,7 +329,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			// A virtual entry stands for a whole location, volume or device root;
 			// dragging it along with real files must not move that root.
 			if (!selectionCapabilities(dragged).canCopy) {
-				toast.error("Locations, volumes and devices cannot be moved.");
+				toast.error(t("dnd.virtualLocationsCannotMove"));
 				return;
 			}
 			const sources: WingPath[] = dragged.map((f) => f.wing_path);
@@ -428,11 +430,11 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 							<Folders size={20} weight="bold" />
 						)}
 						<span className="text-sm font-medium">
-							{activeItem.itemType === "Overview" && "Overview"}
-							{activeItem.itemType === "Recents" && "Recents"}
-							{activeItem.itemType === "Favorites" && "Favorites"}
+							{activeItem.itemType === "Overview" && t("dnd.itemTypes.overview")}
+							{activeItem.itemType === "Recents" && t("dnd.itemTypes.recents")}
+							{activeItem.itemType === "Favorites" && t("dnd.itemTypes.favorites")}
 							{activeItem.itemType === "FileKinds" &&
-								"File Kinds"}
+								t("dnd.itemTypes.fileKinds")}
 						</span>
 					</div>
 				) : activeItem?.label ? (

@@ -1,4 +1,5 @@
 import { Plus } from '@phosphor-icons/react';
+import { useTranslation } from '../../i18n';
 import { useAddGroupDialog } from './AddGroupModal';
 
 interface AddGroupButtonProps {
@@ -6,6 +7,7 @@ interface AddGroupButtonProps {
 }
 
 export function AddGroupButton({ spaceId }: AddGroupButtonProps) {
+	const { t } = useTranslation('navigation');
 	const addGroupDialog = useAddGroupDialog;
 
 	return (
@@ -14,7 +16,7 @@ export function AddGroupButton({ spaceId }: AddGroupButtonProps) {
 			className="flex w-full items-center gap-2 rounded-lg border border-dashed border-sidebar-line/70 px-2 py-1.5 text-sm font-medium text-ink-faint hover:border-sidebar-line hover:bg-sidebar-selected/5 hover:text-sidebar-ink"
 		>
 			<Plus size={16} weight="bold" />
-			<span>Add Group</span>
+			<span>{t('groups.add')}</span>
 		</button>
 	);
 }

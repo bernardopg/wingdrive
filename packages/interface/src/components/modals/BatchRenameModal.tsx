@@ -17,6 +17,7 @@ import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
 import { useUndo } from "../../hooks/useUndo";
 import { useWaitForJob } from "../../hooks/useWaitForJob";
 import { planBatchRename, type BatchRenameRule } from "./batchRename";
+import { useTranslation } from "../../i18n";
 
 interface BatchRenameDialogProps {
 	id: number;
@@ -35,6 +36,7 @@ function parentOf(path: string): string {
 }
 
 function BatchRenameDialog(props: BatchRenameDialogProps) {
+	const { t } = useTranslation("dialogs");
 	const dialog = useDialog(props);
 	const form = useForm();
 	const platform = usePlatform();
@@ -91,8 +93,8 @@ function BatchRenameDialog(props: BatchRenameDialogProps) {
 				for (const reverse of reversals.reverse()) await reverse();
 			});
 		}
-		if (failed > 0) toast.error(`${failed} of ${changes.length} renames failed`);
-		else toast.success(`Renamed ${changes.length} items`);
+		if (failed > 0) toast.error(t("batchRename.renameFailed", { count: changes.length, failed }));
+		else toast.success(t("batchRename.renamed", { count: changes.length }));
 		dialogManager.setState(props.id, { open: false });
 	};
 
@@ -100,35 +102,35 @@ function BatchRenameDialog(props: BatchRenameDialogProps) {
 		<Dialog
 			dialog={dialog}
 			form={form}
-			title={`Rename ${props.files.length} items`}
+			title={t("batchRename.title", { count: props.files.length })}
 			icon={<Textbox size={20} weight="fill" className="text-accent" />}
-			ctaLabel={changes.length > 0 ? `Rename ${changes.length}` : "Rename"}
+			ctaLabel={changes.length > 0 ? t("batchRename.renameCount", { count: changes.length }) : t("batchRename.rename")}
 			submitDisabled={changes.length === 0 || blocked}
-			closeLabel="Cancel"
+			closeLabel={t("common.cancel")}
 			onSubmit={form.handleSubmit(apply)}
 			formClassName="!min-w-[520px] !max-w-[520px]"
 		>
 			<div className="flex flex-col gap-3 py-3">
 				<div className="grid grid-cols-2 gap-3">
-					<Field label="Find">
+					<Field label={t("batchRename.find")}>
 						<Input value={rule.find} onChange={(e) => set("find", e.target.value)} />
 					</Field>
-					<Field label="Replace with">
+					<Field label={t("batchRename.replaceWith")}>
 						<Input value={rule.replace} onChange={(e) => set("replace", e.target.value)} />
 					</Field>
 				</div>
-				<Field label="Name pattern ({name} = name, {n} = number)">
+				<Field label={t("batchRename.namePattern")}>
 					<Input value={rule.template} onChange={(e) => set("template", e.target.value)} />
 				</Field>
 				<div className="grid grid-cols-2 gap-3">
-					<Field label="Start at">
+					<Field label={t("batchRename.startAt")}>
 						<Input
 							type="number"
 							value={rule.start}
 							onChange={(e) => set("start", Number(e.target.value) || 0)}
 						/>
 					</Field>
-					<Field label="Digits">
+					<Field label={t("batchRename.digits")}>
 						<Input
 							type="number"
 							min={0}
@@ -156,7 +158,13 @@ function BatchRenameDialog(props: BatchRenameDialogProps) {
 											? "text-status-error min-w-0 flex-1 truncate"
 											: "text-ink min-w-0 flex-1 truncate"
 									}
-									title={entry.error ?? undefined}
+									title={entry.error === "Name empty"
+									? t("batchRename.validation.nameEmpty")
+									: entry.error === "Name contains slash"
+										? t("batchRename.validation.nameContainsSlash")
+										: entry.error === "Duplicates another new name"
+											? t("batchRename.validation.duplicateName")
+											: undefined}
 								>
 									{entry.newName}
 								</span>

@@ -12,6 +12,7 @@ import {
 } from '@wingdrive/ai';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useCallback, useState} from 'react';
+import {useTranslation} from '../../i18n';
 import {agents, useWingbot} from '../WingbotContext';
 
 function resolveAgentName(agentId: string): string {
@@ -19,6 +20,7 @@ function resolveAgentName(agentId: string): string {
 }
 
 export function TasksRoute() {
+	const {t} = useTranslation('common');
 	const {selectedAgent} = useWingbot();
 	const queryClient = useQueryClient();
 	const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
@@ -100,11 +102,11 @@ export function TasksRoute() {
 			<div className="flex min-w-0 flex-1 flex-col">
 				{tasksQuery.isLoading ? (
 					<div className="py-8 text-center text-sm text-ink-faint">
-						Loading tasks...
+						{t('wingbot.tasks.loading')}
 					</div>
 				) : tasksQuery.error ? (
 					<div className="py-8 text-center text-sm text-red-400">
-						Failed to load tasks.
+						{t('wingbot.tasks.loadFailed')}
 						<div className="mt-1 font-mono text-[10px] text-ink-faint">
 							{(tasksQuery.error as Error).message}
 						</div>
@@ -112,9 +114,9 @@ export function TasksRoute() {
 				) : tasks.length === 0 ? (
 					<div className="flex flex-1 items-center justify-center">
 						<div className="text-center">
-							<p className="text-ink-dull text-sm">No tasks yet.</p>
+							<p className="text-ink-dull text-sm">{t('wingbot.tasks.emptyTitle')}</p>
 							<p className="text-ink-faint mt-1 text-xs">
-								Create one to get started.
+								{t('wingbot.tasks.emptyHint')}
 							</p>
 						</div>
 					</div>

@@ -1,5 +1,6 @@
 import { X } from "@phosphor-icons/react";
 import clsx from "clsx";
+import { useTranslation } from "../../../i18n";
 
 interface TagProps {
   color: string;
@@ -10,6 +11,7 @@ interface TagProps {
 }
 
 export function Tag({ color, children, size = "sm", className, onRemove }: TagProps) {
+const { t } = useTranslation("inspector");
   return (
     <span
       className={clsx(
@@ -36,7 +38,7 @@ export function Tag({ color, children, size = "sm", className, onRemove }: TagPr
             onRemove();
           }}
           className="ml-0.5 rounded-full p-0.5 opacity-50 hover:opacity-100 hover:bg-black/10 transition-opacity"
-          aria-label="Remove tag"
+aria-label={t("inspector.removeTag")}
         >
           <X size={size === "sm" ? 8 : 10} weight="bold" />
         </button>

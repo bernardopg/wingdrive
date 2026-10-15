@@ -1,4 +1,5 @@
 import type {JobResult} from './useWaitForJob';
+import {i18n} from '../i18n';
 
 export type FileOperationKind = 'copy' | 'move' | 'duplicate' | 'delete';
 
@@ -24,21 +25,25 @@ export interface FileOperationOutcome {
 }
 
 const PAST_TENSE: Record<FileOperationKind, string> = {
-	copy: 'Copied',
-	move: 'Moved',
-	duplicate: 'Duplicated',
-	delete: 'Deleted'
+	copy: 'fileOperation.copied',
+	move: 'fileOperation.moved',
+	duplicate: 'fileOperation.duplicated',
+	delete: 'fileOperation.deleted'
 };
 
 const NOUN: Record<FileOperationKind, string> = {
-	copy: 'copy',
-	move: 'move',
-	duplicate: 'duplicate',
-	delete: 'delete'
+	copy: 'fileOperation.copy',
+	move: 'fileOperation.move',
+	duplicate: 'fileOperation.duplicate',
+	delete: 'fileOperation.delete'
 };
 
+function pastTense(kind: FileOperationKind): string {
+	return i18n.t(`common:${PAST_TENSE[kind]}`);
+}
+
 function items(count: number): string {
-	return `${count} item${count === 1 ? '' : 's'}`;
+	return i18n.t('common:fileOperation.items', {count});
 }
 
 function counts(result: Extract<JobResult, {status: 'completed'}>) {
@@ -81,7 +86,10 @@ export function summarizeFileOperation(
 			return {
 				...empty,
 				status: 'failed',
-				message: `Could not ${NOUN[kind]}: ${result.error}`
+				message: i18n.t('common:fileOperation.couldNot', {
+					operation: i18n.t(`common:${NOUN[kind]}`),
+					error: result.error
+				})
 			};
 		case 'cancelled':
 			return {
@@ -89,14 +97,16 @@ export function summarizeFileOperation(
 				status: 'cancelled',
 				message:
 					kind === 'delete'
-						? 'Delete cancelled. Items processed before the cancel are already gone.'
-						: `${PAST_TENSE[kind]} items stay where they are; the rest was cancelled.`
+						? i18n.t('common:fileOperation.deleteCancelled')
+						: i18n.t('common:fileOperation.cancelled', {operation: pastTense(kind)})
 			};
 		case 'timeout':
 			return {
 				...empty,
 				status: 'running',
-				message: `The ${NOUN[kind]} is still running in the background. Follow it in Jobs.`
+				message: i18n.t('common:fileOperation.running', {
+					operation: i18n.t(`common:${NOUN[kind]}`)
+				})
 			};
 		case 'completed':
 			break;
@@ -110,14 +120,20 @@ export function summarizeFileOperation(
 			details: [],
 			status: 'success',
 			message: tally
-				? `${PAST_TENSE[kind]} ${items(tally.done)}`
-				: `${PAST_TENSE[kind]}`
+				? i18n.t('common:fileOperation.completed', {
+						operation: pastTense(kind),
+						items: items(tally.done)
+					})
+				: pastTense(kind)
 		};
 	}
 
-	const parts = [`${PAST_TENSE[kind]} ${items(tally.done)}`];
-	if (tally.failed > 0) parts.push(`${tally.failed} failed`);
-	if (tally.skipped > 0) parts.push(`${tally.skipped} skipped`);
+	const parts = [i18n.t('common:fileOperation.completed', {
+		operation: pastTense(kind),
+		items: items(tally.done)
+	})];
+	if (tally.failed > 0) parts.push(i18n.t('common:fileOperation.failedCount', {count: tally.failed}));
+	if (tally.skipped > 0) parts.push(i18n.t('common:fileOperation.skippedCount', {count: tally.skipped}));
 
 	return {
 		...tally,
@@ -152,11 +168,14 @@ export function combineFileOperations(
 	const running = outcomes.some((o) => o.status === 'running');
 	const cancelled = outcomes.some((o) => o.status === 'cancelled');
 
-	const parts = [`${PAST_TENSE[kind]} ${items(done)}`];
-	if (failed > 0) parts.push(`${failed} failed`);
-	if (skipped > 0) parts.push(`${skipped} skipped`);
-	if (running) parts.push('some still running in Jobs');
-	if (cancelled) parts.push('some cancelled');
+	const parts = [i18n.t('common:fileOperation.completed', {
+		operation: pastTense(kind),
+		items: items(done)
+	})];
+	if (failed > 0) parts.push(i18n.t('common:fileOperation.failedCount', {count: failed}));
+	if (skipped > 0) parts.push(i18n.t('common:fileOperation.skippedCount', {count: skipped}));
+	if (running) parts.push(i18n.t('common:fileOperation.someRunning'));
+	if (cancelled) parts.push(i18n.t('common:fileOperation.someCancelled'));
 
 	const clean = failed === 0 && skipped === 0 && !running && !cancelled;
 	return {

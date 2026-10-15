@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLibraryQuery, useWingDriveClient } from '../../../contexts/WingDriveContext';
 import type { SyncPeerActivity, SyncActivity, SyncState } from '../types';
+import { i18n } from '../../../i18n';
 
 interface SyncMonitorState {
 	currentState: SyncState;
@@ -88,25 +89,25 @@ export function useSyncMonitor() {
 
 				if ('BroadcastSent' in activityType) {
 					eventType = 'broadcast';
-					description = `Broadcast ${activityType.BroadcastSent.changes} changes`;
+					description = i18n.t('dialogs:sync.broadcastChanges', { count: activityType.BroadcastSent.changes });
 				} else if ('ChangesReceived' in activityType) {
 					eventType = 'received';
-					description = `Received ${activityType.ChangesReceived.changes} changes`;
+					description = i18n.t('dialogs:sync.receivedChanges', { count: activityType.ChangesReceived.changes });
 				} else if ('ChangesApplied' in activityType) {
 					eventType = 'applied';
-					description = `Applied ${activityType.ChangesApplied.changes} changes`;
+					description = i18n.t('dialogs:sync.appliedChanges', { count: activityType.ChangesApplied.changes });
 				} else if ('BackfillStarted' in activityType) {
 					eventType = 'backfill';
-					description = 'Backfill started';
+					description = i18n.t('dialogs:sync.backfillStarted');
 				} else if ('BackfillCompleted' in activityType) {
 					eventType = 'backfill';
-					description = `Backfill completed (${activityType.BackfillCompleted.records} records)`;
+					description = i18n.t('dialogs:sync.backfillCompleted', { count: activityType.BackfillCompleted.records });
 				} else if ('CatchUpStarted' in activityType) {
 					eventType = 'backfill';
-					description = 'Catch-up started';
+					description = i18n.t('dialogs:sync.catchUpStarted');
 				} else if ('CatchUpCompleted' in activityType) {
 					eventType = 'backfill';
-					description = 'Catch-up completed';
+					description = i18n.t('dialogs:sync.catchUpCompleted');
 				}
 
 				setState((prev) => ({
@@ -135,7 +136,7 @@ export function useSyncMonitor() {
 							timestamp: event.SyncConnectionChanged.timestamp,
 							eventType: 'connection',
 							peerDeviceId,
-							description: `${peerName} ${connected ? 'connected' : 'disconnected'}`,
+							description: i18n.t(connected ? 'dialogs:sync.peerConnected' : 'dialogs:sync.peerDisconnected', { name: peerName }),
 						},
 						...prev.recentActivity.slice(0, 49),
 					],

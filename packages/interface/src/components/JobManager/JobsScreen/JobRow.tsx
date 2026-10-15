@@ -4,6 +4,7 @@ import clsx from "clsx";
 import type { JobListItem } from "../types";
 import { getJobDisplayName, formatDuration, timeAgo } from "../types";
 import { JobStatusIndicator } from "../components/JobStatusIndicator";
+import { useTranslation } from "../../../i18n";
 
 interface JobRowProps {
 	job: JobListItem;
@@ -13,6 +14,7 @@ interface JobRowProps {
 }
 
 export function JobRow({ job, onPause, onResume, onCancel }: JobRowProps) {
+	const { t } = useTranslation("dialogs");
 	const [isHovered, setIsHovered] = useState(false);
 
 	const displayName = getJobDisplayName(job);
@@ -162,7 +164,7 @@ export function JobRow({ job, onPause, onResume, onCancel }: JobRowProps) {
 						<button
 							onClick={handleAction}
 							className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-app-box hover:bg-app-selected transition-colors"
-							title={canPause ? "Pause job" : "Resume job"}
+							title={canPause ? t("jobs.pause") : t("jobs.resume")}
 						>
 							{canPause ? (
 								<Pause size={12} weight="fill" className="text-ink" />
@@ -175,7 +177,7 @@ export function JobRow({ job, onPause, onResume, onCancel }: JobRowProps) {
 						<button
 							onClick={handleCancel}
 							className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-app-box hover:bg-red-500 transition-colors"
-							title="Cancel job"
+							title={t("jobs.cancel")}
 						>
 							<X size={12} weight="bold" className="text-ink hover:text-white" />
 						</button>

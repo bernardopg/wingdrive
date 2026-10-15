@@ -11,6 +11,8 @@ import {
 } from "../../contexts/WingDriveContext";
 import { useRefetchTagQueries } from "../../hooks/useRefetchTagQueries";
 import { toast } from "@wingdrive/primitives";
+import { useTranslation } from "../../i18n";
+import {uiLocale} from "../../i18n";
 
 interface MetadataPanelProps {
 	file: File;
@@ -30,6 +32,7 @@ export function MetadataPanel({
 	onClose,
 	offsetRight = 0,
 }: MetadataPanelProps) {
+const { t } = useTranslation("inspector");
 	const refetchTagQueries = useRefetchTagQueries();
 	const applyTag = useLibraryMutation("tags.apply", {
 		onSuccess: refetchTagQueries,
@@ -114,7 +117,7 @@ export function MetadataPanel({
 			{/* Header */}
 			<div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
 				<div className="text-sm font-medium text-white/90">
-					Details
+					{t("ui.details")}
 				</div>
 				<div className="flex items-center gap-1">
 					<button
@@ -128,7 +131,7 @@ export function MetadataPanel({
 								});
 							} catch (err) {
 								setIsFavorite(!next);
-								toast.error(`Failed to update favorite: ${err}`);
+								toast.error(t("favoriteFailed", { error: String(err) }));
 							}
 						}}
 						className={`rounded-md p-1.5 transition-colors hover:bg-white/10 ${
@@ -136,7 +139,7 @@ export function MetadataPanel({
 								? "text-yellow-400"
 								: "text-white/60 hover:text-white"
 						}`}
-						title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+						title={isFavorite ? t("inspector.preview.removeFavorite") : t("inspector.preview.addFavorite")}
 					>
 						<Star
 							size={14}
@@ -157,7 +160,7 @@ export function MetadataPanel({
 				{/* Tags */}
 				<section className="space-y-2">
 					<SectionLabel icon={<Tag size={13} weight="fill" />}>
-						Tags
+						{t("ui.tags")}
 					</SectionLabel>
 					<div className="flex flex-wrap items-center gap-1.5">
 						{file.tags && file.tags.length > 0
@@ -216,7 +219,7 @@ export function MetadataPanel({
 							trigger={
 								<button className="flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white">
 									<Plus size={10} weight="bold" />
-									Add tags
+									{t("ui.addTags")}
 								</button>
 							}
 						/>
@@ -229,20 +232,20 @@ export function MetadataPanel({
 						<SectionLabel
 							icon={<Camera size={13} weight="fill" />}
 						>
-							Media
+							{t("ui.media")}
 						</SectionLabel>
 						<dl className="space-y-1.5">
 							{dimensionLine && (
-								<Row label="Dimensions">
+								<Row label={t("inspector.file.dimensions")}>
 									{dimensionLine}
 								</Row>
 							)}
-							{duration && <Row label="Duration">{duration}</Row>}
+							{duration && <Row label={t("inspector.file.duration")}>{duration}</Row>}
 							{videoCodec && (
-								<Row label="Codec">{videoCodec}</Row>
+								<Row label={t("inspector.file.codec")}>{videoCodec}</Row>
 							)}
 							{audioCodec && (
-								<Row label="Codec">{audioCodec}</Row>
+								<Row label={t("inspector.file.codec")}>{audioCodec}</Row>
 							)}
 						</dl>
 						{camera && (
@@ -270,22 +273,22 @@ export function MetadataPanel({
 					<SectionLabel
 						icon={<HardDrive size={13} weight="fill" />}
 					>
-						File
+						{t("ui.file")}
 					</SectionLabel>
 					<dl className="space-y-1.5">
 						{file.size > 0 && (
-							<Row label="Size">
+							<Row label={t("inspector.file.size")}>
 								{formatBytes(file.size)}
 							</Row>
 						)}
-						<Row label="Created">
+						<Row label={t("inspector.file.created")}>
 							{formatDate(file.created_at)}
 						</Row>
-						<Row label="Modified">
+						<Row label={t("inspector.file.modified")}>
 							{formatDate(file.modified_at)}
 						</Row>
 						{file.content_identity?.content_hash && (
-							<Row label="Content hash" mono>
+							<Row label={t("inspector.preview.contentHash")} mono>
 								{shortHash(
 									file.content_identity.content_hash,
 								)}
@@ -300,7 +303,7 @@ export function MetadataPanel({
 						<SectionLabel
 							icon={<HardDrive size={13} weight="fill" />}
 						>
-							Location
+							{t("ui.location")}
 						</SectionLabel>
 						<div className="break-all rounded-md bg-white/5 px-2.5 py-2 text-xs leading-relaxed text-white/60">
 							{physicalPath}
@@ -355,7 +358,7 @@ function formatDuration(totalSeconds: number): string {
 }
 
 function formatDate(date: string): string {
-	return new Date(date).toLocaleDateString(undefined, {
+	return new Date(date).toLocaleDateString(uiLocale(), {
 		year: "numeric",
 		month: "short",
 		day: "numeric",

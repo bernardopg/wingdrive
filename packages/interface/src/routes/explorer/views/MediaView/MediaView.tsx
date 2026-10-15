@@ -15,6 +15,7 @@ import { DateHeader } from "./DateHeader";
 import { formatDate, getItemDate, normalizeDateToMidnight } from "./utils";
 import { useExplorerFiles } from "../../hooks/useExplorerFiles";
 import {useTabScroll} from '../../hooks/useTabScroll';
+import { useTranslation } from "../../../../i18n";
 
 // Helper to check if a file is a media file (image or video)
 function isMediaFile(file: File): boolean {
@@ -26,6 +27,7 @@ function isMediaFile(file: File): boolean {
 }
 
 export function MediaView() {
+const {t} = useTranslation("explorer");
 	const { currentPath, viewSettings, sortBy, setSortBy, setCurrentFiles, mode, scrollPosition } =
 		useExplorer();
 	const {
@@ -350,7 +352,7 @@ export function MediaView() {
 	if (!usesExplorerFiles && mediaQuery.isLoading) {
 		return (
 			<div className="flex items-center justify-center h-full text-ink-dull">
-				Loading media...
+				{t("general.loadingMedia")}
 			</div>
 		);
 	}
@@ -358,9 +360,9 @@ export function MediaView() {
 	if (!usesExplorerFiles && !currentPath) {
 		return (
 			<div className="flex flex-col items-center justify-center h-full text-ink-dull gap-2">
-				<div className="text-lg">No location selected</div>
+				<div className="text-lg">{t("general.noLocationSelected")}</div>
 				<div className="text-sm">
-					Select a location from the sidebar to view media
+					{t("emptyState.selectLocationForMedia")}
 				</div>
 			</div>
 		);
@@ -369,13 +371,13 @@ export function MediaView() {
 	if (files.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center h-full text-ink-dull gap-2">
-				<div className="text-lg">No media files found</div>
+				<div className="text-lg">{t("emptyState.noMediaFound")}</div>
 				<div className="text-sm">
-					{mode.type === "search"
-						? "No images or videos match your search"
+					{t(mode.type === "search"
+						? "emptyState.noMatchingMedia"
 						: usesExplorerFiles
-							? "No images or videos in this view"
-							: "No images or videos in this location"}
+							? "emptyState.noMediaInView"
+							: "emptyState.noMediaInLocation")}
 				</div>
 			</div>
 		);

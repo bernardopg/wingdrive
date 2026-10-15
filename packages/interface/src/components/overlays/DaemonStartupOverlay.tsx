@@ -3,8 +3,10 @@ import { WingDriveLogo } from "@wingdrive/assets/images";
 import { CircleNotch } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
 import { usePlatform } from "../../contexts/PlatformContext";
+import { useTranslation } from "../../i18n";
 
 export function DaemonStartupOverlay({ show }: { show: boolean }) {
+	const { t } = useTranslation("dialogs");
 	const platform = usePlatform();
 	const [version, setVersion] = useState<string>("2.0.0");
 	const isDev = import.meta.env.DEV;
@@ -74,7 +76,7 @@ export function DaemonStartupOverlay({ show }: { show: boolean }) {
 						/>
 						<div className="flex flex-col">
 							<p className="text-lg font-bold text-white">
-								Starting WingDrive
+								{t("daemon.startingWingDrive")}
 							</p>
 							<p className="text-sm text-white/50">
 								v{versionText}

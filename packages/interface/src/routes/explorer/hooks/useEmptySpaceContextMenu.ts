@@ -15,8 +15,10 @@ import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useOpenTerminal} from './useOpenTerminal';
 import {usePasteFiles} from './usePasteFiles';
+import {useTranslation} from '../../../i18n';
 
 export function useEmptySpaceContextMenu() {
+	const {t} = useTranslation('explorer');
 	const {operationalPath} = useExplorer();
 	const createFolder = useCreateFolder();
 	const clipboard = useClipboard();
@@ -30,21 +32,21 @@ export function useEmptySpaceContextMenu() {
 		items: [
 			{
 				icon: ArrowCounterClockwise,
-				label: 'Undo',
+			label: t('contextMenu.undo'),
 				onClick: undo.undo,
 				keybindId: 'explorer.undo',
 				condition: () => undo.canUndo
 			},
 			{
 				icon: FolderPlus,
-				label: 'New Folder',
+			label: t('contextMenu.newFolder'),
 				onClick: createFolder,
 				keybindId: 'explorer.newFolder',
 				condition: () => !!operationalPath
 			},
 			{
 				icon: FilePlus,
-				label: 'New File',
+			label: t('contextMenu.newFile'),
 				onClick: () => {
 					void newFile();
 				},
@@ -53,7 +55,7 @@ export function useEmptySpaceContextMenu() {
 			},
 			{
 				icon: Copy,
-				label: 'Paste',
+			label: t('contextMenu.paste'),
 				onClick: () => {
 					void pasteFiles(operationalPath);
 				},
@@ -62,7 +64,7 @@ export function useEmptySpaceContextMenu() {
 			},
 			{
 				icon: TerminalWindow,
-				label: 'Open Terminal Here',
+			label: t('contextMenu.openTerminalHere'),
 				onClick: () => {
 					void openTerminal?.(operationalPath);
 				},
@@ -72,7 +74,7 @@ export function useEmptySpaceContextMenu() {
 			},
 			{
 				icon: MagnifyingGlass,
-				label: 'Find Duplicates…',
+			label: t('contextMenu.findDuplicates'),
 				onClick: () => {
 					if (operationalPath && 'Physical' in operationalPath) {
 						openDuplicates(operationalPath.Physical.path);

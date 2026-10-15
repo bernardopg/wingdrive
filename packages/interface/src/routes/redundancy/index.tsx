@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { TopBarPortal, TopBarItem } from "../../TopBar";
 import { useLibraryQuery } from "../../contexts/WingDriveContext";
 import { RedundancyVolumeBar } from "./components/RedundancyVolumeBar";
+import { useTranslation } from "../../i18n";
 
 function formatBytes(bytes: number): string {
 	if (bytes === 0) return "0 B";
@@ -22,6 +23,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function RedundancyDashboard() {
+	const { t } = useTranslation("navigation");
 	const navigate = useNavigate();
 
 	const { data, isLoading } = useLibraryQuery({
@@ -45,10 +47,10 @@ export function RedundancyDashboard() {
 		() => (
 			<div className="flex items-center gap-2">
 				<ShieldCheck size={20} weight="bold" className="text-ink" />
-				<h1 className="text-xl font-bold text-ink">Redundancy</h1>
+				<h1 className="text-xl font-bold text-ink">{t("redundancy.title")}</h1>
 			</div>
 		),
-		[],
+		[t],
 	);
 
 	if (isLoading || !data) {
@@ -58,7 +60,7 @@ export function RedundancyDashboard() {
 					left={
 						<TopBarItem
 							id="redundancy-title"
-							label="Redundancy"
+							label={t("redundancy.title")}
 							priority="high"
 						>
 							{topBarTitle}
@@ -66,7 +68,7 @@ export function RedundancyDashboard() {
 					}
 				/>
 				<div className="flex h-full items-center justify-center text-ink-dull">
-					Loading redundancy data...
+					{t("redundancy.loading")}
 				</div>
 			</>
 		);
@@ -84,7 +86,7 @@ export function RedundancyDashboard() {
 				left={
 					<TopBarItem
 						id="redundancy-title"
-						label="Redundancy"
+						label={t("redundancy.title")}
 						priority="high"
 					>
 						{topBarTitle}
@@ -94,7 +96,7 @@ export function RedundancyDashboard() {
 
 			<div className="flex h-full flex-col overflow-hidden">
 				<div className="flex-1 overflow-auto p-4 space-y-4">
-					{/* Replication Score + At-Risk Summary */}
+				{/* Replication Score + At-Risk Summary */}
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						{/* Replication Score Card */}
 						<div className="flex items-center gap-4 rounded-lg border border-app-line bg-app-box/50 p-4">
@@ -108,7 +110,7 @@ export function RedundancyDashboard() {
 									{scorePercent}%
 								</motion.span>
 								<span className="text-xs text-ink-dull">
-									Replication Score
+									{t("redundancy.score")}
 								</span>
 							</div>
 							<div className="flex-1 space-y-1 text-xs text-ink-dull">
@@ -118,7 +120,7 @@ export function RedundancyDashboard() {
 											library_totals.total_redundant_bytes,
 										)}
 									</span>{" "}
-									safely replicated
+									{t("redundancy.safelyReplicated")}
 								</div>
 								<div>
 									<span className="text-ink">
@@ -126,7 +128,7 @@ export function RedundancyDashboard() {
 											library_totals.total_at_risk_bytes,
 										)}
 									</span>{" "}
-									at risk (single copy)
+									{t("redundancy.singleCopyRisk")}
 								</div>
 								<div>
 									<span className="text-ink">
@@ -134,7 +136,7 @@ export function RedundancyDashboard() {
 											library_totals.total_unique_content_bytes,
 										)}
 									</span>{" "}
-									unique content total
+									{t("redundancy.uniqueContentTotal")}
 								</div>
 							</div>
 						</div>
@@ -151,14 +153,13 @@ export function RedundancyDashboard() {
 							/>
 							<div className="flex-1">
 								<div className="text-sm font-medium text-ink">
-									{totalAtRiskFiles.toLocaleString()} files at
-									risk
+									{t("redundancy.atRiskFileCount", {count: totalAtRiskFiles, formattedCount: totalAtRiskFiles.toLocaleString()})}
 								</div>
 								<div className="text-xs text-ink-dull">
 									{formatBytes(
 										library_totals.total_at_risk_bytes,
 									)}{" "}
-									of data exists on only one volume
+									{t("redundancy.dataOnOneVolume")}
 								</div>
 							</div>
 							<ArrowRight
@@ -171,13 +172,12 @@ export function RedundancyDashboard() {
 					{/* Per-Volume Redundancy Bars */}
 					<div>
 						<h2 className="mb-2 text-sm font-medium text-ink-dull">
-							Per-Volume Breakdown
+							{t("redundancy.volumeBreakdown")}
 						</h2>
 						<div className="space-y-2">
 							{volumes.length === 0 ? (
 								<div className="rounded-lg border border-app-line bg-app-box/50 p-6 text-center text-sm text-ink-dull">
-									No volumes with indexed content found.
-									Index a volume to see redundancy data.
+									{t("redundancy.noIndexedVolumes")}
 								</div>
 							) : (
 								volumes.map((vol) => (
@@ -207,13 +207,13 @@ export function RedundancyDashboard() {
 							onClick={() => navigate("/redundancy/compare")}
 							className="rounded-lg border border-app-line bg-app-box/50 px-4 py-2 text-sm text-ink transition-colors hover:bg-app-hover"
 						>
-							Compare Volumes
+							{t("redundancy.compareVolumes")}
 						</button>
 						<button
 							onClick={() => navigate("/redundancy/at-risk")}
 							className="rounded-lg border border-app-line bg-app-box/50 px-4 py-2 text-sm text-ink transition-colors hover:bg-app-hover"
 						>
-							View At-Risk Files
+							{t("redundancy.viewAtRisk")}
 						</button>
 					</div>
 				</div>

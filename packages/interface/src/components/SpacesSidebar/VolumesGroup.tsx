@@ -5,6 +5,7 @@ import {GroupHeader} from './GroupHeader';
 import {SpaceItem} from './SpaceItem';
 import {useVolumeContextMenu} from './hooks/useVolumeContextMenu';
 import {NetworkSection} from './NetworkSection';
+import {useTranslation} from '../../i18n';
 
 interface VolumesGroupProps {
 	isCollapsed: boolean;
@@ -70,6 +71,7 @@ export function VolumesGroup({
 	sortableAttributes,
 	sortableListeners
 }: VolumesGroupProps) {
+const {t} = useTranslation('navigation');
 	const {data: volumesData} = useNormalizedQuery({
 		query: 'volumes.list',
 		input: {filter},
@@ -88,7 +90,7 @@ export function VolumesGroup({
 	return (
 		<div>
 			<GroupHeader
-				label="Volumes"
+				label={t('sidebar.volumes')}
 				isCollapsed={isCollapsed}
 				onToggle={onToggle}
 				sortableAttributes={sortableAttributes}
@@ -100,7 +102,7 @@ export function VolumesGroup({
 				<div className="space-y-0.5">
 					{volumes.length === 0 ? (
 						<div className="text-ink-faint px-2 py-1 text-xs">
-							No volumes
+					{t('volumes.empty')}
 						</div>
 					) : (
 						volumes.map((volume: Volume, index: number) => (

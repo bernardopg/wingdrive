@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '../../i18n';
 import clsx from 'clsx';
 import { Input, Label, dialogManager, useDialog, Dialog } from '@wingdrive/primitives';
 import { useLibraryMutation } from '@wingdrive/ts-client';
@@ -35,6 +36,7 @@ export function useCreateSpaceDialog() {
 }
 
 function CreateSpaceDialog(props: { id: number }) {
+	const { t } = useTranslation('navigation');
 	const dialog = useDialog(props);
 	const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
 	const [selectedIcon, setSelectedIcon] = useState(PRESET_ICONS[0]);
@@ -63,22 +65,22 @@ function CreateSpaceDialog(props: { id: number }) {
 		<Dialog
 			form={form}
 			dialog={dialog}
-			title="Create Wing"
+			title={t('space.create')}
 			onSubmit={onSubmit}
-			ctaLabel="Create"
+			ctaLabel={t('common.create')}
 		>
 			<div className="space-y-4">
 				<div>
-					<Label>Wing Name</Label>
+					<Label>{t('space.name')}</Label>
 					<Input
 						{...form.register('name', { required: true })}
-						placeholder="e.g., Work Files, Personal Photos"
+						placeholder={t('space.namePlaceholder')}
 						autoFocus
 					/>
 				</div>
 
 				<div>
-					<Label>Color</Label>
+					<Label>{t('space.color')}</Label>
 					<div className="flex flex-wrap gap-2">
 						{PRESET_COLORS.map((color) => (
 							<button
@@ -98,7 +100,7 @@ function CreateSpaceDialog(props: { id: number }) {
 				</div>
 
 				<div>
-					<Label>Icon</Label>
+					<Label>{t('space.icon')}</Label>
 					<div className="flex flex-wrap gap-2">
 						{PRESET_ICONS.map((icon) => (
 							<button

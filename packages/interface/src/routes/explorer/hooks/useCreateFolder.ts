@@ -5,16 +5,16 @@ import {useLibraryMutation} from '../../../contexts/WingDriveContext';
 import {useRefetchFileListings} from '../../../hooks/useRefetchFileListings';
 import {useUndo} from '../../../hooks/useUndo';
 import {useExplorer} from '../context';
-
-const BASE_NAME = 'Untitled Folder';
+import {i18n, useTranslation} from '../../../i18n';
 
 /** First of "Untitled Folder", "Untitled Folder 2", ... not already taken. */
 export function nextFolderName(existing: Iterable<string>): string {
+	const baseName = i18n.t('explorer:create.folderBaseName');
 	const taken = new Set(existing);
-	if (!taken.has(BASE_NAME)) return BASE_NAME;
+	if (!taken.has(baseName)) return baseName;
 	let n = 2;
-	while (taken.has(`${BASE_NAME} ${n}`)) n++;
-	return `${BASE_NAME} ${n}`;
+	while (taken.has(`${baseName} ${n}`)) n++;
+	return `${baseName} ${n}`;
 }
 
 /**
@@ -22,6 +22,7 @@ export function nextFolderName(existing: Iterable<string>): string {
  * Resolves to the folder name, or null when nothing was created.
  */
 export function useCreateFolder() {
+	const {t} = useTranslation('explorer');
 	// currentFiles lists the operational directory whenever it is set, so the
 	// free-name check runs against the folder that receives the new one.
 	const {operationalPath, currentFiles} = useExplorer();
@@ -49,10 +50,10 @@ export function useCreateFolder() {
 				const remove = platform.undoEmptyFolder;
 				try {
 					const expected = await platform.fileIdentity(path);
-					undo.record('new folder', () => remove(path, expected));
+					undo.record(t('undo.newFolder'), () => remove(path, expected));
 				} catch {
 					toast.error(
-						'Folder created successfully, but undo is unavailable'
+				t('errors.folderCreatedUndoUnavailable')
 					);
 				}
 			}
@@ -62,7 +63,7 @@ export function useCreateFolder() {
 			refetchListings();
 			return name;
 		} catch (err) {
-			toast.error(`Failed to create folder: ${err}`);
+			toast.error(t('errors.failedToCreateFolder', {error: err}));
 			return null;
 		}
 	}, [
@@ -71,6 +72,7 @@ export function useCreateFolder() {
 		createFolder,
 		refetchListings,
 		platform,
-		undo
+		undo,
+		t
 	]);
 }
