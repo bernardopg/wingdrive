@@ -37,6 +37,8 @@ and keep WingDrive's version wherever it already fixed the same bug.
    WingDrive's code before porting. Small to medium.
 6. `92dea58a4`: CI gate that fails when generated TypeScript types are stale.
    Medium.
+   Done 2026-10-15 as a step of `scripts/ci-rust.sh full`, so CI and
+   `just ci-local` share it; the Tauri schema half is not ported.
 7. `bcc7337b0`, `3cd44f2da`: copy preflight and undo, as WingDrive features.
    Large; split into their own tasks when started.
 
