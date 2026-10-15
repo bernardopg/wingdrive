@@ -1,14 +1,14 @@
 ---
 id: FORK-006
 title: Port the next upstream fixes from the 2026-10-14 survey
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: FORK-002
 priority: Medium
 milestone: M2
 sprint: S03
 tags: [fork, upstream, port]
-last_updated: 2026-10-14
+last_updated: 2026-10-15
 ---
 
 ## Description
@@ -23,6 +23,8 @@ and keep WingDrive's version wherever it already fixed the same bug.
 
 1. `393158c23`: `stop_watching` waits for the watcher loop to exit, closing the
    same race at shutdown that FORK-005 fixed at library creation. Small.
+   Done 2026-10-15 with its regression test
+   (`stopping_the_watcher_inside_its_debounce_reopens_nothing`).
 2. `cedc8d6f7` (monitor part only): mark volumes that disappeared as offline, so
    an unplugged USB drive stops showing as online. Medium.
 3. `4d18db0ab` + `bf1ca21a1`: bound thumbnail decoding by available memory and

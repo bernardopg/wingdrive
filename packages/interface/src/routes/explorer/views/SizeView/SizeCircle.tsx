@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { useRef } from "react";
-import type { File } from "@wingdrive/ts-client";
+import { fileDisplaySize, type File } from "@wingdrive/ts-client";
 import { formatBytes } from "../../utils";
 import {
 	setDragData,
@@ -77,6 +77,7 @@ export function SizeCircle({
 	selected,
 	onSelect,
 }: SizeCircleProps) {
+	const displaySize = fileDisplaySize(file);
 	const platform = usePlatform();
 	const dragStartPos = useRef<{ x: number; y: number } | null>(null);
 	const isDraggingRef = useRef(false);
@@ -214,7 +215,7 @@ export function SizeCircle({
 										: "14px",
 						}}
 					>
-						{formatBytes(file.size)}
+					{displaySize === null ? "—" : formatBytes(displaySize)}
 					</div>
 				</div>
 			</div>

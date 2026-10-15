@@ -1,14 +1,14 @@
 ---
 id: DESK-013
 title: Finish i18n and theming for the Linux desktop
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: DESK-000
 priority: Medium
 milestone: M2
 sprint: S03
 tags: [i18n, themes, desktop, linux]
-last_updated: 2026-10-14
+last_updated: 2026-10-15
 ---
 
 ## Description
@@ -33,8 +33,8 @@ the in-app context menu. Native and unverified parts remain.
 
 ## Acceptance Criteria
 
-- [ ] Tray menu follows the UI language
-- [ ] About links open the system browser from the desktop app
+- [x] Tray menu follows the UI language
+- [x] About links open the system browser from the desktop app
 - [ ] pt-BR proofread to 100% in Crowdin
 - [ ] AppImage verified on Linux; macOS/Windows menu position checked or
       recorded as blocked on hardware

@@ -28,7 +28,7 @@ import {
 import {getIcon} from '@wingdrive/assets/util';
 import {useIsDarkTheme} from '../../../hooks/useTheme';
 import type {File, WingPath} from '@wingdrive/ts-client';
-import {getContentKind} from '@wingdrive/ts-client';
+import {fileDisplaySize, getContentKind} from '@wingdrive/ts-client';
 import {toast} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {useEffect, useState} from 'react';
@@ -382,6 +382,7 @@ title={t('inspector.file.processingJobs')}
 function MediaMetadataCard({file}: {file: File}) {
 	const imageData = file.image_media_data;
 	const videoData = file.video_media_data;
+	const displaySize = fileDisplaySize(file);
 
 	if (!imageData && !videoData) return null;
 
@@ -481,8 +482,8 @@ function MediaMetadataCard({file}: {file: File}) {
 			parts.push(`${width} × ${height}`);
 		}
 
-		if (file.size) {
-			parts.push(formatBytes(file.size));
+		if (displaySize) {
+			parts.push(formatBytes(displaySize));
 		}
 
 		return parts.length > 0 ? parts.join(' • ') : null;
@@ -670,6 +671,7 @@ function MediaMetadataCard({file}: {file: File}) {
 
 function OverviewTab({file}: {file: File}) {
 const {t} = useTranslation('inspector');
+	const displaySize = fileDisplaySize(file);
 	const formatDate = (dateStr: string) => {
 		const date = new Date(dateStr);
 		return date.toLocaleDateString(uiLocale(), {
@@ -763,7 +765,9 @@ const {t} = useTranslation('inspector');
 
 			{/* Details */}
 <Section title={t('inspector.file.details')} icon={Info}>
-<InfoRow label={t('inspector.file.size')} value={formatBytes(file.size)} />
+{displaySize !== null && (
+	<InfoRow label={t('inspector.file.size')} value={formatBytes(displaySize)} />
+)}
 				{file.kind === 'File' && file.extension && (
 <InfoRow label={t('inspector.file.extension')} value={file.extension} />
 				)}
@@ -1761,6 +1765,7 @@ function InstancesTab({file}: {file: File}) {
 
 function InstanceRow({instance}: {instance: File}) {
 	const {t} = useTranslation('inspector');
+	const displaySize = fileDisplaySize(instance);
 	const getPathDisplay = (sdPath: typeof instance.wing_path) => {
 		if ('Physical' in sdPath) {
 			return sdPath.Physical.path;
@@ -1830,9 +1835,11 @@ function InstanceRow({instance}: {instance: File}) {
 				</span>
 
 				{/* Size */}
-				<span className="text-sidebar-ink-dull min-w-[50px] text-right text-[10px]">
-					{formatBytes(instance.size)}
-				</span>
+				{displaySize !== null && (
+					<span className="text-sidebar-ink-dull min-w-[50px] text-right text-[10px]">
+						{formatBytes(displaySize)}
+					</span>
+				)}
 
 				{/* Local indicator */}
 				<div

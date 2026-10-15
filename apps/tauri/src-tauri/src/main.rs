@@ -2405,6 +2405,7 @@ fn main() {
 			launch::take_initial_open_request,
 			background::get_desktop_settings,
 			background::set_desktop_settings,
+			background::set_tray_labels,
 			get_daemon_socket,
 			get_server_url,
 			get_file_stream_url,

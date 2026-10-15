@@ -134,6 +134,7 @@
 		"gapSize": "Gap Size",
 		"itemsShown": "Items Shown",
 		"showFileSize": "Show File Size",
+		"calculateFolderSizes": "Calculate Folder Sizes",
 		"foldersFirst": "Folders First",
 		"showHiddenFiles": "Show Hidden Files"
 	},

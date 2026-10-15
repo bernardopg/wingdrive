@@ -308,5 +308,10 @@
 		"finder": "Show in Finder",
 		"explorer": "Show in Explorer",
 		"folder": "Show in Folder"
+	},
+	"tray": {
+		"open": "Open WingDrive",
+		"newTab": "New Tab",
+		"quit": "Quit WingDrive"
 	}
 }

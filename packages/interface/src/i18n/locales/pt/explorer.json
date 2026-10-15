@@ -134,6 +134,7 @@
 		"gapSize": "Espaçamento",
 		"itemsShown": "Itens exibidos",
 		"showFileSize": "Mostrar tamanho dos arquivos",
+		"calculateFolderSizes": "Calcular tamanhos das pastas",
 		"foldersFirst": "Pastas primeiro",
 		"showHiddenFiles": "Mostrar arquivos ocultos"
 	},
