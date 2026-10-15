@@ -3,7 +3,7 @@ import { Camera, HardDrive, Plus, Star, Tag, X } from "@phosphor-icons/react";
 import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { File } from "@wingdrive/ts-client";
-import { getContentKind } from "@wingdrive/ts-client";
+import { fileDisplaySize, getContentKind } from "@wingdrive/ts-client";
 import { TagPill, TagSelectorButton } from "../Tags";
 import { formatBytes } from "../../routes/explorer/utils";
 import {
@@ -33,6 +33,7 @@ export function MetadataPanel({
 	offsetRight = 0,
 }: MetadataPanelProps) {
 const { t } = useTranslation("inspector");
+	const displaySize = fileDisplaySize(file);
 	const refetchTagQueries = useRefetchTagQueries();
 	const applyTag = useLibraryMutation("tags.apply", {
 		onSuccess: refetchTagQueries,
@@ -276,9 +277,9 @@ const { t } = useTranslation("inspector");
 						{t("ui.file")}
 					</SectionLabel>
 					<dl className="space-y-1.5">
-						{file.size > 0 && (
+						{displaySize !== null && (
 							<Row label={t("inspector.file.size")}>
-								{formatBytes(file.size)}
+								{formatBytes(displaySize)}
 							</Row>
 						)}
 						<Row label={t("inspector.file.created")}>

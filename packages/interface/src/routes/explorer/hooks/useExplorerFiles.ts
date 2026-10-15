@@ -5,9 +5,13 @@ import type {
 	FileSearchOutput,
 	WingPath,
 } from "@wingdrive/ts-client";
-import { useMemo } from "react";
+import { withDirectorySizes } from "@wingdrive/ts-client";
+import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useNormalizedQuery } from "../../../contexts/WingDriveContext";
+import {
+	useLibraryQuery,
+	useNormalizedQuery,
+} from "../../../contexts/WingDriveContext";
 import { useExplorer } from "../context";
 import {
 	buildSearchInput,
@@ -274,6 +278,37 @@ export function useExplorerFiles(): ExplorerFilesResult {
 				? 750
 				: false,
 	});
+	const directorySizePath =
+		currentPath && "Physical" in currentPath ? currentPath : null;
+	const directorySizesQuery = useLibraryQuery(
+		{
+			type: "files.directory_sizes",
+			input: { path: directorySizePath! },
+		},
+		{
+			enabled:
+				viewSettings.calculateFolderSizes &&
+				!!directorySizePath &&
+				!isVirtualView &&
+				!isSearchMode &&
+				!isRecentsMode &&
+				!isFilteredMode &&
+				!isTagMode,
+			// A newer request supersedes this one on the daemon; retrying would
+			// make two Explorer tabs cancel each other in a loop.
+			retry: false,
+			staleTime: 60_000,
+		},
+	);
+	// Re-measure when the listing changes (files created, deleted, moved).
+	const directoryUpdatedAt = directoryQuery.dataUpdatedAt;
+	const sizesUpdatedAt = directorySizesQuery.dataUpdatedAt;
+	const refetchDirectorySizes = directorySizesQuery.refetch;
+	useEffect(() => {
+		if (sizesUpdatedAt > 0 && directoryUpdatedAt > sizesUpdatedAt) {
+			void refetchDirectorySizes();
+		}
+	}, [directoryUpdatedAt, sizesUpdatedAt, refetchDirectorySizes]);
 
 	// Priority: filtered > tag > recents > search > virtual > directory
 	const source: FileSource = isFilteredMode
@@ -288,7 +323,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 						? "virtual"
 						: "directory";
 
-	const files = useMemo(() => {
+	const listedFiles = useMemo(() => {
 		if (isFilteredMode) {
 			return (
 				(filteredQuery.data as FileSearchOutput | undefined)?.files ||
@@ -330,6 +365,13 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		virtualFiles,
 		directoryQuery.data,
 	]);
+	const files = useMemo(
+		() =>
+			source === "directory"
+				? withDirectorySizes(listedFiles, directorySizesQuery.data?.sizes)
+				: listedFiles,
+		[source, directorySizesQuery.data, listedFiles],
+	);
 
 	const isLoading = isFilteredMode
 		? filteredQuery.isLoading

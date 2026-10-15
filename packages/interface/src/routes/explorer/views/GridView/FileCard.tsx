@@ -1,6 +1,6 @@
 import {useDroppable} from '@dnd-kit/core';
 import type {File} from '@wingdrive/ts-client';
-import {isVirtualFile} from '@wingdrive/ts-client';
+import {fileDisplaySize, isVirtualFile} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {memo} from 'react';
 import {TagDot} from '../../../../components/Tags';
@@ -81,6 +81,7 @@ export const FileCard = memo(function FileCard({
 
 	// Make folders droppable
 	const isFolder = file.kind === 'Directory';
+	const displaySize = fileDisplaySize(file);
 	const {setNodeRef: setDropNodeRef, isOver: isDropOver} = useDroppable({
 		id: `folder-drop-${file.id}`,
 		disabled: !isFolder,
@@ -184,9 +185,9 @@ export const FileCard = memo(function FileCard({
 					)}
 
 					{/* Regular file size */}
-					{showFileSize && !hasVolumeCapacity && file.size > 0 && (
+					{showFileSize && !hasVolumeCapacity && !!displaySize && (
 						<div className="text-ink-dull mt-0.5 text-xs">
-							{formatBytes(file.size)}
+							{formatBytes(displaySize)}
 						</div>
 					)}
 

@@ -596,3 +596,45 @@ async fn test_indexing_error_handling() -> Result<()> {
 	harness.shutdown().await?;
 	Ok(())
 }
+
+/// A hard-linked file is stored once on disk, so a directory holding several
+/// links to it must count its bytes once, including links that sit in
+/// different subdirectories.
+#[cfg(unix)]
+#[tokio::test]
+async fn test_aggregate_size_counts_hard_links_once() -> Result<()> {
+	let harness = IndexingHarnessBuilder::new("aggregate_hard_links")
+		.build()
+		.await?;
+
+	let location = harness.create_test_location("test_location").await?;
+	let original = location.write_file("a/x.txt", "1234").await?;
+	std::fs::hard_link(&original, location.path().join("a/y.txt"))?;
+	location.create_dir("b").await?;
+	std::fs::hard_link(&original, location.path().join("b/z.txt"))?;
+	location.write_file("b/w.txt", "12").await?;
+
+	let handle = location.index("Hard Links", IndexMode::Deep).await?;
+	let entries = handle.get_all_entries().await?;
+	let directory = |name: &str| {
+		entries
+			.iter()
+			.find(|entry| entry.kind == 1 && entry.name == name)
+			.map(|entry| (entry.aggregate_size, entry.file_count))
+	};
+
+	assert_eq!(
+		directory("a"),
+		Some((4, 1)),
+		"two links in one folder count once"
+	);
+	assert_eq!(directory("b"), Some((6, 2)), "a link plus a 2-byte file");
+	assert_eq!(
+		directory("test_location"),
+		Some((6, 2)),
+		"links spread across sibling folders count once at the root"
+	);
+
+	harness.shutdown().await?;
+	Ok(())
+}
