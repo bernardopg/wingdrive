@@ -596,3 +596,51 @@ async fn test_indexing_error_handling() -> Result<()> {
 	harness.shutdown().await?;
 	Ok(())
 }
+
+/// A hard-linked file is stored once on disk, so a directory holding several
+/// links to it must count its bytes once, including links that sit in
+/// different subdirectories.
+#[cfg(unix)]
+#[tokio::test]
+async fn test_aggregate_size_counts_hard_links_once() -> Result<()> {
+	let harness = IndexingHarnessBuilder::new("aggregate_hard_links")
+		.build()
+		.await?;
+
+	let location = harness.create_test_location("test_location").await?;
+	let original = location.write_file("a/x.txt", "1234").await?;
+	std::fs::hard_link(&original, location.path().join("a/y.txt"))?;
+	location.create_dir("b").await?;
+	std::fs::hard_link(&original, location.path().join("b/z.txt"))?;
+	location.write_file("b/w.txt", "12").await?;
+
+	let handle = location.index("Hard Links", IndexMode::Deep).await?;
+	let entries = handle.get_all_entries().await?;
+	let aggregate = |name: &str| {
+		entries
+			.iter()
+			.find(|entry| entry.kind == 1 && entry.name == name)
+			.map(|entry| entry.aggregate_size)
+	};
+
+	for e in &entries {
+		eprintln!(
+			"DBG {} kind={} size={} agg={} inode={:?} vol={:?} parent={:?} id={}",
+			e.name, e.kind, e.size, e.aggregate_size, e.inode, e.volume_id, e.parent_id, e.id
+		);
+	}
+	assert_eq!(
+		aggregate("a"),
+		Some(4),
+		"two links in one folder count once"
+	);
+	assert_eq!(aggregate("b"), Some(6), "a link plus a 2-byte file");
+	assert_eq!(
+		aggregate("test_location"),
+		Some(6),
+		"links spread across sibling folders count once at the root"
+	);
+
+	harness.shutdown().await?;
+	Ok(())
+}

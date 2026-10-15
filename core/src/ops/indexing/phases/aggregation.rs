@@ -20,7 +20,7 @@ use crate::{
 };
 use sea_orm::{
 	ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, DbBackend, DbErr,
-	EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
+	EntityTrait, FromQueryResult, QueryFilter, QueryOrder, Statement,
 };
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -75,6 +75,11 @@ pub async fn run_aggregation_phase(
 		directories.append(&mut batch);
 	}
 
+	let parents: HashMap<i32, Option<i32>> = directories
+		.iter()
+		.map(|directory| (directory.id, directory.parent_id))
+		.collect();
+
 	// Count depth by following parent links up to root.
 	let mut dir_depths: Vec<(entities::entry::Model, usize)> = Vec::new();
 
@@ -105,7 +110,10 @@ pub async fn run_aggregation_phase(
 	ctx.log(format!("Found {} directories to aggregate", total_dirs));
 
 	let mut processed = 0;
-	let aggregator = DirectoryAggregator::new(ctx.library_db().clone());
+	let overcounts = hard_link_overcounts(ctx.library_db(), root_entry_id, &parents)
+		.await
+		.map_err(|e| JobError::execution(format!("Failed to find hard links: {}", e)))?;
+	let aggregator = DirectoryAggregator::new(ctx.library_db().clone(), overcounts);
 
 	for directory in directories {
 		ctx.check_interrupt().await?;
@@ -169,11 +177,18 @@ pub async fn run_aggregation_phase(
 
 struct DirectoryAggregator {
 	db: DatabaseConnection,
+	/// Bytes each directory would count twice through hard links; see
+	/// [`hard_link_overcounts`].
+	overcounts: HashMap<i32, i64>,
 }
 
 impl DirectoryAggregator {
-	fn new(db: DatabaseConnection) -> Self {
-		Self { db }
+	fn new(db: DatabaseConnection, overcounts: HashMap<i32, i64>) -> Self {
+		Self { db, overcounts }
+	}
+
+	fn overcount(&self, directory_id: i32) -> i64 {
+		self.overcounts.get(&directory_id).copied().unwrap_or(0)
 	}
 
 	/// Computes aggregate values by summing direct children only.
@@ -181,6 +196,11 @@ impl DirectoryAggregator {
 	/// Files contribute their size directly. Subdirectories contribute their already-computed
 	/// aggregate_size and file_count (this is why we process deepest-first). Symlinks are
 	/// treated as files for counting purposes.
+	///
+	/// A hard-linked file is stored once on disk, so the bytes its extra links add
+	/// are subtracted. Stored child totals already had their own overcount removed,
+	/// so it is added back before the parent's overcount, which covers links that
+	/// span sibling subtrees, is subtracted once.
 	async fn aggregate_directory(
 		&self,
 		directory: &entities::entry::Model,
@@ -201,7 +221,7 @@ impl DirectoryAggregator {
 					file_count += 1;
 				}
 				1 => {
-					aggregate_size += child.aggregate_size;
+					aggregate_size += child.aggregate_size + self.overcount(child.id);
 					file_count += child.file_count;
 				}
 				2 => {
@@ -213,8 +233,77 @@ impl DirectoryAggregator {
 			}
 		}
 
+		aggregate_size -= self.overcount(directory.id);
+
 		Ok((aggregate_size, child_count, file_count))
 	}
+}
+
+#[derive(Debug, FromQueryResult)]
+struct HardLinkedFile {
+	parent_id: Option<i32>,
+	volume_id: Option<i32>,
+	inode: i64,
+	size: i64,
+}
+
+/// Finds the bytes each directory counts more than once because several file
+/// entries under it are hard links to one inode.
+///
+/// For every ancestor directory, a group of `n` links to the same inode inside
+/// it adds `size * (n - 1)` extra bytes. Hard links are rare, so SQL only
+/// returns files whose inode appears more than once under the location.
+/// Ancestors are walked through `parent_id` (`parents` maps each directory of
+/// the location to its parent) rather than the closure table, which can miss
+/// the direct-parent row of entries inserted in the same batch as their parent.
+async fn hard_link_overcounts(
+	db: &DatabaseConnection,
+	root_entry_id: i32,
+	parents: &HashMap<i32, Option<i32>>,
+) -> Result<HashMap<i32, i64>, DbErr> {
+	let statement = Statement::from_sql_and_values(
+		DbBackend::Sqlite,
+		r#"
+		WITH files AS (
+			SELECT e.parent_id, e.volume_id, e.inode, e.size
+			FROM entries e
+			JOIN entry_closure scope ON scope.descendant_id = e.id
+			WHERE scope.ancestor_id = ? AND e.kind = 0 AND e.inode IS NOT NULL
+		),
+		linked AS (
+			SELECT volume_id, inode FROM files
+			GROUP BY volume_id, inode
+			HAVING COUNT(*) > 1
+		)
+		SELECT f.parent_id, f.volume_id, f.inode, f.size
+		FROM files f
+		JOIN linked l ON l.volume_id IS f.volume_id AND l.inode = f.inode
+		"#,
+		[root_entry_id.into()],
+	);
+	let files = HardLinkedFile::find_by_statement(statement).all(db).await?;
+
+	// (directory, volume, inode) -> (size, links under that directory)
+	let mut groups: HashMap<(i32, Option<i32>, i64), (i64, i64)> = HashMap::new();
+	for file in files {
+		let mut ancestor = file.parent_id;
+		while let Some(directory) = ancestor.filter(|id| parents.contains_key(id)) {
+			let group = groups
+				.entry((directory, file.volume_id, file.inode))
+				.or_insert((file.size, 0));
+			group.0 = group.0.max(file.size);
+			group.1 += 1;
+			ancestor = parents[&directory];
+		}
+	}
+
+	let mut overcounts = HashMap::new();
+	for ((directory, _, _), (size, links)) in groups {
+		if links > 1 {
+			*overcounts.entry(directory).or_insert(0) += size * (links - 1);
+		}
+	}
+	Ok(overcounts)
 }
 
 /// Backfills aggregate_size and file_count for all existing directories across all locations.
@@ -261,6 +350,11 @@ pub async fn migrate_directory_sizes(db: &DatabaseConnection) -> Result<(), DbEr
 			directories.append(&mut batch);
 		}
 
+		let parents: HashMap<i32, Option<i32>> = directories
+			.iter()
+			.map(|directory| (directory.id, directory.parent_id))
+			.collect();
+
 		let mut dir_depths: Vec<(entities::entry::Model, usize)> = Vec::new();
 
 		for directory in directories {
@@ -285,7 +379,8 @@ pub async fn migrate_directory_sizes(db: &DatabaseConnection) -> Result<(), DbEr
 		let directories: Vec<entities::entry::Model> =
 			dir_depths.into_iter().map(|(dir, _)| dir).collect();
 
-		let aggregator = DirectoryAggregator::new(db.clone());
+		let overcounts = hard_link_overcounts(db, root_entry_id, &parents).await?;
+		let aggregator = DirectoryAggregator::new(db.clone(), overcounts);
 
 		for directory in directories {
 			match aggregator.aggregate_directory(&directory).await {
