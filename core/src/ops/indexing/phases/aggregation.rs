@@ -266,8 +266,7 @@ struct HardLinkedFile {
 /// it adds `size * (n - 1)` extra bytes and `n - 1` extra files. Hard links are rare, so SQL only
 /// returns files whose inode appears more than once under the location.
 /// Ancestors are walked through `parent_id` (`parents` maps each directory of
-/// the location to its parent) rather than the closure table, which can miss
-/// the direct-parent row of entries inserted in the same batch as their parent.
+/// the location to its parent), which needs no extra query per file.
 async fn hard_link_overcounts(
 	db: &DatabaseConnection,
 	root_entry_id: i32,

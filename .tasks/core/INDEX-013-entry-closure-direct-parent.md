@@ -43,5 +43,5 @@ in-batch ancestor) as an ancestor. Any descendant query through the closure
 
 - `file_move_test` and `folder_rename_test` each have 2 failing ephemeral
   tests that fail identically on `main` before this change; not addressed here.
-- DESK-014's hard-link aggregation walks `parent_id` to avoid this bug; it can
-  switch back to the closure once this lands.
+- DESK-014's hard-link aggregation walks `parent_id` in memory; it stays that
+  way because it avoids a closure query per linked file.
