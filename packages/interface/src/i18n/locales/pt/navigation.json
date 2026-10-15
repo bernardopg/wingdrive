@@ -360,9 +360,9 @@
 		"loading": "Carregando locais..."
 	},
 	"ui": {
-		"refreshStatus": "Atualizar status",
-		"startDaemonAutomaticallyWhenAppLaunches": "Iniciar o daemon automaticamente ao abrir o app",
-		"runDaemonInTheAppProcess": "Executar o daemon no processo do app (alternativa se a permissão em segundo plano for negada)",
-		"sources": "Fontes"
+		"refreshStatus": "Refresh Status",
+		"startDaemonAutomaticallyWhenAppLaunches": "Start daemon automatically when app launches",
+		"runDaemonInTheAppProcess": "Run daemon in the app process (fallback if background permission denied)",
+		"sources": "Sources"
 	}
 }

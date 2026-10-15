@@ -400,10 +400,10 @@
 		"waitingForDevices": "Aguardando dispositivos próximos..."
 	},
 	"ui": {
-		"time": "Hora",
+		"time": "Time",
 		"status": "Status",
-		"noJobsFound": "Nenhuma tarefa encontrada",
-		"noProgressDataAvailable": "Nenhum dado de progresso disponível",
-		"noTagsYet": "Ainda não há etiquetas"
+		"noJobsFound": "No jobs found",
+		"noProgressDataAvailable": "No progress data available",
+		"noTagsYet": "No tags yet"
 	}
 }

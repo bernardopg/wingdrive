@@ -401,13 +401,13 @@
 		"copySuffix": " cópia"
 	},
 	"ui": {
-		"clearFilters": "Limpar filtros",
-		"enableIndexing": "Ativar indexação",
-		"openLocationInspector": "Abrir inspetor do local",
-		"pathIsOutsideAnyLocation": "O caminho está fora de qualquer local",
-		"addLocation": "Adicionar local",
-		"noFilesWithSizeDataTo": "Nenhum arquivo com dados de tamanho para exibir",
-		"noTaggedFiles": "Nenhum arquivo com etiqueta",
-		"filesTaggedWithThisTagWill": "Arquivos com esta etiqueta aparecerão aqui"
+		"clearFilters": "Clear filters",
+		"enableIndexing": "Enable Indexing",
+		"openLocationInspector": "Open Location Inspector",
+		"pathIsOutsideAnyLocation": "Path is outside any location",
+		"addLocation": "Add Location",
+		"noFilesWithSizeDataTo": "No files with size data to display",
+		"noTaggedFiles": "No tagged files",
+		"filesTaggedWithThisTagWill": "Files tagged with this tag will appear here"
 	}
 }

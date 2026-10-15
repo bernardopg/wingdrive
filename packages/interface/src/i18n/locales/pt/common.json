@@ -305,8 +305,8 @@
 		}
 	},
 	"reveal": {
-		"finder": "Mostrar no Finder",
-		"explorer": "Mostrar no Explorer",
-		"folder": "Mostrar na pasta"
+		"finder": "Show in Finder",
+		"explorer": "Show in Explorer",
+		"folder": "Show in Folder"
 	}
 }
