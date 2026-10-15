@@ -310,8 +310,8 @@
 		"folder": "Mostrar na pasta"
 	},
 	"tray": {
-		"open": "Abrir o WingDrive",
-		"newTab": "Nova aba",
-		"quit": "Sair do WingDrive"
+		"open": "Open WingDrive",
+		"newTab": "New Tab",
+		"quit": "Quit WingDrive"
 	}
 }
