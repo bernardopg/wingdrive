@@ -24,7 +24,7 @@ concurrency:
 jobs:
   trufflehog:
     name: TruffleHog
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       # Full history: pull requests and pushes scan only their own commits, but

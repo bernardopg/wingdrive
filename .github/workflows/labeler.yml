@@ -24,7 +24,7 @@ jobs:
   paths:
     name: Label by paths and branch
     if: github.event_name == 'pull_request_target' && github.event.action != 'edited'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -41,7 +41,7 @@ jobs:
   meta:
     name: Label size and type
     if: github.event_name == 'pull_request_target'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       issues: write
@@ -98,7 +98,7 @@ jobs:
   sync:
     name: Sync label definitions
     if: github.event_name != 'pull_request_target'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
