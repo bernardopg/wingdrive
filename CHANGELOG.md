@@ -3,6 +3,52 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.0.0-alpha.15 — 2026-10-15
+
+### Interface (#201)
+
+- The interface is available in Brazilian Portuguese. Pick the language in
+  Settings → Appearance; every window follows it and dates use its format.
+  Translations are managed in Crowdin.
+- 12 new themes: the T3 Code palettes (T3 Code, T3 Chat, Grove, Ocean, Ember,
+  Iris) and Catppuccin, Gruvbox, Solarized, Rosé Pine, Dracula and Tokyo Night.
+  Most follow the system light/dark setting.
+- The Light theme is light again: it stayed dark, and menu hover and faint text
+  were unreadable.
+- File, folder, device and volume icons use their light versions under light
+  themes.
+- Settings are redesigned: grouped sections, switches that save immediately, a
+  layout that adapts to narrow windows, a theme picker with live previews,
+  device pairing options, copy and open for the data directory, and device slug
+  validation. The About page follows the theme.
+
+### Desktop (#201)
+
+- On Linux, right-click menus follow the app theme and language and open at the
+  cursor. Hyprland and other Wayland compositors centered the native popups.
+- The macOS-style menu bar (WingDrive, File, Edit, View) is gone on Linux, as
+  on Windows. Keyboard shortcuts are unchanged.
+
+### Reliability (#202)
+
+- Creating a library no longer fails with `no such column: device_id`:
+  migrations run in one transaction.
+- `library.json` is written atomically, so concurrent writes no longer corrupt
+  it and settings changed while statistics run are kept.
+- A library closed right after creation is no longer reopened by the directory
+  watcher, which caused `AlreadyInUse`.
+- The daemon raises its open file limit at startup, avoiding `EMFILE` with many
+  watched folders.
+- The daemon no longer leaves a 1 MB file named `:memory:` in its working
+  directory.
+
+### Performance (#202)
+
+- Opening a folder that is not indexed no longer rebuilds the file type
+  registry for every file, which took about 25 s for 10,000 files in debug
+  builds.
+- The Jobs panel lists jobs without loading each job's saved state.
+
 ## 2.0.0-alpha.14 — 2026-10-14
 
 ### Performance (#199)
