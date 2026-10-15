@@ -1,6 +1,7 @@
+import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import { cva, VariantProps } from "class-variance-authority";
 import React, { FC } from "react";
-import { Pressable, PressableProps, View, Text } from "react-native";
+import { Pressable, PressableProps, View } from "react-native";
 import { cn } from "~/utils/cn";
 
 /**

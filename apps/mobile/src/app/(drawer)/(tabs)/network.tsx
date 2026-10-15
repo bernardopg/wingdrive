@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from "react-native";
 
 export default function NetworkScreen() {
   return (

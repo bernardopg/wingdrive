@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React, { Children, ReactElement, cloneElement } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
 import { cn } from "~/utils/cn";
 import { SettingsRowProps } from "./SettingsRow";
 

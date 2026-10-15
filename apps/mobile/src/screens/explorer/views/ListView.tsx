@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React from "react";
-import { View, Text, FlatList, Pressable, Image } from "react-native";
+import { View, FlatList, Pressable, Image } from "react-native";
 import type { File } from "@wingdrive/ts-client";
 import { getVirtualMetadata, isVirtualFile, getFileKindForIcon } from "@wingdrive/ts-client";
 import { getIcon } from "@wingdrive/assets/util/mobile";

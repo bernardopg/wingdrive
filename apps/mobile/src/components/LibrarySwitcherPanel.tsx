@@ -1,16 +1,9 @@
+import { LocalizedText as Text } from "../i18n/LocalizedText";
 import React, { useState } from "react";
-import {
-	View,
-	Text,
-	Modal,
-	Pressable,
-	ScrollView,
-	TextInput,
-	Alert,
-	ActivityIndicator,
-} from "react-native";
+import { View, Modal, Pressable, ScrollView, TextInput, Alert, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCoreQuery, useCoreAction, useWingDriveClient } from "../client";
+import { useTranslation } from "react-i18next";
 import { useSidebarStore } from "../stores";
 
 interface LibrarySwitcherPanelProps {
@@ -22,6 +15,7 @@ export function LibrarySwitcherPanel({
 	isOpen,
 	onClose,
 }: LibrarySwitcherPanelProps) {
+	const { t } = useTranslation("common");
 	const insets = useSafeAreaInsets();
 	const client = useWingDriveClient();
 	const { currentLibraryId, setCurrentLibrary: setStoreLibrary } =
@@ -61,18 +55,18 @@ export function LibrarySwitcherPanel({
 				handleSelectLibrary(result.id);
 			}
 		} catch (error) {
-			Alert.alert("Error", "Failed to create library");
+			Alert.alert(t("Error"), t("Failed to create library"));
 		}
 	};
 
 	const handleDeleteLibrary = (libraryId: string, libraryName: string) => {
 		Alert.alert(
-			"Delete Library",
-			`Are you sure you want to delete "${libraryName}"? This action cannot be undone.`,
+			t("Delete Library"),
+			t("Are you sure you want to delete {{name}}? This action cannot be undone.", { name: libraryName }),
 			[
-				{ text: "Cancel", style: "cancel" },
+				{ text: t("Cancel"), style: "cancel" },
 				{
-					text: "Delete",
+					text: t("Delete"),
 					style: "destructive",
 					onPress: async () => {
 						try {
@@ -92,7 +86,7 @@ export function LibrarySwitcherPanel({
 								}
 							}
 						} catch (error) {
-							Alert.alert("Error", "Failed to delete library");
+							Alert.alert(t("Error"), t("Failed to delete library"));
 						}
 					},
 				},
@@ -226,7 +220,7 @@ export function LibrarySwitcherPanel({
 									<TextInput
 										value={newLibraryName}
 										onChangeText={setNewLibraryName}
-										placeholder="My Photos"
+										placeholder={t("My Photos")}
 										placeholderTextColor="hsl(235, 10%, 55%)"
 										className="px-4 py-3 bg-sidebar-box border border-sidebar-line rounded-lg text-ink"
 										autoFocus

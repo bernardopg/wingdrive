@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React, { useState, useMemo, useEffect } from "react";
-import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
+import { View, Pressable, ScrollView, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, DrawerActions } from "@react-navigation/native";
 import Animated, {

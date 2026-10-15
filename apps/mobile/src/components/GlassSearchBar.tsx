@@ -7,6 +7,7 @@ import {
 } from "@callstack/liquid-glass";
 import { useRouter } from "expo-router";
 import { MagnifyingGlass, X } from "phosphor-react-native";
+import { useTranslation } from "react-i18next";
 
 interface GlassSearchBarProps extends Omit<TextInputProps, 'style' | 'onChange' | 'onChangeText'> {
 	onPress?: () => void;
@@ -32,6 +33,7 @@ export const GlassSearchBar = forwardRef<TextInput, GlassSearchBarProps>(
 		ref,
 	) => {
 		const router = useRouter();
+		const { t } = useTranslation('common');
 		const [internalValue, setInternalValue] = useState("");
 		const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(
 			null,
@@ -109,7 +111,7 @@ export const GlassSearchBar = forwardRef<TextInput, GlassSearchBarProps>(
 				pointerEvents={editable ? "auto" : "none"}
 				value={currentValue}
 				onChangeText={handleChange}
-				placeholder="Search library"
+				placeholder={t('Search library')}
 				placeholderTextColor="hsl(235, 10%, 55%)"
 				className="flex-1 text-ink text-base text-md"
 				cursorColor="hsl(220, 90%, 56%)"

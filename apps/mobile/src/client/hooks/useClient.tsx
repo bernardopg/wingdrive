@@ -1,3 +1,4 @@
+import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React, { useEffect, useState, ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -5,14 +6,15 @@ import {
   queryClient,
   useWingDriveClient,
 } from "@wingdrive/ts-client/src/hooks/useClient";
-import type { Event } from "@wingdrive/ts-client/src/generated/types";
+import type { AppConfigOutput, Event } from "@wingdrive/ts-client/src/generated/types";
 import { WingDriveClient } from "../WingDriveClient";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { View, ActivityIndicator, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WingMobileCore } from "wing-mobile-core";
 import { usePreferencesStore } from "../../stores/preferences";
 import { useSidebarStore } from "../../stores/sidebar";
 import { useReactQueryDevTools } from "@dev-plugins/react-query";
+import { applyLanguage } from "../../i18n";
 
 // Re-export the shared hook
 export { useWingDriveClient };
@@ -44,6 +46,15 @@ export function WingDriveProvider({
     async function init() {
       try {
         await client.initialize(deviceName ?? "WingDrive Mobile");
+        try {
+          const config = await client.coreQuery<AppConfigOutput>(
+            "config.app.get",
+            null,
+          );
+          applyLanguage(config?.preferences?.language);
+        } catch {
+          applyLanguage("en");
+        }
 
         // // Subscribe to core logs AFTER core is initialized
         // console.log("[WingDriveProvider] Subscribing to core logs...");

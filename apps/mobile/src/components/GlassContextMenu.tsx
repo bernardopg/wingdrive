@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../i18n/LocalizedText";
 import React, { useState, cloneElement, isValidElement } from "react";
-import { View, Text, Pressable, Modal, StyleSheet } from "react-native";
+import { View, Pressable, Modal, StyleSheet } from "react-native";
 import { BlurView } from "expo-blur";
 import {
 	LiquidGlassView,

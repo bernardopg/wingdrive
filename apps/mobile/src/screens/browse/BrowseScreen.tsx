@@ -1,12 +1,6 @@
+import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import { useState, useRef, useCallback } from "react";
-import {
-	View,
-	Text,
-	ScrollView,
-	Dimensions,
-	type NativeScrollEvent,
-	type NativeSyntheticEvent,
-} from "react-native";
+import { View, ScrollView, Dimensions, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { useSafeAreaInsets, type EdgeInsets } from "react-native-safe-area-context";
 import Animated, {
 	useSharedValue,

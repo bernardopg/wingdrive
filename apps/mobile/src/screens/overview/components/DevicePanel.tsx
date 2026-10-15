@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, ScrollView, Pressable, Modal } from "react-native";
+import { View, Image, ScrollView, Pressable, Modal } from "react-native";
 import DatabaseIcon from "@wingdrive/assets/icons/Database.png";
 import DriveAmazonS3Icon from "@wingdrive/assets/icons/Drive-AmazonS3.png";
 import DriveDropboxIcon from "@wingdrive/assets/icons/Drive-Dropbox.png";

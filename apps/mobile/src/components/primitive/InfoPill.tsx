@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React, { ReactNode } from "react";
-import { Text, View, ViewStyle, TextStyle } from "react-native";
+import { View, ViewStyle, TextStyle } from "react-native";
 import { cn } from "~/utils/cn";
 
 interface InfoPillProps {

@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React, { useState, useMemo } from "react";
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { View, Pressable, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useExplorerFiles } from "./hooks/useExplorerFiles";

@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React, { FC } from "react";
-import { Switch as RNSwitch, SwitchProps, Text, View } from "react-native";
+import { Switch as RNSwitch, SwitchProps, View } from "react-native";
 
 export const Switch: FC<SwitchProps> = (props) => {
 	return (

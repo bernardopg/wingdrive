@@ -1,4 +1,5 @@
 import { cva, VariantProps } from "class-variance-authority";
+import { useTranslation } from "react-i18next";
 import React, { forwardRef, useState } from "react";
 import { TextInputProps, TextInput, View, Pressable } from "react-native";
 import { cn } from "~/utils/cn";
@@ -29,6 +30,7 @@ type InputProps = VariantProps<typeof input> & TextInputProps;
 
 export const Input = forwardRef<TextInput, InputProps>(
 	({ variant, size, disabled, className, editable, style, ...props }, ref) => {
+	const { t } = useTranslation('common');
 		// Get proper font size and line height based on size
 		const fontSize = size === 'sm' ? 14 : size === 'lg' ? 18 : 16;
 		const lineHeight = size === 'sm' ? 20 : size === 'lg' ? 24 : 22;
@@ -42,6 +44,7 @@ export const Input = forwardRef<TextInput, InputProps>(
 				style={[style, { fontSize, lineHeight }]}
 				className={cn(input({ variant, size, disabled }), className)}
 				{...props}
+				placeholder={props.placeholder ? t(props.placeholder) : props.placeholder}
 			/>
 		);
 	},
@@ -56,6 +59,7 @@ type PasswordInputProps = InputProps & {
 
 export const PasswordInput = forwardRef<TextInput, PasswordInputProps>(
 	({ variant, size, disabled, isNewPassword = false, className, style, ...props }, ref) => {
+	const { t } = useTranslation('common');
 		const [showPassword, setShowPassword] = useState(false);
 
 		// Get proper font size and line height based on size
@@ -68,7 +72,7 @@ export const PasswordInput = forwardRef<TextInput, PasswordInputProps>(
 					ref={ref}
 					autoComplete={isNewPassword ? "password-new" : "password"}
 					textContentType={isNewPassword ? "newPassword" : "password"}
-					placeholder="Password"
+					placeholder={t('Password')}
 					secureTextEntry={!showPassword}
 					autoCorrect={false}
 					autoCapitalize="none"
