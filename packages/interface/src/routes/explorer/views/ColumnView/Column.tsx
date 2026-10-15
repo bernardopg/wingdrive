@@ -7,6 +7,7 @@ import {useExplorer} from '../../context';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
 import {useOpenFile} from '../../hooks/useOpenFile';
 import {ColumnItem} from './ColumnItem';
+import {useTranslation} from '../../../../i18n';
 
 /**
  * Memoized wrapper for ColumnItem to prevent re-renders when selection changes elsewhere.
@@ -105,6 +106,7 @@ export const Column = memo(function Column({
 	isActive,
 	virtualFiles
 }: ColumnProps) {
+	const { t } = useTranslation('explorer');
 	const parentRef = useRef<HTMLDivElement>(null);
 	const {viewSettings, sortBy, sortDirection} = useExplorer();
 
@@ -140,7 +142,7 @@ export const Column = memo(function Column({
 				className="border-app-line flex shrink-0 items-center justify-center border-r"
 				style={{width: `${viewSettings.columnWidth}px`}}
 			>
-				<div className="text-ink-dull text-sm">Loading...</div>
+				<div className="text-ink-dull text-sm">{t('general.loading')}</div>
 			</div>
 		);
 	}

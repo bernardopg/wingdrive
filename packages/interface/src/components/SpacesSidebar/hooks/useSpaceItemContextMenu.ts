@@ -15,6 +15,7 @@ import { usePlatform } from "../../../contexts/PlatformContext";
 import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { isVolumeItem, isPathItem } from "./spaceItemUtils";
 import { useExplorer, getSpaceItemKeyFromRoute } from "../../../routes/explorer/context";
+import {useTranslation} from '../../../i18n';
 import {revealLabel} from '../../../util/keybinds/platform';
 
 interface UseSpaceItemContextMenuOptions {
@@ -37,6 +38,7 @@ export function useSpaceItemContextMenu({
 	path,
 	spaceId,
 }: UseSpaceItemContextMenuOptions): ContextMenuResult {
+const {t} = useTranslation('navigation');
 	const navigate = useNavigate();
 	const platform = usePlatform();
 	const { loadPreferencesForSpaceItem } = useExplorer();
@@ -46,7 +48,7 @@ export function useSpaceItemContextMenu({
 	const items: ContextMenuItem[] = [
 		{
 			icon: FolderOpen,
-			label: "Open",
+			label: t("contextMenu.open"),
 			onClick: () => {
 				if (path) {
 					// Extract pathname and search from the path
@@ -62,7 +64,7 @@ export function useSpaceItemContextMenu({
 		},
 		{
 			icon: Database,
-			label: "Index Volume",
+			label: t("contextMenu.indexVolume"),
 			onClick: async () => {
 				if (isVolumeItem(item.item_type)) {
 					const fingerprint =
@@ -117,7 +119,7 @@ export function useSpaceItemContextMenu({
 		{ type: "separator" },
 		{
 			icon: Trash,
-			label: "Remove from Wing",
+			label: t("contextMenu.removeFromSpace"),
 			onClick: async () => {
 				try {
 					await deleteItem.mutateAsync({ item_id: item.id });

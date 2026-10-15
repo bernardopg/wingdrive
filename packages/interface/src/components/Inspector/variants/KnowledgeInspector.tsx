@@ -1,5 +1,6 @@
 import { Sparkle, PaperPlaneRight, Paperclip } from "@phosphor-icons/react";
 import { useState } from "react";
+import { useTranslation } from "../../../i18n";
 import clsx from "clsx";
 
 interface Message {
@@ -10,13 +11,14 @@ interface Message {
 }
 
 export function KnowledgeInspector() {
+	const { t } = useTranslation("inspector");
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
       role: "assistant",
       content:
-        "Hi! I'm your AI assistant for WingDrive. I can help you organize files, search your library, and answer questions about your data.",
+        t("knowledge.greeting"),
       timestamp: new Date(),
     },
   ]);
@@ -39,7 +41,7 @@ export function KnowledgeInspector() {
       const aiResponse: Message = {
         id: messages.length + 2,
         role: "assistant",
-        content: "This is a prototype. AI responses will be implemented soon!",
+        content: t("knowledge.prototype"),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiResponse]);
@@ -126,7 +128,7 @@ export function KnowledgeInspector() {
         <div className="flex items-end gap-2">
           <button
             className="p-2 rounded-lg hover:bg-sidebar-selected transition-colors text-sidebar-ink-dull hover:text-sidebar-ink"
-            title="Attach file"
+title={t("knowledge.attachFile")}
           >
             <Paperclip className="size-4" weight="bold" />
           </button>
@@ -142,7 +144,7 @@ export function KnowledgeInspector() {
                   handleSend();
                 }
               }}
-              placeholder="Ask me anything..."
+placeholder={t("knowledge.placeholder")}
               className="flex-1 bg-transparent text-sm text-sidebar-ink placeholder:text-sidebar-ink-dull outline-none"
             />
           </div>
@@ -156,7 +158,7 @@ export function KnowledgeInspector() {
                 ? "bg-accent hover:bg-accent/90 text-white"
                 : "bg-app-box text-sidebar-ink-dull cursor-not-allowed",
             )}
-            title="Send message"
+title={t("knowledge.send")}
           >
             <PaperPlaneRight className="size-4" weight="fill" />
           </button>
@@ -165,13 +167,13 @@ export function KnowledgeInspector() {
         {/* Quick actions */}
         <div className="flex flex-wrap gap-1.5">
           <button className="px-2.5 py-1.5 text-[11px] font-medium text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md transition-colors">
-            Organize files
+            {t("ui.organizeFiles")}
           </button>
           <button className="px-2.5 py-1.5 text-[11px] font-medium text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md transition-colors">
-            Find duplicates
+            {t("ui.findDuplicates")}
           </button>
           <button className="px-2.5 py-1.5 text-[11px] font-medium text-sidebar-ink-dull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md transition-colors">
-            Smart search
+            {t("ui.smartSearch")}
           </button>
         </div>
       </div>

@@ -53,6 +53,7 @@ import {useOpenFiles} from './useOpenFile';
 import {useOpenTerminal} from './useOpenTerminal';
 import {usePasteFiles} from './usePasteFiles';
 import {revealLabel} from '../../../util/keybinds/platform';
+import {useTranslation} from '../../../i18n';
 
 interface UseFileContextMenuProps {
 	file?: File | null;
@@ -65,6 +66,7 @@ export function useFileContextMenu({
 	selectedFiles,
 	selected
 }: UseFileContextMenuProps) {
+	const {t} = useTranslation('explorer');
 	const {operationalPath, mode, openQuickPreview} = useExplorer();
 	const platform = usePlatform();
 	const refetchTagQueries = useRefetchTagQueries();
@@ -152,7 +154,7 @@ export function useFileContextMenu({
 		items: [
 			{
 				icon: Eye,
-				label: 'Quick Look',
+				label: t('contextMenu.quickLook'),
 				onClick: () => {
 					if (!file) return;
 					openQuickPreview(file.id);
@@ -162,7 +164,7 @@ export function useFileContextMenu({
 			},
 			{
 				icon: FolderOpen,
-				label: targetFiles.length > 1 ? `Open ${targetFiles.length} Items` : 'Open',
+				label: targetFiles.length > 1 ? t('contextMenu.openItems', {count: targetFiles.length}) : t('contextMenu.open'),
 				onClick: () => void openFiles(targetFiles),
 				keybindId: 'explorer.openFile',
 				condition: () =>
@@ -175,14 +177,14 @@ export function useFileContextMenu({
 			{
 				type: 'submenu',
 				icon: ArrowSquareOut,
-				label: 'Open With',
+				label: t('contextMenu.openWith'),
 				condition: () =>
 					!!file &&
 					file.kind === 'File' &&
 					'Physical' in file.wing_path &&
 					apps.length > 0,
 				submenu: apps.map((app) => ({
-					label: app.is_default ? `${app.name} (default)` : app.name,
+					label: app.is_default ? t('contextMenu.defaultApp', {name: app.name}) : app.name,
 					iconUrl: app.icon,
 					onClick: async () => {
 						if (!file) return;
@@ -197,7 +199,7 @@ export function useFileContextMenu({
 			{
 				type: 'submenu',
 				icon: ArrowSquareOut,
-				label: 'Always Open With',
+				label: t('contextMenu.alwaysOpenWith'),
 				condition: () =>
 					canSetDefault &&
 					!!file &&
@@ -223,7 +225,7 @@ export function useFileContextMenu({
 								await platform.revealFile(physicalPath);
 							} catch (err) {
 								console.error('Failed to reveal file:', err);
-								toast.error(`Failed to reveal file: ${err}`);
+								toast.error(t('errors.failedToRevealFile', {error: err}));
 							}
 						} else {
 							console.log(
@@ -242,7 +244,7 @@ export function useFileContextMenu({
 			},
 			{
 				icon: TerminalWindow,
-				label: 'Open Terminal Here',
+				label: t('contextMenu.openTerminalHere'),
 				onClick: () => {
 					void openTerminal?.(file?.wing_path);
 				},
@@ -257,8 +259,8 @@ export function useFileContextMenu({
 				icon: ShareNetwork,
 				label:
 					selected && selectedFiles.length > 1
-						? `Share ${selectedFiles.length} items`
-						: 'Share',
+						? t('contextMenu.shareItems', {count: selectedFiles.length})
+			: t('contextMenu.share'),
 				onClick: async () => {
 					const paths = physicalPaths;
 					if (paths.length === 0) {
@@ -270,7 +272,7 @@ export function useFileContextMenu({
 							await platform.shareFiles(paths);
 						} catch (err) {
 							console.error('Failed to share files:', err);
-							toast.error(`Failed to share: ${err}`);
+							toast.error(t('errors.failedToShare', {error: err}));
 						}
 					}
 				},
@@ -280,7 +282,7 @@ export function useFileContextMenu({
 			{type: 'separator'},
 			{
 				icon: Pencil,
-				label: 'Rename',
+				label: t('contextMenu.rename'),
 				onClick: () => {
 					if (!file) return;
 					startRename(file.id, file);
@@ -291,21 +293,21 @@ export function useFileContextMenu({
 			},
 			{
 				icon: Pencil,
-				label: `Rename ${targetFiles.length} Items…`,
+				label: t('contextMenu.renameItems', {count: targetFiles.length}),
 				onClick: () => openBatchRename(getTargetFiles()),
 				// Renaming needs the same rights as deleting: real, writable entries.
 				condition: () => targetFiles.length > 1 && capabilities.canDelete
 			},
 			{
 				icon: GitDiff,
-				label: 'Compare Folders…',
+				label: t('contextMenu.compareFolders'),
 				onClick: () => openCompareFolders(localFolders[0], localFolders[1]),
 				condition: () =>
 					targetFiles.length === 2 && localFolders.length === 2
 			},
 			{
 				icon: Copy,
-				label: 'Find Duplicates…',
+				label: t('contextMenu.findDuplicates'),
 				onClick: () => {
 					if (duplicateScanRoot) openDuplicates(duplicateScanRoot);
 				},
@@ -313,7 +315,7 @@ export function useFileContextMenu({
 			},
 			{
 				icon: FolderPlus,
-				label: 'New Folder',
+				label: t('contextMenu.newFolder'),
 				onClick: () => {
 					void createEmptyFolder();
 				},
@@ -321,7 +323,7 @@ export function useFileContextMenu({
 			},
 			{
 				icon: FilePlus,
-				label: 'New File',
+				label: t('contextMenu.newFile'),
 				onClick: () => {
 					void newFile();
 				},
@@ -329,7 +331,7 @@ export function useFileContextMenu({
 			},
 			{
 				icon: Link,
-				label: 'Create Link',
+				label: t('contextMenu.createLink'),
 				onClick: () => {
 					if (file) void newLink(file);
 				},
@@ -342,7 +344,7 @@ export function useFileContextMenu({
 			},
 			{
 				icon: FileArchive,
-				label: 'Extract Here',
+				label: t('contextMenu.extractHere'),
 				onClick: () => {
 					if (file) archive.extract(file);
 				},
@@ -355,7 +357,7 @@ export function useFileContextMenu({
 			},
 			{
 				icon: FileArchive,
-				label: 'Extract To...',
+				label: t('contextMenu.extractTo'),
 				onClick: () => {
 					if (file) void archive.extractTo(file);
 				},
@@ -370,18 +372,18 @@ export function useFileContextMenu({
 			{
 				type: 'submenu',
 				icon: Package,
-				label: 'Compress',
+				label: t('contextMenu.compress'),
 				condition: () =>
 					targetFiles.length > 0 &&
 					targetFiles.every((f) => 'Physical' in f.wing_path && f.is_local),
 				submenu: COMPRESS_FORMATS.map(({format, label}) => ({
-					label,
+					label: t(label),
 					onClick: () => archive.compress(targetFiles, format)
 				}))
 			},
 			{
 				icon: FolderPlus,
-				label: 'New Folder with Items',
+				label: t('contextMenu.newFolderWithItems'),
 				onClick: async () => {
 					if (!operationalPath) return;
 					const targets = getTargetFiles();
@@ -390,7 +392,7 @@ export function useFileContextMenu({
 					try {
 						const result = await createFolder.mutateAsync({
 							parent: operationalPath,
-							name: 'New Folder',
+							name: t('contextMenu.newFolder'),
 							items: targets.map((f) => f.wing_path)
 						});
 						console.log('Created folder with items:', result);
@@ -399,7 +401,7 @@ export function useFileContextMenu({
 							'Failed to create folder with items:',
 							err
 						);
-						toast.error(`Failed to create folder: ${err}`);
+						toast.error(t('errors.failedToCreateFolder', {error: err}));
 					}
 				},
 				condition: () => !!operationalPath && capabilities.canCopy
@@ -409,8 +411,8 @@ export function useFileContextMenu({
 				icon: Copy,
 				label:
 					selected && selectedFiles.length > 1
-						? `Copy ${selectedFiles.length} items`
-						: 'Copy',
+						? t('contextMenu.copyItems', {count: selectedFiles.length})
+			: t('contextMenu.copy'),
 				onClick: () => {
 					const targets = getTargetFiles();
 					if (targets.length === 0) {
@@ -431,8 +433,8 @@ export function useFileContextMenu({
 				icon: Scissors,
 				label:
 					selected && selectedFiles.length > 1
-						? `Cut ${selectedFiles.length} items`
-						: 'Cut',
+						? t('contextMenu.cutItems', {count: selectedFiles.length})
+			: t('contextMenu.cut'),
 				onClick: () => {
 					const targets = getTargetFiles();
 					if (targets.length === 0) {
@@ -451,7 +453,7 @@ export function useFileContextMenu({
 			},
 			{
 				icon: Copy,
-				label: 'Paste',
+				label: t('contextMenu.paste'),
 				onClick: () => {
 					void pasteFiles(operationalPath);
 				},
@@ -462,8 +464,8 @@ export function useFileContextMenu({
 				icon: Copy,
 				label:
 					selected && selectedFiles.length > 1
-						? `Duplicate ${selectedFiles.length} items`
-						: 'Duplicate',
+						? t('contextMenu.duplicateItems', {count: selectedFiles.length})
+			: t('contextMenu.duplicate'),
 				onClick: async () => {
 					const targets = getTargetFiles();
 					if (targets.length === 0) return;
@@ -476,12 +478,12 @@ export function useFileContextMenu({
 			{
 				type: 'submenu',
 				icon: Image,
-				label: 'Image Processing',
+				label: t('contextMenu.imageProcessing'),
 				condition: () => !!file && getContentKind(file) === 'image',
 				submenu: [
 					{
 						icon: Sparkle,
-						label: 'Generate Blurhash',
+						label: t('contextMenu.generateBlurhash'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -497,7 +499,7 @@ export function useFileContextMenu({
 					},
 					{
 						icon: Crop,
-						label: 'Regenerate Thumbnail',
+						label: t('contextMenu.regenerateThumbnail'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -511,7 +513,7 @@ export function useFileContextMenu({
 					},
 					{
 						icon: TextAa,
-						label: 'Extract Text (OCR)',
+						label: t('contextMenu.extractText'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -528,12 +530,12 @@ export function useFileContextMenu({
 			{
 				type: 'submenu',
 				icon: Video,
-				label: 'Video Processing',
+				label: t('contextMenu.videoProcessing'),
 				condition: () => !!file && getContentKind(file) === 'video',
 				submenu: [
 					{
 						icon: FilmStrip,
-						label: 'Generate Thumbstrip',
+						label: t('contextMenu.generateThumbstrip'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -550,7 +552,7 @@ export function useFileContextMenu({
 					},
 					{
 						icon: Sparkle,
-						label: 'Generate Blurhash',
+						label: t('contextMenu.generateBlurhash'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -566,7 +568,7 @@ export function useFileContextMenu({
 					},
 					{
 						icon: Crop,
-						label: 'Regenerate Thumbnail',
+						label: t('contextMenu.regenerateThumbnail'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -580,7 +582,7 @@ export function useFileContextMenu({
 					},
 					{
 						icon: Waveform,
-						label: 'Extract Subtitles',
+						label: t('contextMenu.extractSubtitles'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -594,7 +596,7 @@ export function useFileContextMenu({
 					},
 					{
 						icon: FileVideo,
-						label: 'Generate Proxy',
+						label: t('contextMenu.generateProxy'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -612,12 +614,12 @@ export function useFileContextMenu({
 			{
 				type: 'submenu',
 				icon: Microphone,
-				label: 'Audio Processing',
+				label: t('contextMenu.audioProcessing'),
 				condition: () => !!file && getContentKind(file) === 'audio',
 				submenu: [
 					{
 						icon: TextAa,
-						label: 'Transcribe Audio',
+						label: t('contextMenu.transcribeAudio'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -634,7 +636,7 @@ export function useFileContextMenu({
 			{
 				type: 'submenu',
 				icon: FileText,
-				label: 'Document Processing',
+				label: t('contextMenu.documentProcessing'),
 				condition: () =>
 					!!file &&
 					file.kind === 'File' &&
@@ -642,7 +644,7 @@ export function useFileContextMenu({
 				submenu: [
 					{
 						icon: TextAa,
-						label: 'Extract Text (OCR)',
+						label: t('contextMenu.extractText'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -656,7 +658,7 @@ export function useFileContextMenu({
 					},
 					{
 						icon: Crop,
-						label: 'Regenerate Thumbnail',
+						label: t('contextMenu.regenerateThumbnail'),
 						onClick: async () => {
 							const targets = getTargetFiles();
 							await forEachTarget(targets, (f) =>
@@ -674,13 +676,13 @@ export function useFileContextMenu({
 			{
 				type: 'submenu',
 				icon: Stack,
-				label: `Process ${selectedFiles.length} Items`,
+				label: t('contextMenu.processItems', {count: selectedFiles.length}),
 				condition: () =>
 					selected && selectedFiles.length > 1 && !hasVirtualFiles,
 				submenu: [
 					{
 						icon: Crop,
-						label: 'Regenerate All Thumbnails',
+						label: t('contextMenu.regenerateAllThumbnails'),
 						onClick: async () => {
 							await forEachTarget(getTargetFiles(), (f) =>
 								regenerateThumbnail.mutateAsync({
@@ -693,7 +695,7 @@ export function useFileContextMenu({
 					},
 					{
 						icon: Sparkle,
-						label: 'Generate Blurhashes',
+						label: t('contextMenu.generateBlurhashes'),
 						onClick: async () => {
 							await forEachTarget(getTargetFiles(), (f) =>
 								regenerateThumbnail.mutateAsync({
@@ -707,7 +709,7 @@ export function useFileContextMenu({
 					},
 					{
 						icon: TextAa,
-						label: 'Extract Text (OCR)',
+						label: t('contextMenu.extractText'),
 						onClick: async () => {
 							await forEachTarget(getTargetFiles(), (f) =>
 								extractText.mutateAsync({
@@ -724,8 +726,8 @@ export function useFileContextMenu({
 				icon: TagIconComponent,
 				label:
 					selected && selectedFiles.length > 1
-						? `Remove tag from ${selectedFiles.length} items`
-						: 'Remove tag',
+						? t('contextMenu.removeTagItems', {count: selectedFiles.length})
+			: t('contextMenu.removeTag'),
 				onClick: async () => {
 					if (mode.type !== 'tag') return;
 					const targets = getTargetFiles();
@@ -737,7 +739,7 @@ export function useFileContextMenu({
 						});
 					} catch (err) {
 						console.error('Failed to remove tag:', err);
-						toast.error(`Failed to remove tag: ${err}`);
+						toast.error(t('errors.failedToRemoveTag', {error: err}));
 					}
 				},
 				condition: () => mode.type === 'tag' && !hasVirtualFiles
@@ -747,8 +749,8 @@ export function useFileContextMenu({
 				icon: Trash,
 				label:
 					selected && selectedFiles.length > 1
-						? `Delete ${selectedFiles.length} items`
-						: 'Delete',
+						? t('contextMenu.deleteItems', {count: selectedFiles.length})
+						: t('contextMenu.delete'),
 				onClick: async () => {
 					const targets = getTargetFiles();
 					await deleteFiles(targets, false);

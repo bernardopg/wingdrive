@@ -18,7 +18,10 @@ mock.module('./hooks/useFileContextMenu', () => ({
 		};
 	}
 }));
+// Bun module mocks leak into other test files, so keep the real exports
+const actualSelection = await import('./SelectionContext');
 mock.module('./SelectionContext', () => ({
+	...actualSelection,
 	useSelection: () => ({selectedFiles: []})
 }));
 

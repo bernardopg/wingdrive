@@ -7,10 +7,22 @@
 @import "@wingdrive/tokens/css/themes/slate";
 @import "@wingdrive/tokens/css/themes/nord";
 @import "@wingdrive/tokens/css/themes/mocha";
+@import "@wingdrive/tokens/css/themes/t3-code";
+@import "@wingdrive/tokens/css/themes/t3-chat";
+@import "@wingdrive/tokens/css/themes/grove";
+@import "@wingdrive/tokens/css/themes/ocean";
+@import "@wingdrive/tokens/css/themes/ember";
+@import "@wingdrive/tokens/css/themes/iris";
+@import "@wingdrive/tokens/css/themes/catppuccin";
+@import "@wingdrive/tokens/css/themes/gruvbox";
+@import "@wingdrive/tokens/css/themes/solarized";
+@import "@wingdrive/tokens/css/themes/rose-pine";
+@import "@wingdrive/tokens/css/themes/dracula";
+@import "@wingdrive/tokens/css/themes/tokyo-night";
 
-/* Default theme variables (dark) - ensures CSS custom properties are defined
+/* Default theme variables (dark), at zero specificity so any theme class wins - ensures CSS custom properties are defined
    even before theme config loads from daemon. These match @wingdrive/tokens/theme.css */
-:root:not(.light):not(.midnight-theme):not(.noir-theme):not(.slate-theme):not(.nord-theme):not(.mocha-theme) {
+:where(:root) {
   --color-accent: hsl(208, 100%, 57%);
   --color-accent-faint: hsl(208, 100%, 64%);
   --color-accent-deep: hsl(208, 100%, 47%);

@@ -4,6 +4,7 @@ import { X, ArrowLeft, ArrowRight } from '@phosphor-icons/react';
 import { useEffect } from 'react';
 import type { File } from '@wingdrive/ts-client';
 import { useNormalizedQuery } from '../../contexts/WingDriveContext';
+import { useTranslation } from '../../i18n';
 import { ContentRenderer } from './ContentRenderer';
 
 interface QuickPreviewOverlayProps {
@@ -25,6 +26,7 @@ export function QuickPreviewOverlay({
 	hasPrevious,
 	hasNext
 }: QuickPreviewOverlayProps) {
+const { t } = useTranslation('inspector');
 	const { data: file, isLoading, error } = useNormalizedQuery<{ file_id: string }, File>({
 		query: 'files.by_id',
 		input: { file_id: fileId },
@@ -68,12 +70,12 @@ export function QuickPreviewOverlay({
 				>
 					{isLoading || !file ? (
 						<div className="flex h-full items-center justify-center text-ink">
-							<div className="animate-pulse">Loading...</div>
+<div className="animate-pulse">{t('inspector.loading')}</div>
 						</div>
 					) : error ? (
 						<div className="flex h-full items-center justify-center text-red-400">
 							<div>
-								<div className="mb-2 text-lg font-medium">Error loading file</div>
+<div className="mb-2 text-lg font-medium">{t('inspector.preview.errorLoading')}</div>
 								<div className="text-sm">{error.message}</div>
 							</div>
 						</div>
@@ -123,8 +125,7 @@ export function QuickPreviewOverlay({
 							{/* Footer with keyboard hints */}
 							<div className="border-t border-app-line/50 bg-app-box/40 px-4 py-1.5">
 								<div className="text-center text-xs text-ink-dull">
-									<span className="text-ink">ESC</span> or{' '}
-									<span className="text-ink">Space</span> to close
+{t('inspector.preview.closeOverlay')}
 									{(hasPrevious || hasNext) && (
 										<>
 											{' · '}

@@ -24,6 +24,7 @@ import {
 } from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {usePlatform} from '../contexts/PlatformContext';
+import {useTranslation} from '../i18n';
 import {useWingbotEventSource} from './useWingbotEventSource';
 
 export const primaryItems = [
@@ -135,16 +136,16 @@ export const isMacOS =
 		navigator.userAgent.includes('Mac'));
 
 export function WingbotProvider({children}: WingbotProviderProps) {
+	const {t} = useTranslation('common');
 	if (import.meta.env.VITE_SPACEBOT_AVAILABLE !== 'true') {
 		return (
 			<div className="bg-app text-ink flex h-full items-center justify-center p-8">
 				<div className="border-app-line bg-app-box max-w-md rounded-2xl border p-6 text-center">
 					<h1 className="text-lg font-semibold">
-						Wingbot unavailable
+						{t('wingbot.unavailable.title')}
 					</h1>
 					<p className="text-ink-dull mt-2 text-sm">
-						This build does not include the Wingbot runtime. No
-						messages or tasks were changed.
+						{t('wingbot.unavailable.description')}
 					</p>
 				</div>
 			</div>

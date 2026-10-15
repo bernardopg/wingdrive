@@ -21,9 +21,23 @@ export const iconNames = Object.fromEntries(
 export type IconName = keyof typeof iconNames;
 
 export const getIconByName = (name: IconTypes, isDark?: boolean) => {
-	if (!isDark) name = (name + "_Light") as IconTypes;
-	return icons[name];
+	const light = (name + "_Light") as keyof typeof icons;
+	return !isDark && light in icons ? icons[light] : icons[name];
 };
+
+// Dark icon URL -> its `_Light` counterpart, for icons already resolved to a URL
+// (device and volume icons, direct imports).
+const lightByDarkUrl = new Map<string, string>(
+	Object.keys(icons)
+		.filter((key) => `${key}_Light` in icons)
+		.map((key) => [
+			icons[key as keyof typeof icons] as string,
+			icons[`${key}_Light` as keyof typeof icons] as string,
+		]),
+);
+
+/** The light-theme variant of an icon URL, or the URL itself when none exists. */
+export const toLightIcon = (url: string) => lightByDarkUrl.get(url) ?? url;
 
 /**
  * Gets the appropriate icon based on the given criteria.

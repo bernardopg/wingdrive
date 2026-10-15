@@ -1,0 +1,312 @@
+{
+	"errorBoundary": {
+		"title": "Something went wrong",
+		"message": "The application encountered an error. Please try restarting.",
+		"details": "Error details",
+		"reload": "Reload Application"
+	},
+	"dnd": {
+		"virtualLocationsCannotMove": "Locations, volumes and devices cannot be moved.",
+		"itemTypes": {
+			"overview": "Overview",
+			"recents": "Recents",
+			"favorites": "Favorites",
+			"fileKinds": "File Kinds"
+		}
+	},
+	"openWith": {
+		"unsupported": "Opening files is not supported on this platform",
+		"failedFile": "Failed to open file: {{error}}",
+		"failedFiles": "Failed to open files: {{error}}",
+		"defaultSet": "{{appName}} is now the default for this file type",
+		"defaultFailed": "Failed to set default application: {{error}}",
+		"fileNotFound": "File not found: {{path}}",
+		"appNotFound": "Application not found: {{appId}}",
+		"permissionDenied": "Permission denied: {{path}}",
+		"error": "Error: {{error}}"
+	},
+	"fileOperation": {
+		"copied": "Copied",
+		"moved": "Moved",
+		"duplicated": "Duplicated",
+		"deleted": "Deleted",
+		"copy": "copy",
+		"move": "move",
+		"duplicate": "duplicate",
+		"delete": "delete",
+		"items_one": "{{count}} item",
+		"items_other": "{{count}} items",
+		"couldNot": "Could not {{operation}}: {{error}}",
+		"deleteCancelled": "Delete cancelled. Items processed before the cancel are already gone.",
+		"cancelled": "{{operation}} items stay where they are; the rest was cancelled.",
+		"running": "The {{operation}} is still running in the background. Follow it in Jobs.",
+		"completed": "{{operation}} {{items}}",
+		"failedCount_one": "{{count}} failed",
+		"failedCount_other": "{{count}} failed",
+		"skippedCount_one": "{{count}} skipped",
+		"skippedCount_other": "{{count}} skipped",
+		"someRunning": "some still running in Jobs",
+		"someCancelled": "some cancelled"
+	},
+	"undo": {
+		"done": "Undid {{label}}",
+		"failed": "Could not undo: {{error}}",
+		"labels": {
+			"rename": "rename",
+			"batch rename": "batch rename",
+			"move": "move",
+			"remove duplicates": "remove duplicates",
+			"new folder": "new folder",
+			"delete": "delete"
+		}
+	},
+	"clipboard": {
+		"copyFailed": "Could not copy files to the system clipboard: {{error}}"
+	},
+	"wingbot": {
+		"noMessages": "No messages yet",
+		"loadingConversations": "Loading conversations...",
+		"loadConversationsFailed": "Could not load conversations.",
+		"noConversations": "No conversations yet.",
+		"goBack": "Go back",
+		"goForward": "Go forward",
+		"agent": "Agent",
+		"search": "Search",
+		"newChat": "New chat",
+		"projects": "Projects",
+		"history": "History",
+		"emptyHero": {
+			"title": "Let's get to work, James",
+			"description": "Learn how to be productive with Wingbot.",
+			"readDocs": "Read the docs."
+		},
+		"autonomy": {
+			"title": "Autonomy",
+			"description": "Autonomy settings coming soon. Configure your agent's autonomous behavior here."
+		},
+		"memories": {
+			"title": "Memories",
+			"description": "Memory management UI coming soon. View and manage your agent memories here."
+		},
+		"schedule": {
+			"title": "Schedule",
+			"description": "Schedule management UI coming soon. For now this page shows the full token palette in-context.",
+			"groups": {
+				"accent": "Accent",
+				"ink": "Ink",
+				"app": "App",
+				"sidebar": "Sidebar",
+				"menu": "Menu",
+				"legacy": "Legacy"
+			}
+		},
+		"chatComposer": {
+			"placeholder": "Ask Wingbot to review a project, plan work, or start a task...",
+			"heading": "What should Wingbot work on?",
+			"send": "Send"
+		},
+		"tasks": {
+			"loading": "Loading tasks...",
+			"loadFailed": "Failed to load tasks.",
+			"emptyTitle": "No tasks yet.",
+			"emptyHint": "Create one to get started."
+		},
+		"unavailable": {
+			"title": "Wingbot unavailable",
+			"description": "This build does not include the Wingbot runtime. No messages or tasks were changed."
+		},
+		"workerLog": {
+			"worker": "Worker: {{task}}",
+			"status": "Status: {{status}}",
+			"started": "Started: {{date}}",
+			"completed": "Completed: {{date}}",
+			"result": "Result:\n{{result}}",
+			"transcript": "Transcript:\n{{transcript}}"
+		},
+		"navigation": {
+			"chat": "Chat",
+			"tasks": "Tasks"
+		},
+		"agents": {
+			"main": {
+				"name": "Star",
+				"detail": "WingDrive COO"
+			},
+			"operations": {
+				"name": "Operations",
+				"detail": "Scheduling and triage"
+			},
+			"builder": {
+				"name": "Builder",
+				"detail": "Code and tooling"
+			}
+		},
+		"projectDetails": {
+			"runtime": {
+				"name": "Wingbot Runtime",
+				"detail": "Remote control plane"
+			},
+			"hosted": {
+				"name": "Hosted Platform",
+				"detail": "Deploy and observe"
+			},
+			"wingdrive": {
+				"detail": "Main workspace"
+			}
+		},
+		"projectOptions": {
+			"wingdrive": "WingDrive v3",
+			"runtime": "Wingbot Runtime",
+			"hosted": "Hosted Platform"
+		},
+		"conversation": {
+			"start": "Start the conversation here.",
+			"typing": "Wingbot is typing..."
+		}
+	},
+	"app": {
+		"error": "Error",
+		"initializing": "Initializing client...",
+		"checkConsole": "Check console for logs"
+	},
+	"platform": {
+		"chooseFolder": "Choose a folder",
+		"chooseFile": "Choose a file",
+		"saveFile": "Save file"
+	},
+	"dragOverlay": {
+		"fileCount_one": "{{count}} file",
+		"fileCount_other": "{{count}} files",
+		"dragging": "Dragging..."
+	},
+	"contextMenu": {
+		"copy": "Copy",
+		"quickLook": "Quick Look",
+		"share": "Share",
+		"delete": "Delete"
+	},
+	"dragDemo": {
+		"title": "Native Drag & Drop Demo",
+		"files": "Draggable Files",
+		"dragInstructions": "Click and drag these files - move them out of the window to start native drag!",
+		"contextMenuInstructions": "Right-click on a file to test the native context menu.",
+		"dropZone": "Drop Zone",
+		"dropFiles": "Drop files here",
+		"dragFiles": "Drag files here",
+		"dropZoneHint": "This drop zone accepts files from other WingDrive windows",
+		"status": "Status",
+		"dragging": "Dragging",
+		"yes": "Yes",
+		"no": "No",
+		"dropZoneHovered": "Drop zone hovered",
+		"cursor": "Cursor",
+		"howItWorks": "How it works:",
+		"quickLook": "Quick Look: {{file}}",
+		"airDropShare": "AirDrop share",
+		"messages": "Messages",
+		"messagesShare": "Messages share",
+		"confirmDelete": "Delete {{file}}?",
+		"copying": "Copying: {{file}}",
+		"howItWorksItems": {
+			"nativeFiles": "Drag files from the list above to Finder - they'll appear as real files",
+			"overlay": "The custom overlay window follows your cursor during the drag",
+			"dropZones": "Drop zones in other WingDrive windows can receive dragged files",
+			"sync": "All drag state is synchronized across windows via Tauri events",
+			"contextMenu": "Right-click files for native context menu",
+			"transparentWindow": "- transparent window positioned at cursor"
+		}
+	},
+	"updater": {
+		"latest": "You are running the latest version!",
+		"confirm": "A new version (v{{version}}) is available!\n\nCurrent version: v{{currentVersion}}\n\n{{notes}}\n\nWould you like to download and install it now?",
+		"noReleaseNotes": "No release notes available",
+		"failed": "Update failed: {{error}}",
+		"formatBytes": "{{value}} {{unit}}",
+		"units": {
+			"bytes": "Bytes",
+			"kb": "KB",
+			"mb": "MB",
+			"gb": "GB"
+		}
+	},
+	"keybinds": {
+		"explorer": {
+			"undo": "Undo",
+			"openFile": "Open File",
+			"openSelection": "Open",
+			"revealInNativeExplorer": "Reveal in Native Explorer",
+			"renameFile": "Rename",
+			"selectAll": "Select All",
+			"cut": "Cut",
+			"copy": "Copy",
+			"paste": "Paste",
+			"duplicate": "Duplicate",
+			"delete": "Delete",
+			"permanentDelete": "Permanent Delete",
+			"refresh": "Refresh",
+			"newFolder": "New Folder",
+			"newFile": "New File",
+			"openTerminal": "Open Terminal Here",
+			"toggleHiddenFiles": "Show Hidden Files",
+			"navigateBack": "Navigate Back",
+			"navigateForward": "Navigate Forward",
+			"navigateToParent": "Navigate to Parent",
+			"toggleMetadata": "Toggle Metadata",
+			"toggleQuickPreview": "Quick Preview",
+			"moveUp": "Move Up",
+			"moveDown": "Move Down",
+			"moveLeft": "Move Left",
+			"moveRight": "Move Right",
+			"extendSelectionUp": "Extend Selection Up",
+			"extendSelectionDown": "Extend Selection Down",
+			"extendSelectionLeft": "Extend Selection Left",
+			"extendSelectionRight": "Extend Selection Right",
+			"enterTagMode": "Enter Tag Mode",
+			"exitTagMode": "Exit Tag Mode",
+			"toggleTag1": "Toggle Tag 1",
+			"toggleTag2": "Toggle Tag 2",
+			"toggleTag3": "Toggle Tag 3",
+			"toggleTag4": "Toggle Tag 4",
+			"toggleTag5": "Toggle Tag 5",
+			"toggleTag6": "Toggle Tag 6",
+			"toggleTag7": "Toggle Tag 7",
+			"toggleTag8": "Toggle Tag 8",
+			"toggleTag9": "Toggle Tag 9",
+			"toggleTag10": "Toggle Tag 10",
+			"clearSelection": "Clear Selection"
+		},
+		"global": {
+			"openCommandPalette": "Open Command Palette",
+			"openSettings": "Open Settings",
+			"newTab": "New Tab",
+			"closeTab": "Close Tab",
+			"nextTab": "Next Tab",
+			"previousTab": "Previous Tab",
+			"reopenTab": "Reopen Closed Tab",
+			"selectTab1": "Go to Tab 1",
+			"selectTab2": "Go to Tab 2",
+			"selectTab3": "Go to Tab 3",
+			"selectTab4": "Go to Tab 4",
+			"selectTab5": "Go to Tab 5",
+			"selectTab6": "Go to Tab 6",
+			"selectTab7": "Go to Tab 7",
+			"selectTab8": "Go to Tab 8",
+			"selectTab9": "Go to Tab 9",
+			"focusSearchBar": "Focus Search Bar"
+		},
+		"mediaViewer": {
+			"close": "Close Viewer",
+			"nextFile": "Next File",
+			"previousFile": "Previous File"
+		},
+		"quickPreview": {
+			"close": "Close Preview",
+			"closeWithSpace": "Close Preview"
+		}
+	},
+	"reveal": {
+		"finder": "Show in Finder",
+		"explorer": "Show in Explorer",
+		"folder": "Show in Folder"
+	}
+}

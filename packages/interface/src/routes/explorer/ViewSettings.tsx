@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { useExplorer } from "./context";
 import { CircleButton } from "@wingdrive/primitives";
+import { useTranslation } from "../../i18n";
 
 interface ViewSettingsPanelProps {
 	viewSettings: any;
@@ -19,10 +20,11 @@ export function ViewSettingsPanel({
 	viewMode,
 	totalFileCount,
 }: ViewSettingsPanelProps) {
+  const { t } = useTranslation("explorer");
 	return (
 		<div className="w-64 bg-app-box border border-app-line rounded-lg shadow-lg p-3 space-y-4">
 			<div className="text-xs font-semibold text-sidebar-ink uppercase tracking-wider">
-				View Settings
+        {t("viewSettings.title")}
 			</div>
 
 			{/* Column Width (Column View Only) */}
@@ -30,7 +32,7 @@ export function ViewSettingsPanel({
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
 						<label className="text-xs text-sidebar-ink-dull">
-							Column Width
+							{t("viewSettings.columnWidth")}
 						</label>
 						<span className="text-xs text-sidebar-ink font-medium">
 							{viewSettings.columnWidth}px
@@ -57,7 +59,7 @@ export function ViewSettingsPanel({
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
 						<label className="text-xs text-sidebar-ink-dull">
-							{viewMode === "media" ? "Thumbnail Size" : "Grid Size"}
+							{viewMode === "media" ? t("viewSettings.thumbnailSize") : t("viewSettings.gridSize")}
 						</label>
 						<span className="text-xs text-sidebar-ink font-medium">
 							{viewSettings.gridSize}px
@@ -83,7 +85,7 @@ export function ViewSettingsPanel({
 			{viewMode === "grid" && (
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
-						<label className="text-xs text-sidebar-ink-dull">Gap Size</label>
+						<label className="text-xs text-sidebar-ink-dull">{t("viewSettings.gapSize")}</label>
 						<span className="text-xs text-sidebar-ink font-medium">
 							{viewSettings.gapSize}px
 						</span>
@@ -108,7 +110,7 @@ export function ViewSettingsPanel({
 			{viewMode === "size" && (
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
-						<label className="text-xs text-sidebar-ink-dull">Items Shown</label>
+						<label className="text-xs text-sidebar-ink-dull">{t("viewSettings.itemsShown")}</label>
 						<span className="text-xs text-sidebar-ink font-medium">
 							{Math.min(viewSettings.sizeViewItemLimit || 500, totalFileCount || 500)} / {totalFileCount || 0}
 						</span>
@@ -131,7 +133,7 @@ export function ViewSettingsPanel({
 
 			{/* Show File Size Toggle */}
 			<div className="flex items-center justify-between pt-1">
-				<label className="text-xs text-sidebar-ink-dull">Show File Size</label>
+				<label className="text-xs text-sidebar-ink-dull">{t("viewSettings.showFileSize")}</label>
 				<button
 					onClick={() =>
 						setViewSettings({ showFileSize: !viewSettings.showFileSize })
@@ -153,7 +155,7 @@ export function ViewSettingsPanel({
 
 			{/* Folders First Toggle */}
 			<div className="flex items-center justify-between pt-1">
-				<label className="text-xs text-sidebar-ink-dull">Folders First</label>
+				<label className="text-xs text-sidebar-ink-dull">{t("viewSettings.foldersFirst")}</label>
 				<button
 					onClick={() =>
 						setViewSettings({ foldersFirst: !viewSettings.foldersFirst })
@@ -175,7 +177,7 @@ export function ViewSettingsPanel({
 
 			{/* Show Hidden Files Toggle */}
 			<div className="flex items-center justify-between pt-1">
-				<label className="text-xs text-sidebar-ink-dull">Show Hidden Files</label>
+				<label className="text-xs text-sidebar-ink-dull">{t("viewSettings.showHiddenFiles")}</label>
 				<button
 					onClick={() =>
 						setViewSettings({
@@ -206,6 +208,7 @@ interface ViewSettingsProps {
 }
 
 export function ViewSettings({ className, totalFileCount }: ViewSettingsProps) {
+  const { t } = useTranslation("explorer");
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -249,7 +252,7 @@ export function ViewSettings({ className, totalFileCount }: ViewSettingsProps) {
           icon={Sliders}
           onClick={() => setIsOpen(!isOpen)}
           active={isOpen}
-          title="View Settings"
+          title={t("viewSettings.title")}
         />
       </div>
 

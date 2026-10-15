@@ -9,6 +9,7 @@ import {useUndo} from '../../../hooks/useUndo';
 import {useExplorer} from '../context';
 import {physicalPath} from '../fileCapabilities';
 import {requestReveal} from '../pendingReveal';
+import {useTranslation} from '../../../i18n';
 
 /** First of `base`, `base 2`, ... (before the extension) that is not taken. */
 export function nextFreeName(base: string, existing: Iterable<string>): string {
@@ -35,6 +36,7 @@ function diskName(file: File): string {
  * listing shows it.
  */
 export function useCreateEntry() {
+	const {t} = useTranslation('explorer');
 	const {operationalPath, currentFiles} = useExplorer();
 	const createFile = useLibraryMutation('files.createFile');
 	const createSymlink = useLibraryMutation('files.createSymlink');
@@ -66,18 +68,18 @@ export function useCreateEntry() {
 	const newFile = useCallback(async () => {
 		if (!operationalPath) return;
 		const name = nextFreeName(
-			'Untitled File',
+		t('create.fileBaseName'),
 			currentFiles.map(diskName)
 		);
 		try {
 			const {path} = await createFile.mutateAsync({parent: operationalPath, name});
 			if ('Physical' in path) requestReveal(path.Physical.path, {rename: true});
-			await recordUndo(path, 'new file');
+			await recordUndo(path, t('undo.newFile'));
 			refetchListings();
 		} catch (error) {
-			toast.error(`Failed to create file: ${error}`);
+			toast.error(t('errors.failedToCreateFile', {error}));
 		}
-	}, [operationalPath, currentFiles, createFile, recordUndo, refetchListings]);
+	}, [operationalPath, currentFiles, createFile, recordUndo, refetchListings, t]);
 
 	const newLink = useCallback(
 		async (target: File) => {
@@ -93,13 +95,13 @@ export function useCreateEntry() {
 					name
 				});
 				if ('Physical' in path) requestReveal(path.Physical.path);
-				await recordUndo(path, 'new link');
+				await recordUndo(path, t('undo.newLink'));
 				refetchListings();
 			} catch (error) {
-				toast.error(`Failed to create link: ${error}`);
+			toast.error(t('errors.failedToCreateLink', {error}));
 			}
 		},
-		[operationalPath, currentFiles, createSymlink, recordUndo, refetchListings]
+	[operationalPath, currentFiles, createSymlink, recordUndo, refetchListings, t]
 	);
 
 	return {newFile, newLink};

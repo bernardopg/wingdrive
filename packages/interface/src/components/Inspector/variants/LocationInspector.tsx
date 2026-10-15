@@ -36,21 +36,25 @@ import { Button, Dialog, dialogManager, useDialog, CircleButton, type UseDialogP
 import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { useContextMenu } from "../../../hooks/useContextMenu";
 import LocationIcon from "@wingdrive/assets/icons/Location.png";
+import { useTranslation } from "../../../i18n";
+import { ThemedIcon } from "../../ThemedIcon";
+import {uiLocale} from "../../../i18n";
 
 interface LocationInspectorProps {
 	location: Location;
 }
 
 export function LocationInspector({ location }: LocationInspectorProps) {
+const { t } = useTranslation("inspector");
 	const [activeTab, setActiveTab] = useState("overview");
 
 	const tabs = [
-		{ id: "overview", label: "Overview", icon: Info },
-		{ id: "indexing", label: "Indexing", icon: Gear },
-		{ id: "jobs", label: "Jobs", icon: Briefcase },
-		{ id: "activity", label: "Activity", icon: ClockCounterClockwise },
-		{ id: "devices", label: "Devices", icon: HardDrive },
-		{ id: "more", label: "More", icon: DotsThree },
+{ id: "overview", label: t("inspector.location.overview"), icon: Info },
+{ id: "indexing", label: t("inspector.location.indexing"), icon: Gear },
+{ id: "jobs", label: t("inspector.location.jobs"), icon: Briefcase },
+{ id: "activity", label: t("inspector.location.activity"), icon: ClockCounterClockwise },
+{ id: "devices", label: t("inspector.location.devices"), icon: HardDrive },
+{ id: "more", label: t("inspector.location.more"), icon: DotsThree },
 	];
 
 	return (
@@ -89,6 +93,7 @@ export function LocationInspector({ location }: LocationInspectorProps) {
 }
 
 function OverviewTab({ location }: { location: Location }) {
+const { t } = useTranslation("inspector");
 	const rescanLocation = useLibraryMutation("locations.rescan");
 	const routeLocation = useLocation();
 	const navigate = useNavigate();
@@ -98,7 +103,7 @@ function OverviewTab({ location }: { location: Location }) {
 		items: [
 			{
 				icon: MagnifyingGlass,
-				label: "Quick Reindex",
+label: t("inspector.location.quickReindex"),
 				onClick: () => {
 					rescanLocation.mutate({
 						location_id: location.id,
@@ -108,7 +113,7 @@ function OverviewTab({ location }: { location: Location }) {
 			},
 			{
 				icon: Sparkle,
-				label: "Full Reindex",
+label: t("inspector.location.fullReindex"),
 				onClick: () => {
 					rescanLocation.mutate({
 						location_id: location.id,
@@ -129,7 +134,7 @@ function OverviewTab({ location }: { location: Location }) {
 
 	const formatDate = (dateStr: string) => {
 		const date = new Date(dateStr);
-		return date.toLocaleDateString("en-US", {
+		return date.toLocaleDateString(uiLocale(), {
 			month: "short",
 			day: "numeric",
 			year: "numeric",
@@ -139,27 +144,27 @@ function OverviewTab({ location }: { location: Location }) {
 	};
 
 	// Unit variants serialize as plain strings; only Scanning carries data
-	const formatScanState = (scanState: ScanState | null | undefined) => {
-		if (!scanState) return "Unknown";
+const formatScanState = (scanState: ScanState | null | undefined) => {
+if (!scanState) return t("inspector.location.unknown");
 		if (typeof scanState === "string") return scanState;
-		if ("Scanning" in scanState) return `Scanning ${scanState.Scanning.progress}%`;
-		return "Unknown";
+if ("Scanning" in scanState) return t("inspector.location.scanning", { progress: scanState.Scanning.progress });
+return t("inspector.location.unknown");
 	};
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10">
 			{/* Location icon */}
 			<div className="flex justify-center h-48 items-center w-full px-4">
-				<img src={LocationIcon} className="size-24" alt="Location" />
+<ThemedIcon src={LocationIcon} className="size-24" alt={t("inspector.location.location")} />
 			</div>
 
 			{/* Location name */}
 			<div className="px-2 text-center">
 				<h4 className="text-sm font-semibold text-sidebar-ink truncate">
-					{location.name || "Unnamed Location"}
+{location.name || t("inspector.location.unnamed")}
 				</h4>
 				<p className="text-xs text-sidebar-ink-dull mt-0.5">
-					Local Storage
+{t("inspector.location.localStorage")}
 				</p>
 			</div>
 
@@ -176,43 +181,43 @@ function OverviewTab({ location }: { location: Location }) {
 						}}
 						className="flex-1"
 					>
-						Open Location
+{t("inspector.location.openLocation")}
 					</CircleButton>
 				)}
 
 				<CircleButton
 					icon={ArrowsClockwise}
 					onClick={reindexMenu.show}
-					title="Reindex location"
+title={t("inspector.location.reindex")}
 				/>
 			</div>
 
 			{/* Details */}
-			<Section title="Details" icon={Info}>
-				<InfoRow label="Path" value={'Physical' in location.wing_path ? location.wing_path.Physical.path : 'Cloud' in location.wing_path ? location.wing_path.Cloud.path : location.name} mono />
+<Section title={t("inspector.location.details")} icon={Info}>
+<InfoRow label={t("inspector.file.path")} value={'Physical' in location.wing_path ? location.wing_path.Physical.path : 'Cloud' in location.wing_path ? location.wing_path.Cloud.path : location.name} mono />
 			{location.file_count != null && (
 				<InfoRow
-					label="Total Files"
+label={t("inspector.location.totalFiles")}
 					value={location.file_count?.toLocaleString() ?? "0"}
 				/>
 			)}
 				<InfoRow
-					label="Total Size"
+label={t("inspector.location.totalSize")}
 					value={formatBytes(location.total_size)}
 				/>
-				<InfoRow label="Scan State" value={formatScanState(location.scan_state)} />
+<InfoRow label={t("inspector.location.scanState")} value={formatScanState(location.scan_state)} />
 				{location.last_scan_at && (
 					<InfoRow
-						label="Last Scan"
+label={t("inspector.location.lastScan")}
 						value={formatDate(location.last_scan_at)}
 					/>
 				)}
 			</Section>
 
 			{/* Index Mode */}
-			<Section title="Index Mode" icon={Gear}>
+<Section title={t("inspector.location.indexMode")} icon={Gear}>
 				<InfoRow
-					label="Mode"
+label={t("inspector.location.mode")}
 					value={
 						location.index_mode.charAt(0).toUpperCase() +
 						location.index_mode.slice(1)
@@ -224,6 +229,7 @@ function OverviewTab({ location }: { location: Location }) {
 }
 
 function IndexingTab({ location }: { location: Location }) {
+const { t } = useTranslation("inspector");
 	const [indexMode, setIndexMode] = useState<"shallow" | "content" | "deep">(
 		location.index_mode as "shallow" | "content" | "deep",
 	);
@@ -236,39 +242,39 @@ function IndexingTab({ location }: { location: Location }) {
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
-			<Section title="Index Mode" icon={Gear}>
+<Section title={t("inspector.location.indexMode")} icon={Gear}>
 				<p className="text-xs text-sidebar-ink-dull mb-3">
-					Controls how deeply this location is indexed
+{t("inspector.location.indexDepthHint")}
 				</p>
 
 				<div className="space-y-2">
 					<RadioOption
 						value="shallow"
-						label="Shallow"
-						description="Just filesystem metadata (fastest)"
+label={t("inspector.location.shallow")}
+description={t("inspector.location.shallowDescription")}
 						checked={indexMode === "shallow"}
 						onChange={() => setIndexMode("shallow")}
 					/>
 					<RadioOption
 						value="content"
-						label="Content"
-						description="Generate content identities"
+label={t("inspector.location.content")}
+description={t("inspector.location.contentDescription")}
 						checked={indexMode === "content"}
 						onChange={() => setIndexMode("content")}
 					/>
 					<RadioOption
 						value="deep"
-						label="Deep"
-						description="Full indexing with thumbnails and text extraction"
+label={t("inspector.location.deep")}
+description={t("inspector.location.deepDescription")}
 						checked={indexMode === "deep"}
 						onChange={() => setIndexMode("deep")}
 					/>
 				</div>
 			</Section>
 
-			<Section title="Ignore Rules" icon={FunnelX}>
+<Section title={t("inspector.location.ignoreRules")} icon={FunnelX}>
 				<p className="text-xs text-sidebar-ink-dull mb-3">
-					Files and folders matching these patterns will be ignored
+{t("inspector.location.ignoreRulesDescription")}
 				</p>
 
 				<div className="space-y-1">
@@ -286,7 +292,7 @@ function IndexingTab({ location }: { location: Location }) {
 				</div>
 
 				<button className="mt-2 text-xs text-accent hover:text-accent/80 transition-colors">
-					+ Add Rule
+{t("inspector.location.addRule")}
 				</button>
 			</Section>
 		</div>
@@ -294,6 +300,7 @@ function IndexingTab({ location }: { location: Location }) {
 }
 
 function JobsTab({ location }: { location: Location }) {
+const { t } = useTranslation("inspector");
 	const updateLocation = useLibraryMutation("locations.update");
 	const triggerJob = useLibraryMutation("locations.triggerJob");
 
@@ -319,15 +326,14 @@ function JobsTab({ location }: { location: Location }) {
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
 			<p className="text-xs text-sidebar-ink-dull">
-				Configure which processing jobs run automatically for this
-				location
+{t("inspector.location.jobsDescription")}
 			</p>
 
-			<Section title="Media Processing" icon={Image}>
+<Section title={t("inspector.location.mediaProcessing")} icon={Image}>
 				<div className="space-y-2.5">
 					<JobConfigRow
-						label="Generate Thumbnails"
-						description="Create preview thumbnails for images and videos"
+label={t("inspector.location.generateThumbnails")}
+description={t("inspector.location.thumbnailsDescription")}
 						enabled={thumbnails}
 						onToggle={(enabled) =>
 							updatePolicy({
@@ -350,8 +356,8 @@ function JobsTab({ location }: { location: Location }) {
 						isTriggering={triggerJob.isPending}
 					/>
 					<JobConfigRow
-						label="Generate Thumbstrips"
-						description="Create video storyboard grids (5×5 grid of frames)"
+label={t("inspector.location.generateThumbstrips")}
+description={t("inspector.location.thumbstripsDescription")}
 						enabled={thumbstrips}
 						onToggle={(enabled) =>
 							updatePolicy({
@@ -373,8 +379,8 @@ function JobsTab({ location }: { location: Location }) {
 						icon={FilmStrip}
 					/>
 					<JobConfigRow
-						label="Generate Proxies"
-						description="Create scrubbing proxies for videos (180p @ 15fps)"
+label={t("inspector.location.generateProxies")}
+description={t("inspector.location.proxiesDescription")}
 						enabled={proxies}
 						onToggle={(enabled) =>
 							updatePolicy({
@@ -398,11 +404,11 @@ function JobsTab({ location }: { location: Location }) {
 				</div>
 			</Section>
 
-			<Section title="AI Processing" icon={Sparkle}>
+<Section title={t("inspector.location.aiProcessing")} icon={Sparkle}>
 				<div className="space-y-2.5">
 					<JobConfigRow
-						label="Extract Text (OCR)"
-						description="Scan images for text content"
+label={t("inspector.location.extractTextOcr")}
+description={t("inspector.location.ocrDescription")}
 						enabled={ocr}
 						onToggle={(enabled) =>
 							updatePolicy({
@@ -425,8 +431,8 @@ function JobsTab({ location }: { location: Location }) {
 						isTriggering={triggerJob.isPending}
 					/>
 					<JobConfigRow
-						label="Speech to Text"
-						description="Transcribe audio and video files"
+label={t("inspector.location.speechToText")}
+description={t("inspector.location.speechDescription")}
 						enabled={speech}
 						onToggle={(enabled) =>
 							updatePolicy({
@@ -455,18 +461,19 @@ function JobsTab({ location }: { location: Location }) {
 }
 
 function ActivityTab({ location: _location }: { location: Location }) {
+	const { t } = useTranslation("inspector");
 	const activity = [
-		{ action: "Full Scan Completed", time: "10 min ago", files: 12456 },
-		{ action: "Thumbnails Generated", time: "1 hour ago", files: 234 },
-		{ action: "Content Hashes Updated", time: "3 hours ago", files: 5678 },
-		{ action: "Metadata Extracted", time: "5 hours ago", files: 890 },
-		{ action: "Location Added", time: "Jan 15, 2025", files: 0 },
+		{ action: t("inspector.location.fullScanCompleted"), time: t("inspector.location.minutesAgo", { count: 10 }), files: 12456 },
+		{ action: t("inspector.location.thumbnailsGenerated"), time: t("inspector.location.hoursAgo", { count: 1 }), files: 234 },
+		{ action: t("inspector.location.contentHashesUpdated"), time: t("inspector.location.hoursAgo", { count: 3 }), files: 5678 },
+		{ action: t("inspector.location.metadataExtracted"), time: t("inspector.location.hoursAgo", { count: 5 }), files: 890 },
+		{ action: t("inspector.location.locationAdded"), time: t("inspector.location.addedDate"), files: 0 },
 	];
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
 			<p className="text-xs text-sidebar-ink-dull">
-				Recent indexing activity and job history
+				{t("inspector.location.recentActivity")}
 			</p>
 
 			<div className="space-y-0.5">
@@ -486,7 +493,7 @@ function ActivityTab({ location: _location }: { location: Location }) {
 							<div className="text-[11px] text-sidebar-ink-dull mt-0.5">
 								{item.time}
 								{item.files > 0 &&
-									` · ${item.files.toLocaleString()} files`}
+									` · ${item.files.toLocaleString()} ${t("inspector.location.files")}`}
 							</div>
 						</div>
 					</div>
@@ -497,28 +504,29 @@ function ActivityTab({ location: _location }: { location: Location }) {
 }
 
 function DevicesTab({ location: _location }: { location: Location }) {
+	const { t } = useTranslation("inspector");
 	const devices = [
 		{
 			name: "MacBook Pro",
 			status: "online" as const,
-			lastSeen: "2 min ago",
+			lastSeen: t("inspector.location.minutesAgo", { count: 2 }),
 		},
 		{
-			name: "Desktop PC",
+			name: t("inspector.location.desktopPc"),
 			status: "offline" as const,
-			lastSeen: "2 days ago",
+			lastSeen: t("inspector.location.daysAgo", { count: 2 }),
 		},
 		{
-			name: "Home Server",
+			name: t("inspector.location.homeServer"),
 			status: "online" as const,
-			lastSeen: "5 min ago",
+			lastSeen: t("inspector.location.minutesAgo", { count: 5 }),
 		},
 	];
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
 			<p className="text-xs text-sidebar-ink-dull">
-				Devices that have access to this location
+				{t("inspector.location.devicesDescription")}
 			</p>
 
 			<div className="space-y-2">
@@ -547,8 +555,8 @@ function DevicesTab({ location: _location }: { location: Location }) {
 									/>
 									<span>
 										{device.status === "online"
-											? "Online"
-											: "Offline"}{" "}
+											? t("inspector.location.online")
+											: t("inspector.location.offline")}{" "}
 										· {device.lastSeen}
 									</span>
 								</div>
@@ -574,6 +582,7 @@ function useDeleteLocationDialog() {
 }
 
 function DeleteLocationDialog({ locationId, locationName, ...props }: DeleteLocationDialogProps) {
+	const { t } = useTranslation("inspector");
 	const dialog = useDialog(props);
 	const form = useForm();
 	const queryClient = useQueryClient();
@@ -607,12 +616,12 @@ function DeleteLocationDialog({ locationId, locationName, ...props }: DeleteLoca
 		<Dialog
 			dialog={dialog}
 			form={form}
-			title="Remove Location"
-			description={`Are you sure you want to remove "${locationName}"? Your files will not be deleted from disk.`}
+			title={t("inspector.location.removeLocation")}
+			description={t("inspector.location.removeConfirm", { name: locationName })}
 			icon={<Trash className="text-red-400" weight="bold" />}
-			ctaLabel="Remove Location"
+			ctaLabel={t("inspector.location.removeLocation")}
 			ctaDanger
-			cancelLabel="Cancel"
+			cancelLabel={t("inspector.location.cancel")}
 			cancelBtn
 			onSubmit={form.handleSubmit(handleDelete)}
 			loading={removeLocation.isPending}
@@ -621,11 +630,12 @@ function DeleteLocationDialog({ locationId, locationName, ...props }: DeleteLoca
 }
 
 function MoreTab({ location }: { location: Location }) {
+const { t } = useTranslation("inspector");
 	const openDeleteDialog = useDeleteLocationDialog();
 
 	const formatDate = (dateStr: string) => {
 		const date = new Date(dateStr);
-		return date.toLocaleDateString("en-US", {
+		return date.toLocaleDateString(uiLocale(), {
 			month: "short",
 			day: "numeric",
 			year: "numeric",
@@ -636,29 +646,29 @@ function MoreTab({ location }: { location: Location }) {
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
-			<Section title="Advanced" icon={Gear}>
+<Section title={t("inspector.location.advanced")} icon={Gear}>
 				<InfoRow
-					label="Location ID"
+label={t("inspector.location.locationId")}
 					value={String(location.id).slice(0, 8) + "..."}
 					mono
 				/>
 				{location.created_at && (
 					<InfoRow
-						label="Created"
+label={t("inspector.file.created")}
 						value={formatDate(location.created_at)}
 					/>
 				)}
 				{location.last_scan_at && (
 					<InfoRow
-						label="Last Scan"
+label={t("inspector.location.lastScan")}
 						value={formatDate(location.last_scan_at)}
 					/>
 				)}
 			</Section>
 
-			<Section title="Danger Zone" icon={Trash}>
+<Section title={t("inspector.location.dangerZone")} icon={Trash}>
 				<p className="text-xs text-sidebar-ink-dull mb-3">
-					Removing this location will not delete your files
+					{t("ui.removingThisLocationWillNotDelete")}
 				</p>
 				<button
 					onClick={() => openDeleteDialog(location.id, location.name)}
@@ -666,7 +676,7 @@ function MoreTab({ location }: { location: Location }) {
 				>
 					<div className="flex items-center justify-center gap-2">
 						<Trash className="size-4" weight="bold" />
-						<span>Remove Location</span>
+<span>{t("inspector.location.removeLocation")}</span>
 					</div>
 				</button>
 			</Section>
@@ -731,6 +741,7 @@ interface IgnoreRuleProps {
 }
 
 function IgnoreRule({ pattern, onRemove }: IgnoreRuleProps) {
+	const { t } = useTranslation("inspector");
 	return (
 		<div className="flex items-center gap-2 p-2 bg-app-box/40 rounded-lg border border-app-line/50 group">
 			<code className="flex-1 text-xs text-sidebar-ink font-mono">
@@ -739,7 +750,7 @@ function IgnoreRule({ pattern, onRemove }: IgnoreRuleProps) {
 			<button
 				onClick={onRemove}
 				className="size-5 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500/20 transition-all"
-				title="Remove rule"
+title={t("inspector.location.removeRule")}
 			>
 				<X className="size-3 text-red-400" weight="bold" />
 			</button>
@@ -766,6 +777,7 @@ function JobConfigRow({
 	isTriggering,
 	icon: Icon,
 }: JobConfigRowProps) {
+	const { t } = useTranslation("inspector");
 	return (
 		<div className="w-full p-3 bg-app-box/40 rounded-lg border border-app-line/50">
 			{/* Header with toggle and icon */}
@@ -813,10 +825,10 @@ function JobConfigRow({
 				variant="gray"
 				size="sm"
 				className="w-full flex items-center justify-center gap-1.5 mt-2.5"
-				title={enabled ? "Run job now" : "Enable job first"}
+title={enabled ? t("inspector.location.runJobNow") : t("inspector.location.enableJobFirst")}
 			>
 				<Play className="size-3" weight="fill" />
-				{isTriggering ? "Running..." : "Run Now"}
+{isTriggering ? t("inspector.location.running") : t("inspector.location.runNow")}
 			</Button>
 		</div>
 	);

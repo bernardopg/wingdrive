@@ -19,6 +19,7 @@ import { getContentKind } from "@wingdrive/ts-client";
 import { useMemo } from "react";
 import clsx from "clsx";
 import { File as FileComponent } from "../File";
+import {useTranslation} from '../../../i18n';
 
 const CONTENT_KIND_ICONS: Record<ContentKind, PhosphorIcon> = {
 	image: Image,
@@ -51,36 +52,37 @@ const CONTENT_KIND_ICONS: Record<ContentKind, PhosphorIcon> = {
 };
 
 const CONTENT_KIND_LABELS: Record<ContentKind, string> = {
-	image: "Images",
-	video: "Videos",
-	audio: "Audio",
-	document: "Documents",
-	archive: "Archives",
-	code: "Code",
-	text: "Text",
-	database: "Databases",
-	book: "Books",
-	font: "Fonts",
-	mesh: "3D Models",
-	config: "Config",
-	encrypted: "Encrypted",
-	key: "Keys",
-	executable: "Apps",
-	binary: "Binary",
-	spreadsheet: "Spreadsheets",
-	presentation: "Presentations",
-	email: "Emails",
-	calendar: "Calendar",
-	contact: "Contacts",
-	web: "Web",
-	shortcut: "Shortcuts",
-	package: "Packages",
-	model_entry: "Models",
+	image: "knowledge.kindImages",
+	video: "knowledge.kindVideos",
+	audio: "knowledge.kindAudio",
+	document: "knowledge.kindDocuments",
+	archive: "knowledge.kindArchives",
+	code: "knowledge.kindCode",
+	text: "knowledge.kindText",
+	database: "knowledge.kindDatabases",
+	book: "knowledge.kindBooks",
+	font: "knowledge.kindFonts",
+	mesh: "knowledge.kind3dModels",
+	config: "knowledge.kindConfig",
+	encrypted: "knowledge.kindEncrypted",
+	key: "knowledge.kindKeys",
+	executable: "knowledge.kindApps",
+	binary: "knowledge.kindBinary",
+	spreadsheet: "knowledge.kindSpreadsheets",
+	presentation: "knowledge.kindPresentations",
+	email: "knowledge.kindEmails",
+	calendar: "knowledge.kindCalendar",
+	contact: "knowledge.kindContacts",
+	web: "knowledge.kindWeb",
+	shortcut: "knowledge.kindShortcuts",
+	package: "knowledge.kindPackages",
+	model_entry: "knowledge.kindModels",
 	memory: "Memory",
 	unknown: "Other",
 };
 
 export function KnowledgeView() {
+	const {t} = useTranslation('explorer');
 	const { inspectorVisible, currentPath, sortBy, sortDirection, viewSettings } =
 		useExplorer();
 
@@ -155,16 +157,16 @@ export function KnowledgeView() {
 						<Sparkle className="size-8 text-accent" weight="fill" />
 						<div>
 							<h1 className="text-2xl font-semibold text-ink">
-								Knowledge View
+								{t('knowledge.title')}
 							</h1>
 							<p className="text-sm text-ink-dull">
-								AI-powered insights for {files.length} items
+								{t('knowledge.aiPowered', {count: files.length})}
 							</p>
 						</div>
 					</div>
 
 					{/* Content Piles */}
-					<Section title="Content" icon={Folder}>
+					<Section title={t('knowledge.content')} icon={Folder}>
 						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
 							{filesByKind.map(([kind, kindFiles]) => (
 								<ContentPile
@@ -179,7 +181,7 @@ export function KnowledgeView() {
 
 					{/* Tags */}
 					{allTags.length > 0 && (
-						<Section title="Tags" icon={TagIcon}>
+						<Section title={t('knowledge.tags')} icon={TagIcon}>
 							<div className="flex flex-wrap gap-2">
 								{allTags.map((tag) => (
 									<button
@@ -207,72 +209,68 @@ export function KnowledgeView() {
 					{/* Summary & Conversations */}
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 						{/* Summary */}
-						<Section title="Summary" icon={Sparkle}>
+						<Section title={t('knowledge.summary')} icon={Sparkle}>
 							<div className="space-y-2 text-sm text-ink-dull">
 								<p>
-									This directory contains {files.length} items
-									across {filesByKind.length} content types.
+									{t('knowledge.directorySummary', {items: files.length, kinds: filesByKind.length})}
 								</p>
 								{filesByKind.length > 0 && (
 									<p>
-										Most common type:{" "}
-										{CONTENT_KIND_LABELS[filesByKind[0][0]]}{" "}
-										({filesByKind[0][1].length} items)
+										{t('knowledge.mostCommonType', {kind: t(CONTENT_KIND_LABELS[filesByKind[0][0]]), count: filesByKind[0][1].length})}
 									</p>
 								)}
 								{allTags.length > 0 && (
 									<p>
-										Tagged items:{" "}
-										{allTags.reduce(
+										{t('knowledge.taggedItems', {count: allTags.reduce(
 											(sum, tag) => sum + tag.count,
 											0,
-										)}
+										)})}
 									</p>
 								)}
 							</div>
 						</Section>
 
 						{/* Conversations */}
-						<Section title="Conversations" icon={Chat}>
+						<Section title={t('knowledge.conversations')} icon={Chat}>
 							<div className="grid grid-cols-2 gap-2">
 								<ConversationCard
-									title="Organize photos"
-									preview="Can you help sort these by date?"
-									time="2h ago"
+									title={t('knowledge.organizePhotos')}
+									preview={t('knowledge.organizePhotosPreview')}
+									time={t('date.hoursAgo', {count: 2})}
 								/>
 								<ConversationCard
-									title="Find duplicates"
-									preview="Looking for duplicate files in..."
-									time="Yesterday"
+									title={t('knowledge.findDuplicates')}
+									preview={t('knowledge.findDuplicatesPreview')}
+									time={t('knowledge.yesterday')}
 								/>
 							</div>
 						</Section>
 					</div>
 
 					{/* Intelligence Sidecars */}
-					<Section title="Intelligence" icon={Database}>
+					<Section title={t('knowledge.intelligence')} icon={Database}>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 							<SidecarItem
-								kind="OCR Text"
-								variant="Extracted text from 12 images"
+							kind={t('knowledge.ocrText')}
+							variant={t('knowledge.extractedText', {count: 12})}
 								status="ready"
 								size="2.4 MB"
 							/>
 							<SidecarItem
-								kind="Thumbnails"
-								variant="Generated for 48 media files"
+							kind={t('knowledge.thumbnails')}
+							variant={t('knowledge.generatedForMedia', {count: 48})}
 								status="ready"
 								size="8.1 MB"
 							/>
 							<SidecarItem
-								kind="Video Transcripts"
-								variant="Speech-to-text from 3 videos"
+							kind={t('knowledge.videoTranscripts')}
+							variant={t('knowledge.speechToTextFromVideos', {count: 3})}
 								status="pending"
 								size="—"
 							/>
 							<SidecarItem
-								kind="Embeddings"
-								variant="Semantic vectors for search"
+							kind={t('knowledge.embeddings')}
+							variant={t('knowledge.semanticVectors')}
 								status="ready"
 								size="14.2 MB"
 							/>
@@ -322,8 +320,9 @@ function ContentPile({
 	files: File[];
 	totalCount: number;
 }) {
+	const {t} = useTranslation('explorer');
 	const Icon = CONTENT_KIND_ICONS[kind];
-	const label = CONTENT_KIND_LABELS[kind];
+	const label = t(CONTENT_KIND_LABELS[kind]);
 
 	return (
 		<button className="group flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-app-box/40 transition-colors">
@@ -361,7 +360,7 @@ function ContentPile({
 			<div className="text-center">
 				<div className="text-xs font-medium text-ink">{label}</div>
 				<div className="text-[10px] text-ink-dull">
-					{totalCount} items
+					{t('knowledge.itemsCount', {count: totalCount})}
 				</div>
 			</div>
 		</button>
@@ -405,6 +404,7 @@ function SidecarItem({
 	status: "ready" | "pending";
 	size: string;
 }) {
+	const {t} = useTranslation('explorer');
 	return (
 		<div className="flex items-start gap-3 p-3 rounded-lg bg-app-box/40 border border-app-line/50">
 			<div className="size-10 shrink-0 rounded-md bg-accent/10 border border-accent/20 flex items-center justify-center">
@@ -422,7 +422,7 @@ function SidecarItem({
 					status === "pending" && "bg-ink-faint/20 text-ink-dull",
 				)}
 			>
-				{status}
+				{t(`knowledge.status.${status}`)}
 			</span>
 		</div>
 	);

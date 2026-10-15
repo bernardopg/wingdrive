@@ -17,6 +17,7 @@ import { usePlatform } from "../contexts/PlatformContext";
 import { useAudioRecorder } from "../hooks/useAudioRecorder";
 import { useTtsPlayback } from "../hooks/useTtsPlayback";
 import { useWingbotEventSource } from "../Wingbot/useWingbotEventSource";
+import { i18n, useTranslation } from "../i18n";
 
 type VoiceState = "idle" | "recording" | "processing" | "speaking";
 
@@ -42,6 +43,7 @@ function getVoiceSessionId(agentId: string) {
 setServerUrl(SPACEBOT_URL);
 
 export function VoiceOverlay() {
+const { t } = useTranslation("dialogs");
 	const platform = usePlatform();
 	const profileSelector = usePopover();
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -57,7 +59,7 @@ export function VoiceOverlay() {
 		return profileId;
 	});
 	const [statusText, setStatusText] = useState(
-		"Press Option+Shift+Space to talk",
+t("voice.pressShortcut"),
 	);
 	const [transcript, setTranscript] = useState<
 		Array<{ role: string; text: string }>
@@ -177,7 +179,7 @@ export function VoiceOverlay() {
 			speak(event.spoken_text, agentId, profileId).then(() => {
 				ttsStartedRef.current = false;
 				setVoiceState("idle");
-				setStatusText("Press Option+Shift+Space to talk");
+setStatusText(i18n.t("dialogs:voice.pressShortcut"));
 			});
 		},
 		[sessionId, agentId, speak, profileId],
@@ -209,7 +211,7 @@ export function VoiceOverlay() {
 					speak(event.text, agentId, profileId).then(() => {
 						ttsStartedRef.current = false;
 						setVoiceState("idle");
-						setStatusText("Press Option+Shift+Space to talk");
+						setStatusText(i18n.t("dialogs:voice.pressShortcut"));
 					});
 				}
 			}
@@ -226,7 +228,7 @@ export function VoiceOverlay() {
 			if (event.channel_id !== sessionId) return;
 
 			if (event.is_typing && voiceStateRef.current === "processing") {
-				setStatusText("Thinking...");
+setStatusText(i18n.t("dialogs:voice.thinking"));
 			}
 		},
 		[sessionId],
@@ -249,7 +251,7 @@ export function VoiceOverlay() {
 		if (voiceState !== "idle") return;
 		stopTts();
 		setVoiceState("recording");
-		setStatusText("Listening...");
+setStatusText(i18n.t("dialogs:voice.listening"));
 		spokenReceivedRef.current = false;
 		ttsStartedRef.current = false;
 		await startRecording();
@@ -258,16 +260,16 @@ export function VoiceOverlay() {
 	const handleStopRecording = useCallback(async () => {
 		if (recorderState !== "recording") return;
 		setVoiceState("processing");
-		setStatusText("Processing...");
+setStatusText(i18n.t("dialogs:voice.processing"));
 
 		const blob = await stopRecording();
 		if (!blob || blob.size === 0) {
 			setVoiceState("idle");
-			setStatusText("Press Option+Shift+Space to talk");
+setStatusText(i18n.t("dialogs:voice.pressShortcut"));
 			return;
 		}
 
-		setTranscript((prev) => [...prev, { role: "user", text: "[voice message]" }]);
+		setTranscript((prev) => [...prev, { role: "user", text: i18n.t("dialogs:voice.voiceMessage") }]);
 
 		try {
 			const response = await apiClient.webChatSendAudio(
@@ -280,9 +282,9 @@ export function VoiceOverlay() {
 		} catch (error) {
 			console.error("Failed to send audio:", error);
 			setVoiceState("idle");
-			setStatusText("Failed to send. Try again.");
+setStatusText(i18n.t("dialogs:voice.sendFailed"));
 			setTimeout(
-				() => setStatusText("Press Option+Shift+Space to talk"),
+() => setStatusText(i18n.t("dialogs:voice.pressShortcut")),
 				3000,
 			);
 		}
@@ -393,7 +395,7 @@ export function VoiceOverlay() {
 															p.id === profileId,
 													)?.name ??
 														profileId.slice(0, 8) ??
-														"Select voice"}
+t("voice.selectVoice")}
 												</span>
 												<CaretDown
 													className="size-3"
@@ -431,29 +433,28 @@ export function VoiceOverlay() {
 								</div>
 							) : profilesLoading ? (
 								<span className="text-[11px] text-ink-faint">
-									Loading voices...
+{t("voice.loadingVoices")}
 								</span>
 							) : null}
 							<button
 								onClick={() => setExpanded(false)}
 								className="text-[11px] text-ink-faint transition-colors hover:text-ink"
 							>
-								Collapse
+{t("voice.collapse")}
 							</button>
 						</div>
 					</div>
 
 					{profilesError && (
 						<div className="border-b border-white/5 px-4 py-2 text-[11px] text-amber-300/80">
-							Couldn&apos;t load Voicebox profiles. Make sure
-							Voicebox is running on port 17493.
+							{t("voice.profileLoadFailed")}
 						</div>
 					)}
 
 					<div className="max-h-[300px] overflow-y-auto p-4">
 						{transcript.length === 0 ? (
 							<p className="text-center text-xs text-ink-faint">
-								Your conversation will appear here.
+								{t("voice.emptyTranscript")}
 							</p>
 						) : (
 							<div className="flex flex-col gap-3">
@@ -464,7 +465,7 @@ export function VoiceOverlay() {
 									>
 										<span className="text-[11px] font-medium text-ink-faint">
 											{entry.role === "user"
-												? "You"
+? t("voice.you")
 												: "Wingbot"}
 										</span>
 										<p className="whitespace-pre-wrap text-xs leading-relaxed text-ink">
@@ -529,12 +530,12 @@ export function VoiceOverlay() {
 							}`}
 						>
 							{voiceState === "recording"
-								? "Input live"
+? t("voice.inputLive")
 								: voiceState === "speaking"
-									? "Reply live"
+? t("voice.replyLive")
 									: voiceState === "processing"
-										? "Thinking"
-										: "Voice ready"}
+? t("voice.thinkingStatus")
+: t("voice.ready")}
 						</span>
 					</div>
 					<p

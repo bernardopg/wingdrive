@@ -15,8 +15,10 @@ import {useNormalizedQuery} from '../../contexts/WingDriveContext';
 import {DevicePanel} from './DevicePanel';
 import {HeroStats} from './HeroStats';
 import {OverviewTopBar} from './OverviewTopBar';
+import {useTranslation} from '../../i18n';
 
 export function Overview() {
+	const {t} = useTranslation('navigation');
 	const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
 		null
 	);
@@ -52,11 +54,11 @@ export function Overview() {
 	if (isLoading || !libraryInfo) {
 		return (
 			<>
-				<OverviewTopBar libraryName="Loading..." />
+				<OverviewTopBar libraryName={t('common.loading')} />
 				<div className="flex h-full flex-col overflow-hidden">
 					<div className="flex-1 space-y-4 overflow-auto p-6">
 						<div className="text-ink-dull text-center">
-							Loading library statistics...
+							{t('overview.loadingStatistics')}
 						</div>
 					</div>
 				</div>

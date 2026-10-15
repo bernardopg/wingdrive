@@ -1,4 +1,5 @@
 import {ArrowCounterClockwise, ArrowLeft, Trash, X} from '@phosphor-icons/react';
+import {useIsDarkTheme} from '../../hooks/useTheme';
 import {getIcon} from '@wingdrive/assets/util';
 import {Button, CircleButton, toast} from '@wingdrive/primitives';
 import type {TrashEntry} from '@wingdrive/ts-client';
@@ -9,8 +10,10 @@ import {usePlatform} from '../../contexts/PlatformContext';
 import {useCoreMutation, useCoreQuery} from '../../contexts/WingDriveContext';
 import {TopBarItem, TopBarPortal} from '../../TopBar';
 import {formatBytes, formatRelativeTime} from '../explorer/utils';
+import {useTranslation} from '../../i18n';
 
 export function TrashView() {
+	const {t} = useTranslation('navigation');
 	const navigate = useNavigate();
 	const platform = usePlatform();
 	const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -51,18 +54,18 @@ export function TrashView() {
 	function restoreItems(ids: string[]) {
 		void run(
 			() => restore.mutateAsync({ids}),
-			ids.length === 1 ? 'Item restored' : `${ids.length} items restored`
+		t('trash.restored', {count: ids.length})
 		);
 	}
 
 	function purgeItems(ids: string[], label: string) {
 		platform.confirm(
-			`${label} cannot be recovered. Continue?`,
+		t('trash.confirmPurge', {label}),
 			(ok) => {
 				if (ok) {
 					void run(
 						() => purge.mutateAsync({ids}),
-						`${ids.length} ${ids.length === 1 ? 'item' : 'items'} deleted`
+						t('trash.deleted', {count: ids.length})
 					);
 				}
 			}
@@ -74,30 +77,30 @@ export function TrashView() {
 			<TopBarPortal
 				left={
 					<>
-						<TopBarItem id="back" label="Back" priority="high">
+						<TopBarItem id="back" label={t('common.back')} priority="high">
 							<CircleButton
 								icon={ArrowLeft}
 								onClick={() => navigate(-1)}
 							/>
 						</TopBarItem>
-						<TopBarItem id="title" label="Title" priority="high">
-							<h1 className="text-ink text-xl font-bold">Trash</h1>
+						<TopBarItem id="title" label={t('common.title')} priority="high">
+							<h1 className="text-ink text-xl font-bold">{t('sidebar.trash')}</h1>
 						</TopBarItem>
 					</>
 				}
 				right={
 					<>
-						<TopBarItem id="restore" label="Restore" priority="high">
+						<TopBarItem id="restore" label={t('trash.restore')} priority="high">
 							<Button
 								variant="gray"
 								size="sm"
 								disabled={busy || targets.length === 0}
 								onClick={() => restoreItems(targets)}
 							>
-								Restore
+								{t('trash.restore')}
 							</Button>
 						</TopBarItem>
-						<TopBarItem id="empty" label="Empty Trash" priority="high">
+						<TopBarItem id="empty" label={t('trash.empty')} priority="high">
 							<Button
 								variant="colored"
 								className="bg-status-error border-status-error"
@@ -105,14 +108,14 @@ export function TrashView() {
 								disabled={busy || items.length === 0}
 								onClick={() =>
 									targets.length > 0
-										? purgeItems(targets, 'The selected items')
+										? purgeItems(targets, t('trash.selectedItems'))
 										: purgeItems(
 												items.map((item) => item.id),
-												'Everything in the trash'
+												t('trash.everything')
 											)
 								}
 							>
-								{targets.length > 0 ? 'Delete Forever' : 'Empty Trash'}
+								{targets.length > 0 ? t('trash.deleteForever') : t('trash.empty')}
 							</Button>
 						</TopBarItem>
 					</>
@@ -121,9 +124,9 @@ export function TrashView() {
 
 			<div className="flex h-full flex-col overflow-y-auto px-6 py-4">
 				{data && !data.supported ? (
-					<EmptyState text="This system does not let WingDrive read its trash. Open it from your file manager instead." />
+					<EmptyState text={t('trash.unsupported')} />
 				) : isLoading ? null : items.length === 0 ? (
-					<EmptyState text="The trash is empty." />
+					<EmptyState text={t('trash.emptyState')} />
 				) : (
 					<ul className="flex flex-col gap-1">
 						{items.map((item) => (
@@ -161,8 +164,10 @@ function TrashRow({
 	onRestore,
 	onPurge
 }: TrashRowProps) {
+	const {t} = useTranslation('navigation');
+	const isDark = useIsDarkTheme();
 	const extension = item.is_dir ? null : (item.name.split('.').pop() ?? null);
-	const icon = getIcon(item.is_dir ? 'Folder' : 'Document', true, extension, item.is_dir);
+	const icon = getIcon(item.is_dir ? 'Folder' : 'Document', isDark, extension, item.is_dir);
 	const parent = item.original_path.slice(
 		0,
 		item.original_path.length - item.name.length - 1
@@ -178,7 +183,7 @@ function TrashRow({
 			<button
 				type="button"
 				aria-pressed={selected}
-				aria-label={`Select ${item.name}`}
+				aria-label={t('trash.selectItem', {name: item.name})}
 				className="flex min-w-0 flex-1 items-center gap-3 text-left"
 				onClick={onToggle}
 			>
@@ -199,13 +204,13 @@ function TrashRow({
 			<div className="flex gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
 				<CircleButton
 					icon={ArrowCounterClockwise}
-					title="Restore"
+					title={t('trash.restore')}
 					disabled={disabled}
 					onClick={onRestore}
 				/>
 				<CircleButton
 					icon={X}
-					title="Delete forever"
+					title={t('trash.deleteForeverTitle')}
 					disabled={disabled}
 					onClick={onPurge}
 				/>

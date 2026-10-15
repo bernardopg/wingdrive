@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getDragSession, type DragSession } from '../lib/drag';
+import { i18n } from '@wingdrive/interface';
 
 export function DragOverlay() {
   const [session, setSession] = useState<DragSession | null>(null);
@@ -27,12 +28,12 @@ export function DragOverlay() {
           <div className="text-2xl"></div>
           <div>
             <div className="font-semibold text-sm">
-              {itemCount} {itemCount === 1 ? 'file' : 'files'}
+              {i18n.t('common:dragOverlay.fileCount', {count: itemCount})}
             </div>
             <div className="text-xs text-blue-100 opacity-80">
               {session.config.items[0]?.kind.type === 'file'
                 ? session.config.items[0].kind.path.split('/').pop()
-                : 'Dragging...'}
+                : i18n.t('common:dragOverlay.dragging')}
             </div>
           </div>
         </div>

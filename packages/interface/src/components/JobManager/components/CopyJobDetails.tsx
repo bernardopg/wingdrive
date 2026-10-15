@@ -8,6 +8,7 @@ import type { File } from "@wingdrive/ts-client";
 import { SpeedGraph } from "./SpeedGraph";
 import { Thumb } from "../../../routes/explorer/File/Thumb";
 import { formatBytes } from "../../../routes/explorer/utils";
+import { i18n, useTranslation } from "../../../i18n";
 
 interface CopyJobDetailsProps {
   job: JobListItem;
@@ -15,6 +16,7 @@ interface CopyJobDetailsProps {
 }
 
 export function CopyJobDetails({ job, speedHistory }: CopyJobDetailsProps) {
+  const { t } = useTranslation("dialogs");
   const generic = job.generic_progress;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const prevScrollIndexRef = useRef<number>(-1);
@@ -85,7 +87,7 @@ export function CopyJobDetails({ job, speedHistory }: CopyJobDetailsProps) {
   if (!generic) {
     return (
       <div className="p-4 text-xs text-ink-faint">
-        No progress data available
+        {t("ui.noProgressDataAvailable")}
       </div>
     );
   }
@@ -104,7 +106,7 @@ export function CopyJobDetails({ job, speedHistory }: CopyJobDetailsProps) {
       {/* File queue */}
       {files.length > 0 && (
         <div>
-          <div className="text-xs font-medium text-ink mb-2">Transfer Queue</div>
+          <div className="text-xs font-medium text-ink mb-2">{t("jobs.transferQueue")}</div>
           <div
             ref={scrollContainerRef}
             className="space-y-0 max-h-[200px] overflow-y-auto border border-app-line rounded-lg"
@@ -189,7 +191,7 @@ function extractFileName(path: any): string {
     return p.split("/").pop() || p;
   }
 
-  return "Unknown";
+  return i18n.t("dialogs:jobs.unknown");
 }
 
 // Format WingPath to readable string for subtext

@@ -10,11 +10,13 @@ import {useTabScroll} from '../../hooks/useTabScroll';
 import {useSelection} from '../../SelectionContext';
 import {DragSelect} from './DragSelect';
 import {FileCard} from './FileCard';
+import {useTranslation} from '../../../../i18n';
 
 const VIRTUALIZATION_THRESHOLD = 0; // Disabled - always virtualize
 let lastGridMeasurement: {key: string; width: number; height: number} | null = null;
 
 export function GridView() {
+	const {t} = useTranslation('explorer');
 	const {viewSettings, setCurrentFiles} = useExplorer();
 	const {
 		isSelected,
@@ -60,10 +62,10 @@ export function GridView() {
 			<div className="flex h-full items-center justify-center">
 				<div className="text-center">
 					<div className="text-ink-dull mb-1 text-lg font-medium">
-						No tagged files
+						{t("ui.noTaggedFiles")}
 					</div>
 					<div className="text-ink-dull text-sm">
-						Files tagged with this tag will appear here
+						{t("ui.filesTaggedWithThisTagWill")}
 					</div>
 				</div>
 			</div>

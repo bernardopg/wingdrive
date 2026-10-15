@@ -28,6 +28,7 @@ cargo run --bin wing -- <command>      # Run CLI (binary is `wing`)
 - Using `println!` instead of `tracing` macros (`info!`, `debug!`, etc)
 - Implementing `Wire` manually instead of using `register_*` macros
 - Blocking the async runtime with synchronous I/O operations
+- Hardcoding user-visible English text in the UI instead of an i18n key (see [Internationalization](#internationalization-i18n))
 
 ### Quick tips
 
@@ -167,6 +168,38 @@ RpcServer (Rust)
     ↓
 Operation Registry
 ```
+
+### Internationalization (i18n)
+
+Every user-visible string in the UI is translated. A change that adds or edits UI text is not done until
+the text goes through i18n with both English and Brazilian Portuguese entries. Reviews reject hardcoded
+strings.
+
+- **Stack:** i18next with react-i18next, set up in `packages/interface/src/i18n/`. English (`en`) is the
+  source language and `pt` (Brazilian Portuguese) is the target. The daemon stores the choice in
+  `preferences.language` as a two-letter code, which is why the folder is `pt`, not `pt-BR`.
+- **Catalogs:** `packages/interface/src/i18n/locales/<lang>/<namespace>.json`. The namespaces are
+  `settings`, `explorer`, `inspector`, `dialogs`, `navigation` and `common`. Add keys to the namespace that
+  owns the component. A new namespace must also be registered in `i18n/index.ts`.
+- **What to translate:** JSX text, labels, tooltips, `title`, `placeholder`, `aria-label`, `alt`, menu and
+  context-menu items, toasts, dialogs, confirmations and empty states.
+- **What not to translate:** logs, errors that never reach the user, identifiers, protocol and enum
+  values, paths, URLs, keyboard symbols, and brand names (WingDrive, Wingbot, Spacebot).
+- **In components:** `const { t } = useTranslation("explorer");` then `t("contextMenu.copy")`.
+  `apps/tauri/src` imports `useTranslation` and `i18n` from `@wingdrive/interface`.
+- **Outside React render** (module constants, registries, callbacks built once): never call `t` at module
+  load. Resolve at call time with `i18n.t("explorer:contextMenu.copy")`, or store the key and translate
+  where it is rendered. Add `t` to the dependencies of any `useMemo`/`useCallback` that builds labels.
+- **Interpolation and plurals:** `t("copied", { count })` with `{{count}}` in JSON, and `_one` / `_other`
+  suffixes for plurals. Never concatenate translated fragments into a sentence.
+- **Parity:** `en` and `pt` files must have the same keys. Portuguese uses natural Brazilian wording with
+  correct diacritics. Keys are nested and named after the component (`emptyState.title`), and JSON uses
+  tab indentation.
+- **Crowdin:** project `wingdrive`, configured in `crowdin.yml`. `.github/workflows/crowdin.yml` uploads the
+  `en` sources on every push to `main` that changes them and opens a `chore(i18n)` pull request with the
+  translations. To sync locally, use `bun crowdin upload sources` and `bun crowdin download` with
+  `CROWDIN_PERSONAL_TOKEN` and `CROWDIN_PROJECT_ID` set. Do not edit Crowdin-managed `pt` strings by hand
+  in the same pull request as a Crowdin sync.
 
 ### Native Prototypes (iOS, macOS)
 

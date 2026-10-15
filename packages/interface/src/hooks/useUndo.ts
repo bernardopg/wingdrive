@@ -3,6 +3,7 @@ import type {WingPath} from '@wingdrive/ts-client';
 import { useWingDriveClient, useLibraryQuery } from "../contexts/WingDriveContext";
 import { useRefetchFileListings } from "./useRefetchFileListings";
 import { useUndoStore } from "./undoStore";
+import { i18n } from "../i18n";
 
 export function useUndo() {
 	const client = useWingDriveClient();
@@ -21,8 +22,14 @@ export function useUndo() {
 			if (!libraryId) return;
 			try {
 				const label = await store.undo(libraryId);
-				if (label) { refetch(); toast.success(`Undid ${label}`); }
-			} catch (error) { toast.error(`Could not undo: ${error}`); }
+				if (label) {
+					refetch();
+					const localizedLabel = i18n.exists(`common:undo.labels.${label}`)
+						? i18n.t(`common:undo.labels.${label}`)
+						: label;
+					toast.success(i18n.t("common:undo.done", { label: localizedLabel }));
+				}
+			} catch (error) { toast.error(i18n.t("common:undo.failed", { error: String(error) })); }
 		},
 	};
 }

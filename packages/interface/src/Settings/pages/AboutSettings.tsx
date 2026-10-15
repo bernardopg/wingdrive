@@ -3,8 +3,10 @@ import { WingDriveLogo } from "@wingdrive/assets/images";
 import { CircleButton } from "@wingdrive/primitives";
 import { GlobeHemisphereWest, GithubLogo, DiscordLogo } from "@phosphor-icons/react";
 import contributors from "../../contributors.json";
+import { useTranslation } from "../../i18n";
 
 export function AboutSettings() {
+  const { t } = useTranslation();
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[600px]">
@@ -34,9 +36,9 @@ export function AboutSettings() {
         transition={{ duration: 0.5, delay: 0.3 }}
         className="text-center mb-6"
       >
-        <h3 className="text-2xl font-bold text-white mb-2">WingDrive</h3>
-        <p className="text-sm text-white/60">
-          A file explorer from the future.
+        <h3 className="text-2xl font-bold text-ink mb-2">WingDrive</h3>
+        <p className="text-sm text-ink-dull">
+          {t("about.tagline")}
         </p>
       </motion.div>
 
@@ -47,8 +49,8 @@ export function AboutSettings() {
         transition={{ duration: 0.5, delay: 0.35 }}
         className="max-w-md text-center mb-8 px-4"
       >
-        <p className="text-sm text-white/70 leading-relaxed">
-          Infrastructure for the next era of computing. An architecture designed for multi-device environments from the ground up—not cloud services retrofitted with offline support, but local-first sync that scales to the cloud when you want it.
+        <p className="text-sm text-ink-dull leading-relaxed">
+          {t("about.manifesto")}
         </p>
       </motion.div>
 
@@ -65,7 +67,7 @@ export function AboutSettings() {
           rel="noopener noreferrer"
         >
           <CircleButton icon={GlobeHemisphereWest}>
-            Website
+            {t("about.website")}
           </CircleButton>
         </a>
         <a
@@ -95,7 +97,7 @@ export function AboutSettings() {
         transition={{ duration: 0.5, delay: 0.45 }}
         className="max-w-lg text-center mb-8 px-4"
       >
-        <p className="text-[11px] leading-relaxed text-white/30">
+        <p className="text-[11px] leading-relaxed text-ink-faint">
           {contributors.map((c: { name: string; github: string }, i) => (
             <span key={c.github}>
               {i > 0 && " · "}
@@ -104,7 +106,7 @@ export function AboutSettings() {
                 target="_blank"
                 rel="noopener noreferrer"
                 title={`@${c.github}`}
-                className="hover:text-white/50 transition-colors"
+                className="hover:text-ink-dull transition-colors"
               >
                 {c.name}
               </a>
@@ -124,7 +126,7 @@ export function AboutSettings() {
           href="https://github.com/bernardopg/wingdrive/blob/main/LICENSE"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-white/40 hover:text-white/60 transition-colors"
+          className="text-sm text-ink-faint hover:text-ink-dull transition-colors"
         >
           Apache-2.0
         </a>

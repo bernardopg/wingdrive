@@ -19,6 +19,7 @@ import { queryClient } from "@wingdrive/ts-client/hooks";
 import type { Event } from "@wingdrive/ts-client";
 import { useCoreMutation, useWingDriveClient } from "../../contexts/WingDriveContext";
 import { usePlatform } from "../../contexts/PlatformContext";
+import { useTranslation } from "../../i18n";
 
 interface CreateLibraryDialogProps {
 	id: number;
@@ -53,6 +54,7 @@ export function useCreateLibraryDialog(
 }
 
 function CreateLibraryDialog(props: CreateLibraryDialogProps) {
+	const { t } = useTranslation("dialogs");
 	const dialog = useDialog(props);
 	const client = useWingDriveClient();
 	const platform = usePlatform();
@@ -92,7 +94,7 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 		}
 
 		const selected = await platform.openDirectoryPickerDialog({
-			title: "Choose library location",
+			title: t("createLibrary.chooseLocation"),
 			multiple: false,
 		});
 
@@ -105,7 +107,7 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 		if (!data.name.trim()) {
 			form.setError("name", {
 				type: "manual",
-				message: "Library name is required",
+				message: t("createLibrary.nameRequired"),
 			});
 			return;
 		}
@@ -191,7 +193,7 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 		} catch (error) {
 			console.error("Failed to create library:", error);
 			setErrorMessage(
-				error instanceof Error ? error.message : "Failed to create library",
+				error instanceof Error ? error.message : t("createLibrary.createFailed"),
 			);
 			setStep("error");
 
@@ -209,7 +211,7 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 			<Dialog
 				dialog={dialog}
 				form={form}
-				title="Creating Library"
+				title={t("createLibrary.creating")}
 				icon={<Books size={20} weight="fill" />}
 				hideButtons
 			>
@@ -220,10 +222,10 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 					/>
 					<div className="text-center">
 						<p className="text-sm font-medium text-ink">
-							Creating your library...
+							{t("createLibrary.creatingMessage")}
 						</p>
 						<p className="text-xs text-ink-dull mt-1">
-							This may take a moment
+							{t("createLibrary.mayTakeMoment")}
 						</p>
 					</div>
 				</div>
@@ -237,7 +239,7 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 			<Dialog
 				dialog={dialog}
 				form={form}
-				title="Library Created"
+				title={t("createLibrary.created")}
 				icon={<Books size={20} weight="fill" />}
 				hideButtons
 			>
@@ -248,10 +250,10 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 					/>
 					<div className="text-center">
 						<p className="text-sm font-medium text-ink">
-							Library created successfully!
+							{t("createLibrary.successMessage")}
 						</p>
 						<p className="text-xs text-ink-dull mt-1">
-							Initializing...
+							{t("createLibrary.initializing")}
 						</p>
 					</div>
 				</div>
@@ -265,9 +267,9 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 			<Dialog
 				dialog={dialog}
 				form={form}
-				title="Error"
+				title={t("common.error")}
 				icon={<Warning size={20} weight="fill" className="text-red-500" />}
-				ctaLabel="Try Again"
+				ctaLabel={t("common.tryAgain")}
 				onSubmit={async () => {
 					setStep("form");
 					setErrorMessage(null);
@@ -281,7 +283,7 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 					/>
 					<div className="text-center">
 						<p className="text-sm font-medium text-ink">
-							Failed to create library
+							{t("createLibrary.createFailed")}
 						</p>
 						<p className="text-xs text-red-400 mt-1">
 							{errorMessage}
@@ -298,20 +300,20 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 			dialog={dialog}
 			form={form}
 			onSubmit={onSubmit}
-			title="Create New Library"
+			title={t("createLibrary.title")}
 			icon={<Books size={20} weight="fill" />}
-			description="A library is a container for your files, tags, and organization"
-			ctaLabel="Create Library"
+			description={t("createLibrary.description")}
+			ctaLabel={t("createLibrary.create")}
 			onCancelled={true}
 			loading={createLibrary.isPending}
 		>
 			<div className="space-y-4">
 				<div className="space-y-2">
-					<Label slug="name">Library Name</Label>
+					<Label slug="name">{t("createLibrary.name")}</Label>
 					<Input
-						{...form.register("name", { required: "Name is required" })}
+						{...form.register("name", { required: t("createLibrary.nameRequired") })}
 						size="md"
-						placeholder="My Library"
+						placeholder={t("createLibrary.namePlaceholder")}
 						autoFocus
 						className="bg-app-input"
 					/>
@@ -324,8 +326,8 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 
 				<div className="space-y-2">
 					<Label>
-						Location{" "}
-						<span className="text-ink-faint font-normal">(optional)</span>
+						{t("createLibrary.locationLabel")}{" "}
+						<span className="text-ink-faint font-normal">{t("common.optional")}</span>
 					</Label>
 					<div className="relative">
 						<Input
@@ -334,7 +336,7 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 								form.setValue("path", e.target.value || null)
 							}
 							size="md"
-							placeholder="Default location"
+							placeholder={t("createLibrary.locationPlaceholder")}
 							className="pr-12 bg-app-input"
 						/>
 						{platform.openDirectoryPickerDialog && (
@@ -350,7 +352,7 @@ function CreateLibraryDialog(props: CreateLibraryDialogProps) {
 						)}
 					</div>
 					<p className="text-xs text-ink-faint">
-						Leave empty to use the default location
+						{t("createLibrary.defaultLocationHint")}
 					</p>
 				</div>
 			</div>

@@ -20,7 +20,10 @@ const libraryConfig = {
 	auto_track_external_volumes: false
 };
 
+// Bun module mocks leak into other test files, so keep the real exports and override only these
+const actualContext = await import('../../contexts/WingDriveContext');
 mock.module('../../contexts/WingDriveContext', () => ({
+	...actualContext,
 	useCoreQuery: () => ({data: appConfig, refetch: () => {}}),
 	useCoreMutation: () => mutation,
 	useLibraryQuery: () => ({data: libraryConfig, refetch: () => {}, isLoading: false}),
@@ -28,10 +31,15 @@ mock.module('../../contexts/WingDriveContext', () => ({
 	useWingDriveClient: () => ({getCurrentLibraryId: () => 'library'})
 }));
 
+mock.module('../../contexts/PlatformContext', () => ({
+	usePlatform: () => ({platform: 'web', openLink: () => {}})
+}));
+
 const {LibrarySettings} = await import('./LibrarySettings');
 const {AppearanceSettings} = await import('./AppearanceSettings');
 const {PrivacySettings} = await import('./PrivacySettings');
 const {AdvancedSettings} = await import('./AdvancedSettings');
+const {i18n} = await import('../../i18n');
 
 function render(element: ReactElement) {
 	return renderToStaticMarkup(
@@ -49,10 +57,10 @@ describe('settings pages only offer settings with an effect', () => {
 		expect(html).toContain('External Volumes');
 	});
 
-	it('appearance has no language picker', () => {
+	it('appearance offers the language picker', () => {
 		const html = render(<AppearanceSettings />);
-		expect(html).not.toContain('<select');
-		expect(html).toContain('English only');
+		expect(html).toContain('<select');
+		expect(html).toContain('Português (Brasil)');
 	});
 
 	it('privacy states that nothing is collected', () => {
@@ -66,5 +74,14 @@ describe('settings pages only offer settings with an effect', () => {
 		expect(html).not.toContain('Daemon Log Level');
 		expect(html).not.toContain('Enable Job Logging');
 		expect(html).toContain('Include Debug Logs');
+	});
+
+	it('pages render in Portuguese when the language is pt', async () => {
+		await i18n.changeLanguage('pt');
+		try {
+			expect(render(<AdvancedSettings />)).toContain('Incluir logs de depuração');
+		} finally {
+			await i18n.changeLanguage('en');
+		}
 	});
 });

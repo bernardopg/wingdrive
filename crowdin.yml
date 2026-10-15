@@ -1,0 +1,11 @@
+# Crowdin sync for the UI strings. Run locally with `bun crowdin upload sources`
+# and `bun crowdin download`; CI does the same in .github/workflows/crowdin.yml.
+project_id_env: CROWDIN_PROJECT_ID
+api_token_env: CROWDIN_PERSONAL_TOKEN
+base_path: .
+preserve_hierarchy: true
+
+files:
+  # The app stores the language as an ISO 639-1 code, so pt-BR lands in `pt/`.
+  - source: /packages/interface/src/i18n/locales/en/*.json
+    translation: /packages/interface/src/i18n/locales/%two_letters_code%/%original_file_name%

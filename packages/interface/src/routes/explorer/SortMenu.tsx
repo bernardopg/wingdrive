@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { CircleButton } from "@wingdrive/primitives";
 import type { DirectorySortBy, MediaSortBy, SortDirection } from "@wingdrive/ts-client";
+import { useTranslation } from "../../i18n";
 
 interface SortMenuPanelProps {
   sortBy: DirectorySortBy | MediaSortBy;
@@ -25,28 +26,29 @@ interface SortMenuPanelProps {
 }
 
 export function SortMenuPanel({ sortBy, sortDirection, onSortChange, viewMode }: SortMenuPanelProps) {
+  const { t } = useTranslation("explorer");
   // Media listings have their own fixed ordering and ignore the direction.
   const ActiveIcon =
     viewMode === "media" ? Check : sortDirection === "Asc" ? ArrowUp : ArrowDown;
   const sortOptions = viewMode === "media"
     ? [
-        { value: "datetaken", label: "Date Taken", icon: Camera },
-        { value: "modified", label: "Date Modified", icon: CalendarBlank },
-        { value: "created", label: "Date Created", icon: CalendarBlank },
-        { value: "name", label: "Name", icon: TextAa },
-        { value: "size", label: "Size", icon: Ruler },
+        { value: "datetaken", label: t("sort.dateTaken"), icon: Camera },
+        { value: "modified", label: t("sort.dateModified"), icon: CalendarBlank },
+        { value: "created", label: t("sort.dateCreated"), icon: CalendarBlank },
+        { value: "name", label: t("sort.name"), icon: TextAa },
+        { value: "size", label: t("sort.size"), icon: Ruler },
       ]
     : [
-        { value: "name", label: "Name", icon: TextAa },
-        { value: "modified", label: "Date Modified", icon: CalendarBlank },
-        { value: "size", label: "Size", icon: Ruler },
-        { value: "type", label: "Type", icon: FileText },
+        { value: "name", label: t("sort.name"), icon: TextAa },
+        { value: "modified", label: t("sort.dateModified"), icon: CalendarBlank },
+        { value: "size", label: t("sort.size"), icon: Ruler },
+        { value: "type", label: t("sort.type"), icon: FileText },
       ];
 
   return (
     <div className="w-56 bg-app-box border border-app-line rounded-lg shadow-lg overflow-hidden">
       <div className="px-3 py-2 text-xs font-semibold text-sidebar-ink uppercase tracking-wider border-b border-app-line">
-        Sort By
+        {t("sort.sortBy")}
       </div>
 
       <div className="py-1">
@@ -85,6 +87,7 @@ interface SortMenuProps {
 }
 
 export function SortMenu({ sortBy, sortDirection, onSortChange, viewMode, className }: SortMenuProps) {
+  const { t } = useTranslation("explorer");
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -128,7 +131,7 @@ export function SortMenu({ sortBy, sortDirection, onSortChange, viewMode, classN
           icon={SortAscending}
           onClick={() => setIsOpen(!isOpen)}
           active={isOpen}
-          title="Sort"
+          title={t("sort.title")}
         />
       </div>
 

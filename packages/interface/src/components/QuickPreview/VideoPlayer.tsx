@@ -7,6 +7,7 @@ import type {
 	VideoControlsState,
 	VideoControlsCallbacks,
 } from "./VideoControls";
+import { useTranslation } from "../../i18n";
 
 /**
  * Turns an opaque media failure into something a user and a bug report can act
@@ -62,6 +63,7 @@ export function VideoPlayer({
 	onShowControlsChange,
 	getCallbacks,
 }: VideoPlayerProps) {
+	const { t } = useTranslation("inspector");
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const videoContainerRef = useRef<HTMLDivElement>(null);
@@ -383,7 +385,7 @@ export function VideoPlayer({
 					<div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 p-8">
 						<div className="max-w-md text-center">
 							<div className="text-sm font-medium text-white/90">
-								This video could not be played
+								{t("ui.thisVideoCouldNotBePlayed")}
 							</div>
 							<div className="mt-1 text-xs text-white/50">
 								{loadError}

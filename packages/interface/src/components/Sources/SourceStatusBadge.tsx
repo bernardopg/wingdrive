@@ -1,3 +1,5 @@
+import { i18n } from "../../i18n";
+
 interface SourceStatusBadgeProps {
 	status: string;
 }
@@ -14,7 +16,11 @@ export function SourceStatusBadge({ status }: SourceStatusBadgeProps) {
 							: "bg-ink-faint"
 				}`}
 			/>
-			{status}
+			{status === "syncing"
+				? i18n.t("dialogs:sources.syncing")
+				: status === "error"
+					? i18n.t("dialogs:sources.error")
+					: status}
 		</span>
 	);
 }

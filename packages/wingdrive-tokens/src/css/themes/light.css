@@ -39,8 +39,8 @@
 	--color-menu: hsl(235, 5%, 98%);
 	--color-menu-line: hsl(235, 5%, 95%);
 	--color-menu-ink: hsl(235, 5%, 20%);
-	--color-menu-faint: hsl(235, 5%, 80%);
-	--color-menu-hover: hsl(235, 15%, 20%);
-	--color-menu-selected: hsl(235, 5%, 30%);
+	--color-menu-faint: hsl(235, 5%, 45%);
+	--color-menu-hover: hsl(235, 10%, 91%);
+	--color-menu-selected: hsl(235, 10%, 86%);
 	--color-menu-shade: hsl(235, 5%, 0%);
 }

@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import type { SpeedSample } from "../hooks/useJobs";
+import { useTranslation } from "../../../i18n";
 
 interface SpeedGraphProps {
   jobId: string;
@@ -11,11 +12,12 @@ interface SpeedGraphProps {
  * Inspired by Windows file copy dialog with smooth curves and gradient fill.
  */
 export function SpeedGraph({ jobId, speedHistory }: SpeedGraphProps) {
+  const { t } = useTranslation("dialogs");
   // Early return if no data
   if (speedHistory.length === 0) {
     return (
       <div className="h-24 bg-app-dark-box rounded-lg flex items-center justify-center">
-        <span className="text-xs text-ink-faint">No speed data yet</span>
+        <span className="text-xs text-ink-faint">{t("jobs.noSpeedData")}</span>
       </div>
     );
   }
@@ -28,13 +30,13 @@ export function SpeedGraph({ jobId, speedHistory }: SpeedGraphProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-ink-faint">Transfer Speed</span>
+        <span className="text-xs text-ink-faint">{t("jobs.transferSpeed")}</span>
         <div className="flex gap-3 text-[10px]">
           <span className="text-ink-faint">
-            Avg: <span className="text-ink font-medium">{formatSpeed(avgRate)}</span>
+            {t("jobs.average")}: <span className="text-ink font-medium">{formatSpeed(avgRate)}</span>
           </span>
           <span className="text-ink-faint">
-            Peak: <span className="text-ink font-medium">{formatSpeed(maxRate)}</span>
+            {t("jobs.peak")}: <span className="text-ink font-medium">{formatSpeed(maxRate)}</span>
           </span>
         </div>
       </div>

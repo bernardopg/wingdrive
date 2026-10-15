@@ -15,6 +15,7 @@ import type { SearchFilters } from "@wingdrive/ts-client";
 import { TopBarPortal, TopBarItem } from "../../TopBar";
 import { useLibraryQuery } from "../../contexts/WingDriveContext";
 import { ExplorerView, useExplorer } from "../explorer";
+import { useTranslation } from "../../i18n";
 
 type CompareMode = "unique_a" | "shared" | "unique_b";
 
@@ -44,6 +45,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function CompareVolumes() {
+	const { t } = useTranslation("navigation");
 	const navigate = useNavigate();
 	const [volumeA, setVolumeA] = useState<string | null>(null);
 	const [volumeB, setVolumeB] = useState<string | null>(null);
@@ -60,10 +62,10 @@ export function CompareVolumes() {
 
 	const volumeAName =
 		volumes.find((v) => v.volume_uuid === volumeA)?.display_name ??
-		"Volume A";
+		t("redundancy.volumeA");
 	const volumeBName =
 		volumes.find((v) => v.volume_uuid === volumeB)?.display_name ??
-		"Volume B";
+		t("redundancy.volumeB");
 
 	const hasBoth = !!volumeA && !!volumeB && volumeA !== volumeB;
 
@@ -92,16 +94,16 @@ export function CompareVolumes() {
 	}, [hasBoth, mode, volumeA, volumeB]);
 
 	const label = useMemo(() => {
-		if (!hasBoth) return "Compare Volumes";
+		if (!hasBoth) return t("redundancy.compareVolumes");
 		switch (mode) {
 			case "unique_a":
-				return `Unique to ${volumeAName}`;
+				return t("redundancy.uniqueTo", {name: volumeAName});
 			case "unique_b":
-				return `Unique to ${volumeBName}`;
+				return t("redundancy.uniqueTo", {name: volumeBName});
 			case "shared":
-				return `Shared between ${volumeAName} & ${volumeBName}`;
+				return t("redundancy.sharedBetween", {first: volumeAName, second: volumeBName});
 		}
-	}, [hasBoth, mode, volumeAName, volumeBName]);
+	}, [hasBoth, mode, volumeAName, volumeBName, t]);
 
 	// Sync filtered mode whenever selection changes (only when both selected)
 	useEffect(() => {
@@ -132,14 +134,14 @@ export function CompareVolumes() {
 			<div className="flex items-center gap-2">
 				<CircleButton
 					icon={ArrowLeft}
-					title="Back to Redundancy"
+					title={t("redundancy.back")}
 					onClick={() => navigate("/redundancy")}
 				/>
 				<ArrowsLeftRight size={18} weight="bold" className="text-ink" />
 				<span className="text-sm font-semibold text-ink">{label}</span>
 			</div>
 		),
-		[navigate, label],
+		[navigate, label, t],
 	);
 
 	return (
@@ -148,7 +150,7 @@ export function CompareVolumes() {
 				center={
 					<TopBarItem
 						id="redundancy-compare-title"
-						label="Compare Volumes"
+						label={t("redundancy.compareVolumes")}
 						priority="high"
 					>
 						{titleItem}
@@ -165,7 +167,7 @@ export function CompareVolumes() {
 							onChange={(e) => setVolumeA(e.target.value || null)}
 							className="flex-1 rounded-lg border border-app-line bg-app-box/50 px-3 py-1.5 text-sm text-ink"
 						>
-							<option value="">Select Volume A</option>
+							<option value="">{t("redundancy.selectVolumeA")}</option>
 							{volumes.map((v) => (
 								<option
 									key={v.volume_uuid}
@@ -186,7 +188,7 @@ export function CompareVolumes() {
 							onChange={(e) => setVolumeB(e.target.value || null)}
 							className="flex-1 rounded-lg border border-app-line bg-app-box/50 px-3 py-1.5 text-sm text-ink"
 						>
-							<option value="">Select Volume B</option>
+							<option value="">{t("redundancy.selectVolumeB")}</option>
 							{volumes.map((v) => (
 								<option
 									key={v.volume_uuid}
@@ -205,17 +207,17 @@ export function CompareVolumes() {
 							<ModeButton
 								active={mode === "unique_a"}
 								onClick={() => setMode("unique_a")}
-								label={`Unique to ${volumeAName}`}
+								label={t("redundancy.uniqueTo", {name: volumeAName})}
 							/>
 							<ModeButton
 								active={mode === "shared"}
 								onClick={() => setMode("shared")}
-								label="Shared"
+								label={t("redundancy.shared")}
 							/>
 							<ModeButton
 								active={mode === "unique_b"}
 								onClick={() => setMode("unique_b")}
-								label={`Unique to ${volumeBName}`}
+								label={t("redundancy.uniqueTo", {name: volumeBName})}
 							/>
 						</div>
 					)}
@@ -227,7 +229,7 @@ export function CompareVolumes() {
 						<div className="flex flex-col items-center justify-center gap-2 py-16 text-ink-dull">
 							<ShieldCheck size={48} weight="thin" />
 							<span className="text-sm">
-								Select two volumes to compare their contents
+								{t("redundancy.selectTwoVolumes")}
 							</span>
 						</div>
 					) : (

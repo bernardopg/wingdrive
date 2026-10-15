@@ -14,6 +14,7 @@ import {useEffect, useMemo, useRef} from 'react';
 import {ChatComposer} from './ChatComposer';
 import {EmptyChatHero} from './EmptyChatHero';
 import {InlineWorkerCard} from './InlineWorkerCard';
+import {useTranslation} from '../i18n';
 
 interface ConversationScreenProps {
 	agentId: string;
@@ -57,6 +58,7 @@ export function ConversationScreen({
 
 	isSending = false
 }: ConversationScreenProps) {
+	const {t} = useTranslation('common');
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const previousTimelineLengthRef = useRef(0);
 	const timelineQuery = useQuery({
@@ -270,7 +272,7 @@ export function ConversationScreen({
 					</div>
 				) : (
 					<div className="text-ink-dull flex h-full min-h-[240px] items-center justify-center text-sm">
-						Start the conversation here.
+						{t('wingbot.conversation.start')}
 					</div>
 				)}
 
@@ -286,7 +288,7 @@ export function ConversationScreen({
 				{isTyping && !streamingAssistantText ? (
 					<div className="flex justify-start">
 						<div className="border-app-line bg-app text-ink-dull rounded-2xl border px-4 py-3 text-sm">
-							Wingbot is typing...
+							{t('wingbot.conversation.typing')}
 						</div>
 					</div>
 				) : null}

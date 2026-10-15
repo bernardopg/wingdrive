@@ -18,10 +18,12 @@ import { CircleButton, Popover, usePopover } from "@wingdrive/primitives";
 import { ExpandableSearchButton } from "../explorer/components/ExpandableSearchButton";
 import { SourcePathBar } from "../../components/Sources/SourcePathBar";
 import { SourceDataRow } from "../../components/Sources/SourceDataRow";
+import { useTranslation } from "../../i18n";
 
 const PAGE_SIZE = 100;
 
 export function SourceDetail() {
+	const { t } = useTranslation("navigation");
 	const { sourceId } = useParams<{ sourceId: string }>();
 	const navigate = useNavigate();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -172,7 +174,7 @@ export function SourceDetail() {
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-20">
-				<div className="text-ink-faint text-sm">Loading...</div>
+				<div className="text-ink-faint text-sm">{t("common.loading")}</div>
 			</div>
 		);
 	}
@@ -182,8 +184,8 @@ export function SourceDetail() {
 			<div className="p-6">
 				<div className="rounded-lg border border-red-400/20 p-4">
 					<p className="text-sm text-red-400">
-						Failed to load source:{" "}
-						{error ? String(error) : "Not found"}
+						{t("sources.sourceLoadFailed", {error: error ? String(error) : t("common.notFound")})}{" "}
+						{error ? String(error) : t("common.notFound")}
 					</p>
 					{error && (
 						<button
@@ -192,7 +194,7 @@ export function SourceDetail() {
 							onClick={() => void refetch()}
 							className="mt-2 text-xs text-ink underline disabled:opacity-50"
 						>
-							{isFetching ? "Retrying..." : "Retry"}
+							{isFetching ? t("common.retrying") : t("common.retry")}
 						</button>
 					)}
 				</div>
@@ -207,7 +209,7 @@ export function SourceDetail() {
 					<>
 						<TopBarItem
 							id="back"
-							label="Back"
+							label={t("common.back")}
 							priority="high"
 						>
 							<CircleButton
@@ -217,7 +219,7 @@ export function SourceDetail() {
 						</TopBarItem>
 						<TopBarItem
 							id="source-path"
-							label="Path"
+							label={t("common.path")}
 							priority="high"
 						>
 							<SourcePathBar
@@ -231,11 +233,11 @@ export function SourceDetail() {
 					<>
 						<TopBarItem
 							id="search"
-							label="Search"
+							label={t("common.search")}
 							priority="high"
 						>
 							<ExpandableSearchButton
-								placeholder="Search items..."
+								placeholder={t("sources.searchItems")}
 								value={searchValue}
 								onChange={setSearchValue}
 								onClear={() => setSearchValue("")}
@@ -243,7 +245,7 @@ export function SourceDetail() {
 						</TopBarItem>
 						<TopBarItem
 							id="sync"
-							label="Sync"
+							label={t("sources.sync")}
 							priority="high"
 						>
 							<CircleButton
@@ -253,7 +255,7 @@ export function SourceDetail() {
 										source_id: source.id,
 									})
 								}
-								title="Sync"
+								title={t("sources.sync")}
 								active={
 									syncMutation.isPending ||
 									source.status === "syncing"
@@ -262,7 +264,7 @@ export function SourceDetail() {
 						</TopBarItem>
 						<TopBarItem
 							id="more-actions"
-							label="More"
+							label={t("common.more")}
 							priority="normal"
 						>
 							<MoreActionsMenu
@@ -288,11 +290,11 @@ export function SourceDetail() {
 					{updateMutation.data && (
 						<div className="border-accent/20 rounded-lg border p-3">
 							<p className="text-accent text-xs">
-								Updated {updateMutation.data.adapter_id}: v
+								{t("sources.adapterUpdated", {id: updateMutation.data.adapter_id})}: v
 								{updateMutation.data.old_version} &rarr; v
 								{updateMutation.data.new_version}
 								{updateMutation.data.schema_changed
-									? " (schema changed — will migrate on next sync)"
+									? ` (${t("sources.schemaChanged")})`
 									: ""}
 							</p>
 						</div>
@@ -300,14 +302,14 @@ export function SourceDetail() {
 					{updateMutation.error && (
 						<div className="rounded-lg border border-red-400/20 p-3">
 							<p className="text-xs text-red-400">
-								Update failed: {String(updateMutation.error)}
+								{t("sources.updateFailed", {error: String(updateMutation.error)})}
 							</p>
 						</div>
 					)}
 					{syncMutation.error && (
 						<div className="rounded-lg border border-red-400/20 p-3">
 							<p className="text-xs text-red-400">
-								Sync failed: {String(syncMutation.error)}
+								{t("sources.syncFailed", {error: String(syncMutation.error)})}
 							</p>
 							<button
 								type="button"
@@ -317,7 +319,7 @@ export function SourceDetail() {
 								}
 								className="mt-1 text-xs text-ink underline disabled:opacity-50"
 							>
-								{syncMutation.isPending ? "Retrying..." : "Retry sync"}
+								{syncMutation.isPending ? t("common.retrying") : t("sources.retrySync")}
 							</button>
 						</div>
 					)}
@@ -328,15 +330,15 @@ export function SourceDetail() {
 			<div ref={scrollRef} className="flex-1 overflow-y-auto">
 				{itemsLoading && (
 					<div className="text-ink-faint py-12 text-center text-sm">
-						Loading items...
+						{t("sources.loadingItems")}
 					</div>
 				)}
 
 				{!itemsLoading && filteredItems.length === 0 && (
 					<div className="text-ink-faint py-12 text-center text-sm">
 						{searchValue
-							? "No matching items"
-							: "No items yet. Run a sync to populate."}
+							? t("sources.noMatchingItems")
+							: t("sources.noItems")}
 					</div>
 				)}
 
@@ -375,7 +377,7 @@ export function SourceDetail() {
 
 				{loadingMore && (
 					<div className="text-ink-faint py-4 text-center text-xs">
-						Loading more...
+						{t("common.loadingMore")}
 					</div>
 				)}
 			</div>
@@ -385,14 +387,10 @@ export function SourceDetail() {
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
 					<div className="border-app-line bg-app-box w-full max-w-sm rounded-xl border p-6 shadow-2xl">
 						<h3 className="text-ink text-base font-semibold">
-							Delete source
+							{t("sources.deleteTitle")}
 						</h3>
 						<p className="text-ink-faint mt-2 text-sm">
-							This will permanently delete{" "}
-							<strong className="text-ink-dull">
-								{source.name}
-							</strong>{" "}
-							and all its data.
+							{t("sources.deleteConfirm", {name: source.name})}
 						</p>
 						{deleteMutation.error && (
 							<p className="mt-2 text-xs text-red-400">
@@ -404,8 +402,7 @@ export function SourceDetail() {
 								onClick={() => setShowDeleteConfirm(false)}
 								disabled={deleteMutation.isPending}
 								className="border-app-line text-ink-faint hover:text-ink rounded-lg border px-3.5 py-1.5 text-sm font-medium transition-colors"
-							>
-								Cancel
+							>{t("common.cancel")}
 							</button>
 							<button
 								onClick={() =>
@@ -421,8 +418,8 @@ export function SourceDetail() {
 								className="rounded-lg bg-red-500 px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500/80 disabled:opacity-50"
 							>
 								{deleteMutation.isPending
-									? "Deleting..."
-									: "Delete"}
+									? t("common.deleting")
+									: t("common.delete")}
 							</button>
 						</div>
 					</div>
@@ -443,12 +440,13 @@ function MoreActionsMenu({
 	isUpdating: boolean;
 	onDelete: () => void;
 }) {
+	const { t } = useTranslation("navigation");
 	const popover = usePopover();
 
 	return (
 		<Popover.Root open={popover.open} onOpenChange={popover.setOpen}>
 			<Popover.Trigger asChild>
-				<CircleButton icon={DotsThree} title="More actions" />
+				<CircleButton icon={DotsThree} title={t("common.moreActions")} />
 			</Popover.Trigger>
 			<Popover.Content
 				side="bottom"
@@ -466,7 +464,7 @@ function MoreActionsMenu({
 						className="hover:bg-app-hover text-ink flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm disabled:opacity-40"
 					>
 						<ArrowSquareUp size={16} className="text-blue-400" />
-						{isUpdating ? "Updating..." : "Update adapter"}
+						{isUpdating ? t("common.updating") : t("sources.updateAdapter")}
 					</button>
 				)}
 				<button
@@ -476,8 +474,8 @@ function MoreActionsMenu({
 					}}
 					className="hover:bg-app-hover flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm text-red-400"
 				>
-					<Trash size={16} />
-					Delete source
+									<Trash size={16} />
+									{t("sources.delete")}
 				</button>
 			</Popover.Content>
 		</Popover.Root>

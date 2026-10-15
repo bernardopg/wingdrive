@@ -3,16 +3,16 @@ import {toast} from '@wingdrive/primitives';
 import {useEffect, useRef} from 'react';
 import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
 import {usePlatform} from '../../../contexts/PlatformContext';
+import {i18n} from '../../../i18n';
 import {
 	resolveExternalDrop,
 	type ExternalDropRejectionReason
 } from './resolveExternalDrop';
 
 const REJECTION_MESSAGES: Record<ExternalDropRejectionReason, string> = {
-	'no-files': 'No importable files were dropped.',
-	'no-destination': 'Open a physical folder before dropping files.',
-	'not-physical':
-		'Files from outside WingDrive can only be dropped into a physical folder.'
+	'no-files': 'externalDrop.noFiles',
+	'no-destination': 'externalDrop.noDestination',
+	'not-physical': 'externalDrop.notPhysical'
 };
 
 /**
@@ -51,8 +51,8 @@ export function useExternalFileDrop(destination: WingPath | null) {
 			const decision = resolveExternalDrop(destinationRef.current, paths);
 			if (decision.kind === 'reject') {
 				toast.warning({
-					title: 'Cannot Import Here',
-					body: REJECTION_MESSAGES[decision.reason]
+					title: i18n.t('explorer:externalDrop.title'),
+					body: i18n.t(`explorer:${REJECTION_MESSAGES[decision.reason]}`)
 				});
 				return;
 			}

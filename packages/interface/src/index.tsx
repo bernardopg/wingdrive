@@ -75,3 +75,4 @@ export type {
 	KeybindDefinition,
 	KeyCombo,
 } from "./util/keybinds";
+export { i18n, useTranslation, applyLanguage, LANGUAGES } from "./i18n";

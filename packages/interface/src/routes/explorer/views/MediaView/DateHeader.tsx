@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import clsx from "clsx";
+import { useTranslation } from "../../../../i18n";
 
 export const DATE_HEADER_HEIGHT = 75;
 
@@ -8,6 +9,7 @@ interface DateHeaderProps {
 }
 
 export function DateHeader({ date }: DateHeaderProps) {
+  const { t } = useTranslation("explorer");
   const ref = useRef<HTMLDivElement>(null);
   const [isSticky, setIsSticky] = useState(false);
 
@@ -45,7 +47,7 @@ export function DateHeader({ date }: DateHeaderProps) {
           !date && "opacity-75",
         )}
       >
-        {date ?? "No date"}
+          {date ?? t("date.noDate")}
       </div>
     </div>
   );

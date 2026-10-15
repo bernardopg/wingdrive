@@ -1,3 +1,4 @@
+import {i18n} from '../../i18n';
 import type { KeyCombo, Modifier, Platform, PlatformKeyCombo } from './types';
 import { isPlatformKeyCombo } from './types';
 
@@ -153,10 +154,10 @@ export function isInputFocused(): boolean {
 export function revealLabel(): string {
 	switch (getCurrentPlatform()) {
 		case 'macos':
-			return 'Show in Finder';
+			return i18n.t('common:reveal.finder');
 		case 'windows':
-			return 'Show in Explorer';
+			return i18n.t('common:reveal.explorer');
 		default:
-			return 'Show in Folder';
+			return i18n.t('common:reveal.folder');
 	}
 }

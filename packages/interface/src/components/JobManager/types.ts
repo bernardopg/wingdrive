@@ -1,4 +1,5 @@
 import type { JsonValue, ExtendedJobListItem, GenericProgress } from "@wingdrive/ts-client";
+import { i18n } from "../../i18n";
 
 // Re-export for backwards compatibility
 export type JobListItem = ExtendedJobListItem;
@@ -24,10 +25,10 @@ export function getJobDisplayName(job: JobListItem): string {
   if (!job.action_context?.action_type) {
     // Fallback to capitalizing job name
     if (job.name === "indexer") {
-      return "Indexing";
+      return i18n.t("dialogs:jobs.indexing");
     }
     if (job.name === "thumbnail_generation") {
-      return "Generating Thumbnails";
+      return i18n.t("dialogs:jobs.generatingThumbnails");
     }
     return job.name.split("_").map(word =>
       word.charAt(0).toUpperCase() + word.slice(1)
@@ -43,7 +44,7 @@ export function getJobDisplayName(job: JobListItem): string {
         if (path) {
           // Show full path with ~ for home directory
           const homePath = path.replace(/^\/Users\/[^/]+/, "~");
-          return `Added location ${homePath}`;
+          return i18n.t("dialogs:jobs.addedLocation", { path: homePath });
         }
         break;
       }
@@ -51,7 +52,7 @@ export function getJobDisplayName(job: JobListItem): string {
         const source = extractSourcePath(action_input);
         if (source) {
           const fileName = source.split("/").pop() || source;
-          return `Copying '${fileName}'`;
+          return i18n.t("dialogs:jobs.copyingFile", { name: fileName });
         }
         break;
       }
@@ -59,7 +60,7 @@ export function getJobDisplayName(job: JobListItem): string {
         const source = extractSourcePath(action_input);
         if (source) {
           const fileName = source.split("/").pop() || source;
-          return `Moving '${fileName}'`;
+          return i18n.t("dialogs:jobs.movingFile", { name: fileName });
         }
         break;
       }
@@ -67,16 +68,16 @@ export function getJobDisplayName(job: JobListItem): string {
         const target = extractTargetPath(action_input);
         if (target) {
           const fileName = target.split("/").pop() || target;
-          return `Deleting '${fileName}'`;
+          return i18n.t("dialogs:jobs.deletingFile", { name: fileName });
         }
         break;
       }
       case "media.thumbnail":
-        return "Generating Thumbnails";
+        return i18n.t("dialogs:jobs.generatingThumbnails");
       case "media.extract":
-        return "Extracting Media";
+        return i18n.t("dialogs:jobs.extractingMedia");
       case "indexing.start":
-        return "Indexing Location";
+        return i18n.t("dialogs:jobs.indexingLocation");
       case "volumes.index": {
         // This is an ephemeral browse-cache scan (no database persistence), not real
         // library indexing -- label it distinctly so it isn't mistaken for a location
@@ -84,9 +85,9 @@ export function getJobDisplayName(job: JobListItem): string {
         const context = job.action_context?.context as Record<string, unknown> | null;
         const volumeName = context?.volume_name;
         if (volumeName && typeof volumeName === 'string') {
-          return `Scanning ${volumeName}`;
+          return i18n.t("dialogs:jobs.scanningNamedVolume", { name: volumeName });
         }
-        return "Scanning Volume";
+        return i18n.t("dialogs:jobs.scanningVolume");
       }
       default: {
         // Capitalize and format action type
@@ -118,18 +119,18 @@ export function getJobSubtext(job: JobListItem): string {
           : JSON.stringify(job.current_path);
         return pathStr;
       }
-      return job.progress > 0 ? `${Math.round(job.progress * 100)}%` : "Processing...";
+      return job.progress > 0 ? `${Math.round(job.progress * 100)}%` : i18n.t("dialogs:jobs.processing");
     }
     case "completed":
-      return "Completed";
+      return i18n.t("dialogs:jobs.completed");
     case "failed":
-      return "Job failed";
+      return i18n.t("dialogs:jobs.jobFailed");
     case "queued":
-      return "Waiting to start";
+      return i18n.t("dialogs:jobs.waitingToStart");
     case "paused":
-      return "Paused";
+      return i18n.t("dialogs:jobs.paused");
     case "cancelled":
-      return "Cancelled";
+      return i18n.t("dialogs:jobs.cancelled");
     default:
       return "";
   }
@@ -143,15 +144,15 @@ export function getStatusBadge(job: JobListItem): string {
     case "running":
       return `${Math.round(job.progress * 100)}%`;
     case "completed":
-      return "Completed";
+      return i18n.t("dialogs:jobs.completed");
     case "failed":
-      return "Failed";
+      return i18n.t("dialogs:jobs.failed");
     case "paused":
-      return "Paused";
+      return i18n.t("dialogs:jobs.paused");
     case "queued":
-      return "Queued";
+      return i18n.t("dialogs:jobs.queued");
     case "cancelled":
-      return "Cancelled";
+      return i18n.t("dialogs:jobs.cancelled");
     default:
       return "";
   }
@@ -161,18 +162,18 @@ export function getStatusBadge(job: JobListItem): string {
  * Formats duration in milliseconds to human-readable string
  */
 export function formatDuration(ms: number): string {
-  if (ms > 0 && ms < 1000) return "<1s";
+  if (ms > 0 && ms < 1000) return i18n.t("dialogs:jobs.lessThanSecond");
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
 
   if (hours > 0) {
-    return `${hours}h ${minutes % 60}m`;
+    return i18n.t("dialogs:jobs.durationHours", { hours, minutes: minutes % 60 });
   }
   if (minutes > 0) {
-    return `${minutes}m ${seconds % 60}s`;
+    return i18n.t("dialogs:jobs.durationMinutes", { minutes, seconds: seconds % 60 });
   }
-  return `${seconds}s`;
+  return i18n.t("dialogs:jobs.durationSeconds", { seconds });
 }
 
 /**
@@ -193,10 +194,10 @@ export function timeAgo(date: string | Date | undefined): string {
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffDays > 0) return `${diffDays}d ago`;
-  if (diffHours > 0) return `${diffHours}h ago`;
-  if (diffMinutes > 0) return `${diffMinutes}m ago`;
-  return "just now";
+  if (diffDays > 0) return i18n.t("dialogs:jobs.daysAgo", { days: diffDays });
+  if (diffHours > 0) return i18n.t("dialogs:jobs.hoursAgo", { hours: diffHours });
+  if (diffMinutes > 0) return i18n.t("dialogs:jobs.minutesAgo", { minutes: diffMinutes });
+  return i18n.t("dialogs:jobs.justNow");
 }
 
 // Helper functions to extract paths from JsonValue

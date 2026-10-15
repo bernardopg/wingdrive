@@ -3,6 +3,7 @@ import MobileIcon from "@wingdrive/assets/icons/Mobile.png";
 import ServerIcon from "@wingdrive/assets/icons/Server.png";
 import PCIcon from "@wingdrive/assets/icons/PC.png";
 import type { WingPath } from "@wingdrive/ts-client";
+import { i18n } from "../../i18n";
 
 export function formatBytes(bytes: number | bigint | null): string {
 	if (bytes === null) return "0 B";
@@ -25,10 +26,10 @@ export function formatRelativeTime(date: Date | string): string {
 	const days = Math.floor(hours / 24);
 
 	if (days > 7) return d.toLocaleDateString();
-	if (days > 0) return `${days}d ago`;
-	if (hours > 0) return `${hours}h ago`;
-	if (minutes > 0) return `${minutes}m ago`;
-	return "Just now";
+	if (days > 0) return i18n.t("explorer:date.daysAgo", { count: days });
+	if (hours > 0) return i18n.t("explorer:date.hoursAgo", { count: hours });
+	if (minutes > 0) return i18n.t("explorer:date.minutesAgo", { count: minutes });
+	return i18n.t("explorer:date.justNow");
 }
 
 export function getDeviceIcon(os: string, model?: string): string {

@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { getDeviceIcon } from "../../../contexts/WingDriveContext";
 import LaptopIcon from "@wingdrive/assets/icons/Laptop.png";
 import type { VirtualView } from "../context";
+import {useTranslation} from '../../../i18n';
+import { ThemedIcon } from "../../../components/ThemedIcon";
 
 interface VirtualPathBarProps {
 	view: VirtualView;
@@ -14,6 +16,7 @@ interface VirtualPathBarProps {
  * Shows the view name with an appropriate icon instead of file path breadcrumbs
  */
 export function VirtualPathBar({ view, devices }: VirtualPathBarProps) {
+	const {t} = useTranslation('explorer');
 	const device = view.id ? devices.get(view.id) : null;
 	
 	// Determine label and icon based on view type
@@ -22,9 +25,9 @@ export function VirtualPathBar({ view, devices }: VirtualPathBarProps) {
 			return device.name;
 		}
 		if (view.view === "devices") {
-			return "All Devices";
+		return t("virtualPath.allDevices");
 		}
-		return "Virtual View";
+	return t("virtualPath.virtualView");
 	})();
 
 	const icon = (() => {
@@ -45,7 +48,7 @@ export function VirtualPathBar({ view, devices }: VirtualPathBarProps) {
 				"bg-sidebar-box/20 transition-colors",
 			)}
 		>
-			<img
+			<ThemedIcon
 				src={icon}
 				alt=""
 				className="size-5 opacity-60 flex-shrink-0"

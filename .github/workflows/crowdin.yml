@@ -1,0 +1,39 @@
+name: Crowdin
+on:
+  push:
+    branches: [main]
+    paths:
+      - packages/interface/src/i18n/locales/en/**
+      - crowdin.yml
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: crowdin
+  cancel-in-progress: false
+jobs:
+  sync:
+    name: Sync translations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: crowdin/github-action@9c23991700c0ec5256fd41089b9d9d7d540e424e # v3.3.0
+        with:
+          config: crowdin.yml
+          upload_sources: true
+          upload_translations: false
+          download_translations: true
+          localization_branch_name: i18n/crowdin
+          create_pull_request: true
+          pull_request_title: 'chore(i18n): update translations from Crowdin'
+          pull_request_body: 'Translations downloaded from the WingDrive Crowdin project.'
+          pull_request_base_branch_name: main
+          commit_message: 'chore(i18n): update translations from Crowdin'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}

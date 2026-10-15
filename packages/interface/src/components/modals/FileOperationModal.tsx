@@ -30,6 +30,7 @@ import {useRefetchFileListings} from '../../hooks/useRefetchFileListings';
 import {useUndo} from '../../hooks/useUndo';
 import {useWaitForJob} from '../../hooks/useWaitForJob';
 import {File, FileStack} from '../../routes/explorer/File';
+import {i18n, useTranslation} from '../../i18n';
 
 interface FileOperationDialogProps {
 	id: number;
@@ -64,6 +65,7 @@ export function useFileOperationDialog() {
 }
 
 function FileOperationDialog(props: FileOperationDialogProps) {
+	const {t} = useTranslation('dialogs');
 	const dialog = useDialog(props);
 	const form = useForm();
 	const [phase, setPhase] = useState<DialogPhase>({type: 'form'});
@@ -298,7 +300,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 			<Dialog
 				dialog={dialog}
 				form={form}
-				title={operation === 'copy' ? 'Copying Files' : 'Moving Files'}
+title={operation === 'copy' ? t("fileOperation.copyingFiles") : t("fileOperation.movingFiles")}
 				icon={<Files size={20} weight="bold" />}
 				hideButtons
 			>
@@ -309,9 +311,9 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 							weight="bold"
 						/>
 						<span className="text-ink text-sm">
-							{operation === 'copy'
-								? 'Copying files...'
-								: 'Moving files...'}
+{operation === 'copy'
+? t("fileOperation.copyingFilesProgress")
+: t("fileOperation.movingFilesProgress")}
 						</span>
 					</div>
 				</div>
@@ -324,12 +326,12 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 		const isError = outcome.status === 'failed';
 		const title =
 			outcome.status === 'partial'
-				? 'Finished with Problems'
+? t("fileOperation.finishedWithProblems")
 				: outcome.status === 'cancelled'
-					? 'Operation Cancelled'
+? t("fileOperation.cancelled")
 					: outcome.status === 'running'
-						? 'Still Running'
-						: 'Operation Failed';
+? t("fileOperation.stillRunning")
+: t("fileOperation.failed");
 		return (
 			<Dialog
 				dialog={dialog}
@@ -342,7 +344,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 						className={isError ? 'text-red-500' : 'text-amber-500'}
 					/>
 				}
-				ctaLabel="Close"
+ctaLabel={t("common.close")}
 				onCancelled={false}
 				onSubmit={form.handleSubmit(handleCancel)}
 			>
@@ -361,7 +363,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 					)}
 					{outcome.failed > outcome.details.length && (
 						<p className="text-ink-faint text-xs">
-							The job log lists every failed item.
+							{t("fileOperation.failureDetailsHint")}
 						</p>
 					)}
 				</div>
@@ -375,11 +377,11 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 			<Dialog
 				dialog={dialog}
 				form={form}
-				title="Operation Failed"
+title={t("fileOperation.failed")}
 				icon={
 					<Warning size={20} weight="fill" className="text-red-500" />
 				}
-				ctaLabel="Close"
+ctaLabel={t("common.close")}
 				onSubmit={form.handleSubmit(handleCancel)}
 			>
 				<div className="flex flex-col gap-4 py-4">
@@ -390,7 +392,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 						/>
 						<div className="flex-1">
 							<div className="text-ink mb-1 text-sm font-medium">
-								Error
+								{t("common.error")}
 							</div>
 							<div className="text-ink-dull text-xs">
 								{phase.message}
@@ -403,14 +405,13 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 	}
 
 	const sourceCount = props.sources.length;
-	const pluralItems = sourceCount === 1 ? 'item' : 'items';
 
 	// Form state - let user choose operation and conflict resolution
 	return (
 		<Dialog
 			dialog={dialog}
 			form={form}
-			title="File Operation"
+title={t("fileOperation.title")}
 			icon={<Files size={20} weight="bold" />}
 			ctaLabel={operation === 'copy' ? 'Copy' : 'Move'}
 			onSubmit={form.handleSubmit(handleSubmit)}
@@ -434,7 +435,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 								)}
 								<div className="w-full text-center">
 									<div className="text-ink-dull mb-0.5 text-xs">
-										Source
+										{t("fileOperation.source")}
 									</div>
 									{sourceFiles.length === 1 ? (
 										<div className="text-ink w-full truncate text-sm font-medium">
@@ -442,7 +443,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 										</div>
 									) : (
 										<div className="text-ink text-sm font-medium">
-											{sourceCount} {pluralItems}
+											{t("fileOperation.itemCount", { count: sourceCount })}
 										</div>
 									)}
 								</div>
@@ -455,10 +456,10 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 								/>
 								<div className="text-center">
 									<div className="text-ink-dull mb-0.5 text-xs">
-										Source
+										{t("fileOperation.source")}
 									</div>
 									<div className="text-ink text-sm font-medium">
-										{sourceCount} {pluralItems}
+										{t("fileOperation.itemCount", { count: sourceCount })}
 									</div>
 								</div>
 							</>
@@ -480,7 +481,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 								<File.Thumb file={destFile} size={80} />
 								<div className="w-full text-center">
 									<div className="text-ink-dull mb-0.5 text-xs">
-										To
+										{t("fileOperation.destination")}
 									</div>
 									<div className="text-ink w-full truncate text-sm font-medium">
 										{destFile.name}
@@ -495,7 +496,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 								/>
 								<div className="text-center">
 									<div className="text-ink-dull mb-0.5 text-xs">
-										To
+										{t("fileOperation.destination")}
 									</div>
 									<div className="text-ink max-w-full truncate text-sm font-medium">
 										{getFileName(props.destination)}
@@ -509,7 +510,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 				{/* Operation type selection */}
 				<div className="space-y-2">
 					<div className="text-ink-dull mb-2 text-xs font-medium">
-						Operation:
+						{t("fileOperation.operationLabel")}
 					</div>
 					<div className="flex gap-2">
 						<button
@@ -522,7 +523,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 							}`}
 						>
 							<CopyIcon className="size-4" weight="bold" />
-							Copy
+							{t("fileOperation.copy")}
 							<span className="text-xs opacity-60">{modeShortcut('1')}</span>
 						</button>
 						<button
@@ -535,7 +536,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 							}`}
 						>
 							<ArrowsLeftRight className="size-4" weight="bold" />
-							Move
+							{t("fileOperation.move")}
 							<span className="text-xs opacity-60">{modeShortcut('2')}</span>
 						</button>
 					</div>
@@ -544,23 +545,23 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 				{/* Conflict resolution options */}
 				<div className="space-y-2">
 					<div className="text-ink-dull mb-2 text-xs font-medium">
-						If files already exist:
+						{t("fileOperation.conflictsPrompt")}
 					</div>
 					<div className="space-y-1">
 						{[
 							{
 								value: 'Skip',
-								label: 'Skip existing files',
+								label: t("fileOperation.skipExisting"),
 								key: 'S'
 							},
 							{
 								value: 'AutoModifyName',
-								label: 'Keep both (rename new files)',
+								label: t("fileOperation.keepBoth"),
 								key: 'K'
 							},
 							{
 								value: 'Overwrite',
-								label: 'Overwrite existing files',
+								label: t("fileOperation.overwriteExisting"),
 								key: 'O'
 							}
 						].map((option) => (
@@ -602,7 +603,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 // Utility functions
 function getFileName(path: WingPath): string {
 	if (!path || typeof path !== 'object') {
-		return 'Unknown';
+		return i18n.t("dialogs:fileOperation.unknownPath");
 	}
 
 	if ('Physical' in path && path.Physical) {
@@ -617,5 +618,5 @@ function getFileName(path: WingPath): string {
 		return parts[parts.length - 1] || pathStr;
 	}
 
-	return 'Unknown';
+	return i18n.t("dialogs:fileOperation.unknownPath");
 }

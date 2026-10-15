@@ -2489,11 +2489,13 @@ fn main() {
 				}
 			}
 
-			// Explicitly remove menu on Windows
-			#[cfg(target_os = "windows")]
+			// Remove the menu bar on Windows and Linux. It is the macOS app menu, and on
+			// Linux GTK draws it outside the app theme. Shortcuts run through the web
+			// keybind listener, so nothing depends on its accelerators there.
+			#[cfg(any(target_os = "windows", target_os = "linux"))]
 			{
 				use tauri::menu::MenuBuilder;
-				// Create an empty menu to ensure no menu bar is shown on Windows
+				// Create an empty menu to ensure no menu bar is shown
 				if let Ok(empty_menu) = MenuBuilder::new(app.handle()).build() {
 					let _ = app.handle().set_menu(empty_menu);
 				}

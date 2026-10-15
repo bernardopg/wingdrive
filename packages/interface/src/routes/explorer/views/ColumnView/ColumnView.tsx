@@ -10,6 +10,7 @@ import { useVirtualListing } from "../../hooks/useVirtualListing";
 import { isVirtualFile } from '@wingdrive/ts-client';
 import { useExplorerFiles } from "../../hooks/useExplorerFiles";
 import {useTabScroll} from '../../hooks/useTabScroll';
+import {useTranslation} from '../../../../i18n';
 
 /** Get path string from WingPath for comparison */
 function getPathString(path: WingPath | null | undefined): string {
@@ -19,6 +20,7 @@ function getPathString(path: WingPath | null | undefined): string {
 }
 
 export function ColumnView() {
+	const {t} = useTranslation('explorer');
 	const {
 		currentPath,
 		navigateToPath,
@@ -432,7 +434,7 @@ export function ColumnView() {
 	if (!currentPath && !isVirtualView) {
 		return (
 			<div className="flex items-center justify-center h-full">
-				<div className="text-ink-dull">No location selected</div>
+				<div className="text-ink-dull">{t('general.noLocationSelected')}</div>
 			</div>
 		);
 	}

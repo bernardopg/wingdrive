@@ -8,6 +8,7 @@ import { MediaView } from '../MediaView';
 import { ColumnView } from '../ColumnView';
 import { SizeView } from '../SizeView';
 import { KnowledgeView } from '../KnowledgeView';
+import { useTranslation } from '../../../../i18n';
 
 /**
  * SearchView is a router that delegates to the appropriate view component.
@@ -24,6 +25,7 @@ import { KnowledgeView } from '../KnowledgeView';
  * - All other explorer features
  */
 export function SearchView() {
+	const { t } = useTranslation('explorer');
 	const explorer = useExplorer();
 	const { viewMode, mode, setSearchPage } = explorer;
 	const { files, isLoading, error, hasMore, page = 0 } = useExplorerFiles();
@@ -38,7 +40,7 @@ export function SearchView() {
 		return (
 			<div className="flex h-full flex-col items-center justify-center p-8 text-center">
 				<p className="text-ink-dull text-sm">
-					Type at least 2 characters to search
+					{t('search.minimumCharacters')}
 				</p>
 			</div>
 		);
@@ -72,17 +74,17 @@ export function SearchView() {
 			</div>
 			{error && (
 				<p role="alert" className="text-ink p-2 text-sm">
-					Search failed: {error.message}
+					{t('errors.searchFailed', { error: error.message })}
 				</p>
 			)}
 			{!isLoading && !error && files.length === 0 && (
 				<p className="text-ink-dull p-2 text-center text-sm">
-					No results{page > 0 ? ' on this page' : ''}.
+					{t(page > 0 ? 'search.noResultsThisPage' : 'search.noResults')}
 				</p>
 			)}
 			{(page > 0 || hasMore) && (
 				<nav
-					aria-label="Search result pages"
+					aria-label={t('search.resultPages')}
 					className="text-ink flex items-center justify-center gap-3 p-2 text-sm"
 				>
 					<button
@@ -90,15 +92,15 @@ export function SearchView() {
 						disabled={page === 0 || isLoading}
 						onClick={() => setSearchPage(page - 1)}
 					>
-						Previous
+						{t('search.previous')}
 					</button>
-					<span>Page {page + 1}</span>
+					<span>{t('search.page', { count: page + 1 })}</span>
 					<button
 						type="button"
 						disabled={!hasMore || isLoading}
 						onClick={() => setSearchPage(page + 1)}
 					>
-						Next
+						{t('search.next')}
 					</button>
 				</nav>
 			)}

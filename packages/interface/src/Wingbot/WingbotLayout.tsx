@@ -17,6 +17,7 @@ import {
 import {ReactQueryDevtools} from '@tanstack/react-query-devtools';
 import {useEffect, useState} from 'react';
 import {Outlet, useLocation, useNavigate} from 'react-router-dom';
+import {useTranslation} from '../i18n';
 import {
 	agents,
 	isMacOS,
@@ -34,6 +35,7 @@ function SidebarHistoryItem({
 	isActive: boolean;
 	onClick: () => void;
 }) {
+	const {t} = useTranslation('common');
 	return (
 		<button
 			onClick={onClick}
@@ -46,7 +48,7 @@ function SidebarHistoryItem({
 					{conversation.title}
 				</div>
 				<div className="text-ink-dull truncate text-xs">
-					{conversation.last_message_preview ?? 'No messages yet'}
+					{conversation.last_message_preview ?? t('wingbot.noMessages')}
 				</div>
 			</div>
 		</button>
@@ -54,6 +56,7 @@ function SidebarHistoryItem({
 }
 
 function SidebarHistory() {
+	const {t} = useTranslation('common');
 	const location = useLocation();
 	const {
 		conversations,
@@ -66,7 +69,7 @@ function SidebarHistory() {
 	if (conversationsLoading) {
 		return (
 			<div className="text-sidebar-ink-dull px-3 py-2 text-xs">
-				Loading conversations...
+				{t('wingbot.loadingConversations')}
 			</div>
 		);
 	}
@@ -74,7 +77,7 @@ function SidebarHistory() {
 	if (conversationsError) {
 		return (
 			<div className="px-3 py-2 text-xs">
-				<div className="text-red-400">Could not load conversations.</div>
+				<div className="text-red-400">{t('wingbot.loadConversationsFailed')}</div>
 				<div className="text-sidebar-ink-dull mt-1 break-words font-mono text-[10px] leading-relaxed">
 					{conversationsError.message}
 				</div>
@@ -94,7 +97,7 @@ function SidebarHistory() {
 	if (filtered.length === 0) {
 		return (
 			<div className="text-sidebar-ink-dull px-3 py-2 text-xs">
-				No conversations yet.
+				{t('wingbot.noConversations')}
 			</div>
 		);
 	}
@@ -120,6 +123,7 @@ function SidebarHistory() {
 }
 
 export function WingbotLayout() {
+	const {t} = useTranslation('common');
 	const location = useLocation();
 	const navigate = useNavigate();
 	const {
@@ -193,13 +197,13 @@ export function WingbotLayout() {
 						icon={ArrowLeft}
 						onClick={handleGoBack}
 						disabled={!canGoBack}
-						title="Go back"
+						title={t('wingbot.goBack')}
 					/>
 					<CircleButton
 						icon={ArrowRight}
 						onClick={handleGoForward}
 						disabled={!canGoForward}
-						title="Go forward"
+						title={t('wingbot.goForward')}
 					/>
 				</CircleButtonGroup>
 				<Popover.Root
@@ -207,7 +211,11 @@ export function WingbotLayout() {
 					onOpenChange={agentSelector.setOpen}
 				>
 					<Popover.Trigger asChild>
-						<SelectPill>{currentAgent?.name ?? 'Agent'}</SelectPill>
+						<SelectPill>
+							{currentAgent
+								? t(`wingbot.agents.${currentAgent.id}.name`)
+								: t('wingbot.agent')}
+						</SelectPill>
 					</Popover.Trigger>
 					<Popover.Content
 						align="start"
@@ -226,10 +234,10 @@ export function WingbotLayout() {
 								>
 									<div>
 										<div className="font-medium">
-											{agent.name}
+											{t(`wingbot.agents.${agent.id}.name`)}
 										</div>
 										<div className="text-ink-dull text-xs">
-											{agent.detail}
+											{t(`wingbot.agents.${agent.id}.detail`)}
 										</div>
 									</div>
 								</OptionListItem>
@@ -244,7 +252,7 @@ export function WingbotLayout() {
 					<SearchBar
 						value={search}
 						onChange={setSearch}
-						placeholder="Search"
+						placeholder={t('wingbot.search')}
 						className="w-64"
 					/>
 					<Button
@@ -253,7 +261,7 @@ export function WingbotLayout() {
 						variant="gray"
 						size="md"
 					>
-						New chat
+						{t('wingbot.newChat')}
 					</Button>
 				</div>
 			</div>
@@ -287,7 +295,7 @@ export function WingbotLayout() {
 										weight={isActive ? 'fill' : 'bold'}
 									/>
 									<span className="truncate">
-										{item.label}
+										{t(`wingbot.navigation.${item.label.toLowerCase()}`)}
 									</span>
 								</button>
 							);
@@ -298,7 +306,7 @@ export function WingbotLayout() {
 						<section className="mb-5">
 							<div className="mb-2 flex items-center justify-between px-2">
 								<div className="text-sidebar-ink-dull text-[11px] font-semibold uppercase tracking-[0.16em]">
-									Projects
+										{t('wingbot.projects')}
 								</div>
 								<DotsThree className="text-sidebar-ink-dull size-4" />
 							</div>
@@ -316,10 +324,14 @@ export function WingbotLayout() {
 										/>
 										<div>
 											<div className="text-sidebar-ink text-sm font-medium">
-												{project.name}
+											{project.name === 'WingDrive'
+												? project.name
+												: t(`wingbot.projectDetails.${project.name === 'Wingbot Runtime' ? 'runtime' : 'hosted'}.name`)}
 											</div>
 											<div className="text-sidebar-ink-dull text-xs">
-												{project.detail}
+											{t(
+												`wingbot.projectDetails.${project.name === 'WingDrive' ? 'wingdrive' : project.name === 'Wingbot Runtime' ? 'runtime' : 'hosted'}.detail`
+											)}
 											</div>
 										</div>
 									</button>
@@ -330,7 +342,7 @@ export function WingbotLayout() {
 						<section>
 							<div className="mb-2 flex items-center justify-between px-2">
 								<div className="text-sidebar-ink-dull text-[11px] font-semibold uppercase tracking-[0.16em]">
-									History
+										{t('wingbot.history')}
 								</div>
 								<ClockCounterClockwise className="text-sidebar-ink-dull size-4" />
 							</div>

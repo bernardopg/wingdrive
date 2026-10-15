@@ -1,3 +1,4 @@
+import { useTranslation } from "../../i18n";
 import { useState, useRef, useEffect } from "react";
 import {
 	Play,
@@ -65,6 +66,7 @@ function parseSRT(srtContent: string): SubtitleCue[] {
 }
 
 export function AudioPlayer({ src, file }: AudioPlayerProps) {
+	const { t } = useTranslation("inspector");
 	const audioRef = useRef<HTMLAudioElement>(null);
 	const lyricsContainerRef = useRef<HTMLDivElement>(null);
 	const { buildSidecarUrl } = useServer();
@@ -312,7 +314,7 @@ export function AudioPlayer({ src, file }: AudioPlayerProps) {
 									♪
 								</div>
 								<p className="text-white/50">
-									No lyrics available
+									{t("ui.noLyricsAvailable")}
 								</p>
 							</div>
 						)}
@@ -369,7 +371,7 @@ export function AudioPlayer({ src, file }: AudioPlayerProps) {
 						<button
 							onClick={skipBack}
 							className="rounded-full p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-							title="Skip back 10s"
+							title={t("inspector.preview.skipBack")}
 						>
 							<SkipBack size={24} weight="fill" />
 						</button>
@@ -392,7 +394,7 @@ export function AudioPlayer({ src, file }: AudioPlayerProps) {
 						<button
 							onClick={skipForward}
 							className="rounded-full p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-							title="Skip forward 10s"
+							title={t("inspector.preview.skipForward")}
 						>
 							<SkipForward size={24} weight="fill" />
 						</button>

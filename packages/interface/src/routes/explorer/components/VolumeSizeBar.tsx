@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { formatBytes } from "../utils";
+import { useTranslation } from "../../../i18n";
 
 interface VolumeSizeBarProps {
 	totalBytes: number;
@@ -15,6 +16,7 @@ export function VolumeSizeBar({
 	availableBytes,
 	className,
 }: VolumeSizeBarProps) {
+	const { t } = useTranslation("explorer");
 	const usedBytes = totalBytes - availableBytes;
 	const usedPercentage = (usedBytes / totalBytes) * 100;
 
@@ -30,7 +32,7 @@ export function VolumeSizeBar({
 
 			{/* Size text */}
 			<div className="flex items-center justify-between text-[10px] text-ink-dull px-0.5">
-				<span>{formatBytes(availableBytes)} free</span>
+				<span>{formatBytes(availableBytes)} {t("general.free")}</span>
 				<span>{formatBytes(totalBytes)}</span>
 			</div>
 		</div>

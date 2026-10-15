@@ -1,3 +1,4 @@
+import {uiLocale} from "../../i18n";
 interface SourceDataRowProps {
 	title: string;
 	preview?: string | null;
@@ -9,7 +10,7 @@ function formatDate(iso: string): string {
 	try {
 		const d = new Date(iso);
 		if (isNaN(d.getTime())) return iso;
-		return d.toLocaleDateString(undefined, {
+		return d.toLocaleDateString(uiLocale(), {
 			year: "numeric",
 			month: "short",
 			day: "numeric",

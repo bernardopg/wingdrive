@@ -1,5 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import clsx from "clsx";
+import {
+  Books,
+  Cpu,
+  GearSix,
+  Info,
+  MagnifyingGlass,
+  PaintBrush,
+  ShieldCheck,
+  Wrench,
+  type Icon,
+} from "@phosphor-icons/react";
 import {
   GeneralSettings,
   AppearanceSettings,
@@ -13,21 +24,22 @@ import {
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { getCurrentPlatform } from "../../util/keybinds/platform";
+import { useTranslation } from "../../i18n";
 
 interface SettingsSidebarProps {
   currentPage: string;
   onPageChange: (page: string) => void;
 }
 
-const sections = [
-  { id: "general", label: "General" },
-  { id: "appearance", label: "Appearance" },
-  { id: "library", label: "Library" },
-  { id: "indexer", label: "Indexer" },
-  { id: "services", label: "Services" },
-  { id: "privacy", label: "Privacy" },
-  { id: "advanced", label: "Advanced" },
-  { id: "about", label: "About" },
+const sections: { id: string; icon: Icon }[] = [
+  { id: "general", icon: GearSix },
+  { id: "appearance", icon: PaintBrush },
+  { id: "library", icon: Books },
+  { id: "indexer", icon: MagnifyingGlass },
+  { id: "services", icon: Cpu },
+  { id: "privacy", icon: ShieldCheck },
+  { id: "advanced", icon: Wrench },
+  { id: "about", icon: Info },
 ];
 
 // The 52px top inset only makes sense on macOS, where the window has no
@@ -37,26 +49,34 @@ const sections = [
 const isMacOS = getCurrentPlatform() === "macos";
 
 function SettingsSidebar({ currentPage, onPageChange }: SettingsSidebarProps) {
-  const isAboutPage = currentPage === "about";
+  const { t } = useTranslation();
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // On narrow windows the nav is a horizontal strip; keep the open page visible in it
+  useEffect(() => {
+    listRef.current
+      ?.querySelector('[aria-current="page"]')
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [currentPage]);
 
   return (
-    <div className="space-y-1">
-      {sections.map((section) => (
+    <div ref={listRef} className="flex gap-1 overflow-x-auto sm:flex-col sm:overflow-visible">
+      {sections.map(({ id, icon: SectionIcon }) => (
         <button
-          key={section.id}
-          onClick={() => onPageChange(section.id)}
+          key={id}
+          type="button"
+          aria-current={currentPage === id ? "page" : undefined}
+          onClick={() => onPageChange(id)}
           className={clsx(
-            "w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300",
-            currentPage === section.id
-              ? isAboutPage
-                ? "bg-white/20 text-white"
-                : "bg-sidebar-selected text-sidebar-ink"
-              : isAboutPage
-              ? "text-white/60 hover:text-white hover:bg-white/10"
+            "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors duration-300 sm:w-full",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+            currentPage === id
+              ? "bg-sidebar-selected text-sidebar-ink"
               : "text-sidebar-ink-dull hover:text-sidebar-ink hover:bg-sidebar-box"
           )}
         >
-          {section.label}
+          <SectionIcon className="size-4 shrink-0" weight={currentPage === id ? "fill" : "regular"} />
+          {t(`sections.${id}`)}
         </button>
       ))}
     </div>
@@ -91,15 +111,22 @@ function SettingsContent({ page }: SettingsContentProps) {
 }
 
 function SettingsContentWrapper() {
+  const { t } = useTranslation();
   const pathname = window.location.pathname;
-  const initialPage = pathname.split("/").filter(Boolean)[1] || "general";
+  const requested = pathname.split("/").filter(Boolean)[1];
+  const initialPage = sections.some((s) => s.id === requested) ? requested! : "general";
   const [currentPage, setCurrentPage] = useState(initialPage);
+
+  // Keep the URL on the open page so a reload or a reopened window lands there
+  const changePage = (page: string) => {
+    setCurrentPage(page);
+    window.history.replaceState(null, "", `/settings/${page}`);
+  };
 
   return (
     <div
       className={clsx(
-        "h-screen flex transition-colors duration-500 relative",
-        currentPage === "about" ? "bg-black" : "bg-app"
+        "h-screen flex flex-col sm:flex-row bg-app relative"
       )}
     >
       {/* Drag region for macOS traffic lights area */}
@@ -113,34 +140,31 @@ function SettingsContentWrapper() {
       {/* Sidebar */}
       <nav
         className={clsx(
-          "w-48 border-r p-4 transition-all duration-500",
-          isMacOS && "pt-[52px]",
-          currentPage === "about"
-            ? "bg-black border-black"
-            : "bg-sidebar border-sidebar-line"
+          "shrink-0 border-b p-2 transition-all duration-500 sm:w-52 sm:border-b-0 sm:border-r sm:p-4",
+          "bg-sidebar border-sidebar-line",
+          isMacOS && "pt-[52px]"
         )}
       >
-        <div className="mb-6">
+        <div className="mb-6 hidden sm:block">
           <h1
-            className={clsx(
-              "text-xl font-semibold transition-colors duration-500",
-              currentPage === "about" ? "text-white" : "text-sidebar-ink"
-            )}
+            className="text-xl font-semibold text-sidebar-ink"
           >
-            Settings
+            {t("title")}
           </h1>
         </div>
-        <SettingsSidebar currentPage={currentPage} onPageChange={setCurrentPage} />
+        <SettingsSidebar currentPage={currentPage} onPageChange={changePage} />
       </nav>
 
       {/* Main content */}
       <main
         className={clsx(
-          "flex-1 overflow-auto p-8",
+          "flex-1 overflow-auto px-4 py-6 sm:px-8 sm:py-8",
           isMacOS && "pt-[52px]"
         )}
       >
-        <SettingsContent page={currentPage} />
+        <div className={clsx("mx-auto", currentPage !== "about" && "max-w-3xl")}>
+          <SettingsContent page={currentPage} />
+        </div>
       </main>
     </div>
   );

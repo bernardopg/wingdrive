@@ -6,6 +6,7 @@
  */
 
 import { check } from '@tauri-apps/plugin-updater';
+import { i18n } from '@wingdrive/interface';
 import { relaunch } from '@tauri-apps/plugin-process';
 
 export interface UpdateCheckResult {
@@ -159,16 +160,17 @@ export async function performUpdateWithPrompts(): Promise<void> {
     const result = await checkForUpdate();
 
     if (!result.available) {
-      alert('You are running the latest version!');
+      alert(i18n.t('common:updater.latest'));
       return;
     }
 
     // Prompt user
     const shouldUpdate = confirm(
-      `A new version (v${result.version}) is available!\n\n` +
-      `Current version: v${result.currentVersion}\n\n` +
-      `${result.notes || 'No release notes available'}\n\n` +
-      `Would you like to download and install it now?`
+      i18n.t('common:updater.confirm', {
+        version: result.version,
+        currentVersion: result.currentVersion,
+        notes: result.notes || i18n.t('common:updater.noReleaseNotes')
+      })
     );
 
     if (!shouldUpdate) {
@@ -184,7 +186,7 @@ export async function performUpdateWithPrompts(): Promise<void> {
     });
 
   } catch (error) {
-    alert(`Update failed: ${error}`);
+    alert(i18n.t('common:updater.failed', {error: String(error)}));
   }
 }
 
@@ -203,13 +205,19 @@ function getCurrentVersion(): string {
  * Format bytes to human-readable string
  */
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return i18n.t('common:updater.formatBytes', {
+    value: 0,
+    unit: i18n.t('common:updater.units.bytes')
+  });
 
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ['bytes', 'kb', 'mb', 'gb'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  return i18n.t('common:updater.formatBytes', {
+    value: parseFloat((bytes / Math.pow(k, i)).toFixed(2)),
+    unit: i18n.t(`common:updater.units.${sizes[i]}`)
+  });
 }
 
 /**
