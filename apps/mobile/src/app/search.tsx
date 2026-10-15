@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../i18n/LocalizedText";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, Text, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { GlassSearchBar } from "../components/GlassSearchBar";
 import { SearchToolbar } from "../components/SearchToolbar";
@@ -10,11 +11,13 @@ import { useSearchStore } from "../screens/explorer/context/SearchContext";
 import { useSearchFiles } from "@wingdrive/ts-client";
 import type { File } from "@wingdrive/ts-client";
 import type { TextInput } from "react-native";
+import { useTranslation } from "react-i18next";
 import { X } from "phosphor-react-native";
 
 type SearchViewMode = "list" | "grid";
 
 export default function SearchScreen() {
+	const { t } = useTranslation("common");
 	const router = useRouter();
 	const searchInputRef = useRef<TextInput>(null);
 	const [viewMode, setViewMode] = useState<SearchViewMode>("list");
@@ -119,7 +122,7 @@ export default function SearchScreen() {
 			{isSearchMode && query.length < 2 ? (
 				<View className="flex-1 items-center justify-center p-8">
 					<Text className="text-ink-dull text-sm text-center">
-						Type at least 2 characters to search
+						{t("Type at least 2 characters to search")}
 					</Text>
 				</View>
 			) : isLoading ? (
@@ -129,7 +132,7 @@ export default function SearchScreen() {
 			) : files.length === 0 && query.length >= 2 ? (
 				<View className="flex-1 items-center justify-center p-8">
 					<Text className="text-ink-dull text-sm text-center">
-						No results found for "{query}"
+						{t("No results found for {{query}}", { query })}
 					</Text>
 				</View>
 			) : (

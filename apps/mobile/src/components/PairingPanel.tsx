@@ -1,19 +1,12 @@
+import { LocalizedText as Text } from "../i18n/LocalizedText";
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { View, Modal, Pressable, TextInput, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import QRCode from "react-native-qrcode-svg";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { useCoreAction, useCoreQuery } from "../client";
+import { useTranslation } from "react-i18next";
 
 interface PairingPanelProps {
   isOpen: boolean;
@@ -26,6 +19,7 @@ export function PairingPanel({
   onClose,
   initialMode = "generate",
 }: PairingPanelProps) {
+  const { t } = useTranslation("common");
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<"generate" | "join">(initialMode);
   const [joinCode, setJoinCode] = useState("");
@@ -86,7 +80,7 @@ export function PairingPanel({
   const copyCode = () => {
     if (generatePairing.data?.code) {
       Clipboard.setString(generatePairing.data.code);
-      Alert.alert("Copied", "Pairing code copied to clipboard");
+      Alert.alert(t("Copied"), t("Pairing code copied to clipboard"));
     }
   };
 
@@ -128,7 +122,7 @@ export function PairingPanel({
       const result = await requestPermission();
       if (!result.granted) {
         Alert.alert(
-          "Camera Permission",
+          t("Camera Permission"),
           "Camera access is required to scan QR codes",
         );
         return;
@@ -260,7 +254,7 @@ export function PairingPanel({
                   </Text>
                   <Text className="text-xs text-ink-dull mt-0.5">
                     {joinPairing.data
-                      ? `Connected to ${joinPairing.data.device_name}`
+                      ? t("Connected to {{device}}", { device: joinPairing.data.device_name })
                       : "Device paired"}
                   </Text>
                 </View>
@@ -405,6 +399,7 @@ function JoinMode({
   onCancel,
   onOpenScanner,
 }: any) {
+  const { t } = useTranslation("common");
   const isLoading = joinPairing.isPending;
   const state = currentSession?.state;
 
@@ -459,7 +454,7 @@ function JoinMode({
         <TextInput
           value={joinCode}
           onChangeText={setJoinCode}
-          placeholder="brave-lion-sunset-river-eagle-mountain..."
+          placeholder={t("brave-lion-sunset-river-eagle-mountain...")}
           placeholderTextColor="hsl(235, 10%, 55%)"
           editable={!isLoading && !state}
           multiline
@@ -480,7 +475,7 @@ function JoinMode({
         <TextInput
           value={joinNodeId}
           onChangeText={setJoinNodeId}
-          placeholder="For cross-network pairing"
+          placeholder={t("For cross-network pairing")}
           placeholderTextColor="hsl(235, 10%, 55%)"
           editable={!isLoading && !state}
           className="px-4 py-2.5 bg-sidebar-box border border-sidebar-line rounded-lg text-xs text-ink font-mono"

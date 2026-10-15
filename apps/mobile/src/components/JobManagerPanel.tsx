@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../i18n/LocalizedText";
 import React, {useState} from 'react';
-import {View, Text, FlatList, Pressable} from 'react-native';
+import { View, FlatList, Pressable } from "react-native";
 import {useJobs, type ExtendedJobListItem} from '../hooks/useJobs';
 
 function formatBytes(bytes: number): string {

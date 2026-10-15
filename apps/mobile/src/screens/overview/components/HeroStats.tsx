@@ -1,13 +1,7 @@
+import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React, { useState, useCallback, useRef } from "react";
-import {
-	View,
-	Text,
-	Image,
-	ScrollView,
-	Dimensions,
-	NativeScrollEvent,
-	NativeSyntheticEvent,
-} from "react-native";
+import { useTranslation } from "react-i18next";
+import { View, Image, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import DevicesIcon from "@wingdrive/assets/icons/Devices.png";
 import IndexedIcon from "@wingdrive/assets/icons/Indexed.png";
 import LocationIcon from "@wingdrive/assets/icons/Location.png";
@@ -64,6 +58,7 @@ export function HeroStats({
 	sidecarCount,
 	sidecarSize,
 }: HeroStatsProps) {
+	const { t } = useTranslation("common");
 	const [currentPage, setCurrentPage] = useState(0);
 	const scrollViewRef = useRef<ScrollView>(null);
 
@@ -118,7 +113,7 @@ export function HeroStats({
 			icon: IndexedIcon,
 			label: "Files Indexed",
 			value: totalFiles.toLocaleString(),
-			subtitle: `${uniqueContentCount.toLocaleString()} unique files`,
+			subtitle: t("{{count}} unique files", { count: uniqueContentCount.toLocaleString() }),
 		},
 		{
 			icon: MobileIcon,
@@ -168,7 +163,7 @@ export function HeroStats({
 					</Text>
 				</>
 			),
-			subtitle: `${sidecarCount.toLocaleString()} files generated`,
+			subtitle: t("{{count}} files generated", { count: sidecarCount.toLocaleString() }),
 		},
 		{
 			icon: LocationIcon,

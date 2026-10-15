@@ -66,9 +66,11 @@
         "expo-router": "~57.0.26",
         "expo-splash-screen": "~57.0.10",
         "expo-status-bar": "~57.0.1",
+        "i18next": "^26.4.5",
         "nativewind": "5.0.0-rc.0",
         "phosphor-react-native": "^3.0.6",
         "react": "19.2.3",
+        "react-i18next": "^17.0.16",
         "react-native": "0.86.3",
         "react-native-css": "3.1.0-rc.0",
         "react-native-gesture-handler": "~2.32.0",
@@ -98,7 +100,7 @@
     },
     "apps/tauri": {
       "name": "@wingdrive/tauri",
-      "version": "2.0.0-alpha.14",
+      "version": "2.0.0-alpha.15",
       "dependencies": {
         "@phosphor-icons/react": "^2.1.10",
         "@tauri-apps/api": "^2.12.3",

@@ -1,9 +1,11 @@
+import { LocalizedText as Text } from "../i18n/LocalizedText";
 import { useState } from "react";
-import { View, Text, FlatList, Pressable, ActivityIndicator } from "react-native";
+import { View, FlatList, Pressable, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { GlassButton } from "../components/GlassButton";
 import { useJobs, type ExtendedJobListItem } from "../hooks/useJobs";
 import { X } from "phosphor-react-native";
+import { useTranslation } from "react-i18next";
 
 function formatBytes(bytes: number): string {
 	if (bytes === 0) return "0 B";
@@ -30,7 +32,7 @@ function getJobDisplayName(job: ExtendedJobListItem): string {
 		.join(" ");
 }
 
-function getJobSubtext(job: ExtendedJobListItem): string {
+function getJobSubtext(job: ExtendedJobListItem, t: (key: string) => string): string {
 	if (job.status_message) return job.status_message;
 	if (job.current_phase) return job.current_phase;
 
@@ -41,14 +43,14 @@ function getJobSubtext(job: ExtendedJobListItem): string {
 			return `${formatBytes(bytes_completed)} / ${formatBytes(total_bytes)}`;
 		}
 		if (completed && total) {
-			return `${completed} / ${total} items`;
+			return `${completed} / ${total} ${t("items")}`;
 		}
 	}
 
 	return job.status;
 }
 
-function formatTimeAgo(date: Date): string {
+function formatTimeAgo(date: Date, t: (key: string, options?: any) => string): string {
 	const now = new Date();
 	const diffMs = now.getTime() - date.getTime();
 	const diffMins = Math.floor(diffMs / 60000);
@@ -57,10 +59,10 @@ function formatTimeAgo(date: Date): string {
 	if (diffMins < 60) return `${diffMins}m ago`;
 	
 	const diffHours = Math.floor(diffMins / 60);
-	if (diffHours < 24) return `${diffHours}h ago`;
+	if (diffHours < 24) return t("{{count}}h ago", { count: diffHours });
 	
 	const diffDays = Math.floor(diffHours / 24);
-	return `${diffDays}d ago`;
+	return t("{{count}}d ago", { count: diffDays });
 }
 
 interface JobCardProps {
@@ -71,6 +73,7 @@ interface JobCardProps {
 }
 
 function JobCard({ job, onPause, onResume, onCancel }: JobCardProps) {
+	const { t } = useTranslation("common");
 	const isRunning = job.status === "running";
 	const isPaused = job.status === "paused";
 	const isCompleted = job.status === "completed";
@@ -95,7 +98,7 @@ function JobCard({ job, onPause, onResume, onCancel }: JobCardProps) {
 						{getJobDisplayName(job)}
 					</Text>
 					<Text className="text-ink-dull text-sm mt-1" numberOfLines={2}>
-						{getJobSubtext(job)}
+						{getJobSubtext(job, t)}
 					</Text>
 				</View>
 
@@ -107,9 +110,9 @@ function JobCard({ job, onPause, onResume, onCancel }: JobCardProps) {
 						<Text className="text-ink-faint text-xs mt-1">
 							{isCompleted || isFailed
 								? job.completed_at
-									? formatTimeAgo(new Date(job.completed_at))
-									: formatTimeAgo(new Date(job.started_at))
-								: formatTimeAgo(new Date(job.started_at))}
+									? formatTimeAgo(new Date(job.completed_at), t)
+									: formatTimeAgo(new Date(job.started_at), t)
+								: formatTimeAgo(new Date(job.started_at), t)}
 						</Text>
 					)}
 				</View>
@@ -163,6 +166,7 @@ function JobCard({ job, onPause, onResume, onCancel }: JobCardProps) {
 type FilterType = "all" | "active" | "completed";
 
 export default function JobsScreen() {
+	const { t } = useTranslation("common");
 	const router = useRouter();
 	const { jobs, activeJobCount, isLoading, pause, resume, cancel } = useJobs();
 	const [filter, setFilter] = useState<FilterType>("active");
@@ -206,7 +210,7 @@ export default function JobsScreen() {
 						<Text className="text-ink text-xl font-bold">Jobs</Text>
 						<Text className="text-ink-dull text-sm mt-0.5">
 							{activeJobCount > 0
-								? `${activeJobCount} active job${activeJobCount !== 1 ? "s" : ""}`
+								? `${activeJobCount} ${t(activeJobCount === 1 ? "active job" : "active jobs")}`
 								: "No active jobs"}
 						</Text>
 					</View>

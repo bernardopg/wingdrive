@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React, { useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
 import type { SpaceGroup, SpaceItem } from "@wingdrive/ts-client";
 import { SettingsGroup } from "../../../components/primitive";
 import { SpaceItem as SpaceItemComponent } from "./SpaceItem";

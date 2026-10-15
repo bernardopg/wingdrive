@@ -1,6 +1,8 @@
+import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React, { useState } from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, ScrollView, Pressable, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCoreAction } from "../../client";
 import { useAppReset } from "../../contexts";
@@ -18,6 +20,7 @@ import {
 } from "../../components/primitive";
 
 export function SettingsScreen() {
+	const { t } = useTranslation("common");
 	const insets = useSafeAreaInsets();
 	const [switchValue, setSwitchValue] = useState(false);
 	const [inputValue, setInputValue] = useState("");
@@ -30,15 +33,15 @@ export function SettingsScreen() {
 
 	const handleResetData = () => {
 		Alert.alert(
-			"Reset All Data",
-			"This will permanently delete all libraries, settings, and cached data. The app will refresh automatically. Are you sure?",
+			t("Reset All Data"),
+			t("This will permanently delete all libraries, settings, and cached data. The app will refresh automatically. Are you sure?"),
 			[
 				{
-					text: "Cancel",
+					text: t("Cancel"),
 					style: "cancel",
 				},
 				{
-					text: "Reset",
+					text: t("Reset"),
 					style: "destructive",
 					onPress: async () => {
 						resetData.mutate(
@@ -53,8 +56,8 @@ export function SettingsScreen() {
 								},
 								onError: (error) => {
 									Alert.alert(
-										"Error",
-										error.message || "Failed to reset data",
+										t("Error"),
+										error.message || t("Failed to reset data"),
 									);
 								},
 							},

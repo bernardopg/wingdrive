@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../i18n/LocalizedText";
 import type React from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
 import { FunnelSimple, List } from "phosphor-react-native";
 import { useSearchStore } from "../screens/explorer/context/SearchContext";
 import type { SearchScope } from "../screens/explorer/context/SearchContext";

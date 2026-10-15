@@ -1,5 +1,6 @@
+import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React from "react";
-import { Text } from "react-native";
+
 import { SettingsRow, SettingsRowProps } from "./SettingsRow";
 
 interface SettingsOptionProps extends SettingsRowProps {
