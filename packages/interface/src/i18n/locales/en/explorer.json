@@ -46,6 +46,7 @@
 		"failedToDelete": "Failed to delete: {{error}}",
 		"renamedUndoUnavailable": "Renamed successfully, but undo is unavailable",
 		"renameFailed": "Rename failed: {{error}}",
+		"renameIncomplete": "Rename did not complete successfully",
 		"failedToAddLocation": "Failed to add location",
 		"failedToAddCloudStorage": "Failed to add cloud storage",
 		"failedToIndexVolume": "Failed to index volume"

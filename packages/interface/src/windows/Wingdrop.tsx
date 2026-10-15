@@ -165,7 +165,7 @@ export function Wingdrop({ onClose, people = [] }: WingdropProps) {
 										{person.name}
 									</p>
 									<p className="text-xs text-sidebar-ink-faint">
-										{person.status === 'online' ? 'Online' : 'Offline'}
+										{t(person.status === 'online' ? 'wingdrop.online' : 'wingdrop.offline')}
 									</p>
 								</div>
 							</motion.button>

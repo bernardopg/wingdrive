@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import {i18n} from '../i18n';
 
 export interface UpdateStatus {
 	checking: boolean;
@@ -85,7 +86,7 @@ export function useAutoUpdater(checkOnMount = false) {
 				downloading: false,
 				installing: false,
 				readyToInstall: false,
-				error: error instanceof Error ? error.message : 'Failed to check for updates'
+				error: error instanceof Error ? error.message : i18n.t('common:updater.checkFailed')
 			});
 		}
 	}, []);
@@ -142,7 +143,7 @@ export function useAutoUpdater(checkOnMount = false) {
 				downloadProgress: undefined,
 				downloadedBytes: undefined,
 				totalBytes: undefined,
-				error: error instanceof Error ? error.message : 'Failed to download update'
+				error: error instanceof Error ? error.message : i18n.t('common:updater.downloadFailed')
 			}));
 		}
 	};
@@ -164,7 +165,7 @@ export function useAutoUpdater(checkOnMount = false) {
 			setStatus((prev) => ({
 				...prev,
 				installing: false,
-				error: error instanceof Error ? error.message : 'Failed to install update'
+				error: error instanceof Error ? error.message : i18n.t('common:updater.installFailed')
 			}));
 		}
 	};

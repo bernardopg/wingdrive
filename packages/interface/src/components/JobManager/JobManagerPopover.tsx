@@ -65,7 +65,7 @@ export function JobManagerPopover({ className }: JobManagerPopoverProps) {
           <div className="flex items-center gap-2">
             {activeJobCount > 0 && (
               <span className="text-xs text-ink-dull">
-                {activeJobCount} active
+                {t("jobs.activeCount", {count: activeJobCount})}
               </span>
             )}
 

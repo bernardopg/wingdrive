@@ -46,6 +46,7 @@
 		"failedToDelete": "Falha ao excluir: {{error}}",
 		"renamedUndoUnavailable": "O item foi renomeado, mas não é possível desfazer a ação",
 		"renameFailed": "Falha ao renomear: {{error}}",
+		"renameIncomplete": "Não foi possível concluir a renomeação",
 		"failedToAddLocation": "Falha ao adicionar o local",
 		"failedToAddCloudStorage": "Falha ao adicionar o armazenamento na nuvem",
 		"failedToIndexVolume": "Falha ao indexar o volume"

@@ -953,7 +953,7 @@ label={t('inspector.file.path')}
 							? String(file.wing_path.Physical.path)
 							: 'Cloud' in file.wing_path
 								? String(file.wing_path.Cloud.path)
-								: 'Content'
+								: t('inspector.location.content')
 					}
 				/>
 <InfoRow label={t('inspector.file.local')} value={file.is_local ? t('inspector.file.yes') : t('inspector.file.no')} />
@@ -1077,8 +1077,8 @@ label={t('inspector.file.path')}
 								<TextAa size={4} weight="bold" />
 								<span>
 									{extractText.isPending
-										? 'Extracting...'
-										: 'Extract Text (OCR)'}
+										? t('inspector.file.extracting')
+										: t('inspector.file.extractTextOcr')}
 								</span>
 							</button>
 						)}
@@ -1123,8 +1123,8 @@ label={t('inspector.file.path')}
 								<Cube size={4} weight="bold" />
 								<span>
 									{generateSplat.isPending
-										? 'Generating...'
-										: 'Generate 3D Splat'}
+										? t('inspector.file.generating')
+										: t('inspector.file.generateSplat')}
 								</span>
 							</button>
 						)}
@@ -1199,8 +1199,8 @@ label={t('inspector.file.path')}
 								<span>
 									{transcribeAudio.isPending ||
 									isSpeechJobRunning
-										? 'Transcribing...'
-										: 'Generate Subtitles'}
+										? t('inspector.file.transcribing')
+										: t('inspector.file.generateSubtitles')}
 								</span>
 							</button>
 						)}
@@ -1276,8 +1276,8 @@ label={t('inspector.file.path')}
 								<ArrowsClockwise size={4} weight="bold" />
 								<span>
 									{regenerateThumbnail.isPending
-										? 'Generating...'
-										: 'Regenerate Thumbnails'}
+										? t('inspector.file.generating')
+										: t('inspector.file.regenerateThumbnails')}
 								</span>
 							</button>
 						)}
@@ -1349,8 +1349,8 @@ label={t('inspector.file.path')}
 								<FilmStrip size={4} weight="bold" />
 								<span>
 									{generateThumbstrip.isPending
-										? 'Generating...'
-										: 'Generate Thumbstrip'}
+										? t('inspector.file.generating')
+										: t('inspector.file.generateThumbstrip')}
 								</span>
 							</button>
 						)}
@@ -1397,8 +1397,8 @@ label={t('inspector.file.path')}
 								<VideoCamera size={4} weight="bold" />
 								<span>
 									{generateProxy.isPending
-										? 'Encoding...'
-										: 'Generate Scrubbing Proxy'}
+										? t('inspector.file.encoding')
+										: t('inspector.file.generateScrubbingProxy')}
 								</span>
 							</button>
 						)}
@@ -1772,7 +1772,7 @@ function InstanceRow({instance}: {instance: File}) {
 		} else if ('Cloud' in sdPath) {
 			return sdPath.Cloud.path;
 		} else {
-			return 'Content';
+			return t('inspector.location.content');
 		}
 	};
 
@@ -2111,7 +2111,7 @@ const {t} = useTranslation('inspector');
 				/>
 				<InfoRow
 					label={t('inspector.file.contentKind')}
-					value={String(file.content_kind || 'Unknown')}
+					value={String(file.content_kind || t('inspector.location.unknown'))}
 				/>
 				{file.extension && (
 					<InfoRow label={t('inspector.file.extension')} value={String(file.extension)} />

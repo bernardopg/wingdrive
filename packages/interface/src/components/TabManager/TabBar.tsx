@@ -148,7 +148,7 @@ const {t} = useTranslation('dialogs');
 			)}
 		>
 			<TabBarItem
-				label={tab.title}
+				label={tab.title === 'Overview' ? t('navigation:items.overview') : tab.title}
 				active={isActive}
 				/* The window keeps at least one tab, so hide the affordance
 				   instead of offering a click that does nothing. */

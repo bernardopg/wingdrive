@@ -17,33 +17,33 @@ import { useTranslation } from "../../i18n";
 function describeMediaError(
 	video: HTMLVideoElement | null,
 	playError: unknown,
+	translate: (key: string) => string,
 ): string {
 	const error = video?.error;
 
 	if (error) {
-		const reason =
-			{
-				[MediaError.MEDIA_ERR_ABORTED]: "Playback was aborted",
-				[MediaError.MEDIA_ERR_NETWORK]: "The file could not be read",
-				[MediaError.MEDIA_ERR_DECODE]: "The file could not be decoded",
-				[MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]:
-					"The format or source is not supported",
-			}[error.code] ?? "Unknown media error";
+		const reason = {
+			[MediaError.MEDIA_ERR_ABORTED]: {message: 'Playback was aborted', key: 'inspector.preview.mediaAborted'},
+			[MediaError.MEDIA_ERR_NETWORK]: {message: 'The file could not be read', key: 'inspector.preview.mediaNetwork'},
+			[MediaError.MEDIA_ERR_DECODE]: {message: 'The file could not be decoded', key: 'inspector.preview.mediaDecode'},
+			[MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]: {message: 'The format or source is not supported', key: 'inspector.preview.mediaUnsupported'},
+		}[error.code] ?? {message: 'Unknown media error', key: 'inspector.preview.mediaUnknown'};
 
-		console.error("[VideoPlayer]", reason, {
+		console.error("[VideoPlayer]", reason.message, {
 			code: error.code,
 			message: error.message,
 			src: video?.currentSrc,
 		});
 
-		return error.message ? `${reason} (${error.message})` : reason;
+		const message = translate(reason.key);
+		return error.message ? `${message} (${error.message})` : message;
 	}
 
 	console.error("[VideoPlayer] playback failed", playError, {
 		src: video?.currentSrc,
 	});
 
-	return playError instanceof Error ? playError.message : "Playback failed";
+	return playError instanceof Error ? playError.message : translate('inspector.preview.playbackFailed');
 }
 
 interface VideoPlayerProps {
@@ -150,7 +150,7 @@ export function VideoPlayer({
 			// play() rejects when the source failed to decode; without a catch it
 			// surfaced as an unhandled rejection and the UI stayed blank.
 			videoRef.current.play().catch((err) => {
-				setLoadError(describeMediaError(videoRef.current, err));
+				setLoadError(describeMediaError(videoRef.current, err, t));
 			});
 		}
 	}, [playing]);
@@ -363,7 +363,7 @@ export function VideoPlayer({
 						className="max-h-screen max-w-screen"
 						onError={(e) =>
 							setLoadError(
-								describeMediaError(e.currentTarget, null),
+							describeMediaError(e.currentTarget, null, t),
 							)
 						}
 						onPlay={() => setPlaying(true)}
