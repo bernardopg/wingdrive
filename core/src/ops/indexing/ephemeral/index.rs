@@ -194,8 +194,7 @@ impl EphemeralIndex {
 		uuid: Uuid,
 		metadata: EntryMetadata,
 	) -> std::io::Result<Option<ContentKind>> {
-		let registry = FileTypeRegistry::default();
-		self.add_entry_with_registry(path, Some(uuid), metadata, &registry)
+		self.add_entry_with_registry(path, Some(uuid), metadata, FileTypeRegistry::builtin())
 	}
 
 	fn add_entry_with_registry(
@@ -283,11 +282,9 @@ impl EphemeralIndex {
 	) -> std::io::Result<Vec<Option<ContentKind>>> {
 		let mut results = Vec::with_capacity(entries.len());
 
-		// Create registry once for entire batch instead of per-file
-		let registry = FileTypeRegistry::default();
-
 		for (path, uuid, metadata) in entries {
-			let result = self.add_entry_with_registry(path, uuid, metadata, &registry)?;
+			let result =
+				self.add_entry_with_registry(path, uuid, metadata, FileTypeRegistry::builtin())?;
 			results.push(result);
 		}
 
@@ -1039,6 +1036,31 @@ mod tests {
 			permissions: None,
 			is_hidden: false,
 		}
+	}
+
+	/// Browsing a folder adds its entries one at a time, and building a
+	/// `FileTypeRegistry` parses every built-in definition (a few ms). At that
+	/// cost per insert, 20,000 inserts would blow this budget many times over.
+	#[test]
+	fn inserts_do_not_rebuild_the_file_type_registry() {
+		const INSERTS: usize = 20_000;
+		const BUDGET: Duration = Duration::from_secs(5);
+
+		let mut index = EphemeralIndex::new().expect("index");
+		let started = Instant::now();
+		for i in 0..INSERTS {
+			let path = PathBuf::from(format!("/root/dir{}/file-{i}.txt", i / 100));
+			index
+				.add_entry(path.clone(), Uuid::now_v7(), file(path))
+				.expect("add entry");
+		}
+		let elapsed = started.elapsed();
+
+		assert!(
+			elapsed < BUDGET,
+			"{INSERTS} inserts took {elapsed:?}, over the {BUDGET:?} budget: {:?} each",
+			elapsed / INSERTS as u32
+		);
 	}
 
 	#[test]
