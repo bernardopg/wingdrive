@@ -19,6 +19,8 @@
 		"openScreen": "Open full jobs screen",
 		"showAll": "Show all jobs",
 		"showActive": "Show only active jobs",
+		"activeCount_one": "{{count}} active",
+		"activeCount_other": "{{count}} active",
 		"pause": "Pause job",
 		"resume": "Resume job",
 		"cancel": "Cancel job",
@@ -88,6 +90,7 @@
 		"openMonitor": "Open full sync monitor",
 		"showPeers": "Show peers",
 		"showActivity": "Show activity feed",
+		"activity": "Activity",
 		"noPairedDevices": "No paired devices",
 		"pairToSync": "Pair a device to start syncing",
 		"online": "Online",
@@ -396,6 +399,8 @@
 	"wingdrop": {
 		"deviceCount_one": "{{count}} Device",
 		"deviceCount_other": "{{count}} Devices",
+		"online": "Online",
+		"offline": "Offline",
 		"noDevices": "No devices found",
 		"waitingForDevices": "Waiting for nearby devices..."
 	},

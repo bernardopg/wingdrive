@@ -19,6 +19,8 @@
 		"openScreen": "Abrir tela completa de tarefas",
 		"showAll": "Mostrar todas as tarefas",
 		"showActive": "Mostrar apenas tarefas ativas",
+		"activeCount_one": "{{count}} tarefa ativa",
+		"activeCount_other": "{{count}} tarefas ativas",
 		"pause": "Pausar tarefa",
 		"resume": "Retomar tarefa",
 		"cancel": "Cancelar tarefa",
@@ -88,6 +90,7 @@
 		"openMonitor": "Abrir monitor completo de sincronização",
 		"showPeers": "Mostrar dispositivos",
 		"showActivity": "Mostrar atividades",
+		"activity": "Atividade",
 		"noPairedDevices": "Nenhum dispositivo pareado",
 		"pairToSync": "Pareie um dispositivo para iniciar a sincronização",
 		"online": "Conectado",
@@ -396,6 +399,8 @@
 	"wingdrop": {
 		"deviceCount_one": "{{count}} dispositivo",
 		"deviceCount_other": "{{count}} dispositivos",
+		"online": "Online",
+		"offline": "Offline",
 		"noDevices": "Nenhum dispositivo encontrado",
 		"waitingForDevices": "Aguardando dispositivos próximos..."
 	},

@@ -85,7 +85,7 @@ export function useSyncMonitor() {
 				const activityType = activity.activityType;
 
 				let eventType: SyncActivity['eventType'] = 'broadcast';
-				let description = 'Activity';
+				let description = i18n.t('dialogs:sync.activity');
 
 				if ('BroadcastSent' in activityType) {
 					eventType = 'broadcast';

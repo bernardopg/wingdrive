@@ -336,7 +336,7 @@ export function SelectionProvider({
 					throw new Error(
 						result.status === 'failed'
 							? result.error
-							: 'Rename did not complete successfully'
+							: t('errors.renameIncomplete')
 					);
 				}
 				if (

@@ -12,39 +12,32 @@ import { useTranslation } from "../../i18n";
 
 interface PaletteItem {
 	type: ItemType;
-	label: string;
 }
 
 const PALETTE_ITEMS: PaletteItem[] = [
 	{
 		type: "Overview",
-		label: "Overview",
 	},
 	{
 		type: "Recents",
-		label: "Recents",
 	},
 	{
 		type: "Favorites",
-		label: "Favorites",
 	},
 	{
 		type: "FileKinds",
-		label: "File Kinds",
 	},
 	{
 		type: "Sources",
-		label: "Sources",
 	},
 	{
 		type: "Redundancy",
-		label: "Redundancy",
 	},
 ];
 
 function DraggablePaletteItem({ item }: { item: PaletteItem }) {
 	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-		id: `palette-${item.label}`,
+		id: `palette-${item.type}`,
 		data: {
 			type: "palette-item",
 			itemType: item.type,
@@ -53,7 +46,7 @@ function DraggablePaletteItem({ item }: { item: PaletteItem }) {
 
 	// Create a mock SpaceItem for rendering
 	const mockSpaceItem: SpaceItemType = {
-		id: `palette-${item.label}`,
+		id: `palette-${item.type}`,
 		space_id: "",
 		group_id: null,
 		item_type: item.type,
@@ -200,7 +193,7 @@ export function SpaceCustomizationPanel({
 								<div className="space-y-0.5">
 									{PALETTE_ITEMS.map((item) => (
 										<DraggablePaletteItem
-											key={item.label}
+											key={`palette-${item.type}`}
 											item={item}
 										/>
 									))}
