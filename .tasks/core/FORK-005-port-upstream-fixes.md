@@ -8,7 +8,7 @@ priority: High
 milestone: M1
 sprint: S02
 tags: [fork, upstream, license, port]
-last_updated: 2026-10-06
+last_updated: 2026-10-14
 ---
 
 ## Description
@@ -95,3 +95,10 @@ rework (`f9bdf724b`), nightly CLI channel, NAS/titan ops notes, docs moves.
   `test_metrics_data_volume` fail on `main` and are not in CI.
 - Re-run this inventory on each upstream fetch: classify new commits as port,
   already fixed, or not applicable.
+- 2026-10-14 re-run: `docs/design/UPSTREAM_PORT_SURVEY.md` classifies the 36
+  commits up to upstream `4d41a379f`. Ported on branch
+  `worktree-agent-af9207e0e2dc5b35f`: fd limit raise (`fc1798b05`), atomic
+  `library.json` (`ad6452dfb`), migrations in one transaction (`03efcad36`),
+  file type registry built once (`e053bf233`), job listing without state
+  blob (`5bc474e72`), KeyManager in-memory close (`1e1fc8340`), plus a
+  WingDrive fix for the library watcher reopening a just-closed library.
