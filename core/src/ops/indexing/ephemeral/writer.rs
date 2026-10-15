@@ -201,11 +201,21 @@ impl ChangeHandler for MemoryAdapter {
 
 		{
 			let mut index = self.index.write().await;
-			index.remove_entry(old_path);
+			// A directory's children are keyed by their old paths, so drop the
+			// whole subtree; its first level is rescanned at the new path below.
+			if entry.is_directory() {
+				index.remove_directory_tree(old_path);
+			} else {
+				index.remove_entry(old_path);
+			}
 
 			let uuid = entry.uuid.unwrap_or_else(Uuid::new_v4);
 			let entry_metadata = EntryMetadata::from(metadata.clone());
 			let _ = index.add_entry(new_path.to_path_buf(), uuid, entry_metadata);
+		}
+
+		if entry.is_directory() {
+			self.handle_new_directory(new_path).await?;
 		}
 
 		Ok(())
