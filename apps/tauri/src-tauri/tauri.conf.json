@@ -1,6 +1,6 @@
 {
   "productName": "WingDrive",
-  "version": "2.0.0-alpha.14",
+  "version": "2.0.0-alpha.15",
   "identifier": "com.wingdrive.desktop",
   "plugins": {
     "updater": {
