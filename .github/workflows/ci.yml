@@ -25,7 +25,7 @@ concurrency:
 jobs:
   changes:
     name: Detect Rust changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       rust: ${{ steps.filter.outputs.scope != 'none' }}
@@ -54,7 +54,7 @@ jobs:
 
   repository:
     name: Repository Metadata
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Checkout repository
@@ -75,7 +75,7 @@ jobs:
 
   frontend:
     name: TypeScript
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout repository
@@ -119,7 +119,7 @@ jobs:
     name: Rust Workspace
     needs: changes
     if: needs.changes.outputs.rust == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - name: Checkout repository
@@ -153,7 +153,7 @@ jobs:
 
   extensions:
     name: WASM Extensions
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout repository

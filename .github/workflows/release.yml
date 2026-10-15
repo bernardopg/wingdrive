@@ -63,6 +63,7 @@ jobs:
       # tag and tags older than that action would fail to republish.
       - name: Free build disk space in the background
         run: |
+          # shellcheck disable=SC2016 # the inner shell expands these
           nohup bash -c 'sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc; touch "$RUNNER_TEMP/disk-cleanup.done"' \
             > "$RUNNER_TEMP/disk-cleanup.log" 2>&1 &
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -81,6 +82,7 @@ jobs:
           sudo apt-get install -y xvfb xdotool python3 imagemagick libva2 libva-drm2 dbus-daemon
       - name: Wait for build disk space
         run: |
+          # shellcheck disable=SC2016 # the inner shell expands these
           timeout 600 bash -c 'until [ -f "$RUNNER_TEMP/disk-cleanup.done" ]; do sleep 2; done' \
             || { cat "$RUNNER_TEMP/disk-cleanup.log"; exit 1; }
           df -h .
@@ -166,6 +168,7 @@ jobs:
       # tag and tags older than that action would fail to republish.
       - name: Free build disk space in the background
         run: |
+          # shellcheck disable=SC2016 # the inner shell expands these
           nohup bash -c 'sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc; touch "$RUNNER_TEMP/disk-cleanup.done"' \
             > "$RUNNER_TEMP/disk-cleanup.log" 2>&1 &
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -180,6 +183,7 @@ jobs:
         run: ./scripts/setup.sh
       - name: Wait for build disk space
         run: |
+          # shellcheck disable=SC2016 # the inner shell expands these
           timeout 600 bash -c 'until [ -f "$RUNNER_TEMP/disk-cleanup.done" ]; do sleep 2; done' \
             || { cat "$RUNNER_TEMP/disk-cleanup.log"; exit 1; }
           df -h .
@@ -228,7 +232,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
-      actions: read
+      actions: write
       contents: read
     steps:
       - name: Wait for the CI run of the tagged commit
@@ -236,14 +240,31 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/$RELEASE_TAG" -q .sha)
-          for _ in {1..20}; do
-            run=$(gh run list -R "$GITHUB_REPOSITORY" -w ci.yml --commit "$sha" \
-              --json databaseId,conclusion -q '[.[]|select(.conclusion != "cancelled")][0].databaseId')
+          if ! gh api "repos/$GITHUB_REPOSITORY/compare/main...$sha" -q .status | grep -qE '^(identical|behind)$'; then
+            echo "::warning::$RELEASE_TAG ($sha) is not on main. Tag a commit that main already contains."
+          fi
+          find_run() {
+            gh run list -R "$GITHUB_REPOSITORY" -w ci.yml --commit "$sha" \
+              --json databaseId,conclusion -q '[.[]|select(.conclusion != "cancelled")][0].databaseId'
+          }
+          # A push to main starts CI a few seconds after the tag push, so wait briefly first.
+          for _ in {1..4}; do
+            run=$(find_run)
             [ -n "$run" ] && break
             sleep 30
           done
+          # A tag on a commit that never ran CI (for example a branch commit) gets its own run.
           if [ -z "$run" ]; then
-            echo "::error::No CI run for $sha. Push the commit to main, or run CI on it with workflow_dispatch, before releasing."
+            echo "No CI run for $sha, dispatching ci.yml on $RELEASE_TAG"
+            gh workflow run ci.yml -R "$GITHUB_REPOSITORY" --ref "$RELEASE_TAG"
+            for _ in {1..20}; do
+              sleep 15
+              run=$(find_run)
+              [ -n "$run" ] && break
+            done
+          fi
+          if [ -z "$run" ]; then
+            echo "::error::No CI run for $sha, and dispatching one on $RELEASE_TAG did not start it."
             exit 1
           fi
           gh run watch "$run" -R "$GITHUB_REPOSITORY" --exit-status --interval 60
