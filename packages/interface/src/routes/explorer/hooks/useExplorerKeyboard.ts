@@ -10,6 +10,7 @@ import {useExplorer} from '../context';
 import {selectionCapabilities} from '../fileCapabilities';
 import {useCreateEntry} from './useCreateEntry';
 import {useOpenTerminal} from './useOpenTerminal';
+import {useOpenInNewWindow} from './useOpenInNewWindow';
 import {useSelection} from '../SelectionContext';
 import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
@@ -94,6 +95,11 @@ export function useExplorerKeyboard() {
 	const openTerminal = useOpenTerminal();
 	useKeybind('explorer.openTerminal', () => {
 		void openTerminal?.(operationalPath);
+	});
+
+	const openInNewWindow = useOpenInNewWindow();
+	useKeybind('explorer.openInNewWindow', () => {
+		void openInNewWindow?.(operationalPath);
 	});
 
 	useKeybind('explorer.toggleHiddenFiles', () => {

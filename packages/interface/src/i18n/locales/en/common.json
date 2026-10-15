@@ -276,7 +276,8 @@
 			"toggleTag8": "Toggle Tag 8",
 			"toggleTag9": "Toggle Tag 9",
 			"toggleTag10": "Toggle Tag 10",
-			"clearSelection": "Clear Selection"
+			"clearSelection": "Clear Selection",
+			"openInNewWindow": "Open in New Window"
 		},
 		"global": {
 			"openCommandPalette": "Open Command Palette",

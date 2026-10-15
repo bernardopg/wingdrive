@@ -125,13 +125,14 @@ impl WingDriveWindow {
 				)
 			}
 
-			Self::Explorer { library_id, path } => {
-				let url = format!("/explorer/{}/{}", library_id, path);
+			Self::Explorer { path, .. } => {
+				// The window loads the full shell; the library comes from the
+				// shared current-library state, the folder from the deep link.
 				create_window(
 					app,
 					&label,
-					&url,
-					"Explorer",
+					&explorer_url(path),
+					"WingDrive",
 					(1200.0, 800.0),
 					(800.0, 600.0),
 					true,
@@ -450,6 +451,37 @@ fn create_window(
 }
 
 /// Simple hash for generating window IDs
+/// The Explorer route for a local folder, in the form the shell's
+/// `explorerUrlForDirectory` produces: `/explorer?path=<WingPath JSON>`.
+fn explorer_url(path: &str) -> String {
+	let wing_path = serde_json::json!({ "Physical": { "device_slug": "local", "path": path } });
+	format!("/explorer?path={}", percent_encode(&wing_path.to_string()))
+}
+
+/// Percent-encodes everything except RFC 3986 unreserved characters, matching
+/// JavaScript's `encodeURIComponent` for the characters a path can contain.
+fn percent_encode(value: &str) -> String {
+	let mut encoded = String::with_capacity(value.len() * 3);
+	for byte in value.bytes() {
+		match byte {
+			b'A'..=b'Z'
+			| b'a'..=b'z'
+			| b'0'..=b'9'
+			| b'-'
+			| b'_'
+			| b'.'
+			| b'!'
+			| b'~'
+			| b'*'
+			| b'\''
+			| b'('
+			| b')' => encoded.push(byte as char),
+			_ => encoded.push_str(&format!("%{byte:02X}")),
+		}
+	}
+	encoded
+}
+
 fn hash_string(s: &str) -> String {
 	use std::collections::hash_map::DefaultHasher;
 	use std::hash::{Hash, Hasher};
@@ -695,6 +727,19 @@ fn apply_dark_titlebar(window: &WebviewWindow) {
 			&caption_color as *const _ as *const std::ffi::c_void,
 			std::mem::size_of::<u32>() as u32,
 			"DWMWA_BORDER_COLOR",
+		);
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn explorer_url_matches_the_shell_deep_link() {
+		assert_eq!(
+			explorer_url("/home/me/Música e Fotos"),
+			"/explorer?path=%7B%22Physical%22%3A%7B%22device_slug%22%3A%22local%22%2C%22path%22%3A%22%2Fhome%2Fme%2FM%C3%BAsica%20e%20Fotos%22%7D%7D"
 		);
 	}
 }
