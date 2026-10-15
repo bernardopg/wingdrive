@@ -354,9 +354,11 @@ pub async fn handle_create<H: ChangeHandler>(
 						path.parent().unwrap_or(Path::new("/")),
 					)
 					.await?;
-				handler
-					.emit_change_event(&existing, ChangeType::Moved)
-					.await?;
+				let moved = EntryRef {
+					path: path.to_path_buf(),
+					..existing
+				};
+				handler.emit_change_event(&moved, ChangeType::Moved).await?;
 				return Ok(());
 			}
 		}
@@ -446,9 +448,11 @@ pub async fn handle_modify<H: ChangeHandler>(
 						path.parent().unwrap_or(Path::new("/")),
 					)
 					.await?;
-				handler
-					.emit_change_event(&existing, ChangeType::Moved)
-					.await?;
+				let moved = EntryRef {
+					path: path.to_path_buf(),
+					..existing
+				};
+				handler.emit_change_event(&moved, ChangeType::Moved).await?;
 				return Ok(());
 			}
 		}
@@ -541,7 +545,12 @@ pub async fn handle_rename<H: ChangeHandler>(
 		handler
 			.move_entry(&entry, from, to, to.parent().unwrap_or(Path::new("/")))
 			.await?;
-		handler.emit_change_event(&entry, ChangeType::Moved).await?;
+		// The event describes the entry where it now lives; the old path is gone.
+		let moved = EntryRef {
+			path: to.to_path_buf(),
+			..entry
+		};
+		handler.emit_change_event(&moved, ChangeType::Moved).await?;
 		tracing::debug!("Moved entry {} -> {}", from.display(), to.display());
 	} else {
 		tracing::debug!(

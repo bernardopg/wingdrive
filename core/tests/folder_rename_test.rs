@@ -455,6 +455,19 @@ async fn test_ephemeral_folder_rename_via_watcher() -> anyhow::Result<()> {
 		"File content should be preserved"
 	);
 
+	// The index must list the folder's children under its new path.
+	let index = harness.core.context.ephemeral_cache().get_global_index();
+	let children = index
+		.read()
+		.await
+		.list_directory(&renamed_folder)
+		.unwrap_or_default();
+	assert_eq!(
+		children.len(),
+		2,
+		"renamed folder should list its children in the index, got {children:?}"
+	);
+
 	// Verify watcher emitted events (ephemeral uses individual ResourceChanged events)
 	let collector = collection_handle.await.unwrap();
 	let stats = collector.analyze().await;
