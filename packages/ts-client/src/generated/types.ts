@@ -942,7 +942,7 @@ has_more: boolean };
 /**
  * Input for calculating recursive content totals of a directory's child folders.
  */
-export type DirectorySizesInput = {
+export type DirectorySizesInput = { 
 /**
  * Physical directory whose direct child folders should be measured.
  */
@@ -951,11 +951,11 @@ path: WingPath };
 /**
  * Verified directory totals keyed by their physical paths.
  */
-export type DirectorySizesOutput = {
+export type DirectorySizesOutput = { 
 /**
  * Exact recursive totals for readable direct child directories.
  */
-sizes: { [key in string]: number };
+sizes: { [key in string]: number }; 
 /**
  * Direct child directories that could not be read completely.
  */
@@ -1374,7 +1374,7 @@ job_id: string };
 
 /**
  * Represents a file within the WingDrive VDFS.
- *
+ * 
  * This is a computed domain model that aggregates data from Entry, ContentIdentity,
  * Tags, and Sidecars. It provides a rich, developer-friendly interface without
  * duplicating data in the database.
@@ -1406,11 +1406,11 @@ extension: string | null;
 size: number; 
 /**
  * Verified recursive content total for directories.
- *
+ * 
  * `None` means the directory has not been aggregated. Callers must not
  * treat `size` as a directory's content total in that case.
  */
-directory_size: number | null;
+directory_size: number | null; 
 /**
  * Information about the file's content, including its content hash
  */

@@ -44,6 +44,15 @@ if [ "$1" = "full" ]; then
 	step "clippy (workspace)"
 	cargo clippy --workspace --locked -- -D warnings
 
+	# The TypeScript client is generated from Rust types; a stale copy compiles
+	# but sends or reads the wrong shapes at runtime.
+	step "Generated TypeScript types are current"
+	cargo run --locked --bin generate_typescript_types
+	if ! git diff --exit-code -- packages/ts-client/src/generated; then
+		echo "error: packages/ts-client/src/generated is out of date. Run 'cargo run --bin generate_typescript_types' and commit the result." >&2
+		exit 1
+	fi
+
 	# One build of every test binary, so the runs below only execute them.
 	step "Build test binaries"
 	cargo build --locked --bin wing-daemon
