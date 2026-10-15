@@ -10,6 +10,7 @@ import HDDIcon from "@wingdrive/assets/icons/HDD.png";
 import LocationIcon from "@wingdrive/assets/icons/Location.png";
 import ServerIcon from "@wingdrive/assets/icons/Server.png";
 import type {
+	ConnectionMethod,
 	Device,
 	JobListItem,
 	Location,
@@ -18,11 +19,8 @@ import type {
 import { getDeviceIcon } from "@wingdrive/ts-client";
 import { useNormalizedQuery, useCoreQuery, useLibraryAction, useWingDriveClient } from "../../../client";
 import { useVolumeIndexingStore } from "../../../stores";
+import { imageSource } from "../../../utils/imageSource";
 
-// Temporary type extension
-type DeviceWithConnection = Device & {
-	connection_method?: "LocalNetwork" | "DirectInternet" | "RelayProxy" | null;
-};
 
 function formatBytes(bytes: number): string {
 	if (bytes === 0) return "0 B";
@@ -62,20 +60,14 @@ export function DevicePanel({ onLocationSelect }: DevicePanelProps = {}) {
 	);
 
 	// Fetch all volumes
-	const { data: volumesData, isLoading: volumesLoading } = useNormalizedQuery<
-		any,
-		any
-	>({
+	const { data: volumesData, isLoading: volumesLoading } = useNormalizedQuery({
 		query: "volumes.list",
 		input: { filter: "All" },
 		resourceType: "volume",
 	});
 
 	// Fetch all devices
-	const { data: devicesData, isLoading: devicesLoading } = useNormalizedQuery<
-		any,
-		DeviceWithConnection[]
-	>({
+	const { data: devicesData, isLoading: devicesLoading } = useNormalizedQuery({
 		query: "devices.list",
 		input: { include_offline: true, include_details: false },
 		resourceType: "device",
@@ -83,7 +75,7 @@ export function DevicePanel({ onLocationSelect }: DevicePanelProps = {}) {
 
 	// Fetch all locations
 	const { data: locationsData, isLoading: locationsLoading } =
-		useNormalizedQuery<any, any>({
+		useNormalizedQuery({
 			query: "locations.list",
 			input: null,
 			resourceType: "location",
@@ -154,7 +146,7 @@ export function DevicePanel({ onLocationSelect }: DevicePanelProps = {}) {
 	return (
 		<View className="mb-6">
 
-			{devices.map((device: DeviceWithConnection) => {
+			{devices.map((device: Device) => {
 				const deviceVolumes = volumesByDevice[device.id] || [];
 				const deviceJobs = jobsByDevice[device.id] || [];
 				const deviceLocations = locationsByDeviceSlug[device.slug] || [];
@@ -195,7 +187,7 @@ export function DevicePanel({ onLocationSelect }: DevicePanelProps = {}) {
 }
 
 interface ConnectionBadgeProps {
-	method: "LocalNetwork" | "DirectInternet" | "RelayProxy";
+	method: ConnectionMethod;
 }
 
 function ConnectionBadge({ method }: ConnectionBadgeProps) {
@@ -203,7 +195,8 @@ function ConnectionBadge({ method }: ConnectionBadgeProps) {
 		LocalNetwork: "Local",
 		DirectInternet: "Direct",
 		RelayProxy: "Relay",
-	};
+		Tailscale: "Tailscale",
+	} satisfies Record<ConnectionMethod, string>;
 
 	return (
 		<View className="flex-row items-center gap-1.5">
@@ -214,7 +207,7 @@ function ConnectionBadge({ method }: ConnectionBadgeProps) {
 }
 
 interface DeviceCardProps {
-	device?: DeviceWithConnection;
+	device?: Device;
 	volumes: Volume[];
 	jobs: JobListItem[];
 	locations: Location[];
@@ -253,7 +246,7 @@ function DeviceCard({
 					<View className="flex-1 flex-row items-center gap-3">
 						{deviceIconSrc ? (
 							<Image
-								source={deviceIconSrc}
+								source={imageSource(deviceIconSrc)}
 								className="w-8 h-8 opacity-80"
 								style={{ resizeMode: "contain" }}
 							/>
@@ -724,7 +717,7 @@ function VolumeBar({ volume, index }: VolumeBarProps) {
 	const availableBytes = volume.available_space || 0;
 	const usedBytes = totalCapacity - availableBytes;
 
-	const uniqueBytes = volume.unique_bytes ?? Math.floor(usedBytes * 0.7);
+	const uniqueBytes = Math.floor(usedBytes * 0.7);
 	const duplicateBytes = usedBytes - uniqueBytes;
 
 	const uniquePercent = (uniqueBytes / totalCapacity) * 100;

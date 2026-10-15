@@ -124,7 +124,7 @@ export const getBeardedIcon = (
  * @param kind - The type of the icon (e.g., 'Folder', 'Document', 'Image')
  * @param isDir - If true, returns the Folder20 icon
  */
-export const getIcon20 = (kind: string, isDir?: boolean): string | null => {
+export const getIcon20 = (kind: string, isDir?: boolean) => {
 	if (isDir) {
 		return icons["Folder20" as keyof typeof icons] || null;
 	}

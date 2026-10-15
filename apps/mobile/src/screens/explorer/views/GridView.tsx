@@ -4,6 +4,7 @@ import { View, FlatList, Pressable, Image, Dimensions } from "react-native";
 import type { File } from "@wingdrive/ts-client";
 import { getVirtualMetadata, isVirtualFile, getFileKindForIcon } from "@wingdrive/ts-client";
 import { getIcon } from "@wingdrive/assets/util/mobile";
+import { imageSource } from "../../../utils/imageSource";
 
 interface GridViewProps {
 	files: File[];
@@ -57,7 +58,7 @@ function FileCard({ file, onPress }: { file: File; onPress: () => void }) {
 			{/* Icon container - transparent bg matching web FileCard */}
 			<View className="rounded-lg p-2 items-center justify-center aspect-square mb-2">
 				<Image
-					source={iconSource}
+					source={imageSource(iconSource)}
 					className="w-20 h-20"
 					style={{ resizeMode: "contain" }}
 				/>

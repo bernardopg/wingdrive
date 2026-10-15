@@ -55,7 +55,9 @@ export const Thumb = memo(function Thumb({
 
   // Check for virtual file icon override
   const virtualMetadata = getVirtualMetadata(file);
-  const iconOverride = virtualMetadata?.iconUrl;
+  // Bundlers on the web resolve icon imports to URLs; numbers only occur under Metro.
+  const iconOverride =
+    typeof virtualMetadata?.iconUrl === "string" ? virtualMetadata.iconUrl : undefined;
 
   // Check if this is a video with thumbstrip sidecar
   const isVideo = getContentKind(file) === "video";
@@ -254,7 +256,9 @@ export function Icon({
   const isDark = useIsDarkTheme();
   // Check for virtual file icon override
   const virtualMetadata = getVirtualMetadata(file);
-  const iconOverride = virtualMetadata?.iconUrl;
+  // Bundlers on the web resolve icon imports to URLs; numbers only occur under Metro.
+  const iconOverride =
+    typeof virtualMetadata?.iconUrl === "string" ? virtualMetadata.iconUrl : undefined;
 
   // Get content kind for icon resolution
   const kindCapitalized = getFileKindForIcon(file);

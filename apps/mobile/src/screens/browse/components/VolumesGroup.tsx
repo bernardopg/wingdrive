@@ -5,10 +5,11 @@ import { useNormalizedQuery } from "../../../client";
 import type { Volume, Device } from "@wingdrive/ts-client";
 import { getVolumeIcon } from "@wingdrive/ts-client";
 import { SettingsGroup, SettingsLink } from "../../../components/primitive";
+import { imageSource } from "../../../utils/imageSource";
 
 export function VolumesGroup() {
 	const router = useRouter();
-	const { data: volumesData } = useNormalizedQuery<any, { volumes: Volume[] }>(
+	const { data: volumesData } = useNormalizedQuery(
 		{
 			query: "volumes.list",
 			input: { filter: "All" },
@@ -16,7 +17,7 @@ export function VolumesGroup() {
 		}
 	);
 
-	const { data: devices } = useNormalizedQuery<any, Device[]>({
+	const { data: devices } = useNormalizedQuery({
 		query: "devices.list",
 		input: {
 			include_offline: true,
@@ -43,7 +44,7 @@ export function VolumesGroup() {
 						key={volume.id}
 						icon={
 							<Image
-								source={volumeIconSrc}
+								source={imageSource(volumeIconSrc)}
 								className="w-8 h-8"
 								style={{ resizeMode: "contain" }}
 							/>

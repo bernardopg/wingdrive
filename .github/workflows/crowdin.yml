@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - packages/interface/src/i18n/locales/en/**
+      - apps/mobile/src/i18n/locales/en/**
       - crowdin.yml
   schedule:
     - cron: '0 6 * * 1'

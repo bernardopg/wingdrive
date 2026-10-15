@@ -47,7 +47,7 @@ export function ExplorerScreen() {
 	const { files, isLoading, source } = useExplorerFiles(params);
 
 	// Fetch device for path display
-	const { data: devices } = useNormalizedQuery<any, Device[]>({
+	const { data: devices } = useNormalizedQuery({
 		query: "devices.list",
 		input: {
 			include_offline: true,

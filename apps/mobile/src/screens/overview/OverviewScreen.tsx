@@ -78,14 +78,14 @@ export function OverviewScreen() {
 		data: libraryInfo,
 		isLoading,
 		error,
-	} = useNormalizedQuery<null, Library>({
+	} = useNormalizedQuery({
 		query: "libraries.info",
 		input: null,
 		resourceType: "library",
 	});
 
 	// Fetch locations list to get the selected location reactively
-	const { data: locationsData } = useNormalizedQuery<any, any>({
+	const { data: locationsData } = useNormalizedQuery({
 		query: "locations.list",
 		input: null,
 		resourceType: "location",
@@ -395,12 +395,12 @@ export function OverviewScreen() {
 					{/* Wrapper to elevate HeroStats above ScrollView for touch events */}
 					<View style={{ position: "relative", zIndex: 25 }} pointerEvents="auto">
 						<HeroStats
-							totalStorage={stats.total_capacity}
-							usedStorage={stats.total_capacity - stats.available_capacity}
+							totalStorage={stats.total_capacity ?? 0}
+							usedStorage={(stats.total_capacity ?? 0) - (stats.available_capacity ?? 0)}
 							totalFiles={Number(stats.total_files)}
 							locationCount={stats.location_count}
 							tagCount={stats.tag_count}
-							deviceCount={stats.device_count}
+							deviceCount={stats.device_count ?? 0}
 							uniqueContentCount={Number(stats.unique_content_count)}
 							databaseSize={Number(stats.database_size)}
 							sidecarCount={Number(stats.sidecar_count ?? 0)}
