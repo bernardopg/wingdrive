@@ -596,3 +596,50 @@ async fn test_indexing_error_handling() -> Result<()> {
 	harness.shutdown().await?;
 	Ok(())
 }
+
+/// Every entry's closure ancestors must match its `parent_id` chain, even for
+/// folders and files indexed in the same batch as their parent.
+#[tokio::test]
+async fn test_closure_matches_parent_chain_for_nested_entries() -> Result<()> {
+	use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+	use std::collections::{HashMap, HashSet};
+	use wing_core::infra::db::entities::entry_closure;
+
+	let harness = IndexingHarnessBuilder::new("closure_parent_chain")
+		.build()
+		.await?;
+
+	let location = harness.create_test_location("test_location").await?;
+	location.write_file("a/b/c/deep.txt", "deep").await?;
+	location.write_file("a/top.txt", "top").await?;
+
+	let handle = location.index("Nested", IndexMode::Deep).await?;
+	let entries = handle.get_all_entries().await?;
+	let parents: HashMap<i32, Option<i32>> = entries
+		.iter()
+		.map(|entry| (entry.id, entry.parent_id))
+		.collect();
+
+	for entry in &entries {
+		let mut expected = HashSet::new();
+		let mut ancestor = entry.parent_id;
+		while let Some(id) = ancestor {
+			expected.insert(id);
+			ancestor = parents.get(&id).copied().flatten();
+		}
+
+		let actual: HashSet<i32> = entry_closure::Entity::find()
+			.filter(entry_closure::Column::DescendantId.eq(entry.id))
+			.filter(entry_closure::Column::Depth.gt(0))
+			.all(harness.library.db().conn())
+			.await?
+			.into_iter()
+			.map(|row| row.ancestor_id)
+			.collect();
+
+		assert_eq!(actual, expected, "closure ancestors of {}", entry.name);
+	}
+
+	harness.shutdown().await?;
+	Ok(())
+}

@@ -481,13 +481,17 @@ impl DatabaseStorage {
 
 		// Copy all parent's ancestor relationships to build the transitive closure for this entry.
 		// This allows "find all descendants" queries to run in O(1) without recursive traversal.
+		// The parent's own depth-0 row may still sit in `out_self_closures` when both were
+		// created in the same batch, so the direct-parent row is written explicitly.
 		if let Some(parent_id) = parent_id {
 			conn.execute_unprepared(&format!(
 				"INSERT INTO entry_closure (ancestor_id, descendant_id, depth) \
-                 SELECT ancestor_id, {}, depth + 1 \
+                 SELECT ancestor_id, {child}, depth + 1 \
                  FROM entry_closure \
-                 WHERE descendant_id = {}",
-				result.id, parent_id
+                 WHERE descendant_id = {parent} AND ancestor_id != {parent} \
+                 UNION ALL SELECT {parent}, {child}, 1",
+				child = result.id,
+				parent = parent_id
 			))
 			.await
 			.map_err(|e| {
