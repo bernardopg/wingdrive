@@ -1,7 +1,7 @@
 ---
 id: DESK-014
 title: "Show accurate directory content sizes without blocking navigation"
-status: "Done"
+status: Done
 assignee: "bernardopg"
 parent: DESK-000
 priority: High

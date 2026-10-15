@@ -8,7 +8,7 @@ priority: Critical
 milestone: M2
 sprint: S03
 tags: [epic, desktop, linux, file-manager]
-last_updated: 2026-10-07
+last_updated: 2026-10-15
 ---
 
 ## Description
@@ -27,6 +27,13 @@ WingDrive must replace Dolphin, Nautilus or Yazi as the file manager the user op
 - [x] DESK-008 Compress and extract archives
 - [x] DESK-009 Network locations and devices through GIO/gvfs
 - [x] DESK-010 Startup latency and resident memory budget
+- [x] DESK-011 System WebKit memory on Arch
+- [x] DESK-012 Linux navigation compositing
+- [ ] DESK-013 i18n and theming follow-ups (steps 1-2 done; Crowdin proofreading and packaged checks left)
+- [x] DESK-014 Accurate directory sizes
+- [ ] DESK-015 Open a folder in a new window
+- [ ] DESK-016 Dual-pane Explorer
+- [ ] DESK-017 Close M2: AUR runtime evidence and a full working day
 
 ## Acceptance Criteria
 
@@ -36,7 +43,8 @@ WingDrive must replace Dolphin, Nautilus or Yazi as the file manager the user op
 
 ## Evidence
 
-- DESK-001..009 Done in #135 with tests and runtime evidence in each task file; DESK-010 in progress.
+- DESK-001..009 Done in #135 with tests and runtime evidence in each task file; DESK-010..012 and
+  DESK-014 Done since, each with its own evidence.
 - With isolated `XDG_DATA_HOME`/`XDG_CONFIG_HOME` holding the shipped desktop entry, `xdg-mime default
   wingdrive.desktop inode/directory` wrote `inode/directory=wingdrive.desktop` and `gio mime inode/directory`
   reported `wingdrive.desktop` as the default, which is what `xdg-open <dir>` uses.

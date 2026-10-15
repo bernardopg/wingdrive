@@ -7,7 +7,7 @@ parent: UI-000
 priority: High
 milestone: M1
 tags: [epic, tauri, desktop, quality]
-last_updated: 2026-09-25
+last_updated: 2026-10-15
 ---
 
 ## Description
@@ -28,6 +28,7 @@ Make the Tauri desktop app honest and release-ready. Every visible action must e
 - [x] Remove confirmed no-op controls from the default desktop UI
 - [x] Wire the file context-menu Quick Look action to Quick Preview
 - [x] Wire Sources search to the loaded source list
-- [ ] Complete TAURI-002 through TAURI-007
-- [ ] Run the desktop regression matrix on Linux (TAURI-006), macOS and Windows (TAURI-012)
-- [ ] Verify a production bundle, not only the dev executable
+- [x] Complete TAURI-002 through TAURI-007, except TAURI-004 (Spacebot), which moved to M5
+- [x] Run the desktop regression matrix on Linux (TAURI-006)
+- [ ] Run it on macOS and Windows (TAURI-012, M3)
+- [x] Verify a production bundle, not only the dev executable (TAURI-011, TAURI-015)
