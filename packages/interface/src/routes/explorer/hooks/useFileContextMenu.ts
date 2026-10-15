@@ -1,4 +1,5 @@
 import {
+	AppWindow,
 	ArrowSquareOut,
 	Copy,
 	Crop,
@@ -50,6 +51,7 @@ import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
 import {useDuplicateFiles} from './useDuplicateFiles';
 import {useOpenFiles} from './useOpenFile';
+import {useOpenInNewWindow} from './useOpenInNewWindow';
 import {useOpenTerminal} from './useOpenTerminal';
 import {usePasteFiles} from './usePasteFiles';
 import {revealLabel} from '../../../util/keybinds/platform';
@@ -125,6 +127,7 @@ export function useFileContextMenu({
 	const {apps, isLoading: appsLoading, openWithApp, openMultipleWithApp, canSetDefault, setDefaultApp} =
 		useOpenWith(physicalPaths);
 	const openTerminal = useOpenTerminal();
+	const openInNewWindow = useOpenInNewWindow();
 	const {newFile, newLink} = useCreateEntry();
 	const archive = useArchiveActions();
 
@@ -173,6 +176,20 @@ export function useFileContextMenu({
 						file.kind === 'Directory' ||
 						file.kind === 'File' ||
 						file.kind === 'Symlink')
+			},
+			{
+				icon: AppWindow,
+				label: t('contextMenu.openInNewWindow'),
+				onClick: () => {
+					void openInNewWindow?.(file?.wing_path);
+				},
+				keybindId: 'explorer.openInNewWindow',
+				condition: () =>
+					!!openInNewWindow &&
+					!!file &&
+					file.kind === 'Directory' &&
+					'Physical' in file.wing_path &&
+					targetFiles.length === 1
 			},
 			{
 				type: 'submenu',

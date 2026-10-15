@@ -49,7 +49,8 @@
 		"renameIncomplete": "Rename did not complete successfully",
 		"failedToAddLocation": "Failed to add location",
 		"failedToAddCloudStorage": "Failed to add cloud storage",
-		"failedToIndexVolume": "Failed to index volume"
+		"failedToIndexVolume": "Failed to index volume",
+		"couldNotOpenWindow": "Could not open a new window: {{error}}"
 	},
 	"contextMenu": {
 		"quickLook": "Quick Look",
@@ -106,7 +107,8 @@
 		"deleteItems_one": "Delete {{count}} items",
 		"deleteItems_other": "Delete {{count}} items",
 		"delete": "Delete",
-		"undo": "Undo"
+		"undo": "Undo",
+		"openInNewWindow": "Open in New Window"
 	},
 	"sort": {
 		"dateTaken": "Date Taken",

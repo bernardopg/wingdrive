@@ -276,7 +276,8 @@
 			"toggleTag8": "Alternar etiqueta 8",
 			"toggleTag9": "Alternar etiqueta 9",
 			"toggleTag10": "Alternar etiqueta 10",
-			"clearSelection": "Limpar seleção"
+			"clearSelection": "Limpar seleção",
+			"openInNewWindow": "Abrir em nova janela"
 		},
 		"global": {
 			"openCommandPalette": "Abrir paleta de comandos",

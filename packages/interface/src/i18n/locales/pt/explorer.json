@@ -49,7 +49,8 @@
 		"renameIncomplete": "Não foi possível concluir a renomeação",
 		"failedToAddLocation": "Falha ao adicionar o local",
 		"failedToAddCloudStorage": "Falha ao adicionar o armazenamento na nuvem",
-		"failedToIndexVolume": "Falha ao indexar o volume"
+		"failedToIndexVolume": "Falha ao indexar o volume",
+		"couldNotOpenWindow": "Não foi possível abrir uma nova janela: {{error}}"
 	},
 	"contextMenu": {
 		"quickLook": "Visualização rápida",
@@ -106,7 +107,8 @@
 		"deleteItems_one": "Excluir {{count}} item",
 		"deleteItems_other": "Excluir {{count}} itens",
 		"delete": "Excluir",
-		"undo": "Desfazer"
+		"undo": "Desfazer",
+		"openInNewWindow": "Abrir em nova janela"
 	},
 	"sort": {
 		"dateTaken": "Data da captura",

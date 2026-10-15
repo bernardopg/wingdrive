@@ -133,6 +133,14 @@ export const explorerKeybinds = {
 		preventDefault: true
 	}),
 
+	openInNewWindow: defineKeybind({
+		id: 'explorer.openInNewWindow',
+		label: 'Open in New Window',
+		combo: {modifiers: ['Cmd'], key: 'n'},
+		scope: 'explorer',
+		preventDefault: true
+	}),
+
 	openTerminal: defineKeybind({
 		id: 'explorer.openTerminal',
 		label: 'Open Terminal Here',
