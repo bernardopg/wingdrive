@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-10-07. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-10-15. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -54,8 +54,20 @@ Epic: `DESK-000`. Sprint S03.
 
 Pré-requisito: TAURI-015 (pacote AUR com GTK/WebKit do sistema, daemon encerrado ao sair).
 
+Estado em 2026-10-15: DESK-001 a DESK-012 e DESK-014 Done; DESK-013 em andamento.
+
+Próximas candidatas do M2, para priorizar:
+
+| Task | Título | Prioridade | Esforço |
+|---|---|---|---|
+| DESK-017 | Fechar o M2: evidência no pacote AUR e um dia inteiro de uso | High | M |
+| DESK-013 | Revisão pt no Crowdin e verificação do pacote (passos 3 a 5) | Medium | S |
+| DESK-015 | Abrir pasta em nova janela (o host já tem a janela `Explorer`) | Medium | S |
+| FORK-006 | Itens 3, 4, 5 e 7 do upstream: miniaturas limitadas por memória, ícones em WebP, revisar move/sync, preflight de cópia | Medium | M |
+| DESK-016 | Explorer com painel duplo (F3) | Low | L |
+
 O M2 fecha quando o DESK-000 estiver Done com evidência do pacote AUR e um dia inteiro de uso sem
-voltar a outro file manager.
+voltar a outro file manager (DESK-017).
 
 ## Next — M3: Desktop multiplataforma e release
 
@@ -82,6 +94,7 @@ mobile (`RES-000`). Só entram depois de M4, salvo decisão explícita.
 
 | Data | Mudança |
 |---|---|
+| 2026-10-15 | M2 quase fechado; candidatas DESK-015, DESK-016 e DESK-017 abertas; app mobile traduzido e com typecheck no CI |
 | 2026-10-07 | Novo M2 "Gerenciador de arquivos padrão no Linux" (DESK-000) como prioridade máxima; antigos M2–M4 viram M3–M5 |
 | 2026-10-06 | M1 completo: TAURI-006 e BRAND-002 Done; INDEX-010 integrada; sync multi-device corrigido |
 | 2026-10-06 | FORK-004, TAURI-014 e FORK-005 Done; licença Apache-2.0; release `v2.0.0-alpha.7` |
