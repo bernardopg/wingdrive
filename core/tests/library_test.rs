@@ -318,3 +318,58 @@ async fn closing_a_new_library_inside_the_watcher_debounce_keeps_it_closed() {
 		"the watcher reopened a library its creator closed"
 	);
 }
+
+/// The directory watcher debounces a new or changed `.winglibrary` folder
+/// for 500 ms before it opens it. A shutdown inside that window used to let
+/// the watcher's last tick reopen the library `close_all` had just closed,
+/// and the orphan held the lock file against the next process.
+///
+/// The tick runs every 100 ms, so the stop is landed at several points
+/// near the end of the window; one of them is the last tick's.
+///
+/// Ported from upstream Spacedrive `393158c23`.
+#[tokio::test]
+async fn stopping_the_watcher_inside_its_debounce_reopens_nothing() {
+	// Windows refuses a plain open of a directory without backup semantics.
+	fn touch_directory(path: &std::path::Path) {
+		let mut options = std::fs::OpenOptions::new();
+		options.read(true);
+		#[cfg(windows)]
+		{
+			use std::os::windows::fs::OpenOptionsExt;
+			options.write(true).custom_flags(0x0200_0000);
+		}
+		options
+			.open(path)
+			.unwrap()
+			.set_modified(std::time::SystemTime::now())
+			.unwrap();
+	}
+
+	let temp_dir = TempDir::new().unwrap();
+	let core = Core::new(temp_dir.path().to_path_buf()).await.unwrap();
+	let lib_path = core.libraries.list().await[0].path().to_path_buf();
+	let lock_path = lib_path.join(".winglibrary.lock");
+
+	for offset_ms in (400u64..500).step_by(10) {
+		touch_directory(&lib_path);
+		tokio::time::sleep(std::time::Duration::from_millis(offset_ms)).await;
+		core.libraries.stop_watching().await.unwrap();
+		core.libraries.close_all().await.unwrap();
+		tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+
+		assert!(
+			core.libraries.list().await.is_empty(),
+			"no library is open after a stop {offset_ms} ms into the debounce"
+		);
+		assert!(
+			!lock_path.exists(),
+			"the lock file is released after a stop {offset_ms} ms into the debounce"
+		);
+
+		core.libraries.load_all(core.context.clone()).await.unwrap();
+		assert_eq!(core.libraries.list().await.len(), 1);
+		core.libraries.start_watching().await.unwrap();
+	}
+	core.shutdown().await.unwrap();
+}

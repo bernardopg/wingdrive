@@ -1,12 +1,20 @@
 import { motion } from "framer-motion";
+import type { MouseEvent } from "react";
 import { WingDriveLogo } from "@wingdrive/assets/images";
 import { CircleButton } from "@wingdrive/primitives";
 import { GlobeHemisphereWest, GithubLogo, DiscordLogo } from "@phosphor-icons/react";
 import contributors from "../../contributors.json";
+import { usePlatform } from "../../contexts/PlatformContext";
 import { useTranslation } from "../../i18n";
 
 export function AboutSettings() {
   const { t } = useTranslation();
+  const platform = usePlatform();
+  // The Tauri webview ignores target="_blank"; route links to the system browser.
+  const openExternal = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    platform.openLink(event.currentTarget.href);
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[600px]">
@@ -65,6 +73,7 @@ export function AboutSettings() {
           href="https://github.com/bernardopg/wingdrive"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={openExternal}
         >
           <CircleButton icon={GlobeHemisphereWest}>
             {t("about.website")}
@@ -74,6 +83,7 @@ export function AboutSettings() {
           href="https://github.com/bernardopg/wingdrive"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={openExternal}
         >
           <CircleButton icon={GithubLogo}>
             GitHub
@@ -83,6 +93,7 @@ export function AboutSettings() {
           href="https://github.com/bernardopg/wingdrive/discussions"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={openExternal}
         >
           <CircleButton icon={DiscordLogo}>
             Discord
@@ -105,6 +116,7 @@ export function AboutSettings() {
                 href={`https://github.com/${c.github}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={openExternal}
                 title={`@${c.github}`}
                 className="hover:text-ink-dull transition-colors"
               >
@@ -126,6 +138,7 @@ export function AboutSettings() {
           href="https://github.com/bernardopg/wingdrive/blob/main/LICENSE"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={openExternal}
           className="text-sm text-ink-faint hover:text-ink-dull transition-colors"
         >
           Apache-2.0

@@ -69,6 +69,10 @@ pub struct LibraryManager {
 	/// Whether filesystem watching is active
 	is_watching: Arc<RwLock<bool>>,
 
+	/// The watcher's event loop, awaited by `stop_watching` so a debounced
+	/// create cannot reopen a library after `close_all` has closed it.
+	watcher_task: Arc<RwLock<Option<tokio::task::JoinHandle<()>>>>,
+
 	/// Core context (needed for opening libraries on filesystem events)
 	context: Arc<RwLock<Option<Arc<CoreContext>>>>,
 
@@ -123,6 +127,7 @@ impl LibraryManager {
 			device_manager,
 			watcher: Arc::new(RwLock::new(None)),
 			is_watching: Arc::new(RwLock::new(false)),
+			watcher_task: Arc::new(RwLock::new(None)),
 			context: Arc::new(RwLock::new(None)),
 			creating: Arc::new(Mutex::new(HashMap::new())),
 		}
@@ -145,6 +150,7 @@ impl LibraryManager {
 			device_manager,
 			watcher: Arc::new(RwLock::new(None)),
 			is_watching: Arc::new(RwLock::new(false)),
+			watcher_task: Arc::new(RwLock::new(None)),
 			context: Arc::new(RwLock::new(None)),
 			creating: Arc::new(Mutex::new(HashMap::new())),
 		}
@@ -1813,7 +1819,7 @@ impl LibraryManager {
 		*self.is_watching.write().await = true;
 
 		// Start event processing loop
-		tokio::spawn(async move {
+		let task = tokio::spawn(async move {
 			info!("Library watcher event loop started");
 
 			// Debouncing: collect events and process them after a delay
@@ -1824,6 +1830,11 @@ impl LibraryManager {
 			loop {
 				tokio::select! {
 					Some(event) = rx.recv() => {
+						if !*is_watching.read().await {
+							info!("Library watcher shutting down");
+							break;
+						}
+
 						let now = std::time::Instant::now();
 
 						for path in &event.paths {
@@ -1848,6 +1859,14 @@ impl LibraryManager {
 						}
 					}
 					_ = tokio::time::sleep(Duration::from_millis(100)) => {
+						// Checked before the debounced work, not after it: a
+						// create still inside its debounce at shutdown would
+						// otherwise reopen the library `close_all` just closed.
+						if !*is_watching.read().await {
+							info!("Library watcher shutting down");
+							break;
+						}
+
 						let now = std::time::Instant::now();
 
 						// Process creates that have been stable for debounce duration
@@ -1906,6 +1925,7 @@ impl LibraryManager {
 											device_manager: ctx.device_manager.clone(),
 											watcher: Arc::new(RwLock::new(None)),
 											is_watching: Arc::new(RwLock::new(false)),
+											watcher_task: Arc::new(RwLock::new(None)),
 											context: Arc::new(RwLock::new(None)),
 											creating: creating.clone(),
 										};
@@ -1971,6 +1991,7 @@ impl LibraryManager {
 										device_manager: ctx.device_manager.clone(),
 										watcher: Arc::new(RwLock::new(None)),
 										is_watching: Arc::new(RwLock::new(false)),
+										watcher_task: Arc::new(RwLock::new(None)),
 										context: Arc::new(RwLock::new(None)),
 										creating: creating.clone(),
 									};
@@ -1988,16 +2009,11 @@ impl LibraryManager {
 						}
 					}
 				}
-
-				// Check if we should stop
-				if !*is_watching.read().await {
-					info!("Library watcher shutting down");
-					break;
-				}
 			}
 
 			info!("Library watcher event loop stopped");
 		});
+		*self.watcher_task.write().await = Some(task);
 
 		Ok(())
 	}
@@ -2012,6 +2028,15 @@ impl LibraryManager {
 
 		*self.is_watching.write().await = false;
 		*self.watcher.write().await = None;
+
+		// The loop may be mid-way through opening a library; let it finish
+		// so the caller's `close_all` sees that library and closes it too.
+		let task = self.watcher_task.write().await.take();
+		if let Some(task) = task {
+			if let Err(e) = task.await {
+				warn!("Library watcher event loop ended abnormally: {}", e);
+			}
+		}
 
 		info!("Library watcher stopped");
 
