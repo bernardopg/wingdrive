@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: SHARE-000
 priority: High
-tags: [sharing, networking, iroh, relay, cloud]
+tags: [sharing, networking, iroh, relay, cloud, upstream-backlog]
 related_tasks: [CLOUD-002, NET-001]
+milestone: M4
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -35,3 +37,9 @@ Replace Iroh's default relay with wingdrive.app-operated relays for hosted WingD
 ## Notes
 
 `CLOUD-002` is re-scoped: rather than building a store-and-forward relay, wingdrive.app operates standard Iroh relays. The asynchronous coordination need is satisfied at the share-registry layer instead (see SHARE-008).
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

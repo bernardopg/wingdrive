@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: SEC-000
 priority: High
-tags: [security, encryption, sharing, policies]
+tags: [security, encryption, sharing, policies, upstream-backlog]
 whitepaper: Section 8
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -26,3 +28,9 @@ Implement per-library encryption policies to enable secure public sharing of fil
 - [ ] The encryption policy is enforced for all files in the library.
 - [ ] Files in a publicly shared library can be decrypted by anyone with the public key.
 - [ ] Files in a private library can only be decrypted by the owner.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

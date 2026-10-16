@@ -4,8 +4,10 @@ title: "Epic: Public Shares via wingdrive.app"
 status: To Do
 assignee: jamiepine
 priority: High
-tags: [epic, sharing, cloud, networking]
+tags: [epic, sharing, cloud, networking, upstream-backlog]
 related_tasks: [CLOUD-000, CLOUD-002, SEC-007, NET-001]
+milestone: M4
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -40,3 +42,9 @@ Public sharing of WingDrive Spaces (and individual files/folders) via wingdrive.
 - `CLOUD-002` — Asynchronous Relay Server (re-scoped; see SHARE-004 note)
 - `SEC-007` — Per-Library Encryption Policies for Public Sharing
 - `NET-001` — Iroh P2P stack (foundation, already Done)
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

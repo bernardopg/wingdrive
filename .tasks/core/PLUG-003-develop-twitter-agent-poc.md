@@ -5,10 +5,11 @@ status: To Do
 assignee: jamiepine
 parent: PLUG-000
 priority: Medium
-tags: [plugins, wasm, extension, production]
+tags: [plugins, wasm, extension, production, upstream-backlog]
 whitepaper: Section 6.8
-last_updated: 2025-10-14
+last_updated: 2026-10-16
 related_tasks: [PLUG-001, PLUG-002]
+milestone: M5
 ---
 
 ## Description
@@ -65,3 +66,9 @@ Develop a production-ready extension as a real-world validation of the WASM exte
 - **Supersedes**: Original PLUG-003 (Twitter Archive) is outdated
 - **Current Focus**: Photos extension is partially implemented
 - **Reference**: See docs/extensions/ for SDK documentation and examples/
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

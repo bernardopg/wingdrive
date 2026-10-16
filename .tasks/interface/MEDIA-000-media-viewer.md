@@ -5,9 +5,10 @@ status: In Progress
 assignee: jamiepine
 parent: UI-000
 priority: Medium
-tags: [media, viewer, photos, videos]
+tags: [media, viewer, photos, videos, upstream-backlog]
 whitepaper: N/A
-last_updated: 2026-08-19
+last_updated: 2026-10-16
+milestone: M5
 ---
 
 Quick tag actions and slideshow mode shipped (commits 577c1d56c, f26665d27). Favorite action and Live Photo playback still pending.
@@ -46,3 +47,9 @@ Build a full-screen media viewer for photos and videos with support for navigati
 - [ ] Favorite action
 - [ ] Live Photo playback
 - [x] Smooth transitions between items
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

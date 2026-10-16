@@ -5,11 +5,12 @@ status: To Do
 assignee: jamiepine
 parent: CORE-008
 priority: Medium
-tags: [vss, cli, tooling]
+tags: [vss, cli, tooling, upstream-backlog]
 whitepaper: "Section 4.1.5"
-last_updated: 2025-11-01
+last_updated: 2026-10-16
 related_tasks: [CORE-008, CLI-000]
 dependencies: [VSS-001, VSS-002]
+milestone: M5
 ---
 
 ## Description
@@ -232,3 +233,9 @@ Estimated: 4-5 days focused work
 - Day 3: Cleanup and regenerate commands
 - Day 4: Integration with standard operations
 - Day 5: Testing, polish, documentation
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

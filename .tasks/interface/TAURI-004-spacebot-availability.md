@@ -6,8 +6,8 @@ assignee: unassigned
 parent: TAURI-000
 priority: High
 milestone: M5
-tags: [tauri, spacebot, integration]
-last_updated: 2026-08-26
+tags: [tauri, spacebot, integration, upstream-backlog]
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -30,3 +30,9 @@ The tracked fallback `@spacebot/api-client` returns empty data and successful no
 - Typecheck and the production Vite build pass without the private repository.
 - The private `spacebot/packages/api-client` repository is absent on this system, so the real-runtime contract remains pending.
 - All criteria implementable without the private repository are complete (commit 6ccd013bb). The remaining contract test is blocked on access to `spacebot/packages/api-client`; reassign or unblock to finish.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

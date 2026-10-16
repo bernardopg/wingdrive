@@ -5,9 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: FILE-000
 priority: High
-tags: [files, operations, diff, copy, index, deduplication]
-last_updated: 2026-02-07
+tags: [files, operations, diff, copy, index, deduplication, upstream-backlog]
+last_updated: 2026-10-16
 related_tasks: [INDEX-010, INDEX-011, FILE-001, FSYNC-003]
+milestone: M4
 ---
 
 ## Description
@@ -316,3 +317,9 @@ wing-cli files diff /path/a /path/b --no-rules
 - INDEX-011 - Rules-Free Ephemeral Scan Mode (complete coverage for diff accuracy)
 - FILE-001 - File Copy Job (executes the copy after diff)
 - FSYNC-003 - FileSyncService Core (uses diff logic internally for sync resolution)
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

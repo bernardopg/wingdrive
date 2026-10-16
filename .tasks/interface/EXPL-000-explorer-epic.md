@@ -1,14 +1,14 @@
 ---
 id: EXPL-000
 title: "Epic: Explorer Interface"
-status: In Progress
+status: Done
 assignee: jamiepine
 parent: UI-000
 priority: High
 milestone: M1
 tags: [epic, explorer, interface]
 whitepaper: N/A
-last_updated: 2025-12-02
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -42,3 +42,8 @@ Build the complete Explorer interface for browsing and managing files across all
 - [x] Context menus
 - [x] Search integration
 - [x] Inspector panel
+
+## Closed (2026-10-16)
+
+Every criterion is met and every child task (EXPL-001 to EXPL-007) is Done. M1 closed on
+2026-10-06 with the Linux regression matrix (TAURI-006), so the epic closes with it.

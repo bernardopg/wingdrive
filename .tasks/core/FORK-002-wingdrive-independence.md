@@ -1,12 +1,13 @@
 ---
 id: FORK-002
 title: "Complete WingDrive identity and repository independence"
-status: "In Progress"
-assignee: "bernardopg"
-priority: "High"
+status: In Progress
+assignee: bernardopg
+priority: High
 milestone: M3
 tags: ["fork", "branding", "github-actions", "documentation", "release"]
-last_updated: 2026-09-25
+last_updated: 2026-10-16
+sprint: S05
 ---
 
 ## Description
@@ -86,3 +87,15 @@ validation, release artifacts, and GHCR publication are recorded. As of
 2026-09-25, GitHub returned no `release.yml` runs. Apple, Google Play, and
 signed Tauri updater publication remain disabled until WingDrive-owned
 credentials exist.
+
+## External verification (2026-10-16)
+
+Successful runs on `bernardopg/wingdrive` for tag `v2.0.0-alpha.17`:
+
+- WingDrive Release: run 38884321892
+- WingDrive Server Image (GHCR): run 38884321903
+- WingDrive CI on `main`: run 38925822046
+- WingDrive Mobile Validation on `main`: run 38845343984
+
+Still open: signed Tauri updater, Apple and Google Play publication with WingDrive-owned
+credentials, and the child port tasks FORK-006 to FORK-009. Signing is M3 work, planned in S05.

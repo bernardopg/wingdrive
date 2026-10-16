@@ -5,9 +5,10 @@ status: In Progress
 assignee: jamiepine
 parent: UI-000
 priority: High
-tags: [ui, components, design-system]
+tags: [ui, components, design-system, upstream-backlog]
 whitepaper: N/A
-last_updated: 2025-12-02
+last_updated: 2026-10-16
+milestone: M5
 ---
 
 ## Description
@@ -55,3 +56,9 @@ Build a complete set of reusable UI primitives in @wingdrive/primitives that fol
 - [ ] All components keyboard accessible
 - [ ] All components follow V2 rounded style
 - [ ] Documented in Storybook or docs
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

@@ -4,11 +4,11 @@ title: Bidirectional UUID Reconciliation (Ephemeral ↔ Persistent)
 status: In Progress
 assignee: jamiepine
 parent: INDEX-000
-priority: Critical
+priority: High
 tags: [indexing, ephemeral, persistent, uuid, foundation]
-last_updated: 2026-10-06
-milestone: M1
-sprint: S02
+last_updated: 2026-10-16
+milestone: M2
+sprint: S04
 related_tasks: [INDEX-001, FSYNC-003, FILE-006]
 ---
 
@@ -365,3 +365,9 @@ The path tree, metadata, name cache, and content kind storage remain shared. Onl
 - INDEX-011 - Rules-Free Ephemeral Scan Mode (complements this for file sync)
 - FILE-006 - Path Intersection & Smart Diff (depends on unified UUID layer)
 - FSYNC-003 - FileSyncService Core (depends on unified index layer)
+
+## WingDrive triage (2026-10-16)
+
+Code and tests are on `main` since M1. The only open item is the desktop visual check of
+selection, tags, snapshot restore and library switching, which runs with the DESK-017 working day
+in S04.

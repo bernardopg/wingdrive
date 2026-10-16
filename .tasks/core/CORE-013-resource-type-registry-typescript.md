@@ -1,12 +1,14 @@
 ---
 id: CORE-013
 title: Resource Type Registry (TypeScript)
-status: To Do
+status: Done
 assignee: jamiepine
 parent: CORE-011
 priority: High
-tags: [client, typescript, codegen, cache]
+tags: [client, typescript, codegen, cache, obsolete]
 depends_on: [CORE-011]
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -79,3 +81,10 @@ Object.entries(resourceTypeMap).forEach(([type, TypeClass]) => {
 
 - `docs/core/events.md` lines 302-389
 - Specta codegen: `xtask/src/specta_gen.rs`
+
+## WingDrive triage (2026-10-16)
+
+Superseded by `useNormalizedQuery` in `packages/ts-client/src/hooks/useNormalizedQuery.ts`. It
+applies `ResourceChanged` events to cached query data generically, typed by the generated
+`packages/ts-client/src/generated/types.ts`, with tests in `hooks/__tests__/useNormalizedQuery*.ts*`.
+No separate `ResourceTypeRegistry` or `EventCacheUpdater` is needed.

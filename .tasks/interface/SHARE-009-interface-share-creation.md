@@ -5,7 +5,9 @@ status: To Do
 assignee: jamiepine
 parent: SHARE-000
 priority: High
-tags: [interface, sharing, ui]
+tags: [interface, sharing, ui, upstream-backlog]
+milestone: M4
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -30,3 +32,9 @@ Desktop UI for creating shares from Spaces, files, and folder selections.
 - [ ] Generated link is copyable and QR-renderable
 - [ ] Password and expiry inputs validated client-side
 - [ ] Works against a mocked cloud during development
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

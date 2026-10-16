@@ -1,12 +1,13 @@
 ---
 id: SEC-008
 title: "CodeQL advanced setup, TruffleHog and repository rulesets"
-status: In Progress
+status: Done
 assignee: unassigned
 priority: High
 parent: SEC-000
 tags: [security, ci, github]
-last_updated: 2026-10-10
+last_updated: 2026-10-16
+milestone: M1
 ---
 
 ## Description
@@ -32,11 +33,13 @@ credentials beyond GitHub's own provider patterns.
 - [x] `.github/rulesets/release-tags.json` stops `v*` tags from being moved or deleted.
 - [x] `scripts/github-settings.sh` applies the rulesets by name, the merge options and the secret
   scanning extras, and disables CodeQL default setup.
-- [ ] A repository admin runs `scripts/github-settings.sh` after this change merges.
+- [x] A repository admin runs `scripts/github-settings.sh` after this change merges. Applied
+  2026-10-12: `gh api repos/bernardopg/wingdrive/rulesets` lists `main` and `release tags`, both
+  `enforcement: active`, and code scanning default setup reports `not-configured`.
 
 ## Acceptance Criteria
 
-- A direct push or force-push to `main` is rejected.
-- A pull request with a failing CI job, a TruffleHog finding or a new high-severity CodeQL alert
+- [x] A direct push or force-push to `main` is rejected.
+- [x] A pull request with a failing CI job, a TruffleHog finding or a new high-severity CodeQL alert
   cannot merge.
-- Deleting or moving a `v*` tag is rejected.
+- [x] Deleting or moving a `v*` tag is rejected.

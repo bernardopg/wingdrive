@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: RES-000
 priority: Medium
-tags: [performance, mobile, core]
+tags: [performance, mobile, core, upstream-backlog]
 whitepaper: Section 7.1
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -23,3 +25,9 @@ Make background jobs like indexing and file transfers "good citizens" by impleme
 
 - [ ] On battery power, background CPU usage is reduced by at least 50%.
 - [ ] Indexing jobs are automatically paused or slowed when the system reports high thermal pressure.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

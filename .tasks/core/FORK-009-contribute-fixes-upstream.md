@@ -6,7 +6,7 @@ assignee: bernardopg
 parent: FORK-002
 priority: Medium
 milestone: M2
-sprint: S03
+sprint: S05
 tags: [fork, upstream, contribution]
 last_updated: 2026-10-16
 ---
@@ -39,4 +39,5 @@ fields. The owner authorized opening upstream PRs on 2026-10-16.
 
 - [x] Fork of `spacedriveapp/spacedrive` under `bernardopg`
 - [x] Items 1 to 3 prepared as branches with a test each, then opened upstream
+  (spacedriveapp/spacedrive#3160, #3161, #3162, opened 2026-10-16; CI awaits maintainer approval)
 - [ ] Items 4 to 8 prepared or dropped with a reason

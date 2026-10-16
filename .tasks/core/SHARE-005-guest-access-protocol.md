@@ -5,7 +5,9 @@ status: To Do
 assignee: jamiepine
 parent: SHARE-000
 priority: High
-tags: [sharing, networking, protocol, iroh]
+tags: [sharing, networking, protocol, iroh, upstream-backlog]
+milestone: M4
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -33,3 +35,9 @@ New ALPN and protocol handler in core to serve unauthenticated share visitors ov
 - [ ] Token, password, expiry, and revocation gates are all enforced server-side
 - [ ] Path traversal attacks are rejected (covered by tests)
 - [ ] Range requests work for files of any size
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

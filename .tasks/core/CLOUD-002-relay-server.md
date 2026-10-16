@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: CLOUD-000
 priority: High
-tags: [cloud, networking, relay, sharing]
+tags: [cloud, networking, relay, sharing, upstream-backlog]
 whitepaper: Section 5.3
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -25,3 +27,9 @@ Implement the relay server functionality that enables asynchronous communication
 - [ ] The relay server can be deployed and run as a standalone service.
 - [ ] Two peers can communicate asynchronously through the relay server.
 - [ ] The system gracefully falls back to using the relay when direct connection fails.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

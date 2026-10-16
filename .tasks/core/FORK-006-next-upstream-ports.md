@@ -6,7 +6,7 @@ assignee: bernardopg
 parent: FORK-002
 priority: Medium
 milestone: M2
-sprint: S03
+sprint: S04
 tags: [fork, upstream, port]
 last_updated: 2026-10-16
 ---
@@ -38,6 +38,7 @@ and keep WingDrive's version wherever it already fixed the same bug.
    frame window and the decoder runs single-threaded by default.
 4. `12cdfa4be`: ship icons as WebP (196 PNGs today) and keep source maps out of
    the bundle to shrink the AppImage. Medium.
+   In progress 2026-10-16 on branch `port/fork-006-webp-sourcemaps`.
 5. `15d7df180` (move part) and `5bc474e72` (sync part): confirm they apply to
    WingDrive's code before porting. Small to medium.
    Move part done 2026-10-16: it applied. The copy job deleted a moved source
@@ -54,7 +55,7 @@ and keep WingDrive's version wherever it already fixed the same bug.
 
 ## Acceptance Criteria
 
-- [ ] Items 1 and 2 ported, with a regression test each
+- [x] Items 1 and 2 ported, with a regression test each (#206, #210)
 - [ ] Items 3 and 4 ported or split into their own tasks
 - [ ] Items 5 to 7 classified again against current WingDrive code
 - [ ] `just ci-local` passes and the survey document is updated

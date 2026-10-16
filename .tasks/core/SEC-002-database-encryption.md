@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: SEC-000
 priority: High
-tags: [security, database, core, encryption]
+tags: [security, database, core, encryption, upstream-backlog]
 whitepaper: Section 8.1
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -25,3 +27,9 @@ Implement transparent, at-rest encryption for all library databases (`.winglibra
 - [ ] A new library created with a password has its `database.db` file encrypted.
 - [ ] The application can successfully connect to and query an encrypted database with the correct password.
 - [ ] An attempt to open an encrypted database without a password fails with a clear error.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

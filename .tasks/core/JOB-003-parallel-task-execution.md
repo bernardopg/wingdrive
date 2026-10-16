@@ -5,10 +5,11 @@ status: To Do
 assignee: jamiepine
 parent: JOB-000
 priority: High
-tags: [jobs, task-system, performance, parallelism]
+tags: [jobs, task-system, performance, parallelism, upstream-backlog]
 whitepaper: Section 4.4.6
 design_doc: workbench/JOB_PARALLEL_EXECUTION_SPEC.md
-last_updated: 2025-10-14
+last_updated: 2026-10-16
+milestone: M5
 ---
 
 ## Description
@@ -241,3 +242,9 @@ impl Task<JobError> for CopyFileTask {
 ## Notes
 
 This replaces the over-engineered approach from `JOB_TASK_COMPOSITION_API.md`. Key insight: **Jobs are orchestrators, tasks are workers.** Jobs don't need special task types - they just need ability to spawn standard tasks.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

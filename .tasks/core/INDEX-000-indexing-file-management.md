@@ -4,9 +4,10 @@ title: "Epic: Hybrid Indexing Engine"
 status: In Progress
 assignee: jamiepine
 priority: High
-tags: [epic, core, indexing]
+tags: [epic, core, indexing, upstream-backlog]
 whitepaper: Section 4.3
-last_updated: 2026-02-07
+last_updated: 2026-10-16
+milestone: M5
 ---
 
 ## Description
@@ -46,3 +47,9 @@ The hybrid indexing engine is WingDrive's core filesystem discovery and processi
 - **INDEX-010**: Bidirectional UUID Reconciliation - To Do (Critical, blocks FSYNC-003)
 - **INDEX-011**: Rules-Free Ephemeral Scan Mode - To Do (blocks FSYNC-003, FILE-006)
 - **INDEX-012**: Ephemeral Cache Parent Path Deduplication - To Do (correctness fix)
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

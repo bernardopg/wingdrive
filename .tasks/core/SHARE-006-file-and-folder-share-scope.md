@@ -5,7 +5,9 @@ status: To Do
 assignee: jamiepine
 parent: SHARE-000
 priority: Medium
-tags: [sharing, scope]
+tags: [sharing, scope, upstream-backlog]
+milestone: M4
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -25,3 +27,9 @@ Extend share creation beyond Spaces to support sharing a single file or an arbit
 - [ ] User can share a single file from the explorer right-click menu
 - [ ] User can share a multi-selection of files and folders as one share
 - [ ] Renaming a shared file or folder does not break the share link
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.
