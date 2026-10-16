@@ -18,15 +18,17 @@ upstream `main` (`4d41a379f`), with no matching upstream issue or PR. Each
 contribution is a branch off `upstream/main` in a fork of
 `spacedriveapp/spacedrive`, with upstream names (`sd_core`, `SdPath`,
 `.sdlibrary`), no WingDrive task IDs or i18n keys, and no AI co-author trailers.
-Opening each upstream PR needs the owner's go-ahead.
+Upstream rules (`CONTRIBUTING.md`, PR template): every commit signed off for the DCO
+(`git commit -s`), and every PR closes an issue opened first with the bug report form
+fields. The owner authorized opening upstream PRs on 2026-10-16.
 
 ## Ranked contributions
 
 | # | WingDrive commits | Fix | Effort | Status |
 |---|---|---|---|---|
-| 1 | `23b09f2bd` | Sync catch-up applies buffered changes before Ready | S | Branch pushed (`fix/sync-apply-buffered-changes` @ `4a742b64e`), PR draft ready |
-| 2 | `a4ceb17ab` | Library watcher does not reopen a just-created library | S | Branch pushed (`fix/watcher-reopen-created-library` @ `1bb1068e9`), PR draft ready |
-| 3 | `ccf7e046b` (eject part) | Eject refuses system, `/` and `/home` mounts | S | Branch pushed (`fix/eject-system-mount-guard` @ `8057bce4a`), PR draft ready |
+| 1 | `23b09f2bd` | Sync catch-up applies buffered changes before Ready | S | Opened: issue #3157, PR #3160 |
+| 2 | `a4ceb17ab` | Library watcher does not reopen a just-created library | S | Opened: issue #3158, PR #3161 |
+| 3 | `ccf7e046b` (eject part) | Eject refuses system, `/` and `/home` mounts | S | Opened: issue #3159, PR #3162 |
 | 4 | `361332d93` | Secure delete refuses copy-on-write filesystems | M | To Do |
 | 5 | `b55328b8c` | `Vec<T>` generates `T[]`, not the tuple `[T]` | M | To Do |
 | 6 | `d5b619da2`, `7ccb3912f` | Daemon lock ignores zombies; stop waits; app close stops its daemon | M | To Do |
@@ -36,5 +38,5 @@ Opening each upstream PR needs the owner's go-ahead.
 ## Acceptance Criteria
 
 - [x] Fork of `spacedriveapp/spacedrive` under `bernardopg`
-- [ ] Items 1 to 3 prepared as branches with a test each, then opened upstream
+- [x] Items 1 to 3 prepared as branches with a test each, then opened upstream
 - [ ] Items 4 to 8 prepared or dropped with a reason
