@@ -5,6 +5,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { WingDriveProvider } from '../client';
 import { AppResetContext } from '../contexts';
 import '../global.css';
+// Side-effect import: with inlineRequires, a named import of i18n would only run on first use, after
+// the first LocalizedText had already rendered without an i18next instance.
+import '../i18n';
 
 export default function RootLayout() {
   const [resetKey, setResetKey] = useState(0);

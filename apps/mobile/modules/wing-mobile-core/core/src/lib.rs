@@ -502,6 +502,56 @@ mod android {
 		// Intentionally empty - stack probing disabled for x86_64 emulator
 	}
 
+	extern "C" {
+		fn __android_log_write(
+			prio: std::os::raw::c_int,
+			tag: *const std::os::raw::c_char,
+			text: *const std::os::raw::c_char,
+		) -> std::os::raw::c_int;
+	}
+
+	/// Sends panic messages to logcat. A panic that reaches a JNI entry point aborts the
+	/// process, and Android discards stderr, so without this the reason never shows up.
+	fn log_panics_to_logcat() {
+		const ANDROID_LOG_FATAL: std::os::raw::c_int = 7;
+		std::panic::set_hook(Box::new(|info| {
+			let text = CString::new(info.to_string().replace('\0', " ")).unwrap_or_default();
+			unsafe {
+				__android_log_write(ANDROID_LOG_FATAL, c"WingDriveCore".as_ptr(), text.as_ptr())
+			};
+		}));
+	}
+
+	/// Stores the JavaVM for callbacks and hands the application Context to `ndk-context`,
+	/// which iroh's DNS resolver and `netdev` read; both panic when it is missing.
+	fn init_android_context(env: &mut JNIEnv) -> jni::errors::Result<()> {
+		let jvm = env.get_java_vm()?;
+		let vm_ptr = jvm.get_java_vm_pointer();
+		let _ = JAVA_VM.set(Arc::new(jvm));
+
+		static APP_CONTEXT: OnceCell<GlobalRef> = OnceCell::new();
+		if APP_CONTEXT.get().is_some() {
+			return Ok(());
+		}
+		let app = env
+			.call_static_method(
+				"android/app/ActivityThread",
+				"currentApplication",
+				"()Landroid/app/Application;",
+				&[],
+			)?
+			.l()?;
+		let app_ref = env.new_global_ref(app)?;
+		unsafe {
+			ndk_context::initialize_android_context(
+				vm_ptr.cast(),
+				app_ref.as_obj().as_raw().cast(),
+			);
+		}
+		let _ = APP_CONTEXT.set(app_ref);
+		Ok(())
+	}
+
 	#[no_mangle]
 	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_initializeCore(
 		mut env: JNIEnv,
@@ -509,6 +559,11 @@ mod android {
 		data_dir: JString,
 		device_name: JString,
 	) -> jint {
+		log_panics_to_logcat();
+		if let Err(e) = init_android_context(&mut env) {
+			tracing::error!("Failed to initialize the Android context: {e}");
+			return -1;
+		}
 		let data_dir_str: String = env
 			.get_string(&data_dir)
 			.expect("Failed to get data_dir string")
