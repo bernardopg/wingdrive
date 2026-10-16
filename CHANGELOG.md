@@ -3,6 +3,49 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Explorer
+
+- A move that copies (across volumes, or with the streaming strategy on one
+  volume) now removes its source. Before, a streaming move on one volume left
+  the file in both places and reported success (#234).
+- Open With, Always Open With, Share and Reveal appear only for files on
+  this device, so a paired device's path never reaches the local opener
+  (#231).
+- Dragging into a folder with Ctrl copies and with Shift moves; without a
+  modifier the same-volume rule still decides (#231).
+
+### Search
+
+- Refinement pills filter by kind, extension, size, date and hidden files,
+  with counts over the whole result instead of the loaded page. Hidden
+  (dot-prefixed) files stay out unless the pill is on (#232).
+
+### Devices and storage
+
+- ZFS capacity is detected when the daemon runs without `/usr/sbin` on its
+  `PATH`, as a systemd user service on Debian and Ubuntu does (#230).
+- The overview's device panel lists paired devices (#231).
+
+### Sync
+
+- A device that deleted its copy of a library answers the other members'
+  sync requests with an error instead of leaving them to time out, and logs
+  one warning per connection instead of an error per request (#235).
+
+### Performance
+
+- Thumbnail generation runs at most four decodes at once, fewer when free
+  memory is low, instead of a whole batch of 50 (#229).
+- Icons and images ship as WebP, and `wing-server` no longer embeds about
+  18 MB of web source maps.
+
+### Documentation
+
+- The README lists what works today and on which platform, and drops
+  at-rest encryption and safety screening, which are not implemented.
+
 ## 2.0.0-alpha.17 — 2026-10-16
 
 ### Explorer

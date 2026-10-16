@@ -1,13 +1,13 @@
 # Installation Guide
 
-WingDrive requires [Rust](https://rustup.rs/) 1.89+, [Bun](https://bun.sh) 1.3+, [just](https://github.com/casey/just), and Python 3.9+ (for adapters).
+WingDrive builds with the Rust toolchain pinned in `rust-toolchain.toml` (installed by [rustup](https://rustup.rs/)), [Bun](https://bun.sh) 1.3+, [just](https://github.com/casey/just), and Python 3.9+ (for adapters).
 
 ## Option 1: Prebuilt release (recommended)
 
 Get the latest build from [GitHub Releases](https://github.com/bernardopg/wingdrive/releases):
 
 - **Linux:** AppImage or Debian package
-- **macOS:** native bundle coming soon
+- **macOS and Windows:** build from source for now; prebuilt releases are planned for milestone M3
 - **Docker:** `ghcr.io/bernardopg/wingdrive/server` for headless deployments
 
 ## Option 2: Arch-based systems (AUR)
