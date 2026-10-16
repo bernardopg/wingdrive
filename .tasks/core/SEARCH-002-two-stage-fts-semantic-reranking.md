@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: SEARCH-000
 priority: High
-tags: [search, fts, semantic-search, ai]
+tags: [search, fts, semantic-search, ai, upstream-backlog]
 whitepaper: Section 4.7
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -25,3 +27,9 @@ Implement the two-stage search process that combines fast FTS5 keyword filtering
 - [ ] The system can perform fast keyword searches using FTS5.
 - [ ] The system can re-rank search results based on semantic similarity.
 - [ ] The two-stage search process is implemented and functional.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

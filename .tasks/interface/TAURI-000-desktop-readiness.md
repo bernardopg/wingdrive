@@ -5,9 +5,10 @@ status: In Progress
 assignee: unassigned
 parent: UI-000
 priority: High
-milestone: M1
+milestone: M3
 tags: [epic, tauri, desktop, quality]
-last_updated: 2026-10-15
+last_updated: 2026-10-16
+sprint: S05
 ---
 
 ## Description

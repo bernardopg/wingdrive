@@ -7,7 +7,8 @@ parent: DESK-000
 priority: Medium
 milestone: M2
 tags: [desktop, explorer, windows, linux]
-last_updated: 2026-10-15
+last_updated: 2026-10-16
+sprint: S04
 ---
 
 ## Description

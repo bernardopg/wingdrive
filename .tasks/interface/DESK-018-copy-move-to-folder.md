@@ -6,9 +6,9 @@ assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
-sprint: S03
+sprint: S04
 tags: [desktop, explorer, file-operations, linux]
-last_updated: 2026-10-15
+last_updated: 2026-10-16
 ---
 
 ## Description

@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: SHARE-000
 priority: High
-tags: [sharing, cloud, sync]
+tags: [sharing, cloud, sync, upstream-backlog]
 related_tasks: [CLOUD-002]
+milestone: M4
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -34,3 +36,9 @@ Core publishes share metadata to wingdrive.app's registry so `wingdrive.app/s/{t
 ## Notes
 
 This is the only piece of the original "asynchronous relay" idea (CLOUD-002) we actually need: store-and-forward at the metadata layer, not the data layer.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

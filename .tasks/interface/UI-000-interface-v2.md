@@ -4,8 +4,9 @@ title: "Epic: Interface V2 Architecture"
 status: In Progress
 assignee: jamiepine
 priority: High
-tags: [epic, interface, react]
-last_updated: 2025-12-02
+tags: [epic, interface, react, upstream-backlog]
+last_updated: 2026-10-16
+milestone: M5
 ---
 
 ## Description
@@ -37,3 +38,9 @@ Complete rewrite of the WingDrive interface using React 19, TypeScript, and a cl
 - [ ] Settings pages functional
 - [ ] Multi-window support
 - [ ] Mobile app integration
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

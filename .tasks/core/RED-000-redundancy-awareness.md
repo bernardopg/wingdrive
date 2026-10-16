@@ -4,10 +4,11 @@ title: "Redundancy Awareness & Cross-Location File Comparison"
 status: To Do
 assignee: jamiepine
 priority: High
-tags: [epic, core, interface, redundancy, deduplication, volumes, locations]
+tags: [epic, core, interface, redundancy, deduplication, volumes, locations, upstream-backlog]
 related_tasks: [CORE-003, VOL-000, SEARCH-000]
 whitepaper: Section 4.2 (Content Identity)
-last_updated: 2026-04-14
+last_updated: 2026-10-16
+milestone: M5
 ---
 
 ## Description
@@ -279,3 +280,9 @@ packages/interface/src/routes/redundancy/
 5. **API split:** Two concerns, two endpoint families:
    - **`redundancy.summary`** — high-level per-volume/library stats (bytes, counts, replication score). Powers the dashboard and volume bars. Returns aggregate numbers, not files.
    - **`search.files`** with redundancy filters — file-level queries like "on A but not B" or "at-risk files only". Returns file structure (entries with paths, content identity, etc.). Reuses existing search infrastructure, pagination, sorting, and explorer UI.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

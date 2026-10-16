@@ -5,10 +5,11 @@ status: To Do
 assignee: jamiepine
 parent: INDEX-000
 priority: High
-tags: [indexing, stale-detection, offline-recovery, sync, service, modified-time]
+tags: [indexing, stale-detection, offline-recovery, sync, service, modified-time, upstream-backlog]
 whitepaper: Section 4.3.4
-last_updated: 2025-12-23
+last_updated: 2026-10-16
 related_tasks: [INDEX-004, LSYNC-020, LOC-000]
+milestone: M5
 ---
 
 ## Executive Summary
@@ -1169,3 +1170,9 @@ Create an animated SVG/video showing:
 
 5. **Visualization**: Should the animated diagram be interactive (click to explore)?
    - Proposal: Create both static (for docs) and interactive (for landing page)
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

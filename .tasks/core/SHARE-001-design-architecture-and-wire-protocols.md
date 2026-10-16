@@ -6,8 +6,8 @@ assignee: jamiepine
 parent: SHARE-000
 priority: High
 milestone: M4
-tags: [sharing, design, protocol, cloud]
-last_updated: 2026-05-25
+tags: [sharing, design, protocol, cloud, upstream-backlog]
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -45,3 +45,9 @@ Produce the contracts between core, wingdrive.app, and the browser viewer. This 
 - [ ] Wire protocols are typed and machine-checkable on both sides
 - [ ] Token / URL / password protocols are specified with rationale
 - [ ] Design is approved before SHARE-002+ begins
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

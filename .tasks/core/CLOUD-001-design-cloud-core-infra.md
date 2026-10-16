@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: CLOUD-000
 priority: High
-tags: [cloud, infrastructure, design, kubernetes]
+tags: [cloud, infrastructure, design, kubernetes, upstream-backlog]
 whitepaper: Section 5.1
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -25,3 +27,9 @@ Design the infrastructure for provisioning and running isolated `wing-core` inst
 - [ ] A detailed architecture document is created.
 - [ ] The design addresses scalability, security, and cost-effectiveness.
 - [ ] The design is approved and ready for implementation.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

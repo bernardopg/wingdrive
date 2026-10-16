@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: LOC-000
 priority: High
-tags: [core, vdfs, database, refactor]
+tags: [core, vdfs, database, refactor, upstream-backlog]
 whitepaper: "Section 4.1.2, 4.3"
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -28,3 +30,9 @@ A "Location" should not be a rigid, physical path on a disk. It should be a virt
 - [ ] The `relative_path` column is successfully removed from the database schema.
 - [ ] Path reconstruction for files is performant, leveraging the `directory_paths` cache.
 - [ ] [cite_start]Moving a directory correctly updates its path in the cache and triggers a background job to update descendant paths[cite: 5562].
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

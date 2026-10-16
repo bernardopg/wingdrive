@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: VOL-000
 priority: High
-tags: [feature, import, ios, volume, macos]
+tags: [feature, import, ios, volume, macos, upstream-backlog]
 whitepaper: "Section 4.3.5"
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -28,3 +30,9 @@ Implement a feature for the macOS build that detects a physically connected iPho
 - [ ] The contents of the iPhone's camera roll (photos and videos) are displayed correctly.
 - [ ] A user can select items from the iPhone volume and import them into a standard WingDrive Location.
 - [ ] The import operation shows progress and is resumable, like other WingDrive jobs.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

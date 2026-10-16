@@ -6,9 +6,9 @@ assignee: jamiepine
 parent: PLUG-000
 priority: High
 milestone: M5
-tags: [plugins, wasm, api, vdfs, wire]
+tags: [plugins, wasm, api, vdfs, wire, upstream-backlog]
 whitepaper: Section 6.8
-last_updated: 2025-10-14
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -52,3 +52,9 @@ The key architectural insight: expose ONE generic `wingdrive_call()` function th
 - core/src/infra/extension/permissions.rs - Capability-based security
 - core/src/infra/extension/README.md - Architecture documentation
 - extensions/wingdrive-sdk/ - Guest-side SDK (referenced)
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

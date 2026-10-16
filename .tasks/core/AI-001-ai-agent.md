@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: AI-000
 priority: Medium
-tags: [ai, agent, core]
+tags: [ai, agent, core, upstream-backlog]
 whitepaper: Section 4.6
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -25,3 +27,9 @@ Implement the core AI agent that observes user behavior and proactively suggests
 - [ ] The agent can detect when a user repeatedly performs the same organizational task.
 - [ ] The agent can propose a valid, pre-visualized `Action` to automate that task.
 - [ ] The user can approve or deny the suggestion.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

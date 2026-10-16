@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: VOL-000
 priority: Medium
-tags: [volume, classification, automation]
+tags: [volume, classification, automation, upstream-backlog]
 whitepaper: Section 4.8
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -25,3 +27,9 @@ Implement the logic for automatic classification of a Volume's `PhysicalClass`. 
 - [ ] The system can run performance benchmarks on a Volume.
 - [ ] The system can automatically assign a `PhysicalClass` to a Volume based on the benchmark results.
 - [ ] The user can manually change the `PhysicalClass` of a Volume.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

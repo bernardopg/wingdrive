@@ -11,6 +11,8 @@ tags:
   - training-data
   - research
 whitepaper: "Section 4.6: AI-Native VDFS"
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -64,3 +66,8 @@ We will start by creating a Proof of Concept dataset.
 - The dataset includes a mix of both QA and text-to-GraphQL pairs.
 - The data is sufficient to begin an initial fine-tuning experiment.
 
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

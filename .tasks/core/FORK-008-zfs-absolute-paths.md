@@ -1,7 +1,7 @@
 ---
 id: FORK-008
 title: Call zfs and zpool by absolute path
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: FORK-002
 priority: Medium

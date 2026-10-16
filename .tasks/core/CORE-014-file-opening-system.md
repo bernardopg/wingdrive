@@ -6,8 +6,10 @@ assignee: jamiepine
 priority: High
 tags: [core, platform, file-operations]
 whitepaper: DESIGN-open-with.md
-last_updated: 2026-10-08
+last_updated: 2026-10-16
 related_tasks: [EXPL-004, DESK-004]
+milestone: M3
+sprint: S05
 ---
 
 ## Description
@@ -109,3 +111,8 @@ v1 implementation can be found at:
 - Platform-specific tests with mock file system
 - Manual testing on macOS, Windows, Linux
 - Test edge cases: no apps available, permission denied, file not found
+
+## WingDrive triage (2026-10-16)
+
+Linux is covered by DESK-004. The macOS and Windows backends need real machines, so this task
+moves to M3 and runs with the TAURI-012 matrix in S05.

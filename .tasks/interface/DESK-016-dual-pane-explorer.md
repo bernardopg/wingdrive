@@ -7,7 +7,8 @@ parent: DESK-000
 priority: Low
 milestone: M2
 tags: [desktop, explorer, linux]
-last_updated: 2026-10-15
+last_updated: 2026-10-16
+sprint: S05
 ---
 
 ## Description

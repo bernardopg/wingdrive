@@ -5,10 +5,11 @@ status: To Do
 assignee: jamiepine
 parent: FSYNC-000
 priority: Medium
-tags: [api, integration, routes, events]
+tags: [api, integration, routes, events, upstream-backlog]
 design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md
-last_updated: 2025-10-14
+last_updated: 2026-10-16
 related_tasks: [FSYNC-003]
+milestone: M4
 ---
 
 ## Description
@@ -264,3 +265,9 @@ console.log(progress.phase, progress.completed_bytes, progress.total_bytes);
 - Implementation: FILE_SYNC_IMPLEMENTATION_PLAN.md (Lines 1499-1630)
 - API patterns: core/src/api/jobs.rs (similar structure)
 - Related: FSYNC-003 (FileSyncService core), FSYNC-005 (progress aggregation)
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

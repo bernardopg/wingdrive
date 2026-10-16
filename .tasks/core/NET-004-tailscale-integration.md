@@ -5,7 +5,9 @@ status: To Do
 assignee: jamiepine
 parent: NET-000
 priority: Medium
-tags: [networking, tailscale, p2p, discovery]
+tags: [networking, tailscale, p2p, discovery, upstream-backlog]
+milestone: M4
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -66,3 +68,9 @@ When two nodes are on the same Tailscale network, direct UDP connectivity alread
 - [ ] The network settings UI exposes the transport mode option.
 - [ ] Pairing works correctly in tailscale mode (mDNS or Tailscale discovery path).
 - [ ] Graceful fallback: if Tailscale is not running, warn the user and suggest switching to `auto` mode.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

@@ -5,9 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: CORE-008
 priority: High
-tags: [core, vdfs, sidecars, ephemeral, thumbnails]
-last_updated: 2025-12-24
+tags: [core, vdfs, sidecars, ephemeral, thumbnails, upstream-backlog]
+last_updated: 2026-10-16
 related_tasks: [CORE-008, VSS-001, VSS-002, INDEX-000]
+milestone: M5
 ---
 
 ## Overview
@@ -945,3 +946,9 @@ pub struct EphemeralThumbnailConfig {
 - The HTTP endpoint automatically distinguishes managed vs ephemeral by trying both paths
 - This system is completely orthogonal to the managed sidecar system (VSS) - they can coexist without conflicts
 - Ephemeral sidecars are a **caching layer**, not persistent storage - they can be deleted without data loss
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

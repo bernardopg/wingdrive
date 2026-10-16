@@ -1,7 +1,7 @@
 ---
 id: DESK-021
 title: Search refinement bar (kind, extension, size, date, hidden)
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: DESK-000
 priority: Medium

@@ -5,10 +5,11 @@ status: To Do
 assignee: jamiepine
 parent: FILE-000
 priority: High
-tags: [core, file-ops, cloud, jobs]
+tags: [core, file-ops, cloud, jobs, upstream-backlog]
 whitepaper: Section 4.4.6
 related_tasks: [FILE-001, CLOUD-003, VOL-004]
-last_updated: 2025-10-14
+last_updated: 2026-10-16
+milestone: M5
 ---
 
 ## Description
@@ -85,3 +86,9 @@ Extend the file copy job system to support cloud volumes, enabling users to copy
 3. Add integration tests with MinIO or LocalStack
 4. Benchmark performance and optimize chunk sizes
 5. Add support for cloud-native copy operations where available
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.
