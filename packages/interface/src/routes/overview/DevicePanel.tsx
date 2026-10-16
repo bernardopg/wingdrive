@@ -7,14 +7,14 @@ import {
 	WifiHigh,
 	WifiSlash
 } from '@phosphor-icons/react';
-import DatabaseIcon from '@wingdrive/assets/icons/Database.png';
-import DriveAmazonS3Icon from '@wingdrive/assets/icons/Drive-AmazonS3.png';
-import DriveDropboxIcon from '@wingdrive/assets/icons/Drive-Dropbox.png';
-import DriveGoogleDriveIcon from '@wingdrive/assets/icons/Drive-GoogleDrive.png';
-import DriveIcon from '@wingdrive/assets/icons/Drive.png';
-import HDDIcon from '@wingdrive/assets/icons/HDD.png';
-import LocationIcon from '@wingdrive/assets/icons/Location.png';
-import ServerIcon from '@wingdrive/assets/icons/Server.png';
+import DatabaseIcon from '@wingdrive/assets/icons/Database.webp';
+import DriveAmazonS3Icon from '@wingdrive/assets/icons/Drive-AmazonS3.webp';
+import DriveDropboxIcon from '@wingdrive/assets/icons/Drive-Dropbox.webp';
+import DriveGoogleDriveIcon from '@wingdrive/assets/icons/Drive-GoogleDrive.webp';
+import DriveIcon from '@wingdrive/assets/icons/Drive.webp';
+import HDDIcon from '@wingdrive/assets/icons/HDD.webp';
+import LocationIcon from '@wingdrive/assets/icons/Location.webp';
+import ServerIcon from '@wingdrive/assets/icons/Server.webp';
 import type {
 	Device,
 	JobListItem,

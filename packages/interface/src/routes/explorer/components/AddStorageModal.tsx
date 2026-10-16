@@ -36,16 +36,16 @@ import clsx from "clsx";
 import {useTranslation} from "../../../i18n";
 
 // Import icons
-import FolderIcon from "@wingdrive/assets/icons/Folder.png";
-import DriveIcon from "@wingdrive/assets/icons/Drive.png";
-import HDDIcon from "@wingdrive/assets/icons/HDD.png";
-import DriveAmazonS3 from "@wingdrive/assets/icons/Drive-AmazonS3.png";
-import DriveGoogleDrive from "@wingdrive/assets/icons/Drive-GoogleDrive.png";
-import DriveDropbox from "@wingdrive/assets/icons/Drive-Dropbox.png";
-import DriveOneDrive from "@wingdrive/assets/icons/Drive-OneDrive.png";
-import DriveBackBlaze from "@wingdrive/assets/icons/Drive-BackBlaze.png";
-import DrivePCloud from "@wingdrive/assets/icons/Drive-PCloud.png";
-import DriveBox from "@wingdrive/assets/icons/Drive-Box.png";
+import FolderIcon from "@wingdrive/assets/icons/Folder.webp";
+import DriveIcon from "@wingdrive/assets/icons/Drive.webp";
+import HDDIcon from "@wingdrive/assets/icons/HDD.webp";
+import DriveAmazonS3 from "@wingdrive/assets/icons/Drive-AmazonS3.webp";
+import DriveGoogleDrive from "@wingdrive/assets/icons/Drive-GoogleDrive.webp";
+import DriveDropbox from "@wingdrive/assets/icons/Drive-Dropbox.webp";
+import DriveOneDrive from "@wingdrive/assets/icons/Drive-OneDrive.webp";
+import DriveBackBlaze from "@wingdrive/assets/icons/Drive-BackBlaze.webp";
+import DrivePCloud from "@wingdrive/assets/icons/Drive-PCloud.webp";
+import DriveBox from "@wingdrive/assets/icons/Drive-Box.webp";
 import { ThemedIcon } from "../../../components/ThemedIcon";
 
 type StorageCategory = "local" | "cloud" | "external";

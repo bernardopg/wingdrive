@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Image } from "react-native";
-import MobileIcon from "@wingdrive/assets/icons/Mobile.png";
-import CloudSyncIcon from "@wingdrive/assets/icons/CloudSync.png";
-import NewLocationIcon from "@wingdrive/assets/icons/NewLocation.png";
+import MobileIcon from "@wingdrive/assets/icons/Mobile.webp";
+import CloudSyncIcon from "@wingdrive/assets/icons/CloudSync.webp";
+import NewLocationIcon from "@wingdrive/assets/icons/NewLocation.webp";
 import { SettingsGroup, SettingsLink } from "../../../components/primitive";
 
 interface ActionButtonsProps {

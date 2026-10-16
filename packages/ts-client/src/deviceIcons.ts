@@ -1,13 +1,13 @@
 // @ts-nocheck
 import type { LibraryDeviceInfo } from "./generated/types";
-import Laptop from "@wingdrive/assets/icons/Laptop.png";
-import Mobile from "@wingdrive/assets/icons/Mobile.png";
-import MobileAndroid from "@wingdrive/assets/icons/Mobile-Android.png";
-import Tablet from "@wingdrive/assets/icons/Tablet.png";
-import SilverBox from "@wingdrive/assets/icons/SilverBox.png";
-import MiniSilverBox from "@wingdrive/assets/icons/MiniSilverBox.png";
-import PC from "@wingdrive/assets/icons/PC.png";
-import Server from "@wingdrive/assets/icons/Server.png";
+import Laptop from "@wingdrive/assets/icons/Laptop.webp";
+import Mobile from "@wingdrive/assets/icons/Mobile.webp";
+import MobileAndroid from "@wingdrive/assets/icons/Mobile-Android.webp";
+import Tablet from "@wingdrive/assets/icons/Tablet.webp";
+import SilverBox from "@wingdrive/assets/icons/SilverBox.webp";
+import MiniSilverBox from "@wingdrive/assets/icons/MiniSilverBox.webp";
+import PC from "@wingdrive/assets/icons/PC.webp";
+import Server from "@wingdrive/assets/icons/Server.webp";
 
 export type DeviceIcon = string;
 

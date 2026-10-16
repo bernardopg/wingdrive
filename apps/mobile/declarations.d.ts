@@ -1,7 +1,12 @@
 // Declarations locais do app mobile.
-// PNG/JPG/MP4 são numeric IDs no React Native; MP3 é number (RN) ou string (web),
+// WebP/PNG/JPG/MP4 são numeric IDs no React Native; MP3 é number (RN) ou string (web),
 // espelhando as declarações de packages/assets/types.d.ts para não conflitar.
 // SVG globais idem (src + ReactComponent).
+declare module '*.webp' {
+	const value: number;
+	export default value;
+}
+
 declare module '*.png' {
 	const value: number;
 	export default value;

@@ -3,7 +3,7 @@ import { Image } from "react-native";
 import { useRouter } from "expo-router";
 import type { SpaceItem as SpaceItemType, ItemType, WingPath } from "@wingdrive/ts-client";
 import { SettingsLink } from "../../../components/primitive";
-import FolderIcon from "@wingdrive/assets/icons/Folder.png";
+import FolderIcon from "@wingdrive/assets/icons/Folder.webp";
 import { MagnifyingGlass, Clock, Heart, Folders, HardDrive, Tag } from "phosphor-react-native";
 
 // Type guards

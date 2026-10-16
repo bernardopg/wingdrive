@@ -6,7 +6,7 @@ import {
 	Folder
 } from '@phosphor-icons/react';
 import {useDroppable} from '@dnd-kit/core';
-import LaptopIcon from '@wingdrive/assets/icons/Laptop.png';
+import LaptopIcon from '@wingdrive/assets/icons/Laptop.webp';
 import type {Device, WingPath} from '@wingdrive/ts-client';
 import {
 	getDeviceIcon,

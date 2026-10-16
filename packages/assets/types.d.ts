@@ -1,6 +1,6 @@
 // Type declarations for @wingdrive/assets
 
-declare module "@wingdrive/assets/icons/*.png" {
+declare module "@wingdrive/assets/icons/*.webp" {
 	const value: number; // React Native uses numeric IDs for local images
 	export default value;
 }
@@ -10,7 +10,7 @@ declare module "@wingdrive/assets/icons/*.jpg" {
 	export default value;
 }
 
-declare module "@wingdrive/assets/images/*.png" {
+declare module "@wingdrive/assets/images/*.webp" {
 	const value: number;
 	export default value;
 }

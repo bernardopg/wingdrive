@@ -3,11 +3,11 @@
  * To regenerate this file, run: pnpm assets gen
  */
 
-import Dropbox from './Dropbox.png';
-import GoogleDrive from './GoogleDrive.png';
-import iCloud from './iCloud.png';
-import Mega from './Mega.png';
-import Transparent from './Transparent.png';
+import Dropbox from './Dropbox.webp';
+import GoogleDrive from './GoogleDrive.webp';
+import iCloud from './iCloud.webp';
+import Mega from './Mega.webp';
+import Transparent from './Transparent.webp';
 import WingDriveLogo from './WingDriveLogo.svg';
 
 export {Dropbox, GoogleDrive, Mega, Transparent, WingDriveLogo, iCloud};
