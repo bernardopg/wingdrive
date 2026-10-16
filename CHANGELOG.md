@@ -3,7 +3,7 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 2.0.0-alpha.18 — 2026-10-16
 
 ### Explorer
 
@@ -39,12 +39,12 @@ version in the workspace manifests and the matching `v*` git tag.
 - Thumbnail generation runs at most four decodes at once, fewer when free
   memory is low, instead of a whole batch of 50 (#229).
 - Icons and images ship as WebP, and `wing-server` no longer embeds about
-  18 MB of web source maps.
+  18 MB of web source maps (#236).
 
 ### Documentation
 
 - The README lists what works today and on which platform, and drops
-  at-rest encryption and safety screening, which are not implemented.
+  at-rest encryption and safety screening, which are not implemented (#236).
 
 ## 2.0.0-alpha.17 — 2026-10-16
 
