@@ -37,19 +37,19 @@ jobs:
         include:
           - language: actions
             build-mode: none
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             timeout: 15
           - language: javascript-typescript
             build-mode: none
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             timeout: 30
           - language: python
             build-mode: none
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             timeout: 15
           - language: rust
             build-mode: none
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             timeout: 75
     steps:
       - name: Checkout repository

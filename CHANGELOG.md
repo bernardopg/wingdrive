@@ -3,6 +3,45 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.0.0-alpha.16 — 2026-10-15
+
+### Explorer
+
+- Folders show their real content size instead of the filesystem metadata
+  length. An optional "Calculate Folder Sizes" view setting measures folders
+  that are not indexed yet (#205).
+- Hard-linked files count once in folder sizes and file counts (#205).
+- A folder opens in a new window from its context menu or with Ctrl+N (Cmd+N
+  on macOS) (#217).
+- Renaming or moving a folder in a folder that is not indexed now updates the
+  view, keeps the folder's contents, and reindexing it no longer fails with
+  "Ephemeral index not initialized" (#208).
+
+### Desktop
+
+- The tray menu follows the interface language, also on a hidden autostart
+  launch (#206).
+- About page and Wingbot links open in the system browser (#206).
+- The remaining hard-coded interface strings are translated (#212).
+
+### Devices and storage
+
+- An unplugged drive is marked offline instead of staying online (#210).
+
+### Reliability
+
+- Shutting down inside the library watcher's debounce no longer reopens the
+  library and leaves its lock file behind (#206).
+- Folders and files indexed together with their parent are no longer missing
+  from descendant queries; existing libraries are repaired by a migration
+  (#207).
+
+### Mobile
+
+- The mobile app is available in English and Brazilian Portuguese (#213).
+- Deleting a library works, a new library is selected after creation, pinned
+  locations appear in Browse, and Tailscale connections are labelled (#214).
+
 ## 2.0.0-alpha.15 — 2026-10-15
 
 ### Interface (#201)
