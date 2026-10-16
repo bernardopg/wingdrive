@@ -1017,6 +1017,12 @@ WHERE uuid = 'peer-device-id';
 
 All sync decisions use real-time Iroh connectivity checks, ensuring messages only send to reachable peers.
 
+### Libraries a Peer No Longer Holds
+
+A device that deleted its copy of a library still sits in the other members' device table, so they keep sending it sync traffic for that library. The receiving `SyncMultiplexer` answers each request (`StateRequest`, `SharedChangeRequest`, `Heartbeat`, `WatermarkExchangeRequest`) with `SyncMessage::Error` naming the library, and drops notifications. It logs one warning per peer, library and connection, and debug after that.
+
+On the sending side, the backfill request helpers turn an `Error` reply into a failure carrying the peer's reason. The catch-up loop records it and backs off instead of reading the reply as an empty page and marking the peer caught up. No wire format changed: `Error` was already a message variant.
+
 ### Derived Tables
 
 Some data is computed locally and never syncs:
@@ -1160,6 +1166,8 @@ RUST_LOG=wing_core::sync=debug cargo run
 **Missing data**: Verify dependency order. Parents must sync before children.
 
 **Conflicts**: Check HLC implementation maintains ordering.
+
+**"Peer is syncing a library this device does not hold"**: A member still lists this device for a library it deleted. Remove the device from that library on the other member; until then its catch-up fails fast with the reason.
 
 ## Error Types
 
