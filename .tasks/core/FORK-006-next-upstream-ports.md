@@ -40,6 +40,11 @@ and keep WingDrive's version wherever it already fixed the same bug.
    the bundle to shrink the AppImage. Medium.
 5. `15d7df180` (move part) and `5bc474e72` (sync part): confirm they apply to
    WingDrive's code before porting. Small to medium.
+   Move part done 2026-10-16: it applied. The copy job deleted a moved source
+   only when the volume manager said "different volume", so a streaming move
+   on one volume (or a job without a volume manager) left the file in both
+   places and reported success. It now checks the filesystem
+   (`move_streaming_test`, fails without the fix). Sync part still open.
 6. `92dea58a4`: CI gate that fails when generated TypeScript types are stale.
    Medium.
    Done 2026-10-15 as a step of `scripts/ci-rust.sh full`, so CI and

@@ -676,39 +676,37 @@ impl JobHandler for FileCopyJob {
 						super::metadata::CopyFileStatus::Completed,
 					);
 
-					// If this is a move operation and the strategy didn't handle deletion,
-					// we need to delete the source after successful copy
+					// A move whose strategy copied rather than renamed still has its
+					// source. Whether the rename happened is read from the filesystem,
+					// not inferred from volume knowledge: a streaming move on one
+					// volume, or a job without a volume manager, used to skip this
+					// delete and leave the file in both places while reporting success.
+					// Ported from upstream Spacedrive 15d7df180.
 					if is_move && !resolved_source.is_cross_device(&final_destination) {
-						// For same-device moves, LocalMoveStrategy handles deletion atomically
-						// For cross-volume moves, LocalStreamCopyStrategy needs manual deletion
-						if let Some(vm) = volume_manager.as_deref() {
-							if let (Some(source_path), Some(dest_path)) = (
-								resolved_source.as_local_path(),
-								final_destination.as_local_path(),
-							) {
-								if !vm.same_volume(source_path, dest_path).await {
-									// Cross-volume move - delete source
-									if let Err(e) = self.delete_source_file(source_path).await {
-										failed_copies.push(CopyError {
-											source: resolved_source
-												.path()
-												.cloned()
-												.unwrap_or_default(),
-											destination: final_destination
-												.path()
-												.cloned()
-												.unwrap_or_default(),
-											error: format!(
-												"Copy succeeded but failed to delete source: {}",
-												e
-											),
-										});
-										ctx.add_non_critical_error(format!(
-											"Failed to delete source after move {}: {}",
-											resolved_source.display(),
+						if let (Some(source_path), Some(dest_path)) = (
+							resolved_source.as_local_path(),
+							final_destination.as_local_path(),
+						) {
+							let still_there =
+								tokio::fs::symlink_metadata(source_path).await.is_ok();
+							if still_there && source_path != dest_path {
+								if let Err(e) = self.delete_source_file(source_path).await {
+									failed_copies.push(CopyError {
+										source: resolved_source.path().cloned().unwrap_or_default(),
+										destination: final_destination
+											.path()
+											.cloned()
+											.unwrap_or_default(),
+										error: format!(
+											"Copy succeeded but failed to delete source: {}",
 											e
-										));
-									}
+										),
+									});
+									ctx.add_non_critical_error(format!(
+										"Failed to delete source after move {}: {}",
+										resolved_source.display(),
+										e
+									));
 								}
 							}
 						}
@@ -1441,16 +1439,17 @@ impl FileCopyJob {
 		Ok(new_path)
 	}
 
-	/// Delete source file after successful cross-volume move
+	/// Delete the source of a move whose strategy copied it.
+	///
+	/// Reads the link itself, not its target, so a moved symlink to a directory
+	/// is unlinked rather than followed.
 	async fn delete_source_file(&self, source: &std::path::Path) -> Result<(), std::io::Error> {
-		let metadata = tokio::fs::metadata(source).await?;
+		let metadata = tokio::fs::symlink_metadata(source).await?;
 
-		if metadata.is_file() {
-			tokio::fs::remove_file(source).await
-		} else if metadata.is_dir() {
+		if metadata.is_dir() {
 			tokio::fs::remove_dir_all(source).await
 		} else {
-			Ok(())
+			tokio::fs::remove_file(source).await
 		}
 	}
 }
