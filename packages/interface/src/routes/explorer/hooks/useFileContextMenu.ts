@@ -112,21 +112,20 @@ export function useFileContextMenu({
 	const openFiles = useOpenFiles();
 	const {startRename} = useSelection();
 
-	// Get physical paths for file opening
-	const getPhysicalPaths = () => {
-		const targets =
-			selected && selectedFiles.length > 0 ? selectedFiles : [file];
-		return targets
-			.filter(
-				(f): f is File =>
-					f != null &&
-					f.wing_path != null &&
-					'Physical' in f.wing_path
-			)
-			.map((f) => (f.wing_path as any).Physical.path);
-	};
+	const openTargets = (
+		selected && selectedFiles.length > 0 ? selectedFiles : [file]
+	).filter(
+		(f): f is File =>
+			f != null && f.wing_path != null && 'Physical' in f.wing_path
+	);
 
-	const physicalPaths = getPhysicalPaths();
+	// Paths on this machine, for the platform calls that take one. Another
+	// device's path would name a different file here, or none.
+	const physicalPaths = openTargets.flatMap((f) =>
+		f.is_local && 'Physical' in f.wing_path ? [f.wing_path.Physical.path] : []
+	);
+	const allTargetsLocal =
+		physicalPaths.length > 0 && physicalPaths.length === openTargets.length;
 	const {apps, isLoading: appsLoading, openWithApp, openMultipleWithApp, canSetDefault, setDefaultApp} =
 		useOpenWith(physicalPaths);
 	const openTerminal = useOpenTerminal();
@@ -202,7 +201,9 @@ export function useFileContextMenu({
 				condition: () =>
 					!!file &&
 					file.kind === 'File' &&
+					file.is_local &&
 					'Physical' in file.wing_path &&
+					allTargetsLocal &&
 					apps.length > 0,
 				submenu: apps.map((app) => ({
 					label: app.is_default ? t('contextMenu.defaultApp', {name: app.name}) : app.name,
@@ -225,6 +226,7 @@ export function useFileContextMenu({
 					canSetDefault &&
 					!!file &&
 					file.kind === 'File' &&
+					allTargetsLocal &&
 					physicalPaths.length === 1 &&
 					apps.some((app) => !app.is_default),
 				submenu: apps.filter((app) => !app.is_default).map((app) => ({
@@ -260,6 +262,7 @@ export function useFileContextMenu({
 				keybindId: 'explorer.revealInNativeExplorer',
 				condition: () =>
 					!!file &&
+					file.is_local &&
 					'Physical' in file.wing_path &&
 					!!platform.revealFile
 			},
@@ -297,8 +300,7 @@ export function useFileContextMenu({
 						}
 					}
 				},
-				condition: () =>
-					physicalPaths.length > 0 && !!platform.shareFiles
+				condition: () => allTargetsLocal && !!platform.shareFiles
 			},
 			{type: 'separator'},
 			{
