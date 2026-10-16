@@ -45,7 +45,11 @@ and keep WingDrive's version wherever it already fixed the same bug.
    only when the volume manager said "different volume", so a streaming move
    on one volume (or a job without a volume manager) left the file in both
    places and reported success. It now checks the filesystem
-   (`move_streaming_test`, fails without the fix). Sync part still open.
+   (`move_streaming_test`, fails without the fix). Sync part done 2026-10-16:
+   it applied too. A sync request for a library this device no longer holds
+   was logged as an error and left unanswered, so the peer timed out and
+   marked itself caught up. The multiplexer now replies `SyncMessage::Error`
+   (one warning per connection) and backfill turns that reply into a failure.
 6. `92dea58a4`: CI gate that fails when generated TypeScript types are stale.
    Medium.
    Done 2026-10-15 as a step of `scripts/ci-rust.sh full`, so CI and
