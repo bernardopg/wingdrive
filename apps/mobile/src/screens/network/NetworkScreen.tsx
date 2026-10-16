@@ -2,7 +2,8 @@ import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React from "react";
 import { View, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation, DrawerActions } from "@react-navigation/native";
+import { useNavigation } from "expo-router";
+import { DrawerActions } from "expo-router/react-navigation";
 import { Card } from "../../components/primitive";
 
 export function NetworkScreen() {

@@ -1,7 +1,7 @@
 import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React from "react";
 import { View, ScrollView, Pressable } from "react-native";
-import { DrawerContentComponentProps } from "@react-navigation/drawer";
+import type { DrawerContentComponentProps } from "expo-router/drawer";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSidebarStore } from "../../stores";
 import { useCoreQuery, useWingDriveClient } from "../../client";
