@@ -26,7 +26,12 @@ jobs:
         with:
           config: crowdin.yml
           upload_sources: true
-          upload_translations: false
+          # The repo's pt files are the source of truth: upload them before downloading,
+          # and never export an untranslated string, which Crowdin fills with English.
+          upload_translations: true
+          import_eq_suggestions: true
+          auto_approve_imported: true
+          skip_untranslated_strings: true
           download_translations: true
           localization_branch_name: i18n/crowdin
           create_pull_request: true
