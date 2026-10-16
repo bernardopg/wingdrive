@@ -63,8 +63,17 @@ export interface ViewSettings {
 
 export type SearchScope = 'folder' | 'location' | 'library';
 
+export type SearchSizePreset = 'tiny' | 'small' | 'medium' | 'huge';
+export type SearchDatePreset = 'day' | 'week' | 'month' | 'year';
+
 export interface SearchFilters {
 	contentTypes?: ContentKind[];
+	fileTypes?: string[];
+	size?: SearchSizePreset;
+	/** `since` is fixed when the pill is picked, so the query input stays stable. */
+	modified?: {preset: SearchDatePreset; since: string};
+	/** Unset follows the Show Hidden Files view setting. */
+	includeHidden?: boolean;
 }
 
 export type ExplorerMode =
@@ -556,7 +565,7 @@ export function ExplorerProvider({
 		tabState.viewMode,
 		uiState.mode.type,
 		uiState.mode.type === 'search'
-			? `${uiState.mode.scope}:${uiState.mode.query}:${uiState.searchPage}:${(uiState.searchFilters.contentTypes ?? []).join(',')}`
+			? `${uiState.mode.scope}:${uiState.mode.query}:${uiState.searchPage}:${JSON.stringify(uiState.searchFilters)}`
 			: uiState.mode.type === 'tag'
 				? uiState.mode.tagId
 				: uiState.mode.type === 'filtered'

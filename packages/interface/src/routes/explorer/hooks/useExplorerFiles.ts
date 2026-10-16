@@ -35,6 +35,10 @@ export interface ExplorerFilesResult {
 	page?: number;
 	/** The chosen search scope had no folder to search under, so the whole library was searched. */
 	searchScopeFallback?: boolean;
+	/** Match count of a search before pagination. */
+	totalFound?: number;
+	/** Search facets over the whole match set, for the refinement pills. */
+	facets?: FileSearchOutput["facets"];
 }
 
 /**
@@ -103,8 +107,8 @@ export function useExplorerFiles(): ExplorerFilesResult {
 			locationRoot,
 			sortBy,
 			sortDirection,
-			includeHidden: viewSettings.showHiddenFiles,
-			contentTypes: searchFilters.contentTypes ?? [],
+			includeHidden: searchFilters.includeHidden ?? viewSettings.showHiddenFiles,
+			filters: searchFilters,
 			page: searchPage,
 		});
 	}, [
@@ -114,7 +118,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		sortBy,
 		sortDirection,
 		viewSettings.showHiddenFiles,
-		searchFilters.contentTypes,
+		searchFilters,
 		searchPage,
 	]);
 
@@ -397,11 +401,17 @@ export function useExplorerFiles(): ExplorerFilesResult {
 						? null
 						: directoryQuery.error;
 
+	const searchOutput = isSearchMode
+		? (searchQuery.data as FileSearchOutput | undefined)
+		: undefined;
+
 	return {
 		files,
 		isLoading,
 		error,
 		source,
+		totalFound: searchOutput ? Number(searchOutput.total_found) : undefined,
+		facets: searchOutput?.facets,
 		hasMore: isRecentsMode
 			? ((recentsQuery.data as FileSearchOutput | undefined)?.files.length ?? 0) > RECENTS_PAGE_SIZE
 			: isSearchMode

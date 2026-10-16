@@ -197,14 +197,16 @@ impl FilterBuilder {
 	pub fn include_hidden(mut self, include_hidden: &Option<bool>) -> Self {
 		if let Some(include) = include_hidden {
 			if !include {
-				// TODO: Add hidden field to entry table
-				// self.condition = self.condition.add(
-				//     crate::infra::db::entities::entry::Column::Hidden.eq(false)
-				// );
+				self.condition = self.condition.add(not_hidden_condition());
 			}
 		}
 		self
 	}
+}
+
+/// Dot-prefixed names, the rule `files.directory_listing` uses for hidden files.
+pub(crate) fn not_hidden_condition() -> Condition {
+	Condition::all().add(crate::infra::db::entities::entry::Column::Name.not_like(".%"))
 }
 
 pub(crate) fn content_kind_condition(content_types: &[ContentKind]) -> Condition {
