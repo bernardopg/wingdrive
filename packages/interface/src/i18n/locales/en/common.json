@@ -240,6 +240,8 @@
 			"revealInNativeExplorer": "Reveal in Native Explorer",
 			"renameFile": "Rename",
 			"selectAll": "Select All",
+			"invertSelection": "Invert Selection",
+			"selectByPattern": "Select by Pattern",
 			"cut": "Cut",
 			"copy": "Copy",
 			"paste": "Paste",

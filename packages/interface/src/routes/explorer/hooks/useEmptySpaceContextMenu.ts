@@ -4,6 +4,8 @@ import {
 	FilePlus,
 	FolderPlus,
 	MagnifyingGlass,
+	SelectionAll,
+	SelectionInverse,
 	TerminalWindow
 } from '@phosphor-icons/react';
 import {useDuplicatesDialog} from '../../../components/modals/DuplicatesModal';
@@ -11,15 +13,19 @@ import {useClipboard} from '../../../hooks/useClipboard';
 import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useUndo} from '../../../hooks/useUndo';
 import {useExplorer} from '../context';
+import {useSelection} from '../SelectionContext';
 import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useOpenTerminal} from './useOpenTerminal';
+import {useSelectionCommands} from './useSelectionCommands';
 import {usePasteFiles} from './usePasteFiles';
 import {useTranslation} from '../../../i18n';
 
 export function useEmptySpaceContextMenu() {
 	const {t} = useTranslation('explorer');
-	const {operationalPath} = useExplorer();
+	const {operationalPath, currentFiles} = useExplorer();
+	const {selectAll} = useSelection();
+	const selectionCommands = useSelectionCommands();
 	const createFolder = useCreateFolder();
 	const clipboard = useClipboard();
 	const pasteFiles = usePasteFiles();
@@ -81,6 +87,28 @@ export function useEmptySpaceContextMenu() {
 					}
 				},
 				condition: () => !!operationalPath && 'Physical' in operationalPath
+			},
+			{type: 'separator'},
+			{
+				icon: SelectionAll,
+				label: t('contextMenu.selectAll'),
+				onClick: () => selectAll(currentFiles),
+				keybindId: 'explorer.selectAll',
+				condition: () => selectionCommands.hasFiles
+			},
+			{
+				icon: SelectionInverse,
+				label: t('contextMenu.invertSelection'),
+				onClick: selectionCommands.invert,
+				keybindId: 'explorer.invertSelection',
+				condition: () => selectionCommands.hasFiles
+			},
+			{
+				icon: SelectionAll,
+				label: t('contextMenu.selectByPattern'),
+				onClick: selectionCommands.selectByPattern,
+				keybindId: 'explorer.selectByPattern',
+				condition: () => selectionCommands.hasFiles
 			}
 		]
 	});

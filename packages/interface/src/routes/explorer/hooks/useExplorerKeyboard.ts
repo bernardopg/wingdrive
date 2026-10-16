@@ -17,6 +17,7 @@ import {useDeleteFiles} from './useDeleteFiles';
 import {useDuplicateFiles} from './useDuplicateFiles';
 import {useOpenFiles} from './useOpenFile';
 import {usePasteFiles} from './usePasteFiles';
+import {useSelectionCommands} from './useSelectionCommands';
 import {useTypeaheadSearch} from './useTypeaheadSearch';
 
 export function useExplorerKeyboard() {
@@ -100,6 +101,12 @@ export function useExplorerKeyboard() {
 	const openInNewWindow = useOpenInNewWindow();
 	useKeybind('explorer.openInNewWindow', () => {
 		void openInNewWindow?.(operationalPath);
+	});
+
+	const selectionCommands = useSelectionCommands();
+	useKeybind('explorer.invertSelection', selectionCommands.invert, {enabled: selectionCommands.hasFiles});
+	useKeybind('explorer.selectByPattern', selectionCommands.selectByPattern, {
+		enabled: selectionCommands.hasFiles
 	});
 
 	useKeybind('explorer.toggleHiddenFiles', () => {

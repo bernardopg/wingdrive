@@ -55,6 +55,22 @@ export const explorerKeybinds = {
 		preventDefault: true
 	}),
 
+	invertSelection: defineKeybind({
+		id: 'explorer.invertSelection',
+		label: 'Invert Selection',
+		combo: {modifiers: ['Cmd', 'Shift'], key: 'i'},
+		scope: 'explorer',
+		preventDefault: true
+	}),
+
+	selectByPattern: defineKeybind({
+		id: 'explorer.selectByPattern',
+		label: 'Select by Pattern',
+		combo: {modifiers: ['Cmd'], key: 's'},
+		scope: 'explorer',
+		preventDefault: true
+	}),
+
 	// Clipboard
 	cut: defineKeybind({
 		id: 'explorer.cut',

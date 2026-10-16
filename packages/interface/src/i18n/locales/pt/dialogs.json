@@ -404,6 +404,13 @@
 		"noDevices": "Nenhum dispositivo encontrado",
 		"waitingForDevices": "Aguardando dispositivos próximos..."
 	},
+	"selectByPattern": {
+		"title": "Selecionar por padrão",
+		"pattern": "Padrão de nome",
+		"hint": "{{count}} de {{total}} itens correspondem. Use * e ?; separe padrões com ;",
+		"select_one": "Selecionar {{count}} item",
+		"select_other": "Selecionar {{count}} itens"
+	},
 	"ui": {
 		"time": "Hora",
 		"status": "Status",
