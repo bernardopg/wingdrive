@@ -20,7 +20,7 @@ const base: SearchRequest = {
 	sortBy: 'name',
 	sortDirection: 'Asc',
 	includeHidden: false,
-	contentTypes: [],
+	filters: {},
 	page: 0
 };
 
@@ -54,10 +54,33 @@ describe('buildSearchInput', () => {
 		const input = buildSearchInput({
 			...base,
 			includeHidden: true,
-			contentTypes: ['image', 'video']
+			filters: {contentTypes: ['image', 'video']}
 		});
 		expect(input.filters.include_hidden).toBe(true);
 		expect(input.filters.content_types).toEqual(['image', 'video']);
+	});
+
+	it('maps extension, size and date pills to wire filters', () => {
+		const since = '2026-10-09T00:00:00.000Z';
+		const {filters} = buildSearchInput({
+			...base,
+			filters: {
+				fileTypes: ['pdf'],
+				size: 'small',
+				modified: {preset: 'week', since}
+			}
+		});
+		expect(filters.file_types).toEqual(['pdf']);
+		expect(filters.size_range).toEqual({min: 1024, max: 1024 ** 2 - 1});
+		expect(filters.date_range).toEqual({field: 'ModifiedAt', start: since, end: null});
+	});
+
+	it('sends no refinements when no pill is on', () => {
+		const {filters} = buildSearchInput(base);
+		expect(filters.file_types).toBeNull();
+		expect(filters.size_range).toBeNull();
+		expect(filters.date_range).toBeNull();
+		expect(filters.content_types).toBeNull();
 	});
 
 	it('pages with one extra row to detect the next page', () => {

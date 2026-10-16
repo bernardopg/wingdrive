@@ -1,7 +1,7 @@
 ---
 id: FORK-008
 title: Call zfs and zpool by absolute path
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: FORK-002
 priority: Medium
@@ -21,5 +21,12 @@ back to `PATH`.
 
 ## Acceptance Criteria
 
-- [ ] `zfs`/`zpool` are found when `PATH` lacks `/usr/sbin` and `/sbin`
-- [ ] A unit test covers the lookup order
+- [x] `zfs`/`zpool` are found when `PATH` lacks `/usr/sbin` and `/sbin`
+- [x] A unit test covers the lookup order
+
+## Progress
+
+- 2026-10-16: `resolve_bin` looks in `/sbin`, `/usr/sbin`, `/usr/local/sbin`
+  once per binary and falls back to `PATH`; all four `zfs`/`zpool` calls use
+  it. Test `resolve_bin_prefers_the_first_sbin_dir_that_has_it`.
+

@@ -3783,7 +3783,11 @@ export type ScoreBreakdown = { temporal_score: number; semantic_score: number | 
 /**
  * Search facets for filtering UI
  */
-export type SearchFacets = { file_types: { [key in string]: number }; tags: { [key in string]: number }; locations: { [key in string]: number }; date_ranges: { [key in string]: number }; size_ranges: { [key in string]: number } };
+export type SearchFacets = { file_types: { [key in string]: number }; 
+/**
+ * Content kinds by their wire name, so a key can be sent back as a `content_types` value.
+ */
+kinds: { [key in string]: number }; tags: { [key in string]: number }; locations: { [key in string]: number }; date_ranges: { [key in string]: number }; size_ranges: { [key in string]: number } };
 
 /**
  * Container for all structured filters

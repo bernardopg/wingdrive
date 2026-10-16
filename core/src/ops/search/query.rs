@@ -2,7 +2,10 @@
 
 use super::{
 	input::{FileSearchInput, SearchScope},
-	output::{EnhancedFileSearchOutput, EnhancedFileSearchResult, FileSearchOutput},
+	output::{
+		EnhancedFileSearchOutput, EnhancedFileSearchResult, FileSearchOutput, SearchFacets,
+		SearchPage,
+	},
 };
 use crate::infra::query::{QueryError, QueryResult};
 use crate::{
@@ -23,6 +26,10 @@ use specta::Type;
 use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
+
+/// Most FTS matches one search reads. Total and facets cover this many at most.
+// shortcut: matches past the cap are unreachable; page in SQL if libraries outgrow it.
+const FTS_MATCH_CAP: u32 = 5000;
 
 /// File search query
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
@@ -96,7 +103,7 @@ impl LibraryQuery for FileSearchQuery {
 					.collect();
 
 				// Perform the search based on mode
-				let results = match self.input.mode {
+				let page = match self.input.mode {
 					crate::ops::search::input::SearchMode::Fast => {
 						self.execute_fast_search(db.conn(), &device_slug_map)
 							.await?
@@ -113,18 +120,11 @@ impl LibraryQuery for FileSearchQuery {
 
 				let execution_time = start_time.elapsed().as_millis() as u64;
 
-				// Get actual total count for pagination
-				let total_count = self.get_total_count(db.conn()).await.unwrap_or(0);
-
-				// Create output with persistent index type
-				let output = FileSearchOutput::new_persistent(
-					results,
-					total_count,
+				Ok(FileSearchOutput::new_persistent(
+					page,
 					search_id,
 					execution_time,
-				);
-
-				Ok(output)
+				))
 			}
 			crate::ops::search::IndexType::Ephemeral => {
 				// Use ephemeral search
@@ -186,12 +186,17 @@ impl FileSearchQuery {
 		&self,
 		db: &DatabaseConnection,
 		_device_slug_map: &std::collections::HashMap<Uuid, String>,
-	) -> QueryResult<Vec<crate::ops::search::output::FileSearchResult>> {
+	) -> QueryResult<SearchPage> {
 		use sea_orm::Statement;
 
 		// For empty queries (recents view), skip FTS and query entries directly
 		if self.input.query.trim().is_empty() {
-			return self.execute_fast_search_no_fts(db).await;
+			let results = self.execute_fast_search_no_fts(db).await?;
+			return Ok(SearchPage {
+				total: self.get_total_count(db).await.unwrap_or(0),
+				facets: SearchFacets::from_results(&results),
+				results,
+			});
 		}
 
 		// Use FTS5 for high-performance text search
@@ -206,39 +211,7 @@ impl FileSearchQuery {
 		);
 
 		if fts_results.is_empty() {
-			return Ok(Vec::new());
-		}
-
-		let mut structured_condition = Condition::all();
-		let mut has_structured_filter = false;
-		if let Some(content_types) = &self.input.filters.content_types {
-			if !content_types.is_empty() {
-				structured_condition = structured_condition.add(
-					crate::ops::search::filters::content_kind_condition(content_types),
-				);
-				has_structured_filter = true;
-			}
-		}
-		if let Some(favorite) = self.input.filters.favorite {
-			structured_condition =
-				structured_condition.add(crate::ops::search::filters::favorite_condition(favorite));
-			has_structured_filter = true;
-		}
-		if has_structured_filter {
-			let matching_ids: HashSet<i32> = entry::Entity::find()
-				.select_only()
-				.column(entry::Column::Id)
-				.filter(entry::Column::Id.is_in(fts_results.iter().map(|(id, _)| *id)))
-				.filter(structured_condition)
-				.into_tuple::<i32>()
-				.all(db)
-				.await?
-				.into_iter()
-				.collect();
-			fts_results.retain(|(id, _)| matching_ids.contains(id));
-			if fts_results.is_empty() {
-				return Ok(Vec::new());
-			}
+			return Ok(SearchPage::default());
 		}
 
 		// Apply tag filter on FTS results
@@ -250,8 +223,52 @@ impl FileSearchQuery {
 				include_set.as_ref().map_or(true, |s| s.contains(id)) && !exclude_set.contains(id)
 			});
 			if fts_results.is_empty() {
-				return Ok(Vec::new());
+				return Ok(SearchPage::default());
 			}
+		}
+
+		// Structured filters run over every match before paging, and the same
+		// rows feed the facets, so counts and total describe the whole match set.
+		let mut facets = SearchFacets::default();
+		let mut matching_ids = HashSet::new();
+		let rows: Vec<(i32, Option<String>, i64, DateTime<Utc>, Option<i32>)> =
+			entry::Entity::find()
+				.select_only()
+				.column(entry::Column::Id)
+				.column(entry::Column::Extension)
+				.column(entry::Column::Size)
+				.column(entry::Column::ModifiedAt)
+				.column(content_identity::Column::KindId)
+				.join(JoinType::LeftJoin, entry::Relation::ContentIdentity.def())
+				.filter(entry::Column::Id.is_in(fts_results.iter().map(|(id, _)| *id)))
+				.filter(self.structured_filters())
+				.into_tuple()
+				.all(db)
+				.await?;
+		for (id, extension, size, modified_at, kind_id) in rows {
+			matching_ids.insert(id);
+			facets.add(
+				extension.as_deref(),
+				kind_id.map_or(crate::domain::ContentKind::Unknown, |kind_id| {
+					crate::domain::ContentKind::from_id(kind_id)
+				}),
+				size.max(0) as u64,
+				modified_at,
+			);
+		}
+		fts_results.retain(|(id, _)| matching_ids.contains(id));
+		let total = fts_results.len() as u64;
+		let fts_results: Vec<(i32, f64)> = fts_results
+			.into_iter()
+			.skip(self.input.pagination.offset as usize)
+			.take(self.input.pagination.limit as usize)
+			.collect();
+		if fts_results.is_empty() {
+			return Ok(SearchPage {
+				results: Vec::new(),
+				total,
+				facets,
+			});
 		}
 
 		// Build a map of entry_id -> bm25_score for later lookup
@@ -533,7 +550,11 @@ impl FileSearchQuery {
 				.unwrap_or(std::cmp::Ordering::Equal)
 		});
 
-		Ok(results)
+		Ok(SearchPage {
+			results,
+			total,
+			facets,
+		})
 	}
 
 	/// Execute normal search with FTS5 + enhanced ranking
@@ -541,12 +562,12 @@ impl FileSearchQuery {
 		&self,
 		db: &DatabaseConnection,
 		device_slug_map: &std::collections::HashMap<Uuid, String>,
-	) -> QueryResult<Vec<crate::ops::search::output::FileSearchResult>> {
+	) -> QueryResult<SearchPage> {
 		// Use FTS5 as base, then enhance with additional ranking factors
-		let mut results = self.execute_fast_search(db, device_slug_map).await?;
+		let mut page = self.execute_fast_search(db, device_slug_map).await?;
 
 		// Enhanced ranking for normal search
-		for result in &mut results {
+		for result in &mut page.results {
 			let mut enhanced_score = result.score;
 
 			// Add metadata-based scoring
@@ -575,13 +596,13 @@ impl FileSearchQuery {
 		}
 
 		// Re-sort with enhanced scores
-		results.sort_by(|a, b| {
+		page.results.sort_by(|a, b| {
 			b.score
 				.partial_cmp(&a.score)
 				.unwrap_or(std::cmp::Ordering::Equal)
 		});
 
-		Ok(results)
+		Ok(page)
 	}
 
 	/// Execute full search with FTS5 + content analysis
@@ -589,13 +610,13 @@ impl FileSearchQuery {
 		&self,
 		db: &DatabaseConnection,
 		device_slug_map: &std::collections::HashMap<Uuid, String>,
-	) -> QueryResult<Vec<crate::ops::search::output::FileSearchResult>> {
+	) -> QueryResult<SearchPage> {
 		// Start with normal search results
-		let mut results = self.execute_normal_search(db, device_slug_map).await?;
+		let mut page = self.execute_normal_search(db, device_slug_map).await?;
 
 		// For full search, we would add content analysis here
 		// This is a placeholder for future implementation
-		for result in &mut results {
+		for result in &mut page.results {
 			// TODO: Add content extraction and analysis
 			// For now, just add a small boost for files that might have content
 			let size = result.file.size;
@@ -607,13 +628,31 @@ impl FileSearchQuery {
 		}
 
 		// Re-sort with content analysis scores
-		results.sort_by(|a, b| {
+		page.results.sort_by(|a, b| {
 			b.score
 				.partial_cmp(&a.score)
 				.unwrap_or(std::cmp::Ordering::Equal)
 		});
 
-		Ok(results)
+		Ok(page)
+	}
+
+	/// Entry-column filters shared by the FTS and empty-query paths.
+	fn structured_filters(&self) -> Condition {
+		let filters = &self.input.filters;
+		crate::ops::search::filters::FilterBuilder::new()
+			.file_types(&filters.file_types)
+			.date_range(&filters.date_range)
+			.size_range(&filters.size_range)
+			.content_types(&filters.content_types)
+			.favorite(&filters.favorite)
+			.include_hidden(&filters.include_hidden)
+			.at_risk(&filters.at_risk)
+			.on_volumes(&filters.on_volumes)
+			.not_on_volumes(&filters.not_on_volumes)
+			.min_volume_count(&filters.min_volume_count)
+			.max_volume_count(&filters.max_volume_count)
+			.build()
 	}
 
 	/// Apply scope filters to the query condition
@@ -705,8 +744,7 @@ impl FileSearchQuery {
 		// Include hidden filter
 		if let Some(include_hidden) = self.input.filters.include_hidden {
 			if !include_hidden {
-				// TODO: Add hidden field to entry table
-				// condition = condition.add(entry::Column::Hidden.eq(false));
+				condition = condition.add(crate::ops::search::filters::not_hidden_condition());
 			}
 		}
 
@@ -957,7 +995,6 @@ impl FileSearchQuery {
 		&self,
 		db: &DatabaseConnection,
 	) -> QueryResult<Vec<crate::ops::search::output::FileSearchResult>> {
-		use crate::ops::search::filters::FilterBuilder;
 		use crate::ops::search::sorting::SortBuilder;
 
 		tracing::info!(
@@ -968,20 +1005,7 @@ impl FileSearchQuery {
 		// Build query with filters and sorting
 		let mut query = entry::Entity::find().filter(entry::Column::VolumeId.is_not_null());
 
-		// Apply filters
-		let filter_builder = FilterBuilder::new()
-			.file_types(&self.input.filters.file_types)
-			.date_range(&self.input.filters.date_range)
-			.size_range(&self.input.filters.size_range)
-			.content_types(&self.input.filters.content_types)
-			.favorite(&self.input.filters.favorite)
-			.at_risk(&self.input.filters.at_risk)
-			.on_volumes(&self.input.filters.on_volumes)
-			.not_on_volumes(&self.input.filters.not_on_volumes)
-			.min_volume_count(&self.input.filters.min_volume_count)
-			.max_volume_count(&self.input.filters.max_volume_count);
-
-		query = query.filter(filter_builder.build());
+		query = query.filter(self.structured_filters());
 
 		// Apply tag filter
 		if let Some(tag_filter) = &self.input.filters.tags {
@@ -1228,16 +1252,12 @@ impl FileSearchQuery {
 					query.into(),
 					exact.into(),
 					like_pattern.into(),
-					self.input.pagination.limit.to_string().into(),
-					self.input.pagination.offset.to_string().into(),
+					FTS_MATCH_CAP.to_string().into(),
+					"0".into(),
 				]
 			}
 			_ => {
-				vec![
-					query.into(),
-					self.input.pagination.limit.to_string().into(),
-					self.input.pagination.offset.to_string().into(),
-				]
+				vec![query.into(), FTS_MATCH_CAP.to_string().into(), "0".into()]
 			}
 		};
 
@@ -1417,7 +1437,8 @@ impl FileSearchQuery {
 			crate::ops::search::input::SearchMode::Full => {
 				self.execute_full_search(db, &device_slug_map).await?
 			}
-		};
+		}
+		.results;
 
 		if entry_results.is_empty() {
 			return Ok(Vec::new());
@@ -1588,10 +1609,11 @@ impl FileSearchQuery {
 		let cache = context.ephemeral_cache();
 		let lookup =
 			crate::ops::indexing::ephemeral::DatabaseUuidLookup::new(library.db().conn().clone());
-		let results = crate::ops::search::ephemeral_search::search_ephemeral_index(
+		let page = crate::ops::search::ephemeral_search::search_ephemeral_index(
 			&self.input.query,
 			path,
 			&self.input.filters,
+			&self.input.pagination,
 			cache,
 			context.file_type_registry(),
 			library.id(),
@@ -1600,11 +1622,9 @@ impl FileSearchQuery {
 		.await?;
 
 		let execution_time = start_time.elapsed().as_millis() as u64;
-		let total = results.len() as u64;
 
 		Ok(FileSearchOutput::new_ephemeral(
-			results,
-			total,
+			page,
 			search_id,
 			execution_time,
 		))

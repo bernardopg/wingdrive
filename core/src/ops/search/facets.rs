@@ -46,6 +46,7 @@ impl FacetBuilder {
 	pub fn build(self) -> SearchFacets {
 		SearchFacets {
 			file_types: self.file_types,
+			kinds: HashMap::new(),
 			tags: self.tags,
 			locations: self.locations,
 			date_ranges: self.date_ranges,
