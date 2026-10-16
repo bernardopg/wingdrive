@@ -15,6 +15,19 @@
 			"devices": "Dispositivos"
 		},
 		"removeTag": "Remover etiqueta",
+		"checksum": {
+			"title": "Checksum",
+			"calculate": "Calcular SHA-256",
+			"calculating": "Calculando SHA-256…",
+			"failed": "Não foi possível calcular o checksum: {{error}}",
+			"copy": "Copiar",
+			"copied": "SHA-256 copiado",
+			"copyFailed": "Não foi possível copiar: {{error}}",
+			"comparePlaceholder": "Cole o SHA-256 esperado",
+			"match": "Confere com o checksum esperado",
+			"mismatch": "Não confere com o checksum esperado",
+			"invalid": "Não é um checksum SHA-256"
+		},
 		"permissions": {
 			"title": "Permissões",
 			"owner": "Proprietário",
