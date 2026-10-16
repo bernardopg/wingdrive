@@ -5,7 +5,13 @@ import type {
 	SortField,
 	WingPath
 } from '@wingdrive/ts-client';
-import type {SearchScope, SortBy} from '../context';
+import type {
+	SearchDatePreset,
+	SearchFilters,
+	SearchScope,
+	SearchSizePreset,
+	SortBy
+} from '../context';
 
 /** Results per search page. One extra row is requested to detect a next page. */
 export const SEARCH_PAGE_SIZE = 200;
@@ -24,6 +30,55 @@ export const SEARCH_CONTENT_KINDS: {kind: ContentKind; label: string}[] = [
 	{kind: 'text', label: 'search.text'},
 	{kind: 'code', label: 'search.code'},
 	{kind: 'archive', label: 'search.archives'}
+];
+
+/** Size pills. Each matches one daemon size facet bucket, so the facet is the pill's count. */
+export const SEARCH_SIZE_PRESETS: {
+	preset: SearchSizePreset;
+	label: string;
+	facet: string;
+	min: number | null;
+	max: number | null;
+}[] = [
+	{preset: 'tiny', label: 'search.sizeTiny', facet: '< 1 KB', min: null, max: 1023},
+	{
+		preset: 'small',
+		label: 'search.sizeSmall',
+		facet: '1 KB - 1 MB',
+		min: 1024,
+		max: 1024 ** 2 - 1
+	},
+	{
+		preset: 'medium',
+		label: 'search.sizeMedium',
+		facet: '1 MB - 1 GB',
+		min: 1024 ** 2,
+		max: 1024 ** 3 - 1
+	},
+	{preset: 'huge', label: 'search.sizeHuge', facet: '> 1 GB', min: 1024 ** 3, max: null}
+];
+
+/** Modified-date pills. Date facets are exclusive buckets, so a pill counts its bucket and every newer one. */
+export const SEARCH_DATE_PRESETS: {
+	preset: SearchDatePreset;
+	label: string;
+	days: number;
+	facets: string[];
+}[] = [
+	{preset: 'day', label: 'search.pastDay', days: 1, facets: ['Today']},
+	{preset: 'week', label: 'search.pastWeek', days: 7, facets: ['Today', 'This week']},
+	{
+		preset: 'month',
+		label: 'search.pastMonth',
+		days: 30,
+		facets: ['Today', 'This week', 'This month']
+	},
+	{
+		preset: 'year',
+		label: 'search.pastYear',
+		days: 365,
+		facets: ['Today', 'This week', 'This month', 'This year']
+	}
 ];
 
 export function searchSortField(sortBy: SortBy): SortField {
@@ -87,7 +142,7 @@ export interface SearchRequest {
 	sortBy: SortBy;
 	sortDirection: SortDirection;
 	includeHidden: boolean;
-	contentTypes: ContentKind[];
+	filters: SearchFilters;
 	page: number;
 }
 
@@ -104,17 +159,21 @@ export function buildSearchInput(request: SearchRequest): FileSearchInput {
 				? request.locationRoot
 				: null;
 
+	const {contentTypes = [], fileTypes = [], size, modified} = request.filters;
+	const sizePreset = SEARCH_SIZE_PRESETS.find((p) => p.preset === size);
+
 	return {
 		query: request.query,
 		scope: scopePath ? {Path: {path: scopePath}} : 'Library',
 		filters: {
-			file_types: null,
+			file_types: fileTypes.length > 0 ? fileTypes : null,
 			tags: null,
-			date_range: null,
-			size_range: null,
+			date_range: modified
+				? {field: 'ModifiedAt', start: modified.since, end: null}
+				: null,
+			size_range: sizePreset ? {min: sizePreset.min, max: sizePreset.max} : null,
 			locations: null,
-			content_types:
-				request.contentTypes.length > 0 ? request.contentTypes : null,
+			content_types: contentTypes.length > 0 ? contentTypes : null,
 			favorite: null,
 			include_hidden: request.includeHidden,
 			include_archived: null,
