@@ -125,6 +125,7 @@ jobs:
           bun test packages/interface/src/routes/explorer/FileContextMenuProvider.test.tsx
           bun test packages/interface/src/components/TabManager/tabRouter.test.ts
           bun test packages/interface/src/hooks/undoStore.test.ts
+          bun test packages/interface/src/routes/explorer/hooks/copyMoveDestination.test.ts
 
   core:
     name: Rust Workspace

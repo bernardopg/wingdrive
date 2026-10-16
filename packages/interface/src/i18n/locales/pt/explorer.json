@@ -83,6 +83,8 @@
 		"cutItems_other": "Recortar {{count}} itens",
 		"cut": "Recortar",
 		"paste": "Colar",
+		"copyTo": "Copiar para…",
+		"moveTo": "Mover para…",
 		"duplicateItems_one": "Duplicar {{count}} item",
 		"duplicateItems_other": "Duplicar {{count}} itens",
 		"duplicate": "Duplicar",
