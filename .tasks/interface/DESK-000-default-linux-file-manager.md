@@ -34,6 +34,9 @@ WingDrive must replace Dolphin, Nautilus or Yazi as the file manager the user op
 - [ ] DESK-015 Open a folder in a new window (code merged in #217; runtime check pending)
 - [ ] DESK-016 Dual-pane Explorer
 - [ ] DESK-017 Close M2: AUR runtime evidence and a full working day
+- [ ] DESK-018 Copy To and Move To a chosen folder
+- [ ] DESK-019 Invert selection and select by pattern
+- [ ] DESK-020 On-demand file checksum in the Inspector
 
 ## Acceptance Criteria
 
