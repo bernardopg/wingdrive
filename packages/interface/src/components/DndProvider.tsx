@@ -20,6 +20,11 @@ import { File as FileComponent } from "../routes/explorer/File";
 import { selectionCapabilities } from "../routes/explorer/fileCapabilities";
 import { useTabManager } from "./TabManager/useTabManager";
 import { useTranslation } from "../i18n";
+import {
+	dropOperation,
+	modifierKeysNow,
+	useModifierKeyTracker,
+} from "../hooks/useModifierKeys";
 
 /**
  * DndProvider - Global drag-and-drop coordinator
@@ -39,6 +44,8 @@ import { useTranslation } from "../i18n";
  *    - Data: { action, targetType, targetId, targetPath? }
  *    - targetType: "location" | "volume" | "folder"
  *    - targetPath: WingPath (for locations, directly usable)
+ *    - Ctrl forces copy and Shift forces move; dnd-kit carries no modifier
+ *      state, so the window tracker answers
  *
  * 3. type: "space" | "group"
  *    - Legacy: Drops on the space root or group area (no specific item)
@@ -58,6 +65,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 	const reorderItems = useLibraryMutation("spaces.reorder_items");
 	const reorderGroups = useLibraryMutation("spaces.reorder_groups");
 	const openFileOperation = useFileOperationDialog();
+	useModifierKeyTracker();
 	const [activeItem, setActiveItem] = useState<any>(null);
 	const client = useWingDriveClient();
 	const queryClient = useQueryClient();
@@ -344,7 +352,8 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			// Native file managers move within a volume and copy across volumes;
 				// copying by default silently duplicated files during reorganization.
 				// "Same volume" is approximated by matching device slugs on physical
-				// paths; the operation can still be switched in the dialog.
+				// paths; Ctrl or Shift overrides the guess, and the operation can
+				// still be switched in the dialog.
 			const sourceDevice =
 				"Physical" in dragData.sdPath
 					? dragData.sdPath.Physical.device_slug
@@ -355,7 +364,10 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 					: null;
 			const sameVolume =
 				sourceDevice !== null && sourceDevice === targetDevice;
-			const operation: "copy" | "move" = sameVolume ? "move" : "copy";
+			const operation = dropOperation(
+				sameVolume ? "move" : "copy",
+				modifierKeysNow(),
+			);
 
 			openFileOperation({
 				operation,
