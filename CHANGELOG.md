@@ -3,6 +3,33 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.0.0-alpha.17 — 2026-10-16
+
+### Explorer
+
+- Copy To… and Move To… in the context menu pick a destination folder in the
+  system folder picker, then run the usual copy or move with conflict handling
+  and undo (#226).
+- Ctrl+Shift+I inverts the selection and Ctrl+S selects items by name pattern
+  (`*.jpg; *.png`). Both are also in the empty-space context menu, next to a new
+  Select All entry (#227).
+
+### Inspector
+
+- A Checksum section calculates a file's SHA-256 on request, copies it, and
+  checks it against a pasted hash or `sha256sum` line (#227).
+
+### Translations
+
+- Crowdin sync no longer replaces Portuguese strings with English (#224).
+
+### Build and release
+
+- A release tag on a commit without a CI run now starts that run instead of
+  failing the release (#223).
+- Merging an up-to-date pull request no longer reruns CI on main, and CodeQL
+  analyzes Rust only when Rust code changes (#225, #226).
+
 ## 2.0.0-alpha.16 — 2026-10-15
 
 ### Explorer
