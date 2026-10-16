@@ -99,14 +99,10 @@ jobs:
           path: release-tooling
           sparse-checkout: scripts/release
           persist-credentials: false
-      # Tauri's beforeBuildCommand runs the Vite build, so only types and tests run here.
-      - name: Check frontend types
-        run: |
-          bun install --frozen-lockfile
-          bun run typecheck
-          bun test packages/interface/src/components/TabManager/tabRouter.test.ts packages/interface/src/hooks/undoStore.test.ts
-      # Formatting, lint and the desktop and key storage tests run in CI on
-      # the tagged commit; the `ci` job below requires that run to pass.
+      # Typecheck, frontend tests, formatting, lint and the desktop and key storage
+      # tests run in CI on the tagged commit; the `ci` job below requires that run to pass.
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
       - name: Build production desktop bundles
         run: |
           export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"

@@ -705,7 +705,15 @@ Rules for agents and contributors:
   `just ci-local` applies the same filter.
 - Changes limited to one app's Rust crates (`apps/tauri/`, `apps/server/`, `apps/cli/`,
   `apps/mobile/modules/`) lint and test only that app. `scripts/ci-scope.sh` picks the scope and
-  `scripts/ci-rust.sh` runs it, in CI and in `just ci-local`. Pushes to `main` always run every gate.
+  `scripts/ci-rust.sh` runs it, in CI and in `just ci-local`.
+- A push to `main` runs only the gates its own changes need, and skips every job when it merged a pull
+  request whose head has the same tree and already passed CI (`scripts/ci-changes.sh`). Keep a branch up
+  to date with `main` before merging so the merge commit matches its tested tree. A nightly scheduled
+  run on `main` runs every gate and refreshes the Rust cache that pull requests restore.
+- CodeQL analyzes Rust (about 35 minutes) only when a change touches `*.rs`, a `Cargo.toml`,
+  `Cargo.lock` or the CodeQL config; the weekly schedule always includes it.
+- A release tag on a commit that `main`'s CI already checked reuses that run. Tag a commit on `main`
+  after its CI finishes; a tag on any other commit makes the release dispatch a new CI run on the tag.
 - Typecheck with `bun run typecheck` (or `just typecheck`). It runs `bun check` (Bun 1.4.3+) on
   tauri, web, interface, ts-client, ai and primitives. `bun check` reports the same errors as
   `tsc` 7 in about a third of the time. Your editor keeps using the `typescript` package for its
