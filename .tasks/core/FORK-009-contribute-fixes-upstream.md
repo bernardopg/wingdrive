@@ -24,9 +24,9 @@ Opening each upstream PR needs the owner's go-ahead.
 
 | # | WingDrive commits | Fix | Effort | Status |
 |---|---|---|---|---|
-| 1 | `23b09f2bd` | Sync catch-up applies buffered changes before Ready | S | To Do |
-| 2 | `a4ceb17ab` | Library watcher does not reopen a just-created library | S | To Do |
-| 3 | `ccf7e046b` (eject part) | Eject refuses system, `/` and `/home` mounts | S | To Do |
+| 1 | `23b09f2bd` | Sync catch-up applies buffered changes before Ready | S | Branch pushed (`fix/sync-apply-buffered-changes` @ `4a742b64e`), PR draft ready |
+| 2 | `a4ceb17ab` | Library watcher does not reopen a just-created library | S | Branch pushed (`fix/watcher-reopen-created-library` @ `1bb1068e9`), PR draft ready |
+| 3 | `ccf7e046b` (eject part) | Eject refuses system, `/` and `/home` mounts | S | Branch pushed (`fix/eject-system-mount-guard` @ `8057bce4a`), PR draft ready |
 | 4 | `361332d93` | Secure delete refuses copy-on-write filesystems | M | To Do |
 | 5 | `b55328b8c` | `Vec<T>` generates `T[]`, not the tuple `[T]` | M | To Do |
 | 6 | `d5b619da2`, `7ccb3912f` | Daemon lock ignores zombies; stop waits; app close stops its daemon | M | To Do |
@@ -35,6 +35,6 @@ Opening each upstream PR needs the owner's go-ahead.
 
 ## Acceptance Criteria
 
-- [ ] Fork of `spacedriveapp/spacedrive` under `bernardopg`
+- [x] Fork of `spacedriveapp/spacedrive` under `bernardopg`
 - [ ] Items 1 to 3 prepared as branches with a test each, then opened upstream
 - [ ] Items 4 to 8 prepared or dropped with a reason
