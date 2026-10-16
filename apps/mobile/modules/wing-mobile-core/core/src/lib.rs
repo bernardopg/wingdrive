@@ -516,7 +516,9 @@ mod android {
 		const ANDROID_LOG_FATAL: std::os::raw::c_int = 7;
 		std::panic::set_hook(Box::new(|info| {
 			let text = CString::new(info.to_string().replace('\0', " ")).unwrap_or_default();
-			unsafe { __android_log_write(ANDROID_LOG_FATAL, c"WingDriveCore".as_ptr(), text.as_ptr()) };
+			unsafe {
+				__android_log_write(ANDROID_LOG_FATAL, c"WingDriveCore".as_ptr(), text.as_ptr())
+			};
 		}));
 	}
 
@@ -541,7 +543,10 @@ mod android {
 			.l()?;
 		let app_ref = env.new_global_ref(app)?;
 		unsafe {
-			ndk_context::initialize_android_context(vm_ptr.cast(), app_ref.as_obj().as_raw().cast());
+			ndk_context::initialize_android_context(
+				vm_ptr.cast(),
+				app_ref.as_obj().as_raw().cast(),
+			);
 		}
 		let _ = APP_CONTEXT.set(app_ref);
 		Ok(())
