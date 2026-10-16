@@ -1,6 +1,6 @@
 //! Output for file search operations
 
-use crate::domain::File;
+use crate::domain::{ContentKind, File};
 use crate::ops::search::{FilterKind, IndexType};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -61,10 +61,21 @@ pub struct TextHighlight {
 #[derive(Debug, Clone, Serialize, Deserialize, Default, Type)]
 pub struct SearchFacets {
 	pub file_types: HashMap<String, u64>,
+	/// Content kinds by their wire name, so a key can be sent back as a `content_types` value.
+	pub kinds: HashMap<String, u64>,
 	pub tags: HashMap<Uuid, u64>,
 	pub locations: HashMap<Uuid, u64>,
 	pub date_ranges: HashMap<String, u64>,
 	pub size_ranges: HashMap<String, u64>,
+}
+
+/// One page of results with the accounting of the whole filtered match set:
+/// the total before pagination and facets folded over every match.
+#[derive(Debug, Default)]
+pub struct SearchPage {
+	pub results: Vec<FileSearchResult>,
+	pub total: u64,
+	pub facets: SearchFacets,
 }
 
 /// Pagination information
@@ -142,13 +153,12 @@ impl FileSearchOutput {
 	}
 
 	/// Create search output for ephemeral index results
-	pub fn new_ephemeral(
-		results: Vec<FileSearchResult>,
-		total_found: u64,
-		search_id: Uuid,
-		execution_time_ms: u64,
-	) -> Self {
-		let facets = SearchFacets::from_results(&results);
+	pub fn new_ephemeral(page: SearchPage, search_id: Uuid, execution_time_ms: u64) -> Self {
+		let SearchPage {
+			results,
+			total: total_found,
+			facets,
+		} = page;
 		let pagination = PaginationInfo::new(0, 200, total_found);
 		let files = results.iter().map(|r| r.file.clone()).collect();
 
@@ -172,13 +182,12 @@ impl FileSearchOutput {
 	}
 
 	/// Create search output for persistent index results
-	pub fn new_persistent(
-		results: Vec<FileSearchResult>,
-		total_found: u64,
-		search_id: Uuid,
-		execution_time_ms: u64,
-	) -> Self {
-		let facets = SearchFacets::from_results(&results);
+	pub fn new_persistent(page: SearchPage, search_id: Uuid, execution_time_ms: u64) -> Self {
+		let SearchPage {
+			results,
+			total: total_found,
+			facets,
+		} = page;
 		let pagination = PaginationInfo::new(0, 1000, total_found);
 		let files = results.iter().map(|r| r.file.clone()).collect();
 
@@ -267,38 +276,46 @@ impl FileSearchOutput {
 impl SearchFacets {
 	/// Generate facets from search results
 	pub fn from_results(results: &[FileSearchResult]) -> Self {
-		let mut file_types = HashMap::new();
-		let mut tags = HashMap::new();
-		let mut locations = HashMap::new();
-		let mut date_ranges = HashMap::new();
-		let mut size_ranges = HashMap::new();
-
+		let mut facets = Self::default();
 		for result in results {
 			let file = &result.file;
+			facets.add(
+				file.extension.as_deref(),
+				file.content_kind,
+				file.size,
+				file.modified_at,
+			);
+		}
+		facets
+	}
 
-			// Count file types
-			if let Some(ref extension) = file.extension {
-				*file_types.entry(extension.clone()).or_insert(0) += 1;
-			}
-
-			// Count date ranges
-			let modified_at = file.modified_at;
-			let date_range = Self::categorize_date(modified_at);
-			*date_ranges.entry(date_range).or_insert(0) += 1;
-
-			// Count size ranges
-			let size = file.size;
-			let size_range = Self::categorize_size(size);
-			*size_ranges.entry(size_range).or_insert(0) += 1;
+	/// Count one match. Callers fold every filtered match before paging, so a
+	/// count describes the whole match set rather than one page.
+	pub fn add(
+		&mut self,
+		extension: Option<&str>,
+		kind: ContentKind,
+		size: u64,
+		modified_at: DateTime<Utc>,
+	) {
+		if let Some(extension) = extension {
+			*self.file_types.entry(extension.to_string()).or_insert(0) += 1;
 		}
 
-		Self {
-			file_types,
-			tags,
-			locations,
-			date_ranges,
-			size_ranges,
-		}
+		let kind = serde_json::to_value(kind)
+			.ok()
+			.and_then(|value| value.as_str().map(str::to_owned))
+			.unwrap_or_else(|| "unknown".to_string());
+		*self.kinds.entry(kind).or_insert(0) += 1;
+
+		*self
+			.date_ranges
+			.entry(Self::categorize_date(modified_at))
+			.or_insert(0) += 1;
+		*self
+			.size_ranges
+			.entry(Self::categorize_size(size))
+			.or_insert(0) += 1;
 	}
 
 	/// Categorize date into ranges

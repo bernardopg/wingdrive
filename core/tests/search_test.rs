@@ -841,3 +841,158 @@ async fn test_ephemeral_search_result_limit() -> anyhow::Result<()> {
 	harness.shutdown().await?;
 	Ok(())
 }
+
+// ============================================================================
+// REFINEMENT BAR: FACETS OVER THE WHOLE MATCH SET AND HIDDEN FILES
+// ============================================================================
+
+async fn write_refinement_files(dir: &std::path::Path) -> anyhow::Result<()> {
+	tokio::fs::create_dir_all(dir).await?;
+	// "plan" is a separate FTS token in every name, and no name starts with it,
+	// so ephemeral search falls through to substring matching.
+	tokio::fs::write(dir.join("q3 plan.txt"), "small").await?;
+	tokio::fs::write(dir.join("big plan.txt"), "x".repeat(10_000)).await?;
+	tokio::fs::write(dir.join("x plan.rs"), "fn main() {}").await?;
+	tokio::fs::write(dir.join(".hidden plan.txt"), "secret").await?;
+	Ok(())
+}
+
+fn refinement_input(scope: SearchScope, filters: SearchFilters) -> FileSearchInput {
+	FileSearchInput {
+		query: "plan".to_string(),
+		scope,
+		mode: SearchMode::Normal,
+		filters,
+		sort: SortOptions {
+			field: SortField::Relevance,
+			direction: SortDirection::Desc,
+		},
+		// One row per page: totals and facets must still cover every match.
+		pagination: PaginationOptions {
+			limit: 1,
+			offset: 0,
+		},
+	}
+}
+
+fn visible_only() -> SearchFilters {
+	SearchFilters {
+		include_hidden: Some(false),
+		..Default::default()
+	}
+}
+
+/// Checks a search over the four refinement files with hidden files excluded.
+fn assert_refinement_facets(output: &wing_core::ops::search::output::FileSearchOutput) {
+	assert_eq!(output.total_found, 3, "hidden file must be excluded");
+	assert_eq!(output.results.len(), 1, "only one row per page");
+	assert_eq!(output.facets.file_types.get("txt"), Some(&2));
+	assert_eq!(output.facets.file_types.get("rs"), Some(&1));
+	assert_eq!(output.facets.size_ranges.get("1 KB - 1 MB"), Some(&1));
+	assert_eq!(output.facets.size_ranges.values().sum::<u64>(), 3);
+	assert_eq!(output.facets.kinds.values().sum::<u64>(), 3);
+	assert!(output.results.iter().all(|r| !r.file.name.starts_with('.')));
+}
+
+#[tokio::test]
+async fn test_ephemeral_search_facets_and_hidden_filter() -> anyhow::Result<()> {
+	let harness = IndexingHarnessBuilder::new("ephemeral_search_facets")
+		.disable_watcher()
+		.build()
+		.await?;
+
+	let search_dir = harness.temp_path().join("refine");
+	write_refinement_files(&search_dir).await?;
+	index_ephemeral(&harness, search_dir.clone(), IndexScope::Recursive).await?;
+	let scope = || SearchScope::Path {
+		path: WingPath::local(search_dir.clone()),
+	};
+
+	let visible = execute_search(&harness, refinement_input(scope(), visible_only())).await?;
+	assert_eq!(visible.index_type, IndexType::Ephemeral);
+	assert_refinement_facets(&visible);
+	assert_eq!(visible.facets.kinds.get("code"), Some(&1));
+
+	let all = execute_search(
+		&harness,
+		refinement_input(
+			scope(),
+			SearchFilters {
+				include_hidden: Some(true),
+				..Default::default()
+			},
+		),
+	)
+	.await?;
+	assert_eq!(all.total_found, 4, "hidden pill on includes dot files");
+
+	let txt = execute_search(
+		&harness,
+		refinement_input(
+			scope(),
+			SearchFilters {
+				file_types: Some(vec!["txt".to_string()]),
+				..visible_only()
+			},
+		),
+	)
+	.await?;
+	assert_eq!(txt.total_found, 2);
+
+	harness.shutdown().await?;
+	Ok(())
+}
+
+#[tokio::test]
+async fn test_persistent_search_facets_and_hidden_filter() -> anyhow::Result<()> {
+	let harness = IndexingHarnessBuilder::new("persistent_search_facets")
+		.disable_watcher()
+		.build()
+		.await?;
+
+	let test_location = harness.create_test_location("refine").await?;
+	write_refinement_files(test_location.path()).await?;
+	let location = test_location
+		.index("Refine Location", IndexMode::Shallow)
+		.await?;
+	tokio::time::sleep(Duration::from_millis(500)).await;
+	let scope = || SearchScope::Location {
+		location_id: location.uuid,
+	};
+
+	let visible = execute_search(&harness, refinement_input(scope(), visible_only())).await?;
+	assert_eq!(visible.index_type, IndexType::Persistent);
+	assert_refinement_facets(&visible);
+
+	let all = execute_search(
+		&harness,
+		refinement_input(
+			scope(),
+			SearchFilters {
+				include_hidden: Some(true),
+				..Default::default()
+			},
+		),
+	)
+	.await?;
+	assert_eq!(all.total_found, 4, "hidden pill on includes dot files");
+
+	let large = execute_search(
+		&harness,
+		refinement_input(
+			scope(),
+			SearchFilters {
+				size_range: Some(SizeRangeFilter {
+					min: Some(1024),
+					max: None,
+				}),
+				..visible_only()
+			},
+		),
+	)
+	.await?;
+	assert_eq!(large.total_found, 1);
+
+	harness.shutdown().await?;
+	Ok(())
+}

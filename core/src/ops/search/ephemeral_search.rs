@@ -9,11 +9,14 @@ use crate::infra::query::QueryError;
 use crate::ops::indexing::database_storage::EntryMetadata;
 use crate::ops::indexing::ephemeral::EphemeralIndexCache;
 use crate::ops::indexing::state::EntryKind;
-use crate::ops::search::input::{DateField, SearchFilters};
-use crate::ops::search::output::{FileSearchResult, ScoreBreakdown};
+use crate::ops::search::input::{DateField, PaginationOptions, SearchFilters};
+use crate::ops::search::output::{FileSearchResult, ScoreBreakdown, SearchFacets, SearchPage};
 use std::cmp::Ordering;
 use std::path::PathBuf;
 use uuid::Uuid;
+
+/// Most results one ephemeral page serves, whatever limit the caller asks for.
+const EPHEMERAL_PAGE_CAP: usize = 200;
 
 /// Search the ephemeral index for files matching the query
 ///
@@ -24,16 +27,17 @@ pub async fn search_ephemeral_index(
 	query: &str,
 	path_scope: &WingPath,
 	filters: &SearchFilters,
+	pagination: &PaginationOptions,
 	cache: &EphemeralIndexCache,
 	file_type_registry: &FileTypeRegistry,
 	library_id: Uuid,
 	lookup: &dyn crate::ops::indexing::ephemeral::PersistentUuidLookup,
-) -> Result<Vec<FileSearchResult>, QueryError> {
+) -> Result<SearchPage, QueryError> {
 	// Get local path from WingPath
 	let local_path = match path_scope {
 		WingPath::Physical { path, .. } => path.clone(),
 		_ => {
-			return Ok(Vec::new()); // Only physical paths supported for ephemeral
+			return Ok(SearchPage::default()); // Only physical paths supported for ephemeral
 		}
 	};
 
@@ -139,11 +143,21 @@ pub async fn search_ephemeral_index(
 		}
 	}
 
-	// Sort by score and limit
+	// Total and facets cover every filtered match; only the page is cut.
 	results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(Ordering::Equal));
-	results.truncate(200);
+	let total = results.len() as u64;
+	let facets = SearchFacets::from_results(&results);
+	let results = results
+		.into_iter()
+		.skip(pagination.offset as usize)
+		.take((pagination.limit as usize).min(EPHEMERAL_PAGE_CAP))
+		.collect();
 
-	Ok(results)
+	Ok(SearchPage {
+		results,
+		total,
+		facets,
+	})
 }
 
 /// Check if metadata passes ephemeral filters
@@ -152,6 +166,10 @@ fn passes_ephemeral_filters(
 	filters: &SearchFilters,
 	file_type_registry: &FileTypeRegistry,
 ) -> bool {
+	if filters.include_hidden == Some(false) && metadata.is_hidden {
+		return false;
+	}
+
 	// File type filter (extension)
 	if let Some(ref types) = filters.file_types {
 		let ext = metadata
