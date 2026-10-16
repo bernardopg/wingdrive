@@ -4,6 +4,7 @@ use crate::{
 	infra::job::prelude::*,
 	ops::sidecar::types::{SidecarKind, SidecarStatus, SidecarVariant},
 };
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use uuid::Uuid;
@@ -14,6 +15,33 @@ use super::{
 	generator::ThumbnailGenerator,
 	state::{ThumbnailEntry, ThumbnailPhase, ThumbnailState, ThumbnailStats},
 };
+
+/// What one generation may need while a decode is in flight. A 4K video frame
+/// and the decoder's reference frames fit inside this; an image is far smaller.
+const DECODE_BUDGET: u64 = 1024 * 1024 * 1024;
+
+/// Concurrent generations: the configured limit, lowered to what free memory
+/// covers, and never below one so the job always progresses.
+///
+/// Cores alone are the wrong bound on a host whose memory is already spoken
+/// for: a ZFS box hands its ARC nearly all RAM, and a burst of decodes there
+/// gets the daemon OOM-killed rather than slowed. Ported from upstream
+/// Spacedrive `4d18db0ab`.
+fn decode_workers(max_concurrent: usize, available_memory: u64) -> usize {
+	let by_memory = usize::try_from(available_memory / DECODE_BUDGET).unwrap_or(usize::MAX);
+	max_concurrent.min(by_memory).max(1)
+}
+
+/// Memory free right now, in bytes.
+fn available_memory() -> u64 {
+	use sysinfo::{MemoryRefreshKind, RefreshKind, System};
+
+	let mut system = System::new_with_specifics(
+		RefreshKind::nothing().with_memory(MemoryRefreshKind::nothing().with_ram()),
+	);
+	system.refresh_memory();
+	system.available_memory()
+}
 
 /// Configuration for thumbnail generation job
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -427,6 +455,8 @@ impl ThumbnailJob {
 
 		let batches = state.batches.clone(); // Clone to avoid borrowing issues
 		let total_batches = batches.len();
+		let workers = decode_workers(config.max_concurrent, available_memory());
+		ctx.log(format!("Generating up to {workers} thumbnails at once"));
 
 		for (batch_idx, batch) in batches.iter().enumerate() {
 			ctx.check_interrupt().await?;
@@ -438,12 +468,16 @@ impl ThumbnailJob {
 				batch.len()
 			));
 
-			// Process entries in the batch concurrently
-			let tasks = batch
+			// Process entries in the batch concurrently, at most `workers` at a time.
+			// `buffered` keeps results in batch order for the zip below.
+			let tasks: Vec<_> = batch
 				.iter()
-				.map(|entry| Self::generate_thumbnails_for_entry_static(entry, config, ctx));
-
-			let results = futures::future::join_all(tasks).await;
+				.map(|entry| Self::generate_thumbnails_for_entry_static(entry, config, ctx))
+				.collect();
+			let results: Vec<_> = futures::stream::iter(tasks)
+				.buffered(workers)
+				.collect()
+				.await;
 
 			// Process results
 			for (entry, result) in batch.iter().zip(results.iter()) {
@@ -889,5 +923,28 @@ impl ThumbnailJob {
 		drop(temp_file);
 
 		Ok(total_thumbnail_size)
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	const GIB: u64 = DECODE_BUDGET;
+
+	#[test]
+	fn decode_workers_keeps_the_configured_limit_with_memory_to_spare() {
+		assert_eq!(decode_workers(4, 32 * GIB), 4);
+	}
+
+	#[test]
+	fn decode_workers_drops_to_what_free_memory_covers() {
+		assert_eq!(decode_workers(4, 2 * GIB + GIB / 2), 2);
+	}
+
+	#[test]
+	fn decode_workers_never_drops_below_one() {
+		assert_eq!(decode_workers(4, GIB / 2), 1);
+		assert_eq!(decode_workers(0, 32 * GIB), 1);
 	}
 }

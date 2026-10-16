@@ -8,7 +8,7 @@ priority: Medium
 milestone: M2
 sprint: S03
 tags: [fork, upstream, port]
-last_updated: 2026-10-15
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -31,6 +31,11 @@ and keep WingDrive's version wherever it already fixed the same bug.
    offline when detection no longer returns them (`volume_offline_test`).
 3. `4d18db0ab` + `bf1ca21a1`: bound thumbnail decoding by available memory and
    downscale video frames, reimplemented in WingDrive's thumbnail job. Medium.
+   Done 2026-10-16: the thumbnail job ignored `max_concurrent` and decoded a
+   whole 50-entry batch at once; it now runs at most `max_concurrent` (4)
+   generations, lowered to one per free GiB (`decode_workers`). `bf1ca21a1` is
+   ALREADY-HAVE: WingDrive's in-process filter graph has no `thumbnail=30`
+   frame window and the decoder runs single-threaded by default.
 4. `12cdfa4be`: ship icons as WebP (196 PNGs today) and keep source maps out of
    the bundle to shrink the AppImage. Medium.
 5. `15d7df180` (move part) and `5bc474e72` (sync part): confirm they apply to

@@ -89,8 +89,8 @@ are WingDrive commits that credit upstream in the body.
 | Upstream | Area | Summary | Class | Reason | Effort |
 |---|---|---|---|---|---|
 | `e053bf233` | indexing | File type registry built once | PORT | Ported (`29822c72f`); FORK-005 listed it under the arena, but WingDrive's ephemeral index had the same per-insert build | done |
-| `4d18db0ab` | thumbnails | Bound decode workers by free memory | PORT (idea) | Upstream code lives in `service/thumbs`, which WingDrive does not have; the idea fits WingDrive's thumbnail job (large folders of RAW/HEIF on Linux) | M |
-| `bf1ca21a1` | thumbnails | Scale video frames before selecting one | PORT (idea) | Same: re-implement in WingDrive's ffmpeg thumbnail path | M |
+| `4d18db0ab` | thumbnails | Bound decode workers by free memory | PORTED (FORK-006) | Re-implemented in `ops/media/thumbnail/job.rs`: the job now honours `max_concurrent` and lowers it to one generation per free GiB | M |
+| `bf1ca21a1` | thumbnails | Scale video frames before selecting one | ALREADY-HAVE | WingDrive's in-process filter graph (`crates/ffmpeg/src/filter_graph.rs`) has no `thumbnail=30` frame window, and the decoder keeps libavcodec's single-thread default | - |
 | `81070270d`, `63ba30edd` | indexing | statx birth time on musl | PORT (low value) | WingDrive Linux packages link glibc, where `Metadata::created()` already uses statx. Only matters for a musl build | S |
 | `bcc7337b0` | file ops | Journal, trash with recorded origin, undo | PORT (idea) | Undo is a file-manager staple for M2, but upstream's code depends on its job journal; re-implement | L |
 | `3cd44f2da` | file ops | Preflight for copy/move/delete, folder merge | PORT (idea) | Conflict preview before copy is valuable for M2; built on upstream's action framework; re-implement | L |
@@ -134,7 +134,8 @@ Ranked by value for M2 against effort:
 2. `cedc8d6f7` L1, monitor part: mark tracked volumes that vanished as
    offline (M). An unplugged USB drive stays "online" in the sidebar today.
 3. `4d18db0ab` + `bf1ca21a1`: memory-bounded thumbnail decoding and scaled
-   video frames, re-implemented in WingDrive's thumbnail job (M).
+   video frames, re-implemented in WingDrive's thumbnail job (M). Done
+   2026-10-16 (FORK-006); the scaling half was already in place.
 4. `15d7df180`, move part: delete a moved source when it still exists after
    the copy strategy (S to M; check whether WingDrive's copy job has the gap).
 5. `5bc474e72`, sync part: answer sync traffic for an absent library once
