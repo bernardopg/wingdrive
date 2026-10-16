@@ -59,12 +59,10 @@ Estado em 2026-10-16: DESK-001 a DESK-012 e DESK-014 Done. O que falta para fech
 | Task | O que falta | Sprint |
 |---|---|---|
 | DESK-017 | Um dia inteiro de uso do pacote AUR, sem voltar a outro file manager | S04 |
-| DESK-015, DESK-018, DESK-019, DESK-020 | Código no `main`; falta validar no build Linux (no dia da DESK-017) | S04 |
+| DESK-015, DESK-018, DESK-019, DESK-020, DESK-021 | Código no `main`; falta validar no build Linux (no dia da DESK-017) | S04 |
 | INDEX-010 | Checagem visual de seleção, tags e troca de biblioteca | S04 |
 | FORK-007 | Código no `main` (#231); falta conferir devices pareados com um peer real | S04 |
 | DESK-013 | Revisão pt no Crowdin e verificação do pacote (passos 3 a 5) | S04 |
-| FORK-006 | Item 4 (ícones WebP, em andamento) e reclassificar os itens 5 e 7 | S04 |
-| FORK-008, DESK-021 | PRs #230 e #232 em revisão | S03 |
 | DESK-016 | Explorer com painel duplo (F3) | S05 |
 | DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
 
@@ -81,6 +79,8 @@ Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
   repositório; falta a assinatura (plano no S05)
 - `FORK-009` correções do WingDrive enviadas ao upstream (#3160 a #3162 em revisão)
 - Assinatura e instaladores por plataforma
+- `FILE-007` plano de preflight para copiar, mover e apagar (veio do item 7 da FORK-006)
+- `FILE-008` journal de jobs e undo para cópia, sobrescrita e lixeira (veio do item 7 da FORK-006)
 
 ## Later — M4: Integração entre dispositivos
 

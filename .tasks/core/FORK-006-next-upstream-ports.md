@@ -1,7 +1,7 @@
 ---
 id: FORK-006
 title: Port the next upstream fixes from the 2026-10-14 survey
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: FORK-002
 priority: Medium
@@ -38,7 +38,11 @@ and keep WingDrive's version wherever it already fixed the same bug.
    frame window and the decoder runs single-threaded by default.
 4. `12cdfa4be`: ship icons as WebP (196 PNGs today) and keep source maps out of
    the bundle to shrink the AppImage. Medium.
-   In progress 2026-10-16 on branch `port/fork-006-webp-sourcemaps`.
+   Done 2026-10-16: the 201 PNGs matched upstream byte for byte and are now
+   the upstream WebP files, imported as `.webp` by interface, ts-client and
+   mobile. `wing-server` embedded about 18 MB of web source maps; rust-embed
+   now excludes `*.map` (`source_maps_are_not_embedded`). The Tauri build
+   already skips source maps outside debug, so its vite config is unchanged.
 5. `15d7df180` (move part) and `5bc474e72` (sync part): confirm they apply to
    WingDrive's code before porting. Small to medium.
    Move part done 2026-10-16: it applied. The copy job deleted a moved source
@@ -56,10 +60,14 @@ and keep WingDrive's version wherever it already fixed the same bug.
    `just ci-local` share it; the Tauri schema half is not ported.
 7. `bcc7337b0`, `3cd44f2da`: copy preflight and undo, as WingDrive features.
    Large; split into their own tasks when started.
+   Split 2026-10-16: FILE-007 (preflight plan for copy, move and delete) and
+   FILE-008 (job journal and undo for copy, overwrite and trash), both M3.
+   WingDrive already undoes rename, same-volume move and new folders
+   (EXPL-003); FILE-008 extends that rather than replacing it.
 
 ## Acceptance Criteria
 
 - [x] Items 1 and 2 ported, with a regression test each (#206, #210)
-- [ ] Items 3 and 4 ported or split into their own tasks
-- [ ] Items 5 to 7 classified again against current WingDrive code
-- [ ] `just ci-local` passes and the survey document is updated
+- [x] Items 3 and 4 ported or split into their own tasks
+- [x] Items 5 to 7 classified again against current WingDrive code
+- [x] `just ci-local` passes and the survey document is updated
