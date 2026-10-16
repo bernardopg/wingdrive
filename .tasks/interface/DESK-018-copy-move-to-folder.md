@@ -1,7 +1,7 @@
 ---
 id: DESK-018
 title: Copy To and Move To a chosen folder
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: DESK-000
 priority: High
@@ -27,7 +27,15 @@ conflict resolution, and the desktop already grants `dialog:allow-open` for a fo
 
 ## Acceptance Criteria
 
-- [ ] Both entries copy or move the selection into the picked folder, with the usual conflict dialog
-- [ ] Cancelling the picker changes nothing
-- [ ] The entries are hidden where the picker cannot work (web host, cloud paths)
+- [x] Both entries copy or move the selection into the picked folder, with the usual conflict dialog
+- [x] Cancelling the picker changes nothing
+- [x] The entries are hidden where the picker cannot work (web host, cloud paths)
 - [ ] Verified on the Linux desktop build
+
+## Evidence
+
+- `useCopyMoveTo` opens the native folder picker and hands the selection to `useFileOperationDialog`,
+  so copy and move get the existing conflict dialog and undo. The entries need `openDirectoryPickerDialog`
+  (desktop only) and local physical sources, so the web host and cloud paths never show them.
+- `copyMoveDestination.test.ts` covers the picked destination, a cancelled picker and non-local sources.
+- Open: runtime check on the Linux desktop build.

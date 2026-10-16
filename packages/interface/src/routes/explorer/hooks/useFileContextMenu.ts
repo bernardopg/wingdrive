@@ -1,7 +1,9 @@
 import {
 	AppWindow,
+	ArrowBendUpRight,
 	ArrowSquareOut,
 	Copy,
+	CopySimple,
 	Crop,
 	Eye,
 	FileText,
@@ -46,6 +48,7 @@ import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
 import {COMPRESS_FORMATS, isArchiveName} from './archiveName';
 import {useArchiveActions} from './useArchiveActions';
+import {useCopyMoveTo} from './useCopyMoveTo';
 import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
@@ -130,6 +133,7 @@ export function useFileContextMenu({
 	const openInNewWindow = useOpenInNewWindow();
 	const {newFile, newLink} = useCreateEntry();
 	const archive = useArchiveActions();
+	const copyMoveTo = useCopyMoveTo();
 
 	// A right-click on an unselected item acts on that item alone.
 	const targetFiles = selected && selectedFiles.length > 0
@@ -476,6 +480,18 @@ export function useFileContextMenu({
 				},
 				keybindId: 'explorer.paste',
 				condition: () => clipboard.canPaste() && !!operationalPath
+			},
+			{
+				icon: CopySimple,
+				label: t('contextMenu.copyTo'),
+				onClick: () => void copyMoveTo.copyTo(getTargetFiles()),
+				condition: () => capabilities.canCopy && copyMoveTo.canPick(targetFiles)
+			},
+			{
+				icon: ArrowBendUpRight,
+				label: t('contextMenu.moveTo'),
+				onClick: () => void copyMoveTo.moveTo(getTargetFiles()),
+				condition: () => capabilities.canCopy && copyMoveTo.canPick(targetFiles)
 			},
 			{
 				icon: Copy,

@@ -83,6 +83,8 @@
 		"cutItems_other": "Cut {{count}} items",
 		"cut": "Cut",
 		"paste": "Paste",
+		"copyTo": "Copy To…",
+		"moveTo": "Move To…",
 		"duplicateItems_one": "Duplicate {{count}} items",
 		"duplicateItems_other": "Duplicate {{count}} items",
 		"duplicate": "Duplicate",
