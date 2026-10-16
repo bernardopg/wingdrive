@@ -18,15 +18,17 @@ upstream `main` (`4d41a379f`), with no matching upstream issue or PR. Each
 contribution is a branch off `upstream/main` in a fork of
 `spacedriveapp/spacedrive`, with upstream names (`sd_core`, `SdPath`,
 `.sdlibrary`), no WingDrive task IDs or i18n keys, and no AI co-author trailers.
-Opening each upstream PR needs the owner's go-ahead.
+Upstream rules (`CONTRIBUTING.md`, PR template): every commit signed off for the DCO
+(`git commit -s`), and every PR closes an issue opened first with the bug report form
+fields. The owner authorized opening upstream PRs on 2026-10-16.
 
 ## Ranked contributions
 
 | # | WingDrive commits | Fix | Effort | Status |
 |---|---|---|---|---|
-| 1 | `23b09f2bd` | Sync catch-up applies buffered changes before Ready | S | To Do |
-| 2 | `a4ceb17ab` | Library watcher does not reopen a just-created library | S | To Do |
-| 3 | `ccf7e046b` (eject part) | Eject refuses system, `/` and `/home` mounts | S | To Do |
+| 1 | `23b09f2bd` | Sync catch-up applies buffered changes before Ready | S | Opened: issue #3157, PR #3160 |
+| 2 | `a4ceb17ab` | Library watcher does not reopen a just-created library | S | Opened: issue #3158, PR #3161 |
+| 3 | `ccf7e046b` (eject part) | Eject refuses system, `/` and `/home` mounts | S | Opened: issue #3159, PR #3162 |
 | 4 | `361332d93` | Secure delete refuses copy-on-write filesystems | M | To Do |
 | 5 | `b55328b8c` | `Vec<T>` generates `T[]`, not the tuple `[T]` | M | To Do |
 | 6 | `d5b619da2`, `7ccb3912f` | Daemon lock ignores zombies; stop waits; app close stops its daemon | M | To Do |

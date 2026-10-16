@@ -10,6 +10,28 @@ use std::process::Command;
 use tokio::task;
 use tracing::{debug, warn};
 
+/// Directories that hold `zfs` and `zpool`. A daemon launched outside a login
+/// shell (systemd user service, TrueNAS) often lacks them on `PATH`.
+const SBIN_DIRS: &[&str] = &["/sbin", "/usr/sbin", "/usr/local/sbin"];
+
+/// First existing `<dir>/<name>`, or the bare name for a `PATH` lookup.
+fn resolve_bin(name: &str, dirs: &[&str]) -> PathBuf {
+	dirs.iter()
+		.map(|dir| Path::new(dir).join(name))
+		.find(|path| path.exists())
+		.unwrap_or_else(|| PathBuf::from(name))
+}
+
+fn zfs_bin() -> &'static Path {
+	static BIN: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+	BIN.get_or_init(|| resolve_bin("zfs", SBIN_DIRS))
+}
+
+fn zpool_bin() -> &'static Path {
+	static BIN: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+	BIN.get_or_init(|| resolve_bin("zpool", SBIN_DIRS))
+}
+
 /// ZFS filesystem handler
 pub struct ZfsHandler;
 
@@ -38,7 +60,7 @@ impl ZfsHandler {
 
 		task::spawn_blocking(move || {
 			// Use zfs list to find the dataset containing this path
-			let output = Command::new("zfs")
+			let output = Command::new(zfs_bin())
 				.args([
 					"list",
 					"-H",
@@ -75,7 +97,7 @@ impl ZfsHandler {
 		let pool_name = pool_name.to_string();
 
 		task::spawn_blocking(move || {
-			let output = Command::new("zpool")
+			let output = Command::new(zpool_bin())
 				.args(["status", "-v", &pool_name])
 				.output()
 				.map_err(|e| {
@@ -115,7 +137,7 @@ impl ZfsHandler {
 		let pool_name = pool_name.to_string();
 
 		task::spawn_blocking(move || {
-			let output = Command::new("zfs")
+			let output = Command::new(zfs_bin())
 				.args([
 					"list",
 					"-H",
@@ -374,7 +396,7 @@ fn parse_zfs_size(size_str: &str) -> Option<u64> {
 /// Fetch `zfs list` output once for reuse across multiple volumes
 pub async fn fetch_zfs_list_output() -> VolumeResult<String> {
 	task::spawn_blocking(|| {
-		let output = Command::new("zfs")
+		let output = Command::new(zfs_bin())
 			.args([
 				"list",
 				"-H",
@@ -498,6 +520,20 @@ pub async fn enhance_volume_from_mount(volume: &mut Volume) -> VolumeResult<()> 
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn resolve_bin_prefers_the_first_sbin_dir_that_has_it() {
+		let empty = tempfile::tempdir().unwrap();
+		let sbin = tempfile::tempdir().unwrap();
+		std::fs::write(sbin.path().join("zfs"), b"").unwrap();
+		let dirs = [
+			empty.path().to_str().unwrap(),
+			sbin.path().to_str().unwrap(),
+		];
+
+		assert_eq!(resolve_bin("zfs", &dirs), sbin.path().join("zfs"));
+		assert_eq!(resolve_bin("zpool", &dirs), PathBuf::from("zpool"));
+	}
 
 	#[test]
 	fn test_parse_zfs_size() {
