@@ -404,6 +404,13 @@
 		"noDevices": "No devices found",
 		"waitingForDevices": "Waiting for nearby devices..."
 	},
+	"selectByPattern": {
+		"title": "Select by Pattern",
+		"pattern": "Name pattern",
+		"hint": "{{count}} of {{total}} items match. Use * and ?; separate patterns with ;",
+		"select_one": "Select {{count}} item",
+		"select_other": "Select {{count}} items"
+	},
 	"ui": {
 		"time": "Time",
 		"status": "Status",

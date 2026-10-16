@@ -47,6 +47,7 @@ import {useOptionalExplorer} from '../../../routes/explorer';
 import {File as FileComponent} from '../../../routes/explorer/File';
 import {formatBytes} from '../../../routes/explorer/utils';
 import {Divider, InfoRow, Section, TabContent, Tabs, Tag} from '../Inspector';
+import {ChecksumSection} from './ChecksumSection';
 import {PermissionsSection} from './PermissionsSection';
 import {LocationMap} from '../LocationMap';
 import {revealLabel} from '../../../util/keybinds/platform';
@@ -960,6 +961,10 @@ label={t('inspector.file.path')}
 			</Section>
 
 			{file.is_local && <PermissionsSection path={file.wing_path} />}
+
+			{file.is_local && file.kind === 'File' && 'Physical' in file.wing_path && (
+				<ChecksumSection key={file.id} path={file.wing_path} />
+			)}
 
 			{/* Tags */}
 <Section title={t('inspector.file.tags')} icon={TagIcon}>

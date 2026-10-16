@@ -1459,6 +1459,24 @@ export type FileByIdQuery = { file_id: string };
 export type FileByPathQuery = { path: string };
 
 /**
+ * Input for hashing one local file.
+ */
+export type FileChecksumInput = { 
+/**
+ * Physical path of the file on this device.
+ */
+path: WingPath };
+
+/**
+ * SHA-256 digest of the file's full contents.
+ */
+export type FileChecksumOutput = { 
+/**
+ * Lowercase hexadecimal digest, as `sha256sum` prints it.
+ */
+sha256: string };
+
+/**
  * Internal enum for file conflict resolution strategies
  */
 export type FileConflictResolution = "Overwrite" | "AutoModifyName" | "Skip" | "Abort";
@@ -5457,6 +5475,7 @@ export type LibraryQuery =
   |  { type: 'files.by_id'; input: FileByIdQuery; output: File }
   |  { type: 'files.by_path'; input: FileByPathQuery; output: File }
   |  { type: 'files.by_tag'; input: GetFilesByTagInput; output: GetFilesByTagOutput }
+  |  { type: 'files.checksum'; input: FileChecksumInput; output: FileChecksumOutput }
   |  { type: 'files.content_kind_stats'; input: ContentKindStatsInput; output: ContentKindStatsOutput }
   |  { type: 'files.directory_listing'; input: DirectoryListingInput; output: DirectoryListingOutput }
   |  { type: 'files.directory_sizes'; input: DirectorySizesInput; output: DirectorySizesOutput }
@@ -5609,6 +5628,7 @@ export const WIRE_METHODS = {
     'files.by_id': 'query:files.by_id',
     'files.by_path': 'query:files.by_path',
     'files.by_tag': 'query:files.by_tag',
+    'files.checksum': 'query:files.checksum',
     'files.content_kind_stats': 'query:files.content_kind_stats',
     'files.directory_listing': 'query:files.directory_listing',
     'files.directory_sizes': 'query:files.directory_sizes',

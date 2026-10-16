@@ -240,6 +240,8 @@
 			"revealInNativeExplorer": "Mostrar no explorador de arquivos",
 			"renameFile": "Renomear",
 			"selectAll": "Selecionar tudo",
+			"invertSelection": "Inverter seleção",
+			"selectByPattern": "Selecionar por padrão",
 			"cut": "Recortar",
 			"copy": "Copiar",
 			"paste": "Colar",
