@@ -4,7 +4,7 @@ import { Copy } from "@phosphor-icons/react";
 import { STARTUP_TIMEOUT_MS, useDaemonStatus } from "../../hooks/useDaemonStatus";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { Button } from "@wingdrive/primitives";
-import folderIcon from "@wingdrive/assets/icons/FolderNoSpace.png";
+import folderIcon from "@wingdrive/assets/icons/FolderNoSpace.webp";
 import { useTranslation } from "../../i18n";
 import { ThemedIcon } from "../ThemedIcon";
 

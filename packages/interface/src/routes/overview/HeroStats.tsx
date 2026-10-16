@@ -1,11 +1,11 @@
 import {CaretLeft, CaretRight} from '@phosphor-icons/react';
-import DatabaseIcon from '@wingdrive/assets/icons/Database.png';
-import DevicesIcon from '@wingdrive/assets/icons/Devices.png';
-import IndexedIcon from '@wingdrive/assets/icons/Indexed.png';
-import LocationIcon from '@wingdrive/assets/icons/Location.png';
-import MobileIcon from '@wingdrive/assets/icons/Mobile.png';
-import StorageIcon from '@wingdrive/assets/icons/Storage.png';
-import TagsIcon from '@wingdrive/assets/icons/Tags.png';
+import DatabaseIcon from '@wingdrive/assets/icons/Database.webp';
+import DevicesIcon from '@wingdrive/assets/icons/Devices.webp';
+import IndexedIcon from '@wingdrive/assets/icons/Indexed.webp';
+import LocationIcon from '@wingdrive/assets/icons/Location.webp';
+import MobileIcon from '@wingdrive/assets/icons/Mobile.webp';
+import StorageIcon from '@wingdrive/assets/icons/Storage.webp';
+import TagsIcon from '@wingdrive/assets/icons/Tags.webp';
 import {CircleButton} from '@wingdrive/primitives';
 import {motion} from 'framer-motion';
 import {useEffect, useRef, useState} from 'react';

@@ -1,7 +1,7 @@
-import LaptopIcon from "@wingdrive/assets/icons/Laptop.png";
-import MobileIcon from "@wingdrive/assets/icons/Mobile.png";
-import ServerIcon from "@wingdrive/assets/icons/Server.png";
-import PCIcon from "@wingdrive/assets/icons/PC.png";
+import LaptopIcon from "@wingdrive/assets/icons/Laptop.webp";
+import MobileIcon from "@wingdrive/assets/icons/Mobile.webp";
+import ServerIcon from "@wingdrive/assets/icons/Server.webp";
+import PCIcon from "@wingdrive/assets/icons/PC.webp";
 import type { WingPath } from "@wingdrive/ts-client";
 import { i18n } from "../../i18n";
 

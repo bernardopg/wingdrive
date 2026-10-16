@@ -10,7 +10,7 @@ import {
 	type Device,
 	type Volume,
 } from "@wingdrive/ts-client";
-import FolderIcon from "@wingdrive/assets/icons/Folder.png";
+import FolderIcon from "@wingdrive/assets/icons/Folder.webp";
 
 export type VirtualViewType = "device" | "devices" | null;
 

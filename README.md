@@ -5,78 +5,66 @@
 <h1 align="center">WingDrive</h1>
 
 <p align="center">
-  <strong>One file manager for all your devices and clouds.</strong><br/>
-  <span>Local-first · AI-ready · Peer-to-peer · macOS · Windows · Linux · iOS · Android</span>
+  <strong>A local-first file manager that indexes every drive you own.</strong><br/>
+  <span>Rust core · Tauri desktop · CLI · Web server · Peer-to-peer sync</span>
 </p>
 
 <p align="center">
   <a href="https://github.com/bernardopg/wingdrive/releases">
     <img src="https://img.shields.io/github/v/release/bernardopg/wingdrive?include_prereleases&label=Version&color=7c3aed" alt="Version"/>
   </a>
+  <a href="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml">
+    <img src="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/>
+  </a>
   <img src="https://img.shields.io/static/v1?label=License&message=Apache-2.0&color=000" alt="License"/>
-  <img src="https://img.shields.io/static/v1?label=Core&message=Rust&color=DEA584" alt="Core"/>
-  <img src="https://img.shields.io/static/v1?label=Platforms&message=macOS%20%7C%20Windows%20%7C%20Linux&color=36A3FF" alt="Platforms"/>
+  <a href="https://aur.archlinux.org/packages/wingdrive-bin/">
+    <img src="https://img.shields.io/aur/version/wingdrive-bin?label=AUR&color=0090FF" alt="AUR"/>
+  </a>
 </p>
 
----
-
-<div align="center">
-
-# Your files, everywhere. Your data, yours.
-
-WingDrive unifies your data across every device and cloud — without centralized lock-in. Files stay where they are. WingDrive indexes them, makes them searchable, and syncs them peer-to-peer between your own machines.
-
-</div>
+<p align="center">English · <a href="./README.pt.md">Português</a></p>
 
 ---
 
-## ✨ What is WingDrive?
+WingDrive is a desktop file manager backed by a daemon that indexes your folders, external drives
+and cloud volumes into one library. Files stay where they are. The index makes them searchable,
+gives each one a content hash, and lets your own devices sync the library peer-to-peer, without a
+central server.
 
-A cross-device data platform. Index files, emails, notes, and external sources. Search everything. Sync via P2P.
+> **Status: alpha.** Linux is the supported platform today, and the current goal is to make
+> WingDrive good enough to replace Dolphin, Nautilus or Yazi as the default file manager on Linux.
+> macOS and Windows build from source; prebuilt, signed releases for them are planned.
 
-- 🔑 **Content identity** — BLAKE3 hash on every file. Same file on two devices = same hash. Deduplication across all your machines.
-- 🖥️ **Cross-device** — see all your files across all devices in one place. Offline devices stay in the index.
-- 🔄 **P2P sync** — direct device-to-device via Iroh/QUIC. No servers, no cloud, no single point of failure.
-- ☁️ **Cloud volumes** — S3, Google Drive, Dropbox, OneDrive, Azure, GCS as first-class volumes.
-- 📱 **Nine views** — grid, list, columns, media, size, recents, search, knowledge, splat. QuickPreview for video, audio, code, documents, 3D, images.
-- 🏠 **Local-first** — everything runs on your machine. No data leaves your device unless you choose to sync.
+## Features
 
----
+**File manager**
 
-## 🚀 What's New in 2.0.0-alpha16
+- Grid, list, column, media and size views, with QuickPreview for images, video, audio, code and
+  documents.
+- Copy, move, rename, duplicate, delete, and Copy To… / Move To… a chosen folder, with conflict
+  handling and undo for rename, move and new folders.
+- Opens folders from `xdg-open` and from "Show in folder" in other apps (`org.freedesktop.FileManager1`),
+  stays in the tray, and starts with the session.
+- Open With, open terminal here, new empty file, symbolic links, permissions and owner, compress and
+  extract, SHA-256 checksums, select by pattern and invert selection.
+- Real folder sizes, including folders that are not indexed yet.
 
-Released October 15, 2026.
+**Index and search**
 
-<details>
-<summary><strong>📁 Explorer</strong></summary>
-Folders show real content size · hard-linked files count once · open folder in new window (Ctrl+N / Cmd+N) · fixed rename/move in non-indexed folders
-</details>
+- Every file gets a BLAKE3 content identity, so the same file on two devices is recognized as one.
+- Search refines by kind, extension, size, date and hidden files, with counts over the whole result.
+- A filesystem watcher keeps the index current; unplugged drives show as offline.
 
-<details>
-<summary><strong>🖥️ Desktop</strong></summary>
-Tray menu follows interface language · About/Wingbot links open in system browser · remaining strings translated
-</details>
+**Across devices**
 
-<details>
-<summary><strong>💾 Devices & Storage</strong></summary>
-Unplugged drives marked offline instead of staying online
-</details>
+- Pairing and library sync between your own devices over Iroh/QUIC.
+- Cloud volumes through OpenDAL (S3, Google Drive, Dropbox, OneDrive, Azure Blob, GCS).
+- `wing-server` serves the same interface in a browser for headless machines.
 
-<details>
-<summary><strong>🛡️ Reliability</strong></summary>
-Fixed shutdown in library watcher debounce · migration repairs missing files in descendant queries
-</details>
+**Interface**
 
-<details>
-<summary><strong>📱 Mobile</strong></summary>
-English and Brazilian Portuguese · delete library · pinned locations in Browse · Tailscale labels
-</details>
-
-> [Full changelog →](./docs/readme/changelog-alpha16.md)
-
----
-
-## 🖼️ See It in Action
+- English and Brazilian Portuguese. Translations live in Crowdin.
+- Built-in themes, including Catppuccin, Gruvbox, Solarized, Rosé Pine, Dracula and Tokyo Night.
 
 <div align="center">
   <img src="docs/public/WingColumnView.webp" alt="Column view" width="300"/>
@@ -86,97 +74,96 @@ English and Brazilian Portuguese · delete library · pinned locations in Browse
   <img src="docs/public/WingSizeView.webp" alt="Size view" width="300"/>
 </div>
 
----
+## What's new
 
-## 🎯 Why WingDrive?
+Every release is listed in [CHANGELOG.md](./CHANGELOG.md), and the
+[Releases page](https://github.com/bernardopg/wingdrive/releases) has the downloads for each tag.
 
-| Instead of | WingDrive gives you |
-|------------|---------------------|
-| Files scattered across devices and clouds | One unified view of everything |
-| Uploading to the cloud for search | Local indexing on your machine |
-| Vendor lock-in | Open source, Apache-2.0, no lock-in |
-| Black-box AI processing | Structured APIs with permissions and screening |
-| Central sync servers | Peer-to-peer sync between your own devices |
-
----
-
-## 📦 Platforms
+## Platforms
 
 | Platform | Status |
 |----------|--------|
-| macOS | ✅ Supported |
-| Linux | ✅ Supported (AppImage, DEB) |
-| Windows | 🔜 Coming in alpha17 |
-| iOS | 🔜 Coming soon |
-| Android | 🔜 Coming soon |
+| Linux (x86_64) | Supported: AppImage, Debian package, AUR (`wingdrive-bin`) |
+| Headless server | `wing-server` with the web interface, Docker image on GHCR |
+| macOS | Builds from source; prebuilt release planned (milestone M3) |
+| Windows | Builds from source; prebuilt release planned (milestone M3) |
+| iOS, Android | In development (`apps/mobile`), no release yet |
 
----
+## Install
 
-## 🛠️ Installation
+Full guide: [docs/readme/installation.md](./docs/readme/installation.md).
 
-> Full details → [Installation Guide](./docs/readme/installation.md)
-
-**Prebuilt release (recommended):**
-[GitHub Releases](https://github.com/bernardopg/wingdrive/releases) — AppImage, Debian, Docker.
-
-**Arch-based (AUR):**
-<p align="center">
-  <a href="https://aur.archlinux.org/packages/wingdrive-bin/">
-    <img src="https://img.shields.io/badge/AUR-wingdrive--bin-0090FF?logo=arch-linux&logoColor=white" alt="AUR wingdrive-bin"/>
-  </a>
-</p>
+**Arch Linux and derivatives (AUR):**
 
 ```bash
 yay -S wingdrive-bin
 ```
 
-**Build from source:**
+**Other Linux distributions:** download the AppImage or the `.deb` from
+[GitHub Releases](https://github.com/bernardopg/wingdrive/releases). Each release has a
+`SHA256SUMS` file.
+
+**Headless server** (web interface on port 8080, data in the `wingdrive-data` volume; see
+[Linux deployment](./docs/cli/linux-deployment.mdx)):
+
+```bash
+docker run -d -p 8080:8080 -p 7373:7373 \
+  -v wingdrive-data:/data -v /path/to/files:/mnt/files:ro \
+  ghcr.io/bernardopg/wingdrive/server
+```
+
+**From source** (Rust from `rust-toolchain.toml`, [Bun](https://bun.sh) 1.3+,
+[just](https://github.com/casey/just)):
+
 ```bash
 git clone https://github.com/bernardopg/wingdrive
 cd wingdrive
-just setup
-just dev-desktop
+just setup         # native dependencies and .cargo/config.toml
+just dev-desktop   # desktop app; starts its own daemon
+just cli --help    # the `wing` CLI
 ```
 
----
+## Architecture
 
-## 📚 Architecture
+One `wing-daemon` process owns all state. The desktop app, the `wing` CLI, the web interface and
+`wing-server` are thin clients that speak JSON-RPC to it. The mobile app embeds the same core as a
+library.
 
-> Full reference → [Architecture](./docs/readme/architecture.md)
+Stack: Rust, Tokio, SQLite (SeaORM), Iroh/QUIC, BLAKE3, OpenDAL, Tauri 2, React 19.
+Details: [docs/readme/architecture.md](./docs/readme/architecture.md) and the subsystem docs in
+[`docs/core`](./docs/core).
 
-Built on four principles: **VDFS**, **Content Identity**, **Transactional Actions**, **Leaderless Sync**.  
-Stack: Rust · Tokio · SQLite · Iroh/QUIC · BLAKE3 · LanceDB · OpenDAL · Tauri 2 · React 19.
+## Privacy and security
 
----
+- **Local-first:** indexing, thumbnails and search run on your machine. No telemetry or analytics.
+- **Encrypted transport:** peer-to-peer traffic between paired devices uses QUIC with TLS.
+- **Your storage:** WingDrive reads your files in place; it does not upload them anywhere you did not
+  add as a volume.
+- **Destructive operations are guarded:** secure delete refuses copy-on-write filesystems, moves
+  and copies refuse to write into their own source, and the daemon will not eject system mounts.
 
-## 🔒 Privacy & Security
+Library encryption at rest is not available yet. Report vulnerabilities as described in
+[SECURITY.md](./SECURITY.md).
 
-- **End-to-End Encryption** — P2P traffic via QUIC/TLS
-- **At-Rest Encryption** — libraries encrypted on disk (SQLCipher)
-- **No Telemetry** — zero tracking or analytics
-- **Data Sovereignty** — you control where your data lives
+## Roadmap
 
-Safety screening: Prompt Guard 2, trust tiers, quarantine system, content fencing.
+| Milestone | Goal |
+|-----------|------|
+| M1 (done) | Desktop file manager on Linux, from a production bundle |
+| M2 (now) | Default file manager on Linux: daily use without falling back to another one |
+| M3 | macOS and Windows releases, signed installers, copy preflight and wider undo |
+| M4 | Cross-device features: file sync, public sharing, Wingdrop |
 
----
+Details in [.tasks/ROADMAP.md](./.tasks/ROADMAP.md) (Portuguese).
 
-## 🗺️ Roadmap
+## Contributing
 
-- **alpha17** — Windows desktop support
-- **Future** — iOS app, Android app, server edition, Extension SDK (stable API), local AI models
+Read [CONTRIBUTING.md](./CONTRIBUTING.md) and [AGENTS.md](./AGENTS.md) first. Run `just ci-local`
+before you push; it runs the same gates as CI. Bugs and feature requests go to
+[Issues](https://github.com/bernardopg/wingdrive/issues/new/choose); questions to
+[Discord](https://discord.gg/gTaF2Z44f5).
 
-[Releases →](https://github.com/bernardopg/wingdrive/releases)
+## License
 
----
-
-## 🤝 Community
-
-- **Discord** — [discord.gg/gTaF2Z44f5](https://discord.gg/gTaF2Z44f5)
-- **Issues** — [report bugs / request features](https://github.com/bernardopg/wingdrive/issues/new/choose)
-- **Whitepaper** — [docs/overview/whitepaper.mdx](./docs/overview/whitepaper.mdx)
-
----
-
-## 📄 License
-
-**Apache-2.0** — see [LICENSE](./LICENSE). File-kind icons in `packages/assets/icons` stay under GPL-3.0-only; see [NOTICE.md](./NOTICE.md).
+**Apache-2.0**, see [LICENSE](./LICENSE). File-kind icons in `packages/assets/icons` stay under
+GPL-3.0-only; see [NOTICE.md](./NOTICE.md).

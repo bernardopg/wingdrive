@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import { getDeviceIcon } from "../../../contexts/WingDriveContext";
-import LaptopIcon from "@wingdrive/assets/icons/Laptop.png";
+import LaptopIcon from "@wingdrive/assets/icons/Laptop.webp";
 import type { VirtualView } from "../context";
 import {useTranslation} from '../../../i18n';
 import { ThemedIcon } from "../../../components/ThemedIcon";

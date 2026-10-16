@@ -35,7 +35,7 @@ import type { Location, ScanState } from "@wingdrive/ts-client";
 import { Button, Dialog, dialogManager, useDialog, CircleButton, type UseDialogProps } from "@wingdrive/primitives";
 import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { useContextMenu } from "../../../hooks/useContextMenu";
-import LocationIcon from "@wingdrive/assets/icons/Location.png";
+import LocationIcon from "@wingdrive/assets/icons/Location.webp";
 import { useTranslation } from "../../../i18n";
 import { ThemedIcon } from "../../ThemedIcon";
 import {uiLocale} from "../../../i18n";

@@ -143,3 +143,15 @@ Ranked by value for M2 against effort:
 6. `92dea58a4`: CI gate that generated TypeScript types are current (M).
 7. `bcc7337b0` / `3cd44f2da`: undo and copy preflight, as WingDrive
    features rather than ports (L each).
+
+### Outcome (FORK-006, closed 2026-10-16)
+
+| Item | Result |
+|---|---|
+| 1, 2 | Ported with a regression test each (#206, #210). |
+| 3 | Thumbnail job bounded by `max_concurrent` and free memory (#229); frame scaling was already in place. |
+| 4 | Move part applied: a streaming move on one volume left the source behind (#234, `move_streaming_test`). |
+| 5 | Sync part applied: a request for an absent library now gets `SyncMessage::Error` instead of a timeout (#235). |
+| 6 | Stale-types gate runs in `scripts/ci-rust.sh full`. |
+| `12cdfa4be` | Icons and images ship as WebP; `wing-server` no longer embeds web source maps. |
+| 7 | Split into FILE-007 (preflight) and FILE-008 (journal and undo), milestone M3. |

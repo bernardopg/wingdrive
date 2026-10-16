@@ -34,6 +34,8 @@ use tracing::{info, warn};
 /// In release builds, contents are baked into the binary.
 #[derive(Embed)]
 #[folder = "../web/dist/"]
+// Source maps are about 18 MB of the release binary and nothing serves them.
+#[exclude = "*.map"]
 struct WebAssets;
 
 #[derive(Clone)]
@@ -663,4 +665,14 @@ async fn shutdown_signal(daemon_handle: Option<Arc<RwLock<tokio::task::JoinHandl
 		}
 		std::process::exit(0);
 	});
+}
+
+#[cfg(test)]
+mod tests {
+	use super::WebAssets;
+
+	#[test]
+	fn source_maps_are_not_embedded() {
+		assert!(WebAssets::iter().all(|path| !path.ends_with(".map")));
+	}
 }
