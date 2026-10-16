@@ -204,15 +204,12 @@ const {t} = useTranslation('inspector');
 	const isAudio = getContentKind(file) === 'audio';
 	const showJobsButton = isImage || isVideo || isAudio;
 
-	// Get physical path for sharing
-	const getPhysicalPath = (): string | null => {
-		if (file.wing_path && 'Physical' in file.wing_path) {
-			return (file.wing_path as {Physical: {path: string}}).Physical.path;
-		}
-		return null;
-	};
-
-	const physicalPath = getPhysicalPath();
+	// The share sheet takes a path on this machine. Another device's path
+	// would name a different file here, or none.
+	const physicalPath =
+		file.is_local && file.wing_path && 'Physical' in file.wing_path
+			? file.wing_path.Physical.path
+			: null;
 	const canShare = !!physicalPath && !!platform.shareFiles;
 
 	const handleShare = async () => {
