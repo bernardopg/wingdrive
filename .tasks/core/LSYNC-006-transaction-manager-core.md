@@ -4,10 +4,11 @@ title: Transaction Manager Core
 status: Done
 assignee: jamiepine
 parent: LSYNC-000
-priority: Critical
+priority: High
 tags: [sync, database, transaction, architecture, leaderless]
 design_doc: core/src/infra/sync/NEW_SYNC.md
 completed: 2025-10-09
+last_updated: 2026-10-16
 ---
 
 ## Description

@@ -5,10 +5,11 @@ status: To Do
 assignee: jamiepine
 parent: CORE-008
 priority: High
-tags: [vss, addressing, sdpath, core]
+tags: [vss, addressing, sdpath, core, upstream-backlog]
 whitepaper: "Section 4.1.5"
-last_updated: 2025-11-01
+last_updated: 2026-10-16
 related_tasks: [CORE-002, CORE-008]
+milestone: M5
 ---
 
 ## Description
@@ -160,3 +161,9 @@ Estimated: 3-4 days focused work
 - Day 2: Display implementation, resolution logic
 - Day 3: Testing, edge cases, error handling
 - Day 4: Documentation, examples, polish
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

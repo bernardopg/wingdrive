@@ -4,11 +4,11 @@ title: Background mode in the system tray with autostart
 status: Done
 assignee: bernardopg
 parent: DESK-000
-priority: Critical
+priority: High
 milestone: M2
 sprint: S03
 tags: [desktop, tray, daemon]
-last_updated: 2026-10-07
+last_updated: 2026-10-16
 ---
 
 ## Description

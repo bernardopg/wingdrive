@@ -5,11 +5,12 @@ status: To Do
 assignee: jamiepine
 parent: CORE-008
 priority: Medium
-tags: [vss, sync, networking, p2p]
+tags: [vss, sync, networking, p2p, upstream-backlog]
 whitepaper: "Section 4.1.5"
-last_updated: 2025-11-01
+last_updated: 2026-10-16
 related_tasks: [CORE-008, LSYNC-000, NET-000]
 dependencies: [VSS-001, VSS-002]
+milestone: M4
 ---
 
 ## Description
@@ -288,3 +289,9 @@ async fn test_cross_device_sidecar_fetch() {
     assert!(matches!(resolved2, ResolvedPath::Local { .. }));
 }
 ```
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

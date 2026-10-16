@@ -5,7 +5,9 @@ status: To Do
 assignee: jamiepine
 parent: SHARE-000
 priority: High
-tags: [sharing, cloud, accounts, auth]
+tags: [sharing, cloud, accounts, auth, upstream-backlog]
+milestone: M4
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -26,3 +28,9 @@ Link a desktop device to an wingdrive.app account so shares can be created, publ
 - [ ] Linked device can create and publish shares
 - [ ] User can unlink without affecting other linked devices
 - [ ] Compromised device sessions can be revoked from wingdrive.app; the desktop UI surfaces the linked-device list
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

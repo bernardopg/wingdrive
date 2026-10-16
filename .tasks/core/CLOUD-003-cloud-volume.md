@@ -6,9 +6,9 @@ assignee: jamiepine
 parent: CLOUD-000
 priority: High
 milestone: M5
-tags: [cloud, storage, volume, s3]
+tags: [cloud, storage, volume, s3, upstream-backlog]
 whitepaper: Section 5.2
-last_updated: 2025-10-14
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -79,3 +79,9 @@ Implement support for a cloud storage provider (e.g., S3-compatible service) as 
 1. Test end-to-end cloud volume indexing with MinIO or real S3
 2. Implement file copy operations for cloud volumes
 3. Add OAuth support for Google Drive, Dropbox, OneDrive
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

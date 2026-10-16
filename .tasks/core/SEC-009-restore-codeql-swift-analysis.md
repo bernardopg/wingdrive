@@ -1,12 +1,13 @@
 ---
 id: SEC-009
 title: "Restore CodeQL Swift analysis for the iOS app"
-status: "To Do"
-assignee: "bernardopg"
+status: To Do
+assignee: bernardopg
 parent: SEC-008
-priority: "Medium"
-milestone: "M1"
+priority: Medium
+milestone: M5
 tags: ["ci", "security", "codeql", "mobile"]
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -32,3 +33,8 @@ coverage.
 - The `Analyze (swift)` job finishes inside its timeout on pull requests
 - Alerts raised on Swift source appear in the Code Scanning tab with the `/language:swift` category
 - The remaining four CodeQL jobs keep passing
+
+## WingDrive triage (2026-10-16)
+
+M1 closed without it. Swift analysis matters only for the iOS build of the mobile app, so it moves
+with mobile to M5.

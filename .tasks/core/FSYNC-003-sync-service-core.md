@@ -1,14 +1,15 @@
 ---
 id: FSYNC-003
 title: FileSyncService Core Implementation
-status: To Do
+status: In Progress
 assignee: jamiepine
 parent: FSYNC-000
 priority: High
-tags: [service, core, orchestration, resolver]
+tags: [service, core, orchestration, resolver, upstream-backlog]
 design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md
-last_updated: 2026-02-07
+last_updated: 2026-10-16
 related_tasks: [FSYNC-001, FSYNC-002, INDEX-010, INDEX-011, FILE-006]
+milestone: M4
 ---
 
 ## Description
@@ -201,13 +202,13 @@ pub enum ConflictStrategy {
 
 ## Acceptance Criteria
 
-- [ ] FileSyncService struct with ConduitManager and SyncResolver
+- [x] FileSyncService struct with ConduitManager and SyncResolver (`core/src/service/file_sync/mod.rs`)
 - [ ] ConduitManager implements full CRUD for conduits
-- [ ] SyncResolver calculates operations from index queries
+- [x] SyncResolver calculates operations from index queries (`test_sync_resolver_calculates_operations`)
 - [ ] Mirror mode sync works end-to-end (MVP)
-- [ ] sync_now() creates generation and dispatches jobs
+- [x] sync_now() creates generation and dispatches jobs (`FileSyncService::sync_now`)
 - [ ] Job ordering enforced: copies complete before deletes
-- [ ] Active sync tracking prevents duplicate syncs
+- [x] Active sync tracking prevents duplicate syncs (`active_syncs`, `is_syncing`)
 - [ ] Monitor task waits for jobs and updates state
 - [ ] Library sync verification prevents operation when index stale
 - [ ] Trust Watcher verification flow implemented
@@ -271,3 +272,9 @@ The SyncResolver should use the ephemeral cache (with complete scan) as its data
 - Verification: Lines 1699-1855
 - Related: FSYNC-001 (DeleteStrategy), FSYNC-002 (entities), FILE-001 (FileCopyJob)
 - Dependencies: INDEX-010, INDEX-011, FILE-006
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

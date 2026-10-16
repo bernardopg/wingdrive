@@ -6,7 +6,7 @@ assignee: bernardopg
 parent: FORK-002
 priority: High
 milestone: M2
-sprint: S03
+sprint: S04
 tags: [fork, upstream, port, interface]
 last_updated: 2026-10-16
 ---

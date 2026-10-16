@@ -5,11 +5,11 @@ status: In Progress
 assignee: jamiepine
 priority: High
 milestone: M4
-tags: [sync, service, epic, index-driven]
+tags: [sync, service, epic, index-driven, upstream-backlog]
 whitepaper: Section 5.2
 design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md
 documentation: docs/core/file-sync.mdx
-last_updated: 2026-02-07
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -90,3 +90,9 @@ Execution order: INDEX-010 → INDEX-011 → FILE-006 → FSYNC-003
 - Design: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md (2255 lines)
 - Docs: docs/core/file-sync.mdx
 - Related: FILE-001 (File Copy Job), LSYNC-000 (Library Sync)
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

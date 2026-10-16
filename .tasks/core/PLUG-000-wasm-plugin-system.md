@@ -5,9 +5,9 @@ status: In Progress
 assignee: jamiepine
 priority: High
 milestone: M5
-tags: [epic, plugins, wasm, extensibility, extensions]
+tags: [epic, plugins, wasm, extensibility, extensions, upstream-backlog]
 whitepaper: Section 6.7
-last_updated: 2025-11-05
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -34,3 +34,9 @@ This epic covers the implementation of the WebAssembly (WASM) based extension sy
 - `core/src/infra/extension/README.md` - Implementation details
 - `workbench/sdk/EXTENSION_SDK_SPECIFICATION_V2.md` - Complete SDK spec
 - `workbench/core/extensions/EXTENSION_DATA_STORAGE_PHILOSOPHY.md` - Storage model
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

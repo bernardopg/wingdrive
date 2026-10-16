@@ -1,12 +1,14 @@
 ---
 id: CORE-012
 title: Resource Type Registry (Swift)
-status: To Do
+status: Done
 assignee: jamiepine
 parent: CORE-011
 priority: High
-tags: [client, swift, codegen, cache]
+tags: [client, swift, codegen, cache, obsolete]
 depends_on: [CORE-011]
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -70,3 +72,10 @@ class ResourceTypeRegistry {
 
 - `docs/core/events.md` lines 213-298
 - `docs/core/normalized_cache.md` - Cache integration
+
+## WingDrive triage (2026-10-16)
+
+Obsolete, closed without implementation. The registry targets native Swift clients, and WingDrive
+has no iOS or macOS Swift app: mobile is the Expo app in `apps/mobile`, which embeds the core over
+FFI, and `packages/swift-client` stays a prototype. The `EventCacheUpdater` it plugs into does not
+exist in this repository. Reopen as a new task if a native Swift client is ever planned.

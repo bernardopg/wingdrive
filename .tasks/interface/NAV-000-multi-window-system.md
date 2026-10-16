@@ -5,9 +5,10 @@ status: In Progress
 assignee: jamiepine
 parent: UI-000
 priority: Medium
-tags: [navigation, windows, architecture]
+tags: [navigation, windows, architecture, upstream-backlog]
 whitepaper: N/A
-last_updated: 2026-08-24
+last_updated: 2026-10-16
+milestone: M5
 ---
 
 ## Description
@@ -26,10 +27,16 @@ Implement support for multiple windows, each with independent navigation state. 
 
 ## Acceptance Criteria
 
-- [ ] Open new Explorer window from menu
+- [x] Open new Explorer window from menu (DESK-015, #217; runtime check in S04)
 - [ ] Each window has independent navigation
 - [ ] Window position/size persists
 - [ ] Cross-window drag and drop
-- [ ] Windows share library state
+- [x] Windows share library state
 - [ ] Close all windows command
 - [ ] Platform-specific window controls (traffic lights on macOS)
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

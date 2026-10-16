@@ -5,10 +5,11 @@ status: To Do
 assignee: jamiepine
 parent: FSYNC-000
 priority: Medium
-tags: [scheduler, progress, conflicts, polish]
+tags: [scheduler, progress, conflicts, polish, upstream-backlog]
 design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md
-last_updated: 2025-10-14
+last_updated: 2026-10-16
 related_tasks: [FSYNC-003, FSYNC-004]
+milestone: M4
 ---
 
 ## Description
@@ -315,3 +316,9 @@ impl FileSyncService {
 - Scheduler: Lines 1921-2014
 - Progress: Lines 2016-2073
 - Related: FSYNC-003 (resolver conflicts), FSYNC-004 (API for conflicts)
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

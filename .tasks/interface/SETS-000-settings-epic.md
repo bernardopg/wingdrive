@@ -5,9 +5,10 @@ status: In Progress
 assignee: jamiepine
 parent: UI-000
 priority: Medium
-tags: [epic, settings, interface]
+tags: [epic, settings, interface, upstream-backlog]
 whitepaper: N/A
-last_updated: 2026-08-24
+last_updated: 2026-10-16
+milestone: M5
 ---
 
 ## Description
@@ -36,13 +37,19 @@ Build comprehensive settings pages for configuring libraries, appearance, sync, 
 
 ## Acceptance Criteria
 
-- [ ] Settings modal/page opens from menu
-- [ ] Sidebar navigation between categories
+- [x] Settings modal/page opens from menu (`packages/interface/src/routes/settings/index.tsx`)
+- [x] Sidebar navigation between categories (`packages/interface/src/Settings/pages/`)
 - [ ] General settings (language, updates)
 - [ ] Library management (create, delete, encrypt)
-- [ ] Appearance settings (theme, colors)
+- [x] Appearance settings (theme, colors): 12 themes in `AppearanceSettings.tsx` (#201)
 - [ ] Sync configuration UI
 - [ ] Privacy controls
 - [ ] Advanced/debug options
 - [ ] All settings persist correctly
 - [ ] Settings sync across devices
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

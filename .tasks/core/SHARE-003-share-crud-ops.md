@@ -5,7 +5,9 @@ status: To Do
 assignee: jamiepine
 parent: SHARE-000
 priority: High
-tags: [sharing, ops]
+tags: [sharing, ops, upstream-backlog]
+milestone: M4
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -30,3 +32,9 @@ Library operations for managing shares from the desktop client. Each action is r
 - [ ] Tokens are cryptographically random and uniqueness-enforced
 - [ ] Password updates re-hash with fresh salt
 - [ ] Revoking a share blocks subsequent guest access (verified in SHARE-005 tests)
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.

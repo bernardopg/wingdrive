@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-10-15. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-10-16. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -37,7 +37,7 @@ Nautilus ou Yazi no uso diário. `xdg-open` em pastas e "Mostrar na pasta" de ou
 WingDrive, ele fica residente na bandeja e abre na hora, e tem as operações básicas de um file
 manager. Navegação continua gráfica; modo modal estilo Yazi fica fora.
 
-Epic: `DESK-000`. Sprint S03.
+Epic: `DESK-000`. Sprints S03 a S05.
 
 | Ordem | Task | Título |
 |---|---|---|
@@ -54,27 +54,32 @@ Epic: `DESK-000`. Sprint S03.
 
 Pré-requisito: TAURI-015 (pacote AUR com GTK/WebKit do sistema, daemon encerrado ao sair).
 
-Estado em 2026-10-15: DESK-001 a DESK-012 e DESK-014 Done; DESK-013 em andamento.
+Estado em 2026-10-16: DESK-001 a DESK-012 e DESK-014 Done. O que falta para fechar o M2:
 
-Próximas candidatas do M2, para priorizar:
-
-| Task | Título | Prioridade | Esforço |
-|---|---|---|---|
-| DESK-017 | Fechar o M2: evidência no pacote AUR e um dia inteiro de uso | High | M |
-| DESK-013 | Revisão pt no Crowdin e verificação do pacote (passos 3 a 5) | Medium | S |
-| DESK-015 | Abrir pasta em nova janela (o host já tem a janela `Explorer`) | Medium | S |
-| FORK-006 | Itens 3, 4, 5 e 7 do upstream: miniaturas limitadas por memória, ícones em WebP, revisar move/sync, preflight de cópia | Medium | M |
-| DESK-016 | Explorer com painel duplo (F3) | Low | L |
+| Task | O que falta | Sprint |
+|---|---|---|
+| DESK-017 | Um dia inteiro de uso do pacote AUR, sem voltar a outro file manager | S04 |
+| DESK-015, DESK-018, DESK-019, DESK-020 | Código no `main`; falta validar no build Linux (no dia da DESK-017) | S04 |
+| INDEX-010 | Checagem visual de seleção, tags e troca de biblioteca | S04 |
+| FORK-007 | Código no `main` (#231); falta conferir devices pareados com um peer real | S04 |
+| DESK-013 | Revisão pt no Crowdin e verificação do pacote (passos 3 a 5) | S04 |
+| FORK-006 | Item 4 (ícones WebP, em andamento) e reclassificar os itens 5 e 7 | S04 |
+| FORK-008, DESK-021 | PRs #230 e #232 em revisão | S03 |
+| DESK-016 | Explorer com painel duplo (F3) | S05 |
+| DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
 
 O M2 fecha quando o DESK-000 estiver Done com evidência do pacote AUR e um dia inteiro de uso sem
-voltar a outro file manager (DESK-017).
+voltar a outro file manager (DESK-017). Previsão: fim do S05 (2026-11-25).
 
 ## Next — M3: Desktop multiplataforma e release
 
 Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
 
-- `TAURI-012` matriz de runtime em macOS e Windows
-- `FORK-002` identidade e release independentes do WingDrive
+- `TAURI-012` matriz de runtime em macOS e Windows (preparação no S05)
+- `CORE-014` abrir arquivos e "Abrir com" no macOS e no Windows (roda com a TAURI-012)
+- `FORK-002` identidade e release independentes do WingDrive: CI, release e imagem GHCR já rodam no
+  repositório; falta a assinatura (plano no S05)
+- `FORK-009` correções do WingDrive enviadas ao upstream (#3160 a #3162 em revisão)
 - Assinatura e instaladores por plataforma
 
 ## Later — M4: Integração entre dispositivos
@@ -88,12 +93,29 @@ Pairing, Spacedrop, library sync e file sync confiáveis entre desktops.
 ## Later — M5: Opcionais
 
 Cloud (`CLOUD-000`, `CLOUD-003`), extensões (`PLUG-000`), Spacebot (`TAURI-004`), IA (`AI-000`),
-mobile (`RES-000`). Só entram depois de M4, salvo decisão explícita.
+mobile (`RES-000`, `SEC-009`). Só entram depois de M4, salvo decisão explícita.
+
+## Backlog herdado do upstream
+
+Tasks criadas no Spacedrive (assignee `jamiepine`) que ainda estavam abertas. Na auditoria de
+2026-10-16 receberam a tag `upstream-backlog` e uma nota "WingDrive triage" no arquivo, sem apagar
+nada:
+
+- M4 (20 tasks): file sync (`FSYNC-*`), compartilhamento público (`SHARE-*`), Spacedrop e Tailscale
+  (`NET-003`, `NET-004`), sync de sidecars entre devices (`VSS-004`) e `FILE-006`.
+- M5 (45 tasks): IA, cloud, extensões, busca semântica (`SEARCH-*`), criptografia e RBAC (`SEC-*`),
+  mobile e volumes virtuais, sidecars, coleções e ingestão, épicos de interface herdados (`UI-000`,
+  `UI-001`, `MEDIA-000`, `NAV-000`, `SETS-000`, `SRCH-000`).
+- Fechadas como obsoletas: `CORE-012` (registro de tipos em Swift, sem app Swift no repositório) e
+  `CORE-013` (substituída pelo `useNormalizedQuery` do `ts-client`).
+
+Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`.
 
 ## Histórico
 
 | Data | Mudança |
 |---|---|
+| 2026-10-16 | Auditoria do `.tasks/`: quadro do S03 atualizado, S04 e S05 planejados; 65 tasks herdadas do upstream estacionadas em M4/M5; EXPL-000 e SEC-008 Done; CORE-012 e CORE-013 obsoletas |
 | 2026-10-15 | M2 quase fechado; candidatas DESK-015, DESK-016 e DESK-017 abertas; app mobile traduzido e com typecheck no CI |
 | 2026-10-07 | Novo M2 "Gerenciador de arquivos padrão no Linux" (DESK-000) como prioridade máxima; antigos M2–M4 viram M3–M5 |
 | 2026-10-06 | M1 completo: TAURI-006 e BRAND-002 Done; INDEX-010 integrada; sync multi-device corrigido |

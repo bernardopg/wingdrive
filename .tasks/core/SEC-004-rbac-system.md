@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: SEC-000
 priority: Low
-tags: [security, enterprise, collaboration]
+tags: [security, enterprise, collaboration, upstream-backlog]
 whitepaper: Section 4.4.6
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -25,3 +27,9 @@ Implement a granular Role-Based Access Control (RBAC) system for team and enterp
 - [ ] A `Viewer` can read data but cannot execute write actions (e.g., `FileCopy`, `FileDelete`).
 - [ ] A `Contributor` can execute write actions but cannot manage library settings or permissions.
 - [ ] An administrator can define custom roles with specific permissions.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

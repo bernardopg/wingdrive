@@ -6,9 +6,9 @@ assignee: bernardopg
 parent: DESK-000
 priority: Medium
 milestone: M2
-sprint: S03
+sprint: S04
 tags: [i18n, themes, desktop, linux]
-last_updated: 2026-10-15
+last_updated: 2026-10-16
 ---
 
 ## Description

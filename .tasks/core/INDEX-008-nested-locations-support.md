@@ -4,10 +4,11 @@ title: Nested Locations Support
 status: To Do
 assignee: jamiepine
 priority: Medium
-tags: [indexing, locations, architecture, sync]
-last_updated: 2025-12-16
+tags: [indexing, locations, architecture, sync, upstream-backlog]
+last_updated: 2026-10-16
 parent: INDEX-000
 related_tasks: [CORE-001, LSYNC-010, LOC-000]
+milestone: M5
 ---
 
 # Nested Locations Support (Entry Reuse Architecture)
@@ -853,3 +854,9 @@ Photos (/Users/jamespine/Pictures)
 - **Dynamic nesting**: Auto-detect and suggest nested locations
 - **Cross-device virtual views**: Read-only "nested" views of remote device locations
 - **Location templates**: Predefined nesting structures for common use cases
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

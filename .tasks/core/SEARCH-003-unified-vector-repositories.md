@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: SEARCH-000
 priority: High
-tags: [search, vector-search, ai, repositories]
+tags: [search, vector-search, ai, repositories, upstream-backlog]
 whitepaper: Section 4.7
+milestone: M5
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -25,3 +27,9 @@ Implement the Unified Vector Repositories, a system for storing and querying vec
 - [ ] The system can generate and store vector embeddings for files.
 - [ ] The `VectorRepository` can perform efficient vector similarity searches.
 - [ ] The semantic search capabilities are integrated into the overall search system.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

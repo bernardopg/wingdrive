@@ -5,11 +5,12 @@ status: To Do
 assignee: jamiepine
 parent: CORE-008
 priority: High
-tags: [vss, jobs, generation, indexing]
+tags: [vss, jobs, generation, indexing, upstream-backlog]
 whitepaper: "Section 4.1.5"
-last_updated: 2025-11-01
+last_updated: 2026-10-16
 related_tasks: [CORE-008, JOB-000]
 dependencies: [VSS-001]
+milestone: M5
 ---
 
 ## Description
@@ -230,3 +231,9 @@ Estimated: 1 week focused work
 ## Dependencies
 
 Requires VSS-001 (WingPath integration) to be complete for full testing, but can be developed in parallel.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
+is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
+before pulling it into a sprint.

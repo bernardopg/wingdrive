@@ -4,11 +4,11 @@ title: "Epic: WingDrive as the default Linux file manager"
 status: In Progress
 assignee: bernardopg
 parent: TAURI-000
-priority: Critical
+priority: High
 milestone: M2
-sprint: S03
+sprint: S05
 tags: [epic, desktop, linux, file-manager]
-last_updated: 2026-10-15
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -32,11 +32,12 @@ WingDrive must replace Dolphin, Nautilus or Yazi as the file manager the user op
 - [ ] DESK-013 i18n and theming follow-ups (steps 1-2 done; Crowdin proofreading and packaged checks left)
 - [x] DESK-014 Accurate directory sizes
 - [ ] DESK-015 Open a folder in a new window (code merged in #217; runtime check pending)
-- [ ] DESK-016 Dual-pane Explorer
+- [ ] DESK-016 Dual-pane Explorer (planned for S05)
 - [ ] DESK-017 Close M2: AUR runtime evidence and a full working day
-- [ ] DESK-018 Copy To and Move To a chosen folder
-- [ ] DESK-019 Invert selection and select by pattern
-- [ ] DESK-020 On-demand file checksum in the Inspector
+- [ ] DESK-018 Copy To and Move To a chosen folder (code merged in #226; runtime check pending)
+- [ ] DESK-019 Invert selection and select by pattern (code merged in #227; runtime check pending)
+- [ ] DESK-020 On-demand file checksum in the Inspector (code merged in #227; runtime check pending)
+- [ ] DESK-021 Search refinement bar (PR #232 open)
 
 ## Acceptance Criteria
 

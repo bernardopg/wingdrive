@@ -4,11 +4,11 @@ title: XDG integration, command-line paths and single instance
 status: Done
 assignee: bernardopg
 parent: DESK-000
-priority: Critical
+priority: High
 milestone: M2
 sprint: S03
 tags: [desktop, linux, xdg]
-last_updated: 2026-10-07
+last_updated: 2026-10-16
 ---
 
 ## Description

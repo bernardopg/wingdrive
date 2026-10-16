@@ -5,8 +5,10 @@ status: To Do
 assignee: jamiepine
 parent: NET-000
 priority: High
-tags: [networking, spacedrop, sharing, p2p]
+tags: [networking, spacedrop, sharing, p2p, upstream-backlog]
 whitepaper: Section 4.5.3
+milestone: M4
+last_updated: 2026-10-16
 ---
 
 ## Description
@@ -25,3 +27,9 @@ Implement the Spacedrop protocol for ephemeral, secure file sharing between non-
 - [ ] Two non-paired devices can discover each other on a local network.
 - [ ] A user can initiate a file transfer to another device using Spacedrop.
 - [ ] The file transfer is secure and efficient.
+
+## WingDrive triage (2026-10-16)
+
+Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
+`.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
+WingDrive code before pulling it into a sprint.
