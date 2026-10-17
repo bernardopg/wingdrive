@@ -124,7 +124,7 @@ crate::register_core_action!(LibraryCreateAction, "libraries.create");
 
 The `inventory` crate collects operations at compile time. When you use `register_query!` or `register_library_action!`, the operation automatically appears in global `QUERIES` and `ACTIONS` hashmaps at startup. You never manually register operations.
 
-Location: `core/src/ops/registry.rs`
+Location: `core/src/infra/wire/registry.rs`
 
 ### Tauri Desktop Development
 
