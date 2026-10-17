@@ -28,6 +28,14 @@ just dev-mobile               # Metro; the dev client connects to it
 
 The Gradle `preBuild` step runs `modules/wing-mobile-core/android/build-scripts/build.sh`. It reads `WING_ANDROID_ABIS` (default `arm64-v8a`), uses `sccache` when installed, and deletes the hashed dependency `.so` copies that `cargo-ndk` leaves in `jniLibs`. An APK whose architecture list includes an ABI without `libwing_mobile_core.so` crashes at launch with `UnsatisfiedLinkError`, so the ABI you pass to Gradle and to the script must match.
 
+## CI and releases
+
+`.github/workflows/mobile.yml` runs on pull requests and on `main` when the app, `ts-client`, the core or the lockfiles change. It runs three jobs in parallel. The first runs ESLint with zero warnings, checks that the English and Portuguese catalogs have the same keys, and runs `expo install --check`. The second runs clippy on `wing-mobile-core` for `aarch64-linux-android` with `-D warnings`. The third assembles the release APK with `WING_SKIP_RUST=1`, which checks the JavaScript bundle, Kotlin and the native modules without compiling the core twice.
+
+`release.yml` calls the same workflow with the tag. It builds the core in the `release` profile, then a signed APK and AAB whose `versionCode` comes from `scripts/release/android_version.py` (`v2.0.0-alpha.18` becomes `2000018`). The APK, the AAB and `SHA256SUMS-android` go to the GitHub Release next to the desktop assets. Signing needs four repository secrets: `WINGDRIVE_ANDROID_KEYSTORE_BASE64` (the upload keystore, `base64 -w0`), `WINGDRIVE_ANDROID_KEYSTORE_PASSWORD`, `WINGDRIVE_ANDROID_KEY_ALIAS` and `WINGDRIVE_ANDROID_KEY_PASSWORD`. Without them the release still builds the Android app but publishes nothing for it.
+
+Local builds use the `mobile-dev` Cargo profile (no LTO, 16 codegen units), which `just mobile-install-android` selects through `WING_ANDROID_PROFILE`. Release builds keep the `release` profile.
+
 ## Emulator or device
 
 Use the emulator for UI and logic work. It boots in seconds with KVM, and agents can drive it through the `mobile-mcp` server. The emulator sits behind NAT at `10.0.2.x`, so local network discovery and pairing with a desktop on the LAN do not work there. Its camera is a virtual scene, so test QR pairing on a device.

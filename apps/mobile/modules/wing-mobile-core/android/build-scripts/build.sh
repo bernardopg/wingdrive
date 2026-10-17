@@ -22,8 +22,17 @@ if [ -z "$RUSTC_WRAPPER" ] && command -v sccache >/dev/null 2>&1; then
 	export RUSTC_WRAPPER=sccache
 fi
 
-echo "Building for: $ABIS"
-cargo ndk --platform 24 "${TARGET_ARGS[@]}" -o "$OUTPUT_DIR" build --release
+# CI checks the Gradle side on its own and builds Rust in a separate job.
+if [ -n "$WING_SKIP_RUST" ]; then
+	echo "WING_SKIP_RUST set, skipping the Rust build"
+	exit 0
+fi
+
+# release for shipped builds; mobile-dev (no LTO, 16 codegen units) cuts 15-20 min per ABI for local work.
+PROFILE="${WING_ANDROID_PROFILE:-release}"
+
+echo "Building for: $ABIS ($PROFILE)"
+cargo ndk --platform 24 "${TARGET_ARGS[@]}" -o "$OUTPUT_DIR" build --profile "$PROFILE"
 
 # cargo-ndk also copies hashed dependency dylibs (libiroh-<hash>.so, ...); only our library ships.
 find "$OUTPUT_DIR" -name 'lib*-*.so' -delete

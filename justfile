@@ -29,7 +29,7 @@ mobile-emulator avd="wingdrive-api36":
 # Build and install the Android debug dev client. Only needed after Rust, Kotlin or native
 # dependency changes; JS changes reload through `just dev-mobile`. abi: x86_64 (emulator) or arm64-v8a.
 mobile-install-android abi="x86_64":
-	cd apps/mobile/android && ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.1.12297006" WING_ANDROID_ABIS={{abi}} ./gradlew installDebug -PreactNativeArchitectures={{abi}}
+	cd apps/mobile/android && ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.1.12297006" WING_ANDROID_ABIS={{abi}} WING_ANDROID_PROFILE=mobile-dev ./gradlew installDebug -PreactNativeArchitectures={{abi}}
 
 # Same features as dev-daemon and Tauri dev, so all three reuse one wing-core build.
 dev-server *ARGS:
