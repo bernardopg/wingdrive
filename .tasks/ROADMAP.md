@@ -95,6 +95,9 @@ Pairing, Spacedrop, library sync e file sync confiáveis entre desktops.
 Cloud (`CLOUD-000`, `CLOUD-003`), extensões (`PLUG-000`), Spacebot (`TAURI-004`), IA (`AI-000`),
 mobile (`RES-000`, `SEC-009`). Só entram depois de M4, salvo decisão explícita.
 
+Exceção decidida em 2026-10-17: o épico mobile `MOB-000` (Android funcional, loop de dev rápido,
+paridade com o desktop) foi puxado para agora. MOB-001 a MOB-005 entram no S03.
+
 ## Backlog herdado do upstream
 
 Tasks criadas no Spacedrive (assignee `jamiepine`) que ainda estavam abertas. Na auditoria de
@@ -115,6 +118,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-10-17 | Revisão do app mobile no Moto G7 e no emulador: épico MOB-000 com 11 tasks em `.tasks/mobile/`; MOB-001 a MOB-005 puxadas para o S03 |
 | 2026-10-16 | Auditoria do `.tasks/`: quadro do S03 atualizado, S04 e S05 planejados; 65 tasks herdadas do upstream estacionadas em M4/M5; EXPL-000 e SEC-008 Done; CORE-012 e CORE-013 obsoletas |
 | 2026-10-15 | M2 quase fechado; candidatas DESK-015, DESK-016 e DESK-017 abertas; app mobile traduzido e com typecheck no CI |
 | 2026-10-07 | Novo M2 "Gerenciador de arquivos padrão no Linux" (DESK-000) como prioridade máxima; antigos M2–M4 viram M3–M5 |
