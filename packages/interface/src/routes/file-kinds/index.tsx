@@ -76,7 +76,10 @@ export function FileKindsView() {
 	>({
 		query: 'files.content_kind_stats',
 		input: {},
-		resourceType: 'content_kind'
+		// Kind counts change with indexing; the library resource is re-emitted
+		// each time statistics are recalculated, so it drives the refetch.
+		resourceType: 'library',
+		refetchOnResourceChange: true
 	});
 
 	const stats = (statsData?.stats ?? []).sort(
@@ -209,7 +212,10 @@ export function FileKindFiles() {
 	>({
 		query: 'files.content_kind_stats',
 		input: {},
-		resourceType: 'content_kind'
+		// Kind counts change with indexing; the library resource is re-emitted
+		// each time statistics are recalculated, so it drives the refetch.
+		resourceType: 'library',
+		refetchOnResourceChange: true
 	});
 	const stat = data?.stats.find(
 		(item) => item.name === kindName && Number(item.file_count) > 0
