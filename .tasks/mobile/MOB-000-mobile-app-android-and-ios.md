@@ -33,6 +33,7 @@ author's decision on 2026-10-17.
 - MOB-013 Refresh peer device info on reconnect and propagate unpairing
 - MOB-014 Fix wing library sync-setup action names and instance device lookup
 - MOB-015 Android visual fixes: header buttons and system bar overlap
+- MOB-016 Android adaptive icon inside the safe zone, with a themed variant
 
 ## Acceptance Criteria
 
