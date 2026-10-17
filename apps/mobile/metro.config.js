@@ -40,8 +40,6 @@ config.resolver = {
 		spaceUiTokensNodeModules,
 	]),
 
-	unstable_enableSymlinks: true,
-
 	// Exclude build outputs
 	blockList: [
 		/\/apps\/mobile\/ios\/build\/.*/,
@@ -56,6 +54,20 @@ config.resolver = {
 			require.resolve("react-native/package.json", { paths: [projectRoot, workspaceRoot] })
 		),
 	},
+};
+
+// Bun's isolated installs give workspace packages and some dependencies their own copies (ts-client's
+// @tanstack/react-query, expo-router's react-native-screens). Two copies break React context ("No
+// QueryClient set") or run JS against a different native version, so every package the app depends
+// on resolves from the app, whoever imports it.
+const singletons = Object.keys(require("./package.json").dependencies);
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+	const isSingleton = singletons.some((name) => moduleName === name || moduleName.startsWith(`${name}/`));
+	return context.resolveRequest(
+		isSingleton ? { ...context, originModulePath: path.join(projectRoot, "package.json") } : context,
+		moduleName,
+		platform
+	);
 };
 
 // SVG transformer for @wingdrive/assets SVGs

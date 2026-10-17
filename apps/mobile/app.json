@@ -11,7 +11,6 @@
       "ios",
       "android"
     ],
-    "newArchEnabled": true,
     "experiments": {
       "typedRoutes": true
     },
@@ -24,7 +23,12 @@
       "package": "com.wingdrive.app",
       "adaptiveIcon": {
         "backgroundColor": "#000000"
-      }
+      },
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "plugins": [
       [

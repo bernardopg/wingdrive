@@ -2,7 +2,7 @@ import {
   NativeModule,
   requireNativeModule,
   EventEmitter,
-} from "expo-modules-core";
+} from "expo";
 
 export interface CoreEvent {
   body: string;

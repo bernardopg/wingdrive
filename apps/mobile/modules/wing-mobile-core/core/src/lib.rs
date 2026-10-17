@@ -13,6 +13,7 @@ use std::{
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
+use tracing::{error, info, warn};
 use uuid::Uuid;
 
 use wing_core::{
@@ -20,13 +21,6 @@ use wing_core::{
 	infra::daemon::types::{DaemonError, DaemonRequest, DaemonResponse},
 	infra::event::log_emitter::{set_global_log_bus, LogEventLayer},
 	Core,
-};
-
-#[cfg(target_os = "android")]
-use jni::{
-	objects::{JClass, JObject, JString},
-	sys::{jint, jstring},
-	JNIEnv,
 };
 
 // Global state for embedded core
@@ -86,34 +80,24 @@ pub unsafe extern "C" fn initialize_core(
 		}
 	};
 
-	println!(
+	init_tracing();
+
+	info!(
 		"Initializing embedded WingDrive core with data dir: {}, device name: {:?}",
 		data_dir_str, device_name_opt
 	);
 
 	// Check if already initialized (singleton pattern)
 	if RUNTIME.get().is_some() && CORE.get().is_some() {
-		println!("Embedded core already initialized, skipping");
+		info!("Embedded core already initialized, skipping");
 		return 0;
 	}
-
-	// Initialize tracing for core logs with LogEventLayer
-	use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-	let _ = tracing_subscriber::registry()
-		.with(
-			tracing_subscriber::EnvFilter::try_from_default_env()
-				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info,wing_core=debug")),
-		)
-		.with(tracing_subscriber::fmt::layer().with_ansi(false))
-		.with(LogEventLayer::new())
-		.try_init();
 
 	// Initialize Tokio runtime
 	let rt = match Runtime::new() {
 		Ok(rt) => rt,
 		Err(e) => {
-			println!("Failed to create Tokio runtime: {}", e);
+			error!("Failed to create Tokio runtime: {}", e);
 			return -1;
 		}
 	};
@@ -121,7 +105,7 @@ pub unsafe extern "C" fn initialize_core(
 	// Ensure data directory exists
 	let data_path = PathBuf::from(data_dir_str.clone());
 	if let Err(e) = std::fs::create_dir_all(&data_path) {
-		println!("Failed to create data directory: {}", e);
+		error!("Failed to create data directory: {}", e);
 		return -1;
 	}
 
@@ -131,25 +115,18 @@ pub unsafe extern "C" fn initialize_core(
 	let mut core = match core {
 		Ok(core) => core,
 		Err(e) => {
-			println!("Failed to initialize core: {}", e);
+			error!("Failed to initialize core: {}", e);
 			return -1;
 		}
 	};
 
 	// Initialize networking with protocol registration
-	let networking_result = rt.block_on(async {
-		println!("Initializing networking with protocol registration...");
-		core.init_networking().await
-	});
-
-	match networking_result {
-		Ok(()) => {
-			println!("Networking initialized with protocol registration");
-		}
-		Err(e) => {
-			println!("Failed to initialize networking: {}", e);
-			println!("Continuing without networking (pairing will not work)");
-		}
+	match rt.block_on(core.init_networking()) {
+		Ok(()) => info!("Networking initialized with protocol registration"),
+		Err(e) => warn!(
+			"Failed to initialize networking, pairing will not work: {}",
+			e
+		),
 	}
 
 	let core = Arc::new(core);
@@ -161,18 +138,37 @@ pub unsafe extern "C" fn initialize_core(
 	let _ = RUNTIME.set(rt);
 	let _ = CORE.set(core);
 
-	// Emit test logs
-	use tracing::info;
 	info!("Mobile core initialized successfully");
 
 	0 // Success
 }
 
+/// Installs the tracing subscriber once. On Android stdout is discarded, so the fmt layer writes to
+/// logcat under the `WingDriveCore` tag instead.
+fn init_tracing() {
+	use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+	let fmt_layer = tracing_subscriber::fmt::layer().with_ansi(false);
+	#[cfg(target_os = "android")]
+	let fmt_layer = fmt_layer
+		.without_time()
+		.with_writer(android::LogcatWriter::default);
+
+	let _ = tracing_subscriber::registry()
+		.with(
+			tracing_subscriber::EnvFilter::try_from_default_env()
+				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info,wing_core=debug")),
+		)
+		.with(fmt_layer)
+		.with(LogEventLayer::new())
+		.try_init();
+}
+
 /// Shutdown the embedded core
 #[no_mangle]
 pub extern "C" fn shutdown_core() {
-	println!("Shutting down embedded core...");
-	println!("Core shut down");
+	// The core lives until the process exits; there is nothing to release yet.
+	info!("Shutdown requested for the embedded core");
 }
 
 /// Handle JSON-RPC message from the embedded core
@@ -189,20 +185,14 @@ pub unsafe extern "C" fn handle_core_msg(
 ) {
 	let query_str = unsafe { CStr::from_ptr(query).to_string_lossy().to_string() };
 
-	println!("[RPC REQUEST]: {}", query_str);
-
-	// Get global state
-	let runtime = match RUNTIME.get() {
-		Some(rt) => rt,
-		None => {
-			let error_json = r#"{"jsonrpc":"2.0","id":"","error":{"code":-32603,"message":"Core not initialized"}}"#;
-			let error_cstring = CString::new(error_json).unwrap();
-			callback(callback_data, error_cstring.as_ptr());
-			return;
-		}
+	// RUNTIME is set before CORE, so both must be checked: a request can race initialization.
+	let (Some(runtime), Some(core)) = (RUNTIME.get(), CORE.get()) else {
+		callback(
+			callback_data,
+			cr#"{"jsonrpc":"2.0","id":"","error":{"code":-32603,"message":"Core not initialized"}}"#.as_ptr(),
+		);
+		return;
 	};
-
-	let core = CORE.get().unwrap();
 
 	// Convert callback pointers to usize for Send safety
 	let callback_fn_ptr: usize = callback as usize;
@@ -214,8 +204,6 @@ pub unsafe extern "C" fn handle_core_msg(
 		let response_json = serde_json::to_string(&response).unwrap_or_else(|_|
 			r#"{"jsonrpc":"2.0","id":"","error":{"code":-32603,"message":"Response serialization failed"}}"#.to_string()
 		);
-
-		println!("[RPC RESPONSE]: {}", response_json);
 
 		let response_cstring = CString::new(response_json).unwrap();
 		let callback: extern "C" fn(*mut std::os::raw::c_void, *const std::os::raw::c_char) =
@@ -233,17 +221,10 @@ pub extern "C" fn spawn_core_event_listener(
 	callback: extern "C" fn(*mut std::os::raw::c_void, *const std::os::raw::c_char),
 	callback_data: *mut std::os::raw::c_void,
 ) {
-	println!("Starting core event listener...");
-
-	let core = match CORE.get() {
-		Some(core) => core,
-		None => {
-			println!("Core not initialized, cannot start event listener");
-			return;
-		}
+	let (Some(runtime), Some(core)) = (RUNTIME.get(), CORE.get()) else {
+		error!("Core not initialized, cannot start event listener");
+		return;
 	};
-
-	let runtime = RUNTIME.get().unwrap();
 
 	let callback_fn_ptr: usize = callback as usize;
 	let callback_data_int: usize = callback_data as usize;
@@ -255,12 +236,10 @@ pub extern "C" fn spawn_core_event_listener(
 			let event_json = match serde_json::to_string(&event) {
 				Ok(json) => json,
 				Err(e) => {
-					println!("Failed to serialize event: {}", e);
+					error!("Failed to serialize event: {}", e);
 					continue;
 				}
 			};
-
-			println!("Broadcasting event: {}", event_json);
 
 			let event_cstring = CString::new(event_json).unwrap();
 			let callback: extern "C" fn(*mut std::os::raw::c_void, *const std::os::raw::c_char) =
@@ -278,40 +257,23 @@ pub extern "C" fn spawn_core_log_listener(
 	callback: extern "C" fn(*mut std::os::raw::c_void, *const std::os::raw::c_char),
 	callback_data: *mut std::os::raw::c_void,
 ) {
-	println!("[FFI] spawn_core_log_listener called");
-
-	let core = match CORE.get() {
-		Some(core) => core,
-		None => {
-			println!("❌ [FFI] Core not initialized, cannot start log listener");
-			return;
-		}
+	let (Some(runtime), Some(core)) = (RUNTIME.get(), CORE.get()) else {
+		error!("Core not initialized, cannot start log listener");
+		return;
 	};
-
-	println!("[FFI] Core found, subscribing to LogBus...");
-	let runtime = RUNTIME.get().unwrap();
 
 	let callback_fn_ptr: usize = callback as usize;
 	let callback_data_int: usize = callback_data as usize;
 
 	let mut log_subscriber = core.logs.subscribe();
-	println!(
-		"[FFI] Log subscriber created, current subscriber count: {}",
-		core.logs.subscriber_count()
-	);
 
+	// Never log from inside this loop: LogEventLayer would feed the message back into it.
 	runtime.spawn(async move {
-		println!("[FFI] Log listener task spawned, waiting for logs...");
 		while let Ok(log) = log_subscriber.recv().await {
 			let log_json = match serde_json::to_string(&log) {
 				Ok(json) => json,
-				Err(e) => {
-					println!("❌ [FFI] Failed to serialize log: {}", e);
-					continue;
-				}
+				Err(_) => continue,
 			};
-
-			println!("[FFI] Broadcasting log: {}", log_json);
 
 			let log_cstring = CString::new(log_json).unwrap();
 			let callback: extern "C" fn(*mut std::os::raw::c_void, *const std::os::raw::c_char) =
@@ -320,7 +282,6 @@ pub extern "C" fn spawn_core_log_listener(
 				callback_data_int as *mut std::os::raw::c_void;
 			callback(callback_data_ptr, log_cstring.as_ptr());
 		}
-		println!("❌ [FFI] Log listener task ended");
 	});
 }
 
@@ -485,7 +446,7 @@ mod android {
 	use super::*;
 	use jni::{
 		objects::{GlobalRef, JClass, JObject, JString, JValue},
-		sys::{jint, jstring},
+		sys::jint,
 		JNIEnv, JavaVM,
 	};
 	use once_cell::sync::OnceCell;
@@ -508,6 +469,27 @@ mod android {
 			tag: *const std::os::raw::c_char,
 			text: *const std::os::raw::c_char,
 		) -> std::os::raw::c_int;
+	}
+
+	const ANDROID_LOG_INFO: std::os::raw::c_int = 4;
+
+	/// `tracing` writer that sends each formatted event to logcat under the `WingDriveCore` tag.
+	#[derive(Default)]
+	pub(super) struct LogcatWriter;
+
+	impl std::io::Write for LogcatWriter {
+		fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+			let line = String::from_utf8_lossy(buf);
+			let text = CString::new(line.trim_end().replace('\0', " ")).unwrap_or_default();
+			unsafe {
+				__android_log_write(ANDROID_LOG_INFO, c"WingDriveCore".as_ptr(), text.as_ptr())
+			};
+			Ok(buf.len())
+		}
+
+		fn flush(&mut self) -> std::io::Result<()> {
+			Ok(())
+		}
 	}
 
 	/// Sends panic messages to logcat. A panic that reaches a JNI entry point aborts the
@@ -560,37 +542,40 @@ mod android {
 		device_name: JString,
 	) -> jint {
 		log_panics_to_logcat();
+		super::init_tracing();
 		if let Err(e) = init_android_context(&mut env) {
 			tracing::error!("Failed to initialize the Android context: {e}");
 			return -1;
 		}
-		let data_dir_str: String = env
-			.get_string(&data_dir)
-			.expect("Failed to get data_dir string")
-			.into();
 
-		let device_name_str = if device_name.is_null() {
+		let data_dir_str: String = match env.get_string(&data_dir) {
+			Ok(s) => s.into(),
+			Err(e) => {
+				tracing::error!("Invalid data_dir string: {e}");
+				return -1;
+			}
+		};
+		let device_name_str: Option<String> = if device_name.is_null() {
 			None
 		} else {
-			Some(
-				env.get_string(&device_name)
-					.expect("Failed to get device_name string")
-					.into(),
-			)
+			env.get_string(&device_name).ok().map(Into::into)
 		};
 
-		let data_dir_cstr = CString::new(data_dir_str).unwrap();
-		let device_name_cstr = device_name_str.map(|s: String| CString::new(s).unwrap());
+		let (Ok(data_dir_cstr), Ok(device_name_cstr)) = (
+			CString::new(data_dir_str),
+			device_name_str.map(CString::new).transpose(),
+		) else {
+			tracing::error!("data_dir or device_name contains a NUL byte");
+			return -1;
+		};
 
-		let result = super::initialize_core(
+		super::initialize_core(
 			data_dir_cstr.as_ptr(),
 			device_name_cstr
 				.as_ref()
 				.map(|s| s.as_ptr())
 				.unwrap_or(std::ptr::null()),
-		);
-
-		result as jint
+		) as jint
 	}
 
 	#[no_mangle]
@@ -601,6 +586,21 @@ mod android {
 		super::shutdown_core();
 	}
 
+	/// Calls a `(String) -> Unit` method on `target` from any thread. Native callback threads are
+	/// attached once and stay attached, so the JVM does not attach and detach on every message.
+	fn call_with_string(target: &JObject, method: &str, value: &str) -> jni::errors::Result<()> {
+		let jvm = JAVA_VM.get().ok_or(jni::errors::Error::NullPtr("JavaVM"))?;
+		let mut env = jvm.attach_current_thread_permanently()?;
+		let jstring = env.new_string(value)?;
+		env.call_method(
+			target,
+			method,
+			"(Ljava/lang/String;)V",
+			&[JValue::Object(&jstring)],
+		)?;
+		Ok(())
+	}
+
 	#[no_mangle]
 	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_handleCoreMsg(
 		mut env: JNIEnv,
@@ -608,32 +608,42 @@ mod android {
 		query: JString,
 		promise: JObject,
 	) {
-		let query_str: String = env
-			.get_string(&query)
-			.expect("Failed to get query string")
-			.into();
-		let query_cstr = CString::new(query_str).unwrap();
+		let query_cstr = match env.get_string(&query).map(String::from) {
+			Ok(query) => CString::new(query).map_err(|_| "query contains a NUL byte".to_string()),
+			Err(e) => Err(format!("invalid query string: {e}")),
+		};
+		let query_cstr = match query_cstr {
+			Ok(query) => query,
+			Err(message) => {
+				if let Ok(message) = env.new_string(&message) {
+					let _ = env.call_method(
+						&promise,
+						"reject",
+						"(Ljava/lang/String;)V",
+						&[JValue::Object(&message)],
+					);
+				}
+				return;
+			}
+		};
 
-		let promise_ref = env.new_global_ref(promise).unwrap();
+		let promise_ref = match env.new_global_ref(promise) {
+			Ok(promise_ref) => promise_ref,
+			Err(e) => {
+				tracing::error!("Failed to keep the promise reference: {e}");
+				return;
+			}
+		};
 
 		extern "C" fn android_callback(
 			data: *mut std::os::raw::c_void,
 			result: *const std::os::raw::c_char,
 		) {
 			let promise_ref = unsafe { Box::from_raw(data as *mut GlobalRef) };
-			let result_str = unsafe { CStr::from_ptr(result).to_string_lossy().to_string() };
-
-			let jvm = JAVA_VM.get().expect("JavaVM not initialized");
-			let mut env = jvm.attach_current_thread().unwrap();
-
-			let result_jstring = env.new_string(&result_str).unwrap();
-			env.call_method(
-				promise_ref.as_obj(),
-				"resolve",
-				"(Ljava/lang/String;)V",
-				&[JValue::Object(&result_jstring)],
-			)
-			.unwrap();
+			let result_str = unsafe { CStr::from_ptr(result).to_string_lossy() };
+			if let Err(e) = call_with_string(promise_ref.as_obj(), "resolve", &result_str) {
+				tracing::error!("Failed to resolve a core promise: {e}");
+			}
 		}
 
 		let promise_ptr = Box::into_raw(Box::new(promise_ref)) as *mut std::os::raw::c_void;
@@ -641,41 +651,53 @@ mod android {
 		super::handle_core_msg(query_cstr.as_ptr(), android_callback, promise_ptr);
 	}
 
+	/// Stores the module reference, then starts `listener` with `callback`. Shared by the event and
+	/// log listeners, which differ only in the reference slot and the Kotlin method they call.
+	fn register_listener(
+		env: &mut JNIEnv,
+		module: JObject,
+		slot: &OnceCell<GlobalRef>,
+		callback: extern "C" fn(*mut std::os::raw::c_void, *const std::os::raw::c_char),
+		listener: extern "C" fn(
+			extern "C" fn(*mut std::os::raw::c_void, *const std::os::raw::c_char),
+			*mut std::os::raw::c_void,
+		),
+	) {
+		let registered = (|| -> jni::errors::Result<()> {
+			let _ = JAVA_VM.set(Arc::new(env.get_java_vm()?));
+			let _ = slot.set(env.new_global_ref(module)?);
+			Ok(())
+		})();
+		match registered {
+			Ok(()) => listener(callback, std::ptr::null_mut()),
+			Err(e) => tracing::error!("Failed to register a core listener: {e}"),
+		}
+	}
+
 	#[no_mangle]
 	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_registerCoreEventListener(
 		mut env: JNIEnv,
 		module: JObject,
 	) {
-		let jvm = env.get_java_vm().unwrap();
-		let _ = JAVA_VM.set(Arc::new(jvm));
-
-		let module_ref = env.new_global_ref(module).unwrap();
-		let _ = EVENT_MODULE_REF.set(module_ref);
-
 		extern "C" fn android_event_callback(
 			_data: *mut std::os::raw::c_void,
 			event: *const std::os::raw::c_char,
 		) {
-			let event_str = unsafe { CStr::from_ptr(event).to_string_lossy().to_string() };
-
-			let jvm = JAVA_VM.get().expect("JavaVM not initialized");
-			let mut env = jvm.attach_current_thread().unwrap();
-
-			let module_ref = EVENT_MODULE_REF
-				.get()
-				.expect("Event module not initialized");
-			let event_jstring = env.new_string(&event_str).unwrap();
-
-			env.call_method(
-				module_ref.as_obj(),
-				"sendCoreEvent",
-				"(Ljava/lang/String;)V",
-				&[JValue::Object(&event_jstring)],
-			)
-			.unwrap();
+			let event_str = unsafe { CStr::from_ptr(event).to_string_lossy() };
+			if let Some(module_ref) = EVENT_MODULE_REF.get() {
+				if let Err(e) = call_with_string(module_ref.as_obj(), "sendCoreEvent", &event_str) {
+					tracing::error!("Failed to forward a core event: {e}");
+				}
+			}
 		}
 
-		super::spawn_core_event_listener(android_event_callback, std::ptr::null_mut());
+		register_listener(
+			&mut env,
+			module,
+			&EVENT_MODULE_REF,
+			android_event_callback,
+			super::spawn_core_event_listener,
+		);
 	}
 
 	#[no_mangle]
@@ -683,33 +705,23 @@ mod android {
 		mut env: JNIEnv,
 		module: JObject,
 	) {
-		let jvm = env.get_java_vm().unwrap();
-		let _ = JAVA_VM.set(Arc::new(jvm));
-
-		let module_ref = env.new_global_ref(module).unwrap();
-		let _ = LOG_MODULE_REF.set(module_ref);
-
 		extern "C" fn android_log_callback(
 			_data: *mut std::os::raw::c_void,
 			log: *const std::os::raw::c_char,
 		) {
-			let log_str = unsafe { CStr::from_ptr(log).to_string_lossy().to_string() };
-
-			let jvm = JAVA_VM.get().expect("JavaVM not initialized");
-			let mut env = jvm.attach_current_thread().unwrap();
-
-			let module_ref = LOG_MODULE_REF.get().expect("Log module not initialized");
-			let log_jstring = env.new_string(&log_str).unwrap();
-
-			env.call_method(
-				module_ref.as_obj(),
-				"sendCoreLog",
-				"(Ljava/lang/String;)V",
-				&[JValue::Object(&log_jstring)],
-			)
-			.unwrap();
+			let log_str = unsafe { CStr::from_ptr(log).to_string_lossy() };
+			if let Some(module_ref) = LOG_MODULE_REF.get() {
+				// No tracing here: a logged failure would come back through this same callback.
+				let _ = call_with_string(module_ref.as_obj(), "sendCoreLog", &log_str);
+			}
 		}
 
-		super::spawn_core_log_listener(android_log_callback, std::ptr::null_mut());
+		register_listener(
+			&mut env,
+			module,
+			&LOG_MODULE_REF,
+			android_log_callback,
+			super::spawn_core_log_listener,
+		);
 	}
 }
