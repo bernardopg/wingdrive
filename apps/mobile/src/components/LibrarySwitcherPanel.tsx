@@ -54,7 +54,7 @@ export function LibrarySwitcherPanel({
 			if (result?.library_id) {
 				handleSelectLibrary(result.library_id);
 			}
-		} catch (error) {
+		} catch {
 			Alert.alert(t("Error"), t("Failed to create library"));
 		}
 	};
@@ -85,7 +85,7 @@ export function LibrarySwitcherPanel({
 									client.setCurrentLibrary(null);
 								}
 							}
-						} catch (error) {
+						} catch {
 							Alert.alert(t("Error"), t("Failed to delete library"));
 						}
 					},

@@ -239,7 +239,7 @@ interface StatCardProps {
 	progress?: number;
 }
 
-function StatCard({ icon, label, value, subtitle, progress }: StatCardProps) {
+function StatCard({ icon, label, value, subtitle }: StatCardProps) {
 	return (
 		<View className="flex-1 min-w-[140px]">
 			<View className="mb-1 flex-row items-center gap-3">

@@ -1,9 +1,7 @@
 import { LocalizedText as Text } from "../../i18n/LocalizedText";
-import React, { useState, useMemo, useEffect } from "react";
-import { View, Pressable, ScrollView, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "expo-router";
-import { DrawerActions } from "expo-router/react-navigation";
 import Animated, {
 	useSharedValue,
 	useAnimatedScrollHandler,
@@ -16,7 +14,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import { useNormalizedQuery } from "../../client";
-import type { Library } from "@wingdrive/ts-client";
 import { HeroStats, DevicePanel, ActionButtons } from "./components";
 import { PairingPanel } from "../../components/PairingPanel";
 import { LibrarySwitcherPanel } from "../../components/LibrarySwitcherPanel";
@@ -24,7 +21,6 @@ import { GlassButton } from "../../components/GlassButton";
 import { GlassSearchBar } from "../../components/GlassSearchBar";
 import { JobManagerPanel } from "../../components/JobManagerPanel";
 import { useRouter } from "expo-router";
-import { useSearchStore } from "../explorer/context/SearchContext";
 import { CircleNotch, ListBullets } from "phosphor-react-native";
 import { useJobs } from "../../hooks/useJobs";
 
@@ -35,16 +31,12 @@ const NETWORK_HEADER_HEIGHT = 50;
 
 export function OverviewScreen() {
 	const insets = useSafeAreaInsets();
-	const navigation = useNavigation();
 	const router = useRouter();
 	const scrollY = useSharedValue(0);
 	const expandedOffsetY = useSharedValue(0);
 	const [showPairing, setShowPairing] = useState(false);
 	const [showLibrarySwitcher, setShowLibrarySwitcher] = useState(false);
-	const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
-		null
-	);
-	const { enterSearchMode } = useSearchStore();
+	const [, setSelectedLocationId] = useState<string | null>(null);
 	const { activeJobCount, hasRunningJobs } = useJobs();
 
 	// Spinning animation for jobs icon
@@ -84,27 +76,6 @@ export function OverviewScreen() {
 		input: null,
 		resourceType: "library",
 	});
-
-	// Fetch locations list to get the selected location reactively
-	const { data: locationsData } = useNormalizedQuery({
-		query: "locations.list",
-		input: null,
-		resourceType: "location",
-	});
-
-	// Find the selected location from the list reactively
-	const selectedLocation = useMemo(() => {
-		if (!selectedLocationId || !locationsData?.locations) return null;
-		return (
-			locationsData.locations.find(
-				(loc: any) => loc.id === selectedLocationId
-			) || null
-		);
-	}, [selectedLocationId, locationsData]);
-
-	const openDrawer = () => {
-		navigation.dispatch(DrawerActions.openDrawer());
-	};
 
 	// Entrance animation on mount
 	useEffect(() => {

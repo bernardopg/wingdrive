@@ -1,8 +1,7 @@
 import React from "react";
-import { View, Image } from "react-native";
+import { Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useNormalizedQuery } from "../../../client";
-import type { Device } from "@wingdrive/ts-client";
 import { getDeviceIcon } from "@wingdrive/ts-client";
 import { SettingsGroup, SettingsLink } from "../../../components/primitive";
 import { imageSource } from "../../../utils/imageSource";

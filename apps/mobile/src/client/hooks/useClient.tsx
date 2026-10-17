@@ -10,7 +10,6 @@ import type { AppConfigOutput, Event } from "@wingdrive/ts-client/src/generated/
 import { WingDriveClient } from "../WingDriveClient";
 import { View, ActivityIndicator, StyleSheet, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { WingMobileCore } from "wing-mobile-core";
 import { usePreferencesStore } from "../../stores/preferences";
 import { useSidebarStore } from "../../stores/sidebar";
 import { useReactQueryDevTools } from "@dev-plugins/react-query";

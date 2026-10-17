@@ -8,9 +8,9 @@ import { SubscriptionManager } from "./subscriptionManager";
  * Simple event emitter for browser compatibility
  */
 class SimpleEventEmitter {
-  private listeners: Map<string, Set<Function>> = new Map();
+  private listeners: Map<string, Set<(...args: any[]) => void>> = new Map();
 
-  on(event: string, listener: Function) {
+  on(event: string, listener: (...args: any[]) => void) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
@@ -24,7 +24,7 @@ class SimpleEventEmitter {
     }
   }
 
-  once(event: string, listener: Function) {
+  once(event: string, listener: (...args: any[]) => void) {
     const onceWrapper = (...args: any[]) => {
       listener(...args);
       this.off(event, onceWrapper);
@@ -32,7 +32,7 @@ class SimpleEventEmitter {
     this.on(event, onceWrapper);
   }
 
-  off(event: string, listener: Function) {
+  off(event: string, listener: (...args: any[]) => void) {
     const listeners = this.listeners.get(event);
     if (listeners) {
       listeners.delete(listener);

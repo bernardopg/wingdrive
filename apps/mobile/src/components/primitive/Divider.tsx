@@ -2,7 +2,7 @@ import React from "react";
 import { View, ViewProps } from "react-native";
 import { cn } from "~/utils/cn";
 
-interface DividerProps extends ViewProps {}
+type DividerProps = ViewProps;
 
 export function Divider({ className, ...props }: DividerProps) {
 	return (

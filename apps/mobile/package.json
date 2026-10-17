@@ -13,7 +13,8 @@
 		"xcode": "open ios/WingDrive.xcworkspace",
 		"android-studio": "open -a '/Applications/Android Studio.app' ./android",
 		"data": "open \"$(xcrun simctl get_app_container booted com.wingdrive.app data)\"",
-		"lint": "eslint src --cache",
+		"lint": "eslint src --max-warnings 0",
+		"check:i18n": "bun scripts/check-i18n.ts",
 		"typecheck": "tsc -b"
 	},
 	"dependencies": {
@@ -70,14 +71,17 @@
 		"@babel/core": "^7.29.7",
 		"@babel/plugin-transform-runtime": "^7.29.7",
 		"@babel/runtime": "^7.29.10",
+		"@eslint/js": "^10.0.1",
 		"@tailwindcss/postcss": "^4.3.3",
 		"babel-preset-expo": "~57.0.15",
 		"eslint": "^10.12.0",
+		"eslint-plugin-react-hooks": "^7.1.1",
 		"lightningcss": "1.30.1",
 		"postcss": "^8.5.30",
 		"prettier": "^3.9.10",
 		"react-native-svg-transformer": "^1.5.3",
 		"tailwindcss": "^4.3.3",
-		"typescript": "~6.0.3"
+		"typescript": "~6.0.3",
+		"typescript-eslint": "^8.71.2"
 	}
 }

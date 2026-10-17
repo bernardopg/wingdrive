@@ -114,7 +114,7 @@ function JobCard({job, onPause, onResume, onCancel}: JobCardProps) {
 }
 
 export function JobManagerPanel() {
-	const {jobs, activeJobCount, hasRunningJobs, pause, resume, cancel, isLoading} =
+	const {jobs, activeJobCount, pause, resume, cancel, isLoading} =
 		useJobs();
 	const [showAll, setShowAll] = useState(false);
 
