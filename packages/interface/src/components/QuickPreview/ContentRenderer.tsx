@@ -3,6 +3,8 @@ import { fileDisplaySize, getContentKind } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../routes/explorer/File";
 import { formatBytes } from "../../routes/explorer/utils";
 import { usePlatform } from "../../contexts/PlatformContext";
+import { useLibraryMutation } from "../../contexts/WingDriveContext";
+import { containingArchive } from "../../routes/explorer/hooks/archiveName";
 import { useServer } from "../../contexts/ServerContext";
 import { useTranslation } from "../../i18n";
 import {
@@ -644,6 +646,39 @@ function TextRenderer({ file }: ContentRendererProps) {
 	);
 }
 
+/**
+ * The file as the renderers can load it: a file inside an archive points at
+ * its extracted copy, or is `null` while that copy is being made.
+ */
+function useOnDiskFile(file: File): File | null {
+	const openMember = useLibraryMutation("archive.open_member");
+	const physical = "Physical" in file.wing_path ? file.wing_path.Physical : null;
+	const inArchive =
+		file.kind === "File" && !!physical && containingArchive(physical.path) !== null;
+	const [resolved, setResolved] = useState<File | null>(null);
+
+	useEffect(() => {
+		if (!inArchive || !physical) return;
+		let cancelled = false;
+		openMember
+			.mutateAsync({ path: file.wing_path })
+			.then(({ path }) => {
+				if (!cancelled) {
+					setResolved({ ...file, wing_path: { Physical: { ...physical, path } } });
+				}
+			})
+			.catch((error) => console.error("[QuickPreview] Cannot extract from archive", error));
+		return () => {
+			cancelled = true;
+		};
+		// Keyed by the file; the mutation object changes every render.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [file.id, inArchive]);
+
+	if (!inArchive) return file;
+	return resolved?.id === file.id ? resolved : null;
+}
+
 function DefaultRenderer({ file }: ContentRendererProps) {
 	const displaySize = fileDisplaySize(file);
 	return (
@@ -667,12 +702,15 @@ function DefaultRenderer({ file }: ContentRendererProps) {
 }
 
 export function ContentRenderer({
-	file,
+	file: listed,
 	onZoomChange,
 	onVideoControlsStateChange,
 	onShowVideoControlsChange,
 	getVideoCallbacks,
 }: ContentRendererProps) {
+	const file = useOnDiskFile(listed);
+	if (!file) return <DefaultRenderer file={listed} />;
+
 	// Handle directories with grid preview of subdirectories
 	if (file.kind === "Directory") {
 		return <DirectoryPreview file={file} />;

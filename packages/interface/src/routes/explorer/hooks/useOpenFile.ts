@@ -2,8 +2,10 @@ import type { File, WingPath } from "@wingdrive/ts-client";
 import { isVirtualFile } from "@wingdrive/ts-client";
 import { toast } from "@wingdrive/primitives";
 import { usePlatform } from "../../../contexts/PlatformContext";
+import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { useOpenWith } from "../../../hooks/useOpenWith";
 import { useExplorer } from "../context";
+import { containingArchive, isArchiveName } from "./archiveName";
 import { useTranslation } from "../../../i18n";
 
 /** Most files one Open launches, so a stray Select All cannot start hundreds of apps. */
@@ -14,6 +16,7 @@ export function useOpenFile(navigate?: (path: WingPath) => void) {
 	const platform = usePlatform();
 	const { navigateToPath } = useExplorer();
 	const { openWithDefault } = useOpenWith([]);
+	const openMember = useLibraryMutation("archive.open_member");
 	return async (file: File) => {
 		const go = navigate ?? navigateToPath;
 		if (isVirtualFile(file) || file.kind === "Directory") {
@@ -22,6 +25,20 @@ export function useOpenFile(navigate?: (path: WingPath) => void) {
 		}
 		if (!("Physical" in file.wing_path)) return;
 		let path = file.wing_path.Physical.path;
+		const inArchive = containingArchive(path) !== null;
+		// Archives open as folders; their files are extracted to a cache first.
+		if (file.kind === "File" && !inArchive && isArchiveName(path)) {
+			go(file.wing_path);
+			return;
+		}
+		if (inArchive) {
+			try {
+				({ path } = await openMember.mutateAsync({ path: file.wing_path }));
+			} catch (error) {
+				toast.error(t("archive.openFailed", { error }));
+				return;
+			}
+		}
 		if (file.kind === "Symlink") {
 			if (!platform.resolveSymlink) {
 				toast.error(t("errors.resolveLinkDesktopOnly"));

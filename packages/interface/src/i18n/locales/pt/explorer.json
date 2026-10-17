@@ -250,6 +250,7 @@
 		"help": "Selecione arquivos para começar • Pressione 1-9/0 para alternar etiquetas • Esc para sair"
 	},
 	"archive": {
+		"openFailed": "Não foi possível abrir o arquivo de dentro do compactado: {{error}}",
 		"compressing": "Compactando",
 		"extracting": "Extraindo",
 		"extractTo": "Extrair para",
