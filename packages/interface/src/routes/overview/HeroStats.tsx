@@ -16,6 +16,8 @@ interface HeroStatsProps {
 	totalStorage: number; // bytes
 	usedStorage: number; // bytes
 	totalFiles: number;
+	/** Files seen by volume browse indexes, which stay out of the library */
+	browsedFileCount: number;
 	locationCount: number;
 	tagCount: number;
 	deviceCount: number;
@@ -40,6 +42,7 @@ export function HeroStats({
 	totalStorage,
 	usedStorage,
 	totalFiles,
+	browsedFileCount,
 	locationCount,
 	tagCount,
 	deviceCount,
@@ -158,6 +161,23 @@ export function HeroStats({
 					subtitle={t('overview.uniqueFiles', {count: uniqueContentCount, formattedCount: uniqueContentCount.toLocaleString()})}
 					color="from-purple-500 to-pink-500"
 				/>
+
+				{/* Volume browse index */}
+				{browsedFileCount > 0 && (
+					<StatCard
+						icon={
+							<ThemedIcon
+								src={StorageIcon}
+								alt={t('overview.browsedFiles')}
+								className="size-10 opacity-80"
+							/>
+						}
+						label={t('overview.browsedFiles')}
+						value={browsedFileCount.toLocaleString()}
+						subtitle={t('overview.browsedFilesHint')}
+						color="from-sky-500 to-indigo-500"
+					/>
+				)}
 
 				{/* Devices */}
 				<StatCard

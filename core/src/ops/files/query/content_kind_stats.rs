@@ -27,6 +27,8 @@ pub struct ContentKindStat {
 	pub name: String,
 	/// The number of files with this content kind
 	pub file_count: i64,
+	/// Files of this kind in the browse index, which stays out of the library
+	pub browsed_count: i64,
 }
 
 /// Output containing content kind statistics
@@ -105,6 +107,12 @@ impl LibraryQuery for ContentKindStatsQuery {
 
 		let db = library.db();
 		let counts = load_file_counts(db.conn()).await?;
+		let browsed = context
+			.ephemeral_cache()
+			.get_global_index()
+			.read()
+			.await
+			.content_kind_counts();
 
 		// Preserve the stable list and order, including zero-count kinds.
 		let content_kinds = content_kind::Entity::find()
@@ -124,6 +132,7 @@ impl LibraryQuery for ContentKindStatsQuery {
 				kind,
 				name: ck.name,
 				file_count,
+				browsed_count: browsed.get(&ck.id).copied().unwrap_or(0) as i64,
 			});
 		}
 

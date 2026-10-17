@@ -84,6 +84,7 @@ export function Overview() {
 								(stats.available_capacity ?? 0)
 							}
 							totalFiles={Number(stats.total_files)}
+							browsedFileCount={Number(stats.browsed_file_count ?? 0)}
 							locationCount={stats.location_count}
 							tagCount={stats.tag_count}
 							deviceCount={stats.device_count ?? 0}
