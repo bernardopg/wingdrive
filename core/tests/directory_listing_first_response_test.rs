@@ -52,3 +52,39 @@ async fn first_listing_of_small_unindexed_folder_has_entries(
 	assert_eq!(listing.files[0].name, "file-00");
 	Ok(())
 }
+
+/// A paired device's folder that is not indexed must not be listed from this
+/// machine's disk at the same path.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn unindexed_folder_of_another_device_is_not_read_locally(
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+	let temp_dir = TempDir::new()?;
+	let core = Core::new(temp_dir.path().join("data")).await?;
+	let library = core
+		.libraries
+		.create_library("Listing", None, core.context.clone())
+		.await?;
+
+	let folder = temp_dir.path().join("folder");
+	std::fs::create_dir_all(&folder)?;
+	std::fs::write(folder.join("local-only.txt"), "x")?;
+
+	let device = core.device.to_device()?;
+	let session =
+		SessionContext::device_session(device.id, device.name.clone()).with_library(library.id());
+	let query = DirectoryListingQuery::from_input(DirectoryListingInput {
+		path: WingPath::Physical {
+			device_slug: "some-paired-phone".to_string(),
+			path: folder.clone(),
+		},
+		folders_first: Some(false),
+		limit: None,
+		include_hidden: Some(false),
+		sort_by: DirectorySortBy::Name,
+		sort_direction: None,
+	})?;
+	let listing = query.execute(core.context.clone(), session).await?;
+
+	assert!(listing.files.is_empty(), "remote path listed local files");
+	Ok(())
+}

@@ -687,9 +687,22 @@ impl DirectoryListingQuery {
 		use crate::domain::file::File;
 		use crate::ops::indexing::{IndexScope, IndexerJob, IndexerJobConfig};
 
-		// Get the local path for cache lookup
+		// Get the local path for cache lookup. Only this device's paths can be read from disk: a
+		// paired device's unindexed folder used to be listed from the same path here, which showed
+		// this machine's files (or failed with EACCES at `/` on Android) as if they were remote.
 		let local_path = match &self.input.path {
-			WingPath::Physical { path, .. } => path.clone(),
+			WingPath::Physical { path, .. } if self.input.path.is_local() => path.clone(),
+			WingPath::Physical { device_slug, .. } => {
+				tracing::debug!(
+					%device_slug,
+					"Directory of another device is not indexed; listing it empty"
+				);
+				return Ok(DirectoryListingOutput {
+					files: Vec::new(),
+					total_count: 0,
+					has_more: false,
+				});
+			}
 			_ => {
 				tracing::warn!(
 					"Ephemeral indexing only supported for physical paths: {:?}",
