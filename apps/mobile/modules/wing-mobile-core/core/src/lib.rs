@@ -120,13 +120,19 @@ pub unsafe extern "C" fn initialize_core(
 		}
 	};
 
-	// Initialize networking with protocol registration
-	match rt.block_on(core.init_networking()) {
-		Ok(()) => info!("Networking initialized with protocol registration"),
-		Err(e) => warn!(
-			"Failed to initialize networking, pairing will not work: {}",
-			e
-		),
+	// Initialize networking with protocol registration, unless Settings turned it off.
+	let networking_enabled =
+		rt.block_on(async { core.config.read().await.services.networking_enabled });
+	if !networking_enabled {
+		info!("Networking disabled in the app config");
+	} else {
+		match rt.block_on(core.init_networking()) {
+			Ok(()) => info!("Networking initialized with protocol registration"),
+			Err(e) => warn!(
+				"Failed to initialize networking, pairing will not work: {}",
+				e
+			),
+		}
 	}
 
 	let core = Arc::new(core);
