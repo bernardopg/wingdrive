@@ -32,6 +32,7 @@ author's decision on 2026-10-17.
 - MOB-012 Multi-device pairing: real Network screen and device identity
 - MOB-013 Refresh peer device info on reconnect and propagate unpairing
 - MOB-014 Fix wing library sync-setup action names and instance device lookup
+- MOB-015 Android visual fixes: header buttons and system bar overlap
 
 ## Acceptance Criteria
 
