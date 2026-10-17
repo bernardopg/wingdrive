@@ -631,7 +631,8 @@ mod tests {
 			.unwrap();
 		let mut response = String::new();
 		connection.read_to_string(&mut response).await.unwrap();
-		assert!(response.starts_with("HTTP/1.1 403"), "{response}");
+		// No `{response}` in the message: CodeQL treats panics as log sinks for network data.
+		assert!(response.starts_with("HTTP/1.1 403"));
 		shutdown.send(()).await.unwrap();
 	}
 
