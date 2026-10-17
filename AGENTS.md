@@ -826,6 +826,12 @@ cargo build
 cargo run --bin wing -- restart
 ```
 
+### Mobile App
+
+Never iterate with release APKs. Use the debug dev client and Metro: `just mobile-emulator`,
+`just mobile-install-android`, `just dev-mobile`. Full loop in `docs/core/mobile-development.mdx`
+and the agent skill `.agents/skills/wingdrive-mobile-dev/SKILL.md`.
+
 ### Verbose Logging
 
 ```bash

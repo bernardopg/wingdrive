@@ -22,6 +22,15 @@ dev-mobile-android:
 build-mobile:
 	cargo xtask build-mobile
 
+# Boot the Android emulator used for mobile development (docs/core/mobile-development.mdx).
+mobile-emulator avd="wingdrive-api36":
+	"$ANDROID_HOME/emulator/emulator" -avd {{avd}} -no-snapshot-save -no-boot-anim
+
+# Build and install the Android debug dev client. Only needed after Rust, Kotlin or native
+# dependency changes; JS changes reload through `just dev-mobile`. abi: x86_64 (emulator) or arm64-v8a.
+mobile-install-android abi="x86_64":
+	cd apps/mobile/android && ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.1.12297006" WING_ANDROID_ABIS={{abi}} ./gradlew installDebug -PreactNativeArchitectures={{abi}}
+
 # Same features as dev-daemon and Tauri dev, so all three reuse one wing-core build.
 dev-server *ARGS:
 	cargo run --features ffmpeg,heif --bin wing-server {{ARGS}}

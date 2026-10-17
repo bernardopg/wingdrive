@@ -1,0 +1,77 @@
+---
+title: Mobile Development
+sidebarTitle: Mobile Development
+---
+
+The mobile app embeds the Rust core as a native library, so a release APK rebuilds Rust, runs R8 and bundles the JavaScript on every change. That loop takes minutes. The fast loop installs a debug dev client once and reloads JavaScript from Metro in about a second. You rebuild the native app only when Rust, Kotlin or a native dependency changes.
+
+## Which build to rebuild
+
+| You changed | Do this |
+|---|---|
+| Anything in `apps/mobile/src` or `packages/ts-client` | Save the file. Fast Refresh reloads it. |
+| `apps/mobile/modules/wing-mobile-core/core` or `core/` (Rust) | `just mobile-install-android`, then reload the app |
+| Kotlin, `android/`, `app.json` plugins, a package with native code | `just mobile-install-android` |
+| Performance, pairing over the LAN, the camera | Test on a real device with a release build |
+
+## Daily loop on Android
+
+Boot the emulator, install the dev client once, then start Metro:
+
+```bash
+just mobile-emulator          # AVD wingdrive-api36, Android 16, x86_64
+just mobile-install-android   # builds the x86_64 core and the debug APK
+just dev-mobile               # Metro; the dev client connects to it
+```
+
+`just mobile-install-android arm64-v8a` builds for a USB device such as the Moto G7. Gradle installs on every connected device, so with both the emulator and a phone attached, set `ANDROID_SERIAL` (for example `ANDROID_SERIAL=emulator-5554`) to pick one. `adb reverse tcp:8081 tcp:8081` lets a USB device reach Metro without Wi-Fi. `scrcpy` mirrors and controls the device from the desktop.
+
+The Gradle `preBuild` step runs `modules/wing-mobile-core/android/build-scripts/build.sh`. It reads `WING_ANDROID_ABIS` (default `arm64-v8a`), uses `sccache` when installed, and deletes the hashed dependency `.so` copies that `cargo-ndk` leaves in `jniLibs`. An APK whose architecture list includes an ABI without `libwing_mobile_core.so` crashes at launch with `UnsatisfiedLinkError`, so the ABI you pass to Gradle and to the script must match.
+
+## Emulator or device
+
+Use the emulator for UI and logic work. It boots in seconds with KVM, and agents can drive it through the `mobile-mcp` server. The emulator sits behind NAT at `10.0.2.x`, so local network discovery and pairing with a desktop on the LAN do not work there. Its camera is a virtual scene, so test QR pairing on a device.
+
+## iOS
+
+Xcode and the iOS Simulator run only on macOS. The app has its own native module, so Expo Go cannot load it. Build the dev client on a Mac with `just dev-mobile-ios`, then point it at a Metro server on any machine. EAS Build can produce a dev client in the cloud, but it must install `rustup` and the `aarch64-apple-ios` target in an `eas-build-pre-install` hook, and the core build is long.
+
+## Testing with several devices
+
+Pair a disposable desktop daemon with the phone and the emulator to test integration without touching your own library:
+
+```bash
+wing --data-dir /tmp/wd-desk --instance mobilepair start
+wing --data-dir /tmp/wd-desk --instance mobilepair network pair join "<12 words>"
+wing --data-dir /tmp/wd-desk --instance mobilepair network devices
+```
+
+Generate the code on the phone (Network tab, Generate Code). A phone on the same Wi-Fi pairs over mDNS with the words alone. The emulator is behind NAT, so the desktop also needs its node id: `zbarimg --raw` on an `adb exec-out screencap -p` screenshot decodes the QR, and `--node-id` makes the join go through the relay. The Network tab lists each peer, its type and whether it is connected.
+
+Driving the app over `adb`: `adb shell input text` does not reach a `TextInput` inside a React Native `Modal`; the key events go to the activity, where the dev menu shortcuts can open system settings. Let the phone generate the code and join from the desktop, or type on the device itself.
+
+## Debugging
+
+JavaScript logs and red-box errors appear in the Metro terminal. Press `j` in Metro to open the React Native DevTools. Native logs come from logcat:
+
+```bash
+adb logcat -s WingDriveCore WingMobileCore ReactNativeJS AndroidRuntime
+```
+
+Rust panics at the JNI boundary log under the `WingDriveCore` tag. A `FATAL EXCEPTION` with `com.facebook.react.common.JavascriptException` is a JavaScript error that crashed a release build.
+
+## Agent tooling
+
+The `mobile-mcp` MCP server (`@mobilenext/mobile-mcp`) gives agents screenshots, accessibility trees, taps, typing, app install and launch, and logcat on emulators and USB devices. It uses `adb` from `ANDROID_HOME`. The repository skill `.agents/skills/wingdrive-mobile-dev` describes this workflow for any agent.
+
+## Machine setup
+
+The loop needs the Android SDK at `ANDROID_HOME` with platform 36, build-tools 36, NDK `27.1.12297006` (the version React Native 0.86 expects), the emulator and the `system-images;android-36;google_apis_playstore;x86_64` image. Rust needs `cargo-ndk` and the `aarch64-linux-android` and `x86_64-linux-android` targets. JDK 17 is enough for React Native 0.86. `watchman`, `sccache` and `scrcpy` are optional and make the loop faster.
+
+```bash
+sdkmanager "system-images;android-36;google_apis_playstore;x86_64"
+avdmanager create avd -n wingdrive-api36 -d pixel_8 \
+  -k "system-images;android-36;google_apis_playstore;x86_64"
+rustup target add aarch64-linux-android x86_64-linux-android
+cargo install cargo-ndk
+```

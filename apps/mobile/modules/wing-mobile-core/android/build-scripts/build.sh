@@ -8,16 +8,24 @@ echo "Building WingDrive Mobile Core for Android..."
 OUTPUT_DIR="../android/src/main/jniLibs"
 mkdir -p "$OUTPUT_DIR"
 
-# Build for arm64-v8a (most modern Android devices)
-echo "Building for arm64-v8a..."
-cargo ndk --platform 24 -t arm64-v8a -o "$OUTPUT_DIR" build --release
+# WING_ANDROID_ABIS picks the targets: arm64-v8a for devices, x86_64 for the emulator.
+# Example: WING_ANDROID_ABIS="arm64-v8a x86_64" ./build.sh
+ABIS="${WING_ANDROID_ABIS:-arm64-v8a}"
 
-# Optional: Build for armeabi-v7a (older 32-bit devices)
-# echo "Building for armeabi-v7a..."
-# cargo ndk --platform 24 -t armeabi-v7a -o "$OUTPUT_DIR" build --release
+TARGET_ARGS=()
+for abi in $ABIS; do
+	TARGET_ARGS+=(-t "$abi")
+done
 
-# Optional: Build for x86_64 (emulators)
-# echo "Building for x86_64..."
-# cargo ndk --platform 24 -t x86_64 -o "$OUTPUT_DIR" build --release
+# sccache makes rebuilds after a clean or a branch switch much faster when it is installed.
+if [ -z "$RUSTC_WRAPPER" ] && command -v sccache >/dev/null 2>&1; then
+	export RUSTC_WRAPPER=sccache
+fi
+
+echo "Building for: $ABIS"
+cargo ndk --platform 24 "${TARGET_ARGS[@]}" -o "$OUTPUT_DIR" build --release
+
+# cargo-ndk also copies hashed dependency dylibs (libiroh-<hash>.so, ...); only our library ships.
+find "$OUTPUT_DIR" -name 'lib*-*.so' -delete
 
 echo "Android Rust build complete!"
