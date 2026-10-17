@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/bernardopg/wingdrive/releases">
-    <img src="https://img.shields.io/github/v/release/bernardopg/wingdrive?include_prereleases&label=Version&color=7c3aed" alt="Version"/>
+    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fmain%2Fapps%2Ftauri%2Fpackage.json&query=%24.version&prefix=v&label=Version&color=7c3aed" alt="Version"/>
   </a>
   <a href="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml">
     <img src="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/>
