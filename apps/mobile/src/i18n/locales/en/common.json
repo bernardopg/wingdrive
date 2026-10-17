@@ -279,5 +279,11 @@
 	"{{count}}d ago": "{{count}}d ago",
 	"active job": "active job",
 	"active jobs": "active jobs",
-	"and": "and"
+	"and": "and",
+	"Paired Devices": "Paired Devices",
+	"No paired devices yet": "No paired devices yet",
+	"P2P disabled": "P2P disabled",
+	"Unpair device": "Unpair device",
+	"Remove the pairing with this device?": "Remove the pairing with this device?",
+	"Unpair": "Unpair"
 }

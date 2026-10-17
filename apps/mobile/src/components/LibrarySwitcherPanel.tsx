@@ -167,6 +167,10 @@ export function LibrarySwitcherPanel({
 													>
 														{lib.name}
 													</Text>
+													{/* A library shared from another device can carry the same name as a local one. */}
+													<Text className="text-xs text-ink-faint mt-0.5">
+														{lib.id.slice(0, 8)}
+													</Text>
 													{lib.description && (
 														<Text className="text-xs text-ink-dull mt-0.5">
 															{lib.description}

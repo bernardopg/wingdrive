@@ -10,10 +10,26 @@ import type {
 	LibraryAction,
 	LibraryQuery,
 } from "@wingdrive/ts-client/src/generated/types";
+import { useSyncExternalStore } from "react";
 import { useWingDriveClient } from "./useClient";
 
 type Input<U, T> = Extract<U, { type: T }> extends { input: infer I } ? I : never;
 type Output<U, T> = Extract<U, { type: T }> extends { output: infer O } ? O : never;
+
+/**
+ * Current library id that re-renders the caller when the library changes. Reading
+ * `client.getCurrentLibraryId()` during render left screens on the previous library's data.
+ */
+export function useCurrentLibraryId(): string | null {
+	const client = useWingDriveClient();
+	return useSyncExternalStore(
+		(onChange) => {
+			client.on("library-changed", onChange);
+			return () => client.off("library-changed", onChange);
+		},
+		() => client.getCurrentLibraryId(),
+	);
+}
 
 /**
  * Hook for executing core-level queries (no library context).
@@ -42,7 +58,7 @@ export function useLibraryQuery<T extends LibraryQuery["type"]>(
 	options?: Omit<UseQueryOptions<Output<LibraryQuery, T>, Error>, "queryKey" | "queryFn">,
 ) {
 	const client = useWingDriveClient();
-	const libraryId = client.getCurrentLibraryId();
+	const libraryId = useCurrentLibraryId();
 
 	return useQuery<Output<LibraryQuery, T>, Error>({
 		queryKey: ["library", libraryId, method, input],

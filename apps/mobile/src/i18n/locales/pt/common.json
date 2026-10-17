@@ -279,5 +279,11 @@
 	"{{count}}d ago": "há {{count}} d",
 	"active job": "tarefa ativa",
 	"active jobs": "tarefas ativas",
-	"and": "e"
+	"and": "e",
+	"Paired Devices": "Dispositivos pareados",
+	"No paired devices yet": "Nenhum dispositivo pareado ainda",
+	"P2P disabled": "P2P desativado",
+	"Unpair device": "Desparear dispositivo",
+	"Remove the pairing with this device?": "Remover o pareamento com este dispositivo?",
+	"Unpair": "Desparear"
 }

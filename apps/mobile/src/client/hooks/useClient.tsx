@@ -8,7 +8,7 @@ import {
 import type { WingDriveClient as SharedClient } from "@wingdrive/ts-client";
 import type { AppConfigOutput, Event } from "@wingdrive/ts-client/src/generated/types";
 import { WingDriveClient } from "../WingDriveClient";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { View, ActivityIndicator, StyleSheet, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WingMobileCore } from "wing-mobile-core";
 import { usePreferencesStore } from "../../stores/preferences";
@@ -37,6 +37,15 @@ interface WingDriveProviderProps {
   deviceName?: string;
 }
 
+/** Names a new device after the phone model, so two phones paired to one desktop differ. */
+function defaultDeviceName(): string {
+  if (Platform.OS === "android") {
+    const { Brand, Model } = Platform.constants;
+    return Model.toLowerCase().startsWith(Brand.toLowerCase()) ? Model : `${Brand} ${Model}`;
+  }
+  return "WingDrive Mobile";
+}
+
 /**
  * Provider component that initializes the WingDrive core
  * and provides the client context to children.
@@ -57,7 +66,7 @@ export function WingDriveProvider({
 
     async function init() {
       try {
-        await client.initialize(deviceName ?? "WingDrive Mobile");
+        await client.initialize(deviceName ?? defaultDeviceName());
         try {
           const config = await client.coreQuery<AppConfigOutput>(
             "config.app.get",

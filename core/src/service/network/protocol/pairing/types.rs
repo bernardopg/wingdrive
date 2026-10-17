@@ -80,8 +80,10 @@ impl PairingCode {
 			));
 		}
 
+		// The mobile app shows and accepts the words joined by hyphens, desktop by spaces.
 		let words: Vec<String> = trimmed
-			.split_whitespace()
+			.split(|c: char| c.is_whitespace() || c == '-')
+			.filter(|s| !s.is_empty())
 			.map(|s| s.to_lowercase())
 			.collect();
 
@@ -496,5 +498,16 @@ mod tests {
 			let decoded = PairingCode::decode_from_bip39_words(&words).unwrap();
 			assert_eq!(decoded[..16], entropy);
 		}
+	}
+
+	/// The mobile app joins the words with hyphens; both spellings must give the same code.
+	#[test]
+	fn from_string_accepts_spaces_and_hyphens() {
+		let spaced = "legal winner thank year wave sausage worth useful legal winner thank yellow";
+		let hyphenated = format!(" {} ", spaced.replace(' ', "-").to_uppercase());
+
+		let a = PairingCode::from_string(spaced).unwrap();
+		let b = PairingCode::from_string(&hyphenated).unwrap();
+		assert_eq!(a.session_id(), b.session_id());
 	}
 }

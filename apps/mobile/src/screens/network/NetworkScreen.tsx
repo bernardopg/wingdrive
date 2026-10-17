@@ -1,110 +1,132 @@
 import { LocalizedText as Text } from "../../i18n/LocalizedText";
-import React from "react";
-import { View, ScrollView, Pressable } from "react-native";
+import React, { useState } from "react";
+import { View, ScrollView, Pressable, Alert, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "expo-router";
-import { DrawerActions } from "expo-router/react-navigation";
-import { Card } from "../../components/primitive";
+import { useTranslation } from "react-i18next";
+import type { PairedDeviceInfo } from "@wingdrive/ts-client/src/generated/types";
+import { Card, Button } from "../../components/primitive";
+import { PairingPanel } from "../../components/PairingPanel";
+import { useCoreAction, useCoreQuery } from "../../client";
+
+function DeviceRow({ device, onRevoke }: { device: PairedDeviceInfo; onRevoke: () => void }) {
+	return (
+		<Pressable onLongPress={onRevoke} className="flex-row items-center py-3">
+			<View
+				className={`w-2.5 h-2.5 rounded-full mr-3 ${device.isConnected ? "bg-green-500" : "bg-ink-faint"}`}
+			/>
+			<View className="flex-1">
+				<Text className="text-ink font-medium">{device.name}</Text>
+				<Text className="text-ink-dull text-sm">
+					{`${device.deviceType} · ${device.osVersion} · ${device.appVersion}`}
+				</Text>
+			</View>
+			<Text className="text-ink-dull text-sm">{device.isConnected ? "Connected" : "Offline"}</Text>
+		</Pressable>
+	);
+}
 
 export function NetworkScreen() {
+	const { t } = useTranslation("common");
 	const insets = useSafeAreaInsets();
-	const navigation = useNavigation();
+	const [pairingMode, setPairingMode] = useState<"generate" | "join" | null>(null);
 
-	const openDrawer = () => {
-		navigation.dispatch(DrawerActions.openDrawer());
+	// Poll so a peer that connects or drops shows up without leaving the screen.
+	const status = useCoreQuery("network.status", null, { refetchInterval: 5000 });
+	const devices = useCoreQuery("network.devices.list", { connectedOnly: false }, { refetchInterval: 5000 });
+	const revoke = useCoreAction("network.device.revoke");
+
+	const confirmRevoke = (device: PairedDeviceInfo) => {
+		Alert.alert(t("Unpair device"), t("Remove the pairing with this device?"), [
+			{ text: t("Cancel"), style: "cancel" },
+			{
+				text: t("Unpair"),
+				style: "destructive",
+				onPress: () =>
+					revoke.mutate(
+						{ device_id: device.id, remove_from_library: false },
+						{ onSettled: () => devices.refetch() },
+					),
+			},
+		]);
 	};
 
-	return (
-		<ScrollView
-			className="flex-1 bg-app"
-			contentContainerStyle={{
-				paddingTop: insets.top + 16,
-				paddingBottom: insets.bottom + 100,
-				paddingHorizontal: 16,
-			}}
-		>
-			{/* Header */}
-			<View className="flex-row items-center justify-between mb-6">
-				<Pressable onPress={openDrawer} className="p-2 -ml-2">
-					<View className="w-6 h-0.5 bg-ink mb-1.5" />
-					<View className="w-6 h-0.5 bg-ink mb-1.5" />
-					<View className="w-6 h-0.5 bg-ink" />
-				</Pressable>
-				<Text className="text-2xl font-bold text-ink">Network</Text>
-				<View className="w-10" />
-			</View>
+	const running = status.data?.running ?? false;
+	const paired = devices.data?.devices ?? [];
 
-			{/* Network Status */}
-			<Card className="mb-6">
-				<View className="flex-row items-center">
-					<View className="w-3 h-3 rounded-full bg-green-500 mr-3" />
+	return (
+		<View className="flex-1 bg-app">
+			<ScrollView
+				contentContainerStyle={{
+					paddingTop: insets.top + 16,
+					paddingBottom: insets.bottom + 100,
+					paddingHorizontal: 16,
+				}}
+				refreshControl={
+					<RefreshControl
+						refreshing={status.isRefetching || devices.isRefetching}
+						onRefresh={() => {
+							status.refetch();
+							devices.refetch();
+						}}
+					/>
+				}
+			>
+				<Text className="text-2xl font-bold text-ink mb-6">Network</Text>
+
+				<Card className="mb-6">
+					<View className="flex-row items-center">
+						<View className={`w-3 h-3 rounded-full mr-3 ${running ? "bg-green-500" : "bg-red-500"}`} />
+						<View className="flex-1">
+							<Text className="text-ink font-medium">Network Status</Text>
+							<Text className="text-ink-dull text-sm">{running ? "P2P enabled" : "P2P disabled"}</Text>
+						</View>
+						{devices.data && (
+							<Text className="text-ink-dull text-sm">
+								{`${devices.data.connected}/${devices.data.total}`}
+							</Text>
+						)}
+					</View>
+					{status.data?.node_id && (
+						<Text selectable className="text-ink-faint text-xs mt-3">
+							{status.data.node_id}
+						</Text>
+					)}
+				</Card>
+
+				<Text className="text-lg font-semibold text-ink mb-3">Paired Devices</Text>
+				<Card className="mb-4">
+					{paired.length === 0 ? (
+						<Text className="text-ink-dull">No paired devices yet</Text>
+					) : (
+						paired.map((device) => (
+							<DeviceRow key={device.id} device={device} onRevoke={() => confirmRevoke(device)} />
+						))
+					)}
+				</Card>
+
+				<View className="flex-row gap-3">
 					<View className="flex-1">
-						<Text className="text-ink font-medium">
-							Network Status
-						</Text>
-						<Text className="text-ink-dull text-sm">
-							P2P enabled
-						</Text>
+						<Button variant="accent" onPress={() => setPairingMode("generate")}>
+							<Text className="text-white font-medium">Generate Code</Text>
+						</Button>
+					</View>
+					<View className="flex-1">
+						<Button variant="gray" onPress={() => setPairingMode("join")}>
+							<Text className="text-ink font-medium">Join with Code</Text>
+						</Button>
 					</View>
 				</View>
-			</Card>
+			</ScrollView>
 
-			{/* Devices */}
-			<View className="mb-6">
-				<Text className="text-lg font-semibold text-ink mb-3">
-					This Device
-				</Text>
-				<Card>
-					<View className="flex-row items-center">
-						<View className="w-10 h-10 rounded-lg bg-accent/20 items-center justify-center mr-3">
-							<Text className="text-accent">📱</Text>
-						</View>
-						<View>
-							<Text className="text-ink font-medium">
-								WingDrive Mobile
-							</Text>
-							<Text className="text-ink-dull text-sm">
-								Connected
-							</Text>
-						</View>
-					</View>
-				</Card>
-			</View>
-
-			{/* Nearby Devices */}
-			<View className="mb-6">
-				<Text className="text-lg font-semibold text-ink mb-3">
-					Nearby Devices
-				</Text>
-				<Card>
-					<Text className="text-ink-dull">
-						Searching for devices...
-					</Text>
-					<Text className="text-ink-faint text-sm mt-1">
-						Make sure other devices are on the same network
-					</Text>
-				</Card>
-			</View>
-
-			{/* Sync Status */}
-			<View className="mb-6">
-				<Text className="text-lg font-semibold text-ink mb-3">
-					Sync
-				</Text>
-				<Card className="flex-row items-center justify-between">
-					<View>
-						<Text className="text-ink font-medium">
-							Sync Status
-						</Text>
-						<Text className="text-ink-dull text-sm">
-							Up to date
-						</Text>
-					</View>
-					<View className="px-3 py-1 rounded-full bg-green-500/20">
-						<Text className="text-green-500 text-sm">Synced</Text>
-					</View>
-				</Card>
-			</View>
-		</ScrollView>
+			<PairingPanel
+				key={pairingMode ?? "closed"}
+				isOpen={pairingMode !== null}
+				initialMode={pairingMode ?? "generate"}
+				onClose={() => {
+					setPairingMode(null);
+					devices.refetch();
+				}}
+			/>
+		</View>
 	);
 }

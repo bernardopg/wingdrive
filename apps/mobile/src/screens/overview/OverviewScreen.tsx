@@ -385,6 +385,7 @@ export function OverviewScreen() {
 							icon={
 								<Text className="text-ink text-2xl leading-none">⋯</Text>
 							}
+							onPress={() => setShowLibrarySwitcher(true)}
 						/>
 					</View>
 
@@ -486,6 +487,7 @@ export function OverviewScreen() {
 							icon={
 								<Text className="text-ink text-2xl leading-none">⋯</Text>
 							}
+							onPress={() => setShowLibrarySwitcher(true)}
 						/>
 					</View>
 				</View>
@@ -541,7 +543,6 @@ export function OverviewScreen() {
 				}}
 				onScroll={scrollHandler}
 				scrollEventThrottle={16}
-				pointerEvents="box-none"
 			>
 				<View className="px-4 pt-4" pointerEvents="auto">
 
