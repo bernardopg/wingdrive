@@ -318,7 +318,9 @@ impl JobHandler for WingdropSendJob {
 				match result {
 					None => {
 						guard.armed = false;
-						return Err(JobError::execution(format!("{receiver} cancelled the drop")));
+						return Err(JobError::execution(format!(
+							"{receiver} cancelled the drop"
+						)));
 					}
 					Some(Err(error)) => {
 						guard.reason = Some(format!("Sending {} failed", local.display()));

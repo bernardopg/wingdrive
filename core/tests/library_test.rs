@@ -273,7 +273,10 @@ async fn interrupted_jobs_are_settled_on_library_open() {
 	// Shutdown pauses running jobs, so a paused row may be one that cannot resume.
 	let paused_not_resumable = uuid::Uuid::new_v4().to_string();
 	let paused_resumable = uuid::Uuid::new_v4().to_string();
-	row(&resumable, "file_copy", "running").insert(&db).await.unwrap();
+	row(&resumable, "file_copy", "running")
+		.insert(&db)
+		.await
+		.unwrap();
 	row(&not_resumable, "archive_compress", "running")
 		.insert(&db)
 		.await

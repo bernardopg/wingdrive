@@ -103,10 +103,7 @@ fn main() {
 		// so a debug copy left here never reaches a release bundle.
 		let stale = std::fs::metadata(&destination)
 			.and_then(|dest| Ok((dest, std::fs::metadata(&daemon_source)?)))
-			.map(|(dest, source)| {
-				dest.len() == 0
-					|| dest.modified().ok() < source.modified().ok()
-			})
+			.map(|(dest, source)| dest.len() == 0 || dest.modified().ok() < source.modified().ok())
 			.unwrap_or(true);
 		if profile == "release" || stale {
 			std::fs::copy(&daemon_source, destination).expect("Cannot stage daemon sidecar");
