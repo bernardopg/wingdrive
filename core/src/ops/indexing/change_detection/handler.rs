@@ -553,10 +553,14 @@ pub async fn handle_rename<H: ChangeHandler>(
 		handler.emit_change_event(&moved, ChangeType::Moved).await?;
 		tracing::debug!("Moved entry {} -> {}", from.display(), to.display());
 	} else {
+		// The source was never indexed, e.g. a temp folder created and renamed
+		// in the same batch (renames run before creates), so index the target.
 		tracing::debug!(
-			"Entry not found for old path {}, skipping rename",
-			from.display()
+			"Entry not found for old path {}, indexing {} as new",
+			from.display(),
+			to.display()
 		);
+		return handle_create(handler, to, config).await;
 	}
 
 	Ok(())

@@ -53,6 +53,8 @@
         "enable": true,
         "scope": [
           "$HOME/**",
+          "$HOME/.wingdrive/cache/archives/**",
+          "$HOME/.wingdrive/instances/*/cache/archives/**",
           "/Volumes/**",
           "/media/**",
           "/mnt/**",

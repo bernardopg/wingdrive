@@ -225,6 +225,11 @@ pub struct LibraryStatistics {
 	#[serde(default)]
 	pub sidecar_size: u64,
 
+	/// Files found by the last browse index of each volume. That index stays
+	/// out of the library, so these are not part of `total_files`.
+	#[serde(default)]
+	pub browsed_file_count: u64,
+
 	/// Last time the library was fully indexed
 	pub last_indexed: Option<DateTime<Utc>>,
 
@@ -247,6 +252,7 @@ impl Default for LibraryStatistics {
 			database_size: 0,
 			sidecar_count: 0,
 			sidecar_size: 0,
+			browsed_file_count: 0,
 			last_indexed: None,
 			updated_at: Utc::now(),
 		}

@@ -197,7 +197,11 @@ name: string; format: ArchiveFormat };
 /**
  * Input for extracting an archive
  */
-export type ArchiveExtractInput = { archive: WingPath; 
+export type ArchiveExtractInput = { 
+/**
+ * The archive, or a file or folder inside it to extract just that
+ */
+archive: WingPath; 
 /**
  * Folder that receives the extracted content
  */
@@ -207,6 +211,20 @@ destination: WingPath };
  * Archive formats WingDrive can read; all but 7-Zip can also be written.
  */
 export type ArchiveFormat = "zip" | "tar" | "tar_gz" | "tar_bz2" | "tar_xz" | "tar_zst" | "seven_zip";
+
+/**
+ * Input for opening a file that may lie inside an archive
+ */
+export type ArchiveOpenMemberInput = { path: WingPath };
+
+/**
+ * A path on disk that apps can open
+ */
+export type ArchiveOpenMemberOutput = { 
+/**
+ * The extracted copy for an archive member, otherwise the input path
+ */
+path: string };
 
 /**
  * Audio metadata extracted from FFmpeg
@@ -345,7 +363,11 @@ name: string;
 /**
  * The number of files with this content kind
  */
-file_count: number };
+file_count: number; 
+/**
+ * Files of this kind in the browse index, which stays out of the library
+ */
+browsed_count: number };
 
 /**
  * Input for content kind statistics query
@@ -2817,6 +2839,11 @@ sidecar_count?: number;
  * Total size of all sidecar files in bytes
  */
 sidecar_size?: number; 
+/**
+ * Files found by the last browse index of each volume. That index stays
+ * out of the library, so these are not part of `total_files`.
+ */
+browsed_file_count?: number; 
 /**
  * Last time the library was fully indexed
  */
@@ -5392,6 +5419,7 @@ export type LibraryAction =
      { type: 'adapters.update'; input: UpdateAdapterInput; output: UpdateAdapterOutput }
   |  { type: 'archive.compress'; input: ArchiveCompressInput; output: JobReceipt }
   |  { type: 'archive.extract'; input: ArchiveExtractInput; output: JobReceipt }
+  |  { type: 'archive.open_member'; input: ArchiveOpenMemberInput; output: ArchiveOpenMemberOutput }
   |  { type: 'config.library.update'; input: UpdateLibraryConfigInput; output: UpdateLibraryConfigOutput }
   |  { type: 'files.copy'; input: FileCopyInput; output: JobReceipt }
   |  { type: 'files.createFile'; input: CreateFileInput; output: CreateEntryOutput }
@@ -5545,6 +5573,7 @@ export const WIRE_METHODS = {
     'adapters.update': 'action:adapters.update.input',
     'archive.compress': 'action:archive.compress.input',
     'archive.extract': 'action:archive.extract.input',
+    'archive.open_member': 'action:archive.open_member.input',
     'config.library.update': 'action:config.library.update.input',
     'files.copy': 'action:files.copy.input',
     'files.createFile': 'action:files.createFile.input',

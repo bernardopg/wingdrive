@@ -19,7 +19,7 @@ use crate::{
 use chrono::{DateTime, Utc};
 use sea_orm::{
 	ColumnTrait, Condition, ConnectionTrait, DatabaseConnection, EntityTrait, JoinType,
-	QueryFilter, QueryOrder, QuerySelect, RelationTrait, Statement,
+	PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait, Select, Statement,
 };
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -193,7 +193,7 @@ impl FileSearchQuery {
 		if self.input.query.trim().is_empty() {
 			let results = self.execute_fast_search_no_fts(db).await?;
 			return Ok(SearchPage {
-				total: self.get_total_count(db).await.unwrap_or(0),
+				total: PaginatorTrait::count(self.no_fts_query(db).await?, db).await?,
 				facets: SearchFacets::from_results(&results),
 				results,
 			});
@@ -893,51 +893,6 @@ impl FileSearchQuery {
 		Some(crate::domain::ContentKind::from(kind_name.as_str()))
 	}
 
-	/// Get total count of matching entries for pagination
-	async fn get_total_count(&self, db: &DatabaseConnection) -> QueryResult<u64> {
-		let mut condition = Condition::any()
-			.add(entry::Column::Name.contains(&self.input.query))
-			.add(entry::Column::Extension.contains(&self.input.query));
-
-		// Apply scope filters
-		condition = self.apply_scope_filter(condition);
-
-		// Apply additional filters
-		condition = self.apply_filters(condition);
-
-		// Build count query
-		let mut query = entry::Entity::find()
-			.filter(condition)
-			.filter(entry::Column::Kind.eq(0)); // Only files
-
-		// Add location join if location filtering is needed
-		if self.input.filters.locations.is_some() {
-			query = query.join(
-				JoinType::LeftJoin,
-				crate::infra::db::entities::location::Relation::Entry.def(),
-			);
-		}
-
-		// Apply WingPath filtering if specified in scope
-		if let SearchScope::Path { path } = &self.input.scope {
-			if let Some(device_id) = path.device_id() {
-				if let Some(path_str) = path.path() {
-					// Join with directory_paths to filter by path
-					query = query
-						.join(JoinType::LeftJoin, directory_paths::Relation::Entry.def())
-						.filter(crate::ops::search::filters::directory_subtree_condition(
-							&path_str.to_string_lossy(),
-						));
-				}
-			}
-		}
-
-		// For queries with joins, we need to use a different approach
-		// We'll execute the query and count the results
-		let entries = query.all(db).await?;
-		Ok(entries.len() as u64)
-	}
-
 	/// Convert an entry model to a FileSearchResult with device and path resolution
 	async fn entry_to_search_result(
 		&self,
@@ -990,19 +945,8 @@ impl FileSearchQuery {
 		}))
 	}
 
-	/// Execute fast search without FTS (for empty queries like recents view)
-	async fn execute_fast_search_no_fts(
-		&self,
-		db: &DatabaseConnection,
-	) -> QueryResult<Vec<crate::ops::search::output::FileSearchResult>> {
-		use crate::ops::search::sorting::SortBuilder;
-
-		tracing::info!(
-			"Executing fast search without FTS (empty query), sorting by {:?}",
-			self.input.sort.field
-		);
-
-		// Build query with filters and sorting
+	/// Entries matching the filters of a search without a text query.
+	async fn no_fts_query(&self, db: &DatabaseConnection) -> QueryResult<Select<entry::Entity>> {
 		let mut query = entry::Entity::find().filter(entry::Column::VolumeId.is_not_null());
 
 		query = query.filter(self.structured_filters());
@@ -1017,6 +961,22 @@ impl FileSearchQuery {
 				query = query.filter(entry::Column::Id.is_not_in(exclude_ids));
 			}
 		}
+		Ok(query)
+	}
+
+	/// Execute fast search without FTS (for empty queries like recents view)
+	async fn execute_fast_search_no_fts(
+		&self,
+		db: &DatabaseConnection,
+	) -> QueryResult<Vec<crate::ops::search::output::FileSearchResult>> {
+		use crate::ops::search::sorting::SortBuilder;
+
+		tracing::info!(
+			"Executing fast search without FTS (empty query), sorting by {:?}",
+			self.input.sort.field
+		);
+
+		let mut query = self.no_fts_query(db).await?;
 
 		// Apply sorting
 		let sort_builder = SortBuilder::new().apply_sort(&self.input.sort);

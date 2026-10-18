@@ -250,6 +250,7 @@
 		"help": "Select files to start tagging • Press 1-9/0 to toggle tags • Esc to exit"
 	},
 	"archive": {
+		"openFailed": "Could not open file from archive: {{error}}",
 		"compressing": "Compressing",
 		"extracting": "Extracting",
 		"extractTo": "Extract to",

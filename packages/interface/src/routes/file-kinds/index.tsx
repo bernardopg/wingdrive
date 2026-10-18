@@ -1,22 +1,11 @@
 import {getIcon} from '@wingdrive/assets/util';
 import {useIsDarkTheme} from '../../hooks/useTheme';
-import type {ContentKind, SearchFilters} from '@wingdrive/ts-client';
+import type {ContentKindStatsOutput, SearchFilters} from '@wingdrive/ts-client';
 import {useEffect, useMemo} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {useNormalizedQuery} from '../../contexts/WingDriveContext';
 import {ExplorerView, useExplorer} from '../explorer';
 import {useTranslation} from '../../i18n';
-
-interface ContentKindStat {
-	kind: ContentKind;
-	name: string;
-	file_count: bigint | number;
-}
-
-interface ContentKindStatsOutput {
-	stats: ContentKindStat[];
-	total_files: bigint | number;
-}
 
 // Map content kind names to icon names and colors
 // Keys must match backend ContentKind variants (lowercase)
@@ -76,13 +65,17 @@ export function FileKindsView() {
 	>({
 		query: 'files.content_kind_stats',
 		input: {},
-		resourceType: 'content_kind'
+		// Kind counts change with indexing; the library resource is re-emitted
+		// each time statistics are recalculated, so it drives the refetch.
+		resourceType: 'library',
+		refetchOnResourceChange: true
 	});
 
 	const stats = (statsData?.stats ?? []).sort(
 		(a, b) => Number(b.file_count) - Number(a.file_count)
 	);
 	const totalFiles = Number(statsData?.total_files ?? 0);
+	const browsedFiles = stats.reduce((sum, stat) => sum + Number(stat.browsed_count), 0);
 
 	if (isLoading) {
 		return (
@@ -116,7 +109,7 @@ export function FileKindsView() {
 
 			{/* Content Grid */}
 			<div className="flex-1 overflow-auto p-3">
-				{totalFiles === 0 ? (
+				{totalFiles === 0 && browsedFiles === 0 ? (
 					<div className="flex h-full flex-col items-center justify-center text-center px-6">
 						<p className="text-ink text-sm font-medium">
 							{t('fileKinds.emptyTitle')}
@@ -146,6 +139,7 @@ export function FileKindsView() {
 						);
 
 						const fileCount = Number(stat.file_count);
+						const browsedCount = Number(stat.browsed_count);
 
 						return (
 							<button
@@ -171,6 +165,11 @@ export function FileKindsView() {
 										)}{' '}
 											{t('fileKinds.fileCount', {count: fileCount})}
 									</div>
+									{browsedCount > 0 && (
+										<div className="text-ink-faint mt-0.5 text-[11px]">
+											{t('fileKinds.browsedCount', {count: formatFileCount(browsedCount)})}
+										</div>
+									)}
 								</div>
 							</button>
 						);
@@ -209,7 +208,10 @@ export function FileKindFiles() {
 	>({
 		query: 'files.content_kind_stats',
 		input: {},
-		resourceType: 'content_kind'
+		// Kind counts change with indexing; the library resource is re-emitted
+		// each time statistics are recalculated, so it drives the refetch.
+		resourceType: 'library',
+		refetchOnResourceChange: true
 	});
 	const stat = data?.stats.find(
 		(item) => item.name === kindName && Number(item.file_count) > 0
