@@ -208,9 +208,6 @@ function App() {
 		return <DragDemo />;
 	}
 
-	if (route === "/wingdrop") {
-		return <WingdropWindow />;
-	}
 
 	if (error) {
 		console.log("Rendering error state");
@@ -275,6 +272,16 @@ function App() {
 						)}
 						<PopoutInspector />
 					</div>
+				</AuxiliaryWindow>
+			</PlatformProvider>
+		);
+	}
+
+	if (route === "/wingdrop") {
+		return (
+			<PlatformProvider platform={platform}>
+				<AuxiliaryWindow client={client}>
+					<WingdropWindow />
 				</AuxiliaryWindow>
 			</PlatformProvider>
 		);

@@ -45,6 +45,31 @@ pub struct AppConfig {
 	/// Spacebot companion runtime configuration
 	#[serde(default)]
 	pub spacebot: SpacebotConfig,
+
+	/// Receiving files from paired devices with Wingdrop
+	#[serde(default)]
+	pub wingdrop: WingdropConfig,
+}
+
+/// How this device answers Wingdrop offers.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WingdropConfig {
+	/// Whether paired devices may offer files at all
+	pub enabled: bool,
+	/// Accept offers from paired devices without asking
+	pub auto_accept: bool,
+	/// Folder that receives drops; Downloads when unset
+	pub destination: Option<PathBuf>,
+}
+
+impl Default for WingdropConfig {
+	fn default() -> Self {
+		Self {
+			enabled: true,
+			auto_accept: false,
+			destination: None,
+		}
+	}
 }
 
 /// Spacebot integration configuration.
@@ -284,6 +309,7 @@ impl AppConfig {
 			logging: LoggingConfig::default(),
 			proxy_pairing: ProxyPairingConfig::default(),
 			spacebot: SpacebotConfig::default(),
+			wingdrop: WingdropConfig::default(),
 		}
 	}
 

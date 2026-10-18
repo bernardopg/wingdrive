@@ -96,6 +96,9 @@ impl CoreQuery for ListEventsQuery {
 			"FilesModified",
 			// Log events
 			"LogMessage",
+			// Wingdrop
+			"WingdropOffered",
+			"WingdropUpdated",
 			// Custom events
 			"Custom",
 		]

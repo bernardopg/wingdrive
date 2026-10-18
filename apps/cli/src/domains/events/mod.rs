@@ -471,5 +471,12 @@ fn summarize_event(event: &Event) -> String {
 		Event::ConfigChanged { field } => {
 			format!("Configuration changed: {}", field)
 		}
+		Event::WingdropOffered { offer } => format!(
+			"Wingdrop offer {} from {}: {} files, {} bytes",
+			offer.id, offer.from_device_name, offer.file_count, offer.total_bytes
+		),
+		Event::WingdropUpdated { drop_id, status } => {
+			format!("Wingdrop {}: {:?}", drop_id, status)
+		}
 	}
 }

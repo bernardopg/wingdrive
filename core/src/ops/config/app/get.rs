@@ -49,6 +49,9 @@ pub struct AppConfigOutput {
 
 	/// Spacebot companion configuration
 	pub spacebot: SpacebotConfigOutput,
+
+	/// Wingdrop receiving configuration
+	pub wingdrop: WingdropConfigOutput,
 }
 
 /// User preferences output
@@ -91,6 +94,17 @@ pub struct ProxyPairingConfigOutput {
 	pub vouch_signature_max_age: u64,
 	pub vouch_response_timeout: u64,
 	pub vouch_queue_retry_limit: u32,
+}
+
+/// Wingdrop receiving configuration output
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct WingdropConfigOutput {
+	pub enabled: bool,
+	pub auto_accept: bool,
+	/// The configured folder, if any
+	pub destination: Option<PathBuf>,
+	/// Where drops land now: the configured folder or the default
+	pub effective_destination: PathBuf,
 }
 
 /// Spacebot companion configuration output
@@ -150,6 +164,14 @@ impl From<&AppConfig> for AppConfigOutput {
 				vouch_queue_retry_limit: config.proxy_pairing.vouch_queue_retry_limit,
 			},
 			spacebot: SpacebotConfigOutput::from(&config.spacebot),
+			wingdrop: WingdropConfigOutput {
+				enabled: config.wingdrop.enabled,
+				auto_accept: config.wingdrop.auto_accept,
+				destination: config.wingdrop.destination.clone(),
+				effective_destination: crate::service::wingdrop::destination_root(
+					config.wingdrop.destination.as_deref(),
+				),
+			},
 		}
 	}
 }

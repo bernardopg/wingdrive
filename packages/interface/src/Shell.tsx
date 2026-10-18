@@ -17,7 +17,8 @@ import {
 import {useDaemonStatus} from './hooks/useDaemonStatus';
 import {useLiveFileEvents} from './hooks/useLiveFileEvents';
 import {useTheme} from './hooks/useTheme';
-import {explorerRoutes} from './router';
+import {explorerRoutes} from './router';import {WingdropOffers} from './components/Wingdrop/WingdropOffers';
+
 
 interface ShellProps {
 	client: WingDriveClient;
@@ -32,6 +33,7 @@ function ShellWithTabs() {
 	return (
 		<DndProvider>
 			<ThemeApplier />
+			<WingdropOffers />
 			<TabView />
 		</DndProvider>
 	);

@@ -6,6 +6,7 @@ use clap::Subcommand;
 use crate::util::prelude::*;
 
 use crate::context::Context;
+use wing_core::infra::job::handle::JobReceipt;
 use wing_core::ops::network::{
 	devices::{output::ListPairedDevicesOutput, query::ListPairedDevicesInput},
 	pair::{
@@ -15,10 +16,14 @@ use wing_core::ops::network::{
 		status::{output::PairStatusOutput, query::PairStatusQuery},
 	},
 	revoke::output::DeviceRevokeOutput,
-	spacedrop::send::output::SpacedropSendOutput,
 	status::NetworkStatusQuery,
-	DeviceRevokeInput, SpacedropSendInput,
+	wingdrop::{
+		WingdropCancelInput, WingdropCancelOutput, WingdropPendingInput, WingdropRespondInput,
+		WingdropRespondOutput, WingdropSendInput,
+	},
+	DeviceRevokeInput,
 };
+use wing_core::service::wingdrop::WingdropOffer;
 
 use self::args::*;
 
@@ -37,9 +42,9 @@ pub enum NetworkCmd {
 	},
 	/// Revoke a paired device
 	Revoke(RevokeArgs),
-	/// Send files via Wingdrop
-	#[command(alias = "spacedrop")]
-	Wingdrop(WingdropArgs),
+	/// Send files to a paired device, or answer offers from one
+	#[command(subcommand, alias = "spacedrop")]
+	Wingdrop(WingdropCmd),
 }
 
 pub async fn run(ctx: &Context, cmd: NetworkCmd) -> Result<()> {
@@ -193,15 +198,67 @@ pub async fn run(ctx: &Context, cmd: NetworkCmd) -> Result<()> {
 				println!("Revoked: {}", o.revoked);
 			});
 		}
-		NetworkCmd::Wingdrop(args) => {
-			let out: SpacedropSendOutput = execute_action!(ctx, SpacedropSendInput::from(args));
-			print_output!(ctx, &out, |o: &SpacedropSendOutput| {
-				if let Some(j) = o.job_id {
-					println!("Transfer job: {}", j);
+		NetworkCmd::Wingdrop(cmd) => run_wingdrop(ctx, cmd).await?,
+	}
+	Ok(())
+}
+
+async fn run_wingdrop(ctx: &Context, cmd: WingdropCmd) -> Result<()> {
+	match cmd {
+		WingdropCmd::Send(args) => {
+			let out: JobReceipt = execute_action!(ctx, WingdropSendInput::from(args));
+			print_output!(ctx, &out, |o: &JobReceipt| {
+				println!("Offer sent; the transfer starts once the device accepts.");
+				println!("Job: {} (follow it with `wing job info {}`)", o.id, o.id);
+			});
+		}
+		WingdropCmd::Pending => {
+			let offers: Vec<WingdropOffer> = execute_core_query!(ctx, WingdropPendingInput);
+			print_output!(ctx, &offers, |offers: &Vec<WingdropOffer>| {
+				if offers.is_empty() {
+					println!("No offers waiting.");
 				}
-				if let Some(sid) = o.session_id {
-					println!("Wingdrop session: {}", sid);
+				for offer in offers {
+					println!(
+						"{}  from {}: {} files, {} bytes, expires {}",
+						offer.id,
+						offer.from_device_name,
+						offer.file_count,
+						offer.total_bytes,
+						offer.expires_at.format("%H:%M:%S")
+					);
+					for item in &offer.items {
+						println!("    {}{}", item.name, if item.is_dir { "/" } else { "" });
+					}
 				}
+			});
+		}
+		WingdropCmd::Accept { drop_id } | WingdropCmd::Decline { drop_id } => {
+			let accept = matches!(cmd, WingdropCmd::Accept { .. });
+			let out: WingdropRespondOutput =
+				execute_core_action!(ctx, WingdropRespondInput { drop_id, accept });
+			print_output!(ctx, &out, |o: &WingdropRespondOutput| {
+				if accept {
+					for destination in &o.destinations {
+						println!("Receiving into {destination}");
+					}
+				} else {
+					println!("Declined.");
+				}
+			});
+		}
+		WingdropCmd::Cancel { drop_id } => {
+			let out: WingdropCancelOutput =
+				execute_core_action!(ctx, WingdropCancelInput { drop_id });
+			print_output!(ctx, &out, |o: &WingdropCancelOutput| {
+				println!(
+					"{}",
+					if o.cancelled {
+						"Cancelled."
+					} else {
+						"No such drop."
+					}
+				);
 			});
 		}
 	}

@@ -114,10 +114,13 @@ impl JobManager {
 	/// so the user can resume them; the rest are recorded as failed.
 	pub async fn reconcile_interrupted_jobs(&self) -> JobResult<()> {
 		use sea_orm::{ColumnTrait, QueryFilter};
+		// Paused rows are included: shutdown pauses every running job, and a
+		// paused job that cannot resume would otherwise stay paused for good.
 		let stale = database::jobs::Entity::find()
 			.filter(database::jobs::Column::Status.is_in([
 				JobStatus::Running.to_string(),
 				JobStatus::Queued.to_string(),
+				JobStatus::Paused.to_string(),
 			]))
 			.all(self.db.conn())
 			.await?;
@@ -126,6 +129,7 @@ impl JobManager {
 				continue;
 			};
 			match REGISTRY.resumable(&record.name) {
+				Some(true) if record.status == JobStatus::Paused.to_string() => {}
 				Some(true) => {
 					info!(job = %job_id, name = %record.name, "Interrupted job left paused");
 					if let Err(e) = self.db.update_status(job_id, JobStatus::Paused).await {

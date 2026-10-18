@@ -248,11 +248,11 @@ async fn interrupted_jobs_are_settled_on_library_open() {
 	))
 	.await
 	.unwrap();
-	let row = |id: &str, name: &str| jobs::ActiveModel {
+	let row = |id: &str, name: &str, status: &str| jobs::ActiveModel {
 		id: Set(id.to_string()),
 		name: Set(name.to_string()),
 		state: Set(Vec::new()),
-		status: Set("running".to_string()),
+		status: Set(status.to_string()),
 		priority: Set(0),
 		progress_type: Set(None),
 		progress_data: Set(None),
@@ -270,8 +270,22 @@ async fn interrupted_jobs_are_settled_on_library_open() {
 	};
 	let resumable = uuid::Uuid::new_v4().to_string();
 	let not_resumable = uuid::Uuid::new_v4().to_string();
-	row(&resumable, "file_copy").insert(&db).await.unwrap();
-	row(&not_resumable, "archive_compress")
+	// Shutdown pauses running jobs, so a paused row may be one that cannot resume.
+	let paused_not_resumable = uuid::Uuid::new_v4().to_string();
+	let paused_resumable = uuid::Uuid::new_v4().to_string();
+	row(&resumable, "file_copy", "running")
+		.insert(&db)
+		.await
+		.unwrap();
+	row(&not_resumable, "archive_compress", "running")
+		.insert(&db)
+		.await
+		.unwrap();
+	row(&paused_not_resumable, "wingdrop_send", "paused")
+		.insert(&db)
+		.await
+		.unwrap();
+	row(&paused_resumable, "file_copy", "paused")
 		.insert(&db)
 		.await
 		.unwrap();
@@ -290,6 +304,14 @@ async fn interrupted_jobs_are_settled_on_library_open() {
 	assert_eq!(
 		statuses.get(&not_resumable).map(String::as_str),
 		Some("Failed")
+	);
+	assert_eq!(
+		statuses.get(&paused_not_resumable).map(String::as_str),
+		Some("Failed")
+	);
+	assert_eq!(
+		statuses.get(&paused_resumable).map(String::as_str),
+		Some("Paused")
 	);
 }
 

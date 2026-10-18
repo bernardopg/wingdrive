@@ -144,6 +144,16 @@ impl DeviceRegistry {
 		let event_bus = event_bus.clone();
 		let info = info.clone();
 		let library_manager_weak = self.library_manager.clone();
+		// The slug this device reaches the peer at, unique even when the peer
+		// announces this device's own slug.
+		let address = self.device_manager.get_device_slug(device_id);
+		let network_device = move |info: &DeviceInfo, is_connected: bool| {
+			let mut device = crate::domain::Device::from_network_info(info, is_connected, None);
+			if let Some(address) = &address {
+				device.slug = address.clone();
+			}
+			device
+		};
 
 		// Spawn a background task to query database and emit event
 		// This avoids blocking the current thread with database I/O
@@ -183,14 +193,12 @@ impl DeviceRegistry {
 						}
 					}
 
-					device_from_db.unwrap_or_else(|| {
-						crate::domain::Device::from_network_info(&info, is_connected, None)
-					})
+					device_from_db.unwrap_or_else(|| network_device(&info, is_connected))
 				} else {
-					crate::domain::Device::from_network_info(&info, is_connected, None)
+					network_device(&info, is_connected)
 				}
 			} else {
-				crate::domain::Device::from_network_info(&info, is_connected, None)
+				network_device(&info, is_connected)
 			};
 
 			use crate::domain::resource::EventEmitter;
@@ -359,12 +367,9 @@ impl DeviceRegistry {
 					info.device_name, e
 				))
 				.await;
-		} else {
+		} else if let Ok(address) = self.device_manager.get_device_slug(device_id).ok_or(()) {
 			self.logger
-				.debug(&format!(
-					"Cached device slug: {} -> {}",
-					info.device_slug, device_id
-				))
+				.debug(&format!("Cached device slug: {} -> {}", address, device_id))
 				.await;
 		}
 

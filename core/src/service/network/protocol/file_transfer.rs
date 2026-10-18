@@ -401,6 +401,24 @@ impl FileTransferProtocolHandler {
 		paths
 	}
 
+	/// Whether `device_id` may write `path`: inside a library location, or at
+	/// a path this device reserved for one of its accepted Wingdrops.
+	async fn is_write_allowed(&self, device_id: Uuid, path: &std::path::Path) -> bool {
+		if self.is_path_allowed(path).await {
+			return true;
+		}
+		// Compared lexically: Wingdrop destinations are absolute paths this
+		// device chose, and `..` would never match one of them.
+		let lexical = path
+			.components()
+			.all(|c| !matches!(c, std::path::Component::ParentDir));
+		lexical
+			&& self
+				.core_context
+				.as_ref()
+				.is_some_and(|ctx| ctx.wingdrop.allows_write(device_id, path))
+	}
+
 	/// Check if a path is within one of the allowed paths.
 	/// Uses canonicalization to prevent traversal attacks.
 	async fn is_path_allowed(&self, path: &std::path::Path) -> bool {
@@ -687,7 +705,7 @@ impl FileTransferProtocolHandler {
 		{
 			// SECURITY: Validate destination path is within allowed locations
 			let dest_path = std::path::Path::new(&destination_path);
-			if !self.is_path_allowed(dest_path).await {
+			if !self.is_write_allowed(from_device, dest_path).await {
 				tracing::warn!(
 					path = %destination_path,
 					from_device = %from_device,
@@ -951,6 +969,15 @@ impl FileTransferProtocolHandler {
 			(file_path, 64 * 1024u32) // 64KB chunk size
 		};
 
+		// The receiver cancelled the Wingdrop this file belongs to.
+		if self
+			.core_context
+			.as_ref()
+			.is_some_and(|ctx| ctx.wingdrop.is_revoked(&file_path))
+		{
+			return Err("The receiving device cancelled this transfer".to_string());
+		}
+
 		// Ensure parent directory exists
 		if let Some(parent) = file_path.parent() {
 			tokio::fs::create_dir_all(parent)
@@ -1006,7 +1033,7 @@ impl FileTransferProtocolHandler {
 		// Validate destination path is within allowed locations
 		// This prevents arbitrary file write attacks from malicious peers.
 		let dest_path_buf = PathBuf::from(&destination_path);
-		if !self.is_path_allowed(&dest_path_buf).await {
+		if !self.is_write_allowed(device_id, &dest_path_buf).await {
 			self.logger
 				.warn(&format!(
 					"Transfer {} rejected: destination path {:?} is not within allowed locations",

@@ -2106,16 +2106,16 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 		.item(&PredefinedMenuItem::select_all(app, None)?)
 		.build()?;
 
-	// The View menu only holds prototypes: the drag demo and a Spacedrop
-	// window with sample people that sends nothing. Release builds leave it
-	// out until those ship.
+	// Wingdrop sends files to a paired device. The drag demo is a prototype
+	// that only debug builds show.
+	let view_menu = SubmenuBuilder::new(app, "View");
 	#[cfg(debug_assertions)]
-	let view_menu = SubmenuBuilder::new(app, "View")
-		.item(
-			&MenuItemBuilder::with_id("drag-demo", "Drag Demo")
-				.accelerator("CmdOrCtrl+Shift+D")
-				.build(app)?,
-		)
+	let view_menu = view_menu.item(
+		&MenuItemBuilder::with_id("drag-demo", "Drag Demo")
+			.accelerator("CmdOrCtrl+Shift+D")
+			.build(app)?,
+	);
+	let view_menu = view_menu
 		.item(
 			&MenuItemBuilder::with_id("wingdrop", "Wingdrop")
 				.accelerator("CmdOrCtrl+Shift+S")
@@ -2127,7 +2127,6 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 		.item(&app_menu)
 		.item(&file_menu)
 		.item(&edit_menu);
-	#[cfg(debug_assertions)]
 	let menu = menu.item(&view_menu);
 	let menu = menu.build()?;
 
