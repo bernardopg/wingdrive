@@ -1,0 +1,41 @@
+name: Auto-merge
+
+# Pull requests opened by the repository owner merge on their own once the
+# checks the main ruleset requires pass; the head branch is deleted on merge
+# (delete_branch_on_merge is on for the repository).
+#
+# A merge made with GITHUB_TOKEN does not trigger the push workflows on main
+# (CI, CodeQL, Crowdin upload). Store a fine-grained token with contents and
+# pull requests write access on this repository as AUTO_MERGE_TOKEN so the
+# merge is made as the owner and those workflows run. The release gate
+# dispatches CI itself when a tagged commit has no run, so the fallback is safe.
+#
+# Runs on pull_request_target without checking out the pull request, so no
+# code from the branch runs with these permissions.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable:
+    name: Enable auto-merge
+    if: >-
+      github.event.pull_request.user.login == github.repository_owner &&
+      !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge with a merge commit
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN || github.token }}
+          HAS_OWNER_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN != '' }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          if [ "$HAS_OWNER_TOKEN" != "true" ]; then
+            echo "::warning::AUTO_MERGE_TOKEN is not set; the merge will not trigger push workflows on main."
+          fi
+          gh pr merge "$PR" -R "$GITHUB_REPOSITORY" --auto --merge
