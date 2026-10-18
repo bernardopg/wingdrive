@@ -1,6 +1,5 @@
 import type {File} from '@wingdrive/ts-client';
 import {isVirtualFile} from '@wingdrive/ts-client';
-import {containingArchive} from './hooks/archiveName';
 
 /**
  * What the current selection allows. Virtual entries (devices, volumes and
@@ -27,10 +26,7 @@ export function selectionCapabilities(files: File[]): SelectionCapabilities {
 	const hasVirtual = files.some((file) => isVirtualFile(file));
 	const operable = files.filter(isOperableFile);
 	// Files inside an archive are read-only; they are opened or extracted.
-	const inArchive = operable.some((file) => {
-		const path = physicalPath(file);
-		return !!path && containingArchive(path) !== null;
-	});
+	const inArchive = operable.some((file) => !!file.archive);
 	const canModify = !hasVirtual && !inArchive && operable.length > 0;
 
 	return {

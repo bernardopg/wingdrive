@@ -1034,6 +1034,7 @@ impl DirectoryListingQuery {
 				if !member.is_dir {
 					file.content_kind = registry.identify_by_extension(&path);
 				}
+				file.archive = Some(archive.to_string_lossy().into_owned());
 				Some(file)
 			})
 			.collect();
