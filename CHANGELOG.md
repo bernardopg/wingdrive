@@ -3,6 +3,56 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.0.0 — 2026-10-18
+
+First stable release of WingDrive (#238 to #251).
+
+### Wingdrop
+
+- Send files and folders to a paired device. The receiver sees who sends
+  what, accepts or declines, and accepted files land in its Wingdrop folder
+  (Downloads by default) under free names, so nothing is overwritten. Either
+  side can cancel mid-transfer. File menu "Send with Wingdrop", the Wingdrop
+  window, an offer prompt, Settings > Services, and
+  `wing network wingdrop send|pending|accept|decline|cancel` (#251).
+- Paired devices sharing a hostname are addressed as `<name>-<id>` and no
+  longer show this device's data (#251).
+
+### Archives
+
+- Zip, tar and 7z archives open as folders: browse, preview and open their
+  files, or extract a single file or folder (#241, #243).
+- Extracted folders appear in the index; zip archives keep each file's own
+  date (#240, #243).
+
+### Explorer
+
+- Location totals and scan state update live; New Folder starts a rename;
+  paste asks only when a name already exists; Recents has the top bar; tabs
+  show tag, kind and page names (#243).
+- Overview counts paired devices and shows files seen by volume browsing;
+  File Kinds updates while indexing and counts filtered results correctly
+  (#240, #242).
+
+### Reliability
+
+- Indexer batches take the SQLite write lock up front; batches were lost to
+  `database is locked` (#240).
+- Settings changed while the daemon runs survive its shutdown; jobs that
+  cannot resume no longer stay paused after a restart (#251).
+- Daemon errors show their message instead of raw JSON; status colors
+  (errors, online dots) render again (#243, #251).
+
+### Appearance
+
+- All twenty themes save, including the T3 and community themes (#240).
+- Missing Portuguese translations filled in (#243).
+
+### Mobile
+
+- Android app launches, pairs with the desktop and syncs libraries, with a
+  working Network and Settings tab (#238, #239).
+
 ## 2.0.0-alpha.18 — 2026-10-16
 
 ### Explorer
