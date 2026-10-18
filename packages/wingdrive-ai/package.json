@@ -37,7 +37,7 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
-    "@tanstack/react-virtual": "^3.14.17",
+    "@tanstack/react-virtual": "^3.14.20",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "tsup": "^8.5.1",
