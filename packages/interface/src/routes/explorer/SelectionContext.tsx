@@ -52,6 +52,9 @@ interface SelectionContextValue {
 	cancelRename: () => void;
 	saveRename: (newName: string) => Promise<void>;
 	isRenaming: boolean;
+	/** Name of a just-created entry to rename once it shows up in the listing */
+	pendingRename: string | null;
+	renameWhenListed: (name: string | null) => void;
 	/**
 	 * Rebuilds the selection from the displayed collection: drops entries that
 	 * left it and refreshes the rest. The explorer calls it whenever the
@@ -89,6 +92,7 @@ export function SelectionProvider({
 	const [focusedIndex, setFocusedIndex] = useState(-1);
 	const [, setLastSelectedIndex] = useState(-1);
 	const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
+	const [pendingRename, renameWhenListed] = useState<string | null>(null);
 
 	// Mirrors selectedFiles so the callback can compute chained updates
 	// without reading stale state between batched re-renders
@@ -109,6 +113,10 @@ export function SelectionProvider({
 
 	// Track the stored IDs for the active tab (separate from File objects)
 	const storedIds = getSelectionIds(activeTabId);
+	// Updated on render and also by setSelectedFiles, so a restore that runs in
+	// the same commit as a new selection sees it instead of the previous ids.
+	const storedIdsRef = useRef(storedIds);
+	storedIdsRef.current = storedIds;
 
 	// Clear selection when activeTabId changes (we'll restore it when files load)
 	useEffect(() => {
@@ -130,10 +138,8 @@ export function SelectionProvider({
 					: filesOrUpdater;
 
 			selectedFilesRef.current = nextFiles;
-			updateSelectionIds(
-				activeTabId,
-				nextFiles.map((f) => f.id)
-			);
+			storedIdsRef.current = nextFiles.map((f) => f.id);
+			updateSelectionIds(activeTabId, storedIdsRef.current);
 
 			setSelectedFilesInternal(nextFiles);
 		},
@@ -408,8 +414,6 @@ export function SelectionProvider({
 		[selectedFileIds]
 	);
 
-	const storedIdsRef = useRef(storedIds);
-	storedIdsRef.current = storedIds;
 
 	const restoreSelectionFromFiles = useCallback(
 		(files: File[]) => {
@@ -473,6 +477,8 @@ export function SelectionProvider({
 			cancelRename,
 			saveRename,
 			isRenaming,
+			pendingRename,
+			renameWhenListed,
 			// Restore selection
 			restoreSelectionFromFiles
 		}),
@@ -491,6 +497,7 @@ export function SelectionProvider({
 			cancelRename,
 			saveRename,
 			isRenaming,
+			pendingRename,
 			restoreSelectionFromFiles
 		]
 	);

@@ -93,6 +93,11 @@ pub struct File {
 
 	/// Video duration (for grid display optimization)
 	pub duration_seconds: Option<f64>,
+
+	/// The archive file this entry lives in, when it is a member of one.
+	/// Members are read-only: they are opened from a cached copy or extracted.
+	#[serde(default)]
+	pub archive: Option<String>,
 }
 
 /// Domain representation of a sidecar
@@ -506,6 +511,7 @@ impl File {
 			kind,
 			is_local,
 			duration_seconds: None,
+			archive: None,
 		}
 	}
 
@@ -602,6 +608,7 @@ impl File {
 			kind,
 			is_local,
 			duration_seconds: None,
+			archive: None,
 		}
 	}
 

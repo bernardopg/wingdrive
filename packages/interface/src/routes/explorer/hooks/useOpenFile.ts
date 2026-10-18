@@ -5,7 +5,7 @@ import { usePlatform } from "../../../contexts/PlatformContext";
 import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { useOpenWith } from "../../../hooks/useOpenWith";
 import { useExplorer } from "../context";
-import { containingArchive, isArchiveName } from "./archiveName";
+import { isArchiveName } from "./archiveName";
 import { useTranslation } from "../../../i18n";
 
 /** Most files one Open launches, so a stray Select All cannot start hundreds of apps. */
@@ -25,7 +25,7 @@ export function useOpenFile(navigate?: (path: WingPath) => void) {
 		}
 		if (!("Physical" in file.wing_path)) return;
 		let path = file.wing_path.Physical.path;
-		const inArchive = containingArchive(path) !== null;
+		const inArchive = !!file.archive;
 		// Archives open as folders; their files are extracted to a cache first.
 		if (file.kind === "File" && !inArchive && isArchiveName(path)) {
 			go(file.wing_path);

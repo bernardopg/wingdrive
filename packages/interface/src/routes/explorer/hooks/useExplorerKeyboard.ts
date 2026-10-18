@@ -1,5 +1,5 @@
 import type {File} from '@wingdrive/ts-client';
-import {useEffect, useState} from 'react';
+import {useEffect} from 'react';
 import {useClipboard} from '../../../hooks/useClipboard';
 import {useKeybind} from '../../../hooks/useKeybind';
 import {useKeybindScope} from '../../../hooks/useKeybindScope';
@@ -46,7 +46,9 @@ export function useExplorerKeyboard() {
 		setFocusedIndex,
 		setSelectedFiles,
 		startRename,
-		isRenaming
+		isRenaming,
+		pendingRename,
+		renameWhenListed
 	} = useSelection();
 	const clipboard = useClipboard();
 	const pasteFiles = usePasteFiles();
@@ -57,8 +59,6 @@ export function useExplorerKeyboard() {
 	const {duplicateFiles, isPending: isDuplicating} = useDuplicateFiles();
 	const createFolder = useCreateFolder();
 	const refetchListings = useRefetchFileListings();
-	// Name of a folder created from the keyboard, renamed once it is listed
-	const [pendingRename, setPendingRename] = useState<string | null>(null);
 
 	// Activate explorer keybind scope when this hook is active
 	useKeybindScope('explorer');
@@ -83,9 +83,8 @@ export function useExplorerKeyboard() {
 
 	useKeybind('explorer.refresh', refetchListings);
 
-	useKeybind('explorer.newFolder', async () => {
-		const name = await createFolder();
-		if (name) setPendingRename(name);
+	useKeybind('explorer.newFolder', () => {
+		void createFolder();
 	});
 
 	const {newFile} = useCreateEntry();
@@ -117,15 +116,11 @@ export function useExplorerKeyboard() {
 		if (!pendingRename) return;
 		const folder = files.find((f: File) => f.name === pendingRename);
 		if (!folder) return;
-		// startRename only accepts a single selection, so select first and
-		// start the rename on the next run once the selection is committed.
-		if (selectedFiles.length !== 1 || selectedFiles[0].id !== folder.id) {
-			setSelectedFiles([folder]);
-			return;
-		}
-		setPendingRename(null);
-		startRename(folder.id);
-	}, [files, pendingRename, selectedFiles, setSelectedFiles, startRename]);
+		renameWhenListed(null);
+		// Passing the file selects it and starts the rename in one step; the
+		// selection ref startRename reads otherwise still holds the old one here.
+		startRename(folder.id, folder);
+	}, [files, pendingRename, renameWhenListed, startRename]);
 
 	useKeybind(
 		'explorer.copy',

@@ -34,7 +34,7 @@ export function SourcePathBar({
 			</span>
 
 			<span className="text-ink-faint ml-1 whitespace-nowrap text-[11px]">
-				{itemCount.toLocaleString()} items
+				{t("ui.itemCount", {count: itemCount, formattedCount: itemCount.toLocaleString()})}
 			</span>
 		</div>
 	);

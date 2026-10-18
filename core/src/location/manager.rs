@@ -497,6 +497,7 @@ impl LocationManager {
 		active_location.updated_at = Set(chrono::Utc::now());
 
 		active_location.update(library.db().conn()).await?;
+		super::emit_location_changed(library, location_id).await;
 		Ok(())
 	}
 
@@ -522,6 +523,7 @@ impl LocationManager {
 		active_location.updated_at = Set(chrono::Utc::now());
 
 		active_location.update(library.db().conn()).await?;
+		super::emit_location_changed(library, location_id).await;
 		Ok(())
 	}
 

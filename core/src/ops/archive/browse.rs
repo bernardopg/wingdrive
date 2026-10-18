@@ -89,15 +89,30 @@ pub fn materialize(
 ) -> Result<PathBuf, ArchiveError> {
 	let inner = engine::safe_relative(inner)?;
 	let (len, modified) = stamp(archive)?;
-	let key = blake3::hash(format!("{}\0{len}\0{modified:?}", archive.display()).as_bytes());
-	let key = &key.to_hex()[..16];
-	let root = cache_root.join(key);
-	let target = root.join(&inner);
+	let key = blake3::hash(
+		format!(
+			"{}\0{len}\0{modified:?}\0{}",
+			archive.display(),
+			inner.display()
+		)
+		.as_bytes(),
+	);
+	// One flat folder per member, and a name without a leading dot: the
+	// webview's asset protocol refuses paths with hidden components.
+	let root = cache_root.join(&key.to_hex()[..16]);
+	let name = inner
+		.file_name()
+		.map(|n| n.to_string_lossy().into_owned())
+		.unwrap_or_default();
+	let target = root.join(match name.strip_prefix('.') {
+		Some(rest) => format!("_{rest}"),
+		None => name,
+	});
 	if target.is_file() {
 		return Ok(target);
 	}
 
-	let temp = cache_root.join(format!(".{key}-{}", Uuid::new_v4()));
+	let temp = cache_root.join(format!("tmp-{}", Uuid::new_v4()));
 	std::fs::create_dir_all(&temp)?;
 	let result = (|| {
 		engine::extract_only(
@@ -114,12 +129,35 @@ pub fn materialize(
 				inner.display()
 			)));
 		}
-		std::fs::create_dir_all(target.parent().unwrap_or(&root))?;
+		std::fs::create_dir_all(&root)?;
 		std::fs::rename(&extracted, &target)?;
 		Ok(target)
 	})();
 	let _ = std::fs::remove_dir_all(&temp);
 	result
+}
+
+/// Copies older than this are removed when the daemon first opens a member.
+const CACHE_MAX_AGE: std::time::Duration = std::time::Duration::from_secs(7 * 24 * 60 * 60);
+
+/// Removes cached copies and leftover temp folders older than `max_age`.
+pub fn prune(cache_root: &Path, max_age: std::time::Duration) {
+	let Ok(entries) = std::fs::read_dir(cache_root) else {
+		return;
+	};
+	for entry in entries.flatten() {
+		let old = entry
+			.metadata()
+			.and_then(|m| m.modified())
+			.ok()
+			.and_then(|t| t.elapsed().ok())
+			.is_some_and(|age| age > max_age);
+		if old {
+			if let Err(error) = std::fs::remove_dir_all(entry.path()) {
+				tracing::warn!(path = %entry.path().display(), %error, "Could not prune archive cache");
+			}
+		}
+	}
 }
 
 /// Folder that holds files opened from archives.
@@ -160,11 +198,18 @@ impl LibraryAction for ArchiveOpenMemberAction {
 	) -> Result<Self::Output, ActionError> {
 		let path = super::job::local(&self.input.path, "path")?;
 		let cache = cache_root(&context);
-		let opened = tokio::task::spawn_blocking(move || match split(&path) {
-			Some((archive, inner)) if !inner.as_os_str().is_empty() => {
-				materialize(&archive, &inner, &cache)
+		static PRUNED: OnceLock<()> = OnceLock::new();
+		let prune_first = PRUNED.set(()).is_ok();
+		let opened = tokio::task::spawn_blocking(move || {
+			if prune_first {
+				prune(&cache, CACHE_MAX_AGE);
 			}
-			_ => Ok(path),
+			match split(&path) {
+				Some((archive, inner)) if !inner.as_os_str().is_empty() => {
+					materialize(&archive, &inner, &cache)
+				}
+				_ => Ok(path),
+			}
 		})
 		.await
 		.map_err(|e| ActionError::Internal(e.to_string()))?
@@ -215,10 +260,16 @@ mod tests {
 		let cache = dir.path().join("cache");
 		let inner = Path::new("docs/deep/note.txt");
 		let opened = materialize(&archive, inner, &cache).unwrap();
-		assert!(opened.starts_with(&cache) && opened.ends_with(inner));
+		assert!(opened.starts_with(&cache) && opened.ends_with("note.txt"));
 		assert_eq!(std::fs::read_to_string(&opened).unwrap(), "inside");
 		assert_eq!(materialize(&archive, inner, &cache).unwrap(), opened);
 		assert!(materialize(&archive, Path::new("docs/deep"), &cache).is_err());
+		// Nothing but the copy is left behind, and only stale copies are pruned.
+		assert_eq!(std::fs::read_dir(&cache).unwrap().count(), 1);
+		prune(&cache, std::time::Duration::from_secs(3600));
+		assert!(opened.is_file());
+		prune(&cache, std::time::Duration::ZERO);
+		assert!(!opened.exists());
 		assert_eq!(members(&archive).unwrap().len(), 3);
 	}
 }

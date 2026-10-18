@@ -23,22 +23,6 @@ export function isArchiveName(name: string): boolean {
 	return ARCHIVE_SUFFIXES.some((suffix) => lower.endsWith(suffix) && lower.length > suffix.length);
 }
 
-/**
- * The archive file `path` lies inside, from the names of its folders, or the
- * path itself with `orSelf` when it names an archive.
- *
- * shortcut: a real folder named like an archive reads as one here; the daemon
- * checks the disk, so opening still works, only the menu is narrowed.
- */
-export function containingArchive(path: string, orSelf = false): string | null {
-	const parts = path.split('/');
-	const last = orSelf ? parts.length : parts.length - 1;
-	for (let i = 1; i < last; i++) {
-		if (isArchiveName(parts[i])) return parts.slice(0, i + 1).join('/');
-	}
-	return null;
-}
-
 export const COMPRESS_FORMATS: {format: ArchiveFormat; label: string}[] = [
 	{format: 'zip', label: 'archive.zip'},
 	{format: 'tar_gz', label: 'archive.tarGz'},

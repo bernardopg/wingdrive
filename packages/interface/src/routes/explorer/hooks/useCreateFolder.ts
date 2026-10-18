@@ -5,6 +5,7 @@ import {useLibraryMutation} from '../../../contexts/WingDriveContext';
 import {useRefetchFileListings} from '../../../hooks/useRefetchFileListings';
 import {useUndo} from '../../../hooks/useUndo';
 import {useExplorer} from '../context';
+import {useSelection} from '../SelectionContext';
 import {i18n, useTranslation} from '../../../i18n';
 
 /** First of "Untitled Folder", "Untitled Folder 2", ... not already taken. */
@@ -30,6 +31,8 @@ export function useCreateFolder() {
 	const refetchListings = useRefetchFileListings();
 	const platform = usePlatform();
 	const undo = useUndo();
+	// Every entry point (menu, shortcut) names the folder right away.
+	const {renameWhenListed} = useSelection();
 
 	return useCallback(async (): Promise<string | null> => {
 		if (!operationalPath) return null;
@@ -61,6 +64,7 @@ export function useCreateFolder() {
 			// event; without the manual refetch the new folder only appeared
 			// after leaving and re-entering.
 			refetchListings();
+			renameWhenListed(name);
 			return name;
 		} catch (err) {
 			toast.error(t('errors.failedToCreateFolder', {error: err}));
@@ -73,6 +77,7 @@ export function useCreateFolder() {
 		refetchListings,
 		platform,
 		undo,
+		renameWhenListed,
 		t
 	]);
 }

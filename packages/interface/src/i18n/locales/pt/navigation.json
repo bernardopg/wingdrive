@@ -151,6 +151,19 @@
 		"actions": "Ações do volume",
 		"uniqueTitle": "Único: {{size}} ({{percent}}%)",
 		"duplicateTitle": "Duplicado: {{size}} ({{percent}}%)",
+		"free": "{{size}} livres",
+		"files_one": "{{formattedCount}} arquivo",
+		"files_other": "{{formattedCount}} arquivos",
+		"types": {
+			"Primary": "Principal",
+			"UserData": "Dados do usuário",
+			"External": "Externo",
+			"Secondary": "Secundário",
+			"System": "Sistema",
+			"Network": "Rede",
+			"Cloud": "Nuvem",
+			"Virtual": "Virtual"
+		},
 		"indexingTitle": "Indexação: {{indexed}} / {{total}} ({{percent}}%)"
 	},
 	"daemon": {
@@ -366,6 +379,8 @@
 		"refreshStatus": "Atualizar status",
 		"startDaemonAutomaticallyWhenAppLaunches": "Iniciar o daemon automaticamente ao abrir o app",
 		"runDaemonInTheAppProcess": "Executar o daemon no processo do app (alternativa se a permissão em segundo plano for negada)",
-		"sources": "Fontes"
+		"sources": "Fontes",
+		"itemCount_one": "{{formattedCount}} item",
+		"itemCount_other": "{{formattedCount}} itens"
 	}
 }

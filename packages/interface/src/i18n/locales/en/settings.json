@@ -156,7 +156,8 @@
 	"about": {
 		"tagline": "A file explorer from the future.",
 		"manifesto": "Infrastructure for the next era of computing. An architecture designed for multi-device environments from the ground up—not cloud services retrofitted with offline support, but local-first sync that scales to the cloud when you want it.",
-		"website": "Website"
+		"website": "Website",
+		"discussions": "Discussions"
 	},
 	"cancel": "Cancel",
 	"restartNeeded": "Some changes take effect after the daemon restarts.",

@@ -1468,7 +1468,12 @@ content_kind: ContentKind; is_local: boolean;
 /**
  * Video duration (for grid display optimization)
  */
-duration_seconds: number | null };
+duration_seconds: number | null; 
+/**
+ * The archive file this entry lives in, when it is a member of one.
+ * Members are read-only: they are opened from a cached copy or extracted.
+ */
+archive?: string | null };
 
 /**
  * Query to get a file by its ID with all related data

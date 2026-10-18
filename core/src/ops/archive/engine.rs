@@ -339,7 +339,29 @@ fn zip_time(time: zip::DateTime) -> Option<SystemTime> {
 		time.minute().into(),
 		time.second().into(),
 	)?;
-	Some(naive.and_utc().into())
+	// Zip stores wall-clock time without a zone; tools read it as local time.
+	Some(naive.and_local_timezone(chrono::Local).earliest()?.into())
+}
+
+/// A file's modification time as zip's local wall-clock time; zip cannot
+/// store dates before 1980, so those fall back to its earliest date.
+fn zip_mtime(meta: &std::fs::Metadata) -> zip::DateTime {
+	use chrono::{Datelike, Timelike};
+	meta.modified()
+		.ok()
+		.map(chrono::DateTime::<chrono::Local>::from)
+		.and_then(|t| {
+			zip::DateTime::from_date_and_time(
+				u16::try_from(t.year()).ok()?,
+				t.month() as u8,
+				t.day() as u8,
+				t.hour() as u8,
+				t.minute() as u8,
+				t.second() as u8,
+			)
+			.ok()
+		})
+		.unwrap_or_default()
 }
 
 /// Direct children of the folder `dir` inside the archive (empty for the
@@ -647,6 +669,7 @@ fn compress_zip<W: Write + io::Seek>(
 		let options = SimpleFileOptions::default()
 			.compression_method(zip::CompressionMethod::Deflated)
 			.unix_permissions(unix_mode(&item.meta))
+			.last_modified_time(zip_mtime(&item.meta))
 			.large_file(item.meta.len() >= u32::MAX as u64);
 		if item.meta.is_dir() {
 			zip.add_directory(format!("{name}/"), options)?;
@@ -842,10 +865,31 @@ mod tests {
 		for format in [ArchiveFormat::Zip, ArchiveFormat::TarGz] {
 			let dir = tempfile::tempdir().unwrap();
 			let sources = tree(dir.path());
+			// An old date shows whether the archive keeps it rather than "now".
+			File::options()
+				.write(true)
+				.open(dir.path().join("docs/a.txt"))
+				.unwrap()
+				.set_modified(UNIX_EPOCH + Duration::from_secs(1_600_000_000))
+				.unwrap();
 			let archive = dir.path().join(format!("out.{}", format.extension()));
 			compress(&sources, format, &archive, &Control::default()).unwrap();
 
 			let members = list(&archive, format).unwrap();
+			let source_mtime = std::fs::metadata(dir.path().join("docs/a.txt"))
+				.unwrap()
+				.modified()
+				.unwrap();
+			let listed_mtime = members
+				.iter()
+				.find(|m| m.path == Path::new("docs/a.txt"))
+				.and_then(|m| m.modified)
+				.unwrap();
+			let drift = listed_mtime
+				.duration_since(source_mtime)
+				.unwrap_or_else(|e| e.duration());
+			// Zip keeps 2-second precision; a wrong zone would be hours off.
+			assert!(drift.as_secs() <= 2, "{format:?} drift {drift:?}");
 			let b = members
 				.iter()
 				.find(|m| m.path == Path::new("docs/deep/b.bin"))

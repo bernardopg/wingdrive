@@ -2588,6 +2588,15 @@ fn main() {
 			);
 
 			let data_dir = runtime.data_dir;
+			// Files opened from archives are extracted under the daemon's data
+			// dir, which the static scope cannot name (it moves with the
+			// instance and sits in a hidden folder), so allow it here.
+			if let Err(error) = app
+				.asset_protocol_scope()
+				.allow_directory(data_dir.join("cache").join("archives"), true)
+			{
+				tracing::warn!(%error, "Could not allow the archive cache in the asset scope");
+			}
 			let base_data_dir = runtime.base_data_dir;
 			let instance = runtime.instance;
 			let socket_addr = runtime.socket_addr;

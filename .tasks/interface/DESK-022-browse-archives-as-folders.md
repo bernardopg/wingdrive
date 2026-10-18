@@ -1,7 +1,7 @@
 ---
 id: DESK-022
 title: Browse archives as folders
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: High
@@ -30,7 +30,7 @@ archive enters it like a folder; its files open, preview and extract from inside
 
 - [x] Engine tests: listing, implicit folders, extracting one member (zip, tar.gz)
 - [x] Browse tests: path splitting, cache reuse, folders refused as members
-- [ ] Runtime in the Tauri app: enter a zip, preview an image inside it, open a text file, extract a folder
+- [x] Runtime in the Tauri app: enter a zip, preview an image inside it, open a text file, extract a folder
 
 ## Evidence
 
@@ -38,7 +38,14 @@ archive enters it like a folder; its files open, preview and extract from inside
   kinds; `archive.open_member` returned the cached copy with the right content and passed a plain file through;
   extracting `test.zip/docs/img` placed `img/r.png` next to the archive.
 
+- Tauri app on Xvfb through WebKitWebDriver (2026-10-17): entered `projeto.zip`, `.7z` and `.tar.xz`; Quick
+  Preview showed `logo.png` from inside the zip; the member menu offered only Quick Look, Open, Extract Here
+  and Extract To; Extract Here placed `README.md` next to the archive.
+
 ## Notes
 
-- The listing cache keeps 16 archives and is cleared when full. The extracted-file cache is never pruned yet.
-- The UI decides "inside an archive" from folder names, so a real folder named `x.zip` gets the narrowed menu.
+- Members carry `File.archive` (the archive's path) from the listing, so the UI never guesses from names.
+- Opened members are copied to `<data_dir>/cache/archives/<hash>/<name>` (no hidden folders, which the
+  webview's asset protocol refuses); copies older than 7 days are pruned when the daemon first opens one.
+  The Tauri shell allows that folder in the asset scope at runtime, wherever the instance keeps its data.
+- The listing cache keeps 16 archives and is cleared when full.

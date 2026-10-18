@@ -140,11 +140,16 @@
 			"favorites": "Favoritos",
 			"recents": "Recentes",
 			"fileKinds": "Tipos de arquivo",
-			"sources": "Origens",
+			"sources": "Fontes",
 			"adapters": "Adaptadores",
 			"search": "Pesquisar",
 			"jobs": "Tarefas",
-			"daemon": "Daemon"
+			"daemon": "Daemon",
+			"redundancy": "Redundância",
+			"atRisk": "Arquivos em risco",
+			"compare": "Comparar volumes",
+			"trash": "Lixeira",
+			"wingbot": "Wingbot"
 		}
 	},
 	"tags": {

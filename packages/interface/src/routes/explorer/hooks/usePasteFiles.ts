@@ -17,6 +17,7 @@ export function usePasteFiles() {
 				operation: contents.operation === "cut" ? "move" : "copy",
 				sources: contents.files,
 				destination,
+				confirmOnlyOnConflict: true,
 				onComplete: () => {
 					void clipboard.finishPaste(contents).catch((error) => toast.error(t("errors.couldNotUpdateClipboard", {error})));
 				},

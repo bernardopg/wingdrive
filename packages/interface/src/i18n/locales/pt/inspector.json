@@ -203,7 +203,14 @@
 			"hoursAgo_one": "há {{count}} hora",
 			"hoursAgo_other": "há {{count}} horas",
 			"daysAgo_one": "há {{count}} dia",
-			"daysAgo_other": "há {{count}} dias"
+			"daysAgo_other": "há {{count}} dias",
+			"scanStates": {
+				"Idle": "Ocioso",
+				"Pending": "Pendente",
+				"Completed": "Concluído",
+				"Failed": "Falhou",
+				"Paused": "Pausado"
+			}
 		},
 		"preview": {
 			"name": "Nome",
@@ -258,7 +265,10 @@
 			"sendMessage": "Enviar mensagem",
 			"typeMessage": "Digite uma mensagem...",
 			"closePreview": "ESC ou Espaço para fechar",
-			"mesh": "Malha 3D"
+			"mesh": "Malha 3D",
+			"hintClose": "para fechar",
+			"hintOr": "ou",
+			"hintNavigate": "para navegar"
 		}
 	},
 	"knowledge": {
