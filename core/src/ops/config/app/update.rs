@@ -76,6 +76,18 @@ pub struct UpdateAppConfigInput {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub proxy_pairing_vouch_queue_retry_limit: Option<u32>,
 
+	/// Whether paired devices may offer files with Wingdrop
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub wingdrop_enabled: Option<bool>,
+
+	/// Accept Wingdrop offers from paired devices without asking
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub wingdrop_auto_accept: Option<bool>,
+
+	/// Folder that receives drops; an empty string restores Downloads
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub wingdrop_destination: Option<String>,
+
 	/// Whether Spacebot features are enabled in the UI
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub spacebot_enabled: Option<bool>,
@@ -124,6 +136,16 @@ impl CoreAction for UpdateAppConfigAction {
 	}
 
 	async fn validate(&self, _context: Arc<CoreContext>) -> Result<ValidationResult, ActionError> {
+		if let Some(ref destination) = self.input.wingdrop_destination {
+			let destination = destination.trim();
+			if !destination.is_empty() && !std::path::Path::new(destination).is_absolute() {
+				return Err(ActionError::Validation {
+					field: "wingdrop_destination".to_string(),
+					message: "The Wingdrop folder must be an absolute path".to_string(),
+				});
+			}
+		}
+
 		// Validate log level
 		if let Some(ref level) = self.input.log_level {
 			let valid_levels = ["trace", "debug", "info", "warn", "error"];
@@ -359,6 +381,30 @@ impl CoreAction for UpdateAppConfigAction {
 			if config.proxy_pairing.vouch_queue_retry_limit != retry_limit {
 				config.proxy_pairing.vouch_queue_retry_limit = retry_limit;
 				changes.push("proxy_pairing_vouch_queue_retry_limit");
+			}
+		}
+
+		if let Some(enabled) = self.input.wingdrop_enabled {
+			if config.wingdrop.enabled != enabled {
+				config.wingdrop.enabled = enabled;
+				changes.push("wingdrop_enabled");
+			}
+		}
+
+		if let Some(auto_accept) = self.input.wingdrop_auto_accept {
+			if config.wingdrop.auto_accept != auto_accept {
+				config.wingdrop.auto_accept = auto_accept;
+				changes.push("wingdrop_auto_accept");
+			}
+		}
+
+		if let Some(ref destination) = self.input.wingdrop_destination {
+			let destination = destination.trim();
+			let normalized =
+				(!destination.is_empty()).then(|| std::path::PathBuf::from(destination));
+			if config.wingdrop.destination != normalized {
+				config.wingdrop.destination = normalized;
+				changes.push("wingdrop_destination");
 			}
 		}
 

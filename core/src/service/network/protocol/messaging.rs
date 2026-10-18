@@ -57,6 +57,8 @@ pub enum Message {
 	},
 	/// Library-related message
 	Library(LibraryMessage),
+	/// Wingdrop offer, decision or progress
+	Wingdrop(crate::service::wingdrop::WingdropMessage),
 }
 
 impl MessagingProtocolHandler {
@@ -671,10 +673,61 @@ impl MessagingProtocolHandler {
 		node_id: EndpointId,
 		message: LibraryMessage,
 	) -> Result<LibraryMessage> {
+		tracing::info!("Sending library message to node {}: {:?}", node_id, message);
+		match self
+			.send_request(node_id, Message::Library(message))
+			.await?
+		{
+			Message::Library(lib_msg) => {
+				tracing::debug!("Received library message response: {:?}", lib_msg);
+				Ok(lib_msg)
+			}
+			_ => Err(NetworkingError::Protocol(
+				"Expected Library message in response".to_string(),
+			)),
+		}
+	}
+
+	/// Sends a Wingdrop message to a node and returns its reply.
+	pub async fn send_wingdrop_message(
+		&self,
+		node_id: EndpointId,
+		message: crate::service::wingdrop::WingdropMessage,
+	) -> Result<crate::service::wingdrop::WingdropMessage> {
+		match self
+			.send_request(node_id, Message::Wingdrop(message))
+			.await?
+		{
+			Message::Wingdrop(reply) => Ok(reply),
+			_ => Err(NetworkingError::Protocol(
+				"Expected Wingdrop message in response".to_string(),
+			)),
+		}
+	}
+
+	/// Sends one message and waits for the reply. Either side may close an
+	/// idle or duplicate connection at any moment (reconnection keeps only
+	/// one), so a request that dies on a closed connection before any reply
+	/// is sent once more on a fresh one. Handlers treat repeats as no-ops.
+	async fn send_request(&self, node_id: EndpointId, envelope: Message) -> Result<Message> {
+		match self.send_request_once(node_id, &envelope).await {
+			Err(NetworkingError::Transport(reason) | NetworkingError::ConnectionFailed(reason))
+				if !reason.contains("timed out") =>
+			{
+				tracing::debug!(%node_id, %reason, "Request lost with its connection, retrying");
+				self.connections.write().await.remove(&(
+					node_id,
+					crate::service::network::core::MESSAGING_ALPN.to_vec(),
+				));
+				self.send_request_once(node_id, &envelope).await
+			}
+			result => result,
+		}
+	}
+
+	async fn send_request_once(&self, node_id: EndpointId, envelope: &Message) -> Result<Message> {
 		use tokio::io::{AsyncReadExt, AsyncWriteExt};
 		use tokio::time::{timeout, Duration};
-
-		tracing::info!("Sending library message to node {}: {:?}", node_id, message);
 
 		// Get or create cached connection
 		let endpoint = self.endpoint.as_ref().ok_or_else(|| {
@@ -696,10 +749,8 @@ impl MessagingProtocolHandler {
 			NetworkingError::ConnectionFailed(format!("Failed to open stream: {}", e))
 		})?;
 
-		// Wrap message in envelope
-		let envelope = Message::Library(message);
 		let msg_data =
-			serde_json::to_vec(&envelope).map_err(|e| NetworkingError::Serialization(e))?;
+			serde_json::to_vec(envelope).map_err(|e| NetworkingError::Serialization(e))?;
 
 		// Send with length prefix
 		let len = msg_data.len() as u32;
@@ -744,19 +795,59 @@ impl MessagingProtocolHandler {
 			}
 		};
 
-		// Deserialize response
-		let envelope: Message =
-			serde_json::from_slice(&resp_buf).map_err(|e| NetworkingError::Serialization(e))?;
+		serde_json::from_slice(&resp_buf).map_err(NetworkingError::Serialization)
+	}
 
-		match envelope {
-			Message::Library(lib_msg) => {
-				tracing::debug!("Received library message response: {:?}", lib_msg);
-				Ok(lib_msg)
+	/// Handles a Wingdrop message from an authenticated device and returns
+	/// the serialized reply.
+	async fn handle_wingdrop_message(
+		&self,
+		from_device: Uuid,
+		message: crate::service::wingdrop::WingdropMessage,
+	) -> Vec<u8> {
+		use crate::service::wingdrop::{self, WingdropMessage};
+
+		let reply = match self.context.as_ref() {
+			None => WingdropMessage::Rejected {
+				drop_id: wingdrop_id(&message),
+				reason: "This device is not ready to receive files".to_string(),
+			},
+			Some(context) => {
+				let config = crate::config::AppConfig::load_from(&context.data_dir)
+					.map(|c| c.wingdrop)
+					.unwrap_or_default();
+				if matches!(message, WingdropMessage::Offer(_)) && !config.enabled {
+					WingdropMessage::Rejected {
+						drop_id: wingdrop_id(&message),
+						reason: "This device is not accepting Wingdrop files".to_string(),
+					}
+				} else {
+					let is_offer = matches!(message, WingdropMessage::Offer(_));
+					let from_name = {
+						let registry = self.device_registry.read().await;
+						device_name(&registry, from_device)
+					};
+					let auto_accept = config
+						.auto_accept
+						.then(|| wingdrop::destination_root(config.destination.as_deref()));
+					let (reply, auto) = context.wingdrop.handle_message(
+						from_device,
+						from_name,
+						message,
+						&context.events,
+						auto_accept,
+					);
+					if is_offer && matches!(reply, WingdropMessage::OfferReceived { .. }) {
+						spawn_offer_expiry(context.clone());
+					}
+					if let Some(auto) = auto {
+						spawn_send_decision(context.clone(), auto);
+					}
+					reply
+				}
 			}
-			_ => Err(NetworkingError::Protocol(
-				"Expected Library message in response".to_string(),
-			)),
-		}
+		};
+		serde_json::to_vec(&Message::Wingdrop(reply)).unwrap_or_default()
 	}
 }
 
@@ -850,6 +941,31 @@ impl ProtocolHandler for MessagingProtocolHandler {
 							};
 							resp
 						}
+						Message::Wingdrop(drop_msg) => {
+							let device_id_opt = {
+								let registry = self.device_registry.read().await;
+								registry.get_device_by_node(remote_node_id)
+							};
+							match device_id_opt {
+								Some(device_id) => {
+									self.handle_wingdrop_message(device_id, drop_msg.clone())
+										.await
+								}
+								None => {
+									tracing::warn!(
+										"Received Wingdrop message from unknown node {}",
+										remote_node_id
+									);
+									serde_json::to_vec(&Message::Wingdrop(
+										crate::service::wingdrop::WingdropMessage::Rejected {
+											drop_id: wingdrop_id(drop_msg),
+											reason: "Unknown device".to_string(),
+										},
+									))
+									.unwrap_or_default()
+								}
+							}
+						}
 						Message::Goodbye { reason, .. } => {
 							// Received graceful disconnect from remote device
 							eprintln!("Remote device disconnecting gracefully: {}", reason);
@@ -911,6 +1027,9 @@ impl ProtocolHandler for MessagingProtocolHandler {
 					.await
 			}
 			Message::Library(lib_msg) => self.handle_library_message(from_device, lib_msg).await,
+			Message::Wingdrop(drop_msg) => {
+				Ok(self.handle_wingdrop_message(from_device, drop_msg).await)
+			}
 			Message::Goodbye { reason, .. } => {
 				println!(
 					"Device {} disconnecting gracefully: {}",
@@ -936,4 +1055,70 @@ impl ProtocolHandler for MessagingProtocolHandler {
 		// Basic messaging doesn't need special event handling
 		Ok(())
 	}
+}
+
+fn wingdrop_id(message: &crate::service::wingdrop::WingdropMessage) -> Uuid {
+	use crate::service::wingdrop::WingdropMessage::*;
+	match message {
+		Offer(offer) => offer.id,
+		OfferReceived { drop_id }
+		| Decision { drop_id, .. }
+		| Finished { drop_id, .. }
+		| Cancelled { drop_id, .. }
+		| Ack { drop_id }
+		| Rejected { drop_id, .. } => *drop_id,
+	}
+}
+
+/// The name a paired device announced, for showing who sends an offer.
+fn device_name(
+	registry: &crate::service::network::device::DeviceRegistry,
+	device_id: Uuid,
+) -> String {
+	use crate::service::network::device::DeviceState;
+	match registry.get_device_state(device_id) {
+		Some(
+			DeviceState::Paired { info, .. }
+			| DeviceState::Connected { info, .. }
+			| DeviceState::Disconnected { info, .. },
+		) => info.device_name.clone(),
+		_ => device_id.to_string(),
+	}
+}
+
+/// Expires the offer if nobody answers in time, so its prompt closes.
+fn spawn_offer_expiry(context: Arc<crate::context::CoreContext>) {
+	use crate::service::wingdrop;
+	tokio::spawn(async move {
+		tokio::time::sleep(wingdrop::OFFER_TTL + std::time::Duration::from_secs(1)).await;
+		for offer in context.wingdrop.expire_pending() {
+			wingdrop::emit_status(&context.events, offer.id, wingdrop::WingdropStatus::Expired);
+		}
+	});
+}
+
+/// Tells the sender an offer was accepted on arrival.
+fn spawn_send_decision(
+	context: Arc<crate::context::CoreContext>,
+	auto: crate::service::wingdrop::AutoAccepted,
+) {
+	tokio::spawn(async move {
+		let destinations = auto
+			.destinations
+			.iter()
+			.map(|p| p.to_string_lossy().into_owned())
+			.collect();
+		if let Err(error) = crate::service::wingdrop::send_decision(
+			&context,
+			auto.device_id,
+			auto.drop_id,
+			true,
+			destinations,
+		)
+		.await
+		{
+			tracing::warn!(drop_id = %auto.drop_id, %error, "Could not send an automatic Wingdrop decision");
+			context.wingdrop.cancel_incoming(auto.drop_id, None);
+		}
+	});
 }

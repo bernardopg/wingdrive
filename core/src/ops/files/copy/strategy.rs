@@ -312,106 +312,21 @@ impl RemoteTransferStrategy {
 			source, dest_device_slug, dest_device_id
 		);
 
-		let networking = ctx
-			.networking_service()
-			.ok_or_else(|| anyhow::anyhow!("Networking service not available"))?;
-
 		let local_path = source
 			.as_local_path()
 			.ok_or_else(|| anyhow::anyhow!("Source must be local path for PUSH operation"))?;
-
-		let metadata = tokio::fs::metadata(local_path).await?;
-		let file_size = metadata.len();
-
-		let checksum = calculate_file_checksum(local_path)
-			.await
-			.map(Some)
-			.map_err(|e| anyhow::anyhow!("Failed to calculate checksum: {}", e))?;
-
-		info!(
-			"Initiating PUSH transfer: {} ({} bytes) -> device:{} ({})",
-			local_path.display(),
-			file_size,
-			dest_device_slug,
-			dest_device_id
-		);
-
-		ctx.log(format!(
-			"Initiating PUSH transfer: {} ({} bytes) -> device:{} ({})",
-			local_path.display(),
-			file_size,
-			dest_device_slug,
-			dest_device_id
-		));
-
-		let file_metadata = crate::service::network::protocol::FileMetadata {
-			name: local_path
-				.file_name()
-				.unwrap_or_default()
-				.to_string_lossy()
-				.to_string(),
-			size: file_size,
-			modified: metadata.modified().ok(),
-			is_directory: metadata.is_dir(),
-			checksum,
-			mime_type: None,
-		};
-
-		let networking_guard = &*networking;
-		let protocol_registry = networking_guard.protocol_registry();
-		let registry_guard = protocol_registry.read().await;
-
-		let file_transfer_handler = registry_guard
-			.get_handler("file_transfer")
-			.ok_or_else(|| anyhow::anyhow!("File transfer protocol not registered"))?;
-
-		let file_transfer_protocol = file_transfer_handler
-			.as_any()
-			.downcast_ref::<crate::service::network::protocol::FileTransferProtocolHandler>()
-			.ok_or_else(|| anyhow::anyhow!("Invalid file transfer protocol handler"))?;
-
-		let transfer_id = file_transfer_protocol
-			.initiate_transfer(
-				dest_device_id,
-				local_path.to_path_buf(),
-				crate::service::network::protocol::TransferMode::TrustedCopy,
-			)
-			.await?;
-
-		debug!("PUSH transfer initiated with ID: {}", transfer_id);
-		ctx.log(format!("PUSH transfer initiated with ID: {}", transfer_id));
-
-		let result = stream_file_data(
-			local_path,
-			transfer_id,
-			file_transfer_protocol,
-			file_size,
-			dest_device_id,
-			destination
-				.path()
-				.map(|p| p.to_string_lossy().to_string())
-				.unwrap_or_default(),
-			file_metadata,
+		let destination_path = destination
+			.path()
+			.map(|p| p.to_string_lossy().to_string())
+			.unwrap_or_default();
+		push_file_to_device(
 			ctx,
+			local_path,
+			dest_device_id,
+			destination_path,
 			progress_callback,
 		)
-		.await;
-
-		match result {
-			Ok(()) => {
-				info!("PUSH transfer completed: {} bytes", file_size);
-				ctx.log(format!(
-					"PUSH transfer completed successfully: {} bytes",
-					file_size
-				));
-				Ok(file_size)
-			}
-			Err(e) => {
-				error!("PUSH transfer failed: {}", e);
-				ctx.log(format!("PUSH transfer FAILED: {}", e));
-				Err(e)
-			}
-		}
+		.await
 	}
 
 	/// Execute a PULL operation (remote -> local)
@@ -798,6 +713,108 @@ impl CopyStrategy for RemoteTransferStrategy {
 				self.execute_pull(ctx, source, destination, verify_checksum, progress_callback)
 					.await
 			}
+		}
+	}
+}
+
+/// Sends one local file to `destination_path` on a paired device, checking
+/// its hash end to end. `progress_callback` gets the bytes sent so far.
+pub(crate) async fn push_file_to_device<'a>(
+	ctx: &JobContext<'a>,
+	local_path: &Path,
+	dest_device_id: uuid::Uuid,
+	destination_path: String,
+	progress_callback: Option<&ProgressCallback<'a>>,
+) -> Result<u64> {
+	let networking = ctx
+		.networking_service()
+		.ok_or_else(|| anyhow::anyhow!("Networking service not available"))?;
+
+	let metadata = tokio::fs::metadata(local_path).await?;
+	let file_size = metadata.len();
+
+	let checksum = calculate_file_checksum(local_path)
+		.await
+		.map(Some)
+		.map_err(|e| anyhow::anyhow!("Failed to calculate checksum: {}", e))?;
+
+	info!(
+		"Initiating PUSH transfer: {} ({} bytes) -> device {}",
+		local_path.display(),
+		file_size,
+		dest_device_id
+	);
+
+	ctx.log(format!(
+		"Initiating PUSH transfer: {} ({} bytes) -> device {}",
+		local_path.display(),
+		file_size,
+		dest_device_id
+	));
+
+	let file_metadata = crate::service::network::protocol::FileMetadata {
+		name: local_path
+			.file_name()
+			.unwrap_or_default()
+			.to_string_lossy()
+			.to_string(),
+		size: file_size,
+		modified: metadata.modified().ok(),
+		is_directory: metadata.is_dir(),
+		checksum,
+		mime_type: None,
+	};
+
+	let networking_guard = &*networking;
+	let protocol_registry = networking_guard.protocol_registry();
+	let registry_guard = protocol_registry.read().await;
+
+	let file_transfer_handler = registry_guard
+		.get_handler("file_transfer")
+		.ok_or_else(|| anyhow::anyhow!("File transfer protocol not registered"))?;
+
+	let file_transfer_protocol = file_transfer_handler
+		.as_any()
+		.downcast_ref::<crate::service::network::protocol::FileTransferProtocolHandler>()
+		.ok_or_else(|| anyhow::anyhow!("Invalid file transfer protocol handler"))?;
+
+	let transfer_id = file_transfer_protocol
+		.initiate_transfer(
+			dest_device_id,
+			local_path.to_path_buf(),
+			crate::service::network::protocol::TransferMode::TrustedCopy,
+		)
+		.await?;
+
+	debug!("PUSH transfer initiated with ID: {}", transfer_id);
+	ctx.log(format!("PUSH transfer initiated with ID: {}", transfer_id));
+
+	let result = stream_file_data(
+		local_path,
+		transfer_id,
+		file_transfer_protocol,
+		file_size,
+		dest_device_id,
+		destination_path,
+		file_metadata,
+		ctx,
+		progress_callback,
+	)
+	.await;
+
+	match result {
+		Ok(()) => {
+			info!("PUSH transfer completed: {} bytes", file_size);
+			ctx.log(format!(
+				"PUSH transfer completed successfully: {} bytes",
+				file_size
+			));
+			Ok(file_size)
+		}
+		Err(e) => {
+			error!("PUSH transfer failed: {}", e);
+			ctx.log(format!("PUSH transfer FAILED: {}", e));
+			Err(e)
 		}
 	}
 }
