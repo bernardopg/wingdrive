@@ -1010,6 +1010,8 @@ impl Library {
 			"Completed sidecar statistics calculation"
 		);
 
+		let browsed_file_count = Self::calculate_browsed_file_count(&db_conn).await?;
+
 		Ok(LibraryStatistics {
 			total_files,
 			total_size,
@@ -1023,6 +1025,7 @@ impl Library {
 			database_size,
 			sidecar_count,
 			sidecar_size,
+			browsed_file_count,
 			last_indexed: None, // Will be preserved from existing config
 			updated_at: chrono::Utc::now(),
 		})
@@ -1059,6 +1062,8 @@ impl Library {
 		// Calculate sidecar statistics
 		let (sidecar_count, sidecar_size) = self.calculate_sidecar_statistics().await?;
 
+		let browsed_file_count = Self::calculate_browsed_file_count(db).await?;
+
 		Ok(LibraryStatistics {
 			total_files,
 			total_size,
@@ -1072,6 +1077,7 @@ impl Library {
 			database_size,
 			sidecar_count,
 			sidecar_size,
+			browsed_file_count,
 			last_indexed: self.config.read().await.statistics.last_indexed,
 			updated_at: chrono::Utc::now(),
 		})
@@ -1650,6 +1656,25 @@ impl Library {
 	/// Only counts user-relevant volumes (Primary, UserData, External, Secondary)
 	/// Excludes system volumes (VM, Recovery, Preboot, etc.)
 	/// Excludes volumes that are subpaths of other volumes (e.g., /System/Volumes/Data/home inside /System/Volumes/Data)
+	/// Files counted by the last browse index of every volume.
+	///
+	/// shortcut: a volume mounted inside another indexed one is counted twice;
+	/// fine while only the root volume is usually indexed this way.
+	async fn calculate_browsed_file_count(db: &sea_orm::DatabaseConnection) -> Result<u64> {
+		use crate::infra::db::entities::volume;
+		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect};
+
+		let total: Option<i64> = volume::Entity::find()
+			.select_only()
+			.column_as(volume::Column::TotalFileCount.sum(), "total")
+			.filter(volume::Column::LastIndexedAt.is_not_null())
+			.into_tuple()
+			.one(db)
+			.await?
+			.flatten();
+		Ok(total.unwrap_or(0).max(0) as u64)
+	}
+
 	async fn calculate_volume_capacity_static(
 		db: &sea_orm::DatabaseConnection,
 	) -> Result<(u64, u64)> {

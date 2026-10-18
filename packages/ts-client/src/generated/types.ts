@@ -363,7 +363,11 @@ name: string;
 /**
  * The number of files with this content kind
  */
-file_count: number };
+file_count: number; 
+/**
+ * Files of this kind in the browse index, which stays out of the library
+ */
+browsed_count: number };
 
 /**
  * Input for content kind statistics query
@@ -2835,6 +2839,11 @@ sidecar_count?: number;
  * Total size of all sidecar files in bytes
  */
 sidecar_size?: number; 
+/**
+ * Files found by the last browse index of each volume. That index stays
+ * out of the library, so these are not part of `total_files`.
+ */
+browsed_file_count?: number; 
 /**
  * Last time the library was fully indexed
  */

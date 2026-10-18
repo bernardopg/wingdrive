@@ -184,6 +184,7 @@
 		"totalFiles": "Total de arquivos",
 		"emptyTitle": "Ainda não há arquivos indexados",
 		"emptyDescription": "Os tipos de arquivo são obtidos dos locais indexados da sua biblioteca. Adicione uma pasta como local em Fontes e ative a indexação para ver os arquivos agrupados por tipo aqui.",
+		"browsedCount": "+{{count}} na navegação de volumes",
 		"fileCount_one": "arquivo",
 		"fileCount_other": "arquivos",
 		"types": {
@@ -232,6 +233,8 @@
 		"totalStorage": "Armazenamento total",
 		"used": "usado",
 		"files": "Arquivos",
+		"browsedFiles": "Navegados em volumes",
+		"browsedFilesHint": "índice de navegação, fora da biblioteca",
 		"filesIndexed": "Arquivos indexados",
 		"uniqueFiles_one": "{{formattedCount}} arquivo exclusivo",
 		"uniqueFiles_other": "{{formattedCount}} arquivos exclusivos",
