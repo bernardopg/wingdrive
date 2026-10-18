@@ -31,7 +31,19 @@ if [ -n "$ts_changed" ] || [ "${1:-}" = "--all" ]; then
 		git diff --exit-code -- packages/wingdrive-primitives/dist packages/wingdrive-ai/dist \
 			|| { echo "Stale dist. Commit the rebuilt dist/."; exit 1; }
 	fi
+	# expo-router writes typed routes into the ignored apps/mobile/.expo while
+	# the dev server runs; a copy from another branch fails tsc, and CI never
+	# has one, so typecheck without it and put it back afterwards.
+	expo_types=apps/mobile/.expo/types
+	if [ -d "$expo_types" ]; then
+		mv "$expo_types" "$expo_types.ci-local"
+		trap 'mv apps/mobile/.expo/types.ci-local apps/mobile/.expo/types' EXIT
+	fi
 	bun run typecheck
+	if [ -d "$expo_types.ci-local" ]; then
+		mv "$expo_types.ci-local" "$expo_types"
+		trap - EXIT
+	fi
 	# Same list as the "Test critical frontend behavior" step in ci.yml.
 	grep -oE 'bun test [^ ]+' .github/workflows/ci.yml | while read -r _ _ file; do
 		bun test "$file"
