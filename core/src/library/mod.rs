@@ -785,6 +785,10 @@ impl Library {
 		let mut stats = Self::calculate_all_statistics_static(&db, &path).await?;
 		stats.updated_at = chrono::Utc::now();
 
+		if let Err(e) = Self::refresh_location_totals(&db, &event_bus).await {
+			warn!(library_id = %library_id, error = %e, "Failed to refresh location totals");
+		}
+
 		debug!(
 			library_id = %library_id,
 			library_name = %config.name,
@@ -1656,23 +1660,71 @@ impl Library {
 	/// Only counts user-relevant volumes (Primary, UserData, External, Secondary)
 	/// Excludes system volumes (VM, Recovery, Preboot, etc.)
 	/// Excludes volumes that are subpaths of other volumes (e.g., /System/Volumes/Data/home inside /System/Volumes/Data)
-	/// Files counted by the last browse index of every volume.
-	///
-	/// shortcut: a volume mounted inside another indexed one is counted twice;
-	/// fine while only the root volume is usually indexed this way.
+	/// Recounts files and bytes under every location, so its totals follow
+	/// watcher changes, copies and extractions instead of only full scans.
+	/// Rows that changed are saved and announced to clients.
+	async fn refresh_location_totals(db: &Arc<Database>, event_bus: &Arc<EventBus>) -> Result<()> {
+		use crate::infra::db::entities::location;
+		use sea_orm::{
+			ActiveModelTrait, ActiveValue::Set, ConnectionTrait, EntityTrait, Statement,
+		};
+
+		let conn = db.conn();
+		let mut changed = Vec::new();
+		for model in location::Entity::find().all(conn).await? {
+			let Some(root) = model.entry_id else {
+				continue;
+			};
+			let row = conn
+				.query_one_raw(Statement::from_sql_and_values(
+					sea_orm::DatabaseBackend::Sqlite,
+					"SELECT COUNT(*) AS files, COALESCE(SUM(e.size), 0) AS bytes \
+					 FROM entry_closure ec JOIN entries e ON e.id = ec.descendant_id \
+					 WHERE ec.ancestor_id = ? AND e.kind = 0",
+					[root.into()],
+				))
+				.await?;
+			let Some(row) = row else {
+				continue;
+			};
+			let files: i64 = row.try_get("", "files")?;
+			let bytes: i64 = row.try_get("", "bytes")?;
+			if files == model.total_file_count && bytes == model.total_byte_size {
+				continue;
+			}
+			let uuid = model.uuid;
+			let mut active: location::ActiveModel = model.into();
+			active.total_file_count = Set(files);
+			active.total_byte_size = Set(bytes);
+			active.update(conn).await?;
+			changed.push(uuid);
+		}
+		if !changed.is_empty() {
+			if let Err(e) =
+				crate::domain::ResourceManager::new(Arc::new(conn.clone()), event_bus.clone())
+					.emit_resource_events("location", changed)
+					.await
+			{
+				warn!(error = %e, "Failed to emit location resource events");
+			}
+		}
+		Ok(())
+	}
+
+	/// Files counted by the last browse index of every volume. A volume
+	/// mounted inside another indexed one on the same device is already part
+	/// of that index, so only the outermost one counts.
 	async fn calculate_browsed_file_count(db: &sea_orm::DatabaseConnection) -> Result<u64> {
 		use crate::infra::db::entities::volume;
-		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect};
+		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
-		let total: Option<i64> = volume::Entity::find()
-			.select_only()
-			.column_as(volume::Column::TotalFileCount.sum(), "total")
+		let volumes = volume::Entity::find()
 			.filter(volume::Column::LastIndexedAt.is_not_null())
-			.into_tuple()
-			.one(db)
-			.await?
-			.flatten();
-		Ok(total.unwrap_or(0).max(0) as u64)
+			.all(db)
+			.await?;
+		Ok(outermost_browsed_total(volumes.into_iter().filter_map(
+			|v| Some((v.device_id, v.mount_point?, v.total_file_count?)),
+		)))
 	}
 
 	async fn calculate_volume_capacity_static(
@@ -1897,3 +1949,42 @@ pub const LIBRARY_CONFIG_VERSION: u32 = 2;
 
 /// Library directory extension
 pub use crate::branding::LIBRARY_EXTENSION;
+
+/// Sum of browse-index file counts, skipping volumes mounted inside another
+/// counted volume of the same device.
+fn outermost_browsed_total(volumes: impl Iterator<Item = (Uuid, String, i64)>) -> u64 {
+	let mut volumes: Vec<_> = volumes.collect();
+	volumes.sort_by_key(|(_, mount, _)| mount.len());
+	let mut counted: Vec<(Uuid, PathBuf)> = Vec::new();
+	let mut total = 0u64;
+	for (device, mount, files) in volumes {
+		let mount = PathBuf::from(mount);
+		if counted
+			.iter()
+			.any(|(d, outer)| *d == device && mount.starts_with(outer))
+		{
+			continue;
+		}
+		total += files.max(0) as u64;
+		counted.push((device, mount));
+	}
+	total
+}
+
+#[cfg(test)]
+mod browsed_total_tests {
+	use super::*;
+
+	#[test]
+	fn nested_volumes_are_counted_once() {
+		let (a, b) = (Uuid::new_v4(), Uuid::new_v4());
+		let volumes = [
+			(a, "/home".to_string(), 10),
+			(a, "/".to_string(), 100),
+			(b, "/home".to_string(), 7),
+			(a, "/homework".to_string(), 1),
+		];
+		// "/homework" sits inside "/" as well; "/home" of another device counts.
+		assert_eq!(outermost_browsed_total(volumes.into_iter()), 107);
+	}
+}
