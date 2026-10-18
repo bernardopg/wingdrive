@@ -435,7 +435,10 @@ impl RemoteDeleteStrategy {
 
 		// Create delete request
 		let request = FileDeleteMessage::Request {
-			paths: paths.to_vec(),
+			paths: paths
+				.iter()
+				.map(|path| path.addressed_to(device_id))
+				.collect(),
 			mode,
 			request_id,
 		};

@@ -226,8 +226,13 @@ impl LibraryQuery for ListLibraryDevicesQuery {
 					}
 
 					// Convert network DeviceInfo to domain Device
-					let device =
+					let mut device =
 						Device::from_network_info(&info, is_actually_connected, connection_method);
+					// The slug this device reaches the peer at, unique even when
+					// the peer announces this device's own slug.
+					if let Some(address) = context.device_manager.get_device_slug(info.device_id) {
+						device.slug = address;
+					}
 					result.push(device);
 				}
 			}

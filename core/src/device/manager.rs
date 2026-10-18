@@ -287,14 +287,33 @@ impl DeviceManager {
 
 	/// Add a paired device to the pre-library cache (when new device pairs)
 	/// For library-specific device caching, use Library::cache_device() instead
-	pub fn cache_paired_device(&self, slug: String, device_id: Uuid) -> Result<(), DeviceError> {
+	///
+	/// Slugs come from hostnames, so a peer can announce the slug of this
+	/// device or of another peer. Paths address devices by slug, and this
+	/// device always wins a lookup, which made such a peer unreachable. A
+	/// colliding peer is cached under `<slug>-<first 6 hex of its UUID>`, which
+	/// stays the same across restarts. Returns the slug the peer is reachable at.
+	pub fn cache_paired_device(
+		&self,
+		slug: String,
+		device_id: Uuid,
+	) -> Result<String, DeviceError> {
+		let own_slug = self
+			.config
+			.read()
+			.map_err(|_| DeviceError::LockPoisoned)?
+			.slug
+			.clone();
 		let mut cache = self
 			.paired_device_cache
 			.write()
 			.map_err(|_| DeviceError::LockPoisoned)?;
-		cache.insert(slug.clone(), device_id);
-		tracing::debug!("Cached paired device: {} -> {}", slug, device_id);
-		Ok(())
+		// A peer that renamed itself must not stay reachable at its old slug.
+		cache.retain(|_, cached_id| *cached_id != device_id);
+		let address = address_slug(&slug, device_id, &own_slug, &cache);
+		cache.insert(address.clone(), device_id);
+		tracing::debug!("Cached paired device: {} -> {}", address, device_id);
+		Ok(address)
 	}
 
 	/// Remove a specific paired device from the cache by device ID
@@ -626,5 +645,55 @@ mod tests {
 		assert_eq!(config.name, "Test Device");
 		assert_eq!(config.os, "Linux");
 		assert!(config.hardware_model.is_none());
+	}
+}
+
+/// The slug a paired device is reached at: its own, unless that names this
+/// device or another cached device, then suffixed with part of its UUID.
+fn address_slug(
+	slug: &str,
+	device_id: Uuid,
+	own_slug: &str,
+	cache: &HashMap<String, Uuid>,
+) -> String {
+	let taken = |candidate: &str| {
+		candidate == own_slug || cache.get(candidate).is_some_and(|id| *id != device_id)
+	};
+	if !slug.is_empty() && !taken(slug) {
+		return slug.to_string();
+	}
+	let hex = device_id.simple().to_string();
+	let base = if slug.is_empty() { "device" } else { slug };
+	// Six hex digits almost never collide; the full UUID always differs.
+	[&hex[..6], hex.as_str()]
+		.iter()
+		.map(|suffix| format!("{base}-{suffix}"))
+		.find(|candidate| !taken(candidate))
+		.unwrap_or_else(|| format!("{base}-{hex}"))
+}
+
+#[cfg(test)]
+mod address_slug_tests {
+	use super::*;
+
+	#[test]
+	fn colliding_peers_get_a_stable_distinct_slug() {
+		let mut cache = HashMap::new();
+		let (a, b) = (Uuid::new_v4(), Uuid::new_v4());
+		assert_eq!(address_slug("laptop", a, "archlinux", &cache), "laptop");
+
+		let own = address_slug("archlinux", a, "archlinux", &cache);
+		assert_eq!(own, format!("archlinux-{}", &a.simple().to_string()[..6]));
+		// The same peer always lands on the same slug.
+		assert_eq!(address_slug("archlinux", a, "archlinux", &cache), own);
+
+		cache.insert("phone".to_string(), a);
+		assert_eq!(address_slug("phone", a, "archlinux", &cache), "phone");
+		let other = address_slug("phone", b, "archlinux", &cache);
+		assert_eq!(other, format!("phone-{}", &b.simple().to_string()[..6]));
+		assert_eq!(
+			address_slug("", b, "archlinux", &cache).len(),
+			"device-".len() + 6
+		);
 	}
 }
