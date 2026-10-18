@@ -5,6 +5,7 @@
 //! result and rename it into place only when complete, so a cancelled or
 //! failed run never leaves a half-written archive or folder that looks real.
 
+pub mod browse;
 pub mod engine;
 pub mod format;
 pub mod job;

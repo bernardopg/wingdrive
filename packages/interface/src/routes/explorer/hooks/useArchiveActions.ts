@@ -7,7 +7,7 @@ import {useLibraryMutation} from '../../../contexts/WingDriveContext';
 import {useRefetchFileListings} from '../../../hooks/useRefetchFileListings';
 import {useWaitForJob} from '../../../hooks/useWaitForJob';
 import {physicalPath} from '../fileCapabilities';
-import {archiveBaseName} from './archiveName';
+import {archiveBaseName, containingArchive} from './archiveName';
 import {useTranslation} from '../../../i18n';
 
 // Archives can take minutes; the toast still reports the outcome later.
@@ -15,7 +15,9 @@ const ARCHIVE_TIMEOUT_MS = 60 * 60 * 1000;
 
 function parentOf(file: File): WingPath | null {
 	if (!('Physical' in file.wing_path)) return null;
-	const {device_slug, path} = file.wing_path.Physical;
+	const {device_slug, path: own} = file.wing_path.Physical;
+	// A file inside an archive is extracted next to the archive.
+	const path = containingArchive(own) ?? own;
 	const slash = path.lastIndexOf('/');
 	return {Physical: {device_slug, path: slash > 0 ? path.slice(0, slash) : '/'}};
 }

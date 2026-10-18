@@ -33,6 +33,7 @@ pub struct ArchiveCompressInput {
 /// Input for extracting an archive
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct ArchiveExtractInput {
+	/// The archive, or a file or folder inside it to extract just that
 	pub archive: WingPath,
 	/// Folder that receives the extracted content
 	pub destination: WingPath,
@@ -48,7 +49,7 @@ pub struct ArchiveExtractAction {
 	input: ArchiveExtractInput,
 }
 
-fn local(path: &WingPath, field: &str) -> Result<PathBuf, ActionError> {
+pub(super) fn local(path: &WingPath, field: &str) -> Result<PathBuf, ActionError> {
 	path.is_local()
 		.then(|| path.as_local_path().map(Path::to_path_buf))
 		.flatten()
@@ -143,6 +144,7 @@ impl LibraryAction for ArchiveExtractAction {
 		_context: Arc<CoreContext>,
 	) -> Result<ValidationResult, ActionError> {
 		let archive = local(&self.input.archive, "archive")?;
+		let archive = super::browse::split(&archive).map_or(archive, |(file, _)| file);
 		if ArchiveFormat::detect(&archive).is_none() {
 			return Err(ActionError::Validation {
 				field: "archive".to_string(),
@@ -158,8 +160,14 @@ impl LibraryAction for ArchiveExtractAction {
 		library: Arc<crate::library::Library>,
 		_context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
+		let path = local(&self.input.archive, "archive")?;
+		let (archive, member) = match super::browse::split(&path) {
+			Some((file, inner)) if !inner.as_os_str().is_empty() => (file, Some(inner)),
+			_ => (path, None),
+		};
 		let job = ArchiveExtractJob {
-			archive: local(&self.input.archive, "archive")?,
+			archive,
+			member,
 			destination: local(&self.input.destination, "destination")?,
 		};
 		Ok(library
@@ -188,9 +196,12 @@ pub struct ArchiveCompressJob {
 
 /// Extracts `archive` into `destination`. A single top-level entry is placed
 /// directly; several are grouped in a folder named after the archive.
+/// With `member`, only that file or folder of the archive is placed.
 #[derive(Debug, Serialize, Deserialize, Job)]
 pub struct ArchiveExtractJob {
 	pub archive: PathBuf,
+	#[serde(default)]
+	pub member: Option<PathBuf>,
 	pub destination: PathBuf,
 }
 
@@ -447,13 +458,24 @@ impl JobHandler for ArchiveExtractJob {
 			.unwrap_or(0);
 		let (archive, work_temp) = (self.archive.clone(), temp.clone());
 		let extract_temp = work_temp.clone();
+		let member = self.member.clone();
 		supervise(&ctx, "Extracting", total, work_temp, move |control| {
-			engine::extract(&archive, format, &extract_temp, control)
+			engine::extract_only(&archive, format, &extract_temp, member.as_deref(), control)
 		})
 		.await?;
 
 		let destination = self.destination.clone();
+		let member = self.member.clone();
 		let placed = tokio::task::spawn_blocking(move || -> std::io::Result<PathBuf> {
+			if let Some(member) = member {
+				let name = member
+					.file_name()
+					.map(|n| n.to_string_lossy().into_owned())
+					.unwrap_or(stem);
+				let placed = place(&temp.join(&member), &destination, &name)?;
+				std::fs::remove_dir_all(&temp)?;
+				return Ok(placed);
+			}
 			let mut children = std::fs::read_dir(&temp)?.collect::<Result<Vec<_>, _>>()?;
 			if children.len() == 1 {
 				let only = children.pop().expect("one child");
