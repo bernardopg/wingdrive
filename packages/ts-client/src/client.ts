@@ -216,9 +216,7 @@ export class WingDriveClient extends SimpleEventEmitter {
 			return response.json;
 		} else if ("Error" in response || "error" in response) {
 			const error = response.Error || response.error;
-			throw new Error(
-				`${isQuery ? "Query" : "Action"} failed: ${JSON.stringify(error)}`,
-			);
+			throw new Error(describeDaemonError(error));
 		} else {
 			throw new Error(`Unexpected response: ${JSON.stringify(response)}`);
 		}
@@ -279,3 +277,21 @@ export class WingDriveClient extends SimpleEventEmitter {
 
 // Export all types for convenience
 export * from "./generated/types";
+
+/**
+ * Readable text for a daemon error. Errors arrive as an enum such as
+ * `{"OperationFailed": "Invalid input: ..."}`; the variant's message is what a
+ * person needs, not the JSON around it.
+ */
+export function describeDaemonError(error: unknown): string {
+	if (typeof error === "string") return error;
+	if (error && typeof error === "object") {
+		const entries = Object.entries(error);
+		if (entries.length === 1) {
+			const [kind, detail] = entries[0];
+			if (typeof detail === "string") return detail;
+			if (detail == null) return kind;
+		}
+	}
+	return JSON.stringify(error);
+}
