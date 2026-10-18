@@ -150,6 +150,14 @@ impl LibraryQuery for DirectoryListingQuery {
 	) -> QueryResult<Self::Output> {
 		tracing::debug!("DirectoryListingQuery path={:?}", self.input.path);
 		if let Some(path) = self.input.path.as_local_path() {
+			let probe = path.to_path_buf();
+			let inside_archive =
+				tokio::task::spawn_blocking(move || crate::ops::archive::browse::split(&probe))
+					.await
+					.map_err(|e| QueryError::Internal(e.to_string()))?;
+			if let Some((archive, inner)) = inside_archive {
+				return self.query_archive_directory(&context, archive, inner).await;
+			}
 			if !tokio::fs::metadata(path).await?.is_dir() {
 				return Err(QueryError::InvalidInput(
 					"Path is not a directory".to_string(),
@@ -963,6 +971,86 @@ impl DirectoryListingQuery {
 			files: Vec::new(),
 			total_count: 0,
 			has_more: false,
+		})
+	}
+
+	/// Lists the folder `inner` of an archive from its index, without extracting.
+	async fn query_archive_directory(
+		&self,
+		context: &CoreContext,
+		archive: std::path::PathBuf,
+		inner: std::path::PathBuf,
+	) -> QueryResult<DirectoryListingOutput> {
+		use crate::ops::indexing::{database_storage::EntryMetadata, state::EntryKind};
+
+		let WingPath::Physical { device_slug, .. } = &self.input.path else {
+			return Err(QueryError::InvalidInput("Not a local path".to_string()));
+		};
+		let listed = archive.clone();
+		let members =
+			tokio::task::spawn_blocking(move || crate::ops::archive::browse::members(&listed))
+				.await
+				.map_err(|e| QueryError::Internal(e.to_string()))?
+				.map_err(|e| QueryError::Internal(format!("Cannot read archive: {e}")))?;
+		let registry = context.file_type_registry();
+		let include_hidden = self.input.include_hidden.unwrap_or(false);
+
+		let mut files: Vec<File> = crate::ops::archive::engine::children(&members, &inner)
+			.into_iter()
+			.filter_map(|member| {
+				let is_hidden = member
+					.path
+					.file_name()
+					.is_some_and(|name| name.to_string_lossy().starts_with('.'));
+				if is_hidden && !include_hidden {
+					return None;
+				}
+				let path = archive.join(&member.path);
+				let metadata = EntryMetadata {
+					path: path.clone(),
+					kind: if member.is_dir {
+						EntryKind::Directory
+					} else {
+						EntryKind::File
+					},
+					size: member.size,
+					modified: member.modified,
+					accessed: None,
+					created: None,
+					inode: None,
+					permissions: None,
+					is_hidden,
+				};
+				// Stable ids keep selection across refetches of the same archive.
+				let id = Uuid::new_v5(&Uuid::NAMESPACE_URL, path.to_string_lossy().as_bytes());
+				let mut file = File::from_ephemeral(
+					id,
+					&metadata,
+					WingPath::Physical {
+						device_slug: device_slug.clone(),
+						path: path.clone(),
+					},
+				);
+				if !member.is_dir {
+					file.content_kind = registry.identify_by_extension(&path);
+				}
+				Some(file)
+			})
+			.collect();
+		self.sort_files(&mut files);
+
+		let total_count = files.len() as u32;
+		let has_more = self
+			.input
+			.limit
+			.is_some_and(|limit| files.len() > limit as usize);
+		if let Some(limit) = self.input.limit {
+			files.truncate(limit as usize);
+		}
+		Ok(DirectoryListingOutput {
+			files,
+			total_count,
+			has_more,
 		})
 	}
 

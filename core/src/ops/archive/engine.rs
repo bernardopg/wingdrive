@@ -10,6 +10,7 @@ use std::fs::File;
 use std::io::{self, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use thiserror::Error;
 
@@ -199,29 +200,181 @@ pub fn extract(
 	dest: &Path,
 	control: &Control,
 ) -> Result<(), ArchiveError> {
+	extract_only(archive, format, dest, None, control)
+}
+
+/// Like [`extract`], but when `only` is set writes just that member (or the
+/// folder at that path with its contents), at its own path under `dest`.
+pub fn extract_only(
+	archive: &Path,
+	format: ArchiveFormat,
+	dest: &Path,
+	only: Option<&Path>,
+	control: &Control,
+) -> Result<(), ArchiveError> {
 	let file = File::open(archive)?;
 	match format {
-		ArchiveFormat::Zip => extract_zip(file, dest, control),
-		ArchiveFormat::SevenZip => extract_7z(archive, dest, control),
-		_ => {
-			let tracked = Tracked {
-				inner: io::BufReader::new(file),
-				control,
-			};
-			let reader: Box<dyn Read + '_> = match format {
-				ArchiveFormat::Tar => Box::new(tracked),
-				ArchiveFormat::TarGz => Box::new(flate2::read::MultiGzDecoder::new(tracked)),
-				ArchiveFormat::TarBz2 => Box::new(bzip2::read::MultiBzDecoder::new(tracked)),
-				ArchiveFormat::TarXz => Box::new(xz2::read::XzDecoder::new_multi_decoder(tracked)),
-				ArchiveFormat::TarZst => Box::new(zstd::stream::read::Decoder::new(tracked)?),
-				ArchiveFormat::Zip | ArchiveFormat::SevenZip => unreachable!(),
-			};
-			extract_tar(reader, dest, control)
-		}
+		ArchiveFormat::Zip => extract_zip(file, dest, only, control),
+		ArchiveFormat::SevenZip => extract_7z(archive, dest, only, control),
+		_ => extract_tar(tar_reader(file, format, control)?, dest, only, control),
 	}
 }
 
-fn extract_zip(file: File, dest: &Path, control: &Control) -> Result<(), ArchiveError> {
+/// Whether `relative` is the wanted member or inside it.
+fn wanted(relative: &Path, only: Option<&Path>) -> bool {
+	only.is_none_or(|only| relative.starts_with(only))
+}
+
+/// Decompressing reader over the tar stream of a tar-based `format`.
+fn tar_reader<'a>(
+	file: File,
+	format: ArchiveFormat,
+	control: &'a Control,
+) -> Result<Box<dyn Read + 'a>, ArchiveError> {
+	let tracked = Tracked {
+		inner: io::BufReader::new(file),
+		control,
+	};
+	Ok(match format {
+		ArchiveFormat::Tar => Box::new(tracked),
+		ArchiveFormat::TarGz => Box::new(flate2::read::MultiGzDecoder::new(tracked)),
+		ArchiveFormat::TarBz2 => Box::new(bzip2::read::MultiBzDecoder::new(tracked)),
+		ArchiveFormat::TarXz => Box::new(xz2::read::XzDecoder::new_multi_decoder(tracked)),
+		ArchiveFormat::TarZst => Box::new(zstd::stream::read::Decoder::new(tracked)?),
+		ArchiveFormat::Zip | ArchiveFormat::SevenZip => {
+			return Err(ArchiveError::Unsupported("Not a tar archive".into()))
+		}
+	})
+}
+
+/// A file or folder inside an archive.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Member {
+	/// Path inside the archive, validated like an extracted entry name
+	pub path: PathBuf,
+	pub is_dir: bool,
+	pub size: u64,
+	pub modified: Option<SystemTime>,
+}
+
+/// Lists the members of `archive` without extracting anything. Entries with
+/// unsafe names and special files are left out, as extraction skips them.
+pub fn list(archive: &Path, format: ArchiveFormat) -> Result<Vec<Member>, ArchiveError> {
+	let mut members = Vec::new();
+	let mut push = |name: &Path, is_dir: bool, size: u64, modified: Option<SystemTime>| {
+		if let Ok(path) = safe_relative(name) {
+			members.push(Member {
+				path,
+				is_dir,
+				size,
+				modified,
+			});
+		}
+	};
+	match format {
+		ArchiveFormat::Zip => {
+			let mut zip = zip::ZipArchive::new(io::BufReader::new(File::open(archive)?))?;
+			for index in 0..zip.len() {
+				let entry = zip.by_index_raw(index)?;
+				let modified = entry.last_modified().and_then(zip_time);
+				push(
+					Path::new(entry.name()),
+					entry.is_dir(),
+					entry.size(),
+					modified,
+				);
+			}
+		}
+		ArchiveFormat::SevenZip => {
+			let seven = sevenz_rust2::Archive::open(archive)
+				.map_err(|e| ArchiveError::SevenZip(e.to_string()))?;
+			for entry in &seven.files {
+				push(
+					Path::new(entry.name()),
+					entry.is_directory(),
+					entry.size(),
+					Some(entry.last_modified_date().into()),
+				);
+			}
+		}
+		_ => {
+			let control = Control::default();
+			let mut tar = tar::Archive::new(tar_reader(File::open(archive)?, format, &control)?);
+			for entry in tar.entries()? {
+				let entry = entry?;
+				let header = entry.header();
+				let kind = header.entry_type();
+				if !(kind.is_dir()
+					|| kind.is_file()
+					|| kind.is_symlink()
+					|| kind.is_hard_link()
+					|| kind == tar::EntryType::Continuous)
+				{
+					continue;
+				}
+				let modified = header
+					.mtime()
+					.ok()
+					.map(|secs| UNIX_EPOCH + Duration::from_secs(secs));
+				push(
+					&entry.path()?,
+					kind.is_dir(),
+					header.size().unwrap_or(0),
+					modified,
+				);
+			}
+		}
+	}
+	Ok(members)
+}
+
+fn zip_time(time: zip::DateTime) -> Option<SystemTime> {
+	let naive = chrono::NaiveDate::from_ymd_opt(
+		time.year().into(),
+		time.month().into(),
+		time.day().into(),
+	)?
+	.and_hms_opt(
+		time.hour().into(),
+		time.minute().into(),
+		time.second().into(),
+	)?;
+	Some(naive.and_utc().into())
+}
+
+/// Direct children of the folder `dir` inside the archive (empty for the
+/// root), including folders that only exist as the prefix of deeper members.
+pub fn children(members: &[Member], dir: &Path) -> Vec<Member> {
+	let mut found = std::collections::BTreeMap::new();
+	for member in members {
+		let Ok(rest) = member.path.strip_prefix(dir) else {
+			continue;
+		};
+		let mut parts = rest.components();
+		let Some(first) = parts.next() else {
+			continue;
+		};
+		let path = dir.join(first);
+		if parts.next().is_none() {
+			found.insert(path, member.clone());
+		} else {
+			found.entry(path.clone()).or_insert(Member {
+				path,
+				is_dir: true,
+				size: 0,
+				modified: None,
+			});
+		}
+	}
+	found.into_values().collect()
+}
+
+fn extract_zip(
+	file: File,
+	dest: &Path,
+	only: Option<&Path>,
+	control: &Control,
+) -> Result<(), ArchiveError> {
 	let mut zip = zip::ZipArchive::new(Tracked {
 		inner: io::BufReader::new(file),
 		control,
@@ -233,6 +386,9 @@ fn extract_zip(file: File, dest: &Path, control: &Control) -> Result<(), Archive
 			other => ArchiveError::Zip(other),
 		})?;
 		let relative = safe_relative(Path::new(entry.name()))?;
+		if !wanted(&relative, only) {
+			continue;
+		}
 		if entry.is_dir() {
 			create_dir(dest, &relative)?;
 		} else if entry.is_symlink() {
@@ -254,6 +410,7 @@ fn extract_zip(file: File, dest: &Path, control: &Control) -> Result<(), Archive
 fn extract_tar(
 	reader: Box<dyn Read + '_>,
 	dest: &Path,
+	only: Option<&Path>,
 	control: &Control,
 ) -> Result<(), ArchiveError> {
 	let mut archive = tar::Archive::new(reader);
@@ -261,6 +418,9 @@ fn extract_tar(
 		control.check()?;
 		let mut entry = entry.map_err(|e| cancelled_or(control, e))?;
 		let relative = safe_relative(&entry.path()?)?;
+		if !wanted(&relative, only) {
+			continue;
+		}
 		let kind = entry.header().entry_type();
 		if kind.is_dir() {
 			create_dir(dest, &relative)?;
@@ -292,7 +452,12 @@ fn extract_tar(
 	Ok(())
 }
 
-fn extract_7z(archive: &Path, dest: &Path, control: &Control) -> Result<(), ArchiveError> {
+fn extract_7z(
+	archive: &Path,
+	dest: &Path,
+	only: Option<&Path>,
+	control: &Control,
+) -> Result<(), ArchiveError> {
 	let mut failure: Option<ArchiveError> = None;
 	let result =
 		sevenz_rust2::decompress_file_with_extract_fn(archive, dest, |entry, reader, path| {
@@ -302,6 +467,11 @@ fn extract_7z(archive: &Path, dest: &Path, control: &Control) -> Result<(), Arch
 					.strip_prefix(dest)
 					.map_err(|_| ArchiveError::Unsafe(entry.name().to_string()))?
 					.to_path_buf();
+				if !wanted(&relative, only) {
+					// Drain it so a solid archive's stream stays in step.
+					io::copy(reader, &mut io::sink()).map_err(|e| cancelled_or(control, e))?;
+					return Ok(());
+				}
 				if entry.is_directory() {
 					create_dir(dest, &relative)?;
 				} else {
@@ -665,6 +835,64 @@ mod tests {
 		)
 		.unwrap_err();
 		assert!(matches!(error, ArchiveError::Cancelled), "{error}");
+	}
+
+	#[test]
+	fn members_list_and_extract_one_at_a_time() {
+		for format in [ArchiveFormat::Zip, ArchiveFormat::TarGz] {
+			let dir = tempfile::tempdir().unwrap();
+			let sources = tree(dir.path());
+			let archive = dir.path().join(format!("out.{}", format.extension()));
+			compress(&sources, format, &archive, &Control::default()).unwrap();
+
+			let members = list(&archive, format).unwrap();
+			let b = members
+				.iter()
+				.find(|m| m.path == Path::new("docs/deep/b.bin"))
+				.unwrap();
+			assert_eq!((b.is_dir, b.size), (false, 300_000), "{format:?}");
+			assert!(b.modified.is_some(), "{format:?}");
+
+			let names = |dir: &str| -> Vec<PathBuf> {
+				children(&members, Path::new(dir))
+					.into_iter()
+					.map(|m| m.path)
+					.collect()
+			};
+			assert_eq!(names(""), [Path::new("docs"), Path::new("tool.sh")]);
+			assert_eq!(
+				names("docs"),
+				[
+					Path::new("docs/a.txt"),
+					Path::new("docs/deep"),
+					Path::new("docs/link")
+				]
+			);
+			assert!(children(&members, Path::new("docs"))[1].is_dir);
+
+			let dest = dir.path().join("one");
+			std::fs::create_dir(&dest).unwrap();
+			let only = Path::new("docs/a.txt");
+			extract_only(&archive, format, &dest, Some(only), &Control::default()).unwrap();
+			assert_eq!(std::fs::read_to_string(dest.join(only)).unwrap(), "alpha");
+			assert!(!dest.join("docs/deep").exists(), "{format:?}");
+			assert!(!dest.join("tool.sh").exists(), "{format:?}");
+		}
+	}
+
+	#[test]
+	fn implicit_folders_appear_as_children() {
+		let member = |path: &str| Member {
+			path: PathBuf::from(path),
+			is_dir: false,
+			size: 1,
+			modified: None,
+		};
+		let members = [member("a/b/c.txt"), member("top.txt")];
+		let root = children(&members, Path::new(""));
+		assert_eq!(root.len(), 2);
+		assert!(root[0].is_dir && root[0].path == Path::new("a"));
+		assert_eq!(children(&members, Path::new("a"))[0].path, Path::new("a/b"));
 	}
 
 	#[test]
