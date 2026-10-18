@@ -724,6 +724,17 @@ impl EphemeralIndex {
 		self.arena.len()
 	}
 
+	/// Files per content kind id, for kinds recognised from the extension.
+	pub fn content_kind_counts(&self) -> HashMap<i32, u64> {
+		let mut counts = HashMap::new();
+		for kind in self.content_kinds.values() {
+			if *kind != ContentKind::Unknown {
+				*counts.entry(*kind as i32).or_default() += 1;
+			}
+		}
+		counts
+	}
+
 	pub fn is_empty(&self) -> bool {
 		self.arena.is_empty()
 	}

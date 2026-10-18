@@ -124,6 +124,7 @@ impl CoreQuery for DiscoverRemoteLibrariesQuery {
 							database_size: 0,               // Not available from network protocol
 							sidecar_count: 0,               // Not available from network protocol
 							sidecar_size: 0,                // Not available from network protocol
+							browsed_file_count: 0,          // Not available from network protocol
 							last_indexed: None,             // Not available from network protocol
 							updated_at: chrono::Utc::now(), // Current time
 						},
