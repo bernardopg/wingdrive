@@ -816,15 +816,18 @@ impl DeviceRegistry {
 		let config = self.device_manager.config().map_err(|e| {
 			NetworkingError::Protocol(format!("Failed to get device config: {}", e))
 		})?;
-		let device_name = config.name;
-		let device_slug = config.slug;
+		let device_type = match config.form_factor.as_deref() {
+			Some("Laptop") => super::DeviceType::Laptop,
+			Some("Mobile" | "Tablet") => super::DeviceType::Mobile,
+			Some("Server") => super::DeviceType::Server,
+			_ => super::DeviceType::Desktop,
+		};
 
-		// TODO: Get actual values from device manager or system
 		Ok(DeviceInfo {
 			device_id,
-			device_name,
-			device_slug,
-			device_type: super::DeviceType::Desktop, // TODO: Detect actual device type
+			device_name: config.name,
+			device_slug: config.slug,
+			device_type,
 			os_version: std::env::consts::OS.to_string(),
 			app_version: env!("CARGO_PKG_VERSION").to_string(),
 			network_fingerprint: crate::service::network::utils::identity::NetworkFingerprint {

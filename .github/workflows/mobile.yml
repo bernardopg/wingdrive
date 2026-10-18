@@ -1,53 +1,279 @@
-name: WingDrive Mobile Validation
+name: WingDrive Mobile
 
+# Pull requests and main: lint, dependency alignment, the embedded core under clippy for Android,
+# and a Gradle release build (JS bundle, Kotlin, native modules) without the Rust library.
+# Releases: release.yml calls this workflow with a tag and gets a signed APK and AAB back.
 on:
   push:
     branches: [main]
     paths:
       - "apps/mobile/**"
       - "packages/ts-client/**"
+      - "packages/assets/**"
+      - "core/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "bun.lock"
+      - "package.json"
       - ".github/workflows/mobile.yml"
+      - ".github/actions/setup-rust/**"
+      - "scripts/release/android_version.py"
   pull_request:
     paths:
       - "apps/mobile/**"
       - "packages/ts-client/**"
+      - "packages/assets/**"
+      - "core/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "bun.lock"
+      - "package.json"
       - ".github/workflows/mobile.yml"
+      - ".github/actions/setup-rust/**"
+      - "scripts/release/android_version.py"
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      release-tag:
+        description: Version tag to build signed release artifacts for
+        required: true
+        type: string
+    secrets:
+      WINGDRIVE_ANDROID_KEYSTORE_BASE64:
+        required: false
+      WINGDRIVE_ANDROID_KEYSTORE_PASSWORD:
+        required: false
+      WINGDRIVE_ANDROID_KEY_ALIAS:
+        required: false
+      WINGDRIVE_ANDROID_KEY_PASSWORD:
+        required: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: mobile-${{ inputs.release-tag || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ !inputs.release-tag }}
+
+env:
+  # React Native 0.86 expects this NDK; the Rust core links against the same one.
+  ANDROID_NDK_VERSION: 27.1.12297006
+  ANDROID_ABI: arm64-v8a
+  RUST_TARGET: aarch64-linux-android
+  CARGO_NDK_VERSION: 4.1.2
+  BUN_VERSION: "1.4.3"
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4g
 
 jobs:
-  native-projects:
-    name: Generate Native Projects
+  js:
+    name: Lint and dependencies
+    if: ${{ !inputs.release-tag }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          bun-version: "1.4.3"
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Validate Expo configuration
-        run: bunx expo config --type public
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      # Typecheck runs in ci.yml with the other packages.
+      - name: ESLint (no warnings)
+        run: bun run lint
         working-directory: apps/mobile
-
-      - name: Generate Android project
-        run: bunx expo prebuild --platform android --clean --no-install
+      - name: Translation catalogs match
+        run: bun run check:i18n
         working-directory: apps/mobile
+      - name: Packages match the Expo SDK
+        run: bunx expo install --check
+        working-directory: apps/mobile
+      - name: Release version scheme
+        run: python3 scripts/release/android_version.py --self-test
 
-      - name: Verify WingDrive package identity
+  rust-android:
+    name: Embedded core (clippy, aarch64)
+    if: ${{ !inputs.release-tag }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
+        with:
+          phase: start
+          # Keeps /usr/local/lib/android, which holds the SDK this job builds with.
+          paths: /usr/share/dotnet /opt/ghc /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+      - uses: ./.github/actions/setup-rust
+        with:
+          target: ${{ env.RUST_TARGET }}
+          cache-key: mobile
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-ndk@${{ env.CARGO_NDK_VERSION }}
+      - name: Install the Android NDK
         run: |
-          test -f android/app/src/main/AndroidManifest.xml
-          grep "com.wingdrive.app" android/app/build.gradle
-        working-directory: apps/mobile
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ANDROID_NDK_VERSION" > /dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION" >> "$GITHUB_ENV"
+      - name: Wait for disk space
+        uses: ./.github/actions/free-disk-space
+        with:
+          phase: wait
+      - name: Clippy for Android
+        run: cargo ndk --platform 24 -t "$ANDROID_ABI" clippy -p wing-mobile-core --locked -- -D warnings
+
+  android:
+    name: Android build (Gradle, release variant)
+    if: ${{ !inputs.release-tag }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      - name: Install the Android NDK
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ANDROID_NDK_VERSION" > /dev/null
+      - name: Create the debug keystore
+        run: >
+          keytool -genkeypair -keystore apps/mobile/android/app/debug.keystore -storepass android
+          -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000
+          -dname "CN=Android Debug,O=Android,C=US"
+      # The rust-android job covers the core; this one checks the JS bundle and the native modules.
+      - name: Assemble release APK
+        env:
+          WING_SKIP_RUST: "1"
+        run: ./gradlew assembleRelease -PreactNativeArchitectures="$ANDROID_ABI" --stacktrace
+        working-directory: apps/mobile/android
+
+  release:
+    name: Signed Android release
+    if: ${{ inputs.release-tag }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.release-tag }}
+          persist-credentials: false
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
+        with:
+          phase: start
+          # Keeps /usr/local/lib/android, which holds the SDK this job builds with.
+          paths: /usr/share/dotnet /opt/ghc /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+      - name: Version from the tag
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: python3 scripts/release/android_version.py "$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: true
+      - uses: ./.github/actions/setup-rust
+        with:
+          target: ${{ env.RUST_TARGET }}
+          cache-key: mobile-release
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-ndk@${{ env.CARGO_NDK_VERSION }}
+      - name: Install the Android NDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ANDROID_NDK_VERSION" > /dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION" >> "$GITHUB_ENV"
+      - name: Decode the upload keystore
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.WINGDRIVE_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Android upload key configured; the APK and AAB are built but not published."
+            exit 0
+          fi
+          keystore="$RUNNER_TEMP/upload.keystore"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          echo "WINGDRIVE_ANDROID_KEYSTORE=$keystore" >> "$GITHUB_ENV"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+      - name: Create the debug keystore
+        if: steps.keystore.outputs.signed != 'true'
+        run: >
+          keytool -genkeypair -keystore apps/mobile/android/app/debug.keystore -storepass android
+          -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000
+          -dname "CN=Android Debug,O=Android,C=US"
+      - name: Wait for disk space
+        uses: ./.github/actions/free-disk-space
+        with:
+          phase: wait
+      - name: Build APK and AAB
+        env:
+          WING_ANDROID_ABIS: ${{ env.ANDROID_ABI }}
+          WINGDRIVE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.WINGDRIVE_ANDROID_KEYSTORE_PASSWORD }}
+          WINGDRIVE_ANDROID_KEY_ALIAS: ${{ secrets.WINGDRIVE_ANDROID_KEY_ALIAS }}
+          WINGDRIVE_ANDROID_KEY_PASSWORD: ${{ secrets.WINGDRIVE_ANDROID_KEY_PASSWORD }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+        run: >
+          ./gradlew assembleRelease bundleRelease
+          -PreactNativeArchitectures="$ANDROID_ABI"
+          -Pwingdrive.versionName="$VERSION_NAME"
+          -Pwingdrive.versionCode="$VERSION_CODE"
+        working-directory: apps/mobile/android
+      - name: Check the version and signature
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          SIGNED: ${{ steps.keystore.outputs.signed }}
+        run: |
+          apk=apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          aapt2=$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort | tail -n 1)
+          "$aapt2" dump badging "$apk" | grep -q "versionCode='$VERSION_CODE'"
+          unzip -l "$apk" | grep -q "lib/$ANDROID_ABI/libwing_mobile_core.so"
+          if [ "$SIGNED" = "true" ]; then
+            apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -n 1)
+            certs=$("$apksigner" verify --print-certs "$apk")
+            if grep -q "CN=Android Debug" <<< "$certs"; then
+              echo "::error::The release APK is signed with the debug key."
+              exit 1
+            fi
+          fi
+      - name: Prepare release assets
+        if: steps.keystore.outputs.signed == 'true'
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          mkdir dist
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "dist/WingDrive-$VERSION_NAME-android-$ANDROID_ABI.apk"
+          cp apps/mobile/android/app/build/outputs/bundle/release/app-release.aab "dist/WingDrive-$VERSION_NAME-android.aab"
+          cd dist && sha256sum ./* > SHA256SUMS-android
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: steps.keystore.outputs.signed == 'true'
+        with:
+          name: wingdrive-android-release
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14

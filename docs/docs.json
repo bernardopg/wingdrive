@@ -88,6 +88,7 @@
             "pages": [
               "core/database",
               "core/testing",
+              "core/mobile-development",
               "core/releases",
               "core/sync-event-log",
               "core/task-tracking",

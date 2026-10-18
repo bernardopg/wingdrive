@@ -7,8 +7,6 @@ import {
 	mapVolumeToFile,
 	mapDeviceToFile,
 	type File,
-	type Device,
-	type Volume,
 } from "@wingdrive/ts-client";
 import FolderIcon from "@wingdrive/assets/icons/Folder.webp";
 

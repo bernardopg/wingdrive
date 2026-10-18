@@ -141,6 +141,8 @@ export function PairingPanel({
       }, 2000);
       return () => clearTimeout(timer);
     }
+    // handleClose changes every render (status polls each second); the timer starts once per completion.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCompleted]);
 
   if (!isOpen) return null;

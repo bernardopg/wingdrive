@@ -1,8 +1,9 @@
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View, FlatList, Pressable, Image, Dimensions } from "react-native";
 import type { File } from "@wingdrive/ts-client";
-import { getVirtualMetadata, isVirtualFile, getFileKindForIcon } from "@wingdrive/ts-client";
+import { getVirtualMetadata, getFileKindForIcon } from "@wingdrive/ts-client";
 import { getIcon } from "@wingdrive/assets/util/mobile";
 import { imageSource } from "../../../utils/imageSource";
 
@@ -80,6 +81,8 @@ function FileCard({ file, onPress }: { file: File; onPress: () => void }) {
 }
 
 export function GridView({ files, onFilePress }: GridViewProps) {
+	// Edge-to-edge on Android: keep the last row above the navigation bar.
+	const insets = useSafeAreaInsets();
 	if (files.length === 0) {
 		return (
 			<View className="flex-1 items-center justify-center">
@@ -102,7 +105,7 @@ export function GridView({ files, onFilePress }: GridViewProps) {
 			}}
 			contentContainerStyle={{
 				paddingTop: 16,
-				paddingBottom: 32,
+				paddingBottom: insets.bottom + 32,
 			}}
 			className="flex-1"
 		/>

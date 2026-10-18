@@ -646,6 +646,9 @@ export function updateBatchResources<O>(
 		// events before the initial query response arrives. Without this, the
 		// events would be silently dropped and the UI stays empty.
 		if (!oldData) {
+			// The seed has the file-listing shape, so only file queries get one. A device or volume
+			// list seeded this way became an object and crashed `.map` in its consumers.
+			if (options.resourceType !== "file") return undefined;
 			return {
 				files: filteredResources,
 				total_count: filteredResources.length,

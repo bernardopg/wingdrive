@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108"><defs>
+    <linearGradient id="wd-feather-1" x1="22" y1="24" x2="71.608" y2="99.331" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="wd-feather-2" x1="26" y1="48" x2="64.657" y2="113.015" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="wd-feather-3" x1="30" y1="71" x2="56.884" y2="123.138" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs><g transform="translate(54 54) scale(0.54) translate(-63 -64)"><path d="M22 78 C40 46 66 28 104 24 C96 46 78 62 52 70 Z" fill="url(#wd-feather-1)"/><path d="M26 92 C44 66 68 52 100 48 C92 66 74 79 50 85 Z" fill="url(#wd-feather-2)" opacity="0.72"/><path d="M30 104 C46 84 66 74 94 71 C87 85 71 95 50 99 Z" fill="url(#wd-feather-3)" opacity="0.44"/></g></svg>

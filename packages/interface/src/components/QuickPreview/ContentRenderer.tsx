@@ -4,7 +4,6 @@ import { File as FileComponent } from "../../routes/explorer/File";
 import { formatBytes } from "../../routes/explorer/utils";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { useLibraryMutation } from "../../contexts/WingDriveContext";
-import { containingArchive } from "../../routes/explorer/hooks/archiveName";
 import { useServer } from "../../contexts/ServerContext";
 import { useTranslation } from "../../i18n";
 import {
@@ -654,7 +653,7 @@ function useOnDiskFile(file: File): File | null {
 	const openMember = useLibraryMutation("archive.open_member");
 	const physical = "Physical" in file.wing_path ? file.wing_path.Physical : null;
 	const inArchive =
-		file.kind === "File" && !!physical && containingArchive(physical.path) !== null;
+		file.kind === "File" && !!physical && !!file.archive;
 	const [resolved, setResolved] = useState<File | null>(null);
 
 	useEffect(() => {

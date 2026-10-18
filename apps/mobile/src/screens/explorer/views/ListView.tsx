@@ -1,5 +1,6 @@
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View, FlatList, Pressable, Image } from "react-native";
 import type { File } from "@wingdrive/ts-client";
 import { getVirtualMetadata, isVirtualFile, getFileKindForIcon } from "@wingdrive/ts-client";
@@ -103,6 +104,8 @@ function FileRow({ file, onPress }: { file: File; onPress: () => void }) {
 }
 
 export function ListView({ files, onFilePress }: ListViewProps) {
+	// Edge-to-edge on Android: keep the last row above the navigation bar.
+	const insets = useSafeAreaInsets();
 	if (files.length === 0) {
 		return (
 			<View className="flex-1 items-center justify-center">
@@ -118,6 +121,7 @@ export function ListView({ files, onFilePress }: ListViewProps) {
 			renderItem={({ item }) => (
 				<FileRow file={item} onPress={() => onFilePress(item)} />
 			)}
+			contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
 			className="flex-1"
 		/>
 	);

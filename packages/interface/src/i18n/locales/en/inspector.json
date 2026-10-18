@@ -203,7 +203,14 @@
 			"hoursAgo_one": "{{count}} hour ago",
 			"hoursAgo_other": "{{count}} hours ago",
 			"daysAgo_one": "{{count}} day ago",
-			"daysAgo_other": "{{count}} days ago"
+			"daysAgo_other": "{{count}} days ago",
+			"scanStates": {
+				"Idle": "Idle",
+				"Pending": "Pending",
+				"Completed": "Completed",
+				"Failed": "Failed",
+				"Paused": "Paused"
+			}
 		},
 		"preview": {
 			"name": "Name",
@@ -258,7 +265,10 @@
 			"sendMessage": "Send message",
 			"typeMessage": "Type a message...",
 			"closePreview": "ESC or Space to close",
-			"mesh": "3D Mesh"
+			"mesh": "3D Mesh",
+			"hintClose": "to close",
+			"hintOr": "or",
+			"hintNavigate": "to navigate"
 		}
 	},
 	"knowledge": {

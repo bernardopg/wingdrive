@@ -1,12 +1,11 @@
 import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React, { useState, useMemo } from "react";
-import { View, Pressable, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useExplorerFiles } from "./hooks/useExplorerFiles";
 import { ListView } from "./views/ListView";
 import { GridView } from "./views/GridView";
-import type { Device } from "@wingdrive/ts-client";
 import { useNormalizedQuery } from "../../client";
 import { GlassButton } from "../../components/GlassButton";
 import { GlassContextMenu } from "../../components/GlassContextMenu";
@@ -44,7 +43,7 @@ export function ExplorerScreen() {
 	}, [searchParams]);
 
 	// Fetch files
-	const { files, isLoading, source } = useExplorerFiles(params);
+	const { files, isLoading } = useExplorerFiles(params);
 
 	// Fetch device for path display
 	const { data: devices } = useNormalizedQuery({

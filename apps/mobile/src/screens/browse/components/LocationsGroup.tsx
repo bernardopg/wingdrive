@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import { useNormalizedQuery } from "../../../client";
 import { SettingsGroup, SettingsLink } from "../../../components/primitive";
 import FolderIcon from "@wingdrive/assets/icons/Folder.webp";
-import type { Device } from "@wingdrive/ts-client";
 
 export function LocationsGroup() {
 	const router = useRouter();

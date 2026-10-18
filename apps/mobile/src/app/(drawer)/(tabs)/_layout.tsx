@@ -24,6 +24,11 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Icon sf="folder" md="folder" />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="network">
+        <NativeTabs.Trigger.Label>{t("Network")}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="network" md="devices" />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Label>{t("Settings")}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="gearshape" md="settings" />

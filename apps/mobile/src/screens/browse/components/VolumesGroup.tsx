@@ -2,7 +2,6 @@ import React from "react";
 import { Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useNormalizedQuery } from "../../../client";
-import type { Volume, Device } from "@wingdrive/ts-client";
 import { getVolumeIcon } from "@wingdrive/ts-client";
 import { SettingsGroup, SettingsLink } from "../../../components/primitive";
 import { imageSource } from "../../../utils/imageSource";

@@ -22,6 +22,11 @@ const ROUTE_TITLES: Record<string, string> = {
 	"/search": "search",
 	"/jobs": "jobs",
 	"/daemon": "daemon",
+	"/redundancy": "redundancy",
+	"/redundancy/at-risk": "atRisk",
+	"/redundancy/compare": "compare",
+	"/trash": "trash",
+	"/wingbot": "wingbot",
 };
 
 export function deriveTitleFromPath(
@@ -32,9 +37,18 @@ export function deriveTitleFromPath(
 		return i18n.t(`dialogs:tabs.routes.${ROUTE_TITLES[pathname]}`);
 	}
 
+	// Title is set by TagView once the tag's name loads.
 	if (pathname.startsWith("/tag/")) {
-		const tagId = pathname.split("/")[2];
-		return tagId ? i18n.t("dialogs:tabs.tagTitle", { id: tagId.slice(0, 8) }) : i18n.t("dialogs:tabs.tag");
+		return null;
+	}
+
+	if (pathname.startsWith("/file-kinds/")) {
+		const kind = decodeURIComponent(pathname.split("/")[2] ?? "");
+		return i18n.t(`navigation:fileKinds.types.${kind}`, { defaultValue: kind });
+	}
+
+	if (pathname.startsWith("/wingbot")) {
+		return i18n.t("dialogs:tabs.routes.wingbot");
 	}
 
 	// Title is set by the SourceDetail component once the source resolves.

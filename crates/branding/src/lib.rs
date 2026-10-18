@@ -57,6 +57,8 @@ pub const VOLUME_ID_FILE: &str = ".wingdrive-volume-id";
 /// Volume marker written before the fork.
 pub const LEGACY_VOLUME_ID_FILE: &str = ".spacedrive-volume-id";
 
+// Desktop only: mobile keeps its data under the platform data directory.
+#[cfg(not(any(target_os = "ios", target_os = "android")))]
 const DATA_DIR_NAME: &str = ".wingdrive";
 const LEGACY_DATA_DIR_NAME: &str = ".spacedrive";
 

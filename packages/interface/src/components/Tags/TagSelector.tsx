@@ -9,6 +9,8 @@ import {
 } from '../../contexts/WingDriveContext';
 import { useRefetchTagQueries } from '../../hooks/useRefetchTagQueries';
 import { useTranslation } from '../../i18n';
+import {nextTagColor} from './tagColor';
+
 
 interface TagSelectorProps {
 	onSelect: (tag: Tag) => void;
@@ -120,9 +122,7 @@ export function TagSelector({
 		if (!query.trim()) return;
 
 		try {
-			const color = `#${Math.floor(Math.random() * 16777215)
-				.toString(16)
-				.padStart(6, '0')}`;
+			const color = nextTagColor(allTags.map((tag) => tag.color));
 			const result = await createTag.mutateAsync({
 				canonical_name: query.trim(),
 				display_name: null,

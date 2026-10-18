@@ -357,9 +357,9 @@ label={t("inspector.preview.close")}
 							<div className="absolute bottom-0 left-0 right-0 z-10 px-6 py-3">
 								<div className="text-center text-xs text-white/50">
 									<span className="text-white/70">ESC</span>{" "}
-									or{" "}
+									{t("inspector.preview.hintOr")}{" "}
 									<span className="text-white/70">Space</span>{" "}
-									to close
+									{t("inspector.preview.hintClose")}
 									{(hasPrevious || hasNext) && (
 										<>
 											{" · "}
@@ -370,7 +370,7 @@ label={t("inspector.preview.close")}
 											<span className="text-white/70">
 												→
 											</span>{" "}
-											to navigate
+											{t("inspector.preview.hintNavigate")}
 										</>
 									)}
 								</div>

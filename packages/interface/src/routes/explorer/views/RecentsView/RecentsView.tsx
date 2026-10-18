@@ -2,25 +2,19 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useExplorer } from '../../context';
 import { useExplorerFiles } from '../../hooks/useExplorerFiles';
-import { GridView } from '../GridView';
-import { ListView } from '../ListView';
-import { MediaView } from '../MediaView';
-import { ColumnView } from '../ColumnView';
-import { SizeView } from '../SizeView';
-import { KnowledgeView } from '../KnowledgeView';
+import { ExplorerView } from '../../ExplorerView';
 import { useTranslation } from '../../../../i18n';
 
 /**
  * RecentsView displays recently indexed files sorted by indexed_at timestamp.
  *
- * Similar to SearchView, it delegates to existing view components which automatically
- * read from useExplorerFiles. This ensures recents has the same interactions as normal
- * browsing: keyboard navigation, drag-to-select, context menus, etc.
+ * It renders the regular ExplorerView in recents mode, so recents keeps the
+ * explorer's top bar (navigation, view switcher, sort) and its interactions.
  */
 export function RecentsView() {
 	const { t } = useTranslation('explorer');
 	const explorer = useExplorer();
-	const { viewMode, enterRecentsMode, exitRecentsMode } = explorer;
+	const { enterRecentsMode, exitRecentsMode } = explorer;
 	const { files, isLoading, error, hasMore, page = 0, source } = useExplorerFiles();
 	const [, setSearchParams] = useSearchParams();
 
@@ -30,37 +24,12 @@ export function RecentsView() {
 		return () => exitRecentsMode();
 	}, [enterRecentsMode, exitRecentsMode]);
 
-	// Route to the appropriate view based on viewMode
-	// The views will automatically use recents results via useExplorerFiles
-	let view;
-	switch (viewMode) {
-		case 'grid':
-			view = <GridView />;
-			break;
-		case 'list':
-			view = <ListView />;
-			break;
-		case 'media':
-			view = <MediaView />;
-			break;
-		case 'column':
-			view = <ColumnView />;
-			break;
-		case 'size':
-			view = <SizeView />;
-			break;
-		case 'knowledge':
-			view = <KnowledgeView />;
-			break;
-		default:
-			view = <GridView />;
-	}
 	const goToPage = (nextPage: number) => setSearchParams(params => {
 		params.set('page', String(nextPage));
 		return params;
 	});
 	return <div className="flex h-full flex-col">
-		<div key={page} className="min-h-0 flex-1">{view}</div>
+		<div key={page} className="min-h-0 flex-1"><ExplorerView /></div>
 		{error && <p role="alert" className="p-2 text-sm">{t('pagination.couldNotLoadRecentFiles', { error: error.message })}</p>}
 		{source === 'recents' && !isLoading && !error && files.length === 0 && <p className="p-2 text-sm">{t(page > 0 ? 'pagination.noRecentFilesThisPage' : 'pagination.noRecentFiles')}</p>}
 		{source === 'recents' && (page > 0 || hasMore) && <nav aria-label={t('pagination.recentFilesPages')} className="flex items-center justify-center gap-3 p-2 text-sm">

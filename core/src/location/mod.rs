@@ -565,6 +565,7 @@ async fn update_location_scan_state(
 		.await?
 		.ok_or_else(|| LocationError::LocationNotFound { id: Uuid::nil() })?;
 
+	let uuid = location.uuid;
 	let mut active_location: entities::location::ActiveModel = location.into();
 	active_location.scan_state = Set(state.to_string());
 	active_location.error_message = Set(error_message);
@@ -575,6 +576,7 @@ async fn update_location_scan_state(
 	}
 
 	active_location.update(library.db().conn()).await?;
+	emit_location_changed(&library, uuid).await;
 	Ok(())
 }
 
@@ -590,13 +592,30 @@ async fn update_location_stats(
 		.await?
 		.ok_or_else(|| LocationError::LocationNotFound { id: Uuid::nil() })?;
 
+	let uuid = location.uuid;
 	let mut active_location: entities::location::ActiveModel = location.into();
 	active_location.total_file_count = Set(file_count as i64);
 	active_location.total_byte_size = Set(total_size as i64);
 	active_location.updated_at = Set(chrono::Utc::now());
 
 	active_location.update(library.db().conn()).await?;
+	emit_location_changed(&library, uuid).await;
 	Ok(())
+}
+
+/// Tells clients a location row changed, so its scan state and counts in the
+/// UI follow the database instead of the values seen when it was added.
+pub(crate) async fn emit_location_changed(library: &Library, uuid: Uuid) {
+	let resource_manager = crate::domain::ResourceManager::new(
+		Arc::new(library.db().conn().clone()),
+		library.event_bus().clone(),
+	);
+	if let Err(error) = resource_manager
+		.emit_resource_events("location", vec![uuid])
+		.await
+	{
+		warn!(%error, "Failed to emit location resource events");
+	}
 }
 
 /// Get device slug for current device

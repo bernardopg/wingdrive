@@ -54,7 +54,7 @@ export function LibrarySwitcherPanel({
 			if (result?.library_id) {
 				handleSelectLibrary(result.library_id);
 			}
-		} catch (error) {
+		} catch {
 			Alert.alert(t("Error"), t("Failed to create library"));
 		}
 	};
@@ -85,7 +85,7 @@ export function LibrarySwitcherPanel({
 									client.setCurrentLibrary(null);
 								}
 							}
-						} catch (error) {
+						} catch {
 							Alert.alert(t("Error"), t("Failed to delete library"));
 						}
 					},
@@ -166,6 +166,10 @@ export function LibrarySwitcherPanel({
 														}`}
 													>
 														{lib.name}
+													</Text>
+													{/* A library shared from another device can carry the same name as a local one. */}
+													<Text className="text-xs text-ink-faint mt-0.5">
+														{lib.id.slice(0, 8)}
 													</Text>
 													{lib.description && (
 														<Text className="text-xs text-ink-dull mt-0.5">

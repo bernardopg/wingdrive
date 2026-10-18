@@ -67,6 +67,13 @@ updates:
           - react-native-*
           - "@react-native/*"
         update-types: [minor, patch]
+      # ESLint 10 needs @eslint/js 10 and a typescript-eslint that supports it; majors land together.
+      eslint:
+        patterns:
+          - eslint
+          - "@eslint/*"
+          - typescript-eslint
+          - eslint-plugin-*
       bun-minor-patch:
         update-types: [minor, patch]
     ignore:

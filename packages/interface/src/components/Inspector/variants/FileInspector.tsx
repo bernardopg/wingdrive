@@ -202,7 +202,9 @@ const {t} = useTranslation('inspector');
 	const isImage = getContentKind(file) === 'image';
 	const isVideo = getContentKind(file) === 'video';
 	const isAudio = getContentKind(file) === 'audio';
-	const showJobsButton = isImage || isVideo || isAudio;
+	// Archive members are read-only copies: no metadata, sharing or processing.
+	const inArchive = !!file.archive;
+	const showJobsButton = !inArchive && (isImage || isVideo || isAudio);
 
 	// The share sheet takes a path on this machine. Another device's path
 	// would name a different file here, or none.
@@ -210,7 +212,7 @@ const {t} = useTranslation('inspector');
 		file.is_local && file.wing_path && 'Physical' in file.wing_path
 			? file.wing_path.Physical.path
 			: null;
-	const canShare = !!physicalPath && !!platform.shareFiles;
+	const canShare = !inArchive && !!physicalPath && !!platform.shareFiles;
 
 	const handleShare = async () => {
 		if (!physicalPath || !platform.shareFiles) {
@@ -317,6 +319,7 @@ const {t} = useTranslation('inspector');
 
 	return (
 		<div className="flex items-center gap-1.5">
+			{!inArchive && (
 			<button
 				type="button"
 				onClick={handleFavorite}
@@ -336,6 +339,7 @@ const {t} = useTranslation('inspector');
 			>
 				<Star size={14} weight={isFavorite ? 'fill' : 'regular'} />
 			</button>
+			)}
 
 			{/* Quick Preview Button — spacebar isn't available on touch devices */}
 			{explorer && (
