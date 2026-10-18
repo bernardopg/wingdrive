@@ -1324,6 +1324,34 @@ async fn run_test_scenarios(
 	harness.rename_file("release-v1", "release-v1.2").await?;
 	harness.verify_entry_exists("release-v1.2").await?;
 
+	// Archive extraction fills a hidden temp folder, moves its single top-level
+	// folder out and removes the temp folder, all at once.
+	harness.create_dir(".extract-staging/extracted").await?;
+	harness
+		.create_file(".extract-staging/extracted/extracted-child.txt", "x")
+		.await?;
+	harness
+		.rename_file(".extract-staging/extracted", "extracted")
+		.await?;
+	harness.delete_dir(".extract-staging").await?;
+	harness.verify_entry_exists("extracted").await?;
+	harness.verify_entry_exists("extracted-child").await?;
+	harness.delete_dir("extracted").await?;
+
+	// A rename whose source was filtered out (never indexed) still indexes
+	// the destination.
+	harness.create_dir("node_modules").await?;
+	harness
+		.create_file("node_modules/promoted.txt", "x")
+		.await?;
+	tokio::time::sleep(Duration::from_millis(500)).await;
+	harness
+		.rename_file("node_modules/promoted.txt", "promoted.txt")
+		.await?;
+	harness.verify_entry_exists("promoted").await?;
+	harness.delete_file("promoted.txt").await?;
+	harness.delete_dir("node_modules").await?;
+
 	// ext4 hands a freed inode to the next file at once. A new file must not be
 	// taken for a rename of the one just deleted.
 	harness.create_file("reuse-old.txt", "ab").await?;

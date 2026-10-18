@@ -141,8 +141,28 @@ impl CoreAction for UpdateAppConfigAction {
 
 		// Validate theme
 		if let Some(ref theme) = self.input.theme {
+			// Keep in sync with THEME_GROUPS in packages/interface/src/Settings/pages/AppearanceSettings.tsx
 			let valid_themes = [
-				"system", "light", "dark", "midnight", "noir", "slate", "nord", "mocha",
+				"system",
+				"light",
+				"dark",
+				"midnight",
+				"noir",
+				"slate",
+				"nord",
+				"mocha",
+				"t3-code",
+				"t3-chat",
+				"grove",
+				"ocean",
+				"ember",
+				"iris",
+				"catppuccin",
+				"gruvbox",
+				"solarized",
+				"rose-pine",
+				"dracula",
+				"tokyo-night",
 			];
 			if !valid_themes.contains(&theme.to_lowercase().as_str()) {
 				return Err(ActionError::Validation {

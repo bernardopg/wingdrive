@@ -5,7 +5,9 @@
  */
 
 import type {
+	Device,
 	Library,
+	ListLibraryDevicesInput,
 	LocationsListOutput,
 	LocationsListQueryInput
 } from '@wingdrive/ts-client';
@@ -39,6 +41,17 @@ export function Overview() {
 		query: 'locations.list',
 		input: null,
 		resourceType: 'location'
+	});
+
+	// Same query as DevicePanel, so the card counts paired peers that are not
+	// in this library's device table yet.
+	const {data: devicesData} = useNormalizedQuery<
+		ListLibraryDevicesInput,
+		Device[]
+	>({
+		query: 'devices.list',
+		input: {include_offline: true, include_details: false, show_paired: true},
+		resourceType: 'device'
 	});
 
 	// Find the selected location from the list reactively
@@ -86,7 +99,7 @@ export function Overview() {
 							totalFiles={Number(stats.total_files)}
 							locationCount={stats.location_count}
 							tagCount={stats.tag_count}
-							deviceCount={stats.device_count ?? 0}
+							deviceCount={devicesData?.length ?? stats.device_count ?? 0}
 							uniqueContentCount={Number(
 								stats.unique_content_count ?? 0
 							)}
