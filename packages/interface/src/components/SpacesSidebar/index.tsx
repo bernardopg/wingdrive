@@ -487,6 +487,7 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 						spaces={spaces}
 						currentSpace={currentSpace}
 						onSwitch={setCurrentSpace}
+						onOpenSettings={() => setCustomizePanelOpen(true)}
 					/>
 
 					{/* Scrollable Content */}

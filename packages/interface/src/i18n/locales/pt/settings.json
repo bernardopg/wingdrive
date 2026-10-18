@@ -156,7 +156,8 @@
 	"about": {
 		"tagline": "Um explorador de arquivos do futuro.",
 		"manifesto": "Infraestrutura para a próxima era da computação. Uma arquitetura projetada desde o início para ambientes com vários dispositivos — não serviços em nuvem adaptados para funcionar offline, mas sincronização local-first que escala para a nuvem quando você quiser.",
-		"website": "Site"
+		"website": "Site",
+		"discussions": "Discussões"
 	},
 	"cancel": "Cancelar",
 	"restartNeeded": "Algumas alterações passam a valer após reiniciar o daemon.",

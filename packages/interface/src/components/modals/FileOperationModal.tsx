@@ -14,7 +14,7 @@ import {
 	type UseDialogProps
 } from '@wingdrive/primitives';
 import type {File as FileType, WingPath} from '@wingdrive/ts-client';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useForm} from 'react-hook-form';
 import {usePlatform} from '../../contexts/PlatformContext';
 import {getCurrentPlatform, toDisplayString} from '../../util/keybinds/platform';
@@ -38,6 +38,14 @@ interface FileOperationDialogProps {
 	sources: WingPath[];
 	destination: WingPath;
 	onComplete?: () => void;
+	/** Start right away when no source name already exists at the destination. */
+	confirmOnlyOnConflict?: boolean;
+}
+
+function baseName(path: WingPath): string | null {
+	if (!('Physical' in path)) return null;
+	const p = path.Physical.path.replace(/[\\/]+$/, '');
+	return p.slice(Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\')) + 1);
 }
 
 type ConflictResolution = 'Overwrite' | 'AutoModifyName' | 'Skip' | 'Abort';
@@ -119,6 +127,39 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 		return false;
 	});
 
+	// A paste without name clashes needs no decision: run it with the defaults.
+	const {data: destListing, isFetchedAfterMount} = useLibraryQuery(
+		{
+			type: 'files.directory_listing',
+			input: {
+				path: props.destination,
+				limit: null,
+				include_hidden: true,
+				sort_by: 'name',
+				folders_first: false
+			}
+		},
+		// A cached listing can predate the last paste; decide on a fresh one.
+		{enabled: !!props.confirmOnlyOnConflict, refetchOnMount: 'always'}
+	);
+	const submitRef = useRef<(() => Promise<void>) | null>(null);
+	const autoStarted = useRef(false);
+	useEffect(() => {
+		if (
+			!props.confirmOnlyOnConflict ||
+			!destListing ||
+			!isFetchedAfterMount ||
+			autoStarted.current
+		)
+			return;
+		const existing = new Set(destListing.files.map((f) => baseName(f.wing_path)));
+		const clash = props.sources.some((source) => existing.has(baseName(source)));
+		if (!clash) {
+			autoStarted.current = true;
+			void submitRef.current?.();
+		}
+	}, [destListing, isFetchedAfterMount, props.confirmOnlyOnConflict, props.sources]);
+
 	// Auto-close if invalid operation (must be in useEffect to avoid render loop)
 	useEffect(() => {
 		if (hasSameSourceDest) {
@@ -132,6 +173,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 
 	const handleSubmit = async () => {
 		try {
+			autoStarted.current = true;
 			setPhase({type: 'executing'});
 			const move = platform.undoMove;
 			const identify = platform.fileIdentity;
@@ -241,6 +283,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 			});
 		}
 	};
+	submitRef.current = handleSubmit;
 
 	const handleCancel = () => {
 		dialogManager.setState(props.id, {open: false});

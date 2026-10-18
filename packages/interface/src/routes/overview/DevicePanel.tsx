@@ -230,8 +230,15 @@ export function DevicePanel({onLocationSelect}: DevicePanelProps = {}) {
 				{devices.map((device) => {
 					const deviceVolumes = volumesByDevice[device.id] || [];
 					const deviceJobs = jobsByDevice[device.id] || [];
+					// Locations carry only a device slug, and two devices can share one
+					// (same hostname); the current device owns its slug then.
+					const slugOwner =
+						devices.find((d) => d.slug === device.slug && d.is_current) ??
+						devices.find((d) => d.slug === device.slug);
 					const deviceLocations =
-						locationsByDeviceSlug[device.slug] || [];
+						slugOwner?.id === device.id
+							? locationsByDeviceSlug[device.slug] || []
+							: [];
 
 					return (
 						<DeviceCard

@@ -144,7 +144,12 @@
 			"adapters": "Adapters",
 			"search": "Search",
 			"jobs": "Jobs",
-			"daemon": "Daemon"
+			"daemon": "Daemon",
+			"redundancy": "Redundancy",
+			"atRisk": "At-Risk Files",
+			"compare": "Compare Volumes",
+			"trash": "Trash",
+			"wingbot": "Wingbot"
 		}
 	},
 	"tags": {

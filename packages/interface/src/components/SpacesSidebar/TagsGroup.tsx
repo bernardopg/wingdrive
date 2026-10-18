@@ -13,6 +13,8 @@ import {useRefetchTagQueries} from '../../hooks/useRefetchTagQueries';
 import {useExplorer} from '../../routes/explorer/context';
 import {GroupHeader} from './GroupHeader';
 import {useTranslation} from '../../i18n';
+import {nextTagColor} from '../Tags/tagColor';
+
 
 interface TagsGroupProps {
 	isCollapsed: boolean;
@@ -169,9 +171,7 @@ const {t} = useTranslation('navigation');
 				aliases: [],
 				namespace: null,
 				tag_type: null,
-				color: `#${Math.floor(Math.random() * 16777215)
-					.toString(16)
-					.padStart(6, '0')}`,
+				color: nextTagColor(tags.map((tag: {color?: string | null}) => tag.color)),
 				icon: null,
 				description: null,
 				is_organizational_anchor: null,

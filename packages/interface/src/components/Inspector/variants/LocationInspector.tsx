@@ -146,7 +146,7 @@ label: t("inspector.location.fullReindex"),
 	// Unit variants serialize as plain strings; only Scanning carries data
 const formatScanState = (scanState: ScanState | null | undefined) => {
 if (!scanState) return t("inspector.location.unknown");
-		if (typeof scanState === "string") return scanState;
+		if (typeof scanState === "string") return t(`inspector.location.scanStates.${scanState}`, { defaultValue: scanState });
 if ("Scanning" in scanState) return t("inspector.location.scanning", { progress: scanState.Scanning.progress });
 return t("inspector.location.unknown");
 	};

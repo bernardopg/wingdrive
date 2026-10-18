@@ -218,13 +218,12 @@ export function VolumeBar({volume, index}: VolumeBarProps) {
 						)}
 						{volumeTypeStr && (
 							<span className="bg-app-box border-app-line rounded border px-1.5 py-0.5">
-								{volumeTypeStr}
+								{t(`volumes.types.${volumeTypeStr}`, {defaultValue: volumeTypeStr})}
 							</span>
 						)}
 						{indexingProgress ? (
 							<span className="bg-accent/20 border-accent/30 text-accent rounded border px-1.5 py-0.5 font-medium">
-								{indexingProgress.filesIndexed.toLocaleString()}{' '}
-								files
+								{t('volumes.files', {count: indexingProgress.filesIndexed, formattedCount: indexingProgress.filesIndexed.toLocaleString()})}
 								{indexingProgress.rate > 0 && (
 									<span className="text-accent/70 ml-1">
 										({Math.round(indexingProgress.rate)}/s)
@@ -234,8 +233,7 @@ export function VolumeBar({volume, index}: VolumeBarProps) {
 						) : (
 							volume.total_files != null && (
 								<span className="bg-accent/10 border-accent/20 text-accent rounded border px-1.5 py-0.5">
-									{volume.total_files.toLocaleString()}{' '}
-									files
+									{t('volumes.files', {count: volume.total_files, formattedCount: volume.total_files.toLocaleString()})}
 								</span>
 							)
 						)}
@@ -248,7 +246,7 @@ export function VolumeBar({volume, index}: VolumeBarProps) {
 						{formatBytes(totalCapacity)}
 					</div>
 					<div className="text-ink-dull text-[10px]">
-						{formatBytes(availableBytes)} free
+						{t('volumes.free', {size: formatBytes(availableBytes)})}
 					</div>
 					<div className="text-ink-faint flex h-3.5 items-center justify-end gap-1.5 text-[10px]">
 						{volume.read_speed_mbps && (

@@ -9,14 +9,21 @@ interface SpaceSwitcherProps {
 	spaces: Space[] | undefined;
 	currentSpace: Space | undefined;
 	onSwitch: (spaceId: string) => void;
+	onOpenSettings: () => void;
 }
+
+// The core creates the default space with this English name; show it translated.
+const DEFAULT_SPACE_NAME = 'All Devices';
 
 export function SpaceSwitcher({
 	spaces,
 	currentSpace,
-	onSwitch
+	onSwitch,
+	onOpenSettings
 }: SpaceSwitcherProps) {
 	const { t } = useTranslation('navigation');
+	const spaceName = (space: Space) =>
+		space.name === DEFAULT_SPACE_NAME ? t('groups.allDevices') : space.name;
 	const createSpaceDialog = useCreateSpaceDialog;
 
 	return (
@@ -28,7 +35,7 @@ export function SpaceSwitcher({
 						style={{backgroundColor: currentSpace?.color || '#666'}}
 					/>
 					<span className="flex-1 truncate text-left">
-						{currentSpace?.name || t('space.select')}
+						{currentSpace ? spaceName(currentSpace) : t('space.select')}
 					</span>
 				</SelectPill>
 			</DropdownMenu.Trigger>
@@ -50,7 +57,7 @@ export function SpaceSwitcher({
 										className="size-2 rounded-full"
 										style={{backgroundColor: space.color}}
 									/>
-									<span>{space.name}</span>
+									<span>{spaceName(space)}</span>
 								</div>
 							</DropdownMenu.Item>
 						))
@@ -65,7 +72,10 @@ export function SpaceSwitcher({
 					<Plus className="mr-2 size-4" weight="bold" />
 					{t('space.new')}
 				</DropdownMenu.Item>
-				<DropdownMenu.Item className="hover:bg-sidebar-selected text-sidebar-ink rounded-md px-2 py-1 text-sm font-medium">
+				<DropdownMenu.Item
+					onClick={onOpenSettings}
+					className="hover:bg-sidebar-selected text-sidebar-ink rounded-md px-2 py-1 text-sm font-medium"
+				>
 					<GearSix className="mr-2 size-4" weight="bold" />
 					{t('space.settings')}
 				</DropdownMenu.Item>

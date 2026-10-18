@@ -44,9 +44,9 @@ import {useBatchRenameDialog} from '../../../components/modals/BatchRenameModal'
 import {useCompareFoldersDialog} from '../../../components/modals/CompareFoldersModal';
 import {useDuplicatesDialog} from '../../../components/modals/DuplicatesModal';
 import {useExplorer} from '../context';
-import {physicalPath, selectionCapabilities} from '../fileCapabilities';
+import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
-import {COMPRESS_FORMATS, containingArchive, isArchiveName} from './archiveName';
+import {COMPRESS_FORMATS, isArchiveName} from './archiveName';
 import {useArchiveActions} from './useArchiveActions';
 import {useCopyMoveTo} from './useCopyMoveTo';
 import {useCreateEntry} from './useCreateEntry';
@@ -72,7 +72,7 @@ export function useFileContextMenu({
 	selected
 }: UseFileContextMenuProps) {
 	const {t} = useTranslation('explorer');
-	const {operationalPath, mode, openQuickPreview} = useExplorer();
+	const {operationalPath, mode, openQuickPreview, currentFiles} = useExplorer();
 	const platform = usePlatform();
 	const refetchTagQueries = useRefetchTagQueries();
 
@@ -160,13 +160,8 @@ export function useFileContextMenu({
 	// try to change files that are not on disk.
 	const inArchive =
 		targetFiles.length > 0
-			? targetFiles.every((f) => {
-					const path = physicalPath(f);
-					return !!path && containingArchive(path) !== null;
-				})
-			: !!operationalPath &&
-				'Physical' in operationalPath &&
-				containingArchive(operationalPath.Physical.path, true) !== null;
+			? targetFiles.every((f) => !!f.archive)
+			: currentFiles.some((f) => !!f.archive);
 	const archiveItems: ContextMenuItem[] = [];
 	const forArchive = (item: ContextMenuItem) => {
 		archiveItems.push(item);
@@ -174,7 +169,7 @@ export function useFileContextMenu({
 	};
 
 	const items: ContextMenuItem[] = [
-		{
+		forArchive({
 			icon: Eye,
 			label: t('contextMenu.quickLook'),
 			onClick: () => {
@@ -183,7 +178,7 @@ export function useFileContextMenu({
 			},
 			keybind: 'Space',
 			condition: () => !!file
-		},
+		}),
 		forArchive({
 			icon: FolderOpen,
 			label: targetFiles.length > 1 ? t('contextMenu.openItems', {count: targetFiles.length}) : t('contextMenu.open'),

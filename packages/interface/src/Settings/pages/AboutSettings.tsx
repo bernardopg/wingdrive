@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import type { MouseEvent } from "react";
 import { WingDriveLogo } from "@wingdrive/assets/images";
 import { CircleButton } from "@wingdrive/primitives";
-import { GlobeHemisphereWest, GithubLogo, DiscordLogo } from "@phosphor-icons/react";
+import { ChatsCircle, GithubLogo } from "@phosphor-icons/react";
 import contributors from "../../contributors.json";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { useTranslation } from "../../i18n";
@@ -75,16 +75,6 @@ export function AboutSettings() {
           rel="noopener noreferrer"
           onClick={openExternal}
         >
-          <CircleButton icon={GlobeHemisphereWest}>
-            {t("about.website")}
-          </CircleButton>
-        </a>
-        <a
-          href="https://github.com/bernardopg/wingdrive"
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={openExternal}
-        >
           <CircleButton icon={GithubLogo}>
             GitHub
           </CircleButton>
@@ -95,8 +85,8 @@ export function AboutSettings() {
           rel="noopener noreferrer"
           onClick={openExternal}
         >
-          <CircleButton icon={DiscordLogo}>
-            Discord
+          <CircleButton icon={ChatsCircle}>
+            {t("about.discussions")}
           </CircleButton>
         </a>
       </motion.div>
