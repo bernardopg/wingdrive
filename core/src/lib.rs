@@ -631,8 +631,9 @@ impl Core {
 			warn!("Failed to close KeyManager database: {}", e);
 		}
 
-		// Save configuration
-		self.config.write().await.save()?;
+		// The config file is not saved here: settings actions write it
+		// directly, and saving this startup copy reverted every change made
+		// while the daemon ran (theme, language, services, Wingdrop).
 
 		// Emit shutdown event
 		self.events.emit(Event::CoreShutdown);
