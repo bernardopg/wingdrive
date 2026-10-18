@@ -92,8 +92,9 @@ android {
         applicationId 'com.wingdrive.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.0"
+        // Release builds pass -Pwingdrive.versionCode and -Pwingdrive.versionName (see the mobile workflow).
+        versionCode((findProperty('wingdrive.versionCode') ?: '1') as int)
+        versionName findProperty('wingdrive.versionName') ?: "1.0.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -104,15 +105,23 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // The upload key lives outside the repository; CI decodes it from a secret.
+        if (System.getenv('WINGDRIVE_ANDROID_KEYSTORE')) {
+            release {
+                storeFile file(System.getenv('WINGDRIVE_ANDROID_KEYSTORE'))
+                storePassword System.getenv('WINGDRIVE_ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('WINGDRIVE_ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('WINGDRIVE_ANDROID_KEY_PASSWORD')
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Without WINGDRIVE_ANDROID_KEYSTORE the release build is debug-signed and must not ship.
+            signingConfig signingConfigs.findByName('release') ?: signingConfigs.debug
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds

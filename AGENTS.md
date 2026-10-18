@@ -124,7 +124,7 @@ crate::register_core_action!(LibraryCreateAction, "libraries.create");
 
 The `inventory` crate collects operations at compile time. When you use `register_query!` or `register_library_action!`, the operation automatically appears in global `QUERIES` and `ACTIONS` hashmaps at startup. You never manually register operations.
 
-Location: `core/src/ops/registry.rs`
+Location: `core/src/infra/wire/registry.rs`
 
 ### Tauri Desktop Development
 
@@ -825,6 +825,12 @@ After rebuilding, restart the daemon to use the latest code:
 cargo build
 cargo run --bin wing -- restart
 ```
+
+### Mobile App
+
+Never iterate with release APKs. Use the debug dev client and Metro: `just mobile-emulator`,
+`just mobile-install-android`, `just dev-mobile`. Full loop in `docs/core/mobile-development.mdx`
+and the agent skill `.agents/skills/wingdrive-mobile-dev/SKILL.md`.
 
 ### Verbose Logging
 

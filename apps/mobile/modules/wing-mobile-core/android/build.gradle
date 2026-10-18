@@ -2,11 +2,11 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-  compileSdkVersion 35
+  compileSdkVersion rootProject.ext.compileSdkVersion
 
   defaultConfig {
-    minSdkVersion 24
-    targetSdkVersion 35
+    minSdkVersion rootProject.ext.minSdkVersion
+    targetSdkVersion rootProject.ext.targetSdkVersion
   }
 
   sourceSets {
@@ -38,5 +38,4 @@ tasks.named('preBuild').configure {
 
 dependencies {
   implementation project(':expo-modules-core')
-  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.25"
 }

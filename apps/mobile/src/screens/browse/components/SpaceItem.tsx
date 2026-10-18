@@ -1,6 +1,6 @@
 import React from "react";
 import { Image } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import type { SpaceItem as SpaceItemType, ItemType, WingPath } from "@wingdrive/ts-client";
 import { SettingsLink } from "../../../components/primitive";
 import FolderIcon from "@wingdrive/assets/icons/Folder.webp";
@@ -103,18 +103,13 @@ function getItemLabel(itemType: ItemType, resolvedFile?: any): string {
 }
 
 // Get navigation params for item (mobile uses different format)
-function getItemNavigation(itemType: ItemType, itemWingPath?: WingPath): { pathname: string; params?: any } | null {
+function getItemNavigation(itemType: ItemType, itemWingPath?: WingPath): Href | null {
 	if (isOverviewItem(itemType)) {
 		return { pathname: "/" };
 	}
-	if (isRecentsItem(itemType)) {
-		return { pathname: "/recents" };
-	}
-	if (isFavoritesItem(itemType)) {
-		return { pathname: "/favorites" };
-	}
-	if (isFileKindsItem(itemType)) {
-		return { pathname: "/file-kinds" };
+	// Recents, Favorites and File Kinds have no mobile screen yet (MOB-007), so they stay hidden.
+	if (isRecentsItem(itemType) || isFavoritesItem(itemType) || isFileKindsItem(itemType)) {
+		return null;
 	}
 
 	if (isLocationItem(itemType)) {

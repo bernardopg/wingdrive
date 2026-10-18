@@ -18,3 +18,9 @@ paths-ignore:
   - packages/ts-client/src/generated/**
   - whitepaper/**
   - docs/**
+  # Each extra Cargo workspace makes the Rust extractor resolve another dependency graph
+  # before extracting. These ship nothing to users: a GPUI prototype, Criterion
+  # benchmarks and WASM extension samples.
+  - apps/gpui-photo-grid/**
+  - core/benchmarks/**
+  - extensions/**

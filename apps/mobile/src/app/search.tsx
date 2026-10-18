@@ -1,6 +1,7 @@
 import { LocalizedText as Text } from "../i18n/LocalizedText";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View, Platform, ActivityIndicator } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
 import { GlassSearchBar } from "../components/GlassSearchBar";
 import { SearchToolbar } from "../components/SearchToolbar";
@@ -19,6 +20,7 @@ type SearchViewMode = "list" | "grid";
 export default function SearchScreen() {
 	const { t } = useTranslation("common");
 	const router = useRouter();
+	const insets = useSafeAreaInsets();
 	const searchInputRef = useRef<TextInput>(null);
 	const [viewMode, setViewMode] = useState<SearchViewMode>("list");
 
@@ -94,7 +96,7 @@ export default function SearchScreen() {
 			{/* Header */}
 			<View
 				className="bg-app-box border-b border-app-line"
-				style={{ paddingTop: 18 }}
+				style={{ paddingTop: Platform.OS === "ios" ? 18 : insets.top + 8 }}
 			>
 				<View className="px-4 pb-3 flex-row items-center gap-3">
 					<View className="flex-1">

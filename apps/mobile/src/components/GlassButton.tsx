@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
-import { BlurView } from "expo-blur";
 import {
 	LiquidGlassView,
 	isLiquidGlassSupported,
@@ -32,15 +31,6 @@ export function GlassButton({
 				justifyContent: "center",
 			}}
 		>
-			{!isLiquidGlassSupported && (
-				<View
-					className={
-						active
-							? "absolute inset-0 bg-accent/20"
-							: "absolute inset-0 bg-app-box/20"
-					}
-				/>
-			)}
 			<View
 				style={{
 					width: iconSize,
@@ -83,33 +73,37 @@ export function GlassButton({
 		);
 	}
 
-	// Fallback for older iOS and Android
+	// Fallback for older iOS and Android. One rounded, clipped view: expo-blur on Android does not
+	// clip to borderRadius, so the old BlurView plus an inset square showed as a dark box.
 	return (
 		<Pressable
 			onPress={onPress}
-			className={`overflow-hidden ${className || ""}`}
+			className={className}
+			android_ripple={{ color: "rgba(255, 255, 255, 0.12)", foreground: true }}
+			hitSlop={8}
 			style={({ pressed }) => ({
 				width: size,
 				height: size,
 				borderRadius: size / 2,
-				opacity: pressed ? 0.7 : 1,
-				transform: [{ scale: pressed ? 0.95 : 1 }],
+				overflow: "hidden",
+				alignItems: "center",
+				justifyContent: "center",
+				backgroundColor: active ? "rgba(40, 130, 250, 0.2)" : "rgba(30, 31, 38, 0.75)",
+				borderWidth: 1,
+				borderColor: "rgba(128, 128, 128, 0.25)",
+				opacity: pressed ? 0.8 : 1,
 			})}
 		>
-			<BlurView
-				intensity={80}
-				tint="dark"
+			<View
 				style={{
-					flex: 1,
+					width: iconSize,
+					height: iconSize,
 					alignItems: "center",
 					justifyContent: "center",
-					borderWidth: 1,
-					borderColor: "rgba(128, 128, 128, 0.3)",
-					borderRadius: size / 2,
 				}}
 			>
-				{content}
-			</BlurView>
+				{icon}
+			</View>
 		</Pressable>
 	);
 }

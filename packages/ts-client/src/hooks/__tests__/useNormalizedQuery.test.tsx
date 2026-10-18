@@ -227,3 +227,20 @@ describe("useNormalizedQuery - Client-Side Filtering", () => {
 		expect(filtered[0].name).toBe("direct_child");
 	});
 });
+
+describe("useNormalizedQuery - batch before the first response", () => {
+	it("does not seed a non-file query with the file-listing shape", () => {
+		const queryClient = new QueryClient();
+		const queryKey = ["query:devices.list", "test-library-id", {}];
+
+		updateBatchResources(
+			[{ id: "device-1", name: "archlinux" }],
+			{},
+			{ query: "devices.list", input: {}, resourceType: "device" } as UseNormalizedQueryOptions<any>,
+			queryKey,
+			queryClient,
+		);
+
+		expect(queryClient.getQueryData(queryKey)).toBeUndefined();
+	});
+});

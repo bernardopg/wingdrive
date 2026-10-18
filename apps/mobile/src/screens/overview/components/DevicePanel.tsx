@@ -17,7 +17,7 @@ import type {
 	Volume,
 } from "@wingdrive/ts-client";
 import { getDeviceIcon } from "@wingdrive/ts-client";
-import { useNormalizedQuery, useCoreQuery, useLibraryAction, useWingDriveClient } from "../../../client";
+import { useNormalizedQuery, useLibraryAction, useWingDriveClient } from "../../../client";
 import { useVolumeIndexingStore } from "../../../stores";
 import { imageSource } from "../../../utils/imageSource";
 
@@ -611,14 +611,11 @@ interface IndexingProgress {
 	rate: number;
 }
 
-function VolumeBar({ volume, index }: VolumeBarProps) {
+function VolumeBar({ volume }: VolumeBarProps) {
 	const [indexingProgress, setIndexingProgress] = useState<IndexingProgress | null>(null);
 	const [menuVisible, setMenuVisible] = useState(false);
 	const client = useWingDriveClient();
 
-	const jobId = useVolumeIndexingStore((state) =>
-		state.getJobId(volume.fingerprint)
-	);
 
 	// Subscribe to job events for this volume
 	useEffect(() => {

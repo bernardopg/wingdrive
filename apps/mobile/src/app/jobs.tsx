@@ -1,6 +1,7 @@
 import { LocalizedText as Text } from "../i18n/LocalizedText";
 import { useState } from "react";
-import { View, FlatList, Pressable, ActivityIndicator } from "react-native";
+import { View, Platform, FlatList, Pressable, ActivityIndicator } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { GlassButton } from "../components/GlassButton";
 import { useJobs, type ExtendedJobListItem } from "../hooks/useJobs";
@@ -168,6 +169,7 @@ type FilterType = "all" | "active" | "completed";
 export default function JobsScreen() {
 	const { t } = useTranslation("common");
 	const router = useRouter();
+	const insets = useSafeAreaInsets();
 	const { jobs, activeJobCount, isLoading, pause, resume, cancel } = useJobs();
 	const [filter, setFilter] = useState<FilterType>("active");
 
@@ -203,7 +205,7 @@ export default function JobsScreen() {
 			{/* Header */}
 			<View
 				className="bg-app-box border-b border-app-line"
-				style={{ paddingTop: 18 }}
+				style={{ paddingTop: Platform.OS === "ios" ? 18 : insets.top + 8 }}
 			>
 				<View className="px-4 pb-4 flex-row items-center gap-3">
 					<View className="flex-1">
@@ -255,7 +257,7 @@ export default function JobsScreen() {
 							onCancel={cancel}
 						/>
 					)}
-					contentContainerStyle={{ padding: 16 }}
+					contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 16 }}
 				/>
 			)}
 		</View>

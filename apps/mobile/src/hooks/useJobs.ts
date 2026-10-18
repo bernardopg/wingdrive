@@ -9,7 +9,7 @@ import {useJobs as useJobsCore, type UseJobsReturn} from '@wingdrive/ts-client';
  */
 export function useJobs(): UseJobsReturn {
 	const jobs = useJobsCore({
-		onJobCompleted: (jobId, jobType) => {
+		onJobCompleted: (_jobId, _jobType) => {
 			// TODO: Show native notification
 			// Notifications.scheduleNotificationAsync({
 			//   content: {
@@ -19,7 +19,7 @@ export function useJobs(): UseJobsReturn {
 			//   trigger: null,
 			// });
 		},
-		onJobFailed: (jobId) => {
+		onJobFailed: (_jobId) => {
 			// TODO: Show error notification
 			// Notifications.scheduleNotificationAsync({
 			//   content: {
