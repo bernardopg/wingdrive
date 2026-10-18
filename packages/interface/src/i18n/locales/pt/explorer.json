@@ -113,7 +113,8 @@
 		"deleteItems_other": "Excluir {{count}} itens",
 		"delete": "Excluir",
 		"undo": "Desfazer",
-		"openInNewWindow": "Abrir em nova janela"
+		"openInNewWindow": "Abrir em nova janela",
+		"sendWithWingdrop": "Enviar com Wingdrop"
 	},
 	"sort": {
 		"dateTaken": "Data da captura",
@@ -435,5 +436,12 @@
 		"noFilesWithSizeDataTo": "Nenhum arquivo com dados de tamanho para exibir",
 		"noTaggedFiles": "Nenhum arquivo com etiqueta",
 		"filesTaggedWithThisTagWill": "Arquivos com esta etiqueta aparecerão aqui"
+	},
+	"wingdrop": {
+		"waiting": "Aguardando {{name}} aceitar…",
+		"failed": "Falha no Wingdrop: {{error}}",
+		"sendCancelled": "Wingdrop cancelado",
+		"sent_one": "{{count}} item enviado para {{name}}",
+		"sent_other": "{{count}} itens enviados para {{name}}"
 	}
 }

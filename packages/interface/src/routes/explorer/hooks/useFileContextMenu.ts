@@ -20,6 +20,7 @@ import {
 	ShareNetwork,
 	FileArchive,
 	Package,
+	PaperPlaneTilt,
 	Link,
 	FilePlus,
 	TerminalWindow,
@@ -49,6 +50,7 @@ import {useSelection} from '../SelectionContext';
 import {COMPRESS_FORMATS, isArchiveName} from './archiveName';
 import {useArchiveActions} from './useArchiveActions';
 import {useCopyMoveTo} from './useCopyMoveTo';
+import {useWingdrop} from './useWingdrop';
 import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
@@ -133,6 +135,7 @@ export function useFileContextMenu({
 	const {newFile, newLink} = useCreateEntry();
 	const archive = useArchiveActions();
 	const copyMoveTo = useCopyMoveTo();
+	const wingdrop = useWingdrop();
 
 	// A right-click on an unselected item acts on that item alone.
 	const targetFiles = selected && selectedFiles.length > 0
@@ -411,6 +414,19 @@ export function useFileContextMenu({
 			submenu: COMPRESS_FORMATS.map(({format, label}) => ({
 				label: t(label),
 				onClick: () => archive.compress(targetFiles, format)
+			}))
+		},
+		{
+			type: 'submenu',
+			icon: PaperPlaneTilt,
+			label: t('contextMenu.sendWithWingdrop'),
+			condition: () =>
+				wingdrop.targets.length > 0 &&
+				targetFiles.length > 0 &&
+				targetFiles.every((f) => 'Physical' in f.wing_path && f.is_local && !f.archive),
+			submenu: wingdrop.targets.map((device) => ({
+				label: device.name,
+				onClick: () => void wingdrop.sendTo(device, targetFiles)
 			}))
 		},
 		{

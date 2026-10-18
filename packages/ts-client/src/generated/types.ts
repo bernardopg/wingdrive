@@ -106,7 +106,11 @@ proxy_pairing: ProxyPairingConfigOutput;
 /**
  * Spacebot companion configuration
  */
-spacebot: SpacebotConfigOutput };
+spacebot: SpacebotConfigOutput; 
+/**
+ * Wingdrop receiving configuration
+ */
+wingdrop: WingdropConfigOutput };
 
 export type ApplyTagsInput = { 
 /**
@@ -1311,7 +1315,15 @@ resource_type: string;
 /**
  * The deleted resource's ID
  */
-resource_id: string } } | { LocationAdded: { library_id: string; location_id: string; path: string } } | { LocationRemoved: { library_id: string; location_id: string } } | { FilesIndexed: { library_id: string; location_id: string; count: number } } | { ThumbnailsGenerated: { library_id: string; count: number } } | { FileOperationCompleted: { library_id: string; operation: FileOperation; affected_files: number } } | { FilesModified: { library_id: string; paths: string[] } } | { ConfigChanged: { field: string } } | { Custom: { event_type: string } };
+resource_id: string } } | { LocationAdded: { library_id: string; location_id: string; path: string } } | { LocationRemoved: { library_id: string; location_id: string } } | { FilesIndexed: { library_id: string; location_id: string; count: number } } | { ThumbnailsGenerated: { library_id: string; count: number } } | { FileOperationCompleted: { library_id: string; operation: FileOperation; affected_files: number } } | { FilesModified: { library_id: string; paths: string[] } } | { ConfigChanged: { field: string } } | 
+/**
+ * A paired device offers files to this one
+ */
+{ WingdropOffered: { offer: WingdropOffer } } | 
+/**
+ * An offer received by this device was answered, finished or stopped
+ */
+{ WingdropUpdated: { drop_id: string; status: WingdropStatus } } | { Custom: { event_type: string } };
 
 /**
  * Event category for grouping related events
@@ -4221,10 +4233,6 @@ export type SpaceUpdateOutput = { space: Space };
  */
 export type SpacebotConfigOutput = { enabled: boolean; base_url: string; auth_token: string | null; default_agent_id: string; default_sender_name: string };
 
-export type SpacedropSendInput = { device_id: string; paths: WingPath[]; sender: string | null };
-
-export type SpacedropSendOutput = { job_id: string | null; session_id: string | null };
-
 export type SpacesListOutput = { spaces: Space[] };
 
 export type SpacesListQueryInput = null;
@@ -4766,6 +4774,18 @@ proxy_pairing_vouch_response_timeout?: number | null;
  * Maximum retries for queued vouches
  */
 proxy_pairing_vouch_queue_retry_limit?: number | null; 
+/**
+ * Whether paired devices may offer files with Wingdrop
+ */
+wingdrop_enabled?: boolean | null; 
+/**
+ * Accept Wingdrop offers from paired devices without asking
+ */
+wingdrop_auto_accept?: boolean | null; 
+/**
+ * Folder that receives drops; an empty string restores Downloads
+ */
+wingdrop_destination?: string | null; 
 /**
  * Whether Spacebot features are enabled in the UI
  */
@@ -5394,6 +5414,78 @@ format: SidecarFormat } };
  * A batch of WingPaths, useful for operations on multiple files
  */
 export type WingPathBatch = { paths: WingPath[] };
+
+/**
+ * Input for stopping a drop this device receives
+ */
+export type WingdropCancelInput = { drop_id: string };
+
+export type WingdropCancelOutput = { cancelled: boolean };
+
+/**
+ * Wingdrop receiving configuration output
+ */
+export type WingdropConfigOutput = { enabled: boolean; auto_accept: boolean; 
+/**
+ * The configured folder, if any
+ */
+destination: string | null; 
+/**
+ * Where drops land now: the configured folder or the default
+ */
+effective_destination: string };
+
+/**
+ * A top-level file or folder in an offer.
+ */
+export type WingdropItem = { 
+/**
+ * Name only, never a path
+ */
+name: string; is_dir: boolean; 
+/**
+ * Bytes of the file, or of every file in the folder
+ */
+size: number; 
+/**
+ * 1 for a file, the number of files for a folder
+ */
+file_count: number };
+
+/**
+ * Files a device wants to send to this one.
+ */
+export type WingdropOffer = { id: string; from_device_id: string; from_device_name: string; items: WingdropItem[]; total_bytes: number; file_count: number; expires_at: string };
+
+export type WingdropPendingInput = null;
+
+/**
+ * Input for answering an offer
+ */
+export type WingdropRespondInput = { drop_id: string; accept: boolean };
+
+/**
+ * Where accepted items will land, in offer order
+ */
+export type WingdropRespondOutput = { destinations: string[] };
+
+/**
+ * Input for sending files to a paired device
+ */
+export type WingdropSendInput = { 
+/**
+ * The paired device that receives the files
+ */
+device_id: string; 
+/**
+ * Files and folders on this device
+ */
+paths: WingPath[] };
+
+/**
+ * What became of a drop, as clients see it.
+ */
+export type WingdropStatus = { status: "accepted" } | { status: "declined" } | { status: "expired" } | { status: "cancelled"; reason: string | null } | { status: "completed"; paths: string[] };
 // ===== API Type Unions =====
 
 export type CoreAction =
@@ -5412,10 +5504,11 @@ export type CoreAction =
   |  { type: 'network.pair.generate'; input: PairGenerateInput; output: PairGenerateOutput }
   |  { type: 'network.pair.join'; input: PairJoinInput; output: PairJoinOutput }
   |  { type: 'network.pair.vouch'; input: PairVouchInput; output: PairVouchOutput }
-  |  { type: 'network.spacedrop.send'; input: SpacedropSendInput; output: SpacedropSendOutput }
   |  { type: 'network.start'; input: NetworkStartInput; output: NetworkStartOutput }
   |  { type: 'network.stop'; input: NetworkStopInput; output: NetworkStopOutput }
   |  { type: 'network.sync_setup'; input: LibrarySyncSetupInput; output: LibrarySyncSetupOutput }
+  |  { type: 'network.wingdrop.cancel'; input: WingdropCancelInput; output: WingdropCancelOutput }
+  |  { type: 'network.wingdrop.respond'; input: WingdropRespondInput; output: WingdropRespondOutput }
   |  { type: 'trash.purge'; input: TrashPurgeInput; output: TrashPurgeOutput }
   |  { type: 'trash.restore'; input: TrashRestoreInput; output: TrashRestoreOutput }
 ;
@@ -5458,6 +5551,7 @@ export type LibraryAction =
   |  { type: 'media.thumbnail.regenerate'; input: RegenerateThumbnailInput; output: RegenerateThumbnailOutput }
   |  { type: 'media.thumbstrip.generate'; input: GenerateThumbstripInput; output: GenerateThumbstripOutput }
   |  { type: 'metadata.set_favorite'; input: SetFavoriteInput; output: SetFavoriteOutput }
+  |  { type: 'network.wingdrop.send'; input: WingdropSendInput; output: JobReceipt }
   |  { type: 'sources.create'; input: CreateSourceInput; output: CreateSourceOutput }
   |  { type: 'sources.delete'; input: DeleteSourceInput; output: DeleteSourceOutput }
   |  { type: 'sources.sync'; input: SyncSourceInput; output: JobReceipt }
@@ -5500,6 +5594,7 @@ export type CoreQuery =
   |  { type: 'network.pair.vouching_session'; input: VouchingSessionInput; output: VouchingSessionOutput }
   |  { type: 'network.status'; input: NetworkStatusQueryInput; output: NetworkStatus }
   |  { type: 'network.sync_setup.discover'; input: DiscoverRemoteLibrariesInput; output: DiscoverRemoteLibrariesOutput }
+  |  { type: 'network.wingdrop.pending'; input: WingdropPendingInput; output: WingdropOffer[] }
   |  { type: 'trash.list'; input: TrashListInput; output: TrashListOutput }
 ;
 
@@ -5566,10 +5661,11 @@ export const WIRE_METHODS = {
     'network.pair.generate': 'action:network.pair.generate.input',
     'network.pair.join': 'action:network.pair.join.input',
     'network.pair.vouch': 'action:network.pair.vouch.input',
-    'network.spacedrop.send': 'action:network.spacedrop.send.input',
     'network.start': 'action:network.start.input',
     'network.stop': 'action:network.stop.input',
     'network.sync_setup': 'action:network.sync_setup.input',
+    'network.wingdrop.cancel': 'action:network.wingdrop.cancel.input',
+    'network.wingdrop.respond': 'action:network.wingdrop.respond.input',
     'trash.purge': 'action:trash.purge.input',
     'trash.restore': 'action:trash.restore.input',
   },
@@ -5612,6 +5708,7 @@ export const WIRE_METHODS = {
     'media.thumbnail.regenerate': 'action:media.thumbnail.regenerate.input',
     'media.thumbstrip.generate': 'action:media.thumbstrip.generate.input',
     'metadata.set_favorite': 'action:metadata.set_favorite.input',
+    'network.wingdrop.send': 'action:network.wingdrop.send.input',
     'sources.create': 'action:sources.create.input',
     'sources.delete': 'action:sources.delete.input',
     'sources.sync': 'action:sources.sync.input',
@@ -5654,6 +5751,7 @@ export const WIRE_METHODS = {
     'network.pair.vouching_session': 'query:network.pair.vouching_session',
     'network.status': 'query:network.status',
     'network.sync_setup.discover': 'query:network.sync_setup.discover',
+    'network.wingdrop.pending': 'query:network.wingdrop.pending',
     'trash.list': 'query:trash.list',
   },
 
