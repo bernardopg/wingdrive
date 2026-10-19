@@ -540,4 +540,8 @@ impl<J: JobHandler + std::fmt::Debug> ErasedJob for JobExecutor<J> {
 	fn serialize_state(&self) -> Result<Vec<u8>, JobError> {
 		rmp_serde::to_vec(&self.job).map_err(|e| JobError::serialization(format!("{}", e)))
 	}
+
+	fn location_scope(&self) -> Option<uuid::Uuid> {
+		self.job.location_scope()
+	}
 }

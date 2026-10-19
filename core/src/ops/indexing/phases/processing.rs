@@ -7,7 +7,10 @@
 //! indexing paths stay within location boundaries to prevent cross-location data corruption.
 use crate::{
 	infra::{
-		db::entities::{self, directory_paths, entry_closure},
+		db::{
+			begin_write,
+			entities::{self, directory_paths, entry_closure},
+		},
 		job::generic_progress::ToGenericProgress,
 		job::prelude::{JobContext, JobError, Progress},
 	},
@@ -20,7 +23,7 @@ use crate::{
 };
 use sea_orm::{
 	ColumnTrait, DatabaseConnection, DatabaseTransaction, DbErr, EntityTrait, QueryFilter,
-	SqliteTransactionMode, TransactionOptions, TransactionTrait,
+	TransactionTrait,
 };
 use std::{path::Path, sync::Arc};
 use tracing::warn;
@@ -36,27 +39,6 @@ fn is_unique_constraint_violation(error: &JobError) -> bool {
 	error_msg.contains("unique constraint")
 		|| error_msg.contains("unique index")
 		|| error_msg.contains("constraint failed")
-}
-
-/// Begins a transaction that takes SQLite's write lock up front.
-///
-/// A deferred transaction that reads first fails its first write with
-/// SQLITE_BUSY_SNAPSHOT when another connection wrote meanwhile, and
-/// `busy_timeout` does not wait on that, so the whole batch was lost.
-/// Waiting for the lock here is covered by `busy_timeout`, retried a few times
-/// while a long batch from another indexer holds it.
-async fn begin_write(db: &DatabaseConnection) -> Result<DatabaseTransaction, DbErr> {
-	let options = TransactionOptions {
-		sqlite_transaction_mode: Some(SqliteTransactionMode::Immediate),
-		..Default::default()
-	};
-	let mut attempt = 0;
-	loop {
-		match db.begin_with_options(options).await {
-			Err(e) if attempt < 4 && e.to_string().contains("database is locked") => attempt += 1,
-			result => return result,
-		}
-	}
 }
 
 /// Detects the volume holding the location root and records it on the location and its root

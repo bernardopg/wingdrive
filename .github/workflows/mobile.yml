@@ -213,7 +213,7 @@ jobs:
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
             echo "signed=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No Android upload key configured; the APK and AAB are built but not published."
+            echo "::warning::No Android upload key (WINGDRIVE_ANDROID_KEYSTORE_* secrets); this release ships without the APK and AAB."
             exit 0
           fi
           keystore="$RUNNER_TEMP/upload.keystore"

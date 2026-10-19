@@ -25,6 +25,7 @@ use sea_orm::{ActiveModelTrait, ActiveValue::Set, DatabaseConnection, EntityTrai
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tokio::sync::{broadcast, mpsc, watch, Mutex, RwLock};
 use tracing::{debug, error, info, warn};
+use uuid::Uuid;
 use wing_task_system::{TaskDispatcher, TaskHandle, TaskSystem};
 
 /// Manages job execution for a library
@@ -55,6 +56,8 @@ struct RunningJob {
 	/// (name, dedup_key) identifies live work; a second dispatch of the same
 	/// pair reuses this job instead of duplicating it.
 	dedup_key: Option<String>,
+	/// Location the job works on; see `Job::location_scope`.
+	location_scope: Option<Uuid>,
 	task_handle: TaskHandle<JobError>,
 	status_tx: watch::Sender<JobStatus>,
 	latest_progress: Arc<Mutex<Option<Progress>>>,
@@ -388,6 +391,7 @@ impl JobManager {
 		};
 
 		// Create executor using the erased job
+		let location_scope = erased_job.location_scope();
 		let executor = erased_job.create_executor(
 			job_id,
 			job_name.to_string(),
@@ -431,6 +435,7 @@ impl JobManager {
 						persistence_complete_rx: Some(persistence_complete_rx),
 						job_name: job_name.to_string(),
 						dedup_key: None,
+						location_scope,
 						action_context: action_context.clone(),
 						should_emit_events,
 					},
@@ -647,6 +652,7 @@ impl JobManager {
 		}
 
 		let job_id = JobId::new();
+		let location_scope = job.location_scope();
 		let should_persist = job.should_persist();
 		let should_emit_events = job.should_emit_events();
 
@@ -898,6 +904,7 @@ impl JobManager {
 						persistence_complete_rx: Some(persistence_complete_rx),
 						job_name: J::NAME.to_string(),
 						dedup_key: dedup_key.clone(),
+						location_scope,
 						action_context: action_context.clone(),
 						should_emit_events,
 					},
@@ -1622,6 +1629,7 @@ impl JobManager {
 
 						// Create executor using the erased job
 						// Resumed jobs are always persistent (loaded from database)
+						let location_scope = erased_job.location_scope();
 						let executor = erased_job.create_executor(
 							job_id,
 							job_name,
@@ -1675,6 +1683,7 @@ impl JobManager {
 										persistence_complete_rx: Some(persistence_complete_rx),
 										job_name: job_record.name.clone(),
 										dedup_key: None,
+										location_scope,
 										action_context,
 										should_emit_events: true, // Resumed jobs were persisted, so they should emit events
 									},
@@ -2004,6 +2013,36 @@ impl JobManager {
 		Ok(())
 	}
 
+	/// Cancel the live jobs that work on a location.
+	///
+	/// Called before the location is removed, so its walk and thumbnail
+	/// batches stop instead of writing rows for entries that are gone.
+	/// Returns how many jobs were cancelled.
+	pub async fn cancel_location_jobs(&self, location_id: Uuid) -> usize {
+		let job_ids: Vec<JobId> = {
+			let running_jobs = self.running_jobs.read().await;
+			running_jobs
+				.iter()
+				.filter(|(_, job)| {
+					job.location_scope == Some(location_id) && !job.handle.status().is_terminal()
+				})
+				.map(|(id, _)| *id)
+				.collect()
+		};
+
+		let mut cancelled = 0;
+		for job_id in job_ids {
+			match self.cancel_job(job_id).await {
+				Ok(()) => cancelled += 1,
+				Err(e) => warn!(
+					"Failed to cancel job {} of location {}: {}",
+					job_id, location_id, e
+				),
+			}
+		}
+		cancelled
+	}
+
 	/// Resume a paused job
 	pub async fn resume_job(&self, job_id: JobId) -> JobResult<()> {
 		// First check if job exists in running jobs
@@ -2155,6 +2194,7 @@ impl JobManager {
 
 			// Create executor
 			// Resumed jobs are always persistent (loaded from database)
+			let location_scope = erased_job.location_scope();
 			let executor = erased_job.create_executor(
 				job_id,
 				job_name.clone(),
@@ -2194,6 +2234,7 @@ impl JobManager {
 					persistence_complete_rx: Some(persistence_complete_rx),
 					job_name: job_name.clone(),
 					dedup_key: None,
+					location_scope,
 					action_context,
 					should_emit_events: true, // Manually resumed jobs were persisted, so they should emit events
 				},
@@ -2553,5 +2594,3 @@ impl CheckpointHandler for DbCheckpointHandler {
 		Ok(())
 	}
 }
-
-use uuid::Uuid;

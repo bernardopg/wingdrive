@@ -44,13 +44,9 @@ impl LibraryAction for LocationRemoveAction {
 		context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
 		// Remove the location from DB
-		let location_manager = LocationManager::new(context.events.as_ref().clone());
-		location_manager
-			.remove_location(&library, self.input.location_id)
-			.await
-			.map_err(|e| ActionError::Internal(e.to_string()))?;
-
-		// Unwatch the location from the filesystem watcher
+		// Stop new work before the rows go: the watcher would queue indexing
+		// for the tree, and live jobs keep writing while the delete waits for
+		// the write lock.
 		if let Some(watcher) = context.get_fs_watcher().await {
 			if let Err(e) = watcher.unwatch_location(self.input.location_id).await {
 				tracing::warn!(
@@ -60,6 +56,23 @@ impl LibraryAction for LocationRemoveAction {
 				);
 			}
 		}
+		let cancelled = library
+			.jobs()
+			.cancel_location_jobs(self.input.location_id)
+			.await;
+		if cancelled > 0 {
+			tracing::info!(
+				"Cancelled {} jobs of location {}",
+				cancelled,
+				self.input.location_id
+			);
+		}
+
+		let location_manager = LocationManager::new(context.events.as_ref().clone());
+		location_manager
+			.remove_location(&library, self.input.location_id)
+			.await
+			.map_err(|e| ActionError::Internal(e.to_string()))?;
 
 		Ok(LocationRemoveOutput::new(self.input.location_id, None))
 	}
