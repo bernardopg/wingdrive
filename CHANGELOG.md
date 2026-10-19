@@ -3,6 +3,19 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Fixed
+
+- The desktop app connects at login again. The daemon opened its socket only
+  after watching every location, which took minutes on large source trees;
+  watches now register in the background and skip build and dependency
+  directories. The app waits for a daemon that is still starting instead of
+  giving up.
+- Files inside folders of a tree moved into a location are watched.
+- The `wing` CLI ships with the desktop app, so the commands the
+  disconnected-daemon screen suggests work.
+
 ## 2.0.0 — 2026-10-18
 
 First stable release of WingDrive (#238 to #251).
