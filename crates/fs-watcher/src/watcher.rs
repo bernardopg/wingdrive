@@ -6,8 +6,12 @@
 
 use crate::config::{WatchConfig, WatcherConfig};
 use crate::error::{Result, WatcherError};
+#[cfg(target_os = "linux")]
+use crate::event::RawEventKind;
 use crate::event::{FsEvent, RawNotifyEvent};
 use crate::platform::PlatformHandler;
+#[cfg(target_os = "linux")]
+use crate::prune;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher};
 /// The mode to hand notify for a watch.
 ///
@@ -29,7 +33,56 @@ fn notify_mode(recursive: bool) -> RecursiveMode {
 	}
 }
 
+/// Collect the watchable directories of a tree with generated trees omitted.
+///
+/// Runs on a blocking thread: `read_dir` over hundreds of thousands of
+/// entries would stall the async runtime. Symlinked directories are never
+/// entered, so a target outside the tree cannot multiply registration, and
+/// names are compared exactly so `target` never matches `target_platform`.
+fn walk_pruned(root: PathBuf, skip_paths: Vec<PathBuf>) -> Vec<PathBuf> {
+	let mut dirs: Vec<PathBuf> = Vec::new();
+	let mut stack: Vec<PathBuf> = vec![root];
+
+	while let Some(dir) = stack.pop() {
+		dirs.push(dir.clone());
+
+		let entries = match std::fs::read_dir(&dir) {
+			Ok(entries) => entries,
+			Err(e) => {
+				warn!("Tree walk could not read {}: {}", dir.display(), e);
+				continue;
+			}
+		};
+
+		for entry in entries.flatten() {
+			let Ok(file_type) = entry.file_type() else {
+				continue;
+			};
+			if !file_type.is_dir() || file_type.is_symlink() {
+				continue;
+			}
+
+			let name = entry.file_name();
+			if prune::is_generated_dir(&name) {
+				continue;
+			}
+
+			let path = entry.path();
+			if skip_paths.iter().any(|skip| path.starts_with(skip)) {
+				continue;
+			}
+
+			stack.push(path);
+		}
+	}
+
+	dirs
+}
+
+#[cfg(not(target_os = "linux"))]
 use std::collections::HashMap;
+#[cfg(target_os = "linux")]
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
@@ -79,6 +132,14 @@ struct FsWatcherInner {
 	config: WatcherConfig,
 	/// Watched paths with reference counting
 	watched_paths: RwLock<HashMap<PathBuf, WatchState>>,
+	/// Per-directory OS watches registered for a recursive root (Linux).
+	///
+	/// On Linux a recursive root is watched directory-by-directory through a
+	/// pruned walk instead of notify's full recursive walk, so the set keeps
+	/// which directories belong to which root for expansion when new
+	/// directories appear and for release when the root goes away.
+	#[cfg(target_os = "linux")]
+	watched_dirs: RwLock<HashMap<PathBuf, HashSet<PathBuf>>>,
 	/// The notify watcher instance
 	notify_watcher: RwLock<Option<RecommendedWatcher>>,
 	/// Platform-specific event handler
@@ -115,16 +176,7 @@ impl FsWatcherInner {
 
 		// Register with notify if we're running
 		if self.is_running.load(Ordering::SeqCst) {
-			if let Some(watcher) = self.notify_watcher.write().await.as_mut() {
-				let mode = notify_mode(config.recursive);
-
-				watcher
-					.watch(&path, mode)
-					.map_err(|e| WatcherError::WatchFailed {
-						path: path.clone(),
-						reason: e.to_string(),
-					})?;
-			}
+			self.register_os_watch(&path, &config).await?;
 		}
 
 		watched.insert(
@@ -136,6 +188,85 @@ impl FsWatcherInner {
 		);
 
 		debug!("Started watching: {}", path.display());
+		Ok(())
+	}
+
+	/// Register a watched root with the OS-level watcher.
+	///
+	/// On Linux, a recursive root is registered directory-by-directory
+	/// through a pruned walk rather than by notify's own recursive walk:
+	/// notify registers every directory under the root, which burns through
+	/// the kernel's inotify watch limit inside build outputs and caches and
+	/// can take minutes on a large tree, blocking everything that waits for
+	/// the registration to finish.
+	async fn register_os_watch(&self, path: &Path, config: &WatchConfig) -> Result<()> {
+		#[cfg(target_os = "linux")]
+		if config.recursive {
+			return self
+				.register_pruned_walk(path, &config.filters.skip_paths)
+				.await;
+		}
+		#[cfg(not(target_os = "linux"))]
+		let _ = config;
+
+		let mut watcher = self.notify_watcher.write().await;
+		if let Some(watcher) = watcher.as_mut() {
+			watcher
+				.watch(path, notify_mode(config.recursive))
+				.map_err(|e| WatcherError::WatchFailed {
+					path: path.to_path_buf(),
+					reason: e.to_string(),
+				})?;
+		}
+		Ok(())
+	}
+
+	/// Watch a recursive root directory-by-directory on Linux.
+	///
+	/// The walk itself runs on a blocking thread and refuses to enter
+	/// generated directories (see the prune module) and trees the caller
+	/// put on the root's skip list, so watch cost matches the content the
+	/// daemon would ever handle. Each directory gets its own non-recursive
+	/// watch; directories that appear later are picked up by the event loop
+	/// (see `maintain_tree_watch`) the same way notify would have done
+	/// with its recursive auto-add.
+	async fn register_pruned_walk(&self, root: &Path, skip_paths: &[PathBuf]) -> Result<()> {
+		let walk_root = root.to_path_buf();
+		let skip = skip_paths.to_vec();
+		let dirs = tokio::task::spawn_blocking(move || walk_pruned(walk_root, skip))
+			.await
+			.map_err(|e| WatcherError::WatchFailed {
+				path: root.to_path_buf(),
+				reason: format!("tree walk task failed: {}", e),
+			})?;
+
+		info!(
+			"Pruned tree walk of {} found {} watchable directories",
+			root.display(),
+			dirs.len()
+		);
+
+		let mut registered: HashSet<PathBuf> = HashSet::new();
+		{
+			let mut watcher = self.notify_watcher.write().await;
+			if let Some(watcher) = watcher.as_mut() {
+				for dir in &dirs {
+					// Duplicate registrations merge masks instead of failing,
+					// so a directory racing with the walk through the event
+					// loop is already watched either way.
+					if let Err(e) = watcher.watch(dir, RecursiveMode::NonRecursive) {
+						warn!("Failed to create watch for {}: {}", dir.display(), e);
+					} else {
+						registered.insert(dir.clone());
+					}
+				}
+			}
+		}
+
+		self.watched_dirs
+			.write()
+			.await
+			.insert(root.to_path_buf(), registered);
 		Ok(())
 	}
 
@@ -158,11 +289,26 @@ impl FsWatcherInner {
 		if should_unwatch {
 			watched.remove(path);
 
-			// Unregister from notify if we're running
+			// Drop the per-directory watches of a pruned recursive root.
+			#[cfg(target_os = "linux")]
+			let tree_dirs: Vec<PathBuf> = {
+				let mut dirs = self.watched_dirs.write().await;
+				dirs.remove(&path.to_path_buf())
+					.map(|set| set.into_iter().collect())
+					.unwrap_or_default()
+			};
+
 			if self.is_running.load(Ordering::SeqCst) {
-				if let Some(watcher) = self.notify_watcher.write().await.as_mut() {
+				let mut watcher = self.notify_watcher.write().await;
+				if let Some(watcher) = watcher.as_mut() {
 					if let Err(e) = watcher.unwatch(path) {
 						warn!("Failed to unwatch {}: {}", path.display(), e);
+					}
+					#[cfg(target_os = "linux")]
+					for dir in tree_dirs {
+						if let Err(e) = watcher.unwatch(&dir) {
+							trace!("Stale tree watch {}: {}", dir.display(), e);
+						}
 					}
 				}
 			}
@@ -171,6 +317,92 @@ impl FsWatcherInner {
 		}
 
 		Ok(())
+	}
+
+	/// Find the recursive root that contains a path, if any.
+	#[cfg(target_os = "linux")]
+	async fn covering_recursive_root(&self, path: &Path) -> Option<(PathBuf, WatchConfig)> {
+		let watched = self.watched_paths.read().await;
+		watched
+			.iter()
+			.find(|(root, _)| path.starts_with(*root) && root.as_path() != path)
+			.filter(|(_, state)| state.config.recursive)
+			.map(|(root, state)| (root.clone(), state.config.clone()))
+	}
+
+	/// Keep the OS watch set in sync with raw filesystem events (Linux).
+	///
+	/// A created or moved-in directory must be watched right away or events
+	/// inside it are lost; notify's recursive auto-add only fires for parents
+	/// registered `Recursive`, which the pruned walk never does. The removal
+	/// side needs no bookkeeping here: notify releases a watch itself when
+	/// its directory is deleted (DELETE_SELF) or moved out (MOVE_SELF), and
+	/// the old path entry in `watched_dirs` is a stale no-op.
+	#[cfg(target_os = "linux")]
+	async fn maintain_tree_watch(self: &Arc<Self>, raw: &RawNotifyEvent) {
+		if !matches!(raw.kind, RawEventKind::Create | RawEventKind::Rename) {
+			return;
+		}
+
+		let candidates: Vec<PathBuf> = raw.paths.to_vec();
+		let is_rename = matches!(raw.kind, RawEventKind::Rename);
+		let inner = self.clone();
+		tokio::spawn(async move {
+			for path in candidates {
+				// A watch only follows a real directory: symlinked names are
+				// refused so their targets cannot multiply the walk.
+				let Ok(metadata) = std::fs::symlink_metadata(&path) else {
+					if is_rename {
+						// Rename source is gone; its watch died with it.
+						continue;
+					}
+					break;
+				};
+				if !metadata.is_dir() || metadata.is_symlink() {
+					continue;
+				}
+				inner.expand_tree_watch(&path).await;
+			}
+		});
+	}
+
+	/// Watch a directory that appeared under a recursive root.
+	#[cfg(target_os = "linux")]
+	async fn expand_tree_watch(&self, path: &Path) {
+		let Some((root, config)) = self.covering_recursive_root(path).await else {
+			return;
+		};
+
+		let Some(name) = path.file_name() else {
+			return;
+		};
+		if prune::is_generated_dir(name) {
+			trace!("Refusing to watch generated directory {}", path.display());
+			return;
+		}
+		if config
+			.filters
+			.skip_paths
+			.iter()
+			.any(|skip| path.starts_with(skip))
+		{
+			return;
+		}
+
+		// Duplicate registrations merge masks in notify instead of failing,
+		// so racing with the initial walk registers once either way.
+		if let Some(watcher) = self.notify_watcher.write().await.as_mut() {
+			if let Err(e) = watcher.watch(path, RecursiveMode::NonRecursive) {
+				warn!("Failed to watch new directory {}: {}", path.display(), e);
+			}
+		}
+
+		self.watched_dirs
+			.write()
+			.await
+			.entry(root)
+			.or_default()
+			.insert(path.to_path_buf());
 	}
 }
 
@@ -211,6 +443,8 @@ impl FsWatcher {
 			inner: Arc::new(FsWatcherInner {
 				config,
 				watched_paths: RwLock::new(HashMap::new()),
+				#[cfg(target_os = "linux")]
+				watched_dirs: RwLock::new(HashMap::new()),
 				notify_watcher: RwLock::new(None),
 				platform_handler: PlatformHandler::new(),
 				is_running: AtomicBool::new(false),
@@ -236,7 +470,7 @@ impl FsWatcher {
 		let raw_tx_clone = raw_tx.clone();
 		let inner_clone = self.inner.clone();
 
-		let watcher = notify::recommended_watcher(
+		let watcher = RecommendedWatcher::new(
 			move |res: std::result::Result<notify::Event, notify::Error>| match res {
 				Ok(event) => {
 					inner_clone.events_received.fetch_add(1, Ordering::Relaxed);
@@ -250,6 +484,8 @@ impl FsWatcher {
 					error!("Notify watcher error: {}", e);
 				}
 			},
+			// Match indexing: symlink targets can escape the root and multiply startup traversal.
+			notify::Config::default().with_follow_symlinks(false),
 		)
 		.map_err(|e| WatcherError::StartFailed(e.to_string()))?;
 
@@ -278,6 +514,10 @@ impl FsWatcher {
 
 		// Reset platform handler state
 		self.inner.platform_handler.reset().await;
+
+		// Drop the per-directory bookkeeping of pruned tree roots (Linux)
+		#[cfg(target_os = "linux")]
+		self.inner.watched_dirs.write().await.clear();
 
 		info!("Filesystem watcher stopped");
 		Ok(())
@@ -342,18 +582,19 @@ impl FsWatcher {
 
 	/// Register existing watches with notify
 	async fn register_existing_watches(&self) -> Result<()> {
-		let watched = self.inner.watched_paths.read().await;
-		let mut watcher_guard = self.inner.notify_watcher.write().await;
+		let configs: Vec<(PathBuf, WatchConfig)> = {
+			let watched = self.inner.watched_paths.read().await;
+			watched
+				.iter()
+				.map(|(path, state)| (path.clone(), state.config.clone()))
+				.collect()
+		};
 
-		if let Some(watcher) = watcher_guard.as_mut() {
-			for (path, state) in watched.iter() {
-				let mode = notify_mode(state.config.recursive);
-
-				if let Err(e) = watcher.watch(path, mode) {
-					warn!("Failed to register watch for {}: {}", path.display(), e);
-				} else {
-					debug!("Registered watch for: {}", path.display());
-				}
+		for (path, config) in configs {
+			if let Err(e) = self.inner.register_os_watch(&path, &config).await {
+				warn!("Failed to register watch for {}: {}", path.display(), e);
+			} else {
+				debug!("Registered watch for: {}", path.display());
 			}
 		}
 
@@ -380,6 +621,11 @@ impl FsWatcher {
 				tokio::select! {
 					// Process incoming raw events
 					Some(raw_event) = raw_rx.recv() => {
+						// Watch-set maintenance for Linux trees: expand the
+						// pruned watch set when a real directory appears.
+						#[cfg(target_os = "linux")]
+						inner.maintain_tree_watch(&raw_event).await;
+
 						// Check if path should be filtered
 						let should_process = if let Some(path) = raw_event.primary_path() {
 							let watched = inner.watched_paths.read().await;
@@ -500,7 +746,11 @@ mod tests {
 		let watcher = FsWatcher::new(WatcherConfig::default());
 		watcher.start().await.unwrap();
 
-		let temp_dir = TempDir::new().unwrap();
+		// Default filters exclude paths containing `.tmp`, including TempDir's default prefix.
+		let temp_dir = tempfile::Builder::new()
+			.prefix("wing-watch-")
+			.tempdir()
+			.unwrap();
 		let mut events = watcher.subscribe();
 
 		let _handle = watcher
@@ -533,6 +783,101 @@ mod tests {
 			}
 		}
 
+		watcher.stop().await.unwrap();
+	}
+
+	#[cfg(target_os = "linux")]
+	#[tokio::test]
+	async fn recursive_watch_does_not_follow_directory_symlinks() {
+		let root = TempDir::new().unwrap();
+		let external = TempDir::new().unwrap();
+		std::os::unix::fs::symlink(external.path(), root.path().join("linked")).unwrap();
+		let child = root.path().join("child");
+		std::fs::create_dir(&child).unwrap();
+
+		let watcher = FsWatcher::default();
+		watcher.start().await.unwrap();
+		let mut events = watcher.subscribe();
+		watcher
+			.watch_path(
+				root.path(),
+				WatchConfig::recursive().with_filters(crate::config::EventFilters::allow_all()),
+			)
+			.await
+			.unwrap();
+
+		std::fs::write(external.path().join("external.txt"), b"outside").unwrap();
+		let local = child.join("local.txt");
+		std::fs::write(&local, b"inside").unwrap();
+		let mut saw_local = false;
+		let deadline = tokio::time::Instant::now() + Duration::from_secs(1);
+		while let Ok(event) = tokio::time::timeout_at(deadline, events.recv()).await {
+			let event = event.unwrap();
+			assert_ne!(
+				event.path.file_name().unwrap(),
+				"external.txt",
+				"followed a directory symlink: {event:?}"
+			);
+			saw_local |= event.path == local;
+		}
+		assert!(saw_local, "recursive watch missed its real child directory");
+		watcher.stop().await.unwrap();
+	}
+
+	/// Generated build trees are never watched: their contents would
+	/// multiply inotify registrations and flood the event stream, and the
+	/// indexer excludes them by default anyway. New directories that appear
+	/// after the watch was registered must still be picked up, or every
+	/// create inside them would go unnoticed.
+	#[cfg(target_os = "linux")]
+	#[tokio::test]
+	async fn recursive_watch_prunes_generated_dirs_and_expands_new_dirs() {
+		let root = TempDir::new().unwrap();
+		let generated = root.path().join("node_modules");
+		std::fs::create_dir_all(generated.join("package")).unwrap();
+
+		let watcher = FsWatcher::default();
+		watcher.start().await.unwrap();
+		let mut events = watcher.subscribe();
+		watcher
+			.watch_path(
+				root.path(),
+				WatchConfig::recursive().with_filters(crate::config::EventFilters::allow_all()),
+			)
+			.await
+			.unwrap();
+
+		// Nothing inside the generated tree is watched, so its events never
+		// reach a subscriber.
+		std::fs::write(generated.join("package").join("index.js"), b"").unwrap();
+
+		// A real directory that exists at registration is watched; a real
+		// directory created after registration expands the watch set.
+		let existing = root.path().join("existing");
+		std::fs::create_dir(&existing).unwrap();
+		let fresh = root.path().join("fresh");
+		std::fs::create_dir(&fresh).unwrap();
+
+		// Let the created-directory event reach the event loop and expand.
+		tokio::time::sleep(Duration::from_millis(300)).await;
+
+		std::fs::write(existing.join("one.txt"), b"1").unwrap();
+		std::fs::write(fresh.join("two.txt"), b"2").unwrap();
+
+		let deadline = tokio::time::Instant::now() + Duration::from_secs(2);
+		let mut saw_one = false;
+		let mut saw_two = false;
+		while let Ok(event) = tokio::time::timeout_at(deadline, events.recv()).await {
+			let event = event.unwrap();
+			assert!(
+				!event.path.starts_with(&generated),
+				"generated tree produced events: {event:?}"
+			);
+			saw_one |= event.path == existing.join("one.txt");
+			saw_two |= event.path == fresh.join("two.txt");
+		}
+		assert!(saw_one, "watch missed a pre-existing directory");
+		assert!(saw_two, "watch missed an expanded directory");
 		watcher.stop().await.unwrap();
 	}
 

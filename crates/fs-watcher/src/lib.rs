@@ -57,6 +57,7 @@ mod config;
 mod error;
 mod event;
 mod platform;
+mod prune;
 mod watcher;
 
 pub use config::{EventFilters, WatchConfig, WatcherConfig};
