@@ -146,18 +146,39 @@ impl PersistentEventHandler {
 
 		// Register path with FsWatcher if connected
 		if let Some(fs_watcher) = self.fs_watcher.read().await.as_ref() {
-			debug!(
-				"Registering path {} with FsWatcher (recursive)",
-				root_path.display()
-			);
-			fs_watcher
-				.watch_path(&root_path, wing_fs_watcher::WatchConfig::recursive())
-				.await?;
-			info!(
-				"Successfully registered {} with FsWatcher for location {}",
-				root_path.display(),
-				location_id
-			);
+			// OS-level registration walks the tree and can take minutes on
+			// large locations, so it never blocks the caller: the daemon must
+			// answer RPCs while the watches settle.
+			let fs_watcher = fs_watcher.clone();
+			let location_id = location_id;
+			let root_path = root_path.clone();
+			let is_running = self.is_running.clone();
+			tokio::spawn(async move {
+				if !is_running.load(Ordering::SeqCst) {
+					debug!(
+						"Handler stopped before watch registration for location {}",
+						location_id
+					);
+					return;
+				}
+				if let Err(e) = fs_watcher
+					.watch_path(&root_path, wing_fs_watcher::WatchConfig::recursive())
+					.await
+				{
+					error!(
+						"Watch registration failed for location {} at {}: {}",
+						location_id,
+						root_path.display(),
+						e
+					);
+				} else {
+					info!(
+						"Watch registered for location {} at {}",
+						location_id,
+						root_path.display()
+					);
+				}
+			});
 		} else {
 			debug!(
 				"FsWatcher not yet connected, deferring watch for path {} location {} (will register on start)",
@@ -229,32 +250,42 @@ impl PersistentEventHandler {
 		// Create workers for all registered locations AND register paths with FsWatcher
 		// This is critical: locations may have been added before start() was called,
 		// when the FsWatcher wasn't connected yet, so we need to register them now.
+		// OS-level registration happens on background tasks: it walks the
+		// watched tree and can take minutes, and daemon startup (including
+		// RPC bind) may never wait for the walk to finish.
 		let locations: Vec<LocationMeta> = self.locations.read().await.values().cloned().collect();
 		for meta in &locations {
 			self.ensure_worker(meta.clone()).await?;
 
-			// Register the path with the OS-level watcher (may have been skipped during add_location)
-			debug!(
-				"Registering path {} with FsWatcher for location {}",
-				meta.root_path.display(),
-				meta.id
-			);
-			if let Err(e) = fs_watcher
-				.watch_path(&meta.root_path, wing_fs_watcher::WatchConfig::recursive())
-				.await
-			{
-				error!(
-					"Failed to register path {} with FsWatcher: {}",
-					meta.root_path.display(),
-					e
-				);
-			} else {
-				info!(
-					"Successfully registered {} with FsWatcher for location {}",
-					meta.root_path.display(),
-					meta.id
-				);
-			}
+			let fs_watcher = fs_watcher.clone();
+			let meta = meta.clone();
+			let is_running = self.is_running.clone();
+			tokio::spawn(async move {
+				if !is_running.load(Ordering::SeqCst) {
+					debug!(
+						"Handler stopped before watch registration for location {}",
+						meta.id
+					);
+					return;
+				}
+				if let Err(e) = fs_watcher
+					.watch_path(&meta.root_path, wing_fs_watcher::WatchConfig::recursive())
+					.await
+				{
+					error!(
+						"Watch registration failed for location {} at {}: {}",
+						meta.id,
+						meta.root_path.display(),
+						e
+					);
+				} else {
+					info!(
+						"Watch registered for location {} at {}",
+						meta.id,
+						meta.root_path.display()
+					);
+				}
+			});
 		}
 
 		// Start the event routing task

@@ -1898,7 +1898,7 @@ async fn start_daemon(
 	// waits on this loop before the first listing can load.
 	let started = std::time::Instant::now();
 	let mut warned = false;
-	while started.elapsed() < std::time::Duration::from_secs(30) {
+	while started.elapsed() < DAEMON_STARTUP_TIMEOUT {
 		if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
 			return Err(format!("Packaged daemon exited during startup: {status}"));
 		}
@@ -1919,7 +1919,47 @@ async fn start_daemon(
 
 	let _ = child.kill();
 	let _ = child.wait();
-	Err("Daemon failed to start (connection not available after 30 seconds)".to_string())
+	Err(format!(
+		"Daemon failed to start (connection not available after {} seconds)",
+		DAEMON_STARTUP_TIMEOUT.as_secs()
+	))
+}
+
+/// How long a starting daemon may take before it is given up on.
+///
+/// The daemon binds its socket only after it has opened every library and
+/// started its services, which takes minutes on a cold boot with large
+/// locations. A shorter limit kills a healthy daemon midway.
+const DAEMON_STARTUP_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(600);
+
+/// Waits for a daemon this app did not spawn to accept connections.
+async fn wait_for_daemon(socket_addr: &str) -> bool {
+	let started = std::time::Instant::now();
+	while started.elapsed() < DAEMON_STARTUP_TIMEOUT {
+		if is_daemon_running(socket_addr).await {
+			tracing::info!(
+				elapsed_ms = started.elapsed().as_millis() as u64,
+				"Daemon ready at {}",
+				socket_addr
+			);
+			return true;
+		}
+		tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+	}
+	false
+}
+
+/// Whether the login service is running a daemon for the default instance.
+///
+/// The service and this app both start at login; spawning a second daemon
+/// while the service's one is still starting only fails on the library lock.
+#[cfg(target_os = "linux")]
+fn daemon_service_active(instance: Option<&str>) -> bool {
+	instance.is_none()
+		&& host_command("systemctl")
+			.args(["--user", "is-active", "--quiet", "wingdrive-daemon.service"])
+			.status()
+			.is_ok_and(|status| status.success())
 }
 
 #[cfg(test)]
@@ -2688,8 +2728,20 @@ fn main() {
 
 				// Ensure daemon directory exists
 
+				#[cfg(target_os = "linux")]
+				let service_active = daemon_service_active(instance_clone.as_deref());
+				#[cfg(not(target_os = "linux"))]
+				let service_active = false;
+
 				let (started_by_us, child_process) = if is_daemon_running(&socket_addr).await {
 					tracing::info!("Daemon already running, connecting to existing instance");
+					(false, None)
+				} else if service_active {
+					tracing::info!("Daemon service is starting, waiting for it");
+					if !wait_for_daemon(&socket_addr).await {
+						tracing::error!("Daemon service did not become available");
+						return;
+					}
 					(false, None)
 				} else {
 					tracing::info!("No daemon running, starting new instance");
@@ -2704,9 +2756,19 @@ fn main() {
 							true,
 							Some(std::sync::Arc::new(tokio::sync::Mutex::new(Some(child)))),
 						),
+						// A daemon started elsewhere (the CLI, another launch) may
+						// still be opening the library, which makes ours exit on
+						// the library lock. Connect to that one once it is ready.
 						Err(e) => {
-							tracing::error!("Failed to start daemon: {}", e);
-							return;
+							tracing::warn!(
+								"Failed to start daemon: {}; waiting for a running one",
+								e
+							);
+							if !wait_for_daemon(&socket_addr).await {
+								tracing::error!("No daemon became available");
+								return;
+							}
+							(false, None)
 						}
 					}
 				};
