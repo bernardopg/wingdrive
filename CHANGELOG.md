@@ -3,7 +3,9 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 2.0.1 — 2026-10-19
+
+Desktop start-up at login, location removal, and the Android APK (#255, #256).
 
 ### Fixed
 
