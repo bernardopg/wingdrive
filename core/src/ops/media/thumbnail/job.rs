@@ -129,6 +129,10 @@ pub struct ThumbnailJob {
 	/// Job configuration
 	pub config: ThumbnailJobConfig,
 
+	/// Location whose entries this job covers, when dispatched for one
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub location_id: Option<Uuid>,
+
 	// Resumable state
 	#[serde(skip_serializing_if = "Option::is_none")]
 	state: Option<ThumbnailState>,
@@ -138,6 +142,10 @@ impl Job for ThumbnailJob {
 	const NAME: &'static str = "thumbnail_generation";
 	const RESUMABLE: bool = true;
 	const DESCRIPTION: Option<&'static str> = Some("Generate thumbnails for media files");
+
+	fn location_scope(&self) -> Option<Uuid> {
+		self.location_id
+	}
 }
 
 impl crate::infra::job::traits::DynJob for ThumbnailJob {
@@ -254,6 +262,7 @@ impl ThumbnailJob {
 		Self {
 			entry_ids: None,
 			config,
+			location_id: None,
 			state: None,
 		}
 	}
@@ -263,8 +272,15 @@ impl ThumbnailJob {
 		Self {
 			entry_ids: Some(entry_ids),
 			config,
+			location_id: None,
 			state: None,
 		}
+	}
+
+	/// Mark the job as covering one location's entries
+	pub fn for_location(mut self, location_id: Uuid) -> Self {
+		self.location_id = Some(location_id);
+		self
 	}
 
 	/// Create a thumbnail job with default configuration

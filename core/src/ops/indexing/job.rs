@@ -213,6 +213,10 @@ impl Job for IndexerJob {
 	const NAME: &'static str = "indexer";
 	const RESUMABLE: bool = true;
 	const DESCRIPTION: Option<&'static str> = Some("Index files in a location");
+
+	fn location_scope(&self) -> Option<Uuid> {
+		self.config.location_id
+	}
 }
 
 impl DynJob for IndexerJob {
@@ -628,11 +632,14 @@ impl IndexerJob {
 			// Inherit background flag from the indexer job
 			thumbnail_config.run_in_background = self.config.run_in_background;
 
-			let thumbnail_job = if let Some(uuids) = entry_uuids {
+			let mut thumbnail_job = if let Some(uuids) = entry_uuids {
 				ThumbnailJob::for_entries(uuids, thumbnail_config)
 			} else {
 				ThumbnailJob::new(thumbnail_config)
 			};
+			if let Some(location_id) = self.config.location_id {
+				thumbnail_job = thumbnail_job.for_location(location_id);
+			}
 
 			match ctx.library().jobs().dispatch(thumbnail_job).await {
 				Ok(_handle) => {

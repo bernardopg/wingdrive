@@ -24,6 +24,14 @@ pub trait Job: Serialize + DeserializeOwned + Send + Sync + 'static {
 	/// Optional description
 	const DESCRIPTION: Option<&'static str> = None;
 
+	/// The location this job works on, if it works on one.
+	///
+	/// Removing a location cancels its live jobs, so a walk or a thumbnail
+	/// batch cannot keep writing rows for a location that no longer exists.
+	fn location_scope(&self) -> Option<uuid::Uuid> {
+		None
+	}
+
 	/// Get the job schema
 	fn schema() -> JobSchema {
 		JobSchema {

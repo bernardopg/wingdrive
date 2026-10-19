@@ -157,6 +157,11 @@ pub trait ErasedJob: Send + Sync + std::fmt::Debug + 'static {
 
 	fn serialize_state(&self) -> Result<Vec<u8>, crate::infra::job::error::JobError>;
 
+	/// See [`Job::location_scope`](crate::infra::job::traits::Job::location_scope).
+	fn location_scope(&self) -> Option<Uuid> {
+		None
+	}
+
 	fn should_persist(&self) -> bool {
 		true
 	}
