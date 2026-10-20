@@ -38,7 +38,7 @@
 		"eslint": "^10.13.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-config-standard": "^17.1.0",
-		"eslint-plugin-jsdoc": "^65.3.8",
+		"eslint-plugin-jsdoc": "^65.3.11",
 		"eslint-plugin-prettier": "^5.5.7",
 		"node-gyp": "^13.1.0",
 		"typescript": "^7.0.2"
