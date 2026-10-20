@@ -71,11 +71,42 @@ async fn find_library_folder(
 	Err(StatusCode::NOT_FOUND)
 }
 
+#[derive(Deserialize)]
+pub struct SidecarQuery {
+	token: String,
+}
+
+/// Whether the sidecar path segments name one file under a content folder.
+///
+/// `starts_with` on the joined path is lexical, so `..` segments in the
+/// variant (the wildcard) used to pass it and reach any file the user can read.
+fn valid_sidecar_segments(content_uuid: &str, kind: &str, variant_and_ext: &str) -> bool {
+	let plain = |segment: &str| {
+		!segment.is_empty()
+			&& segment
+				.chars()
+				.all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '@' | '.'))
+			&& !segment.contains("..")
+	};
+	uuid::Uuid::parse_str(content_uuid).is_ok()
+		&& !kind.is_empty()
+		&& kind.chars().all(|c| c.is_ascii_lowercase())
+		&& plain(variant_and_ext)
+}
+
 /// Serve a sidecar file (e.g., thumbnail)
 async fn serve_sidecar(
 	State(state): State<ServerState>,
 	Path((library_id, content_uuid, kind, variant_and_ext)): Path<(String, String, String, String)>,
+	Query(query): Query<SidecarQuery>,
 ) -> Result<Response<Body>, StatusCode> {
+	if query.token != *state.token {
+		return Err(StatusCode::FORBIDDEN);
+	}
+	if !valid_sidecar_segments(&content_uuid, &kind, &variant_and_ext) {
+		return Err(StatusCode::BAD_REQUEST);
+	}
+
 	// Find the actual library folder (might be named differently than the ID)
 	let library_folder = find_library_folder(&state.data_dir, &library_id).await?;
 
@@ -617,6 +648,20 @@ pub async fn start_server(
 mod tests {
 	use super::*;
 	use tokio::io::AsyncWriteExt;
+
+	#[test]
+	fn sidecar_segments_reject_traversal() {
+		let uuid = "0cc0b48f-a475-53ec-a580-bc7d47b486a9";
+		assert!(valid_sidecar_segments(uuid, "thumb", "detail@1x.webp"));
+		assert!(!valid_sidecar_segments(
+			uuid,
+			"thumb",
+			"../../../../etc/passwd"
+		));
+		assert!(!valid_sidecar_segments(uuid, "thumb", "a/b.webp"));
+		assert!(!valid_sidecar_segments(uuid, "..", "detail@1x.webp"));
+		assert!(!valid_sidecar_segments("../x", "thumb", "detail@1x.webp"));
+	}
 
 	#[tokio::test]
 	async fn server_starts_and_rejects_unauthenticated_files() {
