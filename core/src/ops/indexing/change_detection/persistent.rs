@@ -225,8 +225,8 @@ impl ChangeHandler for DatabaseAdapter {
 			state
 				.entry_id_cache
 				.insert(parent_path.to_path_buf(), parent_id);
-		} else if let Ok(Some(parent_id)) =
-			DatabaseStorage::resolve_parent_id(&self.db, parent_path).await
+		} else if let Some(parent_id) =
+			DatabaseStorage::resolve_parent_id(&self.db, parent_path).await?
 		{
 			// Cache the parent ID for future lookups
 			state
@@ -234,6 +234,8 @@ impl ChangeHandler for DatabaseAdapter {
 				.insert(parent_path.to_path_buf(), parent_id);
 			self.entry_id_cache
 				.insert(parent_path.to_path_buf(), parent_id);
+		} else {
+			return Err(super::handler::ParentNotIndexed(parent_path.to_path_buf()).into());
 		}
 
 		let entry_id = DatabaseStorage::create_entry(
@@ -375,26 +377,7 @@ impl ChangeHandler for DatabaseAdapter {
 		}
 
 		let txn = self.db.begin().await?;
-
-		if !to_delete_ids.is_empty() {
-			let _ = entities::entry_closure::Entity::delete_many()
-				.filter(entities::entry_closure::Column::DescendantId.is_in(to_delete_ids.clone()))
-				.exec(&txn)
-				.await;
-			let _ = entities::entry_closure::Entity::delete_many()
-				.filter(entities::entry_closure::Column::AncestorId.is_in(to_delete_ids.clone()))
-				.exec(&txn)
-				.await;
-			let _ = entities::directory_paths::Entity::delete_many()
-				.filter(entities::directory_paths::Column::EntryId.is_in(to_delete_ids.clone()))
-				.exec(&txn)
-				.await;
-			let _ = entities::entry::Entity::delete_many()
-				.filter(entities::entry::Column::Id.is_in(to_delete_ids))
-				.exec(&txn)
-				.await;
-		}
-
+		crate::ops::indexing::DatabaseStorage::delete_entries_by_id(&to_delete_ids, &txn).await?;
 		txn.commit().await?;
 		self.entry_id_cache.remove(&entry.path);
 

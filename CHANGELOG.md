@@ -3,6 +3,23 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Fixed
+
+- Removing a large location deletes all its entries. The subtree was deleted
+  in one statement above SQLite's parameter limit, the error was ignored, and
+  the entries stayed in the library.
+- The watcher no longer stores files whose folder is not indexed, and a file
+  deleted right after it was created no longer logs an error.
+- Logs stay bounded: daemon logs keep seven days, job logs older than seven
+  days are deleted, and per-file messages are debug-level.
+- `wing start` and `wing restart` start the daemon through its systemd unit
+  when one is installed, so systemd keeps restarting it.
+- A tab whose navigation stops reaching the screen recovers by itself instead
+  of needing another tab to be opened.
+- The Android release logs at info level.
+
 ## 2.0.1 — 2026-10-19
 
 Desktop start-up at login, location removal, and the Android APK (#255, #256).

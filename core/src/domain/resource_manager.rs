@@ -135,7 +135,7 @@ impl ResourceManager {
 			let resources_json = (resource_info.constructor)(&self.db, &resource_ids).await?;
 
 			if !resources_json.is_empty() {
-				tracing::info!(
+				tracing::debug!(
 					"Emitting {} {} ResourceChanged events",
 					resources_json.len(),
 					resource_type
@@ -215,7 +215,7 @@ impl ResourceManager {
 				continue;
 			}
 
-			tracing::info!(
+			tracing::debug!(
 				"Emitting {} {} ResourceChanged events (from {} {})",
 				resources_json.len(),
 				virtual_type,

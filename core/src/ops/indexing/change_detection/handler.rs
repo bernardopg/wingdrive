@@ -8,8 +8,25 @@ use super::types::{ChangeConfig, ChangeType, EntryRef};
 use crate::ops::indexing::rules::{build_default_ruler, RuleToggles, RulerDecision};
 use crate::ops::indexing::state::{DirEntry, EntryKind};
 use anyhow::Result;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
+
+/// Returned by [`ChangeHandler::create`] when the new entry's parent directory
+/// is not in the index. Creating the entry anyway would leave it without a
+/// parent, outside every location, where removing the location never reaches it.
+#[derive(Debug, thiserror::Error)]
+#[error("parent directory {} is not indexed", .0.display())]
+pub struct ParentNotIndexed(pub PathBuf);
+
+/// True when `error` comes from a path that disappeared, which is routine for
+/// temporary files deleted right after they are created.
+fn is_not_found(error: &anyhow::Error) -> bool {
+	error.chain().any(|cause| {
+		cause
+			.downcast_ref::<std::io::Error>()
+			.is_some_and(|io| io.kind() == std::io::ErrorKind::NotFound)
+	})
+}
 
 /// Abstracts storage operations for filesystem change handling.
 ///
@@ -346,7 +363,17 @@ pub async fn handle_create<H: ChangeHandler>(
 		return Ok(());
 	}
 
-	let metadata = build_dir_entry(path, config.volume_backend).await?;
+	let metadata = match build_dir_entry(path, config.volume_backend).await {
+		Ok(metadata) => metadata,
+		Err(e) if is_not_found(&e) => {
+			tracing::debug!(
+				"Path vanished before indexing, skipping create: {}",
+				path.display()
+			);
+			return Ok(());
+		}
+		Err(e) => return Err(e),
+	};
 
 	if handler.find_by_path(path).await?.is_some() {
 		tracing::debug!(
@@ -394,6 +421,10 @@ pub async fn handle_create<H: ChangeHandler>(
 				.contains("unique constraint") =>
 		{
 			tracing::debug!("Entry created concurrently, skipping: {}", path.display());
+			return Ok(());
+		}
+		Err(e) if e.downcast_ref::<ParentNotIndexed>().is_some() => {
+			tracing::debug!("Skipping create for {}: {e}", path.display());
 			return Ok(());
 		}
 		Err(e) => return Err(e),
@@ -448,7 +479,17 @@ pub async fn handle_modify<H: ChangeHandler>(
 		return Ok(());
 	}
 
-	let metadata = build_dir_entry(path, config.volume_backend).await?;
+	let metadata = match build_dir_entry(path, config.volume_backend).await {
+		Ok(metadata) => metadata,
+		Err(e) if is_not_found(&e) => {
+			tracing::debug!(
+				"Path vanished before indexing, skipping modify: {}",
+				path.display()
+			);
+			return Ok(());
+		}
+		Err(e) => return Err(e),
+	};
 
 	if let Some(inode) = metadata.inode {
 		if let Some(existing) = handler.find_by_inode(inode).await? {
@@ -607,6 +648,80 @@ mod tests {
 		assert!(!should_filter_path(&source, toggles, root.path(), None)
 			.await
 			.unwrap());
+	}
+
+	/// Storage whose index has no directories: every create is refused.
+	struct EmptyIndex;
+
+	#[async_trait::async_trait]
+	impl ChangeHandler for EmptyIndex {
+		async fn find_by_path(&self, _path: &Path) -> Result<Option<EntryRef>> {
+			Ok(None)
+		}
+		async fn find_by_inode(&self, _inode: u64) -> Result<Option<EntryRef>> {
+			Ok(None)
+		}
+		async fn create(&mut self, _metadata: &DirEntry, parent_path: &Path) -> Result<EntryRef> {
+			Err(ParentNotIndexed(parent_path.to_path_buf()).into())
+		}
+		async fn update(&mut self, _entry: &EntryRef, _metadata: &DirEntry) -> Result<()> {
+			Ok(())
+		}
+		async fn move_entry(
+			&mut self,
+			_entry: &EntryRef,
+			_old_path: &Path,
+			_new_path: &Path,
+			_new_parent_path: &Path,
+		) -> Result<()> {
+			Ok(())
+		}
+		async fn delete(&mut self, _entry: &EntryRef) -> Result<()> {
+			Ok(())
+		}
+		async fn run_processors(&self, _entry: &EntryRef, _is_new: bool) -> Result<()> {
+			Ok(())
+		}
+		async fn emit_change_event(
+			&self,
+			_entry: &EntryRef,
+			_change_type: ChangeType,
+		) -> Result<()> {
+			Ok(())
+		}
+		async fn handle_new_directory(&self, _path: &Path) -> Result<()> {
+			Ok(())
+		}
+	}
+
+	/// A file whose directory is not indexed is skipped, not stored as a
+	/// parentless entry that no location removal ever deletes.
+	#[tokio::test]
+	async fn skips_creates_under_an_unindexed_parent() {
+		let root = tempfile::tempdir().unwrap();
+		let file = root.path().join("unindexed/new.txt");
+		std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+		std::fs::write(&file, "x").unwrap();
+		let config = ChangeConfig {
+			rule_toggles: RuleToggles::default(),
+			location_root: root.path(),
+			volume_backend: None,
+		};
+
+		handle_create(&mut EmptyIndex, &file, &config)
+			.await
+			.unwrap();
+	}
+
+	#[test]
+	fn vanished_paths_are_not_found() {
+		let vanished = anyhow::Error::from(std::io::Error::from(std::io::ErrorKind::NotFound))
+			.context("Failed to read metadata");
+		let denied =
+			anyhow::Error::from(std::io::Error::from(std::io::ErrorKind::PermissionDenied));
+
+		assert!(is_not_found(&vanished));
+		assert!(!is_not_found(&denied));
 	}
 
 	/// Ancestors above the location root are not the location's business:

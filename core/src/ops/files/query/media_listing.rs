@@ -105,7 +105,7 @@ impl LibraryQuery for MediaListingQuery {
 	type Output = MediaListingOutput;
 
 	fn from_input(input: Self::Input) -> QueryResult<Self> {
-		tracing::info!(
+		tracing::debug!(
 			"MediaListingQuery::from_input called with input: {:?}",
 			input
 		);

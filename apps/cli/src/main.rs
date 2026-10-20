@@ -275,6 +275,20 @@ async fn main() -> Result<()> {
 				_ => {} // Daemon not running, continue
 			}
 
+			if !foreground {
+				if let Some(service) =
+					domains::daemon::installed_service(&data_dir, instance.as_deref())
+				{
+					if domains::daemon::service_active(&service) {
+						println!("{service} is running; the daemon is still starting up");
+					} else {
+						domains::daemon::start_service(&service).await?;
+						println!("Daemon started through {service}");
+					}
+					return Ok(());
+				}
+			}
+
 			// Start daemon using std::process::Command
 			let current_exe = std::env::current_exe()?;
 			let daemon_path = current_exe.parent().unwrap().join("wing-daemon");
@@ -414,6 +428,15 @@ async fn main() -> Result<()> {
 
 			// Start the daemon again
 			println!("Starting daemon...");
+			if !foreground {
+				if let Some(service) =
+					domains::daemon::installed_service(&data_dir, instance.as_deref())
+				{
+					domains::daemon::start_service(&service).await?;
+					println!("Daemon restarted through {service}");
+					return Ok(());
+				}
+			}
 			let current_exe = std::env::current_exe()?;
 			let daemon_path = current_exe.parent().unwrap().join("wing-daemon");
 			let mut cmd = std::process::Command::new(daemon_path);

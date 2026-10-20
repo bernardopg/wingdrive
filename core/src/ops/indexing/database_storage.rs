@@ -1191,35 +1191,45 @@ impl DatabaseStorage {
 		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
 		let mut to_delete_ids: Vec<i32> = vec![entry_id];
-		if let Ok(rows) = entities::entry_closure::Entity::find()
+		let rows = entities::entry_closure::Entity::find()
 			.filter(entities::entry_closure::Column::AncestorId.eq(entry_id))
 			.all(db)
-			.await
-		{
-			to_delete_ids.extend(rows.into_iter().map(|r| r.descendant_id));
-		}
+			.await?;
+		to_delete_ids.extend(rows.into_iter().map(|r| r.descendant_id));
 		to_delete_ids.sort_unstable();
 		to_delete_ids.dedup();
 
-		if !to_delete_ids.is_empty() {
-			let _ = entities::entry_closure::Entity::delete_many()
-				.filter(entities::entry_closure::Column::DescendantId.is_in(to_delete_ids.clone()))
-				.exec(db)
-				.await;
-			let _ = entities::entry_closure::Entity::delete_many()
-				.filter(entities::entry_closure::Column::AncestorId.is_in(to_delete_ids.clone()))
-				.exec(db)
-				.await;
+		Self::delete_entries_by_id(&to_delete_ids, db).await
+	}
 
-			let _ = entities::directory_paths::Entity::delete_many()
-				.filter(entities::directory_paths::Column::EntryId.is_in(to_delete_ids.clone()))
-				.exec(db)
-				.await;
+	/// Deletes entries with their closure links and directory paths.
+	///
+	/// Works in chunks that stay under SQLite's bound-parameter limit (32766).
+	/// A single statement for a large location tree failed with "too many SQL
+	/// variables", and the location was removed while its entries stayed behind.
+	pub async fn delete_entries_by_id<C>(ids: &[i32], db: &C) -> Result<(), sea_orm::DbErr>
+	where
+		C: sea_orm::ConnectionTrait,
+	{
+		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
-			let _ = entities::entry::Entity::delete_many()
-				.filter(entities::entry::Column::Id.is_in(to_delete_ids))
+		for chunk in ids.chunks(900) {
+			entities::entry_closure::Entity::delete_many()
+				.filter(entities::entry_closure::Column::DescendantId.is_in(chunk.iter().copied()))
 				.exec(db)
-				.await;
+				.await?;
+			entities::entry_closure::Entity::delete_many()
+				.filter(entities::entry_closure::Column::AncestorId.is_in(chunk.iter().copied()))
+				.exec(db)
+				.await?;
+			entities::directory_paths::Entity::delete_many()
+				.filter(entities::directory_paths::Column::EntryId.is_in(chunk.iter().copied()))
+				.exec(db)
+				.await?;
+			entities::entry::Entity::delete_many()
+				.filter(entities::entry::Column::Id.is_in(chunk.iter().copied()))
+				.exec(db)
+				.await?;
 		}
 
 		Ok(())
@@ -1247,6 +1257,58 @@ fn stored_name_and_extension(path: &Path, is_file: bool) -> (String, Option<Stri
 		.and_then(|ext| ext.to_str())
 		.map(|ext| ext.to_lowercase());
 	(name, extension)
+}
+
+#[cfg(test)]
+mod delete_subtree_tests {
+	use super::DatabaseStorage;
+	use crate::infra::db::Database;
+	use sea_orm::{ConnectionTrait, Statement};
+
+	async fn count(db: &sea_orm::DatabaseConnection, table: &str) -> i64 {
+		let row = db
+			.query_one_raw(Statement::from_string(
+				db.get_database_backend(),
+				format!("SELECT COUNT(*) AS n FROM {table}"),
+			))
+			.await
+			.unwrap()
+			.unwrap();
+		row.try_get("", "n").unwrap()
+	}
+
+	/// A location tree larger than SQLite's 32766 bound parameters used to be
+	/// left behind: the single `IN (...)` statement failed and the error was dropped.
+	#[tokio::test]
+	async fn deletes_a_tree_larger_than_the_parameter_limit() {
+		let dir = tempfile::tempdir().unwrap();
+		let database = Database::create(&dir.path().join("library.db"))
+			.await
+			.unwrap();
+		database.migrate().await.unwrap();
+		let db = database.conn();
+
+		let now = "2026-10-19T00:00:00+00:00";
+		db.execute_unprepared(&format!(
+			"INSERT INTO entries (id, name, kind, size, aggregate_size, child_count, file_count, created_at, modified_at, parent_id)
+			 VALUES (1, 'root', 1, 0, 0, 0, 0, '{now}', '{now}', NULL);
+			 WITH RECURSIVE n(i) AS (SELECT 2 UNION ALL SELECT i + 1 FROM n WHERE i < 40001)
+			 INSERT INTO entries (id, name, kind, size, aggregate_size, child_count, file_count, created_at, modified_at, parent_id)
+			 SELECT i, 'file-' || i, 0, 0, 0, 0, 0, '{now}', '{now}', 1 FROM n;
+			 INSERT INTO entry_closure (ancestor_id, descendant_id, depth) SELECT id, id, 0 FROM entries;
+			 INSERT INTO entry_closure (ancestor_id, descendant_id, depth) SELECT 1, id, 1 FROM entries WHERE id > 1;
+			 INSERT INTO directory_paths (entry_id, path) VALUES (1, '/root');"
+		))
+		.await
+		.unwrap();
+		assert_eq!(count(db, "entries").await, 40001);
+
+		DatabaseStorage::delete_subtree(1, db).await.unwrap();
+
+		assert_eq!(count(db, "entries").await, 0);
+		assert_eq!(count(db, "entry_closure").await, 0);
+		assert_eq!(count(db, "directory_paths").await, 0);
+	}
 }
 
 #[cfg(test)]

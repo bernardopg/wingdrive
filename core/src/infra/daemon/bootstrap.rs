@@ -114,6 +114,23 @@ fn raise_fd_limit() {
 	}
 }
 
+/// Daily log files kept per stream. Older files are deleted on rotation; before
+/// this limit the logs directory grew without bound (11 GB in one week).
+const MAX_LOG_FILES: usize = 7;
+
+fn rolling_appender(
+	logs_dir: &std::path::Path,
+	file_name: &str,
+) -> Result<tracing_appender::rolling::RollingFileAppender, tracing_appender::rolling::InitError> {
+	use tracing_appender::rolling::{RollingFileAppender, Rotation};
+
+	RollingFileAppender::builder()
+		.rotation(Rotation::DAILY)
+		.filename_prefix(file_name)
+		.max_log_files(MAX_LOG_FILES)
+		.build(logs_dir)
+}
+
 /// Initialize tracing with file logging to {data_dir}/logs/daemon.log
 /// Supports multi-stream logging with per-stream filters
 fn initialize_tracing_with_file_logging(
@@ -122,7 +139,6 @@ fn initialize_tracing_with_file_logging(
 	use crate::config::AppConfig;
 	use crate::infra::event::log_emitter::LogEventLayer;
 	use std::sync::Once;
-	use tracing_appender::rolling::{RollingFileAppender, Rotation};
 	use tracing_subscriber::{
 		fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer,
 	};
@@ -155,7 +171,13 @@ fn initialize_tracing_with_file_logging(
 			std::env::var("RUST_LOG").unwrap_or_else(|_| config.logging.main_filter.clone());
 
 		// Create main daemon.log file appender
-		let main_file_appender = RollingFileAppender::new(Rotation::DAILY, &logs_dir, "daemon.log");
+		let main_file_appender = match rolling_appender(&logs_dir, "daemon.log") {
+			Ok(appender) => appender,
+			Err(e) => {
+				result = Err(format!("Failed to create daemon.log appender: {}", e).into());
+				return;
+			}
+		};
 
 		// Start building the subscriber with stdout and main file layers
 		let mut layers = Vec::new();
@@ -191,8 +213,16 @@ fn initialize_tracing_with_file_logging(
 				stream.name, stream.file_name, stream.filter
 			);
 
-			let stream_appender =
-				RollingFileAppender::new(Rotation::DAILY, &logs_dir, &stream.file_name);
+			let stream_appender = match rolling_appender(&logs_dir, &stream.file_name) {
+				Ok(appender) => appender,
+				Err(e) => {
+					warn!(
+						"Failed to open log stream '{}': {}. Skipping stream.",
+						stream.name, e
+					);
+					continue;
+				}
+			};
 
 			match EnvFilter::try_new(&stream.filter) {
 				Ok(filter) => {
