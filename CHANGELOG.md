@@ -15,6 +15,9 @@ version in the workspace manifests and the matching `v*` git tag.
   browse, copy or delete the user's files.
 - A malformed RPC request is no longer written to the log at error level; it
   can carry credentials.
+- The desktop app's local media server no longer serves files outside the
+  library's sidecars: a `..` in a thumbnail URL passed its path check. Sidecar
+  URLs now also need the session token, like the file endpoint.
 
 ### Fixed
 

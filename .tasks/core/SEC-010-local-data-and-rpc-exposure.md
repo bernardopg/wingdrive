@@ -40,5 +40,5 @@ Repository history: TruffleHog found no verified secret. The 37 gitleaks finding
 
 ## Follow-up
 
-- The Tauri sidecar HTTP server serves `/sidecar/...` (thumbnails) without its session token and with `Access-Control-Allow-Origin: *`; the URL needs the library and content UUIDs and a random port. Low risk, not changed.
+- Fixed in a follow-up PR: the Tauri sidecar HTTP server served `/sidecar/...` without its session token, and its traversal check was lexical, so `..` segments in the variant reached any file the user can read. Segments are now validated and the token is required.
 - Task files and sprint logs in the public repo name the local username and hosts (`/home/bitter`, `homesystem`).

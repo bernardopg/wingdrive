@@ -154,7 +154,9 @@ export function ServerProvider({ children }: ServerProviderProps) {
 		if (!serverUrl || !libraryId) {
 			return null;
 		}
-		return `${serverUrl}/sidecar/${libraryId}/${contentUuid}/${kind}/${variant}.${format}`;
+		const url = `${serverUrl}/sidecar/${libraryId}/${contentUuid}/${kind}/${variant}.${format}`;
+		// The desktop sidecar server checks its session token; wing-server uses basic auth instead.
+		return serverToken ? `${url}?token=${serverToken}` : url;
 	};
 
 	const buildThumbUrl = (
