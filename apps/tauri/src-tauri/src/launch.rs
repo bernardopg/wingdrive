@@ -90,12 +90,22 @@ pub fn single_instance_id(instance: Option<&str>) -> String {
 /// D-Bus method first lets `wingdrive <dir>` return before any of that.
 /// When no instance owns the name the call fails at once and start-up goes on;
 /// the plugin still catches a launch that races a starting instance.
+///
+/// zbus 6 has no blocking API, so the call runs on Tauri's async runtime. This
+/// happens in `main` before the app starts, outside any task, where blocking
+/// the main thread on that runtime is allowed.
 #[cfg(target_os = "linux")]
 pub fn forward_to_running_instance(id: &str, cwd: &Path) -> bool {
-	let Ok(connection) = zbus::blocking::Connection::session() else {
+	let argv: Vec<String> = std::env::args().collect();
+	let cwd = cwd.to_string_lossy().into_owned();
+	tauri::async_runtime::block_on(call_running_instance(id, argv, cwd))
+}
+
+#[cfg(target_os = "linux")]
+async fn call_running_instance(id: &str, argv: Vec<String>, cwd: String) -> bool {
+	let Ok(connection) = zbus::Connection::session().await else {
 		return false;
 	};
-	let argv: Vec<String> = std::env::args().collect();
 	connection
 		.call_method(
 			Some(format!("{id}.SingleInstance").as_str()),
@@ -103,8 +113,9 @@ pub fn forward_to_running_instance(id: &str, cwd: &Path) -> bool {
 			format!("/{}/SingleInstance", id.replace('.', "/")).as_str(),
 			Some("org.SingleInstance.DBus"),
 			"ExecuteCallback",
-			&(argv, cwd.to_string_lossy().into_owned()),
+			&(argv, cwd),
 		)
+		.await
 		.is_ok()
 }
 
