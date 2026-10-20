@@ -24,7 +24,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@wingdrive/primitives": "^0.2.0",
     "clsx": "^2.1.1",
-    "framer-motion": "^14.0.0",
+    "framer-motion": "^14.3.0",
     "react-loader-spinner": "^8.0.2",
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
@@ -37,7 +37,7 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
-    "@tanstack/react-virtual": "^3.14.17",
+    "@tanstack/react-virtual": "^3.14.21",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "tsup": "^8.5.1",
