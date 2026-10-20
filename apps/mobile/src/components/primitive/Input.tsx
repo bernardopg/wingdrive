@@ -1,7 +1,7 @@
 import { cva, VariantProps } from "class-variance-authority";
 import { useTranslation } from "react-i18next";
 import React, { forwardRef, useState } from "react";
-import { TextInputProps, TextInput, View, Pressable } from "react-native";
+import { TextInputProps, TextInput, View, Pressable, type TextInputInstance } from "react-native";
 import { cn } from "~/utils/cn";
 
 const input = cva("rounded-lg border text-ink bg-app-box", {
@@ -28,7 +28,7 @@ const input = cva("rounded-lg border text-ink bg-app-box", {
 
 type InputProps = VariantProps<typeof input> & TextInputProps;
 
-export const Input = forwardRef<TextInput, InputProps>(
+export const Input = forwardRef<TextInputInstance, InputProps>(
 	({ variant, size, disabled, className, editable, style, ...props }, ref) => {
 	const { t } = useTranslation('common');
 		// Get proper font size and line height based on size
@@ -57,7 +57,7 @@ type PasswordInputProps = InputProps & {
 	isNewPassword?: boolean;
 };
 
-export const PasswordInput = forwardRef<TextInput, PasswordInputProps>(
+export const PasswordInput = forwardRef<TextInputInstance, PasswordInputProps>(
 	({ variant, size, disabled, isNewPassword = false, className, style, ...props }, ref) => {
 	const { t } = useTranslation('common');
 		const [showPassword, setShowPassword] = useState(false);
@@ -85,7 +85,7 @@ export const PasswordInput = forwardRef<TextInput, PasswordInputProps>(
 				<Pressable
 					className="absolute right-4 top-0 bottom-0 justify-center"
 					onPress={() => setShowPassword((v) => !v)}
-					disabled={disabled}
+					disabled={disabled ?? undefined}
 				>
 					<View className="h-5 w-5 items-center justify-center">
 						{showPassword ? (

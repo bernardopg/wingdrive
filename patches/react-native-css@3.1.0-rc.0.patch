@@ -1,0 +1,45 @@
+diff --git a/dist/commonjs/components/index.cjs b/dist/commonjs/components/index.cjs
+index 23af26cff9df498d6c7723abba2e5f7a9a219336..932b9e04d1633740b82c524bb98b9fb95baed694 100644
+--- a/dist/commonjs/components/index.cjs
++++ b/dist/commonjs/components/index.cjs
+@@ -6,6 +6,10 @@
+ /* eslint-disable @typescript-eslint/no-require-imports */
+ 
+ module.exports = {
++  // React Native 0.88 exports the asset registry; expo-asset reads it from here.
++  get AssetRegistry() {
++    return require("react-native").AssetRegistry;
++  },
+   get ActivityIndicator() {
+     return require("./ActivityIndicator").ActivityIndicator;
+   },
+diff --git a/dist/module/components/index.cjs b/dist/module/components/index.cjs
+index 23af26cff9df498d6c7723abba2e5f7a9a219336..932b9e04d1633740b82c524bb98b9fb95baed694 100644
+--- a/dist/module/components/index.cjs
++++ b/dist/module/components/index.cjs
+@@ -6,6 +6,10 @@
+ /* eslint-disable @typescript-eslint/no-require-imports */
+ 
+ module.exports = {
++  // React Native 0.88 exports the asset registry; expo-asset reads it from here.
++  get AssetRegistry() {
++    return require("react-native").AssetRegistry;
++  },
+   get ActivityIndicator() {
+     return require("./ActivityIndicator").ActivityIndicator;
+   },
+diff --git a/src/components/index.cts b/src/components/index.cts
+index ead6ff4e49a132f375488744647af5baeb9a17a6..ac6d8a507f0d98c220d8abf3c39641d382686609 100644
+--- a/src/components/index.cts
++++ b/src/components/index.cts
+@@ -4,6 +4,10 @@
+ /* eslint-disable @typescript-eslint/no-require-imports */
+ 
+ module.exports = {
++  // React Native 0.88 exports the asset registry; expo-asset reads it from here.
++  get AssetRegistry() {
++    return require("react-native").AssetRegistry;
++  },
+   get ActivityIndicator() {
+     return require("./ActivityIndicator").ActivityIndicator;
+   },

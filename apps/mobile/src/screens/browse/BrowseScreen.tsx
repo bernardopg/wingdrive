@@ -1,6 +1,6 @@
 import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import { useState, useRef, useCallback } from "react";
-import { View, ScrollView, Dimensions, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
+import { View, ScrollView, Dimensions, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from "react-native";
 import { useSafeAreaInsets, type EdgeInsets } from "react-native-safe-area-context";
 import Animated, {
 	useSharedValue,
@@ -153,7 +153,7 @@ export function BrowseScreen() {
 		resourceType: "space",
 	});
 	const [currentPage, setCurrentPage] = useState(0);
-	const scrollViewRef = useRef<ScrollView>(null);
+	const scrollViewRef = useRef<ScrollViewInstance>(null);
 
 	const spacesList = (spacesData?.spaces || []) as Space[];
 	const totalPages = spacesList.length + 1; // +1 for create space page

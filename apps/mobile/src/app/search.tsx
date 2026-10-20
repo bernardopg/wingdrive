@@ -11,7 +11,7 @@ import { GlassButton } from "../components/GlassButton";
 import { useSearchStore } from "../screens/explorer/context/SearchContext";
 import { useSearchFiles } from "@wingdrive/ts-client";
 import type { File } from "@wingdrive/ts-client";
-import type { TextInput } from "react-native";
+import type { TextInputInstance } from "react-native";
 import { useTranslation } from "react-i18next";
 import { X } from "phosphor-react-native";
 
@@ -21,7 +21,7 @@ export default function SearchScreen() {
 	const { t } = useTranslation("common");
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
-	const searchInputRef = useRef<TextInput>(null);
+	const searchInputRef = useRef<TextInputInstance>(null);
 	const [viewMode, setViewMode] = useState<SearchViewMode>("list");
 
 	const { query, scope, isSearchMode, enterSearchMode, exitSearchMode, setSearchQuery } =

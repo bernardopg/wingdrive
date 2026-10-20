@@ -90,7 +90,7 @@ updates:
       - dependency-name: "@react-native-async-storage/*"
       - dependency-name: "@react-native-community/*"
       - dependency-name: "@shopify/flash-list"
-      # Expo SDK 57 runs on Babel 7; Babel 8 and babel-preset-expo 58 come with SDK 58.
+      # Expo SDK 58 still runs on Babel 7, so the Babel 8 majors wait for a later SDK.
       - dependency-name: babel-preset-expo
         update-types: [version-update:semver-major]
       - dependency-name: "@babel/core"
