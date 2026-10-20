@@ -3,7 +3,9 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 2.0.2 — 2026-10-20
+
+Privacy and security fixes, location cleanup, bounded logs and dependency updates (#259 to #268).
 
 ### Security
 
@@ -33,6 +35,13 @@ version in the workspace manifests and the matching `v*` git tag.
 - A tab whose navigation stops reaching the screen recovers by itself instead
   of needing another tab to be opened.
 - The Android release logs at info level.
+
+### Changed
+
+- The mobile core uses jni 0.22; native callbacks no longer leak a Java
+  string per event or log line.
+- TypeScript 7 for ts-client and the build scripts; rusqlite 0.39 and
+  jsonschema 0.59 in the developer tools.
 
 ## 2.0.1 — 2026-10-19
 
