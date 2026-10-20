@@ -33,7 +33,7 @@ Also found: a release built without the `WINGDRIVE_ANDROID_KEYSTORE_*` secrets d
 - [x] Removing a location while it indexes succeeds on the first try
 - [x] No job of a removed location keeps running
 - [x] Watcher events under `target/` (and any rejected directory) are ignored
-- [ ] The release publishes the APK (needs the upload key secrets)
+- [x] The release publishes the APK (2.0.1, signed with the upload key)
 
 ## Evidence (2026-10-19)
 

@@ -13,6 +13,56 @@ fn systemd_service_name(base: &str, instance: Option<&str>) -> String {
 	)
 }
 
+/// The systemd user unit installed for the daemon of `data_dir`, if any.
+///
+/// `wing start` and `wing restart` go through this unit so systemd keeps
+/// supervising the daemon. A daemon spawned next to the unit left it inactive,
+/// and nothing restarted the daemon when it crashed.
+#[cfg(target_os = "linux")]
+pub fn installed_service(data_dir: &std::path::Path, instance: Option<&str>) -> Option<String> {
+	let service_name = systemd_service_name("wingdrive-daemon", instance);
+	let unit = dirs::home_dir()?
+		.join(".config/systemd/user")
+		.join(&service_name);
+	let content = std::fs::read_to_string(unit).ok()?;
+	let flag = format!("--data-dir {}", data_dir.display());
+	content.contains(&flag).then_some(service_name)
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn installed_service(_data_dir: &std::path::Path, _instance: Option<&str>) -> Option<String> {
+	None
+}
+
+/// True while systemd runs the unit, including a daemon that has not opened its socket yet.
+pub fn service_active(service_name: &str) -> bool {
+	std::process::Command::new("systemctl")
+		.args(["--user", "is-active", "--quiet", service_name])
+		.status()
+		.is_ok_and(|status| status.success())
+}
+
+/// Starts the daemon through its systemd user unit.
+///
+/// Waits up to 30 s for a daemon that is still shutting down: starting a unit
+/// that is active does nothing, and the exiting daemon would leave it stopped.
+pub async fn start_service(service_name: &str) -> Result<()> {
+	for _ in 0..60 {
+		if !service_active(service_name) {
+			break;
+		}
+		tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+	}
+	let status = std::process::Command::new("systemctl")
+		.args(["--user", "start", service_name])
+		.status()?;
+	anyhow::ensure!(
+		status.success(),
+		"systemctl --user start {service_name} failed: {status}"
+	);
+	Ok(())
+}
+
 #[derive(Subcommand, Debug)]
 pub enum DaemonCmd {
 	/// Install daemon to start automatically on login

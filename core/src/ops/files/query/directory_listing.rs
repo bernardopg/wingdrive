@@ -136,7 +136,7 @@ impl LibraryQuery for DirectoryListingQuery {
 	type Output = DirectoryListingOutput;
 
 	fn from_input(input: Self::Input) -> QueryResult<Self> {
-		tracing::info!(
+		tracing::debug!(
 			"DirectoryListingQuery::from_input called with input: {:?}",
 			input
 		);

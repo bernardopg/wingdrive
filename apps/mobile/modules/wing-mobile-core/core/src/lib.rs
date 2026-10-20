@@ -160,10 +160,17 @@ fn init_tracing() {
 		.without_time()
 		.with_writer(android::LogcatWriter::default);
 
+	// Release builds (and `mobile-dev`, which inherits release) log at info: core debug
+	// output sent ~550 lines to logcat on every launch. Debug builds keep core debug logs.
+	let default_filter = if cfg!(debug_assertions) {
+		"info,wing_core=debug"
+	} else {
+		"info"
+	};
 	let _ = tracing_subscriber::registry()
 		.with(
 			tracing_subscriber::EnvFilter::try_from_default_env()
-				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info,wing_core=debug")),
+				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(default_filter)),
 		)
 		.with(fmt_layer)
 		.with(LogEventLayer::new())

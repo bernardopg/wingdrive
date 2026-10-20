@@ -67,6 +67,31 @@ struct RunningJob {
 	should_emit_events: bool,
 }
 
+/// Job logs untouched for this long are deleted when the library opens. Every
+/// job writes its own file and nothing removed them before.
+const JOB_LOG_RETENTION: std::time::Duration = std::time::Duration::from_secs(7 * 24 * 60 * 60);
+
+fn prune_job_logs(logs_dir: &std::path::Path) {
+	let Ok(entries) = std::fs::read_dir(logs_dir) else {
+		return;
+	};
+	let Some(cutoff) = std::time::SystemTime::now().checked_sub(JOB_LOG_RETENTION) else {
+		return;
+	};
+	for entry in entries.flatten() {
+		let path = entry.path();
+		let stale = entry
+			.metadata()
+			.and_then(|metadata| metadata.modified())
+			.is_ok_and(|modified| modified < cutoff);
+		if stale && path.extension().is_some_and(|ext| ext == "log") {
+			if let Err(e) = std::fs::remove_file(&path) {
+				warn!("Failed to remove old job log {}: {}", path.display(), e);
+			}
+		}
+	}
+}
+
 impl JobManager {
 	/// Create a new job manager
 	pub async fn new(
@@ -77,6 +102,9 @@ impl JobManager {
 		// Initialize job database at library root
 		let job_db_path = data_dir.join("jobs.db");
 		let db = database::init_database(&job_db_path).await?;
+
+		let logs_dir = data_dir.join("logs");
+		tokio::task::spawn_blocking(move || prune_job_logs(&logs_dir));
 
 		// Create task system
 		let dispatcher = TaskSystem::new();

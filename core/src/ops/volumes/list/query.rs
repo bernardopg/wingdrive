@@ -165,7 +165,7 @@ impl LibraryQuery for VolumeListQuery {
 			.all(db)
 			.await?;
 
-		tracing::info!(
+		tracing::debug!(
 			count = tracked_volumes.len(),
 			filter = ?self.filter,
 			"[volumes.list] Fetched tracked volumes from database"
@@ -182,7 +182,7 @@ impl LibraryQuery for VolumeListQuery {
 			.map(|v| (v.fingerprint.clone(), v))
 			.collect();
 
-		tracing::info!(
+		tracing::debug!(
 			tracked_map_size = tracked_map.len(),
 			"[volumes.list] Created tracked_map"
 		);
@@ -254,7 +254,7 @@ impl LibraryQuery for VolumeListQuery {
 			}
 		}
 
-		tracing::info!(
+		tracing::debug!(
 			volume_count = volumes.len(),
 			filter = ?self.filter,
 			"[volumes.list] Returning volumes"

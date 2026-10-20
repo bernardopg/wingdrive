@@ -477,7 +477,7 @@ impl ThumbnailJob {
 		for (batch_idx, batch) in batches.iter().enumerate() {
 			ctx.check_interrupt().await?;
 
-			ctx.log(format!(
+			ctx.log_debug(format!(
 				"Processing batch {} of {} ({} entries)",
 				batch_idx + 1,
 				total_batches,
@@ -500,7 +500,7 @@ impl ThumbnailJob {
 				match result {
 					Ok(thumbnail_size) => {
 						state.record_generated(*thumbnail_size);
-						ctx.log(format!("Generated thumbnail for {}", entry.relative_path));
+						ctx.log_debug(format!("Generated thumbnail for {}", entry.relative_path));
 					}
 					Err(e) => {
 						let error_msg = format!(

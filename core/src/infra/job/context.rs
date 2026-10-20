@@ -68,7 +68,7 @@ impl<'a> JobContext<'a> {
 
 		// Debug logging for thumbnail job progress
 		if let Progress::Generic(ref gp) = progress {
-			tracing::info!(
+			tracing::debug!(
 				"JOB_PROGRESS: phase={}, percentage={}, completed={}/{}, message={}",
 				gp.phase,
 				gp.percentage,
