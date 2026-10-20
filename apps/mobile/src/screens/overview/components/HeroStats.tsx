@@ -1,7 +1,7 @@
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React, { useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { View, Image, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
+import { View, Image, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent, type ScrollViewInstance } from "react-native";
 import DevicesIcon from "@wingdrive/assets/icons/Devices.webp";
 import IndexedIcon from "@wingdrive/assets/icons/Indexed.webp";
 import LocationIcon from "@wingdrive/assets/icons/Location.webp";
@@ -60,7 +60,7 @@ export function HeroStats({
 }: HeroStatsProps) {
 	const { t } = useTranslation("common");
 	const [currentPage, setCurrentPage] = useState(0);
-	const scrollViewRef = useRef<ScrollView>(null);
+	const scrollViewRef = useRef<ScrollViewInstance>(null);
 
 	const usagePercent =
 		totalStorage > 0 ? (usedStorage / totalStorage) * 100 : 0;

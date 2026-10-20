@@ -41,7 +41,7 @@
           },
           "android": {
             "minSdkVersion": 24,
-            "compileSdkVersion": 36,
+            "compileSdkVersion": 37,
             "targetSdkVersion": 36,
             "kotlinVersion": "2.2.20"
           }
@@ -49,7 +49,9 @@
       ],
       "expo-asset",
       "expo-router",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      "expo-image",
+      "expo-status-bar"
     ]
   }
 }

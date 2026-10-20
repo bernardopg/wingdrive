@@ -1,5 +1,5 @@
 import React, { forwardRef, useState, useEffect, useCallback } from "react";
-import { TextInput, View, Pressable, type TextInputProps } from "react-native";
+import { TextInput, View, Pressable, type TextInputInstance, type TextInputProps } from "react-native";
 import { BlurView } from "expo-blur";
 import {
 	LiquidGlassView,
@@ -18,7 +18,7 @@ interface GlassSearchBarProps extends Omit<TextInputProps, 'style' | 'onChange' 
 	debounceMs?: number;
 }
 
-export const GlassSearchBar = forwardRef<TextInput, GlassSearchBarProps>(
+export const GlassSearchBar = forwardRef<TextInputInstance, GlassSearchBarProps>(
 	(
 		{
 			onPress,
