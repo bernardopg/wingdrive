@@ -53,12 +53,13 @@ package() {{
   local app="$pkgdir/opt/wingdrive"
   install -Dm755 squashfs-root/usr/bin/WingDrive "$app/usr/bin/WingDrive"
   install -Dm755 squashfs-root/usr/bin/wing-daemon "$app/usr/bin/wing-daemon"
+  install -Dm755 squashfs-root/usr/bin/wing "$app/usr/bin/wing"
   install -d "$app/usr/lib"
   cp -a squashfs-root/usr/lib/WingDrive "$app/usr/lib/"
   (cd squashfs-root/usr/lib && cp -a $_bundled_libs "$app/usr/lib/")
 
   local missing
-  missing="$(ldd "$app/usr/bin/WingDrive" "$app/usr/bin/wing-daemon" "$app"/usr/lib/*.so.* | grep 'not found' | sort -u || true)"
+  missing="$(ldd "$app/usr/bin/WingDrive" "$app/usr/bin/wing-daemon" "$app/usr/bin/wing" "$app"/usr/lib/*.so.* | grep 'not found' | sort -u || true)"
   if [[ -n "$missing" ]]; then
     printf 'Unresolved libraries:\n%s\n' "$missing" >&2
     return 1
@@ -66,6 +67,8 @@ package() {{
 
   install -d "$pkgdir/usr/bin"
   ln -s /opt/wingdrive/usr/bin/WingDrive "$pkgdir/usr/bin/wingdrive"
+  # The CLI finds wing-daemon next to its resolved path, so a symlink works.
+  ln -s /opt/wingdrive/usr/bin/wing "$pkgdir/usr/bin/wing"
   install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/wingdrive.desktop" <<'DESKTOP'
 [Desktop Entry]
 Type=Application

@@ -24,7 +24,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@wingdrive/primitives": "^0.2.0",
     "clsx": "^2.1.1",
-    "framer-motion": "^13.5.1",
+    "framer-motion": "^14.0.0",
     "react-loader-spinner": "^8.0.2",
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",

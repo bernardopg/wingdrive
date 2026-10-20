@@ -597,12 +597,14 @@ impl LocationManager {
 		library: &Library,
 		location_id: Uuid,
 	) -> LocationResult<()> {
-		use sea_orm::{ActiveValue::NotSet, Set, TransactionTrait};
+		use sea_orm::{ActiveValue::NotSet, Set};
 
 		info!("Removing location {}", location_id);
 
-		// Start a transaction for atomicity
-		let txn = library.db().conn().begin().await?;
+		// Take the write lock up front: the transaction reads before it writes,
+		// and a deferred one fails with "database is locked" as soon as an
+		// indexer commits in between.
+		let txn = crate::infra::db::begin_write(library.db().conn()).await?;
 
 		// Find the location
 		let location = entities::location::Entity::find()

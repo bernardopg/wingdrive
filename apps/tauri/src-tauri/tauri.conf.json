@@ -1,6 +1,6 @@
 {
   "productName": "WingDrive",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "identifier": "com.wingdrive.desktop",
   "plugins": {
     "updater": {
@@ -74,7 +74,8 @@
       "icons/icon.ico"
     ],
     "externalBin": [
-      "../../../target/release/wing-daemon"
+      "../../../target/release/wing-daemon",
+      "../../../target/release/wing"
     ],
     "resources": {
       "gen/**/*": "./",

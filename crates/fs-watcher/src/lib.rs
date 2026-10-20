@@ -57,6 +57,8 @@ mod config;
 mod error;
 mod event;
 mod platform;
+#[cfg(target_os = "linux")]
+mod prune;
 mod watcher;
 
 pub use config::{EventFilters, WatchConfig, WatcherConfig};

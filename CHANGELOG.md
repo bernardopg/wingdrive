@@ -3,6 +3,25 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.0.1 — 2026-10-19
+
+Desktop start-up at login, location removal, and the Android APK (#255, #256).
+
+### Fixed
+
+- The desktop app connects at login again. The daemon opened its socket only
+  after watching every location, which took minutes on large source trees;
+  watches now register in the background and skip build and dependency
+  directories. The app waits for a daemon that is still starting instead of
+  giving up.
+- Files inside folders of a tree moved into a location are watched.
+- The `wing` CLI ships with the desktop app, so the commands the
+  disconnected-daemon screen suggests work.
+- Removing a location while it indexes no longer fails with "database is
+  locked", and the location's indexing and thumbnail jobs stop with it.
+- Changes inside folders the indexing rules exclude (`target`,
+  `node_modules`, …) no longer get indexed when a file inside them changes.
+
 ## 2.0.0 — 2026-10-18
 
 First stable release of WingDrive (#238 to #251).

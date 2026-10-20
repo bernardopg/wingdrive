@@ -120,6 +120,34 @@ pub async fn should_filter_path(
 ) -> Result<bool> {
 	let ruler = build_default_ruler(rule_toggles, location_root, path).await;
 
+	struct SimpleMetadata {
+		is_dir: bool,
+	}
+	impl crate::ops::indexing::rules::MetadataForIndexerRules for SimpleMetadata {
+		fn is_dir(&self) -> bool {
+			self.is_dir
+		}
+	}
+
+	// A rule such as `**/target` matches the directory, not what lies under
+	// it. The indexer never descends into a rejected directory, so an event
+	// below one (a build writing `target/debug/...`) is filtered the same way.
+	let directory = SimpleMetadata { is_dir: true };
+	for ancestor in path
+		.ancestors()
+		.skip(1)
+		.take_while(|ancestor| ancestor.starts_with(location_root) && *ancestor != location_root)
+	{
+		if let Ok(RulerDecision::Reject) = ruler.evaluate_path(ancestor, &directory).await {
+			tracing::debug!(
+				"Filtered path under rejected directory {}: {}",
+				ancestor.display(),
+				path.display()
+			);
+			return Ok(true);
+		}
+	}
+
 	let metadata = if let Some(backend) = backend {
 		backend
 			.metadata(path)
@@ -143,15 +171,6 @@ pub async fn should_filter_path(
 			permissions: None,
 		}
 	};
-
-	struct SimpleMetadata {
-		is_dir: bool,
-	}
-	impl crate::ops::indexing::rules::MetadataForIndexerRules for SimpleMetadata {
-		fn is_dir(&self) -> bool {
-			self.is_dir
-		}
-	}
 
 	let simple_meta = SimpleMetadata {
 		is_dir: metadata.kind == EntryKind::Directory,
@@ -564,4 +583,45 @@ pub async fn handle_rename<H: ChangeHandler>(
 	}
 
 	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	/// A build writing under `target/` creates paths that `**/target` does
+	/// not match by themselves; they are filtered because the indexer never
+	/// enters `target` either.
+	#[tokio::test]
+	async fn filters_paths_under_a_rejected_directory() {
+		let root = tempfile::tempdir().unwrap();
+		let built = root.path().join("app/target/debug/.fingerprint/dep-1a2b");
+		let source = root.path().join("app/src/main");
+		std::fs::create_dir_all(&built).unwrap();
+		std::fs::create_dir_all(&source).unwrap();
+		let toggles = RuleToggles::default();
+
+		assert!(should_filter_path(&built, toggles, root.path(), None)
+			.await
+			.unwrap());
+		assert!(!should_filter_path(&source, toggles, root.path(), None)
+			.await
+			.unwrap());
+	}
+
+	/// Ancestors above the location root are not the location's business:
+	/// a location inside a `build` directory still indexes its own content.
+	#[tokio::test]
+	async fn ignores_rejected_names_above_the_location_root() {
+		let parent = tempfile::tempdir().unwrap();
+		let root = parent.path().join("build/photos");
+		let album = root.join("album");
+		std::fs::create_dir_all(&album).unwrap();
+
+		assert!(
+			!should_filter_path(&album, RuleToggles::default(), &root, None)
+				.await
+				.unwrap()
+		);
+	}
 }

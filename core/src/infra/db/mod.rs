@@ -1,7 +1,8 @@
 //! Database infrastructure using SeaORM
 
 use sea_orm::{
-	ConnectOptions, Database as SeaDatabase, DatabaseConnection, DbErr, TransactionTrait,
+	ConnectOptions, Database as SeaDatabase, DatabaseConnection, DatabaseTransaction, DbErr,
+	SqliteTransactionMode, TransactionOptions, TransactionTrait,
 };
 use sea_orm_migration::MigratorTrait;
 use sqlx::sqlite::SqliteConnectOptions;
@@ -12,6 +13,27 @@ use tracing::info;
 
 pub mod entities;
 pub mod migration;
+
+/// Begins a transaction that takes SQLite's write lock up front.
+///
+/// A deferred transaction that reads first fails its first write with
+/// SQLITE_BUSY_SNAPSHOT when another connection wrote meanwhile, and
+/// `busy_timeout` does not wait on that, so the whole write was lost.
+/// Waiting for the lock here is covered by `busy_timeout`, retried a few times
+/// while a long write from another task holds it.
+pub async fn begin_write(db: &DatabaseConnection) -> Result<DatabaseTransaction, DbErr> {
+	let options = TransactionOptions {
+		sqlite_transaction_mode: Some(SqliteTransactionMode::Immediate),
+		..Default::default()
+	};
+	let mut attempt = 0;
+	loop {
+		match db.begin_with_options(options).await {
+			Err(e) if attempt < 4 && e.to_string().contains("database is locked") => attempt += 1,
+			result => return result,
+		}
+	}
+}
 
 /// Database wrapper for WingDrive
 pub struct Database {

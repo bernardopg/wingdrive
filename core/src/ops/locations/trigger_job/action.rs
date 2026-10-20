@@ -119,7 +119,8 @@ impl LibraryAction for LocationTriggerJobAction {
 					crate::ops::media::thumbnail::ThumbnailJob::new(config)
 				} else {
 					crate::ops::media::thumbnail::ThumbnailJob::for_entries(entry_uuids, config)
-				};
+				}
+				.for_location(self.input.location_id);
 
 				library.jobs().dispatch(job).await.map_err(|e| {
 					ActionError::Internal(format!("Failed to dispatch thumbnail job: {}", e))
