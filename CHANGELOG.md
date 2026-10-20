@@ -3,9 +3,9 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## 2.0.2 — 2026-10-20
+## 2.1.0 — 2026-10-20
 
-Privacy and security fixes, location cleanup, bounded logs and dependency updates (#259 to #268).
+Privacy and security fixes, location cleanup, bounded logs, Expo SDK 58 on mobile and dependency updates (#259 to #273). 2.0.2 was prepared but never tagged; its changes ship here.
 
 ### Security
 
@@ -42,6 +42,11 @@ Privacy and security fixes, location cleanup, bounded logs and dependency update
   string per event or log line.
 - TypeScript 7 for ts-client and the build scripts; rusqlite 0.39 and
   jsonschema 0.59 in the developer tools.
+- Mobile: Expo SDK 58 with React Native 0.88 and React 19.3, built
+  against Android SDK 37.
+- Desktop: zbus 6 for the single-instance hand-off and
+  org.freedesktop.FileManager1; zip 9 for archives.
+- tsup 9 and happy-dom 21 in the build and test tooling.
 
 ## 2.0.1 — 2026-10-19
 
