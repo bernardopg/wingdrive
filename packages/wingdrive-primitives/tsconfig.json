@@ -1,11 +1,1 @@
-{
-  "compilerOptions": {
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "skipLibCheck": true,
-    "target": "ES2022"
-  },
-  "include": ["src"]
-}
+{"compilerOptions":{"esModuleInterop":true,"jsx":"react-jsx","module":"ESNext","moduleResolution":"Bundler","skipLibCheck":true,"target":"ES2022","stableTypeOrdering":true},"include":["src"]}

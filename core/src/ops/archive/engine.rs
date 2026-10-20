@@ -278,7 +278,7 @@ pub fn list(archive: &Path, format: ArchiveFormat) -> Result<Vec<Member>, Archiv
 				let entry = zip.by_index_raw(index)?;
 				let modified = entry.last_modified().and_then(zip_time);
 				push(
-					Path::new(entry.name()),
+					Path::new(entry.name()?.as_ref()),
 					entry.is_dir(),
 					entry.size(),
 					modified,
@@ -407,7 +407,7 @@ fn extract_zip(
 			zip::result::ZipError::Io(io) => cancelled_or(control, io),
 			other => ArchiveError::Zip(other),
 		})?;
-		let relative = safe_relative(Path::new(entry.name()))?;
+		let relative = safe_relative(Path::new(entry.name()?.as_ref()))?;
 		if !wanted(&relative, only) {
 			continue;
 		}

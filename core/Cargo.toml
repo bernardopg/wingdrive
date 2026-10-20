@@ -205,7 +205,7 @@ dialoguer      = "0.12"
 indicatif      = "0.18"
 owo-colors     = "4.1"
 supports-color = "3.0"
-zip = { version = "8.6", default-features = false, features = ["deflate", "bzip2", "time"] }
+zip = { version = "9.0", default-features = false, features = ["deflate", "bzip2", "time"] }
 tar = "0.4"
 flate2 = "1"
 xz2 = "0.1"

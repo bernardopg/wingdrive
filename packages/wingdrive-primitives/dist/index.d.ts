@@ -33,12 +33,12 @@ type LinkButtonProps = ButtonBaseProps & React.AnchorHTMLAttributes<HTMLAnchorEl
     /** Alias for `disabled` (applies disabled styling via className) */
     loading?: boolean;
 };
-declare const buttonStyles: (props?: {
-    size?: "icon" | "lg" | "md" | "sm" | "xs";
-    variant?: "default" | "subtle" | "outline" | "dotted" | "gray" | "accent" | "colored" | "bare";
-    rounding?: "none" | "left" | "right" | "both" | "full";
-} & class_variance_authority_types.ClassProp) => string;
-declare const Button$1: react.ForwardRefExoticComponent<(ButtonProps | LinkButtonProps) & react.RefAttributes<HTMLButtonElement | HTMLAnchorElement>>;
+declare const buttonStyles: (props?: ({
+    size?: "icon" | "lg" | "md" | "sm" | "xs" | null | undefined;
+    variant?: "accent" | "bare" | "colored" | "default" | "dotted" | "gray" | "outline" | "subtle" | null | undefined;
+    rounding?: "both" | "full" | "left" | "none" | "right" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+declare const Button$1: react.ForwardRefExoticComponent<(ButtonProps | LinkButtonProps) & react.RefAttributes<HTMLAnchorElement | HTMLButtonElement>>;
 
 interface InputBaseProps extends VariantProps<typeof inputStyles> {
     icon?: Icon | React.ReactNode;
@@ -55,11 +55,11 @@ declare const inputSizes: {
     lg: string;
     xl: string;
 };
-declare const inputStyles: (props?: {
-    variant?: "default" | "transparent";
-    error?: boolean;
-    size?: "lg" | "md" | "sm" | "xs" | "xl";
-} & class_variance_authority_types.ClassProp) => string;
+declare const inputStyles: (props?: ({
+    variant?: "default" | "transparent" | null | undefined;
+    error?: boolean | null | undefined;
+    size?: "lg" | "md" | "sm" | "xl" | "xs" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 declare const Input: react.ForwardRefExoticComponent<Omit<InputProps, "ref"> & react.RefAttributes<HTMLInputElement>>;
 /** @deprecated Use `SearchBar` instead. */
 declare const SearchInput: react.ForwardRefExoticComponent<Omit<InputProps, "ref"> & react.RefAttributes<HTMLInputElement>>;
@@ -73,7 +73,7 @@ interface PasswordInputProps extends InputProps {
 }
 declare const PasswordInput: react.ForwardRefExoticComponent<Omit<PasswordInputProps, "ref"> & react.RefAttributes<HTMLInputElement>>;
 
-declare const styles: (props?: {} & class_variance_authority_types.ClassProp) => string;
+declare const styles: (props?: ({} & class_variance_authority_types.ClassProp) | undefined) => string;
 interface CheckBoxProps extends ComponentProps<"input">, VariantProps<typeof styles> {
 }
 declare const CheckBox: react.ForwardRefExoticComponent<Omit<CheckBoxProps, "ref"> & react.RefAttributes<HTMLInputElement>>;
@@ -88,9 +88,9 @@ declare const CheckboxIndicator: react.ForwardRefExoticComponent<CheckboxPrimiti
 interface SwitchProps extends VariantProps<typeof switchStyles>, SwitchPrimitive.SwitchProps {
     thumbClassName?: string;
 }
-declare const switchStyles: (props?: {
-    size?: "lg" | "md" | "sm";
-} & class_variance_authority_types.ClassProp) => string;
+declare const switchStyles: (props?: ({
+    size?: "lg" | "md" | "sm" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 declare const Switch: react.ForwardRefExoticComponent<SwitchProps & react.RefAttributes<HTMLButtonElement>>;
 
 declare const Slider: (props: SliderPrimitive.SliderProps) => react.JSX.Element;
@@ -106,9 +106,9 @@ interface FormProps<T extends FieldValues> extends Omit<ComponentProps<"form">, 
     onSubmit?: ReturnType<UseFormHandleSubmit<T>>;
 }
 declare const Form: <T extends FieldValues>({ form, disabled, onSubmit, children, ...props }: FormProps<T>) => react.JSX.Element;
-declare const errorStyles: (props?: {
-    variant?: "default" | "none" | "large";
-} & class_variance_authority_types.ClassProp) => string;
+declare const errorStyles: (props?: ({
+    variant?: "default" | "large" | "none" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 interface ErrorMessageProps extends VariantProps<typeof errorStyles> {
     name: string;
     className: string;
@@ -143,9 +143,9 @@ declare class DialogManager {
 }
 declare const dialogManager: DialogManager;
 declare function useDialog(props: UseDialogProps): {
-    state: DialogState;
-    id: number;
     onSubmit?(): void;
+    id: number;
+    state: DialogState;
 };
 declare function Dialogs(): react.JSX.Element;
 interface DialogProps<S extends FieldValues> extends RDialog.DialogProps, Omit<FormProps<S>, "onSubmit"> {
@@ -303,14 +303,14 @@ interface ContextMenuProps extends RadixCM.ContextMenuContentProps {
     disabled?: boolean;
 }
 declare const contextMenuClassNames: string;
-declare const ContextMenuContext: react.Context<boolean>;
+declare const ContextMenuContext: react.Context<boolean | null>;
 declare const useContextMenuContext: <T extends boolean>({ suspense, }?: {
     suspense?: T;
 }) => T extends true ? NonNullable<ContextType<typeof ContextMenuContext>> : NonNullable<ContextType<typeof ContextMenuContext>> | undefined;
 declare const contextMenuSeparatorClassNames = "border-b-menu-line mx-1 my-0.5 border-b";
-declare const contextMenuItemStyles: (props?: {
-    variant?: "default" | "dull" | "danger";
-} & class_variance_authority_types.ClassProp) => string;
+declare const contextMenuItemStyles: (props?: ({
+    variant?: "danger" | "default" | "dull" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 interface ContextMenuItemProps extends RadixCM.ContextMenuItemProps, VariantProps<typeof contextMenuItemStyles>, Pick<ContextMenuInnerItemProps, "label" | "keybind" | "icon" | "iconProps"> {
 }
 declare const contextMenuItemClassNames = "group py-0.5 outline-none px-1";
@@ -337,10 +337,10 @@ declare const ContextMenu: {
 };
 
 declare const Section: ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => react.JSX.Element;
-declare const itemStyles: (props?: {
-    selected?: boolean | "undefined";
-    active?: boolean;
-} & class_variance_authority_types.ClassProp) => string;
+declare const itemStyles: (props?: ({
+    selected?: "undefined" | boolean | null | undefined;
+    active?: boolean | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 type DropdownItemProps = PropsWithChildren<{
     to?: string;
     className?: string;
@@ -369,13 +369,14 @@ declare const Dropdown_Root: typeof Root;
 declare const Dropdown_Section: typeof Section;
 declare const Dropdown_Separator: typeof Separator;
 declare namespace Dropdown {
-  export { Dropdown_Button as Button, type Dropdown_DropdownRootProps as DropdownRootProps, Dropdown_Item as Item, Dropdown_Root as Root, Dropdown_Section as Section, Dropdown_Separator as Separator };
+  export { Dropdown_Button as Button, Dropdown_Item as Item, Dropdown_Root as Root, Dropdown_Section as Section, Dropdown_Separator as Separator };
+  export type { Dropdown_DropdownRootProps as DropdownRootProps };
 }
 
-declare const selectStyles: (props?: {
-    variant?: "default";
-    size?: "lg" | "md" | "sm";
-} & class_variance_authority_types.ClassProp) => string;
+declare const selectStyles: (props?: ({
+    variant?: "default" | null | undefined;
+    size?: "lg" | "md" | "sm" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 interface SelectProps<TValue extends string = string> extends VariantProps<typeof selectStyles> {
     value: TValue;
     onChange: (value: TValue) => void;
@@ -423,10 +424,10 @@ declare const SelectSeparator: {
     displayName: string;
 };
 
-declare const selectPillStyles: (props?: {
-    variant?: "default" | "sidebar" | "ghost";
-    size?: "lg" | "md" | "sm";
-} & class_variance_authority_types.ClassProp) => string;
+declare const selectPillStyles: (props?: ({
+    variant?: "default" | "ghost" | "sidebar" | null | undefined;
+    size?: "lg" | "md" | "sm" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 interface SelectPillProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof selectPillStyles> {
     /** Hide the caret icon */
     hideCaret?: boolean;
@@ -547,10 +548,10 @@ interface ShortcutProps extends ComponentProps<"div"> {
 }
 declare const Shortcut: (props: ShortcutProps) => react.JSX.Element;
 
-declare const circleButtonStyles: (props?: {
-    variant?: "default" | "accent" | "solid" | "active";
-    size?: "lg" | "md" | "sm";
-} & class_variance_authority_types.ClassProp) => string;
+declare const circleButtonStyles: (props?: ({
+    variant?: "accent" | "active" | "default" | "solid" | null | undefined;
+    size?: "lg" | "md" | "sm" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 interface CircleButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "size">, VariantProps<typeof circleButtonStyles> {
     icon?: React.ElementType;
     /** @deprecated Use variant="active" or variant="accent" instead */
@@ -587,10 +588,10 @@ interface TabBarItemProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElem
 }
 declare const TabBarItem: react.ForwardRefExoticComponent<TabBarItemProps & react.RefAttributes<HTMLButtonElement>>;
 
-declare const shinyButtonVariants: (props?: {
-    size?: "default" | "small";
-    glow?: "lg" | "sm" | "none";
-} & class_variance_authority_types.ClassProp) => string;
+declare const shinyButtonVariants: (props?: ({
+    size?: "default" | "small" | null | undefined;
+    glow?: "lg" | "none" | "sm" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 type BaseShinyButtonProps = VariantProps<typeof shinyButtonVariants> & {
     icon?: Icon | ReactNode;
     children: ReactNode;
@@ -618,9 +619,9 @@ interface ShinyToggleProps<T extends string> {
 }
 declare function ShinyToggle<T extends string>({ value, onChange, options, className, }: ShinyToggleProps<T>): react.JSX.Element;
 
-declare const infoBannerStyles: (props?: {
-    variant?: "gray" | "danger" | "info" | "warning";
-} & class_variance_authority_types.ClassProp) => string;
+declare const infoBannerStyles: (props?: ({
+    variant?: "danger" | "gray" | "info" | "warning" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 interface InfoBannerProps extends VariantProps<typeof infoBannerStyles> {
     icon: ReactNode;
     children: ReactNode;
@@ -730,17 +731,17 @@ interface SpaceItemProps {
 }
 declare const SpaceItem: react.ForwardRefExoticComponent<SpaceItemProps & react.RefAttributes<HTMLButtonElement>>;
 
-declare const badgeVariants: (props?: {
-    variant?: "default" | "outline" | "accent" | "error" | "info" | "success" | "warning" | "secondary" | "destructive";
-    size?: "md" | "sm" | "default";
-} & class_variance_authority_types.ClassProp) => string;
+declare const badgeVariants: (props?: ({
+    variant?: "accent" | "default" | "destructive" | "error" | "info" | "outline" | "secondary" | "success" | "warning" | null | undefined;
+    size?: "default" | "md" | "sm" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {
 }
 declare function Badge({ className, variant, size, ...props }: BadgeProps): react.JSX.Element;
 
-declare const bannerVariants: (props?: {
-    variant?: "default" | "error" | "info" | "success" | "warning";
-} & class_variance_authority_types.ClassProp) => string;
+declare const bannerVariants: (props?: ({
+    variant?: "default" | "error" | "info" | "success" | "warning" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 interface BannerProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof bannerVariants> {
     showDot?: boolean;
 }
@@ -793,10 +794,10 @@ declare const FilterButton: react.ForwardRefExoticComponent<FilterButtonProps & 
 
 interface OptionListProps extends React.HTMLAttributes<HTMLDivElement> {
 }
-declare const optionListItemStyles: (props?: {
-    size?: "lg" | "md" | "sm";
-    selected?: boolean;
-} & class_variance_authority_types.ClassProp) => string;
+declare const optionListItemStyles: (props?: ({
+    size?: "lg" | "md" | "sm" | null | undefined;
+    selected?: boolean | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
 interface OptionListItemProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "size">, VariantProps<typeof optionListItemStyles> {
 }
 declare const OptionList: react.ForwardRefExoticComponent<OptionListProps & react.RefAttributes<HTMLDivElement>>;
@@ -845,6 +846,7 @@ interface JumpToEndButtonProps<TScrollElement extends Element = Element, TItemEl
     children?: ReactNode;
     "aria-label"?: string;
 }
-declare function JumpToEndButton<TScrollElement extends Element = Element, TItemElement extends Element = Element>({ virtualizer, className, children, "aria-label": ariaLabel, }: JumpToEndButtonProps<TScrollElement, TItemElement>): react.JSX.Element;
+declare function JumpToEndButton<TScrollElement extends Element = Element, TItemElement extends Element = Element>({ virtualizer, className, children, "aria-label": ariaLabel, }: JumpToEndButtonProps<TScrollElement, TItemElement>): react.JSX.Element | null;
 
-export { Badge, Banner, Button$1 as Button, type ButtonBaseProps, type ButtonProps, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, CategoryHeading, CheckBox, type CheckBoxProps, CheckboxIndicator, CheckboxRoot, CircleButton, CircleButtonGroup, type CircleButtonGroupProps, type CircleButtonProps, CircularProgress, type CircularProgressProps, Collapsible, CollapsibleContentExp as CollapsibleContent, CollapsibleTriggerExp as CollapsibleTrigger, ContextMenu, type ContextMenuCheckboxItemProps, ContextMenuDivItem, type ContextMenuItemProps, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, type DialogOptions, DialogOverlay, DialogPortal, type DialogProps, DialogRoot, type DialogState, DialogTitle, DialogTrigger, Dialogs, Divider, Dropdown, DropdownMenu, CheckboxItem as DropdownMenuCheckboxItem, Content as DropdownMenuContent, Group as DropdownMenuGroup, Item$1 as DropdownMenuItem, Label as DropdownMenuLabel, Portal as DropdownMenuPortal, RadioGroup as DropdownMenuRadioGroup, RadioItem as DropdownMenuRadioItem, Root$1 as DropdownMenuRoot, Separator$1 as DropdownMenuSeparator, Sub as DropdownMenuSub, SubContent as DropdownMenuSubContent, SubTrigger as DropdownMenuSubTrigger, Trigger as DropdownMenuTrigger, EditingKeys, type EndAnchoredVirtualizerOptions, ErrorMessage, type ErrorMessageProps, FilterButton, Form, type FormProps, GridLayout, InfoBanner, InfoBannerSubtext, InfoBannerText, Input, type InputBaseProps, type InputProps, JumpToEndButton, type JumpToEndButtonProps, Kbd, Label$1 as Label, type LabelProps, Card$1 as LayoutCard, type LinkButtonProps, Loader, ModifierKeys, NavigationKeys, NumberStepper, type OSforKeys, OptionList, OptionListItem, PasswordInput, Popover, Anchor as PopoverAnchor, Close as PopoverClose, Content$2 as PopoverContent, Portal$1 as PopoverPortal, Root$3 as PopoverRoot, Trigger$2 as PopoverTrigger, ProgressBar, type ProgressBarProps, Item$2 as RadioGroupItem, type ItemProps as RadioGroupItemProps, Root$4 as RadioGroupRoot, type RootProps as RadioGroupRootProps, RadixCheckbox, type RadixCheckboxProps, Resizable, ResizableHandle, ResizablePanel, ScreenHeading, SearchBar, SearchInput, Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectOption, SelectPill, type SelectPillProps, type SelectProps, SelectRoot, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectTriggerButton, SelectValue, ShinyButton, type ShinyButtonProps, ShinyToggle, Shortcut, type ShortcutProps, Slider, SpaceItem, type SpaceItemProps, Switch, type SwitchProps, TOAST_TIMEOUT, TabBar, TabBarItem, type TabBarItemProps, type TabBarProps, Content$1 as TabsContent, List as TabsList, Root$2 as TabsRoot, Trigger$1 as TabsTrigger, TextArea, type TextareaProps, type ToastId, type ToastMessage, ToggleGroup, Tooltip, TooltipContent, TooltipPortal, type TooltipProps, TooltipProvider, TooltipRoot, TooltipTrigger, CircleButton as TopBarButton, CircleButtonGroup as TopBarButtonGroup, UIKeys, type UseDialogProps, VirtualList, type VirtualListHandle, type VirtualListProps, badgeVariants, bannerVariants, buttonStyles, buttonStyles as buttonVariants, circleButtonStyles, contextMenuClassNames, contextMenuItemClassNames, contextMenuSeparatorClassNames, dialogManager, errorStyles, inputSizes, inputStyles, keySymbols, modifierSymbols, selectPillStyles, selectStyles, toast, tw, useContextMenuContext, useDialog, useEndAnchoredVirtualizer, usePopover, useResizableContext };
+export { Badge, Banner, Button$1 as Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, CategoryHeading, CheckBox, CheckboxIndicator, CheckboxRoot, CircleButton, CircleButtonGroup, CircularProgress, Collapsible, CollapsibleContentExp as CollapsibleContent, CollapsibleTriggerExp as CollapsibleTrigger, ContextMenu, ContextMenuDivItem, Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogRoot, DialogTitle, DialogTrigger, Dialogs, Divider, Dropdown, DropdownMenu, CheckboxItem as DropdownMenuCheckboxItem, Content as DropdownMenuContent, Group as DropdownMenuGroup, Item$1 as DropdownMenuItem, Label as DropdownMenuLabel, Portal as DropdownMenuPortal, RadioGroup as DropdownMenuRadioGroup, RadioItem as DropdownMenuRadioItem, Root$1 as DropdownMenuRoot, Separator$1 as DropdownMenuSeparator, Sub as DropdownMenuSub, SubContent as DropdownMenuSubContent, SubTrigger as DropdownMenuSubTrigger, Trigger as DropdownMenuTrigger, EditingKeys, ErrorMessage, FilterButton, Form, GridLayout, InfoBanner, InfoBannerSubtext, InfoBannerText, Input, JumpToEndButton, Kbd, Label$1 as Label, Card$1 as LayoutCard, Loader, ModifierKeys, NavigationKeys, NumberStepper, OptionList, OptionListItem, PasswordInput, Popover, Anchor as PopoverAnchor, Close as PopoverClose, Content$2 as PopoverContent, Portal$1 as PopoverPortal, Root$3 as PopoverRoot, Trigger$2 as PopoverTrigger, ProgressBar, Item$2 as RadioGroupItem, Root$4 as RadioGroupRoot, RadixCheckbox, Resizable, ResizableHandle, ResizablePanel, ScreenHeading, SearchBar, SearchInput, Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectOption, SelectPill, SelectRoot, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectTriggerButton, SelectValue, ShinyButton, ShinyToggle, Shortcut, Slider, SpaceItem, Switch, TOAST_TIMEOUT, TabBar, TabBarItem, Content$1 as TabsContent, List as TabsList, Root$2 as TabsRoot, Trigger$1 as TabsTrigger, TextArea, ToggleGroup, Tooltip, TooltipContent, TooltipPortal, TooltipProvider, TooltipRoot, TooltipTrigger, CircleButton as TopBarButton, CircleButtonGroup as TopBarButtonGroup, UIKeys, VirtualList, badgeVariants, bannerVariants, buttonStyles, buttonStyles as buttonVariants, circleButtonStyles, contextMenuClassNames, contextMenuItemClassNames, contextMenuSeparatorClassNames, dialogManager, errorStyles, inputSizes, inputStyles, keySymbols, modifierSymbols, selectPillStyles, selectStyles, toast, tw, useContextMenuContext, useDialog, useEndAnchoredVirtualizer, usePopover, useResizableContext };
+export type { ButtonBaseProps, ButtonProps, CheckBoxProps, CircleButtonGroupProps, CircleButtonProps, CircularProgressProps, ContextMenuCheckboxItemProps, ContextMenuItemProps, DialogOptions, DialogProps, DialogState, EndAnchoredVirtualizerOptions, ErrorMessageProps, FormProps, InputBaseProps, InputProps, JumpToEndButtonProps, LabelProps, LinkButtonProps, OSforKeys, ProgressBarProps, ItemProps as RadioGroupItemProps, RootProps as RadioGroupRootProps, RadixCheckboxProps, SelectPillProps, SelectProps, ShinyButtonProps, ShortcutProps, SpaceItemProps, SwitchProps, TabBarItemProps, TabBarProps, TextareaProps, ToastId, ToastMessage, TooltipProps, UseDialogProps, VirtualListHandle, VirtualListProps };

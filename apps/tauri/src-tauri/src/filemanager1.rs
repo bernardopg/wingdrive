@@ -79,14 +79,14 @@ pub async fn serve(app: AppHandle) {
 }
 
 async fn try_serve(app: AppHandle) -> zbus::Result<()> {
-	let connection = zbus::connection::Builder::session()?
-		.serve_at(OBJECT_PATH, FileManager1 { app })?
+	let connection = zbus::connection::Builder::session()
+		.serve_at(OBJECT_PATH, FileManager1 { app })
 		.build()
 		.await?;
 	let reply = connection
 		.request_name_with_flags(
 			BUS_NAME,
-			RequestNameFlags::ReplaceExisting | RequestNameFlags::AllowReplacement,
+			RequestNameFlags::REPLACE_EXISTING | RequestNameFlags::ALLOW_REPLACEMENT,
 		)
 		.await?;
 	tracing::info!(?reply, "Requested {BUS_NAME}");

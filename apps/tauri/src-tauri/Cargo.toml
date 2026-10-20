@@ -65,7 +65,7 @@ file-opening-windows = { path = "../crates/file-opening-windows" }
 [target.'cfg(target_os = "linux")'.dependencies]
 file-opening-linux = { path = "../crates/file-opening-linux" }
 gtk = "0.18.2"
-zbus = { version = "5.19", default-features = false, features = ["tokio", "blocking-api"] }
+zbus = { version = "6.0", default-features = false, features = ["tokio", "proxy", "service"] }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
