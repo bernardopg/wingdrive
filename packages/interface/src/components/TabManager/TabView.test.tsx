@@ -1,7 +1,9 @@
 import {GlobalRegistrator} from '@happy-dom/global-registrator';
 import {afterAll, describe, expect, it} from 'bun:test';
 
-GlobalRegistrator.register();
+// Registered once per test process and never unregistered: unregistering closes
+// the window whose timers React's scheduler keeps using in the next test file.
+if (!GlobalRegistrator.isRegistered) GlobalRegistrator.register();
 
 const {startTransition, useLayoutEffect} = await import('react');
 const {createRoot} = await import('react-dom/client');
@@ -10,7 +12,21 @@ const {TabManagerContext} = await import('./TabManagerContext');
 const {createTabRouter} = await import('./tabRouter');
 const {renderedLocationKeys, TabView} = await import('./TabView');
 
-afterAll(() => GlobalRegistrator.unregister());
+// Other test files turn on React's act environment; this test drives the real
+// scheduler and timers, outside act().
+const actEnvironment = globalThis as {IS_REACT_ACT_ENVIRONMENT?: boolean};
+const previousActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT;
+
+afterAll(() => {
+	actEnvironment.IS_REACT_ACT_ENVIRONMENT = previousActEnvironment;
+});
+
+/** Waits up to `ms` for `text` to render; the first render can take a while in a full test run. */
+async function waitForText(container: HTMLElement, text: string, ms: number) {
+	const deadline = Date.now() + ms;
+	while (container.textContent !== text && Date.now() < deadline)
+		await new Promise((resolve) => setTimeout(resolve, 25));
+}
 
 // Suspends on a promise that never settles, so a transition that renders this
 // route never commits: the tab looks frozen while its router has moved on.
@@ -46,6 +62,7 @@ const router = createTabRouter(
 
 describe('TabView', () => {
 	it('remounts a tab router whose navigation never renders', async () => {
+		actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
 		const container = document.createElement('div');
 		document.body.append(container);
 		const value = {router, activeTabId: 'tab'} as never;
@@ -54,7 +71,7 @@ describe('TabView', () => {
 				<TabView />
 			</TabManagerContext.Provider>
 		);
-		await new Promise((resolve) => setTimeout(resolve, 50));
+		await waitForText(container, 'home', 2000);
 		expect(container.textContent).toBe('home');
 
 		startTransition(() => void router.navigate('/stuck'));
@@ -64,7 +81,7 @@ describe('TabView', () => {
 
 		// The held render never retries; only the watchdog's remount shows the page.
 		stuck = false;
-		await new Promise((resolve) => setTimeout(resolve, 3300));
+		await waitForText(container, 'destination', 5000);
 		expect(container.textContent).toBe('destination');
 	}, 10_000);
 });
