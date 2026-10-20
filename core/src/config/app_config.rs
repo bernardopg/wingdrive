@@ -351,6 +351,14 @@ impl AppConfig {
 		#[cfg(not(target_os = "ios"))]
 		{
 			fs::create_dir_all(&self.data_dir)?;
+			// The data directory holds the device key, the secrets database,
+			// library databases and logs. It used to keep the default 0755, so
+			// any local user could read the device key and decrypt the secrets.
+			#[cfg(unix)]
+			{
+				use std::os::unix::fs::PermissionsExt;
+				fs::set_permissions(&self.data_dir, fs::Permissions::from_mode(0o700))?;
+			}
 			fs::create_dir_all(self.logs_dir())?;
 			fs::create_dir_all(self.libraries_dir())?;
 			// Job logs are now stored per-library
@@ -433,6 +441,25 @@ impl Migrate for AppConfig {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	/// The data directory holds the device key and secrets; other users must not enter it.
+	#[cfg(unix)]
+	#[test]
+	fn data_directory_is_private() {
+		use std::os::unix::fs::PermissionsExt;
+
+		let root = tempfile::tempdir().unwrap();
+		let data_dir = root.path().join("data");
+		std::fs::create_dir(&data_dir).unwrap();
+		std::fs::set_permissions(&data_dir, fs::Permissions::from_mode(0o755)).unwrap();
+
+		AppConfig::default_with_dir(data_dir.clone())
+			.ensure_directories()
+			.unwrap();
+
+		let mode = std::fs::metadata(&data_dir).unwrap().permissions().mode() & 0o777;
+		assert_eq!(mode, 0o700);
+	}
 
 	#[test]
 	fn fresh_directory_creates_wingdrive_config_not_legacy() {

@@ -5,6 +5,17 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Security
+
+- The data directory is private (0700) and the device key file is readable
+  only by its owner. Both were readable by every local user, which let them
+  read the device key and decrypt the stored cloud credentials.
+- On Linux the daemon rejects RPC connections from other local users. The
+  loopback socket had no authentication, so any account on the machine could
+  browse, copy or delete the user's files.
+- A malformed RPC request is no longer written to the log at error level; it
+  can carry credentials.
+
 ### Fixed
 
 - Removing a large location deletes all its entries. The subtree was deleted
