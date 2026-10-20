@@ -1,7 +1,9 @@
 import {GlobalRegistrator} from '@happy-dom/global-registrator';
-import {afterAll, describe, expect, it, mock} from 'bun:test';
+import {describe, expect, it, mock} from 'bun:test';
 
-GlobalRegistrator.register();
+// Registered once per test process and never unregistered: unregistering closes
+// the window whose timers React's scheduler keeps using in the next test file.
+if (!GlobalRegistrator.isRegistered) GlobalRegistrator.register();
 
 const shown: Array<{file: string; x: number; y: number}> = [];
 const built: string[] = [];
@@ -46,7 +48,6 @@ const event = (x: number, y: number) => ({
 	stopPropagation() {}
 });
 
-afterAll(() => GlobalRegistrator.unregister());
 
 describe('FileContextMenuProvider', () => {
 	it('builds no menu until one is requested, then shows each request once', async () => {

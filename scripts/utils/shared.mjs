@@ -63,7 +63,7 @@ export async function symlinkSharedLibsMacOS(root, nativeDeps) {
 				files
 					.filter(entry => entry.isFile() && entry.name.endsWith('.dylib'))
 					.map(entry =>
-						execFile('codesign', ['-s', signId, '-f', path.join(entry.path, entry.name)])
+						execFile('codesign', ['-s', signId, '-f', path.join(entry.parentPath, entry.name)])
 					)
 			)
 		)
@@ -81,7 +81,7 @@ export async function windowsDLLs(nativeDeps) {
 			.then(files =>
 				files
 					.filter(entry => entry.isFile() && entry.name.endsWith(`.dll`))
-					.map(entry => [path.join(entry.path, entry.name), '.'])
+					.map(entry => [path.join(entry.parentPath, entry.name), '.'])
 			)
 	)
 }
@@ -103,7 +103,7 @@ export async function linuxLibs(nativeDeps) {
 								(entry.isFile() || entry.isSymbolicLink()) &&
 								(entry.name.endsWith('.so') || entry.name.includes('.so.'))
 						)
-						.map(entry => [path.join(entry.path, entry.name), '.'])
+						.map(entry => [path.join(entry.parentPath, entry.name), '.'])
 				)
 			)
 	)

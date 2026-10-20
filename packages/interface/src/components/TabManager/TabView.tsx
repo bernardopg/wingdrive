@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useLayoutEffect, useState} from 'react';
 import {RouterProvider} from 'react-router-dom';
 import {useTabManager} from './useTabManager';
 
@@ -17,7 +17,8 @@ export function TabView() {
 	const {router, activeTabId} = useTabManager();
 	const [remounts, setRemounts] = useState(0);
 
-	useEffect(() => {
+	// Subscribe at commit, as RouterProvider does, so no navigation slips in before the watch starts.
+	useLayoutEffect(() => {
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		const unsubscribe = router.subscribe((state) => {
 			clearTimeout(timer);

@@ -101,6 +101,10 @@ updates:
         update-types: [version-update:semver-major]
       # Pinned for react-native-css: 1.30.2 is rejected and 1.32+ fails to parse the mobile CSS.
       - dependency-name: lightningcss
+      # tsup builds the committed .d.ts of primitives and ai through the TypeScript JS API,
+      # which TypeScript 7 no longer ships; those two packages stay on TypeScript 5.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directories:

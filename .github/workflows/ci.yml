@@ -112,6 +112,7 @@ jobs:
         run: |
           bun test packages/interface/src/routes/explorer/hooks/resolveExternalDrop.test.ts
           bun test packages/interface/src/routes/explorer/hooks/useCreateFolder.test.ts
+          bun test packages/interface/src/components/TabManager/TabView.test.tsx
           bun test packages/ts-client/src/__tests__/generated-collections.test.ts
           bun test packages/interface/src/routes/explorer/fileCapabilities.test.ts
           bun test packages/interface/src/components/TabManager/remapSelectionIds.test.ts
