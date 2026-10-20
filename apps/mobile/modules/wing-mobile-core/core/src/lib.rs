@@ -458,16 +458,19 @@ fn convert_daemon_response_to_jsonrpc(
 mod android {
 	use super::*;
 	use jni::{
-		objects::{GlobalRef, JClass, JObject, JString, JValue},
+		jni_sig, jni_str,
+		objects::{JClass, JObject, JString},
+		refs::{Global, Reference},
+		strings::JNIStr,
 		sys::jint,
-		JNIEnv, JavaVM,
+		Env, EnvUnowned, JValue, JavaVM, Outcome,
 	};
 	use once_cell::sync::OnceCell;
-	use std::sync::Arc;
 
-	static JAVA_VM: OnceCell<Arc<JavaVM>> = OnceCell::new();
-	static EVENT_MODULE_REF: OnceCell<GlobalRef> = OnceCell::new();
-	static LOG_MODULE_REF: OnceCell<GlobalRef> = OnceCell::new();
+	type ObjectRef = Global<JObject<'static>>;
+
+	static EVENT_MODULE_REF: OnceCell<ObjectRef> = OnceCell::new();
+	static LOG_MODULE_REF: OnceCell<ObjectRef> = OnceCell::new();
 
 	// Only for Android x86_64 - provides missing symbol
 	#[cfg(all(target_os = "android", target_arch = "x86_64"))]
@@ -517,22 +520,34 @@ mod android {
 		}));
 	}
 
-	/// Stores the JavaVM for callbacks and hands the application Context to `ndk-context`,
-	/// which iroh's DNS resolver and `netdev` read; both panic when it is missing.
-	fn init_android_context(env: &mut JNIEnv) -> jni::errors::Result<()> {
-		let jvm = env.get_java_vm()?;
-		let vm_ptr = jvm.get_java_vm_pointer();
-		let _ = JAVA_VM.set(Arc::new(jvm));
+	/// Unwraps what a native method computed with its `Env`, logging failures as `what`.
+	fn resolved<T>(outcome: Outcome<T, jni::errors::Error>, what: &str) -> Option<T> {
+		match outcome {
+			Outcome::Ok(value) => Some(value),
+			Outcome::Err(e) => {
+				tracing::error!("Failed to {what}: {e}");
+				None
+			}
+			Outcome::Panic(_) => {
+				tracing::error!("Panicked while trying to {what}");
+				None
+			}
+		}
+	}
 
-		static APP_CONTEXT: OnceCell<GlobalRef> = OnceCell::new();
+	/// Hands the application Context to `ndk-context`, which iroh's DNS resolver and `netdev`
+	/// read; both panic when it is missing.
+	fn init_android_context(env: &mut Env) -> jni::errors::Result<()> {
+		static APP_CONTEXT: OnceCell<ObjectRef> = OnceCell::new();
 		if APP_CONTEXT.get().is_some() {
 			return Ok(());
 		}
+		let vm_ptr = env.get_java_vm()?.get_raw();
 		let app = env
 			.call_static_method(
-				"android/app/ActivityThread",
-				"currentApplication",
-				"()Landroid/app/Application;",
+				jni_str!("android/app/ActivityThread"),
+				jni_str!("currentApplication"),
+				jni_sig!("()Landroid/app/Application;"),
 				&[],
 			)?
 			.l()?;
@@ -548,30 +563,28 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_initializeCore(
-		mut env: JNIEnv,
-		_class: JClass,
-		data_dir: JString,
-		device_name: JString,
+	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_initializeCore<'local>(
+		mut unowned_env: EnvUnowned<'local>,
+		_class: JClass<'local>,
+		data_dir: JString<'local>,
+		device_name: JString<'local>,
 	) -> jint {
 		log_panics_to_logcat();
 		super::init_tracing();
-		if let Err(e) = init_android_context(&mut env) {
-			tracing::error!("Failed to initialize the Android context: {e}");
+		let outcome = unowned_env.with_env(|env| -> jni::errors::Result<_> {
+			init_android_context(env)?;
+			let data_dir = data_dir.try_to_string(env)?;
+			let device_name = if device_name.is_null() {
+				None
+			} else {
+				device_name.try_to_string(env).ok()
+			};
+			Ok((data_dir, device_name))
+		});
+		let Some((data_dir_str, device_name_str)) =
+			resolved(outcome.into_outcome(), "read the core arguments")
+		else {
 			return -1;
-		}
-
-		let data_dir_str: String = match env.get_string(&data_dir) {
-			Ok(s) => s.into(),
-			Err(e) => {
-				tracing::error!("Invalid data_dir string: {e}");
-				return -1;
-			}
-		};
-		let device_name_str: Option<String> = if device_name.is_null() {
-			None
-		} else {
-			env.get_string(&device_name).ok().map(Into::into)
 		};
 
 		let (Ok(data_dir_cstr), Ok(device_name_cstr)) = (
@@ -592,69 +605,70 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_shutdownCore(
-		_env: JNIEnv,
-		_class: JClass,
+	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_shutdownCore<'local>(
+		_env: EnvUnowned<'local>,
+		_class: JClass<'local>,
 	) {
 		super::shutdown_core();
 	}
 
 	/// Calls a `(String) -> Unit` method on `target` from any thread. Native callback threads are
 	/// attached once and stay attached, so the JVM does not attach and detach on every message.
-	fn call_with_string(target: &JObject, method: &str, value: &str) -> jni::errors::Result<()> {
-		let jvm = JAVA_VM.get().ok_or(jni::errors::Error::NullPtr("JavaVM"))?;
-		let mut env = jvm.attach_current_thread_permanently()?;
-		let jstring = env.new_string(value)?;
-		env.call_method(
-			target,
-			method,
-			"(Ljava/lang/String;)V",
-			&[JValue::Object(&jstring)],
-		)?;
-		Ok(())
+	fn call_with_string(target: &JObject, method: &JNIStr, value: &str) -> jni::errors::Result<()> {
+		JavaVM::singleton()?.attach_current_thread(|env| {
+			let jstring = env.new_string(value)?;
+			env.call_method(
+				target,
+				method,
+				jni_sig!("(Ljava/lang/String;)V"),
+				&[JValue::Object(&jstring)],
+			)?;
+			Ok(())
+		})
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_handleCoreMsg(
-		mut env: JNIEnv,
-		_class: JClass,
-		query: JString,
-		promise: JObject,
+	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_handleCoreMsg<'local>(
+		mut unowned_env: EnvUnowned<'local>,
+		_class: JClass<'local>,
+		query: JString<'local>,
+		promise: JObject<'local>,
 	) {
-		let query_cstr = match env.get_string(&query).map(String::from) {
-			Ok(query) => CString::new(query).map_err(|_| "query contains a NUL byte".to_string()),
-			Err(e) => Err(format!("invalid query string: {e}")),
-		};
-		let query_cstr = match query_cstr {
-			Ok(query) => query,
-			Err(message) => {
-				if let Ok(message) = env.new_string(&message) {
-					let _ = env.call_method(
-						&promise,
-						"reject",
-						"(Ljava/lang/String;)V",
-						&[JValue::Object(&message)],
-					);
+		let outcome = unowned_env.with_env(|env| -> jni::errors::Result<_> {
+			let query = match query.try_to_string(env) {
+				Ok(query) => {
+					CString::new(query).map_err(|_| "query contains a NUL byte".to_string())
 				}
-				return;
+				Err(e) => Err(format!("invalid query string: {e}")),
+			};
+			match query {
+				Ok(query) => Ok(Some((query, env.new_global_ref(promise)?))),
+				Err(message) => {
+					let message = env.new_string(message)?;
+					env.call_method(
+						&promise,
+						jni_str!("reject"),
+						jni_sig!("(Ljava/lang/String;)V"),
+						&[JValue::Object(&message)],
+					)?;
+					Ok(None)
+				}
 			}
-		};
-
-		let promise_ref = match env.new_global_ref(promise) {
-			Ok(promise_ref) => promise_ref,
-			Err(e) => {
-				tracing::error!("Failed to keep the promise reference: {e}");
-				return;
-			}
+		});
+		let Some(Some((query_cstr, promise_ref))) =
+			resolved(outcome.into_outcome(), "read a core message")
+		else {
+			return;
 		};
 
 		extern "C" fn android_callback(
 			data: *mut std::os::raw::c_void,
 			result: *const std::os::raw::c_char,
 		) {
-			let promise_ref = unsafe { Box::from_raw(data as *mut GlobalRef) };
+			let promise_ref = unsafe { Box::from_raw(data as *mut ObjectRef) };
 			let result_str = unsafe { CStr::from_ptr(result).to_string_lossy() };
-			if let Err(e) = call_with_string(promise_ref.as_obj(), "resolve", &result_str) {
+			if let Err(e) = call_with_string(promise_ref.as_obj(), jni_str!("resolve"), &result_str)
+			{
 				tracing::error!("Failed to resolve a core promise: {e}");
 			}
 		}
@@ -666,31 +680,31 @@ mod android {
 
 	/// Stores the module reference, then starts `listener` with `callback`. Shared by the event and
 	/// log listeners, which differ only in the reference slot and the Kotlin method they call.
-	fn register_listener(
-		env: &mut JNIEnv,
-		module: JObject,
-		slot: &OnceCell<GlobalRef>,
+	fn register_listener<'local>(
+		unowned_env: &mut EnvUnowned<'local>,
+		module: JObject<'local>,
+		slot: &OnceCell<ObjectRef>,
 		callback: extern "C" fn(*mut std::os::raw::c_void, *const std::os::raw::c_char),
 		listener: extern "C" fn(
 			extern "C" fn(*mut std::os::raw::c_void, *const std::os::raw::c_char),
 			*mut std::os::raw::c_void,
 		),
 	) {
-		let registered = (|| -> jni::errors::Result<()> {
-			let _ = JAVA_VM.set(Arc::new(env.get_java_vm()?));
+		let outcome = unowned_env.with_env(|env| -> jni::errors::Result<()> {
 			let _ = slot.set(env.new_global_ref(module)?);
 			Ok(())
-		})();
-		match registered {
-			Ok(()) => listener(callback, std::ptr::null_mut()),
-			Err(e) => tracing::error!("Failed to register a core listener: {e}"),
+		});
+		if resolved(outcome.into_outcome(), "register a core listener").is_some() {
+			listener(callback, std::ptr::null_mut());
 		}
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_registerCoreEventListener(
-		mut env: JNIEnv,
-		module: JObject,
+	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_registerCoreEventListener<
+		'local,
+	>(
+		mut unowned_env: EnvUnowned<'local>,
+		module: JObject<'local>,
 	) {
 		extern "C" fn android_event_callback(
 			_data: *mut std::os::raw::c_void,
@@ -698,14 +712,16 @@ mod android {
 		) {
 			let event_str = unsafe { CStr::from_ptr(event).to_string_lossy() };
 			if let Some(module_ref) = EVENT_MODULE_REF.get() {
-				if let Err(e) = call_with_string(module_ref.as_obj(), "sendCoreEvent", &event_str) {
+				if let Err(e) =
+					call_with_string(module_ref.as_obj(), jni_str!("sendCoreEvent"), &event_str)
+				{
 					tracing::error!("Failed to forward a core event: {e}");
 				}
 			}
 		}
 
 		register_listener(
-			&mut env,
+			&mut unowned_env,
 			module,
 			&EVENT_MODULE_REF,
 			android_event_callback,
@@ -714,9 +730,11 @@ mod android {
 	}
 
 	#[no_mangle]
-	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_registerCoreLogListener(
-		mut env: JNIEnv,
-		module: JObject,
+	pub unsafe extern "C" fn Java_com_wingdrive_core_WingMobileCoreModule_registerCoreLogListener<
+		'local,
+	>(
+		mut unowned_env: EnvUnowned<'local>,
+		module: JObject<'local>,
 	) {
 		extern "C" fn android_log_callback(
 			_data: *mut std::os::raw::c_void,
@@ -725,12 +743,12 @@ mod android {
 			let log_str = unsafe { CStr::from_ptr(log).to_string_lossy() };
 			if let Some(module_ref) = LOG_MODULE_REF.get() {
 				// No tracing here: a logged failure would come back through this same callback.
-				let _ = call_with_string(module_ref.as_obj(), "sendCoreLog", &log_str);
+				let _ = call_with_string(module_ref.as_obj(), jni_str!("sendCoreLog"), &log_str);
 			}
 		}
 
 		register_listener(
-			&mut env,
+			&mut unowned_env,
 			module,
 			&LOG_MODULE_REF,
 			android_log_callback,
