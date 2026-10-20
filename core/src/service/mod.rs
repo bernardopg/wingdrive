@@ -19,6 +19,7 @@ pub mod statistics_listener;
 pub mod sync;
 pub mod volume_monitor;
 pub mod watcher;
+pub mod wingdrop;
 
 use device::DeviceService;
 use file_sharing::FileSharingService;

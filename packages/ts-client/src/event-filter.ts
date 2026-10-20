@@ -82,6 +82,9 @@ export const DEFAULT_EVENT_SUBSCRIPTION: EventVariant[] = [
 	"ThumbnailsGenerated",
 	"FileOperationCompleted",
 	"FilesModified",
+	// Wingdrop offers and their outcome
+	"WingdropOffered",
+	"WingdropUpdated",
 ];
 
 /**

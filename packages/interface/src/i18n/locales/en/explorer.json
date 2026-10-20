@@ -113,7 +113,8 @@
 		"deleteItems_other": "Delete {{count}} items",
 		"delete": "Delete",
 		"undo": "Undo",
-		"openInNewWindow": "Open in New Window"
+		"openInNewWindow": "Open in New Window",
+		"sendWithWingdrop": "Send with Wingdrop"
 	},
 	"sort": {
 		"dateTaken": "Date Taken",
@@ -435,5 +436,12 @@
 		"noFilesWithSizeDataTo": "No files with size data to display",
 		"noTaggedFiles": "No tagged files",
 		"filesTaggedWithThisTagWill": "Files tagged with this tag will appear here"
+	},
+	"wingdrop": {
+		"waiting": "Waiting for {{name}} to accept…",
+		"failed": "Wingdrop failed: {{error}}",
+		"sendCancelled": "Wingdrop cancelled",
+		"sent_one": "Sent {{count}} item to {{name}}",
+		"sent_other": "Sent {{count}} items to {{name}}"
 	}
 }

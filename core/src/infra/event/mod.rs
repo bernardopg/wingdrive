@@ -363,6 +363,17 @@ pub enum Event {
 		field: String,
 	},
 
+	// Wingdrop events
+	/// A paired device offers files to this one
+	WingdropOffered {
+		offer: crate::service::wingdrop::WingdropOffer,
+	},
+	/// An offer received by this device was answered, finished or stopped
+	WingdropUpdated {
+		drop_id: Uuid,
+		status: crate::service::wingdrop::WingdropStatus,
+	},
+
 	// Custom events for extensibility
 	Custom {
 		event_type: String,

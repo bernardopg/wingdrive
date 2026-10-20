@@ -137,7 +137,16 @@
 		"acceptVouched": "Accept introduced devices",
 		"acceptVouchedHint": "Trust devices that one of your paired devices vouches for, without pairing them again",
 		"vouchToAll": "Introduce new devices automatically",
-		"vouchToAllHint": "When you pair a new device, vouch for it to all your other paired devices"
+		"vouchToAllHint": "When you pair a new device, vouch for it to all your other paired devices",
+		"wingdrop": "Wingdrop",
+		"wingdropDescription": "Paired devices can offer you files. Accepted files land in the folder below.",
+		"wingdropEnabled": "Receive files",
+		"wingdropEnabledHint": "Let paired devices offer files to this device",
+		"wingdropAutoAccept": "Accept without asking",
+		"wingdropAutoAcceptHint": "Save files from paired devices right away",
+		"wingdropFolder": "Folder",
+		"wingdropFolderHint": "Where received files are saved. Leave empty for Downloads.",
+		"wingdropChoose": "Choose…"
 	},
 	"privacy": {
 		"description": "What WingDrive shares about you.",

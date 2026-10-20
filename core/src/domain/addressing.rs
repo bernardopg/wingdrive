@@ -207,6 +207,20 @@ impl WingPath {
 		}
 	}
 
+	/// This path as `device_id` names it: a physical path's slug becomes that
+	/// device's UUID, which every device recognises as itself. Slugs are only
+	/// unique from one device's point of view, so paths sent to a peer must
+	/// not carry the slug this device uses for it.
+	pub fn addressed_to(&self, device_id: uuid::Uuid) -> Self {
+		match self {
+			Self::Physical { path, .. } => Self::Physical {
+				device_slug: device_id.to_string(),
+				path: path.clone(),
+			},
+			other => other.clone(),
+		}
+	}
+
 	/// Check if the given device_slug refers to this device.
 	/// Accepts the slug, the UUID string, or the "local" placeholder.
 	fn is_current_device(device_slug: &str) -> bool {

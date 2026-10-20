@@ -57,7 +57,7 @@ fn main() {
 		}
 	}
 
-	// Create target-suffixed daemon binary for Tauri bundler
+	// Create target-suffixed sidecar binaries for Tauri bundler
 	// Tauri's externalBin expects binaries with target triple suffix
 	let target_triple = std::env::var("TARGET").expect("TARGET not set");
 
@@ -79,36 +79,49 @@ fn main() {
 		.ancestors()
 		.nth(3)
 		.expect("Missing Cargo profile directory");
-	let daemon_source = profile_dir.join(format!("wing-daemon{exe_ext}"));
-	let fallback = std::path::PathBuf::from(format!(
-		"{workspace_dir}/target/{profile}/wing-daemon{exe_ext}"
-	));
-	let daemon_source = if daemon_source.exists() {
-		daemon_source
-	} else {
-		fallback
-	};
-	println!("cargo:rerun-if-changed={}", daemon_source.display());
-	if daemon_source.exists() {
+
+	// The daemon runs the app; the CLI ships beside it so the commands the
+	// disconnected-daemon screen suggests exist on the user's machine.
+	for name in ["wing-daemon", "wing"] {
+		let source = profile_dir.join(format!("{name}{exe_ext}"));
+		let fallback =
+			std::path::PathBuf::from(format!("{workspace_dir}/target/{profile}/{name}{exe_ext}"));
+		let source = if source.exists() { source } else { fallback };
 		let destination = std::path::PathBuf::from(format!(
-			"{workspace_dir}/target/release/wing-daemon-{target_triple}{exe_ext}"
+			"{workspace_dir}/target/release/{name}-{target_triple}{exe_ext}"
 		));
-		std::fs::create_dir_all(destination.parent().expect("Missing sidecar directory"))
-			.expect("Cannot create sidecar directory");
-		// Debug builds must not replace the daemon used by release bundles, but
-		// they do replace `xtask setup --no-daemon`'s empty placeholder:
-		// tauri-build copies this sidecar next to the debug binary, so an empty
-		// one would overwrite target/debug/wing-daemon with a 0-byte file.
-		let placeholder = std::fs::metadata(&destination).is_ok_and(|m| m.len() == 0);
-		if profile == "release" || !destination.exists() || placeholder {
-			std::fs::copy(&daemon_source, destination).expect("Cannot stage daemon sidecar");
-		}
-	} else if profile == "release" {
-		panic!(
-			"Release daemon is missing at {}; run the daemon build first",
-			daemon_source.display()
-		);
+		stage_sidecar(&source, &destination, &profile);
 	}
 
 	tauri_build::build()
+}
+
+/// Copies a sidecar binary to the target-suffixed path `externalBin` names.
+fn stage_sidecar(source: &std::path::Path, destination: &std::path::Path, profile: &str) {
+	println!("cargo:rerun-if-changed={}", source.display());
+	std::fs::create_dir_all(destination.parent().expect("Missing sidecar directory"))
+		.expect("Cannot create sidecar directory");
+	if source.exists() {
+		// tauri-build copies this sidecar next to the app binary, so in a debug
+		// build it overwrites target/debug/<name>. A sidecar older than the
+		// binary just built (or `xtask setup --no-daemon`'s empty placeholder)
+		// would silently swap the current binary for a stale one, so debug
+		// builds refresh it then. Release builds always stage their own
+		// binaries, so a debug copy left here never reaches a release bundle.
+		let stale = std::fs::metadata(destination)
+			.and_then(|dest| Ok((dest, std::fs::metadata(source)?)))
+			.map(|(dest, source)| dest.len() == 0 || dest.modified().ok() < source.modified().ok())
+			.unwrap_or(true);
+		if profile == "release" || stale {
+			std::fs::copy(source, destination).expect("Cannot stage sidecar");
+		}
+	} else if profile == "release" {
+		panic!(
+			"Release sidecar is missing at {}; run the sidecar build first",
+			source.display()
+		);
+	} else if !destination.exists() {
+		// tauri-build refuses a missing externalBin even in debug builds.
+		std::fs::write(destination, b"").expect("Cannot create sidecar placeholder");
+	}
 }

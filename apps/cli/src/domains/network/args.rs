@@ -9,7 +9,7 @@ use wing_core::{
 			join::input::PairJoinInput,
 		},
 		revoke::input::DeviceRevokeInput,
-		spacedrop::send::input::SpacedropSendInput,
+		wingdrop::WingdropSendInput,
 	},
 };
 
@@ -82,28 +82,47 @@ impl PairCmd {
 	}
 }
 
-#[derive(Args, Debug, Clone)]
-pub struct WingdropArgs {
-	/// Target device ID
-	pub device_id: Uuid,
-	/// Files or directories to share
-	pub paths: Vec<String>,
-	/// Sender name for display
-	#[arg(long)]
-	pub sender: Option<String>,
+#[derive(Subcommand, Debug)]
+pub enum WingdropCmd {
+	/// Send files or folders to a paired device; it has to accept them
+	Send(WingdropSendArgs),
+	/// List offers waiting for an answer on this device
+	Pending,
+	/// Accept an offer; files land in the Wingdrop folder
+	Accept { drop_id: Uuid },
+	/// Decline an offer
+	Decline { drop_id: Uuid },
+	/// Stop a drop this device is receiving
+	Cancel { drop_id: Uuid },
 }
 
-impl From<WingdropArgs> for SpacedropSendInput {
-	fn from(args: WingdropArgs) -> Self {
+#[derive(Args, Debug, Clone)]
+pub struct WingdropSendArgs {
+	/// Paired device ID (see `wing network devices`)
+	pub device_id: Uuid,
+	/// Files or folders to send
+	#[arg(required = true)]
+	pub paths: Vec<String>,
+}
+
+impl From<WingdropSendArgs> for WingdropSendInput {
+	fn from(args: WingdropSendArgs) -> Self {
 		let paths = args
 			.paths
 			.iter()
-			.map(|s| WingPath::from_uri(s).unwrap_or_else(|_| WingPath::local(s)))
+			.map(|s| {
+				WingPath::from_uri(s).unwrap_or_else(|_| {
+					// Relative paths mean the shell's folder, not the daemon's.
+					let path = std::path::Path::new(s);
+					WingPath::local(
+						std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf()),
+					)
+				})
+			})
 			.collect();
 		Self {
 			device_id: args.device_id,
 			paths,
-			sender: args.sender,
 		}
 	}
 }

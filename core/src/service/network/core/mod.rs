@@ -975,6 +975,34 @@ impl NetworkingService {
 			.await
 	}
 
+	/// Send a Wingdrop message to a paired device and wait for its reply
+	pub async fn send_wingdrop(
+		&self,
+		device_id: Uuid,
+		message: crate::service::wingdrop::WingdropMessage,
+	) -> Result<crate::service::wingdrop::WingdropMessage> {
+		let node_id = self
+			.device_registry
+			.read()
+			.await
+			.get_node_by_device(device_id)
+			.ok_or(NetworkingError::DeviceNotFound(device_id))?;
+
+		let protocol_registry = self.protocol_registry.read().await;
+		let handler = protocol_registry.get_handler("messaging").ok_or_else(|| {
+			NetworkingError::Protocol("Messaging handler not registered".to_string())
+		})?;
+		let messaging = handler
+			.as_any()
+			.downcast_ref::<crate::service::network::protocol::MessagingProtocolHandler>()
+			.ok_or_else(|| {
+				NetworkingError::Protocol("Invalid messaging handler type".to_string())
+			})?;
+		drop(protocol_registry);
+
+		messaging.send_wingdrop_message(node_id, message).await
+	}
+
 	/// Get protocol registry for registering new protocols
 	pub fn protocol_registry(&self) -> Arc<RwLock<ProtocolRegistry>> {
 		self.protocol_registry.clone()

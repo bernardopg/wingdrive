@@ -137,7 +137,16 @@
 		"acceptVouched": "Aceitar dispositivos apresentados",
 		"acceptVouchedHint": "Confiar em dispositivos que um dos seus dispositivos pareados recomenda, sem parear de novo",
 		"vouchToAll": "Apresentar novos dispositivos automaticamente",
-		"vouchToAllHint": "Ao parear um novo dispositivo, recomendá-lo a todos os seus outros dispositivos pareados"
+		"vouchToAllHint": "Ao parear um novo dispositivo, recomendá-lo a todos os seus outros dispositivos pareados",
+		"wingdrop": "Wingdrop",
+		"wingdropDescription": "Dispositivos pareados podem oferecer arquivos a você. Os aceitos vão para a pasta abaixo.",
+		"wingdropEnabled": "Receber arquivos",
+		"wingdropEnabledHint": "Permitir que dispositivos pareados ofereçam arquivos a este",
+		"wingdropAutoAccept": "Aceitar sem perguntar",
+		"wingdropAutoAcceptHint": "Salvar na hora os arquivos de dispositivos pareados",
+		"wingdropFolder": "Pasta",
+		"wingdropFolderHint": "Onde os arquivos recebidos são salvos. Deixe vazio para usar Downloads.",
+		"wingdropChoose": "Escolher…"
 	},
 	"privacy": {
 		"description": "O que o WingDrive compartilha sobre você.",

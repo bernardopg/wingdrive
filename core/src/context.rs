@@ -44,6 +44,8 @@ pub struct CoreContext {
 	pub job_logs_dir: Option<PathBuf>,
 	// Data directory path (for reset and cleanup operations)
 	pub data_dir: PathBuf,
+	// Wingdrop offers and drops in flight
+	pub wingdrop: Arc<crate::service::wingdrop::WingdropState>,
 }
 
 impl CoreContext {
@@ -78,6 +80,7 @@ impl CoreContext {
 			job_logging_config: None,
 			job_logs_dir: None,
 			data_dir,
+			wingdrop: Arc::new(crate::service::wingdrop::WingdropState::new()),
 		}
 	}
 
