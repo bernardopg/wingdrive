@@ -13,6 +13,57 @@ use crate::infra::event::log_emitter::{set_global_log_bus, LogMessage};
 use crate::infra::event::{Event, EventSubscriber};
 use crate::Core;
 
+/// Whether the process on the other end of `stream` runs as the daemon's user.
+///
+/// The RPC socket listens on loopback without authentication, so any local
+/// account could otherwise list, copy or delete this user's files and read
+/// their logs. Linux exposes the owner of each TCP socket in `/proc/net/tcp`;
+/// elsewhere, and when the owner cannot be found, the connection is accepted.
+#[cfg(target_os = "linux")]
+fn peer_is_same_user(stream: &tokio::net::TcpStream) -> bool {
+	let (Ok(std::net::SocketAddr::V4(peer)), Ok(std::net::SocketAddr::V4(local))) =
+		(stream.peer_addr(), stream.local_addr())
+	else {
+		return true;
+	};
+	let Ok(table) = std::fs::read_to_string("/proc/net/tcp") else {
+		return true;
+	};
+	// SAFETY: geteuid has no preconditions and cannot fail.
+	let own_uid = unsafe { libc::geteuid() };
+	socket_owner(&table, peer, local).is_none_or(|uid| uid == own_uid)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn peer_is_same_user(_stream: &tokio::net::TcpStream) -> bool {
+	true
+}
+
+/// Owner uid of the socket bound to `local` and connected to `remote`, read
+/// from the text of `/proc/net/tcp`.
+#[cfg(any(target_os = "linux", test))]
+fn socket_owner(
+	table: &str,
+	local: std::net::SocketAddrV4,
+	remote: std::net::SocketAddrV4,
+) -> Option<u32> {
+	// Addresses are the IPv4 bytes as a little-endian hex word, then the port.
+	let encode = |addr: std::net::SocketAddrV4| {
+		format!(
+			"{:08X}:{:04X}",
+			u32::from_le_bytes(addr.ip().octets()),
+			addr.port()
+		)
+	};
+	let (local, remote) = (encode(local), encode(remote));
+	table.lines().skip(1).find_map(|line| {
+		let fields: Vec<&str> = line.split_whitespace().collect();
+		(fields.get(1) == Some(&local.as_str()) && fields.get(2) == Some(&remote.as_str()))
+			.then(|| fields.get(7)?.parse().ok())
+			.flatten()
+	})
+}
+
 /// Connection information for event and log streaming
 #[derive(Debug)]
 struct Connection {
@@ -70,6 +121,12 @@ impl RpcServer {
 				result = listener.accept() => {
 					match result {
 						Ok((mut stream, _addr)) => {
+							if !peer_is_same_user(&stream) {
+								tracing::warn!("Rejected an RPC connection from another local user");
+								let _ = stream.shutdown().await;
+								continue;
+							}
+
 							// Check connection limit
 							let current_connections = self.connection_count.load(Ordering::Relaxed);
 							if current_connections >= self.max_connections {
@@ -367,7 +424,8 @@ impl RpcServer {
 								}
 								Err(e) => {
 									tracing::error!("Failed to parse daemon request: {}", e);
-									tracing::error!("Raw request: {}", line.trim());
+									// A malformed request can still carry credentials; keep it out of the default log.
+									tracing::debug!("Raw request: {}", line.trim());
 									// Send error response
 									let error_response = DaemonResponse::Error(DaemonError::SerializationError(e.to_string()));
 									let response_json = serde_json::to_string(&error_response)
@@ -549,5 +607,29 @@ impl RpcServer {
 		let current = self.connection_count.load(Ordering::Relaxed);
 		let max = self.max_connections;
 		(current, max)
+	}
+}
+
+#[cfg(test)]
+mod peer_tests {
+	use super::socket_owner;
+
+	const TABLE: &str = "  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
+   0: 0100007F:1B39 00000000:0000 0A 00000000:00000000 00:00000000 00000000  1000        0 61020 1
+   1: 0100007F:D2EF 0100007F:1B39 01 00000000:00000000 00:00000000 00000000  1001        0 61021 1
+   2: 0100007F:1B39 0100007F:D2EF 01 00000000:00000000 00:00000000 00000000  1000        0 61022 1
+";
+
+	#[test]
+	fn finds_the_owner_of_the_connecting_socket() {
+		let client = "127.0.0.1:53999".parse().unwrap();
+		let daemon = "127.0.0.1:6969".parse().unwrap();
+
+		assert_eq!(socket_owner(TABLE, client, daemon), Some(1001));
+		assert_eq!(socket_owner(TABLE, daemon, client), Some(1000));
+		assert_eq!(
+			socket_owner(TABLE, "127.0.0.1:1".parse().unwrap(), daemon),
+			None
+		);
 	}
 }

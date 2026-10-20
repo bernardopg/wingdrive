@@ -112,7 +112,6 @@ impl KeyManager {
 					options.mode(0o600);
 				}
 				let mut destination = options.open(&backup)?;
-				destination.set_permissions(source.metadata()?.permissions())?;
 				std::io::copy(&mut source, &mut destination)?;
 				destination.sync_all()?;
 				#[cfg(unix)]
@@ -149,6 +148,12 @@ impl KeyManager {
 		// Try to load from file fallback first (if specified and exists)
 		if let Some(ref path) = self.device_key_fallback {
 			if path.exists() {
+				// Key files written before 2.0.2 were readable by every local user.
+				#[cfg(unix)]
+				{
+					use std::os::unix::fs::PermissionsExt;
+					std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))?;
+				}
 				if let Ok(key_hex) = std::fs::read_to_string(path) {
 					if let Ok(key_bytes) = hex::decode(key_hex.trim()) {
 						if key_bytes.len() == KEY_LENGTH {
@@ -170,7 +175,14 @@ impl KeyManager {
 			if let Some(parent) = path.parent() {
 				let _ = std::fs::create_dir_all(parent);
 			}
-			std::fs::write(path, &key_hex)?;
+			let mut options = std::fs::OpenOptions::new();
+			options.write(true).create(true).truncate(true);
+			#[cfg(unix)]
+			{
+				use std::os::unix::fs::OpenOptionsExt;
+				options.mode(0o600);
+			}
+			std::io::Write::write_all(&mut options.open(path)?, key_hex.as_bytes())?;
 
 			// Cache it
 			*self.device_key.write().await = Some(key);
@@ -508,6 +520,37 @@ mod tests {
 		let key2 = manager2.get_device_key().await.unwrap();
 
 		assert_eq!(key1, key2);
+	}
+
+	/// Only the owner can read the device key, including a key file written
+	/// world-readable by an older version.
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn device_key_file_is_private() {
+		use std::os::unix::fs::PermissionsExt;
+
+		let temp_dir = TempDir::new().unwrap();
+		std::fs::create_dir(temp_dir.path().join("a")).unwrap();
+		std::fs::create_dir(temp_dir.path().join("b")).unwrap();
+		let fresh = temp_dir.path().join("fresh_key");
+		let manager =
+			KeyManager::new_with_fallback(temp_dir.path().join("a"), Some(fresh.clone())).unwrap();
+		manager.get_device_key().await.unwrap();
+		assert_eq!(
+			std::fs::metadata(&fresh).unwrap().permissions().mode() & 0o777,
+			0o600
+		);
+
+		let old = temp_dir.path().join("old_key");
+		std::fs::write(&old, hex::encode([7u8; KEY_LENGTH])).unwrap();
+		std::fs::set_permissions(&old, std::fs::Permissions::from_mode(0o644)).unwrap();
+		let manager =
+			KeyManager::new_with_fallback(temp_dir.path().join("b"), Some(old.clone())).unwrap();
+		assert_eq!(manager.get_device_key().await.unwrap(), [7u8; KEY_LENGTH]);
+		assert_eq!(
+			std::fs::metadata(&old).unwrap().permissions().mode() & 0o777,
+			0o600
+		);
 	}
 
 	/// Closing leaves no file behind: the stand-in database is in memory,
