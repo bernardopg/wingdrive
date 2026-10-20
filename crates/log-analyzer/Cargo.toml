@@ -15,7 +15,7 @@ thiserror = "2.0"
 anyhow = "1.0"
 
 # Database
-rusqlite = { version = "0.32", features = ["bundled", "chrono"] }
+rusqlite = { version = "0.39", features = ["bundled", "chrono"] }
 
 # Utilities
 tracing = "0.1"
