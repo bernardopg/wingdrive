@@ -2,7 +2,15 @@ import {CaretDown, CaretUp} from '@phosphor-icons/react';
 import {flexRender} from '@tanstack/react-table';
 import {useVirtualizer} from '@tanstack/react-virtual';
 import clsx from 'clsx';
-import {memo, useCallback, useEffect, useMemo, useRef} from 'react';
+import {
+	memo,
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
 import {isInputFocused} from '../../../../util/keybinds/platform';
 import {useExplorer} from '../../context';
 import {useEmptySpaceContextMenu} from '../../hooks/useEmptySpaceContextMenu';
@@ -37,10 +45,23 @@ export const ListView = memo(function ListView() {
 	const headerScrollRef = useRef<HTMLDivElement>(null);
 	const bodyScrollRef = useRef<HTMLDivElement>(null);
 	const emptySpaceContextMenu = useEmptySpaceContextMenu();
+	const [availableWidth, setAvailableWidth] = useState(0);
+
+	// Columns fill the view, so track its width (without the scrollbar).
+	useLayoutEffect(() => {
+		const container = containerRef.current;
+		if (!container) return;
+		setAvailableWidth(container.clientWidth);
+		const observer = new ResizeObserver(() =>
+			setAvailableWidth(container.clientWidth)
+		);
+		observer.observe(container);
+		return () => observer.disconnect();
+	}, []);
 
 	// Get files from centralized hook (handles search, virtual, and directory)
 	const {files} = useExplorerFiles();
-	const {table} = useTable(files);
+	const {table} = useTable(files, availableWidth);
 	const {rows} = table.getRowModel();
 	const orderedFiles = useMemo(() => rows.map((row) => row.original), [rows]);
 	const columnSizingKey = JSON.stringify(table.getState().columnSizing);
@@ -140,7 +161,10 @@ export const ListView = memo(function ListView() {
 
 	// Calculate total width for table
 	const headerGroups = table.getHeaderGroups();
-	const totalWidth = table.getTotalSize() + TABLE_PADDING_X * 2;
+	const totalWidth = Math.max(
+		table.getTotalSize() + TABLE_PADDING_X * 2,
+		availableWidth
+	);
 
 	return (
 		<div
@@ -217,7 +241,7 @@ export const ListView = memo(function ListView() {
 													<CaretDown className="text-ink-faint size-3 flex-shrink-0" />
 												))}
 
-											{/* Resize handle */}
+											{/* Resize handle; double-click restores the default width */}
 											{canResize && (
 												<div
 													onMouseDown={header.getResizeHandler()}
@@ -225,13 +249,21 @@ export const ListView = memo(function ListView() {
 													onClick={(e) =>
 														e.stopPropagation()
 													}
-													className={clsx(
-														'absolute top-1/2 right-0 h-4 w-1 -translate-y-1/2 cursor-col-resize rounded-full',
-														header.column.getIsResizing()
-															? 'bg-accent'
-															: 'hover:bg-ink-faint/50 bg-transparent'
-													)}
-												/>
+													onDoubleClick={(e) => {
+														e.stopPropagation();
+														header.column.resetSize();
+													}}
+													className="group/resize absolute inset-y-0 -right-1.5 z-10 flex w-3 cursor-col-resize items-center justify-center"
+												>
+													<div
+														className={clsx(
+															'h-4 w-0.5 rounded-full',
+															header.column.getIsResizing()
+																? 'bg-accent'
+																: 'group-hover/resize:bg-ink-faint/50 bg-transparent'
+														)}
+													/>
+												</div>
 											)}
 										</div>
 									);

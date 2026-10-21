@@ -624,15 +624,24 @@ impl EphemeralIndex {
 		let mut deleted_browsed_dirs = Vec::new();
 
 		// Collect children to remove
-		let mut children_to_remove: Vec<(PathBuf, EntryId)> = dir_node
+		let children_to_remove: Vec<(PathBuf, EntryId)> = dir_node
 			.children
 			.iter()
 			.filter_map(|&child_id| {
 				let child_node = self.arena.get(child_id)?;
 				let child_path = self.reconstruct_path(child_id)?;
 
-				// Preserve subdirectories that were explicitly browsed AND still exist
-				if child_node.is_directory() && indexed_paths.contains(&child_path) {
+				// Preserve subdirectories that were browsed, or that lead to a browsed
+				// path (`win10tg` above a browsed `win10tg/iso`), while they still exist
+				let browsed: Vec<&PathBuf> = if child_node.is_directory() {
+					indexed_paths
+						.iter()
+						.filter(|path| path.starts_with(&child_path))
+						.collect()
+				} else {
+					Vec::new()
+				};
+				if !browsed.is_empty() {
 					// Verify the directory still exists on the filesystem
 					if std::fs::metadata(&child_path).is_ok() {
 						return None; // Preserve - still exists and was browsed
@@ -642,7 +651,7 @@ impl EphemeralIndex {
 						"Removing deleted browsed directory: {}",
 						child_path.display()
 					);
-					deleted_browsed_dirs.push(child_path.clone());
+					deleted_browsed_dirs.extend(browsed.into_iter().cloned());
 				}
 
 				// Remove everything else (files, unbrowsed directories, deleted directories)
@@ -650,14 +659,23 @@ impl EphemeralIndex {
 			})
 			.collect();
 
-		let cleared = children_to_remove.len();
-
-		// Remove from indexes
-		for (child_path, child_id) in &children_to_remove {
-			self.path_index.remove(child_path);
-			self.id_to_path.remove(child_id);
-			self.forget_uuid(*child_id);
-			self.content_kinds.remove(child_id);
+		// Remove the children's descendants as well. A descendant left in
+		// `path_index` after its parent is gone is skipped as a duplicate when
+		// the parent is scanned again, so it never reappears in its listing.
+		let mut cleared = 0;
+		let mut pending: Vec<EntryId> = children_to_remove.iter().map(|(_, id)| *id).collect();
+		while let Some(id) = pending.pop() {
+			if let Some(node) = self.arena.get(id) {
+				pending.extend(node.children.iter().copied());
+			}
+			if let Some(path) = self.id_to_path.remove(&id) {
+				if self.path_index.get(&path) == Some(&id) {
+					self.path_index.remove(&path);
+				}
+			}
+			self.forget_uuid(id);
+			self.content_kinds.remove(&id);
+			cleared += 1;
 		}
 
 		// Update parent's children list
@@ -1119,5 +1137,61 @@ mod tests {
 		assert!(added.is_none());
 		assert_eq!(index.len(), before);
 		assert_eq!(index.get_entry_uuid(&path), Some(original));
+	}
+
+	fn directory(path: PathBuf) -> EntryMetadata {
+		EntryMetadata {
+			kind: EntryKind::Directory,
+			..file(path)
+		}
+	}
+
+	/// `/home` listed empty after `/` was scanned again: `/home` itself was
+	/// cleared while the browsed `/home/bitter` stayed in the index, so the
+	/// next scan of `/home` skipped `bitter` as a duplicate of an orphan.
+	#[test]
+	fn rescanning_a_parent_keeps_the_path_to_a_browsed_folder() {
+		let temp = tempfile::tempdir().expect("tempdir");
+		let root = temp.path().to_path_buf();
+		let home = root.join("home");
+		let user = home.join("bitter");
+		std::fs::create_dir_all(&user).expect("create dirs");
+
+		let mut index = EphemeralIndex::new().expect("index");
+		let note = user.join("note.txt");
+		index
+			.add_entry(note.clone(), Uuid::new_v4(), file(note))
+			.expect("add entry");
+		let browsed = std::collections::HashSet::from([root.clone(), user.clone()]);
+
+		index.clear_directory_children(&root, &browsed);
+		index
+			.add_entry(home.clone(), Uuid::new_v4(), directory(home.clone()))
+			.expect("add entry");
+		index.clear_directory_children(&home, &browsed);
+		index
+			.add_entry(user.clone(), Uuid::new_v4(), directory(user.clone()))
+			.expect("add entry");
+
+		assert_eq!(index.list_directory(&home), Some(vec![user]));
+	}
+
+	#[test]
+	fn rescanning_a_parent_drops_unbrowsed_subtrees() {
+		let mut index = EphemeralIndex::new().expect("index");
+		let root = PathBuf::from("/data");
+		let nested = root.join("a/b.txt");
+		index
+			.add_entry(nested.clone(), Uuid::new_v4(), file(nested.clone()))
+			.expect("add entry");
+
+		index.clear_directory_children(&root, &Default::default());
+
+		assert!(index.get_entry_ref(&nested).is_none());
+		let added = index
+			.add_entry(nested.clone(), Uuid::new_v4(), file(nested.clone()))
+			.expect("add entry");
+		assert!(added.is_some());
+		assert_eq!(index.list_directory(&root.join("a")), Some(vec![nested]));
 	}
 }

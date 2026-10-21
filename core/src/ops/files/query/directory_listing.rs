@@ -128,8 +128,10 @@ impl DirectoryListingInput {
 }
 
 /// How long a listing of an unindexed folder waits for its indexer before
-/// returning an empty result that events fill in.
-const FIRST_LISTING_WAIT: std::time::Duration = std::time::Duration::from_millis(250);
+/// returning an empty result that events fill in. Local folders with thousands
+/// of entries (`/usr/bin`, `/usr/lib`) take about 400 ms; at 250 ms they came
+/// back empty and filled in through events and polling.
+const FIRST_LISTING_WAIT: std::time::Duration = std::time::Duration::from_secs(2);
 
 impl LibraryQuery for DirectoryListingQuery {
 	type Input = DirectoryListingInput;
@@ -726,175 +728,156 @@ impl DirectoryListingQuery {
 
 		let cache = context.ephemeral_cache();
 
-		// Check if we have a cached index that covers this path (or a parent path)
-		if let Some(index) = cache.get_for_search(&local_path) {
+		// Serve from the cache only when this folder itself was scanned. Browsing a
+		// deeper path also creates its ancestors, each holding only the child on that
+		// path: `Downloads` listed just `win10tg` after `win10tg/iso` was opened.
+		let cached = if cache.is_indexed(&local_path) {
+			cache.get_for_search(&local_path)
+		} else {
+			None
+		};
+		if let Some(index) = cached {
 			tracing::debug!(
 				"Found cached ephemeral index for path: {}",
 				local_path.display()
 			);
 
-			// Try to get directory listing from cached index
+			// An empty folder gets no node of its own, so a missing entry lists as empty.
 			let children = {
 				let index_guard = index.read().await;
-				index_guard.list_directory(&local_path)
+				index_guard.list_directory(&local_path).unwrap_or_default()
 			};
+			tracing::debug!(
+				"Cached index has {} children for {}",
+				children.len(),
+				local_path.display()
+			);
 
-			// Check if the index actually has entries for this directory
-			if let Some(children) = children {
-				// A parent directory's shallow index may contain this path as an entry
-				// but have no children indexed under it. In that case, fall through
-				// to trigger a new indexer job for this specific directory.
-				if children.is_empty() && !cache.is_indexed(&local_path) {
-					tracing::debug!(
-						"Subdirectory has no indexed children, will trigger indexing: {}",
-						local_path.display()
-					);
-					// Fall through to indexer dispatch below
-				} else {
-					tracing::debug!(
-						"Cached index has {} children for {}",
-						children.len(),
-						local_path.display()
-					);
-
-					let library = context.get_library(library_id).await;
-					let persistent_uuids = if let Some(library) = &library {
-						match crate::ops::indexing::ephemeral::lookup_direct_child_uuids(
-							library.db().conn(),
-							&local_path,
-							&children,
-						)
-						.await
-						{
-							Ok(uuids) => uuids,
-							Err(error) => {
-								tracing::warn!(%error, "Persistent UUID lookup failed; continuing ephemeral browse");
-								Default::default()
-							}
-						}
-					} else {
+			let library = context.get_library(library_id).await;
+			let persistent_uuids = if let Some(library) = &library {
+				match crate::ops::indexing::ephemeral::lookup_direct_child_uuids(
+					library.db().conn(),
+					&local_path,
+					&children,
+				)
+				.await
+				{
+					Ok(uuids) => uuids,
+					Err(error) => {
+						tracing::warn!(%error, "Persistent UUID lookup failed; continuing ephemeral browse");
 						Default::default()
-					};
-
-					// Resolve identities after the scan, before returning cached entries.
-					let mut index_write = index.write().await;
-					let mut files = Vec::new();
-					let mut changes = Vec::new();
-
-					for child_path in children {
-						if let Some(metadata) = index_write.get_entry_ref(&child_path) {
-							if !self.input.include_hidden.unwrap_or(false) && metadata.is_hidden {
-								continue;
-							}
-
-							let scan_uuid =
-								index_write.get_or_assign_uuid_scoped(library_id, &child_path);
-							let entry_uuid =
-								if let Some(&persistent_uuid) = persistent_uuids.get(&child_path) {
-									if scan_uuid != persistent_uuid {
-										index_write.set_entry_uuid_scoped(
-											library_id,
-											&child_path,
-											persistent_uuid,
-										);
-										changes.push((
-											child_path.clone(),
-											Some(scan_uuid),
-											persistent_uuid,
-										));
-									}
-									persistent_uuid
-								} else {
-									scan_uuid
-								};
-
-							let entry_wing_path = WingPath::Physical {
-								device_slug: match &self.input.path {
-									WingPath::Physical { device_slug, .. } => device_slug.clone(),
-									_ => String::new(),
-								},
-								path: child_path.clone(),
-							};
-
-							let content_kind = index_write.get_content_kind(&child_path);
-
-							let mut file =
-								File::from_ephemeral(entry_uuid, &metadata, entry_wing_path);
-							file.content_kind = content_kind;
-							files.push(file);
-						}
 					}
-					drop(index_write);
-
-					// The ephemeral index owns filesystem metadata, while the library
-					// database owns tags, favorites, content and sidecars for matched UUIDs.
-					let mut persistent_files = Vec::new();
-					if let Some(library) = &library {
-						let ids: Vec<_> = files.iter().map(|file| file.id).collect();
-						for chunk in ids.chunks(250) {
-							match File::from_entry_uuids(library.db().conn(), chunk).await {
-								Ok(persistent) => persistent_files.extend(persistent),
-								Err(error) => {
-									tracing::warn!(%error, "Could not enrich ephemeral listing")
-								}
-							}
-						}
-						let by_id: std::collections::HashMap<_, _> = persistent_files
-							.iter()
-							.map(|file| (file.id, file))
-							.collect();
-						for file in &mut files {
-							if let Some(stored) = by_id.get(&file.id) {
-								file.tags = stored.tags.clone();
-								file.favorite = stored.favorite;
-								file.content_identity = stored.content_identity.clone();
-								file.sidecars = stored.sidecars.clone();
-								file.image_media_data = stored.image_media_data.clone();
-								file.video_media_data = stored.video_media_data.clone();
-								file.audio_media_data = stored.audio_media_data.clone();
-							}
-						}
-					}
-					if !changes.is_empty() {
-						let index_read = index.read().await;
-						crate::ops::indexing::ephemeral::emit_uuid_reconciled_events(
-							library
-								.as_ref()
-								.expect("UUID changes require a library")
-								.event_bus(),
-							&index_read,
-							&changes,
-							&persistent_files,
-						);
-					}
-
-					self.sort_files(&mut files);
-
-					let total_count = files.len() as u32;
-					let has_more = if let Some(limit) = self.input.limit {
-						if files.len() > limit as usize {
-							files.truncate(limit as usize);
-							true
-						} else {
-							false
-						}
-					} else {
-						false
-					};
-
-					return Ok(DirectoryListingOutput {
-						files,
-						total_count,
-						has_more,
-					});
 				}
 			} else {
-				// Index exists but doesn't have this directory yet
-				tracing::debug!(
-					"Cached index doesn't contain directory: {}",
-					local_path.display()
+				Default::default()
+			};
+
+			// Resolve identities after the scan, before returning cached entries.
+			let mut index_write = index.write().await;
+			let mut files = Vec::new();
+			let mut changes = Vec::new();
+
+			for child_path in children {
+				if let Some(metadata) = index_write.get_entry_ref(&child_path) {
+					if !self.input.include_hidden.unwrap_or(false) && metadata.is_hidden {
+						continue;
+					}
+
+					let scan_uuid = index_write.get_or_assign_uuid_scoped(library_id, &child_path);
+					let entry_uuid = if let Some(&persistent_uuid) =
+						persistent_uuids.get(&child_path)
+					{
+						if scan_uuid != persistent_uuid {
+							index_write.set_entry_uuid_scoped(
+								library_id,
+								&child_path,
+								persistent_uuid,
+							);
+							changes.push((child_path.clone(), Some(scan_uuid), persistent_uuid));
+						}
+						persistent_uuid
+					} else {
+						scan_uuid
+					};
+
+					let entry_wing_path = WingPath::Physical {
+						device_slug: match &self.input.path {
+							WingPath::Physical { device_slug, .. } => device_slug.clone(),
+							_ => String::new(),
+						},
+						path: child_path.clone(),
+					};
+
+					let content_kind = index_write.get_content_kind(&child_path);
+
+					let mut file = File::from_ephemeral(entry_uuid, &metadata, entry_wing_path);
+					file.content_kind = content_kind;
+					files.push(file);
+				}
+			}
+			drop(index_write);
+
+			// The ephemeral index owns filesystem metadata, while the library
+			// database owns tags, favorites, content and sidecars for matched UUIDs.
+			let mut persistent_files = Vec::new();
+			if let Some(library) = &library {
+				let ids: Vec<_> = files.iter().map(|file| file.id).collect();
+				for chunk in ids.chunks(250) {
+					match File::from_entry_uuids(library.db().conn(), chunk).await {
+						Ok(persistent) => persistent_files.extend(persistent),
+						Err(error) => {
+							tracing::warn!(%error, "Could not enrich ephemeral listing")
+						}
+					}
+				}
+				let by_id: std::collections::HashMap<_, _> = persistent_files
+					.iter()
+					.map(|file| (file.id, file))
+					.collect();
+				for file in &mut files {
+					if let Some(stored) = by_id.get(&file.id) {
+						file.tags = stored.tags.clone();
+						file.favorite = stored.favorite;
+						file.content_identity = stored.content_identity.clone();
+						file.sidecars = stored.sidecars.clone();
+						file.image_media_data = stored.image_media_data.clone();
+						file.video_media_data = stored.video_media_data.clone();
+						file.audio_media_data = stored.audio_media_data.clone();
+					}
+				}
+			}
+			if !changes.is_empty() {
+				let index_read = index.read().await;
+				crate::ops::indexing::ephemeral::emit_uuid_reconciled_events(
+					library
+						.as_ref()
+						.expect("UUID changes require a library")
+						.event_bus(),
+					&index_read,
+					&changes,
+					&persistent_files,
 				);
 			}
+
+			self.sort_files(&mut files);
+
+			let total_count = files.len() as u32;
+			let has_more = if let Some(limit) = self.input.limit {
+				if files.len() > limit as usize {
+					files.truncate(limit as usize);
+					true
+				} else {
+					false
+				}
+			} else {
+				false
+			};
+
+			return Ok(DirectoryListingOutput {
+				files,
+				total_count,
+				has_more,
+			});
 		}
 
 		// No cached index or index doesn't cover this path.
@@ -918,6 +901,20 @@ impl DirectoryListingQuery {
 					"Ephemeral indexing already in progress for {}",
 					local_path.display()
 				);
+				// Usually the UI refetching on this scan's own events: wait for the
+				// scan as the listing that started it does, instead of answering empty.
+				let deadline = tokio::time::Instant::now() + FIRST_LISTING_WAIT;
+				while cache.is_indexing(&local_path) && tokio::time::Instant::now() < deadline {
+					tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+				}
+				if !retried && cache.is_indexed(&local_path) {
+					return Box::pin(self.query_ephemeral_directory_impl(
+						context.clone(),
+						library_id,
+						true,
+					))
+					.await;
+				}
 				return Ok(DirectoryListingOutput {
 					files: Vec::new(),
 					total_count: 0,

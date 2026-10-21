@@ -6,7 +6,7 @@ import {
 	type LegacyColumnDef as ColumnDef
 } from '@tanstack/react-table/legacy';
 import type {File} from '@wingdrive/ts-client';
-import {useEffect, useMemo, useRef} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {useTabManager} from '../../../../components/TabManager';
 import {useExplorer} from '../../context';
 import {formatBytes, formatRelativeTime} from '../../utils';
@@ -25,7 +25,6 @@ const columns: ColumnDef<File>[] = [
 		header: 'list.name',
 		minSize: 200,
 		size: 300,
-		maxSize: 800,
 		accessorFn: (row) =>
 			row.name + (row.extension ? `.${row.extension}` : '')
 	},
@@ -34,7 +33,6 @@ const columns: ColumnDef<File>[] = [
 		header: 'list.size',
 		size: 80,
 		minSize: 60,
-		maxSize: 120,
 		accessorFn: (row) => row.size,
 		cell: (cell) =>
 			cell.row.original.size > 0
@@ -46,7 +44,6 @@ const columns: ColumnDef<File>[] = [
 		header: 'list.modified',
 		size: 120,
 		minSize: 80,
-		maxSize: 180,
 		accessorFn: (row) => new Date(row.modified_at).getTime(),
 		cell: (cell) => formatRelativeTime(cell.row.original.modified_at)
 	},
@@ -55,7 +52,6 @@ const columns: ColumnDef<File>[] = [
 		header: 'list.kind',
 		size: 80,
 		minSize: 60,
-		maxSize: 120,
 		accessorFn: (row) =>
 			row.kind === 'Directory'
 				? i18n.t('explorer:list.folder')
@@ -68,13 +64,34 @@ const columns: ColumnDef<File>[] = [
 		header: 'list.tags',
 		size: 150,
 		minSize: 80,
-		maxSize: 400,
 		accessorFn: (row) =>
 			row.tags.map((tag) => tag.canonical_name).join(', ')
 	}
 ];
 
-export function useTable(files: File[]) {
+const NAME_SIZE = 300;
+const OTHER_COLUMNS = columns.filter((column) => column.header && column.id !== 'name');
+
+/**
+ * Until the user sizes the name column, it takes the width the other columns
+ * leave, so the list spans the whole view at any window size.
+ */
+function fillNameColumn(
+	sizing: ColumnSizingState,
+	availableWidth: number
+): ColumnSizingState {
+	if (sizing.name !== undefined) return sizing;
+	const others = OTHER_COLUMNS.reduce(
+		(sum, column) => sum + (sizing[column.id!] ?? column.size!),
+		0
+	);
+	return {
+		...sizing,
+		name: Math.max(NAME_SIZE, availableWidth - TABLE_PADDING_X * 2 - others)
+	};
+}
+
+export function useTable(files: File[], availableWidth: number) {
 	const {sortBy, sortDirection, viewSettings} = useExplorer();
 	const {activeTabId, getExplorerState, updateExplorerState} =
 		useTabManager();
@@ -82,6 +99,11 @@ export function useTable(files: File[]) {
 	const savedSorting =
 		getExplorerState(activeTabId).listSorting ?? defaultSorting;
 	const previousSort = useRef({sortBy, sortDirection});
+	// The tab this list belongs to, even while another tab is active.
+	const [tabId] = useState(activeTabId);
+	const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(
+		() => getExplorerState(tabId).listColumnSizing ?? {}
+	);
 	useEffect(() => {
 		if (
 			previousSort.current.sortBy !== sortBy ||
@@ -98,7 +120,7 @@ export function useTable(files: File[]) {
 	const table = useReactTable({
 		data: files,
 		columns,
-		defaultColumn: {minSize: 60, maxSize: 500},
+		defaultColumn: {minSize: 60},
 		getCoreRowModel: core,
 		getSortedRowModel: sorted,
 		columnResizeMode: 'onChange',
@@ -110,7 +132,21 @@ export function useTable(files: File[]) {
 					: []),
 				...savedSorting
 			],
-			columnVisibility: {folders: false, created: false}
+			columnVisibility: {folders: false, created: false},
+			columnSizing: fillNameColumn(columnSizing, availableWidth)
+		},
+		onColumnSizingChange: (updater) => {
+			setColumnSizing((previous) => {
+				const filled = fillNameColumn(previous, availableWidth);
+				const next =
+					typeof updater === 'function' ? updater(filled) : updater;
+				// Resizing another column leaves the name column filling the row.
+				if (previous.name === undefined && next.name === filled.name) {
+					const {name: _name, ...rest} = next;
+					return rest;
+				}
+				return next;
+			});
 		},
 		onSortingChange: (updater) => {
 			const next: SortingState =
@@ -123,6 +159,12 @@ export function useTable(files: File[]) {
 		},
 		getRowId: (row) => row.id
 	});
+	// Save widths once a drag ends, not on every pointer move.
+	const isResizing = !!table.getState().columnResizing.isResizingColumn;
+	useEffect(() => {
+		if (!isResizing)
+			updateExplorerState(tabId, {listColumnSizing: columnSizing});
+	}, [isResizing, columnSizing, tabId, updateExplorerState]);
 	return {table, columns};
 }
 export type {ColumnSizingState};
