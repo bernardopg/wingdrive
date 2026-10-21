@@ -1,4 +1,4 @@
-import type {SortingState} from '@tanstack/react-table';
+import type {ColumnSizingState, SortingState} from '@tanstack/react-table';
 import type {
 	DirectorySortBy,
 	MediaSortBy,
@@ -46,6 +46,8 @@ export interface Tab {
  */
 export interface TabExplorerState {
 	listSorting?: SortingState;
+	/** List view widths the user dragged; columns missing here use their defaults. */
+	listColumnSizing?: ColumnSizingState;
 	// View settings
 	viewMode: ViewMode;
 	sortBy: SortBy;
