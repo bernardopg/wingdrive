@@ -320,6 +320,7 @@ impl VolumeBackend for CloudBackend {
 				kind,
 				size: metadata.content_length(),
 				modified: metadata.last_modified().map(SystemTime::from),
+				created: None,
 				inode: None, // Cloud storage doesn't have inodes
 			});
 		}

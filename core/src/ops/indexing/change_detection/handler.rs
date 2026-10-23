@@ -219,6 +219,7 @@ pub async fn build_dir_entry(
 		kind: meta.kind,
 		size: meta.size,
 		modified: meta.modified,
+		created: meta.created,
 		inode: meta.inode,
 	})
 }

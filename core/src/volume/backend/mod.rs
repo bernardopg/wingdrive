@@ -133,6 +133,8 @@ pub struct RawDirEntry {
 	pub kind: EntryKind,
 	pub size: u64,
 	pub modified: Option<SystemTime>,
+	/// Birth time, when the filesystem records one
+	pub created: Option<SystemTime>,
 	pub inode: Option<u64>,
 }
 

@@ -145,6 +145,7 @@ mod tests {
 			kind: EntryKind::File,
 			size: 12,
 			modified: Some(std::time::SystemTime::now()),
+			created: None,
 			inode: Some(12345),
 		};
 
@@ -184,6 +185,7 @@ mod tests {
 			kind: EntryKind::File,
 			size: 12,
 			modified: Some(std::time::SystemTime::now()),
+			created: None,
 			inode: Some(12345),
 		};
 
