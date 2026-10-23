@@ -50,7 +50,8 @@ Measured against the running daemon with `wing file list`:
 - [x] Isolated daemon: `/home`, `Downloads` after the `iso` path, `/usr/bin` on the first call and an empty
       folder list correctly
 - [x] Web UI: list spans the view, columns resize past the old caps, widths survive navigation
-- [ ] Installed Linux package: the reported `/home`, volume and list view cases on the user's machine
+- [ ] Installed Linux package: the reported `/home`, volume and list view cases on the user's machine (listings
+      checked in 2.1.1; list view pending)
 
 ## Evidence
 
@@ -68,5 +69,8 @@ Measured against the running daemon with `wing file list`:
   of `/usr/bin` 4,925 entries in 228 ms and `/usr/lib` 7,320 in 310 ms, then 60 ms and 100 ms from the cache;
   `/home` 1, `/home/bitter` 41, `Downloads` 250, an empty folder 0, each 3 to 6 ms from the cache. The installed
   2.1.0 daemon answered `/usr/bin` and `/usr/lib` with 0 entries on the same calls.
-- Not yet checked in the installed package. The installed 2.1.0 daemon keeps its in-memory index until it
+- 2026-10-23, installed `wingdrive-bin` 2.1.1 against the user's daemon (raw RPC, `limit: null`): `/home` 1 entry,
+  `Downloads` 250, `/usr/bin` 4,925 (399 ms) and `/usr/lib` 7,320 (552 ms) on the first call, then 4 to 141 ms
+  from the cache. `Downloads/taildrop` shows its real birth time and no size. The app started hidden, connected,
+  and opened its window. The list view was not exercised in the packaged app. The installed 2.1.0 daemon keeps its in-memory index until it
   restarts, so `systemctl --user restart wingdrive-daemon` clears a stale `/home` until the fix ships.
