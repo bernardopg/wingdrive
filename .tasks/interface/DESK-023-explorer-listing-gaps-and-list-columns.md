@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S03
 tags: [core, interface, indexing, bug, performance]
-last_updated: 2026-10-21
+last_updated: 2026-10-23
 ---
 
 ## Description
@@ -64,5 +64,9 @@ Measured against the running daemon with `wing file list`:
   width, with Name at 944 px. Dragging Size by 200 px gave 280 px (old cap 120) and Name shrank to keep the row
   full; dragging Name fixed it at 444 px. Widths were in the tab's saved state, survived a page reload and a
   folder change, and double-clicking the Name handle returned it to filling (744 px).
+- 2026-10-23, release daemon from `main` (instance with its own data dir, raw RPC, `limit: null`): first listing
+  of `/usr/bin` 4,925 entries in 228 ms and `/usr/lib` 7,320 in 310 ms, then 60 ms and 100 ms from the cache;
+  `/home` 1, `/home/bitter` 41, `Downloads` 250, an empty folder 0, each 3 to 6 ms from the cache. The installed
+  2.1.0 daemon answered `/usr/bin` and `/usr/lib` with 0 entries on the same calls.
 - Not yet checked in the installed package. The installed 2.1.0 daemon keeps its in-memory index until it
   restarts, so `systemctl --user restart wingdrive-daemon` clears a stale `/home` until the fix ships.
