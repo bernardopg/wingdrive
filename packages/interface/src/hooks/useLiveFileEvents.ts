@@ -54,10 +54,12 @@ export function useLiveFileEvents() {
 			timer = setTimeout(() => {
 				timer = undefined;
 				for (const key of LISTING_QUERY_KEYS) {
-					queryClient.invalidateQueries({
-						queryKey: [key],
-						exact: false,
-					});
+					// Aborting a running fetch every 400 ms kept a large folder
+					// under constant change from ever finishing its listing.
+					queryClient.invalidateQueries(
+						{ queryKey: [key], exact: false },
+						{ cancelRefetch: false },
+					);
 				}
 			}, 400);
 		};

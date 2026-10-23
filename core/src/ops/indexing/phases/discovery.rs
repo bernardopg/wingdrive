@@ -623,6 +623,7 @@ async fn read_directory_with_backend(
 				kind: raw.kind,
 				size: raw.size,
 				modified: raw.modified,
+				created: raw.created,
 				inode: raw.inode,
 			})
 		})

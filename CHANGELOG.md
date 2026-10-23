@@ -17,6 +17,16 @@ Explorer listing fixes for the desktop file manager (#272, #275 and later).
 - The list view fills the window: the name column takes the width the other
   columns leave, columns resize without a maximum, a double-click on a
   resize handle restores the default width, and widths persist per tab.
+- The created date shows when the file was created. Folders outside a
+  location showed the time they were browsed, and indexed entries the time
+  they were indexed. Entries indexed before this release keep the old value
+  until the file changes or its location is removed and added again.
+- A burst of file changes refreshes an open folder once instead of once per
+  change. Every event aborted the listing in flight and requested it again,
+  so copying many files into a large folder kept it from finishing.
+- Folders outside a location no longer show their own inode size (such as
+  "72 B") in the size column; it stays empty until folder sizes are
+  calculated.
 - Ephemeral jobs (browsing folders outside a location) no longer log a
   database error when they start, and job start-up messages are debug-level.
 

@@ -559,16 +559,6 @@ impl File {
 		};
 
 		// Convert SystemTime to chrono::DateTime
-		let created_at = metadata
-			.created
-			.and_then(|t| {
-				chrono::DateTime::from_timestamp(
-					t.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs() as i64,
-					0,
-				)
-			})
-			.unwrap_or_else(chrono::Utc::now);
-
 		let modified_at = metadata
 			.modified
 			.and_then(|t| {
@@ -578,6 +568,18 @@ impl File {
 				)
 			})
 			.unwrap_or_else(chrono::Utc::now);
+
+		// Without a birth time the modification time is the closest truthful value;
+		// the current time made every such file look created a moment ago.
+		let created_at = metadata
+			.created
+			.and_then(|t| {
+				chrono::DateTime::from_timestamp(
+					t.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs() as i64,
+					0,
+				)
+			})
+			.unwrap_or(modified_at);
 
 		let accessed_at = metadata.accessed.and_then(|t| {
 			chrono::DateTime::from_timestamp(
@@ -590,7 +592,13 @@ impl File {
 			id,
 			wing_path,
 			name,
-			size: metadata.size,
+			// A folder's own inode size says nothing about its contents; the listing
+			// shows no size until `directory_size` is measured.
+			size: if metadata.kind == crate::ops::indexing::state::EntryKind::Directory {
+				0
+			} else {
+				metadata.size
+			},
 			directory_size: None,
 			content_identity: None,
 			alternate_paths: Vec::new(),

@@ -408,6 +408,17 @@ impl DatabaseStorage {
 				)
 			})
 			.unwrap_or_else(|| chrono::Utc::now());
+		// The file's birth time; filesystems without one fall back to the modification
+		// time, which is never later than the real creation.
+		let created_at = entry
+			.created
+			.and_then(|t| {
+				chrono::DateTime::from_timestamp(
+					t.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs() as i64,
+					0,
+				)
+			})
+			.unwrap_or(modified_at);
 
 		// UUID assignment: preserve ephemeral UUIDs from prior browsing sessions
 		// so user metadata (tags, notes) survives the transition to persistent indexing.
@@ -448,7 +459,7 @@ impl DatabaseStorage {
 			aggregate_size: Set(0),
 			child_count: Set(0),
 			file_count: Set(0),
-			created_at: Set(now),
+			created_at: Set(created_at),
 			modified_at: Set(modified_at),
 			accessed_at: Set(None),
 			indexed_at: Set(Some(now)),
@@ -635,6 +646,17 @@ impl DatabaseStorage {
 			) {
 				entry_active.modified_at = Set(timestamp);
 			}
+		}
+		if let Some(timestamp) = entry.created.and_then(|created| {
+			chrono::DateTime::from_timestamp(
+				created
+					.duration_since(std::time::UNIX_EPOCH)
+					.ok()?
+					.as_secs() as i64,
+				0,
+			)
+		}) {
+			entry_active.created_at = Set(timestamp);
 		}
 
 		if let Some(inode) = entry.inode {
@@ -1136,6 +1158,17 @@ impl DatabaseStorage {
 					)
 					.unwrap_or_default());
 				}
+			}
+			if let Some(timestamp) = metadata.created().ok().and_then(|created| {
+				chrono::DateTime::from_timestamp(
+					created
+						.duration_since(std::time::UNIX_EPOCH)
+						.ok()?
+						.as_secs() as i64,
+					0,
+				)
+			}) {
+				entry_active.created_at = Set(timestamp);
 			}
 		}
 
