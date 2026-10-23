@@ -22,7 +22,7 @@
  * ```
  */
 
-import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
+import { hashKey, QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 import type { Simplify } from "type-fest";
@@ -294,6 +294,57 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 
 // Event Handling
 
+/** Delay that gathers a burst of change events into one refetch. */
+const REFETCH_COALESCE_MS = 80;
+
+const pendingRefetches = new WeakMap<
+	QueryClient,
+	Map<string, ReturnType<typeof setTimeout>>
+>();
+
+/**
+ * Marks the query stale at once and refetches it once the burst of change
+ * events is over, never cancelling a fetch in flight.
+ *
+ * Invalidating per event aborted the running fetch and started a new one:
+ * copying a thousand files into a folder, or indexing a large one, requested
+ * the whole listing again for every event and could leave it never finishing.
+ */
+export function scheduleCoalescedRefetch(
+	queryClient: QueryClient,
+	queryKey: readonly unknown[],
+	delay = REFETCH_COALESCE_MS,
+) {
+	void queryClient.invalidateQueries({
+		queryKey,
+		exact: true,
+		refetchType: "none",
+	});
+
+	let timers = pendingRefetches.get(queryClient);
+	if (!timers) {
+		timers = new Map();
+		pendingRefetches.set(queryClient, timers);
+	}
+	const key = hashKey(queryKey);
+	if (timers.has(key)) return;
+
+	const run = () => {
+		// A fetch that started before the last event may have missed it: wait for
+		// it to finish, then fetch once more.
+		if (queryClient.getQueryState(queryKey)?.fetchStatus === "fetching") {
+			timers.set(key, setTimeout(run, delay));
+			return;
+		}
+		timers.delete(key);
+		void queryClient.refetchQueries(
+			{ queryKey, exact: true, type: "active" },
+			{ cancelRefetch: false },
+		);
+	};
+	timers.set(key, setTimeout(run, delay));
+}
+
 /**
  * Event handler dispatcher with runtime validation
  *
@@ -324,7 +375,7 @@ export function handleResourceEvent(
 			("ResourceDeleted" in event &&
 				event.ResourceDeleted.resource_type === options.resourceType))
 	) {
-		queryClient.invalidateQueries({ queryKey, exact: true });
+		scheduleCoalescedRefetch(queryClient, queryKey);
 		return;
 	}
 
