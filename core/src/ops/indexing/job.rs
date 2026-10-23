@@ -977,6 +977,7 @@ impl IndexerJob {
 				kind: entry_kind,
 				size: metadata.len(),
 				modified: metadata.modified().ok(),
+				created: metadata.created().ok(),
 				inode: DatabaseStorage::get_inode(&path, &metadata),
 			};
 
@@ -1063,7 +1064,7 @@ impl IndexerJob {
 						size: entry.size,
 						modified: entry.modified,
 						accessed: None,
-						created: None,
+						created: entry.created,
 						inode: entry.inode,
 						permissions: None,
 						is_hidden: is_hidden_path(&entry.path),

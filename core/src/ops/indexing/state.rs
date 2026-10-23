@@ -81,6 +81,9 @@ pub struct DirEntry {
 	pub kind: EntryKind,
 	pub size: u64,
 	pub modified: Option<std::time::SystemTime>,
+	/// Birth time, when the filesystem records one; job state saved before it existed has none
+	#[serde(default)]
+	pub created: Option<std::time::SystemTime>,
 	pub inode: Option<u64>,
 }
 

@@ -214,6 +214,7 @@ impl VolumeBackend for LocalBackend {
 				kind,
 				size: metadata.len(),
 				modified: metadata.modified().ok(),
+				created: metadata.created().ok(),
 				inode: Self::get_inode(&entry_path, &metadata),
 			});
 		}
@@ -359,6 +360,24 @@ mod tests {
 		// Read range [2..5] should give "234"
 		let range_data = backend.read_range(test_path, 2..5).await.unwrap();
 		assert_eq!(&range_data[..], b"234");
+	}
+
+	/// Listings outside a location showed every file as created at the time it was
+	/// browsed, because the birth time was dropped here.
+	#[tokio::test]
+	async fn read_dir_reports_the_birth_time() {
+		let temp_dir = TempDir::new().unwrap();
+		let backend = LocalBackend::new(temp_dir.path());
+		std::fs::write(temp_dir.path().join("a.txt"), b"a").unwrap();
+
+		let entries = backend.read_dir(Path::new("")).await.unwrap();
+
+		let expected = std::fs::metadata(temp_dir.path().join("a.txt"))
+			.unwrap()
+			.created()
+			.ok();
+		assert_eq!(entries.len(), 1);
+		assert_eq!(entries[0].created, expected);
 	}
 
 	#[tokio::test]
