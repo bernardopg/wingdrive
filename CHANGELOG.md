@@ -21,6 +21,9 @@ Explorer listing fixes for the desktop file manager (#272, #275 and later).
   location showed the time they were browsed, and indexed entries the time
   they were indexed. Entries indexed before this release keep the old value
   until the file changes or its location is removed and added again.
+- Folders outside a location no longer show their own inode size (such as
+  "72 B") in the size column; it stays empty until folder sizes are
+  calculated.
 - Ephemeral jobs (browsing folders outside a location) no longer log a
   database error when they start, and job start-up messages are debug-level.
 

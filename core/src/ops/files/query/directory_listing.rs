@@ -1292,6 +1292,31 @@ mod tests {
 		files.into_iter().map(|f| f.name).collect()
 	}
 
+	/// Folders outside a location listed their inode size ("72 B") as if it were
+	/// their contents; the birth time fell back to the time of the listing.
+	#[test]
+	fn ephemeral_folders_have_no_size_and_keep_their_times() {
+		let path = PathBuf::from("/tmp/folder");
+		let modified = std::time::UNIX_EPOCH + std::time::Duration::from_secs(1_700_000_000);
+		let metadata = EntryMetadata {
+			path: path.clone(),
+			kind: EntryKind::Directory,
+			size: 72,
+			modified: Some(modified),
+			accessed: None,
+			created: None,
+			inode: None,
+			permissions: None,
+			is_hidden: false,
+		};
+
+		let folder = File::from_ephemeral(Uuid::new_v4(), &metadata, WingPath::local(path));
+
+		assert_eq!(folder.size, 0);
+		assert_eq!(folder.modified_at.timestamp(), 1_700_000_000);
+		assert_eq!(folder.created_at, folder.modified_at);
+	}
+
 	#[test]
 	fn sort_direction_defaults_and_overrides() {
 		assert_eq!(sorted_names(DirectorySortBy::Name, None), ["a", "b", "c"]);
