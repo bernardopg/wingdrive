@@ -592,7 +592,13 @@ impl File {
 			id,
 			wing_path,
 			name,
-			size: metadata.size,
+			// A folder's own inode size says nothing about its contents; the listing
+			// shows no size until `directory_size` is measured.
+			size: if metadata.kind == crate::ops::indexing::state::EntryKind::Directory {
+				0
+			} else {
+				metadata.size
+			},
 			directory_size: None,
 			content_identity: None,
 			alternate_paths: Vec::new(),
