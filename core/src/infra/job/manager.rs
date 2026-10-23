@@ -1519,7 +1519,7 @@ impl JobManager {
 				info!("Resuming job {}: {}", job_id, job_record.name);
 				match REGISTRY.deserialize_job(&job_record.name, &job_record.state) {
 					Ok(erased_job) => {
-						warn!("DEBUG: Successfully deserialized job {}", job_id);
+						debug!("Successfully deserialized job {}", job_id);
 						info!(
 							"RESUME_STATE_LOAD: Job {} successfully deserialized {} bytes of state",
 							job_id,
@@ -1840,8 +1840,8 @@ impl JobManager {
 								});
 
 								// Update status to Running after successful dispatch
-								warn!(
-									"DEBUG: Attempting to update resumed job {} status to Running",
+								debug!(
+									"Attempting to update resumed job {} status to Running",
 									job_id
 								);
 								if let Some(running_job) =
@@ -1850,17 +1850,20 @@ impl JobManager {
 									if let Err(e) = running_job.status_tx.send(JobStatus::Running) {
 										warn!("Failed to update resumed job status: {}", e);
 									} else {
-										warn!(
-											"DEBUG: Successfully sent Running status to job {}",
+										debug!(
+											"Successfully sent Running status to job {}",
 											job_id
 										);
 									}
 								} else {
-									warn!("DEBUG: Job {} not found in running_jobs when trying to update status", job_id);
+									debug!("Job {} not found in running_jobs when trying to update status", job_id);
 								}
 
 								// Update database status
-								warn!("DEBUG: Attempting to update database status for job {} to Running", job_id);
+								debug!(
+									"Attempting to update database status for job {} to Running",
+									job_id
+								);
 								use sea_orm::{ActiveModelTrait, ActiveValue::Set};
 								let mut job_model = database::jobs::ActiveModel {
 									id: Set(job_id.to_string()),
@@ -1871,7 +1874,7 @@ impl JobManager {
 								if let Err(e) = job_model.update(self.db.conn()).await {
 									warn!("Failed to update resumed job status in database: {}", e);
 								} else {
-									warn!("DEBUG: Successfully updated database status for job {} to Running", job_id);
+									debug!("Successfully updated database status for job {} to Running", job_id);
 								}
 
 								info!("Successfully resumed job {}: {}", job_id, job_record.name);

@@ -3,6 +3,27 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.1.1 — 2026-10-23
+
+Explorer listing fixes for the desktop file manager (#272, #275 and later).
+
+### Fixed
+
+- Folders outside a location list every entry. `/home` listed empty after
+  `/` was opened again, `Downloads` showed only the folder on a deeper path
+  that had been opened, and large folders such as `/usr/bin` and `/usr/lib`
+  came back empty on the first visit.
+- An empty folder is no longer scanned again on every refresh.
+- The list view fills the window: the name column takes the width the other
+  columns leave, columns resize without a maximum, a double-click on a
+  resize handle restores the default width, and widths persist per tab.
+- Ephemeral jobs (browsing folders outside a location) no longer log a
+  database error when they start, and job start-up messages are debug-level.
+
+### Changed
+
+- Dependency updates for TanStack Query, i18next and react-i18next.
+
 ## 2.1.0 — 2026-10-20
 
 Privacy and security fixes, location cleanup, bounded logs, Expo SDK 58 on mobile and dependency updates (#259 to #273). 2.0.2 was prepared but never tagged; its changes ship here.
