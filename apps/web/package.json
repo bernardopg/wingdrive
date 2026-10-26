@@ -27,6 +27,6 @@
 		"tailwindcss-animate": "^1.0.7",
 		"tailwindcss-radix": "^4.0.2",
 		"typescript": "^7.0.2",
-		"vite": "^8.3.4"
+		"vite": "^8.3.5"
 	}
 }
