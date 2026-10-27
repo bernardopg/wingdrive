@@ -39,4 +39,14 @@ never starts an OS drag session.
 
 ## Evidence
 
-- Open.
+- Added and unit tested selection-to-local-path resolution. Mixed selections containing
+  remote, cloud, content or virtual entries are rejected as a whole.
+- `bun test packages/interface/src/routes/explorer/hooks/externalDragPaths.test.ts`: 2 tests passed.
+- `bun run typecheck` and `cargo fmt --all -- --check` passed.
+- `cargo clippy -p wingdrive --locked -- -D warnings` passed after `bun run build` in
+  `apps/tauri` generated the missing frontend distribution.
+- Native drag integration and in-app handoff remain open. CrabNebula `drag` 2.1.1 supports
+  Tauri 2 and GTK, but its GTK implementation constructs file URIs without escaping path
+  characters and starts the gesture without a GDK event. Check URI encoding and the gesture
+  on both X11 and Wayland before using it.
+- This environment has no graphical session, so no external application drop was tested.
