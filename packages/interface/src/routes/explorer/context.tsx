@@ -408,7 +408,10 @@ interface ExplorerContextValue {
 	 * the selection can never reach entries the user cannot see.
 	 */
 	currentFiles: File[];
-	setCurrentFiles: (files: File[]) => void;
+	/** `unfilteredCount` is the view's listing size before the folder filter narrowed it. */
+	setCurrentFiles: (files: File[], unfilteredCount?: number) => void;
+	/** Size of the active view's listing before the folder filter, or null when nothing is filtered out. */
+	unfilteredFileCount: number | null;
 
 	/**
 	 * Directory that New Folder, Paste and external drops write into. It is
@@ -596,15 +599,20 @@ export function ExplorerProvider({
 	const [publishedFiles, setPublishedFiles] = useState<{
 		key: string;
 		files: File[];
-	}>({key: '', files: NO_FILES});
-	const setCurrentFiles = useCallback((files: File[]) => {
+		total: number | null;
+	}>({key: '', files: NO_FILES, total: null});
+	const setCurrentFiles = useCallback((files: File[], unfilteredCount?: number) => {
 		const key = collectionKeyRef.current;
+		const total = unfilteredCount ?? null;
 		setPublishedFiles((prev) =>
-			prev.key === key && sameFiles(prev.files, files) ? prev : {key, files}
+			prev.key === key && prev.total === total && sameFiles(prev.files, files)
+				? prev
+				: {key, files, total}
 		);
 	}, []);
-	const currentFiles =
-		publishedFiles.key === collectionKey ? publishedFiles.files : NO_FILES;
+	const isCurrentPublication = publishedFiles.key === collectionKey;
+	const currentFiles = isCurrentPublication ? publishedFiles.files : NO_FILES;
+	const unfilteredFileCount = isCurrentPublication ? publishedFiles.total : null;
 
 	const [publishedColumn, setPublishedColumn] = useState<{
 		key: string;
@@ -935,6 +943,7 @@ export function ExplorerProvider({
 			closeQuickPreview,
 			currentFiles,
 			setCurrentFiles,
+			unfilteredFileCount,
 			operationalPath,
 			setActiveColumnPath,
 			folderFilter,
@@ -990,6 +999,7 @@ export function ExplorerProvider({
 			closeQuickPreview,
 			currentFiles,
 			setCurrentFiles,
+			unfilteredFileCount,
 			operationalPath,
 			setActiveColumnPath,
 			folderFilter,

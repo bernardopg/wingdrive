@@ -17,11 +17,13 @@ import {Button, CircleButton, Popover, usePopover} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {motion} from 'framer-motion';
 import {useEffect, useState} from 'react';
+import {usePlatform} from '../../../contexts/PlatformContext';
 import {useKeybind} from '../../../hooks/useKeybind';
 import {useExplorer} from '../context';
 import {useSelection} from '../SelectionContext';
 import {sdPathToUri} from '../utils';
 import {useAddStorageDialog} from './AddStorageModal';
+import {resolveTypedPath} from './pathInput';
 import {i18n, useTranslation} from '../../../i18n';
 import { ThemedIcon } from '../../../components/ThemedIcon';
 
@@ -301,6 +303,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 	const [editValue, setEditValue] = useState('');
 	const [editingAsUri, setEditingAsUri] = useState(false);
 	const {navigateToView} = useExplorer();
+	const platform = usePlatform();
 	const uri = sdPathToUri(path);
 	const currentDir = getCurrentDirectoryName(path);
 	const segments = parsePathSegments(path);
@@ -363,14 +366,14 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 	const handleEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === 'Enter') {
 			e.preventDefault();
-			submitEdit();
+			void submitEdit();
 		} else if (e.key === 'Escape') {
 			e.preventDefault();
 			exitEditMode();
 		}
 	};
 
-	const submitEdit = () => {
+	const submitEdit = async () => {
 		const trimmed = editValue.trim();
 		if (!trimmed) {
 			exitEditMode();
@@ -382,19 +385,18 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 				// Try to parse as WingPath JSON
 				const parsed = JSON.parse(trimmed) as WingPath;
 				onNavigate(parsed);
-			} else {
-				// Parse as file path string
-				if ('Physical' in path) {
-					const newPath: WingPath = {
-						Physical: {
-							device_slug: path.Physical.device_slug,
-							path: trimmed.startsWith('/')
-								? trimmed
-								: `/${trimmed}`
-						}
-					};
-					onNavigate(newPath);
-				}
+			} else if ('Physical' in path) {
+				// `~` is this device's home folder, so it only expands for this device.
+				const home =
+					trimmed.startsWith('~') && deviceInfo.device?.is_current
+						? ((await platform.homeDir?.()) ?? null)
+						: null;
+				const resolved = resolveTypedPath(trimmed, home);
+				// Keep the field open on an unresolved `~` rather than navigating somewhere else.
+				if (!resolved) return;
+				onNavigate({
+					Physical: {device_slug: path.Physical.device_slug, path: resolved}
+				});
 			}
 		} catch (error) {
 			console.error('Failed to parse path:', error);

@@ -9,6 +9,7 @@ import { useTypeaheadSearch } from "../../hooks/useTypeaheadSearch";
 import { useVirtualListing } from "../../hooks/useVirtualListing";
 import { isVirtualFile } from '@wingdrive/ts-client';
 import { useExplorerFiles } from "../../hooks/useExplorerFiles";
+import { useFolderFilter } from "../../hooks/useFolderFilter";
 import {useTabScroll} from '../../hooks/useTabScroll';
 import {useTranslation} from '../../../../i18n';
 
@@ -32,6 +33,7 @@ export function ColumnView() {
 		activeTabId,
 		setCurrentFiles,
 		setActiveColumnPath,
+		folderFilter,
 	} = useExplorer();
 	const { files: virtualFiles, isVirtualView } = useVirtualListing();
 	// Search, recents, tags and filters have no folder hierarchy, so they
@@ -217,11 +219,24 @@ export function ColumnView() {
 		[isVirtualView, activeColumnIndex, virtualFiles, activeColumnData]
 	);
 
+	// The folder filter narrows the active column, the one commands act on.
+	const { files: filteredColumnFiles, unfilteredCount } =
+		useFolderFilter(activeColumnFiles);
+	const columnFilter = (index: number) =>
+		index === activeColumnIndex ? folderFilter : null;
+
 	// The active column is the collection file commands act on, and its
 	// folder is where New Folder and Paste write.
 	useEffect(() => {
-		setCurrentFiles(isCollectionSource ? collectionFiles : activeColumnFiles);
-	}, [isCollectionSource, collectionFiles, activeColumnFiles, setCurrentFiles]);
+		if (isCollectionSource) setCurrentFiles(collectionFiles);
+		else setCurrentFiles(filteredColumnFiles, unfilteredCount);
+	}, [
+		isCollectionSource,
+		collectionFiles,
+		filteredColumnFiles,
+		unfilteredCount,
+		setCurrentFiles,
+	]);
 
 	useEffect(() => {
 		setActiveColumnPath(
@@ -231,7 +246,7 @@ export function ColumnView() {
 
 	// Typeahead search for active column
 	const typeahead = useTypeaheadSearch({
-		files: activeColumnFiles,
+		files: filteredColumnFiles,
 		onMatch: (file) => {
 			handleSelectFile(file, activeColumnIndex, activeColumnFiles);
 		},
@@ -470,6 +485,7 @@ export function ColumnView() {
 					columnIndex={0}
 					isActive={columnStack.length === 0}
 					virtualFiles={virtualFiles}
+					filter={columnFilter(-1)}
 				/>
 
 				{/* Subsequent columns: Real directory navigation */}
@@ -499,6 +515,7 @@ export function ColumnView() {
 							nextColumnPath={columnStack[index + 1]}
 							columnIndex={index + 1} // +1 because virtual column is at 0
 							isActive={isActive}
+							filter={columnFilter(index)}
 						/>
 					);
 				})}
@@ -534,6 +551,7 @@ export function ColumnView() {
 						nextColumnPath={columnStack[index + 1]}
 						columnIndex={index}
 						isActive={isActive}
+						filter={columnFilter(index)}
 					/>
 				);
 			})}

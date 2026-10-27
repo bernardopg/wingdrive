@@ -16,6 +16,7 @@ import {isInputFocused} from '../../../../util/keybinds/platform';
 import {useExplorer} from '../../context';
 import {useEmptySpaceContextMenu} from '../../hooks/useEmptySpaceContextMenu';
 import {useExplorerFiles} from '../../hooks/useExplorerFiles';
+import {useFolderFilter} from '../../hooks/useFolderFilter';
 import {REVEAL_EVENT, type RevealDetail} from '../../pendingReveal';
 import {useTabScroll} from '../../hooks/useTabScroll';
 import {useSelection} from '../../SelectionContext';
@@ -71,7 +72,8 @@ export const ListView = memo(function ListView() {
 	}, []);
 
 	// Get files from centralized hook (handles search, virtual, and directory)
-	const {files} = useExplorerFiles();
+	const {files: listedFiles} = useExplorerFiles();
+	const {files, unfilteredCount} = useFolderFilter(listedFiles);
 	const {table} = useTable(files, availableWidth);
 	const {rows} = table.getRowModel();
 	const orderedFiles = useMemo(() => rows.map((row) => row.original), [rows]);
@@ -79,8 +81,8 @@ export const ListView = memo(function ListView() {
 
 	// Publishing the collection also reconciles the selection against it.
 	useEffect(() => {
-		setCurrentFiles(orderedFiles);
-	}, [orderedFiles, setCurrentFiles]);
+		setCurrentFiles(orderedFiles, unfilteredCount);
+	}, [orderedFiles, unfilteredCount, setCurrentFiles]);
 
 	// Virtual row rendering - uses the container as scroll element
 	const rowVirtualizer = useVirtualizer({

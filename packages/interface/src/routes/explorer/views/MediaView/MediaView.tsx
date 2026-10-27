@@ -14,6 +14,7 @@ import { MediaViewItem } from "./MediaViewItem";
 import { DateHeader } from "./DateHeader";
 import { formatDate, getItemDate, normalizeDateToMidnight } from "./utils";
 import { useExplorerFiles } from "../../hooks/useExplorerFiles";
+import { useFolderFilter } from "../../hooks/useFolderFilter";
 import {useTabScroll} from '../../hooks/useTabScroll';
 import { useTranslation } from "../../../../i18n";
 
@@ -147,18 +148,19 @@ const {t} = useTranslation("explorer");
 		// No resourceFilter needed - the backend query already filters for media
 	});
 
-	const files = useMemo(() => {
+	const mediaFiles = useMemo(() => {
 		if (usesExplorerFiles) {
 			return explorerFiles.filter(isMediaFile);
 		}
 		// Normal mode: use media_listing query
 		return mediaQuery.data?.files ?? [];
 	}, [usesExplorerFiles, explorerFiles, mediaQuery.data?.files]);
+	const { files, unfilteredCount } = useFolderFilter(mediaFiles);
 
 	// Update current files in explorer context for quick preview navigation
 	useEffect(() => {
-		setCurrentFiles(files);
-	}, [files, setCurrentFiles]);
+		setCurrentFiles(files, unfilteredCount);
+	}, [files, unfilteredCount, setCurrentFiles]);
 
 
 	// Check if element is ready when files load

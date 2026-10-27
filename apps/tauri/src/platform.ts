@@ -3,6 +3,7 @@ import {
 	convertFileSrc as tauriConvertFileSrc
 } from '@tauri-apps/api/core';
 import {listen} from '@tauri-apps/api/event';
+import {homeDir} from '@tauri-apps/api/path';
 import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {ask, open, save} from '@tauri-apps/plugin-dialog';
 import {open as shellOpen} from '@tauri-apps/plugin-shell';
@@ -156,6 +157,8 @@ export const platform: Platform = {
 			{paths}
 		);
 	},
+
+	homeDir,
 
 	async openTerminal(path: string) {
 		await invoke('open_terminal', {path});
