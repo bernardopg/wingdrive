@@ -5,7 +5,7 @@ import {
 	useLegacyTable as useReactTable,
 	type LegacyColumnDef as ColumnDef
 } from '@tanstack/react-table/legacy';
-import type {File} from '@wingdrive/ts-client';
+import {fileDisplaySize, type File} from '@wingdrive/ts-client';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {useTabManager} from '../../../../components/TabManager';
 import {useExplorer} from '../../context';
@@ -33,11 +33,12 @@ const columns: ColumnDef<File>[] = [
 		header: 'list.size',
 		size: 80,
 		minSize: 60,
-		accessorFn: (row) => row.size,
-		cell: (cell) =>
-			cell.row.original.size > 0
-				? formatBytes(cell.row.original.size)
-				: '—'
+		// Folders show their content size, as in grid view.
+		accessorFn: (row) => fileDisplaySize(row) ?? 0,
+		cell: (cell) => {
+			const size = fileDisplaySize(cell.row.original);
+			return size ? formatBytes(size) : '—';
+		}
 	},
 	{
 		id: 'modified',

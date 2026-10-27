@@ -38,10 +38,10 @@ WingDrive must replace Dolphin, Nautilus or Yazi as the file manager the user op
 - [ ] DESK-019 Invert selection and select by pattern (code merged in #227; runtime check pending)
 - [ ] DESK-020 On-demand file checksum in the Inspector (code merged in #227; runtime check pending)
 - [ ] DESK-021 Search refinement bar (PR #232 open)
-- [ ] DESK-025 Drag files from the Explorer into other apps
-- [ ] DESK-026 Filter the current folder by name (code in place; runtime check pending)
-- [ ] DESK-027 Status bar with counts, selection size and free space (code in place; runtime check pending)
-- [ ] DESK-028 Ctrl+L edits the path bar (code in place; runtime check pending)
+- [ ] DESK-025 Drag files from the Explorer into other apps (X11 verified; native Wayland check left)
+- [x] DESK-026 Filter the current folder by name
+- [x] DESK-027 Status bar with counts, selection size and free space
+- [x] DESK-028 Ctrl+L edits the path bar
 - [ ] DESK-029 Folder tree and expandable list rows
 - [ ] DESK-030 Group items by kind, date or size
 - [ ] DESK-031 New file from the Templates folder

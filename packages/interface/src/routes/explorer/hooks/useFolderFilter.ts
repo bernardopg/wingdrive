@@ -13,7 +13,9 @@ export function useFolderFilter(files: File[]): {files: File[]; unfilteredCount?
 	const text = mode.type === 'browse' ? folderFilter?.trim() : '';
 	return useMemo(
 		() =>
-			text ? {files: filterFiles(files, text), unfilteredCount: files.length} : {files},
+			text && files.length > 0
+				? {files: filterFiles(files, text), unfilteredCount: files.length}
+				: {files},
 		[files, text]
 	);
 }

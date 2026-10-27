@@ -1,7 +1,7 @@
 ---
 id: DESK-027
 title: Explorer status bar with item count, selection size and free space
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Medium
@@ -31,7 +31,7 @@ none of it; the Inspector covers a single file.
 - [ ] Item counts match the visible listing, including while filtered
 - [ ] Selection count and size update as the selection changes
 - [ ] Free space shows for local folders and hides for virtual views
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -41,4 +41,9 @@ none of it; the Inspector covers a single file.
   `volumes.list` (`filter: All`). Without a selection it shows folder and file counts, or "M of N
   items shown" while filtered; with one, the count and summed size (folders add their content size
   when known). Free space shows only for physical paths whose device and volume resolve.
-- Open: runtime check on the Linux desktop build.
+- Runtime, 2026-10-27: debug desktop build (`cargo build -p wingdrive` with the built frontend), isolated daemon and library, private Xvfb `:77`, `GDK_BACKEND=x11`, driven with xdotool.
+  - Showed "1 folder · 2 files" and "338 GB free", "2 selected · 11 B" for a two-file selection,
+    "1 of 2 items shown" while filtered, and "4 folders" in the device view (no free space there).
+  - Found and fixed: list view's Size column read the raw `size` field (18 B for a folder whose grid
+    card showed 2 B); it now uses `fileDisplaySize` like grid view. The stored folder total itself
+    goes stale after a move into the folder, which is INDEX-014.
