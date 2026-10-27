@@ -449,6 +449,16 @@ const ExplorerContext = createContext<ExplorerContextValue | null>(null);
 
 const NO_FILES: File[] = [];
 
+/**
+ * Whether two lists hold the same file objects in the same order. Views
+ * publish a fresh array on most renders; republishing an equal one would
+ * render the whole Explorer again for nothing, or forever if the view's
+ * next render builds yet another array.
+ */
+export function sameFiles(a: File[], b: File[]): boolean {
+	return a === b || (a.length === b.length && a.every((file, i) => file === b[i]));
+}
+
 interface ExplorerProviderProps {
 	children: ReactNode;
 	/** Reserved for Phase 2: Will control whether this tab's context should process events/updates */
@@ -582,11 +592,7 @@ export function ExplorerProvider({
 	const setCurrentFiles = useCallback((files: File[]) => {
 		const key = collectionKeyRef.current;
 		setPublishedFiles((prev) =>
-			prev.key === key &&
-			(prev.files === files ||
-				(prev.files.length === 0 && files.length === 0))
-				? prev
-				: {key, files}
+			prev.key === key && sameFiles(prev.files, files) ? prev : {key, files}
 		);
 	}, []);
 	const currentFiles =
