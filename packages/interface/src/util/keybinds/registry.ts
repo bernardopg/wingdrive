@@ -71,6 +71,22 @@ export const explorerKeybinds = {
 		preventDefault: true
 	}),
 
+	filterFolder: defineKeybind({
+		id: 'explorer.filterFolder',
+		label: 'Filter Folder',
+		combo: {modifiers: ['Cmd', 'Shift'], key: 'f'},
+		scope: 'explorer',
+		preventDefault: true
+	}),
+
+	focusPathBar: defineKeybind({
+		id: 'explorer.focusPathBar',
+		label: 'Edit Location',
+		combo: {modifiers: ['Cmd'], key: 'l'},
+		scope: 'explorer',
+		preventDefault: true
+	}),
+
 	// Clipboard
 	cut: defineKeybind({
 		id: 'explorer.cut',

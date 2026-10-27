@@ -6,6 +6,7 @@
 		"reload": "Recarregar aplicativo"
 	},
 	"dnd": {
+		"dragOutFailed": "Não foi possível arrastar os arquivos para fora do WingDrive",
 		"virtualLocationsCannotMove": "Locais, volumes e dispositivos não podem ser movidos.",
 		"itemTypes": {
 			"overview": "Visão geral",
@@ -242,6 +243,8 @@
 			"selectAll": "Selecionar tudo",
 			"invertSelection": "Inverter seleção",
 			"selectByPattern": "Selecionar por padrão",
+			"filterFolder": "Filtrar pasta",
+			"focusPathBar": "Editar local",
 			"cut": "Recortar",
 			"copy": "Copiar",
 			"paste": "Colar",

@@ -17,6 +17,7 @@ import {Button, CircleButton, Popover, usePopover} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {motion} from 'framer-motion';
 import {useEffect, useState} from 'react';
+import {useKeybind} from '../../../hooks/useKeybind';
 import {useExplorer} from '../context';
 import {useSelection} from '../SelectionContext';
 import {sdPathToUri} from '../utils';
@@ -339,6 +340,10 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 		setEditingAsUri(false);
 	};
 
+	useKeybind('explorer.focusPathBar', () => {
+		enterEditMode('Physical' in path ? path.Physical.path : uri, !('Physical' in path));
+	});
+
 	const handleContainerClick = (e: React.MouseEvent) => {
 		// Only enter edit mode if clicking the container itself, not buttons/segments
 		if (
@@ -484,6 +489,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 						onChange={(e) => setEditValue(e.target.value)}
 						onKeyDown={handleEditKeyDown}
 						onBlur={exitEditMode}
+						onFocus={(e) => e.currentTarget.select()}
 						autoFocus
 						className={clsx(
 							'min-w-0 flex-1 border-0 bg-transparent outline-none ring-0',

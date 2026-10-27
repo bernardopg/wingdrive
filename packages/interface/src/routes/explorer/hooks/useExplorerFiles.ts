@@ -19,6 +19,7 @@ import {
 	MIN_SEARCH_LENGTH,
 	SEARCH_PAGE_SIZE,
 } from "./searchQuery";
+import { filterFiles } from "./folderFilter";
 import { useVirtualListing } from "./useVirtualListing";
 
 const RECENTS_PAGE_SIZE = 100;
@@ -37,6 +38,8 @@ export interface ExplorerFilesResult {
 	searchScopeFallback?: boolean;
 	/** Match count of a search before pagination. */
 	totalFound?: number;
+	/** Listing size before the folder filter, set only while a filter narrows it. */
+	unfilteredCount?: number;
 	/** Search facets over the whole match set, for the refinement pills. */
 	facets?: FileSearchOutput["facets"];
 }
@@ -69,6 +72,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		viewSettings,
 		searchFilters,
 		searchPage,
+		folderFilter,
 	} = explorer;
 
 	// Check for virtual listing first
@@ -369,12 +373,18 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		virtualFiles,
 		directoryQuery.data,
 	]);
-	const files = useMemo(
+	const sizedFiles = useMemo(
 		() =>
 			source === "directory"
 				? withDirectorySizes(listedFiles, directorySizesQuery.data?.sizes)
 				: listedFiles,
 		[source, directorySizesQuery.data, listedFiles],
+	);
+	// The filter narrows folder browsing only; searches and collections have their own refinements.
+	const filterable = source === "directory" || source === "virtual";
+	const files = useMemo(
+		() => (filterable && folderFilter ? filterFiles(sizedFiles, folderFilter) : sizedFiles),
+		[filterable, folderFilter, sizedFiles],
 	);
 
 	const isLoading = isFilteredMode
@@ -410,6 +420,7 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		isLoading,
 		error,
 		source,
+		unfilteredCount: files === sizedFiles ? undefined : sizedFiles.length,
 		totalFound: searchOutput ? Number(searchOutput.total_found) : undefined,
 		facets: searchOutput?.facets,
 		hasMore: isRecentsMode

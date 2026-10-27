@@ -89,6 +89,8 @@ export type Platform = {
 	setDefaultAppForPath?(path: string, appId: string): Promise<void>;
 	resolveSymlink?(path: string): Promise<[string, boolean]>;
 	writeFileClipboard?(paths: string[], cut: boolean): Promise<void>;
+	/** Hand absolute local paths to an OS drag that other apps can drop (Linux) */
+	startFileDrag?(paths: string[]): Promise<void>;
 	readFileClipboard?(): Promise<[string[], boolean]>;
 	fileIdentity?(path: string): Promise<[string, string]>;
 	undoMove?(

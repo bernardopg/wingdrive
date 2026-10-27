@@ -6,6 +6,7 @@
 		"reload": "Reload Application"
 	},
 	"dnd": {
+		"dragOutFailed": "Could not drag the files out of WingDrive",
 		"virtualLocationsCannotMove": "Locations, volumes and devices cannot be moved.",
 		"itemTypes": {
 			"overview": "Overview",
@@ -242,6 +243,8 @@
 			"selectAll": "Select All",
 			"invertSelection": "Invert Selection",
 			"selectByPattern": "Select by Pattern",
+			"filterFolder": "Filter Folder",
+			"focusPathBar": "Edit Location",
 			"cut": "Cut",
 			"copy": "Copy",
 			"paste": "Paste",

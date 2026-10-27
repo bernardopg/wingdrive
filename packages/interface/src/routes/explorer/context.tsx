@@ -419,6 +419,14 @@ interface ExplorerContextValue {
 	operationalPath: WingPath | null;
 	setActiveColumnPath: (path: WingPath | null) => void;
 
+	/**
+	 * Name filter over the folder being browsed, or null when the filter bar is
+	 * closed. It belongs to the tab and location it was typed in, so navigating
+	 * or switching tabs drops it.
+	 */
+	folderFilter: string | null;
+	setFolderFilter: (text: string | null) => void;
+
 	tagModeActive: boolean;
 	setTagModeActive: (active: boolean) => void;
 
@@ -608,6 +616,18 @@ export function ExplorerProvider({
 			prev.key === key && prev.path === path ? prev : {key, path}
 		);
 	}, []);
+
+	const filterKey = `${activeTabId}|${location.pathname}|${location.search}`;
+	const filterKeyRef = useRef(filterKey);
+	filterKeyRef.current = filterKey;
+	const [typedFilter, setTypedFilter] = useState<{
+		key: string;
+		text: string | null;
+	}>({key: '', text: null});
+	const setFolderFilter = useCallback((text: string | null) => {
+		setTypedFilter({key: filterKeyRef.current, text});
+	}, []);
+	const folderFilter = typedFilter.key === filterKey ? typedFilter.text : null;
 
 	const operationalPath = useMemo((): WingPath | null => {
 		if (uiState.mode.type !== 'browse' || !currentPath) return null;
@@ -917,6 +937,8 @@ export function ExplorerProvider({
 			setCurrentFiles,
 			operationalPath,
 			setActiveColumnPath,
+			folderFilter,
+			setFolderFilter,
 			tagModeActive: uiState.tagModeActive,
 			setTagModeActive,
 			mode: uiState.mode,
@@ -970,6 +992,8 @@ export function ExplorerProvider({
 			setCurrentFiles,
 			operationalPath,
 			setActiveColumnPath,
+			folderFilter,
+			setFolderFilter,
 			uiState.tagModeActive,
 			setTagModeActive,
 			uiState.mode,

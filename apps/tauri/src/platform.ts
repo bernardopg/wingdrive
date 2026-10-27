@@ -58,7 +58,9 @@ export const platform: Platform = {
 				writeFileClipboard: (paths: string[], cut: boolean) =>
 					invoke<void>('write_file_clipboard', {paths, cut}),
 				readFileClipboard: () =>
-					invoke<[string[], boolean]>('read_file_clipboard')
+					invoke<[string[], boolean]>('read_file_clipboard'),
+				startFileDrag: (paths: string[]) =>
+					invoke<void>('start_file_drag', {paths})
 			}
 		: {}),
 
