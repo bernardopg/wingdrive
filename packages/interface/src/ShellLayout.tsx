@@ -23,6 +23,7 @@ import {WebContextMenuProvider} from './contexts/WebContextMenuContext';
 import {ExplorerProvider, useExplorer} from './routes/explorer';
 import {KeyboardHandler} from './routes/explorer/KeyboardHandler';
 import {FileContextMenuProvider} from './routes/explorer/FileContextMenuProvider';
+import {OpenFileProvider} from './routes/explorer/OpenFileProvider';
 import {SelectionProvider} from './routes/explorer/SelectionContext';
 import {TagAssignmentMode} from './routes/explorer/TagAssignmentMode';
 import {TopBar, TopBarProvider} from './TopBar';
@@ -292,11 +293,13 @@ export function ShellLayout() {
 					<ExplorerProvider>
 						<WebContextMenuProvider>
 							<FileContextMenuProvider>
-								{/* Sync tab navigation and defaults with router */}
-								<TabNavigationSync />
-								<TabDefaultsSync />
-								<LaunchRequestSync />
-								<ShellLayoutContent />
+								<OpenFileProvider>
+									{/* Sync tab navigation and defaults with router */}
+									<TabNavigationSync />
+									<TabDefaultsSync />
+									<LaunchRequestSync />
+									<ShellLayoutContent />
+								</OpenFileProvider>
 							</FileContextMenuProvider>
 						</WebContextMenuProvider>
 					</ExplorerProvider>

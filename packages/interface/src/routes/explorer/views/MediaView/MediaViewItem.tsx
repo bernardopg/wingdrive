@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import {memo} from 'react';
 import {File as FileComponent} from '../../File';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
-import {useOpenFile} from '../../hooks/useOpenFile';
+import {useOpenFileAction} from '../../OpenFileProvider';
 
 function formatDuration(seconds: number): string {
 	const mins = Math.floor(seconds / 60);
@@ -52,7 +52,7 @@ export const MediaViewItem = memo(function MediaViewItem({
 		showContextMenu(e, file, selected);
 	};
 
-	const openFile = useOpenFile();
+	const openFile = useOpenFileAction();
 	const handleDoubleClick = () => openFile(file);
 
 	return (

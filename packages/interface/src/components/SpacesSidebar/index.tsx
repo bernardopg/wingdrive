@@ -393,7 +393,11 @@ interface SpacesSidebarProps {
 	isPreviewActive?: boolean;
 }
 
-export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
+// Memoized: the shell re-renders on every selection and navigation change,
+// and the sidebar only depends on its own queries and contexts.
+export const SpacesSidebar = memo(function SpacesSidebar({
+	isPreviewActive = false
+}: SpacesSidebarProps) {
 	const {t} = useTranslation('navigation');
 	const client = useWingDriveClient();
 	const platform = usePlatform();
@@ -604,4 +608,4 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 			/>
 		</div>
 	);
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import type { SpaceItem as SpaceItemType } from "@wingdrive/ts-client";
@@ -150,7 +151,38 @@ function DropZoneOverlays({
 	);
 }
 
-export function SpaceItem({
+/**
+ * Reads the Explorer state the item needs (whether it is active) and leaves
+ * the rest to a memoized body. The Explorer context changes several times per
+ * folder change; the body used to re-render for each of them, for every item.
+ */
+export function SpaceItem(props: SpaceItemProps) {
+	const { loadPreferencesForSpaceItem } = useExplorer();
+	const { path } = resolveItemMetadata(props.item, {
+		volumeData: props.volumeData,
+		customIcon: props.overrides?.icon ?? props.customIcon,
+		customLabel: props.overrides?.label ?? props.customLabel,
+	});
+	const isActive = useSpaceItemActive({
+		item: props.item as SpaceItemType,
+		path,
+		hasCustomOnClick: !!(props.overrides?.onClick ?? props.onClick),
+	});
+	return (
+		<SpaceItemBody
+			{...props}
+			isActive={isActive}
+			loadPreferencesForSpaceItem={loadPreferencesForSpaceItem}
+		/>
+	);
+}
+
+interface SpaceItemBodyProps extends SpaceItemProps {
+	isActive: boolean;
+	loadPreferencesForSpaceItem: (id: string) => void;
+}
+
+const SpaceItemBody = memo(function SpaceItemBody({
 	item,
 	spaceId,
 	groupId,
@@ -166,9 +198,10 @@ export function SpaceItem({
 	onClick: legacyOnClick,
 	onContextMenu: legacyOnContextMenu,
 	className,
-}: SpaceItemProps) {
+	isActive,
+	loadPreferencesForSpaceItem,
+}: SpaceItemBodyProps) {
 	const navigate = useNavigate();
-	const { loadPreferencesForSpaceItem } = useExplorer();
 
 	// Merge legacy props into overrides
 	const effectiveOverrides: SpaceItemOverrides = {
@@ -191,12 +224,6 @@ export function SpaceItem({
 		? undefined
 		: (item as SpaceItemType).resolved_file;
 
-	// Active state detection
-	const isActive = useSpaceItemActive({
-		item: item as SpaceItemType,
-		path,
-		hasCustomOnClick: !!effectiveOverrides.onClick,
-	});
 
 	// Drop zone management
 	const dropZones = useSpaceItemDropZones({
@@ -212,6 +239,7 @@ export function SpaceItem({
 		item: item as SpaceItemType,
 		path,
 		spaceId,
+		loadPreferencesForSpaceItem,
 	});
 
 	// Sortable drag/drop
@@ -327,4 +355,4 @@ export function SpaceItem({
 			<BottomInsertionLine visible={showBottomLine} />
 		</div>
 	);
-}
+});

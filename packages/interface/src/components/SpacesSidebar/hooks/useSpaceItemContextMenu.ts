@@ -14,7 +14,7 @@ import {
 import { usePlatform } from "../../../contexts/PlatformContext";
 import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { isVolumeItem, isPathItem } from "./spaceItemUtils";
-import { useExplorer, getSpaceItemKeyFromRoute } from "../../../routes/explorer/context";
+import { getSpaceItemKeyFromRoute } from "../../../routes/explorer/context";
 import {useTranslation} from '../../../i18n';
 import {revealLabel} from '../../../util/keybinds/platform';
 
@@ -22,6 +22,8 @@ interface UseSpaceItemContextMenuOptions {
 	item: SpaceItemType;
 	path: string | null;
 	spaceId?: string;
+	/** Passed in so the item does not re-render on every Explorer change. */
+	loadPreferencesForSpaceItem: (id: string) => void;
 }
 
 /**
@@ -37,11 +39,11 @@ export function useSpaceItemContextMenu({
 	item,
 	path,
 	spaceId,
+	loadPreferencesForSpaceItem,
 }: UseSpaceItemContextMenuOptions): ContextMenuResult {
 const {t} = useTranslation('navigation');
 	const navigate = useNavigate();
 	const platform = usePlatform();
-	const { loadPreferencesForSpaceItem } = useExplorer();
 	const deleteItem = useLibraryMutation("spaces.delete_item");
 	const indexVolume = useLibraryMutation("volumes.index");
 

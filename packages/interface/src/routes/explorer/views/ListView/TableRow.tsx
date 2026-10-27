@@ -9,9 +9,13 @@ import {InlineNameEdit} from '../../components/InlineNameEdit';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
-import {useOpenFile} from '../../hooks/useOpenFile';
-import {useSelection} from '../../SelectionContext';
+import {useOpenFileAction} from '../../OpenFileProvider';
 import {ROW_HEIGHT, TABLE_PADDING_X} from './useTable';
+
+interface Rename {
+	onSave: (newName: string) => Promise<void>;
+	onCancel: () => void;
+}
 
 interface TableRowProps {
 	columnSizingKey: string;
@@ -24,6 +28,10 @@ interface TableRowProps {
 	isPreviousSelected: boolean;
 	isNextSelected: boolean;
 	measureRef: (node: HTMLElement | null) => void;
+	/** The selection to drag with this row; empty unless the row is selected. */
+	selectedFiles: File[];
+	/** Set only on the row being renamed. */
+	rename?: Rename;
 	selectFile: (
 		file: File,
 		files: File[],
@@ -42,13 +50,14 @@ export const TableRow = memo(function TableRow({
 	isPreviousSelected,
 	isNextSelected,
 	measureRef,
+	selectedFiles,
+	rename,
 	selectFile
 }: TableRowProps) {
-	const {selectedFiles} = useSelection();
 
 	const showContextMenu = useShowFileContextMenu();
 
-	const openFile = useOpenFile();
+	const openFile = useOpenFileAction();
 
 	const handleClick = useCallback(
 		(e: React.MouseEvent) => {
@@ -87,8 +96,7 @@ export const TableRow = memo(function TableRow({
 		isDragging
 	} = useDraggableFile({
 		file,
-		selectedFiles:
-			isSelected && selectedFiles.length > 0 ? selectedFiles : undefined
+		selectedFiles: selectedFiles.length > 0 ? selectedFiles : undefined
 	});
 
 	const isFolder = file.kind === 'Directory';
@@ -184,7 +192,7 @@ export const TableRow = memo(function TableRow({
 							style={{width: cell.column.getSize()}}
 						>
 							{isNameColumn ? (
-								<NameCell file={file} />
+								<NameCell file={file} rename={rename} />
 							) : (
 								<span className="truncate">
 									{flexRender(
@@ -202,9 +210,13 @@ export const TableRow = memo(function TableRow({
 });
 
 // Name cell with icon and tags
-const NameCell = memo(function NameCell({file}: {file: File}) {
-	const {renamingFileId, saveRename, cancelRename} = useSelection();
-	const isRenaming = renamingFileId === file.id;
+const NameCell = memo(function NameCell({
+	file,
+	rename
+}: {
+	file: File;
+	rename?: Rename;
+}) {
 
 	return (
 		<div className="flex min-w-0 flex-1 items-center gap-2">
@@ -214,11 +226,11 @@ const NameCell = memo(function NameCell({file}: {file: File}) {
 			</div>
 
 			{/* File name or inline edit */}
-			{isRenaming ? (
+			{rename ? (
 				<InlineNameEdit
 					file={file}
-					onSave={saveRename}
-					onCancel={cancelRename}
+					onSave={rename.onSave}
+					onCancel={rename.onCancel}
 					className="min-w-0 flex-1"
 				/>
 			) : (
@@ -229,7 +241,7 @@ const NameCell = memo(function NameCell({file}: {file: File}) {
 			)}
 
 			{/* Tags (inline, compact) - hide when renaming */}
-			{!isRenaming && file.tags && file.tags.length > 0 && (
+			{!rename && file.tags && file.tags.length > 0 && (
 				<div className="flex flex-shrink-0 items-center gap-1">
 					{file.tags.slice(0, 2).map((tag) => (
 						<TagPill
