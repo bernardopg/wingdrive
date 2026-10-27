@@ -35,4 +35,10 @@ none of it; the Inspector covers a single file.
 
 ## Evidence
 
-- Open.
+- `statusBar.ts` holds `summarizeFiles` and `volumeForPath` (longest mount point on the same device,
+  mounted volumes only, extra `mount_points` included); `statusBar.test.ts` covers both.
+- `ExplorerStatusBar` sits under every view except Size and reads `currentFiles`, the selection and
+  `volumes.list` (`filter: All`). Without a selection it shows folder and file counts, or "M of N
+  items shown" while filtered; with one, the count and summed size (folders add their content size
+  when known). Free space shows only for physical paths whose device and volume resolve.
+- Open: runtime check on the Linux desktop build.

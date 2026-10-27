@@ -242,6 +242,8 @@
 			"selectAll": "Selecionar tudo",
 			"invertSelection": "Inverter seleção",
 			"selectByPattern": "Selecionar por padrão",
+			"filterFolder": "Filtrar pasta",
+			"focusPathBar": "Editar local",
 			"cut": "Recortar",
 			"copy": "Copiar",
 			"paste": "Colar",

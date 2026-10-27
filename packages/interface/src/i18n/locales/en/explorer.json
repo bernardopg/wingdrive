@@ -443,5 +443,20 @@
 		"sendCancelled": "Wingdrop cancelled",
 		"sent_one": "Sent {{count}} item to {{name}}",
 		"sent_other": "Sent {{count}} items to {{name}}"
+	},
+	"filterBar": {
+		"placeholder": "Filter this folder",
+		"clear": "Close filter",
+		"matches": "{{shown}} of {{total}}"
+	},
+	"statusBar": {
+		"folders_one": "{{count}} folder",
+		"folders_other": "{{count}} folders",
+		"files_one": "{{count}} file",
+		"files_other": "{{count}} files",
+		"filtered": "{{shown}} of {{total}} items shown",
+		"selected_one": "{{count}} selected",
+		"selected_other": "{{count}} selected",
+		"free": "{{size}} free"
 	}
 }

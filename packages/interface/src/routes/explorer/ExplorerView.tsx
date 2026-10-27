@@ -12,6 +12,8 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {TopBarItem, TopBarPortal} from '../../TopBar';
 import {ExpandableSearchButton} from './components/ExpandableSearchButton';
+import {ExplorerStatusBar} from './components/ExplorerStatusBar';
+import {FolderFilterBar} from './components/FolderFilterBar';
 import {PathBar} from './components/PathBar';
 import {VirtualPathBar} from './components/VirtualPathBar';
 import {useExplorer, type ViewMode} from './context';
@@ -63,11 +65,12 @@ export function ExplorerView() {
 		exitSearchMode,
 		currentFiles,
 		columnStack,
-		operationalPath
+		operationalPath,
+		setFolderFilter
 	} = useExplorer();
 
 	const {isVirtualView} = useVirtualListing();
-	const {error: listingError} = useExplorerFiles();
+	const {error: listingError, unfilteredCount} = useExplorerFiles();
 	const queryClient = useQueryClient();
 	const routerNavigate = useNavigate();
 	const isPreviewActive = !!quickPreviewFileId;
@@ -136,9 +139,11 @@ export function ExplorerView() {
 			) {
 				navigateToPath(columnStack[columnStack.length - 1]);
 			}
+			// The filter bar lives in grid and list only; never leave it hiding items elsewhere.
+			setFolderFilter(null);
 			setViewMode(newMode as ViewMode);
 		},
-		[viewMode, columnStack, navigateToPath, setViewMode]
+		[viewMode, columnStack, navigateToPath, setViewMode, setFolderFilter]
 	);
 
 	// Memoize submenu content to prevent infinite re-renders
@@ -343,6 +348,14 @@ export function ExplorerView() {
 				)}
 			>
 				{mode.type === 'search' && <SearchToolbar />}
+				{/* Grid and list show the folder listing itself; the other views list it their own way. */}
+				{mode.type === 'browse' &&
+					(viewMode === 'grid' || viewMode === 'list') && (
+						<FolderFilterBar
+							shown={currentFiles.length}
+							total={unfilteredCount ?? currentFiles.length}
+						/>
+					)}
 				<div
 					className={clsx(
 						'flex-1',
@@ -388,6 +401,12 @@ export function ExplorerView() {
 						)}
 					</>
 				</div>
+				{!listingError && viewMode !== 'size' && (
+					<ExplorerStatusBar
+						path={pathBarPath}
+						unfilteredCount={unfilteredCount}
+					/>
+				)}
 			</div>
 		</>
 	);

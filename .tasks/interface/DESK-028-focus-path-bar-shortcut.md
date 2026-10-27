@@ -20,14 +20,17 @@ every file manager. WingDrive's `PathBar` can be edited with the mouse, but no s
 
 1. Register `explorer.focusPathBar` (Ctrl+L) and show it in the shortcuts list.
 2. In `PathBar`, enter edit mode with the current folder's path selected so typing replaces it.
-3. Expand a leading `~` to the home folder when submitting.
+3. Expand a leading `~` to the home folder when submitting. Not done: the interface has no home
+   folder API yet; left for a follow-up.
 
 ## Acceptance Criteria
 
-- [ ] Ctrl+L opens the path field with the path selected
+- [x] Ctrl+L opens the path field with the path selected
 - [ ] Enter navigates, Escape restores the breadcrumbs
 - [ ] Verified on the Linux desktop build
 
 ## Evidence
 
-- Open.
+- `explorer.focusPathBar` (Ctrl+L) is registered and listed; `PathBar` enters edit mode with the
+  physical path (or the URI for other paths), and the field selects its text on focus.
+- Open: runtime check on the Linux desktop build; `~` expansion.

@@ -242,6 +242,8 @@
 			"selectAll": "Select All",
 			"invertSelection": "Invert Selection",
 			"selectByPattern": "Select by Pattern",
+			"filterFolder": "Filter Folder",
+			"focusPathBar": "Edit Location",
 			"cut": "Cut",
 			"copy": "Copy",
 			"paste": "Paste",
