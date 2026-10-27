@@ -1,6 +1,7 @@
 import {CaretDown, CaretUp} from '@phosphor-icons/react';
 import {flexRender} from '@tanstack/react-table';
 import {useVirtualizer} from '@tanstack/react-virtual';
+import type {File} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {
 	memo,
@@ -29,6 +30,8 @@ import {
 	useTable
 } from './useTable';
 
+const NO_FILES: File[] = [];
+
 export const ListView = memo(function ListView() {
 	const {t} = useTranslation('explorer');
 	const {setCurrentFiles, scrollPosition} = useExplorer();
@@ -38,8 +41,16 @@ export const ListView = memo(function ListView() {
 		selectedFileIds,
 		isSelected,
 		selectFile,
-		moveFocus
+		moveFocus,
+		selectedFiles,
+		renamingFileId,
+		saveRename,
+		cancelRename
 	} = useSelection();
+	const rename = useMemo(
+		() => ({onSave: saveRename, onCancel: cancelRename}),
+		[saveRename, cancelRename]
+	);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const headerScrollRef = useRef<HTMLDivElement>(null);
@@ -332,6 +343,14 @@ export const ListView = memo(function ListView() {
 										isNextSelected={isNextSelected}
 										measureRef={
 											rowVirtualizer.measureElement
+										}
+										selectedFiles={
+											fileIsSelected ? selectedFiles : NO_FILES
+										}
+										rename={
+											renamingFileId === file.id
+												? rename
+												: undefined
 										}
 										selectFile={selectFile}
 									/>

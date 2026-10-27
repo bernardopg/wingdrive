@@ -15,6 +15,28 @@ import {useTranslation} from '../../../../i18n';
 const VIRTUALIZATION_THRESHOLD = 0; // Disabled - always virtualize
 let lastGridMeasurement: {key: string; width: number; height: number} | null = null;
 
+const NO_FILES: File[] = [];
+
+/**
+ * Props that change only for the cards they concern, so a selection or
+ * rename does not re-render every card in the grid.
+ */
+function useCardProps() {
+	const {viewSettings} = useExplorer();
+	const {selectedFiles, renamingFileId, saveRename, cancelRename} =
+		useSelection();
+	const rename = useMemo(
+		() => ({onSave: saveRename, onCancel: cancelRename}),
+		[saveRename, cancelRename]
+	);
+	return (file: File, selected: boolean) => ({
+		gridSize: viewSettings.gridSize,
+		showFileSize: viewSettings.showFileSize,
+		selectedFiles: selected ? selectedFiles : NO_FILES,
+		rename: renamingFileId === file.id ? rename : undefined
+	});
+}
+
 export function GridView() {
 	const {t} = useTranslation('explorer');
 	const {viewSettings, setCurrentFiles} = useExplorer();
@@ -22,12 +44,12 @@ export function GridView() {
 		isSelected,
 		focusedIndex,
 		setFocusedIndex,
-		selectedFiles,
 		selectFile,
 		clearSelection,
 		setSelectedFiles
 	} = useSelection();
 	const {gridSize, gapSize} = viewSettings;
+	const cardProps = useCardProps();
 	const emptySpaceContextMenu = useEmptySpaceContextMenu();
 
 	// Get files from centralized hook (handles search, virtual, and directory)
@@ -97,8 +119,8 @@ export function GridView() {
 								allFiles={files}
 								selected={isSelected(file.id)}
 								focused={index === focusedIndex}
-								selectedFiles={selectedFiles}
 								selectFile={selectFile}
+								{...cardProps(file, isSelected(file.id))}
 							/>
 						))}
 					</div>
@@ -115,7 +137,6 @@ export function GridView() {
 			isSelected={isSelected}
 			focusedIndex={focusedIndex}
 			setFocusedIndex={setFocusedIndex}
-			selectedFiles={selectedFiles}
 			selectFile={selectFile}
 			setSelectedFiles={setSelectedFiles}
 			onContainerClick={handleContainerClick}
@@ -131,7 +152,6 @@ interface VirtualizedGridProps {
 	isSelected: (id: string) => boolean;
 	focusedIndex: number;
 	setFocusedIndex: (index: number) => void;
-	selectedFiles: File[];
 	selectFile: (
 		file: File,
 		files: File[],
@@ -150,12 +170,12 @@ function VirtualizedGrid({
 	isSelected,
 	focusedIndex,
 	setFocusedIndex,
-	selectedFiles,
 	selectFile,
 	setSelectedFiles,
 	onContainerClick,
 	onContainerContextMenu
 }: VirtualizedGridProps) {
+	const cardProps = useCardProps();
 	const {sidebarVisible, inspectorVisible, scrollPosition} = useExplorer();
 	const measurementKey = `${window.innerWidth}:${window.innerHeight}:${sidebarVisible}:${inspectorVisible}`;
 	const measurementKeyRef = useRef(measurementKey);
@@ -351,8 +371,11 @@ function VirtualizedGrid({
 												focused={
 													fileIndex === focusedIndex
 												}
-												selectedFiles={selectedFiles}
 												selectFile={selectFile}
+												{...cardProps(
+													file,
+													isSelected(file.id)
+												)}
 											/>
 										);
 									})}

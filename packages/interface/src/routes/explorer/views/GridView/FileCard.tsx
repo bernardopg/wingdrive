@@ -6,12 +6,10 @@ import {memo} from 'react';
 import {TagDot} from '../../../../components/Tags';
 import {InlineNameEdit} from '../../components/InlineNameEdit';
 import {VolumeSizeBar} from '../../components/VolumeSizeBar';
-import {useExplorer} from '../../context';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
-import {useOpenFile} from '../../hooks/useOpenFile';
-import {useSelection} from '../../SelectionContext';
+import {useOpenFileAction} from '../../OpenFileProvider';
 import {formatBytes} from '../../utils';
 
 interface FileCardProps {
@@ -20,6 +18,7 @@ interface FileCardProps {
 	allFiles: File[];
 	selected: boolean;
 	focused: boolean;
+	/** The selection to drag with this card; empty unless the card is selected. */
 	selectedFiles: File[];
 	selectFile: (
 		file: File,
@@ -27,6 +26,10 @@ interface FileCardProps {
 		multi?: boolean,
 		range?: boolean
 	) => void;
+	gridSize: number;
+	showFileSize: boolean;
+	/** Set only on the card being renamed. */
+	rename?: {onSave: (name: string) => Promise<void>; onCancel: () => void};
 }
 
 export const FileCard = memo(function FileCard({
@@ -36,17 +39,14 @@ export const FileCard = memo(function FileCard({
 	selected,
 	focused: _focused,
 	selectedFiles,
-	selectFile
+	selectFile,
+	gridSize,
+	showFileSize,
+	rename
 }: FileCardProps) {
-	const {viewSettings} = useExplorer();
-	const {gridSize, showFileSize} = viewSettings;
-	const {renamingFileId, saveRename, cancelRename} = useSelection();
-
-	const isRenaming = renamingFileId === file.id;
-
 	const showContextMenu = useShowFileContextMenu();
 
-	const openFile = useOpenFile();
+	const openFile = useOpenFileAction();
 
 	const handleClick = (e: React.MouseEvent) => {
 		const multi = e.metaKey || e.ctrlKey;
@@ -74,8 +74,7 @@ export const FileCard = memo(function FileCard({
 		isDragging: dndIsDragging
 	} = useDraggableFile({
 		file,
-		selectedFiles:
-			selected && selectedFiles.length > 0 ? selectedFiles : undefined,
+		selectedFiles: selectedFiles.length > 0 ? selectedFiles : undefined,
 		gridSize
 	});
 
@@ -154,11 +153,11 @@ export const FileCard = memo(function FileCard({
 					<FileComponent.Thumb file={file} size={thumbSize} />
 				</div>
 				<div className="flex w-full flex-col items-center">
-					{isRenaming ? (
+					{rename ? (
 						<InlineNameEdit
 							file={file}
-							onSave={saveRename}
-							onCancel={cancelRename}
+							onSave={rename.onSave}
+							onCancel={rename.onCancel}
 							className="max-w-full"
 						/>
 					) : (

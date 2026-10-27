@@ -28,6 +28,10 @@ The grid, media, column and size views publish memoized arrays and were not affe
 - [x] Memoize the table's `sorting` and `columnSizing` state in `useTable`
 - [x] Make `setCurrentFiles` ignore a list holding the same files in the same order
 - [x] Regression test in the frontend CI list
+- [x] Share one open-file handler instead of one per visible item (`OpenFileProvider`)
+- [x] Grid cards and list rows take what they render as props, so selection and Explorer changes re-render only the items they concern
+- [x] Memoize the sidebar and split `SpaceItem` so its body ignores Explorer changes that do not affect it
+- [x] Keep the dnd-kit pointer sensor's identity across renders
 - [ ] Validate in the packaged release
 
 ## Acceptance Criteria
@@ -53,9 +57,19 @@ The grid, media, column and size views publish memoized arrays and were not affe
 - `bun run typecheck` and all 20 CI frontend test files pass, including the new `useTable.test.tsx`. Rust tests were not run: no Rust code changed.
 - All test processes, the forwarder and the copied profile were removed. The user's app and daemon were not stopped or modified.
 
+## Per-navigation render cost (2026-10-27, second pass)
+
+- A CDP harness over headless Chrome against `wing-server` and an isolated daemon counted React commits per folder change: about 20, of which about 5 re-rendered the whole sidebar (10 items and their subtrees) and every visible card.
+- Every grid card, list row and media item built its own open-file handler: an "Open With" query observer, an archive mutation, a translation hook and the whole Explorer context. `FileCard` and `TableRow` also read the selection context, so every selection or Explorer change re-rendered all of them despite `memo`.
+- `DndProvider` passed `useSensor` a new options object on every render. dnd-kit memoizes sensors on that object, so each render of the provider (once or more per navigation, through the tab manager) gave every `useDraggable` and `useDroppable` consumer a new context value: every file and sidebar item.
+- Chrome, 20 navigations, unminified build: `FileCard` fell from 7.0 to 1.8 ms per navigation and `useOpenFile` (5.1 ms) left the profile. Scripting time per navigation varied between 80 and 98 ms across runs, so the total is not reported as an improvement.
+- WebKitGTK release builds, the reporter's state and daemon, list view, three alternating runs of ten navigations each: median 87.5 ms before and 74.5 ms after; mean 113 and 106 ms; p90 unchanged around 245 ms. The slow tail is the first navigations of each freshly launched app.
+- `OpenFileProvider.test.tsx` checks that the whole tree shares one stable handler that runs the latest open logic.
+
 ## Remaining navigation cost, not fixed here
 
-- Each folder change still requests `files.directory_listing` twice, about 120 ms apart.
+- The first visit to a folder requests `files.directory_listing` twice, about 100 ms apart: the indexer's change events trigger a refetch. Later visits request it once. The second request does not delay the first paint.
 - Clicking a folder fetches `files.permissions` and `files.by_id` for the Inspector before the listing request starts.
-- Every sidebar `SpaceItem` re-renders on each folder change (about 80 ms of 1 s of render time over seven navigations in Chrome).
+- The sidebar item bodies still re-render two or three times per folder change, when the new folder's droppables register with dnd-kit.
+- The PathBar animates its width for 200 ms after each folder change; the TopBar re-measures it on every frame (about 10 small commits).
 - Thumbnails in `Downloads` arrive 200 to 490 ms after the listing.

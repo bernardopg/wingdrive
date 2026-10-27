@@ -52,15 +52,19 @@ import {
  *    - Adds item to space/group
  *    - Data: { type, spaceId, groupId? }
  */
+// Module-level so the sensor keeps its identity across renders. dnd-kit
+// memoizes sensors on the options object: a new literal on every render gave
+// every draggable and droppable (each file and sidebar item) a new context
+// value, re-rendering all of them whenever this provider rendered.
+const POINTER_SENSOR_OPTIONS = {
+	activationConstraint: {
+		distance: 8, // Require 8px movement before activating drag
+	},
+};
+
 export function DndProvider({ children }: { children: React.ReactNode }) {
 	const { t } = useTranslation("common");
-	const sensors = useSensors(
-		useSensor(PointerSensor, {
-			activationConstraint: {
-				distance: 8, // Require 8px movement before activating drag
-			},
-		}),
-	);
+	const sensors = useSensors(useSensor(PointerSensor, POINTER_SENSOR_OPTIONS));
 	const addItem = useLibraryMutation("spaces.add_item");
 	const reorderItems = useLibraryMutation("spaces.reorder_items");
 	const reorderGroups = useLibraryMutation("spaces.reorder_groups");
