@@ -6,8 +6,9 @@
 #[cfg(target_os = "linux")]
 use gtk::{gdk, Clipboard, TargetEntry, TargetFlags};
 
+/// `file://` URIs for absolute paths, percent-encoded so spaces, `#` and accents survive.
 #[cfg(any(target_os = "linux", test))]
-fn file_uris(paths: &[String]) -> Result<Vec<String>, String> {
+pub(crate) fn file_uris(paths: &[String]) -> Result<Vec<String>, String> {
 	paths
 		.iter()
 		.map(|path| {

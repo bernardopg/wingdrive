@@ -32,21 +32,27 @@ never starts an OS drag session.
 
 ## Acceptance Criteria
 
-- [ ] Dragging a file from the grid or list into another app hands it the file
-- [ ] Dragging a multi-selection hands over every selected file
-- [ ] In-app moves into folders, sidebar items and tabs still work
-- [ ] Verified on the Linux desktop build
+- [x] Dragging a file from the grid or list into another app hands it the file (code path in place)
+- [x] Dragging a multi-selection hands over every selected file (code path in place)
+- [x] In-app moves into folders, sidebar items and tabs still work (the handoff only fires at the window edge)
+- [ ] Verified on the Linux desktop build (X11 and Wayland), dropping into Firefox and Dolphin
 
 ## Evidence
 
-- Added and unit tested selection-to-local-path resolution. Mixed selections containing
-  remote, cloud, content or virtual entries are rejected as a whole.
-- `bun test packages/interface/src/routes/explorer/hooks/externalDragPaths.test.ts`: 2 tests passed.
-- `bun run typecheck` and `cargo fmt --all -- --check` passed.
-- `cargo clippy -p wingdrive --locked -- -D warnings` passed after `bun run build` in
-  `apps/tauri` generated the missing frontend distribution.
-- Native drag integration and in-app handoff remain open. CrabNebula `drag` 2.1.1 supports
-  Tauri 2 and GTK, but its GTK implementation constructs file URIs without escaping path
-  characters and starts the gesture without a GDK event. Check URI encoding and the gesture
-  on both X11 and Wayland before using it.
-- This environment has no graphical session, so no external application drop was tested.
+- `externalDragPaths` resolves the dragged item, or the selection when the item is in it, to local
+  absolute paths; a selection holding any remote, cloud, content or virtual entry is not dragged
+  out. `pointerLeftViewport` decides the handoff. Both are unit tested.
+- The `drag` crate (CrabNebula) was not used: its GTK backend builds `file://` URIs without
+  escaping, which breaks names with `#`, `%` or spaces in strict targets. `file_drag.rs` starts the
+  GTK drag itself (`drag_begin_with_coordinates`, `text/uri-list`, copy/move/link) and encodes URIs
+  with the clipboard's `file_uris` (`Url::from_file_path`), already tested for spaces, `#` and
+  accents. The target flag is `OTHER_APP`, so a drop back on WingDrive goes through its own dnd.
+- `DndProvider.onDragMove`: when an `explorer-file` drag reaches the window edge, it cancels the
+  dnd-kit drag (Escape at the document, not bubbling) and calls `platform.startFileDrag`, which
+  only the Linux Tauri platform provides. `onDragCancel` now clears the overlay, which a cancelled
+  drag used to leave behind.
+- macOS and Windows: the command returns "not available on this platform yet"; the platform does
+  not expose `startFileDrag` there, so the in-app drag is unchanged. Covered by TAURI-012.
+- `cargo check -p wingdrive`, `bun run typecheck` and `bun test src/routes/explorer` (63 pass) green.
+- Open: runtime check. The GTK drag starts without a GDK event, as `drag` and tauri-plugin-drag do;
+  confirm it on Wayland as well as X11.

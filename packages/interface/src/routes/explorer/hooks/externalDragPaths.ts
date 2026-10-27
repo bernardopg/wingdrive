@@ -24,3 +24,17 @@ export function externalDragPaths(
 	}
 	return paths;
 }
+
+/**
+ * Whether the pointer reached the window edge. The webview keeps receiving the
+ * pointer while the button is held, so leaving it shows as coordinates at or
+ * past the viewport bounds.
+ */
+export function pointerLeftViewport(
+	x: number,
+	y: number,
+	width: number,
+	height: number
+): boolean {
+	return x <= 0 || y <= 0 || x >= width - 1 || y >= height - 1;
+}

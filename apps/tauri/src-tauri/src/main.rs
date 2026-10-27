@@ -4,6 +4,7 @@
 mod background;
 mod clipboard;
 mod drag;
+mod file_drag;
 mod file_opening;
 #[cfg(target_os = "linux")]
 mod filemanager1;
@@ -2483,6 +2484,7 @@ fn main() {
 			files::resolve_symlink,
 			clipboard::write_file_clipboard,
 			clipboard::read_file_clipboard,
+			file_drag::start_file_drag,
 			undo::file_identity,
 			undo::undo_move,
 			undo::undo_empty_folder,

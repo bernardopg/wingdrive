@@ -6,18 +6,27 @@ import {
 	useSensors,
 	pointerWithin,
 } from "@dnd-kit/core";
-import type { CollisionDetection } from "@dnd-kit/core";
-import { useState } from "react";
+import type { CollisionDetection, DragMoveEvent } from "@dnd-kit/core";
+import { useMemo, useRef, useState } from "react";
 import { House, Clock, Heart, Folders } from "@phosphor-icons/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@wingdrive/primitives";
-import { useLibraryMutation, useWingDriveClient } from "../contexts/WingDriveContext";
+import { usePlatform } from "../contexts/PlatformContext";
+import {
+	useLibraryMutation,
+	useNormalizedQuery,
+	useWingDriveClient,
+} from "../contexts/WingDriveContext";
 import { useSidebarStore } from "@wingdrive/ts-client";
-import type { File, WingPath } from "@wingdrive/ts-client";
+import type { Device, File, WingPath } from "@wingdrive/ts-client";
 import { useSpaces } from "./SpacesSidebar/hooks/useSpaces";
 import { useFileOperationDialog } from "./modals/FileOperationModal";
 import { File as FileComponent } from "../routes/explorer/File";
 import { selectionCapabilities } from "../routes/explorer/fileCapabilities";
+import {
+	externalDragPaths,
+	pointerLeftViewport,
+} from "../routes/explorer/hooks/externalDragPaths";
 import { useTabManager } from "./TabManager/useTabManager";
 import { useTranslation } from "../i18n";
 import {
@@ -94,8 +103,52 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 		return [collisions[0]]; // First collision
 	};
 
+	const platform = usePlatform();
+	const { data: devicesData } = useNormalizedQuery({
+		query: "devices.list",
+		input: { include_offline: true, include_details: false },
+		resourceType: "device",
+		enabled: !!platform.startFileDrag,
+	});
+	const localSlug = useMemo(
+		() => (devicesData as Device[] | undefined)?.find((d) => d.is_current)?.slug,
+		[devicesData],
+	);
+	// One handoff per drag: the OS drag owns the pointer once it starts.
+	const handedOffRef = useRef(false);
+
 	const handleDragStart = (event: any) => {
+		handedOffRef.current = false;
 		setActiveItem(event.active.data.current);
+	};
+
+	// Files dragged past the window edge leave as an OS drag, so other apps
+	// (browsers, chats, editors, file managers) can take them.
+	const handleDragMove = (event: DragMoveEvent) => {
+		if (!platform.startFileDrag || handedOffRef.current) return;
+		const data = event.active.data.current;
+		if (data?.type !== "explorer-file") return;
+		const start = event.activatorEvent;
+		if (!(start instanceof PointerEvent || start instanceof MouseEvent)) return;
+		const x = start.clientX + event.delta.x;
+		const y = start.clientY + event.delta.y;
+		if (!pointerLeftViewport(x, y, window.innerWidth, window.innerHeight)) return;
+		const paths = externalDragPaths(data.file, data.selectedFiles ?? [], localSlug);
+		if (paths.length === 0) return;
+
+		handedOffRef.current = true;
+		// End the in-app drag first: under the OS drag grab the webview never
+		// sees the pointer go up. dnd-kit cancels on Escape at the document;
+		// not bubbling keeps window keybinds from seeing it.
+		document.dispatchEvent(
+			new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: false }),
+		);
+		platform.startFileDrag(paths).catch((error) => {
+			toast.error({
+				title: t("dnd.dragOutFailed"),
+				body: String(error),
+			});
+		});
 	};
 
 	const handleDragEnd = async (event: any) => {
@@ -426,7 +479,9 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			sensors={sensors}
 			collisionDetection={customCollision}
 			onDragStart={handleDragStart}
+			onDragMove={handleDragMove}
 			onDragEnd={handleDragEnd}
+			onDragCancel={() => setActiveItem(null)}
 		>
 			{children}
 			<DragOverlay dropAnimation={null}>

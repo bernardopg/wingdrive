@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'bun:test';
 import type {File, WingPath} from '@wingdrive/ts-client';
 import {mapLocationToFile} from '@wingdrive/ts-client';
-import {externalDragPaths} from './externalDragPaths';
+import {externalDragPaths, pointerLeftViewport} from './externalDragPaths';
 
 function file(id: string, wing_path: WingPath): File {
 	return {id, name: id, kind: 'File', wing_path} as File;
@@ -31,5 +31,16 @@ describe('externalDragPaths', () => {
 		expect(externalDragPaths(cloud, [cloud], 'device-a')).toEqual([]);
 		expect(externalDragPaths(a, [a, location], 'device-a')).toEqual([]);
 		expect(externalDragPaths(missingPath, [missingPath], 'device-a')).toEqual([]);
+	});
+});
+
+describe('pointerLeftViewport', () => {
+	it('is true at or past any edge and false inside', () => {
+		expect(pointerLeftViewport(400, 300, 800, 600)).toBe(false);
+		expect(pointerLeftViewport(1, 1, 800, 600)).toBe(false);
+		expect(pointerLeftViewport(0, 300, 800, 600)).toBe(true);
+		expect(pointerLeftViewport(-20, 300, 800, 600)).toBe(true);
+		expect(pointerLeftViewport(400, 599, 800, 600)).toBe(true);
+		expect(pointerLeftViewport(900, 300, 800, 600)).toBe(true);
 	});
 });

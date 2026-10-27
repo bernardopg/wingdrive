@@ -6,6 +6,7 @@
 		"reload": "Recarregar aplicativo"
 	},
 	"dnd": {
+		"dragOutFailed": "Não foi possível arrastar os arquivos para fora do WingDrive",
 		"virtualLocationsCannotMove": "Locais, volumes e dispositivos não podem ser movidos.",
 		"itemTypes": {
 			"overview": "Visão geral",
