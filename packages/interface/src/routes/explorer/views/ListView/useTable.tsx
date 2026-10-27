@@ -69,6 +69,7 @@ const columns: ColumnDef<File>[] = [
 	}
 ];
 
+const HIDDEN_COLUMNS = {folders: false, created: false};
 const NAME_SIZE = 300;
 const OTHER_COLUMNS = columns.filter((column) => column.header && column.id !== 'name');
 
@@ -95,9 +96,17 @@ export function useTable(files: File[], availableWidth: number) {
 	const {sortBy, sortDirection, viewSettings} = useExplorer();
 	const {activeTabId, getExplorerState, updateExplorerState} =
 		useTabManager();
-	const defaultSorting = [{id: sortBy, desc: sortDirection === 'Desc'}];
-	const savedSorting =
-		getExplorerState(activeTabId).listSorting ?? defaultSorting;
+	const listSorting = getExplorerState(activeTabId).listSorting;
+	// The sorted rows are recomputed whenever this array changes identity, and
+	// ListView publishes new rows to the Explorer, which renders it again.
+	// A fresh array on every render therefore looped forever.
+	const sorting = useMemo<SortingState>(
+		() => [
+			...(viewSettings.foldersFirst ? [{id: 'folders', desc: false}] : []),
+			...(listSorting ?? [{id: sortBy, desc: sortDirection === 'Desc'}])
+		],
+		[viewSettings.foldersFirst, listSorting, sortBy, sortDirection]
+	);
 	const previousSort = useRef({sortBy, sortDirection});
 	// The tab this list belongs to, even while another tab is active.
 	const [tabId] = useState(activeTabId);
@@ -115,6 +124,10 @@ export function useTable(files: File[], availableWidth: number) {
 			});
 		}
 	}, [sortBy, sortBy, sortDirection, activeTabId, updateExplorerState]);
+	const filledSizing = useMemo(
+		() => fillNameColumn(columnSizing, availableWidth),
+		[columnSizing, availableWidth]
+	);
 	const core = useMemo(() => getCoreRowModel<File>(), []);
 	const sorted = useMemo(() => getSortedRowModel<File>(), []);
 	const table = useReactTable({
@@ -126,14 +139,9 @@ export function useTable(files: File[], availableWidth: number) {
 		columnResizeMode: 'onChange',
 		enableSortingRemoval: false,
 		state: {
-			sorting: [
-				...(viewSettings.foldersFirst
-					? [{id: 'folders', desc: false}]
-					: []),
-				...savedSorting
-			],
-			columnVisibility: {folders: false, created: false},
-			columnSizing: fillNameColumn(columnSizing, availableWidth)
+			sorting,
+			columnVisibility: HIDDEN_COLUMNS,
+			columnSizing: filledSizing
 		},
 		onColumnSizingChange: (updater) => {
 			setColumnSizing((previous) => {
