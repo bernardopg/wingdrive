@@ -85,6 +85,9 @@ export type Platform = {
 	/** Open the user's terminal in a folder */
 	openTerminal?(path: string): Promise<void>;
 
+	/** The user's home folder on this device (Tauri only) */
+	homeDir?(): Promise<string>;
+
 	/** Make an application the default for this file's type */
 	setDefaultAppForPath?(path: string, appId: string): Promise<void>;
 	resolveSymlink?(path: string): Promise<[string, boolean]>;

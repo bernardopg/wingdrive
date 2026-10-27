@@ -1,10 +1,11 @@
 import {useVirtualizer, type VirtualItem} from '@tanstack/react-virtual';
 import type {File, WingPath} from '@wingdrive/ts-client';
 import clsx from 'clsx';
-import {memo, useCallback, useRef} from 'react';
+import {memo, useCallback, useMemo, useRef} from 'react';
 import {useNormalizedQuery} from '../../../../contexts/WingDriveContext';
 import {useExplorer} from '../../context';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
+import {filterFiles} from '../../hooks/folderFilter';
 import {useOpenFile} from '../../hooks/useOpenFile';
 import {ColumnItem} from './ColumnItem';
 import {useTranslation} from '../../../../i18n';
@@ -80,6 +81,8 @@ const ColumnItemWrapper = memo(function ColumnItemWrapper({
 	);
 });
 
+const NO_FILES: File[] = [];
+
 interface ColumnProps {
 	path: WingPath | null;
 	isSelected: (fileId: string) => boolean;
@@ -95,6 +98,8 @@ interface ColumnProps {
 	columnIndex: number;
 	isActive: boolean;
 	virtualFiles?: File[];
+	/** Folder filter text, passed to the active column only. */
+	filter?: string | null;
 }
 
 export const Column = memo(function Column({
@@ -104,7 +109,8 @@ export const Column = memo(function Column({
 	onNavigate,
 	nextColumnPath,
 	isActive,
-	virtualFiles
+	virtualFiles,
+	filter
 }: ColumnProps) {
 	const { t } = useTranslation('explorer');
 	const parentRef = useRef<HTMLDivElement>(null);
@@ -126,7 +132,11 @@ export const Column = memo(function Column({
 		// includeDescendants defaults to false for exact directory matching
 	});
 
-	const files = virtualFiles || (directoryQuery.data as any)?.files || [];
+	const listed: File[] = virtualFiles || (directoryQuery.data as any)?.files || NO_FILES;
+	const files = useMemo(
+		() => (filter?.trim() ? filterFiles(listed, filter) : listed),
+		[listed, filter]
+	);
 
 	const rowVirtualizer = useVirtualizer({
 		count: files.length,

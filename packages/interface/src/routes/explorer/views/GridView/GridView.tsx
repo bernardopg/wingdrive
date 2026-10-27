@@ -5,6 +5,7 @@ import {isInputFocused} from '../../../../util/keybinds/platform';
 import {useExplorer} from '../../context';
 import {useEmptySpaceContextMenu} from '../../hooks/useEmptySpaceContextMenu';
 import {useExplorerFiles} from '../../hooks/useExplorerFiles';
+import {useFolderFilter} from '../../hooks/useFolderFilter';
 import {REVEAL_EVENT, type RevealDetail} from '../../pendingReveal';
 import {useTabScroll} from '../../hooks/useTabScroll';
 import {useSelection} from '../../SelectionContext';
@@ -53,12 +54,13 @@ export function GridView() {
 	const emptySpaceContextMenu = useEmptySpaceContextMenu();
 
 	// Get files from centralized hook (handles search, virtual, and directory)
-	const {files, isLoading, source} = useExplorerFiles();
+	const {files: listedFiles, isLoading, source} = useExplorerFiles();
+	const {files, unfilteredCount} = useFolderFilter(listedFiles);
 
 	// Publishing the collection also reconciles the selection against it.
 	useEffect(() => {
-		setCurrentFiles(files);
-	}, [files, setCurrentFiles]);
+		setCurrentFiles(files, unfilteredCount);
+	}, [files, unfilteredCount, setCurrentFiles]);
 
 	const handleContainerClick = (e: React.MouseEvent) => {
 		if (e.target === e.currentTarget) {

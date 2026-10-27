@@ -66,11 +66,12 @@ export function ExplorerView() {
 		currentFiles,
 		columnStack,
 		operationalPath,
-		setFolderFilter
+		setFolderFilter,
+		unfilteredFileCount
 	} = useExplorer();
 
 	const {isVirtualView} = useVirtualListing();
-	const {error: listingError, unfilteredCount} = useExplorerFiles();
+	const {error: listingError} = useExplorerFiles();
 	const queryClient = useQueryClient();
 	const routerNavigate = useNavigate();
 	const isPreviewActive = !!quickPreviewFileId;
@@ -139,8 +140,8 @@ export function ExplorerView() {
 			) {
 				navigateToPath(columnStack[columnStack.length - 1]);
 			}
-			// The filter bar lives in grid and list only; never leave it hiding items elsewhere.
-			setFolderFilter(null);
+			// Knowledge view has no filter bar; never leave a filter hiding items there.
+			if (newMode === 'knowledge') setFolderFilter(null);
 			setViewMode(newMode as ViewMode);
 		},
 		[viewMode, columnStack, navigateToPath, setViewMode, setFolderFilter]
@@ -348,14 +349,13 @@ export function ExplorerView() {
 				)}
 			>
 				{mode.type === 'search' && <SearchToolbar />}
-				{/* Grid and list show the folder listing itself; the other views list it their own way. */}
-				{mode.type === 'browse' &&
-					(viewMode === 'grid' || viewMode === 'list') && (
-						<FolderFilterBar
-							shown={currentFiles.length}
-							total={unfilteredCount ?? currentFiles.length}
-						/>
-					)}
+				{/* Each view filters its own listing; knowledge view is not a file listing. */}
+				{mode.type === 'browse' && viewMode !== 'knowledge' && (
+					<FolderFilterBar
+						shown={currentFiles.length}
+						total={unfilteredFileCount ?? currentFiles.length}
+					/>
+				)}
 				<div
 					className={clsx(
 						'flex-1',
@@ -402,10 +402,7 @@ export function ExplorerView() {
 					</>
 				</div>
 				{!listingError && viewMode !== 'size' && (
-					<ExplorerStatusBar
-						path={pathBarPath}
-						unfilteredCount={unfilteredCount}
-					/>
+					<ExplorerStatusBar path={pathBarPath} />
 				)}
 			</div>
 		</>

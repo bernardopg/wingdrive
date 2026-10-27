@@ -17,6 +17,7 @@ import {useDraggableFile} from '../../hooks/useDraggableFile';
 import {useSelection} from '../../SelectionContext';
 import {formatBytes} from '../../utils';
 import {useExplorerFiles} from '../../hooks/useExplorerFiles';
+import {useFolderFilter} from '../../hooks/useFolderFilter';
 import {i18n, useTranslation} from '../../../../i18n';
 
 // Cache for computed colors
@@ -371,7 +372,7 @@ export function SizeView() {
 	}, [directoryQuery.isSuccess, activeTabId, currentPath]);
 
 	// Only show files if they match the current tab and path
-	const files = useMemo(() => {
+	const sizedFiles = useMemo(() => {
 		if (usesExplorerFiles) {
 			return searchFiles;
 		}
@@ -392,11 +393,11 @@ export function SizeView() {
 
 		return directoryQuery.data.files;
 	}, [usesExplorerFiles, searchFiles, directoryQuery.data, activeTabId, currentPath, dataSource]);
+	const {files, unfilteredCount} = useFolderFilter(sizedFiles);
 
-	// Update explorer context with raw file count (not filtered)
 	useEffect(() => {
-		setCurrentFiles(files);
-	}, [files, setCurrentFiles]);
+		setCurrentFiles(files, unfilteredCount);
+	}, [files, unfilteredCount, setCurrentFiles]);
 
 
 	const svgRef = useRef<SVGSVGElement>(null);

@@ -10,14 +10,12 @@ import {summarizeFiles, volumeForPath} from './statusBar';
 interface ExplorerStatusBarProps {
 	/** Folder whose volume reports free space; null in views without one. */
 	path: WingPath | null;
-	/** Listing size before the folder filter, while a filter narrows it. */
-	unfilteredCount?: number;
 }
 
 /** Item counts, the selection and the drive's free space, under the view. */
-export function ExplorerStatusBar({path, unfilteredCount}: ExplorerStatusBarProps) {
+export function ExplorerStatusBar({path}: ExplorerStatusBarProps) {
 	const {t} = useTranslation('explorer');
-	const {currentFiles, devices} = useExplorer();
+	const {currentFiles, devices, unfilteredFileCount} = useExplorer();
 	const {selectedFiles} = useSelection();
 
 	const physical = path && 'Physical' in path ? path.Physical : null;
@@ -48,9 +46,9 @@ export function ExplorerStatusBar({path, unfilteredCount}: ExplorerStatusBarProp
 	if (selectedFiles.length > 0) {
 		parts.push(t('statusBar.selected', {count: selectedFiles.length}));
 		if (selection.bytes > 0) parts.push(formatBytes(selection.bytes));
-	} else if (unfilteredCount !== undefined) {
+	} else if (unfilteredFileCount !== null) {
 		parts.push(
-			t('statusBar.filtered', {shown: currentFiles.length, total: unfilteredCount})
+			t('statusBar.filtered', {shown: currentFiles.length, total: unfilteredFileCount})
 		);
 	} else {
 		if (listing.folders > 0) parts.push(t('statusBar.folders', {count: listing.folders}));
