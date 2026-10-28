@@ -1807,7 +1807,15 @@ fn find_daemon_binary() -> Result<std::path::PathBuf, String> {
 	);
 	let daemon_plain = format!("wing-daemon{}", std::env::consts::EXE_SUFFIX);
 
-	[&daemon_with_triple, &daemon_plain]
+	// A debug build runs from target/debug, where cargo keeps the plain binary
+	// current while the suffixed one is whatever tauri-build last copied there
+	// from a release build; picking that stale copy ran an old daemon in dev.
+	let order = if cfg!(debug_assertions) {
+		[&daemon_plain, &daemon_with_triple]
+	} else {
+		[&daemon_with_triple, &daemon_plain]
+	};
+	order
 		.iter()
 		.map(|name| bin_dir.join(name))
 		.find(|p| p.exists())

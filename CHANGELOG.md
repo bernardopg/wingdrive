@@ -22,7 +22,13 @@ and WingDrive lacked, plus Explorer performance and folder size fixes (#286 to
   filter is active, the selection's count and size, and free space on the
   folder's drive.
 - Ctrl+L edits the location, with the path selected. `~` and `~/…` expand to
-  the home folder.
+  the home folder, and names without a leading `/` are read from the folder
+  shown, with `.` and `..`.
+- Middle-click or Ctrl+click on a volume, device, location or network mount in
+  the sidebar, and middle-click on a folder, opens it in a new background tab.
+- Drop files on a tab to copy or move them into the folder that tab shows.
+  Holding them over a tab highlights it and switches to it after 400 ms (was
+  one second, with no feedback).
 
 ### Fixed
 
@@ -37,6 +43,7 @@ and WingDrive lacked, plus Explorer performance and folder size fixes (#286 to
 - Dragging a file toward the window edge no longer scrolls wide list views
   sideways.
 - A drag cancelled with Escape no longer leaves its preview on screen.
+- Folders with `%` in their name open, and their tabs show their name.
 
 ## 2.1.1 — 2026-10-23
 

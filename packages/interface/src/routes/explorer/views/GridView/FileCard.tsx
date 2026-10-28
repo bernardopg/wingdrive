@@ -9,7 +9,7 @@ import {VolumeSizeBar} from '../../components/VolumeSizeBar';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
-import {useOpenFileAction} from '../../OpenFileProvider';
+import {useMiddleClickOpensTab, useOpenFileAction} from '../../OpenFileProvider';
 import {formatBytes} from '../../utils';
 
 interface FileCardProps {
@@ -55,6 +55,7 @@ export const FileCard = memo(function FileCard({
 	};
 
 	const handleDoubleClick = () => openFile(file);
+	const handleAuxClick = useMiddleClickOpensTab(file);
 
 	const handleContextMenu = async (e: React.MouseEvent) => {
 		e.preventDefault();
@@ -134,6 +135,7 @@ export const FileCard = memo(function FileCard({
 				selected={selected && !dndIsDragging}
 				onClick={handleClick}
 				onDoubleClick={handleDoubleClick}
+				onAuxClick={handleAuxClick}
 				onContextMenu={handleContextMenu}
 				layout="column"
 				className={clsx(

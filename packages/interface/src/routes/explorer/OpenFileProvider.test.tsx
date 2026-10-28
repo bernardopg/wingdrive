@@ -21,7 +21,9 @@ mock.module('./hooks/useOpenFile', () => ({
 
 const {act, useState} = await import('react');
 const {createRoot} = await import('react-dom/client');
-const {OpenFileProvider, useOpenFileAction} = await import('./OpenFileProvider');
+const {OpenFileProvider, useOpenFileAction, useOpenInNewTabAction, folderRoute} =
+	await import('./OpenFileProvider');
+const {TabManagerContext} = await import('../../components/TabManager/TabManagerContext');
 
 (globalThis as {IS_REACT_ACT_ENVIRONMENT?: boolean}).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -57,5 +59,46 @@ describe('OpenFileProvider', () => {
 		await open({id: 'a'});
 		expect(opened).toEqual(['a@1']);
 		await act(async () => root.unmount());
+	});
+
+	it('opens routes in a background tab through one stable action', async () => {
+		const created: unknown[][] = [];
+		const actions: unknown[] = [];
+		let setVersion: (v: number) => void = () => {};
+		function Tabs({children}: {children: React.ReactNode}) {
+			const [version, set] = useState(0);
+			setVersion = set;
+			// A new context value per render, as the tab manager gives on every navigation.
+			const value = {version, createTab: (...args: unknown[]) => created.push(args)};
+			return (
+				<TabManagerContext.Provider value={value as never}>{children}</TabManagerContext.Provider>
+			);
+		}
+		function Opener() {
+			actions.push(useOpenInNewTabAction());
+			return null;
+		}
+		const root = createRoot(document.createElement('div'));
+		await act(async () =>
+			root.render(
+				<Tabs>
+					<OpenFileProvider>
+						<Opener />
+					</OpenFileProvider>
+				</Tabs>
+			)
+		);
+		await act(async () => setVersion(1));
+
+		expect(new Set(actions).size).toBe(1);
+		(actions[0] as (route: string, title?: string) => void)('/explorer?x', 'Root');
+		expect(created).toEqual([['Root', '/explorer?x', {background: true}]]);
+		await act(async () => root.unmount());
+	});
+
+	it('gives folders and virtual items a route, and files none', () => {
+		const path = {Physical: {device_slug: 'd', path: '/a'}};
+		expect(folderRoute({kind: 'Directory', wing_path: path} as never)).toContain('/explorer?path=');
+		expect(folderRoute({kind: 'File', wing_path: path} as never)).toBeNull();
 	});
 });

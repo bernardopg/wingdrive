@@ -33,6 +33,7 @@ import {useTabManager} from '../../components/TabManager/useTabManager';
 import {useNormalizedQuery} from '../../contexts/WingDriveContext';
 import {SelectionContext} from './SelectionContext';
 import {effectiveViewMode} from './views/effectiveViewMode';
+import {wingPathFromParam} from './wingPathParam';
 
 export type SortBy = DirectorySortBy | MediaSortBy;
 
@@ -287,7 +288,7 @@ const initialUIState: UIState = {
 	searchPage: 0
 };
 
-function targetToUrl(target: NavigationTarget): string {
+export function targetToUrl(target: NavigationTarget): string {
 	if (target.type === 'path') {
 		const encoded = encodeURIComponent(JSON.stringify(target.path));
 		return `/explorer?path=${encoded}`;
@@ -306,12 +307,8 @@ function urlToTarget(search: string): NavigationTarget | null {
 
 	const pathParam = params.get('path');
 	if (pathParam) {
-		try {
-			const path = JSON.parse(decodeURIComponent(pathParam)) as WingPath;
-			return {type: 'path', path};
-		} catch {
-			return null;
-		}
+		const path = wingPathFromParam(pathParam);
+		return path ? {type: 'path', path} : null;
 	}
 
 	const view = params.get('view');

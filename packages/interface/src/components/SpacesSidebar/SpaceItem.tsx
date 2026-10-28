@@ -15,6 +15,7 @@ import { useSpaceItemActive } from "./hooks/useSpaceItemActive";
 import { useSpaceItemDropZones } from "./hooks/useSpaceItemDropZones";
 import { useSpaceItemContextMenu } from "./hooks/useSpaceItemContextMenu";
 import { useExplorer, getSpaceItemKeyFromRoute } from "../../routes/explorer/context";
+import { useOpenInNewTabAction } from "../../routes/explorer/OpenFileProvider";
 import { ThemedIcon } from "../ThemedIcon";
 
 // Overrides for customizing item appearance and behavior
@@ -43,6 +44,8 @@ export interface SpaceItemProps {
 	onClick?: (e?: React.MouseEvent) => void;
 	onContextMenu?: (e: React.MouseEvent) => void;
 	className?: string;
+	/** Route a middle-click or Ctrl+click opens in a new tab, for items with a custom onClick. */
+	tabRoute?: string;
 }
 
 // Icon component that handles both component icons and image icons
@@ -200,8 +203,10 @@ const SpaceItemBody = memo(function SpaceItemBody({
 	className,
 	isActive,
 	loadPreferencesForSpaceItem,
+	tabRoute,
 }: SpaceItemBodyProps) {
 	const navigate = useNavigate();
+	const openInNewTab = useOpenInNewTabAction();
 
 	// Merge legacy props into overrides
 	const effectiveOverrides: SpaceItemOverrides = {
@@ -264,7 +269,18 @@ const SpaceItemBody = memo(function SpaceItemBody({
 		: undefined;
 
 	// Event handlers
+	const newTabRoute = tabRoute ?? path;
+	const openInTab = (e: React.MouseEvent) => {
+		if (!newTabRoute) return false;
+		e.preventDefault();
+		e.stopPropagation();
+		openInNewTab(newTabRoute, label);
+		return true;
+	};
+
 	const handleClick = (e: React.MouseEvent) => {
+		// Ctrl+click opens a new tab, as in a browser.
+		if ((e.ctrlKey || e.metaKey) && openInTab(e)) return;
 		if (effectiveOverrides.onClick) {
 			effectiveOverrides.onClick(e);
 		} else if (path) {
@@ -326,6 +342,9 @@ const SpaceItemBody = memo(function SpaceItemBody({
 
 				<button
 					onClick={handleClick}
+					onAuxClick={(e) => {
+						if (e.button === 1) openInTab(e);
+					}}
 					onContextMenu={handleContextMenu}
 					{...(sortable
 						? { ...sortableAttributes, ...sortableListeners }
