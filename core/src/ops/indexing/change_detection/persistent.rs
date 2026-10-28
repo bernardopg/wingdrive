@@ -150,6 +150,118 @@ impl DatabaseAdapter {
 		let model = q.one(&self.db).await?;
 		Ok(model.map(|m| m.id))
 	}
+
+	/// Adds a change in one entry's share of the folder totals to every directory
+	/// above it, and `children` to its direct parent's child count.
+	///
+	/// Folder totals are otherwise only computed by the aggregation phase of an
+	/// indexing run, so watcher changes left every folder above them stale. Run it
+	/// while the closure rows that place the entry are present: before a delete,
+	/// and on both sides of a move. Hard links added or removed here are counted
+	/// as plain files until the next full scan recomputes the totals.
+	async fn adjust_ancestor_totals(
+		&self,
+		entry_id: i32,
+		parent_id: Option<i32>,
+		bytes: i64,
+		files: i32,
+		children: i32,
+	) -> Result<()> {
+		use sea_orm::sea_query::{Expr, ExprTrait};
+
+		if bytes == 0 && files == 0 && children == 0 {
+			return Ok(());
+		}
+
+		let ancestor_ids: Vec<i32> = entities::entry_closure::Entity::find()
+			.filter(entities::entry_closure::Column::DescendantId.eq(entry_id))
+			.filter(entities::entry_closure::Column::Depth.gt(0))
+			.all(&self.db)
+			.await?
+			.into_iter()
+			.map(|row| row.ancestor_id)
+			.collect();
+		if ancestor_ids.is_empty() {
+			return Ok(());
+		}
+
+		let now = chrono::Utc::now();
+		if bytes != 0 || files != 0 {
+			// Bump indexed_at so sync picks up the new totals, as aggregation does.
+			entities::entry::Entity::update_many()
+				.col_expr(
+					entities::entry::Column::AggregateSize,
+					Expr::col(entities::entry::Column::AggregateSize).add(bytes),
+				)
+				.col_expr(
+					entities::entry::Column::FileCount,
+					Expr::col(entities::entry::Column::FileCount).add(files),
+				)
+				.col_expr(entities::entry::Column::IndexedAt, Expr::value(now))
+				.filter(entities::entry::Column::Id.is_in(ancestor_ids.clone()))
+				.filter(entities::entry::Column::Kind.eq(1))
+				.exec(&self.db)
+				.await?;
+		}
+		if let (true, Some(parent_id)) = (children != 0, parent_id) {
+			entities::entry::Entity::update_many()
+				.col_expr(
+					entities::entry::Column::ChildCount,
+					Expr::col(entities::entry::Column::ChildCount).add(children),
+				)
+				.col_expr(entities::entry::Column::IndexedAt, Expr::value(now))
+				.filter(entities::entry::Column::Id.eq(parent_id))
+				.exec(&self.db)
+				.await?;
+		}
+
+		// Listings show these folders' sizes; tell clients they changed.
+		let uuids: Vec<Uuid> = entities::entry::Entity::find()
+			.filter(entities::entry::Column::Id.is_in(ancestor_ids))
+			.all(&self.db)
+			.await?
+			.into_iter()
+			.filter_map(|entry| entry.uuid)
+			.collect();
+		if !uuids.is_empty() {
+			crate::domain::ResourceManager::new(
+				Arc::new(self.db.clone()),
+				self.context.events.clone(),
+			)
+			.emit_resource_events("entry", uuids)
+			.await?;
+		}
+		Ok(())
+	}
+
+	/// Applies `sign` (1 or -1) times the entry's share of the folder totals above
+	/// it, counting it once among its parent's children. Errors are logged, not
+	/// returned: stale totals must not fail the change itself.
+	async fn shift_entry_totals(&self, entry: &entities::entry::Model, sign: i32) {
+		let (bytes, files) = entry_share(entry);
+		if let Err(e) = self
+			.adjust_ancestor_totals(
+				entry.id,
+				entry.parent_id,
+				bytes * i64::from(sign),
+				files * sign,
+				sign,
+			)
+			.await
+		{
+			tracing::warn!(entry_id = entry.id, error = %e, "Failed to update folder totals");
+		}
+	}
+}
+
+/// Bytes and files an entry adds to the folders above it: a directory its own
+/// totals, a file or symlink its size and one file.
+fn entry_share(entry: &entities::entry::Model) -> (i64, i32) {
+	match entry.kind {
+		1 => (entry.aggregate_size, entry.file_count),
+		0 | 2 => (entry.size, 1),
+		_ => (0, 0),
+	}
 }
 
 #[async_trait::async_trait]
@@ -255,6 +367,7 @@ impl ChangeHandler for DatabaseAdapter {
 			.one(&self.db)
 			.await?
 			.ok_or_else(|| anyhow::anyhow!("Entry not found after creation"))?;
+		self.shift_entry_totals(&entry, 1).await;
 
 		Ok(EntryRef {
 			id: entry.id,
@@ -267,9 +380,28 @@ impl ChangeHandler for DatabaseAdapter {
 	async fn update(&mut self, entry: &EntryRef, metadata: &DirEntry) -> Result<()> {
 		use crate::ops::indexing::database_storage::DatabaseStorage;
 
+		let before = entities::entry::Entity::find_by_id(entry.id)
+			.one(&self.db)
+			.await?;
 		DatabaseStorage::update_entry(&self.db, entry.id, metadata)
 			.await
 			.map_err(|e| anyhow::anyhow!("Failed to update entry: {}", e))?;
+
+		// A resize changes the bytes above the entry, never the counts.
+		if let Some(before) = before {
+			if let Some(after) = entities::entry::Entity::find_by_id(entry.id)
+				.one(&self.db)
+				.await?
+			{
+				let bytes = entry_share(&after).0 - entry_share(&before).0;
+				if let Err(e) = self
+					.adjust_ancestor_totals(after.id, after.parent_id, bytes, 0, 0)
+					.await
+				{
+					tracing::warn!(entry_id = after.id, error = %e, "Failed to update folder totals");
+				}
+			}
+		}
 
 		Ok(())
 	}
@@ -301,6 +433,14 @@ impl ChangeHandler for DatabaseAdapter {
 			self.entry_id_cache
 				.insert(new_parent_path.to_path_buf(), parent_id);
 		}
+
+		// Leave the old folders while the closure still places the entry under them.
+		if let Some(before) = entities::entry::Entity::find_by_id(entry.id)
+			.one(&self.db)
+			.await?
+		{
+			self.shift_entry_totals(&before, -1).await;
+		}
 		DatabaseStorage::move_entry(
 			&mut state,
 			&self.db,
@@ -314,6 +454,13 @@ impl ChangeHandler for DatabaseAdapter {
 
 		self.entry_id_cache.remove(old_path);
 		self.entry_id_cache.insert(new_path.to_path_buf(), entry.id);
+
+		if let Some(after) = entities::entry::Entity::find_by_id(entry.id)
+			.one(&self.db)
+			.await?
+		{
+			self.shift_entry_totals(&after, 1).await;
+		}
 
 		Ok(())
 	}
@@ -374,6 +521,11 @@ impl ChangeHandler for DatabaseAdapter {
 					)
 					.await;
 			}
+		}
+
+		// Leave the folders above while the closure still places the entry there.
+		if let Some(root) = entries_to_delete.iter().find(|e| e.id == entry.id) {
+			self.shift_entry_totals(root, -1).await;
 		}
 
 		let txn = self.db.begin().await?;
