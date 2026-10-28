@@ -3,6 +3,41 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 2.2.0 — 2026-10-28
+
+File manager features that Dolphin, Nautilus, Finder and Windows Explorer have
+and WingDrive lacked, plus Explorer performance and folder size fixes (#286 to
+#290).
+
+### Added
+
+- Drag files out of the Explorer into other apps on Linux: browsers, chat
+  apps, editors and other file managers receive them. Dragging a selected item
+  takes the whole selection. Names with spaces, `#`, `%` or accents arrive
+  intact.
+- Filter the open folder by name with Ctrl+Shift+F, in list, grid, media and
+  column views. Text with `*`, `?` or `[` is read as a glob. Select All and
+  file commands act on the filtered items only.
+- Status bar under the Explorer: folder and file counts, "M of N" while a
+  filter is active, the selection's count and size, and free space on the
+  folder's drive.
+- Ctrl+L edits the location, with the path selected. `~` and `~/…` expand to
+  the home folder.
+
+### Fixed
+
+- Folder sizes follow changes: creating, resizing, moving or deleting a file
+  updates the size, file count and item count of every folder above it, which
+  used to wait for the next full rescan.
+- The list view no longer re-renders the Explorer in an endless loop, which
+  made folder navigation take seconds and kept a CPU core busy even with the
+  window hidden (DESK-024).
+- Folder changes no longer re-render every item of the listing.
+- The list view's Size column shows a folder's content size, as the grid does.
+- Dragging a file toward the window edge no longer scrolls wide list views
+  sideways.
+- A drag cancelled with Escape no longer leaves its preview on screen.
+
 ## 2.1.1 — 2026-10-23
 
 Explorer listing fixes for the desktop file manager (#272, #275 and later).
