@@ -2,6 +2,7 @@ import {
 	ArrowCounterClockwise,
 	Copy,
 	FilePlus,
+	FileText,
 	FolderPlus,
 	MagnifyingGlass,
 	SelectionAll,
@@ -11,6 +12,7 @@ import {
 import {useDuplicatesDialog} from '../../../components/modals/DuplicatesModal';
 import {useClipboard} from '../../../hooks/useClipboard';
 import {useContextMenu} from '../../../hooks/useContextMenu';
+import {useLibraryQuery} from '../../../contexts/WingDriveContext';
 import {useUndo} from '../../../hooks/useUndo';
 import {useExplorer} from '../context';
 import {useSelection} from '../SelectionContext';
@@ -31,7 +33,13 @@ export function useEmptySpaceContextMenu() {
 	const pasteFiles = usePasteFiles();
 	const undo = useUndo();
 	const openTerminal = useOpenTerminal();
-	const {newFile} = useCreateEntry();
+	const {newFile, newFromTemplate} = useCreateEntry();
+	// Small and cheap, and the user may add templates while the app runs.
+	const {data: templatesData} = useLibraryQuery(
+		{type: 'files.templates', input: {}},
+		{staleTime: 30_000}
+	);
+	const templates = templatesData?.templates ?? [];
 	const openDuplicates = useDuplicatesDialog();
 
 	return useContextMenu({
@@ -58,6 +66,19 @@ export function useEmptySpaceContextMenu() {
 				},
 				keybindId: 'explorer.newFile',
 				condition: () => !!operationalPath && 'Physical' in operationalPath
+			},
+			{
+				type: 'submenu',
+				icon: FileText,
+				label: t('contextMenu.newFromTemplate'),
+				condition: () =>
+					!!operationalPath && 'Physical' in operationalPath && templates.length > 0,
+				submenu: templates.map((template) => ({
+					label: template.name,
+					onClick: () => {
+						void newFromTemplate(template);
+					}
+				}))
 			},
 			{
 				icon: Copy,

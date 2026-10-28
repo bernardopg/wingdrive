@@ -235,3 +235,9 @@ With "Show in Groups" on in the view settings, grid and list views split the fol
 | Tags (list) | First tag, then "No Tags" |
 
 `groupFiles` in `views/grouping.ts` keeps the listing order inside each section and orders sections by their first file, so the sort direction carries over. The views then publish the regrouped order with `setCurrentFiles`, so Shift-click ranges and keyboard focus follow what is on screen. The grid starts every section on a new row (`buildGridLayout`), and Up and Down keep the column across section headers (`gridNeighbor`). The list inserts header items between rows (`buildListLayout`) and maps file positions to virtual items for scrolling.
+
+## New from Template
+
+The empty-space context menu lists the files in the user's templates folder under "New from Template", as Nautilus and Dolphin do under "New Document". `files.templates` resolves the folder from `XDG_TEMPLATES_DIR` in `~/.config/user-dirs.dirs`, so localized folders such as `~/Modelos` work, and falls back to `~/Templates`. A folder set to the home folder disables templates, as the XDG user-dirs spec describes. Hidden files and subfolders are not listed.
+
+Choosing a template runs `files.createFromTemplate`, which copies it under the first free name (`Letter.odt`, then `Letter 2.odt`), never replaces an existing file, and keeps the template's permissions so script templates stay executable. The copy is selected and renamed in place, and Ctrl+Z removes it.

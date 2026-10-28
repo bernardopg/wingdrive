@@ -602,6 +602,23 @@ folder_path: WingPath;
 job_receipt?: JobReceipt | null };
 
 /**
+ * Input for creating a file from a template
+ */
+export type CreateFromTemplateInput = { 
+/**
+ * Template file to copy, usually listed by `files.templates`
+ */
+template: WingPath; 
+/**
+ * Directory that receives the copy
+ */
+parent: WingPath; 
+/**
+ * Name of the new file
+ */
+name: string };
+
+/**
  * Input for creating a new archive source
  */
 export type CreateSourceInput = { 
@@ -4509,6 +4526,33 @@ export type TagType =
 "System";
 
 /**
+ * One file the New menu can create a copy of.
+ */
+export type TemplateFile = { 
+/**
+ * File name with extension, as the copy will be named.
+ */
+name: string; 
+/**
+ * Path of the template, for `files.createFromTemplate`.
+ */
+path: WingPath };
+
+/**
+ * Input for listing templates; the folder is the user's, not a parameter.
+ */
+export type TemplatesInput = Record<string, never>;
+
+/**
+ * The user's templates, sorted by name.
+ */
+export type TemplatesOutput = { 
+/**
+ * Templates folder in use, or `None` when there is none.
+ */
+directory: string | null; templates: TemplateFile[] };
+
+/**
  * Text highlighting information
  */
 export type TextHighlight = { field: string; text: string; start: number; end: number };
@@ -5574,6 +5618,7 @@ export type LibraryAction =
   |  { type: 'files.copy'; input: FileCopyInput; output: JobReceipt }
   |  { type: 'files.createFile'; input: CreateFileInput; output: CreateEntryOutput }
   |  { type: 'files.createFolder'; input: CreateFolderInput; output: CreateFolderOutput }
+  |  { type: 'files.createFromTemplate'; input: CreateFromTemplateInput; output: CreateEntryOutput }
   |  { type: 'files.createSymlink'; input: CreateSymlinkInput; output: CreateEntryOutput }
   |  { type: 'files.delete'; input: FileDeleteInput; output: JobReceipt }
   |  { type: 'files.duplicate_detection'; input: DuplicateDetectionInput; output: JobReceipt }
@@ -5665,6 +5710,7 @@ export type LibraryQuery =
   |  { type: 'files.directory_sizes'; input: DirectorySizesInput; output: DirectorySizesOutput }
   |  { type: 'files.media_listing'; input: MediaListingInput; output: MediaListingOutput }
   |  { type: 'files.permissions'; input: PermissionsQuery; output: PermissionsOutput }
+  |  { type: 'files.templates'; input: TemplatesInput; output: TemplatesOutput }
   |  { type: 'files.unique_to_location'; input: UniqueToLocationInput; output: UniqueToLocationOutput }
   |  { type: 'files.vcs_status'; input: VcsStatusInput; output: VcsStatusOutput }
   |  { type: 'jobs.active'; input: ActiveJobsInput; output: ActiveJobsOutput }
@@ -5732,6 +5778,7 @@ export const WIRE_METHODS = {
     'files.copy': 'action:files.copy.input',
     'files.createFile': 'action:files.createFile.input',
     'files.createFolder': 'action:files.createFolder.input',
+    'files.createFromTemplate': 'action:files.createFromTemplate.input',
     'files.createSymlink': 'action:files.createSymlink.input',
     'files.delete': 'action:files.delete.input',
     'files.duplicate_detection': 'action:files.duplicate_detection.input',
@@ -5823,6 +5870,7 @@ export const WIRE_METHODS = {
     'files.directory_sizes': 'query:files.directory_sizes',
     'files.media_listing': 'query:files.media_listing',
     'files.permissions': 'query:files.permissions',
+    'files.templates': 'query:files.templates',
     'files.unique_to_location': 'query:files.unique_to_location',
     'files.vcs_status': 'query:files.vcs_status',
     'jobs.active': 'query:jobs.active',

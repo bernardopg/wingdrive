@@ -1,5 +1,5 @@
 import {toast} from '@wingdrive/primitives';
-import type {File, WingPath} from '@wingdrive/ts-client';
+import type {File, TemplateFile, WingPath} from '@wingdrive/ts-client';
 import {useCallback} from 'react';
 
 import {usePlatform} from '../../../contexts/PlatformContext';
@@ -31,14 +31,15 @@ function diskName(file: File): string {
 }
 
 /**
- * Creates empty files and symbolic links in the operational directory.
- * The new entry is selected and, for files, renamed in place once the
- * listing shows it.
+ * Creates empty files, copies of templates and symbolic links in the
+ * operational directory. The new entry is selected and, for files, renamed
+ * in place once the listing shows it.
  */
 export function useCreateEntry() {
 	const {t} = useTranslation('explorer');
 	const {operationalPath, currentFiles} = useExplorer();
 	const createFile = useLibraryMutation('files.createFile');
+	const createFromTemplate = useLibraryMutation('files.createFromTemplate');
 	const createSymlink = useLibraryMutation('files.createSymlink');
 	const refetchListings = useRefetchFileListings();
 	const platform = usePlatform();
@@ -81,6 +82,26 @@ export function useCreateEntry() {
 		}
 	}, [operationalPath, currentFiles, createFile, recordUndo, refetchListings, t]);
 
+	const newFromTemplate = useCallback(
+		async (template: TemplateFile) => {
+			if (!operationalPath) return;
+			const name = nextFreeName(template.name, currentFiles.map(diskName));
+			try {
+				const {path} = await createFromTemplate.mutateAsync({
+					template: template.path,
+					parent: operationalPath,
+					name
+				});
+				if ('Physical' in path) requestReveal(path.Physical.path, {rename: true});
+				await recordUndo(path, t('undo.newFile'));
+				refetchListings();
+			} catch (error) {
+				toast.error(t('errors.failedToCreateFile', {error}));
+			}
+		},
+		[operationalPath, currentFiles, createFromTemplate, recordUndo, refetchListings, t]
+	);
+
 	const newLink = useCallback(
 		async (target: File) => {
 			if (!operationalPath) return;
@@ -104,5 +125,5 @@ export function useCreateEntry() {
 	[operationalPath, currentFiles, createSymlink, recordUndo, refetchListings, t]
 	);
 
-	return {newFile, newLink};
+	return {newFile, newFromTemplate, newLink};
 }

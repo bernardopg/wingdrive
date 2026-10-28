@@ -1,7 +1,8 @@
 //! # Create files and links
 //!
-//! `files.createFile` makes an empty file and `files.createSymlink` a symbolic
-//! link, the two entries a file manager creates besides folders. Both refuse
+//! `files.createFile` makes an empty file, `files.createFromTemplate` a copy of
+//! a file from the templates folder, and `files.createSymlink` a symbolic link,
+//! the entries a file manager creates besides folders. All of them refuse
 //! to replace an existing name, because the frontend picks a free name from
 //! a listing that can be stale by the time the action runs. Only paths on
 //! this device are accepted; remote devices need their own daemon to write.
@@ -39,6 +40,17 @@ pub struct CreateEntryOutput {
 	pub path: WingPath,
 }
 
+/// Input for creating a file from a template
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct CreateFromTemplateInput {
+	/// Template file to copy, usually listed by `files.templates`
+	pub template: WingPath,
+	/// Directory that receives the copy
+	pub parent: WingPath,
+	/// Name of the new file
+	pub name: String,
+}
+
 /// Input for creating a symbolic link
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct CreateSymlinkInput {
@@ -54,6 +66,12 @@ pub struct CreateSymlinkInput {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateFileAction {
 	input: CreateFileInput,
+}
+
+/// Action for creating a file from a template
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateFromTemplateAction {
+	input: CreateFromTemplateInput,
 }
 
 /// Action for creating a symbolic link
@@ -101,6 +119,47 @@ pub async fn create_empty_file(path: &Path) -> Result<(), ActionError> {
 		.await
 		.map(|_| ())
 		.map_err(|e| creation_error(e, path))
+}
+
+/// Copies `template` to `path`, failing if anything already has that name.
+///
+/// The copy keeps the template's permissions, so an executable script template
+/// stays executable. A copy that fails halfway is removed.
+pub async fn copy_template(template: &Path, path: &Path) -> Result<(), ActionError> {
+	let read_error = |error: std::io::Error| {
+		ActionError::Internal(format!("Failed to read {}: {error}", template.display()))
+	};
+	let metadata = tokio::fs::metadata(template).await.map_err(read_error)?;
+	if !metadata.is_file() {
+		return Err(ActionError::Validation {
+			field: "template".to_string(),
+			message: format!("{} is not a file", template.display()),
+		});
+	}
+	let mut source = tokio::fs::File::open(template).await.map_err(read_error)?;
+
+	let mut destination = tokio::fs::OpenOptions::new()
+		.write(true)
+		.create_new(true)
+		.open(path)
+		.await
+		.map_err(|e| creation_error(e, path))?;
+
+	let copied = async {
+		tokio::io::copy(&mut source, &mut destination).await?;
+		destination.sync_all().await?;
+		tokio::fs::set_permissions(path, metadata.permissions()).await
+	}
+	.await;
+
+	if let Err(error) = copied {
+		let _ = tokio::fs::remove_file(path).await;
+		return Err(ActionError::Internal(format!(
+			"Failed to create {}: {error}",
+			path.display()
+		)));
+	}
+	Ok(())
 }
 
 /// Creates a symbolic link at `link` pointing to `target`.
@@ -151,6 +210,43 @@ impl LibraryAction for CreateFileAction {
 	}
 }
 
+impl LibraryAction for CreateFromTemplateAction {
+	type Input = CreateFromTemplateInput;
+	type Output = CreateEntryOutput;
+
+	fn from_input(input: Self::Input) -> Result<Self, String> {
+		Ok(Self { input })
+	}
+
+	async fn validate(
+		&self,
+		_library: &Arc<crate::library::Library>,
+		_context: Arc<CoreContext>,
+	) -> Result<ValidationResult, ActionError> {
+		validate_name(&self.input.name)?;
+		local_dir(&self.input.parent, "parent")?;
+		local_dir(&self.input.template, "template")?;
+		Ok(ValidationResult::Success { metadata: None })
+	}
+
+	async fn execute(
+		self,
+		_library: Arc<crate::library::Library>,
+		_context: Arc<CoreContext>,
+	) -> Result<Self::Output, ActionError> {
+		let parent = local_dir(&self.input.parent, "parent")?;
+		let template = local_dir(&self.input.template, "template")?;
+		copy_template(template, &parent.join(&self.input.name)).await?;
+		Ok(CreateEntryOutput {
+			path: self.input.parent.join(&self.input.name),
+		})
+	}
+
+	fn action_kind(&self) -> &'static str {
+		"files.createFromTemplate"
+	}
+}
+
 impl LibraryAction for CreateSymlinkAction {
 	type Input = CreateSymlinkInput;
 	type Output = CreateEntryOutput;
@@ -195,6 +291,7 @@ impl LibraryAction for CreateSymlinkAction {
 }
 
 crate::register_library_action!(CreateFileAction, "files.createFile");
+crate::register_library_action!(CreateFromTemplateAction, "files.createFromTemplate");
 crate::register_library_action!(CreateSymlinkAction, "files.createSymlink");
 
 #[cfg(test)]
@@ -212,6 +309,48 @@ mod tests {
 		let error = create_empty_file(&path).await.unwrap_err();
 		assert!(matches!(error, ActionError::Validation { .. }), "{error:?}");
 		assert_eq!(std::fs::read_to_string(&path).unwrap(), "kept");
+	}
+
+	#[tokio::test]
+	async fn template_is_copied_once_with_its_contents() {
+		let dir = tempfile::tempdir().unwrap();
+		let template = dir.path().join("Letter.odt");
+		std::fs::write(&template, "template body").unwrap();
+		let path = dir.path().join("Letter 2.odt");
+
+		copy_template(&template, &path).await.unwrap();
+		assert_eq!(std::fs::read_to_string(&path).unwrap(), "template body");
+
+		std::fs::write(&path, "kept").unwrap();
+		let error = copy_template(&template, &path).await.unwrap_err();
+		assert!(matches!(error, ActionError::Validation { .. }), "{error:?}");
+		assert_eq!(std::fs::read_to_string(&path).unwrap(), "kept");
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn template_keeps_its_permissions() {
+		use std::os::unix::fs::PermissionsExt;
+
+		let dir = tempfile::tempdir().unwrap();
+		let template = dir.path().join("script.sh");
+		std::fs::write(&template, "#!/bin/sh\n").unwrap();
+		std::fs::set_permissions(&template, std::fs::Permissions::from_mode(0o755)).unwrap();
+		let path = dir.path().join("new script.sh");
+
+		copy_template(&template, &path).await.unwrap();
+		let mode = std::fs::metadata(&path).unwrap().permissions().mode();
+		assert_eq!(mode & 0o777, 0o755);
+	}
+
+	#[tokio::test]
+	async fn a_folder_is_not_a_template() {
+		let dir = tempfile::tempdir().unwrap();
+		let error = copy_template(dir.path(), &dir.path().join("copy"))
+			.await
+			.unwrap_err();
+		assert!(matches!(error, ActionError::Validation { .. }), "{error:?}");
+		assert!(!dir.path().join("copy").exists());
 	}
 
 	#[cfg(unix)]
