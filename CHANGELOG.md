@@ -45,6 +45,13 @@ and WingDrive lacked, plus Explorer performance and folder size fixes (#286 to
 - A drag cancelled with Escape no longer leaves its preview on screen.
 - Folders with `%` in their name open, and their tabs show their name.
 
+### Changed
+
+- Dependency updates: Rust crates within their ranges (rustls 0.23.46,
+  parking_lot 0.13, jsonschema 0.60 and 96 others), Bun packages,
+  typescript-eslint 8.72, GitHub Actions, and Expo SDK 58 patch releases on
+  mobile. Unused graph packages (sigma, graphology) were removed.
+
 ## 2.1.1 — 2026-10-23
 
 Explorer listing fixes for the desktop file manager (#272, #275 and later).

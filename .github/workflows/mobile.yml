@@ -89,9 +89,14 @@ jobs:
       - name: Translation catalogs match
         run: bun run check:i18n
         working-directory: apps/mobile
+      # Checked against the installed expo package, not Expo's live version list: the online
+      # check failed every pull request whenever Expo shipped an SDK patch. New patches are
+      # reported weekly by expo-sdk-patches.yml instead.
       - name: Packages match the Expo SDK
         run: bunx expo install --check
         working-directory: apps/mobile
+        env:
+          EXPO_OFFLINE: '1'
       - name: Release version scheme
         run: python3 scripts/release/android_version.py --self-test
 
@@ -115,7 +120,7 @@ jobs:
           target: ${{ env.RUST_TARGET }}
           cache-key: mobile
           save-cache: ${{ github.ref == 'refs/heads/main' }}
-      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # v2.87.31
         with:
           tool: cargo-ndk@${{ env.CARGO_NDK_VERSION }}
       - name: Install the Android NDK
@@ -199,7 +204,7 @@ jobs:
         with:
           target: ${{ env.RUST_TARGET }}
           cache-key: mobile-release
-      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # v2.87.31
         with:
           tool: cargo-ndk@${{ env.CARGO_NDK_VERSION }}
       - name: Install the Android NDK
