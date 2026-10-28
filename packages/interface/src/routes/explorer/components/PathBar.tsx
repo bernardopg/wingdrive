@@ -401,7 +401,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 					trimmed.startsWith('~') && deviceInfo.device?.is_current
 						? ((await platform.homeDir?.()) ?? null)
 						: null;
-				const resolved = resolveTypedPath(trimmed, home);
+				const resolved = resolveTypedPath(trimmed, home, path.Physical.path);
 				// Keep the field open on an unresolved `~` rather than navigating somewhere else.
 				if (!resolved) return;
 				onNavigate({

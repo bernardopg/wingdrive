@@ -124,11 +124,10 @@ impl ChangeDetector {
 			self.path_to_entry.len()
 		));
 
-		use tracing::warn;
 		if self.path_to_entry.is_empty() {
-			warn!("ChangeDetector loaded 0 entries - database may be locked or empty");
+			tracing::warn!("ChangeDetector loaded 0 entries - database may be locked or empty");
 		} else {
-			warn!(
+			tracing::debug!(
 				"ChangeDetector loaded {} entries successfully",
 				self.path_to_entry.len()
 			);

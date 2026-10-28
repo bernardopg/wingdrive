@@ -183,7 +183,8 @@ interface TabManagerContextValue {
 	tabs: Tab[];
 	activeTabId: string;
 	router: Router;
-	createTab: (title?: string, path?: string) => void;
+	/** `background` opens the tab without switching to it, as a middle-click does in a browser. */
+	createTab: (title?: string, path?: string, options?: {background?: boolean}) => void;
 	closeTab: (tabId: string) => void;
 	/** Closes several tabs in one state transition (close others / to the right). */
 	closeTabs: (tabIds: string[]) => void;
@@ -423,7 +424,7 @@ export function TabManagerProvider({
 	}, []);
 
 	const createTab = useCallback(
-		(title?: string, path?: string) => {
+		(title?: string, path?: string, options?: {background?: boolean}) => {
 			const tabPath = path ?? defaultNewTabPath;
 			const [pathname, search = ''] = tabPath.split('?');
 			const derivedTitle =
@@ -449,7 +450,7 @@ export function TabManagerProvider({
 			setSelectionStates((prev) => new Map(prev).set(newTab.id, []));
 
 			setTabs((prev) => [...prev, newTab]);
-			setActiveTabId(newTab.id);
+			if (!options?.background) setActiveTabId(newTab.id);
 		},
 		[defaultNewTabPath]
 	);

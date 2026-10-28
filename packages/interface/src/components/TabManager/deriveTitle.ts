@@ -11,6 +11,7 @@
  * own title once the underlying resource loads.
  */
 import { i18n } from "../../i18n";
+import { wingPathFromParam } from "../../routes/explorer/wingPathParam";
 
 const ROUTE_TITLES: Record<string, string> = {
 	"/": "overview",
@@ -64,17 +65,10 @@ export function deriveTitleFromPath(
 		}
 
 		const pathParam = params.get("path");
-		if (pathParam) {
-			try {
-				const sdPath = JSON.parse(decodeURIComponent(pathParam));
-				if (sdPath?.Physical?.path) {
-					const fullPath = sdPath.Physical.path as string;
-					const parts = fullPath.split("/").filter(Boolean);
-					return parts[parts.length - 1] || i18n.t("dialogs:tabs.explorer");
-				}
-			} catch {
-				// Malformed path param: fall back to the generic label.
-			}
+		const sdPath = pathParam ? wingPathFromParam(pathParam) : null;
+		if (sdPath && "Physical" in sdPath) {
+			const parts = sdPath.Physical.path.split("/").filter(Boolean);
+			return parts[parts.length - 1] || i18n.t("dialogs:tabs.explorer");
 		}
 		return i18n.t("dialogs:tabs.explorer");
 	}

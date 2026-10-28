@@ -10,6 +10,7 @@ interface FileProps {
 	onClick?: (e: React.MouseEvent) => void;
 	onDoubleClick?: (e: React.MouseEvent) => void;
 	onContextMenu?: (e: React.MouseEvent) => void;
+	onAuxClick?: (e: React.MouseEvent) => void;
 	onMouseDown?: (e: React.MouseEvent) => void;
 	onMouseMove?: (e: React.MouseEvent) => void;
 	onMouseUp?: (e: React.MouseEvent) => void;
@@ -26,6 +27,7 @@ function FileComponent({
 	onClick,
 	onDoubleClick,
 	onContextMenu,
+	onAuxClick,
 	onMouseDown,
 	onMouseMove,
 	onMouseUp,
@@ -41,6 +43,7 @@ function FileComponent({
 			onClick={onClick}
 			onDoubleClick={onDoubleClick}
 			onContextMenu={onContextMenu}
+			onAuxClick={onAuxClick}
 			onMouseDown={onMouseDown}
 			onMouseMove={onMouseMove}
 			onMouseUp={onMouseUp}

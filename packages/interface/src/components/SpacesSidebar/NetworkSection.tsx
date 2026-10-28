@@ -6,6 +6,7 @@ import {useNavigate} from 'react-router-dom';
 import {useTranslation} from '../../i18n';
 
 import {usePlatform, type NetworkMount} from '../../contexts/PlatformContext';
+import {useOpenInNewTabAction} from '../../routes/explorer/OpenFileProvider';
 import {explorerUrlForDirectory} from '../TabManager/LaunchRequestSync';
 
 const MOUNTS_KEY = ['gvfs', 'mounts'];
@@ -97,6 +98,7 @@ export function NetworkSection() {
 		enabled: supported && !!platform.listMountableVolumes,
 		refetchInterval: 10000
 	});
+	const openInNewTab = useOpenInNewTabAction();
 
 	if (!supported) return null;
 
@@ -143,7 +145,16 @@ export function NetworkSection() {
 						<button
 							type="button"
 							className="flex min-w-0 flex-1 items-center gap-2 text-left"
-							onClick={() => navigate(explorerUrlForDirectory(mount.path))}
+							onClick={(e) => {
+								const route = explorerUrlForDirectory(mount.path);
+								if (e.ctrlKey || e.metaKey) openInNewTab(route);
+								else navigate(route);
+							}}
+							onAuxClick={(e) => {
+								if (e.button !== 1) return;
+								e.preventDefault();
+								openInNewTab(explorerUrlForDirectory(mount.path));
+							}}
 						>
 							<Icon className="size-4 shrink-0" weight="bold" />
 							<span className="truncate">{mount.name}</span>

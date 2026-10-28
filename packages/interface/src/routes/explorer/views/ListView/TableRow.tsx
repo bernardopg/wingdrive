@@ -9,7 +9,7 @@ import {InlineNameEdit} from '../../components/InlineNameEdit';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
-import {useOpenFileAction} from '../../OpenFileProvider';
+import {useMiddleClickOpensTab, useOpenFileAction} from '../../OpenFileProvider';
 import {ROW_HEIGHT, TABLE_PADDING_X} from './useTable';
 
 interface Rename {
@@ -69,6 +69,7 @@ export const TableRow = memo(function TableRow({
 	);
 
 	const handleDoubleClick = () => openFile(file);
+	const handleAuxClick = useMiddleClickOpensTab(file);
 
 	const handleContextMenu = useCallback(
 		async (e: React.MouseEvent) => {
@@ -134,6 +135,7 @@ export const TableRow = memo(function TableRow({
 			style={{height: ROW_HEIGHT}}
 			onClick={handleClick}
 			onDoubleClick={handleDoubleClick}
+			onAuxClick={handleAuxClick}
 			onContextMenu={handleContextMenu}
 			{...attributes}
 			{...listeners}

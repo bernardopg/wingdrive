@@ -1,14 +1,14 @@
 ---
 id: DESK-025
 title: Drag files from the Explorer into other apps
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
 sprint: S04
 tags: [desktop, explorer, dnd, linux]
-last_updated: 2026-10-27
+last_updated: 2026-10-28
 ---
 
 ## Description
@@ -36,7 +36,7 @@ never starts an OS drag session.
 - [x] Dragging a multi-selection hands over every selected file (code path in place)
 - [x] In-app moves into folders, sidebar items and tabs still work (the handoff only fires at the window edge)
 - [x] Verified on the Linux desktop build under X11, dropping into a GTK `text/uri-list` target
-- [ ] Verified under native Wayland (GDK_BACKEND=wayland) by dropping into Firefox or Dolphin
+- [x] Verified under native Wayland (GDK_BACKEND=wayland) by dropping into Firefox or Dolphin
 
 ## Evidence
 
@@ -67,3 +67,5 @@ never starts an OS drag session.
 - Open: native Wayland. Not automated, since the author's Hyprland session was in use and no nested
   compositor is installed. GTK takes the drag serial from the seat's implicit grab, which the held
   button provides, so it is expected to work; check it by hand.
+- Wayland, 2026-10-28: the author ran the debug build with `GDK_BACKEND=wayland` on Hyprland and
+  confirmed dragging files out to other apps works.

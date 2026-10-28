@@ -4,6 +4,7 @@ import { useDroppable } from "@dnd-kit/core";
 import type { File } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../File";
 import { useDraggableFile } from "../../hooks/useDraggableFile";
+import { useMiddleClickOpensTab } from "../../OpenFileProvider";
 
 interface ColumnItemProps {
 	file: File;
@@ -31,6 +32,8 @@ export const ColumnItem = memo(
 			},
 			[onClick],
 		);
+
+		const handleAuxClick = useMiddleClickOpensTab(file);
 
 		const handleDoubleClick = useCallback(() => {
 			if (onDoubleClick) {
@@ -77,6 +80,7 @@ export const ColumnItem = memo(
 					selected={selected && !isDragging}
 					onClick={handleClick}
 					onDoubleClick={handleDoubleClick}
+					onAuxClick={handleAuxClick}
 					onContextMenu={onContextMenu}
 					layout="row"
 					data-file-id={file.id}

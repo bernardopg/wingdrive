@@ -17,6 +17,7 @@ import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
 import {useCallback, useEffect, useMemo} from 'react';
 import type {Tab} from '.';
+import {folderOfRoute} from '../../routes/explorer/wingPathParam';
 import {useContextMenu} from '../../hooks/useContextMenu';
 import {
 	getComboForPlatform,
@@ -26,6 +27,8 @@ import {
 import {getKeybind} from '../../util/keybinds/registry';
 import {useTabManager} from './useTabManager';
 import {useTranslation} from '../../i18n';
+
+const TAB_SWITCH_DELAY_MS = 400;
 
 interface SortableTabProps {
 	tab: Tab;
@@ -65,21 +68,23 @@ const {t} = useTranslation('dialogs');
 		id: tab.id,
 		data: {
 			type: 'tab',
-			tabId: tab.id
+			tabId: tab.id,
+			// Files dropped on a tab go into the folder it shows.
+			targetPath: folderOfRoute(tab.savedPath)
 		}
 	});
 
+	// Holding dragged files over another tab switches to it, so the drop can
+	// land in one of its subfolders. Short enough to feel immediate, long
+	// enough not to flip tabs while the pointer only crosses the bar.
 	const {active} = useDndContext();
+	const fileOverOtherTab =
+		isOver && !isActive && active?.data.current?.type === 'explorer-file';
 	useEffect(() => {
-		if (
-			!isOver ||
-			isActive ||
-			active?.data.current?.type !== 'explorer-file'
-		)
-			return;
-		const timer = setTimeout(() => onSwitch(tab.id), 1000);
+		if (!fileOverOtherTab) return;
+		const timer = setTimeout(() => onSwitch(tab.id), TAB_SWITCH_DELAY_MS);
 		return () => clearTimeout(timer);
-	}, [isOver, isActive, active, onSwitch, tab.id]);
+	}, [fileOverOtherTab, onSwitch, tab.id]);
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -143,8 +148,9 @@ const {t} = useTranslation('dialogs');
 			{...attributes}
 			{...listeners}
 			className={clsx(
-				'flex min-w-0 flex-1',
-				isDragging && 'z-50 opacity-50'
+				'flex min-w-0 flex-1 rounded-md',
+				isDragging && 'z-50 opacity-50',
+				fileOverOtherTab && 'ring-2 ring-inset ring-accent'
 			)}
 		>
 			<TabBarItem

@@ -1,6 +1,6 @@
 import { WifiHigh, WifiSlashIcon, Trash } from "@phosphor-icons/react";
 import { useNormalizedQuery, getDeviceIcon, useCoreMutation } from "../../contexts/WingDriveContext";
-import { useExplorer } from "../../routes/explorer/context";
+import { targetToUrl, useExplorer } from "../../routes/explorer/context";
 import { SpaceItem } from "./SpaceItem";
 import { GroupHeader } from "./GroupHeader";
 import type { ListLibraryDevicesInput, Device } from "@wingdrive/ts-client";
@@ -128,6 +128,7 @@ const { t } = useTranslation("navigation");
 										loadPreferencesForSpaceItem(`device:${device.id}`);
 										navigateToView("device", device.id);
 									}}
+									tabRoute={targetToUrl({ type: "view", view: "device", id: device.id })}
 									onContextMenu={handleDeviceContextMenu(device)}
 									allowInsertion={false}
 									isLastItem={index === devices.length - 1}
