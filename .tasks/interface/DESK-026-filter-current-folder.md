@@ -1,7 +1,7 @@
 ---
 id: DESK-026
 title: Filter the current folder by name
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: High
@@ -37,7 +37,7 @@ filtered items.
 - [x] Select all and file commands act only on the filtered items
 - [x] Escape and navigation clear the filter
 - [x] Unit tests cover the matcher
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -49,4 +49,11 @@ filtered items.
 - `FolderFilterBar` opens with Ctrl+Shift+F (`explorer.filterFolder`, in the shortcuts list), shows
   "M of N", and closes on Escape or the X button. `bun run typecheck` and `bun test src/routes/explorer`
   (60 pass) are green.
-- Open: runtime check on the Linux desktop build.
+- Runtime, 2026-10-27: debug desktop build (`cargo build -p wingdrive` with the built frontend), isolated daemon and library, private Xvfb `:77`, `GDK_BACKEND=x11`, driven with xdotool.
+  - Ctrl+Shift+F and "pas" narrowed the list to `pasta` with "1 of 2" in the bar and "1 of 2 items
+    shown" in the status bar; switching to column and grid view kept the filter and the count;
+    Escape in the field closed it and restored both items.
+  - Follow-up in this change: the filter now also narrows media view and the active column of column
+    view (`useFolderFilter`), and views publish the unfiltered size with `currentFiles`. Size view
+    is a full-screen visualization layered over the bar, so it has no filter, and switching to it
+    (or to knowledge view) clears the filter.

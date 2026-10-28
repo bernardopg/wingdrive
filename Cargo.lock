@@ -14013,7 +14013,7 @@ dependencies = [
 
 [[package]]
 name = "wing-cli"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -14047,7 +14047,7 @@ dependencies = [
 
 [[package]]
 name = "wing-core"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "aes-gcm 0.11.1",
  "anyhow",
@@ -14285,7 +14285,7 @@ dependencies = [
 
 [[package]]
 name = "wing-server"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -14337,7 +14337,7 @@ dependencies = [
 
 [[package]]
 name = "wing-tauri-core"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "anyhow",
  "serde",
@@ -14358,7 +14358,7 @@ dependencies = [
 
 [[package]]
 name = "wingdrive"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "axum",
  "blake3",

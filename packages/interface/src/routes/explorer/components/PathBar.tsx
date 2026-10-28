@@ -16,7 +16,7 @@ import {
 import {Button, CircleButton, Popover, usePopover} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {motion} from 'framer-motion';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {usePlatform} from '../../../contexts/PlatformContext';
 import {useKeybind} from '../../../hooks/useKeybind';
 import {useExplorer} from '../context';
@@ -302,6 +302,16 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editValue, setEditValue] = useState('');
 	const [editingAsUri, setEditingAsUri] = useState(false);
+	const editInputRef = useRef<HTMLInputElement>(null);
+	// Focus after the commit: autoFocus did not take when Ctrl+L opened the field.
+	useEffect(() => {
+		if (!isEditing) return;
+		const frame = requestAnimationFrame(() => {
+			editInputRef.current?.focus();
+			editInputRef.current?.select();
+		});
+		return () => cancelAnimationFrame(frame);
+	}, [isEditing]);
 	const {navigateToView} = useExplorer();
 	const platform = usePlatform();
 	const uri = sdPathToUri(path);
@@ -486,6 +496,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 
 				{isEditing ? (
 					<input
+						ref={editInputRef}
 						type="text"
 						value={editValue}
 						onChange={(e) => setEditValue(e.target.value)}

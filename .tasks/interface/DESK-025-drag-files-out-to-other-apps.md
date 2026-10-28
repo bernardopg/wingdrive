@@ -35,7 +35,8 @@ never starts an OS drag session.
 - [x] Dragging a file from the grid or list into another app hands it the file (code path in place)
 - [x] Dragging a multi-selection hands over every selected file (code path in place)
 - [x] In-app moves into folders, sidebar items and tabs still work (the handoff only fires at the window edge)
-- [ ] Verified on the Linux desktop build (X11 and Wayland), dropping into Firefox and Dolphin
+- [x] Verified on the Linux desktop build under X11, dropping into a GTK `text/uri-list` target
+- [ ] Verified under native Wayland (GDK_BACKEND=wayland) by dropping into Firefox or Dolphin
 
 ## Evidence
 
@@ -54,5 +55,15 @@ never starts an OS drag session.
 - macOS and Windows: the command returns "not available on this platform yet"; the platform does
   not expose `startFileDrag` there, so the in-app drag is unchanged. Covered by TAURI-012.
 - `cargo check -p wingdrive`, `bun run typecheck` and `bun test src/routes/explorer` (63 pass) green.
-- Open: runtime check. The GTK drag starts without a GDK event, as `drag` and tauri-plugin-drag do;
-  confirm it on Wayland as well as X11.
+- Runtime, 2026-10-27: debug desktop build (`cargo build -p wingdrive` with the built frontend), isolated daemon and library, private Xvfb `:77`, `GDK_BACKEND=x11`, driven with xdotool.
+  - One file dragged past the window edge reached a GTK drop target as
+    `file:///…/a%20b%23c.txt` (copy action); a two-file selection arrived as both URIs, with
+    `caf%C3%A9%20100%25.txt` encoded correctly.
+  - Dragging a row into a folder row still opened the File Operation dialog, and Move moved the file.
+  - Found and fixed: dnd-kit auto-scroll slid wide list views sideways on the way to the edge,
+    hiding the Name column. `holdScrollLeft` in `DndProvider` keeps the horizontal scroll of the
+    dragged item's containers during file drags, releasing one frame after the drag ends; vertical
+    auto-scroll is unchanged.
+- Open: native Wayland. Not automated, since the author's Hyprland session was in use and no nested
+  compositor is installed. GTK takes the drag serial from the seat's implicit grab, which the held
+  button provides, so it is expected to work; check it by hand.

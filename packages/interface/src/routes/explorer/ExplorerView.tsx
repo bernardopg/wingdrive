@@ -140,8 +140,8 @@ export function ExplorerView() {
 			) {
 				navigateToPath(columnStack[columnStack.length - 1]);
 			}
-			// Knowledge view has no filter bar; never leave a filter hiding items there.
-			if (newMode === 'knowledge') setFolderFilter(null);
+			// Size and knowledge views have no filter bar; never leave a filter hiding items there.
+			if (newMode === 'size' || newMode === 'knowledge') setFolderFilter(null);
 			setViewMode(newMode as ViewMode);
 		},
 		[viewMode, columnStack, navigateToPath, setViewMode, setFolderFilter]
@@ -349,8 +349,8 @@ export function ExplorerView() {
 				)}
 			>
 				{mode.type === 'search' && <SearchToolbar />}
-				{/* Each view filters its own listing; knowledge view is not a file listing. */}
-				{mode.type === 'browse' && viewMode !== 'knowledge' && (
+				{/* Each listing view filters itself; size and knowledge views are visualizations. */}
+				{mode.type === 'browse' && viewMode !== 'size' && viewMode !== 'knowledge' && (
 					<FolderFilterBar
 						shown={currentFiles.length}
 						total={unfilteredFileCount ?? currentFiles.length}

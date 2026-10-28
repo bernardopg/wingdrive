@@ -71,6 +71,34 @@ const POINTER_SENSOR_OPTIONS = {
 	},
 };
 
+/**
+ * Keeps the horizontal scroll of the dragged item's containers where it was.
+ * dnd-kit auto-scrolls on both axes, and heading for the window edge to drag
+ * files out to another app slid wide list views sideways, hiding the Name
+ * column. Vertical auto-scroll still works. Returns the release function.
+ */
+function holdScrollLeft(target: EventTarget | null): () => void {
+	const held = new Map<Element, number>();
+	for (let el = target instanceof Element ? target : null; el; el = el.parentElement) {
+		if (el.scrollWidth > el.clientWidth) held.set(el, el.scrollLeft);
+	}
+	if (held.size === 0) return () => {};
+	const restore = (event: Event) => {
+		const left = event.target instanceof Element ? held.get(event.target) : undefined;
+		if (left !== undefined && (event.target as Element).scrollLeft !== left) {
+			(event.target as Element).scrollLeft = left;
+		}
+	};
+	document.addEventListener("scroll", restore, true);
+	// The last auto-scroll step can land after the drag ends; its scroll event
+	// fires before the next animation frame, so release only then.
+	return () =>
+		requestAnimationFrame(() => {
+			for (const [el, left] of held) el.scrollLeft = left;
+			document.removeEventListener("scroll", restore, true);
+		});
+}
+
 export function DndProvider({ children }: { children: React.ReactNode }) {
 	const { t } = useTranslation("common");
 	const sensors = useSensors(useSensor(PointerSensor, POINTER_SENSOR_OPTIONS));
@@ -116,9 +144,20 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 	);
 	// One handoff per drag: the OS drag owns the pointer once it starts.
 	const handedOffRef = useRef(false);
+	const releaseScrollRef = useRef<() => void>(() => {});
+	const endDrag = () => {
+		releaseScrollRef.current();
+		releaseScrollRef.current = () => {};
+		setActiveItem(null);
+	};
 
 	const handleDragStart = (event: any) => {
 		handedOffRef.current = false;
+		releaseScrollRef.current();
+		releaseScrollRef.current =
+			event.active.data.current?.type === "explorer-file"
+				? holdScrollLeft(event.activatorEvent?.target ?? null)
+				: () => {};
 		setActiveItem(event.active.data.current);
 	};
 
@@ -154,7 +193,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 	const handleDragEnd = async (event: any) => {
 		const { active, over } = event;
 
-		setActiveItem(null);
+		endDrag();
 
 		if (!over) return;
 		// Switching tabs unmounts the source, so retain its data from drag start.
@@ -481,7 +520,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			onDragStart={handleDragStart}
 			onDragMove={handleDragMove}
 			onDragEnd={handleDragEnd}
-			onDragCancel={() => setActiveItem(null)}
+			onDragCancel={endDrag}
 		>
 			{children}
 			<DragOverlay dropAnimation={null}>
