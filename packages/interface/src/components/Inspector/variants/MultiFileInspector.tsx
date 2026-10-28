@@ -93,7 +93,7 @@ export function MultiFileInspector({ files }: MultiFileInspectorProps) {
 	}, [files]);
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-auto px-1 pb-10">
 			{/* Stacked thumbnails (v1 style) */}
 			<div className="px-2 pb-4">
 				<div className="relative w-full aspect-square flex items-center justify-center">
