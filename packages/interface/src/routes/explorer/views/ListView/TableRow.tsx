@@ -23,7 +23,10 @@ interface TableRowProps {
 	row: Row<File>;
 	file: File;
 	files: File[];
+	/** Position in the flat file order, for row striping. */
 	index: number;
+	/** Position among the virtualized items, which also count section headers. */
+	virtualIndex: number;
 	isSelected: boolean;
 	isFocused: boolean;
 	isPreviousSelected: boolean;
@@ -48,6 +51,7 @@ export const TableRow = memo(function TableRow({
 	file,
 	files,
 	index,
+	virtualIndex,
 	isSelected,
 	isFocused: _isFocused,
 	isPreviousSelected,
@@ -128,7 +132,7 @@ export const TableRow = memo(function TableRow({
 	return (
 		<div
 			ref={setCombinedNodeRef}
-			data-index={index}
+			data-index={virtualIndex}
 			data-file-id={file.id}
 			data-selectable="true"
 			aria-selected={isSelected}

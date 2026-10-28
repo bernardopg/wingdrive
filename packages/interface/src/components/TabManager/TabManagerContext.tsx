@@ -57,6 +57,8 @@ export interface TabExplorerState {
 	gapSize: number;
 	foldersFirst: boolean;
 	showHiddenFiles: boolean;
+	/** Split grid and list views into sections by the active sort key. */
+	groupItems: boolean;
 
 	// Column view state (serialized WingPath[] as JSON strings)
 	columnStack: string[];
@@ -84,6 +86,7 @@ const DEFAULT_EXPLORER_STATE: TabExplorerState = {
 	gapSize: 16,
 	foldersFirst: true,
 	showHiddenFiles: false,
+	groupItems: false,
 	columnStack: [],
 	scrollTop: 0,
 	scrollLeft: 0,

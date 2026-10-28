@@ -221,3 +221,17 @@ The query re-runs whenever the listing changes and when the window regains focus
 const {vcsStatus} = useExplorerFiles();
 const status = vcsStatusOf(vcsStatus, file); // "modified" | "added" | ... | null
 ```
+
+## Groups
+
+With "Show in Groups" on in the view settings, grid and list views split the folder into sections by the active sort key, the way Dolphin, Finder and Windows Explorer do. The setting is per tab, like "Folders First".
+
+| Sort key | Sections |
+|---|---|
+| Name | First letter, with digits and symbols under "Other" |
+| Modified, Created | Today, Yesterday, Last 7 Days, Last 30 Days, then months of this year, then years |
+| Size | The search size buckets (under 1 KB up to over 1 GB), with unmeasured folders apart |
+| Type | Folders, then each content kind alphabetically |
+| Tags (list) | First tag, then "No Tags" |
+
+`groupFiles` in `views/grouping.ts` keeps the listing order inside each section and orders sections by their first file, so the sort direction carries over. The views then publish the regrouped order with `setCurrentFiles`, so Shift-click ranges and keyboard focus follow what is on screen. The grid starts every section on a new row (`buildGridLayout`), and Up and Down keep the column across section headers (`gridNeighbor`). The list inserts header items between rows (`buildListLayout`) and maps file positions to virtual items for scrolling.

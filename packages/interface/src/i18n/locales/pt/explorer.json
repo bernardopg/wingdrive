@@ -145,7 +145,8 @@
 		"showFileSize": "Mostrar tamanho dos arquivos",
 		"calculateFolderSizes": "Calcular tamanhos das pastas",
 		"foldersFirst": "Pastas primeiro",
-		"showHiddenFiles": "Mostrar arquivos ocultos"
+		"showHiddenFiles": "Mostrar arquivos ocultos",
+		"groupItems": "Mostrar em grupos"
 	},
 	"search": {
 		"searchIn": "Pesquisar em:",
@@ -464,5 +465,14 @@
 		"added": "Adicionado",
 		"modified": "Modificado",
 		"conflicted": "Em conflito"
+	},
+	"groups": {
+		"folders": "Pastas",
+		"other": "Outros",
+		"today": "Hoje",
+		"yesterday": "Ontem",
+		"week": "Últimos 7 dias",
+		"month": "Últimos 30 dias",
+		"untagged": "Sem etiquetas"
 	}
 }

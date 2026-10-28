@@ -23,6 +23,8 @@ import {useSelection} from '../../SelectionContext';
 import {DragSelect} from './DragSelect';
 import {vcsStatusOf} from '../../components/vcsStatus';
 import {TableRow} from './TableRow';
+import {GROUP_HEADER_HEIGHT, GroupHeader, useGroupLabel} from '../GroupHeader';
+import {buildListLayout, groupFiles, isGroupBy} from '../grouping';
 import {useTranslation} from '../../../../i18n';
 import {
 	ROW_HEIGHT,
@@ -36,7 +38,8 @@ const NO_FILES: File[] = [];
 
 export const ListView = memo(function ListView() {
 	const {t} = useTranslation('explorer');
-	const {setCurrentFiles, scrollPosition} = useExplorer();
+	const {setCurrentFiles, scrollPosition, viewSettings} = useExplorer();
+	const groupLabel = useGroupLabel();
 	const {
 		focusedIndex,
 		setFocusedIndex,
@@ -76,7 +79,23 @@ export const ListView = memo(function ListView() {
 	const {files: listedFiles, vcsStatus} = useExplorerFiles();
 	const {files, unfilteredCount} = useFolderFilter(listedFiles);
 	const {table} = useTable(files, availableWidth);
-	const {rows} = table.getRowModel();
+	const {rows: sortedRows} = table.getRowModel();
+	// Sections follow the column the list is sorted by.
+	const sortColumn = table
+		.getState()
+		.sorting.find((entry) => entry.id !== 'folders')?.id;
+	const groupBy = viewSettings.groupItems && isGroupBy(sortColumn) ? sortColumn : null;
+	const groups = useMemo(
+		() => (groupBy ? groupFiles(sortedRows.map((row) => row.original), groupBy) : null),
+		[sortedRows, groupBy]
+	);
+	// Sections reorder the rows, and selection ranges follow what is on screen.
+	const rows = useMemo(() => {
+		if (!groups) return sortedRows;
+		const byId = new Map(sortedRows.map((row) => [row.original.id, row]));
+		return groups.flatMap((group) => group.files.map((file) => byId.get(file.id)!));
+	}, [groups, sortedRows]);
+	const layout = useMemo(() => buildListLayout(groups, rows.length), [groups, rows.length]);
 	const orderedFiles = useMemo(() => rows.map((row) => row.original), [rows]);
 	const columnSizingKey = JSON.stringify(table.getState().columnSizing);
 
@@ -87,15 +106,24 @@ export const ListView = memo(function ListView() {
 
 	// Virtual row rendering - uses the container as scroll element
 	const rowVirtualizer = useVirtualizer({
-		count: rows.length,
+		count: layout.items.length,
 		initialOffset: scrollPosition.top,
 		getScrollElement: useCallback(() => containerRef.current, []),
-		estimateSize: useCallback(() => ROW_HEIGHT, []),
+		estimateSize: useCallback(
+			(index: number) =>
+				layout.items[index]?.type === 'header' ? GROUP_HEADER_HEIGHT : ROW_HEIGHT,
+			[layout]
+		),
 		paddingStart: TABLE_HEADER_HEIGHT + TABLE_PADDING_Y,
 		paddingEnd: TABLE_PADDING_Y,
 		overscan: 15
 	});
 	useTabScroll(containerRef, rows.length);
+
+	// Item sizes are cached by index; headers move them when sections change.
+	useEffect(() => {
+		rowVirtualizer.measure();
+	}, [layout, rowVirtualizer]);
 
 	const virtualRows = rowVirtualizer.getVirtualItems();
 
@@ -120,13 +148,19 @@ export const ListView = memo(function ListView() {
 	rowVirtualizerRef.current = rowVirtualizer;
 	const filesRef = useRef(orderedFiles);
 	filesRef.current = orderedFiles;
+	const itemOfFileRef = useRef(layout.itemOfFile);
+	itemOfFileRef.current = layout.itemOfFile;
 
 	// Rows are virtualized, so a revealed file may not be in the DOM yet.
 	useEffect(() => {
 		const handleReveal = (event: Event) => {
 			const {fileId} = (event as CustomEvent<RevealDetail>).detail;
 			const index = filesRef.current.findIndex((file) => file.id === fileId);
-			if (index >= 0) rowVirtualizerRef.current.scrollToIndex(index, {align: 'center'});
+			if (index >= 0) {
+				rowVirtualizerRef.current.scrollToIndex(itemOfFileRef.current[index] ?? index, {
+					align: 'center'
+				});
+			}
 		};
 		window.addEventListener(REVEAL_EVENT, handleReveal);
 		return () => window.removeEventListener(REVEAL_EVENT, handleReveal);
@@ -163,9 +197,10 @@ export const ListView = memo(function ListView() {
 				}
 
 				// Scroll to keep selection visible
-				rowVirtualizerRef.current.scrollToIndex(newIndex, {
-					align: 'auto'
-				});
+				rowVirtualizerRef.current.scrollToIndex(
+					itemOfFileRef.current[newIndex] ?? newIndex,
+					{align: 'auto'}
+				);
 			}
 		};
 
@@ -312,16 +347,42 @@ export const ListView = memo(function ListView() {
 							}}
 						>
 							{virtualRows.map((virtualRow) => {
-								const row = rows[virtualRow.index];
+								const item = layout.items[virtualRow.index];
+								if (!item) return null;
+
+								if (item.type === 'header') {
+									return (
+										<div
+											key={`group:${item.group.key}`}
+											ref={rowVirtualizer.measureElement}
+											data-index={virtualRow.index}
+											style={{
+												paddingLeft: TABLE_PADDING_X + 8,
+												paddingRight: TABLE_PADDING_X + 8
+											}}
+										>
+											<GroupHeader
+												label={groupLabel(item.group.label)}
+												count={item.group.files.length}
+											/>
+										</div>
+									);
+								}
+
+								const row = rows[item.index];
 								if (!row) return null;
 
 								const file = row.original;
 								// Use O(1) lookup instead of O(n) selectedFiles.some()
 								const fileIsSelected = isSelected(file.id);
-								const isFocused =
-									focusedIndex === virtualRow.index;
-								const previousRow = rows[virtualRow.index - 1];
-								const nextRow = rows[virtualRow.index + 1];
+								const isFocused = focusedIndex === item.index;
+								// A header between two rows breaks the selection band.
+								const previousItem = layout.items[virtualRow.index - 1];
+								const nextItem = layout.items[virtualRow.index + 1];
+								const previousRow =
+									previousItem?.type === 'file' ? rows[previousItem.index] : undefined;
+								const nextRow =
+									nextItem?.type === 'file' ? rows[nextItem.index] : undefined;
 								// Use O(1) Set lookup for adjacent selection detection
 								const isPreviousSelected = previousRow
 									? selectedFileIds.has(
@@ -339,7 +400,8 @@ export const ListView = memo(function ListView() {
 										row={row}
 										file={file}
 										files={orderedFiles}
-										index={virtualRow.index}
+										index={item.index}
+										virtualIndex={virtualRow.index}
 										isSelected={fileIsSelected}
 										isFocused={isFocused}
 										isPreviousSelected={isPreviousSelected}

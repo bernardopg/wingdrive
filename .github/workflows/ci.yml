@@ -131,6 +131,7 @@ jobs:
           bun test packages/interface/src/components/Inspector/variants/checksum.test.ts
           bun test packages/interface/src/routes/explorer/views/ListView/useTable.test.tsx
           bun test packages/interface/src/routes/explorer/components/vcsStatus.test.ts
+          bun test packages/interface/src/routes/explorer/views/grouping.test.ts
           bun test packages/interface/src/routes/explorer/OpenFileProvider.test.tsx
 
   core:

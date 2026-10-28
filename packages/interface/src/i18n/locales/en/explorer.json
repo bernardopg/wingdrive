@@ -145,7 +145,8 @@
 		"showFileSize": "Show File Size",
 		"calculateFolderSizes": "Calculate Folder Sizes",
 		"foldersFirst": "Folders First",
-		"showHiddenFiles": "Show Hidden Files"
+		"showHiddenFiles": "Show Hidden Files",
+		"groupItems": "Show in Groups"
 	},
 	"search": {
 		"searchIn": "Search in:",
@@ -464,5 +465,14 @@
 		"added": "Added",
 		"modified": "Modified",
 		"conflicted": "Conflicted"
+	},
+	"groups": {
+		"folders": "Folders",
+		"other": "Other",
+		"today": "Today",
+		"yesterday": "Yesterday",
+		"week": "Last 7 Days",
+		"month": "Last 30 Days",
+		"untagged": "No Tags"
 	}
 }

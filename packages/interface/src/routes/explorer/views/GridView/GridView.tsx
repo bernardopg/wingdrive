@@ -13,6 +13,14 @@ import {useSelection} from '../../SelectionContext';
 import {DragSelect} from './DragSelect';
 import {FileCard} from './FileCard';
 import {useTranslation} from '../../../../i18n';
+import {GROUP_HEADER_HEIGHT, GroupHeader, useGroupLabel} from '../GroupHeader';
+import {
+	buildGridLayout,
+	gridNeighbor,
+	groupFiles,
+	isGroupBy,
+	type FileGroup
+} from '../grouping';
 
 const VIRTUALIZATION_THRESHOLD = 0; // Disabled - always virtualize
 let lastGridMeasurement: {key: string; width: number; height: number} | null = null;
@@ -42,7 +50,7 @@ function useCardProps(vcsStatus: VcsStatusOutput | undefined) {
 
 export function GridView() {
 	const {t} = useTranslation('explorer');
-	const {viewSettings, setCurrentFiles} = useExplorer();
+	const {viewSettings, sortBy, setCurrentFiles} = useExplorer();
 	const {
 		isSelected,
 		focusedIndex,
@@ -57,7 +65,17 @@ export function GridView() {
 	// Get files from centralized hook (handles search, virtual, and directory)
 	const {files: listedFiles, isLoading, source, vcsStatus} = useExplorerFiles();
 	const cardProps = useCardProps(vcsStatus);
-	const {files, unfilteredCount} = useFolderFilter(listedFiles);
+	const {files: shownFiles, unfilteredCount} = useFolderFilter(listedFiles);
+	const groupBy = viewSettings.groupItems && isGroupBy(sortBy) ? sortBy : null;
+	const groups = useMemo(
+		() => (groupBy ? groupFiles(shownFiles, groupBy) : null),
+		[shownFiles, groupBy]
+	);
+	// Sections reorder the listing, and selection ranges follow what is on screen.
+	const files = useMemo(
+		() => (groups ? groups.flatMap((group) => group.files) : shownFiles),
+		[groups, shownFiles]
+	);
 
 	// Publishing the collection also reconciles the selection against it.
 	useEffect(() => {
@@ -146,6 +164,7 @@ export function GridView() {
 			onContainerClick={handleContainerClick}
 			onContainerContextMenu={handleContainerContextMenu}
 			vcsStatus={vcsStatus}
+			groups={groups}
 		/>
 	);
 }
@@ -167,6 +186,8 @@ interface VirtualizedGridProps {
 	onContainerClick: (e: React.MouseEvent) => void;
 	onContainerContextMenu: (e: React.MouseEvent) => void;
 	vcsStatus: VcsStatusOutput | undefined;
+	/** Sections to draw, or `null` for a plain grid. */
+	groups: FileGroup[] | null;
 }
 
 function VirtualizedGrid({
@@ -180,9 +201,11 @@ function VirtualizedGrid({
 	setSelectedFiles,
 	onContainerClick,
 	onContainerContextMenu,
-	vcsStatus
+	vcsStatus,
+	groups
 }: VirtualizedGridProps) {
 	const cardProps = useCardProps(vcsStatus);
+	const groupLabel = useGroupLabel();
 	const {sidebarVisible, inspectorVisible, scrollPosition} = useExplorer();
 	const measurementKey = `${window.innerWidth}:${window.innerHeight}:${sidebarVisible}:${inspectorVisible}`;
 	const measurementKeyRef = useRef(measurementKey);
@@ -215,12 +238,15 @@ function VirtualizedGrid({
 		return Math.max(1, cols);
 	}, [containerWidth, gridSize, gapSize]);
 
-	const rowCount = Math.ceil(files.length / columns);
+	const layout = useMemo(
+		() => buildGridLayout(groups, files, columns),
+		[groups, files, columns]
+	);
 	const rowGap = 4; // Gap between rows
 
 	// Row virtualizer
 	const rowVirtualizer = useVirtualizer({
-		count: rowCount,
+		count: layout.rows.length,
 		initialOffset: scrollPosition.top,
 		initialRect: {width: containerWidth ?? 0, height: lastGridMeasurement?.key === measurementKey ? lastGridMeasurement.height : 0},
 		getScrollElement: () => parentRef.current,
@@ -242,10 +268,18 @@ function VirtualizedGrid({
 			observer.observe(instance.scrollElement);
 			return () => observer.disconnect();
 		},
-		estimateSize: () => gridSize + gapSize + rowGap,
+		estimateSize: (index) =>
+			layout.rows[index]?.type === 'header'
+				? GROUP_HEADER_HEIGHT
+				: gridSize + gapSize + rowGap,
 		overscan: 5
 	});
 	useTabScroll(parentRef, isInitialized ? files.length : 0);
+
+	// Row sizes are cached by index; headers move them when sections change.
+	useEffect(() => {
+		rowVirtualizer.measure();
+	}, [layout, rowVirtualizer]);
 
 	const virtualRows = rowVirtualizer.getVirtualItems();
 
@@ -260,7 +294,7 @@ function VirtualizedGrid({
 		const index = files.findIndex((file) => file.id === fileId);
 		if (index < 0) return;
 		pendingRevealRef.current = null;
-		rowVirtualizer.scrollToIndex(Math.floor(index / columns), {align: 'center'});
+		rowVirtualizer.scrollToIndex(layout.rowOfFile[index] ?? 0, {align: 'center'});
 	};
 	useEffect(() => {
 		const handleReveal = (event: Event) => {
@@ -272,7 +306,7 @@ function VirtualizedGrid({
 	}, []);
 	useEffect(() => {
 		applyRevealRef.current();
-	}, [files, columns, isInitialized]);
+	}, [files, layout, isInitialized]);
 
 	// Keyboard navigation with correct column count
 	useEffect(() => {
@@ -292,9 +326,9 @@ function VirtualizedGrid({
 			let newIndex = focusedIndex < 0 ? 0 : focusedIndex;
 
 			if (e.key === 'ArrowUp') {
-				newIndex = Math.max(0, newIndex - columns);
+				newIndex = gridNeighbor(layout, newIndex, 'up');
 			} else if (e.key === 'ArrowDown') {
-				newIndex = Math.min(files.length - 1, newIndex + columns);
+				newIndex = gridNeighbor(layout, newIndex, 'down');
 			} else if (e.key === 'ArrowLeft') {
 				newIndex = Math.max(0, newIndex - 1);
 			} else if (e.key === 'ArrowRight') {
@@ -320,7 +354,7 @@ function VirtualizedGrid({
 
 		window.addEventListener('keydown', handleKeyDown);
 		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [files, focusedIndex, columns, setFocusedIndex, setSelectedFiles]);
+	}, [files, focusedIndex, layout, setFocusedIndex, setSelectedFiles]);
 
 	return (
 		<div
@@ -342,12 +376,23 @@ function VirtualizedGrid({
 					}}
 				>
 					{virtualRows.map((virtualRow) => {
-						const startIndex = virtualRow.index * columns;
-						const endIndex = Math.min(
-							startIndex + columns,
-							files.length
-						);
-						const rowFiles = files.slice(startIndex, endIndex);
+						const row = layout.rows[virtualRow.index];
+						if (!row) return null;
+
+						if (row.type === 'header') {
+							return (
+								<GroupHeader
+									key={virtualRow.key}
+									label={groupLabel(row.group.label)}
+									count={row.group.files.length}
+									className="absolute left-0 w-full px-3"
+									style={{top: `${virtualRow.start}px`}}
+								/>
+							);
+						}
+
+						const startIndex = row.start;
+						const rowFiles = row.files;
 
 						return (
 							<div

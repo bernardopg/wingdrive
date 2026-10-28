@@ -200,6 +200,28 @@ export function ViewSettingsPanel({
 				</button>
 			</div>
 
+			{/* Group Items Toggle */}
+			<div className="flex items-center justify-between pt-1">
+				<label className="text-xs text-sidebar-ink-dull">{t("viewSettings.groupItems")}</label>
+				<button
+					onClick={() =>
+						setViewSettings({ groupItems: !viewSettings.groupItems })
+					}
+					className={clsx(
+						"relative w-9 h-5 rounded-full transition-colors",
+						viewSettings.groupItems ? "bg-accent" : "bg-app-line",
+					)}
+				>
+					<motion.div
+						className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full"
+						animate={{
+							x: viewSettings.groupItems ? 16 : 0,
+						}}
+						transition={{ duration: 0.2 }}
+					/>
+				</button>
+			</div>
+
 			{/* Show Hidden Files Toggle */}
 			<div className="flex items-center justify-between pt-1">
 				<label className="text-xs text-sidebar-ink-dull">{t("viewSettings.showHiddenFiles")}</label>
