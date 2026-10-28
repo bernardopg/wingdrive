@@ -458,5 +458,11 @@
 		"selected_one": "{{count}} selecionado",
 		"selected_other": "{{count}} selecionados",
 		"free": "{{size}} livres"
+	},
+	"vcs": {
+		"untracked": "Não rastreado",
+		"added": "Adicionado",
+		"modified": "Modificado",
+		"conflicted": "Em conflito"
 	}
 }

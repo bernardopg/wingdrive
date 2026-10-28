@@ -21,6 +21,7 @@ import {REVEAL_EVENT, type RevealDetail} from '../../pendingReveal';
 import {useTabScroll} from '../../hooks/useTabScroll';
 import {useSelection} from '../../SelectionContext';
 import {DragSelect} from './DragSelect';
+import {vcsStatusOf} from '../../components/vcsStatus';
 import {TableRow} from './TableRow';
 import {useTranslation} from '../../../../i18n';
 import {
@@ -72,7 +73,7 @@ export const ListView = memo(function ListView() {
 	}, []);
 
 	// Get files from centralized hook (handles search, virtual, and directory)
-	const {files: listedFiles} = useExplorerFiles();
+	const {files: listedFiles, vcsStatus} = useExplorerFiles();
 	const {files, unfilteredCount} = useFolderFilter(listedFiles);
 	const {table} = useTable(files, availableWidth);
 	const {rows} = table.getRowModel();
@@ -354,6 +355,7 @@ export const ListView = memo(function ListView() {
 												? rename
 												: undefined
 										}
+										vcsStatus={vcsStatusOf(vcsStatus, file)}
 										selectFile={selectFile}
 									/>
 								);

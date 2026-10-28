@@ -3,6 +3,7 @@ import type {
 	File,
 	FileSearchInput,
 	FileSearchOutput,
+	VcsStatusOutput,
 	WingPath,
 } from "@wingdrive/ts-client";
 import { withDirectorySizes } from "@wingdrive/ts-client";
@@ -39,6 +40,8 @@ export interface ExplorerFilesResult {
 	totalFound?: number;
 	/** Search facets over the whole match set, for the refinement pills. */
 	facets?: FileSearchOutput["facets"];
+	/** Git state of the folder's entries, set only for directory listings. */
+	vcsStatus?: VcsStatusOutput;
 }
 
 /**
@@ -314,6 +317,32 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		}
 	}, [directoryUpdatedAt, sizesUpdatedAt, refetchDirectorySizes]);
 
+	const vcsStatusQuery = useLibraryQuery(
+		{
+			type: "files.vcs_status",
+			input: { path: directorySizePath! },
+		},
+		{
+			enabled:
+				!!directorySizePath &&
+				!isVirtualView &&
+				!isSearchMode &&
+				!isRecentsMode &&
+				!isFilteredMode &&
+				!isTagMode,
+			retry: false,
+			staleTime: 5_000,
+		},
+	);
+	// Edits, new files and deletions change the Git state as well as the listing.
+	const vcsUpdatedAt = vcsStatusQuery.dataUpdatedAt;
+	const refetchVcsStatus = vcsStatusQuery.refetch;
+	useEffect(() => {
+		if (vcsUpdatedAt > 0 && directoryUpdatedAt > vcsUpdatedAt) {
+			void refetchVcsStatus();
+		}
+	}, [directoryUpdatedAt, vcsUpdatedAt, refetchVcsStatus]);
+
 	// Priority: filtered > tag > recents > search > virtual > directory
 	const source: FileSource = isFilteredMode
 		? "filtered"
@@ -412,6 +441,10 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		source,
 		totalFound: searchOutput ? Number(searchOutput.total_found) : undefined,
 		facets: searchOutput?.facets,
+		vcsStatus:
+			source === "directory"
+				? (vcsStatusQuery.data as VcsStatusOutput | undefined)
+				: undefined,
 		hasMore: isRecentsMode
 			? ((recentsQuery.data as FileSearchOutput | undefined)?.files.length ?? 0) > RECENTS_PAGE_SIZE
 			: isSearchMode

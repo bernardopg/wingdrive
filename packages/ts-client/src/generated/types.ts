@@ -4965,6 +4965,58 @@ is_on_primary_volume: boolean };
 export type ValidationWarning = { message: string; suggestion: string | null };
 
 /**
+ * How an entry differs from the last commit.
+ * 
+ * Variants are ordered by how much attention they need, so a folder takes the
+ * maximum of its descendants.
+ */
+export type VcsFileStatus = 
+/**
+ * Not tracked and not ignored.
+ */
+"untracked" | 
+/**
+ * Staged as a new file, including the new side of a rename.
+ */
+"added" | 
+/**
+ * Changed or deleted, staged or not.
+ */
+"modified" | 
+/**
+ * Unmerged after a merge, rebase or cherry-pick.
+ */
+"conflicted";
+
+/**
+ * Input for reading the Git state of a folder's entries.
+ */
+export type VcsStatusInput = { 
+/**
+ * Physical folder shown in the Explorer.
+ */
+path: WingPath };
+
+/**
+ * Git state of a folder's direct children.
+ */
+export type VcsStatusOutput = { 
+/**
+ * Root of the working tree, or `None` when the folder is not in one.
+ */
+repository_root: string | null; 
+/**
+ * State of every entry without its own, set when the folder itself is
+ * untracked: `git` reports an untracked folder once, not per file.
+ */
+inherited_status: VcsFileStatus | null; 
+/**
+ * State of each direct child that differs from the last commit, keyed by
+ * file name. Unchanged entries are absent.
+ */
+entries: { [key in string]: VcsFileStatus } };
+
+/**
  * Video metadata extracted from FFmpeg
  */
 export type VideoMediaData = { uuid: string; width: number; height: number; blurhash: string | null; duration_seconds: number | null; bit_rate: number | null; codec: string | null; pixel_format: string | null; color_space: string | null; color_range: string | null; color_primaries: string | null; color_transfer: string | null; fps_num: number | null; fps_den: number | null; audio_codec: string | null; audio_channels: string | null; audio_sample_rate: number | null; audio_bit_rate: number | null; title: string | null; artist: string | null; album: string | null; creation_time: string | null; date_captured: string | null };
@@ -5614,6 +5666,7 @@ export type LibraryQuery =
   |  { type: 'files.media_listing'; input: MediaListingInput; output: MediaListingOutput }
   |  { type: 'files.permissions'; input: PermissionsQuery; output: PermissionsOutput }
   |  { type: 'files.unique_to_location'; input: UniqueToLocationInput; output: UniqueToLocationOutput }
+  |  { type: 'files.vcs_status'; input: VcsStatusInput; output: VcsStatusOutput }
   |  { type: 'jobs.active'; input: ActiveJobsInput; output: ActiveJobsOutput }
   |  { type: 'jobs.get_copy_metadata'; input: CopyMetadataQueryInput; output: CopyMetadataOutput }
   |  { type: 'jobs.info'; input: JobInfoQueryInput; output: JobInfoOutput }
@@ -5771,6 +5824,7 @@ export const WIRE_METHODS = {
     'files.media_listing': 'query:files.media_listing',
     'files.permissions': 'query:files.permissions',
     'files.unique_to_location': 'query:files.unique_to_location',
+    'files.vcs_status': 'query:files.vcs_status',
     'jobs.active': 'query:jobs.active',
     'jobs.get_copy_metadata': 'query:jobs.get_copy_metadata',
     'jobs.info': 'query:jobs.info',

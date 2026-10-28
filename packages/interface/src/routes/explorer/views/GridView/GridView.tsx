@@ -1,7 +1,8 @@
 import {useVirtualizer} from '@tanstack/react-virtual';
-import type {File} from '@wingdrive/ts-client';
+import type {File, VcsStatusOutput} from '@wingdrive/ts-client';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {isInputFocused} from '../../../../util/keybinds/platform';
+import {vcsStatusOf} from '../../components/vcsStatus';
 import {useExplorer} from '../../context';
 import {useEmptySpaceContextMenu} from '../../hooks/useEmptySpaceContextMenu';
 import {useExplorerFiles} from '../../hooks/useExplorerFiles';
@@ -22,7 +23,7 @@ const NO_FILES: File[] = [];
  * Props that change only for the cards they concern, so a selection or
  * rename does not re-render every card in the grid.
  */
-function useCardProps() {
+function useCardProps(vcsStatus: VcsStatusOutput | undefined) {
 	const {viewSettings} = useExplorer();
 	const {selectedFiles, renamingFileId, saveRename, cancelRename} =
 		useSelection();
@@ -34,7 +35,8 @@ function useCardProps() {
 		gridSize: viewSettings.gridSize,
 		showFileSize: viewSettings.showFileSize,
 		selectedFiles: selected ? selectedFiles : NO_FILES,
-		rename: renamingFileId === file.id ? rename : undefined
+		rename: renamingFileId === file.id ? rename : undefined,
+		vcsStatus: vcsStatusOf(vcsStatus, file)
 	});
 }
 
@@ -50,11 +52,11 @@ export function GridView() {
 		setSelectedFiles
 	} = useSelection();
 	const {gridSize, gapSize} = viewSettings;
-	const cardProps = useCardProps();
 	const emptySpaceContextMenu = useEmptySpaceContextMenu();
 
 	// Get files from centralized hook (handles search, virtual, and directory)
-	const {files: listedFiles, isLoading, source} = useExplorerFiles();
+	const {files: listedFiles, isLoading, source, vcsStatus} = useExplorerFiles();
+	const cardProps = useCardProps(vcsStatus);
 	const {files, unfilteredCount} = useFolderFilter(listedFiles);
 
 	// Publishing the collection also reconciles the selection against it.
@@ -143,6 +145,7 @@ export function GridView() {
 			setSelectedFiles={setSelectedFiles}
 			onContainerClick={handleContainerClick}
 			onContainerContextMenu={handleContainerContextMenu}
+			vcsStatus={vcsStatus}
 		/>
 	);
 }
@@ -163,6 +166,7 @@ interface VirtualizedGridProps {
 	setSelectedFiles: (files: File[]) => void;
 	onContainerClick: (e: React.MouseEvent) => void;
 	onContainerContextMenu: (e: React.MouseEvent) => void;
+	vcsStatus: VcsStatusOutput | undefined;
 }
 
 function VirtualizedGrid({
@@ -175,9 +179,10 @@ function VirtualizedGrid({
 	selectFile,
 	setSelectedFiles,
 	onContainerClick,
-	onContainerContextMenu
+	onContainerContextMenu,
+	vcsStatus
 }: VirtualizedGridProps) {
-	const cardProps = useCardProps();
+	const cardProps = useCardProps(vcsStatus);
 	const {sidebarVisible, inspectorVisible, scrollPosition} = useExplorer();
 	const measurementKey = `${window.innerWidth}:${window.innerHeight}:${sidebarVisible}:${inspectorVisible}`;
 	const measurementKeyRef = useRef(measurementKey);

@@ -208,3 +208,16 @@ if (isVolume) {
 
 This adds visual information without requiring volume-specific components or branching logic in the core Explorer.
 
+
+## Git Status Emblems
+
+Inside a Git working tree, grid and list views draw a lettered emblem on each entry that differs from the last commit: `U` untracked, `A` added, `M` modified or deleted, `C` conflicted. A folder takes the strongest state found anywhere beneath it.
+
+`useExplorerFiles` reads the state with the `files.vcs_status` query for directory listings only, and returns it as `vcsStatus`. The daemon looks for `.git` in the folder and its parents before it starts `git`, so folders outside a repository cost a few `stat` calls. Inside one, it runs `git status --porcelain=v2` scoped to the folder with a 5 second limit and `GIT_OPTIONAL_LOCKS=0`, so it never holds the index lock a terminal `git` needs.
+
+The query re-runs whenever the listing changes and when the window regains focus, which covers edits made in another app and commits made in a terminal. Without `git` installed, or for a repository `git` refuses (for example, one owned by another user), the output is empty and no emblems show.
+
+```typescript
+const {vcsStatus} = useExplorerFiles();
+const status = vcsStatusOf(vcsStatus, file); // "modified" | "added" | ... | null
+```

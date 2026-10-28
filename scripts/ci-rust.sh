@@ -68,6 +68,7 @@ if [ "$1" = "full" ]; then
 	cargo test --locked -p wing-branding
 	cargo test --locked -p wing-core --lib crypto::key_manager::tests
 	cargo test --locked -p wing-core --lib ops::files::query::file_checksum
+	cargo test --locked -p wing-core --lib ops::files::query::vcs_status
 	cargo test --locked -p wing-core --test branding_legacy_paths
 
 	step "Test desktop IPC and launch handling"

@@ -458,5 +458,11 @@
 		"selected_one": "{{count}} selected",
 		"selected_other": "{{count}} selected",
 		"free": "{{size}} free"
+	},
+	"vcs": {
+		"untracked": "Untracked",
+		"added": "Added",
+		"modified": "Modified",
+		"conflicted": "Conflicted"
 	}
 }

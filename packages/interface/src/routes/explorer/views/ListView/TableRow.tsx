@@ -1,11 +1,12 @@
 import {useDroppable} from '@dnd-kit/core';
 import {flexRender} from '@tanstack/react-table';
 import type {LegacyRow as Row} from '@tanstack/react-table/legacy';
-import type {File} from '@wingdrive/ts-client';
+import type {File, VcsFileStatus} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {memo, useCallback} from 'react';
 import {TagPill} from '../../../../components/Tags';
 import {InlineNameEdit} from '../../components/InlineNameEdit';
+import {VcsEmblem} from '../../components/VcsEmblem';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
@@ -32,6 +33,8 @@ interface TableRowProps {
 	selectedFiles: File[];
 	/** Set only on the row being renamed. */
 	rename?: Rename;
+	/** Git state shown as an emblem; `null` outside a working tree or when unchanged. */
+	vcsStatus: VcsFileStatus | null;
 	selectFile: (
 		file: File,
 		files: File[],
@@ -52,6 +55,7 @@ export const TableRow = memo(function TableRow({
 	measureRef,
 	selectedFiles,
 	rename,
+	vcsStatus,
 	selectFile
 }: TableRowProps) {
 
@@ -194,7 +198,11 @@ export const TableRow = memo(function TableRow({
 							style={{width: cell.column.getSize()}}
 						>
 							{isNameColumn ? (
-								<NameCell file={file} rename={rename} />
+								<NameCell
+									file={file}
+									rename={rename}
+									vcsStatus={vcsStatus}
+								/>
 							) : (
 								<span className="truncate">
 									{flexRender(
@@ -214,17 +222,26 @@ export const TableRow = memo(function TableRow({
 // Name cell with icon and tags
 const NameCell = memo(function NameCell({
 	file,
-	rename
+	rename,
+	vcsStatus
 }: {
 	file: File;
 	rename?: Rename;
+	vcsStatus: VcsFileStatus | null;
 }) {
 
 	return (
 		<div className="flex min-w-0 flex-1 items-center gap-2">
 			{/* File icon */}
-			<div className="flex-shrink-0">
+			<div className="relative flex-shrink-0">
 				<FileComponent.Thumb file={file} size={20} />
+				{vcsStatus && (
+					<VcsEmblem
+						status={vcsStatus}
+						size="sm"
+						className="absolute -bottom-0.5 -right-1"
+					/>
+				)}
 			</div>
 
 			{/* File name or inline edit */}
