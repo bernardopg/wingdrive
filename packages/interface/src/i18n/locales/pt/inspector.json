@@ -268,7 +268,11 @@
 			"mesh": "Malha 3D",
 			"hintClose": "para fechar",
 			"hintOr": "ou",
-			"hintNavigate": "para navegar"
+			"hintNavigate": "para navegar",
+			"documentLoadFailed": "Não foi possível abrir este documento",
+			"textLoadFailed": "Não foi possível ler este arquivo",
+			"pageCount_other": "{{count}} páginas",
+			"pageCount_one": "{{count}} página"
 		}
 	},
 	"knowledge": {

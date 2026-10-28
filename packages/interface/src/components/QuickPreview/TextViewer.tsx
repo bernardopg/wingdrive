@@ -40,14 +40,17 @@ export const TextViewer = memo(
 					onLoad?.(new UIEvent('load', {}));
 
 					const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+					// Chunks split lines at arbitrary points, so lines are always cut
+					// from the whole text read so far rather than from the chunk.
+					let text = '';
 					return reader.read().then(function ingestLines({
 						done,
 						value
 					}): void | Promise<void> {
 						if (done) return;
 
-						const chunks = value.split('\n');
-						setLines([...chunks]);
+						text += value;
+						setLines(text.split('\n'));
 
 						if (isSidebarPreview) return;
 

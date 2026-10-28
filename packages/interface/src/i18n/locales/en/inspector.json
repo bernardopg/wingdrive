@@ -268,7 +268,11 @@
 			"mesh": "3D Mesh",
 			"hintClose": "to close",
 			"hintOr": "or",
-			"hintNavigate": "to navigate"
+			"hintNavigate": "to navigate",
+			"documentLoadFailed": "This document could not be opened",
+			"textLoadFailed": "This file could not be read",
+			"pageCount_other": "{{count}} pages",
+			"pageCount_one": "{{count}} page"
 		}
 	},
 	"knowledge": {
