@@ -1,5 +1,9 @@
 import type { File } from "@wingdrive/ts-client";
-import { fileDisplaySize, getContentKind } from "@wingdrive/ts-client";
+import {
+	fileDisplayName,
+	fileDisplaySize,
+	getContentKind,
+} from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../routes/explorer/File";
 import { formatBytes } from "../../routes/explorer/utils";
 import { usePlatform } from "../../contexts/PlatformContext";
@@ -39,6 +43,12 @@ const MeshViewer = lazy(() =>
 const MeshViewerUI = lazy(() =>
 	import("./MeshViewer").then((m) => ({ default: m.MeshViewerUI })),
 );
+const PdfViewer = lazy(() =>
+	import("./PdfViewer").then((m) => ({ default: m.PdfViewer })),
+);
+
+/** Largest file of unknown kind that is sniffed to see if it is plain text. */
+const TEXT_SNIFF_MAX_BYTES = 2 * 1024 * 1024;
 
 interface ContentRendererProps {
 	file: File;
@@ -429,6 +439,82 @@ async function resolveMediaSrc(
 	return platform.convertFileSrc?.(physicalPath) ?? null;
 }
 
+/**
+ * URL the webview can `fetch` the file's bytes from, or `null` while it resolves.
+ *
+ * `fetch` cannot read `asset:` URLs (the CSP's `connect-src` does not list them
+ * and the asset scope stops at `$HOME`), so this prefers the loopback stream
+ * that media playback uses.
+ */
+function useFileFetchSrc(file: File): string | null {
+	const platform = usePlatform();
+	const physicalPath =
+		"Physical" in file.wing_path ? file.wing_path.Physical.path : null;
+	const [resolved, setResolved] = useState<{
+		path: string;
+		url: string;
+	} | null>(null);
+
+	useEffect(() => {
+		if (!physicalPath) return;
+		let cancelled = false;
+
+		resolveMediaSrc(platform, physicalPath).then((url) => {
+			if (!cancelled && url) setResolved({ path: physicalPath, url });
+		});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [physicalPath, platform]);
+
+	return resolved?.path === physicalPath ? resolved.url : null;
+}
+
+/**
+ * Whether a file of unknown kind is readable text: `null` while checking.
+ *
+ * Small files are fetched and rejected when they contain NUL bytes or are not
+ * valid UTF-8, which covers dotfiles, `LICENSE`, and extensionless configs.
+ */
+function useIsPlainText(src: string | null, size: number | null): boolean | null {
+	const sniffable = !!src && size !== null && size <= TEXT_SNIFF_MAX_BYTES;
+	const [result, setResult] = useState<{ src: string; isText: boolean } | null>(
+		null,
+	);
+
+	useEffect(() => {
+		if (!sniffable || !src) return;
+		const controller = new AbortController();
+
+		fetch(src, { signal: controller.signal })
+			.then((response) => {
+				if (!response.ok) throw new Error(`HTTP ${response.status}`);
+				return response.arrayBuffer();
+			})
+			.then((buffer) => {
+				const bytes = new Uint8Array(buffer);
+				let isText = !bytes.subarray(0, 8192).includes(0);
+				if (isText) {
+					try {
+						new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+					} catch {
+						isText = false;
+					}
+				}
+				setResult({ src, isText });
+			})
+			.catch(() => {
+				if (!controller.signal.aborted) setResult({ src, isText: false });
+			});
+
+		return () => controller.abort();
+	}, [sniffable, src]);
+
+	if (!sniffable) return false;
+	return result?.src === src ? result.isText : null;
+}
+
 function VideoRenderer({
 	file,
 	onZoomChange,
@@ -553,7 +639,28 @@ function AudioRenderer({ file }: ContentRendererProps) {
 	return <AudioPlayer src={audioUrl} file={file} />;
 }
 
+function PdfRenderer({ file }: ContentRendererProps) {
+	const src = useFileFetchSrc(file);
+	const placeholder = (
+		<div className="w-full h-full flex items-center justify-center">
+			<FileComponent.Thumb file={file} size={200} />
+		</div>
+	);
+
+	if (!src) return placeholder;
+
+	return (
+		<Suspense fallback={placeholder}>
+			<PdfViewer src={src} />
+		</Suspense>
+	);
+}
+
 function DocumentRenderer({ file }: ContentRendererProps) {
+	if (file.extension?.toLowerCase() === "pdf") {
+		return <PdfRenderer file={file} />;
+	}
+
 	const displaySize = fileDisplaySize(file);
 	return (
 		<div className="w-full h-full flex items-center justify-center">
@@ -577,47 +684,27 @@ function DocumentRenderer({ file }: ContentRendererProps) {
 
 function TextRenderer({ file }: ContentRendererProps) {
 	const { t } = useTranslation("inspector");
-	const platform = usePlatform();
-	const [textUrl, setTextUrl] = useState<string | null>(null);
-	const [shouldLoadText, setShouldLoadText] = useState(false);
+	const textUrl = useFileFetchSrc(file);
+	const [failedUrl, setFailedUrl] = useState<string | null>(null);
+	const handleError = useCallback(() => setFailedUrl(textUrl), [textUrl]);
 
-	const textFileId = file.content_identity?.uuid || file.id;
+	const extension = file.extension?.toLowerCase() || undefined;
 
-	useEffect(() => {
-		setShouldLoadText(false);
-		setTextUrl(null);
-
-		const timer = setTimeout(() => {
-			setShouldLoadText(true);
-		}, 50);
-
-		return () => clearTimeout(timer);
-	}, [textFileId]);
-
-	useEffect(() => {
-		if (!shouldLoadText || !platform.convertFileSrc) {
-			return;
-		}
-
-		const sdPath = file.wing_path as any;
-		const physicalPath = sdPath?.Physical?.path;
-
-		if (!physicalPath) {
-			console.log("[TextRenderer] No physical path available");
-			return;
-		}
-
-		const url = platform.convertFileSrc(physicalPath);
-		console.log(
-			"[TextRenderer] Loading text from:",
-			physicalPath,
-			"-> URL:",
-			url,
+	if (textUrl && failedUrl === textUrl) {
+		return (
+			<div className="w-full h-full flex items-center justify-center">
+				<div className="text-center">
+					<FileComponent.Thumb file={file} size={120} />
+					<div className="mt-4 text-ink text-lg font-medium">
+						{fileDisplayName(file)}
+					</div>
+					<div className="text-ink-dull text-sm mt-2">
+						{t("inspector.preview.textLoadFailed")}
+					</div>
+				</div>
+			</div>
 		);
-		setTextUrl(url);
-	}, [shouldLoadText, textFileId, file.wing_path, platform]);
-
-	const extension = file.name.split(".").pop()?.toLowerCase();
+	}
 
 	if (!textUrl) {
 		return (
@@ -625,7 +712,7 @@ function TextRenderer({ file }: ContentRendererProps) {
 				<div className="text-center">
 					<FileComponent.Thumb file={file} size={120} />
 					<div className="mt-4 text-ink text-lg font-medium">
-						{file.name}
+						{fileDisplayName(file)}
 					</div>
 <div className="text-ink-dull text-sm mt-2">{t("inspector.loading")}</div>
 				</div>
@@ -639,6 +726,7 @@ function TextRenderer({ file }: ContentRendererProps) {
 			<TextViewer
 				src={textUrl}
 				codeExtension={extension}
+				onError={handleError}
 				className="w-full h-full overflow-auto bg-app p-4 text-ink"
 			/>
 		</>
@@ -676,6 +764,17 @@ function useOnDiskFile(file: File): File | null {
 
 	if (!inArchive) return file;
 	return resolved?.id === file.id ? resolved : null;
+}
+
+function UnknownRenderer({ file }: ContentRendererProps) {
+	const src = useFileFetchSrc(file);
+	const isText = useIsPlainText(
+		file.kind === "File" ? src : null,
+		fileDisplaySize(file),
+	);
+
+	if (isText) return <TextRenderer file={file} />;
+	return <DefaultRenderer file={file} />;
 }
 
 function DefaultRenderer({ file }: ContentRendererProps) {
@@ -753,6 +852,8 @@ export function ContentRenderer({
 		case "code":
 		case "config":
 			return <TextRenderer file={file} />;
+		case "unknown":
+			return <UnknownRenderer file={file} />;
 		default:
 			return <DefaultRenderer file={file} />;
 	}

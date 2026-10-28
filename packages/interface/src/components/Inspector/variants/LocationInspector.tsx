@@ -152,7 +152,7 @@ return t("inspector.location.unknown");
 	};
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-auto px-1 pb-10">
 			{/* Location icon */}
 			<div className="flex justify-center h-48 items-center w-full px-4">
 <ThemedIcon src={LocationIcon} className="size-24" alt={t("inspector.location.location")} />
@@ -241,7 +241,7 @@ const { t } = useTranslation("inspector");
 	]);
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-auto pb-10 px-3 pt-2">
 <Section title={t("inspector.location.indexMode")} icon={Gear}>
 				<p className="text-xs text-sidebar-ink-dull mb-3">
 {t("inspector.location.indexDepthHint")}
@@ -324,7 +324,7 @@ const { t } = useTranslation("inspector");
 	const speech = location.job_policies?.speech_to_text?.enabled ?? false;
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-auto pb-10 px-3 pt-2">
 			<p className="text-xs text-sidebar-ink-dull">
 {t("inspector.location.jobsDescription")}
 			</p>
@@ -471,7 +471,7 @@ function ActivityTab({ location: _location }: { location: Location }) {
 	];
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-auto pb-10 px-3 pt-2">
 			<p className="text-xs text-sidebar-ink-dull">
 				{t("inspector.location.recentActivity")}
 			</p>
@@ -524,7 +524,7 @@ function DevicesTab({ location: _location }: { location: Location }) {
 	];
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-auto pb-10 px-3 pt-2">
 			<p className="text-xs text-sidebar-ink-dull">
 				{t("inspector.location.devicesDescription")}
 			</p>
@@ -645,7 +645,7 @@ const { t } = useTranslation("inspector");
 	};
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-auto pb-10 px-3 pt-2">
 <Section title={t("inspector.location.advanced")} icon={Gear}>
 				<InfoRow
 label={t("inspector.location.locationId")}

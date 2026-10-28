@@ -353,14 +353,14 @@ export function VideoPlayer({
 			>
 				<div
 					style={transform}
-					className="flex items-center justify-center"
+					className="flex h-full w-full items-center justify-center"
 				>
 					<video
 						ref={videoRef}
 						src={src}
 						autoPlay
 						playsInline
-						className="max-h-screen max-w-screen"
+						className="h-full w-full object-contain"
 						onError={(e) =>
 							setLoadError(
 							describeMediaError(e.currentTarget, null, t),

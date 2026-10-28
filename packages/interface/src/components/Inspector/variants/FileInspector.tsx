@@ -728,7 +728,7 @@ const {t} = useTranslation('inspector');
 	const fileKind = t(`kinds.${rawKind}`, {defaultValue: rawKind});
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-auto px-1 pb-10">
 			{/* Thumbnail */}
 			<div className="flex w-full justify-center px-4">
 				<FileComponent.Thumb
@@ -1451,7 +1451,7 @@ const {t} = useTranslation('inspector');
 	};
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-auto px-3 pb-10 pt-2">
 			<p className="text-sidebar-ink-dull text-xs">
 				{t('inspector.file.derivativeFiles')}
 			</p>
@@ -1706,7 +1706,7 @@ function InstancesTab({file}: {file: File}) {
 
 	if (!file.content_identity) {
 		return (
-			<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
+			<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-auto px-3 pb-10 pt-2">
 				<p className="text-sidebar-ink-dull text-xs">
 					This file has not been content-hashed yet. Instances will
 					appear after indexing completes.
@@ -1716,7 +1716,7 @@ function InstancesTab({file}: {file: File}) {
 	}
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-auto px-3 pb-10 pt-2">
 			<p className="text-sidebar-ink-dull text-xs">
 				{t("ui.allCopiesOfThisFileAcross")}
 			</p>
@@ -1917,7 +1917,7 @@ const {t} = useTranslation('inspector');
 	return (
 		<div className="flex h-full flex-col">
 			{/* Messages */}
-			<div className="flex-1 space-y-3 overflow-y-auto px-2 pt-2">
+			<div className="flex-1 space-y-3 overflow-y-auto px-3 pt-2">
 				{messages.map((msg) => (
 					<div
 						key={msg.id}
@@ -2042,7 +2042,7 @@ function ActivityTab() {
 	];
 
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-auto px-3 pb-10 pt-2">
 			<p className="text-sidebar-ink-dull text-xs">
 				{t('sampleChat.history')}
 			</p>
@@ -2074,7 +2074,7 @@ function ActivityTab() {
 function DetailsTab({file}: {file: File}) {
 const {t} = useTranslation('inspector');
 	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10">
+		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-auto px-1 pb-10">
 			{/* Content Identity */}
 			{file.content_identity && (
 				<Section title={t('inspector.file.contentIdentity')} icon={Fingerprint}>
