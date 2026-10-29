@@ -241,3 +241,24 @@ With "Show in Groups" on in the view settings, grid and list views split the fol
 The empty-space context menu lists the files in the user's templates folder under "New from Template", as Nautilus and Dolphin do under "New Document". `files.templates` resolves the folder from `XDG_TEMPLATES_DIR` in `~/.config/user-dirs.dirs`, so localized folders such as `~/Modelos` work, and falls back to `~/Templates`. A folder set to the home folder disables templates, as the XDG user-dirs spec describes. Hidden files and subfolders are not listed.
 
 Choosing a template runs `files.createFromTemplate`, which copies it under the first free name (`Letter.odt`, then `Letter 2.odt`), never replaces an existing file, and keeps the template's permissions so script templates stay executable. The copy is selected and renamed in place, and Ctrl+Z removes it.
+
+## User Actions
+
+The file context menu runs commands the user adds, in the format of Dolphin service menus, so menus written for Dolphin work unchanged. WingDrive reads `Type=Service` desktop files from `kio/servicemenus` (and the older `kservices5/ServiceMenus`) in each XDG data directory, and from `wingdrive/actions` for actions meant only for WingDrive:
+
+```ini
+[Desktop Entry]
+Type=Service
+MimeType=image/*;
+Actions=toPng
+X-KDE-Submenu=Convert
+
+[Desktop Action toPng]
+Name=Convert to PNG
+Icon=image-x-generic
+Exec=magick %f %f.png
+```
+
+An action shows when every selected item matches one of its types (`image/*`, an exact type or a parent type, `all/all`, `all/allfiles` for files only, `inode/directory`) and the selection size fits `X-KDE-RequiredNumberOfUrls`, `X-KDE-MinNumberOfUrls` and `X-KDE-MaxNumberOfUrls`. Actions with the same `X-KDE-Submenu` share a submenu; the rest go under "Actions".
+
+As in KIO, a menu in your own data directory (`~/.local/share/...`) only counts when it is executable (`chmod +x`), so a desktop file a download drops there cannot add a command. A user file hides a system file with the same name. Commands run without a shell, with the `Exec` field codes of the Desktop Entry Specification (`%f`, `%F`, `%u`, `%U`); write a literal `%` as `%%`. This is Linux only.

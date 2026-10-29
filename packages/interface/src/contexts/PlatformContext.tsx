@@ -90,6 +90,10 @@ export type Platform = {
 
 	/** Make an application the default for this file's type */
 	setDefaultAppForPath?(path: string, appId: string): Promise<void>;
+	/** User-defined context menu actions (Dolphin service menus) for these local paths */
+	getContextActions?(paths: string[]): Promise<ContextAction[]>;
+	/** Run a context menu action from `getContextActions` on these local paths */
+	runContextAction?(id: string, paths: string[]): Promise<void>;
 	resolveSymlink?(path: string): Promise<[string, boolean]>;
 	writeFileClipboard?(paths: string[], cut: boolean): Promise<void>;
 	/** Hand absolute local paths to an OS drag that other apps can drop (Linux) */
@@ -282,6 +286,17 @@ export interface OpenRequest {
 }
 
 /** Application that can open a file */
+/** A command the user added to the context menu, such as a Dolphin service menu action */
+export interface ContextAction {
+	/** Stable identifier: the menu file name and the action id */
+	id: string;
+	name: string;
+	/** Icon as a `data:` URL, when the icon theme has it */
+	icon: string | null;
+	/** Submenu the menu file groups its actions under */
+	submenu: string | null;
+}
+
 export interface OpenWithApp {
 	/** Platform-specific identifier (bundle ID on macOS, app name on Windows, desktop entry on Linux) */
 	id: string;

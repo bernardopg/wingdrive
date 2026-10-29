@@ -94,7 +94,7 @@ fn main_group(contents: &str) -> HashMap<String, String> {
 }
 
 /// Applies the string escapes defined for desktop entry values.
-fn unescape_value(value: &str) -> String {
+pub(crate) fn unescape_value(value: &str) -> String {
 	let mut out = String::with_capacity(value.len());
 	let mut chars = value.chars();
 	while let Some(c) = chars.next() {

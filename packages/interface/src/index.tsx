@@ -24,6 +24,7 @@ export { Overview } from "./routes/overview";
 
 // Platform abstraction
 export type {
+	ContextAction,
 	DesktopSettings,
 	MountableVolume,
 	NetworkMount,

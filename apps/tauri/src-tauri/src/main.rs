@@ -2502,6 +2502,8 @@ fn main() {
 			file_opening::open_path_with_app,
 			file_opening::open_paths_with_app,
 			file_opening::set_default_app_for_path,
+			file_opening::get_context_actions,
+			file_opening::run_context_action,
 			files::open_terminal,
 			#[cfg(target_os = "linux")]
 			gvfs::list_network_mounts,
