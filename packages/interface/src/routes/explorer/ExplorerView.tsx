@@ -8,8 +8,9 @@ import {
 import {useQueryClient} from '@tanstack/react-query';
 import {CircleButton, CircleButtonGroup} from '@wingdrive/primitives';
 import clsx from 'clsx';
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
+import {useTabManager} from '../../components/TabManager';
 import {TopBarItem, TopBarPortal} from '../../TopBar';
 import {ExpandableSearchButton} from './components/ExpandableSearchButton';
 import {ExplorerStatusBar} from './components/ExplorerStatusBar';
@@ -20,8 +21,11 @@ import {useExplorer, type ViewMode} from './context';
 import {useExplorerFiles} from './hooks/useExplorerFiles';
 import {MIN_SEARCH_LENGTH, SEARCH_DEBOUNCE_MS} from './hooks/searchQuery';
 import {useExternalFileDrop} from './hooks/useExternalFileDrop';
+import {useTerminalPanel} from './hooks/useTerminalPanel';
 import {useVirtualListing} from './hooks/useVirtualListing';
 import {SearchToolbar} from './SearchToolbar';
+import {closeDockedTerminalsExcept} from './terminal/dockedTerminals';
+import {localFolder} from './terminal/terminalFolder';
 import {SortMenu, SortMenuPanel} from './SortMenu';
 import {ViewModeMenu, ViewModeMenuPanel} from './ViewModeMenu';
 import {ColumnView} from './views/ColumnView';
@@ -34,6 +38,9 @@ import {SearchView} from './views/SearchView';
 import {SizeView} from './views/SizeView';
 import {ViewSettings, ViewSettingsPanel} from './ViewSettings';
 import {useTranslation} from '../../i18n';
+
+// xterm.js loads only when a terminal opens.
+const TerminalPanel = lazy(() => import('./terminal/TerminalPanel'));
 
 export function ExplorerView() {
 	const {t} = useTranslation('explorer');
@@ -67,7 +74,8 @@ export function ExplorerView() {
 		columnStack,
 		operationalPath,
 		setFolderFilter,
-		unfilteredFileCount
+		unfilteredFileCount,
+		listedFiles
 	} = useExplorer();
 
 	const {isVirtualView} = useVirtualListing();
@@ -85,6 +93,20 @@ export function ExplorerView() {
 	}, [viewMode, columnStack, currentPath]);
 	// Drops land where New Folder and Paste write, never in a view without a folder.
 	useExternalFileDrop(operationalPath);
+
+	const terminal = useTerminalPanel();
+	const localSlug = useMemo(
+		() => [...devices.values()].find((device) => device.is_current)?.slug,
+		[devices]
+	);
+	// The shell follows the folder New Folder writes into; other views leave it where it is.
+	const terminalFolder = localFolder(operationalPath, localSlug);
+	// Closing a tab hangs up its shell.
+	const {tabs} = useTabManager();
+	const tabIds = tabs.map((tab) => tab.id).join('\n');
+	useEffect(() => {
+		closeDockedTerminalsExcept(tabIds.split('\n'));
+	}, [tabIds]);
 
 	const [searchValue, setSearchValue] = useState('');
 
@@ -352,8 +374,8 @@ export function ExplorerView() {
 				{/* Each listing view filters itself; size and knowledge views are visualizations. */}
 				{mode.type === 'browse' && viewMode !== 'size' && viewMode !== 'knowledge' && (
 					<FolderFilterBar
-						shown={currentFiles.length}
-						total={unfilteredFileCount ?? currentFiles.length}
+						shown={listedFiles.length}
+						total={unfilteredFileCount ?? listedFiles.length}
 					/>
 				)}
 				<div
@@ -401,6 +423,17 @@ export function ExplorerView() {
 						)}
 					</>
 				</div>
+				{terminal.visible && (
+					<Suspense fallback={null}>
+						<TerminalPanel
+							tabId={terminal.tabId}
+							folder={terminalFolder}
+							height={terminal.height}
+							onHeightChange={terminal.setHeight}
+							onExit={terminal.hide}
+						/>
+					</Suspense>
+				)}
 				{!listingError && viewMode !== 'size' && (
 					<ExplorerStatusBar path={pathBarPath} />
 				)}

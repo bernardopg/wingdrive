@@ -6,9 +6,9 @@ assignee: bernardopg
 parent: DESK-000
 priority: Medium
 milestone: M2
-sprint: S03
+sprint: S04
 tags: [desktop, search, interface, core]
-last_updated: 2026-10-16
+last_updated: 2026-10-28
 ---
 
 ## Description

@@ -255,6 +255,7 @@
 			"newFolder": "Nova pasta",
 			"newFile": "Novo arquivo",
 			"openTerminal": "Abrir terminal aqui",
+			"toggleTerminal": "Painel do terminal",
 			"toggleHiddenFiles": "Mostrar arquivos ocultos",
 			"navigateBack": "Voltar",
 			"navigateForward": "Avançar",

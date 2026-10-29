@@ -407,10 +407,16 @@ interface ExplorerContextValue {
 	 * the selection can never reach entries the user cannot see.
 	 */
 	currentFiles: File[];
-	/** `unfilteredCount` is the view's listing size before the folder filter narrowed it. */
-	setCurrentFiles: (files: File[], unfilteredCount?: number) => void;
+	/**
+	 * `unfilteredCount` is the view's listing size before the folder filter narrowed it.
+	 * `listedFiles` are the entries of the folder itself when `files` also holds rows
+	 * of expanded subfolders (list view); omitted, they are `files`.
+	 */
+	setCurrentFiles: (files: File[], unfilteredCount?: number, listedFiles?: File[]) => void;
 	/** Size of the active view's listing before the folder filter, or null when nothing is filtered out. */
 	unfilteredFileCount: number | null;
+	/** `currentFiles` without the rows of expanded subfolders; what item counts describe. */
+	listedFiles: File[];
 
 	/**
 	 * Directory that New Folder, Paste and external drops write into. It is
@@ -598,19 +604,28 @@ export function ExplorerProvider({
 	const [publishedFiles, setPublishedFiles] = useState<{
 		key: string;
 		files: File[];
+		listed: File[];
 		total: number | null;
-	}>({key: '', files: NO_FILES, total: null});
-	const setCurrentFiles = useCallback((files: File[], unfilteredCount?: number) => {
-		const key = collectionKeyRef.current;
-		const total = unfilteredCount ?? null;
-		setPublishedFiles((prev) =>
-			prev.key === key && prev.total === total && sameFiles(prev.files, files)
-				? prev
-				: {key, files, total}
-		);
-	}, []);
+	}>({key: '', files: NO_FILES, listed: NO_FILES, total: null});
+	const setCurrentFiles = useCallback(
+		(files: File[], unfilteredCount?: number, listedFiles?: File[]) => {
+			const key = collectionKeyRef.current;
+			const total = unfilteredCount ?? null;
+			const listed = listedFiles ?? files;
+			setPublishedFiles((prev) =>
+				prev.key === key &&
+				prev.total === total &&
+				sameFiles(prev.files, files) &&
+				sameFiles(prev.listed, listed)
+					? prev
+					: {key, files, listed, total}
+			);
+		},
+		[]
+	);
 	const isCurrentPublication = publishedFiles.key === collectionKey;
 	const currentFiles = isCurrentPublication ? publishedFiles.files : NO_FILES;
+	const listedFiles = isCurrentPublication ? publishedFiles.listed : NO_FILES;
 	const unfilteredFileCount = isCurrentPublication ? publishedFiles.total : null;
 
 	const [publishedColumn, setPublishedColumn] = useState<{
@@ -946,6 +961,7 @@ export function ExplorerProvider({
 			currentFiles,
 			setCurrentFiles,
 			unfilteredFileCount,
+			listedFiles,
 			operationalPath,
 			setActiveColumnPath,
 			folderFilter,
@@ -1002,6 +1018,7 @@ export function ExplorerProvider({
 			currentFiles,
 			setCurrentFiles,
 			unfilteredFileCount,
+			listedFiles,
 			operationalPath,
 			setActiveColumnPath,
 			folderFilter,

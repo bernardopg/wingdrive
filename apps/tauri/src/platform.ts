@@ -1,4 +1,5 @@
 import {
+	Channel,
 	invoke,
 	convertFileSrc as tauriConvertFileSrc
 } from '@tauri-apps/api/core';
@@ -15,7 +16,9 @@ import type {
 	MountableVolume,
 	NetworkMount,
 	OpenRequest,
-	Platform
+	Platform,
+	TerminalSession,
+	TerminalSessionOptions
 } from '@wingdrive/interface';
 import {
 	beginDrag,
@@ -180,6 +183,48 @@ export const platform: Platform = {
 
 	async runAsAdmin(operation: AdminOperation) {
 		await invoke('run_as_admin', {operation});
+	},
+
+	async openTerminalSession({
+		cwd,
+		cols,
+		rows,
+		onOutput,
+		onExit
+	}: TerminalSessionOptions): Promise<TerminalSession> {
+		// Raw channel messages arrive as an ArrayBuffer.
+		const output = new Channel<ArrayBuffer>();
+		output.onmessage = (data) => onOutput(new Uint8Array(data));
+		const exit = new Channel<number | null>();
+		exit.onmessage = (code) => onExit(code);
+		const id = await invoke<number>('terminal_open', {cwd, cols, rows, output, exit});
+
+		// One write in flight keeps keystrokes in order; what arrives meanwhile goes out together.
+		let pending = '';
+		let writing = false;
+		const flush = async () => {
+			writing = true;
+			while (pending) {
+				const data = pending;
+				pending = '';
+				try {
+					await invoke('terminal_write', {id, data});
+				} catch {
+					pending = '';
+				}
+			}
+			writing = false;
+		};
+
+		return {
+			write(data) {
+				pending += data;
+				if (!writing) void flush();
+			},
+			resize: (cols, rows) => invoke('terminal_resize', {id, cols, rows}),
+			follow: (path) => invoke<boolean>('terminal_follow', {id, path}),
+			close: () => invoke('terminal_close', {id})
+		};
 	},
 
 	async openPathDefault(path: string) {

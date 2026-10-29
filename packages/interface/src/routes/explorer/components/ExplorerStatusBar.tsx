@@ -15,7 +15,7 @@ interface ExplorerStatusBarProps {
 /** Item counts, the selection and the drive's free space, under the view. */
 export function ExplorerStatusBar({path}: ExplorerStatusBarProps) {
 	const {t} = useTranslation('explorer');
-	const {currentFiles, devices, unfilteredFileCount} = useExplorer();
+	const {listedFiles, devices, unfilteredFileCount} = useExplorer();
 	const {selectedFiles} = useSelection();
 
 	const physical = path && 'Physical' in path ? path.Physical : null;
@@ -39,7 +39,8 @@ export function ExplorerStatusBar({path}: ExplorerStatusBarProps) {
 		return volumeForPath(volumes, deviceId, physical.path);
 	}, [volumesData, deviceId, physical]);
 
-	const listing = useMemo(() => summarizeFiles(currentFiles), [currentFiles]);
+	// Expanded subfolders' rows are on screen but not in this folder's counts.
+	const listing = useMemo(() => summarizeFiles(listedFiles), [listedFiles]);
 	const selection = useMemo(() => summarizeFiles(selectedFiles), [selectedFiles]);
 
 	const parts: string[] = [];
@@ -48,7 +49,7 @@ export function ExplorerStatusBar({path}: ExplorerStatusBarProps) {
 		if (selection.bytes > 0) parts.push(formatBytes(selection.bytes));
 	} else if (unfilteredFileCount !== null) {
 		parts.push(
-			t('statusBar.filtered', {shown: currentFiles.length, total: unfilteredFileCount})
+			t('statusBar.filtered', {shown: listedFiles.length, total: unfilteredFileCount})
 		);
 	} else {
 		if (listing.folders > 0) parts.push(t('statusBar.folders', {count: listing.folders}));

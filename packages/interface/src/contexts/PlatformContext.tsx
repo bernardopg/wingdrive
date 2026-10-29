@@ -85,6 +85,9 @@ export type Platform = {
 	/** Open the user's terminal in a folder */
 	openTerminal?(path: string): Promise<void>;
 
+	/** Run the user's shell in a folder for the terminal docked under the Explorer (Tauri only) */
+	openTerminalSession?(options: TerminalSessionOptions): Promise<TerminalSession>;
+
 	/** The user's home folder on this device (Tauri only) */
 	homeDir?(): Promise<string>;
 
@@ -288,6 +291,28 @@ export interface OpenRequest {
 }
 
 /** Application that can open a file */
+export interface TerminalSessionOptions {
+	/** Absolute local folder the shell starts in */
+	cwd: string;
+	cols: number;
+	rows: number;
+	/** Bytes the shell printed; a UTF-8 character can span two calls */
+	onOutput(data: Uint8Array): void;
+	/** The shell ended, with its exit code when known */
+	onExit(code: number | null): void;
+}
+
+/** A shell running on a pseudo-terminal */
+export interface TerminalSession {
+	/** Send keystrokes or pasted text, delivered in call order */
+	write(data: string): void;
+	resize(cols: number, rows: number): Promise<void>;
+	/** Change the shell to `path` if it waits at its prompt; false when a program is running */
+	follow(path: string): Promise<boolean>;
+	/** Hang up the shell */
+	close(): Promise<void>;
+}
+
 /** A file operation to repeat with administrator rights; paths are absolute local paths */
 export type AdminOperation =
 	| {type: 'delete'; paths: string[]}

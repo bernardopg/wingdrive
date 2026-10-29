@@ -32,6 +32,7 @@ import {
 	toggleExpandedPath
 } from './listExpansion';
 import {TableRow} from './TableRow';
+import {useExpandedFolderEvents} from './useExpandedFolderEvents';
 import {GROUP_HEADER_HEIGHT, GroupHeader, useGroupLabel} from '../GroupHeader';
 import {buildListLayout, groupFiles, isGroupBy} from '../grouping';
 import {useTranslation} from '../../../../i18n';
@@ -122,6 +123,21 @@ export const ListView = memo(function ListView() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[files, expandedPaths, listingKey]
 	);
+	useExpandedFolderEvents(currentPath, !!shownFolder && expandedPaths.length > 0);
+	// Each expanded folder's Git state, read like the shown folder's.
+	const childVcsQueries = useLibraryQueries(
+		'files.vcs_status',
+		expandedPaths.map((path) => ({path: {Physical: {device_slug: deviceSlug, path}}})),
+		{retry: false, staleTime: 5_000}
+	);
+	const childVcsKey = childVcsQueries.map((query) => query.dataUpdatedAt).join(',');
+	const vcsStatusByFolder = useMemo(
+		() =>
+			new Map(expandedPaths.map((path, index) => [path, childVcsQueries[index]?.data])),
+		// childVcsQueries is a fresh array each render; its contents change with childVcsKey.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[expandedPaths, childVcsKey]
+	);
 	const toggleExpanded = useCallback(
 		(file: File) => {
 			const path = physicalPathOf(file);
@@ -176,8 +192,8 @@ export const ListView = memo(function ListView() {
 
 	// Publishing the collection also reconciles the selection against it.
 	useEffect(() => {
-		setCurrentFiles(orderedFiles, unfilteredCount);
-	}, [orderedFiles, unfilteredCount, setCurrentFiles]);
+		setCurrentFiles(orderedFiles, unfilteredCount, files);
+	}, [orderedFiles, unfilteredCount, files, setCurrentFiles]);
 
 	// Virtual row rendering - uses the container as scroll element
 	const rowVirtualizer = useVirtualizer({
@@ -461,6 +477,14 @@ export const ListView = memo(function ListView() {
 								if (!row) return null;
 
 								const file = row.original;
+								// Rows inside an expanded folder take that folder's Git state.
+								const parentRow = row.getParentRow();
+								const parentPath = parentRow ? physicalPathOf(parentRow.original) : null;
+								const folderVcsStatus = parentRow
+									? parentPath
+										? vcsStatusByFolder.get(parentPath)
+										: undefined
+									: vcsStatus;
 								// Use O(1) lookup instead of O(n) selectedFiles.some()
 								const fileIsSelected = isSelected(file.id);
 								const isFocused = focusedIndex === item.index;
@@ -505,7 +529,7 @@ export const ListView = memo(function ListView() {
 												? rename
 												: undefined
 										}
-										vcsStatus={row.depth === 0 ? vcsStatusOf(vcsStatus, file) : null}
+										vcsStatus={vcsStatusOf(folderVcsStatus, file)}
 										onToggleExpanded={toggleExpanded}
 										selectFile={selectFile}
 									/>

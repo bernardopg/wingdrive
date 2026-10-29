@@ -181,6 +181,14 @@ export const explorerKeybinds = {
 		preventDefault: true
 	}),
 
+	toggleTerminal: defineKeybind({
+		id: 'explorer.toggleTerminal',
+		label: 'Terminal Panel',
+		combo: {modifiers: [], key: 'F4'},
+		scope: 'explorer',
+		preventDefault: true
+	}),
+
 	toggleHiddenFiles: defineKeybind({
 		id: 'explorer.toggleHiddenFiles',
 		label: 'Show Hidden Files',

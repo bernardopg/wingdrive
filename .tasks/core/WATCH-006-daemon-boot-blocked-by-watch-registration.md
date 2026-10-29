@@ -4,11 +4,11 @@ title: Daemon at login is unreachable while location watches register
 status: In Progress
 assignee: bernardopg
 parent: WATCH-000
-priority: Critical
+priority: High
 milestone: M2
-sprint: S03
+sprint: S04
 tags: [watcher, daemon, tauri, packaging, bug]
-last_updated: 2026-10-19
+last_updated: 2026-10-28
 ---
 
 ## Description

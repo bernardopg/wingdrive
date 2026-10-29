@@ -138,6 +138,8 @@ jobs:
           bun test packages/interface/src/hooks/adminRetry.test.ts
           bun test packages/interface/src/components/QuickPreview/pdfBinaryData.test.ts
           bun test packages/interface/src/routes/explorer/OpenFileProvider.test.tsx
+          bun test packages/interface/src/routes/explorer/terminal/terminalFolder.test.ts
+          bun test packages/interface/src/routes/explorer/terminal/dockedTerminals.test.ts
 
   core:
     name: Rust Workspace

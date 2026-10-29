@@ -862,6 +862,9 @@ UI has no `homeDir`, `runAsAdmin` or service menus; those need the Tauri build.
   names that differ only in case.
 - The CSP's `connect-src` does not allow `asset:`. Fetch file bytes through
   `platform.getMediaSrc` (the loopback stream URL), as Quick Preview does.
+- `useLibraryQueries` subscribes to no change events and keys queries without the `query:` prefix
+  that `useNormalizedQuery` uses. Refresh its results yourself, as `useExpandedFolderEvents` does for
+  expanded list rows.
 
 ### Verbose Logging
 
