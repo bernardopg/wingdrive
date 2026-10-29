@@ -15,6 +15,8 @@ export function useRefetchFileListings() {
 	return useCallback(() => {
 		for (const key of [
 			"query:files.directory_listing",
+			// Folders expanded in list view, fetched with useLibraryQueries.
+			"files.directory_listing",
 			"query:files.media_listing",
 			"query:files.by_id",
 			"query:files.recents",

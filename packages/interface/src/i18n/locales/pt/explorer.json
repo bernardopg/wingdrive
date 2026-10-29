@@ -271,6 +271,8 @@
 		"baseName": "Arquivo"
 	},
 	"list": {
+		"expandFolder": "Expandir pasta",
+		"collapseFolder": "Recolher pasta",
 		"name": "Nome",
 		"size": "Tamanho",
 		"modified": "Modificado",

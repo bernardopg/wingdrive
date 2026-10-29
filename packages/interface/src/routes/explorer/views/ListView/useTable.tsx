@@ -1,6 +1,7 @@
-import type {ColumnSizingState, SortingState} from '@tanstack/react-table';
+import type {ColumnSizingState, ExpandedState, SortingState} from '@tanstack/react-table';
 import {
 	getCoreRowModel,
+	getExpandedRowModel,
 	getSortedRowModel,
 	useLegacyTable as useReactTable,
 	type LegacyColumnDef as ColumnDef
@@ -93,7 +94,16 @@ function fillNameColumn(
 	};
 }
 
-export function useTable(files: File[], availableWidth: number) {
+const NO_SUB_ROWS = new Map<string, File[]>();
+const NOTHING_EXPANDED: ExpandedState = {};
+
+/** Folders expanded in place: their listed children and which rows are open. */
+export interface ListExpansion {
+	subRows: Map<string, File[]>;
+	expanded: Record<string, boolean>;
+}
+
+export function useTable(files: File[], availableWidth: number, expansion?: ListExpansion) {
 	const {sortBy, sortDirection, viewSettings} = useExplorer();
 	const {activeTabId, getExplorerState, updateExplorerState} =
 		useTabManager();
@@ -131,17 +141,28 @@ export function useTable(files: File[], availableWidth: number) {
 	);
 	const core = useMemo(() => getCoreRowModel<File>(), []);
 	const sorted = useMemo(() => getSortedRowModel<File>(), []);
+	const expandedModel = useMemo(() => getExpandedRowModel<File>(), []);
+	const subRows = expansion?.subRows ?? NO_SUB_ROWS;
+	// The core row model only rebuilds when `data` changes identity, so a new
+	// set of children has to come with a new array for them to appear.
+	const data = useMemo(() => (subRows.size > 0 ? [...files] : files), [files, subRows]);
 	const table = useReactTable({
-		data: files,
+		data,
 		columns,
 		defaultColumn: {minSize: 60},
 		getCoreRowModel: core,
 		getSortedRowModel: sorted,
+		getExpandedRowModel: expandedModel,
+		// Children sort with the same columns as the folder they are in.
+		getSubRows: (row) => subRows.get(row.id),
+		getRowCanExpand: (row) =>
+			row.original.kind === 'Directory' && 'Physical' in row.original.wing_path,
 		columnResizeMode: 'onChange',
 		enableSortingRemoval: false,
 		state: {
 			sorting,
 			columnVisibility: HIDDEN_COLUMNS,
+			expanded: expansion?.expanded ?? NOTHING_EXPANDED,
 			columnSizing: filledSizing
 		},
 		onColumnSizingChange: (updater) => {

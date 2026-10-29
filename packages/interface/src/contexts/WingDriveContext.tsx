@@ -12,6 +12,7 @@ export {
 	useClient,
 	useCoreQuery,
 	useLibraryQuery,
+	useLibraryQueries,
 	useCoreMutation,
 	useLibraryMutation,
 	useNormalizedQuery,

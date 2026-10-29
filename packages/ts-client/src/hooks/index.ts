@@ -2,7 +2,7 @@
 // These hooks provide type-safe, auto-generated bindings to the WingDrive API
 
 export { WingDriveProvider, useWingDriveClient, useClient, queryClient } from "./useClient";
-export { useCoreQuery, useLibraryQuery } from "./useQuery";
+export { useCoreQuery, useLibraryQuery, useLibraryQueries } from "./useQuery";
 export { useCoreMutation, useLibraryMutation } from "./useMutation";
 export { useNormalizedQuery } from "./useNormalizedQuery";
 // Alias for backwards compatibility

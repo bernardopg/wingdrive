@@ -1,7 +1,7 @@
 import {CaretDown, CaretUp} from '@phosphor-icons/react';
 import {flexRender} from '@tanstack/react-table';
 import {useVirtualizer} from '@tanstack/react-virtual';
-import type {File} from '@wingdrive/ts-client';
+import type {DirectorySortBy, File} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {
 	memo,
@@ -12,6 +12,8 @@ import {
 	useRef,
 	useState
 } from 'react';
+import {useTabManager} from '../../../../components/TabManager';
+import {useLibraryQueries} from '../../../../contexts/WingDriveContext';
 import {isInputFocused} from '../../../../util/keybinds/platform';
 import {useExplorer} from '../../context';
 import {useEmptySpaceContextMenu} from '../../hooks/useEmptySpaceContextMenu';
@@ -22,6 +24,13 @@ import {useTabScroll} from '../../hooks/useTabScroll';
 import {useSelection} from '../../SelectionContext';
 import {DragSelect} from './DragSelect';
 import {vcsStatusOf} from '../../components/vcsStatus';
+import {
+	attachChildren,
+	blocksByTopLevel,
+	expandedWithin,
+	physicalPathOf,
+	toggleExpandedPath
+} from './listExpansion';
 import {TableRow} from './TableRow';
 import {GROUP_HEADER_HEIGHT, GroupHeader, useGroupLabel} from '../GroupHeader';
 import {buildListLayout, groupFiles, isGroupBy} from '../grouping';
@@ -38,7 +47,9 @@ const NO_FILES: File[] = [];
 
 export const ListView = memo(function ListView() {
 	const {t} = useTranslation('explorer');
-	const {setCurrentFiles, scrollPosition, viewSettings} = useExplorer();
+	const {setCurrentFiles, scrollPosition, viewSettings, currentPath, sortBy, sortDirection} =
+		useExplorer();
+	const {activeTabId, getExplorerState, updateExplorerState} = useTabManager();
 	const groupLabel = useGroupLabel();
 	const {
 		focusedIndex,
@@ -76,26 +87,90 @@ export const ListView = memo(function ListView() {
 	}, []);
 
 	// Get files from centralized hook (handles search, virtual, and directory)
-	const {files: listedFiles, vcsStatus} = useExplorerFiles();
+	const {files: listedFiles, vcsStatus, source} = useExplorerFiles();
 	const {files, unfilteredCount} = useFolderFilter(listedFiles);
-	const {table} = useTable(files, availableWidth);
+
+	// Folders expanded in place, listed with the same options as the folder shown.
+	const shownFolder =
+		source === 'directory' && currentPath && 'Physical' in currentPath
+			? currentPath.Physical.path
+			: null;
+	const storedExpanded = getExplorerState(activeTabId).listExpanded;
+	const expandedPaths = useMemo(
+		() => expandedWithin(storedExpanded ?? [], shownFolder),
+		[storedExpanded, shownFolder]
+	);
+	const deviceSlug =
+		currentPath && 'Physical' in currentPath ? currentPath.Physical.device_slug : 'local';
+	const childListings = useLibraryQueries(
+		'files.directory_listing',
+		expandedPaths.map((path) => ({
+			path: {Physical: {device_slug: deviceSlug, path}},
+			limit: null,
+			include_hidden: viewSettings.showHiddenFiles,
+			sort_by: sortBy as DirectorySortBy,
+			folders_first: viewSettings.foldersFirst,
+			sort_direction: sortDirection
+		})),
+		{staleTime: 5_000}
+	);
+	const listingData = childListings.map((query) => query.data?.files);
+	const listingKey = childListings.map((query) => query.dataUpdatedAt).join(',');
+	const expansion = useMemo(
+		() => attachChildren(files, expandedPaths, listingData),
+		// listingData is a fresh array each render; its contents change with listingKey.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[files, expandedPaths, listingKey]
+	);
+	const toggleExpanded = useCallback(
+		(file: File) => {
+			const path = physicalPathOf(file);
+			if (!path) return;
+			updateExplorerState(activeTabId, {
+				listExpanded: toggleExpandedPath(
+					expandedWithin(getExplorerState(activeTabId).listExpanded ?? [], shownFolder),
+					path
+				)
+			});
+		},
+		[activeTabId, getExplorerState, updateExplorerState, shownFolder]
+	);
+
+	const {table} = useTable(files, availableWidth, expansion);
 	const {rows: sortedRows} = table.getRowModel();
 	// Sections follow the column the list is sorted by.
 	const sortColumn = table
 		.getState()
 		.sorting.find((entry) => entry.id !== 'folders')?.id;
 	const groupBy = viewSettings.groupItems && isGroupBy(sortColumn) ? sortColumn : null;
+	// Expanded folders' contents stay with the row that holds them.
+	const blocks = useMemo(() => blocksByTopLevel(sortedRows), [sortedRows]);
 	const groups = useMemo(
-		() => (groupBy ? groupFiles(sortedRows.map((row) => row.original), groupBy) : null),
+		() =>
+			groupBy
+				? groupFiles(
+						sortedRows.filter((row) => row.depth === 0).map((row) => row.original),
+						groupBy
+					)
+				: null,
 		[sortedRows, groupBy]
 	);
 	// Sections reorder the rows, and selection ranges follow what is on screen.
 	const rows = useMemo(() => {
 		if (!groups) return sortedRows;
-		const byId = new Map(sortedRows.map((row) => [row.original.id, row]));
-		return groups.flatMap((group) => group.files.map((file) => byId.get(file.id)!));
-	}, [groups, sortedRows]);
-	const layout = useMemo(() => buildListLayout(groups, rows.length), [groups, rows.length]);
+		return groups.flatMap((group) => group.files.flatMap((file) => blocks.get(file.id) ?? []));
+	}, [groups, sortedRows, blocks]);
+	const layout = useMemo(
+		() =>
+			buildListLayout(
+				groups,
+				rows.length,
+				groups?.map((group) =>
+					group.files.reduce((sum, file) => sum + (blocks.get(file.id)?.length ?? 1), 0)
+				)
+			),
+		[groups, rows.length, blocks]
+	);
 	const orderedFiles = useMemo(() => rows.map((row) => row.original), [rows]);
 	const columnSizingKey = JSON.stringify(table.getState().columnSizing);
 
@@ -148,6 +223,10 @@ export const ListView = memo(function ListView() {
 	rowVirtualizerRef.current = rowVirtualizer;
 	const filesRef = useRef(orderedFiles);
 	filesRef.current = orderedFiles;
+	const rowsRef = useRef(rows);
+	rowsRef.current = rows;
+	const toggleExpandedRef = useRef(toggleExpanded);
+	toggleExpandedRef.current = toggleExpanded;
 	const itemOfFileRef = useRef(layout.itemOfFile);
 	itemOfFileRef.current = layout.itemOfFile;
 
@@ -170,6 +249,15 @@ export const ListView = memo(function ListView() {
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (isInputFocused()) return;
+			// Right opens the focused folder in place and Left closes it, as in Dolphin.
+			if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+				const row = rowsRef.current[focusedIndex];
+				if (!row?.getCanExpand()) return;
+				if (row.getIsExpanded() === (e.key === 'ArrowRight')) return;
+				e.preventDefault();
+				toggleExpandedRef.current(row.original);
+				return;
+			}
 			if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
 				e.preventDefault();
 				const direction = e.key === 'ArrowDown' ? 'down' : 'up';
@@ -417,7 +505,8 @@ export const ListView = memo(function ListView() {
 												? rename
 												: undefined
 										}
-										vcsStatus={vcsStatusOf(vcsStatus, file)}
+										vcsStatus={row.depth === 0 ? vcsStatusOf(vcsStatus, file) : null}
+										onToggleExpanded={toggleExpanded}
 										selectFile={selectFile}
 									/>
 								);

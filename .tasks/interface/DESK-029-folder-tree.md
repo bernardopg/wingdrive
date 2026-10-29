@@ -1,7 +1,7 @@
 ---
 id: DESK-029
 title: Folder tree in the sidebar and expandable folders in list view
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: DESK-000
 priority: Medium
@@ -19,11 +19,31 @@ locations and volumes, and list rows cannot expand.
 
 ## Implementation Steps
 
-1. Expandable folder rows in list view, loading children with `files.directory_listing` on demand.
-2. A collapsible folder tree panel in the sidebar rooted at the home folder and mounted volumes.
-3. Both follow the hidden-files setting and keep their expansion state per tab.
+1. Expandable folder rows in list view: a chevron (or Right and Left) opens a folder in place;
+   its children load with `files.directory_listing` through `useLibraryQueries`, sort with the
+   list's columns and nest as TanStack sub-rows. Collapsing a folder also collapses those inside.
+2. A "Folders" section at the bottom of the sidebar, rooted at the home folder and the filesystem
+   root (the root alone where the platform cannot tell the home folder, as in the web UI). It
+   opens the branch of the folder the active tab shows and highlights it; click navigates and
+   middle-click opens a new tab.
+3. Both follow the hidden-files setting. List expansion is stored per tab (`listExpanded`), so it
+   survives reloads and restores when you come back to the folder.
 
 ## Acceptance Criteria
 
-- [ ] A list-view folder row expands and collapses in place
-- [ ] The sidebar tree follows the current folder
+- [x] A list-view folder row expands and collapses in place
+- [x] The sidebar tree follows the current folder
+- [ ] Verified on the Linux desktop build
+
+## Evidence
+
+- Unit tests: `folderTree.test.ts` (containment, ancestors, deepest root) and
+  `listExpansion.test.ts` (toggle, attach level by level, blocks for grouping); both in CI.
+- Runtime, 2026-10-28: web UI on an isolated `wing-server` (Chrome DevTools). The tree opened
+  `/tmp/.../rt/fx/repo` level by level and marked it; in list view `src` and `src/deep` expanded
+  with indentation, Right and Left opened and closed `docs`, the expansion survived a reload, and
+  "Show in Groups" kept each expanded folder's rows under its section. No console errors.
+- Found and fixed during that check: the table's core row model only rebuilds when `data`
+  changes identity, so new children did not appear until the array was renewed.
+- Not done: expanded children show no Git emblem (the status query covers the shown folder
+  only), and the status bar counts the expanded rows too.

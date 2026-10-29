@@ -271,6 +271,8 @@
 		"baseName": "Archive"
 	},
 	"list": {
+		"expandFolder": "Expand folder",
+		"collapseFolder": "Collapse folder",
 		"name": "Name",
 		"size": "Size",
 		"modified": "Modified",

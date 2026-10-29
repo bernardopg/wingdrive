@@ -213,7 +213,15 @@ export interface ListLayout {
 	itemOfFile: number[];
 }
 
-export function buildListLayout(groups: FileGroup[] | null, count: number): ListLayout {
+/**
+ * Items for the list. `rowsPerGroup` counts each section's rows when expanded
+ * folders add rows beneath their files; it defaults to the section's files.
+ */
+export function buildListLayout(
+	groups: FileGroup[] | null,
+	count: number,
+	rowsPerGroup?: number[]
+): ListLayout {
 	const items: ListItem[] = [];
 	const itemOfFile: number[] = [];
 
@@ -226,12 +234,13 @@ export function buildListLayout(groups: FileGroup[] | null, count: number): List
 	}
 
 	let index = 0;
-	for (const group of groups) {
+	groups.forEach((group, groupIndex) => {
 		items.push({type: 'header', group});
-		for (let i = 0; i < group.files.length; i++) {
+		const rows = rowsPerGroup?.[groupIndex] ?? group.files.length;
+		for (let i = 0; i < rows; i++) {
 			itemOfFile.push(items.length);
 			items.push({type: 'file', index: index++});
 		}
-	}
+	});
 	return {items, itemOfFile};
 }
