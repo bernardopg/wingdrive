@@ -7,7 +7,8 @@ parent: DESK-000
 priority: High
 milestone: M2
 tags: [desktop, performance, linux]
-last_updated: 2026-10-14
+last_updated: 2026-10-28
+sprint: S03
 ---
 
 ## Description

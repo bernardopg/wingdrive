@@ -6,9 +6,9 @@ assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
-sprint: S03
+sprint: S04
 tags: [core, interface, indexing, bug, performance]
-last_updated: 2026-10-23
+last_updated: 2026-10-28
 ---
 
 ## Description

@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-10-16. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-10-28. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -54,16 +54,23 @@ Epic: `DESK-000`. Sprints S03 a S05.
 
 Pré-requisito: TAURI-015 (pacote AUR com GTK/WebKit do sistema, daemon encerrado ao sair).
 
-Estado em 2026-10-16: DESK-001 a DESK-012 e DESK-014 Done. O que falta para fechar o M2:
+Estado em 2026-10-28: S02 e S03 fechados. Done no M2: DESK-001 a DESK-012, DESK-014, DESK-022,
+DESK-025 a DESK-028, DESK-036, TAURI-015, INDEX-013, INDEX-014, NET-005, NET-006, SEC-010,
+WATCH-007, WATCH-008, FORK-006 e FORK-008. O que falta para fechar o M2 (plano de ataque em
+[S04](sprints/S04.md)):
 
 | Task | O que falta | Sprint |
 |---|---|---|
 | DESK-017 | Um dia inteiro de uso do pacote AUR, sem voltar a outro file manager | S04 |
-| DESK-015, DESK-018, DESK-019, DESK-020, DESK-021 | Código no `main`; falta validar no build Linux (no dia da DESK-017) | S04 |
+| DESK-015, DESK-018 a DESK-021, DESK-023, DESK-024 | Código no `main`; falta validar no build Linux (no dia da DESK-017) | S04 |
+| DESK-029 a DESK-033, DESK-035 | Código no `main` (#296, #298); falta validar no build Linux; DESK-033 precisa da senha real no polkit | S04 |
+| DESK-034 | Terminal embutido (F4) | S04 |
+| WATCH-006 | Conexão no login e `wing` no PATH, no pacote seguinte | S04 |
 | INDEX-010 | Checagem visual de seleção, tags e troca de biblioteca | S04 |
 | FORK-007 | Código no `main` (#231); falta conferir devices pareados com um peer real | S04 |
 | DESK-013 | Revisão pt no Crowdin e verificação do pacote (passos 3 a 5) | S04 |
-| DESK-016 | Explorer com painel duplo (F3) | S05 |
+| DESK-016 | Explorer com painel duplo (F3); exige tirar o shell do router de cada aba | S05 |
+| FORK-009 | Correções enviadas ao upstream (#3160 a #3162) | S05 |
 | DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
 
 O M2 fecha quando o DESK-000 estiver Done com evidência do pacote AUR e um dia inteiro de uso sem
@@ -118,6 +125,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-10-28 | #296 mergeado; S02 e S03 fechados com review e retro; sobras do S03 (DESK-021, DESK-023, DESK-024, WATCH-006, MOB-005, MOB-009) no S04; DESK-034 e as duas falhas da DESK-029 (emblema Git nos filhos e contagem da barra de status) entram no S04; DESK-016 ganha notas de desenho |
 | 2026-10-28 | S04: DESK-029 a DESK-033 e DESK-035 com código pronto (PRs #296 e #298), In Progress até a checagem no build Linux; visualização rápida de PDF, texto e código (#295); pdfjs-dist 6.4 fecha o alerta Dependabot 47 (#297); DESK-034 adiada |
 | 2026-10-17 | Revisão do app mobile no Moto G7 e no emulador: épico MOB-000 com 11 tasks em `.tasks/mobile/`; MOB-001 a MOB-005 puxadas para o S03 |
 | 2026-10-16 | Auditoria do `.tasks/`: quadro do S03 atualizado, S04 e S05 planejados; 65 tasks herdadas do upstream estacionadas em M4/M5; EXPL-000 e SEC-008 Done; CORE-012 e CORE-013 obsoletas |
