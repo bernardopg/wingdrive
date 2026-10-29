@@ -9,6 +9,10 @@ import { useWingDriveClient } from "@wingdrive/ts-client";
  */
 const LISTING_QUERY_KEYS = [
 	"query:files.directory_listing",
+	// Folders expanded in list view and their Git state, fetched with
+	// useLibraryQueries, which keys queries without the wire prefix.
+	"files.directory_listing",
+	"files.vcs_status",
 	"query:files.media_listing",
 	"query:files.by_id",
 	"query:files.recents",

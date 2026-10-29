@@ -67,7 +67,8 @@ export function ExplorerView() {
 		columnStack,
 		operationalPath,
 		setFolderFilter,
-		unfilteredFileCount
+		unfilteredFileCount,
+		listedFiles
 	} = useExplorer();
 
 	const {isVirtualView} = useVirtualListing();
@@ -352,8 +353,8 @@ export function ExplorerView() {
 				{/* Each listing view filters itself; size and knowledge views are visualizations. */}
 				{mode.type === 'browse' && viewMode !== 'size' && viewMode !== 'knowledge' && (
 					<FolderFilterBar
-						shown={currentFiles.length}
-						total={unfilteredFileCount ?? currentFiles.length}
+						shown={listedFiles.length}
+						total={unfilteredFileCount ?? listedFiles.length}
 					/>
 				)}
 				<div

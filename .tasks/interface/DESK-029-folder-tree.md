@@ -8,7 +8,7 @@ priority: Medium
 milestone: M2
 tags: [desktop, explorer]
 sprint: S04
-last_updated: 2026-10-28
+last_updated: 2026-10-29
 ---
 
 ## Description
@@ -45,5 +45,15 @@ locations and volumes, and list rows cannot expand.
   "Show in Groups" kept each expanded folder's rows under its section. No console errors.
 - Found and fixed during that check: the table's core row model only rebuilds when `data`
   changes identity, so new children did not appear until the array was renewed.
-- Not done: expanded children show no Git emblem (the status query covers the shown folder
-  only), and the status bar counts the expanded rows too.
+- Fixed on 2026-10-29 (the two gaps found on 2026-10-28):
+  - Expanded children show their Git emblem: `ListView` reads `files.vcs_status` for every expanded
+    folder and each row takes its parent's state.
+  - The status bar and the filter bar count the shown folder only: views publish `listedFiles`
+    next to `currentFiles`, which still holds every visible row for selection and Quick Preview.
+  - Expanded folders' rows went stale until the next navigation: `useLibraryQueries` subscribes to
+    nothing. `useExpandedFolderEvents` subscribes once to file changes under the shown folder,
+    descendants included, and refetches the expanded listings and their Git state.
+  - Runtime, 2026-10-29, web UI on an isolated `wing-server`: with `src` and `src/deep` expanded,
+    `deep` showed U then M, `a.txt` M, `new.txt` U, `b.txt` none; the status bar read "2 folders ·
+    1 file" (7 rows on screen). Creating `src/deep/again.txt` and committing the rest in a terminal
+    showed `again.txt` with U and cleared the others without a reload. No console errors.
