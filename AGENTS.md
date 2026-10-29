@@ -694,6 +694,10 @@ just ci-local --all  # force the Rust steps
 Rules for agents and contributors:
 
 - Push only after `just ci-local` passes. Fix failures locally, then push once.
+- Push to `origin` (`bernardopg/wingdrive`) and open pull requests there
+  (`gh pr create --repo bernardopg/wingdrive`). The `fork` remote is a different repository.
+- After a stacked pull request merges into its base branch, merge `origin/main` into the base.
+  `.github/workflows/ci.yml` usually conflicts on the `bun test` list; keep both sides.
 - Never push to "see what CI says", and never push a series of small fix commits to
   iterate against CI. Reproduce the CI failure locally (same `cargo test` or `bun test`
   command from `.github/workflows/ci.yml`), fix it, rerun, then push.
@@ -831,6 +835,33 @@ cargo run --bin wing -- restart
 Never iterate with release APKs. Use the debug dev client and Metro: `just mobile-emulator`,
 `just mobile-install-android`, `just dev-mobile`. Full loop in `docs/core/mobile-development.mdx`
 and the agent skill `.agents/skills/wingdrive-mobile-dev/SKILL.md`.
+
+### Checking UI Changes at Runtime
+
+Typecheck and unit tests miss rendering bugs, so check Explorer and sidebar changes in the web UI
+against an isolated daemon before calling them done. This never touches the author's daemon or
+library:
+
+```bash
+(cd apps/web && bun run build)
+cargo build --bin wing-server --bin wing-daemon
+S=/tmp/wing-check   # any scratch folder
+HOME=$S/home XDG_CONFIG_HOME=$S/home/.config ./target/debug/wing-server \
+  --data-dir $S/data --instance check --host 127.0.0.1 --port 18089 --auth disabled
+```
+
+Drive `http://127.0.0.1:18089/` with a browser (Chrome DevTools MCP, isolated context). Stop the
+server by PID: `pkill -f` with a pattern that matches its own command line kills your shell. The web
+UI has no `homeDir`, `runAsAdmin` or service menus; those need the Tauri build.
+
+### Frontend Pitfalls
+
+- TanStack Table's legacy `getCoreRowModel` rebuilds only when `data` changes identity. Pass a new
+  array when sub-rows change (see `ListView/useTable.tsx`).
+- `bun test` resolves `./folderTree` to `FolderTree.tsx` in the same folder. Do not give two files
+  names that differ only in case.
+- The CSP's `connect-src` does not allow `asset:`. Fetch file bytes through
+  `platform.getMediaSrc` (the loopback stream URL), as Quick Preview does.
 
 ### Verbose Logging
 
