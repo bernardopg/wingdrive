@@ -136,6 +136,7 @@ jobs:
           bun test packages/interface/src/components/SpacesSidebar/FolderTree/folderTreePaths.test.ts
           bun test packages/interface/src/routes/explorer/views/ListView/listExpansion.test.ts
           bun test packages/interface/src/hooks/adminRetry.test.ts
+          bun test packages/interface/src/components/QuickPreview/pdfBinaryData.test.ts
           bun test packages/interface/src/routes/explorer/OpenFileProvider.test.tsx
 
   core:
