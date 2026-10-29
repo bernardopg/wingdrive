@@ -75,6 +75,7 @@ if [ "$1" = "full" ]; then
 
 	step "Test desktop IPC and launch handling"
 	cargo test --locked -p wingdrive --bin WingDrive
+	cargo test --locked -p file-opening-linux
 
 	step "Test two-device sync"
 	cargo test --locked -p wing-core \
@@ -97,6 +98,7 @@ else
 		step "Test desktop IPC and launch handling"
 		cargo build --locked --bin wing-daemon
 		cargo test --locked -p wingdrive --bin WingDrive
+		cargo test --locked -p file-opening-linux
 	fi
 fi
 

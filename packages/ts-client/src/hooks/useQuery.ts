@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useQuery, type UseQueryOptions, type UseQueryResult } from "@tanstack/react-query";
+import { useQueries, useQuery, type UseQueryOptions, type UseQueryResult } from "@tanstack/react-query";
 import { useWingDriveClient } from "./useClient";
 import type { CoreQuery, LibraryQuery } from "../generated/types";
 import { WIRE_METHODS } from "../generated/types";
@@ -83,4 +83,41 @@ export function useLibraryQuery<T extends LibraryQuery["type"]>(
 		enabled: !!libraryId && (options?.enabled ?? true),
 		...options,
 	}) as UseQueryResult<Extract<LibraryQuery, { type: T }>["output"]>;
+}
+
+/**
+ * Runs the same library query for each input, such as one directory listing
+ * per expanded folder. Results share the cache of `useLibraryQuery` and come
+ * back in input order.
+ *
+ * @example
+ * ```tsx
+ * const listings = useLibraryQueries("files.directory_listing", expandedInputs);
+ * ```
+ */
+export function useLibraryQueries<T extends LibraryQuery["type"]>(
+	type: T,
+	inputs: Extract<LibraryQuery, { type: T }>["input"][],
+	options?: Omit<
+		UseQueryOptions<Extract<LibraryQuery, { type: T }>["output"]>,
+		"queryKey" | "queryFn"
+	>
+): UseQueryResult<Extract<LibraryQuery, { type: T }>["output"]>[] {
+	const client = useWingDriveClient();
+	const wireMethod = WIRE_METHODS.libraryQueries[type];
+	const libraryId = client.getCurrentLibraryId();
+
+	return useQueries({
+		queries: inputs.map((input) => ({
+			queryKey: [type, libraryId, input],
+			queryFn: () => {
+				if (!libraryId) {
+					throw new Error("No library selected. Use client.switchToLibrary() first.");
+				}
+				return client.execute(wireMethod, input);
+			},
+			...options,
+			enabled: !!libraryId && (options?.enabled ?? true),
+		})),
+	}) as UseQueryResult<Extract<LibraryQuery, { type: T }>["output"]>[];
 }

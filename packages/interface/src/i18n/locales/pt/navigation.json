@@ -382,5 +382,12 @@
 		"sources": "Fontes",
 		"itemCount_one": "{{formattedCount}} item",
 		"itemCount_other": "{{formattedCount}} itens"
+	},
+	"folderTree": {
+		"title": "Pastas",
+		"home": "Pasta pessoal",
+		"computer": "Computador",
+		"expand": "Expandir",
+		"collapse": "Recolher"
 	}
 }

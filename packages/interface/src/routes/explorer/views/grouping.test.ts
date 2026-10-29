@@ -147,5 +147,7 @@ describe('grid and list layouts', () => {
 		]);
 		expect(layout.itemOfFile).toEqual([1, 2, 3, 5, 6]);
 		expect(buildListLayout(null, 2).itemOfFile).toEqual([0, 1]);
+		// Expanded folders add rows under their section's files.
+		expect(buildListLayout(groups, files.length + 2, [5, 2]).itemOfFile).toEqual([1, 2, 3, 4, 5, 7, 8]);
 	});
 });

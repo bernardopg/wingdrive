@@ -46,6 +46,8 @@ export interface Tab {
  */
 export interface TabExplorerState {
 	listSorting?: SortingState;
+	/** Folders expanded in place in list view, by absolute path. */
+	listExpanded?: string[];
 	/** List view widths the user dragged; columns missing here use their defaults. */
 	listColumnSizing?: ColumnSizingState;
 	// View settings

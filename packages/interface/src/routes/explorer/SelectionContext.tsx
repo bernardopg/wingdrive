@@ -15,6 +15,7 @@ import {useTabManager} from '../../components/TabManager';
 import {usePlatform} from '../../contexts/PlatformContext';
 import {useLibraryMutation, useWingDriveClient} from '../../contexts/WingDriveContext';
 import {useClipboard} from '../../hooks/useClipboard';
+import {useAdminRetry} from '../../hooks/adminRetry';
 import {useRefetchFileListings} from '../../hooks/useRefetchFileListings';
 import {useUndo} from '../../hooks/useUndo';
 import {useWaitForJob} from '../../hooks/useWaitForJob';
@@ -307,6 +308,7 @@ export function SelectionProvider({
 		setRenamingFileId(null);
 	}, []);
 
+	const adminRetry = useAdminRetry();
 	const saveRename = useCallback(
 		async (newName: string) => {
 			if (!renamingFileId) return;
@@ -379,7 +381,14 @@ export function SelectionProvider({
 			} catch (error) {
 				// Keep in edit mode on error so user can retry
 				console.error('Rename failed:', error);
-				toast.error(t('errors.renameFailed', {error: error instanceof Error ? error.message : String(error)}));
+				const message = error instanceof Error ? error.message : String(error);
+				adminRetry.report(
+					t('errors.renameFailed', {error: message}),
+					file.is_local && 'Physical' in file.wing_path
+						? {type: 'rename', path: file.wing_path.Physical.path, new_name: newName}
+						: null,
+					message
+				);
 				throw error;
 			}
 		},
@@ -391,6 +400,7 @@ export function SelectionProvider({
 			waitForJob,
 			platform,
 			undo,
+			adminRetry,
 			t
 		]
 	);

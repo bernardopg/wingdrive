@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 base64 = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 file-opening = { path = "../file-opening" }
 open = "5.3"
 

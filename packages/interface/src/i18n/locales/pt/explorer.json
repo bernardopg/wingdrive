@@ -24,6 +24,7 @@
 		"back": "Voltar"
 	},
 	"errors": {
+		"contextActionFailed": "Não foi possível executar {{name}}: {{error}}",
 		"couldNotOpenLocation": "Não foi possível abrir este local: {{error}}",
 		"searchFailed": "Falha na pesquisa: {{error}}",
 		"failedToRevealFile": "Falha ao mostrar o arquivo na pasta: {{error}}",
@@ -53,6 +54,7 @@
 		"couldNotOpenWindow": "Não foi possível abrir uma nova janela: {{error}}"
 	},
 	"contextMenu": {
+		"actions": "Ações",
 		"quickLook": "Visualização rápida",
 		"openItems_one": "Abrir {{count}} item",
 		"openItems_other": "Abrir {{count}} itens",
@@ -269,6 +271,8 @@
 		"baseName": "Arquivo"
 	},
 	"list": {
+		"expandFolder": "Expandir pasta",
+		"collapseFolder": "Recolher pasta",
 		"name": "Nome",
 		"size": "Tamanho",
 		"modified": "Modificado",

@@ -24,6 +24,7 @@
 		"back": "Back"
 	},
 	"errors": {
+		"contextActionFailed": "Could not run {{name}}: {{error}}",
 		"couldNotOpenLocation": "Could not open this location: {{error}}",
 		"searchFailed": "Search failed: {{error}}",
 		"failedToRevealFile": "Failed to reveal file: {{error}}",
@@ -53,6 +54,7 @@
 		"couldNotOpenWindow": "Could not open a new window: {{error}}"
 	},
 	"contextMenu": {
+		"actions": "Actions",
 		"quickLook": "Quick Look",
 		"openItems_one": "Open {{count}} Items",
 		"openItems_other": "Open {{count}} Items",
@@ -269,6 +271,8 @@
 		"baseName": "Archive"
 	},
 	"list": {
+		"expandFolder": "Expand folder",
+		"collapseFolder": "Collapse folder",
 		"name": "Name",
 		"size": "Size",
 		"modified": "Modified",
