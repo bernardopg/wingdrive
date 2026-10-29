@@ -5,11 +5,20 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
-Quick Preview that reads every common file type, a security fix for it, and the
-six M2 file manager features planned in S04 (#295 to #298). Each DESK task stays
-In Progress until it is checked on the Linux desktop build.
+## 2.3.0 — 2026-10-29
+
+Quick Preview that reads every common file type, a security fix for it, the
+six M2 file manager features planned in S04 (#295 to #298), and a terminal
+docked under the Explorer (#299 and this release). Each DESK task stays In
+Progress until it is checked on the Linux desktop build.
 
 ### Added
+
+- F4, or "Show Terminal Panel" in the empty-space menu, opens your shell in a
+  panel under the Explorer. Navigating sends the shell along with `cd`, and
+  `cd` in the shell moves the Explorer. A busy shell gets the `cd` once its
+  program ends. The shell survives tab switches and hiding the panel
+  (DESK-034).
 
 - Quick Preview shows PDFs (pdf.js, page by page, with zoom), text, code and
   config files, including extensionless text files up to 2 MB (#295).
@@ -30,6 +39,11 @@ In Progress until it is checked on the Linux desktop build.
 
 ### Fixed
 
+- Right after launch, the first folder could list "0 files": every collapsed
+  row of the sidebar folder tree held a daemon connection and used up its limit
+  of 100. Disabled queries no longer subscribe (DESK-037).
+- Rows inside folders expanded in list view now show their Git emblem, refresh
+  when files change, and are left out of the status bar and filter counts.
 - Text and code previews were blank: the CSP blocked the asset protocol for
   `fetch`. Videos now fit the preview area. The Inspector's scrollbar no longer
   covers right-aligned values (#295).
@@ -39,6 +53,10 @@ In Progress until it is checked on the Linux desktop build.
 - `pdfjs-dist` 6.4: versions 5.6.83 to 6.2.107 could run JavaScript from a
   malicious PDF (Dependabot alert 47). Standard fonts and image decoders are
   bundled, so PDFs that rely on non-embedded fonts keep their glyphs (#297).
+- Dependency audit: `fast-uri`, `node-forge`, `seroval` and
+  `postcss-selector-parser` updated past their advisories. `cargo audit`
+  exceptions with no reachable fix (rsa, and ruzstd and memmap2 through the
+  pinned wasmer 7.1) are recorded with the reason in `.cargo/audit.toml`.
 
 ## 2.2.0 — 2026-10-28
 
