@@ -15,6 +15,7 @@ mod gvfs;
 mod keybinds;
 mod launch;
 mod server;
+mod terminal;
 mod undo;
 mod windows;
 
@@ -2428,6 +2429,7 @@ fn main() {
 	builder
 		.manage(launch::PendingOpenRequests::new(launch_options.requests))
 		.manage(launch::StartHidden(launch_options.hidden.into()))
+		.manage(terminal::TerminalSessions::default())
 		.plugin(tauri_plugin_clipboard_manager::init())
 		.plugin(tauri_plugin_dialog::init())
 		.plugin(tauri_plugin_fs::init())
@@ -2507,6 +2509,11 @@ fn main() {
 			file_opening::run_context_action,
 			admin::run_as_admin,
 			files::open_terminal,
+			terminal::terminal_open,
+			terminal::terminal_write,
+			terminal::terminal_resize,
+			terminal::terminal_follow,
+			terminal::terminal_close,
 			#[cfg(target_os = "linux")]
 			gvfs::list_network_mounts,
 			#[cfg(target_os = "linux")]
@@ -2861,6 +2868,12 @@ fn main() {
 						tracing::info!(window = %label, "Released {} subscriptions", count);
 					}
 				});
+				let closed = window
+					.state::<terminal::TerminalSessions>()
+					.close_window(window.label());
+				if closed > 0 {
+					tracing::info!(window = %window.label(), "Closed {} terminals", closed);
+				}
 			}
 		})
 		.build(tauri::generate_context!())

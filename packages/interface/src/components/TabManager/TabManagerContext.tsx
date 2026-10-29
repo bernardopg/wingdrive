@@ -50,6 +50,9 @@ export interface TabExplorerState {
 	listExpanded?: string[];
 	/** List view widths the user dragged; columns missing here use their defaults. */
 	listColumnSizing?: ColumnSizingState;
+	/** Terminal docked under the view (F4), and its height in pixels. */
+	terminalVisible?: boolean;
+	terminalHeight?: number;
 	// View settings
 	viewMode: ViewMode;
 	sortBy: SortBy;

@@ -31,6 +31,8 @@ export type {
 	NetworkMount,
 	OpenRequest,
 	Platform,
+	TerminalSession,
+	TerminalSessionOptions,
 } from "./contexts/PlatformContext";
 export { PlatformProvider, usePlatform } from "./contexts/PlatformContext";
 

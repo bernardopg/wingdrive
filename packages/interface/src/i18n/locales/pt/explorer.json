@@ -63,6 +63,8 @@
 		"defaultApp": "{{name}} (padrão)",
 		"alwaysOpenWith": "Sempre abrir com",
 		"openTerminalHere": "Abrir terminal aqui",
+		"showTerminalPanel": "Mostrar painel do terminal",
+		"hideTerminalPanel": "Ocultar painel do terminal",
 		"shareItems_one": "Compartilhar {{count}} item",
 		"shareItems_other": "Compartilhar {{count}} itens",
 		"share": "Compartilhar",
@@ -479,5 +481,10 @@
 		"week": "Últimos 7 dias",
 		"month": "Últimos 30 dias",
 		"untagged": "Sem etiquetas"
+	},
+	"terminal": {
+		"label": "Terminal",
+		"resize": "Redimensionar terminal",
+		"couldNotStart": "Não foi possível iniciar o shell: {{error}}"
 	}
 }

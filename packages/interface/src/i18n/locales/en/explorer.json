@@ -63,6 +63,8 @@
 		"defaultApp": "{{name}} (default)",
 		"alwaysOpenWith": "Always Open With",
 		"openTerminalHere": "Open Terminal Here",
+		"showTerminalPanel": "Show Terminal Panel",
+		"hideTerminalPanel": "Hide Terminal Panel",
 		"shareItems_one": "Share {{count}} items",
 		"shareItems_other": "Share {{count}} items",
 		"share": "Share",
@@ -479,5 +481,10 @@
 		"week": "Last 7 Days",
 		"month": "Last 30 Days",
 		"untagged": "No Tags"
+	},
+	"terminal": {
+		"label": "Terminal",
+		"resize": "Resize terminal",
+		"couldNotStart": "Could not start the shell: {{error}}"
 	}
 }

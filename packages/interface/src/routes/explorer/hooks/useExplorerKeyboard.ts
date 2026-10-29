@@ -10,6 +10,7 @@ import {useExplorer} from '../context';
 import {selectionCapabilities} from '../fileCapabilities';
 import {useCreateEntry} from './useCreateEntry';
 import {useOpenTerminal} from './useOpenTerminal';
+import {useTerminalPanel} from './useTerminalPanel';
 import {useOpenInNewWindow} from './useOpenInNewWindow';
 import {useSelection} from '../SelectionContext';
 import {useCreateFolder} from './useCreateFolder';
@@ -96,6 +97,9 @@ export function useExplorerKeyboard() {
 	useKeybind('explorer.openTerminal', () => {
 		void openTerminal?.(operationalPath);
 	});
+
+	const terminalPanel = useTerminalPanel();
+	useKeybind('explorer.toggleTerminal', terminalPanel.toggle, {enabled: terminalPanel.supported});
 
 	const openInNewWindow = useOpenInNewWindow();
 	useKeybind('explorer.openInNewWindow', () => {

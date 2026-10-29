@@ -52,6 +52,14 @@ pub fn use_host_environment(command: &mut Command) -> &mut Command {
 	command
 }
 
+/// The changes `use_host_environment` applies, for spawners other than
+/// `std::process::Command`, such as a pseudo-terminal's command builder.
+///
+/// `Some` sets a variable to the value; `None` removes it.
+pub fn host_environment_overrides() -> Vec<(OsString, Option<OsString>)> {
+	host_overrides(std::env::vars_os())
+}
+
 /// Opens a path or URL with the host's default handler.
 ///
 /// Mirrors `open::that`, which tries each desktop opener until one succeeds,

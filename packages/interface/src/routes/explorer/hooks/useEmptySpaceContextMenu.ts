@@ -19,6 +19,7 @@ import {useSelection} from '../SelectionContext';
 import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useOpenTerminal} from './useOpenTerminal';
+import {useTerminalPanel} from './useTerminalPanel';
 import {useSelectionCommands} from './useSelectionCommands';
 import {usePasteFiles} from './usePasteFiles';
 import {useTranslation} from '../../../i18n';
@@ -33,6 +34,7 @@ export function useEmptySpaceContextMenu() {
 	const pasteFiles = usePasteFiles();
 	const undo = useUndo();
 	const openTerminal = useOpenTerminal();
+	const terminalPanel = useTerminalPanel();
 	const {newFile, newFromTemplate} = useCreateEntry();
 	// Small and cheap, and the user may add templates while the app runs.
 	const {data: templatesData} = useLibraryQuery(
@@ -98,6 +100,15 @@ export function useEmptySpaceContextMenu() {
 				keybindId: 'explorer.openTerminal',
 				condition: () =>
 					!!openTerminal && !!operationalPath && 'Physical' in operationalPath
+			},
+			{
+				icon: TerminalWindow,
+				label: terminalPanel.visible
+					? t('contextMenu.hideTerminalPanel')
+					: t('contextMenu.showTerminalPanel'),
+				onClick: terminalPanel.toggle,
+				keybindId: 'explorer.toggleTerminal',
+				condition: () => terminalPanel.supported
 			},
 			{
 				icon: MagnifyingGlass,

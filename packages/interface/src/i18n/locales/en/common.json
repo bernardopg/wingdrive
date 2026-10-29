@@ -255,6 +255,7 @@
 			"newFolder": "New Folder",
 			"newFile": "New File",
 			"openTerminal": "Open Terminal Here",
+			"toggleTerminal": "Terminal Panel",
 			"toggleHiddenFiles": "Show Hidden Files",
 			"navigateBack": "Navigate Back",
 			"navigateForward": "Navigate Forward",

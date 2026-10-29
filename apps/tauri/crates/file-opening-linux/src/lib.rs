@@ -17,7 +17,9 @@ use mime_apps::XdgDirs;
 
 pub use service_menus::ServiceAction;
 
-pub use host_env::{open_on_host, use_host_environment, PREFERRED_GDK_BACKEND};
+pub use host_env::{
+	host_environment_overrides, open_on_host, use_host_environment, PREFERRED_GDK_BACKEND,
+};
 
 pub struct LinuxFileOpener;
 
