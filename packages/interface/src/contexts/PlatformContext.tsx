@@ -298,16 +298,20 @@ export interface TerminalSessionOptions {
 	rows: number;
 	/** Bytes the shell printed; a UTF-8 character can span two calls */
 	onOutput(data: Uint8Array): void;
+	/** The shell changed its folder on its own, for example after `cd` */
+	onFolderChange?(path: string): void;
 	/** The shell ended, with its exit code when known */
 	onExit(code: number | null): void;
 }
 
 /** A shell running on a pseudo-terminal */
 export interface TerminalSession {
+	/** This machine's name, which shells put in the folders they report with OSC 7 */
+	hostname: string | null;
 	/** Send keystrokes or pasted text, delivered in call order */
 	write(data: string): void;
 	resize(cols: number, rows: number): Promise<void>;
-	/** Change the shell to `path` if it waits at its prompt; false when a program is running */
+	/** Change the shell to `path`, now or once a running program ends; false when it cannot go there */
 	follow(path: string): Promise<boolean>;
 	/** Hang up the shell */
 	close(): Promise<void>;

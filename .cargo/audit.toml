@@ -1,0 +1,20 @@
+# cargo-audit decisions for advisories that have no fix reachable from this workspace.
+# Review each entry when the dependency that pulls it in moves; remove it once a fix lands.
+# Reviewed 2026-10-29.
+
+[advisories]
+ignore = [
+	# rsa: Marvin timing attack on PKCS#1 v1.5 decryption. No patched release exists.
+	# Pulled in by opendal's reqsign (GCS, Azure, S3 request signing). WingDrive only signs
+	# requests with the user's own credentials; it never decrypts attacker-supplied RSA
+	# ciphertext, which the attack needs.
+	"RUSTSEC-2023-0071",
+	# ruzstd < 0.9.1: decompression bomb. Pulled in by object 0.38 through wasmer-compiler 7.1.
+	# wasmer-compiler only writes objects (`object::write`) and never decompresses sections, so the
+	# decoder is unreachable. The fix needs wasmer >= 7.3, whose Store/VM types are not Send and
+	# break the daemon (see the wasmer pin in core/Cargo.toml).
+	"RUSTSEC-2026-0344",
+	# memmap2 0.6: unchecked offsets in advise_range/flush_range. Pulled in by shared-buffer
+	# through wasmer 7.1, which never calls those functions. Same wasmer pin as above.
+	"RUSTSEC-2026-0186",
+]

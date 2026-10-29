@@ -51,12 +51,25 @@ has "Open Terminal Here" (DESK-005), which starts a separate window.
     `pwd; echo olá ação` printed the accents correctly. The shell started in `HOME`, not the
     repository: right after launch the app reconnected to its daemon and the first visit listed
     "0 files", so the view had no folder to give it. The same visit through Ctrl+L later listed the
-    folder. That empty first listing also happens without the panel and is not part of this task.
+    folder. That empty first listing also happened without the panel; it was the daemon's connection
+    limit, fixed in DESK-037.
   - Navigating to `/swap`, then the fixture repository, typed ` cd '/swap'` and
     ` cd '/tmp/wing-check-s04/fx/repo'`. With `sleep 15` running, opening `docs` typed nothing;
     after F4 hid and showed the panel, the history was intact and the shell caught up to `docs`.
   - A new tab (Ctrl+T) had no panel; back on the first tab the same shell and scrollback were there.
   - `exit` closed the panel; closing the tab with the panel open ended its `-zsh` (no zombie left).
-- Not done: the panel does not follow `cd` typed in the shell back to the Explorer (Dolphin syncs
-  both ways); a shell that was busy during navigation catches up only at the next navigation or
-  remount; on Windows the terminal opens but does not follow navigation.
+- Follow-ups, 2026-10-29 (the gaps listed above):
+  - `cd` typed in the shell moves the Explorer. After each burst of output the backend reads the
+    shell's folder (`/proc/<pid>/cwd` on Linux, `sysinfo` elsewhere) and reports a change; xterm.js
+    also reads OSC 7 reports, filtered by this machine's hostname. A hidden panel does not move the
+    Explorer.
+  - A busy shell keeps the folder and gets the `cd` as soon as it is back at its prompt.
+  - Windows: `cd /d "<path>"` after Escape for `cmd` (paths with `"` or `%` are refused), and the
+    shell counts as busy while it has a child process. Unit tested on Linux (`cd_command` for both
+    syntaxes, `has_child_process`); not run on Windows, which has no machine or CI job here.
+  - Rust tests on a real bash: a typed `cd` is reported, following is not reported back, a busy
+    shell follows once `sleep` ends. `osc7Folder` and `shellMoved` are tested in the frontend.
+  - Runtime, same Xvfb setup: the shell started in the repository, `cd docs` in the shell moved the
+    Explorer to `docs`; with `sleep 4` running, going back typed nothing until it ended, then
+    ` cd '/tmp/wing-check-s04/fx/repo'`, and `pwd` agreed. The Explorer did not bounce back.
+- Not done: Windows runtime check.

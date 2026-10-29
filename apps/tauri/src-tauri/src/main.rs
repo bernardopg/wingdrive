@@ -842,6 +842,11 @@ async fn daemon_request(
 
 	tracing::debug!("Received from daemon: {}", response_line.trim());
 
+	// The daemon closes a connection it cannot take, for example at its connection limit.
+	if response_line.trim().is_empty() {
+		return Err("The daemon closed the connection without answering".to_string());
+	}
+
 	// Explicitly close the connection by dropping both halves
 	drop(writer);
 	drop(buf_reader);

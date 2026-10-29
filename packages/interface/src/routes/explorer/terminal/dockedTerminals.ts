@@ -11,8 +11,10 @@ export interface DockedTerminal {
 	host: HTMLDivElement;
 	/** Resolves to null when the shell could not start. */
 	session: Promise<TerminalSession | null>;
-	/** Folder the shell was last sent to, so a remount does not type `cd` again. */
+	/** Folder the shell was last sent to or reported, so neither side echoes the other. */
 	folder: string | null;
+	/** Moves the Explorer when the shell changes folder; set while the panel is on screen. */
+	onFolderChange: ((path: string) => void) | null;
 	/** Refits the terminal to its panel and reports the new size to the shell. */
 	fit(): void;
 	focus(): void;
@@ -56,4 +58,16 @@ export function requestTerminalFocus(tabId: string): void {
 /** Whether the tab's terminal should take focus now; answers true once per request. */
 export function takeTerminalFocus(tabId: string): boolean {
 	return focusRequests.delete(tabId);
+}
+
+/**
+ * The tab's shell moved to `path` on its own. The Explorer follows only while
+ * the panel is on screen; a hidden terminal keeps its folder, and the Explorer
+ * sends it back to the folder on screen when the panel shows again.
+ */
+export function shellMoved(tabId: string, path: string): void {
+	const terminal = terminals.get(tabId);
+	if (!terminal?.onFolderChange || terminal.folder === path) return;
+	terminal.folder = path;
+	terminal.onFolderChange(path);
 }

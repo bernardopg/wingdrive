@@ -140,6 +140,7 @@ jobs:
           bun test packages/interface/src/routes/explorer/OpenFileProvider.test.tsx
           bun test packages/interface/src/routes/explorer/terminal/terminalFolder.test.ts
           bun test packages/interface/src/routes/explorer/terminal/dockedTerminals.test.ts
+          bun test packages/interface/src/hooks/normalizedQuerySubscription.test.tsx
 
   core:
     name: Rust Workspace

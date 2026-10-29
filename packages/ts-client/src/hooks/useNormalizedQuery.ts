@@ -175,8 +175,12 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 	// Event subscription
 	// Only re-subscribe when filter criteria change
 	// Using refs for event handler to avoid re-subscription on every render
+	const enabled = options.enabled ?? true;
 	useEffect(() => {
-		if (!libraryId) return;
+		// A disabled query has nothing to keep fresh. Each subscription holds a
+		// daemon connection, and a folder tree whose collapsed rows subscribed
+		// anyway used up the daemon's connection limit.
+		if (!libraryId || !enabled) return;
 
 		// Skip subscription for file queries without pathScope (prevent overly broad subscriptions)
 		// File resources are too numerous - global subscriptions cause massive event spam
@@ -286,6 +290,7 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 		pathScopeSerialized, // Use serialized version for deep comparison
 		options.includeDescendants,
 		libraryId,
+		enabled,
 		// options and queryKey accessed via refs - don't need to be in deps
 	]);
 
