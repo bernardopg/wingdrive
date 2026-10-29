@@ -244,6 +244,7 @@
 		"copyCount_other": "{{count}} copies · {{size}} each"
 	},
 	"fileOperation": {
+		"retryAsAdmin": "Retry as administrator",
 		"copyingFiles": "Copying Files",
 		"movingFiles": "Moving Files",
 		"copyingFilesProgress": "Copying files...",

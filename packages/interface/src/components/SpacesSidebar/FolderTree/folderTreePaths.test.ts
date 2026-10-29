@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'bun:test';
 
-import {ancestorsWithin, isWithin, normalizeFolder, rootFor} from './folderTree';
+import {ancestorsWithin, isWithin, normalizeFolder, rootFor} from './folderTreePaths';
 
 describe('folder tree paths', () => {
 	test('normalizes trailing slashes but keeps the root', () => {

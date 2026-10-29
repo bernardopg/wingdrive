@@ -9,6 +9,7 @@ import {ask, open, save} from '@tauri-apps/plugin-dialog';
 import {open as shellOpen} from '@tauri-apps/plugin-shell';
 import {i18n} from '@wingdrive/interface';
 import type {
+	AdminOperation,
 	ContextAction,
 	DesktopSettings,
 	MountableVolume,
@@ -175,6 +176,10 @@ export const platform: Platform = {
 
 	async runContextAction(id: string, paths: string[]) {
 		await invoke('run_context_action', {id, paths});
+	},
+
+	async runAsAdmin(operation: AdminOperation) {
+		await invoke('run_as_admin', {operation});
 	},
 
 	async openPathDefault(path: string) {

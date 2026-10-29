@@ -5,6 +5,7 @@ import {useLibraryMutation} from '../../../contexts/WingDriveContext';
 import {useRefetchFileListings} from '../../../hooks/useRefetchFileListings';
 import {useUndo} from '../../../hooks/useUndo';
 import {useExplorer} from '../context';
+import {useAdminRetry} from '../../../hooks/adminRetry';
 import {useSelection} from '../SelectionContext';
 import {i18n, useTranslation} from '../../../i18n';
 
@@ -33,6 +34,7 @@ export function useCreateFolder() {
 	const undo = useUndo();
 	// Every entry point (menu, shortcut) names the folder right away.
 	const {renameWhenListed} = useSelection();
+	const adminRetry = useAdminRetry();
 
 	return useCallback(async (): Promise<string | null> => {
 		if (!operationalPath) return null;
@@ -67,7 +69,13 @@ export function useCreateFolder() {
 			renameWhenListed(name);
 			return name;
 		} catch (err) {
-			toast.error(t('errors.failedToCreateFolder', {error: err}));
+			adminRetry.report(
+				t('errors.failedToCreateFolder', {error: err}),
+				'Physical' in operationalPath
+					? {type: 'create_folder', parent: operationalPath.Physical.path, name}
+					: null,
+				String(err)
+			);
 			return null;
 		}
 	}, [
@@ -78,6 +86,7 @@ export function useCreateFolder() {
 		platform,
 		undo,
 		renameWhenListed,
+		adminRetry,
 		t
 	]);
 }

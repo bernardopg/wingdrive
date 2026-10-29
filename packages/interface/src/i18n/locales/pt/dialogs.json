@@ -244,6 +244,7 @@
 		"copyCount_other": "{{count}} cópias · {{size}} cada"
 	},
 	"fileOperation": {
+		"retryAsAdmin": "Repetir como administrador",
 		"copyingFiles": "Copiando arquivos",
 		"movingFiles": "Movendo arquivos",
 		"copyingFilesProgress": "Copiando arquivos...",

@@ -14,7 +14,7 @@ import {useOpenInNewTabAction} from '../../../routes/explorer/OpenFileProvider';
 import {wingPathFromParam} from '../../../routes/explorer/wingPathParam';
 import {explorerUrlForDirectory} from '../../TabManager/LaunchRequestSync';
 import {GroupHeader} from '../GroupHeader';
-import {ancestorsWithin, normalizeFolder, rootFor} from './folderTree';
+import {ancestorsWithin, normalizeFolder, rootFor} from './folderTreePaths';
 
 /** Sidebar collapse key; the section is not a space group stored by the daemon. */
 const SECTION_ID = 'folder-tree';

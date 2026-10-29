@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod admin;
 mod background;
 mod clipboard;
 mod drag;
@@ -2504,6 +2505,7 @@ fn main() {
 			file_opening::set_default_app_for_path,
 			file_opening::get_context_actions,
 			file_opening::run_context_action,
+			admin::run_as_admin,
 			files::open_terminal,
 			#[cfg(target_os = "linux")]
 			gvfs::list_network_mounts,

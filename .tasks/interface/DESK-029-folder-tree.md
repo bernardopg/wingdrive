@@ -37,7 +37,7 @@ locations and volumes, and list rows cannot expand.
 
 ## Evidence
 
-- Unit tests: `folderTree.test.ts` (containment, ancestors, deepest root) and
+- Unit tests: `folderTreePaths.test.ts` (containment, ancestors, deepest root) and
   `listExpansion.test.ts` (toggle, attach level by level, blocks for grouping); both in CI.
 - Runtime, 2026-10-28: web UI on an isolated `wing-server` (Chrome DevTools). The tree opened
   `/tmp/.../rt/fx/repo` level by level and marked it; in list view `src` and `src/deep` expanded

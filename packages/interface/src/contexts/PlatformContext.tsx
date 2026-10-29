@@ -94,6 +94,8 @@ export type Platform = {
 	getContextActions?(paths: string[]): Promise<ContextAction[]>;
 	/** Run a context menu action from `getContextActions` on these local paths */
 	runContextAction?(id: string, paths: string[]): Promise<void>;
+	/** Repeat a file operation as root after polkit authentication (Linux) */
+	runAsAdmin?(operation: AdminOperation): Promise<void>;
 	resolveSymlink?(path: string): Promise<[string, boolean]>;
 	writeFileClipboard?(paths: string[], cut: boolean): Promise<void>;
 	/** Hand absolute local paths to an OS drag that other apps can drop (Linux) */
@@ -286,6 +288,13 @@ export interface OpenRequest {
 }
 
 /** Application that can open a file */
+/** A file operation to repeat with administrator rights; paths are absolute local paths */
+export type AdminOperation =
+	| {type: 'delete'; paths: string[]}
+	| {type: 'rename'; path: string; new_name: string}
+	| {type: 'create_folder'; parent: string; name: string}
+	| {type: 'transfer'; sources: string[]; destination: string; move_files: boolean};
+
 /** A command the user added to the context menu, such as a Dolphin service menu action */
 export interface ContextAction {
 	/** Stable identifier: the menu file name and the action id */

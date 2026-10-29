@@ -268,3 +268,9 @@ As in KIO, a menu in your own data directory (`~/.local/share/...`) only counts 
 The sidebar's "Folders" section is a tree rooted at the home folder and the filesystem root (the web UI, which cannot tell the home folder, shows the root alone). It opens the branch of the folder the active tab shows and highlights it. Click a folder to open it; middle-click opens it in a new tab. Each open node lists its folders with `files.directory_listing`, so the tree follows the hidden-files setting and updates with the normal resource events.
 
 In list view, the chevron next to a folder (or Right and Left on the focused row) opens it in place, as Dolphin and Finder do. `ListView` fetches every open folder with `useLibraryQueries` and hands the children to TanStack Table as sub-rows, so they sort with the list's columns. The open folders are stored per tab in `listExpanded`, and collapsing a folder collapses the folders inside it. With "Show in Groups" on, an open folder's rows stay with it in its section.
+
+## Retry as Administrator
+
+On Linux, when deleting, renaming, creating a folder, copying or moving fails with a permission error, the error offers "Retry as administrator", as Dolphin's admin mode does. The desktop app's `run_as_admin` command runs one fixed program (`rm -rf`, `mv -n -T`, `mkdir`, `cp -a -n -t` or `mv -n -t`) from `/usr/bin` through `pkexec`, so polkit asks for your password and the command runs as root.
+
+Arguments never pass through a shell. Every path must be absolute, without `.` or `..` segments, and not the filesystem root; names may not contain `/`. Copies and moves skip names that already exist instead of replacing them, and deletes are permanent, because root cannot reach your trash.
