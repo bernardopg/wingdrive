@@ -7,12 +7,14 @@ import {
 	dockedTerminal,
 	keepDockedTerminal,
 	requestTerminalFocus,
+	shellMoved,
 	takeTerminalFocus,
 	type DockedTerminal
 } from './dockedTerminals';
 
 function fakeTerminal() {
 	const session = {
+		hostname: 'desk',
 		write: mock(() => {}),
 		resize: mock(async () => {}),
 		follow: mock(async () => true),
@@ -22,6 +24,7 @@ function fakeTerminal() {
 		host: {} as HTMLDivElement,
 		session: Promise.resolve(session),
 		folder: null,
+		onFolderChange: null,
 		fit: () => {},
 		focus: () => {},
 		dispose: mock(() => {})
@@ -68,5 +71,20 @@ describe('docked terminals', () => {
 		requestTerminalFocus('tab-f');
 		expect(takeTerminalFocus('tab-f')).toBe(true);
 		expect(takeTerminalFocus('tab-f')).toBe(false);
+	});
+
+	test('a shell that moves takes the Explorer along only while the panel is on screen', () => {
+		const {terminal} = fakeTerminal();
+		keepDockedTerminal('tab-m', terminal);
+		shellMoved('tab-m', '/hidden');
+		expect(terminal.folder).toBeNull();
+
+		const moves: string[] = [];
+		terminal.onFolderChange = (path) => moves.push(path);
+		shellMoved('tab-m', '/srv');
+		shellMoved('tab-m', '/srv');
+		expect(moves).toEqual(['/srv']);
+		expect(terminal.folder).toBe('/srv');
+		closeDockedTerminal('tab-m');
 	});
 });

@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 import type {WingPath} from '@wingdrive/ts-client';
 
-import {clampTerminalHeight, localFolder, MIN_TERMINAL_HEIGHT} from './terminalFolder';
+import {clampTerminalHeight, localFolder, MIN_TERMINAL_HEIGHT, osc7Folder} from './terminalFolder';
 
 const physical = (device_slug: string, path: string) =>
 	({Physical: {device_slug, path}}) as WingPath;
@@ -29,5 +29,21 @@ describe('clampTerminalHeight', () => {
 
 	test('a view too small for the maximum still gets the minimum', () => {
 		expect(clampTerminalHeight(500, 50)).toBe(MIN_TERMINAL_HEIGHT);
+	});
+});
+
+describe('osc7Folder', () => {
+	test('reads the folder, decoding escapes', () => {
+		expect(osc7Folder('file://desk/home/me/My%20Files', 'desk')).toBe('/home/me/My Files');
+		expect(osc7Folder('file:///tmp/a%C3%A7%C3%A3o')).toBe('/tmp/ação');
+		expect(osc7Folder('file://localhost/srv', 'desk')).toBe('/srv');
+		expect(osc7Folder('file://ArchLinux/srv', 'ArchLinux')).toBe('/srv');
+	});
+
+	test('ignores other hosts, other schemes and malformed reports', () => {
+		expect(osc7Folder('file://server/home/me', 'desk')).toBeNull();
+		expect(osc7Folder('https://desk/home', 'desk')).toBeNull();
+		expect(osc7Folder('not a url')).toBeNull();
+		expect(osc7Folder('file:///bad%E0%A4%A')).toBeNull();
 	});
 });

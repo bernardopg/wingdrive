@@ -190,14 +190,23 @@ export const platform: Platform = {
 		cols,
 		rows,
 		onOutput,
+		onFolderChange,
 		onExit
 	}: TerminalSessionOptions): Promise<TerminalSession> {
 		// Raw channel messages arrive as an ArrayBuffer.
 		const output = new Channel<ArrayBuffer>();
 		output.onmessage = (data) => onOutput(new Uint8Array(data));
+		const folder = new Channel<string>();
+		folder.onmessage = (path) => onFolderChange?.(path);
 		const exit = new Channel<number | null>();
 		exit.onmessage = (code) => onExit(code);
-		const id = await invoke<number>('terminal_open', {cwd, cols, rows, output, exit});
+		const {id, hostname} = await invoke<{id: number; hostname: string | null}>('terminal_open', {
+			cwd,
+			size: {cols, rows},
+			output,
+			folder,
+			exit
+		});
 
 		// One write in flight keeps keystrokes in order; what arrives meanwhile goes out together.
 		let pending = '';
@@ -217,11 +226,12 @@ export const platform: Platform = {
 		};
 
 		return {
+			hostname,
 			write(data) {
 				pending += data;
 				if (!writing) void flush();
 			},
-			resize: (cols, rows) => invoke('terminal_resize', {id, cols, rows}),
+			resize: (cols, rows) => invoke('terminal_resize', {id, size: {cols, rows}}),
 			follow: (path) => invoke<boolean>('terminal_follow', {id, path}),
 			close: () => invoke('terminal_close', {id})
 		};

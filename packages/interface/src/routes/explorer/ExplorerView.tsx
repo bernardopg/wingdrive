@@ -101,6 +101,11 @@ export function ExplorerView() {
 	);
 	// The shell follows the folder New Folder writes into; other views leave it where it is.
 	const terminalFolder = localFolder(operationalPath, localSlug);
+	// `cd` typed in the shell takes the Explorer along.
+	const followShell = useCallback(
+		(path: string) => navigateToPath({Physical: {device_slug: localSlug ?? 'local', path}}),
+		[navigateToPath, localSlug]
+	);
 	// Closing a tab hangs up its shell.
 	const {tabs} = useTabManager();
 	const tabIds = tabs.map((tab) => tab.id).join('\n');
@@ -430,6 +435,7 @@ export function ExplorerView() {
 							folder={terminalFolder}
 							height={terminal.height}
 							onHeightChange={terminal.setHeight}
+							onShellFolder={followShell}
 							onExit={terminal.hide}
 						/>
 					</Suspense>

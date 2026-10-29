@@ -9,10 +9,11 @@ import {
 	closeDockedTerminal,
 	dockedTerminal,
 	keepDockedTerminal,
+	shellMoved,
 	takeTerminalFocus,
 	type DockedTerminal
 } from './dockedTerminals';
-import {clampTerminalHeight} from './terminalFolder';
+import {clampTerminalHeight, osc7Folder} from './terminalFolder';
 
 /** Tailwind's `font-mono` stack. */
 const FONT_FAMILY =
@@ -27,6 +28,8 @@ interface TerminalPanelProps {
 	folder: string | null;
 	height: number;
 	onHeightChange(height: number): void;
+	/** The shell changed folder on its own (you typed `cd`); the Explorer should go there. */
+	onShellFolder(path: string): void;
 	/** The tab's shell ended, so its panel should close. */
 	onExit(tabId: string): void;
 }
@@ -78,6 +81,7 @@ function createDockedTerminal(
 			cols: terminal.cols,
 			rows: terminal.rows,
 			onOutput: (data) => terminal.write(data),
+			onFolderChange: (path) => shellMoved(tabId, path),
 			onExit: () => {
 				closeDockedTerminal(tabId);
 				onExit(tabId);
@@ -87,6 +91,17 @@ function createDockedTerminal(
 		terminal.write(`\r\n${i18n.t('explorer:terminal.couldNotStart', {error: String(error)})}\r\n`);
 		return null;
 	});
+	// Shells that report their folder (fish, or VTE's script) do it with OSC 7;
+	// it also covers platforms where the folder cannot be read from the process.
+	let hostname: string | null = null;
+	void session.then((shell) => {
+		hostname = shell?.hostname ?? null;
+	});
+	terminal.parser.registerOscHandler(7, (data) => {
+		const path = osc7Folder(data, hostname);
+		if (path) shellMoved(tabId, path);
+		return true;
+	});
 	terminal.onData((data) => void session.then((shell) => shell?.write(data)));
 	terminal.onResize(({cols, rows}) => void session.then((shell) => shell?.resize(cols, rows)));
 
@@ -94,6 +109,7 @@ function createDockedTerminal(
 		host,
 		session,
 		folder,
+		onFolderChange: null,
 		fit: () => {
 			if (host.isConnected) fitAddon.fit();
 		},
@@ -108,6 +124,7 @@ export default function TerminalPanel({
 	folder,
 	height,
 	onHeightChange,
+	onShellFolder,
 	onExit
 }: TerminalPanelProps) {
 	const {t} = useTranslation('explorer');
@@ -121,6 +138,8 @@ export default function TerminalPanel({
 	folderRef.current = folder;
 	const onExitRef = useRef(onExit);
 	onExitRef.current = onExit;
+	const onShellFolderRef = useRef(onShellFolder);
+	onShellFolderRef.current = onShellFolder;
 
 	// The tab's terminal outlives this panel: attach it, or create it on first show.
 	useEffect(() => {
@@ -136,23 +155,29 @@ export default function TerminalPanel({
 			keepDockedTerminal(tabId, docked);
 		}
 		const terminal = docked;
+		terminal.onFolderChange = (path) => onShellFolderRef.current(path);
 		terminal.fit();
 		if (takeTerminalFocus(tabId)) terminal.focus();
 		const observer = new ResizeObserver(() => terminal.fit());
 		observer.observe(container);
 		return () => {
 			observer.disconnect();
+			terminal.onFolderChange = null;
 			terminal.host.remove();
 		};
 	}, [tabId, platform]);
 
-	// Navigating types `cd` into the shell when it waits at its prompt.
+	// Navigating sends the shell along: at once at its prompt, or once a running program ends.
 	useEffect(() => {
 		const docked = dockedTerminal(tabId);
 		if (!docked || !folder || docked.folder === folder) return;
+		const previous = docked.folder;
+		docked.folder = folder;
 		docked.session
 			.then(async (shell) => {
-				if (shell && (await shell.follow(folder))) docked.folder = folder;
+				if (!shell || !(await shell.follow(folder))) {
+					if (docked.folder === folder) docked.folder = previous;
+				}
 			})
 			.catch(() => {});
 	}, [tabId, folder]);
