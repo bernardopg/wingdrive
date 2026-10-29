@@ -97,3 +97,56 @@ pub async fn set_default_app_for_path(
 		.run(move |opener| opener.set_default_app(&path, &app_id))
 		.await
 }
+
+/// A user-defined command for the context menu, from a Dolphin service menu.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ContextAction {
+	pub id: String,
+	pub name: String,
+	pub icon: Option<String>,
+	pub submenu: Option<String>,
+}
+
+/// Service menu actions that apply to every one of `paths`; empty off Linux.
+#[tauri::command]
+pub async fn get_context_actions(paths: Vec<PathBuf>) -> Result<Vec<ContextAction>, String> {
+	#[cfg(target_os = "linux")]
+	{
+		tauri::async_runtime::spawn_blocking(move || {
+			file_opening_linux::context_actions(&paths)
+				.into_iter()
+				.map(|action| ContextAction {
+					id: action.id,
+					name: action.name,
+					icon: action.icon,
+					submenu: action.submenu,
+				})
+				.collect()
+		})
+		.await
+		.map_err(|e| e.to_string())
+	}
+	#[cfg(not(target_os = "linux"))]
+	{
+		let _ = paths;
+		Ok(Vec::new())
+	}
+}
+
+/// Runs the service menu action `id` on `paths`.
+#[tauri::command]
+pub async fn run_context_action(id: String, paths: Vec<PathBuf>) -> Result<(), String> {
+	#[cfg(target_os = "linux")]
+	{
+		tauri::async_runtime::spawn_blocking(move || {
+			file_opening_linux::run_context_action(&id, &paths)
+		})
+		.await
+		.map_err(|e| e.to_string())?
+	}
+	#[cfg(not(target_os = "linux"))]
+	{
+		let _ = (id, paths);
+		Err("Context menu actions are only available on Linux".to_string())
+	}
+}

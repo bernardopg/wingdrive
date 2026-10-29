@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { toast } from "@wingdrive/primitives";
 import type { File } from "@wingdrive/ts-client";
 import {
 	useCoreMutation,
@@ -11,6 +10,7 @@ import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
 import { useUndo } from "../../../hooks/useUndo";
 import { summarizeFileOperation } from "../../../hooks/fileOperationOutcome";
 import { reportFileOperation } from "../../../hooks/reportFileOperation";
+import { useAdminRetry } from "../../../hooks/adminRetry";
 import { isOperableFile } from "../fileCapabilities";
 import { useTranslation } from "../../../i18n";
 
@@ -34,6 +34,7 @@ export function useDeleteFiles() {
 	const openConfirmation = useDeleteConfirmationDialog();
 	const waitForJob = useWaitForJob();
 	const refetchListings = useRefetchFileListings();
+	const adminRetry = useAdminRetry();
 
 	const deleteFiles = useCallback(
 		async (files: File[], permanent: boolean) => {
@@ -61,7 +62,22 @@ export function useDeleteFiles() {
 							refetchListings();
 
 							const outcome = summarizeFileOperation("delete", result);
-							reportFileOperation(outcome);
+							// Files the user cannot write can still go, as root, after a prompt.
+							// Root has no access to the user's trash, so that removal is permanent.
+							const localPaths = files.flatMap((f) =>
+								f.is_local && "Physical" in f.wing_path ? [f.wing_path.Physical.path] : [],
+							);
+							const denied = outcome.details.some(adminRetry.canRetry);
+							if (outcome.status !== "success" && denied && localPaths.length > 0) {
+								const detail = outcome.details[0];
+								adminRetry.report(
+									detail ? `${outcome.message}. ${detail}` : outcome.message,
+									{ type: "delete", paths: localPaths },
+									detail,
+								);
+							} else {
+								reportFileOperation(outcome);
+							}
 							// Trashed local files come back from the system trash by
 							// their original path; permanent deletes have no way back.
 							const trashedPaths = permanent
@@ -86,7 +102,14 @@ export function useDeleteFiles() {
 							resolve(outcome.status === "success");
 						} catch (err) {
 							console.error("Failed to delete:", err);
-							toast.error(t("errors.failedToDelete", {error: err}));
+							const localPaths = files.flatMap((f) =>
+								f.is_local && "Physical" in f.wing_path ? [f.wing_path.Physical.path] : [],
+							);
+							adminRetry.report(
+								t("errors.failedToDelete", {error: err}),
+								localPaths.length > 0 ? { type: "delete", paths: localPaths } : null,
+								String(err),
+							);
 							resolve(false);
 						}
 					},
@@ -96,7 +119,7 @@ export function useDeleteFiles() {
 
 			return confirmed;
 		},
-		[mutation, openConfirmation, waitForJob, refetchListings, restore, undo, t],
+		[mutation, openConfirmation, waitForJob, refetchListings, restore, undo, adminRetry, t],
 	);
 
 	return { deleteFiles, isPending: mutation.isPending };

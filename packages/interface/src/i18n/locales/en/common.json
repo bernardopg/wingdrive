@@ -322,5 +322,10 @@
 		"open": "Open WingDrive",
 		"newTab": "New Tab",
 		"quit": "Quit WingDrive"
+	},
+	"admin": {
+		"retry": "Retry as administrator",
+		"done": "Done as administrator",
+		"failed": "Could not finish as administrator: {{error}}"
 	}
 }

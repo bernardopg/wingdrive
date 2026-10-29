@@ -3,6 +3,43 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+Quick Preview that reads every common file type, a security fix for it, and the
+six M2 file manager features planned in S04 (#295 to #298). Each DESK task stays
+In Progress until it is checked on the Linux desktop build.
+
+### Added
+
+- Quick Preview shows PDFs (pdf.js, page by page, with zoom), text, code and
+  config files, including extensionless text files up to 2 MB (#295).
+- Git emblems in grid and list views: `U` untracked, `A` added, `M` modified,
+  `C` conflicted; a folder shows the strongest state inside it (DESK-035).
+- "Show in Groups" splits grid and list views into sections by the sort key:
+  first letter, date buckets, size buckets, kind or first tag (DESK-030).
+- "New from Template" lists the files in the templates folder
+  (`XDG_TEMPLATES_DIR`, else `~/Templates`) and copies the chosen one, keeping
+  its permissions (DESK-031).
+- Dolphin service menus appear in the file context menu; a menu in your own
+  data folder must be executable to count (DESK-032).
+- A "Folders" tree in the sidebar that follows the open folder, and folders
+  that expand in place in list view, with a chevron or Right and Left
+  (DESK-029).
+- "Retry as administrator" after a permission error on delete, rename, new
+  folder, copy or move, through polkit (DESK-033).
+
+### Fixed
+
+- Text and code previews were blank: the CSP blocked the asset protocol for
+  `fetch`. Videos now fit the preview area. The Inspector's scrollbar no longer
+  covers right-aligned values (#295).
+
+### Security
+
+- `pdfjs-dist` 6.4: versions 5.6.83 to 6.2.107 could run JavaScript from a
+  malicious PDF (Dependabot alert 47). Standard fonts and image decoders are
+  bundled, so PDFs that rely on non-embedded fonts keep their glyphs (#297).
+
 ## 2.2.0 — 2026-10-28
 
 File manager features that Dolphin, Nautilus, Finder and Windows Explorer have

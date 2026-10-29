@@ -9,10 +9,13 @@ mod desktop_entry;
 mod host_env;
 mod icon_theme;
 mod mime_apps;
+mod service_menus;
 pub mod terminal;
 
 use desktop_entry::DesktopEntry;
 use mime_apps::XdgDirs;
+
+pub use service_menus::ServiceAction;
 
 pub use host_env::{open_on_host, use_host_environment, PREFERRED_GDK_BACKEND};
 
@@ -126,5 +129,47 @@ fn launch(entry: &DesktopEntry, args: Vec<String>) -> Result<(), String> {
 	std::thread::spawn(move || {
 		let _ = child.wait();
 	});
+	Ok(())
+}
+
+/// A service menu action the context menu can show for a selection.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ContextAction {
+	pub id: String,
+	pub name: String,
+	/// Icon as a `data:` URL, when the theme has it.
+	pub icon: Option<String>,
+	pub submenu: Option<String>,
+}
+
+/// Service menu actions that apply to every one of `paths`.
+pub fn context_actions(paths: &[PathBuf]) -> Vec<ContextAction> {
+	service_menus::actions_for_paths(&XdgDirs::from_env(), paths)
+		.into_iter()
+		.map(|action| ContextAction {
+			icon: action.icon.as_deref().and_then(icon_theme::icon_data_url),
+			id: action.id,
+			name: action.name,
+			submenu: action.submenu,
+		})
+		.collect()
+}
+
+/// Runs the service menu action `id` on `paths`.
+///
+/// The action is looked up again and must still apply to the paths, so a
+/// stale menu cannot run a command on files it was never offered for.
+pub fn run_context_action(id: &str, paths: &[PathBuf]) -> Result<(), String> {
+	if let Some(missing) = paths.iter().find(|path| !path.exists()) {
+		return Err(format!("{} no longer exists", missing.display()));
+	}
+	let action = service_menus::actions_for_paths(&XdgDirs::from_env(), paths)
+		.into_iter()
+		.find(|action| action.id == id)
+		.ok_or_else(|| format!("The action {id} does not apply to this selection"))?;
+	let entry = action.as_entry();
+	for args in action.command_lines(paths)? {
+		launch(&entry, args)?;
+	}
 	Ok(())
 }

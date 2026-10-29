@@ -13,6 +13,7 @@ import {
 	FolderPlus,
 	GitDiff,
 	Image,
+	Lightning,
 	MagnifyingGlass,
 	Microphone,
 	Pencil,
@@ -49,6 +50,7 @@ import {selectionCapabilities} from '../fileCapabilities';
 import {useSelection} from '../SelectionContext';
 import {COMPRESS_FORMATS, isArchiveName} from './archiveName';
 import {useArchiveActions} from './useArchiveActions';
+import {contextActionMenus, useContextActions} from './useContextActions';
 import {useCopyMoveTo} from './useCopyMoveTo';
 import {useWingdrop} from './useWingdrop';
 import {useCreateEntry} from './useCreateEntry';
@@ -130,6 +132,7 @@ export function useFileContextMenu({
 		physicalPaths.length > 0 && physicalPaths.length === openTargets.length;
 	const {apps, isLoading: appsLoading, openWithApp, openMultipleWithApp, canSetDefault, setDefaultApp} =
 		useOpenWith(physicalPaths);
+	const contextActions = useContextActions(allTargetsLocal ? physicalPaths : []);
 	const openTerminal = useOpenTerminal();
 	const openInNewWindow = useOpenInNewWindow();
 	const {newFile, newLink} = useCreateEntry();
@@ -249,6 +252,12 @@ export function useFileContextMenu({
 				onClick: () => setDefaultApp(physicalPaths[0], app.id, app.name)
 			}))
 		},
+		...contextActionMenus(
+			contextActions.actions,
+			t('contextMenu.actions'),
+			Lightning,
+			contextActions.run
+		),
 		{
 			icon: MagnifyingGlass,
 			label: revealLabel(),

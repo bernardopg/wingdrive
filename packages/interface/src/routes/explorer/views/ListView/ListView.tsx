@@ -1,7 +1,7 @@
 import {CaretDown, CaretUp} from '@phosphor-icons/react';
 import {flexRender} from '@tanstack/react-table';
 import {useVirtualizer} from '@tanstack/react-virtual';
-import type {File} from '@wingdrive/ts-client';
+import type {DirectorySortBy, File} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {
 	memo,
@@ -12,6 +12,8 @@ import {
 	useRef,
 	useState
 } from 'react';
+import {useTabManager} from '../../../../components/TabManager';
+import {useLibraryQueries} from '../../../../contexts/WingDriveContext';
 import {isInputFocused} from '../../../../util/keybinds/platform';
 import {useExplorer} from '../../context';
 import {useEmptySpaceContextMenu} from '../../hooks/useEmptySpaceContextMenu';
@@ -21,7 +23,17 @@ import {REVEAL_EVENT, type RevealDetail} from '../../pendingReveal';
 import {useTabScroll} from '../../hooks/useTabScroll';
 import {useSelection} from '../../SelectionContext';
 import {DragSelect} from './DragSelect';
+import {vcsStatusOf} from '../../components/vcsStatus';
+import {
+	attachChildren,
+	blocksByTopLevel,
+	expandedWithin,
+	physicalPathOf,
+	toggleExpandedPath
+} from './listExpansion';
 import {TableRow} from './TableRow';
+import {GROUP_HEADER_HEIGHT, GroupHeader, useGroupLabel} from '../GroupHeader';
+import {buildListLayout, groupFiles, isGroupBy} from '../grouping';
 import {useTranslation} from '../../../../i18n';
 import {
 	ROW_HEIGHT,
@@ -35,7 +47,10 @@ const NO_FILES: File[] = [];
 
 export const ListView = memo(function ListView() {
 	const {t} = useTranslation('explorer');
-	const {setCurrentFiles, scrollPosition} = useExplorer();
+	const {setCurrentFiles, scrollPosition, viewSettings, currentPath, sortBy, sortDirection} =
+		useExplorer();
+	const {activeTabId, getExplorerState, updateExplorerState} = useTabManager();
+	const groupLabel = useGroupLabel();
 	const {
 		focusedIndex,
 		setFocusedIndex,
@@ -72,10 +87,90 @@ export const ListView = memo(function ListView() {
 	}, []);
 
 	// Get files from centralized hook (handles search, virtual, and directory)
-	const {files: listedFiles} = useExplorerFiles();
+	const {files: listedFiles, vcsStatus, source} = useExplorerFiles();
 	const {files, unfilteredCount} = useFolderFilter(listedFiles);
-	const {table} = useTable(files, availableWidth);
-	const {rows} = table.getRowModel();
+
+	// Folders expanded in place, listed with the same options as the folder shown.
+	const shownFolder =
+		source === 'directory' && currentPath && 'Physical' in currentPath
+			? currentPath.Physical.path
+			: null;
+	const storedExpanded = getExplorerState(activeTabId).listExpanded;
+	const expandedPaths = useMemo(
+		() => expandedWithin(storedExpanded ?? [], shownFolder),
+		[storedExpanded, shownFolder]
+	);
+	const deviceSlug =
+		currentPath && 'Physical' in currentPath ? currentPath.Physical.device_slug : 'local';
+	const childListings = useLibraryQueries(
+		'files.directory_listing',
+		expandedPaths.map((path) => ({
+			path: {Physical: {device_slug: deviceSlug, path}},
+			limit: null,
+			include_hidden: viewSettings.showHiddenFiles,
+			sort_by: sortBy as DirectorySortBy,
+			folders_first: viewSettings.foldersFirst,
+			sort_direction: sortDirection
+		})),
+		{staleTime: 5_000}
+	);
+	const listingData = childListings.map((query) => query.data?.files);
+	const listingKey = childListings.map((query) => query.dataUpdatedAt).join(',');
+	const expansion = useMemo(
+		() => attachChildren(files, expandedPaths, listingData),
+		// listingData is a fresh array each render; its contents change with listingKey.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[files, expandedPaths, listingKey]
+	);
+	const toggleExpanded = useCallback(
+		(file: File) => {
+			const path = physicalPathOf(file);
+			if (!path) return;
+			updateExplorerState(activeTabId, {
+				listExpanded: toggleExpandedPath(
+					expandedWithin(getExplorerState(activeTabId).listExpanded ?? [], shownFolder),
+					path
+				)
+			});
+		},
+		[activeTabId, getExplorerState, updateExplorerState, shownFolder]
+	);
+
+	const {table} = useTable(files, availableWidth, expansion);
+	const {rows: sortedRows} = table.getRowModel();
+	// Sections follow the column the list is sorted by.
+	const sortColumn = table
+		.getState()
+		.sorting.find((entry) => entry.id !== 'folders')?.id;
+	const groupBy = viewSettings.groupItems && isGroupBy(sortColumn) ? sortColumn : null;
+	// Expanded folders' contents stay with the row that holds them.
+	const blocks = useMemo(() => blocksByTopLevel(sortedRows), [sortedRows]);
+	const groups = useMemo(
+		() =>
+			groupBy
+				? groupFiles(
+						sortedRows.filter((row) => row.depth === 0).map((row) => row.original),
+						groupBy
+					)
+				: null,
+		[sortedRows, groupBy]
+	);
+	// Sections reorder the rows, and selection ranges follow what is on screen.
+	const rows = useMemo(() => {
+		if (!groups) return sortedRows;
+		return groups.flatMap((group) => group.files.flatMap((file) => blocks.get(file.id) ?? []));
+	}, [groups, sortedRows, blocks]);
+	const layout = useMemo(
+		() =>
+			buildListLayout(
+				groups,
+				rows.length,
+				groups?.map((group) =>
+					group.files.reduce((sum, file) => sum + (blocks.get(file.id)?.length ?? 1), 0)
+				)
+			),
+		[groups, rows.length, blocks]
+	);
 	const orderedFiles = useMemo(() => rows.map((row) => row.original), [rows]);
 	const columnSizingKey = JSON.stringify(table.getState().columnSizing);
 
@@ -86,15 +181,24 @@ export const ListView = memo(function ListView() {
 
 	// Virtual row rendering - uses the container as scroll element
 	const rowVirtualizer = useVirtualizer({
-		count: rows.length,
+		count: layout.items.length,
 		initialOffset: scrollPosition.top,
 		getScrollElement: useCallback(() => containerRef.current, []),
-		estimateSize: useCallback(() => ROW_HEIGHT, []),
+		estimateSize: useCallback(
+			(index: number) =>
+				layout.items[index]?.type === 'header' ? GROUP_HEADER_HEIGHT : ROW_HEIGHT,
+			[layout]
+		),
 		paddingStart: TABLE_HEADER_HEIGHT + TABLE_PADDING_Y,
 		paddingEnd: TABLE_PADDING_Y,
 		overscan: 15
 	});
 	useTabScroll(containerRef, rows.length);
+
+	// Item sizes are cached by index; headers move them when sections change.
+	useEffect(() => {
+		rowVirtualizer.measure();
+	}, [layout, rowVirtualizer]);
 
 	const virtualRows = rowVirtualizer.getVirtualItems();
 
@@ -119,13 +223,23 @@ export const ListView = memo(function ListView() {
 	rowVirtualizerRef.current = rowVirtualizer;
 	const filesRef = useRef(orderedFiles);
 	filesRef.current = orderedFiles;
+	const rowsRef = useRef(rows);
+	rowsRef.current = rows;
+	const toggleExpandedRef = useRef(toggleExpanded);
+	toggleExpandedRef.current = toggleExpanded;
+	const itemOfFileRef = useRef(layout.itemOfFile);
+	itemOfFileRef.current = layout.itemOfFile;
 
 	// Rows are virtualized, so a revealed file may not be in the DOM yet.
 	useEffect(() => {
 		const handleReveal = (event: Event) => {
 			const {fileId} = (event as CustomEvent<RevealDetail>).detail;
 			const index = filesRef.current.findIndex((file) => file.id === fileId);
-			if (index >= 0) rowVirtualizerRef.current.scrollToIndex(index, {align: 'center'});
+			if (index >= 0) {
+				rowVirtualizerRef.current.scrollToIndex(itemOfFileRef.current[index] ?? index, {
+					align: 'center'
+				});
+			}
 		};
 		window.addEventListener(REVEAL_EVENT, handleReveal);
 		return () => window.removeEventListener(REVEAL_EVENT, handleReveal);
@@ -135,6 +249,15 @@ export const ListView = memo(function ListView() {
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (isInputFocused()) return;
+			// Right opens the focused folder in place and Left closes it, as in Dolphin.
+			if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+				const row = rowsRef.current[focusedIndex];
+				if (!row?.getCanExpand()) return;
+				if (row.getIsExpanded() === (e.key === 'ArrowRight')) return;
+				e.preventDefault();
+				toggleExpandedRef.current(row.original);
+				return;
+			}
 			if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
 				e.preventDefault();
 				const direction = e.key === 'ArrowDown' ? 'down' : 'up';
@@ -162,9 +285,10 @@ export const ListView = memo(function ListView() {
 				}
 
 				// Scroll to keep selection visible
-				rowVirtualizerRef.current.scrollToIndex(newIndex, {
-					align: 'auto'
-				});
+				rowVirtualizerRef.current.scrollToIndex(
+					itemOfFileRef.current[newIndex] ?? newIndex,
+					{align: 'auto'}
+				);
 			}
 		};
 
@@ -311,16 +435,42 @@ export const ListView = memo(function ListView() {
 							}}
 						>
 							{virtualRows.map((virtualRow) => {
-								const row = rows[virtualRow.index];
+								const item = layout.items[virtualRow.index];
+								if (!item) return null;
+
+								if (item.type === 'header') {
+									return (
+										<div
+											key={`group:${item.group.key}`}
+											ref={rowVirtualizer.measureElement}
+											data-index={virtualRow.index}
+											style={{
+												paddingLeft: TABLE_PADDING_X + 8,
+												paddingRight: TABLE_PADDING_X + 8
+											}}
+										>
+											<GroupHeader
+												label={groupLabel(item.group.label)}
+												count={item.group.files.length}
+											/>
+										</div>
+									);
+								}
+
+								const row = rows[item.index];
 								if (!row) return null;
 
 								const file = row.original;
 								// Use O(1) lookup instead of O(n) selectedFiles.some()
 								const fileIsSelected = isSelected(file.id);
-								const isFocused =
-									focusedIndex === virtualRow.index;
-								const previousRow = rows[virtualRow.index - 1];
-								const nextRow = rows[virtualRow.index + 1];
+								const isFocused = focusedIndex === item.index;
+								// A header between two rows breaks the selection band.
+								const previousItem = layout.items[virtualRow.index - 1];
+								const nextItem = layout.items[virtualRow.index + 1];
+								const previousRow =
+									previousItem?.type === 'file' ? rows[previousItem.index] : undefined;
+								const nextRow =
+									nextItem?.type === 'file' ? rows[nextItem.index] : undefined;
 								// Use O(1) Set lookup for adjacent selection detection
 								const isPreviousSelected = previousRow
 									? selectedFileIds.has(
@@ -338,7 +488,8 @@ export const ListView = memo(function ListView() {
 										row={row}
 										file={file}
 										files={orderedFiles}
-										index={virtualRow.index}
+										index={item.index}
+										virtualIndex={virtualRow.index}
 										isSelected={fileIsSelected}
 										isFocused={isFocused}
 										isPreviousSelected={isPreviousSelected}
@@ -354,6 +505,8 @@ export const ListView = memo(function ListView() {
 												? rename
 												: undefined
 										}
+										vcsStatus={row.depth === 0 ? vcsStatusOf(vcsStatus, file) : null}
+										onToggleExpanded={toggleExpanded}
 										selectFile={selectFile}
 									/>
 								);

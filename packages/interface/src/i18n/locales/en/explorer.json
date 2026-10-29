@@ -24,6 +24,7 @@
 		"back": "Back"
 	},
 	"errors": {
+		"contextActionFailed": "Could not run {{name}}: {{error}}",
 		"couldNotOpenLocation": "Could not open this location: {{error}}",
 		"searchFailed": "Search failed: {{error}}",
 		"failedToRevealFile": "Failed to reveal file: {{error}}",
@@ -53,6 +54,7 @@
 		"couldNotOpenWindow": "Could not open a new window: {{error}}"
 	},
 	"contextMenu": {
+		"actions": "Actions",
 		"quickLook": "Quick Look",
 		"openItems_one": "Open {{count}} Items",
 		"openItems_other": "Open {{count}} Items",
@@ -71,6 +73,7 @@
 		"findDuplicates": "Find Duplicates…",
 		"newFolder": "New Folder",
 		"newFile": "New File",
+		"newFromTemplate": "New from Template",
 		"createLink": "Create Link",
 		"extractHere": "Extract Here",
 		"extractTo": "Extract To...",
@@ -145,7 +148,8 @@
 		"showFileSize": "Show File Size",
 		"calculateFolderSizes": "Calculate Folder Sizes",
 		"foldersFirst": "Folders First",
-		"showHiddenFiles": "Show Hidden Files"
+		"showHiddenFiles": "Show Hidden Files",
+		"groupItems": "Show in Groups"
 	},
 	"search": {
 		"searchIn": "Search in:",
@@ -267,6 +271,8 @@
 		"baseName": "Archive"
 	},
 	"list": {
+		"expandFolder": "Expand folder",
+		"collapseFolder": "Collapse folder",
 		"name": "Name",
 		"size": "Size",
 		"modified": "Modified",
@@ -458,5 +464,20 @@
 		"selected_one": "{{count}} selected",
 		"selected_other": "{{count}} selected",
 		"free": "{{size}} free"
+	},
+	"vcs": {
+		"untracked": "Untracked",
+		"added": "Added",
+		"modified": "Modified",
+		"conflicted": "Conflicted"
+	},
+	"groups": {
+		"folders": "Folders",
+		"other": "Other",
+		"today": "Today",
+		"yesterday": "Yesterday",
+		"week": "Last 7 Days",
+		"month": "Last 30 Days",
+		"untagged": "No Tags"
 	}
 }

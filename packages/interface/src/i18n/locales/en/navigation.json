@@ -382,5 +382,12 @@
 		"sources": "Sources",
 		"itemCount_one": "{{formattedCount}} item",
 		"itemCount_other": "{{formattedCount}} items"
+	},
+	"folderTree": {
+		"title": "Folders",
+		"home": "Home",
+		"computer": "Computer",
+		"expand": "Expand",
+		"collapse": "Collapse"
 	}
 }

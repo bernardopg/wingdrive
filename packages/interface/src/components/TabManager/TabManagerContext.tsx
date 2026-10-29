@@ -46,6 +46,8 @@ export interface Tab {
  */
 export interface TabExplorerState {
 	listSorting?: SortingState;
+	/** Folders expanded in place in list view, by absolute path. */
+	listExpanded?: string[];
 	/** List view widths the user dragged; columns missing here use their defaults. */
 	listColumnSizing?: ColumnSizingState;
 	// View settings
@@ -57,6 +59,8 @@ export interface TabExplorerState {
 	gapSize: number;
 	foldersFirst: boolean;
 	showHiddenFiles: boolean;
+	/** Split grid and list views into sections by the active sort key. */
+	groupItems: boolean;
 
 	// Column view state (serialized WingPath[] as JSON strings)
 	columnStack: string[];
@@ -84,6 +88,7 @@ const DEFAULT_EXPLORER_STATE: TabExplorerState = {
 	gapSize: 16,
 	foldersFirst: true,
 	showHiddenFiles: false,
+	groupItems: false,
 	columnStack: [],
 	scrollTop: 0,
 	scrollLeft: 0,

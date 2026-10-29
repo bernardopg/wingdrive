@@ -1,16 +1,22 @@
 import {useDroppable} from '@dnd-kit/core';
 import {flexRender} from '@tanstack/react-table';
 import type {LegacyRow as Row} from '@tanstack/react-table/legacy';
-import type {File} from '@wingdrive/ts-client';
+import type {File, VcsFileStatus} from '@wingdrive/ts-client';
 import clsx from 'clsx';
+import {CaretRight} from '@phosphor-icons/react';
 import {memo, useCallback} from 'react';
 import {TagPill} from '../../../../components/Tags';
 import {InlineNameEdit} from '../../components/InlineNameEdit';
+import {VcsEmblem} from '../../components/VcsEmblem';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
 import {useMiddleClickOpensTab, useOpenFileAction} from '../../OpenFileProvider';
+import {useTranslation} from '../../../../i18n';
 import {ROW_HEIGHT, TABLE_PADDING_X} from './useTable';
+
+/** Indentation per level of an expanded folder, in pixels. */
+const EXPAND_INDENT = 16;
 
 interface Rename {
 	onSave: (newName: string) => Promise<void>;
@@ -22,7 +28,10 @@ interface TableRowProps {
 	row: Row<File>;
 	file: File;
 	files: File[];
+	/** Position in the flat file order, for row striping. */
 	index: number;
+	/** Position among the virtualized items, which also count section headers. */
+	virtualIndex: number;
 	isSelected: boolean;
 	isFocused: boolean;
 	isPreviousSelected: boolean;
@@ -32,6 +41,10 @@ interface TableRowProps {
 	selectedFiles: File[];
 	/** Set only on the row being renamed. */
 	rename?: Rename;
+	/** Git state shown as an emblem; `null` outside a working tree or when unchanged. */
+	vcsStatus: VcsFileStatus | null;
+	/** Opens or closes a folder row in place. */
+	onToggleExpanded: (file: File) => void;
 	selectFile: (
 		file: File,
 		files: File[],
@@ -45,6 +58,7 @@ export const TableRow = memo(function TableRow({
 	file,
 	files,
 	index,
+	virtualIndex,
 	isSelected,
 	isFocused: _isFocused,
 	isPreviousSelected,
@@ -52,6 +66,8 @@ export const TableRow = memo(function TableRow({
 	measureRef,
 	selectedFiles,
 	rename,
+	vcsStatus,
+	onToggleExpanded,
 	selectFile
 }: TableRowProps) {
 
@@ -124,7 +140,7 @@ export const TableRow = memo(function TableRow({
 	return (
 		<div
 			ref={setCombinedNodeRef}
-			data-index={index}
+			data-index={virtualIndex}
 			data-file-id={file.id}
 			data-selectable="true"
 			aria-selected={isSelected}
@@ -194,7 +210,15 @@ export const TableRow = memo(function TableRow({
 							style={{width: cell.column.getSize()}}
 						>
 							{isNameColumn ? (
-								<NameCell file={file} rename={rename} />
+								<NameCell
+									file={file}
+									rename={rename}
+									vcsStatus={vcsStatus}
+									depth={row.depth}
+									canExpand={row.getCanExpand()}
+									isExpanded={row.getIsExpanded()}
+									onToggleExpanded={onToggleExpanded}
+								/>
 							) : (
 								<span className="truncate">
 									{flexRender(
@@ -214,17 +238,61 @@ export const TableRow = memo(function TableRow({
 // Name cell with icon and tags
 const NameCell = memo(function NameCell({
 	file,
-	rename
+	rename,
+	vcsStatus,
+	depth,
+	canExpand,
+	isExpanded,
+	onToggleExpanded
 }: {
 	file: File;
 	rename?: Rename;
+	vcsStatus: VcsFileStatus | null;
+	depth: number;
+	canExpand: boolean;
+	isExpanded: boolean;
+	onToggleExpanded: (file: File) => void;
 }) {
+	const {t} = useTranslation('explorer');
 
 	return (
-		<div className="flex min-w-0 flex-1 items-center gap-2">
+		<div
+			className="flex min-w-0 flex-1 items-center gap-2"
+			style={{paddingLeft: depth * EXPAND_INDENT}}
+		>
+			{/* Expand toggle; files keep the space so names line up */}
+			<button
+				type="button"
+				tabIndex={-1}
+				aria-label={isExpanded ? t('list.collapseFolder') : t('list.expandFolder')}
+				aria-expanded={canExpand ? isExpanded : undefined}
+				className={clsx(
+					'text-ink-faint hover:text-ink hover:bg-app-hover -mr-1 flex size-4 flex-shrink-0 items-center justify-center rounded-sm',
+					!canExpand && 'invisible'
+				)}
+				onClick={(e) => {
+					e.stopPropagation();
+					onToggleExpanded(file);
+				}}
+				onDoubleClick={(e) => e.stopPropagation()}
+			>
+				<CaretRight
+					size={10}
+					weight="bold"
+					className={clsx('transition-transform', isExpanded && 'rotate-90')}
+				/>
+			</button>
+
 			{/* File icon */}
-			<div className="flex-shrink-0">
+			<div className="relative flex-shrink-0">
 				<FileComponent.Thumb file={file} size={20} />
+				{vcsStatus && (
+					<VcsEmblem
+						status={vcsStatus}
+						size="sm"
+						className="absolute -bottom-0.5 -right-1"
+					/>
+				)}
 			</div>
 
 			{/* File name or inline edit */}

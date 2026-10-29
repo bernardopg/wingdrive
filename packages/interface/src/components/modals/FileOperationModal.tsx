@@ -8,6 +8,7 @@ import {
 	Warning
 } from '@phosphor-icons/react';
 import {
+	Button,
 	Dialog,
 	dialogManager,
 	useDialog,
@@ -26,6 +27,7 @@ import {
 	summarizeFileOperation,
 	type FileOperationOutcome
 } from '../../hooks/fileOperationOutcome';
+import {useAdminRetry} from '../../hooks/adminRetry';
 import {useRefetchFileListings} from '../../hooks/useRefetchFileListings';
 import {useUndo} from '../../hooks/useUndo';
 import {useWaitForJob} from '../../hooks/useWaitForJob';
@@ -88,6 +90,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 	const refetchListings = useRefetchFileListings();
 	const platform = usePlatform();
 	const undo = useUndo();
+	const adminRetry = useAdminRetry();
 
 	// Fixed-length slots keep the hook count constant (Rules of Hooks): mapping
 	// over a variable number of sources made React reorder query state whenever
@@ -142,6 +145,35 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 		// A cached listing can predate the last paste; decide on a fresh one.
 		{enabled: !!props.confirmOnlyOnConflict, refetchOnMount: 'always'}
 	);
+	// The same transfer as root, for items the user could not read or write.
+	const localSources = props.sources.flatMap((source) =>
+		'Physical' in source && undo.isLocalPath(source) ? [source.Physical.path] : []
+	);
+	const adminTransfer =
+		'Physical' in props.destination &&
+		undo.isLocalPath(props.destination) &&
+		localSources.length === props.sources.length
+			? {
+					type: 'transfer' as const,
+					sources: localSources,
+					destination: props.destination.Physical.path,
+					move_files: operation === 'move'
+				}
+			: null;
+	const retryAsAdmin = async () => {
+		if (!adminTransfer) return;
+		if (await adminRetry.runAsAdmin(adminTransfer)) {
+			dialogManager.setState(props.id, {open: false});
+			props.onComplete?.();
+		}
+	};
+	const adminRetryButton = (problems: string[]) =>
+		adminTransfer && problems.some(adminRetry.canRetry) ? (
+			<Button variant="outline" size="sm" className="self-start" onClick={() => void retryAsAdmin()}>
+				{t('fileOperation.retryAsAdmin')}
+			</Button>
+		) : null;
+
 	const submitRef = useRef<(() => Promise<void>) | null>(null);
 	const autoStarted = useRef(false);
 	useEffect(() => {
@@ -409,6 +441,7 @@ ctaLabel={t("common.close")}
 							{t("fileOperation.failureDetailsHint")}
 						</p>
 					)}
+					{adminRetryButton(outcome.details)}
 				</div>
 			</Dialog>
 		);
@@ -442,6 +475,7 @@ ctaLabel={t("common.close")}
 							</div>
 						</div>
 					</div>
+					{adminRetryButton([phase.message])}
 				</div>
 			</Dialog>
 		);

@@ -8,7 +8,9 @@ pub mod file_by_id;
 pub mod file_by_path;
 pub mod file_checksum;
 pub mod media_listing;
+pub mod templates;
 pub mod unique_to_location;
+pub mod vcs_status;
 
 pub use alternate_instances::*;
 pub use content_kind_stats::*;
@@ -18,4 +20,6 @@ pub use file_by_id::*;
 pub use file_by_path::*;
 pub use file_checksum::*;
 pub use media_listing::*;
+pub use templates::*;
 pub use unique_to_location::*;
+pub use vcs_status::*;

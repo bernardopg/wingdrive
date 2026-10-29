@@ -1,10 +1,11 @@
 import {useDroppable} from '@dnd-kit/core';
-import type {File} from '@wingdrive/ts-client';
+import type {File, VcsFileStatus} from '@wingdrive/ts-client';
 import {fileDisplaySize, isVirtualFile} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {memo} from 'react';
 import {TagDot} from '../../../../components/Tags';
 import {InlineNameEdit} from '../../components/InlineNameEdit';
+import {VcsEmblem} from '../../components/VcsEmblem';
 import {VolumeSizeBar} from '../../components/VolumeSizeBar';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
@@ -30,6 +31,8 @@ interface FileCardProps {
 	showFileSize: boolean;
 	/** Set only on the card being renamed. */
 	rename?: {onSave: (name: string) => Promise<void>; onCancel: () => void};
+	/** Git state shown as an emblem; `null` outside a working tree or when unchanged. */
+	vcsStatus: VcsFileStatus | null;
 }
 
 export const FileCard = memo(function FileCard({
@@ -42,7 +45,8 @@ export const FileCard = memo(function FileCard({
 	selectFile,
 	gridSize,
 	showFileSize,
-	rename
+	rename,
+	vcsStatus
 }: FileCardProps) {
 	const showContextMenu = useShowFileContextMenu();
 
@@ -146,13 +150,19 @@ export const FileCard = memo(function FileCard({
 			>
 				<div
 					className={clsx(
-						'rounded-lg p-2',
+						'relative rounded-lg p-2',
 						selected && !dndIsDragging
 							? 'bg-app-box'
 							: 'bg-transparent'
 					)}
 				>
 					<FileComponent.Thumb file={file} size={thumbSize} />
+					{vcsStatus && (
+						<VcsEmblem
+							status={vcsStatus}
+							className="absolute bottom-1.5 right-1.5"
+						/>
+					)}
 				</div>
 				<div className="flex w-full flex-col items-center">
 					{rename ? (

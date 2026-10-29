@@ -322,5 +322,10 @@
 		"open": "Abrir o WingDrive",
 		"newTab": "Nova aba",
 		"quit": "Sair do WingDrive"
+	},
+	"admin": {
+		"retry": "Repetir como administrador",
+		"done": "Concluído como administrador",
+		"failed": "Não foi possível concluir como administrador: {{error}}"
 	}
 }

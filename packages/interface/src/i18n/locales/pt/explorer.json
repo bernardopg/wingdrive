@@ -24,6 +24,7 @@
 		"back": "Voltar"
 	},
 	"errors": {
+		"contextActionFailed": "Não foi possível executar {{name}}: {{error}}",
 		"couldNotOpenLocation": "Não foi possível abrir este local: {{error}}",
 		"searchFailed": "Falha na pesquisa: {{error}}",
 		"failedToRevealFile": "Falha ao mostrar o arquivo na pasta: {{error}}",
@@ -53,6 +54,7 @@
 		"couldNotOpenWindow": "Não foi possível abrir uma nova janela: {{error}}"
 	},
 	"contextMenu": {
+		"actions": "Ações",
 		"quickLook": "Visualização rápida",
 		"openItems_one": "Abrir {{count}} item",
 		"openItems_other": "Abrir {{count}} itens",
@@ -71,6 +73,7 @@
 		"findDuplicates": "Encontrar duplicados…",
 		"newFolder": "Nova pasta",
 		"newFile": "Novo arquivo",
+		"newFromTemplate": "Novo a partir de modelo",
 		"createLink": "Criar link",
 		"extractHere": "Extrair aqui",
 		"extractTo": "Extrair para...",
@@ -145,7 +148,8 @@
 		"showFileSize": "Mostrar tamanho dos arquivos",
 		"calculateFolderSizes": "Calcular tamanhos das pastas",
 		"foldersFirst": "Pastas primeiro",
-		"showHiddenFiles": "Mostrar arquivos ocultos"
+		"showHiddenFiles": "Mostrar arquivos ocultos",
+		"groupItems": "Mostrar em grupos"
 	},
 	"search": {
 		"searchIn": "Pesquisar em:",
@@ -267,6 +271,8 @@
 		"baseName": "Arquivo"
 	},
 	"list": {
+		"expandFolder": "Expandir pasta",
+		"collapseFolder": "Recolher pasta",
 		"name": "Nome",
 		"size": "Tamanho",
 		"modified": "Modificado",
@@ -458,5 +464,20 @@
 		"selected_one": "{{count}} selecionado",
 		"selected_other": "{{count}} selecionados",
 		"free": "{{size}} livres"
+	},
+	"vcs": {
+		"untracked": "Não rastreado",
+		"added": "Adicionado",
+		"modified": "Modificado",
+		"conflicted": "Em conflito"
+	},
+	"groups": {
+		"folders": "Pastas",
+		"other": "Outros",
+		"today": "Hoje",
+		"yesterday": "Ontem",
+		"week": "Últimos 7 dias",
+		"month": "Últimos 30 dias",
+		"untagged": "Sem etiquetas"
 	}
 }

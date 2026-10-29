@@ -40,6 +40,7 @@ import {useSyncMonitor} from '../SyncMonitor/hooks/useSyncMonitor';
 import {AddGroupButton} from './AddGroupButton';
 import {useSpaceLayout, useSpaces} from './hooks/useSpaces';
 import {SpaceCustomizationPanel} from './SpaceCustomizationPanel';
+import {FolderTree} from './FolderTree/FolderTree';
 import {SpaceGroup} from './SpaceGroup';
 import {SpaceItem} from './SpaceItem';
 import {SpaceSwitcher} from './SpaceSwitcher';
@@ -545,6 +546,9 @@ export const SpacesSidebar = memo(function SpacesSidebar({
 								))}
 							</SortableContext>
 						)}
+
+						{/* Folder tree, built from the filesystem rather than a space group */}
+						<FolderTree />
 
 						{/* Add Group Button */}
 						{currentSpace && (
