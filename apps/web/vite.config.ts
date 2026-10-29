@@ -11,6 +11,8 @@ const hasSpacebot = fs.existsSync(spacebot);
 
 export default defineConfig({
 	plugins: [react(), tailwindcss()],
+	// pdf.js standard fonts and image decoders, bundled for the PDF preview.
+	assetsInclude: ["**/*.pfb", "**/*.wasm"],
 	resolve: {
 		dedupe: ["react", "react-dom"],
 		alias: [

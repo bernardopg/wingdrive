@@ -9,6 +9,7 @@ import workerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import { useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "../../i18n";
+import { BUNDLED_DATA_BASE, BundledBinaryDataFactory } from "./pdfBinaryData";
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -62,7 +63,13 @@ export function PdfViewer({ src }: PdfViewerProps) {
 				return response.arrayBuffer();
 			})
 			.then((bytes) => {
-				task = pdfjs.getDocument({ data: new Uint8Array(bytes) });
+				task = pdfjs.getDocument({
+					data: new Uint8Array(bytes),
+					BinaryDataFactory: BundledBinaryDataFactory,
+					useWorkerFetch: false,
+					standardFontDataUrl: BUNDLED_DATA_BASE,
+					wasmUrl: BUNDLED_DATA_BASE,
+				});
 				return task.promise;
 			})
 			.then(async (doc) => {
