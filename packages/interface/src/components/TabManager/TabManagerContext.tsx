@@ -18,6 +18,7 @@ import {usePlatform} from '../../contexts/PlatformContext';
 import {useWingDriveClient} from '@wingdrive/ts-client';
 import {deriveTitleFromPath} from './deriveTitle';
 import {remapSelectionIds} from './remapSelectionIds';
+import {restoreTabState} from './restoreTabState';
 import {createTabRouter} from './tabRouter';
 
 type Router = ReturnType<typeof createTabRouter>;
@@ -327,7 +328,7 @@ export function TabManagerProvider({
 			return new Map(
 				Object.entries(restored.explorerStates).map(([id, state]) => [
 					id,
-					{...DEFAULT_EXPLORER_STATE, ...state}
+					restoreTabState({...DEFAULT_EXPLORER_STATE, ...state})
 				])
 			);
 		}
@@ -605,10 +606,10 @@ export function TabManagerProvider({
 			prev.some((t) => t.id === tab.id) ? prev : [...prev, tab]
 		);
 		setExplorerStates((prev) =>
-			new Map(prev).set(tab.id, {
+			new Map(prev).set(tab.id, restoreTabState({
 				...DEFAULT_EXPLORER_STATE,
 				...explorerState
-			})
+			}))
 		);
 		setSelectionStates((prev) => new Map(prev).set(tab.id, []));
 		setClosedTabs(rest);

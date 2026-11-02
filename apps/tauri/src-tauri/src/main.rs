@@ -2502,6 +2502,7 @@ fn main() {
 			clipboard::read_file_clipboard,
 			file_drag::start_file_drag,
 			undo::file_identity,
+			undo::file_content_hash,
 			undo::undo_move,
 			undo::undo_empty_folder,
 			undo::undo_new_file,

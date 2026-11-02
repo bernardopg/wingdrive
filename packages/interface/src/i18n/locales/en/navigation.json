@@ -42,6 +42,7 @@
 		"unnamedTag": "Unnamed Tag"
 	},
 	"sidebar": {
+		"reorderItem": "Reorder {{name}}",
 		"library": "Library",
 		"devices": "Devices",
 		"locations": "Locations",

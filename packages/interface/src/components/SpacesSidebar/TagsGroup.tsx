@@ -11,12 +11,14 @@ import {
 import {useContextMenu} from '../../hooks/useContextMenu';
 import {useRefetchTagQueries} from '../../hooks/useRefetchTagQueries';
 import {useExplorer} from '../../routes/explorer/context';
+import {SortableDynamicList} from './SortableDynamicList';
 import {GroupHeader} from './GroupHeader';
 import {useTranslation} from '../../i18n';
 import {nextTagColor} from '../Tags/tagColor';
 
 
 interface TagsGroupProps {
+	groupId: string;
 	isCollapsed: boolean;
 	onToggle: () => void;
 	sortableAttributes?: any;
@@ -132,6 +134,7 @@ const {t} = useTranslation('navigation');
 }
 
 export function TagsGroup({
+	groupId,
 	isCollapsed,
 	onToggle,
 	sortableAttributes,
@@ -221,9 +224,9 @@ const {t} = useTranslation('navigation');
 						{t('tags.empty')}
 						</div>
 					) : (
-						tags.map((tag: Tag) => (
-							<TagItem key={tag.id} tag={tag} />
-						))
+						<SortableDynamicList groupId={groupId} items={tags as Tag[]} label={(tag) => tag.canonical_name}>
+							{(tag) => <TagItem tag={tag} />}
+						</SortableDynamicList>
 					)}
 
 					{isCreating ? (

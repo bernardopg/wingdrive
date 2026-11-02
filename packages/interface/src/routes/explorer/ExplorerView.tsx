@@ -3,7 +3,8 @@ import {
 	ArrowRight,
 	Info,
 	SidebarSimple,
-	Tag as TagIcon
+	Tag as TagIcon,
+	TerminalWindow
 } from '@phosphor-icons/react';
 import {useQueryClient} from '@tanstack/react-query';
 import {CircleButton, CircleButtonGroup} from '@wingdrive/primitives';
@@ -348,6 +349,21 @@ export function ExplorerView() {
 									viewMode={viewMode as any}
 								/>
 							</TopBarItem>
+							{terminal.supported && (
+								<TopBarItem
+									id="terminal-toggle"
+									label={t(terminal.visible ? 'contextMenu.hideTerminalPanel' : 'contextMenu.showTerminalPanel')}
+									priority="normal"
+									onClick={terminal.toggle}
+								>
+									<CircleButton
+										icon={TerminalWindow}
+										onClick={terminal.toggle}
+										active={terminal.visible}
+										title={t(terminal.visible ? 'contextMenu.hideTerminalPanel' : 'contextMenu.showTerminalPanel')}
+									/>
+								</TopBarItem>
+							)}
 							<TopBarItem
 								id="inspector-toggle"
 								label={t('topBar.inspector')}
@@ -437,6 +453,7 @@ export function ExplorerView() {
 							onHeightChange={terminal.setHeight}
 							onShellFolder={followShell}
 							onExit={terminal.hide}
+							onHide={terminal.toggle}
 						/>
 					</Suspense>
 				)}

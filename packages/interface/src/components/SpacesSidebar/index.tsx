@@ -41,6 +41,7 @@ import {AddGroupButton} from './AddGroupButton';
 import {useSpaceLayout, useSpaces} from './hooks/useSpaces';
 import {SpaceCustomizationPanel} from './SpaceCustomizationPanel';
 import {FolderTree} from './FolderTree/FolderTree';
+import {sidebarSections} from './reorderItems';
 import {SpaceGroup} from './SpaceGroup';
 import {SpaceItem} from './SpaceItem';
 import {SpaceSwitcher} from './SpaceSwitcher';
@@ -116,6 +117,18 @@ function SpaceGroupWithDropZone({
 				sortableAttributes={attributes}
 				sortableListeners={listeners}
 			/>
+		</div>
+	);
+}
+
+function SortableFolderTree({id}: {id: string}) {
+	const {t} = useTranslation('navigation');
+	const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({
+		id, data: {label: t('folderTree.title')}
+	});
+	return (
+		<div ref={setNodeRef} style={{transform: CSS.Transform.toString(transform), transition}} className={clsx(isDragging && 'relative z-50 opacity-50')}>
+			<FolderTree sortableAttributes={attributes} sortableListeners={listeners} />
 		</div>
 	);
 }
@@ -421,7 +434,7 @@ export const SpacesSidebar = memo(function SpacesSidebar({
 		getSpeedHistory
 	} = useJobsContext();
 
-	const {currentSpaceId, setCurrentSpace} = useSidebarStore();
+	const {currentSpaceId, setCurrentSpace, folderTreePositions} = useSidebarStore();
 	const {data: spacesData} = useSpaces();
 	const spaces = (spacesData as any)?.spaces as Space[] | undefined;
 
@@ -529,26 +542,19 @@ export const SpacesSidebar = memo(function SpacesSidebar({
 								</SortableContext>
 							)}
 
-						{/* Groups with space-level drop zones between them */}
-						{layout?.groups && (
-							<SortableContext
-								items={layout.groups.map(({group}) => group.id)}
-								strategy={verticalListSortingStrategy}
-							>
-								{layout.groups.map(({group, items}, index) => (
-									<SpaceGroupWithDropZone
-										key={group.id}
-										group={group}
-										items={items}
-										spaceId={currentSpace?.id}
-										isFirst={index === 0}
-									/>
-								))}
-							</SortableContext>
-						)}
-
-						{/* Folder tree, built from the filesystem rather than a space group */}
-						<FolderTree />
+						{layout?.groups && currentSpace && (() => {
+							const treeId = `folder-tree:${currentSpace.id}`;
+							const sections = sidebarSections(layout.groups.map(({group}) => group.id), treeId, folderTreePositions[currentSpace.id]);
+							return (
+								<SortableContext items={sections} strategy={verticalListSortingStrategy}>
+									{sections.map((id, index) => {
+										if (id === treeId) return <SortableFolderTree key={id} id={id} />;
+										const entry = layout.groups.find(({group}) => group.id === id)!;
+										return <SpaceGroupWithDropZone key={id} group={entry.group} items={entry.items} spaceId={currentSpace.id} isFirst={index === 0} />;
+									})}
+								</SortableContext>
+							);
+						})()}
 
 						{/* Add Group Button */}
 						{currentSpace && (

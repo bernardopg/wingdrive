@@ -5,7 +5,7 @@
 //!
 //! ## Features
 //! - Pre-paired devices (Alice & Bob)
-//! - Indexes WingDrive source code for deterministic testing
+//! - Indexes repository paths and generated fixture trees
 //! - Event-driven architecture
 //! - Captures sync logs, databases, and event bus events
 //! - Timestamped snapshot folders for each run
@@ -101,13 +101,25 @@ async fn test_realtime_sync_alice_to_bob() -> anyhow::Result<()> {
 	// Phase 1: Add location on Alice
 	tracing::info!("=== Phase 1: Adding location on Alice ===");
 
-	// Use WingDrive source code for deterministic testing across all environments
-	let test_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-		.parent()
-		.unwrap()
-		.to_path_buf();
+	// Keep enough files and nested folders for multiple sync batches without
+	// depending on ignored files, build artifacts or checkout size.
+	let fixture = tempfile::tempdir()?;
+	for directory in 0..16 {
+		let path = fixture
+			.path()
+			.join(format!("group-{directory:02}"))
+			.join("nested");
+		std::fs::create_dir_all(&path)?;
+		for file in 0..32 {
+			std::fs::write(
+				path.join(format!("file-{file:02}.txt")),
+				format!("content {directory} {file}"),
+			)?;
+		}
+	}
+	let test_path = fixture.path();
 	let location_uuid = harness
-		.add_and_index_location_alice(test_path.to_str().unwrap(), "wingdrive")
+		.add_and_index_location_alice(test_path.to_str().unwrap(), "fixture")
 		.await?;
 
 	tracing::info!(
@@ -187,6 +199,11 @@ async fn test_realtime_sync_alice_to_bob() -> anyhow::Result<()> {
 		.filter(entities::entry::Column::Size.gt(0))
 		.count(harness.library_bob.db().conn())
 		.await?;
+
+	assert!(
+		total_files >= 512,
+		"Fixture files did not all reach Bob: {total_files}"
+	);
 
 	let max_allowed_orphaned_content = ((total_files as f64) * 0.05).ceil() as u64;
 

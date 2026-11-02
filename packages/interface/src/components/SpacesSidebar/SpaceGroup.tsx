@@ -11,6 +11,7 @@ import { TagsGroup } from "./TagsGroup";
 import { SourcesGroup } from "./SourcesGroup";
 import { GroupHeader } from "./GroupHeader";
 import { useDroppable, useDndContext } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 interface SpaceGroupProps {
 	group: SpaceGroupType;
@@ -66,6 +67,7 @@ export function SpaceGroup({
 		return (
 			<div data-group-id={group.id}>
 				<DevicesGroup
+					groupId={group.id}
 					isCollapsed={isCollapsed}
 					onToggle={handleToggle}
 					sortableAttributes={sortableAttributes}
@@ -80,6 +82,7 @@ export function SpaceGroup({
 		return (
 			<div data-group-id={group.id}>
 				<LocationsGroup
+					groupId={group.id}
 					isCollapsed={isCollapsed}
 					onToggle={handleToggle}
 					sortableAttributes={sortableAttributes}
@@ -94,6 +97,7 @@ export function SpaceGroup({
 		return (
 			<div data-group-id={group.id}>
 				<VolumesGroup
+					groupId={group.id}
 					isCollapsed={isCollapsed}
 					onToggle={handleToggle}
 					sortableAttributes={sortableAttributes}
@@ -108,6 +112,7 @@ export function SpaceGroup({
 		return (
 			<div data-group-id={group.id}>
 				<TagsGroup
+					groupId={group.id}
 					isCollapsed={isCollapsed}
 					onToggle={handleToggle}
 					sortableAttributes={sortableAttributes}
@@ -122,6 +127,7 @@ export function SpaceGroup({
 		return (
 			<div data-group-id={group.id}>
 				<SourcesGroup
+					groupId={group.id}
 					isCollapsed={isCollapsed}
 					onToggle={handleToggle}
 					sortableAttributes={sortableAttributes}
@@ -159,7 +165,8 @@ export function SpaceGroup({
 			{!isCollapsed && (
 				<div className="space-y-0.5 relative min-h-[20px]">
 					{items.length > 0 ? (
-						items.map((item, index) => (
+						<SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+						{items.map((item, index) => (
 							<SpaceItem
 								key={item.id}
 								item={item}
@@ -167,8 +174,10 @@ export function SpaceGroup({
 								allowInsertion={allowInsertion}
 								spaceId={spaceId}
 								groupId={group.id}
+								sortable
 							/>
-						))
+						))}
+						</SortableContext>
 					) : (
 						<div
 							ref={setEmptyRef}

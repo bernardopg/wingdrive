@@ -62,6 +62,32 @@ pub async fn file_identity(path: std::path::PathBuf) -> Result<(String, String),
 	}
 }
 
+#[cfg(target_os = "linux")]
+fn content_hash(path: &std::path::Path) -> Result<String, String> {
+	if !path.is_absolute() {
+		return Err("Undo requires an absolute path".to_string());
+	}
+	let mut file = std::fs::File::open(path).map_err(|e| e.to_string())?;
+	let mut hasher = blake3::Hasher::new();
+	hasher.update_reader(&mut file).map_err(|e| e.to_string())?;
+	Ok(hasher.finalize().to_hex().to_string())
+}
+
+#[tauri::command]
+pub async fn file_content_hash(path: std::path::PathBuf) -> Result<String, String> {
+	#[cfg(target_os = "linux")]
+	{
+		tokio::task::spawn_blocking(move || content_hash(&path))
+			.await
+			.map_err(|e| e.to_string())?
+	}
+	#[cfg(not(target_os = "linux"))]
+	{
+		let _ = path;
+		Err("Safe undo is currently supported on Linux".to_string())
+	}
+}
+
 #[tauri::command]
 pub async fn undo_move(
 	source: std::path::PathBuf,
@@ -106,12 +132,13 @@ pub async fn undo_empty_folder(
 
 /// Removes a file or link this app just created, if it is still that entry.
 ///
-/// A file that has gained content since is kept, because undoing "New File"
-/// must never discard what the user wrote into it.
+/// Empty files must remain empty, and template copies must retain their
+/// original content so undo cannot discard subsequent edits.
 #[tauri::command]
 pub async fn undo_new_file(
 	path: std::path::PathBuf,
 	expected: (String, String),
+	expected_hash: Option<String>,
 ) -> Result<(), String> {
 	#[cfg(target_os = "linux")]
 	{
@@ -120,7 +147,14 @@ pub async fn undo_new_file(
 				return Err("The new file has been replaced; undo was cancelled".to_string());
 			}
 			let metadata = std::fs::symlink_metadata(&path).map_err(|e| e.to_string())?;
-			if metadata.is_file() && metadata.len() > 0 {
+			if let Some(hash) = expected_hash {
+				if !metadata.is_file()
+					|| content_hash(&path)? != hash
+					|| identity(&path)? != expected
+				{
+					return Err("The new file has changed; undo was cancelled".to_string());
+				}
+			} else if metadata.is_file() && metadata.len() > 0 {
 				return Err("The new file has content now; undo was cancelled".to_string());
 			}
 			std::fs::remove_file(path).map_err(|e| e.to_string())
@@ -130,7 +164,7 @@ pub async fn undo_new_file(
 	}
 	#[cfg(not(target_os = "linux"))]
 	{
-		let _ = (path, expected);
+		let _ = (path, expected, expected_hash);
 		Err("Safe undo is currently supported on Linux".to_string())
 	}
 }
@@ -166,7 +200,7 @@ mod tests {
 		let root = tempfile::tempdir().unwrap();
 		let empty = root.path().join("empty");
 		std::fs::write(&empty, "").unwrap();
-		undo_new_file(empty.clone(), identity(&empty).unwrap())
+		undo_new_file(empty.clone(), identity(&empty).unwrap(), None)
 			.await
 			.unwrap();
 		assert!(!empty.exists());
@@ -175,15 +209,43 @@ mod tests {
 		std::fs::write(&written, "").unwrap();
 		let expected = identity(&written).unwrap();
 		std::fs::write(&written, "notes").unwrap();
-		assert!(undo_new_file(written.clone(), expected).await.is_err());
+		assert!(undo_new_file(written.clone(), expected, None)
+			.await
+			.is_err());
 		assert!(written.exists());
 
 		let link = root.path().join("link");
 		std::os::unix::fs::symlink(root.path(), &link).unwrap();
-		undo_new_file(link.clone(), identity(&link).unwrap())
+		undo_new_file(link.clone(), identity(&link).unwrap(), None)
 			.await
 			.unwrap();
 		assert!(std::fs::symlink_metadata(&link).is_err());
 		assert!(root.path().exists());
+	}
+
+	#[tokio::test]
+	async fn undo_template_keeps_changed_or_replaced_files() {
+		let root = tempfile::tempdir().unwrap();
+		let path = root.path().join("template-copy");
+		std::fs::write(&path, b"original").unwrap();
+		let expected = identity(&path).unwrap();
+		let hash = file_content_hash(path.clone()).await.unwrap();
+		std::fs::write(&path, b"modified").unwrap();
+		assert!(
+			undo_new_file(path.clone(), expected.clone(), Some(hash.clone()))
+				.await
+				.is_err()
+		);
+		assert_eq!(std::fs::read(&path).unwrap(), b"modified");
+		std::fs::rename(&path, root.path().join("original-entry")).unwrap();
+		std::fs::write(&path, b"original").unwrap();
+		assert!(undo_new_file(path.clone(), expected, Some(hash.clone()))
+			.await
+			.is_err());
+		let expected = identity(&path).unwrap();
+		undo_new_file(path.clone(), expected, Some(hash))
+			.await
+			.unwrap();
+		assert!(!path.exists());
 	}
 }

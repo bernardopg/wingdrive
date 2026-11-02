@@ -2,11 +2,14 @@ import {
 	DndContext,
 	DragOverlay,
 	PointerSensor,
+	KeyboardSensor,
+	closestCenter,
 	useSensor,
 	useSensors,
 	pointerWithin,
 } from "@dnd-kit/core";
 import type { CollisionDetection, DragMoveEvent } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useMemo, useRef, useState } from "react";
 import { House, Clock, Heart, Folders } from "@phosphor-icons/react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,8 +21,9 @@ import {
 	useWingDriveClient,
 } from "../contexts/WingDriveContext";
 import { useSidebarStore } from "@wingdrive/ts-client";
-import type { Device, File, WingPath } from "@wingdrive/ts-client";
+import type { Device, File, WingPath, SpaceLayout } from "@wingdrive/ts-client";
 import { useSpaces } from "./SpacesSidebar/hooks/useSpaces";
+import { reorderItems as reorderedSidebarItems, rememberDynamicOrder, reorderLayoutItems, sidebarSections, isSidebarSortable } from "./SpacesSidebar/reorderItems";
 import { useFileOperationDialog } from "./modals/FileOperationModal";
 import { File as FileComponent } from "../routes/explorer/File";
 import { selectionCapabilities } from "../routes/explorer/fileCapabilities";
@@ -71,6 +75,14 @@ const POINTER_SENSOR_OPTIONS = {
 	},
 };
 
+class SidebarKeyboardSensor extends KeyboardSensor {
+	static activators: typeof KeyboardSensor.activators = KeyboardSensor.activators.map(({eventName, handler}) => ({
+		eventName,
+		handler: (event, options, context) =>
+			isSidebarSortable(context.active.data.current) && handler(event, options, context)
+	}));
+}
+
 /**
  * Keeps the horizontal scroll of the dragged item's containers where it was.
  * dnd-kit auto-scrolls on both axes, and heading for the window edge to drag
@@ -115,7 +127,7 @@ function alreadyIn(dragData: any, destination: WingPath): boolean {
 
 export function DndProvider({ children }: { children: React.ReactNode }) {
 	const { t } = useTranslation("common");
-	const sensors = useSensors(useSensor(PointerSensor, POINTER_SENSOR_OPTIONS));
+	const sensors = useSensors(useSensor(PointerSensor, POINTER_SENSOR_OPTIONS), useSensor(SidebarKeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}));
 	const addItem = useLibraryMutation("spaces.add_item");
 	const reorderItems = useLibraryMutation("spaces.reorder_items");
 	const reorderGroups = useLibraryMutation("spaces.reorder_groups");
@@ -131,6 +143,14 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 
 	// Custom collision detection: prefer -top zones over -bottom zones to avoid double lines
 	const customCollision: CollisionDetection = (args) => {
+		const sortable = args.active.data.current?.sortable;
+		if (sortable && args.active.data.current?.label != null) {
+			const candidates = args.droppableContainers.filter((container) =>
+				container.data.current?.sortable?.containerId === sortable.containerId
+			);
+			const scoped = {...args, droppableContainers: candidates};
+			return args.pointerCoordinates ? pointerWithin(scoped) : closestCenter(scoped);
+		}
 		const collisions = pointerWithin(args);
 		if (!collisions || collisions.length === 0) return collisions;
 
@@ -262,6 +282,21 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			return;
 		}
 
+		if (dragData?.type === "sidebar-dynamic") {
+			const target = over.data.current;
+			if (target?.type === "sidebar-dynamic" && target.groupId === dragData.groupId) {
+				const ordered = reorderedSidebarItems(
+					dragData.ids.map((id: string) => ({id})), dragData.itemId, target.itemId
+				);
+				if (ordered) {
+					const store = useSidebarStore.getState();
+					store.setDynamicItemOrder(dragData.groupId, rememberDynamicOrder(
+						ordered.map((item) => item.id), store.dynamicItemOrder[dragData.groupId] ?? []
+					));
+				}
+			}
+			return;
+		}
 		// Handle tab reordering
 		if (
 			active.id !== over.id &&
@@ -286,108 +321,46 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 				libraryId,
 				{ space_id: currentSpace.id },
 			];
-			const layout = queryClient.getQueryData(queryKey) as any;
+			const layout = queryClient.getQueryData<SpaceLayout>(queryKey);
 
 			if (!layout) return;
 
-			// Check if we're reordering groups
-			const groups = layout.groups?.map((g: any) => g.group) || [];
-			const isGroupReorder = groups.some((g: any) => g.id === active.id);
-
-			if (isGroupReorder) {
-				console.log("[DnD] Reordering groups");
-
-				const oldIndex = groups.findIndex(
-					(g: any) => g.id === active.id,
-				);
-				const newIndex = groups.findIndex((g: any) => g.id === over.id);
-
-				if (
-					oldIndex !== -1 &&
-					newIndex !== -1 &&
-					oldIndex !== newIndex
-				) {
-					// Optimistically update the UI
-					const newGroups = [...layout.groups];
-					const [movedGroup] = newGroups.splice(oldIndex, 1);
-					newGroups.splice(newIndex, 0, movedGroup);
-
-					queryClient.setQueryData(queryKey, {
-						...layout,
-						groups: newGroups,
-					});
-
-					// Send reorder mutation
-					try {
-						await reorderGroups.mutateAsync({
-							space_id: currentSpace.id,
-							group_ids: newGroups.map((g: any) => g.group.id),
-						});
-						console.log("[DnD] Group reorder successful");
-					} catch (err) {
-						console.error("[DnD] Group reorder failed:", err);
-						// Revert on error
-						queryClient.setQueryData(queryKey, layout);
-					}
+			const treeId = `folder-tree:${currentSpace.id}`;
+			const groups = layout.groups ?? [];
+			const isSection = active.id === treeId || groups.some((entry) => entry.group.id === active.id);
+			if (isSection) {
+				const store = useSidebarStore.getState();
+				const sections = sidebarSections(groups.map((entry) => entry.group.id), treeId, store.folderTreePositions[currentSpace.id]);
+				const reordered = reorderedSidebarItems(sections.map((id) => ({id})), String(active.id), String(over.id));
+				if (!reordered) return;
+				const ids = reordered.map((entry) => entry.id);
+				const treeIndex = ids.indexOf(treeId);
+				const after = treeIndex === 0 ? null : ids[treeIndex - 1];
+				if (active.id === treeId) {
+					store.setFolderTreePosition(currentSpace.id, after);
+					return;
 				}
-
+				const newGroups = ids.filter((id) => id !== treeId).map((id) => groups.find((entry) => entry.group.id === id)!);
+				queryClient.setQueryData(queryKey, {...layout, groups: newGroups});
+				store.setFolderTreePosition(currentSpace.id, after);
+				try {
+					await reorderGroups.mutateAsync({space_id: currentSpace.id, group_ids: newGroups.map((entry) => entry.group.id)});
+				} catch (err) {
+					console.error("[DnD] Group reorder failed:", err);
+					queryClient.setQueryData(queryKey, layout);
+					store.setFolderTreePosition(currentSpace.id, store.folderTreePositions[currentSpace.id]);
+				}
 				return;
 			}
 
-			// Reordering space items
-			if (layout?.space_items) {
-				const items = layout.space_items;
-				const oldIndex = items.findIndex(
-					(item: any) => item.id === active.id,
-				);
-
-				// Extract item ID from over.id (could be a drop zone ID like "space-item-{id}-top")
-				let overItemId = String(over.id);
-				if (overItemId.startsWith("space-item-")) {
-					// Extract the UUID from "space-item-{uuid}-top/bottom/middle"
-					const parts = overItemId.split("-");
-					// Remove "space" and "item" and the last part (top/bottom/middle)
-					overItemId = parts.slice(2, -1).join("-");
-				}
-
-				const newIndex = items.findIndex(
-					(item: any) => item.id === overItemId,
-				);
-
-				console.log("[DnD] Reorder space items:", {
-					oldIndex,
-					newIndex,
-					activeId: active.id,
-					extractedOverId: overItemId,
-				});
-
-				if (
-					oldIndex !== -1 &&
-					newIndex !== -1 &&
-					oldIndex !== newIndex
-				) {
-					// Optimistically update the UI
-					const newItems = [...items];
-					const [movedItem] = newItems.splice(oldIndex, 1);
-					newItems.splice(newIndex, 0, movedItem);
-
-					queryClient.setQueryData(queryKey, {
-						...layout,
-						space_items: newItems,
-					});
-
-					// Send reorder mutation
-					try {
-						await reorderItems.mutateAsync({
-							group_id: null, // Space-level items
-							item_ids: newItems.map((item: any) => item.id),
-						});
-						console.log("[DnD] Space items reorder successful");
-					} catch (err) {
-						console.error("[DnD] Space items reorder failed:", err);
-						// Revert on error
-						queryClient.setQueryData(queryKey, layout);
-					}
+			const reordered = reorderLayoutItems(layout, String(active.id), String(over.id));
+			if (reordered) {
+				queryClient.setQueryData(queryKey, reordered.layout);
+				try {
+					await reorderItems.mutateAsync({group_id: reordered.groupId, item_ids: reordered.itemIds});
+				} catch (err) {
+					console.error("[DnD] Space items reorder failed:", err);
+					queryClient.setQueryData(queryKey, layout);
 				}
 			}
 
@@ -543,6 +516,19 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 
 	return (
 		<DndContext
+			accessibility={{
+				screenReaderInstructions: {draggable: t("dnd.instructions")},
+				announcements: {
+					onDragStart: ({active}) => t("dnd.started", {name: active.data.current?.label ?? active.data.current?.name ?? t("dnd.item")}),
+					onDragOver: ({active, over}) => over
+						? t("dnd.over", {name: active.data.current?.label ?? active.data.current?.name ?? t("dnd.item"), target: over.data.current?.label ?? t("dnd.target")})
+						: t("dnd.outside"),
+					onDragEnd: ({active, over}) => over
+						? t("dnd.dropped", {name: active.data.current?.label ?? active.data.current?.name ?? t("dnd.item")})
+						: t("dnd.cancelled"),
+					onDragCancel: () => t("dnd.cancelled")
+				}
+			}}
 			sensors={sensors}
 			collisionDetection={customCollision}
 			onDragStart={handleDragStart}

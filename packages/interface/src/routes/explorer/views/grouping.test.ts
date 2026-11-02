@@ -38,6 +38,40 @@ describe('groupFiles', () => {
 		]);
 	});
 
+	test('orders name sections by the selected direction even with folders first', () => {
+		const files = [
+			file({name: 'docs', kind: 'Directory'}),
+			file({name: 'sub', kind: 'Directory'}),
+			file({name: 'modified'}),
+			file({name: 'sample'}),
+			file({name: 'untracked'})
+		];
+		expect(groupFiles(files, 'name', NOW, 'Asc').map((group) => group.key)).toEqual([
+			'letter:D', 'letter:M', 'letter:S', 'letter:U'
+		]);
+		expect(groupFiles(files, 'name', NOW, 'Desc').map((group) => group.key)).toEqual([
+			'letter:U', 'letter:S', 'letter:M', 'letter:D'
+		]);
+	});
+	test('orders date and size sections by the selected direction with folders first', () => {
+		const files = [
+			file({name: 'old-folder', kind: 'Directory', modified_at: new Date(2025, 1, 1).toISOString()}),
+			file({name: 'today', modified_at: NOW.toISOString(), size: 2 * 1024 ** 3}),
+			file({name: 'yesterday', modified_at: new Date(2026, 9, 27, 12).toISOString(), size: 100})
+		];
+		expect(groupFiles(files, 'modified', NOW, 'Desc').map((group) => group.key)).toEqual([
+			'date:today', 'date:yesterday', 'year:2025'
+		]);
+		expect(groupFiles(files, 'modified', NOW, 'Asc').map((group) => group.key)).toEqual([
+			'year:2025', 'date:yesterday', 'date:today'
+		]);
+		expect(groupFiles(files, 'size', NOW, 'Asc').map((group) => group.key)).toEqual([
+			'folders', 'size:tiny', 'size:huge'
+		]);
+		expect(groupFiles(files, 'size', NOW, 'Desc').map((group) => group.key)).toEqual([
+			'folders', 'size:huge', 'size:tiny'
+		]);
+	});
 	test('groups by type with folders first, then kinds alphabetically', () => {
 		const files = [
 			file({name: 'song', content_kind: 'audio'}),
@@ -50,6 +84,13 @@ describe('groupFiles', () => {
 			['folders', ['docs']],
 			['kind:audio', ['song', 'track']],
 			['kind:video', ['clip']]
+		]);
+	});
+
+	test('reverses type sections while keeping folders first', () => {
+		const files = [file({name: 'folder', kind: 'Directory'}), file({name: 'song', content_kind: 'audio'}), file({name: 'clip', content_kind: 'video'})];
+		expect(groupFiles(files, 'type', NOW, 'Desc').map((group) => group.key)).toEqual([
+			'folders', 'kind:video', 'kind:audio'
 		]);
 	});
 

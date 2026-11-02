@@ -1,3 +1,4 @@
+import {TerminalWindow, X} from '@phosphor-icons/react';
 import {FitAddon} from '@xterm/addon-fit';
 import {Terminal, type ITheme} from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
@@ -32,6 +33,7 @@ interface TerminalPanelProps {
 	onShellFolder(path: string): void;
 	/** The tab's shell ended, so its panel should close. */
 	onExit(tabId: string): void;
+	onHide(): void;
 }
 
 /** xterm.js needs concrete colors, so read the theme's from the panel. */
@@ -125,7 +127,8 @@ export default function TerminalPanel({
 	height,
 	onHeightChange,
 	onShellFolder,
-	onExit
+	onExit,
+	onHide
 }: TerminalPanelProps) {
 	const {t} = useTranslation('explorer');
 	const platform = usePlatform();
@@ -216,7 +219,7 @@ export default function TerminalPanel({
 			ref={panelRef}
 			role="region"
 			aria-label={t('terminal.label')}
-			className="flex shrink-0 flex-col border-t border-app-line"
+			className="flex shrink-0 flex-col border-t border-app-line bg-app"
 			style={{height: shownHeight}}
 		>
 			<div
@@ -229,9 +232,18 @@ export default function TerminalPanel({
 				onKeyDown={resizeWithKeys}
 				className="h-1 shrink-0 cursor-row-resize hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none"
 			/>
+			<div className="flex h-9 shrink-0 items-center justify-between border-b border-app-line bg-app-box/50 px-3">
+				<div className="flex items-center gap-2 text-xs font-medium text-ink-dull">
+					<TerminalWindow size={15} aria-hidden="true" />
+					<span>{t('terminal.label')}</span>
+				</div>
+				<button type="button" onClick={onHide} aria-label={t('contextMenu.hideTerminalPanel')} title={t('contextMenu.hideTerminalPanel')} className="rounded-md p-1 text-ink-dull transition-colors hover:bg-app-box hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+					<X size={14} aria-hidden="true" />
+				</button>
+			</div>
 			<div
 				ref={containerRef}
-				className="min-h-0 flex-1 overflow-hidden bg-app px-2 pb-1 text-ink"
+				className="min-h-0 flex-1 overflow-hidden bg-app px-3 pb-2 pt-2 text-ink"
 			/>
 		</div>
 	);

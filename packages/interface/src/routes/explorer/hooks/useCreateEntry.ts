@@ -46,7 +46,7 @@ export function useCreateEntry() {
 	const undo = useUndo();
 
 	const recordUndo = useCallback(
-		async (path: WingPath, label: string) => {
+		async (path: WingPath, label: string, expectedHash?: string) => {
 			if (
 				!('Physical' in path) ||
 				!undo.isLocalPath(path) ||
@@ -58,7 +58,7 @@ export function useCreateEntry() {
 			const remove = platform.undoNewFile;
 			try {
 				const expected = await platform.fileIdentity(local);
-				undo.record(label, () => remove(local, expected));
+				undo.record(label, () => remove(local, expected, expectedHash));
 			} catch {
 				// The entry exists; only its undo is unavailable.
 			}
@@ -86,6 +86,14 @@ export function useCreateEntry() {
 		async (template: TemplateFile) => {
 			if (!operationalPath) return;
 			const name = nextFreeName(template.name, currentFiles.map(diskName));
+			let expectedHash: string | undefined;
+			if ('Physical' in template.path && undo.isLocalPath(template.path) && platform.fileContentHash) {
+				try {
+					expectedHash = await platform.fileContentHash(template.path.Physical.path);
+				} catch {
+					// A missing fingerprint prevents undo, not creation.
+				}
+			}
 			try {
 				const {path} = await createFromTemplate.mutateAsync({
 					template: template.path,
@@ -93,13 +101,13 @@ export function useCreateEntry() {
 					name
 				});
 				if ('Physical' in path) requestReveal(path.Physical.path, {rename: true});
-				await recordUndo(path, t('undo.newFile'));
+				if (expectedHash) await recordUndo(path, t('undo.newFile'), expectedHash);
 				refetchListings();
 			} catch (error) {
 				toast.error(t('errors.failedToCreateFile', {error}));
 			}
 		},
-		[operationalPath, currentFiles, createFromTemplate, recordUndo, refetchListings, t]
+		[operationalPath, currentFiles, createFromTemplate, recordUndo, refetchListings, platform, undo, t]
 	);
 
 	const newLink = useCallback(

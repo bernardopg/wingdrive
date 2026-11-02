@@ -1,7 +1,9 @@
 import { memo } from "react";
+import { useTranslation } from "../../i18n";
+import { DotsSixVertical } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import clsx from "clsx";
-import type { SpaceItem as SpaceItemType } from "@wingdrive/ts-client";
+import type { Location, SpaceItem as SpaceItemType } from "@wingdrive/ts-client";
 import { Thumb } from "../../routes/explorer/File/Thumb";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -27,7 +29,7 @@ export interface SpaceItemOverrides {
 }
 
 export interface SpaceItemProps {
-	item: SpaceItemType;
+	item: SpaceItemType | Location;
 	spaceId?: string;
 	groupId?: string | null;
 	// Behavior flags
@@ -205,6 +207,7 @@ const SpaceItemBody = memo(function SpaceItemBody({
 	loadPreferencesForSpaceItem,
 	tabRoute,
 }: SpaceItemBodyProps) {
+	const {t} = useTranslation("navigation");
 	const navigate = useNavigate();
 	const openInNewTab = useOpenInNewTabAction();
 
@@ -252,6 +255,7 @@ const SpaceItemBody = memo(function SpaceItemBody({
 		attributes: sortableAttributes,
 		listeners: sortableListeners,
 		setNodeRef: setSortableRef,
+		setActivatorNodeRef,
 		transform,
 		transition,
 		isDragging: isSortableDragging,
@@ -332,7 +336,7 @@ const SpaceItemBody = memo(function SpaceItemBody({
 			<InsertionLine visible={showTopLine} />
 			<DropHighlight visible={showDropHighlight} />
 
-			<div className="relative">
+			<div className="relative flex items-center">
 				<DropZoneOverlays
 					isDropTarget={dropZones.isDropTarget}
 					setTopRef={dropZones.setTopRef}
@@ -346,11 +350,8 @@ const SpaceItemBody = memo(function SpaceItemBody({
 						if (e.button === 1) openInTab(e);
 					}}
 					onContextMenu={handleContextMenu}
-					{...(sortable
-						? { ...sortableAttributes, ...sortableListeners }
-						: {})}
 					className={clsx(
-						"relative flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent/70",
+						"relative flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent/70",
 						isActive
 							? "bg-sidebar-selected/30 text-sidebar-ink"
 							: [className || "text-sidebar-ink-dull", "hover:text-sidebar-ink hover:bg-sidebar-selected/20"],
@@ -369,6 +370,13 @@ const SpaceItemBody = memo(function SpaceItemBody({
 					<span className="flex-1 truncate text-left">{label}</span>
 					{rightComponent}
 				</button>
+				{sortable && (
+					<button ref={setActivatorNodeRef} type="button" {...sortableAttributes} {...sortableListeners}
+						aria-label={t("sidebar.reorderItem", {name: label})}
+						className="cursor-grab rounded-md p-1 text-sidebar-ink-faint opacity-50 transition-opacity hover:text-sidebar-ink hover:opacity-100 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent active:cursor-grabbing">
+						<DotsSixVertical size={14} aria-hidden="true" />
+					</button>
+				)}
 			</div>
 
 			<BottomInsertionLine visible={showBottomLine} />

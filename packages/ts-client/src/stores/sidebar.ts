@@ -11,6 +11,11 @@ interface SidebarStore {
 	currentSpaceId: string | null;
 	setCurrentSpace: (id: string | null) => void;
 
+	folderTreePositions: Record<string, string | null>;
+	setFolderTreePosition: (spaceId: string, afterGroupId: string | null | undefined) => void;
+	dynamicItemOrder: Record<string, string[]>;
+	setDynamicItemOrder: (groupId: string, ids: string[]) => void;
+
 	// Ephemeral state
 	collapsedGroups: Set<string>;
 	toggleGroup: (groupId: string) => void;
@@ -28,6 +33,18 @@ export const useSidebarStore = create<SidebarStore>()(
 			// Persisted
 			currentSpaceId: null,
 			setCurrentSpace: (id) => set({ currentSpaceId: id }),
+
+			dynamicItemOrder: {},
+			folderTreePositions: {},
+			setFolderTreePosition: (spaceId, afterGroupId) => set((state) => {
+				const positions = {...state.folderTreePositions};
+				if (afterGroupId === undefined) delete positions[spaceId];
+				else positions[spaceId] = afterGroupId;
+				return {folderTreePositions: positions};
+			}),
+			setDynamicItemOrder: (groupId, ids) => set((state) => ({
+				dynamicItemOrder: {...state.dynamicItemOrder, [groupId]: ids},
+			})),
 
 			// Ephemeral
 			collapsedGroups: new Set(),
@@ -55,6 +72,8 @@ export const useSidebarStore = create<SidebarStore>()(
 			name: 'wingdrive-sidebar',
 			partialize: (state) => ({
 				currentSpaceId: state.currentSpaceId,
+				dynamicItemOrder: state.dynamicItemOrder,
+				folderTreePositions: state.folderTreePositions,
 			}),
 		}
 	)

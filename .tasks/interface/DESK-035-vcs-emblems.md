@@ -8,7 +8,7 @@ priority: Low
 milestone: M2
 tags: [desktop, explorer]
 sprint: S04
-last_updated: 2026-10-28
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -29,7 +29,7 @@ WingDrive shows no repository state.
 ## Acceptance Criteria
 
 - [x] Files in a Git working tree show their status as an emblem
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -40,5 +40,6 @@ WingDrive shows no repository state.
   with `git init`; they run in CI.
 - `useExplorerFiles` returns `vcsStatus` for directory listings; `VcsEmblem` draws `U`, `A`, `M` or
   `C` on grid cards and list rows. `vcsStatusOf` is covered by `vcsStatus.test.ts`.
-- Open: runtime check on the Linux desktop build inside a checkout (edit, stage, commit in a
-  terminal and come back to the window).
+- Open: verification on the installed Linux package as part of DESK-017.
+
+- Runtime, 2026-11-02: isolated Linux Tauri debug build with a real Git repository. Grid and list showed added, modified and untracked emblems; an expanded folder showed its modified child. After committing the modified files and returning to the window, their emblems disappeared.

@@ -42,6 +42,7 @@
 		"unnamedTag": "Etiqueta sem nome"
 	},
 	"sidebar": {
+		"reorderItem": "Reordenar {{name}}",
 		"library": "Biblioteca",
 		"devices": "Dispositivos",
 		"locations": "Locais",
