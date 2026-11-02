@@ -102,6 +102,7 @@ const { t } = useTranslation("navigation");
         <div
           {...sortableAttributes}
           {...sortableListeners}
+          aria-label={t("sidebar.reorderItem", {name: label})}
           className="cursor-grab active:cursor-grabbing py-2 px-0.5 -ml-1 text-sidebar-ink-faint hover:text-sidebar-ink transition-colors"
         >
           <DotsSixVertical size={12} weight="bold" />

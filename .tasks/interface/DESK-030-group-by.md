@@ -8,7 +8,7 @@ priority: Low
 milestone: M2
 tags: [desktop, explorer]
 sprint: S04
-last_updated: 2026-10-28
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -27,7 +27,7 @@ into labelled sections by the sort key. WingDrive only sorts.
 ## Acceptance Criteria
 
 - [x] Grid and list views can group by the active sort key with section headers
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -36,5 +36,7 @@ into labelled sections by the sort key. WingDrive only sorts.
 - "Show in Groups" (`groupItems`) is a per-tab setting next to "Folders First". `GridView` and
   `ListView` publish the regrouped order with `setCurrentFiles`, so Shift ranges follow the screen;
   `GroupHeader` draws the section title and count.
-- Open: runtime check on the Linux desktop build (each sort key, Up and Down across sections,
-  Shift range across sections, long folders scrolled).
+- Open: verification on the installed Linux package as part of DESK-017.
+
+- Runtime, 2026-11-02: isolated Linux Tauri debug build with more than 100 files and several size/date buckets. Grid and list showed groups, ascending and descending name order, and Shift+Down selected across group boundaries. Type, date and size grouping were checked in grid, including reversed date order.
+- Fixed name, date, size and type section order when folders-first and the selected sort direction disagreed. Fixed Shift+arrow range selection in the grid. `grouping.test.ts` covers the section order and virtualized row navigation.

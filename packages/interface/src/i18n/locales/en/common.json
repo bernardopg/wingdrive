@@ -6,6 +6,14 @@
 		"reload": "Reload Application"
 	},
 	"dnd": {
+		"instructions": "Press Space or Enter to pick up an item. Use the arrow keys to move it, Space or Enter to drop it, or Escape to cancel.",
+		"item": "item",
+		"target": "drop target",
+		"started": "Picked up {{name}}.",
+		"over": "{{name}} is over {{target}}.",
+		"outside": "Outside a drop target.",
+		"dropped": "Dropped {{name}}.",
+		"cancelled": "Drag cancelled.",
 		"dragOutFailed": "Could not drag the files out of WingDrive",
 		"virtualLocationsCannotMove": "Locations, volumes and devices cannot be moved.",
 		"itemTypes": {

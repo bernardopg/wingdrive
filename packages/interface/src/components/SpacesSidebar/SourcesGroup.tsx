@@ -2,10 +2,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Database } from "@phosphor-icons/react";
 import { useLibraryQuery } from "../../contexts/WingDriveContext";
 import { useAdapterIcons } from "../../hooks/useAdapterIcons";
+import { SortableDynamicList } from "./SortableDynamicList";
 import { GroupHeader } from "./GroupHeader";
 import { useTranslation } from "../../i18n";
 
 interface SourcesGroupProps {
+  groupId: string;
 	isCollapsed: boolean;
 	onToggle: () => void;
 	sortableAttributes?: any;
@@ -13,6 +15,7 @@ interface SourcesGroupProps {
 }
 
 export function SourcesGroup({
+  groupId,
 	isCollapsed,
 	onToggle,
 	sortableAttributes,
@@ -42,7 +45,8 @@ export function SourcesGroup({
 
 			{!isCollapsed && (
 				<div className="space-y-0.5">
-					{sourcesList.map((source) => {
+					<SortableDynamicList groupId={groupId} items={sourcesList} label={(source) => source.name}>
+          {(source) => {
 						const isActive = location.pathname === `/sources/${source.id}`;
 						return (
 							<button
@@ -74,7 +78,8 @@ export function SourcesGroup({
 								<span className="truncate">{source.name}</span>
 							</button>
 						);
-					})}
+					}}
+					</SortableDynamicList>
 				</div>
 			)}
 		</div>

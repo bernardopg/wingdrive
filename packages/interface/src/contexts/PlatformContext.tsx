@@ -105,6 +105,7 @@ export type Platform = {
 	startFileDrag?(paths: string[]): Promise<void>;
 	readFileClipboard?(): Promise<[string[], boolean]>;
 	fileIdentity?(path: string): Promise<[string, string]>;
+	fileContentHash?(path: string): Promise<string>;
 	undoMove?(
 		source: string,
 		destination: string,
@@ -112,7 +113,7 @@ export type Platform = {
 	): Promise<void>;
 	undoEmptyFolder?(path: string, expected: [string, string]): Promise<void>;
 	/** Remove a file or link this app created, if it is unchanged and empty */
-	undoNewFile?(path: string, expected: [string, string]): Promise<void>;
+	undoNewFile?(path: string, expected: [string, string], expectedHash?: string): Promise<void>;
 
 	/** Open file with specific application */
 	openPathWithApp?(path: string, appId: string): Promise<OpenResult>;

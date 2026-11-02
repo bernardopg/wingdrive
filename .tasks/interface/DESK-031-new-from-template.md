@@ -8,7 +8,7 @@ priority: Low
 milestone: M2
 tags: [desktop, explorer, linux]
 sprint: S04
-last_updated: 2026-10-28
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -29,7 +29,7 @@ Document". WingDrive creates empty files only (DESK-006).
 ## Acceptance Criteria
 
 - [x] The New menu lists the templates and copies the chosen one into the current folder
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -39,5 +39,7 @@ Document". WingDrive creates empty files only (DESK-006).
   folder refused as a template; they run in CI.
 - `useCreateEntry().newFromTemplate` and the "New from Template" submenu in
   `useEmptySpaceContextMenu`.
-- Open: runtime check on the Linux desktop build with `~/Modelos` (pt) holding a document and an
-  executable script.
+- Open: verification on the installed Linux package as part of DESK-017.
+
+- Runtime, 2026-11-02: isolated Linux Tauri debug build with `XDG_TEMPLATES_DIR` set to `~/Modelos`. The menu listed a document and an executable script with accented names. Copies preserved bytes and mode 751, chose a free name on collision and entered inline rename. Ctrl+Z removed the unchanged copy and preserved a copy edited after creation. The desktop undo hashes the original template before copying and checks the new file's identity and hash before removal.
+- `undo::tests::undo_template_keeps_changed_or_replaced_files` covers edited and replaced files; the existing empty-file and symlink checks still pass.

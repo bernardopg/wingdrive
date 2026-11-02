@@ -1,6 +1,7 @@
 import {EyeSlash} from '@phosphor-icons/react';
 import {getVolumeIcon, useNormalizedQuery} from '@wingdrive/ts-client';
 import type {Device, Volume} from '@wingdrive/ts-client';
+import {SortableDynamicList} from './SortableDynamicList';
 import {GroupHeader} from './GroupHeader';
 import {SpaceItem} from './SpaceItem';
 import {useVolumeContextMenu} from './hooks/useVolumeContextMenu';
@@ -8,6 +9,7 @@ import {NetworkSection} from './NetworkSection';
 import {useTranslation} from '../../i18n';
 
 interface VolumesGroupProps {
+	groupId: string;
 	isCollapsed: boolean;
 	onToggle: () => void;
 	/** Filter to show tracked, untracked, or all volumes (default: "All") */
@@ -65,6 +67,7 @@ function VolumeItem({volume, index, volumesLength, devices}: {volume: Volume; in
 }
 
 export function VolumesGroup({
+	groupId,
 	isCollapsed,
 	onToggle,
 	filter = 'All',
@@ -84,7 +87,7 @@ const {t} = useTranslation('navigation');
 		resourceType: 'device'
 	});
 
-	const volumes = volumesData?.volumes || [];
+	const volumes: Volume[] = volumesData?.volumes || [];
 	const devices: Device[] = (devicesData as Device[]) ?? [];
 
 	return (
@@ -105,7 +108,8 @@ const {t} = useTranslation('navigation');
 					{t('volumes.empty')}
 						</div>
 					) : (
-						volumes.map((volume: Volume, index: number) => (
+						<SortableDynamicList groupId={groupId} items={volumes} label={(volume) => volume.display_name || volume.name}>
+						{(volume, index) => (
 							<VolumeItem
 								key={volume.id}
 								volume={volume}
@@ -113,9 +117,10 @@ const {t} = useTranslation('navigation');
 								volumesLength={volumes.length}
 								devices={devices}
 							/>
-						))
+						)}
+						</SortableDynamicList>
 					)}
-					<NetworkSection />
+					<NetworkSection groupId={groupId} />
 				</div>
 			)}
 		</div>

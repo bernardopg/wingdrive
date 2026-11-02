@@ -50,14 +50,12 @@ function useCardProps(vcsStatus: VcsStatusOutput | undefined) {
 
 export function GridView() {
 	const {t} = useTranslation('explorer');
-	const {viewSettings, sortBy, setCurrentFiles} = useExplorer();
+	const {viewSettings, sortBy, sortDirection, setCurrentFiles} = useExplorer();
 	const {
 		isSelected,
 		focusedIndex,
-		setFocusedIndex,
 		selectFile,
 		clearSelection,
-		setSelectedFiles
 	} = useSelection();
 	const {gridSize, gapSize} = viewSettings;
 	const emptySpaceContextMenu = useEmptySpaceContextMenu();
@@ -68,8 +66,8 @@ export function GridView() {
 	const {files: shownFiles, unfilteredCount} = useFolderFilter(listedFiles);
 	const groupBy = viewSettings.groupItems && isGroupBy(sortBy) ? sortBy : null;
 	const groups = useMemo(
-		() => (groupBy ? groupFiles(shownFiles, groupBy) : null),
-		[shownFiles, groupBy]
+		() => (groupBy ? groupFiles(shownFiles, groupBy, new Date(), sortDirection ?? 'Asc') : null),
+		[shownFiles, groupBy, sortDirection]
 	);
 	// Sections reorder the listing, and selection ranges follow what is on screen.
 	const files = useMemo(
@@ -158,9 +156,7 @@ export function GridView() {
 			gapSize={gapSize}
 			isSelected={isSelected}
 			focusedIndex={focusedIndex}
-			setFocusedIndex={setFocusedIndex}
 			selectFile={selectFile}
-			setSelectedFiles={setSelectedFiles}
 			onContainerClick={handleContainerClick}
 			onContainerContextMenu={handleContainerContextMenu}
 			vcsStatus={vcsStatus}
@@ -175,14 +171,12 @@ interface VirtualizedGridProps {
 	gapSize: number;
 	isSelected: (id: string) => boolean;
 	focusedIndex: number;
-	setFocusedIndex: (index: number) => void;
 	selectFile: (
 		file: File,
 		files: File[],
 		multi?: boolean,
 		range?: boolean
 	) => void;
-	setSelectedFiles: (files: File[]) => void;
 	onContainerClick: (e: React.MouseEvent) => void;
 	onContainerContextMenu: (e: React.MouseEvent) => void;
 	vcsStatus: VcsStatusOutput | undefined;
@@ -196,9 +190,7 @@ function VirtualizedGrid({
 	gapSize,
 	isSelected,
 	focusedIndex,
-	setFocusedIndex,
 	selectFile,
-	setSelectedFiles,
 	onContainerClick,
 	onContainerContextMenu,
 	vcsStatus,
@@ -336,8 +328,7 @@ function VirtualizedGrid({
 			}
 
 			if (newIndex !== focusedIndex && files[newIndex]) {
-				setFocusedIndex(newIndex);
-				setSelectedFiles([files[newIndex]]);
+				selectFile(files[newIndex], files, false, e.shiftKey);
 
 				// Scroll into view
 				const element = document.querySelector(
@@ -354,7 +345,7 @@ function VirtualizedGrid({
 
 		window.addEventListener('keydown', handleKeyDown);
 		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [files, focusedIndex, layout, setFocusedIndex, setSelectedFiles]);
+	}, [files, focusedIndex, layout, selectFile]);
 
 	return (
 		<div

@@ -43,7 +43,10 @@ function useCurrentFolder(): string | null {
  * that cannot tell the home folder (the web UI) show the root alone. It opens
  * the branch of the folder the active tab shows and highlights it.
  */
-export function FolderTree() {
+export function FolderTree({sortableAttributes, sortableListeners}: {
+	sortableAttributes?: React.HTMLAttributes<HTMLElement>;
+	sortableListeners?: React.DOMAttributes<HTMLElement>;
+} = {}) {
 	const {t} = useTranslation('navigation');
 	const platform = usePlatform();
 	const {collapsedGroups, toggleGroup} = useSidebarStore();
@@ -87,6 +90,8 @@ export function FolderTree() {
 	return (
 		<div>
 			<GroupHeader
+				sortableAttributes={sortableAttributes}
+				sortableListeners={sortableListeners}
 				label={t('folderTree.title')}
 				isCollapsed={isCollapsed}
 				onToggle={() => toggleGroup(SECTION_ID)}

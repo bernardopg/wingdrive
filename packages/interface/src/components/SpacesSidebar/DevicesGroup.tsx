@@ -2,12 +2,14 @@ import { WifiHigh, WifiSlashIcon, Trash } from "@phosphor-icons/react";
 import { useNormalizedQuery, getDeviceIcon, useCoreMutation } from "../../contexts/WingDriveContext";
 import { targetToUrl, useExplorer } from "../../routes/explorer/context";
 import { SpaceItem } from "./SpaceItem";
+import { SortableDynamicList } from "./SortableDynamicList";
 import { GroupHeader } from "./GroupHeader";
 import type { ListLibraryDevicesInput, Device } from "@wingdrive/ts-client";
 import { useTranslation } from "../../i18n";
 import { useWebContextMenuController } from "../../contexts/WebContextMenuContext";
 
 interface DevicesGroupProps {
+	groupId: string;
 	isCollapsed: boolean;
 	onToggle: () => void;
 	sortableAttributes?: any;
@@ -15,6 +17,7 @@ interface DevicesGroupProps {
 }
 
 export function DevicesGroup({
+	groupId,
 	isCollapsed,
 	onToggle,
 	sortableAttributes,
@@ -111,7 +114,8 @@ const { t } = useTranslation("navigation");
 							{t("devices.empty")}
 						</div>
 					) : (
-						devices.map((device, index) => {
+						<SortableDynamicList groupId={groupId} items={devices} label={(device) => device.name}>
+						{(device, index) => {
 							// Create a minimal SpaceItem structure for the device
 							const deviceItem = {
 								id: device.id,
@@ -155,7 +159,8 @@ const { t } = useTranslation("navigation");
 									}
 								/>
 							);
-						})
+						}}
+						</SortableDynamicList>
 					)}
 				</div>
 			)}

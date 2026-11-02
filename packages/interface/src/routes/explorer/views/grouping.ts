@@ -1,4 +1,4 @@
-import type {File} from '@wingdrive/ts-client';
+import type {File, SortDirection} from '@wingdrive/ts-client';
 import {fileDisplaySize, getContentKind} from '@wingdrive/ts-client';
 
 import type {SearchSizePreset} from '../context';
@@ -44,12 +44,10 @@ export function isGroupBy(value: string | undefined): value is GroupBy {
 /**
  * Splits an ordered listing into labelled sections.
  *
- * Files keep their order inside a section, and sections appear in the order
- * their first file does, so the active sort direction carries over. Grouping
- * by type is the exception: folders come first, then kinds alphabetically,
- * because the type sort orders by name, not by kind.
+ * Files keep their order inside each section. Explicit direction sorts sections
+ * independently so folders-first sorting cannot scramble their order.
  */
-export function groupFiles(files: File[], by: GroupBy, now = new Date()): FileGroup[] {
+export function groupFiles(files: File[], by: GroupBy, now = new Date(), direction?: SortDirection): FileGroup[] {
 	const groups = new Map<string, FileGroup>();
 
 	for (const file of files) {
@@ -64,11 +62,32 @@ export function groupFiles(files: File[], by: GroupBy, now = new Date()): FileGr
 	}
 
 	const ordered = [...groups.values()];
-	if (by === 'type') {
+	if (by === 'name' && direction) {
+		ordered.sort((a, b) => {
+			if (a.label.type === 'other') return 1;
+			if (b.label.type === 'other') return -1;
+			return a.key.localeCompare(b.key) * (direction === 'Desc' ? -1 : 1);
+		});
+	} else if ((by === 'modified' || by === 'created') && direction) {
+		const dateOf = (group: FileGroup) => Date.parse(
+			(by === 'modified' ? group.files[0].modified_at : group.files[0].created_at) ?? ''
+		);
+		ordered.sort((a, b) => {
+			if (a.label.type === 'other') return 1;
+			if (b.label.type === 'other') return -1;
+			return (dateOf(a) - dateOf(b)) * (direction === 'Desc' ? -1 : 1);
+		});
+	} else if (by === 'size' && direction) {
 		ordered.sort((a, b) => {
 			if (a.label.type === 'folders') return -1;
 			if (b.label.type === 'folders') return 1;
-			return a.key.localeCompare(b.key);
+			return ((fileDisplaySize(a.files[0]) ?? 0) - (fileDisplaySize(b.files[0]) ?? 0)) * (direction === 'Desc' ? -1 : 1);
+		});
+	} else if (by === 'type') {
+		ordered.sort((a, b) => {
+			if (a.label.type === 'folders') return -1;
+			if (b.label.type === 'folders') return 1;
+			return a.key.localeCompare(b.key) * (direction === 'Desc' ? -1 : 1);
 		});
 	}
 	return ordered;

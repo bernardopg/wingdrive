@@ -6,6 +6,14 @@
 		"reload": "Recarregar aplicativo"
 	},
 	"dnd": {
+		"instructions": "Pressione Espaço ou Enter para pegar um item. Use as setas para movê-lo, Espaço ou Enter para soltá-lo, ou Esc para cancelar.",
+		"item": "item",
+		"target": "área de destino",
+		"started": "{{name}} selecionado para mover.",
+		"over": "{{name}} está sobre {{target}}.",
+		"outside": "Fora de uma área de destino.",
+		"dropped": "{{name}} solto.",
+		"cancelled": "Movimentação cancelada.",
 		"dragOutFailed": "Não foi possível arrastar os arquivos para fora do WingDrive",
 		"virtualLocationsCannotMove": "Locais, volumes e dispositivos não podem ser movidos.",
 		"itemTypes": {

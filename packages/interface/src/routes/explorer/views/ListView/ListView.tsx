@@ -155,10 +155,9 @@ export const ListView = memo(function ListView() {
 	const {table} = useTable(files, availableWidth, expansion);
 	const {rows: sortedRows} = table.getRowModel();
 	// Sections follow the column the list is sorted by.
-	const sortColumn = table
-		.getState()
-		.sorting.find((entry) => entry.id !== 'folders')?.id;
-	const groupBy = viewSettings.groupItems && isGroupBy(sortColumn) ? sortColumn : null;
+	const sortEntry = table.getState().sorting.find((entry) => entry.id !== 'folders');
+	const groupBy = viewSettings.groupItems && isGroupBy(sortEntry?.id) ? sortEntry.id : null;
+	const groupDirection = sortEntry?.desc ? 'Desc' : 'Asc';
 	// Expanded folders' contents stay with the row that holds them.
 	const blocks = useMemo(() => blocksByTopLevel(sortedRows), [sortedRows]);
 	const groups = useMemo(
@@ -166,10 +165,12 @@ export const ListView = memo(function ListView() {
 			groupBy
 				? groupFiles(
 						sortedRows.filter((row) => row.depth === 0).map((row) => row.original),
-						groupBy
+						groupBy,
+						new Date(),
+						groupDirection
 					)
 				: null,
-		[sortedRows, groupBy]
+		[sortedRows, groupBy, groupDirection]
 	);
 	// Sections reorder the rows, and selection ranges follow what is on screen.
 	const rows = useMemo(() => {

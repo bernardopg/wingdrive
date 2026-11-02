@@ -6,6 +6,7 @@ import {useNavigate} from 'react-router-dom';
 import {useTranslation} from '../../i18n';
 
 import {usePlatform, type NetworkMount} from '../../contexts/PlatformContext';
+import {SortableDynamicList} from './SortableDynamicList';
 import {useOpenInNewTabAction} from '../../routes/explorer/OpenFileProvider';
 import {explorerUrlForDirectory} from '../TabManager/LaunchRequestSync';
 
@@ -77,7 +78,7 @@ function iconFor(mount: NetworkMount) {
 }
 
 /** Network locations and devices from gvfs, shown under Volumes on Linux. */
-export function NetworkSection() {
+export function NetworkSection({groupId}: {groupId: string}) {
 	const {t} = useTranslation('navigation');
 	const platform = usePlatform();
 	const navigate = useNavigate();
@@ -138,7 +139,8 @@ export function NetworkSection() {
 
 	return (
 		<div className="mt-1 space-y-0.5">
-			{(mounts.data ?? []).map((mount) => {
+			<SortableDynamicList groupId={`${groupId}:mounts`} items={(mounts.data ?? []).map((mount) => ({...mount, id: mount.path}))} label={(mount) => mount.name}>
+				{(mount) => {
 				const Icon = iconFor(mount);
 				return (
 					<div key={mount.path} className={rowClass}>
@@ -170,8 +172,10 @@ export function NetworkSection() {
 						</button>
 					</div>
 				);
-			})}
-			{(mountable.data ?? []).map((volume) => (
+				}}
+			</SortableDynamicList>
+			<SortableDynamicList groupId={`${groupId}:mountable`} items={(mountable.data ?? []).map((volume) => ({...volume, id: volume.uri}))} label={(volume) => volume.name}>
+				{(volume) => (
 				<button
 					key={volume.uri}
 					type="button"
@@ -182,7 +186,8 @@ export function NetworkSection() {
 					<DeviceMobile className="size-4 shrink-0 opacity-60" weight="bold" />
 					<span className="truncate opacity-70">{volume.name}</span>
 				</button>
-			))}
+				)}
+			</SortableDynamicList>
 			<button type="button" className={rowClass} onClick={() => openConnectDialog(connect)}>
 				<Plus className="size-4 shrink-0" weight="bold" />
 				<span className="truncate">{t('network.connectToServer')}</span>
