@@ -50,6 +50,10 @@ const SETTLE: Duration = Duration::from_millis(60);
 
 const CLOSED: &str = "The terminal is closed";
 
+/// Time a hung-up shell gets to exit before it is killed.
+#[cfg(unix)]
+const HANGUP_GRACE: Duration = Duration::from_secs(2);
+
 /// Open terminals, keyed by the id `terminal_open` returned, with the label of
 /// the window that shows each one.
 #[derive(Default)]
@@ -125,7 +129,8 @@ impl Shell {
 	}
 }
 
-/// A shell running on a pseudo-terminal. Dropping it hangs up the shell.
+/// A shell running on a pseudo-terminal. Dropping it hangs up the shell, and
+/// kills it if it is still running after [`HANGUP_GRACE`].
 struct Session {
 	shell: Arc<Shell>,
 	killer: Box<dyn ChildKiller + Send + Sync>,
@@ -282,8 +287,41 @@ impl Session {
 
 impl Drop for Session {
 	fn drop(&mut self) {
-		if !self.exited.load(Ordering::SeqCst) {
-			let _ = self.killer.kill();
+		if self.exited.load(Ordering::SeqCst) {
+			return;
+		}
+		let _ = self.killer.kill();
+		// A shell hung up while it is still starting can keep running (seen with
+		// bash under load), so a shell that outlives the grace period is killed.
+		#[cfg(unix)]
+		if let Some(pid) = self.shell.pid {
+			let exited = self.exited.clone();
+			let _ = std::thread::Builder::new()
+				.name("terminal-hangup".into())
+				.spawn(move || kill_unless_exited(pid, &exited));
+		}
+	}
+}
+
+/// Kills `pid` unless `exited` is set within [`HANGUP_GRACE`]. The flag is set
+/// once the shell is reaped, so a set flag means the pid is no longer ours.
+#[cfg(unix)]
+fn kill_unless_exited(pid: u32, exited: &AtomicBool) {
+	let step = Duration::from_millis(50);
+	let mut waited = Duration::ZERO;
+	while waited < HANGUP_GRACE {
+		if exited.load(Ordering::SeqCst) {
+			return;
+		}
+		std::thread::sleep(step);
+		waited += step;
+	}
+	if !exited.load(Ordering::SeqCst) {
+		if let Ok(pid) = libc::pid_t::try_from(pid) {
+			// SAFETY: `kill` takes no pointers; the pid is our unreaped child.
+			unsafe {
+				libc::kill(pid, libc::SIGKILL);
+			}
 		}
 	}
 }
