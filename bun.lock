@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "spacedrive",
+      "name": "wingdrive",
       "dependencies": {
         "class-variance-authority": "^0.7.1",
         "gray-matter": "^4.0.3",

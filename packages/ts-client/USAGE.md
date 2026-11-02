@@ -17,7 +17,7 @@ React Components (fully type-safe!)
 ## Setup
 
 ```typescript
-import { SpacedriveClient, SpacedriveProvider } from '@wingdrive/ts-client';
+import { WingDriveClient, WingDriveProvider } from '@wingdrive/ts-client';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
@@ -72,7 +72,7 @@ function LibraryList() {
 ### Library Queries (requires library context)
 
 ```typescript
-import { useLibraryQuery, useSpacedriveClient } from '@wingdrive/ts-client';
+import { useLibraryQuery, useWingDriveClient } from '@wingdrive/ts-client';
 import { useEffect } from 'react';
 
 function FileExplorer() {
@@ -215,7 +215,7 @@ const { data: files } = useLibraryQuery({ type: 'files.directory_listing', input
 ## Low-Level API (if needed)
 
 ```typescript
-import { useSpacedriveClient } from '@wingdrive/ts-client';
+import { useWingDriveClient } from '@wingdrive/ts-client';
 
 function CustomComponent() {
   const client = useWingDriveClient();
@@ -235,7 +235,7 @@ function CustomComponent() {
 ## Event Subscription
 
 ```typescript
-import { useSpacedriveClient } from '@wingdrive/ts-client';
+import { useWingDriveClient } from '@wingdrive/ts-client';
 import { useEffect } from 'react';
 
 function EventListener() {

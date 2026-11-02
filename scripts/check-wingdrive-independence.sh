@@ -7,8 +7,7 @@ readonly operational_identity='com\.spacedrive\.(daemon|core|photos)|spacedrive-
 
 matches="$({
 	git grep -nEI "$forbidden" -- \
-		':!NOTICE' \
-		':!NOTICE.md' \
+		':!CREDITS.md' \
 		':!docs/overview/history.mdx' \
 		':!whitepaper/**' \
 		':!plans/wingdrive-independence-migration.md' \
@@ -16,7 +15,7 @@ matches="$({
 		':!.tasks/core/FORK-002-wingdrive-independence.md' \
 		':!scripts/check-wingdrive-independence.sh' \
 		':!**/Cargo.lock' || true
-} | grep -vE '^README\.md:[0-9]+:> \*\*WingDrive is a community continuation fork of \[Spacedrive\]' || true)"
+})"
 
 if [[ -n "$matches" ]]; then
 	echo "Active Spacedrive-owned endpoints remain:" >&2
