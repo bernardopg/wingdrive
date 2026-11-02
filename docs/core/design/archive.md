@@ -1,5 +1,7 @@
 # Archive System Integration Design
 
+Usage guide (sources, adapters, search and operations): [archive-usage.md](archive-usage.md).
+
 ## What is Archive?
 
 Archive is WingDrive's data archival system that indexes external data sources beyond the filesystem. While the VDFS manages files, Archive handles everything else: emails, notes, messages, bookmarks, calendar events, contacts, and more.
