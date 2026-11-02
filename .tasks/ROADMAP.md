@@ -134,4 +134,4 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 | 2026-10-06 | M1 completo: TAURI-006 e BRAND-002 Done; INDEX-010 integrada; sync multi-device corrigido |
 | 2026-10-06 | FORK-004, TAURI-014 e FORK-005 Done; licença Apache-2.0; release `v2.0.0-alpha.7` |
 | 2026-10-05 | Now atualizado: alpha.6 publicada no AUR; TAURI-013 dividida (TAURI-014); BRAND-002 e TAURI-006 no S02 |
-| 2026-10-01 | Roadmap criado; M1 definido a partir da revisão `docs/design/TAURI_FILEMANAGER_REVIEW_2026-09-03.md` |
+| 2026-10-01 | Roadmap criado; M1 definido a partir da revisão `docs/design/history/TAURI_FILEMANAGER_REVIEW_2026-09-03.md` |

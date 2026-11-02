@@ -60,5 +60,5 @@ machines.
 
 ## Follow-up
 
-Using a separate data directory for development builds is still open and
-tracked in `TODO` under core work.
+Using a separate data directory for development builds was delivered by
+DEV-002 (`just dev-desktop` runs an isolated, named daemon instance).

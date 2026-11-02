@@ -67,7 +67,8 @@
               "core/filesystems",
               "core/file-copy-operations",
               "core/tagging",
-              "core/virtual-sidecars"
+              "core/virtual-sidecars",
+              "core/memory"
             ]
           },
           {
@@ -86,6 +87,7 @@
             "group": "Development",
             "icon": "flask",
             "pages": [
+              "core/development-environment",
               "core/database",
               "core/testing",
               "core/mobile-development",
@@ -93,6 +95,14 @@
               "core/sync-event-log",
               "core/task-tracking",
               "core/cli"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "icon": "pen-nib",
+            "pages": [
+              "WRITING_GUIDE",
+              "CODE_COMMENTS"
             ]
           }
         ]
@@ -146,7 +156,8 @@
               "react/ui/hooks",
               "react/ui/normalized-cache",
               "react/ui/platform",
-              "react/ui/explorer"
+              "react/ui/explorer",
+              "react/ui/popout-windows"
             ]
           }
         ]
