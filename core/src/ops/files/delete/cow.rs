@@ -27,14 +27,17 @@ fn filesystem_is_cow(name: &str) -> bool {
 }
 
 /// Cached mount information for checking every entry before a directory delete.
+///
+/// `disks` is `None` when the platform cannot enumerate mounts; every lookup then
+/// returns `None`, so secure delete fails closed.
 pub(super) struct CowFilesystemDetector {
-	disks: sysinfo::Disks,
+	disks: Option<sysinfo::Disks>,
 }
 
 impl CowFilesystemDetector {
 	pub(super) fn new() -> Self {
 		Self {
-			disks: sysinfo::Disks::new_with_refreshed_list(),
+			disks: sysinfo::Disks::new_with_refreshed_list().ok(),
 		}
 	}
 
@@ -53,7 +56,7 @@ impl CowFilesystemDetector {
 
 		let mut best_match: Option<(usize, String)> = None;
 
-		for disk in self.disks.list() {
+		for disk in self.disks.iter().flat_map(|disks| disks.iter()) {
 			let mount_point = disk.mount_point();
 			if !target.starts_with(mount_point) {
 				continue;

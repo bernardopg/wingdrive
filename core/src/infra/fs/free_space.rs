@@ -39,11 +39,10 @@ pub fn available_bytes(path: &Path) -> Option<u64> {
 			.unwrap_or_else(|| path.to_path_buf())
 	});
 
-	let disks = sysinfo::Disks::new_with_refreshed_list();
+	let disks = sysinfo::Disks::new_with_refreshed_list().ok()?;
 	available_bytes_on_mounts(
 		&target,
 		disks
-			.list()
 			.iter()
 			.map(|disk| (disk.mount_point(), disk.available_space())),
 	)

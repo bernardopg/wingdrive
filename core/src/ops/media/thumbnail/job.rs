@@ -33,12 +33,17 @@ fn decode_workers(max_concurrent: usize, available_memory: u64) -> usize {
 }
 
 /// Memory free right now, in bytes.
+///
+/// Reads as 0 when the platform cannot report memory, so decoding falls back to
+/// a single worker instead of trusting an unknown budget.
 fn available_memory() -> u64 {
 	use sysinfo::{MemoryRefreshKind, RefreshKind, System};
 
-	let mut system = System::new_with_specifics(
+	let Ok(mut system) = System::new_with_specifics(
 		RefreshKind::nothing().with_memory(MemoryRefreshKind::nothing().with_ram()),
-	);
+	) else {
+		return 0;
+	};
 	system.refresh_memory();
 	system.available_memory()
 }

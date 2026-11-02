@@ -21,11 +21,12 @@ pub async fn detect_volumes(
 ) -> VolumeResult<Vec<Volume>> {
 	let config = config.clone();
 	task::spawn_blocking(move || {
-		let disks = sysinfo::Disks::new_with_refreshed_list();
-		debug!("sysinfo detected {} disks", disks.list().len());
+		let disks = sysinfo::Disks::new_with_refreshed_list()
+			.map_err(|e| VolumeError::platform(format!("Disk enumeration failed: {}", e)))?;
+		debug!("sysinfo detected {} disks", disks.len());
 
 		let mut volumes = Vec::new();
-		for disk in disks.list() {
+		for disk in disks.iter() {
 			let mount_point = disk.mount_point().to_path_buf();
 			let total_space = disk.total_space();
 			let available_space = disk.available_space();
