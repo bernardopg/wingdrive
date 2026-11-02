@@ -737,53 +737,52 @@ pub struct SystemInfoConfig {
 fn detect_system_info() -> SystemInfo {
 	use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 
-	let mut sys = System::new_with_specifics(
+	// A platform sysinfo cannot read leaves the CPU and memory fields empty.
+	let sys = System::new_with_specifics(
 		RefreshKind::nothing()
 			.with_cpu(CpuRefreshKind::everything())
 			.with_memory(MemoryRefreshKind::everything()),
-	);
-
-	// Refresh to get accurate data
-	sys.refresh_cpu_all();
-	sys.refresh_memory();
+	)
+	.map(|mut sys| {
+		// Refresh to get accurate data
+		sys.refresh_cpu_all();
+		sys.refresh_memory();
+		sys
+	})
+	.ok();
 
 	// CPU information
-	let cpu_model = sys
-		.cpus()
-		.first()
+	let first_cpu = sys.as_ref().and_then(|sys| sys.cpus().first());
+
+	let cpu_model = first_cpu
 		.map(|cpu| cpu.brand().to_string())
 		.filter(|s| !s.is_empty());
 
 	let cpu_architecture = Some(std::env::consts::ARCH.to_string());
 
-	let cpu_cores_physical = System::physical_core_count().map(|c| c as u32);
+	let cpu_cores_physical = System::physical_core_count().ok().map(|c| c as u32);
 
-	let cpu_cores_logical = Some(sys.cpus().len() as u32);
+	let cpu_cores_logical = sys
+		.as_ref()
+		.map(|sys| sys.cpus().len() as u32)
+		.filter(|&count| count > 0);
 
-	let cpu_frequency_mhz = sys
-		.cpus()
-		.first()
+	let cpu_frequency_mhz = first_cpu
 		.map(|cpu| cpu.frequency() as i64)
 		.filter(|&freq| freq > 0);
 
 	// Memory information
-	let memory_total_bytes = {
-		let total = sys.total_memory();
-		if total > 0 {
-			Some(total as i64)
-		} else {
-			None
-		}
-	};
+	let memory_total_bytes = sys
+		.as_ref()
+		.map(|sys| sys.total_memory())
+		.filter(|&total| total > 0)
+		.map(|total| total as i64);
 
-	let swap_total_bytes = {
-		let total = sys.total_swap();
-		if total > 0 {
-			Some(total as i64)
-		} else {
-			None
-		}
-	};
+	let swap_total_bytes = sys
+		.as_ref()
+		.map(|sys| sys.total_swap())
+		.filter(|&total| total > 0)
+		.map(|total| total as i64);
 
 	// Form factor detection
 	let form_factor = detect_form_factor();
@@ -1065,7 +1064,7 @@ fn detect_boot_disk_type() -> Option<String> {
 			.map(|d| std::path::PathBuf::from(format!("{}\\", d)))
 			.unwrap_or_else(|_| std::path::PathBuf::from("C:\\"));
 
-		let disks = Disks::new_with_refreshed_list();
+		let disks = Disks::new_with_refreshed_list().ok()?;
 		if let Some(disk) = disks.iter().find(|d| d.mount_point() == system_drive) {
 			return match disk.kind() {
 				sysinfo::DiskKind::SSD => Some("SSD".to_string()),
@@ -1158,7 +1157,7 @@ fn detect_boot_disk_capacity() -> Option<i64> {
 			.map(|d| std::path::PathBuf::from(format!("{}\\", d)))
 			.unwrap_or_else(|_| std::path::PathBuf::from("C:\\"));
 
-		let disks = Disks::new_with_refreshed_list();
+		let disks = Disks::new_with_refreshed_list().ok()?;
 		if let Some(disk) = disks.iter().find(|d| d.mount_point() == system_drive) {
 			let size = disk.total_space() as i64;
 			if size > 0 {

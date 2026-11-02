@@ -376,7 +376,7 @@ fn process_cwd(pid: u32) -> Option<PathBuf> {
 	use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
 	let pid = Pid::from_u32(pid);
-	let mut system = System::new();
+	let mut system = System::new().ok()?;
 	system.refresh_processes_specifics(
 		ProcessesToUpdate::Some(&[pid]),
 		false,
@@ -391,7 +391,9 @@ fn has_child_process(pid: u32) -> bool {
 	use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System};
 
 	let parent = Pid::from_u32(pid);
-	let mut system = System::new();
+	let Ok(mut system) = System::new() else {
+		return false;
+	};
 	system.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::nothing());
 	system
 		.processes()
@@ -482,7 +484,7 @@ pub fn terminal_open(
 		.insert(id, (window.label().to_string(), session));
 	Ok(OpenedTerminal {
 		id,
-		hostname: sysinfo::System::host_name(),
+		hostname: sysinfo::System::host_name().ok(),
 	})
 }
 

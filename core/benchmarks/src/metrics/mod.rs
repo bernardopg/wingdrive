@@ -9,10 +9,10 @@ pub fn derive_hardware_label_from_paths(paths: &[PathBuf]) -> Option<String> {
 		return None;
 	}
 	let p = &paths[0];
-	let disks = Disks::new_with_refreshed_list();
+	let disks = Disks::new_with_refreshed_list().ok()?;
 	// Choose disk with longest mount point prefix match
 	let mut best: Option<(usize, String, DiskKind, bool)> = None; // (prefix_len, name, kind, removable)
-	for d in disks.list() {
+	for d in disks.iter() {
 		let mp = d.mount_point();
 		if p.starts_with(mp) {
 			let len = mp.as_os_str().len();
@@ -75,7 +75,7 @@ pub struct HostInfo {
 
 pub fn collect_host_info() -> Option<HostInfo> {
 	use sysinfo::System;
-	let mut system = System::new_all();
+	let mut system = System::new_all().ok()?;
 	system.refresh_all();
 
 	let cpu_model = system
@@ -84,7 +84,7 @@ pub fn collect_host_info() -> Option<HostInfo> {
 		.map(|c| c.brand().to_string())
 		.filter(|s| !s.is_empty());
 
-	let cpu_physical_cores = System::physical_core_count();
+	let cpu_physical_cores = System::physical_core_count().ok();
 
 	// sysinfo >=0.30 reports memory in bytes. Convert to GB (rounded).
 	let memory_total_gb = system

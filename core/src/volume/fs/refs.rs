@@ -157,7 +157,12 @@ impl RefsHandler {
 		let path = path.to_path_buf();
 
 		task::spawn_blocking(move || {
-			let disks = sysinfo::Disks::new_with_refreshed_list();
+			let disks = sysinfo::Disks::new_with_refreshed_list().map_err(|e| {
+				crate::volume::error::VolumeError::platform(format!(
+					"Disk enumeration failed: {}",
+					e
+				))
+			})?;
 			let mut best_match: Option<(&sysinfo::Disk, usize)> = None;
 
 			for disk in &disks {
@@ -225,7 +230,12 @@ impl RefsHandler {
 	/// Get all ReFS volumes on the system.
 	pub async fn get_all_refs_volumes(&self) -> VolumeResult<Vec<RefsVolumeInfo>> {
 		task::spawn_blocking(|| {
-			let disks = sysinfo::Disks::new_with_refreshed_list();
+			let disks = sysinfo::Disks::new_with_refreshed_list().map_err(|e| {
+				crate::volume::error::VolumeError::platform(format!(
+					"Disk enumeration failed: {}",
+					e
+				))
+			})?;
 			let mut refs_volumes = Vec::new();
 
 			for disk in &disks {
