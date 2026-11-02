@@ -26,7 +26,7 @@
 
 ---
 
-O WingDrive é um gerenciador de arquivos desktop com um daemon que indexa suas pastas, discos
+O WingDrive é um gerenciador de arquivos desktop independente com um daemon que indexa suas pastas, discos
 externos e volumes de nuvem numa biblioteca só. Os arquivos ficam onde estão. O índice torna tudo
 pesquisável, dá a cada arquivo um hash de conteúdo e deixa seus próprios dispositivos
 sincronizarem a biblioteca peer-to-peer, sem servidor central.
@@ -169,4 +169,4 @@ as [Issues](https://github.com/bernardopg/wingdrive/issues/new/choose); dúvidas
 ## Licença
 
 **Apache-2.0**, veja [LICENSE](./LICENSE). Os ícones de tipo de arquivo em `packages/assets/icons`
-continuam sob GPL-3.0-only; veja [NOTICE.md](./NOTICE.md).
+continuam sob GPL-3.0-only; veja [CREDITS.md](./CREDITS.md).

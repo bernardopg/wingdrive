@@ -26,7 +26,7 @@
 
 ---
 
-WingDrive is a desktop file manager backed by a daemon that indexes your folders, external drives
+WingDrive is an independent desktop file manager backed by a daemon that indexes your folders, external drives
 and cloud volumes into one library. Files stay where they are. The index makes them searchable,
 gives each one a content hash, and lets your own devices sync the library peer-to-peer, without a
 central server.
@@ -166,4 +166,4 @@ before you push; it runs the same gates as CI. Bugs and feature requests go to
 ## License
 
 **Apache-2.0**, see [LICENSE](./LICENSE). File-kind icons in `packages/assets/icons` stay under
-GPL-3.0-only; see [NOTICE.md](./NOTICE.md).
+GPL-3.0-only; see [CREDITS.md](./CREDITS.md).

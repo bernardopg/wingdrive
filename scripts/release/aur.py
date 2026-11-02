@@ -95,7 +95,8 @@ DBUS
     cp -a squashfs-root/usr/share/icons/. "$pkgdir/usr/share/icons/"
   fi
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-  install -Dm644 squashfs-root/usr/lib/WingDrive/NOTICE.md "$pkgdir/usr/share/licenses/$pkgname/NOTICE.md"
+  install -Dm644 squashfs-root/usr/lib/WingDrive/NOTICE "$pkgdir/usr/share/licenses/$pkgname/NOTICE"
+  install -Dm644 squashfs-root/usr/lib/WingDrive/CREDITS.md "$pkgdir/usr/share/licenses/$pkgname/CREDITS.md"
   cp -a squashfs-root/usr/lib/WingDrive/licenses/. "$pkgdir/usr/share/licenses/$pkgname/"
 }}
 '''

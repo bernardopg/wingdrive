@@ -6,7 +6,7 @@ assignee: bernardopg
 priority: High
 milestone: M3
 tags: ["fork", "branding", "github-actions", "documentation", "release"]
-last_updated: 2026-10-16
+last_updated: 2026-11-02
 sprint: S05
 ---
 
@@ -32,6 +32,10 @@ The execution plan is versioned in
 - [x] Make new CLI services, config files, exports, containers, user agents, and storage keys write WingDrive names
 - [x] Preserve tested reads for legacy services, config, exports, data directories, keyring entries, and storage keys
 - [x] Remove unused WingDrive-named packaging and placeholder CLI scripts
+- [x] Present WingDrive as an independent project and centralize origin attribution in CREDITS.md
+- [x] Preserve Git history and restore original MIT copyright notices in source and bundled licenses
+- [x] Replace inherited project history, obsolete client names, and the lockfile's old workspace name
+- [x] Distribute CREDITS.md and NOTICE in desktop and AUR packages
 
 ## Acceptance Criteria
 

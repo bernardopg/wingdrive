@@ -80,7 +80,8 @@
     "resources": {
       "gen/**/*": "./",
       "../../../LICENSE": "./LICENSE",
-      "../../../NOTICE.md": "./NOTICE.md",
+      "../../../NOTICE": "./NOTICE",
+      "../../../CREDITS.md": "./CREDITS.md",
       "../../../packaging/licenses/": "./licenses/"
     },
     "fileAssociations": [

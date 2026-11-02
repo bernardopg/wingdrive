@@ -710,7 +710,7 @@ First stable release of WingDrive (#238 to #251).
 
 - WingDrive is now licensed under **Apache-2.0**, replacing FSL-1.1-ALv2.
   Upstream Spacedrive relicensed to Apache-2.0 in `bcc124765`, whose only
-  parent is the WingDrive fork point `6dfeccf21`. See [NOTICE.md](NOTICE.md)
+  parent is the WingDrive fork point `6dfeccf21`. See [CREDITS.md](CREDITS.md)
   for the provenance and the exceptions: file-kind icons stay GPL-3.0-only and
   the SpaceUI-derived packages stay MIT. Releases up to `v2.0.0-alpha.6` stay
   under FSL-1.1-ALv2. (#114)

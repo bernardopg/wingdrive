@@ -28,7 +28,7 @@ To familiarize yourself with the project, please read the [README](README.md). H
 WingDrive is licensed under [Apache-2.0](LICENSE). Contributions are accepted
 under the same license, per Apache-2.0 section 5: anything you submit for
 inclusion is licensed under those terms, including the patent grant in section
-3. You keep the copyright to your work. See [NOTICE.md](NOTICE.md) for the
+3. You keep the copyright to your work. See [CREDITS.md](CREDITS.md) for the
 provenance of the license and the exceptions.
 
 ## Getting Started
