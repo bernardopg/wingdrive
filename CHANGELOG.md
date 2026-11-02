@@ -5,6 +5,34 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Added
+
+- The docked terminal has a header with a hide button. Hiding it keeps the
+  shell session, and it no longer reopens by itself on startup (#302).
+- Sidebar groups, the entries inside them and the folder tree can be
+  reordered by pointer or keyboard, with screen reader announcements. The
+  order of dynamic entries and the folder tree position stay on this device
+  (#302).
+
+### Fixed
+
+- Grouped views sort their sections in the active direction, so
+  folders-first sorting no longer scrambles name sections (#302).
+- Shift+arrow keys extend the selection in grouped grid views instead of
+  replacing it (#302).
+- Undo of "New File from Template" removes the copy only while it still
+  matches the template's content and the entry it created; an edited or
+  replaced file is kept (#302).
+
+### Changed
+
+- Dependency updates: Rust crates within ranges (zbus 6.2, uuid 1.29),
+  resvg 0.49, sysinfo 0.40, Bun packages, GitHub Actions, and Expo SDK 58
+  patch releases on mobile (react-native 0.88.1).
+- Documentation: every page is reachable from the docs navigation, dated
+  audits moved to `docs/design/history/`, and the legacy `mint.json` and the
+  root `TODO` queue were removed (`.tasks/` is the backlog).
+
 ## 2.3.0 — 2026-10-29
 
 Quick Preview that reads every common file type, a security fix for it, the
