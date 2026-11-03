@@ -11,8 +11,10 @@ version in the workspace manifests and the matching `v*` git tag.
   screenshots of 2.4.0, platform and coverage badges, roadmap, contact and
   sponsorship links (Portuguese version too). The Discord links pointed to a
   server WingDrive does not have; help now goes to GitHub Discussions.
-- A Coverage workflow publishes the merged frontend test coverage as a README
-  badge on every push to `main`.
+- A Coverage workflow measures Rust (`cargo-llvm-cov`) and frontend (`bun
+  --coverage`) line coverage on every push to `main`. It publishes the README
+  badge, per-component badges in `COVERAGE.md` and an HTML report on GitHub
+  Pages, so no number is edited by hand.
 
 ## 2.4.0 — 2026-11-02
 

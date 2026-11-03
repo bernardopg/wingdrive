@@ -1,16 +1,13 @@
 name: Coverage
 
-# Runs the frontend tests that CI runs, with coverage, and publishes the merged
-# line coverage as a shields.io endpoint on the `badges` branch for the README.
+# Measures line coverage of the Rust and frontend tests, then publishes:
+# - shields.io endpoints on the `badges` branch (README and COVERAGE.md read them),
+# - the HTML report on GitHub Pages (https://bernardopg.github.io/wingdrive/),
+# - the summary table on the run page.
+# Nothing in `main` holds a number, so no file needs editing when coverage changes.
 on:
   push:
     branches: [main]
-    paths:
-      - "packages/**"
-      - "apps/tauri/src/**"
-      - ".github/workflows/ci.yml"
-      - ".github/workflows/coverage.yml"
-      - "scripts/coverage-badge.py"
   schedule:
     - cron: "41 5 * * 1"
   workflow_dispatch:
@@ -24,11 +21,9 @@ concurrency:
 
 jobs:
   frontend:
-    name: Frontend coverage
+    name: Frontend tests
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    permissions:
-      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -41,29 +36,134 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # Same list as the "Test critical frontend behavior" step in ci.yml, one
-      # process per file as there, each writing its own lcov report.
       - name: Run tests with coverage
-        run: |
-          i=0
-          grep -oE 'bun test [^ ]+' .github/workflows/ci.yml | while read -r _ _ file; do
-            i=$((i + 1))
-            bun test --coverage --coverage-reporter=lcov --coverage-dir="coverage/$i" "$file"
-          done
-          mapfile -t reports < <(find coverage -name lcov.info)
-          python3 scripts/coverage-badge.py "frontend coverage" coverage/badge.json "${reports[@]}"
+        run: scripts/coverage-frontend.sh coverage/frontend
 
-      - name: Publish badge
+      - name: Upload report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-frontend
+          path: coverage/frontend
+          retention-days: 7
+
+  rust:
+    name: Rust tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
+        with:
+          phase: start
+
+      - name: Setup System and Rust
+        uses: ./.github/actions/setup-system
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: x86_64-unknown-linux-gnu
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+          # Instrumented builds share nothing with the CI or release caches.
+          cache-key: coverage
+          xtask-setup-args: --no-daemon
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@68a389c788b2cd04016ce8c80ee23b80d2ab3d68 # v2.88.1
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Add llvm-tools
+        run: rustup component add llvm-tools-preview
+
+      - name: Wait for disk space
+        uses: ./.github/actions/free-disk-space
+        with:
+          phase: wait
+
+      - name: Run tests with coverage
+        run: scripts/coverage-rust.sh coverage/rust/rust.lcov
+
+      - name: Upload report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-rust
+          path: coverage/rust
+          retention-days: 7
+
+  report:
+    name: Report
+    needs: [frontend, rust]
+    if: ${{ !cancelled() && (needs.frontend.result == 'success' || needs.rust.result == 'success') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download reports
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: coverage-*
+          path: coverage
+
+      # A side whose job failed keeps its previous numbers out of this run; the
+      # summary says which side is missing.
+      - name: Build report
+        env:
+          RUST_RESULT: ${{ needs.rust.result }}
+          FRONTEND_RESULT: ${{ needs.frontend.result }}
+        run: |
+          mapfile -t reports < <(find coverage -name '*.lcov' -o -name lcov.info)
+          python3 scripts/coverage-report.py site "${reports[@]}"
+          {
+            echo "## Coverage"
+            echo
+            [ "$RUST_RESULT" = success ] || echo "> Rust tests job: $RUST_RESULT; Rust numbers are missing."
+            [ "$FRONTEND_RESULT" = success ] || echo "> Frontend tests job: $FRONTEND_RESULT; frontend numbers are missing."
+            cat site/summary.md
+            echo
+            echo "Report: https://bernardopg.github.io/wingdrive/"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish badges
+        if: github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp coverage/badge.json "$RUNNER_TEMP/frontend-coverage.json"
-          cd "$RUNNER_TEMP"
-          rm -rf badges && mkdir badges && cd badges
+          dir="$RUNNER_TEMP/badges"
+          rm -rf "$dir" && mkdir -p "$dir"
+          cp site/badges/*.json site/summary.json site/summary.md "$dir/"
+          cd "$dir"
           git init -q -b badges
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          cp "$RUNNER_TEMP/frontend-coverage.json" frontend-coverage.json
-          git add frontend-coverage.json
-          git commit -qm "Frontend coverage for ${GITHUB_SHA::9}"
+          git add .
+          git commit -qm "Coverage for ${GITHUB_SHA::9}"
           git push -qf "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges
+
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+  pages:
+    name: Publish report
+    needs: report
+    if: ${{ !cancelled() && needs.report.result == 'success' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

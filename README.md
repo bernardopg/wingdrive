@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://github.com/bernardopg/wingdrive/releases/latest"><img src="https://img.shields.io/github/v/release/bernardopg/wingdrive?label=release&color=7c3aed" alt="Latest release"/></a>
   <a href="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml"><img src="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/></a>
-  <a href="https://github.com/bernardopg/wingdrive/actions/workflows/coverage.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Ffrontend-coverage.json" alt="Frontend coverage"/></a>
+  <a href="./COVERAGE.md"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Fcoverage.json" alt="Coverage"/></a>
   <a href="https://github.com/bernardopg/wingdrive/actions/workflows/codeql.yml"><img src="https://github.com/bernardopg/wingdrive/actions/workflows/codeql.yml/badge.svg?branch=main" alt="CodeQL"/></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-0f172a" alt="Apache-2.0"/></a>
 </p>
@@ -106,7 +106,7 @@ start with your session and stay in the tray.
 | How it works | [Architecture](./docs/readme/architecture.md) · [Core architecture](./docs/core/architecture.mdx) · [Indexing](./docs/core/indexing.mdx) |
 | Extensions | [Extension SDK](./docs/extensions/introduction.mdx) |
 | Contributing | [CONTRIBUTING](./CONTRIBUTING.md) · [AGENTS](./AGENTS.md) · [Dev environment](./docs/core/development-environment.mdx) · [Testing](./docs/core/testing.mdx) |
-| Project | [Changelog](./CHANGELOG.md) · [Roadmap](./.tasks/ROADMAP.md) · [Security](./SECURITY.md) · [Credits](./CREDITS.md) |
+| Project | [Changelog](./CHANGELOG.md) · [Coverage](./COVERAGE.md) · [Roadmap](./.tasks/ROADMAP.md) · [Security](./SECURITY.md) · [Credits](./CREDITS.md) |
 
 ## How it works
 

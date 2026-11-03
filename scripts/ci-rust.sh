@@ -6,7 +6,10 @@
 # `desktop` lints only that app's crates and runs only its tests, which skips the
 # test build of wing-core (about 7 minutes on a hosted runner).
 #
-# Usage: scripts/ci-rust.sh full | <area>...   (areas: desktop server cli mobile)
+# Usage: scripts/ci-rust.sh full | tests | <area>...   (areas: desktop server cli mobile)
+#
+# `tests` runs only the test part of `full`; scripts/coverage-rust.sh uses it so
+# coverage measures the same tests CI runs.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -38,21 +41,7 @@ check_desktop_shell_deps() {
 	fi
 }
 
-if [ "$1" = "full" ]; then
-	check_desktop_shell_deps
-
-	step "clippy (workspace)"
-	cargo clippy --workspace --locked -- -D warnings
-
-	# The TypeScript client is generated from Rust types; a stale copy compiles
-	# but sends or reads the wrong shapes at runtime.
-	step "Generated TypeScript types are current"
-	cargo run --locked --bin generate_typescript_types
-	if ! git diff --exit-code -- packages/ts-client/src/generated; then
-		echo "error: packages/ts-client/src/generated is out of date. Run 'cargo run --bin generate_typescript_types' and commit the result." >&2
-		exit 1
-	fi
-
+run_full_tests() {
 	# One build of every test binary, so the runs below only execute them.
 	step "Build test binaries"
 	cargo build --locked --bin wing-daemon
@@ -82,6 +71,26 @@ if [ "$1" = "full" ]; then
 		--test sync_metrics_test \
 		--test sync_realtime_test \
 		--test sync_backfill_test
+}
+
+if [ "$1" = "tests" ]; then
+	run_full_tests
+elif [ "$1" = "full" ]; then
+	check_desktop_shell_deps
+
+	step "clippy (workspace)"
+	cargo clippy --workspace --locked -- -D warnings
+
+	# The TypeScript client is generated from Rust types; a stale copy compiles
+	# but sends or reads the wrong shapes at runtime.
+	step "Generated TypeScript types are current"
+	cargo run --locked --bin generate_typescript_types
+	if ! git diff --exit-code -- packages/ts-client/src/generated; then
+		echo "error: packages/ts-client/src/generated is out of date. Run 'cargo run --bin generate_typescript_types' and commit the result." >&2
+		exit 1
+	fi
+
+	run_full_tests
 else
 	packages=()
 	for area in "$@"; do
