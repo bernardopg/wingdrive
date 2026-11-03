@@ -55,5 +55,13 @@ run under Xvfb with the steps of `scripts/release/smoke.py`, WebKitWebProcess PS
 - `smoke.py` now reports each session's peak over a 30 s idle window and needs most of three fresh
   sessions under the budget.
 
+Release runs with the new gate, bundled WebKit of the AppImage, idle peak per session:
+`v2.4.0` verify 492.0 and 485.1, `v2.4.0` publish 489.6 and 496.0, `v2.4.1` 551.7, 495.9 and
+478.6 MiB. All seven sessions were flat over the 30 s window (the largest drop 7 MiB, no rise),
+so the idle growth is gone. What remains is spread between launches: WebKitWebProcess started at
+312.8, 266.4 and 249.0 MiB in the three `v2.4.1` sessions, and one of seven sessions went over the
+550 MiB budget by 1.7 MiB. With that rate the majority rule fails a release about one time in
+twenty; a second high session would need a look at what the renderer holds at startup.
+
 Open: the ten runs against the 550 MiB budget need the bundled WebKit of the AppImage, which the
 release job measures. Locally the system WebKit of Arch puts the total at about 590 to 610 MiB.
