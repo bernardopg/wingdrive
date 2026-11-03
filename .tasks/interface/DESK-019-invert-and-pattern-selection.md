@@ -1,14 +1,14 @@
 ---
 id: DESK-019
 title: Invert selection and select by pattern
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Medium
 milestone: M2
 sprint: S04
 tags: [desktop, explorer, selection, keyboard]
-last_updated: 2026-10-16
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -31,7 +31,7 @@ bulk work in large folders. Selection already lives in `SelectionContext` with `
 - [x] Ctrl+Shift+I inverts the selection in grid, list and column views
 - [x] Ctrl+S selects every item whose name matches the glob
 - [x] Unit tests cover the matcher and inversion
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -40,4 +40,4 @@ bulk work in large folders. Selection already lives in `SelectionContext` with `
 - `useSelectionCommands` acts on the displayed collection (`currentFiles`), so all views share it.
   Ctrl+Shift+I and Ctrl+S are registered keybinds (shown in the shortcuts list), and the empty-space
   context menu gains Select All, Invert Selection and Select by Pattern…
-- Open: runtime check on the Linux desktop build.
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. Ctrl+Shift+I inverted a one-item selection to the other 11 items; Ctrl+S with `*.JPG` selected exactly `photo-one.jpg` and `photo-two.jpg` (case-insensitive).

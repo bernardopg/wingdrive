@@ -38,7 +38,7 @@ sprint: S01         # só quando comprometida num sprint
 
 Nada no projeto se chama "Spacedrive" nem usa prefixo `sd`/`sd-`. Use `wingdrive` ou `wing`
 (crates, binários, pacotes, scripts, funções, tipos, variáveis de ambiente, textos). Exceção:
-atribuição legal ao upstream. Ver `FORK-003`.
+atribuição legal ao upstream, centralizada em `CREDITS.md`.
 
 ## Definition of Ready (entra no sprint)
 

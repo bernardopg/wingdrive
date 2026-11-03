@@ -1,14 +1,14 @@
 ---
 id: DESK-029
 title: Folder tree in the sidebar and expandable folders in list view
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Medium
 milestone: M2
 tags: [desktop, explorer]
 sprint: S04
-last_updated: 2026-10-29
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -33,7 +33,7 @@ locations and volumes, and list rows cannot expand.
 
 - [x] A list-view folder row expands and collapses in place
 - [x] The sidebar tree follows the current folder
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -57,3 +57,4 @@ locations and volumes, and list rows cannot expand.
     `deep` showed U then M, `a.txt` M, `new.txt` U, `b.txt` none; the status bar read "2 folders ·
     1 file" (7 rows on screen). Creating `src/deep/again.txt` and committing the rest in a terminal
     showed `again.txt` with U and cleared the others without a reload. No console errors.
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. The sidebar Folders tree is present; in list view the `docs` row expanded in place and showed `inner.txt`.

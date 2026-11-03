@@ -223,7 +223,7 @@ jobs:
           retention-days: 14
 
   # Signed APK and AAB. Without the upload key secrets it builds them but uploads nothing,
-  # so a desktop release does not wait on Google Play credentials (FORK-002).
+  # so a desktop release does not wait on Google Play credentials (REL-001).
   android:
     name: Android
     if: ${{ !inputs.aur_only && inputs.component == 'all' || github.event_name == 'push' }}

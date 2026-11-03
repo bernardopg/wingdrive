@@ -78,8 +78,9 @@ function WebContextMenu({
 				/>
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Portal>
+				{/* A menu taller than the window scrolls instead of losing its first items. */}
 				<DropdownMenu.Content
-					className="bg-menu border-menu-line z-[100] min-w-[200px] rounded-lg border py-1 shadow-2xl"
+					className="bg-menu border-menu-line z-[100] max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[200px] overflow-y-auto rounded-lg border py-1 shadow-2xl"
 					sideOffset={2}
 					align="start"
 					collisionPadding={8}
@@ -119,7 +120,7 @@ function renderItems(items: ContextMenuItem[]) {
 					</DropdownMenu.SubTrigger>
 					<DropdownMenu.Portal>
 						<DropdownMenu.SubContent
-							className="bg-menu border-menu-line z-[100] min-w-[200px] rounded-lg border py-1 shadow-2xl"
+							className="bg-menu border-menu-line z-[100] max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[200px] overflow-y-auto rounded-lg border py-1 shadow-2xl"
 							sideOffset={4}
 							alignOffset={-4}
 						>

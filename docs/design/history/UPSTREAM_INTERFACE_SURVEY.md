@@ -1,7 +1,7 @@
 # Upstream port survey: mobile, Tauri and shared interface (2026-10-16)
 
 Range `6dfeccf21..upstream/main` (`4d41a379f`), paths `apps/mobile apps/tauri packages/interface packages/ts-client`: **92** non-merge commits (the task estimate was 66).
-Core halves are already classified in `docs/design/UPSTREAM_PORT_SURVEY.md` and `.tasks/core/FORK-005-port-upstream-fixes.md`. Rows marked "(survey)" reuse those verdicts.
+Core halves are already classified in `docs/design/history/UPSTREAM_PORT_SURVEY.md` and the FORK-005 task (removed on 2026-11-02, see git history). Rows marked "(survey)" reuse those verdicts.
 
 Method: `git show --stat` and diffs for every commit. `git cherry-pick --no-commit` was tested in a throwaway worktree (now removed) on 15 candidates. **None applied cleanly.** Every one conflicted, mostly because of the `@sd/*` to `@wingdrive/*` and `sd_path` to `wing_path` renames, plus WingDrive's i18n.
 Tokensave was unusable: the index showed 0 nodes with a rebuild in progress, then the server disconnected. WingDrive code was checked with grep and sed.

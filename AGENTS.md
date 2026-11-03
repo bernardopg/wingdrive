@@ -734,7 +734,7 @@ jobs, the TruffleHog secret scan and CodeQL merge protection, and blocks force-p
 
 ## Naming
 
-Never name anything "Spacedrive" or with an `sd`/`sd-` prefix: crates, binaries, packages, scripts, functions, types, environment variables, or user-facing text. Use `wingdrive` or `wing`. The only exception is legally required upstream attribution. Existing `sd` names are being removed under `FORK-003`; do not add new ones.
+Never name anything "Spacedrive" or with an `sd`/`sd-` prefix: crates, binaries, packages, scripts, functions, types, environment variables, or user-facing text. Use `wingdrive` or `wing`. The only exception is legally required upstream attribution. The `sd` names were removed on 2026-10-01; do not add new ones.
 
 ## Task Tracking
 

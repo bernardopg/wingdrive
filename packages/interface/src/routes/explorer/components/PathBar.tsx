@@ -495,7 +495,10 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 				</button>
 
 				{isEditing ? (
+					// The key keeps React from reusing this node for the read-only field below,
+					// which would leave focus in it after Enter and swallow the Explorer's keys.
 					<input
+						key="path-edit"
 						ref={editInputRef}
 						type="text"
 						value={editValue}

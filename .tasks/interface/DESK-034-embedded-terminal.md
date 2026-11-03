@@ -1,14 +1,14 @@
 ---
 id: DESK-034
 title: Terminal panel docked in the Explorer
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Low
 milestone: M2
 tags: [desktop, explorer, linux]
 sprint: S04
-last_updated: 2026-10-29
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -34,7 +34,7 @@ has "Open Terminal Here" (DESK-005), which starts a separate window.
 - [x] F4 toggles a terminal panel whose working directory follows navigation
 - [x] A busy terminal (a program in the foreground) does not receive `cd`
 - [x] The shell survives switching tabs and hiding the panel; closing the tab ends it
-- [ ] Verified on the packaged Linux build
+- [x] Verified on the packaged Linux build
 
 ## Evidence
 
@@ -73,3 +73,4 @@ has "Open Terminal Here" (DESK-005), which starts a separate window.
     Explorer to `docs`; with `sleep 4` running, going back typed nothing until it ended, then
     ` cd '/tmp/wing-check-s04/fx/repo'`, and `pwd` agreed. The Explorer did not bounce back.
 - Not done: Windows runtime check.
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. F4 opened bash in `docs`; `pwd` printed the folder, `cd sub` moved the Explorer, and navigating to `repo` moved the shell.

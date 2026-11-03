@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S04
 tags: [watcher, daemon, tauri, packaging, bug]
-last_updated: 2026-10-28
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -43,3 +43,4 @@ A first fix (84b23bc4d) was pushed to `chore/release-2.0.0` after #252 merged, s
 - Disposable instance (`--instance boottest`) with a location on `/home/bitter/development`: after a restart RPC answered in 767 ms, bound 55 ms after the watcher service started; registration finished 1.5 s later in the background with 34,339 inotify watches.
 - `cargo test -p wing-core --test fs_watcher_test --test ephemeral_watcher_test --test indexing_responder_reindex_test` and `cargo test -p wingdrive` pass.
 - Also seen while removing the locations from the user's library: `location remove` fails with `database is locked` while the indexer writes, and the location's indexer and thumbnail jobs keep running after removal. Not fixed here.
+- 2026-11-02: the release deb ships `usr/bin/wing` next to `WingDrive` and `wing-daemon`, so the CLI is on PATH after install. Connecting at login still needs a real session start with the next AUR package.

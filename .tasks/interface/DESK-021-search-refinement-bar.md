@@ -1,14 +1,14 @@
 ---
 id: DESK-021
 title: Search refinement bar (kind, extension, size, date, hidden)
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Medium
 milestone: M2
 sprint: S04
 tags: [desktop, search, interface, core]
-last_updated: 2026-10-28
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -24,7 +24,7 @@ over the whole result set in `ephemeral_search.rs`.
 - [x] Facet counts cover all results, not only the loaded page
 - [x] Hidden files are excluded unless the pill is on
 - [x] TypeScript types regenerated; core test covers the facets
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -44,6 +44,7 @@ over the whole result set in `ephemeral_search.rs`.
 - Tests: `test_ephemeral_search_facets_and_hidden_filter` and
   `test_persistent_search_facets_and_hidden_filter` in `core/tests/search_test.rs`; extra cases in
   `searchQuery.test.ts`.
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. Searching `ot` in This Folder gave 3 results with facet counts; the Images pill narrowed to the two photos (2 results) and the `.md` pill to `notes.md`.
 
 ## Follow-ups
 
