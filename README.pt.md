@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://github.com/bernardopg/wingdrive/releases/latest"><img src="https://img.shields.io/github/v/release/bernardopg/wingdrive?label=release&color=7c3aed" alt="Última release"/></a>
   <a href="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml"><img src="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/></a>
-  <a href="https://github.com/bernardopg/wingdrive/actions/workflows/coverage.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Ffrontend-coverage.json" alt="Cobertura do frontend"/></a>
+  <a href="./COVERAGE.md"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Fcoverage.json" alt="Cobertura"/></a>
   <a href="https://github.com/bernardopg/wingdrive/actions/workflows/codeql.yml"><img src="https://github.com/bernardopg/wingdrive/actions/workflows/codeql.yml/badge.svg?branch=main" alt="CodeQL"/></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/licen%C3%A7a-Apache--2.0-0f172a" alt="Apache-2.0"/></a>
 </p>
@@ -107,7 +107,7 @@ outros apps, iniciar com a sessão e ficar na bandeja.
 | Como funciona | [Arquitetura](./docs/readme/architecture.md) · [Arquitetura do core](./docs/core/architecture.mdx) · [Indexação](./docs/core/indexing.mdx) |
 | Extensões | [SDK de extensões](./docs/extensions/introduction.mdx) |
 | Contribuir | [CONTRIBUTING](./CONTRIBUTING.md) · [AGENTS](./AGENTS.md) · [Ambiente de dev](./docs/core/development-environment.mdx) · [Testes](./docs/core/testing.mdx) |
-| Projeto | [Changelog](./CHANGELOG.md) · [Roadmap](./.tasks/ROADMAP.md) · [Segurança](./SECURITY.md) · [Créditos](./CREDITS.md) |
+| Projeto | [Changelog](./CHANGELOG.md) · [Cobertura](./COVERAGE.md) · [Roadmap](./.tasks/ROADMAP.md) · [Segurança](./SECURITY.md) · [Créditos](./CREDITS.md) |
 
 A documentação técnica está em inglês; o planejamento em `.tasks/` está em português.
 

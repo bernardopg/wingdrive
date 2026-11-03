@@ -67,6 +67,7 @@ fechar o M2:
 | WATCH-006 | Conexão no login com o pacote AUR (o `wing` já vai no pacote) | S04 |
 | INDEX-010 | Checagem visual de tags e troca de biblioteca | S04 |
 | DESK-013 | Revisão pt no Crowdin e verificação do pacote (passos 3 a 5) | S04 |
+| DESK-043 | Memória do WebKit bimodal, crescendo ociosa no modo alto (derrubou o smoke da release 2.4.0) | S04 |
 | DESK-041, DESK-042 | Escape no View Settings, busca vazia e nomes acessíveis da barra (backlog) | — |
 | DESK-016 | Explorer com painel duplo (F3); exige tirar o shell do router de cada aba | S05 |
 | DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
