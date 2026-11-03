@@ -5,6 +5,11 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+## 2.4.1 — 2026-11-03
+
+Fixes the idle memory growth that failed the 2.4.0 release memory check, and
+makes that check measure idle peaks instead of one snapshot.
+
 ### Changed
 
 - README rewritten as a short landing page and documentation index, with dark
