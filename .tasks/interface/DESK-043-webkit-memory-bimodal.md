@@ -1,7 +1,7 @@
 ---
 id: DESK-043
 title: WebKit renderer memory is bimodal and grows while idle in the high mode
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: DESK-000
 priority: High
@@ -32,7 +32,28 @@ The growth in the high mode is real and would show up as the app sitting in the 
 
 ## Acceptance Criteria
 
-- [ ] Find what allocates while idle in the high mode (timers, animation frames, query refetch,
+- [x] Find what allocates while idle in the high mode (timers, animation frames, query refetch,
       image decoding) and what decides the mode at startup
 - [ ] Ten packaged runs with 15 tabs stay within the 550 MiB budget and flat over 90 s idle
-- [ ] `smoke.py` samples memory over time, so a slow leak fails it instead of a lucky snapshot
+- [x] `smoke.py` samples memory over time, so a slow leak fails it instead of a lucky snapshot
+
+## Evidence
+
+2026-11-03, packaged deb of `main` built with `tauri build --target x86_64-unknown-linux-gnu`,
+run under Xvfb with the steps of `scripts/release/smoke.py`, WebKitWebProcess PSS sampled every 5 s:
+
+- Before the fix, the high mode is a sawtooth, not a leak: 418 rising to 455, a collection drops it
+  to 412, then 468 and 421, then 473 and 427, about every 70 s over 5 minutes. The app keeps making
+  garbage while idle, at about 0.7 MiB/s with under 2% of one core, and the mode only says whether
+  JavaScriptCore has just collected or is about to. Both builds of the comparison show it.
+- The garbage came from `useDaemonStatus`: its fallback poll runs every 3 s while connected and
+  called `setStatus` with a new, equal object, so `ShellWithDaemonCheck` re-rendered
+  `TabManagerProvider` and all 15 tabs. `patchStatus` now returns the previous state when nothing
+  changed, and React skips the render.
+- After the fix, five runs held flat for 3 minutes at 271, 293, 314, 331 and 318 MiB (spread between
+  launches, none rising), against 320 to 330 MiB flat or 410 to 470 MiB in the sawtooth before.
+- `smoke.py` now reports each session's peak over a 30 s idle window and needs most of three fresh
+  sessions under the budget.
+
+Open: the ten runs against the 550 MiB budget need the bundled WebKit of the AppImage, which the
+release job measures. Locally the system WebKit of Arch puts the total at about 590 to 610 MiB.

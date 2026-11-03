@@ -15,6 +15,20 @@ version in the workspace manifests and the matching `v*` git tag.
   --coverage`) line coverage on every push to `main`. It publishes the README
   badge, per-component badges in `COVERAGE.md` and an HTML report on GitHub
   Pages, so no number is edited by hand.
+- The release smoke test measures desktop memory as the peak over 30 s of idle
+  time in fresh sessions, and the 550 MiB budget holds when most of three
+  sessions stay under it. One snapshot taken at a random point of the garbage
+  collection cycle failed the 2.4.0 release by chance. The release workflow runs
+  the smoke test from the workflow commit, so a dispatch from `main` can
+  re-verify an existing tag with the current gate.
+
+### Fixed
+
+- The desktop no longer re-renders the whole window and every open tab every
+  3 s while connected. The daemon status poll replaced its state with an equal
+  new object, so an idle app made garbage that WebKit collected only every
+  minute or so, between about 320 and 470 MiB with 15 tabs. The renderer now
+  stays flat while idle, at about 270 to 330 MiB on the same check (DESK-043).
 
 ## 2.4.0 — 2026-11-02
 
