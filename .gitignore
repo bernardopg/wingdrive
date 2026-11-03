@@ -628,6 +628,7 @@ $RECYCLE.BIN/
 .test-results/
 coverage/
 lcov.info
+*.profraw
 playwright-report/
 test-results/
 *.snap.new
