@@ -3,11 +3,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: 🙏 Get help
-    url: https://github.com/bernardopg/wingdrive/discussions/new?category=help
-    about: If you can't get something to work the way you expect, please open a discussion thread.
+    url: https://github.com/bernardopg/wingdrive/discussions/new?category=q-a
+    about: If you can't get something to work the way you expect, ask in a Q&A discussion.
   - name: 💡 Feature request
     url: https://github.com/bernardopg/wingdrive/discussions/new?category=ideas
-    about: Suggest any ideas you have for new features in a discussion thread.
-  - name: 💬 Chat on Discord
-    url: https://discord.gg/gTaF2Z44f5
-    about: Ask questions and talk to other WingDrive users and maintainers on Discord.
+    about: Suggest a new feature in an Ideas discussion.
+  - name: 🔒 Report a vulnerability
+    url: https://github.com/bernardopg/wingdrive/security/advisories/new
+    about: Report security issues privately, never in a public issue.

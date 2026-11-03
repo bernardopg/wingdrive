@@ -5,6 +5,15 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Changed
+
+- README rewritten as a short landing page and documentation index, with dark
+  screenshots of 2.4.0, platform and coverage badges, roadmap, contact and
+  sponsorship links (Portuguese version too). The Discord links pointed to a
+  server WingDrive does not have; help now goes to GitHub Discussions.
+- A Coverage workflow publishes the merged frontend test coverage as a README
+  badge on every push to `main`.
+
 ## 2.4.0 — 2026-11-02
 
 WingDrive is now an independent project: the inherited fork tracking is gone and
