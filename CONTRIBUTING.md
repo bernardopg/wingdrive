@@ -1097,7 +1097,7 @@ packages/
 
 - **Read the history:** [docs/overview/history.mdx](docs/overview/history.mdx) explains every V1 failure
 - **Architecture docs:** [docs/core/architecture.mdx](docs/core/architecture.mdx) explains V2 design
-- **Discord:** Ask in #development channel
+- **Discussions:** Ask in [GitHub Discussions](https://github.com/bernardopg/wingdrive/discussions)
 - **Examples:** Run `cargo run --example <name>` to see V2 patterns
 
 ### Will V1 Knowledge Help?
@@ -1120,7 +1120,7 @@ packages/
 - [WingDrive Architecture](docs/core/architecture.mdx) - Deep dive into V2 architecture
 - [Extension Development](docs/extensions/introduction.mdx) - Build WASM extensions
 - [Whitepaper](docs/overview/whitepaper.mdx) - WingDrive's vision and technical design
-- [Discord Community](https://discord.gg/gTaF2Z44f5) - Get help and discuss development
+- [GitHub Discussions](https://github.com/bernardopg/wingdrive/discussions) - Get help and discuss development
 
 ## Credits
 

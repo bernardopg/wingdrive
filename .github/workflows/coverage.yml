@@ -1,0 +1,69 @@
+name: Coverage
+
+# Runs the frontend tests that CI runs, with coverage, and publishes the merged
+# line coverage as a shields.io endpoint on the `badges` branch for the README.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "apps/tauri/src/**"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/coverage.yml"
+      - "scripts/coverage-badge.py"
+  schedule:
+    - cron: "41 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.3"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Same list as the "Test critical frontend behavior" step in ci.yml, one
+      # process per file as there, each writing its own lcov report.
+      - name: Run tests with coverage
+        run: |
+          i=0
+          grep -oE 'bun test [^ ]+' .github/workflows/ci.yml | while read -r _ _ file; do
+            i=$((i + 1))
+            bun test --coverage --coverage-reporter=lcov --coverage-dir="coverage/$i" "$file"
+          done
+          mapfile -t reports < <(find coverage -name lcov.info)
+          python3 scripts/coverage-badge.py "frontend coverage" coverage/badge.json "${reports[@]}"
+
+      - name: Publish badge
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp coverage/badge.json "$RUNNER_TEMP/frontend-coverage.json"
+          cd "$RUNNER_TEMP"
+          rm -rf badges && mkdir badges && cd badges
+          git init -q -b badges
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp "$RUNNER_TEMP/frontend-coverage.json" frontend-coverage.json
+          git add frontend-coverage.json
+          git commit -qm "Frontend coverage for ${GITHUB_SHA::9}"
+          git push -qf "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges

@@ -1,172 +1,161 @@
 <p align="center">
-  <img src=".github/logo.svg" alt="WingDrive" width="100" height="100" />
+  <img src=".github/logo.svg" alt="WingDrive" width="96" height="96" />
 </p>
 
 <h1 align="center">WingDrive</h1>
 
 <p align="center">
-  <strong>Um gerenciador de arquivos local-first que indexa todos os seus discos.</strong><br/>
-  <span>Core em Rust · Desktop Tauri · CLI · Servidor web · Sync peer-to-peer</span>
+  <strong>Todos os seus discos num gerenciador de arquivos rápido.</strong><br/>
+  Local-first. Indexado. Seu.
 </p>
 
 <p align="center">
-  <a href="https://github.com/bernardopg/wingdrive/releases">
-    <img src="https://img.shields.io/github/v/release/bernardopg/wingdrive?include_prereleases&label=Versão&color=7c3aed" alt="Versão"/>
-  </a>
-  <a href="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml">
-    <img src="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/>
-  </a>
-  <img src="https://img.shields.io/static/v1?label=Licença&message=Apache-2.0&color=000" alt="Licença"/>
-  <a href="https://aur.archlinux.org/packages/wingdrive-bin/">
-    <img src="https://img.shields.io/aur/version/wingdrive-bin?label=AUR&color=0090FF" alt="AUR"/>
-  </a>
+  <a href="https://github.com/bernardopg/wingdrive/releases/latest"><img src="https://img.shields.io/github/v/release/bernardopg/wingdrive?label=release&color=7c3aed" alt="Última release"/></a>
+  <a href="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml"><img src="https://github.com/bernardopg/wingdrive/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/></a>
+  <a href="https://github.com/bernardopg/wingdrive/actions/workflows/coverage.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Ffrontend-coverage.json" alt="Cobertura do frontend"/></a>
+  <a href="https://github.com/bernardopg/wingdrive/actions/workflows/codeql.yml"><img src="https://github.com/bernardopg/wingdrive/actions/workflows/codeql.yml/badge.svg?branch=main" alt="CodeQL"/></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/licen%C3%A7a-Apache--2.0-0f172a" alt="Apache-2.0"/></a>
 </p>
 
-<p align="center"><a href="./README.md">English</a> · Português</p>
+<p align="center">
+  <a href="https://aur.archlinux.org/packages/wingdrive-bin/"><img src="https://img.shields.io/aur/version/wingdrive-bin?logo=archlinux&logoColor=white&label=AUR&color=1793d1" alt="AUR"/></a>
+  <img src="https://img.shields.io/badge/Linux-suportado-2ea44f?logo=linux&logoColor=white" alt="Linux: suportado"/>
+  <img src="https://img.shields.io/badge/macOS-planejado%20(M3)-6b7280?logo=apple&logoColor=white" alt="macOS: planejado"/>
+  <img src="https://img.shields.io/badge/Windows-planejado%20(M3)-6b7280?logo=windows&logoColor=white" alt="Windows: planejado"/>
+  <img src="https://img.shields.io/badge/Android-em%20desenvolvimento-6b7280?logo=android&logoColor=white" alt="Android: em desenvolvimento"/>
+  <a href="https://github.com/sponsors/bernardopg"><img src="https://img.shields.io/badge/patrocinar-%E2%99%A5-db2777?logo=githubsponsors&logoColor=white" alt="Patrocinar"/></a>
+</p>
 
----
+<p align="center">
+  <a href="#instalação">Instalação</a> ·
+  <a href="#destaques">Destaques</a> ·
+  <a href="#documentação">Docs</a> ·
+  <a href="#roadmap">Roadmap</a> ·
+  <a href="#apoie-o-projeto">Apoie</a> ·
+  <a href="./README.md">English</a>
+</p>
 
-O WingDrive é um gerenciador de arquivos desktop independente com um daemon que indexa suas pastas, discos
-externos e volumes de nuvem numa biblioteca só. Os arquivos ficam onde estão. O índice torna tudo
-pesquisável, dá a cada arquivo um hash de conteúdo e deixa seus próprios dispositivos
-sincronizarem a biblioteca peer-to-peer, sem servidor central.
+<p align="center">
+  <img src="docs/public/WingGridView.webp" alt="WingDrive em grade com o Inspector, tema escuro" width="900"/>
+</p>
 
-> **Status: alpha.** Hoje a plataforma suportada é o Linux, e a meta atual é o WingDrive substituir
-> Dolphin, Nautilus ou Yazi como gerenciador de arquivos padrão no Linux. macOS e Windows compilam a
-> partir do código-fonte; releases prontas e assinadas para eles estão planejadas.
+O WingDrive é um gerenciador de arquivos desktop para Linux com um daemon que indexa suas pastas,
+discos externos e volumes de nuvem numa biblioteca só. Os arquivos ficam onde estão; o índice deixa
+tudo rápido de navegar, buscar e reconhecer entre os seus aparelhos. Sem conta, sem telemetria, sem
+servidor central.
 
-## Recursos
-
-**Gerenciador de arquivos**
-
-- Visões em grade, lista, colunas, mídia e tamanho, com QuickPreview para imagens, vídeo, áudio,
-  código e documentos.
-- Copiar, mover, renomear, duplicar, apagar, e Copiar para… / Mover para… uma pasta escolhida, com
-  tratamento de conflitos e desfazer para renomear, mover e pastas novas.
-- Abre pastas pelo `xdg-open` e pelo "Mostrar na pasta" de outros apps
-  (`org.freedesktop.FileManager1`), fica na bandeja e inicia com a sessão.
-- Abrir com, abrir terminal aqui, novo arquivo vazio, links simbólicos, permissões e dono, compactar
-  e extrair, checksum SHA-256, selecionar por padrão e inverter seleção.
-- Tamanho real das pastas, inclusive das que ainda não foram indexadas.
-
-**Índice e busca**
-
-- Cada arquivo ganha uma identidade de conteúdo BLAKE3, então o mesmo arquivo em dois dispositivos é
-  reconhecido como um só.
-- A busca refina por tipo, extensão, tamanho, data e arquivos ocultos, com contagens sobre o
-  resultado inteiro.
-- Um watcher do sistema de arquivos mantém o índice em dia; discos desconectados aparecem offline.
-
-**Entre dispositivos**
-
-- Pareamento e sync da biblioteca entre seus próprios dispositivos via Iroh/QUIC.
-- Volumes de nuvem via OpenDAL (S3, Google Drive, Dropbox, OneDrive, Azure Blob, GCS).
-- O `wing-server` serve a mesma interface no navegador para máquinas sem tela.
-
-**Interface**
-
-- Inglês e português do Brasil. As traduções ficam no Crowdin.
-- Temas embutidos, entre eles Catppuccin, Gruvbox, Solarized, Rosé Pine, Dracula e Tokyo Night.
-
-<div align="center">
-  <img src="docs/public/WingColumnView.webp" alt="Visão em colunas" width="300"/>
-  <img src="docs/public/WingGridView.webp" alt="Visão em grade" width="300"/>
-  <img src="docs/public/WingListView.webp" alt="Visão em lista" width="300"/>
-  <img src="docs/public/WingMediaView.webp" alt="Visão de mídia" width="300"/>
-  <img src="docs/public/WingSizeView.webp" alt="Visão de tamanho" width="300"/>
-</div>
-
-## Novidades
-
-Cada release está no [CHANGELOG.md](./CHANGELOG.md) (em inglês), e a
-[página de Releases](https://github.com/bernardopg/wingdrive/releases) tem os downloads de cada tag.
-
-## Plataformas
-
-| Plataforma | Status |
-|------------|--------|
-| Linux (x86_64) | Suportado: AppImage, pacote Debian, AUR (`wingdrive-bin`) |
-| Servidor sem tela | `wing-server` com a interface web, imagem Docker no GHCR |
-| macOS | Compila do código-fonte; release pronta planejada (marco M3) |
-| Windows | Compila do código-fonte; release pronta planejada (marco M3) |
-| iOS, Android | Em desenvolvimento (`apps/mobile`), sem release ainda |
+> **Alpha.** O Linux é a plataforma suportada. A meta atual (milestone M2) é substituir o Dolphin,
+> o Nautilus ou o Yazi como gerenciador de arquivos padrão. macOS e Windows compilam a partir do código.
 
 ## Instalação
 
-Guia completo: [docs/readme/installation.md](./docs/readme/installation.md).
+| Onde | Como |
+|---|---|
+| Arch Linux e derivados | `yay -S wingdrive-bin` |
+| Qualquer Linux (x86_64) | AppImage ou `.deb` em [Releases](https://github.com/bernardopg/wingdrive/releases/latest), com `SHA256SUMS` |
+| Servidor sem interface | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |
+| A partir do código | `just setup && just dev-desktop` ([guia](./docs/readme/installation.md)) |
 
-**Arch Linux e derivados (AUR):**
+Depois de instalado, o WingDrive pode abrir pastas pelo `xdg-open` e pelo "Mostrar na pasta" de
+outros apps, iniciar com a sessão e ficar na bandeja.
 
-```bash
-yay -S wingdrive-bin
-```
+## Destaques
 
-**Outras distribuições Linux:** baixe o AppImage ou o `.deb` em
-[GitHub Releases](https://github.com/bernardopg/wingdrive/releases). Cada release traz um arquivo
-`SHA256SUMS`.
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingListView.webp" alt="Lista com emblemas do Git e o terminal embutido"/>
+      <p><strong>Trabalhe onde o código está.</strong> Emblemas do Git em arquivos e pastas, pastas
+      que expandem na lista e um terminal embutido sob a vista (F4) que acompanha a navegação.</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingSearch.webp" alt="Busca com filtros de tipo, extensão, tamanho e data"/>
+      <p><strong>Ache em segundos.</strong> A busca filtra por tipo, extensão, tamanho, data e
+      arquivos ocultos, com contagens sobre o resultado inteiro.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingMediaView.webp" alt="Vista de mídia de uma pasta de fotos"/>
+      <p><strong>Veja as pastas do seu jeito.</strong> Vistas em grade, lista, colunas, mídia e
+      tamanho, seções por tipo ou data, e Visualização rápida para imagem, vídeo, áudio, PDF, texto e código.</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingContextMenu.webp" alt="Menu de contexto com opções de compactar"/>
+      <p><strong>Tudo que um gerenciador de arquivos faz.</strong> Copiar para e Mover para,
+      compactar e extrair, modelos, service menus do Dolphin, permissões, checksum SHA-256 e desfazer.</p>
+    </td>
+  </tr>
+</table>
 
-**Servidor sem tela** (interface web na porta 8080, dados no volume `wingdrive-data`; veja
-[Linux deployment](./docs/cli/linux-deployment.mdx)):
+**E mais**
 
-```bash
-docker run -d -p 8080:8080 -p 7373:7373 \
-  -v wingdrive-data:/data -v /caminho/dos/arquivos:/mnt/files:ro \
-  ghcr.io/bernardopg/wingdrive/server
-```
+- Cada arquivo ganha uma identidade de conteúdo BLAKE3, então o mesmo arquivo em dois aparelhos é um só.
+- Pareie seus aparelhos via Iroh/QUIC para sincronizar a biblioteca e enviar arquivos com o Wingdrop.
+- Volumes de nuvem via OpenDAL: S3, Google Drive, Dropbox, OneDrive, Azure Blob e GCS.
+- CLI `wing` e `wing-server` para scripts e máquinas sem interface, no mesmo daemon.
+- Inglês e português do Brasil, e temas como Catppuccin, Gruvbox, Dracula e Tokyo Night.
 
-**Do código-fonte** (Rust do `rust-toolchain.toml`, [Bun](https://bun.sh) 1.3+,
-[just](https://github.com/casey/just)):
+## Documentação
 
-```bash
-git clone https://github.com/bernardopg/wingdrive
-cd wingdrive
-just setup         # dependências nativas e .cargo/config.toml
-just dev-desktop   # app desktop; sobe o próprio daemon
-just cli --help    # o CLI `wing`
-```
+| Assunto | Comece por |
+|---|---|
+| Instalação e primeiro uso | [Instalação](./docs/readme/installation.md) · [Primeiros passos](./docs/overview/get-started.mdx) |
+| Bibliotecas e locations | [Gerenciar bibliotecas](./docs/overview/manage-libraries.mdx) · [Adicionar locations](./docs/overview/add-index-locations.mdx) |
+| Servidor e CLI | [Self-hosting](./docs/overview/self-hosting.mdx) · [Deploy no Linux](./docs/cli/linux-deployment.mdx) · [CLI](./docs/cli/overview.mdx) |
+| Aparelhos e sync | [Pareamento](./docs/core/pairing.mdx) · [Sync da biblioteca](./docs/core/library-sync.mdx) · [Nuvem](./docs/core/cloud-integration.mdx) |
+| Como funciona | [Arquitetura](./docs/readme/architecture.md) · [Arquitetura do core](./docs/core/architecture.mdx) · [Indexação](./docs/core/indexing.mdx) |
+| Extensões | [SDK de extensões](./docs/extensions/introduction.mdx) |
+| Contribuir | [CONTRIBUTING](./CONTRIBUTING.md) · [AGENTS](./AGENTS.md) · [Ambiente de dev](./docs/core/development-environment.mdx) · [Testes](./docs/core/testing.mdx) |
+| Projeto | [Changelog](./CHANGELOG.md) · [Roadmap](./.tasks/ROADMAP.md) · [Segurança](./SECURITY.md) · [Créditos](./CREDITS.md) |
 
-## Arquitetura
+A documentação técnica está em inglês; o planejamento em `.tasks/` está em português.
 
-Um processo `wing-daemon` guarda todo o estado. O app desktop, o CLI `wing`, a interface web e o
-`wing-server` são clientes finos que falam JSON-RPC com ele. O app mobile embute o mesmo core como
-biblioteca.
+## Como funciona
 
-Stack: Rust, Tokio, SQLite (SeaORM), Iroh/QUIC, BLAKE3, OpenDAL, Tauri 2, React 19.
-Detalhes: [docs/readme/architecture.md](./docs/readme/architecture.md) e a documentação de cada
-subsistema em [`docs/core`](./docs/core).
+Um `wing-daemon` guarda todo o estado. O app desktop (Tauri 2 + React 19), a CLI `wing` e o
+`wing-server` com a interface web são clientes leves que falam JSON-RPC com ele; o app mobile embute
+o mesmo core em Rust. Stack: Rust, Tokio, SQLite (SeaORM), Iroh/QUIC, BLAKE3, OpenDAL.
 
-## Privacidade e segurança
-
-- **Local-first:** indexação, miniaturas e busca rodam na sua máquina. Sem telemetria nem analytics.
-- **Transporte criptografado:** o tráfego peer-to-peer entre dispositivos pareados usa QUIC com TLS.
-- **Seu armazenamento:** o WingDrive lê seus arquivos no lugar; não envia nada para onde você não
-  adicionou como volume.
-- **Operações destrutivas protegidas:** o apagamento seguro recusa sistemas de arquivos copy-on-write,
-  cópias e movimentos recusam escrever dentro da própria origem, e o daemon não ejeta montagens do
-  sistema.
-
-Criptografia da biblioteca em repouso ainda não existe. Reporte vulnerabilidades como descrito no
-[SECURITY.md](./SECURITY.md).
+Privacidade por padrão: indexação, miniaturas e busca rodam na sua máquina, o tráfego entre
+aparelhos pareados é cifrado e as operações destrutivas têm proteção (a exclusão segura recusa
+sistemas de arquivos copy-on-write, cópias não escrevem dentro da própria origem e montagens do
+sistema nunca são ejetadas).
 
 ## Roadmap
 
-| Marco | Objetivo |
-|-------|----------|
-| M1 (feito) | Gerenciador de arquivos desktop no Linux, a partir de um bundle de produção |
-| M2 (agora) | Gerenciador de arquivos padrão no Linux: uso diário sem voltar a outro |
-| M3 | Releases para macOS e Windows, instaladores assinados, preflight de cópia e desfazer ampliado |
-| M4 | Recursos entre dispositivos: sync de arquivos, compartilhamento público, Wingdrop |
+| Milestone | O que traz |
+|---|---|
+| **M1** · feito | Um gerenciador de arquivos desktop confiável no Linux, a partir de um bundle de produção |
+| **M2** · agora | O gerenciador padrão no Linux: Explorer com painel duplo (F3), um dia inteiro de uso sem voltar a outro |
+| **M3** · depois | Releases assinadas para macOS e Windows, atualização automática, pré-checagem de cópia e journal de desfazer |
+| **M4** | Sync de arquivos entre aparelhos, links públicos de compartilhamento, Wingdrop para aparelhos próximos, Tailscale |
+| **M5** | Busca semântica, extensões WASM, criptografia em repouso, releases para Android e iOS |
 
-Detalhes em [.tasks/ROADMAP.md](./.tasks/ROADMAP.md).
+O plano vivo, sprint a sprint, está em [`.tasks/`](./.tasks/ROADMAP.md).
 
-## Contribuindo
+## Apoie o projeto
 
-Leia o [CONTRIBUTING.md](./CONTRIBUTING.md) e o [AGENTS.md](./AGENTS.md) primeiro. Rode
-`just ci-local` antes de dar push; ele roda os mesmos gates da CI. Bugs e pedidos de recurso vão para
-as [Issues](https://github.com/bernardopg/wingdrive/issues/new/choose); dúvidas, para o
-[Discord](https://discord.gg/gTaF2Z44f5).
+O WingDrive é feito às claras por um único desenvolvedor. Se ele economiza seu tempo, considere
+[patrocinar no GitHub](https://github.com/sponsors/bernardopg). Relatos de bug, ideias e pull
+requests ajudam tanto quanto: [Issues](https://github.com/bernardopg/wingdrive/issues/new/choose) ·
+[Discussions](https://github.com/bernardopg/wingdrive/discussions).
+
+## Contato
+
+**Bernardo Gomes**, autor e mantenedor
+
+- E-mail: [bernardo.gomes@bebitterbebetter.com.br](mailto:bernardo.gomes@bebitterbebetter.com.br)
+- Site: [bebitterbebetter.com.br](https://bebitterbebetter.com.br)
+- Discord: `omg_bitter`
+- Instagram: [@be.pgomes](https://instagram.com/be.pgomes)
+
+Relate falhas de segurança em particular pelo
+[GitHub Security Advisories](https://github.com/bernardopg/wingdrive/security/advisories/new)
+([SECURITY.md](./SECURITY.md)), nunca em issues públicas.
 
 ## Licença
 
-**Apache-2.0**, veja [LICENSE](./LICENSE). Os ícones de tipo de arquivo em `packages/assets/icons`
-continuam sob GPL-3.0-only; veja [CREDITS.md](./CREDITS.md).
+[Apache-2.0](./LICENSE). O WingDrive nasceu do código do Spacedrive; essa origem e todos os avisos
+de terceiros estão em [CREDITS.md](./CREDITS.md). Os ícones de tipos de arquivo em
+`packages/assets/icons` continuam sob GPL-3.0-only.
