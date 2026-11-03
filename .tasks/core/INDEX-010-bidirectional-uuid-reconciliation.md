@@ -319,8 +319,8 @@ This is important because the frontend may have cached the temporary UUID in sel
 
 On 2026-09-27, the core library suite passed (370 tests), the UUID reconciliation integration suite passed (6 tests), and 6 Bun cache/selection tests passed. Tauri TypeScript typecheck and `cargo fmt --all -- --check` passed. The explicitly run ignored benchmark extracted 100K persistent entries from indexed SQLite and reconciled their UUIDs in 816 ms in a debug build. A live cached directory listing returned the persistent UUID and emitted the temporary UUID as an alternate before the background reconciliation pass.
 
-On 2026-10-06 the WIP branch was rebased onto `main` (after FORK-003 renames, SeaORM 2,
-TAURI-013/014 and FORK-005). Changes during the rebase:
+On 2026-10-06 the WIP branch was rebased onto `main` (after the `wing` renames, SeaORM 2,
+TAURI-013/014 and the upstream fixes of #115). Changes during the rebase:
 
 - `SdPath`/`sd_path`/`sd_core` renamed to `WingPath`/`wing_path`/`wing_core`; raw SQL calls moved
   to SeaORM 2 `query_all_raw`/`query_one_raw`.

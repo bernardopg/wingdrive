@@ -1,14 +1,14 @@
 ---
 id: DESK-018
 title: Copy To and Move To a chosen folder
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
 sprint: S04
 tags: [desktop, explorer, file-operations, linux]
-last_updated: 2026-10-16
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -30,7 +30,7 @@ conflict resolution, and the desktop already grants `dialog:allow-open` for a fo
 - [x] Both entries copy or move the selection into the picked folder, with the usual conflict dialog
 - [x] Cancelling the picker changes nothing
 - [x] The entries are hidden where the picker cannot work (web host, cloud paths)
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -38,4 +38,4 @@ conflict resolution, and the desktop already grants `dialog:allow-open` for a fo
   so copy and move get the existing conflict dialog and undo. The entries need `openDirectoryPickerDialog`
   (desktop only) and local physical sources, so the web host and cloud paths never show them.
 - `copyMoveDestination.test.ts` covers the picked destination, a cancelled picker and non-local sources.
-- Open: runtime check on the Linux desktop build.
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. "Copy To…" opened the native folder picker (xdg-desktop-portal-gtk), the file operation dialog confirmed, `dest/alpha.txt` appeared and the source stayed. "Move To…" moved `beta.txt` to `move-dest` and it left the listing.

@@ -8,12 +8,12 @@ priority: Medium
 milestone: M3
 tags: [files, operations, undo, trash, jobs, upstream, port]
 last_updated: 2026-10-16
-related_tasks: [FORK-006, FILE-007, EXPL-003]
+related_tasks: [FILE-007, EXPL-003]
 ---
 
 ## Description
 
-Split from FORK-006 item 7 (upstream `bcc7337b0`). WingDrive's undo
+Split from item 7 of the 2026-10-14 upstream survey (upstream `bcc7337b0`). WingDrive's undo
 (EXPL-003, `apps/tauri/src-tauri/src/undo.rs` plus `undoStore.ts`) covers
 rename, same-volume move without overwrite and new empty folders. It cannot
 undo a copy, a cross-volume move, an overwrite or a move to trash, because

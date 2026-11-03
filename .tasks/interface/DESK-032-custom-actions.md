@@ -1,14 +1,14 @@
 ---
 id: DESK-032
 title: User-defined context menu actions
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Medium
 milestone: M2
 tags: [desktop, explorer, linux, extensibility]
 sprint: S04
-last_updated: 2026-10-28
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -32,7 +32,7 @@ context menu, filtered by file type. WingDrive has no such hook.
 ## Acceptance Criteria
 
 - [x] A user action appears for matching files and runs with the selection
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -44,4 +44,4 @@ context menu, filtered by file type. WingDrive has no such hook.
   hidden for both. Nothing was executed.
 - `run_context_action` looks the action up again and refuses one that no longer applies.
 - Frontend: `useContextActions` and `contextActionMenus` (covered by `useContextActions.test.ts`).
-- Open: run an action from the menu in the Linux desktop build.
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. A user service menu (`~/.local/share/kio/servicemenus/wing-check.desktop`, executable, `text/plain`) appeared under Actions for `gamma.txt`; running it created `gamma.txt.ran`.

@@ -1,14 +1,14 @@
 ---
 id: DESK-020
 title: On-demand file checksum in the Inspector
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Medium
 milestone: M2
 sprint: S04
 tags: [desktop, inspector, core, file-operations]
-last_updated: 2026-10-16
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -31,7 +31,7 @@ Dolphin and Nautilus show checksums in Properties. WingDrive's content identity 
 - [x] The digest matches `sha256sum` for small and multi-buffer files (multi-gigabyte check open)
 - [x] Pasting an expected hash shows whether it matches
 - [x] The daemon stays responsive while a large file is hashed
-- [ ] Verified on the Linux desktop build
+- [x] Verified on the Linux desktop build
 
 ## Evidence
 
@@ -41,4 +41,4 @@ Dolphin and Nautilus show checksums in Properties. WingDrive's content identity 
 - `ChecksumSection` in the file Inspector hashes only after "Calculate SHA-256", copies the digest,
   and compares a pasted hash (bare, `sha256:` prefixed or a `sha256sum` line) via `checksum.ts`,
   covered by `checksum.test.ts`.
-- Open: runtime check on the Linux desktop build with a multi-gigabyte file.
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. "Calculate SHA-256" on a 3 GiB file of random blocks showed the digest `sha256sum` printed, in 2 to 3 s with a warm page cache.

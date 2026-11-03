@@ -1,14 +1,14 @@
 ---
 id: DESK-037
 title: Folder tree subscriptions used up the daemon's connection limit
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
 sprint: S04
 tags: [interface, tauri, daemon, bug]
-last_updated: 2026-10-29
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -32,7 +32,7 @@ closed it without an answer, which reached the UI as an empty listing.
 
 - [x] A disabled query opens no subscription
 - [x] The first visit after launch lists the folder
-- [ ] Verified on the packaged Linux build
+- [x] Verified on the packaged Linux build
 
 ## Evidence
 
@@ -41,3 +41,4 @@ closed it without an answer, which reached the UI as an empty listing.
 - Runtime, 2026-10-29: debug desktop build under Xvfb with an isolated daemon. The first Ctrl+L visit to the
   fixture repository listed its four entries, the log has no `Connection limit` line, and the app held 19
   connections to the daemon (more than 100 before).
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. The folder passed on the command line listed on the first visit after launch; the app held 24 TCP connections and the daemon logs had no `Connection limit` line.

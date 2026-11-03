@@ -1,7 +1,7 @@
 ---
 id: DESK-031
 title: New file from the Templates folder
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Low
@@ -39,7 +39,7 @@ Document". WingDrive creates empty files only (DESK-006).
   folder refused as a template; they run in CI.
 - `useCreateEntry().newFromTemplate` and the "New from Template" submenu in
   `useEmptySpaceContextMenu`.
-- Open: verification on the installed Linux package as part of DESK-017.
 
 - Runtime, 2026-11-02: isolated Linux Tauri debug build with `XDG_TEMPLATES_DIR` set to `~/Modelos`. The menu listed a document and an executable script with accented names. Copies preserved bytes and mode 751, chose a free name on collision and entered inline rename. Ctrl+Z removed the unchanged copy and preserved a copy edited after creation. The desktop undo hashes the original template before copying and checks the new file's identity and hash before removal.
 - `undo::tests::undo_template_keeps_changed_or_replaced_files` covers edited and replaced files; the existing empty-file and symlink checks still pass.
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. "New from Template" in the empty-space menu listed `Empty Note.txt` from `~/Templates` and created the copy.

@@ -5,6 +5,13 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+## 2.4.0 — 2026-11-02
+
+WingDrive is now an independent project: the inherited fork tracking is gone and
+third-party credits live in `CREDITS.md` (#310). The M2 file manager features
+from 2.3.0 were checked on the packaged Linux build, and that check found and
+fixed two Explorer bugs.
+
 ### Added
 
 - The docked terminal has a header with a hide button. Hiding it keeps the
@@ -16,6 +23,13 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Fixed
 
+- After typing a path with Ctrl+L and Enter, keyboard focus no longer stays in
+  the path bar, so Explorer shortcuts work right away (DESK-039).
+- Context menus taller than the window scroll instead of losing their first
+  items (DESK-040).
+- Closing a terminal kills a shell that ignores the hangup, so no shell is left
+  running after its tab or window closes (#311).
+
 - Grouped views sort their sections in the active direction, so
   folders-first sorting no longer scrambles name sections (#302).
 - Shift+arrow keys extend the selection in grouped grid views instead of
@@ -25,6 +39,14 @@ version in the workspace manifests and the matching `v*` git tag.
   replaced file is kept (#302).
 
 ### Changed
+
+- WingDrive identity is final: repository, packages and docs no longer present
+  the project as a fork, and `CREDITS.md` and `NOTICE` ship in the desktop and
+  AUR packages (#310).
+- The M2 features from 2.3.0 (Copy To and Move To, invert and pattern
+  selection, checksums, search filters, folder tree, groups, templates, service
+  menus, Git emblems, docked terminal, new windows) passed the runtime check on
+  the packaged Linux build.
 
 - Dependency updates: Rust crates within ranges (zbus 6.2, uuid 1.29),
   resvg 0.49, sysinfo 0.40, Bun packages, GitHub Actions, and Expo SDK 58

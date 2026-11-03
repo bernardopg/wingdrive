@@ -14,7 +14,7 @@ last_updated: 2026-10-28
 ## Description
 
 Release builds are signed with the debug keystore, and the app stays at `1.0.0` / `versionCode 1`
-while the desktop is `2.0.0-alpha.18`. Coordinates with FORK-002 (Google Play credentials).
+while the desktop is `2.0.0-alpha.18`. Coordinates with REL-001 (Google Play credentials).
 
 ## Acceptance Criteria
 
@@ -25,4 +25,4 @@ while the desktop is `2.0.0-alpha.18`. Coordinates with FORK-002 (Google Play cr
 ## Evidence
 
 - `release.yml` calls `mobile.yml` with the tag; the APK, AAB and `SHA256SUMS-android` join the GitHub Release when the upload key secrets exist.
-- Pending: generate the upload key and add the four secrets (with FORK-002), then one signed tag run.
+- Pending: generate the upload key and add the four secrets (with REL-001), then one signed tag run.

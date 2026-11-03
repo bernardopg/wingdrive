@@ -1,13 +1,13 @@
 ---
 id: DESK-015
 title: Open a folder in a new window
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Medium
 milestone: M2
 tags: [desktop, explorer, windows, linux]
-last_updated: 2026-10-16
+last_updated: 2026-11-02
 sprint: S04
 ---
 
@@ -42,6 +42,10 @@ interface opens.
 ## Acceptance Criteria
 
 - [x] Context menu and keybind open the folder in a new window (#217; runtime check in DESK-017)
-- [ ] Several Explorer windows can stay open at once, each on its own path
-- [ ] Closing an Explorer window does not quit the app or stop the daemon
-- [ ] Verified on the packaged Linux build
+- [x] Several Explorer windows can stay open at once, each on its own path
+- [x] Closing an Explorer window does not quit the app or stop the daemon
+- [x] Verified on the packaged Linux build
+
+## Evidence
+
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. Ctrl+N opened the browsed folder and the folder menu's "Open in New Window" opened `docs`: three Explorer windows at once, each on its own path. Closing two left the main window working and the instance's daemon running.

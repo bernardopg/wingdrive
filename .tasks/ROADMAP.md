@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-10-28. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-11-02. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -13,20 +13,20 @@ UI e pelo CLI, sem bug conhecido, rodando de um bundle de produção.
 Epics: `TAURI-000`, `EXPL-000`, `CLI-000` (estendido por `CLI-001`).
 
 Concluídas no S01: WATCH-003, WATCH-004, CLI-001, EXPL-001/002/003/005/006/007, TAURI-008/009/010/011,
-DEV-003, FORK-003, BRAND-001. Release `v2.0.0-alpha.6` publicada no GitHub e no AUR (`wingdrive-bin`).
+DEV-003, BRAND-001 e a renomeação para `wing`. Release `v2.0.0-alpha.6` publicada no GitHub e no AUR (`wingdrive-bin`).
 
 Restante do M1, em ordem:
 
 | Ordem | Task | Título | Sprint |
 |---|---|---|---|
 | 1 | TAURI-013 | Estabilização Linux: segurança de dados (Done) | S01 |
-| 2 | FORK-004 | Próxima tag atualiza o AUR sem passo manual (Done) | S01 |
+| 2 | — | Próxima tag atualiza o AUR sem passo manual (Done) | S01 |
 | 3 | TAURI-014 | Robustez em runtime e paridade da busca (Done) | S02 |
 | 4 | TAURI-006 | Fechar a matriz de regressão Linux (Done) | S02 |
 | 5 | BRAND-002 | Wingbot, WingUI, Wingdrop e Wings (Done) | S02 |
 
-Fora da ordem, já Done: FORK-005 (licença Apache-2.0 e port de correções do upstream).
-Release `v2.0.0-alpha.7` sai com TAURI-013, TAURI-014 e FORK-005; ver [CHANGELOG](../CHANGELOG.md).
+Fora da ordem, já Done: licença Apache-2.0 e port de correções do upstream (#114, #115).
+Release `v2.0.0-alpha.7` sai com TAURI-013, TAURI-014 e essas correções; ver [CHANGELOG](../CHANGELOG.md).
 
 O M1 fecha quando essas cinco estiverem Done e uma release sair sem bug conhecido.
 
@@ -54,23 +54,21 @@ Epic: `DESK-000`. Sprints S03 a S05.
 
 Pré-requisito: TAURI-015 (pacote AUR com GTK/WebKit do sistema, daemon encerrado ao sair).
 
-Estado em 2026-10-28: S02 e S03 fechados. Done no M2: DESK-001 a DESK-012, DESK-014, DESK-022,
-DESK-025 a DESK-028, DESK-036, TAURI-015, INDEX-013, INDEX-014, NET-005, NET-006, SEC-010,
-WATCH-007, WATCH-008, FORK-006 e FORK-008. O que falta para fechar o M2 (plano de ataque em
-[S04](sprints/S04.md)):
+Estado em 2026-11-02: S01, S02 e S03 fechados. Done no M2: DESK-001 a DESK-012, DESK-014,
+DESK-015, DESK-018 a DESK-032, DESK-034 a DESK-040, TAURI-015, INDEX-013, INDEX-014,
+NET-005 a NET-007, SEC-010, WATCH-007, WATCH-008 e os portes do upstream (#230, #234, #235). A checagem
+no pacote de 2026-11-02 fechou 16 tasks de uma vez (log do [S04](sprints/S04.md)). O que falta para
+fechar o M2:
 
 | Task | O que falta | Sprint |
 |---|---|---|
 | DESK-017 | Um dia inteiro de uso do pacote AUR, sem voltar a outro file manager | S04 |
-| DESK-015, DESK-018 a DESK-021, DESK-023, DESK-024 | Código no `main`; falta validar no build Linux (no dia da DESK-017) | S04 |
-| DESK-029 a DESK-033, DESK-035 | Código no `main` (#296, #298); falta validar no build Linux; DESK-033 precisa da senha real no polkit | S04 |
-| DESK-034 | Terminal embutido (F4) | S04 |
-| WATCH-006 | Conexão no login e `wing` no PATH, no pacote seguinte | S04 |
-| INDEX-010 | Checagem visual de seleção, tags e troca de biblioteca | S04 |
-| FORK-007 | Código no `main` (#231); falta conferir devices pareados com um peer real | S04 |
+| DESK-033 | Teste com a senha real no prompt do polkit | S04 |
+| WATCH-006 | Conexão no login com o pacote AUR (o `wing` já vai no pacote) | S04 |
+| INDEX-010 | Checagem visual de tags e troca de biblioteca | S04 |
 | DESK-013 | Revisão pt no Crowdin e verificação do pacote (passos 3 a 5) | S04 |
+| DESK-041, DESK-042 | Escape no View Settings, busca vazia e nomes acessíveis da barra (backlog) | — |
 | DESK-016 | Explorer com painel duplo (F3); exige tirar o shell do router de cada aba | S05 |
-| FORK-009 | Correções enviadas ao upstream (#3160 a #3162) | S05 |
 | DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
 
 O M2 fecha quando o DESK-000 estiver Done com evidência do pacote AUR e um dia inteiro de uso sem
@@ -82,12 +80,11 @@ Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
 
 - `TAURI-012` matriz de runtime em macOS e Windows (preparação no S05)
 - `CORE-014` abrir arquivos e "Abrir com" no macOS e no Windows (roda com a TAURI-012)
-- `FORK-002` identidade e release independentes do WingDrive: CI, release e imagem GHCR já rodam no
+- `REL-001` releases assinados com credenciais do WingDrive: CI, release e imagem GHCR já rodam no
   repositório; falta a assinatura (plano no S05)
-- `FORK-009` correções do WingDrive enviadas ao upstream (#3160 a #3162 em revisão)
 - Assinatura e instaladores por plataforma
-- `FILE-007` plano de preflight para copiar, mover e apagar (veio do item 7 da FORK-006)
-- `FILE-008` journal de jobs e undo para cópia, sobrescrita e lixeira (veio do item 7 da FORK-006)
+- `FILE-007` plano de preflight para copiar, mover e apagar (item 7 do levantamento do upstream de 14/10)
+- `FILE-008` journal de jobs e undo para cópia, sobrescrita e lixeira (item 7 do levantamento do upstream de 14/10)
 
 ## Later — M4: Integração entre dispositivos
 
@@ -125,6 +122,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-02 | WingDrive independente (#310): tasks FORK-* removidas do tracker (histórico no git); NET-007 herda o critério aberto da FORK-007, REL-001 (S05) a assinatura da FORK-002, FORK-009 descartada; levantamentos do upstream em `docs/design/history/`. S01 fechado com review e retro. Checagem no pacote fecha 16 tasks do S04 e acha DESK-039 a DESK-042; release 2.4.0 |
 | 2026-10-28 | #296 mergeado; S02 e S03 fechados com review e retro; sobras do S03 (DESK-021, DESK-023, DESK-024, WATCH-006, MOB-005, MOB-009) no S04; DESK-034 e as duas falhas da DESK-029 (emblema Git nos filhos e contagem da barra de status) entram no S04; DESK-016 ganha notas de desenho |
 | 2026-10-28 | S04: DESK-029 a DESK-033 e DESK-035 com código pronto (PRs #296 e #298), In Progress até a checagem no build Linux; visualização rápida de PDF, texto e código (#295); pdfjs-dist 6.4 fecha o alerta Dependabot 47 (#297); DESK-034 adiada |
 | 2026-10-17 | Revisão do app mobile no Moto G7 e no emulador: épico MOB-000 com 11 tasks em `.tasks/mobile/`; MOB-001 a MOB-005 puxadas para o S03 |

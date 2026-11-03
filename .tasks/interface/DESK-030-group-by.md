@@ -1,7 +1,7 @@
 ---
 id: DESK-030
 title: Group items by kind, date or size
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Low
@@ -36,7 +36,7 @@ into labelled sections by the sort key. WingDrive only sorts.
 - "Show in Groups" (`groupItems`) is a per-tab setting next to "Folders First". `GridView` and
   `ListView` publish the regrouped order with `setCurrentFiles`, so Shift ranges follow the screen;
   `GroupHeader` draws the section title and count.
-- Open: verification on the installed Linux package as part of DESK-017.
 
 - Runtime, 2026-11-02: isolated Linux Tauri debug build with more than 100 files and several size/date buckets. Grid and list showed groups, ascending and descending name order, and Shift+Down selected across group boundaries. Type, date and size grouping were checked in grid, including reversed date order.
 - Fixed name, date, size and type section order when folders-first and the selected sort direction disagreed. Fixed Shift+arrow range selection in the grid. `grouping.test.ts` covers the section order and virtualized row navigation.
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. "Show in Groups" split the grid into letter sections (A, B, D, …) and turning it off restored the flat grid.

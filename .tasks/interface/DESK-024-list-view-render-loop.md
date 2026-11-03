@@ -1,14 +1,14 @@
 ---
 id: DESK-024
 title: List view re-rendered the Explorer in an endless loop, making folder navigation take seconds
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
 sprint: S04
 tags: [interface, performance, bug]
-last_updated: 2026-10-28
+last_updated: 2026-11-02
 ---
 
 ## Description
@@ -32,7 +32,7 @@ The grid, media, column and size views publish memoized arrays and were not affe
 - [x] Grid cards and list rows take what they render as props, so selection and Explorer changes re-render only the items they concern
 - [x] Memoize the sidebar and split `SpaceItem` so its body ignores Explorer changes that do not affect it
 - [x] Keep the dnd-kit pointer sensor's identity across renders
-- [ ] Validate in the packaged release
+- [x] Validate in the packaged release
 
 ## Acceptance Criteria
 
@@ -56,6 +56,7 @@ The grid, media, column and size views publish memoized arrays and were not affe
   - Visible, 1902x1022, ten folder changes in `/home/bitter` (double-click, then Ctrl+ArrowLeft): installed 2.1.1 median 3107 ms and max 3241 ms; this build median 91 ms and max 240 ms.
 - `bun run typecheck` and all 20 CI frontend test files pass, including the new `useTable.test.tsx`. Rust tests were not run: no Rust code changed.
 - All test processes, the forwarder and the copied profile were removed. The user's app and daemon were not stopped or modified.
+- Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. List view, 8 alternating navigations: median 0.24 s from Enter to the new listing (WebDriver polling included). Idle WebKit renderer CPU over 10 s: 0.7% in list view, 1.2% in grid view.
 
 ## Per-navigation render cost (2026-10-27, second pass)
 

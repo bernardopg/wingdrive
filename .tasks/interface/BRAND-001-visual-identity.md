@@ -7,13 +7,13 @@ parent: TAURI-000
 priority: Medium
 milestone: M1
 sprint: S01
-tags: [branding, design, assets, fork]
+tags: [branding, design, assets]
 last_updated: 2026-10-02
 ---
 
 ## Description
 
-FORK-003 renamed every identifier, but part of the visual identity is still the upstream one: the purple/blue glossy orb (app logo, favicon, Android launcher, iOS icon variants, startup and About screens, intro videos) and the upstream file-kind icon pack. The current WingDrive mark is the purple wing at `packages/assets/images/WingDriveLogo.svg` (same art in `.github/logo.svg`, `docs/logo/wingdrive-logo.svg`, and the Tauri icons).
+The 2026-10-01 rename to `wing` changed every identifier, but part of the visual identity is still the upstream one: the purple/blue glossy orb (app logo, favicon, Android launcher, iOS icon variants, startup and About screens, intro videos) and the upstream file-kind icon pack. The current WingDrive mark is the purple wing at `packages/assets/images/WingDriveLogo.svg` (same art in `.github/logo.svg`, `docs/logo/wingdrive-logo.svg`, and the Tauri icons).
 
 Inventory made on 2026-10-01 by comparing each asset's last content change with the fork start (August 2026) and checking the images by eye.
 

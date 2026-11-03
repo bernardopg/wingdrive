@@ -8,12 +8,12 @@ priority: Medium
 milestone: M3
 tags: [files, operations, copy, delete, preview, upstream, port]
 last_updated: 2026-10-16
-related_tasks: [FORK-006, FILE-008, EXPL-003, DESK-018]
+related_tasks: [FILE-008, EXPL-003, DESK-018]
 ---
 
 ## Description
 
-Split from FORK-006 item 7 (upstream `3cd44f2da`). Before a copy, move or
+Split from item 7 of the 2026-10-14 upstream survey (upstream `3cd44f2da`). Before a copy, move or
 delete runs, the daemon answers a read-only plan built from the index: how
 many files and bytes, which destinations already exist and what the conflict
 policy will do to each, and, for delete, which files hold the last copy of

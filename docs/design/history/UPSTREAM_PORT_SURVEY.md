@@ -4,7 +4,7 @@ Survey of upstream Spacedrive (`spacedriveapp/spacedrive`, branch `main`)
 from the WingDrive fork point `6dfeccf21` (2026-07-28) to upstream
 `4d41a379f` (2026-10-13): 279 non-merge commits.
 
-FORK-005 (`.tasks/core/FORK-005-port-upstream-fixes.md`) already classified
+FORK-005 (task removed on 2026-11-02, see git history) already classified
 the first 243 commits and ported 12 of them (merged in #115). This survey
 classifies the 36 commits that landed after FORK-005, re-checks the
 FORK-005 "re-implement later" list, and re-checks earlier commits against
