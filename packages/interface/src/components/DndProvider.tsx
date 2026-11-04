@@ -38,6 +38,7 @@ import {
 	modifierKeysNow,
 	useModifierKeyTracker,
 } from "../hooks/useModifierKeys";
+import { alreadyIn, guessDropOperation } from "./dropTarget";
 
 /**
  * DndProvider - Global drag-and-drop coordinator
@@ -109,20 +110,6 @@ function holdScrollLeft(target: EventTarget | null): () => void {
 			for (const [el, left] of held) el.scrollLeft = left;
 			document.removeEventListener("scroll", restore, true);
 		});
-}
-
-/** Whether every dragged file already sits directly in the destination folder. */
-function alreadyIn(dragData: any, destination: WingPath): boolean {
-	if (!("Physical" in destination)) return false;
-	const dragged: File[] = dragData.selectedFiles ?? [dragData.file];
-	const folder = destination.Physical.path.replace(/\/+$/, "") || "/";
-	return dragged.every((file) => {
-		const path = file.wing_path;
-		if (!("Physical" in path)) return false;
-		if (path.Physical.device_slug !== destination.Physical.device_slug) return false;
-		const parent = path.Physical.path.slice(0, path.Physical.path.lastIndexOf("/")) || "/";
-		return parent === folder;
-	});
 }
 
 export function DndProvider({ children }: { children: React.ReactNode }) {
@@ -227,14 +214,8 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	// Opens the copy/move dialog for the dragged files and a destination folder.
-	const dropFilesInto = (dragData: any, target: WingPath) => {
+	const dropFilesInto = (dragData: any, destination: WingPath) => {
 		const dragged: File[] = dragData.selectedFiles ?? [dragData.file];
-		// Explorer URLs, and so the split-view pane targets, name this device
-		// "local"; files carry its real slug. Compare them as the same device.
-		const destination: WingPath =
-			"Physical" in target && target.Physical.device_slug === "local" && localSlug
-				? { Physical: { ...target.Physical, device_slug: localSlug } }
-				: target;
 		// A virtual entry stands for a whole location, volume or device root;
 		// dragging it along with real files must not move that root.
 		if (!selectionCapabilities(dragged).canCopy) {
@@ -243,22 +224,14 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 		}
 		const sources: WingPath[] = dragged.map((f) => f.wing_path);
 		// Dropping files on the pane that already shows their folder is not a move.
-		if (sources.every((source) => isDirectChild(source, destination))) return;
+		if (alreadyIn(dragged, destination, localSlug)) return;
 
 		// Native file managers move within a volume and copy across volumes;
 		// copying by default silently duplicated files during reorganization.
-		// "Same volume" is approximated by matching device slugs on physical
-		// paths; Ctrl or Shift overrides the guess, and the operation can
-		// still be switched in the dialog.
-		const sourceDevice =
-			"Physical" in dragData.sdPath
-				? dragData.sdPath.Physical.device_slug
-				: null;
-		const targetDevice =
-			"Physical" in destination ? destination.Physical.device_slug : null;
-		const sameVolume = sourceDevice !== null && sourceDevice === targetDevice;
+		// "Same volume" is approximated by the device; Ctrl or Shift overrides
+		// the guess, and the operation can still be switched in the dialog.
 		const operation = dropOperation(
-			sameVolume ? "move" : "copy",
+			guessDropOperation(dragData.sdPath, destination, localSlug),
 			modifierKeysNow(),
 		);
 
@@ -286,7 +259,8 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			const destination = over.data.current.targetPath as WingPath | null;
 			// The hover switch can make the target the source's own tab; files
 			// already in that folder have nowhere to go.
-			if (destination && !alreadyIn(dragData, destination)) {
+			const dragged: File[] = dragData.selectedFiles ?? [dragData.file];
+			if (destination && !alreadyIn(dragged, destination, localSlug)) {
 				dropFilesInto(dragData, destination);
 			}
 			return;
@@ -627,12 +601,4 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			</DragOverlay>
 		</DndContext>
 	);
-}
-
-/** Whether `path` sits directly in the folder `folder`. */
-function isDirectChild(path: WingPath, folder: WingPath): boolean {
-	if (!("Physical" in path) || !("Physical" in folder)) return false;
-	if (path.Physical.device_slug !== folder.Physical.device_slug) return false;
-	const parent = path.Physical.path.replace(/\/+$/, "").replace(/\/[^/]*$/, "") || "/";
-	return parent === (folder.Physical.path.replace(/\/+$/, "") || "/");
 }
