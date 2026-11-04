@@ -3,13 +3,16 @@
 use crate::{
 	domain::addressing::WingPathBatch,
 	infra::job::{generic_progress::GenericProgress, prelude::*},
+	ops::indexing::{ephemeral::responder, rules::RuleToggles},
 };
 use serde::{Deserialize, Serialize};
 use std::{
-	path::PathBuf,
+	collections::HashMap,
+	path::{Path, PathBuf},
 	time::{Duration, Instant},
 };
 use tokio::fs;
+use wing_fs_watcher::FsEvent;
 
 use super::routing::DeleteStrategyRouter;
 
@@ -144,6 +147,13 @@ impl JobHandler for DeleteJob {
 		let failed_count = results.len() - deleted_count;
 		let total_bytes: u64 = results.iter().map(|r| r.bytes_freed).sum();
 
+		let deleted_paths: Vec<PathBuf> = results
+			.iter()
+			.filter(|r| r.success)
+			.filter_map(|r| r.path.as_local_path().map(|p| p.to_path_buf()))
+			.collect();
+		forget_in_ephemeral_index(&ctx, deleted_paths).await;
+
 		let failed_deletions: Vec<DeleteError> = results
 			.into_iter()
 			.filter(|r| !r.success)
@@ -193,6 +203,43 @@ impl JobHandler for DeleteJob {
 			failed_deletions,
 			mode: self.mode.clone(),
 		})
+	}
+}
+
+/// Drops deleted paths from the in-memory index of browsed folders.
+///
+/// Listings of folders outside a location are served from that index, which
+/// the watcher updates one event at a time and skips when its channel lags.
+/// The explorer refreshes as soon as the job reports completion, so without
+/// this step it read the index before the removals landed and the deleted
+/// rows stayed on screen.
+async fn forget_in_ephemeral_index(ctx: &JobContext<'_>, paths: Vec<PathBuf>) {
+	if paths.is_empty() {
+		return;
+	}
+	let context = ctx.library().core_context().clone();
+
+	let mut by_parent: HashMap<PathBuf, Vec<FsEvent>> = HashMap::new();
+	for path in paths {
+		let Some(parent) = path.parent().map(Path::to_path_buf) else {
+			continue;
+		};
+		by_parent
+			.entry(parent)
+			.or_default()
+			.push(FsEvent::remove(path));
+	}
+
+	for (parent, events) in by_parent {
+		if let Err(error) =
+			responder::apply_batch(&context, &parent, events, RuleToggles::default()).await
+		{
+			tracing::warn!(
+				%error,
+				parent = %parent.display(),
+				"Could not drop deleted files from the ephemeral index"
+			);
+		}
 	}
 }
 

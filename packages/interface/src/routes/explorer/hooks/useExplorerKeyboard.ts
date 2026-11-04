@@ -164,7 +164,7 @@ export function useExplorerKeyboard() {
 		{enabled: capabilities.canRename && !isRenaming}
 	);
 
-	// Tag mode: T key enters tag assignment mode
+	// Tag mode: Alt+G enters tag assignment mode
 	useKeybind(
 		'explorer.enterTagMode',
 		() => {

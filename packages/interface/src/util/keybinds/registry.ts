@@ -296,11 +296,13 @@ export const explorerKeybinds = {
 		scope: 'explorer'
 	}),
 
-	// Tag mode
+	// Tag mode. A bare letter belongs to typeahead, which jumps to the first
+	// file whose name starts with the typed letters, and Alt+T focuses the
+	// notifications.
 	enterTagMode: defineKeybind({
 		id: 'explorer.enterTagMode',
 		label: 'Enter Tag Mode',
-		combo: {modifiers: [], key: 't'},
+		combo: {modifiers: ['Alt'], key: 'g'},
 		scope: 'explorer'
 	}),
 
