@@ -41,7 +41,7 @@ export function JobRow({ job, onPause, onResume, onCancel }: JobRowProps) {
 	};
 
 	// Format progress percentage
-	const progressPercent = Math.round(job.progress * 100);
+	const progressPercent = Math.round((job.progress ?? 0) * 100);
 
 	// Get phase and message
 	const phase = job.current_phase;

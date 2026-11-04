@@ -248,7 +248,7 @@ mod tests {
 	macro_rules! create_tests {
 		(($sample1:expr, $sample2:expr), $($item_type:ty),*) => {
 			$(
-				paste::paste! {
+				pastey::paste! {
 					#[test]
 					fn [<eq_ $item_type:lower>]() {
 						let x: $item_type = $sample1;

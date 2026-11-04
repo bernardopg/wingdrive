@@ -1,4 +1,4 @@
-import type { JsonValue, ExtendedJobListItem, GenericProgress } from "@wingdrive/ts-client";
+import type { Value as JsonValue, ExtendedJobListItem, GenericProgress } from "@wingdrive/ts-client";
 import { i18n } from "../../i18n";
 
 // Re-export for backwards compatibility
@@ -119,7 +119,7 @@ export function getJobSubtext(job: JobListItem): string {
           : JSON.stringify(job.current_path);
         return pathStr;
       }
-      return job.progress > 0 ? `${Math.round(job.progress * 100)}%` : i18n.t("dialogs:jobs.processing");
+      return (job.progress ?? 0) > 0 ? `${Math.round((job.progress ?? 0) * 100)}%` : i18n.t("dialogs:jobs.processing");
     }
     case "completed":
       return i18n.t("dialogs:jobs.completed");
@@ -142,7 +142,7 @@ export function getJobSubtext(job: JobListItem): string {
 export function getStatusBadge(job: JobListItem): string {
   switch (job.status) {
     case "running":
-      return `${Math.round(job.progress * 100)}%`;
+      return `${Math.round((job.progress ?? 0) * 100)}%`;
     case "completed":
       return i18n.t("dialogs:jobs.completed");
     case "failed":

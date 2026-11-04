@@ -540,9 +540,9 @@ dependencies = [
 
 [[package]]
 name = "async-executor"
-version = "1.14.0"
+version = "1.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c96bf972d85afc50bf5ab8fe2d54d1586b4e0b46c97c50a0c9e71e2f7bcd812a"
+checksum = "f426a31126c735126297bc5ea7a521263c9faff4f63ca415267ee625651c4f37"
 dependencies = [
  "async-task",
  "concurrent-queue",
@@ -807,7 +807,7 @@ dependencies = [
  "log",
  "num-rational",
  "num-traits",
- "pastey",
+ "pastey 0.1.1",
  "rayon",
  "thiserror 2.0.21",
  "v_frame",
@@ -2254,16 +2254,6 @@ dependencies = [
 
 [[package]]
 name = "ctor"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec09e802f5081de6157da9a75701d6c713d8dc3ba52571fd4bd25f412644e8a6"
-dependencies = [
- "ctor-proc-macro",
- "dtor",
-]
-
-[[package]]
-name = "ctor"
 version = "1.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "914a755b7c2d4af2bdcff7ce1739e2db9a1b81a9b07123d8015786ae03c0980d"
@@ -2271,12 +2261,6 @@ dependencies = [
  "link-section",
  "linktime-proc-macro",
 ]
-
-[[package]]
-name = "ctor-proc-macro"
-version = "0.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2931af7e13dc045d8e9d26afccc6fa115d64e115c9c84b1166288b46f6782c2"
 
 [[package]]
 name = "ctr"
@@ -2816,21 +2800,6 @@ checksum = "cd1511a7b6a56299bd043a9c167a6d2bfb37bf84a6dfceaba651168adfb43c87"
 dependencies = [
  "dtoa",
 ]
-
-[[package]]
-name = "dtor"
-version = "0.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97cbdf2ad6846025e8e25df05171abfb30e3ababa12ee0a0e44b9bbe570633a8"
-dependencies = [
- "dtor-proc-macro",
-]
-
-[[package]]
-name = "dtor-proc-macro"
-version = "0.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7454e41ff9012c00d53cf7f475c5e3afa3b91b7c90568495495e8d9bf47a1055"
 
 [[package]]
 name = "dunce"
@@ -7272,7 +7241,7 @@ version = "0.59.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46081824c74bac9f68f0bc4408077f77b0e315c006514719c97af1c2227ac2d2"
 dependencies = [
- "ctor 1.0.13",
+ "ctor",
  "opendal-core",
  "opendal-http-transport-reqwest",
  "opendal-layer-concurrent-limit",
@@ -7793,6 +7762,12 @@ name = "pastey"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35fb2e5f958ec131621fdd531e9fc186ed768cbe395337403ae56c17a74c68ec"
+
+[[package]]
+name = "pastey"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ee67f1008b1ba2321834326597b8e186293b049a023cdef258527550b9935b4"
 
 [[package]]
 name = "pbkdf2"
@@ -10764,12 +10739,12 @@ dependencies = [
 
 [[package]]
 name = "specta"
-version = "2.0.0-rc.22"
-source = "git+https://github.com/jamiepine/specta?branch=main#9bfc2a4e3ec1a70ddaaffc86cb75281325a18e25"
+version = "2.0.0-rc.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "81633014710ece1c7e8ac99e1bc9ad8d4339a2ccbae89ca2aa1095d4262c86b8"
 dependencies = [
  "chrono",
- "ctor 0.4.3",
- "serde",
+ "rustc_version",
  "serde_json",
  "specta-macros",
  "uuid",
@@ -10777,8 +10752,9 @@ dependencies = [
 
 [[package]]
 name = "specta-macros"
-version = "2.0.0-rc.18"
-source = "git+https://github.com/jamiepine/specta?branch=main#9bfc2a4e3ec1a70ddaaffc86cb75281325a18e25"
+version = "2.0.0-rc.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fe882a75f48f76ac091ca2c5aaad7abd4dfdedf649c08e865bb0d62b5a2cb92"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -10788,30 +10764,41 @@ dependencies = [
 
 [[package]]
 name = "specta-serde"
-version = "0.0.9"
-source = "git+https://github.com/jamiepine/specta?branch=main#9bfc2a4e3ec1a70ddaaffc86cb75281325a18e25"
+version = "0.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a75ee5142f81ca1e0046b16c09d0f5a36c75884802da3f0281f78bfe221e559"
 dependencies = [
  "specta",
+ "specta-macros",
 ]
 
 [[package]]
 name = "specta-swift"
-version = "0.0.1"
-source = "git+https://github.com/jamiepine/specta?branch=main#9bfc2a4e3ec1a70ddaaffc86cb75281325a18e25"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e299ec4f7a9fb1fe4e167605966e6c8d0d21efb1beec30fd78df292e72abc03"
 dependencies = [
  "serde",
  "specta",
- "specta-serde",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
 name = "specta-typescript"
-version = "0.0.9"
-source = "git+https://github.com/jamiepine/specta?branch=main#9bfc2a4e3ec1a70ddaaffc86cb75281325a18e25"
+version = "0.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a113bb506b00463cfb54c5819e55ec081bc7d52ef463d7726181e9073cd473a"
 dependencies = [
  "specta",
- "specta-serde",
+]
+
+[[package]]
+name = "specta-util"
+version = "0.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6df073177e00bb59cf7e8147ac147c451f51a21a4858100d6d74baf0e6fe3bc2"
+dependencies = [
+ "specta",
 ]
 
 [[package]]
@@ -11790,7 +11777,7 @@ dependencies = [
  "anyhow",
  "brotli",
  "cargo_metadata",
- "ctor 1.0.13",
+ "ctor",
  "dom_query",
  "dunce",
  "glob",
@@ -14223,6 +14210,7 @@ dependencies = [
  "specta-serde",
  "specta-swift",
  "specta-typescript",
+ "specta-util",
  "sqlx",
  "strum",
  "supports-color",
@@ -14271,7 +14259,7 @@ dependencies = [
  "futures",
  "generic-array 1.4.5",
  "hex",
- "paste",
+ "pastey 0.2.3",
  "rand 0.10.3",
  "rand_chacha 0.10.0",
  "rand_core 0.10.1",

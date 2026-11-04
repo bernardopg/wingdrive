@@ -1,6 +1,7 @@
 [package]
 edition = "2021"
 name    = "wing-core"
+license.workspace = true
 version = "2.4.1"
 autobins = true
 
@@ -53,17 +54,16 @@ serde_json = "1.0"
 
 # HTTP client (for model downloads)
 reqwest = { version = "0.13", features = ["stream"] }
-specta = { git = "https://github.com/jamiepine/specta", branch = "main", features = [
+specta = { workspace = true, features = [
 	"chrono",
 	"derive",
-	"export",
-	"serde",
 	"serde_json",
 	"uuid"
 ] }
-specta-serde = { git = "https://github.com/jamiepine/specta", branch = "main" }
-specta-swift = { git = "https://github.com/jamiepine/specta", branch = "main" }
-specta-typescript = { git = "https://github.com/jamiepine/specta", branch = "main" }
+specta-serde = "=0.0.14"
+specta-swift = "=0.0.5"
+specta-typescript = "=0.0.14"
+specta-util = "=0.0.14"
 strum = { version = "0.28", features = ["derive"] }
 toml = "1.1"
 hostname = "^0.4"

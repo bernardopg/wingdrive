@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// Generate Swift code directly from the API structure (similar to rspc's TypeScript generation)
 fn generate_swift_api_code(
 	api_structure: &wing_core::infra::wire::type_extraction::WingDriveApiStructure,
-	types: &specta::TypeCollection,
+	types: &specta::Types,
 ) -> Result<String, Box<dyn std::error::Error>> {
 	let mut swift_code = String::new();
 
@@ -81,14 +81,10 @@ fn generate_swift_api_code(
 	);
 
 	// Generate all types using Specta Swift (single export call with deduplication)
-	let mut swift = specta_swift::Swift::new()
+	let swift = specta_swift::Swift::new()
 		.header("")
 		.naming(specta_swift::NamingConvention::PascalCase)
-		.optionals(specta_swift::OptionalStyle::QuestionMark)
-		.struct_naming(specta_swift::StructNamingStrategy::AutoRename); // Explicit struct naming
-
-	// Enable initializer generation for structs
-	swift.generate_initializers = true;
+		.optionals(specta_swift::OptionalStyle::QuestionMark);
 
 	// Debug: Print specta-swift version/features to verify we're using the right code
 	println!("Using specta-swift with fixes:");
@@ -97,7 +93,7 @@ fn generate_swift_api_code(
 	println!("  • Adjacently tagged enums: Fixed");
 	println!("  • Enum struct variants: Fixed");
 
-	let individual_types = swift.export(types)?;
+	let individual_types = swift.export(types, specta_serde::Format)?;
 
 	// Debug: Check for known issues in the generated code
 	if individual_types.contains("case number(    case") {

@@ -1,0 +1,62 @@
+# cargo-deny policy for the Rust workspace. CI runs `cargo deny check` on every change to a
+# Cargo manifest or the lockfile (.github/workflows/dependencies.yml).
+#
+# - sources: every crate comes from crates.io. A git dependency pinned to a fork branch
+#   froze specta at 2.0.0-rc.22 for months while upstream moved on; a new git source now
+#   fails the check instead. Add an exception below only with the reason next to it.
+# - advisories: RustSec, the same database `cargo audit` reads. The ignores mirror
+#   .cargo/audit.toml, where each one is explained.
+# - licenses: the licenses found in the dependency tree on 2026-11-04. A new license fails
+#   the check so it gets a look before it ships.
+
+[graph]
+all-features = false
+
+[advisories]
+# Only direct dependencies fail on "unmaintained"; for transitive ones the fix belongs upstream.
+unmaintained = "workspace"
+ignore = [
+	"RUSTSEC-2023-0071", # rsa via opendal's reqsign, see .cargo/audit.toml
+	"RUSTSEC-2026-0344", # ruzstd via wasmer-compiler, see .cargo/audit.toml
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
+
+[bans]
+# Duplicate versions are common in a tree this size; report them without failing.
+multiple-versions = "allow"
+wildcards = "allow"
+
+[licenses]
+confidence-threshold = 0.9
+# Dual-licensed crates (`Apache-2.0 OR GPL-2.0-only`, `MIT OR LGPL-2.1-or-later`) resolve to the
+# permissive side, so no copyleft license is on the list.
+allow = [
+	"0BSD",
+	"Apache-2.0",
+	"Apache-2.0 WITH LLVM-exception",
+	"BSD-1-Clause",
+	"BSD-2-Clause",
+	"BSD-3-Clause",
+	"BSL-1.0",
+	"CC0-1.0",
+	"CDLA-Permissive-2.0",
+	"ISC",
+	"MIT",
+	"MIT-0",
+	"MPL-2.0",
+	"NCSA",
+	"Unicode-3.0",
+	"Unlicense",
+	"WTFPL",
+	"Zlib",
+	"bzip2-1.0.6",
+]
+
+# Workspace crates are not published to crates.io and carry the repository's license.
+[licenses.private]
+ignore = true

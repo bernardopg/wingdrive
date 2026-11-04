@@ -3,8 +3,6 @@
 # Left out on purpose:
 # - apps/mobile/android and apps/mobile/ios: `expo prebuild --clean` regenerates them,
 #   so Expo SDK upgrades own their Gradle and CocoaPods versions.
-# - apps/tauri/crates/*/Package.swift: they track the swift-rs `specta` branch, and
-#   Dependabot only updates versioned Swift packages.
 # - apps/server/docker-compose.yml: it builds the local Dockerfile and pins no image.
 # - adapters/*.py: standard library only, no requirements file.
 #
@@ -124,6 +122,22 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+
+  # swift-rs is pinned to the release its Rust crate uses (Cargo.lock); bump both together.
+  - package-ecosystem: swift
+    directories:
+      - /apps/tauri/crates/macos
+      - /apps/tauri/crates/file-opening-macos
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(deps)
+    cooldown:
+      default-days: 3
 
   - package-ecosystem: docker
     directory: /apps/server
