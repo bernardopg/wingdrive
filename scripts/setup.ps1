@@ -77,18 +77,22 @@ $wingetValidExit = 0, -1978335189, -1978335153, -1978335135
 # Currently LLVM >= 16 is not supported due to incompatibilities with ffmpeg-sys-next
 # See https://github.com/bernardopg/wingdrive/issues/677
 $llvmVersion = [Version]'15.0.7'
+$libclangDir = "$env:SystemDrive\libclang"
 
 Write-Host 'WingDrive Development Environment Setup' -ForegroundColor Magenta
 Write-Host @"
 
 To set up your machine for WingDrive development, this script will do the following:
-1) Install Windows C++ build tools
-2) Install Edge Webview 2
-3) Install Rust and Cargo
-4) Install Rust tools
-5) Install Strawberry perl (used by to build the openssl-sys crate)
-6) Install Node.js and Bun
-7) Install LLVM $llvmVersion (compiler for ffmpeg-sys-next crate)
+1) Enable long paths and Developer Mode, and exclude target\ from Defender scans
+2) Install Windows C++ build tools
+3) Install Edge Webview 2
+4) Install Rust and Cargo
+5) Install Rust tools
+6) Install Nasm, CMake and 7-Zip
+7) Install Strawberry perl (used by to build the openssl-sys crate)
+8) Install Node.js (when missing) and Bun
+9) Install libclang $llvmVersion (used by bindgen for the ffmpeg-sys-next crate)
+10) Add Git's sh to the PATH (just runs its recipes with it)
 "@
 
 # Install System dependencies (GitHub Actions already has all of those installed)
@@ -117,6 +121,24 @@ https://learn.microsoft.com/windows/package-manager/winget/
 
     Write-Host
     Read-Host 'Press Enter to continue'
+
+    Write-Host
+    Write-Host 'Configuring Windows for development...' -ForegroundColor Yellow
+    # Build scripts write below target\ at depths that pass the 260 character limit.
+    Set-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name LongPathsEnabled -Value 1 -Type DWord
+    # Without Developer Mode, creating a symlink needs an elevated process.
+    $appModelUnlock = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock'
+    if (-not (Test-Path $appModelUnlock)) {
+        New-Item -Path $appModelUnlock -Force | Out-Null
+    }
+    Set-ItemProperty $appModelUnlock -Name AllowDevelopmentWithoutDevLicense -Value 1 -Type DWord
+    # Real-time scans of build output slow down compilation and linking.
+    New-Item -ItemType Directory -Force -Path "$projectRoot\target" | Out-Null
+    try {
+        Add-MpPreference -ExclusionPath "$projectRoot\target" -ErrorAction Stop
+    } catch {
+        Write-Host "Could not add a Defender exclusion for target\: $_" -ForegroundColor DarkYellow
+    }
 
     # TODO: Force update Visual Studio build tools
     Write-Host
@@ -160,6 +182,26 @@ https://learn.microsoft.com/windows/package-manager/winget/
     } else {
         $LASTEXITCODE = 0
     }
+    # The Nasm installer does not touch the PATH.
+    Add-DirectoryToPath "$env:ProgramFiles\NASM"
+
+    Write-Host
+    Write-Host 'Installing CMake...' -ForegroundColor Yellow
+    winget install -e --accept-source-agreements --disable-interactivity --scope machine --id Kitware.CMake
+    if (-not ($wingetValidExit -contains $LASTEXITCODE)) {
+        Exit-WithError 'Failed to install CMake'
+    } else {
+        $LASTEXITCODE = 0
+    }
+
+    Write-Host
+    Write-Host 'Installing 7-Zip...' -ForegroundColor Yellow
+    winget install -e --accept-source-agreements --disable-interactivity --id 7zip.7zip
+    if (-not ($wingetValidExit -contains $LASTEXITCODE)) {
+        Exit-WithError 'Failed to install 7-Zip'
+    } else {
+        $LASTEXITCODE = 0
+    }
 
     Write-Host
     Write-Host 'Installing Strawberry perl...' -ForegroundColor Yellow
@@ -169,6 +211,12 @@ https://learn.microsoft.com/windows/package-manager/winget/
     } else {
         $LASTEXITCODE = 0
     }
+    # Strawberry's c\bin ships MinGW gcc, cmake and nasm, and the machine PATH wins over the user PATH.
+    # Only perl is needed, and those tools would shadow the MSVC toolchain and the versions above.
+    $machinePath = [System.Environment]::GetEnvironmentVariable('Path', 'Machine').Split([IO.Path]::PathSeparator) |
+        Where-Object { $_ -and ($_ -ne "$env:SystemDrive\Strawberry\c\bin") }
+    [System.Environment]::SetEnvironmentVariable('Path', ($machinePath -join [IO.Path]::PathSeparator), 'Machine')
+    Reset-Path
 
     Write-Host
     Write-Host 'Installing NodeJS...' -ForegroundColor Yellow
@@ -180,42 +228,60 @@ https://learn.microsoft.com/windows/package-manager/winget/
         Exit-WithError "Current Node.JS version: $currentNodeVersion (required: $enginesNodeVersion)" `
             'Uninstall the current version of Node.JS and run this script again'
     }
-    # Install Node.JS
-    winget install -e --accept-source-agreements --disable-interactivity --id OpenJS.NodeJS
-    if (-not ($wingetValidExit -contains $LASTEXITCODE)) {
-        Exit-WithError 'Failed to install NodeJS'
-    } else {
-        $LASTEXITCODE = 0
+    # Leave a compatible Node.JS alone, so the script never replaces the version you chose.
+    if (-not $currentNode) {
+        winget install -e --accept-source-agreements --disable-interactivity --id OpenJS.NodeJS
+        if (-not ($wingetValidExit -contains $LASTEXITCODE)) {
+            Exit-WithError 'Failed to install NodeJS'
+        } else {
+            $LASTEXITCODE = 0
+        }
+        # Add NodeJS to the PATH
+        Add-DirectoryToPath "$env:SystemDrive\Program Files\nodejs"
     }
-    # Add NodeJS to the PATH
-    Add-DirectoryToPath "$env:SystemDrive\Program Files\nodejs"
 
     Write-Host
-    Write-Host 'Checking for LLVM...' -ForegroundColor Yellow
-    # Check if LLVM is already installed and if it's compatible with the project
-    $currentLLVMVersion = if ("$(winget list -e --disable-interactivity --id LLVM.LLVM)" -match '(?sm)LLVM.LLVM\s+(\d+(\.\d+)*)') { [Version]$matches[1] } else { $null }
-    if ($currentLLVMVersion -and $currentLLVMVersion.Major -gt $llvmVersion.Major) {
-        Exit-WithError "Current LLVM version: $currentLLVMVersion (required: $llvmVersion)" `
-            'Uninstall the current version of LLVM and run this script again'
+    Write-Host 'Checking for libclang...' -ForegroundColor Yellow
+    # Only libclang.dll is needed, as in .github/actions/setup-system. A full LLVM on the PATH exposes
+    # clang-cl.exe, which makes aws-lc-sys mis-detect __builtin_bswap and fail to link with MSVC.
+    if (-not (Test-Path "$libclangDir\libclang.dll" -PathType Leaf)) {
+        $llvmInstaller = Join-Path $env:TEMP "LLVM-$llvmVersion-win64.exe"
+        curl.exe -fsSL -C - --retry 5 --retry-all-errors -o "$llvmInstaller" "https://github.com/llvm/llvm-project/releases/download/llvmorg-$llvmVersion/LLVM-$llvmVersion-win64.exe"
+        if ($LASTEXITCODE -ne 0) {
+            Exit-WithError 'Failed to download LLVM'
+        }
+        New-Item -ItemType Directory -Force -Path $libclangDir | Out-Null
+        & "$env:ProgramFiles\7-Zip\7z.exe" e "$llvmInstaller" "-o$libclangDir" 'bin\libclang.dll' -r -y | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Exit-WithError 'Failed to extract libclang.dll'
+        }
+        Remove-Item -LiteralPath $llvmInstaller -Force
     }
-    # Install LLVM
-    winget install -e --accept-source-agreements --disable-interactivity --id LLVM.LLVM --version "$llvmVersion"
-    if (-not ($wingetValidExit -contains $LASTEXITCODE)) {
-        Exit-WithError 'Failed to install NodeJS'
-    } else {
-        $LASTEXITCODE = 0
-    }
-    # Add LLVM to the PATH
-    Add-DirectoryToPath "$env:SystemDrive\Program Files\LLVM\bin"
+    [System.Environment]::SetEnvironmentVariable('LIBCLANG_PATH', $libclangDir, 'User')
+    $env:LIBCLANG_PATH = $libclangDir
+
+    # just runs its recipes with sh by default.
+    Add-DirectoryToPath "$env:ProgramFiles\Git\bin"
 
     # Reset Path to ensure that executable installed above are available to rest of the script
     Reset-Path
 
     Write-Host
-    Write-Host 'Installing Rust MSVC Toolchain...' -ForegroundColor Yellow
-    rustup toolchain install stable-msvc
+    Write-Host 'Installing the pinned Rust toolchain...' -ForegroundColor Yellow
+    # rustup reads the version from rust-toolchain.toml.
+    Set-Location $projectRoot
+    rustup toolchain install
     if ($LASTEXITCODE -ne 0) {
-        Exit-WithError 'Failed to install Rust MSVC Toolchain'
+        Exit-WithError 'Failed to install the Rust toolchain'
+    }
+
+    Write-Host
+    Write-Host 'Installing just...' -ForegroundColor Yellow
+    winget install -e --accept-source-agreements --disable-interactivity --id Casey.Just
+    if (-not ($wingetValidExit -contains $LASTEXITCODE)) {
+        Exit-WithError 'Failed to install just'
+    } else {
+        $LASTEXITCODE = 0
     }
 
     Write-Host
@@ -232,20 +298,15 @@ https://learn.microsoft.com/windows/package-manager/winget/
     $enginesBunVersion = if ($packageJson.engines.bun -match '(?sm)(\d+(\.\d+)*)') { [Version]$matches[1] } else { $null }
 
     if (-not $currentBunVersion) {
-        # Install Bun using PowerShell installer
-        Write-Host 'Downloading and installing Bun...' -ForegroundColor Cyan
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-Expression "& { $(Invoke-RestMethod https://bun.sh/install.ps1) }"
-        $ProgressPreference = 'Continue'
-        
-        if (-not $?) {
+        # Install the version pinned by packageManager in package.json
+        $pinnedBunVersion = $packageJson.packageManager -replace '^bun@', ''
+        winget install -e --accept-source-agreements --disable-interactivity --id Oven-sh.Bun --version "$pinnedBunVersion"
+        if (-not ($wingetValidExit -contains $LASTEXITCODE)) {
             Exit-WithError 'Failed to install Bun'
+        } else {
+            $LASTEXITCODE = 0
         }
-
-        # Add Bun to the PATH
-        if (Test-Path "$env:USERPROFILE\.bun\bin" -PathType Container) {
-            Add-DirectoryToPath "$env:USERPROFILE\.bun\bin"
-        }
+        Reset-Path
     } elseif ($currentBunVersion -and $enginesBunVersion -and $currentBunVersion.CompareTo($enginesBunVersion) -lt 0) {
         Exit-WithError "Current Bun version: $currentBunVersion (required: $enginesBunVersion)" `
             'Uninstall the current version of Bun and run this script again'

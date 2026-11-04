@@ -24,6 +24,27 @@ It never uses `~/.wingdrive` or the legacy `~/.spacedrive` directory. Keep
 production WingDrive closed only when you need to avoid network discovery or
 other shared external services. Its local data and daemon port remain separate.
 
+## Windows
+
+Run `.\scripts\setup.ps1` once, then `bun install`. The script asks for
+elevation, installs the toolchain and runs `cargo xtask setup`. See
+[Windows Development](./windows-development) for the full setup and known
+differences.
+
+Keep the repository outside OneDrive, for example in `C:\dev\Wingdrive`.
+`target/` grows past 250 GB, and a synced folder would upload all of it.
+
+`just dev-desktop` runs `scripts\dev-isolated.ps1` on Windows. The default state
+root is `%LOCALAPPDATA%\wingdrive-dev`, and `WINGDRIVE_DEV_ROOT` and
+`WINGDRIVE_DEV_INSTANCE` work as described below.
+
+`just` runs its other recipes with Git's `sh`, so `C:\Program Files\Git\bin`
+must be on the PATH. `bash` in PowerShell resolves to WSL when it is installed,
+so run the shell scripts through `just` or from Git Bash.
+
+Install only `libclang.dll` for bindgen, and set `LIBCLANG_PATH`. Do not put a
+full LLVM on the PATH: `clang-cl.exe` makes `aws-lc-sys` fail to link with MSVC.
+
 ## Custom disposable state
 
 Set `WINGDRIVE_DEV_ROOT` to keep a scenario separate from normal development

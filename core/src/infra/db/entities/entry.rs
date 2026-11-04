@@ -739,7 +739,9 @@ impl Model {
 				.one(db)
 				.await?
 			{
-				Some(parent_path) => format!("{}/{}", parent_path.path, name),
+				Some(parent_path) => {
+					crate::domain::addressing::join_entry_path(&parent_path.path, name)
+				}
 				None => {
 					// Parent path not found yet - might be syncing out of order
 					// This will be fixed by bulk rebuild after backfill completes

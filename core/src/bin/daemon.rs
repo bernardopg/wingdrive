@@ -36,9 +36,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let args = Args::parse();
 
 	// Resolve base data directory
-	let base_data_dir = args
-		.data_dir
-		.unwrap_or(wing_core::config::default_data_dir()?);
+	// Only resolve the default when needed: it creates the production directory.
+	let base_data_dir = match args.data_dir {
+		Some(data_dir) => data_dir,
+		None => wing_core::config::default_data_dir()?,
+	};
 
 	// Calculate instance-specific data directory and socket address
 	let (data_dir, socket_addr) = if let Some(instance) = args.instance {

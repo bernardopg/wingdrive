@@ -11,6 +11,11 @@
 //! The XDG variables are overridden alongside `$HOME` because `dirs::config_dir`
 //! prefers `XDG_CONFIG_HOME` when it is set. Without that the test would read
 //! the developer's real config directory.
+//!
+//! Unix only: on Windows `dirs` asks the Known Folder API and ignores `$HOME`, so
+//! this would run against the real profile. The same decisions run on every
+//! platform as unit tests in `wing-branding`.
+#![cfg(unix)]
 
 use std::fs;
 use std::path::Path;

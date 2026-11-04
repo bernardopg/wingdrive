@@ -364,11 +364,7 @@ impl LibraryQuery for MediaListingQuery {
 
 			// Construct full file path
 			let entry_wing_path = if let Some(dir_path) = directory_path {
-				let full_path = if dir_path.ends_with('/') {
-					format!("{}{}", dir_path, full_name)
-				} else {
-					format!("{}/{}", dir_path, full_name)
-				};
+				let full_path = crate::domain::addressing::join_entry_path(&dir_path, &full_name);
 
 				match &self.input.path {
 					WingPath::Physical { device_slug, .. } => WingPath::Physical {

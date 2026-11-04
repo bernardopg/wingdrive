@@ -12,7 +12,7 @@
  * 180s, which a cold daemon build exceeds.
  */
 import {execSync, spawn} from 'child_process';
-import {existsSync} from 'fs';
+import {copyFileSync, existsSync} from 'fs';
 import {platform} from 'os';
 import {dirname, join, resolve} from 'path';
 import {fileURLToPath} from 'url';
@@ -52,7 +52,7 @@ const INSTANCE = process.env.WINGDRIVE_INSTANCE;
 
 if (!DATA_DIR || !INSTANCE) {
 	throw new Error(
-		'WINGDRIVE_DATA_DIR and WINGDRIVE_INSTANCE are required. Start development with ./scripts/dev-isolated.sh.'
+		'WINGDRIVE_DATA_DIR and WINGDRIVE_INSTANCE are required. Start development with `just dev-desktop`.'
 	);
 }
 
@@ -169,8 +169,17 @@ async function main() {
 		const depsLibPath = join(PROJECT_ROOT, 'apps/.deps/lib');
 		const depsBinPath = join(PROJECT_ROOT, 'apps/.deps/bin');
 
+		// tauri-build copies its sidecar over target/debug/wing-daemon.exe, and Windows
+		// refuses to overwrite a running executable. Running a per-instance copy keeps
+		// that path writable. The copy stays beside the DLLs that xtask placed there.
+		let daemonExecutable = DAEMON_BIN;
+		if (IS_WIN) {
+			daemonExecutable = join(dirname(DAEMON_BIN), `wing-daemon-${INSTANCE}.exe`);
+			copyFileSync(DAEMON_BIN, daemonExecutable);
+		}
+
 		daemonProcess = spawn(
-			DAEMON_BIN,
+			daemonExecutable,
 			['--data-dir', DATA_DIR, '--instance', INSTANCE],
 			{
 				cwd: PROJECT_ROOT,

@@ -343,7 +343,7 @@ fn setup(skip_daemon: bool) -> Result<()> {
 				if let Ok(entries) = fs::read_dir(&dll_source_dir) {
 					for entry in entries.flatten() {
 						let path = entry.path();
-						if path.extension().map_or(false, |ext| ext == "dll") {
+						if path.extension().is_some_and(|ext| ext == "dll") {
 							let dest = target_dir.join(path.file_name().unwrap());
 							if let Err(e) = fs::copy(&path, &dest) {
 								eprintln!(

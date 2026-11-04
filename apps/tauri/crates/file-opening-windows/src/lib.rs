@@ -3,14 +3,13 @@
 use file_opening::{FileOpener, OpenResult, OpenWithApp};
 use std::path::Path;
 use windows::core::*;
-use windows::Win32::Foundation::*;
 use windows::Win32::System::Com::*;
 use windows::Win32::UI::Shell::*;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
 // Thread-local COM initialization
 thread_local! {
-	static COM_INITIALIZED: std::cell::RefCell<bool> = std::cell::RefCell::new(false);
+	static COM_INITIALIZED: std::cell::RefCell<bool> = const { std::cell::RefCell::new(false) };
 }
 
 fn ensure_com_initialized() {
