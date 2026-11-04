@@ -54,28 +54,17 @@ pub async fn search_ephemeral_index(
 			// Empty query: return all files in scope
 			index.list_directory(&local_path).unwrap_or_default()
 		} else {
-			// Use registry for substring search
+			// Every name containing the query, as the indexed search returns:
+			// stopping at exact or prefix hits hid the rest (`test` found
+			// `testcase.txt` but not `my_test_data.txt`). Ranking puts exact and
+			// prefix matches first.
 			let query_lower = query.to_lowercase();
-
-			// Try exact name match first
-			let mut paths = index.find_by_name(&query_lower);
-			tracing::debug!("Exact match for '{}': {} paths", query_lower, paths.len());
-
-			// If no exact matches, try prefix search
-			if paths.is_empty() {
-				paths = index.find_by_prefix(&query_lower);
-				tracing::debug!("Prefix match for '{}': {} paths", query_lower, paths.len());
-			}
-
-			// If still no matches, try substring search
-			if paths.is_empty() {
-				paths = index.find_containing(&query_lower);
-				tracing::debug!(
-					"Substring match for '{}': {} paths",
-					query_lower,
-					paths.len()
-				);
-			}
+			let paths = index.find_containing(&query_lower);
+			tracing::debug!(
+				"Substring match for '{}': {} paths",
+				query_lower,
+				paths.len()
+			);
 
 			tracing::debug!("Total paths before scope filter: {}", paths.len());
 			tracing::debug!("Scope path: {:?}", local_path);

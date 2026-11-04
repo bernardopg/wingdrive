@@ -285,9 +285,23 @@ export function ViewSettings({ className, totalFileCount }: ViewSettingsProps) {
       }
     };
 
+    // Escape closes the panel like any popover; capture runs before the
+    // explorer's own Escape handling (clear selection).
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      setIsOpen(false);
+      buttonRef.current?.focus();
+    };
+
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown, true);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown, true);
+      };
     }
   }, [isOpen]);
 

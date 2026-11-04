@@ -118,6 +118,7 @@
 			"availableLocally": "Available locally",
 			"remote": "Remote",
 			"removeTagFailed": "Failed to remove tag: {{error}}",
+			"addTagFailed": "Failed to add tag: {{error}}",
 			"featureUnavailable": "Feature Not Available",
 			"speechRequiresFfmpeg": "Speech-to-text requires FFmpeg. Please rebuild the daemon with --features ffmpeg,heif or use `cargo daemon`",
 			"transcriptionFailed": "Transcription Failed",

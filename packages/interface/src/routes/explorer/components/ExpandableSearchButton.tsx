@@ -22,10 +22,14 @@ export function ExpandableSearchButton({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 
-	// Expand if there's a value
+	// Expand if there's a value. Clearing from outside the field (the search
+	// toolbar's Clear Search) collapses it; while the field has focus it stays
+	// open so the user can type a new query.
 	useEffect(() => {
 		if (value) {
 			setIsExpanded(true);
+		} else if (document.activeElement !== inputRef.current) {
+			setIsExpanded(false);
 		}
 	}, [value]);
 
@@ -88,7 +92,11 @@ export function ExpandableSearchButton({
 							exit={{ opacity: 0 }}
 							transition={{ duration: 0.15 }}
 						>
-							<CircleButton icon={MagnifyingGlass} onClick={handleButtonClick} />
+							<CircleButton
+								icon={MagnifyingGlass}
+								onClick={handleButtonClick}
+								title={t("topBar.search")}
+							/>
 						</motion.div>
 					) : (
 						<motion.div

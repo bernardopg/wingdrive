@@ -236,6 +236,7 @@ export function ExplorerView() {
 										setSidebarVisible(!sidebarVisible)
 									}
 									active={!sidebarVisible}
+									title={t('topBar.sidebar')}
 								/>
 							</TopBarItem>
 							<TopBarItem
@@ -248,11 +249,13 @@ export function ExplorerView() {
 										icon={ArrowLeft}
 										onClick={goBack}
 										disabled={!canGoBack}
+										title={t('topBar.back')}
 									/>
 									<CircleButton
 										icon={ArrowRight}
 										onClick={goForward}
 										disabled={!canGoForward}
+										title={t('topBar.forward')}
 									/>
 								</CircleButtonGroup>
 							</TopBarItem>
@@ -313,6 +316,7 @@ export function ExplorerView() {
 										setTagModeActive(!tagModeActive)
 									}
 									active={tagModeActive}
+									title={t('topBar.tagMode')}
 								/>
 							</TopBarItem>
 							<TopBarItem
@@ -378,6 +382,7 @@ export function ExplorerView() {
 										setInspectorVisible(!inspectorVisible)
 									}
 									active={!inspectorVisible}
+									title={t('topBar.inspector')}
 								/>
 							</TopBarItem>
 						</>

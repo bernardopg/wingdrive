@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DotsThree } from "@phosphor-icons/react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { CircleButton } from "@wingdrive/primitives";
+import { useTranslation } from "../i18n";
 import { TopBarItem, useTopBar } from "./Context";
 
 interface OverflowButtonProps {
@@ -9,6 +10,7 @@ interface OverflowButtonProps {
 }
 
 export function OverflowButton({ items }: OverflowButtonProps) {
+	const { t } = useTranslation("explorer");
 	const [isOpen, setIsOpen] = useState(false);
 	// The overflow list holds snapshots taken at layout time; read element and
 	// submenu content from the live registry so open menus reflect new state.
@@ -22,6 +24,7 @@ export function OverflowButton({ items }: OverflowButtonProps) {
 				<CircleButton
 					icon={DotsThree}
 					active={isOpen}
+					title={t("topBar.more")}
 				/>
 			</DropdownMenu.Trigger>
 
