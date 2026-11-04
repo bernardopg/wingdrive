@@ -12,7 +12,9 @@
 //! "skip" conflict choice, and deletes are permanent because the root user's
 //! trash is not the user's.
 
-use std::path::{Component, Path, PathBuf};
+use std::path::PathBuf;
+#[cfg(target_os = "linux")]
+use std::path::{Component, Path};
 
 use serde::Deserialize;
 
@@ -36,12 +38,15 @@ pub enum AdminOperation {
 }
 
 /// Programs the operations run, searched in these folders only.
+#[cfg(target_os = "linux")]
 const PROGRAM_DIRS: [&str; 2] = ["/usr/bin", "/bin"];
 
 /// `pkexec` exits with these when the user dismisses or fails the prompt.
+#[cfg(target_os = "linux")]
 const PKEXEC_DISMISSED: [i32; 2] = [126, 127];
 
 /// Builds `pkexec` arguments: the program's absolute path, then its arguments.
+#[cfg(target_os = "linux")]
 pub fn pkexec_args(operation: &AdminOperation) -> Result<Vec<String>, String> {
 	let (program, args): (&str, Vec<String>) = match operation {
 		AdminOperation::Delete { paths } => {
@@ -99,6 +104,7 @@ pub fn pkexec_args(operation: &AdminOperation) -> Result<Vec<String>, String> {
 		.collect())
 }
 
+#[cfg(target_os = "linux")]
 fn require_some(paths: &[PathBuf]) -> Result<(), String> {
 	if paths.is_empty() {
 		Err("No files were given".into())
@@ -108,6 +114,7 @@ fn require_some(paths: &[PathBuf]) -> Result<(), String> {
 }
 
 /// An absolute path below the root without `.` or `..` components.
+#[cfg(target_os = "linux")]
 fn checked_path(path: &Path) -> Result<String, String> {
 	let text = path.to_str().ok_or("The path is not valid UTF-8")?;
 	// `components()` drops `.` in the middle of a path, so check the text too.
@@ -135,6 +142,7 @@ fn checked_path(path: &Path) -> Result<String, String> {
 }
 
 /// A single file name, not a path.
+#[cfg(target_os = "linux")]
 fn checked_name(name: &str) -> Result<&str, String> {
 	if name.is_empty() || name == "." || name == ".." || name.contains('/') || name.contains('\0') {
 		return Err(format!("{name:?} is not a valid name"));
@@ -187,7 +195,7 @@ pub async fn run_as_admin(operation: AdminOperation) -> Result<(), String> {
 	Err("Administrator retries are only available on Linux".into())
 }
 
-#[cfg(test)]
+#[cfg(all(test, target_os = "linux"))]
 mod tests {
 	use super::*;
 

@@ -7,7 +7,7 @@
 use gtk::{gdk, Clipboard, TargetEntry, TargetFlags};
 
 /// `file://` URIs for absolute paths, percent-encoded so spaces, `#` and accents survive.
-#[cfg(any(target_os = "linux", test))]
+#[cfg(target_os = "linux")]
 pub(crate) fn file_uris(paths: &[String]) -> Result<Vec<String>, String> {
 	paths
 		.iter()
@@ -19,7 +19,7 @@ pub(crate) fn file_uris(paths: &[String]) -> Result<Vec<String>, String> {
 		.collect()
 }
 
-#[cfg(any(target_os = "linux", test))]
+#[cfg(target_os = "linux")]
 fn parse_file_uris(text: &str) -> Result<Vec<String>, String> {
 	text.lines()
 		.map(str::trim)
@@ -138,7 +138,7 @@ pub async fn read_file_clipboard(app: tauri::AppHandle) -> Result<(Vec<String>, 
 	}
 }
 
-#[cfg(test)]
+#[cfg(all(test, target_os = "linux"))]
 mod tests {
 	use super::*;
 
