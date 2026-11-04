@@ -46,6 +46,9 @@ and adds `C:\Program Files\Git\bin` to the PATH.
   `nasm` shadow the MSVC toolchain, and the machine PATH wins over the user PATH.
 - `just` runs recipes with Git's `sh`. `bash` in PowerShell resolves to WSL when
   WSL is installed, so run the shell scripts through `just` or from Git Bash.
+- Set `OPENSSL_SRC_PERL` to Strawberry's `perl.exe`. `just` and Git Bash find Git's
+  MSYS perl first, which lacks the modules OpenSSL's `Configure` needs. `setup.ps1`
+  sets it.
 - All text files use LF, set in `.gitattributes`. CRLF breaks the shell scripts
   that CI runs with Git Bash.
 

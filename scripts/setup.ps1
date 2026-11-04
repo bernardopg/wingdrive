@@ -217,6 +217,8 @@ https://learn.microsoft.com/windows/package-manager/winget/
         Where-Object { $_ -and ($_ -ne "$env:SystemDrive\Strawberry\c\bin") }
     [System.Environment]::SetEnvironmentVariable('Path', ($machinePath -join [IO.Path]::PathSeparator), 'Machine')
     Reset-Path
+    # just runs recipes with Git's sh, which finds MSYS perl first. It lacks the modules OpenSSL's Configure needs.
+    [System.Environment]::SetEnvironmentVariable('OPENSSL_SRC_PERL', "$env:SystemDrive\Strawberry\perl\bin\perl.exe", 'User')
 
     Write-Host
     Write-Host 'Installing NodeJS...' -ForegroundColor Yellow

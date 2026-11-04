@@ -35,6 +35,8 @@ runs:
       run: |
         $kept = $env:Path -split ';' | Where-Object { $_ -and $_ -notmatch '\\LLVM\\|\\mingw64\\|\\Strawberry\\c\\' }
         "PATH=$($kept -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Append
+        # shell: bash finds Git's MSYS perl first, which lacks the modules OpenSSL's Configure needs.
+        "OPENSSL_SRC_PERL=C:\Strawberry\perl\bin\perl.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
 
     - name: Restore cached libclang
       if: ${{ runner.os == 'Windows' }}
