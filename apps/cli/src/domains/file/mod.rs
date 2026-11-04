@@ -12,6 +12,11 @@ use wing_core::infra::job::handle::JobReceipt;
 use wing_core::infra::query::LibraryQuery;
 
 use self::args::*;
+use wing_core::ops::files::{
+	copy::action::FileConflictResolution,
+	plan::PlanDecision,
+	query::preflight::{FilePreflightInput, FilePreflightOutput, PreflightOperation},
+};
 
 #[derive(Subcommand, Debug)]
 pub enum FileCmd {
@@ -32,10 +37,30 @@ pub enum FileCmd {
 pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 	match cmd {
 		FileCmd::Copy(args) => {
+			let dry_run = args.dry_run;
 			let input: wing_core::ops::files::copy::input::FileCopyInput = args.into();
 			if let Err(errors) = input.validate() {
 				anyhow::bail!(errors.join("; "))
 			}
+			let plan = preflight(
+				ctx,
+				FilePreflightInput {
+					operation: if input.move_files {
+						PreflightOperation::Move
+					} else {
+						PreflightOperation::Copy
+					},
+					sources: input.sources.paths.clone(),
+					destination: Some(input.destination.clone()),
+					on_conflict: input.overwrite.then_some(FileConflictResolution::Overwrite),
+				},
+			)
+			.await?;
+			if dry_run {
+				print_output!(ctx, &plan, print_plan);
+				return Ok(());
+			}
+			print_plan(&plan);
 
 			// Handle confirmation for file copy operations
 			let receipt = run_copy_with_confirmation(ctx, input).await?;
@@ -51,11 +76,27 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 			});
 		}
 		FileCmd::Delete(args) => {
-			let (permanent, yes, count) = (args.permanent, args.yes, args.paths.len());
+			let (permanent, yes, count, dry_run) =
+				(args.permanent, args.yes, args.paths.len(), args.dry_run);
 			let input: wing_core::ops::files::delete::input::FileDeleteInput = args.into();
 			if let Err(errors) = input.validate() {
 				anyhow::bail!(errors.join("; "))
 			}
+			let plan = preflight(
+				ctx,
+				FilePreflightInput {
+					operation: PreflightOperation::Delete,
+					sources: input.targets.paths.clone(),
+					destination: None,
+					on_conflict: None,
+				},
+			)
+			.await?;
+			if dry_run {
+				print_output!(ctx, &plan, print_plan);
+				return Ok(());
+			}
+			print_plan(&plan);
 			if permanent {
 				crate::util::confirm::confirm_or_abort(
 					&format!("Permanently delete {count} item(s)? This cannot be undone."),
@@ -153,6 +194,52 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 		}
 	}
 	Ok(())
+}
+
+/// Asks the daemon what a copy, move or delete would do, without doing it.
+async fn preflight(ctx: &Context, input: FilePreflightInput) -> Result<FilePreflightOutput> {
+	let plan: FilePreflightOutput = execute_query!(ctx, input);
+	Ok(plan)
+}
+
+/// Prints a preflight plan: totals, conflicts and, for a delete, last copies.
+fn print_plan(plan: &FilePreflightOutput) {
+	let at_least = if plan.truncated { "at least " } else { "" };
+	println!(
+		"Plan: {at_least}{} file(s), {}",
+		plan.files,
+		format_bytes(plan.bytes)
+	);
+	if plan.conflicts > 0 {
+		println!("  {} destination(s) already exist:", plan.conflicts);
+		for item in plan
+			.items
+			.iter()
+			.filter(|item| !matches!(item.decision, None | Some(PlanDecision::Write)))
+		{
+			let target = item
+				.destination
+				.as_ref()
+				.map(|d| d.display())
+				.unwrap_or_default();
+			let effect = match &item.decision {
+				Some(PlanDecision::Overwrite) => "overwrite".to_string(),
+				Some(PlanDecision::Skip) => "skip".to_string(),
+				Some(PlanDecision::Rename(path)) => format!("rename to {}", path.display()),
+				Some(PlanDecision::Abort) => "abort".to_string(),
+				_ => "ask".to_string(),
+			};
+			println!("    {target}: {effect}");
+		}
+	}
+	if let Some(last) = plan.last_copies.filter(|n| *n > 0) {
+		println!("  {last} file(s) are the last copy of their content in this library");
+	}
+	if let Some(unknown) = plan.unknown_files.filter(|n| *n > 0) {
+		println!(
+			"  {unknown} file(s) are not indexed with their content; other copies are unknown"
+		);
+	}
 }
 
 /// Run file copy with confirmation handling

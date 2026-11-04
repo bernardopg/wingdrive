@@ -99,6 +99,32 @@ The router uses this logic to pick strategies:
 - Same storage + copy + CoW filesystem → FastCopyStrategy
 - Cross-storage → LocalStreamCopyStrategy
 
+## Preflight Plan
+
+Before a copy, move or delete runs, the `files.preflight` query answers what it would do, without
+touching the disk:
+
+- how many files and bytes the sources hold (the walk stops after 200,000 entries and reports
+  `truncated`, so a huge tree still answers quickly);
+- where each source lands and what the conflict policy does there: `Write`, `Overwrite`, `Skip`,
+  `Rename` (with the free name it will use), `Abort`, or `Ask` when no policy was chosen yet;
+- for a delete, how many indexed files hold the last copy of their content in the library, and how
+  many files the index cannot vouch for (not indexed, or indexed without content identity). Those are
+  reported as unknown, never as safe.
+
+The destination rule, the conflict decision and the free-name search live in `ops::files::plan`, and
+the copy job calls the same functions, so the plan and the job cannot disagree
+(`core/tests/preflight_test.rs` runs both over one fixture).
+
+The copy and move dialog shows the totals and what happens to existing items as you change the
+policy; the delete dialog warns about last copies. On the command line, `wing file copy` and
+`wing file delete` print the plan before they run, and `--dry-run` stops there:
+
+```bash
+wing file copy report.pdf notes.md --destination ~/Backup --dry-run
+wing file delete ~/Downloads/old --dry-run
+```
+
 ## Progress Tracking
 
 The job system uses a `ProgressAggregator` that tracks overall progress across multiple files. Strategies call a progress callback with current bytes copied and total file size. The aggregator accumulates this across files to compute job-level progress.

@@ -7,6 +7,7 @@ pub mod create_folder;
 pub mod delete;
 pub mod duplicate_detection;
 pub mod permissions;
+pub mod plan;
 pub mod query;
 pub mod rename;
 

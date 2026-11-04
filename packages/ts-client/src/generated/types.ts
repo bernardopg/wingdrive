@@ -1376,6 +1376,32 @@ export type FileDeleteInput = {
 /**  Types of file operations */
 export type FileOperation = "Copy" | "Move" | "Delete" | "Rename";
 
+/**  Input for `files.preflight`. */
+export type FilePreflightInput = {
+	operation: PreflightOperation,
+	sources: WingPath[],
+	/**  Folder (or new name) for a copy or move; ignored for a delete. */
+	destination: WingPath | null,
+	/**  Conflict policy the job will run with; `None` plans conflicts as `Ask`. */
+	on_conflict: FileConflictResolution | null,
+};
+
+/**  The plan: totals over every source, and the first sources in detail. */
+export type FilePreflightOutput = {
+	files: number,
+	bytes: number,
+	/**  Sources whose destination is taken. */
+	conflicts: number,
+	/**  Up to 1000 sources, in input order. */
+	items: PreflightItem[],
+	/**  The file walk stopped early; counts are lower bounds. */
+	truncated: boolean,
+	/**  Delete only: indexed files whose content exists nowhere else in the library. */
+	last_copies: number | null,
+	/**  Delete only: files the index cannot vouch for (not indexed, or no content identity). */
+	unknown_files: number | null,
+};
+
 /**  Input for renaming a file or directory */
 export type FileRenameInput = {
 	/**  The file or directory to rename */
@@ -3015,11 +3041,40 @@ export type PingOutput = {
 	extension_works: boolean,
 };
 
+/**  What a copy or move does with one source, given the conflict policy. */
+export type PlanDecision = 
+/**  Nothing is in the way. */
+{ kind: "Write" } | 
+/**  The existing item is replaced. */
+{ kind: "Overwrite" } | 
+/**  The existing item stays and this source is left out. */
+{ kind: "Skip" } | 
+/**  The source is written under this free name instead. */
+{ kind: "Rename"; path: string } | 
+/**  The whole operation stops here; later sources are not touched. */
+{ kind: "Abort" } | 
+/**  Something is in the way and no policy was chosen yet; the user will be asked. */
+{ kind: "Ask" };
+
 /**  User preferences output */
 export type PreferencesOutput = {
 	theme: string,
 	language: string,
 };
+
+/**  What happens to one source. */
+export type PreflightItem = {
+	source: WingPath,
+	/**  Where a copy or move puts it; `None` for a delete. */
+	destination: WingPath | null,
+	/**  The conflict decision for a copy or move; `None` for a delete. */
+	decision: PlanDecision | null,
+	files: number,
+	bytes: number,
+};
+
+/**  The operation to plan. */
+export type PreflightOperation = "Copy" | "Move" | "Delete";
 
 /**  Privacy levels for tag visibility control */
 export type PrivacyLevel = 
@@ -4729,6 +4784,7 @@ export type LibraryQuery =
   |  { type: 'files.directory_sizes'; input: DirectorySizesInput; output: DirectorySizesOutput }
   |  { type: 'files.media_listing'; input: MediaListingInput; output: MediaListingOutput }
   |  { type: 'files.permissions'; input: PermissionsQuery; output: PermissionsOutput }
+  |  { type: 'files.preflight'; input: FilePreflightInput; output: FilePreflightOutput }
   |  { type: 'files.templates'; input: TemplatesInput; output: TemplatesOutput }
   |  { type: 'files.unique_to_location'; input: UniqueToLocationInput; output: UniqueToLocationOutput }
   |  { type: 'files.vcs_status'; input: VcsStatusInput; output: VcsStatusOutput }
@@ -4889,6 +4945,7 @@ export const WIRE_METHODS = {
     'files.directory_sizes': 'query:files.directory_sizes',
     'files.media_listing': 'query:files.media_listing',
     'files.permissions': 'query:files.permissions',
+    'files.preflight': 'query:files.preflight',
     'files.templates': 'query:files.templates',
     'files.unique_to_location': 'query:files.unique_to_location',
     'files.vcs_status': 'query:files.vcs_status',

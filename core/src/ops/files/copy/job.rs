@@ -437,36 +437,14 @@ impl JobHandler for FileCopyJob {
 				continue;
 			}
 
-			// Determine the final destination path for this source
-			let final_destination = if let Some(dest_path) = self.destination.as_local_path() {
-				// Check if destination exists and is a file (common mistake when dragging onto files)
-				if dest_path.exists() && dest_path.is_file() {
-					// User dropped onto a file - use its parent directory
-					if let Some(parent) = dest_path.parent() {
-						WingPath::local(
-							parent.join(resolved_source.file_name().unwrap_or_default()),
-						)
-					} else {
-						// No parent directory (root?), fallback to destination
-						self.destination.clone()
-					}
-				} else if dest_path.is_dir() || self.sources.paths.len() > 1 {
-					// Destination is a directory, OR we have multiple sources
-					// In both cases, join with source filename
-					self.destination
-						.join(resolved_source.file_name().unwrap_or_default())
-				} else {
-					// Single source, destination doesn't exist or is not a file/dir
-					// Use destination as-is (allows renaming: copy file.txt -> newname.txt)
-					self.destination.clone()
-				}
-			} else {
-				// Non-local destination (remote device, Cloud, Content, Sidecar)
-				// For remote destinations, we can't check if path is a directory,
-				// so always join filename to be safe
-				self.destination
-					.join(resolved_source.file_name().unwrap_or_default())
-			};
+			// Determine the final destination path for this source. The rules live in
+			// `files::plan`, which the read-only preflight shares.
+			let final_destination = crate::ops::files::plan::final_destination(
+				&resolved_source,
+				&self.destination,
+				self.sources.paths.len(),
+			)
+			.await;
 
 			ctx.log(format!(
 				"Final destination calculated: {} -> {}",
@@ -557,95 +535,66 @@ impl JobHandler for FileCopyJob {
 				final_destination.display()
 			);
 
-			// Handle conflict resolution before copying
-			let final_destination = if let Some(resolution) = self.options.conflict_resolution {
-				match resolution {
-					super::action::FileConflictResolution::Skip => {
-						// Check if destination exists
-						if let Some(dest_path) = final_destination.as_local_path() {
-							if dest_path.exists() {
-								ctx.log(format!("Skipping existing file: {}", dest_path.display()));
-
-								// Mark as skipped in metadata
-								self.job_metadata.update_status(
-									&resolved_source,
-									super::metadata::CopyFileStatus::Skipped,
-								);
-
-								// Skip this file
-								progress_aggregator.complete_source();
-								skipped_count += files_in_source;
-								self.completed_indices.push(index);
-								continue;
-							}
-						}
-						final_destination
-					}
-					super::action::FileConflictResolution::AutoModifyName => {
-						// Generate unique name if destination exists
-						if let Some(dest_path) = final_destination.as_local_path() {
-							if dest_path.exists() {
-								let unique_dest = match self.generate_unique_name(&dest_path).await
-								{
-									Ok(unique) => unique,
-									Err(e) => {
-										failed_copies.push(CopyError {
-											source: resolved_source
-												.path()
-												.cloned()
-												.unwrap_or_default(),
-											destination: dest_path.to_path_buf(),
-											error: e.to_string(),
-										});
-										self.job_metadata
-											.set_error(&resolved_source, e.to_string());
-										continue;
-									}
-								};
-								WingPath::Physical {
-									device_slug: final_destination
-										.device_slug()
-										.unwrap_or_default()
-										.to_string(),
-									path: unique_dest,
-								}
-							} else {
-								final_destination
-							}
-						} else {
-							final_destination
-						}
-					}
-					super::action::FileConflictResolution::Overwrite => {
-						// Overwrite is already handled via options.overwrite
-						final_destination
-					}
-					super::action::FileConflictResolution::Abort => {
-						// Stop at the first conflict but keep what was already
-						// copied visible: the rest of the batch counts as skipped.
-						let conflict = final_destination
-							.as_local_path()
-							.map(|dest| dest.exists())
-							.unwrap_or(false);
-						if conflict {
-							failed_copies.push(CopyError {
-								source: resolved_source.path().cloned().unwrap_or_default(),
-								destination: final_destination.path().cloned().unwrap_or_default(),
-								error: "Destination already exists; operation aborted".to_string(),
-							});
-							for remaining in &sources[index + 1..] {
-								skipped_count += match remaining.as_local_path() {
-									Some(path) => self.count_files_in_path(path).await.unwrap_or(1),
-									None => 1,
-								};
-							}
-							break;
-						}
-						final_destination
-					}
+			// Handle conflict resolution before copying, with the same decision the
+			// preflight plan reports (`files::plan::decide`).
+			let decision = match crate::ops::files::plan::decide(
+				&final_destination,
+				self.options.conflict_resolution,
+			)
+			.await
+			{
+				Ok(decision) => decision,
+				Err(e) => {
+					failed_copies.push(CopyError {
+						source: resolved_source.path().cloned().unwrap_or_default(),
+						destination: final_destination.path().cloned().unwrap_or_default(),
+						error: e.to_string(),
+					});
+					self.job_metadata.set_error(&resolved_source, e.to_string());
+					continue;
 				}
-			} else {
-				final_destination
+			};
+			let final_destination = match decision {
+				crate::ops::files::plan::PlanDecision::Skip => {
+					ctx.log(format!(
+						"Skipping existing file: {}",
+						final_destination.display()
+					));
+					self.job_metadata
+						.update_status(&resolved_source, super::metadata::CopyFileStatus::Skipped);
+					progress_aggregator.complete_source();
+					skipped_count += files_in_source;
+					self.completed_indices.push(index);
+					continue;
+				}
+				crate::ops::files::plan::PlanDecision::Rename(unique_dest) => WingPath::Physical {
+					device_slug: final_destination
+						.device_slug()
+						.unwrap_or_default()
+						.to_string(),
+					path: unique_dest,
+				},
+				crate::ops::files::plan::PlanDecision::Abort => {
+					// Stop at the first conflict but keep what was already
+					// copied visible: the rest of the batch counts as skipped.
+					failed_copies.push(CopyError {
+						source: resolved_source.path().cloned().unwrap_or_default(),
+						destination: final_destination.path().cloned().unwrap_or_default(),
+						error: "Destination already exists; operation aborted".to_string(),
+					});
+					for remaining in &sources[index + 1..] {
+						skipped_count += match remaining.as_local_path() {
+							Some(path) => self.count_files_in_path(path).await.unwrap_or(1),
+							None => 1,
+						};
+					}
+					break;
+				}
+				// Overwrite is applied through `options.overwrite`; without a policy
+				// the action already asked the user before the job started.
+				crate::ops::files::plan::PlanDecision::Write
+				| crate::ops::files::plan::PlanDecision::Overwrite
+				| crate::ops::files::plan::PlanDecision::Ask => final_destination,
 			};
 
 			// 2. Execute the strategy with progress callback
@@ -1399,44 +1348,6 @@ impl FileCopyJob {
 		}
 
 		Ok(total)
-	}
-
-	/// Generate a unique filename by appending (1), (2), etc.
-	async fn generate_unique_name(&self, dest_path: &std::path::Path) -> JobResult<PathBuf> {
-		let mut counter = 1;
-		let mut new_path = dest_path.to_path_buf();
-
-		while tokio::fs::metadata(&new_path).await.is_ok() {
-			if let Some(parent) = dest_path.parent() {
-				if let Some(file_name) = dest_path.file_name() {
-					let file_name_str = file_name.to_string_lossy();
-
-					// Split filename and extension
-					if let Some(dot_pos) = file_name_str.rfind('.') {
-						let name = &file_name_str[..dot_pos];
-						let ext = &file_name_str[dot_pos..];
-						new_path = parent.join(format!("{} ({}){}", name, counter, ext));
-					} else {
-						// No extension
-						new_path = parent.join(format!("{} ({})", file_name_str, counter));
-					}
-				} else {
-					return Err(JobError::execution("Could not get filename"));
-				}
-			} else {
-				return Err(JobError::execution("Could not get parent directory"));
-			}
-
-			counter += 1;
-
-			if counter > 1000 {
-				return Err(JobError::execution(
-					"Could not generate unique filename after 1000 attempts",
-				));
-			}
-		}
-
-		Ok(new_path)
 	}
 
 	/// Delete the source of a move whose strategy copied it.

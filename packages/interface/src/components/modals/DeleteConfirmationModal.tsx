@@ -11,6 +11,7 @@ import {
 import type { File as FileType } from "@wingdrive/ts-client";
 import { File, FileStack } from "../../routes/explorer/File";
 import { useTranslation } from "../../i18n";
+import { useLibraryQuery } from "../../contexts/WingDriveContext";
 
 interface DeleteConfirmationDialogProps {
 	id: number;
@@ -118,9 +119,46 @@ function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
 								{t("deleteConfirmation.permanentWarning")}
 							</div>
 						)}
+						<LastCopyNote files={props.files} />
 					</div>
 				</div>
 			</div>
 		</Dialog>
+	);
+}
+
+/**
+ * How many of the files hold the last copy of their content in the library,
+ * from the daemon's read-only preflight. Files the index cannot vouch for are
+ * reported as unknown, never as backed up.
+ */
+function LastCopyNote({ files }: { files: FileType[] }) {
+	const { t } = useTranslation("dialogs");
+	const { data: plan } = useLibraryQuery({
+		type: "files.preflight",
+		input: {
+			operation: "Delete",
+			sources: files.map((file) => file.wing_path),
+			destination: null,
+			on_conflict: null,
+		},
+	});
+	const lastCopies = plan?.last_copies ?? 0;
+	const unknown = plan?.unknown_files ?? 0;
+	if (!plan || (lastCopies === 0 && unknown === 0)) return null;
+
+	return (
+		<div className="mt-1.5 space-y-0.5 text-xs">
+			{lastCopies > 0 && (
+				<div className="text-red-400">
+					{t("deleteConfirmation.lastCopies", { count: lastCopies })}
+				</div>
+			)}
+			{unknown > 0 && (
+				<div className="text-ink-dull">
+					{t("deleteConfirmation.unknownCopies", { count: unknown })}
+				</div>
+			)}
+		</div>
 	);
 }

@@ -227,7 +227,11 @@
 		"multiplePermanent_one": "Excluir {{count}} item permanentemente? Esta ação não pode ser desfeita.",
 		"multiplePermanent_other": "Excluir {{count}} itens permanentemente? Esta ação não pode ser desfeita.",
 		"titleMultiple_other": "Excluir {{count}} itens",
-		"titleMultiple_one": "Excluir {{count}} item"
+		"titleMultiple_one": "Excluir {{count}} item",
+		"lastCopies_one": "{{count}} arquivo é a última cópia do seu conteúdo nesta biblioteca.",
+		"lastCopies_other": "{{count}} arquivos são a última cópia do seu conteúdo nesta biblioteca.",
+		"unknownCopies_one": "{{count}} arquivo não está indexado com o conteúdo, então não se sabe se há outras cópias.",
+		"unknownCopies_other": "{{count}} arquivos não estão indexados com o conteúdo, então não se sabe se há outras cópias."
 	},
 	"duplicates": {
 		"title": "Arquivos duplicados",
@@ -266,7 +270,18 @@
 		"unknownPath": "Desconhecido",
 		"failureDetailsHint": "O log da tarefa lista todos os itens que falharam.",
 		"itemCount_one": "{{count}} item",
-		"itemCount_other": "{{count}} itens"
+		"itemCount_other": "{{count}} itens",
+		"planTotals_one": "{{count}} arquivo, {{size}}",
+		"planTotals_other": "{{count}} arquivos, {{size}}",
+		"planTruncated": "(no mínimo: a pasta é grande demais para contar)",
+		"planConflicts_one": "{{count}} item já existe no destino:",
+		"planConflicts_other": "{{count}} itens já existem no destino:",
+		"planSkipped_one": "{{count}} ignorado",
+		"planSkipped_other": "{{count}} ignorados",
+		"planRenamed_one": "{{count}} renomeado",
+		"planRenamed_other": "{{count}} renomeados",
+		"planOverwritten_one": "{{count}} substituído",
+		"planOverwritten_other": "{{count}} substituídos"
 	},
 	"pairing": {
 		"title": "Pareamento de dispositivo",
