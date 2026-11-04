@@ -18,6 +18,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 use serde::Serialize;
+
+#[cfg(test)]
+#[path = "launch/tests/mod.rs"]
+mod coverage_tests;
 use tauri::{AppHandle, Emitter, Manager};
 
 /// Event telling the frontend that `take_open_requests` has new entries.

@@ -132,6 +132,9 @@ pub const HEADER_OR_FOOTER_SIZE: u64 = 1024 * 8; // 8KB
 /// Content hash generator for content identification
 pub struct ContentHashGenerator;
 
+#[cfg(test)]
+mod tests;
+
 impl ContentHashGenerator {
 	/// Generate a content hash for a local file (uses LocalBackend internally)
 	///

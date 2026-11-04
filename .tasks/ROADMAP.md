@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-11-02. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-11-03. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -87,6 +87,19 @@ Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
 - `FILE-007` plano de preflight para copiar, mover e apagar (item 7 do levantamento do upstream de 14/10)
 - `FILE-008` journal de jobs e undo para cópia, sobrescrita e lixeira (item 7 do levantamento do upstream de 14/10)
 
+### Cobertura de testes no M2 e M3
+
+Por solicitação do usuário em 2026-11-03, o épico `COV-00` amplia a cobertura do core,
+desktop e CLI usando a infraestrutura da DEV-006. [Plano e metas](testing/README.md).
+As tasks `COV-01` a `COV-12` têm dependências e critérios verificáveis. A preparação de COV-01
+e COV-02 começa no branch `test/coverage-core-desktop-cli`; as demais ficam no backlog,
+sem alterar o compromisso do S04/S05 até haver capacidade no planning.
+
+No M2 entram os contratos e regressões críticas; o M3 fecha integração e gates com metas de
+50% no core, 75% no desktop, 60% no CLI e 60% na interface React, além de 80% nas linhas de
+produção alteradas. São metas futuras, verificadas pelo relatório completo, sem excluir
+código para elevar a média. O épico fecha com todas as filhas Done e evidência no main.
+
 ## Later — M4: Integração entre dispositivos
 
 Pairing, Spacedrop, library sync e file sync confiáveis entre desktops.
@@ -123,6 +136,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-03 | COV-00 e COV-01 a COV-12: metas progressivas de cobertura, prioridade em core/desktop/CLI e critérios de evidência, sem ampliar sprints já comprometidos |
 | 2026-11-02 | WingDrive independente (#310): tasks FORK-* removidas do tracker (histórico no git); NET-007 herda o critério aberto da FORK-007, REL-001 (S05) a assinatura da FORK-002, FORK-009 descartada; levantamentos do upstream em `docs/design/history/`. S01 fechado com review e retro. Checagem no pacote fecha 16 tasks do S04 e acha DESK-039 a DESK-042; release 2.4.0 |
 | 2026-10-28 | #296 mergeado; S02 e S03 fechados com review e retro; sobras do S03 (DESK-021, DESK-023, DESK-024, WATCH-006, MOB-005, MOB-009) no S04; DESK-034 e as duas falhas da DESK-029 (emblema Git nos filhos e contagem da barra de status) entram no S04; DESK-016 ganha notas de desenho |
 | 2026-10-28 | S04: DESK-029 a DESK-033 e DESK-035 com código pronto (PRs #296 e #298), In Progress até a checagem no build Linux; visualização rápida de PDF, texto e código (#295); pdfjs-dist 6.4 fecha o alerta Dependabot 47 (#297); DESK-034 adiada |

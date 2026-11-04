@@ -45,6 +45,9 @@ mod domains;
 mod ui;
 mod util;
 
+#[cfg(test)]
+mod tests;
+
 use crate::context::{Context, OutputFormat};
 use crate::domains::{
 	cloud, config as config_cmd,

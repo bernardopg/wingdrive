@@ -51,6 +51,7 @@ run_full_tests() {
 		--test sync_realtime_test \
 		--test sync_backfill_test
 	cargo test --locked --no-run -p wingdrive --bin WingDrive
+	cargo test --locked --no-run -p wing-cli --bin wing
 	cargo test --locked --no-run -p wing-branding
 
 	step "Test branding, key storage and legacy path resolution"
@@ -60,7 +61,11 @@ run_full_tests() {
 	cargo test --locked -p wing-core --lib ops::files::query::vcs_status
 	cargo test --locked -p wing-core --lib ops::files::query::templates
 	cargo test --locked -p wing-core --lib ops::files::create_entry
+	cargo test --locked -p wing-core --lib domain::content_identity::tests
 	cargo test --locked -p wing-core --test branding_legacy_paths
+
+	step "Test CLI contracts and configuration"
+	cargo test --locked -p wing-cli --bin wing
 
 	step "Test desktop IPC and launch handling"
 	cargo test --locked -p wingdrive --bin WingDrive
@@ -108,6 +113,11 @@ else
 		cargo build --locked --bin wing-daemon
 		cargo test --locked -p wingdrive --bin WingDrive
 		cargo test --locked -p file-opening-linux
+	fi
+
+	if [[ " $* " == *" cli "* ]]; then
+		step "Test CLI contracts and configuration"
+		cargo test --locked -p wing-cli --bin wing
 	fi
 fi
 
