@@ -27,7 +27,7 @@ export function DeviceJobActivity({ jobs }: DeviceJobActivityProps) {
 					{firstJob.name}
 				</span>
 				<span className="text-accent/70">
-					{Math.round(firstJob.progress * 100)}%
+					{Math.round((firstJob.progress ?? 0) * 100)}%
 				</span>
 			</div>
 			{remainingCount > 0 && (
