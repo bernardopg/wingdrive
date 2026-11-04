@@ -715,7 +715,9 @@ const {t} = useTranslation('inspector');
 	const isVideo = getContentKind(file) === 'video';
 	const isAudio = getContentKind(file) === 'audio';
 	const hasText = file?.content_identity?.text_content;
-	const isEphemeral = !file.content_identity;
+	// Folders never get a content identity but take tags as entries; the
+	// daemon refuses the ones it has not indexed.
+	const isEphemeral = !file.content_identity && file.kind !== 'Directory';
 
 	const contentKind = getContentKind(file);
 	const rawKind =
@@ -1006,6 +1008,7 @@ label={t('inspector.file.path')}
 						{/* Add Tag Button */}
 						<TagSelectorButton
 							onSelect={async (tag) => {
+								try {
 								await applyTag.mutateAsync({
 									targets: file.content_identity?.uuid
 										? {
@@ -1024,6 +1027,13 @@ label={t('inspector.file.path')}
 									applied_context: null,
 									instance_attributes: null
 								});
+								} catch (err) {
+									toast.error(
+										String(err).includes('need to be indexed')
+											? t('inspector.file.tagsAfterIndexing')
+											: t('inspector.file.addTagFailed', { error: String(err) })
+									);
+								}
 							}}
 							contextTags={file.tags || []}
 							fileId={file.id}

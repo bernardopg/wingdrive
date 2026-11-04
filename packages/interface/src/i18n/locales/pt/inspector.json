@@ -118,6 +118,7 @@
 			"availableLocally": "Disponível localmente",
 			"remote": "Remoto",
 			"removeTagFailed": "Falha ao remover etiqueta: {{error}}",
+			"addTagFailed": "Falha ao adicionar etiqueta: {{error}}",
 			"featureUnavailable": "Recurso indisponível",
 			"speechRequiresFfmpeg": "A transcrição de fala requer FFmpeg. Recompile o daemon com --features ffmpeg,heif ou use `cargo daemon`",
 			"transcriptionFailed": "Falha na transcrição",
