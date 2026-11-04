@@ -135,26 +135,33 @@ the limit) to about 7.5 GB including it.
 Every gate stays: fmt, clippy `-D warnings`, the generated types check, typecheck, the frontend and Rust
 test lists, TruffleHog and every CodeQL language.
 
-## Recommendations that need a decision
+## Decisions applied (2026-11-04)
 
-1. CodeQL Rust only on `main` and the weekly schedule, with the empty result on every pull request
-   (the workflow already uploads one when Rust is unchanged). Saving: a Rust pull request merges in
-   about 14 minutes instead of 36. Risk: a high severity Rust alert surfaces after merge, on `main`,
-   instead of blocking the pull request. A middle ground is to keep it on pull requests that touch
-   security-sensitive paths only (`core/src/crypto/`, `core/src/service/network/`, `apps/server/`).
-2. Delete the existing buildkit caches of `refs/tags/v2.4.1` now
-   (`gh cache list -R bernardopg/wingdrive --ref refs/tags/v2.4.1` then `gh cache delete`), so the next
-   nightly CI run can save its Rust cache without waiting for eviction.
-3. Raise `CARGO_BUILD_JOBS` in `release.yml` to 4, verified first with a `workflow_dispatch` run
-   (`component: desktop`, `publish: false`). Expected saving: several minutes of the 24 to 37 minute
-   `tauri build`. Risk: out of memory during linking. Changing it also changes the rust-cache key, so
-   the first release after the change starts from a cold release cache.
-4. Merge `generate_typescript_types` into the test build of `scripts/ci-rust.sh` (build it with the same
+The author approved the first three recommendations of the review:
+
+1. CodeQL Rust runs on pushes to `main` (when the push reaches Rust code), on the weekly schedule and on
+   manual runs. Pull requests skip it and upload the empty result code scanning protection needs, so a
+   Rust pull request no longer waits 36 minutes for it. A high severity Rust alert now surfaces on `main`
+   right after merge instead of blocking the pull request.
+2. `release.yml` sets `CARGO_BUILD_JOBS` to 4, one job per vCPU of the hosted runner. The rust-cache key
+   includes `CARGO_*` variables, so the first release after the change builds from a cold release cache.
+3. Caches deleted by hand: the 35 buildkit entries of `refs/tags/v2.4.1` (1.84 GB), the coverage Rust
+   cache (1.96 GB, no longer saved) and the two release Rust caches keyed on the old job count (2.67 GB).
+   The repository went from 8.46 GB in 49 entries to 2.19 GB in 11, all on `main`.
+
+How GitHub keeps caches: an entry not read for 7 days is removed, and when the repository passes 10 GB the
+least recently used entries go first. A run reads caches of its own ref and of the default branch, so
+caches saved on a tag or a pull request ref only serve later runs of that same ref and sit unused until
+they expire or push useful entries out.
+
+## Recommendations still open
+
+1. Merge `generate_typescript_types` into the test build of `scripts/ci-rust.sh` (build it with the same
    features and profile as the test binaries). Saving: up to 3 minutes of every full `Rust Workspace`
    run. Needs a check that the generated output does not depend on the feature set.
-5. A merge queue does not help at the current volume: `strict_required_status_checks_policy` is off,
+2. A merge queue does not help at the current volume: `strict_required_status_checks_policy` is off,
    so pull requests never wait for each other.
-6. sccache with the GitHub Actions backend would share the same 10 GB budget, so it does not fix
+3. sccache with the GitHub Actions backend would share the same 10 GB budget, so it does not fix
    eviction. A remote cache (S3, R2) would, at the cost of a secret and a service.
 
 ## How #318 failed
