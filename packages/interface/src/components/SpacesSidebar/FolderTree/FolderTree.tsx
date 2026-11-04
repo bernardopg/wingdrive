@@ -1,11 +1,20 @@
-import {CaretRight, Folder, FolderOpen, HardDrives, House} from '@phosphor-icons/react';
+import {
+	ArrowsInLineVertical,
+	ArrowsOutLineVertical,
+	CaretRight,
+	Folder,
+	FolderOpen,
+	HardDrives,
+	House
+} from '@phosphor-icons/react';
 import type {Icon} from '@phosphor-icons/react';
 import {useQuery} from '@tanstack/react-query';
 import type {File, WingPath} from '@wingdrive/ts-client';
 import {useNormalizedQuery, useSidebarStore} from '@wingdrive/ts-client';
 import clsx from 'clsx';
-import {useEffect, useState} from 'react';
-import {useNavigate, useSearchParams} from 'react-router-dom';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {useSearchParams} from 'react-router-dom';
+import {useSidebarNavigate} from '../../TabManager/useSidebarNavigate';
 
 import {usePlatform} from '../../../contexts/PlatformContext';
 import {useTranslation} from '../../../i18n';
@@ -20,6 +29,11 @@ import {ancestorsWithin, normalizeFolder, rootFor} from './folderTreePaths';
 const SECTION_ID = 'folder-tree';
 /** Indentation per tree level, in pixels. */
 const INDENT = 12;
+/**
+ * Most folders one "expand" click opens. Each one lists its directory, and
+ * the levels below a home folder or the filesystem root hold thousands.
+ */
+const EXPAND_BATCH = 50;
 /** Polls while a folder the indexer has not seen yet still lists empty. */
 const WARMUP_POLLS = 6;
 
@@ -87,6 +101,31 @@ export function FolderTree({sortableAttributes, sortableListeners}: {
 			return next;
 		});
 
+	// Folders on screen that may hold subfolders. Each click opens the
+	// shallowest closed ones, capped at EXPAND_BATCH: a recursive
+	// expand of the filesystem root would list every folder on the disk.
+	// Counted, not a set: the home folder shows both as a root and under
+	// Computer, and closing one copy must not forget the other.
+	const visible = useRef(new Map<string, number>());
+	const registerVisible = useCallback((path: string) => {
+		const counts = visible.current;
+		counts.set(path, (counts.get(path) ?? 0) + 1);
+		return () => {
+			const left = (counts.get(path) ?? 1) - 1;
+			if (left > 0) counts.set(path, left);
+			else counts.delete(path);
+		};
+	}, []);
+	const expandVisible = () =>
+		setExpanded((previous) => {
+			const depth = (path: string) => path.split('/').length;
+			const closed = [...visible.current.keys()]
+				.filter((path) => !previous.has(path))
+				.sort((a, b) => depth(a) - depth(b) || a.localeCompare(b));
+			return new Set([...previous, ...closed.slice(0, EXPAND_BATCH)]);
+		});
+	const collapseAll = () => setExpanded(new Set());
+
 	return (
 		<div>
 			<GroupHeader
@@ -95,6 +134,22 @@ export function FolderTree({sortableAttributes, sortableListeners}: {
 				label={t('folderTree.title')}
 				isCollapsed={isCollapsed}
 				onToggle={() => toggleGroup(SECTION_ID)}
+				actions={
+					!isCollapsed && (
+						<div className="flex items-center">
+							<TreeAction
+								label={t('folderTree.expandAll')}
+								icon={ArrowsOutLineVertical}
+								onClick={expandVisible}
+							/>
+							<TreeAction
+								label={t('folderTree.collapseAll')}
+								icon={ArrowsInLineVertical}
+								onClick={collapseAll}
+							/>
+						</div>
+					)
+				}
 			/>
 			{!isCollapsed && (
 				<div role="tree" aria-label={t('folderTree.title')} className="space-y-0.5">
@@ -107,6 +162,7 @@ export function FolderTree({sortableAttributes, sortableListeners}: {
 							depth={0}
 							expanded={expanded}
 							onToggle={toggle}
+							registerVisible={registerVisible}
 							current={current}
 							// The filesystem root lists the home folder's parent too; the
 							// tree only follows a folder in the deepest root holding it.
@@ -126,8 +182,24 @@ interface FolderNodeProps {
 	depth: number;
 	expanded: Set<string>;
 	onToggle: (path: string) => void;
+	/** Records the folder as on screen until the returned cleanup runs. */
+	registerVisible: (path: string) => () => void;
 	current: string | null;
 	follows: boolean;
+}
+
+function TreeAction({label, icon: ActionIcon, onClick}: {label: string; icon: Icon; onClick: () => void}) {
+	return (
+		<button
+			type="button"
+			aria-label={label}
+			title={label}
+			className="text-sidebar-ink-faint hover:bg-sidebar-selected hover:text-sidebar-ink flex size-6 items-center justify-center rounded-md transition-colors"
+			onClick={onClick}
+		>
+			<ActionIcon size={12} weight="bold" />
+		</button>
+	);
 }
 
 function FolderNode({
@@ -137,11 +209,12 @@ function FolderNode({
 	depth,
 	expanded,
 	onToggle,
+	registerVisible,
 	current,
 	follows
 }: FolderNodeProps) {
 	const {t} = useTranslation('navigation');
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const openInNewTab = useOpenInNewTabAction();
 	const {viewSettings} = useExplorer();
 	const isOpen = expanded.has(path);
@@ -161,6 +234,11 @@ function FolderNode({
 		resourceType: 'file',
 		pathScope: wingPath,
 		enabled: isOpen,
+		// One subscription per open folder used up the daemon's 100
+		// connections once "expand" opened a few levels. The tree refetches
+		// when a folder reopens, on window focus, and after the explorer's own
+		// file operations (useRefetchFileListings), which covers its use.
+		live: false,
 		refetchInterval: (query) =>
 			query.state.data &&
 			(query.state.data as {files: File[]}).files.length === 0 &&
@@ -172,6 +250,7 @@ function FolderNode({
 		(file) => file.kind === 'Directory' && 'Physical' in file.wing_path
 	);
 	const isLeaf = isOpen && !!data && children.length === 0;
+	useEffect(() => (isLeaf ? undefined : registerVisible(path)), [isLeaf, path, registerVisible]);
 	const RowIcon = icon ?? (isOpen ? FolderOpen : Folder);
 	const url = explorerUrlForDirectory(path);
 
@@ -230,6 +309,7 @@ function FolderNode({
 								depth={depth + 1}
 								expanded={expanded}
 								onToggle={onToggle}
+								registerVisible={registerVisible}
 								current={current}
 								follows={follows}
 							/>

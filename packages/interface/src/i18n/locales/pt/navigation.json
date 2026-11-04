@@ -347,7 +347,10 @@
 		"mountNamed": "Montar {{name}}",
 		"connectToServer": "Conectar ao servidor...",
 		"mountFailed": "Não foi possível montar {{name}}: {{error}}",
-		"unmountFailed": "Não foi possível desmontar {{name}}: {{error}}"
+		"unmountFailed": "Não foi possível desmontar {{name}}: {{error}}",
+		"discovered": "Nesta rede",
+		"connectNamed": "Conectar a {{name}}",
+		"refreshDiscovery": "Procurar na rede de novo"
 	},
 	"tags": {
 		"delete": "Excluir etiqueta",
@@ -389,6 +392,8 @@
 		"home": "Pasta pessoal",
 		"computer": "Computador",
 		"expand": "Expandir",
-		"collapse": "Recolher"
+		"collapse": "Recolher",
+		"expandAll": "Expandir pastas visíveis",
+		"collapseAll": "Recolher todas as pastas"
 	}
 }

@@ -5,6 +5,7 @@ import { Button, toast } from '@wingdrive/primitives';
 import { useNormalizedQuery, useLibraryMutation } from '../../contexts/WingDriveContext';
 import { useSelection } from './SelectionContext';
 import { useKeybind } from '../../hooks/useKeybind';
+import { useRefetchTagQueries } from '../../hooks/useRefetchTagQueries';
 import type { Tag } from '@wingdrive/ts-client';
 import { useTranslation } from '../../i18n';
 
@@ -25,7 +26,9 @@ interface TagAssignmentModeProps {
 export function TagAssignmentMode({ isActive, onExit }: TagAssignmentModeProps) {
 	const {t} = useTranslation('explorer');
 	const { selectedFiles } = useSelection();
-	const applyTag = useLibraryMutation('tags.apply');
+	const refetchTagQueries = useRefetchTagQueries();
+	const applyTag = useLibraryMutation('tags.apply', { onSuccess: refetchTagQueries });
+	const unapplyTag = useLibraryMutation('tags.unapply', { onSuccess: refetchTagQueries });
 
 	// Fetch all tags (for now, we'll use the first 10 as the default palette)
 	// TODO: Implement user-defined palettes
@@ -63,28 +66,45 @@ export function TagAssignmentMode({ isActive, onExit }: TagAssignmentModeProps) 
 		const tag = paletteTags[index];
 		if (!tag || selectedFiles.length === 0) return;
 
-		// Get content IDs from selected files (filter out files without content identity)
-		const contentIds = selectedFiles
-			.map(f => f.content_identity?.uuid)
-			.filter((id): id is string => id != null);
-
-		if (contentIds.length === 0) {
-			toast.error(t('tagMode.indexBeforeTagging'));
-			return;
-		}
-
 		try {
-			await applyTag.mutateAsync({
-				targets: { type: 'Content', ids: contentIds },
+			// A second press on a tag every selected item has removes it.
+			if (isTagActive(tag)) {
+				await unapplyTag.mutateAsync({
+					entry_ids: selectedFiles.map((f) => f.id),
+					tag_ids: [tag.id]
+				});
+				return;
+			}
+
+			// Files tag their content, so every copy shares the tag. Folders have
+			// no content identity and are tagged as entries; the daemon refuses
+			// entries it has not indexed with the "index first" message.
+			const contentIds = selectedFiles
+				.map((f) => f.content_identity?.uuid)
+				.filter((id): id is string => id != null);
+			const entryIds = selectedFiles
+				.filter((f) => !f.content_identity)
+				.map((f) => f.id);
+			const base = {
 				tag_ids: [tag.id],
 				source: null,
 				confidence: null,
 				applied_context: null,
 				instance_attributes: null
-			});
+			};
+			if (contentIds.length > 0) {
+				await applyTag.mutateAsync({ ...base, targets: { type: 'Content', ids: contentIds } });
+			}
+			if (entryIds.length > 0) {
+				await applyTag.mutateAsync({ ...base, targets: { type: 'EntryUuid', ids: entryIds } });
+			}
 		} catch (err) {
-			console.error('Failed to apply tag:', err);
-			toast.error(t('errors.failedToApplyTag', {error: err}));
+			console.error('Failed to toggle tag:', err);
+			toast.error(
+				String(err).includes('need to be indexed')
+					? t('tagMode.indexBeforeTagging')
+					: t('errors.failedToApplyTag', {error: err})
+			);
 		}
 	};
 

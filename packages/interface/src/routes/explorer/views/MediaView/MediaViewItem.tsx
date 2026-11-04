@@ -1,6 +1,7 @@
 import type {File} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {memo} from 'react';
+import {useIsCut} from '../../../../hooks/useClipboard';
 import {File as FileComponent} from '../../File';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
 import {useOpenFileAction} from '../../OpenFileProvider';
@@ -34,6 +35,7 @@ export const MediaViewItem = memo(function MediaViewItem({
 	size
 }: MediaViewItemProps) {
 	const showContextMenu = useShowFileContextMenu();
+	const isCut = useIsCut(file.wing_path);
 
 	const handleClick = (e: React.MouseEvent) => {
 		const multi = e.metaKey || e.ctrlKey;
@@ -62,7 +64,8 @@ export const MediaViewItem = memo(function MediaViewItem({
 			className={clsx(
 				'group relative h-full w-full cursor-pointer overflow-hidden transition-all outline-none focus:outline-none',
 				selected && 'ring-accent ring-2 ring-inset',
-				focused && !selected && 'ring-accent/50 ring-2 ring-inset'
+				focused && !selected && 'ring-accent/50 ring-2 ring-inset',
+				isCut && 'opacity-50'
 			)}
 			onClick={handleClick}
 			onDoubleClick={handleDoubleClick}

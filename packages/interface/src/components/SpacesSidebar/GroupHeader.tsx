@@ -11,6 +11,8 @@ interface GroupHeaderProps {
   isCollapsed: boolean;
   onToggle: () => void;
   rightComponent?: React.ReactNode;
+  /** Buttons beside the header, outside its toggle button. */
+  actions?: React.ReactNode;
   sortableAttributes?: any;
   sortableListeners?: any;
   group?: SpaceGroup;
@@ -22,6 +24,7 @@ export function GroupHeader({
   isCollapsed,
   onToggle,
   rightComponent,
+  actions,
   sortableAttributes,
   sortableListeners,
   group,
@@ -142,6 +145,7 @@ const { t } = useTranslation("navigation");
           {rightComponent}
         </button>
       )}
+      {actions}
     </div>
   );
 }

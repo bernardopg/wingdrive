@@ -1,8 +1,16 @@
-import {DeviceMobile, Eject, Globe, Plus} from '@phosphor-icons/react';
+import {
+	ArrowClockwise,
+	DeviceMobile,
+	Eject,
+	Globe,
+	HardDrives,
+	Plus,
+	TerminalWindow
+} from '@phosphor-icons/react';
 import {Dialog, dialogManager, Input, Label, toast, useDialog} from '@wingdrive/primitives';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {useForm} from 'react-hook-form';
-import {useNavigate} from 'react-router-dom';
+import {useSidebarNavigate} from '../TabManager/useSidebarNavigate';
 import {useTranslation} from '../../i18n';
 
 import {usePlatform, type NetworkMount} from '../../contexts/PlatformContext';
@@ -12,6 +20,7 @@ import {explorerUrlForDirectory} from '../TabManager/LaunchRequestSync';
 
 const MOUNTS_KEY = ['gvfs', 'mounts'];
 const VOLUMES_KEY = ['gvfs', 'mountable'];
+const DISCOVERY_KEY = ['gvfs', 'discovered'];
 
 interface ConnectForm {
 	uri: string;
@@ -22,14 +31,23 @@ type Connect = (uri: string, password?: string) => Promise<void>;
 
 // Dialogs render outside the router and query providers, so the section
 // passes in the work that needs them.
-function openConnectDialog(connect: Connect) {
-	dialogManager.create((props) => <ConnectDialog {...props} connect={connect} />);
+function openConnectDialog(connect: Connect, initial?: {uri: string; error?: string}) {
+	dialogManager.create((props) => <ConnectDialog {...props} connect={connect} initial={initial} />);
 }
 
-function ConnectDialog(props: {id: number; connect: Connect}) {
+function ConnectDialog(props: {
+	id: number;
+	connect: Connect;
+	initial?: {uri: string; error?: string};
+}) {
 	const {t} = useTranslation('navigation');
 	const dialog = useDialog(props);
-	const form = useForm<ConnectForm>({defaultValues: {uri: '', password: ''}});
+	const form = useForm<ConnectForm>({
+		defaultValues: {uri: props.initial?.uri ?? '', password: ''},
+		errors: props.initial?.error
+			? {uri: {type: 'mount', message: props.initial.error}}
+			: undefined
+	});
 
 	const onSubmit = form.handleSubmit(async ({uri, password}) => {
 		try {
@@ -77,11 +95,20 @@ function iconFor(mount: NetworkMount) {
 	return ['mtp', 'gphoto2', 'afc'].includes(mount.kind) ? DeviceMobile : Globe;
 }
 
+/** Whether a mounted gvfs folder already serves the discovered `uri`. */
+function isMounted(uri: string, mounts: NetworkMount[]): boolean {
+	const host = uri
+		.replace(/^[a-z]+:\/\/([^@/]*@)?/, '')
+		.split(/[/:]/)[0]
+		?.toLowerCase();
+	return !!host && mounts.some((mount) => mount.path.toLowerCase().includes(`host=${host}`));
+}
+
 /** Network locations and devices from gvfs, shown under Volumes on Linux. */
 export function NetworkSection({groupId}: {groupId: string}) {
 	const {t} = useTranslation('navigation');
 	const platform = usePlatform();
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const queryClient = useQueryClient();
 	const supported = !!platform.listNetworkMounts;
 
@@ -98,6 +125,14 @@ export function NetworkSection({groupId}: {groupId: string}) {
 		queryFn: () => platform.listMountableVolumes!(),
 		enabled: supported && !!platform.listMountableVolumes,
 		refetchInterval: 10000
+	});
+	// mDNS answers change slowly; one browse a minute keeps the list fresh.
+	const discovered = useQuery({
+		queryKey: DISCOVERY_KEY,
+		queryFn: () => platform.discoverNetworkServers!(),
+		enabled: supported && !!platform.discoverNetworkServers,
+		refetchInterval: 60000,
+		staleTime: 30000
 	});
 	const openInNewTab = useOpenInNewTabAction();
 
@@ -122,6 +157,20 @@ export function NetworkSection({groupId}: {groupId: string}) {
 		refresh();
 		navigate(explorerUrlForDirectory(mount.path));
 	};
+
+	// Servers that want a password or a user name fail without one; the
+	// dialog opens on the address so the user can add them.
+	const connectDiscovered = async (uri: string) => {
+		try {
+			await connect(uri);
+		} catch (error) {
+			openConnectDialog(connect, {uri, error: String(error)});
+		}
+	};
+
+	const servers = (discovered.data ?? []).filter(
+		(server) => !isMounted(server.uri, mounts.data ?? [])
+	);
 
 	const unmount = async (mount: NetworkMount) => {
 		try {
@@ -188,6 +237,40 @@ export function NetworkSection({groupId}: {groupId: string}) {
 				</button>
 				)}
 			</SortableDynamicList>
+			{(servers.length > 0 || discovered.isFetching) && (
+				<div className="pt-1">
+					<div className="text-sidebar-ink-faint flex items-center justify-between px-2 py-0.5 text-[11px] font-semibold">
+						<span>{t('network.discovered')}</span>
+						<button
+							type="button"
+							aria-label={t('network.refreshDiscovery')}
+							title={t('network.refreshDiscovery')}
+							className="hover:text-sidebar-ink rounded-sm"
+							onClick={() => void discovered.refetch()}
+						>
+							<ArrowClockwise
+								className={discovered.isFetching ? 'size-3 animate-spin' : 'size-3'}
+								weight="bold"
+							/>
+						</button>
+					</div>
+					{servers.map((server) => {
+						const Icon = server.kind === 'sftp' ? TerminalWindow : HardDrives;
+						return (
+							<button
+								key={server.uri}
+								type="button"
+								className={rowClass}
+								title={`${t('network.connectNamed', {name: server.name})}\n${server.uri}`}
+								onClick={() => void connectDiscovered(server.uri)}
+							>
+								<Icon className="size-4 shrink-0 opacity-60" weight="bold" />
+								<span className="truncate opacity-70">{server.name}</span>
+							</button>
+						);
+					})}
+				</div>
+			)}
 			<button type="button" className={rowClass} onClick={() => openConnectDialog(connect)}>
 				<Plus className="size-4 shrink-0" weight="bold" />
 				<span className="truncate">{t('network.connectToServer')}</span>

@@ -27,6 +27,7 @@ export type {
 	AdminOperation,
 	ContextAction,
 	DesktopSettings,
+	DiscoveredServer,
 	MountableVolume,
 	NetworkMount,
 	OpenRequest,

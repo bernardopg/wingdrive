@@ -21,6 +21,7 @@ import {
 	isGroupBy,
 	type FileGroup
 } from '../grouping';
+import {usePaneFocusedRef} from '../../../../components/TabManager/PaneContext';
 
 const VIRTUALIZATION_THRESHOLD = 0; // Disabled - always virtualize
 let lastGridMeasurement: {key: string; width: number; height: number} | null = null;
@@ -196,6 +197,8 @@ function VirtualizedGrid({
 	vcsStatus,
 	groups
 }: VirtualizedGridProps) {
+	// Keys go to the focused pane of a split view only.
+	const paneFocused = usePaneFocusedRef();
 	const cardProps = useCardProps(vcsStatus);
 	const groupLabel = useGroupLabel();
 	const {sidebarVisible, inspectorVisible, scrollPosition} = useExplorer();
@@ -303,6 +306,7 @@ function VirtualizedGrid({
 	// Keyboard navigation with correct column count
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
+			if (!paneFocused.current) return;
 			if (isInputFocused()) return;
 			if (
 				!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(

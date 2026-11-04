@@ -21,13 +21,14 @@ const client = {
 	subscribeFiltered
 } as never;
 
-function Listing({enabled}: {enabled: boolean}) {
+function Listing({enabled, live}: {enabled: boolean; live?: boolean}) {
 	useNormalizedQuery({
 		query: 'files.directory_listing',
 		input: {path: {Physical: {device_slug: 'local', path: '/tmp'}}} as never,
 		resourceType: 'file',
 		pathScope: {Physical: {device_slug: 'local', path: '/tmp'}},
-		enabled
+		enabled,
+		live
 	});
 	return null;
 }
@@ -51,6 +52,23 @@ describe('useNormalizedQuery subscriptions', () => {
 
 		await act(async () => render(false));
 		expect(unsubscribe).toHaveBeenCalledTimes(1);
+
+		await act(async () => root.unmount());
+	});
+
+	it('opens no subscription for an enabled query that is not live', async () => {
+		subscribeFiltered.mockClear();
+		const container = document.createElement('div');
+		const root = createRoot(container);
+
+		await act(async () =>
+			root.render(
+				<WingDriveProvider client={client}>
+					<Listing enabled live={false} />
+				</WingDriveProvider>
+			)
+		);
+		expect(subscribeFiltered).not.toHaveBeenCalled();
 
 		await act(async () => root.unmount());
 	});

@@ -43,10 +43,13 @@ import {
 	TABLE_PADDING_Y,
 	useTable
 } from './useTable';
+import {usePaneFocusedRef} from '../../../../components/TabManager/PaneContext';
 
 const NO_FILES: File[] = [];
 
 export const ListView = memo(function ListView() {
+	// Keys go to the focused pane of a split view only.
+	const paneFocused = usePaneFocusedRef();
 	const {t} = useTranslation('explorer');
 	const {setCurrentFiles, scrollPosition, viewSettings, currentPath, sortBy, sortDirection} =
 		useExplorer();
@@ -265,6 +268,7 @@ export const ListView = memo(function ListView() {
 	// Keyboard navigation - stable effect, uses refs for changing values
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
+			if (!paneFocused.current) return;
 			if (isInputFocused()) return;
 			// Right opens the focused folder in place and Left closes it, as in Dolphin.
 			if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {

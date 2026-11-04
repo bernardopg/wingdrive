@@ -16,7 +16,12 @@
 		"path": "Caminho",
 		"search": "Pesquisar",
 		"tags": "Etiquetas",
-		"inspector": "Inspetor"
+		"inspector": "Inspetor",
+		"splitView": "Dividir a vista (F3)",
+		"back": "Voltar",
+		"forward": "Avançar",
+		"tagMode": "Modo etiqueta",
+		"more": "Mais"
 	},
 	"actions": {
 		"tryAgain": "Tentar novamente",
@@ -89,6 +94,8 @@
 		"cut": "Recortar",
 		"paste": "Colar",
 		"copyTo": "Copiar para…",
+		"copyToOtherPane": "Copiar para o outro painel",
+		"moveToOtherPane": "Mover para o outro painel",
 		"moveTo": "Mover para…",
 		"selectAll": "Selecionar tudo",
 		"invertSelection": "Inverter seleção",

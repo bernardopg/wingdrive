@@ -14,6 +14,8 @@ mod files;
 mod gvfs;
 mod keybinds;
 mod launch;
+#[cfg(target_os = "linux")]
+mod network_discovery;
 mod server;
 mod terminal;
 mod undo;
@@ -2528,6 +2530,8 @@ fn main() {
 			gvfs::mount_network_location,
 			#[cfg(target_os = "linux")]
 			gvfs::unmount_network_location,
+			#[cfg(target_os = "linux")]
+			network_discovery::discover_network_servers,
 			keybinds::register_keybind,
 			keybinds::unregister_keybind,
 			keybinds::get_registered_keybinds

@@ -76,6 +76,8 @@ export const CircleButton = forwardRef<HTMLButtonElement, CircleButtonProps>(
 					children && "w-auto gap-2 px-3",
 					className,
 				)}
+				// An icon-only button is named by its tooltip unless it has a label.
+				aria-label={props["aria-label"] ?? (children ? undefined : props.title)}
 				{...props}
 			>
 				{Icon && <Icon className="size-[18px]" weight="bold" />}

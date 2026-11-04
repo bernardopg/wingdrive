@@ -1,6 +1,8 @@
 import { useRef, useCallback } from "react";
 import type { File } from "@wingdrive/ts-client";
 
+import { scrollToRevealed } from "../pendingReveal";
+
 interface UseTypeaheadSearchProps {
 	files: File[];
 	onMatch: (file: File, index: number) => void;
@@ -50,11 +52,10 @@ export function useTypeaheadSearch({ files, onMatch, enabled = true }: UseTypeah
 			if (matchIndex !== -1) {
 				onMatch(files[matchIndex], matchIndex);
 
-				// Scroll to the matched file
-				const element = document.querySelector(`[data-file-id="${files[matchIndex].id}"]`);
-				if (element) {
-					element.scrollIntoView({ block: "nearest", behavior: "smooth" });
-				}
+				// Grid and list rows are virtualized, so a match far down the
+				// listing has no element yet; the reveal event scrolls the view
+				// to its row first.
+				scrollToRevealed({ fileId: files[matchIndex].id, index: matchIndex });
 			}
 
 			// Reset search string after 500ms of inactivity

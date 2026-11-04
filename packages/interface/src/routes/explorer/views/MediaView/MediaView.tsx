@@ -17,6 +17,7 @@ import { useExplorerFiles } from "../../hooks/useExplorerFiles";
 import { useFolderFilter } from "../../hooks/useFolderFilter";
 import {useTabScroll} from '../../hooks/useTabScroll';
 import { useTranslation } from "../../../../i18n";
+import {usePaneFocusedRef} from "../../../../components/TabManager/PaneContext";
 
 // Helper to check if a file is a media file (image or video)
 function isMediaFile(file: File): boolean {
@@ -28,6 +29,8 @@ function isMediaFile(file: File): boolean {
 }
 
 export function MediaView() {
+	// Keys go to the focused pane of a split view only.
+	const paneFocused = usePaneFocusedRef();
 const {t} = useTranslation("explorer");
 	const { currentPath, viewSettings, sortBy, setSortBy, setCurrentFiles, mode, scrollPosition } =
 		useExplorer();
@@ -173,6 +176,7 @@ const {t} = useTranslation("explorer");
 	// Keyboard navigation for media view
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
+			if (!paneFocused.current) return;
 			if (
 				!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
 					e.key,
