@@ -13,6 +13,7 @@ import type {
 	AdminOperation,
 	ContextAction,
 	DesktopSettings,
+	DiscoveredServer,
 	MountableVolume,
 	NetworkMount,
 	OpenRequest,
@@ -55,6 +56,8 @@ export const platform: Platform = {
 				listNetworkMounts: () => invoke<NetworkMount[]>('list_network_mounts'),
 				listMountableVolumes: () =>
 					invoke<MountableVolume[]>('list_mountable_volumes'),
+				discoverNetworkServers: () =>
+					invoke<DiscoveredServer[]>('discover_network_servers'),
 				mountNetworkLocation: (uri: string, password?: string) =>
 					invoke<NetworkMount>('mount_network_location', {
 						uri,

@@ -76,6 +76,9 @@ export type Platform = {
 	/** Phones, cameras and other devices gvfs can mount (Tauri/Linux only) */
 	listMountableVolumes?(): Promise<MountableVolume[]>;
 
+	/** File servers on the local network and SSH hosts (Tauri/Linux only) */
+	discoverNetworkServers?(): Promise<DiscoveredServer[]>;
+
 	/** Mount a URI such as sftp://user@host/ (Tauri/Linux only) */
 	mountNetworkLocation?(uri: string, password?: string): Promise<NetworkMount>;
 
@@ -275,6 +278,18 @@ export interface NetworkMount {
 export interface MountableVolume {
 	name: string;
 	uri: string;
+}
+
+/** A file server announced on the network or named in ~/.ssh/config */
+export interface DiscoveredServer {
+	/** Readable name, such as `homesystem (SFTP)` */
+	name: string;
+	/** Address to mount, such as `sftp://homesystem/` */
+	uri: string;
+	/** URI scheme: `sftp`, `smb`, `ftp`, `dav`, `davs` or `nfs` */
+	kind: string;
+	/** `mdns` or `ssh-config` */
+	source: string;
 }
 
 /** How the desktop app behaves when its window closes and at login */

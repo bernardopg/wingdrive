@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { useDroppable } from "@dnd-kit/core";
 import type { File } from "@wingdrive/ts-client";
 import { File as FileComponent } from "../../File";
+import { useIsCut } from "../../../../hooks/useClipboard";
 import { useDraggableFile } from "../../hooks/useDraggableFile";
 import { useMiddleClickOpensTab } from "../../OpenFileProvider";
 
@@ -34,6 +35,7 @@ export const ColumnItem = memo(
 		);
 
 		const handleAuxClick = useMiddleClickOpensTab(file);
+		const isCut = useIsCut(file.wing_path);
 
 		const handleDoubleClick = useCallback(() => {
 			if (onDoubleClick) {
@@ -91,6 +93,7 @@ export const ColumnItem = memo(
 							: "text-ink",
 						focused && !selected && "ring-2 ring-accent/50",
 						isDragging && "opacity-40",
+						isCut && !isDragging && "opacity-50",
 						isFolder && isDropOver && "bg-accent/10",
 					)}
 				>

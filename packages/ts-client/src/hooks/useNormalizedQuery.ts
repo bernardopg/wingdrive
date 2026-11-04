@@ -41,6 +41,12 @@ export type UseNormalizedQueryOptions<I, O = any, TSelected = O> = Simplify<{
 	resourceType: string;
 	/** Whether query is enabled (default: true) */
 	enabled?: boolean;
+	/**
+	 * Keep the result fresh through resource events (default: true). Each
+	 * subscription holds its own daemon connection, so views that run many
+	 * small queries at once turn this off and rely on refetching instead.
+	 */
+	live?: boolean;
 	/** Optional path scope for server-side filtering */
 	pathScope?: WingPath;
 	/** Whether to include descendants (recursive) or only direct children (exact) */
@@ -175,7 +181,7 @@ export function useNormalizedQuery<I, O = any, TSelected = O>(
 	// Event subscription
 	// Only re-subscribe when filter criteria change
 	// Using refs for event handler to avoid re-subscription on every render
-	const enabled = options.enabled ?? true;
+	const enabled = (options.enabled ?? true) && (options.live ?? true);
 	useEffect(() => {
 		// A disabled query has nothing to keep fresh. Each subscription holds a
 		// daemon connection, and a folder tree whose collapsed rows subscribed
