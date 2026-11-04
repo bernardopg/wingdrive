@@ -24,8 +24,8 @@ Portuguese. How to set up and work on Windows is in
 - [x] Reproducible toolchain: `scripts/setup.ps1`, `.gitattributes`, `scripts/dev-isolated.ps1`, `just dev-desktop`
 - [x] Fix what breaks at runtime and in tests on Windows (see Findings)
 - [x] Windows jobs in CI and in the Release workflow
-- [x] `scripts/release/windows_smoke.ps1` installs, runs and uninstalls a bundle (written, first run is on GitHub)
-- [ ] Build `.exe` and `.msi` through `windows-bundle.yml`. The local build stops on Smart App Control
+- [x] `scripts/release/windows_smoke.ps1` installs, runs and uninstalls a bundle
+- [x] Build `.exe` and `.msi` with the workflow's command
 - [ ] Run the Windows jobs on GitHub and fix what only fails on the runner
 - [ ] Add the Windows jobs to the required checks in `.github/rulesets/main.json`
 
@@ -33,11 +33,11 @@ Portuguese. How to set up and work on Windows is in
 
 - [x] `cargo clippy --workspace -- -D warnings` is clean on Windows
 - [x] The CI Rust gates pass on Windows: 459 `wing-core` tests, 20 sync tests, 27 desktop tests, 18 CLI tests
-      (`task-validator` could not run locally because Smart App Control blocked its build script; CI covers it)
+- [x] `just ci-local --all` passes on Windows, with Smart App Control off
 - [x] Typecheck and the 33 CI frontend test files pass on Windows
 - [x] The desktop app opens through `just dev-desktop` and loads a library
 - [x] Location, indexing, search and volume listing work through the CLI
-- [ ] `.exe` and `.msi` install, run and uninstall through `windows_smoke.ps1`
+- [x] `.exe` and `.msi` install, run and uninstall through `windows_smoke.ps1`, locally, on 2026-11-04
 - [ ] `core-windows` and `frontend-windows` pass on GitHub
 - [ ] A `v*` tag publishes the `.exe`, the `.msi` and `SHA256SUMS-windows`
 
@@ -64,14 +64,20 @@ Bugs that only appear on Windows, all fixed on this task's branch:
 - `tauri.windows.conf.json` requested the macOS `app` bundle and no `msi`.
 - "Start at login" returned an error. It now writes the current user's Run key.
 
+- The NSIS uninstaller leaves its folder in `HKCU\Software\WingDrive contributors\WingDrive`,
+  and the MSI's registry search then overrides `INSTALLDIR`. A user who moves from the `.exe`
+  to the `.msi` lands in the old folder. The smoke test clears the key first.
+- Under `shell: bash` and `just`, `perl` is Git's MSYS perl, which cannot run OpenSSL's
+  `Configure`. `OPENSSL_SRC_PERL` points at Strawberry Perl.
+
 Not specific to Windows:
 
 - `wing` and `wing-daemon` evaluated `unwrap_or(default_data_dir()?)` eagerly, so they
   created an empty production data directory even with `--data-dir`.
 
-The development machine has Smart App Control on, which blocks some freshly built
-unsigned binaries at random. `docs/core/windows-development.mdx` shows how to recognize
-and get past it. It may also block unsigned installers on users' machines (REL-001).
+Smart App Control blocked freshly built unsigned binaries until it was turned off on the
+development machine. `docs/core/windows-development.mdx` shows how to recognize it. It may
+also block unsigned installers on users' machines (REL-001).
 
 Traps in the runner setup, handled but not yet proven on GitHub:
 
@@ -91,14 +97,9 @@ Not started, and not needed for the baseline:
 
 ## Handoff
 
-Work is split between two branches, the second stacked on the first:
+The runtime fixes merged in #330 and the CI and installers in #331. Installers for any branch
+come from `gh workflow run windows-bundle.yml --ref <branch>`, in the run's artifacts.
 
-1. `chore/windows-dev-environment`: fixes, tooling and documentation.
-2. `ci/windows-release`: workflows and installers. It opens as a draft, because
-   `auto-merge.yml` would merge it on the required checks alone, and the Windows jobs
-   are not required yet.
-
-Mark the second one ready once `Rust Workspace (Windows)`, `TypeScript (Windows)` and
-`Verify Windows x86_64 installers` pass. The installers are in that last run's artifacts.
-Everything needed to resume from Linux is in this file and in
+To close this task: publish a `v*` tag with the Windows jobs green, then add them to the
+required checks. Everything needed to resume from Linux is in this file and in
 `docs/core/windows-development.mdx`.

@@ -69,8 +69,8 @@ Defender antivirus: Defender reports no detection for these files, and its
 exclusions do not lift the block.
 
 With it on, a release build and `just ci-local` can stop at a different file on
-each run. Run the gates one by one against an existing `target\`, and build the
-installers through `windows-bundle.yml`.
+each run. Both passed once it was off. If you keep it on, run the gates one by one
+against an existing `target\`, and build the installers through `windows-bundle.yml`.
 
 Turning Smart App Control off stops the blocks, but Windows may not let you turn
 it back on without a reset, so make that choice yourself. The same policy can block
@@ -103,7 +103,9 @@ bun run --cwd apps/tauri tauri build --target x86_64-pc-windows-msvc --bundles n
 The bundles land in `target\x86_64-pc-windows-msvc\release\bundle\`.
 `scripts\release\windows_smoke.ps1` installs a bundle, runs the installed daemon
 and app, and uninstalls it. The NSIS installer runs per user. The MSI installs
-per machine, so its smoke test needs an elevated shell.
+per machine, so its smoke test needs an elevated shell. After an NSIS install, the
+MSI ignores `INSTALLDIR` and reuses the folder in
+`HKCU\Software\WingDrive contributors\WingDrive`, even after the NSIS uninstall.
 
 WiX accepts only numeric pre-release versions, so alpha, beta and rc tags ship
 the `.exe` alone. The installers are not signed yet, so SmartScreen warns about

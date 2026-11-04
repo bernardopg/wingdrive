@@ -52,6 +52,10 @@ function Uninstall-Bundle {
     }
 }
 
+# The NSIS uninstaller leaves its folder in this key, and the MSI's registry search then
+# overrides INSTALLDIR with it. Start from a clean key so each bundle lands where asked.
+Remove-Item -Path 'HKCU:\Software\WingDrive contributors' -Recurse -ErrorAction SilentlyContinue
+
 Write-Host "Installing $installerPath into $installDir"
 if ($Kind -eq 'nsis') {
     # NSIS reads /D literally, so it stays last and unquoted.
