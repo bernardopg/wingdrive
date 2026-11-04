@@ -35,7 +35,7 @@
 		"@types/node": ">26.6.x",
 		"@typescript-eslint/eslint-plugin": "^8.72.0",
 		"@typescript-eslint/parser": "^8.72.0",
-		"eslint": "^10.13.0",
+		"eslint": "^10.14.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-config-standard": "^17.1.0",
 		"eslint-plugin-jsdoc": "^65.4.2",
