@@ -86,7 +86,7 @@ const {t} = useTranslation('navigation');
 					console.error('Failed to index volume:', err);
 				}
 			},
-			condition: () => volume.is_mounted
+			condition: () => volume.is_mounted === true
 		},
 		{
 			icon: Gauge,
@@ -107,7 +107,7 @@ const {t} = useTranslation('navigation');
 					console.error('Failed to run speed test:', err);
 				}
 			},
-			condition: () => volume.is_mounted
+			condition: () => volume.is_mounted === true
 		},
 		{
 			icon: EjectSimple,
@@ -126,7 +126,7 @@ const {t} = useTranslation('navigation');
 					console.error('Failed to eject volume:', err);
 				}
 			},
-			condition: () => isRemovable && volume.is_mounted
+			condition: () => isRemovable && volume.is_mounted === true
 		}
 	];
 

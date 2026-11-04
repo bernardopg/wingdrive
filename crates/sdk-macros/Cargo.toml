@@ -2,6 +2,7 @@
 description = "Proc macros for WingDrive extension SDK"
 edition     = "2021"
 name        = "wingdrive-sdk-macros"
+license.workspace = true
 version     = "0.1.0"
 
 [lib]

@@ -33,7 +33,7 @@ export function RedundancyDashboard() {
 
 	const scorePercent = useMemo(() => {
 		if (!data) return 0;
-		return Math.round(data.library_totals.replication_score * 100);
+		return Math.round((data.library_totals.replication_score ?? 0) * 100);
 	}, [data]);
 
 	const scoreColor =

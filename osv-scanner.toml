@@ -1,0 +1,10 @@
+# OSV-Scanner decisions for advisories with no fix reachable from this repository.
+# Each entry mirrors .cargo/audit.toml and deny.toml, where the reasoning is written out.
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2023-0071"
+reason = "rsa via opendal's reqsign; WingDrive never decrypts attacker-supplied RSA ciphertext."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0344"
+reason = "ruzstd via wasmer-compiler, which never decompresses; the fix needs wasmer >= 7.3."
