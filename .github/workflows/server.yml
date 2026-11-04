@@ -70,8 +70,9 @@ jobs:
           platforms: linux/${{ matrix.arch }}
           outputs: type=image,name=ghcr.io/${{ github.repository }}/server,push-by-digest=true,name-canonical=true,push=true
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=wingdrive-server-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=wingdrive-server-${{ matrix.arch }}
+          # No gha layer cache: a tag run cannot read caches saved by another tag, so
+          # every release saved about 1.8 GB that no later run restored. That pushed the
+          # repository past its 10 GB cache limit and evicted the CI Rust cache.
       - name: Export image digest
         env:
           SERVER_IMAGE_DIGEST: ${{ steps.build.outputs.digest }}

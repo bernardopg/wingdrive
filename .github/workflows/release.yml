@@ -31,7 +31,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  CARGO_BUILD_JOBS: '2'
+  # One job per vCPU of the hosted runner (4 on ubuntu-24.04). Two left half
+  # the cores idle through the 25 to 37 minute bundle build.
+  CARGO_BUILD_JOBS: '4'
   CARGO_PROFILE_RELEASE_LTO: thin
   CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '16'
   RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}

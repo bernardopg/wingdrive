@@ -8,6 +8,12 @@ name: Coverage
 on:
   push:
     branches: [main]
+    # These files hold no tested code, so a push that only touches them cannot move a number.
+    paths-ignore:
+      - ".tasks/**"
+      - "docs/**"
+      - "**/*.md"
+      - "**/*.mdx"
   schedule:
     - cron: "41 5 * * 1"
   workflow_dispatch:
@@ -64,8 +70,10 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target: x86_64-unknown-linux-gnu
-          save-cache: ${{ github.ref == 'refs/heads/main' }}
-          # Instrumented builds share nothing with the CI or release caches.
+          # Instrumented builds share nothing with the CI or release caches, and a saved
+          # copy (about 2 GB) helped only this off-path job while it pushed the CI Rust
+          # cache out of the repository's 10 GB limit. A cold run takes about 40 minutes.
+          save-cache: false
           cache-key: coverage
           xtask-setup-args: --no-daemon
 
