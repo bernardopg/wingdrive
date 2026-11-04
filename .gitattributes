@@ -1,3 +1,8 @@
+# Keep LF on every platform. Windows runners check out with core.autocrlf=true,
+# and CRLF breaks the shell scripts that CI runs with Git Bash.
+* text=auto eol=lf
+*.bat -text
+
 # Mark generated lockfiles as generated code
 Cargo.lock -diff linguist-generated
 pnpm-lock.yaml -diff linguist-generated
