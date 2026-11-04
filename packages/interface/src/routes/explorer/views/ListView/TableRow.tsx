@@ -10,6 +10,7 @@ import {InlineNameEdit} from '../../components/InlineNameEdit';
 import {VcsEmblem} from '../../components/VcsEmblem';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
+import {useIsCut} from '../../../../hooks/useClipboard';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
 import {useMiddleClickOpensTab, useOpenFileAction} from '../../OpenFileProvider';
 import {useTranslation} from '../../../../i18n';
@@ -72,6 +73,7 @@ export const TableRow = memo(function TableRow({
 }: TableRowProps) {
 
 	const showContextMenu = useShowFileContextMenu();
+	const isCut = useIsCut(file.wing_path);
 
 	const openFile = useOpenFileAction();
 
@@ -191,7 +193,10 @@ export const TableRow = memo(function TableRow({
 
 			{/* Row content */}
 			<div
-				className="relative flex h-full items-center"
+				className={clsx(
+					'relative flex h-full items-center',
+					isCut && !isDragging && 'opacity-50'
+				)}
 				style={{
 					paddingLeft: TABLE_PADDING_X,
 					paddingRight: TABLE_PADDING_X

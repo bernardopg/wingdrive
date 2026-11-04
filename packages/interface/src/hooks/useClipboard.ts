@@ -46,6 +46,31 @@ export const useClipboardStore = create<ClipboardStore>((set, get) => ({
 	}
 }));
 
+// One key set per cut, shared by every item that asks whether it was cut.
+const cutKeysCache = new WeakMap<WingPath[], Set<string>>();
+
+function cutKeys(files: WingPath[]): Set<string> {
+	let keys = cutKeysCache.get(files);
+	if (!keys) {
+		keys = new Set(files.map((file) => JSON.stringify(file)));
+		cutKeysCache.set(files, keys);
+	}
+	return keys;
+}
+
+/**
+ * Whether `path` was cut and not pasted yet. Views dim these items, as other
+ * file managers do, so the user sees what the next paste will move.
+ */
+export function useIsCut(path: WingPath): boolean {
+	return useClipboardStore(
+		(state) =>
+			state.operation === 'cut' &&
+			state.files.length > 0 &&
+			cutKeys(state.files).has(JSON.stringify(path))
+	);
+}
+
 /**
  * Hook to access clipboard state and operations
  */

@@ -25,7 +25,7 @@ import {CircleButton, Popover, usePopover} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {motion} from 'framer-motion';
 import {memo, useEffect, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useSidebarNavigate} from '../TabManager/useSidebarNavigate';
 import {useTranslation} from '../../i18n';
 import {usePlatform} from '../../contexts/PlatformContext';
 import {useWingDriveClient} from '../../contexts/WingDriveContext';
@@ -137,7 +137,7 @@ function SortableFolderTree({id}: {id: string}) {
 const SyncButton = memo(function SyncButton() {
 const {t} = useTranslation('navigation');
 	const popover = usePopover();
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const [showActivityFeed, setShowActivityFeed] = useState(false);
 	const {onlinePeerCount, isSyncing} = useSyncCount();
 	const sync = useSyncMonitor();
@@ -415,7 +415,7 @@ export const SpacesSidebar = memo(function SpacesSidebar({
 	const {t} = useTranslation('navigation');
 	const client = useWingDriveClient();
 	const platform = usePlatform();
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const {data: libraries} = useLibraries();
 	const [currentLibraryId, setCurrentLibraryId] = useState<string | null>(
 		() => client.getCurrentLibraryId()

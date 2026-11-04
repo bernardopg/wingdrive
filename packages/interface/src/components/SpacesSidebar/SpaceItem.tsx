@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { useTranslation } from "../../i18n";
 import { DotsSixVertical } from "@phosphor-icons/react";
-import { useNavigate } from "react-router-dom";
+import {useSidebarNavigate} from "../TabManager/useSidebarNavigate";
 import clsx from "clsx";
 import type { Location, SpaceItem as SpaceItemType } from "@wingdrive/ts-client";
 import { Thumb } from "../../routes/explorer/File/Thumb";
@@ -208,7 +208,7 @@ const SpaceItemBody = memo(function SpaceItemBody({
 	tabRoute,
 }: SpaceItemBodyProps) {
 	const {t} = useTranslation("navigation");
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const openInNewTab = useOpenInNewTabAction();
 
 	// Merge legacy props into overrides

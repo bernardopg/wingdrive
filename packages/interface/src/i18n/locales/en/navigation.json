@@ -347,7 +347,10 @@
 		"mountNamed": "Mount {{name}}",
 		"connectToServer": "Connect to Server...",
 		"mountFailed": "Could not mount {{name}}: {{error}}",
-		"unmountFailed": "Could not unmount {{name}}: {{error}}"
+		"unmountFailed": "Could not unmount {{name}}: {{error}}",
+		"discovered": "On this network",
+		"connectNamed": "Connect to {{name}}",
+		"refreshDiscovery": "Search the network again"
 	},
 	"tags": {
 		"delete": "Delete Tag",
@@ -389,6 +392,8 @@
 		"home": "Home",
 		"computer": "Computer",
 		"expand": "Expand",
-		"collapse": "Collapse"
+		"collapse": "Collapse",
+		"expandAll": "Expand visible folders",
+		"collapseAll": "Collapse all folders"
 	}
 }

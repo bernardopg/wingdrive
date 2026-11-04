@@ -77,6 +77,18 @@ export interface TabExplorerState {
 	sizeViewTransform: {k: number; x: number; y: number};
 }
 
+/**
+ * The second pane of a tab's split view (F3). Its tab never shows in the tab
+ * bar; it keeps its own path, history and explorer state, and survives closing
+ * the split so reopening it returns to the same folder.
+ */
+export interface SplitPane {
+	tab: Tab;
+	open: boolean;
+}
+
+export type PaneId = 'primary' | 'secondary';
+
 /** A closed tab plus the explorer state it had, so reopening restores context. */
 interface ClosedTab {
 	tab: Tab;
@@ -120,6 +132,8 @@ interface PersistedState {
 	activeTabId: string;
 	explorerStates: Record<string, TabExplorerState>;
 	defaultNewTabPath: string;
+	/** Split view of each tab, by the id of the tab that owns it. */
+	splits?: Record<string, SplitPane>;
 }
 
 function loadPersistedState(storageKey: string): PersistedState | null {
@@ -169,6 +183,19 @@ function loadPersistedState(storageKey: string): PersistedState | null {
 		}
 		if (!localPath(parsed.defaultNewTabPath))
 			parsed.defaultNewTabPath = '/';
+		const splits: Record<string, SplitPane> = {};
+		const owners = new Set(parsed.tabs.map((tab) => tab.id));
+		for (const [owner, split] of Object.entries(parsed.splits ?? {})) {
+			const tab = split?.tab;
+			if (!owners.has(owner) || !tab || typeof tab.id !== 'string' || !localPath(tab.savedPath))
+				continue;
+			if (!Array.isArray(tab.history) || !tab.history.every(localPath) || !Number.isInteger(tab.historyIndex)) {
+				tab.history = [tab.savedPath];
+				tab.historyIndex = 0;
+			}
+			splits[owner] = {tab, open: split.open === true};
+		}
+		parsed.splits = splits;
 		return parsed;
 	} catch {
 		return null;
@@ -218,6 +245,19 @@ interface TabManagerContextValue {
 	// Selection state (per-tab, ephemeral - not persisted)
 	getSelectionIds: (tabId: string) => string[];
 	updateSelectionIds: (tabId: string, fileIds: string[]) => void;
+
+	// Split view of the active tab
+	/** The active tab's second pane while the split is open, else null. */
+	split: {tabId: string; router: Router} | null;
+	/** Opens or closes the active tab's split view (F3). */
+	toggleSplit: () => void;
+	/** Pane that receives keyboard shortcuts and sidebar navigation. */
+	focusedPane: PaneId;
+	setFocusedPane: (pane: PaneId) => void;
+	/** Current URL of a pane of the active tab; null for a closed split. */
+	panePath: (pane: PaneId) => string | null;
+	/** Navigates a pane of the active tab, as a sidebar click does. */
+	navigatePane: (pane: PaneId, to: string) => void;
 }
 
 const TabManagerContext = createContext<TabManagerContextValue | null>(null);
@@ -275,31 +315,61 @@ export function TabManagerProvider({
 		const tabExists = tabs.some((t) => t.id === restored?.activeTabId);
 		return tabExists ? restored!.activeTabId : tabs[0].id;
 	});
+	const [splits, setSplits] = useState<Record<string, SplitPane>>(
+		() => restored?.splits ?? {}
+	);
+	const [focusedPane, setFocusedPane] = useState<PaneId>('primary');
+
 	const routers = useRef(new Map<string, Router>());
+	const routerFor = useCallback(
+		(tab: Tab, save: (savedPath: string, history: string[], historyIndex: number) => void) => {
+			const cached = routers.current.get(tab.id);
+			if (cached) return cached;
+			const created = createTabRouter(routes, tab.savedPath, tab.history, tab.historyIndex, save);
+			routers.current.set(tab.id, created);
+			return created;
+		},
+		[routes]
+	);
 	const router = useMemo(() => {
-		const cached = routers.current.get(activeTabId);
-		if (cached) return cached;
 		const tab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
-		const created = createTabRouter(
-			routes,
-			tab.savedPath,
-			tab.history,
-			tab.historyIndex,
-			(savedPath, history, historyIndex) =>
-				setTabs((prev) =>
-					prev.map((entry) =>
-						entry.id === tab.id
-							? {...entry, savedPath, history, historyIndex}
-							: entry
-					)
+		return routerFor(tab, (savedPath, history, historyIndex) =>
+			setTabs((prev) =>
+				prev.map((entry) =>
+					entry.id === tab.id
+						? {...entry, savedPath, history, historyIndex}
+						: entry
 				)
+			)
 		);
-		routers.current.set(tab.id, created);
-		return created;
-	}, [activeTabId, routes, tabs]);
+	}, [activeTabId, routerFor, tabs]);
+
+	const activeSplit = splits[activeTabId];
+	const splitTab = activeSplit?.open ? activeSplit.tab : null;
+	const splitRouter = useMemo(() => {
+		if (!splitTab) return null;
+		const owner = activeTabId;
+		return routerFor(splitTab, (savedPath, history, historyIndex) =>
+			setSplits((prev) =>
+				prev[owner]
+					? {...prev, [owner]: {...prev[owner], tab: {...prev[owner].tab, savedPath, history, historyIndex}}}
+					: prev
+			)
+		);
+	}, [activeTabId, routerFor, splitTab]);
+	const split = useMemo(
+		() => (splitTab && splitRouter ? {tabId: splitTab.id, router: splitRouter} : null),
+		[splitTab, splitRouter]
+	);
+	// A closed split or another tab hands shortcuts back to the remaining pane.
+	const effectiveFocusedPane: PaneId = split ? focusedPane : 'primary';
+
 	useEffect(() => {
 		// ponytail: routers use O(open tabs) memory; evict cold routers if very large sessions need a cap.
-		const open = new Set(tabs.map((tab) => tab.id));
+		const open = new Set([
+			...tabs.map((tab) => tab.id),
+			...Object.values(splits).map((split) => split.tab.id)
+		]);
 		for (const [id, router] of routers.current) {
 			if (!open.has(id)) {
 				router.dispose();
@@ -420,9 +490,10 @@ export function TabManagerProvider({
 			tabs,
 			activeTabId,
 			explorerStates: explorerStatesObject,
-			defaultNewTabPath
+			defaultNewTabPath,
+			splits
 		});
-	}, [storageKey, tabs, activeTabId, explorerStates, defaultNewTabPath]);
+	}, [storageKey, tabs, activeTabId, explorerStates, defaultNewTabPath, splits]);
 
 	// ========================================================================
 	// Tab management
@@ -505,19 +576,28 @@ export function TabManagerProvider({
 				if (fallback) setActiveTabId(fallback.id);
 			}
 
+			// A closed tab takes its split pane with it.
+			const panes = [...doomed].flatMap((id) => (splits[id] ? [splits[id].tab.id] : []));
+			if (panes.length > 0)
+				setSplits((prev) => {
+					const next = {...prev};
+					for (const id of doomed) delete next[id];
+					return next;
+				});
+
 			setExplorerStates((prev) => {
 				const next = new Map(prev);
-				for (const id of doomed) next.delete(id);
+				for (const id of [...doomed, ...panes]) next.delete(id);
 				return next;
 			});
 
 			setSelectionStates((prev) => {
 				const next = new Map(prev);
-				for (const id of doomed) next.delete(id);
+				for (const id of [...doomed, ...panes]) next.delete(id);
 				return next;
 			});
 		},
-		[activeTabId, tabs, explorerStates]
+		[activeTabId, tabs, explorerStates, splits]
 	);
 
 	const closeTab = useCallback(
@@ -663,6 +743,60 @@ export function TabManagerProvider({
 	);
 
 	// ========================================================================
+	// Split view
+	// ========================================================================
+
+	const toggleSplit = useCallback(() => {
+		const owner = tabs.find((tab) => tab.id === activeTabId);
+		if (!owner) return;
+		const existing = splits[owner.id];
+		if (existing) {
+			const open = !existing.open;
+			setSplits((prev) => ({...prev, [owner.id]: {...existing, open}}));
+			setFocusedPane(open ? 'secondary' : 'primary');
+			return;
+		}
+		// A new pane starts in the same folder and view, as in Dolphin.
+		const tab: Tab = {
+			id: crypto.randomUUID(),
+			title: owner.title,
+			icon: null,
+			isPinned: false,
+			lastActive: Date.now(),
+			savedPath: owner.savedPath,
+			history: [owner.savedPath],
+			historyIndex: 0
+		};
+		setExplorerStates((prev) =>
+			new Map(prev).set(tab.id, {
+				...(prev.get(owner.id) ?? DEFAULT_EXPLORER_STATE),
+				scrollTop: 0,
+				scrollLeft: 0,
+				listExpanded: []
+			})
+		);
+		setSelectionStates((prev) => new Map(prev).set(tab.id, []));
+		setSplits((prev) => ({...prev, [owner.id]: {tab, open: true}}));
+		setFocusedPane('secondary');
+	}, [tabs, activeTabId, splits]);
+
+	const panePath = useCallback(
+		(pane: PaneId): string | null => {
+			if (pane === 'secondary') return splitTab?.savedPath ?? null;
+			return tabs.find((tab) => tab.id === activeTabId)?.savedPath ?? null;
+		},
+		[splitTab, tabs, activeTabId]
+	);
+
+	const navigatePane = useCallback(
+		(pane: PaneId, to: string) => {
+			const target = pane === 'secondary' && splitRouter ? splitRouter : router;
+			void target.navigate(to);
+		},
+		[router, splitRouter]
+	);
+
+	// ========================================================================
 	// Context value
 	// ========================================================================
 
@@ -687,7 +821,13 @@ export function TabManagerProvider({
 			getExplorerState,
 			updateExplorerState,
 			getSelectionIds,
-			updateSelectionIds
+			updateSelectionIds,
+			split,
+			toggleSplit,
+			focusedPane: effectiveFocusedPane,
+			setFocusedPane,
+			panePath,
+			navigatePane
 		}),
 		[
 			tabs,
@@ -709,7 +849,12 @@ export function TabManagerProvider({
 			getExplorerState,
 			updateExplorerState,
 			getSelectionIds,
-			updateSelectionIds
+			updateSelectionIds,
+			split,
+			toggleSplit,
+			effectiveFocusedPane,
+			panePath,
+			navigatePane
 		]
 	);
 

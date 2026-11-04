@@ -1236,7 +1236,83 @@ impl FileSearchQuery {
 			fts_results.push((entry_id, rank));
 		}
 
+		self.append_substring_matches(db, &mut fts_results).await?;
+
 		Ok(fts_results)
+	}
+
+	/// Adds names that contain the query mid-word, which FTS5 cannot match.
+	///
+	/// The FTS index tokenizes names into words and matches word prefixes, so
+	/// `ar` missed `harbor-lights.jpg`, while browsing the same folder before it
+	/// was indexed (the ephemeral search) found it. These rows rank after every
+	/// FTS hit: bm25 ranks are negative and lower is better, so they get 0.
+	async fn append_substring_matches(
+		&self,
+		db: &DatabaseConnection,
+		results: &mut Vec<(i32, f64)>,
+	) -> QueryResult<()> {
+		use sea_orm::Statement;
+
+		let query = self.input.query.trim();
+		if query.is_empty() || results.len() >= FTS_MATCH_CAP as usize {
+			return Ok(());
+		}
+		let mut pattern = String::with_capacity(query.len() + 2);
+		pattern.push('%');
+		for c in query.chars() {
+			if matches!(c, '%' | '_' | '\\') {
+				pattern.push('\\');
+			}
+			pattern.push(c);
+		}
+		pattern.push('%');
+
+		// SQLite's LIKE ignores ASCII case, as the ephemeral search does.
+		let name = "(e.name || CASE WHEN e.extension IS NULL OR e.extension = '' \
+			THEN '' ELSE '.' || e.extension END)";
+		let limit = (FTS_MATCH_CAP as usize - results.len()).to_string();
+		let (sql, params): (String, Vec<sea_orm::Value>) = match &self.input.scope {
+			SearchScope::Path { path } if path.path().is_some() => {
+				let path_str = path.path().unwrap().to_string_lossy();
+				let (exact, like_pattern) =
+					crate::ops::search::filters::directory_subtree_patterns(&path_str);
+				(
+					format!(
+						"SELECT e.id FROM entries e \
+						JOIN directory_paths dp ON dp.entry_id = e.parent_id \
+						WHERE {name} LIKE ? ESCAPE '\\' \
+						AND (dp.path = ? OR dp.path LIKE ? ESCAPE '\\') LIMIT ?"
+					),
+					vec![
+						pattern.into(),
+						exact.into(),
+						like_pattern.into(),
+						limit.into(),
+					],
+				)
+			}
+			_ => (
+				format!("SELECT e.id FROM entries e WHERE {name} LIKE ? ESCAPE '\\' LIMIT ?"),
+				vec![pattern.into(), limit.into()],
+			),
+		};
+
+		let rows = db
+			.query_all_raw(Statement::from_sql_and_values(
+				db.get_database_backend(),
+				&sql,
+				params,
+			))
+			.await?;
+		let seen: HashSet<i32> = results.iter().map(|(id, _)| *id).collect();
+		for row in rows {
+			let entry_id: i32 = row.try_get("", "id")?;
+			if !seen.contains(&entry_id) {
+				results.push((entry_id, 0.0));
+			}
+		}
+		Ok(())
 	}
 
 	/// Check if an entry passes additional (non-text) filters

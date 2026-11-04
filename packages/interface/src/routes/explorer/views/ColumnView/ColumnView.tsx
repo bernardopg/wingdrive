@@ -12,6 +12,7 @@ import { useExplorerFiles } from "../../hooks/useExplorerFiles";
 import { useFolderFilter } from "../../hooks/useFolderFilter";
 import {useTabScroll} from '../../hooks/useTabScroll';
 import {useTranslation} from '../../../../i18n';
+import {usePaneFocusedRef} from '../../../../components/TabManager/PaneContext';
 
 /** Get path string from WingPath for comparison */
 function getPathString(path: WingPath | null | undefined): string {
@@ -21,6 +22,8 @@ function getPathString(path: WingPath | null | undefined): string {
 }
 
 export function ColumnView() {
+	// Keys go to the focused pane of a split view only.
+	const paneFocused = usePaneFocusedRef();
 	const {t} = useTranslation('explorer');
 	const {
 		currentPath,
@@ -276,6 +279,7 @@ export function ColumnView() {
 	// Keyboard navigation
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
+			if (!paneFocused.current) return;
 			if (
 				["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
 					e.key,

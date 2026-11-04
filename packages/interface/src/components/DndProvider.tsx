@@ -151,8 +151,11 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			const scoped = {...args, droppableContainers: candidates};
 			return args.pointerCoordinates ? pointerWithin(scoped) : closestCenter(scoped);
 		}
-		const collisions = pointerWithin(args);
-		if (!collisions || collisions.length === 0) return collisions;
+		const all = pointerWithin(args);
+		if (!all || all.length === 0) return all;
+		// A split-view pane covers the folders inside it; they win when hit.
+		const specific = all.filter((c) => !String(c.id).startsWith("pane-drop-"));
+		const collisions = specific.length > 0 ? specific : all;
 
 		// If we have multiple collisions, prefer -top over -bottom
 		const hasTop = collisions.find((c) => String(c.id).endsWith("-top"));
@@ -170,7 +173,6 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 		query: "devices.list",
 		input: { include_offline: true, include_details: false },
 		resourceType: "device",
-		enabled: !!platform.startFileDrag,
 	});
 	const localSlug = useMemo(
 		() => (devicesData as Device[] | undefined)?.find((d) => d.is_current)?.slug,
@@ -225,8 +227,14 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	// Opens the copy/move dialog for the dragged files and a destination folder.
-	const dropFilesInto = (dragData: any, destination: WingPath) => {
+	const dropFilesInto = (dragData: any, target: WingPath) => {
 		const dragged: File[] = dragData.selectedFiles ?? [dragData.file];
+		// Explorer URLs, and so the split-view pane targets, name this device
+		// "local"; files carry its real slug. Compare them as the same device.
+		const destination: WingPath =
+			"Physical" in target && target.Physical.device_slug === "local" && localSlug
+				? { Physical: { ...target.Physical, device_slug: localSlug } }
+				: target;
 		// A virtual entry stands for a whole location, volume or device root;
 		// dragging it along with real files must not move that root.
 		if (!selectionCapabilities(dragged).canCopy) {
@@ -234,6 +242,8 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			return;
 		}
 		const sources: WingPath[] = dragged.map((f) => f.wing_path);
+		// Dropping files on the pane that already shows their folder is not a move.
+		if (sources.every((source) => isDirectChild(source, destination))) return;
 
 		// Native file managers move within a volume and copy across volumes;
 		// copying by default silently duplicated files during reorganization.
@@ -617,4 +627,12 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			</DragOverlay>
 		</DndContext>
 	);
+}
+
+/** Whether `path` sits directly in the folder `folder`. */
+function isDirectChild(path: WingPath, folder: WingPath): boolean {
+	if (!("Physical" in path) || !("Physical" in folder)) return false;
+	if (path.Physical.device_slug !== folder.Physical.device_slug) return false;
+	const parent = path.Physical.path.replace(/\/+$/, "").replace(/\/[^/]*$/, "") || "/";
+	return parent === (folder.Physical.path.replace(/\/+$/, "") || "/");
 }

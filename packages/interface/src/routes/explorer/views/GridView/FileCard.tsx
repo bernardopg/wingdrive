@@ -9,6 +9,7 @@ import {VcsEmblem} from '../../components/VcsEmblem';
 import {VolumeSizeBar} from '../../components/VolumeSizeBar';
 import {File as FileComponent} from '../../File';
 import {useDraggableFile} from '../../hooks/useDraggableFile';
+import {useIsCut} from '../../../../hooks/useClipboard';
 import {useShowFileContextMenu} from '../../FileContextMenuProvider';
 import {useMiddleClickOpensTab, useOpenFileAction} from '../../OpenFileProvider';
 import {formatBytes} from '../../utils';
@@ -49,6 +50,7 @@ export const FileCard = memo(function FileCard({
 	vcsStatus
 }: FileCardProps) {
 	const showContextMenu = useShowFileContextMenu();
+	const isCut = useIsCut(file.wing_path);
 
 	const openFile = useOpenFileAction();
 
@@ -145,6 +147,7 @@ export const FileCard = memo(function FileCard({
 				className={clsx(
 					'flex flex-col items-center gap-2 rounded-lg p-1 transition-all',
 					dndIsDragging && 'opacity-40',
+					isCut && !dndIsDragging && 'opacity-50',
 					isFolder && isDropOver && 'bg-accent/10'
 				)}
 			>
