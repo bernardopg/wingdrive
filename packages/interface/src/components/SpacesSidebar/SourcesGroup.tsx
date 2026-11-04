@@ -1,4 +1,5 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import {useLocation} from "react-router-dom";
+import {useSidebarNavigate} from "../TabManager/useSidebarNavigate";
 import { Database } from "@phosphor-icons/react";
 import { useLibraryQuery } from "../../contexts/WingDriveContext";
 import { useAdapterIcons } from "../../hooks/useAdapterIcons";
@@ -22,7 +23,7 @@ export function SourcesGroup({
 	sortableListeners,
 }: SourcesGroupProps) {
 	const { t } = useTranslation("navigation");
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const location = useLocation();
 	const { getIcon } = useAdapterIcons();
 

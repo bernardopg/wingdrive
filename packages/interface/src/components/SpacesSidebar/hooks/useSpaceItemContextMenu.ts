@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import {useSidebarNavigate} from "../../TabManager/useSidebarNavigate";
 import {
 	FolderOpen,
 	MagnifyingGlass,
@@ -42,7 +42,7 @@ export function useSpaceItemContextMenu({
 	loadPreferencesForSpaceItem,
 }: UseSpaceItemContextMenuOptions): ContextMenuResult {
 const {t} = useTranslation('navigation');
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const platform = usePlatform();
 	const deleteItem = useLibraryMutation("spaces.delete_item");
 	const indexVolume = useLibraryMutation("volumes.index");
