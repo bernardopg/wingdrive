@@ -69,6 +69,48 @@ env:
   GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4g
 
 jobs:
+  # The path filter above starts this workflow for Rust and JavaScript changes alike, but
+  # the Gradle build skips the Rust core (WING_SKIP_RUST) and the clippy job reads no
+  # JavaScript. Each job runs only for the files it checks.
+  changes:
+    name: Detect mobile changes
+    if: ${{ !inputs.release-tag }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      gradle: ${{ steps.filter.outputs.gradle }}
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check which mobile jobs the changed files need
+        id: filter
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          case "$EVENT" in
+            pull_request) range="$BASE_SHA...$HEAD_SHA" ;;
+            push) range="$BEFORE_SHA..HEAD" ;;
+            *) range="" ;;
+          esac
+          # Manual runs, and a diff that cannot be computed, run every job.
+          if [ -z "$range" ] || ! changed=$(git diff --name-only "$range" 2>/dev/null); then
+            echo "gradle=true" >> "$GITHUB_OUTPUT"
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          shared='^(\.github/workflows/mobile\.yml|scripts/release/android_version\.py)$'
+          gradle='^(apps/mobile/|packages/ts-client/|packages/assets/|bun\.lock$|package\.json$)'
+          rust='^(core/|crates/|apps/mobile/modules/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/actions/setup-rust/)'
+          if grep -qE "$gradle|$shared" <<< "$changed"; then echo "gradle=true"; else echo "gradle=false"; fi >> "$GITHUB_OUTPUT"
+          if grep -qE "$rust|$shared" <<< "$changed"; then echo "rust=true"; else echo "rust=false"; fi >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
   js:
     name: Lint and dependencies
     if: ${{ !inputs.release-tag }}
@@ -102,7 +144,8 @@ jobs:
 
   rust-android:
     name: Embedded core (clippy, aarch64)
-    if: ${{ !inputs.release-tag }}
+    needs: changes
+    if: ${{ !inputs.release-tag && needs.changes.outputs.rust == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -136,7 +179,8 @@ jobs:
 
   android:
     name: Android build (Gradle, release variant)
-    if: ${{ !inputs.release-tag }}
+    needs: changes
+    if: ${{ !inputs.release-tag && needs.changes.outputs.gradle == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
