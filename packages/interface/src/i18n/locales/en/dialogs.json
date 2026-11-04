@@ -227,7 +227,11 @@
 		"multiplePermanent_one": "Permanently delete {{count}} items? This cannot be undone.",
 		"multiplePermanent_other": "Permanently delete {{count}} items? This cannot be undone.",
 		"titleMultiple_other": "Delete {{count}} items",
-		"titleMultiple_one": "Delete {{count}} items"
+		"titleMultiple_one": "Delete {{count}} items",
+		"lastCopies_one": "{{count}} file is the last copy of its content in this library.",
+		"lastCopies_other": "{{count}} files are the last copy of their content in this library.",
+		"unknownCopies_one": "{{count}} file is not indexed with its content, so other copies are unknown.",
+		"unknownCopies_other": "{{count}} files are not indexed with their content, so other copies are unknown."
 	},
 	"duplicates": {
 		"title": "Duplicate files",
@@ -266,7 +270,18 @@
 		"unknownPath": "Unknown",
 		"failureDetailsHint": "The job log lists every failed item.",
 		"itemCount_one": "{{count}} item",
-		"itemCount_other": "{{count}} items"
+		"itemCount_other": "{{count}} items",
+		"planTotals_one": "{{count}} file, {{size}}",
+		"planTotals_other": "{{count}} files, {{size}}",
+		"planTruncated": "(at least: the folder is too large to count)",
+		"planConflicts_one": "{{count}} item already exists at the destination:",
+		"planConflicts_other": "{{count}} items already exist at the destination:",
+		"planSkipped_one": "{{count}} skipped",
+		"planSkipped_other": "{{count}} skipped",
+		"planRenamed_one": "{{count}} renamed",
+		"planRenamed_other": "{{count}} renamed",
+		"planOverwritten_one": "{{count}} overwritten",
+		"planOverwritten_other": "{{count}} overwritten"
 	},
 	"pairing": {
 		"title": "Device Pairing",

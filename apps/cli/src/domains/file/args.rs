@@ -55,6 +55,10 @@ pub struct FileCopyArgs {
 	/// Copy method to use
 	#[arg(long, default_value_t = CopyMethod::Auto)]
 	pub method: CopyMethod,
+
+	/// Print the plan (files, bytes, conflicts) and stop without copying
+	#[arg(long, default_value_t = false)]
+	pub dry_run: bool,
 }
 
 impl From<FileCopyArgs> for FileCopyInput {
@@ -130,6 +134,10 @@ pub struct FileDeleteArgs {
 	/// Skip the confirmation prompt for permanent deletion
 	#[arg(long, short = 'y', default_value_t = false)]
 	pub yes: bool,
+
+	/// Print the plan (files, bytes, last copies) and stop without deleting
+	#[arg(long, default_value_t = false)]
+	pub dry_run: bool,
 }
 
 impl From<FileDeleteArgs> for FileDeleteInput {

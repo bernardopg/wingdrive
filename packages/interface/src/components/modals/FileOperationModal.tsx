@@ -32,6 +32,7 @@ import {useRefetchFileListings} from '../../hooks/useRefetchFileListings';
 import {useUndo} from '../../hooks/useUndo';
 import {useWaitForJob} from '../../hooks/useWaitForJob';
 import {File, FileStack} from '../../routes/explorer/File';
+import {formatBytes} from '../../routes/explorer/utils';
 import {i18n, useTranslation} from '../../i18n';
 
 interface FileOperationDialogProps {
@@ -584,6 +585,13 @@ title={t("fileOperation.title")}
 					</div>
 				</div>
 
+				<PlanSummary
+					operation={operation}
+					sources={props.sources}
+					destination={props.destination}
+					conflictResolution={conflictResolution}
+				/>
+
 				{/* Operation type selection */}
 				<div className="space-y-2">
 					<div className="text-ink-dull mb-2 text-xs font-medium">
@@ -674,6 +682,58 @@ title={t("fileOperation.title")}
 				</div>
 			</div>
 		</Dialog>
+	);
+}
+
+/**
+ * What the job will do, from the daemon's read-only preflight: how many files
+ * and bytes, and what the chosen conflict policy does to items already there.
+ */
+function PlanSummary(props: {
+	operation: 'copy' | 'move';
+	sources: WingPath[];
+	destination: WingPath;
+	conflictResolution: ConflictResolution;
+}) {
+	const {t} = useTranslation('dialogs');
+	const {data: plan} = useLibraryQuery({
+		type: 'files.preflight',
+		input: {
+			operation: props.operation === 'copy' ? 'Copy' : 'Move',
+			sources: props.sources,
+			destination: props.destination,
+			on_conflict: props.conflictResolution
+		}
+	});
+	if (!plan) return null;
+
+	const count = (kind: string) =>
+		plan.items.filter((item) => item.decision?.kind === kind).length;
+	const effects = [
+		[count('Skip'), 'planSkipped'],
+		[count('Rename'), 'planRenamed'],
+		[count('Overwrite'), 'planOverwritten']
+	] as const;
+
+	return (
+		<div className="bg-app-box/60 space-y-1 rounded-md px-3 py-2 text-xs">
+			<div className="text-ink">
+				{t('fileOperation.planTotals', {
+					count: plan.files,
+					size: formatBytes(plan.bytes)
+				})}
+				{plan.truncated && ` ${t('fileOperation.planTruncated')}`}
+			</div>
+			{plan.conflicts > 0 && (
+				<div className="text-ink-dull">
+					{t('fileOperation.planConflicts', {count: plan.conflicts})}{' '}
+					{effects
+						.filter(([n]) => n > 0)
+						.map(([n, key]) => t(`fileOperation.${key}`, {count: n}))
+						.join(', ')}
+				</div>
+			)}
+		</div>
 	);
 }
 
