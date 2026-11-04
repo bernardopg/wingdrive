@@ -9,7 +9,7 @@ milestone: M3
 sprint: S05
 tags: [release, signing, updater, ci]
 related_tasks: [MOB-009, TAURI-012]
-last_updated: 2026-11-02
+last_updated: 2026-11-04
 ---
 
 ## Description
@@ -27,6 +27,7 @@ removed on 2026-11-02; the history is in git).
 - [ ] Tauri updater key generated; the public key in `tauri.conf.json` and the private key in repository secrets
 - [ ] A tag run publishes signed updater artifacts and `latest.json`
 - [ ] Apple signing and notarization plan written (Developer ID, secrets, workflow step)
+- [ ] Windows Authenticode signing plan written for the `.exe` and `.msi` from TAURI-016
 - [ ] Google Play upload key and the four `WINGDRIVE_ANDROID_KEYSTORE_*` secrets in place (with MOB-009)
 - [ ] One tag run signs every artifact that has credentials and skips the others with a warning
 
