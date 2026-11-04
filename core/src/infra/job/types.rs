@@ -47,7 +47,6 @@ impl From<JobId> for Uuid {
 	Type,
 )]
 #[serde(rename_all = "snake_case")]
-#[specta(rename_all = "snake_case")] // Tell Specta to match serde serialization
 #[strum(serialize_all = "lowercase")]
 pub enum JobStatus {
 	/// Job is waiting to be executed

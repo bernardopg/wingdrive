@@ -4,7 +4,7 @@
 //! and extraction of Input/Output types from registered operations at compile-time.
 
 use serde::{de::DeserializeOwned, Serialize};
-use specta::{DataType, Type, TypeCollection};
+use specta::{datatype::DataType, Type, Types};
 
 /// Operation scope - automatically determined by registration macro
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,9 +40,9 @@ pub trait OperationTypeInfo {
 	/// Generate the wire method string for this operation
 	fn wire_method() -> String;
 
-	/// Extract type metadata and register with Specta's TypeCollection
+	/// Extract type metadata and register with Specta's Types
 	/// This is the key method that enables automatic type discovery
-	fn extract_types(collection: &mut TypeCollection) -> OperationMetadata {
+	fn extract_types(collection: &mut Types) -> OperationMetadata {
 		// Register the types with Specta and get their DataType definitions
 		let input_type = Self::Input::definition(collection);
 		let output_type = Self::Output::definition(collection);
@@ -82,7 +82,7 @@ pub trait QueryTypeInfo {
 	fn wire_method() -> String;
 
 	/// Extract query type metadata
-	fn extract_types(collection: &mut TypeCollection) -> QueryMetadata {
+	fn extract_types(collection: &mut Types) -> QueryMetadata {
 		// Register the types with Specta and get their DataType definitions
 		let input_type = Self::Input::definition(collection);
 		let output_type = Self::Output::definition(collection);
@@ -138,14 +138,14 @@ pub struct QueryMetadata {
 /// This is the key that makes compile-time collection possible
 pub struct TypeExtractorEntry {
 	/// Function that extracts operation metadata and registers types
-	pub extractor: fn(&mut TypeCollection) -> OperationMetadata,
+	pub extractor: fn(&mut Types) -> OperationMetadata,
 	pub identifier: &'static str,
 }
 
 /// Entry for collecting query type extractors
 pub struct QueryExtractorEntry {
 	/// Function that extracts query metadata and registers types
-	pub extractor: fn(&mut TypeCollection) -> QueryMetadata,
+	pub extractor: fn(&mut Types) -> QueryMetadata,
 	pub identifier: &'static str,
 }
 
@@ -157,8 +157,8 @@ inventory::collect!(QueryExtractorEntry);
 ///
 /// This is the rspc-inspired magic: we iterate over compile-time registered
 /// extractors rather than runtime data, solving the timeline problem.
-pub fn generate_wingdrive_api() -> (Vec<OperationMetadata>, Vec<QueryMetadata>, TypeCollection) {
-	let mut collection = TypeCollection::default();
+pub fn generate_wingdrive_api() -> (Vec<OperationMetadata>, Vec<QueryMetadata>, Types) {
+	let mut collection = Types::default();
 	let mut operations = Vec::new();
 	let mut queries = Vec::new();
 

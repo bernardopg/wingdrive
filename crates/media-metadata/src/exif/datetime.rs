@@ -16,7 +16,8 @@ pub const NAIVE_FORMAT_STR: &str = "%F %T";
 /// Can be either naive with no TZ (`YYYY-MM-DD HH-MM-SS`) or UTC (`YYYY-MM-DD HH-MM-SS ±HHMM`),
 /// where `±HHMM` is the timezone data. It may be negative if West of the Prime Meridian, or positive if East.
 #[derive(Clone, Debug, PartialEq, Eq, specta::Type)]
-#[serde(untagged)]
+// Serialized by hand as a formatted date string (see the `Serialize` impl).
+#[specta(type = String)]
 pub enum MediaDate {
 	Naive(NaiveDateTime),
 	Utc(DateTime<FixedOffset>),

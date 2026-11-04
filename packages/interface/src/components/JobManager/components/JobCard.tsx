@@ -87,7 +87,7 @@ export function JobCard({ job, onPause, onResume, onCancel, getSpeedHistory }: J
         />
 
         {/* Progress bar (always at bottom) */}
-        <JobProgressBar progress={job.progress} status={job.status} />
+        <JobProgressBar progress={job.progress ?? 0} status={job.status} />
       </div>
       </div>
 

@@ -201,15 +201,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// Generate all types using Specta TypeScript
 	// Note: TypeScript Specta doesn't have built-in duplicate handling like Swift
 	// The error about duplicate types is expected - multiple operations reference the same types
-	let typescript = Typescript::default()
-		.header("")
-		.bigint(specta_typescript::BigIntExportBehavior::Number);
+	let typescript = Typescript::default().header("");
+	// The wire format has always sent 64-bit integers (sizes, counts, timestamps)
+	// as JSON numbers, and the client reads them as `number`. Upstream Specta
+	// refuses them by default; keep the existing contract explicitly.
+	let types = specta_util::Remapper::new()
+		.dangerous_bigints_as_number()
+		.remap_types(types);
 
 	// Export types - duplicates will cause an error but that's OK for now
-	// The TypeCollection naturally deduplicates based on type ID, but Specta checks
+	// The Types naturally deduplicates based on type ID, but Specta checks
 	// for duplicate names. In our case, we have two types named "LibraryStatistics"
 	// from different modules, which is a Rust codebase issue to fix later.
-	let individual_types = match typescript.export(&types) {
+	let individual_types = match typescript.export(&types, specta_serde::Format) {
 		Ok(code) => code,
 		Err(e) => {
 			eprintln!("️  WARNING: Duplicate type names detected: {}", e);
@@ -221,6 +225,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 			String::new()
 		}
 	};
+
+	// Upstream Specta marks each variant of an externally tagged enum as
+	// exclusive (`{ Physical: .. } & { Cloud?: never; .. }`). The optional
+	// `never` keys stop `"Physical" in path` from narrowing the union, which the
+	// whole frontend relies on, so emit the plain union the generator always had.
+	let exclusive_keys = regex::Regex::new(
+		r"\) & \{ [A-Za-z_][A-Za-z0-9_]*\?: never(?:; [A-Za-z_][A-Za-z0-9_]*\?: never)* \}",
+	)
+	.expect("valid regex");
+	let individual_types = exclusive_keys
+		.replace_all(&individual_types, ")")
+		.into_owned();
 
 	println!(
 		"Generated {} characters of TypeScript code",
