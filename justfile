@@ -7,8 +7,13 @@ setup:
 dev-daemon *ARGS:
 	cargo run --features ffmpeg,heif --bin wing-daemon {{ARGS}}
 
+[unix]
 dev-desktop *ARGS:
 	./scripts/dev-isolated.sh {{ARGS}}
+
+[windows]
+dev-desktop *ARGS:
+	powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-isolated.ps1 {{ARGS}}
 
 dev-mobile:
 	cd apps/mobile && bun run start

@@ -170,7 +170,7 @@ pub fn local_path(arg: &str, cwd: &Path) -> Option<PathBuf> {
 		if !rest.starts_with('/') {
 			return None;
 		}
-		PathBuf::from(percent_decode(rest)?)
+		PathBuf::from(uri_path_to_native(percent_decode(rest)?))
 	} else if arg.starts_with('-') || arg.contains("://") {
 		return None;
 	} else {
@@ -182,6 +182,19 @@ pub fn local_path(arg: &str, cwd: &Path) -> Option<PathBuf> {
 		cwd.join(path)
 	};
 	Some(normalize(&path))
+}
+
+/// Drops the slash that a URI puts before a Windows drive, as in `/C:/Users`.
+/// Left in place it makes the path relative, so it resolves against `cwd`.
+fn uri_path_to_native(path: String) -> String {
+	let bytes = path.as_bytes();
+	let names_a_drive =
+		bytes.len() >= 3 && bytes[0] == b'/' && bytes[1].is_ascii_alphabetic() && bytes[2] == b':';
+	if cfg!(windows) && names_a_drive {
+		path[1..].to_string()
+	} else {
+		path
+	}
 }
 
 /// Removes `.` and `..` components without touching the file system, so a
@@ -276,6 +289,7 @@ mod tests {
 			"com.wingdrive.desktop.irelease_181741"
 		);
 		// A leading digit would be an invalid bus name element without the prefix.
+		#[cfg(target_os = "linux")]
 		assert!(zbus::names::WellKnownName::try_from(format!(
 			"{}.SingleInstance",
 			single_instance_id(Some("1.dev"))
@@ -294,7 +308,7 @@ mod tests {
 		std::fs::create_dir(&dir).unwrap();
 		let file = dir.join("notes.txt");
 		std::fs::write(&file, "").unwrap();
-		let uri = format!("file://{}", file.display()).replace(' ', "%20");
+		let uri = tauri::Url::from_file_path(&file).unwrap().to_string();
 
 		let options = parse(
 			&[
@@ -321,6 +335,15 @@ mod tests {
 					select: Some(file)
 				},
 			]
+		);
+	}
+
+	#[cfg(windows)]
+	#[test]
+	fn drive_uris_become_windows_paths() {
+		assert_eq!(
+			local_path("file:///C:/Program%20Files/a.txt", Path::new(r"D:\work")),
+			Some(PathBuf::from(r"C:\Program Files\a.txt"))
 		);
 	}
 

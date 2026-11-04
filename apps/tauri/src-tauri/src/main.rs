@@ -1168,7 +1168,7 @@ async fn start_daemon_process(
 	let previous = state.write().await.daemon_process.take();
 	if let Some(process_arc) = previous {
 		if let Some(mut child) = process_arc.lock().await.take() {
-			terminate_daemon(&mut child);
+			terminate_daemon(&mut child, &socket_addr);
 		}
 	}
 
@@ -1205,7 +1205,7 @@ async fn stop_daemon_process(
 	if let Some(process_arc) = daemon_state.daemon_process.take() {
 		let mut process_lock = process_arc.lock().await;
 		if let Some(mut child) = process_lock.take() {
-			terminate_daemon(&mut child);
+			terminate_daemon(&mut child, &daemon_state.socket_addr);
 		}
 	}
 
@@ -1279,7 +1279,7 @@ async fn install_daemon_service(
 			tracing::info!("Stopping existing daemon child process");
 			let mut process_lock = process_arc.lock().await;
 			if let Some(mut child) = process_lock.take() {
-				terminate_daemon(&mut child);
+				terminate_daemon(&mut child, &socket_addr);
 			}
 		}
 	}
@@ -1517,7 +1517,7 @@ WantedBy=default.target
 				tracing::info!("Stopping existing daemon child process");
 				let mut process_lock = process_arc.lock().await;
 				if let Some(mut child) = process_lock.take() {
-					terminate_daemon(&mut child);
+					terminate_daemon(&mut child, &socket_addr);
 				}
 			}
 		}
@@ -1530,7 +1530,7 @@ WantedBy=default.target
 
 		// Delete existing task if it exists
 		let _ = std::process::Command::new("schtasks")
-			.args(&["/Delete", "/TN", "WingDriveDaemon", "/F"])
+			.args(["/Delete", "/TN", "WingDriveDaemon", "/F"])
 			.output();
 
 		// Create XML for scheduled task
@@ -1588,7 +1588,7 @@ WantedBy=default.target
 
 		// Create the scheduled task
 		let output = std::process::Command::new("schtasks")
-			.args(&[
+			.args([
 				"/Create",
 				"/TN",
 				"WingDriveDaemon",
@@ -1609,7 +1609,7 @@ WantedBy=default.target
 
 		// Start the task
 		let output = std::process::Command::new("schtasks")
-			.args(&["/Run", "/TN", "WingDriveDaemon"])
+			.args(["/Run", "/TN", "WingDriveDaemon"])
 			.output()
 			.map_err(|e| format!("Failed to start scheduled task: {}", e))?;
 
@@ -1859,30 +1859,46 @@ fn build_daemon_command(
 /// Stops a daemon this app spawned and reaps it.
 ///
 /// SIGTERM lets the daemon close its libraries cleanly; a hard kill follows
-/// only if it is still running after the grace period. Reaping matters because
+/// only if it is still running after the grace period. Windows has no SIGTERM,
+/// so it sends the RPC shutdown request `wing stop` uses. Reaping matters because
 /// a zombie's PID keeps owning the library lock, so the next daemon would open
 /// with no libraries.
-fn terminate_daemon(child: &mut std::process::Child) {
+fn terminate_daemon(child: &mut std::process::Child, socket_addr: &str) {
 	if matches!(child.try_wait(), Ok(Some(_))) {
 		return;
 	}
-	#[cfg(unix)]
-	{
-		let pid = child.id() as libc::pid_t;
-		if unsafe { libc::kill(pid, libc::SIGTERM) } == 0 {
-			for _ in 0..DAEMON_STOP_GRACE_POLLS {
-				if matches!(child.try_wait(), Ok(Some(_))) {
-					tracing::info!("Daemon process stopped");
-					return;
-				}
-				std::thread::sleep(std::time::Duration::from_millis(100));
+	if request_daemon_stop(child, socket_addr) {
+		for _ in 0..DAEMON_STOP_GRACE_POLLS {
+			if matches!(child.try_wait(), Ok(Some(_))) {
+				tracing::info!("Daemon process stopped");
+				return;
 			}
-			tracing::warn!("Daemon ignored SIGTERM, killing it");
+			std::thread::sleep(std::time::Duration::from_millis(100));
 		}
+		tracing::warn!("Daemon ignored the stop request, killing it");
 	}
 	let _ = child.kill();
 	let _ = child.wait();
 	tracing::info!("Daemon process killed");
+}
+
+/// Asks the daemon to shut itself down, returning whether the request was sent.
+#[cfg(unix)]
+fn request_daemon_stop(child: &std::process::Child, _socket_addr: &str) -> bool {
+	unsafe { libc::kill(child.id() as libc::pid_t, libc::SIGTERM) == 0 }
+}
+
+/// Asks the daemon to shut itself down, returning whether the request was sent.
+#[cfg(not(unix))]
+fn request_daemon_stop(_child: &std::process::Child, socket_addr: &str) -> bool {
+	use std::io::Write;
+
+	let Ok(mut stream) = std::net::TcpStream::connect(socket_addr) else {
+		return false;
+	};
+	stream
+		.write_all(format!("{}\n", serde_json::json!({ "Shutdown": null })).as_bytes())
+		.is_ok()
 }
 
 /// Poll count for `terminate_daemon`, 100 ms each.
@@ -2046,7 +2062,7 @@ mod start_daemon_integration_tests {
 
 		let reachable = wait_for_port(&config.socket_addr, Duration::from_secs(20));
 		let stopping = Instant::now();
-		terminate_daemon(&mut child);
+		terminate_daemon(&mut child, &config.socket_addr);
 		let stop_time = stopping.elapsed();
 		let status = child.try_wait().expect("reaped status");
 
@@ -2055,12 +2071,12 @@ mod start_daemon_integration_tests {
 			"daemon did not become reachable on {} within 20s",
 			config.socket_addr
 		);
-		// Exit code 0 means the daemon handled SIGTERM itself instead of being
+		// Exit code 0 means the daemon handled the stop request itself instead of being
 		// killed after the grace period.
 		assert_eq!(
 			status.and_then(|status| status.code()),
 			Some(0),
-			"daemon did not shut down gracefully on SIGTERM ({stop_time:?})"
+			"daemon did not shut down gracefully ({stop_time:?})"
 		);
 		assert!(
 			config.data_dir.exists(),
@@ -2912,7 +2928,7 @@ fn stop_owned_daemon(app: &AppHandle) {
 		if let Some(process) = state.daemon_process.take() {
 			if let Some(mut child) = process.lock().await.take() {
 				tracing::info!("App exiting, stopping daemon we started");
-				terminate_daemon(&mut child);
+				terminate_daemon(&mut child, &state.socket_addr);
 			}
 		}
 		state.started_by_us = false;

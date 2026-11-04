@@ -532,6 +532,7 @@ pub fn terminal_close(sessions: tauri::State<'_, TerminalSessions>, id: u32) {
 
 #[cfg(test)]
 mod tests {
+	#[cfg(unix)]
 	use std::{
 		sync::mpsc::Receiver,
 		time::{Duration, Instant},

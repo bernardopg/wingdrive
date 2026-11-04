@@ -3,8 +3,9 @@
 //! A file manager has to open instantly, and a cold WingDrive start pays for
 //! the daemon and a WebKit process. With background mode on, closing the main
 //! window only hides it and a tray icon keeps the app reachable, so later
-//! launches reuse the running instance. "Start at login" writes an XDG
-//! autostart entry that launches WingDrive hidden.
+//! launches reuse the running instance. "Start at login" launches WingDrive
+//! hidden, through an XDG autostart entry on Linux and the current user's Run
+//! registry key on Windows.
 //!
 //! ## Example
 //! ```rust,ignore
@@ -24,6 +25,7 @@ use tauri::{AppHandle, Manager};
 use crate::launch;
 
 const SETTINGS_FILE: &str = "desktop_settings.json";
+#[cfg(target_os = "linux")]
 const AUTOSTART_FILE: &str = "wingdrive.desktop";
 const TRAY_LABELS_FILE: &str = "tray_labels.json";
 
@@ -245,10 +247,73 @@ fn apply_autostart(enabled: bool) -> Result<(), String> {
 	std::fs::write(&file, autostart_entry(&launcher)).map_err(|e| e.to_string())
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "windows")]
+const WINDOWS_RUN_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
+
+#[cfg(target_os = "windows")]
+fn apply_autostart(enabled: bool) -> Result<(), String> {
+	let command = if enabled {
+		let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+		Some(autostart_command(&exe))
+	} else {
+		None
+	};
+	write_run_value(WINDOWS_RUN_KEY, "WingDrive", command.as_deref())
+}
+
+/// The command line a login session runs, quoted because the install path may
+/// contain spaces. Windows paths cannot contain double quotes.
+#[cfg(target_os = "windows")]
+fn autostart_command(exe: &Path) -> String {
+	format!("\"{}\" --hidden", exe.display())
+}
+
+/// Sets `name` under `subkey` of HKEY_CURRENT_USER, or removes it for `None`.
+///
+/// Writing to the current user's hive needs no elevation, and removing a value
+/// that is already gone counts as success, like the Linux entry.
+#[cfg(target_os = "windows")]
+fn write_run_value(subkey: &str, name: &str, command: Option<&str>) -> Result<(), String> {
+	use windows_sys::Win32::Foundation::{ERROR_FILE_NOT_FOUND, ERROR_SUCCESS};
+	use windows_sys::Win32::System::Registry::{
+		RegDeleteKeyValueW, RegSetKeyValueW, HKEY_CURRENT_USER, REG_SZ,
+	};
+
+	let subkey = wide_string(subkey);
+	let name = wide_string(name);
+	let status = match command {
+		Some(command) => {
+			let data = wide_string(command);
+			unsafe {
+				RegSetKeyValueW(
+					HKEY_CURRENT_USER,
+					subkey.as_ptr(),
+					name.as_ptr(),
+					REG_SZ,
+					data.as_ptr().cast(),
+					(data.len() * std::mem::size_of::<u16>()) as u32,
+				)
+			}
+		}
+		None => unsafe { RegDeleteKeyValueW(HKEY_CURRENT_USER, subkey.as_ptr(), name.as_ptr()) },
+	};
+
+	match status {
+		ERROR_SUCCESS => Ok(()),
+		ERROR_FILE_NOT_FOUND if command.is_none() => Ok(()),
+		code => Err(format!("Could not update the login entry (error {code})")),
+	}
+}
+
+#[cfg(target_os = "windows")]
+fn wide_string(text: &str) -> Vec<u16> {
+	text.encode_utf16().chain(std::iter::once(0)).collect()
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "windows")))]
 fn apply_autostart(enabled: bool) -> Result<(), String> {
 	if enabled {
-		Err("Start at login is only available on Linux".to_string())
+		Err("Start at login is only available on Linux and Windows".to_string())
 	} else {
 		Ok(())
 	}
@@ -312,6 +377,57 @@ mod tests {
 		let settings = DesktopSettingsState::load(dir.path()).get();
 		assert!(settings.keep_in_background);
 		assert!(settings.start_at_login);
+	}
+
+	#[cfg(target_os = "windows")]
+	#[test]
+	fn autostart_command_quotes_the_executable_and_starts_hidden() {
+		assert_eq!(
+			autostart_command(Path::new(r"C:\Program Files\WingDrive\WingDrive.exe")),
+			r#""C:\Program Files\WingDrive\WingDrive.exe" --hidden"#
+		);
+	}
+
+	/// Uses a throwaway key so the test never touches the real Run entry.
+	#[cfg(target_os = "windows")]
+	#[test]
+	fn login_entry_is_written_and_removed() {
+		use windows_sys::Win32::Foundation::ERROR_SUCCESS;
+		use windows_sys::Win32::System::Registry::{
+			RegDeleteKeyW, RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_SZ,
+		};
+
+		let subkey = format!(r"Software\WingDriveTest-{}", std::process::id());
+		let read = |name: &str| -> Option<String> {
+			let (key, name) = (wide_string(&subkey), wide_string(name));
+			let mut buffer = [0u16; 512];
+			let mut size = std::mem::size_of_val(&buffer) as u32;
+			let status = unsafe {
+				RegGetValueW(
+					HKEY_CURRENT_USER,
+					key.as_ptr(),
+					name.as_ptr(),
+					RRF_RT_REG_SZ,
+					std::ptr::null_mut(),
+					buffer.as_mut_ptr().cast(),
+					&mut size,
+				)
+			};
+			(status == ERROR_SUCCESS)
+				.then(|| String::from_utf16_lossy(&buffer[..size as usize / 2 - 1]))
+		};
+
+		let command = r#""C:\app.exe" --hidden"#;
+		write_run_value(&subkey, "WingDrive", Some(command)).unwrap();
+		assert_eq!(read("WingDrive").as_deref(), Some(command));
+
+		write_run_value(&subkey, "WingDrive", None).unwrap();
+		assert_eq!(read("WingDrive"), None);
+		// A second removal finds nothing and still succeeds.
+		write_run_value(&subkey, "WingDrive", None).unwrap();
+
+		let key = wide_string(&subkey);
+		unsafe { RegDeleteKeyW(HKEY_CURRENT_USER, key.as_ptr()) };
 	}
 
 	#[cfg(target_os = "linux")]

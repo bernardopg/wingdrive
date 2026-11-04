@@ -88,6 +88,7 @@
             "icon": "flask",
             "pages": [
               "core/development-environment",
+              "core/windows-development",
               "core/database",
               "core/testing",
               "core/mobile-development",

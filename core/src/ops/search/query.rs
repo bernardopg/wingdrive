@@ -27,6 +27,8 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::domain::addressing::join_entry_path;
+
 /// Most FTS matches one search reads. Total and facets cover this many at most.
 // shortcut: matches past the cap are unreachable; page in SQL if libraries outgrow it.
 const FTS_MATCH_CAP: u32 = 5000;
@@ -167,14 +169,7 @@ impl FileSearchQuery {
 					))
 				})?;
 
-			// Construct full path: directory_path + "/" + filename
-			let full_path = if directory_path.path.ends_with('/') {
-				format!("{}{}", directory_path.path, entry_model.name)
-			} else {
-				format!("{}/{}", directory_path.path, entry_model.name)
-			};
-
-			Ok(full_path)
+			Ok(join_entry_path(&directory_path.path, &entry_model.name))
 		} else {
 			// Fallback for entries without parent
 			Ok(format!("/{}", entry_model.name))
@@ -434,11 +429,7 @@ impl FileSearchQuery {
 				} else {
 					entry_name.clone()
 				};
-				if dir_path.ends_with('/') {
-					format!("{}{}", dir_path, file_name)
-				} else {
-					format!("{}/{}", dir_path, file_name)
-				}
+				join_entry_path(&dir_path, &file_name)
 			} else {
 				// Entry has no parent (is a root entry) - use name directly
 				format!("/{}", entry_name)

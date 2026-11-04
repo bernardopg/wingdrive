@@ -5,6 +5,34 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Added
+
+- Windows releases: `windows-bundle.yml` builds an NSIS `.exe` and an `.msi`,
+  installs each one, runs the daemon and the app from the installed files, and
+  uninstalls them. The Release workflow publishes them, and any branch can
+  produce them as run artifacts. Alpha, beta and rc tags ship the `.exe`
+  only, because WiX accepts only numeric pre-release versions. The installers
+  are not signed yet, so Windows SmartScreen warns about them.
+- CI runs the TypeScript and Rust gates on Windows, as separate jobs.
+- "Start at login" works on Windows through the current user's Run registry key.
+- `just dev-desktop` works on Windows through `scripts/dev-isolated.ps1`.
+
+### Fixed
+
+- A library no longer stays locked for up to an hour after a crash on Windows
+  in languages where the `tasklist` "no tasks" message wraps onto two lines,
+  such as Portuguese. The lock check now asks the kernel.
+- Upgrading a secrets database from the old format no longer fails on Windows
+  with os error 33.
+- The operating system version is no longer empty on localized Windows.
+- Search, media and tag results no longer mix `\` and `/` in Windows paths.
+- `tauri dev` no longer fails with os error 32 on Windows when the daemon is
+  running.
+- The desktop app stops its daemon cleanly on Windows instead of killing it.
+- Opening a `file:///C:/...` URI on Windows no longer fails.
+- `wing` and `wing-daemon` no longer create an empty production data directory
+  when `--data-dir` is given.
+
 ## 2.4.1 — 2026-11-03
 
 Fixes the idle memory growth that failed the 2.4.0 release memory check, and

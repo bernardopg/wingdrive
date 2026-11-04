@@ -134,10 +134,7 @@ pub fn data_dir_path() -> Result<PathBuf> {
 	#[cfg(not(any(target_os = "ios", target_os = "android")))]
 	{
 		let home = dirs::home_dir().ok_or_else(|| anyhow!("Could not determine home directory"))?;
-		Ok(resolve_with_legacy(
-			home.join(DATA_DIR_NAME),
-			home.join(LEGACY_DATA_DIR_NAME),
-		))
+		Ok(data_dir_in(&home))
 	}
 
 	#[cfg(any(target_os = "ios", target_os = "android"))]
@@ -148,6 +145,13 @@ pub fn data_dir_path() -> Result<PathBuf> {
 			base.join(LEGACY_LOWER_APP_NAME),
 		))
 	}
+}
+
+/// Data directory under `home`, separate from the lookup so tests can run on
+/// Windows, where `dirs::home_dir` ignores `$HOME` and returns the real profile.
+#[cfg(not(any(target_os = "ios", target_os = "android")))]
+fn data_dir_in(home: &Path) -> PathBuf {
+	resolve_with_legacy(home.join(DATA_DIR_NAME), home.join(LEGACY_DATA_DIR_NAME))
 }
 
 /// Directory holding `device.json` for the current platform.
@@ -185,10 +189,14 @@ pub fn device_config_dir() -> Option<PathBuf> {
 /// working directory.
 pub fn libraries_dir() -> Option<PathBuf> {
 	let home = dirs::home_dir()?;
-	Some(resolve_with_legacy(
+	Some(libraries_dir_in(&home))
+}
+
+fn libraries_dir_in(home: &Path) -> PathBuf {
+	resolve_with_legacy(
 		home.join(APP_NAME).join("Libraries"),
 		home.join(LEGACY_APP_NAME).join("Libraries"),
-	))
+	)
 }
 
 #[cfg(test)]
@@ -196,6 +204,44 @@ mod tests {
 	use super::*;
 
 	use tempfile::tempdir;
+
+	#[cfg(not(any(target_os = "ios", target_os = "android")))]
+	#[test]
+	fn legacy_install_keeps_its_directories() {
+		let home = tempdir().unwrap();
+		std::fs::create_dir_all(home.path().join(".spacedrive")).unwrap();
+		std::fs::create_dir_all(home.path().join("Spacedrive").join("Libraries")).unwrap();
+
+		let data_dir = data_dir_in(home.path());
+		assert_eq!(data_dir, home.path().join(".spacedrive"));
+		assert!(is_legacy_path(&data_dir));
+		assert_eq!(
+			libraries_dir_in(home.path()),
+			home.path().join("Spacedrive").join("Libraries")
+		);
+	}
+
+	#[cfg(not(any(target_os = "ios", target_os = "android")))]
+	#[test]
+	fn fresh_install_uses_wingdrive_directories() {
+		let home = tempdir().unwrap();
+
+		assert_eq!(data_dir_in(home.path()), home.path().join(".wingdrive"));
+		assert_eq!(
+			libraries_dir_in(home.path()),
+			home.path().join("WingDrive").join("Libraries")
+		);
+	}
+
+	#[cfg(not(any(target_os = "ios", target_os = "android")))]
+	#[test]
+	fn wingdrive_directory_wins_over_a_legacy_one() {
+		let home = tempdir().unwrap();
+		std::fs::create_dir_all(home.path().join(".spacedrive")).unwrap();
+		std::fs::create_dir_all(home.path().join(".wingdrive")).unwrap();
+
+		assert_eq!(data_dir_in(home.path()), home.path().join(".wingdrive"));
+	}
 
 	#[test]
 	fn prefers_wingdrive_when_neither_exists() {

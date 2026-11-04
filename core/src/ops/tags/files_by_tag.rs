@@ -197,11 +197,7 @@ impl LibraryQuery for GetFilesByTagQuery {
 				} else {
 					entry_name.clone()
 				};
-				if dir_path.ends_with('/') {
-					format!("{}{}", dir_path, file_name)
-				} else {
-					format!("{}/{}", dir_path, file_name)
-				}
+				crate::domain::addressing::join_entry_path(&dir_path, &file_name)
 			} else {
 				let file_name = if let Some(ext) = &entry_extension {
 					format!("{}.{}", entry_name, ext)

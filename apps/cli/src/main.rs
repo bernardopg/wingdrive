@@ -242,9 +242,11 @@ enum Commands {
 #[tokio::main]
 async fn main() -> Result<()> {
 	let cli = Cli::parse();
-	let data_dir = cli
-		.data_dir
-		.unwrap_or(wing_core::config::default_data_dir()?);
+	// Only resolve the default when needed: it creates the production directory.
+	let data_dir = match cli.data_dir {
+		Some(data_dir) => data_dir,
+		None => wing_core::config::default_data_dir()?,
+	};
 	let instance = cli.instance;
 
 	// Validate instance name for security

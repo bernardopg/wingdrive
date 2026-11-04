@@ -167,22 +167,29 @@ fn is_process_running(pid: u32) -> bool {
 }
 
 /// Check if a process is still running (Windows implementation)
+///
+/// Asks the kernel instead of parsing `tasklist`, whose "no tasks" message is
+/// localized and wraps onto two lines on Portuguese Windows. A process that
+/// refuses access is alive, and a handle that outlives its process reports an
+/// exit code, so neither case holds a stale lock.
 #[cfg(windows)]
 fn is_process_running(pid: u32) -> bool {
-	use std::process::Command;
+	use windows_sys::Win32::Foundation::{
+		CloseHandle, GetLastError, ERROR_ACCESS_DENIED, STILL_ACTIVE,
+	};
+	use windows_sys::Win32::System::Threading::{
+		GetExitCodeProcess, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
+	};
 
-	match Command::new("tasklist")
-		.arg("/fi")
-		.arg(&format!("pid eq {}", pid))
-		.arg("/fo")
-		.arg("csv")
-		.output()
-	{
-		Ok(output) => {
-			let output_str = String::from_utf8_lossy(&output.stdout);
-			output_str.lines().count() > 1 // Header + process line if exists
+	unsafe {
+		let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+		if handle == 0 {
+			return GetLastError() == ERROR_ACCESS_DENIED;
 		}
-		Err(_) => false,
+		let mut exit_code = 0u32;
+		let queried = GetExitCodeProcess(handle, &mut exit_code) != 0;
+		CloseHandle(handle);
+		!queried || exit_code == STILL_ACTIVE as u32
 	}
 }
 
@@ -220,6 +227,47 @@ mod tests {
 		assert!(!is_process_running(child.id()));
 		child.wait().unwrap();
 		assert!(!is_process_running(child.id()));
+	}
+
+	#[cfg(windows)]
+	#[test]
+	fn exited_child_is_not_running_but_a_live_one_is() {
+		let mut child = std::process::Command::new("ping")
+			.args(["-n", "30", "127.0.0.1"])
+			.stdout(std::process::Stdio::null())
+			.spawn()
+			.unwrap();
+		assert!(is_process_running(child.id()));
+		child.kill().unwrap();
+		child.wait().unwrap();
+		// `child` still holds its handle, so the PID resolves to an exited process.
+		assert!(!is_process_running(child.id()));
+	}
+
+	#[cfg(windows)]
+	#[test]
+	fn lock_held_by_a_dead_process_is_stale() {
+		let mut child = std::process::Command::new("ping")
+			.args(["-n", "30", "127.0.0.1"])
+			.stdout(std::process::Stdio::null())
+			.spawn()
+			.unwrap();
+		let dead_pid = child.id();
+		child.kill().unwrap();
+		child.wait().unwrap();
+		drop(child);
+
+		let temp_dir = TempDir::new().unwrap();
+		let lock_path = temp_dir.path().join(".winglibrary.lock");
+		let lock_info = LockInfo {
+			device_id: Uuid::new_v4(),
+			process_id: dead_pid,
+			acquired_at: Utc::now(),
+			description: None,
+		};
+		std::fs::write(&lock_path, serde_json::to_string(&lock_info).unwrap()).unwrap();
+
+		assert!(LibraryLock::is_lock_stale(&lock_path).unwrap());
 	}
 
 	#[test]

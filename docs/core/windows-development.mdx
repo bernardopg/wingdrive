@@ -1,0 +1,142 @@
+---
+title: Windows Development
+sidebarTitle: Windows Development
+---
+
+This page records how to build and test WingDrive on Windows, and what still
+differs from Linux. Planning and open work live in
+`.tasks/interface/TAURI-016-windows-port.md`.
+
+## Set up a machine
+
+Clone outside OneDrive:
+
+```powershell
+git clone https://github.com/bernardopg/wingdrive C:\dev\Wingdrive
+cd C:\dev\Wingdrive
+.\scripts\setup.ps1
+bun install
+```
+
+Keep the repository out of OneDrive because `target/` grows past 250 GB and a
+synced folder would upload all of it. `CARGO_TARGET_DIR` does not solve this:
+`tauri.conf.json`, `apps/tauri/src-tauri/build.rs` and `xtask` name `target/`
+directly.
+
+`setup.ps1` installs these tools and asks for elevation once:
+
+| Tool | Why |
+| ---- | --- |
+| Visual Studio 2022 Build Tools | MSVC compiler and Windows SDK |
+| Rustup | Installs the version pinned in `rust-toolchain.toml` |
+| Bun | Version pinned in `package.json` |
+| just | Project commands |
+| Nasm, Strawberry Perl | OpenSSL build |
+| CMake | `aws-lc-sys`, `wasmer`, `whisper-rs-sys` |
+| 7-Zip, `libclang.dll` 15.0.7 | `bindgen` for FFmpeg, through `LIBCLANG_PATH` |
+
+It also enables long paths and Developer Mode, excludes `target\` from Defender
+and adds `C:\Program Files\Git\bin` to the PATH.
+
+## Machine rules that are easy to break
+
+- Do not put a full LLVM on the PATH. `clang-cl.exe` makes `aws-lc-sys` fail to
+  link with MSVC, so only `libclang.dll` is installed.
+- Do not keep `C:\Strawberry\c\bin` on the PATH. Its MinGW `gcc`, `cmake` and
+  `nasm` shadow the MSVC toolchain, and the machine PATH wins over the user PATH.
+- `just` runs recipes with Git's `sh`. `bash` in PowerShell resolves to WSL when
+  WSL is installed, so run the shell scripts through `just` or from Git Bash.
+- All text files use LF, set in `.gitattributes`. CRLF breaks the shell scripts
+  that CI runs with Git Bash.
+
+## Smart App Control
+
+Smart App Control blocks some unsigned binaries that the build has just produced,
+and the verdict changes between runs. Check it with
+`(Get-MpComputerStatus).SmartAppControlState`. It shows up in two ways:
+
+- `can't find crate for <name>` on a proc macro that exists on disk, because the
+  DLL failed to load. Run `cargo clean -p <name> --release` and build again.
+- `Uma politica de Controle de Aplicativo bloqueou este arquivo (os error 4551)`
+  on a `build-script-build.exe`. Build again.
+
+The log `Microsoft-Windows-CodeIntegrity/Operational` names each blocked file, in
+events 3033 and 3077. Hosted runners do not have this setting. This is not the
+Defender antivirus: Defender reports no detection for these files, and its
+exclusions do not lift the block.
+
+With it on, a release build and `just ci-local` can stop at a different file on
+each run. Run the gates one by one against an existing `target\`, and build the
+installers through `windows-bundle.yml`.
+
+Turning Smart App Control off stops the blocks, but Windows may not let you turn
+it back on without a reset, so make that choice yourself. The same policy can block
+an unsigned WingDrive on a user's machine, which is one more reason for `REL-001`.
+
+## Day to day
+
+```powershell
+just dev-desktop                 # Desktop app against disposable state
+just typecheck                   # TypeScript
+scripts\ci-rust.sh full          # From Git Bash: the same Rust gates as CI
+```
+
+`just dev-desktop` keeps its state in `%LOCALAPPDATA%\wingdrive-dev`, never in
+the production data directory. It runs the daemon from a per-instance copy,
+`target\debug\wing-daemon-<instance>.exe`, because `tauri-build` overwrites
+`wing-daemon.exe` and Windows refuses to overwrite a running executable. Stop the
+daemon with `wing --data-dir <dir> --instance <name> stop`.
+
+Closing the window keeps the app in the tray. Quit from the tray to end a session.
+
+## Build the installers
+
+The Release workflow runs the same command:
+
+```powershell
+bun run --cwd apps/tauri tauri build --target x86_64-pc-windows-msvc --bundles nsis,msi
+```
+
+The bundles land in `target\x86_64-pc-windows-msvc\release\bundle\`.
+`scripts\release\windows_smoke.ps1` installs a bundle, runs the installed daemon
+and app, and uninstalls it. The NSIS installer runs per user. The MSI installs
+per machine, so its smoke test needs an elevated shell.
+
+WiX accepts only numeric pre-release versions, so alpha, beta and rc tags ship
+the `.exe` alone. The installers are not signed yet, so SmartScreen warns about
+them. `REL-001` tracks signing.
+
+## CI
+
+`TypeScript (Windows)` and `Rust Workspace (Windows)` in `.github/workflows/ci.yml`
+are separate jobs, because a matrix would rename the checks the `main` ruleset
+requires. They are not required checks yet. Add them to
+`.github/rulesets/main.json` once they have stayed green.
+
+`.github/workflows/windows-bundle.yml` builds and verifies both installers. The
+Release workflow calls it for a tag, and `publish` needs it. It also runs on pull
+requests that change the installers and on demand, so you can download a build
+from the run's artifacts without publishing a version:
+
+```bash
+gh workflow run windows-bundle.yml --repo bernardopg/wingdrive --ref <branch>
+```
+
+The `ci` gate of the Release workflow waits for every CI job on the tagged commit,
+so a red Windows job also blocks a Linux release.
+
+## Avoid locale-dependent code
+
+Windows localizes command output. A Portuguese `tasklist` wraps its "no tasks"
+message onto two lines, which made a dead process look alive and kept libraries
+locked for up to an hour. A Portuguese `ver` prints `versão` instead of `Version`.
+Call Win32 APIs instead of parsing tool output, and test parsers with translated
+samples.
+
+## Known differences from Linux
+
+- "Administrator retries" (`run_as_admin`) exist only on Linux, through `pkexec`.
+- The system file clipboard exists only on Linux. Windows needs `CF_HDROP`.
+- `core/tests/branding_legacy_paths.rs` runs only on Unix, because `dirs` ignores
+  `$HOME` on Windows. `wing-branding` unit tests cover the same decisions on every
+  platform.
