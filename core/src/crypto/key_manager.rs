@@ -99,23 +99,31 @@ impl KeyManager {
 		// Create or open the redb database
 		let db = match Database::create(&db_path) {
 			Err(redb::DatabaseError::UpgradeRequired(2)) => {
-				let mut legacy = redb_legacy::Database::open(&db_path)
-					.map_err(|error| KeyManagerError::Migration(error.to_string()))?;
+				// Prove the file opens as v2 before touching anything, then close it:
+				// redb's lock makes Windows refuse the backup copy's reads (os error 33).
+				drop(
+					redb_legacy::Database::open(&db_path)
+						.map_err(|error| KeyManagerError::Migration(error.to_string()))?,
+				);
 				// Keep a synced recovery copy before changing the secrets file format.
 				let backup = data_dir.join(format!("secrets.redb.v2-{}.backup", Uuid::new_v4()));
-				let mut source = std::fs::File::open(&db_path)?;
-				let mut options = std::fs::OpenOptions::new();
-				options.write(true).create_new(true);
-				#[cfg(unix)]
 				{
-					use std::os::unix::fs::OpenOptionsExt;
-					options.mode(0o600);
+					let mut source = std::fs::File::open(&db_path)?;
+					let mut options = std::fs::OpenOptions::new();
+					options.write(true).create_new(true);
+					#[cfg(unix)]
+					{
+						use std::os::unix::fs::OpenOptionsExt;
+						options.mode(0o600);
+					}
+					let mut destination = options.open(&backup)?;
+					std::io::copy(&mut source, &mut destination)?;
+					destination.sync_all()?;
 				}
-				let mut destination = options.open(&backup)?;
-				std::io::copy(&mut source, &mut destination)?;
-				destination.sync_all()?;
 				#[cfg(unix)]
 				std::fs::File::open(&data_dir)?.sync_all()?;
+				let mut legacy = redb_legacy::Database::open(&db_path)
+					.map_err(|error| KeyManagerError::Migration(error.to_string()))?;
 				legacy
 					.upgrade()
 					.map_err(|error| KeyManagerError::Migration(error.to_string()))?;

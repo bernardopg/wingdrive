@@ -100,7 +100,10 @@ impl PathResolver {
 	) -> Result<String, DbErr> {
 		if let Some(parent_id) = parent_id {
 			let parent_path = Self::get_directory_path(db, parent_id).await?;
-			Ok(format!("{}/{}", parent_path, name))
+			Ok(crate::domain::addressing::join_entry_path(
+				&parent_path,
+				name,
+			))
 		} else {
 			Ok(name.to_string())
 		}

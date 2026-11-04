@@ -12,6 +12,24 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
+/// Appends `name` to a stored directory path, keeping the separator it already uses.
+///
+/// Local Windows paths are stored with backslashes and cloud paths with slashes, so
+/// the platform cannot decide. A path with any slash keeps using slashes, which leaves
+/// every Unix path unchanged even when a folder name contains a backslash.
+pub fn join_entry_path(directory: &str, name: &str) -> String {
+	let separator = if directory.contains('\\') && !directory.contains('/') {
+		'\\'
+	} else {
+		'/'
+	};
+	if directory.ends_with(separator) {
+		format!("{directory}{name}")
+	} else {
+		format!("{directory}{separator}{name}")
+	}
+}
+
 /// A path within the WingDrive Virtual Distributed File System
 ///
 /// This is the core abstraction that enables cross-device operations.
@@ -1153,5 +1171,33 @@ mod tests {
 		assert!(!path.is_physical());
 		assert!(!path.is_cloud());
 		assert!(!path.is_content());
+	}
+}
+
+#[cfg(test)]
+mod join_entry_path_tests {
+	use super::join_entry_path;
+
+	#[test]
+	fn keeps_the_separator_of_the_stored_path() {
+		assert_eq!(join_entry_path("/home/me", "a.txt"), "/home/me/a.txt");
+		assert_eq!(join_entry_path("/", "a.txt"), "/a.txt");
+		assert_eq!(
+			join_entry_path(r"C:\Users\me", "a.txt"),
+			r"C:\Users\me\a.txt"
+		);
+		assert_eq!(join_entry_path("C:\\", "a.txt"), r"C:\a.txt");
+		assert_eq!(
+			join_entry_path("bucket/photos", "a.txt"),
+			"bucket/photos/a.txt"
+		);
+	}
+
+	#[test]
+	fn a_backslash_in_a_unix_folder_name_stays_a_character() {
+		assert_eq!(
+			join_entry_path(r"/home/me/odd\name", "a.txt"),
+			r"/home/me/odd\name/a.txt"
+		);
 	}
 }

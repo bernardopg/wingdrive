@@ -605,11 +605,8 @@ fn detect_os_version() -> Option<String> {
 
 		if output.status.success() {
 			let stdout = String::from_utf8_lossy(&output.stdout);
-			if let Some(start) = stdout.find("Version ") {
-				let version_str = &stdout[start + 8..];
-				if let Some(end) = version_str.find(']') {
-					return Some(version_str[..end].trim().to_string());
-				}
+			if let Some(version) = crate::domain::device::parse_windows_ver_output(&stdout) {
+				return Some(version);
 			}
 		}
 	}

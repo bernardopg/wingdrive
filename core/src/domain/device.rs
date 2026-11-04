@@ -630,6 +630,19 @@ fn detect_hardware_model() -> Option<String> {
 	None
 }
 
+/// Extracts the build number from the output of `cmd /c ver`.
+///
+/// Windows localizes the word before the number, for example `[Version 10.0.19045]`
+/// or `[versão 10.0.26300]`, so this reads the last token inside the brackets.
+#[cfg(any(target_os = "windows", test))]
+pub(crate) fn parse_windows_ver_output(output: &str) -> Option<String> {
+	let inside_brackets = output.split_once('[')?.1.split_once(']')?.0;
+	inside_brackets
+		.split_whitespace()
+		.last()
+		.map(str::to_string)
+}
+
 /// Get operating system version
 fn detect_os_version() -> Option<String> {
 	#[cfg(target_os = "macos")]
@@ -657,12 +670,8 @@ fn detect_os_version() -> Option<String> {
 
 		if output.status.success() {
 			let stdout = String::from_utf8_lossy(&output.stdout);
-			// Extract version from output like "Microsoft Windows [Version 10.0.19045.3570]"
-			if let Some(start) = stdout.find("Version ") {
-				let version_str = &stdout[start + 8..];
-				if let Some(end) = version_str.find(']') {
-					return Some(version_str[..end].trim().to_string());
-				}
+			if let Some(version) = parse_windows_ver_output(&stdout) {
+				return Some(version);
 			}
 		}
 	}
@@ -1380,3 +1389,28 @@ impl super::resource::Identifiable for Device {
 
 // Register Device as a simple resource
 crate::register_resource!(Device);
+
+#[cfg(test)]
+mod windows_ver_tests {
+	use super::parse_windows_ver_output;
+
+	#[test]
+	fn reads_the_build_number_in_any_language() {
+		for output in [
+			"\r\nMicrosoft Windows [Version 10.0.19045.3570]\r\n",
+			"\r\nMicrosoft Windows [versão 10.0.19045.3570]\r\n",
+			"\r\nMicrosoft Windows [vers\u{fffd}o 10.0.19045.3570]\r\n",
+		] {
+			assert_eq!(
+				parse_windows_ver_output(output).as_deref(),
+				Some("10.0.19045.3570")
+			);
+		}
+	}
+
+	#[test]
+	fn returns_none_without_brackets() {
+		assert_eq!(parse_windows_ver_output("Microsoft Windows"), None);
+		assert_eq!(parse_windows_ver_output("[]"), None);
+	}
+}
