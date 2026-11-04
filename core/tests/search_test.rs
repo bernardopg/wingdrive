@@ -188,19 +188,21 @@ async fn test_persistent_search_with_filters() -> anyhow::Result<()> {
 		.write_file("mixed/data.json", r#"{"key": "value"}"#)
 		.await?;
 
+	// Content mode: the content-type filter reads the content identity,
+	// which shallow indexing does not create.
 	let location = test_location
-		.index("Test Location", IndexMode::Shallow)
+		.index("Test Location", IndexMode::Content)
 		.await?;
 
 	tokio::time::sleep(Duration::from_millis(500)).await;
 
 	// Test 1: Filter by file type (text files)
 	let text_search = FileSearchInput {
-		query: "a".to_string(), // Broad query to test filtering
+		query: String::new(), // Empty query lists the whole scope, so only the filters narrow it
 		scope: SearchScope::Location {
 			location_id: location.uuid,
 		},
-		mode: SearchMode::Normal,
+		mode: SearchMode::Fast,
 		filters: SearchFilters {
 			file_types: Some(vec!["txt".to_string()]),
 			..Default::default()
@@ -227,11 +229,11 @@ async fn test_persistent_search_with_filters() -> anyhow::Result<()> {
 
 	// Test 2: Filter by size range (files > 5000 bytes)
 	let size_search = FileSearchInput {
-		query: "a".to_string(), // Broad query to test filtering
+		query: String::new(), // Empty query lists the whole scope, so only the filters narrow it
 		scope: SearchScope::Location {
 			location_id: location.uuid,
 		},
-		mode: SearchMode::Normal,
+		mode: SearchMode::Fast,
 		filters: SearchFilters {
 			size_range: Some(SizeRangeFilter {
 				min: Some(5000),
@@ -261,11 +263,11 @@ async fn test_persistent_search_with_filters() -> anyhow::Result<()> {
 
 	// Test 3: Filter by content type (Code)
 	let code_search = FileSearchInput {
-		query: "a".to_string(), // Broad query to test filtering
+		query: String::new(), // Empty query lists the whole scope, so only the filters narrow it
 		scope: SearchScope::Location {
 			location_id: location.uuid,
 		},
-		mode: SearchMode::Normal,
+		mode: SearchMode::Fast,
 		filters: SearchFilters {
 			content_types: Some(vec![ContentKind::Code]),
 			..Default::default()
@@ -485,11 +487,11 @@ async fn test_ephemeral_search_with_filters() -> anyhow::Result<()> {
 
 	// Test 1: Filter by file type (.txt files)
 	let txt_search = FileSearchInput {
-		query: "a".to_string(), // Broad query to test filtering
+		query: String::new(), // Empty query lists the whole scope, so only the filters narrow it
 		scope: SearchScope::Path {
 			path: WingPath::local(search_dir.clone()),
 		},
-		mode: SearchMode::Normal,
+		mode: SearchMode::Fast,
 		filters: SearchFilters {
 			file_types: Some(vec!["txt".to_string()]),
 			..Default::default()
@@ -516,11 +518,11 @@ async fn test_ephemeral_search_with_filters() -> anyhow::Result<()> {
 
 	// Test 2: Filter by size range
 	let size_search = FileSearchInput {
-		query: "a".to_string(), // Broad query to test filtering
+		query: String::new(), // Empty query lists the whole scope, so only the filters narrow it
 		scope: SearchScope::Path {
 			path: WingPath::local(search_dir.clone()),
 		},
-		mode: SearchMode::Normal,
+		mode: SearchMode::Fast,
 		filters: SearchFilters {
 			size_range: Some(SizeRangeFilter {
 				min: Some(5000),
@@ -547,11 +549,11 @@ async fn test_ephemeral_search_with_filters() -> anyhow::Result<()> {
 
 	// Test 3: Filter by content type (Code)
 	let code_search = FileSearchInput {
-		query: "a".to_string(), // Broad query to test filtering
+		query: String::new(), // Empty query lists the whole scope, so only the filters narrow it
 		scope: SearchScope::Path {
 			path: WingPath::local(search_dir.clone()),
 		},
-		mode: SearchMode::Normal,
+		mode: SearchMode::Fast,
 		filters: SearchFilters {
 			content_types: Some(vec![ContentKind::Code]),
 			..Default::default()
@@ -606,11 +608,11 @@ async fn test_ephemeral_search_date_filter() -> anyhow::Result<()> {
 	let one_hour_ago = chrono::Utc::now() - chrono::Duration::hours(1);
 
 	let date_search = FileSearchInput {
-		query: "a".to_string(), // Broad query to test filtering
+		query: String::new(), // Empty query lists the whole scope, so only the filters narrow it
 		scope: SearchScope::Path {
 			path: WingPath::local(search_dir.clone()),
 		},
-		mode: SearchMode::Normal,
+		mode: SearchMode::Fast,
 		filters: SearchFilters {
 			date_range: Some(DateRangeFilter {
 				field: DateField::ModifiedAt,
@@ -696,6 +698,83 @@ async fn test_ephemeral_search_substring_matching() -> anyhow::Result<()> {
 		first_result.file.name.starts_with("test"),
 		"Prefix match should score highest"
 	);
+
+	harness.shutdown().await?;
+	Ok(())
+}
+
+#[tokio::test]
+async fn test_mid_word_query_matches_in_indexed_and_unindexed_folders() -> anyhow::Result<()> {
+	// SEARCH-004: FTS5 matches word prefixes, so `ar` found nothing once a
+	// folder was indexed, while the ephemeral search of the same folder found
+	// every name containing it.
+	let harness = IndexingHarnessBuilder::new("mid_word_search")
+		.disable_watcher()
+		.build()
+		.await?;
+	let names = [
+		"harbor-lights.jpg",
+		"night-market.jpg",
+		"wallpaper-dark.png",
+		"sunset.jpg",
+	];
+	let input = |path: WingPath| FileSearchInput {
+		query: "ar".to_string(),
+		scope: SearchScope::Path { path },
+		mode: SearchMode::Normal,
+		filters: SearchFilters::default(),
+		sort: SortOptions {
+			field: SortField::Relevance,
+			direction: SortDirection::Desc,
+		},
+		pagination: PaginationOptions {
+			limit: 50,
+			offset: 0,
+		},
+	};
+	let found = |output: &wing_core::ops::search::output::FileSearchOutput| {
+		let mut names: Vec<String> = output.results.iter().map(|r| r.file.name.clone()).collect();
+		names.sort();
+		names
+	};
+	let expected = vec![
+		"harbor-lights".to_string(),
+		"night-market".to_string(),
+		"wallpaper-dark".to_string(),
+	];
+
+	let unindexed = harness.temp_path().join("unindexed_photos");
+	tokio::fs::create_dir_all(&unindexed).await?;
+	for name in names {
+		tokio::fs::write(unindexed.join(name), "x").await?;
+	}
+	index_ephemeral(&harness, unindexed.clone(), IndexScope::Recursive).await?;
+	let ephemeral = execute_search(&harness, input(WingPath::local(unindexed))).await?;
+	assert_eq!(ephemeral.index_type, IndexType::Ephemeral);
+
+	let location = harness.create_test_location("indexed_photos").await?;
+	for name in names {
+		location.write_file(name, "x").await?;
+	}
+	location.index("Photos", IndexMode::Shallow).await?;
+	tokio::time::sleep(Duration::from_millis(500)).await;
+	let device_slug = wing_core::device::get_current_device_slug();
+	let persistent = execute_search(
+		&harness,
+		input(WingPath::Physical {
+			device_slug,
+			path: location.path().to_path_buf(),
+		}),
+	)
+	.await?;
+	assert_eq!(persistent.index_type, IndexType::Persistent);
+
+	let ephemeral_names: Vec<String> = found(&ephemeral)
+		.into_iter()
+		.map(|n| n.split('.').next().unwrap_or_default().to_string())
+		.collect();
+	assert_eq!(ephemeral_names, expected, "unindexed folder");
+	assert_eq!(found(&persistent), expected, "indexed folder");
 
 	harness.shutdown().await?;
 	Ok(())
