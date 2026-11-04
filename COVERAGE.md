@@ -30,7 +30,7 @@ latest run and nobody edits them by hand.
 
 - **Rust:** [`cargo-llvm-cov`](https://github.com/taiki-e/cargo-llvm-cov) runs
   `scripts/coverage-rust.sh`: the tests from `scripts/ci-rust.sh tests` (the same ones the CI gate
-  runs) plus the unit and integration tests of the CLI, the server and the shared crates. Doctests
+  runs, including the CLI contracts) plus the unit and integration tests of the server and shared crates. Doctests
   are not run.
 - **Frontend:** `scripts/coverage-frontend.sh` runs every `bun test` file from the CI workflow with
   `--coverage`, one process per file, as CI does.
@@ -41,6 +41,9 @@ latest run and nobody edits them by hand.
 
 The percentages count instrumented lines: Rust code that no test binary compiles and TypeScript
 files that no test imports do not appear in the totals. The report lists the files that do.
+
+The [COV-00 plan](.tasks/testing/README.md) defines progressive targets for the core, desktop,
+CLI and shared interface, with tasks, dependencies and evidence requirements.
 
 ## Run it locally
 

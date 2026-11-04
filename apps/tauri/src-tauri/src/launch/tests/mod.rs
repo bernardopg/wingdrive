@@ -1,0 +1,97 @@
+use super::*;
+
+#[test]
+fn hidden_start_is_consumed_once() {
+	let hidden = StartHidden(AtomicBool::new(true));
+	assert!(hidden.is_set());
+	assert!(hidden.consume());
+	assert!(!hidden.is_set());
+	assert!(!hidden.consume());
+	assert!(!StartHidden::default().consume());
+}
+
+#[test]
+fn local_uris_decode_unicode_spaces_and_literal_percent_signs() {
+	let cwd = Path::new("/tmp");
+	for (uri, expected) in [
+		("file:///tmp/a%20b", "/tmp/a b"),
+		("file://localhost/tmp/a%25b", "/tmp/a%b"),
+		("file:///tmp/caf%C3%A9", "/tmp/café"),
+		("file:///tmp/a+b", "/tmp/a+b"),
+	] {
+		assert_eq!(local_path(uri, cwd), Some(PathBuf::from(expected)), "{uri}");
+	}
+}
+
+#[test]
+fn nonlocal_and_malformed_uris_do_not_become_filesystem_paths() {
+	for uri in [
+		"file://remote/tmp/a",
+		"file://localhost.evil/tmp/a",
+		"file:///tmp/%",
+		"file:///tmp/%0",
+		"file:///tmp/%zz",
+		"file:///tmp/%FF",
+		"https://host/a",
+		"smb://host/share",
+		"--unknown",
+	] {
+		assert_eq!(local_path(uri, Path::new("/tmp")), None, "{uri}");
+	}
+}
+
+#[test]
+fn relative_paths_resolve_against_the_forwarded_working_directory() {
+	assert_eq!(
+		local_path("../other/./notes.txt", Path::new("/tmp/forwarded")),
+		Some(PathBuf::from("/tmp/other/notes.txt"))
+	);
+	assert_eq!(
+		local_path("/../../notes.txt", Path::new("/tmp")),
+		Some(PathBuf::from("/notes.txt"))
+	);
+}
+
+#[test]
+fn missing_files_are_skipped_without_losing_valid_requests_or_hidden_flag() {
+	let root = tempfile::tempdir().unwrap();
+	let directory = root.path().join("folder");
+	std::fs::create_dir(&directory).unwrap();
+	let options = parse_args(
+		["missing", "folder", "--hidden", "--unknown"].map(str::to_owned),
+		root.path(),
+	);
+	assert!(options.hidden);
+	assert_eq!(
+		options.requests,
+		vec![OpenRequest {
+			directory,
+			select: None
+		}]
+	);
+}
+
+#[test]
+fn reveal_selects_the_file_in_its_parent() {
+	let request = reveal_request(PathBuf::from("/tmp/notes.txt"));
+	assert_eq!(request.directory, Path::new("/tmp"));
+	assert_eq!(request.select, Some(PathBuf::from("/tmp/notes.txt")));
+}
+
+#[cfg(unix)]
+#[test]
+fn launch_preserves_symlink_paths_instead_of_canonicalizing_them() {
+	let root = tempfile::tempdir().unwrap();
+	let target = root.path().join("target");
+	let link = root.path().join("link");
+	std::fs::create_dir(&target).unwrap();
+	std::os::unix::fs::symlink(&target, &link).unwrap();
+	let options = parse_args(["link".to_owned()], root.path());
+	assert_eq!(
+		options.requests,
+		vec![OpenRequest {
+			directory: link,
+			select: None
+		}]
+	);
+}

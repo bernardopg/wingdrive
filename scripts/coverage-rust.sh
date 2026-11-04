@@ -2,7 +2,7 @@
 # Runs the Rust tests under cargo-llvm-cov and writes one lcov report.
 #
 # It runs the tests CI runs (scripts/ci-rust.sh tests) plus the unit and
-# integration tests of the CLI, the server and the shared crates, which CI only
+# integration tests of the server and the shared crates, which CI only
 # lints. Doctests are not run. The instrumented build lives in
 # target/llvm-cov-target, so it never invalidates the normal target/.
 #
@@ -18,9 +18,9 @@ cargo llvm-cov clean --workspace
 
 scripts/ci-rust.sh tests
 
-printf '\n==> Test CLI, server and shared crates\n'
+printf '\n==> Test server and shared crates\n'
 cargo test --locked --lib --bins --tests \
-	-p wing-cli -p wing-server -p wing-tauri-core -p file-opening \
+	-p wing-server -p wing-tauri-core -p file-opening \
 	-p wing-archive -p wing-utils -p wing-fs-watcher -p wing-task-system -p wing-crypto \
 	-p wing-actors -p wing-client -p wing-media-metadata -p wing-images
 
