@@ -14,7 +14,4 @@ ignore = [
 	# decoder is unreachable. The fix needs wasmer >= 7.3, whose Store/VM types are not Send and
 	# break the daemon (see the wasmer pin in core/Cargo.toml).
 	"RUSTSEC-2026-0344",
-	# memmap2 0.6: unchecked offsets in advise_range/flush_range. Pulled in by shared-buffer
-	# through wasmer 7.1, which never calls those functions. Same wasmer pin as above.
-	"RUSTSEC-2026-0186",
 ]
