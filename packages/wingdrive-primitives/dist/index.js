@@ -2502,6 +2502,7 @@ var CircleButton = forwardRef13(
           children && "w-auto gap-2 px-3",
           className
         ),
+        "aria-label": props["aria-label"] ?? (children ? void 0 : props.title),
         ...props,
         children: [
           Icon2 && /* @__PURE__ */ jsx24(Icon2, { className: "size-[18px]", weight: "bold" }),
