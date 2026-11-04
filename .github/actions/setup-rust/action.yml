@@ -38,7 +38,9 @@ runs:
         targets: ${{ inputs.target }}
         components: clippy, rustfmt
 
+    # GITHUB_PATH needs native paths, and the Windows image already has rustup on PATH.
     - name: Ensure rustup binaries are used
+      if: runner.os != 'Windows'
       shell: bash
       run: |
         # Ensure rustup's cargo/rustc are in PATH before Homebrew's

@@ -27,6 +27,15 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    # The image ships a full LLVM and MinGW. clang-cl.exe breaks aws-lc-sys (see below),
+    # and MinGW's gcc, cmake and nasm would shadow the MSVC toolchain.
+    - name: Remove LLVM and MinGW from PATH
+      if: ${{ runner.os == 'Windows' }}
+      shell: pwsh
+      run: |
+        $kept = $env:Path -split ';' | Where-Object { $_ -and $_ -notmatch '\\LLVM\\|\\mingw64\\|\\Strawberry\\c\\' }
+        "PATH=$($kept -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Append
+
     - name: Restore cached libclang
       if: ${{ runner.os == 'Windows' }}
       id: cache-libclang
@@ -62,8 +71,9 @@ runs:
 
     - name: Set LIBCLANG_PATH
       if: ${{ runner.os == 'Windows' }}
-      shell: powershell
-      run: echo "LIBCLANG_PATH=C:\libclang" >> $env:GITHUB_ENV
+      shell: pwsh
+      # pwsh writes UTF-8. Windows PowerShell's >> writes UTF-16, which the runner cannot read.
+      run: '"LIBCLANG_PATH=C:\libclang" | Out-File -FilePath $env:GITHUB_ENV -Append'
 
     - name: Install current Bash on macOS
       shell: bash

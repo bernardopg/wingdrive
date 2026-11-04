@@ -1,0 +1,115 @@
+name: WingDrive Windows Bundles
+
+# Builds the NSIS and MSI installers, installs each one, runs the daemon and the app
+# from the installed files, and uninstalls them. The Release workflow calls this for a
+# tag. Pull requests that change the installers run it too, so a build can be tried
+# from the run's artifacts without publishing a version.
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/windows-bundle.yml
+      - apps/tauri/src-tauri/tauri.conf.json
+      - apps/tauri/src-tauri/tauri.windows.conf.json
+      - scripts/release/windows_smoke.ps1
+      - scripts/release/daemon_smoke.py
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      release-tag:
+        description: Version tag to build. Empty builds the current commit.
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  CARGO_BUILD_JOBS: '4'
+  CARGO_PROFILE_RELEASE_LTO: thin
+  CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '16'
+  # version.py and the smoke tests read UTF-8 files, and Python on Windows defaults to cp1252.
+  PYTHONUTF8: '1'
+  RELEASE_TAG: ${{ inputs.release-tag }}
+
+jobs:
+  bundles:
+    name: Verify Windows x86_64 installers
+    runs-on: windows-2025
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.release-tag || github.sha }}
+          persist-credentials: false
+      - name: Validate tag and product versions
+        if: ${{ inputs.release-tag != '' }}
+        run: |
+          git rev-parse --verify "refs/tags/$RELEASE_TAG"
+          python scripts/release/version.py "$RELEASE_TAG"
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.3'
+      # Tauri's beforeBuildCommand builds the release daemon, so the setup skips it.
+      - name: Setup System and Rust
+        uses: ./.github/actions/setup-system
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: x86_64-pc-windows-msvc
+          save-cache: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+          cache-key: release-windows
+          xtask-setup-args: --no-daemon
+      # From the workflow commit, so a dispatch can re-verify an older tag with the current gate.
+      - name: Checkout release tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: release-tooling
+          sparse-checkout: scripts/release
+          persist-credentials: false
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+      - name: Build production installers
+        run: |
+          # WiX accepts only a numeric pre-release, so alpha, beta and rc tags ship the NSIS installer alone.
+          case "$RELEASE_TAG" in
+            *-*) bundles=nsis ;;
+            *) bundles=nsis,msi ;;
+          esac
+          bun run --cwd apps/tauri tauri build --verbose --target x86_64-pc-windows-msvc --bundles "$bundles"
+      - name: Verify the NSIS installer
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe
+          ./release-tooling/scripts/release/windows_smoke.ps1 -Kind nsis -Installer $installer.FullName -DaemonSmoke release-tooling/scripts/release/daemon_smoke.py
+      - name: Verify the MSI installer
+        if: ${{ !contains(inputs.release-tag, '-') }}
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+          ./release-tooling/scripts/release/windows_smoke.ps1 -Kind msi -Installer $installer.FullName -DaemonSmoke release-tooling/scripts/release/daemon_smoke.py
+      - name: Prepare release assets
+        run: |
+          if [ -n "$RELEASE_TAG" ]; then
+            version="${RELEASE_TAG#v}"
+          else
+            version=$(python -c "import json; print(json.load(open('apps/tauri/src-tauri/tauri.conf.json'))['version'])")
+          fi
+          mkdir dist
+          cp target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe "dist/WingDrive-$version-x64-setup.exe"
+          case "$RELEASE_TAG" in
+            *-*) ;;
+            *) cp target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi "dist/WingDrive-$version-x64.msi" ;;
+          esac
+          cd dist
+          sha256sum ./* > SHA256SUMS-windows
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wingdrive-windows-release
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14

@@ -1,6 +1,6 @@
 {
   "bundle": {
-    "targets": ["nsis", "app"],
+    "targets": ["nsis", "msi"],
     "resources": {
       "../../.deps/bin/*.dll": "./"
     }

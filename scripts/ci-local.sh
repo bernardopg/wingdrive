@@ -44,10 +44,7 @@ if [ -n "$ts_changed" ] || [ "${1:-}" = "--all" ]; then
 		mv "$expo_types.ci-local" "$expo_types"
 		trap - EXIT
 	fi
-	# Same list as the "Test critical frontend behavior" step in ci.yml.
-	grep -oE 'bun test [^ ]+' .github/workflows/ci.yml | while read -r _ _ file; do
-		bun test "$file"
-	done
+	scripts/ci-frontend-tests.sh
 fi
 
 if [ "$scope" = "none" ]; then

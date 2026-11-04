@@ -1,0 +1,108 @@
+# Installs a Windows bundle, proves it runs, then proves it uninstalls.
+#
+# Usage: windows_smoke.ps1 -Kind nsis|msi -Installer <path> -DaemonSmoke <path to daemon_smoke.py>
+#
+# Tests the installed files rather than the build output, so a sidecar or DLL
+# missing from the bundle fails here instead of on a user's machine.
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)][ValidateSet('nsis', 'msi')][string]$Kind,
+    [Parameter(Mandatory)][string]$Installer,
+    [Parameter(Mandatory)][string]$DaemonSmoke
+)
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+$workRoot = if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { $env:TEMP }
+$installDir = Join-Path $workRoot "wingdrive-smoke-$Kind"
+$dataDir = Join-Path $workRoot "wingdrive-smoke-$Kind-data"
+$msiLog = Join-Path $workRoot "wingdrive-smoke-$Kind.log"
+$installerPath = (Resolve-Path -LiteralPath $Installer).Path
+
+function Assert-ExitCode([int]$Code, [string]$Step) {
+    # 3010 means the MSI succeeded and asks for a reboot.
+    if ($Code -ne 0 -and $Code -ne 3010) {
+        if (Test-Path -LiteralPath $msiLog) { Get-Content -LiteralPath $msiLog -Tail 40 | Write-Host }
+        throw "$Step failed with exit code $Code"
+    }
+}
+
+function Stop-InstalledProcesses {
+    Get-Process -ErrorAction SilentlyContinue |
+        Where-Object { $_.Path -and $_.Path.StartsWith($installDir, [StringComparison]::OrdinalIgnoreCase) } |
+        ForEach-Object {
+            $_.Kill()
+            $_.WaitForExit(10000) | Out-Null
+        }
+}
+
+function Uninstall-Bundle {
+    if ($Kind -eq 'nsis') {
+        $uninstaller = Join-Path $installDir 'uninstall.exe'
+        if (Test-Path -LiteralPath $uninstaller) {
+            $process = Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait -PassThru
+            Assert-ExitCode $process.ExitCode 'NSIS uninstall'
+        }
+    } else {
+        $process = Start-Process -FilePath 'msiexec.exe' -Wait -PassThru -ArgumentList @(
+            '/x', "`"$installerPath`"", '/qn', '/norestart', '/l*v', "`"$msiLog`""
+        )
+        Assert-ExitCode $process.ExitCode 'MSI uninstall'
+    }
+}
+
+Write-Host "Installing $installerPath into $installDir"
+if ($Kind -eq 'nsis') {
+    # NSIS reads /D literally, so it stays last and unquoted.
+    $process = Start-Process -FilePath $installerPath -ArgumentList @('/S', "/D=$installDir") -Wait -PassThru
+    Assert-ExitCode $process.ExitCode 'NSIS install'
+} else {
+    $process = Start-Process -FilePath 'msiexec.exe' -Wait -PassThru -ArgumentList @(
+        '/i', "`"$installerPath`"", '/qn', '/norestart', "INSTALLDIR=`"$installDir`"", '/l*v', "`"$msiLog`""
+    )
+    Assert-ExitCode $process.ExitCode 'MSI install'
+}
+
+try {
+    foreach ($expected in 'WingDrive.exe', 'wing-daemon.exe', 'wing.exe', 'avcodec-*.dll', 'libheif.dll') {
+        if (-not (Test-Path -Path (Join-Path $installDir $expected))) {
+            Get-ChildItem -LiteralPath $installDir | Select-Object -ExpandProperty Name | Write-Host
+            throw "$expected is missing from the $Kind install"
+        }
+    }
+    Write-Host 'PASS: installed files are present'
+
+    & python $DaemonSmoke (Join-Path $installDir 'wing-daemon.exe')
+    if ($LASTEXITCODE -ne 0) { throw 'The installed daemon failed its smoke test' }
+
+    # Named instance and data directory, so this never touches a real library.
+    New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
+    $env:WINGDRIVE_DATA_DIR = $dataDir
+    $env:WINGDRIVE_INSTANCE = "release-smoke-$Kind"
+    $app = Start-Process -FilePath (Join-Path $installDir 'WingDrive.exe') -PassThru
+    $deadline = (Get-Date).AddSeconds(90)
+    while ((Get-Date) -lt $deadline) {
+        if ($app.HasExited) { throw "WingDrive.exe exited with code $($app.ExitCode)" }
+        $app.Refresh()
+        if ($app.MainWindowHandle -ne 0) { break }
+        Start-Sleep -Seconds 1
+    }
+    if ($app.MainWindowHandle -eq 0) { throw 'WingDrive.exe opened no window within 90 seconds' }
+    Start-Sleep -Seconds 10
+    if ($app.HasExited) { throw "WingDrive.exe exited after opening, with code $($app.ExitCode)" }
+    Write-Host "PASS: installed app opened its window ($($app.MainWindowTitle))"
+} finally {
+    Stop-InstalledProcesses
+    Uninstall-Bundle
+}
+
+# The NSIS uninstaller copies itself to a temporary folder and returns before it finishes.
+$deadline = (Get-Date).AddSeconds(60)
+while ((Test-Path -LiteralPath (Join-Path $installDir 'WingDrive.exe')) -and (Get-Date) -lt $deadline) {
+    Start-Sleep -Seconds 1
+}
+if (Test-Path -LiteralPath (Join-Path $installDir 'WingDrive.exe')) {
+    throw "WingDrive.exe is still present after the $Kind uninstall"
+}
+Write-Host "PASS: $Kind bundle uninstalls cleanly"
