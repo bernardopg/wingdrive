@@ -13,7 +13,8 @@ import type {File, WingPath} from '@wingdrive/ts-client';
 import {useNormalizedQuery, useSidebarStore} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {useNavigate, useSearchParams} from 'react-router-dom';
+import {useSearchParams} from 'react-router-dom';
+import {useSidebarNavigate} from '../../TabManager/useSidebarNavigate';
 
 import {usePlatform} from '../../../contexts/PlatformContext';
 import {useTranslation} from '../../../i18n';
@@ -213,7 +214,7 @@ function FolderNode({
 	follows
 }: FolderNodeProps) {
 	const {t} = useTranslation('navigation');
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const openInNewTab = useOpenInNewTabAction();
 	const {viewSettings} = useExplorer();
 	const isOpen = expanded.has(path);

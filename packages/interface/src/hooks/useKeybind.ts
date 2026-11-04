@@ -4,6 +4,7 @@ import type { KeybindId } from '../util/keybinds/registry';
 import { getKeybind } from '../util/keybinds/registry';
 import { getComboForPlatform, getCurrentPlatform, toTauriAccelerator } from '../util/keybinds/platform';
 import { getWebListener } from '../util/keybinds/listener';
+import { usePane } from '../components/TabManager/PaneContext';
 
 export type KeybindHandler = () => void | Promise<void>;
 
@@ -36,7 +37,11 @@ export function useKeybind(
 	handler: KeybindHandler,
 	options: UseKeybindOptions = {}
 ): void {
-	const { enabled = true, ignoreWhenInputFocused = true } = options;
+	// In the split view both panes register the same shortcuts under the same
+	// id; only the focused one keeps them, so a shortcut acts on one pane.
+	const { focused } = usePane();
+	const enabled = (options.enabled ?? true) && focused;
+	const { ignoreWhenInputFocused = true } = options;
 	const platform = usePlatform();
 	const handlerRef = useRef(handler);
 

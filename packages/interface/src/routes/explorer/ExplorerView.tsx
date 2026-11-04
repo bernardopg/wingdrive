@@ -3,6 +3,7 @@ import {
 	ArrowRight,
 	Info,
 	SidebarSimple,
+	SquareSplitHorizontal,
 	Tag as TagIcon,
 	TerminalWindow
 } from '@phosphor-icons/react';
@@ -108,7 +109,7 @@ export function ExplorerView() {
 		[navigateToPath, localSlug]
 	);
 	// Closing a tab hangs up its shell.
-	const {tabs} = useTabManager();
+	const {tabs, split, toggleSplit} = useTabManager();
 	const tabIds = tabs.map((tab) => tab.id).join('\n');
 	useEffect(() => {
 		closeDockedTerminalsExcept(tabIds.split('\n'));
@@ -368,6 +369,19 @@ export function ExplorerView() {
 									/>
 								</TopBarItem>
 							)}
+							<TopBarItem
+								id="split-view"
+								label={t('topBar.splitView')}
+								priority="low"
+								onClick={toggleSplit}
+							>
+								<CircleButton
+									icon={SquareSplitHorizontal}
+									onClick={toggleSplit}
+									active={!!split}
+									title={t('topBar.splitView')}
+								/>
+							</TopBarItem>
 							<TopBarItem
 								id="inspector-toggle"
 								label={t('topBar.inspector')}

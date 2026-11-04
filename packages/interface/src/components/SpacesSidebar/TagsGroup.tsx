@@ -2,7 +2,8 @@ import {CaretRight, Plus, Tag as TagIcon, Trash} from '@phosphor-icons/react';
 import type {Tag} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {useState} from 'react';
-import {useLocation, useNavigate} from 'react-router-dom';
+import {useLocation} from 'react-router-dom';
+import {useSidebarNavigate} from '../TabManager/useSidebarNavigate';
 import {usePlatform} from '../../contexts/PlatformContext';
 import {
 	useLibraryMutation,
@@ -32,7 +33,7 @@ interface TagItemProps {
 
 function TagItem({tag, depth = 0}: TagItemProps) {
 const {t} = useTranslation('navigation');
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const location = useLocation();
 	const platform = usePlatform();
 	const {loadPreferencesForSpaceItem} = useExplorer();
@@ -141,7 +142,7 @@ export function TagsGroup({
 	sortableListeners
 }: TagsGroupProps) {
 const {t} = useTranslation('navigation');
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const {loadPreferencesForSpaceItem} = useExplorer();
 	const [isCreating, setIsCreating] = useState(false);
 	const [newTagName, setNewTagName] = useState('');

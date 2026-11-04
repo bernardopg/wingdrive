@@ -8,7 +8,7 @@ import { usePlatform } from "../../contexts/PlatformContext";
  * Uses the keybind system to listen for tab-related shortcuts and trigger actions.
  */
 export function TabKeyboardHandler() {
-	const { createTab, closeTab, nextTab, previousTab, selectTabAtIndex, reopenTab, tabs, activeTabId } =
+	const { createTab, closeTab, nextTab, previousTab, selectTabAtIndex, reopenTab, tabs, activeTabId, toggleSplit } =
 		useTabManager();
 	const platform = usePlatform();
 
@@ -32,6 +32,11 @@ export function TabKeyboardHandler() {
 		}
 
 		void platform.closeCurrentWindow?.();
+	});
+
+	// Split view (F3), as in Dolphin
+	useKeybind("global.toggleSplitView", () => {
+		toggleSplit();
 	});
 
 	// Next Tab (Cmd+Shift+])

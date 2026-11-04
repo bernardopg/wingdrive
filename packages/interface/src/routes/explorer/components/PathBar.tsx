@@ -26,6 +26,7 @@ import {useAddStorageDialog} from './AddStorageModal';
 import {resolveTypedPath} from './pathInput';
 import {i18n, useTranslation} from '../../../i18n';
 import { ThemedIcon } from '../../../components/ThemedIcon';
+import {usePaneFocusedRef} from '../../../components/TabManager/PaneContext';
 
 interface PathBarProps {
 	path: WingPath;
@@ -296,6 +297,8 @@ function IndexIndicator({path}: {path: WingPath}) {
 }
 
 export function PathBar({path, devices, onNavigate}: PathBarProps) {
+	// Keys go to the focused pane of a split view only.
+	const paneFocused = usePaneFocusedRef();
 	const {t} = useTranslation('explorer');
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isShiftHeld, setIsShiftHeld] = useState(false);
@@ -417,6 +420,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
+			if (!paneFocused.current) return;
 			if (e.key === 'Shift') setIsShiftHeld(true);
 		};
 		const handleKeyUp = (e: KeyboardEvent) => {

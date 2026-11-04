@@ -52,6 +52,10 @@ import {COMPRESS_FORMATS, isArchiveName} from './archiveName';
 import {useArchiveActions} from './useArchiveActions';
 import {contextActionMenus, useContextActions} from './useContextActions';
 import {useCopyMoveTo} from './useCopyMoveTo';
+import {usePane} from '../../../components/TabManager/PaneContext';
+import {folderOfUrl, otherPane} from '../../../components/TabManager/otherPane';
+import {useTabManager} from '../../../components/TabManager/useTabManager';
+import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
 import {useWingdrop} from './useWingdrop';
 import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
@@ -138,6 +142,20 @@ export function useFileContextMenu({
 	const {newFile, newLink} = useCreateEntry();
 	const archive = useArchiveActions();
 	const copyMoveTo = useCopyMoveTo();
+	// Split view: the folder the other pane shows, the target of "to Other Pane".
+	const pane = usePane();
+	const {panePath} = useTabManager();
+	const otherPaneFolder = pane.split ? folderOfUrl(panePath(otherPane(pane.pane))) : null;
+	const openFileOperation = useFileOperationDialog();
+	const toOtherPane = (operation: 'copy' | 'move') => {
+		const files = getTargetFiles();
+		if (!otherPaneFolder || files.length === 0) return;
+		openFileOperation({
+			operation,
+			sources: files.map((f) => f.wing_path),
+			destination: otherPaneFolder
+		});
+	};
 	const wingdrop = useWingdrop();
 
 	// A right-click on an unselected item acts on that item alone.
@@ -516,6 +534,18 @@ export function useFileContextMenu({
 			},
 			keybindId: 'explorer.paste',
 			condition: () => clipboard.canPaste() && !!operationalPath
+		},
+		{
+			icon: CopySimple,
+			label: t('contextMenu.copyToOtherPane'),
+			onClick: () => toOtherPane('copy'),
+			condition: () => capabilities.canCopy && !!otherPaneFolder
+		},
+		{
+			icon: ArrowBendUpRight,
+			label: t('contextMenu.moveToOtherPane'),
+			onClick: () => toOtherPane('move'),
+			condition: () => capabilities.canCopy && !!otherPaneFolder
 		},
 		{
 			icon: CopySimple,

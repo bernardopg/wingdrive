@@ -20,8 +20,11 @@ import {useOpenFiles} from './useOpenFile';
 import {usePasteFiles} from './usePasteFiles';
 import {useSelectionCommands} from './useSelectionCommands';
 import {useTypeaheadSearch} from './useTypeaheadSearch';
+import {usePaneFocusedRef} from '../../../components/TabManager/PaneContext';
 
 export function useExplorerKeyboard() {
+	// Keys go to the focused pane of a split view only.
+	const paneFocused = usePaneFocusedRef();
 	const {
 		currentFiles,
 		operationalPath,
@@ -226,6 +229,7 @@ export function useExplorerKeyboard() {
 
 	useEffect(() => {
 		const handleKeyDown = async (e: KeyboardEvent) => {
+			if (!paneFocused.current) return;
 			// Skip all keyboard shortcuts if renaming or typing in an input
 			if (isRenaming || isInputFocused()) return;
 

@@ -10,7 +10,7 @@ import {
 import {Dialog, dialogManager, Input, Label, toast, useDialog} from '@wingdrive/primitives';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {useForm} from 'react-hook-form';
-import {useNavigate} from 'react-router-dom';
+import {useSidebarNavigate} from '../TabManager/useSidebarNavigate';
 import {useTranslation} from '../../i18n';
 
 import {usePlatform, type NetworkMount} from '../../contexts/PlatformContext';
@@ -108,7 +108,7 @@ function isMounted(uri: string, mounts: NetworkMount[]): boolean {
 export function NetworkSection({groupId}: {groupId: string}) {
 	const {t} = useTranslation('navigation');
 	const platform = usePlatform();
-	const navigate = useNavigate();
+	const navigate = useSidebarNavigate();
 	const queryClient = useQueryClient();
 	const supported = !!platform.listNetworkMounts;
 

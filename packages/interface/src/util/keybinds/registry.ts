@@ -149,6 +149,14 @@ export const explorerKeybinds = {
 		preventDefault: true
 	}),
 
+	toggleSplitView: defineKeybind({
+		id: 'global.toggleSplitView',
+		label: 'Split View',
+		combo: {modifiers: [], key: 'F3'},
+		scope: 'global',
+		preventDefault: true
+	}),
+
 	newFolder: defineKeybind({
 		id: 'explorer.newFolder',
 		label: 'New Folder',

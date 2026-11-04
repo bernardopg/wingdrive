@@ -17,6 +17,7 @@ import {
 	TabDefaultsSync,
 	TabNavigationSync
 } from './components/TabManager';
+import {usePane} from './components/TabManager/PaneContext';
 import {usePlatform} from './contexts/PlatformContext';
 import {useNormalizedQuery} from './contexts/WingDriveContext';
 import {WebContextMenuProvider} from './contexts/WebContextMenuContext';
@@ -37,9 +38,10 @@ function ShellLayoutContent() {
 	const location = useLocation();
 	const params = useParams();
 	const platform = usePlatform();
+	const pane = usePane();
 	const {
-		sidebarVisible,
-		inspectorVisible,
+		sidebarVisible: sidebarSetting,
+		inspectorVisible: inspectorSetting,
 		setInspectorVisible,
 		quickPreviewFileId,
 		tagModeActive,
@@ -51,6 +53,12 @@ function ShellLayoutContent() {
 	// Check if we're on Overview (hide inspector) or in Knowledge view (has its own inspector)
 	const isOverview = location.pathname === '/';
 	const isKnowledgeView = viewMode === 'knowledge';
+
+	// A split view shows the sidebar on the left pane and the Inspector on the
+	// right one, so the window keeps one of each.
+	const sidebarVisible = sidebarSetting && !(pane.split && pane.pane === 'secondary');
+	const inspectorVisible = inspectorSetting && !(pane.split && pane.pane === 'primary');
+	const showTabBar = !(pane.split && pane.pane === 'secondary');
 
 	// Fetch locations to get current location info
 	const locationsQuery = useNormalizedQuery<null, {locations: Location[]}>({
@@ -189,7 +197,7 @@ function ShellLayoutContent() {
 						transition: 'padding 0.3s ease-out'
 					}}
 				>
-					<TabBar />
+					{showTabBar && <TabBar />}
 				</div>
 			)}
 
@@ -206,6 +214,8 @@ function ShellLayoutContent() {
 								ease: [0.25, 1, 0.5, 1]
 							}}
 							className="relative z-[65] overflow-hidden"
+							// Sidebar clicks act on the focused pane and must not refocus.
+							data-pane-neutral
 						>
 							<SpacesSidebar
 								isPreviewActive={
@@ -224,10 +234,18 @@ function ShellLayoutContent() {
 					)}
 				>
 					{/* Tab Bar - nested inside content area like Finder (hidden in size view) */}
-					{!isSizeViewActive && <TabBar />}
+					{!isSizeViewActive && showTabBar && <TabBar />}
 
 					{/* Router content renders here */}
-					<div className="relative flex-1 overflow-hidden">
+					<div
+						className={clsx(
+							'relative flex-1 overflow-hidden',
+							pane.split && 'rounded-lg ring-1 ring-inset',
+							pane.split && (pane.focused ? 'ring-accent/60' : 'ring-transparent')
+						)}
+						data-pane={pane.pane}
+						data-pane-focused={pane.focused}
+					>
 						<Outlet />
 
 						{/* Tag Assignment Mode - positioned at bottom of main content area */}
@@ -285,6 +303,11 @@ function ShellLayoutContent() {
 	);
 }
 
+/** Window-wide work, such as opening folders requested by the launcher, runs in one pane. */
+function PrimaryPaneOnly({children}: {children: React.ReactNode}) {
+	return usePane().pane === 'primary' ? children : null;
+}
+
 export function ShellLayout() {
 	return (
 		<JobsProvider>
@@ -297,7 +320,9 @@ export function ShellLayout() {
 									{/* Sync tab navigation and defaults with router */}
 									<TabNavigationSync />
 									<TabDefaultsSync />
-									<LaunchRequestSync />
+									<PrimaryPaneOnly>
+										<LaunchRequestSync />
+									</PrimaryPaneOnly>
 									<ShellLayoutContent />
 								</OpenFileProvider>
 							</FileContextMenuProvider>
