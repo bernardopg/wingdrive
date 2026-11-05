@@ -74,6 +74,11 @@ Not specific to Windows:
 
 - `wing` and `wing-daemon` evaluated `unwrap_or(default_data_dir()?)` eagerly, so they
   created an empty production data directory even with `--data-dir`.
+- The sync loop decides to backfill from a state it read before several awaits. On the
+  slower Windows runner, `sync_metrics_test` failed twice because the test harness set the
+  device Ready in that window and `start_backfill` overwrote it with Backfilling 16 ms
+  later. `start_backfill` now skips when the state already moved to Ready, catching up or
+  paused, and `test_backfill_skipped_once_device_is_ready` covers it.
 
 Smart App Control blocked freshly built unsigned binaries until it was turned off on the
 development machine. `docs/core/windows-development.mdx` shows how to recognize it. It may
@@ -92,6 +97,12 @@ Not started, and not needed for the baseline:
 - [ ] System file clipboard on Windows (`CF_HDROP`). TAURI-010 covered Linux only.
 - [ ] "Administrator retries" on Windows (`run_as_admin`, UAC instead of `pkexec`)
 - [ ] Authenticode signing for the installers (add to REL-001)
+- [ ] `WINGDRIVE_INSTANCE` does not isolate the app on Windows. The single-instance plugin
+  uses `dbus_id` only on Linux and builds its mutex from the bundle identifier, so a named
+  instance hands its launch to the everyday WingDrive and exits.
+- [ ] `windows_smoke.ps1` reads `MainWindowHandle`, which the runner reports as the plugin's
+  hidden `com.wingdrive.desktop-siw` window. The check proves the app started and stayed up
+  for 10 seconds, not that the main WebView window opened.
 - [ ] Runtime checks not done yet: daemon service through `schtasks`, "Abrir com" (CORE-014), the TAURI-006 checklist (TAURI-012)
 - [ ] The README still marks Windows as planned. Change the badge after the first published release.
 

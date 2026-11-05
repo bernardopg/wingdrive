@@ -252,7 +252,8 @@ jobs:
     name: Require green CI for the tagged commit
     if: ${{ !inputs.aur_only }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    # The Windows Rust job alone takes about 85 minutes when main has to run it.
+    timeout-minutes: 150
     permissions:
       actions: write
       contents: read
