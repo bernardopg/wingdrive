@@ -65,6 +65,7 @@ wing-desktop-macos = { path = "../crates/macos" }
 file-opening-macos = { path = "../crates/file-opening-macos" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
+file-clipboard-windows = { path = "../crates/file-clipboard-windows" }
 file-opening-windows = { path = "../crates/file-opening-windows" }
 windows-sys = { version = "0.52", features = ["Win32_Foundation", "Win32_System_Registry"] }
 

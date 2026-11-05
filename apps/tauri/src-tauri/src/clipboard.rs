@@ -1,7 +1,8 @@
-//! # Linux File Clipboard
+//! # System File Clipboard
 //!
-//! GTK serves URI lists on both X11 and Wayland. GNOME and KDE targets
-//! preserve cut semantics when exchanging files with other file managers.
+//! On Linux, GTK serves URI lists on both X11 and Wayland. GNOME and KDE targets
+//! preserve cut semantics when exchanging files with other file managers. On
+//! Windows, `file-clipboard-windows` writes the `CF_HDROP` list Explorer reads.
 
 #[cfg(target_os = "linux")]
 use gtk::{gdk, Clipboard, TargetEntry, TargetFlags};
@@ -70,10 +71,17 @@ pub async fn write_file_clipboard(
 		.map_err(|e| e.to_string())?;
 		rx.await.map_err(|e| e.to_string())?
 	}
-	#[cfg(not(target_os = "linux"))]
+	#[cfg(windows)]
+	{
+		let _ = app;
+		tauri::async_runtime::spawn_blocking(move || file_clipboard_windows::write(&paths, cut))
+			.await
+			.map_err(|e| e.to_string())?
+	}
+	#[cfg(not(any(target_os = "linux", windows)))]
 	{
 		let _ = (app, paths, cut);
-		Err("System file clipboard is currently supported on Linux".to_string())
+		Err("System file clipboard is supported on Linux and Windows".to_string())
 	}
 }
 
@@ -131,10 +139,17 @@ pub async fn read_file_clipboard(app: tauri::AppHandle) -> Result<(Vec<String>, 
 			.map_err(|_| "File clipboard timed out".to_string())?
 			.map_err(|e| e.to_string())?
 	}
-	#[cfg(not(target_os = "linux"))]
+	#[cfg(windows)]
 	{
 		let _ = app;
-		Err("System file clipboard is currently supported on Linux".to_string())
+		tauri::async_runtime::spawn_blocking(file_clipboard_windows::read)
+			.await
+			.map_err(|e| e.to_string())?
+	}
+	#[cfg(not(any(target_os = "linux", windows)))]
+	{
+		let _ = app;
+		Err("System file clipboard is supported on Linux and Windows".to_string())
 	}
 }
 

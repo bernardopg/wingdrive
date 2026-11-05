@@ -3194,6 +3194,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "file-clipboard-windows"
+version = "0.1.0"
+dependencies = [
+ "windows-sys 0.52.0",
+]
+
+[[package]]
 name = "file-opening"
 version = "0.1.0"
 dependencies = [
@@ -14451,6 +14458,7 @@ version = "2.4.1"
 dependencies = [
  "axum",
  "blake3",
+ "file-clipboard-windows",
  "file-opening",
  "file-opening-linux",
  "file-opening-macos",

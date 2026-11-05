@@ -76,6 +76,7 @@ run_full_tests() {
 	step "Test desktop IPC and launch handling"
 	cargo test --locked -p wingdrive --bin WingDrive
 	cargo test --locked -p "$file_opening_crate"
+	cargo test --locked -p file-clipboard-windows
 
 	step "Test two-device sync"
 	cargo test --locked -p wing-core \
@@ -119,6 +120,7 @@ else
 		cargo build --locked --bin wing-daemon
 		cargo test --locked -p wingdrive --bin WingDrive
 		cargo test --locked -p "$file_opening_crate"
+		cargo test --locked -p file-clipboard-windows
 	fi
 
 	if [[ " $* " == *" cli "* ]]; then
