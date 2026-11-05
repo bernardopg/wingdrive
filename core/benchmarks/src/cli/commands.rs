@@ -166,7 +166,7 @@ async fn mkdata(recipe_path: PathBuf, dataset_root: Option<PathBuf>) -> Result<(
 	let recipe_str = std::fs::read_to_string(&recipe_path)
 		.with_context(|| format!("reading recipe {recipe_path:?}"))?;
 	let recipe: bench::recipe::Recipe =
-		serde_yaml::from_str(&recipe_str).context("parsing recipe yaml")?;
+		serde_saphyr::from_str(&recipe_str).context("parsing recipe yaml")?;
 	let recipe = apply_dataset_root(recipe, dataset_root);
 
 	// If all location markers exist, skip generation
@@ -272,7 +272,7 @@ async fn run_scenario(
 	let recipe_str = std::fs::read_to_string(&recipe_path)
 		.with_context(|| format!("reading recipe {recipe_path:?}"))?;
 	let recipe: bench::recipe::Recipe =
-		serde_yaml::from_str(&recipe_str).context("parsing recipe yaml")?;
+		serde_saphyr::from_str(&recipe_str).context("parsing recipe yaml")?;
 	let recipe = apply_dataset_root(recipe, dataset_root);
 
 	// Resolve scenario by name
@@ -523,7 +523,7 @@ async fn run_all(
 				let recipe_str = std::fs::read_to_string(&recipe_path)
 					.with_context(|| format!("reading recipe {recipe_path:?}"))?;
 				let mut parsed: bench::recipe::Recipe =
-					serde_yaml::from_str(&recipe_str).context("parsing recipe yaml")?;
+					serde_saphyr::from_str(&recipe_str).context("parsing recipe yaml")?;
 
 				// Apply location path to recipe
 				let parsed = apply_dataset_root(parsed, Some(location_path.clone()));
