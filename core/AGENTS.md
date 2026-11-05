@@ -3,7 +3,7 @@
 ## Build/Test Commands
 
 - `cargo build` - Build the project
-- `cargo test` - Run all tests
+- `cargo test -p wing-core --lib` - Run the core's unit tests; `just ci-local` runs the CI gates before a push
 - `cargo test <test_name>` - Run specific test (e.g., `cargo test library_test`)
 - `cargo clippy` - Lint code
 - `cargo fmt` - Format code
@@ -29,14 +29,15 @@
   - `input.rs`: Data structures for the action's input.
   - `output.rs`: Data structures for the action's output.
   - `job.rs`: If the action is long-running, the job implementation.
-- **Database**: Use SeaORM entities, async queries, proper error propagation
+- **Database**: Use SeaORM entities, async queries, proper error propagation. Open SQLite through `crate::infra::db::connect_sqlite` (WAL, `synchronous=NORMAL`); SQLite's defaults made sync tests time out on Windows
+- **Platforms**: The core runs on Linux, Windows, macOS and mobile. Never parse localized tool output (`tasklist`, `ver`); join stored paths with `crate::domain::addressing::join_entry_path`, which keeps the stored separator
 - **Comments**: Minimal inline comments, focus on why not what, no TODO comments in production code
 
 ## Daemon Architecture
 
-WingDrive uses a **daemon-client architecture** where a single daemon process manages the core functionality and multiple client applications (CLI, GraphQL server, desktop app) connect to it via Unix domain sockets.
+WingDrive uses a **daemon-client architecture** where a single daemon process manages the core functionality and the clients (desktop app, `wing`, `wing-server`) speak JSON-RPC 2.0 to it over TCP on `127.0.0.1`: port 6969 for the default instance, a port derived from the name for `--instance` (`core/src/bin/daemon.rs`).
 
-> **For detailed daemon architecture documentation, see [/docs/core/daemon.md](/docs/core/daemon.md)**
+> **For the architecture, see [/docs/core/architecture.mdx](/docs/core/architecture.mdx)**
 
 ### **The `Wire` Trait**
 
@@ -78,7 +79,7 @@ crate::register_core_action!(LibraryCreateAction, "libraries.create");
 
 ### **Registry System**
 
-- **Location**: `core/src/ops/registry.rs`
+- **Location**: `core/src/infra/wire/registry.rs`
 - **Mechanism**: Uses the `inventory` crate for compile-time registration
 - **Global Maps**: `QUERIES` and `ACTIONS` hashmaps populated at startup
 - **Handler Functions**: Generic handlers that decode payloads, execute operations, and encode results

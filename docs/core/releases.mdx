@@ -3,17 +3,20 @@ title: Releases
 sidebarTitle: Releases
 ---
 
-WingDrive uses GitHub Actions workflows, git tags, and a custom xtask command to manage releases. This page covers the full release pipeline from version bump to published artifacts.
+WingDrive uses GitHub Actions workflows, git tags, and a custom xtask command to manage releases. This page covers the full release pipeline from version bump to published artifacts: Linux (AppImage, `.deb`, two AUR packages), Windows (NSIS `.exe` and `.msi`), Android and the server image.
 
 ## Versioning
 
 WingDrive follows semver with pre-release suffixes for alpha/beta releases.
 
 ```
-2.0.0-alpha.1   # Pre-release
-2.0.0-beta.1    # Pre-release
-2.0.0           # Stable release
+3.1.0-alpha.1   # Pre-release
+3.1.0-beta.1    # Pre-release
+3.1.0-rc.1      # Pre-release
+3.1.0           # Stable release
 ```
+
+Only `alpha`, `beta` and `rc` are accepted as pre-release labels (`scripts/release/version.py`).
 
 The version string lives in 7 files across the repo:
 
@@ -25,29 +28,17 @@ The version string lives in 7 files across the repo:
 - `apps/tauri/src-tauri/tauri.conf.json`
 - `apps/tauri/package.json`
 
-These must stay in sync. The bump command handles this automatically.
+These must stay in sync, together with `Cargo.lock`. The bump command handles this.
 
 ## Bump Command
 
-`cargo xtask bump` updates all version files, commits the changes, and creates a git tag.
+`cargo xtask bump` updates all version files and `Cargo.lock`, then checks them with
+`scripts/release/version.py`. It neither commits nor tags: `main` only changes through pull
+requests, and the tag goes on the merge commit.
 
 ```bash
-cargo xtask bump 2.0.0-alpha.2
+cargo xtask bump 3.1.0-beta.1
 ```
-
-This does three things:
-
-1. Updates the version string in all 7 files
-2. Commits with message `v2.0.0-alpha.2`
-3. Creates git tag `v2.0.0-alpha.2`
-
-It does not push. You push manually when ready:
-
-```bash
-git push --tags
-```
-
-Pushing the tag triggers the release workflows.
 
 ## Workflows
 
@@ -57,9 +48,14 @@ GitHub Actions workflows handle CI and releases.
 
 Runs on every pull request and push to `main`. Handles formatting checks, linting, and build verification. This is the standard PR gate.
 
-### Desktop Linux Release (`release.yml`)
+### Desktop Release (`release.yml`)
 
-WingDrive releases provide an x86_64 AppImage and a Debian package. The release
+WingDrive releases provide an x86_64 AppImage and a Debian package for Linux, and an NSIS `.exe`
+and an `.msi` for Windows. `release.yml` first waits for every CI job on the tagged commit (the
+`ci` gate), so a red Windows job also blocks a Linux release. The Windows installers come from
+`windows-bundle.yml`, which installs each one, starts the daemon and the app, waits for the main
+window and uninstalls it. Alpha, beta and rc tags ship the `.exe` only, because WiX accepts only
+numeric pre-release versions. The installers are not signed yet (REL-001). The release
 runner uses Ubuntu 24.04. The AUR package `wingdrive-bin` extracts the AppImage,
 so launching the installed package does not require FUSE.
 
@@ -83,10 +79,19 @@ publication starts after those checks pass. Prerelease versions retain their
 alpha, beta or rc label.
 
 The AUR job verifies the published checksums, builds the package with `makepkg`
-in Arch Linux, generates `.SRCINFO`, and pushes changes using
-`AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS`. Both secrets must be configured in
-the GitHub repository. Repeating the same publication leaves unchanged AUR
-metadata untouched.
+in Arch Linux, runs the smoke test on the installed package, generates `.SRCINFO`, and pushes
+changes using `AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS`. Repeating the same publication leaves
+unchanged AUR metadata untouched. Two packages carry the same AppImage and conflict with each
+other:
+
+| Tag | `wingdrive-bin` | `wingdrive-nightly` |
+|---|---|---|
+| `v3.1.0-alpha.1`, `-beta.N`, `-rc.N` | unchanged | updated |
+| `v3.1.0` | updated | updated |
+
+`wingdrive-nightly` therefore never trails `wingdrive-bin`. `scripts/release/aur.py` refuses a
+pre-release for `wingdrive-bin`. To republish the AUR packages of an existing release, dispatch
+`release.yml` with the tag and `aur_only`.
 
 For a verification run, dispatch the workflow with an existing tag and leave
 `publish` disabled. Desktop regression task TAURI-006 remains separate from
@@ -113,81 +118,50 @@ The Docker build uses `buildah` with QEMU emulation for cross-platform images. T
 
 The `latest` tag only moves for stable releases (tags matching `vX.Y.Z` with no suffix). Pre-release tags like `alpha` or `beta` are published under their specific version only. This protects users pulling `latest` from getting unstable builds.
 
-### Mobile Release (`mobile.yml`)
+### Mobile (`mobile.yml`)
 
-Manual dispatch only. Builds the React Native app for iOS and/or Android. A platform picker lets you build `ios`, `android`, or `all`.
+Runs on pull requests and pushes that touch the mobile app: lint, clippy for the embedded core on
+`aarch64-linux-android`, and a Gradle release-variant build. `release.yml` calls it for every tag;
+the `Signed Android release` job then builds the `.apk` (arm64-v8a) and the `.aab`, signed when the
+four `WINGDRIVE_ANDROID_*` secrets exist, and hands them to the GitHub Release. Nothing is uploaded
+to Google Play yet (MOB-009, REL-001). There is no iOS build in CI.
 
-The mobile app bundles `wing-mobile-core`, a native Expo module that wraps the WingDrive Rust core. This means mobile builds require the full Cargo workspace and Rust cross-compilation toolchain, not just JavaScript bundling.
-
-**iOS (TestFlight):**
-
-1. Compiles `wing-mobile-core` for `aarch64-apple-ios` via `cargo xtask build-mobile`
-2. Runs `expo prebuild` to generate the Xcode project
-3. Archives with `xcodebuild` using manual code signing
-4. Exports IPA with `app-store-connect` distribution method
-5. Uploads directly to TestFlight via `xcrun altool`
-
-Runs on a self-hosted macOS ARM64 runner (same as desktop macOS builds). TestFlight handles distribution to testers automatically after upload.
-
-**Android (Play Store Internal):**
-
-1. Compiles `wing-mobile-core` for `aarch64-linux-android` via `cargo xtask build-mobile`
-2. Runs `expo prebuild` to generate the Android project
-3. Builds a signed AAB with `./gradlew bundleRelease`
-4. Uploads to Play Store internal testing track
-
-Runs on a Linux runner with Java 17 and the Android SDK/NDK.
-
-<Note>The mobile workflow is manual dispatch only. It is not triggered by tags. Run it from the Actions tab when you want to push a mobile build to testers.</Note>
-
-**Required secrets (in addition to existing Apple secrets):**
-
-| Secret | Purpose |
-|---|---|
-| `MOBILE_PROVISIONING_PROFILE` | iOS App Store distribution profile for `com.wingdrive.app` (base64) |
-| `ANDROID_KEYSTORE` | Android release keystore file (base64) |
-| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
-| `ANDROID_KEY_ALIAS` | Signing key alias |
-| `ANDROID_KEY_PASSWORD` | Signing key password |
-| `GOOGLE_PLAY_SERVICE_ACCOUNT` | Google Play API service account JSON (for automated upload) |
+The app bundles `wing-mobile-core`, a native Expo module that wraps the WingDrive Rust core, so the
+Android build needs the Cargo workspace and the Android NDK, not only JavaScript bundling.
 
 ## Release Flow
 
 A full release looks like this:
 
 ```bash
-# 1. Bump version, commit, and tag
-cargo xtask bump 2.0.0-alpha.2
+# 1. Bump the version on a branch and add the CHANGELOG section
+git switch -c release/v3.1.0
+cargo xtask bump 3.1.0
+just ci-local
+gh pr create --title "chore(release): 3.1.0"
 
-# 2. Push the tag (triggers release + server docker workflows)
-git push --tags
+# 2. After the pull request merges and main's CI finishes, tag the merge commit
+git switch main && git pull --ff-only
+git tag -a v3.1.0 -m "WingDrive 3.1.0"
+git push origin v3.1.0
 
-# 3. Wait for workflows to complete on GitHub Actions
-
-# 4. Verify published GitHub assets and wingdrive-bin on AUR
+# 3. Follow the run
+gh run list --workflow release.yml --limit 1
 ```
 
-Both `release.yml` and `server.yml` trigger from the same tag push. The Linux workflow publishes the GitHub release after verification, then updates AUR. Mobile releases use manual dispatch.
+Tag a commit whose CI already finished on `main`: `release.yml` then reuses that run instead of
+starting a new one. Both `release.yml` and `server.yml` trigger from the same tag push.
+`release.yml` publishes the GitHub Release after every verification passes, then the AUR packages.
 
 ## Tauri Updater
 
-Desktop updater endpoints and signing keys are not configured. Install new Linux versions through AUR or download the AppImage or Debian package from GitHub Releases.
+Desktop updater endpoints and signing keys are not configured yet (REL-001). Install new versions through the AUR packages, the AppImage or Debian package, or the Windows installers from GitHub Releases. `wing update` checks for a newer release and prints the command or link for the way it was installed.
 
 ## Secrets
 
-The Linux release requires `AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS` for AUR publication. Apple secrets apply to the experimental mobile workflow:
+The release requires `AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS` for AUR publication. Android signing uses `WINGDRIVE_ANDROID_KEYSTORE_BASE64`, `WINGDRIVE_ANDROID_KEYSTORE_PASSWORD`, `WINGDRIVE_ANDROID_KEY_ALIAS` and `WINGDRIVE_ANDROID_KEY_PASSWORD`; without them the bundle builds unsigned.
 
-| Secret | Purpose |
-|---|---|
-| `APPLE_CERTIFICATE` | macOS code signing certificate (base64) |
-| `APPLE_CERTIFICATE_PASSWORD` | Certificate password |
-| `APPLE_SIGNING_IDENTITY` | Signing identity string |
-| `APPLE_API_KEY` | App Store Connect API key ID |
-| `APPLE_API_KEY_BASE64` | API key file (base64) |
-| `APPLE_API_ISSUER` | API key issuer ID |
-| `APPLE_PROVIDER_SHORT_NAME` | Team provider short name |
-| `TAURI_PRIVATE_KEY` | Tauri update signing key |
-| `TAURI_KEY_PASSWORD` | Tauri signing key password |
-| `SENTRY_AUTH_TOKEN` | Sentry error tracking |
+No workflow uses Apple, Authenticode, Tauri updater or Sentry secrets yet; REL-001 adds the signing
+ones.
 
 The Docker workflow uses only `GITHUB_TOKEN` which is provided automatically.
