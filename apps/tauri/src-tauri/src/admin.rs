@@ -366,4 +366,56 @@ mod tests {
 		});
 		assert!(!path("dest").exists() && !path("a.txt").exists());
 	}
+
+	/// Runs every operation through the real `pkexec` and polkit, in a folder of `/opt`
+	/// that only root can write. Ignored by default: it needs a polkit agent that answers
+	/// for this process, which `scripts/check-admin-retry.sh` registers.
+	#[test]
+	#[ignore = "needs a polkit agent; run scripts/check-admin-retry.sh"]
+	fn pkexec_round_trip_on_root_owned_files() {
+		use std::os::unix::fs::MetadataExt;
+
+		let run = |operation: AdminOperation| {
+			tauri::async_runtime::block_on(run_as_admin(operation.clone()))
+				.unwrap_or_else(|e| panic!("{operation:?}: {e}"));
+		};
+		let parent = PathBuf::from("/opt");
+		assert!(
+			std::fs::write(parent.join(".wingdrive-write-check"), "").is_err(),
+			"/opt must not be writable by this user"
+		);
+		let name = format!("wingdrive-admin-check-{}", std::process::id());
+		let root = parent.join(&name);
+		let user_file = tempfile::NamedTempFile::new().unwrap();
+		std::fs::write(user_file.path(), "from the user").unwrap();
+
+		run(AdminOperation::CreateFolder {
+			parent: parent.clone(),
+			name: name.clone(),
+		});
+		assert_eq!(
+			std::fs::metadata(&root).unwrap().uid(),
+			0,
+			"created as root"
+		);
+
+		run(AdminOperation::Transfer {
+			sources: vec![user_file.path().to_path_buf()],
+			destination: root.clone(),
+			move_files: false,
+		});
+		let copied = root.join(user_file.path().file_name().unwrap());
+		assert_eq!(std::fs::read_to_string(&copied).unwrap(), "from the user");
+
+		run(AdminOperation::Rename {
+			path: copied,
+			new_name: "renamed.txt".into(),
+		});
+		assert!(root.join("renamed.txt").is_file());
+
+		run(AdminOperation::Delete {
+			paths: vec![root.clone()],
+		});
+		assert!(!root.exists());
+	}
 }

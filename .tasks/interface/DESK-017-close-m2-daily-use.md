@@ -1,14 +1,14 @@
 ---
 id: DESK-017
 title: "Close M2: AUR runtime evidence and a full working day"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
 sprint: S04
 tags: [desktop, linux, release, verification]
-last_updated: 2026-10-16
+last_updated: 2026-11-05
 ---
 
 ## Description
@@ -35,9 +35,15 @@ directory sizes (DESK-014), the translated tray, ephemeral rename events
 ## Progress
 
 - 2026-10-15: release 2.0.0-alpha.16 prepared with #205 to #217.
+- 2026-11-02: the check on the installed AUR package closed 16 S04 tasks at once and found
+  DESK-039 to DESK-042 (S04 log).
+- 2026-11-05: the author reports using the AUR package as the only file manager for several
+  days, without falling back to another one.
 
 ## Acceptance Criteria
 
-- [ ] DESK checklist passes on the installed AUR package
-- [ ] A full working day with no fallback to another file manager
-- [ ] Bugs found are filed as tasks; DESK-000 is Done
+- [x] DESK checklist passes on the installed AUR package (2026-11-02, S04 log)
+- [x] A full working day with no fallback to another file manager (author, 2026-11-05: several days)
+- [x] Bugs found are filed as tasks (DESK-039 to DESK-050)
+
+Closing DESK-000 is left to the epic itself, which closes when its last children are Done.

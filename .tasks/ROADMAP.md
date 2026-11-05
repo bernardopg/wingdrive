@@ -62,15 +62,14 @@ fechar o M2:
 
 | Task | O que falta | Sprint |
 |---|---|---|
-| DESK-017 | Um dia inteiro de uso do pacote AUR, sem voltar a outro file manager | S04 |
-| DESK-033 | Teste com a senha real no prompt do polkit | S04 |
 | WATCH-006 | Conexão no login com o pacote AUR (o `wing` já vai no pacote) | S04 |
 | DESK-013 | Revisão pt no Crowdin e verificação do pacote (passos 3 a 5) | S04 |
 | DESK-043 | Memória do WebKit bimodal, crescendo ociosa no modo alto (derrubou o smoke da release 2.4.0) | S04 |
 | DESK-016 | Explorer com painel duplo (F3): feito no app desktop em 2026-11-04, falta conferir no pacote | S05 |
 | DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
 
-INDEX-010, DESK-041 e DESK-042 fecharam em 2026-11-03.
+INDEX-010, DESK-041 e DESK-042 fecharam em 2026-11-03. DESK-017 (vários dias de uso do pacote AUR,
+relato do autor) e DESK-033 (`pkexec` e polkit reais na máquina do autor) fecharam em 2026-11-05.
 
 O M2 fecha quando o DESK-000 estiver Done com evidência do pacote AUR e um dia inteiro de uso sem
 voltar a outro file manager (DESK-017). Previsão: fim do S05 (2026-11-25).
