@@ -106,64 +106,29 @@ wing config get update.repo
 wing config set update.repo "your-org/releases-repo"
 ```
 
-## Auto-Update System
+## Checking for Updates
 
-The CLI includes a built-in update mechanism that fetches releases from a public GitHub repository.
+`wing update` checks the GitHub releases of `update.repo` (by default
+`bernardopg/wingdrive`) and, when a newer release exists, prints how to install
+it for the way this `wing` was installed. It never downloads or replaces
+binaries: each published `wing` ships inside a package that owns its files.
 
-### Update Architecture
+| Installed through | `wing update` prints |
+|---|---|
+| AUR (`/opt/wingdrive`) | `yay -S wingdrive-bin`, or `wingdrive-nightly` for a pre-release |
+| Debian package (`/usr`) | the `.deb` link and `sudo apt install ./<file>` |
+| AppImage | the new AppImage's link |
+| Windows installer | the new `.exe` or `.msi` link, matching the one installed |
+| Source build (`target/`) | `git fetch --tags && git checkout <tag>` |
 
-```
-┌─────────┐                          ┌────────────┐
-│wing update│ ──── GitHub API ────────►│  Releases  │
-└─────────┘                          │ Repository │
-     │                               └────────────┘
-     │ Download binaries                   │
-     ▼                                     │
-┌─────────────────┐                       │
-│ wingdrive-cli-macos-arm64  │◄──────────────────────┘
-│ wing-daemon-...   │
-└─────────────────┘
-     │
-     │ Atomic replacement
-     ▼
-┌─────────────────┐
-│ Installed bins  │
-└─────────────────┘
-```
-
-### Update Process
-
-1. **Check for updates**: Queries GitHub API for latest release
-2. **Download binaries**: Fetches platform-specific binaries
-3. **Verify integrity**: Checks file sizes match expected values
-4. **Atomic replacement**: Replaces binaries with rollback on failure
-5. **Restart daemon**: If daemon was running, restarts it
+The `stable` channel, the default, only considers stable releases. The `beta` and
+`nightly` channels also consider alpha, beta and rc releases, and so does an
+installed pre-release:
 
 ```bash
-# Check and install updates
 wing update
-
-# Force reinstall current version
-wing update --force
+wing config set update.channel nightly
 ```
-
-### Release Repository Setup
-
-The update system uses a public GitHub repository containing only releases (no source code):
-
-1. Create public repo: `your-org/wingdrive`
-2. For each release:
-   - Create empty commit: `git commit --allow-empty -m "Release v0.1.0"`
-   - Tag it: `git tag v0.1.0`
-   - Create GitHub release with binaries as assets
-3. Configure CLI: `wing config set update.repo "your-org/wingdrive"`
-
-<Warning>
-WingDrive releases do not publish standalone `wing` binaries yet, so `wing update`
-currently stops with "Could not find WingDrive CLI for platform". `wing` ships inside
-the Linux packages (AppImage, `.deb`, AUR `wingdrive-bin`) and the Windows installers;
-update it through them. `CLI-002` tracks the fix.
-</Warning>
 
 ## Command Structure
 
@@ -344,11 +309,8 @@ wing restart --reset
 # Check configuration
 wing config show
 
-# Verify repo is accessible
-curl https://api.github.com/repos/YOUR_ORG/YOUR_REPO/releases/latest
-
-# Force clean reinstall
-wing update --force
+# Verify the releases are reachable
+curl https://api.github.com/repos/bernardopg/wingdrive/releases
 ```
 
 ### Socket Connection Errors

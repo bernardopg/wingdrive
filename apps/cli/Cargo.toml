@@ -28,6 +28,7 @@ inquire     = "0.9"
 qr2term     = "0.3"
 ratatui     = "0.30"
 reqwest     = { version = "0.12", features = ["json"] }
+semver      = "1"
 wing-core     = { path = "../../core", features = ["cli"] }
 serde       = { version = "1", features = ["derive"] }
 serde_json  = "1"

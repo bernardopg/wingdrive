@@ -13,9 +13,14 @@ version in the workspace manifests and the matching `v*` git tag.
   from source until its signed release.
 - `TypeScript (Windows)` and `Rust Workspace (Windows)` are required checks on
   `main`, and the Windows Rust job fails the run again.
-- `docs/core/cli.mdx` warns that `wing update` cannot find binaries in
-  WingDrive releases yet (CLI-002), and its examples call `wing` instead of
-  `sd`.
+- `docs/core/cli.mdx` examples call `wing` instead of `sd`.
+- `wing update` reports the newest release and prints how to install it for
+  the way `wing` was installed: the AUR helper command, the `.deb` or AppImage
+  link, the Windows installer, or the tag for a source build. It used to look
+  for standalone binaries that releases never publish, and always failed with
+  "Could not find WingDrive CLI for platform". It no longer downloads or
+  replaces binaries, and `--force` is gone. The `beta` and `nightly` channels
+  include pre-releases (CLI-002).
 
 ## 3.0.0 — 2026-11-05
 
