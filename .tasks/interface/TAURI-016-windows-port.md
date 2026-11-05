@@ -89,6 +89,10 @@ Traps in the runner setup, handled but not yet proven on GitHub:
 - The image ships LLVM 20 and MinGW on the PATH. `setup-system` removes them.
 - Windows PowerShell's `>>` writes `GITHUB_ENV` as UTF-16, so those steps use `pwsh`.
 - Runners check out with `core.autocrlf=true`. `.gitattributes` forces LF.
+- Defender real-time scanning made the runner index 2.5 files/s. The sync tests then hit
+  the 30 s send timeout and Bob never received the content links. `setup-system` turns the
+  scanning off. A timed-out send also drops the receiver's apply midway; the retry queue
+  covers it, but a slow peer can still miss a batch until the retry succeeds.
 
 ## Still open
 

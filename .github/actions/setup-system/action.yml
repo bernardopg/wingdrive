@@ -27,6 +27,18 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    # Defender scans every file the build and the tests write. With it on, the sync tests
+    # indexed 2.5 files/s and their messages hit the 30 s send timeout. Runners are
+    # discarded after the job, so nothing outlives this.
+    - name: Turn off Defender real-time scanning
+      if: ${{ runner.os == 'Windows' }}
+      shell: pwsh
+      run: |
+        Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction Continue
+        $enabled = (Get-MpComputerStatus).RealTimeProtectionEnabled
+        if ($enabled) { "::warning::Defender real-time scanning is still on; Windows tests will be slow." }
+        "Defender real-time scanning enabled: $enabled"
+
     # The image ships a full LLVM and MinGW. clang-cl.exe breaks aws-lc-sys (see below),
     # and MinGW's gcc, cmake and nasm would shadow the MSVC toolchain.
     - name: Remove LLVM and MinGW from PATH
