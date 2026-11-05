@@ -10,11 +10,11 @@ on:
         required: true
         type: string
       publish:
-        description: 'Publish verified assets and update wingdrive-bin on AUR'
+        description: 'Publish verified assets and update the AUR packages'
         default: false
         type: boolean
       aur_only:
-        description: 'Only republish wingdrive-bin on AUR from the existing GitHub Release'
+        description: 'Only republish the AUR packages from the existing GitHub Release'
         default: false
         type: boolean
       component:
@@ -322,12 +322,21 @@ jobs:
           fail_on_unmatched_files: true
           files: dist/*
 
+  # wingdrive-bin follows stable releases. wingdrive-nightly follows every release,
+  # alpha, beta and rc included, so a stable tag updates both and nightly users are
+  # never behind wingdrive-bin. A pre-release never reaches wingdrive-bin.
   aur:
-    name: Publish wingdrive-bin on AUR
+    name: Publish ${{ matrix.package }} on AUR
     needs: publish
     if: always() && (needs.publish.result == 'success' || inputs.aur_only)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(contains(github.event.inputs.tag || github.ref_name, '-') && '["wingdrive-nightly"]' || '["wingdrive-bin","wingdrive-nightly"]') }}
+    env:
+      AUR_PACKAGE: ${{ matrix.package }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -342,7 +351,7 @@ jobs:
           sha256sum --check SHA256SUMS
       - name: Generate and validate AUR package in Arch Linux
         run: |
-          python3 scripts/release/aur.py "${RELEASE_TAG#v}" "dist/WingDrive-${RELEASE_TAG#v}-x86_64.AppImage" dist/LICENSE packaging/aur
+          python3 scripts/release/aur.py "${RELEASE_TAG#v}" "dist/WingDrive-${RELEASE_TAG#v}-x86_64.AppImage" dist/LICENSE packaging/aur "$AUR_PACKAGE"
           # Arch's newer system WebKit uses more memory than the bundled one.
           docker run --rm -e WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB="${{ vars.WINGDRIVE_AUR_MEMORY_BUDGET_MIB || '850' }}" -v "$PWD:/work" archlinux:base bash -euc '
             pacman -Syu --noconfirm base-devel git
@@ -375,7 +384,9 @@ jobs:
           chmod 600 ~/.ssh/aur ~/.ssh/known_hosts
           export GIT_SSH_COMMAND='ssh -i ~/.ssh/aur -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes'
           trap 'rm -f ~/.ssh/aur' EXIT
-          git clone ssh://aur@aur.archlinux.org/wingdrive-bin.git /tmp/aur-repo
+          # Cloning a package that does not exist yet gives an empty repository, and
+          # the first push creates the package under the key's AUR account.
+          git clone "ssh://aur@aur.archlinux.org/$AUR_PACKAGE.git" /tmp/aur-repo
           cp packaging/aur/PKGBUILD packaging/aur/.SRCINFO /tmp/aur-repo/
           cd /tmp/aur-repo
           git add PKGBUILD .SRCINFO

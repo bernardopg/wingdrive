@@ -52,7 +52,7 @@ servidor central.
 
 | Onde | Como |
 |---|---|
-| Arch Linux e derivados | `yay -S wingdrive-bin` |
+| Arch Linux e derivados | `yay -S wingdrive-bin` (estável), ou `yay -S wingdrive-nightly` para todo release, inclusive alpha, beta e rc |
 | Qualquer Linux (x86_64) | AppImage ou `.deb` em [Releases](https://github.com/bernardopg/wingdrive/releases/latest), com `SHA256SUMS` |
 | Windows 10 e 11 (x64), beta | `.exe` ou `.msi` em [Releases](https://github.com/bernardopg/wingdrive/releases/latest), com `SHA256SUMS-windows`. Sem assinatura, então o SmartScreen avisa |
 | Servidor sem interface | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |
