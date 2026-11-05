@@ -32,6 +32,8 @@ version in the workspace manifests and the matching `v*` git tag.
 - Opening a `file:///C:/...` URI on Windows no longer fails.
 - `wing` and `wing-daemon` no longer create an empty production data directory
   when `--data-dir` is given.
+- An automatic backfill no longer overwrites a sync state that moved to Ready,
+  catching up or paused while the backfill peer was chosen.
 
 ## 2.4.1 — 2026-11-03
 

@@ -25,6 +25,15 @@ use tokio::sync::{oneshot, Mutex};
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 
+/// Result of a backfill request that did not fail.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BackfillOutcome {
+	/// The device pulled the peer's state and is now Ready.
+	Completed,
+	/// Another path changed the sync state first, so no backfill ran.
+	Skipped,
+}
+
 /// Manages backfill process for new devices
 pub struct BackfillManager {
 	library_id: Uuid,
@@ -110,7 +119,10 @@ impl BackfillManager {
 	}
 
 	/// Start complete backfill process
-	pub async fn start_backfill(&self, available_peers: Vec<PeerInfo>) -> Result<()> {
+	///
+	/// Returns `BackfillOutcome::Skipped` without touching the state when the device is
+	/// already Ready, catching up or paused by the time the backfill would begin.
+	pub async fn start_backfill(&self, available_peers: Vec<PeerInfo>) -> Result<BackfillOutcome> {
 		// Generate session ID for correlation
 		let session_id = Uuid::new_v4();
 		let start_time = Utc::now();
@@ -193,10 +205,25 @@ impl BackfillManager {
 			let _ = event_logger.log(event).await;
 		}
 
-		// Set state to Backfilling
+		// Set state to Backfilling, unless the state moved on while the peer was chosen.
+		// The sync loop decides to backfill from a state it read before several awaits, so a
+		// pause or a Ready set in that window must win over the stale decision.
 		{
-			let old_state = self.peer_sync.state().await;
 			let mut state = self.peer_sync.state.write().await;
+			let old_state = *state;
+			if matches!(
+				old_state,
+				DeviceSyncState::Ready
+					| DeviceSyncState::CatchingUp { .. }
+					| DeviceSyncState::Paused
+			) {
+				info!(
+					state = ?old_state,
+					session_id = %session_id,
+					"Sync state changed before backfill started, skipping backfill"
+				);
+				return Ok(BackfillOutcome::Skipped);
+			}
 			*state = DeviceSyncState::Backfilling {
 				peer: selected_peer,
 				progress: 0,
@@ -282,7 +309,7 @@ impl BackfillManager {
 
 		info!(session_id = %session_id, "Backfill complete, device is ready");
 
-		Ok(())
+		Ok(BackfillOutcome::Completed)
 	}
 
 	/// Perform incremental catch-up using watermarks

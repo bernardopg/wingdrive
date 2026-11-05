@@ -40,7 +40,7 @@ pub use state::{
 
 pub use metrics::SyncMetricsCollector;
 
-pub use backfill::BackfillManager;
+pub use backfill::{BackfillManager, BackfillOutcome};
 pub use protocol_handler::LogSyncHandler;
 
 /// Consecutive automatic backfill failures tolerated before sync pauses.
@@ -368,8 +368,11 @@ impl SyncService {
 
 										// Start backfill process
 										match backfill_manager.start_backfill(peer_info).await {
-											Ok(()) => {
+											Ok(BackfillOutcome::Completed) => {
 												info!("Automatic backfill completed successfully");
+												backfill_failures = 0;
+											}
+											Ok(BackfillOutcome::Skipped) => {
 												backfill_failures = 0;
 											}
 											Err(e) => {

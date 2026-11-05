@@ -1483,3 +1483,39 @@ async fn verify_nested_file_structure(
 
 	Ok(())
 }
+
+/// A backfill the sync loop decided on before the device became Ready must not run.
+///
+/// The loop reads the state, then awaits peer selection and logging before it sets
+/// Backfilling. On a slow machine, a Ready set in that window was overwritten and the
+/// device backfilled while it already applied live changes.
+#[tokio::test]
+async fn test_backfill_skipped_once_device_is_ready() -> anyhow::Result<()> {
+	let harness = helpers::TwoDeviceHarnessBuilder::new("backfill_skipped_when_ready")
+		.await?
+		.build()
+		.await?;
+
+	let sync_service = harness.library_bob.sync_service().unwrap();
+	let peer_info = wing_core::service::sync::state::PeerInfo {
+		device_id: harness.device_alice_id,
+		is_online: true,
+		latency_ms: 1.0,
+		has_complete_state: true,
+		active_syncs: 0,
+	};
+
+	let outcome = sync_service
+		.backfill_manager()
+		.start_backfill(vec![peer_info])
+		.await?;
+
+	assert_eq!(outcome, wing_core::service::sync::BackfillOutcome::Skipped);
+	assert!(
+		sync_service.peer_sync().state().await.is_ready(),
+		"Bob should stay Ready, got {:?}",
+		sync_service.peer_sync().state().await
+	);
+
+	Ok(())
+}
