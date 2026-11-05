@@ -26,7 +26,10 @@ Portuguese. How to set up and work on Windows is in
 - [x] Windows jobs in CI and in the Release workflow
 - [x] `scripts/release/windows_smoke.ps1` installs, runs and uninstalls a bundle
 - [x] Build `.exe` and `.msi` with the workflow's command
-- [ ] Run the Windows jobs on GitHub and fix what only fails on the runner
+- [ ] Run the Windows jobs on GitHub and fix what only fails on the runner. On 2026-11-05
+  `Rust Workspace (Windows)` became `continue-on-error`, so the release did not wait on
+  two-hour runs. Clippy and the other Rust gates pass on the runner; four
+  `sync_realtime_test` tests still time out there. Make the job blocking again once fixed.
 - [ ] Add the Windows jobs to the required checks in `.github/rulesets/main.json`
 
 ## Acceptance Criteria
@@ -89,10 +92,13 @@ Traps in the runner setup, handled but not yet proven on GitHub:
 - The image ships LLVM 20 and MinGW on the PATH. `setup-system` removes them.
 - Windows PowerShell's `>>` writes `GITHUB_ENV` as UTF-16, so those steps use `pwsh`.
 - Runners check out with `core.autocrlf=true`. `.gitattributes` forces LF.
-- Defender real-time scanning made the runner index 2.5 files/s. The sync tests then hit
-  the 30 s send timeout and Bob never received the content links. `setup-system` turns the
-  scanning off. A timed-out send also drops the receiver's apply midway; the retry queue
-  covers it, but a slow peer can still miss a batch until the retry succeeds.
+- The runner indexed 2.5 files/s and the sync tests hit the 30 s send timeout, so Bob never
+  received the content links. Turning off Defender real-time scanning did not change it.
+  The cause was `sync.db` and the job database, opened with SQLite's defaults (rollback
+  journal, `synchronous=FULL`): every commit flushed and recreated a journal, which is slow
+  on Windows. They now use the library database's WAL settings; on Linux one sync test went
+  from 2930 `fsync` calls to 131. A timed-out send also drops the receiver's apply midway;
+  the retry queue covers it, but a slow peer can still miss a batch until the retry succeeds.
 
 ## Still open
 

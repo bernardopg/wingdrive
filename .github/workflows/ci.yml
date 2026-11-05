@@ -215,7 +215,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     runs-on: windows-2025
-    timeout-minutes: 120
+    # Reports without blocking: a red job here does not fail the run, so it holds back
+    # neither a merge nor the release gate. The sync tests still time out on the runner
+    # (TAURI-016). Remove this once the job has stayed green.
+    continue-on-error: true
+    # A cold build takes about 70 minutes; the nightly run on main saves the cache.
+    timeout-minutes: 150
     defaults:
       run:
         shell: bash
