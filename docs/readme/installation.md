@@ -21,9 +21,15 @@ Get the latest build from [GitHub Releases](https://github.com/bernardopg/wingdr
   </a>
 </p>
 
+Two packages install the same release AppImage, and they conflict with each other:
+
+- `wingdrive-bin` follows stable releases only.
+- `wingdrive-nightly` follows every release, alpha, beta and rc included. A stable
+  release updates it too, so it is never behind `wingdrive-bin`.
+
 ```bash
 # With an AUR helper (yay / paru)
-yay -S wingdrive-bin
+yay -S wingdrive-bin        # or: yay -S wingdrive-nightly
 
 # Or manually
 git clone https://aur.archlinux.org/wingdrive-bin.git

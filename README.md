@@ -51,7 +51,7 @@ browse, search and recognize across your own devices. No account, no telemetry, 
 
 | Where | How |
 |---|---|
-| Arch Linux and derivatives | `yay -S wingdrive-bin` |
+| Arch Linux and derivatives | `yay -S wingdrive-bin` (stable), or `yay -S wingdrive-nightly` for every release including alpha, beta and rc |
 | Any Linux (x86_64) | AppImage or `.deb` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS` |
 | Windows 10 and 11 (x64), beta | `.exe` or `.msi` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS-windows`. Unsigned, so SmartScreen warns |
 | Headless server | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |

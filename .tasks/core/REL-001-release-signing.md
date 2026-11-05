@@ -30,8 +30,8 @@ removed on 2026-11-02; the history is in git).
 - [ ] Windows Authenticode signing plan written for the `.exe` and `.msi` from TAURI-016
 - [ ] Google Play upload key and the four `WINGDRIVE_ANDROID_KEYSTORE_*` secrets in place (with MOB-009)
 - [ ] One tag run signs every artifact that has credentials and skips the others with a warning
-- [ ] Alpha, beta and rc tags do not publish `wingdrive-bin` on AUR (the `aur` job runs for every
-      tag today, so a pre-release would reach every AUR user)
+- [x] Alpha, beta and rc tags do not publish `wingdrive-bin` on AUR. They go to
+      `wingdrive-nightly`, which stable tags update too (`aur.py`, the `aur` job matrix; 2026-11-05)
 
 ## Notes
 

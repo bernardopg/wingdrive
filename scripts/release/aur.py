@@ -1,23 +1,47 @@
 #!/usr/bin/env python3
-"""Generate AUR metadata from the verified release artifacts."""
+"""Generate AUR metadata from the verified release artifacts.
+
+Usage: aur.py VERSION APPIMAGE LICENSE DESTINATION [PACKAGE]
+
+Two AUR packages carry the same AppImage. `wingdrive-bin` follows stable
+releases only. `wingdrive-nightly` follows every release, alpha, beta and rc
+included, so it is never older than `wingdrive-bin`. PACKAGE defaults to
+`wingdrive-nightly` for a pre-release and `wingdrive-bin` otherwise; a
+pre-release is refused for `wingdrive-bin`.
+"""
 import hashlib
 import re
 import sys
 from pathlib import Path
 
-version, image, license_file, destination = sys.argv[1:]
+PACKAGES = {
+    "wingdrive-bin": "WingDrive desktop file manager",
+    "wingdrive-nightly": "WingDrive desktop file manager, every release including alpha, beta and rc",
+}
+
+if len(sys.argv) not in (5, 6):
+    raise SystemExit(__doc__)
+version, image, license_file, destination = sys.argv[1:5]
 if not re.fullmatch(r"\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?", version):
     raise SystemExit("Invalid release version")
+prerelease = "-" in version
+pkgname = sys.argv[5] if len(sys.argv) == 6 else ("wingdrive-nightly" if prerelease else "wingdrive-bin")
+if pkgname not in PACKAGES:
+    raise SystemExit(f"Unknown AUR package: {pkgname}")
+if prerelease and pkgname == "wingdrive-bin":
+    raise SystemExit("wingdrive-bin takes stable releases only; publish pre-releases as wingdrive-nightly")
+# Both packages install /opt/wingdrive and /usr/bin/wing, so each conflicts with the other.
+other = next(name for name in PACKAGES if name != pkgname)
 filename = f"WingDrive-{version}-x86_64.AppImage"
 base = "https://github.com/bernardopg/wingdrive"
 hashes = [hashlib.file_digest(open(path, "rb"), "sha256").hexdigest() for path in (image, license_file)]
 out = Path(destination)
 out.mkdir(parents=True, exist_ok=True)
 pkgbuild = f'''# Maintainer: Bernardo Gomes <bernardopg@users.noreply.github.com>
-pkgname=wingdrive-bin
+pkgname={pkgname}
 pkgver={version.replace('-', '').replace('alpha.', 'alpha').replace('beta.', 'beta').replace('rc.', 'rc')}
 pkgrel=1
-pkgdesc='WingDrive desktop file manager'
+pkgdesc='{PACKAGES[pkgname]}'
 arch=('x86_64')
 url='{base}'
 license=('Apache-2.0' 'GPL-3.0-only')
@@ -30,7 +54,7 @@ optdepends=('gst-plugins-good: audio and video playback in previews'
             'ffmpeg: video thumbnails in folders that are not indexed'
             'poppler: PDF thumbnails in folders that are not indexed')
 provides=('wingdrive')
-conflicts=('wingdrive')
+conflicts=('wingdrive' '{other}')
 options=('!strip' '!debug')
 _upstream_version={version}
 source=("{filename}::{base}/releases/download/v${{_upstream_version}}/{filename}"

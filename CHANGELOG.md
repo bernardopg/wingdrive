@@ -5,6 +5,13 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Added
+
+- The `wingdrive-nightly` AUR package receives every release, alpha, beta and
+  rc included, and stable releases too. `wingdrive-bin` now takes stable
+  releases only: before, a pre-release tag would have reached every
+  `wingdrive-bin` user. The release workflow publishes both packages.
+
 ### Changed
 
 - The README, the installation guide and the documentation introduction list
