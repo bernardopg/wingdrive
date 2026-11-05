@@ -312,6 +312,10 @@ export const platform: Platform = {
 		return unlisten;
 	},
 
+	async showDesktopNotification(request) {
+		await invoke('show_desktop_notification', {request});
+	},
+
 	async getDesktopSettings() {
 		return await invoke<DesktopSettings>('get_desktop_settings');
 	},

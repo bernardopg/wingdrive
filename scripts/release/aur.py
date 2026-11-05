@@ -83,13 +83,11 @@ StartupWMClass=WingDrive
 Categories=System;FileTools;FileManager;
 Keywords=files;folders;file manager;explorer;browser;
 MimeType=inode/directory;application/x-wingdrive-memory;
+X-GNOME-UsesNotifications=true
 DESKTOP
-  # Starts WingDrive hidden when an app reveals a file while it is not running.
-  install -Dm644 /dev/stdin "$pkgdir/usr/share/dbus-1/services/com.wingdrive.FileManager1.service" <<'DBUS'
-[D-BUS Service]
-Name=org.freedesktop.FileManager1
-Exec=/usr/bin/wingdrive --hidden
-DBUS
+  # No D-Bus activation file for org.freedesktop.FileManager1: the name
+  # belongs to the user's default file manager. WingDrive claims it at runtime
+  # only when it is the default for inode/directory (filemanager1.rs).
   if [[ -d squashfs-root/usr/share/icons ]]; then
     install -d "$pkgdir/usr/share/icons"
     cp -a squashfs-root/usr/share/icons/. "$pkgdir/usr/share/icons/"
