@@ -70,7 +70,7 @@ fn main() -> Result<()> {
 		eprintln!("  build-ios    Build wing-ios-core XCFramework for iOS devices and simulator");
 		eprintln!("  build-mobile Build wing-mobile-core for React Native iOS/Android");
 		eprintln!("  test-core    Run all core integration tests with progress tracking");
-		eprintln!("  bump <ver>   Bump version across all packages (e.g. bump 2.0.0-alpha.2)");
+		eprintln!("  bump <ver>   Set the version in every manifest and Cargo.lock (e.g. bump 3.1.0-beta.1)");
 		eprintln!(
 			"  update-contributors  Fetch contributors from GitHub and update contributors.json"
 		);
@@ -98,7 +98,7 @@ fn main() -> Result<()> {
 		"bump" => {
 			let version = args.get(2).cloned().unwrap_or_else(|| {
 				eprintln!("Usage: cargo xtask bump <version>");
-				eprintln!("Example: cargo xtask bump 2.0.0-alpha.2");
+				eprintln!("Example: cargo xtask bump 3.1.0-beta.1");
 				std::process::exit(1);
 			});
 			let root = find_workspace_root()?;

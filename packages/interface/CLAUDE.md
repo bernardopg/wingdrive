@@ -53,27 +53,17 @@ packages/interface/
 │   ├── Shell.tsx                 # App entry point (providers, daemon check)
 │   ├── ShellLayout.tsx           # Layout shell (sidebar, inspector, TopBar)
 │   ├── router.tsx                # Route configuration
-│   ├── DemoWindow.tsx            # Demo/testing window
-│   ├── FloatingControls.tsx      # Floating controls UI
-│   ├── components/
-│   │   ├── DndProvider.tsx       # Drag-and-drop coordinator
-│   │   ├── Explorer/
-│   │   │   ├── ExplorerView.tsx  # File browser view
-│   │   │   ├── context.tsx       # Explorer state/context
-│   │   │   └── ...
-│   │   ├── QuickPreview/
-│   │   │   ├── Controller.tsx    # Preview navigation
-│   │   │   ├── Syncer.tsx        # Selection sync
-│   │   │   └── ...
+│   ├── components/               # Shared feature components (DndProvider, QuickPreview, ...)
+│   ├── routes/
+│   │   ├── explorer/             # Explorer: views (grid, list, columns), hooks, context menus
+│   │   ├── overview/
 │   │   └── ...
+│   ├── Settings/                 # Settings pages
 │   ├── TopBar/                   # TopBar portal system
-│   │   ├── TopBar.tsx
-│   │   ├── Context.tsx
-│   │   └── Portal.tsx
-│   ├── routes/                   # Route components
-│   │   └── overview/
-│   ├── hooks/                    # React hooks
-│   ├── context.tsx               # Client context and hooks
+│   ├── Wingbot/                  # Assistant UI (hidden without its runtime)
+│   ├── windows/                  # Auxiliary windows
+│   ├── i18n/                     # i18next setup and en/pt catalogs
+│   ├── hooks/, contexts/, stores/, util/
 │   ├── styles.css                # Global CSS variables
 │   └── index.tsx                 # Public exports
 ```
@@ -702,6 +692,9 @@ export {DemoWindow} from './DemoWindow';
 
 ## macOS-Specific Rules
 
+macOS only builds from source for now (milestone M3). Linux is the platform to check first, then
+Windows.
+
 ### Native Traffic Lights
 
 The window uses **native** macOS traffic lights positioned by Swift code:
@@ -1019,18 +1012,13 @@ const {data, isLoading, error} = useCoreQuery({
 
 ### Test Pattern
 
-```tsx
-import {render, screen} from '@testing-library/react';
-import {Shell} from './Shell';
+Tests run with `bun test` (`bun:test`), colocated as `*.test.ts(x)`. Components render with
+`react-dom/server` or a mocked client; see `src/Settings/pages/settingsPages.test.tsx`. CI runs the
+files listed in `.github/workflows/ci.yml`, so add a new test file there too.
 
-test('switches libraries', async () => {
-	const user = userEvent.setup();
-	render(<Shell client={mockClient} />);
-
-	await user.click(screen.getByText('Switch Library'));
-	// ...
-});
-```
+Unit tests miss rendering bugs: check Explorer and sidebar changes in the running web UI against an
+isolated daemon (root `AGENTS.md`, "Checking UI Changes at Runtime"), and read "Frontend Pitfalls"
+there first.
 
 ---
 
@@ -1104,32 +1092,16 @@ Before writing code:
 
 - **Type Generation:** `cargo run --bin generate_typescript_types`
 - **Color System:** `/docs/react/ui/colors.mdx`
-- **Workbench Docs:** `/workbench/interface/`
-- **V1 Reference:** `/Users/jamespine/Projects/wingdrive_v1`
+- **Planning:** `.tasks/ROADMAP.md` and the current sprint in `.tasks/sprints/`
 
 ---
 
-## Status: Current Implementation
+## Status
 
-**Complete:**
-
-- Type-safe client with auto-generated types
-- Native macOS traffic lights
-- V1 color system as CSS variables
-- Expanding dropdown (DropdownMenu primitive)
-- Explorer with sidebar and library switcher
-- TanStack Query integration
-- Clean architecture refactor (Shell → ShellLayout → Views)
-- Extracted DndProvider for drag-and-drop coordination
-- QuickPreview components (Controller + Syncer)
-- TopBar portal system for view-specific controls
-
-**In Progress:**
-
-- Port remaining V1 components
-- Build complete Explorer (file grid/list views)
-- Settings pages
-- Multi-window system
+The interface is the daily file manager on Linux (milestone M2, epic DESK-000) and runs on Windows as
+a beta since 3.0.0. The Explorer has grid, list and column views, a dual pane (DESK-016), tabs,
+Quick Preview, search refinement, a docked terminal, Git emblems and an English and Brazilian
+Portuguese UI. Open work lives in `.tasks/`, not in this file.
 
 ---
 

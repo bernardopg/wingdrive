@@ -56,7 +56,7 @@ When updating a task's status, edit the YAML front matter:
 id: TASK-000
 title: Task Title
 status: Done # Changed from "To Do" or "In Progress"
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 tags: [core, feature]
 last_updated: 2025-10-14 # Update this date

@@ -23,7 +23,7 @@ cargo run --bin wing -- <command>      # Run CLI (binary is `wing`)
 
 ### Common Mistakes
 
-- Running `wingdrive` instead of `wing-cli` (the binary name is `wing-cli`)
+- Running `wingdrive` or `wing-cli` instead of `wing` (the CLI binary is `wing`, crate `wing-cli`)
 - Forgetting to restart daemon after rebuilding
 - Using `println!` instead of `tracing` macros (`info!`, `debug!`, etc)
 - Implementing `Wire` manually instead of using `register_*` macros
@@ -35,11 +35,13 @@ cargo run --bin wing -- <command>      # Run CLI (binary is `wing`)
 - On frontend apps, such as the interface in React, you must ALWAYS ensure type-safety based on the auto generated TypeScript types from `ts-client`. Never cast to as any or redefine backend types. our hooks are typesafe with correct input/output types, but sometimes you might need to access types directly from the `ts-client`.
 - If you have changed types on the backend that are public to the frontend (have `Type` derive), then you must regenerate the types using `cargo run --bin generate_typescript_types`
 - Read the `.mdx` files in /docs for context on any part of the app, they are kept up to date.
--
+- WingDrive ships for Linux (supported) and Windows (beta since 3.0.0). macOS only builds from source.
+  Code that touches paths, processes, the clipboard or the shell needs both platforms in mind; see
+  [Windows](#windows).
 
 ## Architecture Overview
 
-WingDrive uses daemon-client architecture. A single daemon process manages core functionality. Multiple clients (CLI, GraphQL server, desktop app) connect via Unix domain sockets.
+WingDrive uses daemon-client architecture. A single daemon process manages core functionality. Clients (the desktop app, `wing`, `wing-server` and its web UI) speak JSON-RPC 2.0 to it over TCP on `127.0.0.1` (port 6969 for the default instance; named instances get their own port), or over WebSocket for the web UI. Mobile embeds the core instead.
 
 ### CQRS and DDD Pattern
 
@@ -100,7 +102,7 @@ WingDrive supports multiple communication patterns for different platforms and u
 
 ### Daemon-Client Communication (Tauri Desktop, CLI, Web)
 
-The Tauri desktop app, CLI, and web interface connect to a daemon process via Unix domain sockets (or WebSockets for web). Communication uses JSON-RPC 2.0 with Wire method strings.
+The Tauri desktop app, CLI, and web interface connect to the daemon over local TCP (or WebSockets for web). Communication uses JSON-RPC 2.0 with Wire method strings.
 
 **Registration Macros:**
 
@@ -153,7 +155,7 @@ The TypeScript client (`packages/ts-client/`) is auto-generated from Rust types 
 cargo run --bin generate_typescript_types
 ```
 
-**Output:** `packages/ts-client/src/generated.ts`
+**Output:** `packages/ts-client/src/generated/`. CI fails when the committed copy is stale.
 
 **Architecture:**
 
@@ -162,7 +164,7 @@ Tauri App (React)
     ↓
 @wingdrive/ts-client (TypeScript)
     ↓
-Daemon (Unix Socket / IPC)
+Daemon (TCP / WebSocket / IPC)
     ↓
 RpcServer (Rust)
     ↓
@@ -205,7 +207,7 @@ strings.
 
 **Note:** iOS and macOS apps are experimental prototypes, not production apps.
 
-Native prototypes embed the core directly as a library via FFI rather than connecting to a daemon. These are located in `apps/ios/` and `apps/macos/` but are private and not documented for public use.
+Native prototypes embed the core directly as a library via FFI rather than connecting to a daemon. They are private and not in this repository; only the generated Swift client is.
 
 **Swift Client Generation:**
 
@@ -342,12 +344,11 @@ Extensions can define:
 
 **Documentation:**
 
-- `/docs/sdk/sdk.md` - Complete SDK specification and API reference
 - `extensions/test-extension/` - Working example extension
 - `crates/sdk/` - SDK implementation
 - `crates/sdk-macros/` - SDK procedural macros
 
-**Status:** SDK implementation in progress. Test extension compiles to WASM successfully. Core integration for loading and executing WASM modules is next phase.
+**Status:** the core loads WASM modules through `core/src/infra/extension/` (feature `wasm`, on by default except on mobile). Extensions are milestone M5 work (`PLUG-000`).
 
 ## Code Standards
 
@@ -695,7 +696,9 @@ Rules for agents and contributors:
 
 - Push only after `just ci-local` passes. Fix failures locally, then push once.
 - Push to `origin` (`bernardopg/wingdrive`) and open pull requests there
-  (`gh pr create --repo bernardopg/wingdrive`). The `fork` remote is a different repository.
+  (`gh pr create --repo bernardopg/wingdrive`). It is the only remote.
+- Pipe `just ci-local` through `tail` only after saving its exit code: `just ci-local | tail` reports
+  `tail`'s status, so a failed run looks green.
 - After a stacked pull request merges into its base branch, merge `origin/main` into the base.
   `.github/workflows/ci.yml` usually conflicts on the `bun test` list; keep both sides.
 - Never push to "see what CI says", and never push a series of small fix commits to
@@ -715,7 +718,12 @@ Rules for agents and contributors:
   to date with `main` before merging so the merge commit matches its tested tree. A nightly scheduled
   run on `main` runs every gate and refreshes the Rust cache that pull requests restore.
 - CodeQL analyzes Rust (about 35 minutes) only when a change touches `*.rs`, a `Cargo.toml`,
-  `Cargo.lock` or the CodeQL config; the weekly schedule always includes it.
+  `Cargo.lock` or the CodeQL config; the weekly schedule always includes it. A pull request without
+  Rust changes uploads an empty Rust result, because the code scanning rule needs one per language.
+- GitHub sometimes loses a CodeQL upload: the job ends with "Timed out waiting for analysis to finish
+  processing", or `Analyze (actions)` fails right after "Uploading results", and the PR stays
+  `BLOCKED` with every check green ("1 configuration not found"). Rerun that one job
+  (`gh run rerun <run> --job <job>`); nothing in the code needs to change.
 - A release tag on a commit that `main`'s CI already checked reuses that run. Tag a commit on `main`
   after its CI finishes; a tag on any other commit makes the release dispatch a new CI run on the tag.
 - Typecheck with `bun run typecheck` (or `just typecheck`). It runs `bun check` (Bun 1.4.3+) on
@@ -724,6 +732,45 @@ Rules for agents and contributors:
   language server.
 - The desktop shell (`apps/tauri/src-tauri`, `wing-tauri-core`) must not depend on `wing-core`.
   Put anything it needs from the core in a small crate under `crates/`, as `wing-branding` does.
+- Required checks on `main`: `Detect Rust changes`, `Repository Metadata`, `TypeScript`,
+  `Rust Workspace`, `TypeScript (Windows)`, `Rust Workspace (Windows)` and `TruffleHog`, plus CodeQL
+  merge protection. A check skipped by its path filter counts as passed. The Windows Rust job takes
+  about 25 minutes with the nightly cache and about 70 cold.
+- `auto-merge.yml` turns on auto-merge for the owner's non-draft pull requests, so a pull request
+  merges as soon as its required checks pass. Open it as a draft when it must wait.
+
+## Windows
+
+Windows builds, tests and ships installers since 3.0.0 (TAURI-016). Read
+`docs/core/windows-development.mdx` before changing platform code. The traps that already cost
+releases:
+
+- Windows localizes command output. Call Win32 APIs instead of parsing `tasklist`, `ver` and the
+  like, and test parsers with translated samples.
+- Join stored paths with the stored path's own separator (`join_entry_path`), not `/`.
+- SQLite with its default journal is very slow on Windows. Open every database through
+  `crate::infra::db::connect_sqlite` (WAL, `synchronous=NORMAL`).
+- Linux-only features (`run_as_admin`, the `pkexec` retry) must stay hidden off Linux in
+  `apps/tauri/src/platform.ts`, not fail when clicked. Windows administrator retries are TAURI-017.
+- Without a Windows machine, check with `cargo clippy --target x86_64-pc-windows-msvc` for the
+  crates that build on Linux, and let `Rust Workspace (Windows)` run the rest.
+
+## Releases
+
+`docs/core/releases.mdx` has the full pipeline. In short:
+
+1. `cargo xtask bump <version>` updates the seven version files and `Cargo.lock`. Open a pull
+   request with it; `main` only changes through pull requests.
+2. After it merges and `main`'s CI finishes, tag the merge commit: `git tag -a vX.Y.Z -m "WingDrive
+   X.Y.Z"` and `git push origin vX.Y.Z`. `scripts/release/version.py` rejects a tag that disagrees
+   with the manifests.
+3. `release.yml` waits for CI on the tagged commit, builds and verifies the Linux, Windows and
+   Android artifacts, publishes the GitHub Release, then the AUR packages.
+
+Alpha, beta and rc tags ship the Windows `.exe` only (WiX needs numeric pre-release versions) and
+publish `wingdrive-nightly` on AUR. Stable tags publish `wingdrive-bin` and `wingdrive-nightly`.
+`wing update` never replaces binaries; it prints the update command for the way `wing` was
+installed (CLI-002).
 
 ## Repository Rules
 
@@ -767,7 +814,7 @@ Each task is a Markdown file: `CATEGORY-###-title-slug.md`
 id: CORE-042
 title: "Implement file sharing API"
 status: "In Progress"
-assignee: "james"
+assignee: "bernardopg"
 priority: "High"
 milestone: "M1"
 sprint: "S01"
@@ -813,7 +860,7 @@ cargo run -p task-validator -- validate
 3. Complete implementation and tests
 4. Update status to `"Done"` and commit
 
-Full documentation: `/docs/core/task-tracking.md`
+Full documentation: `/docs/core/task-tracking.mdx`
 
 ## Debugging
 
@@ -829,6 +876,12 @@ After rebuilding, restart the daemon to use the latest code:
 cargo build
 cargo run --bin wing -- restart
 ```
+
+### Administrator Retries (polkit)
+
+`scripts/check-admin-retry.sh` runs `run_as_admin` through the real `pkexec` and polkit, in `/opt`,
+with no one at the keyboard: a `pkttyagent` registered for the test process answers from
+`WINGDRIVE_POLKIT_PASSWORD`. Never write that password to a file, a commit or a log.
 
 ### Mobile App
 
@@ -875,11 +928,13 @@ RUST_LOG=wing_core::jobs=trace cargo run
 
 ## Documentation Locations
 
-- Core architecture: `/docs/core/`
+- Core architecture: `/docs/core/` (start with `architecture.mdx`)
 - Design docs and RFCs: `/docs/core/design/`
 - Application docs: `/docs/`
-- Daemon details: `/docs/core/daemon.md`
-- Task tracking: `/docs/core/task-tracking.md`
+- Releases: `/docs/core/releases.mdx`
+- Windows: `/docs/core/windows-development.mdx`
+- Mobile: `/docs/core/mobile-development.mdx`
+- Task tracking: `/docs/core/task-tracking.mdx`
 
 
 <!-- headroom:memory-instructions -->

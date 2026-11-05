@@ -30,7 +30,19 @@ fn version_files(root: &Path) -> Vec<(PathBuf, FileType)> {
 }
 
 fn validate_version(version: &str) -> Result<()> {
-	let core = version.split('-').next().unwrap_or(version);
+	let (core, pre) = match version.split_once('-') {
+		Some((core, pre)) => (core, Some(pre)),
+		None => (version, None),
+	};
+	// The release workflow, the AUR packages and the Android version code accept these only.
+	if let Some(pre) = pre {
+		let valid = pre.split_once('.').is_some_and(|(label, n)| {
+			["alpha", "beta", "rc"].contains(&label) && n.parse::<u32>().is_ok()
+		});
+		if !valid {
+			anyhow::bail!("Invalid pre-release '{}'. Use alpha.N, beta.N or rc.N", pre);
+		}
+	}
 
 	let parts: Vec<&str> = core.split('.').collect();
 	if parts.len() != 3 {
@@ -168,39 +180,34 @@ pub fn bump(root: &Path, new_version: &str) -> Result<()> {
 		}
 	}
 
-	// Commit version changes and create git tag
+	// The workspace crates carry the version too, so Cargo.lock changes with them.
+	let status = Command::new("cargo")
+		.args(["update", "--workspace", "--offline"])
+		.current_dir(root)
+		.status()
+		.context("Failed to run cargo update")?;
+	if !status.success() {
+		anyhow::bail!("cargo update --workspace --offline failed");
+	}
+
+	// The release workflow runs the same check against the tag, so a mismatch fails here first.
 	let tag = format!("v{}", new_version);
-
-	let files: Vec<String> = version_files(root)
-		.into_iter()
-		.filter(|(p, _)| p.exists())
-		.map(|(p, _)| p.to_string_lossy().to_string())
-		.collect();
-
-	let mut add_args = vec!["add".to_string()];
-	add_args.extend(files);
-
-	Command::new("git")
-		.args(&add_args)
+	let status = Command::new("python3")
+		.args(["scripts/release/version.py", &tag])
 		.current_dir(root)
 		.status()
-		.context("Failed to stage version files")?;
+		.context("Failed to run scripts/release/version.py")?;
+	if !status.success() {
+		anyhow::bail!("scripts/release/version.py rejected {tag}");
+	}
 
-	Command::new("git")
-		.args(["commit", "-m", &tag])
-		.current_dir(root)
-		.status()
-		.context("Failed to create commit")?;
-
-	Command::new("git")
-		.args(["tag", &tag])
-		.current_dir(root)
-		.status()
-		.context("Failed to create tag")?;
-
+	// main only changes through pull requests, and the tag goes on the merge commit,
+	// so committing or tagging here would put the tag on a commit main never has.
 	println!();
-	println!("Committed and tagged {}. Push with:", tag);
-	println!("  git push --tags");
+	println!("Updated the version files and Cargo.lock to {new_version}. Next:");
+	println!("  1. Add the CHANGELOG section, run `just ci-local` and open a pull request.");
+	println!("  2. After it merges and main's CI finishes, tag the merge commit:");
+	println!("     git tag -a {tag} -m \"WingDrive {new_version}\" && git push origin {tag}");
 
 	Ok(())
 }
