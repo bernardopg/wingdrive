@@ -142,7 +142,7 @@ pub async fn init_database(db_file_path: &Path) -> JobResult<DatabaseConnection>
 
 	let db_url = format!("sqlite://{}?mode=rwc", db_file_path.display());
 
-	let db = sea_orm::Database::connect(&db_url).await?;
+	let db = crate::infra::db::connect_sqlite(&db_url, 10).await?;
 
 	// Create tables
 	create_tables(&db).await?;

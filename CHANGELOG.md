@@ -25,6 +25,8 @@ version in the workspace manifests and the matching `v*` git tag.
   are not signed yet, so Windows SmartScreen warns about them.
 - CI runs the TypeScript and Rust gates on Windows, as separate jobs.
 - "Start at login" works on Windows through the current user's Run registry key.
+- Copy, cut and paste of files work between WingDrive and Explorer on Windows,
+  through the system file clipboard.
 - `just dev-desktop` works on Windows through `scripts/dev-isolated.ps1`.
 
 ### Fixed
@@ -52,6 +54,17 @@ version in the workspace manifests and the matching `v*` git tag.
 - Opening a `file:///C:/...` URI on Windows no longer fails.
 - `wing` and `wing-daemon` no longer create an empty production data directory
   when `--data-dir` is given.
+- An automatic backfill no longer overwrites a sync state that moved to Ready,
+  catching up or paused while the backfill peer was chosen.
+- The sync log (`sync.db`) and the job database use WAL with
+  `synchronous=NORMAL`, like the library database. They used SQLite's
+  defaults, which flushed and recreated a journal on every commit: one sync
+  test made 2930 `fsync` calls, now 131. On Windows that flushing made each
+  synced record take hundreds of milliseconds.
+- On Windows, a named instance (`WINGDRIVE_INSTANCE`) no longer hands its launch
+  to the everyday WingDrive and exits.
+- "Retry as administrator" no longer appears on Windows and macOS, where it
+  always failed. It stays on Linux.
 
 ## 2.4.1 — 2026-11-03
 

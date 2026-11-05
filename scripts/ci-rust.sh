@@ -25,6 +25,12 @@ step() {
 
 [ "$#" -gt 0 ] || { echo "usage: $0 full | <area>..." >&2; exit 2; }
 
+# The tests of each platform's file-opening backend compile only on that platform.
+case "$(uname -s)" in
+	MINGW* | MSYS* | CYGWIN*) file_opening_crate=file-opening-windows ;;
+	*) file_opening_crate=file-opening-linux ;;
+esac
+
 # Tauri's build script and rust-embed need these directories to exist.
 mkdir -p apps/tauri/dist apps/web/dist
 
@@ -69,7 +75,8 @@ run_full_tests() {
 
 	step "Test desktop IPC and launch handling"
 	cargo test --locked -p wingdrive --bin WingDrive
-	cargo test --locked -p file-opening-linux
+	cargo test --locked -p "$file_opening_crate"
+	cargo test --locked -p file-clipboard-windows
 
 	step "Test two-device sync"
 	cargo test --locked -p wing-core \
@@ -112,7 +119,8 @@ else
 		step "Test desktop IPC and launch handling"
 		cargo build --locked --bin wing-daemon
 		cargo test --locked -p wingdrive --bin WingDrive
-		cargo test --locked -p file-opening-linux
+		cargo test --locked -p "$file_opening_crate"
+		cargo test --locked -p file-clipboard-windows
 	fi
 
 	if [[ " $* " == *" cli "* ]]; then

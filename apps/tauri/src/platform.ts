@@ -65,12 +65,20 @@ export const platform: Platform = {
 					}),
 				unmountNetworkLocation: (path: string) =>
 					invoke<void>('unmount_network_location', {path}),
+				startFileDrag: (paths: string[]) =>
+					invoke<void>('start_file_drag', {paths}),
+				// Administrator retries run through polkit; Windows has no UAC path yet.
+				runAsAdmin: async (operation: AdminOperation) => {
+					await invoke('run_as_admin', {operation});
+				}
+			}
+		: {}),
+	...(navigator.platform.startsWith('Linux') || navigator.platform.startsWith('Win')
+		? {
 				writeFileClipboard: (paths: string[], cut: boolean) =>
 					invoke<void>('write_file_clipboard', {paths, cut}),
 				readFileClipboard: () =>
-					invoke<[string[], boolean]>('read_file_clipboard'),
-				startFileDrag: (paths: string[]) =>
-					invoke<void>('start_file_drag', {paths})
+					invoke<[string[], boolean]>('read_file_clipboard')
 			}
 		: {}),
 
@@ -183,10 +191,6 @@ export const platform: Platform = {
 
 	async runContextAction(id: string, paths: string[]) {
 		await invoke('run_context_action', {id, paths});
-	},
-
-	async runAsAdmin(operation: AdminOperation) {
-		await invoke('run_as_admin', {operation});
 	},
 
 	async openTerminalSession({

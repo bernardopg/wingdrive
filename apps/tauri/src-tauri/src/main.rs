@@ -16,6 +16,8 @@ mod keybinds;
 mod launch;
 #[cfg(target_os = "linux")]
 mod network_discovery;
+// The Notify and portal builders serve only the Linux sender; Windows sends a toast.
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 mod notifications;
 mod server;
 mod terminal;
@@ -2443,6 +2445,16 @@ fn main() {
 		return;
 	}
 
+	#[allow(unused_mut)]
+	let mut context = tauri::generate_context!();
+	// The single-instance plugin ignores `dbus_id` on Windows and names its mutex after the
+	// bundle identifier, so a named instance would hand its launch to the everyday WingDrive.
+	// The identifier also names the WebView2 profile folder, which keeps their storage apart.
+	#[cfg(windows)]
+	if std::env::var_os(INSTANCE_ENV).is_some() {
+		context.config_mut().identifier = single_instance_id.clone();
+	}
+
 	let builder = tauri::Builder::default().plugin(
 		tauri_plugin_single_instance::Builder::new()
 			.callback(|app, argv, cwd| {
@@ -2907,7 +2919,7 @@ fn main() {
 				}
 			}
 		})
-		.build(tauri::generate_context!())
+		.build(context)
 		.expect("error while building tauri application")
 		.run(|app, event| {
 			if let tauri::RunEvent::Exit = event {

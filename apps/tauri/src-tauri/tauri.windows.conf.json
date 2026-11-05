@@ -1,8 +1,9 @@
 {
   "bundle": {
-    "targets": ["nsis", "app"],
+    "targets": ["nsis", "msi"],
     "resources": {
-      "../../.deps/bin/*.dll": "./"
+      "../../.deps/bin/*.dll": "./",
+      "icons/128x128.png": "icons/128x128.png"
     }
   }
 }

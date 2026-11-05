@@ -644,9 +644,12 @@ mod linux {
 pub use linux::Notifier;
 
 /// Platforms without a native sender keep the command callable.
+///
+/// Braced rather than a unit struct, so `main` builds it with `default()` on
+/// every platform without clippy's `default_constructed_unit_structs`.
 #[cfg(not(target_os = "linux"))]
 #[derive(Default)]
-pub struct Notifier;
+pub struct Notifier {}
 
 #[cfg(target_os = "windows")]
 impl Notifier {

@@ -21,7 +21,7 @@ on:
         description: 'Verify only one component. Publishing needs both, so pick all to publish.'
         default: all
         type: choice
-        options: [all, desktop, server]
+        options: [all, desktop, server, windows]
 
 permissions:
   contents: read
@@ -48,7 +48,7 @@ jobs:
   # They share no compiled crates, so one runner only ran them one after the other.
   desktop:
     name: Verify Linux x86_64 desktop bundles
-    if: ${{ !inputs.aur_only && inputs.component != 'server' }}
+    if: ${{ !inputs.aur_only && inputs.component != 'server' && inputs.component != 'windows' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 150
     steps:
@@ -151,7 +151,7 @@ jobs:
 
   server:
     name: Verify Linux x86_64 server and command line
-    if: ${{ !inputs.aur_only && inputs.component != 'desktop' }}
+    if: ${{ !inputs.aur_only && inputs.component != 'desktop' && inputs.component != 'windows' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
@@ -226,6 +226,14 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # Unsigned NSIS and MSI installers. REL-001 tracks signing.
+  windows:
+    name: Windows
+    if: ${{ !inputs.aur_only && (inputs.component == 'all' || inputs.component == 'windows' || github.event_name == 'push') }}
+    uses: ./.github/workflows/windows-bundle.yml
+    with:
+      release-tag: ${{ github.event.inputs.tag || github.ref_name }}
+
   # Signed APK and AAB. Without the upload key secrets it builds them but uploads nothing,
   # so a desktop release does not wait on Google Play credentials (REL-001).
   android:
@@ -244,7 +252,8 @@ jobs:
     name: Require green CI for the tagged commit
     if: ${{ !inputs.aur_only }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    # The Windows Rust job alone takes about 85 minutes when main has to run it.
+    timeout-minutes: 150
     permissions:
       actions: write
       contents: read
@@ -286,7 +295,7 @@ jobs:
   publish:
     name: Publish verified GitHub Release
     # Needing both jobs means a run that skipped one component never publishes.
-    needs: [desktop, server, android, ci]
+    needs: [desktop, server, windows, android, ci]
     if: (github.event_name == 'push' || inputs.publish) && !inputs.aur_only
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -296,7 +305,7 @@ jobs:
       # wingdrive-android-release exists only when the Android upload key is configured.
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          pattern: wingdrive-{linux,android}-release
+          pattern: wingdrive-{linux,windows,android}-release
           merge-multiple: true
           path: dist
       - name: Verify artifact checksums
