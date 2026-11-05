@@ -5,6 +5,18 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Changed
+
+- The README, the installation guide and the documentation introduction list
+  the Windows installers as a beta, unsigned and not yet tested by hand on a
+  real machine. The introduction no longer claims macOS support: macOS builds
+  from source until its signed release.
+- `TypeScript (Windows)` and `Rust Workspace (Windows)` are required checks on
+  `main`, and the Windows Rust job fails the run again.
+- `docs/core/cli.mdx` warns that `wing update` cannot find binaries in
+  WingDrive releases yet (CLI-002), and its examples call `wing` instead of
+  `sd`.
+
 ## 3.0.0 — 2026-11-05
 
 The first release with Windows installers (`.exe` and `.msi`), next to the

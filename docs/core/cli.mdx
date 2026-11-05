@@ -71,8 +71,8 @@ Run multiple daemon instances for different data directories:
 
 ```bash
 # Start with custom instance name
-sd --instance work start
-sd --instance personal start
+wing --instance work start
+wing --instance personal start
 
 # Each instance gets its own socket
 # daemon-work.sock
@@ -158,17 +158,19 @@ The update system uses a public GitHub repository containing only releases (no s
    - Create GitHub release with binaries as assets
 3. Configure CLI: `wing config set update.repo "your-org/wingdrive"`
 
-The CI workflow automatically builds binaries for:
-- macOS (arm64, x86_64)
-- Linux (x86_64) - coming soon
-- Windows (x86_64) - coming soon
+<Warning>
+WingDrive releases do not publish standalone `wing` binaries yet, so `wing update`
+currently stops with "Could not find WingDrive CLI for platform". `wing` ships inside
+the Linux packages (AppImage, `.deb`, AUR `wingdrive-bin`) and the Windows installers;
+update it through them. `CLI-002` tracks the fix.
+</Warning>
 
 ## Command Structure
 
 All CLI commands follow this pattern:
 
 ```bash
-sd [--data-dir PATH] [--instance NAME] [--format FORMAT] <command> [args]
+wing [--data-dir PATH] [--instance NAME] [--format FORMAT] <command> [args]
 ```
 
 ### Global Flags

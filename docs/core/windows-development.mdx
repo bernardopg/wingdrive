@@ -4,8 +4,10 @@ sidebarTitle: Windows Development
 ---
 
 This page records how to build and test WingDrive on Windows, and what still
-differs from Linux. Planning and open work live in
-`.tasks/interface/TAURI-016-windows-port.md`.
+differs from Linux. The Windows installers ship since `v3.0.0`, as a beta.
+The port's history is in `.tasks/interface/TAURI-016-windows-port.md` (Done).
+Open work: the manual regression matrix in `TAURI-012`, signing in `REL-001`
+and administrator retries in `TAURI-017`.
 
 ## Set up a machine
 
@@ -142,7 +144,10 @@ samples.
 ## Known differences from Linux
 
 - "Administrator retries" (`run_as_admin`) exist only on Linux, through `pkexec`.
-- The system file clipboard exists only on Linux. Windows needs `CF_HDROP`.
+  The Windows design through UAC is `TAURI-017`.
+- The system file clipboard works on Linux and Windows. On Windows,
+  `file-clipboard-windows` reads and writes `CF_HDROP` and `Preferred DropEffect`;
+  the exchange with Explorer still waits for a check by hand (`TAURI-012`).
 - `core/tests/branding_legacy_paths.rs` runs only on Unix, because `dirs` ignores
   `$HOME` on Windows. `wing-branding` unit tests cover the same decisions on every
   platform.

@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S05
 tags: [tauri, windows, ci, release, platform]
-related_tasks: [TAURI-012, CORE-014, REL-001, TAURI-010]
+related_tasks: [TAURI-012, TAURI-017, CORE-014, REL-001, TAURI-010]
 last_updated: 2026-11-05
 ---
 
@@ -125,11 +125,13 @@ for `x86_64-pc-windows-msvc` from Linux, not yet by hand on Windows:
 
 Still open:
 
-- [ ] Copy in WingDrive and paste in Explorer, and the other way round, on a real machine (TAURI-012)
-- [ ] "Administrator retries" on Windows through UAC. It needs its own design: there is no
-  coreutils, and an elevated `cmd` or PowerShell command line must not be built from paths.
-- [ ] Authenticode signing for the installers (add to REL-001)
-- [ ] Runtime checks not done yet: daemon service through `schtasks`, "Abrir com" (CORE-014), the TAURI-006 checklist (TAURI-012)
+Moved on 2026-11-05 to the task that owns each one:
+
+- Copy in WingDrive and paste in Explorer, and the other way round, on a real machine: TAURI-012
+- "Administrator retries" on Windows through UAC: TAURI-017
+- Authenticode signing for the installers: REL-001
+- Runtime checks: daemon service through `schtasks`, "Abrir com" (CORE-014), the TAURI-006
+  checklist: TAURI-012
 - [x] The README marks Windows as beta and lists the installers (#335).
 
 ## Handoff
@@ -139,7 +141,7 @@ first Windows installers on 2026-11-05, and both Windows CI jobs are required ch
 Installers for any branch come from `gh workflow run windows-bundle.yml --ref <branch>`, in
 the run's artifacts.
 
-The items left under "Still open" belong elsewhere: the manual checks to TAURI-012 and
-CORE-014, signing to REL-001. Administrator retries through UAC need a task of their own.
+The items left under "Still open" moved: the manual checks to TAURI-012 and CORE-014,
+signing to REL-001, administrator retries through UAC to TAURI-017.
 Everything needed to resume from Linux is in this file and in
 `docs/core/windows-development.mdx`.
