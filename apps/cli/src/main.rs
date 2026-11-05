@@ -231,12 +231,8 @@ enum Commands {
 	Volume(VolumeCmd),
 	/// Interactive cloud storage setup
 	Cloud,
-	/// Update CLI and daemon to latest version
-	Update {
-		/// Force update even if already on latest version
-		#[arg(long)]
-		force: bool,
-	},
+	/// Check for a newer WingDrive release and print how to install it
+	Update,
 }
 
 #[tokio::main]
@@ -508,9 +504,9 @@ async fn main() -> Result<()> {
 			// Daemon management doesn't need the client, handle directly
 			daemon::run(data_dir, instance, cmd).await?;
 		}
-		Commands::Update { force } => {
+		Commands::Update => {
 			// Update doesn't need the client
-			update::run(data_dir, force).await?;
+			update::run(data_dir).await?;
 		}
 		_ => {
 			run_client_command(cli.command, cli.format, data_dir, socket_addr).await?;

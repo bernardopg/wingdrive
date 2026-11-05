@@ -1,7 +1,7 @@
 ---
 id: CLI-002
 title: wing update finds no binaries in WingDrive releases
-status: To Do
+status: Done
 assignee: bernardopg
 parent: CLI-000
 priority: Medium
@@ -24,22 +24,27 @@ Replacing the binaries in place would also be wrong for most installs: the AUR p
 
 ## Implementation Steps
 
-- [ ] Decide the behavior per install kind: package manager (AUR, `.deb`), Windows installer,
-      AppImage, source build
-- [ ] For package-managed installs, report the new version and print the package manager command
+- [x] Decide the behavior per install kind: package manager (AUR, `.deb`), Windows installer,
+      AppImage, source build. The path of the running binary decides: `/opt/wingdrive` is the
+      AUR (pacman names the package), `/usr` the `.deb`, `$APPIMAGE` the AppImage, Program Files
+      the MSI, any other Windows path the NSIS installer, a `target/` folder a source build
+- [x] For package-managed installs, report the new version and print the package manager command
       instead of downloading anything
-- [ ] Either publish the assets the command expects, signed (REL-001), or remove the in-place
-      replacement
-- [ ] Update `docs/core/cli.mdx`, section "Release Repository Setup"
+- [x] Remove the in-place replacement: `wing update` downloads nothing, and `--force` is gone
+- [x] Update `docs/core/cli.mdx`: "Checking for Updates" replaces "Auto-Update System"
 
 ## Acceptance Criteria
 
-- [ ] `wing update` on the AUR package reports the latest release and the `yay` or `pacman`
-      command, and changes no file
-- [ ] `wing update` never ends with "Could not find WingDrive CLI for platform" against
-      `bernardopg/wingdrive`
-- [ ] A test covers the asset selection against the asset names of a real release (`v3.0.0`)
+- [x] `wing update` on the AUR package reports the latest release and the `yay` command, and
+      changes no file (`instructions` for `InstallKind::Aur`; `pacman -Qqo` on the author's
+      machine names `wingdrive-bin`)
+- [x] `wing update` never ends with "Could not find WingDrive CLI for platform" against
+      `bernardopg/wingdrive`: run on 2026-11-05 on the `stable` and `nightly` channels, it
+      reports 3.0.0 as the latest release
+- [x] A test covers the asset selection against the asset names of a real release (`v3.0.0`):
+      `points_each_install_kind_at_a_real_v3_asset`, plus four more tests in `update::tests`
 
 ## Notes
 
-Found on 2026-11-05 while checking the documentation after the `v3.0.0` release.
+Found on 2026-11-05 while checking the documentation after the `v3.0.0` release, and fixed the
+same day. A pre-release sends AUR users to `wingdrive-nightly`, the package that carries them.

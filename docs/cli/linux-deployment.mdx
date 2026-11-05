@@ -294,20 +294,15 @@ Override with `--data-dir` flag:
 wing --data-dir /mnt/external/wingdrive start
 ```
 
-### Auto-Update
-
-Configure update repository:
+### Updates
 
 ```bash
-# Set your releases repo
-wing-cli config set update.repo "your-org/wingdrive-cli-releases"
-
-# Check for updates
-wing-cli update
-
-# Auto-update on schedule (cron)
-echo "0 2 * * * /usr/local/bin/wing-cli update --force" | crontab -
+# Check for a newer release and print how to install it
+wing update
 ```
+
+`wing update` never replaces binaries. Update a packaged install through its
+package manager, and a source build by checking out the new tag and rebuilding.
 
 ### Multiple Instances
 

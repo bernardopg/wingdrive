@@ -92,7 +92,7 @@ mover e apagar).
 | 2 | CORE-014 | "Abrir com" e abrir arquivos no Windows e no macOS, conferidos na rodada da TAURI-012 | S05 |
 | 3 | REL-001 | Assinatura: updater do Tauri, Authenticode, Apple, Google Play; AUR só em tags estáveis | S05 |
 | 4 | TAURI-017 | Repetir como administrador no Windows via UAC; espera o certificado da REL-001 | — |
-| 5 | CLI-002 | `wing update` não acha binários nos releases do WingDrive | — |
+| 5 | CLI-002 | `wing update` não acha binários nos releases do WingDrive (Done em 2026-11-05) | — |
 | 6 | FILE-008 | Journal de jobs e undo para cópia, sobrescrita e lixeira (item 7 do levantamento do upstream de 14/10) | — |
 | 7 | TAURI-000 | Fecha quando TAURI-012 e REL-001 fecharem | S05 |
 
