@@ -106,6 +106,9 @@ for `x86_64-pc-windows-msvc` from Linux, not yet by hand on Windows:
   main window starts hidden and the frontend shows it once loaded, so this proves the
   WebView rendered. `MainWindowHandle` also accepted the plugin's hidden
   `com.wingdrive.desktop-siw` window.
+- [x] Desktop notifications from #332 build on Windows: the Notify and portal builders
+  serve only the Linux sender, so `notifications` allows dead code off Linux. The toast
+  logo `icons/128x128.png` is now a bundle resource; without it the toast had no logo.
 - [x] "Retry as administrator" is offered on Linux only. It used to appear on Windows and
   macOS and then fail with "only available on Linux".
 

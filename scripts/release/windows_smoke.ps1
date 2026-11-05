@@ -106,7 +106,7 @@ if ($Kind -eq 'nsis') {
 }
 
 try {
-    foreach ($expected in 'WingDrive.exe', 'wing-daemon.exe', 'wing.exe', 'avcodec-*.dll', 'libheif.dll') {
+    foreach ($expected in 'WingDrive.exe', 'wing-daemon.exe', 'wing.exe', 'avcodec-*.dll', 'libheif.dll', 'icons\128x128.png') {
         if (-not (Test-Path -Path (Join-Path $installDir $expected))) {
             Get-ChildItem -LiteralPath $installDir | Select-Object -ExpandProperty Name | Write-Host
             throw "$expected is missing from the $Kind install"

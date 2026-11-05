@@ -16,6 +16,8 @@ mod keybinds;
 mod launch;
 #[cfg(target_os = "linux")]
 mod network_discovery;
+// The Notify and portal builders serve only the Linux sender; Windows sends a toast.
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 mod notifications;
 mod server;
 mod terminal;
