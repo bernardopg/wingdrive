@@ -5,6 +5,13 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+## 3.0.0 — 2026-11-05
+
+The first release with Windows installers (`.exe` and `.msi`), next to the
+Linux packages. On Windows, CI tests each installer by installing it,
+starting the app and uninstalling it. Nobody has run them by hand on a real
+machine yet. They are unsigned, so SmartScreen warns about them (TAURI-016).
+
 ### Added
 
 - Desktop notifications when a copy, move or other file job ends while
