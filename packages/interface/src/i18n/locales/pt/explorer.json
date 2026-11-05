@@ -17,7 +17,7 @@
 		"search": "Pesquisar",
 		"tags": "Etiquetas",
 		"inspector": "Inspetor",
-		"splitView": "Dividir a vista (F3)",
+		"splitView": "Dividir a visualização (F3)",
 		"back": "Voltar",
 		"forward": "Avançar",
 		"tagMode": "Modo etiqueta",
@@ -108,7 +108,7 @@
 		"regenerateThumbnail": "Gerar miniatura novamente",
 		"extractText": "Extrair texto (OCR)",
 		"videoProcessing": "Processamento de vídeos",
-		"generateThumbstrip": "Gerar sequência de miniaturas",
+		"generateThumbstrip": "Gerar tira de miniaturas",
 		"extractSubtitles": "Extrair legendas",
 		"generateProxy": "Gerar proxy",
 		"audioProcessing": "Processamento de áudio",
@@ -187,7 +187,7 @@
 		"page_one": "Página {{count}}",
 		"page_other": "Página {{count}}",
 		"previous": "Anterior",
-		"next": "Avançar",
+		"next": "Próxima",
 		"resultPages": "Páginas de resultados da pesquisa",
 		"kind": "Tipo",
 		"extension": "Extensão",
@@ -212,7 +212,7 @@
 		"noRecentFilesThisPage": "Nenhum arquivo recente nesta página.",
 		"couldNotLoadRecentFiles": "Não foi possível carregar arquivos recentes: {{error}}",
 		"previous": "Anterior",
-		"next": "Avançar",
+		"next": "Próxima",
 		"page_one": "Página {{count}}",
 		"page_other": "Página {{count}}"
 	},
@@ -261,23 +261,23 @@
 		"indexBeforeTagging": "Estes arquivos precisam ser indexados antes de receber etiquetas",
 		"title": "Modo de etiquetas",
 		"done": "Concluído",
-		"help": "Selecione arquivos para começar • Pressione 1-9/0 para alternar etiquetas • Esc para sair"
+		"help": "Selecione arquivos para começar a etiquetar • Pressione 1-9/0 para alternar etiquetas • Esc para sair"
 	},
 	"archive": {
 		"openFailed": "Não foi possível abrir o arquivo de dentro do compactado: {{error}}",
-		"compressing": "Compactando",
-		"extracting": "Extraindo",
+		"compressing": "Compactação",
+		"extracting": "Extração",
 		"extractTo": "Extrair para",
-		"compressingStatus": "{{label}}...",
-		"failed": "Falha ao {{label}}: {{error}}",
-		"cancelled": "{{label}} cancelado",
-		"finished": "{{label}} concluído",
+		"compressingStatus": "{{label}} em andamento...",
+		"failed": "{{label}} falhou: {{error}}",
+		"cancelled": "{{label}} cancelada",
+		"finished": "{{label}} concluída",
 		"zip": "ZIP (.zip)",
 		"tarGz": "Pacote tar Gzip (.tar.gz)",
 		"tarXz": "Pacote tar XZ (.tar.xz)",
 		"tarZst": "Pacote tar Zstandard (.tar.zst)",
 		"tarBz2": "Pacote tar Bzip2 (.tar.bz2)",
-		"baseName": "Arquivo"
+		"baseName": "Arquivo compactado"
 	},
 	"list": {
 		"expandFolder": "Expandir pasta",
@@ -298,7 +298,7 @@
 		"notPhysical": "Só é possível soltar arquivos externos em uma pasta local."
 	},
 	"undo": {
-		"rename": "renomear",
+		"rename": "renomeação",
 		"newFolder": "nova pasta",
 		"newFile": "novo arquivo",
 		"newLink": "novo link"
@@ -326,7 +326,7 @@
 		"modeDeepDescription": "Indexação completa e miniaturas",
 		"generateThumbnails": "Gerar miniaturas",
 		"generateThumbnailsDescription": "Criar miniaturas de imagens e vídeos",
-		"generateThumbstrips": "Gerar sequências de miniaturas",
+		"generateThumbstrips": "Gerar tiras de miniaturas",
 		"generateThumbstripsDescription": "Criar painéis de quadros para vídeos (grade 5×5)",
 		"generateProxies": "Gerar proxies",
 		"generateProxiesDescription": "Criar proxies para navegar por vídeos (~8 s por vídeo)",

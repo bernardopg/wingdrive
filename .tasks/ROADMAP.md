@@ -62,14 +62,13 @@ fechar o M2:
 
 | Task | O que falta | Sprint |
 |---|---|---|
-| WATCH-006 | Conexão no login com o pacote AUR (o `wing` já vai no pacote) | S04 |
-| DESK-013 | Revisão pt no Crowdin e verificação do pacote (passos 3 a 5) | S04 |
-| DESK-043 | Memória do WebKit bimodal, crescendo ociosa no modo alto (derrubou o smoke da release 2.4.0) | S04 |
-| DESK-016 | Explorer com painel duplo (F3): feito no app desktop em 2026-11-04, falta conferir no pacote | S05 |
+| DESK-043 | O renderer ainda abre em dois modos: dez rodadas da `v3.0.0` ficaram estáveis, mas só quatro abaixo de 550 MiB. Falta achar os 65 MiB do modo alto | S04 |
 | DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
 
 INDEX-010, DESK-041 e DESK-042 fecharam em 2026-11-03. DESK-017 (vários dias de uso do pacote AUR,
-relato do autor) e DESK-033 (`pkexec` e polkit reais na máquina do autor) fecharam em 2026-11-05.
+relato do autor) e DESK-033 (`pkexec` e polkit reais na máquina do autor) fecharam em 2026-11-05, junto com
+WATCH-006 (conexão no login confirmada no journal), DESK-016 (painel duplo no pacote) e DESK-013
+(revisão completa do pt-BR no Crowdin e AppImage conferido no Hyprland).
 
 O M2 fecha quando o DESK-000 estiver Done com evidência do pacote AUR e um dia inteiro de uso sem
 voltar a outro file manager (DESK-017). Previsão: fim do S05 (2026-11-25).
@@ -148,6 +147,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-05 | M2: WATCH-006, DESK-016 e DESK-013 Done; revisão das 2160 frases pt-BR (46 correções); dez rodadas da DESK-043 com a `v3.0.0` (estáveis, 4 de 10 abaixo de 550 MiB). Falta a DESK-043 para fechar o DESK-000 |
 | 2026-11-05 | Release `v3.0.0` com os primeiros instaladores Windows (#331 a #334). TAURI-016 Done, jobs Windows viram required checks (#336) e o README marca o Windows como beta (#335). Sobras da TAURI-016 distribuídas: checagens à mão na TAURI-012, assinatura na REL-001, UAC na nova TAURI-017. Nova CLI-002 (`wing update` sem binários no release). Tabela do M3 com ordem |
 | 2026-11-03 | COV-00 e COV-01 a COV-12: metas progressivas de cobertura, prioridade em core/desktop/CLI e critérios de evidência, sem ampliar sprints já comprometidos |
 | 2026-11-02 | WingDrive independente (#310): tasks FORK-* removidas do tracker (histórico no git); NET-007 herda o critério aberto da FORK-007, REL-001 (S05) a assinatura da FORK-002, FORK-009 descartada; levantamentos do upstream em `docs/design/history/`. S01 fechado com review e retro. Checagem no pacote fecha 16 tasks do S04 e acha DESK-039 a DESK-042; release 2.4.0 |

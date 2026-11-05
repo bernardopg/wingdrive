@@ -101,7 +101,7 @@
 		"changes": "alterações",
 		"noRecentActivity": "Nenhuma atividade recente",
 		"activityWhenSyncing": "As atividades aparecerão aqui durante a sincronização",
-		"backfillStarted": "Preenchimento inicial iniciado",
+		"backfillStarted": "Sincronização inicial iniciada",
 		"catchUpStarted": "Atualização iniciada",
 		"catchUpCompleted": "Atualização concluída",
 		"peerConnected": "{{name}} se conectou",
@@ -116,11 +116,11 @@
 		"receivedChanges_other": "Recebeu {{count}} alterações",
 		"appliedChanges_one": "Aplicou {{count}} alteração",
 		"appliedChanges_other": "Aplicou {{count}} alterações",
-		"backfillCompleted_one": "Preenchimento inicial concluído ({{count}} registro)",
-		"backfillCompleted_other": "Preenchimento inicial concluído ({{count}} registros)",
+		"backfillCompleted_one": "Sincronização inicial concluída ({{count}} registro)",
+		"backfillCompleted_other": "Sincronização inicial concluída ({{count}} registros)",
 		"states": {
 			"Ready": "Pronto",
-			"Backfilling": "Preenchimento inicial",
+			"Backfilling": "Sincronização inicial",
 			"CatchingUp": "Atualizando",
 			"Uninitialized": "Não inicializado",
 			"Paused": "Pausado"
@@ -180,7 +180,7 @@
 	},
 	"compareFolders": {
 		"comparing": "Comparando…",
-		"fileVsFolder": "Arquivo e pasta",
+		"fileVsFolder": "Arquivo versus pasta",
 		"merge": "Mesclar",
 		"title": "Comparar pastas",
 		"onlyIn": "Somente em {{name}}",
@@ -402,7 +402,7 @@
 		"subtitle": "Demonstração da arquitetura de múltiplas janelas"
 	},
 	"voice": {
-		"pressShortcut": "Pressione Option+Shift+Space para falar",
+		"pressShortcut": "Pressione Option+Shift+Espaço para falar",
 		"thinking": "Pensando...",
 		"listening": "Ouvindo...",
 		"processing": "Processando...",
@@ -422,8 +422,8 @@
 	"wingdrop": {
 		"deviceCount_one": "{{count}} dispositivo",
 		"deviceCount_other": "{{count}} dispositivos",
-		"online": "Online",
-		"offline": "Offline",
+		"online": "Conectado",
+		"offline": "Desconectado",
 		"noDevices": "Nenhum dispositivo pareado",
 		"waitingForDevices": "Aguardando dispositivos próximos...",
 		"title": "{{name}} quer enviar arquivos para você",

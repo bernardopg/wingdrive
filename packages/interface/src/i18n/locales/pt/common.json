@@ -49,7 +49,7 @@
 		"deleteCancelled": "Exclusão cancelada. Os itens processados antes do cancelamento já foram removidos.",
 		"cancelled": "Os itens da operação {{operation}} permanecem no local; o restante foi cancelado.",
 		"running": "A {{operation}} continua em execução em segundo plano. Acompanhe em Tarefas.",
-		"completed": "{{operation}} {{items}}",
+		"completed": "{{operation}}: {{items}}",
 		"failedCount_one": "{{count}} falhou",
 		"failedCount_other": "{{count}} falharam",
 		"skippedCount_one": "{{count}} ignorado",
@@ -324,7 +324,7 @@
 	},
 	"reveal": {
 		"finder": "Mostrar no Finder",
-		"explorer": "Mostrar no Explorer",
+		"explorer": "Mostrar no Explorador de Arquivos",
 		"folder": "Mostrar na pasta"
 	},
 	"tray": {

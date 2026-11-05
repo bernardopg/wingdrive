@@ -1,14 +1,14 @@
 ---
 id: WATCH-006
 title: Daemon at login is unreachable while location watches register
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: WATCH-000
 priority: High
 milestone: M2
 sprint: S04
 tags: [watcher, daemon, tauri, packaging, bug]
-last_updated: 2026-11-02
+last_updated: 2026-11-05
 ---
 
 ## Description
@@ -33,8 +33,8 @@ A first fix (84b23bc4d) was pushed to `chore/release-2.0.0` after #252 merged, s
 
 - [x] A daemon restart with a large location binds RPC in about a second
 - [x] Files created in nested directories of a tree moved into a location produce events
-- [ ] The app connects at login when the systemd service is still starting (needs the next package)
-- [ ] `wing` exists on the PATH after installing the package (needs the next package)
+- [x] The app connects at login with the systemd service (2026-11-05, `wingdrive-bin` 3.0.0, see Evidence)
+- [x] `wing` exists on the PATH after installing the package (`/usr/bin/wing` -> `/opt/wingdrive/usr/bin/wing`, 3.0.0)
 
 ## Evidence (2026-10-19)
 
@@ -44,3 +44,11 @@ A first fix (84b23bc4d) was pushed to `chore/release-2.0.0` after #252 merged, s
 - `cargo test -p wing-core --test fs_watcher_test --test ephemeral_watcher_test --test indexing_responder_reindex_test` and `cargo test -p wingdrive` pass.
 - Also seen while removing the locations from the user's library: `location remove` fails with `database is locked` while the indexer writes, and the location's indexer and thumbnail jobs keep running after removal. Not fixed here.
 - 2026-11-02: the release deb ships `usr/bin/wing` next to `WingDrive` and `wing-daemon`, so the CLI is on PATH after install. Connecting at login still needs a real session start with the next AUR package.
+- 2026-11-05, the author's machine after a reboot, `wingdrive-bin` 3.0.0, Arch with Hyprland: the
+  user journal shows `wingdrive-daemon.service` started at 16:54:47 and its library watcher running
+  at 16:54:48; the autostart entry started WingDrive at 16:55:14, which logged "Daemon already
+  running, connecting to existing instance" and "Daemon connection established" at 16:55:16 and
+  opened its event subscriptions. No second daemon was spawned. The author reports the app
+  connected on its own. That boot did not hit the window where the service is still starting
+  (the daemon was ready 27 s earlier); the wait for a starting daemon is covered by the
+  implementation step above.

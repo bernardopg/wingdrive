@@ -1,13 +1,13 @@
 ---
 id: DESK-016
 title: Dual-pane Explorer
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Low
 milestone: M2
 tags: [desktop, explorer, linux]
-last_updated: 2026-11-04
+last_updated: 2026-11-05
 sprint: S05
 ---
 
@@ -46,7 +46,7 @@ DESK-015 is validated, as the description says.
 - [x] F3 toggles a second pane with its own navigation
 - [x] Shortcuts act on the focused pane only
 - [x] Copy and move between panes work by drag and by context menu
-- [ ] Verified on the packaged Linux build
+- [x] Verified on the packaged Linux build (author, `wingdrive-bin` 3.0.0, 2026-11-05)
 
 ## Implementation (2026-11-04)
 
@@ -83,3 +83,5 @@ A pane per tab, as the design notes proposed, without moving the shell out of th
     in `photos`.
 - Open: the dialog of a drop on the same device defaults to Copy instead of Move, also for a drop on a
   folder inside one pane, so it predates this task (DESK-050). Verify on the packaged build.
+- 2026-11-05: the author reports the dual pane working in daily use of the installed AUR package
+  (`wingdrive-bin` 3.0.0). The Copy default on same-device drops was fixed separately (DESK-050).
