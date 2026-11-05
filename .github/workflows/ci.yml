@@ -143,6 +143,7 @@ jobs:
           bun test packages/interface/src/routes/explorer/terminal/terminalFolder.test.ts
           bun test packages/interface/src/routes/explorer/terminal/dockedTerminals.test.ts
           bun test packages/interface/src/hooks/normalizedQuerySubscription.test.tsx
+          bun test packages/interface/src/components/JobManager/jobNotification.test.ts
 
   core:
     name: Rust Workspace

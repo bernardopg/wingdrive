@@ -50,6 +50,8 @@
 		"scanningVolume": "Verificando volume",
 		"processing": "Processando...",
 		"jobFailed": "A tarefa falhou",
+		"notificationCompleted": "Concluído",
+		"notificationOpen": "Mostrar o WingDrive",
 		"waitingToStart": "Aguardando início",
 		"cancelled": "Cancelada",
 		"durationHours": "{{hours}}h {{minutes}}min",

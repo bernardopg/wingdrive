@@ -10,3 +10,4 @@ StartupWMClass={{exec}}
 Categories=System;FileTools;FileManager;
 Keywords=files;folders;file manager;explorer;browser;
 MimeType=inode/directory;application/x-wingdrive-memory;
+X-GNOME-UsesNotifications=true
