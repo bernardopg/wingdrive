@@ -7,6 +7,14 @@
 //! file manager that already holds it either hands it over or passes it on
 //! when it exits.
 //!
+//! The name belongs to whichever file manager the user chose. WingDrive only
+//! claims it when it is the default handler for `inode/directory` (or when
+//! `WINGDRIVE_FILEMANAGER1=1` forces it); otherwise it would take "Show in
+//! folder" away from Dolphin, Nautilus, Thunar, Nemo or PCManFM just by
+//! running in the tray. Packages ship no D-Bus activation file for the name
+//! either: two activatable providers make dbus-broker drop one of them with a
+//! warning on every reload, and the system default file manager should win.
+//!
 //! ## Example
 //! ```rust,ignore
 //! tauri::async_runtime::spawn(filemanager1::serve(app.handle().clone()));
@@ -69,10 +77,45 @@ fn local_paths(uris: &[String]) -> Vec<PathBuf> {
 		.collect()
 }
 
-/// Serves FileManager1 for the app's lifetime.
+/// Environment override: `1`/`true`/`on` always serves, `0`/`false`/`off` never.
+pub const OVERRIDE_ENV: &str = "WINGDRIVE_FILEMANAGER1";
+
+/// Whether WingDrive should own the name.
+///
+/// `default_handler` is the desktop file ID the user set for
+/// `inode/directory`; WingDrive serves only when that is one of its own.
+pub fn should_serve(override_value: Option<&str>, default_handler: Option<&str>) -> bool {
+	match override_value.map(|value| value.trim().to_ascii_lowercase()) {
+		Some(value) if matches!(value.as_str(), "1" | "true" | "on" | "yes") => return true,
+		Some(value) if matches!(value.as_str(), "0" | "false" | "off" | "no") => return false,
+		_ => {}
+	}
+	default_handler.is_some_and(|handler| {
+		crate::notifications::DESKTOP_ENTRY_CANDIDATES
+			.iter()
+			.any(|id| handler.strip_suffix(".desktop") == Some(id))
+	})
+}
+
+/// Serves FileManager1 for the app's lifetime when WingDrive is the user's
+/// file manager.
 ///
 /// Failure only costs the integration, so it is logged and the app goes on.
 pub async fn serve(app: AppHandle) {
+	let override_value = std::env::var(OVERRIDE_ENV).ok();
+	let default_handler = tauri::async_runtime::spawn_blocking(|| {
+		file_opening_linux::default_app_for_mime("inode/directory")
+	})
+	.await
+	.ok()
+	.flatten();
+	if !should_serve(override_value.as_deref(), default_handler.as_deref()) {
+		tracing::info!(
+			default = default_handler.as_deref().unwrap_or("none"),
+			"Leaving {BUS_NAME} to the default file manager"
+		);
+		return;
+	}
 	if let Err(error) = try_serve(app).await {
 		tracing::warn!(%error, "org.freedesktop.FileManager1 unavailable");
 	}
@@ -94,4 +137,28 @@ async fn try_serve(app: AppHandle) -> zbus::Result<()> {
 	std::future::pending::<()>().await;
 	drop(connection);
 	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::should_serve;
+
+	#[test]
+	fn serves_only_when_wingdrive_is_the_default_file_manager() {
+		assert!(should_serve(None, Some("wingdrive.desktop")));
+		assert!(should_serve(None, Some("WingDrive.desktop")));
+		assert!(!should_serve(None, Some("org.kde.dolphin.desktop")));
+		assert!(!should_serve(None, Some("org.gnome.Nautilus.desktop")));
+		assert!(!should_serve(None, Some("wingdrive-dev.desktop")));
+		assert!(!should_serve(None, None));
+	}
+
+	#[test]
+	fn environment_override_wins_both_ways() {
+		assert!(should_serve(Some("1"), Some("thunar.desktop")));
+		assert!(should_serve(Some(" ON "), None));
+		assert!(!should_serve(Some("0"), Some("wingdrive.desktop")));
+		assert!(!should_serve(Some("off"), Some("WingDrive.desktop")));
+		assert!(should_serve(Some("maybe"), Some("wingdrive.desktop")));
+	}
 }

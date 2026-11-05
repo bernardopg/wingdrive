@@ -21,6 +21,16 @@ pub use host_env::{
 	host_environment_overrides, open_on_host, use_host_environment, PREFERRED_GDK_BACKEND,
 };
 
+/// Desktop file ID of the user's default handler for `mime`, such as
+/// `org.kde.dolphin.desktop` for `inode/directory`, resolved as GIO does.
+pub fn default_app_for_mime(mime: &str) -> Option<String> {
+	let dirs = XdgDirs::from_env();
+	let lineage = mime_apps::mime_lineage(&dirs, mime);
+	let entries = mime_apps::load_entries(&dirs);
+	let associations = mime_apps::Associations::load(&dirs);
+	mime_apps::default_app(&lineage, &entries, &associations)
+}
+
 pub struct LinuxFileOpener;
 
 impl FileOpener for LinuxFileOpener {
