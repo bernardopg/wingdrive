@@ -92,17 +92,29 @@ Traps in the runner setup, handled but not yet proven on GitHub:
 
 ## Still open
 
-Not started, and not needed for the baseline:
+Done on 2026-11-04, before the first Windows release. Checked by unit tests and `clippy`
+for `x86_64-pc-windows-msvc` from Linux, not yet by hand on Windows:
 
-- [ ] System file clipboard on Windows (`CF_HDROP`). TAURI-010 covered Linux only.
-- [ ] "Administrator retries" on Windows (`run_as_admin`, UAC instead of `pkexec`)
+- [x] System file clipboard on Windows. `file-clipboard-windows` writes and reads the
+  `CF_HDROP` list and `Preferred DropEffect`, so copy, cut and paste work with Explorer.
+  The encoding is tested on every platform; the Win32 calls only on the Windows runner.
+- [x] `WINGDRIVE_INSTANCE` isolates the app on Windows. The single-instance plugin uses
+  `dbus_id` only on Linux and names its mutex after the bundle identifier, so a named
+  instance used to hand its launch to the everyday WingDrive and exit. A named instance
+  now gets its own identifier, which also gives it its own WebView2 profile.
+- [x] `windows_smoke.ps1` waits for a visible "WingDrive" window owned by the app. The
+  main window starts hidden and the frontend shows it once loaded, so this proves the
+  WebView rendered. `MainWindowHandle` also accepted the plugin's hidden
+  `com.wingdrive.desktop-siw` window.
+- [x] "Retry as administrator" is offered on Linux only. It used to appear on Windows and
+  macOS and then fail with "only available on Linux".
+
+Still open:
+
+- [ ] Copy in WingDrive and paste in Explorer, and the other way round, on a real machine (TAURI-012)
+- [ ] "Administrator retries" on Windows through UAC. It needs its own design: there is no
+  coreutils, and an elevated `cmd` or PowerShell command line must not be built from paths.
 - [ ] Authenticode signing for the installers (add to REL-001)
-- [ ] `WINGDRIVE_INSTANCE` does not isolate the app on Windows. The single-instance plugin
-  uses `dbus_id` only on Linux and builds its mutex from the bundle identifier, so a named
-  instance hands its launch to the everyday WingDrive and exits.
-- [ ] `windows_smoke.ps1` reads `MainWindowHandle`, which the runner reports as the plugin's
-  hidden `com.wingdrive.desktop-siw` window. The check proves the app started and stayed up
-  for 10 seconds, not that the main WebView window opened.
 - [ ] Runtime checks not done yet: daemon service through `schtasks`, "Abrir com" (CORE-014), the TAURI-006 checklist (TAURI-012)
 - [ ] The README still marks Windows as planned. Change the badge after the first published release.
 

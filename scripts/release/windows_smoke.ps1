@@ -20,6 +20,43 @@ $dataDir = Join-Path $workRoot "wingdrive-smoke-$Kind-data"
 $msiLog = Join-Path $workRoot "wingdrive-smoke-$Kind.log"
 $installerPath = (Resolve-Path -LiteralPath $Installer).Path
 
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace WingDriveSmoke {
+    public static class Windows {
+        delegate bool EnumWindowsProc(IntPtr window, IntPtr data);
+
+        [DllImport("user32.dll")]
+        static extern bool EnumWindows(EnumWindowsProc callback, IntPtr data);
+        [DllImport("user32.dll")]
+        static extern bool IsWindowVisible(IntPtr window);
+        [DllImport("user32.dll")]
+        static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        static extern int GetWindowText(IntPtr window, StringBuilder text, int count);
+
+        // Title of the first visible, titled top-level window the process owns, or null.
+        public static string VisibleTitle(uint processId) {
+            string found = null;
+            EnumWindows((window, data) => {
+                uint owner;
+                GetWindowThreadProcessId(window, out owner);
+                if (owner != processId || !IsWindowVisible(window)) return true;
+                var text = new StringBuilder(256);
+                GetWindowText(window, text, text.Capacity);
+                if (text.Length == 0) return true;
+                found = text.ToString();
+                return false;
+            }, IntPtr.Zero);
+            return found;
+        }
+    }
+}
+'@
+
 function Assert-ExitCode([int]$Code, [string]$Step) {
     # 3010 means the MSI succeeded and asks for a reboot.
     if ($Code -ne 0 -and $Code -ne 3010) {
@@ -85,17 +122,24 @@ try {
     $env:WINGDRIVE_DATA_DIR = $dataDir
     $env:WINGDRIVE_INSTANCE = "release-smoke-$Kind"
     $app = Start-Process -FilePath (Join-Path $installDir 'WingDrive.exe') -PassThru
+    # The main window starts hidden and the frontend shows it once it has loaded, so a
+    # visible "WingDrive" window proves the WebView rendered. MainWindowHandle would
+    # also accept the single-instance plugin's hidden message window.
     $deadline = (Get-Date).AddSeconds(90)
+    $title = $null
     while ((Get-Date) -lt $deadline) {
         if ($app.HasExited) { throw "WingDrive.exe exited with code $($app.ExitCode)" }
-        $app.Refresh()
-        if ($app.MainWindowHandle -ne 0) { break }
+        $title = [WingDriveSmoke.Windows]::VisibleTitle([uint32]$app.Id)
+        if ($title -like 'WingDrive*') { break }
         Start-Sleep -Seconds 1
     }
-    if ($app.MainWindowHandle -eq 0) { throw 'WingDrive.exe opened no window within 90 seconds' }
+    if ($title -notlike 'WingDrive*') { throw 'WingDrive.exe showed no main window within 90 seconds' }
     Start-Sleep -Seconds 10
     if ($app.HasExited) { throw "WingDrive.exe exited after opening, with code $($app.ExitCode)" }
-    Write-Host "PASS: installed app opened its window ($($app.MainWindowTitle))"
+    if ([WingDriveSmoke.Windows]::VisibleTitle([uint32]$app.Id) -notlike 'WingDrive*') {
+        throw 'The WingDrive main window closed within 10 seconds of opening'
+    }
+    Write-Host "PASS: installed app showed its main window ($title)"
 } finally {
     Stop-InstalledProcesses
     Uninstall-Bundle

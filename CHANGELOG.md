@@ -15,6 +15,8 @@ version in the workspace manifests and the matching `v*` git tag.
   are not signed yet, so Windows SmartScreen warns about them.
 - CI runs the TypeScript and Rust gates on Windows, as separate jobs.
 - "Start at login" works on Windows through the current user's Run registry key.
+- Copy, cut and paste of files work between WingDrive and Explorer on Windows,
+  through the system file clipboard.
 - `just dev-desktop` works on Windows through `scripts/dev-isolated.ps1`.
 
 ### Fixed
@@ -34,6 +36,10 @@ version in the workspace manifests and the matching `v*` git tag.
   when `--data-dir` is given.
 - An automatic backfill no longer overwrites a sync state that moved to Ready,
   catching up or paused while the backfill peer was chosen.
+- On Windows, a named instance (`WINGDRIVE_INSTANCE`) no longer hands its launch
+  to the everyday WingDrive and exits.
+- "Retry as administrator" no longer appears on Windows and macOS, where it
+  always failed. It stays on Linux.
 
 ## 2.4.1 — 2026-11-03
 
