@@ -32,7 +32,7 @@ impl PeerLog {
 		let sync_db_path = library_path.join("sync.db");
 
 		let database_url = format!("sqlite://{}?mode=rwc", sync_db_path.display());
-		let conn = Database::connect(&database_url)
+		let conn = crate::infra::db::connect_sqlite(&database_url, 10)
 			.await
 			.map_err(|e| PeerLogError::ConnectionError(e.to_string()))?;
 

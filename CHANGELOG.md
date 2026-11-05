@@ -56,6 +56,11 @@ version in the workspace manifests and the matching `v*` git tag.
   when `--data-dir` is given.
 - An automatic backfill no longer overwrites a sync state that moved to Ready,
   catching up or paused while the backfill peer was chosen.
+- The sync log (`sync.db`) and the job database use WAL with
+  `synchronous=NORMAL`, like the library database. They used SQLite's
+  defaults, which flushed and recreated a journal on every commit: one sync
+  test made 2930 `fsync` calls, now 131. On Windows that flushing made each
+  synced record take hundreds of milliseconds.
 - On Windows, a named instance (`WINGDRIVE_INSTANCE`) no longer hands its launch
   to the everyday WingDrive and exits.
 - "Retry as administrator" no longer appears on Windows and macOS, where it

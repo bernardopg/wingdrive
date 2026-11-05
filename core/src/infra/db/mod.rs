@@ -62,7 +62,12 @@ fn sqlite_connect_options(url: &str) -> Result<SqliteConnectOptions, DbErr> {
 
 /// Build a SeaORM `DatabaseConnection` from sqlx `SqliteConnectOptions`,
 /// ensuring all PRAGMAs are applied to every connection in the pool.
-async fn connect_sqlite(url: &str, pool_size: u32) -> Result<DatabaseConnection, DbErr> {
+///
+/// Every SQLite file WingDrive opens goes through here. SQLite's defaults
+/// (rollback journal, `synchronous=FULL`) flush and recreate the journal on
+/// every commit, which costs tens of milliseconds per commit on Windows and
+/// made the sync log the bottleneck of each synced record.
+pub(crate) async fn connect_sqlite(url: &str, pool_size: u32) -> Result<DatabaseConnection, DbErr> {
 	let opts = sqlite_connect_options(url)?;
 
 	let pool_size = pool_size.max(1);
