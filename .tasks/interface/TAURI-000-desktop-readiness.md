@@ -7,7 +7,7 @@ parent: UI-000
 priority: High
 milestone: M3
 tags: [epic, tauri, desktop, quality]
-last_updated: 2026-10-16
+last_updated: 2026-11-05
 sprint: S05
 ---
 
@@ -22,6 +22,13 @@ Make the Tauri desktop app honest and release-ready. Every visible action must e
 - Overview, File Kinds, Sources, Redundancy, Settings, tabs, sidebar, inspector, and auxiliary windows render against real runtime state.
 - Favorites use persisted state and are covered by TAURI-002.
 - Spacebot is hidden or explicitly unavailable when its private runtime is absent; its real-runtime contract test remains open.
+- Windows (TAURI-016, Done 2026-11-05): build, tests and installers in CI; `v3.0.0` published the `.exe` and `.msi`.
+
+## Remaining children
+
+- TAURI-012: the regression matrix on macOS and Windows, by hand.
+- REL-001: signed releases.
+- TAURI-017: administrator retries on Windows (backlog, after REL-001).
 
 ## Acceptance Criteria
 

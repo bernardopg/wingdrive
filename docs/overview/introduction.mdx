@@ -5,9 +5,9 @@ sidebarTitle: Introduction
 ---
 
 <Callout icon="planet-ringed" color="#36A3FF" iconType="solid">
-**v2.0.0-alpha.1 Released: December 26, 2025**
+**v3.0.0 Released: November 5, 2026**
 
-The complete ground-up rewrite is here. This is an alpha release for testing and feedback. macOS and Linux are supported now. Windows support coming in alpha.2.
+The first release with Windows installers (`.exe` and `.msi`, beta and unsigned), next to the Linux AppImage, `.deb` and AUR package. Linux is the supported platform; macOS builds from source.
 
 Read the [full release notes](https://github.com/bernardopg/wingdrive/releases) for more details on the rewrite.
 
@@ -85,18 +85,18 @@ This is infrastructure for the next era of computing.
 
 **Platform Support**
 
-- macOS: Fully supported
-- Linux: Fully supported
-- Windows: Coming in alpha.2
-- iOS & Android: Coming soon
+- Linux: Supported (AppImage, `.deb`, AUR `wingdrive-bin`)
+- Windows 10 and 11 (x64): Beta, unsigned installers since 3.0.0
+- macOS: Builds from source; signed releases planned for milestone M3
+- Android: In development
+- iOS: Private prototype
 
 ### Coming Soon
 
-- **alpha.2**: Windows support
+- **Milestone M3**: signed releases for Windows and macOS
 - **Future releases**:
   - iOS app
   - Android app
-  - Server edition for headless deployments
   - Extension SDK (stable API)
   - AI integration with local models
 
@@ -122,15 +122,15 @@ Files stay in place. WingDrive makes them universally addressable with rich meta
 
 This is an alpha release. We need community help validating:
 
-- macOS and Linux stability
+- Linux and Windows stability
 - v1 to v2 library migration
 - Multi-device sync scenarios
 - Performance at scale
 
 <Tip>
-	macOS and Linux users: Test indexing, multi-device sync, and cloud
-	integration. Report bugs on GitHub. All feedback helps improve
-	stability for the beta release.
+	Linux and Windows users: Test indexing, multi-device sync, and cloud
+	integration. Report bugs on GitHub. On Windows, every report helps the
+	installers leave beta.
 </Tip>
 
 ## For Developers

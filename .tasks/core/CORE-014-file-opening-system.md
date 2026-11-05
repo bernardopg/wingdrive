@@ -6,7 +6,7 @@ assignee: jamiepine
 priority: High
 tags: [core, platform, file-operations]
 whitepaper: DESIGN-open-with.md
-last_updated: 2026-10-16
+last_updated: 2026-11-05
 related_tasks: [EXPL-004, DESK-004]
 milestone: M3
 sprint: S05
@@ -116,3 +116,7 @@ v1 implementation can be found at:
 
 Linux is covered by DESK-004. The macOS and Windows backends need real machines, so this task
 moves to M3 and runs with the TAURI-012 matrix in S05.
+
+2026-11-05: `file-opening-windows` builds, passes clippy and runs its tests on the Windows CI
+runner, and ships in the `v3.0.0` installers. The Windows boxes above still need a check by hand
+on a real machine, listed in TAURI-012.

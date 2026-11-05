@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-11-03. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-11-05. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -65,12 +65,12 @@ fechar o M2:
 | DESK-017 | Um dia inteiro de uso do pacote AUR, sem voltar a outro file manager | S04 |
 | DESK-033 | Teste com a senha real no prompt do polkit | S04 |
 | WATCH-006 | Conexão no login com o pacote AUR (o `wing` já vai no pacote) | S04 |
-| INDEX-010 | Checagem visual de tags e troca de biblioteca | S04 |
 | DESK-013 | Revisão pt no Crowdin e verificação do pacote (passos 3 a 5) | S04 |
 | DESK-043 | Memória do WebKit bimodal, crescendo ociosa no modo alto (derrubou o smoke da release 2.4.0) | S04 |
-| DESK-041, DESK-042 | Escape no View Settings, busca vazia e nomes acessíveis da barra (backlog) | — |
-| DESK-016 | Explorer com painel duplo (F3); exige tirar o shell do router de cada aba | S05 |
+| DESK-016 | Explorer com painel duplo (F3): feito no app desktop em 2026-11-04, falta conferir no pacote | S05 |
 | DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
+
+INDEX-010, DESK-041 e DESK-042 fecharam em 2026-11-03.
 
 O M2 fecha quando o DESK-000 estiver Done com evidência do pacote AUR e um dia inteiro de uso sem
 voltar a outro file manager (DESK-017). Previsão: fim do S05 (2026-11-25).
@@ -79,14 +79,26 @@ voltar a outro file manager (DESK-017). Previsão: fim do S05 (2026-11-25).
 
 Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
 
-- `TAURI-016` base do Windows: build, testes, CI e instaladores `.exe` e `.msi` (feita; saiu na `v3.0.0`)
-- `TAURI-012` matriz de runtime em macOS e Windows (preparação no S05)
-- `CORE-014` abrir arquivos e "Abrir com" no macOS e no Windows (roda com a TAURI-012)
-- `REL-001` releases assinados com credenciais do WingDrive: CI, release e imagem GHCR já rodam no
-  repositório; falta a assinatura (plano no S05)
-- Assinatura e instaladores por plataforma
-- `FILE-007` plano de preflight para copiar, mover e apagar (item 7 do levantamento do upstream de 14/10)
-- `FILE-008` journal de jobs e undo para cópia, sobrescrita e lixeira (item 7 do levantamento do upstream de 14/10)
+Estado em 2026-11-05: a `v3.0.0` saiu com os primeiros instaladores Windows (`.exe` e `.msi`, sem
+assinatura) ao lado dos pacotes Linux. Os jobs Windows do CI são required checks no `main`. O
+Windows está em beta: tudo passa no CI e no smoke dos instaladores, mas ninguém testou à mão numa
+máquina real. O macOS ainda só compila a partir do código.
+
+Done no M3: `TAURI-016` (base do Windows, CI e instaladores) e `FILE-007` (preflight de copiar,
+mover e apagar).
+
+| Ordem | Task | O que falta | Sprint |
+|---|---|---|---|
+| 1 | TAURI-012 | Matriz de regressão à mão: rodada no Windows com a `v3.0.0` e as checagens que sobraram da TAURI-016; macOS depois | S05 |
+| 2 | CORE-014 | "Abrir com" e abrir arquivos no Windows e no macOS, conferidos na rodada da TAURI-012 | S05 |
+| 3 | REL-001 | Assinatura: updater do Tauri, Authenticode, Apple, Google Play; AUR só em tags estáveis | S05 |
+| 4 | TAURI-017 | Repetir como administrador no Windows via UAC; espera o certificado da REL-001 | — |
+| 5 | CLI-002 | `wing update` não acha binários nos releases do WingDrive | — |
+| 6 | FILE-008 | Journal de jobs e undo para cópia, sobrescrita e lixeira (item 7 do levantamento do upstream de 14/10) | — |
+| 7 | TAURI-000 | Fecha quando TAURI-012 e REL-001 fecharem | S05 |
+
+O M3 fecha com a TAURI-012 Done em Windows e macOS, e um release assinado em todas as plataformas
+que têm credencial.
 
 ### Cobertura de testes no M2 e M3
 
@@ -137,6 +149,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-05 | Release `v3.0.0` com os primeiros instaladores Windows (#331 a #334). TAURI-016 Done, jobs Windows viram required checks (#336) e o README marca o Windows como beta (#335). Sobras da TAURI-016 distribuídas: checagens à mão na TAURI-012, assinatura na REL-001, UAC na nova TAURI-017. Nova CLI-002 (`wing update` sem binários no release). Tabela do M3 com ordem |
 | 2026-11-03 | COV-00 e COV-01 a COV-12: metas progressivas de cobertura, prioridade em core/desktop/CLI e critérios de evidência, sem ampliar sprints já comprometidos |
 | 2026-11-02 | WingDrive independente (#310): tasks FORK-* removidas do tracker (histórico no git); NET-007 herda o critério aberto da FORK-007, REL-001 (S05) a assinatura da FORK-002, FORK-009 descartada; levantamentos do upstream em `docs/design/history/`. S01 fechado com review e retro. Checagem no pacote fecha 16 tasks do S04 e acha DESK-039 a DESK-042; release 2.4.0 |
 | 2026-10-28 | #296 mergeado; S02 e S03 fechados com review e retro; sobras do S03 (DESK-021, DESK-023, DESK-024, WATCH-006, MOB-005, MOB-009) no S04; DESK-034 e as duas falhas da DESK-029 (emblema Git nos filhos e contagem da barra de status) entram no S04; DESK-016 ganha notas de desenho |
