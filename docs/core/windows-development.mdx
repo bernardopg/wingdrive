@@ -115,8 +115,9 @@ them. `REL-001` tracks signing.
 
 `TypeScript (Windows)` and `Rust Workspace (Windows)` in `.github/workflows/ci.yml`
 are separate jobs, because a matrix would rename the checks the `main` ruleset
-requires. They are not required checks yet. Add them to
-`.github/rulesets/main.json` once they have stayed green.
+requires. Both are required checks in `.github/rulesets/main.json`. With the
+cache from the nightly run on `main`, the Rust job takes about 25 minutes; a
+cold build takes about 70.
 
 `.github/workflows/windows-bundle.yml` builds and verifies both installers. The
 Release workflow calls it for a tag, and `publish` needs it. It also runs on pull

@@ -1,7 +1,7 @@
 ---
 id: TAURI-016
 title: Windows port baseline, CI and installers
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: TAURI-000
 priority: High
@@ -9,7 +9,7 @@ milestone: M3
 sprint: S05
 tags: [tauri, windows, ci, release, platform]
 related_tasks: [TAURI-012, CORE-014, REL-001, TAURI-010]
-last_updated: 2026-11-04
+last_updated: 2026-11-05
 ---
 
 ## Description
@@ -26,11 +26,11 @@ Portuguese. How to set up and work on Windows is in
 - [x] Windows jobs in CI and in the Release workflow
 - [x] `scripts/release/windows_smoke.ps1` installs, runs and uninstalls a bundle
 - [x] Build `.exe` and `.msi` with the workflow's command
-- [ ] Run the Windows jobs on GitHub and fix what only fails on the runner. On 2026-11-05
-  `Rust Workspace (Windows)` became `continue-on-error`, so the release did not wait on
-  two-hour runs. Clippy and the other Rust gates pass on the runner; four
-  `sync_realtime_test` tests still time out there. Make the job blocking again once fixed.
-- [ ] Add the Windows jobs to the required checks in `.github/rulesets/main.json`
+- [x] Run the Windows jobs on GitHub and fix what only fails on the runner. On 2026-11-05
+  `Rust Workspace (Windows)` became `continue-on-error` while four `sync_realtime_test`
+  tests timed out. With WAL on `sync.db` and the job database they passed, and the job
+  stayed green on six runs in a row (#331 to #334, and the nightly run). It blocks again.
+- [x] Add the Windows jobs to the required checks in `.github/rulesets/main.json`
 
 ## Acceptance Criteria
 
@@ -41,8 +41,8 @@ Portuguese. How to set up and work on Windows is in
 - [x] The desktop app opens through `just dev-desktop` and loads a library
 - [x] Location, indexing, search and volume listing work through the CLI
 - [x] `.exe` and `.msi` install, run and uninstall through `windows_smoke.ps1`, locally, on 2026-11-04
-- [ ] `core-windows` and `frontend-windows` pass on GitHub
-- [ ] A `v*` tag publishes the `.exe`, the `.msi` and `SHA256SUMS-windows`
+- [x] `core-windows` and `frontend-windows` pass on GitHub
+- [x] A `v*` tag publishes the `.exe`, the `.msi` and `SHA256SUMS-windows` (`v3.0.0`, 2026-11-05)
 
 ## Findings
 
@@ -87,7 +87,7 @@ Smart App Control blocked freshly built unsigned binaries until it was turned of
 development machine. `docs/core/windows-development.mdx` shows how to recognize it. It may
 also block unsigned installers on users' machines (REL-001).
 
-Traps in the runner setup, handled but not yet proven on GitHub:
+Traps in the runner setup, all handled and proven on GitHub:
 
 - The image ships LLVM 20 and MinGW on the PATH. `setup-system` removes them.
 - Windows PowerShell's `>>` writes `GITHUB_ENV` as UTF-16, so those steps use `pwsh`.
@@ -97,7 +97,8 @@ Traps in the runner setup, handled but not yet proven on GitHub:
   The cause was `sync.db` and the job database, opened with SQLite's defaults (rollback
   journal, `synchronous=FULL`): every commit flushed and recreated a journal, which is slow
   on Windows. They now use the library database's WAL settings; on Linux one sync test went
-  from 2930 `fsync` calls to 131. A timed-out send also drops the receiver's apply midway;
+  from 2930 `fsync` calls to 131. On the runner, all seven `sync_realtime_test` tests then
+  passed in 95 s. A timed-out send also drops the receiver's apply midway;
   the retry queue covers it, but a slow peer can still miss a batch until the retry succeeds.
 
 ## Still open
@@ -129,13 +130,16 @@ Still open:
   coreutils, and an elevated `cmd` or PowerShell command line must not be built from paths.
 - [ ] Authenticode signing for the installers (add to REL-001)
 - [ ] Runtime checks not done yet: daemon service through `schtasks`, "Abrir com" (CORE-014), the TAURI-006 checklist (TAURI-012)
-- [ ] The README still marks Windows as planned. Change the badge after the first published release.
+- [x] The README marks Windows as beta and lists the installers (#335).
 
 ## Handoff
 
-The runtime fixes merged in #330 and the CI and installers in #331. Installers for any branch
-come from `gh workflow run windows-bundle.yml --ref <branch>`, in the run's artifacts.
+The runtime fixes merged in #330 and the CI and installers in #331. `v3.0.0` published the
+first Windows installers on 2026-11-05, and both Windows CI jobs are required checks.
+Installers for any branch come from `gh workflow run windows-bundle.yml --ref <branch>`, in
+the run's artifacts.
 
-To close this task: publish a `v*` tag with the Windows jobs green, then add them to the
-required checks. Everything needed to resume from Linux is in this file and in
+The items left under "Still open" belong elsewhere: the manual checks to TAURI-012 and
+CORE-014, signing to REL-001. Administrator retries through UAC need a task of their own.
+Everything needed to resume from Linux is in this file and in
 `docs/core/windows-development.mdx`.

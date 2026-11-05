@@ -33,6 +33,8 @@
           { "context": "Repository Metadata", "integration_id": 15368 },
           { "context": "TypeScript", "integration_id": 15368 },
           { "context": "Rust Workspace", "integration_id": 15368 },
+          { "context": "TypeScript (Windows)", "integration_id": 15368 },
+          { "context": "Rust Workspace (Windows)", "integration_id": 15368 },
           { "context": "TruffleHog", "integration_id": 15368 }
         ]
       }

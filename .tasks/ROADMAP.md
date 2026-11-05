@@ -79,7 +79,7 @@ voltar a outro file manager (DESK-017). Previsão: fim do S05 (2026-11-25).
 
 Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
 
-- `TAURI-016` base do Windows: build, testes, CI e instaladores `.exe` e `.msi` (em andamento)
+- `TAURI-016` base do Windows: build, testes, CI e instaladores `.exe` e `.msi` (feita; saiu na `v3.0.0`)
 - `TAURI-012` matriz de runtime em macOS e Windows (preparação no S05)
 - `CORE-014` abrir arquivos e "Abrir com" no macOS e no Windows (roda com a TAURI-012)
 - `REL-001` releases assinados com credenciais do WingDrive: CI, release e imagem GHCR já rodam no
