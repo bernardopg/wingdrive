@@ -21,7 +21,7 @@
   <a href="https://aur.archlinux.org/packages/wingdrive-bin/"><img src="https://img.shields.io/aur/version/wingdrive-bin?logo=archlinux&logoColor=white&label=AUR&color=1793d1" alt="AUR"/></a>
   <img src="https://img.shields.io/badge/Linux-supported-2ea44f?logo=linux&logoColor=white" alt="Linux: supported"/>
   <img src="https://img.shields.io/badge/macOS-planned%20(M3)-6b7280?logo=apple&logoColor=white" alt="macOS: planned"/>
-  <img src="https://img.shields.io/badge/Windows-planned%20(M3)-6b7280?logo=windows&logoColor=white" alt="Windows: planned"/>
+  <img src="https://img.shields.io/badge/Windows-beta-d97706?logo=windows&logoColor=white" alt="Windows: beta"/>
   <img src="https://img.shields.io/badge/Android-in%20development-6b7280?logo=android&logoColor=white" alt="Android: in development"/>
   <a href="https://github.com/sponsors/bernardopg"><img src="https://img.shields.io/badge/sponsor-%E2%99%A5-db2777?logo=githubsponsors&logoColor=white" alt="Sponsor"/></a>
 </p>
@@ -44,7 +44,8 @@ drives and cloud volumes into one library. Files stay where they are; the index 
 browse, search and recognize across your own devices. No account, no telemetry, no central server.
 
 > **Alpha.** Linux is the supported platform. The current goal (milestone M2) is to replace
-> Dolphin, Nautilus or Yazi as the default file manager. macOS and Windows build from source.
+> Dolphin, Nautilus or Yazi as the default file manager. Windows installers ship since 3.0 as a
+> beta: they are unsigned and less tested than Linux. macOS builds from source.
 
 ## Install
 
@@ -52,6 +53,7 @@ browse, search and recognize across your own devices. No account, no telemetry, 
 |---|---|
 | Arch Linux and derivatives | `yay -S wingdrive-bin` |
 | Any Linux (x86_64) | AppImage or `.deb` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS` |
+| Windows 10 and 11 (x64), beta | `.exe` or `.msi` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS-windows`. Unsigned, so SmartScreen warns |
 | Headless server | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |
 | From source | `just setup && just dev-desktop` ([guide](./docs/readme/installation.md)) |
 

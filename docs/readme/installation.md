@@ -7,7 +7,10 @@ WingDrive builds with the Rust toolchain pinned in `rust-toolchain.toml` (instal
 Get the latest build from [GitHub Releases](https://github.com/bernardopg/wingdrive/releases):
 
 - **Linux:** AppImage or Debian package
-- **macOS and Windows:** build from source for now; prebuilt releases are planned for milestone M3
+- **Windows 10 and 11 (x64), beta:** NSIS installer (`.exe`) or `.msi`. They are not signed yet, so
+  SmartScreen warns on first run; choose "More info" and "Run anyway". Check the download against
+  `SHA256SUMS-windows`.
+- **macOS:** build from source for now; prebuilt releases are planned for milestone M3
 - **Docker:** `ghcr.io/bernardopg/wingdrive/server` for headless deployments
 
 ## Option 2: Arch-based systems (AUR)
