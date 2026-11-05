@@ -21,7 +21,7 @@
   <a href="https://aur.archlinux.org/packages/wingdrive-bin/"><img src="https://img.shields.io/aur/version/wingdrive-bin?logo=archlinux&logoColor=white&label=AUR&color=1793d1" alt="AUR"/></a>
   <img src="https://img.shields.io/badge/Linux-suportado-2ea44f?logo=linux&logoColor=white" alt="Linux: suportado"/>
   <img src="https://img.shields.io/badge/macOS-planejado%20(M3)-6b7280?logo=apple&logoColor=white" alt="macOS: planejado"/>
-  <img src="https://img.shields.io/badge/Windows-planejado%20(M3)-6b7280?logo=windows&logoColor=white" alt="Windows: planejado"/>
+  <img src="https://img.shields.io/badge/Windows-beta-d97706?logo=windows&logoColor=white" alt="Windows: beta"/>
   <img src="https://img.shields.io/badge/Android-em%20desenvolvimento-6b7280?logo=android&logoColor=white" alt="Android: em desenvolvimento"/>
   <a href="https://github.com/sponsors/bernardopg"><img src="https://img.shields.io/badge/patrocinar-%E2%99%A5-db2777?logo=githubsponsors&logoColor=white" alt="Patrocinar"/></a>
 </p>
@@ -45,7 +45,8 @@ tudo rápido de navegar, buscar e reconhecer entre os seus aparelhos. Sem conta,
 servidor central.
 
 > **Alpha.** O Linux é a plataforma suportada. A meta atual (milestone M2) é substituir o Dolphin,
-> o Nautilus ou o Yazi como gerenciador de arquivos padrão. macOS e Windows compilam a partir do código.
+> o Nautilus ou o Yazi como gerenciador de arquivos padrão. Desde a 3.0 há instaladores para Windows,
+> em beta: não são assinados e foram menos testados que no Linux. O macOS compila a partir do código.
 
 ## Instalação
 
@@ -53,6 +54,7 @@ servidor central.
 |---|---|
 | Arch Linux e derivados | `yay -S wingdrive-bin` |
 | Qualquer Linux (x86_64) | AppImage ou `.deb` em [Releases](https://github.com/bernardopg/wingdrive/releases/latest), com `SHA256SUMS` |
+| Windows 10 e 11 (x64), beta | `.exe` ou `.msi` em [Releases](https://github.com/bernardopg/wingdrive/releases/latest), com `SHA256SUMS-windows`. Sem assinatura, então o SmartScreen avisa |
 | Servidor sem interface | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |
 | A partir do código | `just setup && just dev-desktop` ([guia](./docs/readme/installation.md)) |
 
