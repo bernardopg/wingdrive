@@ -7,7 +7,7 @@ parent: DESK-000
 priority: High
 milestone: M2
 tags: [desktop, performance, memory, webkitgtk]
-last_updated: 2026-11-03
+last_updated: 2026-11-05
 ---
 
 ## Description
@@ -35,6 +35,7 @@ The growth in the high mode is real and would show up as the app sitting in the 
 - [x] Find what allocates while idle in the high mode (timers, animation frames, query refetch,
       image decoding) and what decides the mode at startup
 - [ ] Ten packaged runs with 15 tabs stay within the 550 MiB budget and flat over 90 s idle
+      (2026-11-05: flat in all ten, within budget in four; see Evidence)
 - [x] `smoke.py` samples memory over time, so a slow leak fails it instead of a lucky snapshot
 
 ## Evidence
@@ -65,3 +66,33 @@ twenty; a second high session would need a look at what the renderer holds at st
 
 Open: the ten runs against the 550 MiB budget need the bundled WebKit of the AppImage, which the
 release job measures. Locally the system WebKit of Arch puts the total at about 590 to 610 MiB.
+
+2026-11-05, ten packaged runs on the author's machine (Arch, 12 cores, 38 GiB). `v3.0.0` AppImage from
+the GitHub Release (checksum verified), bundled WebKit, Xvfb 1920x1080, one fresh isolated instance per
+run. The script calls `session()` from `scripts/release/smoke.py` unchanged, so each run opens 15 tabs
+with Ctrl+T. The only change from the release gate is the idle window, 90 s instead of 30 s, sampled
+every 5 s. Total PSS of the app and its children, peak over the idle window, MiB:
+
+| Run | Peak | WebKitWebProcess | Change over 90 s idle |
+|---|---|---|---|
+| 1 | 540.1 | 317.8 | -10.6 |
+| 2 | 526.8 | 298.1 | -8.8 |
+| 3 | 523.8 | 294.3 | -5.9 |
+| 4 | 590.0 | 362.5 | -6.6 |
+| 5 | 596.4 | 363.9 | -4.9 |
+| 6 | 603.7 | 372.5 | -4.3 |
+| 7 | 605.2 | 369.4 | -5.7 |
+| 8 | 543.3 | 308.3 | -9.1 |
+| 9 | 605.3 | 372.9 | -5.8 |
+| 10 | 601.8 | 370.5 | -5.6 |
+
+- Flat: no run rose by more than 0.2 MiB above its first idle sample, and every run ended lower. The
+  idle growth of the high mode is gone.
+- Budget: four of ten under 550 MiB. The bimodal start is still there and decides the result: the
+  renderer settles at 294 to 318 MiB (total 524 to 543) or at 362 to 373 MiB (total 590 to 605),
+  six times out of ten in the high mode here. WingDrive (114 to 118 MiB), the network process (about
+  30) and the daemon (83 to 91) do not change between modes.
+- With six in ten sessions high, the release gate (two of three sessions under 550 MiB) would fail
+  more often than it passes on this machine; the `v3.0.0` release run passed on the GitHub runner.
+  Next: find what the renderer allocates in the high mode at startup (the 65 MiB step), for example
+  with a WebKit memory dump of one high and one low session, before touching the budget.
