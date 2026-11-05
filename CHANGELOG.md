@@ -66,6 +66,16 @@ version in the workspace manifests and the matching `v*` git tag.
 - "Retry as administrator" no longer appears on Windows and macOS, where it
   always failed. It stays on Linux.
 
+### Security
+
+- Apache Arrow moves to 60.1.0, which fixes out-of-bounds reads on malformed
+  run-end encoded arrays (RUSTSEC-2026-0442).
+- `task-validator` and `wing-bench` read YAML with `serde-saphyr` instead of
+  the deprecated `serde_yaml`, which removes the unmaintained `unsafe-libyaml`
+  (RUSTSEC-2024-0449). A test parses every shipped benchmark recipe.
+- `osv-scanner.toml` records why each remaining advisory has no fix this
+  repository can reach, and each entry expires on 2027-02-05 for review.
+
 ## 2.4.1 — 2026-11-03
 
 Fixes the idle memory growth that failed the 2.4.0 release memory check, and

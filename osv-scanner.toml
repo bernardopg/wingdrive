@@ -1,5 +1,9 @@
 # OSV-Scanner decisions for advisories with no fix reachable from this repository.
-# Each entry mirrors .cargo/audit.toml and deny.toml, where the reasoning is written out.
+# The first two mirror .cargo/audit.toml and deny.toml, where the reasoning is written out.
+# The rest are advisories that cargo-deny reports without failing (unmaintained or unsound
+# crates pulled in transitively) or npm advisories in development tooling. Each one expires,
+# so the Security tab shows it again for review. Remove an entry once its fix lands.
+# Reviewed 2026-11-05.
 
 [[IgnoredVulns]]
 id = "RUSTSEC-2023-0071"
@@ -8,3 +12,62 @@ reason = "rsa via opendal's reqsign; WingDrive never decrypts attacker-supplied 
 [[IgnoredVulns]]
 id = "RUSTSEC-2026-0344"
 reason = "ruzstd via wasmer-compiler, which never decompresses; the fix needs wasmer >= 7.3."
+
+# Rust
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0429"
+reason = "glib 0.18.5 is patches/glib-0.18.5, which carries the upstream fix (patches/README.md). The lockfile still names 0.18.5."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0186"
+ignoreUntil = 2027-02-05
+reason = "memmap2 0.6.2 via wasmer's shared-buffer 0.1.4 (latest), which only calls Mmap::map. The unchecked ranges are in advise_range and flush_range. wasmer is pinned at 7.1, see core/Cargo.toml."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0370"
+ignoreUntil = 2027-02-05
+reason = "zvariant: unmaintained, merged into zbus 6. Pulled by zbus 5 through keyring's secret-service and tauri-plugin-single-instance, both at their latest. The desktop app itself uses zbus 6."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0371"
+ignoreUntil = 2027-02-05
+reason = "zbus_names: unmaintained, merged into zbus 6. Same path as zvariant (RUSTSEC-2026-0370)."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0372"
+ignoreUntil = 2027-02-05
+reason = "zvariant_derive: unmaintained, merged into zbus 6. Same path as zvariant (RUSTSEC-2026-0370)."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0173"
+ignoreUntil = 2027-02-05
+reason = "proc-macro-error2: unmaintained compile-time macro helper, via wasmer-derive 7.1 (pinned, see core/Cargo.toml)."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0370"
+ignoreUntil = 2027-02-05
+reason = "proc-macro-error: unmaintained compile-time macro helper, via glib-macros 0.18 in Tauri's GTK3 stack on Linux."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0436"
+ignoreUntil = 2027-02-05
+reason = "paste: unmaintained compile-time macro, via netlink-packet-core 0.8 in if-watch 3.2.2 (latest)."
+
+# npm. Each package is only in development tooling (Jest, ESLint, the Expo CLI and SVGR),
+# runs on the repository's own files and patterns, and is not part of any shipped bundle.
+
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-02-05
+reason = "deepmerge 4.3.1 (CVE-2026-93753) has no patched release. Used by jest-config and @svgr/plugin-svgo to merge their own configuration objects."
+
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2027-02-05
+reason = "minimatch 9 and 10 (CVE-2026-118764), fixed only in 11, which removes makeRe and the AST class. ESLint, typescript-eslint and glob require ^10. The patterns are the repository's own."
+
+[[IgnoredVulns]]
+id = "GHSA-3g3m-2fjr-6pw4"
+ignoreUntil = 2027-02-05
+reason = "glob 10 and 13 (CVE-2026-118773), fixed only in 14, which changes ignore and walk semantics. Jest and the Expo CLI require ^10 and ^13, and pass no AbortSignal."
