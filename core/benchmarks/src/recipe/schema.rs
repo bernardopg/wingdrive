@@ -89,3 +89,32 @@ pub struct ContentGen {
 fn default_sample_block_size() -> u64 {
 	10 * 1024
 }
+
+#[cfg(test)]
+mod tests {
+	use super::Recipe;
+
+	/// Every recipe shipped in `recipes/` must parse, so a YAML parser change or a schema
+	/// change that breaks one fails here instead of at `wing-bench mkdata`.
+	#[test]
+	fn shipped_recipes_parse() {
+		let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("recipes");
+		let mut parsed = 0;
+		for entry in std::fs::read_dir(&dir).expect("recipes directory") {
+			let path = entry.expect("recipe entry").path();
+			if path.extension().and_then(|e| e.to_str()) != Some("yaml") {
+				continue;
+			}
+			let text = std::fs::read_to_string(&path).expect("readable recipe");
+			let recipe: Recipe = serde_saphyr::from_str(&text)
+				.unwrap_or_else(|e| panic!("{} does not parse: {e}", path.display()));
+			assert!(
+				!recipe.locations.is_empty(),
+				"{} has no locations",
+				path.display()
+			);
+			parsed += 1;
+		}
+		assert!(parsed > 0, "no recipes found in {}", dir.display());
+	}
+}

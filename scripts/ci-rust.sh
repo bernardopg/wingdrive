@@ -78,6 +78,9 @@ run_full_tests() {
 	cargo test --locked -p "$file_opening_crate"
 	cargo test --locked -p file-clipboard-windows
 
+	step "Test developer tools"
+	cargo test --locked -p wing-bench --lib
+
 	step "Test two-device sync"
 	cargo test --locked -p wing-core \
 		--test sync_metrics_test \

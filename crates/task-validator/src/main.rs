@@ -166,7 +166,7 @@ fn list_tasks(
 
 		if content.starts_with("---") {
 			if let Some(front_matter_str) = content.split("---").nth(1) {
-				match serde_yaml::from_str::<TaskFrontMatter>(front_matter_str) {
+				match serde_saphyr::from_str::<TaskFrontMatter>(front_matter_str) {
 					Ok(front_matter) => tasks.push(front_matter),
 					Err(e) => eprintln!("Error parsing YAML in {:?}: {}", path, e),
 				}
@@ -329,7 +329,7 @@ fn validate_tasks() -> Result<(), Box<dyn std::error::Error>> {
 
 		if content.starts_with("---") {
 			if let Some(front_matter_str) = content.split("---").nth(1) {
-				match serde_yaml::from_str::<Value>(front_matter_str) {
+				match serde_saphyr::from_str::<Value>(front_matter_str) {
 					Ok(yaml_value) => {
 						let errors: Vec<_> = compiled_schema.iter_errors(&yaml_value).collect();
 						if !errors.is_empty() {
@@ -383,7 +383,7 @@ fn export_tasks(output_path: &str) -> Result<(), Box<dyn std::error::Error>> {
 			let front_matter_str = parts[1];
 			let body = parts[2].trim();
 
-			match serde_yaml::from_str::<TaskFrontMatter>(front_matter_str) {
+			match serde_saphyr::from_str::<TaskFrontMatter>(front_matter_str) {
 				Ok(front_matter) => {
 					// Extract category from path (.tasks/core/... -> "core")
 					let category = path
