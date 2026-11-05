@@ -1,3 +1,4 @@
+import type {DesktopNotificationRequest} from '../components/JobManager/jobNotification';
 import {createContext, PropsWithChildren, useContext} from 'react';
 
 /** Files dragged from the operating system into a window (Tauri only) */
@@ -117,6 +118,9 @@ export type Platform = {
 	undoEmptyFolder?(path: string, expected: [string, string]): Promise<void>;
 	/** Remove a file or link this app created, if it is unchanged and empty */
 	undoNewFile?(path: string, expected: [string, string], expectedHash?: string): Promise<void>;
+
+	/** Show a native desktop notification carrying WingDrive's name and logo */
+	showDesktopNotification?(request: DesktopNotificationRequest): Promise<void>;
 
 	/** Open file with specific application */
 	openPathWithApp?(path: string, appId: string): Promise<OpenResult>;
@@ -378,7 +382,7 @@ export interface MenuItemState {
 	enabled: boolean;
 }
 
-const PlatformContext = createContext<Platform | undefined>(undefined);
+export const PlatformContext = createContext<Platform | undefined>(undefined);
 
 export function usePlatform(): Platform {
 	const ctx = useContext(PlatformContext);

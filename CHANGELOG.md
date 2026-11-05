@@ -7,6 +7,16 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Added
 
+- Desktop notifications when a copy, move or other file job ends while
+  WingDrive is in the background. They carry WingDrive's name, desktop entry
+  and logo on every Linux notification server (GNOME Shell, Plasma,
+  xfce4-notifyd, mako, dunst, swaync, Quickshell shells), use the
+  notification portal under Flatpak, and use a toast under the installer's
+  AppUserModelID on Windows.
+- Linux packages install the WingDrive icon at 16, 48, 256 and 512 px and as
+  a scalable SVG, so docks and notification servers no longer scale a 32 px
+  icon.
+
 - Windows releases: `windows-bundle.yml` builds an NSIS `.exe` and an `.msi`,
   installs each one, runs the daemon and the app from the installed files, and
   uninstalls them. The Release workflow publishes them, and any branch can
@@ -20,6 +30,16 @@ version in the workspace manifests and the matching `v*` git tag.
 - `just dev-desktop` works on Windows through `scripts/dev-isolated.ps1`.
 
 ### Fixed
+
+- WingDrive no longer takes `org.freedesktop.FileManager1` away from the
+  system file manager: it claims the name only when it is the default handler
+  for `inode/directory` (or `WINGDRIVE_FILEMANAGER1=1`). The AUR package no
+  longer installs `com.wingdrive.FileManager1.service`, which dbus-broker
+  reported as "not named after the D-Bus name" and which made it ignore
+  Dolphin's activation file as a duplicate.
+- The window's WM_CLASS and Wayland app_id are always `WingDrive`, matching
+  `StartupWMClass`. Launching through `/usr/bin/wingdrive` used to produce
+  `Wingdrive`, so docks showed an unknown app.
 
 - A library no longer stays locked for up to an hour after a crash on Windows
   in languages where the `tasklist` "no tasks" message wraps onto two lines,

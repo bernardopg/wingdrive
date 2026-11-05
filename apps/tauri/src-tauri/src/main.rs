@@ -16,6 +16,7 @@ mod keybinds;
 mod launch;
 #[cfg(target_os = "linux")]
 mod network_discovery;
+mod notifications;
 mod server;
 mod terminal;
 mod undo;
@@ -2421,6 +2422,8 @@ fn main() {
 		// GTK/WebKit's Wayland startup failed in runtime validation; prefer available XWayland.
 		std::env::set_var("GDK_BACKEND", file_opening_linux::PREFERRED_GDK_BACKEND);
 	}
+	// Before GTK starts: the desktop matches this to the .desktop file.
+	notifications::apply_process_identity();
 	// Initialize logging
 	tracing_subscriber::registry()
 		.with(
@@ -2463,6 +2466,7 @@ fn main() {
 		.manage(launch::PendingOpenRequests::new(launch_options.requests))
 		.manage(launch::StartHidden(launch_options.hidden.into()))
 		.manage(terminal::TerminalSessions::default())
+		.manage(notifications::Notifier::default())
 		.plugin(tauri_plugin_clipboard_manager::init())
 		.plugin(tauri_plugin_dialog::init())
 		.plugin(tauri_plugin_fs::init())
@@ -2560,7 +2564,8 @@ fn main() {
 			network_discovery::discover_network_servers,
 			keybinds::register_keybind,
 			keybinds::unregister_keybind,
-			keybinds::get_registered_keybinds
+			keybinds::get_registered_keybinds,
+			notifications::show_desktop_notification
 		])
 		.setup(|app| {
 			// Setup native menu
