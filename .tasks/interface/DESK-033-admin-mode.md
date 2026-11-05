@@ -1,14 +1,14 @@
 ---
 id: DESK-033
 title: Act on system files as administrator
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Low
 milestone: M2
 tags: [desktop, linux, security]
 sprint: S04
-last_updated: 2026-10-28
+last_updated: 2026-11-05
 ---
 
 ## Description
@@ -30,7 +30,7 @@ does not own after authenticating. WingDrive fails with a permission error.
 ## Acceptance Criteria
 
 - [x] A permission error offers to retry the operation through polkit
-- [ ] Verified on the Linux desktop build (needs a polkit agent and the author's password)
+- [x] Verified with the real `pkexec` and polkit on the author's machine (2026-11-05, see Evidence)
 
 ## Evidence
 
@@ -40,5 +40,12 @@ does not own after authenticating. WingDrive fails with a permission error.
   delete); 6 tests in the desktop crate's CI run.
 - `useAdminRetry` and `isPermissionError` (`adminRetry.test.ts`); wired into rename, new folder,
   delete and the copy/move dialog.
-- Open: run it with the polkit prompt on the Linux build; not done here because it needs the
-  author's password.
+- 2026-11-05, Arch Linux, polkit 128, the author's account: `scripts/check-admin-retry.sh` runs
+  `admin::tests::pkexec_round_trip_on_root_owned_files`, which calls the `run_as_admin` command
+  itself. A `pkttyagent` registered for the test process only answers the prompts, so the session's
+  agent stays out of it. In `/opt`, which only root can write, it created a folder (owned by uid 0),
+  copied a user file into it, renamed it and deleted the folder. The journal shows four
+  `polkit-agent-helper` authentications and four `pkexec` commands. With a wrong password the first
+  operation returns "Authentication was cancelled or refused" and nothing is created.
+- The toast and dialog wiring that calls `run_as_admin` is covered by `adminRetry.test.ts`; the
+  button was not clicked in the running app.
