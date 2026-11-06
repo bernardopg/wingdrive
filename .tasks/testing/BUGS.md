@@ -175,6 +175,14 @@
 - Correção: a renomeação usa o caminho pedido como destino exato, sem a regra de soltar dentro de pasta; com a correção do conflito acima, um nome ocupado falha e mantém os dois itens.
 - Limite: a ação de renomear continua sem validar o nome antes de criar o job; o erro aparece no resultado do job.
 
+## Testes do task-system dependiam da ordem de execução
+
+- Estado: corrigido; `cargo test -p wing-task-system --test integration_test` passou três vezes seguidas com 10 testes.
+- Local: `crates/task-system/tests/integration_test.rs`, `many_pauses_test`.
+- Reprodução anterior: na execução de `scripts/coverage-rust.sh` de 2026-11-06, 9 dos 10 testes falharam. `many_pauses_test` instalava um subscriber global de tracing; quando rodava antes dos testes com `#[traced_test]`, o primeiro deles parava com `a global default trace dispatcher has already been set` e os demais com `Once instance has previously been poisoned`.
+- Correção: `many_pauses_test` também usa `#[traced_test]`, sem alterar `RUST_LOG` nem instalar subscriber global.
+- Limite: só afeta o runner de cobertura, que testa os crates compartilhados; o CI normal não roda essa suíte.
+
 ## Melhorias sugeridas
 
 Itens vistos na leitura do código, sem teste que comprove falha. O código não foi alterado.
