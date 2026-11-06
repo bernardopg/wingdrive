@@ -3,7 +3,10 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 3.0.1 — 2026-11-06
+
+Bug fixes found by the expanded test suites and by running every fix in a
+real daemon and the desktop app, and the Wingbot name in code and settings.
 
 ### Added
 
@@ -28,6 +31,53 @@ version in the workspace manifests and the matching `v*` git tag.
   "Could not find WingDrive CLI for platform". It no longer downloads or
   replaces binaries, and `--force` is gone. The `beta` and `nightly` channels
   include pre-releases (CLI-002).
+
+- The Wingbot settings use the `wingbot` key and `wingbot_*` fields in
+  `config.app.update`. Settings saved under the old `spacebot` key are read
+  and saved back under `wingbot`; saved tabs and windows still open Wingbot.
+- Renaming refuses a name that is already taken before it starts, instead of
+  failing inside the job. The name limit is 255 bytes on Linux and macOS and
+  255 UTF-16 units on Windows, where accented names were refused too early.
+- Linux CI runs every core unit test and the new file-operation, tag and
+  config suites; core line coverage went from 30% to 44% and the desktop
+  shell from 55% to 61% in a local run.
+
+### Fixed
+
+- Copying or moving a folder recreates the symbolic links inside it. It used
+  to follow them: a link to the folder itself nested copies of it, links to
+  other folders copied data from outside the selection, and dangling links
+  vanished or failed the whole copy. Progress no longer walks the disk for a
+  link to `/`.
+- Deleting a dangling link, permanently or to the trash, works.
+- A copy job no longer overwrites a file that appeared after the conflict
+  question; that item fails with "Destination already exists". Renaming onto
+  an existing folder no longer moves the item inside it.
+- Copies with checksum verification read the destination back, so a bad write
+  is detected. Before, the check compared the source with itself.
+- "Keep both" keeps file name bytes that are not UTF-8.
+- Creating a tag records this device as its creator, not the library. Tag
+  search finds a tag by its alias alone. Tag and Wings colours must be
+  `#RRGGBB` hex, and tag name limits count characters, not bytes.
+- `WingPath::file_name` no longer leaks memory on every sidecar call, and
+  joining cloud paths no longer doubles the `/`.
+- Changing the theme or log level only in letter case is not a change, and an
+  empty Wingbot URL (`/`) is refused.
+- "Show in folder" selects the file on Linux. The D-Bus call was malformed and
+  always fell back to opening the parent folder, which could also hang until
+  the opened program closed. Names with `%`, `#` or `?` reach the file manager
+  intact.
+- Thumbnails and sidecar paths work for named instances and custom data
+  folders.
+- "Start at login" works when the app's path contains `%`, `"`, `$` or a
+  backtick.
+- Two named instances whose names differ only in punctuation or accents no
+  longer share one D-Bus name and steal each other's windows.
+- The local media server no longer advertises bytes for empty files or
+  inverted ranges; sidecar requests with `..` are refused.
+- GVFS mount names and `file://` launch URIs no longer decode incomplete
+  escapes such as `%A` or `%+A`.
+- Network discovery reads `Host=name` entries in `~/.ssh/config`.
 
 ## 3.0.0 — 2026-11-05
 
