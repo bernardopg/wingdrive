@@ -71,3 +71,29 @@ fixo, o que permite rodar essas suítes em paralelo.
 Validação local: `cargo test --locked -p wingdrive --bin WingDrive` com 82 aprovados e um ignorado
 preexistente; `file-opening-linux` com 23; e as suítes de tags e endereçamento do core aprovadas.
 Os testes do desktop não abrem janela Tauri, montagem GVFS real nem outra versão do app.
+
+### Cobertura medida após `test/coverage-more`, 2026-11-06
+
+`scripts/coverage-rust.sh` no Linux (Arch, Rust 1.99.0), num worktree sem `node_modules`, com
+`WING_SKIP_WEB_BUILD=1`. A primeira execução parou em `wing-task-system --test integration_test`
+(teste dependente de ordem, corrigido e registrado em [BUGS.md](BUGS.md)); o passo dos crates
+compartilhados rodou de novo e `cargo llvm-cov report` juntou os perfis das duas execuções.
+Relatório com `python3 scripts/coverage-report.py <dir>/site <dir>/rust.lcov`.
+
+| Componente | Antes (medição local de 2026-11-06) | Depois |
+|---|---|---|
+| Core | 30,2% (24.635/81.455) | 44,1% (35.896/81.472) |
+| Desktop | 54,7% (3.781/6.912) | 60,8% (4.267/7.014) |
+
+O maior ganho do core vem de rodar todos os testes unitários (`cargo test -p wing-core --lib`,
+489 aprovados) no gate Linux, em vez de seis módulos. O denominador do desktop cresceu 102 linhas
+com casos novos em módulos `tests` inline; sem elas, a cobertura fica em cerca de 60,3%.
+
+Arquivos alterados, antes e depois: `ops/files/copy/job.rs` 351/655 para 499/663,
+`ops/files/copy/strategy.rs` 150/716 para 174/723, `ops/files/delete/strategy.rs` 0/234 para
+56/234, `ops/config/app/update.rs` 0/315 para 224/315, `src-tauri/src/main.rs` 235/1455 para
+375/1455, `keybinds.rs` 0/46 para 38/46, `file_opening.rs` 0/89 para 55/89, `files.rs` 64/159
+para 87/167 e `undo.rs` 143/166 para 201/207.
+
+O teste do desktop que inicia `wing-daemon` usou o binário de outro checkout, ligado em
+`target/debug`; ele procura o binário fora de `CARGO_TARGET_DIR`. Windows e macOS não rodaram.
