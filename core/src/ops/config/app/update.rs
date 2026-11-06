@@ -237,7 +237,8 @@ impl CoreAction for UpdateAppConfigAction {
 		}
 
 		if let Some(ref base_url) = self.input.spacebot_base_url {
-			if base_url.trim().is_empty() {
+			// Check the value that is saved, after trailing slashes are trimmed.
+			if base_url.trim().trim_end_matches('/').is_empty() {
 				return Err(ActionError::Validation {
 					field: "spacebot_base_url".to_string(),
 					message: "Spacebot base URL cannot be empty".to_string(),
@@ -281,17 +282,18 @@ impl CoreAction for UpdateAppConfigAction {
 			}
 		}
 
-		if let Some(ref log_level) = self.input.log_level {
-			if config.log_level != *log_level {
-				config.log_level = log_level.to_lowercase();
+		// Log level and theme are stored lowercase, so compare in that case.
+		if let Some(log_level) = self.input.log_level.as_deref().map(str::to_lowercase) {
+			if config.log_level != log_level {
+				config.log_level = log_level;
 				changes.push("log_level");
 				requires_restart = true;
 			}
 		}
 
-		if let Some(ref theme) = self.input.theme {
-			if config.preferences.theme != *theme {
-				config.preferences.theme = theme.to_lowercase();
+		if let Some(theme) = self.input.theme.as_deref().map(str::to_lowercase) {
+			if config.preferences.theme != theme {
+				config.preferences.theme = theme;
 				changes.push("theme");
 			}
 		}

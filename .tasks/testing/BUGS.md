@@ -149,3 +149,11 @@
 - Impacto: "Iniciar com o sistema" gravava um comando que apontava para outro caminho quando o AppImage ou o executável ficava num caminho com esses caracteres.
 - Correção: aplicar a regra de aspas do `Exec` (`"`, `` ` ``, `$` e `\` com barra), depois duplicar as barras pelo escape de string e trocar `%` por `%%`.
 - Limite: o teste compara com a especificação; não houve sessão gráfica executando a entrada.
+
+## Configuração do app tratava mudança de caixa como alteração
+
+- Estado: corrigido; `same_value_in_another_case_is_not_a_change` e `validation_rejects_each_invalid_field` em `core/tests/app_config_action_test.rs` falhavam antes da correção e passam depois.
+- Local: `core/src/ops/config/app/update.rs`, `UpdateAppConfigAction::validate` e `execute`.
+- Reprodução anterior: com `log_level` salvo como `warn` e tema `nord`, enviar `WARN` e `Nord` respondia `Updated: log_level, theme` com `requires_restart = true`, gravava o arquivo e emitia `ConfigChanged`, embora o valor salvo continuasse igual. Enviar `spacebot_base_url = "/"` passava na validação e salvava uma URL vazia, pois a barra final é removida depois.
+- Correção: comparar nível de log e tema já em minúsculas, como são gravados, e validar a URL do Spacebot depois de remover as barras finais.
+- Limite: o teste chama a ação direto com o contexto do harness, sem RPC nem interface.

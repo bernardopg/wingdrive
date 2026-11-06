@@ -78,6 +78,7 @@ if [ "$(uname -s)" = Linux ]; then
 		location_remove_jobs_test
 		copy_symlink_test
 		delete_strategy_test
+		app_config_action_test
 		indexing_test
 		library_test
 	)
@@ -103,12 +104,18 @@ run_full_tests() {
 
 	step "Test branding, key storage and legacy path resolution"
 	cargo test --locked -p wing-branding
-	cargo test --locked -p wing-core --lib crypto::key_manager::tests
-	cargo test --locked -p wing-core --lib ops::files::query::file_checksum
-	cargo test --locked -p wing-core --lib ops::files::query::vcs_status
-	cargo test --locked -p wing-core --lib ops::files::query::templates
-	cargo test --locked -p wing-core --lib ops::files::create_entry
-	cargo test --locked -p wing-core --lib domain::content_identity::tests
+	# Every core unit test passed on Linux; other platforms keep the modules
+	# already proven there until a run shows the rest pass too.
+	if [ "$(uname -s)" = Linux ]; then
+		cargo test --locked -p wing-core --lib
+	else
+		cargo test --locked -p wing-core --lib crypto::key_manager::tests
+		cargo test --locked -p wing-core --lib ops::files::query::file_checksum
+		cargo test --locked -p wing-core --lib ops::files::query::vcs_status
+		cargo test --locked -p wing-core --lib ops::files::query::templates
+		cargo test --locked -p wing-core --lib ops::files::create_entry
+		cargo test --locked -p wing-core --lib domain::content_identity::tests
+	fi
 	cargo test --locked -p wing-core --test branding_legacy_paths
 
 	step "Test core contracts"
