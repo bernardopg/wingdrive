@@ -211,12 +211,23 @@ async fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
 	Ok(())
 }
 
+/// The `file://` URI FileManager1 receives for `path`.
+///
+/// Percent-encoding keeps `%XX`, `#` and `?` in file names from being read as
+/// escapes, a fragment or a query.
+#[cfg(target_os = "linux")]
+fn reveal_uri(path: &Path) -> String {
+	tauri::Url::from_file_path(path)
+		.map(String::from)
+		.unwrap_or_else(|()| format!("file://{}", path.display()))
+}
+
 #[cfg(target_os = "linux")]
 async fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
 	// Prefer the freedesktop file manager interface so the file is actually
 	// selected; fall back to opening the parent directory when no file
 	// manager implements ShowItems.
-	let uri = format!("file://{}", path.display());
+	let uri = reveal_uri(path);
 	let mut gdbus = tokio::process::Command::new("gdbus");
 	file_opening_linux::use_host_environment(gdbus.as_std_mut());
 	let dbus_call = gdbus

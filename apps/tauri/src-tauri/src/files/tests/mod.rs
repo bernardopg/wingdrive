@@ -84,3 +84,55 @@ async fn missing_libraries_directory_returns_an_error() {
 		.unwrap_err();
 	assert!(error.contains("libraries directory"), "{error}");
 }
+
+/// FileManager1 decodes the URI, so the path has to survive the round trip.
+#[cfg(target_os = "linux")]
+#[test]
+fn reveal_uri_round_trips_paths_with_reserved_characters() {
+	for path in [
+		"/tmp/plain.txt",
+		"/tmp/a b.txt",
+		"/tmp/100%20off.txt",
+		"/tmp/notes#1.txt",
+		"/tmp/what?.txt",
+		"/tmp/café.txt",
+	] {
+		let uri = super::reveal_uri(std::path::Path::new(path));
+		let parsed = tauri::Url::parse(&uri).unwrap();
+		assert_eq!(parsed.fragment(), None, "{uri}");
+		assert_eq!(parsed.query(), None, "{uri}");
+		assert_eq!(
+			parsed.to_file_path().unwrap(),
+			std::path::PathBuf::from(path),
+			"{uri}"
+		);
+	}
+}
+
+#[tokio::test]
+async fn reveal_and_terminal_reject_missing_folders() {
+	let dir = tempfile::tempdir().unwrap();
+	let missing = dir.path().join("missing");
+	let error = super::reveal_file(missing.to_string_lossy().into_owned())
+		.await
+		.unwrap_err();
+	assert!(error.starts_with("Path does not exist"), "{error}");
+
+	use tauri::Manager;
+	let app = tauri::test::mock_app();
+	app.manage(crate::background::DesktopSettingsState::load(dir.path()));
+	let file = dir.path().join("file");
+	std::fs::write(&file, "").unwrap();
+	for path in [missing, file] {
+		let error = super::open_terminal(path.to_string_lossy().into_owned(), app.state())
+			.await
+			.unwrap_err();
+		assert!(error.starts_with("Not a folder"), "{error}");
+	}
+}
+
+#[cfg(not(target_os = "macos"))]
+#[tokio::test]
+async fn share_sheet_is_unavailable_off_macos() {
+	assert!(super::share_files(vec!["/tmp".into()]).await.is_err());
+}

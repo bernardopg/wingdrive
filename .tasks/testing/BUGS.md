@@ -131,3 +131,21 @@
 - Reprodução anterior: `permanent_delete` em um link que aponta para um caminho inexistente retornava `No such file or directory (os error 2)` e o link ficava no disco.
 - Correção: ler o próprio link com `symlink_metadata` e removê-lo com `remove_file`. O tamanho liberado de um link passa a ser o do link, não o do alvo. O teste confirma que os alvos de links para arquivo e pasta continuam intactos.
 - Limite: o modo lixeira (`trash::delete`) não foi testado com links quebrados.
+
+## Revelar arquivo no Linux enviava URI sem codificação
+
+- Estado: corrigido; `reveal_uri_round_trips_paths_with_reserved_characters` em `apps/tauri/src-tauri/src/files/tests/mod.rs` falhava antes da correção e passa depois.
+- Local: `apps/tauri/src-tauri/src/files.rs`, `reveal_path` no Linux, agora via `reveal_uri`.
+- Reprodução anterior: o comando montava `file://{caminho}` sem codificar. `/tmp/100%20off.txt` virava `/tmp/100 off.txt` ao decodificar, `notes#1.txt` perdia `#1.txt` como fragmento e `what?.txt` virava consulta.
+- Impacto: "Mostrar na pasta" pedia ao gerenciador de arquivos um item diferente ou inexistente. O fallback abre a pasta pai só quando a chamada D-Bus falha.
+- Correção: gerar a URI com `Url::from_file_path`, que codifica o caminho como o lado receptor (`filemanager1.rs`) decodifica.
+- Limite: sem chamada D-Bus real nem gerenciador de arquivos no teste.
+
+## Entrada de autostart não escapava o caminho do executável
+
+- Estado: corrigido; `autostart_entry_escapes_launcher_paths_for_the_exec_key` em `apps/tauri/src-tauri/src/background.rs` falhava antes da correção e passa depois.
+- Local: `apps/tauri/src-tauri/src/background.rs`, `autostart_entry`.
+- Reprodução anterior: com o executável em `/opt/100%d/a\b"c$d`e/WingDrive`, a linha `Exec` saía com `%d` sem escape, `\` duplicado só uma vez e `$` e `` ` `` sem barra. Pela Desktop Entry Specification, `%d` é um código de campo removido na expansão, e um `\` literal entre aspas exige quatro barras no arquivo.
+- Impacto: "Iniciar com o sistema" gravava um comando que apontava para outro caminho quando o AppImage ou o executável ficava num caminho com esses caracteres.
+- Correção: aplicar a regra de aspas do `Exec` (`"`, `` ` ``, `$` e `\` com barra), depois duplicar as barras pelo escape de string e trocar `%` por `%%`.
+- Limite: o teste compara com a especificação; não houve sessão gráfica executando a entrada.

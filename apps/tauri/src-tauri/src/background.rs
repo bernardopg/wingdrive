@@ -341,11 +341,18 @@ fn launcher_path() -> Option<PathBuf> {
 
 #[cfg(target_os = "linux")]
 fn autostart_entry(launcher: &Path) -> String {
-	// Desktop entry Exec values quote arguments with double quotes.
-	let exec = launcher
-		.to_string_lossy()
-		.replace('\\', "\\\\")
-		.replace('"', "\\\"");
+	// Exec quoting escapes `"`, `` ` ``, `$` and `\` with a backslash, the string
+	// escapes then double every backslash, and `%` starts a field code.
+	let mut exec = String::new();
+	for c in launcher.to_string_lossy().chars() {
+		match c {
+			'"' | '`' | '$' => exec.push_str("\\\\"),
+			'\\' => exec.push_str("\\\\\\"),
+			'%' => exec.push('%'),
+			_ => {}
+		}
+		exec.push(c);
+	}
 	format!(
 		"[Desktop Entry]\nType=Application\nName=WingDrive\nComment=Keep WingDrive ready in the tray\nExec=\"{exec}\" --hidden\nIcon=WingDrive\nTerminal=false\nX-GNOME-Autostart-enabled=true\n"
 	)
@@ -443,6 +450,18 @@ mod tests {
 		apply_autostart(false).unwrap();
 		assert!(!file.exists());
 		apply_autostart(false).unwrap();
+	}
+
+	/// The Desktop Entry Specification applies the string escapes first, then
+	/// the Exec quoting rules, then expands `%` field codes.
+	#[cfg(target_os = "linux")]
+	#[test]
+	fn autostart_entry_escapes_launcher_paths_for_the_exec_key() {
+		let entry = autostart_entry(Path::new(r#"/opt/100%d/a\b"c$d`e/WingDrive"#));
+		assert!(
+			entry.contains(r#"Exec="/opt/100%%d/a\\\\b\\"c\\$d\\`e/WingDrive" --hidden"#),
+			"{entry}"
+		);
 	}
 
 	#[cfg(target_os = "linux")]
