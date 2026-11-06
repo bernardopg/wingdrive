@@ -77,6 +77,7 @@ if [ "$(uname -s)" = Linux ]; then
 		entry_move_integrity_test
 		location_remove_jobs_test
 		copy_symlink_test
+		copy_conflict_test
 		delete_strategy_test
 		app_config_action_test
 		indexing_test

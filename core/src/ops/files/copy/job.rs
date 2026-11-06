@@ -439,12 +439,18 @@ impl JobHandler for FileCopyJob {
 
 			// Determine the final destination path for this source. The rules live in
 			// `files::plan`, which the read-only preflight shares.
-			let final_destination = crate::ops::files::plan::final_destination(
-				&resolved_source,
-				&self.destination,
-				self.sources.paths.len(),
-			)
-			.await;
+			// A rename names its destination exactly. Treating an existing folder
+			// there as a drop target moved the item inside it.
+			let final_destination = if matches!(self.options.move_mode, Some(MoveMode::Rename)) {
+				self.destination.clone()
+			} else {
+				crate::ops::files::plan::final_destination(
+					&resolved_source,
+					&self.destination,
+					self.sources.paths.len(),
+				)
+				.await
+			};
 
 			ctx.log(format!(
 				"Final destination calculated: {} -> {}",
@@ -590,8 +596,22 @@ impl JobHandler for FileCopyJob {
 					}
 					break;
 				}
-				// Overwrite is applied through `options.overwrite`; without a policy
-				// the action already asked the user before the job started.
+				// The action asks about conflicts before queueing the job, so one found
+				// here appeared since then. Keep it unless overwriting was chosen; a
+				// case-only rename on a case-insensitive volume finds the source itself.
+				crate::ops::files::plan::PlanDecision::Ask
+					if !self.options.overwrite
+						&& !same_entry(&resolved_source, &final_destination).await =>
+				{
+					let error = "Destination already exists".to_string();
+					failed_copies.push(CopyError {
+						source: resolved_source.path().cloned().unwrap_or_default(),
+						destination: final_destination.path().cloned().unwrap_or_default(),
+						error: error.clone(),
+					});
+					self.job_metadata.set_error(&resolved_source, error);
+					continue;
+				}
 				crate::ops::files::plan::PlanDecision::Write
 				| crate::ops::files::plan::PlanDecision::Overwrite
 				| crate::ops::files::plan::PlanDecision::Ask => final_destination,
@@ -1362,6 +1382,42 @@ impl FileCopyJob {
 		} else {
 			tokio::fs::remove_file(source).await
 		}
+	}
+}
+
+/// Whether both paths name the same entry on disk, without following links:
+/// a link renamed to its target's name is not the target.
+async fn same_entry(a: &WingPath, b: &WingPath) -> bool {
+	let (Some(a), Some(b)) = (a.as_local_path(), b.as_local_path()) else {
+		return false;
+	};
+	#[cfg(unix)]
+	{
+		use std::os::unix::fs::MetadataExt;
+		match (
+			tokio::fs::symlink_metadata(a).await,
+			tokio::fs::symlink_metadata(b).await,
+		) {
+			(Ok(a), Ok(b)) => a.dev() == b.dev() && a.ino() == b.ino(),
+			_ => false,
+		}
+	}
+	#[cfg(not(unix))]
+	{
+		// Windows names are case-insensitive, so compare the folder and then the name.
+		let (Some(a_parent), Some(b_parent)) = (a.parent(), b.parent()) else {
+			return false;
+		};
+		let same_folder = match (
+			tokio::fs::canonicalize(a_parent).await,
+			tokio::fs::canonicalize(b_parent).await,
+		) {
+			(Ok(a), Ok(b)) => a == b,
+			_ => false,
+		};
+		same_folder
+			&& a.file_name().map(|n| n.to_string_lossy().to_lowercase())
+				== b.file_name().map(|n| n.to_string_lossy().to_lowercase())
 	}
 }
 

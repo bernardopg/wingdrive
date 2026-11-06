@@ -157,3 +157,20 @@
 - Reprodução anterior: com `log_level` salvo como `warn` e tema `nord`, enviar `WARN` e `Nord` respondia `Updated: log_level, theme` com `requires_restart = true`, gravava o arquivo e emitia `ConfigChanged`, embora o valor salvo continuasse igual. Enviar `spacebot_base_url = "/"` passava na validação e salvava uma URL vazia, pois a barra final é removida depois.
 - Correção: comparar nível de log e tema já em minúsculas, como são gravados, e validar a URL do Spacebot depois de remover as barras finais.
 - Limite: o teste chama a ação direto com o contexto do harness, sem RPC nem interface.
+
+## Job de cópia substituía item criado depois da confirmação
+
+- Estado: corrigido; `copy_without_a_policy_keeps_a_file_that_appeared_after_the_check` em `core/tests/copy_conflict_test.rs` falhava antes da correção e passa depois.
+- Local: `core/src/ops/files/copy/job.rs`, decisão de conflito do `FileCopyJob`.
+- Reprodução anterior: um job sem política de conflito e com `overwrite = false` copiava `report.txt` sobre um `report.txt` já existente no destino, com `Streaming` e `Atomic`. O arquivo original virava o novo conteúdo e o job contava a cópia como bem-sucedida.
+- Impacto: a ação de cópia pergunta sobre conflitos antes de enfileirar o job, mas o job roda depois. Dois jobs na fila para a mesma pasta, ou outro programa criando o mesmo nome nesse intervalo, levavam à substituição sem pergunta. O campo `CopyOptions::overwrite` não era lido pelo job.
+- Correção: um conflito sem política só é substituído com `overwrite = true`; caso contrário, aquele item falha com `Destination already exists` e os demais seguem. A mesma entrada no disco, comparada sem seguir links, não conta como conflito, para manter renomeações só de maiúsculas em volumes que ignoram caixa.
+- Limite: um job retomado depois de interrupção, com uma pasta parcialmente copiada no destino e sem política, agora falha nessa pasta em vez de completá-la por cima. Não houve teste de retomada nem de volume que ignora caixa.
+
+## Renomear para um nome existente movia o item para dentro da pasta
+
+- Estado: corrigido; `rename_onto_an_existing_folder_does_not_move_into_it`, `rename_onto_an_existing_file_fails_and_keeps_both` e `renaming_a_link_to_its_target_name_keeps_the_target` em `core/tests/copy_conflict_test.rs`.
+- Local: `core/src/ops/files/copy/job.rs` (destino do `MoveMode::Rename`) e `core/src/ops/files/rename/action.rs`, que não verifica se o nome novo já existe.
+- Reprodução anterior: renomear `notes.txt` para `docs`, sendo `docs` uma pasta existente, movia o arquivo para `docs/notes.txt` e reportava `moved_count = 1`. Renomear `draft.txt` para `final.txt` existente resolvia o destino como o próprio `draft.txt`, não fazia nada e também reportava sucesso.
+- Correção: a renomeação usa o caminho pedido como destino exato, sem a regra de soltar dentro de pasta; com a correção do conflito acima, um nome ocupado falha e mantém os dois itens.
+- Limite: a ação de renomear continua sem validar o nome antes de criar o job; o erro aparece no resultado do job.
