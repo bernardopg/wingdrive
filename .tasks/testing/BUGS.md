@@ -114,3 +114,20 @@
 - Reprodução anterior: com UUID válido, `variant = "../../etc/passwd"` ou `kind = "../thumb"` gerava um caminho fora da pasta do conteúdo. O servidor de mídia já rejeitava esses segmentos; o comando IPC não.
 - Correção: o comando usa a mesma validação do servidor (`valid_sidecar_segments`) antes de montar o caminho.
 - Limite: o comando só devolve o caminho; não foi verificado se algum fluxo da interface lê o arquivo resultante.
+
+## Cópia e movimentação de pastas seguiam links simbólicos
+
+- Estado: corrigido; os quatro casos de `core/tests/copy_symlink_test.rs` falhavam antes da correção e passam depois.
+- Local: `core/src/ops/files/copy/strategy.rs`, `copy_file_streaming` (percurso da pasta) e `get_path_size`, usado por `LocalMoveStrategy`.
+- Reprodução anterior: uma pasta com `self -> .`, um link para outra pasta e um link quebrado. Cópia com `CopyMethod::Streaming` ou `Atomic` terminava sem falhas, mas `dest/source/self` virava uma pasta real com cópias aninhadas da própria pasta até a resolução de links falhar, e o link quebrado sumia sem erro. A movimentação `Atomic` da mesma pasta falhava com `No such file or directory`, pois o cálculo de tamanho seguia o link quebrado.
+- Impacto: a cópia gravava dados que não estavam na seleção (o conteúdo do alvo de cada link) e repetia a pasta dentro dela mesma. O job informava sucesso.
+- Correção: no Unix, o percurso recria cada link com o mesmo alvo em vez de segui-lo, e o tamanho usa `symlink_metadata`. A movimentação em streaming continua apagando a origem sem tocar no alvo dos links.
+- Limite: Windows mantém o comportamento anterior, sem teste. Links no topo da seleção (o link selecionado em si) não mudaram. `FileCopyJob::get_path_size` e `count_files_in_path` ainda seguem links para estimar progresso; ver Melhorias sugeridas.
+
+## Exclusão permanente falhava em link simbólico quebrado
+
+- Estado: corrigido; `permanent_delete_removes_links_without_following_them` em `core/tests/delete_strategy_test.rs` falhava antes da correção e passa depois.
+- Local: `core/src/ops/files/delete/strategy.rs`, `LocalDeleteStrategy::permanent_delete` e `get_path_size`.
+- Reprodução anterior: `permanent_delete` em um link que aponta para um caminho inexistente retornava `No such file or directory (os error 2)` e o link ficava no disco.
+- Correção: ler o próprio link com `symlink_metadata` e removê-lo com `remove_file`. O tamanho liberado de um link passa a ser o do link, não o do alvo. O teste confirma que os alvos de links para arquivo e pasta continuam intactos.
+- Limite: o modo lixeira (`trash::delete`) não foi testado com links quebrados.

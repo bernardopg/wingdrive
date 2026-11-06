@@ -296,3 +296,34 @@ async fn test_cloud_backend_delete_directory() {
 
 	println!("test_cloud_backend_delete_directory passed!");
 }
+
+/// Permanent deletion removes a link itself, never what it points to, and a
+/// dangling link can still be deleted.
+#[cfg(unix)]
+#[tokio::test]
+async fn permanent_delete_removes_links_without_following_them() {
+	let temp_dir = TempDir::new().unwrap();
+	let root = temp_dir.path();
+	let target_dir = root.join("target-dir");
+	create_test_directory(&target_dir).await.unwrap();
+	let target_file = root.join("target.txt");
+	create_test_file(&target_file, "keep").await.unwrap();
+
+	let strategy = LocalDeleteStrategy;
+	for (name, target) in [
+		("dir-link", target_dir.as_path()),
+		("file-link", target_file.as_path()),
+		("dangling", Path::new("missing-target")),
+	] {
+		let link = root.join(name);
+		std::os::unix::fs::symlink(target, &link).unwrap();
+		strategy
+			.permanent_delete(&link)
+			.await
+			.unwrap_or_else(|e| panic!("{name}: {e}"));
+		assert!(fs::symlink_metadata(&link).await.is_err(), "{name} remains");
+	}
+
+	assert_eq!(fs::read_to_string(&target_file).await.unwrap(), "keep");
+	assert!(target_dir.join("subdir/file3.txt").exists());
+}
