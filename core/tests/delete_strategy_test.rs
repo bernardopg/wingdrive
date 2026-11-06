@@ -14,6 +14,20 @@ use wing_core::{
 };
 
 /// Helper to create test files with content
+/// A folder for files the trash tests delete. The home trash follows
+/// `XDG_DATA_HOME` when the file is on the same mount, so pointing it at this
+/// folder keeps the tests out of the user's real trash. Set once, before any
+/// trash call, because the variable is process-wide.
+fn trash_sandbox() -> &'static Path {
+	static ROOT: std::sync::OnceLock<TempDir> = std::sync::OnceLock::new();
+	ROOT.get_or_init(|| {
+		let root = TempDir::new().unwrap();
+		std::env::set_var("XDG_DATA_HOME", root.path().join("data"));
+		root
+	})
+	.path()
+}
+
 async fn create_test_file(path: &Path, content: &str) -> Result<(), std::io::Error> {
 	if let Some(parent) = path.parent() {
 		fs::create_dir_all(parent).await?;
@@ -72,9 +86,7 @@ async fn test_local_delete_strategy_permanent() {
 
 #[tokio::test]
 async fn test_local_delete_strategy_trash() {
-	// Setup test environment
-	let temp_dir = TempDir::new().unwrap();
-	let test_root = temp_dir.path();
+	let test_root = trash_sandbox();
 
 	// Create test file
 	let test_file = test_root.join("trash_test.txt");
@@ -181,7 +193,7 @@ async fn test_delete_modes_all_types() {
 	assert!(!perm_file.exists());
 
 	// Test 2: Trash delete
-	let trash_file = test_root.join("trash.txt");
+	let trash_file = trash_sandbox().join("trash.txt");
 	create_test_file(&trash_file, "Trash").await.unwrap();
 	let result = strategy.move_to_trash(&trash_file).await;
 	if let Err(e) = &result {
@@ -326,4 +338,23 @@ async fn permanent_delete_removes_links_without_following_them() {
 
 	assert_eq!(fs::read_to_string(&target_file).await.unwrap(), "keep");
 	assert!(target_dir.join("subdir/file3.txt").exists());
+}
+
+#[cfg(target_os = "linux")]
+#[tokio::test]
+async fn trash_moves_a_dangling_link_into_the_isolated_trash() {
+	let root = trash_sandbox();
+	let link = root.join("dangling-link");
+	std::os::unix::fs::symlink(root.join("missing-target"), &link).unwrap();
+
+	LocalDeleteStrategy.move_to_trash(&link).await.unwrap();
+
+	assert!(fs::symlink_metadata(&link).await.is_err());
+	let trashed = root.join("data/Trash/files/dangling-link");
+	let metadata = fs::symlink_metadata(&trashed).await.unwrap();
+	assert!(metadata.file_type().is_symlink());
+	assert_eq!(
+		fs::read_link(&trashed).await.unwrap(),
+		root.join("missing-target")
+	);
 }

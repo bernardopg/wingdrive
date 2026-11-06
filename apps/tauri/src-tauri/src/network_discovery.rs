@@ -146,14 +146,17 @@ pub fn parse_ssh_config(config: &str) -> Vec<String> {
 	let mut hosts = Vec::new();
 	for line in config.lines() {
 		let line = line.trim();
-		let mut words = line.split_whitespace();
-		let Some(keyword) = words.next() else {
-			continue;
-		};
+		// OpenSSH also accepts `Host=name` and `Host = name`.
+		let end = line
+			.find(|c: char| c.is_whitespace() || c == '=')
+			.unwrap_or(line.len());
+		let (keyword, rest) = line.split_at(end);
 		if !keyword.eq_ignore_ascii_case("host") {
 			continue;
 		}
-		for host in words {
+		let rest = rest.trim_start();
+		let rest = rest.strip_prefix('=').unwrap_or(rest);
+		for host in rest.split_whitespace() {
 			if host.starts_with('#') {
 				break;
 			}
@@ -276,9 +279,14 @@ Host homesystem hs
   HostName 192.168.15.20
 Host *.example.com !bad
 host  github.com  # code
+Host=nas
+Host = backup
 Match host foo
 ";
-		assert_eq!(parse_ssh_config(config), ["homesystem", "hs", "github.com"]);
+		assert_eq!(
+			parse_ssh_config(config),
+			["homesystem", "hs", "github.com", "nas", "backup"]
+		);
 	}
 
 	#[test]

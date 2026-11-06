@@ -201,3 +201,79 @@ async fn atomic_move_of_a_folder_with_a_link_to_itself_renames_it() {
 	assert!(fs::symlink_metadata(&source).await.is_err());
 	harness.shutdown().await.unwrap();
 }
+
+/// The copy action counts the folder before it queues the job. Following links
+/// there failed the whole copy on a dangling link before the job ran.
+#[tokio::test]
+async fn copy_action_queues_a_folder_with_a_dangling_link() {
+	use wing_core::{
+		infra::action::LibraryAction,
+		ops::files::copy::{action::FileCopyAction, input::FileCopyInput},
+	};
+	let harness = IndexingHarnessBuilder::new("copy_action_links")
+		.build()
+		.await
+		.unwrap();
+	let location = harness.create_test_location("links").await.unwrap();
+	let source = folder_with_links(location.path()).await;
+	let destination = location.path().join("dest");
+	fs::create_dir_all(&destination).await.unwrap();
+
+	let action = <FileCopyAction as LibraryAction>::from_input(FileCopyInput::new(
+		vec![source],
+		&destination,
+	))
+	.unwrap();
+	let receipt = {
+		let manager = harness.core.context.action_manager.read().await;
+		manager
+			.as_ref()
+			.unwrap()
+			.dispatch_library(Some(harness.library.id()), action)
+			.await
+			.unwrap()
+	};
+
+	let copy = destination.join("source");
+	let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+	while fs::symlink_metadata(copy.join("dangling")).await.is_err() {
+		assert!(
+			std::time::Instant::now() < deadline,
+			"job {} never copied the folder",
+			receipt.id
+		);
+		tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+	}
+	assert_links_preserved(&copy).await;
+	harness.shutdown().await.unwrap();
+}
+
+/// The delete job checks that its targets exist. Following a dangling link
+/// reported it missing, so it could not be deleted.
+#[tokio::test]
+async fn delete_job_removes_a_selected_dangling_link() {
+	use wing_core::ops::files::delete::job::DeleteJob;
+	let harness = IndexingHarnessBuilder::new("delete_dangling_link")
+		.build()
+		.await
+		.unwrap();
+	let location = harness.create_test_location("links").await.unwrap();
+	let link = location.path().join("dangling");
+	symlink("missing-target", &link).unwrap();
+
+	let output = harness
+		.library
+		.jobs()
+		.dispatch(DeleteJob::permanent(
+			WingPathBatch::new(vec![WingPath::local(link.clone())]),
+			true,
+		))
+		.await
+		.unwrap()
+		.wait()
+		.await;
+
+	assert!(output.is_ok(), "{output:?}");
+	assert!(fs::symlink_metadata(&link).await.is_err());
+	harness.shutdown().await.unwrap();
+}

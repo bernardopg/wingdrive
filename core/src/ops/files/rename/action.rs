@@ -9,7 +9,7 @@ use crate::{
 		action::{error::ActionError, LibraryAction, ValidationResult},
 		job::handle::JobReceipt,
 	},
-	ops::files::copy::job::FileCopyJob,
+	ops::files::copy::job::{same_entry, FileCopyJob},
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -79,6 +79,24 @@ impl LibraryAction for FileRenameAction {
 				});
 			}
 			_ => {}
+		}
+
+		// Refuse a name that is taken before queueing the job, so the person sees
+		// the conflict now. A case-only rename on a case-insensitive volume finds
+		// the target itself, which is not a conflict.
+		if let Some(path) = self.target.as_local_path() {
+			if let Some(parent) = path.parent() {
+				let destination = WingPath::local(parent.join(&self.new_name));
+				let taken = destination
+					.as_local_path()
+					.is_some_and(|path| std::fs::symlink_metadata(path).is_ok());
+				if taken && !same_entry(&self.target, &destination).await {
+					return Err(ActionError::Validation {
+						field: "new_name".to_string(),
+						message: format!("An item named \"{}\" already exists", self.new_name),
+					});
+				}
+			}
 		}
 
 		Ok(ValidationResult::Success { metadata: None })

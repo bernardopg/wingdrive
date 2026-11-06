@@ -1303,23 +1303,7 @@ impl FileCopyJob {
 
 	/// Count files in a path (recursive for directories)
 	async fn count_files_in_path(&self, path: &std::path::Path) -> Result<usize, std::io::Error> {
-		let mut count = 0;
-		let mut stack = vec![path.to_path_buf()];
-
-		while let Some(current_path) = stack.pop() {
-			let metadata = tokio::fs::metadata(&current_path).await?;
-
-			if metadata.is_file() {
-				count += 1;
-			} else if metadata.is_dir() {
-				let mut dir = tokio::fs::read_dir(&current_path).await?;
-				while let Some(entry) = dir.next_entry().await? {
-					stack.push(entry.path());
-				}
-			}
-		}
-
-		Ok(count)
+		Ok(tree_totals(path).await?.0)
 	}
 
 	/// List all files in a directory (recursive)
@@ -1351,23 +1335,7 @@ impl FileCopyJob {
 
 	/// Get size of a path (file or directory) using iterative approach
 	async fn get_path_size(&self, path: &std::path::Path) -> Result<u64, std::io::Error> {
-		let mut total = 0u64;
-		let mut stack = vec![path.to_path_buf()];
-
-		while let Some(current_path) = stack.pop() {
-			let metadata = tokio::fs::metadata(&current_path).await?;
-
-			if metadata.is_file() {
-				total += metadata.len();
-			} else if metadata.is_dir() {
-				let mut dir = tokio::fs::read_dir(&current_path).await?;
-				while let Some(entry) = dir.next_entry().await? {
-					stack.push(entry.path());
-				}
-			}
-		}
-
-		Ok(total)
+		Ok(tree_totals(path).await?.1)
 	}
 
 	/// Delete the source of a move whose strategy copied it.
@@ -1385,9 +1353,46 @@ impl FileCopyJob {
 	}
 }
 
+/// Count the items under `path` and add up their sizes, as the copy will see them.
+///
+/// The selected path is followed, but links inside it count as one item of their
+/// own size: the copy recreates them instead of reading their targets, and
+/// following them walked the whole disk for a link to `/` and never ended for a
+/// link to an ancestor.
+pub(crate) async fn tree_totals(path: &std::path::Path) -> Result<(usize, u64), std::io::Error> {
+	let mut count = 0;
+	let mut size = 0u64;
+	let mut stack = vec![(path.to_path_buf(), true)];
+
+	while let Some((current, is_selection)) = stack.pop() {
+		// A selected dangling link still counts as the one item it is.
+		let followed = if is_selection {
+			tokio::fs::metadata(&current).await.ok()
+		} else {
+			None
+		};
+		let metadata = match followed {
+			Some(metadata) => metadata,
+			None => tokio::fs::symlink_metadata(&current).await?,
+		};
+
+		if metadata.is_dir() {
+			let mut dir = tokio::fs::read_dir(&current).await?;
+			while let Some(entry) = dir.next_entry().await? {
+				stack.push((entry.path(), false));
+			}
+		} else {
+			count += 1;
+			size += metadata.len();
+		}
+	}
+
+	Ok((count, size))
+}
+
 /// Whether both paths name the same entry on disk, without following links:
 /// a link renamed to its target's name is not the target.
-async fn same_entry(a: &WingPath, b: &WingPath) -> bool {
+pub(crate) async fn same_entry(a: &WingPath, b: &WingPath) -> bool {
 	let (Some(a), Some(b)) = (a.as_local_path(), b.as_local_path()) else {
 		return false;
 	};
@@ -1640,6 +1645,35 @@ fn format_bytes(bytes: u64) -> String {
 mod tests {
 	use super::*;
 	use std::thread;
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn totals_count_inner_links_once_without_following_them() {
+		let root = tempfile::tempdir().unwrap();
+		let folder = root.path().join("folder");
+		std::fs::create_dir(&folder).unwrap();
+		std::fs::write(folder.join("data.bin"), [0u8; 100]).unwrap();
+		// A link to an ancestor never ends when followed; one to `/` walks the disk.
+		std::os::unix::fs::symlink(root.path(), folder.join("ancestor")).unwrap();
+		std::os::unix::fs::symlink("/", folder.join("root")).unwrap();
+		std::os::unix::fs::symlink(folder.join("missing"), folder.join("dangling")).unwrap();
+
+		let (count, size) = tokio::time::timeout(Duration::from_secs(5), tree_totals(&folder))
+			.await
+			.expect("walking the folder must not follow its links")
+			.unwrap();
+		assert_eq!(count, 4);
+		let links: u64 = ["ancestor", "root", "dangling"]
+			.iter()
+			.map(|name| std::fs::symlink_metadata(folder.join(name)).unwrap().len())
+			.sum();
+		assert_eq!(size, 100 + links);
+
+		// The selected path itself is still followed.
+		let selected_link = root.path().join("selected");
+		std::os::unix::fs::symlink(&folder, &selected_link).unwrap();
+		assert_eq!(tree_totals(&selected_link).await.unwrap(), (count, size));
+	}
 
 	#[test]
 	fn test_speed_tracker_creation() {

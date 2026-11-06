@@ -225,7 +225,7 @@ impl TestConfigBuilder {
 			},
 			logging: crate::config::app_config::LoggingConfig::default(),
 			proxy_pairing: crate::config::app_config::ProxyPairingConfig::default(),
-			spacebot: crate::config::app_config::SpacebotConfig::default(),
+			wingbot: crate::config::app_config::WingbotConfig::default(),
 			wingdrop: Default::default(),
 		}
 	}

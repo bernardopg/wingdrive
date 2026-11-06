@@ -446,59 +446,26 @@ impl LibraryAction for FileCopyAction {
 }
 
 impl FileCopyAction {
-	/// Calculate total file count and bytes for the sources
+	/// Calculate total file count and bytes for the sources.
+	///
+	/// Links inside a folder count as themselves, as the copy recreates them:
+	/// following them failed the whole copy on a dangling link and walked the
+	/// disk for a link to `/`.
 	async fn calculate_totals(&self) -> Result<(usize, u64), ActionError> {
 		let mut total_files = 0usize;
 		let mut total_bytes = 0u64;
 
 		for source in &self.sources.paths {
 			if let Some(local_path) = source.as_local_path() {
-				let metadata = tokio::fs::metadata(local_path).await.map_err(|e| {
+				let (count, size) = super::job::tree_totals(local_path).await.map_err(|e| {
 					ActionError::Internal(format!("Failed to read metadata: {}", e))
 				})?;
-
-				if metadata.is_file() {
-					total_files += 1;
-					total_bytes += metadata.len();
-				} else if metadata.is_dir() {
-					let (count, size) = self.count_directory(local_path).await?;
-					total_files += count;
-					total_bytes += size;
-				}
+				total_files += count;
+				total_bytes += size;
 			}
 		}
 
 		Ok((total_files, total_bytes))
-	}
-
-	/// Count files and total size in a directory recursively
-	async fn count_directory(&self, path: &std::path::Path) -> Result<(usize, u64), ActionError> {
-		let mut count = 0usize;
-		let mut size = 0u64;
-		let mut stack = vec![path.to_path_buf()];
-
-		while let Some(current) = stack.pop() {
-			let metadata = tokio::fs::metadata(&current)
-				.await
-				.map_err(|e| ActionError::Internal(format!("Failed to read metadata: {}", e)))?;
-
-			if metadata.is_file() {
-				count += 1;
-				size += metadata.len();
-			} else if metadata.is_dir() {
-				let mut dir = tokio::fs::read_dir(&current).await.map_err(|e| {
-					ActionError::Internal(format!("Failed to read directory: {}", e))
-				})?;
-
-				while let Some(entry) = dir.next_entry().await.map_err(|e| {
-					ActionError::Internal(format!("Failed to read directory entry: {}", e))
-				})? {
-					stack.push(entry.path());
-				}
-			}
-		}
-
-		Ok((count, size))
 	}
 
 	/// Check for all file conflicts and return list of conflicting (source, destination) pairs

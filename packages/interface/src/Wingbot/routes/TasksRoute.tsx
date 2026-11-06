@@ -3,7 +3,7 @@ import {
 	type Task,
 
 	type UpdateTaskRequest,
-} from '@spacebot/api-client';
+} from '@wingbot/api-client';
 import {
 	TaskDetail,
 	TaskList,

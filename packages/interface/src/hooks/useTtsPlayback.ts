@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { apiClient } from "@spacebot/api-client";
+import { apiClient } from "@wingbot/api-client";
 
 export type PlaybackState = "idle" | "loading" | "playing";
 

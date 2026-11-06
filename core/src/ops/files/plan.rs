@@ -104,11 +104,18 @@ pub async fn next_free_name(path: &Path) -> std::io::Result<PathBuf> {
 	let file_name = path
 		.file_name()
 		.ok_or_else(|| std::io::Error::other("Could not get filename"))?
-		.to_string_lossy()
-		.into_owned();
-	let (stem, extension) = match file_name.rfind('.') {
-		Some(dot) if dot > 0 => (&file_name[..dot], &file_name[dot..]),
-		_ => (file_name.as_str(), ""),
+		.as_encoded_bytes();
+	// Split the raw name so bytes that are not UTF-8 survive in the new name.
+	let split = match file_name.iter().rposition(|&byte| byte == b'.') {
+		Some(dot) if dot > 0 => dot,
+		_ => file_name.len(),
+	};
+	// SAFETY: both halves come from one OsStr split next to an ASCII `.`, or at its end.
+	let (stem, extension) = unsafe {
+		(
+			std::ffi::OsStr::from_encoded_bytes_unchecked(&file_name[..split]),
+			std::ffi::OsStr::from_encoded_bytes_unchecked(&file_name[split..]),
+		)
 	};
 
 	let mut candidate = path.to_path_buf();
@@ -119,7 +126,10 @@ pub async fn next_free_name(path: &Path) -> std::io::Result<PathBuf> {
 				"Could not generate unique filename after {MAX_RENAME_ATTEMPTS} attempts"
 			)));
 		}
-		candidate = parent.join(format!("{stem} ({counter}){extension}"));
+		let mut name = stem.to_os_string();
+		name.push(format!(" ({counter})"));
+		name.push(extension);
+		candidate = parent.join(name);
 		counter += 1;
 	}
 	Ok(candidate)
@@ -128,6 +138,24 @@ pub async fn next_free_name(path: &Path) -> std::io::Result<PathBuf> {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn free_name_keeps_bytes_that_are_not_utf8() {
+		use std::os::unix::ffi::OsStrExt;
+		let dir = tempfile::tempdir().unwrap();
+		let taken = dir.path().join(std::ffi::OsStr::from_bytes(b"caf\xff.txt"));
+		std::fs::write(&taken, "x").unwrap();
+		let free = next_free_name(&taken).await.unwrap();
+		assert_eq!(free.file_name().unwrap().as_bytes(), b"caf\xff (1).txt");
+
+		let dotfile = dir.path().join(".hidden");
+		std::fs::write(&dotfile, "x").unwrap();
+		assert_eq!(
+			next_free_name(&dotfile).await.unwrap(),
+			dir.path().join(".hidden (1)")
+		);
+	}
 
 	#[tokio::test]
 	async fn destination_rules() {

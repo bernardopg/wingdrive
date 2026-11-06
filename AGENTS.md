@@ -186,7 +186,7 @@ strings.
 - **What to translate:** JSX text, labels, tooltips, `title`, `placeholder`, `aria-label`, `alt`, menu and
   context-menu items, toasts, dialogs, confirmations and empty states.
 - **What not to translate:** logs, errors that never reach the user, identifiers, protocol and enum
-  values, paths, URLs, keyboard symbols, and brand names (WingDrive, Wingbot, Spacebot).
+  values, paths, URLs, keyboard symbols, and brand names (WingDrive, Wingbot).
 - **In components:** `const { t } = useTranslation("explorer");` then `t("contextMenu.copy")`.
   `apps/tauri/src` imports `useTranslation` and `i18n` from `@wingdrive/interface`.
 - **Outside React render** (module constants, registries, callbacks built once): never call `t` at module

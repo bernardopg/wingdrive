@@ -39,7 +39,7 @@ impl FileSyncTestSetup {
 			},
 			logging: wing_core::config::LoggingConfig::default(),
 			proxy_pairing: wing_core::config::ProxyPairingConfig::default(),
-			spacebot: wing_core::config::SpacebotConfig::default(),
+			wingbot: wing_core::config::WingbotConfig::default(),
 			wingdrop: Default::default(),
 		};
 		config.save()?;

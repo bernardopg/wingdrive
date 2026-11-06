@@ -11,11 +11,15 @@ use helpers::*;
 use tokio::fs;
 use wing_core::{
 	domain::addressing::{WingPath, WingPathBatch},
+	infra::action::{error::ActionError, LibraryAction},
 	infra::job::output::JobOutput,
-	ops::files::copy::{
-		action::FileConflictResolution,
-		input::CopyMethod,
-		job::{CopyOptions, FileCopyJob},
+	ops::files::{
+		copy::{
+			action::FileConflictResolution,
+			input::CopyMethod,
+			job::{CopyOptions, FileCopyJob},
+		},
+		rename::action::FileRenameAction,
 	},
 };
 
@@ -260,5 +264,45 @@ async fn renaming_a_link_to_its_target_name_keeps_the_target() {
 		.await
 		.unwrap()
 		.is_file());
+	harness.shutdown().await.unwrap();
+}
+
+async fn validate_rename(
+	harness: &IndexingHarness,
+	target: &Path,
+	name: &str,
+) -> Result<wing_core::infra::action::ValidationResult, ActionError> {
+	FileRenameAction::new(WingPath::local(target.to_path_buf()), name)
+		.validate(&harness.library, harness.core.context.clone())
+		.await
+}
+
+#[tokio::test]
+async fn rename_action_refuses_a_taken_name_before_queueing_a_job() {
+	let harness = IndexingHarnessBuilder::new("rename_action_taken_name")
+		.build()
+		.await
+		.unwrap();
+	let location = harness.create_test_location("conflict").await.unwrap();
+	let root = location.path();
+	write(&root.join("draft.txt"), "draft").await;
+	write(&root.join("final.txt"), "final").await;
+	write(&root.join("docs/readme.txt"), "readme").await;
+	for taken in ["final.txt", "docs"] {
+		match validate_rename(&harness, &root.join("draft.txt"), taken).await {
+			Err(ActionError::Validation { field, message }) => {
+				assert_eq!(field, "new_name");
+				assert!(message.contains(taken), "{message}");
+			}
+			other => panic!("{taken}: expected a validation error, got {other:?}"),
+		}
+	}
+	validate_rename(&harness, &root.join("draft.txt"), "report.txt")
+		.await
+		.unwrap();
+	assert_eq!(
+		fs::read_to_string(root.join("draft.txt")).await.unwrap(),
+		"draft"
+	);
 	harness.shutdown().await.unwrap();
 }

@@ -97,3 +97,31 @@ para 87/167 e `undo.rs` 143/166 para 201/207.
 
 O teste do desktop que inicia `wing-daemon` usou o binário de outro checkout, ligado em
 `target/debug`; ele procura o binário fora de `CARGO_TARGET_DIR`. Windows e macOS não rodaram.
+
+### Teste real das correções, 2026-11-06
+
+Ambiente isolado em disco (`HOME`, `XDG_*`, dados e instância próprios), sem tocar no daemon nem
+no app do autor. Os roteiros ficaram fora do repositório.
+
+- Core: `wing-daemon --instance rtcheck` e chamadas JSON-RPC reais. Passaram 22 verificações:
+  links preservados em cópia `Streaming` e `Atomic` (com link para `/` terminando em 0,3 s),
+  movimentação com link quebrado, `AutoModifyName`, `verify_checksum` em 5 MiB, renomeação recusada
+  para arquivo e pasta existentes, limite de 255 bytes, exclusão permanente e na lixeira isolada de
+  link quebrado, caixa do tema e do nível de log, `wingbot_base_url = "/"`, tag com alias, cor
+  hexadecimal e 255 caracteres. O banco confirmou `created_by_device` igual ao dispositivo.
+  `spaces.create` recusou `#zzzzzz`. Um `wingdrive.json` com a chave `spacebot` foi lido e regravado
+  como `wingbot`.
+- Desktop: `target/debug/WingDrive` em Xvfb, com D-Bus privado e WebKitWebDriver. Comandos reais:
+  `get_sidecar_path` (UUID curto, `..` em `kind` e `variant`, caminho da instância), servidor de
+  mídia (vazio sem Range com `Content-Length: 0`, `bytes=0-` com 416, `bytes=2-5` com 206 e `2345`;
+  `bytes=6-2` com 200 e corpo completo via `curl`), `reveal_file` com `%20`, `#`, `?` e `'` no nome
+  recebido por um `FileManager1` de teste, `set_desktop_settings` gerando o autostart executado por
+  `gio launch` e pelo systemd, `discover_network_servers` com `Host=nas` e `Host = backup`, e as
+  rotas `/wingbot` e `/spacebot/chat` (redireciona para `/wingbot/chat`). Duas instâncias `work-a` e
+  `work_a` rodaram juntas com nomes D-Bus distintos, e uma nova abertura de `work-a` foi entregue à
+  instância existente.
+
+O teste real achou seis bugs que os testes unitários não pegavam, registrados em [BUGS.md](BUGS.md).
+Não validados em runtime: rótulos de montagens GVFS (sem montagem com escapes), `file:///tmp/%+A`
+numa abertura real (a URI foi entregue, mas o resultado não é visível) e nomes fora de UTF-8, que o
+JSON-RPC não transporta. Windows e macOS não rodaram.

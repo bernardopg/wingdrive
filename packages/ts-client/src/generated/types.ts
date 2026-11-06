@@ -132,8 +132,8 @@ export type AppConfigOutput = {
 	logging: LoggingConfigOutput,
 	/**  Proxy pairing configuration */
 	proxy_pairing: ProxyPairingConfigOutput,
-	/**  Spacebot companion configuration */
-	spacebot: SpacebotConfigOutput,
+	/**  Wingbot companion configuration */
+	wingbot: WingbotConfigOutput,
 	/**  Wingdrop receiving configuration */
 	wingdrop: WingdropConfigOutput,
 };
@@ -3596,15 +3596,6 @@ export type SpaceUpdateOutput = {
 	space: Space,
 };
 
-/**  Spacebot companion configuration output */
-export type SpacebotConfigOutput = {
-	enabled: boolean,
-	base_url: string,
-	auth_token: string | null,
-	default_agent_id: string,
-	default_sender_name: string,
-};
-
 export type SpacesListOutput = {
 	spaces: Space[],
 };
@@ -4061,16 +4052,16 @@ export type UpdateAppConfigInput = {
 	wingdrop_auto_accept?: boolean | null,
 	/**  Folder that receives drops; an empty string restores Downloads */
 	wingdrop_destination?: string | null,
-	/**  Whether Spacebot features are enabled in the UI */
-	spacebot_enabled?: boolean | null,
-	/**  Spacebot API base URL */
-	spacebot_base_url?: string | null,
-	/**  Optional Spacebot bearer token */
-	spacebot_auth_token?: string | null,
-	/**  Default Spacebot agent ID for embedded chat */
-	spacebot_default_agent_id?: string | null,
+	/**  Whether Wingbot features are enabled in the UI */
+	wingbot_enabled?: boolean | null,
+	/**  Wingbot API base URL */
+	wingbot_base_url?: string | null,
+	/**  Optional Wingbot bearer token */
+	wingbot_auth_token?: string | null,
+	/**  Default Wingbot agent ID for embedded chat */
+	wingbot_default_agent_id?: string | null,
 	/**  Default sender name for embedded chat */
-	spacebot_default_sender_name?: string | null,
+	wingbot_default_sender_name?: string | null,
 };
 
 /**  Output for update app configuration action */
@@ -4589,6 +4580,15 @@ export type WingPath =
 /**  A batch of WingPaths, useful for operations on multiple files */
 export type WingPathBatch = {
 	paths: WingPath[],
+};
+
+/**  Wingbot companion configuration output */
+export type WingbotConfigOutput = {
+	enabled: boolean,
+	base_url: string,
+	auth_token: string | null,
+	default_agent_id: string,
+	default_sender_name: string,
 };
 
 /**  Input for stopping a drop this device receives */

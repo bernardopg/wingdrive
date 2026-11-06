@@ -7,16 +7,16 @@ import commonjs from 'vite-plugin-commonjs';
 
 const spaceui = path.resolve(import.meta.dirname, '../../../spaceui/packages');
 const hasSpaceui = fs.existsSync(spaceui);
-const spacebot = path.resolve(
+const wingbot = path.resolve(
 	import.meta.dirname,
-	'../../../spacebot/packages'
+	'../../../wingbot/packages'
 );
-const hasSpacebot = fs.existsSync(spacebot);
+const hasWingbot = fs.existsSync(wingbot);
 
 export default defineConfig(() => ({
 	define: {
-		'import.meta.env.VITE_SPACEBOT_AVAILABLE': JSON.stringify(
-			String(hasSpacebot)
+		'import.meta.env.VITE_WINGBOT_AVAILABLE': JSON.stringify(
+			String(hasWingbot)
 		)
 	},
 	plugins: [react(), tailwindcss(), commonjs()],
@@ -113,16 +113,16 @@ export default defineConfig(() => ({
 						)
 					}
 				]),
-			// Spacebot lives in a separate private repo. Fall back to a tracked
+			// Wingbot lives in a separate private repo. Fall back to a tracked
 			// in-tree stub so the desktop app still builds without it; leaving the
 			// specifier external produced a bare import the webview cannot resolve.
 			{
-				find: /^@spacebot\/api-client$/,
-				replacement: hasSpacebot
-					? `${spacebot}/api-client/src`
+				find: /^@wingbot\/api-client$/,
+				replacement: hasWingbot
+					? `${wingbot}/api-client/src`
 					: path.resolve(
 							import.meta.dirname,
-							'./src/stubs/spacebot-api-client.ts'
+							'./src/stubs/wingbot-api-client.ts'
 						)
 			},
 			{

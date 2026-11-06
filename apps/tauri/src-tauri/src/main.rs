@@ -2032,8 +2032,18 @@ mod start_daemon_integration_tests {
 		} else {
 			"release"
 		};
-		let path = workspace_root
-			.join("target")
+		// Builds may go to another folder through CARGO_TARGET_DIR.
+		let target_dir = std::env::var_os("CARGO_TARGET_DIR")
+			.map(PathBuf::from)
+			.map(|dir| {
+				if dir.is_absolute() {
+					dir
+				} else {
+					workspace_root.join(dir)
+				}
+			})
+			.unwrap_or_else(|| workspace_root.join("target"));
+		let path = target_dir
 			.join(profile)
 			.join(format!("wing-daemon{}", std::env::consts::EXE_SUFFIX));
 		assert!(

@@ -154,7 +154,7 @@
 
 - Estado: corrigido; `same_value_in_another_case_is_not_a_change` e `validation_rejects_each_invalid_field` em `core/tests/app_config_action_test.rs` falhavam antes da correção e passam depois.
 - Local: `core/src/ops/config/app/update.rs`, `UpdateAppConfigAction::validate` e `execute`.
-- Reprodução anterior: com `log_level` salvo como `warn` e tema `nord`, enviar `WARN` e `Nord` respondia `Updated: log_level, theme` com `requires_restart = true`, gravava o arquivo e emitia `ConfigChanged`, embora o valor salvo continuasse igual. Enviar `spacebot_base_url = "/"` passava na validação e salvava uma URL vazia, pois a barra final é removida depois.
+- Reprodução anterior: com `log_level` salvo como `warn` e tema `nord`, enviar `WARN` e `Nord` respondia `Updated: log_level, theme` com `requires_restart = true`, gravava o arquivo e emitia `ConfigChanged`, embora o valor salvo continuasse igual. Enviar `wingbot_base_url = "/"` (então `spacebot_base_url`) passava na validação e salvava uma URL vazia, pois a barra final é removida depois.
 - Correção: comparar nível de log e tema já em minúsculas, como são gravados, e validar a URL do Spacebot depois de remover as barras finais.
 - Limite: o teste chama a ação direto com o contexto do harness, sem RPC nem interface.
 
@@ -183,15 +183,99 @@
 - Correção: `many_pauses_test` também usa `#[traced_test]`, sem alterar `RUST_LOG` nem instalar subscriber global.
 - Limite: só afeta o runner de cobertura, que testa os crates compartilhados; o CI normal não roda essa suíte.
 
-## Melhorias sugeridas
+## Verificação de checksum da cópia nunca detectava erro
 
-Itens vistos na leitura do código, sem teste que comprove falha. O código não foi alterado.
+- Estado: corrigido; `written_file_check_reads_the_destination_back` em `core/src/ops/files/copy/strategy.rs`.
+- Local: `copy_single_file_with_offset`, usado pela cópia em streaming com `verify_checksum`.
+- Antes: os dois hashers recebiam o mesmo bloco lido da origem, então a comparação era sempre igual.
+- Correção: depois do `sync_all`, `verify_written_file` relê o destino do disco e compara com o hash da origem. Diferença remove a cópia e retorna `InvalidData`.
+- Limite: o teste corrompe o destino diretamente; não simula falha de hardware nem cache do sistema de arquivos.
 
-- `core/src/ops/files/copy/strategy.rs`, `copy_single_file_with_offset`: com `verify_checksum`, os dois hashers recebem o mesmo `chunk` lido da origem, então a comparação nunca falha. Uma verificação real precisa reler o destino depois do `sync_all`.
-- `core/src/ops/files/copy/job.rs`, `get_path_size` e `count_files_in_path`: seguem links ao estimar progresso. Um link para `/` dentro da seleção percorre o disco inteiro antes da cópia, que agora só recria o link.
-- `core/src/ops/files/rename/validation.rs`, `validate_filename`: conta bytes e a mensagem fala em caracteres. No Linux o limite de 255 bytes está certo; no Windows o limite é de 255 unidades UTF-16, e nomes com acentos são recusados antes disso.
-- `core/src/ops/files/plan.rs`, `next_free_name`: usa `to_string_lossy`, então o nome alternativo de um arquivo com bytes fora de UTF-8 troca esses bytes por `U+FFFD`.
-- `core/src/ops/files/rename/action.rs`: a validação não verifica se o nome novo já existe. Desde a correção do job o conflito falha, mas o erro só aparece no resultado do job, não na validação da ação.
-- `apps/tauri/src-tauri/src/network_discovery.rs`, `parse_ssh_config`: não reconhece a forma `Host=nome`, aceita pelo OpenSSH.
-- `apps/tauri/src-tauri/src/main.rs`, `start_daemon_integration_tests::workspace_daemon_binary`: procura `wing-daemon` em `<workspace>/target`, ignorando `CARGO_TARGET_DIR`. Num worktree que compila em outro diretório o teste falha sem relação com o código.
-- `core/tests/delete_strategy_test.rs`, `test_local_delete_strategy_trash`: chama `trash::delete` real num arquivo de `/tmp`. A lixeira usada depende do volume; vale isolar `XDG_DATA_HOME` como faz o teste de `core/src/ops/trash`.
+## Estimativa de progresso da cópia seguia links
+
+- Estado: corrigido; `totals_count_inner_links_once_without_following_them` em `core/src/ops/files/copy/job.rs`.
+- Local: `FileCopyJob::get_path_size` e `count_files_in_path`, agora em `tree_totals`.
+- Antes: um link para `/` dentro da seleção percorria o disco inteiro e um link para uma pasta ancestral não terminava, antes mesmo de a cópia começar.
+- Correção: o caminho selecionado continua sendo seguido; links dentro dele contam como um item do próprio tamanho, como a cópia os recria.
+
+## Limite de nome na renomeação usava a unidade errada
+
+- Estado: corrigido; `length_limit_uses_the_platform_unit` em `core/src/ops/files/rename/validation.rs`.
+- Antes: contava bytes em todas as plataformas e a mensagem dizia caracteres. No Windows, cujo limite é de 255 unidades UTF-16, 128 `é` eram recusados.
+- Correção: bytes no Linux e no macOS, unidades UTF-16 no Windows; a mensagem nomeia a unidade.
+- Limite: o caso do Windows só roda no CI do Windows.
+
+## Nome alternativo perdia bytes fora de UTF-8
+
+- Estado: corrigido; `free_name_keeps_bytes_that_are_not_utf8` em `core/src/ops/files/plan.rs`.
+- Local: `next_free_name`, usado pela política "manter os dois".
+- Antes: `to_string_lossy` trocava esses bytes por `U+FFFD`, então `caf\xff.txt` virava `caf� (1).txt`.
+- Correção: o nome é dividido nos bytes do `OsStr`, junto ao `.` ASCII, e o número entra sem converter o restante.
+
+## Renomear para um nome ocupado só falhava dentro do job
+
+- Estado: corrigido; `rename_action_refuses_a_taken_name_before_queueing_a_job` em `core/tests/copy_conflict_test.rs`.
+- Local: `FileRenameAction::validate`.
+- Antes: a ação aceitava o nome e o erro só aparecia no resultado do job.
+- Correção: a validação recusa um nome já usado por arquivo, pasta ou link, com `field = "new_name"`. Uma renomeação só de maiúsculas que encontra o próprio item continua aceita.
+
+## Descoberta de servidores ignorava `Host=nome` no ssh config
+
+- Estado: corrigido; caso novo em `ssh_config_lists_concrete_hosts` (`apps/tauri/src-tauri/src/network_discovery.rs`).
+- Antes: só `Host nome` era lido; `Host=nome` e `Host = nome`, aceitos pelo OpenSSH, eram ignorados.
+
+## Teste do daemon do desktop ignorava `CARGO_TARGET_DIR`
+
+- Estado: corrigido em `start_daemon_integration_tests::workspace_daemon_binary`.
+- Antes: procurava `wing-daemon` só em `<workspace>/target`, e falhava num worktree que compila em outro diretório.
+
+## Testes de lixeira usavam a lixeira real
+
+- Estado: corrigido em `core/tests/delete_strategy_test.rs`; caso novo `trash_moves_a_dangling_link_into_the_isolated_trash`.
+- Antes: `trash::delete` real num arquivo de `/tmp` deixava itens em `/tmp/.Trash-<uid>` ou na lixeira do usuário.
+- Correção: `XDG_DATA_HOME` aponta para uma pasta temporária, e os arquivos ficam no mesmo volume. O caso novo confirma que um link quebrado vai para a lixeira como link, sem seguir o alvo.
+
+## Achados do teste real em 2026-11-06
+
+Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade. Os testes unitários anteriores chamavam a estratégia ou o job direto e não passavam por estes caminhos.
+
+### Ação de cópia falhava numa pasta com link quebrado
+
+- Estado: corrigido; `copy_action_queues_a_folder_with_a_dangling_link` em `core/tests/copy_symlink_test.rs`.
+- Local: `core/src/ops/files/copy/action.rs`, `calculate_totals`.
+- Reprodução: `files.copy` pelo RPC numa pasta com um link quebrado respondia `Failed to read metadata: No such file or directory` antes de criar o job. A correção dos links no job nunca era alcançada pela interface nem pelo CLI.
+- Correção: a ação usa a mesma contagem do job (`tree_totals`), que não segue links internos e conta um link quebrado selecionado como um item.
+
+### Job de exclusão dizia que um link quebrado não existia
+
+- Estado: corrigido; `delete_job_removes_a_selected_dangling_link` em `core/tests/copy_symlink_test.rs`.
+- Local: `core/src/ops/files/delete/job.rs`, `validate_targets`.
+- Reprodução: `files.delete` permanente num link quebrado terminava com `Target does not exist`, embora `permanent_delete` já soubesse removê-lo.
+- Correção: verificar a existência com `symlink_metadata`.
+
+### Caminho de sidecar ignorava a instância do app
+
+- Estado: corrigido; `sidecar_path_uses_the_given_data_directory` em `apps/tauri/src-tauri/src/files/tests/mod.rs`.
+- Local: `apps/tauri/src-tauri/src/files.rs`, `get_sidecar_path`.
+- Reprodução: com `WINGDRIVE_INSTANCE` ou `WINGDRIVE_DATA_DIR`, o comando procurava bibliotecas no diretório padrão e respondia `Failed to read libraries directory`.
+- Correção: usar o diretório de dados do daemon da janela (`DaemonState::data_dir`), o mesmo do servidor de mídia.
+
+### "Mostrar na pasta" nunca selecionava o arquivo no Linux
+
+- Estado: corrigido; `show_items_argument_is_a_gvariant_string_array`, e validado com um serviço `FileManager1` no barramento de teste.
+- Local: `apps/tauri/src-tauri/src/files.rs`, `reveal_path`.
+- Reprodução: o `gdbus call` recebia a URI como texto solto, mas `ShowItems` espera um array (`as`). O `gdbus` recusava com `Erro ao analisar o parâmetro 1 do tipo "as"` e o app sempre caía no fallback de abrir a pasta pai.
+- Correção: passar `['<uri>']` em texto GVariant, com `\` e `'` escapados.
+
+### "Mostrar na pasta" ficava pendente com o fallback
+
+- Estado: corrigido; `reveal_fallback_does_not_wait_for_the_folder_opener` falhava antes (`reveal waited 30s`) e passa depois.
+- Reprodução: sem `FileManager1`, o `xdg-open` abriu o `kitty` e só retornou quando a janela fechou; o comando ficou pendente por minutos.
+- Correção: o fallback roda em segundo plano e só registra falhas no log.
+
+### Autostart rejeitado com `%` no caminho
+
+- Estado: corrigido; `autostart_entry_escapes_launcher_paths_for_the_exec_key` atualizado.
+- Reprodução: a entrada seguia a especificação, mas o GLib (`gio launch`, autostart do GNOME) e o `systemd-xdg-autostart-generator`, que este sistema usa, procuram o programa antes de converter `%%` em `%` e recusavam a entrada.
+- Correção: com `%` no caminho, o `Exec` começa por `/usr/bin/env`. Validado executando a entrada gerada pelo app com `gio launch` e como unit gerada pelo systemd.
+- Limite: o gerador do systemd interpreta `\`, `$` e `` ` `` de forma diferente da especificação. Caminhos com esses caracteres funcionam no GLib, não no systemd.

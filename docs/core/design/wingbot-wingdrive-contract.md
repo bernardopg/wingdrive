@@ -1,0 +1,512 @@
+# Wingbot–WingDrive Integration Contract
+
+> **Naming:** Wingbot is WingDrive's agent surface (UI, routes and windows).
+> In this document "Wingbot" means the external agent runtime it connects to,
+> including its HTTP API and the `@wingbot/api-client` package. Those names
+> belong to that project and are kept. WingDrive's persisted settings still use
+> the `wingbot` key and `wingbot_*` fields for compatibility (BRAND-002).
+
+## Purpose
+
+Define the exact boundary between Wingbot and WingDrive so both products remain independently functional while gaining real capabilities when paired together.
+
+Both sides need a flag. Wingbot needs to know whether WingDrive is present. WingDrive needs to know which device hosts Wingbot. Neither product should break without the other.
+
+---
+
+## Principles
+
+1. **Both products work alone.** Wingbot runs standalone with Discord, Slack, Telegram, webchat. WingDrive runs standalone as a file manager. Neither requires the other.
+2. **Pairing is opt-in.** A configuration flag on each side enables the integration. Disabled by default.
+3. **WingDrive is the device graph.** Wingbot never owns device identity, library membership, or multi-device topology. It receives that information from WingDrive.
+4. **Wingbot is the agent runtime.** WingDrive never runs LLM processes, manages agent memory, or orchestrates workers. It delegates that to Wingbot.
+5. **The library is the boundary.** A Wingbot instance is paired to a library, through a specific device. Every device in that library can access Wingbot through the paired device.
+6. **No leader device.** WingDrive's P2P system is leaderless. There is no master device. But there is exactly one device that hosts Wingbot — that device has the `wingbot_host` capability, and all other devices route through it.
+
+---
+
+## Wingbot Side
+
+### Config: `[wingdrive]`
+
+Add a new top-level section to Wingbot's `config.toml`:
+
+```toml
+[wingdrive]
+enabled = false
+```
+
+That is the minimum. When `enabled = false` (the default), Wingbot operates exactly as it does today. No WingDrive awareness, no device graph, no remote execution. All tools run locally against the workspace filesystem.
+
+When `enabled = true`, Wingbot expects a WingDrive node to be reachable. This unlocks:
+
+- **Device graph awareness** — Wingbot can see all devices in the paired library.
+- **Remote execution** — workers can target specific devices for shell/file operations.
+- **File System Intelligence** — agents receive context and policy when navigating paths through WingDrive.
+- **Proxy chat** — WingDrive devices in the library can reach Wingbot through the P2P layer without a direct HTTP connection.
+
+### Config Shape
+
+```rust
+pub struct WingDriveIntegrationConfig {
+    /// Master switch. When false, Wingbot has no WingDrive awareness.
+    pub enabled: bool,
+
+    /// How to reach the paired WingDrive node.
+    /// Default: "http://127.0.0.1:7872" (local co-located node).
+    pub api_url: Option<String>,
+
+    /// Auth token for the WingDrive API, if required.
+    pub api_key: Option<String>,
+
+    /// Library ID this Wingbot instance is paired with.
+    /// Set during pairing. Wingbot only operates within this library.
+    pub library_id: Option<String>,
+
+    /// Device UUID of the paired WingDrive node.
+    /// This is the device that Wingbot "lives on" in the library graph.
+    pub device_id: Option<String>,
+}
+```
+
+```toml
+# Minimal — disabled, standalone Wingbot
+[wingdrive]
+enabled = false
+
+# Paired — co-located Wingbot and WingDrive on the same machine
+[wingdrive]
+enabled = true
+api_url = "http://127.0.0.1:7872"
+library_id = "a1b2c3d4-..."
+device_id = "e5f6g7h8-..."
+```
+
+### Where It Plugs In
+
+**Config types** (`src/config/types.rs`):
+- Add `wingdrive: WingDriveIntegrationConfig` to the top-level `Config` struct, alongside `llm`, `defaults`, `agents`, `messaging`, etc.
+- Default is `enabled: false`. All other fields are `Option` and only relevant when enabled.
+
+**Agent initialization** (`src/main.rs`):
+- When `wingdrive.enabled`, create a `WingDriveClient` that connects to the paired node.
+- Pass the client into `AgentDeps` so branches and workers can access it.
+- Query the device graph on startup and refresh periodically.
+
+**Worker tool server** (`src/tools.rs`):
+- When WingDrive is enabled and a worker has an `execution_target` set to a remote device, swap local shell/file tool implementations for WingDrive-proxied versions.
+- When no `execution_target` is set, tools run locally as they do today.
+- The tool interface stays identical from the model's perspective. Only the backend changes.
+
+**Runtime behavior when `enabled = true` but WingDrive is unreachable:**
+- Wingbot should start normally and log a warning.
+- Local tools continue to work.
+- Remote execution tools fail with a clear error if the target device is unreachable.
+- Wingbot retries the WingDrive connection in the background.
+- This must not block agent startup or conversation.
+
+---
+
+## WingDrive Side
+
+### AppConfig: `wingbot`
+
+WingDrive already has a `WingbotConfig` in `AppConfig` (`core/src/config/app_config.rs`):
+
+```rust
+pub struct WingbotConfig {
+    pub enabled: bool,
+    pub base_url: String,
+    pub auth_token: Option<String>,
+    pub default_agent_id: String,
+    pub default_sender_name: String,
+}
+```
+
+This is currently a direct-connection config (HTTP URL + token). It needs to evolve to support the paired-node model where Wingbot is reached through the P2P layer, not just through a direct HTTP URL.
+
+### Proposed Evolution
+
+```rust
+pub struct WingbotConfig {
+    /// Master switch. When false, no Wingbot UI or functionality.
+    pub enabled: bool,
+
+    /// Connection mode.
+    pub mode: WingbotConnectionMode,
+
+    /// HTTP base URL (used in ManagedLocal and ExternalLocal modes).
+    pub base_url: String,
+
+    /// Bearer auth token for direct HTTP connections.
+    pub auth_token: Option<String>,
+
+    /// Path to the Wingbot binary (Managed Local mode).
+    pub binary_path: Option<PathBuf>,
+
+    /// Path to the Wingbot config.toml to use (Managed Local mode).
+    pub config_path: Option<PathBuf>,
+
+    /// Instance directory for managed Wingbot data.
+    pub instance_dir: Option<PathBuf>,
+
+    /// Auto-start Wingbot when WingDrive launches (Managed Local mode).
+    pub auto_start: bool,
+
+    /// Default agent to target from the embedded chat.
+    pub default_agent_id: String,
+
+    /// Default sender name used by the embedded chat.
+    pub default_sender_name: String,
+}
+
+pub enum WingbotConnectionMode {
+    /// WingDrive launches and supervises Wingbot as a child process.
+    ManagedLocal,
+    /// WingDrive connects to an already-running local Wingbot.
+    ExternalLocal,
+    /// WingDrive connects to a remote Wingbot via the P2P layer,
+    /// routing through the device that has `wingbot_host` capability.
+    Library,
+}
+```
+
+The `Library` mode is the new one. In this mode, WingDrive does not connect to Wingbot over HTTP directly. Instead, it routes messages through the P2P system to whichever device in the library has the `wingbot_host` capability. That device proxies to its local Wingbot instance.
+
+### Device Table: `wingbot_host` Capability
+
+The device table already has a `capabilities` JSON field that syncs across all devices in the library:
+
+```json
+{"indexing": true, "p2p": true, "volume_detection": true}
+```
+
+Add `wingbot_host`:
+
+```json
+{"indexing": true, "p2p": true, "volume_detection": true, "wingbot_host": true}
+```
+
+This is a boolean flag on the device record. It is set on exactly one device in the library — the device that runs Wingbot. It syncs automatically to all other devices via the existing shared-resource sync protocol (HLC-ordered, last-write-wins on the device record).
+
+**Rules:**
+
+- At most one device in a library may have `wingbot_host: true`. If a second device claims it, the UI should warn and the user should resolve the conflict.
+- The flag is set when Wingbot is paired to this device (either through managed local startup or manual configuration).
+- The flag is cleared when Wingbot is unpaired or the device is removed from the library.
+- Any device in the library can query the device list and find the `wingbot_host` device.
+
+**Why this lives in capabilities, not a separate table:**
+
+- It syncs automatically. Every device in the library sees it without any new sync protocol work.
+- It is queryable alongside other device metadata.
+- It does not require a migration to add a new column — `capabilities` is already a JSON blob.
+- It follows the existing pattern for device feature flags.
+
+### What the `wingbot_host` Flag Enables
+
+When a WingDrive device sees another device in the library with `wingbot_host: true`:
+
+1. **It knows Wingbot exists in this library.** The UI can show Wingbot features even if the local device is not the host.
+2. **It knows where to route.** Chat messages, approvals, and status queries route to the host device over P2P.
+3. **It knows the host's online status.** If the host device is offline, the UI can show "Wingbot offline" instead of a broken connection.
+
+When the local device itself has `wingbot_host: true`:
+
+1. **It runs the Wingbot proxy.** It accepts forwarded messages from other devices and relays them to the local Wingbot HTTP API.
+2. **It sets the capability on its own device record.** This propagates to all other devices automatically.
+3. **It manages the Wingbot lifecycle** (in managed local mode).
+
+---
+
+## The Proxy
+
+### Raw HTTP Proxy, Not a Typed Protocol
+
+The proxy is not a typed message contract. It is a raw HTTP proxy. A WingDrive device sends an HTTP request over the P2P connection to the host device, and the host device forwards it to `127.0.0.1:19898` (or whatever Wingbot's API is bound to) and returns the response verbatim.
+
+This means:
+
+- No typed message definitions to maintain on the WingDrive side.
+- No translation layer between WingDrive's internal types and Wingbot's API.
+- Wingbot's API evolves freely — new endpoints, new fields, new event types — and the proxy carries them without changes.
+- The desktop interface can use the `@wingbot/api-client` package directly against the proxy URL the same way it uses it against a local Wingbot instance.
+- Mobile uses the same proxy through WingDrive core operations that tunnel HTTP over P2P.
+
+The proxy is transparent. From the client's perspective, it is hitting a Wingbot HTTP API. The only difference is the transport — P2P instead of TCP.
+
+### SSE Relay
+
+SSE is the one part that is not a simple request-response proxy. The host device maintains a single SSE subscription to Wingbot's `/api/events` endpoint and relays events to connected peers over the P2P connection as they arrive.
+
+This is still untyped relay — the host device does not parse or filter the SSE events. It forwards the raw event stream. The receiving device's client code parses and handles events the same way it would with a direct SSE connection.
+
+If multiple devices are connected, the host fans out the same event stream to each. If no devices are connected, it can drop the SSE subscription and re-establish it when a device connects.
+
+### What the Host Device Runs
+
+The Wingbot host device runs a `WingbotProxy` inside `wing-core` that:
+
+1. Accepts inbound HTTP-over-P2P requests from peer devices.
+2. Forwards them to the local Wingbot instance and returns the response.
+3. Maintains one SSE subscription to Wingbot and relays events to connected peers.
+
+That is the entire proxy. No caching, no typed messages, no operation-level logic. If Wingbot adds a new endpoint tomorrow, it works through the proxy immediately.
+
+This service only runs on the device with `wingbot_host: true`. Other devices do not run it.
+
+---
+
+## Remote Execution
+
+When Wingbot has `[wingdrive] enabled = true`, workers gain the ability to target specific devices.
+
+### How It Works
+
+1. The agent (channel or branch) decides which device should perform a task. It has access to the device graph — a list of all library devices with their names, slugs, online status, and capabilities.
+
+2. The agent spawns a worker with an `execution_target`:
+   ```
+   spawn_worker(task: "run tests on the MacBook", execution_target: "jamies-macbook-pro")
+   ```
+
+3. The worker's tool server detects that `execution_target` is set to a remote device. Instead of registering local shell/file tools, it registers proxy versions:
+   - `ShellTool` → `RemoteShellTool` (sends shell commands to the target device through WingDrive)
+   - `FileReadTool` → `RemoteFileReadTool` (reads files on the target device)
+   - `FileWriteTool` → `RemoteFileWriteTool` (writes files on the target device)
+   - `FileListTool` → `RemoteFileListTool` (lists files on the target device)
+
+4. The proxy tools send typed execution requests to the paired WingDrive node, which:
+   - Resolves effective policy for the agent principal + target device + path + operation
+   - If allowed, forwards the request to the target WingDrive device over P2P
+   - The target device executes locally and returns the result
+   - The result returns to the worker through the proxy chain
+
+5. From the model's perspective, the tools are identical. It calls `shell` with a command and gets output back. It does not need to know the command ran on a different machine.
+
+### Policy Enforcement
+
+Every remote operation passes through WingDrive's permission system:
+
+- **Device access policy** — which devices can Wingbot target?
+- **Subtree policy** — which paths are readable/writable on those devices?
+- **Operation policy** — which operations are allowed (list, read, write, shell, delete)?
+- **Confirmation policy** — which operations require live user approval?
+
+Policy is resolved on the paired WingDrive node before forwarding. The target device may enforce a second check.
+
+### When `execution_target` Is Not Set
+
+When a worker has no `execution_target`, it runs locally on the Wingbot host machine using standard local tools. This is the current behavior and remains the default. The WingDrive integration adds remote execution as an opt-in capability per worker, not a global replacement.
+
+---
+
+## Pairing Flow
+
+### First-Time Setup
+
+The pairing flow connects a Wingbot instance to a WingDrive library:
+
+1. **User enables Wingbot in WingDrive settings.** Sets connection mode to Managed Local or External Local.
+
+2. **WingDrive detects or starts Wingbot.** In managed local mode, WingDrive launches the Wingbot binary. In external local mode, WingDrive connects to the configured URL.
+
+3. **WingDrive sets `wingbot_host: true` on the local device record.** This propagates to all devices in the library via sync.
+
+4. **WingDrive writes the pairing info to Wingbot's config.** Sets `[spacedrive] enabled = true`, `library_id`, and `device_id` in Wingbot's `config.toml`. If managed local, WingDrive owns this config file. If external, the user configures it manually or WingDrive writes it via Wingbot's settings API.
+
+5. **Wingbot reads its config and connects to the WingDrive API.** It queries the device graph and becomes aware of all devices in the library.
+
+6. **Other devices in the library see the `wingbot_host` flag.** Their UI shows Wingbot as available. They can open the chat surface and route messages through the P2P layer to the host device.
+
+### Unpairing
+
+1. User disables Wingbot in WingDrive settings, or removes the host device from the library.
+2. WingDrive clears `wingbot_host: true` from the device capabilities.
+3. WingDrive stops the managed Wingbot process (if managed local).
+4. Other devices see the flag disappear and remove the Wingbot UI.
+5. Wingbot continues running but loses WingDrive awareness (reverts to standalone).
+
+---
+
+## Mobile
+
+The mobile app (`apps/mobile/`) reaches Wingbot through the same P2P proxy that desktop devices use. It does not need a direct HTTP connection to Wingbot.
+
+### How Mobile Finds Wingbot
+
+1. The mobile app is a WingDrive device in the library. It has its own device UUID and is registered in the library database.
+2. When the library syncs, the mobile device receives all device records, including the one with `wingbot_host: true`.
+3. The mobile app establishes a P2P connection to the host device (or routes through another connected device via proxy pairing).
+4. HTTP requests to Wingbot go through the `WingbotProxy` on the host device, which forwards them to the local Wingbot API and returns the response.
+
+### Mobile Chat Surface
+
+The mobile app sends HTTP requests to Wingbot through WingDrive core, which tunnels them over P2P to the host device. From the mobile code's perspective, it is calling a Wingbot API — it does not need to know whether the request traveled over localhost or across the planet.
+
+WingDrive core handles the routing internally:
+- If the local device is the Wingbot host → direct HTTP call to `localhost:19898`
+- If another device is the host → HTTP-over-P2P to that device → proxy to Wingbot
+
+The mobile app does not need to know which path was taken.
+
+### Mobile Scope
+
+First slice for mobile:
+- Chat screen (send messages, receive streaming responses)
+- Active tasks and status
+- Approval requests (push from host device when a worker needs confirmation)
+
+Not needed on mobile initially:
+- Worker transcript inspection
+- Memory management
+- Agent configuration
+- Schedule management
+
+---
+
+## What Each Side Exposes
+
+### WingDrive Exposes to Wingbot
+
+When Wingbot queries the WingDrive API:
+
+- **Device graph** — all devices in the library, with name, slug, form factor, OS, online status, capabilities.
+- **Location list** — indexed locations per device, with paths and metadata.
+- **File System Intelligence** — context nodes, policies, and summaries for paths the agent navigates.
+- **Remote execution** — typed shell/file operations forwarded to target devices with policy enforcement.
+- **Audit trail** — every remote operation is logged with agent principal, target device, path, operation, and result.
+
+### Wingbot Exposes to WingDrive
+
+When WingDrive queries the Wingbot API (directly or through the proxy):
+
+- **Agent list** — available agents with id, name, role, warmup status.
+- **Webchat** — send messages, fetch history, create conversations.
+- **SSE events** — streaming deltas, typing state, worker events.
+- **Task list** — active and recent tasks with status, assignees, linked conversations.
+- **Status** — version, uptime, health, warmup readiness.
+
+---
+
+## Summary of Changes
+
+### Wingbot Changes
+
+| Change | Location | Description |
+|---|---|---|
+| `WingDriveIntegrationConfig` struct | `src/config/types.rs` | New config section with `enabled`, `api_url`, `library_id`, `device_id` |
+| TOML parsing for `[wingdrive]` | `src/config/load.rs` | Parse the new section, all fields optional when disabled |
+| `SpacedriveClient` | new module | HTTP client for WingDrive API (device graph, FSI, remote exec) |
+| Device graph query | agent init | Fetch and cache library device list on startup |
+| `execution_target` on workers | `src/agent/worker.rs` | Optional device slug/UUID that routes tools to a remote device |
+| Remote tool variants | `src/tools.rs` | `RemoteShellTool`, `RemoteFileReadTool`, etc. that proxy through WingDrive |
+| Graceful degradation | agent init | Warn and continue if WingDrive is unreachable |
+
+### WingDrive Changes
+
+| Change | Location | Description |
+|---|---|---|
+| Evolve `WingbotConfig` | `core/src/config/app_config.rs` | Add `mode`, `binary_path`, `config_path`, `instance_dir`, `auto_start` |
+| `WingbotConnectionMode` enum | `core/src/config/app_config.rs` | `ManagedLocal`, `ExternalLocal`, `Library` |
+| `wingbot_host` capability | device `capabilities` JSON | Boolean flag on device record, syncs automatically |
+| `WingbotProxy` | new service in `core/src/service/` | Runs on host device, forwards HTTP-over-P2P to local Wingbot |
+| P2P HTTP tunnel | `core/src/service/network/` | Carries raw HTTP requests/responses and SSE relay over QUIC |
+| Core operations | `core/src/ops/wingbot/` | Thin wrappers that route HTTP to Wingbot (local or via P2P proxy) |
+| Agent principal model | `core/src/domain/` | New principal type representing a Wingbot instance in the library |
+| Policy model | `core/src/domain/` | Device, subtree, operation, and confirmation policies for agent access |
+| Settings UI | `packages/interface/` | Connection mode selector, managed local controls, status display |
+| Mobile chat | `apps/mobile/` | Chat screen using core operations routed through P2P proxy |
+
+---
+
+## Implementation Order
+
+### Phase 1: Flags and Config
+
+Both sides get their flags. No runtime behavior changes yet.
+
+**Wingbot:**
+- Add `WingDriveIntegrationConfig` to config types
+- Parse `[wingdrive]` section in config loader
+- Default `enabled = false`, no behavior change
+
+**WingDrive:**
+- Evolve `WingbotConfig` with connection mode and new fields
+- Add `wingbot_host` to `DeviceCapabilities` (the typed struct in `session.rs`)
+- Add `wingbot_host` to the capabilities JSON set during device registration
+- Core operations to get/update wingbot config
+
+### Phase 2: Direct Connection (Desktop)
+
+Desktop WingDrive connects to a local Wingbot instance. No P2P proxy yet.
+
+**WingDrive:**
+- Managed local: Tauri spawns Wingbot as a child process
+- External local: connect to existing Wingbot at configured URL
+- Settings UI for connection mode and status
+- Replace hardcoded values in the existing Wingbot interface components
+
+**Wingbot:**
+- No changes needed. The existing webchat API already works.
+
+### Phase 3: P2P Proxy
+
+Non-host devices reach Wingbot through the host device.
+
+**WingDrive:**
+- `WingbotProxy` on host device — raw HTTP proxy + SSE relay over P2P
+- Core operations that route HTTP to Wingbot transparently (local or via proxy)
+- The host device sets `wingbot_host: true` on its device record
+
+### Phase 4: Mobile Chat
+
+Mobile devices use the same P2P proxy.
+
+**WingDrive mobile:**
+- Chat screen using `wingbot.send_message` core action
+- Streaming responses via core subscription events
+- Task and approval display
+
+### Phase 5: Remote Execution
+
+Wingbot workers can target remote devices.
+
+**Wingbot:**
+- `WingDriveClient` queries device graph
+- `execution_target` on worker spawn
+- Remote tool variants that proxy through WingDrive
+
+**WingDrive:**
+- Agent principal model
+- Policy resolution (device + subtree + operation + confirmation)
+- Remote execution protocol (typed operations forwarded to target devices)
+- Audit logging
+
+### Phase 6: File System Intelligence
+
+Agents receive context and policy when navigating paths.
+
+**WingDrive:**
+- Context node storage and queries
+- Policy resolution API
+- Agent-readable context surfaced during navigation
+
+**Wingbot:**
+- Query FSI when listing or reading files through WingDrive
+- Surface context in worker prompts
+- Write observations back with attribution
+
+---
+
+## Open Questions
+
+1. **Config ownership in managed local mode.** Should WingDrive generate Wingbot's `config.toml` entirely, or should it only inject the `[spacedrive]` section and leave the rest to the user?
+
+2. **Multiple libraries.** Can one Wingbot instance pair with multiple libraries, or is it strictly one-to-one? The current design assumes one library per Wingbot instance. Multiple libraries would require a library selector in the Wingbot config.
+
+3. **Host migration.** What happens when the user wants to move Wingbot from one device to another? The `wingbot_host` flag on the old device needs to be cleared and set on the new one. Should this be a UI action or automatic?
+
+4. **Offline host.** When the host device is offline, should other devices show a "Wingbot unavailable" state, or should they try to reach Wingbot through relay? The answer depends on whether Wingbot can be reached via Iroh relay when the host device is on a different network.
+
+5. **Auth between Wingbot and WingDrive.** When both run on the same machine, auth may be unnecessary (loopback only). When remote, they need mutual authentication. Should this use the existing WingDrive session keys from pairing, or a separate shared secret?

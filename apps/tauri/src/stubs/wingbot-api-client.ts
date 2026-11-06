@@ -1,10 +1,10 @@
 //! # Wingbot API Client Stub
 //!
-//! Stand-in for `@spacebot/api-client` when the private spacebot repo is not
+//! Stand-in for `@wingbot/api-client` when the private wingbot repo is not
 //! checked out next to this one. The Wingbot UI is optional, so the desktop
 //! build must still link without it. Previously the build externalized the
 //! bare specifier, which left an unresolvable `import ... from
-//! "@spacebot/api-client"` in the bundle and killed the whole app at load
+//! "@wingbot/api-client"` in the bundle and killed the whole app at load
 //! time with a blank window.
 //!
 //! Only runtime values need stubbing. Every other import from this module in

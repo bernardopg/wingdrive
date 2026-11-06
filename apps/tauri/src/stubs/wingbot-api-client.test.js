@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'bun:test';
-import {apiClient} from './spacebot-api-client.ts';
+import {apiClient} from './wingbot-api-client.ts';
 
 describe('Wingbot fallback client', () => {
 	test('rejects mutations instead of reporting false success', async () => {

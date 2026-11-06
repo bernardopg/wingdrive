@@ -11,13 +11,13 @@
 		"resolveJsonModule": true,
 		"paths": {
 			"~/*": ["./src/*"],
-			"@spacebot/api-client": [
-				"../../../spacebot/packages/api-client/src/index.ts",
-				"../../apps/tauri/src/stubs/spacebot-api-client.ts"
+			"@wingbot/api-client": [
+				"../../../wingbot/packages/api-client/src/index.ts",
+				"../../apps/tauri/src/stubs/wingbot-api-client.ts"
 			],
-			"@spacebot/api-client/*": [
-				"../../../spacebot/packages/api-client/src/*",
-				"../../apps/tauri/src/stubs/spacebot-api-client.ts"
+			"@wingbot/api-client/*": [
+				"../../../wingbot/packages/api-client/src/*",
+				"../../apps/tauri/src/stubs/wingbot-api-client.ts"
 			]
 		},
 		"types": ["@react-three/fiber"]

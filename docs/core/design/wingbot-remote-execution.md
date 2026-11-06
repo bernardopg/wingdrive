@@ -1,35 +1,35 @@
-# Spacebot Remote Execution Over WingDrive
+# Wingbot Remote Execution Over WingDrive
 
 > **Naming:** Wingbot is WingDrive's agent surface (UI, routes and windows).
-> In this document "Spacebot" means the external agent runtime it connects to,
-> including its HTTP API and the `@spacebot/api-client` package. Those names
+> In this document "Wingbot" means the external agent runtime it connects to,
+> including its HTTP API and the `@wingbot/api-client` package. Those names
 > belong to that project and are kept. WingDrive's persisted settings still use
-> the `spacebot` key and `spacebot_*` fields for compatibility (BRAND-002).
+> the `wingbot` key and `wingbot_*` fields for compatibility (BRAND-002).
 
 ## Purpose
 
-Define how a single Spacebot instance can operate across many user devices by using WingDrive as the permission, transport, and execution layer.
+Define how a single Wingbot instance can operate across many user devices by using WingDrive as the permission, transport, and execution layer.
 
 This design assumes the normal long-term deployment model:
 
-- one Spacebot instance
-- one paired WingDrive node owned by that Spacebot instance
+- one Wingbot instance
+- one paired WingDrive node owned by that Wingbot instance
 - many user WingDrive devices in the same library
 
 WingDrive becomes the system that decides what the agent can access, on which devices, and for which operations.
 
 ## Decision
 
-Spacebot should never directly own the multi-device graph.
+Wingbot should never directly own the multi-device graph.
 
 Instead:
 
-- every Spacebot instance must be paired to a WingDrive node
-- that paired WingDrive node is Spacebot's portal into the user's library
+- every Wingbot instance must be paired to a WingDrive node
+- that paired WingDrive node is Wingbot's portal into the user's library
 - all remote file access, shell access, future computer use, and other device-local execution go through WingDrive
 - WingDrive is the source of truth for device identity, library membership, permissions, and remote dispatch
 
-This means WingDrive is the permission and execution layer. Spacebot is the agent runtime and scheduler.
+This means WingDrive is the permission and execution layer. Wingbot is the agent runtime and scheduler.
 
 ## Why This Shape
 
@@ -43,7 +43,7 @@ WingDrive already owns the hard distributed systems primitives:
 - file transfer
 - library-scoped jobs
 
-Spacebot already owns the hard agent-runtime primitives:
+Wingbot already owns the hard agent-runtime primitives:
 
 - channels, branches, workers
 - memory and planning
@@ -55,22 +55,22 @@ Spacebot already owns the hard agent-runtime primitives:
 This split is the cleanest one:
 
 - WingDrive decides whether something may happen and where it runs
-- Spacebot decides what work should be done and how to delegate it
+- Wingbot decides what work should be done and how to delegate it
 
 ## Deployment Model
 
 ### Local Install
 
 - WingDrive runs on the user's machine
-- Spacebot runs as a subprocess of WingDrive
+- Wingbot runs as a subprocess of WingDrive
 - both connect to the same local library and device identity
 
 ### Hosted Install
 
-- hosted infrastructure runs one Spacebot instance and one WingDrive node together
+- hosted infrastructure runs one Wingbot instance and one WingDrive node together
 - that WingDrive node appears as a device in the user's library
 - user devices pair with that library
-- Spacebot uses its paired WingDrive node to operate across the rest of the fleet
+- Wingbot uses its paired WingDrive node to operate across the rest of the fleet
 
 This avoids any central relay architecture beyond what WingDrive already needs for peer connectivity.
 
@@ -79,17 +79,17 @@ This avoids any central relay architecture beyond what WingDrive already needs f
 The user-facing product model is:
 
 - WingDrive is installed on all user devices
-- Spacebot is accessed through WingDrive, not through a separate desktop app
-- Spacebot Desktop is replaced by WingDrive UI surfaces
-- one Spacebot instance can act across the user's device fleet because WingDrive provides the device graph and permission system
+- Wingbot is accessed through WingDrive, not through a separate desktop app
+- Wingbot Desktop is replaced by WingDrive UI surfaces
+- one Wingbot instance can act across the user's device fleet because WingDrive provides the device graph and permission system
 
 This is the long-term convergence point between the two products.
 
 ## Core Principle
 
-Spacebot should know what devices exist and what it is allowed to do.
+Wingbot should know what devices exist and what it is allowed to do.
 
-Spacebot should not be the final authority that enforces those decisions.
+Wingbot should not be the final authority that enforces those decisions.
 
 WingDrive remains the enforcement layer.
 
@@ -106,9 +106,9 @@ That gives us:
 ```text
 User
   -> WingDrive UI
-    -> Spacebot runtime
+    -> Wingbot runtime
       -> worker with execution_target
-        -> WingDrive client bound to paired Spacebot node
+        -> WingDrive client bound to paired Wingbot node
           -> permission + routing decision
             -> target WingDrive device
               -> local execution on that device
@@ -116,7 +116,7 @@ User
 
 ### Responsibility Split
 
-#### Spacebot owns
+#### Wingbot owns
 
 - chat and voice interaction
 - planning and delegation
@@ -138,25 +138,25 @@ User
 
 ## Paired Node Model
 
-Every Spacebot instance has exactly one paired WingDrive node.
+Every Wingbot instance has exactly one paired WingDrive node.
 
-That node is Spacebot's home device inside the library.
+That node is Wingbot's home device inside the library.
 
 It is responsible for:
 
-- authenticating Spacebot to the library
+- authenticating Wingbot to the library
 - maintaining the current device graph
 - resolving allowed targets
 - forwarding remote operations to peer devices
 - storing policy and audit metadata locally as part of the library context
 
-This is the key simplification that avoids making Spacebot maintain direct relationships with many devices.
+This is the key simplification that avoids making Wingbot maintain direct relationships with many devices.
 
 ## Execution Model
 
-### Current Spacebot behavior
+### Current Wingbot behavior
 
-Today, Spacebot workers execute shell and file tools on the machine where Spacebot itself runs.
+Today, Wingbot workers execute shell and file tools on the machine where Wingbot itself runs.
 
 ### Target behavior
 
@@ -172,7 +172,7 @@ Each worker binds to exactly one `execution_target` when it is spawned.
 
 Examples:
 
-- local paired Spacebot device
+- local paired Wingbot device
 - user's MacBook
 - Windows workstation
 - NAS device
@@ -180,7 +180,7 @@ Examples:
 
 The tool interface stays simple for the model. The transport changes under the hood.
 
-## Recommended Spacebot Integration Shape
+## Recommended Wingbot Integration Shape
 
 Add an `execution_target` abstraction to workers.
 
@@ -205,7 +205,7 @@ Add a new agent principal and remote execution protocol.
 
 WingDrive should support:
 
-- identifying a Spacebot instance as a library-scoped principal
+- identifying a Wingbot instance as a library-scoped principal
 - resolving what devices and subtrees it may access
 - forwarding typed operations to the correct device
 - enforcing policy before any peer execution occurs
@@ -222,7 +222,7 @@ Suggested model:
 AgentPrincipal
   id
   library_id
-  kind                 # spacebot
+  kind                 # wingbot
   paired_device_id
   display_name
   created_at
@@ -230,9 +230,9 @@ AgentPrincipal
   status
 ```
 
-This principal represents the Spacebot instance inside the library.
+This principal represents the Wingbot instance inside the library.
 
-All remote operations performed by Spacebot should be evaluated against this principal.
+All remote operations performed by Wingbot should be evaluated against this principal.
 
 ## Policy Model
 
@@ -242,7 +242,7 @@ Suggested layers:
 
 ### Device Access Policy
 
-Determines which devices the Spacebot principal may access.
+Determines which devices the Wingbot principal may access.
 
 Examples:
 
@@ -261,7 +261,7 @@ Examples:
 
 ### Operation Policy
 
-Determines what Spacebot may do there.
+Determines what Wingbot may do there.
 
 Examples:
 
@@ -294,22 +294,22 @@ For every request, WingDrive should resolve permissions using:
 - `target_location_or_path`
 - `operation_kind`
 
-That resolution should happen on the paired Spacebot node before forwarding, and again on the target device if needed for defense in depth.
+That resolution should happen on the paired Wingbot node before forwarding, and again on the target device if needed for defense in depth.
 
 ## Request Flow
 
 ### Example: remote shell command
 
 ```text
-1. User asks Spacebot to work on a repo on the MacBook
-2. Spacebot spawns a worker with execution_target = MacBook
+1. User asks Wingbot to work on a repo on the MacBook
+2. Wingbot spawns a worker with execution_target = MacBook
 3. Worker calls shell tool
 4. Proxy tool sends request to paired WingDrive node
 5. Paired node resolves effective policy for principal + MacBook + path + shell
 6. If allowed, paired node forwards typed execution request to MacBook WingDrive
 7. MacBook WingDrive executes locally inside its OS context
 8. Result returns to paired node
-9. Result returns to Spacebot worker
+9. Result returns to Wingbot worker
 10. Worker continues and reports status
 ```
 
@@ -357,7 +357,7 @@ The target device should execute through the same internal dispatch and action/q
 
 ## Audit Model
 
-Every Spacebot-routed operation should be auditable.
+Every Wingbot-routed operation should be auditable.
 
 Suggested audit fields:
 
@@ -365,7 +365,7 @@ Suggested audit fields:
 request_id
 library_id
 agent_principal_id
-origin_device_id        # paired Spacebot node
+origin_device_id        # paired Wingbot node
 target_device_id
 operation_kind
 target_path
@@ -377,9 +377,9 @@ result_status
 
 This is critical for trust, debugging, and future approval workflows.
 
-## Device Graph Context for Spacebot
+## Device Graph Context for Wingbot
 
-Spacebot needs a compact view of the library graph.
+Wingbot needs a compact view of the library graph.
 
 It should know:
 
@@ -394,7 +394,7 @@ This context should be concise for channels and richer for workers.
 
 Do not dump the full graph blindly into every prompt.
 
-## Why This Replaces Spacebot Desktop
+## Why This Replaces Wingbot Desktop
 
 If WingDrive is the permission and execution layer, then WingDrive is also the right user interface layer.
 
@@ -406,7 +406,7 @@ That means:
 - device selection happens in WingDrive
 - file and context views happen in WingDrive
 
-Spacebot Desktop becomes redundant once this model exists.
+Wingbot Desktop becomes redundant once this model exists.
 
 ## Local vs Hosted Symmetry
 
@@ -414,12 +414,12 @@ This design intentionally keeps local and hosted deployments symmetric.
 
 ### Local
 
-- WingDrive launches Spacebot locally
+- WingDrive launches Wingbot locally
 - both share one local paired device
 
 ### Hosted
 
-- hosted environment runs one Spacebot and one WingDrive node together
+- hosted environment runs one Wingbot and one WingDrive node together
 - that node is visible as a device in the user's library
 - user pairs the rest of their devices into the same library
 
@@ -437,7 +437,7 @@ WingDrive already has:
 - typed action/query dispatch
 - library-scoped jobs and remote job visibility
 
-Spacebot already has:
+Wingbot already has:
 
 - worker lifecycle and isolated tool servers
 - local shell and file tools
@@ -457,7 +457,7 @@ The integration does not require rewriting either product from scratch. It requi
 - remote operation forwarding
 - audit-first remote execution records
 
-### In Spacebot
+### In Wingbot
 
 - worker execution target abstraction
 - WingDrive-backed proxy tools
@@ -468,13 +468,13 @@ The integration does not require rewriting either product from scratch. It requi
 
 ### Phase 1: Principal and Policy Model
 
-- add Spacebot principal type to WingDrive
+- add Wingbot principal type to WingDrive
 - add device, subtree, and capability policies
 - add effective-permission resolution
 
 ### Phase 2: Remote File Queries
 
-- allow Spacebot-routed list/read/search against target devices through WingDrive
+- allow Wingbot-routed list/read/search against target devices through WingDrive
 - wire policy enforcement and audit logging
 
 ### Phase 3: Remote Shell Execution
@@ -485,7 +485,7 @@ The integration does not require rewriting either product from scratch. It requi
 ### Phase 4: WingDrive UI as the Agent Surface
 
 - embed chat, voice, target-device status, and permission controls in WingDrive
-- remove dependency on Spacebot Desktop
+- remove dependency on Wingbot Desktop
 
 ### Phase 5: Computer Use
 
@@ -494,12 +494,12 @@ The integration does not require rewriting either product from scratch. It requi
 
 ### Phase 6: Hosted Productization
 
-- ship hosted Spacebot with embedded WingDrive node
+- ship hosted Wingbot with embedded WingDrive node
 - build onboarding around library pairing
 
 ## Open Questions
 
-1. Should the target device perform a second policy check locally, or should the paired Spacebot node be the only enforcement point?
+1. Should the target device perform a second policy check locally, or should the paired Wingbot node be the only enforcement point?
 2. How should offline devices be represented in worker scheduling and retries?
 3. Which operations should always require live approval even when globally allowed?
 4. Should execution target be chosen explicitly by the model, by policy, or by a scheduler that picks the best allowed device?
@@ -511,11 +511,11 @@ Adopt the paired-node architecture.
 
 The correct long-term model is:
 
-- one Spacebot instance
-- one paired WingDrive node for that Spacebot
+- one Wingbot instance
+- one paired WingDrive node for that Wingbot
 - many user WingDrive devices in the same library
 - WingDrive as the permission and execution layer
-- Spacebot as the agent runtime and scheduler
+- Wingbot as the agent runtime and scheduler
 
 This gives us a clean answer to a core product question:
 
