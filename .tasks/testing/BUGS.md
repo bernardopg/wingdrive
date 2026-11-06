@@ -114,3 +114,84 @@
 - Reprodução anterior: com UUID válido, `variant = "../../etc/passwd"` ou `kind = "../thumb"` gerava um caminho fora da pasta do conteúdo. O servidor de mídia já rejeitava esses segmentos; o comando IPC não.
 - Correção: o comando usa a mesma validação do servidor (`valid_sidecar_segments`) antes de montar o caminho.
 - Limite: o comando só devolve o caminho; não foi verificado se algum fluxo da interface lê o arquivo resultante.
+
+## Cópia e movimentação de pastas seguiam links simbólicos
+
+- Estado: corrigido; os quatro casos de `core/tests/copy_symlink_test.rs` falhavam antes da correção e passam depois.
+- Local: `core/src/ops/files/copy/strategy.rs`, `copy_file_streaming` (percurso da pasta) e `get_path_size`, usado por `LocalMoveStrategy`.
+- Reprodução anterior: uma pasta com `self -> .`, um link para outra pasta e um link quebrado. Cópia com `CopyMethod::Streaming` ou `Atomic` terminava sem falhas, mas `dest/source/self` virava uma pasta real com cópias aninhadas da própria pasta até a resolução de links falhar, e o link quebrado sumia sem erro. A movimentação `Atomic` da mesma pasta falhava com `No such file or directory`, pois o cálculo de tamanho seguia o link quebrado.
+- Impacto: a cópia gravava dados que não estavam na seleção (o conteúdo do alvo de cada link) e repetia a pasta dentro dela mesma. O job informava sucesso.
+- Correção: no Unix, o percurso recria cada link com o mesmo alvo em vez de segui-lo, e o tamanho usa `symlink_metadata`. A movimentação em streaming continua apagando a origem sem tocar no alvo dos links.
+- Limite: Windows mantém o comportamento anterior, sem teste. Links no topo da seleção (o link selecionado em si) não mudaram. `FileCopyJob::get_path_size` e `count_files_in_path` ainda seguem links para estimar progresso; ver Melhorias sugeridas.
+
+## Exclusão permanente falhava em link simbólico quebrado
+
+- Estado: corrigido; `permanent_delete_removes_links_without_following_them` em `core/tests/delete_strategy_test.rs` falhava antes da correção e passa depois.
+- Local: `core/src/ops/files/delete/strategy.rs`, `LocalDeleteStrategy::permanent_delete` e `get_path_size`.
+- Reprodução anterior: `permanent_delete` em um link que aponta para um caminho inexistente retornava `No such file or directory (os error 2)` e o link ficava no disco.
+- Correção: ler o próprio link com `symlink_metadata` e removê-lo com `remove_file`. O tamanho liberado de um link passa a ser o do link, não o do alvo. O teste confirma que os alvos de links para arquivo e pasta continuam intactos.
+- Limite: o modo lixeira (`trash::delete`) não foi testado com links quebrados.
+
+## Revelar arquivo no Linux enviava URI sem codificação
+
+- Estado: corrigido; `reveal_uri_round_trips_paths_with_reserved_characters` em `apps/tauri/src-tauri/src/files/tests/mod.rs` falhava antes da correção e passa depois.
+- Local: `apps/tauri/src-tauri/src/files.rs`, `reveal_path` no Linux, agora via `reveal_uri`.
+- Reprodução anterior: o comando montava `file://{caminho}` sem codificar. `/tmp/100%20off.txt` virava `/tmp/100 off.txt` ao decodificar, `notes#1.txt` perdia `#1.txt` como fragmento e `what?.txt` virava consulta.
+- Impacto: "Mostrar na pasta" pedia ao gerenciador de arquivos um item diferente ou inexistente. O fallback abre a pasta pai só quando a chamada D-Bus falha.
+- Correção: gerar a URI com `Url::from_file_path`, que codifica o caminho como o lado receptor (`filemanager1.rs`) decodifica.
+- Limite: sem chamada D-Bus real nem gerenciador de arquivos no teste.
+
+## Entrada de autostart não escapava o caminho do executável
+
+- Estado: corrigido; `autostart_entry_escapes_launcher_paths_for_the_exec_key` em `apps/tauri/src-tauri/src/background.rs` falhava antes da correção e passa depois.
+- Local: `apps/tauri/src-tauri/src/background.rs`, `autostart_entry`.
+- Reprodução anterior: com o executável em `/opt/100%d/a\b"c$d`e/WingDrive`, a linha `Exec` saía com `%d` sem escape, `\` duplicado só uma vez e `$` e `` ` `` sem barra. Pela Desktop Entry Specification, `%d` é um código de campo removido na expansão, e um `\` literal entre aspas exige quatro barras no arquivo.
+- Impacto: "Iniciar com o sistema" gravava um comando que apontava para outro caminho quando o AppImage ou o executável ficava num caminho com esses caracteres.
+- Correção: aplicar a regra de aspas do `Exec` (`"`, `` ` ``, `$` e `\` com barra), depois duplicar as barras pelo escape de string e trocar `%` por `%%`.
+- Limite: o teste compara com a especificação; não houve sessão gráfica executando a entrada.
+
+## Configuração do app tratava mudança de caixa como alteração
+
+- Estado: corrigido; `same_value_in_another_case_is_not_a_change` e `validation_rejects_each_invalid_field` em `core/tests/app_config_action_test.rs` falhavam antes da correção e passam depois.
+- Local: `core/src/ops/config/app/update.rs`, `UpdateAppConfigAction::validate` e `execute`.
+- Reprodução anterior: com `log_level` salvo como `warn` e tema `nord`, enviar `WARN` e `Nord` respondia `Updated: log_level, theme` com `requires_restart = true`, gravava o arquivo e emitia `ConfigChanged`, embora o valor salvo continuasse igual. Enviar `spacebot_base_url = "/"` passava na validação e salvava uma URL vazia, pois a barra final é removida depois.
+- Correção: comparar nível de log e tema já em minúsculas, como são gravados, e validar a URL do Spacebot depois de remover as barras finais.
+- Limite: o teste chama a ação direto com o contexto do harness, sem RPC nem interface.
+
+## Job de cópia substituía item criado depois da confirmação
+
+- Estado: corrigido; `copy_without_a_policy_keeps_a_file_that_appeared_after_the_check` em `core/tests/copy_conflict_test.rs` falhava antes da correção e passa depois.
+- Local: `core/src/ops/files/copy/job.rs`, decisão de conflito do `FileCopyJob`.
+- Reprodução anterior: um job sem política de conflito e com `overwrite = false` copiava `report.txt` sobre um `report.txt` já existente no destino, com `Streaming` e `Atomic`. O arquivo original virava o novo conteúdo e o job contava a cópia como bem-sucedida.
+- Impacto: a ação de cópia pergunta sobre conflitos antes de enfileirar o job, mas o job roda depois. Dois jobs na fila para a mesma pasta, ou outro programa criando o mesmo nome nesse intervalo, levavam à substituição sem pergunta. O campo `CopyOptions::overwrite` não era lido pelo job.
+- Correção: um conflito sem política só é substituído com `overwrite = true`; caso contrário, aquele item falha com `Destination already exists` e os demais seguem. A mesma entrada no disco, comparada sem seguir links, não conta como conflito, para manter renomeações só de maiúsculas em volumes que ignoram caixa.
+- Limite: um job retomado depois de interrupção, com uma pasta parcialmente copiada no destino e sem política, agora falha nessa pasta em vez de completá-la por cima. Não houve teste de retomada nem de volume que ignora caixa.
+
+## Renomear para um nome existente movia o item para dentro da pasta
+
+- Estado: corrigido; `rename_onto_an_existing_folder_does_not_move_into_it`, `rename_onto_an_existing_file_fails_and_keeps_both` e `renaming_a_link_to_its_target_name_keeps_the_target` em `core/tests/copy_conflict_test.rs`.
+- Local: `core/src/ops/files/copy/job.rs` (destino do `MoveMode::Rename`) e `core/src/ops/files/rename/action.rs`, que não verifica se o nome novo já existe.
+- Reprodução anterior: renomear `notes.txt` para `docs`, sendo `docs` uma pasta existente, movia o arquivo para `docs/notes.txt` e reportava `moved_count = 1`. Renomear `draft.txt` para `final.txt` existente resolvia o destino como o próprio `draft.txt`, não fazia nada e também reportava sucesso.
+- Correção: a renomeação usa o caminho pedido como destino exato, sem a regra de soltar dentro de pasta; com a correção do conflito acima, um nome ocupado falha e mantém os dois itens.
+- Limite: a ação de renomear continua sem validar o nome antes de criar o job; o erro aparece no resultado do job.
+
+## Testes do task-system dependiam da ordem de execução
+
+- Estado: corrigido; `cargo test -p wing-task-system --test integration_test` passou três vezes seguidas com 10 testes.
+- Local: `crates/task-system/tests/integration_test.rs`, `many_pauses_test`.
+- Reprodução anterior: na execução de `scripts/coverage-rust.sh` de 2026-11-06, 9 dos 10 testes falharam. `many_pauses_test` instalava um subscriber global de tracing; quando rodava antes dos testes com `#[traced_test]`, o primeiro deles parava com `a global default trace dispatcher has already been set` e os demais com `Once instance has previously been poisoned`.
+- Correção: `many_pauses_test` também usa `#[traced_test]`, sem alterar `RUST_LOG` nem instalar subscriber global.
+- Limite: só afeta o runner de cobertura, que testa os crates compartilhados; o CI normal não roda essa suíte.
+
+## Melhorias sugeridas
+
+Itens vistos na leitura do código, sem teste que comprove falha. O código não foi alterado.
+
+- `core/src/ops/files/copy/strategy.rs`, `copy_single_file_with_offset`: com `verify_checksum`, os dois hashers recebem o mesmo `chunk` lido da origem, então a comparação nunca falha. Uma verificação real precisa reler o destino depois do `sync_all`.
+- `core/src/ops/files/copy/job.rs`, `get_path_size` e `count_files_in_path`: seguem links ao estimar progresso. Um link para `/` dentro da seleção percorre o disco inteiro antes da cópia, que agora só recria o link.
+- `core/src/ops/files/rename/validation.rs`, `validate_filename`: conta bytes e a mensagem fala em caracteres. No Linux o limite de 255 bytes está certo; no Windows o limite é de 255 unidades UTF-16, e nomes com acentos são recusados antes disso.
+- `core/src/ops/files/plan.rs`, `next_free_name`: usa `to_string_lossy`, então o nome alternativo de um arquivo com bytes fora de UTF-8 troca esses bytes por `U+FFFD`.
+- `core/src/ops/files/rename/action.rs`: a validação não verifica se o nome novo já existe. Desde a correção do job o conflito falha, mas o erro só aparece no resultado do job, não na validação da ação.
+- `apps/tauri/src-tauri/src/network_discovery.rs`, `parse_ssh_config`: não reconhece a forma `Host=nome`, aceita pelo OpenSSH.
+- `apps/tauri/src-tauri/src/main.rs`, `start_daemon_integration_tests::workspace_daemon_binary`: procura `wing-daemon` em `<workspace>/target`, ignorando `CARGO_TARGET_DIR`. Num worktree que compila em outro diretório o teste falha sem relação com o código.
+- `core/tests/delete_strategy_test.rs`, `test_local_delete_strategy_trash`: chama `trash::delete` real num arquivo de `/tmp`. A lixeira usada depende do volume; vale isolar `XDG_DATA_HOME` como faz o teste de `core/src/ops/trash`.

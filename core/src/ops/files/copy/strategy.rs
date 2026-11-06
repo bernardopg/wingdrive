@@ -825,7 +825,9 @@ async fn get_path_size(path: &Path) -> Result<u64, std::io::Error> {
 	let mut stack = vec![path.to_path_buf()];
 
 	while let Some(current_path) = stack.pop() {
-		let metadata = fs::metadata(&current_path).await?;
+		// Links count as themselves: following them looped on links to an ancestor
+		// and failed the whole move on a dangling one.
+		let metadata = fs::symlink_metadata(&current_path).await?;
 
 		if metadata.is_file() {
 			total += metadata.len();
@@ -1030,6 +1032,17 @@ async fn copy_file_streaming<'a>(
 		let mut stack = vec![(source.to_path_buf(), destination.to_path_buf())];
 
 		while let Some((src_path, dest_path)) = stack.pop() {
+			// Recreate links inside the folder: following them copied data from outside
+			// the selection, recursed into links to an ancestor and dropped dangling ones.
+			#[cfg(unix)]
+			if fs::symlink_metadata(&src_path)
+				.await?
+				.file_type()
+				.is_symlink()
+			{
+				fs::symlink(fs::read_link(&src_path).await?, &dest_path).await?;
+				continue;
+			}
 			if src_path.is_file() {
 				files_to_copy.push((src_path, dest_path));
 			} else if src_path.is_dir() {

@@ -227,7 +227,8 @@ impl LocalDeleteStrategy {
 		let mut stack = vec![path.to_path_buf()];
 
 		while let Some(current_path) = stack.pop() {
-			let metadata = fs::metadata(&current_path).await?;
+			// A link frees only itself, not the data it points to.
+			let metadata = fs::symlink_metadata(&current_path).await?;
 
 			if metadata.is_file() {
 				total += metadata.len();
@@ -275,9 +276,10 @@ impl LocalDeleteStrategy {
 
 	/// Permanently delete file or directory
 	pub async fn permanent_delete(&self, path: &Path) -> Result<(), std::io::Error> {
-		let metadata = fs::metadata(path).await?;
+		// Read the link itself so a dangling link can be deleted too.
+		let metadata = fs::symlink_metadata(path).await?;
 
-		if metadata.is_file() {
+		if metadata.is_file() || metadata.file_type().is_symlink() {
 			fs::remove_file(path).await?;
 		} else if metadata.is_dir() {
 			fs::remove_dir_all(path).await?;

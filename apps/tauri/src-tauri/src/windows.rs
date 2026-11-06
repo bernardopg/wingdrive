@@ -743,3 +743,7 @@ mod tests {
 		);
 	}
 }
+
+#[cfg(test)]
+#[path = "windows/tests/mod.rs"]
+mod window_tests;

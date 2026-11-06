@@ -52,3 +52,17 @@ Drive(1): Drive B
 		]
 	);
 }
+
+#[tokio::test]
+async fn mount_and_unmount_reject_input_before_running_gio() {
+	let error = mount_network_location("  server/share ".into(), None)
+		.await
+		.unwrap_err();
+	assert!(error.starts_with("Enter an address"), "{error}");
+	for path in ["/tmp/gvfs/sftp:host=x", "/", "relative"] {
+		assert_eq!(
+			unmount_network_location(path.into()).await.unwrap_err(),
+			"Not a network location"
+		);
+	}
+}

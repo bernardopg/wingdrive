@@ -59,6 +59,8 @@ sysinfo = { version = "0.40.0", default-features = false, features = ["system"] 
 
 [dev-dependencies]
 tempfile = "3.27.0"
+# Mock runtime for commands that take `tauri::State`.
+tauri = { version = "2.11.5", features = ["test"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 wing-desktop-macos = { path = "../crates/macos" }

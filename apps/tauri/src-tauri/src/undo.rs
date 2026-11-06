@@ -248,4 +248,53 @@ mod tests {
 			.unwrap();
 		assert!(!path.exists());
 	}
+
+	#[tokio::test]
+	async fn undo_rejects_relative_paths_and_missing_or_directory_entries() {
+		let root = tempfile::tempdir().unwrap();
+		let relative = std::path::PathBuf::from("relative");
+		assert!(file_identity(relative.clone()).await.is_err());
+		assert!(file_content_hash(relative.clone()).await.is_err());
+		let file = root.path().join("file");
+		std::fs::write(&file, "data").unwrap();
+		let expected = identity(&file).unwrap();
+		assert!(move_no_replace(&file, &relative, &expected).is_err());
+		assert!(undo_move(relative, root.path().join("x"), expected.clone())
+			.await
+			.is_err());
+		assert!(file.exists());
+
+		let missing = root.path().join("missing");
+		assert!(file_identity(missing.clone()).await.is_err());
+		assert!(undo_new_file(missing.clone(), expected.clone(), None)
+			.await
+			.is_err());
+		assert!(undo_empty_folder(missing, expected).await.is_err());
+
+		// A moved file goes back when the original name is still free.
+		let moved = root.path().join("moved");
+		std::fs::rename(&file, &moved).unwrap();
+		let expected = file_identity(moved.clone()).await.unwrap();
+		undo_move(moved.clone(), file.clone(), expected)
+			.await
+			.unwrap();
+		assert_eq!(std::fs::read_to_string(&file).unwrap(), "data");
+		assert!(!moved.exists());
+
+		// A directory is never removed as a new file, with or without a hash.
+		let folder = root.path().join("folder");
+		std::fs::create_dir(&folder).unwrap();
+		let expected = identity(&folder).unwrap();
+		assert!(undo_new_file(folder.clone(), expected.clone(), None)
+			.await
+			.is_err());
+		assert!(
+			undo_new_file(folder.clone(), expected.clone(), Some("hash".into()))
+				.await
+				.is_err()
+		);
+		assert!(file_content_hash(folder.clone()).await.is_err());
+		undo_empty_folder(folder.clone(), expected).await.unwrap();
+		assert!(!folder.exists());
+	}
 }

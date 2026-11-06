@@ -154,6 +154,22 @@ mod tests {
 	}
 
 	#[test]
+	fn only_existing_local_uris_become_paths() {
+		let dir = tempfile::tempdir().unwrap();
+		let file = dir.path().join("a b.txt");
+		std::fs::write(&file, "x").unwrap();
+		let uri = |path: &std::path::Path| tauri::Url::from_file_path(path).unwrap().to_string();
+		let paths = super::local_paths(&[
+			uri(&file),
+			uri(dir.path()),
+			uri(&dir.path().join("missing")),
+			"sftp://host/tmp/file".to_string(),
+			"not a uri".to_string(),
+		]);
+		assert_eq!(paths, vec![file, dir.path().to_path_buf()]);
+	}
+
+	#[test]
 	fn environment_override_wins_both_ways() {
 		assert!(should_serve(Some("1"), Some("thunar.desktop")));
 		assert!(should_serve(Some(" ON "), None));

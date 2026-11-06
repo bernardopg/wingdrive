@@ -6,7 +6,6 @@ use futures_concurrency::future::Join;
 use rand::RngExt;
 use tempfile::tempdir;
 use tracing::info;
-use tracing_subscriber::EnvFilter;
 use tracing_test::traced_test;
 
 mod common;
@@ -159,17 +158,10 @@ async fn pause_test() {
 	system.shutdown().await;
 }
 
+// A global subscriber set here made every `traced_test` that ran later panic.
 #[test]
+#[traced_test]
 fn many_pauses_test() {
-	std::env::set_var("RUST_LOG", "info,wing_task_system=error");
-
-	tracing_subscriber::fmt()
-		.with_file(true)
-		.with_line_number(true)
-		.with_env_filter(EnvFilter::from_default_env())
-		.try_init()
-		.ok();
-
 	std::thread::spawn(|| {
 		tokio::runtime::Builder::new_multi_thread()
 			.enable_all()

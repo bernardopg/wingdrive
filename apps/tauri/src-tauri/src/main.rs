@@ -398,6 +398,10 @@ type SubscriptionMap = Arc<RwLock<HashMap<u64, (String, oneshot::Sender<()>)>>>;
 #[path = "subscription_test.rs"]
 mod subscription_tests;
 
+#[cfg(test)]
+#[path = "main/tests/mod.rs"]
+mod command_tests;
+
 struct SubscriptionManager {
 	subscriptions: SubscriptionMap,
 	counter: std::sync::atomic::AtomicU64,
