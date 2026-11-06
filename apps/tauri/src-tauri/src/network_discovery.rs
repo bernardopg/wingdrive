@@ -282,6 +282,32 @@ Match host foo
 	}
 
 	#[test]
+	fn ssh_config_hosts_become_sftp_servers_and_missing_config_is_empty() {
+		let home = tempfile::tempdir().unwrap();
+		assert!(ssh_config_servers(home.path()).is_empty());
+		std::fs::create_dir(home.path().join(".ssh")).unwrap();
+		std::fs::write(home.path().join(".ssh/config"), "Host nas *.lan\n").unwrap();
+		let servers = ssh_config_servers(home.path());
+		assert_eq!(servers.len(), 1);
+		assert_eq!(servers[0].uri, "sftp://nas/");
+		assert_eq!(servers[0].name, "nas (SFTP)");
+		assert_eq!(servers[0].source, "ssh-config");
+	}
+
+	#[test]
+	fn avahi_lines_without_host_or_known_service_are_skipped() {
+		let listing = "\
+=;eth0;IPv4;x;_smb._tcp;local;;192.168.1.5;445;
+=;eth0;IPv4;x;_ftp._tcp;local;ftp.local.;192.168.1.5;2121;
+=;eth0;IPv4;x;_nfs._tcp;local;nfs.local;192.168.1.5;notaport;
+=;short;line
+";
+		let uris: Vec<String> = parse_avahi(listing).into_iter().map(|s| s.uri).collect();
+		assert_eq!(uris, ["ftp://ftp.local:2121/", "nfs://nfs.local/"]);
+		assert_eq!(unescape("\\999x"), "\\999x");
+	}
+
+	#[test]
 	fn unescape_decodes_decimal_bytes() {
 		assert_eq!(unescape("Roku\\032Express"), "Roku Express");
 		assert_eq!(unescape("plain\\"), "plain\\");

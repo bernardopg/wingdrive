@@ -150,3 +150,7 @@ pub async fn run_context_action(id: String, paths: Vec<PathBuf>) -> Result<(), S
 		Err("Context menu actions are only available on Linux".to_string())
 	}
 }
+
+#[cfg(test)]
+#[path = "file_opening/tests/mod.rs"]
+mod tests;

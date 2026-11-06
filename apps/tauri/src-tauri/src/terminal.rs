@@ -571,6 +571,25 @@ mod tests {
 	}
 
 	#[test]
+	fn commands_on_an_unknown_terminal_report_it_closed() {
+		use tauri::Manager;
+		let app = tauri::test::mock_app();
+		app.manage(TerminalSessions::default());
+		let size = || TerminalSize { cols: 80, rows: 24 };
+		assert_eq!(
+			terminal_write(app.state(), 7, "ls\r".into()).unwrap_err(),
+			CLOSED
+		);
+		assert_eq!(terminal_resize(app.state(), 7, size()).unwrap_err(), CLOSED);
+		assert_eq!(
+			terminal_follow(app.state(), 7, "/tmp".into()).unwrap_err(),
+			CLOSED
+		);
+		terminal_close(app.state(), 7);
+		assert_eq!(app.state::<TerminalSessions>().close_window("main"), 0);
+	}
+
+	#[test]
 	fn size_never_reaches_zero() {
 		let size = size(0, 0);
 		assert_eq!((size.cols, size.rows), (1, 1));

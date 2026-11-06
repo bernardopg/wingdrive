@@ -122,3 +122,30 @@ fn file_uri_rejects_signed_percent_escapes() {
 		assert_eq!(local_path(uri, Path::new("/tmp")), None, "{uri}");
 	}
 }
+
+#[test]
+fn initial_request_is_taken_only_when_it_opens_a_folder() {
+	use tauri::Manager;
+
+	let folder = |path: &str| OpenRequest {
+		directory: PathBuf::from(path),
+		select: None,
+	};
+	let reveal = OpenRequest {
+		directory: PathBuf::from("/b"),
+		select: Some(PathBuf::from("/b/file")),
+	};
+
+	let app = tauri::test::mock_app();
+	app.manage(PendingOpenRequests::new(vec![reveal.clone(), folder("/c")]));
+	// A reveal at the head stays queued for the frontend, with what follows it.
+	assert_eq!(take_initial_open_request(app.state()), None);
+	assert_eq!(take_open_requests(app.state()), vec![reveal, folder("/c")]);
+	assert!(take_open_requests(app.state()).is_empty());
+	assert_eq!(take_initial_open_request(app.state()), None);
+
+	let app = tauri::test::mock_app();
+	app.manage(PendingOpenRequests::new(vec![folder("/a"), folder("/d")]));
+	assert_eq!(take_initial_open_request(app.state()), Some(folder("/a")));
+	assert_eq!(take_open_requests(app.state()), vec![folder("/d")]);
+}

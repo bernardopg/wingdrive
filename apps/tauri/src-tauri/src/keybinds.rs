@@ -88,3 +88,7 @@ pub fn emit_keybind_triggered(app: &AppHandle, id: &str) {
 		tracing::error!("Failed to emit keybind-triggered event: {}", e);
 	}
 }
+
+#[cfg(test)]
+#[path = "keybinds/tests/mod.rs"]
+mod tests;
