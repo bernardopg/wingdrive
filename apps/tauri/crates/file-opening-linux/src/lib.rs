@@ -12,6 +12,10 @@ mod mime_apps;
 mod service_menus;
 pub mod terminal;
 
+#[cfg(test)]
+#[path = "opener_test.rs"]
+mod opener_test;
+
 use desktop_entry::DesktopEntry;
 use mime_apps::XdgDirs;
 

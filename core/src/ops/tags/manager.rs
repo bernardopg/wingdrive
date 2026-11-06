@@ -775,36 +775,36 @@ impl TagManager {
 			}
 		}
 
-		if tag_db_ids.is_empty() {
-			return Ok(Vec::new());
-		}
-
-		// Build filtered query with the found tag IDs
-		let mut query_builder = tag::Entity::find().filter(tag::Column::Id.is_in(tag_db_ids));
-
-		// Apply namespace filter
-		if let Some(namespace) = namespace_filter {
-			query_builder = query_builder.filter(tag::Column::Namespace.eq(namespace));
-		}
-
-		// Apply tag type filter
-		if let Some(ref tag_type) = tag_type_filter {
-			query_builder = query_builder.filter(tag::Column::TagType.eq(tag_type.as_str()));
-		}
-
-		// Apply privacy filter
-		if !include_archived {
-			query_builder = query_builder.filter(tag::Column::PrivacyLevel.eq("normal"));
-		}
-
-		let models = query_builder
-			.all(&*db)
-			.await
-			.map_err(|e| TagError::DatabaseError(e.to_string()))?;
-
+		// Without a name match, skip the name query but still run the alias
+		// search below: a tag can match on an alias alone.
 		let mut results = Vec::new();
-		for model in models {
-			results.push(model_to_domain(model)?);
+		if !tag_db_ids.is_empty() {
+			// Build filtered query with the found tag IDs
+			let mut query_builder = tag::Entity::find().filter(tag::Column::Id.is_in(tag_db_ids));
+
+			// Apply namespace filter
+			if let Some(namespace) = namespace_filter {
+				query_builder = query_builder.filter(tag::Column::Namespace.eq(namespace));
+			}
+
+			// Apply tag type filter
+			if let Some(ref tag_type) = tag_type_filter {
+				query_builder = query_builder.filter(tag::Column::TagType.eq(tag_type.as_str()));
+			}
+
+			// Apply privacy filter
+			if !include_archived {
+				query_builder = query_builder.filter(tag::Column::PrivacyLevel.eq("normal"));
+			}
+
+			let models = query_builder
+				.all(&*db)
+				.await
+				.map_err(|e| TagError::DatabaseError(e.to_string()))?;
+
+			for model in models {
+				results.push(model_to_domain(model)?);
+			}
 		}
 
 		// Also search aliases in memory (for now)

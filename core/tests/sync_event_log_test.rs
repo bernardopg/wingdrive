@@ -5,16 +5,13 @@
 
 mod helpers;
 
-use helpers::{MockTransport, TestDataDir};
+use helpers::{MockTransport, TestConfigBuilder, TestDataDir};
 use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
 use std::{path::PathBuf, sync::Arc};
 use tokio::{fs, time::Duration};
 use uuid::Uuid;
 use wing_core::{
-	infra::{
-		db::entities,
-		sync::{EventCategory, EventSeverity, NetworkTransport, SyncEventQuery, SyncEventType},
-	},
+	infra::sync::{EventCategory, EventSeverity, NetworkTransport, SyncEventQuery, SyncEventType},
 	library::Library,
 	service::{sync::state::DeviceSyncState, Service},
 	Core,
@@ -35,6 +32,7 @@ impl EventLogTestHarness {
 		// Use TestDataDir helper for proper cross-platform directory management
 		let test_data_alice = TestDataDir::new(format!("event_log_{}", test_name))?;
 		let temp_dir_alice = test_data_alice.core_data_path();
+		TestConfigBuilder::new(temp_dir_alice.clone()).build()?;
 
 		// Create snapshot directory
 		let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
@@ -474,35 +472,54 @@ async fn test_event_log_persistence() -> anyhow::Result<()> {
 		"Events persisted to sync.db"
 	);
 
-	// Restart sync service (simulates app restart)
-	drop(harness.library_alice.sync_service());
+	let library_path = harness.library_alice.path().to_path_buf();
+	let EventLogTestHarness {
+		_test_data_alice: test_data,
+		core_alice,
+		library_alice,
+		device_alice_id,
+		transport_alice,
+		..
+	} = harness;
+	drop(library_alice);
+	core_alice.libraries.close_library(library_id).await?;
+	core_alice
+		.shutdown()
+		.await
+		.map_err(|e| anyhow::anyhow!(e))?;
+	drop(core_alice);
 
-	// Re-initialize sync service
-	harness
-		.library_alice
+	let reopened_core = Core::new(test_data.core_data_path())
+		.await
+		.map_err(|e| anyhow::anyhow!(e))?;
+	let reopened_library = match reopened_core.libraries.get_library(library_id).await {
+		Some(library) => library,
+		None => {
+			reopened_core
+				.libraries
+				.open_library(&library_path, reopened_core.context.clone())
+				.await?
+		}
+	};
+	reopened_library
 		.init_sync_service(
-			harness.device_alice_id,
-			harness.transport_alice.clone() as Arc<dyn NetworkTransport>,
+			device_alice_id,
+			transport_alice as Arc<dyn NetworkTransport>,
 		)
 		.await?;
-
-	harness
-		.library_alice
+	let events_after = reopened_library
 		.sync_service()
 		.unwrap()
-		.start()
+		.event_logger()
+		.query(query)
 		.await?;
-
-	tokio::time::sleep(Duration::from_millis(100)).await;
-
-	// Query events again (should still exist after restart)
-	let events_after = harness.query_events_api(query).await?;
-
-	assert_eq!(
-		events_after.len(),
-		events_before.len(),
-		"Events should persist across sync service restart"
-	);
+	for previous in events_before {
+		assert!(
+			events_after.iter().any(|event| event.id == previous.id),
+			"missing persisted event {:?}",
+			previous.id
+		);
+	}
 
 	Ok(())
 }

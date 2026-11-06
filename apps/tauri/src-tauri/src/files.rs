@@ -1,6 +1,10 @@
 use std::path::{Path, PathBuf};
 use tracing::error;
 
+#[cfg(test)]
+#[path = "files/tests/mod.rs"]
+mod tests;
+
 #[tauri::command]
 pub async fn resolve_symlink(path: PathBuf) -> Result<(PathBuf, bool), String> {
 	let target = tokio::fs::canonicalize(&path)
@@ -92,6 +96,12 @@ pub async fn get_sidecar_path(
 	variant: String,
 	format: String,
 ) -> Result<String, String> {
+	let content_uuid = canonical_sidecar_uuid(&content_uuid)?;
+	// The segments become path components, so reject `..` and separators before joining.
+	if !crate::server::valid_sidecar_segments(&content_uuid, &kind, &format!("{variant}.{format}"))
+	{
+		return Err("Invalid sidecar path segment".to_string());
+	}
 	// Get the data directory
 	let data_dir = wing_tauri_core::default_data_dir()
 		.map_err(|e| format!("Failed to get data directory: {}", e))?;
@@ -123,6 +133,12 @@ pub async fn get_sidecar_path(
 		.join(format!("{}.{}", variant, format));
 
 	Ok(sidecar_path.to_string_lossy().to_string())
+}
+
+fn canonical_sidecar_uuid(value: &str) -> Result<String, String> {
+	uuid::Uuid::parse_str(value)
+		.map(|id| id.hyphenated().to_string())
+		.map_err(|_| "Invalid content UUID".to_string())
 }
 
 /// Find library folder by UUID (reads library.json files to match ID)

@@ -7,7 +7,7 @@ parent: COV-00
 priority: High
 milestone: M2
 tags: [coverage, testing, ci]
-last_updated: 2026-11-03
+last_updated: 2026-11-06
 ---
 
 ## Description
@@ -43,3 +43,13 @@ não de uma medição local nova. Inventário e reprodução completa continuam 
 O artefato Rust foi baixado do run concluído `41686685198`; os 20 maiores déficits por
 componente e arquivos fora desse LCOV estão em [INVENTORY.md](INVENTORY.md). A auditoria
 frontend, a exclusão de testes inline e a reprodução local completa seguem abertas.
+
+### Medição local no branch `test/coverage-expanded`, 2026-11-06
+
+Coleta completa com `scripts/coverage-rust.sh`, `scripts/coverage-frontend.sh` e
+`scripts/coverage-report.py`, com `HOME` e `XDG_CONFIG_HOME` temporários, em Linux. Core:
+24.635/81.455 (30,2%); desktop: 3.781/6.912 (54,7%). O core passa da primeira etapa (30%); o
+desktop ainda não chega aos 60%. A medição antecede a revisão do PR, que moveu testes para o
+runner Linux e acrescentou casos ao desktop; o número oficial é o do workflow Coverage após o
+merge. Uma medição do dia anterior (core 20,1%, desktop 49,1%) foi descartada porque a primeira
+execução falhou no meio e os ignorados não entraram no relatório.

@@ -95,3 +95,30 @@ fn launch_preserves_symlink_paths_instead_of_canonicalizing_them() {
 		}]
 	);
 }
+
+#[test]
+fn valid_instance_names_do_not_collide_on_the_session_bus() {
+	let names = ["work-a", "work_a", "work_2da", "café", "cafê"];
+	let identifiers: std::collections::HashSet<_> = names
+		.iter()
+		.map(|name| single_instance_id(Some(name)))
+		.collect();
+	assert_eq!(identifiers.len(), names.len());
+	#[cfg(target_os = "linux")]
+	for id in identifiers {
+		assert!(zbus::names::WellKnownName::try_from(format!("{id}.SingleInstance")).is_ok());
+	}
+	#[cfg(target_os = "linux")]
+	assert!(zbus::names::WellKnownName::try_from(format!(
+		"{}.SingleInstance",
+		single_instance_id(Some(&"é".repeat(32)))
+	))
+	.is_ok());
+}
+
+#[test]
+fn file_uri_rejects_signed_percent_escapes() {
+	for uri in ["file:///tmp/%+A", "file:///tmp/%+1"] {
+		assert_eq!(local_path(uri, Path::new("/tmp")), None, "{uri}");
+	}
+}

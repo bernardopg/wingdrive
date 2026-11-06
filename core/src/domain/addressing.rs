@@ -336,18 +336,22 @@ impl WingPath {
 	}
 
 	/// Get just the file name
-	pub fn file_name(&self) -> Option<&str> {
+	pub fn file_name(&self) -> Option<std::borrow::Cow<'_, str>> {
 		match self {
-			Self::Physical { path, .. } => path.file_name()?.to_str(),
-			Self::Cloud { path, .. } => path.split('/').last(),
+			Self::Physical { path, .. } => {
+				path.file_name()?.to_str().map(std::borrow::Cow::Borrowed)
+			}
+			Self::Cloud { path, .. } => path.split('/').last().map(std::borrow::Cow::Borrowed),
 			Self::Content { .. } => None, // Content paths don't have filenames
 			Self::Sidecar {
 				variant, format, ..
 			} => {
 				// Return the filename part: "grid@2x.webp"
-				Some(Box::leak(
-					format!("{}.{}", variant.as_str(), format.extension()).into_boxed_str(),
-				))
+				Some(std::borrow::Cow::Owned(format!(
+					"{}.{}",
+					variant.as_str(),
+					format.extension()
+				)))
 			}
 		}
 	}
@@ -393,7 +397,15 @@ impl WingPath {
 				path: base_path,
 			} => {
 				let path_str = path.as_ref().to_string_lossy();
-				let separator = if base_path.ends_with('/') || path_str.starts_with('/') {
+				let path_str = if base_path.is_empty() || base_path.ends_with('/') {
+					path_str.strip_prefix('/').unwrap_or(&path_str)
+				} else {
+					path_str.as_ref()
+				};
+				let separator = if base_path.is_empty()
+					|| base_path.ends_with('/')
+					|| path_str.starts_with('/')
+				{
 					""
 				} else {
 					"/"

@@ -1232,13 +1232,13 @@ impl FileCopyJob {
 			let dest_path = if let Some(dest_local) = self.destination.as_local_path() {
 				if dest_local.is_dir() || self.sources.paths.len() > 1 {
 					self.destination
-						.join(resolved_source.file_name().unwrap_or_default())
+						.join(resolved_source.file_name().unwrap_or_default().as_ref())
 				} else {
 					self.destination.clone()
 				}
 			} else {
 				self.destination
-					.join(resolved_source.file_name().unwrap_or_default())
+					.join(resolved_source.file_name().unwrap_or_default().as_ref())
 			};
 
 			let entry = CopyFileEntry {

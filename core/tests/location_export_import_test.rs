@@ -152,8 +152,8 @@ async fn test_location_export_import() -> Result<(), Box<dyn std::error::Error +
 	let location_action = LocationAddAction::from_input(location_input)
 		.map_err(|e| format!("Failed to create location action: {}", e))?;
 
-	let action_manager = core.context.action_manager.read().await;
-	let action_manager = action_manager
+	let action_manager_guard = core.context.action_manager.read().await;
+	let action_manager = action_manager_guard
 		.as_ref()
 		.ok_or("Action manager not initialized")?;
 
@@ -251,7 +251,7 @@ async fn test_location_export_import() -> Result<(), Box<dyn std::error::Error +
 	tokio::fs::write(&export_file, legacy_export).await?;
 
 	// Close first library
-	drop(action_manager);
+	drop(action_manager_guard);
 	let lib1_id = library1.id();
 	core.libraries.close_library(lib1_id).await?;
 	drop(library1);
@@ -280,8 +280,8 @@ async fn test_location_export_import() -> Result<(), Box<dyn std::error::Error +
 	let import_action = LocationImportAction::from_input(import_input)
 		.map_err(|e| format!("Failed to create import action: {}", e))?;
 
-	let action_manager = core.context.action_manager.read().await;
-	let action_manager = action_manager
+	let action_manager_guard = core.context.action_manager.read().await;
+	let action_manager = action_manager_guard
 		.as_ref()
 		.ok_or("Action manager not initialized")?;
 
@@ -367,7 +367,7 @@ async fn test_location_export_import() -> Result<(), Box<dyn std::error::Error +
 	println!("Import verification complete");
 
 	// Cleanup
-	drop(action_manager);
+	drop(action_manager_guard);
 	let lib2_id = library2.id();
 	core.libraries.close_library(lib2_id).await?;
 	drop(library2);
@@ -407,8 +407,8 @@ async fn test_export_nonexistent_location() -> Result<(), Box<dyn std::error::Er
 	let export_action = LocationExportAction::from_input(export_input)
 		.map_err(|e| format!("Failed to create export action: {}", e))?;
 
-	let action_manager = core.context.action_manager.read().await;
-	let action_manager = action_manager
+	let action_manager_guard = core.context.action_manager.read().await;
+	let action_manager = action_manager_guard
 		.as_ref()
 		.ok_or("Action manager not initialized")?;
 
@@ -422,7 +422,7 @@ async fn test_export_nonexistent_location() -> Result<(), Box<dyn std::error::Er
 	);
 
 	// Cleanup
-	drop(action_manager);
+	drop(action_manager_guard);
 	let lib_id = library.id();
 	core.libraries.close_library(lib_id).await?;
 	drop(library);
@@ -460,8 +460,8 @@ async fn test_import_invalid_file() -> Result<(), Box<dyn std::error::Error + Se
 	let import_action = LocationImportAction::from_input(import_input)
 		.map_err(|e| format!("Failed to create import action: {}", e))?;
 
-	let action_manager = core.context.action_manager.read().await;
-	let action_manager = action_manager
+	let action_manager_guard = core.context.action_manager.read().await;
+	let action_manager = action_manager_guard
 		.as_ref()
 		.ok_or("Action manager not initialized")?;
 
@@ -472,7 +472,7 @@ async fn test_import_invalid_file() -> Result<(), Box<dyn std::error::Error + Se
 	assert!(result.is_err(), "Import of invalid file should fail");
 
 	// Cleanup
-	drop(action_manager);
+	drop(action_manager_guard);
 	let lib_id = library.id();
 	core.libraries.close_library(lib_id).await?;
 	drop(library);
@@ -525,8 +525,8 @@ async fn test_import_links_existing_content_identities(
 	let location_action = LocationAddAction::from_input(location_input)
 		.map_err(|e| format!("Failed to create location action: {}", e))?;
 
-	let action_manager = core.context.action_manager.read().await;
-	let action_manager = action_manager
+	let action_manager_guard = core.context.action_manager.read().await;
+	let action_manager = action_manager_guard
 		.as_ref()
 		.ok_or("Action manager not initialized")?;
 
@@ -572,7 +572,7 @@ async fn test_import_links_existing_content_identities(
 		.map_err(|e| format!("Failed to dispatch export: {}", e))?;
 
 	// Close first library
-	drop(action_manager);
+	drop(action_manager_guard);
 	let lib1_id = library1.id();
 	core.libraries.close_library(lib1_id).await?;
 	drop(library1);
@@ -600,8 +600,8 @@ async fn test_import_links_existing_content_identities(
 	let location_action2 = LocationAddAction::from_input(location_input2)
 		.map_err(|e| format!("Failed to create location action: {}", e))?;
 
-	let action_manager = core.context.action_manager.read().await;
-	let action_manager = action_manager
+	let action_manager_guard = core.context.action_manager.read().await;
+	let action_manager = action_manager_guard
 		.as_ref()
 		.ok_or("Action manager not initialized")?;
 
@@ -690,7 +690,7 @@ async fn test_import_links_existing_content_identities(
 	);
 
 	// Cleanup
-	drop(action_manager);
+	drop(action_manager_guard);
 	let lib2_id = library2.id();
 	core.libraries.close_library(lib2_id).await?;
 	drop(library2);

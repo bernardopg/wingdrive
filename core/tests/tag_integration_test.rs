@@ -42,7 +42,7 @@ async fn test_tag_creation_and_application_with_events() -> anyhow::Result<()> {
 		.write_file("images/photo1.jpg", "Photo 1")
 		.await?;
 
-	let location = test_location
+	test_location
 		.index("Tag Test Location", IndexMode::Deep)
 		.await?;
 
@@ -133,8 +133,9 @@ async fn test_tag_creation_and_application_with_events() -> anyhow::Result<()> {
 		.await?
 		.expect("tag1 'Important' should exist in database");
 
-	assert_eq!(tag1_model.canonical_name, "important");
-	assert_eq!(tag1_model.display_name, Some("Important".to_string()));
+	assert_eq!(tag1_model.canonical_name, "Important");
+	assert_eq!(tag1_model.display_name, None);
+	assert_eq!(tag1_model.created_by_device, Some(harness.device_id));
 
 	// Verify tag2 exists with namespace
 	let tag2_model = tag::Entity::find()
@@ -143,7 +144,7 @@ async fn test_tag_creation_and_application_with_events() -> anyhow::Result<()> {
 		.await?
 		.expect("tag2 'Work' should exist in database");
 
-	assert_eq!(tag2_model.canonical_name, "work");
+	assert_eq!(tag2_model.canonical_name, "Work");
 	assert_eq!(tag2_model.namespace, Some("projects".to_string()));
 
 	// Verify tag3 exists
@@ -161,19 +162,22 @@ async fn test_tag_creation_and_application_with_events() -> anyhow::Result<()> {
 
 	// Find the files we created
 	let file1 = entry::Entity::find()
-		.filter(entry::Column::Name.eq("file1.txt"))
+		.filter(entry::Column::Name.eq("file1"))
+		.filter(entry::Column::Extension.eq("txt"))
 		.one(db)
 		.await?
 		.expect("file1.txt should be indexed");
 
 	let file2 = entry::Entity::find()
-		.filter(entry::Column::Name.eq("file2.txt"))
+		.filter(entry::Column::Name.eq("file2"))
+		.filter(entry::Column::Extension.eq("txt"))
 		.one(db)
 		.await?
 		.expect("file2.txt should be indexed");
 
 	let photo1 = entry::Entity::find()
-		.filter(entry::Column::Name.eq("photo1.jpg"))
+		.filter(entry::Column::Name.eq("photo1"))
+		.filter(entry::Column::Extension.eq("jpg"))
 		.one(db)
 		.await?
 		.expect("photo1.jpg should be indexed");
@@ -372,8 +376,8 @@ async fn test_tag_creation_and_application_with_events() -> anyhow::Result<()> {
 		.map(|t| t.canonical_name.clone())
 		.collect();
 
-	assert!(file1_tag_names.contains(&"important".to_string()));
-	assert!(file1_tag_names.contains(&"work".to_string()));
+	assert!(file1_tag_names.contains(&"Important".to_string()));
+	assert!(file1_tag_names.contains(&"Work".to_string()));
 
 	tracing::info!("Verified file1 tag reverse lookup: {:?}", file1_tag_names);
 

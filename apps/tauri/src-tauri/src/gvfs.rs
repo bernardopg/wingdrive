@@ -22,6 +22,10 @@ use std::time::Duration;
 
 use serde::Serialize;
 
+#[cfg(test)]
+#[path = "gvfs/tests/mod.rs"]
+mod contract_tests;
+
 /// A mounted gvfs location.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct NetworkMount {
@@ -105,8 +109,11 @@ fn percent_decode(text: &str) -> String {
 	let mut out = Vec::with_capacity(bytes.len());
 	let mut i = 0;
 	while i < bytes.len() {
-		if bytes[i] == b'%' {
-			if let Some(byte) = std::str::from_utf8(&bytes[i + 1..(i + 3).min(bytes.len())])
+		if bytes[i] == b'%'
+			&& i + 3 <= bytes.len()
+			&& bytes[i + 1..i + 3].iter().all(u8::is_ascii_hexdigit)
+		{
+			if let Some(byte) = std::str::from_utf8(&bytes[i + 1..i + 3])
 				.ok()
 				.and_then(|hex| u8::from_str_radix(hex, 16).ok())
 			{

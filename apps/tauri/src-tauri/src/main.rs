@@ -394,6 +394,10 @@ impl DaemonConnectionPool {
 /// Subscription id -> (owning window label, cancellation sender).
 type SubscriptionMap = Arc<RwLock<HashMap<u64, (String, oneshot::Sender<()>)>>>;
 
+#[cfg(test)]
+#[path = "subscription_test.rs"]
+mod subscription_tests;
+
 struct SubscriptionManager {
 	subscriptions: SubscriptionMap,
 	counter: std::sync::atomic::AtomicU64,

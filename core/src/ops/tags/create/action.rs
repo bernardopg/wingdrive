@@ -40,13 +40,15 @@ impl LibraryAction for CreateTagAction {
 	async fn execute(
 		self,
 		library: Arc<Library>,
-		_context: Arc<CoreContext>,
+		context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
 		let db = library.db();
 		let semantic_tag_manager = TagManager::new(Arc::new(db.conn().clone()));
 
-		// Get current device ID from library context
-		let device_id = library.id(); // Use library ID as device ID
+		let device_id = context
+			.device_manager
+			.device_id()
+			.map_err(|error| ActionError::Internal(format!("Failed to get device ID: {error}")))?;
 
 		// Create the semantic tag with all optional fields
 		let tag_entity = semantic_tag_manager
@@ -78,7 +80,7 @@ impl LibraryAction for CreateTagAction {
 		// Emit resource event for the new tag (sidebar reactivity)
 		let resource_manager = crate::domain::ResourceManager::new(
 			Arc::new(library.db().conn().clone()),
-			_context.events.clone(),
+			context.events.clone(),
 		);
 		resource_manager
 			.emit_resource_events("tag", vec![tag_entity.uuid])
@@ -258,7 +260,7 @@ impl LibraryAction for CreateTagAction {
 			if !affected_entry_uuids.is_empty() {
 				let resource_manager = crate::domain::ResourceManager::new(
 					Arc::new(library.db().conn().clone()),
-					_context.events.clone(),
+					context.events.clone(),
 				);
 				if let Err(e) = resource_manager
 					.emit_resource_events("file", affected_entry_uuids)

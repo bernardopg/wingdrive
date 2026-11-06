@@ -57,69 +57,17 @@ impl TestDataDir {
 			}
 		};
 
-		// On Windows, add timestamp + counter to ensure uniqueness even across test runs
-		// This prevents conflicts with leftover files from previous runs where cleanup failed
-		let dir_name = if use_home_for_watcher {
-			#[cfg(windows)]
-			{
-				use std::sync::atomic::{AtomicU64, Ordering};
-				use std::time::{SystemTime, UNIX_EPOCH};
-				static COUNTER: AtomicU64 = AtomicU64::new(0);
-				let id = COUNTER.fetch_add(1, Ordering::Relaxed);
-				let timestamp = SystemTime::now()
-					.duration_since(UNIX_EPOCH)
-					.unwrap()
-					.as_secs();
-				format!(".wingdrive_test_{}_{}_{}", test_name, timestamp, id)
-			}
-			#[cfg(not(windows))]
-			{
-				format!(".wingdrive_test_{}", test_name)
-			}
+		let prefix = if use_home_for_watcher {
+			".wingdrive_test_"
 		} else {
-			#[cfg(windows)]
-			{
-				use std::sync::atomic::{AtomicU64, Ordering};
-				use std::time::{SystemTime, UNIX_EPOCH};
-				static COUNTER: AtomicU64 = AtomicU64::new(0);
-				let id = COUNTER.fetch_add(1, Ordering::Relaxed);
-				let timestamp = SystemTime::now()
-					.duration_since(UNIX_EPOCH)
-					.unwrap()
-					.as_secs();
-				format!("wingdrive-test-{}-{}-{}", test_name, timestamp, id)
-			}
-			#[cfg(not(windows))]
-			{
-				format!("wingdrive-test-{}", test_name)
-			}
+			"wingdrive-test-"
 		};
-
-		let temp_path = PathBuf::from(temp_base).join(dir_name);
-
-		// On Windows, try to clean up any leftover directory from failed previous cleanup
-		// Retry a few times since file locks may be released shortly
-		#[cfg(windows)]
-		{
-			for attempt in 0..3 {
-				match std::fs::remove_dir_all(&temp_path) {
-					Ok(_) => break,
-					Err(e) if attempt < 2 => {
-						std::thread::sleep(std::time::Duration::from_millis(100));
-					}
-					Err(_) => {
-						// After retries, ignore - we have unique timestamp+counter so no conflict
-						break;
-					}
-				}
-			}
-		}
-		#[cfg(not(windows))]
-		{
-			let _ = std::fs::remove_dir_all(&temp_path);
-		}
-
-		std::fs::create_dir_all(&temp_path)?;
+		let temp_path = PathBuf::from(temp_base).join(format!(
+			"{prefix}{}-{}",
+			test_name,
+			uuid::Uuid::new_v4()
+		));
+		std::fs::create_dir(&temp_path)?;
 
 		// Create standard subdirectories
 		std::fs::create_dir_all(temp_path.join("core_data"))?;

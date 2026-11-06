@@ -89,7 +89,7 @@ impl CreateTagInput {
 			return Err("canonical_name cannot be empty".to_string());
 		}
 
-		if self.canonical_name.len() > 255 {
+		if self.canonical_name.chars().count() > 255 {
 			return Err("canonical_name cannot exceed 255 characters".to_string());
 		}
 
@@ -98,7 +98,7 @@ impl CreateTagInput {
 			if namespace.trim().is_empty() {
 				return Err("namespace cannot be empty if provided".to_string());
 			}
-			if namespace.len() > 100 {
+			if namespace.chars().count() > 100 {
 				return Err("namespace cannot exceed 100 characters".to_string());
 			}
 		}
@@ -112,7 +112,10 @@ impl CreateTagInput {
 
 		// Validate color format (hex)
 		if let Some(color) = &self.color {
-			if !color.starts_with('#') || color.len() != 7 {
+			if color.len() != 7
+				|| !color.starts_with('#')
+				|| !color.as_bytes()[1..].iter().all(u8::is_ascii_hexdigit)
+			{
 				return Err("color must be in hex format (#RRGGBB)".to_string());
 			}
 		}

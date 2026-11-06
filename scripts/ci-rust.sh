@@ -47,11 +47,50 @@ check_desktop_shell_deps() {
 	fi
 }
 
+# Core integration suites. The contract suites check pure functions, so they run on every
+# platform. The filesystem suites open a library, index or watch real folders, archive or
+# move files. They are validated on Linux only, so they stay off the Windows required check
+# until a Windows run proves them.
+core_contract_tests=(
+	addressing_contract_test
+	space_contract_test
+	tag_validation_contract_test
+)
+core_filesystem_tests=()
+if [ "$(uname -s)" = Linux ]; then
+	core_filesystem_tests=(
+		archive_contract_test
+		tag_manager_contract_test
+		indexing_rules_test
+		preflight_test
+		search_test
+		directory_listing_first_response_test
+		ephemeral_coverage_test
+		copy_action_test
+		location_export_import_test
+		event_filtering_test
+		job_registration_test
+		sync_event_log_test
+		tag_integration_test
+		tagging_persistence_test
+		move_streaming_test
+		entry_move_integrity_test
+		location_remove_jobs_test
+		indexing_test
+		library_test
+	)
+fi
+
 run_full_tests() {
 	# One build of every test binary, so the runs below only execute them.
 	step "Build test binaries"
 	cargo build --locked --bin wing-daemon
+	local core_test_flags=()
+	for test in "${core_contract_tests[@]}" ${core_filesystem_tests[@]+"${core_filesystem_tests[@]}"}; do
+		core_test_flags+=(--test "$test")
+	done
 	cargo test --locked --no-run -p wing-core --lib \
+		"${core_test_flags[@]}" \
 		--test branding_legacy_paths \
 		--test sync_metrics_test \
 		--test sync_realtime_test \
@@ -69,6 +108,23 @@ run_full_tests() {
 	cargo test --locked -p wing-core --lib ops::files::create_entry
 	cargo test --locked -p wing-core --lib domain::content_identity::tests
 	cargo test --locked -p wing-core --test branding_legacy_paths
+
+	step "Test core contracts"
+	for test in "${core_contract_tests[@]}"; do
+		cargo test --locked -p wing-core --test "$test"
+	done
+
+	if [ "${#core_filesystem_tests[@]}" -gt 0 ]; then
+		step "Test core libraries, indexing and file operations on a real filesystem"
+		for test in "${core_filesystem_tests[@]}"; do
+			case "$test" in
+				# These share watcher and indexer timing, so their cases run one at a time.
+				indexing_test | library_test)
+					cargo test --locked -p wing-core --test "$test" -- --test-threads=1 ;;
+				*) cargo test --locked -p wing-core --test "$test" ;;
+			esac
+		done
+	fi
 
 	step "Test CLI contracts and configuration"
 	cargo test --locked -p wing-cli --bin wing

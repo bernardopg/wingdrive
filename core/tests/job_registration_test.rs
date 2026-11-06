@@ -1,6 +1,5 @@
 //! Tests for job registration system
 
-use uuid::Uuid;
 use wing_core::{
 	domain::addressing::WingPath,
 	infra::job::{prelude::*, registry::REGISTRY},

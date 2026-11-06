@@ -7,7 +7,7 @@ parent: COV-00
 priority: High
 milestone: M2
 tags: [coverage, testing, ci]
-last_updated: 2026-11-03
+last_updated: 2026-11-06
 ---
 
 ## Description
@@ -54,3 +54,20 @@ Log local: `/tmp/wingdrive-cov-ci-local.log`.
 Esta evidência valida as suites locais e o runner normal. O runner instrumentado completo e o
 CI remoto deste branch ainda não foram executados. A medição publicada de referência continua
 na COV-01; nenhuma porcentagem nova é atribuída a esta entrega.
+
+### Ampliação das suítes e correções, 2026-11-06
+
+Novas suítes de contrato no core: `addressing_contract_test`, `archive_contract_test`,
+`space_contract_test`, `tag_validation_contract_test` e `tag_manager_contract_test`. No desktop:
+`files/tests`, `gvfs/tests` e `server/tests` em `apps/tauri/src-tauri/src/`, casos novos em
+`launch/tests`, `subscription_test.rs` e o teste isolado do seletor de aplicativos em
+`file-opening-linux`. Os bugs que elas acharam e as correções estão em [BUGS.md](BUGS.md).
+
+`scripts/ci-rust.sh` passa a rodar as suítes de contrato puras em todas as plataformas. As que
+abrem biblioteca, indexam, arquivam ou movem arquivos rodam só no Linux, pois não houve execução
+no Windows. `TestDataDir` agora cria um diretório único por instância e não apaga mais um caminho
+fixo, o que permite rodar essas suítes em paralelo.
+
+Validação local: `cargo test --locked -p wingdrive --bin WingDrive` com 82 aprovados e um ignorado
+preexistente; `file-opening-linux` com 23; e as suítes de tags e endereçamento do core aprovadas.
+Os testes do desktop não abrem janela Tauri, montagem GVFS real nem outra versão do app.

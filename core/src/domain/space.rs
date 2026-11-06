@@ -51,7 +51,9 @@ impl Space {
 
 	/// Validate color format
 	pub fn validate_color(color: &str) -> bool {
-		color.starts_with('#') && color.len() == 7
+		color.len() == 7
+			&& color.starts_with('#')
+			&& color.as_bytes()[1..].iter().all(u8::is_ascii_hexdigit)
 	}
 
 	/// Create a default "All Devices" space
