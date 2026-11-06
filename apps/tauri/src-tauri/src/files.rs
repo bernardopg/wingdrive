@@ -90,24 +90,43 @@ pub async fn share_files(_paths: Vec<String>) -> Result<(), String> {
 /// Get the physical path to a sidecar file
 #[tauri::command]
 pub async fn get_sidecar_path(
+	state: tauri::State<'_, std::sync::Arc<tokio::sync::RwLock<crate::DaemonState>>>,
 	library_id: String,
 	content_uuid: String,
 	kind: String,
 	variant: String,
 	format: String,
 ) -> Result<String, String> {
-	let content_uuid = canonical_sidecar_uuid(&content_uuid)?;
+	// Libraries live in the data directory of the daemon this window uses. A
+	// named instance or WINGDRIVE_DATA_DIR moves it away from the default one.
+	let data_dir = state.read().await.data_dir.clone();
+	sidecar_path_in(
+		&data_dir,
+		&library_id,
+		&content_uuid,
+		kind,
+		&variant,
+		&format,
+	)
+	.await
+}
+
+async fn sidecar_path_in(
+	data_dir: &Path,
+	library_id: &str,
+	content_uuid: &str,
+	kind: String,
+	variant: &str,
+	format: &str,
+) -> Result<String, String> {
+	let content_uuid = canonical_sidecar_uuid(content_uuid)?;
 	// The segments become path components, so reject `..` and separators before joining.
 	if !crate::server::valid_sidecar_segments(&content_uuid, &kind, &format!("{variant}.{format}"))
 	{
 		return Err("Invalid sidecar path segment".to_string());
 	}
-	// Get the data directory
-	let data_dir = wing_tauri_core::default_data_dir()
-		.map_err(|e| format!("Failed to get data directory: {}", e))?;
-
 	// Find the actual library folder (might be named differently than the ID)
-	let library_folder = find_library_folder(&data_dir, &library_id)
+	let library_folder = find_library_folder(data_dir, library_id)
 		.await
 		.map_err(|e| format!("Failed to find library folder: {:?}", e))?;
 
@@ -215,6 +234,15 @@ async fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
 ///
 /// Percent-encoding keeps `%XX`, `#` and `?` in file names from being read as
 /// escapes, a fragment or a query.
+/// The `as` argument of `ShowItems` in GVariant text form, as `gdbus call`
+/// parses it. A bare URI is not an array and gdbus refused it, so reveal always
+/// fell back to opening the parent folder without selecting the item.
+#[cfg(target_os = "linux")]
+fn show_items_argument(uri: &str) -> String {
+	let escaped = uri.replace('\\', "\\\\").replace('\'', "\\'");
+	format!("['{escaped}']")
+}
+
 #[cfg(target_os = "linux")]
 fn reveal_uri(path: &Path) -> String {
 	tauri::Url::from_file_path(path)
@@ -241,7 +269,7 @@ async fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
 			"--method",
 			"org.freedesktop.FileManager1.ShowItems",
 		])
-		.arg(&uri)
+		.arg(show_items_argument(&uri))
 		.arg("")
 		.status()
 		.await;
@@ -251,10 +279,15 @@ async fn reveal_path(path: &Path) -> Result<(), std::io::Error> {
 	}
 
 	if let Some(parent) = path.parent() {
+		// `xdg-open` returns only when the program it starts exits when that
+		// program stays in the foreground, as a terminal does. Waiting for it
+		// kept the reveal call pending until the user closed that window.
 		let parent = parent.to_path_buf();
-		tokio::task::spawn_blocking(move || file_opening_linux::open_on_host(parent))
-			.await
-			.map_err(std::io::Error::other)??;
+		tokio::task::spawn_blocking(move || {
+			if let Err(error) = file_opening_linux::open_on_host(&parent) {
+				tracing::warn!(%error, path = %parent.display(), "Could not open the parent folder");
+			}
+		});
 	}
 	Ok(())
 }

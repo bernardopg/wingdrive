@@ -24,7 +24,7 @@ pub enum FilenameValidationError {
 	#[error("Filename cannot end with a space or period")]
 	InvalidEnding,
 
-	#[error("Filename exceeds maximum length of {0} characters")]
+	#[error("Filename exceeds the maximum length of {0} {unit}", unit = NAME_LENGTH_UNIT)]
 	TooLong(usize),
 }
 
@@ -37,8 +37,23 @@ const WINDOWS_RESERVED_NAMES: &[&str] = &[
 /// Invalid characters for filenames across platforms
 const INVALID_CHARS: &[char] = &['<', '>', ':', '"', '|', '?', '*', '\0'];
 
-/// Maximum filename length (conservative cross-platform limit)
+/// Maximum filename length. Linux and macOS file systems limit a name to 255
+/// bytes; Windows limits it to 255 UTF-16 code units.
 const MAX_FILENAME_LENGTH: usize = 255;
+
+#[cfg(windows)]
+const NAME_LENGTH_UNIT: &str = "UTF-16 code units";
+#[cfg(not(windows))]
+const NAME_LENGTH_UNIT: &str = "bytes";
+
+/// Length of `name` in the unit the platform's file systems limit.
+fn name_length(name: &str) -> usize {
+	if cfg!(windows) {
+		name.encode_utf16().count()
+	} else {
+		name.len()
+	}
+}
 
 /// Validate a filename for use in rename operations
 ///
@@ -74,7 +89,7 @@ pub fn validate_filename(name: &str) -> Result<(), FilenameValidationError> {
 	}
 
 	// Check maximum length
-	if name.len() > MAX_FILENAME_LENGTH {
+	if name_length(name) > MAX_FILENAME_LENGTH {
 		return Err(FilenameValidationError::TooLong(MAX_FILENAME_LENGTH));
 	}
 
@@ -167,5 +182,24 @@ mod tests {
 			validate_filename(&long_name),
 			Err(FilenameValidationError::TooLong(_))
 		));
+		assert!(validate_filename(&"a".repeat(255)).is_ok());
+	}
+
+	/// 128 `é` take 256 bytes but 128 UTF-16 units: too long on Linux and macOS,
+	/// valid on Windows.
+	#[test]
+	fn length_limit_uses_the_platform_unit() {
+		let accented = "é".repeat(128);
+		let result = validate_filename(&accented);
+		if cfg!(windows) {
+			assert!(result.is_ok());
+		} else {
+			let error = result.unwrap_err();
+			assert!(matches!(error, FilenameValidationError::TooLong(255)));
+			assert_eq!(
+				error.to_string(),
+				"Filename exceeds the maximum length of 255 bytes"
+			);
+		}
 	}
 }

@@ -909,12 +909,6 @@ async fn copy_single_file_with_offset<'a>(
 		None
 	};
 
-	let mut dest_hasher = if verify_checksum {
-		Some(blake3::Hasher::new())
-	} else {
-		None
-	};
-
 	loop {
 		if let Err(_) = ctx.check_interrupt().await {
 			// Clean up partial file so resume doesn't see corrupted data.
@@ -935,9 +929,6 @@ async fn copy_single_file_with_offset<'a>(
 		total_copied += bytes_read as u64;
 
 		if let Some(hasher) = &mut source_hasher {
-			hasher.update(chunk);
-		}
-		if let Some(hasher) = &mut dest_hasher {
 			hasher.update(chunk);
 		}
 
@@ -971,29 +962,14 @@ async fn copy_single_file_with_offset<'a>(
 		));
 	}
 
-	if verify_checksum {
-		if let (Some(source_hasher), Some(dest_hasher)) = (source_hasher, dest_hasher) {
-			let source_hash = source_hasher.finalize();
-			let dest_hash = dest_hasher.finalize();
-
-			if source_hash != dest_hash {
-				let _ = fs::remove_file(destination).await;
-				return Err(std::io::Error::new(
-					std::io::ErrorKind::InvalidData,
-					format!(
-						"Checksum verification failed: source={}, dest={}",
-						source_hash.to_hex(),
-						dest_hash.to_hex()
-					),
-				));
-			}
-
-			ctx.log(format!(
-				"Checksum verification passed for {}: {}",
-				destination.display(),
-				source_hash.to_hex()
-			));
-		}
+	if let Some(source_hasher) = source_hasher {
+		let source_hash = source_hasher.finalize();
+		verify_written_file(destination, source_hash).await?;
+		ctx.log(format!(
+			"Checksum verification passed for {}: {}",
+			destination.display(),
+			source_hash.to_hex()
+		));
 	}
 
 	let source_metadata = fs::metadata(source).await?;
@@ -1105,6 +1081,39 @@ async fn copy_file_streaming<'a>(
 }
 
 /// Calculate file checksum for integrity verification
+/// Compare the file on disk with the hash of the bytes that were written.
+///
+/// Hashing the written buffer again would only repeat the source hash, so the
+/// destination is read back after `sync_all`. A mismatch removes the copy.
+async fn verify_written_file(
+	destination: &Path,
+	expected: blake3::Hash,
+) -> Result<(), std::io::Error> {
+	let mut file = fs::File::open(destination).await?;
+	let mut hasher = blake3::Hasher::new();
+	let mut buffer = vec![0u8; 64 * 1024];
+	loop {
+		let read = file.read(&mut buffer).await?;
+		if read == 0 {
+			break;
+		}
+		hasher.update(&buffer[..read]);
+	}
+	let actual = hasher.finalize();
+	if actual != expected {
+		let _ = fs::remove_file(destination).await;
+		return Err(std::io::Error::new(
+			std::io::ErrorKind::InvalidData,
+			format!(
+				"Checksum verification failed: source={}, dest={}",
+				expected.to_hex(),
+				actual.to_hex()
+			),
+		));
+	}
+	Ok(())
+}
+
 async fn calculate_file_checksum(path: &Path) -> Result<String> {
 	crate::domain::content_identity::ContentHashGenerator::generate_content_hash(path)
 		.await
@@ -1361,4 +1370,27 @@ async fn stream_file_data<'a>(
 	}
 
 	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::verify_written_file;
+
+	#[tokio::test]
+	async fn written_file_check_reads_the_destination_back() {
+		let dir = tempfile::tempdir().unwrap();
+		let path = dir.path().join("copy.bin");
+		tokio::fs::write(&path, b"expected bytes").await.unwrap();
+		verify_written_file(&path, blake3::hash(b"expected bytes"))
+			.await
+			.unwrap();
+
+		// A destination that differs from what was sent fails and is removed.
+		tokio::fs::write(&path, b"corrupted bytes").await.unwrap();
+		let error = verify_written_file(&path, blake3::hash(b"expected bytes"))
+			.await
+			.unwrap_err();
+		assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+		assert!(!path.exists());
+	}
 }

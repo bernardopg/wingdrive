@@ -278,7 +278,8 @@ impl DeleteJob {
 	async fn validate_targets(&self, _ctx: &JobContext<'_>) -> JobResult<()> {
 		for target in &self.targets.paths {
 			if let Some(local_path) = target.as_local_path() {
-				if !fs::try_exists(local_path).await.unwrap_or(false) {
+				// Read the link itself: a dangling link exists and can be deleted.
+				if fs::symlink_metadata(local_path).await.is_err() {
 					return Err(JobError::execution(format!(
 						"Target does not exist: {}",
 						local_path.display()

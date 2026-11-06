@@ -353,8 +353,16 @@ fn autostart_entry(launcher: &Path) -> String {
 		}
 		exec.push(c);
 	}
+	// GLib and systemd's autostart generator look up the program before they
+	// turn `%%` back into `%`, so they reject a launcher path with `%` in it.
+	// Starting it through `env` gives them a program they can find.
+	let program = if exec.contains('%') {
+		"/usr/bin/env "
+	} else {
+		""
+	};
 	format!(
-		"[Desktop Entry]\nType=Application\nName=WingDrive\nComment=Keep WingDrive ready in the tray\nExec=\"{exec}\" --hidden\nIcon=WingDrive\nTerminal=false\nX-GNOME-Autostart-enabled=true\n"
+		"[Desktop Entry]\nType=Application\nName=WingDrive\nComment=Keep WingDrive ready in the tray\nExec={program}\"{exec}\" --hidden\nIcon=WingDrive\nTerminal=false\nX-GNOME-Autostart-enabled=true\n"
 	)
 }
 
@@ -459,7 +467,9 @@ mod tests {
 	fn autostart_entry_escapes_launcher_paths_for_the_exec_key() {
 		let entry = autostart_entry(Path::new(r#"/opt/100%d/a\b"c$d`e/WingDrive"#));
 		assert!(
-			entry.contains(r#"Exec="/opt/100%%d/a\\\\b\\"c\\$d\\`e/WingDrive" --hidden"#),
+			entry.contains(
+				r#"Exec=/usr/bin/env "/opt/100%%d/a\\\\b\\"c\\$d\\`e/WingDrive" --hidden"#
+			),
 			"{entry}"
 		);
 	}
