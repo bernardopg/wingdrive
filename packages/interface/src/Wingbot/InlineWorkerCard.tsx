@@ -1,4 +1,4 @@
-import {apiClient, type WorkerListItem} from '@spacebot/api-client';
+import {apiClient, type WorkerListItem} from '@wingbot/api-client';
 import {
 	InlineWorkerCard as InlineWorkerCardUI,
 	type TranscriptStep

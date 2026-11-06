@@ -62,16 +62,16 @@ async fn validation_rejects_each_invalid_field() {
 			json!({"proxy_pairing_vouch_queue_retry_limit": 0}),
 			"proxy_pairing_vouch_queue_retry_limit",
 		),
-		(json!({"spacebot_base_url": "  "}), "spacebot_base_url"),
+		(json!({"wingbot_base_url": "  "}), "wingbot_base_url"),
 		// Trailing slashes are trimmed before saving, so "/" would store an empty URL.
-		(json!({"spacebot_base_url": "/"}), "spacebot_base_url"),
+		(json!({"wingbot_base_url": "/"}), "wingbot_base_url"),
 		(
-			json!({"spacebot_default_agent_id": " "}),
-			"spacebot_default_agent_id",
+			json!({"wingbot_default_agent_id": " "}),
+			"wingbot_default_agent_id",
 		),
 		(
-			json!({"spacebot_default_sender_name": ""}),
-			"spacebot_default_sender_name",
+			json!({"wingbot_default_sender_name": ""}),
+			"wingbot_default_sender_name",
 		),
 	] {
 		assert_eq!(rejected_field(&harness, input).await, field);
@@ -93,9 +93,9 @@ async fn updates_are_normalized_saved_and_reported() {
 			"theme": "Dark",
 			"language": "pt",
 			"wingdrop_destination": "  ",
-			"spacebot_base_url": " http://127.0.0.1:19898/ ",
-			"spacebot_auth_token": "  ",
-			"spacebot_default_agent_id": " main ",
+			"wingbot_base_url": " http://127.0.0.1:19898/ ",
+			"wingbot_auth_token": "  ",
+			"wingbot_default_agent_id": " main ",
 			"fs_watcher_enabled": false,
 		}),
 	)
@@ -109,9 +109,9 @@ async fn updates_are_normalized_saved_and_reported() {
 	assert_eq!(config.preferences.theme, "dark");
 	assert_eq!(config.preferences.language, "pt");
 	assert_eq!(config.wingdrop.destination, None);
-	assert_eq!(config.spacebot.base_url, "http://127.0.0.1:19898");
-	assert_eq!(config.spacebot.auth_token, None);
-	assert_eq!(config.spacebot.default_agent_id, "main");
+	assert_eq!(config.wingbot.base_url, "http://127.0.0.1:19898");
+	assert_eq!(config.wingbot.auth_token, None);
+	assert_eq!(config.wingbot.default_agent_id, "main");
 	assert!(!config.services.fs_watcher_enabled);
 
 	let output = update(&harness, json!({"theme": "dark", "language": "pt"})).await;

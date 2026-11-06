@@ -42,9 +42,10 @@ pub struct AppConfig {
 	#[serde(default)]
 	pub proxy_pairing: ProxyPairingConfig,
 
-	/// Spacebot companion runtime configuration
-	#[serde(default)]
-	pub spacebot: SpacebotConfig,
+	/// Wingbot companion runtime configuration. Configs written before the
+	/// rename stored it under `spacebot`.
+	#[serde(default, alias = "spacebot")]
+	pub wingbot: WingbotConfig,
 
 	/// Receiving files from paired devices with Wingdrop
 	#[serde(default)]
@@ -72,16 +73,16 @@ impl Default for WingdropConfig {
 	}
 }
 
-/// Spacebot integration configuration.
+/// Wingbot integration configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SpacebotConfig {
-	/// Whether Spacebot features are visible in the UI.
+pub struct WingbotConfig {
+	/// Whether Wingbot features are visible in the UI.
 	pub enabled: bool,
 
-	/// Base URL for the Spacebot HTTP API.
+	/// Base URL for the Wingbot HTTP API.
 	pub base_url: String,
 
-	/// Optional bearer token used for Spacebot API requests.
+	/// Optional bearer token used for Wingbot API requests.
 	pub auth_token: Option<String>,
 
 	/// Default agent to target from the embedded chat.
@@ -91,7 +92,7 @@ pub struct SpacebotConfig {
 	pub default_sender_name: String,
 }
 
-impl Default for SpacebotConfig {
+impl Default for WingbotConfig {
 	fn default() -> Self {
 		Self {
 			enabled: false,
@@ -308,7 +309,7 @@ impl AppConfig {
 			services: ServiceConfig::default(),
 			logging: LoggingConfig::default(),
 			proxy_pairing: ProxyPairingConfig::default(),
-			spacebot: SpacebotConfig::default(),
+			wingbot: WingbotConfig::default(),
 			wingdrop: WingdropConfig::default(),
 		}
 	}
@@ -416,8 +417,8 @@ impl Migrate for AppConfig {
 				self.migrate()
 			}
 			5 => {
-				// Migration from v5 to v6: Add Spacebot companion configuration
-				self.spacebot = SpacebotConfig::default();
+				// Migration from v5 to v6: Add Wingbot companion configuration
+				self.wingbot = WingbotConfig::default();
 				self.version = 6;
 				self.migrate()
 			}
@@ -492,6 +493,28 @@ mod tests {
 
 		assert!(legacy_path.exists());
 		assert!(data_dir.join("wingdrive.json").exists());
+	}
+
+	#[test]
+	fn reads_wingbot_settings_saved_under_the_legacy_key() {
+		let root = tempfile::tempdir().unwrap();
+		let data_dir = root.path().to_path_buf();
+		let mut json = serde_json::to_value(AppConfig::default_with_dir(data_dir.clone())).unwrap();
+		let object = json.as_object_mut().unwrap();
+		let mut legacy = object.remove("wingbot").unwrap();
+		legacy["enabled"] = true.into();
+		legacy["base_url"] = "http://127.0.0.1:4000".into();
+		object.insert("spacebot".into(), legacy);
+		fs::write(data_dir.join("wingdrive.json"), json.to_string()).unwrap();
+
+		let loaded = AppConfig::load_from(&data_dir).unwrap();
+		assert!(loaded.wingbot.enabled);
+		assert_eq!(loaded.wingbot.base_url, "http://127.0.0.1:4000");
+		loaded.save().unwrap();
+		let saved: serde_json::Value =
+			serde_json::from_slice(&fs::read(data_dir.join("wingdrive.json")).unwrap()).unwrap();
+		assert!(saved.get("spacebot").is_none());
+		assert_eq!(saved["wingbot"]["enabled"], true);
 	}
 
 	#[test]

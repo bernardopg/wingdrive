@@ -7,7 +7,7 @@ use specta::Type;
 
 use crate::{
 	config::{
-		AppConfig, JobLoggingConfig, LoggingConfig, Preferences, ServiceConfig, SpacebotConfig,
+		AppConfig, JobLoggingConfig, LoggingConfig, Preferences, ServiceConfig, WingbotConfig,
 	},
 	context::CoreContext,
 	infra::query::{CoreQuery, QueryError, QueryResult},
@@ -47,8 +47,8 @@ pub struct AppConfigOutput {
 	/// Proxy pairing configuration
 	pub proxy_pairing: ProxyPairingConfigOutput,
 
-	/// Spacebot companion configuration
-	pub spacebot: SpacebotConfigOutput,
+	/// Wingbot companion configuration
+	pub wingbot: WingbotConfigOutput,
 
 	/// Wingdrop receiving configuration
 	pub wingdrop: WingdropConfigOutput,
@@ -107,9 +107,9 @@ pub struct WingdropConfigOutput {
 	pub effective_destination: PathBuf,
 }
 
-/// Spacebot companion configuration output
+/// Wingbot companion configuration output
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct SpacebotConfigOutput {
+pub struct WingbotConfigOutput {
 	pub enabled: bool,
 	pub base_url: String,
 	pub auth_token: Option<String>,
@@ -117,8 +117,8 @@ pub struct SpacebotConfigOutput {
 	pub default_sender_name: String,
 }
 
-impl From<&SpacebotConfig> for SpacebotConfigOutput {
-	fn from(config: &SpacebotConfig) -> Self {
+impl From<&WingbotConfig> for WingbotConfigOutput {
+	fn from(config: &WingbotConfig) -> Self {
 		Self {
 			enabled: config.enabled,
 			base_url: config.base_url.clone(),
@@ -163,7 +163,7 @@ impl From<&AppConfig> for AppConfigOutput {
 				vouch_response_timeout: config.proxy_pairing.vouch_response_timeout,
 				vouch_queue_retry_limit: config.proxy_pairing.vouch_queue_retry_limit,
 			},
-			spacebot: SpacebotConfigOutput::from(&config.spacebot),
+			wingbot: WingbotConfigOutput::from(&config.wingbot),
 			wingdrop: WingdropConfigOutput {
 				enabled: config.wingdrop.enabled,
 				auto_accept: config.wingdrop.auto_accept,

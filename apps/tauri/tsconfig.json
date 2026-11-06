@@ -17,13 +17,13 @@
 		"noFallthroughCasesInSwitch": true,
 		"paths": {
 			"~/*": ["./src/*"],
-			"@spacebot/api-client": [
-				"../../../spacebot/packages/api-client/src/index.ts",
-				"./src/stubs/spacebot-api-client.ts"
+			"@wingbot/api-client": [
+				"../../../wingbot/packages/api-client/src/index.ts",
+				"./src/stubs/wingbot-api-client.ts"
 			],
-			"@spacebot/api-client/*": [
-				"../../../spacebot/packages/api-client/src/*",
-				"./src/stubs/spacebot-api-client.ts"
+			"@wingbot/api-client/*": [
+				"../../../wingbot/packages/api-client/src/*",
+				"./src/stubs/wingbot-api-client.ts"
 			]
 		}
 	},

@@ -72,7 +72,7 @@ impl TestConfigBuilder {
 				statistics_listener_enabled: false,
 			},
 			proxy_pairing: wing_core::config::app_config::ProxyPairingConfig::default(),
-			spacebot: wing_core::config::app_config::SpacebotConfig::default(),
+			wingbot: wing_core::config::app_config::WingbotConfig::default(),
 			wingdrop: Default::default(),
 		};
 

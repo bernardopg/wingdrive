@@ -2,11 +2,11 @@ import {
 	apiClient,
 	type TimelineItem,
 	type WorkerListItem
-} from '@spacebot/api-client';
+} from '@wingbot/api-client';
 import type {
 	PortalConversationSummary,
 	PortalHistoryMessage
-} from '@spacebot/api-client';
+} from '@wingbot/api-client';
 import {MessageBubble} from '@wingdrive/ai';
 import {useQuery} from '@tanstack/react-query';
 import {useVirtualizer} from '@tanstack/react-virtual';

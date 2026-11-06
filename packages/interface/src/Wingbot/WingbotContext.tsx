@@ -10,7 +10,7 @@ import {
 	type PortalConversationResponse,
 	type PortalConversationSummary,
 	type TypingStateEvent
-} from '@spacebot/api-client';
+} from '@wingbot/api-client';
 import {usePopover} from '@wingdrive/primitives';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {
@@ -137,7 +137,7 @@ export const isMacOS =
 
 export function WingbotProvider({children}: WingbotProviderProps) {
 	const {t} = useTranslation('common');
-	if (import.meta.env.VITE_SPACEBOT_AVAILABLE !== 'true') {
+	if (import.meta.env.VITE_WINGBOT_AVAILABLE !== 'true') {
 		return (
 			<div className="bg-app text-ink flex h-full items-center justify-center p-8">
 				<div className="border-app-line bg-app-box max-w-md rounded-2xl border p-6 text-center">

@@ -11,7 +11,7 @@ import {
 	getEventsUrl,
 	setServerUrl,
 	type TtsProfile,
-} from "@spacebot/api-client";
+} from "@wingbot/api-client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlatform } from "../contexts/PlatformContext";
 import { useAudioRecorder } from "../hooks/useAudioRecorder";
@@ -23,7 +23,7 @@ type VoiceState = "idle" | "recording" | "processing" | "speaking";
 
 const OVERLAY_WINDOW_LABEL = "voice-overlay";
 const OVERLAY_WIDTH = 520;
-const SPACEBOT_URL = "http://127.0.0.1:19898";
+const WINGBOT_URL = "http://127.0.0.1:19898";
 const DEFAULT_AGENT_ID = "main";
 const VOICE_PROFILE_KEY = "wingdrive.voice.profileId";
 const LEGACY_VOICE_PROFILE_KEY = "spacedrive.voice.profileId";
@@ -40,7 +40,7 @@ function getVoiceSessionId(agentId: string) {
 }
 
 // Initialize API client for the voice overlay window
-setServerUrl(SPACEBOT_URL);
+setServerUrl(WINGBOT_URL);
 
 export function VoiceOverlay() {
 const { t } = useTranslation("dialogs");

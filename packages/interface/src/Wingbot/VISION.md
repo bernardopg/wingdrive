@@ -242,7 +242,7 @@ Each new data source should follow the same pattern: TanStack Query for fetching
 
 ### API Client
 
-The `@spacebot/api-client` package already exists and is used throughout. New API methods should be added there as Wingbot's API surface is consumed. Keep it as the single point of contact with the Wingbot HTTP API.
+The `@wingbot/api-client` package already exists and is used throughout. New API methods should be added there as Wingbot's API surface is consumed. Keep it as the single point of contact with the Wingbot HTTP API.
 
 ---
 
@@ -403,7 +403,7 @@ For all of this to work, WingDrive core needs a proxy service that:
 3. Proxies SSE events back as WingDrive core subscription events.
 4. Handles connection lifecycle — what happens when the paired node goes offline, when the Wingbot instance restarts, when the library topology changes.
 
-This proxy lives in `wing-core`, not in the interface layer. The interface consumes it through the same `useCoreQuery` / `useCoreAction` / `useLibraryQuery` hooks that power the rest of the mobile and desktop apps. The `@spacebot/api-client` package remains useful for desktop direct connections, but mobile and remote devices go through the core proxy.
+This proxy lives in `wing-core`, not in the interface layer. The interface consumes it through the same `useCoreQuery` / `useCoreAction` / `useLibraryQuery` hooks that power the rest of the mobile and desktop apps. The `@wingbot/api-client` package remains useful for desktop direct connections, but mobile and remote devices go through the core proxy.
 
 The proxy also enables a clean answer to the connection model question on desktop: instead of three explicit modes (managed local, external local, remote), the desktop app could also route through the core proxy when Wingbot is paired at the library level. Direct HTTP remains available as an optimization for the co-located case.
 

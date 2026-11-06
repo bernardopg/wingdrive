@@ -12,7 +12,7 @@ pub mod migration;
 
 pub use app_config::{
 	AppConfig, JobLoggingConfig, LogStreamConfig, LoggingConfig, ProxyPairingConfig, ServiceConfig,
-	SpacebotConfig,
+	WingbotConfig,
 };
 pub use migration::Migrate;
 

@@ -43,10 +43,9 @@ if [[ -n "$legacy_matches" ]]; then
 	exit 1
 fi
 
-# BRAND-002: old product names must not reach the interface. The external
-# Spacebot runtime keeps its package name (@spacebot/api-client) and the
-# persisted spacebot_* settings keep theirs, so only names a person reads count:
-# string literals and JSX text in the frontend and CLI output.
+# BRAND-002: old product names must not reach the interface. Only names a
+# person reads count here: string literals and JSX text in the frontend and CLI
+# output. The code-wide Spacebot check follows.
 readonly old_product_names='\b(Spacebot|Spacedrop|SpaceUI)\b'
 
 brand_matches="$({
@@ -56,11 +55,31 @@ brand_matches="$({
 		'apps/tauri/src-tauri/src/**' \
 		'apps/web/src/**' \
 		'apps/cli/src/**' || true
-} | grep -vE '@spacebot/|spacebot-api-client|SpacebotConfig|Spacedrop(Send|Args)|spacedrop::|// |//! |/// ' || true)"
+} | grep -vE 'Spacedrop(Send|Args)|spacedrop::|// |//! |/// ' || true)"
 
 if [[ -n "$brand_matches" ]]; then
 	echo "Old product names remain in the interface (use Wingbot, Wingdrop, WingUI):" >&2
 	echo "$brand_matches" >&2
+	exit 1
+fi
+
+# Wingbot replaced Spacebot everywhere in code, settings and the RPC API. The
+# files listed read names saved before the rename: tab paths, window labels and
+# the `spacebot` config key.
+wingbot_matches="$({
+	git grep -niI 'spacebot' -- \
+		'core/**' 'crates/**' 'apps/**' 'packages/**' 'adapters/**' 'scripts/**' \
+		':!packages/interface/src/Wingbot/legacyPath.ts' \
+		':!packages/interface/src/Wingbot/legacyPath.test.ts' \
+		':!packages/interface/src/router.tsx' \
+		':!apps/tauri/src/App.tsx' \
+		':!core/src/config/app_config.rs' \
+		':!scripts/check-wingdrive-independence.sh' || true
+})"
+
+if [[ -n "$wingbot_matches" ]]; then
+	echo "Spacebot names remain in code (use Wingbot):" >&2
+	echo "$wingbot_matches" >&2
 	exit 1
 fi
 

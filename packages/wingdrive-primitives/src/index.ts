@@ -138,7 +138,7 @@ export { InfoBanner, InfoBannerText, InfoBannerSubtext } from "./InfoBanner";
 // Layout
 export { Card as LayoutCard, GridLayout } from "./Layout";
 
-// Card (Spacebot-origin)
+// Card (Wingbot-origin)
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "./Card";
 
 // Typography
@@ -162,7 +162,7 @@ export type { FormProps, ErrorMessageProps } from "./forms/Form";
 export { SpaceItem } from "./SpaceItem";
 export type { SpaceItemProps } from "./SpaceItem";
 
-// Spacebot-origin components (kept from original extraction, audit pending)
+// Wingbot-origin components (kept from original extraction, audit pending)
 export { Badge, badgeVariants } from "./Badge";
 export { Banner, bannerVariants } from "./Banner";
 export { ToggleGroup } from "./ToggleGroup";
