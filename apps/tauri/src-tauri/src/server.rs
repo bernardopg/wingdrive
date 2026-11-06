@@ -21,6 +21,10 @@ use tokio::{
 };
 use tracing::{error, info};
 
+#[cfg(test)]
+#[path = "server/tests/mod.rs"]
+mod contract_tests;
+
 #[derive(Clone)]
 pub struct ServerState {
 	/// Path to the WingDrive data directory
@@ -80,7 +84,11 @@ pub struct SidecarQuery {
 ///
 /// `starts_with` on the joined path is lexical, so `..` segments in the
 /// variant (the wildcard) used to pass it and reach any file the user can read.
-fn valid_sidecar_segments(content_uuid: &str, kind: &str, variant_and_ext: &str) -> bool {
+pub(crate) fn valid_sidecar_segments(
+	content_uuid: &str,
+	kind: &str,
+	variant_and_ext: &str,
+) -> bool {
 	let plain = |segment: &str| {
 		!segment.is_empty()
 			&& segment
@@ -252,7 +260,7 @@ async fn serve_file(
 		None => (StatusCode::OK, 0, total.saturating_sub(1)),
 	};
 
-	if total > 0 && start >= total {
+	if status == StatusCode::PARTIAL_CONTENT && (total == 0 || start >= total) {
 		return Response::builder()
 			.status(StatusCode::RANGE_NOT_SATISFIABLE)
 			.header(header::CONTENT_RANGE, format!("bytes */{}", total))
@@ -264,7 +272,7 @@ async fn serve_file(
 		.await
 		.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-	let length = end.saturating_sub(start) + 1;
+	let length = if total == 0 { 0 } else { end - start + 1 };
 	let body = Body::from_stream(tokio_util::io::ReaderStream::new(file.take(length)));
 
 	let mut builder = Response::builder()
@@ -548,6 +556,9 @@ fn parse_range(value: &str, total: u64) -> Option<(u64, u64)> {
 		(s, e) => {
 			let start: u64 = s.parse().ok()?;
 			let end: u64 = e.parse().ok()?;
+			if start > end {
+				return None;
+			}
 			Some((start, end.min(last)))
 		}
 	}

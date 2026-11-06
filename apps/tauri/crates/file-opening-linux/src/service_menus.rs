@@ -324,7 +324,7 @@ Exec=nothing
 		let pdf = lineage(&["application/pdf", "application/octet-stream"]);
 		let text = lineage(&["text/plain", "application/octet-stream"]);
 
-		assert!(action.matches(&[png.clone()]));
+		assert!(action.matches(std::slice::from_ref(&png)));
 		assert!(action.matches(&[png.clone(), pdf]));
 		assert!(!action.matches(&[png, text]));
 		assert!(!action.matches(&[]));
@@ -341,8 +341,8 @@ Exec=nothing
 		let file = lineage(&["text/plain", "application/octet-stream"]);
 
 		let files_only = &parse("f.desktop", Path::new("/f"), &menu("all/allfiles"), &[])[0];
-		assert!(files_only.matches(&[file.clone()]));
-		assert!(!files_only.matches(&[folder.clone()]));
+		assert!(files_only.matches(std::slice::from_ref(&file)));
+		assert!(!files_only.matches(std::slice::from_ref(&folder)));
 
 		let everything = &parse("e.desktop", Path::new("/e"), &menu("all/all"), &[])[0];
 		assert!(everything.matches(&[folder.clone(), file]));
@@ -357,7 +357,7 @@ Exec=nothing
 		let action = &parse("diff.desktop", Path::new("/d"), menu, &[])[0];
 		let file = lineage(&["text/plain"]);
 
-		assert!(!action.matches(&[file.clone()]));
+		assert!(!action.matches(std::slice::from_ref(&file)));
 		assert!(action.matches(&[file.clone(), file.clone()]));
 		assert!(!action.matches(&[file.clone(), file.clone(), file]));
 	}

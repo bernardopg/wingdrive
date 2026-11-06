@@ -213,12 +213,12 @@ async fn test_rule_toggles_basic() {
 		only_images: false,
 		no_dev_dirs: false,
 	};
-	let ruler = build_default_ruler(toggles, root, root).await;
+	let _ruler = build_default_ruler(toggles, root, root).await;
 	#[cfg(target_os = "macos")]
 	{
 		let ds_store = root.join(".DS_Store");
 		touch(&ds_store);
-		let decision = ruler
+		let decision = _ruler
 			.evaluate_path(&ds_store, &std::fs::metadata(&ds_store).unwrap())
 			.await
 			.unwrap();
@@ -228,7 +228,7 @@ async fn test_rule_toggles_basic() {
 	{
 		let thumbs = root.join("Thumbs.db");
 		touch(&thumbs);
-		let decision = ruler
+		let decision = _ruler
 			.evaluate_path(&thumbs, &std::fs::metadata(&thumbs).unwrap())
 			.await
 			.unwrap();

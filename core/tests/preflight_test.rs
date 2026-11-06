@@ -24,6 +24,20 @@ use wing_core::{
 	},
 };
 
+#[test]
+fn test_data_directories_are_unique_and_clean_up_independently() -> anyhow::Result<()> {
+	let first = TestDataDir::new("preflight-isolation")?;
+	let second = TestDataDir::new("preflight-isolation")?;
+	assert_ne!(first.path(), second.path());
+	let first_path = first.path().to_path_buf();
+	let marker = second.path().join("marker");
+	std::fs::write(&marker, b"keep")?;
+	drop(first);
+	assert!(!first_path.exists());
+	assert_eq!(std::fs::read(marker)?, b"keep");
+	Ok(())
+}
+
 async fn preflight(
 	harness: &IndexingHarness,
 	input: FilePreflightInput,

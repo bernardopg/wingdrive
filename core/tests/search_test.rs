@@ -318,7 +318,7 @@ async fn test_persistent_search_by_path() -> anyhow::Result<()> {
 		.await?;
 	test_location.write_file("root.txt", "Root content").await?;
 
-	let location = test_location
+	test_location
 		.index("Test Location", IndexMode::Shallow)
 		.await?;
 

@@ -19,7 +19,7 @@ impl TagValidator {
 			));
 		}
 
-		if name.len() > 255 {
+		if name.chars().count() > 255 {
 			return Err(TagError::InvalidCompositionRule(
 				"Tag name cannot exceed 255 characters".to_string(),
 			));

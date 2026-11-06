@@ -77,11 +77,15 @@ pub fn single_instance_id(instance: Option<&str>) -> String {
 	match instance {
 		None => BASE.to_string(),
 		Some(name) => {
-			// Bus name elements allow only ASCII letters, digits and `_`.
-			let element: String = name
-				.chars()
-				.map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
-				.collect();
+			// Encode non-alphanumeric bytes so distinct instance names cannot share a bus name.
+			let mut element = String::with_capacity(name.len());
+			for byte in name.bytes() {
+				if byte.is_ascii_alphanumeric() {
+					element.push(char::from(byte));
+				} else {
+					element.push_str(&format!("_{byte:02x}"));
+				}
+			}
 			format!("{BASE}.i{element}")
 		}
 	}
@@ -219,7 +223,11 @@ fn percent_decode(input: &str) -> Option<String> {
 	let mut i = 0;
 	while i < bytes.len() {
 		if bytes[i] == b'%' {
-			let hex = std::str::from_utf8(bytes.get(i + 1..i + 3)?).ok()?;
+			let digits = bytes.get(i + 1..i + 3)?;
+			if !digits.iter().all(u8::is_ascii_hexdigit) {
+				return None;
+			}
+			let hex = std::str::from_utf8(digits).ok()?;
 			out.push(u8::from_str_radix(hex, 16).ok()?);
 			i += 3;
 		} else {
@@ -286,7 +294,7 @@ mod tests {
 		assert_eq!(single_instance_id(None), "com.wingdrive.desktop");
 		assert_eq!(
 			single_instance_id(Some("release-181741")),
-			"com.wingdrive.desktop.irelease_181741"
+			"com.wingdrive.desktop.irelease_2d181741"
 		);
 		// A leading digit would be an invalid bus name element without the prefix.
 		#[cfg(target_os = "linux")]
