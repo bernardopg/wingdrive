@@ -7,7 +7,7 @@ parent: COV-00
 priority: High
 milestone: M2
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-03
+last_updated: 2026-11-06
 ---
 
 ## Description
@@ -29,3 +29,12 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 - [ ] Desktop apps/tauri atinge pelo menos 60% na primeira etapa e 75% na conclusão.
 - [ ] Undo nunca sobrescreve dados criados depois da operação original.
 - [ ] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
+
+## Evidence
+
+- 2026-11-06: suítes novas em `apps/tauri/src-tauri/src/{main,keybinds,file_opening,windows}/tests/`
+  e casos novos em `launch`, `files`, `gvfs`, `undo`, `terminal`, `background`,
+  `filemanager1` e `network_discovery`. Comandos com `tauri::State` rodam num app
+  `tauri::test::mock_app`, e o proxy do daemon fala com um listener TCP local de uma conexão.
+  `cargo test --locked -p wingdrive --bin WingDrive`: 107 aprovados; o teste que inicia
+  `wing-daemon` depende do binário em `<workspace>/target/debug`. Sem janela, D-Bus real ou polkit.

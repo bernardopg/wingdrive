@@ -174,3 +174,16 @@
 - Reprodução anterior: renomear `notes.txt` para `docs`, sendo `docs` uma pasta existente, movia o arquivo para `docs/notes.txt` e reportava `moved_count = 1`. Renomear `draft.txt` para `final.txt` existente resolvia o destino como o próprio `draft.txt`, não fazia nada e também reportava sucesso.
 - Correção: a renomeação usa o caminho pedido como destino exato, sem a regra de soltar dentro de pasta; com a correção do conflito acima, um nome ocupado falha e mantém os dois itens.
 - Limite: a ação de renomear continua sem validar o nome antes de criar o job; o erro aparece no resultado do job.
+
+## Melhorias sugeridas
+
+Itens vistos na leitura do código, sem teste que comprove falha. O código não foi alterado.
+
+- `core/src/ops/files/copy/strategy.rs`, `copy_single_file_with_offset`: com `verify_checksum`, os dois hashers recebem o mesmo `chunk` lido da origem, então a comparação nunca falha. Uma verificação real precisa reler o destino depois do `sync_all`.
+- `core/src/ops/files/copy/job.rs`, `get_path_size` e `count_files_in_path`: seguem links ao estimar progresso. Um link para `/` dentro da seleção percorre o disco inteiro antes da cópia, que agora só recria o link.
+- `core/src/ops/files/rename/validation.rs`, `validate_filename`: conta bytes e a mensagem fala em caracteres. No Linux o limite de 255 bytes está certo; no Windows o limite é de 255 unidades UTF-16, e nomes com acentos são recusados antes disso.
+- `core/src/ops/files/plan.rs`, `next_free_name`: usa `to_string_lossy`, então o nome alternativo de um arquivo com bytes fora de UTF-8 troca esses bytes por `U+FFFD`.
+- `core/src/ops/files/rename/action.rs`: a validação não verifica se o nome novo já existe. Desde a correção do job o conflito falha, mas o erro só aparece no resultado do job, não na validação da ação.
+- `apps/tauri/src-tauri/src/network_discovery.rs`, `parse_ssh_config`: não reconhece a forma `Host=nome`, aceita pelo OpenSSH.
+- `apps/tauri/src-tauri/src/main.rs`, `start_daemon_integration_tests::workspace_daemon_binary`: procura `wing-daemon` em `<workspace>/target`, ignorando `CARGO_TARGET_DIR`. Num worktree que compila em outro diretório o teste falha sem relação com o código.
+- `core/tests/delete_strategy_test.rs`, `test_local_delete_strategy_trash`: chama `trash::delete` real num arquivo de `/tmp`. A lixeira usada depende do volume; vale isolar `XDG_DATA_HOME` como faz o teste de `core/src/ops/trash`.
