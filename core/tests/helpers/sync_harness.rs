@@ -95,7 +95,12 @@ pub fn init_test_tracing(test_name: &str, snapshot_dir: &std::path::Path) -> any
 				.with_ansi(false)
 				.with_writer(log_file),
 		)
-		.with(fmt::layer().with_target(true).with_thread_ids(true))
+		.with(
+			fmt::layer()
+				.with_target(true)
+				.with_thread_ids(true)
+				.with_test_writer(),
+		)
 		.with(EnvFilter::try_from_default_env().unwrap_or_else(|_| {
 			EnvFilter::new(
 				"wing_core::service::sync=debug,\

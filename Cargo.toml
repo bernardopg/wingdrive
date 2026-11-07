@@ -159,3 +159,5 @@ strip         = true     # Still remove debug symbols
 # GHSA-wrw7-89jp-8q8g backport for the GTK3 stack used by Tauri on Linux.
 # See patches/README.md.
 glib = { path = "patches/glib-0.18.5" }
+# E0365 future-incompat fix for the copy wasmer-derive pulls in. See patches/README.md.
+proc-macro-error2 = { path = "patches/proc-macro-error2-2.0.1" }

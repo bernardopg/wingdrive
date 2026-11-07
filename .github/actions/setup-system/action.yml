@@ -94,9 +94,32 @@ runs:
       if: runner.os == 'macOS'
       run: brew install bash
 
-    - name: Install Nasm
-      if: ${{ runner.os != 'Linux' }}
-      uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+    # Same NASM build ilammy/setup-nasm v1.5.2 installed, without its Node 20 runtime
+    # (the action has no newer release). The hash pins the official win64 zip.
+    - name: Install Nasm (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $version = '2.16.01'
+        $sha256 = '029EED31FAF0D2C5F95783294432CBEA6C15BF633430F254BB3C1F195C67CA3A'
+        $zip = Join-Path $env:RUNNER_TEMP "nasm-$version-win64.zip"
+        $urls = @(
+          "https://github.com/ilammy/setup-nasm/raw/mirror/releasebuilds/$version/win64/nasm-$version-win64.zip",
+          "https://www.nasm.us/pub/nasm/releasebuilds/$version/win64/nasm-$version-win64.zip"
+        )
+        foreach ($url in $urls) {
+          try { Invoke-WebRequest -Uri $url -OutFile $zip -MaximumRetryCount 3; break } catch { Write-Host "Download failed from ${url}: $_" }
+        }
+        if ((Get-FileHash -Algorithm SHA256 $zip).Hash -ne $sha256) { throw "NASM $version zip hash mismatch" }
+        Expand-Archive -Path $zip -DestinationPath $env:RUNNER_TEMP -Force
+        $dir = Join-Path $env:RUNNER_TEMP "nasm-$version"
+        $dir | Out-File -FilePath $env:GITHUB_PATH -Append
+        & (Join-Path $dir 'nasm.exe') -v
+
+    - name: Install Nasm (macOS)
+      if: runner.os == 'macOS'
+      shell: bash
+      run: brew install nasm
 
     - name: Install Mold (linker)
       shell: bash

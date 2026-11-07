@@ -16,7 +16,7 @@ use wing_core::{
 
 #[tokio::test]
 async fn capture_phase_snapshots() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	tracing_subscriber::fmt::init();
+	tracing_subscriber::fmt().with_test_writer().init();
 	eprintln!("\nPHASE SNAPSHOT TEST - Indexing Desktop\n");
 	eprintln!("{}", "=".repeat(80));
 

@@ -48,6 +48,13 @@ runs:
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         fi
 
+    # rustup deprecated installing the rust-toolchain.toml toolchain as a side
+    # effect of other commands (rust-lang/rustup#4836), so install it first.
+    - name: Install the pinned toolchain
+      if: steps.check-rust.outputs.installed == 'true'
+      shell: bash
+      run: rustup toolchain install --no-self-update
+
     - name: Add build target (self-hosted only)
       if: ${{ inputs.target != '' && steps.check-rust.outputs.installed == 'true' }}
       shell: bash
@@ -69,6 +76,9 @@ runs:
       shell: bash
       run: |
         pinned=$(rustup show active-toolchain | cut -d' ' -f1)
+        # Make the pinned toolchain the default so uninstalling the image's one
+        # does not warn about removing the default toolchain.
+        rustup default "$pinned"
         rustup toolchain list | cut -d' ' -f1 | while read -r toolchain; do
           if [ "$toolchain" != "$pinned" ]; then rustup toolchain uninstall "$toolchain"; fi
         done

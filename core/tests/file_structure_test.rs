@@ -11,7 +11,7 @@ use wing_core::{
 
 #[tokio::test]
 async fn map_file_structure_per_phase() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	tracing_subscriber::fmt::init();
+	tracing_subscriber::fmt().with_test_writer().init();
 	eprintln!("\nMAPPING FILE STRUCTURE AT EACH PHASE\n");
 	eprintln!("{}", "=".repeat(80));
 

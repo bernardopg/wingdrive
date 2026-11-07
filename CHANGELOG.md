@@ -3,6 +3,25 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Fixed
+
+- CI and release builds no longer print the "will be rejected by a future
+  version of Rust" warning for `proc-macro-error2` 2.0.1 (pulled in by
+  `wasmer-derive`): `patches/proc-macro-error2-2.0.1` carries the one-line
+  E0365 fix until upstream releases it.
+- The Windows installer job no longer warns that `ilammy/setup-nasm` runs on
+  Node.js 20: `setup-system` downloads the same NASM 2.16.01 build itself and
+  checks its SHA-256. macOS installs NASM with Homebrew.
+- `setup-rust` installs the pinned toolchain before `rustup target add` and
+  makes it the default, which clears the rustup deprecation warnings.
+- The Rust CI jobs set `WING_SKIP_WEB_BUILD`, so `wing-server`'s build script
+  no longer warns that bun is missing. An explicit skip no longer warns.
+- Core integration tests: the unused `size_mb` warning on Windows is gone, and
+  test tracing goes through the test writer, so passing tests no longer flood
+  the CI log with daemon `WARN`/`DEBUG` lines.
+
 ## 3.0.1 — 2026-11-06
 
 Bug fixes found by the expanded test suites and by running every fix in a

@@ -103,7 +103,7 @@ struct TestSummary {
 async fn test_copy_progress_with_metadata_tracking() {
 	// Initialize tracing subscriber for debug logs
 	let _guard = tracing_subscriber::registry()
-		.with(tracing_subscriber::fmt::layer())
+		.with(tracing_subscriber::fmt::layer().with_test_writer())
 		.with(
 			tracing_subscriber::EnvFilter::try_from_default_env()
 				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),

@@ -8,6 +8,18 @@ in glib >= 0.20, so this is glib 0.18.5 with the one-line backport
 (`&p` -> `&mut p` in `src/variant_iter.rs`). Remove once Tauri's Linux stack
 moves to glib >= 0.20.
 
+## proc-macro-error2-2.0.1
+
+`wasmer-derive` (Wasmer 7.1, pinned in `core/Cargo.toml`; 7.5 still uses it)
+depends on `proc-macro-error2` 2.0.1, the last release, unmaintained since
+2024-09. Its `__export` module re-exports the private `extern crate
+proc_macro`, which rustc flags as E0365 ("will be rejected by a future version
+of Rust", rust-lang/rust#127909) on every build. This is 2.0.1 with the
+compiler's suggested one-line fix (`extern crate proc_macro;` ->
+`pub extern crate proc_macro;` in `src/lib.rs`). Remove once a
+`proc-macro-error2` release fixes it
+(GnomedDev/proc-macro-error-2#13) or Wasmer drops the dependency.
+
 ## react-native-css@3.1.0-rc.0.patch
 
 NativeWind's `react-native-css` sends every `react-native` import through

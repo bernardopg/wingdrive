@@ -390,7 +390,6 @@ impl WindowsTestVolumeManager {
 
 	async fn create_vhd(&self, config: TestVolumeConfig) -> Result<TestVolume> {
 		let vhd_path = self.temp_dir.join(format!("{}.vhdx", config.name));
-		let size_mb = config.size_bytes / (1024 * 1024);
 
 		// Ensure temp directory exists
 		tokio::fs::create_dir_all(&self.temp_dir).await?;

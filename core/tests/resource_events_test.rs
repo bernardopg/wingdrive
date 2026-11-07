@@ -194,7 +194,7 @@ impl EventStats {
 #[tokio::test]
 async fn test_resource_events_during_indexing(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-	tracing_subscriber::fmt::init();
+	tracing_subscriber::fmt().with_test_writer().init();
 	eprintln!("\nStarting resource events test\n");
 
 	// Setup
