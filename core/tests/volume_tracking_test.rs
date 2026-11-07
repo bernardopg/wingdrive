@@ -16,7 +16,7 @@ use wing_core::{
 #[tokio::test]
 async fn test_volume_tracking_lifecycle() {
 	// Initialize logging
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	// Setup test environment
 	let data_dir = tempdir().unwrap();
@@ -243,7 +243,7 @@ async fn test_volume_tracking_lifecycle() {
 #[tokio::test]
 async fn test_volume_tracking_multiple_libraries() {
 	// Initialize logging
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	// Setup test environment
 	let data_dir = tempdir().unwrap();
@@ -450,7 +450,7 @@ async fn test_volume_tracking_multiple_libraries() {
 
 #[tokio::test]
 async fn test_automatic_system_volume_tracking() {
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	let data_dir = tempdir().unwrap();
 	let data_path = data_dir.path().to_path_buf();
@@ -516,7 +516,7 @@ async fn test_automatic_system_volume_tracking() {
 
 #[tokio::test]
 async fn test_auto_tracking_disabled() {
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	// This test verifies manual control over volume tracking
 	// Since we can't disable auto-tracking via config after creation,
@@ -608,7 +608,7 @@ async fn test_auto_tracking_disabled() {
 
 #[tokio::test]
 async fn test_volume_state_updates() {
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	let data_dir = tempdir().unwrap();
 	let data_path = data_dir.path().to_path_buf();
@@ -702,7 +702,7 @@ async fn test_volume_state_updates() {
 
 #[tokio::test]
 async fn test_volume_speed_test() {
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	let data_dir = tempdir().unwrap();
 	let data_path = data_dir.path().to_path_buf();
@@ -784,7 +784,7 @@ async fn test_volume_speed_test() {
 
 #[tokio::test]
 async fn test_volume_types_and_properties() {
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	let data_dir = tempdir().unwrap();
 	let data_path = data_dir.path().to_path_buf();
@@ -867,7 +867,7 @@ async fn test_volume_types_and_properties() {
 
 #[tokio::test]
 async fn test_volume_tracking_persistence() {
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	let data_dir = tempdir().unwrap();
 	let data_path = data_dir.path().to_path_buf();
@@ -999,7 +999,7 @@ async fn test_volume_tracking_persistence() {
 
 #[tokio::test]
 async fn test_volume_tracking_edge_cases() {
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	let data_dir = tempdir().unwrap();
 	let data_path = data_dir.path().to_path_buf();
@@ -1127,7 +1127,7 @@ async fn test_volume_tracking_edge_cases() {
 
 #[tokio::test]
 async fn test_volume_refresh_and_detection() {
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	let data_dir = tempdir().unwrap();
 	let data_path = data_dir.path().to_path_buf();
@@ -1198,7 +1198,7 @@ async fn test_volume_refresh_and_detection() {
 
 #[tokio::test]
 async fn test_volume_monitor_service() {
-	let _ = tracing_subscriber::fmt::try_init();
+	let _ = tracing_subscriber::fmt().with_test_writer().try_init();
 
 	let data_dir = tempdir().unwrap();
 	let data_path = data_dir.path().to_path_buf();

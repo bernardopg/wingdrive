@@ -159,6 +159,7 @@ async fn capture_event_fixtures_for_typescript(
 			tracing_subscriber::EnvFilter::try_from_default_env()
 				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("wing_core=debug")),
 		)
+		.with_test_writer()
 		.try_init();
 
 	let temp_dir = TempDir::new()?;

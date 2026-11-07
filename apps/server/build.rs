@@ -6,13 +6,14 @@ fn main() {
 	println!("cargo:rerun-if-changed=build.rs");
 	println!("cargo:rerun-if-env-changed=WING_SKIP_WEB_BUILD");
 
+	// An explicit opt-out (Docker build stage, CI Rust jobs) needs no warning:
+	// the caller chose to use the existing apps/web/dist.
 	if env::var_os("WING_SKIP_WEB_BUILD").is_some() {
-		println!("cargo:warning=WING_SKIP_WEB_BUILD set — using existing apps/web/dist");
 		return;
 	}
 
-	// If bun isn't available (e.g., Docker Rust build stage), the caller is
-	// expected to have prebuilt apps/web/dist. Skip silently.
+	// Without bun the caller is expected to have prebuilt apps/web/dist. Warn,
+	// because a stale or missing bundle is easy to miss otherwise.
 	if Command::new("bun").arg("--version").output().is_err() {
 		println!("cargo:warning=bun not found on PATH — using existing apps/web/dist");
 		return;

@@ -444,6 +444,7 @@ impl TestHarness {
 		// Setup logging
 		let _ = tracing_subscriber::fmt()
 			.with_env_filter("wing_core=debug,fs_watcher_test=debug")
+			.with_test_writer()
 			.try_init();
 
 		// Create core

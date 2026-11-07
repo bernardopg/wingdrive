@@ -17,6 +17,8 @@ env:
   CARGO_NET_RETRY: 10
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: short
+  # The Rust jobs do not build the web UI; wing-server embeds whatever apps/web/dist holds.
+  WING_SKIP_WEB_BUILD: 1
   RUSTUP_MAX_RETRIES: 10
   WINGDRIVE_CUSTOM_APT_FLAGS: --no-install-recommends
 
