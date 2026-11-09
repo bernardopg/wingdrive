@@ -156,6 +156,8 @@ opt-level     = 2        # Good optimization without extreme size focus
 strip         = true     # Still remove debug symbols
 
 [patch.crates-io]
+# Allow the SQLite security update until SQLx publishes its upstream fix.
+sqlx-sqlite = { path = "patches/sqlx-sqlite-0.9.0" }
 # GHSA-wrw7-89jp-8q8g backport for the GTK3 stack used by Tauri on Linux.
 # See patches/README.md.
 glib = { path = "patches/glib-0.18.5" }
