@@ -169,7 +169,7 @@ mod tests {
 
 		let db = connect_sqlite("sqlite::memory:", 1).await.unwrap();
 		let row = db
-			.query_one(&Statement::from_string(
+			.query_one_raw(Statement::from_string(
 				DatabaseBackend::Sqlite,
 				"SELECT sqlite_version() AS version".to_string(),
 			))
