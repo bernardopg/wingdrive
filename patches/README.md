@@ -20,7 +20,7 @@ compiler's suggested one-line fix (`extern crate proc_macro;` ->
 `proc-macro-error2` release fixes it
 (GnomedDev/proc-macro-error-2#13) or Wasmer drops the dependency.
 
-## react-native-css@3.1.0-rc.0.patch
+## react-native-css@3.1.0-rc.1.patch
 
 NativeWind's `react-native-css` sends every `react-native` import through
 `components/index.cjs`, which lists React Native's exports one by one. React

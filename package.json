@@ -57,6 +57,6 @@
     "react": "19.3.1"
   },
   "patchedDependencies": {
-    "react-native-css@3.1.0-rc.0": "patches/react-native-css@3.1.0-rc.0.patch"
+    "react-native-css@3.1.0-rc.1": "patches/react-native-css@3.1.0-rc.1.patch"
   }
 }
