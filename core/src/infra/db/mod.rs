@@ -163,6 +163,30 @@ impl Database {
 mod tests {
 	use super::*;
 
+	#[tokio::test]
+	async fn sqlite_includes_wal_page_size_fix() {
+		use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
+
+		let db = connect_sqlite("sqlite::memory:", 1).await.unwrap();
+		let row = db
+			.query_one_raw(Statement::from_string(
+				DatabaseBackend::Sqlite,
+				"SELECT sqlite_version() AS version".to_string(),
+			))
+			.await
+			.unwrap()
+			.unwrap();
+		let version: String = row.try_get("", "version").unwrap();
+		let parts: Vec<u32> = version
+			.split('.')
+			.map(|part| part.parse().unwrap())
+			.collect();
+		assert!(
+			parts.as_slice() >= [3, 54, 0].as_slice(),
+			"SQLite {version} is vulnerable to CVE-2026-119375"
+		);
+	}
+
 	/// Every connection of a 30-connection pool opens before the first
 	/// statement. The migrator rotates through them, and the connection that
 	/// loaded the schema just before `m20251226` adds `entries.device_id` is

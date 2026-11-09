@@ -1,5 +1,12 @@
 # Local crate patches
 
+## sqlx-sqlite-0.9.0
+
+SQLx 0.9.0 caps `libsqlite3-sys` below 0.38, preventing the SQLite fix for
+CVE-2026-119375. This copy widens the bound to below 0.40, following upstream
+SQLx commits 94aafe3a and 10462fa4. Remove it when a SQLx release includes
+those changes.
+
 ## glib-0.18.5
 
 Linux Tauri still pulls gtk-rs GTK3 (glib 0.18.x) through wry/webkit2gtk.
@@ -20,7 +27,7 @@ compiler's suggested one-line fix (`extern crate proc_macro;` ->
 `proc-macro-error2` release fixes it
 (GnomedDev/proc-macro-error-2#13) or Wasmer drops the dependency.
 
-## react-native-css@3.1.0-rc.0.patch
+## react-native-css@3.1.0-rc.1.patch
 
 NativeWind's `react-native-css` sends every `react-native` import through
 `components/index.cjs`, which lists React Native's exports one by one. React
