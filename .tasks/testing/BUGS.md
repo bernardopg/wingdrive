@@ -325,3 +325,27 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 
 - Estado: corrigido junto com a escrita em nome temporário; `copy_that_fails_while_reading_leaves_no_partial_file`.
 - Reprodução anterior: copiar `/proc/self/mem`, que abre e falha na primeira leitura, deixava um `mem` vazio no destino.
+
+## URIs de sidecar não reconheciam todos os tipos gerados
+
+- Estado: corrigido localmente; regressão `every_sidecar_kind_and_format_round_trips_through_uri` em `core/tests/addressing_contract_test.rs`.
+- Local: `core/src/domain/addressing.rs`, `WingPath::from_uri`.
+- Reprodução anterior: gere uma URI de `Thumbstrip` ou `GaussianSplat` com `to_uri` e tente lê-la com `from_uri`. Os diretórios `thumbstrips` e `gaussian_splats` eram recusados com `InvalidSidecarKind`.
+- Correção: reconhecer os dois diretórios que os tipos públicos já geram. O teste percorre os sete tipos e os seis formatos, com variante Unicode contendo ponto.
+- Limite: valida somente o endereçamento, sem gerar ou resolver arquivos de sidecar.
+
+## JSON de sidecar recusava o próprio formato MessagePack
+
+- Estado: corrigido localmente; regressão `every_sidecar_kind_and_format_round_trips_through_json` em `core/tests/addressing_contract_test.rs`.
+- Local: `core/src/ops/sidecar/types.rs`, `SidecarFormat::try_from`, usado pelo desserializador de `WingPath`.
+- Reprodução anterior: serialize um `WingPath::Sidecar` com `SidecarFormat::MessagePack` e desserialize o JSON. O valor público `message_pack` falhava com `Invalid sidecar format`.
+- Correção: aceitar `message_pack` junto dos aliases existentes `messagepack` e `msgpack`, preservando a representação pública.
+- Limite: não altera o formato dos arquivos MessagePack nem os tipos gerados dos clientes.
+
+## Caminhos do provedor genérico de nuvem não faziam ida e volta
+
+- Estado: corrigido localmente; regressão `every_cloud_service_preserves_keys_through_uri_and_json` em `core/tests/addressing_contract_test.rs`.
+- Local: `core/src/volume/backend/mod.rs`, `CloudServiceType::from_scheme`.
+- Reprodução anterior: construa um `WingPath::cloud` com `CloudServiceType::Other`. Sua URI `cloud://photos/key` retornava `UnknownScheme`, e seu JSON com `service = "cloud"` também era recusado.
+- Correção: reconhecer o esquema `cloud` correspondente à variante pública `Other`. O teste verifica os dez provedores, raiz vazia e chaves Unicode com caracteres reservados.
+- Limite: nenhum backend de nuvem foi acessado; a correção cobre a identidade dos caminhos.

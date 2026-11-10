@@ -237,6 +237,116 @@ pub static CORE_ACTIONS: Lazy<HashMap<&'static str, CoreActionHandlerFn>> = Lazy
 
 #[cfg(test)]
 mod tests {
+	use std::collections::HashSet;
+
+	use super::*;
+
+	#[test]
+	fn registered_methods_are_unique_well_formed_and_never_lost_in_maps() {
+		let queries: Vec<_> = inventory::iter::<CoreQueryEntry>()
+			.map(|e| e.method)
+			.chain(inventory::iter::<LibraryQueryEntry>().map(|e| e.method))
+			.collect();
+		let actions: Vec<_> = inventory::iter::<CoreActionEntry>()
+			.map(|e| e.method)
+			.chain(inventory::iter::<LibraryActionEntry>().map(|e| e.method))
+			.collect();
+		assert!(!queries.is_empty());
+		assert!(!actions.is_empty());
+		let mut seen = HashSet::new();
+		for (methods, prefix, suffix) in [(&queries, "query:", ""), (&actions, "action:", ".input")]
+		{
+			for method in methods {
+				assert!(seen.insert(*method), "duplicate registry method: {method}");
+				let identifier = method
+					.strip_prefix(prefix)
+					.unwrap()
+					.strip_suffix(suffix)
+					.unwrap();
+				assert!(identifier.contains('.'), "missing namespace: {method}");
+				for segment in identifier.split('.') {
+					assert!(!segment.is_empty(), "empty method segment: {method}");
+					assert!(
+						segment
+							.bytes()
+							.all(|b| b.is_ascii_alphanumeric() || b == b'_'),
+						"invalid method segment: {method}"
+					);
+				}
+			}
+		}
+		assert_eq!(queries.len(), CORE_QUERIES.len() + LIBRARY_QUERIES.len());
+		assert_eq!(actions.len(), CORE_ACTIONS.len() + LIBRARY_ACTIONS.len());
+	}
+
+	#[test]
+	fn extracted_types_match_every_registered_method_and_scope() {
+		use crate::infra::wire::type_extraction::{
+			create_wingdrive_api_structure, generate_wingdrive_api, OperationScope, QueryScope,
+		};
+
+		let (operations, queries, _) = generate_wingdrive_api();
+		let mut methods = HashSet::new();
+		for op in &operations {
+			assert!(
+				methods.insert(op.wire_method.as_str()),
+				"duplicate metadata: {}",
+				op.identifier
+			);
+			assert_eq!(op.wire_method, format!("action:{}.input", op.identifier));
+			let registered = match op.scope {
+				OperationScope::Core => CORE_ACTIONS.contains_key(op.wire_method.as_str()),
+				OperationScope::Library => LIBRARY_ACTIONS.contains_key(op.wire_method.as_str()),
+			};
+			assert!(registered, "{}", op.wire_method);
+			assert!(!op.input_type_name_ts.is_empty());
+			assert!(!op.output_type_name_ts.is_empty());
+		}
+		for query in &queries {
+			assert!(
+				methods.insert(query.wire_method.as_str()),
+				"duplicate metadata: {}",
+				query.identifier
+			);
+			assert_eq!(query.wire_method, format!("query:{}", query.identifier));
+			let registry = match query.scope {
+				QueryScope::Core => &*CORE_QUERIES,
+				QueryScope::Library => &*LIBRARY_QUERIES,
+			};
+			assert!(
+				registry.contains_key(query.wire_method.as_str()),
+				"{}",
+				query.wire_method
+			);
+		}
+		assert_eq!(operations.len(), CORE_ACTIONS.len() + LIBRARY_ACTIONS.len());
+		assert_eq!(queries.len(), CORE_QUERIES.len() + LIBRARY_QUERIES.len());
+		let api = create_wingdrive_api_structure(&operations, &queries);
+		for (group, registry) in [
+			(
+				&api.core_actions,
+				CORE_ACTIONS.keys().copied().collect::<HashSet<_>>(),
+			),
+			(
+				&api.library_actions,
+				LIBRARY_ACTIONS.keys().copied().collect::<HashSet<_>>(),
+			),
+		] {
+			assert_eq!(group.len(), registry.len());
+			for op in group {
+				assert!(registry.contains(op.wire_method.as_str()));
+				let original = operations
+					.iter()
+					.find(|m| m.identifier == op.identifier)
+					.unwrap();
+				assert_eq!(op.input_type_name_ts, original.input_type_name_ts);
+				assert_eq!(op.output_type_name_ts, original.output_type_name_ts);
+			}
+		}
+		assert_eq!(api.core_queries.len(), CORE_QUERIES.len());
+		assert_eq!(api.library_queries.len(), LIBRARY_QUERIES.len());
+	}
+
 	#[test]
 	fn list_registered_ops() {
 		// Collect and display registered actions

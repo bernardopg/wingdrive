@@ -547,10 +547,12 @@ impl WingPath {
 				// Parse kind from directory name
 				let kind = match kind_dir {
 					"thumbs" => SidecarKind::Thumb,
+					"thumbstrips" => SidecarKind::Thumbstrip,
 					"proxies" => SidecarKind::Proxy,
 					"embeddings" => SidecarKind::Embeddings,
 					"ocr" => SidecarKind::Ocr,
 					"transcript" => SidecarKind::Transcript,
+					"gaussian_splats" => SidecarKind::GaussianSplat,
 					_ => return Err(WingPathParseError::InvalidSidecarKind),
 				};
 

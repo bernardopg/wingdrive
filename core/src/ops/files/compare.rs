@@ -257,4 +257,89 @@ mod tests {
 		assert_eq!(out.identical, 1);
 		assert!(compare_folders(&a, &a.join("shared")).is_err());
 	}
+
+	#[test]
+	fn equal_bytes_with_different_timestamps_still_compare_identically() {
+		let root = tempfile::tempdir().unwrap();
+		let (left, right) = (root.path().join("left"), root.path().join("right"));
+		for (folder, seconds) in [(&left, 1_000_000), (&right, 2_000_000)] {
+			std::fs::create_dir(folder).unwrap();
+			let file = folder.join("café.txt");
+			std::fs::write(&file, b"same bytes").unwrap();
+			std::fs::File::options()
+				.write(true)
+				.open(file)
+				.unwrap()
+				.set_modified(UNIX_EPOCH + std::time::Duration::from_secs(seconds))
+				.unwrap();
+		}
+		let result = compare_folders(&left, &right).unwrap();
+		assert_eq!(result.identical, 1);
+		assert_eq!(result.unreadable, 0);
+		assert!(result.entries.is_empty());
+	}
+
+	#[test]
+	fn file_directory_conflicts_are_reported_without_descending_into_them() {
+		let root = tempfile::tempdir().unwrap();
+		let (left, right) = (root.path().join("left"), root.path().join("right"));
+		std::fs::create_dir(&left).unwrap();
+		std::fs::create_dir_all(right.join("conflict/nested")).unwrap();
+		std::fs::write(left.join("conflict"), b"file").unwrap();
+		std::fs::write(right.join("conflict/nested/inside.txt"), b"inside").unwrap();
+		let result = compare_folders(&left, &right).unwrap();
+		assert_eq!(result.entries.len(), 1);
+		let entry = &result.entries[0];
+		assert_eq!(entry.relative_path, "conflict");
+		assert_eq!(entry.status, CompareStatus::Different);
+		assert!(!entry.left.as_ref().unwrap().is_dir);
+		assert!(entry.right.as_ref().unwrap().is_dir);
+		assert_eq!(result.identical, 0);
+	}
+
+	#[test]
+	fn invalid_roots_and_relative_query_paths_are_rejected() {
+		let root = tempfile::tempdir().unwrap();
+		let child = root.path().join("child");
+		std::fs::create_dir(&child).unwrap();
+		let file = root.path().join("file");
+		std::fs::write(&file, b"file").unwrap();
+		for (left, right) in [
+			(root.path(), root.path()),
+			(root.path(), child.as_path()),
+			(child.as_path(), root.path()),
+			(root.path(), file.as_path()),
+			(file.as_path(), child.as_path()),
+		] {
+			assert!(compare_folders(left, right).is_err());
+		}
+		assert!(compare_folders(root.path(), &root.path().join("missing")).is_err());
+		for (left, right) in [
+			(PathBuf::from("relative"), child.clone()),
+			(child, PathBuf::from("relative")),
+		] {
+			assert!(matches!(
+				CompareFoldersQuery::from_input(CompareFoldersInput { left, right }),
+				Err(QueryError::InvalidInput(_))
+			));
+		}
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn links_on_either_side_are_skipped_without_reading_the_target() {
+		use std::os::unix::fs::symlink;
+
+		let root = tempfile::tempdir().unwrap();
+		let (left, right) = (root.path().join("left"), root.path().join("right"));
+		for folder in [&left, &right] {
+			std::fs::create_dir(folder).unwrap();
+			symlink("missing", folder.join("dangling")).unwrap();
+			symlink(root.path(), folder.join("outside")).unwrap();
+		}
+		let result = compare_folders(&left, &right).unwrap();
+		assert!(result.entries.is_empty());
+		assert_eq!(result.identical, 0);
+		assert_eq!(result.unreadable, 0);
+	}
 }

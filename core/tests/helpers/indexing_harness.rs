@@ -52,8 +52,12 @@ impl IndexingHarnessBuilder {
 
 	/// Build the harness
 	pub async fn build(self) -> anyhow::Result<IndexingHarness> {
-		// Use TestDataDir with watcher support (uses home directory for macOS compatibility)
-		let test_data = TestDataDir::new_for_watcher(&self.test_name)?;
+		// Only watcher fixtures need the home volume for macOS event delivery.
+		let test_data = if self.watcher_enabled {
+			TestDataDir::new_for_watcher(&self.test_name)?
+		} else {
+			TestDataDir::new(&self.test_name)?
+		};
 		let test_root = test_data.path().to_path_buf();
 
 		let snapshot_dir = test_root.join("snapshots");

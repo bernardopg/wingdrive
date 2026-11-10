@@ -202,4 +202,29 @@ mod tests {
 			);
 		}
 	}
+
+	#[test]
+	fn every_forbidden_character_is_rejected_even_inside_unicode_names() {
+		for character in ['<', '>', ':', '"', '|', '?', '*', '\0'] {
+			let name = format!("café{character}文件.txt");
+			assert!(
+				matches!(validate_filename(&name), Err(FilenameValidationError::InvalidCharacter(found)) if found == character),
+				"{name:?}"
+			);
+		}
+	}
+
+	#[test]
+	fn supplementary_unicode_characters_obey_the_exact_platform_boundary() {
+		let boundary = if cfg!(windows) {
+			format!("{}a", "\u{1f680}".repeat(127))
+		} else {
+			format!("{}abc", "\u{1f680}".repeat(63))
+		};
+		assert!(validate_filename(&boundary).is_ok());
+		assert!(matches!(
+			validate_filename(&format!("{boundary}a")),
+			Err(FilenameValidationError::TooLong(255))
+		));
+	}
 }

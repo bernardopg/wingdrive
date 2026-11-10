@@ -210,3 +210,102 @@ impl From<&str> for ApiError {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::infra::{action::error::ActionError, query::error::QueryError};
+
+	fn assert_contract(error: ApiError, status: u16, payload: serde_json::Value) {
+		assert_eq!(error.status_code(), status);
+		assert_eq!(error.is_client_error(), status < 500);
+		let encoded = serde_json::to_value(error).unwrap();
+		assert_eq!(encoded, payload);
+		let decoded: ApiError = serde_json::from_value(encoded).unwrap();
+		assert_eq!(decoded.status_code(), status);
+	}
+
+	#[test]
+	fn action_failures_preserve_public_codes_and_validation_details() {
+		use serde_json::json;
+
+		for (source, status, payload) in [
+			(
+				ActionError::LibraryNotFound(uuid::Uuid::nil()),
+				404,
+				json!({"LibraryNotFound": {"library_id": uuid::Uuid::nil().to_string()}}),
+			),
+			(
+				ActionError::PermissionDenied {
+					action: "files.createFile".into(),
+					reason: "read only".into(),
+				},
+				403,
+				json!({"InsufficientPermissions": {"reason": "read only"}}),
+			),
+			(
+				ActionError::InvalidInput("bad payload".into()),
+				400,
+				json!({"InvalidInput": {"details": "bad payload"}}),
+			),
+			(
+				ActionError::Validation {
+					field: "name".into(),
+					message: "empty".into(),
+				},
+				400,
+				json!({"InvalidInput": {"details": "name: empty"}}),
+			),
+			(ActionError::Timeout, 408, json!("Timeout")),
+			(
+				ActionError::Internal("disk".into()),
+				500,
+				json!({"ActionExecutionFailed": {"reason": "Internal error: disk"}}),
+			),
+		] {
+			assert_contract(source.into(), status, payload);
+		}
+	}
+
+	#[test]
+	fn query_failures_preserve_public_codes_and_validation_details() {
+		use serde_json::json;
+
+		for (source, status, payload) in [
+			(
+				QueryError::LibraryNotFound(uuid::Uuid::nil()),
+				404,
+				json!({"LibraryNotFound": {"library_id": uuid::Uuid::nil().to_string()}}),
+			),
+			(
+				QueryError::PermissionDenied {
+					query: "files.byId".into(),
+					reason: "private".into(),
+				},
+				403,
+				json!({"InsufficientPermissions": {"reason": "private"}}),
+			),
+			(
+				QueryError::InvalidInput("bad payload".into()),
+				400,
+				json!({"InvalidInput": {"details": "bad payload"}}),
+			),
+			(
+				QueryError::Validation {
+					field: "path".into(),
+					message: "missing".into(),
+				},
+				400,
+				json!({"InvalidInput": {"details": "path: missing"}}),
+			),
+			(QueryError::Timeout, 408, json!("Timeout")),
+			(
+				QueryError::Internal("disk".into()),
+				500,
+				json!({"QueryExecutionFailed": {"reason": "Internal error: disk"}}),
+			),
+		] {
+			assert_contract(source.into(), status, payload);
+		}
+	}
+}
