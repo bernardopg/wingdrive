@@ -35,7 +35,7 @@ pub struct DeviceInfo {
 }
 
 /// Type of device
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DeviceType {
 	Desktop,
 	Laptop,

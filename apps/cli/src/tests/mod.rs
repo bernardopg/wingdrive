@@ -254,3 +254,13 @@ fn connection_errors_become_actionable_errors_and_domain_errors_keep_their_messa
 		.to_string()
 		.contains("Permission denied copying destination"));
 }
+
+#[test]
+fn named_instances_keep_daemon_state_under_their_own_directory() {
+	let base = Path::new("data");
+	assert_eq!(daemon_data_dir(base, None), base);
+	assert_eq!(
+		daemon_data_dir(base, Some("test-01")),
+		base.join("instances").join("test-01")
+	);
+}

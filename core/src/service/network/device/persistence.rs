@@ -242,6 +242,23 @@ impl DevicePersistence {
 		Ok(())
 	}
 
+	/// Replace the stored description of a paired device.
+	///
+	/// Returns `false` when the device is not paired.
+	pub async fn update_device_info(
+		&self,
+		device_id: Uuid,
+		device_info: DeviceInfo,
+	) -> Result<bool> {
+		let mut devices = self.load_paired_devices().await?;
+		let Some(device) = devices.get_mut(&device_id) else {
+			return Ok(false);
+		};
+		device.device_info = device_info;
+		self.save_paired_devices(&devices).await?;
+		Ok(true)
+	}
+
 	/// Get a single paired device by ID
 	pub async fn get_paired_device(
 		&self,

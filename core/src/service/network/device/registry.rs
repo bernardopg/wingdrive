@@ -39,6 +39,9 @@ pub struct DeviceRegistry {
 
 	/// Library manager for querying device data from database
 	library_manager: Option<std::sync::Weak<crate::library::LibraryManager>>,
+
+	/// Receives the ID of every device that becomes connected
+	connected_notifier: Option<tokio::sync::mpsc::UnboundedSender<Uuid>>,
 }
 
 impl DeviceRegistry {
@@ -59,7 +62,119 @@ impl DeviceRegistry {
 			logger,
 			event_bus: None,
 			library_manager: None,
+			connected_notifier: None,
 		}
+	}
+
+	/// Set the channel that hears about every device that becomes connected.
+	///
+	/// The networking service uses it to send this device's current
+	/// description to the peer.
+	pub fn set_connected_notifier(&mut self, notifier: tokio::sync::mpsc::UnboundedSender<Uuid>) {
+		self.connected_notifier = Some(notifier);
+	}
+
+	fn notify_connected(&self, device_id: Uuid) {
+		if let Some(notifier) = &self.connected_notifier {
+			// The receiver only goes away at shutdown.
+			let _ = notifier.send(device_id);
+		}
+	}
+
+	/// This device's description, as peers should store it.
+	pub fn local_peer_info(&self) -> Result<crate::service::network::protocol::PeerDeviceInfo> {
+		Ok((&self.get_local_device_info()?).into())
+	}
+
+	/// Store a new description a paired device sent about itself.
+	///
+	/// Identity fields (device ID, network fingerprint) never change here.
+	/// Returns `false` when the description is the one already stored.
+	pub async fn update_peer_info(
+		&mut self,
+		device_id: Uuid,
+		update: &crate::service::network::protocol::PeerDeviceInfo,
+	) -> Result<bool> {
+		update.validate().map_err(|reason| {
+			NetworkingError::Protocol(format!("Invalid device info: {reason}"))
+		})?;
+
+		let (info, is_connected) = match self.devices.get_mut(&device_id) {
+			Some(DeviceState::Paired { info, .. } | DeviceState::Disconnected { info, .. }) => {
+				(info, false)
+			}
+			Some(DeviceState::Connected { info, .. }) => (info, true),
+			_ => return Err(NetworkingError::DeviceNotFound(device_id)),
+		};
+
+		let slug_changed = info.device_slug != update.device_slug;
+		if !update.apply_to(info) {
+			return Ok(false);
+		}
+		info.last_seen = Utc::now();
+		let info = info.clone();
+
+		if slug_changed {
+			if let Err(e) = self
+				.device_manager
+				.cache_paired_device(info.device_slug.clone(), device_id)
+			{
+				self.logger
+					.warn(&format!(
+						"Failed to cache the new slug of device {}: {}",
+						device_id, e
+					))
+					.await;
+			}
+		}
+
+		if let Err(e) = self
+			.persistence
+			.update_device_info(device_id, info.clone())
+			.await
+		{
+			self.logger
+				.warn(&format!(
+					"Failed to persist the new info of device {}: {}",
+					device_id, e
+				))
+				.await;
+		}
+
+		self.logger
+			.info(&format!(
+				"Device {} now reports itself as {} ({:?}, {}, {})",
+				device_id, info.device_name, info.device_type, info.os_version, info.app_version
+			))
+			.await;
+
+		self.emit_device_changed(device_id, &info, is_connected);
+		Ok(true)
+	}
+
+	/// Drop a pairing from memory, the slug cache and persistent storage.
+	///
+	/// Returns whether the device was stored as paired. Library databases are
+	/// left alone; the caller decides about them.
+	pub async fn forget_paired_device(&mut self, device_id: Uuid) -> Result<bool> {
+		self.remove_device(device_id)?;
+		let removed = self.persistence.remove_paired_device(device_id).await?;
+		if let Err(e) = self
+			.device_manager
+			.remove_paired_device_from_cache(device_id)
+		{
+			self.logger
+				.warn(&format!(
+					"Failed to remove device {} from the slug cache: {}",
+					device_id, e
+				))
+				.await;
+		}
+		if let Some(event_bus) = &self.event_bus {
+			use crate::domain::resource::EventEmitter;
+			crate::domain::device::Device::emit_deleted(device_id, event_bus);
+		}
+		Ok(removed)
 	}
 
 	/// Set the event bus for emitting resource change events
@@ -477,6 +592,7 @@ impl DeviceRegistry {
 
 		// Emit ResourceChanged event for UI reactivity
 		self.emit_device_changed(device_id, &info, true);
+		self.notify_connected(device_id);
 
 		Ok(())
 	}
@@ -730,6 +846,7 @@ impl DeviceRegistry {
 
 				// Emit ResourceChanged event for UI reactivity
 				self.emit_device_changed(device_id, &info, true);
+				self.notify_connected(device_id);
 			}
 			DeviceState::Connected {
 				info,
@@ -986,8 +1103,248 @@ impl DeviceRegistry {
 		// Emit ResourceChanged event for UI reactivity (after releasing borrow)
 		if let Some(info) = info_for_event {
 			self.emit_device_changed(device_id, &info, true);
+			self.notify_connected(device_id);
 		}
 
 		Ok(())
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::service::network::device::DeviceType;
+	use crate::service::network::protocol::PeerDeviceInfo;
+	use crate::service::network::utils::identity::NetworkFingerprint;
+	use crate::service::network::utils::SilentLogger;
+	use tempfile::TempDir;
+
+	pub(crate) fn test_registry() -> (DeviceRegistry, TempDir) {
+		let temp_dir = TempDir::new().unwrap();
+		let key_manager = Arc::new(
+			KeyManager::new_with_fallback(
+				temp_dir.path().to_path_buf(),
+				Some(temp_dir.path().join("device_key")),
+			)
+			.unwrap(),
+		);
+		let device_manager = Arc::new(
+			DeviceManager::init(&temp_dir.path().to_path_buf(), key_manager.clone(), None).unwrap(),
+		);
+		(
+			DeviceRegistry::new(device_manager, key_manager, Arc::new(SilentLogger)),
+			temp_dir,
+		)
+	}
+
+	/// Pairs a device the way the Moto G7 of MOB-013 was stored: placeholder
+	/// name and the wrong type.
+	pub(crate) async fn pair_stale_phone(registry: &mut DeviceRegistry) -> (Uuid, EndpointId) {
+		let device_id = Uuid::new_v4();
+		let node_id = iroh::SecretKey::generate().public();
+		let info = DeviceInfo {
+			device_id,
+			device_name: "WingDrive Mobile".to_string(),
+			device_slug: "wingdrive-mobile".to_string(),
+			device_type: DeviceType::Desktop,
+			os_version: "android".to_string(),
+			app_version: "2.1.0".to_string(),
+			network_fingerprint: NetworkFingerprint {
+				node_id: node_id.to_string(),
+				public_key_hash: "hash".to_string(),
+			},
+			last_seen: Utc::now(),
+		};
+		registry
+			.complete_pairing(
+				device_id,
+				info,
+				SessionKeys::from_shared_secret(vec![7; 32]),
+				None,
+				crate::service::network::device::PairingType::Direct,
+				None,
+				None,
+			)
+			.await
+			.unwrap();
+		(device_id, node_id)
+	}
+
+	pub(crate) fn renamed_phone() -> PeerDeviceInfo {
+		PeerDeviceInfo {
+			device_name: "motorola moto g(7)".to_string(),
+			device_slug: "motorola-moto-g-7".to_string(),
+			device_type: DeviceType::Mobile,
+			os_version: "android".to_string(),
+			app_version: "3.0.1".to_string(),
+		}
+	}
+
+	fn stored_info(registry: &DeviceRegistry, device_id: Uuid) -> DeviceInfo {
+		match registry.get_device_state(device_id) {
+			Some(
+				DeviceState::Paired { info, .. }
+				| DeviceState::Connected { info, .. }
+				| DeviceState::Disconnected { info, .. },
+			) => info.clone(),
+			other => panic!("device is not paired: {other:?}"),
+		}
+	}
+
+	#[tokio::test]
+	async fn peer_info_update_replaces_the_stored_copy_everywhere() {
+		let (mut registry, _dir) = test_registry();
+		let (device_id, node_id) = pair_stale_phone(&mut registry).await;
+
+		assert!(registry
+			.update_peer_info(device_id, &renamed_phone())
+			.await
+			.unwrap());
+
+		let info = stored_info(&registry, device_id);
+		assert_eq!(PeerDeviceInfo::from(&info), renamed_phone());
+		// Identity is not the peer's to change.
+		assert_eq!(info.device_id, device_id);
+		assert_eq!(info.network_fingerprint.node_id, node_id.to_string());
+
+		let persisted = registry
+			.get_persisted_device(device_id)
+			.await
+			.unwrap()
+			.unwrap();
+		assert_eq!(
+			PeerDeviceInfo::from(&persisted.device_info),
+			renamed_phone()
+		);
+		assert_eq!(
+			registry
+				.device_manager
+				.get_device_slug(device_id)
+				.as_deref(),
+			Some("motorola-moto-g-7")
+		);
+		assert_eq!(
+			registry.device_manager.resolve_by_slug("wingdrive-mobile"),
+			None
+		);
+
+		// The same description again changes nothing.
+		assert!(!registry
+			.update_peer_info(device_id, &renamed_phone())
+			.await
+			.unwrap());
+	}
+
+	#[tokio::test]
+	async fn peer_info_update_survives_a_restart() {
+		let (mut registry, dir) = test_registry();
+		let (device_id, _) = pair_stale_phone(&mut registry).await;
+		registry
+			.update_peer_info(device_id, &renamed_phone())
+			.await
+			.unwrap();
+		let persistence = registry.persistence();
+		drop(registry);
+
+		let loaded = persistence.load_paired_devices().await.unwrap();
+		assert_eq!(
+			PeerDeviceInfo::from(&loaded[&device_id].device_info),
+			renamed_phone()
+		);
+		drop(dir);
+	}
+
+	#[tokio::test]
+	async fn invalid_or_unknown_peer_info_is_refused() {
+		let (mut registry, _dir) = test_registry();
+		let (device_id, _) = pair_stale_phone(&mut registry).await;
+
+		let mut blank = renamed_phone();
+		blank.device_name = String::new();
+		assert!(registry.update_peer_info(device_id, &blank).await.is_err());
+		assert_eq!(
+			stored_info(&registry, device_id).device_name,
+			"WingDrive Mobile"
+		);
+
+		assert!(matches!(
+			registry
+				.update_peer_info(Uuid::new_v4(), &renamed_phone())
+				.await,
+			Err(NetworkingError::DeviceNotFound(_))
+		));
+	}
+
+	#[tokio::test]
+	async fn every_transition_to_connected_is_announced() {
+		let (mut registry, _dir) = test_registry();
+		let (notifier, mut connected) = tokio::sync::mpsc::unbounded_channel();
+		registry.set_connected_notifier(notifier);
+		let (device_id, node_id) = pair_stale_phone(&mut registry).await;
+		assert!(
+			connected.try_recv().is_err(),
+			"pairing alone is not a connection"
+		);
+
+		registry
+			.set_device_connected(device_id, node_id)
+			.await
+			.unwrap();
+		assert_eq!(connected.try_recv().unwrap(), device_id);
+		// Already connected: nothing new to announce.
+		registry
+			.set_device_connected(device_id, node_id)
+			.await
+			.unwrap();
+		assert!(connected.try_recv().is_err());
+
+		registry
+			.update_device_from_connection(device_id, node_id, false, None)
+			.await
+			.unwrap();
+		registry
+			.update_device_from_connection(device_id, node_id, true, None)
+			.await
+			.unwrap();
+		assert_eq!(connected.try_recv().unwrap(), device_id);
+
+		registry
+			.mark_disconnected(
+				device_id,
+				crate::service::network::device::DisconnectionReason::ConnectionLost,
+			)
+			.await
+			.unwrap();
+		registry
+			.mark_connected(
+				device_id,
+				ConnectionInfo {
+					latency_ms: None,
+					rx_bytes: 0,
+					tx_bytes: 0,
+				},
+			)
+			.await
+			.unwrap();
+		assert_eq!(connected.try_recv().unwrap(), device_id);
+	}
+
+	#[tokio::test]
+	async fn forgetting_a_pairing_clears_memory_cache_and_storage() {
+		let (mut registry, _dir) = test_registry();
+		let (device_id, node_id) = pair_stale_phone(&mut registry).await;
+
+		assert!(registry.forget_paired_device(device_id).await.unwrap());
+
+		assert!(registry.get_device_state(device_id).is_none());
+		assert_eq!(registry.get_device_by_node(node_id), None);
+		assert_eq!(registry.device_manager.get_device_slug(device_id), None);
+		assert!(registry
+			.get_persisted_device(device_id)
+			.await
+			.unwrap()
+			.is_none());
+		// A second removal finds nothing, and says so.
+		assert!(!registry.forget_paired_device(device_id).await.unwrap());
 	}
 }

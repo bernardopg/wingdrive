@@ -2,6 +2,9 @@ use super::{input::DeviceRevokeInput, output::DeviceRevokeOutput};
 use crate::infra::action::{error::ActionError, CoreAction};
 use std::sync::Arc;
 
+/// How long a revocation waits for the peer to acknowledge it.
+const PEER_NOTICE_WAIT: std::time::Duration = std::time::Duration::from_secs(5);
+
 pub struct DeviceRevokeAction {
 	pub device_id: uuid::Uuid,
 	pub remove_from_library: bool,
@@ -29,37 +32,44 @@ impl CoreAction for DeviceRevokeAction {
 			.await
 			.ok_or_else(|| ActionError::Internal("Networking not initialized".to_string()))?;
 
-		// Remove from network registry state and persistence
+		// Tell the peer while the pairing still exists here: once it is
+		// removed, this device no longer knows which node to talk to.
+		let peer_node = net
+			.device_registry()
+			.read()
+			.await
+			.get_node_by_device(self.device_id);
+		let peer_notified = match peer_node {
+			Some(_) => match net.notify_unpaired(self.device_id, PEER_NOTICE_WAIT).await {
+				Ok(()) => {
+					tracing::info!("Device {} dropped the pairing on its side", self.device_id);
+					true
+				}
+				Err(error) => {
+					tracing::warn!(
+						"Device {} was not told about the revocation and keeps the pairing on its side: {}",
+						self.device_id,
+						error
+					);
+					false
+				}
+			},
+			None => false,
+		};
+
+		// Remove from network registry state, slug cache and persistence.
+		// This also emits the ResourceDeleted event.
 		{
 			let reg = net.device_registry();
 			let mut guard = reg.write().await;
-
-			tracing::info!(
-				"Removing device {} from network registry in-memory state",
-				self.device_id
-			);
-			if let Err(e) = guard.remove_device(self.device_id) {
-				tracing::warn!("Failed to remove device from network registry: {}", e);
-			}
-
-			tracing::info!(
-				"Removing device {} from network encrypted persistence",
-				self.device_id
-			);
-			match guard.remove_paired_device(self.device_id).await {
-				Ok(removed) => {
-					if removed {
-						tracing::info!(
-							"Device {} removed from network persistent storage",
-							self.device_id
-						);
-					} else {
-						tracing::warn!(
-							"Device {} not found in network persistent storage (already removed?)",
-							self.device_id
-						);
-					}
+			match guard.forget_paired_device(self.device_id).await {
+				Ok(true) => {
+					tracing::info!("Device {} removed from network storage", self.device_id)
 				}
+				Ok(false) => tracing::warn!(
+					"Device {} not found in network persistent storage (already removed?)",
+					self.device_id
+				),
 				Err(e) => {
 					tracing::error!("Failed to remove device from network persistence: {}", e);
 					return Err(ActionError::Internal(format!(
@@ -68,6 +78,11 @@ impl CoreAction for DeviceRevokeAction {
 					)));
 				}
 			}
+		}
+
+		// An unpaired node has no business keeping open connections.
+		if let Some(node_id) = peer_node {
+			net.close_node_connections(node_id, "unpaired").await;
 		}
 
 		// Remove from all library databases (if requested)
@@ -130,28 +145,11 @@ impl CoreAction for DeviceRevokeAction {
 			);
 		}
 
-		// Remove from DeviceManager cache
-		tracing::info!(
-			"Removing device {} from DeviceManager cache",
-			self.device_id
-		);
-		if let Err(e) = context
-			.device_manager
-			.remove_paired_device_from_cache(self.device_id)
-		{
-			tracing::warn!("Failed to remove device from cache: {}", e);
-		}
-
-		// Emit ResourceDeleted event
-		tracing::info!(
-			"Emitting ResourceDeleted event for device {}",
-			self.device_id
-		);
-		use crate::domain::resource::EventEmitter;
-		crate::domain::device::Device::emit_deleted(self.device_id, &context.events);
-
 		tracing::info!("Device {} successfully revoked", self.device_id);
-		Ok(DeviceRevokeOutput { revoked: true })
+		Ok(DeviceRevokeOutput {
+			revoked: true,
+			peer_notified,
+		})
 	}
 
 	fn action_kind(&self) -> &'static str {

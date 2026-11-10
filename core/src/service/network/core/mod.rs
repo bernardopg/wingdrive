@@ -315,6 +315,9 @@ impl NetworkingService {
 		*self.shutdown_sender.write().await = Some(shutdown_sender);
 		self.command_sender = Some(command_sender);
 
+		// Send this device's current description to every peer that connects
+		self.start_device_info_announcer().await;
+
 		// Load and attempt to reconnect to paired devices
 		self.load_and_reconnect_devices().await?;
 
@@ -322,6 +325,86 @@ impl NetworkingService {
 		self.start_periodic_reconnection().await;
 
 		Ok(())
+	}
+
+	/// Announce this device's description to each peer as it connects.
+	///
+	/// Pairing sends the description once. A device that was renamed, upgraded
+	/// or had its type corrected would otherwise keep its old values on every
+	/// peer until it was paired again.
+	async fn start_device_info_announcer(&self) {
+		let (notifier, mut connected) = mpsc::unbounded_channel::<Uuid>();
+		self.device_registry
+			.write()
+			.await
+			.set_connected_notifier(notifier);
+
+		let device_registry = self.device_registry.clone();
+		let protocol_registry = self.protocol_registry.clone();
+		let handle = tokio::spawn(async move {
+			while let Some(device_id) = connected.recv().await {
+				let device_registry = device_registry.clone();
+				let protocol_registry = protocol_registry.clone();
+				// One task per peer: a slow or old peer must not delay the others.
+				tokio::spawn(async move {
+					match announce_device_info(&device_registry, &protocol_registry, device_id)
+						.await
+					{
+						Ok(()) => tracing::debug!(%device_id, "Sent current device info to peer"),
+						// A peer on a version without these messages closes the stream.
+						Err(error) => {
+							tracing::debug!(%device_id, %error, "Peer did not take the device info")
+						}
+					}
+				});
+			}
+		});
+		self.background_tasks.write().await.push(handle);
+	}
+
+	/// Tell a paired device that this device removed the pairing.
+	///
+	/// Waits at most `wait` for the peer's acknowledgement. An error means the
+	/// peer could not be told (offline, old version); it then keeps the
+	/// pairing on its side until someone removes it there.
+	pub async fn notify_unpaired(&self, device_id: Uuid, wait: std::time::Duration) -> Result<()> {
+		use crate::service::network::protocol::DeviceMessage;
+
+		let send = send_device_message(
+			&self.device_registry,
+			&self.protocol_registry,
+			device_id,
+			DeviceMessage::Unpaired,
+		);
+		match tokio::time::timeout(wait, send).await {
+			Ok(Ok(DeviceMessage::UnpairedAck)) => Ok(()),
+			Ok(Ok(other)) => Err(NetworkingError::Protocol(format!(
+				"Unexpected reply to Unpaired: {other:?}"
+			))),
+			Ok(Err(error)) => Err(error),
+			Err(_) => Err(NetworkingError::Transport(format!(
+				"Peer did not acknowledge within {}s",
+				wait.as_secs()
+			))),
+		}
+	}
+
+	/// Close every connection to a node, on all protocols.
+	pub async fn close_node_connections(&self, node_id: EndpointId, reason: &str) {
+		let closed: Vec<Connection> = {
+			let mut connections = self.active_connections.write().await;
+			let keys: Vec<_> = connections
+				.keys()
+				.filter(|(node, _)| *node == node_id)
+				.cloned()
+				.collect();
+			keys.iter()
+				.filter_map(|key| connections.remove(key))
+				.collect()
+		};
+		for connection in closed {
+			connection.close(0u32.into(), reason.as_bytes());
+		}
 	}
 
 	/// Load paired devices from persistence and attempt reconnection
@@ -2035,6 +2118,56 @@ async fn spawn_connection_watcher_task(
 				.await;
 		}
 	});
+}
+
+/// Sends a device message to a paired device over the messaging protocol.
+async fn send_device_message(
+	device_registry: &Arc<RwLock<DeviceRegistry>>,
+	protocol_registry: &Arc<RwLock<ProtocolRegistry>>,
+	device_id: Uuid,
+	message: crate::service::network::protocol::DeviceMessage,
+) -> Result<crate::service::network::protocol::DeviceMessage> {
+	let node_id = device_registry
+		.read()
+		.await
+		.get_node_by_device(device_id)
+		.ok_or(NetworkingError::DeviceNotFound(device_id))?;
+
+	let handler = protocol_registry
+		.read()
+		.await
+		.get_handler("messaging")
+		.ok_or_else(|| NetworkingError::Protocol("Messaging handler not registered".to_string()))?;
+	let messaging = handler
+		.as_any()
+		.downcast_ref::<crate::service::network::protocol::MessagingProtocolHandler>()
+		.ok_or_else(|| NetworkingError::Protocol("Invalid messaging handler type".to_string()))?;
+
+	messaging.send_device_message(node_id, message).await
+}
+
+/// Sends this device's current description to one paired device.
+async fn announce_device_info(
+	device_registry: &Arc<RwLock<DeviceRegistry>>,
+	protocol_registry: &Arc<RwLock<ProtocolRegistry>>,
+	device_id: Uuid,
+) -> Result<()> {
+	use crate::service::network::protocol::DeviceMessage;
+
+	let info = device_registry.read().await.local_peer_info()?;
+	match send_device_message(
+		device_registry,
+		protocol_registry,
+		device_id,
+		DeviceMessage::Info(info),
+	)
+	.await?
+	{
+		DeviceMessage::InfoAck => Ok(()),
+		other => Err(NetworkingError::Protocol(format!(
+			"Unexpected reply to Info: {other:?}"
+		))),
+	}
 }
 
 // Ensure NetworkingService is Send + Sync for proper async usage
