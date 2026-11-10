@@ -242,7 +242,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 						throw new Error(
 							t('fileOperation.undoSkipped', {
 								count: undone.output.data.skipped_count,
-								reason: undone.output.data.skipped[0] ?? ''
+								reason: undone.output.data.skipped?.[0] ?? ''
 							})
 						);
 					}
