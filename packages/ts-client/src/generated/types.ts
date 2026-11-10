@@ -743,6 +743,11 @@ export type DeviceRevokeInput = {
 
 export type DeviceRevokeOutput = {
 	revoked: boolean,
+	/**
+	 *  Whether the peer acknowledged the revocation and dropped the pairing
+	 *  on its side. `false` when it was offline or runs an older version.
+	 */
+	peer_notified?: boolean,
 };
 
 /**  Device sync state for state machine */

@@ -169,6 +169,30 @@ Proxy pairing lets a new device join a network after a single direct pairing. Th
 
 See [Proxy Pairing](/docs/core/proxy-pairing) for the full protocol, resource model, and flows.
 
+## After pairing
+
+Pairing sends each device's description (name, slug, type, OS and app version) once. Two
+messages on the messaging protocol keep the pairing current afterwards. Both are
+`Message::Device(DeviceMessage)` in `core/src/service/network/protocol/device_messages.rs`.
+
+**Refreshing device info.** Every time a paired device becomes connected, each side sends
+`DeviceMessage::Info` with its current description and the peer answers `InfoAck`. The registry
+(`DeviceRegistry::update_peer_info`) replaces the stored copy in memory and in the encrypted
+paired-device storage, and re-caches the slug when it changed. A device that was renamed, upgraded
+or had its type corrected therefore shows the new values on its peers after the next connection.
+The message carries no device ID and no fingerprint: the receiver takes the sender's identity from
+the authenticated connection, so a device can only describe itself.
+
+**Removing a pairing.** `network.device.revoke` sends `DeviceMessage::Unpaired` before it deletes
+the pairing locally, and waits up to 5 seconds for `UnpairedAck`. The peer then drops the pairing
+too (`DeviceRegistry::forget_paired_device`) and its UI loses the device through the usual
+`ResourceDeleted` event. The action's output has `peer_notified`: `false` means the peer was
+offline or runs a version without this message, and still lists the pairing until someone removes
+it there. Library databases on the peer are not touched.
+
+Device messages from a node that is not paired get no answer and change nothing. A peer on a
+version without these messages closes the stream; the sender logs it at debug level and carries on.
+
 ## Technical Architecture
 
 ### Protocol Messages

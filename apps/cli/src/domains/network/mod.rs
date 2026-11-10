@@ -196,6 +196,13 @@ pub async fn run(ctx: &Context, cmd: NetworkCmd) -> Result<()> {
 			let out: DeviceRevokeOutput = execute_action!(ctx, input);
 			print_output!(ctx, &out, |o: &DeviceRevokeOutput| {
 				println!("Revoked: {}", o.revoked);
+				if o.peer_notified {
+					println!("The device dropped the pairing on its side.");
+				} else {
+					println!(
+						"The device could not be told and still lists this pairing; remove it there too."
+					);
+				}
 			});
 		}
 		NetworkCmd::Wingdrop(cmd) => run_wingdrop(ctx, cmd).await?,

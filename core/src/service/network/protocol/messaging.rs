@@ -1,6 +1,9 @@
 //! Basic messaging protocol handler
 
-use super::{library_messages::LibraryMessage, ProtocolEvent, ProtocolHandler};
+use super::{
+	device_messages::DeviceMessage, library_messages::LibraryMessage, ProtocolEvent,
+	ProtocolHandler,
+};
 use crate::service::network::{utils, NetworkingError, Result};
 use async_trait::async_trait;
 use iroh::{endpoint::Connection, Endpoint, EndpointAddr, EndpointId};
@@ -59,6 +62,8 @@ pub enum Message {
 	Library(LibraryMessage),
 	/// Wingdrop offer, decision or progress
 	Wingdrop(crate::service::wingdrop::WingdropMessage),
+	/// The sender's current description, or the end of its pairing
+	Device(DeviceMessage),
 }
 
 impl MessagingProtocolHandler {
@@ -705,6 +710,58 @@ impl MessagingProtocolHandler {
 		}
 	}
 
+	/// Sends a device message to a node and returns its reply.
+	///
+	/// Sent once, with no retry on a fresh connection: a peer running a
+	/// version without these messages closes the stream, and that is not a
+	/// reason to open another connection to it.
+	pub async fn send_device_message(
+		&self,
+		node_id: EndpointId,
+		message: DeviceMessage,
+	) -> Result<DeviceMessage> {
+		match self
+			.send_request_once(node_id, &Message::Device(message))
+			.await?
+		{
+			Message::Device(reply) => Ok(reply),
+			_ => Err(NetworkingError::Protocol(
+				"Expected Device message in response".to_string(),
+			)),
+		}
+	}
+
+	/// Handles a device message from an authenticated paired device and
+	/// returns the serialized reply, empty when there is none.
+	async fn handle_device_message(&self, from_device: Uuid, message: DeviceMessage) -> Vec<u8> {
+		let reply = match message {
+			DeviceMessage::Info(info) => {
+				let mut registry = self.device_registry.write().await;
+				match registry.update_peer_info(from_device, &info).await {
+					Ok(_) => Some(DeviceMessage::InfoAck),
+					Err(error) => {
+						tracing::warn!(device_id = %from_device, %error, "Rejected device info from peer");
+						None
+					}
+				}
+			}
+			DeviceMessage::Unpaired => {
+				tracing::info!(device_id = %from_device, "Peer removed the pairing, dropping it here too");
+				let mut registry = self.device_registry.write().await;
+				if let Err(error) = registry.forget_paired_device(from_device).await {
+					tracing::error!(device_id = %from_device, %error, "Failed to drop a pairing the peer removed");
+				}
+				// Acknowledge even after a storage error: the device is
+				// already gone from memory, and the peer has nothing to retry.
+				Some(DeviceMessage::UnpairedAck)
+			}
+			DeviceMessage::InfoAck | DeviceMessage::UnpairedAck => None,
+		};
+		reply
+			.and_then(|reply| serde_json::to_vec(&Message::Device(reply)).ok())
+			.unwrap_or_default()
+	}
+
 	/// Sends one message and waits for the reply. Either side may close an
 	/// idle or duplicate connection at any moment (reconnection keeps only
 	/// one), so a request that dies on a closed connection before any reply
@@ -966,6 +1023,27 @@ impl ProtocolHandler for MessagingProtocolHandler {
 								}
 							}
 						}
+						Message::Device(device_msg) => {
+							let device_id_opt = {
+								let registry = self.device_registry.read().await;
+								registry.get_device_by_node(remote_node_id)
+							};
+							match device_id_opt {
+								Some(device_id) => {
+									self.handle_device_message(device_id, device_msg.clone())
+										.await
+								}
+								None => {
+									// Only a paired device may describe itself or
+									// end a pairing; anyone else gets no answer.
+									tracing::warn!(
+										"Received device message from unknown node {}",
+										remote_node_id
+									);
+									Vec::new()
+								}
+							}
+						}
 						Message::Goodbye { reason, .. } => {
 							// Received graceful disconnect from remote device
 							eprintln!("Remote device disconnecting gracefully: {}", reason);
@@ -1029,6 +1107,9 @@ impl ProtocolHandler for MessagingProtocolHandler {
 			Message::Library(lib_msg) => self.handle_library_message(from_device, lib_msg).await,
 			Message::Wingdrop(drop_msg) => {
 				Ok(self.handle_wingdrop_message(from_device, drop_msg).await)
+			}
+			Message::Device(device_msg) => {
+				Ok(self.handle_device_message(from_device, device_msg).await)
 			}
 			Message::Goodbye { reason, .. } => {
 				println!(
@@ -1121,4 +1202,233 @@ fn spawn_send_decision(
 			context.wingdrop.cancel_incoming(auto.drop_id, None);
 		}
 	});
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::crypto::key_manager::KeyManager;
+	use crate::device::DeviceManager;
+	use crate::service::network::device::{
+		DeviceInfo, DeviceRegistry, DeviceState, DeviceType, PairingType, SessionKeys,
+	};
+	use crate::service::network::protocol::PeerDeviceInfo;
+	use crate::service::network::utils::identity::NetworkFingerprint;
+	use tempfile::TempDir;
+	use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+	struct Peer {
+		handler: Arc<MessagingProtocolHandler>,
+		registry: Arc<RwLock<DeviceRegistry>>,
+		device_id: Uuid,
+		node_id: EndpointId,
+		_dir: TempDir,
+	}
+
+	/// A handler whose registry holds one paired device with stale info.
+	async fn handler_with_paired_device() -> Peer {
+		let dir = TempDir::new().unwrap();
+		let key_manager = Arc::new(
+			KeyManager::new_with_fallback(
+				dir.path().to_path_buf(),
+				Some(dir.path().join("device_key")),
+			)
+			.unwrap(),
+		);
+		let device_manager = Arc::new(
+			DeviceManager::init(&dir.path().to_path_buf(), key_manager.clone(), None).unwrap(),
+		);
+		let mut registry =
+			DeviceRegistry::new(device_manager, key_manager, Arc::new(utils::SilentLogger));
+
+		let device_id = Uuid::new_v4();
+		let node_id = iroh::SecretKey::generate().public();
+		registry
+			.complete_pairing(
+				device_id,
+				DeviceInfo {
+					device_id,
+					device_name: "WingDrive Mobile".to_string(),
+					device_slug: "wingdrive-mobile".to_string(),
+					device_type: DeviceType::Desktop,
+					os_version: "android".to_string(),
+					app_version: "2.1.0".to_string(),
+					network_fingerprint: NetworkFingerprint {
+						node_id: node_id.to_string(),
+						public_key_hash: "hash".to_string(),
+					},
+					last_seen: chrono::Utc::now(),
+				},
+				SessionKeys::from_shared_secret(vec![7; 32]),
+				None,
+				PairingType::Direct,
+				None,
+				None,
+			)
+			.await
+			.unwrap();
+
+		let registry = Arc::new(RwLock::new(registry));
+		let handler = Arc::new(MessagingProtocolHandler::new(
+			registry.clone(),
+			None,
+			Arc::new(RwLock::new(HashMap::new())),
+		));
+		Peer {
+			handler,
+			registry,
+			device_id,
+			node_id,
+			_dir: dir,
+		}
+	}
+
+	fn current_info() -> PeerDeviceInfo {
+		PeerDeviceInfo {
+			device_name: "motorola moto g(7)".to_string(),
+			device_slug: "motorola-moto-g-7".to_string(),
+			device_type: DeviceType::Mobile,
+			os_version: "android".to_string(),
+			app_version: "3.0.1".to_string(),
+		}
+	}
+
+	/// Sends one framed message through `handle_stream`, as a peer with
+	/// `from_node` as its authenticated identity, and returns the reply.
+	async fn exchange(
+		handler: &Arc<MessagingProtocolHandler>,
+		from_node: EndpointId,
+		message: &Message,
+	) -> Option<Message> {
+		let (client, server) = tokio::io::duplex(64 * 1024);
+		let (server_read, server_write) = tokio::io::split(server);
+		let (mut client_read, mut client_write) = tokio::io::split(client);
+
+		let serving = handler.clone();
+		let served = tokio::spawn(async move {
+			serving
+				.handle_stream(Box::new(server_write), Box::new(server_read), from_node)
+				.await;
+		});
+
+		let body = serde_json::to_vec(message).unwrap();
+		client_write
+			.write_all(&(body.len() as u32).to_be_bytes())
+			.await
+			.unwrap();
+		client_write.write_all(&body).await.unwrap();
+		client_write.shutdown().await.unwrap();
+		drop(client_write);
+
+		let mut reply = Vec::new();
+		client_read.read_to_end(&mut reply).await.unwrap();
+		served.await.unwrap();
+		if reply.is_empty() {
+			return None;
+		}
+		let length = u32::from_be_bytes(reply[..4].try_into().unwrap()) as usize;
+		assert_eq!(reply.len(), 4 + length, "one framed reply");
+		Some(serde_json::from_slice(&reply[4..]).unwrap())
+	}
+
+	fn stored_name(registry: &DeviceRegistry, device_id: Uuid) -> Option<String> {
+		match registry.get_device_state(device_id) {
+			Some(
+				DeviceState::Paired { info, .. }
+				| DeviceState::Connected { info, .. }
+				| DeviceState::Disconnected { info, .. },
+			) => Some(info.device_name.clone()),
+			_ => None,
+		}
+	}
+
+	#[tokio::test]
+	async fn info_from_a_paired_device_updates_the_registry_and_is_acknowledged() {
+		let peer = handler_with_paired_device().await;
+
+		let reply = exchange(
+			&peer.handler,
+			peer.node_id,
+			&Message::Device(DeviceMessage::Info(current_info())),
+		)
+		.await;
+
+		assert!(matches!(
+			reply,
+			Some(Message::Device(DeviceMessage::InfoAck))
+		));
+		let registry = peer.registry.read().await;
+		assert_eq!(
+			stored_name(&registry, peer.device_id).as_deref(),
+			Some("motorola moto g(7)")
+		);
+		let persisted = registry
+			.get_persisted_device(peer.device_id)
+			.await
+			.unwrap()
+			.unwrap();
+		assert_eq!(PeerDeviceInfo::from(&persisted.device_info), current_info());
+	}
+
+	#[tokio::test]
+	async fn unpaired_from_a_paired_device_drops_the_pairing_and_is_acknowledged() {
+		let peer = handler_with_paired_device().await;
+
+		let reply = exchange(
+			&peer.handler,
+			peer.node_id,
+			&Message::Device(DeviceMessage::Unpaired),
+		)
+		.await;
+
+		assert!(matches!(
+			reply,
+			Some(Message::Device(DeviceMessage::UnpairedAck))
+		));
+		let registry = peer.registry.read().await;
+		assert!(registry.get_device_state(peer.device_id).is_none());
+		assert!(registry.get_device_by_node(peer.node_id).is_none());
+		assert!(registry
+			.get_persisted_device(peer.device_id)
+			.await
+			.unwrap()
+			.is_none());
+	}
+
+	#[tokio::test]
+	async fn device_messages_from_an_unknown_node_change_nothing() {
+		let peer = handler_with_paired_device().await;
+		let stranger = iroh::SecretKey::generate().public();
+
+		for message in [DeviceMessage::Unpaired, DeviceMessage::Info(current_info())] {
+			let reply = exchange(&peer.handler, stranger, &Message::Device(message)).await;
+			assert!(reply.is_none(), "a stranger gets no answer");
+		}
+
+		let registry = peer.registry.read().await;
+		assert_eq!(
+			stored_name(&registry, peer.device_id).as_deref(),
+			Some("WingDrive Mobile")
+		);
+	}
+
+	#[tokio::test]
+	async fn invalid_info_is_not_stored_or_acknowledged() {
+		let peer = handler_with_paired_device().await;
+		let mut info = current_info();
+		info.device_name = "x".repeat(4096);
+
+		let reply = exchange(
+			&peer.handler,
+			peer.node_id,
+			&Message::Device(DeviceMessage::Info(info)),
+		)
+		.await;
+
+		assert!(reply.is_none());
+		assert_eq!(
+			stored_name(&*peer.registry.read().await, peer.device_id).as_deref(),
+			Some("WingDrive Mobile")
+		);
+	}
 }
