@@ -279,3 +279,49 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução: a entrada seguia a especificação, mas o GLib (`gio launch`, autostart do GNOME) e o `systemd-xdg-autostart-generator`, que este sistema usa, procuram o programa antes de converter `%%` em `%` e recusavam a entrada.
 - Correção: com `%` no caminho, o `Exec` começa por `/usr/bin/env`. Validado executando a entrada gerada pelo app com `gio launch` e como unit gerada pelo systemd.
 - Limite: o gerador do systemd interpreta `\`, `$` e `` ` `` de forma diferente da especificação. Caminhos com esses caracteres funcionam no GLib, não no systemd.
+
+## Achados da suíte de falhas de cópia em 2026-11-10
+
+`core/tests/copy_failure_test.rs` roda o job de cópia contra cancelamento, falha no meio e itens fora do comum. Seis dos doze casos iniciais falharam; a checagem pelo CLI num daemon isolado achou o sétimo item.
+
+### Cancelar uma sobrescrita destruía o arquivo anterior
+
+- Estado: corrigido; `cancelled_overwrite_keeps_the_previous_file`.
+- Local: `core/src/ops/files/copy/strategy.rs`, `copy_single_file_with_offset` e `FastCopyStrategy`.
+- Reprodução anterior: copiar `stream.bin` sobre um `stream.bin` existente com `overwrite = true` e cancelar no meio. `File::create` truncava o destino antes de ler a origem, e o cancelamento apagava o parcial. Sobrava nada: nem o conteúdo antigo, nem o novo.
+- Correção: cada arquivo é escrito como `.wing-part-<id>` na pasta de destino e renomeado ao terminar. Erro ou cancelamento remove o temporário. A cópia `Atomic` (`std::fs::copy`) segue o mesmo caminho.
+- Limite: um daemon morto no meio da cópia deixa um `.wing-part-*` na pasta. Não há limpeza automática.
+
+### Cópia cancelada terminava como concluída com uma falha
+
+- Estado: corrigido; `cancelled_copy_leaves_no_partial_file`.
+- Local: `core/src/ops/files/copy/job.rs`, tratamento do erro da estratégia.
+- Reprodução anterior: cancelar um job durante um arquivo grande. A estratégia consumia o pedido de interrupção e devolvia um erro comum; o job contava o item como falha e seguia para os próximos itens do lote. O resultado era `Completed` com `failed_count = 1`. Pausar tinha o mesmo efeito.
+- Correção: o erro da estratégia carrega a marca de interrupção (`is_interruption`) e o job devolve `JobError::Interrupted`, que o executor trata como cancelado ou pausado.
+
+### `preserve_timestamps` não era lido
+
+- Estado: corrigido; `copies_keep_content_and_modification_time` e `timestamps_are_new_when_the_option_is_off`.
+- Reprodução anterior: toda cópia saía com a data do momento da cópia, com a opção ligada (o padrão) ou desligada. Só a movimentação por rename mantinha a data.
+- Correção: depois de cada item copiado, o job aplica a data de modificação da origem a arquivos e pastas do destino. Falha nessa etapa só vai para o log.
+- Limite: data de acesso e de criação não são copiadas; links ficam com a data em que foram recriados. No Windows, pastas podem manter a data nova.
+
+### Link selecionado era seguido, e link quebrado derrubava o job
+
+- Estado: corrigido no Unix; `a_selected_link_is_copied_and_moved_as_a_link` e `copy_action_accepts_a_selected_dangling_link`.
+- Local: `strategy.rs` (as três estratégias locais), `job.rs` (`collect_file_metadata`, `tree_totals`) e `action.rs` (validação das origens e checagem de conflito).
+- Reprodução anterior: selecionar um link quebrado junto com outros arquivos. A ação respondia `Source file does not exist`; chamado direto, o job inteiro falhava com `Failed to read metadata`, sem copiar os demais itens. Um link para pasta copiava a pasta inteira, e a movimentação em streaming copiava o alvo e apagava só o link.
+- Correção: o link selecionado é o item, como já eram os links dentro de pastas. É recriado com o mesmo alvo, e mover ou renomear age sobre o link.
+- Mudança de comportamento: copiar um link para arquivo agora gera um link, não uma cópia do conteúdo. Isso reverte a escolha registrada acima em "Estimativa de progresso da cópia seguia links" ("o caminho selecionado continua sendo seguido"). Windows continua seguindo links.
+
+### Pipe, socket ou dispositivo dentro de uma pasta sumia na movimentação
+
+- Estado: corrigido; `folder_with_a_special_file_is_refused_and_kept`.
+- Reprodução anterior: mover em streaming uma pasta com um pipe nomeado. O percurso ignorava o que não fosse arquivo, pasta ou link, a cópia terminava sem erro e o job apagava a pasta de origem com o pipe dentro.
+- Correção: a pasta falha com `pipes, sockets and device files are not supported`, antes de copiar conteúdo de arquivo. A origem fica intacta.
+- Limite: a cópia (sem mover) da mesma pasta também falha, em vez de pular o item.
+
+### Cópia que falhava na leitura deixava arquivo truncado
+
+- Estado: corrigido junto com a escrita em nome temporário; `copy_that_fails_while_reading_leaves_no_partial_file`.
+- Reprodução anterior: copiar `/proc/self/mem`, que abre e falha na primeira leitura, deixava um `mem` vazio no destino.

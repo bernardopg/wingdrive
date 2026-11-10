@@ -1,13 +1,13 @@
 ---
 id: COV-03
 title: "Cobrir operações de arquivos e prevenção de perda de dados"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: COV-00
 priority: High
 milestone: M2
 tags: [coverage, testing, core]
-last_updated: 2026-11-06
+last_updated: 2026-11-10
 ---
 
 ## Description
@@ -20,14 +20,14 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 
 ## Implementation Steps
 
-- [ ] Criar fixtures temporárias com colisões, arquivos vazios, diretórios e links simbólicos.
-- [ ] Exercitar overwrite, conflito, destino dentro da origem, cancelamento e falha parcial.
-- [ ] Verificar checksum, metadados e ausência de remoção da origem em falhas.
+- [x] Criar fixtures temporárias com colisões, arquivos vazios, diretórios e links simbólicos.
+- [x] Exercitar overwrite, conflito, destino dentro da origem, cancelamento e falha parcial.
+- [x] Verificar checksum, metadados e ausência de remoção da origem em falhas.
 
 ## Acceptance Criteria
 
 - [ ] Ao menos 80% de linhas nos módulos alterados de core/src/ops/files, com lista explícita de arquivos.
-- [ ] Casos de erro e cancelamento confirmam bytes e caminhos preservados.
+- [x] Casos de erro e cancelamento confirmam bytes e caminhos preservados.
 - [ ] LCOV antes/depois com o mesmo conjunto de arquivos e testes no gate normal.
 
 ## Evidence
@@ -37,3 +37,12 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
   dentro de pastas copiadas e movidas, conflito surgido depois da confirmação, overwrite
   escolhido e renomeação para nome ocupado. Os bugs que acharam estão em [BUGS.md](BUGS.md).
   Ainda faltam arquivos vazios, cancelamento, falha parcial e medição por arquivo de `ops/files`.
+- 2026-11-10: `core/tests/copy_failure_test.rs` (14 casos, no gate Linux de `scripts/ci-rust.sh`)
+  cobre arquivos e pastas vazios, conteúdo e data de modificação, cancelamento de cópia, de
+  sobrescrita e de movimentação, falha de leitura, lote com um arquivo ilegível, pasta com arquivo
+  ilegível, pasta com pipe e links selecionados. O cancelamento usa um pipe nomeado alimentado por
+  uma thread, para parar o job no meio de um arquivo. Sete bugs corrigidos, em [BUGS.md](BUGS.md).
+  Conferido pelo CLI num daemon isolado: `wing file copy --overwrite --method streaming` de um
+  arquivo de 300 KB com data de 2017 e de um link quebrado; o destino ficou com os mesmos bytes, a
+  data de 2017 e o link.
+  Falta a medição LCOV por arquivo de `ops/files`, que decide o critério de 80%.

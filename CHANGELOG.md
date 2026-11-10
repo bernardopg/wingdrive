@@ -7,6 +7,17 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Fixed
 
+- Cancelling a copy that replaces an existing file no longer destroys that
+  file. Copies are written under a temporary name and renamed into place, so a
+  cancelled or failed copy also leaves no truncated file behind.
+- A cancelled or paused copy stops as cancelled or paused. It used to count the
+  current item as failed and carry on with the rest of the batch.
+- Copies keep the modification time of files and folders. The
+  `preserve_timestamps` option existed and defaulted to on, but nothing read it.
+- A selected symbolic link is copied, moved and renamed as a link. A dangling
+  one failed the whole operation, and a link to a folder copied the folder.
+- Moving a folder that holds a pipe, socket or device file fails instead of
+  skipping the item in silence and then deleting it with the source folder.
 - CI and release builds no longer print the "will be rejected by a future
   version of Rust" warning for `proc-macro-error2` 2.0.1 (pulled in by
   `wasmer-derive`): `patches/proc-macro-error2-2.0.1` carries the one-line

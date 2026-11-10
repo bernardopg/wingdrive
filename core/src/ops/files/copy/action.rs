@@ -155,12 +155,18 @@ impl FileCopyActionBuilder {
 		// Then do filesystem validation for local paths only
 		for source in &self.input.sources.paths {
 			if let Some(local_path) = source.as_local_path() {
-				if !local_path.exists() {
+				// Read the link itself: a dangling link exists and is copied as a link.
+				let Ok(metadata) = std::fs::symlink_metadata(local_path) else {
 					self.errors.push(format!(
 						"Source file does not exist: {}",
 						local_path.display()
 					));
-				} else if local_path.is_dir() && std::fs::read_dir(local_path).is_err() {
+					continue;
+				};
+				if cfg!(unix) && metadata.file_type().is_symlink() {
+					continue;
+				}
+				if local_path.is_dir() && std::fs::read_dir(local_path).is_err() {
 					self.errors
 						.push(format!("Cannot read directory: {}", local_path.display()));
 				} else if local_path.is_file() && std::fs::metadata(local_path).is_err() {
@@ -494,7 +500,8 @@ impl FileCopyAction {
 				};
 
 				// Check if this would conflict
-				if actual_dest.exists() {
+				// A dangling link in the way is a conflict too.
+				if std::fs::symlink_metadata(&actual_dest).is_ok() {
 					conflicts.push((source_path.to_path_buf(), actual_dest));
 				}
 			}
