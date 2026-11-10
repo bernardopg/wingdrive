@@ -152,6 +152,19 @@ impl JobHandler for DeleteJob {
 			.filter(|r| r.success)
 			.filter_map(|r| r.path.as_local_path().map(|p| p.to_path_buf()))
 			.collect();
+		if matches!(self.mode, DeleteMode::Trash) && !deleted_paths.is_empty() {
+			use crate::ops::files::journal::{Effect, Journal};
+			let journal = Journal::open(&ctx, "delete").await;
+			let mut trash_ids = crate::ops::trash::trashed_ids(deleted_paths.clone()).await;
+			for original in &deleted_paths {
+				journal
+					.record(&Effect::Trashed {
+						trash_id: trash_ids.remove(original),
+						original: original.clone(),
+					})
+					.await;
+			}
+		}
 		forget_in_ephemeral_index(&ctx, deleted_paths).await;
 
 		let failed_deletions: Vec<DeleteError> = results

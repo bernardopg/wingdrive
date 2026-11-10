@@ -173,6 +173,40 @@ A copy or move never leaves a damaged file behind and never loses the one it rep
 - **Modification times are kept** for files and folders when `preserve_timestamps` is on (the
   default). Links keep the time of their creation.
 
+## Undo
+
+Copy, move, rename and trash jobs journal what they changed, one record per item, in the library's
+job database (`file_journal`). `files.undo` queues a job that reverses one earlier job, newest
+record first; `files.undo_history` lists recent operations and how much of each can still be undone.
+
+```bash
+wing file history          # recent operations, newest first
+wing file undo             # the most recent one that still has something to undo
+wing file undo <JOB_ID>    # a specific one
+```
+
+| Recorded | Undo does |
+|---|---|
+| A copy created an item | Removes it |
+| An item was moved or renamed | Moves it back, across volumes when needed |
+| A file was replaced | Puts the previous file back |
+| An item went to the trash | Restores it from the trash |
+| A folder was written into an existing folder | Nothing: reported as not undoable |
+
+**Replaced files are kept, not deleted.** A job that overwrites a file first moves it to a hidden
+`.wing-undo-<job>/` folder next to it. Records and kept files expire after 7 days; they are removed
+when the next file job starts. If the copy fails or is cancelled, the previous file goes straight
+back.
+
+**Undo refuses what changed.** Each record carries a seal of the item as the job left it: inode,
+number of entries, total size and latest change time of the whole tree. An item that was edited,
+replaced, moved away or deleted since is skipped with a reason, and so is a move whose old place is
+taken again. Skipped records stay in the journal, so undo can be run again later. Undo never
+overwrites anything.
+
+The desktop app records every copy and move it starts and undoes it with Ctrl+Z. Permanent deletes
+record nothing. An undo is not itself journaled, so there is no redo.
+
 ## Job Resumption
 
 FileCopyJob tracks completed files in `completed_indices` and checkpoints every 20 files. If the job is interrupted, you can restart it and already-completed files will be skipped. The progress aggregator accounts for skipped files when calculating overall progress.

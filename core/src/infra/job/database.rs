@@ -133,6 +133,33 @@ pub mod checkpoint {
 	impl ActiveModelBehavior for ActiveModel {}
 }
 
+pub mod journal {
+	use super::*;
+
+	/// One change a file job made to the disk, kept so it can be undone.
+	///
+	/// `effect` is the JSON form of `ops::files::journal::Effect`.
+	#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
+	#[sea_orm(table_name = "file_journal")]
+	pub struct Model {
+		#[sea_orm(primary_key)]
+		pub id: i32,
+		#[sea_orm(indexed)]
+		pub job_id: String,
+		/// Order within the job; undo runs from the highest down.
+		pub seq: i32,
+		pub operation: String,
+		pub effect: String,
+		pub created_at: DateTime<Utc>,
+		pub undone_at: Option<DateTime<Utc>>,
+	}
+
+	#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+	pub enum Relation {}
+
+	impl ActiveModelBehavior for ActiveModel {}
+}
+
 /// Initialize job database
 pub async fn init_database(db_file_path: &Path) -> JobResult<DatabaseConnection> {
 	// Ensure the parent directory exists
@@ -170,6 +197,12 @@ async fn create_tables(db: &DatabaseConnection) -> JobResult<()> {
 	let mut checkpoint_statement = schema.create_table_from_entity(checkpoint::Entity);
 	checkpoint_statement.if_not_exists();
 	db.execute_raw(db.get_database_backend().build(&checkpoint_statement))
+		.await?;
+
+	// Create the file journal table if not exists
+	let mut journal_statement = schema.create_table_from_entity(journal::Entity);
+	journal_statement.if_not_exists();
+	db.execute_raw(db.get_database_backend().build(&journal_statement))
 		.await?;
 
 	Ok(())

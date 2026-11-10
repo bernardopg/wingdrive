@@ -64,6 +64,7 @@
 			"rename": "rename",
 			"batch rename": "batch rename",
 			"move": "move",
+			"copy": "copy",
 			"remove duplicates": "remove duplicates",
 			"new folder": "new folder",
 			"delete": "delete"

@@ -71,6 +71,15 @@ pub enum JobOutput {
 		total_bytes: u64,
 	},
 
+	/// Undo of an earlier copy, move, rename or trash job
+	FileUndo {
+		undone_count: usize,
+		skipped_count: usize,
+		/// Why each skipped item was left alone, capped to keep history small.
+		#[serde(default)]
+		skipped: Vec<String>,
+	},
+
 	/// Duplicate detection output
 	DuplicateDetection {
 		duplicate_groups: usize,
@@ -268,6 +277,17 @@ impl fmt::Display for JobOutput {
 					f,
 					"Deleted {} files ({} failed, {} bytes)",
 					deleted_count, failed_count, total_bytes
+				)
+			}
+			Self::FileUndo {
+				undone_count,
+				skipped_count,
+				..
+			} => {
+				write!(
+					f,
+					"Undid {} items ({} skipped)",
+					undone_count, skipped_count
 				)
 			}
 			Self::DuplicateDetection {

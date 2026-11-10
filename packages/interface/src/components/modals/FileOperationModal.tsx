@@ -17,7 +17,6 @@ import {
 import type {File as FileType, WingPath} from '@wingdrive/ts-client';
 import {useEffect, useRef, useState} from 'react';
 import {useForm} from 'react-hook-form';
-import {usePlatform} from '../../contexts/PlatformContext';
 import {getCurrentPlatform, toDisplayString} from '../../util/keybinds/platform';
 import {
 	useLibraryMutation,
@@ -87,9 +86,9 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 		useState<ConflictResolution>('Skip');
 
 	const copyFiles = useLibraryMutation('files.copy');
+	const undoFiles = useLibraryMutation('files.undo');
 	const waitForJob = useWaitForJob();
 	const refetchListings = useRefetchFileListings();
-	const platform = usePlatform();
 	const undo = useUndo();
 	const adminRetry = useAdminRetry();
 
@@ -208,54 +207,10 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 		try {
 			autoStarted.current = true;
 			setPhase({type: 'executing'});
-			const move = platform.undoMove;
-			const identify = platform.fileIdentity;
-			const candidates =
-				operation === 'move' &&
-				conflictResolution === 'Skip' &&
-				move &&
-				identify &&
-				undo.isLocalPath(props.destination) &&
-				'Physical' in props.destination
-					? await Promise.all(
-							props.sources.flatMap((source) => {
-								if (
-									!('Physical' in source) ||
-									!undo.isLocalPath(source) ||
-									!('Physical' in props.destination)
-								)
-									return [];
-								const oldPath = source.Physical.path;
-								const name = oldPath.slice(
-									Math.max(
-										oldPath.lastIndexOf('/'),
-										oldPath.lastIndexOf('\\')
-									) + 1
-								);
-								const newPath =
-									props.destination.Physical.path.replace(
-										/[\\/]$/,
-										''
-									) +
-									'/' +
-									name;
-								return [
-									identify(oldPath)
-										.then((expected) => ({
-											oldPath,
-											newPath,
-											expected
-										}))
-										.catch(() => null)
-								];
-							})
-						)
-					: [];
-
 			// Execute with the user's chosen operation and conflict resolution
 			// The mutation only queues the job; wait for it to finish so the
 			// listing refresh below actually sees the new files on disk.
-			const {result} = await waitForJob(() =>
+			const {receipt, result} = await waitForJob(() =>
 				copyFiles.mutateAsync({
 					sources: {paths: props.sources},
 					destination: props.destination,
@@ -270,33 +225,28 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 			refetchListings();
 
 			const outcome = summarizeFileOperation(operation, result);
-			// Items that did move can be undone even when others failed; the
-			// identity check skips the ones that never arrived.
-			if (
-				move &&
-				identify &&
-				(outcome.status === 'success' || outcome.status === 'partial')
-			) {
-				for (const candidate of candidates) {
-					if (!candidate) continue;
-					try {
-						const current = await identify(candidate.newPath);
-						if (
-							JSON.stringify(current) ===
-							JSON.stringify(candidate.expected)
-						) {
-							undo.record('move', () =>
-								move(
-									candidate.newPath,
-									candidate.oldPath,
-									candidate.expected
-								)
-							);
-						}
-					} catch {
-						/* A skipped or cross-volume item has no safe inode-preserving inverse. */
+			// The job journals what it changed, so the core can reverse a copy,
+			// an overwrite or a move, and skips whatever changed since.
+			if (outcome.status === 'success' || outcome.status === 'partial') {
+				const jobId = receipt.id;
+				undo.record(operation, async () => {
+					const {result: undone} = await waitForJob(() =>
+						undoFiles.mutateAsync({job_id: jobId})
+					);
+					if (undone.status === 'failed') throw new Error(undone.error);
+					if (
+						undone.status === 'completed' &&
+						undone.output.type === 'FileUndo' &&
+						undone.output.data.skipped_count > 0
+					) {
+						throw new Error(
+							t('fileOperation.undoSkipped', {
+								count: undone.output.data.skipped_count,
+								reason: undone.output.data.skipped?.[0] ?? ''
+							})
+						);
 					}
-				}
+				});
 			}
 
 			if (outcome.status !== 'success') {

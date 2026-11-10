@@ -386,6 +386,13 @@ impl JobHandler for FileCopyJob {
 		};
 		ctx.progress(Progress::generic(progress.to_generic_progress()));
 
+		let operation = match (&self.options.move_mode, is_move) {
+			(Some(MoveMode::Rename), _) => "rename",
+			(_, true) => "move",
+			_ => "copy",
+		};
+		let journal = crate::ops::files::journal::Journal::open(&ctx, operation).await;
+
 		// Create progress aggregator for tracking overall progress
 		let mut progress_aggregator =
 			ProgressAggregator::new(&ctx, actual_file_count, estimated_total_bytes);
@@ -560,6 +567,11 @@ impl JobHandler for FileCopyJob {
 					continue;
 				}
 			};
+			let may_replace = matches!(
+				decision,
+				crate::ops::files::plan::PlanDecision::Overwrite
+					| crate::ops::files::plan::PlanDecision::Ask
+			);
 			let final_destination = match decision {
 				crate::ops::files::plan::PlanDecision::Skip => {
 					ctx.log(format!(
@@ -617,6 +629,38 @@ impl JobHandler for FileCopyJob {
 				| crate::ops::files::plan::PlanDecision::Ask => final_destination,
 			};
 
+			// A case-only rename on a case-insensitive volume finds itself there.
+			let in_place = same_entry(&resolved_source, &final_destination).await;
+
+			// What this item replaces is moved aside, not destroyed, so undo
+			// can bring it back. A folder written into a folder is a merge.
+			let mut merged = false;
+			let mut stash = None;
+			if may_replace && !in_place {
+				if let Some(dest_path) = final_destination.as_local_path() {
+					if let Ok(existing) = tokio::fs::symlink_metadata(dest_path).await {
+						if existing.is_dir() {
+							merged = true;
+						} else {
+							match journal.stash(dest_path).await {
+								Ok(kept) => stash = Some(kept),
+								Err(e) => {
+									let error =
+										format!("Could not set the existing file aside: {e}");
+									failed_copies.push(CopyError {
+										source: resolved_source.path().cloned().unwrap_or_default(),
+										destination: dest_path.to_path_buf(),
+										error: error.clone(),
+									});
+									self.job_metadata.set_error(&resolved_source, error);
+									continue;
+								}
+							}
+						}
+					}
+				}
+			}
+
 			// 2. Execute the strategy with progress callback
 			match strategy
 				.execute(
@@ -658,6 +702,48 @@ impl JobHandler for FileCopyJob {
 						}
 					}
 
+					// Journal last, so the seal describes the finished item.
+					let journal_after = |source_gone: bool| {
+						let (source, destination) = (
+							resolved_source.as_local_path().map(|p| p.to_path_buf()),
+							final_destination.as_local_path().map(|p| p.to_path_buf()),
+						);
+						let journal = &journal;
+						async move {
+							use crate::ops::files::journal::{seal_of, Effect};
+							let (Some(source), Some(destination)) = (source, destination) else {
+								return;
+							};
+							if source == destination {
+								return;
+							}
+							if merged {
+								journal.record(&Effect::Merged { path: destination }).await;
+								return;
+							}
+							let seal = match seal_of(&destination).await {
+								Ok(seal) => seal,
+								Err(error) => {
+									tracing::warn!(path = %destination.display(), %error, "Could not seal a finished item; it cannot be undone");
+									return;
+								}
+							};
+							let effect = if source_gone || in_place {
+								Effect::Moved {
+									from: source,
+									to: destination,
+									seal,
+								}
+							} else {
+								Effect::Created {
+									path: destination,
+									seal,
+								}
+							};
+							journal.record(&effect).await;
+						}
+					};
+
 					// A move whose strategy copied rather than renamed still has its
 					// source. Whether the rename happened is read from the filesystem,
 					// not inferred from volume knowledge: a streaming move on one
@@ -693,8 +779,21 @@ impl JobHandler for FileCopyJob {
 							}
 						}
 					}
+
+					let source_gone = match resolved_source.as_local_path() {
+						Some(source_path) => {
+							tokio::fs::symlink_metadata(source_path).await.is_err()
+						}
+						None => false,
+					};
+					journal_after(source_gone).await;
 				}
 				Err(e) => {
+					// The replacement never arrived; put the previous item back.
+					if let Some(kept) = stash.take() {
+						journal.unstash(kept).await;
+					}
+
 					// A cancelled or paused job stops here. Counting the item as
 					// failed let the job carry on and finish as completed.
 					if super::strategy::is_interruption(&e) {

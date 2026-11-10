@@ -126,6 +126,23 @@ mod platform {
 		Ok(count)
 	}
 
+	/// The newest trash item of each original path.
+	pub fn newest_ids(
+		paths: &[std::path::PathBuf],
+	) -> Result<std::collections::HashMap<std::path::PathBuf, String>, String> {
+		let mut items = os_limited::list().map_err(|e| e.to_string())?;
+		items.sort_by_key(|item| std::cmp::Reverse(item.time_deleted));
+		let mut ids = std::collections::HashMap::new();
+		for item in items {
+			let original = item.original_path();
+			if paths.contains(&original) {
+				ids.entry(original)
+					.or_insert_with(|| item.id.to_string_lossy().into_owned());
+			}
+		}
+		Ok(ids)
+	}
+
 	pub fn purge(ids: &[String]) -> Result<u32, String> {
 		let items = select(ids, &[])?;
 		let count = items.len() as u32;
@@ -152,6 +169,12 @@ mod platform {
 	pub fn purge(_ids: &[String]) -> Result<u32, String> {
 		Err(UNSUPPORTED.to_string())
 	}
+
+	pub fn newest_ids(
+		_paths: &[std::path::PathBuf],
+	) -> Result<std::collections::HashMap<std::path::PathBuf, String>, String> {
+		Ok(std::collections::HashMap::new())
+	}
 }
 
 async fn blocking<T: Send + 'static>(
@@ -160,6 +183,35 @@ async fn blocking<T: Send + 'static>(
 	tokio::task::spawn_blocking(work)
 		.await
 		.map_err(|e| e.to_string())?
+}
+
+/// Trash identifiers of items a job just trashed, by original path.
+///
+/// Empty where the platform cannot list its trash.
+pub(crate) async fn trashed_ids(
+	paths: Vec<std::path::PathBuf>,
+) -> std::collections::HashMap<std::path::PathBuf, String> {
+	blocking(move || platform::newest_ids(&paths))
+		.await
+		.unwrap_or_default()
+}
+
+/// Puts one trashed item back where it came from.
+///
+/// With no identifier, the newest item trashed from `original` is restored.
+pub(crate) async fn restore_one(
+	trash_id: Option<String>,
+	original: std::path::PathBuf,
+) -> Result<(), String> {
+	let restored = blocking(move || match trash_id {
+		Some(id) => platform::restore(&[id], &[]),
+		None => platform::restore(&[], &[original.to_string_lossy().into_owned()]),
+	})
+	.await?;
+	if restored == 0 {
+		return Err("it is no longer in the trash".to_string());
+	}
+	Ok(())
 }
 
 pub struct TrashListQuery;

@@ -161,3 +161,17 @@ impl From<FileMkdirArgs> for CreateFolderInput {
 		Self::new(local_path(args.parent), args.name)
 	}
 }
+
+#[derive(Args, Debug, Clone)]
+pub struct FileUndoArgs {
+	/// Job to undo, as `wing file history` lists it (default: the most recent
+	/// copy, move, rename or trash that still has something to undo)
+	pub job_id: Option<uuid::Uuid>,
+}
+
+#[derive(Args, Debug, Clone)]
+pub struct FileHistoryArgs {
+	/// Most operations to show
+	#[arg(long, default_value_t = 20)]
+	pub limit: u32,
+}
