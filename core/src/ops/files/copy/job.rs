@@ -645,6 +645,19 @@ impl JobHandler for FileCopyJob {
 						super::metadata::CopyFileStatus::Completed,
 					);
 
+					// A copy is a new file with a new modification time unless the
+					// source's is put back. A renamed source is gone and kept its own.
+					if self.options.preserve_timestamps {
+						if let (Some(source_path), Some(dest_path)) = (
+							resolved_source.as_local_path(),
+							final_destination.as_local_path(),
+						) {
+							if source_path != dest_path {
+								copy_modification_times(source_path, dest_path).await;
+							}
+						}
+					}
+
 					// A move whose strategy copied rather than renamed still has its
 					// source. Whether the rename happened is read from the filesystem,
 					// not inferred from volume knowledge: a streaming move on one
@@ -682,6 +695,12 @@ impl JobHandler for FileCopyJob {
 					}
 				}
 				Err(e) => {
+					// A cancelled or paused job stops here. Counting the item as
+					// failed let the job carry on and finish as completed.
+					if super::strategy::is_interruption(&e) {
+						return Err(JobError::Interrupted);
+					}
+
 					failed_copies.push(CopyError {
 						source: resolved_source.path().cloned().unwrap_or_default(),
 						destination: final_destination.path().cloned().unwrap_or_default(),
@@ -1207,14 +1226,14 @@ impl FileCopyJob {
 				resolved_source.as_local_path()
 			{
 				// Local path - get from filesystem
-				let metadata = tokio::fs::metadata(local_path)
+				let metadata = selection_metadata(local_path)
 					.await
 					.map_err(|e| JobError::execution(format!("Failed to read metadata: {}", e)))?;
 
-				let size = if metadata.is_file() {
-					metadata.len()
-				} else {
+				let size = if metadata.is_dir() {
 					self.get_path_size(local_path).await.unwrap_or(0)
+				} else {
+					metadata.len()
 				};
 
 				// Try to find entry UUID for local paths too
@@ -1353,10 +1372,63 @@ impl FileCopyJob {
 	}
 }
 
+/// Metadata of a selected path. On Unix a symbolic link is the item itself,
+/// as the copy strategies treat it.
+async fn selection_metadata(path: &std::path::Path) -> Result<std::fs::Metadata, std::io::Error> {
+	#[cfg(unix)]
+	{
+		tokio::fs::symlink_metadata(path).await
+	}
+	#[cfg(not(unix))]
+	{
+		tokio::fs::metadata(path).await
+	}
+}
+
+/// Gives a finished copy the modification times of its source, folders included.
+///
+/// Best effort: the copy is complete either way, so a failure is only logged.
+/// Links are left alone.
+async fn copy_modification_times(source: &std::path::Path, destination: &std::path::Path) {
+	fn apply(source: &std::path::Path, destination: &std::path::Path) -> std::io::Result<()> {
+		let metadata = std::fs::symlink_metadata(source)?;
+		if metadata.file_type().is_symlink() {
+			return Ok(());
+		}
+		if metadata.is_dir() {
+			// Children first: writing into a folder changes its own time.
+			for entry in std::fs::read_dir(source)? {
+				let entry = entry?;
+				let _ = apply(&entry.path(), &destination.join(entry.file_name()));
+			}
+		}
+		let modified = metadata.modified()?;
+		// Windows needs write access to set times; a read-only file on Unix
+		// only opens for reading, which is enough for its owner there.
+		let file = std::fs::OpenOptions::new()
+			.write(true)
+			.open(destination)
+			.or_else(|_| std::fs::File::open(destination))?;
+		file.set_modified(modified)
+	}
+
+	let (source, destination) = (source.to_path_buf(), destination.to_path_buf());
+	let shown = destination.clone();
+	match tokio::task::spawn_blocking(move || apply(&source, &destination)).await {
+		Ok(Ok(())) => {}
+		Ok(Err(error)) => {
+			tracing::warn!(path = %shown.display(), %error, "Could not keep the modification time of a copy")
+		}
+		Err(error) => {
+			tracing::warn!(path = %shown.display(), %error, "Could not keep the modification time of a copy")
+		}
+	}
+}
+
 /// Count the items under `path` and add up their sizes, as the copy will see them.
 ///
-/// The selected path is followed, but links inside it count as one item of their
-/// own size: the copy recreates them instead of reading their targets, and
+/// Links count as one item of their own size, the selected path included on
+/// Unix: the copy recreates them instead of reading their targets, and
 /// following them walked the whole disk for a link to `/` and never ended for a
 /// link to an ancestor.
 pub(crate) async fn tree_totals(path: &std::path::Path) -> Result<(usize, u64), std::io::Error> {
@@ -1365,15 +1437,10 @@ pub(crate) async fn tree_totals(path: &std::path::Path) -> Result<(usize, u64), 
 	let mut stack = vec![(path.to_path_buf(), true)];
 
 	while let Some((current, is_selection)) = stack.pop() {
-		// A selected dangling link still counts as the one item it is.
-		let followed = if is_selection {
-			tokio::fs::metadata(&current).await.ok()
+		let metadata = if is_selection {
+			selection_metadata(&current).await?
 		} else {
-			None
-		};
-		let metadata = match followed {
-			Some(metadata) => metadata,
-			None => tokio::fs::symlink_metadata(&current).await?,
+			tokio::fs::symlink_metadata(&current).await?
 		};
 
 		if metadata.is_dir() {
@@ -1669,10 +1736,12 @@ mod tests {
 			.sum();
 		assert_eq!(size, 100 + links);
 
-		// The selected path itself is still followed.
+		// A selected link is one item too, whether or not its target exists.
 		let selected_link = root.path().join("selected");
 		std::os::unix::fs::symlink(&folder, &selected_link).unwrap();
-		assert_eq!(tree_totals(&selected_link).await.unwrap(), (count, size));
+		let link_size = std::fs::symlink_metadata(&selected_link).unwrap().len();
+		assert_eq!(tree_totals(&selected_link).await.unwrap(), (1, link_size));
+		assert_eq!(tree_totals(&folder.join("dangling")).await.unwrap().0, 1);
 	}
 
 	#[test]

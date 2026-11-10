@@ -153,6 +153,26 @@ For move operations, if the copy succeeds but source deletion fails, the operati
 When using checksum verification, corrupted copies are automatically deleted to prevent partial or incorrect files from persisting.
 </Warning>
 
+## Data Safety
+
+A copy or move never leaves a damaged file behind and never loses the one it replaces:
+
+- **Written under a temporary name.** Each file is written as `.wing-part-<id>` next to its
+  destination and renamed into place when it is complete. A cancelled or failed copy removes the
+  temporary file, so the destination keeps its previous content, or stays absent. A daemon that is
+  killed mid-copy can leave a `.wing-part-*` file behind; it is safe to delete.
+- **Cancel and pause stop the job.** The item being copied is not counted as failed, the job ends as
+  cancelled (or paused), and a resumed job copies that item again from the start.
+- **Sources are deleted only after their copy is complete.** A move that fails or is cancelled keeps
+  the source. For a folder this is all or nothing: one unreadable file inside keeps the whole folder.
+- **Symbolic links are copied as links** on Unix, with the same target, whether they are inside a
+  folder or selected directly, and whether or not the target exists. The target is never read or
+  deleted. Windows follows links.
+- **Pipes, sockets and device files are refused** inside a folder. The folder fails with a message
+  that names the item, before any file content is copied.
+- **Modification times are kept** for files and folders when `preserve_timestamps` is on (the
+  default). Links keep the time of their creation.
+
 ## Job Resumption
 
 FileCopyJob tracks completed files in `completed_indices` and checkpoints every 20 files. If the job is interrupted, you can restart it and already-completed files will be skipped. The progress aggregator accounts for skipped files when calculating overall progress.

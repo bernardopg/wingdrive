@@ -92,11 +92,12 @@ impl CopyStrategy for LocalMoveStrategy {
 			.ok_or_else(|| anyhow::anyhow!("Destination path is not local"))?;
 
 		// Read size before rename since source path becomes invalid after move.
-		let metadata = fs::metadata(source_path).await?;
-		let size = if metadata.is_file() {
-			metadata.len()
-		} else {
+		// The link itself is what moves, so a dangling one is fine.
+		let metadata = selection_metadata(source_path).await?;
+		let size = if metadata.is_dir() {
 			get_path_size(source_path).await?
+		} else {
+			metadata.len()
 		};
 
 		// Send initial progress event so UI shows 0% before the instant rename.
@@ -203,6 +204,13 @@ impl CopyStrategy for FastCopyStrategy {
 			.as_local_path()
 			.ok_or_else(|| anyhow::anyhow!("Destination path is not local"))?;
 
+		if let Some(size) = copy_selected_link(source_path, dest_path).await? {
+			if let Some(callback) = progress_callback {
+				callback(size, u64::MAX);
+			}
+			return Ok(size);
+		}
+
 		let metadata = fs::metadata(source_path).await?;
 		if metadata.is_dir() {
 			// std::fs::copy only handles files; delegate recursive copies to streaming strategy.
@@ -219,12 +227,26 @@ impl CopyStrategy for FastCopyStrategy {
 			fs::create_dir_all(parent).await?;
 		}
 
-		let bytes_copied = tokio::task::spawn_blocking({
+		// Copy under a temporary name: `std::fs::copy` truncates its target first,
+		// so a copy that failed half-way destroyed the file it was replacing.
+		let partial = partial_path(dest_path);
+		let copied = tokio::task::spawn_blocking({
 			let source_path = source_path.to_path_buf();
-			let dest_path = dest_path.to_path_buf();
-			move || -> Result<u64, std::io::Error> { std::fs::copy(&source_path, &dest_path) }
+			let partial = partial.clone();
+			move || -> Result<u64, std::io::Error> { std::fs::copy(&source_path, &partial) }
 		})
-		.await??;
+		.await?;
+		let bytes_copied = match copied {
+			Ok(bytes) => bytes,
+			Err(error) => {
+				let _ = fs::remove_file(&partial).await;
+				return Err(error.into());
+			}
+		};
+		if let Err(error) = fs::rename(&partial, dest_path).await {
+			let _ = fs::remove_file(&partial).await;
+			return Err(error.into());
+		}
 
 		// Post-copy verification detects CoW bugs and hardware errors (bit flips, bad sectors).
 		if verify_checksum {
@@ -872,6 +894,91 @@ async fn copy_single_file<'a>(
 	Ok(result)
 }
 
+/// Marks an error as "the job was cancelled or paused", not a failed item.
+///
+/// Checking for an interruption consumes the request, so the job cannot ask
+/// again after a strategy returns; the error has to carry the answer.
+#[derive(Debug)]
+struct CopyInterrupted;
+
+impl std::fmt::Display for CopyInterrupted {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.write_str("Operation cancelled")
+	}
+}
+
+impl std::error::Error for CopyInterrupted {}
+
+fn interrupted() -> std::io::Error {
+	std::io::Error::new(std::io::ErrorKind::Interrupted, CopyInterrupted)
+}
+
+/// Whether a strategy stopped because the job was cancelled or paused.
+pub(crate) fn is_interruption(error: &anyhow::Error) -> bool {
+	error.chain().any(|cause| {
+		cause
+			.downcast_ref::<std::io::Error>()
+			.and_then(std::io::Error::get_ref)
+			.is_some_and(|inner| inner.is::<CopyInterrupted>())
+	})
+}
+
+/// Name for a copy in progress, next to its final name.
+///
+/// A copy is written here and renamed into place when it is complete, so a
+/// cancelled or failed copy leaves neither a truncated file under the real
+/// name nor a hole where the file it was replacing used to be.
+fn partial_path(destination: &Path) -> PathBuf {
+	destination.with_file_name(format!(".wing-part-{}", uuid::Uuid::new_v4().simple()))
+}
+
+/// Metadata of a selected path. On Unix a symbolic link is the item itself.
+async fn selection_metadata(path: &Path) -> Result<std::fs::Metadata, std::io::Error> {
+	#[cfg(unix)]
+	{
+		fs::symlink_metadata(path).await
+	}
+	#[cfg(not(unix))]
+	{
+		fs::metadata(path).await
+	}
+}
+
+/// Recreates `source` at `destination` when it is a symbolic link, with the
+/// same target, and returns the link's size. `None` for anything else.
+///
+/// The link the user selected is copied as a link, like the ones inside a
+/// folder: following it copied data from outside the selection, and a
+/// dangling link failed the whole job.
+async fn copy_selected_link(
+	source: &Path,
+	destination: &Path,
+) -> Result<Option<u64>, std::io::Error> {
+	#[cfg(unix)]
+	{
+		let metadata = fs::symlink_metadata(source).await?;
+		if !metadata.file_type().is_symlink() {
+			return Ok(None);
+		}
+		if let Some(parent) = destination.parent() {
+			fs::create_dir_all(parent).await?;
+		}
+		// Through a temporary name, so replacing an existing item is one rename.
+		let partial = partial_path(destination);
+		fs::symlink(fs::read_link(source).await?, &partial).await?;
+		if let Err(error) = fs::rename(&partial, destination).await {
+			let _ = fs::remove_file(&partial).await;
+			return Err(error);
+		}
+		Ok(Some(metadata.len()))
+	}
+	#[cfg(not(unix))]
+	{
+		let _ = (source, destination);
+		Ok(None)
+	}
+}
+
 /// Copy a single file with streaming and progress tracking, with byte offset for cumulative progress
 async fn copy_single_file_with_offset<'a>(
 	source: &Path,
@@ -887,6 +994,39 @@ async fn copy_single_file_with_offset<'a>(
 		fs::create_dir_all(parent).await?;
 	}
 
+	let partial = partial_path(destination);
+	let written = write_file_contents(
+		source,
+		&partial,
+		volume_info,
+		ctx,
+		verify_checksum,
+		file_size,
+		progress_callback,
+		byte_offset,
+	)
+	.await;
+	let published = match written {
+		Ok(bytes) => fs::rename(&partial, destination).await.map(|()| bytes),
+		Err(error) => Err(error),
+	};
+	if published.is_err() {
+		let _ = fs::remove_file(&partial).await;
+	}
+	published
+}
+
+/// Streams `source` into `destination`, which must be a name nobody else uses.
+async fn write_file_contents<'a>(
+	source: &Path,
+	destination: &Path,
+	volume_info: Option<(&crate::volume::Volume, &crate::volume::Volume)>,
+	ctx: &JobContext<'a>,
+	verify_checksum: bool,
+	file_size: u64,
+	progress_callback: Option<&ProgressCallback<'a>>,
+	_byte_offset: u64,
+) -> Result<u64, std::io::Error> {
 	let mut source_file = fs::File::open(source).await?;
 	let mut dest_file = fs::File::create(destination).await?;
 
@@ -913,10 +1053,7 @@ async fn copy_single_file_with_offset<'a>(
 		if let Err(_) = ctx.check_interrupt().await {
 			// Clean up partial file so resume doesn't see corrupted data.
 			let _ = fs::remove_file(destination).await;
-			return Err(std::io::Error::new(
-				std::io::ErrorKind::Interrupted,
-				"Operation cancelled",
-			));
+			return Err(interrupted());
 		}
 
 		let bytes_read = source_file.read(&mut buffer).await?;
@@ -972,14 +1109,12 @@ async fn copy_single_file_with_offset<'a>(
 		));
 	}
 
-	let source_metadata = fs::metadata(source).await?;
-	let dest_file = fs::File::open(destination).await?;
-
 	#[cfg(unix)]
 	{
 		use std::os::unix::fs::PermissionsExt;
+		let source_metadata = fs::metadata(source).await?;
 		let permissions = std::fs::Permissions::from_mode(source_metadata.permissions().mode());
-		dest_file.set_permissions(permissions).await?;
+		fs::set_permissions(destination, permissions).await?;
 	}
 
 	Ok(total_copied)
@@ -996,6 +1131,13 @@ async fn copy_file_streaming<'a>(
 ) -> Result<u64, std::io::Error> {
 	if let Some(parent) = destination.parent() {
 		fs::create_dir_all(parent).await?;
+	}
+
+	if let Some(size) = copy_selected_link(source, destination).await? {
+		if let Some(callback) = progress_callback {
+			callback(size, u64::MAX);
+		}
+		return Ok(size);
 	}
 
 	let metadata = fs::metadata(source).await?;
@@ -1019,6 +1161,18 @@ async fn copy_file_streaming<'a>(
 				fs::symlink(fs::read_link(&src_path).await?, &dest_path).await?;
 				continue;
 			}
+			let entry_type = fs::symlink_metadata(&src_path).await?.file_type();
+			if !entry_type.is_file() && !entry_type.is_dir() && !entry_type.is_symlink() {
+				// Skipping it made the copy look complete, and a move then
+				// deleted the source folder with the item still inside.
+				return Err(std::io::Error::new(
+					std::io::ErrorKind::Unsupported,
+					format!(
+						"Cannot copy {}: pipes, sockets and device files are not supported",
+						src_path.display()
+					),
+				));
+			}
 			if src_path.is_file() {
 				files_to_copy.push((src_path, dest_path));
 			} else if src_path.is_dir() {
@@ -1035,10 +1189,7 @@ async fn copy_file_streaming<'a>(
 		let mut cumulative_bytes = 0u64;
 		for (src_path, dest_path) in files_to_copy {
 			if let Err(_) = ctx.check_interrupt().await {
-				return Err(std::io::Error::new(
-					std::io::ErrorKind::Interrupted,
-					"Operation cancelled",
-				));
+				return Err(interrupted());
 			}
 
 			let file_metadata = fs::metadata(&src_path).await?;
