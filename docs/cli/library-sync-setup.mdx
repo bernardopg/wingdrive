@@ -151,41 +151,44 @@ Configure library sync between local and remote devices.
 wing library sync-setup setup \
   --local-library <LOCAL_LIBRARY_ID> \
   --remote-device <REMOTE_DEVICE_ID> \
-  [--remote-library <REMOTE_LIBRARY_ID>] \
   [--action <ACTION>] \
+  [--name <NAME>] \
+  [--remote-library <REMOTE_LIBRARY_ID>] \
   [--leader <LEADER>] \
   [--local-device <LOCAL_DEVICE_ID>]
 ```
+
+With no `--local-library` and no `--remote-device`, the command runs interactively.
 
 **Required Arguments**:
 - `--local-library` - UUID of your local library
 - `--remote-device` - UUID of the paired device
 
 **Optional Arguments**:
-- `--remote-library` - UUID of the remote library to sync with (optional for register-only)
-- `--action` - Sync action type (default: `register-only`)
-  - `register-only` - Just register devices (Phase 1) 
-  - `merge-into-local` - Future (Phase 3)
-  - `merge-into-remote` - Future (Phase 3)
-  - `create-shared` - Future (Phase 3)
-- `--leader` - Which device is the sync leader (default: `local`)
-  - `local` - This device is the leader
-  - `remote` - Remote device is the leader
-- `--local-device` - Override auto-detected local device ID
+- `--action` - Sync action (default: `share-local`)
+  - `share-local` - Share the local library with the remote device. Needs `--name`.
+  - `join-remote` - Join a library the remote device already has. Needs `--remote-library`
+    and `--name`.
+  - `merge` - Merge two libraries. Needs `--remote-library` and `--name`. The core does not
+    implement it yet and answers with an error.
+- `--name` - Shared library name (`share-local`), the remote library's name (`join-remote`) or
+  the merged name (`merge`)
+- `--remote-library` - UUID of the remote library
+- `--leader` - Deprecated. `local` (default) or `remote`
+- `--local-device` - Override the local device ID. By default the CLI asks the daemon, so the
+  ID is right for `--instance` and `--data-dir` too.
 
 **Example**:
 ```bash
 $ wing library sync-setup setup \
   --local-library 3f8cb26f-de79-4d87-88dd-01be5f024041 \
   --remote-device 550e8400-e29b-41d4-a716-446655440000 \
-  --remote-library 7a9c2d1e-5f84-4b23-a567-1234567890ab \
-  --action register-only \
-  --leader local
+  --action share-local \
+  --name "Photos"
 
 ✓ Library sync setup successful
   Local library: 3f8cb26f-de79-4d87-88dd-01be5f024041
-  Remote library: 7a9c2d1e-5f84-4b23-a567-1234567890ab
-  Devices successfully registered for library access
+  Remote library: 3f8cb26f-de79-4d87-88dd-01be5f024041
 ```
 
 ## Complete Workflow Example
@@ -240,13 +243,12 @@ Remote Libraries (1):
 $ wing library sync-setup setup \
   --local-library 3f8cb26f-de79-4d87-88dd-01be5f024041 \
   --remote-device e1054ba9-2e8b-4847-9644-a7fb764d4221 \
-  --remote-library d9828b35-6618-4d56-a37a-84ef03617d1e \
-  --leader local
+  --action share-local \
+  --name "My Library"
 
 ✓ Library sync setup successful
   Local library: 3f8cb26f-de79-4d87-88dd-01be5f024041
-  Remote library: d9828b35-6618-4d56-a37a-84ef03617d1e
-  Devices successfully registered for library access
+  Remote library: 3f8cb26f-de79-4d87-88dd-01be5f024041
 
 # 8. Verify devices are registered
 $ wing library info
@@ -296,40 +298,43 @@ wing library sync-setup discover <PHONE_DEVICE_ID>
 wing library sync-setup setup \
   --local-library <DESKTOP_LIBRARY_ID> \
   --remote-device <PHONE_DEVICE_ID> \
-  --remote-library <PHONE_LIBRARY_ID>
+  --name "Desktop Library"
 ```
 
 ### Scenario 2: Multiple Libraries
 
-You want to choose which libraries to sync.
+You want to choose which libraries to share. Run `setup` once per library.
 
 ```bash
 # Discover what libraries the remote device has
 wing library sync-setup discover <REMOTE_DEVICE_ID>
 
-# Set up sync for specific library pair
+# Share one library
 wing library sync-setup setup \
   --local-library <PHOTOS_LIBRARY_ID> \
   --remote-device <REMOTE_DEVICE_ID> \
-  --remote-library <THEIR_PHOTOS_LIBRARY_ID>
+  --name "Photos"
 
-# Optionally set up another pair
+# Join one of theirs
 wing library sync-setup setup \
   --local-library <WORK_LIBRARY_ID> \
   --remote-device <REMOTE_DEVICE_ID> \
-  --remote-library <THEIR_WORK_LIBRARY_ID>
+  --action join-remote \
+  --remote-library <THEIR_WORK_LIBRARY_ID> \
+  --name "Work"
 ```
 
-### Scenario 3: One-Way Registration
-
-Register your device in their library without syncing data.
+### Scenario 3: Join a Library the Other Device Shared
 
 ```bash
+wing library sync-setup discover <THEIR_DEVICE_ID>
+
 wing library sync-setup setup \
   --local-library <MY_LIBRARY_ID> \
   --remote-device <THEIR_DEVICE_ID> \
-  --action register-only
-# No --remote-library specified
+  --action join-remote \
+  --remote-library <THEIR_LIBRARY_ID> \
+  --name "Their Library"
 ```
 
 ## Troubleshooting
@@ -438,34 +443,6 @@ wing library sync-setup setup \
   --remote-device <REMOTE_DEVICE_ID> \
   --remote-library <REMOTE_LIBRARY_ID> \
   --leader remote
-```
-
-## Future Commands (Phase 3)
-
-When full sync is implemented, additional actions will be available:
-
-```bash
-# Merge remote library into local
-wing library sync-setup setup \
-  --local-library <LOCAL_ID> \
-  --remote-device <DEVICE_ID> \
-  --remote-library <REMOTE_ID> \
-  --action merge-into-local \
-  --leader local
-
-# Merge local library into remote
-wing library sync-setup setup \
-  --local-library <LOCAL_ID> \
-  --remote-device <DEVICE_ID> \
-  --remote-library <REMOTE_ID> \
-  --action merge-into-remote \
-  --leader remote
-
-# Create new shared library
-wing library sync-setup setup \
-  --remote-device <DEVICE_ID> \
-  --action create-shared \
-  --leader local
 ```
 
 ## See Also

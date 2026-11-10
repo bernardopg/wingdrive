@@ -226,7 +226,13 @@ pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
 				let input = if args.is_interactive() {
 					run_interactive_sync_setup(ctx).await?
 				} else {
-					args.to_input(ctx)?
+					// Ask the daemon only when the ID was not given: `--instance`
+					// keeps `device.json` outside `ctx.data_dir`.
+					let daemon_device_id = match args.local_device {
+						Some(id) => id,
+						None => daemon_device_id(ctx).await?,
+					};
+					args.to_input(daemon_device_id)?
 				};
 
 				let out: LibrarySyncSetupOutput = execute_core_action!(ctx, input);
@@ -249,6 +255,15 @@ pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
 	Ok(())
 }
 
+/// Device ID of the daemon the CLI is connected to.
+///
+/// The daemon is the only reliable source: with `--instance` it keeps
+/// `device.json` under `instances/<name>`, not in the CLI's data directory.
+async fn daemon_device_id(ctx: &Context) -> Result<uuid::Uuid> {
+	let status: wing_core::ops::core::status::output::CoreStatus = execute_core_query!(ctx, ());
+	Ok(status.device_info.id)
+}
+
 async fn run_interactive_sync_setup(ctx: &Context) -> Result<LibrarySyncSetupInput> {
 	use crate::util::confirm::{select, text};
 	use wing_core::ops::network::devices::{
@@ -257,16 +272,7 @@ async fn run_interactive_sync_setup(ctx: &Context) -> Result<LibrarySyncSetupInp
 
 	println!("\n=== Library Sync Setup ===\n");
 
-	// Get local device ID from config
-	let config_path = ctx.data_dir.join("device.json");
-	if !config_path.exists() {
-		anyhow::bail!(
-			"Device config not found. Please run the daemon first to initialize device config."
-		);
-	}
-	let config_data = std::fs::read_to_string(&config_path)?;
-	let device_config: wing_core::device::DeviceConfig = serde_json::from_str(&config_data)?;
-	let local_device_id = device_config.id;
+	let local_device_id = daemon_device_id(ctx).await?;
 
 	// Step 1: Select local library
 	let libraries: Vec<wing_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(

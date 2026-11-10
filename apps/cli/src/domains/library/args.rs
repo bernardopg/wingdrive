@@ -92,6 +92,17 @@ impl From<DiscoverArgs> for DiscoverRemoteLibrariesInput {
 	}
 }
 
+/// Sync action accepted by `wing library sync-setup setup --action`.
+#[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SyncActionArg {
+	/// Share the local library with the remote device (needs --name)
+	ShareLocal,
+	/// Join a library the remote device already has (needs --remote-library and --name)
+	JoinRemote,
+	/// Merge two libraries (not implemented in the core yet)
+	Merge,
+}
+
 #[derive(Args, Debug)]
 pub struct SetupArgs {
 	/// Local library ID
@@ -102,23 +113,24 @@ pub struct SetupArgs {
 	#[arg(long)]
 	pub remote_device: Option<Uuid>,
 
-	/// Remote library ID (optional for register-only mode)
+	/// Remote library ID (required for join-remote and merge)
 	#[arg(long)]
 	pub remote_library: Option<Uuid>,
 
-	/// Sync action: register-only, create-shared
-	#[arg(long)]
-	pub action: Option<String>,
+	/// Sync action
+	#[arg(long, value_enum, default_value_t = SyncActionArg::ShareLocal)]
+	pub action: SyncActionArg,
 
-	/// Library name for create-shared action
+	/// Library name: the shared name for share-local, the remote library's name for
+	/// join-remote, the merged name for merge
 	#[arg(long)]
 	pub name: Option<String>,
 
-	/// DEPRICATED: Leader device: "local" or "remote"
+	/// DEPRECATED: Leader device: "local" or "remote"
 	#[arg(long)]
 	pub leader: Option<String>,
 
-	/// Local device ID (optional, uses current device if not specified)
+	/// Local device ID (optional, asks the daemon if not specified)
 	#[arg(long)]
 	pub local_device: Option<Uuid>,
 
@@ -132,28 +144,16 @@ impl SetupArgs {
 		self.interactive || (self.local_library.is_none() && self.remote_device.is_none())
 	}
 
-	pub fn to_input(&self, ctx: &crate::context::Context) -> anyhow::Result<LibrarySyncSetupInput> {
+	/// Build the action input. `daemon_device_id` is the device ID the daemon reports
+	/// for the selected instance; `--local-device` overrides it.
+	pub fn to_input(&self, daemon_device_id: Uuid) -> anyhow::Result<LibrarySyncSetupInput> {
 		let local_library = self
 			.local_library
 			.ok_or_else(|| anyhow::anyhow!("--local-library is required"))?;
 		let remote_device = self
 			.remote_device
 			.ok_or_else(|| anyhow::anyhow!("--remote-device is required"))?;
-
-		// Get local device ID from config or argument
-		let local_device_id = if let Some(id) = self.local_device {
-			id
-		} else {
-			// Read device config to get current device ID
-			let config_path = ctx.data_dir.join("device.json");
-			if !config_path.exists() {
-				anyhow::bail!("Device config not found. Please specify --local-device");
-			}
-			let config_data = std::fs::read_to_string(&config_path)?;
-			let device_config: wing_core::device::DeviceConfig =
-				serde_json::from_str(&config_data)?;
-			device_config.id
-		};
+		let local_device_id = self.local_device.unwrap_or(daemon_device_id);
 
 		// Determine leader device ID
 		let leader = self.leader.as_deref().unwrap_or("local");
@@ -163,17 +163,15 @@ impl SetupArgs {
 			_ => anyhow::bail!("Leader must be 'local' or 'remote'"),
 		};
 
-		// Parse action
-		let action_str = self.action.as_deref().unwrap_or("share-local");
 		let action =
-			match action_str {
-				"share-local" => {
+			match self.action {
+				SyncActionArg::ShareLocal => {
 					let name = self.name.clone().ok_or_else(|| {
 						anyhow::anyhow!("--name is required for share-local action")
 					})?;
 					LibrarySyncAction::ShareLocalLibrary { library_name: name }
 				}
-				"join-remote" => {
+				SyncActionArg::JoinRemote => {
 					let remote_library_id = self.remote_library.ok_or_else(|| {
 						anyhow::anyhow!("--remote-library is required for join-remote action")
 					})?;
@@ -185,8 +183,7 @@ impl SetupArgs {
 						remote_library_name: name,
 					}
 				}
-				"merge" => {
-					let local_library_id = local_library;
+				SyncActionArg::Merge => {
 					let remote_library_id = self.remote_library.ok_or_else(|| {
 						anyhow::anyhow!("--remote-library is required for merge action")
 					})?;
@@ -195,15 +192,11 @@ impl SetupArgs {
 						.clone()
 						.ok_or_else(|| anyhow::anyhow!("--name is required for merge action"))?;
 					LibrarySyncAction::MergeLibraries {
-						local_library_id,
+						local_library_id: local_library,
 						remote_library_id,
 						merged_name: name,
 					}
 				}
-				_ => anyhow::bail!(
-					"Invalid action '{}'. Supported: share-local, join-remote, merge",
-					action_str
-				),
 			};
 
 		Ok(LibrarySyncSetupInput {
@@ -214,5 +207,132 @@ impl SetupArgs {
 			action,
 			leader_device_id,
 		})
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use clap::Parser;
+
+	use super::*;
+
+	#[derive(Parser, Debug)]
+	struct Harness {
+		#[command(flatten)]
+		setup: SetupArgs,
+	}
+
+	fn parse(args: &[&str]) -> Result<SetupArgs, clap::Error> {
+		let mut argv = vec!["setup"];
+		argv.extend_from_slice(args);
+		Harness::try_parse_from(argv).map(|harness| harness.setup)
+	}
+
+	const LIBRARY: &str = "3f8cb26f-de79-4d87-88dd-01be5f024041";
+	const REMOTE_DEVICE: &str = "550e8400-e29b-41d4-a716-446655440000";
+	const REMOTE_LIBRARY: &str = "7a9c2d1e-5f84-4b23-a567-1234567890ab";
+
+	#[test]
+	fn help_lists_exactly_the_actions_the_parser_accepts() {
+		use clap::CommandFactory;
+
+		let help = Harness::command().render_long_help().to_string();
+		for action in ["share-local", "join-remote", "merge"] {
+			assert!(help.contains(action), "help is missing {action}:\n{help}");
+			assert!(
+				parse(&["--action", action]).is_ok(),
+				"{action} is documented but rejected"
+			);
+		}
+		for stale in ["register-only", "create-shared"] {
+			assert!(!help.contains(stale), "help still documents {stale}");
+			assert!(parse(&["--action", stale]).is_err(), "{stale} was accepted");
+		}
+	}
+
+	#[test]
+	fn local_device_comes_from_the_daemon_unless_overridden() {
+		let daemon_device = Uuid::new_v4();
+		let args = parse(&[
+			"--local-library",
+			LIBRARY,
+			"--remote-device",
+			REMOTE_DEVICE,
+			"--name",
+			"Photos",
+		])
+		.unwrap();
+		let input = args.to_input(daemon_device).unwrap();
+		assert_eq!(input.local_device_id, daemon_device);
+		assert_eq!(input.leader_device_id, daemon_device);
+		assert!(matches!(
+			input.action,
+			LibrarySyncAction::ShareLocalLibrary { ref library_name } if library_name == "Photos"
+		));
+
+		let explicit = Uuid::new_v4();
+		let explicit_text = explicit.to_string();
+		let args = parse(&[
+			"--local-library",
+			LIBRARY,
+			"--remote-device",
+			REMOTE_DEVICE,
+			"--name",
+			"Photos",
+			"--local-device",
+			&explicit_text,
+			"--leader",
+			"remote",
+		])
+		.unwrap();
+		let input = args.to_input(daemon_device).unwrap();
+		assert_eq!(input.local_device_id, explicit);
+		assert_eq!(input.leader_device_id.to_string(), REMOTE_DEVICE);
+	}
+
+	#[test]
+	fn each_action_reports_its_missing_arguments() {
+		let base = ["--local-library", LIBRARY, "--remote-device", REMOTE_DEVICE];
+		let device = Uuid::new_v4();
+
+		let error = parse(&base).unwrap().to_input(device).unwrap_err();
+		assert!(error
+			.to_string()
+			.contains("--name is required for share-local"));
+
+		let mut join = base.to_vec();
+		join.extend(["--action", "join-remote", "--name", "Theirs"]);
+		let error = parse(&join).unwrap().to_input(device).unwrap_err();
+		assert!(error
+			.to_string()
+			.contains("--remote-library is required for join-remote"));
+
+		join.extend(["--remote-library", REMOTE_LIBRARY]);
+		let input = parse(&join).unwrap().to_input(device).unwrap();
+		assert!(matches!(
+			input.action,
+			LibrarySyncAction::JoinRemoteLibrary { remote_library_id, .. }
+				if remote_library_id.to_string() == REMOTE_LIBRARY
+		));
+
+		let mut merge = base.to_vec();
+		merge.extend(["--action", "merge", "--remote-library", REMOTE_LIBRARY]);
+		let error = parse(&merge).unwrap().to_input(device).unwrap_err();
+		assert!(error.to_string().contains("--name is required for merge"));
+
+		let mut bad_leader = base.to_vec();
+		bad_leader.extend(["--name", "Photos", "--leader", "both"]);
+		assert!(parse(&bad_leader).unwrap().to_input(device).is_err());
+	}
+
+	#[test]
+	fn no_library_or_device_means_interactive() {
+		assert!(parse(&[]).unwrap().is_interactive());
+		assert!(!parse(&["--local-library", LIBRARY])
+			.unwrap()
+			.is_interactive());
+		assert!(parse(&["--local-library", LIBRARY, "-i"])
+			.unwrap()
+			.is_interactive());
 	}
 }

@@ -509,21 +509,34 @@ async fn main() -> Result<()> {
 			update::run(data_dir).await?;
 		}
 		_ => {
-			run_client_command(cli.command, cli.format, data_dir, socket_addr).await?;
+			run_client_command(cli.command, cli.format, data_dir, instance, socket_addr).await?;
 		}
 	}
 
 	Ok(())
 }
 
+/// Directory where the daemon of this instance keeps its own state.
+///
+/// A named instance lives under `instances/<name>`, as `wing-daemon` computes it;
+/// the CLI's own `cli.json` stays in `data_dir`.
+fn daemon_data_dir(data_dir: &Path, instance: Option<&str>) -> std::path::PathBuf {
+	match instance {
+		Some(instance) => data_dir.join("instances").join(instance),
+		None => data_dir.to_path_buf(),
+	}
+}
+
 async fn run_client_command(
 	command: Commands,
 	format: OutputFormat,
 	data_dir: std::path::PathBuf,
+	instance: Option<String>,
 	socket_addr: String,
 ) -> Result<()> {
 	// Initialize device ID and slug from device.json if it exists
-	if let Ok(device_config) = std::fs::read_to_string(data_dir.join("device.json")) {
+	let device_config_path = daemon_data_dir(&data_dir, instance.as_deref()).join("device.json");
+	if let Ok(device_config) = std::fs::read_to_string(device_config_path) {
 		if let Ok(device_json) = serde_json::from_str::<serde_json::Value>(&device_config) {
 			if let Some(device_id_str) = device_json.get("id").and_then(|v| v.as_str()) {
 				if let Ok(device_id) = uuid::Uuid::parse_str(device_id_str) {
