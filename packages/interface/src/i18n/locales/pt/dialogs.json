@@ -251,6 +251,7 @@
 	},
 	"fileOperation": {
 		"retryAsAdmin": "Repetir como administrador",
+		"undoSkipped": "{{count}} item(ns) mudaram desde então e foram mantidos. {{reason}}",
 		"copyingFiles": "Copiando arquivos",
 		"movingFiles": "Movendo arquivos",
 		"copyingFilesProgress": "Copiando arquivos...",

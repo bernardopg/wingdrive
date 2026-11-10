@@ -32,6 +32,10 @@ pub enum FileCmd {
 	Delete(FileDeleteArgs),
 	/// Create a folder
 	Mkdir(FileMkdirArgs),
+	/// Undo a copy, move, rename or trash
+	Undo(FileUndoArgs),
+	/// List recent file operations and what undo can still reverse
+	History(FileHistoryArgs),
 }
 
 pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
@@ -120,6 +124,54 @@ pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 					println!("Created {}", output.folder_path);
 				}
 			);
+		}
+		FileCmd::Undo(args) => {
+			let input = wing_core::ops::files::undo::FileUndoInput {
+				job_id: args.job_id,
+			};
+			let receipt: JobReceipt = execute_action!(ctx, input);
+			print_output!(ctx, &receipt, |receipt: &JobReceipt| {
+				println!("Dispatched undo job {}", receipt.id);
+			});
+		}
+		FileCmd::History(args) => {
+			use wing_core::ops::files::undo::{UndoHistoryInput, UndoHistoryOutput};
+			let output: UndoHistoryOutput = execute_query!(
+				ctx,
+				UndoHistoryInput {
+					limit: Some(args.limit)
+				}
+			);
+			print_output!(ctx, &output, |output: &UndoHistoryOutput| {
+				if output.operations.is_empty() {
+					println!("No file operations recorded");
+					return;
+				}
+				let mut table = comfy_table::Table::new();
+				table.load_style(UTF8_BORDERS_ONLY);
+				table.set_header(vec!["Job", "Operation", "When", "Undoable", "Example"]);
+				for operation in &output.operations {
+					let when = chrono::DateTime::from_timestamp(operation.started_at, 0)
+						.map(|time| {
+							time.with_timezone(&chrono::Local)
+								.format("%Y-%m-%d %H:%M")
+								.to_string()
+						})
+						.unwrap_or_default();
+					table.add_row(vec![
+						operation.job_id.to_string(),
+						operation.operation.clone(),
+						when,
+						format!("{} of {}", operation.pending, operation.effects),
+						operation.example.display().to_string(),
+					]);
+				}
+				println!("{table}");
+				println!(
+					"Records and replaced files are kept for {} days.",
+					output.retention_days
+				);
+			});
 		}
 		FileCmd::Info(args) => {
 			let file_info = get_file_info(ctx, &args.path).await?;

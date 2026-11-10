@@ -64,6 +64,7 @@
 			"rename": "renomeação",
 			"batch rename": "renomeação em lote",
 			"move": "movimentação",
+			"copy": "cópia",
 			"remove duplicates": "remoção de duplicatas",
 			"new folder": "nova pasta",
 			"delete": "exclusão"

@@ -1,13 +1,14 @@
 ---
 id: FILE-008
 title: Job journal and undo for copy, overwrite and trash
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: FILE-000
 priority: Medium
 milestone: M3
+sprint: S05
 tags: [files, operations, undo, trash, jobs, upstream, port]
-last_updated: 2026-10-16
+last_updated: 2026-11-10
 related_tasks: [FILE-007, EXPL-003]
 ---
 
@@ -39,8 +40,43 @@ changed since.
 
 ## Acceptance Criteria
 
-- [ ] Copy, move, overwrite and trash jobs write a journal entry per effect
-- [ ] Undo reverses each of them and refuses items changed since
-- [ ] Overwritten files are recoverable until the stash expires
+- [x] Copy, move, overwrite and trash jobs write a journal entry per effect
+- [x] Undo reverses each of them and refuses items changed since
+- [x] Overwritten files are recoverable until the stash expires
 - [ ] Existing rename/move/folder undo keeps working (current tests pass)
-- [ ] Docs in `docs/core/` updated
+- [x] Docs in `docs/core/` updated
+
+## Implementation
+
+- `core/src/ops/files/journal.rs`: `Effect` (created, moved, replaced, trashed, merged), the `Seal`
+  that undo checks, the per-job stash folder and the 7-day expiry. Table `file_journal` in the job
+  database (`core/src/infra/job/database.rs`), which is per library and never synced.
+- `FileCopyJob` and `DeleteJob` write the journal. A failed or cancelled overwrite puts the stashed
+  file back at once.
+- `core/src/ops/files/undo/`: `FileUndoJob`, action `files.undo`, query `files.undo_history`,
+  output `JobOutput::FileUndo`.
+- CLI: `wing file undo [JOB_ID]` and `wing file history`.
+- Interface: `FileOperationModal` records every copy and move with the job id and undoes it through
+  `files.undo`. This replaces the Linux-only inode undo it had for same-volume moves.
+
+## Evidence
+
+- 2026-11-10: `core/tests/file_undo_test.rs`, 14 cases with real jobs, in the Linux gate of
+  `scripts/ci-rust.sh`: copy, overwrite, move (rename and copy-then-delete), rename, trash, a copy
+  edited afterwards, an old place taken again, a merge, a failed overwrite, expiry, history and the
+  action. Unit tests for the seal in `journal.rs`.
+- Isolated daemon (`--instance undo8`): `wing file copy --overwrite` of two files over one existing
+  file, `wing file history` showed `3 of 3`, `wing file undo` brought the previous content back and
+  removed the copies and the stash folder; history then showed `0 of 3` and a second undo answered
+  `Nothing to undo`.
+
+## Open
+
+- [ ] Existing rename/move/folder undo keeps working: the desktop still uses the Tauri commands for
+      rename, new folder and new file. Moving those onto the core journal is not done, so the CLI
+      and web get undo for copy, move, rename and trash only.
+- The undo job does not journal itself (no redo).
+- The seal cannot tell an edit that restores the same size within the same change-time tick; on
+  Windows it uses modification time and no inode.
+- A folder copied over an existing folder is a merge and is not undoable.
+- The Ctrl+Z path in the desktop app was typechecked, not driven in a browser.

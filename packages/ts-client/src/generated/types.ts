@@ -1485,6 +1485,15 @@ export type FileSystem =
 /**  Other filesystem */
 { Other: string };
 
+/**  Input for undoing a file operation. */
+export type FileUndoInput = {
+	/**
+	 *  The job to undo, as `files.undo_history` lists it. Without it, the
+	 *  most recent operation that still has something to undo.
+	 */
+	job_id?: string | null,
+};
+
 /**  Indicates which filters are available for a given search type */
 export type FilterKind = "FileTypes" | "DateRange" | "SizeRange" | "ContentTypes" | "Tags" | "Locations" | "Hidden" | "Archived" | "AtRisk" | "OnVolumes" | "NotOnVolumes" | "VolumeCount";
 
@@ -2097,6 +2106,13 @@ export type JobOutput =
 	deleted_count: number,
 	failed_count: number,
 	total_bytes: number,
+} } | 
+/**  Undo of an earlier copy, move, rename or trash job */
+{ type: "FileUndo"; data: {
+	undone_count: number,
+	skipped_count: number,
+	/**  Why each skipped item was left alone, capped to keep history small. */
+	skipped?: string[],
 } } | 
 /**  Duplicate detection output */
 { type: "DuplicateDetection"; data: {
@@ -3961,6 +3977,34 @@ export type UnapplyTagsOutput = {
 	warnings: string[],
 };
 
+/**  Input for listing what can be undone. */
+export type UndoHistoryInput = {
+	/**  Most operations to return, newest first. */
+	limit?: number | null,
+};
+
+export type UndoHistoryOutput = {
+	/**  Newest first. */
+	operations: UndoableOperation[],
+	/**  Days a replaced file and its record are kept. */
+	retention_days: number,
+};
+
+/**  One earlier operation and how much of it undo can still reverse. */
+export type UndoableOperation = {
+	job_id: string,
+	/**  `copy`, `move`, `rename` or `delete`. */
+	operation: string,
+	/**  Seconds since the Unix epoch. */
+	started_at: number,
+	/**  Changes the job recorded. */
+	effects: number,
+	/**  Changes undo can still reverse; zero once undone. */
+	pending: number,
+	/**  One path from the operation, to recognise it by. */
+	example: string,
+};
+
 /**  Statistics for the unified ephemeral index */
 export type UnifiedIndexStats = {
 	/**  Total entries in the shared arena */
@@ -4704,6 +4748,7 @@ export type LibraryAction =
   |  { type: 'files.rename'; input: FileRenameInput; output: JobReceipt }
   |  { type: 'files.setGroup'; input: SetGroupInput; output: PermissionsChanged }
   |  { type: 'files.setPermissions'; input: SetPermissionsInput; output: PermissionsChanged }
+  |  { type: 'files.undo'; input: FileUndoInput; output: JobReceipt }
   |  { type: 'indexing.start'; input: IndexInput; output: JobReceipt }
   |  { type: 'indexing.verify'; input: IndexVerifyInput; output: IndexVerifyOutput }
   |  { type: 'jobs.cancel'; input: JobCancelInput; output: JobCancelOutput }
@@ -4791,6 +4836,7 @@ export type LibraryQuery =
   |  { type: 'files.permissions'; input: PermissionsQuery; output: PermissionsOutput }
   |  { type: 'files.preflight'; input: FilePreflightInput; output: FilePreflightOutput }
   |  { type: 'files.templates'; input: TemplatesInput; output: TemplatesOutput }
+  |  { type: 'files.undo_history'; input: UndoHistoryInput; output: UndoHistoryOutput }
   |  { type: 'files.unique_to_location'; input: UniqueToLocationInput; output: UniqueToLocationOutput }
   |  { type: 'files.vcs_status'; input: VcsStatusInput; output: VcsStatusOutput }
   |  { type: 'jobs.active'; input: ActiveJobsInput; output: ActiveJobsOutput }
@@ -4865,6 +4911,7 @@ export const WIRE_METHODS = {
     'files.rename': 'action:files.rename.input',
     'files.setGroup': 'action:files.setGroup.input',
     'files.setPermissions': 'action:files.setPermissions.input',
+    'files.undo': 'action:files.undo.input',
     'indexing.start': 'action:indexing.start.input',
     'indexing.verify': 'action:indexing.verify.input',
     'jobs.cancel': 'action:jobs.cancel.input',
@@ -4952,6 +4999,7 @@ export const WIRE_METHODS = {
     'files.permissions': 'query:files.permissions',
     'files.preflight': 'query:files.preflight',
     'files.templates': 'query:files.templates',
+    'files.undo_history': 'query:files.undo_history',
     'files.unique_to_location': 'query:files.unique_to_location',
     'files.vcs_status': 'query:files.vcs_status',
     'jobs.active': 'query:jobs.active',

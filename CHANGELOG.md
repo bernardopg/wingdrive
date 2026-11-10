@@ -5,6 +5,14 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Added
+
+- Undo for copy, overwrite, cross-volume move and trash. File jobs journal what
+  they changed, `wing file undo` and Ctrl+Z in the desktop app reverse it, and
+  `wing file history` lists what can still be undone. A file that a copy
+  replaces is kept for 7 days in a hidden `.wing-undo-*` folder next to it.
+  Undo skips anything that changed since the operation.
+
 ### Fixed
 
 - Cancelling a copy that replaces an existing file no longer destroys that
