@@ -381,3 +381,11 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: com `Exec=viewer --label=%%f %%u` e os arquivos `/first.txt` e `/second.txt`, a função produzia dois comandos `viewer --label=%f %u`, ambos sem os arquivos. A busca por substring confundia o percentual literal com os códigos `%f` e `%u`.
 - Correção: consumir cada par de percentual e código antes de decidir se a entrada aceita um arquivo por comando. Sem código real de arquivo, os dois caminhos são anexados a um único comando. Outro caso verifica que `%%%f` ainda expande o percentual literal seguido do código real.
 - Limite: o teste verifica os argumentos gerados, sem executar um aplicativo gráfico ou consultar associações reais do usuário.
+
+## Servidor de mídia respondia 403 para pasta no Windows
+
+- Estado: corrigido; `file_stream_rejects_missing_files_directories_and_relative_paths` falhou no job `Rust Workspace (Windows)` do PR #359 (`403` em vez de `400`) e define o comportamento esperado.
+- Local: `apps/tauri/src-tauri/src/server.rs`, `serve_file`.
+- Reprodução anterior: pedir uma pasta ao `/file`. No Unix a pasta abre e a checagem `is_dir` responde `400`; no Windows `File::open` falha com acesso negado, que virava `403`.
+- Correção: um erro de abertura numa pasta responde `400` nas duas plataformas.
+- Limite: conferido só pelo CI do Windows; sem máquina Windows à mão.
