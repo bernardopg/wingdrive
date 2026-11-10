@@ -349,3 +349,19 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: construa um `WingPath::cloud` com `CloudServiceType::Other`. Sua URI `cloud://photos/key` retornava `UnknownScheme`, e seu JSON com `service = "cloud"` também era recusado.
 - Correção: reconhecer o esquema `cloud` correspondente à variante pública `Other`. O teste verifica os dez provedores, raiz vazia e chaves Unicode com caracteres reservados.
 - Limite: nenhum backend de nuvem foi acessado; a correção cobre a identidade dos caminhos.
+
+## Avaliação pública ignorava rejeição por diretórios filhos
+
+- Estado: corrigido localmente; regressão `child_directory_rejection_reaches_the_public_evaluator` em `core/tests/indexing_rules_test.rs`.
+- Local: `core/src/ops/indexing/rules.rs`, `IndexerRuler::evaluate_path`.
+- Reprodução anterior: configure `RejectIfChildrenDirectoriesArePresent` para `cache`, crie esse subdiretório e avalie a pasta pai. `apply_all` indicava rejeição, mas `evaluate_path` retornava `Accept` porque passava `is_dir = false` à decisão final.
+- Correção: usar `metadata.is_dir()` na avaliação. O teste também troca o diretório filho por um arquivo com o mesmo nome e exige aceitação.
+- Limite: exercita a API pública das regras; não verifica a reconciliação do watcher nem a remoção de registros já indexados.
+
+## Erro de leitura de diretório aparecia como erro de MessagePack
+
+- Estado: corrigido localmente; regressão `child_rules_distinguish_files_directories_and_missing_paths` em `core/tests/indexing_rules_test.rs`.
+- Local: `core/src/ops/indexing/rules.rs`, `accept_dir_for_its_children` e `reject_dir_for_its_children`.
+- Reprodução anterior: obtenha metadados de uma pasta e aplique uma regra de diretórios filhos a um caminho inexistente com esses metadados. A falha de `read_dir` virava `RuleParametersRMPDecode(TypeMismatch(...))`, ocultando o erro de filesystem.
+- Correção: propagar `Error::Io` com o erro original nas duas regras.
+- Limite: o teste usa caminho inexistente; não simula falhas de permissão nem erros durante a iteração de uma pasta já aberta.
