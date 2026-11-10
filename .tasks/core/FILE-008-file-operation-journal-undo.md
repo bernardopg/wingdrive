@@ -70,6 +70,11 @@ changed since.
   removed the copies and the stash folder; history then showed `0 of 3` and a second undo answered
   `Nothing to undo`.
 
+- Web UI on an isolated `wing-server`, driven with headless Chrome: copied two files from `src`,
+  pasted into `dest` over an existing `report.txt` choosing "Overwrite existing files", then Ctrl+Z.
+  Disk after the paste: `.wing-undo-<job>`, `extra.txt`, `report.txt` = new. After Ctrl+Z:
+  `report.txt` = previous only, and the toast "Undid copy". The Tauri shell was not driven.
+
 ## Open
 
 - [ ] Existing rename/move/folder undo keeps working: the desktop still uses the Tauri commands for
@@ -79,4 +84,3 @@ changed since.
 - The seal cannot tell an edit that restores the same size within the same change-time tick; on
   Windows it uses modification time and no inode.
 - A folder copied over an existing folder is a merge and is not undoable.
-- The Ctrl+Z path in the desktop app was typechecked, not driven in a browser.
