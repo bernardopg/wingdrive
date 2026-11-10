@@ -240,6 +240,28 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn decoding_rejects_an_offset_past_the_block_and_invalid_utf16() {
+		let mut bytes = encode_drop_files(&[r"C:\file".into()]).unwrap();
+		bytes[0..4].copy_from_slice(&u32::MAX.to_le_bytes());
+		assert!(decode_drop_files(&bytes).is_err());
+		let mut bytes = encode_drop_files(&[r"C:\file".into()]).unwrap();
+		bytes[DROPFILES_SIZE..DROPFILES_SIZE + 2].copy_from_slice(&0xd800u16.to_le_bytes());
+		assert!(decode_drop_files(&bytes).is_err());
+	}
+
+	#[test]
+	fn decoding_honors_an_offset_beyond_the_header_and_the_first_empty_name() {
+		let paths = vec!["C:\\emoji-😀.txt".into()];
+		let original = encode_drop_files(&paths).unwrap();
+		let mut padded = original[..DROPFILES_SIZE].to_vec();
+		padded.extend_from_slice(&[0x41; 8]);
+		padded.extend_from_slice(&original[DROPFILES_SIZE..]);
+		padded[0..4].copy_from_slice(&28u32.to_le_bytes());
+		padded.extend_from_slice(&[0, 0xd8]);
+		assert_eq!(decode_drop_files(&padded).unwrap(), paths);
+	}
+
+	#[test]
 	fn paths_survive_a_round_trip() {
 		let paths = vec![
 			r"C:\Users\Ana\Área de Trabalho\a b#c.txt".to_string(),

@@ -184,9 +184,16 @@ fn tokenize(exec: &str) -> Option<Vec<String>> {
 /// with no file code gets the files appended, which is what launchers do.
 pub fn command_lines(entry: &DesktopEntry, paths: &[PathBuf]) -> Result<Vec<Vec<String>>, String> {
 	let args = tokenize(&entry.exec).ok_or_else(|| format!("Malformed Exec in {}", entry.id))?;
-	let single = args
-		.iter()
-		.any(|arg| arg.contains("%f") || arg.contains("%u"));
+	let single = args.iter().any(|arg| {
+		let mut chars = arg.chars();
+		while let Some(c) = chars.next() {
+			// Consume escaped percent signs before looking for file codes.
+			if c == '%' && matches!(chars.next(), Some('f' | 'u')) {
+				return true;
+			}
+		}
+		false
+	});
 	let multiple = args.iter().any(|arg| arg == "%F" || arg == "%U");
 	let groups: Vec<&[PathBuf]> = if single && !multiple {
 		paths.chunks(1).collect()
@@ -267,6 +274,69 @@ pub fn file_uri(path: &Path) -> String {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn escaped_percent_file_codes_remain_literal_and_still_append_files() {
+		let files = vec![PathBuf::from("/first.txt"), PathBuf::from("/second.txt")];
+		let lines = command_lines(&entry("viewer --label=%%f %%u"), &files).unwrap();
+		assert_eq!(
+			lines,
+			[vec![
+				"viewer",
+				"--label=%f",
+				"%u",
+				"/first.txt",
+				"/second.txt"
+			]]
+		);
+	}
+
+	#[test]
+	fn escaped_percent_before_a_real_file_code_keeps_single_file_grouping() {
+		let files = vec![PathBuf::from("/a b"), PathBuf::from("/c")];
+		assert_eq!(
+			command_lines(&entry("viewer %%%f"), &files).unwrap(),
+			[vec!["viewer", "%/a b"], vec!["viewer", "%/c"]]
+		);
+	}
+
+	#[test]
+	fn entry_expansion_keeps_empty_arguments_and_drops_missing_icons_and_obsolete_codes() {
+		let mut app = entry(r#"viewer "" %i %d %k 100%%"#);
+		app.icon = None;
+		assert_eq!(
+			command_lines(&app, &[]).unwrap(),
+			[vec![
+				"viewer",
+				"",
+				"/usr/share/applications/viewer.desktop",
+				"100%"
+			]]
+		);
+	}
+
+	#[test]
+	fn try_exec_requires_an_executable_file_and_missing_fields_are_rejected() {
+		use std::os::unix::fs::PermissionsExt;
+		let root = tempfile::tempdir().unwrap();
+		let program = root.path().join("viewer");
+		std::fs::write(&program, "fixture").unwrap();
+		std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o600)).unwrap();
+		let text = format!(
+			"[Desktop Entry]\nType=Application\nName=Viewer\nExec=viewer\nTryExec={}\n",
+			program.display()
+		);
+		assert!(parse("viewer.desktop", &program, &text, &[]).is_none());
+		std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o700)).unwrap();
+		assert!(parse("viewer.desktop", &program, &text, &[]).is_some());
+		assert!(!program_exists(root.path().to_str().unwrap()));
+		for text in [
+			"[Desktop Entry]\nType=Application\nExec=viewer\n",
+			"[Desktop Entry]\nType=Application\nName=Viewer\n",
+		] {
+			assert!(parse("viewer.desktop", &program, text, &[]).is_none());
+		}
+	}
 
 	fn entry(exec: &str) -> DesktopEntry {
 		DesktopEntry {

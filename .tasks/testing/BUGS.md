@@ -373,3 +373,11 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: o teste chamava `set_var("XDG_CONFIG_HOME", ...)` no processo compartilhado pelos testes e não restaurava o valor. Outros testes podiam observar o diretório temporário ou um caminho já removido.
 - Correção: executar o teste existente num subprocesso com HOME/XDG temporários, sem alterar o ambiente do runner. Separar a gravação da entrada da resolução do ambiente permite que os casos novos verifiquem erros de criação e remoção sem apagar dados existentes.
 - Limite: sem sessão gráfica nem execução da entrada de autostart. Não foi observado acesso à configuração real do usuário durante a execução inicial.
+
+## Percentual escapado no Exec descartava os arquivos selecionados
+
+- Estado: corrigido; `escaped_percent_file_codes_remain_literal_and_still_append_files` falhava antes da correção e passou depois. A suíte de `file-opening-linux` terminou com 28 testes unitários e 1 doctest aprovados.
+- Local: `apps/tauri/crates/file-opening-linux/src/desktop_entry.rs`, `command_lines`.
+- Reprodução anterior: com `Exec=viewer --label=%%f %%u` e os arquivos `/first.txt` e `/second.txt`, a função produzia dois comandos `viewer --label=%f %u`, ambos sem os arquivos. A busca por substring confundia o percentual literal com os códigos `%f` e `%u`.
+- Correção: consumir cada par de percentual e código antes de decidir se a entrada aceita um arquivo por comando. Sem código real de arquivo, os dois caminhos são anexados a um único comando. Outro caso verifica que `%%%f` ainda expande o percentual literal seguido do código real.
+- Limite: o teste verifica os argumentos gerados, sem executar um aplicativo gráfico ou consultar associações reais do usuário.
