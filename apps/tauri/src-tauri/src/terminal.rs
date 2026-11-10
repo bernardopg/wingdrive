@@ -533,6 +533,40 @@ pub fn terminal_close(sessions: tauri::State<'_, TerminalSessions>, id: u32) {
 #[cfg(test)]
 mod tests {
 	#[cfg(unix)]
+	#[test]
+	fn terminal_navigation_refuses_non_utf8_paths() {
+		use std::os::unix::ffi::OsStrExt;
+		let path = std::path::Path::new(std::ffi::OsStr::from_bytes(b"/tmp/name\xff"));
+		for syntax in [super::Syntax::Posix, super::Syntax::Cmd] {
+			assert!(super::cd_command(path, syntax).is_none());
+		}
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn posix_navigation_treats_shell_metacharacters_as_literal_path_bytes() {
+		let root = tempfile::tempdir().unwrap();
+		let folder = root.path().join("a'$(false)`false`$HOME;&b");
+		std::fs::create_dir(&folder).unwrap();
+		let keys = super::cd_command(&folder, super::Syntax::Posix).unwrap();
+		let command = std::str::from_utf8(&keys[2..keys.len() - 1]).unwrap();
+		let output = std::process::Command::new("/bin/sh")
+			.args(["-c", &format!("{command} && pwd -P")])
+			.env("HOME", root.path())
+			.current_dir(root.path())
+			.output()
+			.unwrap();
+		assert!(
+			output.status.success(),
+			"{}",
+			String::from_utf8_lossy(&output.stderr)
+		);
+		assert_eq!(
+			String::from_utf8(output.stdout).unwrap().trim_end(),
+			std::fs::canonicalize(folder).unwrap().to_str().unwrap()
+		);
+	}
+	#[cfg(unix)]
 	use std::{
 		sync::mpsc::Receiver,
 		time::{Duration, Instant},

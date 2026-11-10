@@ -365,3 +365,11 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: obtenha metadados de uma pasta e aplique uma regra de diretórios filhos a um caminho inexistente com esses metadados. A falha de `read_dir` virava `RuleParametersRMPDecode(TypeMismatch(...))`, ocultando o erro de filesystem.
 - Correção: propagar `Error::Io` com o erro original nas duas regras.
 - Limite: o teste usa caminho inexistente; não simula falhas de permissão nem erros durante a iteração de uma pasta já aberta.
+
+## Teste de autostart alterava o XDG global do runner
+
+- Estado: corrigido; o teste existente continua verificando criação, remoção e remoção repetida da entrada.
+- Local: `apps/tauri/src-tauri/src/background.rs`, `autostart_file_is_written_and_removed` e `write_autostart`.
+- Reprodução anterior: o teste chamava `set_var("XDG_CONFIG_HOME", ...)` no processo compartilhado pelos testes e não restaurava o valor. Outros testes podiam observar o diretório temporário ou um caminho já removido.
+- Correção: executar o teste existente num subprocesso com HOME/XDG temporários, sem alterar o ambiente do runner. Separar a gravação da entrada da resolução do ambiente permite que os casos novos verifiquem erros de criação e remoção sem apagar dados existentes.
+- Limite: sem sessão gráfica nem execução da entrada de autostart. Não foi observado acesso à configuração real do usuário durante a execução inicial.

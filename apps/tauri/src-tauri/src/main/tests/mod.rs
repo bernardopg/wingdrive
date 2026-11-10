@@ -50,6 +50,23 @@ fn app_state() -> AppState {
 	}
 }
 
+#[tokio::test]
+async fn resetting_the_pool_discards_connection_state_and_subscriptions() {
+	let pool = DaemonConnectionPool::new("invalid-address".into());
+	*pool.initialized.lock().await = true;
+	pool.subscriptions.write().await.extend([(2, ()), (3, ())]);
+	pool.reset().await;
+	assert!(!*pool.initialized.lock().await);
+	assert!(pool.writer.lock().await.is_none());
+	assert!(pool.subscriptions.read().await.is_empty());
+	assert_eq!(
+		pool.subscribe(5, vec![], None).await.unwrap_err(),
+		"Connection not initialized"
+	);
+	pool.reset().await;
+	assert!(pool.subscriptions.read().await.is_empty());
+}
+
 /// Accepts one connection, returns the line it received and writes `reply`.
 async fn one_shot_daemon(reply: &'static str) -> (String, tokio::task::JoinHandle<String>) {
 	let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();

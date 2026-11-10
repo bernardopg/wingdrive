@@ -174,6 +174,159 @@ mod tests {
 	use super::*;
 
 	#[tokio::test]
+	async fn move_keeps_existing_directories_and_links_to_directories() {
+		let root = tempfile::tempdir().unwrap();
+		let source = root.path().join("source");
+		let directory = root.path().join("directory");
+		let link = root.path().join("link");
+		std::fs::write(&source, b"original").unwrap();
+		std::fs::create_dir(&directory).unwrap();
+		std::fs::write(directory.join("new-data"), b"keep").unwrap();
+		std::os::unix::fs::symlink(&directory, &link).unwrap();
+		let expected = file_identity(source.clone()).await.unwrap();
+		for destination in [directory.clone(), link.clone()] {
+			assert!(undo_move(source.clone(), destination, expected.clone())
+				.await
+				.is_err());
+			assert_eq!(std::fs::read(&source).unwrap(), b"original");
+			assert_eq!(std::fs::read(directory.join("new-data")).unwrap(), b"keep");
+		}
+		assert_eq!(std::fs::read_link(link).unwrap(), directory);
+	}
+
+	#[tokio::test]
+	async fn move_keeps_an_existing_dangling_link_and_its_source() {
+		let root = tempfile::tempdir().unwrap();
+		let source = root.path().join("source");
+		let destination = root.path().join("destination");
+		let missing = root.path().join("missing");
+		std::fs::write(&source, b"original").unwrap();
+		std::os::unix::fs::symlink(&missing, &destination).unwrap();
+		let expected = file_identity(source.clone()).await.unwrap();
+
+		assert!(undo_move(source.clone(), destination.clone(), expected)
+			.await
+			.is_err());
+		assert_eq!(std::fs::read(&source).unwrap(), b"original");
+		assert_eq!(std::fs::read_link(&destination).unwrap(), missing);
+	}
+
+	#[tokio::test]
+	async fn move_restores_the_link_without_moving_its_target() {
+		let root = tempfile::tempdir().unwrap();
+		let target = root.path().join("target");
+		let source = root.path().join("link");
+		let destination = root.path().join("restored");
+		std::fs::write(&target, b"keep target").unwrap();
+		std::os::unix::fs::symlink(&target, &source).unwrap();
+		let expected = file_identity(source.clone()).await.unwrap();
+		assert_ne!(expected, file_identity(target.clone()).await.unwrap());
+
+		undo_move(source.clone(), destination.clone(), expected)
+			.await
+			.unwrap();
+		assert!(std::fs::symlink_metadata(&source).is_err());
+		assert_eq!(std::fs::read_link(destination).unwrap(), target);
+		assert_eq!(std::fs::read(target).unwrap(), b"keep target");
+	}
+
+	#[tokio::test]
+	async fn replacing_a_new_file_with_a_link_cancels_both_undo_operations() {
+		let root = tempfile::tempdir().unwrap();
+		let path = root.path().join("created");
+		let original = root.path().join("original");
+		let destination = root.path().join("restored");
+		std::fs::write(&path, []).unwrap();
+		let expected = file_identity(path.clone()).await.unwrap();
+		std::fs::rename(&path, &original).unwrap();
+		std::os::unix::fs::symlink(&original, &path).unwrap();
+
+		assert!(undo_new_file(path.clone(), expected.clone(), None)
+			.await
+			.is_err());
+		assert!(undo_move(path.clone(), destination.clone(), expected)
+			.await
+			.is_err());
+		assert_eq!(std::fs::read_link(path).unwrap(), original);
+		assert_eq!(std::fs::read(original).unwrap(), b"");
+		assert!(!destination.exists());
+	}
+
+	#[tokio::test]
+	async fn folder_undo_keeps_a_replacement_even_when_it_is_empty() {
+		let root = tempfile::tempdir().unwrap();
+		let path = root.path().join("folder");
+		let original = root.path().join("original");
+		std::fs::create_dir(&path).unwrap();
+		let expected = file_identity(path.clone()).await.unwrap();
+		std::fs::rename(&path, &original).unwrap();
+		std::fs::create_dir(&path).unwrap();
+
+		assert!(undo_empty_folder(path.clone(), expected).await.is_err());
+		assert!(path.is_dir());
+		assert!(original.is_dir());
+	}
+
+	#[tokio::test]
+	async fn link_undo_removes_a_dangling_link_but_a_template_hash_rejects_it() {
+		let root = tempfile::tempdir().unwrap();
+		let path = root.path().join("link");
+		let missing = root.path().join("missing");
+		std::os::unix::fs::symlink(&missing, &path).unwrap();
+		let expected = file_identity(path.clone()).await.unwrap();
+
+		assert!(
+			undo_new_file(path.clone(), expected.clone(), Some("hash".into()))
+				.await
+				.is_err()
+		);
+		assert_eq!(std::fs::read_link(&path).unwrap(), missing);
+		undo_new_file(path.clone(), expected, None).await.unwrap();
+		assert!(std::fs::symlink_metadata(path).is_err());
+		assert!(!missing.exists());
+	}
+
+	#[tokio::test]
+	async fn failed_move_to_a_missing_parent_or_nul_path_keeps_the_source() {
+		let root = tempfile::tempdir().unwrap();
+		let source = root.path().join("source");
+		std::fs::write(&source, b"keep").unwrap();
+		let expected = file_identity(source.clone()).await.unwrap();
+		for destination in [
+			root.path().join("missing/file"),
+			root.path().join("nul\0file"),
+		] {
+			assert!(undo_move(source.clone(), destination, expected.clone())
+				.await
+				.is_err());
+			assert_eq!(std::fs::read(&source).unwrap(), b"keep");
+		}
+	}
+
+	#[tokio::test]
+	async fn template_hash_detects_same_size_edits_and_hashes_empty_files() {
+		let root = tempfile::tempdir().unwrap();
+		let path = root.path().join("template");
+		std::fs::write(&path, []).unwrap();
+		assert_eq!(
+			file_content_hash(path.clone()).await.unwrap(),
+			blake3::hash(b"").to_hex().to_string()
+		);
+		std::fs::write(&path, b"original").unwrap();
+		let expected = file_identity(path.clone()).await.unwrap();
+		let hash = file_content_hash(path.clone()).await.unwrap();
+		std::fs::write(&path, b"modified").unwrap();
+
+		assert!(undo_new_file(path.clone(), expected, Some(hash))
+			.await
+			.is_err());
+		assert_eq!(std::fs::read(path).unwrap(), b"modified");
+		assert!(file_content_hash(root.path().join("missing"))
+			.await
+			.is_err());
+	}
+
+	#[tokio::test]
 	async fn undo_preserves_conflicting_files_replacements_and_nonempty_folders() {
 		let root = tempfile::tempdir().unwrap();
 		let source = root.path().join("new");

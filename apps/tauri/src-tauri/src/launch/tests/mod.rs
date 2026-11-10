@@ -1,6 +1,67 @@
 use super::*;
 
 #[test]
+fn draining_open_requests_keeps_order_and_allows_new_batches() {
+	use tauri::Manager;
+	let root = tempfile::tempdir().unwrap();
+	let folder = OpenRequest {
+		directory: root.path().join("a"),
+		select: None,
+	};
+	let reveal = reveal_request(root.path().join("b/file"));
+	let app = tauri::test::mock_app();
+	app.manage(PendingOpenRequests::new(vec![
+		folder.clone(),
+		reveal.clone(),
+		folder.clone(),
+	]));
+	assert_eq!(take_initial_open_request(app.state()), Some(folder.clone()));
+	assert_eq!(take_initial_open_request(app.state()), None);
+	assert_eq!(
+		take_open_requests(app.state()),
+		[reveal.clone(), folder.clone()]
+	);
+	app.state::<PendingOpenRequests>()
+		.0
+		.lock()
+		.unwrap()
+		.extend([reveal.clone(), folder.clone()]);
+	assert_eq!(take_open_requests(app.state()), [reveal, folder]);
+	assert!(take_open_requests(app.state()).is_empty());
+}
+
+#[cfg(unix)]
+#[test]
+fn launch_skips_dangling_links_and_keeps_argument_order_and_duplicates() {
+	let root = tempfile::tempdir().unwrap();
+	let file = root.path().join("a #%.txt");
+	let folder = root.path().join("folder");
+	std::fs::write(&file, []).unwrap();
+	std::fs::create_dir(&folder).unwrap();
+	std::os::unix::fs::symlink(root.path().join("missing"), root.path().join("dangling")).unwrap();
+	let options = parse_args(
+		[
+			"dangling".into(),
+			tauri::Url::from_file_path(&file).unwrap().to_string(),
+			"folder".into(),
+			"a #%.txt".into(),
+		],
+		root.path(),
+	);
+	assert_eq!(
+		options.requests,
+		[
+			reveal_request(file.clone()),
+			OpenRequest {
+				directory: folder,
+				select: None
+			},
+			reveal_request(file)
+		]
+	);
+}
+
+#[test]
 fn hidden_start_is_consumed_once() {
 	let hidden = StartHidden(AtomicBool::new(true));
 	assert!(hidden.is_set());

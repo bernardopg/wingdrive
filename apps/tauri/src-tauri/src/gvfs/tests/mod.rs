@@ -1,6 +1,48 @@
 use super::*;
 
 #[test]
+fn mount_listing_does_not_take_attributes_from_a_neighboring_drive() {
+	let listing = "Volume(0): Incomplete\n  activation_root=smb://nas/incomplete\nDrive(1): Neighbor\n  can_mount=1\nVolume(1): Ready\n  can_mount=1\n  activation_root=sftp://nas/ready\n";
+	assert_eq!(
+		parse_mountable(listing),
+		[MountableVolume {
+			name: "Ready".into(),
+			uri: "sftp://nas/ready".into()
+		}]
+	);
+}
+
+#[test]
+fn fuse_listing_sorts_labels_without_changing_mount_paths() {
+	let root = tempfile::tempdir().unwrap();
+	for folder in ["sftp:host=Zebra", "smb-share:host=nas,share=alpha%20Docs"] {
+		std::fs::create_dir(root.path().join(folder)).unwrap();
+	}
+	let mounts = list_in(root.path());
+	assert_eq!(
+		mounts[0].path,
+		root.path()
+			.join("smb-share:host=nas,share=alpha%20Docs")
+			.to_string_lossy()
+	);
+	assert_eq!(
+		mounts[1].path,
+		root.path().join("sftp:host=Zebra").to_string_lossy()
+	);
+	assert_eq!(
+		mounts.iter().map(|m| m.name.as_str()).collect::<Vec<_>>(),
+		["alpha Docs on nas (SMB)", "Zebra (SFTP)"]
+	);
+	for mount in mounts {
+		assert_eq!(
+			std::path::Path::new(&mount.path).parent(),
+			Some(root.path())
+		);
+		assert!(std::path::Path::new(&mount.path).is_dir());
+	}
+}
+
+#[test]
 fn mount_labels_decode_complete_utf8_and_keep_invalid_escapes() {
 	assert_eq!(
 		describe("sftp:host=nas,user=Jos%C3%A9").name,

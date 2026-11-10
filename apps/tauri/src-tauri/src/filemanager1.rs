@@ -144,6 +144,23 @@ mod tests {
 	use super::should_serve;
 
 	#[test]
+	fn override_aliases_are_case_insensitive_and_unknown_values_use_the_default() {
+		for value in [" TRUE ", "yes", "On", "1"] {
+			assert!(should_serve(Some(value), None), "{value}");
+		}
+		for value in [" FALSE ", "NO", "Off", "0"] {
+			assert!(
+				!should_serve(Some(value), Some("wingdrive.desktop")),
+				"{value}"
+			);
+		}
+		for value in ["", "maybe"] {
+			assert!(!should_serve(Some(value), Some("other.desktop")));
+			assert!(should_serve(Some(value), Some("wingdrive.desktop")));
+		}
+	}
+
+	#[test]
 	fn serves_only_when_wingdrive_is_the_default_file_manager() {
 		assert!(should_serve(None, Some("wingdrive.desktop")));
 		assert!(should_serve(None, Some("WingDrive.desktop")));

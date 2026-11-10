@@ -158,6 +158,34 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn malformed_clipboard_entries_reject_the_entire_selection() {
+		for invalid in [
+			"not a URI",
+			"file://remote/tmp/file",
+			"file:///tmp/%FF",
+			"https://example.invalid/file",
+		] {
+			assert!(
+				parse_file_uris(&format!("file:///tmp/valid\r\n{invalid}\r\n")).is_err(),
+				"{invalid}"
+			);
+		}
+		assert!(file_uris(&["/tmp/valid".into(), "relative".into()]).is_err());
+	}
+
+	#[test]
+	fn clipboard_comments_empty_lists_and_encoded_line_breaks_keep_item_boundaries() {
+		assert!(parse_file_uris(" \r\n# comment\r\n\t# another\n")
+			.unwrap()
+			.is_empty());
+		assert!(file_uris(&[]).unwrap().is_empty());
+		assert_eq!(
+			parse_file_uris("file:///tmp/a%0D%0Ab\r\nfile://localhost/tmp/c%25d\n").unwrap(),
+			["/tmp/a\r\nb", "/tmp/c%d"]
+		);
+	}
+
+	#[test]
 	fn file_clipboard_uri_roundtrip_and_trust_boundary() {
 		let paths = vec!["/tmp/a b#c.txt".to_string(), "/tmp/café\nfile".to_string()];
 		let uris = file_uris(&paths).unwrap();

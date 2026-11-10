@@ -247,6 +247,33 @@ pub async fn discover_network_servers() -> Result<Vec<DiscoveredServer>, String>
 mod tests {
 	use super::*;
 
+	#[test]
+	fn ssh_aliases_are_unique_and_pattern_only_blocks_add_no_servers() {
+		assert_eq!(parse_ssh_config("# Host ignored\nHost nas nas *.lan !blocked ?\nHOST = backup nas # skip\nHostName other\nMatch host ignored\nHost\n"), ["nas", "backup"]);
+	}
+
+	#[test]
+	fn unreadable_or_non_utf8_ssh_configs_yield_no_servers() {
+		let root = tempfile::tempdir().unwrap();
+		let ssh = root.path().join(".ssh");
+		std::fs::create_dir(&ssh).unwrap();
+		std::fs::write(ssh.join("config"), b"Host \xff\n").unwrap();
+		assert!(ssh_config_servers(root.path()).is_empty());
+		std::fs::remove_file(ssh.join("config")).unwrap();
+		std::fs::create_dir(ssh.join("config")).unwrap();
+		assert!(ssh_config_servers(root.path()).is_empty());
+	}
+
+	#[test]
+	fn mdns_deduplicates_by_uri_and_preserves_nondefault_ports_and_txt_paths() {
+		let listing = "=;e;IPv4;Jos\\195\\169;_ssh._tcp;local;nas.local.;1;22;\"u=me\" \"path=///docs;2026\"\n=;e;IPv6;Duplicate;_sftp-ssh._tcp;local;nas.local;::1;22;\"path=/docs;2026\"\n=;e;IPv4;Other;_sftp-ssh._tcp;local;nas.local;1;2222;\"path=/\"\n";
+		let servers = parse_avahi(listing);
+		assert_eq!(servers.len(), 2);
+		assert_eq!(servers[0].name, "José (SFTP)");
+		assert_eq!(servers[0].uri, "sftp://nas.local/docs;2026");
+		assert_eq!(servers[1].uri, "sftp://nas.local:2222/");
+	}
+
 	const LISTING: &str = "\
 +;eth0;IPv4;nas;_smb._tcp;local
 =;eth0;IPv4;nas;_smb._tcp;local;nas.local;192.168.1.5;445;
