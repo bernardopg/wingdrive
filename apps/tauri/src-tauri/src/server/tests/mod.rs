@@ -1,6 +1,88 @@
 use super::*;
 use axum::body::to_bytes;
 
+#[tokio::test]
+async fn malformed_and_overflowing_ranges_return_the_complete_file() {
+	let root = tempfile::tempdir().unwrap();
+	let path = root.path().join("file.bin");
+	tokio::fs::write(&path, b"0123456789").await.unwrap();
+	for range in [
+		"items=1-2",
+		"bytes=0-1,3-4",
+		"bytes=-",
+		"bytes=abc-5",
+		"bytes=0-abc",
+		"bytes=18446744073709551616-",
+		"bytes=-18446744073709551616",
+	] {
+		let response = file_response(&path, "test-token", Some(range))
+			.await
+			.unwrap();
+		assert_eq!(response.status(), StatusCode::OK, "{range}");
+		assert_eq!(response.headers()[header::CONTENT_LENGTH], "10", "{range}");
+		assert!(
+			!response.headers().contains_key(header::CONTENT_RANGE),
+			"{range}"
+		);
+		assert_eq!(
+			&to_bytes(response.into_body(), 100).await.unwrap()[..],
+			b"0123456789",
+			"{range}"
+		);
+	}
+}
+
+#[tokio::test]
+async fn suffix_and_extreme_ranges_return_only_existing_bytes() {
+	let root = tempfile::tempdir().unwrap();
+	let path = root.path().join("file.bin");
+	tokio::fs::write(&path, b"abc").await.unwrap();
+	for (range, expected, content_range) in [
+		("bytes=-18446744073709551615", &b"abc"[..], "bytes 0-2/3"),
+		("bytes=2-18446744073709551615", &b"c"[..], "bytes 2-2/3"),
+	] {
+		let response = file_response(&path, "test-token", Some(range))
+			.await
+			.unwrap();
+		assert_eq!(response.status(), StatusCode::PARTIAL_CONTENT);
+		assert_eq!(response.headers()[header::CONTENT_RANGE], content_range);
+		assert_eq!(
+			&to_bytes(response.into_body(), 100).await.unwrap()[..],
+			expected
+		);
+	}
+	for range in ["bytes=-0", "bytes=18446744073709551615-"] {
+		let response = file_response(&path, "test-token", Some(range))
+			.await
+			.unwrap();
+		assert_eq!(response.status(), StatusCode::RANGE_NOT_SATISFIABLE);
+		assert_eq!(response.headers()[header::CONTENT_RANGE], "bytes */3");
+		assert!(to_bytes(response.into_body(), 100)
+			.await
+			.unwrap()
+			.is_empty());
+	}
+}
+
+#[tokio::test]
+async fn file_stream_rejects_missing_files_directories_and_relative_paths() {
+	let root = tempfile::tempdir().unwrap();
+	for (path, expected) in [
+		(root.path().join("missing"), StatusCode::NOT_FOUND),
+		(root.path().to_path_buf(), StatusCode::BAD_REQUEST),
+		(PathBuf::from("relative/file"), StatusCode::BAD_REQUEST),
+	] {
+		assert_eq!(
+			file_response(&path, "test-token", None).await.unwrap_err(),
+			expected
+		);
+		assert_eq!(
+			file_response(&path, "bad-token", None).await.unwrap_err(),
+			StatusCode::FORBIDDEN
+		);
+	}
+}
+
 fn state(data_dir: PathBuf) -> ServerState {
 	ServerState {
 		data_dir,

@@ -9,7 +9,6 @@ use futures_concurrency::future::TryJoin;
 use gix_ignore::{glob::pattern::Case, Search};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use once_cell::sync::Lazy;
-use rmp::Marker;
 use rmp_serde::{decode, encode};
 use serde::{de::VariantAccess, Deserialize, Serialize};
 use specta::Type;
@@ -221,7 +220,7 @@ impl IndexerRuler {
 	) -> Result<RulerDecision, Error> {
 		let acceptance_per_rule_kind = self.apply_all(source, metadata).await?;
 		Ok(
-			if Self::reject_path(Path::new(""), false, &acceptance_per_rule_kind) {
+			if Self::reject_path(Path::new(""), metadata.is_dir(), &acceptance_per_rule_kind) {
 				RulerDecision::Reject
 			} else {
 				RulerDecision::Accept
@@ -458,9 +457,7 @@ async fn accept_dir_for_its_children(
 	if !metadata.is_dir() {
 		return Ok(false);
 	}
-	let mut read_dir = tokio::fs::read_dir(source.as_ref()).await.map_err(|_| {
-		Error::RuleParametersRMPDecode(rmp_serde::decode::Error::TypeMismatch(Marker::FixPos(0)))
-	})?;
+	let mut read_dir = tokio::fs::read_dir(source.as_ref()).await?;
 	while let Ok(Some(entry)) = read_dir.next_entry().await {
 		let entry_name = match entry.file_name().into_string() {
 			Ok(s) => s,
@@ -483,9 +480,7 @@ async fn reject_dir_for_its_children(
 	if !metadata.is_dir() {
 		return Ok(true);
 	}
-	let mut read_dir = tokio::fs::read_dir(source.as_ref()).await.map_err(|_| {
-		Error::RuleParametersRMPDecode(rmp_serde::decode::Error::TypeMismatch(Marker::FixPos(0)))
-	})?;
+	let mut read_dir = tokio::fs::read_dir(source.as_ref()).await?;
 	while let Ok(Some(entry)) = read_dir.next_entry().await {
 		let name = match entry.file_name().into_string() {
 			Ok(s) => s,

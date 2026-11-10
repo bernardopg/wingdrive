@@ -233,6 +233,10 @@ async fn serve_file(
 	let mut file = File::open(&path).await.map_err(|e| {
 		if e.kind() == io::ErrorKind::NotFound {
 			StatusCode::NOT_FOUND
+		} else if path.is_dir() {
+			// Windows refuses to open a folder as a file; Unix opens it and
+			// the check below answers the same.
+			StatusCode::BAD_REQUEST
 		} else {
 			error!("Error opening {:?}: {}", path, e);
 			StatusCode::FORBIDDEN

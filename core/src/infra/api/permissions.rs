@@ -339,3 +339,183 @@ impl From<PermissionError> for ApiError {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use std::marker::PhantomData;
+
+	use super::*;
+	use crate::ops::{
+		core::status::query::CoreStatusQuery,
+		files::{create_folder::action::CreateFolderAction, query::file_by_id::FileByIdQuery},
+		libraries::create::LibraryCreateAction,
+	};
+
+	#[tokio::test]
+	async fn unauthenticated_sessions_cannot_execute_any_operation_kind() {
+		let mut session = SessionContext::device_session(Uuid::nil(), "test".into())
+			.with_library(Uuid::from_u128(1));
+		session.auth.authentication_level = AuthLevel::None;
+		let layer = PermissionLayer::new();
+		let results = [
+			layer
+				.check_core_action(&session, PhantomData::<LibraryCreateAction>)
+				.await,
+			layer
+				.check_library_action(&session, PhantomData::<CreateFolderAction>)
+				.await,
+			layer
+				.check_core_query(&session, PhantomData::<CoreStatusQuery>)
+				.await,
+			layer
+				.check_library_query(&session, PhantomData::<FileByIdQuery>)
+				.await,
+		];
+		for result in results {
+			assert!(matches!(result, Err(PermissionError::Unauthenticated)));
+		}
+	}
+
+	#[tokio::test]
+	async fn read_only_sessions_can_query_but_cannot_mutate_core_or_library() {
+		let mut session = SessionContext::device_session(Uuid::nil(), "test".into())
+			.with_library(Uuid::from_u128(1));
+		session.permissions = PermissionSet::read_only();
+		let layer = PermissionLayer::new();
+		layer
+			.check_core_query(&session, PhantomData::<CoreStatusQuery>)
+			.await
+			.unwrap();
+		layer
+			.check_library_query(&session, PhantomData::<FileByIdQuery>)
+			.await
+			.unwrap();
+		assert!(matches!(
+			layer
+				.check_core_action(&session, PhantomData::<LibraryCreateAction>)
+				.await,
+			Err(PermissionError::InsufficientPrivileges)
+		));
+		assert!(matches!(
+			layer
+				.check_library_action(&session, PhantomData::<CreateFolderAction>)
+				.await,
+			Err(PermissionError::InsufficientPrivileges)
+		));
+		session.permissions.library.can_read = false;
+		session.permissions.core.can_read_status = false;
+		assert!(matches!(
+			layer
+				.check_library_query(&session, PhantomData::<FileByIdQuery>)
+				.await,
+			Err(PermissionError::InsufficientPrivileges)
+		));
+		assert!(matches!(
+			layer
+				.check_core_query(&session, PhantomData::<CoreStatusQuery>)
+				.await,
+			Err(PermissionError::InsufficientPrivileges)
+		));
+	}
+
+	#[tokio::test]
+	async fn authenticated_levels_require_library_context_and_explicit_write_permission() {
+		let layer = PermissionLayer::new();
+		for level in [
+			AuthLevel::Device,
+			AuthLevel::User(Uuid::nil()),
+			AuthLevel::Admin(Uuid::nil()),
+		] {
+			let mut session = SessionContext::device_session(Uuid::nil(), "test".into());
+			session.auth.authentication_level = level;
+			layer
+				.check_core_action(&session, PhantomData::<LibraryCreateAction>)
+				.await
+				.unwrap();
+			assert!(matches!(
+				layer
+					.check_library_action(&session, PhantomData::<CreateFolderAction>)
+					.await,
+				Err(PermissionError::OperationNotAllowed { .. })
+			));
+			session.current_library_id = Some(Uuid::from_u128(1));
+			layer
+				.check_library_action(&session, PhantomData::<CreateFolderAction>)
+				.await
+				.unwrap();
+			session.permissions.library.can_write = false;
+			assert!(matches!(
+				layer
+					.check_library_action(&session, PhantomData::<CreateFolderAction>)
+					.await,
+				Err(PermissionError::InsufficientPrivileges)
+			));
+		}
+	}
+
+	#[tokio::test]
+	async fn permissive_layer_bypasses_authentication_context_and_permission_checks() {
+		let mut session = SessionContext::device_session(Uuid::nil(), "test".into());
+		session.auth.authentication_level = AuthLevel::None;
+		session.permissions = PermissionSet::read_only();
+		session.permissions.library.can_read = false;
+		session.permissions.core.can_read_status = false;
+		let layer = PermissionLayer::permissive();
+		layer
+			.check_core_action(&session, PhantomData::<LibraryCreateAction>)
+			.await
+			.unwrap();
+		layer
+			.check_library_action(&session, PhantomData::<CreateFolderAction>)
+			.await
+			.unwrap();
+		layer
+			.check_core_query(&session, PhantomData::<CoreStatusQuery>)
+			.await
+			.unwrap();
+		layer
+			.check_library_query(&session, PhantomData::<FileByIdQuery>)
+			.await
+			.unwrap();
+	}
+
+	#[test]
+	fn permission_errors_preserve_public_status_and_payload() {
+		for (error, status, payload) in [
+			(
+				PermissionError::Unauthenticated,
+				401,
+				serde_json::json!("Unauthenticated"),
+			),
+			(
+				PermissionError::InsufficientPrivileges,
+				403,
+				serde_json::json!({"InsufficientPermissions": {"reason": "Operation not allowed"}}),
+			),
+			(
+				PermissionError::LibraryAccessDenied {
+					library_id: Uuid::nil(),
+				},
+				404,
+				serde_json::json!({"LibraryNotFound": {"library_id": Uuid::nil().to_string()}}),
+			),
+			(
+				PermissionError::OperationNotAllowed {
+					operation: "blocked".into(),
+				},
+				403,
+				serde_json::json!({"InsufficientPermissions": {"reason": "blocked"}}),
+			),
+			(
+				PermissionError::RateLimitExceeded,
+				429,
+				serde_json::json!({"RateLimitExceeded": {"retry_after_seconds": 60}}),
+			),
+		] {
+			let api: ApiError = error.into();
+			assert_eq!(api.status_code(), status);
+			assert!(api.is_client_error());
+			assert_eq!(serde_json::to_value(api).unwrap(), payload);
+		}
+	}
+}

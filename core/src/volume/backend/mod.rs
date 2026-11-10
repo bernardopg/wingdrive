@@ -121,6 +121,7 @@ impl CloudServiceType {
 			"b2" => Some(Self::BackblazeB2),
 			"wasabi" => Some(Self::Wasabi),
 			"spaces" => Some(Self::DigitalOceanSpaces),
+			"cloud" => Some(Self::Other),
 			_ => None,
 		}
 	}

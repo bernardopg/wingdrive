@@ -235,16 +235,25 @@ pub fn set_desktop_settings(
 #[cfg(target_os = "linux")]
 fn apply_autostart(enabled: bool) -> Result<(), String> {
 	let dir = autostart_dir().ok_or("Could not determine the autostart directory")?;
+	let launcher = if enabled {
+		Some(launcher_path().ok_or("Could not determine the WingDrive executable")?)
+	} else {
+		None
+	};
+	write_autostart(&dir, launcher.as_deref())
+}
+
+#[cfg(target_os = "linux")]
+fn write_autostart(dir: &Path, launcher: Option<&Path>) -> Result<(), String> {
 	let file = dir.join(AUTOSTART_FILE);
-	if !enabled {
+	let Some(launcher) = launcher else {
 		return match std::fs::remove_file(&file) {
 			Err(e) if e.kind() != std::io::ErrorKind::NotFound => Err(e.to_string()),
 			_ => Ok(()),
 		};
-	}
-	let launcher = launcher_path().ok_or("Could not determine the WingDrive executable")?;
-	std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-	std::fs::write(&file, autostart_entry(&launcher)).map_err(|e| e.to_string())
+	};
+	std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+	std::fs::write(&file, autostart_entry(launcher)).map_err(|e| e.to_string())
 }
 
 #[cfg(target_os = "windows")]
@@ -448,16 +457,91 @@ mod tests {
 	#[cfg(target_os = "linux")]
 	#[test]
 	fn autostart_file_is_written_and_removed() {
+		const CHILD_ENV: &str = "WINGDRIVE_TEST_AUTOSTART_DIR";
+		if let Some(config) = std::env::var_os(CHILD_ENV) {
+			let file = Path::new(&config).join("autostart").join(AUTOSTART_FILE);
+			apply_autostart(true).unwrap();
+			assert!(std::fs::read_to_string(&file).unwrap().contains("--hidden"));
+			apply_autostart(false).unwrap();
+			assert!(!file.exists());
+			apply_autostart(false).unwrap();
+			return;
+		}
 		let config = tempfile::tempdir().unwrap();
-		// Only this test reads XDG_CONFIG_HOME in this binary.
-		std::env::set_var("XDG_CONFIG_HOME", config.path());
-		let file = config.path().join("autostart").join(AUTOSTART_FILE);
+		let output = std::process::Command::new(std::env::current_exe().unwrap())
+			.args([
+				"--exact",
+				"background::tests::autostart_file_is_written_and_removed",
+			])
+			.env(CHILD_ENV, config.path())
+			.env("HOME", config.path())
+			.env("XDG_CONFIG_HOME", config.path())
+			.env_remove("APPIMAGE")
+			.output()
+			.unwrap();
+		assert!(
+			output.status.success(),
+			"child failed: {}\n{}",
+			String::from_utf8_lossy(&output.stdout),
+			String::from_utf8_lossy(&output.stderr)
+		);
+	}
 
-		apply_autostart(true).unwrap();
-		assert!(std::fs::read_to_string(&file).unwrap().contains("--hidden"));
-		apply_autostart(false).unwrap();
-		assert!(!file.exists());
-		apply_autostart(false).unwrap();
+	#[test]
+	fn corrupt_settings_fall_back_to_defaults_without_rewriting_the_file() {
+		let dir = tempfile::tempdir().unwrap();
+		let path = dir.path().join(SETTINGS_FILE);
+		for contents in ["{", r#"{"start_at_login":"yes"}"#, "[]"] {
+			std::fs::write(&path, contents).unwrap();
+			assert_eq!(
+				DesktopSettingsState::load(dir.path()).get(),
+				DesktopSettings::default()
+			);
+			assert_eq!(std::fs::read_to_string(&path).unwrap(), contents);
+		}
+	}
+
+	#[test]
+	fn failed_settings_write_keeps_the_last_in_memory_value() {
+		let dir = tempfile::tempdir().unwrap();
+		let state = DesktopSettingsState::load(dir.path());
+		std::fs::create_dir(dir.path().join(SETTINGS_FILE)).unwrap();
+		let changed = DesktopSettings {
+			keep_in_background: false,
+			..DesktopSettings::default()
+		};
+		assert!(state.save(changed).is_err());
+		assert_eq!(state.get(), DesktopSettings::default());
+	}
+
+	#[test]
+	fn settings_create_missing_parents_and_preserve_unicode_terminal_commands() {
+		let dir = tempfile::tempdir().unwrap();
+		let nested = dir.path().join("new/nested");
+		let state = DesktopSettingsState::load(&nested);
+		let changed = DesktopSettings {
+			terminal_command: Some("/opt/Aplicações/terminal --title=José".into()),
+			..DesktopSettings::default()
+		};
+		state.save(changed.clone()).unwrap();
+		assert_eq!(state.get(), changed);
+		assert_eq!(DesktopSettingsState::load(&nested).get(), changed);
+	}
+
+	#[cfg(target_os = "linux")]
+	#[test]
+	fn autostart_propagates_creation_and_removal_errors() {
+		let root = tempfile::tempdir().unwrap();
+		let blocked = root.path().join("blocked");
+		std::fs::write(&blocked, b"keep").unwrap();
+		assert!(write_autostart(&blocked, Some(Path::new("/opt/WingDrive"))).is_err());
+		assert_eq!(std::fs::read(&blocked).unwrap(), b"keep");
+
+		let entry = root.path().join(AUTOSTART_FILE);
+		std::fs::create_dir(&entry).unwrap();
+		std::fs::write(entry.join("keep"), b"keep").unwrap();
+		assert!(write_autostart(root.path(), None).is_err());
+		assert_eq!(std::fs::read(entry.join("keep")).unwrap(), b"keep");
 	}
 
 	/// The Desktop Entry Specification applies the string escapes first, then

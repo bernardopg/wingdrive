@@ -214,4 +214,180 @@ mod tests {
 			.await
 			.expect("migrations on a stale pooled connection");
 	}
+
+	async fn scalar(db: &impl sea_orm::ConnectionTrait, sql: &str) -> i64 {
+		let row = db
+			.query_one_raw(sea_orm::Statement::from_string(
+				sea_orm::DatabaseBackend::Sqlite,
+				sql.to_string(),
+			))
+			.await
+			.unwrap()
+			.unwrap();
+		row.try_get_by_index(0).unwrap()
+	}
+
+	#[tokio::test]
+	async fn migrated_database_reopens_without_losing_rows_or_reapplying_migrations() {
+		use sea_orm::ConnectionTrait;
+
+		let dir = tempfile::tempdir().unwrap();
+		let path = dir.path().join("nested/library.db");
+		let db = Database::create(&path).await.unwrap();
+		db.migrate().await.unwrap();
+		let applied = scalar(db.conn(), "SELECT COUNT(*) FROM seaql_migrations").await;
+		assert!(applied > 0);
+		db.conn().execute_unprepared("CREATE TABLE coverage_probe (value INTEGER NOT NULL); INSERT INTO coverage_probe VALUES (42)").await.unwrap();
+		db.conn.close().await.unwrap();
+		let reopened = Database::open(&path).await.unwrap();
+		reopened.migrate().await.unwrap();
+		assert_eq!(
+			scalar(reopened.conn(), "SELECT COUNT(*) FROM seaql_migrations").await,
+			applied
+		);
+		assert_eq!(
+			scalar(reopened.conn(), "SELECT value FROM coverage_probe").await,
+			42
+		);
+		assert_eq!(scalar(reopened.conn(), "PRAGMA synchronous").await, 1);
+		reopened.conn.close().await.unwrap();
+	}
+
+	#[tokio::test]
+	async fn rollback_discards_schema_and_rows_while_commit_survives_reopening() {
+		use sea_orm::ConnectionTrait;
+
+		let dir = tempfile::tempdir().unwrap();
+		let path = dir.path().join("transactions.db");
+		let db = Database::create(&path).await.unwrap();
+		db.conn()
+			.execute_unprepared(
+				"CREATE TABLE counter (value INTEGER NOT NULL); INSERT INTO counter VALUES (1)",
+			)
+			.await
+			.unwrap();
+		let transaction = begin_write(db.conn()).await.unwrap();
+		transaction
+			.execute_unprepared(
+				"UPDATE counter SET value = 9; CREATE TABLE rolled_back (id INTEGER)",
+			)
+			.await
+			.unwrap();
+		transaction.rollback().await.unwrap();
+		assert_eq!(scalar(db.conn(), "SELECT value FROM counter").await, 1);
+		assert_eq!(
+			scalar(
+				db.conn(),
+				"SELECT COUNT(*) FROM sqlite_master WHERE name = 'rolled_back'"
+			)
+			.await,
+			0
+		);
+		let transaction = begin_write(db.conn()).await.unwrap();
+		transaction
+			.execute_unprepared("UPDATE counter SET value = 2")
+			.await
+			.unwrap();
+		transaction.commit().await.unwrap();
+		db.conn.close().await.unwrap();
+		let reopened = Database::open(&path).await.unwrap();
+		assert_eq!(
+			scalar(reopened.conn(), "SELECT value FROM counter").await,
+			2
+		);
+		reopened.conn.close().await.unwrap();
+	}
+
+	#[tokio::test]
+	async fn failed_migration_rolls_back_earlier_schema_changes_and_tracking_rows() {
+		use sea_orm::ConnectionTrait;
+
+		let dir = tempfile::tempdir().unwrap();
+		let db = Database::create(&dir.path().join("failed.db"))
+			.await
+			.unwrap();
+		db.conn()
+			.execute_unprepared("CREATE TABLE entries (incompatible INTEGER)")
+			.await
+			.unwrap();
+		assert!(db.migrate().await.is_err());
+		assert_eq!(
+			scalar(
+				db.conn(),
+				"SELECT COUNT(*) FROM sqlite_master WHERE name = 'devices'"
+			)
+			.await,
+			0
+		);
+		assert_eq!(
+			scalar(
+				db.conn(),
+				"SELECT COUNT(*) FROM sqlite_master WHERE name = 'seaql_migrations'"
+			)
+			.await,
+			0
+		);
+		db.conn()
+			.execute_unprepared("DROP TABLE entries")
+			.await
+			.unwrap();
+		db.migrate().await.unwrap();
+		assert!(scalar(db.conn(), "SELECT COUNT(*) FROM seaql_migrations").await > 0);
+		db.conn.close().await.unwrap();
+	}
+
+	#[tokio::test]
+	async fn queued_writer_observes_the_committed_value_before_its_read() {
+		use sea_orm::ConnectionTrait;
+
+		let dir = tempfile::tempdir().unwrap();
+		let url = format!(
+			"sqlite://{}?mode=rwc",
+			dir.path().join("writers.db").display()
+		);
+		let db = connect_sqlite(&url, 2).await.unwrap();
+		db.execute_unprepared(
+			"CREATE TABLE counter (value INTEGER NOT NULL); INSERT INTO counter VALUES (0)",
+		)
+		.await
+		.unwrap();
+		let first = begin_write(&db).await.unwrap();
+		first
+			.execute_unprepared("UPDATE counter SET value = 1")
+			.await
+			.unwrap();
+		let other_db = db.clone();
+		let (started, ready) = tokio::sync::oneshot::channel();
+		let writer = tokio::spawn(async move {
+			started.send(()).unwrap();
+			let transaction = begin_write(&other_db).await.unwrap();
+			let observed = scalar(&transaction, "SELECT value FROM counter").await;
+			transaction
+				.execute_unprepared("UPDATE counter SET value = value + 1")
+				.await
+				.unwrap();
+			transaction.commit().await.unwrap();
+			observed
+		});
+		ready.await.unwrap();
+		first.commit().await.unwrap();
+		assert_eq!(
+			tokio::time::timeout(Duration::from_secs(10), writer)
+				.await
+				.unwrap()
+				.unwrap(),
+			1
+		);
+		assert_eq!(scalar(&db, "SELECT value FROM counter").await, 2);
+		db.close().await.unwrap();
+	}
+
+	#[tokio::test]
+	async fn opening_a_missing_database_does_not_create_it() {
+		let dir = tempfile::tempdir().unwrap();
+		let missing = dir.path().join("missing.db");
+		assert!(Database::open(&missing).await.is_err());
+		assert!(!missing.exists());
+		assert!(connect_sqlite("sqlite://?mode=invalid", 1).await.is_err());
+	}
 }

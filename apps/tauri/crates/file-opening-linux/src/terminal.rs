@@ -100,6 +100,49 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn opening_a_terminal_without_a_command_omits_execution_flags() {
+		let terminal = resolve(Some("  wezterm  --config-file /tmp/config  ")).unwrap();
+		let root = tempfile::tempdir().unwrap();
+		let command = terminal.command(root.path(), &[]);
+		assert_eq!(command.get_program(), "wezterm");
+		assert_eq!(
+			command.get_args().collect::<Vec<_>>(),
+			["--config-file", "/tmp/config"]
+		);
+		assert_eq!(command.get_current_dir(), Some(root.path()));
+	}
+
+	#[test]
+	fn terminal_arguments_and_command_arguments_stay_separate_without_a_shell() {
+		let root = tempfile::tempdir().unwrap();
+		for (override_command, expected) in [
+			(
+				"kitty --single-instance",
+				vec!["--single-instance", "program", "a;$(false) b"],
+			),
+			(
+				"/opt/bin/wezterm --config-file config",
+				vec![
+					"--config-file",
+					"config",
+					"start",
+					"--",
+					"program",
+					"a;$(false) b",
+				],
+			),
+			(
+				"unknown --option",
+				vec!["--option", "-e", "program", "a;$(false) b"],
+			),
+		] {
+			let terminal = resolve(Some(override_command)).unwrap();
+			let command = terminal.command(root.path(), &["program".into(), "a;$(false) b".into()]);
+			assert_eq!(command.get_args().collect::<Vec<_>>(), expected);
+		}
+	}
+
+	#[test]
 	fn override_keeps_arguments_and_knows_exec_flags() {
 		let kitty = resolve(Some("kitty --single-instance")).unwrap();
 		assert_eq!(kitty.program, vec!["kitty", "--single-instance"]);

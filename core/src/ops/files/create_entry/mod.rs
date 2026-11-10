@@ -376,4 +376,101 @@ mod tests {
 		assert!(local_dir(&remote, "parent").is_err());
 		assert!(local_dir(&WingPath::local("/home/me"), "parent").is_ok());
 	}
+
+	#[tokio::test]
+	async fn missing_parent_and_template_return_errors_without_creating_files() {
+		let dir = tempfile::tempdir().unwrap();
+		let destination = dir.path().join("missing/notes.txt");
+		assert!(matches!(
+			create_empty_file(&destination).await,
+			Err(ActionError::Internal(_))
+		));
+		assert!(!destination.exists());
+		let destination = dir.path().join("copy.txt");
+		assert!(matches!(
+			copy_template(&dir.path().join("missing"), &destination).await,
+			Err(ActionError::Internal(_))
+		));
+		assert!(!destination.exists());
+	}
+
+	#[tokio::test]
+	async fn concurrent_creators_cannot_replace_the_winning_file() {
+		let dir = tempfile::tempdir().unwrap();
+		let destination = dir.path().join("notes.txt");
+		let (first, second) = tokio::join!(
+			create_empty_file(&destination),
+			create_empty_file(&destination)
+		);
+		let error = match (first, second) {
+			(Ok(()), Err(error)) | (Err(error), Ok(())) => error,
+			other => panic!("expected exactly one successful creator: {other:?}"),
+		};
+		assert!(matches!(error, ActionError::Validation { field, .. } if field == "name"));
+		assert_eq!(tokio::fs::metadata(destination).await.unwrap().len(), 0);
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn creation_conflicts_preserve_directories_and_dangling_links() {
+		let dir = tempfile::tempdir().unwrap();
+		let template = dir.path().join("template");
+		tokio::fs::write(&template, b"template body").await.unwrap();
+		let directory = dir.path().join("folder");
+		tokio::fs::create_dir(&directory).await.unwrap();
+		let link = dir.path().join("dangling");
+		let missing = dir.path().join("missing");
+		tokio::fs::symlink(&missing, &link).await.unwrap();
+		for destination in [&directory, &link] {
+			for result in [
+				create_empty_file(destination).await,
+				copy_template(&template, destination).await,
+				create_link(&template, destination).await,
+			] {
+				assert!(
+					matches!(result, Err(ActionError::Validation { field, .. }) if field == "name")
+				);
+			}
+		}
+		assert!(directory.is_dir());
+		assert_eq!(tokio::fs::read_link(link).await.unwrap(), missing);
+		assert!(!missing.exists());
+		assert_eq!(tokio::fs::read(template).await.unwrap(), b"template body");
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn file_creation_and_template_copy_preserve_non_utf8_names() {
+		use std::os::unix::ffi::OsStrExt;
+
+		let dir = tempfile::tempdir().unwrap();
+		let source = dir.path().join(std::ffi::OsStr::from_bytes(b"source\xff"));
+		let destination = dir.path().join(std::ffi::OsStr::from_bytes(b"copy\xfe"));
+		create_empty_file(&source).await.unwrap();
+		tokio::fs::write(&source, b"binary name").await.unwrap();
+		copy_template(&source, &destination).await.unwrap();
+		assert_eq!(tokio::fs::read(destination).await.unwrap(), b"binary name");
+	}
+
+	#[test]
+	fn invalid_names_and_nonphysical_parents_keep_the_validation_field() {
+		for name in ["", ".", "..", "../escape", "a\\b", "nul\0", "bad:name"] {
+			assert!(
+				matches!(validate_name(name), Err(ActionError::Validation { field, .. }) if field == "name"),
+				"{name:?}"
+			);
+		}
+		for path in [
+			WingPath::content(uuid::Uuid::nil()),
+			WingPath::from_uri("s3://bucket/key").unwrap(),
+			WingPath::from_uri("sidecar://00000000-0000-0000-0000-000000000000/ocr/default.json")
+				.unwrap(),
+		] {
+			for field in ["parent", "template", "target"] {
+				assert!(
+					matches!(local_dir(&path, field), Err(ActionError::Validation { field: actual, .. }) if actual == field)
+				);
+			}
+		}
+	}
 }

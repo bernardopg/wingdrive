@@ -158,7 +158,7 @@ impl TryFrom<&str> for SidecarFormat {
 			"webp" => Ok(Self::Webp),
 			"mp4" => Ok(Self::Mp4),
 			"json" => Ok(Self::Json),
-			"msgpack" | "messagepack" => Ok(Self::MessagePack),
+			"msgpack" | "messagepack" | "message_pack" => Ok(Self::MessagePack),
 			"text" | "txt" => Ok(Self::Text),
 			"ply" => Ok(Self::Ply),
 			_ => Err(format!("Invalid sidecar format: {}", value)),

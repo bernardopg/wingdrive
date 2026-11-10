@@ -62,6 +62,7 @@ if [ "$(uname -s)" = Linux ]; then
 		archive_contract_test
 		tag_manager_contract_test
 		indexing_rules_test
+		rpc_validation_contract_test
 		preflight_test
 		search_test
 		directory_listing_first_response_test

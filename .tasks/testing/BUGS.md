@@ -325,3 +325,67 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 
 - Estado: corrigido junto com a escrita em nome temporário; `copy_that_fails_while_reading_leaves_no_partial_file`.
 - Reprodução anterior: copiar `/proc/self/mem`, que abre e falha na primeira leitura, deixava um `mem` vazio no destino.
+
+## URIs de sidecar não reconheciam todos os tipos gerados
+
+- Estado: corrigido localmente; regressão `every_sidecar_kind_and_format_round_trips_through_uri` em `core/tests/addressing_contract_test.rs`.
+- Local: `core/src/domain/addressing.rs`, `WingPath::from_uri`.
+- Reprodução anterior: gere uma URI de `Thumbstrip` ou `GaussianSplat` com `to_uri` e tente lê-la com `from_uri`. Os diretórios `thumbstrips` e `gaussian_splats` eram recusados com `InvalidSidecarKind`.
+- Correção: reconhecer os dois diretórios que os tipos públicos já geram. O teste percorre os sete tipos e os seis formatos, com variante Unicode contendo ponto.
+- Limite: valida somente o endereçamento, sem gerar ou resolver arquivos de sidecar.
+
+## JSON de sidecar recusava o próprio formato MessagePack
+
+- Estado: corrigido localmente; regressão `every_sidecar_kind_and_format_round_trips_through_json` em `core/tests/addressing_contract_test.rs`.
+- Local: `core/src/ops/sidecar/types.rs`, `SidecarFormat::try_from`, usado pelo desserializador de `WingPath`.
+- Reprodução anterior: serialize um `WingPath::Sidecar` com `SidecarFormat::MessagePack` e desserialize o JSON. O valor público `message_pack` falhava com `Invalid sidecar format`.
+- Correção: aceitar `message_pack` junto dos aliases existentes `messagepack` e `msgpack`, preservando a representação pública.
+- Limite: não altera o formato dos arquivos MessagePack nem os tipos gerados dos clientes.
+
+## Caminhos do provedor genérico de nuvem não faziam ida e volta
+
+- Estado: corrigido localmente; regressão `every_cloud_service_preserves_keys_through_uri_and_json` em `core/tests/addressing_contract_test.rs`.
+- Local: `core/src/volume/backend/mod.rs`, `CloudServiceType::from_scheme`.
+- Reprodução anterior: construa um `WingPath::cloud` com `CloudServiceType::Other`. Sua URI `cloud://photos/key` retornava `UnknownScheme`, e seu JSON com `service = "cloud"` também era recusado.
+- Correção: reconhecer o esquema `cloud` correspondente à variante pública `Other`. O teste verifica os dez provedores, raiz vazia e chaves Unicode com caracteres reservados.
+- Limite: nenhum backend de nuvem foi acessado; a correção cobre a identidade dos caminhos.
+
+## Avaliação pública ignorava rejeição por diretórios filhos
+
+- Estado: corrigido localmente; regressão `child_directory_rejection_reaches_the_public_evaluator` em `core/tests/indexing_rules_test.rs`.
+- Local: `core/src/ops/indexing/rules.rs`, `IndexerRuler::evaluate_path`.
+- Reprodução anterior: configure `RejectIfChildrenDirectoriesArePresent` para `cache`, crie esse subdiretório e avalie a pasta pai. `apply_all` indicava rejeição, mas `evaluate_path` retornava `Accept` porque passava `is_dir = false` à decisão final.
+- Correção: usar `metadata.is_dir()` na avaliação. O teste também troca o diretório filho por um arquivo com o mesmo nome e exige aceitação.
+- Limite: exercita a API pública das regras; não verifica a reconciliação do watcher nem a remoção de registros já indexados.
+
+## Erro de leitura de diretório aparecia como erro de MessagePack
+
+- Estado: corrigido localmente; regressão `child_rules_distinguish_files_directories_and_missing_paths` em `core/tests/indexing_rules_test.rs`.
+- Local: `core/src/ops/indexing/rules.rs`, `accept_dir_for_its_children` e `reject_dir_for_its_children`.
+- Reprodução anterior: obtenha metadados de uma pasta e aplique uma regra de diretórios filhos a um caminho inexistente com esses metadados. A falha de `read_dir` virava `RuleParametersRMPDecode(TypeMismatch(...))`, ocultando o erro de filesystem.
+- Correção: propagar `Error::Io` com o erro original nas duas regras.
+- Limite: o teste usa caminho inexistente; não simula falhas de permissão nem erros durante a iteração de uma pasta já aberta.
+
+## Teste de autostart alterava o XDG global do runner
+
+- Estado: corrigido; o teste existente continua verificando criação, remoção e remoção repetida da entrada.
+- Local: `apps/tauri/src-tauri/src/background.rs`, `autostart_file_is_written_and_removed` e `write_autostart`.
+- Reprodução anterior: o teste chamava `set_var("XDG_CONFIG_HOME", ...)` no processo compartilhado pelos testes e não restaurava o valor. Outros testes podiam observar o diretório temporário ou um caminho já removido.
+- Correção: executar o teste existente num subprocesso com HOME/XDG temporários, sem alterar o ambiente do runner. Separar a gravação da entrada da resolução do ambiente permite que os casos novos verifiquem erros de criação e remoção sem apagar dados existentes.
+- Limite: sem sessão gráfica nem execução da entrada de autostart. Não foi observado acesso à configuração real do usuário durante a execução inicial.
+
+## Percentual escapado no Exec descartava os arquivos selecionados
+
+- Estado: corrigido; `escaped_percent_file_codes_remain_literal_and_still_append_files` falhava antes da correção e passou depois. A suíte de `file-opening-linux` terminou com 28 testes unitários e 1 doctest aprovados.
+- Local: `apps/tauri/crates/file-opening-linux/src/desktop_entry.rs`, `command_lines`.
+- Reprodução anterior: com `Exec=viewer --label=%%f %%u` e os arquivos `/first.txt` e `/second.txt`, a função produzia dois comandos `viewer --label=%f %u`, ambos sem os arquivos. A busca por substring confundia o percentual literal com os códigos `%f` e `%u`.
+- Correção: consumir cada par de percentual e código antes de decidir se a entrada aceita um arquivo por comando. Sem código real de arquivo, os dois caminhos são anexados a um único comando. Outro caso verifica que `%%%f` ainda expande o percentual literal seguido do código real.
+- Limite: o teste verifica os argumentos gerados, sem executar um aplicativo gráfico ou consultar associações reais do usuário.
+
+## Servidor de mídia respondia 403 para pasta no Windows
+
+- Estado: corrigido; `file_stream_rejects_missing_files_directories_and_relative_paths` falhou no job `Rust Workspace (Windows)` do PR #359 (`403` em vez de `400`) e define o comportamento esperado.
+- Local: `apps/tauri/src-tauri/src/server.rs`, `serve_file`.
+- Reprodução anterior: pedir uma pasta ao `/file`. No Unix a pasta abre e a checagem `is_dir` responde `400`; no Windows `File::open` falha com acesso negado, que virava `403`.
+- Correção: um erro de abertura numa pasta responde `400` nas duas plataformas.
+- Limite: conferido só pelo CI do Windows; sem máquina Windows à mão.
