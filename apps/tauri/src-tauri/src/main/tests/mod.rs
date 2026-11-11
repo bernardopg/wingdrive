@@ -257,3 +257,7 @@ async fn app_state_commands_report_selection_library_and_subscriptions() {
 		format!("Subscription {id} not found")
 	);
 }
+
+#[cfg(unix)]
+mod daemon;
+mod events;

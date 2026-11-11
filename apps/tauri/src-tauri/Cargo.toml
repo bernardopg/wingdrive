@@ -78,6 +78,10 @@ file-opening-linux = { path = "../crates/file-opening-linux" }
 gtk = "0.18.2"
 zbus = { version = "6.0", default-features = false, features = ["tokio", "proxy", "service"] }
 
+# A peer-to-peer bus connection stands in for the notification server in tests.
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+zbus = { version = "6.0", default-features = false, features = ["tokio", "proxy", "service", "p2p"] }
+
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 

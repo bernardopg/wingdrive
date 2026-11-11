@@ -203,4 +203,38 @@ mod tests {
 		assert!(!should_serve(Some("off"), Some("WingDrive.desktop")));
 		assert!(should_serve(Some("maybe"), Some("wingdrive.desktop")));
 	}
+
+	#[test]
+	fn folders_open_as_tabs_and_files_open_selected() {
+		use crate::launch::OpenRequest;
+
+		let dir = tempfile::tempdir().unwrap();
+		let file = dir.path().join("report.pdf");
+		std::fs::write(&file, "x").unwrap();
+		let uri = |path: &std::path::Path| tauri::Url::from_file_path(path).unwrap().to_string();
+		let uris = [
+			uri(dir.path()),
+			uri(&file),
+			"smb://server/share".to_string(),
+		];
+
+		assert_eq!(
+			super::folder_requests(&uris),
+			[
+				OpenRequest {
+					directory: dir.path().to_path_buf(),
+					select: None,
+				},
+				OpenRequest {
+					directory: dir.path().to_path_buf(),
+					select: Some(file.clone()),
+				},
+			]
+		);
+		let items = super::item_requests(&uris);
+		assert_eq!(items.len(), 2);
+		assert_eq!(items[0].select.as_deref(), Some(dir.path()));
+		assert_eq!(items[1].select.as_deref(), Some(file.as_path()));
+		assert!(super::item_requests(&[]).is_empty());
+	}
 }

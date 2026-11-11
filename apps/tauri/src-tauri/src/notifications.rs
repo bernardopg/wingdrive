@@ -646,6 +646,9 @@ mod linux {
 		}
 	}
 
+	#[cfg(test)]
+	#[path = "tests/bus.rs"]
+	mod bus_tests;
 }
 
 #[cfg(target_os = "linux")]

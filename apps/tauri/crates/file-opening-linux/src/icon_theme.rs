@@ -265,6 +265,69 @@ fn menu_dirs(index: &str) -> Vec<String> {
 mod tests {
 	use super::*;
 
+	fn xdg_in(config_home: &Path) -> XdgDirs {
+		XdgDirs {
+			config_home: config_home.to_path_buf(),
+			config_dirs: vec![],
+			data_home: config_home.join("data"),
+			data_dirs: vec![],
+			desktops: vec![],
+		}
+	}
+
+	#[test]
+	fn theme_name_prefers_gnome_then_gtk_files_then_gtk_theme() {
+		let dir = tempfile::tempdir().unwrap();
+		let xdg = xdg_in(dir.path());
+		assert_eq!(current_theme_from(None, &xdg, None), None);
+		assert_eq!(
+			current_theme_from(None, &xdg, Some("Adwaita-dark:dark".into())).as_deref(),
+			Some("Adwaita-dark")
+		);
+		assert_eq!(current_theme_from(None, &xdg, Some(" :dark".into())), None);
+		std::fs::create_dir_all(dir.path().join("gtk-3.0")).unwrap();
+		std::fs::write(
+			dir.path().join("gtk-3.0/settings.ini"),
+			"[Settings]\ngtk-icon-theme-name=\"Papirus\"\n",
+		)
+		.unwrap();
+		assert_eq!(
+			current_theme_from(None, &xdg, Some("Adwaita".into())).as_deref(),
+			Some("Papirus")
+		);
+		// GTK 4's file wins over GTK 3's.
+		std::fs::create_dir_all(dir.path().join("gtk-4.0")).unwrap();
+		std::fs::write(
+			dir.path().join("gtk-4.0/settings.ini"),
+			"[Settings]\ngtk-icon-theme-name=Breeze\n",
+		)
+		.unwrap();
+		assert_eq!(
+			current_theme_from(None, &xdg, None).as_deref(),
+			Some("Breeze")
+		);
+		assert_eq!(
+			current_theme_from(Some("Yaru".into()), &xdg, None).as_deref(),
+			Some("Yaru")
+		);
+	}
+
+	#[test]
+	fn environment_lookup_finds_absolute_icons_and_caches_misses() {
+		let dir = tempfile::tempdir().unwrap();
+		let icon = dir.path().join("app.png");
+		std::fs::write(&icon, b"\x89PNG").unwrap();
+		let lookup = IconLookup::from_env();
+		assert_eq!(lookup.find(icon.to_str().unwrap()), Some(icon.clone()));
+		let url = icon_data_url(icon.to_str().unwrap()).unwrap();
+		assert!(url.starts_with("data:image/png;base64,"), "{url}");
+		// The second call is answered from the cache, even after the file is gone.
+		std::fs::remove_file(&icon).unwrap();
+		assert_eq!(icon_data_url(icon.to_str().unwrap()), Some(url));
+		assert_eq!(icon_data_url("wingdrive-test-no-such-icon-name"), None);
+		assert_eq!(icon_data_url("wingdrive-test-no-such-icon-name"), None);
+	}
+
 	fn write(path: &Path, contents: &[u8]) {
 		std::fs::create_dir_all(path.parent().unwrap()).unwrap();
 		std::fs::write(path, contents).unwrap();

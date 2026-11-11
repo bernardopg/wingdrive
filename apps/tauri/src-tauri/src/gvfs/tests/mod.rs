@@ -108,3 +108,70 @@ async fn mount_and_unmount_reject_input_before_running_gio() {
 		);
 	}
 }
+
+/// `sh -c script` standing in for `gio mount`; `$0` is the URI.
+fn mount_script(script: &str) -> std::process::Command {
+	let mut command = std::process::Command::new("sh");
+	command.args(["-c", script, "sftp://server/"]);
+	command
+}
+
+#[test]
+fn mount_reports_gio_results_and_answers_the_password_prompt() {
+	use std::time::Duration;
+
+	use super::run_mount_command;
+
+	let run = |script: &str, password: Option<&str>| {
+		run_mount_command(
+			mount_script(script),
+			"sftp://server/",
+			password,
+			Duration::from_secs(10),
+		)
+	};
+	run("exit 0", None).unwrap();
+	// The password is the only line gio reads from stdin.
+	run("read line; [ \"$line\" = secret ]", Some("secret")).unwrap();
+	assert!(run("read line; [ \"$line\" = secret ]", Some("wrong")).is_err());
+	// A location that is already mounted is what the caller wanted.
+	run(
+		"echo 'gio: sftp://server/: Location is already mounted' >&2; exit 2",
+		None,
+	)
+	.unwrap();
+	assert_eq!(
+		run(
+			"echo 'first' >&2; echo 'gio: sftp://server/: Permission denied' >&2; exit 2",
+			None
+		)
+		.unwrap_err(),
+		"sftp://server/: Permission denied"
+	);
+	assert_eq!(
+		run("exit 1", None).unwrap_err(),
+		"Could not mount sftp://server/"
+	);
+}
+
+#[test]
+fn mount_gives_up_on_a_prompt_that_never_ends() {
+	use std::time::Duration;
+
+	let error = super::run_mount_command(
+		mount_script("sleep 30"),
+		"sftp://server/",
+		None,
+		Duration::from_millis(200),
+	)
+	.unwrap_err();
+	assert_eq!(error, "Timed out connecting to sftp://server/");
+	let error = super::run_mount_command(
+		std::process::Command::new("/nonexistent/gio"),
+		"sftp://server/",
+		None,
+		Duration::from_secs(1),
+	)
+	.unwrap_err();
+	assert!(error.starts_with("gio is not available"), "{error}");
+}

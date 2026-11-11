@@ -266,6 +266,65 @@ fn merge_servers(mut servers: Vec<DiscoveredServer>, home: Option<&Path>) -> Vec
 mod tests {
 	use super::*;
 
+	fn avahi_script(script: &str) -> Command {
+		let mut command = Command::new("sh");
+		command.args(["-c", script]);
+		command
+	}
+
+	#[test]
+	fn browsing_parses_what_avahi_printed_even_when_it_is_stopped() {
+		let line = "=;eth0;IPv4;NAS;_smb._tcp;local;nas.local;10.0.0.2;445;";
+		let servers = browse_with(
+			avahi_script(&format!("echo '{line}'")),
+			Duration::from_secs(10),
+		);
+		assert_eq!(servers.len(), 1);
+		assert_eq!(servers[0].uri, "smb://nas.local/");
+		// avahi-browse that never terminates is stopped at the time limit.
+		let started = Instant::now();
+		let servers = browse_with(avahi_script("sleep 30"), Duration::from_millis(200));
+		assert!(servers.is_empty());
+		assert!(started.elapsed() < Duration::from_secs(10));
+		// A listing larger than the pipe buffer arrives whole, without waiting
+		// for the time limit.
+		let started = Instant::now();
+		let servers = browse_with(
+			avahi_script(
+				"i=0; while [ $i -lt 2000 ]; do \
+				 echo \"=;eth0;IPv4;NAS$i;_smb._tcp;local;nas$i.local;10.0.0.2;445;padding-padding\"; \
+				 i=$((i+1)); done",
+			),
+			Duration::from_secs(20),
+		);
+		assert_eq!(servers.len(), 2000);
+		assert!(started.elapsed() < Duration::from_secs(15));
+		// A host without Avahi has no announced servers.
+		assert!(browse_with(
+			Command::new("/nonexistent/avahi-browse"),
+			Duration::from_secs(1)
+		)
+		.is_empty());
+	}
+
+	#[test]
+	fn ssh_hosts_are_added_unless_an_announced_server_has_the_same_address() {
+		let root = tempfile::tempdir().unwrap();
+		std::fs::create_dir(root.path().join(".ssh")).unwrap();
+		std::fs::write(root.path().join(".ssh/config"), "Host nas backup\n").unwrap();
+		let announced = DiscoveredServer {
+			name: "nas".into(),
+			uri: "sftp://nas/".into(),
+			kind: "sftp".into(),
+			source: "mdns".into(),
+		};
+		let servers = merge_servers(vec![announced], Some(root.path()));
+		let uris: Vec<&str> = servers.iter().map(|s| s.uri.as_str()).collect();
+		assert_eq!(uris, ["sftp://nas/", "sftp://backup/"]);
+		assert_eq!(servers[0].source, "mdns");
+		assert!(merge_servers(vec![], None).is_empty());
+	}
+
 	#[test]
 	fn ssh_aliases_are_unique_and_pattern_only_blocks_add_no_servers() {
 		assert_eq!(parse_ssh_config("# Host ignored\nHost nas nas *.lan !blocked ?\nHOST = backup nas # skip\nHostName other\nMatch host ignored\nHost\n"), ["nas", "backup"]);

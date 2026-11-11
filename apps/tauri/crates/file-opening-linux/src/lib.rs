@@ -189,3 +189,31 @@ pub fn run_context_action(id: &str, paths: &[PathBuf]) -> Result<(), String> {
 	}
 	Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn context_actions_refuse_missing_files_and_actions_that_do_not_apply() {
+		let dir = tempfile::tempdir().unwrap();
+		let file = dir.path().join("report.txt");
+		std::fs::write(&file, "x").unwrap();
+		let missing = dir.path().join("gone.txt");
+
+		let error = run_context_action("any", &[file.clone(), missing.clone()]).unwrap_err();
+		assert_eq!(error, format!("{} no longer exists", missing.display()));
+		let error =
+			run_context_action("wingdrive-test-no-such-action", std::slice::from_ref(&file))
+				.unwrap_err();
+		assert_eq!(
+			error,
+			"The action wingdrive-test-no-such-action does not apply to this selection"
+		);
+		// Whatever service menus this machine has, every listed action applies
+		// to the selection and carries a name.
+		for action in context_actions(&[file]) {
+			assert!(!action.id.is_empty() && !action.name.is_empty());
+		}
+	}
+}
