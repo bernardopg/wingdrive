@@ -1,0 +1,9 @@
+---
+import Simple from "../../views/Simple.astro";
+import { t } from "../../i18n/strings";
+const s = t.pt.privacy;
+---
+
+<Simple lang="pt" title={s.title} lead={s.lead}>
+	<div class="prose">{s.body.map((p) => <p>{p}</p>)}</div>
+</Simple>

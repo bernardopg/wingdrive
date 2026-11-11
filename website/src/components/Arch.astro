@@ -1,0 +1,180 @@
+---
+import { t, type Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].arch;
+const strip = t[lang].strip;
+---
+
+<section class="section arch" id="architecture">
+	<div class="bg-grid"></div>
+	<div class="wrap">
+		<div class="section-head center">
+			<span class="eyebrow reveal">{s.eyebrow}</span>
+			<h2 class="h-lg reveal" style="--d:60ms">{s.title}</h2>
+			<p class="lead reveal" style="--d:120ms">{s.lead}</p>
+		</div>
+		<div class="diagram reveal" style="--d:120ms">
+			<div class="tier clients">
+				{s.clients.map((c) => <div class="node">{c}</div>)}
+			</div>
+			<div class="wire" aria-hidden="true"><span>JSON-RPC 2.0</span></div>
+			<div class="daemon">
+				<div class="dh"><span class="led"></span><code>{s.core}</code></div>
+				<div class="layers">
+					{s.layers.map((l) => <div>{l}</div>)}
+				</div>
+			</div>
+			<div class="wire" aria-hidden="true"><span>VDFS · WingPath</span></div>
+			<div class="tier storage">
+				{s.storage.map((c) => <div class="node">{c}</div>)}
+			</div>
+		</div>
+		<div class="stack reveal">
+			<span>{strip.title}</span>
+			<ul>{strip.items.map((i) => <li>{i}</li>)}</ul>
+		</div>
+	</div>
+</section>
+
+<style>
+	.arch {
+		overflow: hidden;
+	}
+	.diagram {
+		display: grid;
+		gap: 0;
+		max-width: 960px;
+		margin-inline: auto;
+	}
+	.tier {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 12px;
+	}
+	.node {
+		text-align: center;
+		padding: 16px 12px;
+		border-radius: 14px;
+		border: 1px solid var(--line);
+		background: rgb(20 13 41 / 0.8);
+		font-size: 14.5px;
+		color: var(--text);
+	}
+	.storage .node {
+		color: var(--muted);
+	}
+	.wire {
+		position: relative;
+		height: 70px;
+		display: grid;
+		place-items: center;
+	}
+	.wire::before {
+		content: "";
+		position: absolute;
+		inset: 0 50%;
+		width: 2px;
+		margin-left: -1px;
+		background: repeating-linear-gradient(180deg, #a78bfa 0 6px, transparent 6px 14px);
+		background-size: 2px 28px;
+		animation: flowv 1s linear infinite;
+		opacity: 0.7;
+	}
+	@keyframes flowv {
+		to {
+			background-position: 0 28px;
+		}
+	}
+	.wire span {
+		position: relative;
+		font-family: var(--mono);
+		font-size: 12px;
+		color: var(--lavender);
+		background: var(--bg);
+		padding: 3px 10px;
+		border-radius: 999px;
+		border: 1px solid var(--line);
+	}
+	.daemon {
+		position: relative;
+		padding: 22px;
+		border-radius: 20px;
+		border: 1px solid var(--line-strong);
+		background: linear-gradient(160deg, rgb(124 58 237 / 0.22), rgb(20 13 41 / 0.9) 60%);
+		box-shadow: 0 30px 90px -40px rgb(124 58 237 / 0.9);
+	}
+	.dh {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin-bottom: 16px;
+		font-size: 17px;
+	}
+	.dh code {
+		font-weight: 600;
+	}
+	.led {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+		background: var(--ok);
+		box-shadow: 0 0 12px var(--ok);
+		animation: blink 2s ease-in-out infinite;
+	}
+	@keyframes blink {
+		50% {
+			opacity: 0.4;
+		}
+	}
+	.layers {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 10px;
+	}
+	.layers div {
+		padding: 12px 10px;
+		border-radius: 12px;
+		background: rgb(10 6 20 / 0.55);
+		border: 1px solid var(--line);
+		font-size: 13.5px;
+		color: var(--muted);
+		text-align: center;
+	}
+	.stack {
+		margin-top: 64px;
+		display: grid;
+		justify-items: center;
+		gap: 16px;
+		color: var(--dim);
+		font-size: 14px;
+	}
+	.stack ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 10px;
+	}
+	.stack li {
+		font-family: var(--mono);
+		font-size: 13.5px;
+		color: var(--lavender);
+		padding: 7px 14px;
+		border-radius: 999px;
+		border: 1px solid var(--line);
+	}
+	@media (max-width: 760px) {
+		.tier {
+			grid-template-columns: 1fr 1fr;
+		}
+		.layers {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+</style>

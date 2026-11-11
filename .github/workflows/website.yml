@@ -1,0 +1,114 @@
+name: Website
+
+# Builds wingdrive.org from website/ and deploys it to Hostinger over SSH.
+# The download page and changelog are generated at build time from the latest
+# GitHub release and CHANGELOG.md, so the site redeploys after every release
+# (workflow_run, because a release made with GITHUB_TOKEN does not trigger
+# `release` events), on every change to the site or the changelog, and daily
+# as a safety net. Pull requests only build.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'CHANGELOG.md'
+      - '.github/workflows/website.yml'
+  pull_request:
+    paths:
+      - 'website/**'
+      - '.github/workflows/website.yml'
+  workflow_run:
+    workflows: ['WingDrive Release']
+    types: [completed]
+  release:
+    types: [published, edited]
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-${{ github.event.pull_request.number || 'main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+        if: github.event_name != 'pull_request'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+        if: github.event_name == 'pull_request'
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.3"
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Build
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bun run build
+      - name: Check output
+        run: |
+          test -f dist/index.html
+          test -f dist/pt/index.html
+          test -f dist/.htaccess
+          grep -q 'releases/download/' dist/download/index.html
+          echo "pages: $(find dist -name '*.html' | wc -l)"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: website-dist
+          path: website/dist
+          include-hidden-files: true
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Hostinger
+    needs: build
+    if: github.event_name != 'pull_request' && github.repository == 'bernardopg/wingdrive'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: website
+      url: https://wingdrive.org
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: website-dist
+          path: dist
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.WEBSITE_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.WEBSITE_SSH_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Upload
+        env:
+          HOST: ${{ secrets.WEBSITE_SSH_HOST }}
+          PORT: ${{ secrets.WEBSITE_SSH_PORT }}
+          USER: ${{ secrets.WEBSITE_SSH_USER }}
+        run: |
+          rsync -rlz --delete --checksum \
+            --exclude '.well-known' \
+            -e "ssh -i ~/.ssh/deploy -p $PORT -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
+            dist/ "$USER@$HOST:domains/wingdrive.org/public_html/"
+      - name: Clean up key
+        if: always()
+        run: rm -f ~/.ssh/deploy

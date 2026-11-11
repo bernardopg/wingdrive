@@ -1,0 +1,82 @@
+---
+import Icon from "./Icon.astro";
+import { t, type Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].features;
+---
+
+<section class="section" id="features">
+	<div class="bg-grid"></div>
+	<div class="wrap">
+		<div class="section-head center">
+			<span class="eyebrow reveal">{s.eyebrow}</span>
+			<h2 class="h-lg reveal" style="--d:60ms">{s.title}</h2>
+			<p class="lead reveal" style="--d:120ms">{s.lead}</p>
+		</div>
+		<div class="grid">
+			{
+				s.items.map((f, i) => (
+					<article class="card reveal" style={`--d:${(i % 4) * 70}ms`}>
+						<span class="ico">
+							<Icon name={f.icon} size={22} />
+						</span>
+						<h3>{f.t}</h3>
+						<p>{f.d}</p>
+					</article>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<style>
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 16px;
+	}
+	.card {
+		display: grid;
+		align-content: start;
+		gap: 12px;
+		padding: 26px;
+	}
+	.card:hover {
+		transform: translateY(-4px);
+	}
+	.ico {
+		display: grid;
+		place-items: center;
+		width: 46px;
+		height: 46px;
+		border-radius: 14px;
+		color: var(--lavender);
+		background: linear-gradient(145deg, rgb(139 92 246 / 0.25), rgb(67 56 202 / 0.12));
+		border: 1px solid var(--line-strong);
+		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+		margin-bottom: 6px;
+	}
+	h3 {
+		font-size: 18px;
+		font-weight: 600;
+	}
+	p {
+		color: var(--muted);
+		font-size: 15px;
+		line-height: 1.6;
+	}
+	@media (max-width: 1050px) {
+		.grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+	@media (max-width: 560px) {
+		.grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

@@ -145,11 +145,13 @@ requests ajudam tanto quanto: [Issues](https://github.com/bernardopg/wingdrive/i
 
 ## Contato
 
+- Site: [wingdrive.org](https://wingdrive.org/pt/)
+- Discord: [servidor do WingDrive](https://discord.gg/ZHbD5Hbh)
+
 **Bernardo Gomes**, autor e mantenedor
 
 - E-mail: [bernardo.gomes@bebitterbebetter.com.br](mailto:bernardo.gomes@bebitterbebetter.com.br)
-- Site: [bebitterbebetter.com.br](https://bebitterbebetter.com.br)
-- Discord: `omg_bitter`
+- Site pessoal: [bebitterbebetter.com.br](https://bebitterbebetter.com.br)
 - Instagram: [@be.pgomes](https://instagram.com/be.pgomes)
 
 Relate falhas de segurança em particular pelo

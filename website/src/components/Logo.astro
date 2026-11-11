@@ -1,0 +1,35 @@
+---
+// The WingDrive mark: three stacked feathers on the dark tile.
+interface Props {
+	size?: number;
+	tile?: boolean;
+}
+const { size = 32, tile = true } = Astro.props;
+const id = `wd${Math.random().toString(36).slice(2, 7)}`;
+---
+
+<svg width={size} height={size} viewBox="0 0 128 128" role="img" aria-hidden="true" class="logo">
+	<defs>
+		<linearGradient id={`${id}a`} x1="22" y1="24" x2="71.6" y2="99.3" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#a78bfa"></stop>
+			<stop offset="1" stop-color="#4338ca"></stop>
+		</linearGradient>
+	</defs>
+	{tile && <rect width="128" height="128" rx="28" fill="#140d29" stroke="rgba(167,139,250,.35)" stroke-width="2" />}
+	<path class="f1" d="M22 78 C40 46 66 28 104 24 C96 46 78 62 52 70 Z" fill={`url(#${id}a)`}></path>
+	<path class="f2" d="M26 92 C44 66 68 52 100 48 C92 66 74 79 50 85 Z" fill={`url(#${id}a)`} opacity="0.72"></path>
+	<path class="f3" d="M30 104 C46 84 66 74 94 71 C87 85 71 95 50 99 Z" fill={`url(#${id}a)`} opacity="0.44"></path>
+</svg>
+
+<style>
+	.logo path {
+		transform-origin: 30px 100px;
+		transition: transform 0.6s var(--ease);
+	}
+	:global(a:hover) > .logo .f1 {
+		transform: rotate(-5deg);
+	}
+	:global(a:hover) > .logo .f2 {
+		transform: rotate(-2.5deg);
+	}
+</style>

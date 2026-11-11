@@ -1,0 +1,44 @@
+---
+// Plain prose page: privacy, changelog and other text pages.
+import Base from "../layouts/Base.astro";
+import type { Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+	title: string;
+	lead: string;
+}
+const { lang, title, lead } = Astro.props;
+---
+
+<Base lang={lang} title={title} description={lead}>
+	<section class="head">
+		<div class="glow-orb" style="width:600px;height:420px;left:-120px;top:-160px;background:#4338ca"></div>
+		<div class="wrap narrow">
+			<h1 class="h-lg">{title}</h1>
+			<p class="lead">{lead}</p>
+		</div>
+	</section>
+	<article class="wrap narrow prose">
+		<slot />
+	</article>
+</Base>
+
+<style>
+	.head {
+		position: relative;
+		padding: 150px 0 40px;
+		overflow: hidden;
+	}
+	.head .wrap {
+		display: grid;
+		gap: 16px;
+		position: relative;
+	}
+	.narrow {
+		max-width: 820px;
+	}
+	.prose {
+		padding-bottom: 80px;
+	}
+</style>

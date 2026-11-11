@@ -1,0 +1,58 @@
+---
+import Base from "../layouts/Base.astro";
+import Icon from "../components/Icon.astro";
+import { t } from "../i18n/strings";
+const s = t.en.notFound;
+const p = t.pt.notFound;
+---
+
+<Base lang="en" title="404">
+	<section class="nf">
+		<div class="glow-orb" style="width:600px;height:600px;left:50%;top:10%;margin-left:-300px;background:#6d28d9"></div>
+		<div class="wrap inner">
+			<p class="code grad">404</p>
+			<h1 class="h-lg">{s.title}</h1>
+			<p class="lead">{s.lead}</p>
+			<p class="lead pt" lang="pt-BR">{p.title} {p.lead}</p>
+			<div class="btns">
+				<a class="btn btn-primary" href="/"><Icon name="arrow" size={18} />{s.home}</a>
+				<a class="btn" href="/docs/"><Icon name="book" size={18} />Docs</a>
+			</div>
+		</div>
+	</section>
+</Base>
+
+<style>
+	.nf {
+		position: relative;
+		min-height: 80vh;
+		display: grid;
+		place-items: center;
+		text-align: center;
+		overflow: hidden;
+		padding-top: 72px;
+	}
+	.inner {
+		display: grid;
+		justify-items: center;
+		gap: 18px;
+		position: relative;
+	}
+	.code {
+		font-family: var(--display);
+		font-size: clamp(90px, 18vw, 180px);
+		font-weight: 700;
+		line-height: 1;
+		letter-spacing: -0.05em;
+	}
+	.pt {
+		font-size: 15px;
+		color: var(--dim);
+	}
+	.btns {
+		display: flex;
+		gap: 12px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+</style>

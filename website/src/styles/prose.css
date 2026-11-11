@@ -1,0 +1,105 @@
+/* Typography for rendered Markdown (docs, changelog, privacy). */
+.prose {
+	color: #d9d4f1;
+	font-size: 16.5px;
+	line-height: 1.75;
+}
+.prose > * + * {
+	margin-top: 1.05em;
+}
+.prose h2 {
+	font-size: 28px;
+	margin-top: 2.2em;
+	padding-top: 0.4em;
+	scroll-margin-top: 96px;
+}
+.prose h3 {
+	font-size: 20px;
+	margin-top: 1.8em;
+	scroll-margin-top: 96px;
+}
+.prose h4 {
+	font-size: 17px;
+	margin-top: 1.4em;
+}
+.prose a {
+	color: var(--lavender);
+	text-decoration: underline;
+	text-decoration-color: rgb(196 181 253 / 0.35);
+	text-underline-offset: 3px;
+}
+.prose a:hover {
+	text-decoration-color: var(--lavender);
+}
+.prose ul,
+.prose ol {
+	padding-left: 1.3em;
+}
+.prose li + li {
+	margin-top: 0.4em;
+}
+.prose li::marker {
+	color: var(--violet);
+}
+.prose strong {
+	color: var(--text);
+}
+.prose :not(pre) > code {
+	font-size: 0.88em;
+	padding: 0.15em 0.4em;
+	border-radius: 6px;
+	background: rgb(139 92 246 / 0.12);
+	border: 1px solid var(--line);
+	color: #e9e3ff;
+	overflow-wrap: anywhere;
+}
+.prose pre {
+	padding: 16px 18px;
+	border-radius: 12px;
+	border: 1px solid var(--line);
+	font-size: 13.5px;
+	line-height: 1.6;
+	overflow-x: auto;
+	background: #0c0818 !important;
+}
+.prose blockquote {
+	margin: 1.4em 0;
+	padding: 14px 18px;
+	border-left: 3px solid var(--violet);
+	background: rgb(139 92 246 / 0.08);
+	border-radius: 0 12px 12px 0;
+	color: var(--muted);
+}
+.prose blockquote p {
+	margin: 0;
+}
+.prose table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 15px;
+	display: block;
+	overflow-x: auto;
+}
+.prose th,
+.prose td {
+	text-align: left;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--line);
+}
+.prose th {
+	color: var(--text);
+	font-weight: 600;
+}
+.prose hr {
+	border: 0;
+	border-top: 1px solid var(--line);
+	margin: 2.4em 0;
+}
+.prose img {
+	border-radius: 12px;
+	border: 1px solid var(--line);
+}
+.prose > h2:first-child,
+.prose > p:first-child + h2 {
+	margin-top: 1.4em;
+}

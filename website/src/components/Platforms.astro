@@ -1,0 +1,193 @@
+---
+import Icon from "./Icon.astro";
+import { t, type Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const p = t[lang].platforms;
+const r = t[lang].roadmap;
+const icons = ["tux", "windows", "apple", "docker", "android"];
+---
+
+<section class="section" id="platforms">
+	<div class="wrap">
+		<div class="section-head">
+			<span class="eyebrow reveal">{p.eyebrow}</span>
+			<h2 class="h-lg reveal" style="--d:60ms">{p.title}</h2>
+		</div>
+		<div class="plats">
+			{
+				p.items.map((it, i) => (
+					<article class="card reveal" style={`--d:${i * 60}ms`}>
+						<div class="top">
+							<Icon name={icons[i]} size={26} />
+							<span class="pill">
+								<span class:list={["dot", { warn: it.tone === "warn", dim: it.tone === "dim" }]} />
+								{it.s}
+							</span>
+						</div>
+						<h3>{it.os}</h3>
+						<p>{it.d}</p>
+					</article>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<section class="section roadmap" id="roadmap">
+	<div class="wrap">
+		<div class="section-head">
+			<span class="eyebrow reveal">{r.eyebrow}</span>
+			<h2 class="h-lg reveal" style="--d:60ms">{r.title}</h2>
+		</div>
+		<ol class="timeline">
+			{
+				r.items.map((it, i) => (
+					<li class:list={["reveal", { done: i === 0, now: i === 1 }]} style={`--d:${i * 80}ms`}>
+						<span class="m">{it.m}</span>
+						<span class="s">{it.s}</span>
+						<p>{it.t}</p>
+					</li>
+				))
+			}
+		</ol>
+	</div>
+</section>
+
+<style>
+	.plats {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 14px;
+	}
+	.card {
+		display: grid;
+		align-content: start;
+		gap: 10px;
+		padding: 22px;
+	}
+	.top {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		color: var(--lavender);
+		margin-bottom: 6px;
+	}
+	.pill {
+		font-size: 12px;
+		padding: 4px 10px;
+	}
+	h3 {
+		font-size: 18px;
+	}
+	.card p {
+		color: var(--muted);
+		font-size: 14.5px;
+	}
+	.roadmap {
+		padding-top: 0;
+	}
+	.timeline {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 14px;
+		position: relative;
+	}
+	.timeline::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 21px;
+		height: 2px;
+		background: linear-gradient(90deg, var(--ok), var(--violet) 30%, rgb(167 139 250 / 0.15));
+	}
+	.timeline li {
+		position: relative;
+		display: grid;
+		gap: 8px;
+		padding-top: 52px;
+	}
+	.timeline li::before {
+		content: "";
+		position: absolute;
+		top: 14px;
+		left: 0;
+		width: 16px;
+		height: 16px;
+		border-radius: 50%;
+		background: var(--bg);
+		border: 2px solid rgb(167 139 250 / 0.4);
+	}
+	.timeline li.done::before {
+		background: var(--ok);
+		border-color: var(--ok);
+	}
+	.timeline li.now::before {
+		background: var(--violet);
+		border-color: var(--lavender);
+		box-shadow: 0 0 0 6px rgb(139 92 246 / 0.25);
+		animation: now 2s ease-in-out infinite;
+	}
+	@keyframes now {
+		50% {
+			box-shadow: 0 0 0 12px rgb(139 92 246 / 0);
+		}
+	}
+	.m {
+		font-family: var(--display);
+		font-size: 26px;
+		font-weight: 700;
+	}
+	.s {
+		font-family: var(--mono);
+		font-size: 12px;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--lavender);
+	}
+	.done .s {
+		color: var(--ok);
+	}
+	.timeline p {
+		color: var(--muted);
+		font-size: 14.5px;
+	}
+	@media (max-width: 1050px) {
+		.plats {
+			grid-template-columns: repeat(2, 1fr);
+		}
+		.timeline {
+			grid-template-columns: 1fr;
+			gap: 26px;
+			padding-left: 30px;
+		}
+		.timeline::before {
+			left: 7px;
+			right: auto;
+			top: 0;
+			bottom: 0;
+			width: 2px;
+			height: auto;
+			background: linear-gradient(180deg, var(--ok), var(--violet) 30%, rgb(167 139 250 / 0.15));
+		}
+		.timeline li {
+			padding-top: 0;
+		}
+		.timeline li::before {
+			left: -30px;
+			top: 8px;
+		}
+	}
+	@media (max-width: 520px) {
+		.plats {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

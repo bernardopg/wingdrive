@@ -1,0 +1,77 @@
+---
+import Icon from "./Icon.astro";
+import { t, href, type Lang, REPO } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].cta;
+---
+
+<section class="section cta">
+	<div class="wrap">
+		<div class="panel reveal">
+			<video class="loop" autoplay muted loop playsinline preload="none" poster="/video/winged-drive-poster.webp" aria-hidden="true">
+				<source src="/video/winged-drive.webm" type="video/webm" />
+				<source src="/video/winged-drive.mp4" type="video/mp4" />
+			</video>
+			<div class="copy">
+				<h2 class="h-lg">{s.title}</h2>
+				<p class="lead">{s.lead}</p>
+				<div class="btns">
+					<a class="btn btn-primary" href={href(lang, "/download/")}><Icon name="download" size={18} />{s.primary}</a>
+					<a class="btn" href={REPO} rel="noopener"><Icon name="github" size={18} />{s.secondary}</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	.panel {
+		position: relative;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		align-items: center;
+		gap: 24px;
+		border-radius: 32px;
+		border: 1px solid var(--line-strong);
+		background:
+			radial-gradient(120% 120% at 100% 50%, rgb(124 58 237 / 0.35), transparent 60%),
+			linear-gradient(160deg, #150d2d, #0c0719);
+		overflow: hidden;
+		padding: clamp(28px, 5vw, 64px);
+		box-shadow: 0 60px 140px -60px rgb(124 58 237 / 0.9);
+	}
+	.copy {
+		display: grid;
+		gap: 18px;
+		position: relative;
+		z-index: 1;
+	}
+	.btns {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+		margin-top: 8px;
+	}
+	.loop {
+		order: 2;
+		width: 100%;
+		aspect-ratio: 1280 / 860;
+		object-fit: cover;
+		mask-image: radial-gradient(closest-side, #000 62%, transparent);
+		-webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent);
+		transform: scale(1.18);
+	}
+	@media (max-width: 860px) {
+		.panel {
+			grid-template-columns: 1fr;
+		}
+		.loop {
+			order: 0;
+			transform: none;
+		}
+	}
+</style>
