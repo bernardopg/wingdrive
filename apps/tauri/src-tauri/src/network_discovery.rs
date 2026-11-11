@@ -214,13 +214,14 @@ fn browse_with(mut command: Command, timeout: Duration) -> Vec<DiscoveredServer>
 	};
 	// Read while it runs: on a busy network the listing outgrows the pipe
 	// buffer, and a blocked writer would only stop at the time limit.
-	let reader = child.stdout.take().map(|mut stdout| {
+	let (sender, listing) = std::sync::mpsc::channel();
+	if let Some(mut stdout) = child.stdout.take() {
 		std::thread::spawn(move || {
 			let mut listing = String::new();
 			let _ = stdout.read_to_string(&mut listing);
-			listing
-		})
-	});
+			let _ = sender.send(listing);
+		});
+	}
 	let deadline = Instant::now() + timeout;
 	loop {
 		match child.try_wait() {
@@ -233,8 +234,9 @@ fn browse_with(mut command: Command, timeout: Duration) -> Vec<DiscoveredServer>
 			}
 		}
 	}
-	let listing = reader
-		.and_then(|reader| reader.join().ok())
+	// A process it started may still hold the pipe open; do not wait for it.
+	let listing = listing
+		.recv_timeout(Duration::from_secs(1))
 		.unwrap_or_default();
 	parse_avahi(&listing)
 }
@@ -281,9 +283,10 @@ mod tests {
 		);
 		assert_eq!(servers.len(), 1);
 		assert_eq!(servers[0].uri, "smb://nas.local/");
-		// avahi-browse that never terminates is stopped at the time limit.
+		// avahi-browse that never terminates is stopped at the time limit, even
+		// when a child it started keeps the output pipe open.
 		let started = Instant::now();
-		let servers = browse_with(avahi_script("sleep 30"), Duration::from_millis(200));
+		let servers = browse_with(avahi_script("sleep 30; true"), Duration::from_millis(200));
 		assert!(servers.is_empty());
 		assert!(started.elapsed() < Duration::from_secs(10));
 		// A listing larger than the pipe buffer arrives whole, without waiting
