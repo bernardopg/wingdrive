@@ -1,0 +1,964 @@
+use super::*;
+use clap::Parser;
+#[derive(Parser)]
+struct Cli {
+	#[command(flatten)]
+	args: FileSearchArgs,
+}
+macro_rules! content_case {
+	($name:ident, $mode:literal, $mode_variant:ident, $kind:literal, $kind_variant:ident, $hidden:literal) => {
+		#[test]
+		fn $name() {
+			let mut args = vec!["wing", "q", "--mode", $mode, "--content-type", $kind];
+			if $hidden {
+				args.push("--include-hidden");
+			}
+			let input: FileSearchInput = Cli::try_parse_from(args).unwrap().args.into();
+			assert!(matches!(input.mode, SearchMode::$mode_variant));
+			assert!(matches!(
+				input.filters.content_types.as_deref(),
+				Some([ContentKind::$kind_variant])
+			));
+			assert_eq!(input.filters.include_hidden, Some($hidden));
+		}
+	};
+}
+macro_rules! sort_case {
+	($name:ident, $sort:literal, $sort_variant:ident, $date:literal, $date_variant:ident, $direction:literal, $direction_variant:ident) => {
+		#[test]
+		fn $name() {
+			let input: FileSearchInput = Cli::try_parse_from([
+				"wing",
+				"q",
+				"--sort-field",
+				$sort,
+				"--sort-direction",
+				$direction,
+				"--date-field",
+				$date,
+				"--date-start",
+				"2024-01-01T00:00:00Z",
+			])
+			.unwrap()
+			.args
+			.into();
+			assert!(matches!(input.sort.field, SortField::$sort_variant));
+			assert!(matches!(
+				input.sort.direction,
+				SortDirection::$direction_variant
+			));
+			assert!(matches!(
+				input.filters.date_range.unwrap().field,
+				DateField::$date_variant
+			));
+		}
+	};
+}
+macro_rules! size_case {
+	($name:ident, $min:expr, $max:expr) => {
+		#[test]
+		fn $name() {
+			let mut args = vec!["wing", "q"];
+			if let Some(v) = $min {
+				args.extend(["--min-size", v]);
+			}
+			if let Some(v) = $max {
+				args.extend(["--max-size", v]);
+			}
+			let input: FileSearchInput = Cli::try_parse_from(args).unwrap().args.into();
+			let range = input.filters.size_range.unwrap();
+			assert_eq!(range.min, $min.map(|v: &str| v.parse::<u64>().unwrap()));
+			assert_eq!(range.max, $max.map(|v: &str| v.parse::<u64>().unwrap()));
+		}
+	};
+}
+
+content_case!(
+	content_fast_unknown_false,
+	"fast",
+	Fast,
+	"unknown",
+	Unknown,
+	false
+);
+content_case!(
+	content_fast_unknown_true,
+	"fast",
+	Fast,
+	"unknown",
+	Unknown,
+	true
+);
+content_case!(
+	content_fast_image_false,
+	"fast",
+	Fast,
+	"image",
+	Image,
+	false
+);
+content_case!(content_fast_image_true, "fast", Fast, "image", Image, true);
+content_case!(
+	content_fast_video_false,
+	"fast",
+	Fast,
+	"video",
+	Video,
+	false
+);
+content_case!(content_fast_video_true, "fast", Fast, "video", Video, true);
+content_case!(
+	content_fast_audio_false,
+	"fast",
+	Fast,
+	"audio",
+	Audio,
+	false
+);
+content_case!(content_fast_audio_true, "fast", Fast, "audio", Audio, true);
+content_case!(
+	content_fast_document_false,
+	"fast",
+	Fast,
+	"document",
+	Document,
+	false
+);
+content_case!(
+	content_fast_document_true,
+	"fast",
+	Fast,
+	"document",
+	Document,
+	true
+);
+content_case!(
+	content_fast_archive_false,
+	"fast",
+	Fast,
+	"archive",
+	Archive,
+	false
+);
+content_case!(
+	content_fast_archive_true,
+	"fast",
+	Fast,
+	"archive",
+	Archive,
+	true
+);
+content_case!(content_fast_code_false, "fast", Fast, "code", Code, false);
+content_case!(content_fast_code_true, "fast", Fast, "code", Code, true);
+content_case!(content_fast_text_false, "fast", Fast, "text", Text, false);
+content_case!(content_fast_text_true, "fast", Fast, "text", Text, true);
+content_case!(
+	content_fast_database_false,
+	"fast",
+	Fast,
+	"database",
+	Database,
+	false
+);
+content_case!(
+	content_fast_database_true,
+	"fast",
+	Fast,
+	"database",
+	Database,
+	true
+);
+content_case!(content_fast_book_false, "fast", Fast, "book", Book, false);
+content_case!(content_fast_book_true, "fast", Fast, "book", Book, true);
+content_case!(content_fast_font_false, "fast", Fast, "font", Font, false);
+content_case!(content_fast_font_true, "fast", Fast, "font", Font, true);
+content_case!(content_fast_mesh_false, "fast", Fast, "mesh", Mesh, false);
+content_case!(content_fast_mesh_true, "fast", Fast, "mesh", Mesh, true);
+content_case!(
+	content_fast_config_false,
+	"fast",
+	Fast,
+	"config",
+	Config,
+	false
+);
+content_case!(
+	content_fast_config_true,
+	"fast",
+	Fast,
+	"config",
+	Config,
+	true
+);
+content_case!(
+	content_fast_encrypted_false,
+	"fast",
+	Fast,
+	"encrypted",
+	Encrypted,
+	false
+);
+content_case!(
+	content_fast_encrypted_true,
+	"fast",
+	Fast,
+	"encrypted",
+	Encrypted,
+	true
+);
+content_case!(content_fast_key_false, "fast", Fast, "key", Key, false);
+content_case!(content_fast_key_true, "fast", Fast, "key", Key, true);
+content_case!(
+	content_fast_executable_false,
+	"fast",
+	Fast,
+	"executable",
+	Executable,
+	false
+);
+content_case!(
+	content_fast_executable_true,
+	"fast",
+	Fast,
+	"executable",
+	Executable,
+	true
+);
+content_case!(
+	content_fast_binary_false,
+	"fast",
+	Fast,
+	"binary",
+	Binary,
+	false
+);
+content_case!(
+	content_fast_binary_true,
+	"fast",
+	Fast,
+	"binary",
+	Binary,
+	true
+);
+content_case!(
+	content_normal_unknown_false,
+	"normal",
+	Normal,
+	"unknown",
+	Unknown,
+	false
+);
+content_case!(
+	content_normal_unknown_true,
+	"normal",
+	Normal,
+	"unknown",
+	Unknown,
+	true
+);
+content_case!(
+	content_normal_image_false,
+	"normal",
+	Normal,
+	"image",
+	Image,
+	false
+);
+content_case!(
+	content_normal_image_true,
+	"normal",
+	Normal,
+	"image",
+	Image,
+	true
+);
+content_case!(
+	content_normal_video_false,
+	"normal",
+	Normal,
+	"video",
+	Video,
+	false
+);
+content_case!(
+	content_normal_video_true,
+	"normal",
+	Normal,
+	"video",
+	Video,
+	true
+);
+content_case!(
+	content_normal_audio_false,
+	"normal",
+	Normal,
+	"audio",
+	Audio,
+	false
+);
+content_case!(
+	content_normal_audio_true,
+	"normal",
+	Normal,
+	"audio",
+	Audio,
+	true
+);
+content_case!(
+	content_normal_document_false,
+	"normal",
+	Normal,
+	"document",
+	Document,
+	false
+);
+content_case!(
+	content_normal_document_true,
+	"normal",
+	Normal,
+	"document",
+	Document,
+	true
+);
+content_case!(
+	content_normal_archive_false,
+	"normal",
+	Normal,
+	"archive",
+	Archive,
+	false
+);
+content_case!(
+	content_normal_archive_true,
+	"normal",
+	Normal,
+	"archive",
+	Archive,
+	true
+);
+content_case!(
+	content_normal_code_false,
+	"normal",
+	Normal,
+	"code",
+	Code,
+	false
+);
+content_case!(
+	content_normal_code_true,
+	"normal",
+	Normal,
+	"code",
+	Code,
+	true
+);
+content_case!(
+	content_normal_text_false,
+	"normal",
+	Normal,
+	"text",
+	Text,
+	false
+);
+content_case!(
+	content_normal_text_true,
+	"normal",
+	Normal,
+	"text",
+	Text,
+	true
+);
+content_case!(
+	content_normal_database_false,
+	"normal",
+	Normal,
+	"database",
+	Database,
+	false
+);
+content_case!(
+	content_normal_database_true,
+	"normal",
+	Normal,
+	"database",
+	Database,
+	true
+);
+content_case!(
+	content_normal_book_false,
+	"normal",
+	Normal,
+	"book",
+	Book,
+	false
+);
+content_case!(
+	content_normal_book_true,
+	"normal",
+	Normal,
+	"book",
+	Book,
+	true
+);
+content_case!(
+	content_normal_font_false,
+	"normal",
+	Normal,
+	"font",
+	Font,
+	false
+);
+content_case!(
+	content_normal_font_true,
+	"normal",
+	Normal,
+	"font",
+	Font,
+	true
+);
+content_case!(
+	content_normal_mesh_false,
+	"normal",
+	Normal,
+	"mesh",
+	Mesh,
+	false
+);
+content_case!(
+	content_normal_mesh_true,
+	"normal",
+	Normal,
+	"mesh",
+	Mesh,
+	true
+);
+content_case!(
+	content_normal_config_false,
+	"normal",
+	Normal,
+	"config",
+	Config,
+	false
+);
+content_case!(
+	content_normal_config_true,
+	"normal",
+	Normal,
+	"config",
+	Config,
+	true
+);
+content_case!(
+	content_normal_encrypted_false,
+	"normal",
+	Normal,
+	"encrypted",
+	Encrypted,
+	false
+);
+content_case!(
+	content_normal_encrypted_true,
+	"normal",
+	Normal,
+	"encrypted",
+	Encrypted,
+	true
+);
+content_case!(
+	content_normal_key_false,
+	"normal",
+	Normal,
+	"key",
+	Key,
+	false
+);
+content_case!(content_normal_key_true, "normal", Normal, "key", Key, true);
+content_case!(
+	content_normal_executable_false,
+	"normal",
+	Normal,
+	"executable",
+	Executable,
+	false
+);
+content_case!(
+	content_normal_executable_true,
+	"normal",
+	Normal,
+	"executable",
+	Executable,
+	true
+);
+content_case!(
+	content_normal_binary_false,
+	"normal",
+	Normal,
+	"binary",
+	Binary,
+	false
+);
+content_case!(
+	content_normal_binary_true,
+	"normal",
+	Normal,
+	"binary",
+	Binary,
+	true
+);
+content_case!(
+	content_full_unknown_false,
+	"full",
+	Full,
+	"unknown",
+	Unknown,
+	false
+);
+content_case!(
+	content_full_unknown_true,
+	"full",
+	Full,
+	"unknown",
+	Unknown,
+	true
+);
+content_case!(
+	content_full_image_false,
+	"full",
+	Full,
+	"image",
+	Image,
+	false
+);
+content_case!(content_full_image_true, "full", Full, "image", Image, true);
+content_case!(
+	content_full_video_false,
+	"full",
+	Full,
+	"video",
+	Video,
+	false
+);
+content_case!(content_full_video_true, "full", Full, "video", Video, true);
+content_case!(
+	content_full_audio_false,
+	"full",
+	Full,
+	"audio",
+	Audio,
+	false
+);
+content_case!(content_full_audio_true, "full", Full, "audio", Audio, true);
+content_case!(
+	content_full_document_false,
+	"full",
+	Full,
+	"document",
+	Document,
+	false
+);
+content_case!(
+	content_full_document_true,
+	"full",
+	Full,
+	"document",
+	Document,
+	true
+);
+content_case!(
+	content_full_archive_false,
+	"full",
+	Full,
+	"archive",
+	Archive,
+	false
+);
+content_case!(
+	content_full_archive_true,
+	"full",
+	Full,
+	"archive",
+	Archive,
+	true
+);
+content_case!(content_full_code_false, "full", Full, "code", Code, false);
+content_case!(content_full_code_true, "full", Full, "code", Code, true);
+content_case!(content_full_text_false, "full", Full, "text", Text, false);
+content_case!(content_full_text_true, "full", Full, "text", Text, true);
+content_case!(
+	content_full_database_false,
+	"full",
+	Full,
+	"database",
+	Database,
+	false
+);
+content_case!(
+	content_full_database_true,
+	"full",
+	Full,
+	"database",
+	Database,
+	true
+);
+content_case!(content_full_book_false, "full", Full, "book", Book, false);
+content_case!(content_full_book_true, "full", Full, "book", Book, true);
+content_case!(content_full_font_false, "full", Full, "font", Font, false);
+content_case!(content_full_font_true, "full", Full, "font", Font, true);
+content_case!(content_full_mesh_false, "full", Full, "mesh", Mesh, false);
+content_case!(content_full_mesh_true, "full", Full, "mesh", Mesh, true);
+content_case!(
+	content_full_config_false,
+	"full",
+	Full,
+	"config",
+	Config,
+	false
+);
+content_case!(
+	content_full_config_true,
+	"full",
+	Full,
+	"config",
+	Config,
+	true
+);
+content_case!(
+	content_full_encrypted_false,
+	"full",
+	Full,
+	"encrypted",
+	Encrypted,
+	false
+);
+content_case!(
+	content_full_encrypted_true,
+	"full",
+	Full,
+	"encrypted",
+	Encrypted,
+	true
+);
+content_case!(content_full_key_false, "full", Full, "key", Key, false);
+content_case!(content_full_key_true, "full", Full, "key", Key, true);
+content_case!(
+	content_full_executable_false,
+	"full",
+	Full,
+	"executable",
+	Executable,
+	false
+);
+content_case!(
+	content_full_executable_true,
+	"full",
+	Full,
+	"executable",
+	Executable,
+	true
+);
+content_case!(
+	content_full_binary_false,
+	"full",
+	Full,
+	"binary",
+	Binary,
+	false
+);
+content_case!(
+	content_full_binary_true,
+	"full",
+	Full,
+	"binary",
+	Binary,
+	true
+);
+sort_case!(
+	sort_relevance_created_asc,
+	"relevance",
+	Relevance,
+	"created",
+	CreatedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_relevance_created_desc,
+	"relevance",
+	Relevance,
+	"created",
+	CreatedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_relevance_modified_asc,
+	"relevance",
+	Relevance,
+	"modified",
+	ModifiedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_relevance_modified_desc,
+	"relevance",
+	Relevance,
+	"modified",
+	ModifiedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_relevance_accessed_asc,
+	"relevance",
+	Relevance,
+	"accessed",
+	AccessedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_relevance_accessed_desc,
+	"relevance",
+	Relevance,
+	"accessed",
+	AccessedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_name_created_asc,
+	"name",
+	Name,
+	"created",
+	CreatedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_name_created_desc,
+	"name",
+	Name,
+	"created",
+	CreatedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_name_modified_asc,
+	"name",
+	Name,
+	"modified",
+	ModifiedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_name_modified_desc,
+	"name",
+	Name,
+	"modified",
+	ModifiedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_name_accessed_asc,
+	"name",
+	Name,
+	"accessed",
+	AccessedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_name_accessed_desc,
+	"name",
+	Name,
+	"accessed",
+	AccessedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_size_created_asc,
+	"size",
+	Size,
+	"created",
+	CreatedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_size_created_desc,
+	"size",
+	Size,
+	"created",
+	CreatedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_size_modified_asc,
+	"size",
+	Size,
+	"modified",
+	ModifiedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_size_modified_desc,
+	"size",
+	Size,
+	"modified",
+	ModifiedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_size_accessed_asc,
+	"size",
+	Size,
+	"accessed",
+	AccessedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_size_accessed_desc,
+	"size",
+	Size,
+	"accessed",
+	AccessedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_modified_created_asc,
+	"modified",
+	ModifiedAt,
+	"created",
+	CreatedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_modified_created_desc,
+	"modified",
+	ModifiedAt,
+	"created",
+	CreatedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_modified_modified_asc,
+	"modified",
+	ModifiedAt,
+	"modified",
+	ModifiedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_modified_modified_desc,
+	"modified",
+	ModifiedAt,
+	"modified",
+	ModifiedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_modified_accessed_asc,
+	"modified",
+	ModifiedAt,
+	"accessed",
+	AccessedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_modified_accessed_desc,
+	"modified",
+	ModifiedAt,
+	"accessed",
+	AccessedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_created_created_asc,
+	"created",
+	CreatedAt,
+	"created",
+	CreatedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_created_created_desc,
+	"created",
+	CreatedAt,
+	"created",
+	CreatedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_created_modified_asc,
+	"created",
+	CreatedAt,
+	"modified",
+	ModifiedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_created_modified_desc,
+	"created",
+	CreatedAt,
+	"modified",
+	ModifiedAt,
+	"desc",
+	Desc
+);
+sort_case!(
+	sort_created_accessed_asc,
+	"created",
+	CreatedAt,
+	"accessed",
+	AccessedAt,
+	"asc",
+	Asc
+);
+sort_case!(
+	sort_created_accessed_desc,
+	"created",
+	CreatedAt,
+	"accessed",
+	AccessedAt,
+	"desc",
+	Desc
+);
+size_case!(size_00, Some("0"), Some("0"));
+size_case!(size_01, Some("0"), Some("1"));
+size_case!(size_02, Some("0"), Some("1024"));
+size_case!(size_03, Some("0"), Some("18446744073709551615"));
+size_case!(size_04, Some("1"), Some("1"));
+size_case!(size_05, Some("1"), Some("1024"));
+size_case!(size_06, Some("1"), Some("18446744073709551615"));
+size_case!(size_07, Some("1024"), Some("1024"));
+size_case!(size_08, Some("1024"), Some("18446744073709551615"));
+size_case!(
+	size_09,
+	Some("18446744073709551615"),
+	Some("18446744073709551615")
+);
+size_case!(size_10, Some("0"), None::<&str>);
+size_case!(size_11, Some("1"), None::<&str>);
+size_case!(size_12, Some("1024"), None::<&str>);
+size_case!(size_13, None::<&str>, Some("0"));
+size_case!(size_14, None::<&str>, Some("1"));
+size_case!(size_15, None::<&str>, Some("1024"));

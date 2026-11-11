@@ -68,3 +68,61 @@ pub struct JobControlArgs {
 	/// Job ID to control
 	pub job_id: Uuid,
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use clap::Parser;
+	#[derive(Parser)]
+	struct List {
+		#[command(flatten)]
+		args: JobListArgs,
+	}
+	#[derive(Parser)]
+	struct Monitor {
+		#[command(flatten)]
+		args: JobMonitorArgs,
+	}
+	#[test]
+	fn job_list_rejects_unknown_status() {
+		assert!(List::try_parse_from(["wing", "--status", "runnnning"]).is_err());
+	}
+	#[test]
+	fn job_monitor_rejects_unknown_status() {
+		assert!(Monitor::try_parse_from(["wing", "--status", "runnnning"]).is_err());
+	}
+
+	#[test]
+	fn job_filters_preserve_all_supported_statuses() {
+		for status in [
+			"queued",
+			"running",
+			"paused",
+			"completed",
+			"failed",
+			"cancelled",
+		] {
+			let args = List::try_parse_from(["wing", "--status", status])
+				.unwrap()
+				.args;
+			assert_eq!(
+				args.to_input(Uuid::nil()).status,
+				Some(status.parse().unwrap())
+			);
+			assert_eq!(
+				Monitor::try_parse_from(["wing", "--status", status])
+					.unwrap()
+					.args
+					.status
+					.as_deref(),
+				Some(status)
+			);
+		}
+		assert!(List::try_parse_from(["wing"])
+			.unwrap()
+			.args
+			.to_input(Uuid::nil())
+			.status
+			.is_none());
+	}
+}

@@ -247,3 +247,130 @@ impl From<FileSearchArgs> for FileSearchInput {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use clap::Parser;
+
+	#[derive(Parser)]
+	struct SearchCli {
+		#[command(flatten)]
+		search: FileSearchArgs,
+	}
+
+	#[test]
+	fn default_search_keeps_library_scope_and_pagination() {
+		let input: FileSearchInput = SearchCli::try_parse_from(["wing", "report"])
+			.unwrap()
+			.search
+			.into();
+		assert_eq!(input.query, "report");
+		assert!(matches!(input.scope, SearchScope::Library));
+		assert!(matches!(input.mode, SearchMode::Normal));
+		assert_eq!(input.pagination.limit, 50);
+		assert_eq!(input.pagination.offset, 0);
+		assert!(input.filters.tags.is_none());
+		assert!(input.filters.date_range.is_none());
+		assert!(input.filters.size_range.is_none());
+	}
+
+	#[test]
+	fn search_filters_and_pagination_reach_the_query() {
+		let tag = "550e8400-e29b-41d4-a716-446655440000";
+		let excluded = "550e8400-e29b-41d4-a716-446655440001";
+		let input: FileSearchInput = SearchCli::try_parse_from([
+			"wing",
+			"report",
+			"--mode",
+			"full",
+			"--tags",
+			tag,
+			"--exclude-tags",
+			excluded,
+			"--file-type",
+			"pdf",
+			"--file-type",
+			"txt",
+			"--min-size",
+			"10",
+			"--max-size",
+			"100",
+			"--date-field",
+			"created",
+			"--date-start",
+			"2024-01-01T00:00:00Z",
+			"--sort-field",
+			"size",
+			"--sort-direction",
+			"asc",
+			"--limit",
+			"7",
+			"--offset",
+			"3",
+			"--include-hidden",
+			"--include-archived",
+		])
+		.unwrap()
+		.search
+		.into();
+		assert!(matches!(input.mode, SearchMode::Full));
+		assert_eq!(input.filters.file_types.unwrap(), ["pdf", "txt"]);
+		let tags = input.filters.tags.unwrap();
+		assert_eq!(tags.include, [Uuid::parse_str(tag).unwrap()]);
+		assert_eq!(tags.exclude, [Uuid::parse_str(excluded).unwrap()]);
+		let size = input.filters.size_range.unwrap();
+		assert_eq!((size.min, size.max), (Some(10), Some(100)));
+		let date = input.filters.date_range.unwrap();
+		assert!(matches!(date.field, DateField::CreatedAt));
+		assert_eq!(
+			date.start.unwrap().to_rfc3339(),
+			"2024-01-01T00:00:00+00:00"
+		);
+		assert!(date.end.is_none());
+		assert!(matches!(input.sort.field, SortField::Size));
+		assert!(matches!(input.sort.direction, SortDirection::Asc));
+		assert_eq!((input.pagination.limit, input.pagination.offset), (7, 3));
+		assert_eq!(input.filters.include_hidden, Some(true));
+		assert_eq!(input.filters.include_archived, Some(true));
+	}
+
+	#[test]
+	fn search_rejects_invalid_or_conflicting_scopes() {
+		assert!(
+			SearchCli::try_parse_from(["wing", "report", "--wing-path", "content://invalid"])
+				.is_err()
+		);
+		assert!(SearchCli::try_parse_from([
+			"wing",
+			"report",
+			"--wing-path",
+			"/tmp",
+			"--location",
+			"550e8400-e29b-41d4-a716-446655440000",
+		])
+		.is_err());
+		let input: FileSearchInput =
+			SearchCli::try_parse_from(["wing", "report", "--wing-path", "/tmp"])
+				.unwrap()
+				.search
+				.into();
+		assert!(matches!(input.scope, SearchScope::Path { .. }));
+	}
+
+	#[test]
+	fn search_rejects_invalid_filters() {
+		for args in [
+			vec!["wing", "q", "--tags", "bad-uuid"],
+			vec!["wing", "q", "--date-start", "not-a-date"],
+			vec!["wing", "q", "--min-size", "-1"],
+			vec!["wing", "q", "--mode", "unknown"],
+		] {
+			assert!(SearchCli::try_parse_from(&args).is_err(), "{args:?}");
+		}
+	}
+}
+
+#[cfg(test)]
+#[path = "args/matrix.rs"]
+mod matrix;

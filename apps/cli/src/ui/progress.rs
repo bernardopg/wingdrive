@@ -259,3 +259,59 @@ pub fn create_spinner(message: &str) -> ProgressBar {
 	pb.enable_steady_tick(Duration::from_millis(100));
 	pb
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn progress_tracks_state_and_clamps_updates() {
+		let id = Uuid::new_v4();
+		let mut job = JobProgressBar::new(id, "fixture".into(), JobStatus::Running, 0.25);
+		assert_eq!(job.bar.position(), 25);
+		job.set_progress(2.0);
+		assert_eq!(job.bar.position(), 100);
+		job.set_progress(-1.0);
+		assert_eq!(job.bar.position(), 0);
+		job.tick();
+		assert_eq!(job.spinner_frame, 1);
+		job.update_status(JobStatus::Paused);
+		job.tick();
+		assert_eq!(job.spinner_frame, 1);
+		job.finish();
+	}
+
+	#[test]
+	fn manager_counts_updates_and_removes_only_terminal_jobs() {
+		let mut manager = JobProgressManager::new(ProgressConfig::default());
+		let running = Uuid::new_v4();
+		let completed = Uuid::new_v4();
+		let failed = Uuid::new_v4();
+		let cancelled = Uuid::new_v4();
+		manager.add_job(running, "running".into(), JobStatus::Queued, 0.0);
+		manager.add_job(completed, "completed".into(), JobStatus::Completed, 1.0);
+		manager.add_job(failed, "failed".into(), JobStatus::Failed, 0.5);
+		manager.add_job(cancelled, "cancelled".into(), JobStatus::Cancelled, 0.5);
+		manager.update_job(running, JobStatus::Running, 0.75);
+		assert_eq!(manager.count_by_status(JobStatus::Running), 1);
+		assert_eq!(manager.bars[&running].bar.position(), 75);
+		manager.tick_all();
+		assert_eq!(manager.bars[&running].spinner_frame, 1);
+		manager.clear_completed();
+		assert_eq!(manager.bars.len(), 1);
+		assert!(manager.bars.contains_key(&running));
+		manager.remove_job(running);
+		manager.remove_job(Uuid::new_v4());
+		assert!(manager.bars.is_empty());
+	}
+
+	#[test]
+	fn simple_progress_and_spinner_can_complete() {
+		let bar = create_simple_progress("copy", 10);
+		bar.set_position(7);
+		assert_eq!(bar.position(), 7);
+		bar.finish_and_clear();
+		let spinner = create_spinner("waiting");
+		spinner.finish_and_clear();
+	}
+}

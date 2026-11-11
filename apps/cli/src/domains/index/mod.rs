@@ -458,3 +458,18 @@ fn format_bytes(bytes: u64) -> String {
 		format!("{:.1} {}", size, UNITS[unit_index])
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	#[test]
+	fn report_path_truncates_by_characters() {
+		let short = "é".repeat(58);
+		assert_eq!(report_path(std::path::Path::new(&short)), short);
+		let long = "é".repeat(59);
+		assert_eq!(
+			report_path(std::path::Path::new(&long)),
+			format!("...{}", "é".repeat(55))
+		);
+	}
+}

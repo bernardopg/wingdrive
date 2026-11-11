@@ -38,6 +38,77 @@ pub enum FileCmd {
 	History(FileHistoryArgs),
 }
 
+#[cfg(test)]
+mod conflict_tests {
+	use super::*;
+	use wing_core::{
+		domain::addressing::WingPath,
+		infra::action::LibraryAction,
+		ops::files::copy::{action::FileCopyAction, input::FileCopyInput},
+	};
+
+	#[tokio::test]
+	async fn detects_conflict_on_later_source() {
+		let dir = tempfile::tempdir().unwrap();
+		let dest = dir.path().join("dest");
+		std::fs::create_dir(&dest).unwrap();
+		std::fs::write(dest.join("second.txt"), b"existing").unwrap();
+		std::fs::write(dir.path().join("first.txt"), b"first").unwrap();
+		std::fs::write(dir.path().join("second.txt"), b"second").unwrap();
+		let input = FileCopyInput::new(
+			vec![dir.path().join("first.txt"), dir.path().join("second.txt")],
+			&dest,
+		);
+		let action = FileCopyAction::from_input(input).unwrap();
+		assert!(check_for_simple_conflicts(&action).await.unwrap());
+	}
+
+	#[tokio::test]
+	async fn detects_single_conflicts_and_accepts_free_destinations() {
+		let dir = tempfile::tempdir().unwrap();
+		let source = dir.path().join("source");
+		let dest = dir.path().join("dest");
+		std::fs::write(&source, b"source").unwrap();
+		let action =
+			FileCopyAction::from_input(FileCopyInput::new(vec![source.clone()], &dest)).unwrap();
+		assert!(!check_for_simple_conflicts(&action).await.unwrap());
+		std::fs::write(&dest, b"existing").unwrap();
+		assert!(check_for_simple_conflicts(&action).await.unwrap());
+		std::fs::remove_file(&dest).unwrap();
+		std::fs::create_dir(&dest).unwrap();
+		let action = FileCopyAction::from_input(FileCopyInput::new(vec![source], &dest)).unwrap();
+		assert!(!check_for_simple_conflicts(&action).await.unwrap());
+		std::fs::write(dest.join("source"), b"existing").unwrap();
+		assert!(check_for_simple_conflicts(&action).await.unwrap());
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn detects_dangling_symlink_at_destination() {
+		let dir = tempfile::tempdir().unwrap();
+		let dest = dir.path().join("destination");
+		std::fs::write(dir.path().join("source"), b"source").unwrap();
+		std::os::unix::fs::symlink(dir.path().join("missing"), &dest).unwrap();
+		let action =
+			FileCopyAction::from_input(FileCopyInput::new(vec![dir.path().join("source")], &dest))
+				.unwrap();
+		assert!(check_for_simple_conflicts(&action).await.unwrap());
+	}
+
+	#[tokio::test]
+	async fn ignores_local_paths_when_destination_is_remote() {
+		let dir = tempfile::tempdir().unwrap();
+		let mut input = FileCopyInput::new(vec![dir.path().join("source")], dir.path());
+		input.destination = WingPath::Physical {
+			device_slug: "other-device".into(),
+			path: dir.path().to_path_buf(),
+		};
+		std::fs::write(dir.path().join("source"), b"local").unwrap();
+		let action = FileCopyAction::from_input(input).unwrap();
+		assert!(!check_for_simple_conflicts(&action).await.unwrap());
+	}
+}
+
 pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
 	match cmd {
 		FileCmd::Copy(args) => {

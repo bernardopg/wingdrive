@@ -715,3 +715,64 @@ async fn show_partners(ctx: &Context) -> Result<()> {
 
 	Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	#[test]
+	fn accepts_documented_naive_timestamp_as_utc() {
+		assert_eq!(
+			parse_time_filter("2025-12-03 10:00:00")
+				.unwrap()
+				.to_rfc3339(),
+			"2025-12-03T10:00:00+00:00"
+		);
+	}
+	#[test]
+	fn accepts_rfc3339_timestamp_with_offset() {
+		assert_eq!(
+			parse_time_filter("2025-12-03T12:00:00+02:00")
+				.unwrap()
+				.to_rfc3339(),
+			"2025-12-03T10:00:00+00:00"
+		);
+	}
+	#[test]
+	fn parses_relative_durations_and_rejects_unknown_units() {
+		assert_eq!(
+			parse_duration("2 hours").unwrap(),
+			chrono::Duration::hours(2)
+		);
+		assert_eq!(parse_duration("3 days").unwrap(), chrono::Duration::days(3));
+		assert!(parse_duration("2 elephants").is_err());
+		assert!(parse_duration("two hours").is_err());
+		assert!(parse_duration("2").is_err());
+	}
+
+	#[test]
+	fn excessive_relative_duration_returns_error_instead_of_panicking() {
+		assert!(parse_time_filter("9223372036854775807 weeks ago").is_err());
+		assert!(parse_time_filter("9223372036854775807 seconds ago").is_err());
+		assert!(parse_time_filter("1000000000000000 seconds ago").is_err());
+	}
+
+	#[test]
+	fn sql_export_escapes_quotes_in_model_types() {
+		let mut event = wing_core::infra::sync::SyncEventLog::new(
+			uuid::Uuid::nil(),
+			SyncEventType::StateTransition,
+			"fixture",
+		);
+		event.model_types = Some(vec!["name'with-quote".into()]);
+		assert!(format_events_sql(&[event]).contains("'name''with-quote'"));
+	}
+	#[test]
+	fn formats_durations_and_sizes_at_boundaries() {
+		assert_eq!(format_duration(59), "59s");
+		assert_eq!(format_duration(60), "1m 0s");
+		assert_eq!(format_duration(3600), "1h 0m");
+		assert_eq!(format_bytes(0), "0 B");
+		assert_eq!(format_bytes(1024), "1.0 KB");
+		assert_eq!(format_bytes(1024 * 1024), "1.0 MB");
+	}
+}
