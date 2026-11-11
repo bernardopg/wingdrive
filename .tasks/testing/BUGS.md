@@ -552,3 +552,78 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: a função esperava o `avahi-browse` terminar e só depois lia o stdout. Uma listagem maior que o buffer do pipe (64 KiB no Linux) bloqueava o processo, que só parava ao ser morto no limite de tempo; o diálogo esperava o limite inteiro e recebia a listagem truncada. O teste gera 2.000 linhas (~150 KiB).
 - Correção: uma thread lê o stdout enquanto o processo roda.
 - Limite: verificado com um script no lugar do `avahi-browse`, sem rede mDNS real.
+
+## Core: listagem de mídia nunca indicava resultados além do limite
+
+- Estado: corrigido; `media_listing_reports_more_results_than_the_limit` em `core/tests/file_queries_test.rs`.
+- Local: `core/src/ops/files/query/media_listing.rs`, `files.media_listing`.
+- Reprodução anterior: com `limit: 3` numa pasta com quatro imagens, a consulta usava `LIMIT 3` e depois comparava `total_count > limit` com as mesmas três linhas, então `has_more` era sempre `false`. `total_count` também nunca passava do limite.
+- Correção: a consulta busca uma linha além do limite, devolve só as `limit` primeiras e marca `has_more` quando a linha extra existe.
+- Limite: a visão de mídia do Explorer pede `limit: 10000` e não lê `has_more`; o efeito visível é uma pasta com mais de 10 mil mídias truncada sem aviso.
+
+## Core: listagem de mídia tratava `_` e `%` no nome da pasta como curinga
+
+- Estado: corrigido; `media_listing_matches_folder_names_literally`.
+- Local: `files.media_listing` com `include_descendants: true`.
+- Reprodução anterior: em `album_x`, o padrão `LIKE 'album_x/%'` também casava `albumYx/sub/`, e a listagem trazia a mídia da pasta vizinha. O teste falhava com `["inside", "outside"]`.
+- Correção: o padrão vem de `directory_subtree_patterns`, que escapa `%`, `_` e `\` e já era usado pela busca e pelo preflight; a consulta declara `ESCAPE '\'`.
+
+## Core: resolução de caminho não achava pasta com ponto no nome
+
+- Estado: corrigido; `paths_resolve_through_dotted_folders_and_sibling_locations` em `core/tests/file_queries_test.rs`. Com o resolvedor antigo o teste falha em `dotted folder`.
+- Local: `PathResolver::find_entry_by_path` e `resolve_physical_to_entry` em `core/src/ops/indexing/path_resolver.rs`, usados por `files.by_path`, cópia e outras operações.
+- Reprodução anterior: cada componente do caminho perdia o trecho após o último ponto antes da busca, porque arquivos guardam nome e extensão separados. Pastas guardam o nome inteiro, então `v1.2` virava `v1` e nada abaixo dela era encontrado. Pela mesma regra, `notes.txt` e a pasta `notes` buscavam o mesmo nome sem olhar a extensão, e o resultado dependia da ordem do banco. Extensões em maiúsculas (`README.MD`) não casavam com a extensão guardada em minúsculas.
+- A escolha da location comparava strings: `/shelf` aceitava `/shelf2/other.txt`, procurava o arquivo na location errada e desistia sem testar as demais.
+- O dispositivo era procurado pelo slug literal, então o placeholder `local` de `WingPath::local`, usado por clientes sem dispositivo registrado, nunca resolvia. As locations eram alcançadas só pelos volumes do dispositivo, e uma location com `volume_id` nulo (preenchido só no primeiro índice) ficava de fora. Os dois casos foram apontados na revisão do PR.
+- Correção: cada componente casa uma entrada com o nome inteiro e sem extensão, ou um arquivo com o radical e a extensão em minúsculas; a location é escolhida por `Path::starts_with`, que compara componentes. `local` e o UUID do dispositivo valem como este dispositivo, e as locations são buscadas por `device_id`.
+
+## Core: verificação de índice acusava a própria pasta e seus ancestrais
+
+- Estado: corrigido; `a_fresh_index_matches_the_filesystem` em `core/tests/index_verify_test.rs`.
+- Local: `IndexVerifyAction::compare_indexes`, ação `indexing.verify`.
+- Reprodução anterior: logo depois de indexar uma location, a verificação retornava `is_valid: false` com `/`, `/tmp`, a pasta temporária e a raiz da location como "File exists on filesystem but not in index". O índice efêmero guarda a pasta verificada e cada ancestral até `/`; só a raiz era removida do lado do banco.
+- Correção: os dois lados são limitados à pasta verificada e ao que fica abaixo dela. A pasta continua na comparação; a data de modificação dela vem do disco, porque a varredura a registra só como ancestral, sem metadados. O tamanho é comparado só para arquivos: o sistema de arquivos dá 0 para pastas, e a raiz da location guarda o tamanho do conteúdo.
+
+## Core: arquivos por tag falhavam para tag desconhecida só com `include_children`
+
+- Estado: corrigido; `files_by_tag_follow_child_tags_and_confidence`.
+- Local: `core/src/ops/tags/files_by_tag.rs`, `tags.files_by_tag`.
+- Reprodução anterior: para um UUID sem tag, a consulta devolvia lista vazia com `include_children: false` e o erro `Failed to get descendants: Tag not found` com `true`.
+- Correção: tag inexistente devolve lista vazia nos dois casos.
+
+## Core: exclusões e reordenação de Spaces não chegavam aos outros dispositivos
+
+- Estado: corrigido; o caminho local está coberto por `groups_and_items_are_reordered_renamed_and_deleted` em `core/tests/space_layout_test.rs`.
+- Local: `spaces.delete`, `spaces.delete_group`, `spaces.delete_item`, `spaces.reorder_groups` e `spaces.reorder_items` em `core/src/ops/spaces/`.
+- Reprodução anterior: criar e editar espaços, grupos e itens chamava `library.sync_model`, mas apagar e reordenar não. Os três modelos já aplicam `ChangeType::Delete` recebido; a exclusão local só não era enviada, então o espaço, grupo ou item continuava nos outros dispositivos. A nova ordem também não era enviada, e a reordenação não emitia eventos de recurso para atualizar outras janelas.
+- Correção: as três exclusões registram `ChangeType::Delete` antes de apagar a linha, então uma falha no registro não deixa uma exclusão que nenhum dispositivo recebe. A reordenação confere todas as linhas antes, grava a nova ordem numa transação, envia cada linha atualizada e emite os eventos de `space_group` ou `space_item`.
+- Limite: o teste lê o log de mudanças que seria enviado (`peer_log`), sem um segundo dispositivo aplicando as mudanças.
+
+## Core: grupos e itens de Space iam para outros dispositivos com o ID local do pai
+
+- Estado: corrigido; `groups_and_items_are_reordered_renamed_and_deleted` lê o `peer_log` e exige `space_uuid` (e `group_uuid` nos itens) em cada inserção e atualização. Com o código anterior, o teste falha em `space_group Insert without space_uuid` com `"space_id":2` no payload. Apontado na revisão do PR.
+- Local: `spaces.add_group`, `spaces.add_item`, `spaces.update_group` e a reordenação.
+- Reprodução anterior: as ações chamavam `library.sync_model`, que não converte chaves estrangeiras. `space_group` e `space_item` declaram `space_id` e `group_id` em `foreign_key_mappings`, mas o payload saía com os inteiros locais. Quem recebe trata um inteiro sem o campo `_uuid` como já resolvido, então o grupo ou item podia ser gravado sob o espaço ou grupo que tivesse o mesmo número no outro banco.
+- Correção: essas ações usam `sync_model_with_db`, que troca os inteiros pelos UUIDs antes do envio.
+
+## Core: item de Space podia ser gravado em grupo de outro espaço
+
+- Estado: corrigido; `groups_and_items_are_reordered_renamed_and_deleted`.
+- Local: `spaces.add_item`, `spaces.reorder_groups` e `spaces.reorder_items`.
+- Reprodução anterior: `add_item` conferia que o espaço e o grupo existiam, mas não que o grupo pertencia ao espaço; o item ficava com `space_id` de um espaço e `group_id` de outro e aparecia no grupo do segundo. `reorder_groups` aceitava grupos de outro espaço, e `reorder_items` aceitava itens de outro grupo.
+- Correção: o grupo precisa pertencer ao espaço informado, e cada item reordenado precisa estar no grupo informado. Sem `group_id`, todos os itens precisam estar no nível do mesmo espaço; a primeira versão desta correção ainda aceitava itens de espaços diferentes, o que a revisão do PR apontou. O erro é o mesmo "not found" de um ID inexistente.
+
+## Core: item fixado no Space resolvia o arquivo errado
+
+- Estado: corrigido; `a_space_layout_lists_groups_items_and_pinned_files`.
+- Local: `resolve_wing_path_to_entry_uuid` em `core/src/ops/spaces/add_item/action.rs`.
+- Reprodução anterior: o caminho fixado era procurado pelo nome e pela extensão em todo o banco e conferido pelo pai. A pasta `notes` podia resolver para `notes.txt` da mesma pasta, e uma pasta `v1.2` era procurada como arquivo `v1` de extensão `2`, ficando sem arquivo resolvido no layout.
+- Correção: o item usa `PathResolver::resolve_to_entry`, o mesmo resolvedor das consultas de arquivo.
+
+## Core: criar uma sincronização de pastas falhava sempre
+
+- Estado: corrigido; `file_sync_test` passou de 1 para 10 casos aprovados, e a migração tem o teste `conduits_reference_entries_and_keep_their_rows`.
+- Local: `core/src/infra/db/migration/m20251015_000002_create_sync_tables.rs`, nova `m20261111_000001_fix_sync_conduit_entry_fk.rs`.
+- Reprodução anterior: as duas chaves estrangeiras de `sync_conduit` apontavam para a tabela `entry`, que não existe (a tabela é `entries`). O SQLite verifica a tabela pai a cada inserção, então `ConduitManager::create_conduit` falhava com `no such table: main.entry`.
+- Correção: a migração original passa a declarar `entries` para bancos novos. A nova migração recria `sync_conduit` e `sync_generation` com as chaves corretas nos bancos existentes, copia as linhas cujas entradas ainda existem e recria os índices, tudo numa transação: uma falha no meio deixa as tabelas originais, e a migração roda de novo na próxima abertura (teste `a_failed_rebuild_keeps_the_original_tables`).
+- Limite: o serviço de sincronização de pastas ainda não tem ação nem interface (FSYNC-004 em To Do); o teste `test_mirror_sync_with_files` agora espera o monitor terminar em vez de dormir 100 ms.

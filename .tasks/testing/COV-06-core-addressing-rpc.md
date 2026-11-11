@@ -7,7 +7,7 @@ parent: COV-00
 priority: High
 milestone: M2
 tags: [coverage, testing, core]
-last_updated: 2026-11-10
+last_updated: 2026-11-11
 ---
 
 ## Description
@@ -77,3 +77,60 @@ Limites: não houve execução em Windows nem medição LCOV ou de linhas cobert
 Esta evidência não comprova a meta de 85%. Os formatos dos tipos públicos foram preservados;
 `generate_typescript_types` não foi executado. Espaços, tags, permissões de filesystem e
 validações de locations ainda precisam de novas tranches. A task passou a In Progress com o merge do #359; os critérios seguem abertos até a medição LCOV.
+
+## Evidence 2026-11-11
+
+Ambiente: Linux x86_64, `rustc 1.99.0`, `cargo-llvm-cov 0.9.1`, branch `test/core-coverage-1`.
+
+Primeira tranche do core rumo a 80% de linhas. A triagem rodou as 42 suítes de `core/tests/` que o
+CI não executava; as que passaram e as três novas entraram na lista Linux de `scripts/ci-rust.sh`
+depois de três execuções seguidas sem falha.
+
+| Suíte | Situação |
+|---|---|
+| `file_queries_test` (nova) | 9 testes: `files.media_listing`, `files.by_path`, `files.by_id`, `files.alternate_instances`, `tags.files_by_tag` e resolução de caminho |
+| `index_verify_test` (nova) | 3 testes de `indexing.verify`: índice novo, mudanças por fora do índice e pasta fora de location |
+| `space_layout_test` (nova) | 2 testes: layout com grupos e itens fixados, reordenação, renomeação, exclusão e erros |
+| `file_sync_test` | Falhava em 9 de 10 casos com `no such table: main.entry`; 10/10 após a correção da migração |
+| `folder_rename_test`, `copy_progress_test`, `config_persistence_test`, `database_migration_test`, `event_system_test`, `job_shutdown_test`, `normalized_cache_fixtures_test`, `indexing_responder_reindex_test`, `proxy_pairing_protocol_test`, `analyze_events` | Passavam e não rodavam no CI |
+
+Fora do CI, com o motivo: `aggregate_sizes_watcher_test`, `ephemeral_watcher_test`, `fs_watcher_test`
+e `file_move_test` passam, mas dependem do watcher e não passaram pelas três rodadas.
+`job_resumption_integration_test` depende de tempo (a indexação passou da fase antes da
+interrupção). `phase_snapshot_test` e `resource_events_test` exigem `~/Desktop`.
+`volume_tracking_test` espera um volume `swap`. `wasm_extension_test` e `wasm_job_execution_test`
+carregam um `.wasm` versionado compilado com o módulo de import antigo `spacedrive`; o SDK atual
+usa `wingdrive`. `ephemeral_bridge_test` e `typescript_bridge_test` precisam de `node_modules` no
+checkout. Os testes de pareamento, cópia e transferência entre dispositivos passam, mas levam cerca
+de dois minutos cada; `transitive_sync_backfill_test` estourou o tempo de espera. Esses ficam para
+a COV-05.
+
+Bugs corrigidos (detalhes em [BUGS.md](BUGS.md), entradas "Core:"): grupos e itens de Space enviados a outros dispositivos com o ID local do pai, achado na revisão do PR; `has_more` da listagem de mídia
+nunca verdadeiro e `_`/`%` tratados como curinga; resolução de caminho sem achar pasta com ponto e
+escolhendo location por prefixo de string; `indexing.verify` acusando a própria pasta e os
+ancestrais; `tags.files_by_tag` com erro só quando `include_children`; exclusões e reordenações de
+Spaces sem sync; item de Space em grupo de outro espaço; item fixado resolvendo o arquivo errado;
+`sync_conduit` com chaves estrangeiras para a tabela inexistente `entry`. A revisão do PR também
+apontou o placeholder `local` e locations sem volume na resolução de caminho, itens de dois espaços
+aceitos juntos na reordenação, exclusão apagada antes do registro de sync, reordenação gravada pela
+metade, a pasta verificada fora da comparação do `indexing.verify` e a migração sem transação; todos
+foram corrigidos com teste. As suítes novas também entraram em `cargo xtask test-core`.
+Inconsistências removidas: `ops::addressing::PathResolver`, alcançável só por `WingPath::resolve`,
+que nada chamava; um comentário de documentação de `filters.rs` estava sobre a função errada.
+
+| Comando | Resultado |
+|---|---|
+| `cargo llvm-cov` com `wing-core --lib` e as suítes de `scripts/ci-rust.sh`, após `cargo llvm-cov clean --workspace` | 821 testes aprovados, 0 falhas |
+| Componente `core/` com o filtro de `scripts/coverage-report.py` | 42.582/83.586 linhas (50,9%); o relatório do `main` tem 39.137/83.573 (46,8%) |
+| As 14 suítes adicionadas ao CI, três rodadas seguidas | Sem falha |
+| `cargo clippy --locked -p wing-core -- -D warnings` | Limpo |
+| Testes novos contra o código antigo | `has_more`, curinga de pasta e pasta com ponto falham antes da correção |
+
+Maiores ganhos por arquivo, em linhas: `media_listing.rs` 0 para 277, `files_by_tag.rs` 0 para 233,
+`domain/space.rs` 152 para 373, `verify/action.rs` 0 para 210, `service/file_sync/mod.rs` 0 para
+165, `file_by_path.rs` 0 para 157, `alternate_instances.rs` 0 para 147, `spaces/get_layout` 0 para 133.
+
+Limites: a medição local não inclui os testes de `wing-server` e dos crates compartilhados que o
+workflow de cobertura também roda, então o número do CI pode ser um pouco maior. A replicação dos
+Spaces entre dois dispositivos não foi exercitada. Não houve execução em Windows nem `just ci-local`.
+
