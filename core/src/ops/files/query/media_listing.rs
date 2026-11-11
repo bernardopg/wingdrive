@@ -203,8 +203,8 @@ impl LibraryQuery for MediaListingQuery {
 
 		// Apply directory scope filter
 		if self.input.include_descendants.unwrap_or(false) {
-			// Include all descendants: match entries where directory path starts with parent path
-			sql_query.push_str(" AND (e.parent_id = ?1 OR dp.path LIKE ?2)");
+			// Include all descendants: match entries whose directory lies below the parent
+			sql_query.push_str(" AND (e.parent_id = ?1 OR dp.path LIKE ?2 ESCAPE '\\')");
 		} else {
 			// Only direct children
 			sql_query.push_str(" AND e.parent_id = ?1");
@@ -224,22 +224,23 @@ impl LibraryQuery for MediaListingQuery {
 			MediaSortBy::Size => sql_query.push_str(" ORDER BY e.size DESC"),
 		}
 
-		// Apply limit
+		// Apply limit. One row past it tells whether more results exist.
 		if let Some(limit) = self.input.limit {
-			sql_query.push_str(&format!(" LIMIT {}", limit));
+			sql_query.push_str(&format!(" LIMIT {}", u64::from(limit) + 1));
 		}
 
 		// Build query parameters
 		let parent_path_pattern = if self.input.include_descendants.unwrap_or(false) {
-			// Get the directory path for the parent to construct LIKE pattern
+			// The LIKE pattern for everything below the parent, with `_` and `%`
+			// in folder names escaped so they match literally
 			let parent_path = self.get_parent_directory_path(db.conn(), parent_id).await?;
-			Some(format!("{}/%", parent_path))
+			Some(crate::ops::search::filters::directory_subtree_patterns(&parent_path).1)
 		} else {
 			None
 		};
 
 		// Execute the query
-		let rows = if let Some(path_pattern) = parent_path_pattern {
+		let mut rows = if let Some(path_pattern) = parent_path_pattern {
 			db.conn()
 				.query_all_raw(sea_orm::Statement::from_sql_and_values(
 					sea_orm::DatabaseBackend::Sqlite,
@@ -268,6 +269,13 @@ impl LibraryQuery for MediaListingQuery {
 			});
 		}
 
+		let has_more = match self.input.limit {
+			Some(limit) if rows.len() > limit as usize => {
+				rows.truncate(limit as usize);
+				true
+			}
+			_ => false,
+		};
 		let total_count = rows.len() as u32;
 
 		// Collect all content UUIDs for batch sidecar query
@@ -525,12 +533,6 @@ impl LibraryQuery for MediaListingQuery {
 				}
 			}
 		}
-
-		let has_more = if let Some(limit) = self.input.limit {
-			total_count > limit
-		} else {
-			false
-		};
 
 		Ok(MediaListingOutput {
 			files,

@@ -67,10 +67,17 @@ impl LibraryQuery for GetFilesByTagQuery {
 		let mut tag_uuids = vec![self.input.tag_id];
 		if self.input.include_children {
 			let manager = TagManager::new(Arc::new(conn.clone()));
-			let descendants = manager
-				.get_descendants(self.input.tag_id)
-				.await
-				.map_err(|e| QueryError::Internal(format!("Failed to get descendants: {}", e)))?;
+			// An unknown tag has no files with or without its children
+			let descendants = match manager.get_descendants(self.input.tag_id).await {
+				Ok(descendants) => descendants,
+				Err(crate::domain::tag::TagError::TagNotFound) => Vec::new(),
+				Err(e) => {
+					return Err(QueryError::Internal(format!(
+						"Failed to get descendants: {}",
+						e
+					)))
+				}
+			};
 			tag_uuids.extend(descendants.iter().map(|t| t.id));
 		}
 

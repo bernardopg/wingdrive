@@ -232,11 +232,6 @@ pub(crate) fn favorite_condition(favorite: bool) -> Condition {
 
 // Removed hardcoded extension mapping - now using FileTypeRegistry
 
-/// Format a UUID as a SQLite BLOB literal (`X'...'`).
-///
-/// `volumes.uuid` is stored as a 16-byte BLOB (SeaORM default for `Uuid`
-/// on SQLite), so comparing against a quoted UUID string silently returns
-/// zero matches. A blob literal compares byte-for-byte.
 /// The directory itself and a LIKE pattern for everything below it.
 ///
 /// A bare `path%` also matched sibling folders sharing the prefix (`/loc`
@@ -295,6 +290,11 @@ pub(crate) fn on_volumes_condition(uuids: &[Uuid]) -> Condition {
 	})
 }
 
+/// Format a UUID as a SQLite BLOB literal (`X'...'`).
+///
+/// `volumes.uuid` is stored as a 16-byte BLOB (SeaORM default for `Uuid`
+/// on SQLite), so comparing against a quoted UUID string silently returns
+/// zero matches. A blob literal compares byte-for-byte.
 fn uuid_to_sqlite_blob_literal(uuid: &Uuid) -> String {
 	let mut out = String::with_capacity(36);
 	out.push_str("X'");

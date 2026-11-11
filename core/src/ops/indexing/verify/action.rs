@@ -383,9 +383,21 @@ impl IndexVerifyAction {
 			db_entries.len()
 		);
 
-		// Remove the root path itself from db_entries - the ephemeral indexer doesn't
-		// create an entry for the root directory it's scanning, only its contents
-		db_entries.remove(root_path);
+		// Compare the verified folder and what lies below it. The ephemeral
+		// index also holds every ancestor up to `/`, which made a fresh index
+		// report those as missing.
+		let mut fs_entries: HashMap<_, _> = fs_entries
+			.into_iter()
+			.filter(|(path, _)| path.starts_with(root_path))
+			.collect();
+		db_entries.retain(|path, _| path.starts_with(root_path));
+		// The walk records the verified folder as an ancestor, without its own
+		// metadata, so its modification time is read here
+		if let Some(root) = fs_entries.get_mut(root_path) {
+			root.modified = std::fs::metadata(root_path)
+				.and_then(|metadata| metadata.modified())
+				.ok();
+		}
 
 		// Count files and directories
 		for (_path, metadata) in &fs_entries {
@@ -452,9 +464,11 @@ impl IndexVerifyAction {
 				(fs_entries.get(fs_path), db_entries.get(db_path))
 			{
 				// Check size
+				// Only files have a comparable size: the filesystem reports 0 for a
+				// directory, while a location root stores the size of its contents
 				let fs_size = fs_meta.size;
 				let db_size = db_entry.size as u64;
-				if fs_size != db_size {
+				if matches!(fs_meta.kind, EntryKind::File) && fs_size != db_size {
 					report
 						.metadata_mismatches
 						.push(IntegrityDifference::size_mismatch_with_debug(
