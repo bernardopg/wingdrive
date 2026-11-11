@@ -7,13 +7,11 @@
 
 use std::path::{Path, PathBuf};
 
-use sea_orm::{prelude::*, ConnectionTrait, QuerySelect, Statement};
+use sea_orm::{prelude::*, Condition, ConnectionTrait, QuerySelect, Statement};
 
 use crate::{
 	domain::addressing::WingPath,
-	infra::db::entities::{
-		device, directory_paths, entry, location, volume, DirectoryPaths, Entry,
-	},
+	infra::db::entities::{device, directory_paths, entry, location, DirectoryPaths, Entry},
 };
 
 pub struct PathResolver;
@@ -223,8 +221,26 @@ impl PathResolver {
 		path: &WingPath,
 	) -> Result<Option<entry::Model>, DbErr> {
 		match path {
-			WingPath::Physical { device_slug, path } => {
-				Self::resolve_physical_to_entry(db, device_slug, path).await
+			WingPath::Physical {
+				device_slug,
+				path: local_path,
+			} => {
+				// The `local` placeholder and the device UUID name this device too
+				let device = if path.is_local() {
+					device::Entity::find()
+						.filter(device::Column::Uuid.eq(crate::device::get_current_device_id()))
+						.one(db)
+						.await?
+				} else {
+					device::Entity::find()
+						.filter(device::Column::Slug.eq(device_slug.as_str()))
+						.one(db)
+						.await?
+				};
+				match device {
+					Some(device) => Self::resolve_physical_to_entry(db, &device, local_path).await,
+					None => Ok(None),
+				}
 			}
 			WingPath::Cloud { .. } => {
 				// TODO: Implement cloud path resolution
@@ -244,56 +260,37 @@ impl PathResolver {
 		}
 	}
 
-	/// Resolve a Physical path to its entry
+	/// Resolve a Physical path on `device` to its entry
 	async fn resolve_physical_to_entry<C: ConnectionTrait>(
 		db: &C,
-		device_slug: &str,
+		device: &device::Model,
 		path: &PathBuf,
 	) -> Result<Option<entry::Model>, DbErr> {
-		// Find device by slug
-		let device = device::Entity::find()
-			.filter(device::Column::Slug.eq(device_slug))
-			.one(db)
-			.await?;
-
-		let Some(device) = device else {
-			return Ok(None);
-		};
-
-		// Find volumes for this device (device_id FK is uuid, not id)
-		let volumes = volume::Entity::find()
-			.filter(volume::Column::DeviceId.eq(device.uuid))
+		// Every location of the device, including those whose volume is not
+		// resolved yet (`volume_id` is NULL until the first index)
+		let locations = location::Entity::find()
+			.filter(location::Column::DeviceId.eq(device.id))
 			.all(db)
 			.await?;
 
-		let path_str = path.to_string_lossy();
+		for location in locations {
+			let Some(entry_id) = location.entry_id else {
+				continue;
+			};
 
-		// Check each volume's locations
-		for volume in volumes {
-			let locations = location::Entity::find()
-				.filter(location::Column::VolumeId.eq(volume.id))
-				.all(db)
-				.await?;
+			// Get location root path from directory_paths
+			let location_path = Self::get_full_path(db, entry_id).await?;
 
-			for location in locations {
-				let Some(entry_id) = location.entry_id else {
-					continue;
-				};
-
-				// Get location root path from directory_paths
-				let location_path = Self::get_full_path(db, entry_id).await?;
-				let location_path_str = location_path.to_string_lossy();
-
-				// Check if target path is within this location
-				if path_str.starts_with(location_path_str.as_ref()) {
-					// Exact match - return location root
-					if path == &location_path {
-						return entry::Entity::find_by_id(entry_id).one(db).await;
-					}
-
-					// Find entry by traversing path
-					return Self::find_entry_by_path(db, entry_id, path, &location_path).await;
+			// Check if target path is within this location. Comparing components
+			// keeps a location `/loc` from claiming paths under `/loc2`.
+			if path.starts_with(&location_path) {
+				// Exact match - return location root
+				if path == &location_path {
+					return entry::Entity::find_by_id(entry_id).one(db).await;
 				}
+
+				// Find entry by traversing path
+				return Self::find_entry_by_path(db, entry_id, path, &location_path).await;
 			}
 		}
 
@@ -331,37 +328,27 @@ impl PathResolver {
 				return Ok(None);
 			};
 
-			// Strip extension for entry lookup (extensions stored separately)
-			let component_without_ext = component
-				.rfind('.')
-				.map(|pos| &component[..pos])
-				.unwrap_or(component);
-
-			// Try exact match first
-			let mut child = entry::Entity::find()
-				.filter(entry::Column::ParentId.eq(parent_id))
-				.filter(entry::Column::Name.eq(component_without_ext))
-				.one(db)
-				.await?;
-
-			// If not found, try with Unicode space variations (database may have Unicode spaces)
-			if child.is_none() {
-				let with_narrow_nbsp = component_without_ext.replace(' ', "\u{202f}");
+			// Directories keep their full name; files store the stem and the
+			// lowercase extension. Either form can match, so a folder `v1.2` is
+			// found and a folder `notes` is not confused with `notes.txt`.
+			let mut child = None;
+			for spaces in [None, Some('\u{202f}'), Some('\u{00a0}')] {
+				// The database may hold names with Unicode spaces
+				let candidate = match spaces {
+					Some(space) if component.contains(' ') => {
+						component.replace(' ', space.encode_utf8(&mut [0; 4]))
+					}
+					Some(_) => continue,
+					None => String::from(*component),
+				};
 				child = entry::Entity::find()
 					.filter(entry::Column::ParentId.eq(parent_id))
-					.filter(entry::Column::Name.eq(with_narrow_nbsp))
+					.filter(component_condition(&candidate))
 					.one(db)
 					.await?;
-			}
-
-			// Still not found? Try non-breaking space
-			if child.is_none() {
-				let with_nbsp = component_without_ext.replace(' ', "\u{00a0}");
-				child = entry::Entity::find()
-					.filter(entry::Column::ParentId.eq(parent_id))
-					.filter(entry::Column::Name.eq(with_nbsp))
-					.one(db)
-					.await?;
+				if child.is_some() {
+					break;
+				}
 			}
 
 			match child {
@@ -377,5 +364,25 @@ impl PathResolver {
 		}
 
 		Ok(None)
+	}
+}
+
+/// Matches an entry named `component`: a directory or extensionless entry with
+/// that full name, or a file whose stem and lowercase extension make it up.
+fn component_condition(component: &str) -> Condition {
+	let whole = Condition::all()
+		.add(entry::Column::Name.eq(component))
+		.add(entry::Column::Extension.is_null());
+	let path = Path::new(component);
+	match (
+		path.file_stem().and_then(|stem| stem.to_str()),
+		path.extension().and_then(|ext| ext.to_str()),
+	) {
+		(Some(stem), Some(extension)) => Condition::any().add(whole).add(
+			Condition::all()
+				.add(entry::Column::Name.eq(stem))
+				.add(entry::Column::Extension.eq(extension.to_lowercase())),
+		),
+		_ => whole,
 	}
 }

@@ -6,216 +6,11 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
 	async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-		// Create sync_conduit table
+		manager.create_table(sync_conduit_table()).await?;
+		manager.create_index(sync_conduit_enabled_index()).await?;
+		manager.create_table(sync_generation_table()).await?;
 		manager
-			.create_table(
-				Table::create()
-					.table(SyncConduit::Table)
-					.if_not_exists()
-					.col(
-						ColumnDef::new(SyncConduit::Id)
-							.integer()
-							.not_null()
-							.auto_increment()
-							.primary_key(),
-					)
-					.col(
-						ColumnDef::new(SyncConduit::Uuid)
-							.binary()
-							.not_null()
-							.unique_key(),
-					)
-					.col(
-						ColumnDef::new(SyncConduit::SourceEntryId)
-							.integer()
-							.not_null(),
-					)
-					.col(
-						ColumnDef::new(SyncConduit::TargetEntryId)
-							.integer()
-							.not_null(),
-					)
-					.col(ColumnDef::new(SyncConduit::SyncMode).string().not_null())
-					.col(
-						ColumnDef::new(SyncConduit::Enabled)
-							.boolean()
-							.not_null()
-							.default(true),
-					)
-					.col(
-						ColumnDef::new(SyncConduit::Schedule)
-							.string()
-							.not_null()
-							.default("manual"),
-					)
-					.col(
-						ColumnDef::new(SyncConduit::UseIndexRules)
-							.boolean()
-							.not_null()
-							.default(true),
-					)
-					.col(ColumnDef::new(SyncConduit::IndexModeOverride).string())
-					.col(
-						ColumnDef::new(SyncConduit::ParallelTransfers)
-							.integer()
-							.not_null()
-							.default(3),
-					)
-					.col(ColumnDef::new(SyncConduit::BandwidthLimitMbps).integer())
-					.col(
-						ColumnDef::new(SyncConduit::LastSyncCompletedAt).timestamp_with_time_zone(),
-					)
-					.col(
-						ColumnDef::new(SyncConduit::SyncGeneration)
-							.big_integer()
-							.not_null()
-							.default(0),
-					)
-					.col(ColumnDef::new(SyncConduit::LastSyncError).string())
-					.col(
-						ColumnDef::new(SyncConduit::TotalSyncs)
-							.big_integer()
-							.not_null()
-							.default(0),
-					)
-					.col(
-						ColumnDef::new(SyncConduit::FilesSynced)
-							.big_integer()
-							.not_null()
-							.default(0),
-					)
-					.col(
-						ColumnDef::new(SyncConduit::BytesTransferred)
-							.big_integer()
-							.not_null()
-							.default(0),
-					)
-					.col(
-						ColumnDef::new(SyncConduit::CreatedAt)
-							.timestamp_with_time_zone()
-							.not_null(),
-					)
-					.col(
-						ColumnDef::new(SyncConduit::UpdatedAt)
-							.timestamp_with_time_zone()
-							.not_null(),
-					)
-					.foreign_key(
-						ForeignKey::create()
-							.name("fk_sync_conduit_source_entry")
-							.from(SyncConduit::Table, SyncConduit::SourceEntryId)
-							.to(Entry::Table, Entry::Id)
-							.on_delete(ForeignKeyAction::Cascade),
-					)
-					.foreign_key(
-						ForeignKey::create()
-							.name("fk_sync_conduit_target_entry")
-							.from(SyncConduit::Table, SyncConduit::TargetEntryId)
-							.to(Entry::Table, Entry::Id)
-							.on_delete(ForeignKeyAction::Cascade),
-					)
-					.to_owned(),
-			)
-			.await?;
-
-		// Create index on enabled column for active conduit queries
-		manager
-			.create_index(
-				Index::create()
-					.name("idx_sync_conduit_enabled")
-					.table(SyncConduit::Table)
-					.col(SyncConduit::Enabled)
-					.to_owned(),
-			)
-			.await?;
-
-		// Create sync_generation table
-		manager
-			.create_table(
-				Table::create()
-					.table(SyncGeneration::Table)
-					.if_not_exists()
-					.col(
-						ColumnDef::new(SyncGeneration::Id)
-							.integer()
-							.not_null()
-							.auto_increment()
-							.primary_key(),
-					)
-					.col(
-						ColumnDef::new(SyncGeneration::ConduitId)
-							.integer()
-							.not_null(),
-					)
-					.col(
-						ColumnDef::new(SyncGeneration::Generation)
-							.big_integer()
-							.not_null(),
-					)
-					.col(
-						ColumnDef::new(SyncGeneration::StartedAt)
-							.timestamp_with_time_zone()
-							.not_null(),
-					)
-					.col(ColumnDef::new(SyncGeneration::CompletedAt).timestamp_with_time_zone())
-					.col(
-						ColumnDef::new(SyncGeneration::FilesCopied)
-							.integer()
-							.not_null()
-							.default(0),
-					)
-					.col(
-						ColumnDef::new(SyncGeneration::FilesDeleted)
-							.integer()
-							.not_null()
-							.default(0),
-					)
-					.col(
-						ColumnDef::new(SyncGeneration::ConflictsResolved)
-							.integer()
-							.not_null()
-							.default(0),
-					)
-					.col(
-						ColumnDef::new(SyncGeneration::BytesTransferred)
-							.big_integer()
-							.not_null()
-							.default(0),
-					)
-					.col(
-						ColumnDef::new(SyncGeneration::ErrorsEncountered)
-							.integer()
-							.not_null()
-							.default(0),
-					)
-					.col(ColumnDef::new(SyncGeneration::VerifiedAt).timestamp_with_time_zone())
-					.col(
-						ColumnDef::new(SyncGeneration::VerificationStatus)
-							.string()
-							.not_null()
-							.default("unverified"),
-					)
-					.foreign_key(
-						ForeignKey::create()
-							.name("fk_sync_generation_conduit")
-							.from(SyncGeneration::Table, SyncGeneration::ConduitId)
-							.to(SyncConduit::Table, SyncConduit::Id)
-							.on_delete(ForeignKeyAction::Cascade),
-					)
-					.to_owned(),
-			)
-			.await?;
-
-		// Create index on (conduit_id, generation) for efficient generation lookups
-		manager
-			.create_index(
-				Index::create()
-					.name("idx_sync_generation_conduit")
-					.table(SyncGeneration::Table)
-					.col(SyncGeneration::ConduitId)
-					.col(SyncGeneration::Generation)
-					.to_owned(),
-			)
+			.create_index(sync_generation_conduit_index())
 			.await?;
 
 		Ok(())
@@ -235,8 +30,210 @@ impl MigrationTrait for Migration {
 	}
 }
 
+/// The `sync_conduit` table: one row per pair of folders kept in sync.
+pub(super) fn sync_conduit_table() -> TableCreateStatement {
+	Table::create()
+		.table(SyncConduit::Table)
+		.if_not_exists()
+		.col(
+			ColumnDef::new(SyncConduit::Id)
+				.integer()
+				.not_null()
+				.auto_increment()
+				.primary_key(),
+		)
+		.col(
+			ColumnDef::new(SyncConduit::Uuid)
+				.binary()
+				.not_null()
+				.unique_key(),
+		)
+		.col(
+			ColumnDef::new(SyncConduit::SourceEntryId)
+				.integer()
+				.not_null(),
+		)
+		.col(
+			ColumnDef::new(SyncConduit::TargetEntryId)
+				.integer()
+				.not_null(),
+		)
+		.col(ColumnDef::new(SyncConduit::SyncMode).string().not_null())
+		.col(
+			ColumnDef::new(SyncConduit::Enabled)
+				.boolean()
+				.not_null()
+				.default(true),
+		)
+		.col(
+			ColumnDef::new(SyncConduit::Schedule)
+				.string()
+				.not_null()
+				.default("manual"),
+		)
+		.col(
+			ColumnDef::new(SyncConduit::UseIndexRules)
+				.boolean()
+				.not_null()
+				.default(true),
+		)
+		.col(ColumnDef::new(SyncConduit::IndexModeOverride).string())
+		.col(
+			ColumnDef::new(SyncConduit::ParallelTransfers)
+				.integer()
+				.not_null()
+				.default(3),
+		)
+		.col(ColumnDef::new(SyncConduit::BandwidthLimitMbps).integer())
+		.col(ColumnDef::new(SyncConduit::LastSyncCompletedAt).timestamp_with_time_zone())
+		.col(
+			ColumnDef::new(SyncConduit::SyncGeneration)
+				.big_integer()
+				.not_null()
+				.default(0),
+		)
+		.col(ColumnDef::new(SyncConduit::LastSyncError).string())
+		.col(
+			ColumnDef::new(SyncConduit::TotalSyncs)
+				.big_integer()
+				.not_null()
+				.default(0),
+		)
+		.col(
+			ColumnDef::new(SyncConduit::FilesSynced)
+				.big_integer()
+				.not_null()
+				.default(0),
+		)
+		.col(
+			ColumnDef::new(SyncConduit::BytesTransferred)
+				.big_integer()
+				.not_null()
+				.default(0),
+		)
+		.col(
+			ColumnDef::new(SyncConduit::CreatedAt)
+				.timestamp_with_time_zone()
+				.not_null(),
+		)
+		.col(
+			ColumnDef::new(SyncConduit::UpdatedAt)
+				.timestamp_with_time_zone()
+				.not_null(),
+		)
+		.foreign_key(
+			ForeignKey::create()
+				.name("fk_sync_conduit_source_entry")
+				.from(SyncConduit::Table, SyncConduit::SourceEntryId)
+				.to(Entry::Table, Entry::Id)
+				.on_delete(ForeignKeyAction::Cascade),
+		)
+		.foreign_key(
+			ForeignKey::create()
+				.name("fk_sync_conduit_target_entry")
+				.from(SyncConduit::Table, SyncConduit::TargetEntryId)
+				.to(Entry::Table, Entry::Id)
+				.on_delete(ForeignKeyAction::Cascade),
+		)
+		.to_owned()
+}
+
+/// Index on `enabled` for active conduit queries.
+pub(super) fn sync_conduit_enabled_index() -> IndexCreateStatement {
+	Index::create()
+		.name("idx_sync_conduit_enabled")
+		.table(SyncConduit::Table)
+		.col(SyncConduit::Enabled)
+		.to_owned()
+}
+
+/// The `sync_generation` table: one row per sync run of a conduit.
+pub(super) fn sync_generation_table() -> TableCreateStatement {
+	Table::create()
+		.table(SyncGeneration::Table)
+		.if_not_exists()
+		.col(
+			ColumnDef::new(SyncGeneration::Id)
+				.integer()
+				.not_null()
+				.auto_increment()
+				.primary_key(),
+		)
+		.col(
+			ColumnDef::new(SyncGeneration::ConduitId)
+				.integer()
+				.not_null(),
+		)
+		.col(
+			ColumnDef::new(SyncGeneration::Generation)
+				.big_integer()
+				.not_null(),
+		)
+		.col(
+			ColumnDef::new(SyncGeneration::StartedAt)
+				.timestamp_with_time_zone()
+				.not_null(),
+		)
+		.col(ColumnDef::new(SyncGeneration::CompletedAt).timestamp_with_time_zone())
+		.col(
+			ColumnDef::new(SyncGeneration::FilesCopied)
+				.integer()
+				.not_null()
+				.default(0),
+		)
+		.col(
+			ColumnDef::new(SyncGeneration::FilesDeleted)
+				.integer()
+				.not_null()
+				.default(0),
+		)
+		.col(
+			ColumnDef::new(SyncGeneration::ConflictsResolved)
+				.integer()
+				.not_null()
+				.default(0),
+		)
+		.col(
+			ColumnDef::new(SyncGeneration::BytesTransferred)
+				.big_integer()
+				.not_null()
+				.default(0),
+		)
+		.col(
+			ColumnDef::new(SyncGeneration::ErrorsEncountered)
+				.integer()
+				.not_null()
+				.default(0),
+		)
+		.col(ColumnDef::new(SyncGeneration::VerifiedAt).timestamp_with_time_zone())
+		.col(
+			ColumnDef::new(SyncGeneration::VerificationStatus)
+				.string()
+				.not_null()
+				.default("unverified"),
+		)
+		.foreign_key(
+			ForeignKey::create()
+				.name("fk_sync_generation_conduit")
+				.from(SyncGeneration::Table, SyncGeneration::ConduitId)
+				.to(SyncConduit::Table, SyncConduit::Id)
+				.on_delete(ForeignKeyAction::Cascade),
+		)
+		.to_owned()
+}
+
+/// Index on (conduit_id, generation) for efficient generation lookups.
+pub(super) fn sync_generation_conduit_index() -> IndexCreateStatement {
+	Index::create()
+		.name("idx_sync_generation_conduit")
+		.table(SyncGeneration::Table)
+		.col(SyncGeneration::ConduitId)
+		.col(SyncGeneration::Generation)
+		.to_owned()
+}
+
 #[derive(DeriveIden)]
-enum SyncConduit {
+pub(super) enum SyncConduit {
 	Table,
 	Id,
 	Uuid,
@@ -260,7 +257,7 @@ enum SyncConduit {
 }
 
 #[derive(DeriveIden)]
-enum SyncGeneration {
+pub(super) enum SyncGeneration {
 	Table,
 	Id,
 	ConduitId,
@@ -276,8 +273,13 @@ enum SyncGeneration {
 	VerificationStatus,
 }
 
+/// The entries table. The first version of this migration named it `entry`,
+/// a table that does not exist, so every conduit insert failed its foreign
+/// key check; `m20261111_000001_fix_sync_conduit_entry_fk` repairs databases
+/// created with it.
 #[derive(DeriveIden)]
 enum Entry {
+	#[sea_orm(iden = "entries")]
 	Table,
 	Id,
 }

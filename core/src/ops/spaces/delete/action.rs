@@ -40,7 +40,15 @@ impl LibraryAction for SpaceDeleteAction {
 
 		let space_id = space_model.uuid;
 
-		// Delete will cascade to groups and items due to foreign key constraints
+		// Groups and items go with the space through the foreign keys, here and
+		// on every device that applies the synced deletion.
+		// Record the deletion for other devices first: if that fails nothing is
+		// deleted and the action can be retried, instead of a local deletion
+		// that no device ever hears about.
+		library
+			.sync_model(&space_model, crate::infra::sync::ChangeType::Delete)
+			.await
+			.map_err(|e| ActionError::Internal(format!("Failed to sync space: {}", e)))?;
 		space_model.delete(db).await.map_err(ActionError::SeaOrm)?;
 
 		// Emit ResourceDeleted event for real-time UI updates using EventEmitter

@@ -77,7 +77,7 @@ impl LibraryAction for AddGroupAction {
 
 		// Sync to peers (emits direct event)
 		library
-			.sync_model(&result, crate::infra::sync::ChangeType::Insert)
+			.sync_model_with_db(&result, crate::infra::sync::ChangeType::Insert, db)
 			.await
 			.map_err(|e| ActionError::Internal(format!("Failed to sync group: {}", e)))?;
 

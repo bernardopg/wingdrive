@@ -40,6 +40,13 @@ impl LibraryAction for DeleteItemAction {
 
 		let item_id = item_model.uuid;
 
+		// Record the deletion for other devices first: if that fails nothing is
+		// deleted and the action can be retried, instead of a local deletion
+		// that no device ever hears about.
+		library
+			.sync_model(&item_model, crate::infra::sync::ChangeType::Delete)
+			.await
+			.map_err(|e| ActionError::Internal(format!("Failed to sync space item: {}", e)))?;
 		item_model.delete(db).await.map_err(ActionError::SeaOrm)?;
 
 		// Emit ResourceDeleted event for the item using EventEmitter
