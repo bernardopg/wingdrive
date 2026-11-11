@@ -44,8 +44,10 @@ to the app.
   name such as `org.freedesktop.impl.portal.desktop.wingdrive`, with `OpenFile`, `SaveFile` and
   `SaveFiles`. Each request exports a `org.freedesktop.impl.portal.Request` object so the portal can
   close it.
-- [ ] **Packaging:** ship `wingdrive.portal` (`DBusName`, `Interfaces`, `UseIn`) and a D-Bus
-  activation file for the backend name, so a request works while WingDrive is not running. Check
+- [ ] **Packaging:** ship `wingdrive.portal` with `DBusName`, `Interfaces` and `UseIn`. `UseIn`
+  must list every desktop where WingDrive supports the picker (at least `Hyprland`, plus `KDE`,
+  `GNOME` and others once checked); otherwise the portal never selects the backend there. Also ship
+  a D-Bus activation file for the backend name, so a request works while WingDrive is not running. Check
   that the activation file does not collide with the `FileManager1` rule in `filemanager1.rs`:
   packages ship no activation file for `FileManager1`.
 - [ ] **Picker window:** reuse the Explorer for navigation, search, sidebar and previews, with a
@@ -60,13 +62,24 @@ to the app.
 - [ ] **Save conflicts:** a Save over an existing file asks to overwrite.
 - [ ] **Responses:** Cancel and closing the window return response 1, and errors return response 2,
   so the calling app never hangs.
-- [ ] **Opt-in:** a Settings switch writes `org.freedesktop.impl.portal.FileChooser=wingdrive` to the
-  user's `portals.conf` for the current desktop, and restores the previous value when turned off.
-  Document the manual line for users who manage the file themselves.
-- [ ] **Fallback:** when WingDrive or its daemon cannot start, the portal falls back to the previous
-  backend instead of leaving the app without a dialog. Record how `xdg-desktop-portal` behaves when
-  the configured backend fails to activate.
-- [ ] **Docs:** `docs/` page on enabling it, and the AUR package notes.
+- [ ] **Opt-in, which file:** a Settings switch edits
+  `~/.config/xdg-desktop-portal/<desktop>-portals.conf`, where `<desktop>` is each entry of
+  `$XDG_CURRENT_DESKTOP`, lowercased (`hyprland-portals.conf` on the author's machine). It edits
+  `portals.conf` only when no per-desktop file exists, because the per-desktop file takes
+  precedence: on the author's machine, a change to `portals.conf` alone would have no effect.
+- [ ] **Opt-in, which value:** the switch stores the previous `FileChooser` value, then writes an
+  ordered list with WingDrive first and the previous backend after it, for example
+  `org.freedesktop.impl.portal.FileChooser=wingdrive;gtk`. Turning the switch off writes the stored
+  previous value back. Fallback and switch-off use the same stored value. Document the manual line
+  for users who manage the file themselves.
+- [ ] **Fallback:** confirm from the `xdg-desktop-portal` 1.22 source and docs that a list is tried
+  in order when the first backend cannot be activated, and record the result here. If it is not, the
+  backend itself must hand the request on (or the switch must refuse to enable without a working
+  activation), so an app is never left without a dialog.
+- [ ] **Docs:** `docs/` page on enabling it, and the AUR package notes. The same page covers "Show in
+  folder": WingDrive only takes `org.freedesktop.FileManager1` when it is the default for
+  `inode/directory` (`xdg-mime default wingdrive.desktop inode/directory`, or the Settings path that
+  sets it). The code keeps not setting that default by itself, as `filemanager1.rs` explains.
 
 ## Acceptance Criteria
 
@@ -77,6 +90,12 @@ to the app.
 - [ ] Multiple selection, folder selection and type filters behave as the requesting app asks.
 - [ ] A Flatpak app and a GTK4 app (portal path) use the picker too.
 - [ ] Turning the switch off restores the previous FileChooser backend.
+- [ ] On the author's Hyprland session, the switch edits `hyprland-portals.conf` and the portal then
+  selects the WingDrive backend.
+- [ ] With the switch on, a stopped WingDrive whose activation fails still leaves Chrome's upload
+  with a working dialog from the fallback backend.
+- [ ] With `inode/directory` set to WingDrive, "Show in folder" from Chrome (`ShowItems`) opens a
+  WingDrive window with the file selected.
 - [ ] Unit tests cover option parsing and responses; an integration test drives the D-Bus interface
   on a private session bus (`dbus-run-session`), as the FileManager1 tests do.
 - [ ] Verified on the author's Hyprland session with the AUR package.
