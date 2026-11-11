@@ -116,6 +116,10 @@ fn display_event(event: &Event, args: &EventsMonitorArgs) {
 	}
 }
 
+fn short_job_id(id: &str) -> String {
+	id.chars().take(8).collect()
+}
+
 /// Create a human-readable summary of an event
 fn summarize_event(event: &Event) -> String {
 	match event {
@@ -242,12 +246,12 @@ fn summarize_event(event: &Event) -> String {
 		Event::JobQueued {
 			job_id, job_type, ..
 		} => {
-			format!("Job queued: {} ({})", job_type, &job_id[..8])
+			format!("Job queued: {} ({})", job_type, short_job_id(job_id))
 		}
 		Event::JobStarted {
 			job_id, job_type, ..
 		} => {
-			format!("Job started: {} ({})", job_type, &job_id[..8])
+			format!("Job started: {} ({})", job_type, short_job_id(job_id))
 		}
 		Event::JobProgress {
 			job_id,
@@ -263,7 +267,7 @@ fn summarize_event(event: &Event) -> String {
 			format!(
 				"Job progress: {} ({}) - {:.1}%{}",
 				job_type,
-				&job_id[..8],
+				short_job_id(job_id),
 				progress,
 				msg
 			)
@@ -277,7 +281,7 @@ fn summarize_event(event: &Event) -> String {
 			format!(
 				"Job completed: {} ({}) - {:?}",
 				job_type,
-				&job_id[..8],
+				short_job_id(job_id),
 				output
 			)
 		}
@@ -287,18 +291,23 @@ fn summarize_event(event: &Event) -> String {
 			error,
 			..
 		} => {
-			format!("Job failed: {} ({}) - {}", job_type, &job_id[..8], error)
+			format!(
+				"Job failed: {} ({}) - {}",
+				job_type,
+				short_job_id(job_id),
+				error
+			)
 		}
 		Event::JobCancelled {
 			job_id, job_type, ..
 		} => {
-			format!("Job cancelled: {} ({})", job_type, &job_id[..8])
+			format!("Job cancelled: {} ({})", job_type, short_job_id(job_id))
 		}
 		Event::JobPaused { job_id, .. } => {
-			format!("Job paused: {}", &job_id[..8])
+			format!("Job paused: {}", short_job_id(job_id))
 		}
 		Event::JobResumed { job_id, .. } => {
-			format!("Job resumed: {}", &job_id[..8])
+			format!("Job resumed: {}", short_job_id(job_id))
 		}
 
 		// Indexing events
@@ -459,9 +468,6 @@ fn summarize_event(event: &Event) -> String {
 			)
 		}
 
-		// Config events
-		Event::ConfigChanged { .. } => "Configuration changed".to_string(),
-
 		// Custom events
 		Event::Custom { event_type, data } => {
 			format!("Custom event: {} - {:?}", event_type, data)
@@ -477,6 +483,310 @@ fn summarize_event(event: &Event) -> String {
 		),
 		Event::WingdropUpdated { drop_id, status } => {
 			format!("Wingdrop {}: {:?}", drop_id, status)
+		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use uuid::Uuid;
+
+	#[test]
+	fn short_job_id_is_rendered_without_panicking() {
+		let event = Event::JobPaused {
+			job_id: "é".into(),
+			device_id: Uuid::nil(),
+		};
+		assert!(summarize_event(&event).contains('é'));
+	}
+
+	#[test]
+	fn config_change_summary_includes_changed_field() {
+		let event = Event::ConfigChanged {
+			field: "language".into(),
+		};
+		assert!(summarize_event(&event).contains("language"));
+	}
+
+	#[test]
+	fn lifecycle_and_entry_summaries_include_identity() {
+		let library = Uuid::new_v4();
+		let entry = Uuid::new_v4();
+		assert_eq!(summarize_event(&Event::CoreStarted), "Core started");
+		assert_eq!(summarize_event(&Event::CoreShutdown), "Core shutting down");
+		assert_eq!(summarize_event(&Event::Refresh), "Cache refresh triggered");
+		assert!(summarize_event(&Event::EntryCreated {
+			library_id: library,
+			entry_id: entry
+		})
+		.contains(&entry.to_string()));
+		assert!(summarize_event(&Event::EntryModified {
+			library_id: library,
+			entry_id: entry
+		})
+		.contains(&library.to_string()));
+		assert!(summarize_event(&Event::EntryDeleted {
+			library_id: library,
+			entry_id: entry
+		})
+		.contains(&entry.to_string()));
+		assert!(summarize_event(&Event::EntryMoved {
+			library_id: library,
+			entry_id: entry,
+			old_path: "before".into(),
+			new_path: "after".into()
+		})
+		.contains("after"));
+	}
+
+	#[test]
+	fn indexing_and_device_events_include_progress_and_errors() {
+		let id = Uuid::new_v4();
+		assert!(
+			summarize_event(&Event::IndexingStarted { location_id: id }).contains(&id.to_string())
+		);
+		assert!(summarize_event(&Event::IndexingProgress {
+			location_id: id,
+			processed: 3,
+			total: Some(10)
+		})
+		.contains("3/10"));
+		assert!(summarize_event(&Event::IndexingProgress {
+			location_id: id,
+			processed: 3,
+			total: None
+		})
+		.contains("3 processed"));
+		assert!(summarize_event(&Event::IndexingCompleted {
+			location_id: id,
+			total_files: 4,
+			total_dirs: 2
+		})
+		.contains("4 files, 2 dirs"));
+		assert!(summarize_event(&Event::IndexingFailed {
+			location_id: id,
+			error: "failure".into()
+		})
+		.contains("failure"));
+		assert!(summarize_event(&Event::DeviceConnected {
+			device_id: id,
+			device_name: "remote".into()
+		})
+		.contains("remote"));
+		assert!(
+			summarize_event(&Event::DeviceDisconnected { device_id: id }).contains(&id.to_string())
+		);
+	}
+
+	#[test]
+	fn job_events_render_short_ids_and_messages() {
+		let device = Uuid::nil();
+		let id = "abc".to_string();
+		let events = [
+			Event::JobQueued {
+				job_id: id.clone(),
+				job_type: "copy".into(),
+				device_id: device,
+			},
+			Event::JobStarted {
+				job_id: id.clone(),
+				job_type: "copy".into(),
+				device_id: device,
+			},
+			Event::JobProgress {
+				job_id: id.clone(),
+				job_type: "copy".into(),
+				device_id: device,
+				progress: 50.0,
+				message: Some("moving".into()),
+				generic_progress: None,
+			},
+			Event::JobFailed {
+				job_id: id.clone(),
+				job_type: "copy".into(),
+				device_id: device,
+				error: "failure".into(),
+			},
+			Event::JobCancelled {
+				job_id: id.clone(),
+				job_type: "copy".into(),
+				device_id: device,
+			},
+			Event::JobResumed {
+				job_id: id,
+				device_id: device,
+			},
+		];
+		for event in events {
+			assert!(summarize_event(&event).contains("abc"));
+		}
+	}
+
+	#[test]
+	fn library_events_render_names_and_failure_details() {
+		let id = Uuid::new_v4();
+		let events = [
+			Event::LibraryCreated {
+				id,
+				name: "work".into(),
+				path: "fixture".into(),
+				source: Default::default(),
+			},
+			Event::LibraryOpened {
+				id,
+				name: "work".into(),
+				path: "fixture".into(),
+			},
+			Event::LibraryClosed {
+				id,
+				name: "work".into(),
+			},
+			Event::LibraryDeleted {
+				id,
+				name: "work".into(),
+				deleted_data: false,
+			},
+		];
+		for event in events {
+			assert!(summarize_event(&event).contains("work"));
+		}
+		let fail = Event::LibraryLoadFailed {
+			id: Some(id),
+			path: "fixture".into(),
+			error: "broken".into(),
+			error_type: "config".into(),
+		};
+		assert!(summarize_event(&fail).contains("broken"));
+	}
+
+	#[test]
+	fn display_supports_human_and_json_formats() {
+		let event = Event::CoreStarted;
+		for format in [
+			OutputFormat::Human,
+			OutputFormat::Json,
+			OutputFormat::JsonPretty,
+		] {
+			let args = EventsMonitorArgs {
+				event_type: None,
+				library_id: None,
+				job_id: None,
+				device_id: None,
+				timestamps: true,
+				format,
+				verbose: false,
+				pretty: false,
+			};
+			display_event(&event, &args);
+		}
+	}
+
+	#[test]
+	fn resource_events_include_identifiers_and_batch_counts() {
+		let id = Uuid::new_v4();
+		let changed = Event::ResourceChanged {
+			resource_type: "file".into(),
+			resource: serde_json::json!({"id":id}),
+			metadata: None,
+		};
+		assert!(summarize_event(&changed).contains(&id.to_string()));
+		let batch = Event::ResourceChangedBatch {
+			resource_type: "file".into(),
+			resources: serde_json::json!([1, 2]),
+			metadata: None,
+		};
+		assert!(summarize_event(&batch).contains("2 items"));
+		let deleted = Event::ResourceDeleted {
+			resource_type: "file".into(),
+			resource_id: id,
+		};
+		assert!(summarize_event(&deleted).contains(&id.to_string()));
+	}
+
+	#[test]
+	fn sync_events_summarize_state_connections_and_errors() {
+		let id = Uuid::new_v4();
+		let state = Event::SyncStateChanged {
+			library_id: id,
+			previous_state: "paused".into(),
+			new_state: "ready".into(),
+			timestamp: "now".into(),
+		};
+		assert!(summarize_event(&state).contains("paused → ready"));
+		let activity = Event::SyncActivity {
+			library_id: id,
+			peer_device_id: id,
+			activity_type: wing_core::infra::event::SyncActivityType::ChangesApplied { changes: 3 },
+			model_type: None,
+			count: 3,
+			timestamp: "now".into(),
+		};
+		assert!(summarize_event(&activity).contains("3 changes"));
+		for (connected, expected) in [(true, "connected"), (false, "disconnected")] {
+			let connection = Event::SyncConnectionChanged {
+				library_id: id,
+				peer_device_id: id,
+				peer_name: "peer".into(),
+				connected,
+				timestamp: "now".into(),
+			};
+			assert!(summarize_event(&connection).contains(expected));
+		}
+		let error = Event::SyncError {
+			library_id: id,
+			peer_device_id: None,
+			error_type: "fixture".into(),
+			message: "failure".into(),
+			timestamp: "now".into(),
+		};
+		assert!(summarize_event(&error).contains("failure"));
+	}
+
+	#[test]
+	fn legacy_location_events_report_counts_and_paths() {
+		let id = Uuid::new_v4();
+		let events = [
+			(
+				Event::LocationAdded {
+					library_id: id,
+					location_id: id,
+					path: "fixture".into(),
+				},
+				"fixture",
+			),
+			(
+				Event::LocationRemoved {
+					library_id: id,
+					location_id: id,
+				},
+				"removed",
+			),
+			(
+				Event::FilesIndexed {
+					library_id: id,
+					location_id: id,
+					count: 5,
+				},
+				"5 files",
+			),
+			(
+				Event::ThumbnailsGenerated {
+					library_id: id,
+					count: 3,
+				},
+				"3",
+			),
+			(
+				Event::FilesModified {
+					library_id: id,
+					paths: vec!["fixture".into()],
+				},
+				"1 files",
+			),
+		];
+		for (event, expected) in events {
+			assert!(summarize_event(&event).contains(expected));
 		}
 	}
 }

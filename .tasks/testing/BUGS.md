@@ -389,3 +389,120 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: pedir uma pasta ao `/file`. No Unix a pasta abre e a checagem `is_dir` responde `400`; no Windows `File::open` falha com acesso negado, que virava `403`.
 - Correção: um erro de abertura numa pasta responde `400` nas duas plataformas.
 - Limite: conferido só pelo CI do Windows; sem máquina Windows à mão.
+
+## CLI: busca com `--wing-path` inválido pesquisava a biblioteca inteira
+
+- Estado: corrigido; `search_scope_errors_are_rejected_by_the_actual_command_tree` e os testes de `domains/search/args.rs` cobrem endereço inválido e válido.
+- Local: `apps/cli/src/domains/search/args.rs`, `FileSearchArgs`.
+- Reprodução anterior: `wing search files report --wing-path content://invalid` era aceito. A conversão imprimia um aviso e usava `SearchScope::Library`, ampliando a busca em vez de restringi-la ao caminho pedido.
+- Correção: o Clap interpreta o valor com `WingPath::from_uri` e rejeita o endereço que não converte. Um endereço válido continua virando `SearchScope::Path`.
+
+## CLI: busca aceitava `--wing-path` e `--location` juntos
+
+- Estado: corrigido; a rejeição é verificada no parser de busca e na árvore real de comandos.
+- Local: `apps/cli/src/domains/search/args.rs`, `FileSearchArgs`.
+- Reprodução anterior: com as duas opções, a conversão usava o caminho e descartava a location sem avisar.
+- Correção: `conflicts_with = "location"` faz o parser recusar a combinação e nomear as duas opções.
+
+## CLI: indexação tratava endereço inválido como caminho local
+
+- Estado: corrigido; `malformed_and_nonlocal_addresses_are_rejected_by_all_index_commands` cobre endereço inválido, esquema desconhecido, nuvem e outro dispositivo nos três comandos.
+- Local: `apps/cli/src/domains/index/args.rs`, `index start`, `index quick-scan` e `index browse`.
+- Reprodução anterior: um valor que falhava em `WingPath::from_uri`, como `content://invalid`, caía em `WingPath::local` e chegava ao core como o caminho literal `content://invalid`.
+- Correção: os três comandos usam `local_index_path`, que retorna erro para endereço malformado e para endereço que não é local. Caminhos sem esquema continuam aceitos.
+
+## CLI: checagem de conflito da cópia perdia conflitos reais
+
+- Estado: corrigido; três dos quatro testes de `domains::file::conflict_tests` falhavam antes da correção.
+- Local: `apps/cli/src/domains/file/mod.rs`, `check_for_simple_conflicts`.
+- Reprodução anterior: com duas origens e conflito só na segunda, a função retornava `false`, pois olhava apenas a primeira. Um link simbólico quebrado no destino também retornava `false`, porque `metadata` segue o link. Com destino em outro dispositivo, um arquivo local de mesmo caminho podia gerar um falso conflito.
+- Impacto: o CLI decide por esse resultado se pede confirmação antes de sobrescrever. O efeito no job do daemon não foi testado.
+- Correção: verificar todas as origens locais, usar `symlink_metadata` para enxergar o próprio link e ignorar o disco local quando o destino não é deste dispositivo. Erros de acesso diferentes de `NotFound` são propagados.
+- Limite: a checagem continua local e sujeita a mudanças no filesystem entre a consulta e a execução do job.
+
+## CLI: Wingdrop enviava caminhos relativos ao daemon
+
+- Estado: corrigido; `wingdrop_relative_path_is_resolved_before_sending` falhava antes da correção.
+- Local: `apps/cli/src/domains/network/args.rs`, `From<WingdropSendArgs> for WingdropSendInput`.
+- Reprodução anterior: `WingPath::from_uri` aceita um caminho sem esquema como local e o mantinha relativo. O daemon, que tem outro diretório de trabalho, resolveria `relative-file` em outra pasta. Não houve transferência real.
+- Correção: o Wingdrop usa o mesmo `local_path` dos comandos de arquivo, que resolve o caminho a partir do diretório do CLI e mantém `local://<dispositivo>/...` como endereço remoto. O teste cobre os dois casos.
+
+## CLI: filtro `--status` de jobs aceitava valor desconhecido
+
+- Estado: corrigido; `job_list_rejects_unknown_status` e `job_monitor_rejects_unknown_status` falhavam antes da correção.
+- Local: `apps/cli/src/domains/job/args.rs`, `JobListArgs` e `JobMonitorArgs`.
+- Reprodução anterior: `wing job list --status runnnning` passava pelo parser. A conversão para `JobStatus` falhava e virava `None`, o mesmo que listar sem filtro.
+- Correção: um `value_parser` recusa o valor e lista os seis status aceitos. Outro teste confirma a conversão dos seis status válidos e a ausência de filtro sem a opção.
+
+## CLI: `job pause`, `resume` e `cancel` saíam com sucesso quando falhavam
+
+- Estado: corrigido; os três testes `failed_*_returns_error` em `apps/cli/src/tests/rpc.rs` falhavam antes da correção.
+- Local: `apps/cli/src/domains/job/mod.rs`.
+- Reprodução anterior: com resposta `success: false` do daemon, os comandos imprimiam a falha e retornavam `Ok(())`. Scripts recebiam código de saída 0.
+- Correção: os três comandos retornam erro quando `success` é falso. No formato JSON a resposta estruturada continua sendo impressa antes do erro.
+- Limite: respostas RPC sintéticas em loopback, sem daemon real.
+
+## CLI: `wing logs` ignorava `--data-dir` e `--instance`
+
+- Estado: corrigido; `log_path_uses_the_selected_data_directory` falhava antes da correção.
+- Local: `apps/cli/src/domains/logs/mod.rs`, `get_daemon_log_path`, e `apps/cli/src/context.rs`.
+- Reprodução anterior: a função usava `wing_core::config::default_data_dir()` e devolvia o log da instalação padrão, mesmo com outro diretório de dados ou outra instância selecionada.
+- Correção: `Context` guarda o diretório do daemon (`daemon_data_dir`), já resolvido para a instância nomeada, e a busca de logs parte dele. Os testes usam diretórios temporários e não leem logs reais.
+- Limite: o fluxo de streaming (`logs follow`) não foi executado contra um daemon real.
+
+## CLI: `--since` rejeitava o formato mostrado na própria ajuda
+
+- Estado: corrigido; `accepts_documented_naive_timestamp_as_utc` falhava antes da correção.
+- Local: `apps/cli/src/domains/sync/mod.rs`, `parse_time_filter`.
+- Reprodução anterior: `2025-12-03 10:00:00`, exemplo da ajuda de `wing sync events --since`, retornava erro porque `DateTime::parse_from_str` exige fuso.
+- Correção: data sem fuso é lida como UTC, e a ajuda de `sync events` e `sync metrics` diz isso. Datas RFC 3339 mantêm o offset informado.
+
+## CLI: duração extrema em `--since` causava panic
+
+- Estado: corrigido; a regressão foi reproduzida sem daemon.
+- Local: `apps/cli/src/domains/sync/mod.rs`, `parse_duration` e `parse_time_filter`.
+- Reprodução anterior: `--since '9223372036854775807 weeks ago'` estourava a multiplicação em build de debug.
+- Correção: multiplicação, construção da `Duration` e subtração da data usam operações verificadas; valor fora do intervalo vira erro.
+
+## CLI: exportação SQL não escapava apóstrofo no tipo de modelo
+
+- Estado: corrigido; `sql_export_escapes_quotes_in_model_types` falhava antes da correção.
+- Local: `apps/cli/src/domains/sync/mod.rs`, `format_events_sql`.
+- Reprodução anterior: um modelo chamado `name'with-quote` era interpolado num literal SQL sem duplicar o apóstrofo, gerando SQL inválido.
+- Correção: duplicar o apóstrofo, como já era feito para resumo e detalhes. O teste verifica o texto gerado, sem executar SQL.
+
+## CLI: relatório de `index verify` causava panic com caminho Unicode longo
+
+- Estado: corrigido; `index_verify_renders_long_unicode_paths_without_panicking` falhava antes da correção.
+- Local: `apps/cli/src/domains/index/mod.rs`, listas de entradas ausentes e obsoletas.
+- Reprodução anterior: um caminho com 60 caracteres `é` era cortado num índice de byte fora da fronteira UTF-8.
+- Correção: `report_path` abrevia por caracteres. Outro teste cobre o limite de truncamento.
+
+## CLI: `wing status` causava panic com `node_id` Unicode longo
+
+- Estado: corrigido; regressão com resposta RPC sintética.
+- Local: `apps/cli/src/main.rs`, tabela de rede do `status`.
+- Reprodução anterior: um `node_id` com 26 caracteres `é` era cortado no byte 47, fora da fronteira UTF-8.
+- Correção: abreviar por caracteres.
+- Limite: não foi demonstrado que um daemon real produza esse identificador.
+
+## CLI: `wing library info <id>` consultava a biblioteca selecionada
+
+- Estado: corrigido; o teste RPC sintético falhava ao comparar o ID enviado.
+- Local: `apps/cli/src/domains/library/mod.rs`, `library info`.
+- Reprodução anterior: com uma biblioteca selecionada, o comando enviava ao daemon o ID selecionado em vez do informado.
+- Correção: usar o ID explícito no contexto da consulta; sem argumento, vale a biblioteca selecionada.
+
+## CLI: monitor de eventos causava panic com ID de job curto
+
+- Estado: corrigido; `short_job_id_is_rendered_without_panicking` falhava antes da correção.
+- Local: `apps/cli/src/domains/events/mod.rs`, `summarize_event`, e `apps/cli/src/domains/logs/mod.rs`.
+- Reprodução anterior: `&job_id[..8]` causava panic com ID menor que oito bytes ou com caractere multibyte cruzando o oitavo byte.
+- Correção: `short_job_id` limita por caracteres. O streaming de logs recebeu o mesmo tratamento, sem teste com stream real.
+
+## CLI: monitor de eventos omitia o campo alterado em `ConfigChanged`
+
+- Estado: corrigido; `config_change_summary_includes_changed_field` falhava antes da correção.
+- Local: `apps/cli/src/domains/events/mod.rs`, `summarize_event`.
+- Reprodução anterior: um braço anterior do `match` respondia só `Configuration changed` e tornava inalcançável o braço que incluía o nome do campo.
+- Correção: remover o braço duplicado.

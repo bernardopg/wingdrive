@@ -49,6 +49,32 @@ fn invalid_output_formats_and_unknown_commands_are_rejected() {
 }
 
 #[test]
+fn search_scope_errors_are_rejected_by_the_actual_command_tree() {
+	for args in [
+		vec![
+			"wing",
+			"search",
+			"files",
+			"report",
+			"--wing-path",
+			"content://invalid",
+		],
+		vec![
+			"wing",
+			"search",
+			"files",
+			"report",
+			"--wing-path",
+			"/tmp",
+			"--location",
+			"550e8400-e29b-41d4-a716-446655440000",
+		],
+	] {
+		assert!(Cli::try_parse_from(&args).is_err(), "{args:?}");
+	}
+}
+
+#[test]
 fn deletion_defaults_to_trash_and_confirmation() {
 	let cli = Cli::try_parse_from(["wing", "file", "delete", "first", "second"]).unwrap();
 	let Commands::File(FileCmd::Delete(args)) = cli.command else {
@@ -264,3 +290,5 @@ fn named_instances_keep_daemon_state_under_their_own_directory() {
 		base.join("instances").join("test-01")
 	);
 }
+
+mod rpc;

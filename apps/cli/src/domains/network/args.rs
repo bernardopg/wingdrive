@@ -1,17 +1,18 @@
+use std::path::PathBuf;
+
 use clap::{Args, Subcommand};
 use uuid::Uuid;
 
-use wing_core::{
-	domain::addressing::WingPath,
-	ops::network::{
-		pair::{
-			cancel::input::PairCancelInput, generate::input::PairGenerateInput,
-			join::input::PairJoinInput,
-		},
-		revoke::input::DeviceRevokeInput,
-		wingdrop::WingdropSendInput,
+use wing_core::ops::network::{
+	pair::{
+		cancel::input::PairCancelInput, generate::input::PairGenerateInput,
+		join::input::PairJoinInput,
 	},
+	revoke::input::DeviceRevokeInput,
+	wingdrop::WingdropSendInput,
 };
+
+use crate::domains::file::args::local_path;
 
 #[derive(Subcommand, Debug)]
 pub enum PairCmd {
@@ -107,18 +108,13 @@ pub struct WingdropSendArgs {
 
 impl From<WingdropSendArgs> for WingdropSendInput {
 	fn from(args: WingdropSendArgs) -> Self {
+		// Same rules as the file commands: relative paths mean the shell's
+		// folder, not the daemon's, and `local://<device>/...` stays remote.
 		let paths = args
 			.paths
-			.iter()
-			.map(|s| {
-				WingPath::from_uri(s).unwrap_or_else(|_| {
-					// Relative paths mean the shell's folder, not the daemon's.
-					let path = std::path::Path::new(s);
-					WingPath::local(
-						std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf()),
-					)
-				})
-			})
+			.into_iter()
+			.map(PathBuf::from)
+			.map(local_path)
 			.collect();
 		Self {
 			device_id: args.device_id,
@@ -140,5 +136,126 @@ impl From<RevokeArgs> for DeviceRevokeInput {
 			device_id: args.device_id,
 			remove_from_library: false,
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use clap::Parser;
+	use wing_core::domain::addressing::WingPath;
+
+	#[derive(Parser)]
+	struct SendCli {
+		#[command(flatten)]
+		args: WingdropSendArgs,
+	}
+	#[derive(Parser)]
+	struct RevokeCli {
+		#[command(flatten)]
+		args: RevokeArgs,
+	}
+	const DEVICE: &str = "550e8400-e29b-41d4-a716-446655440000";
+
+	#[test]
+	fn pairing_generate_only_converts_generate_command() {
+		assert!(PairCmd::Generate {}.to_generate_input().is_some());
+		assert!(PairCmd::Status.to_generate_input().is_none());
+	}
+	#[test]
+	fn pairing_without_code_enters_interactive_mode() {
+		assert!(PairCmd::Join {
+			code: None,
+			node_id: None
+		}
+		.to_join_input()
+		.is_none());
+	}
+	#[test]
+	fn pairing_plain_code_without_node_is_preserved() {
+		let input = PairCmd::Join {
+			code: Some("one two".into()),
+			node_id: None,
+		}
+		.to_join_input()
+		.unwrap();
+		assert_eq!(input.code, "one two");
+		assert!(input.node_id.is_none());
+	}
+	#[test]
+	fn pairing_node_wraps_words_in_json() {
+		let input = PairCmd::Join {
+			code: Some("one two".into()),
+			node_id: Some("node".into()),
+		}
+		.to_join_input()
+		.unwrap();
+		let json: serde_json::Value = serde_json::from_str(&input.code).unwrap();
+		assert_eq!(json["version"], 2);
+		assert_eq!(json["words"], "one two");
+		assert_eq!(json["node_id"], "node");
+		assert_eq!(input.node_id.as_deref(), Some("node"));
+	}
+	#[test]
+	fn pairing_json_is_not_wrapped_twice() {
+		let code = "  {\"version\":2}";
+		let input = PairCmd::Join {
+			code: Some(code.into()),
+			node_id: Some("node".into()),
+		}
+		.to_join_input()
+		.unwrap();
+		assert_eq!(input.code, code);
+	}
+	#[test]
+	fn pairing_cancel_preserves_session() {
+		let id = Uuid::parse_str(DEVICE).unwrap();
+		assert_eq!(
+			PairCmd::Cancel { session_id: id }
+				.to_cancel_input()
+				.unwrap()
+				.session_id,
+			id
+		);
+		assert!(PairCmd::Status.to_cancel_input().is_none());
+	}
+	#[test]
+	fn wingdrop_relative_path_is_resolved_before_sending() {
+		let args = SendCli::try_parse_from([
+			"wing",
+			DEVICE,
+			"relative-file",
+			"local://other-device/folder/file",
+		])
+		.unwrap()
+		.args;
+		let input: WingdropSendInput = args.into();
+		assert_eq!(input.device_id, Uuid::parse_str(DEVICE).unwrap());
+		assert_eq!(
+			input.paths[0].as_local_path().unwrap(),
+			std::path::absolute("relative-file").unwrap()
+		);
+		assert!(
+			matches!(&input.paths[1], WingPath::Physical { device_slug, .. } if device_slug == "other-device")
+		);
+	}
+	#[test]
+	fn wingdrop_requires_a_valid_device_and_path() {
+		assert!(SendCli::try_parse_from(["wing", DEVICE]).is_err());
+		assert!(SendCli::try_parse_from(["wing", "invalid", "file"]).is_err());
+	}
+	#[test]
+	fn revoke_keeps_device_without_removing_library() {
+		let args = RevokeCli::try_parse_from(["wing", DEVICE, "--yes"])
+			.unwrap()
+			.args;
+		assert!(args.yes);
+		let input: DeviceRevokeInput = args.into();
+		assert_eq!(input.device_id, Uuid::parse_str(DEVICE).unwrap());
+		assert!(!input.remove_from_library);
+	}
+	#[test]
+	fn revoke_requires_valid_uuid() {
+		assert!(RevokeCli::try_parse_from(["wing", "not-a-uuid"]).is_err());
 	}
 }

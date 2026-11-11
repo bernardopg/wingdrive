@@ -77,9 +77,11 @@ pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
 			});
 		}
 		LibraryCmd::Info(args) => {
-			// Get current library ID from CLI context if not specified
-			let current_library_id = ctx.library_id;
-			let input = args.to_input(current_library_id)?;
+			let library_id = args.library_id.or(ctx.library_id).ok_or_else(|| {
+				anyhow::anyhow!("No library specified and no current library set")
+			})?;
+			let ctx = ctx.clone().with_library_id(library_id);
+			let input = args.to_input(Some(library_id))?;
 			let out: LibraryInfoOutput = execute_query!(ctx, input);
 			print_output!(ctx, &out, |info: &LibraryInfoOutput| {
 				println!("Library Information");

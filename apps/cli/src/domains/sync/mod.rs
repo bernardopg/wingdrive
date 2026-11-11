@@ -136,15 +136,17 @@ fn parse_time_filter(time_str: &str) -> Result<DateTime<Utc>> {
 	if time_str.ends_with(" ago") {
 		let duration_str = &time_str[..time_str.len() - 4];
 		let duration = parse_duration(duration_str)?;
-		Ok(Utc::now() - duration)
+		Utc::now()
+			.checked_sub_signed(duration)
+			.ok_or_else(|| anyhow::anyhow!("Time is outside the supported range: {}", time_str))
 	} else {
 		// Try parsing as absolute time
 		DateTime::parse_from_rfc3339(time_str)
 			.map(|dt| dt.with_timezone(&Utc))
 			.or_else(|_| {
 				// Try common formats
-				DateTime::parse_from_str(time_str, "%Y-%m-%d %H:%M:%S")
-					.map(|dt| dt.with_timezone(&Utc))
+				chrono::NaiveDateTime::parse_from_str(time_str, "%Y-%m-%d %H:%M:%S")
+					.map(|dt| dt.and_utc())
 			})
 			.map_err(|_| anyhow::anyhow!("Invalid time format: {}", time_str))
 	}
@@ -161,16 +163,19 @@ fn parse_duration(duration_str: &str) -> Result<chrono::Duration> {
 		.map_err(|_| anyhow::anyhow!("Invalid number: {}", parts[0]))?;
 	let unit = parts[1].to_lowercase();
 
-	let seconds = match unit.as_str() {
-		"second" | "seconds" | "sec" | "s" => value,
-		"minute" | "minutes" | "min" | "m" => value * 60,
-		"hour" | "hours" | "h" => value * 3600,
-		"day" | "days" | "d" => value * 86400,
-		"week" | "weeks" | "w" => value * 604800,
+	let multiplier = match unit.as_str() {
+		"second" | "seconds" | "sec" | "s" => 1,
+		"minute" | "minutes" | "min" | "m" => 60,
+		"hour" | "hours" | "h" => 3600,
+		"day" | "days" | "d" => 86400,
+		"week" | "weeks" | "w" => 604800,
 		_ => return Err(anyhow::anyhow!("Unknown time unit: {}", unit)),
 	};
-
-	Ok(chrono::Duration::seconds(seconds))
+	let seconds = value
+		.checked_mul(multiplier)
+		.ok_or_else(|| anyhow::anyhow!("Duration is too large: {}", duration_str))?;
+	chrono::Duration::try_seconds(seconds)
+		.ok_or_else(|| anyhow::anyhow!("Duration is too large: {}", duration_str))
 }
 
 fn display_metrics(
@@ -554,7 +559,7 @@ fn format_events_sql(events: &[wing_core::infra::sync::SyncEventLog]) -> String 
 			if details.is_empty() { "NULL".to_string() } else { format!("'{}'", details.replace("'", "''")) },
 			event.correlation_id.map(|id| format!("'{}'", id)).unwrap_or_else(|| "NULL".to_string()),
 			event.peer_device_id.map(|id| format!("'{}'", id)).unwrap_or_else(|| "NULL".to_string()),
-			if model_types.is_empty() { "NULL".to_string() } else { format!("'{}'", model_types) },
+			if model_types.is_empty() { "NULL".to_string() } else { format!("'{}'", model_types.replace('\'', "''")) },
 			event.record_count.map(|c| c.to_string()).unwrap_or_else(|| "NULL".to_string()),
 			event.duration_ms.map(|d| d.to_string()).unwrap_or_else(|| "NULL".to_string()),
 		));
@@ -709,4 +714,65 @@ async fn show_partners(ctx: &Context) -> Result<()> {
 	}
 
 	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	#[test]
+	fn accepts_documented_naive_timestamp_as_utc() {
+		assert_eq!(
+			parse_time_filter("2025-12-03 10:00:00")
+				.unwrap()
+				.to_rfc3339(),
+			"2025-12-03T10:00:00+00:00"
+		);
+	}
+	#[test]
+	fn accepts_rfc3339_timestamp_with_offset() {
+		assert_eq!(
+			parse_time_filter("2025-12-03T12:00:00+02:00")
+				.unwrap()
+				.to_rfc3339(),
+			"2025-12-03T10:00:00+00:00"
+		);
+	}
+	#[test]
+	fn parses_relative_durations_and_rejects_unknown_units() {
+		assert_eq!(
+			parse_duration("2 hours").unwrap(),
+			chrono::Duration::hours(2)
+		);
+		assert_eq!(parse_duration("3 days").unwrap(), chrono::Duration::days(3));
+		assert!(parse_duration("2 elephants").is_err());
+		assert!(parse_duration("two hours").is_err());
+		assert!(parse_duration("2").is_err());
+	}
+
+	#[test]
+	fn excessive_relative_duration_returns_error_instead_of_panicking() {
+		assert!(parse_time_filter("9223372036854775807 weeks ago").is_err());
+		assert!(parse_time_filter("9223372036854775807 seconds ago").is_err());
+		assert!(parse_time_filter("1000000000000000 seconds ago").is_err());
+	}
+
+	#[test]
+	fn sql_export_escapes_quotes_in_model_types() {
+		let mut event = wing_core::infra::sync::SyncEventLog::new(
+			uuid::Uuid::nil(),
+			SyncEventType::StateTransition,
+			"fixture",
+		);
+		event.model_types = Some(vec!["name'with-quote".into()]);
+		assert!(format_events_sql(&[event]).contains("'name''with-quote'"));
+	}
+	#[test]
+	fn formats_durations_and_sizes_at_boundaries() {
+		assert_eq!(format_duration(59), "59s");
+		assert_eq!(format_duration(60), "1m 0s");
+		assert_eq!(format_duration(3600), "1h 0m");
+		assert_eq!(format_bytes(0), "0 B");
+		assert_eq!(format_bytes(1024), "1.0 KB");
+		assert_eq!(format_bytes(1024 * 1024), "1.0 MB");
+	}
 }

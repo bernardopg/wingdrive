@@ -175,3 +175,157 @@ pub struct FileHistoryArgs {
 	#[arg(long, default_value_t = 20)]
 	pub limit: u32,
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use clap::Parser;
+
+	#[derive(Parser)]
+	struct CopyCli {
+		#[command(flatten)]
+		args: FileCopyArgs,
+	}
+
+	#[derive(Parser)]
+	struct DeleteCli {
+		#[command(flatten)]
+		args: FileDeleteArgs,
+	}
+
+	#[test]
+	fn copy_defaults_and_explicit_flags_reach_the_core() {
+		let args = CopyCli::try_parse_from(["wing", "source", "--destination", "destination"])
+			.unwrap()
+			.args;
+		let input: FileCopyInput = args.into();
+		assert_eq!(
+			input.sources.paths[0].as_local_path().unwrap(),
+			std::path::absolute("source").unwrap()
+		);
+		assert_eq!(
+			input.destination.as_local_path().unwrap(),
+			std::path::absolute("destination").unwrap()
+		);
+		assert!(!input.overwrite && !input.verify_checksum && !input.move_files);
+		assert!(input.preserve_timestamps);
+		assert_eq!(input.copy_method, CopyMethod::Auto);
+		assert!(input.on_conflict.is_none());
+
+		let args = CopyCli::try_parse_from([
+			"wing",
+			"first",
+			"second",
+			"--destination",
+			"target",
+			"--overwrite",
+			"--verify-checksum",
+			"--move-files",
+			"--method",
+			"streaming",
+			"--dry-run",
+		])
+		.unwrap()
+		.args;
+		assert!(args.dry_run);
+		let input: FileCopyInput = args.into();
+		assert_eq!(input.sources.paths.len(), 2);
+		assert!(input.overwrite && input.verify_checksum && input.move_files);
+		assert_eq!(input.copy_method, CopyMethod::Streaming);
+		assert!(input.validate().is_ok());
+	}
+
+	#[test]
+	fn copy_requires_a_destination_and_valid_method() {
+		assert!(CopyCli::try_parse_from(["wing", "source"]).is_err());
+		assert!(CopyCli::try_parse_from([
+			"wing",
+			"source",
+			"--destination",
+			"target",
+			"--method",
+			"bad"
+		])
+		.is_err());
+		let input: FileCopyInput = CopyCli::try_parse_from(["wing", "--destination", "target"])
+			.unwrap()
+			.args
+			.into();
+		assert!(input.validate().is_err());
+	}
+
+	#[test]
+	fn local_path_preserves_remote_address_and_resolves_relative_paths() {
+		let remote = local_path(PathBuf::from("local://other-device/folder/file"));
+		assert!(
+			matches!(remote, WingPath::Physical { device_slug, .. } if device_slug == "other-device")
+		);
+		let relative = local_path(PathBuf::from("folder/file"));
+		assert_eq!(
+			relative.as_local_path().unwrap(),
+			std::path::absolute("folder/file").unwrap()
+		);
+	}
+
+	#[test]
+	fn delete_conversion_keeps_targets_and_requires_explicit_permanent_deletion() {
+		for (flags, permanent) in [(vec![], false), (vec!["--permanent", "--yes"], true)] {
+			let mut argv = vec!["wing", "first", "second"];
+			argv.extend(flags);
+			let input: FileDeleteInput = DeleteCli::try_parse_from(argv).unwrap().args.into();
+			assert_eq!(input.permanent, permanent);
+			assert!(input.recursive);
+			assert_eq!(input.targets.paths.len(), 2);
+			assert_eq!(
+				input.targets.paths[0].as_local_path().unwrap(),
+				std::path::absolute("first").unwrap()
+			);
+			assert_eq!(
+				input.targets.paths[1].as_local_path().unwrap(),
+				std::path::absolute("second").unwrap()
+			);
+			assert!(input.validate().is_ok());
+		}
+		assert!(DeleteCli::try_parse_from(["wing", "--permanent"]).is_err());
+	}
+
+	#[test]
+	fn rename_and_mkdir_preserve_names_and_absolute_paths() {
+		let rename: FileRenameInput = FileRenameArgs {
+			path: "old".into(),
+			new_name: "new.txt".into(),
+		}
+		.into();
+		assert_eq!(
+			rename.target.as_local_path().unwrap(),
+			std::path::absolute("old").unwrap()
+		);
+		assert_eq!(rename.new_name, "new.txt");
+		let mkdir: CreateFolderInput = FileMkdirArgs {
+			parent: "parent".into(),
+			name: "folder".into(),
+		}
+		.into();
+		assert_eq!(
+			mkdir.parent.as_local_path().unwrap(),
+			std::path::absolute("parent").unwrap()
+		);
+		assert_eq!(mkdir.name, "folder");
+		assert!(mkdir.items.is_empty());
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn local_path_keeps_the_symlink_itself() {
+		let dir = tempfile::tempdir().unwrap();
+		let target = dir.path().join("target");
+		let link = dir.path().join("link");
+		std::fs::write(&target, b"data").unwrap();
+		std::os::unix::fs::symlink(&target, &link).unwrap();
+		assert_eq!(local_path(link.clone()).as_local_path().unwrap(), link);
+	}
+}
+
+#[cfg(test)]
+#[path = "args/matrix.rs"]
+mod matrix;

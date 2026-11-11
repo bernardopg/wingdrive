@@ -1,4 +1,4 @@
-mod args;
+pub(crate) mod args;
 
 use anyhow::Result;
 use clap::Subcommand;
@@ -36,6 +36,77 @@ pub enum FileCmd {
 	Undo(FileUndoArgs),
 	/// List recent file operations and what undo can still reverse
 	History(FileHistoryArgs),
+}
+
+#[cfg(test)]
+mod conflict_tests {
+	use super::*;
+	use wing_core::{
+		domain::addressing::WingPath,
+		infra::action::LibraryAction,
+		ops::files::copy::{action::FileCopyAction, input::FileCopyInput},
+	};
+
+	#[tokio::test]
+	async fn detects_conflict_on_later_source() {
+		let dir = tempfile::tempdir().unwrap();
+		let dest = dir.path().join("dest");
+		std::fs::create_dir(&dest).unwrap();
+		std::fs::write(dest.join("second.txt"), b"existing").unwrap();
+		std::fs::write(dir.path().join("first.txt"), b"first").unwrap();
+		std::fs::write(dir.path().join("second.txt"), b"second").unwrap();
+		let input = FileCopyInput::new(
+			vec![dir.path().join("first.txt"), dir.path().join("second.txt")],
+			&dest,
+		);
+		let action = FileCopyAction::from_input(input).unwrap();
+		assert!(check_for_simple_conflicts(&action).await.unwrap());
+	}
+
+	#[tokio::test]
+	async fn detects_single_conflicts_and_accepts_free_destinations() {
+		let dir = tempfile::tempdir().unwrap();
+		let source = dir.path().join("source");
+		let dest = dir.path().join("dest");
+		std::fs::write(&source, b"source").unwrap();
+		let action =
+			FileCopyAction::from_input(FileCopyInput::new(vec![source.clone()], &dest)).unwrap();
+		assert!(!check_for_simple_conflicts(&action).await.unwrap());
+		std::fs::write(&dest, b"existing").unwrap();
+		assert!(check_for_simple_conflicts(&action).await.unwrap());
+		std::fs::remove_file(&dest).unwrap();
+		std::fs::create_dir(&dest).unwrap();
+		let action = FileCopyAction::from_input(FileCopyInput::new(vec![source], &dest)).unwrap();
+		assert!(!check_for_simple_conflicts(&action).await.unwrap());
+		std::fs::write(dest.join("source"), b"existing").unwrap();
+		assert!(check_for_simple_conflicts(&action).await.unwrap());
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn detects_dangling_symlink_at_destination() {
+		let dir = tempfile::tempdir().unwrap();
+		let dest = dir.path().join("destination");
+		std::fs::write(dir.path().join("source"), b"source").unwrap();
+		std::os::unix::fs::symlink(dir.path().join("missing"), &dest).unwrap();
+		let action =
+			FileCopyAction::from_input(FileCopyInput::new(vec![dir.path().join("source")], &dest))
+				.unwrap();
+		assert!(check_for_simple_conflicts(&action).await.unwrap());
+	}
+
+	#[tokio::test]
+	async fn ignores_local_paths_when_destination_is_remote() {
+		let dir = tempfile::tempdir().unwrap();
+		let mut input = FileCopyInput::new(vec![dir.path().join("source")], dir.path());
+		input.destination = WingPath::Physical {
+			device_slug: "other-device".into(),
+			path: dir.path().to_path_buf(),
+		};
+		std::fs::write(dir.path().join("source"), b"local").unwrap();
+		let action = FileCopyAction::from_input(input).unwrap();
+		assert!(!check_for_simple_conflicts(&action).await.unwrap());
+	}
 }
 
 pub async fn run(ctx: &Context, cmd: FileCmd) -> Result<()> {
@@ -362,75 +433,33 @@ async fn run_copy_with_confirmation(
 async fn check_for_simple_conflicts(
 	action: &wing_core::ops::files::copy::action::FileCopyAction,
 ) -> Result<bool> {
-	use wing_core::domain::addressing::WingPath;
-
-	// Extract the physical path from the destination WingPath
-	let dest_path = match &action.destination {
-		WingPath::Physical { path, .. } => path,
-		WingPath::Cloud { .. } => {
-			// Cloud paths are not yet supported for copy operations
-			return Ok(false);
-		}
-		WingPath::Content { .. } => {
-			// Content paths cannot be destinations for copy operations
-			return Ok(false);
-		}
-		WingPath::Sidecar { .. } => {
-			// Sidecar paths cannot be destinations for copy operations
-			return Ok(false);
-		}
+	let Some(destination) = action.destination.as_local_path() else {
+		return Ok(false);
 	};
-
-	// Resolve the actual destination file path using the same logic as the core copy job
-	let final_dest_path = resolve_final_destination_path(action, dest_path)?;
-
-	// Check if the resolved destination file exists
-	Ok(tokio::fs::metadata(&final_dest_path).await.is_ok())
-}
-
-/// Resolve the final destination path using the same logic as the core copy job
-/// This handles the case where destination is a directory vs a file path
-fn resolve_final_destination_path(
-	action: &wing_core::ops::files::copy::action::FileCopyAction,
-	dest_path: &std::path::PathBuf,
-) -> Result<std::path::PathBuf> {
-	use wing_core::domain::addressing::WingPath;
-
-	if action.sources.paths.len() > 1 {
-		// Multiple sources: destination must be a directory
-		if let Some(first_source) = action.sources.paths.first() {
-			if let WingPath::Physical {
-				path: source_path, ..
-			} = first_source
-			{
-				if let Some(filename) = source_path.file_name() {
-					return Ok(dest_path.join(filename));
-				}
-			}
-		}
-		// Fallback
-		return Ok(dest_path.clone());
-	} else {
-		// Single source: check if destination is a directory
-		if dest_path.is_dir() {
-			// Destination is a directory, join with source filename
-			if let Some(source) = action.sources.paths.first() {
-				if let WingPath::Physical {
-					path: source_path, ..
-				} = source
-				{
-					if let Some(filename) = source_path.file_name() {
-						return Ok(dest_path.join(filename));
-					}
-				}
-			}
-			// Fallback
-			return Ok(dest_path.clone());
+	let is_directory = match tokio::fs::metadata(destination).await {
+		Ok(metadata) => metadata.is_dir(),
+		Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
+		Err(error) => return Err(error.into()),
+	};
+	for source in &action.sources.paths {
+		let Some(source) = source.as_local_path() else {
+			continue;
+		};
+		let target = if is_directory || action.sources.paths.len() > 1 {
+			let Some(name) = source.file_name() else {
+				continue;
+			};
+			destination.join(name)
 		} else {
-			// Destination is a file path, use as-is
-			return Ok(dest_path.clone());
+			destination.to_path_buf()
+		};
+		match tokio::fs::symlink_metadata(target).await {
+			Ok(_) => return Ok(true),
+			Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+			Err(error) => return Err(error.into()),
 		}
 	}
+	Ok(false)
 }
 
 /// Get file information using the FileByPathQuery

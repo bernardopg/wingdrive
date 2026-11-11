@@ -551,6 +551,7 @@ async fn run_client_command(
 
 	let core = CoreClient::new(socket_addr.clone());
 	let mut ctx = Context::new(core, format, data_dir, socket_addr)?;
+	ctx.daemon_data_dir = daemon_data_dir(&ctx.data_dir, instance.as_deref());
 
 	ctx.validate_and_fix_library().await?;
 
@@ -703,8 +704,8 @@ async fn run_client_command(
 						network_table.add_row(vec!["Status", "● Running"]);
 
 						if let Some(node_id) = &status.network.node_id {
-							let node_id_display = if node_id.len() > 50 {
-								format!("{}...", &node_id[..47])
+							let node_id_display = if node_id.chars().count() > 50 {
+								format!("{}...", node_id.chars().take(47).collect::<String>())
 							} else {
 								node_id.clone()
 							};

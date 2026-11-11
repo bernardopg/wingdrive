@@ -94,7 +94,7 @@ async fn run_logs_follow(ctx: &Context, args: LogsFollowArgs) -> Result<()> {
 					log_msg
 						.job_id
 						.as_ref()
-						.map(|id| format!(" [job:{}]", &id[..8]))
+						.map(|id| format!(" [job:{}]", id.chars().take(8).collect::<String>()))
 						.unwrap_or_default()
 				} else {
 					String::new()
@@ -167,9 +167,8 @@ fn colorize_level(level: &str) -> String {
 }
 
 /// Get the daemon log file path by querying the daemon's data directory
-async fn get_daemon_log_path(_ctx: &Context) -> Result<std::path::PathBuf> {
-	let data_dir = wing_core::config::default_data_dir()?;
-	let logs_dir = data_dir.join("logs");
+async fn get_daemon_log_path(ctx: &Context) -> Result<std::path::PathBuf> {
+	let logs_dir = ctx.daemon_data_dir.join("logs");
 
 	// Check for today's log file first (with date suffix due to daily rotation)
 	let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
@@ -326,4 +325,125 @@ async fn show_recent_historical_logs(ctx: &Context, args: &LogsFollowArgs) -> Re
 	println!("Now streaming live logs...");
 
 	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::context::OutputFormat;
+	use wing_core::client::CoreClient;
+
+	fn show_args() -> LogsShowArgs {
+		LogsShowArgs {
+			lines: 20,
+			level: None,
+			component: None,
+			job_id: None,
+			timestamps: false,
+			verbose: false,
+		}
+	}
+
+	fn context(root: &std::path::Path) -> Context {
+		Context::new(
+			CoreClient::new("127.0.0.1:0".into()),
+			OutputFormat::Human,
+			root.to_path_buf(),
+			"127.0.0.1:0".into(),
+		)
+		.unwrap()
+	}
+
+	#[tokio::test]
+	async fn log_path_uses_the_selected_data_directory() {
+		let root = tempfile::tempdir().unwrap();
+		let logs = root.path().join("logs");
+		std::fs::create_dir(&logs).unwrap();
+		let expected = logs.join("daemon.log");
+		std::fs::write(&expected, "fixture\n").unwrap();
+		let ctx = Context::new(
+			CoreClient::new("127.0.0.1:0".into()),
+			OutputFormat::Human,
+			root.path().to_path_buf(),
+			"127.0.0.1:0".into(),
+		)
+		.unwrap();
+		assert_eq!(get_daemon_log_path(&ctx).await.unwrap(), expected);
+	}
+
+	#[tokio::test]
+	async fn log_path_uses_named_daemon_directory() {
+		let root = tempfile::tempdir().unwrap();
+		let dir = root.path().join("instances").join("test");
+		std::fs::create_dir_all(dir.join("logs")).unwrap();
+		let expected = dir.join("logs/daemon.log");
+		std::fs::write(&expected, "fixture\n").unwrap();
+		let mut ctx = context(root.path());
+		ctx.daemon_data_dir = dir;
+		assert_eq!(get_daemon_log_path(&ctx).await.unwrap(), expected);
+	}
+
+	#[tokio::test]
+	async fn log_path_prefers_today_then_base() {
+		let root = tempfile::tempdir().unwrap();
+		let logs = root.path().join("logs");
+		std::fs::create_dir(&logs).unwrap();
+		let base = logs.join("daemon.log");
+		let today = logs.join(format!(
+			"daemon.log.{}",
+			chrono::Utc::now().format("%Y-%m-%d")
+		));
+		std::fs::write(&base, "old").unwrap();
+		std::fs::write(&today, "today").unwrap();
+		let ctx = context(root.path());
+		assert_eq!(get_daemon_log_path(&ctx).await.unwrap(), today);
+		std::fs::remove_file(&today).unwrap();
+		assert_eq!(get_daemon_log_path(&ctx).await.unwrap(), base);
+	}
+
+	#[tokio::test]
+	async fn missing_log_is_reported_without_creating_one() {
+		let root = tempfile::tempdir().unwrap();
+		let ctx = context(root.path());
+		assert!(run_logs_show(&ctx, show_args()).await.is_ok());
+		assert!(!root.path().join("logs").exists());
+	}
+
+	#[test]
+	fn reads_only_requested_tail_and_handles_empty_file() {
+		let root = tempfile::tempdir().unwrap();
+		let file = root.path().join("log");
+		std::fs::write(&file, "one\ntwo\nthree\n").unwrap();
+		assert_eq!(read_last_lines(&file, 2).unwrap(), ["two", "three"]);
+		assert!(read_last_lines(&file, 0).unwrap().is_empty());
+		std::fs::write(&file, "").unwrap();
+		assert!(read_last_lines(&file, 20).unwrap().is_empty());
+	}
+
+	#[test]
+	fn formats_and_filters_structured_log_lines() {
+		let line = "2026-01-02T03:04:05Z WARN ThreadId(1) wing_core::index: hello";
+		let mut args = show_args();
+		args.level = Some("warn".into());
+		args.component = Some("index".into());
+		args.timestamps = true;
+		args.verbose = true;
+		let output = format_log_line(line, &args).unwrap();
+		assert!(output.contains("2026-01-02T03:04:05Z"));
+		assert!(output.contains("wing_core::index"));
+		assert!(output.contains("hello"));
+		args.level = Some("error".into());
+		assert!(format_log_line(line, &args).is_none());
+		args.level = None;
+		args.component = Some("network".into());
+		assert!(format_log_line(line, &args).is_none());
+	}
+
+	#[test]
+	fn malformed_log_lines_remain_readable() {
+		assert_eq!(
+			format_log_line("unstructured", &show_args()).as_deref(),
+			Some("unstructured")
+		);
+	}
 }

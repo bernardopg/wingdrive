@@ -1,0 +1,253 @@
+use super::*;
+use clap::Parser;
+#[derive(Parser)]
+struct Cli {
+	#[command(flatten)]
+	args: IndexStartArgs,
+}
+macro_rules! case {
+	($name:ident, $mode:literal, $mv:ident, $scope:literal, $sv:ident, $persist:literal, $hidden:literal) => {
+		#[test]
+		fn $name() {
+			let mut args = vec!["wing", "source", "--mode", $mode, "--scope", $scope];
+			if $persist {
+				args.push("--persistent");
+			}
+			if $hidden {
+				args.push("--include-hidden");
+			}
+			let library = Uuid::nil();
+			let input = Cli::try_parse_from(args)
+				.unwrap()
+				.args
+				.to_input(library)
+				.unwrap();
+			assert_eq!(input.library_id, library);
+			assert_eq!(input.paths, [PathBuf::from("source")]);
+			assert!(matches!(input.mode, IndexMode::$mv));
+			assert!(matches!(input.scope, IndexScope::$sv));
+			assert_eq!(
+				matches!(input.persistence, IndexPersistence::Persistent),
+				$persist
+			);
+			assert_eq!(input.include_hidden, $hidden);
+		}
+	};
+}
+
+case!(
+	index_shallow_current_0_0,
+	"shallow",
+	Shallow,
+	"current",
+	Current,
+	false,
+	false
+);
+case!(
+	index_shallow_current_0_1,
+	"shallow",
+	Shallow,
+	"current",
+	Current,
+	false,
+	true
+);
+case!(
+	index_shallow_current_1_0,
+	"shallow",
+	Shallow,
+	"current",
+	Current,
+	true,
+	false
+);
+case!(
+	index_shallow_current_1_1,
+	"shallow",
+	Shallow,
+	"current",
+	Current,
+	true,
+	true
+);
+case!(
+	index_shallow_recursive_0_0,
+	"shallow",
+	Shallow,
+	"recursive",
+	Recursive,
+	false,
+	false
+);
+case!(
+	index_shallow_recursive_0_1,
+	"shallow",
+	Shallow,
+	"recursive",
+	Recursive,
+	false,
+	true
+);
+case!(
+	index_shallow_recursive_1_0,
+	"shallow",
+	Shallow,
+	"recursive",
+	Recursive,
+	true,
+	false
+);
+case!(
+	index_shallow_recursive_1_1,
+	"shallow",
+	Shallow,
+	"recursive",
+	Recursive,
+	true,
+	true
+);
+case!(
+	index_content_current_0_0,
+	"content",
+	Content,
+	"current",
+	Current,
+	false,
+	false
+);
+case!(
+	index_content_current_0_1,
+	"content",
+	Content,
+	"current",
+	Current,
+	false,
+	true
+);
+case!(
+	index_content_current_1_0,
+	"content",
+	Content,
+	"current",
+	Current,
+	true,
+	false
+);
+case!(
+	index_content_current_1_1,
+	"content",
+	Content,
+	"current",
+	Current,
+	true,
+	true
+);
+case!(
+	index_content_recursive_0_0,
+	"content",
+	Content,
+	"recursive",
+	Recursive,
+	false,
+	false
+);
+case!(
+	index_content_recursive_0_1,
+	"content",
+	Content,
+	"recursive",
+	Recursive,
+	false,
+	true
+);
+case!(
+	index_content_recursive_1_0,
+	"content",
+	Content,
+	"recursive",
+	Recursive,
+	true,
+	false
+);
+case!(
+	index_content_recursive_1_1,
+	"content",
+	Content,
+	"recursive",
+	Recursive,
+	true,
+	true
+);
+case!(
+	index_deep_current_0_0,
+	"deep",
+	Deep,
+	"current",
+	Current,
+	false,
+	false
+);
+case!(
+	index_deep_current_0_1,
+	"deep",
+	Deep,
+	"current",
+	Current,
+	false,
+	true
+);
+case!(
+	index_deep_current_1_0,
+	"deep",
+	Deep,
+	"current",
+	Current,
+	true,
+	false
+);
+case!(
+	index_deep_current_1_1,
+	"deep",
+	Deep,
+	"current",
+	Current,
+	true,
+	true
+);
+case!(
+	index_deep_recursive_0_0,
+	"deep",
+	Deep,
+	"recursive",
+	Recursive,
+	false,
+	false
+);
+case!(
+	index_deep_recursive_0_1,
+	"deep",
+	Deep,
+	"recursive",
+	Recursive,
+	false,
+	true
+);
+case!(
+	index_deep_recursive_1_0,
+	"deep",
+	Deep,
+	"recursive",
+	Recursive,
+	true,
+	false
+);
+case!(
+	index_deep_recursive_1_1,
+	"deep",
+	Deep,
+	"recursive",
+	Recursive,
+	true,
+	true
+);

@@ -77,3 +77,57 @@ pub async fn run(data_dir: PathBuf, cmd: ConfigCmd) -> Result<()> {
 
 	Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	#[tokio::test]
+	async fn configuration_commands_persist_and_reject_unknown_keys() {
+		let root = tempfile::tempdir().unwrap();
+		let dir = root.path().to_path_buf();
+		run(dir.clone(), ConfigCmd::Show).await.unwrap();
+		for key in ["current_library_id", "update.repo", "update.channel"] {
+			run(dir.clone(), ConfigCmd::Get { key: key.into() })
+				.await
+				.unwrap();
+		}
+		run(
+			dir.clone(),
+			ConfigCmd::Set {
+				key: "update.repo".into(),
+				value: "example/releases".into(),
+			},
+		)
+		.await
+		.unwrap();
+		run(
+			dir.clone(),
+			ConfigCmd::Set {
+				key: "update.channel".into(),
+				value: "beta".into(),
+			},
+		)
+		.await
+		.unwrap();
+		let saved = CliConfig::load(&dir).unwrap();
+		assert_eq!(saved.update.repo, "example/releases");
+		assert_eq!(saved.update.channel, "beta");
+		assert!(run(
+			dir.clone(),
+			ConfigCmd::Get {
+				key: "unknown".into()
+			}
+		)
+		.await
+		.is_err());
+		assert!(run(
+			dir,
+			ConfigCmd::Set {
+				key: "unknown".into(),
+				value: "x".into()
+			}
+		)
+		.await
+		.is_err());
+	}
+}

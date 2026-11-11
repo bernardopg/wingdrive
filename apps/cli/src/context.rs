@@ -16,6 +16,7 @@ pub struct Context {
 	pub core: CoreClient,
 	pub format: OutputFormat,
 	pub data_dir: PathBuf,
+	pub daemon_data_dir: PathBuf,
 	pub socket_addr: String,
 	pub library_id: Option<Uuid>,
 	pub cli_config: CliConfig,
@@ -34,6 +35,7 @@ impl Context {
 		Ok(Self {
 			core,
 			format,
+			daemon_data_dir: data_dir.clone(),
 			data_dir,
 			socket_addr,
 			library_id,

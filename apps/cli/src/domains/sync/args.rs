@@ -18,7 +18,7 @@ pub struct SyncEventsArgs {
 	/// Time range: events since this time
 	#[arg(
 		long,
-		help = "Show events since (e.g., '1 hour ago', '2025-12-03 10:00:00')"
+		help = "Show events since (e.g., '1 hour ago', '2025-12-03 10:00:00' UTC)"
 	)]
 	pub since: Option<String>,
 
@@ -61,7 +61,7 @@ pub struct SyncMetricsArgs {
 	/// Show metrics for a specific time range
 	#[arg(
 		long,
-		help = "Show metrics since this time (e.g., '1 hour ago', '2025-10-23 10:00:00')"
+		help = "Show metrics since this time (e.g., '1 hour ago', '2025-10-23 10:00:00' UTC)"
 	)]
 	pub since: Option<String>,
 

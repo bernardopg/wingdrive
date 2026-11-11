@@ -264,3 +264,260 @@ impl TryFrom<VolumeRemoveCloudArgs> for VolumeRemoveCloudInput {
 		Ok(Self { fingerprint })
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use clap::Parser;
+
+	#[derive(Parser)]
+	struct AddCli {
+		#[command(flatten)]
+		args: VolumeAddCloudArgs,
+	}
+
+	fn parse(args: &[&str]) -> VolumeAddCloudArgs {
+		AddCli::try_parse_from(args).unwrap().args
+	}
+
+	#[test]
+	fn s3_compatible_services_keep_provider_and_credentials() {
+		for (service, expected) in [
+			("s3", CloudServiceType::S3),
+			("backblaze-b2", CloudServiceType::BackblazeB2),
+			("wasabi", CloudServiceType::Wasabi),
+			("digital-ocean-spaces", CloudServiceType::DigitalOceanSpaces),
+		] {
+			let input = parse(&[
+				"wing",
+				"My volume",
+				"--service",
+				service,
+				"--bucket",
+				"test-bucket",
+				"--region",
+				"test-region",
+				"--access-key-id",
+				"fake-id",
+				"--secret-access-key",
+				"fake-secret",
+				"--endpoint",
+				"https://example.invalid",
+			])
+			.validate_and_build()
+			.unwrap();
+			assert_eq!(input.service, expected);
+			assert_eq!(input.display_name, "My volume");
+			let CloudStorageConfig::S3 {
+				bucket,
+				region,
+				access_key_id,
+				secret_access_key,
+				endpoint,
+			} = input.config
+			else {
+				panic!("expected S3 configuration")
+			};
+			assert_eq!(
+				(
+					bucket.as_str(),
+					region.as_str(),
+					access_key_id.as_str(),
+					secret_access_key.as_str()
+				),
+				("test-bucket", "test-region", "fake-id", "fake-secret")
+			);
+			assert_eq!(endpoint.as_deref(), Some("https://example.invalid"));
+		}
+	}
+
+	#[test]
+	fn s3_reports_each_missing_required_field() {
+		let required = [
+			("--bucket", "bucket"),
+			("--region", "region"),
+			("--access-key-id", "key"),
+			("--secret-access-key", "secret"),
+		];
+		for (missing, _) in required {
+			let mut args = vec!["wing", "name", "--service", "s3"];
+			for (flag, value) in required {
+				if flag != missing {
+					args.extend([flag, value]);
+				}
+			}
+			assert!(parse(&args)
+				.validate_and_build()
+				.unwrap_err()
+				.contains(missing));
+		}
+	}
+
+	#[test]
+	fn google_drive_keeps_oauth_fields_and_root() {
+		let input = parse(&[
+			"wing",
+			"name",
+			"--service",
+			"google-drive",
+			"--access-token",
+			"access",
+			"--refresh-token",
+			"refresh",
+			"--client-id",
+			"id",
+			"--client-secret",
+			"secret",
+			"--root",
+			"folder",
+		])
+		.validate_and_build()
+		.unwrap();
+		let CloudStorageConfig::GoogleDrive {
+			root,
+			access_token,
+			refresh_token,
+			client_id,
+			client_secret,
+		} = input.config
+		else {
+			panic!("expected Google Drive")
+		};
+		assert_eq!(root.as_deref(), Some("folder"));
+		assert_eq!(
+			(
+				access_token.as_str(),
+				refresh_token.as_str(),
+				client_id.as_str(),
+				client_secret.as_str()
+			),
+			("access", "refresh", "id", "secret")
+		);
+	}
+
+	#[test]
+	fn onedrive_requires_access_token_and_accepts_full_credentials() {
+		assert!(parse(&["wing", "name", "--service", "one-drive"])
+			.validate_and_build()
+			.unwrap_err()
+			.contains("--access-token"));
+		let input = parse(&[
+			"wing",
+			"name",
+			"--service",
+			"one-drive",
+			"--access-token",
+			"access",
+			"--refresh-token",
+			"refresh",
+			"--client-id",
+			"id",
+			"--client-secret",
+			"secret",
+		])
+		.validate_and_build()
+		.unwrap();
+		assert!(matches!(
+			input.config,
+			CloudStorageConfig::OneDrive { root: None, .. }
+		));
+	}
+
+	#[test]
+	fn dropbox_uses_refresh_token_without_access_token() {
+		let input = parse(&[
+			"wing",
+			"name",
+			"--service",
+			"dropbox",
+			"--refresh-token",
+			"refresh",
+			"--client-id",
+			"id",
+			"--client-secret",
+			"secret",
+		])
+		.validate_and_build()
+		.unwrap();
+		assert!(
+			matches!(input.config, CloudStorageConfig::Dropbox { refresh_token, .. } if refresh_token == "refresh")
+		);
+	}
+
+	#[test]
+	fn azure_requires_account_and_preserves_endpoint() {
+		assert!(parse(&[
+			"wing",
+			"name",
+			"--service",
+			"azure-blob",
+			"--container",
+			"test"
+		])
+		.validate_and_build()
+		.unwrap_err()
+		.contains("--account-name"));
+		let input = parse(&[
+			"wing",
+			"name",
+			"--service",
+			"azure-blob",
+			"--container",
+			"test",
+			"--account-name",
+			"account",
+			"--account-key",
+			"fake",
+			"--endpoint",
+			"https://example.invalid",
+		])
+		.validate_and_build()
+		.unwrap();
+		assert!(
+			matches!(input.config, CloudStorageConfig::AzureBlob { container, endpoint: Some(endpoint), .. } if container == "test" && endpoint == "https://example.invalid")
+		);
+	}
+
+	#[test]
+	fn google_cloud_reads_service_account_from_file() {
+		let dir = tempfile::tempdir().unwrap();
+		let path = dir.path().join("fake.json");
+		std::fs::write(&path, "{\"test\":true}").unwrap();
+		let input = parse(&[
+			"wing",
+			"name",
+			"--service",
+			"google-cloud-storage",
+			"--bucket",
+			"test",
+			"--service-account",
+			path.to_str().unwrap(),
+			"--root",
+			"folder",
+		])
+		.validate_and_build()
+		.unwrap();
+		assert!(
+			matches!(input.config, CloudStorageConfig::GoogleCloudStorage { bucket, root: Some(root), credential, .. } if bucket == "test" && root == "folder" && credential == "{\"test\":true}")
+		);
+	}
+
+	#[test]
+	fn google_cloud_reports_unreadable_service_account() {
+		let dir = tempfile::tempdir().unwrap();
+		let path = dir.path().join("missing.json");
+		let error = parse(&[
+			"wing",
+			"name",
+			"--service",
+			"google-cloud-storage",
+			"--bucket",
+			"test",
+			"--service-account",
+			path.to_str().unwrap(),
+		])
+		.validate_and_build()
+		.unwrap_err();
+		assert!(error.contains("Failed to read service account file"));
+	}
+}
