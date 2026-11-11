@@ -33,8 +33,8 @@ de branch disponível. O número de testes não substitui medição de cobertura
 4. COV-05 e COV-10 cobrem recuperação/sync e CLI com daemon no M3.
 5. COV-11 ativa os pisos após as suites passarem; COV-12 verifica o conjunto e fecha o épico.
 
-COV-01 a COV-04, COV-06 e COV-07 estão In Progress (#343, #344, #358 e #359); bugs achados
-pelas suítes ficam em [BUGS.md](BUGS.md). As demais ficam no backlog sem `sprint`.
+COV-01 a COV-04, COV-06, COV-07 e COV-09 estão In Progress (#343, #344, #358, #359 e o PR da
+COV-09); bugs achados pelas suítes ficam em [BUGS.md](BUGS.md). As demais ficam no backlog sem `sprint`.
 Não acrescentar compromisso ao S04/S05 já ocupado: puxar no máximo duas tasks por vez para o
 sprint com capacidade, preencher `sprint` e atualizar o quadro e o log juntos. Não inventar
 S06 nem datas antes do planning. Um teste implementado neste branch só vira Done após cumprir
@@ -58,5 +58,14 @@ python3 scripts/coverage-report.py coverage/site coverage/rust/rust.lcov $(find 
 ```
 
 O relatório completo é a referência das metas. Relatórios focados servem para diagnosticar
-arquivos; não comprovam os pisos de componente. Falha de um runner deixa aquele componente
+arquivos; não comprovam os pisos de componente.
+
+Para o CLI, `scripts/coverage-cli-production.py` lê um LCOV e conta só as linhas de produção de
+`apps/cli/`, sem os módulos `#[cfg(test)]` e as matrizes `args/matrix.rs` que o relatório completo
+conta como código. É a medida usada nas metas da COV-09:
+
+```bash
+cargo llvm-cov --locked -p wing-cli --bin wing --lcov --output-path target/cov-cli/cli.lcov
+python3 scripts/coverage-cli-production.py target/cov-cli/cli.lcov
+``` Falha de um runner deixa aquele componente
 sem evidência atual, mesmo que um badge anterior ainda exista.

@@ -230,7 +230,7 @@ wing scan /path/to/directory --mode content --watch
 ```bash
 # List all jobs with colored status and progress
 wing job list
-wing job list --status running      # Filter by status
+wing job list --status running      # queued, running, paused, completed, failed or cancelled
 
 # Show detailed job information
 wing job info <job-id>
@@ -239,11 +239,15 @@ wing job info <job-id>
 wing job monitor
 wing job monitor --job-id <job-id>  # Monitor specific job
 
-# Control jobs (planned features)
+# Control jobs
 wing job pause <job-id>
 wing job resume <job-id>
 wing job cancel <job-id>
 ```
+
+`--status` rejects any other value instead of listing every job. `pause`, `resume` and `cancel`
+exit with a non-zero code when the daemon refuses the request, so scripts can check the result;
+with `--format json` the daemon's answer is still printed first.
 
 **Job Monitor Features:**
 - Live progress bars for running jobs
@@ -251,6 +255,17 @@ wing job cancel <job-id>
 - ️ Real-time updates every second
 - Automatic cleanup of completed jobs
 - ️ Ctrl+C to exit gracefully
+
+### Search
+
+```bash
+wing search files report
+wing search files report --wing-path ~/Documents
+wing search files report --location <location-id>
+```
+
+`--wing-path` and `--location` each narrow the search, and only one of them may be given. An
+address that does not parse is rejected; it no longer falls back to searching the whole library.
 
 ### File Operations
 
@@ -291,9 +306,13 @@ wing status
 wing monitor
 
 # View daemon logs
-wing system logs
-wing system logs --tail 50
+wing logs show
+wing logs show --lines 50 --level warn
+wing logs follow
 ```
+
+`wing logs` reads the log of the daemon selected by `--data-dir` and `--instance`, so
+`wing --instance test logs show` shows that instance's log, not the default one.
 
 ### Networking & Device Management
 
@@ -313,8 +332,10 @@ wing network pair --initiate              # Generate pairing code
 wing network pair --join <code>           # Join using code
 wing network pair --status                # Check pairing status
 
-# Wingdrop (file sharing)
-wing network wingdrop <device-id> /path/to/file --sender "Your Name"
+# Wingdrop (file sharing); relative paths are resolved from the current folder
+wing network wingdrop send <device-id> ./report.pdf ~/Pictures/trip
+wing network wingdrop pending
+wing network wingdrop accept <drop-id>
 
 # Remove paired device (the other device, if online, drops the pairing too)
 wing network revoke <device-id>
