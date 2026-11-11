@@ -50,6 +50,7 @@ WingDrive must replace Dolphin, Nautilus or Yazi as the file manager the user op
 - [ ] DESK-034 Terminal panel docked in the Explorer
 - [ ] DESK-035 Git status emblems on files
 - [x] DESK-036 Open in a new tab from the sidebar and folders, and drop files on tabs
+- [ ] DESK-051 WingDrive as the file chooser for uploads and saves (xdg-desktop-portal FileChooser)
 
 ## Acceptance Criteria
 
