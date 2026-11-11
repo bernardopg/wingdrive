@@ -3,7 +3,12 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 3.1.0 — 2026-11-10
+
+Undo for copy, overwrite, move and trash, copies that never destroy data when
+they are cancelled or fail, paired devices that keep each other's name current
+and forget each other together, and a bundled SQLite with the CVE-2026-119375
+fix. The test suites grew by 79 cases and found seven more bugs (#347 to #360).
 
 ### Added
 
@@ -11,7 +16,24 @@ version in the workspace manifests and the matching `v*` git tag.
   they changed, `wing file undo` and Ctrl+Z in the desktop app reverse it, and
   `wing file history` lists what can still be undone. A file that a copy
   replaces is kept for 7 days in a hidden `.wing-undo-*` folder next to it.
-  Undo skips anything that changed since the operation.
+  Undo skips anything that changed since the operation. The journal lives in
+  each library's job database and is never synced. RPC clients get the
+  `files.undo` action and the `files.undo_history` query (FILE-008).
+- Paired devices send their current name, type, operating system and app
+  version every time they connect, so a renamed or reinstalled device shows up
+  with its new description on the other side (MOB-013).
+- Removing a paired device (`wing network revoke`, `network.device.revoke`)
+  tells the other device, which drops the pairing too. The output reports
+  `peer_notified`. A device that is offline, or still runs 3.0.x, keeps the
+  pairing until it is removed there; the CLI says so.
+
+### Changed
+
+- Mobile: Expo 58.0.23 with the `react-native-safe-area-context` version its
+  patch needs, and NativeWind 5.0.0-rc.1 with its `react-native-css`
+  3.1.0-rc.1 peer. The AssetRegistry patch moves to the new version.
+- Dependabot updates for the Cargo, bun and GitHub Actions groups (#349, #350,
+  #352).
 
 ### Fixed
 
@@ -26,6 +48,37 @@ version in the workspace manifests and the matching `v*` git tag.
   one failed the whole operation, and a link to a folder copied the folder.
 - Moving a folder that holds a pipe, socket or device file fails instead of
   skipping the item in silence and then deleting it with the source folder.
+- `wing library sync-setup setup --action` takes and documents the same values:
+  `share-local`, `join-remote` and `merge`. The help listed `register-only` and
+  `create-shared`, which the parser refused (MOB-014).
+- `wing library sync-setup` works with `--instance`. It asks the daemon for the
+  local device instead of reading `device.json` from the default data folder,
+  so it no longer demands `--local-device` for a named instance.
+- An application whose desktop entry has `Exec=viewer %%f %%u` receives the
+  selected files. The escaped `%%` was read as a file code and the files were
+  dropped.
+- The local media server answers 400 for a folder on Windows too. Windows
+  refuses to open a folder as a file, and the error became a 403.
+- Sidecar addresses round-trip: `WingPath::from_uri` accepts the `thumbstrips`
+  and `gaussian_splats` URIs that `to_uri` produces, the MessagePack sidecar
+  format reads back its own JSON (`message_pack`), and `cloud://` paths of a
+  service without its own type (`CloudServiceType::Other`) round-trip.
+- The indexing rule that rejects a folder holding certain subfolders
+  (`RejectIfChildrenDirectoriesArePresent`) is applied. The ruler always saw
+  the path as a file and skipped it. A folder the ruler cannot read reports the
+  read error instead of a MessagePack decode error.
+
+### Security
+
+- Bundled SQLite moves to the version in `libsqlite3-sys` 0.39.1, which
+  addresses RUSTSEC-2026-0459 and carries the fix for CVE-2026-119375, with
+  `rusqlite` 0.41.1. SQLx 0.9.0 caps
+  `libsqlite3-sys` below 0.38, so `patches/sqlx-sqlite-0.9.0` widens the bound
+  until a SQLx release does. The patch no longer uses the `time` format APIs
+  deprecated in 0.3.48. A core test fails if SQLite is older than 3.54.0.
+
+### CI
+
 - CI and release builds no longer print the "will be rejected by a future
   version of Rust" warning for `proc-macro-error2` 2.0.1 (pulled in by
   `wasmer-derive`): `patches/proc-macro-error2-2.0.1` carries the one-line

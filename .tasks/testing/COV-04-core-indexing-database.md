@@ -1,13 +1,13 @@
 ---
 id: COV-04
 title: "Cobrir banco, indexação e reconciliação do watcher"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: COV-00
 priority: High
 milestone: M2
 tags: [coverage, testing, core]
-last_updated: 2026-11-03
+last_updated: 2026-11-10
 ---
 
 ## Description
@@ -63,4 +63,4 @@ Limites: não houve execução em Windows nem medição LCOV ou de linhas cobert
 a meta de 70% permanece sem comprovação. A prioridade foi COV-06 e os gates obrigatórios.
 Não foram ampliados nesta tranche os testes de downgrade de migrations, reconciliação de UUID,
 watcher com eventos duplicados/concorrentes, preservação de tags na segunda indexação ou
-invariantes da closure table após move/rename/delete. O status da task permanece inalterado.
+invariantes da closure table após move/rename/delete. A task passou a In Progress com o merge do #359; os critérios seguem abertos até a medição LCOV.

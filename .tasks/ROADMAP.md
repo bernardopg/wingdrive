@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-11-05. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-11-10. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -85,6 +85,9 @@ máquina real. O macOS ainda só compila a partir do código.
 Done no M3: `TAURI-016` (base do Windows, CI e instaladores) e `FILE-007` (preflight de copiar,
 mover e apagar).
 
+Estado em 2026-11-10: a `v3.1.0` leva o undo da FILE-008 para cópia, sobrescrita, movimentação e
+lixeira no core, no CLI e na web UI, e cópias que não perdem dados quando canceladas ou com falha.
+
 | Ordem | Task | O que falta | Sprint |
 |---|---|---|---|
 | 1 | TAURI-012 | Matriz de regressão à mão: rodada no Windows com a `v3.0.0` e as checagens que sobraram da TAURI-016; macOS depois | S05 |
@@ -92,7 +95,7 @@ mover e apagar).
 | 3 | REL-001 | Assinatura: updater do Tauri, Authenticode, Apple, Google Play; AUR só em tags estáveis | S05 |
 | 4 | TAURI-017 | Repetir como administrador no Windows via UAC; espera o certificado da REL-001 | — |
 | 5 | CLI-002 | `wing update` não acha binários nos releases do WingDrive (Done em 2026-11-05) | — |
-| 6 | FILE-008 | Journal de jobs e undo para cópia, sobrescrita e lixeira (item 7 do levantamento do upstream de 14/10) | — |
+| 6 | FILE-008 | Journal e undo de cópia, sobrescrita, movimentação e lixeira no `main` (#360). Falta levar renomear, nova pasta e novo arquivo do Tauri para o journal | S05 |
 | 7 | TAURI-000 | Fecha quando TAURI-012 e REL-001 fecharem | S05 |
 
 O M3 fecha com a TAURI-012 Done em Windows e macOS, e um release assinado em todas as plataformas
@@ -102,9 +105,10 @@ que têm credencial.
 
 Por solicitação do usuário em 2026-11-03, o épico `COV-00` amplia a cobertura do core,
 desktop e CLI usando a infraestrutura da DEV-006. [Plano e metas](testing/README.md).
-As tasks `COV-01` a `COV-12` têm dependências e critérios verificáveis. A preparação de COV-01
-e COV-02 começa no branch `test/coverage-core-desktop-cli`; as demais ficam no backlog,
-sem alterar o compromisso do S04/S05 até haver capacidade no planning.
+As tasks `COV-01` a `COV-12` têm dependências e critérios verificáveis. Em 2026-11-10,
+COV-01 a COV-04, COV-06 e COV-07 estão In Progress, com suítes no `main` (#343, #344, #358, #359)
+e sem a medição LCOV que fecha cada meta; as demais ficam no backlog, sem alterar o compromisso
+do S04/S05 até haver capacidade no planning.
 
 No M2 entram os contratos e regressões críticas; o M3 fecha integração e gates com metas de
 50% no core, 75% no desktop, 60% no CLI e 60% na interface React, além de 80% nas linhas de
@@ -147,6 +151,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-10 | Release `v3.1.0` em preparação (#347 a #360): FILE-008 com undo no core, CLI e web UI (falta o lado Tauri); COV-03 sem perda de dados em cópia cancelada; MOB-013 e MOB-014 Done; SQLite embutido atualizado (RUSTSEC-2026-0459); COV-04, COV-06 e COV-07 In Progress com 79 testes e sete bugs corrigidos |
 | 2026-11-05 | M2: WATCH-006, DESK-016 e DESK-013 Done; revisão das 2160 frases pt-BR (46 correções); dez rodadas da DESK-043 com a `v3.0.0` (estáveis, 4 de 10 abaixo de 550 MiB). Falta a DESK-043 para fechar o DESK-000 |
 | 2026-11-05 | Release `v3.0.0` com os primeiros instaladores Windows (#331 a #334). TAURI-016 Done, jobs Windows viram required checks (#336) e o README marca o Windows como beta (#335). Sobras da TAURI-016 distribuídas: checagens à mão na TAURI-012, assinatura na REL-001, UAC na nova TAURI-017. Nova CLI-002 (`wing update` sem binários no release). Tabela do M3 com ordem |
 | 2026-11-03 | COV-00 e COV-01 a COV-12: metas progressivas de cobertura, prioridade em core/desktop/CLI e critérios de evidência, sem ampliar sprints já comprometidos |

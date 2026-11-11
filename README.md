@@ -126,7 +126,7 @@ filesystems, copies refuse to write into their own source, system mounts are nev
 |---|---|
 | **M1** · done | A reliable desktop file manager on Linux, from a production bundle |
 | **M2** · now | The default file manager on Linux: dual-pane Explorer (F3), a full day of use without falling back |
-| **M3** · next | Signed releases for macOS and Windows, auto-updates, copy preflight and an undo journal |
+| **M3** · next | Signed releases for macOS and Windows and auto-updates. Copy preflight (3.0) and undo for copy, move and trash (3.1) already shipped |
 | **M4** | File sync between devices, public sharing links, Wingdrop to nearby devices, Tailscale |
 | **M5** | Semantic search, WASM extensions, encryption at rest, Android and iOS releases |
 
