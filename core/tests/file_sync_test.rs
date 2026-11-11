@@ -362,8 +362,15 @@ async fn test_mirror_sync_with_files() {
 	// Verify copy job was created
 	assert!(handle.source_to_target.copy_job_id.is_some());
 
-	// Wait a bit for sync to process (in real scenario, would monitor jobs)
-	tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+	// The monitor marks the generation complete once it stops tracking the sync
+	let deadline = tokio::time::Instant::now() + tokio::time::Duration::from_secs(30);
+	while file_sync.is_syncing(conduit.id).await {
+		assert!(
+			tokio::time::Instant::now() < deadline,
+			"sync never finished"
+		);
+		tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+	}
 
 	// Verify conduit state was updated
 	let updated_conduit = conduit_manager.get_conduit(conduit.id).await.unwrap();

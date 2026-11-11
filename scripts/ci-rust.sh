@@ -85,6 +85,20 @@ if [ "$(uname -s)" = Linux ]; then
 		app_config_action_test
 		indexing_test
 		library_test
+		file_queries_test
+		index_verify_test
+		space_layout_test
+		file_sync_test
+		folder_rename_test
+		copy_progress_test
+		config_persistence_test
+		database_migration_test
+		event_system_test
+		job_shutdown_test
+		normalized_cache_fixtures_test
+		indexing_responder_reindex_test
+		proxy_pairing_protocol_test
+		analyze_events
 	)
 fi
 

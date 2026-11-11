@@ -93,6 +93,22 @@ pub const CORE_TESTS: &[TestSuite] = &[
 	// 	test_args: &["--test", "typescript_search_bridge_test"],
 	// },
 	TestSuite {
+		name: "File queries test",
+		test_args: &["--test", "file_queries_test"],
+	},
+	TestSuite {
+		name: "Index verify test",
+		test_args: &["--test", "index_verify_test"],
+	},
+	TestSuite {
+		name: "Space layout test",
+		test_args: &["--test", "space_layout_test"],
+	},
+	TestSuite {
+		name: "File sync test",
+		test_args: &["--test", "file_sync_test"],
+	},
+	TestSuite {
 		name: "Normalized cache fixtures test",
 		test_args: &["--test", "normalized_cache_fixtures_test"],
 	},
@@ -143,10 +159,6 @@ pub const CORE_TESTS: &[TestSuite] = &[
 	// TestSuite {
 	// 	name: "File sync simple test",
 	// 	test_args: &["--test", "file_sync_simple_test"],
-	// },
-	// TestSuite {
-	// 	name: "File sync test",
-	// 	test_args: &["--test", "file_sync_test"],
 	// },
 
 	// TestSuite {
