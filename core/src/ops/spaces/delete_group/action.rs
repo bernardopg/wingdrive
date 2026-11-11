@@ -40,7 +40,15 @@ impl LibraryAction for DeleteGroupAction {
 
 		let group_id = group_model.uuid;
 
-		// Delete will cascade to items due to foreign key constraints
+		// Items go with the group through the foreign keys, here and on every
+		// device that applies the synced deletion.
+		// Record the deletion for other devices first: if that fails nothing is
+		// deleted and the action can be retried, instead of a local deletion
+		// that no device ever hears about.
+		library
+			.sync_model(&group_model, crate::infra::sync::ChangeType::Delete)
+			.await
+			.map_err(|e| ActionError::Internal(format!("Failed to sync space group: {}", e)))?;
 		group_model.delete(db).await.map_err(ActionError::SeaOrm)?;
 
 		// Emit ResourceDeleted event for the group using EventEmitter

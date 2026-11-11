@@ -60,7 +60,7 @@ impl LibraryAction for UpdateGroupAction {
 
 		// Sync to peers (emits direct event)
 		library
-			.sync_model(&result, crate::infra::sync::ChangeType::Update)
+			.sync_model_with_db(&result, crate::infra::sync::ChangeType::Update, db)
 			.await
 			.map_err(|e| ActionError::Internal(format!("Failed to sync group: {}", e)))?;
 

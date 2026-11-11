@@ -6,7 +6,6 @@ use crate::{
 		error::{ActionError, ActionResult},
 		LibraryAction,
 	},
-	infra::db::entities::{directory_paths, entry},
 };
 use chrono::Utc;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, NotSet, QueryFilter, QueryOrder, Set};
@@ -42,10 +41,11 @@ impl LibraryAction for AddItemAction {
 				ActionError::Internal(format!("Space {} not found", self.input.space_id))
 			})?;
 
-		// Verify group exists if group_id is provided
+		// Verify the group exists in this space if group_id is provided
 		let group_model_id = if let Some(group_id) = self.input.group_id {
 			let group_model = crate::infra::db::entities::space_group::Entity::find()
 				.filter(crate::infra::db::entities::space_group::Column::Uuid.eq(group_id))
+				.filter(crate::infra::db::entities::space_group::Column::SpaceId.eq(space_model.id))
 				.one(db)
 				.await
 				.map_err(ActionError::SeaOrm)?
@@ -112,7 +112,7 @@ impl LibraryAction for AddItemAction {
 
 		// Sync to peers (emits direct event)
 		library
-			.sync_model(&result, crate::infra::sync::ChangeType::Insert)
+			.sync_model_with_db(&result, crate::infra::sync::ChangeType::Insert, db)
 			.await
 			.map_err(|e| ActionError::Internal(format!("Failed to sync item: {}", e)))?;
 
@@ -154,67 +154,23 @@ impl LibraryAction for AddItemAction {
 
 crate::register_library_action!(AddItemAction, "spaces.add_item");
 
-/// Resolve an WingPath to an entry UUID by looking up the entry in the database
+/// Resolve a WingPath to the UUID of its indexed entry.
+///
+/// Matching by name and extension found a file `notes.txt` for a folder
+/// `notes` pinned beside it, and never found a folder with a dot in its name,
+/// so this uses the path resolver the file queries use.
 async fn resolve_wing_path_to_entry_uuid(
 	wing_path: &WingPath,
 	db: &sea_orm::DatabaseConnection,
 ) -> Option<uuid::Uuid> {
-	match wing_path {
-		WingPath::Physical { path, .. } => {
-			let path_str = path.to_string_lossy();
-			let path_buf = std::path::Path::new(path_str.as_ref());
-
-			let file_name = path_buf.file_name()?.to_string_lossy().to_string();
-			let parent_path = path_buf.parent()?.to_string_lossy().to_string();
-
-			tracing::debug!(
-				"Looking up entry: file_name={}, parent_path={}",
-				file_name,
-				parent_path
+	match crate::ops::indexing::PathResolver::resolve_to_entry(db, wing_path).await {
+		Ok(entry) => entry.and_then(|entry| entry.uuid),
+		Err(error) => {
+			tracing::warn!(
+				"Failed to resolve {} to an entry: {}",
+				wing_path.display(),
+				error
 			);
-
-			// Parse name and extension
-			let (name, extension) = if let Some(dot_idx) = file_name.rfind('.') {
-				(
-					file_name[..dot_idx].to_string(),
-					Some(file_name[dot_idx + 1..].to_string()),
-				)
-			} else {
-				(file_name.clone(), None)
-			};
-
-			tracing::debug!("Parsed: name={}, extension={:?}", name, extension);
-
-			// Find entry by name/extension
-			let mut query = entry::Entity::find().filter(entry::Column::Name.eq(&name));
-
-			if let Some(ext) = &extension {
-				query = query.filter(entry::Column::Extension.eq(ext));
-			}
-
-			let entries = query.all(db).await.ok()?;
-			tracing::debug!("Found {} matching entries by name", entries.len());
-
-			// Find entry with matching parent path
-			for e in entries {
-				if let Some(parent_id) = e.parent_id {
-					if let Ok(Some(parent_path_model)) =
-						directory_paths::Entity::find_by_id(parent_id).one(db).await
-					{
-						tracing::debug!("Entry {} parent path: {}", e.id, parent_path_model.path);
-						if parent_path_model.path == parent_path {
-							tracing::info!("Matched entry_uuid: {:?}", e.uuid);
-							return e.uuid;
-						}
-					}
-				}
-			}
-
-			tracing::warn!("No matching entry found for path: {}", path_str);
-			None
-		}
-		_ => {
-			tracing::warn!("Non-Physical WingPath not supported for entry resolution");
 			None
 		}
 	}
