@@ -153,6 +153,12 @@ Tag a commit whose CI already finished on `main`: `release.yml` then reuses that
 starting a new one. Both `release.yml` and `server.yml` trigger from the same tag push.
 `release.yml` publishes the GitHub Release after every verification passes, then the AUR packages.
 
+## Discord
+
+`discord.yml` posts to the WingDrive Discord server. Each push to `main` lists its commits in `#commits`. Each successful `release.yml` run posts that release's notes to `#changelog`, which is an announcement channel other servers can follow. Releases are created with `GITHUB_TOKEN`, which does not trigger `release` events in other workflows, so the post follows the release workflow's completion. Run the workflow by hand with a `tag` to post a release again.
+
+Pull requests and issues reach `#github` through a repository webhook pointed at Discord's GitHub-compatible endpoint (`<webhook URL>/github`, events `pull_request` and `issues`). That endpoint cannot filter by branch, which is why the `main` and release feeds live in the workflow instead.
+
 ## Tauri Updater
 
 Desktop updater endpoints and signing keys are not configured yet (REL-001). Install new versions through the AUR packages, the AppImage or Debian package, or the Windows installers from GitHub Releases. `wing update` checks for a newer release and prints the command or link for the way it was installed.
@@ -160,6 +166,8 @@ Desktop updater endpoints and signing keys are not configured yet (REL-001). Ins
 ## Secrets
 
 The release requires `AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS` for AUR publication. Android signing uses `WINGDRIVE_ANDROID_KEYSTORE_BASE64`, `WINGDRIVE_ANDROID_KEYSTORE_PASSWORD`, `WINGDRIVE_ANDROID_KEY_ALIAS` and `WINGDRIVE_ANDROID_KEY_PASSWORD`; without them the bundle builds unsigned.
+
+`discord.yml` reads `DISCORD_WEBHOOK_COMMITS` and `DISCORD_WEBHOOK_CHANGELOG`, the Discord webhook URLs of `#commits` and `#changelog`; without them it posts nothing and leaves a notice.
 
 No workflow uses Apple, Authenticode, Tauri updater or Sentry secrets yet; REL-001 adds the signing
 ones.
