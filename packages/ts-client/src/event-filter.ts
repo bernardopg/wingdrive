@@ -26,10 +26,13 @@ export type EventVariant = ExtractEventVariant<Event>;
 /**
  * Default event subscription list - excludes noisy events
  *
- * Subscribes to all lifecycle events but filters out:
+ * Subscribes to all lifecycle events, including JobProgress for the job
+ * manager's progress bars, but filters out:
  * - LogMessage: Too spammy (every INFO log becomes an event)
- * - JobProgress: Too frequent (use polling for job progress instead)
  * - IndexingProgress: Too frequent (use polling for indexing status)
+ *
+ * The desktop shell keeps the same list in `get_default_event_subscription`
+ * (apps/tauri/src-tauri/src/main.rs); a Rust test fails when they differ.
  */
 export const DEFAULT_EVENT_SUBSCRIPTION: EventVariant[] = [
 	// Core lifecycle

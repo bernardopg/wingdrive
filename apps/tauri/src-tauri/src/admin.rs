@@ -156,9 +156,16 @@ fn checked_name(name: &str) -> Result<&str, String> {
 pub async fn run_as_admin(operation: AdminOperation) -> Result<(), String> {
 	let args = pkexec_args(&operation)?;
 	tracing::info!(?operation, "Repeating an operation as administrator");
+	run_elevated("pkexec", args).await
+}
 
+/// Runs `program` with `args` and turns its exit into the command's result:
+/// polkit's dismissal codes become a cancellation, other failures report the
+/// first line the program printed to stderr.
+#[cfg(target_os = "linux")]
+async fn run_elevated(program: &'static str, args: Vec<String>) -> Result<(), String> {
 	let output = tauri::async_runtime::spawn_blocking(move || {
-		let mut command = std::process::Command::new("pkexec");
+		let mut command = std::process::Command::new(program);
 		file_opening_linux::use_host_environment(&mut command);
 		command
 			.args(&args)
@@ -167,7 +174,7 @@ pub async fn run_as_admin(operation: AdminOperation) -> Result<(), String> {
 	})
 	.await
 	.map_err(|e| e.to_string())?
-	.map_err(|e| format!("pkexec could not start: {e}"))?;
+	.map_err(|e| format!("{program} could not start: {e}"))?;
 
 	if output.status.success() {
 		return Ok(());
@@ -202,6 +209,40 @@ mod tests {
 	fn args(operation: AdminOperation) -> Vec<String> {
 		// The program path depends on the system; the arguments do not.
 		pkexec_args(&operation).unwrap().split_off(1)
+	}
+
+	#[tokio::test]
+	async fn elevated_exit_codes_become_results() {
+		let sh = |script: &str| vec!["-c".to_string(), script.to_string()];
+		run_elevated("sh", sh("exit 0")).await.unwrap();
+		for code in PKEXEC_DISMISSED {
+			assert_eq!(
+				run_elevated("sh", sh(&format!("exit {code}")))
+					.await
+					.unwrap_err(),
+				"Authentication was cancelled or refused"
+			);
+		}
+		assert_eq!(
+			run_elevated(
+				"sh",
+				sh("echo 'mv: cannot move' >&2; echo second >&2; exit 1")
+			)
+			.await
+			.unwrap_err(),
+			"mv: cannot move"
+		);
+		assert_eq!(
+			run_elevated("sh", sh("exit 1")).await.unwrap_err(),
+			"The command failed"
+		);
+		let error = run_elevated("/nonexistent/pkexec", vec![])
+			.await
+			.unwrap_err();
+		assert!(
+			error.starts_with("/nonexistent/pkexec could not start"),
+			"{error}"
+		);
 	}
 
 	#[test]

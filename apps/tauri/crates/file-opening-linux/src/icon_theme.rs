@@ -166,15 +166,26 @@ fn is_supported(path: &Path) -> bool {
 /// The icon theme name: GNOME's setting, then GTK's settings files, then
 /// the theme part of `GTK_THEME`.
 fn current_theme(xdg: &XdgDirs) -> Option<String> {
-	let from_gsettings = || {
-		let output = use_host_environment(&mut Command::new("gsettings"))
-			.args(["get", "org.gnome.desktop.interface", "icon-theme"])
-			.output()
-			.ok()?;
-		let value = String::from_utf8(output.stdout).ok()?;
-		let value = value.trim().trim_matches('\'').to_string();
-		(output.status.success() && !value.is_empty()).then_some(value)
-	};
+	current_theme_from(gsettings_icon_theme(), xdg, std::env::var("GTK_THEME").ok())
+}
+
+/// The `icon-theme` GNOME stores, when `gsettings` runs and has one.
+fn gsettings_icon_theme() -> Option<String> {
+	let output = use_host_environment(&mut Command::new("gsettings"))
+		.args(["get", "org.gnome.desktop.interface", "icon-theme"])
+		.output()
+		.ok()?;
+	let value = String::from_utf8(output.stdout).ok()?;
+	let value = value.trim().trim_matches('\'').to_string();
+	(output.status.success() && !value.is_empty()).then_some(value)
+}
+
+/// `current_theme` with GNOME's setting and `GTK_THEME` already read.
+fn current_theme_from(
+	gsettings: Option<String>,
+	xdg: &XdgDirs,
+	gtk_theme: Option<String>,
+) -> Option<String> {
 	let from_gtk_settings = || {
 		["gtk-4.0", "gtk-3.0"].iter().find_map(|dir| {
 			let text =
@@ -183,13 +194,10 @@ fn current_theme(xdg: &XdgDirs) -> Option<String> {
 		})
 	};
 	let from_gtk_theme = || {
-		let value = std::env::var("GTK_THEME").ok()?;
-		let name = value.split(':').next()?.trim().to_string();
+		let name = gtk_theme?.split(':').next()?.trim().to_string();
 		(!name.is_empty()).then_some(name)
 	};
-	from_gsettings()
-		.or_else(from_gtk_settings)
-		.or_else(from_gtk_theme)
+	gsettings.or_else(from_gtk_settings).or_else(from_gtk_theme)
 }
 
 /// Reads `key` from `[group]` of an INI-style file.

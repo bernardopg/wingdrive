@@ -39,27 +39,13 @@ impl FileManager1 {
 	/// Opens each folder in a tab.
 	#[zbus(name = "ShowFolders")]
 	fn show_folders(&self, uris: Vec<String>, _startup_id: String) {
-		let requests = local_paths(&uris)
-			.into_iter()
-			.map(|path| match path.is_dir() {
-				true => OpenRequest {
-					directory: path,
-					select: None,
-				},
-				false => launch::reveal_request(path),
-			})
-			.collect();
-		launch::deliver(&self.app, requests);
+		launch::deliver(&self.app, folder_requests(&uris));
 	}
 
 	/// Opens the parent folder of each item with the item selected.
 	#[zbus(name = "ShowItems")]
 	fn show_items(&self, uris: Vec<String>, _startup_id: String) {
-		let requests = local_paths(&uris)
-			.into_iter()
-			.map(launch::reveal_request)
-			.collect();
-		launch::deliver(&self.app, requests);
+		launch::deliver(&self.app, item_requests(&uris));
 	}
 
 	/// Selects the items; the Inspector shows the selection's properties.
@@ -67,6 +53,29 @@ impl FileManager1 {
 	fn show_item_properties(&self, uris: Vec<String>, startup_id: String) {
 		self.show_items(uris, startup_id);
 	}
+}
+
+/// `ShowFolders`: a folder opens in a tab; a file opens its folder with the
+/// file selected, as other file managers do.
+fn folder_requests(uris: &[String]) -> Vec<OpenRequest> {
+	local_paths(uris)
+		.into_iter()
+		.map(|path| match path.is_dir() {
+			true => OpenRequest {
+				directory: path,
+				select: None,
+			},
+			false => launch::reveal_request(path),
+		})
+		.collect()
+}
+
+/// `ShowItems`: each item's folder opens with the item selected.
+fn item_requests(uris: &[String]) -> Vec<OpenRequest> {
+	local_paths(uris)
+		.into_iter()
+		.map(launch::reveal_request)
+		.collect()
 }
 
 /// Keeps only existing local paths; remote URIs have no local folder to open.

@@ -242,7 +242,7 @@ fn percent_decode(input: &str) -> Option<String> {
 ///
 /// An empty list still shows the window, because launching WingDrive again
 /// while it sits in the tray means the user wants to see it.
-pub fn deliver(app: &AppHandle, requests: Vec<OpenRequest>) {
+pub fn deliver<R: tauri::Runtime>(app: &AppHandle<R>, requests: Vec<OpenRequest>) {
 	if !requests.is_empty() {
 		tracing::info!(count = requests.len(), "Delivering open requests");
 		if let Some(pending) = app.try_state::<PendingOpenRequests>() {
@@ -254,7 +254,7 @@ pub fn deliver(app: &AppHandle, requests: Vec<OpenRequest>) {
 }
 
 /// Shows, unminimizes and focuses the main window.
-pub fn show_main_window(app: &AppHandle) {
+pub fn show_main_window<R: tauri::Runtime>(app: &AppHandle<R>) {
 	if let Some(window) = app.get_webview_window("main") {
 		let _ = window.show();
 		let _ = window.unminimize();

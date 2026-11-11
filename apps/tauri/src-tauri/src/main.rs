@@ -31,14 +31,15 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tauri::menu::MenuItem;
 use tauri::Emitter;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Runtime};
 use tauri_plugin_global_shortcut::ShortcutState;
 use tokio::sync::oneshot;
 use tokio::sync::RwLock;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-/// Default event subscription list - mirrors packages/ts-client/src/event-filter.ts
-/// Excludes noisy events: LogMessage, JobProgress, IndexingProgress
+/// Default event subscription list - mirrors `DEFAULT_EVENT_SUBSCRIPTION` in
+/// packages/ts-client/src/event-filter.ts, which a test keeps in step.
+/// Excludes the noisy LogMessage and IndexingProgress events.
 fn get_default_event_subscription() -> Vec<&'static str> {
 	vec![
 		// Core lifecycle
@@ -91,6 +92,9 @@ fn get_default_event_subscription() -> Vec<&'static str> {
 		"ThumbnailsGenerated",
 		"FileOperationCompleted",
 		"FilesModified",
+		// Wingdrop offers and their outcome
+		"WingdropOffered",
+		"WingdropUpdated",
 	]
 }
 
@@ -239,7 +243,7 @@ impl DaemonConnectionPool {
 		tracing::info!("Connection pool reset");
 	}
 
-	async fn ensure_connected(&self, app: &AppHandle) -> Result<(), String> {
+	async fn ensure_connected<R: Runtime>(&self, app: &AppHandle<R>) -> Result<(), String> {
 		let mut initialized = self.initialized.lock().await;
 
 		if *initialized {
@@ -484,30 +488,21 @@ struct MenuItemState {
 }
 
 /// Menu state - stores references to menu items for dynamic updates
-struct MenuState {
-	items: Arc<RwLock<HashMap<String, MenuItem<tauri::Wry>>>>,
+struct MenuState<R: Runtime = tauri::Wry> {
+	items: Arc<RwLock<HashMap<String, MenuItem<R>>>>,
 }
 
 /// Called from frontend when app is ready to be shown
 #[tauri::command]
-fn app_ready(window: tauri::Window, start_hidden: tauri::State<'_, launch::StartHidden>) {
+fn app_ready<R: Runtime>(
+	window: tauri::Window<R>,
+	start_hidden: tauri::State<'_, launch::StartHidden>,
+) {
 	if window.label() == "main" && start_hidden.consume() {
 		return;
 	}
 	window.show().ok();
 	window.set_focus().ok();
-
-	// #[cfg(debug_assertions)]
-	// if window.label() == "main" && window.app_handle().get_webview_window("wingbot").is_none() {
-	// 	if let Err(error) = windows::show_window(
-	// 		window.app_handle().clone(),
-	// 		windows::WingDriveWindow::Wingbot,
-	// 	)
-	// 	.await
-	// 	{
-	// 		tracing::warn!(?error, "Failed to auto-open Wingbot window");
-	// 	}
-	// }
 }
 
 /// Get the daemon socket address for the frontend to connect
@@ -580,10 +575,23 @@ fn percent_encode_query(value: &str) -> String {
 	encoded
 }
 
+/// Script that publishes the server URL and library ID as window globals.
+///
+/// Both values are written as JSON string literals, so a quote or a newline in
+/// either one cannot end the string and run as script.
+fn globals_script(server_url: &str, library_id: &str) -> String {
+	let quote = |value: &str| serde_json::Value::from(value).to_string();
+	format!(
+		"window.__WINGDRIVE_SERVER_URL__ = {}; window.__WINGDRIVE_LIBRARY_ID__ = {};",
+		quote(server_url),
+		quote(library_id)
+	)
+}
+
 /// Set the current library ID in the window (legacy - injects into main window only)
 #[tauri::command]
-async fn set_library_id(
-	app: AppHandle,
+async fn set_library_id<R: Runtime>(
+	app: AppHandle<R>,
 	library_id: String,
 	state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
 ) -> Result<(), String> {
@@ -594,11 +602,7 @@ async fn set_library_id(
 		};
 
 		if let Some(server_url) = server_url {
-			let script = format!(
-				r#"window.__WINGDRIVE_SERVER_URL__ = "{}"; window.__WINGDRIVE_LIBRARY_ID__ = "{}";"#,
-				server_url, library_id
-			);
-
+			let script = globals_script(&server_url, &library_id);
 			window.eval(&script).map_err(|e| e.to_string())?;
 			tracing::debug!("Injected library ID and server URL into window");
 		}
@@ -617,8 +621,8 @@ async fn get_current_library_id(app_state: tauri::State<'_, AppState>) -> Result
 
 /// Set the current library ID in app state and emit to all windows
 #[tauri::command]
-async fn set_current_library_id(
-	app: AppHandle,
+async fn set_current_library_id<R: Runtime>(
+	app: AppHandle<R>,
 	library_id: String,
 	app_state: tauri::State<'_, AppState>,
 	daemon_state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
@@ -647,10 +651,7 @@ async fn set_current_library_id(
 	};
 
 	if let Some(server_url) = server_url {
-		let script = format!(
-			r#"window.__WINGDRIVE_SERVER_URL__ = "{}"; window.__WINGDRIVE_LIBRARY_ID__ = "{}";"#,
-			server_url, library_id
-		);
+		let script = globals_script(&server_url, &library_id);
 
 		// Inject into all windows
 		for window in app.webview_windows().values() {
@@ -674,8 +675,8 @@ async fn set_current_library_id(
 }
 
 /// Validate that the current library exists, reset state if it doesn't
-async fn validate_and_reset_library_if_needed(
-	app: AppHandle,
+async fn validate_and_reset_library_if_needed<R: Runtime>(
+	app: AppHandle<R>,
 	current_library_id_arc: &Arc<RwLock<Option<String>>>,
 	daemon_state: &Arc<RwLock<DaemonState>>,
 	data_dir: &std::path::Path,
@@ -796,8 +797,8 @@ async fn get_selected_file_ids(
 
 /// Set selected file IDs in app state and emit to all windows
 #[tauri::command]
-async fn set_selected_file_ids(
-	app: AppHandle,
+async fn set_selected_file_ids<R: Runtime>(
+	app: AppHandle<R>,
 	file_ids: Vec<String>,
 	app_state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
@@ -877,9 +878,9 @@ async fn daemon_request(
 /// Returns a subscription ID that can be used to unsubscribe
 #[tauri::command]
 #[allow(non_snake_case)]
-async fn subscribe_to_events(
-	app: tauri::AppHandle,
-	window: tauri::WebviewWindow,
+async fn subscribe_to_events<R: Runtime>(
+	app: tauri::AppHandle<R>,
+	window: tauri::WebviewWindow<R>,
 	daemon_state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
 	app_state: tauri::State<'_, AppState>,
 	eventTypes: Option<Vec<String>>,
@@ -1102,8 +1103,8 @@ async fn unsubscribe_from_events(
 
 /// Cancels the calling window's subscriptions (window reload or close).
 #[tauri::command]
-async fn cleanup_all_connections(
-	window: tauri::WebviewWindow,
+async fn cleanup_all_connections<R: Runtime>(
+	window: tauri::WebviewWindow<R>,
 	app_state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
 	let count = app_state
@@ -1122,8 +1123,11 @@ async fn get_active_subscriptions(app_state: tauri::State<'_, AppState>) -> Resu
 
 /// Update menu item states
 #[tauri::command]
-async fn update_menu_items(app: AppHandle, items: Vec<MenuItemState>) -> Result<(), String> {
-	if let Some(menu_state) = app.try_state::<MenuState>() {
+async fn update_menu_items<R: Runtime>(
+	app: AppHandle<R>,
+	items: Vec<MenuItemState>,
+) -> Result<(), String> {
+	if let Some(menu_state) = app.try_state::<MenuState<R>>() {
 		let menu_items = menu_state.items.read().await;
 
 		for item_state in items {
@@ -1162,8 +1166,8 @@ async fn get_daemon_status(
 
 /// Start daemon as a background process
 #[tauri::command]
-async fn start_daemon_process(
-	app: tauri::AppHandle,
+async fn start_daemon_process<R: Runtime>(
+	app: tauri::AppHandle<R>,
 	state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
 ) -> Result<(), String> {
 	let socket_addr = state.read().await.socket_addr.clone();
@@ -1817,7 +1821,11 @@ fn find_daemon_binary() -> Result<std::path::PathBuf, String> {
 	let exe_path =
 		std::env::current_exe().map_err(|e| format!("Failed to get current exe: {}", e))?;
 	let bin_dir = exe_path.parent().ok_or("No parent directory for exe")?;
+	find_daemon_binary_in(bin_dir)
+}
 
+/// Looks for the daemon next to the app executable in `bin_dir`.
+fn find_daemon_binary_in(bin_dir: &Path) -> Result<std::path::PathBuf, String> {
 	// Tauri's externalBin bundles with a target triple suffix (e.g. wing-daemon-x86_64-pc-windows-msvc.exe)
 	// Try that first, then fall back to the plain name for dev builds
 	let daemon_with_triple = format!(
@@ -1930,10 +1938,27 @@ async fn start_daemon(
 	socket_addr: &str,
 ) -> Result<std::process::Child, String> {
 	let daemon_path = find_daemon_binary()?;
+	spawn_daemon(
+		&daemon_path,
+		base_data_dir,
+		instance,
+		socket_addr,
+		DAEMON_STARTUP_TIMEOUT,
+	)
+	.await
+}
 
+/// Spawns `daemon_path` and waits up to `timeout` for it to answer a ping.
+async fn spawn_daemon(
+	daemon_path: &Path,
+	base_data_dir: &PathBuf,
+	instance: Option<&str>,
+	socket_addr: &str,
+	timeout: std::time::Duration,
+) -> Result<std::process::Child, String> {
 	tracing::info!(?daemon_path, ?base_data_dir, ?instance, "Starting daemon");
 
-	let mut child = build_daemon_command(&daemon_path, base_data_dir, instance)
+	let mut child = build_daemon_command(daemon_path, base_data_dir, instance)
 		.stdout(std::process::Stdio::inherit())
 		.stderr(std::process::Stdio::inherit())
 		.spawn()
@@ -1943,7 +1968,7 @@ async fn start_daemon(
 	// waits on this loop before the first listing can load.
 	let started = std::time::Instant::now();
 	let mut warned = false;
-	while started.elapsed() < DAEMON_STARTUP_TIMEOUT {
+	while started.elapsed() < timeout {
 		if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
 			return Err(format!("Packaged daemon exited during startup: {status}"));
 		}
@@ -1966,7 +1991,7 @@ async fn start_daemon(
 	let _ = child.wait();
 	Err(format!(
 		"Daemon failed to start (connection not available after {} seconds)",
-		DAEMON_STARTUP_TIMEOUT.as_secs()
+		timeout.as_secs()
 	))
 }
 
@@ -1979,8 +2004,13 @@ const DAEMON_STARTUP_TIMEOUT: std::time::Duration = std::time::Duration::from_se
 
 /// Waits for a daemon this app did not spawn to accept connections.
 async fn wait_for_daemon(socket_addr: &str) -> bool {
+	wait_for_daemon_within(socket_addr, DAEMON_STARTUP_TIMEOUT).await
+}
+
+/// `wait_for_daemon` with the time limit given.
+async fn wait_for_daemon_within(socket_addr: &str, timeout: std::time::Duration) -> bool {
 	let started = std::time::Instant::now();
-	while started.elapsed() < DAEMON_STARTUP_TIMEOUT {
+	while started.elapsed() < timeout {
 		if is_daemon_running(socket_addr).await {
 			tracing::info!(
 				elapsed_ms = started.elapsed().as_millis() as u64,
@@ -2119,7 +2149,7 @@ mod start_daemon_integration_tests {
 	}
 }
 
-fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+fn setup_menu<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
 	use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
 
 	// Store menu items for dynamic updates
@@ -2235,190 +2265,144 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 
 	// Handle menu events
 	let app_handle = app.clone();
-	app.on_menu_event(move |_app, event| {
-		let event_id = event.id().as_ref();
-		match event_id {
-			"open-library" => {
-				let app_clone = app_handle.clone();
-				tauri::async_runtime::spawn(async move {
-					use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
-
-					// Show folder picker dialog
-					let folder_path = app_clone
-						.dialog()
-						.file()
-						.set_title("Select Library Folder")
-						.set_directory(std::path::PathBuf::from("."))
-						.blocking_pick_folder();
-
-					if let Some(path) = folder_path {
-						tracing::info!("Selected library path: {:?}", path);
-
-						// Get daemon state
-						let daemon_state: tauri::State<Arc<RwLock<DaemonState>>> =
-							app_clone.state();
-						let state = daemon_state.read().await;
-
-						// Convert FilePath to PathBuf
-						let default_path = std::path::PathBuf::from(".");
-						let path_buf = path.as_path().unwrap_or(&default_path);
-
-						// Create the DaemonRequest
-						let request = serde_json::json!({
-							"Action": {
-								"method": "action:libraries.open.input",
-								"library_id": null,
-								"payload": {
-									"path": path_buf.to_string_lossy().to_string()
-								}
-							}
-						});
-
-						drop(state);
-
-						// Send request to daemon using the daemon_request logic
-						use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-						use tokio::net::TcpStream;
-
-						let state = daemon_state.read().await;
-						let socket_addr = state.socket_addr.clone();
-						drop(state);
-
-						match TcpStream::connect(&socket_addr).await {
-							Ok(mut stream) => {
-								// Send request
-								let request_line = match serde_json::to_string(&request) {
-									Ok(s) => s,
-									Err(e) => {
-										tracing::error!("Failed to serialize request: {}", e);
-										return;
-									}
-								};
-
-								if let Err(e) = stream
-									.write_all(format!("{}\n", request_line).as_bytes())
-									.await
-								{
-									tracing::error!("Failed to write request: {}", e);
-									app_clone
-										.dialog()
-										.message(format!("Failed to send request to daemon: {}", e))
-										.kind(MessageDialogKind::Error)
-										.title("Error")
-										.blocking_show();
-									return;
-								}
-
-								// Read response
-								let mut reader = BufReader::new(stream);
-								let mut response_line = String::new();
-
-								match reader.read_line(&mut response_line).await {
-									Ok(_) => {
-										match serde_json::from_str::<serde_json::Value>(
-											&response_line,
-										) {
-											Ok(response) => {
-												tracing::info!(
-													"Library opened successfully: {:?}",
-													response
-												);
-												// Emit event to notify frontend
-												if let Err(e) =
-													app_clone.emit("library-opened", response)
-												{
-													tracing::error!(
-														"Failed to emit library-opened event: {}",
-														e
-													);
-												}
-											}
-											Err(e) => {
-												tracing::error!("Failed to parse response: {}", e);
-												app_clone
-													.dialog()
-													.message(format!(
-														"Failed to open library: {}",
-														e
-													))
-													.kind(MessageDialogKind::Error)
-													.title("Error")
-													.blocking_show();
-											}
-										}
-									}
-									Err(e) => {
-										tracing::error!("Failed to read response: {}", e);
-										app_clone
-											.dialog()
-											.message(format!(
-												"Failed to read response from daemon: {}",
-												e
-											))
-											.kind(MessageDialogKind::Error)
-											.title("Error")
-											.blocking_show();
-									}
-								}
-							}
-							Err(e) => {
-								tracing::error!("Failed to connect to daemon: {}", e);
-								app_clone
-									.dialog()
-									.message(format!("Failed to connect to daemon: {}", e))
-									.kind(MessageDialogKind::Error)
-									.title("Error")
-									.blocking_show();
-							}
-						}
-					}
-				});
-			}
-			"drag-demo" => {
-				let app_clone = app_handle.clone();
-				tauri::async_runtime::spawn(async move {
-					if let Err(e) =
-						windows::show_window(app_clone, windows::WingDriveWindow::DragDemo).await
-					{
-						tracing::error!("Failed to show drag demo: {}", e);
-					}
-				});
-			}
-			"wingdrop" => {
-				let app_clone = app_handle.clone();
-				tauri::async_runtime::spawn(async move {
-					if let Err(e) =
-						windows::show_window(app_clone, windows::WingDriveWindow::Wingdrop).await
-					{
-						tracing::error!("Failed to show wingdrop: {}", e);
-					}
-				});
-			}
-			// File menu actions - emit events to frontend
-			"duplicate" | "rename" | "delete" => {
-				if let Err(e) = app_handle.emit("menu-action", event_id) {
-					tracing::error!("Failed to emit menu action: {}", e);
-				}
-			}
-			// Edit menu clipboard actions - emit event for smart handling in frontend.
-			// Paste uses the native predefined menu item to avoid duplicate text pastes.
-			"cut" | "copy" => {
-				tracing::info!("[Menu] Clipboard action triggered: {}", event_id);
-				// Emit generic clipboard event - frontend will decide if it's a text or file operation
-				if let Err(e) = app_handle.emit("clipboard-action", event_id) {
-					tracing::error!("Failed to emit clipboard action: {}", e);
-				} else {
-					tracing::info!(
-						"[Menu] Clipboard action event emitted successfully: {}",
-						event_id
-					);
-				}
-			}
-			_ => {}
-		}
-	});
+	app.on_menu_event(move |_app, event| handle_menu_event(&app_handle, event.id().as_ref()));
 
 	Ok(())
+}
+
+/// Runs the action of a native menu item. File and clipboard items are
+/// forwarded to the frontend, which knows the current selection.
+fn handle_menu_event<R: Runtime>(app_handle: &AppHandle<R>, event_id: &str) {
+	match event_id {
+		"open-library" => {
+			let app_clone = app_handle.clone();
+			tauri::async_runtime::spawn(async move {
+				use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+
+				let Some(path) = app_clone
+					.dialog()
+					.file()
+					.set_title("Select Library Folder")
+					.blocking_pick_folder()
+				else {
+					return;
+				};
+				let Ok(path) = path.into_path() else {
+					tracing::error!("The selected library folder is not a local path");
+					return;
+				};
+				tracing::info!("Selected library path: {:?}", path);
+
+				let socket_addr = {
+					let daemon_state: tauri::State<Arc<RwLock<DaemonState>>> = app_clone.state();
+					let state = daemon_state.read().await;
+					state.socket_addr.clone()
+				};
+				match open_library_request(&socket_addr, &path).await {
+					Ok(library) => {
+						tracing::info!("Library opened successfully: {:?}", library);
+						if let Err(e) = app_clone.emit("library-opened", library) {
+							tracing::error!("Failed to emit library-opened event: {}", e);
+						}
+					}
+					Err(message) => {
+						tracing::error!("{message}");
+						app_clone
+							.dialog()
+							.message(message)
+							.kind(MessageDialogKind::Error)
+							.title("Error")
+							.blocking_show();
+					}
+				}
+			});
+		}
+		"drag-demo" => {
+			let app_clone = app_handle.clone();
+			tauri::async_runtime::spawn(async move {
+				if let Err(e) =
+					windows::show_window(app_clone, windows::WingDriveWindow::DragDemo).await
+				{
+					tracing::error!("Failed to show drag demo: {}", e);
+				}
+			});
+		}
+		"wingdrop" => {
+			let app_clone = app_handle.clone();
+			tauri::async_runtime::spawn(async move {
+				if let Err(e) =
+					windows::show_window(app_clone, windows::WingDriveWindow::Wingdrop).await
+				{
+					tracing::error!("Failed to show wingdrop: {}", e);
+				}
+			});
+		}
+		// File menu actions - emit events to frontend
+		"duplicate" | "rename" | "delete" => {
+			if let Err(e) = app_handle.emit("menu-action", event_id) {
+				tracing::error!("Failed to emit menu action: {}", e);
+			}
+		}
+		// Edit menu clipboard actions - emit event for smart handling in frontend.
+		// Paste uses the native predefined menu item to avoid duplicate text pastes.
+		"cut" | "copy" => {
+			// Emit generic clipboard event - frontend will decide if it's a text or file operation
+			if let Err(e) = app_handle.emit("clipboard-action", event_id) {
+				tracing::error!("Failed to emit clipboard action: {}", e);
+			}
+		}
+		_ => {}
+	}
+}
+
+/// Asks the daemon to open the library at `path` and returns its answer.
+///
+/// The daemon answers `{"JsonOk": ...}` on success and `{"Error": ...}` when
+/// it refuses, for example when the folder holds no library.
+async fn open_library_request(socket_addr: &str, path: &Path) -> Result<serde_json::Value, String> {
+	use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+	use tokio::net::TcpStream;
+
+	let request = json!({
+		"Action": {
+			"method": "action:libraries.open.input",
+			"library_id": null,
+			"payload": { "path": path.to_string_lossy() }
+		}
+	});
+	let mut stream = TcpStream::connect(socket_addr)
+		.await
+		.map_err(|e| format!("Failed to connect to daemon: {e}"))?;
+	stream
+		.write_all(format!("{request}\n").as_bytes())
+		.await
+		.map_err(|e| format!("Failed to send request to daemon: {e}"))?;
+	let mut response_line = String::new();
+	BufReader::new(stream)
+		.read_line(&mut response_line)
+		.await
+		.map_err(|e| format!("Failed to read response from daemon: {e}"))?;
+	if response_line.trim().is_empty() {
+		return Err("The daemon closed the connection without answering".to_string());
+	}
+	let response: serde_json::Value = serde_json::from_str(&response_line)
+		.map_err(|e| format!("Failed to open library: invalid response: {e}"))?;
+	if let Some(library) = response.get("JsonOk") {
+		return Ok(library.clone());
+	}
+	let error = response
+		.get("Error")
+		.map(|error| match error {
+			serde_json::Value::Object(map) => map
+				.values()
+				.next()
+				.and_then(|message| message.as_str())
+				.map(str::to_string)
+				.unwrap_or_else(|| error.to_string()),
+			other => other.to_string(),
+		})
+		.unwrap_or_else(|| response.to_string());
+	Err(format!("Failed to open library: {error}"))
 }
 
 fn main() {
@@ -2950,7 +2934,7 @@ fn main() {
 ///
 /// A daemon the user installed as a service, or one that was already running,
 /// is left alone so other clients keep working.
-fn stop_owned_daemon(app: &AppHandle) {
+fn stop_owned_daemon<R: Runtime>(app: &AppHandle<R>) {
 	let Some(state) = app.try_state::<Arc<RwLock<DaemonState>>>() else {
 		return;
 	};

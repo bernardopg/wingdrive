@@ -20,7 +20,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::menu::{MenuBuilder, MenuItem, MenuItemBuilder, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Runtime};
 
 use crate::launch;
 
@@ -87,10 +87,10 @@ impl DesktopSettingsState {
 }
 
 /// Tray menu items whose text follows the UI language.
-struct TrayMenu {
-	open: MenuItem<tauri::Wry>,
-	new_tab: MenuItem<tauri::Wry>,
-	quit: MenuItem<tauri::Wry>,
+struct TrayMenu<R: Runtime = tauri::Wry> {
+	open: MenuItem<R>,
+	new_tab: MenuItem<R>,
+	quit: MenuItem<R>,
 }
 
 /// Tray menu labels in the current UI language, sent by the webview.
@@ -115,12 +115,12 @@ impl Default for TrayLabels {
 }
 
 /// Where the tray labels persist: next to the desktop settings.
-fn tray_labels_path(app: &AppHandle) -> Option<PathBuf> {
+fn tray_labels_path<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
 	let state = app.try_state::<DesktopSettingsState>()?;
 	Some(state.path.parent()?.join(TRAY_LABELS_FILE))
 }
 
-fn load_tray_labels(app: &AppHandle) -> TrayLabels {
+fn load_tray_labels<R: Runtime>(app: &AppHandle<R>) -> TrayLabels {
 	tray_labels_path(app)
 		.and_then(|path| std::fs::read(path).ok())
 		.and_then(|bytes| serde_json::from_slice(&bytes).ok())
@@ -128,7 +128,7 @@ fn load_tray_labels(app: &AppHandle) -> TrayLabels {
 }
 
 /// Whether closing the main window should hide it instead of quitting.
-pub fn keeps_running(app: &AppHandle) -> bool {
+pub fn keeps_running<R: Runtime>(app: &AppHandle<R>) -> bool {
 	app.try_state::<DesktopSettingsState>()
 		.is_some_and(|state| state.get().keep_in_background)
 }
@@ -137,7 +137,7 @@ pub fn keeps_running(app: &AppHandle) -> bool {
 ///
 /// Linux trays built on AppIndicator deliver no click events, so every action
 /// lives in the menu rather than on the icon itself.
-pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
+pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
 	let labels = load_tray_labels(app);
 	let open = MenuItemBuilder::with_id("tray-open", labels.open).build(app)?;
 	let new_tab = MenuItemBuilder::with_id("tray-new-tab", labels.new_tab).build(app)?;
@@ -195,14 +195,14 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
 /// Renames the tray menu items after the UI language changes and saves the
 /// labels for the next launch.
 #[tauri::command]
-pub fn set_tray_labels(app: AppHandle, labels: TrayLabels) -> Result<(), String> {
+pub fn set_tray_labels<R: Runtime>(app: AppHandle<R>, labels: TrayLabels) -> Result<(), String> {
 	if let Some(path) = tray_labels_path(&app) {
 		let json = serde_json::to_vec_pretty(&labels).map_err(|e| e.to_string())?;
 		if let Err(error) = std::fs::write(&path, json) {
 			tracing::warn!(%error, path = %path.display(), "Could not save tray labels");
 		}
 	}
-	let Some(menu) = app.try_state::<TrayMenu>() else {
+	let Some(menu) = app.try_state::<TrayMenu<R>>() else {
 		return Ok(());
 	};
 	for (item, text) in [

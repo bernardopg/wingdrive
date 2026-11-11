@@ -17,7 +17,7 @@
 
 use std::collections::HashSet;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
@@ -191,14 +191,20 @@ fn ssh_config_servers(home: &Path) -> Vec<DiscoveredServer> {
 fn browse_mdns() -> Vec<DiscoveredServer> {
 	let mut command = Command::new("avahi-browse");
 	file_opening_linux::use_host_environment(&mut command);
+	command.args([
+		"--all",
+		"--terminate",
+		"--resolve",
+		"--parsable",
+		"--no-db-lookup",
+	]);
+	browse_with(command, BROWSE_TIMEOUT)
+}
+
+/// Runs a prepared browse command for at most `timeout` and parses what it
+/// printed until then.
+fn browse_with(mut command: Command, timeout: Duration) -> Vec<DiscoveredServer> {
 	let Ok(mut child) = command
-		.args([
-			"--all",
-			"--terminate",
-			"--resolve",
-			"--parsable",
-			"--no-db-lookup",
-		])
 		.stdin(Stdio::null())
 		.stdout(Stdio::piped())
 		.stderr(Stdio::null())
@@ -206,7 +212,16 @@ fn browse_mdns() -> Vec<DiscoveredServer> {
 	else {
 		return Vec::new();
 	};
-	let deadline = Instant::now() + BROWSE_TIMEOUT;
+	// Read while it runs: on a busy network the listing outgrows the pipe
+	// buffer, and a blocked writer would only stop at the time limit.
+	let reader = child.stdout.take().map(|mut stdout| {
+		std::thread::spawn(move || {
+			let mut listing = String::new();
+			let _ = stdout.read_to_string(&mut listing);
+			listing
+		})
+	});
+	let deadline = Instant::now() + timeout;
 	loop {
 		match child.try_wait() {
 			Ok(Some(_)) => break,
@@ -218,10 +233,9 @@ fn browse_mdns() -> Vec<DiscoveredServer> {
 			}
 		}
 	}
-	let mut listing = String::new();
-	if let Some(mut stdout) = child.stdout.take() {
-		let _ = stdout.read_to_string(&mut listing);
-	}
+	let listing = reader
+		.and_then(|reader| reader.join().ok())
+		.unwrap_or_default();
 	parse_avahi(&listing)
 }
 
@@ -229,18 +243,23 @@ fn browse_mdns() -> Vec<DiscoveredServer> {
 #[tauri::command]
 pub async fn discover_network_servers() -> Result<Vec<DiscoveredServer>, String> {
 	tokio::task::spawn_blocking(|| {
-		let mut servers = browse_mdns();
-		if let Some(home) = std::env::var_os("HOME") {
-			for server in ssh_config_servers(Path::new(&home)) {
-				if !servers.iter().any(|s| s.uri == server.uri) {
-					servers.push(server);
-				}
-			}
-		}
-		servers
+		let home = std::env::var_os("HOME").map(PathBuf::from);
+		merge_servers(browse_mdns(), home.as_deref())
 	})
 	.await
 	.map_err(|e| e.to_string())
+}
+
+/// Announced servers first, then SSH hosts whose address none of them has.
+fn merge_servers(mut servers: Vec<DiscoveredServer>, home: Option<&Path>) -> Vec<DiscoveredServer> {
+	if let Some(home) = home {
+		for server in ssh_config_servers(home) {
+			if !servers.iter().any(|s| s.uri == server.uri) {
+				servers.push(server);
+			}
+		}
+	}
+	servers
 }
 
 #[cfg(test)]

@@ -415,7 +415,10 @@ mod linux {
 	}
 
 	impl Notifier {
-		async fn session(&self, app: &AppHandle) -> Option<&(zbus::Connection, Capabilities)> {
+		async fn session<R: tauri::Runtime>(
+			&self,
+			app: &AppHandle<R>,
+		) -> Option<&(zbus::Connection, Capabilities)> {
 			self.session
 				.get_or_init(|| async {
 					let connection = match zbus::Connection::session().await {
@@ -447,7 +450,7 @@ mod linux {
 				.as_ref()
 		}
 
-		fn identity(&self, app: &AppHandle) -> &Identity {
+		fn identity<R: tauri::Runtime>(&self, app: &AppHandle<R>) -> &Identity {
 			if let Some(identity) = self.identity.get() {
 				return identity;
 			}
@@ -460,9 +463,9 @@ mod linux {
 			self.sent.lock().unwrap().contains(&id)
 		}
 
-		pub async fn send(
+		pub async fn send<R: tauri::Runtime>(
 			&self,
-			app: &AppHandle,
+			app: &AppHandle<R>,
 			request: &NotificationRequest,
 		) -> Result<(), String> {
 			if is_sandboxed() {
@@ -543,7 +546,7 @@ mod linux {
 	}
 
 	/// Opens the main window when the user clicks a WingDrive notification.
-	fn listen_for_clicks(app: AppHandle, connection: zbus::Connection) {
+	fn listen_for_clicks<R: tauri::Runtime>(app: AppHandle<R>, connection: zbus::Connection) {
 		use stream::next;
 		tauri::async_runtime::spawn(async move {
 			let Ok(proxy) = notifications_proxy(&connection).await else {
@@ -556,14 +559,18 @@ mod linux {
 				let Ok((id, action)) = message.body().deserialize::<(u32, String)>() else {
 					continue;
 				};
-				let ours = tauri::Manager::try_state::<Notifier>(&app)
-					.map(|notifier| notifier.owns(id))
-					.unwrap_or(false);
-				if ours && action == DEFAULT_ACTION {
+				if click_opens_window(&app, id, &action) {
 					crate::launch::show_main_window(&app);
 				}
 			}
 		});
+	}
+
+	/// Whether `action` on notification `id` should bring WingDrive forward:
+	/// only a click on the body of a notification WingDrive sent.
+	fn click_opens_window<R: tauri::Runtime>(app: &AppHandle<R>, id: u32, action: &str) -> bool {
+		action == DEFAULT_ACTION
+			&& tauri::Manager::try_state::<Notifier>(app).is_some_and(|notifier| notifier.owns(id))
 	}
 
 	/// `StreamExt::next` without pulling in a stream crate for one call.
@@ -609,7 +616,7 @@ mod linux {
 			.map_err(|error| error.to_string())
 	}
 
-	fn detect_identity(app: &AppHandle) -> Identity {
+	fn detect_identity<R: tauri::Runtime>(app: &AppHandle<R>) -> Identity {
 		let home = std::env::var_os("HOME").map(PathBuf::from);
 		let data_home = std::env::var("XDG_DATA_HOME").ok();
 		let data_dirs_env = std::env::var("XDG_DATA_DIRS").ok();
@@ -638,6 +645,7 @@ mod linux {
 			logo,
 		}
 	}
+
 }
 
 #[cfg(target_os = "linux")]

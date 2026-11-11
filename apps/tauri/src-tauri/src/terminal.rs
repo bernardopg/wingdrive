@@ -450,8 +450,8 @@ fn shell_command() -> CommandBuilder {
 /// shell's new folder on `folder` each time you change it, and the exit code on
 /// `exit` once the shell ends.
 #[tauri::command]
-pub fn terminal_open(
-	window: tauri::Window,
+pub fn terminal_open<R: tauri::Runtime>(
+	window: tauri::Window<R>,
 	sessions: tauri::State<'_, TerminalSessions>,
 	cwd: String,
 	size: TerminalSize,
