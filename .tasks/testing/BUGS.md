@@ -506,3 +506,49 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Local: `apps/cli/src/domains/events/mod.rs`, `summarize_event`.
 - Reprodução anterior: um braço anterior do `match` respondia só `Configuration changed` e tornava inalcançável o braço que incluía o nome do campo.
 - Correção: remover o braço duplicado.
+
+## Desktop: "Open Library..." tratava a recusa do daemon como sucesso
+
+- Estado: corrigido; `opening_a_library_returns_the_daemon_answer_or_its_error` em `apps/tauri/src-tauri/src/main/tests/events.rs`.
+- Local: `apps/tauri/src-tauri/src/main.rs`, item de menu `open-library` (agora `handle_menu_event` e `open_library_request`).
+- Reprodução anterior: escolher uma pasta sem biblioteca. O daemon responde `{"Error": {"ValidationError": ...}}`; o handler aceitava qualquer JSON, emitia `library-opened` com o erro e não mostrava o diálogo de falha. Um caminho de seleção que não era local virava `.`, a pasta de trabalho do processo.
+- Correção: `open_library_request` devolve o conteúdo de `JsonOk` e transforma `Error` e resposta vazia em mensagem; o menu mostra o diálogo de erro nesses casos e recusa seleção não local. O seletor deixa de abrir na pasta de trabalho do processo.
+- Limite: o diálogo nativo não roda no `MockRuntime`; os testes cobrem a requisição e as respostas com um listener TCP.
+
+## Desktop: ID da biblioteca entrava sem escape no script injetado nas janelas
+
+- Estado: corrigido; `injected_globals_are_json_string_literals`.
+- Local: `apps/tauri/src-tauri/src/main.rs`, `set_library_id` e `set_current_library_id`.
+- Reprodução anterior: um ID com aspas, como `x"; alert(1); "`, fechava o literal de `window.__WINGDRIVE_LIBRARY_ID__` e o resto rodava como script em todas as janelas.
+- Correção: `globals_script` escreve a URL e o ID como literais JSON.
+- Limite: o ID vem do próprio frontend; não há caminho conhecido para um valor externo chegar aqui.
+
+## Desktop: assinatura padrão do Tauri não recebia ofertas do Wingdrop
+
+- Estado: corrigido; `default_subscription_matches_the_typescript_client` lê `packages/ts-client/src/event-filter.ts` e compara as listas.
+- Local: `get_default_event_subscription` em `apps/tauri/src-tauri/src/main.rs`.
+- Reprodução anterior: a lista Rust, que diz espelhar `DEFAULT_EVENT_SUBSCRIPTION`, não tinha `WingdropOffered` e `WingdropUpdated`. Uma assinatura sem `eventTypes` não recebia ofertas. Os comentários dos dois lados diziam que `JobProgress` ficava de fora, mas as duas listas o incluem e o gerenciador de jobs o consome.
+- Correção: os dois eventos entram na lista Rust e os comentários passam a descrever o que é excluído (`LogMessage`, `IndexingProgress`).
+- Limite: o ts-client sempre envia `eventTypes`; o padrão Rust só vale para chamadas sem a lista.
+
+## Desktop: rotas de janela não codificavam IDs vindos do frontend
+
+- Estado: corrigido; `window_routes_encode_identifiers_from_the_frontend` em `apps/tauri/src-tauri/src/windows/tests/mod.rs`.
+- Local: `WingDriveWindow::create` em `apps/tauri/src-tauri/src/windows.rs`.
+- Reprodução anterior: um `context_id` ou `file_id` com `/` ou `:`, válidos num label de janela, entrava cru na rota (`/media-viewer/x/y`, `/contextmenu?context=a/b:c`) e mudava o caminho lido pelo frontend. A rota do Explorer já codificava; as outras não.
+- Correção: settings, inspector, media viewer, quick preview, drag overlay e context menu passam o ID por `percent_encode`.
+
+## Desktop: overlay de voz ficava escondido sem informação de monitor
+
+- Estado: corrigido; `voice_overlay_toggle_closes_an_open_overlay`.
+- Local: `WingDriveWindow::VoiceOverlay` em `apps/tauri/src-tauri/src/windows.rs`.
+- Reprodução anterior: a janela era criada invisível e, se `position_overlay_window` falhasse (sem monitor atual), o comando retornava erro com a janela já criada. Ela não aparecia, e o próximo atalho só a fechava.
+- Correção: a falha de posicionamento vira aviso no log e a janela é mostrada onde o gerenciador de janelas a colocar. `resize_overlay_window` continua retornando o erro.
+
+## Desktop: descoberta mDNS perdia servidores numa rede movimentada
+
+- Estado: corrigido; `browsing_parses_what_avahi_printed_even_when_it_is_stopped` em `apps/tauri/src-tauri/src/network_discovery.rs`.
+- Local: `browse_mdns` (agora `browse_with`).
+- Reprodução anterior: a função esperava o `avahi-browse` terminar e só depois lia o stdout. Uma listagem maior que o buffer do pipe (64 KiB no Linux) bloqueava o processo, que só parava ao ser morto no limite de tempo; o diálogo esperava o limite inteiro e recebia a listagem truncada. O teste gera 2.000 linhas (~150 KiB).
+- Correção: uma thread lê o stdout enquanto o processo roda.
+- Limite: verificado com um script no lugar do `avahi-browse`, sem rede mDNS real.

@@ -7,7 +7,7 @@ parent: COV-00
 priority: High
 milestone: M2
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-10
+last_updated: 2026-11-11
 ---
 
 ## Description
@@ -26,7 +26,7 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 
 ## Acceptance Criteria
 
-- [ ] Desktop apps/tauri atinge pelo menos 60% na primeira etapa e 75% na conclusão.
+- [x] Desktop apps/tauri atinge pelo menos 60% na primeira etapa e 75% na conclusão.
 - [ ] Undo nunca sobrescreve dados criados depois da operação original.
 - [ ] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
 
@@ -107,3 +107,52 @@ runtime macOS/Windows. Não foi simulada troca concorrente de inode entre a
 checagem e a operação no sistema de arquivos. Não foi gerado LCOV nem relatório
 de linhas nesta entrega; as metas de 60%/75% continuam sem comprovação atual.
 A task passou a In Progress com o merge do #359; os critérios seguem abertos até a medição LCOV.
+
+### 2026-11-11
+
+Linux x86_64, rustc 1.99.0, `cargo-llvm-cov 0.9.1`, branch `test/desktop-coverage` a partir
+de `27e8546fe`. Medição com o mesmo filtro de `scripts/coverage-report.py` (componente
+`apps/tauri/`, sem arquivos sob `tests/`), depois de `cargo llvm-cov clean --workspace`:
+
+| Medida | Linhas cobertas/instrumentadas | Percentual |
+|---|---:|---:|
+| `main` (`summary.json` do branch `badges`, SHA `27e8546fe`) | 4.694/7.442 | 63,1% |
+| Este branch | 6.352/7.793 | 81,5% |
+
+```bash
+cargo llvm-cov clean --workspace
+cargo llvm-cov --no-report --locked -p wingdrive --bin WingDrive
+cargo llvm-cov --no-report --locked -p file-opening-linux -p file-opening -p file-clipboard-windows -p wing-tauri-core
+cargo llvm-cov report --lcov --output-path target/cov-desktop/desktop.lcov
+```
+
+Suítes: `wingdrive --bin WingDrive` 184 aprovados, 0 falhas, 1 ignorado (polkit);
+`file-opening-linux` 31 unitários e 1 doctest. Os testes novos usam `tauri::test::mock_app`,
+listeners TCP no lugar do daemon, scripts `sh` no lugar de `wing-daemon`, `gio`,
+`pkexec` e `avahi-browse`, e uma conexão D-Bus ponto a ponto (`zbus` com `p2p` só nos
+testes) no lugar do servidor de notificações. Nada usa o daemon, o D-Bus de sessão ou as
+configurações do usuário, exceto leituras: tema de ícones, service menus e o shell de login
+no teste de terminal, que só roda no Unix.
+
+Para rodar no `MockRuntime`, comandos e helpers passaram a ser genéricos em `tauri::Runtime`
+(janelas, menu, assinaturas, bandeja, `launch`, notificações, terminal). Partes que chamavam
+processos ou relógios fixos ganharam uma variante que recebe o comando ou o limite de tempo:
+`spawn_daemon`, `find_daemon_binary_in`, `wait_for_daemon_within`, `run_mount_command`,
+`run_elevated`, `browse_with` e `current_theme_from`.
+
+Novos casos cobrem: menu nativo e seus eventos, abertura de biblioteca, seleção e validação
+da biblioteca, assinaturas de eventos (canal por janela, fim do stream, cancelamento, pool
+persistente), ciclo de vida do daemon (achar, iniciar, esperar, SIGTERM e kill), todas as
+janelas e o posicionamento de menu e overlay, rótulos da bandeja, montagem gvfs, retry com
+polkit, FileManager1, descoberta mDNS, terminal real, tema de ícones, service menus e
+notificações com cliques.
+
+Os testes acharam seis bugs, corrigidos e descritos em [BUGS.md](BUGS.md) (entradas
+"Desktop:"): "Open Library..." tratava a recusa do daemon como sucesso, o ID da biblioteca
+entrava sem escape no script das janelas, a assinatura padrão não recebia o Wingdrop, rotas
+de janela não codificavam IDs, o overlay de voz ficava escondido sem monitor e a descoberta
+mDNS perdia servidores acima de 64 KiB de listagem.
+
+Fora da medição por precisarem de runtime gráfico, GTK ou macOS: `main()`, a criação da
+bandeja, o clipboard GTK, `drag/` e `file_drag.rs` (macOS), o diálogo de "Open Library..." e
+a instalação do serviço do daemon, que escreve em `~/.config/systemd`.
