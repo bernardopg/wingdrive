@@ -39,8 +39,8 @@
 		"@radix-ui/react-tooltip": "^1.4.1",
 		"@react-three/drei": "^10.7.9",
 		"@react-three/fiber": "^9.8.2",
-		"@tanstack/react-query": "^5.106.1",
-		"@tanstack/react-query-devtools": "^5.106.1",
+		"@tanstack/react-query": "^5.107.1",
+		"@tanstack/react-query-devtools": "^5.107.1",
 		"@tanstack/react-table": "^9.3.1",
 		"@tanstack/react-virtual": "^3.14.26",
 		"@types/d3": "^7.4.3",
@@ -54,9 +54,9 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"d3": "^7.9.2",
-		"framer-motion": "^14.9.1",
+		"framer-motion": "^14.10.1",
 		"i18next": "^26.7.2",
-		"maplibre-gl": "^6.16.0",
+		"maplibre-gl": "^6.17.0",
 		"ogl": "^1.0.11",
 		"openapi-fetch": "^0.17.0",
 		"pdfjs-dist": "^6.5.438",
@@ -76,7 +76,7 @@
 		"rooks": "^9.9.0",
 		"sonner": "^2.0.8",
 		"three": "^0.187.0",
-		"zustand": "^5.0.16"
+		"zustand": "^5.1.0"
 	},
 	"devDependencies": {
 		"@happy-dom/global-registrator": "^21.0.3",
