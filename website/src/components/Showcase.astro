@@ -1,0 +1,215 @@
+---
+import { t, type Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].showcase;
+---
+
+<section class="section showcase" data-showcase>
+	<div class="glow-orb" style="width:700px;height:500px;right:-200px;top:20%;background:#6d28d9"></div>
+	<div class="wrap">
+		<div class="section-head center">
+			<span class="eyebrow reveal">{s.eyebrow}</span>
+			<h2 class="h-lg reveal" style="--d:60ms">{s.title}</h2>
+		</div>
+		<div class="tabs reveal" role="tablist" aria-label={s.title}>
+			{
+				s.tabs.map((tab, i) => (
+					<button role="tab" id={`tab-${tab.id}`} aria-controls={`panel-${tab.id}`} aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1} data-i={i}>
+						{tab.t}
+						<span class="bar" />
+					</button>
+				))
+			}
+		</div>
+		<div class="frame reveal" style="--d:100ms" data-tilt>
+			<div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>WingDrive</span></div>
+			<div class="screens">
+				{
+					s.tabs.map((tab, i) => (
+						<picture role="tabpanel" id={`panel-${tab.id}`} aria-labelledby={`tab-${tab.id}`} class:list={["screen", { on: i === 0 }]}>
+							<source type="image/avif" srcset={`/img/shots/${tab.img}-800.avif 800w, /img/shots/${tab.img}-1600.avif 1600w`} sizes="(max-width: 1240px) 100vw, 1200px" />
+							<img
+								src={`/img/shots/${tab.img}-1600.webp`}
+								srcset={`/img/shots/${tab.img}-800.webp 800w, /img/shots/${tab.img}-1600.webp 1600w`}
+								sizes="(max-width: 1240px) 100vw, 1200px"
+								alt={tab.alt}
+								loading="lazy"
+								decoding="async"
+							/>
+						</picture>
+					))
+				}
+			</div>
+		</div>
+	</div>
+</section>
+
+<script>
+	const root = document.querySelector<HTMLElement>("[data-showcase]");
+	if (root) {
+		const tabs = [...root.querySelectorAll<HTMLButtonElement>("[role=tab]")];
+		const panels = [...root.querySelectorAll<HTMLElement>(".screen")];
+		let current = 0;
+		let timer: number | undefined;
+		const DURATION = 5200;
+		const select = (i: number, focus = false) => {
+			current = (i + tabs.length) % tabs.length;
+			tabs.forEach((t, j) => {
+				t.setAttribute("aria-selected", String(j === current));
+				t.tabIndex = j === current ? 0 : -1;
+				t.style.setProperty("--dur", `${DURATION}ms`);
+			});
+			panels.forEach((p, j) => p.classList.toggle("on", j === current));
+			if (focus) tabs[current].focus();
+		};
+		const schedule = () => {
+			clearInterval(timer);
+			timer = window.setInterval(() => select(current + 1), DURATION);
+		};
+		tabs.forEach((tab, i) =>
+			tab.addEventListener("click", () => {
+				select(i);
+				schedule();
+			}),
+		);
+		root.querySelector("[role=tablist]")!.addEventListener("keydown", (e) => {
+			const k = (e as KeyboardEvent).key;
+			if (k === "ArrowRight" || k === "ArrowLeft") {
+				select(current + (k === "ArrowRight" ? 1 : -1), true);
+				schedule();
+			}
+		});
+		new IntersectionObserver(([e]) => (e.isIntersecting ? schedule() : clearInterval(timer))).observe(root);
+		select(0);
+
+		// Perspective tilt that flattens as the frame scrolls into place.
+		const frame = root.querySelector<HTMLElement>("[data-tilt]")!;
+		const onScroll = () => {
+			const r = frame.getBoundingClientRect();
+			const p = Math.min(Math.max((innerHeight - r.top) / (innerHeight * 0.9), 0), 1);
+			frame.style.setProperty("--tilt", `${(1 - p) * 16}deg`);
+			frame.style.setProperty("--sc", `${0.92 + p * 0.08}`);
+		};
+		if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+			addEventListener("scroll", onScroll, { passive: true });
+			onScroll();
+		}
+	}
+</script>
+
+<style>
+	.showcase {
+		overflow: hidden;
+	}
+	.tabs {
+		display: flex;
+		gap: 6px;
+		justify-content: center;
+		flex-wrap: wrap;
+		margin-bottom: 28px;
+	}
+	[role="tab"] {
+		position: relative;
+		overflow: hidden;
+		font: inherit;
+		font-size: 14.5px;
+		color: var(--muted);
+		background: rgb(255 255 255 / 0.02);
+		border: 1px solid var(--line);
+		padding: 9px 16px;
+		border-radius: 999px;
+		cursor: pointer;
+		transition:
+			color 0.25s,
+			border-color 0.25s,
+			background 0.25s;
+	}
+	[role="tab"]:hover {
+		color: var(--text);
+	}
+	[role="tab"][aria-selected="true"] {
+		color: var(--text);
+		border-color: var(--line-strong);
+		background: rgb(139 92 246 / 0.14);
+	}
+	.bar {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		height: 2px;
+		width: 0;
+		background: linear-gradient(90deg, var(--violet), var(--lavender));
+	}
+	[aria-selected="true"] .bar {
+		animation: fill var(--dur, 5s) linear forwards;
+	}
+	@keyframes fill {
+		to {
+			width: 100%;
+		}
+	}
+	.frame {
+		perspective: 1600px;
+		transform: perspective(1600px) rotateX(var(--tilt, 0deg)) scale(var(--sc, 1));
+		transform-origin: 50% 0;
+		border-radius: 16px;
+		border: 1px solid var(--line-strong);
+		background: #0d0920;
+		box-shadow:
+			0 50px 120px -40px rgb(124 58 237 / 0.6),
+			0 0 0 1px rgb(255 255 255 / 0.03);
+		overflow: hidden;
+		will-change: transform;
+	}
+	.frame.reveal.in {
+		transform: perspective(1600px) rotateX(var(--tilt, 0deg)) scale(var(--sc, 1));
+	}
+	.chrome {
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		height: 38px;
+		padding: 0 16px;
+		border-bottom: 1px solid var(--line);
+		background: linear-gradient(180deg, #171030, #120c27);
+	}
+	.chrome i {
+		width: 11px;
+		height: 11px;
+		border-radius: 50%;
+		background: #2c2150;
+	}
+	.chrome span {
+		margin-inline: auto;
+		padding-right: 50px;
+		font-size: 12.5px;
+		color: var(--dim);
+		font-family: var(--mono);
+	}
+	.screens {
+		display: grid;
+	}
+	.screen {
+		grid-area: 1 / 1;
+		opacity: 0;
+		transform: scale(1.015);
+		transition:
+			opacity 0.7s var(--ease),
+			transform 1.2s var(--ease);
+	}
+	.screen.on {
+		opacity: 1;
+		transform: none;
+	}
+	.screen img {
+		width: 100%;
+		height: auto;
+		aspect-ratio: 16 / 10;
+		object-fit: cover;
+		object-position: top left;
+	}
+</style>

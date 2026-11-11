@@ -1,0 +1,22 @@
+---
+import Simple from "../../views/Simple.astro";
+import { t } from "../../i18n/strings";
+import { Content } from "../../data/CHANGELOG.md";
+const s = t.pt.changelog;
+---
+
+<Simple lang="pt" title={s.title} lead={s.lead}>
+	<div class="prose changelog"><Content /></div>
+</Simple>
+
+<style>
+	.changelog :global(h1),
+	.changelog :global(h1 + p) {
+		display: none;
+	}
+	.changelog :global(h2) {
+		font-size: 30px;
+		padding-top: 1.2em;
+		border-top: 1px solid var(--line);
+	}
+</style>

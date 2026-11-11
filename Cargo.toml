@@ -33,6 +33,7 @@ resolver = "2"
 [workspace.package]
 edition      = "2021"
 license      = "Apache-2.0"
+homepage     = "https://wingdrive.org"
 repository   = "https://github.com/bernardopg/wingdrive"
 rust-version = "1.89"
 

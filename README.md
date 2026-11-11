@@ -141,11 +141,13 @@ requests help just as much: [Issues](https://github.com/bernardopg/wingdrive/iss
 
 ## Contact
 
+- Website: [wingdrive.org](https://wingdrive.org)
+- Discord: [WingDrive server](https://discord.gg/ZHbD5Hbh)
+
 **Bernardo Gomes**, author and maintainer
 
 - Email: [bernardo.gomes@bebitterbebetter.com.br](mailto:bernardo.gomes@bebitterbebetter.com.br)
-- Website: [bebitterbebetter.com.br](https://bebitterbebetter.com.br)
-- Discord: `omg_bitter`
+- Personal site: [bebitterbebetter.com.br](https://bebitterbebetter.com.br)
 - Instagram: [@be.pgomes](https://instagram.com/be.pgomes)
 
 Report security issues privately through [GitHub Security Advisories](https://github.com/bernardopg/wingdrive/security/advisories/new) ([SECURITY.md](./SECURITY.md)), not in public issues.

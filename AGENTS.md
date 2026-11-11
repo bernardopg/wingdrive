@@ -772,6 +772,35 @@ publish `wingdrive-nightly` on AUR. Stable tags publish `wingdrive-bin` and `win
 `wing update` never replaces binaries; it prints the update command for the way `wing` was
 installed (CLI-002).
 
+## Website
+
+`website/` is the wingdrive.org site: an Astro static site with English at `/` and Brazilian
+Portuguese at `/pt/`. It is a standalone Bun project, not a workspace member, so it has its own
+`website/bun.lock`; run `bun install` inside `website/`, never from the root for it.
+
+```bash
+cd website
+bun install
+bun run dev      # http://localhost:4321; copies ../CHANGELOG.md into src/data first
+bun run build    # dist/
+bun run assets   # rebuild images, hero sparkle points, favicons and og.png from raw-assets/
+```
+
+- Marketing copy for both languages is in `website/src/i18n/strings.ts`. Docs pages are
+  `website/src/content/docs/{en,pt}/*.md` with the same file names; change both languages together.
+- The download page reads the latest GitHub Release and the changelog page renders the root
+  `CHANGELOG.md`, both at build time. Neither is edited by hand on the site.
+- `.github/workflows/website.yml` builds pull requests and deploys `main` to Hostinger over SSH
+  (rsync into `domains/wingdrive.org/public_html`). It redeploys after every `WingDrive Release`
+  run, on pushes that touch `website/` or `CHANGELOG.md`, and daily, so releases reach the site with
+  no manual step.
+- Deploy credentials live only in the `website` GitHub environment (`WEBSITE_SSH_KEY`,
+  `WEBSITE_SSH_KNOWN_HOSTS`, `WEBSITE_SSH_HOST`, `WEBSITE_SSH_PORT`, `WEBSITE_SSH_USER`), limited to
+  `main`. The key is a dedicated deploy key on the Hostinger account. Never commit keys, hostnames
+  with credentials or `.env` files under `website/`.
+- Product facts on the site (platforms, shortcuts, CLI commands, roadmap) must match the code and
+  `.tasks/ROADMAP.md`. Update the site in the same pull request that changes them.
+
 ## Repository Rules
 
 `main` only changes through pull requests. Its ruleset (`.github/rulesets/main.json`) requires the CI

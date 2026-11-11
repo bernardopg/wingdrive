@@ -1,0 +1,170 @@
+---
+import Logo from "./Logo.astro";
+import Icon from "./Icon.astro";
+import { t, href, type Lang, REPO, SPONSOR, DISCORD } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].footer;
+const L = s.links;
+const cols = [
+	{
+		t: s.product,
+		links: [
+			[L.features, href(lang, "/#features")],
+			[L.download, href(lang, "/download/")],
+			[L.changelog, href(lang, "/changelog/")],
+			[L.roadmap, href(lang, "/#roadmap")],
+		],
+	},
+	{
+		t: s.resources,
+		links: [
+			[L.docs, href(lang, "/docs/")],
+			[L.install, href(lang, "/docs/installation/")],
+			[L.selfhost, href(lang, "/docs/self-hosting/")],
+			[L.cli, href(lang, "/docs/cli/")],
+		],
+	},
+	{
+		t: s.community,
+		links: [
+			[L.github, REPO],
+			[L.issues, `${REPO}/issues/new/choose`],
+			[L.discord, DISCORD],
+			[L.discussions, `${REPO}/discussions`],
+			[L.sponsor, SPONSOR],
+			[L.about, href(lang, "/about/")],
+			[L.privacy, href(lang, "/privacy/")],
+		],
+	},
+];
+const year = new Date().getFullYear();
+---
+
+<footer class="foot">
+	<div class="wrap grid">
+		<div class="brandcol">
+			<a class="brand" href={href(lang, "/")}><Logo size={34} /><span>WingDrive</span></a>
+			<p>{s.tagline}</p>
+			<div class="social">
+				<a href={REPO} aria-label="GitHub" rel="noopener"><Icon name="github" size={20} /></a>
+				<a href={DISCORD} aria-label="Discord" rel="noopener"><Icon name="discord" size={20} /></a>
+				<a href={SPONSOR} aria-label="Sponsor" rel="noopener"><Icon name="heart" size={20} /></a>
+				<a href="mailto:bernardo.gomes@bebitterbebetter.com.br" aria-label="Email"><Icon name="mail" size={20} /></a>
+			</div>
+		</div>
+		{
+			cols.map((c) => (
+				<div>
+					<h3>{c.t}</h3>
+					<ul>
+						{c.links.map(([label, to]) => (
+							<li>
+								<a href={to} rel={to.startsWith("http") ? "noopener" : undefined}>
+									{label}
+								</a>
+							</li>
+						))}
+					</ul>
+				</div>
+			))
+		}
+	</div>
+	<div class="wrap legal">
+		<span>© {year} WingDrive · Bernardo Gomes</span>
+		<span>{s.legal}</span>
+	</div>
+</footer>
+
+<style>
+	.foot {
+		border-top: 1px solid var(--line);
+		background: linear-gradient(180deg, transparent, rgb(67 56 202 / 0.06));
+		padding: 72px 0 36px;
+		margin-top: 40px;
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: 1.6fr repeat(3, 1fr);
+		gap: 40px;
+	}
+	.brand {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		font-family: var(--display);
+		font-weight: 700;
+		font-size: 20px;
+	}
+	.brandcol p {
+		color: var(--muted);
+		margin-top: 16px;
+		max-width: 34ch;
+		font-size: 15px;
+	}
+	.social {
+		display: flex;
+		gap: 8px;
+		margin-top: 20px;
+	}
+	.social a {
+		display: grid;
+		place-items: center;
+		width: 40px;
+		height: 40px;
+		border-radius: 12px;
+		border: 1px solid var(--line);
+		color: var(--muted);
+		transition: all 0.25s;
+	}
+	.social a:hover {
+		color: var(--text);
+		border-color: var(--lavender);
+	}
+	h3 {
+		font-size: 13px;
+		font-family: var(--mono);
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		color: var(--dim);
+		font-weight: 500;
+		margin-bottom: 16px;
+	}
+	ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 10px;
+	}
+	ul a {
+		color: var(--muted);
+		font-size: 15px;
+		transition: color 0.2s;
+	}
+	ul a:hover {
+		color: var(--text);
+	}
+	.legal {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 12px;
+		margin-top: 56px;
+		padding-top: 24px;
+		border-top: 1px solid var(--line);
+		color: var(--dim);
+		font-size: 13.5px;
+	}
+	@media (max-width: 820px) {
+		.grid {
+			grid-template-columns: 1fr 1fr;
+		}
+		.brandcol {
+			grid-column: 1 / -1;
+		}
+	}
+</style>

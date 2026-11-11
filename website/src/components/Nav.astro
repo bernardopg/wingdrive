@@ -1,0 +1,187 @@
+---
+import Icon from "./Icon.astro";
+import Logo from "./Logo.astro";
+import { t, href, swapLang, type Lang, REPO } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang];
+const path = Astro.url.pathname;
+const other: Lang = lang === "en" ? "pt" : "en";
+const links = [
+	{ label: s.nav.features, to: href(lang, "/#features") },
+	{ label: s.nav.why, to: href(lang, "/#why") },
+	{ label: s.nav.docs, to: href(lang, "/docs/") },
+	{ label: s.nav.changelog, to: href(lang, "/changelog/") },
+	{ label: s.nav.about, to: href(lang, "/about/") },
+];
+const active = (to: string) => !to.includes("#") && path.startsWith(to.replace(/\/$/, ""));
+---
+
+<header class="nav" data-nav>
+	<div class="wrap bar">
+		<a class="brand" href={href(lang, "/")} aria-label="WingDrive">
+			<Logo size={30} />
+			<span>WingDrive</span>
+		</a>
+		<nav class="links" aria-label="Main">
+			{links.map((l) => <a href={l.to} class:list={[{ on: active(l.to) }]}>{l.label}</a>)}
+		</nav>
+		<div class="actions">
+			<a class="ghost" href={swapLang(path, other)} hreflang={other === "pt" ? "pt-BR" : "en"} lang={other === "pt" ? "pt-BR" : "en"} title={s.nav.lang}>
+				<Icon name="globe" size={18} />
+				<span class="lang-label">{other === "pt" ? "PT" : "EN"}</span>
+			</a>
+			<a class="ghost hide-sm" href={REPO} aria-label="GitHub" rel="noopener"><Icon name="github" size={19} /></a>
+			<a class="btn btn-primary btn-sm hide-sm" href={href(lang, "/download/")}><Icon name="download" size={16} />{s.nav.download}</a>
+			<button class="ghost burger" type="button" aria-expanded="false" aria-controls="mnav" aria-label={s.nav.menu} data-burger>
+				<Icon name="menu" size={22} />
+			</button>
+		</div>
+	</div>
+	<div class="mnav" id="mnav" hidden>
+		{links.map((l) => <a href={l.to}>{l.label}</a>)}
+		<a href={REPO} rel="noopener">GitHub</a>
+		<a class="btn btn-primary" href={href(lang, "/download/")}><Icon name="download" size={16} />{s.nav.download}</a>
+	</div>
+</header>
+
+<script>
+	const nav = document.querySelector<HTMLElement>("[data-nav]")!;
+	const burger = nav.querySelector<HTMLButtonElement>("[data-burger]")!;
+	const panel = nav.querySelector<HTMLElement>("#mnav")!;
+	const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 12);
+	onScroll();
+	window.addEventListener("scroll", onScroll, { passive: true });
+	burger.addEventListener("click", () => {
+		const open = burger.getAttribute("aria-expanded") !== "true";
+		burger.setAttribute("aria-expanded", String(open));
+		panel.hidden = !open;
+		nav.classList.toggle("open", open);
+	});
+	panel.addEventListener("click", (e) => {
+		if ((e.target as HTMLElement).closest("a")) burger.click();
+	});
+</script>
+
+<style>
+	.nav {
+		position: fixed;
+		inset: 0 0 auto;
+		z-index: 50;
+		transition:
+			background 0.4s,
+			border-color 0.4s,
+			backdrop-filter 0.4s;
+		border-bottom: 1px solid transparent;
+	}
+	.nav.scrolled,
+	.nav.open {
+		background: rgb(10 6 20 / 0.72);
+		backdrop-filter: blur(16px) saturate(140%);
+		-webkit-backdrop-filter: blur(16px) saturate(140%);
+		border-color: var(--line);
+	}
+	.bar {
+		height: 72px;
+		display: flex;
+		align-items: center;
+		gap: 28px;
+	}
+	.brand {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-family: var(--display);
+		font-weight: 700;
+		font-size: 19px;
+		letter-spacing: -0.02em;
+	}
+	.links {
+		display: flex;
+		gap: 4px;
+		margin-inline: auto;
+	}
+	.links a {
+		padding: 8px 14px;
+		border-radius: 999px;
+		color: var(--muted);
+		font-size: 15px;
+		transition:
+			color 0.2s,
+			background 0.2s;
+	}
+	.links a:hover,
+	.links a.on {
+		color: var(--text);
+		background: rgb(139 92 246 / 0.1);
+	}
+	.actions {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin-left: auto;
+	}
+	.links + .actions {
+		margin-left: 0;
+	}
+	.ghost {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		height: 40px;
+		min-width: 40px;
+		justify-content: center;
+		padding: 0 10px;
+		border-radius: 999px;
+		color: var(--muted);
+		background: none;
+		border: 0;
+		cursor: pointer;
+		font: inherit;
+		font-size: 13px;
+		font-weight: 600;
+		transition:
+			color 0.2s,
+			background 0.2s;
+	}
+	.ghost:hover {
+		color: var(--text);
+		background: rgb(139 92 246 / 0.1);
+	}
+	.burger {
+		display: none;
+	}
+	.mnav {
+		display: grid;
+		gap: 4px;
+		padding: 8px 16px 20px;
+	}
+	.mnav[hidden] {
+		display: none;
+	}
+	.mnav a:not(.btn) {
+		padding: 12px 8px;
+		border-bottom: 1px solid var(--line);
+		color: var(--muted);
+	}
+	.mnav .btn {
+		margin-top: 12px;
+	}
+	@media (max-width: 920px) {
+		.links,
+		.hide-sm {
+			display: none;
+		}
+		.burger {
+			display: inline-flex;
+		}
+	}
+	@media (min-width: 921px) {
+		.mnav {
+			display: none !important;
+		}
+	}
+</style>

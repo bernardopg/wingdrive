@@ -1,0 +1,176 @@
+---
+import Base from "../layouts/Base.astro";
+import Icon from "../components/Icon.astro";
+import { t, type Lang, REPO, SPONSOR, DISCORD } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].about;
+---
+
+<Base lang={lang} title={s.title} description={s.lead}>
+	<section class="head">
+		<picture class="art">
+			<source type="image/avif" srcset="/img/art/about-1280.avif 1280w, /img/art/about-1920.avif 1536w" sizes="100vw" />
+			<img src="/img/art/about-1920.webp" srcset="/img/art/about-640.webp 640w, /img/art/about-1280.webp 1280w, /img/art/about-1920.webp 1536w" sizes="100vw" alt="" width="1536" height="1024" />
+		</picture>
+		<div class="wrap">
+			<h1 class="h-xl reveal">{s.title}</h1>
+			<p class="lead reveal" style="--d:80ms">{s.lead}</p>
+		</div>
+	</section>
+
+	<section class="wrap story">
+		<h2 class="h-md reveal">{s.storyT}</h2>
+		<div class="paras">{s.story.map((p, i) => <p class="reveal" style={`--d:${i * 70}ms`}>{p}</p>)}</div>
+	</section>
+
+	<section class="wrap section principles">
+		<h2 class="h-lg reveal">{s.principlesT}</h2>
+		<div class="grid">
+			{
+				s.principles.map((p, i) => (
+					<article class="card reveal" style={`--d:${i * 70}ms`}>
+						<span class="num">0{i + 1}</span>
+						<h3>{p.t}</h3>
+						<p>{p.d}</p>
+					</article>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="wrap two">
+		<article class="card reveal">
+			<h2 class="h-md">{s.makerT}</h2>
+			<p>{s.maker}</p>
+			<div class="btns">
+				<a class="btn btn-sm" href={REPO} rel="noopener"><Icon name="github" size={16} />bernardopg/wingdrive</a>
+				<a class="btn btn-sm" href={DISCORD} rel="noopener"><Icon name="discord" size={16} />Discord</a>
+				<a class="btn btn-sm" href={SPONSOR} rel="noopener"><Icon name="heart" size={16} />Sponsor</a>
+			</div>
+			<h3>{s.contact}</h3>
+			<ul class="contact">
+				<li><Icon name="mail" size={16} /><a href="mailto:bernardo.gomes@bebitterbebetter.com.br">bernardo.gomes@bebitterbebetter.com.br</a></li>
+				<li><Icon name="discord" size={16} /><a href={DISCORD} rel="noopener">discord.gg/ZHbD5Hbh</a></li>
+				<li><Icon name="globe" size={16} /><a href="https://bebitterbebetter.com.br" rel="noopener">bebitterbebetter.com.br</a></li>
+			</ul>
+		</article>
+		<article class="card reveal" style="--d:80ms">
+			<h2 class="h-md">{s.creditsT}</h2>
+			<p>{s.credits}</p>
+			<div class="btns">
+				<a class="btn btn-sm" href={`${REPO}/blob/main/CREDITS.md`} rel="noopener">CREDITS.md <Icon name="external" size={14} /></a>
+				<a class="btn btn-sm" href={`${REPO}/blob/main/LICENSE`} rel="noopener">Apache-2.0 <Icon name="external" size={14} /></a>
+			</div>
+		</article>
+	</section>
+</Base>
+
+<style>
+	.head {
+		position: relative;
+		min-height: 560px;
+		display: grid;
+		align-items: end;
+		padding: 140px 0 60px;
+		overflow: hidden;
+		isolation: isolate;
+	}
+	.art img {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		z-index: -1;
+		opacity: 0.7;
+		mask-image: linear-gradient(180deg, #000 50%, transparent);
+	}
+	.head .wrap {
+		display: grid;
+		gap: 20px;
+	}
+	.story {
+		display: grid;
+		grid-template-columns: 0.4fr 1fr;
+		gap: 40px;
+		padding-top: 60px;
+	}
+	.paras {
+		display: grid;
+		gap: 20px;
+		font-size: 19px;
+		color: var(--muted);
+	}
+	.principles h2 {
+		margin-bottom: 36px;
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 16px;
+	}
+	.card {
+		display: grid;
+		gap: 12px;
+		align-content: start;
+	}
+	.num {
+		font-family: var(--mono);
+		color: var(--violet);
+		font-size: 14px;
+	}
+	.card h3 {
+		font-size: 18px;
+	}
+	.card p {
+		color: var(--muted);
+		font-size: 15.5px;
+	}
+	.two {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+		margin-bottom: 80px;
+	}
+	.btns {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+	.contact {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 8px;
+		color: var(--muted);
+		font-size: 15px;
+	}
+	.contact li {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		overflow-wrap: anywhere;
+	}
+	.contact a {
+		color: var(--lavender);
+	}
+	@media (max-width: 900px) {
+		.story,
+		.two {
+			grid-template-columns: 1fr;
+		}
+		.grid {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+	@media (max-width: 520px) {
+		.grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

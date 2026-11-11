@@ -8,6 +8,9 @@ contact_links:
   - name: 💡 Feature request
     url: https://github.com/bernardopg/wingdrive/discussions/new?category=ideas
     about: Suggest a new feature in an Ideas discussion.
+  - name: 💬 Chat on Discord
+    url: https://discord.gg/ZHbD5Hbh
+    about: Talk with the community and the maintainer in the WingDrive Discord server.
   - name: 🔒 Report a vulnerability
     url: https://github.com/bernardopg/wingdrive/security/advisories/new
     about: Report security issues privately, never in a public issue.

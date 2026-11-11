@@ -1,0 +1,351 @@
+---
+import { t, type Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].sync;
+const words = ["brave", "lion", "sunset", "river", "eagle", "mountain", "forest", "ocean", "thunder", "crystal", "diamond", "phoenix"];
+// Circular layout in a 600×560 viewBox: three devices on one orbit around the library core.
+const C = { x: 300, y: 280 };
+const R = 190;
+const at = (deg: number) => ({ x: C.x + R * Math.cos((deg * Math.PI) / 180), y: C.y + R * Math.sin((deg * Math.PI) / 180) });
+const devices = [
+	{ k: "laptop", ...at(-90) },
+	{ k: "phone", ...at(30) },
+	{ k: "server", ...at(150) },
+];
+const orbit = `M ${C.x} ${C.y - R} A ${R} ${R} 0 1 1 ${C.x - 0.01} ${C.y - R} Z`;
+---
+
+<section class="section sync">
+	<div class="wrap layout">
+		<div class="viz reveal" aria-hidden="true">
+			<svg viewBox="0 0 600 560" role="presentation">
+				<defs>
+					<linearGradient id="sg" x1="0" x2="1" y1="0" y2="1">
+						<stop offset="0" stop-color="#c4b5fd"></stop>
+						<stop offset="1" stop-color="#6d28d9"></stop>
+					</linearGradient>
+					<radialGradient id="sglow">
+						<stop offset="0" stop-color="#8b5cf6" stop-opacity=".5"></stop>
+						<stop offset="1" stop-color="#8b5cf6" stop-opacity="0"></stop>
+					</radialGradient>
+					<radialGradient id="node">
+						<stop offset="0" stop-color="#2a1b55"></stop>
+						<stop offset="1" stop-color="#140d29"></stop>
+					</radialGradient>
+					<filter id="soft"><feGaussianBlur stdDeviation="2.5"></feGaussianBlur></filter>
+					<path id="orbit" d={orbit}></path>
+				</defs>
+
+				<circle cx={C.x} cy={C.y} r="250" fill="url(#sglow)"></circle>
+				<g class="spin slow"><circle cx={C.x} cy={C.y} r="244" class="dots"></circle></g>
+				<circle cx={C.x} cy={C.y} r={R} class="track"></circle>
+				<g class="spin"><circle cx={C.x} cy={C.y} r={R} class="flow"></circle></g>
+				<circle cx={C.x} cy={C.y} r="118" class="inner"></circle>
+
+				{devices.map((d) => <line x1={C.x} y1={C.y} x2={d.x} y2={d.y} class="spoke" />)}
+				{
+					devices.map((d, i) => (
+						<circle r="3.5" class="pulse">
+							<animate attributeName="cx" values={`${C.x};${d.x}`} dur="2.4s" begin={`${i * 0.8}s`} repeatCount="indefinite" />
+							<animate attributeName="cy" values={`${C.y};${d.y}`} dur="2.4s" begin={`${i * 0.8}s`} repeatCount="indefinite" />
+							<animate attributeName="opacity" values="0;1;1;0" dur="2.4s" begin={`${i * 0.8}s`} repeatCount="indefinite" />
+						</circle>
+					))
+				}
+				{
+					[0, 1, 2, 3, 4, 5].map((i) => (
+						<circle r="5" class="packet" filter="url(#soft)">
+							<animateMotion dur="7.2s" repeatCount="indefinite" begin={`${-i * 1.2}s`}>
+								<mpath href="#orbit" />
+							</animateMotion>
+						</circle>
+					))
+				}
+
+				{[0, 1, 2].map((i) => <circle class="ripple" cx={C.x} cy={C.y} r="60" style={`animation-delay:${i * 1.2}s`} />)}
+				<circle cx={C.x} cy={C.y} r="62" fill="url(#node)" class="core"></circle>
+				<g class="feather" transform={`translate(${C.x} ${C.y})`}>
+					<path d="M-34 22 C-18 -8 6 -26 40 -30 C33 -10 16 4 -8 12 Z" fill="url(#sg)"></path>
+					<path d="M-30 34 C-14 10 8 -2 36 -6 C29 10 12 22 -10 27 Z" fill="url(#sg)" opacity=".7"></path>
+					<path d="M-26 44 C-12 26 6 16 30 13 C24 26 10 35 -8 39 Z" fill="url(#sg)" opacity=".45"></path>
+				</g>
+
+				{
+					devices.map((d, i) => (
+						<g class="dev" transform={`translate(${d.x} ${d.y})`} style={`animation-delay:${i * 0.4}s`}>
+							<circle r="54" class="halo" />
+							<circle r="46" class="badge" />
+							{d.k === "laptop" && (
+								<g>
+									<rect x="-24" y="-17" width="48" height="30" rx="3" />
+									<rect x="-19" y="-12" width="38" height="20" rx="1.5" class="screen" />
+									<path d="M-30 15 H30 L26 20 H-26 Z" />
+								</g>
+							)}
+							{d.k === "phone" && (
+								<g>
+									<rect x="-13" y="-24" width="26" height="48" rx="6" />
+									<rect x="-9" y="-18" width="18" height="34" rx="3" class="screen" />
+								</g>
+							)}
+							{d.k === "server" && (
+								<g>
+									<rect x="-22" y="-22" width="44" height="44" rx="7" />
+									{[-11, 0, 11].map((x, j) => (
+										<rect x={x - 3.5} y="-13" width="7" height="26" rx="2" class:list={["bay", { lit: j === 1 }]} />
+									))}
+								</g>
+							)}
+						</g>
+					))
+				}
+			</svg>
+			<div class="code">
+				{words.map((w, i) => <span style={`--i:${i}`}>{w}</span>)}
+			</div>
+		</div>
+		<div class="copy">
+			<span class="eyebrow reveal">{s.eyebrow}</span>
+			<h2 class="h-lg reveal" style="--d:60ms">{s.title}</h2>
+			<p class="lead reveal" style="--d:120ms">{s.lead}</p>
+			<ol class="steps">
+				{
+					s.steps.map((st, i) => (
+						<li class="reveal" style={`--d:${180 + i * 80}ms`}>
+							<span class="n">{i + 1}</span>
+							<div>
+								<h3>{st.t}</h3>
+								<p>{st.d}</p>
+							</div>
+						</li>
+					))
+				}
+			</ol>
+		</div>
+	</div>
+</section>
+
+<style>
+	.layout {
+		display: grid;
+		grid-template-columns: 1.05fr 0.95fr;
+		gap: clamp(32px, 6vw, 80px);
+		align-items: center;
+	}
+	.copy {
+		display: grid;
+		gap: 20px;
+	}
+	.viz {
+		position: relative;
+	}
+	svg {
+		width: 100%;
+		height: auto;
+		overflow: visible;
+	}
+	.track {
+		fill: none;
+		stroke: rgb(167 139 250 / 0.16);
+		stroke-width: 2;
+	}
+	.flow {
+		fill: none;
+		stroke: #a78bfa;
+		stroke-width: 2;
+		stroke-dasharray: 2 16;
+		stroke-linecap: round;
+		opacity: 0.7;
+	}
+	.dots {
+		fill: none;
+		stroke: rgb(196 181 253 / 0.35);
+		stroke-width: 1.5;
+		stroke-dasharray: 1 22;
+		stroke-linecap: round;
+	}
+	.inner {
+		fill: none;
+		stroke: rgb(167 139 250 / 0.12);
+		stroke-dasharray: 4 6;
+	}
+	.spin {
+		transform-origin: 300px 280px;
+		animation: spin 30s linear infinite;
+	}
+	.spin.slow {
+		animation-duration: 80s;
+		animation-direction: reverse;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	.spoke {
+		stroke: rgb(167 139 250 / 0.22);
+		stroke-width: 1.5;
+		stroke-dasharray: 3 5;
+	}
+	.pulse {
+		fill: #e9d5ff;
+	}
+	.packet {
+		fill: #f5f3ff;
+	}
+	.ripple {
+		fill: none;
+		stroke: #a78bfa;
+		stroke-width: 1.5;
+		transform-origin: 300px 280px;
+		animation: ripple 3.6s var(--ease) infinite;
+		opacity: 0;
+	}
+	@keyframes ripple {
+		0% {
+			transform: scale(1);
+			opacity: 0.6;
+		}
+		100% {
+			transform: scale(3);
+			opacity: 0;
+		}
+	}
+	.core {
+		stroke: rgb(196 181 253 / 0.45);
+		stroke-width: 1.5;
+	}
+	.feather {
+		transform-box: fill-box;
+	}
+	.feather path {
+		animation: flap 4s ease-in-out infinite;
+		transform-origin: -30px 40px;
+	}
+	@keyframes flap {
+		50% {
+			transform: rotate(-5deg);
+		}
+	}
+	.dev .halo {
+		fill: none;
+		stroke: rgb(167 139 250 / 0.3);
+		animation: halo 3s ease-in-out infinite;
+		animation-delay: inherit;
+	}
+	@keyframes halo {
+		50% {
+			stroke: rgb(196 181 253 / 0.75);
+			stroke-width: 3;
+		}
+	}
+	.dev .badge {
+		fill: url(#node);
+		stroke: rgb(196 181 253 / 0.5);
+		stroke-width: 1.5;
+	}
+	.dev g rect,
+	.dev g path {
+		fill: #1b1236;
+		stroke: rgb(196 181 253 / 0.75);
+		stroke-width: 1.5;
+	}
+	.dev .screen {
+		fill: url(#sg) !important;
+		opacity: 0.45;
+		animation: glow 3s ease-in-out infinite alternate;
+	}
+	.dev .bay {
+		fill: #2a1d55 !important;
+	}
+	.dev .bay.lit {
+		fill: #a78bfa !important;
+		animation: glow 1.2s ease-in-out infinite alternate;
+	}
+	@keyframes glow {
+		to {
+			opacity: 0.85;
+		}
+	}
+	.code {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		justify-content: center;
+		margin-top: 10px;
+	}
+	.code span {
+		font-family: var(--mono);
+		font-size: 12.5px;
+		padding: 4px 9px;
+		border-radius: 8px;
+		border: 1px solid var(--line);
+		color: var(--lavender);
+		background: rgb(139 92 246 / 0.06);
+		animation: word 7s var(--ease) infinite;
+		animation-delay: calc(var(--i) * 0.12s);
+	}
+	@keyframes word {
+		0%,
+		8% {
+			opacity: 0.25;
+			transform: translateY(4px);
+		}
+		14%,
+		85% {
+			opacity: 1;
+			transform: none;
+		}
+		100% {
+			opacity: 0.25;
+		}
+	}
+	.steps {
+		list-style: none;
+		padding: 0;
+		margin: 10px 0 0;
+		display: grid;
+		gap: 16px;
+	}
+	.steps li {
+		display: flex;
+		gap: 16px;
+		padding: 18px;
+		border-radius: 16px;
+		border: 1px solid var(--line);
+		background: rgb(20 13 41 / 0.6);
+	}
+	.n {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 10px;
+		font-family: var(--mono);
+		font-size: 14px;
+		color: white;
+		background: linear-gradient(135deg, var(--violet), var(--indigo));
+	}
+	.steps h3 {
+		font-size: 17px;
+		font-weight: 600;
+		margin-bottom: 4px;
+	}
+	.steps p {
+		color: var(--muted);
+		font-size: 15px;
+	}
+	@media (max-width: 900px) {
+		.layout {
+			grid-template-columns: 1fr;
+		}
+		.viz {
+			order: 2;
+		}
+	}
+</style>

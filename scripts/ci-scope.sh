@@ -23,10 +23,12 @@ if [ "${1:-}" = "--packages" ]; then
 fi
 
 # Files that never reach a Rust compile: docs, task tracking, the TypeScript
-# packages and app frontends, and release-only scripts.
+# packages and app frontends, release-only scripts, and the website with its
+# deploy workflow (website/ is a standalone Bun project).
 changed=$(cat)
 rust_files=$(printf '%s\n' "$changed" \
-	| grep -vE '^(\.tasks/|docs/|\.claude/|packages/|apps/web/|apps/tauri/(src|public)/|apps/tauri/[^/]+$|scripts/release/)' \
+	| grep -vE '^(\.tasks/|docs/|\.claude/|packages/|apps/web/|apps/tauri/(src|public)/|apps/tauri/[^/]+$|scripts/release/|website/)' \
+	| grep -vE '^\.github/(workflows/website\.yml|dependabot\.yml)$' \
 	| grep -vE '^apps/mobile/' \
 	| grep -vE '\.(md|mdx)$|^(LICENSE|bun\.lock|package\.json)$' \
 	| grep -v '^$' || true)

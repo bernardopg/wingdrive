@@ -1,0 +1,254 @@
+---
+import Logo from "./Logo.astro";
+import { t, type Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].cloud;
+const inner = ["Amazon S3", "Google Drive", "Dropbox", "OneDrive"];
+const outer = ["Azure Blob", "GCS", "Backblaze B2", "Cloudflare R2", "MinIO", "WebDAV", "Nextcloud", "+ 30"];
+const uris = [
+	"s3://my-bucket/photos/vacation.jpg",
+	"gdrive://My Drive/Documents/contract.pdf",
+	"onedrive://Documents/budget.xlsx",
+	"dropbox://Apps/WingDrive/backup.zip",
+	"azblob://container/data/export.csv",
+	"gcs://bucket/logs/app.log",
+];
+---
+
+<section class="section cloud" id="cloud">
+	<div class="wrap layout">
+		<div class="copy">
+			<span class="eyebrow reveal">{s.eyebrow}</span>
+			<h2 class="h-lg reveal" style="--d:60ms">{s.title}</h2>
+			<p class="lead reveal" style="--d:120ms">{s.lead}</p>
+			<div class="term reveal" style="--d:180ms" aria-label="Cloud path examples">
+				<div class="bar"><i></i><i></i><i></i></div>
+				<ul>
+					{uris.map((u, i) => <li style={`--i:${i}`}><span class="p">$</span> wing ls <span class="u">{u}</span></li>)}
+				</ul>
+			</div>
+		</div>
+		<div class="orbit reveal" style="--d:100ms" aria-hidden="true">
+			<div class="ring r2">
+				{outer.map((n, i) => <span class="chip" style={`--a:${(360 / outer.length) * i}deg`}><b>{n}</b></span>)}
+			</div>
+			<div class="ring r1">
+				{inner.map((n, i) => <span class="chip big" style={`--a:${(360 / inner.length) * i + 20}deg`}><b>{n}</b></span>)}
+			</div>
+			<div class="beams">
+				{Array.from({ length: 12 }, (_, i) => <i style={`--r:${i * 30}deg;--d:${(i % 4) * 0.45}s`} />)}
+			</div>
+			<div class="center"><Logo size={88} /></div>
+		</div>
+	</div>
+</section>
+
+<style>
+	.cloud {
+		overflow: hidden;
+	}
+	.layout {
+		display: grid;
+		grid-template-columns: 0.95fr 1.05fr;
+		gap: clamp(32px, 6vw, 80px);
+		align-items: center;
+	}
+	.copy {
+		display: grid;
+		gap: 20px;
+	}
+	.term {
+		margin-top: 10px;
+		border-radius: 14px;
+		border: 1px solid var(--line);
+		background: #0c0818;
+		overflow: hidden;
+	}
+	.term .bar {
+		display: flex;
+		gap: 6px;
+		padding: 10px 14px;
+		border-bottom: 1px solid var(--line);
+	}
+	.term .bar i {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+		background: #2c2150;
+	}
+	.term ul {
+		list-style: none;
+		margin: 0;
+		padding: 14px 16px;
+		display: grid;
+		gap: 6px;
+		font-family: var(--mono);
+		font-size: 13px;
+		color: var(--muted);
+	}
+	.term li {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		animation: line 9s var(--ease) infinite;
+		animation-delay: calc(var(--i) * 0.5s);
+	}
+	@keyframes line {
+		0%,
+		4% {
+			opacity: 0.3;
+		}
+		10%,
+		90% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0.3;
+		}
+	}
+	.p {
+		color: var(--violet);
+	}
+	.u {
+		color: var(--lavender);
+	}
+	.orbit {
+		position: relative;
+		aspect-ratio: 1;
+		width: min(100%, 560px);
+		margin-inline: auto;
+		container-type: inline-size;
+	}
+	.orbit::before {
+		content: "";
+		position: absolute;
+		inset: 20%;
+		border-radius: 50%;
+		background: radial-gradient(circle, rgb(124 58 237 / 0.45), transparent 70%);
+		filter: blur(30px);
+	}
+	.ring {
+		position: absolute;
+		border-radius: 50%;
+		border: 1px dashed rgb(167 139 250 / 0.25);
+		animation: spin 60s linear infinite;
+	}
+	.r1 {
+		inset: 22%;
+		animation-duration: 40s;
+		animation-direction: reverse;
+	}
+	.r2 {
+		inset: 3%;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	.chip {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 0;
+		height: 0;
+		transform: rotate(var(--a)) translateY(-50cqi);
+	}
+	.r1 .chip {
+		transform: rotate(var(--a)) translateY(-28cqi);
+	}
+	.r2 .chip {
+		transform: rotate(var(--a)) translateY(-47cqi);
+	}
+	.chip b {
+		position: absolute;
+		left: 0;
+		top: 0;
+		transform: translate(-50%, -50%) rotate(calc(-1 * var(--a)));
+		white-space: nowrap;
+		font-weight: 500;
+		font-size: 12px;
+		padding: 6px 11px;
+		border-radius: 999px;
+		color: var(--text);
+		background: rgb(20 13 41 / 0.92);
+		border: 1px solid var(--line-strong);
+		box-shadow: 0 6px 24px -8px rgb(124 58 237 / 0.6);
+		animation: counter 60s linear infinite;
+	}
+	.r1 .chip b {
+		animation: counter-r 40s linear infinite;
+		font-size: 13.5px;
+		padding: 8px 14px;
+		background: linear-gradient(135deg, rgb(139 92 246 / 0.35), rgb(20 13 41 / 0.95));
+	}
+	@keyframes counter {
+		from {
+			transform: translate(-50%, -50%) rotate(calc(-1 * var(--a)));
+		}
+		to {
+			transform: translate(-50%, -50%) rotate(calc(-1 * var(--a) - 360deg));
+		}
+	}
+	@keyframes counter-r {
+		from {
+			transform: translate(-50%, -50%) rotate(calc(-1 * var(--a)));
+		}
+		to {
+			transform: translate(-50%, -50%) rotate(calc(-1 * var(--a) + 360deg));
+		}
+	}
+	.beams i {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 2px;
+		height: 30%;
+		transform-origin: 50% 0;
+		transform: rotate(var(--r));
+		background: linear-gradient(180deg, transparent, rgb(196 181 253 / 0.9), transparent);
+		background-size: 100% 40%;
+		background-repeat: no-repeat;
+		animation: beam 1.8s linear infinite;
+		animation-delay: var(--d);
+		opacity: 0.6;
+	}
+	@keyframes beam {
+		from {
+			background-position: 0 260%;
+		}
+		to {
+			background-position: 0 -160%;
+		}
+	}
+	.center {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		filter: drop-shadow(0 0 40px rgb(139 92 246 / 0.8));
+		animation: pulse 3s ease-in-out infinite;
+	}
+	@keyframes pulse {
+		50% {
+			transform: translate(-50%, -50%) scale(1.06);
+		}
+	}
+	@media (max-width: 900px) {
+		.layout {
+			grid-template-columns: 1fr;
+		}
+		.chip b {
+			font-size: 10.5px;
+			padding: 4px 8px;
+		}
+		.r1 .chip b {
+			font-size: 11.5px;
+			padding: 6px 10px;
+		}
+	}
+</style>

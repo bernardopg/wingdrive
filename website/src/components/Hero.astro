@@ -1,0 +1,223 @@
+---
+import Icon from "./Icon.astro";
+import { t, href, type Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].hero;
+---
+
+<section class="hero">
+	<div class="art">
+	<picture>
+		<source type="image/avif" srcset="/img/art/hero-1280.avif 1280w, /img/art/hero-1920.avif 1672w" sizes="100vw" />
+		<img
+			src="/img/art/hero-1920.webp"
+			srcset="/img/art/hero-640.webp 640w, /img/art/hero-1280.webp 1280w, /img/art/hero-1920.webp 1672w"
+			sizes="100vw"
+			alt=""
+			fetchpriority="high"
+			width="1672"
+			height="941"
+		/>
+	</picture>
+	<canvas class="dust" data-hero aria-hidden="true"></canvas>
+	</div>
+	<div class="veil"></div>
+	<div class="wrap inner">
+		<a class="pill badge reveal" href={href(lang, "/changelog/")}>
+			<span class="dot"></span>{s.badge}<Icon name="arrow" size={15} />
+		</a>
+		<h1 class="h-xl reveal" style="--d:80ms">
+			<span>{s.title1}</span>
+			<span class="grad">{s.title2}</span>
+		</h1>
+		<p class="lead reveal" style="--d:160ms">{s.lead}</p>
+		<div class="ctas reveal" style="--d:240ms">
+			<a class="btn btn-primary" href={href(lang, "/download/")} data-os-cta>
+				<span data-os-icon><Icon name="tux" size={18} /></span>
+				<span>{s.ctaDownload} <span data-os-name>Linux</span></span>
+			</a>
+			<a class="btn" href={href(lang, "/docs/")}><Icon name="book" size={18} />{s.ctaDocs}</a>
+		</div>
+		<ul class="meta reveal" style="--d:320ms">
+			{s.meta.map((m) => <li><Icon name="check" size={16} />{m}</li>)}
+		</ul>
+	</div>
+	<div class="scroll-hint" aria-hidden="true"><span></span></div>
+</section>
+
+<template id="os-icons">
+	<span data-k="windows"><Icon name="windows" size={18} /></span>
+	<span data-k="apple"><Icon name="apple" size={18} /></span>
+	<span data-k="android"><Icon name="android" size={18} /></span>
+</template>
+
+<script>
+	import { mountHero } from "../scripts/hero";
+	const canvas = document.querySelector<HTMLCanvasElement>("[data-hero]");
+	const img = document.querySelector<HTMLImageElement>(".hero .art img");
+	if (canvas && img) {
+		const start = () => mountHero(canvas, img);
+		"requestIdleCallback" in window ? requestIdleCallback(start, { timeout: 600 }) : setTimeout(start, 200);
+	}
+	// Name the visitor's platform on the primary button.
+	const ua = navigator.userAgent;
+	const os = /Android/i.test(ua) ? ["Android", "android"] : /Windows/i.test(ua) ? ["Windows", "windows"] : /Mac OS X|Macintosh/i.test(ua) ? ["macOS", "apple"] : null;
+	if (os) {
+		const name = document.querySelector("[data-os-name]");
+		const icon = document.querySelector("[data-os-icon]");
+		const tpl = document.querySelector<HTMLTemplateElement>("#os-icons");
+		if (name) name.textContent = os[0];
+		const svg = tpl?.content.querySelector(`[data-k="${os[1]}"]`);
+		if (icon && svg) icon.innerHTML = svg.innerHTML;
+	}
+</script>
+
+<style>
+	.hero {
+		position: relative;
+		min-height: max(720px, 100svh);
+		display: grid;
+		align-items: center;
+		overflow: hidden;
+		isolation: isolate;
+		padding-top: 72px;
+	}
+	.art {
+		position: absolute;
+		inset: 0;
+		z-index: -3;
+		animation: drift 26s ease-in-out infinite alternate;
+	}
+	.art img,
+	.dust {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+	.art img {
+		object-fit: cover;
+		object-position: 72% 50%;
+	}
+	@keyframes drift {
+		from {
+			transform: scale(1.04) translate3d(0, 0, 0);
+		}
+		to {
+			transform: scale(1.1) translate3d(-1.2%, -1%, 0);
+		}
+	}
+	.veil {
+		position: absolute;
+		inset: 0;
+		z-index: -2;
+		pointer-events: none;
+		background:
+			linear-gradient(90deg, rgb(10 6 20 / 0.96) 0%, rgb(10 6 20 / 0.9) 44%, rgb(10 6 20 / 0.55) 62%, rgb(10 6 20 / 0) 80%),
+			linear-gradient(0deg, var(--bg) 0%, transparent 28%),
+			linear-gradient(180deg, rgb(10 6 20 / 0.6) 0%, transparent 18%);
+	}
+	.inner {
+		display: grid;
+		gap: 26px;
+		justify-items: start;
+		padding-block: 64px 120px;
+	}
+	.badge {
+		transition: border-color 0.3s;
+	}
+	.badge:hover {
+		border-color: var(--lavender);
+	}
+	h1 {
+		display: grid;
+		max-width: 17ch;
+	}
+	h1 span:last-child {
+		padding-bottom: 0.08em;
+	}
+	.lead {
+		max-width: 54ch;
+	}
+	.ctas {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+		margin-top: 6px;
+	}
+	.ctas span[data-os-icon] {
+		display: inline-flex;
+	}
+	.meta {
+		list-style: none;
+		padding: 0;
+		margin: 6px 0 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 22px;
+		color: var(--muted);
+		font-size: 14px;
+	}
+	.meta li {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+	}
+	.meta :global(svg) {
+		color: var(--ok);
+	}
+	.scroll-hint {
+		position: absolute;
+		left: 50%;
+		bottom: 28px;
+		width: 24px;
+		height: 38px;
+		margin-left: -12px;
+		border: 1.5px solid var(--line-strong);
+		border-radius: 14px;
+	}
+	.scroll-hint span {
+		position: absolute;
+		left: 50%;
+		top: 8px;
+		width: 3px;
+		height: 8px;
+		margin-left: -1.5px;
+		border-radius: 2px;
+		background: var(--lavender);
+		animation: wheel 1.8s var(--ease) infinite;
+	}
+	@keyframes wheel {
+		0% {
+			transform: translateY(0);
+			opacity: 1;
+		}
+		70% {
+			transform: translateY(12px);
+			opacity: 0;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@media (max-width: 800px) {
+		.art {
+			opacity: 0.6;
+		}
+		.art img {
+			object-position: 78% 50%;
+		}
+		.veil {
+			background:
+				linear-gradient(180deg, rgb(10 6 20 / 0.55), rgb(10 6 20 / 0.85) 60%, var(--bg)),
+				linear-gradient(90deg, rgb(10 6 20 / 0.7), transparent);
+		}
+		.scroll-hint {
+			display: none;
+		}
+	}
+</style>

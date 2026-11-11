@@ -1,0 +1,121 @@
+---
+import Base from "../layouts/Base.astro";
+import Icon from "../components/Icon.astro";
+import { getCollection } from "astro:content";
+import { t, href, type Lang, REPO } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].docs;
+const all = (await getCollection("docs", (d) => d.id.startsWith(`${lang}/`))).sort((a, b) => a.data.order - b.data.order);
+const groups = [...new Set(all.map((d) => d.data.group))].map((g) => ({ g, items: all.filter((d) => d.data.group === g) }));
+const icons = ["sparkle", "download", "check", "views", "copy", "globe", "server", "tux", "terminal", "server", "code", "chat"];
+---
+
+<Base lang={lang} title={s.title} description={s.lead}>
+	<section class="head">
+		<div class="glow-orb" style="width:640px;height:440px;right:-140px;top:-160px;background:#6d28d9"></div>
+		<div class="wrap">
+			<span class="eyebrow">WingDrive</span>
+			<h1 class="h-lg">{s.title}</h1>
+			<p class="lead">{s.lead}</p>
+		</div>
+	</section>
+	<section class="wrap body">
+		{
+			groups.map(({ g, items }) => (
+				<div class="grp">
+					<h2>{g}</h2>
+					<div class="grid">
+						{items.map((d) => (
+							<a class="card reveal" href={href(lang, `/docs/${d.id.replace(`${lang}/`, "")}/`)}>
+								<span class="ico">
+									<Icon name={icons[d.data.order - 1] ?? "book"} size={20} />
+								</span>
+								<h3>{d.data.title}</h3>
+								<p>{d.data.description}</p>
+							</a>
+						))}
+					</div>
+				</div>
+			))
+		}
+		<a class="more" href={`${REPO}/tree/main/docs`} rel="noopener"><Icon name="github" size={18} />{s.edit}<Icon name="external" size={14} /></a>
+	</section>
+</Base>
+
+<style>
+	.head {
+		position: relative;
+		padding: 150px 0 40px;
+		overflow: hidden;
+	}
+	.head .wrap {
+		display: grid;
+		gap: 16px;
+		position: relative;
+	}
+	.body {
+		display: grid;
+		gap: 48px;
+		padding-bottom: 80px;
+	}
+	h2 {
+		font-family: var(--mono);
+		font-size: 12.5px;
+		text-transform: uppercase;
+		letter-spacing: 0.14em;
+		color: var(--lavender);
+		font-weight: 500;
+		margin-bottom: 16px;
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 14px;
+	}
+	.card {
+		display: grid;
+		gap: 10px;
+		align-content: start;
+	}
+	.card:hover {
+		transform: translateY(-3px);
+	}
+	.ico {
+		display: grid;
+		place-items: center;
+		width: 40px;
+		height: 40px;
+		border-radius: 12px;
+		color: var(--lavender);
+		background: rgb(139 92 246 / 0.14);
+		border: 1px solid var(--line);
+	}
+	h3 {
+		font-size: 18px;
+	}
+	.card p {
+		color: var(--muted);
+		font-size: 14.5px;
+	}
+	.more {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		color: var(--lavender);
+		justify-self: start;
+	}
+	@media (max-width: 900px) {
+		.grid {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+	@media (max-width: 560px) {
+		.grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

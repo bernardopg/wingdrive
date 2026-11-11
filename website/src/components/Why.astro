@@ -1,0 +1,113 @@
+---
+import { t, type Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].why;
+---
+
+<section class="section" id="why">
+	<div class="wrap">
+		<div class="section-head">
+			<span class="eyebrow reveal">{s.eyebrow}</span>
+			<h2 class="h-lg reveal" style="--d:60ms">{s.title}</h2>
+			<p class="lead reveal" style="--d:120ms">{s.lead}</p>
+		</div>
+		<div class="rows">
+			{
+				s.items.map((it, i) => (
+					<article class:list={["row", { flip: i % 2 === 1 }]}>
+						<div class="media reveal">
+							<picture>
+								<source type="image/avif" srcset={`/img/art/${it.img}-640.avif 640w, /img/art/${it.img}-1280.avif 1254w`} sizes="(max-width: 860px) 100vw, 560px" />
+								<img
+									src={`/img/art/${it.img}-1280.webp`}
+									srcset={`/img/art/${it.img}-640.webp 640w, /img/art/${it.img}-1280.webp 1254w`}
+									sizes="(max-width: 860px) 100vw, 560px"
+									alt=""
+									loading="lazy"
+									decoding="async"
+									width="1254"
+									height="1254"
+								/>
+							</picture>
+						</div>
+						<div class="text reveal" style="--d:120ms">
+							<span class="num">0{i + 1}</span>
+							<h3 class="h-md">{it.t}</h3>
+							<p>{it.d}</p>
+						</div>
+					</article>
+				))
+			}
+		</div>
+	</div>
+</section>
+
+<style>
+	.rows {
+		display: grid;
+		gap: clamp(56px, 8vw, 110px);
+	}
+	.row {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: clamp(32px, 6vw, 90px);
+		align-items: center;
+	}
+	.row.flip .media {
+		order: 2;
+	}
+	.media {
+		position: relative;
+		border-radius: 28px;
+		overflow: hidden;
+		border: 1px solid var(--line);
+		aspect-ratio: 1;
+		box-shadow: 0 40px 100px -50px rgb(124 58 237 / 0.7);
+	}
+	.media::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		box-shadow: inset 0 0 80px 20px var(--bg);
+		pointer-events: none;
+	}
+	.media img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: transform 1.6s var(--ease);
+	}
+	.row:hover .media img {
+		transform: scale(1.04);
+	}
+	.text {
+		display: grid;
+		gap: 16px;
+		max-width: 46ch;
+	}
+	.num {
+		font-family: var(--mono);
+		color: var(--violet);
+		font-size: 14px;
+	}
+	.text p {
+		color: var(--muted);
+		font-size: 17.5px;
+	}
+	@media (max-width: 860px) {
+		.row {
+			grid-template-columns: 1fr;
+		}
+		.row.flip .media {
+			order: 0;
+		}
+		.media {
+			max-width: 520px;
+		}
+	}
+</style>
