@@ -743,16 +743,6 @@ impl WingPath {
 		}
 	}
 
-	/// Resolve this path to an optimal physical location
-	/// This is the entry point for path resolution that will use the PathResolver service
-	pub async fn resolve(
-		&self,
-		context: &crate::context::CoreContext,
-	) -> Result<WingPath, PathResolutionError> {
-		let resolver = crate::ops::addressing::PathResolver;
-		resolver.resolve(self, context).await
-	}
-
 	/// Resolve this path using a JobContext
 	pub async fn resolve_in_job<'a>(
 		&self,
