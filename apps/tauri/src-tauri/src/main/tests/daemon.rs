@@ -20,6 +20,36 @@ fn script(dir: &Path, name: &str, body: &str) -> PathBuf {
 	path
 }
 
+/// Retries `attempt` while it fails with "Text file busy".
+///
+/// A script written moments ago cannot be executed while another test thread
+/// is between `fork` and `exec`, because the child briefly holds the write
+/// handle. The error clears once that child has exec'd.
+async fn retry_busy<T>(mut attempt: impl AsyncFnMut() -> Result<T, String>) -> Result<T, String> {
+	for _ in 0..50 {
+		match attempt().await {
+			Err(error) if error.contains("Text file busy") => {
+				tokio::time::sleep(Duration::from_millis(20)).await
+			}
+			result => return result,
+		}
+	}
+	attempt().await
+}
+
+/// `Command::spawn` for a just-written script, with the same retry.
+fn spawn_script(path: &Path) -> std::process::Child {
+	for _ in 0..50 {
+		match std::process::Command::new(path).spawn() {
+			Err(error) if error.raw_os_error() == Some(libc::ETXTBSY) => {
+				std::thread::sleep(Duration::from_millis(20))
+			}
+			result => return result.unwrap(),
+		}
+	}
+	std::process::Command::new(path).spawn().unwrap()
+}
+
 /// Answers every connection's first line with `Pong`, as the daemon does.
 async fn ponging_daemon() -> String {
 	let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -71,13 +101,16 @@ async fn a_daemon_that_answers_is_returned_running_and_then_stopped() {
 	let dir = tempfile::tempdir().unwrap();
 	let daemon = script(dir.path(), "wing-daemon", "exec sleep 30");
 	let address = ponging_daemon().await;
-	let mut child = spawn_daemon(
-		&daemon,
-		&dir.path().to_path_buf(),
-		Some("test"),
-		&address,
-		Duration::from_secs(10),
-	)
+	let mut child = retry_busy(async || {
+		spawn_daemon(
+			&daemon,
+			&dir.path().to_path_buf(),
+			Some("test"),
+			&address,
+			Duration::from_secs(10),
+		)
+		.await
+	})
 	.await
 	.unwrap();
 	assert!(child.try_wait().unwrap().is_none());
@@ -95,13 +128,16 @@ async fn a_daemon_that_answers_is_returned_running_and_then_stopped() {
 async fn a_daemon_that_exits_or_never_answers_is_reported() {
 	let dir = tempfile::tempdir().unwrap();
 	let crashing = script(dir.path(), "crashing", "exit 3");
-	let error = spawn_daemon(
-		&crashing,
-		&dir.path().to_path_buf(),
-		None,
-		&closed_address().await,
-		Duration::from_secs(10),
-	)
+	let error = retry_busy(async || {
+		spawn_daemon(
+			&crashing,
+			&dir.path().to_path_buf(),
+			None,
+			&closed_address().await,
+			Duration::from_secs(10),
+		)
+		.await
+	})
 	.await
 	.unwrap_err();
 	assert!(
@@ -110,13 +146,16 @@ async fn a_daemon_that_exits_or_never_answers_is_reported() {
 	);
 
 	let silent = script(dir.path(), "silent", "exec sleep 30");
-	let error = spawn_daemon(
-		&silent,
-		&dir.path().to_path_buf(),
-		None,
-		&closed_address().await,
-		Duration::from_millis(300),
-	)
+	let error = retry_busy(async || {
+		spawn_daemon(
+			&silent,
+			&dir.path().to_path_buf(),
+			None,
+			&closed_address().await,
+			Duration::from_millis(300),
+		)
+		.await
+	})
 	.await
 	.unwrap_err();
 	assert!(
@@ -124,13 +163,16 @@ async fn a_daemon_that_exits_or_never_answers_is_reported() {
 		"{error}"
 	);
 
-	let error = spawn_daemon(
-		&dir.path().join("missing"),
-		&dir.path().to_path_buf(),
-		None,
-		&closed_address().await,
-		Duration::from_secs(1),
-	)
+	let error = retry_busy(async || {
+		spawn_daemon(
+			&dir.path().join("missing"),
+			&dir.path().to_path_buf(),
+			None,
+			&closed_address().await,
+			Duration::from_secs(1),
+		)
+		.await
+	})
 	.await
 	.unwrap_err();
 	assert!(error.starts_with("Failed to start daemon"), "{error}");
@@ -153,7 +195,7 @@ fn a_daemon_that_ignores_sigterm_is_killed() {
 		"stubborn",
 		"trap '' TERM; while :; do sleep 1; done",
 	);
-	let mut child = std::process::Command::new(&stubborn).spawn().unwrap();
+	let mut child = spawn_script(&stubborn);
 	std::thread::sleep(Duration::from_millis(200));
 	terminate_daemon(&mut child, "127.0.0.1:9");
 	assert!(child.try_wait().unwrap().is_some());

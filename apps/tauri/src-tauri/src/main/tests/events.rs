@@ -137,13 +137,12 @@ async fn menu_items_forward_file_and_clipboard_actions_to_the_frontend() {
 	);
 	assert_eq!(*clipboard.lock().unwrap(), ["\"cut\"", "\"copy\""]);
 
-	handle_menu_event(&handle, "wingdrop");
-	handle_menu_event(&handle, "drag-demo");
-	wait_for(|| {
-		handle.get_webview_window("wingdrop").is_some()
-			&& handle.get_webview_window("drag-demo").is_some()
-	})
-	.await;
+	// One at a time: the mock runtime's window table is not thread-safe, so
+	// two windows built at once on different threads panic there.
+	for id in ["wingdrop", "drag-demo"] {
+		handle_menu_event(&handle, id);
+		wait_for(|| handle.get_webview_window(id).is_some()).await;
+	}
 }
 
 #[tokio::test]
