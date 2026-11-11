@@ -1,0 +1,112 @@
+name: Discord
+
+# Posts to the WingDrive Discord server:
+#   #commits   every push to main, with the commits it brought in;
+#   #changelog the notes of a release, called by release.yml right after its
+#              publish job, or run by hand to post a tag again.
+#
+# Pull requests and issues reach #github through a repository webhook pointed
+# at Discord's GitHub-compatible endpoint, which cannot filter by branch; these
+# two feeds need that filter, so they live here.
+#
+# release.yml creates the release with GITHUB_TOKEN, which fires no `release`
+# event for other workflows, and only it knows which tag it published and
+# whether publication (not just verification or an AUR-only rerun) succeeded.
+# So it calls this workflow with the tag once its publish job succeeds; an AUR
+# failure after that does not hold the post back.
+#
+# A called workflow sees its caller's event name, so the commits job also
+# checks that the push was to main: a tag push that starts a release never
+# posts commits.
+#
+# No job checks out code. Event text reaches the scripts only through
+# environment variables, and mentions are disabled in every message, so a
+# commit message or release note cannot ping anyone.
+
+on:
+  push:
+    branches: [main]
+  workflow_call:
+    inputs:
+      tag:
+        description: Published release tag to post to #changelog
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to post to #changelog (for example v3.1.0)
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  commits:
+    name: Post commits merged into main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.tag == ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Post to #commits
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_COMMITS }}
+          COMMITS: ${{ toJSON(github.event.commits) }}
+          COMPARE: ${{ github.event.compare }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "::notice::DISCORD_WEBHOOK_COMMITS is not set; nothing posted."
+            exit 0
+          fi
+          count=$(jq 'length' <<<"$COMMITS")
+          [ "$count" -gt 0 ] || exit 0
+          # The ten most recent commits, first line of each message only. Each field
+          # is capped, and so is the whole list, to stay under Discord's
+          # 4096-character embed description.
+          lines=$(jq -r '.[-10:] | map("[`\(.id[0:7])`](\(.url)) \(.message | split("\n")[0] | .[0:120]) · \(.author.name | .[0:40])") | join("\n") | .[0:3800]' <<<"$COMMITS")
+          if [ "$count" -gt 10 ]; then
+            lines="$lines"$'\n'"… e mais $((count - 10)) · and $((count - 10)) more"
+          fi
+          payload=$(jq -n --arg description "$lines" --arg url "$COMPARE" --argjson count "$count" '{
+            allowed_mentions: {parse: []},
+            embeds: [{
+              title: "\($count) commit(s) no main",
+              url: $url,
+              description: $description,
+              color: 4175185
+            }]
+          }')
+          curl -fsS --retry 3 -H 'Content-Type: application/json' -d "$payload" "$WEBHOOK"
+
+  changelog:
+    name: Post release notes
+    if: inputs.tag != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Post to #changelog
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_CHANGELOG }}
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "::notice::DISCORD_WEBHOOK_CHANGELOG is not set; nothing posted."
+            exit 0
+          fi
+          release=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json name,url,body,isPrerelease,publishedAt)
+          payload=$(jq '{
+            allowed_mentions: {parse: []},
+            embeds: [{
+              title: (.name // "WingDrive"),
+              url: .url,
+              description: (
+                if (.body | length) > 3800
+                then .body[0:3800] + "…\n\n[Notas completas · Full notes](\(.url))"
+                else .body end),
+              color: (if .isPrerelease then 15105570 else 3066993 end),
+              footer: {text: (if .isPrerelease then "Pré-release · Pre-release" else "Release" end)},
+              timestamp: .publishedAt
+            }]
+          }' <<<"$release")
+          curl -fsS --retry 3 -H 'Content-Type: application/json' -d "$payload" "$WEBHOOK"

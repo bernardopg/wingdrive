@@ -325,6 +325,20 @@ jobs:
   # wingdrive-bin follows stable releases. wingdrive-nightly follows every release,
   # alpha, beta and rc included, so a stable tag updates both and nightly users are
   # never behind wingdrive-bin. A pre-release never reaches wingdrive-bin.
+  # Posts the published notes to #changelog. It needs only publish, so an AUR
+  # failure afterwards does not hold the post back, and verification or
+  # AUR-only runs, which skip publish, post nothing.
+  discord:
+    name: Post release notes to Discord
+    needs: publish
+    if: needs.publish.result == 'success'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/discord.yml
+    with:
+      tag: ${{ github.event.inputs.tag || github.ref_name }}
+    secrets: inherit
+
   aur:
     name: Publish ${{ matrix.package }} on AUR
     needs: publish
