@@ -103,10 +103,11 @@ pub async fn run(ctx: &Context, cmd: JobCmd) -> Result<()> {
 			print_output!(ctx, &out, |o: &JobPauseOutput| {
 				if o.success {
 					println!("Job {} paused successfully", o.job_id);
-				} else {
-					println!("Failed to pause job {}", o.job_id);
 				}
 			});
+			if !out.success {
+				anyhow::bail!("Failed to pause job {}", out.job_id);
+			}
 		}
 		JobCmd::Resume(args) => {
 			let input = JobResumeInput::new(args.job_id);
@@ -114,10 +115,11 @@ pub async fn run(ctx: &Context, cmd: JobCmd) -> Result<()> {
 			print_output!(ctx, &out, |o: &JobResumeOutput| {
 				if o.success {
 					println!("Job {} resumed successfully", o.job_id);
-				} else {
-					println!("Failed to resume job {}", o.job_id);
 				}
 			});
+			if !out.success {
+				anyhow::bail!("Failed to resume job {}", out.job_id);
+			}
 		}
 		JobCmd::Cancel(args) => {
 			let input = JobCancelInput::new(args.job_id);
@@ -125,10 +127,11 @@ pub async fn run(ctx: &Context, cmd: JobCmd) -> Result<()> {
 			print_output!(ctx, &out, |o: &JobCancelOutput| {
 				if o.success {
 					println!("Job {} cancelled successfully", o.job_id);
-				} else {
-					println!("Failed to cancel job {}", o.job_id);
 				}
 			});
+			if !out.success {
+				anyhow::bail!("Failed to cancel job {}", out.job_id);
+			}
 		}
 		JobCmd::Remote => {
 			use wing_core::ops::jobs::remote_list::{

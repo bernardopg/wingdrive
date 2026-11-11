@@ -116,6 +116,10 @@ fn display_event(event: &Event, args: &EventsMonitorArgs) {
 	}
 }
 
+fn short_job_id(id: &str) -> String {
+	id.chars().take(8).collect()
+}
+
 /// Create a human-readable summary of an event
 fn summarize_event(event: &Event) -> String {
 	match event {
@@ -242,12 +246,12 @@ fn summarize_event(event: &Event) -> String {
 		Event::JobQueued {
 			job_id, job_type, ..
 		} => {
-			format!("Job queued: {} ({})", job_type, &job_id[..8])
+			format!("Job queued: {} ({})", job_type, short_job_id(job_id))
 		}
 		Event::JobStarted {
 			job_id, job_type, ..
 		} => {
-			format!("Job started: {} ({})", job_type, &job_id[..8])
+			format!("Job started: {} ({})", job_type, short_job_id(job_id))
 		}
 		Event::JobProgress {
 			job_id,
@@ -263,7 +267,7 @@ fn summarize_event(event: &Event) -> String {
 			format!(
 				"Job progress: {} ({}) - {:.1}%{}",
 				job_type,
-				&job_id[..8],
+				short_job_id(job_id),
 				progress,
 				msg
 			)
@@ -277,7 +281,7 @@ fn summarize_event(event: &Event) -> String {
 			format!(
 				"Job completed: {} ({}) - {:?}",
 				job_type,
-				&job_id[..8],
+				short_job_id(job_id),
 				output
 			)
 		}
@@ -287,18 +291,23 @@ fn summarize_event(event: &Event) -> String {
 			error,
 			..
 		} => {
-			format!("Job failed: {} ({}) - {}", job_type, &job_id[..8], error)
+			format!(
+				"Job failed: {} ({}) - {}",
+				job_type,
+				short_job_id(job_id),
+				error
+			)
 		}
 		Event::JobCancelled {
 			job_id, job_type, ..
 		} => {
-			format!("Job cancelled: {} ({})", job_type, &job_id[..8])
+			format!("Job cancelled: {} ({})", job_type, short_job_id(job_id))
 		}
 		Event::JobPaused { job_id, .. } => {
-			format!("Job paused: {}", &job_id[..8])
+			format!("Job paused: {}", short_job_id(job_id))
 		}
 		Event::JobResumed { job_id, .. } => {
-			format!("Job resumed: {}", &job_id[..8])
+			format!("Job resumed: {}", short_job_id(job_id))
 		}
 
 		// Indexing events
@@ -458,9 +467,6 @@ fn summarize_event(event: &Event) -> String {
 				vouchee_device_id
 			)
 		}
-
-		// Config events
-		Event::ConfigChanged { .. } => "Configuration changed".to_string(),
 
 		// Custom events
 		Event::Custom { event_type, data } => {

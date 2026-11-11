@@ -11,6 +11,23 @@ use wing_core::{infra::job::handle::JobReceipt, ops::libraries::list::query::Lis
 
 use self::args::*;
 
+fn report_path(path: &std::path::Path) -> String {
+	let text = path.display().to_string();
+	if text.chars().count() <= 58 {
+		text
+	} else {
+		let tail: String = text
+			.chars()
+			.rev()
+			.take(55)
+			.collect::<Vec<_>>()
+			.into_iter()
+			.rev()
+			.collect();
+		format!("...{tail}")
+	}
+}
+
 #[derive(Subcommand, Debug)]
 pub enum IndexCmd {
 	/// Start indexing for one or more paths
@@ -151,15 +168,7 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 							);
 							if args.detailed {
 								for diff in report.missing_from_index.iter().take(5) {
-									let path_str = diff.path.display().to_string();
-									if path_str.len() <= 58 {
-										println!("║   - {:58} ║", path_str);
-									} else {
-										println!(
-											"║   - ...{:55} ║",
-											&path_str[path_str.len().saturating_sub(55)..]
-										);
-									}
+									println!("║   - {:58} ║", report_path(&diff.path));
 								}
 								if report.missing_from_index.len() > 5 {
 									println!(
@@ -179,15 +188,7 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 							);
 							if args.detailed {
 								for diff in report.stale_in_index.iter().take(5) {
-									let path_str = diff.path.display().to_string();
-									if path_str.len() <= 58 {
-										println!("║   - {:58} ║", path_str);
-									} else {
-										println!(
-											"║   - ...{:55} ║",
-											&path_str[path_str.len().saturating_sub(55)..]
-										);
-									}
+									println!("║   - {:58} ║", report_path(&diff.path));
 								}
 								if report.stale_in_index.len() > 5 {
 									println!(

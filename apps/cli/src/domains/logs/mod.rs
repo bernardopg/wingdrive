@@ -94,7 +94,7 @@ async fn run_logs_follow(ctx: &Context, args: LogsFollowArgs) -> Result<()> {
 					log_msg
 						.job_id
 						.as_ref()
-						.map(|id| format!(" [job:{}]", &id[..8]))
+						.map(|id| format!(" [job:{}]", id.chars().take(8).collect::<String>()))
 						.unwrap_or_default()
 				} else {
 					String::new()
@@ -167,9 +167,8 @@ fn colorize_level(level: &str) -> String {
 }
 
 /// Get the daemon log file path by querying the daemon's data directory
-async fn get_daemon_log_path(_ctx: &Context) -> Result<std::path::PathBuf> {
-	let data_dir = wing_core::config::default_data_dir()?;
-	let logs_dir = data_dir.join("logs");
+async fn get_daemon_log_path(ctx: &Context) -> Result<std::path::PathBuf> {
+	let logs_dir = ctx.daemon_data_dir.join("logs");
 
 	// Check for today's log file first (with date suffix due to daily rotation)
 	let today = chrono::Utc::now().format("%Y-%m-%d").to_string();

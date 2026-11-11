@@ -1,17 +1,18 @@
+use std::path::PathBuf;
+
 use clap::{Args, Subcommand};
 use uuid::Uuid;
 
-use wing_core::{
-	domain::addressing::WingPath,
-	ops::network::{
-		pair::{
-			cancel::input::PairCancelInput, generate::input::PairGenerateInput,
-			join::input::PairJoinInput,
-		},
-		revoke::input::DeviceRevokeInput,
-		wingdrop::WingdropSendInput,
+use wing_core::ops::network::{
+	pair::{
+		cancel::input::PairCancelInput, generate::input::PairGenerateInput,
+		join::input::PairJoinInput,
 	},
+	revoke::input::DeviceRevokeInput,
+	wingdrop::WingdropSendInput,
 };
+
+use crate::domains::file::args::local_path;
 
 #[derive(Subcommand, Debug)]
 pub enum PairCmd {
@@ -107,18 +108,13 @@ pub struct WingdropSendArgs {
 
 impl From<WingdropSendArgs> for WingdropSendInput {
 	fn from(args: WingdropSendArgs) -> Self {
+		// Same rules as the file commands: relative paths mean the shell's
+		// folder, not the daemon's, and `local://<device>/...` stays remote.
 		let paths = args
 			.paths
-			.iter()
-			.map(|s| {
-				WingPath::from_uri(s).unwrap_or_else(|_| {
-					// Relative paths mean the shell's folder, not the daemon's.
-					let path = std::path::Path::new(s);
-					WingPath::local(
-						std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf()),
-					)
-				})
-			})
+			.into_iter()
+			.map(PathBuf::from)
+			.map(local_path)
 			.collect();
 		Self {
 			device_id: args.device_id,

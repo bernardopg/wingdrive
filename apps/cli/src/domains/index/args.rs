@@ -12,6 +12,15 @@ use wing_core::{
 	},
 };
 
+fn local_index_path(path: &str) -> anyhow::Result<PathBuf> {
+	let address = WingPath::from_uri(path)
+		.map_err(|error| anyhow::anyhow!("Invalid address {path:?}: {error}"))?;
+	address
+		.as_local_path()
+		.map(|path| path.to_path_buf())
+		.ok_or_else(|| anyhow::anyhow!("Non-local address not supported for indexing: {path}"))
+}
+
 #[derive(Debug, Clone, ValueEnum)]
 pub enum IndexModeArg {
 	Shallow,
@@ -72,15 +81,11 @@ pub struct IndexStartArgs {
 
 impl IndexStartArgs {
 	pub fn to_input(&self, library_id: Uuid) -> anyhow::Result<IndexInput> {
-		let mut local_paths: Vec<PathBuf> = Vec::new();
-		for s in &self.paths {
-			let wing_path = WingPath::from_uri(s).unwrap_or_else(|_| WingPath::local(s));
-			if let Some(p) = wing_path.as_local_path() {
-				local_paths.push(p.to_path_buf());
-			} else {
-				anyhow::bail!("Non-local address not supported for indexing yet: {}", s);
-			}
-		}
+		let local_paths = self
+			.paths
+			.iter()
+			.map(|path| local_index_path(path))
+			.collect::<anyhow::Result<Vec<_>>>()?;
 
 		let persistence = if self.persistent {
 			IndexPersistence::Persistent
@@ -105,12 +110,8 @@ pub struct QuickScanArgs {
 
 impl QuickScanArgs {
 	pub fn to_input(&self, library_id: Uuid) -> anyhow::Result<IndexInput> {
-		let wing_path =
-			WingPath::from_uri(&self.path).unwrap_or_else(|_| WingPath::local(&self.path));
-		let p = wing_path
-			.as_local_path()
-			.ok_or_else(|| anyhow::anyhow!("Non-local path not supported yet"))?;
-		Ok(IndexInput::new(library_id, vec![p.to_path_buf()])
+		let path = local_index_path(&self.path)?;
+		Ok(IndexInput::new(library_id, vec![path])
 			.with_mode(IndexMode::Shallow)
 			.with_scope(IndexScope::from(self.scope.clone()))
 			.with_persistence(IndexPersistence::Ephemeral))
@@ -128,12 +129,8 @@ pub struct BrowseArgs {
 
 impl BrowseArgs {
 	pub fn to_input(&self, library_id: Uuid) -> anyhow::Result<IndexInput> {
-		let wing_path =
-			WingPath::from_uri(&self.path).unwrap_or_else(|_| WingPath::local(&self.path));
-		let p = wing_path
-			.as_local_path()
-			.ok_or_else(|| anyhow::anyhow!("Non-local path not supported yet"))?;
-		Ok(IndexInput::new(library_id, vec![p.to_path_buf()])
+		let path = local_index_path(&self.path)?;
+		Ok(IndexInput::new(library_id, vec![path])
 			.with_mode(if self.content {
 				IndexMode::Content
 			} else {

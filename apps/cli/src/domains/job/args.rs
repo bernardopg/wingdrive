@@ -6,9 +6,17 @@ use wing_core::{
 	ops::jobs::{info::query::JobInfoQueryInput, list::query::JobListInput},
 };
 
+fn parse_status(value: &str) -> Result<String, String> {
+	value
+		.parse::<JobStatus>()
+		.map(|_| value.to_owned())
+		.map_err(|_| "expected queued, running, paused, completed, failed, or cancelled".to_owned())
+}
+
 #[derive(Args, Debug)]
 pub struct JobListArgs {
-	#[arg(long)]
+	/// Filter by job status: queued, running, paused, completed, failed or cancelled
+	#[arg(long, value_parser = parse_status)]
 	pub status: Option<String>,
 }
 
@@ -42,8 +50,8 @@ pub struct JobMonitorArgs {
 	#[arg(long)]
 	pub job_id: Option<Uuid>,
 
-	/// Filter by job status
-	#[arg(long)]
+	/// Filter by job status: queued, running, paused, completed, failed or cancelled
+	#[arg(long, value_parser = parse_status)]
 	pub status: Option<String>,
 
 	/// Refresh interval in seconds

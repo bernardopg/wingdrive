@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use clap::Args;
 use uuid::Uuid;
 
-use wing_core::domain::ContentKind;
+use wing_core::domain::{addressing::WingPath, ContentKind};
 use wing_core::ops::search::input::{
 	DateField, DateRangeFilter, FileSearchInput, PaginationOptions, SearchFilters, SearchMode,
 	SearchScope, SizeRangeFilter, SortDirection, SortField, SortOptions, TagFilter,
@@ -18,8 +18,8 @@ pub struct FileSearchArgs {
 	pub mode: SearchModeArg,
 
 	/// WingPath to narrow search to a specific directory
-	#[arg(long)]
-	pub wing_path: Option<String>,
+	#[arg(long, value_parser = WingPath::from_uri, conflicts_with = "location")]
+	pub wing_path: Option<WingPath>,
 
 	/// File type filter (can be specified multiple times)
 	#[arg(long)]
@@ -144,18 +144,8 @@ impl From<FileSearchArgs> for FileSearchInput {
 			SearchModeArg::Full => SearchMode::Full,
 		};
 
-		let scope = if let Some(wing_path_str) = args.wing_path {
-			// Parse WingPath from string
-			match wing_core::domain::addressing::WingPath::from_uri(&wing_path_str) {
-				Ok(wing_path) => SearchScope::Path { path: wing_path },
-				Err(_) => {
-					eprintln!(
-						"Warning: Invalid WingPath '{}', falling back to library search",
-						wing_path_str
-					);
-					SearchScope::Library
-				}
-			}
+		let scope = if let Some(path) = args.wing_path {
+			SearchScope::Path { path }
 		} else if let Some(location_id) = args.location {
 			SearchScope::Location { location_id }
 		} else {
