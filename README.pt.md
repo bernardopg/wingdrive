@@ -130,7 +130,7 @@ sistema nunca são ejetadas).
 |---|---|
 | **M1** · feito | Um gerenciador de arquivos desktop confiável no Linux, a partir de um bundle de produção |
 | **M2** · agora | O gerenciador padrão no Linux: Explorer com painel duplo (F3), um dia inteiro de uso sem voltar a outro |
-| **M3** · depois | Releases assinadas para macOS e Windows, atualização automática, pré-checagem de cópia e journal de desfazer |
+| **M3** · depois | Releases assinadas para macOS e Windows e atualização automática. A pré-checagem de cópia (3.0) e o desfazer de cópia, movimentação e lixeira (3.1) já saíram |
 | **M4** | Sync de arquivos entre aparelhos, links públicos de compartilhamento, Wingdrop para aparelhos próximos, Tailscale |
 | **M5** | Busca semântica, extensões WASM, criptografia em repouso, releases para Android e iOS |
 

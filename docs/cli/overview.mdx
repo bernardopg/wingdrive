@@ -267,7 +267,19 @@ wing file copy ~/Project/ ~/Backup/Project/ \
   --overwrite \
   --verify \
   --preserve-timestamps
+
+# List recent copies, moves, renames and trash operations, and what undo can still reverse
+wing file history
+wing file history --limit 50
+
+# Undo the most recent operation, or a given job from the history
+wing file undo
+wing file undo <job-id>
 ```
+
+Undo skips any item that changed after the operation. A file that a copy overwrote stays for 7 days
+in a hidden `.wing-undo-<job>` folder next to it. Details in
+[File copy operations](/docs/core/file-copy-operations#undo).
 
 ### System Commands
 
@@ -304,7 +316,7 @@ wing network pair --status                # Check pairing status
 # Wingdrop (file sharing)
 wing network wingdrop <device-id> /path/to/file --sender "Your Name"
 
-# Remove paired device
+# Remove paired device (the other device, if online, drops the pairing too)
 wing network revoke <device-id>
 ```
 

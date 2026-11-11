@@ -1,13 +1,13 @@
 ---
 id: COV-06
 title: "Cobrir endereçamento, validação e contratos RPC"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: COV-00
 priority: High
 milestone: M2
 tags: [coverage, testing, core]
-last_updated: 2026-11-03
+last_updated: 2026-11-10
 ---
 
 ## Description
@@ -76,4 +76,4 @@ entradas e a integração S3 já existentes.
 Limites: não houve execução em Windows nem medição LCOV ou de linhas cobertas/instrumentadas.
 Esta evidência não comprova a meta de 85%. Os formatos dos tipos públicos foram preservados;
 `generate_typescript_types` não foi executado. Espaços, tags, permissões de filesystem e
-validações de locations ainda precisam de novas tranches. O status da task permanece inalterado.
+validações de locations ainda precisam de novas tranches. A task passou a In Progress com o merge do #359; os critérios seguem abertos até a medição LCOV.

@@ -1,7 +1,7 @@
 ---
 id: COV-07
 title: "Cobrir shell desktop, IPC e segurança do undo"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: COV-00
 priority: High
@@ -106,4 +106,4 @@ Limites: sem integração gráfica, D-Bus real, polkit, daemon real, API Win32 o
 runtime macOS/Windows. Não foi simulada troca concorrente de inode entre a
 checagem e a operação no sistema de arquivos. Não foi gerado LCOV nem relatório
 de linhas nesta entrega; as metas de 60%/75% continuam sem comprovação atual.
-O status e os critérios de aceite permanecem inalterados.
+A task passou a In Progress com o merge do #359; os critérios seguem abertos até a medição LCOV.
