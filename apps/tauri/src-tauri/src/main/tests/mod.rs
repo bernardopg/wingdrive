@@ -83,9 +83,11 @@ async fn one_shot_daemon(reply: &'static str) -> (String, tokio::task::JoinHandl
 }
 
 /// An address on which nothing listens.
+///
+/// A freed ephemeral port can be taken again by a test running in parallel;
+/// port 1 needs privileges to bind, so no test ever listens there.
 async fn closed_address() -> String {
-	let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-	listener.local_addr().unwrap().to_string()
+	"127.0.0.1:1".to_string()
 }
 
 #[tokio::test]
@@ -257,3 +259,7 @@ async fn app_state_commands_report_selection_library_and_subscriptions() {
 		format!("Subscription {id} not found")
 	);
 }
+
+#[cfg(unix)]
+mod daemon;
+mod events;

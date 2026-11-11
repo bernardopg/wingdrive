@@ -245,8 +245,20 @@ pub async fn mount_network_location(
 }
 
 fn run_mount(uri: &str, password: Option<&str>) -> Result<(), String> {
-	let mut child = gio()
-		.args(["mount", uri])
+	let mut command = gio();
+	command.args(["mount", uri]);
+	run_mount_command(command, uri, password, Duration::from_secs(90))
+}
+
+/// Runs a prepared `gio mount` command, answering the password prompt and
+/// giving up after `timeout`.
+fn run_mount_command(
+	mut command: Command,
+	uri: &str,
+	password: Option<&str>,
+	timeout: Duration,
+) -> Result<(), String> {
+	let mut child = command
 		.stdin(Stdio::piped())
 		.stdout(Stdio::piped())
 		.stderr(Stdio::piped())
@@ -258,7 +270,7 @@ fn run_mount(uri: &str, password: Option<&str>) -> Result<(), String> {
 		}
 		// Closing stdin makes any further prompt fail instead of waiting.
 	}
-	let deadline = std::time::Instant::now() + Duration::from_secs(90);
+	let deadline = std::time::Instant::now() + timeout;
 	loop {
 		if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
 			let output = child.wait_with_output().map_err(|e| e.to_string())?;

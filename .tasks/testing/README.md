@@ -33,8 +33,8 @@ de branch disponível. O número de testes não substitui medição de cobertura
 4. COV-05 e COV-10 cobrem recuperação/sync e CLI com daemon no M3.
 5. COV-11 ativa os pisos após as suites passarem; COV-12 verifica o conjunto e fecha o épico.
 
-COV-01 a COV-04, COV-06, COV-07 e COV-09 estão In Progress (#343, #344, #358, #359 e o PR da
-COV-09); bugs achados pelas suítes ficam em [BUGS.md](BUGS.md). As demais ficam no backlog sem `sprint`.
+COV-01 a COV-04, COV-06, COV-07 e COV-09 estão In Progress (#343, #344, #358, #359 e #362; a
+COV-07 já mede 81,5%); bugs achados pelas suítes ficam em [BUGS.md](BUGS.md). As demais ficam no backlog sem `sprint`.
 Não acrescentar compromisso ao S04/S05 já ocupado: puxar no máximo duas tasks por vez para o
 sprint com capacidade, preencher `sprint` e atualizar o quadro e o log juntos. Não inventar
 S06 nem datas antes do planning. Um teste implementado neste branch só vira Done após cumprir

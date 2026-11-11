@@ -17,7 +17,7 @@
 
 use std::collections::HashSet;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
@@ -191,14 +191,20 @@ fn ssh_config_servers(home: &Path) -> Vec<DiscoveredServer> {
 fn browse_mdns() -> Vec<DiscoveredServer> {
 	let mut command = Command::new("avahi-browse");
 	file_opening_linux::use_host_environment(&mut command);
+	command.args([
+		"--all",
+		"--terminate",
+		"--resolve",
+		"--parsable",
+		"--no-db-lookup",
+	]);
+	browse_with(command, BROWSE_TIMEOUT)
+}
+
+/// Runs a prepared browse command for at most `timeout` and parses what it
+/// printed until then.
+fn browse_with(mut command: Command, timeout: Duration) -> Vec<DiscoveredServer> {
 	let Ok(mut child) = command
-		.args([
-			"--all",
-			"--terminate",
-			"--resolve",
-			"--parsable",
-			"--no-db-lookup",
-		])
 		.stdin(Stdio::null())
 		.stdout(Stdio::piped())
 		.stderr(Stdio::null())
@@ -206,7 +212,17 @@ fn browse_mdns() -> Vec<DiscoveredServer> {
 	else {
 		return Vec::new();
 	};
-	let deadline = Instant::now() + BROWSE_TIMEOUT;
+	// Read while it runs: on a busy network the listing outgrows the pipe
+	// buffer, and a blocked writer would only stop at the time limit.
+	let (sender, listing) = std::sync::mpsc::channel();
+	if let Some(mut stdout) = child.stdout.take() {
+		std::thread::spawn(move || {
+			let mut listing = String::new();
+			let _ = stdout.read_to_string(&mut listing);
+			let _ = sender.send(listing);
+		});
+	}
+	let deadline = Instant::now() + timeout;
 	loop {
 		match child.try_wait() {
 			Ok(Some(_)) => break,
@@ -218,10 +234,10 @@ fn browse_mdns() -> Vec<DiscoveredServer> {
 			}
 		}
 	}
-	let mut listing = String::new();
-	if let Some(mut stdout) = child.stdout.take() {
-		let _ = stdout.read_to_string(&mut listing);
-	}
+	// A process it started may still hold the pipe open; do not wait for it.
+	let listing = listing
+		.recv_timeout(Duration::from_secs(1))
+		.unwrap_or_default();
 	parse_avahi(&listing)
 }
 
@@ -229,23 +245,88 @@ fn browse_mdns() -> Vec<DiscoveredServer> {
 #[tauri::command]
 pub async fn discover_network_servers() -> Result<Vec<DiscoveredServer>, String> {
 	tokio::task::spawn_blocking(|| {
-		let mut servers = browse_mdns();
-		if let Some(home) = std::env::var_os("HOME") {
-			for server in ssh_config_servers(Path::new(&home)) {
-				if !servers.iter().any(|s| s.uri == server.uri) {
-					servers.push(server);
-				}
-			}
-		}
-		servers
+		let home = std::env::var_os("HOME").map(PathBuf::from);
+		merge_servers(browse_mdns(), home.as_deref())
 	})
 	.await
 	.map_err(|e| e.to_string())
 }
 
+/// Announced servers first, then SSH hosts whose address none of them has.
+fn merge_servers(mut servers: Vec<DiscoveredServer>, home: Option<&Path>) -> Vec<DiscoveredServer> {
+	if let Some(home) = home {
+		for server in ssh_config_servers(home) {
+			if !servers.iter().any(|s| s.uri == server.uri) {
+				servers.push(server);
+			}
+		}
+	}
+	servers
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	fn avahi_script(script: &str) -> Command {
+		let mut command = Command::new("sh");
+		command.args(["-c", script]);
+		command
+	}
+
+	#[test]
+	fn browsing_parses_what_avahi_printed_even_when_it_is_stopped() {
+		let line = "=;eth0;IPv4;NAS;_smb._tcp;local;nas.local;10.0.0.2;445;";
+		let servers = browse_with(
+			avahi_script(&format!("echo '{line}'")),
+			Duration::from_secs(10),
+		);
+		assert_eq!(servers.len(), 1);
+		assert_eq!(servers[0].uri, "smb://nas.local/");
+		// avahi-browse that never terminates is stopped at the time limit, even
+		// when a child it started keeps the output pipe open.
+		let started = Instant::now();
+		let servers = browse_with(avahi_script("sleep 30; true"), Duration::from_millis(200));
+		assert!(servers.is_empty());
+		assert!(started.elapsed() < Duration::from_secs(10));
+		// A listing larger than the pipe buffer arrives whole, without waiting
+		// for the time limit.
+		let started = Instant::now();
+		let servers = browse_with(
+			avahi_script(
+				"i=0; while [ $i -lt 2000 ]; do \
+				 echo \"=;eth0;IPv4;NAS$i;_smb._tcp;local;nas$i.local;10.0.0.2;445;padding-padding\"; \
+				 i=$((i+1)); done",
+			),
+			Duration::from_secs(20),
+		);
+		assert_eq!(servers.len(), 2000);
+		assert!(started.elapsed() < Duration::from_secs(15));
+		// A host without Avahi has no announced servers.
+		assert!(browse_with(
+			Command::new("/nonexistent/avahi-browse"),
+			Duration::from_secs(1)
+		)
+		.is_empty());
+	}
+
+	#[test]
+	fn ssh_hosts_are_added_unless_an_announced_server_has_the_same_address() {
+		let root = tempfile::tempdir().unwrap();
+		std::fs::create_dir(root.path().join(".ssh")).unwrap();
+		std::fs::write(root.path().join(".ssh/config"), "Host nas backup\n").unwrap();
+		let announced = DiscoveredServer {
+			name: "nas".into(),
+			uri: "sftp://nas/".into(),
+			kind: "sftp".into(),
+			source: "mdns".into(),
+		};
+		let servers = merge_servers(vec![announced], Some(root.path()));
+		let uris: Vec<&str> = servers.iter().map(|s| s.uri.as_str()).collect();
+		assert_eq!(uris, ["sftp://nas/", "sftp://backup/"]);
+		assert_eq!(servers[0].source, "mdns");
+		assert!(merge_servers(vec![], None).is_empty());
+	}
 
 	#[test]
 	fn ssh_aliases_are_unique_and_pattern_only_blocks_add_no_servers() {

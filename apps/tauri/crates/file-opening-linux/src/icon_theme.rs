@@ -166,15 +166,26 @@ fn is_supported(path: &Path) -> bool {
 /// The icon theme name: GNOME's setting, then GTK's settings files, then
 /// the theme part of `GTK_THEME`.
 fn current_theme(xdg: &XdgDirs) -> Option<String> {
-	let from_gsettings = || {
-		let output = use_host_environment(&mut Command::new("gsettings"))
-			.args(["get", "org.gnome.desktop.interface", "icon-theme"])
-			.output()
-			.ok()?;
-		let value = String::from_utf8(output.stdout).ok()?;
-		let value = value.trim().trim_matches('\'').to_string();
-		(output.status.success() && !value.is_empty()).then_some(value)
-	};
+	current_theme_from(gsettings_icon_theme(), xdg, std::env::var("GTK_THEME").ok())
+}
+
+/// The `icon-theme` GNOME stores, when `gsettings` runs and has one.
+fn gsettings_icon_theme() -> Option<String> {
+	let output = use_host_environment(&mut Command::new("gsettings"))
+		.args(["get", "org.gnome.desktop.interface", "icon-theme"])
+		.output()
+		.ok()?;
+	let value = String::from_utf8(output.stdout).ok()?;
+	let value = value.trim().trim_matches('\'').to_string();
+	(output.status.success() && !value.is_empty()).then_some(value)
+}
+
+/// `current_theme` with GNOME's setting and `GTK_THEME` already read.
+fn current_theme_from(
+	gsettings: Option<String>,
+	xdg: &XdgDirs,
+	gtk_theme: Option<String>,
+) -> Option<String> {
 	let from_gtk_settings = || {
 		["gtk-4.0", "gtk-3.0"].iter().find_map(|dir| {
 			let text =
@@ -183,13 +194,10 @@ fn current_theme(xdg: &XdgDirs) -> Option<String> {
 		})
 	};
 	let from_gtk_theme = || {
-		let value = std::env::var("GTK_THEME").ok()?;
-		let name = value.split(':').next()?.trim().to_string();
+		let name = gtk_theme?.split(':').next()?.trim().to_string();
 		(!name.is_empty()).then_some(name)
 	};
-	from_gsettings()
-		.or_else(from_gtk_settings)
-		.or_else(from_gtk_theme)
+	gsettings.or_else(from_gtk_settings).or_else(from_gtk_theme)
 }
 
 /// Reads `key` from `[group]` of an INI-style file.
@@ -256,6 +264,69 @@ fn menu_dirs(index: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	fn xdg_in(config_home: &Path) -> XdgDirs {
+		XdgDirs {
+			config_home: config_home.to_path_buf(),
+			config_dirs: vec![],
+			data_home: config_home.join("data"),
+			data_dirs: vec![],
+			desktops: vec![],
+		}
+	}
+
+	#[test]
+	fn theme_name_prefers_gnome_then_gtk_files_then_gtk_theme() {
+		let dir = tempfile::tempdir().unwrap();
+		let xdg = xdg_in(dir.path());
+		assert_eq!(current_theme_from(None, &xdg, None), None);
+		assert_eq!(
+			current_theme_from(None, &xdg, Some("Adwaita-dark:dark".into())).as_deref(),
+			Some("Adwaita-dark")
+		);
+		assert_eq!(current_theme_from(None, &xdg, Some(" :dark".into())), None);
+		std::fs::create_dir_all(dir.path().join("gtk-3.0")).unwrap();
+		std::fs::write(
+			dir.path().join("gtk-3.0/settings.ini"),
+			"[Settings]\ngtk-icon-theme-name=\"Papirus\"\n",
+		)
+		.unwrap();
+		assert_eq!(
+			current_theme_from(None, &xdg, Some("Adwaita".into())).as_deref(),
+			Some("Papirus")
+		);
+		// GTK 4's file wins over GTK 3's.
+		std::fs::create_dir_all(dir.path().join("gtk-4.0")).unwrap();
+		std::fs::write(
+			dir.path().join("gtk-4.0/settings.ini"),
+			"[Settings]\ngtk-icon-theme-name=Breeze\n",
+		)
+		.unwrap();
+		assert_eq!(
+			current_theme_from(None, &xdg, None).as_deref(),
+			Some("Breeze")
+		);
+		assert_eq!(
+			current_theme_from(Some("Yaru".into()), &xdg, None).as_deref(),
+			Some("Yaru")
+		);
+	}
+
+	#[test]
+	fn environment_lookup_finds_absolute_icons_and_caches_misses() {
+		let dir = tempfile::tempdir().unwrap();
+		let icon = dir.path().join("app.png");
+		std::fs::write(&icon, b"\x89PNG").unwrap();
+		let lookup = IconLookup::from_env();
+		assert_eq!(lookup.find(icon.to_str().unwrap()), Some(icon.clone()));
+		let url = icon_data_url(icon.to_str().unwrap()).unwrap();
+		assert!(url.starts_with("data:image/png;base64,"), "{url}");
+		// The second call is answered from the cache, even after the file is gone.
+		std::fs::remove_file(&icon).unwrap();
+		assert_eq!(icon_data_url(icon.to_str().unwrap()), Some(url));
+		assert_eq!(icon_data_url("wingdrive-test-no-such-icon-name"), None);
+		assert_eq!(icon_data_url("wingdrive-test-no-such-icon-name"), None);
+	}
 
 	fn write(path: &Path, contents: &[u8]) {
 		std::fs::create_dir_all(path.parent().unwrap()).unwrap();

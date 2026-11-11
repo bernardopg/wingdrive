@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{
+	AppHandle, Emitter, Manager, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+};
 
 /// Window types in WingDrive
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -87,12 +89,12 @@ impl WingDriveWindow {
 	}
 
 	/// Get existing window if it exists
-	pub fn get(&self, app: &AppHandle) -> Option<WebviewWindow> {
+	pub fn get<R: Runtime>(&self, app: &AppHandle<R>) -> Option<WebviewWindow<R>> {
 		app.get_webview_window(&self.label())
 	}
 
 	/// Show or focus this window
-	pub async fn show(&self, app: &AppHandle) -> Result<WebviewWindow, String> {
+	pub async fn show<R: Runtime>(&self, app: &AppHandle<R>) -> Result<WebviewWindow<R>, String> {
 		// If window already exists, surface it. It may still be hidden when its
 		// webview never reached `app_ready` (e.g. dev server reload mid-boot).
 		if let Some(window) = self.get(app) {
@@ -107,7 +109,7 @@ impl WingDriveWindow {
 	}
 
 	/// Create a new window
-	async fn create(&self, app: &AppHandle) -> Result<WebviewWindow, String> {
+	async fn create<R: Runtime>(&self, app: &AppHandle<R>) -> Result<WebviewWindow<R>, String> {
 		let label = self.label();
 
 		match self {
@@ -142,7 +144,10 @@ impl WingDriveWindow {
 			}
 
 			Self::Settings { page } => {
-				let url = format!("/settings/{}", page.as_deref().unwrap_or(""));
+				let url = format!(
+					"/settings/{}",
+					percent_encode(page.as_deref().unwrap_or(""))
+				);
 				create_window(
 					app,
 					&label,
@@ -157,7 +162,10 @@ impl WingDriveWindow {
 			}
 
 			Self::Inspector { item_id } => {
-				let url = format!("/inspector/{}", item_id.as_deref().unwrap_or(""));
+				let url = format!(
+					"/inspector/{}",
+					percent_encode(item_id.as_deref().unwrap_or(""))
+				);
 				let window = create_window(
 					app,
 					&label,
@@ -183,7 +191,7 @@ impl WingDriveWindow {
 			}
 
 			Self::MediaViewer { file_id } => {
-				let url = format!("/media-viewer/{}", file_id);
+				let url = format!("/media-viewer/{}", percent_encode(file_id));
 				create_window(
 					app,
 					&label,
@@ -234,7 +242,7 @@ impl WingDriveWindow {
 			),
 
 			Self::QuickPreview { file_id } => {
-				let url = format!("/quick-preview/{}", file_id);
+				let url = format!("/quick-preview/{}", percent_encode(file_id));
 				create_window(
 					app,
 					&label,
@@ -329,7 +337,11 @@ impl WingDriveWindow {
 						.build()
 						.map_err(|e| format!("Failed to create voice overlay: {}", e))?;
 
-				position_overlay_window(&window, 520.0, 112.0)?;
+				// Without monitor information the overlay still opens, where the
+				// window manager puts it, instead of staying hidden forever.
+				if let Err(error) = position_overlay_window(&window, 520.0, 112.0) {
+					tracing::warn!(%error, "Could not position the voice overlay");
+				}
 
 				window.show().ok();
 				Ok(window)
@@ -360,7 +372,7 @@ impl WingDriveWindow {
 			),
 
 			Self::DragOverlay { session_id } => {
-				let url = format!("/drag-overlay?session={}", session_id);
+				let url = format!("/drag-overlay?session={}", percent_encode(session_id));
 				let window = WebviewWindowBuilder::new(app, label, WebviewUrl::App(url.into()))
 					.title("")
 					.inner_size(200.0, 150.0)
@@ -379,7 +391,7 @@ impl WingDriveWindow {
 			}
 
 			Self::ContextMenu { context_id } => {
-				let url = format!("/contextmenu?context={}", context_id);
+				let url = format!("/contextmenu?context={}", percent_encode(context_id));
 				// Stays hidden until `position_context_menu` has measured the content
 				// and placed it at the cursor, so the menu never flashes centered.
 				let window = WebviewWindowBuilder::new(app, label, WebviewUrl::App(url.into()))
@@ -407,8 +419,8 @@ impl WingDriveWindow {
 
 /// Helper to create a window with common configuration
 #[allow(clippy::too_many_arguments)]
-fn create_window(
-	app: &AppHandle,
+fn create_window<R: Runtime>(
+	app: &AppHandle<R>,
 	label: &str,
 	url: &str,
 	title: &str,
@@ -417,7 +429,7 @@ fn create_window(
 	decorations: bool,
 	always_on_top: bool,
 	transparent: bool,
-) -> Result<WebviewWindow, String> {
+) -> Result<WebviewWindow<R>, String> {
 	let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::App(url.into()))
 		.title(title)
 		.inner_size(size.0, size.1)
@@ -450,7 +462,6 @@ fn create_window(
 	Ok(window)
 }
 
-/// Simple hash for generating window IDs
 /// The Explorer route for a local folder, in the form the shell's
 /// `explorerUrlForDirectory` produces: `/explorer?path=<WingPath JSON>`.
 fn explorer_url(path: &str) -> String {
@@ -482,6 +493,7 @@ fn percent_encode(value: &str) -> String {
 	encoded
 }
 
+/// Simple hash for generating window IDs
 fn hash_string(s: &str) -> String {
 	use std::collections::hash_map::DefaultHasher;
 	use std::hash::{Hash, Hasher};
@@ -491,7 +503,11 @@ fn hash_string(s: &str) -> String {
 	format!("{:x}", hasher.finish())
 }
 
-fn position_overlay_window(window: &WebviewWindow, width: f64, height: f64) -> Result<(), String> {
+fn position_overlay_window<R: Runtime>(
+	window: &WebviewWindow<R>,
+	width: f64,
+	height: f64,
+) -> Result<(), String> {
 	use tauri::{PhysicalPosition, Position};
 
 	let monitor = window
@@ -499,25 +515,61 @@ fn position_overlay_window(window: &WebviewWindow, width: f64, height: f64) -> R
 		.map_err(|e| e.to_string())?
 		.ok_or("No monitor found")?;
 
-	let monitor_size = monitor.size();
-	let monitor_position = monitor.position();
 	let scale_factor = window.scale_factor().map_err(|e| e.to_string())?;
-
-	let physical_width = (width * scale_factor).round() as i32;
-	let physical_height = (height * scale_factor).round() as i32;
-	let bottom_margin = (24.0 * scale_factor).round() as i32;
-
-	let x = monitor_position.x + (monitor_size.width as i32 - physical_width) / 2;
-	let y = monitor_position.y + monitor_size.height as i32 - physical_height - bottom_margin;
+	let (x, y) = overlay_position(
+		(monitor.position().x, monitor.position().y),
+		(monitor.size().width, monitor.size().height),
+		(width, height),
+		scale_factor,
+	);
 
 	window
 		.set_position(Position::Physical(PhysicalPosition::new(x, y)))
 		.map_err(|e| e.to_string())
 }
 
+/// Physical position that centers an overlay of `size` logical pixels
+/// horizontally on the monitor, 24 logical pixels above its bottom edge.
+fn overlay_position(
+	monitor_position: (i32, i32),
+	monitor_size: (u32, u32),
+	size: (f64, f64),
+	scale_factor: f64,
+) -> (i32, i32) {
+	let physical_width = (size.0 * scale_factor).round() as i32;
+	let physical_height = (size.1 * scale_factor).round() as i32;
+	let bottom_margin = (24.0 * scale_factor).round() as i32;
+	(
+		monitor_position.0 + (monitor_size.0 as i32 - physical_width) / 2,
+		monitor_position.1 + monitor_size.1 as i32 - physical_height - bottom_margin,
+	)
+}
+
+/// Places a menu of `menu_size` with its corner at `cursor` (relative to the
+/// monitor), moved back inside the monitor when it would overflow an edge.
+fn clamp_menu_position(
+	cursor: (f64, f64),
+	menu_size: (f64, f64),
+	monitor_position: (i32, i32),
+	monitor_size: (u32, u32),
+) -> (i32, i32) {
+	let clamp = |cursor: f64, menu: f64, origin: i32, extent: u32| {
+		((cursor as i32) + origin)
+			.min(origin + extent as i32 - menu as i32)
+			.max(origin)
+	};
+	(
+		clamp(cursor.0, menu_size.0, monitor_position.0, monitor_size.0),
+		clamp(cursor.1, menu_size.1, monitor_position.1, monitor_size.1),
+	)
+}
+
 /// Tauri command to show a window
 #[tauri::command]
-pub async fn show_window(app: AppHandle, window: WingDriveWindow) -> Result<String, String> {
+pub async fn show_window<R: Runtime>(
+	app: AppHandle<R>,
+	window: WingDriveWindow,
+) -> Result<String, String> {
 	let label = window.label();
 	window.show(&app).await?;
 	Ok(label)
@@ -525,14 +577,14 @@ pub async fn show_window(app: AppHandle, window: WingDriveWindow) -> Result<Stri
 
 /// Tauri command to close a window
 #[tauri::command]
-pub async fn close_window(app: AppHandle, label: String) -> Result<(), String> {
+pub async fn close_window<R: Runtime>(app: AppHandle<R>, label: String) -> Result<(), String> {
 	if let Some(window) = app.get_webview_window(&label) {
 		window.close().map_err(|e| e.to_string())?;
 	}
 	Ok(())
 }
 
-pub fn toggle_voice_overlay_internal(app: AppHandle) -> Result<(), String> {
+pub fn toggle_voice_overlay_internal<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
 	let window = WingDriveWindow::VoiceOverlay;
 	let label = window.label();
 
@@ -551,13 +603,13 @@ pub fn toggle_voice_overlay_internal(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn toggle_voice_overlay(app: AppHandle) -> Result<(), String> {
+pub async fn toggle_voice_overlay<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
 	toggle_voice_overlay_internal(app)
 }
 
 #[tauri::command]
-pub async fn resize_overlay_window(
-	app: AppHandle,
+pub async fn resize_overlay_window<R: Runtime>(
+	app: AppHandle<R>,
 	label: String,
 	width: f64,
 	height: f64,
@@ -608,14 +660,14 @@ pub fn apply_macos_styling(_app: AppHandle) -> Result<(), String> {
 
 /// Tauri command to list all open windows
 #[tauri::command]
-pub async fn list_windows(app: AppHandle) -> Result<Vec<String>, String> {
+pub async fn list_windows<R: Runtime>(app: AppHandle<R>) -> Result<Vec<String>, String> {
 	Ok(app.webview_windows().into_keys().collect())
 }
 
 /// Tauri command to position and show context menu with screen boundary detection
 #[tauri::command]
-pub async fn position_context_menu(
-	app: AppHandle,
+pub async fn position_context_menu<R: Runtime>(
+	app: AppHandle<R>,
 	label: String,
 	x: f64,
 	y: f64,
@@ -634,17 +686,12 @@ pub async fn position_context_menu(
 		.map_err(|e| e.to_string())?
 		.ok_or("No monitor found")?;
 
-	let monitor_size = monitor.size();
-	let monitor_pos = monitor.position();
-
-	// Calculate final position with screen boundary clamping
-	let final_x = ((x as i32) + monitor_pos.x)
-		.min(monitor_pos.x + monitor_size.width as i32 - menu_width as i32)
-		.max(monitor_pos.x);
-
-	let final_y = ((y as i32) + monitor_pos.y)
-		.min(monitor_pos.y + monitor_size.height as i32 - menu_height as i32)
-		.max(monitor_pos.y);
+	let (final_x, final_y) = clamp_menu_position(
+		(x, y),
+		(menu_width, menu_height),
+		(monitor.position().x, monitor.position().y),
+		(monitor.size().width, monitor.size().height),
+	);
 
 	// Position window
 	window
@@ -669,7 +716,7 @@ pub fn apply_dark_titlebar_pub(window: &WebviewWindow) {
 }
 
 #[cfg(target_os = "windows")]
-fn apply_dark_titlebar(window: &WebviewWindow) {
+fn apply_dark_titlebar<R: Runtime>(window: &WebviewWindow<R>) {
 	#[allow(non_snake_case)]
 	mod dwm {
 		// DWM attribute constants

@@ -2,7 +2,13 @@ use std::collections::HashSet;
 
 use serde_json::json;
 
-use super::{explorer_url, hash_string, percent_encode, WingDriveWindow};
+use tauri::Manager;
+
+use super::{
+	clamp_menu_position, close_window, explorer_url, hash_string, list_windows, overlay_position,
+	percent_encode, position_context_menu, resize_overlay_window, show_window,
+	toggle_voice_overlay_internal, WingDriveWindow,
+};
 
 fn every_window() -> Vec<WingDriveWindow> {
 	vec![
@@ -104,4 +110,133 @@ fn percent_encoding_matches_encode_uri_component() {
 	);
 	// Quotes in the path stay inside the JSON string.
 	assert!(explorer_url("/a\"b").contains("%5C%22"));
+}
+
+#[tokio::test]
+async fn every_window_kind_opens_once_and_closes_by_label() {
+	let app = tauri::test::mock_app();
+	let handle = app.handle().clone();
+	for window in every_window() {
+		let label = window.label();
+		assert_eq!(
+			show_window(handle.clone(), window.clone()).await.unwrap(),
+			label
+		);
+		assert!(handle.get_webview_window(&label).is_some(), "{label}");
+		// A second request surfaces the existing window instead of failing on a
+		// duplicate label.
+		assert_eq!(show_window(handle.clone(), window).await.unwrap(), label);
+	}
+	let mut open = list_windows(handle.clone()).await.unwrap();
+	open.sort();
+	let mut expected: Vec<String> = every_window().iter().map(WingDriveWindow::label).collect();
+	expected.sort();
+	assert_eq!(open, expected);
+
+	close_window(handle.clone(), "main".into()).await.unwrap();
+	// Closing a window that is not open is not an error.
+	close_window(handle.clone(), "no-such-window".into())
+		.await
+		.unwrap();
+}
+
+#[tokio::test]
+async fn window_routes_encode_identifiers_from_the_frontend() {
+	let app = tauri::test::mock_app();
+	let handle = app.handle().clone();
+	// `/` and `:` are valid in a label but must not split the route.
+	let window = WingDriveWindow::ContextMenu {
+		context_id: "a/b:c".into(),
+	};
+	let label = show_window(handle.clone(), window).await.unwrap();
+	let url = handle.get_webview_window(&label).unwrap().url().unwrap();
+	assert_eq!(url.query(), Some("context=a%2Fb%3Ac"));
+	let label = show_window(
+		handle.clone(),
+		WingDriveWindow::MediaViewer {
+			file_id: "x/y".into(),
+		},
+	)
+	.await
+	.unwrap();
+	let url = handle.get_webview_window(&label).unwrap().url().unwrap();
+	assert!(url.path().ends_with("/media-viewer/x%2Fy"), "{url}");
+	// Characters a label cannot hold are refused with the reason.
+	let error = show_window(
+		handle,
+		WingDriveWindow::ContextMenu {
+			context_id: "a&b".into(),
+		},
+	)
+	.await
+	.unwrap_err();
+	assert!(error.contains("Window labels must only include"), "{error}");
+}
+
+#[tokio::test]
+async fn overlay_and_menu_commands_need_an_open_window() {
+	let app = tauri::test::mock_app();
+	let handle = app.handle().clone();
+	assert_eq!(
+		resize_overlay_window(handle.clone(), "missing".into(), 10.0, 10.0)
+			.await
+			.unwrap_err(),
+		"Overlay window not found"
+	);
+	assert_eq!(
+		position_context_menu(handle.clone(), "missing".into(), 0.0, 0.0, 1.0, 1.0)
+			.await
+			.unwrap_err(),
+		"Context menu window not found"
+	);
+}
+
+#[test]
+fn voice_overlay_toggle_closes_an_open_overlay() {
+	let app = tauri::test::mock_app();
+	let handle = app.handle().clone();
+	tauri::async_runtime::block_on(show_window(handle.clone(), WingDriveWindow::VoiceOverlay))
+		.unwrap();
+	let label = WingDriveWindow::VoiceOverlay.label();
+	assert!(handle.get_webview_window(&label).is_some());
+	toggle_voice_overlay_internal(handle.clone()).unwrap();
+	// Without an open overlay the toggle opens one in the background.
+	let app = tauri::test::mock_app();
+	toggle_voice_overlay_internal(app.handle().clone()).unwrap();
+}
+
+#[test]
+fn context_menu_stays_inside_the_monitor() {
+	let monitor = ((100, 50), (1920, 1080));
+	// Fits: the corner lands on the cursor, offset by the monitor origin.
+	assert_eq!(
+		clamp_menu_position((10.0, 20.0), (250.0, 300.0), monitor.0, monitor.1),
+		(110, 70)
+	);
+	// Overflows the right and bottom edges: pulled back inside.
+	assert_eq!(
+		clamp_menu_position((1900.0, 1000.0), (250.0, 300.0), monitor.0, monitor.1),
+		(100 + 1920 - 250, 50 + 1080 - 300)
+	);
+	// Taller than the monitor: the top edge wins.
+	assert_eq!(
+		clamp_menu_position((0.0, 500.0), (250.0, 2000.0), monitor.0, monitor.1),
+		(100, 50)
+	);
+	assert_eq!(
+		clamp_menu_position((-40.0, -40.0), (10.0, 10.0), (0, 0), (800, 600)),
+		(0, 0)
+	);
+}
+
+#[test]
+fn overlay_is_centered_above_the_bottom_edge_in_physical_pixels() {
+	assert_eq!(
+		overlay_position((0, 0), (1920, 1080), (520.0, 112.0), 1.0),
+		((1920 - 520) / 2, 1080 - 112 - 24)
+	);
+	assert_eq!(
+		overlay_position((1920, 0), (2880, 1800), (520.0, 112.0), 1.5),
+		(1920 + (2880 - 780) / 2, 1800 - 168 - 36)
+	);
 }

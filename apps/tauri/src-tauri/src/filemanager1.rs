@@ -39,27 +39,13 @@ impl FileManager1 {
 	/// Opens each folder in a tab.
 	#[zbus(name = "ShowFolders")]
 	fn show_folders(&self, uris: Vec<String>, _startup_id: String) {
-		let requests = local_paths(&uris)
-			.into_iter()
-			.map(|path| match path.is_dir() {
-				true => OpenRequest {
-					directory: path,
-					select: None,
-				},
-				false => launch::reveal_request(path),
-			})
-			.collect();
-		launch::deliver(&self.app, requests);
+		launch::deliver(&self.app, folder_requests(&uris));
 	}
 
 	/// Opens the parent folder of each item with the item selected.
 	#[zbus(name = "ShowItems")]
 	fn show_items(&self, uris: Vec<String>, _startup_id: String) {
-		let requests = local_paths(&uris)
-			.into_iter()
-			.map(launch::reveal_request)
-			.collect();
-		launch::deliver(&self.app, requests);
+		launch::deliver(&self.app, item_requests(&uris));
 	}
 
 	/// Selects the items; the Inspector shows the selection's properties.
@@ -67,6 +53,29 @@ impl FileManager1 {
 	fn show_item_properties(&self, uris: Vec<String>, startup_id: String) {
 		self.show_items(uris, startup_id);
 	}
+}
+
+/// `ShowFolders`: a folder opens in a tab; a file opens its folder with the
+/// file selected, as other file managers do.
+fn folder_requests(uris: &[String]) -> Vec<OpenRequest> {
+	local_paths(uris)
+		.into_iter()
+		.map(|path| match path.is_dir() {
+			true => OpenRequest {
+				directory: path,
+				select: None,
+			},
+			false => launch::reveal_request(path),
+		})
+		.collect()
+}
+
+/// `ShowItems`: each item's folder opens with the item selected.
+fn item_requests(uris: &[String]) -> Vec<OpenRequest> {
+	local_paths(uris)
+		.into_iter()
+		.map(launch::reveal_request)
+		.collect()
 }
 
 /// Keeps only existing local paths; remote URIs have no local folder to open.
@@ -193,5 +202,39 @@ mod tests {
 		assert!(!should_serve(Some("0"), Some("wingdrive.desktop")));
 		assert!(!should_serve(Some("off"), Some("WingDrive.desktop")));
 		assert!(should_serve(Some("maybe"), Some("wingdrive.desktop")));
+	}
+
+	#[test]
+	fn folders_open_as_tabs_and_files_open_selected() {
+		use crate::launch::OpenRequest;
+
+		let dir = tempfile::tempdir().unwrap();
+		let file = dir.path().join("report.pdf");
+		std::fs::write(&file, "x").unwrap();
+		let uri = |path: &std::path::Path| tauri::Url::from_file_path(path).unwrap().to_string();
+		let uris = [
+			uri(dir.path()),
+			uri(&file),
+			"smb://server/share".to_string(),
+		];
+
+		assert_eq!(
+			super::folder_requests(&uris),
+			[
+				OpenRequest {
+					directory: dir.path().to_path_buf(),
+					select: None,
+				},
+				OpenRequest {
+					directory: dir.path().to_path_buf(),
+					select: Some(file.clone()),
+				},
+			]
+		);
+		let items = super::item_requests(&uris);
+		assert_eq!(items.len(), 2);
+		assert_eq!(items[0].select.as_deref(), Some(dir.path()));
+		assert_eq!(items[1].select.as_deref(), Some(file.as_path()));
+		assert!(super::item_requests(&[]).is_empty());
 	}
 }

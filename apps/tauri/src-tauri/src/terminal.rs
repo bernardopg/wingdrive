@@ -450,8 +450,8 @@ fn shell_command() -> CommandBuilder {
 /// shell's new folder on `folder` each time you change it, and the exit code on
 /// `exit` once the shell ends.
 #[tauri::command]
-pub fn terminal_open(
-	window: tauri::Window,
+pub fn terminal_open<R: tauri::Runtime>(
+	window: tauri::Window<R>,
 	sessions: tauri::State<'_, TerminalSessions>,
 	cwd: String,
 	size: TerminalSize,
@@ -621,6 +621,56 @@ mod tests {
 		);
 		terminal_close(app.state(), 7);
 		assert_eq!(app.state::<TerminalSessions>().close_window("main"), 0);
+	}
+
+	// The user's login shell runs here; Windows CI has no `exit`-aware default.
+	#[cfg(unix)]
+	#[test]
+	fn terminals_open_in_a_folder_and_close_with_their_window() {
+		use std::sync::mpsc;
+		use std::time::Duration;
+
+		use tauri::ipc::Channel;
+		use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+
+		let app = tauri::test::mock_app();
+		app.manage(TerminalSessions::default());
+		let window = WebviewWindowBuilder::new(&app, "main", WebviewUrl::default())
+			.build()
+			.unwrap();
+		let size = || TerminalSize { cols: 80, rows: 24 };
+		let (exited, exit_code) = mpsc::channel();
+		let open = |cwd: &str| {
+			let exited = exited.clone();
+			terminal_open(
+				window.as_ref().window(),
+				app.state(),
+				cwd.to_string(),
+				size(),
+				Channel::new(|_| Ok(())),
+				Channel::new(|_| Ok(())),
+				Channel::new(move |_| {
+					let _ = exited.send(());
+					Ok(())
+				}),
+			)
+		};
+
+		let error = open("/nonexistent/folder").unwrap_err();
+		assert_eq!(error, "Not a folder: /nonexistent/folder");
+
+		let dir = tempfile::tempdir().unwrap();
+		let opened = open(dir.path().to_str().unwrap()).unwrap();
+		let sessions = app.state::<TerminalSessions>();
+		terminal_resize(app.state(), opened.id, TerminalSize { cols: 0, rows: 0 }).unwrap();
+		terminal_write(app.state(), opened.id, "exit\r".into()).unwrap();
+		exit_code
+			.recv_timeout(Duration::from_secs(20))
+			.expect("the shell did not exit");
+		let second = open(dir.path().to_str().unwrap()).unwrap();
+		assert_eq!(second.id, opened.id + 1);
+		assert_eq!(sessions.close_window("main"), 2);
+		assert_eq!(sessions.close_window("main"), 0);
 	}
 
 	#[test]
