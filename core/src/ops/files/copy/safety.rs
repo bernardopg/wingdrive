@@ -105,6 +105,77 @@ mod tests {
 	use super::*;
 	use std::fs;
 
+	#[test]
+	fn nested_missing_path_inside_source_is_rejected() {
+		let temp = tempfile::tempdir().unwrap();
+		let source = temp.path().join("café");
+		fs::create_dir(&source).unwrap();
+		let destination = source.join("missing").join("nested");
+		assert_eq!(
+			recursive_copy_errors(&batch(&source), &WingPath::local(destination)).len(),
+			1
+		);
+	}
+
+	#[test]
+	fn similarly_named_sibling_is_not_inside_source() {
+		let temp = tempfile::tempdir().unwrap();
+		let source = temp.path().join("source");
+		fs::create_dir(&source).unwrap();
+		let destination = temp.path().join("source-backup").join("nested");
+		assert!(recursive_copy_errors(&batch(&source), &WingPath::local(destination)).is_empty());
+	}
+
+	#[test]
+	fn ordinary_file_can_be_copied_into_its_parent() {
+		let temp = tempfile::tempdir().unwrap();
+		let source = temp.path().join("source.txt");
+		fs::write(&source, b"content").unwrap();
+		assert!(recursive_copy_errors(&batch(&source), &WingPath::local(temp.path())).is_empty());
+	}
+
+	#[test]
+	fn batch_checks_each_directory_against_the_final_destination() {
+		let temp = tempfile::tempdir().unwrap();
+		let source = temp.path().join("source");
+		let other = temp.path().join("other");
+		fs::create_dir(&source).unwrap();
+		fs::create_dir(&other).unwrap();
+		let sources = WingPathBatch::new(vec![WingPath::local(&source), WingPath::local(&other)]);
+		let errors = recursive_copy_errors(&sources, &WingPath::local(source.join("nested")));
+		assert_eq!(errors.len(), 1);
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn existing_file_inside_source_still_resolves_to_a_recursive_target() {
+		let temp = tempfile::tempdir().unwrap();
+		let source = temp.path().join("source");
+		fs::create_dir(&source).unwrap();
+		let target = source.join("existing");
+		fs::write(&target, b"content").unwrap();
+		assert_eq!(
+			recursive_copy_errors(&batch(&source), &WingPath::local(target)).len(),
+			1
+		);
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn symlinked_source_cannot_be_copied_into_its_real_directory() {
+		use std::os::unix::fs::symlink;
+
+		let temp = tempfile::tempdir().unwrap();
+		let source = temp.path().join("source");
+		let alias = temp.path().join("alias");
+		fs::create_dir(&source).unwrap();
+		symlink(&source, &alias).unwrap();
+		assert_eq!(
+			recursive_copy_errors(&batch(&alias), &WingPath::local(source.join("nested"))).len(),
+			1
+		);
+	}
+
 	fn batch(path: &Path) -> WingPathBatch {
 		WingPathBatch::new(vec![WingPath::local(path.to_path_buf())])
 	}
