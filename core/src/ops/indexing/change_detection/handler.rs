@@ -186,6 +186,7 @@ pub async fn should_filter_path(
 			accessed: fs_meta.accessed().ok(),
 			inode: None,
 			permissions: None,
+			revision: None,
 		}
 	};
 

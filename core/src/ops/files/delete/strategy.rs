@@ -129,16 +129,13 @@ impl LocalDeleteStrategy {
 		path: &WingPath,
 		mode: DeleteMode,
 	) -> DeleteResult {
-		// Only permanent deletion is supported for cloud paths
-		if !matches!(mode, DeleteMode::Permanent) {
+		// Overwriting blocks on a remote service proves nothing about its replicas.
+		if matches!(mode, DeleteMode::Secure) {
 			return DeleteResult {
 				path: path.clone(),
 				success: false,
 				bytes_freed: 0,
-				error: Some(format!(
-					"Delete mode {:?} not supported for cloud paths (only Permanent)",
-					mode
-				)),
+				error: Some("Secure deletion is not possible on cloud storage".to_string()),
 			};
 		}
 
@@ -204,8 +201,20 @@ impl LocalDeleteStrategy {
 			Err(_) => 0, // If we can't get metadata, proceed anyway
 		};
 
-		// Perform deletion
-		match backend.delete(Path::new(cloud_path)).await {
+		// Trash goes to the service's own trash when it has one, so the item can
+		// be restored there; services without a trash refuse instead of deleting.
+		let deletion = match mode {
+			DeleteMode::Trash => match backend.trash(Path::new(cloud_path)).await {
+				Err(crate::volume::error::VolumeError::Unsupported(_)) => {
+					Err(crate::volume::error::VolumeError::Unsupported(
+						"this cloud service has no trash; delete permanently instead".to_string(),
+					))
+				}
+				other => other,
+			},
+			_ => backend.delete(Path::new(cloud_path)).await,
+		};
+		match deletion {
 			Ok(_) => DeleteResult {
 				path: path.clone(),
 				success: true,

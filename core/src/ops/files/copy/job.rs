@@ -209,9 +209,28 @@ impl JobHandler for FileCopyJob {
 			.any(|path| matches!(path, WingPath::Cloud { .. }))
 			|| matches!(destination, WingPath::Cloud { .. })
 		{
-			return Err(JobError::execution(
-				"Cloud copy and move operations are not supported yet",
-			));
+			// Cloud volumes move bytes through their backend, not the filesystem
+			// strategies below.
+			let is_move = self.options.delete_after_copy
+				|| matches!(self.options.move_mode, Some(MoveMode::Rename));
+			let conflict = self
+				.options
+				.conflict_resolution
+				.or(if self.options.overwrite {
+					Some(super::action::FileConflictResolution::Overwrite)
+				} else {
+					None
+				});
+			return super::cloud::run_cloud_batch(
+				&ctx,
+				&resolved_sources.paths,
+				&destination,
+				self.options.move_mode.as_ref(),
+				is_move,
+				conflict,
+				self.started_at,
+			)
+			.await;
 		}
 		validate_layout(&resolved_sources, &destination)?;
 		self.destination = destination;
@@ -1220,7 +1239,18 @@ impl FileCopyJob {
 				device_slug: device_slug.clone(),
 				path: path.with_file_name(&new_name),
 			},
-			WingPath::Cloud { .. } => panic!("Cloud storage operations are not yet implemented"),
+			WingPath::Cloud {
+				service,
+				identifier,
+				path,
+			} => WingPath::Cloud {
+				service: *service,
+				identifier: identifier.clone(),
+				path: match path.trim_end_matches('/').rsplit_once('/') {
+					Some((parent, _)) => format!("{parent}/{new_name}"),
+					None => new_name.clone(),
+				},
+			},
 			WingPath::Content { .. } => panic!("Cannot rename a content-addressed path"),
 			WingPath::Sidecar { .. } => panic!("Cannot rename a sidecar path"),
 		};
@@ -1739,7 +1769,18 @@ impl MoveJob {
 				device_slug: device_slug.clone(),
 				path: path.with_file_name(&new_name),
 			},
-			WingPath::Cloud { .. } => panic!("Cloud storage operations are not yet implemented"),
+			WingPath::Cloud {
+				service,
+				identifier,
+				path,
+			} => WingPath::Cloud {
+				service: *service,
+				identifier: identifier.clone(),
+				path: match path.trim_end_matches('/').rsplit_once('/') {
+					Some((parent, _)) => format!("{parent}/{new_name}"),
+					None => new_name.clone(),
+				},
+			},
 			WingPath::Content { .. } => panic!("Cannot rename a content-addressed path"),
 			WingPath::Sidecar { .. } => panic!("Cannot rename a sidecar path"),
 		};

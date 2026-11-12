@@ -369,10 +369,17 @@ impl WingPath {
 				path,
 			} => {
 				let parent_path = path.trim_end_matches('/');
-				parent_path.rfind('/').map(|idx| Self::Cloud {
+				if parent_path.is_empty() {
+					return None;
+				}
+				// A top-level item's parent is the volume root, the empty path.
+				Some(Self::Cloud {
 					service: *service,
 					identifier: identifier.clone(),
-					path: parent_path[..idx].to_string(),
+					path: parent_path
+						.rfind('/')
+						.map(|idx| parent_path[..idx].to_string())
+						.unwrap_or_default(),
 				})
 			}
 			Self::Content { .. } => None, // Content paths don't have parents

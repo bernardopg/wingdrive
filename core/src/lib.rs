@@ -299,6 +299,16 @@ impl Core {
 		{
 			error!("Failed to load cloud volumes from database: {}", e);
 		}
+		context
+			.integrations
+			.restore_drive_volumes(&loaded_libraries)
+			.await;
+		context
+			.integrations
+			.cloud_edits
+			.remove_stale_sessions()
+			.await;
+		crate::ops::cloud_sync::scheduler::spawn(context.clone());
 
 		// Initialize networking if enabled in config
 		let service_config = config.read().await.services.clone();

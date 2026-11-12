@@ -46,6 +46,8 @@ pub struct CoreContext {
 	pub data_dir: PathBuf,
 	// Wingdrop offers and drops in flight
 	pub wingdrop: Arc<crate::service::wingdrop::WingdropState>,
+	// Connected third-party accounts, sign-in sessions and cloud editing sessions
+	pub integrations: Arc<crate::service::integrations::IntegrationService>,
 }
 
 impl CoreContext {
@@ -79,6 +81,9 @@ impl CoreContext {
 			file_type_registry: Arc::new(FileTypeRegistry::new()),
 			job_logging_config: None,
 			job_logs_dir: None,
+			integrations: Arc::new(crate::service::integrations::IntegrationService::new(
+				data_dir.clone(),
+			)),
 			data_dir,
 			wingdrop: Arc::new(crate::service::wingdrop::WingdropState::new()),
 		}

@@ -72,35 +72,6 @@ impl CloudBackend {
 		})
 	}
 
-	/// Create a new cloud backend for Google Drive
-	pub async fn new_google_drive(
-		access_token: impl AsRef<str>,
-		refresh_token: impl AsRef<str>,
-		client_id: impl AsRef<str>,
-		client_secret: impl AsRef<str>,
-		root: Option<String>,
-	) -> Result<Self, VolumeError> {
-		let mut builder = opendal::services::Gdrive::default()
-			.access_token(access_token.as_ref())
-			.refresh_token(refresh_token.as_ref())
-			.client_id(client_id.as_ref())
-			.client_secret(client_secret.as_ref());
-
-		if let Some(r) = &root {
-			builder = builder.root(r);
-		}
-
-		let operator = opendal::Operator::new(builder).map_err(|e| {
-			VolumeError::Platform(format!("Failed to create Google Drive operator: {}", e))
-		})?;
-
-		Ok(Self {
-			operator,
-			service_type: CloudServiceType::GoogleDrive,
-			root: PathBuf::from(root.unwrap_or_else(|| "/".to_string())),
-		})
-	}
-
 	/// Create a new cloud backend for OneDrive
 	pub async fn new_onedrive(
 		access_token: impl AsRef<str>,
@@ -248,7 +219,7 @@ impl VolumeBackend for CloudBackend {
 			.operator
 			.read(&cloud_path)
 			.await
-			.map_err(|e| VolumeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+			.map_err(map_opendal_error)?;
 
 		Ok(data.to_bytes())
 	}
@@ -265,7 +236,7 @@ impl VolumeBackend for CloudBackend {
 			.read_with(&cloud_path)
 			.range(range.start..range.end)
 			.await
-			.map_err(|e| VolumeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+			.map_err(map_opendal_error)?;
 
 		Ok(data.to_bytes())
 	}
@@ -277,7 +248,7 @@ impl VolumeBackend for CloudBackend {
 		self.operator
 			.write(&cloud_path, data)
 			.await
-			.map_err(|e| VolumeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+			.map_err(map_opendal_error)?;
 
 		Ok(())
 	}
@@ -291,14 +262,13 @@ impl VolumeBackend for CloudBackend {
 			.operator
 			.lister(&cloud_path)
 			.await
-			.map_err(|e| VolumeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+			.map_err(map_opendal_error)?;
 
 		// Collect entries from async iterator
 
 		let mut lister = lister;
 		while let Some(entry_result) = lister.try_next().await.transpose() {
-			let entry = entry_result
-				.map_err(|e| VolumeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+			let entry = entry_result.map_err(map_opendal_error)?;
 
 			let metadata = entry.metadata();
 			let name = entry
@@ -322,6 +292,11 @@ impl VolumeBackend for CloudBackend {
 				modified: metadata.last_modified().map(SystemTime::from),
 				created: None,
 				inode: None, // Cloud storage doesn't have inodes
+				revision: metadata
+					.content_md5()
+					.or_else(|| metadata.etag())
+					.or_else(|| metadata.version())
+					.map(str::to_string),
 			});
 		}
 
@@ -336,7 +311,7 @@ impl VolumeBackend for CloudBackend {
 			.operator
 			.stat(&cloud_path)
 			.await
-			.map_err(|e| VolumeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+			.map_err(map_opendal_error)?;
 
 		let kind = if metadata.is_dir() {
 			EntryKind::Directory
@@ -354,6 +329,11 @@ impl VolumeBackend for CloudBackend {
 			accessed: None,
 			inode: None,       // Cloud storage doesn't have inodes
 			permissions: None, // Cloud backends don't have Unix permissions
+			revision: metadata
+				.content_md5()
+				.or_else(|| metadata.etag())
+				.or_else(|| metadata.version())
+				.map(str::to_string),
 		})
 	}
 
@@ -375,20 +355,20 @@ impl VolumeBackend for CloudBackend {
 			.operator
 			.stat(&cloud_path)
 			.await
-			.map_err(|e| VolumeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+			.map_err(map_opendal_error)?;
 
 		if metadata.is_dir() {
 			// Delete directory recursively
 			self.operator
 				.remove_all(&cloud_path)
 				.await
-				.map_err(|e| VolumeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+				.map_err(map_opendal_error)?;
 		} else {
 			// Delete file
 			self.operator
 				.delete(&cloud_path)
 				.await
-				.map_err(|e| VolumeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+				.map_err(map_opendal_error)?;
 		}
 
 		Ok(())
@@ -411,9 +391,31 @@ impl VolumeBackend for CloudBackend {
 		self.operator
 			.create_dir(&cloud_path)
 			.await
-			.map_err(|e| VolumeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+			.map_err(map_opendal_error)?;
 
 		Ok(())
+	}
+
+	async fn rename(&self, from: &Path, to: &Path) -> Result<(), VolumeError> {
+		let from = self.to_cloud_path(from);
+		let to = self.to_cloud_path(to);
+		debug!("CloudBackend::rename: {} -> {}", from, to);
+		self.operator
+			.rename(&from, &to)
+			.await
+			.map(|_| ())
+			.map_err(map_opendal_error)
+	}
+
+	async fn copy(&self, from: &Path, to: &Path) -> Result<(), VolumeError> {
+		let from = self.to_cloud_path(from);
+		let to = self.to_cloud_path(to);
+		debug!("CloudBackend::copy: {} -> {}", from, to);
+		self.operator
+			.copy(&from, &to)
+			.await
+			.map(|_| ())
+			.map_err(map_opendal_error)
 	}
 
 	fn is_local(&self) -> bool {
@@ -422,6 +424,20 @@ impl VolumeBackend for CloudBackend {
 
 	fn backend_type(&self) -> BackendType {
 		BackendType::Cloud(self.service_type)
+	}
+}
+
+/// Keeps "not found" detectable through `std::io::ErrorKind` and reports
+/// operations the service lacks as `Unsupported` so callers can fall back.
+fn map_opendal_error(error: opendal::Error) -> VolumeError {
+	match error.kind() {
+		opendal::ErrorKind::NotFound => VolumeError::Io(std::io::Error::new(
+			std::io::ErrorKind::NotFound,
+			error.to_string(),
+		)),
+		opendal::ErrorKind::Unsupported => VolumeError::Unsupported(error.to_string()),
+		opendal::ErrorKind::PermissionDenied => VolumeError::PermissionDenied(error.to_string()),
+		_ => VolumeError::Service(error.to_string()),
 	}
 }
 

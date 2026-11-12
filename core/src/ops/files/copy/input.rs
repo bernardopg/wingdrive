@@ -136,15 +136,6 @@ impl FileCopyInput {
 		if self.sources.paths.is_empty() {
 			errors.push("At least one source file must be specified".to_string());
 		}
-		if self
-			.sources
-			.paths
-			.iter()
-			.any(|path| matches!(path, WingPath::Cloud { .. }))
-			|| matches!(&self.destination, WingPath::Cloud { .. })
-		{
-			errors.push("Cloud copy and move operations are not supported yet".to_string());
-		}
 
 		if errors.is_empty() {
 			Ok(())
@@ -228,7 +219,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_validation_rejects_cloud_paths() {
+	fn test_validation_accepts_cloud_paths() {
 		let cloud = WingPath::Cloud {
 			service: crate::volume::backend::CloudServiceType::S3,
 			identifier: "bucket".into(),
@@ -239,11 +230,7 @@ mod tests {
 			let mut input = FileCopyInput::default();
 			input.sources = WingPathBatch::new(vec![source]);
 			input.destination = destination;
-			assert!(input
-				.validate()
-				.unwrap_err()
-				.iter()
-				.any(|error| error.contains("Cloud")));
+			assert!(input.validate().is_ok());
 		}
 	}
 

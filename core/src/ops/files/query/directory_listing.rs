@@ -167,6 +167,10 @@ impl LibraryQuery for DirectoryListingQuery {
 			}
 		}
 
+		if self.input.path.is_cloud() {
+			return self.query_cloud_directory(&context).await;
+		}
+
 		let library_id = session
 			.current_library_id
 			.ok_or_else(|| QueryError::Internal("No library in session".to_string()))?;
@@ -981,6 +985,73 @@ impl DirectoryListingQuery {
 			files: Vec::new(),
 			total_count: 0,
 			has_more: false,
+		})
+	}
+
+	/// Lists a cloud folder live from its volume backend.
+	///
+	/// Cloud volumes are browsed without indexing them first, the same way an
+	/// unindexed local folder is, so a freshly connected Drive opens at once.
+	/// The backend caches listings briefly, so moving back and forth between
+	/// folders does not call the service every time.
+	async fn query_cloud_directory(
+		&self,
+		context: &CoreContext,
+	) -> QueryResult<DirectoryListingOutput> {
+		use crate::ops::indexing::{database_storage::EntryMetadata, state::EntryKind};
+
+		let (backend, folder) = crate::ops::cloud_sync::resolve_remote(context, &self.input.path)
+			.await
+			.map_err(QueryError::Internal)?;
+		let entries = backend
+			.read_dir(&folder)
+			.await
+			.map_err(|e| QueryError::Internal(format!("Cannot list cloud folder: {e}")))?;
+		let registry = context.file_type_registry();
+		let include_hidden = self.input.include_hidden.unwrap_or(false);
+
+		let mut files: Vec<File> = entries
+			.into_iter()
+			.filter(|entry| include_hidden || !entry.name.starts_with('.'))
+			.map(|entry| {
+				let wing_path = self.input.path.join(&entry.name);
+				let is_hidden = entry.name.starts_with('.');
+				let path = std::path::PathBuf::from(wing_path.display());
+				let metadata = EntryMetadata {
+					path: path.clone(),
+					kind: entry.kind,
+					size: entry.size,
+					modified: entry.modified,
+					accessed: None,
+					created: entry.created,
+					inode: None,
+					permissions: None,
+					is_hidden,
+				};
+				// Stable ids keep selection and inspector state across refetches.
+				let id = Uuid::new_v5(&Uuid::NAMESPACE_URL, wing_path.display().as_bytes());
+				let mut file = File::from_ephemeral(id, &metadata, wing_path);
+				if entry.kind != EntryKind::Directory {
+					file.content_kind =
+						registry.identify_by_extension(std::path::Path::new(&entry.name));
+				}
+				file
+			})
+			.collect();
+		self.sort_files(&mut files);
+
+		let total_count = files.len() as u32;
+		let has_more = self
+			.input
+			.limit
+			.is_some_and(|limit| files.len() > limit as usize);
+		if let Some(limit) = self.input.limit {
+			files.truncate(limit as usize);
+		}
+		Ok(DirectoryListingOutput {
+			files,
+			total_count,
+			has_more,
 		})
 	}
 

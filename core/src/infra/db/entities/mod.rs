@@ -4,6 +4,7 @@
 
 pub mod audio_media_data;
 pub mod cloud_credential;
+pub mod cloud_sync_pair;
 pub mod content_identity;
 pub mod content_kind;
 pub mod device;
