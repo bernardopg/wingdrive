@@ -457,8 +457,23 @@ fn extract_tar(
 				.ok_or_else(|| ArchiveError::Unsafe(relative.display().to_string()))?;
 			let target = safe_relative(&target)?;
 			check_no_link_parents(dest, &target)?;
+			let source = dest.join(&target);
+			if !std::fs::symlink_metadata(&source)?.file_type().is_file() {
+				return Err(ArchiveError::Unsafe(target.display().to_string()));
+			}
+			let mut options = File::options();
+			options.read(true);
+			#[cfg(unix)]
+			{
+				use std::os::unix::fs::OpenOptionsExt;
+				options.custom_flags(libc::O_NOFOLLOW);
+			}
+			let mut input = options.open(source)?;
+			if !input.metadata()?.is_file() {
+				return Err(ArchiveError::Unsafe(target.display().to_string()));
+			}
 			let mut out = create_file(dest, &relative)?;
-			io::copy(&mut File::open(dest.join(&target))?, &mut out)?;
+			io::copy(&mut input, &mut out)?;
 		} else if kind.is_file() || kind == tar::EntryType::Continuous {
 			let mut out = create_file(dest, &relative)?;
 			io::copy(&mut entry, &mut out).map_err(|e| cancelled_or(control, e))?;
@@ -946,5 +961,158 @@ mod tests {
 		assert!(check_link_target(Path::new("link"), Path::new("/etc/passwd")).is_err());
 		assert!(safe_relative(Path::new("a\\..\\..\\x")).is_err());
 		assert!(safe_relative(Path::new("./a/b")).is_ok());
+	}
+	#[test]
+	fn tar_hard_link_cannot_read_a_preexisting_symlink() {
+		let dir = tempfile::tempdir().unwrap();
+		let outside = dir.path().join("secret");
+		std::fs::write(&outside, "private").unwrap();
+		let dest = dir.path().join("out");
+		std::fs::create_dir(&dest).unwrap();
+		std::os::unix::fs::symlink(&outside, dest.join("source")).unwrap();
+		let archive = dir.path().join("hardlink.tar");
+		let mut builder = tar::Builder::new(File::create(&archive).unwrap());
+		let mut header = tar::Header::new_gnu();
+		header.set_entry_type(tar::EntryType::Link);
+		header.set_size(0);
+		builder
+			.append_link(&mut header, "copied", "source")
+			.unwrap();
+		builder.finish().unwrap();
+		let error = extract(&archive, ArchiveFormat::Tar, &dest, &Control::default()).unwrap_err();
+		assert!(matches!(error, ArchiveError::Unsafe(_)), "{error}");
+		assert!(!dest.join("copied").exists());
+		assert_eq!(std::fs::read_to_string(outside).unwrap(), "private");
+	}
+
+	#[test]
+	fn tar_hard_link_copies_an_existing_regular_file() {
+		let dir = tempfile::tempdir().unwrap();
+		let dest = dir.path().join("out");
+		std::fs::create_dir(&dest).unwrap();
+		std::fs::write(dest.join("source"), "content").unwrap();
+		let archive = dir.path().join("hardlink.tar");
+		let mut builder = tar::Builder::new(File::create(&archive).unwrap());
+		let mut header = tar::Header::new_gnu();
+		header.set_entry_type(tar::EntryType::Link);
+		header.set_size(0);
+		builder.append_link(&mut header, "copy", "source").unwrap();
+		builder.finish().unwrap();
+		extract(&archive, ArchiveFormat::Tar, &dest, &Control::default()).unwrap();
+		assert_eq!(
+			std::fs::read_to_string(dest.join("copy")).unwrap(),
+			"content"
+		);
+	}
+
+	#[test]
+	fn archive_paths_reject_escape_and_accept_nested_names() {
+		for path in [
+			"",
+			".",
+			"..",
+			"../escape",
+			"a/../../escape",
+			"/absolute",
+			"a\\..\\escape",
+		] {
+			assert!(safe_relative(Path::new(path)).is_err(), "{path:?}");
+		}
+		for (path, expected) in [("a/b", "a/b"), ("./a/b", "a/b"), ("a\\b", "a/b")] {
+			assert_eq!(
+				safe_relative(Path::new(path)).unwrap(),
+				PathBuf::from(expected)
+			);
+		}
+	}
+
+	#[test]
+	fn link_targets_cannot_escape_at_any_depth() {
+		for (link, target) in [
+			("link", "../outside"),
+			("a/link", "../../outside"),
+			("a/b/link", "../../../outside"),
+			("a/link", "/outside"),
+		] {
+			assert!(
+				check_link_target(Path::new(link), Path::new(target)).is_err(),
+				"{link} -> {target}"
+			);
+		}
+		for (link, target) in [
+			("link", "inside"),
+			("a/link", "../inside"),
+			("a/b/link", "../../inside"),
+		] {
+			assert!(
+				check_link_target(Path::new(link), Path::new(target)).is_ok(),
+				"{link} -> {target}"
+			);
+		}
+	}
+	#[test]
+	fn creating_a_file_replaces_a_symlink_without_touching_its_target() {
+		let dir = tempfile::tempdir().unwrap();
+		let outside = dir.path().join("outside");
+		std::fs::write(&outside, "original").unwrap();
+		let dest = dir.path().join("out");
+		std::fs::create_dir(&dest).unwrap();
+		std::os::unix::fs::symlink(&outside, dest.join("entry")).unwrap();
+		create_file(&dest, Path::new("entry"))
+			.unwrap()
+			.write_all(b"replacement")
+			.unwrap();
+		assert_eq!(std::fs::read_to_string(outside).unwrap(), "original");
+		assert_eq!(
+			std::fs::read_to_string(dest.join("entry")).unwrap(),
+			"replacement"
+		);
+	}
+
+	#[test]
+	fn creating_a_file_does_not_replace_a_directory() {
+		let dir = tempfile::tempdir().unwrap();
+		std::fs::create_dir(dir.path().join("entry")).unwrap();
+		assert!(matches!(
+			create_file(dir.path(), Path::new("entry")),
+			Err(ArchiveError::Unsafe(_))
+		));
+		assert!(dir.path().join("entry").is_dir());
+	}
+
+	#[test]
+	fn existing_symlink_parent_is_rejected_for_files_and_directories() {
+		let dir = tempfile::tempdir().unwrap();
+		let outside = dir.path().join("outside");
+		let dest = dir.path().join("out");
+		std::fs::create_dir(&outside).unwrap();
+		std::fs::create_dir(&dest).unwrap();
+		std::os::unix::fs::symlink(&outside, dest.join("parent")).unwrap();
+		assert!(matches!(
+			create_file(&dest, Path::new("parent/file")),
+			Err(ArchiveError::Unsafe(_))
+		));
+		assert!(matches!(
+			create_dir(&dest, Path::new("parent/folder")),
+			Err(ArchiveError::Unsafe(_))
+		));
+		assert_eq!(std::fs::read_dir(outside).unwrap().count(), 0);
+	}
+
+	#[test]
+	fn cancelled_extraction_does_not_create_entries() {
+		let dir = tempfile::tempdir().unwrap();
+		let archive = dir.path().join("input.zip");
+		let mut zip = zip::ZipWriter::new(File::create(&archive).unwrap());
+		zip.start_file("file", zip::write::SimpleFileOptions::default())
+			.unwrap();
+		zip.write_all(b"content").unwrap();
+		zip.finish().unwrap();
+		let dest = dir.path().join("out");
+		std::fs::create_dir(&dest).unwrap();
+		let control = Control::default();
+		control.cancel.store(true, Ordering::Relaxed);
+		assert!(extract(&archive, ArchiveFormat::Zip, &dest, &control).is_err());
+		assert_eq!(std::fs::read_dir(dest).unwrap().count(), 0);
 	}
 }

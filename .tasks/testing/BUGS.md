@@ -1,5 +1,14 @@
 # Bugs encontrados na ampliação de cobertura
 
+## Hard link TAR segue link simbólico existente no destino
+
+- Estado: correção e testes de regressão adicionados, ainda não executados por solicitação do usuário.
+- Local: `core/src/ops/archive/engine.rs`, `extract_tar`.
+- Reprodução: extraia um TAR contendo hard link `copied` para `source` em um destino onde `source` é um link simbólico para um arquivo externo. A implementação anterior abria o alvo com `File::open` e copiava seu conteúdo para `copied`.
+- Impacto: conteúdo legível pelo processo pode ser copiado para o destino da extração. A reprodução foi identificada por análise do código; o teste automatizado ainda não foi executado.
+- Correção: rejeitar origens que não sejam arquivos regulares, abrir antes de criar o destino e usar `O_NOFOLLOW` em Unix. A verificação dos diretórios ancestrais ainda depende de verificações por caminho e não garante proteção contra alterações concorrentes do diretório de extração; isso não foi testado.
+
+
 ## Arquivos antigos no cache de arquivos compactados não são removidos
 
 - Estado: corrigido localmente; testes de regressão adicionados, execução Cargo pendente por bloqueio do diretório de build.
