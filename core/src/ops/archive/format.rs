@@ -98,4 +98,125 @@ mod tests {
 			);
 		}
 	}
+
+	macro_rules! format_case {
+		($name:ident, $path:expr, $format:expr, $stem:expr) => {
+			#[test]
+			fn $name() {
+				let path = Path::new($path);
+				assert_eq!(ArchiveFormat::detect(path), $format);
+				assert_eq!(ArchiveFormat::stem(path).as_deref(), $stem);
+			}
+		};
+	}
+	format_case!(
+		detect_zip,
+		"backup.zip",
+		Some(ArchiveFormat::Zip),
+		Some("backup")
+	);
+	format_case!(detect_jar, "app.jar", Some(ArchiveFormat::Zip), Some("app"));
+	format_case!(
+		detect_tar,
+		"backup.tar",
+		Some(ArchiveFormat::Tar),
+		Some("backup")
+	);
+	format_case!(
+		detect_tar_gz,
+		"backup.tar.gz",
+		Some(ArchiveFormat::TarGz),
+		Some("backup")
+	);
+	format_case!(
+		detect_tgz,
+		"backup.tgz",
+		Some(ArchiveFormat::TarGz),
+		Some("backup")
+	);
+	format_case!(
+		detect_tar_bz2,
+		"backup.tar.bz2",
+		Some(ArchiveFormat::TarBz2),
+		Some("backup")
+	);
+	format_case!(
+		detect_tbz2,
+		"backup.tbz2",
+		Some(ArchiveFormat::TarBz2),
+		Some("backup")
+	);
+	format_case!(
+		detect_tbz,
+		"backup.tbz",
+		Some(ArchiveFormat::TarBz2),
+		Some("backup")
+	);
+	format_case!(
+		detect_tar_xz,
+		"backup.tar.xz",
+		Some(ArchiveFormat::TarXz),
+		Some("backup")
+	);
+	format_case!(
+		detect_txz,
+		"backup.txz",
+		Some(ArchiveFormat::TarXz),
+		Some("backup")
+	);
+	format_case!(
+		detect_tar_zst,
+		"backup.tar.zst",
+		Some(ArchiveFormat::TarZst),
+		Some("backup")
+	);
+	format_case!(
+		detect_tzst,
+		"backup.tzst",
+		Some(ArchiveFormat::TarZst),
+		Some("backup")
+	);
+	format_case!(
+		detect_seven_zip,
+		"backup.7z",
+		Some(ArchiveFormat::SevenZip),
+		Some("backup")
+	);
+	format_case!(
+		detect_mixed_case,
+		"Backup.TaR.Gz",
+		Some(ArchiveFormat::TarGz),
+		Some("Backup")
+	);
+	format_case!(
+		detect_nested,
+		"folder/backup.tar",
+		Some(ArchiveFormat::Tar),
+		Some("backup")
+	);
+	format_case!(
+		detect_multiple_dots,
+		"backup.2026.zip",
+		Some(ArchiveFormat::Zip),
+		Some("backup.2026")
+	);
+	format_case!(
+		detect_unicode_stem,
+		"日本語.zip",
+		Some(ArchiveFormat::Zip),
+		Some("日本語")
+	);
+	format_case!(
+		detect_hidden_stem,
+		".backup.zip",
+		Some(ArchiveFormat::Zip),
+		Some(".backup")
+	);
+	format_case!(reject_empty_path, "", None, None);
+	format_case!(reject_suffix_only, ".tar.gz", None, None);
+	format_case!(reject_unknown_suffix, "backup.rar", None, None);
+	format_case!(reject_bare_gz, "backup.gz", None, None);
+	format_case!(reject_trailing_extension, "backup.zip.txt", None, None);
+	format_case!(reject_missing_dot, "backupzip", None, None);
+	format_case!(reject_partial_suffix, "backup.tar.g", None, None);
 }

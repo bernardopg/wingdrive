@@ -1115,4 +1115,55 @@ mod tests {
 		assert!(extract(&archive, ArchiveFormat::Zip, &dest, &control).is_err());
 		assert_eq!(std::fs::read_dir(dest).unwrap().count(), 0);
 	}
+
+	macro_rules! relative_case {
+		($name:ident, $input:expr, $expected:expr) => {
+			#[test]
+			fn $name() {
+				let result = safe_relative(Path::new($input));
+				let expected: Option<&str> = $expected;
+				match expected {
+					Some(expected) => assert_eq!(result.unwrap(), PathBuf::from(expected)),
+					None => assert!(matches!(result, Err(ArchiveError::Unsafe(_)))),
+				}
+			}
+		};
+	}
+	relative_case!(path_simple_file, "file.txt", Some("file.txt"));
+	relative_case!(path_nested_file, "dir/file.txt", Some("dir/file.txt"));
+	relative_case!(path_unicode, "文書/写真.jpg", Some("文書/写真.jpg"));
+	relative_case!(path_hidden_file, ".config", Some(".config"));
+	relative_case!(path_double_dot_filename, "..backup", Some("..backup"));
+	relative_case!(
+		path_leading_current_directory,
+		"./dir/file",
+		Some("dir/file")
+	);
+	relative_case!(
+		path_middle_current_directory,
+		"dir/./file",
+		Some("dir/file")
+	);
+	relative_case!(path_repeated_slashes, "dir//file", Some("dir/file"));
+	relative_case!(path_backslash_separator, "dir\\file", Some("dir/file"));
+	relative_case!(path_trailing_separator, "dir/", Some("dir"));
+	relative_case!(path_with_spaces, "my folder/a b", Some("my folder/a b"));
+	relative_case!(path_dash_and_underscore, "a-b/c_d", Some("a-b/c_d"));
+	relative_case!(
+		path_multiple_dots,
+		"a...b/file.tar.gz",
+		Some("a...b/file.tar.gz")
+	);
+	relative_case!(reject_empty_archive_path, "", None);
+	relative_case!(reject_current_directory_only, ".", None);
+	relative_case!(reject_parent_directory_only, "..", None);
+	relative_case!(reject_parent_prefix, "../file", None);
+	relative_case!(reject_parent_middle, "dir/../file", None);
+	relative_case!(reject_parent_suffix, "dir/..", None);
+	relative_case!(reject_multiple_parents, "dir/../../file", None);
+	relative_case!(reject_absolute_archive_path, "/etc/passwd", None);
+	relative_case!(reject_root_only, "/", None);
+	relative_case!(reject_backslash_escape, "dir\\..\\file", None);
+	relative_case!(reject_backslash_absolute, "\\root\\file", None);
+	relative_case!(reject_current_then_parent, "./../file", None);
 }
