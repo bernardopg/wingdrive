@@ -110,16 +110,6 @@ export type Platform = {
 	/** Hand absolute local paths to an OS drag that other apps can drop (Linux) */
 	startFileDrag?(paths: string[]): Promise<void>;
 	readFileClipboard?(): Promise<[string[], boolean]>;
-	fileIdentity?(path: string): Promise<[string, string]>;
-	fileContentHash?(path: string): Promise<string>;
-	undoMove?(
-		source: string,
-		destination: string,
-		expected: [string, string]
-	): Promise<void>;
-	undoEmptyFolder?(path: string, expected: [string, string]): Promise<void>;
-	/** Remove a file or link this app created, if it is unchanged and empty */
-	undoNewFile?(path: string, expected: [string, string], expectedHash?: string): Promise<void>;
 
 	/** Show a native desktop notification carrying WingDrive's name and logo */
 	showDesktopNotification?(request: DesktopNotificationRequest): Promise<void>;

@@ -176,7 +176,9 @@ A copy or move never leaves a damaged file behind and never loses the one it rep
 ## Undo
 
 Copy, move, rename and trash jobs journal what they changed, one record per item, in the library's
-job database (`file_journal`). `files.undo` queues a job that reverses one earlier job, newest
+job database (`file_journal`). `files.createFolder`, `files.createFile`, `files.createFromTemplate`
+and `files.createSymlink` run without a job, so each journals its new entry under an id of its own
+and returns it as `undo_id`. `files.undo` queues a job that reverses one earlier operation, newest
 record first; `files.undo_history` lists recent operations and how much of each can still be undone.
 
 ```bash
@@ -188,6 +190,7 @@ wing file undo <JOB_ID>    # a specific one
 | Recorded | Undo does |
 |---|---|
 | A copy created an item | Removes it |
+| A folder, file or link was created | Removes it; a folder only while it is empty |
 | An item was moved or renamed | Moves it back, across volumes when needed |
 | A file was replaced | Puts the previous file back |
 | An item went to the trash | Restores it from the trash |
@@ -202,10 +205,18 @@ back.
 number of entries, total size and latest change time of the whole tree. An item that was edited,
 replaced, moved away or deleted since is skipped with a reason, and so is a move whose old place is
 taken again. Skipped records stay in the journal, so undo can be run again later. Undo never
-overwrites anything.
+overwrites anything: on Linux it moves items back with `renameat2(RENAME_NOREPLACE)`, so an item
+that appears at the old place during the undo is kept as well.
 
-The desktop app records every copy and move it starts and undoes it with Ctrl+Z. Permanent deletes
-record nothing. An undo is not itself journaled, so there is no redo.
+Renaming an item moves its change time. For an item that holds no data (an empty file, an empty
+folder or, on Unix, a symbolic link) undo accepts a new change time when the inode, the number of
+entries and the size still match, so a new folder renamed and renamed back can still be undone. A
+file with content must match exactly.
+
+The Explorer, in the desktop app and the web UI, records every copy, move, rename, batch rename,
+trash, new folder, new file and new link it starts, and Ctrl+Z undoes the latest one through
+`files.undo`. There is no separate desktop undo path. Permanent deletes record nothing. An undo is
+not itself journaled, so there is no redo.
 
 ## Job Resumption
 

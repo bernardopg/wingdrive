@@ -1,4 +1,3 @@
-import {toast} from '@wingdrive/primitives';
 import {useTranslation} from '../../i18n';
 import type {File} from '@wingdrive/ts-client';
 import {
@@ -329,7 +328,7 @@ export function SelectionProvider({
 			}
 
 			try {
-				const {result} = await waitForJob(() =>
+				const {receipt, result} = await waitForJob(() =>
 					renameFile.mutateAsync({
 						target: file.wing_path,
 						new_name: newName
@@ -347,33 +346,8 @@ export function SelectionProvider({
 							: t('errors.renameIncomplete')
 					);
 				}
-				if (
-					file.is_local &&
-					'Physical' in file.wing_path &&
-					platform.fileIdentity &&
-					platform.undoMove
-				) {
-					const oldPath = file.wing_path.Physical.path;
-					const newPath =
-						oldPath.slice(
-							0,
-							Math.max(
-								oldPath.lastIndexOf('/'),
-								oldPath.lastIndexOf('\\')
-							) + 1
-						) + newName;
-					const move = platform.undoMove;
-					try {
-						const expected = await platform.fileIdentity(newPath);
-						undo.record(t('undo.rename'), () =>
-							move(newPath, oldPath, expected)
-						);
-					} catch {
-						toast.error(
-							t('errors.renamedUndoUnavailable')
-						);
-					}
-				}
+				// The rename job journals the move, so the core can put the old name back.
+				undo.recordJournaled(t('undo.rename'), receipt.id);
 				setRenamingFileId(null);
 				// Renames change paths on disk; without a refetch the old name stays
 				// visible until the next navigation.
@@ -398,7 +372,6 @@ export function SelectionProvider({
 			renameFile,
 			refetchListings,
 			waitForJob,
-			platform,
 			undo,
 			adminRetry,
 			t

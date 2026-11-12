@@ -178,10 +178,15 @@ async fn folder_validation_rejects_invalid_names_and_address_kinds() -> anyhow::
 		.execute(harness.library.clone(), harness.core.context.clone())
 		.await?;
 	assert!(output.folder_path.as_local_path().unwrap().is_dir());
+	let value = serde_json::to_value(&output)?;
 	assert_eq!(
-		serde_json::to_value(&output)?,
-		json!({"folder_path": WingPath::local(harness.temp_path().join("café"))})
+		value["folder_path"],
+		serde_json::to_value(WingPath::local(harness.temp_path().join("café")))?
 	);
+	// The folder is journaled so it can be undone; the id is a fresh UUID.
+	assert!(value["undo_id"]
+		.as_str()
+		.is_some_and(|id| Uuid::parse_str(id).is_ok()));
 	harness.shutdown().await?;
 	Ok(())
 }

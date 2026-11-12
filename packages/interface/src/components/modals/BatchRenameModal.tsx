@@ -12,7 +12,6 @@ import { fileDisplayName, type File } from "@wingdrive/ts-client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLibraryMutation } from "../../contexts/WingDriveContext";
-import { usePlatform } from "../../contexts/PlatformContext";
 import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
 import { useUndo } from "../../hooks/useUndo";
 import { useWaitForJob } from "../../hooks/useWaitForJob";
@@ -31,15 +30,10 @@ export function useBatchRenameDialog() {
 		));
 }
 
-function parentOf(path: string): string {
-	return path.slice(0, Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")) + 1);
-}
-
 function BatchRenameDialog(props: BatchRenameDialogProps) {
 	const { t } = useTranslation("dialogs");
 	const dialog = useDialog(props);
 	const form = useForm();
-	const platform = usePlatform();
 	const renameFile = useLibraryMutation("files.rename");
 	const waitForJob = useWaitForJob();
 	const refetchListings = useRefetchFileListings();
@@ -62,37 +56,23 @@ function BatchRenameDialog(props: BatchRenameDialogProps) {
 		setRule((prev) => ({ ...prev, [key]: value }));
 
 	const apply = async () => {
-		const reversals: (() => Promise<void>)[] = [];
+		const jobIds: string[] = [];
 		let failed = 0;
 		// Sequential, so a later rename never races an earlier one in the same folder.
 		for (const { file, newName } of changes) {
 			try {
-				const { result } = await waitForJob(() =>
+				const { receipt, result } = await waitForJob(() =>
 					renameFile.mutateAsync({ target: file.wing_path, new_name: newName }),
 				);
 				if (result.status !== "completed") throw new Error("rename did not complete");
-				if (
-					file.is_local &&
-					"Physical" in file.wing_path &&
-					platform.fileIdentity &&
-					platform.undoMove
-				) {
-					const oldPath = file.wing_path.Physical.path;
-					const newPath = parentOf(oldPath) + newName;
-					const expected = await platform.fileIdentity(newPath);
-					const move = platform.undoMove;
-					reversals.push(() => move(newPath, oldPath, expected));
-				}
+				jobIds.push(receipt.id);
 			} catch {
 				failed += 1;
 			}
 		}
 		refetchListings();
-		if (reversals.length > 0) {
-			undo.record("batch rename", async () => {
-				for (const reverse of reversals.reverse()) await reverse();
-			});
-		}
+		// One step undoes every rename, newest first.
+		undo.recordJournaled("batch rename", jobIds);
 		if (failed > 0) toast.error(t("batchRename.renameFailed", { count: changes.length, failed }));
 		else toast.success(t("batchRename.renamed", { count: changes.length }));
 		dialogManager.setState(props.id, { open: false });

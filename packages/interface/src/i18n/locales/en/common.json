@@ -60,6 +60,9 @@
 	"undo": {
 		"done": "Undid {{label}}",
 		"failed": "Could not undo: {{error}}",
+		"skipped_one": "{{count}} item changed since and was left alone. {{reason}}",
+		"skipped_other": "{{count}} items changed since and were left alone. {{reason}}",
+		"cancelled": "the undo was cancelled",
 		"labels": {
 			"rename": "rename",
 			"batch rename": "batch rename",

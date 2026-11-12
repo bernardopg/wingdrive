@@ -251,7 +251,6 @@
 	},
 	"fileOperation": {
 		"retryAsAdmin": "Retry as administrator",
-		"undoSkipped": "{{count}} item(s) changed since and were left alone. {{reason}}",
 		"copyingFiles": "Copying Files",
 		"movingFiles": "Moving Files",
 		"copyingFilesProgress": "Copying files...",

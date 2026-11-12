@@ -18,7 +18,7 @@ O WingDrive oferece todas as ferramentas que você espera de um gerenciador de a
 
 ## Desfazer
 
-Cópias, substituições, movimentações entre volumes e envios à lixeira são registrados em um histórico. Pressione **Ctrl+Z** no aplicativo desktop ou execute `wing file undo` para desfazer a última operação. `wing file history` lista o que ainda pode ser desfeito.
+Cópias, substituições, movimentações, renomeações, envios à lixeira e novas pastas, arquivos e links são registrados em um histórico. Pressione **Ctrl+Z** no aplicativo desktop ou na interface web, ou execute `wing file undo`, para desfazer a última operação. `wing file history` lista o que ainda pode ser desfeito.
 
 - Um arquivo substituído por uma cópia é mantido por 7 dias em uma pasta oculta `.wing-undo-*` ao lado dele.
 - A operação de desfazer ignora tudo o que foi alterado desde a operação original, para nunca sobrescrever trabalho mais recente.

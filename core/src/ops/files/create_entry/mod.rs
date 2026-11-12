@@ -38,6 +38,10 @@ pub struct CreateFileInput {
 pub struct CreateEntryOutput {
 	/// Path of the created entry
 	pub path: WingPath,
+	/// Operation that `files.undo` takes to remove the entry again, unless
+	/// its creation could not be journaled.
+	#[serde(default)]
+	pub undo_id: Option<uuid::Uuid>,
 }
 
 /// Input for creating a file from a template
@@ -108,6 +112,12 @@ fn creation_error(error: std::io::Error, path: &Path) -> ActionError {
 	} else {
 		ActionError::Internal(format!("Failed to create {}: {error}", path.display()))
 	}
+}
+
+/// Journals a created entry so `files.undo` can remove it while it is unchanged.
+async fn journal_created(library: &crate::library::Library, path: &Path) -> Option<uuid::Uuid> {
+	crate::ops::files::journal::record_created(library.jobs().database().conn(), "create", path)
+		.await
 }
 
 /// Creates `path` as an empty file, failing if anything already has that name.
@@ -195,13 +205,14 @@ impl LibraryAction for CreateFileAction {
 
 	async fn execute(
 		self,
-		_library: Arc<crate::library::Library>,
+		library: Arc<crate::library::Library>,
 		_context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
 		let parent = local_dir(&self.input.parent, "parent")?;
 		create_empty_file(&parent.join(&self.input.name)).await?;
 		Ok(CreateEntryOutput {
 			path: self.input.parent.join(&self.input.name),
+			undo_id: journal_created(&library, &parent.join(&self.input.name)).await,
 		})
 	}
 
@@ -231,7 +242,7 @@ impl LibraryAction for CreateFromTemplateAction {
 
 	async fn execute(
 		self,
-		_library: Arc<crate::library::Library>,
+		library: Arc<crate::library::Library>,
 		_context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
 		let parent = local_dir(&self.input.parent, "parent")?;
@@ -239,6 +250,7 @@ impl LibraryAction for CreateFromTemplateAction {
 		copy_template(template, &parent.join(&self.input.name)).await?;
 		Ok(CreateEntryOutput {
 			path: self.input.parent.join(&self.input.name),
+			undo_id: journal_created(&library, &parent.join(&self.input.name)).await,
 		})
 	}
 
@@ -274,7 +286,7 @@ impl LibraryAction for CreateSymlinkAction {
 
 	async fn execute(
 		self,
-		_library: Arc<crate::library::Library>,
+		library: Arc<crate::library::Library>,
 		_context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
 		let parent = local_dir(&self.input.parent, "parent")?;
@@ -282,6 +294,7 @@ impl LibraryAction for CreateSymlinkAction {
 		create_link(&target, &parent.join(&self.input.name)).await?;
 		Ok(CreateEntryOutput {
 			path: self.input.parent.join(&self.input.name),
+			undo_id: journal_created(&library, &parent.join(&self.input.name)).await,
 		})
 	}
 

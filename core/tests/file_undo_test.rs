@@ -525,3 +525,240 @@ async fn the_undo_action_picks_the_latest_operation_and_refuses_when_empty() {
 	}
 	assert_eq!(read(&root.join("src/a.txt")).await, "a");
 }
+
+/// Runs a library action the way the daemon does.
+async fn act<A: wing_core::infra::action::LibraryAction>(
+	harness: &IndexingHarness,
+	action: A,
+) -> A::Output {
+	let manager = harness.core.context.action_manager.read().await;
+	manager
+		.as_ref()
+		.unwrap()
+		.dispatch_library(Some(harness.library.id()), action)
+		.await
+		.unwrap()
+}
+
+/// Creates an entry through its action and returns its undo id.
+async fn create(harness: &IndexingHarness, parent: &Path, kind: &str, name: &str) -> Uuid {
+	use wing_core::{
+		infra::action::LibraryAction,
+		ops::files::{
+			create_entry::{
+				CreateFileAction, CreateFileInput, CreateFromTemplateAction,
+				CreateFromTemplateInput, CreateSymlinkAction, CreateSymlinkInput,
+			},
+			CreateFolderAction, CreateFolderInput,
+		},
+	};
+	let parent_path = WingPath::local(parent.to_path_buf());
+	let name = name.to_string();
+	let undo_id = match kind {
+		"folder" => {
+			let action = CreateFolderAction::from_input(CreateFolderInput {
+				parent: parent_path,
+				name,
+				items: vec![],
+			})
+			.unwrap();
+			act(harness, action).await.undo_id
+		}
+		"file" => {
+			let action = CreateFileAction::from_input(CreateFileInput {
+				parent: parent_path,
+				name,
+			})
+			.unwrap();
+			act(harness, action).await.undo_id
+		}
+		"template" => {
+			let action = CreateFromTemplateAction::from_input(CreateFromTemplateInput {
+				template: WingPath::local(parent.join("Templates/Letter.txt")),
+				parent: parent_path,
+				name,
+			})
+			.unwrap();
+			act(harness, action).await.undo_id
+		}
+		"link" => {
+			let action = CreateSymlinkAction::from_input(CreateSymlinkInput {
+				target: WingPath::local(parent.join("Templates")),
+				parent: parent_path,
+				name,
+			})
+			.unwrap();
+			act(harness, action).await.undo_id
+		}
+		other => panic!("unknown kind {other}"),
+	};
+	undo_id.expect("the creation was journaled")
+}
+
+#[tokio::test]
+async fn undoing_a_new_folder_file_template_or_link_removes_only_it() {
+	let harness = harness("undo_create").await;
+	let location = harness.create_test_location("create").await.unwrap();
+	let root = location.path();
+	write(&root.join("Templates/Letter.txt"), "Dear").await;
+
+	let folder = create(&harness, root, "folder", "Untitled Folder").await;
+	let file = create(&harness, root, "file", "Untitled File").await;
+	let template = create(&harness, root, "template", "Letter.txt").await;
+	let link = create(&harness, root, "link", "Templates (link)").await;
+	assert_eq!(
+		names(root).await,
+		[
+			"Letter.txt",
+			"Templates",
+			"Templates (link)",
+			"Untitled File",
+			"Untitled Folder"
+		]
+	);
+
+	for id in [link, template, file, folder] {
+		assert_eq!(undo(&harness, id).await, (1, vec![]));
+		assert_eq!(pending(&harness, id).await, 0);
+	}
+	assert_eq!(names(root).await, ["Templates"]);
+	// Removing the link never touched what it pointed to.
+	assert_eq!(read(&root.join("Templates/Letter.txt")).await, "Dear");
+
+	let history = journal::history(harness.library.jobs().database().conn(), 10)
+		.await
+		.unwrap();
+	assert_eq!(history.len(), 4);
+	assert!(history
+		.iter()
+		.all(|operation| operation.operation == "create"
+			&& operation.effects == 1
+			&& operation.pending == 0));
+}
+
+#[tokio::test]
+async fn a_new_entry_that_holds_work_or_was_replaced_is_kept() {
+	let harness = harness("undo_create_kept").await;
+	let location = harness.create_test_location("kept").await.unwrap();
+	let root = location.path();
+	write(&root.join("Templates/Letter.txt"), "Dear").await;
+
+	let file = create(&harness, root, "file", "notes.txt").await;
+	let folder = create(&harness, root, "folder", "album").await;
+	let template = create(&harness, root, "template", "letter.txt").await;
+	let replaced = create(&harness, root, "folder", "replaced").await;
+	let swapped = create(&harness, root, "file", "swapped").await;
+
+	tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+	write(&root.join("notes.txt"), "typed").await;
+	write(&root.join("album/photo.jpg"), "pixels").await;
+	// Same size as the template, so only the change time tells.
+	write(&root.join("letter.txt"), "Sirs").await;
+	fs::rename(root.join("replaced"), root.join("original"))
+		.await
+		.unwrap();
+	fs::create_dir(root.join("replaced")).await.unwrap();
+	#[cfg(unix)]
+	{
+		fs::rename(root.join("swapped"), root.join("swapped-original"))
+			.await
+			.unwrap();
+		fs::symlink(root.join("swapped-original"), root.join("swapped"))
+			.await
+			.unwrap();
+	}
+
+	for (id, reason) in [
+		(file, "changed after the operation"),
+		(folder, "changed after the operation"),
+		(template, "changed after the operation"),
+		(replaced, "replaced by another item"),
+	] {
+		let (undone, skipped) = undo(&harness, id).await;
+		assert_eq!(undone, 0, "{skipped:?}");
+		assert!(skipped[0].contains(reason), "{skipped:?}");
+		assert_eq!(pending(&harness, id).await, 1);
+	}
+	#[cfg(unix)]
+	{
+		let (undone, skipped) = undo(&harness, swapped).await;
+		assert_eq!(undone, 0, "{skipped:?}");
+		assert_eq!(
+			fs::read_link(root.join("swapped")).await.unwrap(),
+			root.join("swapped-original")
+		);
+	}
+	#[cfg(not(unix))]
+	let _ = swapped;
+
+	assert_eq!(read(&root.join("notes.txt")).await, "typed");
+	assert_eq!(read(&root.join("album/photo.jpg")).await, "pixels");
+	assert_eq!(read(&root.join("letter.txt")).await, "Sirs");
+	assert!(root.join("replaced").is_dir() && root.join("original").is_dir());
+
+	// Once the work is gone again, the empty folder can still be undone.
+	fs::remove_file(root.join("album/photo.jpg")).await.unwrap();
+	assert_eq!(undo(&harness, folder).await, (1, vec![]));
+	assert!(!root.join("album").exists());
+}
+
+#[tokio::test]
+async fn a_new_folder_renamed_then_undone_twice_is_gone() {
+	let harness = harness("undo_create_rename").await;
+	let location = harness.create_test_location("renamed").await.unwrap();
+	let root = location.path();
+
+	let created = create(&harness, root, "folder", "Untitled Folder").await;
+	let folder_path = root.join("Untitled Folder");
+	tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+	let (renamed, _) = run(
+		&harness,
+		FileCopyJob::new_rename(WingPath::local(folder_path), "Trips".into()),
+	)
+	.await;
+	assert_eq!(names(root).await, ["Trips"]);
+
+	// Ctrl+Z twice: the rename, then the creation, although each rename
+	// moved the folder's change time.
+	assert_eq!(undo(&harness, renamed).await, (1, vec![]));
+	assert_eq!(names(root).await, ["Untitled Folder"]);
+	assert_eq!(undo(&harness, created).await, (1, vec![]));
+	assert!(names(root).await.is_empty());
+}
+
+#[tokio::test]
+async fn undoing_a_rename_keeps_whatever_took_the_old_name() {
+	let harness = harness("undo_rename_taken").await;
+	let location = harness.create_test_location("taken").await.unwrap();
+	let root = location.path();
+	write(&root.join("draft.txt"), "text").await;
+	let (job, _) = run(
+		&harness,
+		FileCopyJob::new_rename(WingPath::local(root.join("draft.txt")), "final.txt".into()),
+	)
+	.await;
+
+	// A folder, then a dangling link, at the old name.
+	fs::create_dir(root.join("draft.txt")).await.unwrap();
+	let (undone, skipped) = undo(&harness, job).await;
+	assert_eq!(undone, 0);
+	assert!(skipped[0].contains("taken again"), "{skipped:?}");
+	fs::remove_dir(root.join("draft.txt")).await.unwrap();
+	#[cfg(unix)]
+	{
+		fs::symlink(root.join("missing"), root.join("draft.txt"))
+			.await
+			.unwrap();
+		let (undone, skipped) = undo(&harness, job).await;
+		assert_eq!(undone, 0, "{skipped:?}");
+		assert_eq!(
+			fs::read_link(root.join("draft.txt")).await.unwrap(),
+			root.join("missing")
+		);
+		fs::remove_file(root.join("draft.txt")).await.unwrap();
+	}
+	assert_eq!(read(&root.join("final.txt")).await, "text");
+
+	assert_eq!(undo(&harness, job).await, (1, vec![]));
+	assert_eq!(names(root).await, ["draft.txt"]);
+}

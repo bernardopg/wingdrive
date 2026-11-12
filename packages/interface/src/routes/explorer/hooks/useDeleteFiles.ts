@@ -1,9 +1,6 @@
 import { useCallback } from "react";
 import type { File } from "@wingdrive/ts-client";
-import {
-	useCoreMutation,
-	useLibraryMutation,
-} from "../../../contexts/WingDriveContext";
+import { useLibraryMutation } from "../../../contexts/WingDriveContext";
 import { useDeleteConfirmationDialog } from "../../../components/modals/DeleteConfirmationModal";
 import { useWaitForJob } from "../../../hooks/useWaitForJob";
 import { useRefetchFileListings } from "../../../hooks/useRefetchFileListings";
@@ -29,7 +26,6 @@ import { useTranslation } from "../../../i18n";
 export function useDeleteFiles() {
 	const {t} = useTranslation("explorer");
 	const mutation = useLibraryMutation("files.delete");
-	const restore = useCoreMutation("trash.restore");
 	const undo = useUndo();
 	const openConfirmation = useDeleteConfirmationDialog();
 	const waitForJob = useWaitForJob();
@@ -52,7 +48,7 @@ export function useDeleteFiles() {
 					permanent,
 					onConfirm: async () => {
 						try {
-							const { result } = await waitForJob(() =>
+							const { receipt, result } = await waitForJob(() =>
 								mutation.mutateAsync({
 									targets: { paths: files.map((f) => f.wing_path) },
 									permanent,
@@ -78,26 +74,15 @@ export function useDeleteFiles() {
 							} else {
 								reportFileOperation(outcome);
 							}
-							// Trashed local files come back from the system trash by
-							// their original path; permanent deletes have no way back.
-							const trashedPaths = permanent
-								? []
-								: files.flatMap((f) =>
-										undo.isLocalPath(f.wing_path) &&
-										"Physical" in f.wing_path
-											? [f.wing_path.Physical.path]
-											: [],
-									);
+							// The delete job journals where each local item went in the
+							// trash; permanent deletes record nothing and have no way back.
+							const trashedLocal =
+								!permanent && files.some((f) => undo.isLocalPath(f.wing_path));
 							if (
 								(outcome.status === "success" || outcome.status === "partial") &&
-								trashedPaths.length > 0
+								trashedLocal
 							) {
-								undo.record("delete", async () => {
-									await restore.mutateAsync({
-										ids: [],
-										original_paths: trashedPaths,
-									});
-								});
+								undo.recordJournaled("delete", receipt.id);
 							}
 							resolve(outcome.status === "success");
 						} catch (err) {
@@ -119,7 +104,7 @@ export function useDeleteFiles() {
 
 			return confirmed;
 		},
-		[mutation, openConfirmation, waitForJob, refetchListings, restore, undo, adminRetry, t],
+		[mutation, openConfirmation, waitForJob, refetchListings, undo, adminRetry, t],
 	);
 
 	return { deleteFiles, isPending: mutation.isPending };

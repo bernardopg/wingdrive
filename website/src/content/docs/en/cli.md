@@ -48,7 +48,7 @@ wing file copy ./a.txt ~/Backup/
 wing file rename ./old.txt new.txt
 wing file mkdir ~/Projects/new
 wing file delete ./tmp.log
-wing file undo                   # reverse the last copy, move or trash
+wing file undo                   # reverse the last copy, move, rename, trash or creation
 wing file history                # what can still be undone
 ```
 

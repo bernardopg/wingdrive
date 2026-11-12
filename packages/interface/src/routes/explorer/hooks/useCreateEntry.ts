@@ -1,8 +1,7 @@
 import {toast} from '@wingdrive/primitives';
-import type {File, TemplateFile, WingPath} from '@wingdrive/ts-client';
+import type {File, TemplateFile} from '@wingdrive/ts-client';
 import {useCallback} from 'react';
 
-import {usePlatform} from '../../../contexts/PlatformContext';
 import {useLibraryMutation} from '../../../contexts/WingDriveContext';
 import {useRefetchFileListings} from '../../../hooks/useRefetchFileListings';
 import {useUndo} from '../../../hooks/useUndo';
@@ -42,29 +41,7 @@ export function useCreateEntry() {
 	const createFromTemplate = useLibraryMutation('files.createFromTemplate');
 	const createSymlink = useLibraryMutation('files.createSymlink');
 	const refetchListings = useRefetchFileListings();
-	const platform = usePlatform();
 	const undo = useUndo();
-
-	const recordUndo = useCallback(
-		async (path: WingPath, label: string, expectedHash?: string) => {
-			if (
-				!('Physical' in path) ||
-				!undo.isLocalPath(path) ||
-				!platform.fileIdentity ||
-				!platform.undoNewFile
-			)
-				return;
-			const local = path.Physical.path;
-			const remove = platform.undoNewFile;
-			try {
-				const expected = await platform.fileIdentity(local);
-				undo.record(label, () => remove(local, expected, expectedHash));
-			} catch {
-				// The entry exists; only its undo is unavailable.
-			}
-		},
-		[platform, undo]
-	);
 
 	const newFile = useCallback(async () => {
 		if (!operationalPath) return;
@@ -73,41 +50,34 @@ export function useCreateEntry() {
 			currentFiles.map(diskName)
 		);
 		try {
-			const {path} = await createFile.mutateAsync({parent: operationalPath, name});
+			const {path, undo_id} = await createFile.mutateAsync({parent: operationalPath, name});
 			if ('Physical' in path) requestReveal(path.Physical.path, {rename: true});
-			await recordUndo(path, t('undo.newFile'));
+			undo.recordJournaled(t('undo.newFile'), [undo_id]);
 			refetchListings();
 		} catch (error) {
 			toast.error(t('errors.failedToCreateFile', {error}));
 		}
-	}, [operationalPath, currentFiles, createFile, recordUndo, refetchListings, t]);
+	}, [operationalPath, currentFiles, createFile, undo, refetchListings, t]);
 
 	const newFromTemplate = useCallback(
 		async (template: TemplateFile) => {
 			if (!operationalPath) return;
 			const name = nextFreeName(template.name, currentFiles.map(diskName));
-			let expectedHash: string | undefined;
-			if ('Physical' in template.path && undo.isLocalPath(template.path) && platform.fileContentHash) {
-				try {
-					expectedHash = await platform.fileContentHash(template.path.Physical.path);
-				} catch {
-					// A missing fingerprint prevents undo, not creation.
-				}
-			}
 			try {
-				const {path} = await createFromTemplate.mutateAsync({
+				const {path, undo_id} = await createFromTemplate.mutateAsync({
 					template: template.path,
 					parent: operationalPath,
 					name
 				});
 				if ('Physical' in path) requestReveal(path.Physical.path, {rename: true});
-				if (expectedHash) await recordUndo(path, t('undo.newFile'), expectedHash);
+				// Undo removes the copy only while it still matches what was created.
+				undo.recordJournaled(t('undo.newFile'), [undo_id]);
 				refetchListings();
 			} catch (error) {
 				toast.error(t('errors.failedToCreateFile', {error}));
 			}
 		},
-		[operationalPath, currentFiles, createFromTemplate, recordUndo, refetchListings, platform, undo, t]
+		[operationalPath, currentFiles, createFromTemplate, refetchListings, undo, t]
 	);
 
 	const newLink = useCallback(
@@ -118,19 +88,19 @@ export function useCreateEntry() {
 				currentFiles.map(diskName)
 			);
 			try {
-				const {path} = await createSymlink.mutateAsync({
+				const {path, undo_id} = await createSymlink.mutateAsync({
 					target: target.wing_path,
 					parent: operationalPath,
 					name
 				});
 				if ('Physical' in path) requestReveal(path.Physical.path);
-				await recordUndo(path, t('undo.newLink'));
+				undo.recordJournaled(t('undo.newLink'), [undo_id]);
 				refetchListings();
 			} catch (error) {
 			toast.error(t('errors.failedToCreateLink', {error}));
 			}
 		},
-	[operationalPath, currentFiles, createSymlink, recordUndo, refetchListings, t]
+	[operationalPath, currentFiles, createSymlink, undo, refetchListings, t]
 	);
 
 	return {newFile, newFromTemplate, newLink};

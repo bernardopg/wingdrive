@@ -8,6 +8,7 @@ use crate::{
 	infra::action::{error::ActionError, LibraryAction, ValidationResult},
 	ops::files::{
 		copy::job::{FileCopyJob, MoveMode},
+		journal,
 		rename::validation::validate_filename,
 	},
 	volume::{LocalBackend, VolumeBackend},
@@ -152,7 +153,14 @@ impl LibraryAction for CreateFolderAction {
 				job_handle.into(),
 			))
 		} else {
-			Ok(CreateFolderOutput::without_items(folder_path))
+			// Moved items are journaled by their job; an empty folder by itself.
+			let undo_id = match folder_path.as_local_path() {
+				Some(path) => {
+					journal::record_created(library.jobs().database().conn(), "create", path).await
+				}
+				None => None,
+			};
+			Ok(CreateFolderOutput::without_items(folder_path).with_undo(undo_id))
 		}
 	}
 

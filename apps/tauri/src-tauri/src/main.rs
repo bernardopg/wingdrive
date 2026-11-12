@@ -23,7 +23,6 @@ mod network_discovery;
 mod notifications;
 mod server;
 mod terminal;
-mod undo;
 mod windows;
 
 use serde::{Deserialize, Serialize};
@@ -2539,11 +2538,6 @@ fn main() {
 			clipboard::write_file_clipboard,
 			clipboard::read_file_clipboard,
 			file_drag::start_file_drag,
-			undo::file_identity,
-			undo::file_content_hash,
-			undo::undo_move,
-			undo::undo_empty_folder,
-			undo::undo_new_file,
 			file_opening::get_apps_for_paths,
 			file_opening::open_path_default,
 			file_opening::open_path_with_app,
