@@ -33,6 +33,25 @@ version in the workspace manifests and the matching `v*` git tag.
 - Cloud volumes disappeared 30 seconds after startup, when the volume
   monitor's refresh did not find them among local disks.
 - Cloud locations were listed as local paths, so opening one showed nothing.
+- Extracting a TAR whose hard link pointed at a symbolic link already in the
+  destination copied the link's external target into the extraction. Hard
+  links to anything but a regular file are now rejected and opened without
+  following links.
+- The archive browse cache never removed old plain files at its root, so
+  they stayed on disk and logged a warning on every prune.
+
+### Tests
+
+- Boundary cases for tag validation, rename validation and archive formats
+  and extraction.
+
+### Planned
+
+- Integrations roadmap (`INTG-000`): bundled Google OAuth client, Google app
+  verification, privacy policy and terms, reconnect flow and real-Google
+  validation, so any user connects with a sign-in; then Dropbox, OneDrive,
+  Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA, Proton Drive, object
+  storage, SFTP and SMB. See `.tasks/ROADMAP.md`.
 
 ## 3.1.1 — 2026-11-12
 

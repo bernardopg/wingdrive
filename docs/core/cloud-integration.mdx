@@ -3,7 +3,7 @@ title: Cloud Integration
 sidebarTitle: Cloud Integration
 ---
 
-WingDrive treats cloud storage as native volumes, enabling seamless file management across local and cloud storage. The system leverages OpenDAL to support over 40 cloud services while maintaining consistent performance and behavior.
+WingDrive treats cloud storage as native volumes, enabling seamless file management across local and cloud storage. Google Drive has its own connector (see [Integrations](/docs/core/integrations)); the other services go through OpenDAL.
 
 ## How Cloud Volumes Work
 
@@ -79,17 +79,16 @@ See [Unified Addressing](/docs/core/addressing) for complete details on URI form
 
 ## Supported Services
 
-WingDrive supports all major cloud providers through OpenDAL:
+| Service | Backend | Compiled in |
+| --- | --- | --- |
+| Google Drive | `GoogleDriveBackend` ([Integrations](/docs/core/integrations)) | Yes |
+| Amazon S3 and S3-compatible (R2, MinIO, Wasabi, B2, Spaces) | OpenDAL `services-s3` | Yes |
+| Dropbox | OpenDAL `services-dropbox` | Yes |
+| OneDrive | OpenDAL `services-onedrive` | Yes |
+| Azure Blob | OpenDAL `services-azblob` | Yes |
+| Google Cloud Storage | OpenDAL `services-gcs` | Yes |
 
-**Object Storage**: S3, Azure Blob, Google Cloud Storage, MinIO, Backblaze B2, Cloudflare R2
-
-**Consumer Cloud**: Google Drive, Dropbox, OneDrive, iCloud Drive, pCloud, MEGA
-
-**Enterprise Storage**: SharePoint, Box, Nextcloud, Seafile, WebDAV
-
-**Regional Services**: Alibaba Cloud OSS, Tencent COS, Huawei OBS, Baidu BOS
-
-Each service maintains its native features while presenting a unified interface through WingDrive.
+OpenDAL supports more services (WebDAV, Nextcloud, Box, pCloud and others), but their features are not enabled in `core/Cargo.toml`. Each one is tracked as an integration task under `INTG-000`.
 
 ## Content Identification
 
@@ -114,21 +113,16 @@ The constant transfer size for large files makes cloud indexing predictable and 
 
 ## Credential Management
 
-Cloud credentials are encrypted with XChaCha20-Poly1305 using your library key. Credentials store in your OS keyring: Keychain on macOS, Credential Manager on Windows, Secret Service on Linux. Each library maintains separate credentials for isolation.
+Cloud credentials are encrypted with XChaCha20-Poly1305 using the library key and stored in the library's `cloud_credentials` table. Each library keeps separate credentials. Google account grants live in the same table under `integration:google:*` keys.
 
 ```rust
-let credential_manager = CloudCredentialManager::new(library_key_manager);
+let credential_manager = CloudCredentialManager::new(key_manager, library.db().clone(), library.id());
 credential_manager
-    .store_credential(library_id, &volume_fingerprint, &credential)
+    .store_credential(library.id(), &volume_fingerprint, &credential)
     .await?;
 ```
 
-API keys and access credentials remain encrypted at rest. Removing a cloud volume purges its credentials from storage immediately.
-
-<Info>
-	WingDrive never stores credentials in plain text or transmits them outside
-	the secure credential flow.
-</Info>
+Removing a cloud volume deletes its credentials.
 
 ## Indexing Cloud Content
 

@@ -93,7 +93,8 @@ start with your session and stay in the tray.
 
 - Every file gets a BLAKE3 content identity, so the same file on two devices is one file.
 - Pair your own devices over Iroh/QUIC to sync the library and send files with Wingdrop.
-- Cloud volumes through OpenDAL: S3, Google Drive, Dropbox, OneDrive, Azure Blob and GCS.
+- Google Drive and Google Photos with several accounts: browse, copy, edit in local apps, sync folders
+  and upload photos. S3, Dropbox, OneDrive, Azure Blob and GCS as volumes through OpenDAL.
 - `wing` CLI and `wing-server` for scripts and headless machines, both on the same daemon.
 - English and Brazilian Portuguese, and themes such as Catppuccin, Gruvbox, Dracula and Tokyo Night.
 
@@ -104,7 +105,7 @@ start with your session and stay in the tray.
 | Install and first run | [Installation](./docs/readme/installation.md) · [Get started](./docs/overview/get-started.mdx) |
 | Libraries and locations | [Manage libraries](./docs/overview/manage-libraries.mdx) · [Add locations](./docs/overview/add-index-locations.mdx) |
 | Server and CLI | [Self-hosting](./docs/overview/self-hosting.mdx) · [Linux deployment](./docs/cli/linux-deployment.mdx) · [CLI](./docs/cli/overview.mdx) |
-| Devices and sync | [Pairing](./docs/core/pairing.mdx) · [Library sync](./docs/core/library-sync.mdx) · [Cloud](./docs/core/cloud-integration.mdx) |
+| Devices and sync | [Pairing](./docs/core/pairing.mdx) · [Library sync](./docs/core/library-sync.mdx) · [Cloud](./docs/core/cloud-integration.mdx) · [Integrations](./docs/core/integrations.mdx) |
 | How it works | [Architecture](./docs/readme/architecture.md) · [Core architecture](./docs/core/architecture.mdx) · [Indexing](./docs/core/indexing.mdx) |
 | Extensions | [Extension SDK](./docs/extensions/introduction.mdx) |
 | Contributing | [CONTRIBUTING](./CONTRIBUTING.md) · [AGENTS](./AGENTS.md) · [Dev environment](./docs/core/development-environment.mdx) · [Testing](./docs/core/testing.mdx) |

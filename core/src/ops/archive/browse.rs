@@ -153,7 +153,12 @@ pub fn prune(cache_root: &Path, max_age: std::time::Duration) {
 			.and_then(|t| t.elapsed().ok())
 			.is_some_and(|age| age > max_age);
 		if old {
-			if let Err(error) = std::fs::remove_dir_all(entry.path()) {
+			let result = match entry.file_type() {
+				Ok(kind) if kind.is_dir() => std::fs::remove_dir_all(entry.path()),
+				Ok(_) => std::fs::remove_file(entry.path()),
+				Err(error) => Err(error),
+			};
+			if let Err(error) = result {
 				tracing::warn!(path = %entry.path().display(), %error, "Could not prune archive cache");
 			}
 		}
@@ -271,5 +276,30 @@ mod tests {
 		prune(&cache, std::time::Duration::ZERO);
 		assert!(!opened.exists());
 		assert_eq!(members(&archive).unwrap().len(), 3);
+	}
+	#[test]
+	fn prune_removes_stale_files_as_well_as_directories() {
+		let dir = tempfile::tempdir().unwrap();
+		let file = dir.path().join("orphan");
+		std::fs::write(&file, "stale").unwrap();
+		prune(dir.path(), std::time::Duration::ZERO);
+		assert!(!file.exists());
+	}
+	#[cfg(unix)]
+	#[test]
+	fn prune_removes_a_symlink_without_removing_its_target() {
+		use std::os::unix::fs::symlink;
+
+		let dir = tempfile::tempdir().unwrap();
+		let cache = dir.path().join("cache");
+		let outside = dir.path().join("outside");
+		std::fs::create_dir(&cache).unwrap();
+		std::fs::create_dir(&outside).unwrap();
+		std::fs::write(outside.join("kept"), "data").unwrap();
+		let link = cache.join("link");
+		symlink(&outside, &link).unwrap();
+		prune(&cache, std::time::Duration::ZERO);
+		assert!(!link.exists());
+		assert!(outside.join("kept").is_file());
 	}
 }

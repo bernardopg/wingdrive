@@ -294,4 +294,123 @@ mod tests {
 		assert!(TagValidator::validate_color("#FF00").is_err()); // Too short
 		assert!(TagValidator::validate_color("#GG0000").is_err()); // Invalid hex
 	}
+	#[test]
+	fn tag_names_enforce_unicode_character_and_whitespace_boundaries() {
+		assert!(TagValidator::validate_tag_name(&"é".repeat(255)).is_ok());
+		assert!(TagValidator::validate_tag_name(&"é".repeat(256)).is_err());
+		for name in [
+			"\tname",
+			"name\n",
+			"\u{2003}name",
+			"name\u{2003}",
+			"a\0b",
+			"a\u{7f}b",
+		] {
+			assert!(TagValidator::validate_tag_name(name).is_err(), "{name:?}");
+		}
+		for name in ["a b", "a\tb", "日本語", "a-b_c"] {
+			assert!(TagValidator::validate_tag_name(name).is_ok(), "{name:?}");
+		}
+	}
+
+	#[test]
+	fn namespace_accepts_only_its_documented_alphabet_and_length() {
+		assert!(TagValidator::validate_namespace(&"a".repeat(100)).is_ok());
+		assert!(TagValidator::validate_namespace(&"a".repeat(101)).is_err());
+		for name in [
+			"name/child",
+			"name.child",
+			"name@host",
+			"é",
+			" name",
+			"name ",
+		] {
+			assert!(TagValidator::validate_namespace(name).is_err(), "{name:?}");
+		}
+		for name in ["abc", "A-1_2", "two words"] {
+			assert!(TagValidator::validate_namespace(name).is_ok(), "{name:?}");
+		}
+	}
+
+	#[test]
+	fn color_requires_exactly_six_ascii_hex_digits() {
+		for color in ["#000000", "#ffffff", "#Aa12bC"] {
+			assert!(TagValidator::validate_color(color).is_ok(), "{color:?}");
+		}
+		for color in [
+			"",
+			"#123",
+			"#12345678",
+			"#12345g",
+			"#１２３４５６",
+			" #123456",
+			"#123456\n",
+		] {
+			assert!(TagValidator::validate_color(color).is_err(), "{color:?}");
+		}
+	}
+
+	macro_rules! tag_case {
+		($name:ident, $method:ident, $input:expr, $valid:expr) => {
+			#[test]
+			fn $name() {
+				assert_eq!(
+					TagValidator::$method($input).is_ok(),
+					$valid,
+					"{:?}",
+					$input
+				);
+			}
+		};
+	}
+	tag_case!(tag_basic, validate_tag_name, "project", true);
+	tag_case!(tag_unicode, validate_tag_name, "日本語", true);
+	tag_case!(tag_internal_space, validate_tag_name, "my project", true);
+	tag_case!(tag_empty, validate_tag_name, "", false);
+	tag_case!(tag_spaces_only, validate_tag_name, "   ", false);
+	tag_case!(tag_leading_space, validate_tag_name, " tag", false);
+	tag_case!(tag_trailing_space, validate_tag_name, "tag ", false);
+	tag_case!(tag_null, validate_tag_name, "a\0b", false);
+	tag_case!(tag_control, validate_tag_name, "a\u{1}b", false);
+	tag_case!(
+		tag_max_characters,
+		validate_tag_name,
+		&"é".repeat(255),
+		true
+	);
+	tag_case!(
+		tag_above_max_characters,
+		validate_tag_name,
+		&"é".repeat(256),
+		false
+	);
+	tag_case!(namespace_basic, validate_namespace, "projects", true);
+	tag_case!(namespace_underscore, validate_namespace, "team_1", true);
+	tag_case!(namespace_hyphen, validate_namespace, "team-1", true);
+	tag_case!(
+		namespace_internal_space,
+		validate_namespace,
+		"my team",
+		true
+	);
+	tag_case!(namespace_slash, validate_namespace, "team/sub", false);
+	tag_case!(namespace_colon, validate_namespace, "team:sub", false);
+	tag_case!(namespace_non_ascii, validate_namespace, "équipe", false);
+	tag_case!(
+		namespace_exact_limit,
+		validate_namespace,
+		&"a".repeat(100),
+		true
+	);
+	tag_case!(
+		namespace_over_limit,
+		validate_namespace,
+		&"a".repeat(101),
+		false
+	);
+	tag_case!(color_lowercase, validate_color, "#abcdef", true);
+	tag_case!(color_uppercase, validate_color, "#ABCDEF", true);
+	tag_case!(color_without_hash, validate_color, "ABCDEF", false);
+	tag_case!(color_with_alpha, validate_color, "#abcdef00", false);
+	tag_case!(color_invalid_hex, validate_color, "#abcdeg", false);
 }

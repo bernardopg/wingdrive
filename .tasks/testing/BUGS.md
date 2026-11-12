@@ -1,5 +1,23 @@
 # Bugs encontrados na ampliação de cobertura
 
+## Hard link TAR segue link simbólico existente no destino
+
+- Estado: corrigido; testes de regressão passaram em 2026-11-12 (`cargo test -p wing-core --lib archive::`).
+- Local: `core/src/ops/archive/engine.rs`, `extract_tar`.
+- Reprodução: extraia um TAR contendo hard link `copied` para `source` em um destino onde `source` é um link simbólico para um arquivo externo. A implementação anterior abria o alvo com `File::open` e copiava seu conteúdo para `copied`.
+- Impacto: conteúdo legível pelo processo pode ser copiado para o destino da extração. A reprodução foi identificada por análise do código e o teste de regressão cobre o caso.
+- Correção: rejeitar origens que não sejam arquivos regulares, abrir antes de criar o destino e usar `O_NOFOLLOW` em Unix. A verificação dos diretórios ancestrais ainda depende de verificações por caminho e não garante proteção contra alterações concorrentes do diretório de extração; isso não foi testado.
+
+
+## Arquivos antigos no cache de arquivos compactados não são removidos
+
+- Estado: corrigido; testes de regressão passaram em 2026-11-12.
+- Local: `core/src/ops/archive/browse.rs`, `prune`.
+- Reprodução: coloque um arquivo comum antigo na raiz do cache e execute `prune`. A função tentava removê-lo como diretório e deixava a entrada no disco.
+- Impacto: entradas comuns antigas permaneciam no cache e geravam avisos repetidos. Não foi identificado um fluxo normal que crie essas entradas.
+- Correção: escolher a operação de remoção pelo tipo da entrada, sem seguir links simbólicos ao decidir como removê-la.
+
+
 ## Avisos do Clippy nos testes de menus de serviço
 
 - Estado: corrigido localmente; `cargo clippy --locked -p file-opening-linux --all-targets -- -D warnings` passou.

@@ -3,13 +3,13 @@ id: CLOUD-004
 title: Google integration (Drive, Photos and cloud folder sync)
 status: In Progress
 assignee: bernardopg
-parent: CLOUD-000
+parent: INTG-000
 priority: High
 milestone: M5
-sprint: S05
+sprint: S06
 tags: [cloud, integrations, google-drive, google-photos, oauth, sync]
 last_updated: 2026-11-12
-related_tasks: [CLOUD-003, FILE-003]
+related_tasks: [CLOUD-003, FILE-003, INTG-000, INTG-001, INTG-002, INTG-003, INTG-004, INTG-005]
 ---
 
 ## Description
@@ -51,12 +51,18 @@ behavior are documented in `docs/core/integrations.mdx`.
 
 ## Next
 
-- Create the WingDrive Google Cloud project, enable Drive API, Photos Library
-  API and Photos Picker API, and decide whether to bundle the client ID at
-  build time (`WINGDRIVE_GOOGLE_CLIENT_ID`). Publishing past testing mode
-  needs Google's verification for the restricted `drive` scope.
-- Shared drives and "Shared with me" are not browsed.
-- Drive files are not indexed, so they do not appear in library search.
+Pending work to make Google work for any user with just a sign-in is tracked under the epic
+INTG-000 and planned in sprint S06:
+
+- INTG-001: WingDrive Google Cloud project and OAuth client bundled in release builds.
+- INTG-002: privacy policy, terms and Limited Use disclosure on wingdrive.org.
+- INTG-003: Google OAuth verification (restricted `drive` scope needs a yearly CASA assessment).
+- INTG-004: end-to-end validation with real Google on every platform and package.
+- INTG-005: reconnect flow for revoked or expired accounts.
+- INTG-006 to INTG-009 (backlog): remote wing-server and mobile sign-in, shared drives,
+  Drive change feed and search, Photos albums and progress.
+
+This task closes when INTG-001 to INTG-004 are Done.
 
 ## Log
 

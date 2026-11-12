@@ -227,4 +227,38 @@ mod tests {
 			Err(FilenameValidationError::TooLong(255))
 		));
 	}
+
+	macro_rules! filename_case {
+		($name:ident, $input:expr, $valid:expr) => {
+			#[test]
+			fn $name() {
+				assert_eq!(validate_filename($input).is_ok(), $valid, "{:?}", $input);
+			}
+		};
+	}
+	filename_case!(filename_plain, "report", true);
+	filename_case!(filename_extension, "report.pdf", true);
+	filename_case!(filename_hidden, ".hidden", true);
+	filename_case!(filename_unicode, "日本語.txt", true);
+	filename_case!(filename_emoji, "photo📷.jpg", true);
+	filename_case!(filename_internal_space, "my report.pdf", true);
+	filename_case!(filename_multiple_dots, "archive.tar.gz", true);
+	filename_case!(filename_leading_dash, "-report", true);
+	filename_case!(filename_underscore, "report_2026", true);
+	filename_case!(filename_double_dot_prefix, "..backup", true);
+	filename_case!(filename_empty, "", false);
+	filename_case!(filename_current_directory, ".", false);
+	filename_case!(filename_parent_directory, "..", false);
+	filename_case!(filename_forward_slash, "dir/file", false);
+	filename_case!(filename_backslash, "dir\\file", false);
+	filename_case!(filename_null, "a\0b", false);
+	filename_case!(filename_less_than, "a<b", false);
+	filename_case!(filename_greater_than, "a>b", false);
+	filename_case!(filename_colon, "a:b", false);
+	filename_case!(filename_quote, "a\"b", false);
+	filename_case!(filename_pipe, "a|b", false);
+	filename_case!(filename_question, "a?b", false);
+	filename_case!(filename_star, "a*b", false);
+	filename_case!(filename_too_long, &"a".repeat(256), false);
+	filename_case!(filename_exact_limit, &"a".repeat(255), true);
 }
