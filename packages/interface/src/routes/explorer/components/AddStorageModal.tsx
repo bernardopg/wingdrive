@@ -47,6 +47,7 @@ import DriveBackBlaze from "@wingdrive/assets/icons/Drive-BackBlaze.webp";
 import DrivePCloud from "@wingdrive/assets/icons/Drive-PCloud.webp";
 import DriveBox from "@wingdrive/assets/icons/Drive-Box.webp";
 import { ThemedIcon } from "../../../components/ThemedIcon";
+import { useGoogleConnect } from "../../../hooks/useGoogleConnect";
 
 type StorageCategory = "local" | "cloud" | "external";
 type ModalStep = "category" | "provider" | "local-config" | "cloud-config";
@@ -1144,6 +1145,29 @@ function AddStorageDialog(props: {
 		);
 	}
 
+	// Google Drive signs in through the browser instead of a token form.
+	if (step === "cloud-config" && selectedProvider?.cloudServiceType === "gdrive") {
+		return (
+			<StorageDialog
+				dialog={dialog}
+				form={dummyForm}
+				title={t("addStorage.addProvider", {name: selectedProvider.name})}
+				icon={<ThemedIcon src={selectedProvider.icon} className="size-5" alt="" />}
+				description={t("addStorage.googleDescription")}
+				hideButtons={true}
+				showBackButton={true}
+				onBack={handleBack}
+			>
+				<GoogleDriveConnectStep
+					onConnected={(identifier) => {
+						dialog.state.open = false;
+						props.onStorageAdded?.({Cloud: {service: "gdrive", identifier, path: ""}});
+					}}
+				/>
+			</StorageDialog>
+		);
+	}
+
 	// Render cloud configuration form
 	if (step === "cloud-config" && selectedProvider) {
 		const provider = selectedProvider;
@@ -1390,4 +1414,45 @@ function AddStorageDialog(props: {
 	}
 
 	return null;
+}
+
+/** Signs a Google account in and mounts its Drive; several accounts can be added one by one. */
+function GoogleDriveConnectStep({onConnected}: {onConnected: (identifier: string) => void}) {
+	const {t} = useTranslation('explorer');
+	const clientInfo = useLibraryQuery({type: "integrations.google.client", input: {}});
+	const {state, start, cancel, isStarting} = useGoogleConnect((account) => {
+		if (account.drive) onConnected(account.drive.identifier);
+	});
+	const configured = clientInfo.data?.configured ?? false;
+
+	return (
+		<div className="space-y-3">
+			<p className="text-sm text-ink-dull">{t("addStorage.googleHint")}</p>
+			{!configured && !clientInfo.isLoading && (
+				<p className="rounded-md border border-status-warning/25 bg-status-warning/10 px-3 py-2 text-sm text-status-warning">
+					{t("addStorage.googleNotConfigured")}
+				</p>
+			)}
+			{state.phase === "waiting" ? (
+				<div className="flex items-center gap-2">
+					<span className="text-sm text-ink-dull">{t("addStorage.googleWaiting")}</span>
+					<Button variant="gray" size="sm" onClick={() => void cancel()}>
+						{t("addStorage.googleCancel")}
+					</Button>
+				</div>
+			) : (
+				<Button
+					variant="accent"
+					size="md"
+					disabled={!configured || isStarting}
+					onClick={() => void start(["drive", "photos"])}
+				>
+					{t("addStorage.googleSignIn")}
+				</Button>
+			)}
+			{state.phase === "error" && (
+				<p className="text-sm text-status-error">{t("addStorage.googleFailed", {error: state.message})}</p>
+			)}
+		</div>
+	);
 }

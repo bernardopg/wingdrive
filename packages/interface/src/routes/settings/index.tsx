@@ -7,6 +7,7 @@ import {
   Info,
   MagnifyingGlass,
   PaintBrush,
+  PlugsConnected,
   ShieldCheck,
   Wrench,
   type Icon,
@@ -17,6 +18,7 @@ import {
   LibrarySettings,
   IndexerSettings,
   ServicesSettings,
+  IntegrationsSettings,
   PrivacySettings,
   AdvancedSettings,
   AboutSettings,
@@ -37,6 +39,7 @@ const sections: { id: string; icon: Icon }[] = [
   { id: "library", icon: Books },
   { id: "indexer", icon: MagnifyingGlass },
   { id: "services", icon: Cpu },
+  { id: "integrations", icon: PlugsConnected },
   { id: "privacy", icon: ShieldCheck },
   { id: "advanced", icon: Wrench },
   { id: "about", icon: Info },
@@ -99,6 +102,8 @@ function SettingsContent({ page }: SettingsContentProps) {
       return <IndexerSettings />;
     case "services":
       return <ServicesSettings />;
+    case "integrations":
+      return <IntegrationsSettings />;
     case "privacy":
       return <PrivacySettings />;
     case "advanced":

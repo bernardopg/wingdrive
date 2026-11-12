@@ -56,6 +56,7 @@ use crate::domains::{
 	events::{self, EventsCmd},
 	file::{self, FileCmd},
 	index::{self, IndexCmd},
+	integrations::{self, IntegrationsCmd},
 	job::{self, JobCmd},
 	library::{self, LibraryCmd},
 	location::{self, LocationCmd},
@@ -199,6 +200,9 @@ enum Commands {
 	/// Indexing operations
 	#[command(subcommand)]
 	Index(IndexCmd),
+	/// Connected accounts (Google Drive and Photos) and cloud folder sync
+	#[command(subcommand)]
+	Integrations(IntegrationsCmd),
 	/// Location operations
 	#[command(subcommand)]
 	Location(LocationCmd),
@@ -746,6 +750,7 @@ async fn run_client_command(
 		Commands::Library(cmd) => library::run(&ctx, cmd).await?,
 		Commands::File(cmd) => file::run(&ctx, cmd).await?,
 		Commands::Index(cmd) => index::run(&ctx, cmd).await?,
+		Commands::Integrations(cmd) => integrations::run(&ctx, cmd).await?,
 		Commands::Location(cmd) => location::run(&ctx, cmd).await?,
 		Commands::Network(cmd) => network::run(&ctx, cmd).await?,
 		Commands::Job(cmd) => job::run(&ctx, cmd).await?,

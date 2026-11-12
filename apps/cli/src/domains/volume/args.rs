@@ -133,26 +133,10 @@ impl VolumeAddCloudArgs {
 				}
 			}
 			CloudServiceArg::GoogleDrive => {
-				let access_token = self
-					.access_token
-					.ok_or("--access-token is required for Google Drive")?;
-				let refresh_token = self
-					.refresh_token
-					.ok_or("--refresh-token is required for Google Drive")?;
-				let client_id = self
-					.client_id
-					.ok_or("--client-id is required for Google Drive")?;
-				let client_secret = self
-					.client_secret
-					.ok_or("--client-secret is required for Google Drive")?;
-
-				CloudStorageConfig::GoogleDrive {
-					root: self.root,
-					access_token,
-					refresh_token,
-					client_id,
-					client_secret,
-				}
+				return Err(
+					"Google Drive connects through the browser: run `wing integrations connect google`"
+						.to_string(),
+				);
 			}
 			CloudServiceArg::OneDrive => {
 				let access_token = self
@@ -354,45 +338,11 @@ mod tests {
 	}
 
 	#[test]
-	fn google_drive_keeps_oauth_fields_and_root() {
-		let input = parse(&[
-			"wing",
-			"name",
-			"--service",
-			"google-drive",
-			"--access-token",
-			"access",
-			"--refresh-token",
-			"refresh",
-			"--client-id",
-			"id",
-			"--client-secret",
-			"secret",
-			"--root",
-			"folder",
-		])
-		.validate_and_build()
-		.unwrap();
-		let CloudStorageConfig::GoogleDrive {
-			root,
-			access_token,
-			refresh_token,
-			client_id,
-			client_secret,
-		} = input.config
-		else {
-			panic!("expected Google Drive")
-		};
-		assert_eq!(root.as_deref(), Some("folder"));
-		assert_eq!(
-			(
-				access_token.as_str(),
-				refresh_token.as_str(),
-				client_id.as_str(),
-				client_secret.as_str()
-			),
-			("access", "refresh", "id", "secret")
-		);
+	fn google_drive_points_to_the_browser_sign_in() {
+		let error = parse(&["wing", "name", "--service", "google-drive"])
+			.validate_and_build()
+			.unwrap_err();
+		assert!(error.contains("wing integrations connect google"));
 	}
 
 	#[test]

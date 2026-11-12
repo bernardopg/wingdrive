@@ -5,6 +5,7 @@ pub mod devices;
 pub mod events;
 pub mod file;
 pub mod index;
+pub mod integrations;
 pub mod job;
 pub mod library;
 pub mod location;

@@ -124,7 +124,8 @@
 		"delete": "Excluir",
 		"undo": "Desfazer",
 		"openInNewWindow": "Abrir em nova janela",
-		"sendWithWingdrop": "Enviar com Wingdrop"
+		"sendWithWingdrop": "Enviar com Wingdrop",
+		"uploadToGooglePhotos": "Enviar para o Google Fotos"
 	},
 	"sort": {
 		"dateTaken": "Data da captura",
@@ -374,7 +375,14 @@
 		"alternativeSuggestion": "Sugestão alternativa",
 		"endpoint": "Endpoint",
 		"endpointExampleR2": " (por exemplo, https://account.r2.cloudflarestorage.com)",
-		"endpointExampleMinio": " (por exemplo, http://localhost:9000)"
+		"endpointExampleMinio": " (por exemplo, http://localhost:9000)",
+		"googleDescription": "Entre com o Google para adicionar seu Drive",
+		"googleHint": "O navegador abre a página de login do Google. Depois que você permitir o acesso, o Drive aparece na barra lateral. Repita para adicionar outras contas.",
+		"googleNotConfigured": "O login no Google precisa de um cliente OAuth. Adicione um em Configurações > Integrações.",
+		"googleSignIn": "Entrar com o Google",
+		"googleWaiting": "Termine o login no navegador…",
+		"googleCancel": "Cancelar",
+		"googleFailed": "O login no Google falhou: {{error}}"
 	},
 	"knowledge": {
 		"title": "Visualização de conhecimento",
@@ -517,5 +525,15 @@
 			"emptyName": "Digite um nome.",
 			"badName": "O nome não pode conter \"/\" nem ser \".\" ou \"..\"."
 		}
+	},
+	"googlePhotos": {
+		"uploading_one": "Enviando {{count}} item para o Google Fotos ({{email}})",
+		"uploading_other": "Enviando {{count}} itens para o Google Fotos ({{email}})",
+		"uploaded": "Enviado para o Google Fotos ({{email}})",
+		"failed": "O envio para o Google Fotos falhou: {{error}}"
+	},
+	"cloudEdit": {
+		"opened": "Editando uma cópia do arquivo da nuvem. As alterações salvas são enviadas automaticamente.",
+		"openFailed": "Não foi possível abrir o arquivo da nuvem: {{error}}"
 	}
 }

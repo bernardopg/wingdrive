@@ -124,7 +124,8 @@
 		"delete": "Delete",
 		"undo": "Undo",
 		"openInNewWindow": "Open in New Window",
-		"sendWithWingdrop": "Send with Wingdrop"
+		"sendWithWingdrop": "Send with Wingdrop",
+		"uploadToGooglePhotos": "Upload to Google Photos"
 	},
 	"sort": {
 		"dateTaken": "Date Taken",
@@ -374,7 +375,14 @@
 		"alternativeSuggestion": "Alternative Suggestion",
 		"endpoint": "Endpoint",
 		"endpointExampleR2": " (e.g., https://account.r2.cloudflarestorage.com)",
-		"endpointExampleMinio": " (e.g., http://localhost:9000)"
+		"endpointExampleMinio": " (e.g., http://localhost:9000)",
+		"googleDescription": "Sign in with Google to add your Drive",
+		"googleHint": "Your browser opens Google's sign-in page. After you allow access, the Drive appears in the sidebar. Repeat to add more accounts.",
+		"googleNotConfigured": "Google sign-in needs an OAuth client. Add one in Settings > Integrations.",
+		"googleSignIn": "Sign in with Google",
+		"googleWaiting": "Finish signing in in your browser…",
+		"googleCancel": "Cancel",
+		"googleFailed": "Google sign-in failed: {{error}}"
 	},
 	"knowledge": {
 		"title": "Knowledge View",
@@ -517,5 +525,15 @@
 			"emptyName": "Type a name.",
 			"badName": "The name cannot contain \"/\" or be \".\" or \"..\"."
 		}
+	},
+	"googlePhotos": {
+		"uploading_one": "Uploading {{count}} item to Google Photos ({{email}})",
+		"uploading_other": "Uploading {{count}} items to Google Photos ({{email}})",
+		"uploaded": "Uploaded to Google Photos ({{email}})",
+		"failed": "Google Photos upload failed: {{error}}"
+	},
+	"cloudEdit": {
+		"opened": "Editing a copy of the cloud file. Saved changes upload automatically.",
+		"openFailed": "Could not open the cloud file: {{error}}"
 	}
 }
