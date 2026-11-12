@@ -114,6 +114,16 @@ async fn call_running_instance(id: &str, argv: Vec<String>, cwd: String) -> bool
 	let Ok(connection) = zbus::Connection::session().await else {
 		return false;
 	};
+	call_instance_on(&connection, id, argv, cwd).await
+}
+
+#[cfg(target_os = "linux")]
+async fn call_instance_on(
+	connection: &zbus::Connection,
+	id: &str,
+	argv: Vec<String>,
+	cwd: String,
+) -> bool {
 	connection
 		.call_method(
 			Some(format!("{id}.SingleInstance").as_str()),
