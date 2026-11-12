@@ -16,6 +16,12 @@ const files = [
 const ids = (list: File[]) => list.map((f) => f.id);
 
 describe('select by pattern', () => {
+	test('treats an invalid character range as literal text without breaking other globs', () => {
+		const matcher = globMatcher('[z-a]; *.txt');
+		expect(matcher?.test('[z-a]')).toBe(true);
+		expect(matcher?.test('notes.txt')).toBe(true);
+		expect(matcher?.test('z')).toBe(false);
+	});
 	test('matches whole names case-insensitively', () => {
 		expect(ids(filesMatching(files, '*.jpg'))).toEqual(['1', '5']);
 		expect(ids(filesMatching(files, 'photos'))).toEqual(['4']);

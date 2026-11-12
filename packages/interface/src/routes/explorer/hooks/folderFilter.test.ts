@@ -15,6 +15,10 @@ const files = [
 const ids = (list: File[]) => list.map((f) => f.id);
 
 describe('folder filter', () => {
+	test('accepts a malformed range as literal text', () => {
+		const literal = file('5', '[z-a]');
+		expect(ids(filterFiles([...files, literal], '[z-a]'))).toEqual(['5']);
+	});
 	test('blank text keeps every file', () => {
 		expect(filterFiles(files, '')).toBe(files);
 		expect(filterFiles(files, '   ')).toBe(files);

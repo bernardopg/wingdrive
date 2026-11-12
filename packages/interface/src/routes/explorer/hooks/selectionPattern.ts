@@ -19,7 +19,14 @@ export function globMatcher(pattern: string): RegExp | null {
 				const end = glob.indexOf(']', i + 1);
 				if (end > i + 1) {
 					const body = glob.slice(i + 1, end).replace(/^!/, '^').replace(/\\/g, '\\\\');
-					out += `[${body}]`;
+					const characterClass = `[${body}]`;
+					try {
+						new RegExp(characterClass, 'i');
+						out += characterClass;
+					} catch {
+						// Invalid ranges should match their literal spelling instead of breaking the filter.
+						out += glob.slice(i, end + 1).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+					}
 					i = end;
 				} else out += '\\[';
 			} else out += c.replace(/[.+^${}()|\\\]]/g, '\\$&');
