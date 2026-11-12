@@ -82,8 +82,12 @@ pub async fn decide(
 	let Some(path) = target.as_local_path() else {
 		return Ok(PlanDecision::Write);
 	};
-	if tokio::fs::symlink_metadata(path).await.is_err() {
-		return Ok(PlanDecision::Write);
+	match tokio::fs::symlink_metadata(path).await {
+		Ok(_) => {}
+		Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+			return Ok(PlanDecision::Write);
+		}
+		Err(error) => return Err(error),
 	}
 	Ok(match policy {
 		None => PlanDecision::Ask,
@@ -120,7 +124,12 @@ pub async fn next_free_name(path: &Path) -> std::io::Result<PathBuf> {
 
 	let mut candidate = path.to_path_buf();
 	let mut counter = 1;
-	while tokio::fs::symlink_metadata(&candidate).await.is_ok() {
+	loop {
+		match tokio::fs::symlink_metadata(&candidate).await {
+			Ok(_) => {}
+			Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(candidate),
+			Err(error) => return Err(error),
+		}
 		if counter > MAX_RENAME_ATTEMPTS {
 			return Err(std::io::Error::other(format!(
 				"Could not generate unique filename after {MAX_RENAME_ATTEMPTS} attempts"
@@ -132,12 +141,118 @@ pub async fn next_free_name(path: &Path) -> std::io::Result<PathBuf> {
 		candidate = parent.join(name);
 		counter += 1;
 	}
-	Ok(candidate)
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn inaccessible_target_is_not_treated_as_available() {
+		use std::os::unix::fs::PermissionsExt;
+
+		let dir = tempfile::tempdir().unwrap();
+		let locked = dir.path().join("locked");
+		std::fs::create_dir(&locked).unwrap();
+		std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o000)).unwrap();
+		let target = locked.join("file.txt");
+		let metadata_error = match std::fs::symlink_metadata(&target) {
+			Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => error,
+			_ => {
+				std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o700)).unwrap();
+				return;
+			}
+		};
+		let decision = decide(&WingPath::local(&target), None).await;
+		let free_name = next_free_name(&target).await;
+		std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o700)).unwrap();
+		assert_eq!(metadata_error.kind(), std::io::ErrorKind::PermissionDenied);
+		assert_eq!(
+			decision.unwrap_err().kind(),
+			std::io::ErrorKind::PermissionDenied
+		);
+		assert_eq!(
+			free_name.unwrap_err().kind(),
+			std::io::ErrorKind::PermissionDenied
+		);
+	}
+
+	#[tokio::test]
+	async fn conflict_policies_preserve_the_requested_action() {
+		let dir = tempfile::tempdir().unwrap();
+		let target = dir.path().join("existing");
+		std::fs::write(&target, b"original").unwrap();
+		for (policy, expected) in [
+			(FileConflictResolution::Overwrite, PlanDecision::Overwrite),
+			(FileConflictResolution::Skip, PlanDecision::Skip),
+			(FileConflictResolution::Abort, PlanDecision::Abort),
+		] {
+			assert_eq!(
+				decide(&WingPath::local(&target), Some(policy))
+					.await
+					.unwrap(),
+				expected
+			);
+		}
+		assert_eq!(std::fs::read(target).unwrap(), b"original");
+	}
+
+	#[tokio::test]
+	async fn generated_names_keep_extensions_and_find_gaps() {
+		let dir = tempfile::tempdir().unwrap();
+		for (name, expected) in [
+			("archive.tar.gz", "archive.tar (1).gz"),
+			(".profile", ".profile (1)"),
+			("no-extension", "no-extension (1)"),
+			("café 文件.txt", "café 文件 (1).txt"),
+		] {
+			let target = dir.path().join(name);
+			std::fs::write(&target, b"x").unwrap();
+			assert_eq!(
+				next_free_name(&target).await.unwrap(),
+				dir.path().join(expected)
+			);
+		}
+		let target = dir.path().join("gap.txt");
+		std::fs::write(&target, b"x").unwrap();
+		std::fs::write(dir.path().join("gap (2).txt"), b"x").unwrap();
+		assert_eq!(
+			next_free_name(&target).await.unwrap(),
+			dir.path().join("gap (1).txt")
+		);
+	}
+
+	#[tokio::test]
+	async fn generated_name_search_stops_after_its_attempt_limit() {
+		let dir = tempfile::tempdir().unwrap();
+		let target = dir.path().join("taken.txt");
+		std::fs::write(&target, b"").unwrap();
+		for counter in 1..=MAX_RENAME_ATTEMPTS {
+			std::fs::write(dir.path().join(format!("taken ({counter}).txt")), b"").unwrap();
+		}
+		let error = next_free_name(&target).await.unwrap_err();
+		assert!(error.to_string().contains("1000 attempts"));
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn dangling_symlinks_are_conflicts_and_reserve_names() {
+		use std::os::unix::fs::symlink;
+
+		let dir = tempfile::tempdir().unwrap();
+		let target = dir.path().join("file.txt");
+		symlink(dir.path().join("missing"), &target).unwrap();
+		symlink(dir.path().join("missing"), dir.path().join("file (1).txt")).unwrap();
+		assert_eq!(
+			decide(&WingPath::local(&target), None).await.unwrap(),
+			PlanDecision::Ask
+		);
+		assert_eq!(
+			next_free_name(&target).await.unwrap(),
+			dir.path().join("file (2).txt")
+		);
+	}
 
 	#[cfg(unix)]
 	#[tokio::test]
