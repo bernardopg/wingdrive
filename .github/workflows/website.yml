@@ -112,3 +112,10 @@ jobs:
       - name: Clean up key
         if: always()
         run: rm -f ~/.ssh/deploy
+      - name: Check the live site
+        run: |
+          for path in / /pt/ /download/ /changelog/; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --retry 3 --retry-all-errors "https://wingdrive.org$path")
+            echo "$path -> $code"
+            [ "$code" = 200 ] || { echo "::error::https://wingdrive.org$path returned $code"; exit 1; }
+          done

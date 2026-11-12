@@ -9,7 +9,7 @@ contact_links:
     url: https://github.com/bernardopg/wingdrive/discussions/new?category=ideas
     about: Suggest a new feature in an Ideas discussion.
   - name: 💬 Chat on Discord
-    url: https://discord.gg/ZHbD5Hbh
+    url: https://discord.gg/n8uwvrYMCh
     about: Talk with the community and the maintainer in the WingDrive Discord server.
   - name: 🔒 Report a vulnerability
     url: https://github.com/bernardopg/wingdrive/security/advisories/new

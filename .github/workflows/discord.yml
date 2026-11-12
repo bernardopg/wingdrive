@@ -65,12 +65,12 @@ jobs:
           # 4096-character embed description.
           lines=$(jq -r '.[-10:] | map("[`\(.id[0:7])`](\(.url)) \(.message | split("\n")[0] | .[0:120]) · \(.author.name | .[0:40])") | join("\n") | .[0:3800]' <<<"$COMMITS")
           if [ "$count" -gt 10 ]; then
-            lines="$lines"$'\n'"… e mais $((count - 10)) · and $((count - 10)) more"
+            lines="$lines"$'\n'"… and $((count - 10)) more"
           fi
           payload=$(jq -n --arg description "$lines" --arg url "$COMPARE" --argjson count "$count" '{
             allowed_mentions: {parse: []},
             embeds: [{
-              title: "\($count) commit(s) no main",
+              title: (if $count == 1 then "1 new commit on main" else "\($count) new commits on main" end),
               url: $url,
               description: $description,
               color: 4175185
@@ -102,10 +102,10 @@ jobs:
               url: .url,
               description: (
                 if (.body | length) > 3800
-                then .body[0:3800] + "…\n\n[Notas completas · Full notes](\(.url))"
+                then .body[0:3800] + "…\n\n[Full release notes](\(.url))"
                 else .body end),
               color: (if .isPrerelease then 15105570 else 3066993 end),
-              footer: {text: (if .isPrerelease then "Pré-release · Pre-release" else "Release" end)},
+              footer: {text: (if .isPrerelease then "Pre-release" else "Release" end)},
               timestamp: .publishedAt
             }]
           }' <<<"$release")
