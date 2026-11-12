@@ -1527,6 +1527,78 @@ async fn stream_file_data<'a>(
 mod tests {
 	use super::verify_written_file;
 
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn selected_dangling_link_is_copied_without_following_it() {
+		use std::os::unix::fs::symlink;
+
+		let dir = tempfile::tempdir().unwrap();
+		let source = dir.path().join("source");
+		let destination = dir.path().join("nested/destination");
+		symlink("../missing", &source).unwrap();
+		let bytes = super::copy_selected_link(&source, &destination)
+			.await
+			.unwrap();
+		assert!(bytes.is_some());
+		assert_eq!(
+			std::fs::read_link(destination).unwrap(),
+			std::path::Path::new("../missing")
+		);
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn selected_link_replaces_file_without_touching_link_target() {
+		use std::os::unix::fs::symlink;
+
+		let dir = tempfile::tempdir().unwrap();
+		let source = dir.path().join("source");
+		let destination = dir.path().join("destination");
+		let target = dir.path().join("target");
+		std::fs::write(&target, b"target content").unwrap();
+		std::fs::write(&destination, b"old content").unwrap();
+		symlink("target", &source).unwrap();
+		super::copy_selected_link(&source, &destination)
+			.await
+			.unwrap();
+		assert_eq!(
+			std::fs::read_link(destination).unwrap(),
+			std::path::Path::new("target")
+		);
+		assert_eq!(std::fs::read(target).unwrap(), b"target content");
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn selected_regular_file_is_left_for_the_regular_copy_path() {
+		let dir = tempfile::tempdir().unwrap();
+		let source = dir.path().join("source");
+		let destination = dir.path().join("destination");
+		std::fs::write(&source, b"content").unwrap();
+		assert!(super::copy_selected_link(&source, &destination)
+			.await
+			.unwrap()
+			.is_none());
+		assert!(!destination.exists());
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn failed_link_publication_removes_temporary_link() {
+		use std::os::unix::fs::symlink;
+
+		let dir = tempfile::tempdir().unwrap();
+		let source = dir.path().join("source");
+		let destination = dir.path().join("destination");
+		symlink("missing", &source).unwrap();
+		std::fs::create_dir(&destination).unwrap();
+		assert!(super::copy_selected_link(&source, &destination)
+			.await
+			.is_err());
+		assert!(destination.is_dir());
+		assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 2);
+	}
+
 	#[tokio::test]
 	async fn written_file_check_reads_the_destination_back() {
 		let dir = tempfile::tempdir().unwrap();

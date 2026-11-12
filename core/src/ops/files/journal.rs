@@ -451,6 +451,50 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn seal_rejects_an_atomically_replaced_file() {
+		let temp = tempfile::tempdir().unwrap();
+		let path = temp.path().join("file");
+		let replacement = temp.path().join("replacement");
+		std::fs::write(&path, b"original").unwrap();
+		let seal = Seal::of(&path).unwrap();
+		std::fs::write(&replacement, b"different").unwrap();
+		std::fs::rename(&replacement, &path).unwrap();
+		assert!(seal.check(&path).is_err());
+	}
+
+	#[test]
+	fn seal_reports_missing_nested_tree() {
+		let temp = tempfile::tempdir().unwrap();
+		let root = temp.path().join("folder");
+		std::fs::create_dir(&root).unwrap();
+		std::fs::write(root.join("file"), b"content").unwrap();
+		let seal = Seal::of(&root).unwrap();
+		std::fs::remove_file(root.join("file")).unwrap();
+		assert_eq!(
+			seal.check(&root),
+			Err("it was changed after the operation".to_string())
+		);
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn seal_detects_retargeted_dangling_link() {
+		use std::os::unix::fs::symlink;
+
+		let temp = tempfile::tempdir().unwrap();
+		let link = temp.path().join("link");
+		let replacement = temp.path().join("replacement");
+		symlink("missing-one", &link).unwrap();
+		let seal = Seal::of(&link).unwrap();
+		symlink("missing-two", &replacement).unwrap();
+		std::fs::rename(replacement, &link).unwrap();
+		assert_eq!(
+			seal.check(&link),
+			Err("it was replaced by another item".to_string())
+		);
+	}
+
+	#[test]
 	fn seal_accepts_an_untouched_tree_and_names_what_changed() {
 		let root = tempfile::tempdir().unwrap();
 		let folder = root.path().join("album");

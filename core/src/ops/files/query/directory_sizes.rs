@@ -223,6 +223,61 @@ crate::register_library_query!(DirectorySizesQuery, "files.directory_sizes");
 mod tests {
 	use super::*;
 
+	#[test]
+	fn empty_directories_are_reported_and_root_files_are_ignored() {
+		let temp = tempfile::tempdir().unwrap();
+		let empty = temp.path().join("空");
+		std::fs::create_dir(&empty).unwrap();
+		std::fs::write(temp.path().join("root-file"), b"ignored").unwrap();
+		let output = measure_child_directories(temp.path(), &never).unwrap();
+		assert_eq!(output.sizes.len(), 1);
+		assert_eq!(output.sizes.get(empty.to_string_lossy().as_ref()), Some(&0));
+		assert!(output.unavailable_paths.is_empty());
+	}
+
+	#[test]
+	fn missing_root_is_an_error() {
+		let temp = tempfile::tempdir().unwrap();
+		let error = measure_child_directories(&temp.path().join("missing"), &never).unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::NotFound);
+	}
+
+	#[test]
+	fn cancellation_during_nested_walk_discards_partial_result() {
+		use std::cell::Cell;
+
+		let temp = tempfile::tempdir().unwrap();
+		let child = temp.path().join("child");
+		std::fs::create_dir_all(child.join("nested")).unwrap();
+		let calls = Cell::new(0);
+		let error = measure_directory(&child, &|| {
+			calls.set(calls.get() + 1);
+			calls.get() > 1
+		})
+		.unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::Interrupted);
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn symlink_cycles_and_external_targets_are_not_traversed() {
+		use std::os::unix::fs::symlink;
+
+		let temp = tempfile::tempdir().unwrap();
+		let child = temp.path().join("child");
+		std::fs::create_dir(&child).unwrap();
+		std::fs::write(child.join("file"), b"abc").unwrap();
+		symlink(".", child.join("cycle")).unwrap();
+		symlink("../missing", child.join("dangling")).unwrap();
+		let expected = 3
+			+ std::fs::symlink_metadata(child.join("cycle"))
+				.unwrap()
+				.len() + std::fs::symlink_metadata(child.join("dangling"))
+			.unwrap()
+			.len();
+		assert_eq!(measure_directory(&child, &never).unwrap(), expected);
+	}
+
 	fn never() -> bool {
 		false
 	}
