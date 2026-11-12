@@ -27,8 +27,8 @@ import {
 } from '@phosphor-icons/react';
 import {getIcon} from '@wingdrive/assets/util';
 import {useIsDarkTheme} from '../../../hooks/useTheme';
-import type {File, WingPath} from '@wingdrive/ts-client';
-import {fileDisplaySize, getContentKind} from '@wingdrive/ts-client';
+import type {CloudWebLinkOutput, File, WingPath} from '@wingdrive/ts-client';
+import {WIRE_METHODS, fileDisplaySize, getContentKind} from '@wingdrive/ts-client';
 import {toast} from '@wingdrive/primitives';
 import clsx from 'clsx';
 import {useEffect, useState} from 'react';
@@ -39,7 +39,8 @@ import {useServer} from '../../../contexts/ServerContext';
 import {
 	getDeviceIcon,
 	useLibraryMutation,
-	useNormalizedQuery
+	useNormalizedQuery,
+	useWingDriveClient
 } from '../../../contexts/WingDriveContext';
 import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useRefetchTagQueries} from '../../../hooks/useRefetchTagQueries';
@@ -956,11 +957,12 @@ label={t('inspector.file.path')}
 						'Physical' in file.wing_path
 							? String(file.wing_path.Physical.path)
 							: 'Cloud' in file.wing_path
-								? String(file.wing_path.Cloud.path)
+								? `${file.wing_path.Cloud.service}://${file.wing_path.Cloud.identifier}/${file.wing_path.Cloud.path}`
 								: t('inspector.location.content')
 					}
 				/>
 <InfoRow label={t('inspector.file.local')} value={file.is_local ? t('inspector.file.yes') : t('inspector.file.no')} />
+				{'Cloud' in file.wing_path && <CloudWebLinkButton path={file.wing_path} />}
 			</Section>
 
 			{file.is_local && <PermissionsSection path={file.wing_path} />}
@@ -1048,8 +1050,8 @@ label={t('inspector.file.path')}
 				)}
 			</Section>
 
-			{/* AI Processing */}
-			{(isImage || isVideo || isAudio) && (
+			{/* AI Processing reads the file on disk, so cloud files are left out. */}
+			{(isImage || isVideo || isAudio) && !('Cloud' in file.wing_path) && (
 <Section title={t('inspector.file.aiProcessing')} icon={Sparkle}>
 					<div className="flex flex-col gap-2">
 						{/* OCR for images */}
@@ -1779,6 +1781,34 @@ function InstancesTab({file}: {file: File}) {
 	);
 }
 
+/** Opens a cloud item in its service's web interface. */
+function CloudWebLinkButton({path}: {path: File['wing_path']}) {
+	const {t} = useTranslation('inspector');
+	const platform = usePlatform();
+	const client = useWingDriveClient();
+	const open = async () => {
+		try {
+			const {url} = await client.execute<{path: File['wing_path']}, CloudWebLinkOutput>(
+				WIRE_METHODS.libraryQueries['files.cloud_web_link'],
+				{path}
+			);
+			if (url) platform.openLink(url);
+			else toast.error(t('inspector.file.noWebLink'));
+		} catch (error) {
+			toast.error(t('inspector.file.openInBrowserFailed', {error: String(error)}));
+		}
+	};
+	return (
+		<button
+			type="button"
+			className="mx-2 mt-1 rounded-md px-2 py-1 text-left text-xs text-accent hover:bg-app-hover"
+			onClick={() => void open()}
+		>
+			{t('inspector.file.openInBrowser')}
+		</button>
+	);
+}
+
 function InstanceRow({instance}: {instance: File}) {
 	const {t} = useTranslation('inspector');
 	const displaySize = fileDisplaySize(instance);
@@ -1786,7 +1816,7 @@ function InstanceRow({instance}: {instance: File}) {
 		if ('Physical' in sdPath) {
 			return sdPath.Physical.path;
 		} else if ('Cloud' in sdPath) {
-			return sdPath.Cloud.path;
+			return `${sdPath.Cloud.service}://${sdPath.Cloud.identifier}/${sdPath.Cloud.path}`;
 		} else {
 			return t('inspector.location.content');
 		}

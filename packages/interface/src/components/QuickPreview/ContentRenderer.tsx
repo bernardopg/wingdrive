@@ -735,34 +735,50 @@ function TextRenderer({ file }: ContentRendererProps) {
 
 /**
  * The file as the renderers can load it: a file inside an archive points at
- * its extracted copy, or is `null` while that copy is being made.
+ * its extracted copy and a cloud file at a downloaded copy, or is `null` while
+ * that copy is being made. When the copy cannot be made (a cloud file over the
+ * preview size limit, a dropped connection) the original file is returned, and
+ * the renderers fall back to its icon and details.
  */
 function useOnDiskFile(file: File): File | null {
 	const openMember = useLibraryMutation("archive.open_member");
+	const cloudPreview = useLibraryMutation("files.cloud_preview");
 	const physical = "Physical" in file.wing_path ? file.wing_path.Physical : null;
 	const inArchive =
 		file.kind === "File" && !!physical && !!file.archive;
+	const inCloud = file.kind === "File" && "Cloud" in file.wing_path;
 	const [resolved, setResolved] = useState<File | null>(null);
+	const [failedId, setFailedId] = useState<string | null>(null);
 
 	useEffect(() => {
-		if (!inArchive || !physical) return;
+		if (!inArchive && !inCloud) return;
 		let cancelled = false;
-		openMember
-			.mutateAsync({ path: file.wing_path })
+		const copy = inArchive
+			? openMember.mutateAsync({ path: file.wing_path })
+			: cloudPreview.mutateAsync({ path: file.wing_path });
+		copy
 			.then(({ path }) => {
-				if (!cancelled) {
-					setResolved({ ...file, wing_path: { Physical: { ...physical, path } } });
-				}
+				if (cancelled) return;
+				const device_slug = physical?.device_slug ?? "local";
+				setResolved({
+					...file,
+					is_local: true,
+					wing_path: { Physical: { device_slug, path } },
+				});
 			})
-			.catch((error) => console.error("[QuickPreview] Cannot extract from archive", error));
+			.catch((error) => {
+				console.error("[QuickPreview] Cannot make a local copy", error);
+				if (!cancelled) setFailedId(file.id);
+			});
 		return () => {
 			cancelled = true;
 		};
-		// Keyed by the file; the mutation object changes every render.
+		// Keyed by the file; the mutation objects change every render.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [file.id, inArchive]);
+	}, [file.id, inArchive, inCloud]);
 
-	if (!inArchive) return file;
+	if (!inArchive && !inCloud) return file;
+	if (failedId === file.id) return file;
 	return resolved?.id === file.id ? resolved : null;
 }
 

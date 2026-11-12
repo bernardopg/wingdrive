@@ -18,11 +18,14 @@ describe('Copy To / Move To destination', () => {
 		expect(pickedDestination([local('/a/x')], [])).toBeNull();
 	});
 
-	test('needs local physical sources', () => {
+	test('needs local or cloud sources', () => {
 		expect(canPickDestination([])).toBe(false);
-		expect(canPickDestination([local('/a'), cloud])).toBe(false);
 		expect(canPickDestination([local('/a', false)])).toBe(false);
-		expect(pickedDestination([cloud], '/b')).toBeNull();
+		expect(canPickDestination([local('/a'), cloud])).toBe(true);
+	});
+
+	test('a cloud source downloads to a folder on this device', () => {
+		expect(pickedDestination([cloud], '/b')).toEqual({Physical: {device_slug: 'local', path: '/b'}});
 	});
 
 	test('the picker starts in the folder that holds the selection', () => {

@@ -7,9 +7,12 @@ import {
 	MagnifyingGlass,
 	SelectionAll,
 	SelectionInverse,
-	TerminalWindow
+	TerminalWindow,
+	UploadSimple
 } from '@phosphor-icons/react';
 import {useDuplicatesDialog} from '../../../components/modals/DuplicatesModal';
+import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
+import {usePlatform} from '../../../contexts/PlatformContext';
 import {useClipboard} from '../../../hooks/useClipboard';
 import {useContextMenu} from '../../../hooks/useContextMenu';
 import {useLibraryQuery} from '../../../contexts/WingDriveContext';
@@ -43,6 +46,20 @@ export function useEmptySpaceContextMenu() {
 	);
 	const templates = templatesData?.templates ?? [];
 	const openDuplicates = useDuplicatesDialog();
+	const platform = usePlatform();
+	const openFileOperation = useFileOperationDialog();
+	// Picking files and copying them into the cloud folder uploads them.
+	const uploadHere = async () => {
+		if (!operationalPath || !platform.openFilePickerDialog) return;
+		const picked = await platform.openFilePickerDialog({title: t('contextMenu.uploadFiles'), multiple: true});
+		const paths = Array.isArray(picked) ? picked : picked ? [picked] : [];
+		if (paths.length === 0) return;
+		openFileOperation({
+			operation: 'copy',
+			sources: paths.map((path) => ({Physical: {device_slug: 'local', path}})),
+			destination: operationalPath
+		});
+	};
 
 	return useContextMenu({
 		items: [
@@ -61,20 +78,30 @@ export function useEmptySpaceContextMenu() {
 				condition: () => !!operationalPath
 			},
 			{
+				icon: UploadSimple,
+				label: t('contextMenu.uploadFiles'),
+				onClick: () => void uploadHere(),
+				condition: () =>
+					!!operationalPath && 'Cloud' in operationalPath && !!platform.openFilePickerDialog
+			},
+			{
 				icon: FilePlus,
 			label: t('contextMenu.newFile'),
 				onClick: () => {
 					void newFile();
 				},
 				keybindId: 'explorer.newFile',
-				condition: () => !!operationalPath && 'Physical' in operationalPath
+				condition: () =>
+					!!operationalPath && ('Physical' in operationalPath || 'Cloud' in operationalPath)
 			},
 			{
 				type: 'submenu',
 				icon: FileText,
 				label: t('contextMenu.newFromTemplate'),
 				condition: () =>
-					!!operationalPath && 'Physical' in operationalPath && templates.length > 0,
+					!!operationalPath &&
+					('Physical' in operationalPath || 'Cloud' in operationalPath) &&
+					templates.length > 0,
 				submenu: templates.map((template) => ({
 					label: template.name,
 					onClick: () => {

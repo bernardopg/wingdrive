@@ -10,8 +10,9 @@ export type ExternalDropDecision =
 
 /**
  * Decide what an operating-system file drop means for the current Explorer
- * folder. Only writable physical folders can receive imports; everything
- * else must be rejected explicitly so drops are never silently swallowed.
+ * folder. Folders on a device and on a cloud volume receive imports (a drop
+ * on a cloud folder uploads); everything else is rejected explicitly so drops
+ * are never silently swallowed.
  */
 export function resolveExternalDrop(
 	destination: WingPath | null,
@@ -23,7 +24,7 @@ export function resolveExternalDrop(
 	if (!destination) {
 		return {kind: 'reject', reason: 'no-destination'};
 	}
-	if (!('Physical' in destination)) {
+	if (!('Physical' in destination) && !('Cloud' in destination)) {
 		return {kind: 'reject', reason: 'not-physical'};
 	}
 	return {

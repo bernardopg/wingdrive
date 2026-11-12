@@ -4,8 +4,9 @@
 //! a file from the templates folder, and `files.createSymlink` a symbolic link,
 //! the entries a file manager creates besides folders. All of them refuse
 //! to replace an existing name, because the frontend picks a free name from
-//! a listing that can be stale by the time the action runs. Only paths on
-//! this device are accepted; remote devices need their own daemon to write.
+//! a listing that can be stale by the time the action runs. Files and
+//! templates can also be created in a folder of a mounted cloud volume;
+//! links only on this device. Remote devices need their own daemon to write.
 //!
 //! ## Example
 //! ```rust,ignore
@@ -185,6 +186,39 @@ pub async fn create_link(target: &Path, link: &Path) -> Result<(), ActionError> 
 	result.map_err(|e| creation_error(e, link))
 }
 
+/// Creates `name` in a cloud folder from `template`, or empty without one.
+///
+/// Cloud entries are not journaled: undo works on local paths only.
+async fn create_in_cloud(
+	context: &CoreContext,
+	parent: &WingPath,
+	name: &str,
+	template: Option<&Path>,
+) -> Result<CreateEntryOutput, ActionError> {
+	let target = parent.join(name);
+	let (backend, remote) = crate::ops::cloud_sync::resolve_remote(context, &target)
+		.await
+		.map_err(|message| ActionError::Validation {
+			field: "parent".to_string(),
+			message,
+		})?;
+	if backend.exists(&remote).await.unwrap_or(false) {
+		return Err(ActionError::Validation {
+			field: "name".to_string(),
+			message: format!("{name} already exists"),
+		});
+	}
+	let written = match template {
+		Some(template) => backend.write_from_file(&remote, template).await.map(|_| ()),
+		None => backend.write(&remote, bytes::Bytes::new()).await,
+	};
+	written.map_err(|e| ActionError::Internal(format!("Failed to create {name}: {e}")))?;
+	Ok(CreateEntryOutput {
+		path: target,
+		undo_id: None,
+	})
+}
+
 impl LibraryAction for CreateFileAction {
 	type Input = CreateFileInput;
 	type Output = CreateEntryOutput;
@@ -199,15 +233,20 @@ impl LibraryAction for CreateFileAction {
 		_context: Arc<CoreContext>,
 	) -> Result<ValidationResult, ActionError> {
 		validate_name(&self.input.name)?;
-		local_dir(&self.input.parent, "parent")?;
+		if !self.input.parent.is_cloud() {
+			local_dir(&self.input.parent, "parent")?;
+		}
 		Ok(ValidationResult::Success { metadata: None })
 	}
 
 	async fn execute(
 		self,
 		library: Arc<crate::library::Library>,
-		_context: Arc<CoreContext>,
+		context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
+		if self.input.parent.is_cloud() {
+			return create_in_cloud(&context, &self.input.parent, &self.input.name, None).await;
+		}
 		let parent = local_dir(&self.input.parent, "parent")?;
 		create_empty_file(&parent.join(&self.input.name)).await?;
 		Ok(CreateEntryOutput {
@@ -235,7 +274,9 @@ impl LibraryAction for CreateFromTemplateAction {
 		_context: Arc<CoreContext>,
 	) -> Result<ValidationResult, ActionError> {
 		validate_name(&self.input.name)?;
-		local_dir(&self.input.parent, "parent")?;
+		if !self.input.parent.is_cloud() {
+			local_dir(&self.input.parent, "parent")?;
+		}
 		local_dir(&self.input.template, "template")?;
 		Ok(ValidationResult::Success { metadata: None })
 	}
@@ -243,10 +284,19 @@ impl LibraryAction for CreateFromTemplateAction {
 	async fn execute(
 		self,
 		library: Arc<crate::library::Library>,
-		_context: Arc<CoreContext>,
+		context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
-		let parent = local_dir(&self.input.parent, "parent")?;
 		let template = local_dir(&self.input.template, "template")?;
+		if self.input.parent.is_cloud() {
+			return create_in_cloud(
+				&context,
+				&self.input.parent,
+				&self.input.name,
+				Some(template),
+			)
+			.await;
+		}
+		let parent = local_dir(&self.input.parent, "parent")?;
 		copy_template(template, &parent.join(&self.input.name)).await?;
 		Ok(CreateEntryOutput {
 			path: self.input.parent.join(&self.input.name),

@@ -61,9 +61,18 @@ describe('resolveExternalDrop', () => {
 		expect(decision).toEqual({kind: 'reject', reason: 'no-destination'});
 	});
 
-	it('rejects a drop into a non-physical destination', () => {
+	it('uploads a drop into a cloud folder', () => {
+		const decision = resolveExternalDrop(cloudDestination('reports'), ['/tmp/a.png']);
+
+		expect(decision).toEqual({
+			kind: 'copy',
+			destination: cloudDestination('reports'),
+			sources: [{Physical: {device_slug: 'local', path: '/tmp/a.png'}}]
+		});
+	});
+
+	it('rejects a drop into a destination without folders', () => {
 		for (const destination of [
-			cloudDestination('reports'),
 			{
 				Content: {content_id: '00000000-0000-0000-0000-000000000000'}
 			} satisfies WingPath

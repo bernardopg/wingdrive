@@ -70,3 +70,8 @@ This task closes when INTG-001 to INTG-004 are Done.
   isolated `wing-server` with a fake Google found two bugs, both fixed: the
   volume monitor removed cloud volumes 30 s after startup, and
   `locations.list` turned cloud locations into local paths.
+- 2026-11-12: Explorer completed for Drive (Quick Look through a preview cache, Open in Browser,
+  New File and templates in Drive, upload by drop and Upload Files Here, Copy To downloads, Column
+  view and drag and drop for cloud folders, Drive volume opens the cloud root). Runtime check on an
+  isolated `wing-server` found that deleting in a cloud folder did nothing; fixed in the delete
+  strategy router.

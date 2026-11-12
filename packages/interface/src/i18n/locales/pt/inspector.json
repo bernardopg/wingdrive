@@ -127,7 +127,10 @@
 			"thumbstripRequiresFfmpeg": "A geração de tiras de miniaturas requer FFmpeg. Recompile o daemon com --features ffmpeg,heif ou use `cargo daemon`",
 			"thumbstripFailed": "Falha ao gerar tira de miniaturas",
 			"noSidecars": "Ainda não há arquivos auxiliares gerados",
-			"derivativeFiles": "Arquivos derivados e conteúdo associado gerado pelo WingDrive"
+			"derivativeFiles": "Arquivos derivados e conteúdo associado gerado pelo WingDrive",
+			"openInBrowser": "Abrir no navegador",
+			"noWebLink": "Este serviço não tem página na web para o item.",
+			"openInBrowserFailed": "Não foi possível abrir o item no navegador: {{error}}"
 		},
 		"location": {
 			"overview": "Visão geral",

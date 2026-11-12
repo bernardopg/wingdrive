@@ -22,6 +22,18 @@ describe('drop target', () => {
 		expect(guessDropOperation(cloud, at('local', '/b'), 'archlinux')).toBe('copy');
 	});
 
+	it('moves inside one cloud volume and copies between volumes', () => {
+		const drive = (identifier: string, path: string) =>
+			({Cloud: {service: 'gdrive', identifier, path}}) as unknown as WingPath;
+		expect(guessDropOperation(drive('a@x.com', 'trip/f.jpg'), drive('a@x.com', 'other'), undefined)).toBe('move');
+		expect(guessDropOperation(drive('a@x.com', 'f.jpg'), drive('b@x.com', ''), undefined)).toBe('copy');
+		expect(guessDropOperation(at('local', '/a/f'), drive('a@x.com', ''), 'archlinux')).toBe('copy');
+		expect(alreadyIn([file(drive('a@x.com', 'trip/f.jpg'))], drive('a@x.com', 'trip'), undefined)).toBe(true);
+		expect(alreadyIn([file(drive('a@x.com', 'f.jpg'))], drive('a@x.com', ''), undefined)).toBe(true);
+		expect(alreadyIn([file(drive('a@x.com', 'trip/f.jpg'))], drive('a@x.com', ''), undefined)).toBe(false);
+		expect(alreadyIn([file(drive('a@x.com', 'trip/f.jpg'))], drive('b@x.com', 'trip'), undefined)).toBe(false);
+	});
+
 	it('sees files already in the destination across slugs', () => {
 		const files = [file(at('local', '/a/one')), file(at('local', '/a/two/'))];
 		expect(alreadyIn(files, at('archlinux', '/a/'), 'archlinux')).toBe(true);

@@ -133,3 +133,102 @@ impl LibraryAction for CloudEditCloseAction {
 }
 
 crate::register_library_action!(CloudEditCloseAction, "files.cloud_edit.close");
+
+/// Downloads a cloud file into the preview cache and returns the local copy.
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct CloudPreviewInput {
+	pub path: WingPath,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct CloudPreviewOutput {
+	/// Read-only local copy; changes to it are not uploaded.
+	pub path: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CloudPreviewAction {
+	input: CloudPreviewInput,
+}
+
+impl LibraryAction for CloudPreviewAction {
+	type Input = CloudPreviewInput;
+	type Output = CloudPreviewOutput;
+
+	fn from_input(input: Self::Input) -> Result<Self, String> {
+		if input.path.as_cloud().is_none() {
+			return Err("Only files on cloud volumes need a preview download".to_string());
+		}
+		Ok(Self { input })
+	}
+
+	async fn execute(
+		self,
+		_library: Arc<Library>,
+		context: Arc<CoreContext>,
+	) -> Result<Self::Output, ActionError> {
+		let (backend, remote_path) =
+			crate::ops::cloud_sync::resolve_remote(&context, &self.input.path)
+				.await
+				.map_err(ActionError::InvalidInput)?;
+		let local = context
+			.integrations
+			.cloud_edits
+			.preview_copy(&self.input.path, backend.as_ref(), &remote_path)
+			.await
+			.map_err(|e| ActionError::Internal(e.to_string()))?;
+		Ok(CloudPreviewOutput {
+			path: local.to_string_lossy().into_owned(),
+		})
+	}
+
+	fn action_kind(&self) -> &'static str {
+		"files.cloud_preview"
+	}
+}
+
+crate::register_library_action!(CloudPreviewAction, "files.cloud_preview");
+
+/// The page that shows a cloud item in its service's web interface.
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct CloudWebLinkInput {
+	pub path: WingPath,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct CloudWebLinkOutput {
+	/// `None` when the service has no web interface for the item.
+	pub url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CloudWebLinkQuery {
+	input: CloudWebLinkInput,
+}
+
+impl LibraryQuery for CloudWebLinkQuery {
+	type Input = CloudWebLinkInput;
+	type Output = CloudWebLinkOutput;
+
+	fn from_input(input: Self::Input) -> QueryResult<Self> {
+		Ok(Self { input })
+	}
+
+	async fn execute(
+		self,
+		context: Arc<CoreContext>,
+		_session: crate::infra::api::SessionContext,
+	) -> QueryResult<Self::Output> {
+		let (backend, remote_path) =
+			crate::ops::cloud_sync::resolve_remote(&context, &self.input.path)
+				.await
+				.map_err(crate::infra::query::QueryError::InvalidInput)?;
+		let url = backend
+			.web_link(&remote_path)
+			.await
+			.map_err(|e| crate::infra::query::QueryError::Internal(e.to_string()))?;
+		Ok(CloudWebLinkOutput { url })
+	}
+}
+
+crate::register_library_query!(CloudWebLinkQuery, "files.cloud_web_link");
