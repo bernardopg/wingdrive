@@ -1,4 +1,4 @@
-import type {File, Volume} from '@wingdrive/ts-client';
+import type {Device, File, Volume} from '@wingdrive/ts-client';
 
 export interface FileSummary {
 	folders: number;
@@ -22,10 +22,13 @@ export function summarizeFiles(files: File[]): FileSummary {
 	return summary;
 }
 
+/** Whole-segment prefix test; `\` separates segments too, for Windows paths like `C:\Users`. */
 function isUnder(path: string, mountPoint: string): boolean {
-	if (mountPoint === '/') return path.startsWith('/');
-	const root = mountPoint.replace(/\/+$/, '');
-	return path === root || path.startsWith(`${root}/`);
+	const root = mountPoint.replace(/[\\/]+$/, '');
+	if (root === '') return path.startsWith('/');
+	if (!path.startsWith(root)) return false;
+	const next = path.charAt(root.length);
+	return next === '' || next === '/' || next === '\\';
 }
 
 /**
@@ -48,4 +51,15 @@ export function volumeForPath(
 		}
 	}
 	return best?.volume ?? null;
+}
+
+/**
+ * The id of the device a path's slug names. Explorer URLs opened from outside
+ * the app name this device `local`, which no device carries as its slug.
+ */
+export function deviceIdForSlug(devices: Iterable<Device>, slug: string): string | null {
+	for (const device of devices) {
+		if (device.slug === slug || (slug === 'local' && device.is_current)) return device.id;
+	}
+	return null;
 }

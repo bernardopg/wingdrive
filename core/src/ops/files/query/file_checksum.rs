@@ -50,33 +50,35 @@ impl LibraryQuery for FileChecksumQuery {
 		let path = self.input.path.as_local_path().ok_or_else(|| {
 			QueryError::InvalidInput("Checksums are only available for local files".into())
 		})?;
-
-		if !path.is_absolute() {
-			return Err(QueryError::InvalidInput(format!(
-				"Path is not absolute: {}",
-				path.display()
-			)));
-		}
-
-		let metadata = tokio::fs::metadata(path)
-			.await
-			.map_err(|error| QueryError::io_error(path.display().to_string(), error))?;
-		if !metadata.is_file() {
-			return Err(QueryError::InvalidInput(format!(
-				"Path is not a file: {}",
-				path.display()
-			)));
-		}
-
-		let path = path.to_path_buf();
-		let hash_path = path.clone();
-		let sha256 = tokio::task::spawn_blocking(move || sha256_file(&hash_path))
-			.await
-			.map_err(|error| QueryError::Internal(format!("Checksum worker failed: {error}")))?
-			.map_err(|error| QueryError::io_error(path.display().to_string(), error))?;
-
+		let sha256 = checksum_local_file(path).await?;
 		Ok(FileChecksumOutput { sha256 })
 	}
+}
+
+/// Validates and hashes one local file; the query's body, kept apart so tests reach it.
+async fn checksum_local_file(path: &Path) -> QueryResult<String> {
+	if !path.is_absolute() {
+		return Err(QueryError::InvalidInput(format!(
+			"Path is not absolute: {}",
+			path.display()
+		)));
+	}
+
+	let metadata = tokio::fs::metadata(path)
+		.await
+		.map_err(|error| QueryError::io_error(path.display().to_string(), error))?;
+	if !metadata.is_file() {
+		return Err(QueryError::InvalidInput(format!(
+			"Path is not a file: {}",
+			path.display()
+		)));
+	}
+
+	let hash_path = path.to_path_buf();
+	tokio::task::spawn_blocking(move || sha256_file(&hash_path))
+		.await
+		.map_err(|error| QueryError::Internal(format!("Checksum worker failed: {error}")))?
+		.map_err(|error| QueryError::io_error(path.display().to_string(), error))
 }
 
 fn sha256_file(path: &Path) -> std::io::Result<String> {
@@ -129,5 +131,27 @@ mod tests {
 			sha256_file(&large).unwrap(),
 			hex::encode(Sha256::digest(&contents))
 		);
+	}
+	#[tokio::test]
+	async fn query_body_hashes_files_and_rejects_other_paths() {
+		let temporary = tempfile::tempdir().unwrap();
+		let abc = temporary.path().join("abc");
+		std::fs::write(&abc, b"abc").unwrap();
+
+		assert_eq!(
+			checksum_local_file(&abc).await.unwrap(),
+			"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+		);
+		assert!(matches!(
+			checksum_local_file(Path::new("relative/abc")).await,
+			Err(QueryError::InvalidInput(_))
+		));
+		assert!(matches!(
+			checksum_local_file(temporary.path()).await,
+			Err(QueryError::InvalidInput(_))
+		));
+		assert!(checksum_local_file(&temporary.path().join("missing"))
+			.await
+			.is_err());
 	}
 }

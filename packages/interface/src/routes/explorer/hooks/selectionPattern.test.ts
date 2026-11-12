@@ -40,6 +40,20 @@ describe('select by pattern', () => {
 		expect(globMatcher('[')?.test('[')).toBe(true);
 	});
 
+	test('reads bracket classes the way the shell does', () => {
+		// `]` right after `[` or `[!` is a member; an unterminated class is literal.
+		expect(globMatcher('a[!]')?.test('ab')).toBe(false);
+		expect(globMatcher('a[!]')?.test('a[!]')).toBe(true);
+		expect(globMatcher('[]]x')?.test(']x')).toBe(true);
+		expect(globMatcher('[]]x')?.test('ax')).toBe(false);
+		expect(globMatcher('[!]]x')?.test('ax')).toBe(true);
+		expect(globMatcher('[!]]x')?.test(']x')).toBe(false);
+		expect(globMatcher('[a^]')?.test('^')).toBe(true);
+		expect(globMatcher('[^a]')?.test('b')).toBe(true);
+		expect(globMatcher('[^a]')?.test('a')).toBe(false);
+		expect(globMatcher('[a\\]')?.test('\\')).toBe(true);
+	});
+
 	test('an empty pattern selects nothing', () => {
 		expect(globMatcher('  ')).toBeNull();
 		expect(filesMatching(files, '')).toEqual([]);

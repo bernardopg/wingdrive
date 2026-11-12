@@ -4,7 +4,7 @@ import {useCallback} from 'react';
 import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
 import {usePlatform} from '../../../contexts/PlatformContext';
 import {useTranslation} from '../../../i18n';
-import {canPickDestination, pickedDestination} from './copyMoveDestination';
+import {canPickDestination, pickedDestination, pickerStartFolder} from './copyMoveDestination';
 
 /** "Copy To…" and "Move To…": pick a folder, then run the usual copy or move dialog. */
 export function useCopyMoveTo() {
@@ -16,7 +16,8 @@ export function useCopyMoveTo() {
 		async (files: File[], operation: 'copy' | 'move') => {
 			if (!platform.openDirectoryPickerDialog || !canPickDestination(files)) return;
 			const picked = await platform.openDirectoryPickerDialog({
-				title: t(operation === 'copy' ? 'contextMenu.copyTo' : 'contextMenu.moveTo')
+				title: t(operation === 'copy' ? 'contextMenu.copyTo' : 'contextMenu.moveTo'),
+				defaultPath: pickerStartFolder(files)
 			});
 			const destination = pickedDestination(files, picked);
 			if (!destination) return;

@@ -8,7 +8,7 @@ priority: Medium
 milestone: M2
 sprint: S04
 tags: [desktop, explorer, selection, keyboard]
-last_updated: 2026-11-02
+last_updated: 2026-11-12
 ---
 
 ## Description
@@ -41,3 +41,10 @@ bulk work in large folders. Selection already lives in `SelectionContext` with `
   Ctrl+Shift+I and Ctrl+S are registered keybinds (shown in the shortcuts list), and the empty-space
   context menu gains Select All, Invert Selection and Select by Pattern…
 - Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. Ctrl+Shift+I inverted a one-item selection to the other 11 items; Ctrl+S with `*.JPG` selected exactly `photo-one.jpg` and `photo-two.jpg` (case-insensitive).
+
+- Re-check, 2026-11-12, Isolated `wing-server` (debug build, own data dir and instance, port 18093), web UI in headless Chrome driven over CDP, fixture folder with 5 folders and 6 files: Ctrl+S with `*.JPG` selected `photo-one.jpg` and `photo-two.JPG`
+  (status bar "2 selected · 6 B"), `*.md; *.txt` selected 3, `photo-[!o]*` selected only `photo-two.JPG`;
+  Ctrl+Shift+I inverted to 10 items in grid view and in column view. In list view with `sub` expanded,
+  Ctrl+A selected 14 rows and Ctrl+Shift+I left none selected.
+- The glob matcher turned `[!]` into a class matching any character and closed `[]]` too early. Fixed in
+  DESK-091 (merged with the invalid-range fallback of DESK-060).

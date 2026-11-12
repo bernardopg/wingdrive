@@ -16,10 +16,13 @@ export function globMatcher(pattern: string): RegExp | null {
 			if (c === '*') out += '.*';
 			else if (c === '?') out += '.';
 			else if (c === '[') {
-				const end = glob.indexOf(']', i + 1);
-				if (end > i + 1) {
-					const body = glob.slice(i + 1, end).replace(/^!/, '^').replace(/\\/g, '\\\\');
-					const characterClass = `[${body}]`;
+				// As in the shell, `[!` and `[^` negate, and a `]` right after them is a member.
+				const negated = glob[i + 1] === '!' || glob[i + 1] === '^';
+				const start = i + 1 + (negated ? 1 : 0);
+				const end = glob.indexOf(']', glob[start] === ']' ? start + 1 : start);
+				if (end > start) {
+					const members = glob.slice(start, end).replace(/[\\\]^]/g, '\\$&');
+					const characterClass = `[${negated ? '^' : ''}${members}]`;
 					try {
 						new RegExp(characterClass, 'i');
 						out += characterClass;

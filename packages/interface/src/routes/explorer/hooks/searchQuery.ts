@@ -108,6 +108,7 @@ function physical(path: WingPath | null | undefined) {
  * Root of the location that contains `path`, or null when the path is outside
  * every location. The deepest root wins for nested locations, and a root only
  * matches whole path segments, so /data/photos2 is not inside /data/photos.
+ * Both separators count, for Windows paths.
  */
 export function findLocationRoot(
 	path: WingPath | null,
@@ -121,11 +122,11 @@ export function findLocationRoot(
 	for (const location of locations) {
 		const root = physical(location.wing_path);
 		if (!root || root.device_slug !== target.device_slug) continue;
-		const rootPath = root.path.replace(/\/+$/, '');
+		const rootPath = root.path.replace(/[\\/]+$/, '');
+		const next = target.path.charAt(rootPath.length);
 		const inside =
-			target.path === rootPath ||
-			target.path.startsWith(`${rootPath}/`) ||
-			rootPath === '';
+			rootPath === '' ||
+			(target.path.startsWith(rootPath) && (next === '' || next === '/' || next === '\\'));
 		if (inside && rootPath.length > bestLength) {
 			best = location.wing_path;
 			bestLength = rootPath.length;

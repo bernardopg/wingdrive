@@ -132,17 +132,14 @@ impl DatabaseAdapter {
 			.and_then(|s| s.to_str())
 			.unwrap_or("")
 			.to_string();
-		let ext = path
-			.extension()
-			.and_then(|s| s.to_str())
-			.map(|s| s.to_lowercase());
+		let ext = path.extension().and_then(|s| s.to_str());
 
 		let mut q = entities::entry::Entity::find()
 			.filter(entities::entry::Column::ParentId.eq(parent_id))
 			.filter(entities::entry::Column::Name.eq(name));
 
 		if let Some(e) = ext {
-			q = q.filter(entities::entry::Column::Extension.eq(e));
+			q = q.filter(entities::entry::extension_lookup(e));
 		} else {
 			q = q.filter(entities::entry::Column::Extension.is_null());
 		}

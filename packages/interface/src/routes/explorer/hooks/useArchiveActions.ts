@@ -8,6 +8,7 @@ import {useRefetchFileListings} from '../../../hooks/useRefetchFileListings';
 import {useWaitForJob} from '../../../hooks/useWaitForJob';
 import {physicalPath} from '../fileCapabilities';
 import {archiveBaseName} from './archiveName';
+import {pickerStartFolder} from './copyMoveDestination';
 import {useTranslation} from '../../../i18n';
 
 // Archives can take minutes; the toast still reports the outcome later.
@@ -83,7 +84,10 @@ export function useArchiveActions() {
 	const extractTo = useCallback(
 		async (file: File) => {
 			if (!platform.openDirectoryPickerDialog || !('Physical' in file.wing_path)) return;
-			const picked = await platform.openDirectoryPickerDialog({title: t('archive.extractTo')});
+			const picked = await platform.openDirectoryPickerDialog({
+				title: t('archive.extractTo'),
+				defaultPath: pickerStartFolder([file])
+			});
 			const directory = Array.isArray(picked) ? picked[0] : picked;
 			if (!directory) return;
 			extract(file, {

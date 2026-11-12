@@ -8,7 +8,7 @@ priority: Medium
 milestone: M2
 sprint: S04
 tags: [desktop, search, interface, core]
-last_updated: 2026-11-02
+last_updated: 2026-11-12
 ---
 
 ## Description
@@ -45,6 +45,12 @@ over the whole result set in `ephemeral_search.rs`.
   `test_persistent_search_facets_and_hidden_filter` in `core/tests/search_test.rs`; extra cases in
   `searchQuery.test.ts`.
 - Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. Searching `ot` in This Folder gave 3 results with facet counts; the Images pill narrowed to the two photos (2 results) and the `.md` pill to `notes.md`.
+
+- Re-check, 2026-11-12, Isolated `wing-server` (debug build, own data dir and instance, port 18093), web UI in headless Chrome driven over CDP, fixture folder with 5 folders and 6 files: searching `ot` in This Folder gave 3 results; the filter panel showed
+  Kind Images 2, Text 1, Extension .jpg 2, .md 1, Size under 1 KB 3, Modified past day 3. The Images pill
+  gave 2 results and the .md pill 1. The .jpg pill gave 1 result instead of 2, dropping `photo-two.JPG`:
+  the extension filter compared case. Fixed in DESK-096. "This Location" fell back to the whole library
+  for Windows paths; fixed in DESK-093.
 
 ## Follow-ups
 

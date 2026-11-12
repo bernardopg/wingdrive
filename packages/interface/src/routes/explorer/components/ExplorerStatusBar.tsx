@@ -5,7 +5,7 @@ import {useTranslation} from '../../../i18n';
 import {useExplorer} from '../context';
 import {useSelection} from '../SelectionContext';
 import {formatBytes} from '../utils';
-import {summarizeFiles, volumeForPath} from './statusBar';
+import {deviceIdForSlug, summarizeFiles, volumeForPath} from './statusBar';
 
 interface ExplorerStatusBarProps {
 	/** Folder whose volume reports free space; null in views without one. */
@@ -19,13 +19,10 @@ export function ExplorerStatusBar({path}: ExplorerStatusBarProps) {
 	const {selectedFiles} = useSelection();
 
 	const physical = path && 'Physical' in path ? path.Physical : null;
-	const deviceId = useMemo(() => {
-		if (!physical) return null;
-		for (const device of devices.values()) {
-			if (device.slug === physical.device_slug) return device.id;
-		}
-		return null;
-	}, [devices, physical]);
+	const deviceId = useMemo(
+		() => (physical ? deviceIdForSlug(devices.values(), physical.device_slug) : null),
+		[devices, physical]
+	);
 
 	const {data: volumesData} = useNormalizedQuery({
 		query: 'volumes.list',

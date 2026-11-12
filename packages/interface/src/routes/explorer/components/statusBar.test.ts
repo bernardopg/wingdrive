@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'bun:test';
-import type {File, Volume} from '@wingdrive/ts-client';
+import type {Device, File, Volume} from '@wingdrive/ts-client';
 
-import {summarizeFiles, volumeForPath} from './statusBar';
+import {deviceIdForSlug, summarizeFiles, volumeForPath} from './statusBar';
 
 const entry = (kind: string, size: number, directory_size: number | null = null) =>
 	({kind, size, directory_size}) as unknown as File;
@@ -59,7 +59,33 @@ describe('volumeForPath', () => {
 		expect(id('/data/file')).toBe('alias');
 	});
 
+	test('matches Windows drives and folder mount points', () => {
+		const windows = [volume('c', 'C:\\'), volume('data', 'C:\\mnt\\data'), volume('d', 'D:\\')];
+		const winId = (path: string) => volumeForPath(windows, 'dev', path)?.id ?? null;
+		expect(winId('C:\\Users\\me')).toBe('c');
+		expect(winId('C:\\')).toBe('c');
+		expect(winId('C:\\mnt\\data\\photos')).toBe('data');
+		expect(winId('C:\\mnt\\database')).toBe('c');
+		expect(winId('D:\\games')).toBe('d');
+		expect(winId('E:\\x')).toBeNull();
+	});
+
 	test('no match on an unknown device', () => {
 		expect(volumeForPath(volumes, 'nope', '/home')).toBeNull();
+	});
+});
+
+describe('deviceIdForSlug', () => {
+	const devices = [
+		{id: 'phone', slug: 'pixel', is_current: false},
+		{id: 'pc', slug: 'archlinux', is_current: true}
+	] as unknown as Device[];
+
+	test('matches the slug, and `local` names the current device', () => {
+		expect(deviceIdForSlug(devices, 'pixel')).toBe('phone');
+		expect(deviceIdForSlug(devices, 'archlinux')).toBe('pc');
+		expect(deviceIdForSlug(devices, 'local')).toBe('pc');
+		expect(deviceIdForSlug(devices, 'nope')).toBeNull();
+		expect(deviceIdForSlug(devices.slice(0, 1), 'local')).toBeNull();
 	});
 });

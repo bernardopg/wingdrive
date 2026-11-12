@@ -127,4 +127,13 @@ describe('findLocationRoot', () => {
 			path('/home/me')
 		);
 	});
+	it('matches Windows paths on whole segments', () => {
+		const windows = [{wing_path: path('C:\\Users\\me')}, {wing_path: path('D:\\')}];
+		expect(findLocationRoot(path('C:\\Users\\me\\docs'), windows)).toEqual(
+			path('C:\\Users\\me')
+		);
+		expect(findLocationRoot(path('C:\\Users\\me'), windows)).toEqual(path('C:\\Users\\me'));
+		expect(findLocationRoot(path('C:\\Users\\meg'), windows)).toBeNull();
+		expect(findLocationRoot(path('D:\\games'), windows)).toEqual(path('D:\\'));
+	});
 });

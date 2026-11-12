@@ -166,7 +166,10 @@ fn passes_ephemeral_filters(
 			.extension()
 			.and_then(|e| e.to_str())
 			.unwrap_or("");
-		if !types.contains(&ext.to_string()) {
+		if !types
+			.iter()
+			.any(|file_type| file_type.eq_ignore_ascii_case(ext))
+		{
 			return false;
 		}
 	}

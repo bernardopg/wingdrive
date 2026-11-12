@@ -299,7 +299,7 @@ impl SearchFacets {
 		modified_at: DateTime<Utc>,
 	) {
 		if let Some(extension) = extension {
-			*self.file_types.entry(extension.to_string()).or_insert(0) += 1;
+			*self.file_types.entry(extension.to_lowercase()).or_insert(0) += 1;
 		}
 
 		let kind = serde_json::to_value(kind)

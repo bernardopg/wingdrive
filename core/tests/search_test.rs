@@ -1075,3 +1075,126 @@ async fn test_persistent_search_facets_and_hidden_filter() -> anyhow::Result<()>
 	harness.shutdown().await?;
 	Ok(())
 }
+
+async fn write_case_files(dir: &std::path::Path) -> anyhow::Result<()> {
+	tokio::fs::create_dir_all(dir).await?;
+	tokio::fs::write(dir.join("camera plan.JPG"), "upper").await?;
+	tokio::fs::write(dir.join("phone plan.jpg"), "lower").await?;
+	Ok(())
+}
+
+fn case_input(scope: SearchScope, extension: &str) -> FileSearchInput {
+	let mut input = refinement_input(
+		scope,
+		SearchFilters {
+			file_types: Some(vec![extension.to_string()]),
+			..visible_only()
+		},
+	);
+	input.pagination.limit = 10;
+	input
+}
+
+fn local_path(path: &WingPath) -> PathBuf {
+	match path {
+		WingPath::Physical { path, .. } => path.clone(),
+		other => panic!("expected a physical path, got {other:?}"),
+	}
+}
+
+/// Every result points at a file that exists, so a lowercased extension never
+/// becomes part of the path on a case-sensitive file system.
+fn assert_case_results(output: &wing_core::ops::search::output::FileSearchOutput) {
+	assert_eq!(output.total_found, 2);
+	assert_eq!(output.facets.file_types.get("jpg"), Some(&2));
+	assert_eq!(
+		output.facets.file_types.len(),
+		1,
+		"extension facets ignore case"
+	);
+	for result in &output.results {
+		let path = local_path(&result.file.wing_path);
+		assert!(
+			path.exists(),
+			"result path {} does not exist",
+			path.display()
+		);
+	}
+}
+
+#[tokio::test]
+async fn test_uppercase_extensions_keep_their_real_path() -> anyhow::Result<()> {
+	use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+	use wing_core::{infra::db::entities::entry, ops::indexing::PathResolver};
+
+	let harness = IndexingHarnessBuilder::new("uppercase_extension_paths")
+		.disable_watcher()
+		.build()
+		.await?;
+
+	// Indexed location: stored rows, PathResolver and search.
+	let test_location = harness.create_test_location("case").await?;
+	write_case_files(test_location.path()).await?;
+	let location = test_location
+		.index("Case Location", IndexMode::Shallow)
+		.await?;
+	tokio::time::sleep(Duration::from_millis(500)).await;
+	let db = harness.library.db().conn();
+
+	let camera = entry::Entity::find()
+		.filter(entry::Column::Name.eq("camera plan"))
+		.one(db)
+		.await?
+		.expect("camera plan.JPG is indexed");
+	assert_eq!(camera.extension.as_deref(), Some("JPG"));
+	assert_eq!(
+		PathResolver::get_full_path(db, camera.id).await?,
+		test_location.path().join("camera plan.JPG")
+	);
+
+	let location_scope = || SearchScope::Location {
+		location_id: location.uuid,
+	};
+	for extension in ["jpg", "JPG"] {
+		let output = execute_search(&harness, case_input(location_scope(), extension)).await?;
+		assert_eq!(output.index_type, IndexType::Persistent);
+		assert_case_results(&output);
+	}
+
+	// Rows written before extensions kept their case hold lowercase. A rescan
+	// sees the rebuilt path missing and the same inode, and rewrites the row.
+	entry::Entity::update_many()
+		.col_expr(
+			entry::Column::Extension,
+			sea_orm::sea_query::Expr::value("jpg"),
+		)
+		.filter(entry::Column::Id.eq(camera.id))
+		.exec(db)
+		.await?;
+	location.reindex().await?;
+	let repaired = entry::Entity::find_by_id(camera.id)
+		.one(db)
+		.await?
+		.expect("the rescan keeps the entry's id");
+	assert_eq!(repaired.extension.as_deref(), Some("JPG"));
+
+	// Unindexed folder: listing names and the extension filter.
+	let browse_dir = harness.temp_path().join("browse-case");
+	write_case_files(&browse_dir).await?;
+	index_ephemeral(&harness, browse_dir.clone(), IndexScope::Recursive).await?;
+	let browse_scope = || SearchScope::Path {
+		path: WingPath::local(browse_dir.clone()),
+	};
+	for extension in ["jpg", "JPG"] {
+		let output = execute_search(&harness, case_input(browse_scope(), extension)).await?;
+		assert_eq!(output.index_type, IndexType::Ephemeral);
+		assert_case_results(&output);
+		assert!(output
+			.results
+			.iter()
+			.any(|result| result.file.extension.as_deref() == Some("JPG")));
+	}
+
+	harness.shutdown().await?;
+	Ok(())
+}

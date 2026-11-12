@@ -461,7 +461,7 @@ async fn paths_resolve_through_dotted_folders_and_sibling_locations() -> anyhow:
 	let lookup = |path: PathBuf| async { run(&harness, FileByPathQuery::new(path)).await };
 
 	// A folder with a dot in its name, and a file inside it with an uppercase
-	// extension, which the index stores in lowercase.
+	// extension, which the index keeps as written (DESK-096).
 	let dotted = lookup(shelf.join("v1.2")).await?.expect("dotted folder");
 	assert_eq!(
 		(dotted.name.as_str(), dotted.extension.as_deref()),
@@ -471,6 +471,7 @@ async fn paths_resolve_through_dotted_folders_and_sibling_locations() -> anyhow:
 		.await?
 		.expect("file in dotted folder");
 	assert_eq!(readme.name, "README");
+	assert_eq!(readme.extension.as_deref(), Some("MD"));
 
 	// The folder `notes` is not its sibling file `notes.txt`, and back.
 	let folder = lookup(shelf.join("notes")).await?.expect("folder");

@@ -15,3 +15,20 @@ export function pickedDestination(files: File[], picked: string | string[] | nul
 export function canPickDestination(files: File[]): boolean {
 	return files.length > 0 && files.every((f) => 'Physical' in f.wing_path && f.is_local);
 }
+
+/**
+ * The folder holding the first selected file, where the picker opens. Splits on
+ * either separator because Windows paths come back with backslashes.
+ */
+export function pickerStartFolder(files: File[]): string | undefined {
+	const first = files[0];
+	if (!first || !('Physical' in first.wing_path)) return undefined;
+	const path = first.wing_path.Physical.path.replace(/[\\/]+$/, '');
+	const cut = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+	if (cut < 0) return undefined;
+	const parent = path.slice(0, cut);
+	// Keep the root's separator: `/` on Unix, `C:\` on Windows.
+	if (parent === '') return path[cut];
+	if (/^[A-Za-z]:$/.test(parent)) return `${parent}${path[cut]}`;
+	return parent;
+}
