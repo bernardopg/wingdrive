@@ -89,6 +89,7 @@
             "pages": [
               "core/development-environment",
               "core/windows-development",
+              "core/linux-desktop-integration",
               "core/database",
               "core/testing",
               "core/mobile-development",

@@ -121,10 +121,11 @@ const STORAGE_KEY = 'wing-tabs-state';
  * Secondary windows run their own tab manager; sharing one key would make two
  * windows overwrite each other's tabs on every change.
  */
-function storageKeyFor(windowLabel?: string): string {
-	return !windowLabel || windowLabel === 'main'
-		? STORAGE_KEY
-		: `${STORAGE_KEY}:${windowLabel}`;
+export function storageKeyFor(windowLabel?: string): string {
+	if (!windowLabel || windowLabel === 'main') return STORAGE_KEY;
+	// Each file chooser window has a new label; they share one entry instead of piling up.
+	if (windowLabel.startsWith('file-chooser-')) return `${STORAGE_KEY}:file-chooser`;
+	return `${STORAGE_KEY}:${windowLabel}`;
 }
 
 interface PersistedState {

@@ -178,6 +178,21 @@ export type Platform = {
 	/** Get current window label (Tauri only) */
 	getCurrentWindowLabel?(): string;
 
+	/** The file chooser request this window answers, or null when it ended (Linux Tauri only) */
+	getFilePickerRequest?(): Promise<FilePickerRequest | null>;
+
+	/** Return the user's choice to the app that asked; rejects with a FilePickerError (Linux Tauri only) */
+	respondFilePicker?(selection: FilePickerSelection): Promise<void>;
+
+	/** Cancel this window's file chooser request and close the window (Linux Tauri only) */
+	cancelFilePicker?(): Promise<void>;
+
+	/** State of the WingDrive file chooser switch in the portal configuration (Linux Tauri only) */
+	getFileChooserPortal?(): Promise<FileChooserPortalStatus>;
+
+	/** Turn the WingDrive file chooser on or off for apps that use the portal (Linux Tauri only) */
+	setFileChooserPortal?(enabled: boolean): Promise<FileChooserPortalStatus>;
+
 	/** Close current window (Tauri only) */
 	closeCurrentWindow?(): Promise<void>;
 
@@ -302,6 +317,87 @@ export interface DesktopSettings {
 	start_at_login: boolean;
 	/** Terminal command for Open Terminal Here; null detects one */
 	terminal_command: string | null;
+}
+
+/** Which portal method opened a file picker window */
+export type FilePickerMode = 'open' | 'save' | 'save_files';
+
+/** A filter rule as the requesting app sent it */
+export type FilePickerRule =
+	| {kind: 'glob'; pattern: string}
+	| {kind: 'mime_type'; pattern: string};
+
+export interface FilePickerFilter {
+	name: string;
+	rules: FilePickerRule[];
+	/** Globs for every rule; MIME types already resolved */
+	globs: string[];
+}
+
+export interface FilePickerChoice {
+	id: string;
+	label: string;
+	/** Empty for a check box, whose values are "true" and "false" */
+	options: {id: string; label: string}[];
+	initial: string;
+}
+
+export interface FilePickerOptions {
+	accept_label: string | null;
+	modal: boolean;
+	multiple: boolean;
+	directory: boolean;
+	filters: FilePickerFilter[];
+	current_filter: number | null;
+	choices: FilePickerChoice[];
+	current_folder: string | null;
+	current_name: string | null;
+	current_file: string | null;
+	files: string[];
+}
+
+/** A portal file chooser request waiting in a picker window */
+export interface FilePickerRequest {
+	id: string;
+	mode: FilePickerMode;
+	app_id: string;
+	parent_window: string;
+	title: string;
+	options: FilePickerOptions;
+	start_folder: string;
+	suggested_name: string | null;
+}
+
+/** What the picker returns; paths are local and absolute */
+export type FilePickerSelection =
+	| {
+			kind: 'open';
+			paths: string[];
+			choices: [string, string][];
+			current_filter: number | null;
+	  }
+	| {
+			kind: 'save';
+			path: string;
+			overwrite: boolean;
+			choices: [string, string][];
+			current_filter: number | null;
+	  }
+	| {kind: 'save_files'; folder: string; choices: [string, string][]};
+
+/** Why a selection was refused; `exists` asks before replacing a file */
+export type FilePickerError =
+	| {kind: 'exists'; path: string}
+	| {kind: 'invalid'; reason: string};
+
+export interface FileChooserPortalStatus {
+	enabled: boolean;
+	/** The portals.conf file the switch edits */
+	config_file: string;
+	/** Its current FileChooser value */
+	value: string | null;
+	/** Whether wingdrive.portal is installed where xdg-desktop-portal looks */
+	backend_installed: boolean;
 }
 
 /** A folder the desktop asked WingDrive to open, with an optional entry to select */

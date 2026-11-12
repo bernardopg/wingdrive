@@ -5,6 +5,8 @@ mod admin;
 mod background;
 mod clipboard;
 mod drag;
+#[cfg(target_os = "linux")]
+mod file_chooser;
 mod file_drag;
 mod file_opening;
 #[cfg(target_os = "linux")]
@@ -2557,6 +2559,16 @@ fn main() {
 			terminal::terminal_follow,
 			terminal::terminal_close,
 			#[cfg(target_os = "linux")]
+			file_chooser::file_chooser_request,
+			#[cfg(target_os = "linux")]
+			file_chooser::file_chooser_respond,
+			#[cfg(target_os = "linux")]
+			file_chooser::file_chooser_cancel,
+			#[cfg(target_os = "linux")]
+			file_chooser::file_chooser_portal_status,
+			#[cfg(target_os = "linux")]
+			file_chooser::file_chooser_portal_set,
+			#[cfg(target_os = "linux")]
 			gvfs::list_network_mounts,
 			#[cfg(target_os = "linux")]
 			gvfs::list_mountable_volumes,
@@ -2760,7 +2772,12 @@ fn main() {
 			#[cfg(target_os = "linux")]
 			if std::env::var_os(INSTANCE_ENV).is_none() {
 				tauri::async_runtime::spawn(filemanager1::serve(app.handle().clone()));
+				tauri::async_runtime::spawn(file_chooser::serve(app.handle().clone()));
 			}
+			#[cfg(target_os = "linux")]
+			app.manage(file_chooser::PortalStateFile(
+				data_dir.join("file-chooser-portal.json"),
+			));
 			// Some desktops have no tray host; the app still works, only hiding is lost.
 			if let Err(error) = background::create_tray(app.handle()) {
 				tracing::warn!(%error, "Tray icon unavailable");

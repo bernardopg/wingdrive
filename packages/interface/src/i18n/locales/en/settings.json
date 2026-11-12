@@ -37,6 +37,13 @@
 			"terminal": "Terminal",
 			"terminalHint": "Command for Open Terminal Here. Leave empty to use xdg-terminal-exec, $TERMINAL or an installed terminal."
 		},
+		"fileChooser": {
+			"title": "File chooser",
+			"enable": "Use WingDrive to pick files in other apps",
+			"hint": "Uploads and saves in browsers, Flatpak and GTK4 apps open WingDrive. Edits {{file}} and restores the previous chooser when turned off.",
+			"notInstalled": "Needs wingdrive.portal from the WingDrive package. Builds from source must install it by hand.",
+			"failed": "Could not change the file chooser: {{error}}"
+		},
 		"version": {
 			"title": "Version Information",
 			"version": "Version",

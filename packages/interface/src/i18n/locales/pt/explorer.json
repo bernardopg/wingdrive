@@ -493,5 +493,31 @@
 		"label": "Terminal",
 		"resize": "Redimensionar terminal",
 		"couldNotStart": "Não foi possível iniciar o shell: {{error}}"
+	},
+	"filePicker": {
+		"title": "Escolha um arquivo",
+		"open": "Abrir",
+		"selectFolder": "Selecionar pasta",
+		"save": "Salvar",
+		"saveHere": "Salvar aqui",
+		"cancel": "Cancelar",
+		"close": "Fechar",
+		"name": "Nome",
+		"filter": "Tipo de arquivo",
+		"replace": "Substituir",
+		"replaceQuestion": "\"{{name}}\" já existe. Deseja substituí-lo?",
+		"savingFiles_one": "Salvando {{count}} arquivo nesta pasta",
+		"savingFiles_other": "Salvando {{count}} arquivos nesta pasta",
+		"ended": "O app que pediu um arquivo não espera mais por esta janela.",
+		"errors": {
+			"nothingSelected": "Selecione um item primeiro.",
+			"onlyOne": "Selecione apenas um item.",
+			"notFolder": "Selecione apenas pastas.",
+			"notFile": "Selecione apenas arquivos.",
+			"notLocal": "Só pastas deste dispositivo podem ser usadas aqui.",
+			"filterMismatch": "A seleção não corresponde ao tipo de arquivo.",
+			"emptyName": "Digite um nome.",
+			"badName": "O nome não pode conter \"/\" nem ser \".\" ou \"..\"."
+		}
 	}
 }

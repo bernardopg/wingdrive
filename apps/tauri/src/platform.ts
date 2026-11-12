@@ -14,6 +14,9 @@ import type {
 	ContextAction,
 	DesktopSettings,
 	DiscoveredServer,
+	FileChooserPortalStatus,
+	FilePickerRequest,
+	FilePickerSelection,
 	MountableVolume,
 	NetworkMount,
 	OpenRequest,
@@ -67,6 +70,15 @@ export const platform: Platform = {
 					invoke<void>('unmount_network_location', {path}),
 				startFileDrag: (paths: string[]) =>
 					invoke<void>('start_file_drag', {paths}),
+				getFilePickerRequest: () =>
+					invoke<FilePickerRequest | null>('file_chooser_request'),
+				respondFilePicker: (selection: FilePickerSelection) =>
+					invoke<void>('file_chooser_respond', {selection}),
+				cancelFilePicker: () => invoke<void>('file_chooser_cancel'),
+				getFileChooserPortal: () =>
+					invoke<FileChooserPortalStatus>('file_chooser_portal_status'),
+				setFileChooserPortal: (enabled: boolean) =>
+					invoke<FileChooserPortalStatus>('file_chooser_portal_set', {enabled}),
 				// Administrator retries run through polkit; Windows has no UAC path yet.
 				runAsAdmin: async (operation: AdminOperation) => {
 					await invoke('run_as_admin', {operation});

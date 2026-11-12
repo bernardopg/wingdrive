@@ -23,6 +23,20 @@ Then:
 
 To go back, point `inode/directory` at your previous file manager, for example `org.kde.dolphin.desktop` or `org.gnome.Nautilus.desktop`.
 
+## File chooser for uploads and saves
+
+WingDrive can be the dialog that opens when you upload a file in a browser or choose where to save a download. Chrome, Firefox, Flatpak apps and GTK4 apps use it through `xdg-desktop-portal`.
+
+In **Settings**, under **File chooser**, turn on **Use WingDrive to pick files in other apps**. WingDrive puts itself first in your portal configuration (`~/.config/xdg-desktop-portal/hyprland-portals.conf` on Hyprland, `portals.conf` elsewhere), keeps your previous chooser after it, and restarts the portal. Restart open browsers so they see the change. Turning the switch off puts the previous chooser back.
+
+To edit the file yourself, add this line under `[preferred]`, with your previous chooser after `wingdrive`:
+
+```ini
+org.freedesktop.impl.portal.FileChooser=wingdrive;gtk
+```
+
+The packages install `wingdrive.portal`, which the switch needs. A build from source must install it by hand.
+
 ## Background and tray
 
 In **Settings**, under **Background**:

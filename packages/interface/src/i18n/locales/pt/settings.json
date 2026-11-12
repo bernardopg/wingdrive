@@ -37,6 +37,13 @@
 			"terminal": "Terminal",
 			"terminalHint": "Comando para Abrir terminal aqui. Deixe vazio para usar xdg-terminal-exec, $TERMINAL ou um terminal instalado."
 		},
+		"fileChooser": {
+			"title": "Seletor de arquivos",
+			"enable": "Usar o WingDrive para escolher arquivos em outros apps",
+			"hint": "Envios e salvamentos em navegadores, apps Flatpak e GTK4 abrem o WingDrive. Edita {{file}} e restaura o seletor anterior ao desligar.",
+			"notInstalled": "Requer o wingdrive.portal do pacote do WingDrive. Builds a partir do código-fonte precisam instalá-lo manualmente.",
+			"failed": "Não foi possível alterar o seletor de arquivos: {{error}}"
+		},
 		"version": {
 			"title": "Informações da versão",
 			"version": "Versão",

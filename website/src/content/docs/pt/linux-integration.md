@@ -23,6 +23,20 @@ Depois:
 
 Para voltar, associe `inode/directory` ao gerenciador de arquivos anterior, por exemplo, `org.kde.dolphin.desktop` ou `org.gnome.Nautilus.desktop`.
 
+## Seletor de arquivos para envios e salvamentos
+
+O WingDrive pode ser a janela que abre quando você envia um arquivo em um navegador ou escolhe onde salvar um download. Chrome, Firefox, apps Flatpak e apps GTK4 o usam pelo `xdg-desktop-portal`.
+
+Em **Settings**, na seção **File chooser**, ative **Use WingDrive to pick files in other apps**. O WingDrive se coloca em primeiro lugar na configuração do portal (`~/.config/xdg-desktop-portal/hyprland-portals.conf` no Hyprland, `portals.conf` nos demais), mantém o seletor anterior depois dele e reinicia o portal. Reinicie os navegadores abertos para que vejam a mudança. Desligar a opção restaura o seletor anterior.
+
+Para editar o arquivo você mesmo, adicione esta linha em `[preferred]`, com o seletor anterior depois de `wingdrive`:
+
+```ini
+org.freedesktop.impl.portal.FileChooser=wingdrive;gtk
+```
+
+Os pacotes instalam o `wingdrive.portal`, que a opção exige. Um build a partir do código-fonte precisa instalá-lo manualmente.
+
 ## Segundo plano e bandeja
 
 Em **Settings**, na seção **Background**:

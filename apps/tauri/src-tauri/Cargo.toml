@@ -77,6 +77,7 @@ tauri-winrt-notification = "0.8"
 file-opening-linux = { path = "../crates/file-opening-linux" }
 gtk = "0.18.2"
 zbus = { version = "6.0", default-features = false, features = ["tokio", "proxy", "service"] }
+thiserror = { workspace = true }
 
 # A peer-to-peer bus connection stands in for the notification server in tests.
 [target.'cfg(target_os = "linux")'.dev-dependencies]
