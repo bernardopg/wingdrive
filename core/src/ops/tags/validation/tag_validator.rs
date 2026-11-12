@@ -294,4 +294,59 @@ mod tests {
 		assert!(TagValidator::validate_color("#FF00").is_err()); // Too short
 		assert!(TagValidator::validate_color("#GG0000").is_err()); // Invalid hex
 	}
+	#[test]
+	fn tag_names_enforce_unicode_character_and_whitespace_boundaries() {
+		assert!(TagValidator::validate_tag_name(&"é".repeat(255)).is_ok());
+		assert!(TagValidator::validate_tag_name(&"é".repeat(256)).is_err());
+		for name in [
+			"\tname",
+			"name\n",
+			"\u{2003}name",
+			"name\u{2003}",
+			"a\0b",
+			"a\u{7f}b",
+		] {
+			assert!(TagValidator::validate_tag_name(name).is_err(), "{name:?}");
+		}
+		for name in ["a b", "a\tb", "日本語", "a-b_c"] {
+			assert!(TagValidator::validate_tag_name(name).is_ok(), "{name:?}");
+		}
+	}
+
+	#[test]
+	fn namespace_accepts_only_its_documented_alphabet_and_length() {
+		assert!(TagValidator::validate_namespace(&"a".repeat(100)).is_ok());
+		assert!(TagValidator::validate_namespace(&"a".repeat(101)).is_err());
+		for name in [
+			"name/child",
+			"name.child",
+			"name@host",
+			"é",
+			" name",
+			"name ",
+		] {
+			assert!(TagValidator::validate_namespace(name).is_err(), "{name:?}");
+		}
+		for name in ["abc", "A-1_2", "two words"] {
+			assert!(TagValidator::validate_namespace(name).is_ok(), "{name:?}");
+		}
+	}
+
+	#[test]
+	fn color_requires_exactly_six_ascii_hex_digits() {
+		for color in ["#000000", "#ffffff", "#Aa12bC"] {
+			assert!(TagValidator::validate_color(color).is_ok(), "{color:?}");
+		}
+		for color in [
+			"",
+			"#123",
+			"#12345678",
+			"#12345g",
+			"#１２３４５６",
+			" #123456",
+			"#123456\n",
+		] {
+			assert!(TagValidator::validate_color(color).is_err(), "{color:?}");
+		}
+	}
 }
