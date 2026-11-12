@@ -1,5 +1,14 @@
 # Bugs encontrados na ampliação de cobertura
 
+## Arquivos antigos no cache de arquivos compactados não são removidos
+
+- Estado: corrigido localmente; testes de regressão adicionados, execução Cargo pendente por bloqueio do diretório de build.
+- Local: `core/src/ops/archive/browse.rs`, `prune`.
+- Reprodução: coloque um arquivo comum antigo na raiz do cache e execute `prune`. A função tentava removê-lo como diretório e deixava a entrada no disco.
+- Impacto: entradas comuns antigas permaneciam no cache e geravam avisos repetidos. Não foi identificado um fluxo normal que crie essas entradas.
+- Correção: escolher a operação de remoção pelo tipo da entrada, sem seguir links simbólicos ao decidir como removê-la.
+
+
 ## Avisos do Clippy nos testes de menus de serviço
 
 - Estado: corrigido localmente; `cargo clippy --locked -p file-opening-linux --all-targets -- -D warnings` passou.
