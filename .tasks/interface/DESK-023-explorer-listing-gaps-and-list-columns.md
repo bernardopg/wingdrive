@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S04
 tags: [core, interface, indexing, bug, performance]
-last_updated: 2026-11-02
+last_updated: 2026-11-12
 ---
 
 ## Description
@@ -75,3 +75,7 @@ Measured against the running daemon with `wing file list`:
   and opened its window. The list view was not exercised in the packaged app. The installed 2.1.0 daemon keeps its in-memory index until it
   restarts, so `systemctl --user restart wingdrive-daemon` clears a stale `/home` until the fix ships.
 - Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. `/usr/bin` listed all 4932 entries on the first visit (`5 folders · 4927 files`), `/home` and the Root volume listed every non-hidden entry, and the list view columns filled the view.
+- Re-check, 2026-11-12, isolated `wing-server` (debug build, own data dir and instance, port 18093), web UI in
+  headless Chrome: a 3,000-file folder listed "3000 files" on its first visit (about 1.9 s to a settled status
+  bar, debug build), an empty folder "0 files", and in list view at 1600 px the header and rows span the view
+  with Name filling the width the other columns leave.

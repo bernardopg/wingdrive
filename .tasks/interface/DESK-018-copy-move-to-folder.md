@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S04
 tags: [desktop, explorer, file-operations, linux]
-last_updated: 2026-11-02
+last_updated: 2026-11-12
 ---
 
 ## Description
@@ -39,3 +39,8 @@ conflict resolution, and the desktop already grants `dialog:allow-open` for a fo
   (desktop only) and local physical sources, so the web host and cloud paths never show them.
 - `copyMoveDestination.test.ts` covers the picked destination, a cancelled picker and non-local sources.
 - Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. "Copy To…" opened the native folder picker (xdg-desktop-portal-gtk), the file operation dialog confirmed, `dest/alpha.txt` appeared and the source stayed. "Move To…" moved `beta.txt` to `move-dest` and it left the listing.
+
+- Re-check, 2026-11-12: the implementation step "open the native folder picker, starting in the current
+  folder" did not hold: the picker had no starting folder. Fixed in DESK-090 (`pickerStartFolder`, also
+  used by "Extract To…"); the packaged check of that fix is open there. In the web UI (Isolated `wing-server` (debug build, own data dir and instance, port 18093), web UI in headless Chrome driven over CDP, fixture folder with 5 folders and 6 files) the
+  file context menu has no "Copy To…" or "Move To…", since the web platform has no folder picker.

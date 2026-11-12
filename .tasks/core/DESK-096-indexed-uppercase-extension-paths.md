@@ -41,7 +41,7 @@ Found on 2026-11-12 while checking DESK-020 in the web UI against an indexed loc
 - [x] A rescan rewrites old rows to the real case without losing their id
 - [x] Extension filters and facets ignore case in indexed and ephemeral search
 - [x] Tests cover storage, lookups, search filters and the rescan repair
-- [ ] Checked in the web UI with the fixed build (the bug itself was reproduced there; see Evidence)
+- [x] Checked in the web UI
 
 ## Fix
 
@@ -69,5 +69,10 @@ Found on 2026-11-12 while checking DESK-020 in the web UI against an indexed loc
 - Web UI before the fix (isolated `wing-server`, 2026-11-12): the indexed location listed `UPPER.jpg`
   and "Calculate SHA-256" failed with `No such file or directory`; in an unindexed folder the `.jpg` facet
   read 2 and the `.jpg` pill returned 1 result, dropping `photo-two.JPG`.
-- Not checked in the web UI with the fixed build: the session ran out of time before rebuilding the
-  server. Check it on the next package.
+- Web UI with the fix, same data dir (rows written by the old build): before a rescan `UPPER.jpg` still
+  failed, as expected for an old row. After `wing location rescan` the location listed `UPPER.JPG`,
+  "Calculate SHA-256" showed `75a288c0...91ee9`, the digest `sha256sum` prints, and pasting
+  `SHA256 (UPPER.JPG) = 75a288c0...` read "Matches the expected checksum". In the unindexed folder the
+  `.jpg` pill returned 2 results, `photo-one.jpg` and `photo-two.JPG`, and the list shows `photo-two.JPG`.
+- Old libraries keep lowercase rows until a location is rescanned; the watcher and lookups still find
+  them in the meantime, but their rebuilt paths stay wrong until then.

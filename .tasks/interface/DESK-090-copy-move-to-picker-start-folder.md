@@ -37,3 +37,7 @@ DESK-018 against its implementation steps on 2026-11-11.
 `openDirectoryPickerDialog` takes an optional `defaultPath`, which the Tauri platform passes to the
 dialog plugin, and "Copy To…", "Move To…" and "Extract To…" use it. "the picker starts in the folder
 that holds the selection" in `copyMoveDestination.test.ts` covers it.
+
+Open: the first criterion needs the desktop build, because the web UI has no folder picker and does not
+show "Copy To…" (checked 2026-11-12). Check it with the next package: the GTK portal should open in the
+folder of the selected file.

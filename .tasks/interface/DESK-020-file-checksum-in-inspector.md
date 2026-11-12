@@ -8,7 +8,7 @@ priority: Medium
 milestone: M2
 sprint: S04
 tags: [desktop, inspector, core, file-operations]
-last_updated: 2026-11-02
+last_updated: 2026-11-12
 ---
 
 ## Description
@@ -42,3 +42,9 @@ Dolphin and Nautilus show checksums in Properties. WingDrive's content identity 
   and compares a pasted hash (bare, `sha256:` prefixed or a `sha256sum` line) via `checksum.ts`,
   covered by `checksum.test.ts`.
 - Packaged build, 2026-11-02: `WingDrive_2.3.0_amd64.deb` built from `main` (0c337f746) with this release's interface fixes, using the release command (`tauri build --target x86_64-unknown-linux-gnu`), extracted and run under Xvfb with an isolated HOME, data directory and instance, driven through tauri-driver and WebKitWebDriver. "Calculate SHA-256" on a 3 GiB file of random blocks showed the digest `sha256sum` printed, in 2 to 3 s with a warm page cache.
+
+- Re-check, 2026-11-12: `checksum_local_file` now holds the query body, with a test for a known digest, a
+  relative path, a folder and a missing file. Two bugs found and fixed: pasting a BSD tag line,
+  `openssl dgst` or `certutil` output reported "invalid" (DESK-092), and in an indexed location a file
+  with an uppercase extension (`UPPER.JPG`) resolved to `UPPER.jpg`, so "Calculate SHA-256" failed with
+  `No such file or directory` (DESK-096, core fix).
