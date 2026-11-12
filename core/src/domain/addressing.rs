@@ -493,6 +493,27 @@ impl WingPath {
 		}
 	}
 
+	/// The path of a location root as stored in `directory_paths`.
+	///
+	/// Cloud locations store a service URI such as `gdrive://me@x.com/`; every
+	/// other location stores a filesystem path on `device_slug`.
+	pub fn from_stored_location(device_slug: &str, stored: &str) -> Self {
+		if let Some((scheme, rest)) = stored.split_once("://") {
+			if let Some(service) = crate::volume::backend::CloudServiceType::from_scheme(scheme) {
+				let (identifier, path) = rest.split_once('/').unwrap_or((rest, ""));
+				return Self::Cloud {
+					service,
+					identifier: identifier.to_string(),
+					path: path.trim_matches('/').to_string(),
+				};
+			}
+		}
+		Self::Physical {
+			device_slug: device_slug.to_string(),
+			path: stored.into(),
+		}
+	}
+
 	/// Parse an WingPath from a URI string (unified addressing format)
 	/// Examples:
 	/// - "local://device-slug/path/to/file" -> Physical path
@@ -1187,6 +1208,35 @@ mod tests {
 
 #[cfg(test)]
 mod join_entry_path_tests {
+	#[test]
+	fn stored_location_paths_keep_cloud_roots() {
+		use super::WingPath;
+
+		assert_eq!(
+			WingPath::from_stored_location("pc", "gdrive://me@x.com/"),
+			WingPath::Cloud {
+				service: crate::volume::backend::CloudServiceType::GoogleDrive,
+				identifier: "me@x.com".into(),
+				path: String::new(),
+			}
+		);
+		assert_eq!(
+			WingPath::from_stored_location("pc", "s3://bucket/a/b"),
+			WingPath::Cloud {
+				service: crate::volume::backend::CloudServiceType::S3,
+				identifier: "bucket".into(),
+				path: "a/b".into(),
+			}
+		);
+		assert_eq!(
+			WingPath::from_stored_location("pc", "/home/u"),
+			WingPath::Physical {
+				device_slug: "pc".into(),
+				path: "/home/u".into(),
+			}
+		);
+	}
+
 	use super::join_entry_path;
 
 	#[test]

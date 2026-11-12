@@ -836,11 +836,14 @@ impl VolumeManager {
 			}
 		}
 
-		// Check for removed volumes
+		// Check for removed volumes. Cloud volumes never show up in local
+		// detection; they live until their account or credentials are removed.
 		let removed_fingerprints: Vec<_> = current_volumes
-			.keys()
-			.filter(|fp| !seen_fingerprints.contains(fp))
-			.cloned()
+			.iter()
+			.filter(|(fp, volume)| {
+				!seen_fingerprints.contains(fp) && volume.cloud_identifier.is_none()
+			})
+			.map(|(fp, _)| fp.clone())
 			.collect();
 
 		for fingerprint in removed_fingerprints {

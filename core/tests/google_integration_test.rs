@@ -356,6 +356,16 @@ async fn two_accounts_drive_photos_sync_edit_and_removal() -> TestResult {
 	assert!(locations
 		.iter()
 		.any(|l| l.path.to_string_lossy() == "gdrive://ana@example.com/"));
+	// The volume monitor's local rescan must not drop cloud volumes.
+	volumes.refresh_volumes().await?;
+	assert!(volumes
+		.find_cloud_volume(CloudServiceType::GoogleDrive, "ana@example.com")
+		.await
+		.is_some_and(|v| v.backend.is_some()));
+	assert!(integrations.list_accounts(&library).await?[0]
+		.drive
+		.as_ref()
+		.is_some_and(|d| d.mounted));
 
 	// Upload through the copy job, then list the folder through the query.
 	let local = TempDir::new()?;
