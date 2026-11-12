@@ -142,7 +142,7 @@ requests help just as much: [Issues](https://github.com/bernardopg/wingdrive/iss
 ## Contact
 
 - Website: [wingdrive.org](https://wingdrive.org)
-- Discord: [WingDrive server](https://discord.gg/ZHbD5Hbh)
+- Discord: [WingDrive server](https://discord.gg/n8uwvrYMCh)
 
 **Bernardo Gomes**, author and maintainer
 

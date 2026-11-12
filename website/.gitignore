@@ -4,3 +4,6 @@ dist/
 .env
 *.log
 src/data/CHANGELOG.md
+
+# The root .gitignore ignores every "data" directory; this one holds generated site data.
+!src/data/

@@ -146,7 +146,7 @@ requests ajudam tanto quanto: [Issues](https://github.com/bernardopg/wingdrive/i
 ## Contato
 
 - Site: [wingdrive.org](https://wingdrive.org/pt/)
-- Discord: [servidor do WingDrive](https://discord.gg/ZHbD5Hbh)
+- Discord: [servidor do WingDrive](https://discord.gg/n8uwvrYMCh)
 
 **Bernardo Gomes**, autor e mantenedor
 

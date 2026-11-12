@@ -21,7 +21,7 @@ export function swapLang(pathname: string, to: Lang): string {
 export const REPO = "https://github.com/bernardopg/wingdrive";
 export const RELEASES = `${REPO}/releases`;
 export const SPONSOR = "https://github.com/sponsors/bernardopg";
-export const DISCORD = "https://discord.gg/ZHbD5Hbh";
+export const DISCORD = "https://discord.gg/n8uwvrYMCh";
 export const AUR = "https://aur.archlinux.org/packages/wingdrive-bin/";
 export const DOCKER = "ghcr.io/bernardopg/wingdrive/server";
 
