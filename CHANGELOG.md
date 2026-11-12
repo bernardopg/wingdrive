@@ -3,6 +3,37 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Added
+
+- Google integration (CLOUD-004). Connect several Google accounts per library
+  through the browser (Settings > Integrations, `wing integrations connect
+  google`). Each Google Drive shows up as a volume and a sidebar location you
+  browse live, with Google Docs, Sheets and Slides as `.docx`, `.xlsx` and
+  `.pptx` exports. Grants are stored encrypted with the library key and
+  disconnecting revokes them at Google. See `docs/core/integrations.mdx`.
+- Copy, move, rename, new folder and move to trash work on cloud volumes, in
+  both directions between local folders and the cloud (FILE-003).
+- Double-clicking a Drive file opens a local copy whose saves upload back;
+  if the file changed in the cloud meanwhile, the edit is kept as a conflict
+  copy. Google Docs open in the browser.
+- Cloud sync keeps a local folder and a cloud folder in step, both ways or
+  one way, on demand or every N minutes (`wing integrations cloud-sync`).
+- Google Photos: upload photos and videos from the context menu, optionally
+  into an album, and import photos picked on Google's page.
+
+### Changed
+
+- Adding Google Drive no longer asks for pasted OAuth tokens; it signs in
+  through the browser.
+
+### Fixed
+
+- Cloud volumes disappeared 30 seconds after startup, when the volume
+  monitor's refresh did not find them among local disks.
+- Cloud locations were listed as local paths, so opening one showed nothing.
+
 ## 3.1.1 — 2026-11-12
 
 WingDrive as the Linux file chooser for browsers, Flatpak and GTK4 apps, undo

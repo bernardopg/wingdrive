@@ -1,0 +1,203 @@
+---
+title: Integrations
+sidebarTitle: Integrations
+---
+
+An integration connects an account from another service to a library. WingDrive maps what the account offers onto its own concepts: storage becomes a cloud volume that the Explorer, copy jobs and cloud sync already understand, and services without a file tree get their own jobs. Google is the first provider, with Google Drive and Google Photos.
+
+## What you can do with Google
+
+| Feature | Where |
+| --- | --- |
+| Connect several Google accounts per library | Settings > Integrations, `wing integrations connect google` |
+| Browse each account's Drive in the Explorer | Sidebar location `Google Drive (email)` |
+| Download, upload, copy, move and rename between local folders and Drive | Copy, paste, drag and drop, `wing file copy` |
+| Create folders and move items to the Drive trash | Explorer |
+| Open a Drive file in a local app and upload saves back | Double-click a file in Drive |
+| Open Google Docs, Sheets and Slides in the browser | Double-click a Google Docs file |
+| Keep a local folder in sync with a Drive folder | Settings > Integrations > Cloud sync, `wing integrations cloud-sync` |
+| Upload photos and videos to Google Photos | Context menu > Upload to Google Photos, `wing integrations photos upload` |
+| Import photos picked in Google Photos | Settings > Integrations, `wing integrations photos import` |
+
+## Signing in
+
+WingDrive uses the OAuth flow Google recommends for desktop apps:
+
+1. The daemon opens a one-shot HTTP listener on a random `127.0.0.1` port.
+2. The browser shows Google's consent page for the services you selected.
+3. Google redirects to the listener with an authorization code.
+4. The daemon trades the code for tokens and reads the account profile.
+
+PKCE (RFC 7636) binds the code to the daemon, so another local process that sees the redirect cannot redeem it. The `state` parameter must match, and a redirect with a different `state` is ignored instead of cancelling the sign-in. The session expires after 10 minutes.
+
+Connecting the same account again merges the grants, which is how you add Photos to an account that only granted Drive. Accounts are keyed by Google's stable account ID, not by email.
+
+### OAuth client
+
+Google requires every app to sign in with an OAuth client. WingDrive picks one in this order:
+
+1. The client saved in the library (Settings > Integrations > Google sign-in client, or `wing integrations google-client set`).
+2. `WINGDRIVE_GOOGLE_CLIENT_ID` and `WINGDRIVE_GOOGLE_CLIENT_SECRET` in the daemon's environment.
+3. The same variables at build time, compiled into the binary.
+
+To create your own client:
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a project.
+2. Enable the Google Drive API, the Photos Library API and the Photos Picker API.
+3. Configure the OAuth consent screen. While the app is in testing mode, add your accounts as test users. Testing-mode grants expire after 7 days; publish the app to keep them.
+4. Create credentials of type **OAuth client ID** with application type **Desktop app**.
+5. Paste the client ID and secret in Settings > Integrations, or run:
+
+```bash
+wing integrations google-client set --client-id 1234-abc.apps.googleusercontent.com --client-secret GOCSPX-...
+```
+
+A desktop client secret is not confidential, but Google still requires it in the token request. Accounts keep the client they signed in with, because a refresh token only works with the client that issued it.
+
+### Scopes
+
+| Service | Scopes |
+| --- | --- |
+| Identity | `openid`, `email`, `profile` |
+| Drive | `https://www.googleapis.com/auth/drive` |
+| Photos | `photoslibrary.appendonly`, `photoslibrary.readonly.appcreateddata`, `photoslibrary.edit.appcreateddata`, `photospicker.mediaitems.readonly` |
+
+Users can untick scopes on the consent page. WingDrive reads the scopes Google actually granted and only offers the services they cover.
+
+## Where secrets live
+
+Grants and custom clients are stored in the library's `cloud_credentials` table, encrypted with XChaCha20-Poly1305 under the library key, the same as cloud volume credentials. The email and profile are encrypted together with the tokens. Each library keeps its own accounts.
+
+Access tokens stay in memory. `GoogleTokenSource` holds one per account, refreshes it two minutes before expiry under a lock, and shares it between the Drive volume and Photos jobs. A `401` drops the cached token and retries once. Rate limits (`429`, or `403` with a rate-limit reason) and `5xx` answers back off exponentially from 500 ms, up to four attempts.
+
+Disconnecting an account removes its Drive location and volume, revokes the refresh token at Google, and deletes the stored secrets. If Google cannot be reached, the local copy is still deleted and the grant stays listed in the Google account's third-party access page.
+
+## Google Drive volume
+
+Each connected account with Drive gets a cloud volume addressed as `gdrive://<email>/`, plus a sidebar location named `Google Drive (<email>)`. The location uses index mode `none`, so connecting a large Drive does not start a crawl. Folders list live from the Drive API.
+
+```text
+gdrive://ana@example.com/Projects/report.pdf
+```
+
+`GoogleDriveBackend` implements `VolumeBackend` over Drive v3:
+
+- **Paths over IDs.** Drive addresses files by ID and allows duplicate names in a folder. The backend lists each folder and gives every child a unique name. Duplicates become `name (2).ext` in creation order, so a path keeps pointing at the same file. A `/` in a name becomes `_`.
+- **Google Docs.** Docs, Sheets, Slides and Drawings have no bytes of their own. They appear as `.docx`, `.xlsx`, `.pptx` and `.pdf` and download as exports. Writing to them is refused, and opening them goes to the browser. Forms, Sites and shortcuts are hidden.
+- **Uploads** use Drive's resumable protocol in 8 MiB chunks, streamed from disk. After an interrupted chunk the upload resumes from the byte Google confirmed.
+- **Downloads** read 8 MiB ranges into a `.wingpart` sibling and rename it into place, so a failed download leaves no truncated file.
+- **Rename and move** inside Drive are a single server-side `PATCH`, folders included. **Copy** of a file is server side; folders are recreated file by file.
+- **Trash.** Deleting to the trash moves the item to Drive's trash, where it can be restored. Permanent deletion is also available. Secure deletion is refused on cloud storage.
+- **Revisions.** Listings carry `md5Checksum` (or the file version for Google Docs), which sync and cloud editing use to detect remote changes.
+- **Capacity** comes from `about.storageQuota`.
+- Listings are cached for 30 seconds and every write invalidates the folders it touches.
+
+## Copying to and from the cloud
+
+`FileCopyJob` hands a batch that involves a cloud volume to `ops::files::copy::cloud`, which moves bytes through `VolumeBackend`. Local to cloud, cloud to local and cloud to cloud all work, for files and folders. A copy between two cloud volumes goes through a temporary file. Conflicts follow the job's `FileConflictResolution` (overwrite, keep both, skip, abort). A move deletes each source only after its copy succeeded, and keeps a source folder that still holds skipped or failed items.
+
+## Editing cloud files
+
+Double-clicking a Drive file downloads it to `<data dir>/cloud-edit/<session>/` and opens that copy with the default app. The daemon checks the copy every 2 seconds and uploads it once a change has stayed the same for 2 seconds, so a save in progress is not uploaded half written. Polling a single file survives editors that save by renaming a temporary file over the original.
+
+Before each upload WingDrive compares the cloud revision with the one it downloaded. If the file changed in the cloud meanwhile, the local edit is uploaded next to it as `name (conflict copy <date>).ext`, so neither edit is lost.
+
+Settings > Integrations lists open sessions with their state. **Finish editing** uploads pending changes and deletes the local copy; if that upload fails, the copy is kept. Sessions older than 7 days are cleaned up when the daemon starts.
+
+## Cloud sync
+
+A sync pair keeps a local folder and a folder on a cloud volume in step. It works with any cloud volume, not only Google Drive.
+
+| Mode | Behavior |
+| --- | --- |
+| `two_way` | Changes on either side reach the other |
+| `upload` | The cloud folder mirrors the local folder |
+| `download` | The local folder mirrors the cloud folder |
+
+Each run lists both trees and compares them with the manifest saved by the last successful run. The manifest is what makes deletions safe: a file missing on one side counts as deleted only if both sides had it before.
+
+- A first run never deletes anything. Files present on both sides with the same size are adopted without a transfer.
+- Deletions propagate only with `propagate_deletes`, and only for files synced before. Local deletions go to the system trash; cloud deletions go to the service's trash when it has one.
+- In `two_way`, when both sides changed a file, the local copy is renamed to `name (conflict copy <date>).ext`, the cloud version is downloaded, and the conflict copy is uploaded. An edit beats a deletion.
+- Remote changes are detected by revision (MD5 or ETag) when the service reports one, otherwise by size and modification time.
+- Partial downloads, `.DS_Store`, `Thumbs.db`, `desktop.ini` and Office or LibreOffice lock files are ignored. Local symlinks are skipped.
+- A failing file is reported and left out of the manifest, so the next run retries it.
+
+Pairs run on demand or every N minutes (5 or more). The scheduler checks for due pairs every minute, and a pair never runs twice at once. Two pairs cannot overlap on the same local or cloud folder.
+
+```bash
+wing integrations cloud-sync add Documents ~/Documents gdrive://ana@gmail.com/Backup/Documents --every 60
+wing integrations cloud-sync run <id>
+wing integrations cloud-sync update <id> --mode upload --propagate-deletes true
+wing integrations cloud-sync list
+```
+
+## Google Photos
+
+Since 2025-03-31 the Photos Library API only lets an app list and edit media and albums it created itself. Reading the rest of a library goes through the Photos Picker API, where the user selects items on a Google page.
+
+- **Upload.** Photos and videos are streamed to `uploads` and turned into media items in batches of 50, optionally into a new or existing WingDrive album. Folders are walked and files Google Photos does not accept are skipped. The job is resumable without duplicates: it records every file whose media item exists.
+- **Albums.** Lists the albums WingDrive created.
+- **Import.** WingDrive creates a picker session and opens its page. Once the user presses Done, the import job downloads each item at original quality (`=d` for photos, `=dv` for videos) into the chosen folder, numbering names that already exist.
+
+```bash
+wing integrations photos upload <account-id> ~/Pictures/Trip --new-album "Trip"
+wing integrations photos import <account-id> ~/Pictures/From-Google
+```
+
+## Operations
+
+| Wire method | Kind |
+| --- | --- |
+| `integrations.accounts.list`, `integrations.accounts.remove` | Query, action |
+| `integrations.google.client`, `integrations.google.set_client` | Query, action |
+| `integrations.google.connect`, `.connect_status`, `.connect_cancel` | Action, query, action |
+| `integrations.google.drive.mount` | Action |
+| `integrations.google.photos.albums`, `.upload`, `.picker.start`, `.picker.status`, `.picker.import` | Mixed |
+| `cloud_sync.list`, `.create`, `.update`, `.delete`, `.run` | Query, actions |
+| `files.cloud_edit.open`, `.list`, `.close` | Action, query, action |
+
+All of them are library operations. Jobs: `cloud_sync`, `google_photos_upload`, `google_photos_import`.
+
+## Code map
+
+| Path | Role |
+| --- | --- |
+| `core/src/service/integrations/mod.rs` | `IntegrationService`: sign-in sessions, token sources, Drive mounting |
+| `core/src/service/integrations/google/oauth.rs` | PKCE, consent URL, loopback listener, token exchange, refresh, revoke |
+| `core/src/service/integrations/google/tokens.rs` | Shared access tokens and retrying API client |
+| `core/src/service/integrations/google/drive.rs` | `GoogleDriveBackend` |
+| `core/src/service/integrations/google/photos.rs` | Photos Library and Picker client |
+| `core/src/service/integrations/store.rs` | Encrypted account and client storage |
+| `core/src/service/integrations/cloud_edit.rs` | Local editing sessions |
+| `core/src/ops/cloud_sync/` | Sync engine, job, scheduler and operations |
+| `core/src/ops/files/copy/cloud.rs` | Copy and move through cloud backends |
+| `core/src/ops/integrations/` | Wire operations and Photos jobs |
+| `packages/interface/src/Settings/pages/IntegrationsSettings.tsx` | Settings page |
+| `apps/cli/src/domains/integrations/` | `wing integrations` |
+
+## Testing
+
+`core/tests/google_integration_test.rs` runs the whole flow against an in-memory fake of the Google APIs (`core/tests/helpers/fake_google.rs`): sign-in of two accounts through the real loopback listener, Drive listing with pagination and duplicate names, ranged downloads, Google Docs export, chunked resumable uploads, rename, copy, trash, a forced `401` recovered by a refresh, copy jobs in both directions, a volume refresh, cloud sync, Photos upload and picker import, a cloud editing session, and account removal with revocation.
+
+`WINGDRIVE_GOOGLE_ENDPOINTS_BASE` points every Google API at another server, which is how a daemon can run against a fake for manual checks:
+
+```bash
+WINGDRIVE_GOOGLE_ENDPOINTS_BASE=http://127.0.0.1:18090 \
+WINGDRIVE_GOOGLE_CLIENT_ID=test.apps.googleusercontent.com \
+WINGDRIVE_GOOGLE_CLIENT_SECRET=test \
+  ./target/debug/wing-server --data-dir /tmp/wing-check --instance check --port 18089 --auth disabled
+```
+
+<Warning>
+	Never set `WINGDRIVE_GOOGLE_ENDPOINTS_BASE` on a daemon you use with real
+	accounts. It sends authorization codes and tokens to that server.
+</Warning>
+
+## Limitations
+
+- Shared drives and "Shared with me" are not browsed; only "My Drive".
+- Drive folders are listed live and not indexed, so Drive files do not appear in library search. Enabling indexing on the Drive location runs the generic cloud indexer, which has not been validated against Google Drive.
+- Changes made in Drive appear on the next listing (cache of 30 seconds); there is no push notification channel.
+- Google Docs, Sheets and Slides edit only in the browser.
+- The Photos Library API cannot list photos WingDrive did not upload; use the picker to import them.

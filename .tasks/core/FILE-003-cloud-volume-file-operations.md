@@ -1,14 +1,14 @@
 ---
 id: FILE-003
 title: Cloud Volume File Operations
-status: To Do
-assignee: jamiepine
+status: In Progress
+assignee: bernardopg
 parent: FILE-000
 priority: High
 tags: [core, file-ops, cloud, jobs, upstream-backlog]
 whitepaper: Section 4.4.6
 related_tasks: [FILE-001, CLOUD-003, VOL-004]
-last_updated: 2026-10-16
+last_updated: 2026-11-12
 milestone: M5
 ---
 
@@ -47,11 +47,11 @@ Extend the file copy job system to support cloud volumes, enabling users to copy
 
 ## Acceptance Criteria
 
-- [ ] User can copy a local file to a cloud volume
-- [ ] User can copy a file from a cloud volume to local storage
-- [ ] User can copy files between two different cloud volumes
+- [x] User can copy a local file to a cloud volume
+- [x] User can copy a file from a cloud volume to local storage
+- [x] User can copy files between two different cloud volumes
 - [ ] Progress is accurately reported for cloud transfers
-- [ ] Transfers can be cancelled mid-operation
+- [x] Transfers can be cancelled mid-operation
 - [ ] Checksum verification works for cloud transfers
 
 ## Implementation Files
@@ -92,3 +92,14 @@ Extend the file copy job system to support cloud volumes, enabling users to copy
 Inherited from upstream Spacedrive. It is not on WingDrive's desktop file-manager path, so it
 is parked in the Later milestone M5 (`.tasks/ROADMAP.md`). Re-decide whether WingDrive wants it
 before pulling it into a sprint.
+
+## Progress (2026-11-12, CLOUD-004)
+
+`core/src/ops/files/copy/cloud.rs` runs every `FileCopyJob` batch that touches a
+cloud volume through `VolumeBackend`: local to cloud, cloud to local and cloud to
+cloud, files and folders, with conflict resolution, server-side rename for moves
+inside one volume and server-side copy when the service has one. Rename,
+create folder and trash work on cloud paths. Cancellation is checked between
+items. Progress reports files and bytes per item, not per byte inside a file,
+and no checksum is compared after a cloud transfer; both stay open here as
+known gaps. Tests: unit tests in `cloud.rs` and `core/tests/google_integration_test.rs`.

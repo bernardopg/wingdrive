@@ -128,6 +128,10 @@ Pairing, Spacedrop, library sync e file sync confiáveis entre desktops.
 Cloud (`CLOUD-000`, `CLOUD-003`), extensões (`PLUG-000`), Spacebot (`TAURI-004`), IA (`AI-000`),
 mobile (`RES-000`, `SEC-009`). Só entram depois de M4, salvo decisão explícita.
 
+Exceção decidida em 2026-11-12: a integração Google (`CLOUD-004`: Drive como volume, Google Fotos,
+sincronização de pastas com a nuvem) foi puxada para o S05 a pedido do autor. Ela fecha a parte de
+cópia da `FILE-003` e deixa pendente só a ida e volta com o Google real.
+
 Exceção decidida em 2026-10-17: o épico mobile `MOB-000` (Android funcional, loop de dev rápido,
 paridade com o desktop) foi puxado para agora. MOB-001 a MOB-005 entram no S03.
 
