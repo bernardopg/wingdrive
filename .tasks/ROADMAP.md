@@ -95,7 +95,7 @@ lixeira no core, no CLI e na web UI, e cópias que não perdem dados quando canc
 | 3 | REL-001 | Assinatura: updater do Tauri, Authenticode, Apple, Google Play; AUR só em tags estáveis | S05 |
 | 4 | TAURI-017 | Repetir como administrador no Windows via UAC; espera o certificado da REL-001 | — |
 | 5 | CLI-002 | `wing update` não acha binários nos releases do WingDrive (Done em 2026-11-05) | — |
-| 6 | FILE-008 | Journal e undo de cópia, sobrescrita, movimentação e lixeira no `main` (#360). Falta levar renomear, nova pasta e novo arquivo do Tauri para o journal | S05 |
+| 6 | FILE-008 | Done em 2026-11-12: todo undo do Explorer passa pelo journal do core (#378) | — |
 | 7 | TAURI-000 | Fecha quando TAURI-012 e REL-001 fecharem | S05 |
 
 O M3 fecha com a TAURI-012 Done em Windows e macOS, e um release assinado em todas as plataformas
@@ -151,6 +151,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-12 | PRs #373 a #379: site com deploy automático e Discord em inglês; FILE-008 Done; DESK-051 com o backend do portal `FileChooser` (falta conferir com navegadores e no pacote); revalidação do S03/S04 achou DESK-090 a DESK-096; coverage com CORE-020, CLI-010 e DESK-060 |
 | 2026-11-10 | Release `v3.1.0` em preparação (#347 a #360): FILE-008 com undo no core, CLI e web UI (falta o lado Tauri); COV-03 sem perda de dados em cópia cancelada; MOB-013 e MOB-014 Done; SQLite embutido atualizado (RUSTSEC-2026-0459); COV-04, COV-06 e COV-07 In Progress com 79 testes e sete bugs corrigidos |
 | 2026-11-05 | M2: WATCH-006, DESK-016 e DESK-013 Done; revisão das 2160 frases pt-BR (46 correções); dez rodadas da DESK-043 com a `v3.0.0` (estáveis, 4 de 10 abaixo de 550 MiB). Falta a DESK-043 para fechar o DESK-000 |
 | 2026-11-05 | Release `v3.0.0` com os primeiros instaladores Windows (#331 a #334). TAURI-016 Done, jobs Windows viram required checks (#336) e o README marca o Windows como beta (#335). Sobras da TAURI-016 distribuídas: checagens à mão na TAURI-012, assinatura na REL-001, UAC na nova TAURI-017. Nova CLI-002 (`wing update` sem binários no release). Tabela do M3 com ordem |

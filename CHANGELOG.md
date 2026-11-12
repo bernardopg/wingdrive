@@ -3,6 +3,53 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Added
+
+- WingDrive can be the file chooser for uploads and saves in browsers, Flatpak
+  and GTK4 apps on Linux, through an `org.freedesktop.impl.portal.FileChooser`
+  backend (Settings > General > File chooser). The switch keeps the previous
+  portal value and restores it when turned off. The `.deb` and AUR packages
+  install `wingdrive.portal` and a D-Bus activation file for it (DESK-051, #375).
+
+### Changed
+
+- Ctrl+Z undoes rename, batch rename, new folder, new file, new file from
+  template and new link through the core journal, in the desktop app and the
+  web UI, and `wing file undo` and `wing file history` include them. The
+  Tauri-side undo is gone. Undo never overwrites an item that took the old
+  name, including a dangling link (FILE-008, #378).
+- Copy To, Move To and Extract To open the folder picker in the folder of the
+  selection (DESK-090, #379).
+
+### Fixed
+
+- Files with an uppercase extension, such as camera `.JPG` photos, in indexed
+  locations could not be opened, copied, deleted or hashed. Rescan a location
+  to repair files indexed by an earlier version. The `.jpg` search filter also
+  matches `.JPG` files (DESK-096, #379).
+- The status bar shows free space for folders opened from outside the app and
+  on Windows (DESK-094, DESK-095, #379).
+- "This Location" search on Windows searched the whole library (DESK-093, #379).
+- The SHA-256 check in the Inspector accepts BSD-style, `openssl` and
+  `certutil` checksum lines (DESK-092, #379).
+- Select by Pattern reads `[!]` and `[]]` the way the shell does, and an
+  invalid range such as `[z-a]` matches literally instead of failing, also in
+  the folder filter (DESK-060, DESK-091, #374, #379).
+- Copy and move conflict planning no longer treats a destination it cannot
+  read (permission denied) as free (CORE-020, #376).
+- `wing logs --job-id` filters the log history too, not only new lines
+  (CLI-010, #377).
+- wingdrive.org deploys again: the site data folder was never committed. The
+  Discord invite on the site, the READMEs and the issue template is now
+  permanent (#373).
+
+### Tests
+
+- About 175 new tests across the core, the CLI and the desktop interface
+  (#374 to #379).
+
 ## 3.1.0 — 2026-11-10
 
 Undo for copy, overwrite, move and trash, copies that never destroy data when
