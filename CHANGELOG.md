@@ -3,7 +3,12 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 3.1.1 — 2026-11-12
+
+WingDrive as the Linux file chooser for browsers, Flatpak and GTK4 apps, undo
+for rename and new items through the core journal, a fix for files with an
+uppercase extension, about 175 new tests and routine dependency updates
+(#368 to #380).
 
 ### Added
 
@@ -49,6 +54,14 @@ version in the workspace manifests and the matching `v*` git tag.
 
 - About 175 new tests across the core, the CLI and the desktop interface
   (#374 to #379).
+
+### Dependencies
+
+- Rust: `jsonschema` 0.61.0, `sevenz-rust2` 0.25.0, `notify` 8.2.2, `zip`
+  9.4.2, `uuid` 1.29.1, `toml` 1.2.1 and `smallvec` 1.16.5 (#370 to #372).
+- Interface: TanStack Query 5.107.1, `framer-motion` 14.10.1, `zustand` 5.1.0,
+  `maplibre-gl` 6.17.0, Tailwind CSS 4.3.5 and minor tooling updates (#369).
+- CI: `taiki-e/install-action` 2.90.3 (#368).
 
 ## 3.1.0 — 2026-11-10
 
