@@ -367,16 +367,16 @@ impl DatabaseStorage {
 		out_self_closures: &mut Vec<entry_closure::ActiveModel>,
 		out_dir_paths: &mut Vec<directory_paths::ActiveModel>,
 	) -> Result<entities::entry::Model, JobError> {
-		// Extensions are normalized to lowercase and stored without the leading dot
-		// because search queries are case-insensitive ("JPG" should match "*.jpg").
-		// Directories never have extensions even if named "folder.app" since macOS
-		// treats .app bundles as atomic units, not files with extensions.
+		// Extensions keep their case and drop the leading dot: paths are rebuilt from
+		// name and extension, and "IMG.jpg" does not open "IMG.JPG" on Linux. Searches
+		// compare extensions without case instead. Directories never have extensions
+		// even if named "folder.app" since macOS treats .app bundles as atomic units.
 		let extension = match entry.kind {
 			EntryKind::File => entry
 				.path
 				.extension()
 				.and_then(|ext| ext.to_str())
-				.map(|ext| ext.to_lowercase()),
+				.map(str::to_string),
 			EntryKind::Directory | EntryKind::Symlink => None,
 		};
 
@@ -1270,7 +1270,7 @@ impl DatabaseStorage {
 }
 
 /// Name and extension stored for an entry at `path`, matching how entries are
-/// first indexed: files split off a lowercase extension, while directories and
+/// first indexed: files split off their extension, case kept, while directories and
 /// symlinks keep their full name, dots included ("release-v1.2", "Foo.app").
 fn stored_name_and_extension(path: &Path, is_file: bool) -> (String, Option<String>) {
 	let full_name = || {
@@ -1288,7 +1288,7 @@ fn stored_name_and_extension(path: &Path, is_file: bool) -> (String, Option<Stri
 	let extension = path
 		.extension()
 		.and_then(|ext| ext.to_str())
-		.map(|ext| ext.to_lowercase());
+		.map(str::to_string);
 	(name, extension)
 }
 
@@ -1350,10 +1350,10 @@ mod stored_name_tests {
 	use std::path::Path;
 
 	#[test]
-	fn files_split_a_lowercase_extension() {
+	fn files_split_their_extension_keeping_its_case() {
 		assert_eq!(
 			stored_name_and_extension(Path::new("/a/Report.final.MD"), true),
-			("Report.final".to_string(), Some("md".to_string()))
+			("Report.final".to_string(), Some("MD".to_string()))
 		);
 		assert_eq!(
 			stored_name_and_extension(Path::new("/a/Makefile"), true),

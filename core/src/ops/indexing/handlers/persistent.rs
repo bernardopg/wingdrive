@@ -693,7 +693,7 @@ impl PersistentEventHandler {
 			.filter(entry::Column::ParentId.eq(parent_dir.entry_id))
 			.filter(entry::Column::Name.eq(name));
 		query = match ext {
-			Some(e) => query.filter(entry::Column::Extension.eq(e.to_lowercase())),
+			Some(e) => query.filter(entry::extension_lookup(e)),
 			None => query.filter(entry::Column::Extension.is_null()),
 		};
 		query.one(db).await.ok()?

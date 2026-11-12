@@ -27,8 +27,9 @@ impl FilterBuilder {
 			if !types.is_empty() {
 				let mut file_type_condition = Condition::any();
 				for file_type in types {
-					file_type_condition = file_type_condition
-						.add(crate::infra::db::entities::entry::Column::Extension.eq(file_type));
+					file_type_condition = file_type_condition.add(
+						crate::infra::db::entities::entry::extension_eq_ignore_case(file_type),
+					);
 				}
 				self.condition = self.condition.add(file_type_condition);
 			}

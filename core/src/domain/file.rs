@@ -537,7 +537,7 @@ impl File {
 				.path
 				.extension()
 				.and_then(|e| e.to_str())
-				.map(|s| s.to_lowercase());
+				.map(str::to_string);
 
 			let name = metadata
 				.path

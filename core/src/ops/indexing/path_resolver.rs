@@ -368,7 +368,7 @@ impl PathResolver {
 }
 
 /// Matches an entry named `component`: a directory or extensionless entry with
-/// that full name, or a file whose stem and lowercase extension make it up.
+/// that full name, or a file whose stem and extension make it up.
 fn component_condition(component: &str) -> Condition {
 	let whole = Condition::all()
 		.add(entry::Column::Name.eq(component))
@@ -381,7 +381,7 @@ fn component_condition(component: &str) -> Condition {
 		(Some(stem), Some(extension)) => Condition::any().add(whole).add(
 			Condition::all()
 				.add(entry::Column::Name.eq(stem))
-				.add(entry::Column::Extension.eq(extension.to_lowercase())),
+				.add(entry::extension_lookup(extension)),
 		),
 		_ => whole,
 	}

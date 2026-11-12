@@ -30,7 +30,7 @@ impl FacetBuilder {
 
 		// Count file types
 		if let Some(ref extension) = file.extension {
-			*self.file_types.entry(extension.clone()).or_insert(0) += 1;
+			*self.file_types.entry(extension.to_lowercase()).or_insert(0) += 1;
 		}
 
 		// Count date ranges

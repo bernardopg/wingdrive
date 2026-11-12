@@ -420,6 +420,30 @@ impl crate::infra::sync::Syncable for Model {
 	}
 }
 
+/// Matches the stored extension of a file whose path ends in `extension`.
+///
+/// Extensions keep their case, so a path rebuilt from an entry is the real one on
+/// case-sensitive file systems. Rows indexed before that stored the lowercase
+/// form; accepting it finds them until a rescan rewrites them.
+pub fn extension_lookup(extension: &str) -> sea_orm::sea_query::SimpleExpr {
+	let lowercase = extension.to_lowercase();
+	if lowercase == extension {
+		Column::Extension.eq(extension)
+	} else {
+		Column::Extension.is_in([extension.to_string(), lowercase])
+	}
+}
+
+/// Matches files whose extension equals `extension` in any case, for filters that
+/// treat "JPG" and "jpg" as one type.
+pub fn extension_eq_ignore_case(extension: &str) -> sea_orm::sea_query::SimpleExpr {
+	use sea_orm::{
+		sea_query::{Expr, Func},
+		ExprTrait,
+	};
+	Expr::expr(Func::lower(Expr::col((Entity, Column::Extension)))).eq(extension.to_lowercase())
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EntryKind {
 	File = 0,

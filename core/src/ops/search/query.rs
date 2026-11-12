@@ -571,7 +571,7 @@ impl FileSearchQuery {
 
 			// Boost files with extensions that match common document types
 			if let Some(ref extension) = result.file.extension {
-				match extension.as_str() {
+				match extension.to_lowercase().as_str() {
 					"pdf" | "doc" | "docx" | "txt" | "md" => enhanced_score += 0.2,
 					"jpg" | "png" | "gif" | "webp" => enhanced_score += 0.1,
 					_ => {}
@@ -673,7 +673,7 @@ impl FileSearchQuery {
 				let mut file_type_condition = Condition::any();
 				for file_type in file_types {
 					file_type_condition =
-						file_type_condition.add(entry::Column::Extension.eq(file_type));
+						file_type_condition.add(entry::extension_eq_ignore_case(file_type));
 				}
 				condition = condition.add(file_type_condition);
 			}
@@ -1316,7 +1316,10 @@ impl FileSearchQuery {
 		if let Some(file_types) = &self.input.filters.file_types {
 			if !file_types.is_empty() {
 				if let Some(ref extension) = entry_model.extension {
-					if !file_types.contains(extension) {
+					if !file_types
+						.iter()
+						.any(|file_type| file_type.eq_ignore_ascii_case(extension))
+					{
 						return Ok(false);
 					}
 				} else {
