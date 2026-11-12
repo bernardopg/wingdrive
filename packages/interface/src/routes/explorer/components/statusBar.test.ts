@@ -59,6 +59,17 @@ describe('volumeForPath', () => {
 		expect(id('/data/file')).toBe('alias');
 	});
 
+	test('matches Windows drives and folder mount points', () => {
+		const windows = [volume('c', 'C:\\'), volume('data', 'C:\\mnt\\data'), volume('d', 'D:\\')];
+		const winId = (path: string) => volumeForPath(windows, 'dev', path)?.id ?? null;
+		expect(winId('C:\\Users\\me')).toBe('c');
+		expect(winId('C:\\')).toBe('c');
+		expect(winId('C:\\mnt\\data\\photos')).toBe('data');
+		expect(winId('C:\\mnt\\database')).toBe('c');
+		expect(winId('D:\\games')).toBe('d');
+		expect(winId('E:\\x')).toBeNull();
+	});
+
 	test('no match on an unknown device', () => {
 		expect(volumeForPath(volumes, 'nope', '/home')).toBeNull();
 	});

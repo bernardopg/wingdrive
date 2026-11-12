@@ -22,10 +22,13 @@ export function summarizeFiles(files: File[]): FileSummary {
 	return summary;
 }
 
+/** Whole-segment prefix test; `\` separates segments too, for Windows paths like `C:\Users`. */
 function isUnder(path: string, mountPoint: string): boolean {
-	if (mountPoint === '/') return path.startsWith('/');
-	const root = mountPoint.replace(/\/+$/, '');
-	return path === root || path.startsWith(`${root}/`);
+	const root = mountPoint.replace(/[\\/]+$/, '');
+	if (root === '') return path.startsWith('/');
+	if (!path.startsWith(root)) return false;
+	const next = path.charAt(root.length);
+	return next === '' || next === '/' || next === '\\';
 }
 
 /**
