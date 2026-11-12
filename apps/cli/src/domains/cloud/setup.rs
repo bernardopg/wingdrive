@@ -148,43 +148,17 @@ async fn add_s3_interactive(ctx: &Context) -> Result<()> {
 }
 
 async fn add_google_drive_interactive(ctx: &Context) -> Result<()> {
-	let name = text("Volume name (e.g., 'My Google Drive')", false)?.unwrap();
-	let root = text("Root folder ID (leave empty for entire drive)", true)?;
-
-	println!("\nOAuth Setup:");
-	println!("  You'll need OAuth credentials from Google Cloud Console");
-	println!("  Visit: https://console.cloud.google.com/apis/credentials\n");
-
-	let client_id = text("OAuth Client ID", false)?.unwrap();
-	let client_secret = password("OAuth Client Secret", false)?.unwrap();
-
-	println!("\nAfter authorizing, you'll receive tokens:");
-	let access_token = password("Access Token", false)?.unwrap();
-	let refresh_token = password("Refresh Token", false)?.unwrap();
-
-	println!("\nSummary:");
-	println!("  Provider: Google Drive");
-	println!("  Name:     {}", name);
-	if let Some(ref r) = root {
-		println!("  Root:     {}", r);
-	}
-	println!();
-
-	confirm_or_abort("Add this cloud volume?", false)?;
-
-	let input = VolumeAddCloudInput {
-		service: CloudServiceType::GoogleDrive,
-		display_name: name.clone(),
-		config: CloudStorageConfig::GoogleDrive {
-			root,
-			access_token,
-			refresh_token,
-			client_id,
-			client_secret,
+	// Google Drive signs in through the browser and supports several accounts.
+	crate::domains::integrations::connect_google(
+		ctx,
+		crate::domains::integrations::ConnectGoogleArgs {
+			drive_only: false,
+			photos_only: false,
+			email: None,
+			no_browser: false,
 		},
-	};
-
-	execute_add_cloud(ctx, input).await
+	)
+	.await
 }
 
 async fn add_onedrive_interactive(ctx: &Context) -> Result<()> {

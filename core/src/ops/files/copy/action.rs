@@ -310,21 +310,29 @@ impl LibraryAction for FileCopyAction {
 				message: "At least one source file must be specified".to_string(),
 			});
 		}
-		let cloud_source = self
+		for path in self
 			.sources
 			.paths
 			.iter()
-			.any(|path| matches!(path, WingPath::Cloud { .. }));
-		if cloud_source || matches!(&self.destination, WingPath::Cloud { .. }) {
-			return Err(ActionError::Validation {
-				field: if cloud_source {
-					"sources"
-				} else {
-					"destination"
+			.chain(std::iter::once(&self.destination))
+		{
+			if let Some((service, identifier, _)) = path.as_cloud() {
+				if context
+					.volume_manager
+					.find_cloud_volume(service, identifier)
+					.await
+					.is_none()
+				{
+					return Err(ActionError::Validation {
+						field: "destination".to_string(),
+						message: format!(
+							"Cloud volume {}://{} is not connected",
+							service.scheme(),
+							identifier
+						),
+					});
 				}
-				.to_string(),
-				message: "Cloud copy and move operations are not supported yet".to_string(),
-			});
+			}
 		}
 
 		// Get strategy metadata for rich UI display

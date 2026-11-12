@@ -115,11 +115,20 @@ impl LibraryAction for CreateFolderAction {
 				})?;
 			}
 			WingPath::Cloud { .. } => {
-				// Cloud folder creation would use CloudBackend
-				// For now, return an error as cloud support needs more infrastructure
-				return Err(ActionError::Internal(
-					"Cloud folder creation not yet implemented".to_string(),
-				));
+				let (backend, remote_path) =
+					crate::ops::cloud_sync::resolve_remote(&_context, &folder_path)
+						.await
+						.map_err(ActionError::InvalidInput)?;
+				if backend.exists(&remote_path).await.unwrap_or(false) {
+					return Err(ActionError::Validation {
+						field: "name".to_string(),
+						message: format!("An item named \"{}\" already exists", self.name),
+					});
+				}
+				backend
+					.create_directory(&remote_path, false)
+					.await
+					.map_err(|e| ActionError::Internal(format!("Failed to create folder: {e}")))?;
 			}
 			_ => {
 				return Err(ActionError::Internal(

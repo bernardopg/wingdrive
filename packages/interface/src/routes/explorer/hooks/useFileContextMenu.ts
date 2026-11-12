@@ -13,6 +13,7 @@ import {
 	FolderPlus,
 	GitDiff,
 	Image,
+	Images,
 	Lightning,
 	MagnifyingGlass,
 	Microphone,
@@ -57,6 +58,7 @@ import {folderOfUrl, otherPane} from '../../../components/TabManager/otherPane';
 import {useTabManager} from '../../../components/TabManager/useTabManager';
 import {useFileOperationDialog} from '../../../components/modals/FileOperationModal';
 import {useWingdrop} from './useWingdrop';
+import {canUploadToPhotos, useGooglePhotosUpload} from './useGooglePhotosUpload';
 import {useCreateEntry} from './useCreateEntry';
 import {useCreateFolder} from './useCreateFolder';
 import {useDeleteFiles} from './useDeleteFiles';
@@ -157,6 +159,7 @@ export function useFileContextMenu({
 		});
 	};
 	const wingdrop = useWingdrop();
+	const googlePhotos = useGooglePhotosUpload();
 
 	// A right-click on an unselected item acts on that item alone.
 	const targetFiles = selected && selectedFiles.length > 0
@@ -454,6 +457,16 @@ export function useFileContextMenu({
 			submenu: wingdrop.targets.map((device) => ({
 				label: device.name,
 				onClick: () => void wingdrop.sendTo(device, targetFiles)
+			}))
+		},
+		{
+			type: 'submenu',
+			icon: Images,
+			label: t('contextMenu.uploadToGooglePhotos'),
+			condition: () => googlePhotos.accounts.length > 0 && canUploadToPhotos(targetFiles),
+			submenu: googlePhotos.accounts.map((account) => ({
+				label: account.email,
+				onClick: () => void googlePhotos.uploadTo(account, targetFiles)
 			}))
 		},
 		{

@@ -45,6 +45,7 @@ mod m20261001_000001_unique_directory_entries;
 mod m20261006_000001_add_directory_paths_path_index;
 mod m20261015_000001_repair_entry_closure;
 mod m20261111_000001_fix_sync_conduit_entry_fk;
+mod m20261112_000001_create_cloud_sync_pairs;
 
 pub struct Migrator;
 
@@ -95,6 +96,7 @@ impl MigratorTrait for Migrator {
 			Box::new(m20261006_000001_add_directory_paths_path_index::Migration),
 			Box::new(m20261015_000001_repair_entry_closure::Migration),
 			Box::new(m20261111_000001_fix_sync_conduit_entry_fk::Migration),
+			Box::new(m20261112_000001_create_cloud_sync_pairs::Migration),
 		]
 	}
 }

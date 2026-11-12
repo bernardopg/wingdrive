@@ -17,10 +17,27 @@ export function useOpenFile(navigate?: (path: WingPath) => void) {
 	const { navigateToPath } = useExplorer();
 	const { openWithDefault } = useOpenWith([]);
 	const openMember = useLibraryMutation("archive.open_member");
+	const openCloud = useLibraryMutation("files.cloud_edit.open");
 	return async (file: File) => {
 		const go = navigate ?? navigateToPath;
 		if (isVirtualFile(file) || file.kind === "Directory") {
 			go(file.wing_path);
+			return;
+		}
+		// Cloud files open from a local copy whose saves upload back, or in the
+		// service's web editor for Google Docs, Sheets and Slides.
+		if ("Cloud" in file.wing_path) {
+			try {
+				const opened = await openCloud.mutateAsync({ path: file.wing_path });
+				if (opened.kind === "browser") {
+					platform.openLink(opened.url);
+				} else {
+					await openWithDefault(opened.session.local_path);
+					toast.info(t("cloudEdit.opened"));
+				}
+			} catch (error) {
+				toast.error(t("cloudEdit.openFailed", { error }));
+			}
 			return;
 		}
 		if (!("Physical" in file.wing_path)) return;

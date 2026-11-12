@@ -147,71 +147,12 @@ impl LibraryAction for VolumeAddCloudAction {
 
 				(backend, credential, cloud_identifier, mount_point, config)
 			}
-			CloudStorageConfig::GoogleDrive {
-				root,
-				access_token,
-				refresh_token,
-				client_id,
-				client_secret,
-			} => {
-				// Validate required OAuth credentials for Google Drive
-				if access_token.trim().is_empty() {
-					return Err(ActionError::InvalidInput(
-						"Google Drive requires a valid access_token".to_string(),
-					));
-				}
-				if refresh_token.trim().is_empty() {
-					return Err(ActionError::InvalidInput(
-						"Google Drive requires a valid refresh_token".to_string(),
-					));
-				}
-				if client_id.trim().is_empty() {
-					return Err(ActionError::InvalidInput(
-						"Google Drive requires a valid client_id".to_string(),
-					));
-				}
-				if client_secret.trim().is_empty() {
-					return Err(ActionError::InvalidInput(
-						"Google Drive requires a valid client_secret".to_string(),
-					));
-				}
-
-				let backend = CloudBackend::new_google_drive(
-					access_token,
-					refresh_token,
-					client_id,
-					client_secret,
-					root.clone(),
-				)
-				.await
-				.map_err(|e| {
-					ActionError::InvalidInput(format!(
-						"Failed to create Google Drive backend: {}",
-						e
-					))
-				})?;
-
-				let credential = CloudCredential::new_oauth(
-					CloudServiceType::GoogleDrive,
-					access_token.clone(),
-					refresh_token.clone(),
-					client_id.clone(),
-					client_secret.clone(),
-					None, // Google Drive tokens typically don't have a fixed expiry in the refresh flow
-				);
-
-				let cloud_identifier = root.as_deref().unwrap_or("root").to_string();
-				let desired_mount_point = format!("gdrive://{}", cloud_identifier);
-				let mount_point = context
-					.volume_manager
-					.ensure_unique_mount_point(&desired_mount_point)
-					.await;
-
-				let config = serde_json::json!({
-					"root": root,
-				});
-
-				(backend, credential, cloud_identifier, mount_point, config)
+			CloudStorageConfig::GoogleDrive { .. } => {
+				// Google Drive needs the browser sign-in, which also handles multiple
+				// accounts and token refresh; pasted tokens are no longer accepted.
+				return Err(ActionError::InvalidInput(
+					"Connect Google Drive from Settings > Integrations".to_string(),
+				));
 			}
 			CloudStorageConfig::OneDrive {
 				root,

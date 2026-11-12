@@ -168,6 +168,16 @@ impl VolumeManager {
 			for db_volume in cloud_volumes {
 				let fingerprint = VolumeFingerprint(db_volume.fingerprint.clone());
 
+				// Integration volumes (Google Drive accounts) are restored by the
+				// integration service, which owns their OAuth grants.
+				if db_volume
+					.cloud_config
+					.as_deref()
+					.is_some_and(|config| config.contains("\"integration\""))
+				{
+					continue;
+				}
+
 				// Skip if already loaded
 				if self.get_volume(&fingerprint).await.is_some() {
 					continue;
@@ -243,24 +253,10 @@ impl VolumeManager {
 								}
 							}
 							crate::volume::CloudServiceType::GoogleDrive => {
-								if let crate::crypto::cloud_credentials::CredentialData::OAuth {
-									access_token,
-									refresh_token,
-									client_id,
-									client_secret,
-								} = &credential.data
-								{
-									crate::volume::CloudBackend::new_google_drive(
-										access_token,
-										refresh_token,
-										client_id,
-										client_secret,
-										Some(cloud_identifier.clone()),
-									).await
-								} else {
-									warn!("Invalid credential type for Google Drive volume {}", fingerprint.0);
-									continue;
-								}
+								// Drive volumes come from the Google integration; a row without
+								// its integration marker predates it and cannot authenticate.
+								warn!("Skipping Google Drive volume {} without an integration account; reconnect it in Settings > Integrations", fingerprint.0);
+								continue;
 							}
 							crate::volume::CloudServiceType::OneDrive => {
 								if let crate::crypto::cloud_credentials::CredentialData::OAuth {
@@ -840,11 +836,14 @@ impl VolumeManager {
 			}
 		}
 
-		// Check for removed volumes
+		// Check for removed volumes. Cloud volumes never show up in local
+		// detection; they live until their account or credentials are removed.
 		let removed_fingerprints: Vec<_> = current_volumes
-			.keys()
-			.filter(|fp| !seen_fingerprints.contains(fp))
-			.cloned()
+			.iter()
+			.filter(|(fp, volume)| {
+				!seen_fingerprints.contains(fp) && volume.cloud_identifier.is_none()
+			})
+			.map(|(fp, _)| fp.clone())
 			.collect();
 
 		for fingerprint in removed_fingerprints {
@@ -1267,8 +1266,10 @@ impl VolumeManager {
 				if vol_service == service && vol_id == identifier {
 					// Update cache for next time
 					let mount_point_key = format!("{}://{}", service.scheme(), identifier);
-					let mut mount_point_cache = self.mount_point_cache.blocking_write();
-					mount_point_cache.insert(mount_point_key, volume.fingerprint.clone());
+					// `blocking_write` panics inside the runtime; a missed cache fill is harmless.
+					if let Ok(mut mount_point_cache) = self.mount_point_cache.try_write() {
+						mount_point_cache.insert(mount_point_key, volume.fingerprint.clone());
+					}
 
 					return Some(volume.clone());
 				}
@@ -1323,6 +1324,21 @@ impl VolumeManager {
 		}
 
 		volumes.insert(fingerprint.clone(), volume);
+	}
+
+	/// Removes a cloud volume from the in-memory registry, dropping its backend.
+	pub async fn unregister_cloud_volume(&self, fingerprint: &VolumeFingerprint) {
+		let removed = self.volumes.write().await.remove(fingerprint);
+		if let Some(volume) = removed {
+			if let Some((service, identifier)) = volume.parse_cloud_identity() {
+				self.mount_point_cache.write().await.remove(&format!(
+					"{}://{}",
+					service.scheme(),
+					identifier
+				));
+			}
+			info!("Unregistered cloud volume '{}'", volume.name);
+		}
 	}
 
 	/// Track a volume in the specified library

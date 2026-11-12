@@ -231,6 +231,52 @@ export type AudioMediaData = {
 	copyright: string | null,
 };
 
+/**  Uploads pending changes and removes the local copy. */
+export type CloudEditCloseInput = {
+	id: string,
+};
+
+export type CloudEditCloseOutput = {
+	id: string,
+};
+
+export type CloudEditListInput = Record<string, never>;
+
+/**  What opening a cloud file produced. */
+export type CloudEditOpen = 
+/**  Open this local copy with the default app. */
+{ kind: "local"; session: CloudEditSessionInfo } | 
+/**  The file only edits in the browser; open this URL. */
+{ kind: "browser"; url: string };
+
+/**
+ *  Opens a file on a cloud volume for editing.
+ * 
+ *  Returns a local copy to hand to the default app, or a browser URL for
+ *  files that only edit online, such as Google Docs.
+ */
+export type CloudEditOpenInput = {
+	path: WingPath,
+};
+
+/**  A cloud file open for editing. */
+export type CloudEditSessionInfo = {
+	id: string,
+	path: WingPath,
+	local_path: string,
+	state: CloudEditState,
+	last_synced_at: string | null,
+};
+
+/**  Upload state of an editing session. */
+export type CloudEditState = 
+/**  The local copy matches the cloud. */
+{ state: "synced" } | 
+/**  The app saved changes that are waiting to settle. */
+{ state: "modified" } | { state: "uploading" } | 
+/**  The cloud file changed too; the local edit went to `copy_name`. */
+{ state: "conflict"; copy_name: string } | { state: "error"; message: string };
+
 /**  Cloud service type identifier */
 export type CloudServiceType = "s3" | "gdrive" | "dropbox" | "onedrive" | "gcs" | "azblob" | "b2" | "wasabi" | "spaces" | "cloud";
 
@@ -251,6 +297,67 @@ export type CloudStorageConfig = { type: "S3"; bucket: string; region: string; a
  *  Only refresh_token is required (not access_token).
  */
 { type: "Dropbox"; root: string | null; refresh_token: string; client_id: string; client_secret: string } | { type: "AzureBlob"; container: string; endpoint: string | null; account_name: string; account_key: string } | { type: "GoogleCloudStorage"; bucket: string; root: string | null; endpoint: string | null; credential: string };
+
+/**  Creates a sync pair. */
+export type CloudSyncCreateInput = {
+	name: string,
+	/**  Absolute path of a folder on this device; created if missing. */
+	local_path: string,
+	/**  A folder on a mounted cloud volume; created if missing. */
+	remote: WingPath,
+	mode: SyncMode,
+	propagate_deletes: boolean,
+	interval_minutes: number | null,
+	/**  Start the first run right away. */
+	run_now: boolean,
+};
+
+/**  Deletes a sync pair. Files on both sides stay where they are. */
+export type CloudSyncDeleteInput = {
+	id: string,
+};
+
+export type CloudSyncDeleteOutput = {
+	id: string,
+};
+
+/**  Lists the sync pairs of the library. */
+export type CloudSyncListInput = Record<string, never>;
+
+/**  A sync pair as clients see it. */
+export type CloudSyncPairInfo = {
+	id: string,
+	name: string,
+	local_path: string,
+	remote: WingPath,
+	mode: SyncMode,
+	propagate_deletes: boolean,
+	/**  Minutes between automatic runs; `None` runs only on demand. */
+	interval_minutes: number | null,
+	enabled: boolean,
+	last_run_at: string | null,
+	/**  "success", "partial" or "failed". */
+	last_status: string | null,
+	last_error: string | null,
+	last_report: SyncReport | null,
+	running: boolean,
+};
+
+/**  Starts a sync run now. */
+export type CloudSyncRunInput = {
+	id: string,
+};
+
+/**  Changes a sync pair. Omitted fields keep their value. */
+export type CloudSyncUpdateInput = {
+	id: string,
+	name: string | null,
+	mode: SyncMode | null,
+	propagate_deletes: boolean | null,
+	/**  `Some(None)` clears the interval. */
+	interval_minutes: number | null,
+	enabled: boolean | null,
+};
 
 export type CompareEntry = {
 	/**  Path below both roots, `/`-separated */
@@ -302,6 +409,11 @@ export type CompositionRule = {
 	operands: string[],
 	result_attribute: string,
 };
+
+/**  Progress of a browser sign-in. */
+export type ConnectStatus = 
+/**  Waiting for the user to finish in the browser. */
+{ status: "pending" } | { status: "completed"; account: IntegrationAccountInfo } | { status: "failed"; message: string } | { status: "cancelled" };
 
 /**  Network connection method for a device */
 export type ConnectionMethod = 
@@ -873,6 +985,14 @@ export type DownloadWhisperModelInput = {
 export type DownloadWhisperModelOutput = {
 	/**  Job ID for tracking download progress */
 	job_id: string,
+};
+
+/**  The Drive volume of an account, addressable as `gdrive://<identifier>/`. */
+export type DriveMountInfo = {
+	fingerprint: string,
+	identifier: string,
+	/**  Whether the volume is registered and reachable in this daemon. */
+	mounted: boolean,
 };
 
 /**  Input for file duplicate detection operations */
@@ -1699,6 +1819,74 @@ export type GetTagChildrenOutput = {
 	children: Tag[],
 };
 
+export type GoogleClientInfo = {
+	/**  Whether sign-in can start. */
+	configured: boolean,
+	source: OAuthClientSource | null,
+	/**  The client ID, which is public; the secret is never returned. */
+	client_id: string | null,
+};
+
+/**  Which OAuth client the library uses for Google sign-in. */
+export type GoogleClientInfoInput = Record<string, never>;
+
+export type GoogleConnectCancelInput = {
+	session_id: string,
+};
+
+export type GoogleConnectCancelOutput = {
+	cancelled: boolean,
+};
+
+/**
+ *  Starts a Google sign-in. Open `auth_url` in the browser, then poll
+ *  `integrations.google.connect_status` with `session_id`.
+ */
+export type GoogleConnectInput = {
+	/**  Services to request; empty requests Drive and Photos. */
+	services: GoogleService[],
+	/**  Preselects an account on the consent page, for reconnecting. */
+	login_hint: string | null,
+};
+
+export type GoogleConnectOutput = {
+	session_id: string,
+	auth_url: string,
+};
+
+export type GoogleConnectStatusInput = {
+	session_id: string,
+};
+
+/**  Mounts or unmounts an account's Google Drive. */
+export type GoogleDriveMountInput = {
+	account_id: string,
+	mounted: boolean,
+};
+
+export type GoogleDriveMountOutput = {
+	drive: DriveMountInfo | null,
+};
+
+/**  Google services an account can enable. */
+export type GoogleService = 
+/**  Google Drive as a browsable cloud volume. */
+"drive" | 
+/**  Google Photos upload, picker import and app albums. */
+"photos";
+
+/**
+ *  Saves or clears the library's own Google OAuth client.
+ * 
+ *  Create it in Google Cloud Console as an OAuth client of type "Desktop
+ *  app". Accounts already connected keep the client they signed in with.
+ */
+export type GoogleSetClientInput = {
+	/**  `None` clears the custom client. */
+	client_id: string | null,
+	client_secret: string | null,
+};
+
 /**  Types of groups that can appear in a space */
 export type GroupType = 
 /**  Fixed quick navigation (Overview, Recents, Favorites) */
@@ -1932,6 +2120,38 @@ export type IndexerStats = {
 	skipped: number,
 	errors: number,
 };
+
+/**  A connected account as clients see it, without secrets. */
+export type IntegrationAccountInfo = {
+	id: string,
+	provider: IntegrationProvider,
+	email: string,
+	name: string | null,
+	picture: string | null,
+	/**  Services the account granted access to. */
+	services: GoogleService[],
+	connected_at: string,
+	drive: DriveMountInfo | null,
+};
+
+/**  Disconnects an account from the library. */
+export type IntegrationAccountRemoveInput = {
+	account_id: string,
+	/**
+	 *  Also revoke WingDrive's access at the provider. Leave on unless the
+	 *  same account stays connected in another library.
+	 */
+	revoke: boolean,
+};
+
+export type IntegrationAccountRemoveOutput = {
+	account_id: string,
+};
+
+export type IntegrationAccountsListInput = Record<string, never>;
+
+/**  Providers WingDrive can connect. */
+export type IntegrationProvider = "google";
 
 /**  Represents a single integrity difference */
 export type IntegrityDifference = {
@@ -2847,6 +3067,15 @@ export type NetworkStopOutput = {
 	stopped: boolean,
 };
 
+/**  Where the OAuth client in use comes from. */
+export type OAuthClientSource = 
+/**  Saved by the user in this library. */
+"library" | 
+/**  Set in the daemon's environment. */
+"environment" | 
+/**  Compiled into this build. */
+"bundled";
+
 /**  Object detection policy (for future AI features) */
 export type ObjectDetectionPolicy = {
 	/**  Whether to run object detection on this location */
@@ -3061,6 +3290,61 @@ export type PermissionsOutput = {
 /**  Input for reading a path's permissions */
 export type PermissionsQuery = {
 	path: WingPath,
+};
+
+/**  An album WingDrive created in Google Photos. */
+export type PhotosAlbum = {
+	id: string,
+	title?: string,
+	productUrl?: string | null,
+	mediaItemsCount?: string | null,
+};
+
+/**  Lists the albums WingDrive created in an account. */
+export type PhotosAlbumsInput = {
+	account_id: string,
+};
+
+/**  Downloads what the user picked into a local folder. */
+export type PhotosPickerImportInput = {
+	account_id: string,
+	session_id: string,
+	/**  A folder on this device; created if missing. */
+	destination: WingPath,
+};
+
+/**  Starts a Photos picker session. Open `picker_uri` in the browser. */
+export type PhotosPickerStartInput = {
+	account_id: string,
+};
+
+export type PhotosPickerStartOutput = {
+	session_id: string,
+	picker_uri: string,
+	/**  Seconds the UI should wait between status checks. */
+	poll_interval_seconds: number,
+};
+
+export type PhotosPickerStatus = {
+	ready: boolean,
+	expire_time: string | null,
+};
+
+/**  Whether the user finished selecting in the picker. */
+export type PhotosPickerStatusInput = {
+	account_id: string,
+	session_id: string,
+};
+
+/**  Uploads local photos and videos to Google Photos. */
+export type PhotosUploadInput = {
+	account_id: string,
+	/**  Local files or folders; folders are walked recursively. */
+	paths: WingPath[],
+	/**  Add the uploads to this existing WingDrive album. */
+	album_id: string | null,
+	/**  Or create a new album with this title. */
+	new_album_title: string | null,
 };
 
 export type PingInput = {
@@ -3740,6 +4024,15 @@ export type SyncMetricsSnapshot = {
 	errors: ErrorSnapshot,
 };
 
+/**  Which way changes flow. */
+export type SyncMode = 
+/**  Changes on either side reach the other. */
+"two_way" | 
+/**  The local folder is the source; the cloud folder mirrors it. */
+"upload" | 
+/**  The cloud folder is the source; the local folder mirrors it. */
+"download";
+
 export type SyncPartnerInfo = {
 	device_uuid: string,
 	device_name: string,
@@ -3752,6 +4045,18 @@ export type SyncPartnersDebugInfo = {
 	paired_devices: number,
 	final_sync_partners: number,
 	device_details: DeviceDebugInfo[],
+};
+
+/**  Counts of what a run did. */
+export type SyncReport = {
+	uploaded: number,
+	downloaded: number,
+	deleted_local: number,
+	deleted_remote: number,
+	conflicts: number,
+	bytes_transferred: number,
+	/**  Paths that failed with their error; the next run retries them. */
+	errors: string[],
 };
 
 export type SyncSourceInput = {
@@ -4749,7 +5054,13 @@ export type LibraryAction =
   |  { type: 'archive.compress'; input: ArchiveCompressInput; output: JobReceipt }
   |  { type: 'archive.extract'; input: ArchiveExtractInput; output: JobReceipt }
   |  { type: 'archive.open_member'; input: ArchiveOpenMemberInput; output: ArchiveOpenMemberOutput }
+  |  { type: 'cloud_sync.create'; input: CloudSyncCreateInput; output: CloudSyncPairInfo }
+  |  { type: 'cloud_sync.delete'; input: CloudSyncDeleteInput; output: CloudSyncDeleteOutput }
+  |  { type: 'cloud_sync.run'; input: CloudSyncRunInput; output: JobReceipt }
+  |  { type: 'cloud_sync.update'; input: CloudSyncUpdateInput; output: CloudSyncPairInfo }
   |  { type: 'config.library.update'; input: UpdateLibraryConfigInput; output: UpdateLibraryConfigOutput }
+  |  { type: 'files.cloud_edit.close'; input: CloudEditCloseInput; output: CloudEditCloseOutput }
+  |  { type: 'files.cloud_edit.open'; input: CloudEditOpenInput; output: CloudEditOpen }
   |  { type: 'files.copy'; input: FileCopyInput; output: JobReceipt }
   |  { type: 'files.createFile'; input: CreateFileInput; output: CreateEntryOutput }
   |  { type: 'files.createFolder'; input: CreateFolderInput; output: CreateFolderOutput }
@@ -4763,6 +5074,14 @@ export type LibraryAction =
   |  { type: 'files.undo'; input: FileUndoInput; output: JobReceipt }
   |  { type: 'indexing.start'; input: IndexInput; output: JobReceipt }
   |  { type: 'indexing.verify'; input: IndexVerifyInput; output: IndexVerifyOutput }
+  |  { type: 'integrations.accounts.remove'; input: IntegrationAccountRemoveInput; output: IntegrationAccountRemoveOutput }
+  |  { type: 'integrations.google.connect'; input: GoogleConnectInput; output: GoogleConnectOutput }
+  |  { type: 'integrations.google.connect_cancel'; input: GoogleConnectCancelInput; output: GoogleConnectCancelOutput }
+  |  { type: 'integrations.google.drive.mount'; input: GoogleDriveMountInput; output: GoogleDriveMountOutput }
+  |  { type: 'integrations.google.photos.picker.import'; input: PhotosPickerImportInput; output: JobReceipt }
+  |  { type: 'integrations.google.photos.picker.start'; input: PhotosPickerStartInput; output: PhotosPickerStartOutput }
+  |  { type: 'integrations.google.photos.upload'; input: PhotosUploadInput; output: JobReceipt }
+  |  { type: 'integrations.google.set_client'; input: GoogleSetClientInput; output: GoogleClientInfo }
   |  { type: 'jobs.cancel'; input: JobCancelInput; output: JobCancelOutput }
   |  { type: 'jobs.pause'; input: JobPauseInput; output: JobPauseOutput }
   |  { type: 'jobs.resume'; input: JobResumeInput; output: JobResumeOutput }
@@ -4834,6 +5153,7 @@ export type CoreQuery =
 export type LibraryQuery =
      { type: 'adapters.config'; input: GetAdapterConfigInput; output: AdapterConfigField[] }
   |  { type: 'adapters.list'; input: ListAdaptersInput; output: AdapterInfo[] }
+  |  { type: 'cloud_sync.list'; input: CloudSyncListInput; output: CloudSyncPairInfo[] }
   |  { type: 'config.library.get'; input: GetLibraryConfigQueryInput; output: LibrarySettingsOutput }
   |  { type: 'devices.list'; input: ListLibraryDevicesInput; output: Device[] }
   |  { type: 'files.alternate_instances'; input: AlternateInstancesInput; output: AlternateInstancesOutput }
@@ -4841,6 +5161,7 @@ export type LibraryQuery =
   |  { type: 'files.by_path'; input: FileByPathQuery; output: File }
   |  { type: 'files.by_tag'; input: GetFilesByTagInput; output: GetFilesByTagOutput }
   |  { type: 'files.checksum'; input: FileChecksumInput; output: FileChecksumOutput }
+  |  { type: 'files.cloud_edit.list'; input: CloudEditListInput; output: CloudEditSessionInfo[] }
   |  { type: 'files.content_kind_stats'; input: ContentKindStatsInput; output: ContentKindStatsOutput }
   |  { type: 'files.directory_listing'; input: DirectoryListingInput; output: DirectoryListingOutput }
   |  { type: 'files.directory_sizes'; input: DirectorySizesInput; output: DirectorySizesOutput }
@@ -4851,6 +5172,11 @@ export type LibraryQuery =
   |  { type: 'files.undo_history'; input: UndoHistoryInput; output: UndoHistoryOutput }
   |  { type: 'files.unique_to_location'; input: UniqueToLocationInput; output: UniqueToLocationOutput }
   |  { type: 'files.vcs_status'; input: VcsStatusInput; output: VcsStatusOutput }
+  |  { type: 'integrations.accounts.list'; input: IntegrationAccountsListInput; output: IntegrationAccountInfo[] }
+  |  { type: 'integrations.google.client'; input: GoogleClientInfoInput; output: GoogleClientInfo }
+  |  { type: 'integrations.google.connect_status'; input: GoogleConnectStatusInput; output: ConnectStatus }
+  |  { type: 'integrations.google.photos.albums'; input: PhotosAlbumsInput; output: PhotosAlbum[] }
+  |  { type: 'integrations.google.photos.picker.status'; input: PhotosPickerStatusInput; output: PhotosPickerStatus }
   |  { type: 'jobs.active'; input: ActiveJobsInput; output: ActiveJobsOutput }
   |  { type: 'jobs.get_copy_metadata'; input: CopyMetadataQueryInput; output: CopyMetadataOutput }
   |  { type: 'jobs.info'; input: JobInfoQueryInput; output: JobInfoOutput }
@@ -4912,7 +5238,13 @@ export const WIRE_METHODS = {
     'archive.compress': 'action:archive.compress.input',
     'archive.extract': 'action:archive.extract.input',
     'archive.open_member': 'action:archive.open_member.input',
+    'cloud_sync.create': 'action:cloud_sync.create.input',
+    'cloud_sync.delete': 'action:cloud_sync.delete.input',
+    'cloud_sync.run': 'action:cloud_sync.run.input',
+    'cloud_sync.update': 'action:cloud_sync.update.input',
     'config.library.update': 'action:config.library.update.input',
+    'files.cloud_edit.close': 'action:files.cloud_edit.close.input',
+    'files.cloud_edit.open': 'action:files.cloud_edit.open.input',
     'files.copy': 'action:files.copy.input',
     'files.createFile': 'action:files.createFile.input',
     'files.createFolder': 'action:files.createFolder.input',
@@ -4926,6 +5258,14 @@ export const WIRE_METHODS = {
     'files.undo': 'action:files.undo.input',
     'indexing.start': 'action:indexing.start.input',
     'indexing.verify': 'action:indexing.verify.input',
+    'integrations.accounts.remove': 'action:integrations.accounts.remove.input',
+    'integrations.google.connect': 'action:integrations.google.connect.input',
+    'integrations.google.connect_cancel': 'action:integrations.google.connect_cancel.input',
+    'integrations.google.drive.mount': 'action:integrations.google.drive.mount.input',
+    'integrations.google.photos.picker.import': 'action:integrations.google.photos.picker.import.input',
+    'integrations.google.photos.picker.start': 'action:integrations.google.photos.picker.start.input',
+    'integrations.google.photos.upload': 'action:integrations.google.photos.upload.input',
+    'integrations.google.set_client': 'action:integrations.google.set_client.input',
     'jobs.cancel': 'action:jobs.cancel.input',
     'jobs.pause': 'action:jobs.pause.input',
     'jobs.resume': 'action:jobs.resume.input',
@@ -4997,6 +5337,7 @@ export const WIRE_METHODS = {
   libraryQueries: {
     'adapters.config': 'query:adapters.config',
     'adapters.list': 'query:adapters.list',
+    'cloud_sync.list': 'query:cloud_sync.list',
     'config.library.get': 'query:config.library.get',
     'devices.list': 'query:devices.list',
     'files.alternate_instances': 'query:files.alternate_instances',
@@ -5004,6 +5345,7 @@ export const WIRE_METHODS = {
     'files.by_path': 'query:files.by_path',
     'files.by_tag': 'query:files.by_tag',
     'files.checksum': 'query:files.checksum',
+    'files.cloud_edit.list': 'query:files.cloud_edit.list',
     'files.content_kind_stats': 'query:files.content_kind_stats',
     'files.directory_listing': 'query:files.directory_listing',
     'files.directory_sizes': 'query:files.directory_sizes',
@@ -5014,6 +5356,11 @@ export const WIRE_METHODS = {
     'files.undo_history': 'query:files.undo_history',
     'files.unique_to_location': 'query:files.unique_to_location',
     'files.vcs_status': 'query:files.vcs_status',
+    'integrations.accounts.list': 'query:integrations.accounts.list',
+    'integrations.google.client': 'query:integrations.google.client',
+    'integrations.google.connect_status': 'query:integrations.google.connect_status',
+    'integrations.google.photos.albums': 'query:integrations.google.photos.albums',
+    'integrations.google.photos.picker.status': 'query:integrations.google.photos.picker.status',
     'jobs.active': 'query:jobs.active',
     'jobs.get_copy_metadata': 'query:jobs.get_copy_metadata',
     'jobs.info': 'query:jobs.info',

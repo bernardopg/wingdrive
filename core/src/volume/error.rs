@@ -60,6 +60,14 @@ pub enum VolumeError {
 	/// Volume is not tracked
 	#[error("Volume is not tracked: {0}")]
 	NotTracked(String),
+
+	/// The backend cannot perform this operation
+	#[error("Operation not supported: {0}")]
+	Unsupported(String),
+
+	/// A remote storage service rejected the request
+	#[error("Storage service error: {0}")]
+	Service(String),
 }
 
 impl VolumeError {

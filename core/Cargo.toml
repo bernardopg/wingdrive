@@ -52,8 +52,11 @@ int-enum = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# HTTP client (for model downloads)
-reqwest = { version = "0.13", features = ["stream"] }
+# HTTP client (model downloads, Google integration)
+base64  = { workspace = true }
+mime_guess = "2"
+reqwest    = { version = "0.13", features = ["stream"] }
+url        = "2.5"
 specta = { workspace = true, features = [
 	"chrono",
 	"derive",
@@ -81,6 +84,7 @@ regex = "1.11"
 blake3 = "1.5"  # Content addressing
 bytes  = "1.7"  # Efficient byte buffers for I/O operations
 hex    = "0.4"  # Hex encoding for volume fingerprints
+md-5   = "0.11" # Compare local files with Google Drive's md5Checksum during sync
 notify = "8.2"  # File system watching
 sha2   = "0.11" # SHA-256 hashing for CAS IDs
 
@@ -158,6 +162,7 @@ argon2       = "0.6"                                            # Password deriv
 async-stream = "0.3"                                            # File streaming
 ring         = "0.17"                                           # Crypto primitives
 tokio-stream = "0.1"                                            # Async streams
+tokio-util   = { workspace = true, features = ["io"] }          # File bodies for uploads
 
 # BIP39 wordlist support
 bip39 = "3.0"
@@ -248,5 +253,6 @@ path = "src/bin/daemon.rs"
 
 
 [dev-dependencies]
+axum              = { workspace = true }
 pretty_assertions = "1.4"
 tempfile          = "3.14"

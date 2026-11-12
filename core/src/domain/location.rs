@@ -251,10 +251,7 @@ impl Identifiable for Location {
 			// context when needed, here we use Uuid::nil as a placeholder.
 			let library_id = Uuid::nil();
 
-			let wing_path = WingPath::Physical {
-				device_slug: device_model.slug.clone(),
-				path: dir_path.path.clone().into(),
-			};
+			let wing_path = WingPath::from_stored_location(&device_model.slug, &dir_path.path);
 
 			results.push(Location::from_db_model(&loc, library_id, wing_path));
 		}

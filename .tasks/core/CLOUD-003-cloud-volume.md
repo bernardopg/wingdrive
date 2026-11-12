@@ -8,7 +8,7 @@ priority: High
 milestone: M5
 tags: [cloud, storage, volume, s3, upstream-backlog]
 whitepaper: Section 5.2
-last_updated: 2026-10-16
+last_updated: 2026-11-12
 ---
 
 ## Description
@@ -44,7 +44,7 @@ Implement support for a cloud storage provider (e.g., S3-compatible service) as 
 ## Acceptance Criteria
 
 - [x] A user can add an S3 bucket as a new location in their library.
-- [ ] Files can be copied to and from the cloud volume.
+- [x] Files can be copied to and from the cloud volume.
 - [x] The cloud volume can be indexed like any other location.
 
 ## Implementation Files
@@ -78,7 +78,7 @@ Implement support for a cloud storage provider (e.g., S3-compatible service) as 
 
 1. Test end-to-end cloud volume indexing with MinIO or real S3
 2. Implement file copy operations for cloud volumes
-3. Add OAuth support for Google Drive, Dropbox, OneDrive
+3. Add OAuth support for Dropbox and OneDrive (Google Drive done in CLOUD-004)
 
 ## WingDrive triage (2026-10-16)
 

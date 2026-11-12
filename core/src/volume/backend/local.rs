@@ -216,6 +216,7 @@ impl VolumeBackend for LocalBackend {
 				modified: metadata.modified().ok(),
 				created: metadata.created().ok(),
 				inode: Self::get_inode(&entry_path, &metadata),
+				revision: None,
 			});
 		}
 
@@ -269,6 +270,7 @@ impl VolumeBackend for LocalBackend {
 			accessed: metadata.accessed().ok(),
 			inode: Self::get_inode(&full_path, &metadata),
 			permissions,
+			revision: None,
 		})
 	}
 
@@ -314,6 +316,26 @@ impl VolumeBackend for LocalBackend {
 			fs::create_dir(&full_path).await.map_err(VolumeError::Io)?;
 		}
 
+		Ok(())
+	}
+
+	async fn rename(&self, from: &Path, to: &Path) -> Result<(), VolumeError> {
+		let from = self.resolve_path(from);
+		let to = self.resolve_path(to);
+		debug!(
+			"LocalBackend::rename: {} -> {}",
+			from.display(),
+			to.display()
+		);
+		fs::rename(&from, &to).await?;
+		Ok(())
+	}
+
+	async fn copy(&self, from: &Path, to: &Path) -> Result<(), VolumeError> {
+		let from = self.resolve_path(from);
+		let to = self.resolve_path(to);
+		debug!("LocalBackend::copy: {} -> {}", from.display(), to.display());
+		fs::copy(&from, &to).await?;
 		Ok(())
 	}
 

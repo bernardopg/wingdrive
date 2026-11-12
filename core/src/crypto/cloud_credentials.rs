@@ -191,6 +191,109 @@ impl CloudCredentialManager {
 	}
 
 	/// Encrypt credential data using library key
+	/// Stores any serializable secret under `key`, encrypted like volume credentials.
+	///
+	/// Integrations keep OAuth grants and client secrets here so every secret
+	/// in a library shares one encryption scheme and one table. `kind` is a
+	/// short label stored in clear text for diagnostics.
+	pub async fn store_secret<T: Serialize>(
+		&self,
+		key: &str,
+		kind: &str,
+		value: &T,
+	) -> Result<(), CloudCredentialError> {
+		use crate::infra::db::entities::cloud_credential;
+		use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+
+		let library_key = self.key_manager.get_library_key(self.library_id).await?;
+		let encrypted = self.encrypt_credential(&serde_json::to_vec(value)?, &library_key)?;
+		let db = self.db.conn();
+		let existing = cloud_credential::Entity::find()
+			.filter(cloud_credential::Column::VolumeFingerprint.eq(key))
+			.one(db)
+			.await
+			.map_err(|e| CloudCredentialError::Database(e.to_string()))?;
+		let now = chrono::Utc::now();
+		match existing {
+			Some(existing) => {
+				let mut active: cloud_credential::ActiveModel = existing.into();
+				active.encrypted_credential = Set(encrypted);
+				active.service_type = Set(kind.to_string());
+				active.updated_at = Set(now);
+				active
+					.update(db)
+					.await
+					.map_err(|e| CloudCredentialError::Database(e.to_string()))?;
+			}
+			None => {
+				cloud_credential::ActiveModel {
+					id: sea_orm::ActiveValue::NotSet,
+					volume_fingerprint: Set(key.to_string()),
+					encrypted_credential: Set(encrypted),
+					service_type: Set(kind.to_string()),
+					created_at: Set(now),
+					updated_at: Set(now),
+				}
+				.insert(db)
+				.await
+				.map_err(|e| CloudCredentialError::Database(e.to_string()))?;
+			}
+		}
+		Ok(())
+	}
+
+	/// Reads a secret stored with `store_secret`, or `None` if `key` has none.
+	pub async fn get_secret<T: serde::de::DeserializeOwned>(
+		&self,
+		key: &str,
+	) -> Result<Option<T>, CloudCredentialError> {
+		use crate::infra::db::entities::cloud_credential;
+		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+
+		let Some(model) = cloud_credential::Entity::find()
+			.filter(cloud_credential::Column::VolumeFingerprint.eq(key))
+			.one(self.db.conn())
+			.await
+			.map_err(|e| CloudCredentialError::Database(e.to_string()))?
+		else {
+			return Ok(None);
+		};
+		let library_key = self.key_manager.get_library_key(self.library_id).await?;
+		let plaintext = self.decrypt_credential(&model.encrypted_credential, &library_key)?;
+		Ok(Some(serde_json::from_slice(&plaintext)?))
+	}
+
+	/// Keys of every stored secret that starts with `prefix`.
+	pub async fn list_secret_keys(
+		&self,
+		prefix: &str,
+	) -> Result<Vec<String>, CloudCredentialError> {
+		use crate::infra::db::entities::cloud_credential;
+		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+
+		Ok(cloud_credential::Entity::find()
+			.filter(cloud_credential::Column::VolumeFingerprint.starts_with(prefix))
+			.all(self.db.conn())
+			.await
+			.map_err(|e| CloudCredentialError::Database(e.to_string()))?
+			.into_iter()
+			.map(|model| model.volume_fingerprint)
+			.collect())
+	}
+
+	/// Deletes the secret stored under `key`; deleting a missing key succeeds.
+	pub async fn delete_secret(&self, key: &str) -> Result<(), CloudCredentialError> {
+		use crate::infra::db::entities::cloud_credential;
+		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+
+		cloud_credential::Entity::delete_many()
+			.filter(cloud_credential::Column::VolumeFingerprint.eq(key))
+			.exec(self.db.conn())
+			.await
+			.map_err(|e| CloudCredentialError::Database(e.to_string()))?;
+		Ok(())
+	}
+
 	fn encrypt_credential(
 		&self,
 		data: &[u8],

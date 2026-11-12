@@ -365,16 +365,23 @@ When files change outside WingDrive:
 	notifications.
 </Tip>
 
+<Note>
+	Google Drive connects through the browser sign-in described in
+	[Integrations](/docs/core/integrations), which supports several accounts.
+	`CloudStorageConfig::GoogleDrive` with pasted tokens is no longer accepted.
+</Note>
+
 ## Known Issues
 
 **Change Detection**: Cloud files are treated as new on each reindex. The system cannot yet detect modifications using cloud provider metadata. This means reindexing will recreate entries rather than updating them.
 
 **File Watcher**: Cloud volumes do not support real-time file monitoring. Changes made outside WingDrive require manual refresh or reindexing to appear.
 
-**OAuth Tokens**: Token refresh is not yet implemented. You must re-authenticate manually when tokens expire.
+**OAuth Tokens**: Google accounts refresh their tokens on their own (see [Integrations](/docs/core/integrations)). Other OAuth services refresh through OpenDAL.
 
 ## Related Documentation
 
+- [Integrations](/docs/core/integrations) - Google Drive, Google Photos and cloud folder sync
 - [Volumes](/docs/core/volumes) - Volume system fundamentals
 - [Indexing](/docs/core/indexing) - How WingDrive indexes files
 - [Jobs](/docs/core/jobs) - Monitor long-running operations

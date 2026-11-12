@@ -369,10 +369,17 @@ impl WingPath {
 				path,
 			} => {
 				let parent_path = path.trim_end_matches('/');
-				parent_path.rfind('/').map(|idx| Self::Cloud {
+				if parent_path.is_empty() {
+					return None;
+				}
+				// A top-level item's parent is the volume root, the empty path.
+				Some(Self::Cloud {
 					service: *service,
 					identifier: identifier.clone(),
-					path: parent_path[..idx].to_string(),
+					path: parent_path
+						.rfind('/')
+						.map(|idx| parent_path[..idx].to_string())
+						.unwrap_or_default(),
 				})
 			}
 			Self::Content { .. } => None, // Content paths don't have parents
@@ -483,6 +490,27 @@ impl WingPath {
 				s1 == s2 && id1 == id2
 			}
 			_ => false, // Content paths or mixed types can't be compared for volume
+		}
+	}
+
+	/// The path of a location root as stored in `directory_paths`.
+	///
+	/// Cloud locations store a service URI such as `gdrive://me@x.com/`; every
+	/// other location stores a filesystem path on `device_slug`.
+	pub fn from_stored_location(device_slug: &str, stored: &str) -> Self {
+		if let Some((scheme, rest)) = stored.split_once("://") {
+			if let Some(service) = crate::volume::backend::CloudServiceType::from_scheme(scheme) {
+				let (identifier, path) = rest.split_once('/').unwrap_or((rest, ""));
+				return Self::Cloud {
+					service,
+					identifier: identifier.to_string(),
+					path: path.trim_matches('/').to_string(),
+				};
+			}
+		}
+		Self::Physical {
+			device_slug: device_slug.to_string(),
+			path: stored.into(),
 		}
 	}
 
@@ -1180,6 +1208,35 @@ mod tests {
 
 #[cfg(test)]
 mod join_entry_path_tests {
+	#[test]
+	fn stored_location_paths_keep_cloud_roots() {
+		use super::WingPath;
+
+		assert_eq!(
+			WingPath::from_stored_location("pc", "gdrive://me@x.com/"),
+			WingPath::Cloud {
+				service: crate::volume::backend::CloudServiceType::GoogleDrive,
+				identifier: "me@x.com".into(),
+				path: String::new(),
+			}
+		);
+		assert_eq!(
+			WingPath::from_stored_location("pc", "s3://bucket/a/b"),
+			WingPath::Cloud {
+				service: crate::volume::backend::CloudServiceType::S3,
+				identifier: "bucket".into(),
+				path: "a/b".into(),
+			}
+		);
+		assert_eq!(
+			WingPath::from_stored_location("pc", "/home/u"),
+			WingPath::Physical {
+				device_slug: "pc".into(),
+				path: "/home/u".into(),
+			}
+		);
+	}
+
 	use super::join_entry_path;
 
 	#[test]

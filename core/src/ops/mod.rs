@@ -10,6 +10,7 @@
 
 pub mod adapters;
 pub mod archive;
+pub mod cloud_sync;
 pub mod config;
 // pub mod content;
 pub mod core;
@@ -17,6 +18,7 @@ pub mod devices;
 pub mod extension_test;
 pub mod files;
 pub mod indexing;
+pub mod integrations;
 pub mod jobs;
 pub mod libraries;
 pub mod locations;

@@ -80,10 +80,7 @@ impl LibraryQuery for LocationsListQuery {
 						))
 					})?;
 
-			let wing_path = WingPath::Physical {
-				device_slug: device.slug.clone(),
-				path: directory_path.path.clone().into(),
-			};
+			let wing_path = WingPath::from_stored_location(&device.slug, &directory_path.path);
 
 			out.push(Location::from_db_model(
 				&location_model,
