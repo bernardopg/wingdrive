@@ -11,6 +11,23 @@ describe('expected SHA-256 input', () => {
 		expect(parseExpectedSha256(`${abc}  ./WingDrive.AppImage`)).toBe(abc);
 	});
 
+	test('accepts BSD tag lines and checksum tool output', () => {
+		expect(parseExpectedSha256(`SHA256 (abc.txt) = ${abc}`)).toBe(abc);
+		expect(parseExpectedSha256(`SHA2-256(abc.txt)= ${abc}`)).toBe(abc);
+		expect(parseExpectedSha256(`${abc} *abc.txt`)).toBe(abc);
+		expect(
+			parseExpectedSha256(
+				`SHA256 hash of abc.txt:\r\n${abc.toUpperCase()}\r\nCertUtil: -hashfile command completed successfully.`
+			)
+		).toBe(abc);
+		// Same digest twice is still one digest.
+		expect(parseExpectedSha256(`${abc}  a\n${abc}  b`)).toBe(abc);
+	});
+
+	test('does not guess between two different digests', () => {
+		expect(parseExpectedSha256(`${abc}  a\n${'e'.repeat(64)}  b`)).toBeNull();
+	});
+
 	test('rejects text without a full digest', () => {
 		expect(parseExpectedSha256('')).toBeNull();
 		expect(parseExpectedSha256(abc.slice(1))).toBeNull();
