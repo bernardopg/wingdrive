@@ -194,6 +194,20 @@ WINGDRIVE_GOOGLE_CLIENT_SECRET=test \
 	accounts. It sends authorization codes and tokens to that server.
 </Warning>
 
+## Status and roadmap
+
+The integration is complete in code and tested against a fake of the Google APIs. For any user to connect with only a sign-in, these remain (epic `INTG-000`, sprint S06):
+
+| Task | What |
+| --- | --- |
+| INTG-001 | WingDrive's Google Cloud project and OAuth client, bundled in release builds |
+| INTG-002 | Privacy policy, terms and Limited Use disclosure on wingdrive.org |
+| INTG-003 | Google OAuth verification; the restricted `drive` scope needs a yearly CASA assessment |
+| INTG-004 | End-to-end validation with real Google on every platform |
+| INTG-005 | Reconnect flow for revoked or expired accounts |
+
+Until INTG-001 ships, sign-in needs your own OAuth client (see [OAuth client](#oauth-client)). Other providers (Dropbox, OneDrive, Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA, Proton Drive, object storage, SFTP and SMB) are planned as INTG-021 to INTG-031 on top of a shared provider framework (INTG-020).
+
 ## Limitations
 
 - Shared drives and "Shared with me" are not browsed; only "My Drive".

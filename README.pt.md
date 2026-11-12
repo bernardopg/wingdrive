@@ -94,7 +94,8 @@ outros apps, iniciar com a sessão e ficar na bandeja.
 
 - Cada arquivo ganha uma identidade de conteúdo BLAKE3, então o mesmo arquivo em dois aparelhos é um só.
 - Pareie seus aparelhos via Iroh/QUIC para sincronizar a biblioteca e enviar arquivos com o Wingdrop.
-- Volumes de nuvem via OpenDAL: S3, Google Drive, Dropbox, OneDrive, Azure Blob e GCS.
+- Google Drive e Google Fotos com várias contas: navegar, copiar, editar em apps locais, sincronizar
+  pastas e enviar fotos. S3, Dropbox, OneDrive, Azure Blob e GCS como volumes via OpenDAL.
 - CLI `wing` e `wing-server` para scripts e máquinas sem interface, no mesmo daemon.
 - Inglês e português do Brasil, e temas como Catppuccin, Gruvbox, Dracula e Tokyo Night.
 

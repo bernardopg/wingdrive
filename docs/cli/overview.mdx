@@ -296,6 +296,33 @@ Undo skips any item that changed after the operation. A file that a copy overwro
 in a hidden `.wing-undo-<job>` folder next to it. Details in
 [File copy operations](/docs/core/file-copy-operations#undo).
 
+### Integrations
+
+```bash
+# Connect a Google account (Drive and Photos) through the browser; repeat for more accounts
+wing integrations connect google
+wing integrations connect google --drive-only --email me@gmail.com
+wing integrations list
+wing integrations remove <account-id>
+
+# The OAuth client used to sign in
+wing integrations google-client show
+wing integrations google-client set --client-id <id>.apps.googleusercontent.com --client-secret <secret>
+
+# Google Drive volume and Google Photos
+wing integrations drive mount <account-id>
+wing integrations photos upload <account-id> ~/Pictures/Trip --new-album "Trip"
+wing integrations photos import <account-id> ~/Pictures/From-Google
+
+# Keep a local folder in sync with a cloud folder
+wing integrations cloud-sync add Documents ~/Documents gdrive://me@gmail.com/Backup --every 60
+wing integrations cloud-sync list
+wing integrations cloud-sync run <pair-id>
+```
+
+Copies, moves and renames accept cloud paths such as `gdrive://me@gmail.com/Folder/file.pdf`.
+Details in [Integrations](/docs/core/integrations).
+
 ### System Commands
 
 ```bash
@@ -393,6 +420,7 @@ wing location add ~/Pictures --name "Photos" --mode deep
 
 # 4. Add cloud storage
 wing volume add-cloud "S3 Backup" --service s3 --bucket my-backup --region us-west-2
+wing integrations connect google   # Google Drive and Photos, through the browser
 
 # 5. Monitor the indexing progress
 wing job monitor
