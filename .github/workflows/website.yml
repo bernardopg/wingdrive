@@ -104,11 +104,20 @@ jobs:
           HOST: ${{ secrets.WEBSITE_SSH_HOST }}
           PORT: ${{ secrets.WEBSITE_SSH_PORT }}
           USER: ${{ secrets.WEBSITE_SSH_USER }}
+        # Hostinger's SSH port sometimes times out for a few minutes (the
+        # 3.1.1 changelog deploy failed that way), so retry before failing.
         run: |
-          rsync -rlz --delete --checksum \
-            --exclude '.well-known' \
-            -e "ssh -i ~/.ssh/deploy -p $PORT -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
-            dist/ "$USER@$HOST:domains/wingdrive.org/public_html/"
+          for attempt in 1 2 3 4; do
+            if rsync -rlz --delete --checksum \
+              --exclude '.well-known' \
+              -e "ssh -i ~/.ssh/deploy -p $PORT -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=30" \
+              dist/ "$USER@$HOST:domains/wingdrive.org/public_html/"; then
+              exit 0
+            fi
+            echo "::warning::rsync attempt $attempt failed, retrying in $((attempt * 30)) s"
+            sleep $((attempt * 30))
+          done
+          exit 1
       - name: Clean up key
         if: always()
         run: rm -f ~/.ssh/deploy
