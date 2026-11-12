@@ -474,4 +474,19 @@ mod tests {
 		assert!(format_log_line("unstructured", &args).is_none());
 	}
 
+	#[test]
+	fn streamed_timestamps_show_utc_time_to_milliseconds() {
+		let timestamp = chrono::DateTime::parse_from_rfc3339("2026-01-02T03:04:05.123456Z")
+			.unwrap()
+			.with_timezone(&Utc);
+		assert_eq!(format_timestamp(timestamp, true), "[03:04:05.123] ");
+	}
+
+	#[test]
+	fn streamed_timestamps_can_be_hidden() {
+		let timestamp = chrono::DateTime::parse_from_rfc3339("2026-01-02T03:04:05Z")
+			.unwrap()
+			.with_timezone(&Utc);
+		assert_eq!(format_timestamp(timestamp, false), "");
+	}
 }
