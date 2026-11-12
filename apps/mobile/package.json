@@ -29,7 +29,7 @@
 		"@react-navigation/native": "^7.5.1",
 		"@react-navigation/native-stack": "^7.21.0",
 		"@shopify/flash-list": "2.3.2",
-		"@tanstack/react-query": "^5.106.1",
+		"@tanstack/react-query": "^5.107.1",
 		"@wingdrive/assets": "workspace:*",
 		"@wingdrive/tokens": "^0.2.3",
 		"@wingdrive/ts-client": "workspace:*",
@@ -66,14 +66,14 @@
 		"react-native-svg": "15.16.0",
 		"react-native-worklets": "0.13.0",
 		"wing-mobile-core": "file:./modules/wing-mobile-core",
-		"zustand": "^5.0.16"
+		"zustand": "^5.1.0"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.29.13",
 		"@babel/plugin-transform-runtime": "^7.29.7",
 		"@babel/runtime": "^7.29.13",
 		"@eslint/js": "^10.0.1",
-		"@tailwindcss/postcss": "^4.3.4",
+		"@tailwindcss/postcss": "^4.3.5",
 		"babel-preset-expo": "~58.0.24",
 		"eslint": "^10.14.0",
 		"eslint-plugin-react-hooks": "^7.1.1",
@@ -81,7 +81,7 @@
 		"postcss": "^8.5.32",
 		"prettier": "^3.9.10",
 		"react-native-svg-transformer": "^1.5.3",
-		"tailwindcss": "^4.3.4",
+		"tailwindcss": "^4.3.5",
 		"typescript": "~6.0.3",
 		"typescript-eslint": "^8.72.0"
 	}
