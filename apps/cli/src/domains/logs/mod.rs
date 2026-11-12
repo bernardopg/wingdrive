@@ -242,6 +242,17 @@ fn read_last_lines(file_path: &std::path::Path, n: usize) -> Result<Vec<String>>
 
 /// Format a log line based on user preferences
 fn format_log_line(line: &str, args: &LogsShowArgs) -> Option<String> {
+	if let Some(job_id) = &args.job_id {
+		let matches_job = line.split_whitespace().any(|field| {
+			field
+				.strip_prefix("job_id=")
+				.is_some_and(|value| value.trim_matches('"') == job_id)
+		});
+		if !matches_job {
+			return None;
+		}
+	}
+
 	// Parse the log line format: timestamp LEVEL ThreadId(N) target: message
 	// Example: 2025-09-19T02:25:54.897283Z DEBUG ThreadId(13) wing_core::infra::event: Event emitted to subscribers
 
@@ -445,5 +456,37 @@ mod tests {
 			format_log_line("unstructured", &show_args()).as_deref(),
 			Some("unstructured")
 		);
+	}
+
+	#[test]
+	fn historical_logs_filter_by_job_id() {
+		let mut args = show_args();
+		args.job_id = Some("job-1".into());
+		let matching = "2026-01-02T03:04:05Z INFO ThreadId(1) wing_core::job: started job_id=job-1";
+		let other = "2026-01-02T03:04:05Z INFO ThreadId(1) wing_core::job: started job_id=job-2";
+		let prefix = "2026-01-02T03:04:05Z INFO ThreadId(1) wing_core::job: started job_id=job-10";
+		let quoted =
+			"2026-01-02T03:04:05Z INFO ThreadId(1) wing_core::job: started job_id=\"job-1\"";
+		assert!(format_log_line(matching, &args).is_some());
+		assert!(format_log_line(quoted, &args).is_some());
+		assert!(format_log_line(other, &args).is_none());
+		assert!(format_log_line(prefix, &args).is_none());
+		assert!(format_log_line("unstructured", &args).is_none());
+	}
+
+	#[test]
+	fn streamed_timestamps_show_utc_time_to_milliseconds() {
+		let timestamp = chrono::DateTime::parse_from_rfc3339("2026-01-02T03:04:05.123456Z")
+			.unwrap()
+			.with_timezone(&Utc);
+		assert_eq!(format_timestamp(timestamp, true), "[03:04:05.123] ");
+	}
+
+	#[test]
+	fn streamed_timestamps_can_be_hidden() {
+		let timestamp = chrono::DateTime::parse_from_rfc3339("2026-01-02T03:04:05Z")
+			.unwrap()
+			.with_timezone(&Utc);
+		assert_eq!(format_timestamp(timestamp, false), "");
 	}
 }

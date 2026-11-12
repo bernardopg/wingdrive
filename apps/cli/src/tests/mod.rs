@@ -292,3 +292,5 @@ fn named_instances_keep_daemon_state_under_their_own_directory() {
 }
 
 mod rpc;
+
+mod coverage;

@@ -1896,3 +1896,61 @@ async fn library_selection_keeps_existing_id() {
 	assert_eq!(ctx.require_current_library().unwrap(), library());
 	server.await.unwrap();
 }
+
+#[tokio::test]
+async fn file_undo_without_job_requests_most_recent_operation() {
+	let (result, requests) = run(
+		&["wing", "file", "undo"],
+		OutputFormat::Json,
+		vec![
+			listing(),
+			success(
+				"action:files.undo.input",
+				Some(library()),
+				json!({"id": TAG, "job_name": "undo"}),
+			),
+		],
+	)
+	.await;
+	result.unwrap();
+	assert!(requests[1]["job_id"].is_null());
+}
+
+#[tokio::test]
+async fn file_history_default_limit_reaches_daemon_for_empty_history() {
+	let (result, requests) = run(
+		&["wing", "file", "history"],
+		OutputFormat::Json,
+		vec![
+			listing(),
+			success(
+				"query:files.undo_history",
+				Some(library()),
+				json!({"operations": [], "retention_days": 7}),
+			),
+		],
+	)
+	.await;
+	result.unwrap();
+	assert_eq!(requests[1]["limit"], 20);
+}
+
+#[tokio::test]
+async fn undo_daemon_error_is_returned_to_caller() {
+	let (result, _) = run(
+		&["wing", "file", "undo", TAG],
+		OutputFormat::Human,
+		vec![
+			listing(),
+			Step {
+				method: "action:files.undo.input",
+				library: Some(library()),
+				response: DaemonResponse::Error(DaemonError::ValidationError(
+					"nothing to undo".into(),
+				)),
+			},
+		],
+	)
+	.await;
+	assert!(result.unwrap_err().to_string().contains("nothing to undo"));
+}
