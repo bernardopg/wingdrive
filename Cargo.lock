@@ -14541,6 +14541,7 @@ dependencies = [
  "tauri-plugin-updater",
  "tauri-winrt-notification",
  "tempfile",
+ "thiserror 2.0.21",
  "tokio",
  "tokio-util",
  "tracing",

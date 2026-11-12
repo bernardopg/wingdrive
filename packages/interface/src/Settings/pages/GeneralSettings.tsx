@@ -4,7 +4,11 @@ import { Copy, FolderOpen } from "@phosphor-icons/react";
 import { toast } from "@wingdrive/primitives";
 import clsx from "clsx";
 import { useCoreQuery, useCoreMutation } from "../../contexts/WingDriveContext";
-import { usePlatform, type DesktopSettings } from "../../contexts/PlatformContext";
+import {
+  usePlatform,
+  type DesktopSettings,
+  type FileChooserPortalStatus,
+} from "../../contexts/PlatformContext";
 import { useTranslation } from "../../i18n";
 import {
   SettingsHeader,
@@ -45,6 +49,24 @@ export function GeneralSettings() {
   useEffect(() => {
     platform.getDesktopSettings?.().then(setDesktopSettings).catch(() => setDesktopSettings(null));
   }, [platform]);
+
+  const [portal, setPortal] = useState<FileChooserPortalStatus | null>(null);
+  const [portalBusy, setPortalBusy] = useState(false);
+  useEffect(() => {
+    platform.getFileChooserPortal?.().then(setPortal).catch(() => setPortal(null));
+  }, [platform]);
+
+  const updateFileChooserPortal = async (enabled: boolean) => {
+    if (!platform.setFileChooserPortal) return;
+    setPortalBusy(true);
+    try {
+      setPortal(await platform.setFileChooserPortal(enabled));
+    } catch (error) {
+      toast.error(t("general.fileChooser.failed", { error: errorMessage(error) }));
+    } finally {
+      setPortalBusy(false);
+    }
+  };
 
   const updateDesktopSetting = async <K extends keyof DesktopSettings>(
     key: K,
@@ -212,6 +234,22 @@ export function GeneralSettings() {
               placeholder="kitty --single-instance"
             />
           </SettingsRow>
+        </SettingsSection>
+      )}
+
+      {portal && (
+        <SettingsSection title={t("general.fileChooser.title")}>
+          <SwitchRow
+            label={t("general.fileChooser.enable")}
+            hint={
+              portal.backend_installed
+                ? t("general.fileChooser.hint", { file: portal.config_file })
+                : t("general.fileChooser.notInstalled")
+            }
+            checked={portal.enabled}
+            disabled={portalBusy || (!portal.enabled && !portal.backend_installed)}
+            onChange={(value) => void updateFileChooserPortal(value)}
+          />
         </SettingsSection>
       )}
 

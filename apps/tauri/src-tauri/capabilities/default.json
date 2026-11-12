@@ -10,7 +10,8 @@
 		"inspector-*",
 		"quick-preview-*",
 		"settings-*",
-		"job-manager"
+		"job-manager",
+		"file-chooser-*"
 	],
 	"permissions": [
 		"core:default",

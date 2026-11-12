@@ -1,0 +1,113 @@
+---
+title: Linux Desktop Integration
+sidebarTitle: Linux Desktop Integration
+---
+
+WingDrive answers two D-Bus services that other apps use to show files: "Show in folder"
+(`org.freedesktop.FileManager1`) and the file chooser of the desktop portal
+(`org.freedesktop.impl.portal.FileChooser`). Both are opt-in, so installing WingDrive never takes
+these dialogs away from the file manager you already use.
+
+## Show in folder
+
+Browsers and editors call `ShowItems` on `org.freedesktop.FileManager1`. WingDrive owns that name
+only while it is the default handler for `inode/directory`
+(`apps/tauri/src-tauri/src/filemanager1.rs`):
+
+```bash
+xdg-mime default wingdrive.desktop inode/directory
+```
+
+Restart WingDrive after the change. `WINGDRIVE_FILEMANAGER1=1` forces the service on and `0` forces
+it off. WingDrive never sets the `inode/directory` default by itself, and packages ship no D-Bus
+activation file for `FileManager1`: the name belongs to the file manager you chose.
+
+## File chooser for uploads and saves
+
+Chrome, Firefox, Flatpak apps and GTK4 apps ask `xdg-desktop-portal` for a file chooser. The portal
+forwards the request to the backend `portals.conf` names for
+`org.freedesktop.impl.portal.FileChooser`. WingDrive serves that interface on
+`org.freedesktop.impl.portal.desktop.wingdrive` (`apps/tauri/src-tauri/src/file_chooser.rs`), with
+`OpenFile`, `SaveFile` and `SaveFiles`. A request opens a picker window: the Explorer with a bar for
+Open, Save and Cancel. The picker returns local paths as `file://` URIs. Cancel and closing the
+window return response 1, and errors return response 2, so the app never waits on a closed window.
+
+The picker supports `multiple`, `directory`, `filters` and `current_filter`, `choices`,
+`accept_label`, and `current_folder`, `current_name` and `current_file` for saves. A save over an
+existing file asks before replacing it. `SaveFiles` adds ` (1)`, ` (2)` and so on to names that
+already exist in the chosen folder.
+
+### Turn it on
+
+In **Settings > General > File chooser**, turn on **Use WingDrive to pick files in other apps**. The
+switch:
+
+1. Picks the file the portal reads: the first `~/.config/xdg-desktop-portal/<desktop>-portals.conf`
+   with a `[preferred]` key, where `<desktop>` is an entry of `$XDG_CURRENT_DESKTOP` in lowercase
+   (`hyprland-portals.conf` on Hyprland), otherwise `portals.conf`. The per-desktop file wins over
+   `portals.conf`, so editing `portals.conf` next to it would change nothing.
+2. Stores the current `FileChooser` value in `file-chooser-portal.json` in the WingDrive data folder.
+3. Writes WingDrive first and the previous backend after it, for example
+   `org.freedesktop.impl.portal.FileChooser=wingdrive;gtk`.
+4. Runs `systemctl --user try-restart xdg-desktop-portal.service`. The portal picks its backends at
+   start-up, so apps see the change after this restart. Restart apps that cached the old portal,
+   such as an open Chrome.
+
+Turning the switch off writes the stored value back, or removes the line when there was none. The
+switch refuses to turn on while `wingdrive.portal` is missing, since the portal would skip the entry.
+
+To manage the file yourself, add this line under `[preferred]`, with your previous backend after
+`wingdrive`:
+
+```ini
+[preferred]
+org.freedesktop.impl.portal.FileChooser=wingdrive;gtk
+```
+
+`WINGDRIVE_FILE_CHOOSER=0` stops WingDrive from serving the backend name.
+
+### Fallback
+
+`xdg-desktop-portal` 1.22 (`xdp_portal_config_find` in `src/xdp-portal-config.c`) walks the list in
+order and takes the first backend whose `.portal` file is installed and lists the interface. It
+does not check whether the backend runs or starts, and it chooses once, when the portal starts.
+So `wingdrive;gtk` falls back to GTK when WingDrive is uninstalled, but not when WingDrive fails to
+start. Two things cover that case:
+
+- Packages ship a D-Bus activation file, so a request starts WingDrive (in the tray, with
+  `--hidden`) when it is not running.
+- The switch refuses to turn on without `wingdrive.portal`.
+
+If WingDrive is installed but cannot start, the request fails with an error and the app shows no
+dialog until you turn the switch off or fix WingDrive. The `UseIn` key of `.portal` files only
+applies when no `portals.conf` selects a backend and is deprecated, so `wingdrive.portal` leaves it
+out: WingDrive is never picked without the switch.
+
+### Package files
+
+| File | Purpose |
+| --- | --- |
+| `/usr/share/xdg-desktop-portal/portals/wingdrive.portal` | Tells the portal the backend exists (`DBusName`, `Interfaces`). |
+| `/usr/share/dbus-1/services/org.freedesktop.impl.portal.desktop.wingdrive.service` | Starts WingDrive for a request. |
+
+The AUR packages (`scripts/release/aur.py`) and the `.deb` (`tauri.conf.json`) install both. A
+build from source must copy `apps/tauri/src-tauri/portal/wingdrive.portal` and an activation file
+whose `Exec` points at the built binary. This activation file does not collide with the
+`FileManager1` rule above: it is for the portal backend name only.
+
+### Limits
+
+- The filter does not hide files from the Explorer listing. A selection that does not match the
+  chosen filter is refused with a message.
+- `modal` and the parent window handle are read but not applied: the picker opens as a normal
+  window.
+- Only local folders can be chosen. Cloud and remote locations are refused with a message.
+
+### Tests
+
+```bash
+cargo test -p wingdrive --bin WingDrive file_chooser
+bun test packages/interface/src/components/FilePicker/filePicker.test.ts
+```
+
+The D-Bus tests start their own `dbus-daemon` and never touch your session bus or portal.

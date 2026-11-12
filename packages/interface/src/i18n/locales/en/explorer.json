@@ -493,5 +493,31 @@
 		"label": "Terminal",
 		"resize": "Resize terminal",
 		"couldNotStart": "Could not start the shell: {{error}}"
+	},
+	"filePicker": {
+		"title": "Choose a file",
+		"open": "Open",
+		"selectFolder": "Select Folder",
+		"save": "Save",
+		"saveHere": "Save Here",
+		"cancel": "Cancel",
+		"close": "Close",
+		"name": "Name",
+		"filter": "File type",
+		"replace": "Replace",
+		"replaceQuestion": "\"{{name}}\" already exists. Replace it?",
+		"savingFiles_one": "Saving {{count}} file in this folder",
+		"savingFiles_other": "Saving {{count}} files in this folder",
+		"ended": "The app that asked for a file no longer waits for this window.",
+		"errors": {
+			"nothingSelected": "Select an item first.",
+			"onlyOne": "Select only one item.",
+			"notFolder": "Select folders only.",
+			"notFile": "Select files only.",
+			"notLocal": "Only folders on this device can be used here.",
+			"filterMismatch": "The selection does not match the file type.",
+			"emptyName": "Type a name.",
+			"badName": "The name cannot contain \"/\" or be \".\" or \"..\"."
+		}
 	}
 }

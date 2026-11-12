@@ -3,6 +3,8 @@ import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
 import {useEffect, useMemo} from 'react';
 import {Outlet, useLocation, useParams} from 'react-router-dom';
+import {FilePickerBar} from './components/FilePicker/FilePickerBar';
+import {isFilePickerWindow} from './components/FilePicker/filePicker';
 import {Inspector} from './components/Inspector/Inspector';
 import {JobsProvider} from './components/JobManager/hooks/JobsContext';
 import {
@@ -289,6 +291,13 @@ function ShellLayoutContent() {
 					)}
 				</AnimatePresence>
 			</div>
+
+			{/* File chooser windows answer a portal request from another app */}
+			{pane.pane === 'primary' && isFilePickerWindow(platform.getCurrentWindowLabel?.()) && (
+				<div className="relative z-[66]" data-pane-neutral>
+					<FilePickerBar />
+				</div>
+			)}
 
 			{/* Quick Preview - isolated component to prevent frame rerenders on selection change */}
 			<QuickPreviewController

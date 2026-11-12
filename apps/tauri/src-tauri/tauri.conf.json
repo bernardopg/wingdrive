@@ -112,7 +112,9 @@
         ],
         "files": {
           "/usr/lib/wingdrive/": "../../.deps/lib/",
-          "/usr/share/icons/hicolor/scalable/apps/WingDrive.svg": "icons/WingDrive.svg"
+          "/usr/share/icons/hicolor/scalable/apps/WingDrive.svg": "icons/WingDrive.svg",
+          "/usr/share/xdg-desktop-portal/portals/wingdrive.portal": "portal/wingdrive.portal",
+          "/usr/share/dbus-1/services/org.freedesktop.impl.portal.desktop.wingdrive.service": "portal/org.freedesktop.impl.portal.desktop.wingdrive.service"
         }
       },
       "appimage": {

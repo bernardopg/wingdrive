@@ -112,6 +112,19 @@ DESKTOP
   # No D-Bus activation file for org.freedesktop.FileManager1: the name
   # belongs to the user's default file manager. WingDrive claims it at runtime
   # only when it is the default for inode/directory (filemanager1.rs).
+  # The FileChooser portal backend (DESK-051). The portal only uses it once
+  # the Settings switch names it in portals.conf, so installing it changes
+  # nothing by itself; activation starts WingDrive in the tray for a request.
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/xdg-desktop-portal/portals/wingdrive.portal" <<'PORTAL'
+[portal]
+DBusName=org.freedesktop.impl.portal.desktop.wingdrive
+Interfaces=org.freedesktop.impl.portal.FileChooser;
+PORTAL
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/dbus-1/services/org.freedesktop.impl.portal.desktop.wingdrive.service" <<'SERVICE'
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.desktop.wingdrive
+Exec=/usr/bin/wingdrive --hidden
+SERVICE
   if [[ -d squashfs-root/usr/share/icons ]]; then
     install -d "$pkgdir/usr/share/icons"
     cp -a squashfs-root/usr/share/icons/. "$pkgdir/usr/share/icons/"

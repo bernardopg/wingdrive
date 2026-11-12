@@ -462,6 +462,32 @@ fn create_window<R: Runtime>(
 	Ok(window)
 }
 
+/// Opens a file chooser picker: the Explorer at `folder`, which shows its
+/// confirm bar because the label starts with `file-chooser-`.
+#[cfg(target_os = "linux")]
+pub fn create_file_chooser_window<R: Runtime>(
+	app: &AppHandle<R>,
+	label: &str,
+	folder: &std::path::Path,
+	title: &str,
+) -> Result<WebviewWindow<R>, String> {
+	let title = match title.trim() {
+		"" => "WingDrive",
+		title => title,
+	};
+	create_window(
+		app,
+		label,
+		&explorer_url(&folder.to_string_lossy()),
+		title,
+		(1100.0, 720.0),
+		(640.0, 420.0),
+		true,
+		false,
+		false,
+	)
+}
+
 /// The Explorer route for a local folder, in the form the shell's
 /// `explorerUrlForDirectory` produces: `/explorer?path=<WingPath JSON>`.
 fn explorer_url(path: &str) -> String {
