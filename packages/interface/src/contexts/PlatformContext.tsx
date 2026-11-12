@@ -22,6 +22,8 @@ export type Platform = {
 	openDirectoryPickerDialog?(opts?: {
 		title?: string;
 		multiple?: boolean;
+		/** Folder the picker opens in. */
+		defaultPath?: string;
 	}): Promise<string | string[] | null>;
 
 	/** Open native file picker dialog (Tauri only) */

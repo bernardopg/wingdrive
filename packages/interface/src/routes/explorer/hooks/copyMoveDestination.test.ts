@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 import type {File} from '@wingdrive/ts-client';
 
-import {canPickDestination, pickedDestination} from './copyMoveDestination';
+import {canPickDestination, pickedDestination, pickerStartFolder} from './copyMoveDestination';
 
 const local = (path: string, is_local = true) =>
 	({wing_path: {Physical: {device_slug: 'pc', path}}, is_local}) as unknown as File;
@@ -23,5 +23,14 @@ describe('Copy To / Move To destination', () => {
 		expect(canPickDestination([local('/a'), cloud])).toBe(false);
 		expect(canPickDestination([local('/a', false)])).toBe(false);
 		expect(pickedDestination([cloud], '/b')).toBeNull();
+	});
+
+	test('the picker starts in the folder that holds the selection', () => {
+		expect(pickerStartFolder([local('/home/me/docs/a.txt'), local('/home/me/docs/b')])).toBe('/home/me/docs');
+		expect(pickerStartFolder([local('/a.txt')])).toBe('/');
+		expect(pickerStartFolder([local('C:\\Users\\me\\a.txt')])).toBe('C:\\Users\\me');
+		expect(pickerStartFolder([local('C:\\a.txt')])).toBe('C:\\');
+		expect(pickerStartFolder([cloud])).toBeUndefined();
+		expect(pickerStartFolder([])).toBeUndefined();
 	});
 });

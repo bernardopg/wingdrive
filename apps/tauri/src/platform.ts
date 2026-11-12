@@ -98,7 +98,8 @@ export const platform: Platform = {
 		const result = await open({
 			directory: true,
 			multiple: opts?.multiple ?? false,
-			title: opts?.title ?? i18n.t('common:platform.chooseFolder')
+			title: opts?.title ?? i18n.t('common:platform.chooseFolder'),
+			defaultPath: opts?.defaultPath
 		});
 
 		return result;
