@@ -27,7 +27,7 @@ Os arquivos permanecem no índice, então você ainda pode pesquisá-los e ver s
 
 ## Posso desfazer um erro?
 
-Cópias, substituições, movimentações entre volumes e envios à lixeira podem ser desfeitos com Ctrl+Z ou `wing file undo`. Um arquivo substituído por uma cópia é mantido por 7 dias.
+Cópias, substituições, movimentações, renomeações, envios à lixeira e novas pastas, arquivos e links podem ser desfeitos com Ctrl+Z ou `wing file undo`. Um arquivo substituído por uma cópia é mantido por 7 dias.
 
 ## Quais plataformas são compatíveis?
 

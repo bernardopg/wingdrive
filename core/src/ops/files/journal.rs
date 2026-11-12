@@ -1,7 +1,9 @@
 //! # Journal of what file jobs changed
 //!
 //! Copy, move and trash jobs write one [`Effect`] per item they changed, so an
-//! undo job can reverse exactly that and nothing else. The journal lives in the
+//! undo job can reverse exactly that and nothing else. Actions that create a
+//! folder, file or link record a single `Created` effect through
+//! [`record_created`]. The journal lives in the
 //! library's job database: it describes this device's disk and is never synced.
 //!
 //! Each effect that left something behind carries a [`Seal`], a fingerprint of
@@ -138,13 +140,35 @@ impl Seal {
 		{
 			return Err("it was replaced by another item".to_string());
 		}
-		if current.entries != self.entries
-			|| current.size != self.size
-			|| current.changed != self.changed
-		{
+		if current.entries != self.entries || current.size != self.size {
+			return Err("it was changed after the operation".to_string());
+		}
+		// Renaming an item moves its change time, so a new folder renamed and
+		// renamed back would never undo. Only an item that holds no data may
+		// skip that check: removing it cannot lose anyone's work.
+		if current.changed != self.changed && !self.holds_no_data(path) {
 			return Err("it was changed after the operation".to_string());
 		}
 		Ok(())
+	}
+
+	/// An empty file, an empty folder or, where inodes tell items apart, a
+	/// symbolic link, whose target cannot change without a new inode.
+	fn holds_no_data(&self, path: &Path) -> bool {
+		if self.entries != 1 {
+			return false;
+		}
+		if self.size == 0 {
+			return true;
+		}
+		cfg!(unix)
+			&& std::fs::symlink_metadata(path)
+				.is_ok_and(|metadata| metadata.file_type().is_symlink())
+	}
+
+	/// A folder that had nothing in it.
+	pub fn is_empty_folder(&self) -> bool {
+		self.is_dir && self.entries == 1
 	}
 }
 
@@ -203,17 +227,32 @@ pub struct Journal {
 
 impl Journal {
 	/// Opens the journal of the running job. `operation` is `copy`, `move`,
-	/// `rename` or `delete`, shown when listing what can be undone.
+	/// `rename`, `delete` or `create`, shown when listing what can be undone.
 	pub async fn open(ctx: &JobContext<'_>, operation: &'static str) -> Self {
 		let db = ctx.library().jobs().database().conn().clone();
-		let job_id = ctx.id().0;
 
 		// Old stashes go when new work starts, so no timer is needed.
 		let expired = purge_expired(&db, Utc::now() - Duration::days(RETENTION_DAYS)).await;
 		if expired > 0 {
 			ctx.log(format!("Removed {expired} expired undo records"));
 		}
+		Self::start(db, ctx.id().0, operation).await
+	}
 
+	/// Opens a journal for an operation that runs without a job, such as
+	/// creating a folder. Its fresh id takes the place of a job id in
+	/// `files.undo` and `files.undo_history`.
+	pub async fn standalone(db: &DatabaseConnection, operation: &'static str) -> Self {
+		purge_expired(db, Utc::now() - Duration::days(RETENTION_DAYS)).await;
+		Self::start(db.clone(), Uuid::new_v4(), operation).await
+	}
+
+	/// The id undo knows this operation by.
+	pub fn id(&self) -> Uuid {
+		self.job_id
+	}
+
+	async fn start(db: DatabaseConnection, job_id: Uuid, operation: &'static str) -> Self {
 		// A resumed job continues its own numbering.
 		let last = journal::Entity::find()
 			.filter(journal::Column::JobId.eq(job_id.to_string()))
@@ -321,6 +360,33 @@ impl Journal {
 			}
 		}
 	}
+}
+
+/// Journals an item an action just created, as an operation of its own.
+///
+/// Returns the id `files.undo` takes to remove it again, or `None` when the
+/// item could not be sealed or recorded. The item stays either way; only its
+/// undo is lost, so callers report success.
+pub async fn record_created(
+	db: &DatabaseConnection,
+	operation: &'static str,
+	path: &Path,
+) -> Option<Uuid> {
+	let seal = match seal_of(path).await {
+		Ok(seal) => seal,
+		Err(error) => {
+			tracing::warn!(path = %path.display(), %error, "Could not seal a created item for undo");
+			return None;
+		}
+	};
+	let journal = Journal::standalone(db, operation).await;
+	journal
+		.record(&Effect::Created {
+			path: path.to_path_buf(),
+			seal,
+		})
+		.await
+		.map(|_| journal.id())
 }
 
 /// Effects of a job that were not undone yet, newest first.
@@ -548,6 +614,62 @@ mod tests {
 		// Changing the link's target is not a change to the folder.
 		std::fs::write(outside.join("more.bin"), "x").unwrap();
 		assert_eq!(seal.check(&folder), Ok(()));
+	}
+
+	#[test]
+	fn renaming_back_spares_only_items_without_data() {
+		let root = tempfile::tempdir().unwrap();
+		let away = root.path().join("away");
+		let round_trip = |path: &Path| {
+			std::thread::sleep(std::time::Duration::from_millis(20));
+			std::fs::rename(path, &away).unwrap();
+			std::fs::rename(&away, path).unwrap();
+		};
+
+		let folder = root.path().join("Untitled Folder");
+		std::fs::create_dir(&folder).unwrap();
+		let empty = root.path().join("Untitled File");
+		std::fs::write(&empty, "").unwrap();
+		let letter = root.path().join("letter.txt");
+		std::fs::write(&letter, "Dear").unwrap();
+		let seals = [&folder, &empty, &letter].map(|path| Seal::of(path).unwrap());
+		for path in [&folder, &empty, &letter] {
+			round_trip(path);
+		}
+
+		assert!(seals[0].is_empty_folder());
+		assert_eq!(seals[0].check(&folder), Ok(()));
+		assert_eq!(seals[1].check(&empty), Ok(()));
+		// A file with content could have been edited in between.
+		assert_eq!(
+			seals[2].check(&letter),
+			Err("it was changed after the operation".to_string())
+		);
+
+		// An empty folder that got a file is no longer empty.
+		std::fs::write(folder.join("note"), "").unwrap();
+		assert!(seals[0].check(&folder).is_err());
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn a_link_renamed_back_is_still_the_same_link() {
+		let root = tempfile::tempdir().unwrap();
+		let link = root.path().join("link");
+		std::os::unix::fs::symlink(root.path(), &link).unwrap();
+		let seal = Seal::of(&link).unwrap();
+		std::thread::sleep(std::time::Duration::from_millis(20));
+		std::fs::rename(&link, root.path().join("away")).unwrap();
+		std::fs::rename(root.path().join("away"), &link).unwrap();
+		assert_eq!(seal.check(&link), Ok(()));
+
+		// A new link with the same target is another inode.
+		std::fs::rename(&link, root.path().join("old link")).unwrap();
+		std::os::unix::fs::symlink(root.path(), &link).unwrap();
+		assert_eq!(
+			seal.check(&link),
+			Err("it was replaced by another item".to_string())
+		);
 	}
 
 	#[test]

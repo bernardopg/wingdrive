@@ -9,10 +9,7 @@ import {
 import type { DuplicateSet, WingPath } from "@wingdrive/ts-client";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-	useCoreMutation,
-	useLibraryMutation,
-} from "../../contexts/WingDriveContext";
+import { useLibraryMutation } from "../../contexts/WingDriveContext";
 import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
 import { useUndo } from "../../hooks/useUndo";
 import { useWaitForJob } from "../../hooks/useWaitForJob";
@@ -56,7 +53,6 @@ function DuplicatesDialog(props: DuplicatesDialogProps) {
 	const form = useForm();
 	const detect = useLibraryMutation("files.duplicate_detection");
 	const remove = useLibraryMutation("files.delete");
-	const restore = useCoreMutation("trash.restore");
 	const waitForJob = useWaitForJob();
 	const refetchListings = useRefetchFileListings();
 	const undo = useUndo();
@@ -122,13 +118,11 @@ function DuplicatesDialog(props: DuplicatesDialogProps) {
 	const apply = async () => {
 		const trashed = targets.map(localPath);
 		try {
-			const { result } = await waitForJob(() =>
+			const { receipt, result } = await waitForJob(() =>
 				remove.mutateAsync({ targets: { paths: targets }, permanent: false, recursive: false }),
 			);
 			if (result.status !== "completed") throw new Error(`delete ${result.status}`);
-			undo.record("remove duplicates", async () => {
-				await restore.mutateAsync({ ids: [], original_paths: trashed });
-			});
+			undo.recordJournaled("remove duplicates", receipt.id);
 			toast.success(t("duplicates.movedToTrash", { count: trashed.length }));
 		} catch (err) {
 			toast.error(t("duplicates.removeFailed", { error: err }));

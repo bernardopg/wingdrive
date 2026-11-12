@@ -27,7 +27,7 @@ Its files stay in the index, so you can still search them and see their metadata
 
 ## Can I undo a mistake?
 
-Copy, overwrite, cross-volume move and trash can be undone with Ctrl+Z or `wing file undo`. A file replaced by a copy is kept for 7 days.
+Copy, overwrite, move, rename, trash and new folders, files and links can be undone with Ctrl+Z or `wing file undo`. A file replaced by a copy is kept for 7 days.
 
 ## Which platforms are supported?
 

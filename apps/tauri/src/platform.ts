@@ -44,18 +44,6 @@ export const platform: Platform = {
 		invoke<[string, boolean]>('resolve_symlink', {path}),
 	...(navigator.platform.startsWith('Linux')
 		? {
-				fileContentHash: (path: string) => invoke<string>('file_content_hash', {path}),
-				fileIdentity: (path: string) =>
-					invoke<[string, string]>('file_identity', {path}),
-				undoMove: (
-					source: string,
-					destination: string,
-					expected: [string, string]
-				) => invoke<void>('undo_move', {source, destination, expected}),
-				undoEmptyFolder: (path: string, expected: [string, string]) =>
-					invoke<void>('undo_empty_folder', {path, expected}),
-				undoNewFile: (path: string, expected: [string, string], expectedHash?: string) =>
-					invoke<void>('undo_new_file', {path, expected, expectedHash: expectedHash ?? null}),
 				listNetworkMounts: () => invoke<NetworkMount[]>('list_network_mounts'),
 				listMountableVolumes: () =>
 					invoke<MountableVolume[]>('list_mountable_volumes'),

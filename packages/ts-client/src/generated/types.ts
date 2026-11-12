@@ -467,6 +467,11 @@ export type CoreStatus = {
 export type CreateEntryOutput = {
 	/**  Path of the created entry */
 	path: WingPath,
+	/**
+	 *  Operation that `files.undo` takes to remove the entry again, unless
+	 *  its creation could not be journaled.
+	 */
+	undo_id?: string | null,
 };
 
 /**  Input for creating an empty file */
@@ -493,6 +498,11 @@ export type CreateFolderOutput = {
 	folder_path: WingPath,
 	/**  Job receipt if items were moved into the folder */
 	job_receipt?: JobReceipt | null,
+	/**
+	 *  Operation that `files.undo` takes to remove the new folder again.
+	 *  Set for an empty folder on this device whose creation was journaled.
+	 */
+	undo_id?: string | null,
 };
 
 /**  Input for creating a file from a template */
@@ -1488,8 +1498,10 @@ export type FileSystem =
 /**  Input for undoing a file operation. */
 export type FileUndoInput = {
 	/**
-	 *  The job to undo, as `files.undo_history` lists it. Without it, the
-	 *  most recent operation that still has something to undo.
+	 *  The job to undo, as `files.undo_history` lists it, or the `undo_id`
+	 *  that `files.createFolder`, `files.createFile`,
+	 *  `files.createFromTemplate` and `files.createSymlink` return. Without
+	 *  it, the most recent operation that still has something to undo.
 	 */
 	job_id?: string | null,
 };
@@ -3993,7 +4005,7 @@ export type UndoHistoryOutput = {
 /**  One earlier operation and how much of it undo can still reverse. */
 export type UndoableOperation = {
 	job_id: string,
-	/**  `copy`, `move`, `rename` or `delete`. */
+	/**  `copy`, `move`, `rename`, `delete` or `create`. */
 	operation: string,
 	/**  Seconds since the Unix epoch. */
 	started_at: number,

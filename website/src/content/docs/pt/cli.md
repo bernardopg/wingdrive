@@ -48,7 +48,7 @@ wing file copy ./a.txt ~/Backup/
 wing file rename ./old.txt new.txt
 wing file mkdir ~/Projects/new
 wing file delete ./tmp.log
-wing file undo                   # desfaz a última cópia, movimentação ou envio à lixeira
+wing file undo                   # desfaz a última cópia, movimentação, renomeação, envio à lixeira ou criação
 wing file history                # o que ainda pode ser desfeito
 ```
 

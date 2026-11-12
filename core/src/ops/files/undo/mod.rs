@@ -1,8 +1,10 @@
-//! # Undo for copy, move, rename and trash
+//! # Undo for copy, move, rename, trash and new entries
 //!
-//! `files.undo` reverses what one earlier job recorded in the
+//! `files.undo` reverses what one earlier operation recorded in the
 //! [journal](super::journal), newest effect first, and `files.undo_history`
-//! lists the jobs it can still work on.
+//! lists the operations it can still work on. An operation is a file job, or
+//! an action that created a folder, file or link, which journals under an id
+//! of its own (`undo_id` in its output).
 //!
 //! Undo never guesses. Each item is compared with the seal the job left; one
 //! that changed, moved or vanished since is skipped and reported, and stays
@@ -37,7 +39,8 @@ const DEFAULT_HISTORY_LIMIT: u32 = 20;
 /// Reverses the journaled effects of one file job.
 #[derive(Debug, Serialize, Deserialize, Job)]
 pub struct FileUndoJob {
-	/// The copy, move, rename or delete job to undo.
+	/// The copy, move, rename or delete job, or the `undo_id` of a created
+	/// entry, to undo.
 	pub job_id: Uuid,
 }
 
@@ -130,13 +133,24 @@ async fn reverse(effect: &Effect) -> Result<(), String> {
 	match effect {
 		Effect::Created { path, seal } => {
 			check_seal(seal, path).await?;
+			if seal.is_empty_folder() {
+				// Fails instead of taking along anything added since the check.
+				return tokio::fs::remove_dir(path)
+					.await
+					.map_err(|error| error.to_string());
+			}
 			remove_tree(path).await
 		}
 		Effect::Moved { from, to, seal } => {
 			check_seal(seal, to).await?;
-			// A case-only rename on a case-insensitive volume finds itself.
-			if exists(from).await && !same_entry(from, to).await {
-				return Err(format!("{} is taken again", from.display()));
+			if exists(from).await {
+				// A case-only rename on a case-insensitive volume finds itself.
+				if !same_entry(from, to).await {
+					return Err(format!("{} is taken again", from.display()));
+				}
+				return tokio::fs::rename(to, from)
+					.await
+					.map_err(|error| error.to_string());
 			}
 			move_back(to, from).await
 		}
@@ -147,9 +161,7 @@ async fn reverse(effect: &Effect) -> Result<(), String> {
 			if exists(path).await {
 				return Err("what replaced it is still there".to_string());
 			}
-			tokio::fs::rename(stash, path)
-				.await
-				.map_err(|error| error.to_string())?;
+			rename_no_replace(stash, path).await?;
 			if let Some(folder) = stash.parent() {
 				// Only goes when it was the last stashed item.
 				let _ = tokio::fs::remove_dir(folder).await;
@@ -199,8 +211,11 @@ async fn move_back(to: &Path, from: &Path) -> Result<(), String> {
 			.await
 			.map_err(|error| error.to_string())?;
 	}
-	match tokio::fs::rename(to, from).await {
+	match rename_no_replace_io(to, from).await {
 		Ok(()) => Ok(()),
+		Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+			Err(format!("{} is taken again", from.display()))
+		}
 		Err(error) if error.kind() == std::io::ErrorKind::CrossesDevices => {
 			let (source, destination) = (to.to_path_buf(), from.to_path_buf());
 			tokio::task::spawn_blocking(move || copy_back(&source, &destination))
@@ -212,13 +227,67 @@ async fn move_back(to: &Path, from: &Path) -> Result<(), String> {
 	}
 }
 
+/// Renames `source` to `destination` unless something is at `destination`.
+async fn rename_no_replace(source: &Path, destination: &Path) -> Result<(), String> {
+	rename_no_replace_io(source, destination)
+		.await
+		.map_err(|error| match error.kind() {
+			std::io::ErrorKind::AlreadyExists => "something else is at its place now".to_string(),
+			_ => error.to_string(),
+		})
+}
+
+async fn rename_no_replace_io(source: &Path, destination: &Path) -> std::io::Result<()> {
+	let (source, destination) = (source.to_path_buf(), destination.to_path_buf());
+	tokio::task::spawn_blocking(move || rename_no_replace_blocking(&source, &destination))
+		.await
+		.map_err(std::io::Error::other)?
+}
+
+/// Linux refuses atomically, so an item that appears between the checks and
+/// the rename is never overwritten. Elsewhere, and on filesystems without
+/// that flag, a check right before the rename narrows the window.
+fn rename_no_replace_blocking(source: &Path, destination: &Path) -> std::io::Result<()> {
+	#[cfg(target_os = "linux")]
+	{
+		use std::os::unix::ffi::OsStrExt;
+		let to_c = |path: &Path| {
+			std::ffi::CString::new(path.as_os_str().as_bytes())
+				.map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidInput, error))
+		};
+		let (from, to) = (to_c(source)?, to_c(destination)?);
+		// SAFETY: both pointers are NUL-terminated strings that outlive the call.
+		let result = unsafe {
+			libc::renameat2(
+				libc::AT_FDCWD,
+				from.as_ptr(),
+				libc::AT_FDCWD,
+				to.as_ptr(),
+				libc::RENAME_NOREPLACE,
+			)
+		};
+		if result == 0 {
+			return Ok(());
+		}
+		let error = std::io::Error::last_os_error();
+		if error.raw_os_error() != Some(libc::EINVAL) {
+			return Err(error);
+		}
+	}
+	if std::fs::symlink_metadata(destination).is_ok() {
+		return Err(std::io::Error::from(std::io::ErrorKind::AlreadyExists));
+	}
+	std::fs::rename(source, destination)
+}
+
 /// Copies `source` to `destination` on another volume, then removes `source`.
 ///
 /// The copy is built under a temporary name, so a failure leaves `source`
 /// whole and nothing half-written under the real name.
 fn copy_back(source: &Path, destination: &Path) -> std::io::Result<()> {
 	let partial = destination.with_file_name(format!(".wing-part-{}", Uuid::new_v4().simple()));
-	let copied = copy_tree(source, &partial).and_then(|()| std::fs::rename(&partial, destination));
+	let copied = copy_tree(source, &partial)
+		.and_then(|()| rename_no_replace_blocking(&partial, destination));
 	if let Err(error) = copied {
 		let _ = if partial.is_dir() {
 			std::fs::remove_dir_all(&partial)
@@ -259,14 +328,16 @@ fn copy_tree(source: &Path, destination: &Path) -> std::io::Result<()> {
 /// Input for undoing a file operation.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct FileUndoInput {
-	/// The job to undo, as `files.undo_history` lists it. Without it, the
-	/// most recent operation that still has something to undo.
+	/// The job to undo, as `files.undo_history` lists it, or the `undo_id`
+	/// that `files.createFolder`, `files.createFile`,
+	/// `files.createFromTemplate` and `files.createSymlink` return. Without
+	/// it, the most recent operation that still has something to undo.
 	#[serde(default)]
 	#[specta(optional)]
 	pub job_id: Option<Uuid>,
 }
 
-/// Queues an undo job for one earlier copy, move, rename or trash job.
+/// Queues an undo job for one earlier copy, move, rename, trash or creation.
 pub struct FileUndoAction {
 	input: FileUndoInput,
 }
@@ -337,7 +408,7 @@ pub struct UndoHistoryInput {
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct UndoableOperation {
 	pub job_id: Uuid,
-	/// `copy`, `move`, `rename` or `delete`.
+	/// `copy`, `move`, `rename`, `delete` or `create`.
 	pub operation: String,
 	/// Seconds since the Unix epoch.
 	pub started_at: i64,
@@ -408,3 +479,60 @@ impl LibraryQuery for UndoHistoryQuery {
 }
 
 crate::register_library_query!(UndoHistoryQuery, "files.undo_history");
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn moving_back_never_replaces_what_is_at_the_old_place() {
+		let root = tempfile::tempdir().unwrap();
+		let source = root.path().join("source");
+		std::fs::write(&source, "moved").unwrap();
+		let file = root.path().join("file");
+		std::fs::write(&file, "keep").unwrap();
+		let folder = root.path().join("folder");
+		std::fs::create_dir(&folder).unwrap();
+
+		let mut taken = vec![file.clone(), folder.clone()];
+		#[cfg(unix)]
+		{
+			let dangling = root.path().join("dangling");
+			std::os::unix::fs::symlink(root.path().join("missing"), &dangling).unwrap();
+			taken.push(dangling);
+		}
+		for destination in &taken {
+			let error = rename_no_replace_blocking(&source, destination).unwrap_err();
+			assert_eq!(
+				error.kind(),
+				std::io::ErrorKind::AlreadyExists,
+				"{destination:?}"
+			);
+		}
+		assert_eq!(std::fs::read_to_string(&source).unwrap(), "moved");
+		assert_eq!(std::fs::read_to_string(&file).unwrap(), "keep");
+		assert!(folder.is_dir());
+
+		// A missing parent fails too, and the source stays.
+		assert!(rename_no_replace_blocking(&source, &root.path().join("gone/x")).is_err());
+		let free = root.path().join("free");
+		rename_no_replace_blocking(&source, &free).unwrap();
+		assert_eq!(std::fs::read_to_string(free).unwrap(), "moved");
+		assert!(!source.exists());
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn a_link_moves_back_without_its_target() {
+		let root = tempfile::tempdir().unwrap();
+		let target = root.path().join("target");
+		std::fs::write(&target, "target").unwrap();
+		let link = root.path().join("link");
+		std::os::unix::fs::symlink(&target, &link).unwrap();
+		let restored = root.path().join("restored");
+
+		rename_no_replace_blocking(&link, &restored).unwrap();
+		assert_eq!(std::fs::read_link(&restored).unwrap(), target);
+		assert_eq!(std::fs::read_to_string(&target).unwrap(), "target");
+	}
+}

@@ -18,7 +18,7 @@ WingDrive has the full toolbox you expect from a file manager, and it is careful
 
 ## Undo
 
-Copy, overwrite, cross-volume move and trash are journaled. Press **Ctrl+Z** in the desktop app, or run `wing file undo`, to reverse the last one. `wing file history` lists what can still be undone.
+Copy, overwrite, move, rename, trash and new folders, files and links are journaled. Press **Ctrl+Z** in the desktop app or the web UI, or run `wing file undo`, to reverse the last one. `wing file history` lists what can still be undone.
 
 - A file that a copy replaces is kept for 7 days in a hidden `.wing-undo-*` folder next to it.
 - Undo skips anything that changed since the operation, so it never overwrites newer work.

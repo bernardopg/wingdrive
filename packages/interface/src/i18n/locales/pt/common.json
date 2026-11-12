@@ -60,6 +60,9 @@
 	"undo": {
 		"done": "Desfeito: {{label}}",
 		"failed": "Não foi possível desfazer: {{error}}",
+		"skipped_one": "{{count}} item mudou desde então e foi mantido. {{reason}}",
+		"skipped_other": "{{count}} itens mudaram desde então e foram mantidos. {{reason}}",
+		"cancelled": "o desfazer foi cancelado",
 		"labels": {
 			"rename": "renomeação",
 			"batch rename": "renomeação em lote",

@@ -86,7 +86,6 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 		useState<ConflictResolution>('Skip');
 
 	const copyFiles = useLibraryMutation('files.copy');
-	const undoFiles = useLibraryMutation('files.undo');
 	const waitForJob = useWaitForJob();
 	const refetchListings = useRefetchFileListings();
 	const undo = useUndo();
@@ -228,25 +227,7 @@ function FileOperationDialog(props: FileOperationDialogProps) {
 			// The job journals what it changed, so the core can reverse a copy,
 			// an overwrite or a move, and skips whatever changed since.
 			if (outcome.status === 'success' || outcome.status === 'partial') {
-				const jobId = receipt.id;
-				undo.record(operation, async () => {
-					const {result: undone} = await waitForJob(() =>
-						undoFiles.mutateAsync({job_id: jobId})
-					);
-					if (undone.status === 'failed') throw new Error(undone.error);
-					if (
-						undone.status === 'completed' &&
-						undone.output.type === 'FileUndo' &&
-						undone.output.data.skipped_count > 0
-					) {
-						throw new Error(
-							t('fileOperation.undoSkipped', {
-								count: undone.output.data.skipped_count,
-								reason: undone.output.data.skipped?.[0] ?? ''
-							})
-						);
-					}
-				});
+				undo.recordJournaled(operation, receipt.id);
 			}
 
 			if (outcome.status !== 'success') {

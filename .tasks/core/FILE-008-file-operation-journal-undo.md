@@ -1,14 +1,14 @@
 ---
 id: FILE-008
 title: Job journal and undo for copy, overwrite and trash
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: FILE-000
 priority: Medium
 milestone: M3
 sprint: S05
 tags: [files, operations, undo, trash, jobs, upstream, port]
-last_updated: 2026-11-10
+last_updated: 2026-11-12
 related_tasks: [FILE-007, EXPL-003]
 ---
 
@@ -43,7 +43,7 @@ changed since.
 - [x] Copy, move, overwrite and trash jobs write a journal entry per effect
 - [x] Undo reverses each of them and refuses items changed since
 - [x] Overwritten files are recoverable until the stash expires
-- [ ] Existing rename/move/folder undo keeps working (current tests pass)
+- [x] Existing rename/move/folder undo keeps working (current tests pass)
 - [x] Docs in `docs/core/` updated
 
 ## Implementation
@@ -58,6 +58,18 @@ changed since.
 - CLI: `wing file undo [JOB_ID]` and `wing file history`.
 - Interface: `FileOperationModal` records every copy and move with the job id and undoes it through
   `files.undo`. This replaces the Linux-only inode undo it had for same-volume moves.
+- 2026-11-12, one undo path: `files.createFolder`, `files.createFile`, `files.createFromTemplate`
+  and `files.createSymlink` journal their new entry with `journal::record_created` under an id of
+  their own and return it as `undo_id`. Rename, batch rename, trash and duplicate removal record
+  their job id. `useUndo().recordJournaled` (`hooks/journalUndo.ts`) runs `files.undo` for each id,
+  newest first, and keeps what is left on failure. The Tauri commands `file_identity`,
+  `file_content_hash`, `undo_move`, `undo_empty_folder` and `undo_new_file`
+  (`apps/tauri/src-tauri/src/undo.rs`) and their `Platform` entries are removed.
+- The core kept the guarantees those commands gave: moves go back with
+  `renameat2(RENAME_NOREPLACE)` on Linux (a check before `rename` elsewhere), a new empty folder is
+  removed with `remove_dir`, and an item without data (empty file, empty folder, Unix link) accepts
+  a new change time when inode, entries and size match, so a folder renamed and renamed back can
+  still be undone.
 
 ## Evidence
 
@@ -70,6 +82,14 @@ changed since.
   removed the copies and the stash folder; history then showed `0 of 3` and a second undo answered
   `Nothing to undo`.
 
+- 2026-11-12: `cargo test -p wing-core --test file_undo_test`, 18 passed. New cases: new folder,
+  file, template copy and link removed (link target kept); an entry edited, filled, replaced by
+  another inode or swapped for a link is kept; new folder, rename, then two undos; a rename whose
+  old name is taken by a folder or a dangling link is refused until it is free.
+  `cargo test -p wing-core --lib ops::files::`, 86 passed, with new unit tests for the no-replace
+  rename and the change-time rule. `bun test` of `journalUndo.test.ts`, `undoStore.test.ts`,
+  `useCreateFolder.test.ts` and `useCreateEntry.test.ts`, 8 passed. `bun run typecheck` clean.
+  `cargo clippy --locked -p wing-core -p wingdrive -p wing-cli -- -D warnings` clean.
 - Web UI on an isolated `wing-server`, driven with headless Chrome: copied two files from `src`,
   pasted into `dest` over an existing `report.txt` choosing "Overwrite existing files", then Ctrl+Z.
   Disk after the paste: `.wing-undo-<job>`, `extra.txt`, `report.txt` = new. After Ctrl+Z:
@@ -77,10 +97,9 @@ changed since.
 
 ## Open
 
-- [ ] Existing rename/move/folder undo keeps working: the desktop still uses the Tauri commands for
-      rename, new folder and new file. Moving those onto the core journal is not done, so the CLI
-      and web get undo for copy, move, rename and trash only.
 - The undo job does not journal itself (no redo).
 - The seal cannot tell an edit that restores the same size within the same change-time tick; on
   Windows it uses modification time and no inode.
 - A folder copied over an existing folder is a merge and is not undoable.
+- The Tauri shell was not driven by hand for the new paths; it uses the same interface hooks and
+  `files.undo` as the web UI.

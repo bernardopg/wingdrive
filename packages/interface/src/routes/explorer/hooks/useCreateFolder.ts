@@ -1,6 +1,4 @@
-import {toast} from '@wingdrive/primitives';
 import {useCallback} from 'react';
-import {usePlatform} from '../../../contexts/PlatformContext';
 import {useLibraryMutation} from '../../../contexts/WingDriveContext';
 import {useRefetchFileListings} from '../../../hooks/useRefetchFileListings';
 import {useUndo} from '../../../hooks/useUndo';
@@ -30,7 +28,6 @@ export function useCreateFolder() {
 	const {operationalPath, currentFiles} = useExplorer();
 	const createFolder = useLibraryMutation('files.createFolder');
 	const refetchListings = useRefetchFileListings();
-	const platform = usePlatform();
 	const undo = useUndo();
 	// Every entry point (menu, shortcut) names the folder right away.
 	const {renameWhenListed} = useSelection();
@@ -45,23 +42,8 @@ export function useCreateFolder() {
 				name,
 				items: []
 			});
-			if (
-				'Physical' in output.folder_path &&
-				undo.isLocalPath(output.folder_path) &&
-				platform.fileIdentity &&
-				platform.undoEmptyFolder
-			) {
-				const path = output.folder_path.Physical.path;
-				const remove = platform.undoEmptyFolder;
-				try {
-					const expected = await platform.fileIdentity(path);
-					undo.record(t('undo.newFolder'), () => remove(path, expected));
-				} catch {
-					toast.error(
-				t('errors.folderCreatedUndoUnavailable')
-					);
-				}
-			}
+			// The core journals the new folder; undo removes it while it is still empty.
+			undo.recordJournaled(t('undo.newFolder'), [output.undo_id]);
 			// The mutation creates the folder without emitting a listing
 			// event; without the manual refetch the new folder only appeared
 			// after leaving and re-entering.
@@ -83,7 +65,6 @@ export function useCreateFolder() {
 		currentFiles,
 		createFolder,
 		refetchListings,
-		platform,
 		undo,
 		renameWhenListed,
 		adminRetry,
