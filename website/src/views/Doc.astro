@@ -53,6 +53,7 @@ const current = slugOf(entry);
 				<p class="lead">{entry.data.description}</p>
 			</header>
 			<div class="prose"><Content /></div>
+			<a class="edit-inline" href={`${REPO}/edit/main/website/src/content/docs/${entry.id}.md`} rel="noopener"><Icon name="github" size={16} />{s.editPage}</a>
 			<nav class="pager">
 				{
 					prev ? (
@@ -90,7 +91,8 @@ const current = slugOf(entry);
 					</>
 				)
 			}
-			<a class="gh" href={`${REPO}/tree/main/docs`} rel="noopener"><Icon name="github" size={16} />{s.edit}</a>
+			<a class="gh" href={`${REPO}/edit/main/website/src/content/docs/${entry.id}.md`} rel="noopener"><Icon name="github" size={16} />{s.editPage}</a>
+			<a class="gh" href={`${REPO}/tree/main/docs`} rel="noopener"><Icon name="code" size={16} />{s.edit}</a>
 		</aside>
 	</div>
 </Base>
@@ -237,11 +239,19 @@ const current = slugOf(entry);
 	.toc a.on {
 		border-left-color: var(--violet);
 	}
-	.gh {
-		display: inline-flex !important;
+	.edit-inline {
+		display: none;
 		align-items: center;
 		gap: 8px;
-		margin-top: 24px;
+		margin-top: 40px;
+		font-size: 14px;
+		color: var(--lavender);
+	}
+	.gh {
+		display: flex !important;
+		align-items: center;
+		gap: 8px;
+		margin-top: 16px;
 		font-size: 13px;
 		color: var(--lavender) !important;
 		padding: 0 !important;
@@ -254,10 +264,13 @@ const current = slugOf(entry);
 		.toc {
 			display: none;
 		}
+		.edit-inline {
+			display: inline-flex;
+		}
 	}
 	@media (max-width: 960px) {
 		.docs {
-			grid-template-columns: 1fr;
+			grid-template-columns: minmax(0, 1fr);
 			gap: 20px;
 			padding-top: 96px;
 		}

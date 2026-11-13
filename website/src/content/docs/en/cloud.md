@@ -5,7 +5,7 @@ order: 7
 group: Using WingDrive
 ---
 
-WingDrive treats cloud storage as native **volumes**. A connected service shows up in the sidebar and works with the same operations as any other drive: browse, copy, move, rename, delete to the trash and sync.
+WingDrive treats cloud storage as native **volumes**. A connected service shows up in the sidebar and takes the same operations as any other drive: browse, copy, move, rename, move to the trash and sync.
 
 ## Supported services
 
@@ -19,17 +19,50 @@ WingDrive treats cloud storage as native **volumes**. A connected service shows 
 
 Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA and other services are planned. The roadmap lists them under the integrations epic.
 
-## Google Drive and Google Photos
+## Connect a Google account
 
-Open **Settings > Integrations** and choose **Connect a Google account**. Your browser opens Google's sign-in page; after you allow access, the account's Drive appears in the sidebar as `Google Drive (your@email)`. Repeat to add more accounts.
+<ol class="steps">
+<li>Open <strong>Settings → Integrations</strong> (<kbd>Ctrl</kbd>+<kbd>,</kbd>).</li>
+<li>Under <em>Google accounts</em>, keep <strong>Google Drive</strong> and <strong>Google Photos</strong> checked, or uncheck the one you do not want.</li>
+<li>Click <strong>Connect a Google account</strong>. Your browser opens Google's sign-in page.</li>
+<li>Allow access. Back in WingDrive, the account's Drive appears in the sidebar as <code>Google Drive (you@gmail.com)</code>.</li>
+</ol>
 
-- Drive folders list live. Google Docs, Sheets and Slides appear as `.docx`, `.xlsx` and `.pptx`, and open in the browser.
-- Double-click a Drive file to open a local copy in your usual app. Each save uploads it back. If the file changed in Drive meanwhile, your version is kept as a conflict copy.
-- **Cloud sync** keeps a folder on your computer in step with a Drive folder, both ways or one way, on demand or every few minutes.
-- Right-click photos or videos and choose **Upload to Google Photos**. **Import from Google Photos** opens Google's picker and downloads what you select at full quality.
-- Disconnecting an account revokes WingDrive's access at Google.
+Repeat to add more accounts. Each one keeps its own Drive and Photos access.
 
-From the CLI:
+<figure class="shot">
+<a href="/img/docs/settings-integrations.webp"><img src="/img/docs/settings-integrations.webp" width="1400" height="900" loading="lazy" alt="Settings, Integrations page with Google accounts, cloud sync and Google sign-in client"></a>
+<figcaption>Settings → Integrations: Google accounts, cloud sync and the Google sign-in client.</figcaption>
+</figure>
+
+<div class="callout warn">
+
+<p><strong>“Sign-in needs a Google OAuth client.”</strong> Builds that ship a Google client sign in right away. If you see this message, follow the four steps on the same page: create a project in Google Cloud Console, enable the Drive, Photos Library and Photos Picker APIs, add your accounts as test users and create an OAuth client of type <em>Desktop app</em>. Paste its ID and secret under <strong>Google sign-in client</strong>.</p>
+
+</div>
+
+### What you can do with Drive
+
+- **Browse live.** Folders list straight from Drive. Google Docs, Sheets and Slides show as `.docx`, `.xlsx` and `.pptx` and open in the browser.
+- **Edit in your own apps.** Double-click a Drive file to open a local copy. Each save uploads it back. If the file changed in Drive meanwhile, your version is kept as a conflict copy.
+- **Copy, move, rename, new folder and trash** work between local folders and Drive, in both directions. Files dragged in from the desktop upload.
+- **Quick Preview** downloads the file to a cache first. **Open in Browser** opens the item on drive.google.com.
+
+### Keep a folder in sync
+
+<ol class="steps">
+<li>In <strong>Settings → Integrations</strong>, under <em>Cloud sync</em>, click <strong>Sync a folder</strong>.</li>
+<li>Pick the folder on this device and the Drive folder to pair it with.</li>
+<li>Choose both ways or one way, and on demand or every N minutes.</li>
+</ol>
+
+### Google Photos
+
+Right-click photos or videos and choose **Upload to Google Photos**, optionally into a new or existing album. **Import from Google Photos** opens Google's picker and downloads what you select at full quality.
+
+Disconnecting an account deletes its grant here and revokes WingDrive's access at Google.
+
+### From the CLI
 
 ```bash
 wing integrations connect google
@@ -38,11 +71,31 @@ wing integrations cloud-sync add Documents ~/Documents gdrive://you@gmail.com/Ba
 wing integrations photos upload <account-id> ~/Pictures/Trip --new-album "Trip"
 ```
 
-Google sign-in needs an OAuth client. Builds that include one sign in right away; otherwise create a "Desktop app" client in Google Cloud Console and paste it in **Settings > Integrations > Google sign-in client**.
-
 ## Other services
 
-In the desktop app, use **Add Storage** in the sidebar. From the CLI, the interactive setup walks you through it:
+<ol class="steps">
+<li>On the Overview, click <strong>Add Storage</strong> and choose <strong>Cloud Storage</strong>.</li>
+<li>Pick the provider.</li>
+<li>Fill in the bucket or container and the credentials from the table above, then confirm. The volume appears under <em>Volumes</em>.</li>
+</ol>
+
+<div class="shots">
+
+<figure class="shot">
+<a href="/img/docs/add-storage.webp"><img src="/img/docs/add-storage.webp" width="560" height="500" loading="lazy" alt="Add Storage dialog"></a>
+<figcaption>Choose <strong>Cloud Storage</strong>…</figcaption>
+</figure>
+
+<figure class="shot">
+<a href="/img/docs/add-storage-cloud.webp"><img src="/img/docs/add-storage-cloud.webp" width="560" height="620" loading="lazy" alt="Cloud provider picker with S3, R2, MinIO, B2, Wasabi, Spaces, Drive, Dropbox, OneDrive and more"></a>
+<figcaption>…then the provider.</figcaption>
+</figure>
+
+</div>
+
+For Google Drive, use **Settings → Integrations** as described above: it signs in through the browser instead of asking for tokens.
+
+From the CLI, the interactive setup walks you through it:
 
 ```bash
 wing cloud

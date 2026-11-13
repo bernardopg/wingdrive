@@ -28,6 +28,7 @@
 
 <p align="center">
   <a href="#instalação">Instalação</a> ·
+  <a href="#primeiros-passos">Primeiros passos</a> ·
   <a href="#destaques">Destaques</a> ·
   <a href="#documentação">Docs</a> ·
   <a href="#roadmap">Roadmap</a> ·
@@ -61,6 +62,18 @@ servidor central.
 Depois de instalado, o WingDrive pode abrir pastas pelo `xdg-open` e pelo "Mostrar na pasta" de
 outros apps, iniciar com a sessão e ficar na bandeja.
 
+## Primeiros passos
+
+1. **Adicione suas pastas.** Na Visão geral, clique em **Adicionar armazenamento** e depois em
+   **Pasta local**. O WingDrive indexa a pasta onde ela está; nada é movido nem copiado.
+2. **Navegue e busque.** Escolha a vista (grade, lista, colunas, mídia, tamanho), aperte
+   <kbd>Espaço</kbd> para a Visualização rápida e <kbd>F3</kbd> para dois painéis.
+   <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz a última operação com arquivos.
+3. **Conecte o resto.** **Configurações → Integrações** entra no Google Drive e no Google Fotos;
+   **Parear** liga seus outros computadores.
+
+O [guia do usuário em wingdrive.org](https://wingdrive.org/pt/docs/) mostra cada passo com capturas de tela.
+
 ## Destaques
 
 <table>
@@ -88,6 +101,20 @@ outros apps, iniciar com a sessão e ficar na bandeja.
       compactar e extrair, modelos, service menus do Dolphin, permissões, checksum SHA-256 e desfazer.</p>
     </td>
   </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingIntegrations.webp" alt="Configurações, Integrações com contas Google e sincronização com a nuvem"/>
+      <p><strong>Suas nuvens como pastas locais.</strong> Entre no Google Drive e no Google Fotos pelas
+      Configurações, com várias contas. Copie, mova, edite nos seus apps e mantenha pastas
+      sincronizadas nos dois sentidos.</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingOverview.webp" alt="Visão geral com armazenamento, aparelhos, locations e volumes"/>
+      <p><strong>Todos os discos num relance.</strong> A Visão geral resume armazenamento, arquivos
+      indexados, aparelhos, locations e volumes, e é onde você adiciona armazenamento, pareia
+      aparelhos e configura o sync.</p>
+    </td>
+  </tr>
 </table>
 
 **E mais**
@@ -103,10 +130,11 @@ outros apps, iniciar com a sessão e ficar na bandeja.
 
 | Assunto | Comece por |
 |---|---|
+| Guia do usuário, com capturas | [wingdrive.org/pt/docs](https://wingdrive.org/pt/docs/): [Primeira execução](https://wingdrive.org/pt/docs/first-run/) · [Explorer](https://wingdrive.org/pt/docs/explorer/) · [Nuvem](https://wingdrive.org/pt/docs/cloud/) · [Dispositivos](https://wingdrive.org/pt/docs/devices/) |
 | Instalação e primeiro uso | [Instalação](./docs/readme/installation.md) · [Primeiros passos](./docs/overview/get-started.mdx) |
 | Bibliotecas e locations | [Gerenciar bibliotecas](./docs/overview/manage-libraries.mdx) · [Adicionar locations](./docs/overview/add-index-locations.mdx) |
 | Servidor e CLI | [Self-hosting](./docs/overview/self-hosting.mdx) · [Deploy no Linux](./docs/cli/linux-deployment.mdx) · [CLI](./docs/cli/overview.mdx) |
-| Aparelhos e sync | [Pareamento](./docs/core/pairing.mdx) · [Sync da biblioteca](./docs/core/library-sync.mdx) · [Nuvem](./docs/core/cloud-integration.mdx) |
+| Aparelhos e sync | [Pareamento](./docs/core/pairing.mdx) · [Sync da biblioteca](./docs/core/library-sync.mdx) · [Nuvem](./docs/core/cloud-integration.mdx) · [Integrações](./docs/core/integrations.mdx) |
 | Como funciona | [Arquitetura](./docs/readme/architecture.md) · [Arquitetura do core](./docs/core/architecture.mdx) · [Indexação](./docs/core/indexing.mdx) |
 | Extensões | [SDK de extensões](./docs/extensions/introduction.mdx) |
 | Contribuir | [CONTRIBUTING](./CONTRIBUTING.md) · [AGENTS](./AGENTS.md) · [Ambiente de dev](./docs/core/development-environment.mdx) · [Testes](./docs/core/testing.mdx) |

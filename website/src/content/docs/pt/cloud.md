@@ -5,7 +5,7 @@ order: 7
 group: Usando o WingDrive
 ---
 
-O WingDrive trata o armazenamento na nuvem como **volumes** nativos. Um serviço conectado aparece na barra lateral e aceita as mesmas operações de qualquer outra unidade: navegar, copiar, mover, renomear, mandar para a lixeira e sincronizar.
+O WingDrive trata o armazenamento na nuvem como **volumes** nativos. Um serviço conectado aparece na barra lateral e aceita as mesmas operações de qualquer outro drive: navegar, copiar, mover, renomear, mandar para a lixeira e sincronizar.
 
 ## Serviços compatíveis
 
@@ -19,17 +19,50 @@ O WingDrive trata o armazenamento na nuvem como **volumes** nativos. Um serviço
 
 Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA e outros serviços estão planejados. O roadmap lista todos no épico de integrações.
 
-## Google Drive e Google Fotos
+## Conecte uma conta Google
 
-Abra **Configurações > Integrações** e escolha **Conectar uma conta Google**. O navegador abre a página de login do Google; depois que você permitir o acesso, o Drive da conta aparece na barra lateral como `Google Drive (seu@email)`. Repita para adicionar outras contas.
+<ol class="steps">
+<li>Abra <strong>Configurações → Integrações</strong> (<kbd>Ctrl</kbd>+<kbd>,</kbd>).</li>
+<li>Em <em>Contas Google</em>, deixe <strong>Google Drive</strong> e <strong>Google Fotos</strong> marcados, ou desmarque o que não quiser.</li>
+<li>Clique em <strong>Conectar uma conta Google</strong>. O navegador abre a página de login do Google.</li>
+<li>Permita o acesso. De volta ao WingDrive, o Drive da conta aparece na barra lateral como <code>Google Drive (voce@gmail.com)</code>.</li>
+</ol>
 
-- As pastas do Drive são listadas na hora. Documentos, Planilhas e Apresentações Google aparecem como `.docx`, `.xlsx` e `.pptx` e abrem no navegador.
-- Dê dois cliques em um arquivo do Drive para abrir uma cópia local no app de sempre. Cada vez que você salva, ela é enviada de volta. Se o arquivo mudou no Drive enquanto isso, sua versão é guardada como cópia de conflito.
-- A **sincronização com a nuvem** mantém uma pasta do computador igual a uma pasta do Drive, nos dois sentidos ou em um só, sob demanda ou a cada alguns minutos.
-- Clique com o botão direito em fotos ou vídeos e escolha **Enviar para o Google Fotos**. **Importar do Google Fotos** abre o seletor do Google e baixa o que você escolher em qualidade original.
-- Desconectar uma conta revoga o acesso do WingDrive no Google.
+Repita para adicionar outras contas. Cada uma mantém o próprio acesso ao Drive e ao Fotos.
 
-Pela CLI:
+<figure class="shot">
+<a href="/img/docs/settings-integrations.webp"><img src="/img/docs/settings-integrations.webp" width="1400" height="900" loading="lazy" alt="Página Integrações das configurações, com contas Google, sincronização com a nuvem e cliente de login do Google"></a>
+<figcaption>Configurações → Integrações: contas Google, sincronização com a nuvem e o cliente de login do Google.</figcaption>
+</figure>
+
+<div class="callout warn">
+
+<p><strong>“O login precisa de um cliente OAuth do Google.”</strong> Versões que já trazem um cliente do Google entram direto. Se aparecer essa mensagem, siga os quatro passos da mesma página: crie um projeto no Google Cloud Console, ative as APIs Drive, Photos Library e Photos Picker, adicione suas contas como usuários de teste e crie um cliente OAuth do tipo <em>App para computador</em>. Cole o ID e o segredo em <strong>Cliente de login do Google</strong>.</p>
+
+</div>
+
+### O que dá para fazer no Drive
+
+- **Navegar ao vivo.** As pastas vêm direto do Drive. Documentos, Planilhas e Apresentações Google aparecem como `.docx`, `.xlsx` e `.pptx` e abrem no navegador.
+- **Editar nos seus apps.** Dê dois cliques em um arquivo do Drive para abrir uma cópia local. Cada vez que você salva, ela é enviada de volta. Se o arquivo mudou no Drive enquanto isso, sua versão é guardada como cópia de conflito.
+- **Copiar, mover, renomear, criar pasta e mandar para a lixeira** funcionam entre pastas locais e o Drive, nos dois sentidos. Arquivos arrastados da área de trabalho são enviados.
+- A **Visualização Rápida** baixa o arquivo para um cache antes. **Abrir no navegador** abre o item no drive.google.com.
+
+### Mantenha uma pasta sincronizada
+
+<ol class="steps">
+<li>Em <strong>Configurações → Integrações</strong>, na seção <em>Sincronização com a nuvem</em>, clique em <strong>Sincronizar uma pasta</strong>.</li>
+<li>Escolha a pasta deste dispositivo e a pasta do Drive que vai ficar igual a ela.</li>
+<li>Escolha nos dois sentidos ou em um só, e sob demanda ou a cada N minutos.</li>
+</ol>
+
+### Google Fotos
+
+Clique com o botão direito em fotos ou vídeos e escolha **Enviar para o Google Fotos**, se quiser em um álbum novo ou existente. **Importar do Google Fotos** abre o seletor do Google e baixa o que você escolher em qualidade original.
+
+Desconectar uma conta apaga a autorização guardada aqui e revoga o acesso do WingDrive no Google.
+
+### Pela CLI
 
 ```bash
 wing integrations connect google
@@ -38,11 +71,31 @@ wing integrations cloud-sync add Documentos ~/Documentos gdrive://voce@gmail.com
 wing integrations photos upload <id-da-conta> ~/Imagens/Viagem --new-album "Viagem"
 ```
 
-O login no Google precisa de um cliente OAuth. Versões que já trazem um entram direto; nas outras, crie um cliente do tipo "App para computador" no Google Cloud Console e cole-o em **Configurações > Integrações > Cliente de login do Google**.
-
 ## Outros serviços
 
-No aplicativo desktop, use **Adicionar armazenamento** na barra lateral. Pela CLI, a configuração interativa orienta você:
+<ol class="steps">
+<li>Na Visão geral, clique em <strong>Adicionar armazenamento</strong> e escolha <strong>Armazenamento na nuvem</strong>.</li>
+<li>Escolha o provedor.</li>
+<li>Preencha o bucket ou contêiner e as credenciais da tabela acima e confirme. O volume aparece em <em>Volumes</em>.</li>
+</ol>
+
+<div class="shots">
+
+<figure class="shot">
+<a href="/img/docs/add-storage.webp"><img src="/img/docs/add-storage.webp" width="560" height="500" loading="lazy" alt="Diálogo Adicionar armazenamento"></a>
+<figcaption>Escolha <strong>Armazenamento na nuvem</strong>…</figcaption>
+</figure>
+
+<figure class="shot">
+<a href="/img/docs/add-storage-cloud.webp"><img src="/img/docs/add-storage-cloud.webp" width="560" height="620" loading="lazy" alt="Seletor de provedores com S3, R2, MinIO, B2, Wasabi, Spaces, Drive, Dropbox, OneDrive e outros"></a>
+<figcaption>…e depois o provedor.</figcaption>
+</figure>
+
+</div>
+
+Para o Google Drive, use **Configurações → Integrações**, como descrito acima: o login é feito pelo navegador, sem pedir tokens.
+
+Pela CLI, a configuração interativa orienta você:
 
 ```bash
 wing cloud

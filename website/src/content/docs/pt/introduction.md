@@ -11,6 +11,11 @@ Não há conta, telemetria nem servidor central. A indexação, as miniaturas e 
 
 > **Alpha.** Linux é a plataforma compatível, e o objetivo atual (marco M2) é substituir Dolphin, Nautilus ou Yazi como seu gerenciador de arquivos padrão. Os instaladores para Windows são distribuídos em versão beta desde a 3.0. No macOS, a compilação é feita a partir do código-fonte.
 
+<figure class="shot">
+<a href="/img/shots/WingGridView-1600.webp"><img src="/img/shots/WingGridView-1600.webp" srcset="/img/shots/WingGridView-800.webp 800w, /img/shots/WingGridView-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="Visualização em grade do WingDrive com o Inspetor"></a>
+<figcaption>Uma janela para todas as suas pastas, drives e nuvens.</figcaption>
+</figure>
+
 ## O que você encontra
 
 - **Um Explorer rápido** com visualizações em grade, lista, colunas, mídia e tamanho, Quick Preview, modo de painel duplo (F3) e terminal acoplado (F4).
@@ -18,7 +23,8 @@ Não há conta, telemetria nem servidor central. A indexação, as miniaturas e 
 - **Operações seguras com arquivos**: verificação prévia de cópia, cópias atômicas, desfazer cópia, movimentação e envio à lixeira, compactação e extração, somas de verificação.
 - **Identidade de conteúdo**: cada arquivo recebe um hash BLAKE3, para que o mesmo arquivo em dois dispositivos seja reconhecido como um só.
 - **Dispositivos**: emparelhe suas máquinas via Iroh/QUIC para sincronizar a biblioteca e enviar arquivos com o Wingdrop.
-- **Volumes na nuvem** por meio do OpenDAL: S3, Google Drive, Dropbox, OneDrive, Azure Blob, GCS e outros.
+- **Google Drive e Google Fotos** com várias contas: navegue, copie, edite nos seus apps, sincronize pastas e envie fotos.
+- **Volumes na nuvem** por meio do OpenDAL: S3 e serviços compatíveis, Dropbox, OneDrive, Azure Blob e GCS.
 - **CLI `wing` e `wing-server`** para scripts e máquinas sem interface gráfica, no mesmo daemon.
 
 ## Conceitos principais

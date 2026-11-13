@@ -16,7 +16,18 @@ WingDrive has the full toolbox you expect from a file manager, and it is careful
 - **Open With**, including desktop entries with field codes such as `%f` and `%u`.
 - **Permissions** and **SHA-256 checksums** from the Inspector.
 
+<figure class="shot">
+<a href="/img/shots/WingContextMenu-1600.webp"><img src="/img/shots/WingContextMenu-1600.webp" srcset="/img/shots/WingContextMenu-800.webp 800w, /img/shots/WingContextMenu-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="Context menu with Compress options"></a>
+<figcaption>Right-click for the full toolbox: open, rename, compress, copy, duplicate, trash.</figcaption>
+</figure>
+
 ## Undo
+
+<div class="callout tip">
+
+<p><strong>Made a mistake?</strong> Press <kbd>Ctrl</kbd>+<kbd>Z</kbd> right away. Trash, move, copy over a file, rename and new items all come back.</p>
+
+</div>
 
 Copy, overwrite, move, rename, trash and new folders, files and links are journaled. Press **Ctrl+Z** in the desktop app or the web UI, or run `wing file undo`, to reverse the last one. `wing file history` lists what can still be undone.
 
