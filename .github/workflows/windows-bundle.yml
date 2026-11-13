@@ -32,6 +32,12 @@ env:
   # version.py and the smoke tests read UTF-8 files, and Python on Windows defaults to cp1252.
   PYTHONUTF8: '1'
   RELEASE_TAG: ${{ inputs.release-tag }}
+  # WingDrive's own OAuth clients (INTG-001, INTG-022), compiled into wing-core
+  # with option_env!. Without the secrets the build still works and users sign in
+  # with a client of their own.
+  WINGDRIVE_GOOGLE_CLIENT_ID: ${{ secrets.WINGDRIVE_GOOGLE_CLIENT_ID }}
+  WINGDRIVE_GOOGLE_CLIENT_SECRET: ${{ secrets.WINGDRIVE_GOOGLE_CLIENT_SECRET }}
+  WINGDRIVE_MICROSOFT_CLIENT_ID: ${{ secrets.WINGDRIVE_MICROSOFT_CLIENT_ID }}
 
 jobs:
   bundles:

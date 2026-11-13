@@ -1,14 +1,14 @@
 ---
 id: INTG-003
 title: Google OAuth app verification (sensitive and restricted scopes)
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: INTG-000
 priority: High
 milestone: M5
-sprint: S06
+sprint: S05
 tags: [integrations, google, oauth, verification, security]
-last_updated: 2026-11-12
+last_updated: 2026-11-13
 related_tasks: [INTG-001, INTG-002]
 ---
 
@@ -28,6 +28,13 @@ Decide the scope strategy before submitting, because it changes the product:
 3. Submit brand verification, then sensitive and restricted scope verification.
 4. If `drive` stays, run the CASA assessment (tier per Google's request) and schedule the yearly renewal.
 5. Publish the app to "In production" once approved.
+
+## Progress (2026-11-13)
+
+The app is "In production" without verification: grants persist, the unverified-app screen shows
+and the project is capped at 100 users. Brand verification started with the domain check; a
+120x120 logo is in `docs/logo/wingdrive-logo-120.png` for the consent screen. The scope decision
+(`drive` with CASA or `drive.file`) is still open.
 
 ## Acceptance Criteria
 

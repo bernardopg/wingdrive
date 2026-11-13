@@ -3,6 +3,31 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Added
+
+- Integrations connect in two ways (INTG-010). "Google account" and
+  "Microsoft account" only need the sign-in button: WingDrive's own OAuth
+  client, compiled into release builds from repository secrets, does the
+  rest. "Google Cloud" and "Microsoft Entra" use a client you register
+  yourself. Settings > Integrations is a catalog of cards with each service's
+  logo, title and mode, and every mode lists its advantages, disadvantages
+  and setup steps. Accounts show the mode they signed in with.
+- OneDrive (INTG-022). Sign in with a personal, work or school Microsoft
+  account through the browser (`wing integrations connect onedrive`); each
+  OneDrive becomes a volume and sidebar location at `onedrive://<email>/`,
+  usable for copies and cloud sync. Add Storage signs in instead of asking
+  for tokens.
+- wingdrive.org has a privacy policy with the Google API Limited Use
+  disclosure and terms of service, in English and Portuguese (INTG-002).
+
+### Changed
+
+- `integrations.google.client` returns WingDrive's client and your own
+  separately, and the connect actions take a `mode`. `wing integrations
+  connect google --own-client` signs in with your saved client.
+
 ## 3.2.0 — 2026-11-13
 
 Google Drive and Google Photos with several accounts per library, file

@@ -42,6 +42,12 @@ env:
   # Hosted runners lose about 25 s to a D-Bus timeout during GTK start-up.
   WINGDRIVE_STARTUP_BUDGET_SECONDS: ${{ vars.WINGDRIVE_STARTUP_BUDGET_SECONDS || '45' }}
   WINGDRIVE_RESIDENT_OPEN_BUDGET_MS: ${{ vars.WINGDRIVE_RESIDENT_OPEN_BUDGET_MS || '300' }}
+  # WingDrive's own OAuth clients (INTG-001, INTG-022), compiled into wing-core
+  # with option_env!. Without the secrets the build still works and users sign in
+  # with a client of their own.
+  WINGDRIVE_GOOGLE_CLIENT_ID: ${{ secrets.WINGDRIVE_GOOGLE_CLIENT_ID }}
+  WINGDRIVE_GOOGLE_CLIENT_SECRET: ${{ secrets.WINGDRIVE_GOOGLE_CLIENT_SECRET }}
+  WINGDRIVE_MICROSOFT_CLIENT_ID: ${{ secrets.WINGDRIVE_MICROSOFT_CLIENT_ID }}
 
 jobs:
   # Desktop bundles and the server binaries build on separate runners in parallel.
@@ -233,6 +239,7 @@ jobs:
     uses: ./.github/workflows/windows-bundle.yml
     with:
       release-tag: ${{ github.event.inputs.tag || github.ref_name }}
+    secrets: inherit
 
   # Signed APK and AAB. Without the upload key secrets it builds them but uploads nothing,
   # so a desktop release does not wait on Google Play credentials (REL-001).

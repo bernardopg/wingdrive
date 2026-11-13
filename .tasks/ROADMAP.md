@@ -155,6 +155,12 @@ Google, validação real e reconexão), planejadas no [S06](sprints/S06.md). Dep
 provedores (INTG-020) e Dropbox, OneDrive, Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA,
 Proton Drive, armazenamento de objetos, SFTP e SMB (INTG-021 a INTG-031).
 
+Em 2026-11-13 o login só com o botão funcionou com o Google real: cada provedor tem dois modos,
+"Conta" (cliente do WingDrive embutido no build, como o GNOME Online Accounts faz) e cliente próprio
+(Google Cloud ou Microsoft Entra), escolhidos num catálogo de cards em Configurações > Integrações
+(INTG-010). OneDrive (INTG-022) já entra por login no navegador; falta registrar o app do WingDrive
+na Microsoft. INTG-001 a INTG-004 andaram no S05.
+
 Exceção decidida em 2026-10-17: o épico mobile `MOB-000` (Android funcional, loop de dev rápido,
 paridade com o desktop) foi puxado para agora. MOB-001 a MOB-005 entram no S03.
 
@@ -178,6 +184,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-13 | Integrações: modos "Conta" e cliente próprio com catálogo de cards (INTG-010), OneDrive por login no navegador (INTG-022), projeto e cliente OAuth do WingDrive no Google com login real funcionando (INTG-001, INTG-004), `/privacy` e `/service-terms` no site (INTG-002) |
 | 2026-11-13 | Release `v3.2.0` (#383 a #389): integração Google com Drive e Fotos em várias contas (CLOUD-004), operações e edição em volumes de nuvem, cloud sync, COV-07 Done com 91,6% de cobertura do shell desktop e os bugs achados corrigidos, `sdPath` para `wdPath` (BRAND-003) |
 | 2026-11-13 | Todas as tasks com responsável `bernardopg`, milestone (M0 para as concluídas no upstream) e sprint; sprints S07 a S14 planejados |
 | 2026-11-12 | Release `v3.1.1` (#368 a #381): portal `FileChooser` (DESK-051), undo de renomear e novos itens no Tauri (FILE-008), correções DESK-090 a DESK-096, CORE-020, CLI-010, cerca de 175 testes e atualizações do Dependabot |
