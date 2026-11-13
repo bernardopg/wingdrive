@@ -404,19 +404,43 @@ pub fn parse_callback_request(request_line: &str) -> Option<CallbackParams> {
 pub struct LoopbackListener {
 	listener: TcpListener,
 	port: u16,
+	/// Provider named on the page the browser shows after the redirect.
+	provider: &'static str,
+	/// Host written in the redirect URI.
+	redirect_host: &'static str,
 }
 
 impl LoopbackListener {
-	/// Binds `127.0.0.1` on a port the OS picks.
+	/// Binds `127.0.0.1` on a port the OS picks, for a Google sign-in.
 	pub async fn bind() -> std::io::Result<Self> {
+		Self::bind_for("Google", "127.0.0.1").await
+	}
+
+	/// Binds `127.0.0.1` on a port the OS picks for `provider`.
+	///
+	/// `redirect_host` is the host the redirect URI names. Microsoft only lets
+	/// app registrations list `localhost` with any port, so its sign-in uses
+	/// `localhost`, which browsers resolve to this loopback listener.
+	pub async fn bind_for(
+		provider: &'static str,
+		redirect_host: &'static str,
+	) -> std::io::Result<Self> {
 		let listener = TcpListener::bind(("127.0.0.1", 0)).await?;
 		let port = listener.local_addr()?.port();
-		Ok(Self { listener, port })
+		Ok(Self {
+			listener,
+			port,
+			provider,
+			redirect_host,
+		})
 	}
 
 	/// The redirect URI registered in the authorization request.
 	pub fn redirect_uri(&self) -> String {
-		format!("http://127.0.0.1:{}{CALLBACK_PATH}", self.port)
+		format!(
+			"http://{}:{}{CALLBACK_PATH}",
+			self.redirect_host, self.port
+		)
 	}
 
 	/// Waits for the redirect and returns the authorization code.
@@ -460,20 +484,20 @@ impl LoopbackListener {
 				};
 				if params.state.as_deref() != Some(expected_state) {
 					warn!("Ignoring OAuth redirect with an unexpected state");
-					let _ = respond(&mut stream, 400, &callback_page(false)).await;
+					let _ = respond(&mut stream, 400, &callback_page(false, self.provider)).await;
 					continue;
 				}
 				if let Some(error) = params.error {
-					let _ = respond(&mut stream, 200, &callback_page(false)).await;
+					let _ = respond(&mut stream, 200, &callback_page(false, self.provider)).await;
 					return Err(GoogleError::Authorization(error));
 				}
 				let Some(code) = params.code else {
-					let _ = respond(&mut stream, 400, &callback_page(false)).await;
+					let _ = respond(&mut stream, 400, &callback_page(false, self.provider)).await;
 					return Err(GoogleError::Authorization(
 						"redirect carried no authorization code".to_string(),
 					));
 				};
-				let _ = respond(&mut stream, 200, &callback_page(true)).await;
+				let _ = respond(&mut stream, 200, &callback_page(true, self.provider)).await;
 				debug!("Received OAuth authorization code on the loopback listener");
 				return Ok(code);
 			}
@@ -505,18 +529,17 @@ async fn respond(
 
 /// Page the browser shows after the redirect. It carries both languages
 /// because the daemon does not know the UI language.
-fn callback_page(success: bool) -> String {
-	let (title, en, pt) = if success {
+fn callback_page(success: bool, provider: &str) -> String {
+	let title = "WingDrive";
+	let (en, pt) = if success {
 		(
-			"WingDrive",
-			"Your Google account is connected. You can close this tab and go back to WingDrive.",
-			"Sua conta Google foi conectada. Você pode fechar esta aba e voltar ao WingDrive.",
+			format!("Your {provider} account is connected. You can close this tab and go back to WingDrive."),
+			format!("Sua conta {provider} foi conectada. Você pode fechar esta aba e voltar ao WingDrive."),
 		)
 	} else {
 		(
-			"WingDrive",
-			"Google sign-in did not finish. Go back to WingDrive and try again.",
-			"O login no Google não terminou. Volte ao WingDrive e tente de novo.",
+			format!("{provider} sign-in did not finish. Go back to WingDrive and try again."),
+			format!("O login na conta {provider} não terminou. Volte ao WingDrive e tente de novo."),
 		)
 	};
 	format!(

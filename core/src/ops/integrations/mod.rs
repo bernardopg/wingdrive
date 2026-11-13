@@ -5,10 +5,14 @@
 //!
 //! - `integrations.accounts.list`: connected accounts and their services.
 //! - `integrations.accounts.remove`: disconnect, revoke and forget an account.
-//! - `integrations.google.client` and `integrations.google.set_client`: which
-//!   OAuth client signs users in, and saving a custom one.
+//! - `integrations.google.client` and `integrations.google.set_client`:
+//!   WingDrive's own Google client and the user's own from Google Cloud.
 //! - `integrations.google.connect`, `integrations.google.connect_status` and
-//!   `integrations.google.connect_cancel`: the browser sign-in.
+//!   `integrations.google.connect_cancel`: the browser sign-in. Status and
+//!   cancel serve Microsoft sign-ins too.
+//! - `integrations.microsoft.client`, `integrations.microsoft.set_client`,
+//!   `integrations.microsoft.connect` and `integrations.onedrive.mount`: the
+//!   same for Microsoft accounts and their OneDrive.
 //! - `integrations.google.drive.mount`: mount or unmount an account's Drive.
 //! - `integrations.google.photos.*`: albums, upload and picker import.
 //! - `files.cloud_edit.*`: open cloud files in local apps and write edits back.
@@ -16,6 +20,7 @@
 pub mod accounts;
 pub mod cloud_edit;
 pub mod google;
+pub mod microsoft;
 pub mod photos;
 
 use std::sync::Arc;

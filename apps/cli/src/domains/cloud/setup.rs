@@ -154,6 +154,7 @@ async fn add_google_drive_interactive(ctx: &Context) -> Result<()> {
 		crate::domains::integrations::ConnectGoogleArgs {
 			drive_only: false,
 			photos_only: false,
+			own_client: false,
 			email: None,
 			no_browser: false,
 		},
@@ -162,43 +163,16 @@ async fn add_google_drive_interactive(ctx: &Context) -> Result<()> {
 }
 
 async fn add_onedrive_interactive(ctx: &Context) -> Result<()> {
-	let name = text("Volume name (e.g., 'My OneDrive')", false)?.unwrap();
-	let root = text("Root folder path (leave empty for entire drive)", true)?;
-
-	println!("\nOAuth Setup:");
-	println!("  You'll need OAuth credentials from Azure Portal");
-	println!("  Visit: https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps\n");
-
-	let client_id = text("Application (client) ID", false)?.unwrap();
-	let client_secret = password("Client Secret", false)?.unwrap();
-
-	println!("\nAfter authorizing, you'll receive tokens:");
-	let access_token = password("Access Token", false)?.unwrap();
-	let refresh_token = password("Refresh Token", false)?.unwrap();
-
-	println!("\nSummary:");
-	println!("  Provider: Microsoft OneDrive");
-	println!("  Name:     {}", name);
-	if let Some(ref r) = root {
-		println!("  Root:     {}", r);
-	}
-	println!();
-
-	confirm_or_abort("Add this cloud volume?", false)?;
-
-	let input = VolumeAddCloudInput {
-		service: CloudServiceType::OneDrive,
-		display_name: name.clone(),
-		config: CloudStorageConfig::OneDrive {
-			root,
-			access_token,
-			refresh_token,
-			client_id,
-			client_secret,
+	// OneDrive signs in through the browser like Google Drive and supports several accounts.
+	crate::domains::integrations::connect_onedrive(
+		ctx,
+		crate::domains::integrations::ConnectOneDriveArgs {
+			own_client: false,
+			email: None,
+			no_browser: false,
 		},
-	};
-
-	execute_add_cloud(ctx, input).await
+	)
+	.await
 }
 
 async fn add_dropbox_interactive(ctx: &Context) -> Result<()> {

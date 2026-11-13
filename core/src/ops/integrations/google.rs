@@ -13,21 +13,13 @@ use crate::library::Library;
 use crate::service::integrations::google::oauth::{GoogleService, OAuthClient};
 use crate::service::integrations::store::IntegrationStore;
 use crate::service::integrations::{
-	ConnectStatus, DriveMountInfo, IntegrationError, OAuthClientSource,
+	ConnectStatus, ConnectionMode, DriveMountInfo, IntegrationError, OAuthClientsInfo,
 };
 
-/// Which OAuth client the library uses for Google sign-in.
+/// Which OAuth clients the library can use for Google sign-in: WingDrive's
+/// own ("sign in with your Google account") and the user's own from Google Cloud.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct GoogleClientInfoInput {}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct GoogleClientInfo {
-	/// Whether sign-in can start.
-	pub configured: bool,
-	pub source: Option<OAuthClientSource>,
-	/// The client ID, which is public; the secret is never returned.
-	pub client_id: Option<String>,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GoogleClientInfoQuery {
@@ -36,7 +28,7 @@ pub struct GoogleClientInfoQuery {
 
 impl LibraryQuery for GoogleClientInfoQuery {
 	type Input = GoogleClientInfoInput;
-	type Output = GoogleClientInfo;
+	type Output = OAuthClientsInfo;
 
 	fn from_input(input: Self::Input) -> QueryResult<Self> {
 		Ok(Self { input })
@@ -49,19 +41,7 @@ impl LibraryQuery for GoogleClientInfoQuery {
 	) -> QueryResult<Self::Output> {
 		let library = super::session_library(&context, &session).await?;
 		let store = IntegrationStore::for_library(&library);
-		let client = context.integrations.google_client(&store).await?;
-		Ok(match client {
-			Some((client, source)) => GoogleClientInfo {
-				configured: true,
-				source: Some(source),
-				client_id: Some(client.client_id),
-			},
-			None => GoogleClientInfo {
-				configured: false,
-				source: None,
-				client_id: None,
-			},
-		})
+		Ok(context.integrations.google_clients(&store).await?)
 	}
 }
 
@@ -70,7 +50,8 @@ crate::register_library_query!(GoogleClientInfoQuery, "integrations.google.clien
 /// Saves or clears the library's own Google OAuth client.
 ///
 /// Create it in Google Cloud Console as an OAuth client of type "Desktop
-/// app". Accounts already connected keep the client they signed in with.
+/// app". It is used by sign-ins in the "custom" mode; accounts already
+/// connected keep the client they signed in with.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct GoogleSetClientInput {
 	/// `None` clears the custom client.
@@ -85,7 +66,7 @@ pub struct GoogleSetClientAction {
 
 impl LibraryAction for GoogleSetClientAction {
 	type Input = GoogleSetClientInput;
-	type Output = GoogleClientInfo;
+	type Output = OAuthClientsInfo;
 
 	fn from_input(input: Self::Input) -> Result<Self, String> {
 		match (&input.client_id, &input.client_secret) {
@@ -119,12 +100,7 @@ impl LibraryAction for GoogleSetClientAction {
 			.set_google_client(client.as_ref())
 			.await
 			.map_err(IntegrationError::from)?;
-		let current = context.integrations.google_client(&store).await?;
-		Ok(GoogleClientInfo {
-			configured: current.is_some(),
-			source: current.as_ref().map(|(_, source)| *source),
-			client_id: current.map(|(client, _)| client.client_id),
-		})
+		Ok(context.integrations.google_clients(&store).await?)
 	}
 
 	fn action_kind(&self) -> &'static str {
@@ -136,8 +112,13 @@ crate::register_library_action!(GoogleSetClientAction, "integrations.google.set_
 
 /// Starts a Google sign-in. Open `auth_url` in the browser, then poll
 /// `integrations.google.connect_status` with `session_id`.
+///
+/// `integrations.google.connect_status` and `integrations.google.connect_cancel`
+/// follow Microsoft sign-ins too; the session IDs are shared.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct GoogleConnectInput {
+	/// Whose OAuth client to sign in with.
+	pub mode: ConnectionMode,
 	/// Services to request; empty requests Drive and Photos.
 	pub services: Vec<GoogleService>,
 	/// Preselects an account on the consent page, for reconnecting.
@@ -170,7 +151,12 @@ impl LibraryAction for GoogleConnectAction {
 	) -> Result<Self::Output, ActionError> {
 		let (session_id, auth_url) = context
 			.integrations
-			.start_google_connect(library, self.input.services, self.input.login_hint)
+			.start_google_connect(
+				library,
+				self.input.mode,
+				self.input.services,
+				self.input.login_hint,
+			)
 			.await?;
 		Ok(GoogleConnectOutput {
 			session_id,
