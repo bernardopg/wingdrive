@@ -208,7 +208,9 @@ mod systemd {
 	#[test]
 	fn uninstalling_removes_current_and_legacy_units() {
 		let systemd_dir = tempfile::tempdir().unwrap();
-		std::fs::write(systemd_dir.path().join("spacedrive-daemon.service"), "").unwrap();
+		// The unit name from before the rename.
+		let legacy = crate::SYSTEMD_UNITS[1];
+		std::fs::write(systemd_dir.path().join(legacy), "").unwrap();
 		assert!(systemd_service_installed(systemd_dir.path()));
 		let calls = Mutex::new(Vec::new());
 
@@ -219,9 +221,9 @@ mod systemd {
 		assert_eq!(
 			*calls.lock().unwrap(),
 			[
-				"--user stop spacedrive-daemon.service",
-				"--user disable spacedrive-daemon.service",
-				"--user daemon-reload",
+				format!("--user stop {legacy}"),
+				format!("--user disable {legacy}"),
+				"--user daemon-reload".to_string(),
 			]
 		);
 
