@@ -23,6 +23,8 @@ bun run build                                  # static output in website/dist/
 - App screenshots come from `../docs/public/Wing*.webp`.
 - `raw-assets/blender/winged_drive.py`: the Blender scene behind `public/video/winged-drive.*`
   (`blender -b -P winged_drive.py -- <out-dir> anim`, then encode the frames with ffmpeg).
+- `raw-assets/blender/drive_loop.py`: an earlier 120-frame turntable loop of the drive, kept for
+  reference (`blender -b -P drive_loop.py -- <out-dir>`).
 - `bun run assets` rebuilds the image sizes, the hero sparkle points
   (`src/data/hero-points.json`), favicons, manifest icons and `public/og.png`.
 
