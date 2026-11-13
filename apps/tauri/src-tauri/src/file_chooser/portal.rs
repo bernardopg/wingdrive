@@ -19,14 +19,17 @@ pub const OBJECT_PATH: &str = "/org/freedesktop/portal/desktop";
 
 /// Where shared-mime-info keeps its glob table, user data first.
 fn globs2_paths() -> Vec<PathBuf> {
-	let home = std::env::var_os("HOME")
-		.map(PathBuf::from)
-		.unwrap_or_default();
-	let data_home = std::env::var_os("XDG_DATA_HOME")
+	globs2_paths_from(|name| std::env::var_os(name))
+}
+
+/// The glob table paths for an environment read through `var`.
+pub(super) fn globs2_paths_from(var: impl Fn(&str) -> Option<std::ffi::OsString>) -> Vec<PathBuf> {
+	let home = var("HOME").map(PathBuf::from).unwrap_or_default();
+	let data_home = var("XDG_DATA_HOME")
 		.map(PathBuf::from)
 		.unwrap_or_else(|| home.join(".local/share"));
-	let data_dirs = std::env::var("XDG_DATA_DIRS")
-		.ok()
+	let data_dirs = var("XDG_DATA_DIRS")
+		.and_then(|value| value.into_string().ok())
 		.filter(|value| !value.is_empty())
 		.unwrap_or_else(|| "/usr/local/share:/usr/share".to_string());
 	std::iter::once(data_home)

@@ -682,3 +682,51 @@ async fn tauri_host_creates_a_picker_and_answers_cancellation() {
 	assert_eq!(task.await.unwrap().into_reply().0, response::CANCELLED);
 	assert!(broker.request(&id).is_none());
 }
+
+#[test]
+fn glob_tables_follow_xdg_data_folders() {
+	let map: HashMap<&str, &str> = HashMap::from([("HOME", "/h"), ("XDG_DATA_DIRS", "/x:/y")]);
+	let paths =
+		super::portal::globs2_paths_from(|name| map.get(name).map(std::ffi::OsString::from));
+	assert_eq!(
+		paths,
+		[
+			PathBuf::from("/h/.local/share/mime/globs2"),
+			PathBuf::from("/x/mime/globs2"),
+			PathBuf::from("/y/mime/globs2"),
+		]
+	);
+	let empty = HashMap::from([("XDG_DATA_HOME", "/d"), ("XDG_DATA_DIRS", "")]);
+	let paths =
+		super::portal::globs2_paths_from(|name| empty.get(name).map(std::ffi::OsString::from));
+	assert_eq!(paths[0], PathBuf::from("/d/mime/globs2"));
+	assert_eq!(paths.last(), Some(&PathBuf::from("/usr/share/mime/globs2")));
+}
+
+#[tokio::test]
+async fn restarting_the_portal_reports_the_command_result() {
+	assert!(restart_portal(tokio::process::Command::new("true")).await);
+	assert!(!restart_portal(tokio::process::Command::new("false")).await);
+	assert!(!restart_portal(tokio::process::Command::new("/nonexistent/wing-systemctl")).await);
+	let command = systemctl_restart();
+	let args: Vec<_> = command.as_std().get_args().collect();
+	assert_eq!(command.as_std().get_program(), "systemctl");
+	assert_eq!(
+		args,
+		["--user", "try-restart", "xdg-desktop-portal.service"]
+	);
+}
+
+#[tokio::test]
+async fn the_switch_runs_off_the_runtime_and_reports_errors() {
+	let dir = tempfile::tempdir().unwrap();
+	let paths = super::portals_conf::PortalPaths {
+		config_dir: dir.path().join("config"),
+		desktops: vec![],
+		state_file: dir.path().join("state.json"),
+		portal_dirs: vec![dir.path().join("portals")],
+	};
+	// The backend file is missing, so enabling is refused.
+	assert!(switch_portal(paths.clone(), true).await.is_err());
+	assert!(!switch_portal(paths, false).await.unwrap().enabled);
+}
