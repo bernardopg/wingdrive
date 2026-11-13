@@ -2,8 +2,9 @@
 id: LSYNC-022
 title: Sync Metrics and Observability System
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 parent: LSYNC-000
 tags: [sync, metrics, observability, monitoring]
 last_updated: 2025-12-02

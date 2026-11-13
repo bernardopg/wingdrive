@@ -2,7 +2,7 @@
 id: VSS-001
 title: "WingPath::Sidecar Variant Integration"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-008
 priority: High
 tags: [vss, addressing, sdpath, core, upstream-backlog]
@@ -10,6 +10,7 @@ whitepaper: "Section 4.1.5"
 last_updated: 2026-10-16
 related_tasks: [CORE-002, CORE-008]
 milestone: M5
+sprint: S12
 ---
 
 ## Description

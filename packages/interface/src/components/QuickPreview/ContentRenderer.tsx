@@ -132,8 +132,8 @@ function ImageRenderer({ file, onZoomChange }: ContentRendererProps) {
 			return;
 		}
 
-		const sdPath = file.wing_path as any;
-		const physicalPath = sdPath?.Physical?.path;
+		const wdPath = file.wing_path as any;
+		const physicalPath = wdPath?.Physical?.path;
 
 		if (!physicalPath) {
 			console.log(
@@ -544,8 +544,8 @@ function VideoRenderer({
 	useEffect(() => {
 		if (!shouldLoadVideo) return;
 
-		const sdPath = file.wing_path as any;
-		const physicalPath = sdPath?.Physical?.path;
+		const wdPath = file.wing_path as any;
+		const physicalPath = wdPath?.Physical?.path;
 
 		if (!physicalPath) return;
 
@@ -607,8 +607,8 @@ function AudioRenderer({ file }: ContentRendererProps) {
 	useEffect(() => {
 		if (!shouldLoadAudio) return;
 
-		const sdPath = file.wing_path as any;
-		const physicalPath = sdPath?.Physical?.path;
+		const wdPath = file.wing_path as any;
+		const physicalPath = wdPath?.Physical?.path;
 
 		if (!physicalPath) return;
 

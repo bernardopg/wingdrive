@@ -2,13 +2,14 @@
 id: INDEX-008
 title: Nested Locations Support
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 priority: Medium
 tags: [indexing, locations, architecture, sync, upstream-backlog]
 last_updated: 2026-10-16
 parent: INDEX-000
 related_tasks: [CORE-001, LSYNC-010, LOC-000]
 milestone: M5
+sprint: S12
 ---
 
 # Nested Locations Support (Entry Reuse Architecture)

@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: INTG-000
 priority: High
 milestone: M5
+sprint: S11
 tags: [integrations, architecture]
 last_updated: 2026-11-12
 related_tasks: [CLOUD-004]

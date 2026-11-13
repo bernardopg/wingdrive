@@ -90,8 +90,8 @@ const {t} = useTranslation('navigation');
 	);
 
 	const handleAddStorage = () => {
-		useAddStorageDialog((sdPath) => {
-			navigate(`/explorer?path=${encodeURIComponent(JSON.stringify(sdPath))}`);
+		useAddStorageDialog((wdPath) => {
+			navigate(`/explorer?path=${encodeURIComponent(JSON.stringify(wdPath))}`);
 		});
 	};
 

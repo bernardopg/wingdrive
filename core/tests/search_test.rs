@@ -327,14 +327,16 @@ async fn test_persistent_search_by_path() -> anyhow::Result<()> {
 	// Search within folder_a only
 	let folder_a_path = test_location.path().join("folder_a");
 	let device_slug = wing_core::device::get_current_device_slug();
-	let folder_a_sd = WingPath::Physical {
+	let folder_a_path = WingPath::Physical {
 		device_slug,
 		path: folder_a_path.to_path_buf(),
 	};
 
 	let path_search = FileSearchInput {
 		query: "test".to_string(),
-		scope: SearchScope::Path { path: folder_a_sd },
+		scope: SearchScope::Path {
+			path: folder_a_path,
+		},
 		mode: SearchMode::Normal,
 		filters: SearchFilters::default(),
 		sort: SortOptions {

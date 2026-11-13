@@ -2,9 +2,10 @@
 id: LSYNC-010
 title: Peer Sync Service (Leaderless)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: LSYNC-000
 priority: High
+milestone: M0
 tags: [sync, replication, service, peer-to-peer, leaderless]
 depends_on: [LSYNC-006, LSYNC-014, LSYNC-015, LSYNC-016, LSYNC-013]
 design_doc: core/src/infra/sync/NEW_SYNC.md

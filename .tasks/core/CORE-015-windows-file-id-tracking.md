@@ -2,8 +2,9 @@
 id: CORE-015
 title: "Windows File ID Tracking for Stable File Identity"
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 tags: [core, windows, indexing, platform]
 last_updated: 2025-12-29
 ---

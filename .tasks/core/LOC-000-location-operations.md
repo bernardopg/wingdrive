@@ -2,8 +2,9 @@
 id: LOC-000
 title: Location Operations
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 tags: [epic, core, locations]
 whitepaper: Section 4.3.3
 ---

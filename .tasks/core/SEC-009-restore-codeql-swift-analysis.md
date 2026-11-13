@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: SEC-008
 priority: Medium
 milestone: M5
+sprint: S13
 tags: ["ci", "security", "codeql", "mobile"]
 last_updated: 2026-10-16
 ---

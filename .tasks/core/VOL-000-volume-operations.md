@@ -2,8 +2,9 @@
 id: VOL-000
 title: Volume Operations
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 tags: [epic, core, volumes]
 whitepaper: Section 4.8
 ---

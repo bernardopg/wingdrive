@@ -2,9 +2,10 @@
 id: SEC-005
 title: Secure Credential Vault
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: SEC-000
 priority: High
+milestone: M0
 tags: [security, credentials, vault, cloud]
 whitepaper: Section 8
 ---

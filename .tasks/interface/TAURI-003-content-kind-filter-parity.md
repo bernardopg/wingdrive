@@ -2,9 +2,10 @@
 id: TAURI-003
 title: Fix Content Kind Filter Parity
 status: Done
-assignee: unassigned
+assignee: bernardopg
 parent: TAURI-000
 priority: High
+milestone: M0
 tags: [tauri, search, explorer, bug]
 last_updated: 2026-08-24
 ---

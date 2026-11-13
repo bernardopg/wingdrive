@@ -2,7 +2,7 @@
 id: PLUG-003
 title: Develop Production Extension (Photos or Email)
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: PLUG-000
 priority: Medium
 tags: [plugins, wasm, extension, production, upstream-backlog]
@@ -10,6 +10,7 @@ whitepaper: Section 6.8
 last_updated: 2026-10-16
 related_tasks: [PLUG-001, PLUG-002]
 milestone: M5
+sprint: S13
 ---
 
 ## Description

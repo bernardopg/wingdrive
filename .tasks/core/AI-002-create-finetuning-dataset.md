@@ -2,7 +2,7 @@
 id: AI-002
 title: "Create Fine-Tuning Dataset for AI Agent"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: AI-000
 priority: Medium
 tags:
@@ -12,6 +12,7 @@ tags:
   - research
 whitepaper: "Section 4.6: AI-Native VDFS"
 milestone: M5
+sprint: S12
 last_updated: 2026-10-16
 ---
 

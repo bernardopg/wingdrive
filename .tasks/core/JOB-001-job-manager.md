@@ -2,9 +2,10 @@
 id: JOB-001
 title: Job Manager for Task Scheduling
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: JOB-000
 priority: High
+milestone: M0
 tags: [core, jobs]
 whitepaper: Section 4.4
 ---

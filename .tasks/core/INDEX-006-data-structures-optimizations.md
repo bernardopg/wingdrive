@@ -2,9 +2,10 @@
 id: INDEX-006
 title: Data Structures & Memory Optimizations
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: INDEX-000
 priority: High
+milestone: M0
 tags: [indexing, performance, memory, optimization]
 whitepaper: Section 4.3.7
 last_updated: 2025-12-16

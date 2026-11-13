@@ -54,7 +54,7 @@ export function VolumesGroup() {
 						}
 						onPress={() => {
 							if (device) {
-								const sdPath = {
+								const wdPath = {
 									Physical: {
 										device_slug: device.slug,
 										path: volume.mount_point || "/",
@@ -64,7 +64,7 @@ export function VolumesGroup() {
 									pathname: "/explorer",
 									params: {
 										type: "path",
-										path: JSON.stringify(sdPath),
+										path: JSON.stringify(wdPath),
 									},
 								});
 							}

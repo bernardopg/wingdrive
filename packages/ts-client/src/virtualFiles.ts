@@ -62,7 +62,7 @@ export function mapVolumeToFile(
 	deviceSlug: string,
 	iconUrl?: string | number,
 ): File {
-	const sdPath = {
+	const wdPath = {
 		Physical: {
 			device_slug: deviceSlug,
 			path: volume.mount_point || "/",
@@ -73,7 +73,7 @@ export function mapVolumeToFile(
 		id: `virtual:volume:${volume.fingerprint}`,
 		kind: "Directory",
 		name: volume.display_name || volume.name,
-		wing_path: sdPath,
+		wing_path: wdPath,
 		extension: null,
 		size: volume.total_capacity ? Number(volume.total_capacity) : 0,
 		content_identity: null,
@@ -101,7 +101,7 @@ export function mapVolumeToFile(
  * Maps a Device to a File-like object for Explorer display
  */
 export function mapDeviceToFile(device: any, iconUrl?: string | number): File {
-	const sdPath = {
+	const wdPath = {
 		Physical: {
 			device_slug: device.slug,
 			path: "/",
@@ -112,7 +112,7 @@ export function mapDeviceToFile(device: any, iconUrl?: string | number): File {
 		id: `virtual:device:${device.id}`,
 		kind: "Directory",
 		name: device.name,
-		wing_path: sdPath,
+		wing_path: wdPath,
 		extension: null,
 		size: 0,
 		content_identity: null,

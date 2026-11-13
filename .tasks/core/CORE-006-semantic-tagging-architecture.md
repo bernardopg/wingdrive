@@ -2,9 +2,10 @@
 id: CORE-006
 title: Semantic Tagging Architecture
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-000
 priority: Medium
+milestone: M0
 tags: [core, vdfs, tagging, metadata]
 whitepaper: Section 4.1
 ---

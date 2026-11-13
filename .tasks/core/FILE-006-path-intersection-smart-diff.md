@@ -2,13 +2,14 @@
 id: FILE-006
 title: Path Intersection & Smart Diff
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: FILE-000
 priority: High
 tags: [files, operations, diff, copy, index, deduplication, upstream-backlog]
 last_updated: 2026-10-16
 related_tasks: [INDEX-010, INDEX-011, FILE-001, FSYNC-003]
 milestone: M4
+sprint: S07
 ---
 
 ## Description

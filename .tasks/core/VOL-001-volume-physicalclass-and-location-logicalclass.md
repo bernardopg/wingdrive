@@ -2,12 +2,13 @@
 id: VOL-001
 title: Volume PhysicalClass and Location LogicalClass
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: VOL-000
 priority: High
 tags: [volume, storage-tiering, classification, upstream-backlog]
 whitepaper: Section 4.8
 milestone: M5
+sprint: S12
 last_updated: 2026-10-16
 ---
 

@@ -316,9 +316,9 @@ async fn test_ephemeral_folder_rename_via_reindex() -> anyhow::Result<()> {
 	tokio::fs::write(original_folder.join("file2.rs"), "fn main() {}").await?;
 
 	// Index in ephemeral mode
-	let test_root_sd = WingPath::local(test_root);
+	let test_root_path = WingPath::local(test_root);
 	let indexer_config =
-		IndexerJobConfig::ephemeral_browse(test_root_sd, IndexScope::Recursive, false);
+		IndexerJobConfig::ephemeral_browse(test_root_path, IndexScope::Recursive, false);
 	let indexer_job = IndexerJob::new(indexer_config);
 
 	tracing::info!("Initial ephemeral indexing");
@@ -389,9 +389,9 @@ async fn test_ephemeral_folder_rename_via_watcher() -> anyhow::Result<()> {
 	tokio::fs::write(original_folder.join("file2.rs"), "fn main() {}").await?;
 
 	// Index in ephemeral mode
-	let test_root_sd = WingPath::local(test_root);
+	let test_root_path = WingPath::local(test_root);
 	let indexer_config =
-		IndexerJobConfig::ephemeral_browse(test_root_sd, IndexScope::Recursive, false);
+		IndexerJobConfig::ephemeral_browse(test_root_path, IndexScope::Recursive, false);
 	let indexer_job = IndexerJob::new(indexer_config);
 
 	tracing::info!("Initial ephemeral indexing");

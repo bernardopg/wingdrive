@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
+sprint: S05
 tags: [desktop, performance, memory, webkitgtk]
 last_updated: 2026-11-05
 ---

@@ -2,9 +2,10 @@
 id: ACT-001
 title: Action Manager and Handler Registry
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: ACT-000
 priority: High
+milestone: M0
 tags: [core, actions]
 whitepaper: Section 4.4.4
 ---

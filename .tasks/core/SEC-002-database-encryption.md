@@ -2,12 +2,13 @@
 id: SEC-002
 title: SQLCipher for At-Rest Library Encryption
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SEC-000
 priority: High
 tags: [security, database, core, encryption, upstream-backlog]
 whitepaper: Section 8.1
 milestone: M5
+sprint: S11
 last_updated: 2026-10-16
 ---
 

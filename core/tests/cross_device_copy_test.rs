@@ -193,13 +193,13 @@ async fn alice_cross_device_copy_scenario() {
 
 		// Create source WingPath (on Alice's device)
 		// Note: slug is generated from device name "Alice's Test Device" → "alice-s-test-device"
-		let source_sdpath = WingPath::physical("alice-s-test-device".to_string(), source_path);
+		let source_wdpath = WingPath::physical("alice-s-test-device".to_string(), source_path);
 
 		// Create destination WingPath (on Bob's device) - use directory, not full path
 		// The job will automatically join the filename for cross-device copies
 		// Note: slug is generated from device name "Bob's Test Device" → "bob-s-test-device"
 		let dest_dir = PathBuf::from("/tmp/received_files");
-		let dest_sdpath = WingPath::physical("bob-s-test-device".to_string(), &dest_dir);
+		let dest_wdpath = WingPath::physical("bob-s-test-device".to_string(), &dest_dir);
 
 		println!(
 			"  Source: {} (device: {})",
@@ -215,8 +215,8 @@ async fn alice_cross_device_copy_scenario() {
 
 		// Build the copy action directly with WingPath
 		let copy_action = FileCopyAction {
-			sources: WingPathBatch::new(vec![source_sdpath]),
-			destination: dest_sdpath,
+			sources: WingPathBatch::new(vec![source_wdpath]),
+			destination: dest_wdpath,
 			options: CopyOptions {
 				overwrite: true,
 				verify_checksum: true,

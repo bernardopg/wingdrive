@@ -2,12 +2,13 @@
 id: SHARE-004
 title: Custom wingdrive.app Relay Configuration
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: High
 tags: [sharing, networking, iroh, relay, cloud, upstream-backlog]
 related_tasks: [CLOUD-002, NET-001]
 milestone: M4
+sprint: S07
 last_updated: 2026-10-16
 ---
 

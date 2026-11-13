@@ -2,8 +2,9 @@
 id: DEV-004
 title: "Cut SSD writes and heat from local Rust builds"
 status: Done
-assignee: unassigned
+assignee: bernardopg
 priority: High
+milestone: M0
 parent: DEV-000
 tags: [development, build, performance, linux]
 last_updated: 2026-10-09

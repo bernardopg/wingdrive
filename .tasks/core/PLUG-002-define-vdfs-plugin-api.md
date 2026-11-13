@@ -2,10 +2,11 @@
 id: PLUG-002
 title: Define and Implement VDFS Plugin API Bridge
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 parent: PLUG-000
 priority: High
 milestone: M5
+sprint: S09
 tags: [plugins, wasm, api, vdfs, wire, upstream-backlog]
 whitepaper: Section 6.8
 last_updated: 2026-10-16

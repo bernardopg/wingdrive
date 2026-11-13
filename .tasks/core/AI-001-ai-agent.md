@@ -2,12 +2,13 @@
 id: AI-001
 title: AI Agent for Proactive Assistance
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: AI-000
 priority: Medium
 tags: [ai, agent, core, upstream-backlog]
 whitepaper: Section 4.6
 milestone: M5
+sprint: S12
 last_updated: 2026-10-16
 ---
 

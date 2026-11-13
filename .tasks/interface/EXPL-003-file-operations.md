@@ -2,7 +2,7 @@
 id: EXPL-003
 title: File Operations UI
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: EXPL-000
 priority: High
 milestone: M1

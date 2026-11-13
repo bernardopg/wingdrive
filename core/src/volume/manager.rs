@@ -1043,14 +1043,14 @@ impl VolumeManager {
 
 	/// Resolve a volume for an WingPath (unified method for cloud and local paths)
 	/// This abstracts away the cloud/local path distinction
-	pub async fn resolve_volume_for_sdpath(
+	pub async fn resolve_volume_for_wdpath(
 		&self,
-		sdpath: &crate::domain::addressing::WingPath,
+		wdpath: &crate::domain::addressing::WingPath,
 		_library: &crate::library::Library,
 	) -> VolumeResult<Option<Volume>> {
-		info!("resolve_volume_for_sdpath called with: {}", sdpath);
+		info!("resolve_volume_for_wdpath called with: {}", wdpath);
 		// Check if this is a cloud path
-		if let Some((service, identifier, _path)) = sdpath.as_cloud() {
+		if let Some((service, identifier, _path)) = wdpath.as_cloud() {
 			// Cloud path - use identity-based lookup
 			info!(
 				"Cloud path detected: service={:?}, identifier={}",
@@ -1059,11 +1059,11 @@ impl VolumeManager {
 			Ok(self.find_cloud_volume(service, identifier).await)
 		} else {
 			// Local path - resolve by filesystem path
-			if let Some(local_path) = sdpath.as_local_path() {
+			if let Some(local_path) = wdpath.as_local_path() {
 				info!("Local path extracted: {}", local_path.display());
 				Ok(self.volume_for_path(local_path).await)
 			} else {
-				info!("as_local_path() returned None for sdpath: {}", sdpath);
+				info!("as_local_path() returned None for wdpath: {}", wdpath);
 				Ok(None)
 			}
 		}

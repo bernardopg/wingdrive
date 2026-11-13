@@ -5,6 +5,7 @@ status: Done
 assignee: bernardopg
 parent: INDEX-000
 priority: High
+milestone: M0
 tags: [indexing, ephemeral, rules, file-sync, completeness]
 last_updated: 2026-10-08
 related_tasks: [INDEX-005, INDEX-010, FSYNC-003, FILE-006]

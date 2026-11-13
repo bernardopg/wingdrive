@@ -2,7 +2,7 @@
 id: TAURI-000
 title: "Epic: Tauri Desktop Readiness"
 status: In Progress
-assignee: unassigned
+assignee: bernardopg
 parent: UI-000
 priority: High
 milestone: M3

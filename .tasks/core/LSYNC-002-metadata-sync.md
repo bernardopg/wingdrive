@@ -2,9 +2,10 @@
 id: LSYNC-002
 title: Shared Sync with HLC
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: LSYNC-000
 priority: High
+milestone: M0
 tags: [sync, metadata, albums, tags, hlc, shared-resources]
 depends_on: [LSYNC-006, LSYNC-009, LSYNC-010]
 design_doc: core/src/infra/sync/NEW_SYNC.md

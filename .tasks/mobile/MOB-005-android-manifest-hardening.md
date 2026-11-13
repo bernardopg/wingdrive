@@ -6,7 +6,7 @@ assignee: bernardopg
 parent: MOB-000
 priority: High
 milestone: M5
-sprint: S04
+sprint: S09
 tags: [mobile, android, security]
 last_updated: 2026-10-28
 ---

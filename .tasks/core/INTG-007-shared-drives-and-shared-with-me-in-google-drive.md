@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: INTG-000
 priority: Medium
 milestone: M5
+sprint: S12
 tags: [integrations, google, drive]
 last_updated: 2026-11-12
 related_tasks: [CLOUD-004]

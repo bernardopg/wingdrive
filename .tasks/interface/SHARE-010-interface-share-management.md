@@ -2,11 +2,12 @@
 id: SHARE-010
 title: "Interface: Share Management View"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: Medium
 tags: [interface, sharing, ui, upstream-backlog]
 milestone: M4
+sprint: S08
 last_updated: 2026-10-16
 ---
 

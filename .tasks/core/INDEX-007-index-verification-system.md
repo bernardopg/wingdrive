@@ -2,9 +2,10 @@
 id: INDEX-007
 title: Index Verification System
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: INDEX-000
 priority: Medium
+milestone: M0
 tags: [indexing, verification, integrity, diagnostics]
 whitepaper: Section 4.3.8
 last_updated: 2025-12-16

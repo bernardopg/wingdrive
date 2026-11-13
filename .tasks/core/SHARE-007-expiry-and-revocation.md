@@ -2,11 +2,12 @@
 id: SHARE-007
 title: Share Expiry & Revocation Enforcement
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: Medium
 tags: [sharing, lifecycle, upstream-backlog]
 milestone: M4
+sprint: S08
 last_updated: 2026-10-16
 ---
 

@@ -2,11 +2,12 @@
 id: SEARCH-000
 title: "Search"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 tags: [epic, search, ai, fts, upstream-backlog]
 whitepaper: Section 4.7
 milestone: M5
+sprint: S11
 last_updated: 2026-10-16
 ---
 

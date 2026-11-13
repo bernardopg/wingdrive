@@ -1,9 +1,10 @@
 ---
 id: SAFE-005
 title: "Add free space preflight to write-heavy jobs"
-status: "Done"
-assignee: unassigned
-priority: "High"
+status: Done
+assignee: bernardopg
+priority: High
+milestone: M0
 tags: [core, jobs, safety]
 last_updated: 2026-08-31
 ---

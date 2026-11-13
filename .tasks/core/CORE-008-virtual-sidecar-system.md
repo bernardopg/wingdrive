@@ -2,9 +2,10 @@
 id: CORE-008
 title: Virtual Sidecar System (VSS)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-000
 priority: High
+milestone: M0
 tags: [core, vdfs, sidecars, derivatives, addressing]
 whitepaper: Section 4.1.5
 last_updated: 2025-11-05

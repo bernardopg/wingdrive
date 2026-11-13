@@ -2,9 +2,10 @@
 id: INDEX-005
 title: Indexer Rules Engine
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: INDEX-000
 priority: Medium
+milestone: M0
 tags: [indexing, rules, filtering, gitignore]
 whitepaper: Section 4.3.6
 last_updated: 2025-12-16

@@ -2,13 +2,14 @@
 id: VSS-006
 title: Ephemeral Sidecar System
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-008
 priority: High
 tags: [core, vdfs, sidecars, ephemeral, thumbnails, upstream-backlog]
 last_updated: 2026-10-16
 related_tasks: [CORE-008, VSS-001, VSS-002, INDEX-000]
 milestone: M5
+sprint: S12
 ---
 
 ## Overview

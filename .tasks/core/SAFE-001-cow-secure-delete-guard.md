@@ -1,9 +1,10 @@
 ---
 id: SAFE-001
 title: "Refuse unsafe secure deletion on CoW filesystems"
-status: "Done"
-assignee: "jamiepine"
-priority: "High"
+status: Done
+assignee: bernardopg
+priority: High
+milestone: M0
 tags: [core, filesystem, safety, btrfs]
 ---
 

@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: INTG-000
 priority: Low
 milestone: M5
+sprint: S14
 tags: [integrations, mega, encryption]
 last_updated: 2026-11-12
 related_tasks: [INTG-020]

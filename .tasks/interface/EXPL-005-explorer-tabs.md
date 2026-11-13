@@ -2,7 +2,7 @@
 id: EXPL-005
 title: Explorer Tabs
 status: Done
-assignee: unassigned
+assignee: bernardopg
 parent: EXPL-000
 priority: High
 sprint: S01

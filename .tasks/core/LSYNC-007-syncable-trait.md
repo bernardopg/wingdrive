@@ -2,9 +2,10 @@
 id: LSYNC-007
 title: Syncable Trait
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: LSYNC-000
 priority: High
+milestone: M0
 tags: [sync, trait, codegen, macro]
 design_doc: core/src/infra/sync/NEW_SYNC.md
 last_updated: 2025-10-14

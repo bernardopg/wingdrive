@@ -2,12 +2,13 @@
 id: INDEX-000
 title: "Epic: Hybrid Indexing Engine"
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 tags: [epic, core, indexing, upstream-backlog]
 whitepaper: Section 4.3
 last_updated: 2026-10-16
 milestone: M5
+sprint: S09
 ---
 
 ## Description

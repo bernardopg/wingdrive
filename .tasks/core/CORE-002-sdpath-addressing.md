@@ -2,9 +2,10 @@
 id: CORE-002
 title: Universal WingPath Addressing
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-000
 priority: High
+milestone: M0
 tags: [core, vdfs, addressing]
 whitepaper: Section 4.1.4
 ---

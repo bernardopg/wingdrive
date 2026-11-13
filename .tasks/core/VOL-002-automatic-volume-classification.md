@@ -2,12 +2,13 @@
 id: VOL-002
 title: Automatic Volume Classification
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: VOL-000
 priority: Medium
 tags: [volume, classification, automation, upstream-backlog]
 whitepaper: Section 4.8
 milestone: M5
+sprint: S13
 last_updated: 2026-10-16
 ---
 

@@ -2,12 +2,13 @@
 id: RES-001
 title: Adaptive Resource Throttling
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: RES-000
 priority: Medium
 tags: [performance, mobile, core, upstream-backlog]
 whitepaper: Section 7.1
 milestone: M5
+sprint: S13
 last_updated: 2026-10-16
 ---
 

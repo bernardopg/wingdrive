@@ -2,12 +2,13 @@
 id: SHARE-002
 title: PublicShare Schema, Sync, Migrations
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: High
 tags: [sharing, database, sync, upstream-backlog]
 related_tasks: [SEC-007]
 milestone: M4
+sprint: S07
 last_updated: 2026-10-16
 ---
 

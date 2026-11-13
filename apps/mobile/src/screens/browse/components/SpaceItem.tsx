@@ -92,9 +92,9 @@ function getItemLabel(itemType: ItemType, resolvedFile?: any): string {
 	if (isTagItem(itemType)) return resolvedFile?.name || "Unnamed Tag";
 	if (isPathItem(itemType)) {
 		if (resolvedFile?.name) return resolvedFile.name;
-		const sdPath = itemType.Path.wing_path;
-		if (typeof sdPath === "object" && "Physical" in sdPath) {
-			const parts = (sdPath as { Physical: { path: string } }).Physical.path.split("/");
+		const wdPath = itemType.Path.wing_path;
+		if (typeof wdPath === "object" && "Physical" in wdPath) {
+			const parts = (wdPath as { Physical: { path: string } }).Physical.path.split("/");
 			return parts[parts.length - 1] || "Path";
 		}
 		return "Path";

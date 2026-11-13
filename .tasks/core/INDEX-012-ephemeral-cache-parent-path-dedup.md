@@ -5,6 +5,7 @@ status: Done
 assignee: bernardopg
 parent: INDEX-000
 priority: High
+milestone: M0
 tags: [indexing, ephemeral, cache, deduplication, bug, macos]
 last_updated: 2026-10-08
 related_tasks: [INDEX-001, INDEX-010]

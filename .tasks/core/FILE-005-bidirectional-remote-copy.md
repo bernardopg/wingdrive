@@ -2,9 +2,10 @@
 id: FILE-005
 title: Bidirectional Remote File Copy (PULL Support)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: FILE-000
 priority: High
+milestone: M0
 tags: [core, jobs, file-ops, networking, p2p]
 ---
 

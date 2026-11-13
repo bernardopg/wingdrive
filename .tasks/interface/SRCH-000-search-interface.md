@@ -2,13 +2,14 @@
 id: SRCH-000
 title: Search Interface
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 parent: UI-000
 priority: Medium
 tags: [search, interface, upstream-backlog]
 whitepaper: Section 6.0
 last_updated: 2026-10-16
 milestone: M5
+sprint: S10
 ---
 
 ## Description

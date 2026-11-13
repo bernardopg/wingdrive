@@ -2,13 +2,14 @@
 id: RED-000
 title: "Redundancy Awareness & Cross-Location File Comparison"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 tags: [epic, core, interface, redundancy, deduplication, volumes, locations, upstream-backlog]
 related_tasks: [CORE-003, VOL-000, SEARCH-000]
 whitepaper: Section 4.2 (Content Identity)
 last_updated: 2026-10-16
 milestone: M5
+sprint: S11
 ---
 
 ## Description

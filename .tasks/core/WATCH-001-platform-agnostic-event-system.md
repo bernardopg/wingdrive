@@ -2,9 +2,10 @@
 id: WATCH-001
 title: Platform-Agnostic Event System
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: WATCH-000
 priority: High
+milestone: M0
 tags: [watcher, events, api]
 last_updated: 2025-12-16
 ---

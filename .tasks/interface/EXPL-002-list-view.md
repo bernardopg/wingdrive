@@ -2,7 +2,7 @@
 id: EXPL-002
 title: File List View with Sortable Columns
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: EXPL-000
 priority: High
 milestone: M1

@@ -5,6 +5,7 @@ status: In Progress
 assignee: bernardopg
 priority: High
 milestone: M5
+sprint: S09
 tags: [epic, mobile, android, ios]
 last_updated: 2026-10-17
 ---

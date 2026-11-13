@@ -1,9 +1,28 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-11-10. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-11-13. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
+
+## Calendário de sprints
+
+Desde 2026-11-13 toda task aberta tem sprint e toda task tem milestone e responsável (`bernardopg`).
+Os sprints futuros são um plano de backlog: ao abrir cada um, revisar a lista com o que sobrou.
+
+| Sprint | Datas | Milestone | Foco |
+|---|---|---|---|
+| [S05](sprints/S05.md) | 2026-11-12 a 2026-11-25 | M2, M3 | Fechar o M2 (DESK-000, BRAND-003 Wings, cobertura) |
+| [S06](sprints/S06.md) | 2026-11-26 a 2026-12-09 | M3, M5 | Release assinado, macOS/Windows, Google para qualquer usuário |
+| [S07](sprints/S07.md) | 2026-12-10 a 2026-12-23 | M4 | Sync de arquivos e compartilhamento |
+| [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | M4 | Fechar o M4 |
+| [S09](sprints/S09.md) a [S14](sprints/S14.md) | 2027-01-07 a 2027-03-31 | M5 | Opcionais por prioridade |
+
+## Done — M0: Base herdada do upstream
+
+Tasks concluídas no Spacedrive antes do fork, sem milestone até 2026-11-13. Ficam como registro do
+que o WingDrive herdou pronto; nenhuma é revalidada aqui (o M4 revalida `NET-000` e `LSYNC-000`).
+Listar: `cargo run --bin task-validator -- list --milestone M0`.
 
 ## Done — M1: File manager desktop Linux 1.0
 
@@ -141,7 +160,7 @@ paridade com o desktop) foi puxado para agora. MOB-001 a MOB-005 entram no S03.
 
 ## Backlog herdado do upstream
 
-Tasks criadas no Spacedrive (assignee `jamiepine`) que ainda estavam abertas. Na auditoria de
+Tasks criadas no upstream que ainda estavam abertas; desde 2026-11-13 todas têm `bernardopg` como responsável. Na auditoria de
 2026-10-16 receberam a tag `upstream-backlog` e uma nota "WingDrive triage" no arquivo, sem apagar
 nada:
 
@@ -159,6 +178,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-13 | Todas as tasks com responsável `bernardopg`, milestone (M0 para as concluídas no upstream) e sprint; sprints S07 a S14 planejados |
 | 2026-11-12 | Release `v3.1.1` (#368 a #381): portal `FileChooser` (DESK-051), undo de renomear e novos itens no Tauri (FILE-008), correções DESK-090 a DESK-096, CORE-020, CLI-010, cerca de 175 testes e atualizações do Dependabot |
 | 2026-11-12 | PRs #373 a #379: site com deploy automático e Discord em inglês; FILE-008 Done; DESK-051 com o backend do portal `FileChooser` (falta conferir com navegadores e no pacote); revalidação do S03/S04 achou DESK-090 a DESK-096; coverage com CORE-020, CLI-010 e DESK-060 |
 | 2026-11-10 | Release `v3.1.0` em preparação (#347 a #360): FILE-008 com undo no core, CLI e web UI (falta o lado Tauri); COV-03 sem perda de dados em cópia cancelada; MOB-013 e MOB-014 Done; SQLite embutido atualizado (RUSTSEC-2026-0459); COV-04, COV-06 e COV-07 In Progress com 79 testes e sete bugs corrigidos |

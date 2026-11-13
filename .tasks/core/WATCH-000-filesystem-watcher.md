@@ -2,8 +2,9 @@
 id: WATCH-000
 title: "Epic: Filesystem Watcher Foundation"
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 tags: [epic, core, watcher, filesystem]
 last_updated: 2025-12-16
 ---

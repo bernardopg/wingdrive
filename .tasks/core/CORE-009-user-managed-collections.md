@@ -2,12 +2,13 @@
 id: CORE-009
 title: User-Managed Collections
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-000
 priority: Low
 tags: [core, vdfs, collections, organization, upstream-backlog]
 whitepaper: Section 4.1
 milestone: M5
+sprint: S14
 last_updated: 2026-10-16
 ---
 

@@ -2,8 +2,9 @@
 id: FILE-004
 title: "Rename, New Folder, and New Folder with Items"
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 tags: [core, interface, file-ops, keybinds, ux]
 parent: FILE-000
 last_updated: 2025-12-24

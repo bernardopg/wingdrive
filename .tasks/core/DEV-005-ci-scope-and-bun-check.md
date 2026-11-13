@@ -2,8 +2,9 @@
 id: DEV-005
 title: "Faster CI, release and desktop builds"
 status: Done
-assignee: unassigned
+assignee: bernardopg
 priority: High
+milestone: M0
 parent: DEV-000
 tags: [development, ci, build, performance]
 last_updated: 2026-10-10

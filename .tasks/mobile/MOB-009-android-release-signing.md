@@ -6,7 +6,7 @@ assignee: bernardopg
 parent: MOB-000
 priority: Medium
 milestone: M5
-sprint: S04
+sprint: S10
 tags: [mobile, android, release]
 last_updated: 2026-10-28
 ---

@@ -2,9 +2,10 @@
 id: CORE-004
 title: Hierarchical Indexing with Closure Table
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-000
 priority: High
+milestone: M0
 tags: [core, vdfs, database, performance]
 whitepaper: Section 4.3.4
 ---

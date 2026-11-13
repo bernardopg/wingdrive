@@ -397,23 +397,23 @@ async fn bob_pull_receiver_scenario() {
 
 		// Source WingPath is on Alice's device (remote from Bob's perspective)
 		// Device slug is derived from "Alice's Test Device" → "alice-s-test-device"
-		let source_sdpath = WingPath::physical(
+		let source_wdpath = WingPath::physical(
 			"alice-s-test-device".to_string(),
 			PathBuf::from(remote_path),
 		);
 
 		// Destination WingPath is on Bob's device (local)
 		let dest_path = pull_dest_dir.join(filename);
-		let dest_sdpath = WingPath::physical("bob-s-test-device".to_string(), &dest_path);
+		let dest_wdpath = WingPath::physical("bob-s-test-device".to_string(), &dest_path);
 
-		println!("  Source (remote): {}", source_sdpath.display());
-		println!("  Destination (local): {}", dest_sdpath.display());
+		println!("  Source (remote): {}", source_wdpath.display());
+		println!("  Destination (local): {}", dest_wdpath.display());
 
 		// Build and dispatch PULL action
 		// The RemoteTransferStrategy should detect this as PULL direction
 		let copy_action = FileCopyAction {
-			sources: WingPathBatch::new(vec![source_sdpath]),
-			destination: dest_sdpath,
+			sources: WingPathBatch::new(vec![source_wdpath]),
+			destination: dest_wdpath,
 			options: CopyOptions {
 				overwrite: true,
 				verify_checksum: true,

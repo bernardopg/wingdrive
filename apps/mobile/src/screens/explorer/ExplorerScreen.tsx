@@ -69,12 +69,12 @@ export function ExplorerScreen() {
 
 		if (params?.type === "path") {
 			try {
-				const sdPath = JSON.parse(params.path);
-				if (sdPath.Physical) {
+				const wdPath = JSON.parse(params.path);
+				if (wdPath.Physical) {
 					const device = devices?.find(
-						(d) => d.slug === sdPath.Physical.device_slug,
+						(d) => d.slug === wdPath.Physical.device_slug,
 					);
-					const pathParts = sdPath.Physical.path.split("/").filter(Boolean);
+					const pathParts = wdPath.Physical.path.split("/").filter(Boolean);
 					if (pathParts.length === 0) {
 						return device?.name || "Root";
 					}

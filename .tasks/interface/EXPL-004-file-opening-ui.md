@@ -2,9 +2,10 @@
 id: EXPL-004
 title: File Opening UI Integration
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: EXPL-000
 priority: High
+milestone: M0
 tags: [explorer, file-operations, ui]
 whitepaper: DESIGN-open-with.md
 last_updated: 2026-08-19

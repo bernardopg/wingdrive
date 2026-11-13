@@ -2,11 +2,12 @@
 id: RES-000
 title: "Resource Management & Mobile"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 priority: Medium
 tags: [epic, core, performance, mobile, upstream-backlog]
 whitepaper: Section 7
 milestone: M5
+sprint: S13
 last_updated: 2026-10-16
 ---
 

@@ -2,9 +2,10 @@
 id: PLUG-001
 title: Integrate WASM Runtime
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: PLUG-000
 priority: High
+milestone: M0
 tags: [plugins, wasm, runtime, wasmer]
 whitepaper: Section 6.7
 last_updated: 2025-10-14

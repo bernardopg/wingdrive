@@ -1,9 +1,10 @@
 ---
 id: SAFE-002
 title: "Block recursive copies into their source tree"
-status: "Done"
-assignee: "jamiepine"
-priority: "High"
+status: Done
+assignee: bernardopg
+priority: High
+milestone: M0
 tags: [core, filesystem, safety, copy]
 ---
 

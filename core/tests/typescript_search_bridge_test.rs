@@ -112,14 +112,14 @@ async fn test_typescript_search_persistent_and_ephemeral() -> anyhow::Result<()>
 
 	// Index ephemeral directory using global cache
 	tracing::info!("Indexing ephemeral directory...");
-	let ephemeral_sd = WingPath::local(ephemeral_dir.clone());
+	let ephemeral_path = WingPath::local(ephemeral_dir.clone());
 	let global_index = harness.core.context.ephemeral_cache().get_global_index();
 
 	let indexer_config =
-		IndexerJobConfig::ephemeral_browse(ephemeral_sd.clone(), IndexScope::Recursive, false);
+		IndexerJobConfig::ephemeral_browse(ephemeral_path.clone(), IndexScope::Recursive, false);
 	eprintln!(
 		"[Rust] Indexer config: path={:?}, scope={:?}, persistence={:?}",
-		ephemeral_sd, indexer_config.scope, indexer_config.persistence
+		ephemeral_path, indexer_config.scope, indexer_config.persistence
 	);
 
 	let mut indexer_job = IndexerJob::new(indexer_config);

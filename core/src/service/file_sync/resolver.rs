@@ -29,7 +29,7 @@ pub struct EntryWithPath {
 
 impl EntryWithPath {
 	/// Convert to WingPath for job operations
-	pub fn to_sdpath(&self, device_slug: String) -> WingPath {
+	pub fn to_wdpath(&self, device_slug: String) -> WingPath {
 		WingPath::physical(device_slug, self.full_path.clone())
 	}
 }

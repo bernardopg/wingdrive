@@ -2,9 +2,10 @@
 id: CORE-005
 title: Advanced File Type System
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-000
 priority: High
+milestone: M0
 tags: [core, vdfs, file-types]
 whitepaper: Section 4.1.7
 ---

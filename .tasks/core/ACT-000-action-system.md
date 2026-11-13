@@ -2,8 +2,9 @@
 id: ACT-000
 title: "Transactional Action System"
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 tags: [epic, core, actions]
 whitepaper: Section 4.4
 ---

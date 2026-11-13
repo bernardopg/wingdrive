@@ -2,9 +2,10 @@
 id: FILE-001
 title: File Copy Job with Strategy Pattern
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: FILE-000
 priority: High
+milestone: M0
 tags: [core, jobs, file-ops, vdfs]
 whitepaper: Section 4.4.6
 ---

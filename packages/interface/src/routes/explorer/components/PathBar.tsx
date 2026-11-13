@@ -21,7 +21,7 @@ import {usePlatform} from '../../../contexts/PlatformContext';
 import {useKeybind} from '../../../hooks/useKeybind';
 import {useExplorer} from '../context';
 import {useSelection} from '../SelectionContext';
-import {sdPathToUri} from '../utils';
+import {wdPathToUri} from '../utils';
 import {useAddStorageDialog} from './AddStorageModal';
 import {resolveTypedPath} from './pathInput';
 import {i18n, useTranslation} from '../../../i18n';
@@ -83,27 +83,27 @@ function PathSegmentButton({
 	);
 }
 
-function getCurrentDirectoryName(sdPath: WingPath): string {
-	if ('Physical' in sdPath) {
-		const parts = sdPath.Physical.path.split('/').filter(Boolean);
+function getCurrentDirectoryName(wdPath: WingPath): string {
+	if ('Physical' in wdPath) {
+		const parts = wdPath.Physical.path.split('/').filter(Boolean);
 		return parts[parts.length - 1] || '/';
 	}
 
-	if ('Cloud' in sdPath) {
-		const parts = sdPath.Cloud.path.split('/').filter(Boolean);
-		return parts[parts.length - 1] || sdPath.Cloud.identifier;
+	if ('Cloud' in wdPath) {
+		const parts = wdPath.Cloud.path.split('/').filter(Boolean);
+		return parts[parts.length - 1] || wdPath.Cloud.identifier;
 	}
 
-	if ('Content' in sdPath) {
+	if ('Content' in wdPath) {
 		return i18n.t('explorer:path.content');
 	}
 
 	return '';
 }
 
-function parsePathSegments(sdPath: WingPath): PathSegment[] {
-	if ('Physical' in sdPath) {
-		const {device_slug, path} = sdPath.Physical;
+function parsePathSegments(wdPath: WingPath): PathSegment[] {
+	if ('Physical' in wdPath) {
+		const {device_slug, path} = wdPath.Physical;
 		const parts = path.split('/').filter(Boolean);
 
 		return [
@@ -128,8 +128,8 @@ function parsePathSegments(sdPath: WingPath): PathSegment[] {
 		];
 	}
 
-	if ('Cloud' in sdPath) {
-		const {service, identifier, path} = sdPath.Cloud;
+	if ('Cloud' in wdPath) {
+		const {service, identifier, path} = wdPath.Cloud;
 		const parts = path.split('/').filter(Boolean);
 
 		return [
@@ -317,7 +317,7 @@ export function PathBar({path, devices, onNavigate}: PathBarProps) {
 	}, [isEditing]);
 	const {navigateToView} = useExplorer();
 	const platform = usePlatform();
-	const uri = sdPathToUri(path);
+	const uri = wdPathToUri(path);
 	const currentDir = getCurrentDirectoryName(path);
 	const segments = parsePathSegments(path);
 

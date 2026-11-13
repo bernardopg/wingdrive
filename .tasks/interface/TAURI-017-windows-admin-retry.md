@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: TAURI-000
 priority: Low
 milestone: M3
+sprint: S06
 tags: [tauri, windows, permissions, file-operations]
 related_tasks: [DESK-033, TAURI-016]
 last_updated: 2026-11-05

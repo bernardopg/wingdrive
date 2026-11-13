@@ -2,11 +2,12 @@
 id: SHARE-006
 title: File & Folder Share Scope
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: Medium
 tags: [sharing, scope, upstream-backlog]
 milestone: M4
+sprint: S08
 last_updated: 2026-10-16
 ---
 

@@ -2,9 +2,10 @@
 id: LSYNC-006
 title: Transaction Manager Core
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: LSYNC-000
 priority: High
+milestone: M0
 tags: [sync, database, transaction, architecture, leaderless]
 design_doc: core/src/infra/sync/NEW_SYNC.md
 completed: 2025-10-09

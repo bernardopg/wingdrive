@@ -675,7 +675,7 @@ impl ThumbnailJob {
 
 				// Parse the cloud path to get an WingPath
 				use crate::domain::addressing::WingPath;
-				let sdpath =
+				let wdpath =
 					WingPath::from_uri_with_context(&entry.relative_path, &library.core_context())
 						.await
 						.map_err(|e| {
@@ -684,7 +684,7 @@ impl ThumbnailJob {
 
 				// Resolve the volume backend for this path
 				let volume = volume_manager
-					.resolve_volume_for_sdpath(&sdpath, &library)
+					.resolve_volume_for_wdpath(&wdpath, &library)
 					.await
 					.map_err(|e| ThumbnailError::other(format!("Failed to resolve volume: {}", e)))?
 					.ok_or_else(|| ThumbnailError::other("No volume found for cloud path"))?;

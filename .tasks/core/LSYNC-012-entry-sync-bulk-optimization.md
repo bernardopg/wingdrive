@@ -2,9 +2,10 @@
 id: LSYNC-012
 title: Bulk Entry Sync Optimization (State-Based)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: LSYNC-000
 priority: High
+milestone: M0
 tags: [sync, indexing, bulk, performance, state-based]
 depends_on: [LSYNC-006, LSYNC-010]
 design_doc: core/src/infra/sync/NEW_SYNC.md

@@ -1013,7 +1013,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_sdpath_physical_creation() {
+	fn test_wdpath_physical_creation() {
 		let device_slug = "test-device-abc123".to_string();
 		let path = WingPath::new(device_slug.clone(), "/home/user/file.txt");
 
@@ -1030,7 +1030,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_sdpath_content_creation() {
+	fn test_wdpath_content_creation() {
 		let content_id = Uuid::new_v4();
 		let path = WingPath::content(content_id);
 
@@ -1043,7 +1043,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_sdpath_display() {
+	fn test_wdpath_display() {
 		let device_slug = "test-device-abc123".to_string();
 		let path = WingPath::new(device_slug.clone(), "/home/user/file.txt");
 
@@ -1054,7 +1054,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_sdpath_uri_parsing() {
+	fn test_wdpath_uri_parsing() {
 		// Test content URI
 		let content_id = Uuid::new_v4();
 		let uri = format!("content://{}", content_id);
@@ -1101,7 +1101,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_sdpath_sidecar_creation() {
+	fn test_wdpath_sidecar_creation() {
 		let content_id = Uuid::new_v4();
 		let path = WingPath::sidecar(
 			content_id,
@@ -1127,7 +1127,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_sdpath_sidecar_display() {
+	fn test_wdpath_sidecar_display() {
 		let content_id = Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap();
 		let path = WingPath::sidecar(
 			content_id,
@@ -1144,7 +1144,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_sdpath_sidecar_uri_parsing() {
+	fn test_wdpath_sidecar_uri_parsing() {
 		let uri = "sidecar://550e8400-e29b-41d4-a716-446655440000/thumbs/grid@2x.webp";
 		let path = WingPath::from_uri(uri).unwrap();
 
@@ -1190,7 +1190,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_sdpath_sidecar_is_sidecar() {
+	fn test_wdpath_sidecar_is_sidecar() {
 		let content_id = Uuid::new_v4();
 		let path = WingPath::sidecar(
 			content_id,

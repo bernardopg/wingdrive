@@ -2,12 +2,13 @@
 id: SEARCH-001
 title: Asynchronous SearchJob
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SEARCH-000
 priority: High
 tags: [search, jobs, async, upstream-backlog]
 whitepaper: Section 4.7
 milestone: M5
+sprint: S11
 last_updated: 2026-10-16
 ---
 

@@ -3,7 +3,7 @@ import type { WingPath } from "@wingdrive/ts-client";
 // Data transferred during drag operations
 export interface SidebarDragData {
 	type: "explorer-file";
-	sdPath: WingPath;
+	wdPath: WingPath;
 	name: string;
 }
 

@@ -2,7 +2,7 @@
 id: INDEX-010
 title: Bidirectional UUID Reconciliation (Ephemeral ↔ Persistent)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: INDEX-000
 priority: High
 tags: [indexing, ephemeral, persistent, uuid, foundation]
