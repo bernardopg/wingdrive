@@ -260,6 +260,15 @@ async fn library_validation_reports_unreachable_and_refusing_daemons() {
 			.await
 			.unwrap_err();
 	assert!(error.contains("Invalid response format"), "{error}");
+
+	let (address, _daemon) = one_shot_daemon("<html>\n").await;
+	let state = daemon_state(&address, None, None);
+	let error =
+		validate_and_reset_library_if_needed(app.handle().clone(), &current, &state, data.path())
+			.await
+			.unwrap_err();
+	assert!(error.starts_with("Failed to parse response"), "{error}");
+	assert!(error.ends_with("Raw: <html>"), "{error}");
 	// An error keeps the selection: the library may still exist.
 	assert_eq!(current.read().await.as_deref(), Some("lib"));
 }

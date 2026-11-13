@@ -7,6 +7,8 @@ use std::time::Duration;
 
 use serde_json::{json, Value};
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::net::TcpListener;
 use tokio::sync::oneshot;
 
 use super::events::{record, wait_for};
@@ -41,6 +43,15 @@ fn runtime_config_comes_from_the_data_dir_and_instance_values() {
 		.err()
 		.unwrap();
 	assert!(error.contains("letters, numbers"), "{error}");
+
+	// Without the variable the platform's data folder is used, if it resolves.
+	match daemon_runtime_config_from_env(None, None) {
+		Ok(config) => {
+			assert_eq!(config.data_dir, config.base_data_dir);
+			assert_eq!(config.socket_addr, "127.0.0.1:6969");
+		}
+		Err(error) => assert!(error.starts_with("Failed to resolve data directory")),
+	}
 }
 
 #[test]
@@ -251,6 +262,58 @@ async fn without_a_daemon_the_windows_are_never_told_it_connected() {
 	assert!(state.server_url.is_some());
 	assert!(!state.started_by_us && state.daemon_process.is_none());
 	assert!(connected.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn a_daemon_that_cannot_list_libraries_keeps_the_saved_one() {
+	let data = tempfile::tempdir().unwrap();
+	let saved = data.path().join("current_library_id.txt");
+	std::fs::write(&saved, "lib").unwrap();
+	// Answers every line with `Pong` and reports when the connection that
+	// asked for the libraries has been closed by the app.
+	let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+	let address = listener.local_addr().unwrap().to_string();
+	let (asked, mut done) = tokio::sync::mpsc::unbounded_channel();
+	tokio::spawn(async move {
+		while let Ok((stream, _)) = listener.accept().await {
+			let asked = asked.clone();
+			tokio::spawn(async move {
+				let (reader, mut writer) = stream.into_split();
+				let mut reader = BufReader::new(reader);
+				let mut line = String::new();
+				let mut listed = false;
+				while reader.read_line(&mut line).await.unwrap_or(0) > 0 {
+					listed |= line.contains("query:libraries.list");
+					let _ = writer.write_all(b"\"Pong\"\n").await;
+					line.clear();
+				}
+				if listed {
+					let _ = asked.send(());
+				}
+			});
+		}
+	});
+	let app = tauri::test::mock_app();
+	let changes = record(&app, "library-changed");
+	let daemon = manage_app_state(app.handle(), runtime(data.path(), &address));
+
+	connect_daemon(app.handle().clone(), daemon, quick_launch()).await;
+	tokio::time::timeout(Duration::from_secs(5), done.recv())
+		.await
+		.unwrap()
+		.unwrap();
+
+	// The library may still exist, so an unusable answer changes nothing.
+	assert!(saved.exists());
+	assert_eq!(
+		app.state::<AppState>()
+			.current_library_id
+			.read()
+			.await
+			.as_deref(),
+		Some("lib")
+	);
+	assert!(changes.lock().unwrap().is_empty());
 }
 
 #[tokio::test]
