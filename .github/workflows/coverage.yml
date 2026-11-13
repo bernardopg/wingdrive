@@ -118,8 +118,9 @@ jobs:
           pattern: coverage-*
           path: coverage
 
-      # A side whose job failed keeps its previous numbers out of this run; the
-      # summary says which side is missing.
+      # A side whose job failed is left out of this run's summary, which says
+      # which side is missing. Badges and Pages publish only complete runs, so a
+      # failed side never replaces the published total with a partial one.
       - name: Build report
         env:
           RUST_RESULT: ${{ needs.rust.result }}
@@ -138,7 +139,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish badges
-        if: github.ref == 'refs/heads/main'
+        if: ${{ github.ref == 'refs/heads/main' && needs.frontend.result == 'success' && needs.rust.result == 'success' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -154,15 +155,15 @@ jobs:
           git push -qf "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges
 
       - name: Upload Pages artifact
-        if: github.ref == 'refs/heads/main'
+        if: ${{ github.ref == 'refs/heads/main' && needs.frontend.result == 'success' && needs.rust.result == 'success' }}
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: site
 
   pages:
     name: Publish report
-    needs: report
-    if: ${{ !cancelled() && needs.report.result == 'success' && github.ref == 'refs/heads/main' }}
+    needs: [frontend, rust, report]
+    if: ${{ !cancelled() && needs.report.result == 'success' && needs.frontend.result == 'success' && needs.rust.result == 'success' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

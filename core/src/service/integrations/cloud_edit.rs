@@ -461,6 +461,19 @@ mod tests {
 		file.set_modified(old).unwrap();
 	}
 
+	/// Stops the session's background watcher and returns its state, so the
+	/// test is the only caller of `sync_once`.
+	///
+	/// Left running, the watcher's poll can upload the same edit at the same
+	/// time as the test, and the test then reads the remote file while that
+	/// second write has truncated it but not yet written it.
+	async fn stop_watcher(service: &CloudEditService, id: Uuid) -> Arc<Mutex<SessionState>> {
+		let sessions = service.sessions.lock().await;
+		let session = &sessions[&id];
+		session.task.abort();
+		session.state.clone()
+	}
+
 	#[tokio::test]
 	async fn edits_are_uploaded_after_they_settle_and_close_cleans_up() {
 		let remote = tempfile::tempdir().unwrap();
@@ -497,11 +510,8 @@ mod tests {
 		};
 		assert_eq!(again.id, session.id);
 
+		let state = stop_watcher(&service, session.id).await;
 		std::fs::write(&local, "v2 edited").unwrap();
-		let state = {
-			let sessions = service.sessions.lock().await;
-			sessions[&session.id].state.clone()
-		};
 		// Fresh edits wait for the settle time.
 		sync_once(
 			backend.as_ref(),
@@ -615,11 +625,11 @@ mod tests {
 			panic!();
 		};
 		let local = PathBuf::from(&session.local_path);
+		let state = stop_watcher(&service, session.id).await;
 		*backend.1.lock().unwrap() = "r2".into();
 		std::fs::write(remote.path().join("plan.md"), "theirs").unwrap();
 		std::fs::write(&local, "mine").unwrap();
 		age(&local);
-		let state = service.sessions.lock().await[&session.id].state.clone();
 		sync_once(
 			backend.as_ref(),
 			Path::new("plan.md"),
