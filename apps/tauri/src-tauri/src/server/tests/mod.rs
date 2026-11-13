@@ -378,6 +378,7 @@ async fn sidecars_are_found_in_renamed_and_legacy_library_folders() {
 	);
 }
 
+#[cfg(unix)]
 #[tokio::test]
 async fn sidecar_errors_distinguish_missing_libraries_and_unreadable_files() {
 	let dir = tempfile::tempdir().unwrap();
@@ -408,6 +409,7 @@ async fn sidecar_errors_distinguish_missing_libraries_and_unreadable_files() {
 	);
 }
 
+#[cfg(unix)]
 #[tokio::test]
 async fn unreadable_files_are_forbidden() {
 	use std::os::unix::fs::PermissionsExt;
