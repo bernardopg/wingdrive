@@ -244,9 +244,7 @@ impl IntegrationService {
 		};
 		Self::with_endpoints(endpoints, bundled, data_dir).with_microsoft(
 			microsoft_endpoints,
-			microsoft_client_from(
-				option_env!("WINGDRIVE_MICROSOFT_CLIENT_ID").map(str::to_string),
-			),
+			microsoft_client_from(option_env!("WINGDRIVE_MICROSOFT_CLIENT_ID").map(str::to_string)),
 		)
 	}
 
@@ -759,7 +757,9 @@ impl IntegrationService {
 			.await
 		{
 			Ok(_) | Err(crate::volume::error::VolumeError::NotTracked(_)) => {}
-			Err(error) => warn!(%error, volume = %mount.label, "Could not untrack the cloud drive volume"),
+			Err(error) => {
+				warn!(%error, volume = %mount.label, "Could not untrack the cloud drive volume")
+			}
 		}
 		context
 			.volume_manager
@@ -839,7 +839,12 @@ impl IntegrationService {
 						let tokens = self.token_source(library.id(), account).await;
 						let mount = CloudMount::google_drive(account);
 						match self
-							.register_mount(library, &mount, self.google_drive_backend(tokens), false)
+							.register_mount(
+								library,
+								&mount,
+								self.google_drive_backend(tokens),
+								false,
+							)
 							.await
 						{
 							Ok(_) => info!(account = %account.id, "Restored Google Drive volume"),
@@ -887,7 +892,8 @@ impl IntegrationService {
 		if store.microsoft_account(account_id).await?.is_some() {
 			return self.remove_microsoft_account(library, account_id).await;
 		}
-		self.remove_google_account(library, account_id, revoke).await
+		self.remove_google_account(library, account_id, revoke)
+			.await
 	}
 
 	/// Disconnects a Google account: unmounts Drive, revokes the grant at

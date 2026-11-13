@@ -380,11 +380,16 @@
 		"endpointExampleMinio": " (e.g., http://localhost:9000)",
 		"googleDescription": "Sign in with Google to add your Drive",
 		"googleHint": "Your browser opens Google's sign-in page. After you allow access, the Drive appears in the sidebar. Repeat to add more accounts.",
-		"googleNotConfigured": "Google sign-in needs an OAuth client. Add one in Settings > Integrations.",
+		"googleNotConfigured": "This build has no Google sign-in. Save your own Google Cloud client in Settings > Integrations.",
 		"googleSignIn": "Sign in with Google",
 		"googleWaiting": "Finish signing in in your browser…",
 		"googleCancel": "Cancel",
-		"googleFailed": "Google sign-in failed: {{error}}"
+		"googleFailed": "Google sign-in failed: {{error}}",
+		"oneDriveDescription": "Sign in with Microsoft to add your OneDrive",
+		"oneDriveHint": "Your browser opens Microsoft's sign-in page. After you allow access, OneDrive appears in the sidebar. Repeat to add more accounts.",
+		"oneDriveNotConfigured": "This build has no Microsoft sign-in. Save your own Microsoft Entra app in Settings > Integrations.",
+		"oneDriveSignIn": "Sign in with Microsoft",
+		"oneDriveFailed": "Microsoft sign-in failed: {{error}}"
 	},
 	"knowledge": {
 		"title": "Knowledge View",

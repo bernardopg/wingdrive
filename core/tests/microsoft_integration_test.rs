@@ -60,7 +60,9 @@ async fn token(State(state): State<Shared>, body: Bytes) -> Response {
 	s.client_ids
 		.push(form.get("client_id").cloned().unwrap_or_default());
 	match form.get("grant_type").map(String::as_str) {
-		Some("authorization_code") if form.get("code").map(String::as_str) == Some("code-carla") => {
+		Some("authorization_code")
+			if form.get("code").map(String::as_str) == Some("code-carla") =>
+		{
 			if form.get("code_verifier").is_none_or(|v| v.len() < 43) {
 				return (
 					StatusCode::BAD_REQUEST,
@@ -175,7 +177,10 @@ async fn onedrive_sign_in_rotation_custom_client_and_removal() -> TestResult {
 	let store = IntegrationStore::for_library(&library);
 
 	let clients = integrations.microsoft_clients(&store).await?;
-	assert_eq!(clients.app.map(|a| a.client_id).as_deref(), Some(APP_CLIENT));
+	assert_eq!(
+		clients.app.map(|a| a.client_id).as_deref(),
+		Some(APP_CLIENT)
+	);
 	assert_eq!(clients.custom_client_id, None);
 
 	// Sign in with WingDrive's app registration.
@@ -189,10 +194,13 @@ async fn onedrive_sign_in_rotation_custom_client_and_removal() -> TestResult {
 	assert!(query["redirect_uri"].starts_with("http://localhost:"));
 	assert!(query["redirect_uri"].ends_with("/oauth/callback"));
 	let callback = query["redirect_uri"].replace("localhost", "127.0.0.1");
-	let page = reqwest::get(format!("{callback}?code=code-carla&state={}", query["state"]))
-		.await?
-		.text()
-		.await?;
+	let page = reqwest::get(format!(
+		"{callback}?code=code-carla&state={}",
+		query["state"]
+	))
+	.await?
+	.text()
+	.await?;
 	assert!(page.contains("Microsoft"));
 
 	let ConnectStatus::Completed { account } = wait_for(&core, library.id(), session_id).await?
@@ -203,7 +211,10 @@ async fn onedrive_sign_in_rotation_custom_client_and_removal() -> TestResult {
 	assert_eq!(account.email, "carla@outlook.com");
 	assert_eq!(account.name.as_deref(), Some("Carla"));
 	assert_eq!(account.mode, ConnectionMode::App);
-	let drive = account.drive.clone().expect("OneDrive is mounted on connect");
+	let drive = account
+		.drive
+		.clone()
+		.expect("OneDrive is mounted on connect");
 	assert!(drive.mounted);
 	assert_eq!(drive.identifier, "carla@outlook.com");
 
@@ -214,7 +225,10 @@ async fn onedrive_sign_in_rotation_custom_client_and_removal() -> TestResult {
 		.get_volume(&VolumeFingerprint(drive.fingerprint.clone()))
 		.await
 		.expect("volume registered");
-	assert_eq!(volume.mount_point.to_string_lossy(), "onedrive://carla@outlook.com");
+	assert_eq!(
+		volume.mount_point.to_string_lossy(),
+		"onedrive://carla@outlook.com"
+	);
 	assert_eq!(volume.total_capacity, 5368709120);
 	let locations = wing_core::location::LocationManager::new(core.context.events.as_ref().clone())
 		.list_locations(&library)
@@ -238,7 +252,11 @@ async fn onedrive_sign_in_rotation_custom_client_and_removal() -> TestResult {
 	}
 	assert_eq!(stored, fake.lock().unwrap().refresh_token);
 	assert!(fake.lock().unwrap().rotations >= 1);
-	assert_eq!(fake.lock().unwrap().secrets_sent, 0, "public clients send no secret");
+	assert_eq!(
+		fake.lock().unwrap().secrets_sent,
+		0,
+		"public clients send no secret"
+	);
 
 	// The custom mode needs the user's own app registration.
 	assert!(matches!(
@@ -265,9 +283,11 @@ async fn onedrive_sign_in_rotation_custom_client_and_removal() -> TestResult {
 		.collect();
 	assert_eq!(custom_query["client_id"], OWN_CLIENT);
 	assert_eq!(custom_query["login_hint"], "carla@outlook.com");
-	assert!(integrations
-		.cancel_connect(library.id(), custom_session)
-		.await);
+	assert!(
+		integrations
+			.cancel_connect(library.id(), custom_session)
+			.await
+	);
 
 	// Removing the account unmounts OneDrive and forgets the grant.
 	integrations

@@ -437,10 +437,7 @@ impl LoopbackListener {
 
 	/// The redirect URI registered in the authorization request.
 	pub fn redirect_uri(&self) -> String {
-		format!(
-			"http://{}:{}{CALLBACK_PATH}",
-			self.redirect_host, self.port
-		)
+		format!("http://{}:{}{CALLBACK_PATH}", self.redirect_host, self.port)
 	}
 
 	/// Waits for the redirect and returns the authorization code.
@@ -539,7 +536,9 @@ fn callback_page(success: bool, provider: &str) -> String {
 	} else {
 		(
 			format!("{provider} sign-in did not finish. Go back to WingDrive and try again."),
-			format!("O login na conta {provider} não terminou. Volte ao WingDrive e tente de novo."),
+			format!(
+				"O login na conta {provider} não terminou. Volte ao WingDrive e tente de novo."
+			),
 		)
 	};
 	format!(

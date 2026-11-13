@@ -33,8 +33,7 @@ impl Default for MicrosoftEndpoints {
 	fn default() -> Self {
 		// `common` accepts personal, work and school accounts.
 		Self {
-			authorize: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
-				.to_string(),
+			authorize: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize".to_string(),
 			token: "https://login.microsoftonline.com/common/oauth2/v2.0/token".to_string(),
 			graph: "https://graph.microsoft.com/v1.0".to_string(),
 		}

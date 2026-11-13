@@ -338,7 +338,9 @@ async fn list(ctx: &Context) -> Result<()> {
 		}
 		let mut table = Table::new();
 		table.load_style(UTF8_BORDERS_ONLY);
-		table.set_header(vec!["ID", "Provider", "Email", "Services", "Sign-in", "Drive"]);
+		table.set_header(vec![
+			"ID", "Provider", "Email", "Services", "Sign-in", "Drive",
+		]);
 		for account in accounts {
 			table.add_row(vec![
 				Cell::new(&account.id),
@@ -411,10 +413,7 @@ async fn wait_for_sign_in(ctx: &Context, session_id: Uuid) -> Result<()> {
 	println!("Waiting for the sign-in to finish (Ctrl+C to stop)...");
 	loop {
 		tokio::time::sleep(Duration::from_secs(1)).await;
-		let status: ConnectStatus = execute_query!(
-			ctx,
-			GoogleConnectStatusInput { session_id }
-		);
+		let status: ConnectStatus = execute_query!(ctx, GoogleConnectStatusInput { session_id });
 		match status {
 			ConnectStatus::Pending => continue,
 			ConnectStatus::Completed { account } => {

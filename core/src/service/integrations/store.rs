@@ -328,7 +328,10 @@ mod tests {
 			drive_fingerprint: None,
 		};
 		store.save_microsoft_account(&account).await.unwrap();
-		assert_eq!(store.microsoft_accounts().await.unwrap(), vec![account.clone()]);
+		assert_eq!(
+			store.microsoft_accounts().await.unwrap(),
+			vec![account.clone()]
+		);
 		// Google and Microsoft accounts do not see each other.
 		assert!(store.google_accounts().await.unwrap().is_empty());
 
@@ -343,7 +346,10 @@ mod tests {
 			.set_microsoft_client(Some(&account.client))
 			.await
 			.unwrap();
-		assert_eq!(store.microsoft_client().await.unwrap(), Some(account.client));
+		assert_eq!(
+			store.microsoft_client().await.unwrap(),
+			Some(account.client)
+		);
 		store.set_microsoft_client(None).await.unwrap();
 		assert!(store.microsoft_client().await.unwrap().is_none());
 	}

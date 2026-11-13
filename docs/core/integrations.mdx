@@ -3,7 +3,22 @@ title: Integrations
 sidebarTitle: Integrations
 ---
 
-An integration connects an account from another service to a library. WingDrive maps what the account offers onto its own concepts: storage becomes a cloud volume that the Explorer, copy jobs and cloud sync already understand, and services without a file tree get their own jobs. Google is the first provider, with Google Drive and Google Photos.
+An integration connects an account from another service to a library. WingDrive maps what the account offers onto its own concepts: storage becomes a cloud volume that the Explorer, copy jobs and cloud sync already understand, and services without a file tree get their own jobs. Providers are Google (Google Drive and Google Photos) and Microsoft (OneDrive).
+
+## Connection modes
+
+Every sign-in goes through an OAuth client registered with the provider. Settings > Integrations shows one card per service and mode, and the user picks whose client signs them in:
+
+| Mode | Google card | Microsoft card | What the user does |
+| --- | --- | --- | --- |
+| `app` | Google account | Microsoft account | Only signs in. WingDrive's own client, included in official builds, does the rest. |
+| `custom` | Google Cloud | Microsoft Entra | Registers their own client first, saves it in the library, then signs in. |
+
+The `app` mode is the quick path. It depends on the client in the build (INTG-001 for Google, INTG-022 for Microsoft), and until the provider verifies WingDrive's app, the consent page warns that the app is unverified and caps how many people can sign in. API quotas are shared by everyone using WingDrive's client.
+
+The `custom` mode works in any build, including builds from source, and keeps the project, quotas and access control with the user. It takes a few minutes in Google Cloud Console or Microsoft Entra. A Google consent screen left in testing mode ends grants every 7 days.
+
+Each account stores the client it signed in with and its mode (`IntegrationAccountInfo.mode`), because a refresh token only works with the client that issued it. Google accounts saved before modes existed count as `custom` when their client matches the one saved in the library, and `app` otherwise. Starting a sign-in in a mode without a client fails with `AppClientMissing` or `CustomClientMissing`.
 
 ## What you can do with Google
 
@@ -38,11 +53,7 @@ Connecting the same account again merges the grants, which is how you add Photos
 
 ### OAuth client
 
-Google requires every app to sign in with an OAuth client. WingDrive picks one in this order:
-
-1. The client saved in the library (Settings > Integrations > Google sign-in client, or `wing integrations google-client set`).
-2. `WINGDRIVE_GOOGLE_CLIENT_ID` and `WINGDRIVE_GOOGLE_CLIENT_SECRET` in the daemon's environment.
-3. The same variables at build time, compiled into the binary.
+WingDrive's own Google client (mode `app`) comes from `WINGDRIVE_GOOGLE_CLIENT_ID` and `WINGDRIVE_GOOGLE_CLIENT_SECRET` in the daemon's environment, or the same variables at build time, compiled into the binary. The user's own client (mode `custom`) is saved in the library from the Google Cloud card in Settings > Integrations, or with `wing integrations google-client set`.
 
 To create your own client:
 
@@ -50,10 +61,11 @@ To create your own client:
 2. Enable the Google Drive API, the Photos Library API and the Photos Picker API.
 3. Configure the OAuth consent screen. While the app is in testing mode, add your accounts as test users. Testing-mode grants expire after 7 days; publish the app to keep them.
 4. Create credentials of type **OAuth client ID** with application type **Desktop app**.
-5. Paste the client ID and secret in Settings > Integrations, or run:
+5. Paste the client ID and secret in the Google Cloud card of Settings > Integrations, or run:
 
 ```bash
 wing integrations google-client set --client-id 1234-abc.apps.googleusercontent.com --client-secret GOCSPX-...
+wing integrations connect google --own-client
 ```
 
 A desktop client secret is not confidential, but Google still requires it in the token request. Accounts keep the client they signed in with, because a refresh token only works with the client that issued it.
@@ -67,6 +79,28 @@ A desktop client secret is not confidential, but Google still requires it in the
 | Photos | `photoslibrary.appendonly`, `photoslibrary.readonly.appcreateddata`, `photoslibrary.edit.appcreateddata`, `photospicker.mediaitems.readonly` |
 
 Users can untick scopes on the consent page. WingDrive reads the scopes Google actually granted and only offers the services they cover.
+
+## OneDrive
+
+Microsoft accounts (personal, work or school) sign in against the Microsoft identity platform's `common` endpoint as a public client: PKCE and no client secret. The redirect goes to `http://localhost:<port>/oauth/callback`, served by the same loopback listener as Google, because Microsoft only lets app registrations list `localhost` with any port.
+
+Scopes are `openid profile email offline_access User.Read Files.ReadWrite`. `Files.ReadWrite` covers the user's own OneDrive and, unlike `Files.ReadWrite.All`, needs no admin consent in most tenants.
+
+WingDrive's own app registration (mode `app`) comes from `WINGDRIVE_MICROSOFT_CLIENT_ID` in the daemon's environment or at build time. To use your own (mode `custom`):
+
+1. In [Microsoft Entra](https://entra.microsoft.com/), open **App registrations > New registration**.
+2. Under **Supported account types**, choose accounts in any organizational directory and personal Microsoft accounts.
+3. Under **Redirect URI**, choose **Public client/native (mobile & desktop)** and enter `http://localhost/oauth/callback`.
+4. Copy the **Application (client) ID** into the Microsoft Entra card of Settings > Integrations, or run:
+
+```bash
+wing integrations microsoft-client set --client-id 00000000-0000-0000-0000-000000000000
+wing integrations connect onedrive --own-client
+```
+
+Each connected account gets a cloud volume addressed as `onedrive://<email>/` and a sidebar location `OneDrive (<email>)`, with index mode `none` like Google Drive. `OneDriveBackend` runs file operations through OpenDAL's OneDrive service, but refreshes tokens itself: OpenDAL's refresh always sends a client secret, which public clients must not send, and drops the refresh token Microsoft rotates on every refresh. `MicrosoftTokenSource` keeps the newest refresh token and writes it back to the library under a write lock, so the grant outlives the 90-day lifetime of the first token. OpenDAL gets only the current access token and is rebuilt when it changes. Deleting moves items to the OneDrive recycle bin. Capacity comes from Graph `/me/drive`.
+
+Microsoft has no endpoint for an app to revoke its own grant. Disconnecting deletes the local secrets and unmounts OneDrive; the grant stays listed at [account.live.com/consent/Manage](https://account.live.com/consent/Manage) (or the tenant's My Apps page) until the user removes it.
 
 ## Where secrets live
 
@@ -155,8 +189,10 @@ wing integrations photos import <account-id> ~/Pictures/From-Google
 | --- | --- |
 | `integrations.accounts.list`, `integrations.accounts.remove` | Query, action |
 | `integrations.google.client`, `integrations.google.set_client` | Query, action |
-| `integrations.google.connect`, `.connect_status`, `.connect_cancel` | Action, query, action |
+| `integrations.google.connect`, `.connect_status`, `.connect_cancel` | Action, query, action (status and cancel serve Microsoft sign-ins too) |
 | `integrations.google.drive.mount` | Action |
+| `integrations.microsoft.client`, `integrations.microsoft.set_client`, `integrations.microsoft.connect` | Query, action, action |
+| `integrations.onedrive.mount` | Action |
 | `integrations.google.photos.albums`, `.upload`, `.picker.start`, `.picker.status`, `.picker.import` | Mixed |
 | `cloud_sync.list`, `.create`, `.update`, `.delete`, `.run` | Query, actions |
 | `files.cloud_edit.open`, `.list`, `.close` | Action, query, action |
@@ -167,7 +203,8 @@ All of them are library operations. Jobs: `cloud_sync`, `google_photos_upload`, 
 
 | Path | Role |
 | --- | --- |
-| `core/src/service/integrations/mod.rs` | `IntegrationService`: sign-in sessions, token sources, Drive mounting |
+| `core/src/service/integrations/mod.rs` | `IntegrationService`: connection modes, sign-in sessions, token sources, Drive and OneDrive mounting |
+| `core/src/service/integrations/microsoft/` | Microsoft sign-in, rotating token source, `OneDriveBackend` |
 | `core/src/service/integrations/google/oauth.rs` | PKCE, consent URL, loopback listener, token exchange, refresh, revoke |
 | `core/src/service/integrations/google/tokens.rs` | Shared access tokens and retrying API client |
 | `core/src/service/integrations/google/drive.rs` | `GoogleDriveBackend` |
@@ -177,12 +214,15 @@ All of them are library operations. Jobs: `cloud_sync`, `google_photos_upload`, 
 | `core/src/ops/cloud_sync/` | Sync engine, job, scheduler and operations |
 | `core/src/ops/files/copy/cloud.rs` | Copy and move through cloud backends |
 | `core/src/ops/integrations/` | Wire operations and Photos jobs |
-| `packages/interface/src/Settings/pages/IntegrationsSettings.tsx` | Settings page |
+| `packages/interface/src/Settings/pages/IntegrationsSettings.tsx` | Settings page: catalog cards, mode explanations, accounts, sync |
+| `packages/interface/src/hooks/useIntegrationConnect.ts` | Browser sign-in for both providers |
 | `apps/cli/src/domains/integrations/` | `wing integrations` |
 
 ## Testing
 
 `core/tests/google_integration_test.rs` runs the whole flow against an in-memory fake of the Google APIs (`core/tests/helpers/fake_google.rs`): sign-in of two accounts through the real loopback listener, Drive listing with pagination and duplicate names, ranged downloads, Google Docs export, chunked resumable uploads, rename, copy, trash, a forced `401` recovered by a refresh, copy jobs in both directions, a volume refresh, cloud sync, Photos upload and picker import, a cloud editing session, and account removal with revocation.
+
+`core/tests/microsoft_integration_test.rs` runs the Microsoft sign-in against a fake identity platform and Graph `/me`: the `app` mode, OneDrive mounted with its location and capacity, the rotated refresh token saved back, no client secret sent, the `custom` mode and account removal. OneDrive file operations go through OpenDAL to the real Graph and are not covered by the fake. `WINGDRIVE_MICROSOFT_ENDPOINTS_BASE` points sign-in and `/me` at another server.
 
 `WINGDRIVE_GOOGLE_ENDPOINTS_BASE` points every Google API at another server, which is how a daemon can run against a fake for manual checks:
 
@@ -210,7 +250,7 @@ The integration is complete in code and tested against a fake of the Google APIs
 | INTG-004 | End-to-end validation with real Google on every platform |
 | INTG-005 | Reconnect flow for revoked or expired accounts |
 
-Until INTG-001 ships, sign-in needs your own OAuth client (see [OAuth client](#oauth-client)). Other providers (Dropbox, OneDrive, Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA, Proton Drive, object storage, SFTP and SMB) are planned as INTG-021 to INTG-031 on top of a shared provider framework (INTG-020).
+Until INTG-001 ships, Google sign-in needs the `custom` mode (see [OAuth client](#oauth-client)). OneDrive (INTG-022) still needs WingDrive's Microsoft app registration in release builds and a check against the real service. Other providers (Dropbox, Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA, Proton Drive, object storage, SFTP and SMB) are planned as INTG-021 to INTG-031 on top of a shared provider framework (INTG-020).
 
 ## Limitations
 
@@ -219,3 +259,4 @@ Until INTG-001 ships, sign-in needs your own OAuth client (see [OAuth client](#o
 - Changes made in Drive appear on the next listing (cache of 30 seconds); there is no push notification channel.
 - Google Docs, Sheets and Slides edit only in the browser.
 - The Photos Library API cannot list photos WingDrive did not upload; use the picker to import them.
+- OneDrive shows the signed-in user's own drive; SharePoint libraries and items shared with the user are not browsed.

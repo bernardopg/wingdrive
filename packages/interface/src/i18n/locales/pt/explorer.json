@@ -380,11 +380,16 @@
 		"endpointExampleMinio": " (por exemplo, http://localhost:9000)",
 		"googleDescription": "Entre com o Google para adicionar seu Drive",
 		"googleHint": "O navegador abre a página de login do Google. Depois que você permitir o acesso, o Drive aparece na barra lateral. Repita para adicionar outras contas.",
-		"googleNotConfigured": "O login no Google precisa de um cliente OAuth. Adicione um em Configurações > Integrações.",
+		"googleNotConfigured": "Esta versão não tem login no Google. Salve um cliente seu do Google Cloud em Configurações > Integrações.",
 		"googleSignIn": "Entrar com o Google",
 		"googleWaiting": "Termine o login no navegador…",
 		"googleCancel": "Cancelar",
-		"googleFailed": "O login no Google falhou: {{error}}"
+		"googleFailed": "O login no Google falhou: {{error}}",
+		"oneDriveDescription": "Entre com a Microsoft para adicionar seu OneDrive",
+		"oneDriveHint": "O navegador abre a página de login da Microsoft. Depois que você permitir o acesso, o OneDrive aparece na barra lateral. Repita para adicionar outras contas.",
+		"oneDriveNotConfigured": "Esta versão não tem login na Microsoft. Salve um app seu do Microsoft Entra em Configurações > Integrações.",
+		"oneDriveSignIn": "Entrar com a Microsoft",
+		"oneDriveFailed": "O login na Microsoft falhou: {{error}}"
 	},
 	"knowledge": {
 		"title": "Visualização de conhecimento",

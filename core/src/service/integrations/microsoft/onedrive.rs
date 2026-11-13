@@ -154,8 +154,6 @@ impl VolumeBackend for OneDriveBackend {
 			.map_err(|e| VolumeError::Service(e.to_string()))?;
 		let info: DriveInfo =
 			serde_json::from_slice(&body).map_err(|e| VolumeError::Service(e.to_string()))?;
-		Ok(info
-			.quota
-			.and_then(|q| Some((q.total?, q.remaining?))))
+		Ok(info.quota.and_then(|q| Some((q.total?, q.remaining?))))
 	}
 }

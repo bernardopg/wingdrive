@@ -43,8 +43,7 @@ pub fn authorization_url(
 	code_challenge: &str,
 	login_hint: Option<&str>,
 ) -> String {
-	let mut url =
-		url::Url::parse(&endpoints.authorize).expect("authorize endpoint is a valid URL");
+	let mut url = url::Url::parse(&endpoints.authorize).expect("authorize endpoint is a valid URL");
 	{
 		let mut query = url.query_pairs_mut();
 		query
@@ -248,11 +247,13 @@ mod tests {
 			Some("ana@example.com"),
 		);
 		let parsed = url::Url::parse(&url).unwrap();
-		let query: std::collections::HashMap<_, _> =
-			parsed.query_pairs().into_owned().collect();
+		let query: std::collections::HashMap<_, _> = parsed.query_pairs().into_owned().collect();
 		assert_eq!(parsed.host_str(), Some("login.microsoftonline.com"));
 		assert_eq!(query["code_challenge_method"], "S256");
-		assert_eq!(query["redirect_uri"], "http://localhost:5555/oauth/callback");
+		assert_eq!(
+			query["redirect_uri"],
+			"http://localhost:5555/oauth/callback"
+		);
 		assert_eq!(query["login_hint"], "ana@example.com");
 		assert!(query["scope"].contains("offline_access"));
 		assert!(query["scope"].contains("Files.ReadWrite"));
