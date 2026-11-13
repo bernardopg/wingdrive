@@ -3,7 +3,12 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 3.2.0 — 2026-11-13
+
+Google Drive and Google Photos with several accounts per library, file
+operations and editing on cloud volumes, two-way cloud sync, desktop shell
+coverage at 91.6% with the bugs it found fixed, and the `sdPath` to `wdPath`
+rename (#383 to #388).
 
 ### Added
 
