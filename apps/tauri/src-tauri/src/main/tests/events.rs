@@ -19,7 +19,10 @@ use crate::{
 };
 
 /// Collects the payloads emitted on `event` anywhere in the app.
-fn record<R: tauri::Runtime>(app: &tauri::App<R>, event: &str) -> Arc<Mutex<Vec<String>>> {
+pub(super) fn record<R: tauri::Runtime>(
+	app: &tauri::App<R>,
+	event: &str,
+) -> Arc<Mutex<Vec<String>>> {
 	let seen = Arc::new(Mutex::new(Vec::new()));
 	let sink = seen.clone();
 	app.listen_any(event, move |event| {
@@ -28,7 +31,7 @@ fn record<R: tauri::Runtime>(app: &tauri::App<R>, event: &str) -> Arc<Mutex<Vec<
 	seen
 }
 
-async fn wait_for(mut done: impl FnMut() -> bool) {
+pub(super) async fn wait_for(mut done: impl FnMut() -> bool) {
 	tokio::time::timeout(Duration::from_secs(5), async {
 		while !done() {
 			tokio::time::sleep(Duration::from_millis(10)).await;
@@ -257,6 +260,15 @@ async fn library_validation_reports_unreachable_and_refusing_daemons() {
 			.await
 			.unwrap_err();
 	assert!(error.contains("Invalid response format"), "{error}");
+
+	let (address, _daemon) = one_shot_daemon("<html>\n").await;
+	let state = daemon_state(&address, None, None);
+	let error =
+		validate_and_reset_library_if_needed(app.handle().clone(), &current, &state, data.path())
+			.await
+			.unwrap_err();
+	assert!(error.starts_with("Failed to parse response"), "{error}");
+	assert!(error.ends_with("Raw: <html>"), "{error}");
 	// An error keeps the selection: the library may still exist.
 	assert_eq!(current.read().await.as_deref(), Some("lib"));
 }
@@ -582,4 +594,59 @@ async fn the_persistent_pool_multiplexes_subscribe_and_unsubscribe() {
 		.await
 		.unwrap_err()
 		.starts_with("Failed to connect to daemon"));
+}
+
+/// Accepts one connection, optionally reads its first line, then resets it the
+/// way the kernel does when the daemon crashes.
+async fn crashing_daemon(read_first_line: bool) -> String {
+	let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+	let address = listener.local_addr().unwrap().to_string();
+	tokio::spawn(async move {
+		let (mut stream, _) = listener.accept().await.unwrap();
+		if read_first_line {
+			let mut line = String::new();
+			BufReader::new(&mut stream)
+				.read_line(&mut line)
+				.await
+				.unwrap();
+		}
+		stream.set_zero_linger().unwrap();
+	});
+	address
+}
+
+#[tokio::test]
+async fn a_crashed_daemon_ends_subscriptions_with_the_read_error() {
+	let address = crashing_daemon(true).await;
+	let app = app_with_daemon(daemon_state(&address, None, None));
+	app.manage(app_state());
+	let window = WebviewWindowBuilder::new(&app, "main", WebviewUrl::default())
+		.build()
+		.unwrap();
+	let closed = record(&app, "events:9:closed");
+
+	subscribe_to_events(
+		app.handle().clone(),
+		window,
+		app.state(),
+		app.state(),
+		None,
+		None,
+		Some("events:9".into()),
+	)
+	.await
+	.unwrap();
+
+	wait_for(|| !closed.lock().unwrap().is_empty()).await;
+	let reason = closed.lock().unwrap()[0].clone();
+	assert!(reason.starts_with("\"read failed: "), "{reason}");
+}
+
+#[tokio::test]
+async fn the_persistent_pool_reports_a_crashed_daemon() {
+	let app = tauri::test::mock_app();
+	let disconnected = record(&app, "daemon-disconnected");
+	let pool = DaemonConnectionPool::new(crashing_daemon(false).await);
+	pool.ensure_connected(app.handle()).await.unwrap();
+	wait_for(|| !disconnected.lock().unwrap().is_empty()).await;
 }

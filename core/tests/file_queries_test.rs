@@ -311,7 +311,7 @@ async fn files_are_found_by_path_and_by_id_with_their_other_copies() -> anyhow::
 			other => panic!("unexpected alternate {other:?}"),
 		})
 		.collect();
-	assert_eq!(alternates, [copy.clone()]);
+	assert_eq!(alternates, std::slice::from_ref(&copy));
 
 	let by_id = run(&harness, FileByIdQuery::new(file.id))
 		.await?
@@ -494,7 +494,7 @@ async fn paths_resolve_through_dotted_folders_and_sibling_locations() -> anyhow:
 		.await?;
 	let placeholder = WingPath::Physical {
 		device_slug: "local".to_string(),
-		path: shelf.join("notes.txt").into(),
+		path: shelf.join("notes.txt"),
 	};
 	let entry = wing_core::ops::indexing::PathResolver::resolve_to_entry(db, &placeholder)
 		.await?

@@ -74,7 +74,7 @@ impl FsEventCollector {
 
 		writeln!(file, "=== FsWatcher Event Log ===")?;
 		writeln!(file, "Total events collected: {}", events.len())?;
-		writeln!(file, "")?;
+		writeln!(file)?;
 
 		for (i, (timestamp, event)) in events.iter().enumerate() {
 			let elapsed = timestamp.duration_since(self.start_time);
@@ -89,7 +89,7 @@ impl FsEventCollector {
 			if let Some(is_dir) = event.is_directory {
 				writeln!(file, "         is_directory: {}", is_dir)?;
 			}
-			writeln!(file, "")?;
+			writeln!(file)?;
 		}
 
 		writeln!(file, "=== End of Event Log ===")?;
@@ -264,7 +264,7 @@ impl CoreEventCollector {
 
 		writeln!(file, "=== Core ResourceChanged Event Log ===")?;
 		writeln!(file, "Total events collected: {}", events.len())?;
-		writeln!(file, "")?;
+		writeln!(file)?;
 
 		for (i, event) in events.iter().enumerate() {
 			let elapsed = event.timestamp.duration_since(self.start_time);
@@ -321,7 +321,7 @@ impl CoreEventCollector {
 			for line in event.resource_json.lines() {
 				writeln!(file, "    {}", line)?;
 			}
-			writeln!(file, "")?;
+			writeln!(file)?;
 		}
 
 		writeln!(file, "=== End of Core Event Log ===")?;

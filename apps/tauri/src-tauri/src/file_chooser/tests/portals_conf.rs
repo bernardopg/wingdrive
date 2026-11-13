@@ -329,3 +329,101 @@ fn the_shipped_portal_file_names_the_backend() {
 	assert!(service.contains("Name=org.freedesktop.impl.portal.desktop.wingdrive"));
 	assert!(!service.contains("FileManager1"));
 }
+
+fn vars(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<std::ffi::OsString> {
+	let map: std::collections::HashMap<String, String> = pairs
+		.iter()
+		.map(|(k, v)| (k.to_string(), v.to_string()))
+		.collect();
+	move |name| map.get(name).map(std::ffi::OsString::from)
+}
+
+#[test]
+fn paths_follow_xdg_variables_and_ignore_relative_ones() {
+	let state = PathBuf::from("/state.json");
+	let paths = PortalPaths::from_vars(
+		state.clone(),
+		vars(&[
+			("HOME", "/home/me"),
+			("XDG_CONFIG_HOME", "/cfg"),
+			("XDG_DATA_HOME", "relative/data"),
+			("XDG_DATA_DIRS", "/a:/b"),
+			("XDG_CURRENT_DESKTOP", "Hyprland:KDE"),
+		]),
+	);
+	assert_eq!(paths.config_dir, PathBuf::from("/cfg/xdg-desktop-portal"));
+	assert_eq!(paths.state_file, state);
+	assert_eq!(paths.desktops, ["hyprland", "kde"]);
+	// A relative XDG_DATA_HOME is invalid, so the home default applies.
+	assert_eq!(
+		paths.portal_dirs,
+		[
+			PathBuf::from("/home/me/.local/share/xdg-desktop-portal/portals"),
+			PathBuf::from("/a/xdg-desktop-portal/portals"),
+			PathBuf::from("/b/xdg-desktop-portal/portals"),
+		]
+	);
+}
+
+#[test]
+fn defaults_apply_without_xdg_variables_and_the_portal_dir_override_wins() {
+	let defaults = PortalPaths::from_vars(PathBuf::new(), vars(&[("HOME", "/h")]));
+	assert_eq!(
+		defaults.config_dir,
+		PathBuf::from("/h/.config/xdg-desktop-portal")
+	);
+	assert!(defaults.desktops.is_empty());
+	assert_eq!(
+		defaults.portal_dirs.last(),
+		Some(&PathBuf::from("/usr/share/xdg-desktop-portal/portals"))
+	);
+	let overridden = PortalPaths::from_vars(
+		PathBuf::new(),
+		vars(&[
+			("HOME", "/h"),
+			("XDG_DESKTOP_PORTAL_DIR", "/portals"),
+			("XDG_DATA_DIRS", ""),
+		]),
+	);
+	assert_eq!(overridden.portal_dirs, [PathBuf::from("/portals")]);
+}
+
+#[test]
+fn status_reports_an_unwritten_config_and_a_missing_backend() {
+	let dir = tempfile::tempdir().unwrap();
+	let paths = PortalPaths {
+		config_dir: dir.path().join("config"),
+		desktops: vec![],
+		state_file: dir.path().join("state.json"),
+		portal_dirs: vec![dir.path().join("none")],
+	};
+	let status = paths.status();
+	assert!(!status.enabled);
+	assert!(!status.backend_installed);
+	assert_eq!(status.value, None);
+	assert_eq!(status.config_file, dir.path().join("config/portals.conf"));
+	// Switching off with nothing to restore and no state file still succeeds.
+	assert!(!paths.disable().unwrap().enabled);
+}
+
+#[test]
+fn an_unreadable_config_is_an_error_not_an_empty_file() {
+	let fixture = Fixture::new("");
+	// A folder where the config file should be cannot be read as text.
+	std::fs::create_dir_all(fixture.paths.config_dir.join("portals.conf")).unwrap();
+	let error = fixture.paths.enable().unwrap_err();
+	assert!(error.contains("portals.conf"), "{error}");
+}
+
+#[test]
+fn a_corrupt_state_file_is_ignored() {
+	let fixture = Fixture::new("");
+	let config = fixture.write("portals.conf", "[preferred]\ndefault=gtk\n");
+	fixture.paths.enable().unwrap();
+	std::fs::write(&fixture.paths.state_file, "not json").unwrap();
+	// Without a readable state, switching off drops wingdrive and keeps the rest.
+	let status = fixture.paths.disable().unwrap();
+	assert!(!status.enabled);
+	assert!(!read(&config).contains("wingdrive"));
+	assert!(!fixture.paths.state_file.exists());
+}

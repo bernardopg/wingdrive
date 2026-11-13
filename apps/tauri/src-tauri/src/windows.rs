@@ -529,26 +529,39 @@ fn hash_string(s: &str) -> String {
 	format!("{:x}", hasher.finish())
 }
 
+/// A monitor's origin and size in physical pixels.
+type MonitorArea = ((i32, i32), (u32, u32));
+
+/// The area of the monitor `window` is on.
+fn monitor_area<R: Runtime>(window: &WebviewWindow<R>) -> Result<MonitorArea, String> {
+	let monitor = window
+		.current_monitor()
+		.map_err(|e| e.to_string())?
+		.ok_or("No monitor found")?;
+	Ok((
+		(monitor.position().x, monitor.position().y),
+		(monitor.size().width, monitor.size().height),
+	))
+}
+
 fn position_overlay_window<R: Runtime>(
 	window: &WebviewWindow<R>,
 	width: f64,
 	height: f64,
 ) -> Result<(), String> {
+	place_overlay(window, monitor_area(window)?, (width, height))
+}
+
+/// Moves an overlay of `size` logical pixels to its place on `area`.
+fn place_overlay<R: Runtime>(
+	window: &WebviewWindow<R>,
+	area: MonitorArea,
+	size: (f64, f64),
+) -> Result<(), String> {
 	use tauri::{PhysicalPosition, Position};
 
-	let monitor = window
-		.current_monitor()
-		.map_err(|e| e.to_string())?
-		.ok_or("No monitor found")?;
-
 	let scale_factor = window.scale_factor().map_err(|e| e.to_string())?;
-	let (x, y) = overlay_position(
-		(monitor.position().x, monitor.position().y),
-		(monitor.size().width, monitor.size().height),
-		(width, height),
-		scale_factor,
-	);
-
+	let (x, y) = overlay_position(area.0, area.1, size, scale_factor);
 	window
 		.set_position(Position::Physical(PhysicalPosition::new(x, y)))
 		.map_err(|e| e.to_string())
@@ -657,7 +670,7 @@ pub async fn resize_overlay_window<R: Runtime>(
 
 /// Apply macOS window styling to current window (called from frontend when ready)
 #[tauri::command]
-pub fn apply_macos_styling(_app: AppHandle) -> Result<(), String> {
+pub fn apply_macos_styling<R: Runtime>(_app: AppHandle<R>) -> Result<(), String> {
 	#[cfg(target_os = "macos")]
 	{
 		let window = _app
@@ -703,32 +716,29 @@ pub async fn position_context_menu<R: Runtime>(
 	let window = app
 		.get_webview_window(&label)
 		.ok_or("Context menu window not found")?;
-
-	use tauri::{PhysicalPosition, Position};
-
-	// Get current monitor
-	let monitor = window
-		.current_monitor()
-		.map_err(|e| e.to_string())?
-		.ok_or("No monitor found")?;
-
-	let (final_x, final_y) = clamp_menu_position(
+	show_menu_at(
+		&window,
+		monitor_area(&window)?,
 		(x, y),
 		(menu_width, menu_height),
-		(monitor.position().x, monitor.position().y),
-		(monitor.size().width, monitor.size().height),
-	);
+	)
+}
 
-	// Position window
+/// Shows the menu window at `cursor`, kept inside `area`, and focuses it.
+fn show_menu_at<R: Runtime>(
+	window: &WebviewWindow<R>,
+	area: MonitorArea,
+	cursor: (f64, f64),
+	menu_size: (f64, f64),
+) -> Result<(), String> {
+	use tauri::{PhysicalPosition, Position};
+
+	let (x, y) = clamp_menu_position(cursor, menu_size, area.0, area.1);
 	window
-		.set_position(Position::Physical(PhysicalPosition::new(final_x, final_y)))
+		.set_position(Position::Physical(PhysicalPosition::new(x, y)))
 		.map_err(|e| e.to_string())?;
-
-	// Show and focus
 	window.show().map_err(|e| e.to_string())?;
-	window.set_focus().map_err(|e| e.to_string())?;
-
-	Ok(())
+	window.set_focus().map_err(|e| e.to_string())
 }
 
 /// Apply dark titlebar on Windows using DWM API.

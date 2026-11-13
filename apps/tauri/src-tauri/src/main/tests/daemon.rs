@@ -325,3 +325,153 @@ fn the_first_ready_main_window_stays_hidden_after_a_hidden_launch() {
 	assert!(!app.state::<StartHidden>().is_set());
 	app_ready(main.as_ref().window(), app.state());
 }
+
+/// Drops every connection for its first 1.2 s, then answers like
+/// `ponging_daemon`: a daemon that comes up after the app first looked for one
+/// and takes longer than a second, as a cold start does.
+async fn late_daemon() -> String {
+	let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+	let address = listener.local_addr().unwrap().to_string();
+	let ready_at = Instant::now() + Duration::from_millis(1200);
+	tokio::spawn(async move {
+		while let Ok((stream, _)) = listener.accept().await {
+			if Instant::now() < ready_at {
+				continue;
+			}
+			tokio::spawn(async move {
+				let (reader, mut writer) = stream.into_split();
+				let mut line = String::new();
+				if BufReader::new(reader).read_line(&mut line).await.is_ok() {
+					let _ = writer.write_all(b"\"Pong\"\n").await;
+				}
+			});
+		}
+	});
+	address
+}
+
+fn launch(
+	service_active: fn(Option<&str>) -> bool,
+	daemon_path: Result<PathBuf, String>,
+	startup_timeout: Duration,
+) -> crate::DaemonLaunch {
+	crate::DaemonLaunch {
+		service_active,
+		daemon_path,
+		startup_timeout,
+		validation_delay: Duration::ZERO,
+	}
+}
+
+#[tokio::test]
+async fn startup_waits_for_a_login_service_that_is_still_starting() {
+	use crate::acquire_daemon;
+
+	let base = PathBuf::from("/nonexistent");
+	let missing = || Err::<PathBuf, String>("not used".into());
+	let service = launch(|_| true, missing(), Duration::from_secs(10));
+	let (ours, child) = acquire_daemon(&late_daemon().await, &base, None, &service)
+		.await
+		.unwrap();
+	assert!(!ours && child.is_none());
+
+	let service = launch(|_| true, missing(), Duration::from_millis(300));
+	assert!(
+		acquire_daemon(&closed_address().await, &base, None, &service)
+			.await
+			.is_none()
+	);
+
+	// A named instance never waits for the default instance's service.
+	#[cfg(target_os = "linux")]
+	assert!(!crate::daemon_service_active(Some("dev")));
+}
+
+#[tokio::test]
+async fn startup_spawns_its_own_daemon_or_waits_for_one_started_elsewhere() {
+	use crate::acquire_daemon;
+
+	let dir = tempfile::tempdir().unwrap();
+	let daemon = script(
+		dir.path(),
+		"wing-daemon",
+		"[ \"$1\" = probe ] && exit 0\nexec sleep 30",
+	);
+	// Once one run succeeds, no thread still holds the script open for writing.
+	spawn_probe(&daemon);
+	let base = dir.path().to_path_buf();
+
+	let own = launch(|_| false, Ok(daemon.clone()), Duration::from_secs(10));
+	let (ours, child) = acquire_daemon(&late_daemon().await, &base, Some("dev"), &own)
+		.await
+		.unwrap();
+	let mut child = child.expect("the spawned daemon");
+	assert!(ours);
+	assert!(child.try_wait().unwrap().is_none());
+	terminate_daemon(&mut child, "127.0.0.1:9");
+
+	// Another launch holds the library: its daemon answers once ready.
+	let failing = launch(|_| false, Err("not found".into()), Duration::from_secs(10));
+	let (ours, child) = acquire_daemon(&late_daemon().await, &base, None, &failing)
+		.await
+		.unwrap();
+	assert!(!ours && child.is_none());
+
+	let failing = launch(
+		|_| false,
+		Err("not found".into()),
+		Duration::from_millis(300),
+	);
+	assert!(
+		acquire_daemon(&closed_address().await, &base, None, &failing)
+			.await
+			.is_none()
+	);
+}
+
+/// Runs `path probe` until the kernel stops reporting the file busy.
+fn spawn_probe(path: &Path) {
+	for _ in 0..50 {
+		match std::process::Command::new(path).arg("probe").status() {
+			Err(error) if error.raw_os_error() == Some(libc::ETXTBSY) => {
+				std::thread::sleep(Duration::from_millis(20))
+			}
+			result => {
+				assert!(result.unwrap().success());
+				return;
+			}
+		}
+	}
+	panic!("{path:?} stayed busy");
+}
+
+#[tokio::test]
+async fn installing_the_service_stops_the_daemon_this_app_started() {
+	use tauri::Listener;
+
+	use super::daemon_state;
+	use crate::prepare_service_install;
+
+	let state = daemon_state("127.0.0.1:9", None, None);
+	let child = std::process::Command::new("sleep")
+		.arg("30")
+		.spawn()
+		.unwrap();
+	let process = Arc::new(tokio::sync::Mutex::new(Some(child)));
+	state.write().await.daemon_process = Some(process.clone());
+	let app = tauri::test::mock_app();
+	let starting = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+	let seen = starting.clone();
+	app.listen_any("daemon-starting", move |_| {
+		seen.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+	});
+
+	let (data_dir, socket_addr) = prepare_service_install(app.handle(), &state).await;
+
+	assert_eq!(data_dir, PathBuf::from("/nonexistent/wingdrive-test"));
+	assert_eq!(socket_addr, "127.0.0.1:9");
+	// The child was stopped and reaped, not merely forgotten.
+	assert!(process.lock().await.is_none());
+	assert!(state.read().await.daemon_process.is_none());
+	assert_eq!(starting.load(std::sync::atomic::Ordering::SeqCst), 1);
+}

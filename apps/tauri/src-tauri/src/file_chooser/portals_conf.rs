@@ -246,21 +246,28 @@ impl PortalPaths {
 	/// The paths of this session. `XDG_DESKTOP_PORTAL_DIR` replaces every
 	/// portal folder, as it does for the portal itself.
 	pub fn from_env(state_file: PathBuf) -> Self {
-		let home = std::env::var_os("HOME")
-			.map(PathBuf::from)
-			.unwrap_or_default();
+		Self::from_vars(state_file, |name| std::env::var_os(name))
+	}
+
+	/// The paths for an environment read through `var`, so tests never touch
+	/// the process environment.
+	pub fn from_vars(
+		state_file: PathBuf,
+		var: impl Fn(&str) -> Option<std::ffi::OsString>,
+	) -> Self {
+		let home = var("HOME").map(PathBuf::from).unwrap_or_default();
 		let env_dir = |name: &str| {
-			std::env::var_os(name)
+			var(name)
 				.map(PathBuf::from)
 				.filter(|path| path.is_absolute())
 		};
+		let text = |name: &str| var(name).and_then(|value| value.into_string().ok());
 		let config_home = env_dir("XDG_CONFIG_HOME").unwrap_or_else(|| home.join(".config"));
 		let data_home = env_dir("XDG_DATA_HOME").unwrap_or_else(|| home.join(".local/share"));
 		let portal_dirs = match env_dir("XDG_DESKTOP_PORTAL_DIR") {
 			Some(dir) => vec![dir],
 			None => {
-				let data_dirs = std::env::var("XDG_DATA_DIRS")
-					.ok()
+				let data_dirs = text("XDG_DATA_DIRS")
 					.filter(|value| !value.is_empty())
 					.unwrap_or_else(|| "/usr/local/share:/usr/share".to_string());
 				std::iter::once(data_home)
@@ -271,7 +278,7 @@ impl PortalPaths {
 		};
 		Self {
 			config_dir: config_home.join("xdg-desktop-portal"),
-			desktops: current_desktops(std::env::var("XDG_CURRENT_DESKTOP").ok().as_deref()),
+			desktops: current_desktops(text("XDG_CURRENT_DESKTOP").as_deref()),
 			state_file,
 			portal_dirs,
 		}

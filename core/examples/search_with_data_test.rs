@@ -236,12 +236,14 @@ async fn main() -> Result<()> {
 	// Test with file type filters
 	println!("\nTesting with file type filters...");
 
-	let mut filters = wing_core::ops::search::input::SearchFilters::default();
-	filters.file_types = Some(vec![
-		"png".to_string(),
-		"jpg".to_string(),
-		"jpeg".to_string(),
-	]);
+	let filters = wing_core::ops::search::input::SearchFilters {
+		file_types: Some(vec![
+			"png".to_string(),
+			"jpg".to_string(),
+			"jpeg".to_string(),
+		]),
+		..Default::default()
+	};
 
 	let filtered_search_input = FileSearchInput {
 		query: "screenshot".to_string(),

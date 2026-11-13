@@ -37,9 +37,46 @@ fn parse_file_uris(text: &str) -> Result<Vec<String>, String> {
 		.collect()
 }
 
+/// Selection targets offered when writing, in the order `selection_text` reads
+/// their index: the URI list everyone reads, then GNOME's and KDE's cut markers.
+#[cfg(target_os = "linux")]
+const WRITE_TARGETS: [&str; 3] = [
+	"text/uri-list",
+	"x-special/gnome-copied-files",
+	"application/x-kde-cutselection",
+];
+
+/// The bytes served for the `WRITE_TARGETS` entry at `info`.
+#[cfg(target_os = "linux")]
+fn selection_text(info: u32, cut: bool, uris: &[String]) -> String {
+	match info {
+		1 => format!("{}\n{}", if cut { "cut" } else { "copy" }, uris.join("\n")),
+		2 => if cut { "1" } else { "0" }.to_string(),
+		_ => format!("{}\r\n", uris.join("\r\n")),
+	}
+}
+
+/// Reads `x-special/gnome-copied-files`: `copy` or `cut`, then one URI per line.
+#[cfg(target_os = "linux")]
+fn parse_gnome_copied_files(bytes: &[u8]) -> Result<(Vec<String>, bool), String> {
+	let text = std::str::from_utf8(bytes).map_err(|e| e.to_string())?;
+	let (operation, uris) = text.split_once('\n').ok_or("Invalid file clipboard")?;
+	if !matches!(operation, "copy" | "cut") {
+		return Err("Invalid clipboard operation".to_string());
+	}
+	Ok((parse_file_uris(uris)?, operation == "cut"))
+}
+
+/// Reads a `text/uri-list` selection; `cut` comes from KDE's marker, if any.
+#[cfg(target_os = "linux")]
+fn parse_uri_list(bytes: &[u8], cut: bool) -> Result<(Vec<String>, bool), String> {
+	let text = std::str::from_utf8(bytes).map_err(|e| e.to_string())?;
+	Ok((parse_file_uris(text)?, cut))
+}
+
 #[tauri::command]
-pub async fn write_file_clipboard(
-	app: tauri::AppHandle,
+pub async fn write_file_clipboard<R: tauri::Runtime>(
+	app: tauri::AppHandle<R>,
 	paths: Vec<String>,
 	cut: bool,
 ) -> Result<(), String> {
@@ -49,17 +86,12 @@ pub async fn write_file_clipboard(
 		let (tx, rx) = tokio::sync::oneshot::channel();
 		app.run_on_main_thread(move || {
 			let clipboard = Clipboard::get(&gdk::SELECTION_CLIPBOARD);
-			let targets = [
-				TargetEntry::new("text/uri-list", TargetFlags::empty(), 0),
-				TargetEntry::new("x-special/gnome-copied-files", TargetFlags::empty(), 1),
-				TargetEntry::new("application/x-kde-cutselection", TargetFlags::empty(), 2),
-			];
+			let targets: Vec<_> = (0..)
+				.zip(WRITE_TARGETS)
+				.map(|(info, target)| TargetEntry::new(target, TargetFlags::empty(), info))
+				.collect();
 			let ok = clipboard.set_with_data(&targets, move |_, data, info| {
-				let text = match info {
-					1 => format!("{}\n{}", if cut { "cut" } else { "copy" }, uris.join("\n")),
-					2 => if cut { "1" } else { "0" }.to_string(),
-					_ => format!("{}\r\n", uris.join("\r\n")),
-				};
+				let text = selection_text(info, cut, &uris);
 				data.set(&data.target(), 8, text.as_bytes());
 			});
 			let _ = tx.send(if ok {
@@ -86,7 +118,9 @@ pub async fn write_file_clipboard(
 }
 
 #[tauri::command]
-pub async fn read_file_clipboard(app: tauri::AppHandle) -> Result<(Vec<String>, bool), String> {
+pub async fn read_file_clipboard<R: tauri::Runtime>(
+	app: tauri::AppHandle<R>,
+) -> Result<(Vec<String>, bool), String> {
 	#[cfg(target_os = "linux")]
 	{
 		let (tx, rx) = tokio::sync::oneshot::channel();
@@ -96,18 +130,7 @@ pub async fn read_file_clipboard(app: tauri::AppHandle) -> Result<(Vec<String>, 
 				&gdk::Atom::intern("x-special/gnome-copied-files"),
 				move |clipboard, data| {
 					if data.length() > 0 {
-						let bytes = data.data();
-						let result = std::str::from_utf8(&bytes)
-							.map_err(|e| e.to_string())
-							.and_then(|text| {
-								let (operation, uris) =
-									text.split_once('\n').ok_or("Invalid file clipboard")?;
-								if !matches!(operation, "copy" | "cut") {
-									return Err("Invalid clipboard operation".to_string());
-								}
-								Ok((parse_file_uris(uris)?, operation == "cut"))
-							});
-						let _ = tx.send(result);
+						let _ = tx.send(parse_gnome_copied_files(&data.data()));
 					} else {
 						clipboard.request_contents(
 							&gdk::Atom::intern("application/x-kde-cutselection"),
@@ -119,10 +142,7 @@ pub async fn read_file_clipboard(app: tauri::AppHandle) -> Result<(Vec<String>, 
 										let result = if data.length() <= 0 {
 											Ok((vec![], false))
 										} else {
-											let bytes = data.data();
-											std::str::from_utf8(&bytes)
-												.map_err(|e| e.to_string())
-												.and_then(|text| Ok((parse_file_uris(text)?, cut)))
+											parse_uri_list(&data.data(), cut)
 										};
 										let _ = tx.send(result);
 									},
@@ -154,47 +174,5 @@ pub async fn read_file_clipboard(app: tauri::AppHandle) -> Result<(Vec<String>, 
 }
 
 #[cfg(all(test, target_os = "linux"))]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn malformed_clipboard_entries_reject_the_entire_selection() {
-		for invalid in [
-			"not a URI",
-			"file://remote/tmp/file",
-			"file:///tmp/%FF",
-			"https://example.invalid/file",
-		] {
-			assert!(
-				parse_file_uris(&format!("file:///tmp/valid\r\n{invalid}\r\n")).is_err(),
-				"{invalid}"
-			);
-		}
-		assert!(file_uris(&["/tmp/valid".into(), "relative".into()]).is_err());
-	}
-
-	#[test]
-	fn clipboard_comments_empty_lists_and_encoded_line_breaks_keep_item_boundaries() {
-		assert!(parse_file_uris(" \r\n# comment\r\n\t# another\n")
-			.unwrap()
-			.is_empty());
-		assert!(file_uris(&[]).unwrap().is_empty());
-		assert_eq!(
-			parse_file_uris("file:///tmp/a%0D%0Ab\r\nfile://localhost/tmp/c%25d\n").unwrap(),
-			["/tmp/a\r\nb", "/tmp/c%d"]
-		);
-	}
-
-	#[test]
-	fn file_clipboard_uri_roundtrip_and_trust_boundary() {
-		let paths = vec!["/tmp/a b#c.txt".to_string(), "/tmp/café\nfile".to_string()];
-		let uris = file_uris(&paths).unwrap();
-		assert_eq!(
-			parse_file_uris(&format!("# comment\r\n{}\r\n", uris.join("\r\n"))).unwrap(),
-			paths
-		);
-		assert!(file_uris(&["relative".to_string()]).is_err());
-		assert!(parse_file_uris("https://example.com/file").is_err());
-		assert!(parse_file_uris("file://remote/tmp/file").is_err());
-	}
-}
+#[path = "clipboard/tests/mod.rs"]
+mod tests;

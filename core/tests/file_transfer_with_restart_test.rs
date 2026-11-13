@@ -429,18 +429,16 @@ async fn bob_restart_scenario() {
 		tokio::time::sleep(Duration::from_secs(1)).await;
 
 		if let Ok(entries) = std::fs::read_dir(received_dir) {
-			for entry in entries {
-				if let Ok(entry) = entry {
-					let filename = entry.file_name().to_string_lossy().to_string();
-					if !received_files.contains(&filename) {
-						if let Ok(metadata) = entry.metadata() {
-							received_files.push(filename.clone());
-							println!(
-								"Bob: Received file: {} ({} bytes)",
-								filename,
-								metadata.len()
-							);
-						}
+			for entry in entries.flatten() {
+				let filename = entry.file_name().to_string_lossy().to_string();
+				if !received_files.contains(&filename) {
+					if let Ok(metadata) = entry.metadata() {
+						received_files.push(filename.clone());
+						println!(
+							"Bob: Received file: {} ({} bytes)",
+							filename,
+							metadata.len()
+						);
 					}
 				}
 			}

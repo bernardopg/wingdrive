@@ -76,8 +76,9 @@ impl LibraryAction for LocationImportAction {
 			})?;
 
 		// Accept pre-fork exports while new exports use the WingDrive header.
-		if !sql_content.contains("-- WingDrive Location Export")
-			&& !sql_content.contains("-- WingDrive Location Export")
+		let header = |app: &str| format!("-- {app} Location Export");
+		if !sql_content.contains(&header(wing_branding::APP_NAME))
+			&& !sql_content.contains(&header(wing_branding::LEGACY_APP_NAME))
 		{
 			return Err(ActionError::Validation {
 				field: "import_path".to_string(),
