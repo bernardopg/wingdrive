@@ -1,13 +1,13 @@
 ---
 id: COV-07
 title: "Cobrir shell desktop, IPC e segurança do undo"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: COV-00
 priority: High
 milestone: M2
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-11
+last_updated: 2026-11-13
 ---
 
 ## Description
@@ -20,15 +20,15 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 
 ## Implementation Steps
 
-- [ ] Cobrir launch, single instance, IPC, clipboard, terminal e fila de abertura.
-- [ ] Testar undo contra inode substituído, symlink, arquivo alterado e destino existente.
-- [ ] Isolar D-Bus, HOME/XDG e processos; registrar casos que exigem runtime gráfico.
+- [x] Cobrir launch, single instance, IPC, clipboard, terminal e fila de abertura.
+- [x] Testar undo contra inode substituído, symlink, arquivo alterado e destino existente.
+- [x] Isolar D-Bus, HOME/XDG e processos; registrar casos que exigem runtime gráfico.
 
 ## Acceptance Criteria
 
 - [x] Desktop apps/tauri atinge pelo menos 60% na primeira etapa e 75% na conclusão.
-- [ ] Undo nunca sobrescreve dados criados depois da operação original.
-- [ ] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
+- [x] Undo nunca sobrescreve dados criados depois da operação original.
+- [x] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
 
 ## Evidence
 
@@ -190,3 +190,31 @@ caminho físico, mas 17 aprovados e uma falha com HOME pelo symlink `target`; a
 mesma falha foi reproduzida na base limpa `6152c8ecd`. O caso está em [BUGS.md](BUGS.md).
 Não houve validação gráfica ou de polkit real. A cobertura e os
 critérios restantes mantêm a tarefa em andamento.
+
+### 2026-11-13
+
+Cobertura de linhas do componente desktop (`apps/tauri/`, sem arquivos de teste): **80,5% para 91,6%**
+(7.985 de 8.718), medida com `cargo llvm-cov` sobre `wingdrive --bin WingDrive`, `wing-tauri-core`,
+`file-opening`, `file-opening-linux` e `file-clipboard-windows`. `cargo test -p wingdrive --bin WingDrive`:
+223 aprovados, 1 ignorado. Clippy `-D warnings` limpo no desktop e no core com `--all-targets`.
+
+| Arquivo | Antes | Depois |
+|---|---|---|
+| `main.rs` | 67,2% | 85,3% |
+| `drag/mod.rs`, `drag/session.rs` | 0% | 99,0%, 100% |
+| `drag/commands.rs` | 0% | 88,9% |
+| `files.rs` | 72,3% | 94,2% |
+| `file_opening.rs` | 61,8% | 92,1% |
+| `notifications.rs` | 86,2% | 97,2% |
+| `background.rs` | 80,7% | 96,0% |
+| `server.rs`, `windows.rs`, `admin.rs` | 85-90% | 95,8%, 95,3%, 96,6% |
+| `network_discovery.rs` | 91,4% | 97,5% |
+| `file_chooser/portals_conf.rs`, `file_chooser.rs` | 86,2%, 69,6% | cobertos `from_vars`, troca do switch e reinício do portal |
+
+Bugs corrigidos (detalhes em [BUGS.md](BUGS.md)): undo da lixeira com pasta-pai por symlink,
+sessão de arraste presa no Linux e no Windows, frontend sem forma de encerrar um arraste, unit systemd
+do daemon quebrando caminhos com espaço, e import de exports de location anteriores ao fork
+(o rebrand comparava o mesmo cabeçalho duas vezes).
+
+Ficam sem cobertura por exigirem display ou sessão D-Bus real: `clipboard.rs` e `file_drag.rs` (GTK),
+`serve` de `filemanager1.rs` e `file_chooser.rs`, e partes de `gvfs.rs` que chamam o `gio` do sistema.

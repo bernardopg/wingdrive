@@ -87,6 +87,13 @@
 - Antes: quando a busca textual no nome não retornava IDs, a função retornava antes de consultar os aliases. Uma tag chamada `Project` com alias `uniquealias` não aparecia ao buscar `uniquealias`.
 - Correção: prosseguir com a busca por aliases mesmo quando a busca inicial está vazia. O teste também verifica namespace, tipo e resultado ausente.
 
+## Import rejeitava exports de location anteriores ao fork
+
+- Estado: corrigido em 2026-11-13.
+- Local: `core/src/ops/locations/import/action.rs`.
+- Reprodução: importar um export com o cabeçalho antigo (`wing_branding::LEGACY_APP_NAME`). A troca de nomes do rebrand transformou a checagem em duas comparações com o cabeçalho novo, e o import falhava com "File is not a valid WingDrive location export". O teste de compatibilidade também substituía o cabeçalho por ele mesmo e não detectava o problema.
+- Correção: aceitar os cabeçalhos com `APP_NAME` e `LEGACY_APP_NAME`; o teste agora monta um cabeçalho legado de verdade e confere que a troca aconteceu.
+
 ## Aviso de incompatibilidade futura em dependência Rust
 
 - Estado: confirmado na compilação instrumentada, sem falha de build atual.
