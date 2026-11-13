@@ -370,6 +370,14 @@ const TOOL_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(15);
 
 /// Run a host tool that writes one PNG to stdout.
 async fn tool_png(program: &str, args: &[&std::ffi::OsStr]) -> Result<Vec<u8>, String> {
+	tool_png_within(program, args, TOOL_TIMEOUT).await
+}
+
+async fn tool_png_within(
+	program: &str,
+	args: &[&std::ffi::OsStr],
+	timeout: std::time::Duration,
+) -> Result<Vec<u8>, String> {
 	let child = tokio::process::Command::new(program)
 		.args(args)
 		.stdin(std::process::Stdio::null())
@@ -378,7 +386,7 @@ async fn tool_png(program: &str, args: &[&std::ffi::OsStr]) -> Result<Vec<u8>, S
 		.kill_on_drop(true)
 		.spawn()
 		.map_err(|e| format!("{program}: {e}"))?;
-	let output = tokio::time::timeout(TOOL_TIMEOUT, child.wait_with_output())
+	let output = tokio::time::timeout(timeout, child.wait_with_output())
 		.await
 		.map_err(|_| format!("{program} timed out"))?
 		.map_err(|e| e.to_string())?;
