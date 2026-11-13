@@ -3,199 +3,139 @@ title: Get Started with WingDrive
 sidebarTitle: Get Started
 ---
 
-WingDrive unifies your files across all devices into one seamless experience. This guide walks you through initial setup and core concepts to get you organizing files in minutes.
+WingDrive indexes your folders, external drives and cloud volumes into one library. This guide installs it, creates your first library, adds folders and connects the rest of your storage. It takes about ten minutes.
 
-You'll install WingDrive, create your first library, and understand how the distributed filesystem works. By the end, you'll have a foundation for managing files across all your devices.
+The [user guide on wingdrive.org](https://wingdrive.org/docs/) covers the same steps with more screenshots, in English and Portuguese.
 
 ## Install WingDrive
 
-WingDrive runs as a background service (daemon) with a separate user interface. This architecture enables features like offline sync and multi-device coordination.
+WingDrive runs a background service (the daemon) and a separate window. Closing the window does not stop indexing or sync.
 
-<Steps>
-<Step title="Download the App">
-Visit the [WingDrive releases](https://github.com/bernardopg/wingdrive/releases) and get the installer for your platform. Check each release entry for its supported platforms.
-</Step>
-<Step title="Run the Installer">
-Follow your platform's standard installation process. On macOS, drag WingDrive to Applications. On Windows, run the installer. Linux users can use AppImage or package managers.
-</Step>
-<Step title="Launch WingDrive">
-Open WingDrive from your applications. The daemon starts automatically in the background. You'll see the setup wizard on first launch.
-</Step>
-</Steps>
+| Platform | How |
+|---|---|
+| Arch Linux and derivatives | `yay -S wingdrive-bin` (stable) or `yay -S wingdrive-nightly` (every release, including alpha, beta and rc) |
+| Any Linux (x86_64) | AppImage or `.deb` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) |
+| Windows 10 and 11 (x64), beta | `.exe` or `.msi` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest). Unsigned, so SmartScreen warns |
+| Headless server | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |
+| macOS | Build from source ([installation guide](../readme/installation.md)) |
 
 <Note>
-The daemon runs separately from the UI. Closing the app window doesn't stop file syncing or background operations. CLI users can set up auto-start with `wing daemon install` on macOS.
+Linux is the supported platform. Windows installers are a beta. Signed macOS and Windows builds are planned for milestone M3.
 </Note>
 
 ## Create Your First Library
 
-Libraries organize your files and settings. Think of a library as a unified view of all your data across devices.
-
 <Steps>
-<Step title="Choose Library Name">
-Pick a descriptive name like "Personal" or "Work". You can create multiple libraries later for different purposes.
+<Step title="Open WingDrive">
+On first launch the setup wizard opens.
 </Step>
-<Step title="Select Storage Location">
-WingDrive stores library data in a local database. Choose the default location or pick a custom path with sufficient space.
+<Step title="Name the library">
+Pick a name such as "Personal" or "Work". You can create more libraries later and switch between them from the library menu next to the page title.
 </Step>
-<Step title="Complete Setup">
-Click "Create Library" to initialize your database. WingDrive creates the necessary structures for organizing your files.
+<Step title="Confirm">
+The sidebar appears with Overview, Recents and Favorites.
 </Step>
 </Steps>
 
-Your library starts empty. Next, you'll add locations to begin organizing files.
-
-## Understand Key Concepts
-
-WingDrive introduces concepts that differ from traditional file managers:
-
-### Libraries
-A library is your personal database of file information. It stores:
-- File metadata and organization
-- Tags and custom attributes
-- Device relationships
-- Sync settings
-
-<Info>
-Libraries remain local to each device but can sync organizational data between devices you own.
-</Info>
-
-### Locations
-Locations are folders on your device that WingDrive monitors. Adding a location indexes its contents into your library without moving files.
-
-### Virtual Filesystem (VDFS)
-WingDrive creates a unified view of files across all devices. Files keep their physical location but appear in one searchable interface.
-
-### WingPaths
-Universal file addresses that work across all storage types. WingDrive uses three types of paths:
-
-- **Physical**: Traditional filesystem paths on local devices (`/Users/jane/Documents/report.pdf`)
-- **Cloud**: Cloud storage paths for services like S3, Google Drive, or Dropbox (`photos/vacation/beach.jpg`)
-- **Content**: Content-addressed paths that find files by their content, regardless of location
-
-This unified system means you can copy files between your laptop, external drive, and cloud storage using the same commands.
-
-## Navigate the Interface
-
-The WingDrive interface provides powerful tools for file management:
-
-**Sidebar** - Switch between libraries, access locations, and view system status. Collapsible for more workspace.
-
-**Explorer** - Browse files with list or grid views. Supports columns, sorting, and filtering like traditional file managers.
-
-**Inspector** - View and edit file metadata. Add tags, see technical details, and manage file relationships.
-
-**Search Bar** - Find files instantly across all indexed locations. Supports filters and advanced queries.
-
-**Job Manager** - Monitor background operations like indexing and sync. Access via the status indicator.
-
-<Tip>
-Use keyboard shortcuts for efficiency. Press `⌘/` (Mac) or `Ctrl+/` (Windows/Linux) to see all available shortcuts.
-</Tip>
+A library is a local database about your files: names, sizes, content identity, tags and devices. Files are never moved into it. To back up everything you organized, copy the library folder.
 
 ## Add Your First Location
 
-Connect a folder to start organizing files:
+A location is a folder that WingDrive watches and indexes. Adding one never moves or copies files.
 
 <Steps>
-<Step title="Open Location Settings">
-Click the + button next to "Locations" in the sidebar or go to Settings → Locations.
+<Step title="Open Add Storage">
+On the Overview, click **Add Storage** at the top right, or **+** next to *Locations* in the sidebar.
 </Step>
-<Step title="Select a Folder">
-Choose a folder to index. Start with something manageable like Documents or Pictures.
+<Step title="Choose Local Folder">
+Pick a folder. Start with something small, like Documents or Pictures.
 </Step>
-<Step title="Configure Indexing">
-Select indexing depth:
-- **Shallow**: File names and basic metadata only (fastest)
-- **Deep**: Full content analysis including thumbnails (recommended)
+<Step title="Pick an indexing mode">
+- **Shallow**: names and basic metadata only. The fastest.
+- **Content**: adds BLAKE3 content identity, so duplicates and copies are recognized.
+- **Deep**: adds media analysis and thumbnails. Use it for photo and video folders.
 </Step>
-<Step title="Start Indexing">
-Click "Add Location" to begin. Monitor progress in the job manager (status bar).
+<Step title="Follow progress">
+The job manager (the sync icon at the bottom of the sidebar) shows indexing progress.
 </Step>
 </Steps>
 
-<Warning>
-Initial indexing time depends on folder size and depth selected. A folder with 10,000 files typically takes 2-5 minutes for deep indexing.
-</Warning>
+![Overview with storage totals, devices, locations and volumes](/public/WingOverview.webp)
+
+<Tip>
+**Settings → Indexer** decides what new locations skip: system files, Git folders, build folders such as `node_modules`, hidden files, and paths listed in `.gitignore`.
+</Tip>
+
+## Find Your Way Around
+
+![Grid view with the Inspector](/public/WingGridView.webp)
+
+- **Sidebar**: Overview, Recents, Favorites, File Kinds, locations, volumes, devices and tags.
+- **Explorer**: grid, list, columns, media and size views, with tabs (`Ctrl+T`) and two panes (`F3`).
+- **Quick Preview**: press `Space` on a file.
+- **Inspector** (`Ctrl+I`): details, permissions, SHA-256 and tags of the selection.
+- **Search**: the magnifier in the top bar searches every indexed location and filters by kind, extension, size, date and hidden files.
+- **Command palette** (`Ctrl+Shift+P`) and **Settings** (`Ctrl+,`).
+
+Copy, move, trash, rename and new items are journaled: `Ctrl+Z` undoes the last one, and `wing file undo` does the same from the terminal.
 
 ## Organize with Tags
 
-Tags provide flexible organization without moving files:
+Tags organize files without moving them. Add them from the Inspector, or press `Alt+G` for tag mode and `1` to `0` to toggle the first ten tags on the selection. Click a tag in the sidebar to list its files. Tags sync to paired devices with the library.
+
+## Connect Google Drive and Other Clouds
 
 <Steps>
-<Step title="Create a Tag">
-Right-click any file and select "Add Tag" or use Settings → Tags to create tags first.
+<Step title="Open Settings → Integrations">
+Keep Google Drive and Google Photos checked, then click **Connect a Google account**.
 </Step>
-<Step title="Apply Tags">
-Select multiple files and apply tags in bulk. Tags sync across devices.
-</Step>
-<Step title="Filter by Tags">
-Click tags in the sidebar to filter your view instantly.
+<Step title="Sign in in the browser">
+After you allow access, the account's Drive appears in the sidebar. Repeat for more accounts.
 </Step>
 </Steps>
 
-Tags support colors and hierarchies for advanced organization.
+![Settings, Integrations](/public/WingIntegrations.webp)
 
-## Search Across Everything
-
-WingDrive's search works across all indexed locations simultaneously:
-
-```
-photo                    # Find all photos
-tag:vacation            # Files tagged "vacation"
-size:>10MB              # Large files
-modified:<7d            # Changed in last week
-```
-
-<Info>
-Search runs locally for privacy. No file data leaves your devices.
-</Info>
+S3 and compatible services, Dropbox, OneDrive, Azure Blob and GCS are added through **Add Storage → Cloud Storage** or `wing cloud`. See [Integrations](/core/integrations) and [Cloud integration](/core/cloud-integration).
 
 ## Connect Another Device
 
-Expand WingDrive to multiple devices:
-
 <Steps>
-<Step title="Install on Second Device">
-Download and install WingDrive on another computer or mobile device.
+<Step title="Install WingDrive on the second device">
+Use the same steps as above.
 </Step>
-<Step title="Sign In">
-Use the same account to link devices (coming soon) or set up peer-to-peer pairing.
+<Step title="Pair">
+On the first device, click **Pair → Generate Pairing Code**. On the second, click **Pair → Join with Code** and scan the QR code or type the 12 words. Codes expire after five minutes.
 </Step>
-<Step title="Enable Sync">
-Choose which organizational data to sync. File content remains on original devices.
+<Step title="Set up sync">
+Click **Setup Sync** to share the library. The index, tags and metadata sync; file contents stay where they are.
 </Step>
 </Steps>
 
-Connected devices share tags, comments, and organization while keeping files in place.
+There is no account and no central server: paired devices talk to each other directly over Iroh/QUIC, end-to-end encrypted. See [Pairing](/core/pairing) and [Library sync](/core/library-sync).
 
 ## Next Steps
 
-You now have WingDrive running with your first library and location. Explore these features:
-
-- **[Back Up Photos from iPhone](/guides/backup-photos-ios)** - Automatic photo backup
-- **[Manage Your Libraries](/guides/manage-libraries)** - Multiple library workflows
-- **[Add and Index Locations](/guides/add-index-locations)** - Advanced indexing options
+- **[Manage Your Libraries](/overview/manage-libraries)**: several libraries and switching between them
+- **[Add and Index Locations](/overview/add-index-locations)**: indexing options in detail
+- **[Self-hosting](/overview/self-hosting)**: run `wing-server` on a NAS or VPS
 
 <Note>
-Use [WingDrive Discussions](https://github.com/bernardopg/wingdrive/discussions) for help, tips, and project updates.
+Use [WingDrive Discussions](https://github.com/bernardopg/wingdrive/discussions) or the [Discord server](https://discord.gg/n8uwvrYMCh) for help and tips.
 </Note>
 
 ## Troubleshooting
 
 ### WingDrive won't start
-- Check if the daemon is running in your system processes
-- Restart your computer to clear any stuck processes
-- Reinstall if issues persist
+- Run `wing status` to see whether the daemon answers.
+- On a Wayland session with a GTK error, start it through XWayland: `GDK_BACKEND=x11 wingdrive`.
+- Read the logs with `wing logs`.
 
 ### Indexing seems slow
-- Start with shallow indexing for large folders
-- Ensure your disk isn't full
-- Check job manager for detailed progress
+- Use Shallow indexing for very large folders.
+- Check that the disk is not full.
+- Open the job manager, or run `wing job monitor`, for detailed progress.
 
 ### Can't see files
-- Verify the location was added successfully
-- Check if indexing completed in job manager
-- Ensure you're viewing the correct library
-
-Need more help? Visit our [troubleshooting guide](/troubleshooting) or ask in [GitHub Discussions](https://github.com/bernardopg/wingdrive/discussions).
+- Check that the location was added and its indexing job completed.
+- Check that the right library is selected in the library menu.

@@ -16,7 +16,20 @@ O emparelhamento usa um código de uso único. Um dispositivo o **gera** e o out
 
 Os códigos são válidos por cinco minutos e nunca são reutilizados.
 
-No aplicativo desktop, abra **Devices** na barra lateral e escolha *Pair device*. Pela CLI:
+No aplicativo desktop:
+
+<ol class="steps">
+<li>No primeiro dispositivo, abra a Visão geral e clique em <strong>Parear</strong> na barra superior e depois em <strong>Gerar código de pareamento</strong>.</li>
+<li>No segundo, clique em <strong>Parear → Conectar com código</strong> e leia o QR code ou digite as 12 palavras. Em outra rede, cole também o Node ID mostrado em <em>pareamento entre redes</em>.</li>
+<li>Os dois aparecem em <em>Dispositivos</em> na barra lateral. Depois, clique em <strong>Configurar sincronização</strong> para compartilhar a biblioteca.</li>
+</ol>
+
+<figure class="shot">
+<a href="/img/docs/pair-device.webp"><img src="/img/docs/pair-device.webp" width="620" height="830" loading="lazy" alt="Diálogo de pareamento com QR code, o código de 12 palavras e o Node ID"></a>
+<figcaption><strong>Gerar código de pareamento</strong> mostra um QR code, as 12 palavras e o Node ID deste dispositivo.</figcaption>
+</figure>
+
+Pela CLI:
 
 ```bash
 # No primeiro dispositivo

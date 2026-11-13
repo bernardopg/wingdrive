@@ -11,6 +11,11 @@ There is no account, no telemetry and no central server. Indexing, thumbnails an
 
 > **Alpha.** Linux is the supported platform, and the current goal (milestone M2) is to replace Dolphin, Nautilus or Yazi as your default file manager. Windows installers ship as a beta since 3.0. macOS builds from source.
 
+<figure class="shot">
+<a href="/img/shots/WingGridView-1600.webp"><img src="/img/shots/WingGridView-1600.webp" srcset="/img/shots/WingGridView-800.webp 800w, /img/shots/WingGridView-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="WingDrive grid view with the Inspector"></a>
+<figcaption>One window for every folder, drive and cloud you own.</figcaption>
+</figure>
+
 ## What you get
 
 - **A fast Explorer** with grid, list, columns, media and size views, Quick Preview, a dual-pane mode (F3) and a docked terminal (F4).
@@ -18,7 +23,8 @@ There is no account, no telemetry and no central server. Indexing, thumbnails an
 - **Safe file operations**: copy preflight, atomic copies, undo for copy, move and trash, compress and extract, checksums.
 - **Content identity**: every file gets a BLAKE3 hash, so the same file on two devices is one file.
 - **Devices**: pair your own machines over Iroh/QUIC to sync the library and send files with Wingdrop.
-- **Cloud volumes** through OpenDAL: S3, Google Drive, Dropbox, OneDrive, Azure Blob, GCS and more.
+- **Google Drive and Google Photos** with several accounts: browse, copy, edit in your own apps, sync folders and upload photos.
+- **Cloud volumes** through OpenDAL: S3 and compatible services, Dropbox, OneDrive, Azure Blob and GCS.
 - **`wing` CLI and `wing-server`** for scripts and headless machines, on the same daemon.
 
 ## Core ideas

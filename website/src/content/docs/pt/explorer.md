@@ -17,6 +17,34 @@ O Explorer é onde você passa o dia. Ele foi criado para ser rápido com o tecl
 | **Mídia** | Pastas de fotos e vídeos |
 | **Tamanho** | Encontrar o que ocupa espaço |
 
+<div class="shots">
+
+<figure class="shot">
+<a href="/img/shots/WingListView-1600.webp"><img src="/img/shots/WingListView-1600.webp" srcset="/img/shots/WingListView-800.webp 800w, /img/shots/WingListView-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="Visualização em lista com indicadores Git e o terminal acoplado"></a>
+<figcaption>Lista: colunas ordenáveis, pastas expansíveis, indicadores Git e o terminal (F4).</figcaption>
+</figure>
+
+<figure class="shot">
+<a href="/img/shots/WingColumnView-1600.webp"><img src="/img/shots/WingColumnView-1600.webp" srcset="/img/shots/WingColumnView-800.webp 800w, /img/shots/WingColumnView-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="Visualização em colunas"></a>
+<figcaption>Colunas: navegue por árvores profundas.</figcaption>
+</figure>
+
+</div>
+
+<div class="shots">
+
+<figure class="shot">
+<a href="/img/shots/WingMediaView-1600.webp"><img src="/img/shots/WingMediaView-1600.webp" srcset="/img/shots/WingMediaView-800.webp 800w, /img/shots/WingMediaView-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="Visualização de mídia de uma pasta de fotos"></a>
+<figcaption>Mídia: pastas de fotos e vídeos.</figcaption>
+</figure>
+
+<figure class="shot">
+<a href="/img/shots/WingSizeView-1600.webp"><img src="/img/shots/WingSizeView-1600.webp" srcset="/img/shots/WingSizeView-800.webp 800w, /img/shots/WingSizeView-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="Visualização por tamanho"></a>
+<figcaption>Tamanho: veja o que ocupa espaço.</figcaption>
+</figure>
+
+</div>
+
 Agrupe uma pasta em seções por tipo ou data, mostre ou oculte arquivos ocultos (Ctrl+H) e filtre a pasta atual (Ctrl+Shift+F).
 
 ## Quick Preview
@@ -26,6 +54,11 @@ Pressione **Space** em um arquivo para visualizá-lo sem abrir outro aplicativo:
 ## Pesquisa
 
 A barra de pesquisa busca em todas as localizações indexadas. Refine os resultados por **tipo**, **extensão**, **tamanho**, **data** e **arquivos ocultos**. As contagens abrangem todos os resultados, não apenas a primeira página.
+
+<figure class="shot">
+<a href="/img/shots/WingSearch-1600.webp"><img src="/img/shots/WingSearch-1600.webp" srcset="/img/shots/WingSearch-800.webp 800w, /img/shots/WingSearch-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="Resultados de pesquisa com filtros de tipo, extensão, tamanho e data"></a>
+<figcaption>Pesquisa com filtros. As contagens cobrem todos os resultados.</figcaption>
+</figure>
 
 ## Abas, painel duplo e terminal
 

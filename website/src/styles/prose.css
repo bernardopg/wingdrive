@@ -103,3 +103,112 @@
 .prose > p:first-child + h2 {
 	margin-top: 1.4em;
 }
+
+/* Screenshots: <figure class="shot"><img …><figcaption>…</figcaption></figure> */
+.prose figure.shot {
+	margin: 1.8em 0;
+	display: grid;
+	gap: 10px;
+}
+.prose figure.shot img {
+	display: block;
+	width: 100%;
+	height: auto;
+	box-shadow: 0 18px 50px -24px rgb(10 4 30 / 0.9);
+}
+.prose figure.shot a {
+	text-decoration: none;
+}
+.prose figcaption {
+	font-size: 14px;
+	line-height: 1.55;
+	color: var(--dim);
+	text-align: center;
+}
+/* Two screenshots side by side, stacked on narrow screens. */
+.prose .shots {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 18px;
+	margin: 1.8em 0;
+}
+.prose .shots figure.shot {
+	margin: 0;
+}
+@media (max-width: 720px) {
+	.prose .shots {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Callouts: <div class="callout tip"><p><strong>Tip.</strong> …</p></div> */
+.prose .callout {
+	margin: 1.5em 0;
+	padding: 14px 18px;
+	border-radius: 12px;
+	border: 1px solid var(--line);
+	border-left-width: 3px;
+	background: rgb(139 92 246 / 0.08);
+	color: var(--muted);
+	font-size: 15.5px;
+}
+.prose .callout p {
+	margin: 0;
+}
+.prose .callout p + p {
+	margin-top: 0.6em;
+}
+.prose .callout.tip {
+	border-left-color: #34d399;
+	background: rgb(52 211 153 / 0.07);
+}
+.prose .callout.note {
+	border-left-color: var(--violet);
+}
+.prose .callout.warn {
+	border-left-color: #f59e0b;
+	background: rgb(245 158 11 / 0.08);
+}
+
+/* Numbered how-to steps: an <ol class="steps"> right after a heading. */
+.prose ol.steps {
+	list-style: none;
+	padding-left: 0;
+	counter-reset: step;
+	display: grid;
+	gap: 12px;
+}
+.prose ol.steps > li {
+	counter-increment: step;
+	position: relative;
+	padding: 2px 0 2px 44px;
+	margin: 0;
+}
+.prose ol.steps > li::before {
+	content: counter(step);
+	position: absolute;
+	left: 0;
+	top: 2px;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	font-size: 13.5px;
+	font-weight: 600;
+	color: var(--text);
+	background: rgb(139 92 246 / 0.22);
+	border: 1px solid var(--line);
+}
+
+.prose kbd {
+	font-family: var(--mono);
+	font-size: 0.82em;
+	padding: 0.12em 0.45em;
+	border-radius: 6px;
+	border: 1px solid var(--line);
+	border-bottom-width: 2px;
+	background: var(--surface);
+	color: var(--text);
+	white-space: nowrap;
+}

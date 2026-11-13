@@ -16,7 +16,20 @@ Pairing uses a one-time code. One device **generates** it, the other **joins** w
 
 Codes are valid for five minutes and never reused.
 
-From the desktop app, open **Devices** in the sidebar and choose *Pair device*. From the CLI:
+In the desktop app:
+
+<ol class="steps">
+<li>On the first device, open the Overview and click <strong>Pair</strong> in the top bar, then <strong>Generate Pairing Code</strong>.</li>
+<li>On the second device, click <strong>Pair → Join with Code</strong> and scan the QR code or type the 12 words. On another network, also paste the Node ID shown under <em>For cross-network pairing</em>.</li>
+<li>Both devices show up under <em>Devices</em> in the sidebar. Next, click <strong>Setup Sync</strong> to share the library.</li>
+</ol>
+
+<figure class="shot">
+<a href="/img/docs/pair-device.webp"><img src="/img/docs/pair-device.webp" width="620" height="830" loading="lazy" alt="Device Pairing dialog with a QR code, the 12-word code and the Node ID"></a>
+<figcaption><strong>Generate Pairing Code</strong> shows a QR code, the 12 words and this device's Node ID.</figcaption>
+</figure>
+
+From the CLI:
 
 ```bash
 # On the first device

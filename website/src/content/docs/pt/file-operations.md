@@ -16,7 +16,18 @@ O WingDrive oferece todas as ferramentas que você espera de um gerenciador de a
 - **Open With**, incluindo entradas de desktop com códigos de campo como `%f` e `%u`.
 - **Permissões** e **somas de verificação SHA-256** no Inspector.
 
+<figure class="shot">
+<a href="/img/shots/WingContextMenu-1600.webp"><img src="/img/shots/WingContextMenu-1600.webp" srcset="/img/shots/WingContextMenu-800.webp 800w, /img/shots/WingContextMenu-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="Menu de contexto com as opções de Compactar"></a>
+<figcaption>Clique com o botão direito para todas as ferramentas: abrir, renomear, compactar, copiar, duplicar, lixeira.</figcaption>
+</figure>
+
 ## Desfazer
+
+<div class="callout tip">
+
+<p><strong>Errou?</strong> Aperte <kbd>Ctrl</kbd>+<kbd>Z</kbd> na hora. Lixeira, mover, copiar por cima de um arquivo, renomear e itens novos voltam.</p>
+
+</div>
 
 Cópias, substituições, movimentações, renomeações, envios à lixeira e novas pastas, arquivos e links são registrados em um histórico. Pressione **Ctrl+Z** no aplicativo desktop ou na interface web, ou execute `wing file undo`, para desfazer a última operação. `wing file history` lista o que ainda pode ser desfeito.
 

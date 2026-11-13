@@ -28,6 +28,7 @@
 
 <p align="center">
   <a href="#install">Install</a> ·
+  <a href="#first-steps">First steps</a> ·
   <a href="#highlights">Highlights</a> ·
   <a href="#documentation">Docs</a> ·
   <a href="#roadmap">Roadmap</a> ·
@@ -60,6 +61,18 @@ browse, search and recognize across your own devices. No account, no telemetry, 
 After installing, WingDrive can open folders for `xdg-open` and for "Show in folder" in other apps,
 start with your session and stay in the tray.
 
+## First steps
+
+1. **Add your folders.** On the Overview, click **Add Storage**, then **Local Folder**. WingDrive
+   indexes the folder in place; nothing is moved or copied.
+2. **Browse and search.** Pick a view (grid, list, columns, media, size), press <kbd>Space</kbd> for
+   Quick Preview and <kbd>F3</kbd> for two panes. <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes the last
+   file operation.
+3. **Connect the rest.** **Settings → Integrations** signs in to Google Drive and Google Photos;
+   **Pair** links your other computers.
+
+The [user guide on wingdrive.org](https://wingdrive.org/docs/) walks through each step with screenshots.
+
 ## Highlights
 
 <table>
@@ -87,6 +100,19 @@ start with your session and stay in the tray.
       extract, templates, Dolphin service menus, permissions, SHA-256 checksums, and undo.</p>
     </td>
   </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingIntegrations.webp" alt="Settings, Integrations with Google accounts and cloud sync"/>
+      <p><strong>Your clouds, like local folders.</strong> Sign in to Google Drive and Google Photos
+      from Settings, with several accounts. Copy, move, edit in your own apps and keep folders in
+      sync both ways.</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingOverview.webp" alt="Overview with storage, devices, locations and volumes"/>
+      <p><strong>Every drive at a glance.</strong> The Overview sums up storage, indexed files,
+      devices, locations and volumes, and is where you add storage, pair devices and set up sync.</p>
+    </td>
+  </tr>
 </table>
 
 **Also in the box**
@@ -102,6 +128,7 @@ start with your session and stay in the tray.
 
 | Topic | Start here |
 |---|---|
+| User guide, with screenshots | [wingdrive.org/docs](https://wingdrive.org/docs/): [First run](https://wingdrive.org/docs/first-run/) · [Explorer](https://wingdrive.org/docs/explorer/) · [Cloud volumes](https://wingdrive.org/docs/cloud/) · [Devices](https://wingdrive.org/docs/devices/) |
 | Install and first run | [Installation](./docs/readme/installation.md) · [Get started](./docs/overview/get-started.mdx) |
 | Libraries and locations | [Manage libraries](./docs/overview/manage-libraries.mdx) · [Add locations](./docs/overview/add-index-locations.mdx) |
 | Server and CLI | [Self-hosting](./docs/overview/self-hosting.mdx) · [Linux deployment](./docs/cli/linux-deployment.mdx) · [CLI](./docs/cli/overview.mdx) |
