@@ -1,29 +1,29 @@
 use super::*;
 #[cfg(target_os = "macos")]
 use crate::windows::WingDriveWindow;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Runtime};
 
 #[tauri::command]
-pub async fn begin_drag(
-	app: AppHandle,
+pub async fn begin_drag<R: Runtime>(
+	app: AppHandle<R>,
 	config: DragConfig,
 	source_window_label: String,
 ) -> Result<String, String> {
 	tracing::info!("begin_drag called for window: {}", source_window_label);
 	tracing::debug!("Drag config: {:?}", config);
 
-	let coordinator = app.state::<DragCoordinator>();
-
-	match coordinator.begin_drag(&app, config.clone(), source_window_label.clone()) {
-		Ok(_) => {}
-		Err(e) => {
-			tracing::error!("Failed to begin drag: {}", e);
-			return Err(e);
-		}
-	}
-
 	#[cfg(target_os = "macos")]
 	{
+		let coordinator = app.state::<DragCoordinator>();
+
+		match coordinator.begin_drag(&app, config.clone(), source_window_label.clone()) {
+			Ok(_) => {}
+			Err(e) => {
+				tracing::error!("Failed to begin drag: {}", e);
+				return Err(e);
+			}
+		}
+
 		let session_id = uuid::Uuid::new_v4().to_string();
 
 		let _source_window = app
@@ -109,13 +109,16 @@ pub async fn begin_drag(
 
 	#[cfg(not(target_os = "macos"))]
 	{
+		// No native drag follows, so a session here would announce a drag that never
+		// happens and refuse the next one until it goes stale.
+		let _ = app;
 		Err("Drag and drop is only supported on macOS currently".to_string())
 	}
 }
 
 #[tauri::command]
-pub async fn end_drag(
-	app: AppHandle,
+pub async fn end_drag<R: Runtime>(
+	app: AppHandle<R>,
 	session_id: String,
 	result: DragResult,
 ) -> Result<(), String> {
@@ -147,13 +150,15 @@ pub async fn end_drag(
 }
 
 #[tauri::command]
-pub async fn get_drag_session(app: AppHandle) -> Result<Option<DragSession>, String> {
+pub async fn get_drag_session<R: Runtime>(
+	app: AppHandle<R>,
+) -> Result<Option<DragSession>, String> {
 	let coordinator = app.state::<DragCoordinator>();
 	Ok(coordinator.current_session())
 }
 
 #[tauri::command]
-pub async fn force_clear_drag_state(app: AppHandle) -> Result<(), String> {
+pub async fn force_clear_drag_state<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
 	tracing::warn!("force_clear_drag_state called - this should only be used for debugging");
 	let coordinator = app.state::<DragCoordinator>();
 	coordinator.force_clear_state(&app);
