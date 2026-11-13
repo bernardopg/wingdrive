@@ -654,6 +654,21 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Correção: a migração original passa a declarar `entries` para bancos novos. A nova migração recria `sync_conduit` e `sync_generation` com as chaves corretas nos bancos existentes, copia as linhas cujas entradas ainda existem e recria os índices, tudo numa transação: uma falha no meio deixa as tabelas originais, e a migração roda de novo na próxima abertura (teste `a_failed_rebuild_keeps_the_original_tables`).
 - Limite: o serviço de sincronização de pastas ainda não tem ação nem interface (FSYNC-004 em To Do); o teste `test_mirror_sync_with_files` agora espera o monitor terminar em vez de dormir 100 ms.
 
+## Desktop: arrastar no Linux e no Windows deixava uma sessão de arraste presa
+
+- Estado: corrigido; `drag::tests::begin_drag_off_macos_fails_without_starting_a_session`.
+- Local: `begin_drag` em `apps/tauri/src-tauri/src/drag/commands.rs`.
+- Reprodução anterior: fora do macOS, o comando registrava a sessão no `DragCoordinator` e emitia `drag:began` para todas as janelas antes de responder que o arraste só existe no macOS. O círculo da visão de tamanhos (`SizeCircle.tsx`) chama `platform.startDrag` em qualquer plataforma.
+- Impacto: as janelas recebiam o início de um arraste que nunca acontecia e nunca recebiam `drag:ended`. Por 30 segundos, até a sessão ser considerada antiga, cada nova tentativa falhava com "A drag operation is already in progress".
+- Correção: fora do macOS o comando responde com o erro sem registrar sessão nem emitir eventos.
+
+## Desktop: o frontend não conseguia encerrar nem reconhecer o fim de um arraste
+
+- Estado: corrigido; `drag::tests::frontend_drag_config_and_results_keep_their_wire_format` e os testes de `drag:ended`.
+- Local: `DragResult` em `apps/tauri/src-tauri/src/drag/events.rs`.
+- Reprodução anterior: `#[serde(tag = "type", rename_all = "camelCase")]` gravava as variantes como `dropped`, `cancelled` e `failed`. O frontend envia `{ type: "Cancelled" }` em `useDragOperation.ts` e compara `event.result.type === "Dropped"` em `useDropZone.ts`. O comando `end_drag` recusava o argumento com "unknown variant `Cancelled`".
+- Impacto: no macOS, cancelar pelo frontend não encerrava a sessão, que bloqueava novos arrastes por 30 segundos, e `useDropZone` nunca reconhecia um `drag:ended` como soltura.
+- Correção: o enum mantém os nomes das variantes em Pascal case, como o tipo TypeScript declara. Os campos (`operation`, `target`, `error`) não mudam.
 ## Desktop: serviço systemd do daemon quebrava caminhos com espaço
 
 - Estado: corrigido em 2026-11-12; `command_tests::service::systemd::unit_arguments_survive_spaces_and_systemd_specifiers` e `installing_writes_the_unit_then_reloads_enables_and_starts_it`.

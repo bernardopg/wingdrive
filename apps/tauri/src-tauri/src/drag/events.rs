@@ -1,5 +1,6 @@
 use super::*;
 
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DragBeganEvent {
@@ -30,8 +31,10 @@ pub struct DragEndEvent {
 	pub result: DragResult,
 }
 
+/// Variant names stay in Pascal case: the frontend sends and compares
+/// `Dropped`, `Cancelled` and `Failed` (`apps/tauri/src/lib/drag.ts`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[serde(tag = "type")]
 pub enum DragResult {
 	Dropped {
 		operation: DragOperation,

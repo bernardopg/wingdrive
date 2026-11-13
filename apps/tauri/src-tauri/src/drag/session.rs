@@ -10,6 +10,7 @@ pub struct DragSession {
 	pub started_at: u64,
 }
 
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 impl DragSession {
 	pub fn new(config: DragConfig, source_window: String) -> Self {
 		Self {

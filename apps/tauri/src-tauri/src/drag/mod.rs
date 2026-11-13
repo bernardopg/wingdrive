@@ -6,11 +6,14 @@ pub use commands::*;
 pub use events::*;
 pub use session::*;
 
+#[cfg(test)]
+mod tests;
+
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Runtime};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -44,6 +47,11 @@ pub enum DragOperation {
 	Link,
 }
 
+/// A session older than this is assumed lost (its end callback never came) and
+/// no longer blocks a new drag.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+const STALE_SESSION: Duration = Duration::from_secs(30);
+
 #[derive(Debug, Clone)]
 pub struct DragCoordinator {
 	state: Arc<RwLock<Option<(DragSession, Instant)>>>,
@@ -56,9 +64,11 @@ impl DragCoordinator {
 		}
 	}
 
-	pub fn begin_drag(
+	// Only the macOS native drag starts sessions.
+	#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+	pub fn begin_drag<R: Runtime>(
 		&self,
-		app: &AppHandle,
+		app: &AppHandle<R>,
 		config: DragConfig,
 		source_window: String,
 	) -> Result<(), String> {
@@ -67,7 +77,7 @@ impl DragCoordinator {
 		// Check for stale state and clean it up
 		if let Some((session, started_at)) = state.as_ref() {
 			let elapsed = started_at.elapsed();
-			if elapsed > Duration::from_secs(30) {
+			if elapsed > STALE_SESSION {
 				tracing::warn!(
 					"Cleaning up stale drag session {} that started {:?} ago",
 					session.id,
@@ -93,7 +103,7 @@ impl DragCoordinator {
 	}
 
 	#[allow(dead_code)]
-	pub fn update_position(&self, app: &AppHandle, x: f64, y: f64) {
+	pub fn update_position<R: Runtime>(&self, app: &AppHandle<R>, x: f64, y: f64) {
 		if let Some((session, _)) = self.state.read().as_ref() {
 			app.emit(
 				"drag:moved",
@@ -108,7 +118,7 @@ impl DragCoordinator {
 	}
 
 	#[allow(dead_code)]
-	pub fn enter_window(&self, app: &AppHandle, window_label: String) {
+	pub fn enter_window<R: Runtime>(&self, app: &AppHandle<R>, window_label: String) {
 		if let Some((session, _)) = self.state.read().as_ref() {
 			app.emit(
 				"drag:entered",
@@ -122,7 +132,7 @@ impl DragCoordinator {
 	}
 
 	#[allow(dead_code)]
-	pub fn leave_window(&self, app: &AppHandle, window_label: String) {
+	pub fn leave_window<R: Runtime>(&self, app: &AppHandle<R>, window_label: String) {
 		if let Some((session, _)) = self.state.read().as_ref() {
 			app.emit(
 				"drag:left",
@@ -135,7 +145,7 @@ impl DragCoordinator {
 		}
 	}
 
-	pub fn end_drag(&self, app: &AppHandle, result: DragResult) {
+	pub fn end_drag<R: Runtime>(&self, app: &AppHandle<R>, result: DragResult) {
 		if let Some((session, started_at)) = self.state.write().take() {
 			let elapsed = started_at.elapsed();
 			tracing::info!(
@@ -164,7 +174,7 @@ impl DragCoordinator {
 			.map(|(session, _)| session.clone())
 	}
 
-	pub fn force_clear_state(&self, app: &AppHandle) {
+	pub fn force_clear_state<R: Runtime>(&self, app: &AppHandle<R>) {
 		if let Some((session, started_at)) = self.state.write().take() {
 			tracing::warn!(
 				"Force clearing drag state: session_id={}, elapsed={:?}",
