@@ -676,6 +676,7 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: `#[serde(tag = "type", rename_all = "camelCase")]` gravava as variantes como `dropped`, `cancelled` e `failed`. O frontend envia `{ type: "Cancelled" }` em `useDragOperation.ts` e compara `event.result.type === "Dropped"` em `useDropZone.ts`. O comando `end_drag` recusava o argumento com "unknown variant `Cancelled`".
 - Impacto: no macOS, cancelar pelo frontend não encerrava a sessão, que bloqueava novos arrastes por 30 segundos, e `useDropZone` nunca reconhecia um `drag:ended` como soltura.
 - Correção: o enum mantém os nomes das variantes em Pascal case, como o tipo TypeScript declara. Os campos (`operation`, `target`, `error`) não mudam.
+
 ## Desktop: serviço systemd do daemon quebrava caminhos com espaço
 
 - Estado: corrigido em 2026-11-12; `command_tests::service::systemd::unit_arguments_survive_spaces_and_systemd_specifiers` e `installing_writes_the_unit_then_reloads_enables_and_starts_it`.
