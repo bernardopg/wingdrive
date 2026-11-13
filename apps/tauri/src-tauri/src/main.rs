@@ -1246,12 +1246,7 @@ async fn check_daemon_installed() -> Result<bool, String> {
 
 	#[cfg(target_os = "linux")]
 	{
-		let home =
-			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
-		let systemd_dir = std::path::PathBuf::from(home).join(".config/systemd/user");
-		Ok(["wingdrive-daemon.service", "spacedrive-daemon.service"]
-			.iter()
-			.any(|name| systemd_dir.join(name).exists()))
+		Ok(systemd_service_installed(&systemd_user_dir()?))
 	}
 
 	#[cfg(target_os = "windows")]
@@ -1274,13 +1269,14 @@ async fn check_daemon_installed() -> Result<bool, String> {
 	}
 }
 
-/// Install daemon as a service (LaunchAgent on macOS, systemd on Linux)
-#[tauri::command]
-async fn install_daemon_service(
-	app: tauri::AppHandle,
-	daemon_state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
-	app_state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
+/// Stops the daemon this app spawned so the service can start its own.
+///
+/// Both would otherwise compete for the same socket and library lock. Returns
+/// the data directory and socket address the service's daemon will use.
+async fn prepare_service_install<R: Runtime>(
+	app: &AppHandle<R>,
+	daemon_state: &Arc<RwLock<DaemonState>>,
+) -> (PathBuf, String) {
 	let (data_dir, socket_addr) = {
 		let state = daemon_state.read().await;
 		(state.data_dir.clone(), state.socket_addr.clone())
@@ -1303,6 +1299,17 @@ async fn install_daemon_service(
 	// Emit starting event since installation starts the daemon
 	let _ = app.emit("daemon-starting", ());
 	tracing::info!("Emitted daemon-starting event");
+	(data_dir, socket_addr)
+}
+
+/// Install daemon as a service (LaunchAgent on macOS, systemd on Linux)
+#[tauri::command]
+async fn install_daemon_service(
+	app: tauri::AppHandle,
+	daemon_state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
+	app_state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+	let (data_dir, socket_addr) = prepare_service_install(&app, &daemon_state).await;
 
 	#[cfg(target_os = "macos")]
 	{
@@ -1389,135 +1396,30 @@ async fn install_daemon_service(
 			return Err(format!("Failed to load daemon service: {}", stderr));
 		}
 
-		// Update daemon state - we no longer own the process
-		let mut state = daemon_state.write().await;
-		state.started_by_us = false;
-		state.daemon_process = None;
-		tracing::info!("Updated daemon state: started_by_us = false");
-		drop(state);
-
-		// Reset connection pool so it can reconnect to the service-managed daemon
-		tracing::info!("Resetting connection pool to reconnect to service daemon");
-		app_state.connection_pool.reset().await;
-
-		// Wait for daemon to start and become available
-		tracing::info!("Waiting for daemon to become available...");
-		for i in 0..30 {
-			tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-			if is_daemon_running(&socket_addr).await {
-				tracing::info!("Daemon is running after {} attempts", i + 1);
-				break;
-			}
-			if i == 29 {
-				return Err("Daemon failed to start after installing service".to_string());
-			}
-		}
-
-		// Trigger reconnection
-		tracing::info!("Triggering reconnection");
-		app_state.connection_pool.ensure_connected(&app).await?;
-
-		Ok(())
+		reconnect_to_service_daemon(
+			&app,
+			&daemon_state,
+			&app_state,
+			&socket_addr,
+			SERVICE_START_POLLS,
+		)
+		.await
 	}
 
 	#[cfg(target_os = "linux")]
 	{
-		use std::io::Write;
-
-		let home =
-			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
-		let systemd_dir = std::path::PathBuf::from(&home).join(".config/systemd/user");
-
-		std::fs::create_dir_all(&systemd_dir)
-			.map_err(|e| format!("Failed to create systemd directory: {}", e))?;
-
-		let service_path = systemd_dir.join("wingdrive-daemon.service");
-
+		let systemd_dir = systemd_user_dir()?;
 		let daemon_path = find_daemon_binary()?;
+		install_systemd_service(&systemd_dir, &daemon_path, &data_dir, run_systemctl)?;
 
-		let service_content = format!(
-			r#"[Unit]
-Description=WingDrive Daemon
-After=network.target
-
-[Service]
-Type=simple
-ExecStart={} --data-dir {}
-Restart=on-failure
-RestartSec=5s
-
-[Install]
-WantedBy=default.target
-"#,
-			daemon_path.display(),
-			data_dir.display()
-		);
-
-		let mut file = std::fs::File::create(&service_path)
-			.map_err(|e| format!("Failed to create service file: {}", e))?;
-		file.write_all(service_content.as_bytes())
-			.map_err(|e| format!("Failed to write service file: {}", e))?;
-
-		// Enable and start the service
-		let output = host_command("systemctl")
-			.args(["--user", "daemon-reload"])
-			.output()
-			.map_err(|e| format!("Failed to reload systemd: {}", e))?;
-
-		if !output.status.success() {
-			let stderr = String::from_utf8_lossy(&output.stderr);
-			return Err(format!("Failed to reload systemd: {}", stderr));
-		}
-
-		let output = host_command("systemctl")
-			.args(["--user", "enable", "wingdrive-daemon.service"])
-			.output()
-			.map_err(|e| format!("Failed to enable service: {}", e))?;
-
-		if !output.status.success() {
-			let stderr = String::from_utf8_lossy(&output.stderr);
-			return Err(format!("Failed to enable service: {}", stderr));
-		}
-
-		let output = host_command("systemctl")
-			.args(["--user", "start", "wingdrive-daemon.service"])
-			.output()
-			.map_err(|e| format!("Failed to start service: {}", e))?;
-
-		if !output.status.success() {
-			let stderr = String::from_utf8_lossy(&output.stderr);
-			return Err(format!("Failed to start daemon service: {}", stderr));
-		}
-
-		// Update daemon state - we no longer own the process
-		let mut state = daemon_state.write().await;
-		state.started_by_us = false;
-		state.daemon_process = None;
-		tracing::info!("Updated daemon state: started_by_us = false");
-		drop(state);
-
-		// Reset connection pool so it can reconnect to the service-managed daemon
-		tracing::info!("Resetting connection pool to reconnect to service daemon");
-		app_state.connection_pool.reset().await;
-
-		// Wait for daemon to start and become available
-		tracing::info!("Waiting for daemon to become available...");
-		for i in 0..30 {
-			tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-			if is_daemon_running(&socket_addr).await {
-				tracing::info!("Daemon is running after {} attempts", i + 1);
-				break;
-			}
-			if i == 29 {
-				return Err("Daemon failed to start after installing service".to_string());
-			}
-		}
-
-		// Trigger reconnection
-		tracing::info!("Triggering reconnection");
-		app_state.connection_pool.ensure_connected(&app).await?;
-
-		Ok(())
+		reconnect_to_service_daemon(
+			&app,
+			&daemon_state,
+			&app_state,
+			&socket_addr,
+			SERVICE_START_POLLS,
+		)
+		.await
 	}
 
 	#[cfg(target_os = "windows")]
@@ -1635,35 +1537,14 @@ WantedBy=default.target
 			return Err(format!("Failed to start daemon task: {}", stderr));
 		}
 
-		// Update daemon state - we no longer own the process
-		let mut state = daemon_state.write().await;
-		state.started_by_us = false;
-		state.daemon_process = None;
-		tracing::info!("Updated daemon state: started_by_us = false");
-		drop(state);
-
-		// Reset connection pool so it can reconnect to the service-managed daemon
-		tracing::info!("Resetting connection pool to reconnect to service daemon");
-		app_state.connection_pool.reset().await;
-
-		// Wait for daemon to start and become available
-		tracing::info!("Waiting for daemon to become available...");
-		for i in 0..30 {
-			tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-			if is_daemon_running(&socket_addr).await {
-				tracing::info!("Daemon is running after {} attempts", i + 1);
-				break;
-			}
-			if i == 29 {
-				return Err("Daemon failed to start after installing service".to_string());
-			}
-		}
-
-		// Trigger reconnection
-		tracing::info!("Triggering reconnection");
-		app_state.connection_pool.ensure_connected(&app).await?;
-
-		Ok(())
+		reconnect_to_service_daemon(
+			&app,
+			&daemon_state,
+			&app_state,
+			&socket_addr,
+			SERVICE_START_POLLS,
+		)
+		.await
 	}
 
 	#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
@@ -1696,27 +1577,7 @@ async fn uninstall_daemon_service() -> Result<(), String> {
 
 	#[cfg(target_os = "linux")]
 	{
-		let home =
-			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
-		let systemd_dir = std::path::PathBuf::from(home).join(".config/systemd/user");
-		for name in ["wingdrive-daemon.service", "spacedrive-daemon.service"] {
-			let service_path = systemd_dir.join(name);
-			if service_path.exists() {
-				let _ = host_command("systemctl")
-					.args(["--user", "stop", name])
-					.output();
-				let _ = host_command("systemctl")
-					.args(["--user", "disable", name])
-					.output();
-				std::fs::remove_file(&service_path)
-					.map_err(|e| format!("Failed to remove service file: {}", e))?;
-			}
-		}
-		let _ = host_command("systemctl")
-			.args(["--user", "daemon-reload"])
-			.output();
-
-		Ok(())
+		uninstall_systemd_services(&systemd_user_dir()?, run_systemctl)
 	}
 
 	#[cfg(target_os = "windows")]
@@ -1930,6 +1791,190 @@ fn host_command(program: &str) -> std::process::Command {
 	let mut command = std::process::Command::new(program);
 	file_opening_linux::use_host_environment(&mut command);
 	command
+}
+
+/// Runs `systemctl` with `args` on the host.
+#[cfg(target_os = "linux")]
+fn run_systemctl(args: &[&str]) -> std::io::Result<std::process::Output> {
+	host_command("systemctl").args(args).output()
+}
+
+/// The folder that holds the user's systemd units.
+#[cfg(target_os = "linux")]
+fn systemd_user_dir() -> Result<PathBuf, String> {
+	let home =
+		std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
+	Ok(PathBuf::from(home).join(".config/systemd/user"))
+}
+
+/// Unit files of the login service, current name first, then the pre-rename one.
+#[cfg(target_os = "linux")]
+const SYSTEMD_UNITS: [&str; 2] = ["wingdrive-daemon.service", "spacedrive-daemon.service"];
+
+/// Whether `systemd_dir` holds a unit for the daemon, under either name.
+#[cfg(target_os = "linux")]
+fn systemd_service_installed(systemd_dir: &Path) -> bool {
+	SYSTEMD_UNITS
+		.iter()
+		.any(|name| systemd_dir.join(name).exists())
+}
+
+/// Quotes `value` as a single `ExecStart` argument.
+///
+/// systemd splits an unquoted argument at whitespace and expands `%`
+/// specifiers and `$` variables in it, so a data folder such as
+/// "My Files" reached the daemon as two arguments.
+#[cfg(target_os = "linux")]
+fn systemd_exec_argument(value: &Path) -> String {
+	let mut quoted = String::from("\"");
+	for character in value.to_string_lossy().chars() {
+		match character {
+			'"' | '\\' => {
+				quoted.push('\\');
+				quoted.push(character);
+			}
+			'\n' => quoted.push_str("\\n"),
+			'%' => quoted.push_str("%%"),
+			'$' => quoted.push_str("$$"),
+			_ => quoted.push(character),
+		}
+	}
+	quoted.push('"');
+	quoted
+}
+
+/// The user unit that runs `daemon_path` on `data_dir` at login.
+#[cfg(target_os = "linux")]
+fn systemd_unit(daemon_path: &Path, data_dir: &Path) -> String {
+	format!(
+		r#"[Unit]
+Description=WingDrive Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart={} --data-dir {}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target
+"#,
+		systemd_exec_argument(daemon_path),
+		systemd_exec_argument(data_dir)
+	)
+}
+
+/// Writes the daemon's user unit into `systemd_dir`, then enables and starts it.
+///
+/// `systemctl` runs the given arguments; tests pass a recorder so they never
+/// reach the user's service manager.
+#[cfg(target_os = "linux")]
+fn install_systemd_service(
+	systemd_dir: &Path,
+	daemon_path: &Path,
+	data_dir: &Path,
+	systemctl: impl Fn(&[&str]) -> std::io::Result<std::process::Output>,
+) -> Result<(), String> {
+	std::fs::create_dir_all(systemd_dir)
+		.map_err(|e| format!("Failed to create systemd directory: {}", e))?;
+	std::fs::write(
+		systemd_dir.join(SYSTEMD_UNITS[0]),
+		systemd_unit(daemon_path, data_dir),
+	)
+	.map_err(|e| format!("Failed to write service file: {}", e))?;
+
+	let steps: [(&[&str], &str, &str); 3] = [
+		(
+			&["--user", "daemon-reload"],
+			"Failed to reload systemd",
+			"Failed to reload systemd",
+		),
+		(
+			&["--user", "enable", SYSTEMD_UNITS[0]],
+			"Failed to enable service",
+			"Failed to enable service",
+		),
+		(
+			&["--user", "start", SYSTEMD_UNITS[0]],
+			"Failed to start service",
+			"Failed to start daemon service",
+		),
+	];
+	for (args, spawn_error, status_error) in steps {
+		let output = systemctl(args).map_err(|e| format!("{spawn_error}: {e}"))?;
+		if !output.status.success() {
+			let stderr = String::from_utf8_lossy(&output.stderr);
+			return Err(format!("{status_error}: {stderr}"));
+		}
+	}
+	Ok(())
+}
+
+/// Stops, disables and deletes the daemon's user units under either name.
+///
+/// Stopping and disabling are best effort: a unit systemd no longer knows
+/// still has its file removed.
+#[cfg(target_os = "linux")]
+fn uninstall_systemd_services(
+	systemd_dir: &Path,
+	systemctl: impl Fn(&[&str]) -> std::io::Result<std::process::Output>,
+) -> Result<(), String> {
+	for name in SYSTEMD_UNITS {
+		let service_path = systemd_dir.join(name);
+		if service_path.exists() {
+			let _ = systemctl(&["--user", "stop", name]);
+			let _ = systemctl(&["--user", "disable", name]);
+			std::fs::remove_file(&service_path)
+				.map_err(|e| format!("Failed to remove service file: {}", e))?;
+		}
+	}
+	let _ = systemctl(&["--user", "daemon-reload"]);
+	Ok(())
+}
+
+/// Polls of 100 ms while a freshly installed service starts its daemon.
+const SERVICE_START_POLLS: u32 = 30;
+
+/// Hands the daemon over to the login service and reconnects to it.
+///
+/// The app no longer owns the process, so exiting must leave it running. The
+/// pool drops its old connection and opens a new one once the service's
+/// daemon answers.
+async fn reconnect_to_service_daemon<R: Runtime>(
+	app: &AppHandle<R>,
+	daemon_state: &Arc<RwLock<DaemonState>>,
+	app_state: &AppState,
+	socket_addr: &str,
+	polls: u32,
+) -> Result<(), String> {
+	// Update daemon state - we no longer own the process
+	let mut state = daemon_state.write().await;
+	state.started_by_us = false;
+	state.daemon_process = None;
+	tracing::info!("Updated daemon state: started_by_us = false");
+	drop(state);
+
+	// Reset connection pool so it can reconnect to the service-managed daemon
+	tracing::info!("Resetting connection pool to reconnect to service daemon");
+	app_state.connection_pool.reset().await;
+
+	// Wait for daemon to start and become available
+	tracing::info!("Waiting for daemon to become available...");
+	for i in 0..polls {
+		tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+		if is_daemon_running(socket_addr).await {
+			tracing::info!("Daemon is running after {} attempts", i + 1);
+			break;
+		}
+		if i + 1 == polls {
+			return Err("Daemon failed to start after installing service".to_string());
+		}
+	}
+
+	// Trigger reconnection
+	tracing::info!("Triggering reconnection");
+	app_state.connection_pool.ensure_connected(app).await
 }
 
 /// Start the daemon as a background process

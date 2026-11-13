@@ -19,7 +19,10 @@ use crate::{
 };
 
 /// Collects the payloads emitted on `event` anywhere in the app.
-fn record<R: tauri::Runtime>(app: &tauri::App<R>, event: &str) -> Arc<Mutex<Vec<String>>> {
+pub(super) fn record<R: tauri::Runtime>(
+	app: &tauri::App<R>,
+	event: &str,
+) -> Arc<Mutex<Vec<String>>> {
 	let seen = Arc::new(Mutex::new(Vec::new()));
 	let sink = seen.clone();
 	app.listen_any(event, move |event| {
@@ -28,7 +31,7 @@ fn record<R: tauri::Runtime>(app: &tauri::App<R>, event: &str) -> Arc<Mutex<Vec<
 	seen
 }
 
-async fn wait_for(mut done: impl FnMut() -> bool) {
+pub(super) async fn wait_for(mut done: impl FnMut() -> bool) {
 	tokio::time::timeout(Duration::from_secs(5), async {
 		while !done() {
 			tokio::time::sleep(Duration::from_millis(10)).await;

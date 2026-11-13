@@ -82,6 +82,28 @@ async fn one_shot_daemon(reply: &'static str) -> (String, tokio::task::JoinHandl
 	(address, task)
 }
 
+/// Answers every line of every connection with `reply`, as a daemon would
+/// answer a ping and a libraries query alike.
+async fn answering_daemon(reply: serde_json::Value) -> String {
+	let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+	let address = listener.local_addr().unwrap().to_string();
+	tokio::spawn(async move {
+		while let Ok((stream, _)) = listener.accept().await {
+			let reply = format!("{reply}\n");
+			tokio::spawn(async move {
+				let (reader, mut writer) = stream.into_split();
+				let mut reader = BufReader::new(reader);
+				let mut line = String::new();
+				while reader.read_line(&mut line).await.unwrap_or(0) > 0 {
+					let _ = writer.write_all(reply.as_bytes()).await;
+					line.clear();
+				}
+			});
+		}
+	});
+	address
+}
+
 /// An address on which nothing listens.
 ///
 /// A freed ephemeral port can be taken again by a test running in parallel;
@@ -263,3 +285,4 @@ async fn app_state_commands_report_selection_library_and_subscriptions() {
 #[cfg(unix)]
 mod daemon;
 mod events;
+mod service;
