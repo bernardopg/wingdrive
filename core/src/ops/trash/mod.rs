@@ -104,13 +104,17 @@ mod platform {
 	fn select(ids: &[String], paths: &[String]) -> Result<Vec<TrashItem>, String> {
 		let mut items = os_limited::list().map_err(|e| e.to_string())?;
 		items.sort_by_key(|item| std::cmp::Reverse(item.time_deleted));
+		let wanted: Vec<_> = paths
+			.iter()
+			.map(|p| super::trash_location(Path::new(p)))
+			.collect();
 		let mut chosen: Vec<TrashItem> = Vec::new();
 		for item in items {
 			let original = item.original_path();
 			let by_id = ids
 				.iter()
 				.any(|id| item.id.to_string_lossy() == id.as_str());
-			let by_path = paths.iter().any(|p| Path::new(p) == original)
+			let by_path = wanted.iter().any(|p| *p == original)
 				&& !chosen.iter().any(|c| c.original_path() == original);
 			if by_id || by_path {
 				chosen.push(item);
@@ -132,12 +136,18 @@ mod platform {
 	) -> Result<std::collections::HashMap<std::path::PathBuf, String>, String> {
 		let mut items = os_limited::list().map_err(|e| e.to_string())?;
 		items.sort_by_key(|item| std::cmp::Reverse(item.time_deleted));
+		let wanted: Vec<_> = paths
+			.iter()
+			.map(|p| (super::trash_location(p), p))
+			.collect();
 		let mut ids = std::collections::HashMap::new();
 		for item in items {
 			let original = item.original_path();
-			if paths.contains(&original) {
-				ids.entry(original)
-					.or_insert_with(|| item.id.to_string_lossy().into_owned());
+			for (location, requested) in &wanted {
+				if *location == original {
+					ids.entry((*requested).clone())
+						.or_insert_with(|| item.id.to_string_lossy().into_owned());
+				}
 			}
 		}
 		Ok(ids)
@@ -174,6 +184,22 @@ mod platform {
 		_paths: &[std::path::PathBuf],
 	) -> Result<std::collections::HashMap<std::path::PathBuf, String>, String> {
 		Ok(std::collections::HashMap::new())
+	}
+}
+
+/// The path the system trash records for an item trashed from `path`.
+///
+/// The `trash` crate canonicalizes the parent folder before it moves an item,
+/// so a path whose parent crosses a symbolic link is recorded under the link's
+/// target. Comparing journal paths with this form finds those items again; the
+/// item itself is not resolved, since it is no longer there after trashing.
+pub(crate) fn trash_location(path: &std::path::Path) -> std::path::PathBuf {
+	match (path.parent(), path.file_name()) {
+		(Some(parent), Some(name)) => match std::fs::canonicalize(parent) {
+			Ok(parent) => parent.join(name),
+			Err(_) => path.to_path_buf(),
+		},
+		_ => path.to_path_buf(),
 	}
 }
 
@@ -308,8 +334,62 @@ crate::register_core_action!(TrashPurgeAction, "trash.purge");
 mod tests {
 	use super::platform;
 
+	/// The tests point XDG_DATA_HOME, which is process-wide, at their own trash.
+	static TRASH_ENV: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+	#[test]
+	fn trash_location_resolves_a_symlinked_parent_only() {
+		let root = tempfile::tempdir().unwrap();
+		let real = root.path().join("real");
+		std::fs::create_dir(&real).unwrap();
+		let link = root.path().join("link");
+		std::os::unix::fs::symlink(&real, &link).unwrap();
+		let real = std::fs::canonicalize(&real).unwrap();
+		assert_eq!(
+			super::trash_location(&link.join("gone.txt")),
+			real.join("gone.txt")
+		);
+		// The item may itself be a link; only its parent is resolved.
+		std::os::unix::fs::symlink(&real, real.join("self")).unwrap();
+		assert_eq!(super::trash_location(&real.join("self")), real.join("self"));
+		let missing = root.path().join("missing/child");
+		assert_eq!(super::trash_location(&missing), missing);
+	}
+
+	#[tokio::test]
+	async fn items_trashed_through_a_symlinked_folder_are_found_and_restored() {
+		let _env = TRASH_ENV.lock().unwrap_or_else(|e| e.into_inner());
+		let root = tempfile::tempdir().unwrap();
+		std::env::set_var("XDG_DATA_HOME", root.path());
+		let real = root.path().join("real");
+		std::fs::create_dir(&real).unwrap();
+		let link = root.path().join("link");
+		std::os::unix::fs::symlink(&real, &link).unwrap();
+		let file = link.join("notes.txt");
+		std::fs::write(&file, b"hello").unwrap();
+
+		trash::delete(&file).unwrap();
+		let ids = super::trashed_ids(vec![file.clone()]).await;
+		assert!(
+			ids.contains_key(&file),
+			"the journal path finds its trash item"
+		);
+
+		// Without an id, undo falls back to the newest item of the path.
+		super::restore_one(None, file.clone()).await.unwrap();
+		assert_eq!(std::fs::read(&file).unwrap(), b"hello");
+
+		trash::delete(&file).unwrap();
+		let ids = super::trashed_ids(vec![file.clone()]).await;
+		super::restore_one(ids.get(&file).cloned(), file.clone())
+			.await
+			.unwrap();
+		assert_eq!(std::fs::read(real.join("notes.txt")).unwrap(), b"hello");
+	}
+
 	#[test]
 	fn restores_by_original_path_and_purges_by_id() {
+		let _env = TRASH_ENV.lock().unwrap_or_else(|e| e.into_inner());
 		// The home trash follows XDG_DATA_HOME; keep the file on the same
 		// mount so the test never touches the user's real trash.
 		let root = tempfile::tempdir().unwrap();
