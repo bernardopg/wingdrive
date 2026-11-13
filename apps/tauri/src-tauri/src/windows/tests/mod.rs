@@ -6,8 +6,8 @@ use tauri::Manager;
 
 use super::{
 	clamp_menu_position, close_window, explorer_url, hash_string, list_windows, overlay_position,
-	percent_encode, position_context_menu, resize_overlay_window, show_window,
-	toggle_voice_overlay_internal, WingDriveWindow,
+	percent_encode, place_overlay, position_context_menu, resize_overlay_window, show_menu_at,
+	show_window, toggle_voice_overlay_internal, WingDriveWindow,
 };
 
 fn every_window() -> Vec<WingDriveWindow> {
@@ -238,5 +238,178 @@ fn overlay_is_centered_above_the_bottom_edge_in_physical_pixels() {
 	assert_eq!(
 		overlay_position((1920, 0), (2880, 1800), (520.0, 112.0), 1.5),
 		(1920 + (2880 - 780) / 2, 1800 - 168 - 36)
+	);
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn file_chooser_opens_the_explorer_at_the_folder() {
+	let app = tauri::test::mock_app();
+	let folder = std::path::Path::new("/home/me/Documentos");
+	let window =
+		super::create_file_chooser_window(app.handle(), "file-chooser-1", folder, "  ").unwrap();
+	assert_eq!(window.label(), "file-chooser-1");
+	let url = window.url().unwrap();
+	let route = format!("{}?{}", url.path(), url.query().unwrap_or_default());
+	assert!(
+		route.ends_with(&explorer_url("/home/me/Documentos")),
+		"{route}"
+	);
+	// The picker label is chosen by the portal request; a duplicate is refused.
+	let error = super::create_file_chooser_window(app.handle(), "file-chooser-1", folder, "Open")
+		.unwrap_err();
+	assert!(error.starts_with("Failed to create window"), "{error}");
+}
+
+#[tokio::test]
+async fn windows_with_invalid_identifiers_are_refused() {
+	let app = tauri::test::mock_app();
+	for window in [
+		WingDriveWindow::MediaViewer {
+			file_id: "a&b".into(),
+		},
+		WingDriveWindow::Inspector {
+			item_id: Some("a&b".into()),
+		},
+		WingDriveWindow::DragOverlay {
+			session_id: "a&b".into(),
+		},
+	] {
+		let error = show_window(app.handle().clone(), window).await.unwrap_err();
+		assert!(error.contains("Window labels must only include"), "{error}");
+	}
+	assert!(list_windows(app.handle().clone()).await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn placing_open_overlays_needs_monitor_information() {
+	let app = tauri::test::mock_app();
+	let handle = app.handle().clone();
+	let overlay = show_window(handle.clone(), WingDriveWindow::VoiceOverlay)
+		.await
+		.unwrap();
+	let menu = show_window(
+		handle.clone(),
+		WingDriveWindow::ContextMenu {
+			context_id: "c1".into(),
+		},
+	)
+	.await
+	.unwrap();
+	// The mock runtime reports no monitor, as a headless session does.
+	assert_eq!(
+		resize_overlay_window(handle.clone(), overlay, 300.0, 90.0)
+			.await
+			.unwrap_err(),
+		"No monitor found"
+	);
+	assert_eq!(
+		position_context_menu(handle.clone(), menu, 10.0, 10.0, 200.0, 100.0)
+			.await
+			.unwrap_err(),
+		"No monitor found"
+	);
+}
+
+/// With monitor information (the mock runtime has none) placing an overlay
+/// or a menu succeeds; the target positions are covered by the pure helpers.
+#[test]
+fn overlays_and_menus_are_placed_once_the_monitor_is_known() {
+	let app = tauri::test::mock_app();
+	let window = tauri::WebviewWindowBuilder::new(&app, "overlay", tauri::WebviewUrl::default())
+		.build()
+		.unwrap();
+	let area = ((1920, 0), (2560, 1440));
+	place_overlay(&window, area, (520.0, 112.0)).unwrap();
+	show_menu_at(&window, area, (2500.0, 1400.0), (250.0, 300.0)).unwrap();
+}
+
+fn invoke(
+	webview: &tauri::WebviewWindow<tauri::test::MockRuntime>,
+	cmd: &str,
+	body: serde_json::Value,
+) -> Result<serde_json::Value, serde_json::Value> {
+	tauri::test::get_ipc_response(
+		webview,
+		tauri::webview::InvokeRequest {
+			cmd: cmd.into(),
+			callback: tauri::ipc::CallbackFn(0),
+			error: tauri::ipc::CallbackFn(1),
+			url: "tauri://localhost".parse().unwrap(),
+			body: tauri::ipc::InvokeBody::Json(body),
+			headers: Default::default(),
+			invoke_key: tauri::test::INVOKE_KEY.to_string(),
+		},
+	)
+	.map(|body| body.deserialize().unwrap())
+}
+
+/// The frontend calls these commands by name with camelCase arguments.
+#[test]
+fn window_commands_answer_the_frontend_over_ipc() {
+	let app = tauri::test::mock_builder()
+		.invoke_handler(tauri::generate_handler![
+			super::show_window,
+			super::close_window,
+			super::list_windows,
+			super::toggle_voice_overlay,
+			super::resize_overlay_window,
+			super::position_context_menu,
+			super::apply_macos_styling,
+		])
+		.build(tauri::test::mock_context(tauri::test::noop_assets()))
+		.unwrap();
+	let webview = tauri::WebviewWindowBuilder::new(&app, "main", tauri::WebviewUrl::default())
+		.build()
+		.unwrap();
+
+	assert_eq!(
+		invoke(
+			&webview,
+			"show_window",
+			json!({ "window": { "type": "Settings", "page": "privacy" } })
+		),
+		Ok(json!("settings-privacy"))
+	);
+	let mut open = invoke(&webview, "list_windows", json!({}))
+		.unwrap()
+		.as_array()
+		.unwrap()
+		.clone();
+	open.sort_by_key(|label| label.to_string());
+	assert_eq!(open, [json!("main"), json!("settings-privacy")]);
+
+	assert_eq!(
+		invoke(
+			&webview,
+			"resize_overlay_window",
+			json!({ "label": "missing", "width": 1.0, "height": 1.0 })
+		),
+		Err(json!("Overlay window not found"))
+	);
+	assert_eq!(
+		invoke(
+			&webview,
+			"position_context_menu",
+			json!({ "label": "missing", "x": 0.0, "y": 0.0, "menuWidth": 1.0, "menuHeight": 1.0 })
+		),
+		Err(json!("Context menu window not found"))
+	);
+	assert_eq!(
+		invoke(
+			&webview,
+			"close_window",
+			json!({ "label": "settings-privacy" })
+		),
+		Ok(json!(null))
+	);
+	assert_eq!(
+		invoke(&webview, "toggle_voice_overlay", json!({})),
+		Ok(json!(null))
+	);
+	// Every window calls this once ready; only macOS restyles the titlebar.
+	assert_eq!(
+		invoke(&webview, "apply_macos_styling", json!({})),
+		Ok(json!(null))
 	);
 }

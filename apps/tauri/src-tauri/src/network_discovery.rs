@@ -184,11 +184,11 @@ fn ssh_config_servers(home: &Path) -> Vec<DiscoveredServer> {
 		.collect()
 }
 
-/// Runs `avahi-browse` once, terminated after [`BROWSE_TIMEOUT`].
+/// The `avahi-browse` call that lists every resolved service once.
 ///
 /// A host without Avahi yields no servers instead of an error: the SSH
 /// configuration still lists hosts there.
-fn browse_mdns() -> Vec<DiscoveredServer> {
+fn browse_command() -> Command {
 	let mut command = Command::new("avahi-browse");
 	file_opening_linux::use_host_environment(&mut command);
 	command.args([
@@ -198,7 +198,7 @@ fn browse_mdns() -> Vec<DiscoveredServer> {
 		"--parsable",
 		"--no-db-lookup",
 	]);
-	browse_with(command, BROWSE_TIMEOUT)
+	command
 }
 
 /// Runs a prepared browse command for at most `timeout` and parses what it
@@ -244,9 +244,18 @@ fn browse_with(mut command: Command, timeout: Duration) -> Vec<DiscoveredServer>
 /// File servers announced on the network plus hosts from `~/.ssh/config`.
 #[tauri::command]
 pub async fn discover_network_servers() -> Result<Vec<DiscoveredServer>, String> {
-	tokio::task::spawn_blocking(|| {
-		let home = std::env::var_os("HOME").map(PathBuf::from);
-		merge_servers(browse_mdns(), home.as_deref())
+	let home = std::env::var_os("HOME").map(PathBuf::from);
+	discover(browse_command(), BROWSE_TIMEOUT, home).await
+}
+
+/// Runs `browse` off the async runtime and adds the SSH hosts under `home`.
+async fn discover(
+	browse: Command,
+	timeout: Duration,
+	home: Option<PathBuf>,
+) -> Result<Vec<DiscoveredServer>, String> {
+	tokio::task::spawn_blocking(move || {
+		merge_servers(browse_with(browse, timeout), home.as_deref())
 	})
 	.await
 	.map_err(|e| e.to_string())
@@ -421,6 +430,56 @@ Match host foo
 		let uris: Vec<String> = parse_avahi(listing).into_iter().map(|s| s.uri).collect();
 		assert_eq!(uris, ["ftp://ftp.local:2121/", "nfs://nfs.local/"]);
 		assert_eq!(unescape("\\999x"), "\\999x");
+	}
+
+	#[test]
+	fn browse_command_lists_resolved_services_once_without_a_database() {
+		let command = browse_command();
+		assert_eq!(command.get_program(), "avahi-browse");
+		let args: Vec<_> = command.get_args().collect();
+		assert_eq!(
+			args,
+			[
+				"--all",
+				"--terminate",
+				"--resolve",
+				"--parsable",
+				"--no-db-lookup"
+			]
+		);
+	}
+
+	#[tokio::test]
+	async fn discovery_merges_announced_servers_with_ssh_hosts() {
+		let home = tempfile::tempdir().unwrap();
+		std::fs::create_dir(home.path().join(".ssh")).unwrap();
+		std::fs::write(home.path().join(".ssh/config"), "Host nas.local backup\n").unwrap();
+		let browse =
+			avahi_script("echo '=;eth0;IPv4;nas;_sftp-ssh._tcp;local;nas.local;10.0.0.2;22;'");
+		let servers = discover(browse, Duration::from_secs(10), Some(home.path().into()))
+			.await
+			.unwrap();
+		let found: Vec<(&str, &str)> = servers
+			.iter()
+			.map(|s| (s.uri.as_str(), s.source.as_str()))
+			.collect();
+		assert_eq!(
+			found,
+			[
+				("sftp://nas.local/", "mdns"),
+				("sftp://backup/", "ssh-config")
+			]
+		);
+
+		// Without a home folder or Avahi there is nothing to list, and no error.
+		let servers = discover(
+			Command::new("/nonexistent/avahi-browse"),
+			Duration::from_secs(1),
+			None,
+		)
+		.await
+		.unwrap();
+		assert!(servers.is_empty());
 	}
 
 	#[test]
