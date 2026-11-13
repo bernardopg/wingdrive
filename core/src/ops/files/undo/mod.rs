@@ -484,6 +484,67 @@ crate::register_library_query!(UndoHistoryQuery, "files.undo_history");
 mod tests {
 	use super::*;
 
+	#[tokio::test]
+	async fn undo_keeps_a_file_replaced_after_creation() {
+		let root = tempfile::tempdir().unwrap();
+		let path = root.path().join("created");
+		std::fs::write(&path, "original").unwrap();
+		let seal = journal::Seal::of(&path).unwrap();
+		std::fs::rename(&path, root.path().join("original")).unwrap();
+		std::fs::write(&path, "new data").unwrap();
+
+		assert!(reverse(&Effect::Created {
+			path: path.clone(),
+			seal
+		})
+		.await
+		.is_err());
+		assert_eq!(std::fs::read(&path).unwrap(), b"new data");
+	}
+
+	#[cfg(unix)]
+	#[tokio::test]
+	async fn undo_keeps_a_symlink_and_its_target_after_replacement() {
+		let root = tempfile::tempdir().unwrap();
+		let path = root.path().join("created");
+		let target = root.path().join("target");
+		std::fs::write(&path, "original").unwrap();
+		std::fs::write(&target, "new data").unwrap();
+		let seal = journal::Seal::of(&path).unwrap();
+		std::fs::remove_file(&path).unwrap();
+		std::os::unix::fs::symlink(&target, &path).unwrap();
+
+		assert!(reverse(&Effect::Created {
+			path: path.clone(),
+			seal
+		})
+		.await
+		.is_err());
+		assert_eq!(std::fs::read_link(&path).unwrap(), target);
+		assert_eq!(std::fs::read(&target).unwrap(), b"new data");
+	}
+
+	#[tokio::test]
+	async fn undo_keeps_an_item_in_a_replaced_parent() {
+		let root = tempfile::tempdir().unwrap();
+		let parent = root.path().join("parent");
+		std::fs::create_dir(&parent).unwrap();
+		let path = parent.join("created");
+		std::fs::write(&path, "original").unwrap();
+		let seal = journal::Seal::of(&path).unwrap();
+		std::fs::rename(&parent, root.path().join("old-parent")).unwrap();
+		std::fs::create_dir(&parent).unwrap();
+		std::fs::write(&path, "new data").unwrap();
+
+		assert!(reverse(&Effect::Created {
+			path: path.clone(),
+			seal
+		})
+		.await
+		.is_err());
+		assert_eq!(std::fs::read(&path).unwrap(), b"new data");
+	}
+
 	#[test]
 	fn moving_back_never_replaces_what_is_at_the_old_place() {
 		let root = tempfile::tempdir().unwrap();

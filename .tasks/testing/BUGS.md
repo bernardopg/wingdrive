@@ -1,5 +1,13 @@
 # Bugs encontrados na ampliação de cobertura
 
+## Undo da lixeira não encontra itens em caminhos com diretório pai por symlink
+
+- Estado: corrigido em 2026-11-12. Reproduzido com `TMPDIR`, `HOME` e `XDG_DATA_HOME` apontando para um diretório por symlink (`file_undo_test`: 3 itens "no longer in the trash"); com a correção os 18 testes passam no mesmo ambiente.
+- Local: `core/src/ops/trash/mod.rs`, `newest_ids` e `select`; journal em `core/src/ops/files/delete/job.rs`.
+- Reprodução no Linux: execute `file_undo_test` com HOME e XDG temporários cujo caminho passa pelo symlink `target` desta worktree. `undoing_a_trash_restores_the_items` falha com `it is no longer in the trash` para os dois itens livres. Com os mesmos diretórios pelo caminho físico, os 18 testes passam.
+- A biblioteca `trash` canonicaliza o pai antes de mover o item, enquanto a busca do journal compara o caminho registrado literalmente com o caminho da lixeira. Não foi demonstrada perda dos itens, que permanecem na lixeira.
+- Correção: `trash_location` reproduz o caminho que a lixeira grava (pai canonicalizado mais o nome do item, sem resolver o próprio item). `trashed_ids` e a restauração por caminho comparam por essa forma e devolvem o id sob o caminho do journal. A restauração continua recusando quando há algo no caminho original (checagem do undo) e a biblioteca `trash` recusa colisão no destino físico, então nada é sobrescrito.
+- Testes: `ops::trash::tests::trash_location_resolves_a_symlinked_parent_only` e `items_trashed_through_a_symlinked_folder_are_found_and_restored`.
 ## Hard link TAR segue link simbólico existente no destino
 
 - Estado: corrigido; testes de regressão passaram em 2026-11-12 (`cargo test -p wing-core --lib archive::`).

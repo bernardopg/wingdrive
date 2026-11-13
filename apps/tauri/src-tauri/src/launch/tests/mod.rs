@@ -1,5 +1,99 @@
 use super::*;
 
+#[cfg(target_os = "linux")]
+struct SingleInstanceRecorder(std::sync::mpsc::Sender<(Vec<String>, String)>);
+
+#[cfg(target_os = "linux")]
+#[zbus::interface(name = "org.SingleInstance.DBus")]
+impl SingleInstanceRecorder {
+	async fn execute_callback(&self, argv: Vec<String>, cwd: String) {
+		self.0.send((argv, cwd)).unwrap();
+	}
+}
+
+#[cfg(target_os = "linux")]
+#[tokio::test]
+async fn forwarding_delivers_arguments_and_working_directory_on_a_private_bus() {
+	use std::io::{BufRead, BufReader};
+	use std::process::{Child, Command, Stdio};
+
+	struct Bus(Child);
+	impl Drop for Bus {
+		fn drop(&mut self) {
+			let _ = self.0.kill();
+			let _ = self.0.wait();
+		}
+	}
+	let mut bus = Bus(Command::new("dbus-daemon")
+		.args(["--session", "--nofork", "--print-address=1"])
+		.stdout(Stdio::piped())
+		.stderr(Stdio::null())
+		.spawn()
+		.unwrap());
+	let mut address = String::new();
+	BufReader::new(bus.0.stdout.take().unwrap())
+		.read_line(&mut address)
+		.unwrap();
+	let address = address.trim();
+	let id = single_instance_id(Some("test-instance"));
+	let (sent, received) = std::sync::mpsc::channel();
+	let _server = zbus::connection::Builder::address(address)
+		.name(format!("{id}.SingleInstance"))
+		.serve_at(
+			format!("/{}/SingleInstance", id.replace('.', "/")),
+			SingleInstanceRecorder(sent),
+		)
+		.build()
+		.await
+		.unwrap();
+	let client = zbus::connection::Builder::address(address)
+		.build()
+		.await
+		.unwrap();
+	let argv = vec!["wingdrive".into(), "a b".into(), "--hidden".into()];
+	assert!(call_instance_on(&client, &id, argv.clone(), "/other cwd".into()).await);
+	assert_eq!(
+		received
+			.recv_timeout(std::time::Duration::from_secs(2))
+			.unwrap(),
+		(argv, "/other cwd".into())
+	);
+	assert!(
+		!call_instance_on(
+			&client,
+			&single_instance_id(Some("absent")),
+			vec![],
+			String::new()
+		)
+		.await
+	);
+}
+
+#[test]
+fn delivery_queues_each_batch_and_notifies_the_frontend() {
+	use std::sync::Arc;
+	use tauri::{Listener, Manager};
+
+	let app = tauri::test::mock_app();
+	app.manage(PendingOpenRequests::new(Vec::new()));
+	let events = Arc::new(Mutex::new(0));
+	let seen = events.clone();
+	app.listen_any(OPEN_REQUESTS_EVENT, move |_| *seen.lock().unwrap() += 1);
+	let first = OpenRequest {
+		directory: PathBuf::from("/first"),
+		select: None,
+	};
+	let second = reveal_request(PathBuf::from("/second/file"));
+
+	deliver(app.handle(), vec![first.clone()]);
+	deliver(app.handle(), Vec::new());
+	deliver(app.handle(), vec![second.clone()]);
+	assert_eq!(take_open_requests(app.state()), vec![first, second]);
+	assert_eq!(*events.lock().unwrap(), 2);
+	deliver(app.handle(), vec![]);
+	assert!(take_open_requests(app.state()).is_empty());
+}
+
 #[test]
 fn draining_open_requests_keeps_order_and_allows_new_batches() {
 	use tauri::Manager;

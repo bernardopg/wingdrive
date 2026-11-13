@@ -600,3 +600,85 @@ async fn cancelling_or_closing_answers_one_and_a_failed_window_answers_two() {
 	assert_eq!(failing.run(third).await.into_reply().0, 2);
 	assert!(!failing.is_pending(&id));
 }
+
+#[tokio::test]
+async fn picker_commands_restrict_windows_and_return_the_selected_file() {
+	use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+
+	let dir = tempfile::tempdir().unwrap();
+	let file = dir.path().join("chosen.txt");
+	std::fs::write(&file, "data").unwrap();
+	let host = FakeHost::default();
+	let broker = Broker::new(host.clone());
+	let request = request(&broker, PickerMode::Open, PickerOptions::default());
+	let id = request.id.clone();
+	let app = tauri::test::mock_app();
+	let picker =
+		WebviewWindowBuilder::new(&app, format!("{WINDOW_PREFIX}{id}"), WebviewUrl::default())
+			.build()
+			.unwrap();
+	let other = WebviewWindowBuilder::new(&app, "other", WebviewUrl::default())
+		.build()
+		.unwrap();
+	let picker_window = picker.as_ref().window().clone();
+	let other_window = other.as_ref().window().clone();
+	assert!(file_chooser_request(app.handle().clone(), picker_window.clone()).is_err());
+	app.manage(broker.clone());
+	assert!(file_chooser_request(app.handle().clone(), other_window.clone()).is_err());
+	assert!(file_chooser_cancel(app.handle().clone(), other_window).is_err());
+
+	let task = tokio::spawn(async move { broker.run(request).await });
+	wait_for_show(&host).await;
+	assert_eq!(
+		file_chooser_request(app.handle().clone(), picker_window.clone())
+			.unwrap()
+			.unwrap()
+			.id,
+		id
+	);
+	file_chooser_respond(
+		app.handle().clone(),
+		picker_window.clone(),
+		Selection::Open {
+			paths: vec![file.clone()],
+			choices: vec![],
+			current_filter: None,
+		},
+	)
+	.unwrap();
+	let (code, result) = task.await.unwrap().into_reply();
+	assert_eq!(code, response::SUCCESS);
+	assert_eq!(uris(&result), [file_uri(&file)]);
+	assert!(file_chooser_request(app.handle().clone(), picker_window)
+		.unwrap()
+		.is_none());
+}
+
+#[tokio::test]
+async fn tauri_host_creates_a_picker_and_answers_cancellation() {
+	use tauri::Manager;
+
+	let app = tauri::test::mock_app();
+	let host = TauriHost {
+		app: app.handle().clone(),
+	};
+	let broker = Broker::new(host);
+	app.manage(broker.clone());
+	let request = request(&broker, PickerMode::Open, PickerOptions::default());
+	let id = request.id.clone();
+	let label = format!("{WINDOW_PREFIX}{id}");
+	let task = tokio::spawn({
+		let broker = broker.clone();
+		async move { broker.run(request).await }
+	});
+	tokio::time::timeout(std::time::Duration::from_secs(5), async {
+		while app.get_webview_window(&label).is_none() {
+			tokio::task::yield_now().await;
+		}
+	})
+	.await
+	.unwrap();
+	broker.cancel(&id);
+	assert_eq!(task.await.unwrap().into_reply().0, response::CANCELLED);
+	assert!(broker.request(&id).is_none());
+}

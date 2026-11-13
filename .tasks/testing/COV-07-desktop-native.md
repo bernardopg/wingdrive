@@ -156,3 +156,37 @@ mDNS perdia servidores acima de 64 KiB de listagem.
 Fora da medição por precisarem de runtime gráfico, GTK ou macOS: `main()`, a criação da
 bandeja, o clipboard GTK, `drag/` e `file_drag.rs` (macOS), o diálogo de "Open Library..." e
 a instalação do serviço do daemon, que escreve em `~/.config/systemd`.
+
+### 2026-11-12
+
+Linux x86_64, base `6152c8ecd`. A entrega parcial acrescenta testes da fila e do
+encaminhamento de argumentos em um D-Bus privado, dos comandos e do host do seletor
+de arquivos com runtime Tauri simulado, e da reversão de arquivos substituídos,
+links e diretório pai substituído no journal do core. O runtime simulado não
+confirma a destruição real da janela. Os testes anteriores já cobrem mudança de
+mesmo tamanho e destino ocupado. A troca concorrente entre verificar o selo e
+alterar o arquivo não foi testada; o critério de segurança permanece aberto.
+
+| Componente ou arquivo | Antes | Depois |
+|---|---:|---:|
+| Desktop (`apps/tauri/`) | 6.738/8.371 (80,5%) | 6.823/8.379 (81,4%) |
+| `launch.rs` | 172/201 (85,6%) | 197/209 (94,3%) |
+| `file_chooser.rs` | 85/191 (44,5%) | 133/191 (69,6%) |
+
+Medição com `cargo llvm-cov --no-report` para `wingdrive --bin WingDrive` e
+`file-opening-linux`, `file-opening`, `file-clipboard-windows` e `wing-tauri-core`,
+seguido de `cargo llvm-cov report --lcov` e `scripts/coverage-report.py`. Perfis
+foram limpos antes da medição final. A meta desta rodada, 88%, permanece aberta.
+Com display e endereço D-Bus de sessão ausentes, o shell teve 214 aprovados e um
+ignorado (`pkexec_round_trip_on_root_owned_files`, exige agente polkit). Os helpers
+tiveram 31, 1, 7 e 0 testes aprovados, respectivamente. O core, com HOME/XDG
+temporários, teve 609 testes unitários aprovados e dois ignorados.
+
+`cargo fmt --all`, Clippy do shell com `--all-targets -D warnings` e Clippy da
+biblioteca do core passaram. Clippy do core com `--all-targets -D warnings` falhou
+em avisos de testes não alterados, incluindo `archive_contract_test.rs` e helpers
+compartilhados. A integração `file_undo_test` teve 18 aprovados com HOME/XDG pelo
+caminho físico, mas 17 aprovados e uma falha com HOME pelo symlink `target`; a
+mesma falha foi reproduzida na base limpa `6152c8ecd`. O caso está em [BUGS.md](BUGS.md).
+Não houve validação gráfica ou de polkit real. A cobertura e os
+critérios restantes mantêm a tarefa em andamento.
