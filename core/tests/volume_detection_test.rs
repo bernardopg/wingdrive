@@ -3,19 +3,6 @@
 //! These tests verify that the volume detection system correctly identifies volumes,
 //! resolves paths to their storage locations, and selects optimal copy strategies.
 
-use std::{path::PathBuf, sync::Arc};
-use uuid::Uuid;
-use wing_core::{
-	device::get_current_device_slug,
-	domain::addressing::WingPath,
-	infra::event::EventBus,
-	ops::files::copy::{input::CopyMethod, routing::CopyStrategyRouter},
-	volume::{
-		types::{VolumeDetectionConfig, VolumeType},
-		VolumeManager,
-	},
-};
-
 /// Test volume detection on macOS
 #[cfg(target_os = "macos")]
 #[tokio::test]

@@ -146,14 +146,26 @@ fn validate_instance_name(instance: &str) -> Result<(), String> {
 }
 
 fn daemon_runtime_config() -> Result<DaemonRuntimeConfig, String> {
-	let base_data_dir = match std::env::var_os(DATA_DIR_ENV) {
+	daemon_runtime_config_from_env(
+		std::env::var_os(DATA_DIR_ENV),
+		std::env::var(INSTANCE_ENV).ok(),
+	)
+}
+
+/// Builds the configuration from the values of `WINGDRIVE_DATA_DIR` and
+/// `WINGDRIVE_INSTANCE`, so tests need not change the process environment.
+fn daemon_runtime_config_from_env(
+	data_dir: Option<std::ffi::OsString>,
+	instance: Option<String>,
+) -> Result<DaemonRuntimeConfig, String> {
+	let base_data_dir = match data_dir {
 		Some(value) if !value.is_empty() => PathBuf::from(value),
 		Some(_) => return Err(format!("{DATA_DIR_ENV} cannot be empty")),
 		None => wing_tauri_core::default_data_dir()
 			.map_err(|error| format!("Failed to resolve data directory: {error}"))?,
 	};
 
-	daemon_runtime_config_for(base_data_dir, std::env::var(INSTANCE_ENV).ok())
+	daemon_runtime_config_for(base_data_dir, instance)
 }
 
 fn daemon_runtime_config_for(
@@ -1246,12 +1258,7 @@ async fn check_daemon_installed() -> Result<bool, String> {
 
 	#[cfg(target_os = "linux")]
 	{
-		let home =
-			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
-		let systemd_dir = std::path::PathBuf::from(home).join(".config/systemd/user");
-		Ok(["wingdrive-daemon.service", "spacedrive-daemon.service"]
-			.iter()
-			.any(|name| systemd_dir.join(name).exists()))
+		Ok(systemd_service_installed(&systemd_user_dir()?))
 	}
 
 	#[cfg(target_os = "windows")]
@@ -1274,13 +1281,14 @@ async fn check_daemon_installed() -> Result<bool, String> {
 	}
 }
 
-/// Install daemon as a service (LaunchAgent on macOS, systemd on Linux)
-#[tauri::command]
-async fn install_daemon_service(
-	app: tauri::AppHandle,
-	daemon_state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
-	app_state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
+/// Stops the daemon this app spawned so the service can start its own.
+///
+/// Both would otherwise compete for the same socket and library lock. Returns
+/// the data directory and socket address the service's daemon will use.
+async fn prepare_service_install<R: Runtime>(
+	app: &AppHandle<R>,
+	daemon_state: &Arc<RwLock<DaemonState>>,
+) -> (PathBuf, String) {
 	let (data_dir, socket_addr) = {
 		let state = daemon_state.read().await;
 		(state.data_dir.clone(), state.socket_addr.clone())
@@ -1303,6 +1311,17 @@ async fn install_daemon_service(
 	// Emit starting event since installation starts the daemon
 	let _ = app.emit("daemon-starting", ());
 	tracing::info!("Emitted daemon-starting event");
+	(data_dir, socket_addr)
+}
+
+/// Install daemon as a service (LaunchAgent on macOS, systemd on Linux)
+#[tauri::command]
+async fn install_daemon_service(
+	app: tauri::AppHandle,
+	daemon_state: tauri::State<'_, Arc<RwLock<DaemonState>>>,
+	app_state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+	let (data_dir, socket_addr) = prepare_service_install(&app, &daemon_state).await;
 
 	#[cfg(target_os = "macos")]
 	{
@@ -1389,135 +1408,30 @@ async fn install_daemon_service(
 			return Err(format!("Failed to load daemon service: {}", stderr));
 		}
 
-		// Update daemon state - we no longer own the process
-		let mut state = daemon_state.write().await;
-		state.started_by_us = false;
-		state.daemon_process = None;
-		tracing::info!("Updated daemon state: started_by_us = false");
-		drop(state);
-
-		// Reset connection pool so it can reconnect to the service-managed daemon
-		tracing::info!("Resetting connection pool to reconnect to service daemon");
-		app_state.connection_pool.reset().await;
-
-		// Wait for daemon to start and become available
-		tracing::info!("Waiting for daemon to become available...");
-		for i in 0..30 {
-			tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-			if is_daemon_running(&socket_addr).await {
-				tracing::info!("Daemon is running after {} attempts", i + 1);
-				break;
-			}
-			if i == 29 {
-				return Err("Daemon failed to start after installing service".to_string());
-			}
-		}
-
-		// Trigger reconnection
-		tracing::info!("Triggering reconnection");
-		app_state.connection_pool.ensure_connected(&app).await?;
-
-		Ok(())
+		reconnect_to_service_daemon(
+			&app,
+			&daemon_state,
+			&app_state,
+			&socket_addr,
+			SERVICE_START_POLLS,
+		)
+		.await
 	}
 
 	#[cfg(target_os = "linux")]
 	{
-		use std::io::Write;
-
-		let home =
-			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
-		let systemd_dir = std::path::PathBuf::from(&home).join(".config/systemd/user");
-
-		std::fs::create_dir_all(&systemd_dir)
-			.map_err(|e| format!("Failed to create systemd directory: {}", e))?;
-
-		let service_path = systemd_dir.join("wingdrive-daemon.service");
-
+		let systemd_dir = systemd_user_dir()?;
 		let daemon_path = find_daemon_binary()?;
+		install_systemd_service(&systemd_dir, &daemon_path, &data_dir, run_systemctl)?;
 
-		let service_content = format!(
-			r#"[Unit]
-Description=WingDrive Daemon
-After=network.target
-
-[Service]
-Type=simple
-ExecStart={} --data-dir {}
-Restart=on-failure
-RestartSec=5s
-
-[Install]
-WantedBy=default.target
-"#,
-			daemon_path.display(),
-			data_dir.display()
-		);
-
-		let mut file = std::fs::File::create(&service_path)
-			.map_err(|e| format!("Failed to create service file: {}", e))?;
-		file.write_all(service_content.as_bytes())
-			.map_err(|e| format!("Failed to write service file: {}", e))?;
-
-		// Enable and start the service
-		let output = host_command("systemctl")
-			.args(["--user", "daemon-reload"])
-			.output()
-			.map_err(|e| format!("Failed to reload systemd: {}", e))?;
-
-		if !output.status.success() {
-			let stderr = String::from_utf8_lossy(&output.stderr);
-			return Err(format!("Failed to reload systemd: {}", stderr));
-		}
-
-		let output = host_command("systemctl")
-			.args(["--user", "enable", "wingdrive-daemon.service"])
-			.output()
-			.map_err(|e| format!("Failed to enable service: {}", e))?;
-
-		if !output.status.success() {
-			let stderr = String::from_utf8_lossy(&output.stderr);
-			return Err(format!("Failed to enable service: {}", stderr));
-		}
-
-		let output = host_command("systemctl")
-			.args(["--user", "start", "wingdrive-daemon.service"])
-			.output()
-			.map_err(|e| format!("Failed to start service: {}", e))?;
-
-		if !output.status.success() {
-			let stderr = String::from_utf8_lossy(&output.stderr);
-			return Err(format!("Failed to start daemon service: {}", stderr));
-		}
-
-		// Update daemon state - we no longer own the process
-		let mut state = daemon_state.write().await;
-		state.started_by_us = false;
-		state.daemon_process = None;
-		tracing::info!("Updated daemon state: started_by_us = false");
-		drop(state);
-
-		// Reset connection pool so it can reconnect to the service-managed daemon
-		tracing::info!("Resetting connection pool to reconnect to service daemon");
-		app_state.connection_pool.reset().await;
-
-		// Wait for daemon to start and become available
-		tracing::info!("Waiting for daemon to become available...");
-		for i in 0..30 {
-			tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-			if is_daemon_running(&socket_addr).await {
-				tracing::info!("Daemon is running after {} attempts", i + 1);
-				break;
-			}
-			if i == 29 {
-				return Err("Daemon failed to start after installing service".to_string());
-			}
-		}
-
-		// Trigger reconnection
-		tracing::info!("Triggering reconnection");
-		app_state.connection_pool.ensure_connected(&app).await?;
-
-		Ok(())
+		reconnect_to_service_daemon(
+			&app,
+			&daemon_state,
+			&app_state,
+			&socket_addr,
+			SERVICE_START_POLLS,
+		)
+		.await
 	}
 
 	#[cfg(target_os = "windows")]
@@ -1635,35 +1549,14 @@ WantedBy=default.target
 			return Err(format!("Failed to start daemon task: {}", stderr));
 		}
 
-		// Update daemon state - we no longer own the process
-		let mut state = daemon_state.write().await;
-		state.started_by_us = false;
-		state.daemon_process = None;
-		tracing::info!("Updated daemon state: started_by_us = false");
-		drop(state);
-
-		// Reset connection pool so it can reconnect to the service-managed daemon
-		tracing::info!("Resetting connection pool to reconnect to service daemon");
-		app_state.connection_pool.reset().await;
-
-		// Wait for daemon to start and become available
-		tracing::info!("Waiting for daemon to become available...");
-		for i in 0..30 {
-			tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-			if is_daemon_running(&socket_addr).await {
-				tracing::info!("Daemon is running after {} attempts", i + 1);
-				break;
-			}
-			if i == 29 {
-				return Err("Daemon failed to start after installing service".to_string());
-			}
-		}
-
-		// Trigger reconnection
-		tracing::info!("Triggering reconnection");
-		app_state.connection_pool.ensure_connected(&app).await?;
-
-		Ok(())
+		reconnect_to_service_daemon(
+			&app,
+			&daemon_state,
+			&app_state,
+			&socket_addr,
+			SERVICE_START_POLLS,
+		)
+		.await
 	}
 
 	#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
@@ -1696,27 +1589,7 @@ async fn uninstall_daemon_service() -> Result<(), String> {
 
 	#[cfg(target_os = "linux")]
 	{
-		let home =
-			std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
-		let systemd_dir = std::path::PathBuf::from(home).join(".config/systemd/user");
-		for name in ["wingdrive-daemon.service", "spacedrive-daemon.service"] {
-			let service_path = systemd_dir.join(name);
-			if service_path.exists() {
-				let _ = host_command("systemctl")
-					.args(["--user", "stop", name])
-					.output();
-				let _ = host_command("systemctl")
-					.args(["--user", "disable", name])
-					.output();
-				std::fs::remove_file(&service_path)
-					.map_err(|e| format!("Failed to remove service file: {}", e))?;
-			}
-		}
-		let _ = host_command("systemctl")
-			.args(["--user", "daemon-reload"])
-			.output();
-
-		Ok(())
+		uninstall_systemd_services(&systemd_user_dir()?, run_systemctl)
 	}
 
 	#[cfg(target_os = "windows")]
@@ -1932,6 +1805,190 @@ fn host_command(program: &str) -> std::process::Command {
 	command
 }
 
+/// Runs `systemctl` with `args` on the host.
+#[cfg(target_os = "linux")]
+fn run_systemctl(args: &[&str]) -> std::io::Result<std::process::Output> {
+	host_command("systemctl").args(args).output()
+}
+
+/// The folder that holds the user's systemd units.
+#[cfg(target_os = "linux")]
+fn systemd_user_dir() -> Result<PathBuf, String> {
+	let home =
+		std::env::var("HOME").map_err(|_| "Could not determine home directory".to_string())?;
+	Ok(PathBuf::from(home).join(".config/systemd/user"))
+}
+
+/// Unit files of the login service, current name first, then the pre-rename one.
+#[cfg(target_os = "linux")]
+const SYSTEMD_UNITS: [&str; 2] = ["wingdrive-daemon.service", "spacedrive-daemon.service"];
+
+/// Whether `systemd_dir` holds a unit for the daemon, under either name.
+#[cfg(target_os = "linux")]
+fn systemd_service_installed(systemd_dir: &Path) -> bool {
+	SYSTEMD_UNITS
+		.iter()
+		.any(|name| systemd_dir.join(name).exists())
+}
+
+/// Quotes `value` as a single `ExecStart` argument.
+///
+/// systemd splits an unquoted argument at whitespace and expands `%`
+/// specifiers and `$` variables in it, so a data folder such as
+/// "My Files" reached the daemon as two arguments.
+#[cfg(target_os = "linux")]
+fn systemd_exec_argument(value: &Path) -> String {
+	let mut quoted = String::from("\"");
+	for character in value.to_string_lossy().chars() {
+		match character {
+			'"' | '\\' => {
+				quoted.push('\\');
+				quoted.push(character);
+			}
+			'\n' => quoted.push_str("\\n"),
+			'%' => quoted.push_str("%%"),
+			'$' => quoted.push_str("$$"),
+			_ => quoted.push(character),
+		}
+	}
+	quoted.push('"');
+	quoted
+}
+
+/// The user unit that runs `daemon_path` on `data_dir` at login.
+#[cfg(target_os = "linux")]
+fn systemd_unit(daemon_path: &Path, data_dir: &Path) -> String {
+	format!(
+		r#"[Unit]
+Description=WingDrive Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart={} --data-dir {}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target
+"#,
+		systemd_exec_argument(daemon_path),
+		systemd_exec_argument(data_dir)
+	)
+}
+
+/// Writes the daemon's user unit into `systemd_dir`, then enables and starts it.
+///
+/// `systemctl` runs the given arguments; tests pass a recorder so they never
+/// reach the user's service manager.
+#[cfg(target_os = "linux")]
+fn install_systemd_service(
+	systemd_dir: &Path,
+	daemon_path: &Path,
+	data_dir: &Path,
+	systemctl: impl Fn(&[&str]) -> std::io::Result<std::process::Output>,
+) -> Result<(), String> {
+	std::fs::create_dir_all(systemd_dir)
+		.map_err(|e| format!("Failed to create systemd directory: {}", e))?;
+	std::fs::write(
+		systemd_dir.join(SYSTEMD_UNITS[0]),
+		systemd_unit(daemon_path, data_dir),
+	)
+	.map_err(|e| format!("Failed to write service file: {}", e))?;
+
+	let steps: [(&[&str], &str, &str); 3] = [
+		(
+			&["--user", "daemon-reload"],
+			"Failed to reload systemd",
+			"Failed to reload systemd",
+		),
+		(
+			&["--user", "enable", SYSTEMD_UNITS[0]],
+			"Failed to enable service",
+			"Failed to enable service",
+		),
+		(
+			&["--user", "start", SYSTEMD_UNITS[0]],
+			"Failed to start service",
+			"Failed to start daemon service",
+		),
+	];
+	for (args, spawn_error, status_error) in steps {
+		let output = systemctl(args).map_err(|e| format!("{spawn_error}: {e}"))?;
+		if !output.status.success() {
+			let stderr = String::from_utf8_lossy(&output.stderr);
+			return Err(format!("{status_error}: {stderr}"));
+		}
+	}
+	Ok(())
+}
+
+/// Stops, disables and deletes the daemon's user units under either name.
+///
+/// Stopping and disabling are best effort: a unit systemd no longer knows
+/// still has its file removed.
+#[cfg(target_os = "linux")]
+fn uninstall_systemd_services(
+	systemd_dir: &Path,
+	systemctl: impl Fn(&[&str]) -> std::io::Result<std::process::Output>,
+) -> Result<(), String> {
+	for name in SYSTEMD_UNITS {
+		let service_path = systemd_dir.join(name);
+		if service_path.exists() {
+			let _ = systemctl(&["--user", "stop", name]);
+			let _ = systemctl(&["--user", "disable", name]);
+			std::fs::remove_file(&service_path)
+				.map_err(|e| format!("Failed to remove service file: {}", e))?;
+		}
+	}
+	let _ = systemctl(&["--user", "daemon-reload"]);
+	Ok(())
+}
+
+/// Polls of 100 ms while a freshly installed service starts its daemon.
+const SERVICE_START_POLLS: u32 = 30;
+
+/// Hands the daemon over to the login service and reconnects to it.
+///
+/// The app no longer owns the process, so exiting must leave it running. The
+/// pool drops its old connection and opens a new one once the service's
+/// daemon answers.
+async fn reconnect_to_service_daemon<R: Runtime>(
+	app: &AppHandle<R>,
+	daemon_state: &Arc<RwLock<DaemonState>>,
+	app_state: &AppState,
+	socket_addr: &str,
+	polls: u32,
+) -> Result<(), String> {
+	// Update daemon state - we no longer own the process
+	let mut state = daemon_state.write().await;
+	state.started_by_us = false;
+	state.daemon_process = None;
+	tracing::info!("Updated daemon state: started_by_us = false");
+	drop(state);
+
+	// Reset connection pool so it can reconnect to the service-managed daemon
+	tracing::info!("Resetting connection pool to reconnect to service daemon");
+	app_state.connection_pool.reset().await;
+
+	// Wait for daemon to start and become available
+	tracing::info!("Waiting for daemon to become available...");
+	for i in 0..polls {
+		tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+		if is_daemon_running(socket_addr).await {
+			tracing::info!("Daemon is running after {} attempts", i + 1);
+			break;
+		}
+		if i + 1 == polls {
+			return Err("Daemon failed to start after installing service".to_string());
+		}
+	}
+
+	// Trigger reconnection
+	tracing::info!("Triggering reconnection");
+	app_state.connection_pool.ensure_connected(app).await
+}
+
 /// Start the daemon as a background process
 async fn start_daemon(
 	base_data_dir: &PathBuf,
@@ -2003,12 +2060,8 @@ async fn spawn_daemon(
 /// locations. A shorter limit kills a healthy daemon midway.
 const DAEMON_STARTUP_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(600);
 
-/// Waits for a daemon this app did not spawn to accept connections.
-async fn wait_for_daemon(socket_addr: &str) -> bool {
-	wait_for_daemon_within(socket_addr, DAEMON_STARTUP_TIMEOUT).await
-}
-
-/// `wait_for_daemon` with the time limit given.
+/// Waits up to `timeout` for a daemon this app did not spawn to accept
+/// connections.
 async fn wait_for_daemon_within(socket_addr: &str, timeout: std::time::Duration) -> bool {
 	let started = std::time::Instant::now();
 	while started.elapsed() < timeout {
@@ -2294,27 +2347,13 @@ fn handle_menu_event<R: Runtime>(app_handle: &AppHandle<R>, event_id: &str) {
 				};
 				tracing::info!("Selected library path: {:?}", path);
 
-				let socket_addr = {
-					let daemon_state: tauri::State<Arc<RwLock<DaemonState>>> = app_clone.state();
-					let state = daemon_state.read().await;
-					state.socket_addr.clone()
-				};
-				match open_library_request(&socket_addr, &path).await {
-					Ok(library) => {
-						tracing::info!("Library opened successfully: {:?}", library);
-						if let Err(e) = app_clone.emit("library-opened", library) {
-							tracing::error!("Failed to emit library-opened event: {}", e);
-						}
-					}
-					Err(message) => {
-						tracing::error!("{message}");
-						app_clone
-							.dialog()
-							.message(message)
-							.kind(MessageDialogKind::Error)
-							.title("Error")
-							.blocking_show();
-					}
+				if let Err(message) = open_library(&app_clone, &path).await {
+					app_clone
+						.dialog()
+						.message(message)
+						.kind(MessageDialogKind::Error)
+						.title("Error")
+						.blocking_show();
 				}
 			});
 		}
@@ -2353,6 +2392,30 @@ fn handle_menu_event<R: Runtime>(app_handle: &AppHandle<R>, event_id: &str) {
 			}
 		}
 		_ => {}
+	}
+}
+
+/// Opens the library at `path` and tells every window about it.
+///
+/// Returns the daemon's refusal as the message to show the user.
+async fn open_library<R: Runtime>(app: &AppHandle<R>, path: &Path) -> Result<(), String> {
+	let socket_addr = {
+		let daemon_state: tauri::State<Arc<RwLock<DaemonState>>> = app.state();
+		let state = daemon_state.read().await;
+		state.socket_addr.clone()
+	};
+	match open_library_request(&socket_addr, path).await {
+		Ok(library) => {
+			tracing::info!("Library opened successfully: {:?}", library);
+			if let Err(e) = app.emit("library-opened", library) {
+				tracing::error!("Failed to emit library-opened event: {}", e);
+			}
+			Ok(())
+		}
+		Err(message) => {
+			tracing::error!("{message}");
+			Err(message)
+		}
 	}
 }
 
@@ -2415,17 +2478,15 @@ fn main() {
 		unsafe { libc::mallopt(libc::M_ARENA_MAX, 1) };
 	}
 	#[cfg(target_os = "linux")]
-	if let Some(app_dir) = std::env::var_os("APPDIR") {
-		// linuxdeploy's scanner hook assumes a Debian path that differs on Arch.
-		let scanner = PathBuf::from(app_dir).join("usr/lib/gstreamer-1.0/gst-plugin-scanner");
-		if scanner.is_file() {
-			std::env::set_var("GST_PLUGIN_SCANNER_1_0", scanner);
-		}
+	if let Some(scanner) = bundled_gst_plugin_scanner(std::env::var_os("APPDIR")) {
+		std::env::set_var("GST_PLUGIN_SCANNER_1_0", scanner);
 	}
 	#[cfg(target_os = "linux")]
-	if std::env::var_os("GDK_BACKEND").is_none() && std::env::var_os("DISPLAY").is_some() {
-		// GTK/WebKit's Wayland startup failed in runtime validation; prefer available XWayland.
-		std::env::set_var("GDK_BACKEND", file_opening_linux::PREFERRED_GDK_BACKEND);
+	if let Some(backend) = forced_gdk_backend(
+		std::env::var_os("GDK_BACKEND").as_deref(),
+		std::env::var_os("DISPLAY").as_deref(),
+	) {
+		std::env::set_var("GDK_BACKEND", backend);
 	}
 	// Before GTK starts: the desktop matches this to the .desktop file.
 	notifications::apply_process_identity();
@@ -2578,10 +2639,7 @@ fn main() {
 			notifications::show_desktop_notification
 		])
 		.setup(|app| {
-			// Setup native menu
-			if let Err(e) = setup_menu(app.handle()) {
-				tracing::warn!("Failed to setup menu: {}", e);
-			}
+			setup_menus(app.handle());
 
 			// Register the voice overlay hotkey here instead of via
 			// with_shortcut: a duplicate registration (stale instance, or the
@@ -2598,18 +2656,6 @@ fn main() {
 					Err(error) => {
 						tracing::warn!(?error, "Failed to parse Alt+Space shortcut");
 					}
-				}
-			}
-
-			// Remove the menu bar on Windows and Linux. It is the macOS app menu, and on
-			// Linux GTK draws it outside the app theme. Shortcuts run through the web
-			// keybind listener, so nothing depends on its accelerators there.
-			#[cfg(any(target_os = "windows", target_os = "linux"))]
-			{
-				use tauri::menu::MenuBuilder;
-				// Create an empty menu to ensure no menu bar is shown
-				if let Ok(empty_menu) = MenuBuilder::new(app.handle()).build() {
-					let _ = app.handle().set_menu(empty_menu);
 				}
 			}
 
@@ -2698,190 +2744,23 @@ fn main() {
 				"Configured daemon runtime"
 			);
 
-			let data_dir = runtime.data_dir;
-			// Files opened from archives are extracted under the daemon's data
-			// dir, which the static scope cannot name (it moves with the
-			// instance and sits in a hidden folder), so allow it here.
-			if let Err(error) = app
-				.asset_protocol_scope()
-				.allow_directory(data_dir.join("cache").join("archives"), true)
-			{
-				tracing::warn!(%error, "Could not allow the archive cache in the asset scope");
-			}
-			let base_data_dir = runtime.base_data_dir;
-			let instance = runtime.instance;
-			let socket_addr = runtime.socket_addr;
-			let daemon_base_data_dir = base_data_dir.clone();
-			let daemon_instance = instance.clone();
-
-			// Initialize state immediately (before async operations)
-			let daemon_state = Arc::new(RwLock::new(DaemonState {
-				started_by_us: false,
-				socket_addr: socket_addr.clone(),
-				data_dir: data_dir.clone(),
-				base_data_dir,
-				instance: instance.clone(),
-				server_url: None,
-				server_token: None,
-				server_shutdown: None,
-				daemon_process: None,
-			}));
-
-			// Initialize app state for library ID (shared across all windows)
-			// Try to load persisted library ID from disk
-			let persisted_library_id = {
-				let library_id_file = data_dir.join("current_library_id.txt");
-				if library_id_file.exists() {
-					match std::fs::read_to_string(&library_id_file) {
-						Ok(id) => {
-							tracing::info!("Loaded persisted library ID: {}", id);
-							Some(id.trim().to_string())
-						}
-						Err(e) => {
-							tracing::warn!("Failed to read persisted library ID: {}", e);
-							None
-						}
-					}
-				} else {
-					None
-				}
-			};
-
-			let app_state = AppState {
-				current_library_id: Arc::new(RwLock::new(persisted_library_id)),
-				selected_file_ids: Arc::new(RwLock::new(Vec::new())),
-				connection_pool: Arc::new(DaemonConnectionPool::new(socket_addr.clone())),
-				subscription_manager: SubscriptionManager::new(),
-			};
-
-			// Clone references needed for validation before managing state (which moves it)
-			let app_handle = app.handle().clone();
-			let app_state_current_library_id = app_state.current_library_id.clone();
-			let daemon_state_clone = daemon_state.clone();
-			let data_dir_clone = data_dir.clone();
-			let base_data_dir_clone = daemon_base_data_dir;
-			let instance_clone = daemon_instance;
-
-			app.manage(background::DesktopSettingsState::load(&data_dir));
 			#[cfg(target_os = "linux")]
 			if std::env::var_os(INSTANCE_ENV).is_none() {
 				tauri::async_runtime::spawn(filemanager1::serve(app.handle().clone()));
 				tauri::async_runtime::spawn(file_chooser::serve(app.handle().clone()));
 			}
-			#[cfg(target_os = "linux")]
-			app.manage(file_chooser::PortalStateFile(
-				data_dir.join("file-chooser-portal.json"),
-			));
+			let daemon_state = manage_app_state(app.handle(), runtime);
 			// Some desktops have no tray host; the app still works, only hiding is lost.
 			if let Err(error) = background::create_tray(app.handle()) {
 				tracing::warn!(%error, "Tray icon unavailable");
 			}
-			app.manage(daemon_state.clone());
-			app.manage(app_state);
-			app.manage(drag::DragCoordinator::new());
-			app.manage(keybinds::KeybindState::new());
-			app.manage(file_opening::FileOpeningService::new());
-
-			let _handle = app.handle().clone();
 
 			// Initialize daemon connection in background
-			tauri::async_runtime::spawn(async move {
-				tracing::info!("Data directory: {:?}", data_dir_clone);
-				tracing::info!("Socket address: {:?}", socket_addr);
-
-				// Start HTTP server for serving files/sidecars
-				match server::start_server(data_dir_clone.clone()).await {
-					Ok((server_url, server_token, shutdown_tx)) => {
-						tracing::info!("HTTP server started at {}", server_url);
-						let mut state = daemon_state.write().await;
-						state.server_url = Some(server_url);
-						state.server_token = Some(server_token);
-						state.server_shutdown = Some(shutdown_tx);
-					}
-					Err(e) => {
-						tracing::error!("Failed to start HTTP server: {}", e);
-					}
-				}
-
-				// Ensure daemon directory exists
-
-				#[cfg(target_os = "linux")]
-				let service_active = daemon_service_active(instance_clone.as_deref());
-				#[cfg(not(target_os = "linux"))]
-				let service_active = false;
-
-				let (started_by_us, child_process) = if is_daemon_running(&socket_addr).await {
-					tracing::info!("Daemon already running, connecting to existing instance");
-					(false, None)
-				} else if service_active {
-					tracing::info!("Daemon service is starting, waiting for it");
-					if !wait_for_daemon(&socket_addr).await {
-						tracing::error!("Daemon service did not become available");
-						return;
-					}
-					(false, None)
-				} else {
-					tracing::info!("No daemon running, starting new instance");
-					match start_daemon(
-						&base_data_dir_clone,
-						instance_clone.as_deref(),
-						&socket_addr,
-					)
-					.await
-					{
-						Ok(child) => (
-							true,
-							Some(std::sync::Arc::new(tokio::sync::Mutex::new(Some(child)))),
-						),
-						// A daemon started elsewhere (the CLI, another launch) may
-						// still be opening the library, which makes ours exit on
-						// the library lock. Connect to that one once it is ready.
-						Err(e) => {
-							tracing::warn!(
-								"Failed to start daemon: {}; waiting for a running one",
-								e
-							);
-							if !wait_for_daemon(&socket_addr).await {
-								tracing::error!("No daemon became available");
-								return;
-							}
-							(false, None)
-						}
-					}
-				};
-
-				// Update daemon state
-				let mut state = daemon_state.write().await;
-				state.started_by_us = started_by_us;
-				state.daemon_process = child_process;
-
-				tracing::info!("Daemon connection established");
-				// The frontend waits on this event (or its slower poll) before it
-				// leaves the startup screen.
-				let _ = app_handle.emit("daemon-connected", ());
-
-				// Validate persisted library ID in background (non-blocking)
-				// If library no longer exists, reset the state
-				let app_handle_validate = app_handle.clone();
-				let app_state_validate = app_state_current_library_id.clone();
-				let daemon_state_validate = daemon_state_clone.clone();
-				let data_dir_validate = data_dir_clone.clone();
-				tokio::spawn(async move {
-					// Wait a bit for daemon to be fully ready
-					tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
-
-					if let Err(e) = validate_and_reset_library_if_needed(
-						app_handle_validate,
-						&app_state_validate,
-						&daemon_state_validate,
-						&data_dir_validate,
-					)
-					.await
-					{
-						tracing::warn!("Failed to validate library: {}", e);
-					}
-				});
-			});
+			tauri::async_runtime::spawn(connect_daemon(
+				app.handle().clone(),
+				daemon_state,
+				DaemonLaunch::for_this_app(),
+			));
 
 			// In dev mode, show window immediately
 			#[cfg(debug_assertions)]
@@ -2894,51 +2773,319 @@ fn main() {
 
 			Ok(())
 		})
-		.on_window_event(|window, event| {
-			// Update titlebar on fullscreen change (macOS)
-			#[cfg(target_os = "macos")]
-			if let tauri::WindowEvent::Resized(_) = event {
-				if let Ok(is_fullscreen) = window.is_fullscreen() {
-					if let Ok(ns_window) = window.ns_window() {
-						unsafe {
-							wing_desktop_macos::set_titlebar_style(&ns_window, is_fullscreen);
-						}
-					}
-				}
-			}
-
-			if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-				if window.label() == "main" && background::keeps_running(window.app_handle()) {
-					api.prevent_close();
-					let _ = window.hide();
-				}
-			}
-
-			// A destroyed window can no longer receive its events; release its streams.
-			if let tauri::WindowEvent::Destroyed = event {
-				let app = window.app_handle().clone();
-				let label = window.label().to_string();
-				tauri::async_runtime::spawn(async move {
-					if let Some(app_state) = app.try_state::<AppState>() {
-						let count = app_state.subscription_manager.cancel_window(&label).await;
-						tracing::info!(window = %label, "Released {} subscriptions", count);
-					}
-				});
-				let closed = window
-					.state::<terminal::TerminalSessions>()
-					.close_window(window.label());
-				if closed > 0 {
-					tracing::info!(window = %window.label(), "Closed {} terminals", closed);
-				}
-			}
-		})
+		.on_window_event(handle_window_event)
 		.build(context)
 		.expect("error while building tauri application")
-		.run(|app, event| {
-			if let tauri::RunEvent::Exit = event {
-				stop_owned_daemon(app);
+		.run(handle_run_event);
+}
+
+/// The AppImage's own GStreamer plugin scanner, when `app_dir` holds one.
+///
+/// linuxdeploy's scanner hook assumes a Debian path that differs on Arch.
+#[cfg(target_os = "linux")]
+fn bundled_gst_plugin_scanner(app_dir: Option<std::ffi::OsString>) -> Option<PathBuf> {
+	let scanner = PathBuf::from(app_dir?).join("usr/lib/gstreamer-1.0/gst-plugin-scanner");
+	scanner.is_file().then_some(scanner)
+}
+
+/// The GDK backend to force, given `GDK_BACKEND` and `DISPLAY`.
+///
+/// GTK/WebKit's Wayland startup failed in runtime validation; prefer available
+/// XWayland unless the user picked a backend.
+#[cfg(target_os = "linux")]
+fn forced_gdk_backend(
+	gdk_backend: Option<&std::ffi::OsStr>,
+	display: Option<&std::ffi::OsStr>,
+) -> Option<&'static str> {
+	(gdk_backend.is_none() && display.is_some())
+		.then_some(file_opening_linux::PREFERRED_GDK_BACKEND)
+}
+
+/// Installs the native menu, then hides the menu bar outside macOS.
+fn setup_menus<R: Runtime>(app: &AppHandle<R>) {
+	if let Err(e) = setup_menu(app) {
+		tracing::warn!("Failed to setup menu: {}", e);
+	}
+
+	// Remove the menu bar on Windows and Linux. It is the macOS app menu, and on
+	// Linux GTK draws it outside the app theme. Shortcuts run through the web
+	// keybind listener, so nothing depends on its accelerators there.
+	#[cfg(any(target_os = "windows", target_os = "linux"))]
+	{
+		use tauri::menu::MenuBuilder;
+		// Create an empty menu to ensure no menu bar is shown
+		if let Ok(empty_menu) = MenuBuilder::new(app).build() {
+			let _ = app.set_menu(empty_menu);
+		}
+	}
+}
+
+/// Builds the state the commands read and hands it to the app.
+///
+/// Returns the daemon state, which `connect_daemon` completes once a daemon
+/// answers.
+fn manage_app_state<R: Runtime>(
+	app: &AppHandle<R>,
+	runtime: DaemonRuntimeConfig,
+) -> Arc<RwLock<DaemonState>> {
+	let data_dir = runtime.data_dir;
+	// Files opened from archives are extracted under the daemon's data
+	// dir, which the static scope cannot name (it moves with the
+	// instance and sits in a hidden folder), so allow it here.
+	if let Err(error) = app
+		.asset_protocol_scope()
+		.allow_directory(data_dir.join("cache").join("archives"), true)
+	{
+		tracing::warn!(%error, "Could not allow the archive cache in the asset scope");
+	}
+
+	let daemon_state = Arc::new(RwLock::new(DaemonState {
+		started_by_us: false,
+		socket_addr: runtime.socket_addr.clone(),
+		data_dir: data_dir.clone(),
+		base_data_dir: runtime.base_data_dir,
+		instance: runtime.instance,
+		server_url: None,
+		server_token: None,
+		server_shutdown: None,
+		daemon_process: None,
+	}));
+	let app_state = AppState {
+		current_library_id: Arc::new(RwLock::new(load_persisted_library_id(&data_dir))),
+		selected_file_ids: Arc::new(RwLock::new(Vec::new())),
+		connection_pool: Arc::new(DaemonConnectionPool::new(runtime.socket_addr)),
+		subscription_manager: SubscriptionManager::new(),
+	};
+
+	app.manage(background::DesktopSettingsState::load(&data_dir));
+	#[cfg(target_os = "linux")]
+	app.manage(file_chooser::PortalStateFile(
+		data_dir.join("file-chooser-portal.json"),
+	));
+	app.manage(daemon_state.clone());
+	app.manage(app_state);
+	app.manage(drag::DragCoordinator::new());
+	app.manage(keybinds::KeybindState::new());
+	app.manage(file_opening::FileOpeningService::new());
+	daemon_state
+}
+
+/// Reads the library selected in the previous session, if one was saved.
+fn load_persisted_library_id(data_dir: &Path) -> Option<String> {
+	let library_id_file = data_dir.join("current_library_id.txt");
+	if !library_id_file.exists() {
+		return None;
+	}
+	match std::fs::read_to_string(&library_id_file) {
+		Ok(id) => {
+			tracing::info!("Loaded persisted library ID: {}", id);
+			Some(id.trim().to_string())
+		}
+		Err(e) => {
+			tracing::warn!("Failed to read persisted library ID: {}", e);
+			None
+		}
+	}
+}
+
+/// How startup finds or starts the daemon; tests shorten its time limits.
+struct DaemonLaunch {
+	/// Whether the login service is starting a daemon for the given instance.
+	service_active: fn(Option<&str>) -> bool,
+	daemon_path: Result<PathBuf, String>,
+	/// How long a spawned or service-started daemon may take to answer.
+	startup_timeout: std::time::Duration,
+	/// Pause before checking that the remembered library still exists.
+	validation_delay: std::time::Duration,
+}
+
+impl DaemonLaunch {
+	fn for_this_app() -> Self {
+		Self {
+			#[cfg(target_os = "linux")]
+			service_active: daemon_service_active,
+			#[cfg(not(target_os = "linux"))]
+			service_active: |_| false,
+			daemon_path: find_daemon_binary(),
+			startup_timeout: DAEMON_STARTUP_TIMEOUT,
+			// Lets a daemon that just answered finish opening its libraries.
+			validation_delay: std::time::Duration::from_secs(1),
+		}
+	}
+}
+
+/// Finds a running daemon or starts one.
+///
+/// Returns whether this app started it, with its process, or `None` when no
+/// daemon became available.
+async fn acquire_daemon(
+	socket_addr: &str,
+	base_data_dir: &PathBuf,
+	instance: Option<&str>,
+	launch: &DaemonLaunch,
+) -> Option<(bool, Option<std::process::Child>)> {
+	if is_daemon_running(socket_addr).await {
+		tracing::info!("Daemon already running, connecting to existing instance");
+		return Some((false, None));
+	}
+	if (launch.service_active)(instance) {
+		tracing::info!("Daemon service is starting, waiting for it");
+		if !wait_for_daemon_within(socket_addr, launch.startup_timeout).await {
+			tracing::error!("Daemon service did not become available");
+			return None;
+		}
+		return Some((false, None));
+	}
+
+	tracing::info!("No daemon running, starting new instance");
+	let started = match &launch.daemon_path {
+		Ok(daemon_path) => {
+			spawn_daemon(
+				daemon_path,
+				base_data_dir,
+				instance,
+				socket_addr,
+				launch.startup_timeout,
+			)
+			.await
+		}
+		Err(error) => Err(error.clone()),
+	};
+	match started {
+		Ok(child) => Some((true, Some(child))),
+		// A daemon started elsewhere (the CLI, another launch) may
+		// still be opening the library, which makes ours exit on
+		// the library lock. Connect to that one once it is ready.
+		Err(e) => {
+			tracing::warn!("Failed to start daemon: {}; waiting for a running one", e);
+			if !wait_for_daemon_within(socket_addr, launch.startup_timeout).await {
+				tracing::error!("No daemon became available");
+				return None;
 			}
-		});
+			Some((false, None))
+		}
+	}
+}
+
+/// Starts the file server, connects to a daemon and tells the windows.
+///
+/// Runs in the background so the window shows its startup screen meanwhile.
+/// Afterwards it checks that the remembered library still exists.
+async fn connect_daemon<R: Runtime>(
+	app: AppHandle<R>,
+	daemon_state: Arc<RwLock<DaemonState>>,
+	launch: DaemonLaunch,
+) {
+	let (data_dir, base_data_dir, instance, socket_addr) = {
+		let state = daemon_state.read().await;
+		(
+			state.data_dir.clone(),
+			state.base_data_dir.clone(),
+			state.instance.clone(),
+			state.socket_addr.clone(),
+		)
+	};
+	tracing::info!("Data directory: {:?}", data_dir);
+	tracing::info!("Socket address: {:?}", socket_addr);
+
+	// Start HTTP server for serving files/sidecars
+	match server::start_server(data_dir.clone()).await {
+		Ok((server_url, server_token, shutdown_tx)) => {
+			tracing::info!("HTTP server started at {}", server_url);
+			let mut state = daemon_state.write().await;
+			state.server_url = Some(server_url);
+			state.server_token = Some(server_token);
+			state.server_shutdown = Some(shutdown_tx);
+		}
+		Err(e) => {
+			tracing::error!("Failed to start HTTP server: {}", e);
+		}
+	}
+
+	let Some((started_by_us, child_process)) =
+		acquire_daemon(&socket_addr, &base_data_dir, instance.as_deref(), &launch).await
+	else {
+		return;
+	};
+	{
+		let mut state = daemon_state.write().await;
+		state.started_by_us = started_by_us;
+		state.daemon_process =
+			child_process.map(|child| Arc::new(tokio::sync::Mutex::new(Some(child))));
+	}
+
+	tracing::info!("Daemon connection established");
+	// The frontend waits on this event (or its slower poll) before it
+	// leaves the startup screen.
+	let _ = app.emit("daemon-connected", ());
+
+	// If the remembered library no longer exists, reset the selection.
+	let current_library_id = app.state::<AppState>().current_library_id.clone();
+	tokio::spawn(async move {
+		tokio::time::sleep(launch.validation_delay).await;
+		if let Err(e) =
+			validate_and_reset_library_if_needed(app, &current_library_id, &daemon_state, &data_dir)
+				.await
+		{
+			tracing::warn!("Failed to validate library: {}", e);
+		}
+	});
+}
+
+/// Hides the main window instead of closing it while the app keeps running in
+/// the background, and frees what a destroyed window held.
+fn handle_window_event<R: Runtime>(window: &tauri::Window<R>, event: &tauri::WindowEvent) {
+	// Update titlebar on fullscreen change (macOS)
+	#[cfg(target_os = "macos")]
+	if let tauri::WindowEvent::Resized(_) = event {
+		if let Ok(is_fullscreen) = window.is_fullscreen() {
+			if let Ok(ns_window) = window.ns_window() {
+				unsafe {
+					wing_desktop_macos::set_titlebar_style(&ns_window, is_fullscreen);
+				}
+			}
+		}
+	}
+
+	if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+		if window.label() == "main" && background::keeps_running(window.app_handle()) {
+			api.prevent_close();
+			let _ = window.hide();
+		}
+	}
+
+	// A destroyed window can no longer receive its events; release its streams.
+	if let tauri::WindowEvent::Destroyed = event {
+		release_window(window.app_handle(), window.label());
+	}
+}
+
+/// Cancels the event streams and closes the terminals of the window `label`.
+fn release_window<R: Runtime>(app: &AppHandle<R>, label: &str) {
+	let app_clone = app.clone();
+	let label_clone = label.to_string();
+	tauri::async_runtime::spawn(async move {
+		if let Some(app_state) = app_clone.try_state::<AppState>() {
+			let count = app_state
+				.subscription_manager
+				.cancel_window(&label_clone)
+				.await;
+			tracing::info!(window = %label_clone, "Released {} subscriptions", count);
+		}
+	});
+	let closed = app
+		.state::<terminal::TerminalSessions>()
+		.close_window(label);
+	if closed > 0 {
+		tracing::info!(window = %label, "Closed {} terminals", closed);
+	}
+}
+
+/// Stops the daemon this app started when the app exits.
+fn handle_run_event<R: Runtime>(app: &AppHandle<R>, event: tauri::RunEvent) {
+	if let tauri::RunEvent::Exit = event {
+		stop_owned_daemon(app);
+	}
 }
 
 /// Stops the daemon on app exit when this app spawned it.

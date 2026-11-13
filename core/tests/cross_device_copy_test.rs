@@ -459,8 +459,8 @@ async fn bob_cross_device_copy_scenario() {
 
 		// Check for new files in received directory
 		if let Ok(entries) = std::fs::read_dir(received_dir) {
-			for entry in entries {
-				if let Ok(entry) = entry {
+			for entry in entries.flatten() {
+				{
 					let filename = entry.file_name().to_string_lossy().to_string();
 					if !received_files.contains(&filename) {
 						if let Ok(metadata) = entry.metadata() {
@@ -492,7 +492,7 @@ async fn bob_cross_device_copy_scenario() {
 		}
 
 		let elapsed = start_time.elapsed().as_secs();
-		if elapsed > 0 && elapsed % 10 == 0 && received_files.is_empty() {
+		if elapsed > 0 && elapsed.is_multiple_of(10) && received_files.is_empty() {
 			println!("Bob: Still waiting for files... ({}s elapsed)", elapsed);
 		}
 	}

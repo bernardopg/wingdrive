@@ -343,3 +343,22 @@ async fn invalid_options_and_a_failed_window_answer_two() {
 		.unwrap();
 	assert_eq!(reply.body().deserialize::<Reply>().unwrap().0, 2);
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn connect_serves_the_backend_on_the_given_bus() {
+	let Some(bus) = PrivateBus::start() else {
+		eprintln!("dbus-daemon unavailable; skipping");
+		return;
+	};
+	let broker = Broker::new(FakeHost::default());
+	let builder = zbus::connection::Builder::address(bus.address.as_str());
+	let _server = super::super::portal::connect(builder, broker)
+		.await
+		.unwrap();
+	let client = bus.connect().await;
+	let dbus = zbus::fdo::DBusProxy::new(&client).await.unwrap();
+	assert!(dbus
+		.name_has_owner(BUS_NAME.try_into().unwrap())
+		.await
+		.unwrap());
+}

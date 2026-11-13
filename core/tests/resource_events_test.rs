@@ -49,7 +49,7 @@ impl EventCollector {
 							Event::ResourceChangedBatch {
 								resource_type,
 								resources,
-								metadata,
+								metadata: _,
 							} => {
 								batch_event_count += 1;
 								let count = if let Some(arr) = resources.as_array() {
@@ -112,7 +112,7 @@ impl EventCollector {
 				Event::ResourceChangedBatch {
 					resource_type,
 					resources,
-					metadata,
+					metadata: _,
 				} => {
 					let count = if let Some(arr) = resources.as_array() {
 						arr.len()

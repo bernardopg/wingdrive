@@ -18,8 +18,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
-use tauri::menu::{MenuBuilder, MenuItem, MenuItemBuilder, PredefinedMenuItem};
-use tauri::tray::TrayIconBuilder;
+use tauri::menu::{Menu, MenuBuilder, MenuItem, MenuItemBuilder, PredefinedMenuItem};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, Runtime};
 
 use crate::launch;
@@ -138,7 +138,26 @@ pub fn keeps_running<R: Runtime>(app: &AppHandle<R>) -> bool {
 /// Linux trays built on AppIndicator deliver no click events, so every action
 /// lives in the menu rather than on the icon itself.
 pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
-	let labels = load_tray_labels(app);
+	let (menu, items) = build_tray_menu(app, load_tray_labels(app))?;
+	let mut tray = TrayIconBuilder::with_id("main")
+		.tooltip("WingDrive")
+		.menu(&menu)
+		.show_menu_on_left_click(false)
+		.on_menu_event(|app, event| on_tray_menu(app, event.id().as_ref()))
+		.on_tray_icon_event(|tray, event| on_tray_icon(tray.app_handle(), &event));
+	if let Some(icon) = app.default_window_icon() {
+		tray = tray.icon(icon.clone());
+	}
+	tray.build(app)?;
+	app.manage(items);
+	Ok(())
+}
+
+/// The tray menu, plus the items whose text follows the UI language.
+fn build_tray_menu<R: Runtime>(
+	app: &AppHandle<R>,
+	labels: TrayLabels,
+) -> tauri::Result<(Menu<R>, TrayMenu<R>)> {
 	let open = MenuItemBuilder::with_id("tray-open", labels.open).build(app)?;
 	let new_tab = MenuItemBuilder::with_id("tray-new-tab", labels.new_tab).build(app)?;
 	let quit = MenuItemBuilder::with_id("tray-quit", labels.quit).build(app)?;
@@ -148,48 +167,47 @@ pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
 		.item(&PredefinedMenuItem::separator(app)?)
 		.item(&quit)
 		.build()?;
+	Ok((
+		menu,
+		TrayMenu {
+			open,
+			new_tab,
+			quit,
+		},
+	))
+}
 
-	let mut tray = TrayIconBuilder::with_id("main")
-		.tooltip("WingDrive")
-		.menu(&menu)
-		.show_menu_on_left_click(false)
-		.on_menu_event(|app, event| match event.id().as_ref() {
-			"tray-open" => launch::show_main_window(app),
-			"tray-new-tab" => {
-				let home = std::env::var_os("HOME")
-					.map(PathBuf::from)
-					.unwrap_or_else(|| "/".into());
-				launch::deliver(
-					app,
-					vec![launch::OpenRequest {
-						directory: home,
-						select: None,
-					}],
-				);
-			}
-			"tray-quit" => app.exit(0),
-			_ => {}
-		})
-		.on_tray_icon_event(|tray, event| {
-			if let tauri::tray::TrayIconEvent::Click {
-				button: tauri::tray::MouseButton::Left,
-				button_state: tauri::tray::MouseButtonState::Up,
-				..
-			} = event
-			{
-				launch::show_main_window(tray.app_handle());
-			}
-		});
-	if let Some(icon) = app.default_window_icon() {
-		tray = tray.icon(icon.clone());
+/// Runs the tray menu item with `id`.
+fn on_tray_menu<R: Runtime>(app: &AppHandle<R>, id: &str) {
+	match id {
+		"tray-open" => launch::show_main_window(app),
+		"tray-new-tab" => {
+			let home = std::env::var_os("HOME")
+				.map(PathBuf::from)
+				.unwrap_or_else(|| "/".into());
+			launch::deliver(
+				app,
+				vec![launch::OpenRequest {
+					directory: home,
+					select: None,
+				}],
+			);
+		}
+		"tray-quit" => app.exit(0),
+		_ => {}
 	}
-	tray.build(app)?;
-	app.manage(TrayMenu {
-		open,
-		new_tab,
-		quit,
-	});
-	Ok(())
+}
+
+/// A left click on trays that report clicks opens the main window.
+fn on_tray_icon<R: Runtime>(app: &AppHandle<R>, event: &TrayIconEvent) {
+	if let TrayIconEvent::Click {
+		button: MouseButton::Left,
+		button_state: MouseButtonState::Up,
+		..
+	} = event
+	{
+		launch::show_main_window(app);
+	}
 }
 
 /// Renames the tray menu items after the UI language changes and saves the
@@ -234,9 +252,19 @@ pub fn set_desktop_settings(
 
 #[cfg(target_os = "linux")]
 fn apply_autostart(enabled: bool) -> Result<(), String> {
-	let dir = autostart_dir().ok_or("Could not determine the autostart directory")?;
+	apply_autostart_in(enabled, autostart_dir(), launcher_path)
+}
+
+/// Writes or removes the entry in `dir`; `launcher` is only asked when enabling.
+#[cfg(target_os = "linux")]
+fn apply_autostart_in(
+	enabled: bool,
+	dir: Option<PathBuf>,
+	launcher: impl FnOnce() -> Option<PathBuf>,
+) -> Result<(), String> {
+	let dir = dir.ok_or("Could not determine the autostart directory")?;
 	let launcher = if enabled {
-		Some(launcher_path().ok_or("Could not determine the WingDrive executable")?)
+		Some(launcher().ok_or("Could not determine the WingDrive executable")?)
 	} else {
 		None
 	};
@@ -330,10 +358,23 @@ fn apply_autostart(enabled: bool) -> Result<(), String> {
 
 #[cfg(target_os = "linux")]
 fn autostart_dir() -> Option<PathBuf> {
-	std::env::var_os("XDG_CONFIG_HOME")
+	autostart_dir_from(
+		std::env::var_os("XDG_CONFIG_HOME"),
+		std::env::var_os("HOME"),
+	)
+}
+
+/// `$XDG_CONFIG_HOME/autostart`, or `~/.config/autostart` when it is unset or
+/// relative, as the base directory specification requires.
+#[cfg(target_os = "linux")]
+fn autostart_dir_from(
+	config_home: Option<std::ffi::OsString>,
+	home: Option<std::ffi::OsString>,
+) -> Option<PathBuf> {
+	config_home
 		.map(PathBuf::from)
 		.filter(|dir| dir.is_absolute())
-		.or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
+		.or_else(|| home.map(|home| PathBuf::from(home).join(".config")))
 		.map(|config| config.join("autostart"))
 }
 
@@ -343,7 +384,12 @@ fn autostart_dir() -> Option<PathBuf> {
 /// AppImage file itself is the stable launcher.
 #[cfg(target_os = "linux")]
 fn launcher_path() -> Option<PathBuf> {
-	std::env::var_os("APPIMAGE")
+	launcher_from(std::env::var_os("APPIMAGE"))
+}
+
+#[cfg(target_os = "linux")]
+fn launcher_from(appimage: Option<std::ffi::OsString>) -> Option<PathBuf> {
+	appimage
 		.map(PathBuf::from)
 		.or_else(|| std::env::current_exe().ok())
 }
@@ -456,6 +502,92 @@ mod tests {
 	}
 
 	#[test]
+	fn tray_items_are_renamed_when_the_language_changes() {
+		let dir = tempfile::tempdir().unwrap();
+		let app = app_with_settings(dir.path());
+		let (_menu, items) = build_tray_menu(app.handle(), TrayLabels::default()).unwrap();
+		assert_eq!(items.open.text().unwrap(), "Open WingDrive");
+		app.manage(items);
+
+		let labels = TrayLabels {
+			open: "Abrir o WingDrive".into(),
+			new_tab: "Nova aba".into(),
+			quit: "Sair do WingDrive".into(),
+		};
+		set_tray_labels(app.handle().clone(), labels).unwrap();
+		let items = app.state::<TrayMenu<tauri::test::MockRuntime>>();
+		assert_eq!(items.open.text().unwrap(), "Abrir o WingDrive");
+		assert_eq!(items.new_tab.text().unwrap(), "Nova aba");
+		assert_eq!(items.quit.text().unwrap(), "Sair do WingDrive");
+	}
+
+	fn app_with_open_queue() -> (
+		tauri::App<tauri::test::MockRuntime>,
+		std::sync::mpsc::Receiver<()>,
+	) {
+		use tauri::Listener;
+
+		let app = tauri::test::mock_app();
+		app.manage(launch::PendingOpenRequests::new(Vec::new()));
+		tauri::WebviewWindowBuilder::new(&app, "main", tauri::WebviewUrl::default())
+			.build()
+			.unwrap();
+		let (sender, delivered) = std::sync::mpsc::channel();
+		app.listen_any(launch::OPEN_REQUESTS_EVENT, move |_| {
+			let _ = sender.send(());
+		});
+		(app, delivered)
+	}
+
+	#[test]
+	fn new_tab_from_the_tray_opens_the_home_folder() {
+		let (app, delivered) = app_with_open_queue();
+		on_tray_menu(app.handle(), "tray-new-tab");
+		let home = std::env::var_os("HOME")
+			.map(PathBuf::from)
+			.unwrap_or_else(|| "/".into());
+		assert_eq!(
+			launch::take_open_requests(app.state()),
+			[launch::OpenRequest {
+				directory: home,
+				select: None,
+			}]
+		);
+		assert!(delivered.try_recv().is_ok());
+	}
+
+	#[test]
+	fn other_tray_actions_only_bring_the_window_forward() {
+		use tauri::tray::TrayIconId;
+		use tauri::{PhysicalPosition, Rect};
+
+		let (app, delivered) = app_with_open_queue();
+		on_tray_menu(app.handle(), "tray-open");
+		on_tray_menu(app.handle(), "unknown-item");
+		let click = |button, button_state| TrayIconEvent::Click {
+			id: TrayIconId::new("main"),
+			position: PhysicalPosition::new(0.0, 0.0),
+			rect: Rect::default(),
+			button,
+			button_state,
+		};
+		on_tray_icon(
+			app.handle(),
+			&click(MouseButton::Left, MouseButtonState::Up),
+		);
+		on_tray_icon(
+			app.handle(),
+			&click(MouseButton::Right, MouseButtonState::Up),
+		);
+		on_tray_icon(
+			app.handle(),
+			&click(MouseButton::Left, MouseButtonState::Down),
+		);
+		assert!(launch::take_open_requests(app.state()).is_empty());
+		assert!(delivered.try_recv().is_err());
+	}
+
+	#[test]
 	fn closing_hides_to_the_tray_only_when_background_mode_is_on() {
 		let app = tauri::test::mock_app();
 		assert!(!keeps_running(app.handle()));
@@ -553,6 +685,18 @@ mod tests {
 			apply_autostart(false).unwrap();
 			assert!(!file.exists());
 			apply_autostart(false).unwrap();
+
+			// The settings command writes the entry and the settings together.
+			let app = app_with_settings(Path::new(&config));
+			let on = DesktopSettings {
+				start_at_login: true,
+				..DesktopSettings::default()
+			};
+			assert_eq!(set_desktop_settings(app.state(), on.clone()).unwrap(), on);
+			assert!(file.exists());
+			assert_eq!(DesktopSettingsState::load(Path::new(&config)).get(), on);
+			set_desktop_settings(app.state(), DesktopSettings::default()).unwrap();
+			assert!(!file.exists());
 			return;
 		}
 		let config = tempfile::tempdir().unwrap();
@@ -630,6 +774,50 @@ mod tests {
 		std::fs::write(entry.join("keep"), b"keep").unwrap();
 		assert!(write_autostart(root.path(), None).is_err());
 		assert_eq!(std::fs::read(entry.join("keep")).unwrap(), b"keep");
+	}
+
+	#[cfg(target_os = "linux")]
+	#[test]
+	fn autostart_folder_follows_the_base_directory_specification() {
+		let dir = |config: Option<&str>, home: Option<&str>| {
+			autostart_dir_from(config.map(Into::into), home.map(Into::into))
+		};
+		assert_eq!(
+			dir(Some("/cfg"), Some("/home/u")),
+			Some(PathBuf::from("/cfg/autostart"))
+		);
+		// A relative XDG_CONFIG_HOME is invalid and ignored.
+		assert_eq!(
+			dir(Some("cfg"), Some("/home/u")),
+			Some(PathBuf::from("/home/u/.config/autostart"))
+		);
+		assert_eq!(dir(None, None), None);
+
+		assert_eq!(
+			launcher_from(Some("/apps/WingDrive.AppImage".into())),
+			Some(PathBuf::from("/apps/WingDrive.AppImage"))
+		);
+		assert_eq!(launcher_from(None), std::env::current_exe().ok());
+	}
+
+	#[cfg(target_os = "linux")]
+	#[test]
+	fn autostart_reports_what_it_could_not_find() {
+		let root = tempfile::tempdir().unwrap();
+		assert_eq!(
+			apply_autostart_in(false, None, || None).unwrap_err(),
+			"Could not determine the autostart directory"
+		);
+		assert_eq!(
+			apply_autostart_in(true, Some(root.path().into()), || None).unwrap_err(),
+			"Could not determine the WingDrive executable"
+		);
+		assert!(!root.path().join(AUTOSTART_FILE).exists());
+		// Turning it off never needs the executable.
+		apply_autostart_in(false, Some(root.path().into()), || {
+			panic!("the launcher is only needed to enable autostart")
+		})
+		.unwrap();
 	}
 
 	/// The Desktop Entry Specification applies the string escapes first, then

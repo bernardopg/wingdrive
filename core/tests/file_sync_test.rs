@@ -37,7 +37,8 @@ async fn create_test_file(path: &std::path::Path, content: &str) -> anyhow::Resu
 /// Test setup with a core and library
 struct FileSyncTestSetup {
 	_temp_dir: TempDir,
-	core: Core,
+	// Held so the core and its services stay alive for the test.
+	_core: Core,
 	library: Arc<wing_core::library::Library>,
 }
 
@@ -85,7 +86,7 @@ impl FileSyncTestSetup {
 
 		Ok(Self {
 			_temp_dir: temp_dir,
-			core,
+			_core: core,
 			library,
 		})
 	}

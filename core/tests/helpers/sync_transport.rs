@@ -12,13 +12,16 @@ use wing_core::{
 };
 
 /// Unified mock transport for N-device sync tests
+type MessageQueues = Arc<Mutex<HashMap<Uuid, Vec<(Uuid, SyncMessage)>>>>;
+type MessageHistory = Arc<Mutex<Vec<(Uuid, Uuid, SyncMessage)>>>;
+
 pub struct MockTransport {
 	my_device_id: Uuid,
 	connected_peers: Vec<Uuid>,
 	/// Shared message queues: recipient_id -> messages for them
-	queues: Arc<Mutex<HashMap<Uuid, Vec<(Uuid, SyncMessage)>>>>,
+	queues: MessageQueues,
 	/// Complete message history: (from, to, message)
-	history: Arc<Mutex<Vec<(Uuid, Uuid, SyncMessage)>>>,
+	history: MessageHistory,
 	/// Shared sync service registry for request/response handling
 	sync_services: Arc<Mutex<HashMap<Uuid, Weak<SyncService>>>>,
 	/// Devices that are "offline" and won't receive messages
@@ -30,8 +33,8 @@ impl MockTransport {
 	pub fn new(
 		my_device_id: Uuid,
 		connected_peers: Vec<Uuid>,
-		queues: Arc<Mutex<HashMap<Uuid, Vec<(Uuid, SyncMessage)>>>>,
-		history: Arc<Mutex<Vec<(Uuid, Uuid, SyncMessage)>>>,
+		queues: MessageQueues,
+		history: MessageHistory,
 		sync_services: Arc<Mutex<HashMap<Uuid, Weak<SyncService>>>>,
 		blocked_devices: Arc<Mutex<std::collections::HashSet<Uuid>>>,
 	) -> Arc<Self> {
@@ -127,7 +130,7 @@ impl MockTransport {
 	) -> anyhow::Result<usize> {
 		let mut queues = self.queues.lock().await;
 		let messages = queues.entry(self.my_device_id).or_insert_with(Vec::new);
-		let incoming: Vec<_> = messages.drain(..).collect();
+		let incoming: Vec<_> = std::mem::take(messages);
 		let count = incoming.len();
 		drop(queues);
 

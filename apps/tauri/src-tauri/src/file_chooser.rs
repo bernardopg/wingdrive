@@ -334,26 +334,45 @@ pub async fn file_chooser_portal_set(
 	state: tauri::State<'_, PortalStateFile>,
 	enabled: bool,
 ) -> Result<portals_conf::PortalStatus, String> {
-	let paths = portal_paths(&state);
-	let status = tauri::async_runtime::spawn_blocking(move || match enabled {
+	let status = switch_portal(portal_paths(&state), enabled).await?;
+	restart_portal(systemctl_restart()).await;
+	Ok(status)
+}
+
+/// Edits `portals.conf` off the async runtime, since it reads and writes files.
+async fn switch_portal(
+	paths: portals_conf::PortalPaths,
+	enabled: bool,
+) -> Result<portals_conf::PortalStatus, String> {
+	tauri::async_runtime::spawn_blocking(move || match enabled {
 		true => paths.enable(),
 		false => paths.disable(),
 	})
 	.await
-	.map_err(|e| e.to_string())??;
-	restart_portal().await;
-	Ok(status)
+	.map_err(|e| e.to_string())?
+}
+
+fn systemctl_restart() -> tokio::process::Command {
+	let mut command = tokio::process::Command::new("systemctl");
+	command.args(["--user", "try-restart", "xdg-desktop-portal.service"]);
+	command
 }
 
 /// Best effort: without systemd the change applies at the next login.
-async fn restart_portal() {
-	let result = tokio::process::Command::new("systemctl")
-		.args(["--user", "try-restart", "xdg-desktop-portal.service"])
-		.status()
-		.await;
-	match result {
-		Ok(status) if status.success() => tracing::info!("Restarted xdg-desktop-portal"),
-		Ok(status) => tracing::warn!(%status, "Could not restart xdg-desktop-portal"),
-		Err(error) => tracing::warn!(%error, "Could not restart xdg-desktop-portal"),
+/// Returns whether the restart command succeeded.
+async fn restart_portal(mut command: tokio::process::Command) -> bool {
+	match command.status().await {
+		Ok(status) if status.success() => {
+			tracing::info!("Restarted xdg-desktop-portal");
+			true
+		}
+		Ok(status) => {
+			tracing::warn!(%status, "Could not restart xdg-desktop-portal");
+			false
+		}
+		Err(error) => {
+			tracing::warn!(%error, "Could not restart xdg-desktop-portal");
+			false
+		}
 	}
 }

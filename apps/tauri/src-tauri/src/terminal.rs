@@ -854,6 +854,95 @@ mod tests {
 
 	#[cfg(unix)]
 	#[test]
+	fn follow_refuses_folders_the_shell_cannot_be_sent_to() {
+		let root = tempfile::tempdir().unwrap();
+		let file = root.path().join("file.txt");
+		std::fs::write(&file, b"x").unwrap();
+		let newline = root.path().join("a\nb");
+		std::fs::create_dir(&newline).unwrap();
+		let bash = spawn_bash(root.path());
+		assert!(wait_until(|| bash.session.shell.at_prompt()));
+		for path in [
+			Path::new("relative"),
+			file.as_path(),
+			&root.path().join("missing"),
+			// A real folder whose name would end the typed command early.
+			newline.as_path(),
+		] {
+			assert!(!bash.session.follow(path), "{path:?}");
+		}
+		assert!(bash.session.shell.pending.lock().is_none());
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn a_pending_folder_the_shell_cannot_type_is_dropped() {
+		let root = tempfile::tempdir().unwrap();
+		let bash = spawn_bash(root.path());
+		assert!(wait_until(|| bash.session.shell.at_prompt()));
+		*bash.session.shell.pending.lock() = Some(PathBuf::from("/tmp/a\nrm -rf ~"));
+		// Settling consumes the pending folder without typing it.
+		assert_eq!(bash.session.shell.settle(), None);
+		assert!(bash.session.shell.pending.lock().is_none());
+		let mut seen = String::new();
+		bash.session.write(b"echo \"at:$PWD\"\r".to_vec()).unwrap();
+		wait_for(
+			&bash.printed,
+			&mut seen,
+			&format!("at:{}", canonical(root.path()).display()),
+		);
+		assert!(!seen.contains("rm -rf"));
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn a_terminal_nobody_reads_is_hung_up() {
+		let root = tempfile::tempdir().unwrap();
+		let (exit, exited) = mpsc::channel();
+		let session = Session::spawn(
+			bash(),
+			root.path(),
+			size(80, 24),
+			// The webview went away: its output channel refuses the first chunk.
+			|_| false,
+			|_| {},
+			move |code| {
+				let _ = exit.send(code);
+			},
+		)
+		.unwrap();
+		assert!(exited.recv_timeout(Duration::from_secs(10)).is_ok());
+		assert!(session.exited.load(Ordering::SeqCst));
+		// The shell is reaped, so the hangup has nothing left to kill.
+		drop(session);
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn a_shell_that_ignores_the_hangup_is_killed_after_the_grace_period() {
+		let mut child = std::process::Command::new("sleep")
+			.arg("30")
+			.spawn()
+			.unwrap();
+		let started = Instant::now();
+		kill_unless_exited(child.id(), &AtomicBool::new(false));
+		let status = child.wait().unwrap();
+		assert!(!status.success());
+		assert!(started.elapsed() >= HANGUP_GRACE);
+
+		// A reaped shell's pid may belong to another process: never signal it.
+		let mut child = std::process::Command::new("sleep")
+			.arg("30")
+			.spawn()
+			.unwrap();
+		kill_unless_exited(child.id(), &AtomicBool::new(true));
+		assert!(child.try_wait().unwrap().is_none());
+		let _ = child.kill();
+		let _ = child.wait();
+	}
+
+	#[cfg(unix)]
+	#[test]
 	fn destroyed_window_closes_only_its_terminals() {
 		let start = tempfile::tempdir().unwrap();
 		let sessions = TerminalSessions::default();

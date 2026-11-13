@@ -70,7 +70,7 @@ impl EventTimeline {
 						{
 							resource_changed
 								.entry(resource_type.to_string())
-								.or_insert_with(Vec::new)
+								.or_default()
 								.push(EventEntry {
 									timestamp: timestamp.clone(),
 									event_type: "ResourceChanged".to_string(),
@@ -86,7 +86,7 @@ impl EventTimeline {
 						{
 							resource_changed
 								.entry(resource_type.to_string())
-								.or_insert_with(Vec::new)
+								.or_default()
 								.push(EventEntry {
 									timestamp: timestamp.clone(),
 									event_type: "ResourceChangedBatch".to_string(),
@@ -102,7 +102,7 @@ impl EventTimeline {
 						{
 							resource_deleted
 								.entry(resource_type.to_string())
-								.or_insert_with(Vec::new)
+								.or_default()
 								.push(EventEntry {
 									timestamp: timestamp.clone(),
 									event_type: "ResourceDeleted".to_string(),
@@ -269,7 +269,7 @@ impl SyncEventTimeline {
 						};
 
 						if let Some(mt) = model_type {
-							state_changes.entry(mt).or_insert_with(Vec::new).push(entry);
+							state_changes.entry(mt).or_default().push(entry);
 						}
 					}
 					"shared_change" => {

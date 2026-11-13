@@ -356,11 +356,9 @@ async fn test_initial_backfill_alice_indexes_first() -> anyhow::Result<()> {
 		.count(library_bob.db().conn())
 		.await?;
 
-	let linkage_pct = if bob_total_files > 0 {
-		(bob_files_linked * 100) / bob_total_files
-	} else {
-		0
-	};
+	let linkage_pct = (bob_files_linked * 100)
+		.checked_div(bob_total_files)
+		.unwrap_or(0);
 
 	tracing::info!(
 		bob_files_linked = bob_files_linked,

@@ -87,6 +87,13 @@
 - Antes: quando a busca textual no nome não retornava IDs, a função retornava antes de consultar os aliases. Uma tag chamada `Project` com alias `uniquealias` não aparecia ao buscar `uniquealias`.
 - Correção: prosseguir com a busca por aliases mesmo quando a busca inicial está vazia. O teste também verifica namespace, tipo e resultado ausente.
 
+## Import rejeitava exports de location anteriores ao fork
+
+- Estado: corrigido em 2026-11-13.
+- Local: `core/src/ops/locations/import/action.rs`.
+- Reprodução: importar um export com o cabeçalho antigo (`wing_branding::LEGACY_APP_NAME`). A troca de nomes do rebrand transformou a checagem em duas comparações com o cabeçalho novo, e o import falhava com "File is not a valid WingDrive location export". O teste de compatibilidade também substituía o cabeçalho por ele mesmo e não detectava o problema.
+- Correção: aceitar os cabeçalhos com `APP_NAME` e `LEGACY_APP_NAME`; o teste agora monta um cabeçalho legado de verdade e confere que a troca aconteceu.
+
 ## Aviso de incompatibilidade futura em dependência Rust
 
 - Estado: confirmado na compilação instrumentada, sem falha de build atual.
@@ -653,3 +660,27 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: as duas chaves estrangeiras de `sync_conduit` apontavam para a tabela `entry`, que não existe (a tabela é `entries`). O SQLite verifica a tabela pai a cada inserção, então `ConduitManager::create_conduit` falhava com `no such table: main.entry`.
 - Correção: a migração original passa a declarar `entries` para bancos novos. A nova migração recria `sync_conduit` e `sync_generation` com as chaves corretas nos bancos existentes, copia as linhas cujas entradas ainda existem e recria os índices, tudo numa transação: uma falha no meio deixa as tabelas originais, e a migração roda de novo na próxima abertura (teste `a_failed_rebuild_keeps_the_original_tables`).
 - Limite: o serviço de sincronização de pastas ainda não tem ação nem interface (FSYNC-004 em To Do); o teste `test_mirror_sync_with_files` agora espera o monitor terminar em vez de dormir 100 ms.
+
+## Desktop: arrastar no Linux e no Windows deixava uma sessão de arraste presa
+
+- Estado: corrigido; `drag::tests::begin_drag_off_macos_fails_without_starting_a_session`.
+- Local: `begin_drag` em `apps/tauri/src-tauri/src/drag/commands.rs`.
+- Reprodução anterior: fora do macOS, o comando registrava a sessão no `DragCoordinator` e emitia `drag:began` para todas as janelas antes de responder que o arraste só existe no macOS. O círculo da visão de tamanhos (`SizeCircle.tsx`) chama `platform.startDrag` em qualquer plataforma.
+- Impacto: as janelas recebiam o início de um arraste que nunca acontecia e nunca recebiam `drag:ended`. Por 30 segundos, até a sessão ser considerada antiga, cada nova tentativa falhava com "A drag operation is already in progress".
+- Correção: fora do macOS o comando responde com o erro sem registrar sessão nem emitir eventos.
+
+## Desktop: o frontend não conseguia encerrar nem reconhecer o fim de um arraste
+
+- Estado: corrigido; `drag::tests::frontend_drag_config_and_results_keep_their_wire_format` e os testes de `drag:ended`.
+- Local: `DragResult` em `apps/tauri/src-tauri/src/drag/events.rs`.
+- Reprodução anterior: `#[serde(tag = "type", rename_all = "camelCase")]` gravava as variantes como `dropped`, `cancelled` e `failed`. O frontend envia `{ type: "Cancelled" }` em `useDragOperation.ts` e compara `event.result.type === "Dropped"` em `useDropZone.ts`. O comando `end_drag` recusava o argumento com "unknown variant `Cancelled`".
+- Impacto: no macOS, cancelar pelo frontend não encerrava a sessão, que bloqueava novos arrastes por 30 segundos, e `useDropZone` nunca reconhecia um `drag:ended` como soltura.
+- Correção: o enum mantém os nomes das variantes em Pascal case, como o tipo TypeScript declara. Os campos (`operation`, `target`, `error`) não mudam.
+## Desktop: serviço systemd do daemon quebrava caminhos com espaço
+
+- Estado: corrigido em 2026-11-12; `command_tests::service::systemd::unit_arguments_survive_spaces_and_systemd_specifiers` e `installing_writes_the_unit_then_reloads_enables_and_starts_it`.
+- Local: `apps/tauri/src-tauri/src/main.rs`, `install_daemon_service` (ramo Linux), agora `systemd_unit` e `systemd_exec_argument`.
+- Reprodução anterior: com `WINGDRIVE_DATA_DIR=/home/eu/Meus Arquivos`, o comando "instalar como serviço" gravava `ExecStart=/caminho/wing-daemon --data-dir /home/eu/Meus Arquivos`. O systemd separa argumentos sem aspas nos espaços e expande `%` e `$` dentro deles, então o daemon recebia `--data-dir /home/eu/Meus` e um argumento solto `Arquivos`. Um `%` ou `$` no caminho também mudava o valor.
+- Impacto: o serviço iniciava o daemon na pasta errada ou falhava na leitura dos argumentos, e o app esperava 3 s antes de mostrar "Daemon failed to start after installing service". Identificado pela especificação de linha de comando do `systemd.service`; não foi reproduzido contra um gerenciador systemd real, porque os testes não alcançam o systemd do usuário.
+- Correção: cada argumento de `ExecStart` vai entre aspas duplas, com `\` e `"` escapados, `%` como `%%`, `$` como `$$` e quebra de linha como `\n`.
+- Limite: o serviço continua usando a pasta da instância como `--data-dir` e não passa `--instance`, então instalar o serviço a partir de uma instância nomeada inicia o daemon padrão na porta 6969. Não foi alterado aqui.

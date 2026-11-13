@@ -419,9 +419,18 @@ mod linux {
 			&self,
 			app: &AppHandle<R>,
 		) -> Option<&(zbus::Connection, Capabilities)> {
+			self.session_with(app, zbus::Connection::session()).await
+		}
+
+		/// Connects once with `connect` and asks the server what it supports.
+		async fn session_with<R: tauri::Runtime>(
+			&self,
+			app: &AppHandle<R>,
+			connect: impl std::future::Future<Output = zbus::Result<zbus::Connection>>,
+		) -> Option<&(zbus::Connection, Capabilities)> {
 			self.session
 				.get_or_init(|| async {
-					let connection = match zbus::Connection::session().await {
+					let connection = match connect.await {
 						Ok(connection) => connection,
 						Err(error) => {
 							tracing::warn!(%error, "No session bus for notifications");
@@ -454,7 +463,15 @@ mod linux {
 			if let Some(identity) = self.identity.get() {
 				return identity;
 			}
-			let identity = detect_identity(app);
+			let home = std::env::var_os("HOME").map(PathBuf::from);
+			let data_home = std::env::var("XDG_DATA_HOME").ok();
+			let data_dirs_env = std::env::var("XDG_DATA_DIRS").ok();
+			let data_dirs = xdg_data_dirs(
+				data_home.as_deref(),
+				data_dirs_env.as_deref(),
+				home.as_deref(),
+			);
+			let identity = detect_identity(app, &data_dirs);
 			let _ = self.identity.set(identity);
 			self.identity.get().expect("identity was just set")
 		}
@@ -593,7 +610,15 @@ mod linux {
 		let connection = zbus::Connection::session()
 			.await
 			.map_err(|error| error.to_string())?;
-		let proxy = zbus::Proxy::new(&connection, PORTAL_NAME, PORTAL_PATH, PORTAL_INTERFACE)
+		add_portal_notification(&connection, request).await
+	}
+
+	/// Sends `request` to the notification portal on `connection`.
+	async fn add_portal_notification(
+		connection: &zbus::Connection,
+		request: &NotificationRequest,
+	) -> Result<(), String> {
+		let proxy = zbus::Proxy::new(connection, PORTAL_NAME, PORTAL_PATH, PORTAL_INTERFACE)
 			.await
 			.map_err(|error| error.to_string())?;
 		let fields: HashMap<&str, Value<'_>> = build_portal_notification(request, ICON_NAME)
@@ -616,17 +641,10 @@ mod linux {
 			.map_err(|error| error.to_string())
 	}
 
-	fn detect_identity<R: tauri::Runtime>(app: &AppHandle<R>) -> Identity {
-		let home = std::env::var_os("HOME").map(PathBuf::from);
-		let data_home = std::env::var("XDG_DATA_HOME").ok();
-		let data_dirs_env = std::env::var("XDG_DATA_DIRS").ok();
-		let data_dirs = xdg_data_dirs(
-			data_home.as_deref(),
-			data_dirs_env.as_deref(),
-			home.as_deref(),
-		);
-		let desktop_entry = resolve_desktop_entry(&data_dirs, Path::exists);
-		let logo = if theme_has_icon(&data_dirs, ICON_NAME, Path::exists) {
+	/// Finds the desktop file and logo WingDrive was installed with under `data_dirs`.
+	fn detect_identity<R: tauri::Runtime>(app: &AppHandle<R>, data_dirs: &[PathBuf]) -> Identity {
+		let desktop_entry = resolve_desktop_entry(data_dirs, Path::exists);
+		let logo = if theme_has_icon(data_dirs, ICON_NAME, Path::exists) {
 			LogoSource::Themed(ICON_NAME.to_owned())
 		} else {
 			// An AppImage run without desktop integration has no theme icon;
@@ -664,9 +682,9 @@ pub struct Notifier {}
 
 #[cfg(target_os = "windows")]
 impl Notifier {
-	pub async fn send(
+	pub async fn send<R: tauri::Runtime>(
 		&self,
-		app: &tauri::AppHandle,
+		app: &tauri::AppHandle<R>,
 		request: &NotificationRequest,
 	) -> Result<(), String> {
 		use tauri::Manager;
@@ -696,9 +714,9 @@ impl Notifier {
 
 #[cfg(not(any(target_os = "linux", target_os = "windows")))]
 impl Notifier {
-	pub async fn send(
+	pub async fn send<R: tauri::Runtime>(
 		&self,
-		_app: &tauri::AppHandle,
+		_app: &tauri::AppHandle<R>,
 		_request: &NotificationRequest,
 	) -> Result<(), String> {
 		// macOS: notifications need a signed bundle; nothing is sent yet.
@@ -711,8 +729,8 @@ impl Notifier {
 /// Failure is logged and swallowed: a missing notification server must not
 /// turn a finished copy into an error.
 #[tauri::command]
-pub async fn show_desktop_notification(
-	app: tauri::AppHandle,
+pub async fn show_desktop_notification<R: tauri::Runtime>(
+	app: tauri::AppHandle<R>,
 	notifier: tauri::State<'_, Notifier>,
 	request: NotificationRequest,
 ) -> Result<(), String> {
@@ -972,6 +990,18 @@ mod tests {
 		let template = include_str!("../wingdrive.desktop");
 		assert!(template.contains("StartupWMClass={{exec}}"));
 		assert!(template.contains("Icon={{icon}}"));
+	}
+
+	#[cfg(target_os = "linux")]
+	#[test]
+	fn process_identity_matches_the_desktop_file() {
+		apply_process_identity();
+		assert_eq!(
+			gtk::glib::prgname().as_deref(),
+			Some(PROGRAM_NAME),
+			"WM_CLASS must match StartupWMClass"
+		);
+		assert_eq!(gtk::glib::application_name().as_deref(), Some(APP_NAME));
 	}
 
 	#[test]

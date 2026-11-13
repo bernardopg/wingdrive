@@ -255,3 +255,253 @@ fn reveal_fallback_does_not_wait_for_the_folder_opener() {
 		String::from_utf8_lossy(&output.stderr)
 	);
 }
+
+/// The command reads the data directory from the window's daemon state, so a
+/// named instance resolves sidecars inside its own libraries.
+#[tokio::test]
+async fn sidecar_command_resolves_against_the_daemon_data_directory() {
+	use tauri::Manager;
+
+	let dir = tempfile::tempdir().unwrap();
+	let library = dir.path().join("libraries/photos.winglibrary");
+	tokio::fs::create_dir_all(&library).await.unwrap();
+	tokio::fs::write(library.join("library.json"), r#"{"id":"photos"}"#)
+		.await
+		.unwrap();
+	let app = tauri::test::mock_app();
+	app.manage(std::sync::Arc::new(tokio::sync::RwLock::new(
+		crate::DaemonState {
+			started_by_us: false,
+			socket_addr: "127.0.0.1:9".into(),
+			data_dir: dir.path().to_path_buf(),
+			base_data_dir: dir.path().join("base"),
+			instance: Some("work".into()),
+			server_url: None,
+			server_token: None,
+			server_shutdown: None,
+			daemon_process: None,
+		},
+	)));
+
+	let uuid = "353c7043-8d28-56ec-a424-7ab8932b1ffe";
+	for (kind, variant, format, expected) in [
+		("thumb", "detail@1x", "webp", "thumbs/detail@1x.webp"),
+		// Transcripts keep a singular folder name.
+		("transcript", "text", "srt", "transcript/text.srt"),
+	] {
+		let path = super::get_sidecar_path(
+			app.state(),
+			"photos".into(),
+			uuid.into(),
+			kind.into(),
+			variant.into(),
+			format.into(),
+		)
+		.await
+		.unwrap();
+		assert_eq!(
+			Path::new(&path),
+			library
+				.join("sidecars/content/35/3c")
+				.join(uuid)
+				.join(expected)
+		);
+	}
+	let error = super::get_sidecar_path(
+		app.state(),
+		"other".into(),
+		uuid.into(),
+		"thumb".into(),
+		"grid".into(),
+		"webp".into(),
+	)
+	.await
+	.unwrap_err();
+	assert!(
+		error.contains("Library folder not found for ID: other"),
+		"{error}"
+	);
+}
+
+/// "Open Terminal Here" starts the configured terminal in the folder, and
+/// reports a terminal that cannot start.
+#[cfg(target_os = "linux")]
+#[tokio::test]
+async fn open_terminal_starts_the_configured_terminal_in_the_folder() {
+	use std::os::unix::fs::PermissionsExt;
+	use tauri::Manager;
+
+	let dir = tempfile::tempdir().unwrap();
+	let folder = dir.path().join("pasta com espaço");
+	std::fs::create_dir(&folder).unwrap();
+	let physical = folder.canonicalize().unwrap();
+	let marker = dir.path().join("cwd");
+	let script = dir.path().join("fake-terminal");
+	std::fs::write(
+		&script,
+		format!(
+			"#!/bin/sh\nprintf '%s|%s\\n' \"$(pwd -P)\" \"$*\" > '{}'\n",
+			marker.display()
+		),
+	)
+	.unwrap();
+	std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+	for (terminal, expected) in [
+		(
+			script.display().to_string(),
+			Ok(format!("{}|", physical.display())),
+		),
+		(
+			format!("{} --title wing", script.display()),
+			Ok(format!("{}|--title wing", physical.display())),
+		),
+		(
+			dir.path().join("missing-terminal").display().to_string(),
+			Err("Failed to start"),
+		),
+	] {
+		let _ = std::fs::remove_file(&marker);
+		let settings_dir = tempfile::tempdir().unwrap();
+		std::fs::write(
+			settings_dir.path().join("desktop_settings.json"),
+			serde_json::json!({ "terminal_command": terminal }).to_string(),
+		)
+		.unwrap();
+		let app = tauri::test::mock_app();
+		app.manage(crate::background::DesktopSettingsState::load(
+			settings_dir.path(),
+		));
+		let result = super::open_terminal(folder.to_string_lossy().into_owned(), app.state()).await;
+		match expected {
+			Ok(expected) => {
+				result.unwrap();
+				let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+				while !marker.exists() {
+					assert!(std::time::Instant::now() < deadline, "terminal never ran");
+					std::thread::sleep(std::time::Duration::from_millis(20));
+				}
+				// The script may still be writing; wait for the line to end.
+				let mut written = String::new();
+				while !written.ends_with('\n') {
+					assert!(
+						std::time::Instant::now() < deadline,
+						"terminal output incomplete"
+					);
+					written = std::fs::read_to_string(&marker).unwrap();
+				}
+				assert_eq!(written.trim_end(), expected);
+			}
+			Err(prefix) => {
+				let error = result.unwrap_err();
+				assert!(error.starts_with(prefix), "{error}");
+			}
+		}
+	}
+}
+
+/// With a FileManager1 service, reveal selects the item and opens nothing
+/// else; without one, a path with no parent has nothing to open.
+#[cfg(target_os = "linux")]
+#[test]
+fn reveal_selects_through_file_manager1_and_terminal_lookup_needs_a_terminal() {
+	const CHILD_ENV: &str = "WINGDRIVE_TEST_REVEAL_SELECT_CHILD";
+	if let Some(root) = std::env::var_os(CHILD_ENV) {
+		let root = Path::new(&root);
+		let runtime = tokio::runtime::Runtime::new().unwrap();
+		runtime.block_on(async {
+			let file = root.join("it's here.txt");
+			super::reveal_file(file.to_string_lossy().into_owned())
+				.await
+				.unwrap();
+			let args = std::fs::read_to_string(root.join("gdbus-args")).unwrap();
+			let lines: Vec<&str> = args.lines().collect();
+			let items = super::show_items_argument(&super::reveal_uri(&file));
+			// The last argument is ShowItems' empty startup id.
+			assert_eq!(
+				lines,
+				[
+					"call",
+					"--session",
+					"--dest",
+					"org.freedesktop.FileManager1",
+					"--object-path",
+					"/org/freedesktop/FileManager1",
+					"--method",
+					"org.freedesktop.FileManager1.ShowItems",
+					items.as_str(),
+					"",
+				]
+			);
+
+			// gdbus now fails; "/" has no parent folder to fall back to.
+			std::fs::write(root.join("gdbus-fail"), "").unwrap();
+			super::reveal_path(Path::new("/")).await.unwrap();
+			std::thread::sleep(std::time::Duration::from_millis(200));
+			assert!(!root.join("opened").exists());
+		});
+
+		// No override, no xdg-terminal-exec, no $TERMINAL and no known emulator.
+		let error = super::spawn_terminal(root, None).unwrap_err();
+		assert_eq!(
+			error,
+			"No terminal emulator found. Set one in Settings > General."
+		);
+		runtime.shutdown_background();
+		return;
+	}
+
+	use std::os::unix::fs::PermissionsExt;
+	let dir = tempfile::tempdir().unwrap();
+	let root = dir.path();
+	let bin = root.join("bin");
+	std::fs::create_dir(&bin).unwrap();
+	std::fs::write(root.join("it's here.txt"), "x").unwrap();
+	for (name, script) in [
+		(
+			"gdbus",
+			format!(
+				"#!/bin/sh\n[ -e '{0}/gdbus-fail' ] && exit 1\nfor a in \"$@\"; do printf '%s\\n' \"$a\"; done > '{0}/gdbus-args'\n",
+				root.display()
+			),
+		),
+		(
+			"xdg-open",
+			format!("#!/bin/sh\ntouch '{}/opened'\n", root.display()),
+		),
+	] {
+		let path = bin.join(name);
+		std::fs::write(&path, script).unwrap();
+		std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+	}
+	// The scripts need a shell, so PATH holds only the fixture folder plus the
+	// shell's own, which has no terminal emulators.
+	let sh_dir = root.join("sh");
+	std::fs::create_dir(&sh_dir).unwrap();
+	for tool in ["sh", "touch"] {
+		let real = ["/usr/bin", "/bin"]
+			.iter()
+			.map(|d| Path::new(d).join(tool))
+			.find(|p| p.exists())
+			.unwrap();
+		std::os::unix::fs::symlink(real, sh_dir.join(tool)).unwrap();
+	}
+	let output = std::process::Command::new(std::env::current_exe().unwrap())
+		.args([
+			"--exact",
+			"files::tests::reveal_selects_through_file_manager1_and_terminal_lookup_needs_a_terminal",
+			"--nocapture",
+		])
+		.env(CHILD_ENV, root)
+		.env("PATH", format!("{}:{}", bin.display(), sh_dir.display()))
+		.env_remove("TERMINAL")
+		.env_remove("APPDIR")
+		.output()
+		.unwrap();
+	assert!(
+		output.status.success(),
+		"child failed: {}{}",
+		String::from_utf8_lossy(&output.stdout),
+		String::from_utf8_lossy(&output.stderr)
+	);
+}

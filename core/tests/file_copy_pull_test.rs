@@ -451,8 +451,8 @@ async fn bob_pull_receiver_scenario() {
 		tokio::time::sleep(Duration::from_secs(1)).await;
 
 		if let Ok(entries) = std::fs::read_dir(&pull_dest_dir) {
-			for entry in entries {
-				if let Ok(entry) = entry {
+			for entry in entries.flatten() {
+				{
 					let filename = entry.file_name().to_string_lossy().to_string();
 					if !received_files.contains(&filename) {
 						if let Ok(metadata) = entry.metadata() {
@@ -485,7 +485,10 @@ async fn bob_pull_receiver_scenario() {
 		}
 
 		let elapsed = start_time.elapsed().as_secs();
-		if elapsed > 0 && elapsed % 10 == 0 && received_files.len() < source_files_info.len() {
+		if elapsed > 0
+			&& elapsed.is_multiple_of(10)
+			&& received_files.len() < source_files_info.len()
+		{
 			println!(
 				"Bob: PULL progress: {}/{} files received ({}s elapsed)",
 				received_files.len(),

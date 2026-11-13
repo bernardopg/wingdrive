@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	// List tables to verify
 	println!("\nCreated tables:");
 	let result = db
-        .query_all(Statement::from_string(
+        .query_all_raw(Statement::from_string(
             sea_orm::DatabaseBackend::Sqlite,
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
         ))
