@@ -178,6 +178,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-13 | Release `v3.2.0` (#383 a #389): integração Google com Drive e Fotos em várias contas (CLOUD-004), operações e edição em volumes de nuvem, cloud sync, COV-07 Done com 91,6% de cobertura do shell desktop e os bugs achados corrigidos, `sdPath` para `wdPath` (BRAND-003) |
 | 2026-11-13 | Todas as tasks com responsável `bernardopg`, milestone (M0 para as concluídas no upstream) e sprint; sprints S07 a S14 planejados |
 | 2026-11-12 | Release `v3.1.1` (#368 a #381): portal `FileChooser` (DESK-051), undo de renomear e novos itens no Tauri (FILE-008), correções DESK-090 a DESK-096, CORE-020, CLI-010, cerca de 175 testes e atualizações do Dependabot |
 | 2026-11-12 | PRs #373 a #379: site com deploy automático e Discord em inglês; FILE-008 Done; DESK-051 com o backend do portal `FileChooser` (falta conferir com navegadores e no pacote); revalidação do S03/S04 achou DESK-090 a DESK-096; coverage com CORE-020, CLI-010 e DESK-060 |
