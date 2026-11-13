@@ -95,7 +95,7 @@ async fn alice_sync_setup_scenario() {
 			println!("Alice: Pairing successful!");
 
 			// Share library with Bob - THIS IS THE CRITICAL TEST
-			let bob_device_id = connected.first().unwrap().clone();
+			let bob_device_id = *connected.first().unwrap();
 			println!(
 				"Alice: Sharing library with Bob (device: {})...",
 				bob_device_id

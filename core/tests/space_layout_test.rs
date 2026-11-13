@@ -86,7 +86,7 @@ async fn spaces(test_name: &str) -> anyhow::Result<Spaces> {
 fn local(path: std::path::PathBuf) -> WingPath {
 	WingPath::Physical {
 		device_slug: wing_core::device::get_current_device_slug(),
-		path: path.into(),
+		path,
 	}
 }
 

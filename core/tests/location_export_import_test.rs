@@ -246,7 +246,11 @@ async fn test_location_export_import() -> Result<(), Box<dyn std::error::Error +
 	// Pre-fork exports remain importable during the compatibility window.
 	let legacy_export = export_content.replace(
 		"-- WingDrive Location Export",
-		"-- WingDrive Location Export",
+		&format!("-- {} Location Export", wing_branding::LEGACY_APP_NAME),
+	);
+	assert_ne!(
+		legacy_export, export_content,
+		"the export carries the header"
 	);
 	tokio::fs::write(&export_file, legacy_export).await?;
 

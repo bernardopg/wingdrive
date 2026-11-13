@@ -12,7 +12,7 @@ fn archives_round_trip_and_extract_selected_members() {
 	std::fs::create_dir_all(source.join("nested")).unwrap();
 	std::fs::write(source.join("nested/café.txt"), b"archive contents").unwrap();
 	std::fs::write(source.join("other.txt"), b"other").unwrap();
-	assert_eq!(engine::source_size(&[source.clone()]), 21);
+	assert_eq!(engine::source_size(std::slice::from_ref(&source)), 21);
 
 	for format in [
 		ArchiveFormat::Zip,
@@ -25,7 +25,13 @@ fn archives_round_trip_and_extract_selected_members() {
 		let archive = root.path().join(format!("test.{}", format.extension()));
 		let output = root.path().join(format!("out-{}", format.extension()));
 		std::fs::create_dir(&output).unwrap();
-		engine::compress(&[source.clone()], format, &archive, &Control::default()).unwrap();
+		engine::compress(
+			std::slice::from_ref(&source),
+			format,
+			&archive,
+			&Control::default(),
+		)
+		.unwrap();
 		let entries = engine::list(&archive, format).unwrap();
 		assert!(
 			entries

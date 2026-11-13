@@ -30,7 +30,7 @@ pub enum TestFileSystem {
 
 impl TestFileSystem {
 	/// Get the filesystem string for the current platform
-	pub fn to_platform_string(&self) -> &'static str {
+	pub fn to_platform_string(self) -> &'static str {
 		match self {
 			TestFileSystem::Apfs => "APFS",
 			TestFileSystem::HfsPlus => "HFS+",
@@ -553,7 +553,7 @@ impl LinuxTestVolumeManager {
 		// Mount tmpfs
 		let size_mb = config.size_bytes / (1024 * 1024);
 		let output = tokio::process::Command::new("sudo")
-			.args(&[
+			.args([
 				"mount",
 				"-t",
 				"tmpfs",
@@ -583,7 +583,7 @@ impl LinuxTestVolumeManager {
 			cleanup: Some(Box::new(move || {
 				// Unmount tmpfs
 				std::process::Command::new("sudo")
-					.args(&["umount", mount_point_clone.to_str().unwrap()])
+					.args(["umount", mount_point_clone.to_str().unwrap()])
 					.output()
 					.ok();
 
@@ -604,7 +604,7 @@ impl LinuxTestVolumeManager {
 
 		// Create image file
 		let output = tokio::process::Command::new("dd")
-			.args(&[
+			.args([
 				"if=/dev/zero",
 				&format!("of={}", img_path.to_str().unwrap()),
 				"bs=1M",
@@ -623,7 +623,7 @@ impl LinuxTestVolumeManager {
 
 		// Create loop device
 		let output = tokio::process::Command::new("sudo")
-			.args(&["losetup", "--find", "--show", img_path.to_str().unwrap()])
+			.args(["losetup", "--find", "--show", img_path.to_str().unwrap()])
 			.output()
 			.await
 			.context("Failed to create loop device")?;
@@ -669,7 +669,7 @@ impl LinuxTestVolumeManager {
 		if !output.status.success() {
 			// Clean up loop device
 			tokio::process::Command::new("sudo")
-				.args(&["losetup", "-d", &loop_device])
+				.args(["losetup", "-d", &loop_device])
 				.output()
 				.await
 				.ok();
@@ -682,7 +682,7 @@ impl LinuxTestVolumeManager {
 
 		// Mount the loop device
 		let output = tokio::process::Command::new("sudo")
-			.args(&["mount", &loop_device, mount_point.to_str().unwrap()])
+			.args(["mount", &loop_device, mount_point.to_str().unwrap()])
 			.output()
 			.await
 			.context("Failed to mount loop device")?;
@@ -690,7 +690,7 @@ impl LinuxTestVolumeManager {
 		if !output.status.success() {
 			// Clean up
 			tokio::process::Command::new("sudo")
-				.args(&["losetup", "-d", &loop_device])
+				.args(["losetup", "-d", &loop_device])
 				.output()
 				.await
 				.ok();
@@ -720,13 +720,13 @@ impl LinuxTestVolumeManager {
 			cleanup: Some(Box::new(move || {
 				// Unmount
 				std::process::Command::new("sudo")
-					.args(&["umount", mount_point_clone.to_str().unwrap()])
+					.args(["umount", mount_point_clone.to_str().unwrap()])
 					.output()
 					.ok();
 
 				// Detach loop device
 				std::process::Command::new("sudo")
-					.args(&["losetup", "-d", &loop_device_clone])
+					.args(["losetup", "-d", &loop_device_clone])
 					.output()
 					.ok();
 
@@ -755,7 +755,7 @@ impl LinuxTestVolumeManager {
 	pub async fn check_privileges(&self) -> Result<()> {
 		// Check if we can use sudo
 		let output = tokio::process::Command::new("sudo")
-			.args(&["-n", "true"])
+			.args(["-n", "true"])
 			.output()
 			.await?;
 

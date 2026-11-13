@@ -101,10 +101,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		tokio::select! {
 			Ok(event) = event_rx.recv() => {
 				match event {
-					Event::JobProgress { job_id, message, .. } => {
-						if let Some(msg) = message {
-							println!("   Job {}: {}", job_id, msg);
-						}
+					Event::JobProgress { job_id, message: Some(msg), .. } => {
+						println!("   Job {}: {}", job_id, msg);
 					}
 					Event::IndexingCompleted { .. } => {
 						println!("   Indexing completed!");

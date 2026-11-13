@@ -163,19 +163,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 		let event_timeout = timeout(Duration::from_secs(5), async {
 			let mut event_count = 0;
-			loop {
-				match subscriber.recv().await {
-					Ok(event) => {
-						if event.is_volume_event() {
-							event_count += 1;
-							println!("   Volume event received: {:?}", event);
+			while let Ok(event) = subscriber.recv().await {
+				if event.is_volume_event() {
+					event_count += 1;
+					println!("   Volume event received: {:?}", event);
 
-							if event_count >= 3 {
-								break; // Don't wait for too many events
-							}
-						}
+					if event_count >= 3 {
+						break; // Don't wait for too many events
 					}
-					Err(_) => break,
 				}
 			}
 			event_count

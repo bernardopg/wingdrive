@@ -543,7 +543,7 @@ async fn test_ephemeral_search_with_filters() -> anyhow::Result<()> {
 	let size_results = execute_search(&harness, size_search).await?;
 	assert_eq!(size_results.index_type, IndexType::Ephemeral);
 	assert!(
-		size_results.results.len() >= 1,
+		!size_results.results.is_empty(),
 		"Should find at least 1 large file"
 	);
 

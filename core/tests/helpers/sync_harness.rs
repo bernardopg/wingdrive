@@ -728,6 +728,7 @@ impl SnapshotCapture {
 	}
 
 	/// Write a comprehensive summary markdown
+	#[allow(clippy::too_many_arguments)]
 	pub async fn write_summary(
 		&self,
 		test_name: &str,
@@ -776,16 +777,12 @@ impl SnapshotCapture {
 			.count(library_bob.db().conn())
 			.await?;
 
-		let alice_linkage_pct = if alice_total_files > 0 {
-			(alice_files_linked * 100) / alice_total_files
-		} else {
-			0
-		};
-		let bob_linkage_pct = if bob_total_files > 0 {
-			(bob_files_linked * 100) / bob_total_files
-		} else {
-			0
-		};
+		let alice_linkage_pct = (alice_files_linked * 100)
+			.checked_div(alice_total_files)
+			.unwrap_or(0);
+		let bob_linkage_pct = (bob_files_linked * 100)
+			.checked_div(bob_total_files)
+			.unwrap_or(0);
 
 		let summary = format!(
 			r#"# Sync Test Snapshot: {}

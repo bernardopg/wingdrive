@@ -265,18 +265,13 @@ async fn test_event_filtering() -> Result<(), Box<dyn std::error::Error + Send +
 	let event_subscriber = core.events.subscribe();
 	let event_collector = tokio::spawn(async move {
 		let mut subscriber = event_subscriber;
-		loop {
-			match timeout(
-				Duration::from_millis(100),
-				subscriber.recv_filtered(|e| e.is_for_library(lib1_id)),
-			)
-			.await
-			{
-				Ok(Ok(event)) => {
-					lib1_events_clone.lock().await.push(event);
-				}
-				_ => break,
-			}
+		while let Ok(Ok(event)) = timeout(
+			Duration::from_millis(100),
+			subscriber.recv_filtered(|e| e.is_for_library(lib1_id)),
+		)
+		.await
+		{
+			lib1_events_clone.lock().await.push(event);
 		}
 	});
 

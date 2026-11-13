@@ -232,7 +232,7 @@ async fn capture_event_fixtures_for_typescript(
 	// Build the path scope (using device_slug from above)
 	let test_location_path = wing_core::domain::WingPath::Physical {
 		device_slug: device_slug.clone(),
-		path: test_dir.clone().into(),
+		path: test_dir.clone(),
 	};
 
 	// Use the actual production LocationAddAction to get real ResourceChanged events

@@ -153,6 +153,7 @@ fn not_found(id: &str) -> Response {
 }
 
 /// Checks the bearer token and returns the user's sub.
+#[allow(clippy::result_large_err)]
 fn auth(state: &Shared, headers: &HeaderMap) -> Result<String, Response> {
 	let mut state = state.lock().unwrap();
 	if state.fail_next_with_401 {
@@ -194,7 +195,7 @@ async fn token(State(state): State<Shared>, body: Bytes) -> Response {
 				)
 					.into_response();
 			};
-			if form.get("code_verifier").map_or(true, |v| v.len() < 43) {
+			if form.get("code_verifier").is_none_or(|v| v.len() < 43) {
 				return (
 					StatusCode::BAD_REQUEST,
 					Json(json!({"error": "invalid_request", "error_description": "code_verifier"})),

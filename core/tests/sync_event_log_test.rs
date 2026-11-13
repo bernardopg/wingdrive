@@ -361,7 +361,7 @@ async fn test_batch_aggregation() -> anyhow::Result<()> {
 
 	// Should have one batch event aggregating all the adds
 	assert!(
-		events.len() >= 1,
+		!events.is_empty(),
 		"Expected at least one batch ingestion event"
 	);
 
@@ -454,7 +454,7 @@ async fn test_event_log_persistence() -> anyhow::Result<()> {
 	let events_before = harness.query_events_api(query.clone()).await?;
 
 	assert!(
-		events_before.len() >= 1,
+		!events_before.is_empty(),
 		"Should have logged state transition"
 	);
 
@@ -694,7 +694,7 @@ async fn test_severity_filtering() -> anyhow::Result<()> {
 
 	tracing::info!(error_count = errors.len(), "Error events");
 
-	assert!(errors.len() >= 1, "Should have at least one error event");
+	assert!(!errors.is_empty(), "Should have at least one error event");
 
 	// All should be Error severity
 	for event in &errors {

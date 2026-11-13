@@ -554,18 +554,16 @@ async fn bob_file_transfer_scenario() {
 
 		// Check for new files in received directory
 		if let Ok(entries) = std::fs::read_dir(received_dir) {
-			for entry in entries {
-				if let Ok(entry) = entry {
-					let filename = entry.file_name().to_string_lossy().to_string();
-					if !received_files.contains(&filename) {
-						if let Ok(metadata) = entry.metadata() {
-							received_files.push(filename.clone());
-							println!(
-								"Bob: Received file: {} ({} bytes)",
-								filename,
-								metadata.len()
-							);
-						}
+			for entry in entries.flatten() {
+				let filename = entry.file_name().to_string_lossy().to_string();
+				if !received_files.contains(&filename) {
+					if let Ok(metadata) = entry.metadata() {
+						received_files.push(filename.clone());
+						println!(
+							"Bob: Received file: {} ({} bytes)",
+							filename,
+							metadata.len()
+						);
 					}
 				}
 			}
@@ -573,7 +571,7 @@ async fn bob_file_transfer_scenario() {
 
 		// Debug: Show directory contents periodically
 		let elapsed = start_time.elapsed().as_secs();
-		if elapsed > 0 && elapsed % 10 == 0 && received_files.is_empty() {
+		if elapsed > 0 && elapsed.is_multiple_of(10) && received_files.is_empty() {
 			println!("Bob: Still waiting for files... checking directory:");
 			if let Ok(entries) = std::fs::read_dir(received_dir) {
 				let file_count = entries.count();
@@ -581,7 +579,7 @@ async fn bob_file_transfer_scenario() {
 			}
 		}
 
-		if received_files.len() > 0 && received_files.len() % 2 == 0 {
+		if !received_files.is_empty() && received_files.len() % 2 == 0 {
 			println!(
 				"Bob: Progress: {}/{} files received",
 				received_files.len(),

@@ -133,6 +133,7 @@ async fn capture_phase_snapshots() -> Result<(), Box<dyn std::error::Error + Sen
 				Event::JobProgress {
 					job_type, message, ..
 				} if job_type == "indexer" => {
+					#[allow(clippy::collapsible_match)]
 					if let Some(msg) = message {
 						if msg.contains("Processing entries") && !processing_complete {
 							eprintln!("Phase: Processing");
@@ -167,16 +168,14 @@ async fn capture_phase_snapshots() -> Result<(), Box<dyn std::error::Error + Sen
 							.push((current_phase_name.clone(), current_phase_events.clone()));
 					}
 				}
-				Event::JobCompleted { job_type, .. } => {
-					if job_type == "indexer" && !job_completed {
-						eprintln!("Job Complete\n");
-						job_completed = true;
+				Event::JobCompleted { job_type, .. } if job_type == "indexer" && !job_completed => {
+					eprintln!("Job Complete\n");
+					job_completed = true;
 
-						// Save final phase
-						if !current_phase_events.is_empty() {
-							phase_events
-								.push((current_phase_name.clone(), current_phase_events.clone()));
-						}
+					// Save final phase
+					if !current_phase_events.is_empty() {
+						phase_events
+							.push((current_phase_name.clone(), current_phase_events.clone()));
 					}
 				}
 				_ => {}

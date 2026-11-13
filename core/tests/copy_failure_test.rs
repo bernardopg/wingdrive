@@ -566,7 +566,7 @@ async fn folder_move_that_fails_inside_keeps_the_whole_source_folder() {
 		if copied.join(name).exists() {
 			assert_eq!(
 				fs::read(copied.join(name)).await.unwrap(),
-				name[..1].as_bytes()
+				&name.as_bytes()[..1]
 			);
 		}
 	}
