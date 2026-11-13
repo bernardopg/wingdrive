@@ -285,4 +285,6 @@ async fn app_state_commands_report_selection_library_and_subscriptions() {
 #[cfg(unix)]
 mod daemon;
 mod events;
+mod ipc;
 mod service;
+mod startup;
