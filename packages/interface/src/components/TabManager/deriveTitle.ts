@@ -65,9 +65,9 @@ export function deriveTitleFromPath(
 		}
 
 		const pathParam = params.get("path");
-		const sdPath = pathParam ? wingPathFromParam(pathParam) : null;
-		if (sdPath && "Physical" in sdPath) {
-			const parts = sdPath.Physical.path.split("/").filter(Boolean);
+		const wdPath = pathParam ? wingPathFromParam(pathParam) : null;
+		if (wdPath && "Physical" in wdPath) {
+			const parts = wdPath.Physical.path.split("/").filter(Boolean);
 			return parts[parts.length - 1] || i18n.t("dialogs:tabs.explorer");
 		}
 		return i18n.t("dialogs:tabs.explorer");

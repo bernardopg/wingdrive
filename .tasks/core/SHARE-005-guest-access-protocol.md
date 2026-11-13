@@ -2,11 +2,12 @@
 id: SHARE-005
 title: Guest Access Protocol over Iroh
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: High
 tags: [sharing, networking, protocol, iroh, upstream-backlog]
 milestone: M4
+sprint: S07
 last_updated: 2026-10-16
 ---
 

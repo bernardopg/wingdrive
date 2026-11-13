@@ -2,7 +2,7 @@
 id: VSS-005
 title: "CLI Sidecar Commands"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-008
 priority: Medium
 tags: [vss, cli, tooling, upstream-backlog]
@@ -11,6 +11,7 @@ last_updated: 2026-10-16
 related_tasks: [CORE-008, CLI-000]
 dependencies: [VSS-001, VSS-002]
 milestone: M5
+sprint: S13
 ---
 
 ## Description

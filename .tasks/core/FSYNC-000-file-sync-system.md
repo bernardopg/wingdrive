@@ -2,9 +2,10 @@
 id: FSYNC-000
 title: File Sync
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 milestone: M4
+sprint: S07
 tags: [sync, service, epic, index-driven, upstream-backlog]
 whitepaper: Section 5.2
 design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md

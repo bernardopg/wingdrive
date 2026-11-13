@@ -323,7 +323,7 @@ const jobOptions: JobOption[] = [
 ];
 
 export function useAddStorageDialog(
-	onStorageAdded?: (sdPath: any) => void,
+	onStorageAdded?: (wdPath: any) => void,
 	initialPath?: string,
 ) {
 	return dialogManager.create((props) => (
@@ -337,7 +337,7 @@ export function useAddStorageDialog(
 
 function AddStorageDialog(props: {
 	id: number;
-	onStorageAdded?: (sdPath: any) => void;
+	onStorageAdded?: (wdPath: any) => void;
 	initialPath?: string;
 }) {
 	const {t} = useTranslation('explorer');

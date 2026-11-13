@@ -2,11 +2,12 @@
 id: FILE-000
 title: "Epic: File Operations"
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 tags: [epic, core, file-ops, upstream-backlog]
 whitepaper: Section 4
 milestone: M5
+sprint: S09
 last_updated: 2026-10-16
 ---
 

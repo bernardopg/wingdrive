@@ -2,9 +2,10 @@
 id: FSYNC-002
 title: Database Schema & Entities
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: FSYNC-000
 priority: High
+milestone: M0
 tags: [database, schema, migration, entities]
 design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md
 last_updated: 2025-10-15

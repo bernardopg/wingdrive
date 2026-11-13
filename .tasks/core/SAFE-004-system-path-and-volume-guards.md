@@ -1,9 +1,10 @@
 ---
 id: SAFE-004
 title: "Protect system paths and privileged volume operations"
-status: "Done"
-assignee: "jamiepine"
-priority: "High"
+status: Done
+assignee: bernardopg
+priority: High
+milestone: M0
 tags: [core, filesystem, safety, volumes, locations]
 ---
 

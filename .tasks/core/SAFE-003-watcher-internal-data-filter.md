@@ -1,9 +1,10 @@
 ---
 id: SAFE-003
 title: "Exclude WingDrive data from filesystem watcher events"
-status: "Done"
-assignee: "jamiepine"
-priority: "High"
+status: Done
+assignee: bernardopg
+priority: High
+milestone: M0
 tags: [core, filesystem, safety, watcher]
 ---
 

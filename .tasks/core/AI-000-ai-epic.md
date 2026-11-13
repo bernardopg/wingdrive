@@ -2,9 +2,10 @@
 id: AI-000
 title: "Local AI & Intelligence"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 milestone: M5
+sprint: S10
 tags: [epic, ai, agent, upstream-backlog]
 whitepaper: Section 4.6
 last_updated: 2026-10-16

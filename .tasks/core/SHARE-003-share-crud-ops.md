@@ -2,11 +2,12 @@
 id: SHARE-003
 title: Share CRUD Operations
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: High
 tags: [sharing, ops, upstream-backlog]
 milestone: M4
+sprint: S07
 last_updated: 2026-10-16
 ---
 

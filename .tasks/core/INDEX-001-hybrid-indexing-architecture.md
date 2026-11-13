@@ -2,9 +2,10 @@
 id: INDEX-001
 title: Hybrid Indexing Architecture (Ephemeral + Persistent)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: INDEX-000
 priority: High
+milestone: M0
 tags: [indexing, architecture, ephemeral, persistent]
 whitepaper: Section 4.3.1
 last_updated: 2025-12-16

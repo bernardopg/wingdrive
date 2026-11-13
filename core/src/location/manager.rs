@@ -161,7 +161,7 @@ impl LocationManager {
 		// Resolve volume for this location path BEFORE creating the entry
 		// Volume detection is required - all locations must have a volume
 		let volume_id = match volume_manager
-			.resolve_volume_for_sdpath(&wing_path, &library)
+			.resolve_volume_for_wdpath(&wing_path, &library)
 			.await
 		{
 			Ok(Some(volume)) => {

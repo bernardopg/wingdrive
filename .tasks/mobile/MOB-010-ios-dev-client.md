@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: MOB-000
 priority: Low
 milestone: M5
+sprint: S14
 tags: [mobile, ios]
 last_updated: 2026-10-17
 ---

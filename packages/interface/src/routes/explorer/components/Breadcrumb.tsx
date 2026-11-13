@@ -11,9 +11,9 @@ interface PathSegment {
   path: WingPath;
 }
 
-function parseWingPathSegments(sdPath: WingPath): PathSegment[] {
-  if ("Physical" in sdPath) {
-    const { device_slug, path } = sdPath.Physical;
+function parseWingPathSegments(wdPath: WingPath): PathSegment[] {
+  if ("Physical" in wdPath) {
+    const { device_slug, path } = wdPath.Physical;
     const parts = path.split("/").filter(Boolean);
 
     return parts.map((part, index) => ({
@@ -27,8 +27,8 @@ function parseWingPathSegments(sdPath: WingPath): PathSegment[] {
     }));
   }
 
-  if ("Cloud" in sdPath) {
-    const { service, identifier, path } = sdPath.Cloud;
+  if ("Cloud" in wdPath) {
+    const { service, identifier, path } = wdPath.Cloud;
     const parts = path.split("/").filter(Boolean);
 
     return parts.map((part, index) => ({

@@ -2,8 +2,9 @@
 id: CLI-000
 title: "Epic: Command-Line Interface"
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 tags: [epic, cli]
 last_updated: 2025-12-02
 ---

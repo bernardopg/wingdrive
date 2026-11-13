@@ -2,7 +2,7 @@
 id: FSYNC-004
 title: Service Integration & API
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: FSYNC-000
 priority: Medium
 tags: [api, integration, routes, events, upstream-backlog]
@@ -10,6 +10,7 @@ design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md
 last_updated: 2026-10-16
 related_tasks: [FSYNC-003]
 milestone: M4
+sprint: S08
 ---
 
 ## Description

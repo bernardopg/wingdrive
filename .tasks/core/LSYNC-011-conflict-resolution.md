@@ -2,9 +2,10 @@
 id: LSYNC-011
 title: Conflict Resolution (HLC-Based)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: LSYNC-000
 priority: Medium
+milestone: M0
 tags: [sync, conflict-resolution, hlc, merge]
 depends_on: [LSYNC-009, LSYNC-010]
 design_doc: core/src/infra/sync/NEW_SYNC.md

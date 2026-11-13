@@ -2,13 +2,14 @@
 id: SETS-000
 title: "Epic: Settings Interface"
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 parent: UI-000
 priority: Medium
 tags: [epic, settings, interface, upstream-backlog]
 whitepaper: N/A
 last_updated: 2026-10-16
 milestone: M5
+sprint: S10
 ---
 
 ## Description

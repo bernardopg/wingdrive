@@ -529,9 +529,9 @@ export function useFileContextMenu({
 					console.warn('Cannot copy virtual files');
 					return;
 				}
-				const sdPaths = targets.map((f) => f.wing_path);
+				const wdPaths = targets.map((f) => f.wing_path);
 				clipboard.copyFiles(
-					sdPaths,
+					wdPaths,
 					operationalPath,
 					targets.every((file) => file.is_local)
 				);
@@ -551,9 +551,9 @@ export function useFileContextMenu({
 					console.warn('Cannot cut virtual files');
 					return;
 				}
-				const sdPaths = targets.map((f) => f.wing_path);
+				const wdPaths = targets.map((f) => f.wing_path);
 				clipboard.cutFiles(
-					sdPaths,
+					wdPaths,
 					operationalPath,
 					targets.every((file) => file.is_local)
 				);

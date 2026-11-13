@@ -2,8 +2,9 @@
 id: LSYNC-023
 title: Rebuild Closure Tables After Sync
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 parent: LSYNC-000
 tags: [sync, database, bug, closure-table]
 last_updated: 2025-10-23

@@ -2,11 +2,12 @@
 id: NET-004
 title: First-Class Tailscale Support
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: NET-000
 priority: Medium
 tags: [networking, tailscale, p2p, discovery, upstream-backlog]
 milestone: M4
+sprint: S08
 last_updated: 2026-10-16
 ---
 

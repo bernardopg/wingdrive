@@ -278,13 +278,13 @@ async fn test_copy_strategy_selection() {
 		if source_path.exists() && dest_path.exists() {
 			// Create WingPath instances (using current device slug)
 			let device_slug = get_current_device_slug();
-			let source_sdpath = WingPath::new(device_slug.clone(), source_path.clone());
-			let dest_sdpath = WingPath::new(device_slug, dest_path.clone());
+			let source_wdpath = WingPath::new(device_slug.clone(), source_path.clone());
+			let dest_wdpath = WingPath::new(device_slug, dest_path.clone());
 
 			// Test strategy selection
 			let strategy = CopyStrategyRouter::select_strategy(
-				&source_sdpath,
-				&dest_sdpath,
+				&source_wdpath,
+				&dest_wdpath,
 				false, // is_move = false
 				&CopyMethod::Auto,
 				Some(&*volume_manager),
@@ -293,8 +293,8 @@ async fn test_copy_strategy_selection() {
 
 			// Get strategy description
 			let description = CopyStrategyRouter::describe_strategy(
-				&source_sdpath,
-				&dest_sdpath,
+				&source_wdpath,
+				&dest_wdpath,
 				false,
 				&CopyMethod::Auto,
 				Some(&*volume_manager),
@@ -453,12 +453,12 @@ async fn test_full_copy_workflow_simulation() {
 
 					// Step 3: Select copy strategy
 					let device_slug = get_current_device_slug();
-					let source_sdpath = WingPath::new(device_slug.clone(), source_path.clone());
-					let dest_sdpath = WingPath::new(device_slug, dest_path.clone());
+					let source_wdpath = WingPath::new(device_slug.clone(), source_path.clone());
+					let dest_wdpath = WingPath::new(device_slug, dest_path.clone());
 
 					let description = CopyStrategyRouter::describe_strategy(
-						&source_sdpath,
-						&dest_sdpath,
+						&source_wdpath,
+						&dest_wdpath,
 						false,
 						&CopyMethod::Auto,
 						Some(&*volume_manager),

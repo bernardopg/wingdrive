@@ -2,9 +2,10 @@
 id: PLUG-000
 title: "Epic: WASM Extension System"
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 milestone: M5
+sprint: S09
 tags: [epic, plugins, wasm, extensibility, extensions, upstream-backlog]
 whitepaper: Section 6.7
 last_updated: 2026-10-16

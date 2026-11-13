@@ -2,10 +2,11 @@
 id: SEC-000
 title: Security & Privacy
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 tags: [security, epic, upstream-backlog]
 milestone: M5
+sprint: S09
 last_updated: 2026-10-16
 ---
 

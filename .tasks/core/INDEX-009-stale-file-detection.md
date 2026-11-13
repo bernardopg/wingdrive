@@ -2,7 +2,7 @@
 id: INDEX-009
 title: Intelligent Stale Detection Service with Modified-Time Optimization
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: INDEX-000
 priority: High
 tags: [indexing, stale-detection, offline-recovery, sync, service, modified-time, upstream-backlog]
@@ -10,6 +10,7 @@ whitepaper: Section 4.3.4
 last_updated: 2026-10-16
 related_tasks: [INDEX-004, LSYNC-020, LOC-000]
 milestone: M5
+sprint: S10
 ---
 
 ## Executive Summary

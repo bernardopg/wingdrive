@@ -2,9 +2,10 @@
 id: WATCH-002
 title: Platform-Specific Rename Detection
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: WATCH-000
 priority: High
+milestone: M0
 tags: [watcher, platform, rename, inode]
 last_updated: 2025-12-16
 ---

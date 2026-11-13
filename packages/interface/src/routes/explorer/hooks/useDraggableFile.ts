@@ -25,7 +25,7 @@ export function useDraggableFile({
 		disabled: isVirtual,
 		data: {
 			type: "explorer-file",
-			sdPath: file.wing_path,
+			wdPath: file.wing_path,
 			name: file.name,
 			file: file,
 			gridSize,

@@ -2,7 +2,7 @@
 id: VSS-004
 title: "Cross-Device Sidecar Sync"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-008
 priority: Medium
 tags: [vss, sync, networking, p2p, upstream-backlog]
@@ -11,6 +11,7 @@ last_updated: 2026-10-16
 related_tasks: [CORE-008, LSYNC-000, NET-000]
 dependencies: [VSS-001, VSS-002]
 milestone: M4
+sprint: S08
 ---
 
 ## Description

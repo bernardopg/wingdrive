@@ -2,7 +2,7 @@
 id: CORE-014
 title: Cross-Platform File Opening Backend
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 tags: [core, platform, file-operations]
 whitepaper: DESIGN-open-with.md

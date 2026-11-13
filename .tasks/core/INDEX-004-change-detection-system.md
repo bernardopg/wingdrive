@@ -2,9 +2,10 @@
 id: INDEX-004
 title: Change Detection System (Batch + Real-Time)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: INDEX-000
 priority: High
+milestone: M0
 tags: [indexing, change-detection, watcher, stale-detection]
 whitepaper: Section 4.3.3
 last_updated: 2025-12-16

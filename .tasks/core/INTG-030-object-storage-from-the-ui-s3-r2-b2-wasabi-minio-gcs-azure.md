@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: INTG-000
 priority: Medium
 milestone: M5
+sprint: S13
 tags: [integrations, s3, object-storage, gcs, azure]
 last_updated: 2026-11-12
 related_tasks: [INTG-020]

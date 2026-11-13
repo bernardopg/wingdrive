@@ -2,7 +2,7 @@
 id: CORE-012
 title: Resource Type Registry (Swift)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-011
 priority: High
 tags: [client, swift, codegen, cache, obsolete]

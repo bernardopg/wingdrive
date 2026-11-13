@@ -2,9 +2,10 @@
 id: LSYNC-003
 title: Library Sync Setup (Device Registration & Discovery)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: LSYNC-000
 priority: High
+milestone: M0
 tags: [sync, networking, library-setup, device-pairing]
 ---
 

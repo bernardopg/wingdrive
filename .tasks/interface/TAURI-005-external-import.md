@@ -2,9 +2,10 @@
 id: TAURI-005
 title: Implement External File Import
 status: Done
-assignee: unassigned
+assignee: bernardopg
 parent: TAURI-000
 priority: Medium
+milestone: M0
 tags: [tauri, explorer, drag-drop]
 last_updated: 2026-08-26
 ---

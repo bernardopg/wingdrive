@@ -2,10 +2,11 @@
 id: SHARE-001
 title: "Design: Share Architecture & Wire Protocols"
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: High
 milestone: M4
+sprint: S07
 tags: [sharing, design, protocol, cloud, upstream-backlog]
 last_updated: 2026-10-16
 ---

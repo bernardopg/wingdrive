@@ -118,10 +118,10 @@ if (isTagItem(itemType)) return resolvedFile?.name || i18n.t("navigation:items.u
 	if (isPathItem(itemType)) {
 		// Use resolved file name if available, otherwise extract from path
 		if (resolvedFile?.name) return resolvedFile.name;
-		const sdPath = itemType.Path.wing_path;
-		if (typeof sdPath === "object" && "Physical" in sdPath) {
+		const wdPath = itemType.Path.wing_path;
+		if (typeof wdPath === "object" && "Physical" in wdPath) {
 			const parts = (
-				sdPath as { Physical: { path: string } }
+				wdPath as { Physical: { path: string } }
 			).Physical.path.split("/");
 			return parts[parts.length - 1] || i18n.t("navigation:items.path");
 		}
@@ -177,8 +177,8 @@ function getItemPath(
 	if (isVolumeItem(itemType)) {
 		// Navigate to explorer with volume's root path
 		if (volumeData) {
-			const sdPath = volumeRootPath(volumeData);
-			return `/explorer?path=${encodeURIComponent(JSON.stringify(sdPath))}`;
+			const wdPath = volumeRootPath(volumeData);
+			return `/explorer?path=${encodeURIComponent(JSON.stringify(wdPath))}`;
 		}
 		return null;
 	}

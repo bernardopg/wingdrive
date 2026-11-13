@@ -2,12 +2,13 @@
 id: CORE-010
 title: File Ingestion Workflow
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-000
 priority: High
 tags: [core, vdfs, ingestion, workflow, upstream-backlog]
 whitepaper: Section 4.4.7
 milestone: M5
+sprint: S10
 last_updated: 2026-10-16
 ---
 

@@ -2,7 +2,7 @@
 id: CORE-013
 title: Resource Type Registry (TypeScript)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-011
 priority: High
 tags: [client, typescript, codegen, cache, obsolete]

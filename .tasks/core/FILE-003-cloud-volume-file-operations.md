@@ -10,6 +10,7 @@ whitepaper: Section 4.4.6
 related_tasks: [FILE-001, CLOUD-003, VOL-004]
 last_updated: 2026-11-12
 milestone: M5
+sprint: S09
 ---
 
 ## Description

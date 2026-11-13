@@ -2,7 +2,7 @@
 id: VSS-002
 title: "Sidecar Generation Job System Integration"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-008
 priority: High
 tags: [vss, jobs, generation, indexing, upstream-backlog]
@@ -11,6 +11,7 @@ last_updated: 2026-10-16
 related_tasks: [CORE-008, JOB-000]
 dependencies: [VSS-001]
 milestone: M5
+sprint: S12
 ---
 
 ## Description

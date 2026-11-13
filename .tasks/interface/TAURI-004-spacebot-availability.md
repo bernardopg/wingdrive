@@ -2,10 +2,11 @@
 id: TAURI-004
 title: Make Spacebot Availability Explicit
 status: In Progress
-assignee: unassigned
+assignee: bernardopg
 parent: TAURI-000
 priority: High
 milestone: M5
+sprint: S09
 tags: [tauri, spacebot, integration, upstream-backlog]
 last_updated: 2026-10-16
 ---

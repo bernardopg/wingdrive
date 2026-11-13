@@ -2,9 +2,10 @@
 id: CORE-001
 title: Entry-Centric Data Model
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: CORE-000
 priority: High
+milestone: M0
 tags: [core, vdfs, database, model]
 whitepaper: Section 4.1.2
 ---

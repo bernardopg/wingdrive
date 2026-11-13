@@ -2,11 +2,12 @@
 id: SHARE-011
 title: wingdrive.app Account Linking
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: High
 tags: [sharing, cloud, accounts, auth, upstream-backlog]
 milestone: M4
+sprint: S08
 last_updated: 2026-10-16
 ---
 

@@ -2,9 +2,10 @@
 id: JOB-002
 title: Job-Specific File Logging
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: JOB-000
 priority: Medium
+milestone: M0
 tags: [core, jobs, logging]
 whitepaper: Section 6
 ---

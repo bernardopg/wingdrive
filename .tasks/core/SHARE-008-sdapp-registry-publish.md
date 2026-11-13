@@ -2,12 +2,13 @@
 id: SHARE-008
 title: Publish Shares to wingdrive.app Registry
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: High
 tags: [sharing, cloud, sync, upstream-backlog]
 related_tasks: [CLOUD-002]
 milestone: M4
+sprint: S08
 last_updated: 2026-10-16
 ---
 

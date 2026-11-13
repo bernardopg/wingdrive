@@ -2,9 +2,10 @@
 id: INDEX-003
 title: Database Architecture (Closure Table & Directory Paths Cache)
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: INDEX-000
 priority: High
+milestone: M0
 tags: [indexing, database, closure-table, performance]
 whitepaper: Section 4.3.5
 last_updated: 2025-12-16

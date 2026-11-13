@@ -2,8 +2,9 @@
 id: DEV-002
 title: "Isolate Linux desktop development runtime"
 status: Done
-assignee: unassigned
+assignee: bernardopg
 priority: High
+milestone: M0
 parent: DEV-000
 tags: [development, tauri, daemon, safety, linux]
 last_updated: 2026-09-25

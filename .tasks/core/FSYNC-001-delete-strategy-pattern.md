@@ -2,9 +2,10 @@
 id: FSYNC-001
 title: DeleteJob Strategy Pattern & Remote Deletion
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: FSYNC-000
 priority: High
+milestone: M0
 tags: [delete, strategy, remote, networking]
 design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md
 last_updated: 2025-10-15

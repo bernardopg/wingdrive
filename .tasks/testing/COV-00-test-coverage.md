@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: DEV-000
 priority: High
 milestone: M3
+sprint: S06
 tags: [epic, coverage, testing, core, desktop, cli]
 last_updated: 2026-11-10
 ---

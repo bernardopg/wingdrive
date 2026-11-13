@@ -2,12 +2,13 @@
 id: CLOUD-002
 title: Asynchronous Relay Server
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: CLOUD-000
 priority: High
 tags: [cloud, networking, relay, sharing, upstream-backlog]
 whitepaper: Section 5.3
 milestone: M5
+sprint: S10
 last_updated: 2026-10-16
 ---
 

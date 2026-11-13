@@ -5,6 +5,7 @@ status: To Do
 assignee: bernardopg
 priority: High
 milestone: M5
+sprint: S10
 tags: [epic, cloud, integrations]
 last_updated: 2026-11-12
 related_tasks: [CLOUD-004, CLOUD-003, FILE-003]

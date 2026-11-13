@@ -2,11 +2,12 @@
 id: SHARE-000
 title: "Epic: Public Shares via wingdrive.app"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 tags: [epic, sharing, cloud, networking, upstream-backlog]
 related_tasks: [CLOUD-000, CLOUD-002, SEC-007, NET-001]
 milestone: M4
+sprint: S07
 last_updated: 2026-10-16
 ---
 

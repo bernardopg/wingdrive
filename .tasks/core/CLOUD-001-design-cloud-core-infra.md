@@ -2,12 +2,13 @@
 id: CLOUD-001
 title: Design Managed Cloud Core Infrastructure
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: CLOUD-000
 priority: High
 tags: [cloud, infrastructure, design, kubernetes, upstream-backlog]
 whitepaper: Section 5.1
 milestone: M5
+sprint: S10
 last_updated: 2026-10-16
 ---
 

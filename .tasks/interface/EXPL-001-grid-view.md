@@ -2,7 +2,7 @@
 id: EXPL-001
 title: File Grid View with Virtual Scrolling
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: EXPL-000
 priority: High
 milestone: M1

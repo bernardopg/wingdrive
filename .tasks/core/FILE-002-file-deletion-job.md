@@ -2,9 +2,10 @@
 id: FILE-002
 title: File Deletion Job
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: FILE-000
 priority: High
+milestone: M0
 tags: [core, jobs, file-ops]
 whitepaper: Section 4.4
 ---

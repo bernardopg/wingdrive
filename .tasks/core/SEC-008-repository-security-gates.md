@@ -2,7 +2,7 @@
 id: SEC-008
 title: "CodeQL advanced setup, TruffleHog and repository rulesets"
 status: Done
-assignee: unassigned
+assignee: bernardopg
 priority: High
 parent: SEC-000
 tags: [security, ci, github]

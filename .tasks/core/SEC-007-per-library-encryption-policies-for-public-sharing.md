@@ -2,12 +2,13 @@
 id: SEC-007
 title: Per-Library Encryption Policies for Public Sharing
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SEC-000
 priority: High
 tags: [security, encryption, sharing, policies, upstream-backlog]
 whitepaper: Section 8
 milestone: M5
+sprint: S12
 last_updated: 2026-10-16
 ---
 

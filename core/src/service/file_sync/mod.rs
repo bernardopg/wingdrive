@@ -201,7 +201,7 @@ impl FileSyncService {
 			let source_paths: Vec<WingPath> = operations
 				.to_copy
 				.iter()
-				.map(|e| e.to_sdpath(device_slug.clone()))
+				.map(|e| e.to_wdpath(device_slug.clone()))
 				.collect();
 
 			// For MVP, use the first entry's parent as destination
@@ -236,7 +236,7 @@ impl FileSyncService {
 			let paths: Vec<WingPath> = operations
 				.to_delete
 				.iter()
-				.map(|e| e.to_sdpath(device_slug.clone()))
+				.map(|e| e.to_wdpath(device_slug.clone()))
 				.collect();
 
 			let mut job = DeleteJob::new(WingPathBatch::new(paths), DeleteMode::Permanent);

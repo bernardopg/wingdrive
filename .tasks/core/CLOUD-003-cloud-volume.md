@@ -2,10 +2,11 @@
 id: CLOUD-003
 title: Cloud Storage Provider as a Volume
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 parent: CLOUD-000
 priority: High
 milestone: M5
+sprint: S09
 tags: [cloud, storage, volume, s3, upstream-backlog]
 whitepaper: Section 5.2
 last_updated: 2026-11-12

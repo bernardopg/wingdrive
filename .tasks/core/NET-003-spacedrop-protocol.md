@@ -2,12 +2,13 @@
 id: NET-003
 title: Spacedrop Protocol
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: NET-000
 priority: High
 tags: [networking, spacedrop, sharing, p2p, upstream-backlog]
 whitepaper: Section 4.5.3
 milestone: M4
+sprint: S07
 last_updated: 2026-10-18
 ---
 

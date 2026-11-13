@@ -2,11 +2,12 @@
 id: UI-000
 title: "Epic: Interface V2 Architecture"
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 tags: [epic, interface, react, upstream-backlog]
 last_updated: 2026-10-16
 milestone: M5
+sprint: S09
 ---
 
 ## Description

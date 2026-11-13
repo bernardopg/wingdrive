@@ -2,7 +2,7 @@
 id: TAURI-006
 title: Add Tauri Runtime Regression Matrix
 status: Done
-assignee: unassigned
+assignee: bernardopg
 parent: TAURI-000
 priority: High
 sprint: S02

@@ -2,9 +2,10 @@
 id: INDEX-002
 title: Five-Phase Indexing Pipeline
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: INDEX-000
 priority: High
+milestone: M0
 tags: [indexing, pipeline, phases]
 whitepaper: Section 4.3.2
 last_updated: 2025-12-16

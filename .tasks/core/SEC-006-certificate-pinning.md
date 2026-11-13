@@ -2,12 +2,13 @@
 id: SEC-006
 title: Certificate Pinning
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SEC-000
 priority: Medium
 tags: [security, networking, certificate-pinning, upstream-backlog]
 whitepaper: Section 8
 milestone: M5
+sprint: S13
 last_updated: 2026-10-16
 ---
 

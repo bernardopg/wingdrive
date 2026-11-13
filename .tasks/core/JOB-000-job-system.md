@@ -2,8 +2,9 @@
 id: JOB-000
 title: "Epic: Durable Job System"
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 tags: [epic, core, jobs]
 whitepaper: Section 4.4
 ---

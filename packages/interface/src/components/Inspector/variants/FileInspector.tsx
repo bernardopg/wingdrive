@@ -1812,11 +1812,11 @@ function CloudWebLinkButton({path}: {path: File['wing_path']}) {
 function InstanceRow({instance}: {instance: File}) {
 	const {t} = useTranslation('inspector');
 	const displaySize = fileDisplaySize(instance);
-	const getPathDisplay = (sdPath: typeof instance.wing_path) => {
-		if ('Physical' in sdPath) {
-			return sdPath.Physical.path;
-		} else if ('Cloud' in sdPath) {
-			return `${sdPath.Cloud.service}://${sdPath.Cloud.identifier}/${sdPath.Cloud.path}`;
+	const getPathDisplay = (wdPath: typeof instance.wing_path) => {
+		if ('Physical' in wdPath) {
+			return wdPath.Physical.path;
+		} else if ('Cloud' in wdPath) {
+			return `${wdPath.Cloud.service}://${wdPath.Cloud.identifier}/${wdPath.Cloud.path}`;
 		} else {
 			return t('inspector.location.content');
 		}

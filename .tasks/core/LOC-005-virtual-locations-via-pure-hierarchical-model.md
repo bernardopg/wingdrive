@@ -2,12 +2,13 @@
 id: LOC-005
 title: "Virtual Locations via Pure Hierarchical Model"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: LOC-000
 priority: High
 tags: [core, vdfs, database, refactor, upstream-backlog]
 whitepaper: "Section 4.1.2, 4.3"
 milestone: M5
+sprint: S11
 last_updated: 2026-10-16
 ---
 

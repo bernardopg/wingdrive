@@ -2,13 +2,14 @@
 id: MEDIA-000
 title: Media Viewer
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 parent: UI-000
 priority: Medium
 tags: [media, viewer, photos, videos, upstream-backlog]
 whitepaper: N/A
 last_updated: 2026-10-16
 milestone: M5
+sprint: S10
 ---
 
 Quick tag actions and slideshow mode shipped (commits 577c1d56c, f26665d27). Favorite action and Live Photo playback still pending.

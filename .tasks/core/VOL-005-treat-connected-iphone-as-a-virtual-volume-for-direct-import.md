@@ -2,12 +2,13 @@
 id: VOL-005
 title: "Mobile as a Virtual Volume"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: VOL-000
 priority: High
 tags: [feature, import, ios, volume, macos, upstream-backlog]
 whitepaper: "Section 4.3.5"
 milestone: M5
+sprint: S12
 last_updated: 2026-10-16
 ---
 

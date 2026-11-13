@@ -2,9 +2,10 @@
 id: CLOUD-000
 title: "Epic: Cloud as a Peer"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 priority: High
 milestone: M5
+sprint: S10
 tags: [epic, cloud, networking, infrastructure, upstream-backlog]
 whitepaper: Section 5
 last_updated: 2026-10-16

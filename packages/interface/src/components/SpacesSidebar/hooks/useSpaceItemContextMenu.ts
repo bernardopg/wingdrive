@@ -92,10 +92,10 @@ const {t} = useTranslation('navigation');
 			label: revealLabel(),
 			onClick: async () => {
 				if (isPathItem(item.item_type)) {
-					const sdPath = item.item_type.Path.wing_path;
-					if (typeof sdPath === "object" && "Physical" in sdPath) {
+					const wdPath = item.item_type.Path.wing_path;
+					if (typeof wdPath === "object" && "Physical" in wdPath) {
 						const physicalPath = (
-							sdPath as { Physical: { path: string } }
+							wdPath as { Physical: { path: string } }
 						).Physical.path;
 						if (platform.revealFile) {
 							try {
@@ -110,10 +110,10 @@ const {t} = useTranslation('navigation');
 			keybindId: 'explorer.revealInNativeExplorer',
 			condition: () => {
 				if (!isPathItem(item.item_type)) return false;
-				const sdPath = item.item_type.Path.wing_path;
+				const wdPath = item.item_type.Path.wing_path;
 				return (
-					typeof sdPath === "object" &&
-					"Physical" in sdPath &&
+					typeof wdPath === "object" &&
+					"Physical" in wdPath &&
 					!!platform.revealFile
 				);
 			},

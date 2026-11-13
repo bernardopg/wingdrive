@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: COV-00
 priority: High
 milestone: M2
+sprint: S05
 tags: [coverage, testing, desktop]
 last_updated: 2026-11-13
 ---

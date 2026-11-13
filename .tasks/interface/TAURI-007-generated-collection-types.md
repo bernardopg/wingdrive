@@ -2,9 +2,10 @@
 id: TAURI-007
 title: Generate Array Types for Collection Queries
 status: Done
-assignee: unassigned
+assignee: bernardopg
 parent: TAURI-000
 priority: Medium
+milestone: M0
 tags: [tauri, typescript, codegen, bug]
 last_updated: 2026-08-26
 ---

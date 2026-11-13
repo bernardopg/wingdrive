@@ -2,8 +2,9 @@
 id: LSYNC-000
 title: "Library Sync"
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 tags: [epic, sync, networking, library-sync, leaderless]
 whitepaper: Section 4.5.1
 design_doc: core/src/infra/sync/NEW_SYNC.md

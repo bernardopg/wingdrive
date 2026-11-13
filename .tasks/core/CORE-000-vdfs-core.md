@@ -2,8 +2,9 @@
 id: CORE-000
 title: "VDFS Core Architecture"
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: High
+milestone: M0
 tags: [epic, core, vdfs]
 whitepaper: Section 4.1
 ---

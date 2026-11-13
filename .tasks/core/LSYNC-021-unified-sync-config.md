@@ -2,8 +2,9 @@
 id: LSYNC-021
 title: Unified Sync Configuration System
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 priority: Medium
+milestone: M0
 parent: LSYNC-000
 tags: [sync, core, config]
 last_updated: 2025-12-02

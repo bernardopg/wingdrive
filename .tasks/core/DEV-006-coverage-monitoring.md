@@ -5,6 +5,7 @@ status: Done
 assignee: bernardopg
 parent: DEV-000
 priority: Medium
+milestone: M0
 tags: [ci, testing, coverage, documentation]
 last_updated: 2026-11-03
 ---

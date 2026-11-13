@@ -231,7 +231,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 		// "Same volume" is approximated by the device; Ctrl or Shift overrides
 		// the guess, and the operation can still be switched in the dialog.
 		const operation = dropOperation(
-			guessDropOperation(dragData.sdPath, destination, localSlug),
+			guessDropOperation(dragData.wdPath, destination, localSlug),
 			modifierKeysNow(),
 		);
 
@@ -387,7 +387,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 				await addItem.mutateAsync({
 					space_id: dropData.spaceId,
 					group_id: null,
-					item_type: { Path: { wing_path: dragData.sdPath } },
+					item_type: { Path: { wing_path: dragData.wdPath } },
 				});
 				console.log("[DnD] Successfully added to space root");
 			} catch (err) {
@@ -403,14 +403,14 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			console.log("[DnD] Adding to group:", {
 				spaceId: dropData.spaceId,
 				groupId: dropData.groupId,
-				sdPath: dragData.sdPath,
+				wdPath: dragData.wdPath,
 			});
 
 			try {
 				await addItem.mutateAsync({
 					space_id: dropData.spaceId,
 					group_id: dropData.groupId,
-					item_type: { Path: { wing_path: dragData.sdPath } },
+					item_type: { Path: { wing_path: dragData.wdPath } },
 				});
 				console.log("[DnD] Successfully added to group");
 			} catch (err) {
@@ -430,14 +430,14 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 				action: dropData.action,
 				spaceId: dropData.spaceId,
 				groupId: dropData.groupId,
-				sdPath: dragData.sdPath,
+				wdPath: dragData.wdPath,
 			});
 
 			try {
 				await addItem.mutateAsync({
 					space_id: dropData.spaceId,
 					group_id: dropData.groupId || null,
-					item_type: { Path: { wing_path: dragData.sdPath } },
+					item_type: { Path: { wing_path: dragData.wdPath } },
 				});
 				console.log("[DnD] Successfully inserted item");
 				// TODO: Implement proper ordering relative to itemId
@@ -462,14 +462,14 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 		if (dropData?.type === "space" && dragData.type === "explorer-file") {
 			console.log("[DnD] Adding to space (type=space):", {
 				spaceId: dropData.spaceId,
-				sdPath: dragData.sdPath,
+				wdPath: dragData.wdPath,
 			});
 
 			try {
 				await addItem.mutateAsync({
 					space_id: dropData.spaceId,
 					group_id: null,
-					item_type: { Path: { wing_path: dragData.sdPath } },
+					item_type: { Path: { wing_path: dragData.wdPath } },
 				});
 				console.log("[DnD] Successfully added to space");
 			} catch (err) {
@@ -482,14 +482,14 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			console.log("[DnD] Adding to group (type=group):", {
 				spaceId: dropData.spaceId,
 				groupId: dropData.groupId,
-				sdPath: dragData.sdPath,
+				wdPath: dragData.wdPath,
 			});
 
 			try {
 				await addItem.mutateAsync({
 					space_id: dropData.spaceId,
 					group_id: dropData.groupId,
-					item_type: { Path: { wing_path: dragData.sdPath } },
+					item_type: { Path: { wing_path: dragData.wdPath } },
 				});
 				console.log("[DnD] Successfully added to group");
 			} catch (err) {

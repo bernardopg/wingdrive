@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: MOB-000
 priority: Medium
 milestone: M5
+sprint: S13
 tags: [mobile, interface, parity]
 last_updated: 2026-10-17
 ---

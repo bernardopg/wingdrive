@@ -50,20 +50,20 @@ export function getDeviceIcon(os: string, model?: string): string {
 	return LaptopIcon;
 }
 
-export function sdPathToUri(sdPath: WingPath): string {
-	if ("Physical" in sdPath) {
-		const { device_slug, path } = sdPath.Physical;
+export function wdPathToUri(wdPath: WingPath): string {
+	if ("Physical" in wdPath) {
+		const { device_slug, path } = wdPath.Physical;
 		return `local://${device_slug}${path}`;
 	}
 
-	if ("Cloud" in sdPath) {
-		const { service, identifier, path } = sdPath.Cloud;
+	if ("Cloud" in wdPath) {
+		const { service, identifier, path } = wdPath.Cloud;
 		const scheme = service.toLowerCase();
 		return `${scheme}://${identifier}/${path}`;
 	}
 
-	if ("Content" in sdPath) {
-		const { content_id } = sdPath.Content;
+	if ("Content" in wdPath) {
+		const { content_id } = wdPath.Content;
 		return `content://${content_id}`;
 	}
 

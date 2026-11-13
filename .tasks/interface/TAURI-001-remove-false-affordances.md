@@ -2,9 +2,10 @@
 id: TAURI-001
 title: Remove False Desktop Affordances
 status: Done
-assignee: unassigned
+assignee: bernardopg
 parent: TAURI-000
 priority: High
+milestone: M0
 tags: [tauri, interface, bug]
 last_updated: 2026-08-24
 ---

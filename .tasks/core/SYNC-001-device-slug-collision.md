@@ -1,9 +1,10 @@
 ---
 id: SYNC-001
 title: "Fix device slug collision aborting shared-change apply"
-status: "Done"
-assignee: unassigned
-priority: "High"
+status: Done
+assignee: bernardopg
+priority: High
+milestone: M0
 tags: [core, sync, bug]
 last_updated: 2026-08-31
 ---

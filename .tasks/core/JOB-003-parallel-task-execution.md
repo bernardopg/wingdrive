@@ -2,7 +2,7 @@
 id: JOB-003
 title: Parallel Task Execution from Jobs
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: JOB-000
 priority: High
 tags: [jobs, task-system, performance, parallelism, upstream-backlog]
@@ -10,6 +10,7 @@ whitepaper: Section 4.4.6
 design_doc: workbench/JOB_PARALLEL_EXECUTION_SPEC.md
 last_updated: 2026-10-16
 milestone: M5
+sprint: S11
 ---
 
 ## Description

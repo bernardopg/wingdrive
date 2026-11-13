@@ -2,12 +2,13 @@
 id: SEARCH-003
 title: Unified Vector Repositories
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SEARCH-000
 priority: High
 tags: [search, vector-search, ai, repositories, upstream-backlog]
 whitepaper: Section 4.7
 milestone: M5
+sprint: S11
 last_updated: 2026-10-16
 ---
 

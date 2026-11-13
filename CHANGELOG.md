@@ -12,7 +12,8 @@ version in the workspace manifests and the matching `v*` git tag.
   google`). Each Google Drive shows up as a volume and a sidebar location you
   browse live, with Google Docs, Sheets and Slides as `.docx`, `.xlsx` and
   `.pptx` exports. Grants are stored encrypted with the library key and
-  disconnecting revokes them at Google. See `docs/core/integrations.mdx`.
+  disconnecting revokes them at Google. See `docs/core/integrations.mdx`
+  (#383).
 - Copy, move, rename, new folder and move to trash work on cloud volumes, in
   both directions between local folders and the cloud (FILE-003).
 - Double-clicking a Drive file opens a local copy whose saves upload back;
@@ -27,12 +28,15 @@ version in the workspace manifests and the matching `v*` git tag.
   work in Drive folders, files dropped from the desktop upload, Copy To
   downloads, the Column view and drag and drop understand Drive folders, the
   Inspector shows the full `gdrive://` path, and the Drive volume in the
-  sidebar opens the Drive.
+  sidebar opens the Drive (#385).
 
 ### Changed
 
 - Adding Google Drive no longer asks for pasted OAuth tokens; it signs in
   through the browser.
+- Code and task tracker: `sdPath` is now `wdPath` in the core, interface and
+  clients, and every open task has an owner, a milestone and a sprint from
+  S05 to S14 (BRAND-003).
 
 ### Fixed
 
@@ -47,11 +51,25 @@ version in the workspace manifests and the matching `v*` git tag.
   they stayed on disk and logged a warning on every prune.
 - Deleting an item in a cloud folder did nothing: the delete job sent cloud
   paths to the strategy for other devices, which skipped them.
+- Undoing a move to trash failed with "no longer in the trash" when the item
+  was trashed through a folder reached by a symbolic link (#386).
+- Dragging on Linux and Windows left a drag session behind, so every new
+  drag failed for 30 seconds, and the frontend could not cancel or recognize
+  the end of a drag on macOS (#387).
+- Installing the daemon as a systemd service broke data folder paths with
+  spaces, `%` or `$`; every `ExecStart` argument is now quoted (#387).
+- Location exports made before the rename to WingDrive were rejected on
+  import (#387).
 
 ### Tests
 
 - Boundary cases for tag validation, rename validation and archive formats
   and extraction.
+- Desktop shell line coverage from 80.5% to 91.6%: Tauri commands, daemon
+  lifecycle, file chooser portal, drag, clipboard, services menu and the
+  media server (COV-07, #386, #387).
+- Core integration tests pass `clippy --all-targets` and the tests that set
+  the process-wide device ID run one at a time in CI (#385, #387).
 
 ### Planned
 

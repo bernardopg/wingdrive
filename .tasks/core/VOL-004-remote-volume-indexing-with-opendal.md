@@ -2,9 +2,10 @@
 id: VOL-004
 title: Cloud Volume Indexing with OpenDAL
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: VOL-000
 priority: High
+milestone: M0
 tags: [volume, remote-indexing, opendal, cloud]
 whitepaper: Section 4.3.5
 last_updated: 2025-10-14

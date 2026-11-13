@@ -2,7 +2,7 @@
 id: EXPL-000
 title: "Epic: Explorer Interface"
 status: Done
-assignee: jamiepine
+assignee: bernardopg
 parent: UI-000
 priority: High
 milestone: M1

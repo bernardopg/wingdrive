@@ -2,7 +2,7 @@
 id: FSYNC-003
 title: FileSyncService Core Implementation
 status: In Progress
-assignee: jamiepine
+assignee: bernardopg
 parent: FSYNC-000
 priority: High
 tags: [service, core, orchestration, resolver, upstream-backlog]
@@ -10,6 +10,7 @@ design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md
 last_updated: 2026-10-16
 related_tasks: [FSYNC-001, FSYNC-002, INDEX-010, INDEX-011, FILE-006]
 milestone: M4
+sprint: S07
 ---
 
 ## Description

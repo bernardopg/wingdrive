@@ -2,9 +2,10 @@
 id: TAURI-002
 title: Implement Persistent Favorites
 status: Done
-assignee: unassigned
+assignee: bernardopg
 parent: TAURI-000
 priority: High
+milestone: M0
 tags: [tauri, explorer, favorites]
 last_updated: 2026-08-24
 ---

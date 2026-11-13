@@ -2,11 +2,12 @@
 id: SHARE-009
 title: "Interface: Share Creation UI"
 status: To Do
-assignee: jamiepine
+assignee: bernardopg
 parent: SHARE-000
 priority: High
 tags: [interface, sharing, ui, upstream-backlog]
 milestone: M4
+sprint: S08
 last_updated: 2026-10-16
 ---
 

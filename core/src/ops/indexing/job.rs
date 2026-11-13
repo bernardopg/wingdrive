@@ -303,7 +303,7 @@ impl IndexerJob {
 		let volume_backend: Option<Arc<dyn crate::volume::VolumeBackend>> =
 			if let Some(vm) = ctx.volume_manager() {
 				match vm
-					.resolve_volume_for_sdpath(&self.config.path, ctx.library())
+					.resolve_volume_for_wdpath(&self.config.path, ctx.library())
 					.await
 				{
 					Ok(Some(mut volume)) => {
