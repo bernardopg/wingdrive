@@ -277,6 +277,16 @@ export type CloudEditState =
 /**  The cloud file changed too; the local edit went to `copy_name`. */
 { state: "conflict"; copy_name: string } | { state: "error"; message: string };
 
+/**  Downloads a cloud file into the preview cache and returns the local copy. */
+export type CloudPreviewInput = {
+	path: WingPath,
+};
+
+export type CloudPreviewOutput = {
+	/**  Read-only local copy; changes to it are not uploaded. */
+	path: string,
+};
+
 /**  Cloud service type identifier */
 export type CloudServiceType = "s3" | "gdrive" | "dropbox" | "onedrive" | "gcs" | "azblob" | "b2" | "wasabi" | "spaces" | "cloud";
 
@@ -357,6 +367,16 @@ export type CloudSyncUpdateInput = {
 	/**  `Some(None)` clears the interval. */
 	interval_minutes: number | null,
 	enabled: boolean | null,
+};
+
+/**  The page that shows a cloud item in its service's web interface. */
+export type CloudWebLinkInput = {
+	path: WingPath,
+};
+
+export type CloudWebLinkOutput = {
+	/**  `None` when the service has no web interface for the item. */
+	url: string | null,
 };
 
 export type CompareEntry = {
@@ -5061,6 +5081,7 @@ export type LibraryAction =
   |  { type: 'config.library.update'; input: UpdateLibraryConfigInput; output: UpdateLibraryConfigOutput }
   |  { type: 'files.cloud_edit.close'; input: CloudEditCloseInput; output: CloudEditCloseOutput }
   |  { type: 'files.cloud_edit.open'; input: CloudEditOpenInput; output: CloudEditOpen }
+  |  { type: 'files.cloud_preview'; input: CloudPreviewInput; output: CloudPreviewOutput }
   |  { type: 'files.copy'; input: FileCopyInput; output: JobReceipt }
   |  { type: 'files.createFile'; input: CreateFileInput; output: CreateEntryOutput }
   |  { type: 'files.createFolder'; input: CreateFolderInput; output: CreateFolderOutput }
@@ -5162,6 +5183,7 @@ export type LibraryQuery =
   |  { type: 'files.by_tag'; input: GetFilesByTagInput; output: GetFilesByTagOutput }
   |  { type: 'files.checksum'; input: FileChecksumInput; output: FileChecksumOutput }
   |  { type: 'files.cloud_edit.list'; input: CloudEditListInput; output: CloudEditSessionInfo[] }
+  |  { type: 'files.cloud_web_link'; input: CloudWebLinkInput; output: CloudWebLinkOutput }
   |  { type: 'files.content_kind_stats'; input: ContentKindStatsInput; output: ContentKindStatsOutput }
   |  { type: 'files.directory_listing'; input: DirectoryListingInput; output: DirectoryListingOutput }
   |  { type: 'files.directory_sizes'; input: DirectorySizesInput; output: DirectorySizesOutput }
@@ -5245,6 +5267,7 @@ export const WIRE_METHODS = {
     'config.library.update': 'action:config.library.update.input',
     'files.cloud_edit.close': 'action:files.cloud_edit.close.input',
     'files.cloud_edit.open': 'action:files.cloud_edit.open.input',
+    'files.cloud_preview': 'action:files.cloud_preview.input',
     'files.copy': 'action:files.copy.input',
     'files.createFile': 'action:files.createFile.input',
     'files.createFolder': 'action:files.createFolder.input',
@@ -5346,6 +5369,7 @@ export const WIRE_METHODS = {
     'files.by_tag': 'query:files.by_tag',
     'files.checksum': 'query:files.checksum',
     'files.cloud_edit.list': 'query:files.cloud_edit.list',
+    'files.cloud_web_link': 'query:files.cloud_web_link',
     'files.content_kind_stats': 'query:files.content_kind_stats',
     'files.directory_listing': 'query:files.directory_listing',
     'files.directory_sizes': 'query:files.directory_sizes',

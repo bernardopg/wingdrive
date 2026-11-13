@@ -86,6 +86,7 @@ if [ "$(uname -s)" = Linux ]; then
 		indexing_test
 		library_test
 		file_queries_test
+		google_integration_test
 		index_verify_test
 		space_layout_test
 		file_sync_test
@@ -146,7 +147,10 @@ run_full_tests() {
 		for test in "${core_filesystem_tests[@]}"; do
 			case "$test" in
 				# These share watcher and indexer timing, so their cases run one at a time.
-				indexing_test | library_test)
+				# Each case of file_queries_test and google_integration_test starts its own
+				# Core, which sets the process-wide current device ID; in parallel, one case
+				# could resolve "local" paths against another case's device and find nothing.
+				indexing_test | library_test | file_queries_test | google_integration_test)
 					cargo test --locked -p wing-core --test "$test" -- --test-threads=1 ;;
 				*) cargo test --locked -p wing-core --test "$test" ;;
 			esac

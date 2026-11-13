@@ -131,6 +131,28 @@ if (isTagItem(itemType)) return resolvedFile?.name || i18n.t("navigation:items.u
 	return i18n.t("navigation:items.unknown");
 }
 
+/** URI schemes of cloud volumes, whose mount point is `scheme://identifier`. */
+const CLOUD_SCHEMES = new Set(["s3", "gdrive", "onedrive", "dropbox", "azblob", "gcs", "b2", "wasabi", "spaces", "cloud"]);
+
+/**
+ * Root folder of a volume. Cloud volumes are mounted at a service URI such as
+ * `gdrive://me@gmail.com`, which is a cloud path, not a folder on the device.
+ */
+export function volumeRootPath(volumeData: { device_slug: string; mount_path: string }): WingPath {
+	const match = /^([a-z0-9]+):\/\/([^/]+)\/?(.*)$/.exec(volumeData.mount_path || "");
+	if (match && CLOUD_SCHEMES.has(match[1])) {
+		return {
+			Cloud: { service: match[1], identifier: match[2], path: match[3] ?? "" },
+		} as unknown as WingPath;
+	}
+	return {
+		Physical: {
+			device_slug: volumeData.device_slug,
+			path: volumeData.mount_path || "/",
+		},
+	};
+}
+
 // Build navigation path for an item
 function getItemPath(
 	itemType: ItemType,
@@ -155,12 +177,7 @@ function getItemPath(
 	if (isVolumeItem(itemType)) {
 		// Navigate to explorer with volume's root path
 		if (volumeData) {
-			const sdPath = {
-				Physical: {
-					device_slug: volumeData.device_slug,
-					path: volumeData.mount_path || "/",
-				},
-			};
+			const sdPath = volumeRootPath(volumeData);
 			return `/explorer?path=${encodeURIComponent(JSON.stringify(sdPath))}`;
 		}
 		return null;
@@ -289,12 +306,7 @@ export function buildDropTargetPath(
 	}
 
 	if (isVolumeItem(itemType) && volumeData) {
-		return {
-			Physical: {
-				device_slug: volumeData.device_slug,
-				path: volumeData.mount_path || "/",
-			},
-		};
+		return volumeRootPath(volumeData);
 	}
 
 	if (isLocationItem(itemType) && itemWingPath) {

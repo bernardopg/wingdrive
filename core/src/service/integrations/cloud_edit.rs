@@ -39,6 +39,12 @@ const SETTLE_TIME: Duration = Duration::from_secs(2);
 /// Session folders older than this are removed when the daemon starts.
 const STALE_SESSION_AGE: Duration = Duration::from_secs(7 * 24 * 3600);
 
+/// Largest file Quick Preview downloads; bigger files open with an app instead.
+pub const PREVIEW_MAX_BYTES: u64 = 512 * 1024 * 1024;
+
+/// Folder name of the preview cache, next to the editing sessions.
+const PREVIEW_DIR: &str = "preview";
+
 /// Upload state of an editing session.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(tag = "state", rename_all = "snake_case")]
@@ -123,12 +129,68 @@ impl CloudEditService {
 		&self.root
 	}
 
+	/// Downloads a read-only copy of a cloud file for Quick Preview.
+	///
+	/// The copy is cached by path and revision, so previewing the same file
+	/// twice downloads it once, and a file changed in the cloud is fetched
+	/// again. Files over `PREVIEW_MAX_BYTES` are refused so a preview never
+	/// starts a multi-gigabyte download.
+	pub async fn preview_copy(
+		&self,
+		path: &WingPath,
+		backend: &dyn VolumeBackend,
+		remote_path: &Path,
+	) -> Result<PathBuf, VolumeError> {
+		use sha2::{Digest, Sha256};
+
+		let metadata = backend.metadata(remote_path).await?;
+		if metadata.kind == crate::ops::indexing::state::EntryKind::Directory {
+			return Err(VolumeError::Unsupported("folders have no preview".into()));
+		}
+		if metadata.size > PREVIEW_MAX_BYTES {
+			return Err(VolumeError::Unsupported(format!(
+				"files over {} MB are not previewed; open the file instead",
+				PREVIEW_MAX_BYTES / (1024 * 1024)
+			)));
+		}
+		let file_name = remote_path
+			.file_name()
+			.map(|n| n.to_os_string())
+			.ok_or_else(|| VolumeError::InvalidData("cloud path has no file name".into()))?;
+		let key = Sha256::digest(
+			format!(
+				"{}\n{}\n{}",
+				path.display(),
+				metadata.revision.as_deref().unwrap_or_default(),
+				metadata.size
+			)
+			.as_bytes(),
+		);
+		let folder = self.root.join(PREVIEW_DIR).join(hex::encode(&key[..16]));
+		let local = folder.join(file_name);
+		if tokio::fs::metadata(&local).await.is_ok() {
+			return Ok(local);
+		}
+		tokio::fs::create_dir_all(&folder).await?;
+		backend.read_to_file(remote_path, &local).await?;
+		Ok(local)
+	}
+
 	/// Deletes session folders left from earlier runs that are older than a week.
 	pub async fn remove_stale_sessions(&self) {
-		let Ok(mut entries) = tokio::fs::read_dir(&self.root).await else {
+		for dir in [self.root.clone(), self.root.join(PREVIEW_DIR)] {
+			Self::remove_old_entries(&dir).await;
+		}
+	}
+
+	async fn remove_old_entries(dir: &Path) {
+		let Ok(mut entries) = tokio::fs::read_dir(dir).await else {
 			return;
 		};
 		while let Ok(Some(entry)) = entries.next_entry().await {
+			if entry.file_name() == PREVIEW_DIR {
+				continue;
+			}
 			let old = entry
 				.metadata()
 				.await
@@ -579,6 +641,40 @@ mod tests {
 		assert_eq!(
 			std::fs::read_to_string(remote.path().join(&copy_name)).unwrap(),
 			"mine"
+		);
+	}
+
+	#[tokio::test]
+	async fn preview_copies_are_cached_by_revision() {
+		let remote = tempfile::tempdir().unwrap();
+		let cache = tempfile::tempdir().unwrap();
+		std::fs::write(remote.path().join("a.txt"), "one").unwrap();
+		let backend = Revisioned(
+			LocalBackend::new(remote.path()),
+			std::sync::Mutex::new("r1".into()),
+		);
+		let service = CloudEditService::new(cache.path().to_path_buf());
+		let first = service
+			.preview_copy(&cloud_path("a.txt"), &backend, Path::new("a.txt"))
+			.await
+			.unwrap();
+		assert_eq!(std::fs::read_to_string(&first).unwrap(), "one");
+		std::fs::write(remote.path().join("a.txt"), "two").unwrap();
+		let cached = service
+			.preview_copy(&cloud_path("a.txt"), &backend, Path::new("a.txt"))
+			.await
+			.unwrap();
+		assert_eq!(cached, first, "same revision reuses the download");
+		*backend.1.lock().unwrap() = "r2".into();
+		let fresh = service
+			.preview_copy(&cloud_path("a.txt"), &backend, Path::new("a.txt"))
+			.await
+			.unwrap();
+		assert_ne!(fresh, first);
+		assert_eq!(std::fs::read_to_string(&fresh).unwrap(), "two");
+		assert!(
+			service.list().await.is_empty(),
+			"previews are not editing sessions"
 		);
 	}
 

@@ -5,6 +5,7 @@ import { useSelection } from "../../SelectionContext";
 import { useNormalizedQuery } from "../../../../contexts/WingDriveContext";
 import type { DirectorySortBy } from "@wingdrive/ts-client";
 import { Column } from "./Column";
+import { columnKey, folderKey, parentFolderKey } from "./columnPaths";
 import { useTypeaheadSearch } from "../../hooks/useTypeaheadSearch";
 import { useVirtualListing } from "../../hooks/useVirtualListing";
 import { isVirtualFile } from '@wingdrive/ts-client';
@@ -16,9 +17,7 @@ import {usePaneFocusedRef} from '../../../../components/TabManager/PaneContext';
 
 /** Get path string from WingPath for comparison */
 function getPathString(path: WingPath | null | undefined): string {
-	if (!path) return "";
-	if ("Physical" in path) return path.Physical?.path || "";
-	return JSON.stringify(path);
+	return folderKey(path);
 }
 
 export function ColumnView() {
@@ -177,18 +176,10 @@ export function ColumnView() {
 			return -1; // Virtual column
 		}
 
-		const filePath =
-			"Physical" in firstSelected.wing_path
-				? firstSelected.wing_path.Physical?.path
-				: null;
-		if (!filePath) return columnStack.length - 1;
+		const fileParent = parentFolderKey(firstSelected.wing_path);
+		if (fileParent === null) return columnStack.length - 1;
 
-		const fileParent = filePath.substring(0, filePath.lastIndexOf("/"));
-
-		return columnStack.findIndex((path) => {
-			const columnPath = "Physical" in path ? path.Physical?.path : null;
-			return columnPath === fileParent;
-		});
+		return columnStack.findIndex((path) => folderKey(path) === fileParent);
 	}, [selectedFiles, columnStack, isVirtualView]);
 
 	const activeColumnPath = columnStack[activeColumnIndex];
@@ -420,11 +411,8 @@ export function ColumnView() {
 
 		const paths = new Set<string>();
 		for (const file of selectedFiles) {
-			const filePath =
-				"Physical" in file.wing_path ? file.wing_path.Physical?.path : null;
-			if (!filePath) continue;
-			const fileParent = filePath.substring(0, filePath.lastIndexOf("/"));
-			paths.add(fileParent);
+			const fileParent = parentFolderKey(file.wing_path);
+			if (fileParent !== null) paths.add(fileParent);
 		}
 		return paths;
 	}, [selectedFiles]);
@@ -494,21 +482,15 @@ export function ColumnView() {
 
 				{/* Subsequent columns: Real directory navigation */}
 				{columnStack.map((path, index) => {
-					const columnPath =
-						"Physical" in path ? path.Physical?.path || "" : "";
+					const columnPath = folderKey(path);
 					const isActive =
 						selectedFiles.length > 0
 							? activeColumnPaths.has(columnPath)
 							: index === columnStack.length - 1;
 
-					const deviceSlug =
-						"Physical" in path ? path.Physical?.device_slug : "unknown";
-					const pathStr =
-						"Physical" in path ? path.Physical?.path : "unknown";
-
 					return (
 						<Column
-							key={`${deviceSlug}-${pathStr}-${index}`}
+							key={columnKey(path, index)}
 							path={path}
 							isSelected={isSelected}
 							selectedFileIds={selectedFileIds}
@@ -530,21 +512,15 @@ export function ColumnView() {
 	return (
 		<div ref={scrollRef} className="flex h-full overflow-x-auto bg-app">
 			{columnStack.map((path, index) => {
-				const columnPath =
-					"Physical" in path ? path.Physical?.path || "" : "";
+				const columnPath = folderKey(path);
 				const isActive =
 					selectedFiles.length > 0
 						? activeColumnPaths.has(columnPath)
 						: index === columnStack.length - 1;
 
-				const deviceSlug =
-					"Physical" in path ? path.Physical?.device_slug : "unknown";
-				const pathStr =
-					"Physical" in path ? path.Physical?.path : "unknown";
-
 				return (
 					<Column
-						key={`${deviceSlug}-${pathStr}-${index}`}
+						key={columnKey(path, index)}
 						path={path}
 						isSelected={isSelected}
 						selectedFileIds={selectedFileIds}

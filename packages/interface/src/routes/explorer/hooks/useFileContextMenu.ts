@@ -11,6 +11,7 @@ import {
 	FilmStrip,
 	FolderOpen,
 	FolderPlus,
+	Globe,
 	GitDiff,
 	Image,
 	Images,
@@ -35,10 +36,10 @@ import {
 	Waveform
 } from '@phosphor-icons/react';
 import {toast} from '@wingdrive/primitives';
-import type {File} from '@wingdrive/ts-client';
-import {getContentKind, isVirtualFile} from '@wingdrive/ts-client';
+import type {CloudWebLinkOutput, File} from '@wingdrive/ts-client';
+import {WIRE_METHODS, getContentKind, isVirtualFile} from '@wingdrive/ts-client';
 import {usePlatform} from '../../../contexts/PlatformContext';
-import {useLibraryMutation} from '../../../contexts/WingDriveContext';
+import {useLibraryMutation, useWingDriveClient} from '../../../contexts/WingDriveContext';
 import {useClipboard} from '../../../hooks/useClipboard';
 import {useContextMenu, type ContextMenuItem} from '../../../hooks/useContextMenu';
 import {useOpenWith} from '../../../hooks/useOpenWith';
@@ -160,6 +161,19 @@ export function useFileContextMenu({
 	};
 	const wingdrop = useWingdrop();
 	const googlePhotos = useGooglePhotosUpload();
+	const client = useWingDriveClient();
+	const openInBrowser = async (target: File) => {
+		try {
+			const {url} = await client.execute<{path: File['wing_path']}, CloudWebLinkOutput>(
+				WIRE_METHODS.libraryQueries['files.cloud_web_link'],
+				{path: target.wing_path}
+			);
+			if (url) platform.openLink(url);
+			else toast.error(t('cloudEdit.noWebLink'));
+		} catch (error) {
+			toast.error(t('cloudEdit.openFailed', {error}));
+		}
+	};
 
 	// A right-click on an unselected item acts on that item alone.
 	const targetFiles = selected && selectedFiles.length > 0
@@ -272,6 +286,14 @@ export function useFileContextMenu({
 				iconUrl: app.icon,
 				onClick: () => setDefaultApp(physicalPaths[0], app.id, app.name)
 			}))
+		},
+		{
+			icon: Globe,
+			label: t('contextMenu.openInBrowser'),
+			onClick: () => {
+				if (file) void openInBrowser(file);
+			},
+			condition: () => !!file && 'Cloud' in file.wing_path && targetFiles.length === 1
 		},
 		...contextActionMenus(
 			contextActions.actions,

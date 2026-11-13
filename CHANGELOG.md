@@ -22,6 +22,12 @@ version in the workspace manifests and the matching `v*` git tag.
   one way, on demand or every N minutes (`wing integrations cloud-sync`).
 - Google Photos: upload photos and videos from the context menu, optionally
   into an album, and import photos picked on Google's page.
+- Google Drive in the Explorer: Quick Look downloads the file to a cache,
+  Open in Browser opens the item on drive.google.com, New File and templates
+  work in Drive folders, files dropped from the desktop upload, Copy To
+  downloads, the Column view and drag and drop understand Drive folders, the
+  Inspector shows the full `gdrive://` path, and the Drive volume in the
+  sidebar opens the Drive.
 
 ### Changed
 
@@ -39,6 +45,8 @@ version in the workspace manifests and the matching `v*` git tag.
   following links.
 - The archive browse cache never removed old plain files at its root, so
   they stayed on disk and logged a warning on every prune.
+- Deleting an item in a cloud folder did nothing: the delete job sent cloud
+  paths to the strategy for other devices, which skipped them.
 
 ### Tests
 

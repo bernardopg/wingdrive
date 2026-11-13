@@ -125,7 +125,9 @@
 		"undo": "Desfazer",
 		"openInNewWindow": "Abrir em nova janela",
 		"sendWithWingdrop": "Enviar com Wingdrop",
-		"uploadToGooglePhotos": "Enviar para o Google Fotos"
+		"uploadToGooglePhotos": "Enviar para o Google Fotos",
+		"openInBrowser": "Abrir no navegador",
+		"uploadFiles": "Enviar arquivos para cá…"
 	},
 	"sort": {
 		"dateTaken": "Data da captura",
@@ -294,7 +296,7 @@
 		"title": "Não é possível importar aqui",
 		"noFiles": "Nenhum arquivo compatível foi solto.",
 		"noDestination": "Abra uma pasta local antes de soltar arquivos.",
-		"notPhysical": "Só é possível soltar arquivos externos em uma pasta local."
+		"notPhysical": "Só é possível soltar arquivos externos em uma pasta deste dispositivo ou da nuvem."
 	},
 	"undo": {
 		"rename": "renomeação",
@@ -534,6 +536,7 @@
 	},
 	"cloudEdit": {
 		"opened": "Editando uma cópia do arquivo da nuvem. As alterações salvas são enviadas automaticamente.",
-		"openFailed": "Não foi possível abrir o arquivo da nuvem: {{error}}"
+		"openFailed": "Não foi possível abrir o arquivo da nuvem: {{error}}",
+		"noWebLink": "Este serviço não tem página na web para o item."
 	}
 }

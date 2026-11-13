@@ -17,6 +17,26 @@ export function sameDevice(a: string, b: string, localSlug: string | undefined):
 	return here(a) && here(b);
 }
 
+/** The volume and parent folder of a cloud path, such as `gdrive://me@x.com|trip`. */
+function cloudParent(path: WingPath): string | null {
+	if (!('Cloud' in path)) return null;
+	const {service, identifier, path: inner} = path.Cloud;
+	const trimmed = inner.replace(/^\/+|\/+$/g, '');
+	const cut = trimmed.lastIndexOf('/');
+	return `${service}://${identifier}|${cut < 0 ? '' : trimmed.slice(0, cut)}`;
+}
+
+/** The volume and folder a cloud path names, in the form `cloudParent` returns. */
+function cloudFolder(path: WingPath): string | null {
+	if (!('Cloud' in path)) return null;
+	const {service, identifier, path: inner} = path.Cloud;
+	return `${service}://${identifier}|${inner.replace(/^\/+|\/+$/g, '')}`;
+}
+
+function cloudVolume(path: WingPath): string | null {
+	return 'Cloud' in path ? `${path.Cloud.service}://${path.Cloud.identifier}` : null;
+}
+
 function parentOf(path: string): string {
 	const trimmed = path.replace(/\/+$/, '');
 	return trimmed.slice(0, trimmed.lastIndexOf('/')) || '/';
@@ -24,6 +44,10 @@ function parentOf(path: string): string {
 
 /** Whether every file already sits directly in `destination`, so the drop changes nothing. */
 export function alreadyIn(files: File[], destination: WingPath, localSlug: string | undefined): boolean {
+	const cloudDestination = cloudFolder(destination);
+	if (cloudDestination !== null) {
+		return files.every((file) => cloudParent(file.wing_path) === cloudDestination);
+	}
 	if (!('Physical' in destination)) return false;
 	const folder = destination.Physical.path.replace(/\/+$/, '') || '/';
 	return files.every((file) => {
@@ -38,13 +62,17 @@ export function alreadyIn(files: File[], destination: WingPath, localSlug: strin
 
 /**
  * The operation a drop starts with before modifier keys: Move on the same
- * device, as Linux file managers do, and Copy across devices or clouds.
+ * device or inside one cloud volume, as Linux file managers do, and Copy
+ * across devices, between clouds and between a cloud and a disk.
  */
 export function guessDropOperation(
 	source: WingPath,
 	destination: WingPath,
 	localSlug: string | undefined
 ): 'copy' | 'move' {
+	const sourceVolume = cloudVolume(source);
+	// Inside one cloud volume a move is a server-side rename.
+	if (sourceVolume !== null) return sourceVolume === cloudVolume(destination) ? 'move' : 'copy';
 	if (!('Physical' in source) || !('Physical' in destination)) return 'copy';
 	return sameDevice(source.Physical.device_slug, destination.Physical.device_slug, localSlug)
 		? 'move'

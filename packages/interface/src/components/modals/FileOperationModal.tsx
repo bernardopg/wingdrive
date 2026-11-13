@@ -45,6 +45,10 @@ interface FileOperationDialogProps {
 }
 
 function baseName(path: WingPath): string | null {
+	if ('Cloud' in path) {
+		const p = path.Cloud.path.replace(/\/+$/, '');
+		return p.slice(p.lastIndexOf('/') + 1) || null;
+	}
 	if (!('Physical' in path)) return null;
 	const p = path.Physical.path.replace(/[\\/]+$/, '');
 	return p.slice(Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\')) + 1);

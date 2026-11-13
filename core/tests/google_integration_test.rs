@@ -551,6 +551,71 @@ async fn two_accounts_drive_photos_sync_edit_and_removal() -> TestResult {
 		b"day one, edited"
 	);
 
+	// New files, templates, previews and web links work on cloud folders.
+	{
+		use wing_core::infra::action::LibraryAction;
+		use wing_core::ops::files::create_entry::{
+			CreateFileAction, CreateFileInput, CreateFromTemplateAction, CreateFromTemplateInput,
+		};
+		use wing_core::ops::integrations::cloud_edit::{
+			CloudPreviewAction, CloudPreviewInput, CloudWebLinkInput, CloudWebLinkQuery,
+		};
+		let created = CreateFileAction::from_input(CreateFileInput {
+			parent: gdrive("ana@example.com", "trip"),
+			name: "empty.txt".into(),
+		})?
+		.execute(library.clone(), core.context.clone())
+		.await?;
+		assert_eq!(created.path, gdrive("ana@example.com", "trip/empty.txt"));
+		let template = local.path().join("template.md");
+		std::fs::write(&template, b"# title")?;
+		CreateFromTemplateAction::from_input(CreateFromTemplateInput {
+			template: WingPath::local(template),
+			parent: gdrive("ana@example.com", "trip"),
+			name: "doc.md".into(),
+		})?
+		.execute(library.clone(), core.context.clone())
+		.await?;
+		let duplicate = CreateFileAction::from_input(CreateFileInput {
+			parent: gdrive("ana@example.com", "trip"),
+			name: "doc.md".into(),
+		})?
+		.execute(library.clone(), core.context.clone())
+		.await;
+		assert!(duplicate.is_err(), "existing names are refused");
+		let preview = CloudPreviewAction::from_input(CloudPreviewInput {
+			path: gdrive("ana@example.com", "trip/doc.md"),
+		})?
+		.execute(library.clone(), core.context.clone())
+		.await?;
+		assert_eq!(std::fs::read(&preview.path)?, b"# title");
+		let link = CloudWebLinkQuery::from_input(CloudWebLinkInput {
+			path: gdrive("ana@example.com", "trip/doc.md"),
+		})?
+		.execute(core.context.clone(), session.clone())
+		.await?;
+		assert!(link.url.unwrap().contains("drive.google.com"));
+
+		// Deleting from the Explorer moves the item to the Drive trash.
+		use wing_core::ops::files::delete::job::{DeleteJob, DeleteMode};
+		library
+			.jobs()
+			.dispatch(DeleteJob::new(
+				WingPathBatch::new(vec![gdrive("ana@example.com", "trip/empty.txt")]),
+				DeleteMode::Trash,
+			))
+			.await?
+			.wait()
+			.await?;
+		assert!(fake
+			.state
+			.lock()
+			.unwrap()
+			.files
+			.values()
+			.any(|f| f.name == "empty.txt" && f.trashed));
+	}
+
 	// Removing Ana revokes her grant and unmounts only her Drive.
 	integrations
 		.remove_google_account(&library, &ana.id, true)

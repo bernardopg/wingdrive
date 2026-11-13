@@ -125,7 +125,9 @@
 		"undo": "Undo",
 		"openInNewWindow": "Open in New Window",
 		"sendWithWingdrop": "Send with Wingdrop",
-		"uploadToGooglePhotos": "Upload to Google Photos"
+		"uploadToGooglePhotos": "Upload to Google Photos",
+		"openInBrowser": "Open in Browser",
+		"uploadFiles": "Upload Files Here…"
 	},
 	"sort": {
 		"dateTaken": "Date Taken",
@@ -294,7 +296,7 @@
 		"title": "Cannot Import Here",
 		"noFiles": "No importable files were dropped.",
 		"noDestination": "Open a physical folder before dropping files.",
-		"notPhysical": "Files from outside WingDrive can only be dropped into a physical folder."
+		"notPhysical": "Files from outside WingDrive can only be dropped into a folder on this device or in the cloud."
 	},
 	"undo": {
 		"rename": "rename",
@@ -534,6 +536,7 @@
 	},
 	"cloudEdit": {
 		"opened": "Editing a copy of the cloud file. Saved changes upload automatically.",
-		"openFailed": "Could not open the cloud file: {{error}}"
+		"openFailed": "Could not open the cloud file: {{error}}",
+		"noWebLink": "This service has no web page for the item."
 	}
 }
