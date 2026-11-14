@@ -557,6 +557,40 @@ async fn the_broker_answers_with_the_choice_and_closes_the_window() {
 }
 
 #[tokio::test]
+async fn a_request_before_the_host_attaches_waits_for_it() {
+	let broker = Broker::detached(HOST_WAIT);
+	let first = request(&broker, PickerMode::Open, PickerOptions::default());
+	let id = first.id.clone();
+	let task = tokio::spawn({
+		let broker = broker.clone();
+		async move { broker.run(first).await }
+	});
+	tokio::time::sleep(std::time::Duration::from_millis(30)).await;
+	assert!(broker.is_pending(&id), "the call waits instead of failing");
+	assert!(!task.is_finished());
+
+	let host = FakeHost::default();
+	assert!(broker.attach(host.clone()));
+	assert!(!broker.attach(FakeHost::default()), "the first host stays");
+	let shown = wait_for_show(&host).await;
+	assert_eq!(shown.id, id);
+	broker.cancel(&id);
+	assert_eq!(task.await.unwrap().into_reply().0, 1);
+	assert_eq!(*host.dismissed.lock().unwrap(), [id]);
+}
+
+#[tokio::test]
+async fn a_host_that_never_attaches_fails_the_request() {
+	let broker = Broker::detached(std::time::Duration::from_millis(40));
+	let lost = request(&broker, PickerMode::Save, PickerOptions::default());
+	let id = lost.id.clone();
+	assert_eq!(broker.run(lost).await.into_reply().0, 2);
+	assert!(!broker.is_pending(&id));
+	// Cancelling an unknown request without a host does not panic.
+	broker.cancel(&id);
+}
+
+#[tokio::test]
 async fn cancelling_or_closing_answers_one_and_a_failed_window_answers_two() {
 	let host = FakeHost::default();
 	let broker = Broker::new(host.clone());

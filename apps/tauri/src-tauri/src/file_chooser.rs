@@ -14,9 +14,18 @@
 //! while the switch is off: the portal only calls the backend `portals.conf`
 //! selects.
 //!
+//! The name is claimed in `main`, before GTK starts, and the window host is
+//! attached later in `setup`. GTK's application startup asks D-Bus to start
+//! `org.freedesktop.portal.Desktop` and waits for it, while a portal that is
+//! starting waits for every backend it activates. Claiming the name after GTK
+//! deadlocked the two until the portal gave up after 25 s and left the
+//! session without any file chooser.
+//!
 //! ## Example
 //! ```rust,ignore
-//! tauri::async_runtime::spawn(file_chooser::serve(app.handle().clone()));
+//! let broker = file_chooser::start(); // in main, before tauri::Builder
+//! // in setup:
+//! file_chooser::attach(app.handle(), broker);
 //! ```
 
 pub mod options;
@@ -30,11 +39,12 @@ mod tests;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
+use std::time::Duration;
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager, Runtime};
-use tokio::sync::oneshot;
+use tokio::sync::{oneshot, watch};
 use zbus::OwnedVariant as OwnedValue;
 
 use options::{PickerMode, PickerOptions, Selection, SelectionError};
@@ -101,20 +111,57 @@ struct Pending {
 	reply: oneshot::Sender<Outcome>,
 }
 
+/// How long a request waits for the window host before it fails.
+pub const HOST_WAIT: Duration = Duration::from_secs(60);
+
 /// Pending portal calls, by request id.
 pub struct Broker {
 	pending: Mutex<HashMap<String, Pending>>,
 	next_id: AtomicU64,
-	host: Box<dyn PickerHost>,
+	host: OnceLock<Box<dyn PickerHost>>,
+	attached: watch::Sender<bool>,
+	host_wait: Duration,
 }
 
 impl Broker {
+	#[cfg(test)]
 	pub fn new(host: impl PickerHost) -> Arc<Self> {
+		let broker = Self::detached(HOST_WAIT);
+		broker.attach(host);
+		broker
+	}
+
+	/// A broker whose host arrives later through [`Broker::attach`]. Requests
+	/// that come first wait up to `host_wait` for it, then fail.
+	pub fn detached(host_wait: Duration) -> Arc<Self> {
 		Arc::new(Self {
 			pending: Mutex::new(HashMap::new()),
 			next_id: AtomicU64::new(1),
-			host: Box::new(host),
+			host: OnceLock::new(),
+			attached: watch::channel(false).0,
+			host_wait,
 		})
+	}
+
+	/// Sets the host once; later calls are ignored and return `false`.
+	pub fn attach(&self, host: impl PickerHost) -> bool {
+		let attached = self.host.set(Box::new(host)).is_ok();
+		if attached {
+			self.attached.send_replace(true);
+		}
+		attached
+	}
+
+	async fn host(&self) -> Option<&dyn PickerHost> {
+		if let Some(host) = self.host.get() {
+			return Some(host.as_ref());
+		}
+		let mut attached = self.attached.subscribe();
+		tokio::time::timeout(self.host_wait, attached.wait_for(|ready| *ready))
+			.await
+			.ok()?
+			.ok()?;
+		self.host.get().map(|host| host.as_ref())
 	}
 
 	pub fn next_id(&self) -> String {
@@ -132,7 +179,11 @@ impl Broker {
 				reply,
 			},
 		);
-		if let Err(error) = self.host.show(&request) {
+		let shown = match self.host().await {
+			Some(host) => host.show(&request),
+			None => Err("WingDrive did not finish starting".to_string()),
+		};
+		if let Err(error) = shown {
 			self.lock().remove(&id);
 			return Outcome::Failed(error);
 		}
@@ -162,14 +213,20 @@ impl Broker {
 		let entry = pending.remove(id).expect("checked above");
 		drop(pending);
 		entry.reply.send(Outcome::Chosen(results)).ok();
-		self.host.dismiss(id);
+		self.dismiss(id);
 		Ok(())
 	}
 
 	/// Cancels a request and closes its window.
 	pub fn cancel(&self, id: &str) {
 		if self.finish(id, Outcome::Cancelled) {
-			self.host.dismiss(id);
+			self.dismiss(id);
+		}
+	}
+
+	fn dismiss(&self, id: &str) {
+		if let Some(host) = self.host.get() {
+			host.dismiss(id);
 		}
 	}
 
@@ -246,16 +303,30 @@ impl<R: Runtime> PickerHost for TauriHost<R> {
 	}
 }
 
-/// Serves the backend for the app's lifetime.
+/// Claims the backend name and serves it for the app's lifetime. Call it in
+/// `main` before GTK starts (see the module docs), then [`attach`] the app.
 ///
-/// Failure only costs the integration, so it is logged and the app goes on.
-pub async fn serve(app: AppHandle) {
+/// Returns `None` when the environment turns the backend off. Failure to
+/// connect only costs the integration, so it is logged and the app goes on.
+pub fn start() -> Option<Arc<Broker>> {
 	if disabled_by_env(std::env::var(OVERRIDE_ENV).ok().as_deref()) {
 		tracing::info!("{OVERRIDE_ENV} turned the file chooser backend off");
-		return;
+		return None;
 	}
-	let broker = Broker::new(TauriHost { app: app.clone() });
-	app.manage(broker.clone());
+	let broker = Broker::detached(HOST_WAIT);
+	tauri::async_runtime::spawn(serve(broker.clone()));
+	Some(broker)
+}
+
+/// Gives a started backend its window host and the Tauri commands their broker.
+pub fn attach<R: Runtime>(app: &AppHandle<R>, broker: Option<Arc<Broker>>) {
+	if let Some(broker) = broker {
+		broker.attach(TauriHost { app: app.clone() });
+		app.manage(broker);
+	}
+}
+
+async fn serve(broker: Arc<Broker>) {
 	match portal::connect(zbus::connection::Builder::session(), broker).await {
 		Ok(connection) => {
 			tracing::info!("Serving {}", portal::BUS_NAME);
