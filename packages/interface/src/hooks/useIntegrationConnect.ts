@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
 	WIRE_METHODS,
 	type ConnectStatus,
+	type ConnectionMode,
 	type GoogleService,
 	type IntegrationAccountInfo,
 } from "@wingdrive/ts-client";
@@ -12,13 +13,18 @@ import { useLibraryMutation, useWingDriveClient } from "../contexts/WingDriveCon
 /** How often the sign-in status is checked while the browser is open. */
 const POLL_MS = 1500;
 
-export type GoogleConnectState =
+export type ConnectState =
 	| { phase: "idle" }
 	| { phase: "waiting"; authUrl: string; sessionId: string }
 	| { phase: "done"; account: IntegrationAccountInfo }
 	| { phase: "error"; message: string };
 
-/** Query keys that change when an account connects: accounts and the Drive location. */
+/** What to sign in to: a Google account with some services, or a Microsoft account. */
+export type ConnectRequest =
+	| { provider: "google"; mode: ConnectionMode; services: GoogleService[]; loginHint?: string }
+	| { provider: "microsoft"; mode: ConnectionMode; loginHint?: string };
+
+/** Query keys that change when an account connects: accounts and the drive location. */
 export const INTEGRATION_QUERY_KEYS = [
 	["integrations.accounts.list"],
 	["locations.list"],
@@ -26,18 +32,20 @@ export const INTEGRATION_QUERY_KEYS = [
 ] as const;
 
 /**
- * Runs the Google sign-in: the daemon returns a consent URL, the browser
- * opens it, and the hook polls the daemon until Google redirects back.
- * Unmounting stops polling and cancels the daemon's session so its loopback
- * listener closes.
+ * Runs a browser sign-in for Google or Microsoft: the daemon returns a sign-in
+ * URL, the browser opens it, and the hook polls the daemon until the provider
+ * redirects back. Unmounting stops polling and cancels the daemon's session so
+ * its loopback listener closes.
  */
-export function useGoogleConnect(onConnected?: (account: IntegrationAccountInfo) => void) {
+export function useIntegrationConnect(onConnected?: (account: IntegrationAccountInfo) => void) {
 	const client = useWingDriveClient();
 	const platform = usePlatform();
 	const queryClient = useQueryClient();
-	const connect = useLibraryMutation("integrations.google.connect");
+	const connectGoogle = useLibraryMutation("integrations.google.connect");
+	const connectMicrosoft = useLibraryMutation("integrations.microsoft.connect");
+	// Status and cancel serve both providers; sessions share one ID space.
 	const cancelSession = useLibraryMutation("integrations.google.connect_cancel");
-	const [state, setState] = useState<GoogleConnectState>({ phase: "idle" });
+	const [state, setState] = useState<ConnectState>({ phase: "idle" });
 	const active = useRef<string | null>(null);
 	const onConnectedRef = useRef(onConnected);
 	onConnectedRef.current = onConnected;
@@ -53,10 +61,20 @@ export function useGoogleConnect(onConnected?: (account: IntegrationAccountInfo)
 	);
 
 	const start = useCallback(
-		async (services: GoogleService[], loginHint?: string) => {
+		async (request: ConnectRequest) => {
 			let sessionId: string;
 			try {
-				const out = await connect.mutateAsync({ services, login_hint: loginHint ?? null });
+				const out =
+					request.provider === "google"
+						? await connectGoogle.mutateAsync({
+								mode: request.mode,
+								services: request.services,
+								login_hint: request.loginHint ?? null,
+							})
+						: await connectMicrosoft.mutateAsync({
+								mode: request.mode,
+								login_hint: request.loginHint ?? null,
+							});
 				sessionId = out.session_id;
 				active.current = sessionId;
 				setState({ phase: "waiting", authUrl: out.auth_url, sessionId });
@@ -93,7 +111,7 @@ export function useGoogleConnect(onConnected?: (account: IntegrationAccountInfo)
 				}
 			}
 		},
-		[client, connect, platform, queryClient]
+		[client, connectGoogle, connectMicrosoft, platform, queryClient]
 	);
 
 	const cancel = useCallback(async () => {
@@ -105,5 +123,5 @@ export function useGoogleConnect(onConnected?: (account: IntegrationAccountInfo)
 
 	const reset = useCallback(() => setState({ phase: "idle" }), []);
 
-	return { state, start, cancel, reset, isStarting: connect.isPending };
+	return { state, start, cancel, reset, isStarting: connectGoogle.isPending || connectMicrosoft.isPending };
 }

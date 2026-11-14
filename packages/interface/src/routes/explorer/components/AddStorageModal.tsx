@@ -47,7 +47,7 @@ import DriveBackBlaze from "@wingdrive/assets/icons/Drive-BackBlaze.webp";
 import DrivePCloud from "@wingdrive/assets/icons/Drive-PCloud.webp";
 import DriveBox from "@wingdrive/assets/icons/Drive-Box.webp";
 import { ThemedIcon } from "../../../components/ThemedIcon";
-import { useGoogleConnect } from "../../../hooks/useGoogleConnect";
+import { useIntegrationConnect } from "../../../hooks/useIntegrationConnect";
 
 type StorageCategory = "local" | "cloud" | "external";
 type ModalStep = "category" | "provider" | "local-config" | "cloud-config";
@@ -1145,23 +1145,28 @@ function AddStorageDialog(props: {
 		);
 	}
 
-	// Google Drive signs in through the browser instead of a token form.
-	if (step === "cloud-config" && selectedProvider?.cloudServiceType === "gdrive") {
+	// Google Drive and OneDrive sign in through the browser instead of a token form.
+	if (
+		step === "cloud-config" &&
+		(selectedProvider?.cloudServiceType === "gdrive" || selectedProvider?.cloudServiceType === "onedrive")
+	) {
+		const service = selectedProvider.cloudServiceType;
 		return (
 			<StorageDialog
 				dialog={dialog}
 				form={dummyForm}
 				title={t("addStorage.addProvider", {name: selectedProvider.name})}
 				icon={<ThemedIcon src={selectedProvider.icon} className="size-5" alt="" />}
-				description={t("addStorage.googleDescription")}
+				description={t(service === "gdrive" ? "addStorage.googleDescription" : "addStorage.oneDriveDescription")}
 				hideButtons={true}
 				showBackButton={true}
 				onBack={handleBack}
 			>
-				<GoogleDriveConnectStep
+				<CloudSignInStep
+					provider={service === "gdrive" ? "google" : "microsoft"}
 					onConnected={(identifier) => {
 						dialog.state.open = false;
-						props.onStorageAdded?.({Cloud: {service: "gdrive", identifier, path: ""}});
+						props.onStorageAdded?.({Cloud: {service, identifier, path: ""}});
 					}}
 				/>
 			</StorageDialog>
@@ -1416,21 +1421,36 @@ function AddStorageDialog(props: {
 	return null;
 }
 
-/** Signs a Google account in and mounts its Drive; several accounts can be added one by one. */
-function GoogleDriveConnectStep({onConnected}: {onConnected: (identifier: string) => void}) {
+/**
+ * Signs a Google or Microsoft account in and mounts its drive; several
+ * accounts can be added one by one. Uses WingDrive's own client when the
+ * build has one, and the user's own client from Settings > Integrations
+ * otherwise.
+ */
+function CloudSignInStep({
+	provider,
+	onConnected,
+}: {
+	provider: "google" | "microsoft";
+	onConnected: (identifier: string) => void;
+}) {
 	const {t} = useTranslation('explorer');
-	const clientInfo = useLibraryQuery({type: "integrations.google.client", input: {}});
-	const {state, start, cancel, isStarting} = useGoogleConnect((account) => {
+	const clients = useLibraryQuery({
+		type: provider === "google" ? "integrations.google.client" : "integrations.microsoft.client",
+		input: {},
+	});
+	const {state, start, cancel, isStarting} = useIntegrationConnect((account) => {
 		if (account.drive) onConnected(account.drive.identifier);
 	});
-	const configured = clientInfo.data?.configured ?? false;
+	const mode = clients.data?.app ? "app" : clients.data?.custom_client_id ? "custom" : null;
+	const google = provider === "google";
 
 	return (
 		<div className="space-y-3">
-			<p className="text-sm text-ink-dull">{t("addStorage.googleHint")}</p>
-			{!configured && !clientInfo.isLoading && (
+			<p className="text-sm text-ink-dull">{t(google ? "addStorage.googleHint" : "addStorage.oneDriveHint")}</p>
+			{!mode && !clients.isLoading && (
 				<p className="rounded-md border border-status-warning/25 bg-status-warning/10 px-3 py-2 text-sm text-status-warning">
-					{t("addStorage.googleNotConfigured")}
+					{t(google ? "addStorage.googleNotConfigured" : "addStorage.oneDriveNotConfigured")}
 				</p>
 			)}
 			{state.phase === "waiting" ? (
@@ -1444,14 +1464,23 @@ function GoogleDriveConnectStep({onConnected}: {onConnected: (identifier: string
 				<Button
 					variant="accent"
 					size="md"
-					disabled={!configured || isStarting}
-					onClick={() => void start(["drive", "photos"])}
+					disabled={!mode || isStarting}
+					onClick={() => {
+						if (!mode) return;
+						void start(
+							google
+								? {provider: "google", mode, services: ["drive", "photos"]}
+								: {provider: "microsoft", mode}
+						);
+					}}
 				>
-					{t("addStorage.googleSignIn")}
+					{t(google ? "addStorage.googleSignIn" : "addStorage.oneDriveSignIn")}
 				</Button>
 			)}
 			{state.phase === "error" && (
-				<p className="text-sm text-status-error">{t("addStorage.googleFailed", {error: state.message})}</p>
+				<p className="text-sm text-status-error">
+					{t(google ? "addStorage.googleFailed" : "addStorage.oneDriveFailed", {error: state.message})}
+				</p>
 			)}
 		</div>
 	);

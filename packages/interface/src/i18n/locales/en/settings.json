@@ -180,29 +180,146 @@
 	"restartNeeded": "Some changes take effect after the daemon restarts.",
 	"saveFailed": "Failed to save: {{error}}",
 	"integrations": {
-		"description": "Connect accounts from other services. Google Drive becomes a volume you browse, copy to and sync with; Google Photos receives uploads and lets you import picked photos.",
+		"description": "Connect accounts from other services. Google Drive and OneDrive become volumes you browse, copy to and sync with; Google Photos receives uploads and lets you import the photos you pick.",
 		"dismiss": "Dismiss",
-		"google": {
-			"title": "Google accounts",
-			"description": "Connect as many Google accounts as you want. Each one keeps its own Drive and Photos access.",
-			"notConfigured": "Sign-in needs a Google OAuth client. Add one in \"Google sign-in client\" below.",
-			"noAccounts": "No Google account connected yet.",
-			"serviceDrive": "Google Drive",
-			"servicePhotos": "Google Photos",
-			"connect": "Connect a Google account",
+		"providers": {
+			"google": "Google Drive and Photos",
+			"microsoft": "OneDrive"
+		},
+		"catalog": {
+			"title": "Connect a service",
+			"description": "Pick the service and how it connects. \"Account\" means you only sign in. Google Cloud and Microsoft Entra mean you register your own client first: more control, more steps.",
+			"ready": "Ready",
+			"unavailable": "Not in this build",
+			"needsSetup": "Needs setup",
+			"clientSaved": "Client saved",
+			"accounts_one": "{{count}} account",
+			"accounts_other": "{{count}} accounts",
+			"pros": "Advantages",
+			"cons": "Disadvantages",
+			"howTo": "How to connect"
+		},
+		"modes": {
+			"google": {
+				"app": {
+					"modality": "Google account",
+					"summary": "Sign in with your Google account. Nothing to set up.",
+					"intro": "WingDrive signs in with its own OAuth client, which is included in official builds. You only choose your account and allow access.",
+					"pros": [
+						"No Google Cloud project: sign in and you are done.",
+						"Works the same on every device that runs an official WingDrive build.",
+						"Tokens stay encrypted in this library. No WingDrive server sees your files."
+					],
+					"cons": [
+						"Depends on the client included in the build; builds from source may not have one.",
+						"Until Google verifies the WingDrive app, Google shows an \"unverified app\" warning and caps how many people can sign in.",
+						"API quotas are shared by everyone who uses WingDrive's client."
+					],
+					"steps": [
+						"Choose Google Drive, Google Photos or both below.",
+						"Click Sign in with Google. Your browser opens Google's sign-in page.",
+						"Pick your account and allow the access WingDrive asks for.",
+						"Go back to WingDrive. Drive appears in the sidebar; repeat to add more accounts."
+					],
+					"connect": "Sign in with Google",
+					"unavailable": "This build does not include WingDrive's Google client. Use an official build, or connect with Google Cloud and your own client."
+				},
+				"custom": {
+					"modality": "Google Cloud",
+					"summary": "Use an OAuth client from your own Google Cloud project.",
+					"intro": "You create a \"Desktop app\" OAuth client in your own Google Cloud project and WingDrive signs in with it. Nothing depends on WingDrive's client.",
+					"pros": [
+						"The project and its API quotas are yours alone.",
+						"Works in any build, including builds from source.",
+						"You decide which APIs and accounts have access, and can revoke everything in your project."
+					],
+					"cons": [
+						"Takes about ten minutes in Google Cloud Console.",
+						"While the consent screen is in testing mode, Google ends access every 7 days. Publish it to avoid that, even without verification.",
+						"The client is saved in this library only; other libraries need it saved again."
+					],
+					"steps": [
+						"Open console.cloud.google.com and create a project.",
+						"In APIs & Services > Library, enable Google Drive API, Photos Library API and Photos Picker API.",
+						"In OAuth consent screen, choose External, fill in the app name and add your Google accounts as test users.",
+						"In Credentials, create an OAuth client ID of type Desktop app.",
+						"Paste the client ID and client secret below and save.",
+						"Click Sign in with Google Cloud."
+					],
+					"connect": "Sign in with Google Cloud"
+				}
+			},
+			"microsoft": {
+				"app": {
+					"modality": "Microsoft account",
+					"summary": "Sign in with a personal, work or school Microsoft account.",
+					"intro": "WingDrive signs in with its own Microsoft app registration, which is included in official builds. You only choose your account and allow access.",
+					"pros": [
+						"No Azure or Entra setup: sign in and you are done.",
+						"Works with personal accounts (Outlook, Hotmail) and with work or school accounts.",
+						"Tokens stay encrypted in this library. No WingDrive server sees your files."
+					],
+					"cons": [
+						"Depends on the app registration included in the build; builds from source may not have one.",
+						"Some organizations only allow apps an administrator approved.",
+						"Microsoft has no way for an app to revoke itself: after disconnecting, remove WingDrive at account.live.com/consent/Manage."
+					],
+					"steps": [
+						"Click Sign in with Microsoft. Your browser opens Microsoft's sign-in page.",
+						"Pick your account and accept the permissions WingDrive asks for.",
+						"Go back to WingDrive. OneDrive appears in the sidebar; repeat to add more accounts."
+					],
+					"connect": "Sign in with Microsoft",
+					"unavailable": "This build does not include WingDrive's Microsoft app. Use an official build, or connect with Microsoft Entra and your own app."
+				},
+				"custom": {
+					"modality": "Microsoft Entra",
+					"summary": "Use an app you register in Microsoft Entra.",
+					"intro": "You register a public client app in Microsoft Entra and WingDrive signs in with its application (client) ID. Public clients use PKCE, so there is no secret to copy.",
+					"pros": [
+						"The app registration is yours, in your own account or tenant.",
+						"No client secret to create, store or renew.",
+						"Fits organizations that only allow apps they registered themselves."
+					],
+					"cons": [
+						"Needs a free Azure account to reach Microsoft Entra.",
+						"Work or school tenants may need an administrator to consent to the app.",
+						"The app is saved in this library only; other libraries need it saved again."
+					],
+					"steps": [
+						"Open entra.microsoft.com and go to App registrations > New registration.",
+						"Under Supported account types, choose accounts in any organizational directory and personal Microsoft accounts.",
+						"Under Redirect URI, choose Public client/native (mobile & desktop) and enter http://localhost/oauth/callback.",
+						"Copy the Application (client) ID from the app's Overview page, paste it below and save.",
+						"Click Sign in with Microsoft Entra."
+					],
+					"connect": "Sign in with Microsoft Entra"
+				}
+			}
+		},
+		"accounts": {
+			"title": "Connected accounts",
+			"description": "Every account connected to this library, with the way it signed in.",
+			"none": "No account connected yet. Pick a service above.",
 			"waiting": "Finish signing in in your browser…",
 			"openAgain": "Open the sign-in page again",
 			"connected": "Connected {{email}}",
-			"reconnected": "Account access updated",
-			"failed": "Google sign-in failed: {{error}}",
-			"driveMounted": "Show Google Drive in WingDrive",
-			"driveHint": "Adds the Drive to the sidebar and to copy and sync destinations",
-			"driveFailed": "Could not change Google Drive: {{error}}",
-			"grantMore": "Grant Drive and Photos access",
+			"failed": "Sign-in failed: {{error}}",
+			"oneDriveMounted": "Show OneDrive in WingDrive",
+			"driveHint": "Adds the drive to the sidebar and to copy and sync destinations",
+			"driveFailed": "Could not change the drive: {{error}}",
 			"disconnect": "Disconnect",
 			"confirmDisconnect": "Disconnect this account and revoke WingDrive's access?",
+			"confirmDisconnectMicrosoft": "Disconnect this account? To revoke access, also remove WingDrive at account.live.com/consent/Manage.",
 			"disconnected": "Disconnected {{email}}",
 			"disconnectFailed": "Could not disconnect: {{error}}"
+		},
+		"google": {
+			"serviceDrive": "Google Drive",
+			"servicePhotos": "Google Photos",
+			"reconnected": "Account access updated",
+			"driveMounted": "Show Google Drive in WingDrive",
+			"grantMore": "Grant Drive and Photos access"
 		},
 		"photos": {
 			"import": "Import from Google Photos",
@@ -216,19 +333,19 @@
 		},
 		"sync": {
 			"title": "Cloud sync",
-			"description": "Keep a folder on this device in step with a folder in Google Drive.",
+			"description": "Keep a folder on this device in step with a folder in Google Drive or OneDrive.",
 			"empty": "No synced folders yet.",
 			"add": "Sync a folder",
-			"needsDrive": "Connect a Google account with Drive shown in WingDrive to sync folders.",
+			"needsDrive": "Connect an account with Google Drive or OneDrive shown in WingDrive to sync folders.",
 			"name": "Name",
 			"localFolder": "Folder on this device",
-			"account": "Google Drive account",
-			"remoteFolder": "Folder in Google Drive",
-			"remoteFolderHint": "Path inside My Drive, such as Backup/Laptop. It is created if missing.",
+			"account": "Cloud account",
+			"remoteFolder": "Folder in the cloud",
+			"remoteFolderHint": "Path from the root of the drive, such as Backup/Laptop. It is created if missing.",
 			"mode": "Direction",
 			"modeTwoWay": "Both ways",
-			"modeUpload": "Upload only (Drive mirrors this device)",
-			"modeDownload": "Download only (this device mirrors Drive)",
+			"modeUpload": "Upload only (the cloud mirrors this device)",
+			"modeDownload": "Download only (this device mirrors the cloud)",
 			"interval": "Run automatically",
 			"manual": "Only when I click Run now",
 			"everyMinutes_one": "Every {{count}} minute",
@@ -244,7 +361,9 @@
 			"ranAt": "Last run {{when}}",
 			"failedAt": "Failed {{when}}: {{error}}",
 			"summary": "Last run {{when}}: {{uploaded}} up, {{downloaded}} down, {{conflicts}} conflicts, {{errors}} errors",
-			"actionFailed": "Cloud sync failed: {{error}}"
+			"actionFailed": "Cloud sync failed: {{error}}",
+			"accountGoogle": "Google Drive · {{email}}",
+			"accountOneDrive": "OneDrive · {{email}}"
 		},
 		"edit": {
 			"title": "Cloud files being edited",
@@ -258,25 +377,15 @@
 			"closeFailed": "Could not upload the last changes: {{error}}"
 		},
 		"client": {
-			"title": "Google sign-in client",
-			"description": "WingDrive signs in to Google with an OAuth client. Use the one in this build, or your own.",
-			"current": "Client in use",
-			"none": "None configured",
-			"source": {
-				"library": "Your client {{id}}",
-				"environment": "Client {{id}} from the daemon environment",
-				"bundled": "Client {{id}} included in this build"
-			},
-			"steps": "To use your own client:",
-			"step1": "In Google Cloud Console, create a project and enable the Google Drive API, Photos Library API and Photos Picker API.",
-			"step2": "Configure the OAuth consent screen and add your Google accounts as test users.",
-			"step3": "Create credentials of type OAuth client ID, application type Desktop app.",
-			"step4": "Paste the client ID and client secret here.",
+			"current": "Your client: {{id}}",
+			"none": "No client of your own saved yet.",
 			"clientId": "Client ID",
 			"clientSecret": "Client secret",
+			"applicationId": "Application (client) ID",
 			"save": "Save client",
-			"clear": "Use the default client",
-			"saved": "Google sign-in client saved",
+			"clear": "Forget client",
+			"saved": "Client saved",
+			"cleared": "Client forgotten",
 			"failed": "Could not save the client: {{error}}"
 		}
 	}

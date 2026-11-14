@@ -76,7 +76,7 @@ impl LibraryAction for IntegrationAccountRemoveAction {
 	) -> Result<Self::Output, ActionError> {
 		context
 			.integrations
-			.remove_google_account(&library, &self.input.account_id, self.input.revoke)
+			.remove_account(&library, &self.input.account_id, self.input.revoke)
 			.await?;
 		Ok(IntegrationAccountRemoveOutput {
 			account_id: self.input.account_id,

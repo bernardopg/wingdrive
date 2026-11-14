@@ -123,6 +123,7 @@ jobs:
           bun test packages/interface/src/routes/explorer/views/effectiveViewMode.test.ts
           bun test packages/interface/src/hooks/fileOperationOutcome.test.ts
           bun test packages/interface/src/Settings/pages/settingsPages.test.tsx
+          bun test packages/interface/src/Settings/pages/integrationsSettings.test.tsx
           bun test packages/interface/src/routes/explorer/hooks/searchQuery.test.ts
           bun test packages/ts-client/src/__tests__/tauri-transport.test.ts
           bun test apps/tauri/src/lib/rendering.test.js

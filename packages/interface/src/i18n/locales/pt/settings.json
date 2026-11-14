@@ -180,29 +180,146 @@
 	"restartNeeded": "Algumas alterações passam a valer após reiniciar o daemon.",
 	"saveFailed": "Falha ao salvar: {{error}}",
 	"integrations": {
-		"description": "Conecte contas de outros serviços. O Google Drive vira um volume que você navega, para onde copia e com o qual sincroniza; o Google Fotos recebe envios e permite importar as fotos que você escolher.",
+		"description": "Conecte contas de outros serviços. O Google Drive e o OneDrive viram volumes que você navega, para onde copia e com os quais sincroniza; o Google Fotos recebe envios e permite importar as fotos que você escolher.",
 		"dismiss": "Dispensar",
-		"google": {
-			"title": "Contas Google",
-			"description": "Conecte quantas contas Google quiser. Cada uma tem o próprio acesso ao Drive e ao Fotos.",
-			"notConfigured": "O login precisa de um cliente OAuth do Google. Adicione um em \"Cliente de login do Google\", abaixo.",
-			"noAccounts": "Nenhuma conta Google conectada ainda.",
-			"serviceDrive": "Google Drive",
-			"servicePhotos": "Google Fotos",
-			"connect": "Conectar uma conta Google",
+		"providers": {
+			"google": "Google Drive e Fotos",
+			"microsoft": "OneDrive"
+		},
+		"catalog": {
+			"title": "Conectar um serviço",
+			"description": "Escolha o serviço e a forma de conexão. \"Conta\" quer dizer que você só faz login. Google Cloud e Microsoft Entra querem dizer que você registra um cliente seu antes: mais controle, mais passos.",
+			"ready": "Pronto",
+			"unavailable": "Fora desta versão",
+			"needsSetup": "Precisa configurar",
+			"clientSaved": "Cliente salvo",
+			"accounts_one": "{{count}} conta",
+			"accounts_other": "{{count}} contas",
+			"pros": "Vantagens",
+			"cons": "Desvantagens",
+			"howTo": "Como conectar"
+		},
+		"modes": {
+			"google": {
+				"app": {
+					"modality": "Conta Google",
+					"summary": "Entre com sua conta Google. Nada para configurar.",
+					"intro": "O WingDrive entra com o próprio cliente OAuth, incluído nas versões oficiais. Você só escolhe a conta e permite o acesso.",
+					"pros": [
+						"Sem projeto no Google Cloud: entrou, está pronto.",
+						"Funciona igual em todo dispositivo com uma versão oficial do WingDrive.",
+						"Os tokens ficam criptografados nesta biblioteca. Nenhum servidor do WingDrive vê seus arquivos."
+					],
+					"cons": [
+						"Depende do cliente incluído na versão; compilações a partir do código-fonte podem não ter.",
+						"Enquanto o Google não verificar o app do WingDrive, aparece um aviso de \"app não verificado\" e há limite de pessoas que podem entrar.",
+						"As cotas de API são divididas entre todos que usam o cliente do WingDrive."
+					],
+					"steps": [
+						"Escolha Google Drive, Google Fotos ou os dois abaixo.",
+						"Clique em Entrar com o Google. O navegador abre a página de login do Google.",
+						"Escolha sua conta e permita o acesso que o WingDrive pede.",
+						"Volte ao WingDrive. O Drive aparece na barra lateral; repita para adicionar outras contas."
+					],
+					"connect": "Entrar com o Google",
+					"unavailable": "Esta versão não inclui o cliente Google do WingDrive. Use uma versão oficial ou conecte pelo Google Cloud com um cliente seu."
+				},
+				"custom": {
+					"modality": "Google Cloud",
+					"summary": "Use um cliente OAuth do seu próprio projeto no Google Cloud.",
+					"intro": "Você cria um cliente OAuth do tipo \"App para computador\" no seu projeto do Google Cloud e o WingDrive entra com ele. Nada depende do cliente do WingDrive.",
+					"pros": [
+						"O projeto e as cotas de API são só seus.",
+						"Funciona em qualquer versão, inclusive compilada a partir do código-fonte.",
+						"Você decide quais APIs e contas têm acesso e pode revogar tudo no seu projeto."
+					],
+					"cons": [
+						"Leva uns dez minutos no Google Cloud Console.",
+						"Enquanto a tela de consentimento estiver em modo de teste, o Google encerra o acesso a cada 7 dias. Publique a tela para evitar isso, mesmo sem verificação.",
+						"O cliente fica salvo só nesta biblioteca; outras bibliotecas precisam salvá-lo de novo."
+					],
+					"steps": [
+						"Abra console.cloud.google.com e crie um projeto.",
+						"Em APIs e serviços > Biblioteca, ative Google Drive API, Photos Library API e Photos Picker API.",
+						"Em Tela de consentimento OAuth, escolha Externo, preencha o nome do app e adicione suas contas Google como usuários de teste.",
+						"Em Credenciais, crie um ID do cliente OAuth do tipo App para computador.",
+						"Cole abaixo o ID e a chave secreta do cliente e salve.",
+						"Clique em Entrar com o Google Cloud."
+					],
+					"connect": "Entrar com o Google Cloud"
+				}
+			},
+			"microsoft": {
+				"app": {
+					"modality": "Conta Microsoft",
+					"summary": "Entre com uma conta Microsoft pessoal, de trabalho ou escolar.",
+					"intro": "O WingDrive entra com o próprio registro de app na Microsoft, incluído nas versões oficiais. Você só escolhe a conta e permite o acesso.",
+					"pros": [
+						"Sem configurar Azure ou Entra: entrou, está pronto.",
+						"Funciona com contas pessoais (Outlook, Hotmail) e com contas de trabalho ou escolares.",
+						"Os tokens ficam criptografados nesta biblioteca. Nenhum servidor do WingDrive vê seus arquivos."
+					],
+					"cons": [
+						"Depende do registro de app incluído na versão; compilações a partir do código-fonte podem não ter.",
+						"Algumas organizações só permitem apps aprovados por um administrador.",
+						"A Microsoft não deixa um app revogar o próprio acesso: depois de desconectar, remova o WingDrive em account.live.com/consent/Manage."
+					],
+					"steps": [
+						"Clique em Entrar com a Microsoft. O navegador abre a página de login da Microsoft.",
+						"Escolha sua conta e aceite as permissões que o WingDrive pede.",
+						"Volte ao WingDrive. O OneDrive aparece na barra lateral; repita para adicionar outras contas."
+					],
+					"connect": "Entrar com a Microsoft",
+					"unavailable": "Esta versão não inclui o app Microsoft do WingDrive. Use uma versão oficial ou conecte pelo Microsoft Entra com um app seu."
+				},
+				"custom": {
+					"modality": "Microsoft Entra",
+					"summary": "Use um app que você registra no Microsoft Entra.",
+					"intro": "Você registra um app de cliente público no Microsoft Entra e o WingDrive entra com o ID do aplicativo (cliente). Clientes públicos usam PKCE, então não há chave secreta para copiar.",
+					"pros": [
+						"O registro do app é seu, na sua conta ou no seu locatário.",
+						"Nenhuma chave secreta para criar, guardar ou renovar.",
+						"Serve para organizações que só permitem apps registrados por elas mesmas."
+					],
+					"cons": [
+						"Precisa de uma conta Azure gratuita para acessar o Microsoft Entra.",
+						"Locatários de trabalho ou escolares podem exigir que um administrador consinta o app.",
+						"O app fica salvo só nesta biblioteca; outras bibliotecas precisam salvá-lo de novo."
+					],
+					"steps": [
+						"Abra entra.microsoft.com e vá em Registros de aplicativo > Novo registro.",
+						"Em Tipos de conta com suporte, escolha contas em qualquer diretório organizacional e contas Microsoft pessoais.",
+						"Em URI de redirecionamento, escolha Cliente público/nativo (celular e desktop) e digite http://localhost/oauth/callback.",
+						"Copie o ID do aplicativo (cliente) na página Visão geral do app, cole abaixo e salve.",
+						"Clique em Entrar com o Microsoft Entra."
+					],
+					"connect": "Entrar com o Microsoft Entra"
+				}
+			}
+		},
+		"accounts": {
+			"title": "Contas conectadas",
+			"description": "Todas as contas conectadas a esta biblioteca, com a forma de login de cada uma.",
+			"none": "Nenhuma conta conectada ainda. Escolha um serviço acima.",
 			"waiting": "Termine o login no navegador…",
 			"openAgain": "Abrir a página de login de novo",
 			"connected": "{{email}} conectada",
-			"reconnected": "Acesso da conta atualizado",
-			"failed": "O login no Google falhou: {{error}}",
-			"driveMounted": "Mostrar o Google Drive no WingDrive",
-			"driveHint": "Adiciona o Drive à barra lateral e aos destinos de cópia e sincronização",
-			"driveFailed": "Não foi possível alterar o Google Drive: {{error}}",
-			"grantMore": "Liberar acesso ao Drive e ao Fotos",
+			"failed": "O login falhou: {{error}}",
+			"oneDriveMounted": "Mostrar o OneDrive no WingDrive",
+			"driveHint": "Adiciona o drive à barra lateral e aos destinos de cópia e sincronização",
+			"driveFailed": "Não foi possível alterar o drive: {{error}}",
 			"disconnect": "Desconectar",
 			"confirmDisconnect": "Desconectar esta conta e revogar o acesso do WingDrive?",
+			"confirmDisconnectMicrosoft": "Desconectar esta conta? Para revogar o acesso, remova também o WingDrive em account.live.com/consent/Manage.",
 			"disconnected": "{{email}} desconectada",
 			"disconnectFailed": "Não foi possível desconectar: {{error}}"
+		},
+		"google": {
+			"serviceDrive": "Google Drive",
+			"servicePhotos": "Google Fotos",
+			"reconnected": "Acesso da conta atualizado",
+			"driveMounted": "Mostrar o Google Drive no WingDrive",
+			"grantMore": "Liberar acesso ao Drive e ao Fotos"
 		},
 		"photos": {
 			"import": "Importar do Google Fotos",
@@ -216,19 +333,19 @@
 		},
 		"sync": {
 			"title": "Sincronização com a nuvem",
-			"description": "Mantenha uma pasta deste dispositivo igual a uma pasta do Google Drive.",
+			"description": "Mantenha uma pasta deste dispositivo igual a uma pasta do Google Drive ou do OneDrive.",
 			"empty": "Nenhuma pasta sincronizada ainda.",
 			"add": "Sincronizar uma pasta",
-			"needsDrive": "Conecte uma conta Google com o Drive visível no WingDrive para sincronizar pastas.",
+			"needsDrive": "Conecte uma conta com o Google Drive ou o OneDrive visível no WingDrive para sincronizar pastas.",
 			"name": "Nome",
 			"localFolder": "Pasta neste dispositivo",
-			"account": "Conta do Google Drive",
-			"remoteFolder": "Pasta no Google Drive",
-			"remoteFolderHint": "Caminho dentro de Meu Drive, como Backup/Notebook. Ela é criada se não existir.",
+			"account": "Conta na nuvem",
+			"remoteFolder": "Pasta na nuvem",
+			"remoteFolderHint": "Caminho a partir da raiz do drive, como Backup/Notebook. Ela é criada se não existir.",
 			"mode": "Direção",
 			"modeTwoWay": "Nos dois sentidos",
-			"modeUpload": "Só envio (o Drive espelha este dispositivo)",
-			"modeDownload": "Só download (este dispositivo espelha o Drive)",
+			"modeUpload": "Só envio (a nuvem espelha este dispositivo)",
+			"modeDownload": "Só download (este dispositivo espelha a nuvem)",
 			"interval": "Executar automaticamente",
 			"manual": "Só quando eu clicar em Sincronizar agora",
 			"everyMinutes_one": "A cada {{count}} minuto",
@@ -244,7 +361,9 @@
 			"ranAt": "Última execução em {{when}}",
 			"failedAt": "Falhou em {{when}}: {{error}}",
 			"summary": "Última execução em {{when}}: {{uploaded}} enviados, {{downloaded}} baixados, {{conflicts}} conflitos, {{errors}} erros",
-			"actionFailed": "A sincronização com a nuvem falhou: {{error}}"
+			"actionFailed": "A sincronização com a nuvem falhou: {{error}}",
+			"accountGoogle": "Google Drive · {{email}}",
+			"accountOneDrive": "OneDrive · {{email}}"
 		},
 		"edit": {
 			"title": "Arquivos da nuvem em edição",
@@ -258,25 +377,15 @@
 			"closeFailed": "Não foi possível enviar as últimas alterações: {{error}}"
 		},
 		"client": {
-			"title": "Cliente de login do Google",
-			"description": "O WingDrive entra no Google com um cliente OAuth. Use o desta versão ou um seu.",
-			"current": "Cliente em uso",
-			"none": "Nenhum configurado",
-			"source": {
-				"library": "Seu cliente {{id}}",
-				"environment": "Cliente {{id}} do ambiente do daemon",
-				"bundled": "Cliente {{id}} incluído nesta versão"
-			},
-			"steps": "Para usar um cliente seu:",
-			"step1": "No Google Cloud Console, crie um projeto e ative a Google Drive API, a Photos Library API e a Photos Picker API.",
-			"step2": "Configure a tela de consentimento OAuth e adicione suas contas Google como usuários de teste.",
-			"step3": "Crie uma credencial do tipo ID do cliente OAuth, com tipo de aplicativo App para computador.",
-			"step4": "Cole aqui o ID e a chave secreta do cliente.",
+			"current": "Seu cliente: {{id}}",
+			"none": "Nenhum cliente seu salvo ainda.",
 			"clientId": "ID do cliente",
 			"clientSecret": "Chave secreta do cliente",
+			"applicationId": "ID do aplicativo (cliente)",
 			"save": "Salvar cliente",
-			"clear": "Usar o cliente padrão",
-			"saved": "Cliente de login do Google salvo",
+			"clear": "Esquecer cliente",
+			"saved": "Cliente salvo",
+			"cleared": "Cliente esquecido",
 			"failed": "Não foi possível salvar o cliente: {{error}}"
 		}
 	}

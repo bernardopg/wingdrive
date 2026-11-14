@@ -178,6 +178,7 @@ const en = {
 			sponsor: "Sponsor",
 			about: "About",
 			privacy: "Privacy",
+			terms: "Terms of Service",
 		},
 		legal: "WingDrive is open source under the Apache License 2.0.",
 	},
@@ -251,12 +252,90 @@ const en = {
 		lead: "Every notable change, release by release. Generated from CHANGELOG.md in the repository.",
 	},
 	privacy: {
-		title: "Privacy",
-		lead: "Short version: we don't collect anything.",
-		body: [
-			"The WingDrive app has no telemetry and no account. Indexing, thumbnails and search run on your device. Data travels only between devices you pair, end-to-end encrypted, or to cloud services you connect yourself.",
-			"This website has no cookies, no analytics and no third-party trackers. The download page asks the public GitHub API for the latest release from your browser, which GitHub may log like any request.",
-			"Questions? Write to the maintainer at the address on the About page.",
+		title: "Privacy Policy",
+		lead: "Short version: WingDrive collects nothing. Your files and accounts stay on your devices.",
+		updated: "Last updated: November 13, 2026",
+		sections: [
+			{
+				h: "The app",
+				p: [
+					"The WingDrive app has no telemetry, no analytics and no WingDrive account. Indexing, thumbnails and search run on your device. Data travels only between devices you pair, end-to-end encrypted, or to cloud services you connect yourself.",
+					"WingDrive has no servers that receive your files, your metadata or your account data. The maintainer cannot see anything you do in the app.",
+				],
+			},
+			{
+				h: "Google accounts",
+				p: [
+					"When you connect a Google account in Settings > Integrations, your browser shows Google's consent page and WingDrive asks only for the access you choose: your basic profile (name, email address and picture) to name the account, Google Drive to browse, download, upload, rename, move and delete your files, and Google Photos to upload photos and videos, manage albums WingDrive created and import the items you pick.",
+					"WingDrive uses this data only to show your Drive and Photos inside the app and to run the actions you start, such as copying files, syncing folders or uploading photos. It does not use Google data for advertising, does not sell it, does not transfer it to anyone, and does not use it to train AI or machine-learning models. No person reads it.",
+					"The OAuth refresh token and the account profile are stored only on your device, encrypted with your library's key. Files you download are saved where you choose. Nothing is sent to a WingDrive server, because there is none.",
+					"WingDrive's use and transfer to any other app of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.",
+				],
+			},
+			{
+				h: "Microsoft accounts",
+				p: [
+					"When you connect a Microsoft account, WingDrive asks for your basic profile and read and write access to your OneDrive. The same rules apply: the data is used only for the actions you start in the app, the refresh token is stored encrypted on your device, and nothing is shared, sold or sent to WingDrive.",
+				],
+			},
+			{
+				h: "Removing access",
+				p: [
+					"Disconnect an account in Settings > Integrations to delete its tokens from your device; for Google, WingDrive also revokes the grant. You can always remove WingDrive at myaccount.google.com/permissions or account.live.com/consent/Manage. Deleting the library folder deletes everything WingDrive stored.",
+				],
+			},
+			{
+				h: "This website",
+				p: [
+					"This website has no cookies, no analytics and no third-party trackers. The download page asks the public GitHub API for the latest release from your browser, which GitHub may log like any request.",
+				],
+			},
+			{
+				h: "Contact",
+				p: ["Questions or requests about privacy: bernardo.gomes@bebitterbebetter.com.br."],
+			},
+		],
+	},
+	terms: {
+		title: "Terms of Service",
+		lead: "WingDrive is free, open-source software. These terms cover the app, its cloud integrations and this website.",
+		updated: "Last updated: November 13, 2026",
+		sections: [
+			{
+				h: "License",
+				p: [
+					"WingDrive is distributed under the Apache License 2.0. You may use, copy, modify and distribute it under that license. The license text in the repository prevails over anything on this page.",
+				],
+			},
+			{
+				h: "Your data and your accounts",
+				p: [
+					"Your files stay yours. WingDrive runs on your devices and acts only on your instructions. When you connect a cloud account such as Google Drive, Google Photos or OneDrive, you authorize WingDrive to act on that account on your behalf, and you remain bound by that provider's own terms.",
+					"You can disconnect any account at any time in Settings > Integrations. How WingDrive handles account data is described in the Privacy Policy.",
+				],
+			},
+			{
+				h: "Acceptable use",
+				p: [
+					"Do not use WingDrive to access accounts or files you are not allowed to access, to break the law, or to break the terms of the cloud services you connect.",
+				],
+			},
+			{
+				h: "No warranty",
+				p: [
+					"WingDrive is provided \"as is\", without warranties of any kind. File operations such as moving, syncing and deleting can lose data if something goes wrong. Keep backups of anything important. To the extent the law allows, the authors are not liable for any damage or data loss that results from using WingDrive.",
+				],
+			},
+			{
+				h: "Changes",
+				p: [
+					"These terms may change as WingDrive evolves. The date at the top shows the latest version, and the history is public in the repository.",
+				],
+			},
+			{
+				h: "Contact",
+				p: ["bernardo.gomes@bebitterbebetter.com.br"],
+			},
 		],
 	},
 	docs: {
@@ -440,6 +519,7 @@ const pt: Strings = {
 			sponsor: "Apoiar",
 			about: "Sobre",
 			privacy: "Privacidade",
+			terms: "Termos de Serviço",
 		},
 		legal: "O WingDrive é código aberto sob a Licença Apache 2.0.",
 	},
@@ -513,12 +593,90 @@ const pt: Strings = {
 		lead: "Cada mudança relevante, versão a versão. Gerado a partir do CHANGELOG.md do repositório (em inglês).",
 	},
 	privacy: {
-		title: "Privacidade",
-		lead: "Versão curta: não coletamos nada.",
-		body: [
-			"O app WingDrive não tem telemetria nem conta. Indexação, miniaturas e busca rodam no seu dispositivo. Os dados só viajam entre dispositivos que você pareia, com criptografia ponta a ponta, ou para serviços de nuvem que você mesmo conecta.",
-			"Este site não usa cookies, analytics nem rastreadores de terceiros. A página de download consulta a API pública do GitHub pelo seu navegador para saber a última versão, e o GitHub pode registrar essa requisição como qualquer outra.",
-			"Dúvidas? Escreva para o mantenedor no endereço da página Sobre.",
+		title: "Política de Privacidade",
+		lead: "Versão curta: o WingDrive não coleta nada. Seus arquivos e contas ficam nos seus dispositivos.",
+		updated: "Última atualização: 13 de novembro de 2026",
+		sections: [
+			{
+				h: "O app",
+				p: [
+					"O app WingDrive não tem telemetria, analytics nem conta WingDrive. Indexação, miniaturas e busca rodam no seu dispositivo. Os dados só viajam entre dispositivos que você pareia, com criptografia ponta a ponta, ou para serviços de nuvem que você mesmo conecta.",
+					"O WingDrive não tem servidores que recebam seus arquivos, seus metadados ou os dados das suas contas. O mantenedor não vê nada do que você faz no app.",
+				],
+			},
+			{
+				h: "Contas Google",
+				p: [
+					"Quando você conecta uma conta Google em Configurações > Integrações, o navegador mostra a página de consentimento do Google e o WingDrive pede só o acesso que você escolher: seu perfil básico (nome, e-mail e foto) para identificar a conta, o Google Drive para navegar, baixar, enviar, renomear, mover e excluir seus arquivos, e o Google Fotos para enviar fotos e vídeos, gerenciar álbuns criados pelo WingDrive e importar os itens que você escolher.",
+					"O WingDrive usa esses dados só para mostrar seu Drive e seu Fotos dentro do app e para executar as ações que você inicia, como copiar arquivos, sincronizar pastas ou enviar fotos. Ele não usa dados do Google para publicidade, não os vende, não os transfere para ninguém e não os usa para treinar modelos de IA ou de aprendizado de máquina. Nenhuma pessoa os lê.",
+					"O token de atualização OAuth e o perfil da conta ficam só no seu dispositivo, criptografados com a chave da sua biblioteca. Os arquivos que você baixa vão para onde você escolher. Nada é enviado a um servidor do WingDrive, porque ele não existe.",
+					"O uso e a transferência, para qualquer outro app, de informações recebidas das APIs do Google pelo WingDrive seguem a Política de Dados do Usuário dos Serviços de API do Google, incluindo os requisitos de Uso Limitado.",
+				],
+			},
+			{
+				h: "Contas Microsoft",
+				p: [
+					"Quando você conecta uma conta Microsoft, o WingDrive pede seu perfil básico e acesso de leitura e escrita ao seu OneDrive. Valem as mesmas regras: os dados servem só para as ações que você inicia no app, o token de atualização fica criptografado no seu dispositivo e nada é compartilhado, vendido ou enviado ao WingDrive.",
+				],
+			},
+			{
+				h: "Remover o acesso",
+				p: [
+					"Desconecte uma conta em Configurações > Integrações para apagar os tokens dela do seu dispositivo; no Google, o WingDrive também revoga a autorização. Você sempre pode remover o WingDrive em myaccount.google.com/permissions ou account.live.com/consent/Manage. Apagar a pasta da biblioteca apaga tudo o que o WingDrive guardou.",
+				],
+			},
+			{
+				h: "Este site",
+				p: [
+					"Este site não usa cookies, analytics nem rastreadores de terceiros. A página de download consulta a API pública do GitHub pelo seu navegador para saber a última versão, e o GitHub pode registrar essa requisição como qualquer outra.",
+				],
+			},
+			{
+				h: "Contato",
+				p: ["Dúvidas ou pedidos sobre privacidade: bernardo.gomes@bebitterbebetter.com.br."],
+			},
+		],
+	},
+	terms: {
+		title: "Termos de Serviço",
+		lead: "O WingDrive é software livre e de código aberto. Estes termos cobrem o app, as integrações com a nuvem e este site.",
+		updated: "Última atualização: 13 de novembro de 2026",
+		sections: [
+			{
+				h: "Licença",
+				p: [
+					"O WingDrive é distribuído sob a Licença Apache 2.0. Você pode usar, copiar, modificar e distribuir o software nos termos dessa licença. O texto da licença no repositório prevalece sobre qualquer coisa nesta página.",
+				],
+			},
+			{
+				h: "Seus dados e suas contas",
+				p: [
+					"Seus arquivos continuam seus. O WingDrive roda nos seus dispositivos e só age sob suas instruções. Ao conectar uma conta de nuvem, como Google Drive, Google Fotos ou OneDrive, você autoriza o WingDrive a agir nessa conta em seu nome e continua sujeito aos termos do próprio provedor.",
+					"Você pode desconectar qualquer conta a qualquer momento em Configurações > Integrações. A forma como o WingDrive trata os dados das contas está na Política de Privacidade.",
+				],
+			},
+			{
+				h: "Uso aceitável",
+				p: [
+					"Não use o WingDrive para acessar contas ou arquivos que você não tem permissão de acessar, para violar a lei ou para violar os termos dos serviços de nuvem que você conecta.",
+				],
+			},
+			{
+				h: "Sem garantia",
+				p: [
+					"O WingDrive é fornecido \"no estado em que se encontra\", sem garantias de qualquer tipo. Operações de arquivo como mover, sincronizar e excluir podem perder dados se algo der errado. Mantenha backup do que for importante. Na medida permitida pela lei, os autores não respondem por danos ou perdas de dados decorrentes do uso do WingDrive.",
+				],
+			},
+			{
+				h: "Alterações",
+				p: [
+					"Estes termos podem mudar conforme o WingDrive evolui. A data no topo mostra a versão mais recente, e o histórico é público no repositório.",
+				],
+			},
+			{
+				h: "Contato",
+				p: ["bernardo.gomes@bebitterbebetter.com.br"],
+			},
 		],
 	},
 	docs: {

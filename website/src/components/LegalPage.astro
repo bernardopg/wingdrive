@@ -1,0 +1,35 @@
+---
+// Policy-style page (privacy, terms): sections with headings and a last-updated line.
+import Simple from "../views/Simple.astro";
+import type { Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+	page: { title: string; lead: string; updated: string; sections: { h: string; p: string[] }[] };
+}
+const { lang, page } = Astro.props;
+---
+
+<Simple lang={lang} title={page.title} lead={page.lead}>
+	<p class="updated">{page.updated}</p>
+	{
+		page.sections.map((section) => (
+			<section>
+				<h2>{section.h}</h2>
+				{section.p.map((text) => (
+					<p>{text}</p>
+				))}
+			</section>
+		))
+	}
+</Simple>
+
+<style>
+	section p {
+		margin: 0 0 0.9rem;
+	}
+	.updated {
+		opacity: 0.7;
+		font-size: 0.9rem;
+	}
+</style>

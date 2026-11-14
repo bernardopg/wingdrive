@@ -36,7 +36,7 @@ use wing_core::{
 			oauth::GoogleService, GoogleApi, GoogleDriveBackend, GoogleEndpoints,
 			GoogleTokenSource, OAuthClient,
 		},
-		ConnectStatus,
+		ConnectStatus, ConnectionMode,
 	},
 	volume::{backend::CloudServiceType, VolumeBackend},
 	Core,
@@ -261,6 +261,7 @@ async fn connect(
 	let (session_id, auth_url) = integrations
 		.start_google_connect(
 			library.clone(),
+			ConnectionMode::App,
 			vec![GoogleService::Drive, GoogleService::Photos],
 			None,
 		)
@@ -322,6 +323,15 @@ async fn two_accounts_drive_photos_sync_edit_and_removal() -> TestResult {
 		panic!("Ana's sign-in failed");
 	};
 	assert_eq!(ana.email, "ana@example.com", "emails are stored lowercase");
+	assert_eq!(ana.mode, ConnectionMode::App);
+	// The custom mode needs the user's own client, which this library lacks.
+	let custom = integrations
+		.start_google_connect(library.clone(), ConnectionMode::Custom, Vec::new(), None)
+		.await;
+	assert!(matches!(
+		custom,
+		Err(wing_core::service::integrations::IntegrationError::CustomClientMissing(_))
+	));
 	assert_eq!(
 		ana.services,
 		vec![GoogleService::Drive, GoogleService::Photos]

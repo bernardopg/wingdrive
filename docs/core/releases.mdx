@@ -169,6 +169,8 @@ Desktop updater endpoints and signing keys are not configured yet (REL-001). Ins
 
 The release requires `AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS` for AUR publication. Android signing uses `WINGDRIVE_ANDROID_KEYSTORE_BASE64`, `WINGDRIVE_ANDROID_KEYSTORE_PASSWORD`, `WINGDRIVE_ANDROID_KEY_ALIAS` and `WINGDRIVE_ANDROID_KEY_PASSWORD`; without them the bundle builds unsigned.
 
+`release.yml` and `windows-bundle.yml` pass `WINGDRIVE_GOOGLE_CLIENT_ID`, `WINGDRIVE_GOOGLE_CLIENT_SECRET` and `WINGDRIVE_MICROSOFT_CLIENT_ID` to the builds, which compile them into `wing-core` as WingDrive's own OAuth clients (the "Google account" and "Microsoft account" sign-in in `docs/core/integrations.mdx`). Without them the build still works and users sign in with a client of their own.
+
 `discord.yml` reads `DISCORD_WEBHOOK_COMMITS` and `DISCORD_WEBHOOK_CHANGELOG`, the Discord webhook URLs of `#commits` and `#changelog`; without them it posts nothing and leaves a notice.
 
 No workflow uses Apple, Authenticode, Tauri updater or Sentry secrets yet; REL-001 adds the signing

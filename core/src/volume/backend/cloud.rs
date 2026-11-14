@@ -101,6 +101,25 @@ impl CloudBackend {
 		})
 	}
 
+	/// Create a OneDrive backend that signs every request with `access_token`.
+	///
+	/// OpenDAL takes either an access token or a refresh token, not both, and
+	/// its own refresh needs a client secret. Integrations that refresh tokens
+	/// themselves build a new backend with each new access token.
+	pub fn new_onedrive_with_access_token(
+		access_token: impl AsRef<str>,
+	) -> Result<Self, VolumeError> {
+		let builder = opendal::services::Onedrive::default().access_token(access_token.as_ref());
+		let operator = opendal::Operator::new(builder).map_err(|e| {
+			VolumeError::Platform(format!("Failed to create OneDrive operator: {}", e))
+		})?;
+		Ok(Self {
+			operator,
+			service_type: CloudServiceType::OneDrive,
+			root: PathBuf::from("/"),
+		})
+	}
+
 	/// Create a new cloud backend for Dropbox
 	///
 	/// Uses OAuth 2.0 refresh token for long-term access. OpenDAL automatically

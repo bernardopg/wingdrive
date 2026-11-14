@@ -112,6 +112,13 @@ export type ApfsVolumeInfo = {
 /**  APFS volume roles in the container */
 export type ApfsVolumeRole = "System" | "Data" | "Preboot" | "Recovery" | "VM" | { Other: string };
 
+/**  WingDrive's own client for a provider, as clients see it. */
+export type AppClientInfo = {
+	source: OAuthClientSource,
+	/**  The client ID, which is public; a secret is never returned. */
+	client_id: string,
+};
+
 /**  App configuration response with all fields exposed */
 export type AppConfigOutput = {
 	/**  Config schema version */
@@ -454,6 +461,16 @@ export type ConnectionMethod =
 "RelayProxy" | 
 /**  Direct path over the user's Tailscale tailnet (WireGuard mesh) */
 "Tailscale";
+
+/**  Whose OAuth client an account signs in with. */
+export type ConnectionMode = 
+/**  WingDrive's own client: the user only signs in to their account. */
+"app" | 
+/**
+ *  A client the user registered in their own Google Cloud project or
+ *  Microsoft Entra tenant.
+ */
+"custom";
 
 /**  Domain representation of content identity */
 export type ContentIdentity = {
@@ -1007,7 +1024,10 @@ export type DownloadWhisperModelOutput = {
 	job_id: string,
 };
 
-/**  The Drive volume of an account, addressable as `gdrive://<identifier>/`. */
+/**
+ *  The storage volume of an account, addressable as `gdrive://<identifier>/`
+ *  for Google Drive or `onedrive://<identifier>/` for OneDrive.
+ */
 export type DriveMountInfo = {
 	fingerprint: string,
 	identifier: string,
@@ -1839,15 +1859,10 @@ export type GetTagChildrenOutput = {
 	children: Tag[],
 };
 
-export type GoogleClientInfo = {
-	/**  Whether sign-in can start. */
-	configured: boolean,
-	source: OAuthClientSource | null,
-	/**  The client ID, which is public; the secret is never returned. */
-	client_id: string | null,
-};
-
-/**  Which OAuth client the library uses for Google sign-in. */
+/**
+ *  Which OAuth clients the library can use for Google sign-in: WingDrive's
+ *  own ("sign in with your Google account") and the user's own from Google Cloud.
+ */
 export type GoogleClientInfoInput = Record<string, never>;
 
 export type GoogleConnectCancelInput = {
@@ -1861,8 +1876,13 @@ export type GoogleConnectCancelOutput = {
 /**
  *  Starts a Google sign-in. Open `auth_url` in the browser, then poll
  *  `integrations.google.connect_status` with `session_id`.
+ * 
+ *  `integrations.google.connect_status` and `integrations.google.connect_cancel`
+ *  follow Microsoft sign-ins too; the session IDs are shared.
  */
 export type GoogleConnectInput = {
+	/**  Whose OAuth client to sign in with. */
+	mode: ConnectionMode,
 	/**  Services to request; empty requests Drive and Photos. */
 	services: GoogleService[],
 	/**  Preselects an account on the consent page, for reconnecting. */
@@ -1899,7 +1919,8 @@ export type GoogleService =
  *  Saves or clears the library's own Google OAuth client.
  * 
  *  Create it in Google Cloud Console as an OAuth client of type "Desktop
- *  app". Accounts already connected keep the client they signed in with.
+ *  app". It is used by sign-ins in the "custom" mode; accounts already
+ *  connected keep the client they signed in with.
  */
 export type GoogleSetClientInput = {
 	/**  `None` clears the custom client. */
@@ -2148,8 +2169,13 @@ export type IntegrationAccountInfo = {
 	email: string,
 	name: string | null,
 	picture: string | null,
-	/**  Services the account granted access to. */
+	/**
+	 *  Google services the account granted access to; empty for Microsoft,
+	 *  whose only service is OneDrive (`drive`).
+	 */
 	services: GoogleService[],
+	/**  Whose OAuth client the account signed in with. */
+	mode: ConnectionMode,
 	connected_at: string,
 	drive: DriveMountInfo | null,
 };
@@ -2171,7 +2197,7 @@ export type IntegrationAccountRemoveOutput = {
 export type IntegrationAccountsListInput = Record<string, never>;
 
 /**  Providers WingDrive can connect. */
-export type IntegrationProvider = "google";
+export type IntegrationProvider = "google" | "microsoft";
 
 /**  Represents a single integrity difference */
 export type IntegrityDifference = {
@@ -3009,6 +3035,40 @@ export type MemoryBreakdownStats = {
 	content_kinds_entries: number,
 };
 
+/**
+ *  Which app registrations the library can use for Microsoft sign-in:
+ *  WingDrive's own and the user's own from Microsoft Entra.
+ */
+export type MicrosoftClientInfoInput = Record<string, never>;
+
+/**
+ *  Starts a Microsoft sign-in. Open `auth_url` in the browser, then poll
+ *  `integrations.google.connect_status` with `session_id`.
+ */
+export type MicrosoftConnectInput = {
+	/**  Whose app registration to sign in with. */
+	mode: ConnectionMode,
+	/**  Preselects an account on the sign-in page, for reconnecting. */
+	login_hint: string | null,
+};
+
+export type MicrosoftConnectOutput = {
+	session_id: string,
+	auth_url: string,
+};
+
+/**
+ *  Saves or clears the library's own Microsoft Entra app registration.
+ * 
+ *  Register it as a public client ("Mobile and desktop applications") with
+ *  the redirect URI `http://localhost/oauth/callback`. Public clients have no
+ *  secret, so only the application (client) ID is needed.
+ */
+export type MicrosoftSetClientInput = {
+	/**  `None` clears the custom app registration. */
+	client_id: string | null,
+};
+
 /**  Information about a model */
 export type ModelInfo = {
 	/**  Unique model identifier */
@@ -3087,14 +3147,20 @@ export type NetworkStopOutput = {
 	stopped: boolean,
 };
 
-/**  Where the OAuth client in use comes from. */
+/**  Where WingDrive's own OAuth client comes from. */
 export type OAuthClientSource = 
-/**  Saved by the user in this library. */
-"library" | 
 /**  Set in the daemon's environment. */
 "environment" | 
 /**  Compiled into this build. */
 "bundled";
+
+/**  The OAuth clients a library can sign in with, for one provider. */
+export type OAuthClientsInfo = {
+	/**  WingDrive's own client; `None` when this build has none. */
+	app: AppClientInfo | null,
+	/**  The ID of the client the user saved in this library, if any. */
+	custom_client_id: string | null,
+};
 
 /**  Object detection policy (for future AI features) */
 export type ObjectDetectionPolicy = {
@@ -3118,6 +3184,16 @@ export type OcrPolicy = {
 	min_confidence: number | null,
 	/**  Whether to reprocess files that already have text */
 	reprocess: boolean,
+};
+
+/**  Mounts or unmounts a Microsoft account's OneDrive. */
+export type OneDriveMountInput = {
+	account_id: string,
+	mounted: boolean,
+};
+
+export type OneDriveMountOutput = {
+	drive: DriveMountInfo | null,
 };
 
 /**  Operating system types */
@@ -5102,7 +5178,10 @@ export type LibraryAction =
   |  { type: 'integrations.google.photos.picker.import'; input: PhotosPickerImportInput; output: JobReceipt }
   |  { type: 'integrations.google.photos.picker.start'; input: PhotosPickerStartInput; output: PhotosPickerStartOutput }
   |  { type: 'integrations.google.photos.upload'; input: PhotosUploadInput; output: JobReceipt }
-  |  { type: 'integrations.google.set_client'; input: GoogleSetClientInput; output: GoogleClientInfo }
+  |  { type: 'integrations.google.set_client'; input: GoogleSetClientInput; output: OAuthClientsInfo }
+  |  { type: 'integrations.microsoft.connect'; input: MicrosoftConnectInput; output: MicrosoftConnectOutput }
+  |  { type: 'integrations.microsoft.set_client'; input: MicrosoftSetClientInput; output: OAuthClientsInfo }
+  |  { type: 'integrations.onedrive.mount'; input: OneDriveMountInput; output: OneDriveMountOutput }
   |  { type: 'jobs.cancel'; input: JobCancelInput; output: JobCancelOutput }
   |  { type: 'jobs.pause'; input: JobPauseInput; output: JobPauseOutput }
   |  { type: 'jobs.resume'; input: JobResumeInput; output: JobResumeOutput }
@@ -5195,10 +5274,11 @@ export type LibraryQuery =
   |  { type: 'files.unique_to_location'; input: UniqueToLocationInput; output: UniqueToLocationOutput }
   |  { type: 'files.vcs_status'; input: VcsStatusInput; output: VcsStatusOutput }
   |  { type: 'integrations.accounts.list'; input: IntegrationAccountsListInput; output: IntegrationAccountInfo[] }
-  |  { type: 'integrations.google.client'; input: GoogleClientInfoInput; output: GoogleClientInfo }
+  |  { type: 'integrations.google.client'; input: GoogleClientInfoInput; output: OAuthClientsInfo }
   |  { type: 'integrations.google.connect_status'; input: GoogleConnectStatusInput; output: ConnectStatus }
   |  { type: 'integrations.google.photos.albums'; input: PhotosAlbumsInput; output: PhotosAlbum[] }
   |  { type: 'integrations.google.photos.picker.status'; input: PhotosPickerStatusInput; output: PhotosPickerStatus }
+  |  { type: 'integrations.microsoft.client'; input: MicrosoftClientInfoInput; output: OAuthClientsInfo }
   |  { type: 'jobs.active'; input: ActiveJobsInput; output: ActiveJobsOutput }
   |  { type: 'jobs.get_copy_metadata'; input: CopyMetadataQueryInput; output: CopyMetadataOutput }
   |  { type: 'jobs.info'; input: JobInfoQueryInput; output: JobInfoOutput }
@@ -5289,6 +5369,9 @@ export const WIRE_METHODS = {
     'integrations.google.photos.picker.start': 'action:integrations.google.photos.picker.start.input',
     'integrations.google.photos.upload': 'action:integrations.google.photos.upload.input',
     'integrations.google.set_client': 'action:integrations.google.set_client.input',
+    'integrations.microsoft.connect': 'action:integrations.microsoft.connect.input',
+    'integrations.microsoft.set_client': 'action:integrations.microsoft.set_client.input',
+    'integrations.onedrive.mount': 'action:integrations.onedrive.mount.input',
     'jobs.cancel': 'action:jobs.cancel.input',
     'jobs.pause': 'action:jobs.pause.input',
     'jobs.resume': 'action:jobs.resume.input',
@@ -5385,6 +5468,7 @@ export const WIRE_METHODS = {
     'integrations.google.connect_status': 'query:integrations.google.connect_status',
     'integrations.google.photos.albums': 'query:integrations.google.photos.albums',
     'integrations.google.photos.picker.status': 'query:integrations.google.photos.picker.status',
+    'integrations.microsoft.client': 'query:integrations.microsoft.client',
     'jobs.active': 'query:jobs.active',
     'jobs.get_copy_metadata': 'query:jobs.get_copy_metadata',
     'jobs.info': 'query:jobs.info',
