@@ -184,6 +184,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-13 | Release `v3.3.0` (#393): login no Google com um botão pelo cliente OAuth do WingDrive embutido no build (secrets do repositório), modo com cliente próprio, OneDrive por login no navegador, catálogo de integrações, `/privacy` e `/service-terms` |
 | 2026-11-13 | Integrações: modos "Conta" e cliente próprio com catálogo de cards (INTG-010), OneDrive por login no navegador (INTG-022), projeto e cliente OAuth do WingDrive no Google com login real funcionando (INTG-001, INTG-004), `/privacy` e `/service-terms` no site (INTG-002) |
 | 2026-11-13 | Release `v3.2.0` (#383 a #389): integração Google com Drive e Fotos em várias contas (CLOUD-004), operações e edição em volumes de nuvem, cloud sync, COV-07 Done com 91,6% de cobertura do shell desktop e os bugs achados corrigidos, `sdPath` para `wdPath` (BRAND-003) |
 | 2026-11-13 | Todas as tasks com responsável `bernardopg`, milestone (M0 para as concluídas no upstream) e sprint; sprints S07 a S14 planejados |

@@ -46,7 +46,10 @@ Google treats a "Desktop app" client secret as not confidential, so embedding it
 - Signing in with the bundled client worked against real Google from the Linux desktop app
   (isolated instance, debug build), INTG-004.
 
-Left: add the GitHub secrets, logo and terms link on the consent screen, AUR `wingdrive-nightly`
+- `WINGDRIVE_GOOGLE_CLIENT_ID` and `WINGDRIVE_GOOGLE_CLIENT_SECRET` set as repository secrets;
+  v3.3.0 is the first release built with them.
+
+Left: logo and terms link on the consent screen, AUR `wingdrive-nightly`
 (builds from source), Docker image, Flatpak and mobile, and the CI check of the client source.
 
 ## Acceptance Criteria

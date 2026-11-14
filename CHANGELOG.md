@@ -3,7 +3,11 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 3.3.0 — 2026-11-13
+
+Sign in to Google with one button, your own OAuth client as an alternative,
+OneDrive through the browser, an integrations catalog in Settings, and the
+privacy policy and terms on wingdrive.org (#393).
 
 ### Added
 
