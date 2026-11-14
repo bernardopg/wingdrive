@@ -154,6 +154,16 @@ jobs:
           bun test packages/interface/src/routes/explorer/terminal/dockedTerminals.test.ts
           bun test packages/interface/src/hooks/normalizedQuerySubscription.test.tsx
           bun test packages/interface/src/components/JobManager/jobNotification.test.ts
+          bun test packages/interface/src/routes/explorer/SelectionContext.test.tsx
+          bun test packages/interface/src/components/TabManager/TabManagerContext.test.tsx
+          bun test packages/interface/src/routes/explorer/context.test.tsx
+          bun test packages/interface/src/util/keybinds/platform.test.ts
+          bun test packages/interface/src/util/keybinds/listener.test.ts
+          bun test packages/interface/src/hooks/useClipboard.test.tsx
+          bun test packages/interface/src/hooks/useTheme.test.tsx
+          bun test packages/interface/src/routes/explorer/explorerUtils.test.ts
+          bun test packages/interface/src/hooks/useWaitForJob.test.tsx
+          bun test packages/interface/src/hooks/useUndo.test.tsx
 
   core:
     name: Rust Workspace
