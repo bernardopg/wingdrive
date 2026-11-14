@@ -3,6 +3,7 @@ import type {FilePickerRequest} from '../../contexts/PlatformContext';
 import {
 	acceptLabel,
 	buildSelection,
+	entryName,
 	globToRegExp,
 	initialChoices,
 	initialFilter,
@@ -58,6 +59,22 @@ describe('globs', () => {
 		expect(globToRegExp('[!a]*').test('bcd')).toBe(true);
 		expect(globToRegExp('a+b(c).*').test('a+b(c).x')).toBe(true);
 		expect(globToRegExp('[unclosed').test('[unclosed')).toBe(true);
+	});
+
+	test("Chrome's case-folded globs match the Explorer's split names", () => {
+		// What Chrome sent for accept=".txt,text/plain" on 2026-11-14.
+		const chrome = {
+			name: 'Arquivos personalizados',
+			rules: [],
+			globs: ['*.[tT][eE][xX][tT]', '*.[tT][xX][tT]']
+		};
+		const alpha = entryName({name: 'alpha', extension: 'txt'});
+		expect(alpha).toBe('alpha.txt');
+		expect(matchesFilter(alpha, chrome)).toBe(true);
+		expect(matchesFilter(entryName({name: 'pic', extension: 'png'}), chrome)).toBe(
+			false
+		);
+		expect(entryName({name: 'README', extension: null})).toBe('README');
 	});
 
 	test('filters without globs let everything through', () => {
