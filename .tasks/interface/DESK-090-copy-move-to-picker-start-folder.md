@@ -1,14 +1,14 @@
 ---
 id: DESK-090
 title: Copy To and Move To open the folder picker outside the current folder
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: Low
 milestone: M2
 sprint: S05
 tags: [desktop, explorer, file-operations, bug]
-last_updated: 2026-11-11
+last_updated: 2026-11-14
 ---
 
 ## Description
@@ -27,7 +27,7 @@ DESK-018 against its implementation steps on 2026-11-11.
 
 ## Acceptance Criteria
 
-- [ ] The picker opens in the folder that holds the selection
+- [x] The picker opens in the folder that holds the selection
 - [x] A unit test covers the starting folder, including Windows paths
 
 ## Fix
@@ -41,3 +41,9 @@ that holds the selection" in `copyMoveDestination.test.ts` covers it.
 Open: the first criterion needs the desktop build, because the web UI has no folder picker and does not
 show "Copy To…" (checked 2026-11-12). Check it with the next package: the GTK portal should open in the
 folder of the selected file.
+
+## Evidence (2026-11-14)
+
+Installed AUR `wingdrive-bin` 3.2.0 (has the fix since `v3.1.1`) on the author's Hyprland session.
+In a folder under `/tmp`, right-click `beta.txt`, "Copiar para…": the GTK dialog opened in that
+folder (path bar `…/e2e/files`, the four entries of the folder listed), not in the last folder or home.
