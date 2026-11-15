@@ -52,23 +52,23 @@ export type AdapterInfo = {
 };
 
 export type AddGroupInput = {
-	space_id: string,
+	wing_id: string,
 	name: string,
 	group_type: GroupType,
 };
 
 export type AddGroupOutput = {
-	group: SpaceGroup,
+	group: WingGroup,
 };
 
 export type AddItemInput = {
-	space_id: string,
+	wing_id: string,
 	group_id: string | null,
 	item_type: ItemType,
 };
 
 export type AddItemOutput = {
-	item: SpaceItem,
+	item: WingItem,
 };
 
 /**  Input for alternate instances query */
@@ -1928,7 +1928,7 @@ export type GoogleSetClientInput = {
 	client_secret: string | null,
 };
 
-/**  Types of groups that can appear in a space */
+/**  Types of groups that can appear in a wing */
 export type GroupType = 
 /**  Fixed quick navigation (Overview, Recents, Favorites) */
 "QuickAccess" | 
@@ -3602,7 +3602,7 @@ export type RemoteLibraryInfo = {
 };
 
 export type ReorderGroupsInput = {
-	space_id: string,
+	wing_id: string,
 	group_ids: string[],
 };
 
@@ -3894,126 +3894,6 @@ export type SourceItem = {
 	preview: string | null,
 	subtitle: string | null,
 };
-
-/**  A Space defines a sidebar layout and filtering context */
-export type Space = {
-	/**  Unique identifier */
-	id: string,
-	/**  Human-friendly name (e.g., "All Devices", "Work Files") */
-	name: string,
-	/**  Icon identifier (Phosphor icon name or emoji) */
-	icon: string,
-	/**  Color for visual identification (hex format: #RRGGBB) */
-	color: string,
-	/**  Sort order in space switcher */
-	order: number,
-	/**  Timestamps */
-	created_at: string,
-	updated_at: string,
-};
-
-export type SpaceCreateInput = {
-	name: string,
-	icon: string,
-	color: string,
-};
-
-export type SpaceCreateOutput = {
-	space: Space,
-};
-
-export type SpaceDeleteInput = {
-	space_id: string,
-};
-
-export type SpaceDeleteOutput = {
-	success: boolean,
-};
-
-export type SpaceGetOutput = {
-	space: Space,
-};
-
-export type SpaceGetQueryInput = {
-	space_id: string,
-};
-
-/**  A SpaceGroup is a collapsible section in the sidebar */
-export type SpaceGroup = {
-	/**  Unique identifier */
-	id: string,
-	/**  Space this group belongs to */
-	space_id: string,
-	/**  Group name (e.g., "Quick Access", "MacBook Pro") */
-	name: string,
-	/**  Type of group (determines content and behavior) */
-	group_type: GroupType,
-	/**  Whether group is collapsed */
-	is_collapsed: boolean,
-	/**  Sort order within space */
-	order: number,
-	/**  Timestamp */
-	created_at: string,
-};
-
-/**  A group with its items */
-export type SpaceGroupWithItems = {
-	/**  The group */
-	group: SpaceGroup,
-	/**  Items in this group (sorted by order) */
-	items: SpaceItem[],
-};
-
-/**  An item within a space (can be space-level or within a group) */
-export type SpaceItem = {
-	/**  Unique identifier */
-	id: string,
-	/**  Space this item belongs to */
-	space_id: string,
-	/**  Group this item belongs to (None = space-level item) */
-	group_id: string | null,
-	/**  Type discriminant (for quick type checking) */
-	item_type: ItemType,
-	/**  Sort order within space or group */
-	order: number,
-	/**  Timestamp */
-	created_at: string,
-	/**  Resolved file data for Path items (populated by get_layout query) */
-	resolved_file?: File | null,
-};
-
-/**  Complete sidebar layout for a space */
-export type SpaceLayout = {
-	/**  Unique identifier (same as space.id for cache matching) */
-	id: string,
-	/**  The space */
-	space: Space,
-	/**  Space-level items (pinned shortcuts, no group) */
-	space_items: SpaceItem[],
-	/**  Groups with their items */
-	groups: SpaceGroupWithItems[],
-};
-
-export type SpaceLayoutQueryInput = {
-	space_id: string,
-};
-
-export type SpaceUpdateInput = {
-	space_id: string,
-	name: string | null,
-	icon: string | null,
-	color: string | null,
-};
-
-export type SpaceUpdateOutput = {
-	space: Space,
-};
-
-export type SpacesListOutput = {
-	spaces: Space[],
-};
-
-export type SpacesListQueryInput = null;
 
 /**  Speech-to-text transcription policy */
 export type SpeechPolicy = {
@@ -4559,7 +4439,7 @@ export type UpdateGroupInput = {
 };
 
 export type UpdateGroupOutput = {
-	group: SpaceGroup,
+	group: WingGroup,
 };
 
 /**
@@ -4990,6 +4870,109 @@ export type VouchingSessionOutput = {
 
 export type VouchingSessionState = "Pending" | "InProgress" | "Completed";
 
+/**  A Wing defines a sidebar layout and filtering context */
+export type Wing = {
+	/**  Unique identifier */
+	id: string,
+	/**  Human-friendly name (e.g., "All Devices", "Work Files") */
+	name: string,
+	/**  Icon identifier (Phosphor icon name or emoji) */
+	icon: string,
+	/**  Color for visual identification (hex format: #RRGGBB) */
+	color: string,
+	/**  Sort order in wing switcher */
+	order: number,
+	/**  Timestamps */
+	created_at: string,
+	updated_at: string,
+};
+
+export type WingCreateInput = {
+	name: string,
+	icon: string,
+	color: string,
+};
+
+export type WingCreateOutput = {
+	wing: Wing,
+};
+
+export type WingDeleteInput = {
+	wing_id: string,
+};
+
+export type WingDeleteOutput = {
+	success: boolean,
+};
+
+export type WingGetOutput = {
+	wing: Wing,
+};
+
+export type WingGetQueryInput = {
+	wing_id: string,
+};
+
+/**  A WingGroup is a collapsible section in the sidebar */
+export type WingGroup = {
+	/**  Unique identifier */
+	id: string,
+	/**  Wing this group belongs to */
+	wing_id: string,
+	/**  Group name (e.g., "Quick Access", "MacBook Pro") */
+	name: string,
+	/**  Type of group (determines content and behavior) */
+	group_type: GroupType,
+	/**  Whether group is collapsed */
+	is_collapsed: boolean,
+	/**  Sort order within wing */
+	order: number,
+	/**  Timestamp */
+	created_at: string,
+};
+
+/**  A group with its items */
+export type WingGroupWithItems = {
+	/**  The group */
+	group: WingGroup,
+	/**  Items in this group (sorted by order) */
+	items: WingItem[],
+};
+
+/**  An item within a wing (can be wing-level or within a group) */
+export type WingItem = {
+	/**  Unique identifier */
+	id: string,
+	/**  Wing this item belongs to */
+	wing_id: string,
+	/**  Group this item belongs to (None = wing-level item) */
+	group_id: string | null,
+	/**  Type discriminant (for quick type checking) */
+	item_type: ItemType,
+	/**  Sort order within wing or group */
+	order: number,
+	/**  Timestamp */
+	created_at: string,
+	/**  Resolved file data for Path items (populated by get_layout query) */
+	resolved_file?: File | null,
+};
+
+/**  Complete sidebar layout for a wing */
+export type WingLayout = {
+	/**  Unique identifier (same as wing.id for cache matching) */
+	id: string,
+	/**  The wing */
+	wing: Wing,
+	/**  Wing-level items (pinned shortcuts, no group) */
+	wing_items: WingItem[],
+	/**  Groups with their items */
+	groups: WingGroupWithItems[],
+};
+
+export type WingLayoutQueryInput = {
+	wing_id: string,
+};
+
 /**
  *  A path within the WingDrive Virtual Distributed File System
  * 
@@ -5042,6 +5025,17 @@ export type WingPath =
 /**  A batch of WingPaths, useful for operations on multiple files */
 export type WingPathBatch = {
 	paths: WingPath[],
+};
+
+export type WingUpdateInput = {
+	wing_id: string,
+	name: string | null,
+	icon: string | null,
+	color: string | null,
+};
+
+export type WingUpdateOutput = {
+	wing: Wing,
 };
 
 /**  Wingbot companion configuration output */
@@ -5117,6 +5111,12 @@ export type WingdropSendInput = {
 
 /**  What became of a drop, as clients see it. */
 export type WingdropStatus = { status: "accepted" } | { status: "declined" } | { status: "expired" } | { status: "cancelled"; reason: string | null } | { status: "completed"; paths: string[] };
+
+export type WingsListOutput = {
+	wings: Wing[],
+};
+
+export type WingsListQueryInput = null;
 
 // ===== API Type Unions =====
 
@@ -5207,16 +5207,6 @@ export type LibraryAction =
   |  { type: 'sources.create'; input: CreateSourceInput; output: CreateSourceOutput }
   |  { type: 'sources.delete'; input: DeleteSourceInput; output: DeleteSourceOutput }
   |  { type: 'sources.sync'; input: SyncSourceInput; output: JobReceipt }
-  |  { type: 'spaces.add_group'; input: AddGroupInput; output: AddGroupOutput }
-  |  { type: 'spaces.add_item'; input: AddItemInput; output: AddItemOutput }
-  |  { type: 'spaces.create'; input: SpaceCreateInput; output: SpaceCreateOutput }
-  |  { type: 'spaces.delete'; input: SpaceDeleteInput; output: SpaceDeleteOutput }
-  |  { type: 'spaces.delete_group'; input: DeleteGroupInput; output: DeleteGroupOutput }
-  |  { type: 'spaces.delete_item'; input: DeleteItemInput; output: DeleteItemOutput }
-  |  { type: 'spaces.reorder_groups'; input: ReorderGroupsInput; output: ReorderOutput }
-  |  { type: 'spaces.reorder_items'; input: ReorderItemsInput; output: ReorderOutput }
-  |  { type: 'spaces.update'; input: SpaceUpdateInput; output: SpaceUpdateOutput }
-  |  { type: 'spaces.update_group'; input: UpdateGroupInput; output: UpdateGroupOutput }
   |  { type: 'tags.apply'; input: ApplyTagsInput; output: ApplyTagsOutput }
   |  { type: 'tags.create'; input: CreateTagInput; output: CreateTagOutput }
   |  { type: 'tags.delete'; input: DeleteTagInput; output: DeleteTagOutput }
@@ -5229,6 +5219,16 @@ export type LibraryAction =
   |  { type: 'volumes.speed_test'; input: VolumeSpeedTestInput; output: VolumeSpeedTestOutput }
   |  { type: 'volumes.track'; input: VolumeTrackInput; output: VolumeTrackOutput }
   |  { type: 'volumes.untrack'; input: VolumeUntrackInput; output: VolumeUntrackOutput }
+  |  { type: 'wings.add_group'; input: AddGroupInput; output: AddGroupOutput }
+  |  { type: 'wings.add_item'; input: AddItemInput; output: AddItemOutput }
+  |  { type: 'wings.create'; input: WingCreateInput; output: WingCreateOutput }
+  |  { type: 'wings.delete'; input: WingDeleteInput; output: WingDeleteOutput }
+  |  { type: 'wings.delete_group'; input: DeleteGroupInput; output: DeleteGroupOutput }
+  |  { type: 'wings.delete_item'; input: DeleteItemInput; output: DeleteItemOutput }
+  |  { type: 'wings.reorder_groups'; input: ReorderGroupsInput; output: ReorderOutput }
+  |  { type: 'wings.reorder_items'; input: ReorderItemsInput; output: ReorderOutput }
+  |  { type: 'wings.update'; input: WingUpdateInput; output: WingUpdateOutput }
+  |  { type: 'wings.update_group'; input: UpdateGroupInput; output: UpdateGroupOutput }
 ;
 
 export type CoreQuery =
@@ -5292,9 +5292,6 @@ export type LibraryQuery =
   |  { type: 'sources.get'; input: GetSourceInput; output: SourceInfo }
   |  { type: 'sources.list'; input: ListSourcesInput; output: SourceInfo[] }
   |  { type: 'sources.list_items'; input: ListSourceItemsInput; output: SourceItem[] }
-  |  { type: 'spaces.get'; input: SpaceGetQueryInput; output: SpaceGetOutput }
-  |  { type: 'spaces.get_layout'; input: SpaceLayoutQueryInput; output: SpaceLayout }
-  |  { type: 'spaces.list'; input: SpacesListQueryInput; output: SpacesListOutput }
   |  { type: 'sync.activity'; input: GetSyncActivityInput; output: GetSyncActivityOutput }
   |  { type: 'sync.eventLog'; input: GetSyncEventLogInput; output: GetSyncEventLogOutput }
   |  { type: 'sync.metrics'; input: GetSyncMetricsInput; output: GetSyncMetricsOutput }
@@ -5305,6 +5302,9 @@ export type LibraryQuery =
   |  { type: 'tags.search'; input: SearchTagsInput; output: SearchTagsOutput }
   |  { type: 'test.ping'; input: PingInput; output: PingOutput }
   |  { type: 'volumes.list'; input: VolumeListQueryInput; output: VolumeListOutput }
+  |  { type: 'wings.get'; input: WingGetQueryInput; output: WingGetOutput }
+  |  { type: 'wings.get_layout'; input: WingLayoutQueryInput; output: WingLayout }
+  |  { type: 'wings.list'; input: WingsListQueryInput; output: WingsListOutput }
 ;
 
 // ===== Wire Method Mappings =====
@@ -5397,16 +5397,6 @@ export const WIRE_METHODS = {
     'sources.create': 'action:sources.create.input',
     'sources.delete': 'action:sources.delete.input',
     'sources.sync': 'action:sources.sync.input',
-    'spaces.add_group': 'action:spaces.add_group.input',
-    'spaces.add_item': 'action:spaces.add_item.input',
-    'spaces.create': 'action:spaces.create.input',
-    'spaces.delete': 'action:spaces.delete.input',
-    'spaces.delete_group': 'action:spaces.delete_group.input',
-    'spaces.delete_item': 'action:spaces.delete_item.input',
-    'spaces.reorder_groups': 'action:spaces.reorder_groups.input',
-    'spaces.reorder_items': 'action:spaces.reorder_items.input',
-    'spaces.update': 'action:spaces.update.input',
-    'spaces.update_group': 'action:spaces.update_group.input',
     'tags.apply': 'action:tags.apply.input',
     'tags.create': 'action:tags.create.input',
     'tags.delete': 'action:tags.delete.input',
@@ -5419,6 +5409,16 @@ export const WIRE_METHODS = {
     'volumes.speed_test': 'action:volumes.speed_test.input',
     'volumes.track': 'action:volumes.track.input',
     'volumes.untrack': 'action:volumes.untrack.input',
+    'wings.add_group': 'action:wings.add_group.input',
+    'wings.add_item': 'action:wings.add_item.input',
+    'wings.create': 'action:wings.create.input',
+    'wings.delete': 'action:wings.delete.input',
+    'wings.delete_group': 'action:wings.delete_group.input',
+    'wings.delete_item': 'action:wings.delete_item.input',
+    'wings.reorder_groups': 'action:wings.reorder_groups.input',
+    'wings.reorder_items': 'action:wings.reorder_items.input',
+    'wings.update': 'action:wings.update.input',
+    'wings.update_group': 'action:wings.update_group.input',
   },
 
   coreQueries: {
@@ -5482,9 +5482,6 @@ export const WIRE_METHODS = {
     'sources.get': 'query:sources.get',
     'sources.list': 'query:sources.list',
     'sources.list_items': 'query:sources.list_items',
-    'spaces.get': 'query:spaces.get',
-    'spaces.get_layout': 'query:spaces.get_layout',
-    'spaces.list': 'query:spaces.list',
     'sync.activity': 'query:sync.activity',
     'sync.eventLog': 'query:sync.eventLog',
     'sync.metrics': 'query:sync.metrics',
@@ -5495,6 +5492,9 @@ export const WIRE_METHODS = {
     'tags.search': 'query:tags.search',
     'test.ping': 'query:test.ping',
     'volumes.list': 'query:volumes.list',
+    'wings.get': 'query:wings.get',
+    'wings.get_layout': 'query:wings.get_layout',
+    'wings.list': 'query:wings.list',
   },
 
 } as const;

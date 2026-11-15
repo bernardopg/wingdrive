@@ -1527,13 +1527,13 @@ async fn volume_scan_does_not_issue_mutating_request() {
 }
 
 #[tokio::test]
-async fn spaces_list_handles_empty_response() {
+async fn wings_list_handles_empty_response() {
 	let (result, _) = run(
-		&["wing", "spaces", "list"],
+		&["wing", "wings", "list"],
 		OutputFormat::Human,
 		vec![
 			listing(),
-			success("query:spaces.list", Some(library()), json!({"spaces":[]})),
+			success("query:wings.list", Some(library()), json!({"wings":[]})),
 		],
 	)
 	.await;
@@ -1541,14 +1541,14 @@ async fn spaces_list_handles_empty_response() {
 }
 
 #[tokio::test]
-async fn spaces_layout_forwards_id() {
+async fn wings_layout_forwards_id() {
 	let (result, req) = run(
-		&["wing", "spaces", "layout", TAG],
+		&["wing", "wings", "layout", TAG],
 		OutputFormat::Human,
 		vec![
 			listing(),
 			success(
-				"query:spaces.get_layout",
+				"query:wings.get_layout",
 				Some(library()),
 				json!({"groups":[]}),
 			),
@@ -1556,7 +1556,7 @@ async fn spaces_layout_forwards_id() {
 	)
 	.await;
 	result.unwrap();
-	assert_eq!(req[1]["space_id"], TAG);
+	assert_eq!(req[1]["wing_id"], TAG);
 }
 
 #[tokio::test]
@@ -1587,18 +1587,14 @@ async fn volume_list_renders_tracked_volume() {
 }
 
 #[tokio::test]
-async fn spaces_list_renders_a_wing() {
-	let space = wing_core::domain::Space::new("fixture".into(), "star".into(), "#112233".into());
+async fn wings_list_renders_a_wing() {
+	let wing = wing_core::domain::Wing::new("fixture".into(), "star".into(), "#112233".into());
 	let (result, _) = run(
-		&["wing", "spaces", "list"],
+		&["wing", "wings", "list"],
 		OutputFormat::Human,
 		vec![
 			listing(),
-			success(
-				"query:spaces.list",
-				Some(library()),
-				json!({"spaces":[space]}),
-			),
+			success("query:wings.list", Some(library()), json!({"wings":[wing]})),
 		],
 	)
 	.await;

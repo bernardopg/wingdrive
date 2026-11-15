@@ -418,7 +418,7 @@ impl Event {
 		};
 
 		if paths.is_empty() {
-			// Empty affected_paths means this is a global resource (location, space, etc.)
+			// Empty affected_paths means this is a global resource (location, wing, etc.)
 			tracing::debug!("Empty affected_paths (global resource), including");
 			return true;
 		}

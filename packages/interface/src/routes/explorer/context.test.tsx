@@ -182,13 +182,13 @@ describe('explorer helpers', () => {
 	});
 
 	it('maps routes to the sidebar item keys their preferences are saved under', () => {
-		expect(explorer.getSpaceItemKey('/', '')).toBe('overview');
-		expect(explorer.getSpaceItemKey('/recents', '')).toBe('recents');
-		expect(explorer.getSpaceItemKey('/favorites', '')).toBe('favorites');
-		expect(explorer.getSpaceItemKey('/file-kinds', '')).toBe('file-kinds');
-		expect(explorer.getSpaceItemKey('/tag/t1', '')).toBe('tag:t1');
-		expect(explorer.getSpaceItemKey('/explorer', '?view=x')).toBe('explorer:?view=x');
-		expect(explorer.getSpaceItemKey('/settings', '')).toBe('/settings');
+		expect(explorer.getWingItemKey('/', '')).toBe('overview');
+		expect(explorer.getWingItemKey('/recents', '')).toBe('recents');
+		expect(explorer.getWingItemKey('/favorites', '')).toBe('favorites');
+		expect(explorer.getWingItemKey('/file-kinds', '')).toBe('file-kinds');
+		expect(explorer.getWingItemKey('/tag/t1', '')).toBe('tag:t1');
+		expect(explorer.getWingItemKey('/explorer', '?view=x')).toBe('explorer:?view=x');
+		expect(explorer.getWingItemKey('/settings', '')).toBe('/settings');
 	});
 
 	it('compares file lists by identity and order', () => {
@@ -309,9 +309,9 @@ describe('ExplorerProvider', () => {
 
 		sortPrefs.saved.set('path:local:/home/me', 'type');
 		await mount();
-		await run(() => ctx.loadPreferencesForSpaceItem('none'));
+		await run(() => ctx.loadPreferencesForWingItem('none'));
 		viewPrefs.saved.set('media-item', {viewMode: 'media', viewSettings: {gridSize: 200}});
-		await run(() => ctx.loadPreferencesForSpaceItem('media-item'));
+		await run(() => ctx.loadPreferencesForWingItem('media-item'));
 		expect(sortPrefs.saved.get('path:local:/home/me')).toBe('datetaken');
 	});
 

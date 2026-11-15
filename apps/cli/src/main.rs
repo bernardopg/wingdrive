@@ -64,11 +64,11 @@ use crate::domains::{
 	network::{self, NetworkCmd},
 	redundancy::{self, RedundancyCmd},
 	search::{self, SearchCmd},
-	spaces::{self, SpacesCmd},
 	sync::{self, SyncCmd},
 	tag::{self, TagCmd},
 	update,
 	volume::{self, VolumeCmd},
+	wings::{self, WingsCmd},
 };
 
 use config_cmd::ConfigCmd;
@@ -223,7 +223,7 @@ enum Commands {
 	Search(SearchCmd),
 	/// Wings operations (sidebar collections)
 	#[command(subcommand, name = "wings", alias = "spaces")]
-	Spaces(SpacesCmd),
+	Wings(WingsCmd),
 	/// Sync operations and metrics
 	#[command(subcommand)]
 	Sync(SyncCmd),
@@ -758,7 +758,7 @@ async fn run_client_command(
 		Commands::Logs(cmd) => logs::run(&ctx, cmd).await?,
 		Commands::Redundancy(cmd) => redundancy::run(&ctx, cmd).await?,
 		Commands::Search(cmd) => search::run(&ctx, cmd).await?,
-		Commands::Spaces(cmd) => spaces::exec(cmd, &ctx).await?,
+		Commands::Wings(cmd) => wings::exec(cmd, &ctx).await?,
 		Commands::Tag(cmd) => tag::run(&ctx, cmd).await?,
 		Commands::Volume(cmd) => volume::run(&ctx, cmd).await?,
 		Commands::Cloud => cloud::run(&ctx).await?,

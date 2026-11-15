@@ -1,0 +1,138 @@
+import {useSidebarNavigate} from "../../TabManager/useSidebarNavigate";
+import {
+	FolderOpen,
+	MagnifyingGlass,
+	Trash,
+	Database,
+} from "@phosphor-icons/react";
+import type { WingItem as WingItemType } from "@wingdrive/ts-client";
+import {
+	useContextMenu,
+	type ContextMenuItem,
+	type ContextMenuResult,
+} from "../../../hooks/useContextMenu";
+import { usePlatform } from "../../../contexts/PlatformContext";
+import { useLibraryMutation } from "../../../contexts/WingDriveContext";
+import { isVolumeItem, isPathItem } from "./wingItemUtils";
+import { getWingItemKeyFromRoute } from "../../../routes/explorer/context";
+import {useTranslation} from '../../../i18n';
+import {revealLabel} from '../../../util/keybinds/platform';
+
+interface UseWingItemContextMenuOptions {
+	item: WingItemType;
+	path: string | null;
+	wingId?: string;
+	/** Passed in so the item does not re-render on every Explorer change. */
+	loadPreferencesForWingItem: (id: string) => void;
+}
+
+/**
+ * Provides context menu functionality for wing items.
+ *
+ * Menu items include:
+ * - Open: Navigate to the item's path
+ * - Index Volume: Trigger indexing for volume items
+ * - Show in Finder/Folder: Reveal file in OS file manager (Path items only)
+ * - Remove from Wing: Delete the item from the current wing
+ */
+export function useWingItemContextMenu({
+	item,
+	path,
+	wingId,
+	loadPreferencesForWingItem,
+}: UseWingItemContextMenuOptions): ContextMenuResult {
+const {t} = useTranslation('navigation');
+	const navigate = useSidebarNavigate();
+	const platform = usePlatform();
+	const deleteItem = useLibraryMutation("wings.delete_item");
+	const indexVolume = useLibraryMutation("volumes.index");
+
+	const items: ContextMenuItem[] = [
+		{
+			icon: FolderOpen,
+			label: t("contextMenu.open"),
+			onClick: () => {
+				if (path) {
+					// Extract pathname and search from the path
+					const [pathname, search] = path.includes("?")
+						? [path.split("?")[0], "?" + path.split("?")[1]]
+						: [path, ""];
+					const wingItemKey = getWingItemKeyFromRoute(pathname, search);
+					loadPreferencesForWingItem(wingItemKey);
+					navigate(path);
+				}
+			},
+			condition: () => !!path,
+		},
+		{
+			icon: Database,
+			label: t("contextMenu.indexVolume"),
+			onClick: async () => {
+				if (isVolumeItem(item.item_type)) {
+					const fingerprint =
+						(item as WingItemType & { fingerprint?: string })
+							.fingerprint || item.item_type.Volume.volume_id;
+
+					try {
+						const result = await indexVolume.mutateAsync({
+							fingerprint: fingerprint.toString(),
+							scope: "Recursive",
+						});
+						console.log("Volume indexed:", result.message);
+					} catch (err) {
+						console.error("Failed to index volume:", err);
+					}
+				}
+			},
+			condition: () => isVolumeItem(item.item_type),
+		},
+		{ type: "separator" },
+		{
+			icon: MagnifyingGlass,
+			label: revealLabel(),
+			onClick: async () => {
+				if (isPathItem(item.item_type)) {
+					const wdPath = item.item_type.Path.wing_path;
+					if (typeof wdPath === "object" && "Physical" in wdPath) {
+						const physicalPath = (
+							wdPath as { Physical: { path: string } }
+						).Physical.path;
+						if (platform.revealFile) {
+							try {
+								await platform.revealFile(physicalPath);
+							} catch (err) {
+								console.error("Failed to reveal file:", err);
+							}
+						}
+					}
+				}
+			},
+			keybindId: 'explorer.revealInNativeExplorer',
+			condition: () => {
+				if (!isPathItem(item.item_type)) return false;
+				const wdPath = item.item_type.Path.wing_path;
+				return (
+					typeof wdPath === "object" &&
+					"Physical" in wdPath &&
+					!!platform.revealFile
+				);
+			},
+		},
+		{ type: "separator" },
+		{
+			icon: Trash,
+			label: t("contextMenu.removeFromWing"),
+			onClick: async () => {
+				try {
+					await deleteItem.mutateAsync({ item_id: item.id });
+				} catch (err) {
+					console.error("Failed to remove item:", err);
+				}
+			},
+			variant: "danger" as const,
+			condition: () => wingId != null,
+		},
+	];
+
+	return useContextMenu({ items });
+}

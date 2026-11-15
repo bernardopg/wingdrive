@@ -4,7 +4,7 @@ Status: draft for review. Source-of-truth contract between core (this repo) and 
 
 ## What this is
 
-A user picks a Space, file, folder, or multi-selection in their local WingDrive and creates a public share. They get a link of the form `https://wingdrive.app/s/{token}`. Anyone with the link can open it in a browser, browse the listing, and stream/download files. Bytes are served directly from the user's core through an Iroh QUIC connection over an wingdrive.app-operated relay — wingdrive.app never proxies file content.
+A user picks a Wing, file, folder, or multi-selection in their local WingDrive and creates a public share. They get a link of the form `https://wingdrive.app/s/{token}`. Anyone with the link can open it in a browser, browse the listing, and stream/download files. Bytes are served directly from the user's core through an Iroh QUIC connection over an wingdrive.app-operated relay — wingdrive.app never proxies file content.
 
 This document specifies the wire contracts and lifecycle. UX (`SHARE-009` / `SHARE-010`), schema (`SHARE-002`), ops (`SHARE-003`), and protocol handler (`SHARE-005`) tasks build against this spec.
 
@@ -336,7 +336,7 @@ What wingdrive.app receives at publish time and exposes via the resolver:
 
 | Field | Required | Notes |
 |---|---|---|
-| `name` | yes | Visitor-visible title. Defaults to Space name; user-editable. |
+| `name` | yes | Visitor-visible title. Defaults to the Wing name; user-editable. |
 | `item_count` | yes | Top-level item count. |
 | `kind` | yes | `space` / `file` / `folder` / `selection`. |
 | `cover_thumb_url` | no | If owner opts in, core pre-uploads a cover thumbnail to wingdrive.app's CDN and returns the URL here. Off by default. |

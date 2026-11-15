@@ -101,8 +101,8 @@ pub const CORE_TESTS: &[TestSuite] = &[
 		test_args: &["--test", "index_verify_test"],
 	},
 	TestSuite {
-		name: "Space layout test",
-		test_args: &["--test", "space_layout_test"],
+		name: "Wing layout test",
+		test_args: &["--test", "wing_layout_test"],
 	},
 	TestSuite {
 		name: "File sync test",

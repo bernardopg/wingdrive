@@ -6,7 +6,7 @@ import {
 	setDragData,
 	clearDragData,
 	type SidebarDragData,
-} from "../../../../components/SpacesSidebar/dnd";
+} from "../../../../components/WingsSidebar/dnd";
 import { usePlatform } from "../../../../contexts/PlatformContext";
 import { i18n } from "../../../../i18n";
 

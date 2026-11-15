@@ -3,7 +3,7 @@ import type {Volume} from '@wingdrive/ts-client';
 import {CircleButton} from '@wingdrive/primitives';
 import {motion} from 'framer-motion';
 import {useEffect, useState} from 'react';
-import {useVolumeContextMenu} from '../../components/SpacesSidebar/hooks/useVolumeContextMenu';
+import {useVolumeContextMenu} from '../../components/WingsSidebar/hooks/useVolumeContextMenu';
 import {
 	useWingDriveClient
 } from '../../contexts/WingDriveContext';

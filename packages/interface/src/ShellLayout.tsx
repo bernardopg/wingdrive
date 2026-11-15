@@ -12,7 +12,7 @@ import {
 	QuickPreviewController,
 	QuickPreviewSyncer
 } from './components/QuickPreview';
-import {SpacesSidebar} from './components/SpacesSidebar';
+import {WingsSidebar} from './components/WingsSidebar';
 import {
 	TabBar,
 	LaunchRequestSync,
@@ -219,7 +219,7 @@ function ShellLayoutContent() {
 							// Sidebar clicks act on the focused pane and must not refocus.
 							data-pane-neutral
 						>
-							<SpacesSidebar
+							<WingsSidebar
 								isPreviewActive={
 									isPreviewActive || isSizeViewActive
 								}

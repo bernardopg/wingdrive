@@ -12,10 +12,10 @@
 //! All resources (simple and virtual) are registered in resource_registry.rs.
 //! ResourceManager uses the registry to dispatch event construction generically.
 //!
-//! For simple resources (Space, Location, etc.):
+//! For simple resources (Wing, Location, etc.):
 //! - Direct lookup in registry and call constructor
 //!
-//! For virtual resources (File, SpaceLayout):
+//! For virtual resources (File, WingLayout):
 //! - Map dependency changes to affected virtual resource IDs
 //! - Call constructor to build complete resources
 //!
@@ -122,6 +122,9 @@ impl ResourceManager {
 			return Ok(());
 		}
 
+		// Sync passes its model name, which for Wings is not the resource type.
+		let resource_type = crate::domain::wing::resource_type_for_sync_model(resource_type);
+
 		tracing::debug!(
 			resource_type = %resource_type,
 			count = resource_ids.len(),
@@ -166,7 +169,7 @@ impl ResourceManager {
 			}
 
 			// Continue to check for virtual resource dependencies
-			// (e.g., space_item -> space_layout, entry -> file)
+			// (e.g., wing_item -> wing_layout, entry -> file)
 		}
 
 		// Check if any virtual resources depend on this type (dependency routing)

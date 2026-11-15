@@ -233,7 +233,7 @@ fn stop_reset_is_opt_in() {
 fn spaces_alias_and_wings_select_same_command() {
 	for command in ["spaces", "wings"] {
 		let cli = Cli::try_parse_from(["wing", command, "list"]).unwrap();
-		assert!(matches!(cli.command, Commands::Spaces(SpacesCmd::List)));
+		assert!(matches!(cli.command, Commands::Wings(WingsCmd::List)));
 	}
 }
 

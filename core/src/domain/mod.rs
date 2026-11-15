@@ -16,10 +16,10 @@ pub mod memory;
 pub mod resource;
 pub mod resource_manager;
 pub mod resource_registry;
-pub mod space;
 pub mod tag;
 pub mod user_metadata;
 pub mod volume;
+pub mod wing;
 
 // Re-export commonly used types
 pub use addressing::{PathResolutionError, WingPath, WingPathBatch, WingPathParseError};
@@ -32,9 +32,6 @@ pub use media_data::{AudioMediaData, ImageMediaData, VideoMediaData};
 pub use memory::{MemoryFile, MemoryMetadata, MemoryScope};
 pub use resource::{EventEmitter, Identifiable};
 pub use resource_manager::ResourceManager;
-pub use space::{
-	GroupType, ItemType, Space, SpaceGroup, SpaceGroupWithItems, SpaceItem, SpaceLayout,
-};
 pub use tag::{
 	OrganizationalPattern, PatternType, PrivacyLevel, RelationshipType, Tag, TagApplication,
 	TagError, TagRelationship, TagSource, TagType,
@@ -44,3 +41,4 @@ pub use volume::{
 	DiskType as DomainDiskType, FileSystem as DomainFileSystem, MountType as DomainMountType,
 	Volume, VolumeType,
 };
+pub use wing::{GroupType, ItemType, Wing, WingGroup, WingGroupWithItems, WingItem, WingLayout};

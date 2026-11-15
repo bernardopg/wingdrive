@@ -332,7 +332,7 @@ function urlToTarget(search: string): NavigationTarget | null {
 	return null;
 }
 
-function getSpaceItemKey(pathname: string, search: string): string {
+function getWingItemKey(pathname: string, search: string): string {
 	if (pathname === '/') return 'overview';
 	if (pathname === '/recents') return 'recents';
 	if (pathname === '/favorites') return 'favorites';
@@ -455,7 +455,7 @@ interface ExplorerContextValue {
 
 	devices: Map<string, Device>;
 
-	loadPreferencesForSpaceItem: (id: string) => void;
+	loadPreferencesForWingItem: (id: string) => void;
 
 	// Tab info
 	activeTabId: string;
@@ -740,7 +740,7 @@ export function ExplorerProvider({
 		if (canGoForward) void routerNavigate(1);
 	}, [canGoForward, routerNavigate]);
 
-	const spaceKey = getSpaceItemKey(location.pathname, location.search);
+	const wingKey = getWingItemKey(location.pathname, location.search);
 
 	// View settings from TabManager (per-tab)
 	const viewMode = effectiveViewMode(
@@ -783,9 +783,9 @@ export function ExplorerProvider({
 			updateExplorerState(activeTabId, {
 				viewMode: mode as TabViewMode
 			});
-			viewPrefs.setPreferences(spaceKey, {viewMode: mode});
+			viewPrefs.setPreferences(wingKey, {viewMode: mode});
 		},
-		[activeTabId, updateExplorerState, spaceKey, viewPrefs]
+		[activeTabId, updateExplorerState, wingKey, viewPrefs]
 	);
 
 	const setSortBy = useCallback(
@@ -833,7 +833,7 @@ export function ExplorerProvider({
 			}
 
 			// Save to preferences
-			viewPrefs.setPreferences(spaceKey, {
+			viewPrefs.setPreferences(wingKey, {
 				viewSettings: {...viewSettings, ...settings}
 			});
 		},
@@ -841,7 +841,7 @@ export function ExplorerProvider({
 			activeTabId,
 			updateExplorerState,
 			tabState,
-			spaceKey,
+			wingKey,
 			viewSettings,
 			viewPrefs
 		]
@@ -913,7 +913,7 @@ export function ExplorerProvider({
 		uiDispatch({type: 'SET_SEARCH_PAGE', page});
 	}, []);
 
-	const loadPreferencesForSpaceItem = useCallback(
+	const loadPreferencesForWingItem = useCallback(
 		(id: string) => {
 			const prefs = viewPrefs.getPreferences(id);
 			if (prefs) {
@@ -982,7 +982,7 @@ export function ExplorerProvider({
 			searchPage: uiState.searchPage,
 			setSearchPage,
 			devices,
-			loadPreferencesForSpaceItem,
+			loadPreferencesForWingItem,
 			activeTabId
 		}),
 		[
@@ -1039,7 +1039,7 @@ export function ExplorerProvider({
 			uiState.searchPage,
 			setSearchPage,
 			devices,
-			loadPreferencesForSpaceItem,
+			loadPreferencesForWingItem,
 			activeTabId
 		]
 	);
@@ -1069,8 +1069,8 @@ export function useOptionalExplorer(): ExplorerContextValue | null {
 }
 
 export {
-	getSpaceItemKey,
-	getSpaceItemKey as getSpaceItemKeyFromRoute,
+	getWingItemKey,
+	getWingItemKey as getWingItemKeyFromRoute,
 	targetToKey,
 	targetsEqual
 };

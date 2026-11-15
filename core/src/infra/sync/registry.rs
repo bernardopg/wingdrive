@@ -994,9 +994,9 @@ mod tests {
 		let entry_idx = order.iter().position(|m| m == "entry").unwrap();
 		let collection_idx = order.iter().position(|m| m == "collection").unwrap();
 		let collection_entry_idx = order.iter().position(|m| m == "collection_entry").unwrap();
-		let space_idx = order.iter().position(|m| m == "space").unwrap();
-		let space_group_idx = order.iter().position(|m| m == "space_group").unwrap();
-		let space_item_idx = order.iter().position(|m| m == "space_item").unwrap();
+		let wing_idx = order.iter().position(|m| m == "space").unwrap();
+		let wing_group_idx = order.iter().position(|m| m == "space_group").unwrap();
+		let wing_item_idx = order.iter().position(|m| m == "space_item").unwrap();
 
 		// Device must come before location
 		assert!(
@@ -1017,14 +1017,14 @@ mod tests {
 			"entry must sync before collection_entry"
 		);
 
-		// Space hierarchy
+		// Wing hierarchy
 		assert!(
-			space_idx < space_group_idx,
-			"space must sync before space_group"
+			wing_idx < wing_group_idx,
+			"wing must sync before wing_group"
 		);
 		assert!(
-			space_group_idx < space_item_idx,
-			"space_group must sync before space_item"
+			wing_group_idx < wing_item_idx,
+			"wing_group must sync before wing_item"
 		);
 	}
 }
