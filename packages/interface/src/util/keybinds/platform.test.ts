@@ -19,9 +19,10 @@ const copy = {modifiers: ['Cmd'], key: 'c'} as never;
 
 describe('keybind platform helpers', () => {
 	it('detects the platform once from the user agent', () => {
-		// happy-dom reports an X11 Linux user agent.
-		expect(getCurrentPlatform()).toBe('linux');
-		expect(getCurrentPlatform()).toBe('linux');
+		// happy-dom reports the user agent of the system the tests run on.
+		const platform = getCurrentPlatform();
+		expect(['linux', 'windows', 'macos', 'web']).toContain(platform);
+		expect(getCurrentPlatform()).toBe(platform);
 		expect(revealLabel()).toBeString();
 	});
 

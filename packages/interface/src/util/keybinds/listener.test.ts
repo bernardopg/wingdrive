@@ -5,8 +5,13 @@ import {afterEach, describe, expect, it} from 'bun:test';
 // the window whose timers React's scheduler keeps using in the next test file.
 if (!GlobalRegistrator.isRegistered) GlobalRegistrator.register();
 
-// happy-dom reports Linux, so Cmd combos match the Ctrl key.
 const {getWebListener, resetWebListener} = await import('./listener');
+const {getCurrentPlatform} = await import('./platform');
+
+// happy-dom reports the host's user agent: Cmd combos match Meta on macOS and Ctrl elsewhere.
+const mac = getCurrentPlatform() === 'macos';
+const cmd = (init: KeyboardEventInit): KeyboardEventInit =>
+	mac ? {...init, metaKey: true} : {...init, ctrlKey: true};
 
 function press(init: KeyboardEventInit) {
 	const event = new KeyboardEvent('keydown', {bubbles: true, cancelable: true, ...init});
@@ -27,7 +32,7 @@ describe('web keybind listener', () => {
 		listener.register('copy', {modifiers: ['Cmd'], key: 'c'} as never, () => void fired.push('copy'), 'global', true);
 		listener.register('del', {modifiers: [], key: 'Delete'} as never, () => void fired.push('del'), 'global');
 
-		const copy = press({key: 'c', code: 'KeyC', ctrlKey: true});
+		const copy = press(cmd({key: 'c', code: 'KeyC'}));
 		expect(fired).toEqual(['copy']);
 		expect(copy.defaultPrevented).toBe(true);
 
@@ -38,12 +43,12 @@ describe('web keybind listener', () => {
 		// Wrong or extra modifiers do not match.
 		press({key: 'c', code: 'KeyC'});
 		press({key: 'c', code: 'KeyC', ctrlKey: true, metaKey: true});
-		press({key: 'c', code: 'KeyC', ctrlKey: true, altKey: true});
-		press({key: 'c', code: 'KeyC', ctrlKey: true, shiftKey: true});
+		press(cmd({key: 'c', code: 'KeyC', altKey: true}));
+		press(cmd({key: 'c', code: 'KeyC', shiftKey: true}));
 		expect(fired).toEqual(['copy', 'del']);
 
 		listener.unregister('copy');
-		press({key: 'c', code: 'KeyC', ctrlKey: true});
+		press(cmd({key: 'c', code: 'KeyC'}));
 		expect(fired).toEqual(['copy', 'del']);
 	});
 
@@ -88,7 +93,7 @@ describe('web keybind listener', () => {
 		document.body.append(input);
 		input.focus();
 		press({key: 'a', code: 'KeyA'});
-		press({key: 's', code: 'KeyS', ctrlKey: true});
+		press(cmd({key: 's', code: 'KeyS'}));
 		expect(fired).toEqual(['save']);
 		input.remove();
 	});
