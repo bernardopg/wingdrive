@@ -136,7 +136,7 @@ pub fn deterministic_system_album_uuid(name: &str) -> Uuid {
 
 /// Generate deterministic UUID for library-scoped default entities
 ///
-/// This is the polymorphic way to create default entities (spaces, groups, etc.)
+/// This is the polymorphic way to create default entities (wings, groups, etc.)
 /// that need consistent UUIDs across all devices sharing a library.
 ///
 /// Uses library_id as the namespace, so:
@@ -145,10 +145,10 @@ pub fn deterministic_system_album_uuid(name: &str) -> Uuid {
 ///
 /// # Example
 /// ```rust,ignore
-/// // Default space for this library
-/// let space_id = deterministic_library_default_uuid(library_id, "space", "All Devices");
+/// // Default wing for this library
+/// let wing_id = deterministic_library_default_uuid(library_id, "space", "All Devices");
 ///
-/// // Default group within that space
+/// // Default group within that wing
 /// let group_id = deterministic_library_default_uuid(library_id, "space_group", "Locations");
 ///
 /// // Default item
@@ -217,20 +217,20 @@ mod tests {
 		let library_b = Uuid::new_v4();
 
 		// Same library + same entity = same UUID
-		let space1 = deterministic_library_default_uuid(library_a, "space", "All Devices");
-		let space2 = deterministic_library_default_uuid(library_a, "space", "All Devices");
-		assert_eq!(space1, space2);
+		let wing1 = deterministic_library_default_uuid(library_a, "space", "All Devices");
+		let wing2 = deterministic_library_default_uuid(library_a, "space", "All Devices");
+		assert_eq!(wing1, wing2);
 
 		// Different libraries = different UUIDs
-		let space3 = deterministic_library_default_uuid(library_b, "space", "All Devices");
-		assert_ne!(space1, space3);
+		let wing3 = deterministic_library_default_uuid(library_b, "space", "All Devices");
+		assert_ne!(wing1, wing3);
 
 		// Different entity types = different UUIDs
 		let group = deterministic_library_default_uuid(library_a, "space_group", "All Devices");
-		assert_ne!(space1, group);
+		assert_ne!(wing1, group);
 
 		// Different names = different UUIDs
-		let other_space = deterministic_library_default_uuid(library_a, "space", "Other Space");
-		assert_ne!(space1, other_space);
+		let other_wing = deterministic_library_default_uuid(library_a, "space", "Other Wing");
+		assert_ne!(wing1, other_wing);
 	}
 }

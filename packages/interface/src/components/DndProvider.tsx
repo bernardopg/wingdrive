@@ -21,9 +21,9 @@ import {
 	useWingDriveClient,
 } from "../contexts/WingDriveContext";
 import { useSidebarStore } from "@wingdrive/ts-client";
-import type { Device, File, WingPath, SpaceLayout } from "@wingdrive/ts-client";
-import { useSpaces } from "./SpacesSidebar/hooks/useSpaces";
-import { reorderItems as reorderedSidebarItems, rememberDynamicOrder, reorderLayoutItems, sidebarSections, isSidebarSortable } from "./SpacesSidebar/reorderItems";
+import type { Device, File, WingPath, WingLayout } from "@wingdrive/ts-client";
+import { useWings } from "./WingsSidebar/hooks/useWings";
+import { reorderItems as reorderedSidebarItems, rememberDynamicOrder, reorderLayoutItems, sidebarSections, isSidebarSortable } from "./WingsSidebar/reorderItems";
 import { useFileOperationDialog } from "./modals/FileOperationModal";
 import { File as FileComponent } from "../routes/explorer/File";
 import { selectionCapabilities } from "../routes/explorer/fileCapabilities";
@@ -61,10 +61,10 @@ import { alreadyIn, guessDropOperation } from "./dropTarget";
  *    - Ctrl forces copy and Shift forces move; dnd-kit carries no modifier
  *      state, so the window tracker answers
  *
- * 3. type: "space" | "group"
- *    - Legacy: Drops on the space root or group area (no specific item)
- *    - Adds item to space/group
- *    - Data: { type, spaceId, groupId? }
+ * 3. type: "wing" | "group"
+ *    - Legacy: Drops on the wing root or group area (no specific item)
+ *    - Adds item to wing/group
+ *    - Data: { type, wingId, groupId? }
  */
 // Module-level so the sensor keeps its identity across renders. dnd-kit
 // memoizes sensors on the options object: a new literal on every render gave
@@ -115,17 +115,17 @@ function holdScrollLeft(target: EventTarget | null): () => void {
 export function DndProvider({ children }: { children: React.ReactNode }) {
 	const { t } = useTranslation("common");
 	const sensors = useSensors(useSensor(PointerSensor, POINTER_SENSOR_OPTIONS), useSensor(SidebarKeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}));
-	const addItem = useLibraryMutation("spaces.add_item");
-	const reorderItems = useLibraryMutation("spaces.reorder_items");
-	const reorderGroups = useLibraryMutation("spaces.reorder_groups");
+	const addItem = useLibraryMutation("wings.add_item");
+	const reorderItems = useLibraryMutation("wings.reorder_items");
+	const reorderGroups = useLibraryMutation("wings.reorder_groups");
 	const openFileOperation = useFileOperationDialog();
 	useModifierKeyTracker();
 	const [activeItem, setActiveItem] = useState<any>(null);
 	const client = useWingDriveClient();
 	const queryClient = useQueryClient();
-	const { currentSpaceId } = useSidebarStore();
-	const { data: spacesData } = useSpaces();
-	const spaces = spacesData?.spaces;
+	const { currentWingId } = useSidebarStore();
+	const { data: wingsData } = useWings();
+	const wings = wingsData?.wings;
 	const { reorderTabs } = useTabManager();
 
 	// Custom collision detection: prefer -top zones over -bottom zones to avoid double lines
@@ -294,45 +294,45 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 		// Handle sortable reordering (no drag data, just active/over IDs)
 		if (active.id !== over.id && !dragData?.type) {
 			const libraryId = client.getCurrentLibraryId();
-			const currentSpace =
-				spaces?.find((s: any) => s.id === currentSpaceId) ??
-				spaces?.[0];
+			const currentWing =
+				wings?.find((s: any) => s.id === currentWingId) ??
+				wings?.[0];
 
-			if (!currentSpace || !libraryId) return;
+			if (!currentWing || !libraryId) return;
 
 			const queryKey = [
-				"query:spaces.get_layout",
+				"query:wings.get_layout",
 				libraryId,
-				{ space_id: currentSpace.id },
+				{ wing_id: currentWing.id },
 			];
-			const layout = queryClient.getQueryData<SpaceLayout>(queryKey);
+			const layout = queryClient.getQueryData<WingLayout>(queryKey);
 
 			if (!layout) return;
 
-			const treeId = `folder-tree:${currentSpace.id}`;
+			const treeId = `folder-tree:${currentWing.id}`;
 			const groups = layout.groups ?? [];
 			const isSection = active.id === treeId || groups.some((entry) => entry.group.id === active.id);
 			if (isSection) {
 				const store = useSidebarStore.getState();
-				const sections = sidebarSections(groups.map((entry) => entry.group.id), treeId, store.folderTreePositions[currentSpace.id]);
+				const sections = sidebarSections(groups.map((entry) => entry.group.id), treeId, store.folderTreePositions[currentWing.id]);
 				const reordered = reorderedSidebarItems(sections.map((id) => ({id})), String(active.id), String(over.id));
 				if (!reordered) return;
 				const ids = reordered.map((entry) => entry.id);
 				const treeIndex = ids.indexOf(treeId);
 				const after = treeIndex === 0 ? null : ids[treeIndex - 1];
 				if (active.id === treeId) {
-					store.setFolderTreePosition(currentSpace.id, after);
+					store.setFolderTreePosition(currentWing.id, after);
 					return;
 				}
 				const newGroups = ids.filter((id) => id !== treeId).map((id) => groups.find((entry) => entry.group.id === id)!);
 				queryClient.setQueryData(queryKey, {...layout, groups: newGroups});
-				store.setFolderTreePosition(currentSpace.id, after);
+				store.setFolderTreePosition(currentWing.id, after);
 				try {
-					await reorderGroups.mutateAsync({space_id: currentSpace.id, group_ids: newGroups.map((entry) => entry.group.id)});
+					await reorderGroups.mutateAsync({wing_id: currentWing.id, group_ids: newGroups.map((entry) => entry.group.id)});
 				} catch (err) {
 					console.error("[DnD] Group reorder failed:", err);
 					queryClient.setQueryData(queryKey, layout);
-					store.setFolderTreePosition(currentSpace.id, store.folderTreePositions[currentSpace.id]);
+					store.setFolderTreePosition(currentWing.id, store.folderTreePositions[currentWing.id]);
 				}
 				return;
 			}
@@ -343,7 +343,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 				try {
 					await reorderItems.mutateAsync({group_id: reordered.groupId, item_ids: reordered.itemIds});
 				} catch (err) {
-					console.error("[DnD] Space items reorder failed:", err);
+					console.error("[DnD] Wing items reorder failed:", err);
 					queryClient.setQueryData(queryKey, layout);
 				}
 			}
@@ -358,15 +358,15 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 		// Handle palette item drops (from customization panel)
 		if (dragData?.type === "palette-item") {
 			const libraryId = client.getCurrentLibraryId();
-			const currentSpace =
-				spaces?.find((s: any) => s.id === currentSpaceId) ??
-				spaces?.[0];
+			const currentWing =
+				wings?.find((s: any) => s.id === currentWingId) ??
+				wings?.[0];
 
-			if (!currentSpace || !libraryId) return;
+			if (!currentWing || !libraryId) return;
 
 			try {
 				await addItem.mutateAsync({
-					space_id: currentSpace.id,
+					wing_id: currentWing.id,
 					group_id: dropData?.groupId || null,
 					item_type: dragData.itemType,
 				});
@@ -379,36 +379,36 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 
 		if (!dragData || dragData.type !== "explorer-file") return;
 
-		// Add to space (root-level drop zones between groups)
-		if (dropData?.action === "add-to-space") {
-			if (!dropData.spaceId) return;
+		// Add to wing (root-level drop zones between groups)
+		if (dropData?.action === "add-to-wing") {
+			if (!dropData.wingId) return;
 
 			try {
 				await addItem.mutateAsync({
-					space_id: dropData.spaceId,
+					wing_id: dropData.wingId,
 					group_id: null,
 					item_type: { Path: { wing_path: dragData.wdPath } },
 				});
-				console.log("[DnD] Successfully added to space root");
+				console.log("[DnD] Successfully added to wing root");
 			} catch (err) {
-				console.error("[DnD] Failed to add to space:", err);
+				console.error("[DnD] Failed to add to wing:", err);
 			}
 			return;
 		}
 
 		// Add to group (empty group drop zone)
 		if (dropData?.action === "add-to-group") {
-			if (!dropData.spaceId || !dropData.groupId) return;
+			if (!dropData.wingId || !dropData.groupId) return;
 
 			console.log("[DnD] Adding to group:", {
-				spaceId: dropData.spaceId,
+				wingId: dropData.wingId,
 				groupId: dropData.groupId,
 				wdPath: dragData.wdPath,
 			});
 
 			try {
 				await addItem.mutateAsync({
-					space_id: dropData.spaceId,
+					wing_id: dropData.wingId,
 					group_id: dropData.groupId,
 					item_type: { Path: { wing_path: dragData.wdPath } },
 				});
@@ -419,23 +419,23 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			return;
 		}
 
-		// Insert before/after sidebar items (adds item to space/group)
+		// Insert before/after sidebar items (adds item to wing/group)
 		if (
 			dropData?.action === "insert-before" ||
 			dropData?.action === "insert-after"
 		) {
-			if (!dropData.spaceId) return;
+			if (!dropData.wingId) return;
 
 			console.log("[DnD] Inserting item:", {
 				action: dropData.action,
-				spaceId: dropData.spaceId,
+				wingId: dropData.wingId,
 				groupId: dropData.groupId,
 				wdPath: dragData.wdPath,
 			});
 
 			try {
 				await addItem.mutateAsync({
-					space_id: dropData.spaceId,
+					wing_id: dropData.wingId,
 					group_id: dropData.groupId || null,
 					item_type: { Path: { wing_path: dragData.wdPath } },
 				});
@@ -458,20 +458,20 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 			return;
 		}
 
-		// Drop on space root area (adds to space)
-		if (dropData?.type === "space" && dragData.type === "explorer-file") {
-			console.log("[DnD] Adding to space (type=space):", {
-				spaceId: dropData.spaceId,
+		// Drop on wing root area (adds to wing)
+		if (dropData?.type === "wing" && dragData.type === "explorer-file") {
+			console.log("[DnD] Adding to wing (type=wing):", {
+				wingId: dropData.wingId,
 				wdPath: dragData.wdPath,
 			});
 
 			try {
 				await addItem.mutateAsync({
-					space_id: dropData.spaceId,
+					wing_id: dropData.wingId,
 					group_id: null,
 					item_type: { Path: { wing_path: dragData.wdPath } },
 				});
-				console.log("[DnD] Successfully added to space");
+				console.log("[DnD] Successfully added to wing");
 			} catch (err) {
 				console.error("[DnD] Failed to add item:", err);
 			}
@@ -480,14 +480,14 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 		// Drop on group area (adds to group)
 		if (dropData?.type === "group" && dragData.type === "explorer-file") {
 			console.log("[DnD] Adding to group (type=group):", {
-				spaceId: dropData.spaceId,
+				wingId: dropData.wingId,
 				groupId: dropData.groupId,
 				wdPath: dragData.wdPath,
 			});
 
 			try {
 				await addItem.mutateAsync({
-					space_id: dropData.spaceId,
+					wing_id: dropData.wingId,
 					group_id: dropData.groupId,
 					item_type: { Path: { wing_path: dragData.wdPath } },
 				});
@@ -546,7 +546,7 @@ export function DndProvider({ children }: { children: React.ReactNode }) {
 						</span>
 					</div>
 				) : activeItem?.label ? (
-					// Group or SpaceItem preview (from sortable context)
+					// Group or WingItem preview (from sortable context)
 					<div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar/95 backdrop-blur-sm text-sidebar-ink shadow-lg border border-sidebar-line min-w-[180px]">
 						<span className="text-sm font-medium">
 							{activeItem.label}

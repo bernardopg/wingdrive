@@ -3120,12 +3120,12 @@ var keySymbols = {
   Pause: { macOS: "\u2389", Other: "Pause" }
 };
 
-// src/SpaceItem.tsx
+// src/WingItem.tsx
 import { forwardRef as forwardRef16 } from "react";
 import clsx27 from "clsx";
 import { jsx as jsx32, jsxs as jsxs22 } from "react/jsx-runtime";
-var SpaceItem = forwardRef16(
-  function SpaceItem2({
+var WingItem = forwardRef16(
+  function WingItem2({
     icon,
     label,
     active,
@@ -3830,7 +3830,6 @@ export {
   ShinyToggle,
   Shortcut,
   Slider,
-  SpaceItem,
   Switch,
   TOAST_TIMEOUT,
   TabBar,
@@ -3852,6 +3851,7 @@ export {
   CircleButtonGroup as TopBarButtonGroup,
   UIKeys,
   VirtualList,
+  WingItem,
   badgeVariants,
   bannerVariants,
   buttonStyles,

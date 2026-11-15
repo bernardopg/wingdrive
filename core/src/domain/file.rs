@@ -383,9 +383,9 @@ impl crate::domain::resource::Identifiable for File {
 }
 
 impl File {
-	/// Build a File from an entry model and item type (for space item resolution)
+	/// Build a File from an entry model and item type (for wing item resolution)
 	///
-	/// This is used by SpaceItem resolution where we know the ItemType
+	/// This is used by WingItem resolution where we know the ItemType
 	/// and need to construct a File with the appropriate WingPath.
 	pub async fn from_entry_model_with_item_type(
 		entry_model: crate::infra::db::entities::entry::Model,

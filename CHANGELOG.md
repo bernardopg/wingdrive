@@ -3,6 +3,18 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Changed
+
+- Wings replace Spaces in code, the database and the RPC API (BRAND-003). The
+  `spaces`, `space_groups` and `space_items` tables become `wings`,
+  `wing_groups` and `wing_items` in a migration that keeps every row, the
+  `spaces.*` actions and queries become `wings.*`, and the CLI command is
+  `wing wings` (`wing spaces` still works). Sync keeps the old model and field
+  names, so a device on 3.3.1 and a newer one keep syncing their sidebar. The
+  wing selected in the sidebar survives the upgrade.
+
 ## 3.3.1 — 2026-11-14
 
 WingDrive as the file chooser works again after a login, Chrome's file type

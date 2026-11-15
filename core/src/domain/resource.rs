@@ -16,8 +16,8 @@
 //!
 //! ### Simple Resources
 //! Backed by a single database table. Examples:
-//! - `Space` - workspace/project
-//! - `SpaceGroup` - group within a space
+//! - `Wing` - workspace/project
+//! - `WingGroup` - group within a wing
 //! - `Location` - indexed filesystem location
 //!
 //! Simple resources:
@@ -28,7 +28,7 @@
 //! ### Virtual Resources
 //! Computed from multiple database tables. Examples:
 //! - `File` - aggregates Entry + ContentIdentity + Sidecars + Tags
-//! - `SpaceLayout` - aggregates Space + Groups + Items
+//! - `WingLayout` - aggregates Wing + Groups + Items
 //!
 //! Virtual resources:
 //! - Implement `from_ids()` with complex joins
@@ -121,7 +121,7 @@ pub trait Identifiable: Serialize + for<'de> Deserialize<'de> + Type {
 	///
 	/// Example:
 	/// - File: When ContentIdentity changes, find all Entry UUIDs that reference it
-	/// - SpaceLayout: When SpaceGroup changes, find parent Space UUID
+	/// - WingLayout: When WingGroup changes, find parent Wing UUID
 	///
 	/// Default: empty (not a virtual resource, or doesn't depend on this type)
 	async fn route_from_dependency(
@@ -142,7 +142,7 @@ pub trait Identifiable: Serialize + for<'de> Deserialize<'de> + Type {
 	///
 	/// Example:
 	/// - File::from_ids() → File::from_entry_uuids()
-	/// - SpaceLayout::from_ids() → SpaceLayout::from_space_ids()
+	/// - WingLayout::from_ids() → WingLayout::from_wing_ids()
 	///
 	/// Default: Not implemented (only virtual resources need this)
 	async fn from_ids(

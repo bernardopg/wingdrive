@@ -158,9 +158,9 @@ export { tw } from "./utils";
 export { Form, ErrorMessage, errorStyles, z } from "./forms/Form";
 export type { FormProps, ErrorMessageProps } from "./forms/Form";
 
-// SpaceItem (sidebar/list item with polymorphic icon)
-export { SpaceItem } from "./SpaceItem";
-export type { SpaceItemProps } from "./SpaceItem";
+// WingItem (sidebar/list item with polymorphic icon)
+export { WingItem } from "./WingItem";
+export type { WingItemProps } from "./WingItem";
 
 // Wingbot-origin components (kept from original extraction, audit pending)
 export { Badge, badgeVariants } from "./Badge";

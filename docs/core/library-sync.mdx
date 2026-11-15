@@ -1454,12 +1454,16 @@ This reduces network overhead during rapid operations (e.g., bulk tagging).
 | UserMetadataTag | `user_metadata_tag` | `user_metadata`, `tag` | `user_metadata_id → user_metadata`, `tag_id → tag`, `device_uuid → devices` | - |
 | AuditLog | `audit_log` | None | None | - |
 | Sidecar | `sidecar` | `content_identity` | `content_uuid → content_identities` | - |
-| Space | `spaces` | None | None | - |
-| SpaceGroup | `space_groups` | `space` | `space_id → spaces` | - |
-| SpaceItem | `space_items` | `space`, `space_group` | `space_id → spaces`, `group_id → space_groups` | - |
+| Wing (model `space`) | `wings` | None | None | - |
+| WingGroup (model `space_group`) | `wing_groups` | `space` | `space_id → wings` | - |
+| WingItem (model `space_item`) | `wing_items` | `space`, `space_group` | `space_id → wings`, `group_id → wing_groups` | - |
 | VideoMediaData | `video_media_data` | None | None | - |
 | AudioMediaData | `audio_media_data` | None | None | - |
 | ImageMediaData | `image_media_data` | None | None | - |
+
+Wings sync under the model names, field names (`space_id`, `space_uuid`) and deterministic
+UUID seeds they had before the rename, so devices on WingDrive 3.3.1 and older keep syncing with
+newer ones. The table and the Rust field are `wing_id`; serde sends it as `space_id`.
 
 ### Excluded Fields
 

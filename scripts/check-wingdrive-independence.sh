@@ -83,4 +83,26 @@ if [[ -n "$wingbot_matches" ]]; then
 	exit 1
 fi
 
+# Wings replaced Spaces in code, the database and the RPC API. Sync keeps the old
+# model and field names (`space`, `space_group`, `space_item`, `space_id`) for
+# devices on 3.3.1 and older; those are plain strings and do not match below.
+# The files listed are the migrations that created and renamed the tables and the
+# reader of the sidebar state saved before the rename.
+wings_matches="$({
+	git grep -nEI '\bSpace(s|Item|Group|GroupWithItems|Layout|sSidebar|Switcher|CustomizationPanel)?\b|useSpaces?\b|currentSpaceId|\bspaces\.[a-z_]+\b|\bspace_(items|groups|layout)\b' -- \
+		'core/**' 'crates/**' 'apps/**' 'packages/**' \
+		':!core/src/infra/db/migration/m2025*' \
+		':!core/src/infra/db/migration/m20261115_000001_rename_spaces_to_wings.rs' \
+		':!core/src/infra/db/migration/mod.rs' \
+		':!packages/ts-client/src/stores/sidebar.ts' \
+		':!packages/ts-client/src/__tests__/sidebar-store.test.ts' \
+		':!**/dist/**' ':!apps/tauri/src-tauri/gen/**' ':!*.css' ':!*.md' || true
+} | grep -vE "DigitalOcean ?Spaces|DO Spaces|'Space'|\"Space\"|key: 'Space'|Alt\+Space|Option\+Shift\+Space|Storage Spaces|or Space|Space or|press Space|<span[^>]*>Space</span>|// |//! |/// |^[^:]+:[0-9]+:\s*\*|Space to close|closeWithSpace" || true)"
+
+if [[ -n "$wings_matches" ]]; then
+	echo "Space names remain in code (use Wings):" >&2
+	echo "$wings_matches" >&2
+	exit 1
+fi
+
 echo "WingDrive independence check passed."

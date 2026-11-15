@@ -13,10 +13,10 @@ import { useNormalizedQuery } from "../../client";
 import { PageIndicator } from "../../components/PageIndicator";
 import { GlassSearchBar } from "../../components/GlassSearchBar";
 import { useRouter } from "expo-router";
-import { SpaceItem as SpaceItemComponent, SpaceGroupComponent } from "./components";
+import { WingItem as WingItemComponent, WingGroupComponent } from "./components";
 import { SettingsGroup } from "../../components/primitive";
 
-interface Space {
+interface Wing {
 	id: string;
 	name: string;
 	color: string;
@@ -24,11 +24,11 @@ interface Space {
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
-function SpaceContent({
-	space,
+function WingContent({
+	wing,
 	insets
 }: {
-	space: Space;
+	wing: Wing;
 	insets: EdgeInsets;
 }) {
 	const router = useRouter();
@@ -44,17 +44,17 @@ function SpaceContent({
 		router.push("/search");
 	};
 
-	// Fetch space layout
+	// Fetch wing layout
 	const { data: layout } = useNormalizedQuery({
-		query: "spaces.get_layout",
-		input: { space_id: space.id },
-		resourceType: "space_layout",
-		resourceId: space.id,
-		enabled: !!space.id,
+		query: "wings.get_layout",
+		input: { wing_id: wing.id },
+		resourceType: "wing_layout",
+		resourceId: wing.id,
+		enabled: !!wing.id,
 	});
 
-	// Space name scale on overscroll (anchored left)
-	const spaceNameScale = useAnimatedStyle(() => {
+	// Wing name scale on overscroll (anchored left)
+	const wingNameScale = useAnimatedStyle(() => {
 		const scale = interpolate(
 			scrollY.value,
 			[-200, 0],
@@ -69,7 +69,7 @@ function SpaceContent({
 	});
 
 	// Filter out Overview items (mobile doesn't show Overview in browse tab)
-	const spaceItems = (layout?.space_items || []).filter(
+	const wingItems = (layout?.wing_items || []).filter(
 		(item) => item.item_type !== "Overview"
 	);
 	const groups = layout?.groups || [];
@@ -91,13 +91,13 @@ function SpaceContent({
 				<View className="flex-row items-center gap-2">
 					<View
 						className="w-4 h-4 mx-1 rounded-full"
-						style={{ backgroundColor: space.color }}
+						style={{ backgroundColor: wing.color }}
 					/>
 					<Animated.Text
-						style={[spaceNameScale]}
+						style={[wingNameScale]}
 						className="text-ink text-[30px] font-bold"
 					>
-						{space.name}
+						{wing.name}
 					</Animated.Text>
 				</View>
 			</View>
@@ -107,12 +107,12 @@ function SpaceContent({
 				<GlassSearchBar onPress={handleSearchPress} editable={false} />
 			</View>
 
-			{/* Space Items (pinned shortcuts) */}
-			{spaceItems.length > 0 && (
+			{/* Wing Items (pinned shortcuts) */}
+			{wingItems.length > 0 && (
 				<View className="mb-6">
 					<SettingsGroup>
-						{spaceItems.map((item) => (
-							<SpaceItemComponent key={item.id} item={item} />
+						{wingItems.map((item) => (
+							<WingItemComponent key={item.id} item={item} />
 						))}
 					</SettingsGroup>
 				</View>
@@ -120,13 +120,13 @@ function SpaceContent({
 
 			{/* Groups */}
 			{groups.map(({ group, items }) => (
-				<SpaceGroupComponent key={group.id} group={group} items={items} />
+				<WingGroupComponent key={group.id} group={group} items={items} />
 			))}
 		</Animated.ScrollView>
 	);
 }
 
-function CreateSpaceScreen() {
+function CreateWingScreen() {
 	return (
 		<View
 			style={{ width: SCREEN_WIDTH, paddingHorizontal: 16 }}
@@ -136,10 +136,10 @@ function CreateSpaceScreen() {
 				<Text className="text-accent text-3xl">+</Text>
 			</View>
 			<Text className="text-xl font-bold text-ink mb-2">
-				Create New Space
+				Create New Wing
 			</Text>
 			<Text className="text-ink-dull text-center max-w-xs">
-				Organize your files, devices, and locations into separate spaces
+				Organize your files, devices, and locations into separate Wings
 			</Text>
 		</View>
 	);
@@ -147,16 +147,16 @@ function CreateSpaceScreen() {
 
 export function BrowseScreen() {
 	const insets = useSafeAreaInsets();
-	const { data: spacesData } = useNormalizedQuery({
-		query: "spaces.list",
+	const { data: wingsData } = useNormalizedQuery({
+		query: "wings.list",
 		input: null,
-		resourceType: "space",
+		resourceType: "wing",
 	});
 	const [currentPage, setCurrentPage] = useState(0);
 	const scrollViewRef = useRef<ScrollViewInstance>(null);
 
-	const spacesList = (spacesData?.spaces || []) as Space[];
-	const totalPages = spacesList.length + 1; // +1 for create space page
+	const wingsList = (wingsData?.wings || []) as Wing[];
+	const totalPages = wingsList.length + 1; // +1 for create wing page
 
 	const handleScroll = useCallback(
 		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -167,9 +167,9 @@ export function BrowseScreen() {
 		[]
 	);
 
-	// Build page colors array - space colors for space pages, accent for create page
+	// Build page colors array - wing colors for wing pages, accent for create page
 	const pageColors = [
-		...spacesList.map((space) => space.color),
+		...wingsList.map((wing) => wing.color),
 		"hsl(208, 100%, 57%)", // Create page uses accent color
 	];
 
@@ -184,17 +184,17 @@ export function BrowseScreen() {
 				scrollEventThrottle={16}
 				decelerationRate="fast"
 			>
-				{spacesList.map((space) => (
-					<SpaceContent
-						key={space.id}
-						space={space}
+				{wingsList.map((wing) => (
+					<WingContent
+						key={wing.id}
+						wing={wing}
 						insets={insets}
 					/>
 				))}
-				<CreateSpaceScreen />
+				<CreateWingScreen />
 			</ScrollView>
 
-			{/* Floating Space Indicator */}
+			{/* Floating Wing Indicator */}
 			<View
 				className="absolute left-0 right-0"
 				style={{

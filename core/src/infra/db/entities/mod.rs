@@ -30,13 +30,13 @@ pub mod collection_entry;
 pub mod indexer_rule;
 pub mod sidecar;
 pub mod sidecar_availability;
-pub mod space;
-pub mod space_group;
-pub mod space_item;
 pub mod sync_conduit;
 pub mod sync_generation;
 pub mod video_media_data;
 pub mod volume;
+pub mod wing;
+pub mod wing_group;
+pub mod wing_item;
 
 // Re-export all entities
 pub use audio_media_data::Entity as AudioMediaData;
@@ -55,14 +55,14 @@ pub use indexer_rule::Entity as IndexerRule;
 pub use location::Entity as Location;
 pub use sidecar::Entity as Sidecar;
 pub use sidecar_availability::Entity as SidecarAvailability;
-pub use space::Entity as Space;
-pub use space_group::Entity as SpaceGroup;
-pub use space_item::Entity as SpaceItem;
 pub use sync_conduit::Entity as SyncConduit;
 pub use sync_generation::Entity as SyncGeneration;
 pub use user_metadata::Entity as UserMetadata;
 pub use video_media_data::Entity as VideoMediaData;
 pub use volume::Entity as Volume;
+pub use wing::Entity as Wing;
+pub use wing_group::Entity as WingGroup;
+pub use wing_item::Entity as WingItem;
 
 // Tagging entities
 pub use tag::Entity as Tag;
@@ -88,14 +88,14 @@ pub use indexer_rule::ActiveModel as IndexerRuleActive;
 pub use location::ActiveModel as LocationActive;
 pub use sidecar::ActiveModel as SidecarActive;
 pub use sidecar_availability::ActiveModel as SidecarAvailabilityActive;
-pub use space::ActiveModel as SpaceActive;
-pub use space_group::ActiveModel as SpaceGroupActive;
-pub use space_item::ActiveModel as SpaceItemActive;
 pub use sync_conduit::ActiveModel as SyncConduitActive;
 pub use sync_generation::ActiveModel as SyncGenerationActive;
 pub use user_metadata::ActiveModel as UserMetadataActive;
 pub use video_media_data::ActiveModel as VideoMediaDataActive;
 pub use volume::ActiveModel as VolumeActive;
+pub use wing::ActiveModel as WingActive;
+pub use wing_group::ActiveModel as WingGroupActive;
+pub use wing_item::ActiveModel as WingItemActive;
 
 // Tagging active models
 pub use tag::ActiveModel as TagActive;

@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S05
 tags: [branding, core, interface, compatibility]
-last_updated: 2026-11-13
+last_updated: 2026-11-15
 ---
 
 ## Description
@@ -30,15 +30,24 @@ change.
   paths and window labels `spacebot` still open Wingbot.
 - [x] `sdPath` and its variants (`sdPaths`, `sdPathToUri`, `sd_path`, `*_sdpath`) renamed to
   `wdPath` across core, CLI, desktop, mobile and the interface (2026-11-13).
-- [ ] Wings: rename the `Space` entity, `spaces`, `space_items` and `space_groups` tables, the
-  `spaces.*` actions and queries, the sync models and the interface code, with a migration and a
-  plan for devices on an older version.
+- [x] Wings: the `Wing`, `WingGroup`, `WingItem` and `WingLayout` types, the `wings`, `wing_groups`
+  and `wing_items` tables (migration `m20261115_000001_rename_spaces_to_wings`), the `wings.*`
+  actions and queries, the `wing wings` CLI command (`spaces` stays an alias), `WingsSidebar`,
+  `useWings` and the mobile Browse screen (2026-11-15).
+- [x] Wings: sync keeps the model names `space`, `space_group` and `space_item`, the `space_id` and
+  `space_uuid` fields and the seeds of the deterministic default UUIDs, so devices on 3.3.1 and
+  older keep syncing. `resource_type_for_sync_model` maps those model names to the `wing*`
+  resource types. The sidebar store moves a saved `currentSpaceId` to `currentWingId`.
+- [x] Wings: code-wide check in `scripts/check-wingdrive-independence.sh`.
+- [x] Wings: checked against a copy of the author's library (2026-11-15).
+- [ ] Wings: sidebar checked in the desktop app and sync with a device on 3.3.1.
 
 ## Acceptance Criteria
 
 - [ ] `git grep -i spacebot` and the Space names find only compatibility readers and history.
 - [ ] Existing settings, libraries and sidebar collections survive the upgrade.
 - [ ] Sync between a new and an older device is either kept or refused with a clear message.
+  Kept by design: the wire names did not change (`wing_layout_test` checks them).
 
 ## Evidence
 
@@ -52,3 +61,13 @@ change.
   The Space names are the remaining work: about 170 `space_id`, 77 `SpaceItem`, 73 `space_group`,
   plus `SpaceLayout`, `SpacesSidebar`, `useSpaces`, the `spaces.*` wire methods, the `spaces`,
   `space_items` and `space_groups` tables and the sync models. Planned in S05.
+- 2026-11-15, Wings: the migration test builds the 3.3.1 schema with `Migrator::down`, saves a wing
+  with a group and two items, migrates and finds every row, the links and foreign keys under the new
+  names; a failed rename leaves the old tables. `wing_layout_test` (4), `wing_contract_test`,
+  `sync_setup_test`, the sync registry tests and `sidebar-store.test.ts` pass.
+- 2026-11-15, the author's library (`sqlite3 .backup` of `library.db`, `sync.db` and `jobs.db`, the
+  original untouched) opened by the new daemon in an isolated instance: the migration ran, `wings`,
+  `wing_groups` and `wing_items` hold the 1 wing, 5 groups and 6 items of before,
+  `PRAGMA foreign_key_check` is empty, `wing wings list` and `wing wings layout` show them, and no
+  second default wing was created. A unit test pins `space_id`, `space_uuid` and the three model
+  names on the wire.

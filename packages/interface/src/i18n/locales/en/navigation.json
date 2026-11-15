@@ -72,24 +72,24 @@
 		"customGroup": "Custom Group",
 		"device": "Device",
 		"group": "Group",
-		"dragHint": "Drag items to your space",
+		"dragHint": "Drag items to your Wing",
 		"dragSidebar": "Drag to sidebar"
 	},
-	"space": {
+	"wing": {
 		"create": "Create Wing",
 		"name": "Wing Name",
 		"namePlaceholder": "e.g., Work Files, Personal Photos",
 		"color": "Color",
 		"icon": "Icon",
 		"select": "Select Wing",
-		"new": "New Space",
-		"settings": "Space Settings"
+		"new": "New Wing",
+		"settings": "Wing Settings"
 	},
 	"contextMenu": {
 		"open": "Open",
 		"indexVolume": "Index Volume",
 		"showInFolder": "Show in folder",
-		"removeFromSpace": "Remove from Wing",
+		"removeFromWing": "Remove from Wing",
 		"trackVolume": "Track Volume",
 		"untrackVolume": "Untrack Volume",
 		"speedTest": "Speed Test",

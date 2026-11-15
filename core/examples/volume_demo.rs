@@ -137,7 +137,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	}
 
 	// Test volume space queries
-	println!("\n6. Testing Volume Space Queries:");
+	println!("\n6. Testing Volume Free Capacity Queries:");
 	let space_requirements = [
 		(1024 * 1024 * 1024, "1 GB"),            // 1GB
 		(10 * 1024 * 1024 * 1024u64, "10 GB"),   // 10GB

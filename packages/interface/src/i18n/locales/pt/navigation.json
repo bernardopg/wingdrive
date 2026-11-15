@@ -72,24 +72,24 @@
 		"customGroup": "Grupo personalizado",
 		"device": "Dispositivo",
 		"group": "Grupo",
-		"dragHint": "Arraste itens para seu espaço",
+		"dragHint": "Arraste itens para seu Wing",
 		"dragSidebar": "Arraste para a barra lateral"
 	},
-	"space": {
+	"wing": {
 		"create": "Criar Wing",
 		"name": "Nome do Wing",
 		"namePlaceholder": "Ex.: Arquivos de trabalho, Fotos pessoais",
 		"color": "Cor",
 		"icon": "Ícone",
 		"select": "Selecionar Wing",
-		"new": "Novo espaço",
-		"settings": "Configurações do espaço"
+		"new": "Novo Wing",
+		"settings": "Configurações do Wing"
 	},
 	"contextMenu": {
 		"open": "Abrir",
 		"indexVolume": "Indexar volume",
 		"showInFolder": "Mostrar na pasta",
-		"removeFromSpace": "Remover do Wing",
+		"removeFromWing": "Remover do Wing",
 		"trackVolume": "Rastrear volume",
 		"untrackVolume": "Parar de rastrear volume",
 		"speedTest": "Teste de velocidade",

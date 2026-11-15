@@ -53,7 +53,7 @@ check_desktop_shell_deps() {
 # until a Windows run proves them.
 core_contract_tests=(
 	addressing_contract_test
-	space_contract_test
+	wing_contract_test
 	tag_validation_contract_test
 )
 core_filesystem_tests=()
@@ -88,7 +88,7 @@ if [ "$(uname -s)" = Linux ]; then
 		file_queries_test
 		google_integration_test
 		index_verify_test
-		space_layout_test
+		wing_layout_test
 		file_sync_test
 		folder_rename_test
 		copy_progress_test
