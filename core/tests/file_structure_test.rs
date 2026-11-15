@@ -17,7 +17,8 @@ async fn map_file_structure_per_phase() -> Result<(), Box<dyn std::error::Error 
 
 	// Setup
 	let temp_dir = TempDir::new()?;
-	let core = Core::new(temp_dir.path().to_path_buf()).await?;
+	// Locations live next to the data dir, not in it: the walk skips the daemon's own data.
+	let core = Core::new(temp_dir.path().join("data")).await?;
 
 	let library = core
 		.libraries

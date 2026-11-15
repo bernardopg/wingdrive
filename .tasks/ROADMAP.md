@@ -81,8 +81,11 @@ fechar o M2:
 
 | Task | O que falta | Sprint |
 |---|---|---|
-| DESK-043 | O renderer ainda abre em dois modos: dez rodadas da `v3.0.0` ficaram estáveis, mas só quatro abaixo de 550 MiB. Falta achar os 65 MiB do modo alto | S04 |
+| DESK-051 | Login a frio com o pacote AUR da correção do deadlock do portal; Chrome, Firefox, GTK4 e Flatpak já conferidos em 2026-11-14 | S05 |
 | DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
+
+DESK-043 e DESK-090 fecharam em 2026-11-14: dez sessões da `v3.3.0` com 15 abas ficaram abaixo de
+550 MiB, e o modo alto do renderer não voltou nem com a `v3.0.0`.
 
 INDEX-010, DESK-041 e DESK-042 fecharam em 2026-11-03. DESK-017 (vários dias de uso do pacote AUR,
 relato do autor) e DESK-033 (`pkexec` e polkit reais na máquina do autor) fecharam em 2026-11-05, junto com

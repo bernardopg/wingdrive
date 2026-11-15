@@ -1,14 +1,14 @@
 ---
 id: DESK-043
 title: WebKit renderer memory is bimodal and grows while idle in the high mode
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
 sprint: S05
 tags: [desktop, performance, memory, webkitgtk]
-last_updated: 2026-11-05
+last_updated: 2026-11-14
 ---
 
 ## Description
@@ -35,8 +35,8 @@ The growth in the high mode is real and would show up as the app sitting in the 
 
 - [x] Find what allocates while idle in the high mode (timers, animation frames, query refetch,
       image decoding) and what decides the mode at startup
-- [ ] Ten packaged runs with 15 tabs stay within the 550 MiB budget and flat over 90 s idle
-      (2026-11-05: flat in all ten, within budget in four; see Evidence)
+- [x] Ten packaged runs with 15 tabs stay within the 550 MiB budget and flat over 90 s idle
+      (2026-11-05: flat in all ten, within budget in four; 2026-11-14: ten of ten; see Evidence)
 - [x] `smoke.py` samples memory over time, so a slow leak fails it instead of a lucky snapshot
 
 ## Evidence
@@ -97,3 +97,31 @@ every 5 s. Total PSS of the app and its children, peak over the idle window, MiB
   more often than it passes on this machine; the `v3.0.0` release run passed on the GitHub runner.
   Next: find what the renderer allocates in the high mode at startup (the 65 MiB step), for example
   with a WebKit memory dump of one high and one low session, before touching the budget.
+
+2026-11-14, same machine (Arch, kernel 7.3.4, 12 cores, 38 GiB), the `v3.3.0` AppImage from the
+GitHub Release, extracted, Xvfb 1920x1080 under `xvfb-run` and a private `dbus-run-session`. The
+harness calls `session()` from `scripts/release/smoke.py` unchanged (15 tabs with Ctrl+T), with
+the idle window set to 90 s and samples every 5 s, and saves the smaps of every process after it.
+
+| Run | Peak | WebKitWebProcess | First → last idle sample |
+|---|---|---|---|
+| 1 | 475.1 | 272 | 471 → 469 |
+| 2 | 504.3 | 283 | 498 → 497 |
+| 3 | 539.6 | 285 | 540 → 502 |
+| 4 | 537.5 | 288 | 538 → 523 |
+| 5 | 506.7 | 287 | 507 → 500 |
+| 6 | 520.0 | 285 | 520 → 506 |
+| 7 | 529.0 | 269 | 499 → 490 (one 5 s peak of 529, then down) |
+| 8 | 545.5 | 282 | 545 → 512 |
+| 9 | 503.4 | 276 | 503 → 492 |
+| 10 | 520.4 | 277 | 520 → 491 |
+
+- Budget: ten of ten under 550 MiB. Flat: every run ended at or below its first idle sample.
+- The high mode did not show up at all: WebKitWebProcess stayed at 269 to 288 MiB. Two shorter
+  rounds the same evening, six sessions of `v3.3.0` and six of `v3.0.0` (the build that went high
+  six times in ten on 2026-11-05), gave 278 to 301 MiB in every session. Since the same `v3.0.0`
+  binary no longer reaches the 362 to 373 MiB step, the step came from the machine's state on
+  2026-11-05 (system libraries outside the AppImage, load or memory pressure), not from WingDrive's
+  code. Its exact trigger stays unidentified; if a release run fails the gate again, compare the
+  saved smaps of a high and a low session before touching the budget.
+

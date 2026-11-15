@@ -298,6 +298,21 @@ impl IndexerJob {
 		};
 		let root_path = root_path_buf.as_path();
 
+		// The walk drops everything inside the daemon's own data folder (see
+		// `read_directory_with_backend`), so a location there would finish with zero
+		// entries and no error, which reads as an empty folder (CORE-021).
+		if !self.config.is_ephemeral() {
+			let canonical = root_path
+				.canonicalize()
+				.unwrap_or_else(|_| root_path.to_path_buf());
+			if crate::config::is_own_data(&canonical) {
+				return Err(JobError::execution(format!(
+					"{} is inside WingDrive's own data folder, which is never indexed",
+					root_path.display()
+				)));
+			}
+		}
+
 		// Resolve volume backend for I/O operations and get capacity for progress
 		let mut volume_total_capacity: Option<u64> = None;
 		let volume_backend: Option<Arc<dyn crate::volume::VolumeBackend>> =
