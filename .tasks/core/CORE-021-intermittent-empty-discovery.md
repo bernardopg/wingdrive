@@ -38,7 +38,7 @@ código de indexação mudou desde a `v3.1.1`.
 ## Acceptance Criteria
 
 - Discovery de uma pasta com itens nunca termina com zero itens sem reportar erro.
-- 50 execuções seguidas do teste de fixtures e 10 do smoke do Explorer passam.
+- 50 execuções seguidas do teste de fixtures (feito em 2026-11-14) e 10 do smoke do Explorer passam.
 
 ## Investigation (2026-11-14)
 
@@ -58,7 +58,7 @@ polls, and the wait ran into its 30 s timeout with `entries: 1`.
   already completed.
 - Regression test `core/tests/own_data_location_test.rs`, alone in its binary so its Core is the
   first: a location inside the data dir fails with that message, and one beside it indexes.
-- `normalized_cache_fixtures_test` run 50 times in a row: see Evidence below.
+- `normalized_cache_fixtures_test` binary run 50 times in a row on 2026-11-14: 50 pass, 0 fail.
 
 **Explorer smoke: not explained by this.** The release smoke runs `wing-server --data-dir
 /tmp/wingdrive-browser` and the fixture is `/tmp/wingdrive-explorer-*`, outside it. The ephemeral
