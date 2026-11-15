@@ -3,6 +3,31 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## 3.3.1 — 2026-11-14
+
+WingDrive as the file chooser works again after a login, Chrome's file type
+filters accept the files they ask for, and the Explorer, tab and selection
+state of the interface are covered by tests (#395).
+
+### Fixed
+
+- The file chooser portal no longer leaves the session without any file
+  chooser (DESK-051). At login, `xdg-desktop-portal` started WingDrive and
+  waited for its bus name while WingDrive's GTK start-up waited for the
+  portal; after 25 s the portal gave up and exported no
+  `org.freedesktop.portal.FileChooser`, so uploads and "Save as" had no dialog
+  at all. WingDrive now claims the name before GTK starts.
+- The picker matches type filters against the full file name. Chrome's
+  `*.[tT][xX][tT]` for `accept=".txt"` refused every file, because the
+  Explorer keeps the extension apart from the name.
+- Indexing a location inside WingDrive's own data folder fails with a message
+  instead of finishing with no entries (CORE-021).
+
+### Changed
+
+- Interface line coverage rises from 44.9% to about 82% with render tests for
+  the Explorer, tab manager and selection providers and their hooks (COV-08).
+
 ## 3.3.0 — 2026-11-13
 
 Sign in to Google with one button, your own OAuth client as an alternative,
