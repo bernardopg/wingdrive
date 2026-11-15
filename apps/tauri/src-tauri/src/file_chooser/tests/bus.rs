@@ -362,3 +362,43 @@ async fn connect_serves_the_backend_on_the_given_bus() {
 		.await
 		.unwrap());
 }
+
+/// The startup order of `main`: the name is claimed before GTK starts and the
+/// window host arrives later. A portal that activates the backend in between
+/// sees the name at once, and its call waits for the host instead of failing.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn the_name_is_served_before_the_host_attaches() {
+	let Some(bus) = PrivateBus::start() else {
+		eprintln!("dbus-daemon unavailable; skipping");
+		return;
+	};
+	let broker = Broker::detached(HOST_WAIT);
+	let _server = super::super::portal::connect(
+		zbus::connection::Builder::address(bus.address.as_str()),
+		broker.clone(),
+	)
+	.await
+	.unwrap();
+	let client = bus.connect().await;
+	let dbus = zbus::fdo::DBusProxy::new(&client).await.unwrap();
+	assert!(dbus
+		.name_has_owner(BUS_NAME.try_into().unwrap())
+		.await
+		.unwrap());
+
+	let pending = call(
+		&client,
+		"OpenFile",
+		"/org/freedesktop/portal/desktop/request/1_1/early",
+		HashMap::new(),
+	);
+	tokio::time::sleep(Duration::from_millis(50)).await;
+	assert!(!pending.is_finished(), "the call waits for the host");
+
+	let host = FakeHost::default();
+	broker.attach(host.clone());
+	let request = shown(&host, 1).await;
+	broker.cancel(&request.id);
+	let (code, _) = pending.await.unwrap();
+	assert_eq!(code, 1);
+}

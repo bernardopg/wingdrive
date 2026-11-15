@@ -14,6 +14,7 @@ import {useSelection} from '../../routes/explorer/SelectionContext';
 import {
 	acceptLabel,
 	buildSelection,
+	entryName,
 	initialChoices,
 	initialFilter,
 	type PickedEntry,
@@ -105,7 +106,7 @@ function PickerControls({request}: {request: FilePickerRequest}) {
 
 	const currentFolder = localPath(currentPath);
 	const picked: PickedEntry[] = selectedFiles.map((file: File) => ({
-		name: file.name,
+		name: entryName(file),
 		path: localPath(file.wing_path),
 		isDirectory: file.kind === 'Directory'
 	}));

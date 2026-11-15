@@ -2509,6 +2509,14 @@ fn main() {
 		return;
 	}
 
+	// Before GTK starts: see the `file_chooser` module docs for the deadlock this avoids.
+	#[cfg(target_os = "linux")]
+	let file_chooser_broker = if std::env::var_os(INSTANCE_ENV).is_none() {
+		file_chooser::start()
+	} else {
+		None
+	};
+
 	#[allow(unused_mut)]
 	let mut context = tauri::generate_context!();
 	// The single-instance plugin ignores `dbus_id` on Windows and names its mutex after the
@@ -2638,7 +2646,7 @@ fn main() {
 			keybinds::get_registered_keybinds,
 			notifications::show_desktop_notification
 		])
-		.setup(|app| {
+		.setup(move |app| {
 			setup_menus(app.handle());
 
 			// Register the voice overlay hotkey here instead of via
@@ -2747,8 +2755,9 @@ fn main() {
 			#[cfg(target_os = "linux")]
 			if std::env::var_os(INSTANCE_ENV).is_none() {
 				tauri::async_runtime::spawn(filemanager1::serve(app.handle().clone()));
-				tauri::async_runtime::spawn(file_chooser::serve(app.handle().clone()));
 			}
+			#[cfg(target_os = "linux")]
+			file_chooser::attach(app.handle(), file_chooser_broker);
 			let daemon_state = manage_app_state(app.handle(), runtime);
 			// Some desktops have no tray host; the app still works, only hiding is lost.
 			if let Err(error) = background::create_tray(app.handle()) {

@@ -42,6 +42,14 @@ export function matchesFilter(name: string, filter: FilePickerFilter | undefined
 	return filter.globs.some((glob) => globToRegExp(glob).test(name));
 }
 
+/**
+ * The name filters match against. The Explorer keeps the extension apart
+ * (`alpha` and `txt`), and a browser's `*.txt` must see `alpha.txt`.
+ */
+export function entryName(file: {name: string; extension?: string | null}): string {
+	return file.extension ? `${file.name}.${file.extension}` : file.name;
+}
+
 /** An entry the user picked; `path` is unset for an entry with no local path. */
 export interface PickedEntry {
 	name: string;

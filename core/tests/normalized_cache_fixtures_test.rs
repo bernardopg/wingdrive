@@ -111,7 +111,9 @@ async fn wait_for_indexing_completion(
 		let running = library.jobs().list_jobs(Some(JobStatus::Running)).await?;
 		let completed = library.jobs().list_jobs(Some(JobStatus::Completed)).await?;
 
-		if !running.is_empty() {
+		// A fast job can finish between two polls; seeing it completed counts too,
+		// or the wait runs into its timeout (CORE-021).
+		if !running.is_empty() || !completed.is_empty() {
 			job_seen = true;
 		}
 
@@ -163,7 +165,8 @@ async fn capture_event_fixtures_for_typescript(
 		.try_init();
 
 	let temp_dir = TempDir::new()?;
-	let core = Core::new(temp_dir.path().to_path_buf()).await?;
+	// Locations live next to the data dir, not in it: the walk skips the daemon's own data.
+	let core = Core::new(temp_dir.path().join("data")).await?;
 
 	// Create test directory structure
 	let test_dir = temp_dir.path().join("test_location");

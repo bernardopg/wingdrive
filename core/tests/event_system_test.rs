@@ -124,7 +124,8 @@ async fn test_core_and_library_events() -> Result<(), Box<dyn std::error::Error 
 #[tokio::test]
 async fn test_location_and_job_events() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 	let temp_dir = TempDir::new()?;
-	let core = Core::new(temp_dir.path().to_path_buf()).await?;
+	// Locations live next to the data dir, not in it: the walk skips the daemon's own data.
+	let core = Core::new(temp_dir.path().join("data")).await?;
 
 	// Create library
 	let library = core

@@ -8,7 +8,7 @@ priority: High
 tags: [core, indexing, bug, flaky]
 milestone: M2
 sprint: S06
-last_updated: 2026-11-13
+last_updated: 2026-11-14
 ---
 
 ## Description
@@ -38,4 +38,29 @@ código de indexação mudou desde a `v3.1.1`.
 ## Acceptance Criteria
 
 - Discovery de uma pasta com itens nunca termina com zero itens sem reportar erro.
-- 50 execuções seguidas do teste de fixtures e 10 do smoke do Explorer passam.
+- 50 execuções seguidas do teste de fixtures (feito em 2026-11-14) e 10 do smoke do Explorer passam.
+
+## Investigation (2026-11-14)
+
+**Fixture test: two causes found.** `normalized_cache_fixtures_test` created the Core with
+`temp_dir` as its data dir and the location at `temp_dir/test_location`, inside it. Since e52b16b36
+(2026-10-05) the walk drops everything under the daemon's own data dir (`config::is_own_data`, so
+the daemon never indexes its own SQLite journals), so this location always finished discovery with
+`0 files, 0 dirs, 0 symlinks, 0 skipped` and no error: only the root entry existed. That part was
+deterministic. The intermittent failure came from `wait_for_indexing_completion`, which only counted
+the job as seen once it caught it in `Running`; a job with nothing to walk often finished between two
+polls, and the wait ran into its 30 s timeout with `entries: 1`.
+
+- Persistent indexing now fails with `<path> is inside WingDrive's own data folder, which is never
+  indexed` instead of finishing empty (`ops/indexing/job.rs`).
+- `normalized_cache_fixtures_test`, `file_structure_test` and `event_system_test` keep the Core's
+  data dir in `temp_dir/data`, beside their locations, and the fixture wait counts a job it finds
+  already completed.
+- Regression test `core/tests/own_data_location_test.rs`, alone in its binary so its Core is the
+  first: a location inside the data dir fails with that message, and one beside it indexes.
+- `normalized_cache_fixtures_test` binary run 50 times in a row on 2026-11-14: 50 pass, 0 fail.
+
+**Explorer smoke: not explained by this.** The release smoke runs `wing-server --data-dir
+/tmp/wingdrive-browser` and the fixture is `/tmp/wingdrive-explorer-*`, outside it. The ephemeral
+index of `/tmp` noted above stays the lead for that failure.
+

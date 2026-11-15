@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S05
 tags: [desktop, linux, portal, dbus, file-chooser]
-last_updated: 2026-11-12
+last_updated: 2026-11-14
 ---
 
 ## Description
@@ -83,19 +83,19 @@ to the app.
 
 ## Acceptance Criteria
 
-- [ ] With the switch on, Chrome's "upload file" opens the WingDrive picker. Choosing a file
+- [x] With the switch on, Chrome's "upload file" opens the WingDrive picker. Choosing a file
   uploads it; Cancel leaves the page unchanged.
-- [ ] Chrome's "Save as" and download location prompts open the picker in save mode, with the
+- [x] Chrome's "Save as" and download location prompts open the picker in save mode, with the
   suggested name and folder. The file lands where chosen.
-- [ ] Multiple selection, folder selection and type filters behave as the requesting app asks.
-- [ ] A Flatpak app and a GTK4 app (portal path) use the picker too.
+- [x] Multiple selection, folder selection and type filters behave as the requesting app asks.
+- [x] A Flatpak app and a GTK4 app (portal path) use the picker too.
 - [x] Turning the switch off restores the previous FileChooser backend. (Checked on temporary
   config folders in `file_chooser::tests::portals_conf`, not on the author's live file.)
-- [ ] On the author's Hyprland session, the switch edits `hyprland-portals.conf` and the portal then
+- [x] On the author's Hyprland session, the switch edits `hyprland-portals.conf` and the portal then
   selects the WingDrive backend.
-- [ ] With the switch on, a stopped WingDrive whose activation fails still leaves Chrome's upload
+- [x] With the switch on, a stopped WingDrive whose activation fails still leaves Chrome's upload
   with a working dialog from the fallback backend.
-- [ ] With `inode/directory` set to WingDrive, "Show in folder" from Chrome (`ShowItems`) opens a
+- [x] With `inode/directory` set to WingDrive, "Show in folder" from Chrome (`ShowItems`) opens a
   WingDrive window with the file selected.
 - [x] Unit tests cover option parsing and responses; an integration test drives the D-Bus interface
   on a private session bus (`dbus-run-session`), as the FileManager1 tests do.
@@ -172,3 +172,50 @@ runs in that case.
 - `modal` and `parent_window` are parsed but not applied; the picker opens as a normal window.
 - Filters do not hide entries in the Explorer listing; a selection outside the chosen filter is
   refused with a message.
+
+### Real apps on the author's machine (2026-11-14)
+
+Hyprland 0.57.2, `xdg-desktop-portal` 1.22.1, AUR `wingdrive-bin` 3.2.0 (the picker code is the same
+in 3.3.0), `hyprland-portals.conf` with `org.freedesktop.impl.portal.FileChooser=wingdrive;gtk`
+written by the Settings switch. Chrome 157 and Firefox 160 ran with throwaway profiles, driven with
+`ydotool`, `wtype` and the Chrome DevTools protocol; results read back from the page.
+
+- **Startup deadlock, fixed here.** Since the login of 2026-11-13 the live portal exported no
+  `org.freedesktop.portal.FileChooser` at all: `Failed to create file chooser proxy: Error calling
+  StartServiceByName for org.freedesktop.impl.portal.desktop.wingdrive: Timeout was reached`. The
+  portal activated WingDrive at start-up and waited for its name; WingDrive was blocked for 25 s in
+  `g_application_register`, where GtkApplication creates a proxy for `org.freedesktop.portal.Desktop`
+  (Inhibit) with auto-start and waits for the portal (gdb breakpoint on `g_dbus_proxy_new_sync`,
+  `dbus-monitor` on a private bus). WingDrive claimed its name only in `setup`, after GTK. Now
+  `file_chooser::start` claims it in `main` before `tauri::Builder`, and the window host attaches in
+  `setup`. Reproduced on a private bus with the real portal and the installed 3.2.0: 25 s and no
+  FileChooser; with the fixed build, three runs exported FileChooser within 1 s
+  (`Using wingdrive.portal for org.freedesktop.impl.portal.FileChooser`). Regression tests:
+  `a_request_before_the_host_attaches_waits_for_it`, `a_host_that_never_attaches_fails_the_request`,
+  `bus::the_name_is_served_before_the_host_attaches`.
+- After `systemctl --user restart xdg-desktop-portal` the live portal exported FileChooser and:
+  - Chrome single upload: picker opened ("Abrir arquivo"), `alpha.txt` reached the page (6 bytes).
+    Cancel closed the window and left the input unchanged.
+  - Chrome `multiple`: `pic.png` and `beta.txt` with Ctrl+click. `webkitdirectory`: the button
+    read "Fazer upload", folder `sub` went through Chrome's own confirmation, page got `sub/inner.txt`.
+  - Chrome `accept=".txt,text/plain"`: Chrome sends `*.[tT][xX][tT]` and `*.[tT][eE][xX][tT]`.
+    **Bug found and fixed:** every file was refused, because the picker matched the Explorer's name
+    without its extension (`alpha`). It now matches `alpha.txt` (`entryName`, test in
+    `filePicker.test.ts`); `pic.png` is still refused with "A seleção não corresponde ao tipo de arquivo."
+  - Chrome download with "ask where to save": save mode in the `downloads` folder Chrome sent,
+    name `report.txt` with the stem selected; the file landed there with its content. Saving over it
+    showed "\"report.txt\" já existe. Deseja substituí-lo?", Substituir returned the URI and Chrome
+    replaced the file.
+  - Firefox with `widget.use-xdg-desktop-portal.file-picker=1`: picker titled "File Upload - …",
+    `beta.txt` reached the page.
+  - GTK4: `zenity --file-selection --multiple` (zenity 4.2.2) opened the picker and printed both paths.
+  - Flatpak: `OpenFile` on the frontend portal from inside `com.usebottles.bottles` (GNOME 50
+    runtime) answered 0 with `file:///run/user/1000/doc/<id>/alpha.txt` from the document portal.
+  - `ShowItems` for a file (what Chrome's "Show in folder" calls) opened a WingDrive tab with the
+    file selected.
+- Fallback: on a private bus where the backend's activation exits with status 1, the portal starts at
+  once without exporting FileChooser (`Process org.freedesktop.impl.portal.desktop.wingdrive exited
+  with status 1`), and zenity showed its own GTK dialog. Apps that check for the portal interface
+  (Chrome, GTK) keep a working dialog; Firefox forced to `file-picker=1` would not.
+- Left: the AUR package of the release with the fix, to confirm a cold login brings the FileChooser
+  up without restarting the portal.
