@@ -600,6 +600,9 @@ function AccountRow({ account }: { account: IntegrationAccountInfo }) {
 								? `${driveScheme(account.provider)}://${account.drive.identifier}/`
 								: t("integrations.accounts.driveHint")}
 						</p>
+						{account.drive_access === "app_files" && (
+							<p className="text-xs text-ink-dull">{t("integrations.google.driveAppFiles")}</p>
+						)}
 					</div>
 					<Switch checked={!!account.drive?.mounted} disabled={mounting} onChange={(value) => void toggleDrive(value)} />
 				</div>
