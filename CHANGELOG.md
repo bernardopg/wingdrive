@@ -5,8 +5,49 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+## 3.4.0 — 2026-11-16
+
+The AppImage and the Windows installers update themselves with signed
+updates, the daemon runs without a console window on Windows, WingDrive's
+Google client moves to the `drive.file` scope so Google can verify it without
+a paid assessment, Spaces become Wings, and a task board with an MCP server
+organizes the project (#397, #398, #399, #406, #407).
+
+### Added
+
+- Signed updates for the AppImage and the Windows installers (REL-001).
+  Releases sign both with the WingDrive updater key and publish a
+  `latest.json` that lists only signed artifacts. Settings > General >
+  Updates shows the channel, checks on demand, installs with a restart and
+  can check once after startup with a notification. The AUR packages and the
+  `.deb` report their package manager as the update channel and never
+  download anything, so `pacman`, `yay` and `apt` stay the only writers of
+  their files. Self-updating starts with this release: an AppImage or Windows
+  install of 3.3.1 or older needs one manual update to 3.4.0.
+- Settings > General > Background has "Start minimized in the tray", on by
+  default. Turned off, WingDrive opens its window when it starts at login.
+- The Integrations account row and `wing integrations list` say when an
+  account's Drive shows only the files WingDrive created or opened, and how to
+  see all of it.
+- Task board for contributors (DEV-007): `just board` serves a kanban of
+  `.tasks/` on `127.0.0.1:7357` (drag between columns, filters by sprint,
+  milestone and epic, sprint and roadmap progress, checklist editing, live
+  updates), and the `wingdrive-board` MCP server in `.mcp.json` lets agents
+  list, move, check and log tasks. The Markdown files stay the source of
+  truth; the progress tables in the sprint files and `ROADMAP.md` are now
+  generated from the task front matter, and CI fails when they are stale or a
+  task points at a missing parent, sprint or milestone.
+
 ### Changed
 
+- WingDrive's own Google client asks for `drive.file` instead of the full
+  `drive` scope (INTG-003). `drive` is restricted: verifying it needs a paid
+  security assessment every year, which a free project does not take on.
+  With the "Google account" mode, Drive now shows the files WingDrive created
+  and the ones you open with it. The "Google Cloud" mode, with your own OAuth
+  client, keeps access to all of My Drive. Accounts connected before this
+  release keep the access they granted. Decision record:
+  `docs/design/GOOGLE-DRIVE-SCOPE.md`.
 - Wings replace Spaces in code, the database and the RPC API (BRAND-003). The
   `spaces`, `space_groups` and `space_items` tables become `wings`,
   `wing_groups` and `wing_items` in a migration that keeps every row, the
@@ -14,18 +55,37 @@ version in the workspace manifests and the matching `v*` git tag.
   `wing wings` (`wing spaces` still works). Sync keeps the old model and field
   names, so a device on 3.3.1 and a newer one keep syncing their sidebar. The
   wing selected in the sidebar survives the upgrade.
-
-### Added
-
-- Settings > General > Background has "Start minimized in the tray", on by
-  default. Turned off, WingDrive opens its window when it starts at login.
+- The daemon no longer logs normal events as warnings and errors (CORE-022):
+  unreadable folders in `/tmp` during listings, temporary files deleted before
+  the watcher read them, devices without entries, watcher events after
+  shutdown, and QUIC handshakes rejected before any identity check. Real
+  failures keep their level.
+- The Explorer smoke test runs on every pull request and ten times in a row
+  every night, and fails on any 5xx RPC response (TAURI-018).
 
 ### Fixed
 
+- "Upload to Google Photos" appears in the Explorer menu for a local photo or
+  video. It never showed, because the check read the extension from the file
+  name, which the daemon sends without it. A selection of several files still
+  lacks it (DESK-098).
+- On Windows the daemon opened a console window, and closing it stopped
+  WingDrive (TAURI-019). Release builds start it, `schtasks`, and the console
+  programs it runs (`cmd`, `git`, `ffmpeg`, `ffprobe`, `sharp`) without a
+  window.
+- A peer with no device-owned data, such as a phone without locations, no
+  longer forces a full sync every few seconds (CORE-023). A missing watermark
+  starts the catch-up from the beginning without a warning, and the sync loop
+  waits 60 s after a successful catch-up with the same peer.
 - WingDrive no longer opens its window at login when "Start at login" is on
   (DESK-097). The file chooser portal often starts WingDrive first, hidden,
   and the login entry's hidden launch then reached the running WingDrive,
   which showed its window for every launch handed to it.
+- Android: the phone lists its own storage (shared storage and each card
+  under `/storage`), asks for All files access from Explore, explains an
+  empty device view, "Create New Wing" creates a wing, and the remaining
+  labels are translated (MOB-017). The Android core builds on hosts that
+  export `CFLAGS="-march=native"`.
 
 ## 3.3.1 — 2026-11-14
 

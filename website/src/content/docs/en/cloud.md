@@ -41,6 +41,15 @@ Repeat to add more accounts. Each one keeps its own Drive and Photos access.
 
 </div>
 
+### Which Drive files WingDrive sees
+
+How much of Drive you get depends on the client you sign in with:
+
+- **Google account** (WingDrive's own client): WingDrive sees the files and folders it created and the ones you open with it. This uses Google's `drive.file` permission, which keeps WingDrive's Google verification free for an open-source project.
+- **Google Cloud** (your own OAuth client): WingDrive sees your whole My Drive, including existing folders to sync. The Google Cloud project is yours, so the broader permission needs no review by Google.
+
+Accounts connected before 3.4.0 keep the access they granted.
+
 ### What you can do with Drive
 
 - **Browse live.** Folders list straight from Drive. Google Docs, Sheets and Slides show as `.docx`, `.xlsx` and `.pptx` and open in the browser.
