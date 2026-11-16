@@ -82,6 +82,18 @@ pub enum ConnectionMode {
 	Custom,
 }
 
+impl ConnectionMode {
+	/// Drive access a Google sign-in asks for. WingDrive's client stays on
+	/// `drive.file`, which Google verifies without a paid security assessment;
+	/// a custom client belongs to the user, so it can ask for all of Drive.
+	pub fn drive_access(self) -> oauth::DriveAccess {
+		match self {
+			Self::App => oauth::DriveAccess::AppFiles,
+			Self::Custom => oauth::DriveAccess::Full,
+		}
+	}
+}
+
 /// Where WingDrive's own OAuth client comes from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "snake_case")]
@@ -134,6 +146,9 @@ pub struct IntegrationAccountInfo {
 	pub mode: ConnectionMode,
 	pub connected_at: DateTime<Utc>,
 	pub drive: Option<DriveMountInfo>,
+	/// How much of Google Drive the account granted; `None` for Microsoft and
+	/// for Google accounts without Drive.
+	pub drive_access: Option<oauth::DriveAccess>,
 }
 
 /// Progress of a browser sign-in.
@@ -451,7 +466,7 @@ impl IntegrationService {
 			&self.endpoints,
 			&client,
 			&redirect_uri,
-			&oauth::scopes_for(&services),
+			&oauth::scopes_for(&services, mode.drive_access()),
 			&state,
 			&pkce.challenge,
 			login_hint.as_deref(),
@@ -962,6 +977,7 @@ impl IntegrationService {
 			drive: self
 				.mount_info(library, &account.drive_fingerprint, &account.email)
 				.await,
+			drive_access: oauth::DriveAccess::granted(&account.scopes),
 		})
 	}
 
@@ -983,6 +999,7 @@ impl IntegrationService {
 			drive: self
 				.mount_info(library, &account.drive_fingerprint, &account.email)
 				.await,
+			drive_access: None,
 		}
 	}
 

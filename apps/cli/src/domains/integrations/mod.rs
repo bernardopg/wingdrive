@@ -40,7 +40,7 @@ use wing_core::ops::integrations::photos::{
 	PhotosAlbumsInput, PhotosPickerImportInput, PhotosPickerStartInput, PhotosPickerStartOutput,
 	PhotosPickerStatus, PhotosPickerStatusInput, PhotosUploadInput,
 };
-use wing_core::service::integrations::google::oauth::GoogleService;
+use wing_core::service::integrations::google::oauth::{DriveAccess, GoogleService};
 use wing_core::service::integrations::google::photos::PhotosAlbum;
 use wing_core::service::integrations::{
 	ConnectStatus, ConnectionMode, IntegrationAccountInfo, IntegrationProvider, OAuthClientsInfo,
@@ -295,6 +295,9 @@ fn services_label(services: &[GoogleService]) -> String {
 fn account_services(account: &IntegrationAccountInfo) -> String {
 	match account.provider {
 		IntegrationProvider::Microsoft => "OneDrive".to_string(),
+		_ if account.drive_access == Some(DriveAccess::AppFiles) => {
+			services_label(&account.services).replace("Drive", "Drive (files WingDrive opened)")
+		}
 		_ => services_label(&account.services),
 	}
 }

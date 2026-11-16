@@ -3,15 +3,20 @@ import type {File} from '@wingdrive/ts-client';
 
 import {canUploadToPhotos, isPhotosMedia} from './useGooglePhotosUpload';
 
-const file = (name: string, extra: Partial<Record<string, unknown>> = {}) =>
-	({
-		name,
+// Like the daemon: `name` is the stem and the extension is a separate field.
+const file = (fullName: string, extra: Partial<Record<string, unknown>> = {}) => {
+	const dot = fullName.lastIndexOf('.');
+	const hasExtension = dot > 0 && extra.kind !== 'Directory';
+	return {
+		name: hasExtension ? fullName.slice(0, dot) : fullName,
+		extension: hasExtension ? fullName.slice(dot + 1) : null,
 		kind: 'File',
 		is_local: true,
 		archive: null,
-		wing_path: {Physical: {device_slug: 'local', path: `/home/u/${name}`}},
+		wing_path: {Physical: {device_slug: 'local', path: `/home/u/${fullName}`}},
 		...extra
-	}) as unknown as File;
+	} as unknown as File;
+};
 
 describe('Upload to Google Photos', () => {
 	test('accepts photo and video extensions in any case', () => {

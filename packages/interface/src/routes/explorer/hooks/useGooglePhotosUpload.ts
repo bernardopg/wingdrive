@@ -23,6 +23,11 @@ export function isPhotosMedia(name: string): boolean {
 	return dot > 0 && PHOTOS_EXTENSIONS.has(name.slice(dot + 1).toLowerCase());
 }
 
+/** `File.name` is the stem; the extension lives in its own field. */
+function fullName(file: File): string {
+	return file.extension ? `${file.name}.${file.extension}` : file.name;
+}
+
 /** Whether every file can go to Google Photos: local photos, videos or folders of them. */
 export function canUploadToPhotos(files: File[]): boolean {
 	return (
@@ -32,7 +37,7 @@ export function canUploadToPhotos(files: File[]): boolean {
 				'Physical' in f.wing_path &&
 				f.is_local &&
 				!f.archive &&
-				(f.kind === 'Directory' || isPhotosMedia(f.name))
+				(f.kind === 'Directory' || isPhotosMedia(fullName(f)))
 		)
 	);
 }
