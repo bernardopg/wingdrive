@@ -51,6 +51,10 @@ const MAX_BACKFILL_ATTEMPTS: u32 = 3;
 /// hammering a peer, short enough that a connectivity blip heals itself.
 const BACKFILL_PAUSE_SECS: u64 = 300;
 
+/// Shortest time between two catch-ups with the same peer from the sync loop.
+/// Real-time broadcasts carry changes in between; the catch-up only repairs gaps.
+const CATCH_UP_INTERVAL: std::time::Duration = std::time::Duration::from_secs(60);
+
 /// Retry state for incremental catch-up operations
 ///
 /// Implements exponential backoff to prevent infinite retry loops when catch-up fails.
@@ -327,6 +331,11 @@ impl SyncService {
 		let mut backfill_failures: u32 = 0;
 		let mut backfill_paused_until: Option<tokio::time::Instant> = None;
 		let mut retry_state = CatchUpRetryState::new();
+		// Last successful catch-up per peer. A peer that owns no device data never
+		// gets a watermark, and a quiet one keeps an old watermark; without this the
+		// loop would catch up with them on every pass, every few seconds.
+		let mut last_catch_up: std::collections::HashMap<Uuid, std::time::Instant> =
+			std::collections::HashMap::new();
 
 		tokio::select! {
 			_ = async {
@@ -458,7 +467,13 @@ impl SyncService {
 											.unwrap_or_default();
 
 										// Determine if we need to sync with this peer
-										let needs_sync = if peer_watermarks.is_empty() {
+										let caught_up_recently = last_catch_up
+											.get(&partner_id)
+											.is_some_and(|at| at.elapsed() < CATCH_UP_INTERVAL);
+										let needs_sync = if caught_up_recently {
+											debug!(peer = %partner_id, "Caught up with peer recently, skipping");
+											false
+										} else if peer_watermarks.is_empty() {
 											// NEW PEER - never synced with them before
 											info!(peer = %partner_id, "Detected new peer, no watermarks exist - initiating sync");
 											true
@@ -564,6 +579,7 @@ impl SyncService {
 											Ok(()) => {
 												info!(peer = %partner_id, "Incremental catch-up completed");
 												retry_state.record_success();
+												last_catch_up.insert(partner_id, std::time::Instant::now());
 												// Transition back to Ready
 												let old_state = peer_sync.state().await;
 												let mut state = peer_sync.state.write().await;

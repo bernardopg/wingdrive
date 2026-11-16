@@ -1,15 +1,15 @@
 ---
 id: CORE-023
 title: A peer with no device-owned data forces a full sync every few seconds
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: LSYNC-000
 priority: High
 milestone: M4
-sprint: S07
+sprint: S06
 tags: [core, sync, performance, bug]
 related_tasks: [CORE-022, BRAND-003, MOB-013]
-last_updated: 2026-11-15
+last_updated: 2026-11-16
 ---
 
 ## Description
@@ -32,11 +32,11 @@ same. The age in the message is the sentinel, not a real age.
 
 ## Implementation Steps
 
-- [ ] A missing state watermark means "nothing received yet": run the first full sync once, log it
-      at INFO, and record a watermark when it completes even if it received nothing.
-- [ ] Find what triggers a catch-up every 5 seconds with an idle peer, and stop it while the peer is
+- [x] A missing state watermark means "nothing received yet": the catch-up starts from the
+      beginning, logs it at INFO and writes no SyncError event (`catch_up_from_peer`).
+- [x] Find what triggers a catch-up every 5 seconds with an idle peer, and stop it while the peer is
       Ready and nothing changed.
-- [ ] "No entries found for device" is a normal answer for a device without locations: DEBUG.
+- [x] "No entries found for device" is a normal answer for a device without locations: DEBUG.
 - [ ] Regression test with two in-process cores where one side owns no device data: one full sync,
       then incremental catch-ups only.
 
@@ -44,3 +44,16 @@ same. The age in the message is the sentinel, not a real age.
 
 - [ ] With the same setup (desktop and phone, the phone without locations), 10 idle minutes log no
       forced full sync after the first one and no WARN about watermarks.
+
+## Cause (2026-11-16)
+
+The sync loop (`run_sync_loop` in `core/src/service/sync/mod.rs`) runs every few seconds and
+decides per connected peer from its watermarks in `sync.db`. A peer with no watermark is "new" and
+gets a catch-up; one whose oldest watermark is older than 60 s is "stale" and gets one too. A phone
+without locations sends no device-owned data, so it never gets a watermark and stayed "new" on every
+pass, and a quiet peer's watermark only ages. `catch_up_from_peer` then read the missing watermark
+as `Duration::max_value()`, hence "106751991167 days old" and a forced full sync each time.
+
+The loop now remembers the last successful catch-up per peer and skips the peer for 60 s after it
+(`CATCH_UP_INTERVAL`), whatever its watermarks say. Real-time broadcasts carry the changes in
+between, and the catch-up only repairs gaps.

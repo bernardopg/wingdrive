@@ -322,10 +322,16 @@ impl BackfillManager {
 		state_watermark: Option<chrono::DateTime<chrono::Utc>>,
 		shared_watermark: Option<String>,
 	) -> Result<()> {
+		// No state watermark means nothing device-owned came from this peer yet (a
+		// phone without locations never sends any): the catch-up starts from the
+		// beginning, which is the normal first sync, not a stale one.
+		let Some(watermark) = state_watermark else {
+			info!(peer = %peer, "No state watermark for this peer yet, catching up from the start");
+			return self.catch_up_since(peer, None, shared_watermark).await;
+		};
+
 		// Check watermark age - force full sync if too old (tombstones may be pruned)
-		let watermark_age = state_watermark
-			.map(|w| chrono::Utc::now() - w)
-			.unwrap_or(chrono::Duration::max_value());
+		let watermark_age = chrono::Utc::now() - watermark;
 
 		let threshold_days = self.config.retention.force_full_sync_threshold_days;
 		let effective_state_watermark =
@@ -366,6 +372,18 @@ impl BackfillManager {
 				state_watermark
 			};
 
+		self.catch_up_since(peer, effective_state_watermark, shared_watermark)
+			.await
+	}
+
+	/// Backfills shared changes after `shared_watermark` and device-owned state
+	/// after `state_watermark` (`None` = everything), then records the watermarks.
+	async fn catch_up_since(
+		&self,
+		peer: Uuid,
+		effective_state_watermark: Option<chrono::DateTime<chrono::Utc>>,
+		shared_watermark: Option<String>,
+	) -> Result<()> {
 		// Parse shared watermark HLC for incremental sync
 		let since_hlc = shared_watermark
 			.as_ref()
