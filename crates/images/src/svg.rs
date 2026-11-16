@@ -36,6 +36,7 @@ impl ImageHandler for SvgHandler {
 			font_resolver: usvg::FontResolver::default(),
 			fontdb: Arc::new(fontdb),
 			style_sheet: None,
+			..usvg::Options::default()
 		};
 
 		let rtree = usvg::Tree::from_data(&data, &options)?;
