@@ -1,14 +1,14 @@
 ---
 id: CORE-021
 title: Discovery intermitente encontra zero itens numa pasta com arquivos
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: CORE-000
 priority: High
 tags: [core, indexing, bug, flaky]
 milestone: M2
-sprint: S06
-last_updated: 2026-11-14
+sprint: S05
+last_updated: 2026-11-15
 ---
 
 ## Description

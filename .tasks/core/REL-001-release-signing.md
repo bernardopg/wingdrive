@@ -6,10 +6,10 @@ assignee: bernardopg
 parent: TAURI-000
 priority: High
 milestone: M3
-sprint: S05
+sprint: S06
 tags: [release, signing, updater, ci]
 related_tasks: [MOB-009, TAURI-012]
-last_updated: 2026-11-05
+last_updated: 2026-11-15
 ---
 
 ## Description
