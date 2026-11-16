@@ -15,6 +15,18 @@ version in the workspace manifests and the matching `v*` git tag.
   names, so a device on 3.3.1 and a newer one keep syncing their sidebar. The
   wing selected in the sidebar survives the upgrade.
 
+### Added
+
+- Settings > General > Background has "Start minimized in the tray", on by
+  default. Turned off, WingDrive opens its window when it starts at login.
+
+### Fixed
+
+- WingDrive no longer opens its window at login when "Start at login" is on
+  (DESK-097). The file chooser portal often starts WingDrive first, hidden,
+  and the login entry's hidden launch then reached the running WingDrive,
+  which showed its window for every launch handed to it.
+
 ## 3.3.1 — 2026-11-14
 
 WingDrive as the file chooser works again after a login, Chrome's file type

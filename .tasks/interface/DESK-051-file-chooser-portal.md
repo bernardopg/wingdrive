@@ -1,14 +1,14 @@
 ---
 id: DESK-051
 title: WingDrive as the file chooser for uploads and saves (xdg-desktop-portal FileChooser)
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: DESK-000
 priority: High
 milestone: M2
 sprint: S05
 tags: [desktop, linux, portal, dbus, file-chooser]
-last_updated: 2026-11-14
+last_updated: 2026-11-15
 ---
 
 ## Description
@@ -219,3 +219,8 @@ written by the Settings switch. Chrome 157 and Firefox 160 ran with throwaway pr
   (Chrome, GTK) keep a working dialog; Firefox forced to `file-picker=1` would not.
 - Left: the AUR package of the release with the fix, to confirm a cold login brings the FileChooser
   up without restarting the portal.
+
+## Closed 2026-11-15
+
+The author did the cold login with `wingdrive-bin` `3.3.1` from the AUR and confirmed that the
+upload dialog in Chrome is WingDrive's picker.

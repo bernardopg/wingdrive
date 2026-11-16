@@ -1,14 +1,14 @@
 ---
 id: COV-02
 title: "Adicionar a primeira suíte de regressões de contratos"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: COV-00
 priority: High
 milestone: M2
 sprint: S05
 tags: [coverage, testing, ci]
-last_updated: 2026-11-06
+last_updated: 2026-11-15
 ---
 
 ## Description
@@ -30,7 +30,7 @@ COV-01. Escopo, metas e ordem em [README.md](README.md).
 
 - [x] Testes verificam resultados e preservação de dados, sem daemon pessoal, rede externa ou credenciais.
 - [x] Core, desktop e CLI passam localmente e falhas propagam para o gate.
-- [ ] Evidências registram comandos e limites da validação; DoD exige merge no main.
+- [x] Evidências registram comandos e limites da validação; DoD exige merge no main.
 
 ## Evidence
 
@@ -126,3 +126,8 @@ O teste real achou seis bugs que os testes unitários não pegavam, registrados 
 Não validados em runtime: rótulos de montagens GVFS (sem montagem com escapes), `file:///tmp/%+A`
 numa abertura real (a URI foi entregue, mas o resultado não é visível) e nomes fora de UTF-8, que o
 JSON-RPC não transporta. Windows e macOS não rodaram.
+
+## Closed 2026-11-15
+
+The contract suites are on `main` (#343, #344, #358, #359 and the later coverage PRs) and run in
+`just ci-local` and CI; their commands and limits are recorded above.

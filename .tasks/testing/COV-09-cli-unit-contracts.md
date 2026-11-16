@@ -5,10 +5,10 @@ status: In Progress
 assignee: bernardopg
 parent: COV-00
 priority: High
-milestone: M2
-sprint: S05
+milestone: M3
+sprint: S06
 tags: [coverage, testing, cli]
-last_updated: 2026-11-11
+last_updated: 2026-11-15
 ---
 
 ## Description
@@ -83,3 +83,28 @@ Arquivos de produção ainda abaixo de 25%: `domains/cloud/setup.rs` (0%), `doma
 (3,8%), `util/confirm.rs` (3,4%), `util/macros.rs` (3,6%), `ui/colors.rs` (23,1%) e
 `domains/search/mod.rs` (24,0%). O fluxo interativo, a execução contra daemon real e o Windows
 ficam com a COV-10; a saída JSON validada por estrutura continua aberta nesta task.
+
+## Measurement 2026-11-15
+
+Coverage workflow of `main` at `5c7764815` (run 43686539472), `summary.json` on the `badges`
+branch and the `coverage-rust` LCOV artifact of the same run:
+
+| Area | Lines |
+|---|---|
+| Core | 53.7% (48,548 / 90,473) |
+| Desktop (Tauri shell and its crates) | 90.7% (7,842 / 8,647) |
+| CLI | 65.9% (4,830 / 7,330) |
+| Interface (React) | 74.5% (5,159 / 6,925) |
+| `core/src/ops/files` | 63.9% (5,901 / 9,234) |
+| `core/src/ops/indexing` | 73.7% (6,567 / 8,909) |
+| `core/src/infra/db` | 54.6% (3,020 / 5,529) |
+| `core/src/domain/addressing` | 76.8% (553 / 720) |
+| `core/src/infra/wire` and `infra/api` | 80.3% (1,174 / 1,462) |
+| `core/src/infra/job` | 43.1% (1,294 / 2,999) |
+| Sync (`service/sync`, `infra/sync`) | 72.5% (5,885 / 8,121) |
+
+The four M3 component goals (core 50%, desktop 75%, CLI 60%, interface 60%) are met on `main`.
+Moved to M3 with the rest of the coverage epic, since its open criteria are module goals and gates,
+not M2 work.
+
+The CLI is at 65.9%.

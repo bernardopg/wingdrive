@@ -1,7 +1,7 @@
 ---
 id: CORE-021
 title: Discovery intermitente encontra zero itens numa pasta com arquivos
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: CORE-000
 priority: High
@@ -64,3 +64,17 @@ polls, and the wait ran into its 30 s timeout with `entries: 1`.
 /tmp/wingdrive-browser` and the fixture is `/tmp/wingdrive-explorer-*`, outside it. The ephemeral
 index of `/tmp` noted above stays the lead for that failure.
 
+## Explorer smoke, 2026-11-15
+
+Release `wing-server` built from `main` (`5c7764815`) with `--features wing-core/ffmpeg,wing-core/heif`,
+isolated data dir, Playwright 1.62.1 and `scripts/release/explorer.cjs` unchanged:
+
+- 10 runs in a row against one server: 10 passed (18 to 26 s each).
+- 5 more runs that open `/tmp` in the Explorer first, so the ephemeral index of the fixture's parent
+  exists before the fixture (the lead from the `v3.2.0` failure): 5 passed.
+- No `Parallel discovery complete: 0 files, 0 dirs` line in either server log.
+
+The `v3.2.0` failure did not come back in 15 runs, and the fixture-test causes were fixed on
+2026-11-14, so the acceptance criteria are met. TAURI-018 runs the smoke on every pull request
+and 10 times each night, which measures the failure if it still exists. The warnings the server
+logged during these runs went to CORE-022.

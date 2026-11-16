@@ -49,7 +49,7 @@ Release `v2.0.0-alpha.7` sai com TAURI-013, TAURI-014 e essas correções; ver [
 
 O M1 fecha quando essas cinco estiverem Done e uma release sair sem bug conhecido.
 
-## Now — M2: Gerenciador de arquivos padrão no Linux
+## Done — M2: Gerenciador de arquivos padrão no Linux
 
 Prioridade máxima por decisão do usuário (2026-10-07). Resultado: WingDrive substitui Dolphin,
 Nautilus ou Yazi no uso diário. `xdg-open` em pastas e "Mostrar na pasta" de outros apps abrem o
@@ -81,10 +81,11 @@ fechar o M2:
 
 | Task | O que falta | Sprint |
 |---|---|---|
-| BRAND-003 | Barra lateral dos Wings no app desktop e sync com um aparelho na 3.3.1 (código no `main` desde o #397) | S05 |
-| DESK-051 | Login a frio com o pacote AUR da correção do deadlock do portal; Chrome, Firefox, GTK4 e Flatpak já conferidos em 2026-11-14 | S05 |
-| CORE-021 | Pasta abrindo com "0 files" no smoke do Explorer da `v3.2.0`; a parte do teste de fixtures já foi corrigida | S05 |
-| DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
+| BRAND-003 | Done em 2026-11-15: barra lateral dos Wings no desktop e sync com o moto g(7) na 3.3.1 | S05 |
+| DESK-051 | Done em 2026-11-15: login a frio com o `wingdrive-bin` 3.3.1 conferido pelo autor | S05 |
+| CORE-021 | Done em 2026-11-15: 15 rodadas do smoke do Explorer sem pasta vazia | S05 |
+| DESK-097 | Done em 2026-11-15: login com `--hidden` repassado à instância aberta não mostra a janela; setting "Iniciar minimizado na bandeja" | S05 |
+| DESK-000 | Done em 2026-11-15 | S05 |
 
 DESK-043 e DESK-090 fecharam em 2026-11-14: dez sessões da `v3.3.0` com 15 abas ficaram abaixo de
 550 MiB, e o modo alto do renderer não voltou nem com a `v3.0.0`.
@@ -94,10 +95,13 @@ relato do autor) e DESK-033 (`pkexec` e polkit reais na máquina do autor) fecha
 WATCH-006 (conexão no login confirmada no journal), DESK-016 (painel duplo no pacote) e DESK-013
 (revisão completa do pt-BR no Crowdin e AppImage conferido no Hyprland).
 
-O M2 fecha quando o DESK-000 estiver Done com evidência do pacote AUR e um dia inteiro de uso sem
-voltar a outro file manager (DESK-017). Previsão: fim do S05 (2026-11-25).
+**M2 fechado em 2026-11-15.** O DESK-051 foi conferido pelo autor com o `wingdrive-bin` `3.3.1`
+(login a frio e upload no Chrome), a BRAND-003 terminou com a barra lateral dos Wings no desktop e o
+sync com um celular na `3.3.1`, a CORE-021 passou em 15 rodadas do smoke do Explorer, e a DESK-097
+(janela aberta no login) foi corrigida. Com todas as filhas Done e o dia de uso da DESK-017, o
+DESK-000 fechou. As tasks de cobertura que estavam no M2 foram para o M3, onde ficam as metas.
 
-## Next — M3: Desktop multiplataforma e release
+## Now — M3: Desktop multiplataforma e release
 
 Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
 
@@ -115,13 +119,15 @@ lixeira no core, no CLI e na web UI, e cópias que não perdem dados quando canc
 | Ordem | Task | O que falta | Sprint |
 |---|---|---|---|
 | 1 | REL-001 | Assinatura: primeiro o updater do Tauri, depois Authenticode, Apple e Google Play; AUR só em tags estáveis | S06 |
-| 2 | TAURI-018 | Smoke do Explorer (`scripts/release/explorer.cjs`) em todo pull request e 10 execuções agendadas | S06 |
-| 3 | TAURI-012 | Matriz de regressão à mão: rodada no Windows com as checagens que sobraram da TAURI-016; macOS quando houver um Mac | S06 |
-| 4 | CORE-014 | "Abrir com" e abrir arquivos no Windows e no macOS, conferidos na rodada da TAURI-012 | S06 |
-| 5 | TAURI-017 | Repetir como administrador no Windows via UAC; espera o certificado da REL-001 | — |
-| 6 | CLI-002 | `wing update` não acha binários nos releases do WingDrive (Done em 2026-11-05) | — |
-| 7 | FILE-008 | Done em 2026-11-12: todo undo do Explorer passa pelo journal do core (#378) | — |
-| 8 | TAURI-000 | Fecha quando REL-001, TAURI-018 e TAURI-012 fecharem | S06 |
+| 2 | TAURI-018 | Smoke do Explorer (`scripts/release/explorer.cjs`) em todo pull request e 10 execuções agendadas; job no `ci.yml` desde 2026-11-15 | S05 |
+| 3 | CORE-022 | Logs do daemon e do app sem ruído de condições normais (`/tmp` sem permissão, arquivos temporários, teardown) | S06 |
+| 4 | TAURI-019 | Daemon no Windows sem janela de console, com ícone na bandeja (precisa de máquina Windows) | S07 |
+| 5 | TAURI-012 | Matriz de regressão à mão: rodada no Windows com as checagens que sobraram da TAURI-016; macOS quando houver um Mac | S06 |
+| 6 | CORE-014 | "Abrir com" e abrir arquivos no Windows e no macOS, conferidos na rodada da TAURI-012 | S06 |
+| 7 | TAURI-017 | Repetir como administrador no Windows via UAC; espera o certificado da REL-001 | — |
+| 8 | CLI-002 | `wing update` não acha binários nos releases do WingDrive (Done em 2026-11-05) | — |
+| 9 | FILE-008 | Done em 2026-11-12: todo undo do Explorer passa pelo journal do core (#378) | — |
+| 10 | TAURI-000 | Fecha quando REL-001, TAURI-018 e TAURI-012 fecharem | S06 |
 
 O M3 fecha com a TAURI-012 Done em Windows e macOS, e um release assinado em todas as plataformas
 que têm credencial.
@@ -190,6 +196,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-15 | **M2 Done**: DESK-051 conferida pelo autor, BRAND-003 com barra lateral e sync com celular na 3.3.1, CORE-021 com 15 rodadas do smoke, DESK-097 (janela no login) corrigida; DESK-000 Done. M3 vira o Now. Tasks novas: TAURI-018 (smoke do Explorer no CI), TAURI-019 (daemon no Windows em segundo plano), CORE-022 (ruído de log), CORE-023 (full sync em loop), MOB-017 (revisão Android). Cobertura no `main`: core 53,7%, desktop 90,7%, CLI 65,9%, interface 74,5%; metas do M3 batidas e as COV abertas foram para o M3 |
 | 2026-11-15 | Release `v3.3.1` e Wings no código (#397). Plano do app desktop: o S05 fecha o M2 com BRAND-003, DESK-051 e CORE-021 (veio do S06) e solta a 3.4.0; o S06 abre com o updater assinado (REL-001), a nova TAURI-018 (smoke do Explorer em todo pull request) e a rodada Windows da TAURI-012 antes das integrações. Build Android funciona com `CFLAGS=-march=native` no host |
 | 2026-11-13 | Release `v3.3.0` (#393): login no Google com um botão pelo cliente OAuth do WingDrive embutido no build (secrets do repositório), modo com cliente próprio, OneDrive por login no navegador, catálogo de integrações, `/privacy` e `/service-terms` |
 | 2026-11-13 | Integrações: modos "Conta" e cliente próprio com catálogo de cards (INTG-010), OneDrive por login no navegador (INTG-022), projeto e cliente OAuth do WingDrive no Google com login real funcionando (INTG-001, INTG-004), `/privacy` e `/service-terms` no site (INTG-002) |
