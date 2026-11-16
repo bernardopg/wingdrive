@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import Hero from "../components/Hero.astro";
+import Film from "../components/Film.astro";
 import Universe from "../components/Universe.astro";
 import Features from "../components/Features.astro";
 import Showcase from "../components/Showcase.astro";
@@ -21,6 +22,7 @@ const { lang } = Astro.props;
 <Base lang={lang}>
 	<link slot="head" rel="preload" as="image" type="image/avif" href="/img/art/hero-1920.avif" imagesrcset="/img/art/hero-1280.avif 1280w, /img/art/hero-1920.avif 1672w" imagesizes="100vw" />
 	<Hero lang={lang} />
+	<Film lang={lang} />
 	<Universe lang={lang} />
 	<Showcase lang={lang} />
 	<Features lang={lang} />
