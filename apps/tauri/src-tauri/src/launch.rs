@@ -252,6 +252,24 @@ fn percent_decode(input: &str) -> Option<String> {
 ///
 /// An empty list still shows the window, because launching WingDrive again
 /// while it sits in the tray means the user wants to see it.
+/// Handles a launch that another WingDrive process handed to this one.
+///
+/// The login entry starts WingDrive with `--hidden`, and so does the portal
+/// when it activates the file chooser. When the portal started WingDrive first,
+/// the login launch arrives here, and it must leave the windows as they are.
+pub fn deliver_forwarded<R: tauri::Runtime>(app: &AppHandle<R>, options: LaunchOptions) {
+	if !shows_window(&options) {
+		tracing::info!("Kept WingDrive in the tray for a hidden launch");
+		return;
+	}
+	deliver(app, options.requests);
+}
+
+/// Whether a forwarded launch should bring the main window up.
+fn shows_window(options: &LaunchOptions) -> bool {
+	!options.hidden || !options.requests.is_empty()
+}
+
 pub fn deliver<R: tauri::Runtime>(app: &AppHandle<R>, requests: Vec<OpenRequest>) {
 	if !requests.is_empty() {
 		tracing::info!(count = requests.len(), "Delivering open requests");
@@ -298,6 +316,21 @@ pub fn take_open_requests(state: tauri::State<'_, PendingOpenRequests>) -> Vec<O
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn a_hidden_launch_handed_over_keeps_the_window_hidden() {
+		let folder = OpenRequest {
+			directory: PathBuf::from("/home"),
+			select: None,
+		};
+		let launch = |hidden, requests| LaunchOptions { hidden, requests };
+
+		assert!(!shows_window(&launch(true, vec![])));
+		assert!(shows_window(&launch(false, vec![])));
+		// A folder to open always shows it, even from a hidden launch.
+		assert!(shows_window(&launch(true, vec![folder.clone()])));
+		assert!(shows_window(&launch(false, vec![folder])));
+	}
 
 	#[test]
 	fn named_instances_get_their_own_bus_name() {

@@ -2531,7 +2531,7 @@ fn main() {
 		tauri_plugin_single_instance::Builder::new()
 			.callback(|app, argv, cwd| {
 				let options = launch::parse_args(argv.into_iter().skip(1), Path::new(&cwd));
-				launch::deliver(app, options.requests);
+				launch::deliver_forwarded(app, options);
 			})
 			.dbus_id(single_instance_id)
 			.build(),

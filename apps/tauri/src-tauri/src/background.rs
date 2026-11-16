@@ -35,8 +35,10 @@ const TRAY_LABELS_FILE: &str = "tray_labels.json";
 pub struct DesktopSettings {
 	/// Closing the main window hides it to the tray instead of quitting.
 	pub keep_in_background: bool,
-	/// Start WingDrive hidden when the user logs in.
+	/// Start WingDrive when the user logs in.
 	pub start_at_login: bool,
+	/// A login start keeps WingDrive in the tray instead of showing its window.
+	pub start_minimized: bool,
 	/// Terminal command for "Open Terminal Here"; empty means detect.
 	pub terminal_command: Option<String>,
 }
@@ -46,6 +48,7 @@ impl Default for DesktopSettings {
 		Self {
 			keep_in_background: true,
 			start_at_login: false,
+			start_minimized: true,
 			terminal_command: None,
 		}
 	}
@@ -245,20 +248,21 @@ pub fn set_desktop_settings(
 	state: tauri::State<'_, DesktopSettingsState>,
 	settings: DesktopSettings,
 ) -> Result<DesktopSettings, String> {
-	apply_autostart(settings.start_at_login)?;
+	apply_autostart(settings.start_at_login, settings.start_minimized)?;
 	state.save(settings.clone())?;
 	Ok(settings)
 }
 
 #[cfg(target_os = "linux")]
-fn apply_autostart(enabled: bool) -> Result<(), String> {
-	apply_autostart_in(enabled, autostart_dir(), launcher_path)
+fn apply_autostart(enabled: bool, hidden: bool) -> Result<(), String> {
+	apply_autostart_in(enabled, hidden, autostart_dir(), launcher_path)
 }
 
 /// Writes or removes the entry in `dir`; `launcher` is only asked when enabling.
 #[cfg(target_os = "linux")]
 fn apply_autostart_in(
 	enabled: bool,
+	hidden: bool,
 	dir: Option<PathBuf>,
 	launcher: impl FnOnce() -> Option<PathBuf>,
 ) -> Result<(), String> {
@@ -268,11 +272,11 @@ fn apply_autostart_in(
 	} else {
 		None
 	};
-	write_autostart(&dir, launcher.as_deref())
+	write_autostart(&dir, launcher.as_deref(), hidden)
 }
 
 #[cfg(target_os = "linux")]
-fn write_autostart(dir: &Path, launcher: Option<&Path>) -> Result<(), String> {
+fn write_autostart(dir: &Path, launcher: Option<&Path>, hidden: bool) -> Result<(), String> {
 	let file = dir.join(AUTOSTART_FILE);
 	let Some(launcher) = launcher else {
 		return match std::fs::remove_file(&file) {
@@ -281,17 +285,17 @@ fn write_autostart(dir: &Path, launcher: Option<&Path>) -> Result<(), String> {
 		};
 	};
 	std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-	std::fs::write(&file, autostart_entry(launcher)).map_err(|e| e.to_string())
+	std::fs::write(&file, autostart_entry(launcher, hidden)).map_err(|e| e.to_string())
 }
 
 #[cfg(target_os = "windows")]
 const WINDOWS_RUN_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
 
 #[cfg(target_os = "windows")]
-fn apply_autostart(enabled: bool) -> Result<(), String> {
+fn apply_autostart(enabled: bool, hidden: bool) -> Result<(), String> {
 	let command = if enabled {
 		let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-		Some(autostart_command(&exe))
+		Some(autostart_command(&exe, hidden))
 	} else {
 		None
 	};
@@ -301,8 +305,8 @@ fn apply_autostart(enabled: bool) -> Result<(), String> {
 /// The command line a login session runs, quoted because the install path may
 /// contain spaces. Windows paths cannot contain double quotes.
 #[cfg(target_os = "windows")]
-fn autostart_command(exe: &Path) -> String {
-	format!("\"{}\" --hidden", exe.display())
+fn autostart_command(exe: &Path, hidden: bool) -> String {
+	format!("\"{}\"{}", exe.display(), hidden_arg(hidden))
 }
 
 /// Sets `name` under `subkey` of HKEY_CURRENT_USER, or removes it for `None`.
@@ -348,7 +352,7 @@ fn wide_string(text: &str) -> Vec<u16> {
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "windows")))]
-fn apply_autostart(enabled: bool) -> Result<(), String> {
+fn apply_autostart(enabled: bool, _hidden: bool) -> Result<(), String> {
 	if enabled {
 		Err("Start at login is only available on Linux and Windows".to_string())
 	} else {
@@ -394,8 +398,18 @@ fn launcher_from(appimage: Option<std::ffi::OsString>) -> Option<PathBuf> {
 		.or_else(|| std::env::current_exe().ok())
 }
 
+/// The argument that keeps a login start in the tray.
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+fn hidden_arg(hidden: bool) -> &'static str {
+	if hidden {
+		" --hidden"
+	} else {
+		""
+	}
+}
+
 #[cfg(target_os = "linux")]
-fn autostart_entry(launcher: &Path) -> String {
+fn autostart_entry(launcher: &Path, hidden: bool) -> String {
 	// Exec quoting escapes `"`, `` ` ``, `$` and `\` with a backslash, the string
 	// escapes then double every backslash, and `%` starts a field code.
 	let mut exec = String::new();
@@ -417,7 +431,8 @@ fn autostart_entry(launcher: &Path) -> String {
 		""
 	};
 	format!(
-		"[Desktop Entry]\nType=Application\nName=WingDrive\nComment=Keep WingDrive ready in the tray\nExec={program}\"{exec}\" --hidden\nIcon=WingDrive\nTerminal=false\nX-GNOME-Autostart-enabled=true\n"
+		"[Desktop Entry]\nType=Application\nName=WingDrive\nComment=Keep WingDrive ready in the tray\nExec={program}\"{exec}\"{hidden}\nIcon=WingDrive\nTerminal=false\nX-GNOME-Autostart-enabled=true\n",
+		hidden = hidden_arg(hidden)
 	)
 }
 
@@ -434,6 +449,7 @@ mod tests {
 		let changed = DesktopSettings {
 			keep_in_background: false,
 			start_at_login: true,
+			start_minimized: false,
 			terminal_command: Some("kitty".into()),
 		};
 		state.save(changed.clone()).unwrap();
@@ -621,14 +637,20 @@ mod tests {
 		let settings = DesktopSettingsState::load(dir.path()).get();
 		assert!(settings.keep_in_background);
 		assert!(settings.start_at_login);
+		// Settings saved before the option existed keep starting in the tray.
+		assert!(settings.start_minimized);
 	}
 
 	#[cfg(target_os = "windows")]
 	#[test]
 	fn autostart_command_quotes_the_executable_and_starts_hidden() {
 		assert_eq!(
-			autostart_command(Path::new(r"C:\Program Files\WingDrive\WingDrive.exe")),
+			autostart_command(Path::new(r"C:\Program Files\WingDrive\WingDrive.exe"), true),
 			r#""C:\Program Files\WingDrive\WingDrive.exe" --hidden"#
+		);
+		assert_eq!(
+			autostart_command(Path::new(r"C:\WingDrive\WingDrive.exe"), false),
+			r#""C:\WingDrive\WingDrive.exe""#
 		);
 	}
 
@@ -680,11 +702,13 @@ mod tests {
 		const CHILD_ENV: &str = "WINGDRIVE_TEST_AUTOSTART_DIR";
 		if let Some(config) = std::env::var_os(CHILD_ENV) {
 			let file = Path::new(&config).join("autostart").join(AUTOSTART_FILE);
-			apply_autostart(true).unwrap();
+			apply_autostart(true, true).unwrap();
 			assert!(std::fs::read_to_string(&file).unwrap().contains("--hidden"));
-			apply_autostart(false).unwrap();
+			apply_autostart(true, false).unwrap();
+			assert!(!std::fs::read_to_string(&file).unwrap().contains("--hidden"));
+			apply_autostart(false, true).unwrap();
 			assert!(!file.exists());
-			apply_autostart(false).unwrap();
+			apply_autostart(false, true).unwrap();
 
 			// The settings command writes the entry and the settings together.
 			let app = app_with_settings(Path::new(&config));
@@ -766,13 +790,13 @@ mod tests {
 		let root = tempfile::tempdir().unwrap();
 		let blocked = root.path().join("blocked");
 		std::fs::write(&blocked, b"keep").unwrap();
-		assert!(write_autostart(&blocked, Some(Path::new("/opt/WingDrive"))).is_err());
+		assert!(write_autostart(&blocked, Some(Path::new("/opt/WingDrive")), true).is_err());
 		assert_eq!(std::fs::read(&blocked).unwrap(), b"keep");
 
 		let entry = root.path().join(AUTOSTART_FILE);
 		std::fs::create_dir(&entry).unwrap();
 		std::fs::write(entry.join("keep"), b"keep").unwrap();
-		assert!(write_autostart(root.path(), None).is_err());
+		assert!(write_autostart(root.path(), None, true).is_err());
 		assert_eq!(std::fs::read(entry.join("keep")).unwrap(), b"keep");
 	}
 
@@ -805,16 +829,16 @@ mod tests {
 	fn autostart_reports_what_it_could_not_find() {
 		let root = tempfile::tempdir().unwrap();
 		assert_eq!(
-			apply_autostart_in(false, None, || None).unwrap_err(),
+			apply_autostart_in(false, true, None, || None).unwrap_err(),
 			"Could not determine the autostart directory"
 		);
 		assert_eq!(
-			apply_autostart_in(true, Some(root.path().into()), || None).unwrap_err(),
+			apply_autostart_in(true, true, Some(root.path().into()), || None).unwrap_err(),
 			"Could not determine the WingDrive executable"
 		);
 		assert!(!root.path().join(AUTOSTART_FILE).exists());
 		// Turning it off never needs the executable.
-		apply_autostart_in(false, Some(root.path().into()), || {
+		apply_autostart_in(false, true, Some(root.path().into()), || {
 			panic!("the launcher is only needed to enable autostart")
 		})
 		.unwrap();
@@ -825,7 +849,7 @@ mod tests {
 	#[cfg(target_os = "linux")]
 	#[test]
 	fn autostart_entry_escapes_launcher_paths_for_the_exec_key() {
-		let entry = autostart_entry(Path::new(r#"/opt/100%d/a\b"c$d`e/WingDrive"#));
+		let entry = autostart_entry(Path::new(r#"/opt/100%d/a\b"c$d`e/WingDrive"#), true);
 		assert!(
 			entry.contains(
 				r#"Exec=/usr/bin/env "/opt/100%%d/a\\\\b\\"c\\$d\\`e/WingDrive" --hidden"#
@@ -837,7 +861,13 @@ mod tests {
 	#[cfg(target_os = "linux")]
 	#[test]
 	fn autostart_entry_quotes_the_launcher_and_starts_hidden() {
-		let entry = autostart_entry(Path::new("/opt/Wing Drive/WingDrive"));
+		let entry = autostart_entry(Path::new("/opt/Wing Drive/WingDrive"), true);
 		assert!(entry.contains("Exec=\"/opt/Wing Drive/WingDrive\" --hidden\n"));
+		// With "Start minimized in the tray" off, the login shows the window.
+		let entry = autostart_entry(Path::new("/opt/Wing Drive/WingDrive"), false);
+		assert!(
+			entry.contains("Exec=\"/opt/Wing Drive/WingDrive\"\n"),
+			"{entry}"
+		);
 	}
 }

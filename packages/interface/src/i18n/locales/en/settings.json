@@ -34,7 +34,9 @@
 			"keepRunning": "Keep running in the background",
 			"keepRunningHint": "Closing the window keeps WingDrive in the tray so folders open instantly",
 			"startAtLogin": "Start at login",
-			"startAtLoginHint": "Start WingDrive hidden in the tray when you log in",
+			"startAtLoginHint": "Start WingDrive when you log in",
+			"startMinimized": "Start minimized in the tray",
+			"startMinimizedHint": "At login, keep WingDrive in the tray without opening its window",
 			"terminal": "Terminal",
 			"terminalHint": "Command for Open Terminal Here. Leave empty to use xdg-terminal-exec, $TERMINAL or an installed terminal."
 		},

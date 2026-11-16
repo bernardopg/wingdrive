@@ -34,7 +34,9 @@
 			"keepRunning": "Continuar em execução em segundo plano",
 			"keepRunningHint": "Fechar a janela mantém o WingDrive na bandeja para que as pastas abram instantaneamente",
 			"startAtLogin": "Iniciar ao entrar",
-			"startAtLoginHint": "Iniciar o WingDrive oculto na bandeja quando você entrar na sessão",
+			"startAtLoginHint": "Iniciar o WingDrive quando você entrar na sessão",
+			"startMinimized": "Iniciar minimizado na bandeja",
+			"startMinimizedHint": "Ao entrar, manter o WingDrive na bandeja sem abrir a janela",
 			"terminal": "Terminal",
 			"terminalHint": "Comando para Abrir terminal aqui. Deixe vazio para usar xdg-terminal-exec, $TERMINAL ou um terminal instalado."
 		},

@@ -307,6 +307,8 @@ export interface DiscoveredServer {
 export interface DesktopSettings {
 	keep_in_background: boolean;
 	start_at_login: boolean;
+	/** A login start stays in the tray instead of showing the window */
+	start_minimized: boolean;
 	/** Terminal command for Open Terminal Here; null detects one */
 	terminal_command: string | null;
 }

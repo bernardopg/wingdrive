@@ -214,6 +214,13 @@ export function GeneralSettings() {
             checked={desktopSettings.start_at_login}
             onChange={(value) => updateDesktopSetting("start_at_login", value)}
           />
+          <SwitchRow
+            label={t("general.background.startMinimized")}
+            hint={t("general.background.startMinimizedHint")}
+            checked={desktopSettings.start_minimized}
+            disabled={!desktopSettings.start_at_login}
+            onChange={(value) => updateDesktopSetting("start_minimized", value)}
+          />
           <SettingsRow
             label={t("general.background.terminal")}
             hint={t("general.background.terminalHint")}
