@@ -74,4 +74,36 @@ What is wrong, most important first:
 - Item 4: the AI compute card is gone; the first page shows storage, files, devices and library size.
 - Item 5: the title row fades before it reaches the status bar.
 - Item 8: "Create New Wing" opens a name prompt and creates the wing with `wings.create`.
-- Left: item 7 (slow taps) and the check on a device or emulator with screenshots.
+
+## Checked on the moto g(7) (2026-11-16)
+
+Release build of PR #399 installed beside the everyday app as `com.wingdrive.app.review`
+(debug-signed), fresh library:
+
+- Internal storage detected at start ("New volume discovered: Internal storage", 50 GB, 46 GB free)
+  and shown on the Overview under the phone.
+- Explore shows "Allow access to files"; "Open settings" opens the system page "Acesso a todos os
+  arquivos" for WingDrive. After granting it and coming back, the card is gone without a restart.
+- Opening "Internal storage" lists the phone's folders (Alarms, DCIM, Download, Pictures...) and
+  subfolders open.
+- "Create New Wing" asks for a name and creates the wing ("Trabalho", orange).
+- Portuguese: "Arquivos indexados", "usado", "Armazenamento interno" translated; the title row fades
+  away when the Overview scrolls, so nothing draws under the status bar.
+
+Still wrong, found in this check:
+
+1. The folder view of the internal storage is titled "0" (the last segment of
+   `/storage/emulated/0`); it should show the volume name.
+2. "Total Storage" stays at 0 B while the volume is not tracked; the phone's own storage should count.
+3. Volume chips show the filesystem as "android" and "Primary", and the free space says "free":
+   untranslated or meaningless labels.
+4. A fresh install starts in English on a phone set to pt-BR; the app should follow the system
+   language until the user picks one.
+5. The core logs `WARN swarm_discovery::socket: error sending mDNS: Operation not permitted` every
+   few seconds: Android needs a Wi-Fi multicast lock (`CHANGE_WIFI_MULTICAST_STATE`) for mDNS, so
+   phones do not find desktops on the local network by discovery.
+6. A new wing is an empty page with no hint on how to add items.
+7. The system page shows the app as version 1.0.0 (MOB-009).
+8. Item 7 of the review (taps taking 1 to 3 s) still has no cause: `gfxinfo` shows no slow frame,
+   so the next step is a Hermes profile of the JS thread.
+
