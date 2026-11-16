@@ -329,9 +329,10 @@ async fn main() -> Result<()> {
 					}
 				}
 			} else {
-				// Background mode: redirect stdout/stderr to null
+				// Background mode: redirect stdout/stderr to null, and no console window on Windows
 				command.stdout(std::process::Stdio::null());
 				command.stderr(std::process::Stdio::null());
+				wing_core::common::process::hide_console_window(&mut command);
 
 				match command.spawn() {
 					Ok(child) => {
@@ -476,9 +477,10 @@ async fn main() -> Result<()> {
 					}
 				}
 			} else {
-				// Run in background
+				// Run in background, with no console window on Windows
 				cmd.stdout(std::process::Stdio::null());
 				cmd.stderr(std::process::Stdio::null());
+				wing_core::common::process::hide_console_window(&mut cmd);
 
 				let child = cmd.spawn()?;
 				println!("Daemon restarted (PID: {})", child.id());

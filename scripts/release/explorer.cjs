@@ -24,6 +24,14 @@ const { chromium } = require('playwright');
   page.setDefaultTimeout(20000);
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
+  // A server error on an RPC call fails the smoke even when the page recovers (TAURI-018).
+  // Expected failures, such as the missing location checked below, answer with a 4xx or a
+  // JSON error body, not a 5xx.
+  page.on('response', response => {
+    if (response.url().endsWith('/rpc') && response.status() >= 500) {
+      errors.push(`RPC ${response.status()} from ${response.url()}`);
+    }
+  });
   if (process.env.RPC_URL) {
     await page.route('**/rpc', async route => {
       const response = await route.fetch({url: process.env.RPC_URL});

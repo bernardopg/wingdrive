@@ -1,6 +1,6 @@
 import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React, { useState } from "react";
-import { View, ScrollView, Alert, Linking, Modal, TextInput, Pressable } from "react-native";
+import { ScrollView, Alert, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -15,61 +15,10 @@ import { useCurrentLibraryId } from "../../client/hooks/useQuery";
 import { useAppReset } from "../../contexts";
 import { applyLanguage } from "../../i18n";
 import { usePreferencesStore } from "../../stores/preferences";
-import { Button, SettingsGroup, SettingsLink, SettingsOption, SettingsToggle } from "../../components/primitive";
+import { SettingsGroup, SettingsLink, SettingsOption, SettingsToggle } from "../../components/primitive";
+import { RenameDialog } from "../../components/RenameDialog";
 
 const REPOSITORY_URL = "https://github.com/bernardopg/wingdrive";
-
-/** One-field text prompt; Android has no `Alert.prompt`. */
-function RenameDialog({
-	title,
-	initialValue,
-	onSubmit,
-	onClose,
-}: {
-	title: string;
-	initialValue: string;
-	onSubmit: (value: string) => void;
-	onClose: () => void;
-}) {
-	const { t } = useTranslation("common");
-	const [value, setValue] = useState(initialValue);
-	const trimmed = value.trim();
-
-	return (
-		<Modal transparent animationType="fade" onRequestClose={onClose}>
-			<Pressable className="flex-1 bg-black/60 items-center justify-center px-6" onPress={onClose}>
-				<Pressable className="w-full bg-app-box border border-app-line rounded-2xl p-5" onPress={() => {}}>
-					<Text className="text-ink text-lg font-semibold mb-4">{title}</Text>
-					<TextInput
-						value={value}
-						onChangeText={setValue}
-						autoFocus
-						selectTextOnFocus
-						maxLength={64}
-						className="h-12 px-4 rounded-xl border border-app-line text-ink"
-						placeholderTextColor="hsl(235, 10%, 55%)"
-					/>
-					<View className="flex-row gap-3 mt-5">
-						<View className="flex-1">
-							<Button variant="gray" onPress={onClose}>
-								<Text className="text-ink font-medium">{t("Cancel")}</Text>
-							</Button>
-						</View>
-						<View className="flex-1">
-							<Button
-								variant="accent"
-								disabled={!trimmed || trimmed === initialValue}
-								onPress={() => onSubmit(trimmed)}
-							>
-								<Text className="text-white font-medium">{t("Save")}</Text>
-							</Button>
-						</View>
-					</View>
-				</Pressable>
-			</Pressable>
-		</Modal>
-	);
-}
 
 export function SettingsScreen() {
 	const { t } = useTranslation("common");

@@ -112,9 +112,19 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
       - name: Build production desktop bundles
+        env:
+          # The updater key (REL-001) signs the AppImage for installs that update themselves.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-          bun run --cwd apps/tauri tauri build --verbose --target x86_64-unknown-linux-gnu --bundles appimage,deb
+          updater=()
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            updater=(--config '{"bundle":{"createUpdaterArtifacts":true}}')
+          else
+            echo "::warning::TAURI_SIGNING_PRIVATE_KEY is not set; the AppImage ships without an updater signature"
+          fi
+          bun run --cwd apps/tauri tauri build --verbose --target x86_64-unknown-linux-gnu --bundles appimage,deb "${updater[@]}"
       - name: Verify fresh production daemon startup
         run: |
           export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
@@ -142,6 +152,9 @@ jobs:
           version="${RELEASE_TAG#v}"
           mkdir dist
           cp target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage "dist/WingDrive-$version-x86_64.AppImage"
+          for sig in target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage.sig; do
+            [ -f "$sig" ] && cp "$sig" "dist/WingDrive-$version-x86_64.AppImage.sig"
+          done
           cp target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb "dist/WingDrive-$version-amd64.deb"
           cp LICENSE dist/LICENSE
           python3 release-tooling/scripts/release/aur.py "$version" "dist/WingDrive-$version-x86_64.AppImage" LICENSE packaging/aur
@@ -320,6 +333,16 @@ jobs:
           cd dist
           test -f SHA256SUMS
           for sums in SHA256SUMS*; do sha256sum --check "$sums"; done
+      # The Tauri updater reads releases/latest/download/latest.json. It lists only
+      # signed artifacts: the AppImage and the NSIS installer (REL-001).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: release-tooling
+          sparse-checkout: scripts/release
+          persist-credentials: false
+      - name: Write the updater manifest
+        run: python3 release-tooling/scripts/release/updater_manifest.py "$RELEASE_TAG" dist "$GITHUB_REPOSITORY"
       - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: ${{ env.RELEASE_TAG }}

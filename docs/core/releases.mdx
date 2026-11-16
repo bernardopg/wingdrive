@@ -163,7 +163,15 @@ Pull requests and issues reach `#github` through a repository webhook pointed at
 
 ## Tauri Updater
 
-Desktop updater endpoints and signing keys are not configured yet (REL-001). Install new versions through the AUR packages, the AppImage or Debian package, or the Windows installers from GitHub Releases. `wing update` checks for a newer release and prints the command or link for the way it was installed.
+The desktop app updates itself only where nothing else owns its files: the AppImage (the runtime sets `$APPIMAGE`) and the Windows installers. Copies installed by a package manager, the AUR packages `wingdrive-bin` and `wingdrive-nightly` and the `.deb`, report their package manager as the update channel and never download anything, so `pacman`, `yay` and `apt` stay the only writers of their files and their database keeps the real version. The AUR packages run the extracted AppImage from `/opt/wingdrive`, without `$APPIMAGE`, which is how the app tells them apart.
+
+A stable tag builds the AppImage and the NSIS installer with `createUpdaterArtifacts`, signs them with the updater key and publishes their `.sig` files. The publish job then writes `latest.json` (`scripts/release/updater_manifest.py`) with the signed artifacts only. Installed apps read `https://github.com/bernardopg/wingdrive/releases/latest/download/latest.json`, which follows the newest stable release, and the updater plugin checks each signature against the public key in `apps/tauri/src-tauri/tauri.conf.json` before installing.
+
+In the app, Settings > General > Updates shows the channel, checks on demand and installs with a restart. With "Check for updates automatically" on, the app checks once, 30 seconds after it starts, and shows a desktop notification when a release is waiting. `wing update` checks for a newer release and prints the command or link for the way it was installed.
+
+### Updater key
+
+The key pair was created on 2026-11-16 with `tauri signer generate`. The private key and its password are in the repository secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, and a copy of both, with the public key, is in the maintainer's Bitwarden vault, item "WingDrive Tauri updater signing key". Installed apps trust only this key: losing it means every user has to reinstall by hand to receive updates again, so never rotate it without a plan that ships the new public key first.
 
 ## Secrets
 
@@ -173,7 +181,6 @@ The release requires `AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS` for AUR publica
 
 `discord.yml` reads `DISCORD_WEBHOOK_COMMITS` and `DISCORD_WEBHOOK_CHANGELOG`, the Discord webhook URLs of `#commits` and `#changelog`; without them it posts nothing and leaves a notice.
 
-No workflow uses Apple, Authenticode, Tauri updater or Sentry secrets yet; REL-001 adds the signing
-ones.
+`release.yml` and `windows-bundle.yml` read `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` to sign the updater artifacts; without them the bundles build unsigned and `latest.json` lists nothing. No workflow uses Apple, Authenticode or Sentry secrets yet.
 
 The Docker workflow uses only `GITHUB_TOKEN` which is provided automatically.

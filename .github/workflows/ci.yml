@@ -113,6 +113,7 @@ jobs:
       - name: Test critical frontend behavior
         run: |
           bun test packages/interface/src/routes/explorer/hooks/resolveExternalDrop.test.ts
+          bun test packages/interface/src/Settings/pages/UpdatesSection.test.tsx
           bun test packages/interface/src/routes/explorer/hooks/useCreateFolder.test.ts
           bun test packages/interface/src/components/TabManager/TabView.test.tsx
           bun test packages/ts-client/src/__tests__/generated-collections.test.ts
@@ -201,6 +202,85 @@ jobs:
       # Same script as `just ci-local`. Scoped runs lint and test only the apps that changed.
       - name: Rust gates (${{ needs.changes.outputs.scope }})
         run: scripts/ci-rust.sh ${{ needs.changes.outputs.scope }}
+
+  # TAURI-018: the Explorer end to end against a real backend. The desktop app and wing-server
+  # serve the same interface, so a break here breaks the Tauri app's Explorer too. The nightly
+  # run repeats the smoke 10 times so an intermittent failure (CORE-021) is counted, not retried.
+  explorer-smoke:
+    name: Explorer smoke
+    needs: changes
+    if: needs.changes.outputs.verified != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      BASE_URL: http://127.0.0.1:18765
+      NODE_PATH: /tmp/wingdrive-playwright/node_modules
+      WINGDRIVE_TEST_OUTPUT: /tmp/wingdrive-browser-evidence
+      SMOKE_RUNS: ${{ github.event_name == 'schedule' && 10 || 1 }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup System and Rust
+        uses: ./.github/actions/setup-system
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: x86_64-unknown-linux-gnu
+          save-cache: false
+          cache-key: ci
+          xtask-setup-args: --no-daemon
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.3"
+
+      # wing-server embeds apps/web/dist at compile time, so the web build goes first.
+      - name: Build the web interface and wing-server
+        run: |
+          bun install --frozen-lockfile
+          bun run --cwd apps/web build
+          cargo build --locked --bin wing-server
+
+      - name: Install Chromium for Playwright
+        run: |
+          npm install --prefix /tmp/wingdrive-playwright playwright@1.62.1
+          /tmp/wingdrive-playwright/node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Run the Explorer smoke
+        run: |
+          export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          target/debug/wing-server --host 127.0.0.1 --port 18765 --auth disabled \
+            --data-dir /tmp/wingdrive-browser --instance ci-explorer > /tmp/wingdrive-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for _ in {1..120}; do
+            if curl -fsS "$BASE_URL/health" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS "$BASE_URL/health"
+          failed=0
+          for run in $(seq "$SMOKE_RUNS"); do
+            echo "::group::Explorer smoke run $run of $SMOKE_RUNS"
+            WINGDRIVE_TEST_OUTPUT="$WINGDRIVE_TEST_OUTPUT/run-$run" node scripts/release/explorer.cjs \
+              || { failed=$((failed + 1)); echo "::error::Explorer smoke run $run failed"; }
+            echo "::endgroup::"
+          done
+          echo "Explorer smoke: $((SMOKE_RUNS - failed)) of $SMOKE_RUNS runs passed" | tee -a "$GITHUB_STEP_SUMMARY"
+          test "$failed" -eq 0
+
+      - name: Preserve Explorer smoke evidence
+        if: failure()
+        run: cp /tmp/wingdrive-server.log "$WINGDRIVE_TEST_OUTPUT/" 2>/dev/null || true
+
+      - name: Upload Explorer smoke evidence
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: explorer-smoke-evidence
+          path: /tmp/wingdrive-browser-evidence/
+          if-no-files-found: ignore
+          retention-days: 14
 
   # Separate jobs rather than a matrix: a matrix would rename the "TypeScript" and
   # "Rust Workspace" checks that the main ruleset requires.

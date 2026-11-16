@@ -6,7 +6,6 @@ import DevicesIcon from "@wingdrive/assets/icons/Devices.webp";
 import IndexedIcon from "@wingdrive/assets/icons/Indexed.webp";
 import LocationIcon from "@wingdrive/assets/icons/Location.webp";
 import MobileIcon from "@wingdrive/assets/icons/Mobile.webp";
-import ComputeIcon from "@wingdrive/assets/icons/Compute.webp";
 import TagsIcon from "@wingdrive/assets/icons/Tags.webp";
 import DatabaseIcon from "@wingdrive/assets/icons/Database.webp";
 import StorageIcon from "@wingdrive/assets/icons/Storage.webp";
@@ -38,14 +37,6 @@ function formatBytes(bytes: number): { value: string; unit: string } {
 	};
 }
 
-function getTOPSRank(tops: number): { label: string } {
-	if (tops >= 100) return { label: "Extreme" };
-	if (tops >= 70) return { label: "Very High" };
-	if (tops >= 40) return { label: "High" };
-	if (tops >= 20) return { label: "Moderate" };
-	return { label: "Low" };
-}
-
 export function HeroStats({
 	totalStorage,
 	usedStorage,
@@ -69,8 +60,6 @@ export function HeroStats({
 	const usedFormatted = formatBytes(usedStorage);
 	const databaseFormatted = formatBytes(databaseSize);
 	const sidecarFormatted = formatBytes(sidecarSize);
-	const topsValue = 70;
-	const topsRank = getTOPSRank(topsValue);
 
 	const handleScroll = useCallback(
 		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -104,7 +93,7 @@ export function HeroStats({
 							{usedFormatted.unit}
 						</Text>
 					</Text>{" "}
-					used
+					{t("used")}
 				</>
 			),
 			progress: usagePercent,
@@ -120,19 +109,6 @@ export function HeroStats({
 			label: "Connected Devices",
 			value: deviceCount,
 			subtitle: "registered in library",
-		},
-		{
-			icon: ComputeIcon,
-			label: "AI Compute Power",
-			value: (
-				<>
-					<Text className="text-ink text-3xl font-bold">
-						{topsValue}{" "}
-						<Text className="text-ink-faint text-xl">TOPS</Text>
-					</Text>
-				</>
-			),
-			subtitle: topsRank.label,
 		},
 		// Second page - Storage breakdown
 		{

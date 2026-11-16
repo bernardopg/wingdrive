@@ -96,6 +96,43 @@ class WingMobileCoreModule : Module() {
                 android.util.Log.e("WingMobileCore", "Failed to shutdown core: ${e.message}")
             }
         }
+
+        // A file manager needs to read shared storage: "All files access" on Android 11+,
+        // the storage permission before (MOB-017).
+        Function("hasAllFilesAccess") {
+            val context = appContext.reactContext ?: return@Function false
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                android.os.Environment.isExternalStorageManager()
+            } else {
+                context.checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) ==
+                    android.content.pm.PackageManager.PERMISSION_GRANTED
+            }
+        }
+
+        // Opens the system page where the user grants it; the app re-checks when it returns.
+        Function("openAllFilesAccessSettings") {
+            val context = appContext.reactContext ?: return@Function false
+            val packageUri = android.net.Uri.parse("package:${context.packageName}")
+            val intent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                android.content.Intent(
+                    android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                    packageUri,
+                )
+            } else {
+                android.content.Intent(
+                    android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    packageUri,
+                )
+            }
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            try {
+                context.startActivity(intent)
+                true
+            } catch (e: Exception) {
+                android.util.Log.e("WingMobileCore", "Failed to open storage settings: ${e.message}")
+                false
+            }
+        }
     }
 
     fun getDataDirectory(): String {

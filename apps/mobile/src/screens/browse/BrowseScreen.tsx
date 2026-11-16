@@ -1,6 +1,6 @@
 import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import { useState, useRef, useCallback } from "react";
-import { View, ScrollView, Dimensions, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from "react-native";
+import { Alert, Pressable, View, ScrollView, Dimensions, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from "react-native";
 import { useSafeAreaInsets, type EdgeInsets } from "react-native-safe-area-context";
 import Animated, {
 	useSharedValue,
@@ -9,12 +9,15 @@ import Animated, {
 	interpolate,
 	Extrapolation,
 } from "react-native-reanimated";
-import { useNormalizedQuery } from "../../client";
+import { useLibraryAction, useNormalizedQuery } from "../../client";
+import { useTranslation } from "react-i18next";
+import { RenameDialog } from "../../components/RenameDialog";
 import { PageIndicator } from "../../components/PageIndicator";
 import { GlassSearchBar } from "../../components/GlassSearchBar";
 import { useRouter } from "expo-router";
 import { WingItem as WingItemComponent, WingGroupComponent } from "./components";
 import { SettingsGroup } from "../../components/primitive";
+import { StorageAccessCard } from "../../components/StorageAccessCard";
 
 interface Wing {
 	id: string;
@@ -107,6 +110,8 @@ function WingContent({
 				<GlassSearchBar onPress={handleSearchPress} editable={false} />
 			</View>
 
+			<StorageAccessCard />
+
 			{/* Wing Items (pinned shortcuts) */}
 			{wingItems.length > 0 && (
 				<View className="mb-6">
@@ -126,21 +131,47 @@ function WingContent({
 	);
 }
 
-function CreateWingScreen() {
+/** Colors offered to new wings, the same palette as the desktop's "New Wing". */
+const WING_COLORS = ["#3B82F6", "#F97316", "#22C55E", "#A855F7", "#EF4444", "#EAB308"];
+
+function CreateWingScreen({ wingCount }: { wingCount: number }) {
+	const { t } = useTranslation("common");
+	const [naming, setNaming] = useState(false);
+	const createWing = useLibraryAction("wings.create");
 	return (
 		<View
 			style={{ width: SCREEN_WIDTH, paddingHorizontal: 16 }}
 			className="flex-1 items-center justify-center"
 		>
-			<View className="w-16 h-16 rounded-full bg-accent/10 items-center justify-center mb-4">
-				<Text className="text-accent text-3xl">+</Text>
-			</View>
-			<Text className="text-xl font-bold text-ink mb-2">
-				Create New Wing
-			</Text>
-			<Text className="text-ink-dull text-center max-w-xs">
-				Organize your files, devices, and locations into separate Wings
-			</Text>
+			<Pressable
+				onPress={() => setNaming(true)}
+				accessibilityRole="button"
+				className="items-center"
+			>
+				<View className="w-16 h-16 rounded-full bg-accent/10 items-center justify-center mb-4">
+					<Text className="text-accent text-3xl">+</Text>
+				</View>
+				<Text className="text-xl font-bold text-ink mb-2">
+					Create New Wing
+				</Text>
+				<Text className="text-ink-dull text-center max-w-xs">
+					Organize your files, devices, and locations into separate Wings
+				</Text>
+			</Pressable>
+			{naming && (
+				<RenameDialog
+					title={t("Create New Wing")}
+					initialValue=""
+					onClose={() => setNaming(false)}
+					onSubmit={(name) => {
+						setNaming(false);
+						createWing.mutate(
+							{ name, icon: "Planet", color: WING_COLORS[wingCount % WING_COLORS.length] },
+							{ onError: (error) => Alert.alert(t("Error"), error.message) },
+						);
+					}}
+				/>
+			)}
 		</View>
 	);
 }
@@ -191,7 +222,7 @@ export function BrowseScreen() {
 						insets={insets}
 					/>
 				))}
-				<CreateWingScreen />
+				<CreateWingScreen wingCount={wingsList.length} />
 			</ScrollView>
 
 			{/* Floating Wing Indicator */}

@@ -93,6 +93,7 @@ impl ProxyGenerator {
 
 		// Spawn FFmpeg process
 		let mut cmd = Command::new("ffmpeg");
+		crate::common::process::hide_console_window_async(&mut cmd);
 		cmd.args(args)
 			.stdin(Stdio::null())
 			.stdout(Stdio::null())

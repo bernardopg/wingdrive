@@ -115,6 +115,17 @@ export function OverviewScreen() {
 	});
 
 	// Library name scale on overscroll (anchored left)
+	// The hero moves up at half the scroll speed, so its title row would slide under
+	// the status bar before the hero fades; fade the row out first (MOB-017).
+	const heroTitleRowStyle = useAnimatedStyle(() => ({
+		opacity: interpolate(
+			scrollY.value,
+			[0, HEADER_INITIAL_HEIGHT * 2],
+			[1, 0],
+			Extrapolation.CLAMP
+		),
+	}));
+
 	const libraryNameScale = useAnimatedStyle(() => {
 		const scale = interpolate(
 			scrollY.value,
@@ -314,7 +325,10 @@ export function OverviewScreen() {
 						heroAnimatedStyle,
 					]}
 				>
-					<View className="px-4 pb-4 flex-row items-center gap-3">
+					<Animated.View
+						style={heroTitleRowStyle}
+						className="px-4 pb-4 flex-row items-center gap-3"
+					>
 						<Animated.Text
 							style={[libraryNameScale]}
 							className="text-ink text-[30px] font-bold flex-1"
@@ -358,7 +372,7 @@ export function OverviewScreen() {
 							}
 							onPress={() => setShowLibrarySwitcher(true)}
 						/>
-					</View>
+					</Animated.View>
 
 					{/* Search Bar */}
 					<View className="px-4 mb-4" style={{ position: "relative", zIndex: 25 }} pointerEvents="auto">

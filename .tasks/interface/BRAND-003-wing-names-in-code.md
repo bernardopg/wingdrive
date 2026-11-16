@@ -1,7 +1,7 @@
 ---
 id: BRAND-003
 title: Wingbot and Wings names in code, settings and the RPC API
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: UI-000
 priority: High
@@ -40,13 +40,13 @@ change.
   resource types. The sidebar store moves a saved `currentSpaceId` to `currentWingId`.
 - [x] Wings: code-wide check in `scripts/check-wingdrive-independence.sh`.
 - [x] Wings: checked against a copy of the author's library (2026-11-15).
-- [ ] Wings: sidebar checked in the desktop app and sync with a device on 3.3.1.
+- [x] Wings: sidebar checked in the desktop app and sync with a device on 3.3.1 (2026-11-15).
 
 ## Acceptance Criteria
 
-- [ ] `git grep -i spacebot` and the Space names find only compatibility readers and history.
-- [ ] Existing settings, libraries and sidebar collections survive the upgrade.
-- [ ] Sync between a new and an older device is either kept or refused with a clear message.
+- [x] `git grep -i spacebot` and the Space names find only compatibility readers and history.
+- [x] Existing settings, libraries and sidebar collections survive the upgrade.
+- [x] Sync between a new and an older device is either kept or refused with a clear message.
   Kept by design: the wire names did not change (`wing_layout_test` checks them).
 
 ## Evidence
@@ -71,3 +71,15 @@ change.
   `PRAGMA foreign_key_check` is empty, `wing wings list` and `wing wings layout` show them, and no
   second default wing was created. A unit test pins `space_id`, `space_uuid` and the three model
   names on the wire.
+- 2026-11-15, sync with a device on `v3.3.1`: a daemon built from `main` (named instance) paired
+  with the moto g(7) on `v3.3.1` and shared a new library. A wing ("Trabalho"), a group ("Projetos")
+  and two items created on the desktop through `wings.create`, `wings.add_group` and
+  `wings.add_item` reached the phone in seconds; its log shows "Shared change applied successfully"
+  for `space_group` and `space_item`, and Explore shows the wing and the group. The default groups
+  the phone created for the shared library have the same deterministic ids as the desktop's, so
+  the desktop still lists one "All Devices" wing with five groups. The phone hides Recents and
+  Favorites items by design (MOB-007); its review is MOB-017.
+- 2026-11-15, desktop sidebar: the same interface the Tauri app serves (`wing-server`, release
+  build) against that daemon. The wing switcher lists "All Devices" and "Trabalho" with "New Wing"
+  and "Wing Settings"; "Trabalho" shows Favorites, the Projetos group with Recents, and Folders. The
+  sidebar store saved `currentWingId` at version 1, and the page logged no error.

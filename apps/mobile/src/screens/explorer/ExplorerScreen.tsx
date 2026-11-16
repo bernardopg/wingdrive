@@ -10,6 +10,7 @@ import { useNormalizedQuery } from "../../client";
 import { GlassButton } from "../../components/GlassButton";
 import { GlassContextMenu } from "../../components/GlassContextMenu";
 import { SearchToolbar } from "../../components/SearchToolbar";
+import { StorageAccessCard } from "../../components/StorageAccessCard";
 import { useSearchStore } from "./context/SearchContext";
 import { List, ArrowLeft } from "phosphor-react-native";
 
@@ -44,6 +45,32 @@ export function ExplorerScreen() {
 
 	// Fetch files
 	const { files, isLoading } = useExplorerFiles(params);
+
+	// Devices listed in the library, to explain an empty device view.
+	const { data: libraryDevices } = useNormalizedQuery({
+		query: "devices.list",
+		input: { include_offline: true, include_details: false, show_paired: true },
+		resourceType: "device",
+		enabled: params?.type === "view" && params.view === "device",
+	});
+	const viewedDevice =
+		params?.type === "view" && params.view === "device"
+			? libraryDevices?.find((device) => device.id === params.id)
+			: undefined;
+	// An empty device view means missing storage access on this phone, or a
+	// device that shares no folders with this library (MOB-017).
+	const emptyState = viewedDevice ? (
+		viewedDevice.is_current ? (
+			<View className="px-6 w-full">
+				<StorageAccessCard />
+				<Text className="text-ink-dull text-center">No items</Text>
+			</View>
+		) : (
+			<Text className="text-ink-dull text-center px-8">
+				This device shares no folders with this library yet. Add a location on it to browse its files here.
+			</Text>
+		)
+	) : undefined;
 
 	// Fetch device for path display
 	const { data: devices } = useNormalizedQuery({
@@ -188,9 +215,9 @@ export function ExplorerScreen() {
 			) : (
 				<>
 					{viewMode === "list" ? (
-						<ListView files={files} onFilePress={handleFilePress} />
+						<ListView files={files} onFilePress={handleFilePress} emptyState={emptyState} />
 					) : (
-						<GridView files={files} onFilePress={handleFilePress} />
+						<GridView files={files} onFilePress={handleFilePress} emptyState={emptyState} />
 					)}
 				</>
 			)}

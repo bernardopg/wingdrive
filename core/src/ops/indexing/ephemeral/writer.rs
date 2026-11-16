@@ -282,6 +282,21 @@ impl ChangeHandler for MemoryAdapter {
 
 		let mut entries = match tokio::fs::read_dir(path).await {
 			Ok(e) => e,
+			// Folders owned by other users (systemd's private folders in /tmp) and folders
+			// deleted before the walk reaches them are normal, not worth a warning each.
+			Err(e)
+				if matches!(
+					e.kind(),
+					std::io::ErrorKind::PermissionDenied | std::io::ErrorKind::NotFound
+				) =>
+			{
+				tracing::debug!(
+					"Skipped directory {} for ephemeral indexing: {}",
+					path.display(),
+					e
+				);
+				return Ok(());
+			}
 			Err(e) => {
 				tracing::warn!(
 					"Failed to read directory {} for ephemeral indexing: {}",

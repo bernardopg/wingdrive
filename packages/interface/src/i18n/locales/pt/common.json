@@ -229,22 +229,6 @@
 			"transparentWindow": "em uma janela transparente posicionada no cursor"
 		}
 	},
-	"updater": {
-		"latest": "Você está usando a versão mais recente!",
-		"checkFailed": "Falha ao buscar atualizações",
-		"downloadFailed": "Falha ao baixar a atualização",
-		"installFailed": "Falha ao instalar a atualização",
-		"confirm": "Uma nova versão (v{{version}}) está disponível!\n\nVersão atual: v{{currentVersion}}\n\n{{notes}}\n\nDeseja baixá-la e instalá-la agora?",
-		"noReleaseNotes": "Nenhuma nota de versão disponível",
-		"failed": "Falha ao atualizar: {{error}}",
-		"formatBytes": "{{value}} {{unit}}",
-		"units": {
-			"bytes": "bytes",
-			"kb": "KB",
-			"mb": "MB",
-			"gb": "GB"
-		}
-	},
 	"keybinds": {
 		"explorer": {
 			"undo": "Desfazer",

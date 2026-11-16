@@ -30,6 +30,10 @@ export interface CoreModule {
   shutdown(): void;
   addListener(callback: (event: CoreEvent) => void): () => void;
   addLogListener(callback: (log: CoreLog) => void): () => void;
+  /** Whether the app may read shared storage (Android); always true elsewhere */
+  hasAllFilesAccess(): boolean;
+  /** Opens the system page that grants storage access; false when it could not */
+  openAllFilesAccessSettings(): boolean;
 }
 
 interface WingMobileCoreNativeModule extends NativeModule<WingMobileCoreEvents> {
@@ -41,6 +45,8 @@ interface WingMobileCoreNativeModule extends NativeModule<WingMobileCoreEvents> 
   shutdown(): void;
   addListener(callback: (event: CoreEvent) => void): () => void;
   addLogListener(callback: (log: CoreLog) => void): () => void;
+  hasAllFilesAccess?(): boolean;
+  openAllFilesAccessSettings?(): boolean;
 }
 
 const WingMobileCoreModule =
@@ -70,4 +76,8 @@ export const WingMobileCore: CoreModule = {
     const subscription = emitter.addListener("WingCoreLog", callback);
     return () => subscription.remove();
   },
+  // iOS has no such permission, so only Android implements these.
+  hasAllFilesAccess: () => WingMobileCoreModule.hasAllFilesAccess?.() ?? true,
+  openAllFilesAccessSettings: () =>
+    WingMobileCoreModule.openAllFilesAccessSettings?.() ?? false,
 };

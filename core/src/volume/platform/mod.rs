@@ -11,3 +11,8 @@ pub mod windows;
 
 #[cfg(target_os = "ios")]
 pub mod ios;
+
+// Also built for tests on other Unix systems: its detection takes the storage root as a parameter.
+#[cfg(any(target_os = "android", all(test, unix)))]
+#[cfg_attr(not(target_os = "android"), allow(dead_code))]
+pub mod android;

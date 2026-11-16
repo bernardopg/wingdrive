@@ -231,5 +231,13 @@
 	"Version": "Versão",
 	"Source code": "Código-fonte",
 	"Report a problem": "Relatar um problema",
-	"Save": "Salvar"
+	"Save": "Salvar",
+	"Files Indexed": "Arquivos indexados",
+	"Sources": "Fontes",
+	"All Devices": "Todos os dispositivos",
+	"Internal storage": "Armazenamento interno",
+	"Allow access to files": "Permitir acesso aos arquivos",
+	"WingDrive needs All files access to show and manage the files on this device.": "O WingDrive precisa do acesso a todos os arquivos para mostrar e gerenciar os arquivos deste aparelho.",
+	"Open settings": "Abrir configurações",
+	"This device shares no folders with this library yet. Add a location on it to browse its files here.": "Este aparelho ainda não compartilha pastas com esta biblioteca. Adicione um local nele para navegar pelos arquivos aqui."
 }

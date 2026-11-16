@@ -34,7 +34,9 @@
 			"keepRunning": "Keep running in the background",
 			"keepRunningHint": "Closing the window keeps WingDrive in the tray so folders open instantly",
 			"startAtLogin": "Start at login",
-			"startAtLoginHint": "Start WingDrive hidden in the tray when you log in",
+			"startAtLoginHint": "Start WingDrive when you log in",
+			"startMinimized": "Start minimized in the tray",
+			"startMinimizedHint": "At login, keep WingDrive in the tray without opening its window",
 			"terminal": "Terminal",
 			"terminalHint": "Command for Open Terminal Here. Leave empty to use xdg-terminal-exec, $TERMINAL or an installed terminal."
 		},
@@ -66,6 +68,23 @@
 			"button": "Reset",
 			"pending": "Resetting...",
 			"zone": "Danger zone"
+		},
+		"updates": {
+			"title": "Updates",
+			"version": "WingDrive {{version}}",
+			"check": "Check for updates",
+			"install": "Install and restart",
+			"checking": "Checking for updates…",
+			"upToDate": "WingDrive is up to date",
+			"available": "WingDrive {{version}} is available",
+			"installing": "Installing the update…",
+			"downloading": "Downloading the update: {{percent}}%",
+			"failed": "The update failed: {{error}}",
+			"selfHint": "WingDrive installs signed releases from GitHub",
+			"packageManagerHint": "Your package manager installs updates. On Arch, run yay -Syu or pacman -Syu",
+			"unsupportedHint": "Updates on this system come from new downloads on wingdrive.org",
+			"automatic": "Check for updates automatically",
+			"automaticHint": "Look for a new version after WingDrive starts and show a notification"
 		}
 	},
 	"appearance": {

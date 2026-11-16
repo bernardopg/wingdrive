@@ -179,8 +179,12 @@ impl NetworkingEventLoop {
 				Some(incoming) = self.endpoint.accept() => {
 					let conn = match incoming.await {
 						Ok(c) => c,
+						// A handshake that fails here never reached a device's identity check:
+						// a stray, duplicated or late Initial packet that does not decrypt
+						// ("authentication failed"), or a peer that gave up. The dialing side
+						// sees and reports its own failure.
 						Err(e) => {
-							self.logger.error(&format!("Failed to establish connection: {}", e)).await;
+							self.logger.debug(&format!("Incoming connection rejected during the handshake: {}", e)).await;
 							continue;
 						}
 					};

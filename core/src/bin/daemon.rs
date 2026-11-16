@@ -1,3 +1,8 @@
+// A release daemon on Windows is a background program: started at login or by the app,
+// it must not open a console window that stops WingDrive when closed (TAURI-019). It logs to
+// daemon.log, and `wing start --foreground` still shows its output through inherited handles.
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+
 use clap::Parser;
 use std::path::PathBuf;
 use tokio::signal;

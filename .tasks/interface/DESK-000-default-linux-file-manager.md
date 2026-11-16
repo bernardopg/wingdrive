@@ -1,14 +1,14 @@
 ---
 id: DESK-000
 title: "Epic: WingDrive as the default Linux file manager"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: TAURI-000
 priority: High
 milestone: M2
 sprint: S05
 tags: [epic, desktop, linux, file-manager]
-last_updated: 2026-10-27
+last_updated: 2026-11-15
 ---
 
 ## Description
@@ -29,34 +29,36 @@ WingDrive must replace Dolphin, Nautilus or Yazi as the file manager the user op
 - [x] DESK-010 Startup latency and resident memory budget
 - [x] DESK-011 System WebKit memory on Arch
 - [x] DESK-012 Linux navigation compositing
-- [ ] DESK-013 i18n and theming follow-ups (steps 1-2 done; Crowdin proofreading and packaged checks left)
+- [x] DESK-013 i18n and theming follow-ups
 - [x] DESK-014 Accurate directory sizes
-- [ ] DESK-015 Open a folder in a new window (code merged in #217; runtime check pending)
-- [ ] DESK-016 Dual-pane Explorer (planned for S05)
-- [ ] DESK-017 Close M2: AUR runtime evidence and a full working day
-- [ ] DESK-018 Copy To and Move To a chosen folder (code merged in #226; runtime check pending)
-- [ ] DESK-019 Invert selection and select by pattern (code merged in #227; runtime check pending)
-- [ ] DESK-020 On-demand file checksum in the Inspector (code merged in #227; runtime check pending)
-- [ ] DESK-021 Search refinement bar (PR #232 open)
+- [x] DESK-015 Open a folder in a new window
+- [x] DESK-016 Dual-pane Explorer
+- [x] DESK-017 Close M2: AUR runtime evidence and a full working day
+- [x] DESK-018 Copy To and Move To a chosen folder
+- [x] DESK-019 Invert selection and select by pattern
+- [x] DESK-020 On-demand file checksum in the Inspector
+- [x] DESK-021 Search refinement bar
 - [x] DESK-025 Drag files from the Explorer into other apps
 - [x] DESK-026 Filter the current folder by name
 - [x] DESK-027 Status bar with counts, selection size and free space
 - [x] DESK-028 Ctrl+L edits the path bar
-- [ ] DESK-029 Folder tree and expandable list rows
-- [ ] DESK-030 Group items by kind, date or size
-- [ ] DESK-031 New file from the Templates folder
-- [ ] DESK-032 User-defined context menu actions
-- [ ] DESK-033 Act on system files as administrator
-- [ ] DESK-034 Terminal panel docked in the Explorer
-- [ ] DESK-035 Git status emblems on files
+- [x] DESK-029 Folder tree and expandable list rows
+- [x] DESK-030 Group items by kind, date or size
+- [x] DESK-031 New file from the Templates folder
+- [x] DESK-032 User-defined context menu actions
+- [x] DESK-033 Act on system files as administrator
+- [x] DESK-034 Terminal panel docked in the Explorer
+- [x] DESK-035 Git status emblems on files
 - [x] DESK-036 Open in a new tab from the sidebar and folders, and drop files on tabs
-- [ ] DESK-051 WingDrive as the file chooser for uploads and saves (xdg-desktop-portal FileChooser)
+- [x] DESK-051 WingDrive as the file chooser for uploads and saves
+- [x] DESK-097 A hidden login start stays in the tray, and "Start minimized in the tray" is a setting
+- [x] DESK-090 to DESK-096 Bugs found in the S03 and S04 revalidation
 
 ## Acceptance Criteria
 
 - [x] `xdg-mime default wingdrive.desktop inode/directory` makes `xdg-open <dir>` open WingDrive
-- [ ] Every child task is Done with runtime evidence from the AUR package
-- [ ] A full working day on the author's machine without falling back to another file manager
+- [x] Every child task is Done with runtime evidence from the AUR package
+- [x] A full working day on the author's machine without falling back to another file manager
 
 ## Evidence
 
@@ -65,4 +67,8 @@ WingDrive must replace Dolphin, Nautilus or Yazi as the file manager the user op
 - With isolated `XDG_DATA_HOME`/`XDG_CONFIG_HOME` holding the shipped desktop entry, `xdg-mime default
   wingdrive.desktop inode/directory` wrote `inode/directory=wingdrive.desktop` and `gio mime inode/directory`
   reported `wingdrive.desktop` as the default, which is what `xdg-open <dir>` uses.
-- Open: runtime evidence from the published AUR package and a full working day on the author's machine.
+- DESK-017 (2026-11-05): the author used the AUR package for several days without going back to
+  another file manager. Each child task records its own check on the AUR package.
+- Closed on 2026-11-15: DESK-051 confirmed by the author with `wingdrive-bin` `3.3.1` (cold login,
+  upload in Chrome), and DESK-097 (window shown at login) fixed and reproduced with a named
+  instance. With every child Done, M2 is complete.

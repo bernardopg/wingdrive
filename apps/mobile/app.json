@@ -27,6 +27,9 @@
         "backgroundColor": "#0F0A1F"
       },
       "allowBackup": false,
+      "permissions": [
+        "android.permission.MANAGE_EXTERNAL_STORAGE"
+      ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW"

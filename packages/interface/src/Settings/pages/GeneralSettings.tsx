@@ -19,6 +19,7 @@ import {
   errorMessage,
   inputClass,
 } from "../components";
+import { UpdatesSection } from "./UpdatesSection";
 
 interface DeviceSettingsForm {
   name: string;
@@ -214,6 +215,13 @@ export function GeneralSettings() {
             checked={desktopSettings.start_at_login}
             onChange={(value) => updateDesktopSetting("start_at_login", value)}
           />
+          <SwitchRow
+            label={t("general.background.startMinimized")}
+            hint={t("general.background.startMinimizedHint")}
+            checked={desktopSettings.start_minimized}
+            disabled={!desktopSettings.start_at_login}
+            onChange={(value) => updateDesktopSetting("start_minimized", value)}
+          />
           <SettingsRow
             label={t("general.background.terminal")}
             hint={t("general.background.terminalHint")}
@@ -236,6 +244,11 @@ export function GeneralSettings() {
           </SettingsRow>
         </SettingsSection>
       )}
+
+      <UpdatesSection
+        desktopSettings={desktopSettings}
+        onSettingChange={(value) => updateDesktopSetting("check_for_updates", value)}
+      />
 
       {portal && (
         <SettingsSection title={t("general.fileChooser.title")}>

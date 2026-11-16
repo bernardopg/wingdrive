@@ -153,7 +153,7 @@ pub async fn get_audio_duration_public(path: &Path) -> Result<f32> {
 	let output = tokio::task::spawn_blocking({
 		let path = path.to_path_buf();
 		move || {
-			Command::new("ffprobe")
+			crate::common::process::hide_console_window(&mut Command::new("ffprobe"))
 				.args([
 					"-v",
 					"error",
