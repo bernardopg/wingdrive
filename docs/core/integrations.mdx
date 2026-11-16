@@ -75,8 +75,11 @@ A desktop client secret is not confidential, but Google still requires it in the
 | Service | Scopes |
 | --- | --- |
 | Identity | `openid`, `email`, `profile` |
-| Drive | `https://www.googleapis.com/auth/drive` |
+| Drive, mode `app` | `https://www.googleapis.com/auth/drive.file` |
+| Drive, mode `custom` | `https://www.googleapis.com/auth/drive` |
 | Photos | `photoslibrary.appendonly`, `photoslibrary.readonly.appcreateddata`, `photoslibrary.edit.appcreateddata`, `photospicker.mediaitems.readonly` |
+
+The full `drive` scope is restricted: an app that asks for it through a public client passes Google verification only with a paid security assessment (CASA) every year. WingDrive's own client therefore asks for `drive.file`, which shows the files WingDrive created or the user opened with it. A custom client belongs to the user, so it keeps the full scope (`ConnectionMode::drive_access`, ADR in `docs/design/GOOGLE-DRIVE-SCOPE.md`). Either scope counts as Drive granted, and `IntegrationAccountInfo.drive_access` (`full` or `app_files`) tells the UI and the CLI which one an account has, so accounts connected before 3.4.0 with `drive` keep working.
 
 Users can untick scopes on the consent page. WingDrive reads the scopes Google actually granted and only offers the services they cover.
 
@@ -246,14 +249,15 @@ The integration is complete in code and tested against a fake of the Google APIs
 | --- | --- |
 | INTG-001 | WingDrive's Google Cloud project and OAuth client, bundled in release builds |
 | INTG-002 | Privacy policy, terms and Limited Use disclosure on wingdrive.org |
-| INTG-003 | Google OAuth verification; the restricted `drive` scope needs a yearly CASA assessment |
+| INTG-003 | Google OAuth verification of the sensitive Photos scopes, submitted on 2026-11-16; WingDrive's client asks for no restricted scope |
 | INTG-004 | End-to-end validation with real Google on every platform |
 | INTG-005 | Reconnect flow for revoked or expired accounts |
 
-Until INTG-001 ships, Google sign-in needs the `custom` mode (see [OAuth client](#oauth-client)). OneDrive (INTG-022) still needs WingDrive's Microsoft app registration in release builds and a check against the real service. Other providers (Dropbox, Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA, Proton Drive, object storage, SFTP and SMB) are planned as INTG-021 to INTG-031 on top of a shared provider framework (INTG-020).
+Official builds since 3.3.0 ship WingDrive's Google client; builds from source without it need the `custom` mode (see [OAuth client](#oauth-client)). OneDrive (INTG-022) still needs WingDrive's Microsoft app registration in release builds and a check against the real service. Other providers (Dropbox, Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA, Proton Drive, object storage, SFTP and SMB) are planned as INTG-021 to INTG-031 on top of a shared provider framework (INTG-020).
 
 ## Limitations
 
+- In mode `app`, Drive shows only files WingDrive created or opened (`drive.file`). Opening existing files there needs the Google Picker, which is not wired yet; use mode `custom` for all of My Drive.
 - Shared drives and "Shared with me" are not browsed; only "My Drive".
 - Drive folders are listed live and not indexed, so Drive files do not appear in library search. Enabling indexing on the Drive location runs the generic cloud indexer, which has not been validated against Google Drive.
 - Changes made in Drive appear on the next listing (cache of 30 seconds); there is no push notification channel.
