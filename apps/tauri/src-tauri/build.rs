@@ -75,9 +75,13 @@ fn main() {
 	};
 
 	let out_dir = std::path::PathBuf::from(std::env::var_os("OUT_DIR").expect("OUT_DIR not set"));
+	// OUT_DIR is <profile>/build/<pkg>-<hash>/out, or <profile>/build/<pkg>/<hash>/out
+	// with the build-dir layout Cargo 1.100 uses. The profile directory is the
+	// parent of the `build` ancestor in both.
 	let profile_dir = out_dir
 		.ancestors()
-		.nth(3)
+		.find(|dir| dir.file_name().is_some_and(|name| name == "build"))
+		.and_then(std::path::Path::parent)
 		.expect("Missing Cargo profile directory");
 
 	// The daemon runs the app; the CLI ships beside it so the commands the
