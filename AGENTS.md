@@ -824,6 +824,8 @@ WingDrive uses a file-based task system in `/.tasks/` to track features, epics, 
 
 Planning follows the hierarchy roadmap, milestone, epic, task, with two-week sprints. Read `.tasks/PLANNING.md` for the method and Definition of Done, `.tasks/ROADMAP.md` for milestone order, and `.tasks/sprints/` for the current sprint. Tasks set `parent` (epic), `milestone` (`M1`, `M2`, ...), and, once committed to a sprint, `sprint` (`S01`, ...).
 
+The `wingdrive-board` MCP server (`.mcp.json`, `tools/board/`) reads and updates tasks, checklists and sprint logs; prefer it over hand edits. `just board` opens the same data as a kanban UI for the author.
+
 ### When to Create Tasks
 
 Create tasks for work that:

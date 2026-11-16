@@ -1,0 +1,8 @@
+{
+	"mcpServers": {
+		"wingdrive-board": {
+			"command": "bun",
+			"args": ["tools/board/src/cli.ts", "mcp"]
+		}
+	}
+}

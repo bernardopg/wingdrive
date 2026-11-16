@@ -21,6 +21,12 @@ ts_changed=$(printf '%s\n' "$changed" | grep -E '^(packages/|apps/|bun\.lock|pac
 
 step "Task files"
 cargo run -q -p task-validator -- validate
+[ -d tools/board/node_modules ] || bun install --cwd tools/board --frozen-lockfile
+bun tools/board/src/cli.ts check --strict \
+	|| { echo "Board check failed. Fix the errors above, or run 'just board-sync' and commit the tables."; exit 1; }
+if printf '%s\n' "$changed" | grep -q '^tools/board/'; then
+	(cd tools/board && bun run typecheck && bun test)
+fi
 ./scripts/check-wingdrive-independence.sh
 
 if [ -n "$ts_changed" ] || [ "${1:-}" = "--all" ]; then
