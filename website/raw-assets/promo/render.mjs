@@ -35,7 +35,17 @@ async function openPage(browser) {
 
 async function shot(p, t, tb = t) {
 	await p.page.evaluate(([t, tb]) => window.seek(t, tb), [t, tb]);
-	const r = await p.cdp.send("Page.captureScreenshot", { format: "png", optimizeForSpeed: true, captureBeyondViewport: false });
+	let r;
+	for (let attempt = 0; ; attempt++) {
+		try {
+			r = await p.cdp.send("Page.captureScreenshot", { format: "png", optimizeForSpeed: true, captureBeyondViewport: false });
+			break;
+		} catch (e) {
+			// A busy compositor sometimes refuses one capture; give up after a few tries.
+			if (attempt >= 4) throw e;
+			await new Promise((res) => setTimeout(res, 250 * (attempt + 1)));
+		}
+	}
 	return Buffer.from(r.data, "base64");
 }
 
