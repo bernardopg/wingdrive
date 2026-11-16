@@ -6,10 +6,10 @@ assignee: bernardopg
 priority: High
 tags: [core, platform, file-operations]
 whitepaper: DESIGN-open-with.md
-last_updated: 2026-11-05
+last_updated: 2026-11-15
 related_tasks: [EXPL-004, DESK-004]
 milestone: M3
-sprint: S05
+sprint: S06
 ---
 
 ## Description

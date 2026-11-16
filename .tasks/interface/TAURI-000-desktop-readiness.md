@@ -7,8 +7,8 @@ parent: UI-000
 priority: High
 milestone: M3
 tags: [epic, tauri, desktop, quality]
-last_updated: 2026-11-05
-sprint: S05
+last_updated: 2026-11-15
+sprint: S06
 ---
 
 ## Description
@@ -26,9 +26,14 @@ Make the Tauri desktop app honest and release-ready. Every visible action must e
 
 ## Remaining children
 
-- TAURI-012: the regression matrix on macOS and Windows, by hand.
-- REL-001: signed releases.
-- TAURI-017: administrator retries on Windows (backlog, after REL-001).
+Order decided on 2026-11-15, all in S06 unless noted:
+
+1. REL-001: the Tauri updater key and signed `latest.json` first, so installed apps receive fixes
+   without a manual download; then Authenticode and Apple.
+2. TAURI-018: the Explorer smoke on every pull request, so an Explorer regression fails before a tag.
+3. TAURI-012: the regression matrix by hand, Windows first (with CORE-014). macOS needs a Mac; without
+   one it moves to S07.
+4. TAURI-017: administrator retries on Windows (after REL-001's certificate).
 
 ## Acceptance Criteria
 
@@ -39,4 +44,6 @@ Make the Tauri desktop app honest and release-ready. Every visible action must e
 - [x] Complete TAURI-002 through TAURI-007, except TAURI-004 (Spacebot), which moved to M5
 - [x] Run the desktop regression matrix on Linux (TAURI-006)
 - [ ] Run it on macOS and Windows (TAURI-012, M3)
+- [ ] Explorer smoke runs on every pull request (TAURI-018)
+- [ ] Installed apps update themselves from signed releases (REL-001)
 - [x] Verify a production bundle, not only the dev executable (TAURI-011, TAURI-015)

@@ -7,8 +7,8 @@ parent: TAURI-000
 priority: Medium
 milestone: M3
 tags: [tauri, testing, ci, macos, windows]
-last_updated: 2026-11-05
-sprint: S05
+last_updated: 2026-11-15
+sprint: S06
 ---
 
 ## Description

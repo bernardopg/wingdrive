@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-11-13. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-11-15. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -12,8 +12,8 @@ Os sprints futuros são um plano de backlog: ao abrir cada um, revisar a lista c
 
 | Sprint | Datas | Milestone | Foco |
 |---|---|---|---|
-| [S05](sprints/S05.md) | 2026-11-12 a 2026-11-25 | M2, M3 | Fechar o M2 (DESK-000, BRAND-003 Wings, cobertura) |
-| [S06](sprints/S06.md) | 2026-11-26 a 2026-12-09 | M3, M5 | Release assinado, macOS/Windows, Google para qualquer usuário |
+| [S05](sprints/S05.md) | 2026-11-12 a 2026-11-25 | M2 | Fechar o M2 (DESK-051, BRAND-003, CORE-021) e release 3.4.0 |
+| [S06](sprints/S06.md) | 2026-11-26 a 2026-12-09 | M3, M5 | Updater assinado, smoke do Explorer em todo PR, Windows à mão, Google para qualquer usuário |
 | [S07](sprints/S07.md) | 2026-12-10 a 2026-12-23 | M4 | Sync de arquivos e compartilhamento |
 | [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | M4 | Fechar o M4 |
 | [S09](sprints/S09.md) a [S14](sprints/S14.md) | 2027-01-07 a 2027-03-31 | M5 | Opcionais por prioridade |
@@ -81,7 +81,9 @@ fechar o M2:
 
 | Task | O que falta | Sprint |
 |---|---|---|
+| BRAND-003 | Barra lateral dos Wings no app desktop e sync com um aparelho na 3.3.1 (código no `main` desde o #397) | S05 |
 | DESK-051 | Login a frio com o pacote AUR da correção do deadlock do portal; Chrome, Firefox, GTK4 e Flatpak já conferidos em 2026-11-14 | S05 |
+| CORE-021 | Pasta abrindo com "0 files" no smoke do Explorer da `v3.2.0`; a parte do teste de fixtures já foi corrigida | S05 |
 | DESK-000 | Fecha quando todas as filhas estiverem Done | S05 |
 
 DESK-043 e DESK-090 fecharam em 2026-11-14: dez sessões da `v3.3.0` com 15 abas ficaram abaixo de
@@ -112,13 +114,14 @@ lixeira no core, no CLI e na web UI, e cópias que não perdem dados quando canc
 
 | Ordem | Task | O que falta | Sprint |
 |---|---|---|---|
-| 1 | TAURI-012 | Matriz de regressão à mão: rodada no Windows com a `v3.0.0` e as checagens que sobraram da TAURI-016; macOS depois | S05 |
-| 2 | CORE-014 | "Abrir com" e abrir arquivos no Windows e no macOS, conferidos na rodada da TAURI-012 | S05 |
-| 3 | REL-001 | Assinatura: updater do Tauri, Authenticode, Apple, Google Play; AUR só em tags estáveis | S05 |
-| 4 | TAURI-017 | Repetir como administrador no Windows via UAC; espera o certificado da REL-001 | — |
-| 5 | CLI-002 | `wing update` não acha binários nos releases do WingDrive (Done em 2026-11-05) | — |
-| 6 | FILE-008 | Done em 2026-11-12: todo undo do Explorer passa pelo journal do core (#378) | — |
-| 7 | TAURI-000 | Fecha quando TAURI-012 e REL-001 fecharem | S05 |
+| 1 | REL-001 | Assinatura: primeiro o updater do Tauri, depois Authenticode, Apple e Google Play; AUR só em tags estáveis | S06 |
+| 2 | TAURI-018 | Smoke do Explorer (`scripts/release/explorer.cjs`) em todo pull request e 10 execuções agendadas | S06 |
+| 3 | TAURI-012 | Matriz de regressão à mão: rodada no Windows com as checagens que sobraram da TAURI-016; macOS quando houver um Mac | S06 |
+| 4 | CORE-014 | "Abrir com" e abrir arquivos no Windows e no macOS, conferidos na rodada da TAURI-012 | S06 |
+| 5 | TAURI-017 | Repetir como administrador no Windows via UAC; espera o certificado da REL-001 | — |
+| 6 | CLI-002 | `wing update` não acha binários nos releases do WingDrive (Done em 2026-11-05) | — |
+| 7 | FILE-008 | Done em 2026-11-12: todo undo do Explorer passa pelo journal do core (#378) | — |
+| 8 | TAURI-000 | Fecha quando REL-001, TAURI-018 e TAURI-012 fecharem | S06 |
 
 O M3 fecha com a TAURI-012 Done em Windows e macOS, e um release assinado em todas as plataformas
 que têm credencial.
@@ -187,6 +190,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-15 | Release `v3.3.1` e Wings no código (#397). Plano do app desktop: o S05 fecha o M2 com BRAND-003, DESK-051 e CORE-021 (veio do S06) e solta a 3.4.0; o S06 abre com o updater assinado (REL-001), a nova TAURI-018 (smoke do Explorer em todo pull request) e a rodada Windows da TAURI-012 antes das integrações. Build Android funciona com `CFLAGS=-march=native` no host |
 | 2026-11-13 | Release `v3.3.0` (#393): login no Google com um botão pelo cliente OAuth do WingDrive embutido no build (secrets do repositório), modo com cliente próprio, OneDrive por login no navegador, catálogo de integrações, `/privacy` e `/service-terms` |
 | 2026-11-13 | Integrações: modos "Conta" e cliente próprio com catálogo de cards (INTG-010), OneDrive por login no navegador (INTG-022), projeto e cliente OAuth do WingDrive no Google com login real funcionando (INTG-001, INTG-004), `/privacy` e `/service-terms` no site (INTG-002) |
 | 2026-11-13 | Release `v3.2.0` (#383 a #389): integração Google com Drive e Fotos em várias contas (CLOUD-004), operações e edição em volumes de nuvem, cloud sync, COV-07 Done com 91,6% de cobertura do shell desktop e os bugs achados corrigidos, `sdPath` para `wdPath` (BRAND-003) |
