@@ -1,7 +1,7 @@
 ---
 id: CORE-022
 title: Daemon and desktop logs flood with expected conditions
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: TAURI-000
 priority: Medium
@@ -42,18 +42,36 @@ Noise hides the next real failure, and the journal is the first thing a user sen
 
 ## Implementation Steps
 
-- [ ] `Permission denied` on a directory inside an ephemeral listing: count them and log one DEBUG
-      line per walk with the count, not one WARN per directory. Keep WARN for the folder the user
-      opened.
-- [ ] A create event for a path that no longer exists is skipped at DEBUG.
-- [ ] Find why a paired, trusted device fails authentication on reconnect after a successful
+- [x] `Permission denied` or `NotFound` on a directory reached by the ephemeral writer logs at
+      DEBUG; other read errors keep the WARN.
+- [x] A create or modify event for a path that no longer exists is skipped at DEBUG; a real
+      failure on a path that still exists keeps the ERROR.
+- [x] "No entries found for device" is DEBUG: a device without locations owns no entries.
+- [x] The file watcher drops raw events at DEBUG once its receiver is closed during shutdown; a
+      full buffer is still an ERROR.
+- [x] Find why a paired, trusted device fails authentication on reconnect after a successful
       connection in the same session, and fix the cause or log the reason at INFO.
 - [ ] Remove the accelerator warnings: build the tray menu items without accelerators, or register
       them in the accel group GTK expects.
 - [ ] Add a check to the Linux smoke that counts WARN and ERROR lines of an idle daemon over a few
       minutes with `/tmp` open, so the noise does not come back.
 
+The `notify::inotify` and `wing_task_system` lines above only appear with a `RUST_LOG` that
+enables those crates. The daemon's default filter (`wing_core=info,wingdrive=info`) hides them, so
+the author's journal never had them.
+
 ## Acceptance Criteria
 
 - [ ] An idle daemon with `/tmp` open in the Explorer writes no WARN or ERROR line in 10 minutes.
-- [ ] A phone that reconnects after sleep or a network change connects without "authentication failed".
+- [x] A phone that reconnects after sleep or a network change connects without "authentication failed".
+
+## "authentication failed" (2026-11-16)
+
+Not the device's credentials. The message comes from the QUIC stack (`noq-proto`,
+`Endpoint::handle_first_packet`): an *Initial* packet whose AEAD tag does not verify is rejected
+with `PROTOCOL_VIOLATION("authentication failed")` before any TLS or device identity check. In the
+author's journal the phone's connection was up the whole time (connected 18:49, lost 22:36), and the
+five failures at 19:28 and 19:34 were extra handshakes arriving next to it: duplicated, late or
+cross-path Initial packets from the phone's path probing. The event loop logged every failed
+incoming handshake as an ERROR; it now logs them at DEBUG ("Incoming connection rejected during the
+handshake"), since the dialing side reports its own failure and nothing is lost.

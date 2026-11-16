@@ -316,13 +316,13 @@ pub async fn apply_batch<H: ChangeHandler>(
 
 	for path in creates {
 		if let Err(e) = retry_busy!(handle_create(handler, &path, config)) {
-			tracing::error!("Failed to handle create for {}: {}", path.display(), e);
+			log_change_error("create", &path, &e).await;
 		}
 	}
 
 	for path in modifies {
 		if let Err(e) = retry_busy!(handle_modify(handler, &path, config)) {
-			tracing::error!("Failed to handle modify for {}: {}", path.display(), e);
+			log_change_error("modify", &path, &e).await;
 		}
 	}
 
@@ -626,6 +626,16 @@ pub async fn handle_rename<H: ChangeHandler>(
 	}
 
 	Ok(())
+}
+
+/// Logs a failed create or modify. A temporary file that was deleted before the handler read it
+/// is the normal life of a temporary file, so it only shows at debug level.
+async fn log_change_error(kind: &str, path: &Path, error: &impl std::fmt::Display) {
+	if tokio::fs::symlink_metadata(path).await.is_err() {
+		tracing::debug!("Skipped {kind} for {}: it no longer exists", path.display());
+	} else {
+		tracing::error!("Failed to handle {kind} for {}: {}", path.display(), error);
+	}
 }
 
 #[cfg(test)]

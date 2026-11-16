@@ -230,7 +230,8 @@ impl crate::infra::sync::Syncable for Model {
 			);
 
 			if count_with_device == 0 {
-				tracing::warn!(
+				// A device without locations owns no entries; that is a normal answer.
+				tracing::debug!(
 					device_uuid = %owner_device_uuid,
 					"No entries found for device, returning empty"
 				);

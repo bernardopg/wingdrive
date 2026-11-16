@@ -504,8 +504,13 @@ impl FsWatcher {
 					inner_clone.events_received.fetch_add(1, Ordering::Relaxed);
 					let raw_event = RawNotifyEvent::from_notify(event);
 
-					if let Err(e) = raw_tx_clone.try_send(raw_event) {
-						error!("Failed to send raw event: {}", e);
+					match raw_tx_clone.try_send(raw_event) {
+						Ok(()) => {}
+						// The receiver is gone while the watcher shuts down.
+						Err(mpsc::error::TrySendError::Closed(_)) => {
+							debug!("Dropped a raw event: the watcher is stopping");
+						}
+						Err(e) => error!("Failed to send raw event: {}", e),
 					}
 				}
 				Err(e) => {
