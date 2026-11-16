@@ -80,13 +80,21 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
       - name: Build production installers
+        env:
+          # The updater key (REL-001) signs the installers of tagged releases.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ inputs.release-tag != '' && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ inputs.release-tag != '' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
         run: |
           # WiX accepts only a numeric pre-release, so alpha, beta and rc tags ship the NSIS installer alone.
           case "$RELEASE_TAG" in
             *-*) bundles=nsis ;;
             *) bundles=nsis,msi ;;
           esac
-          bun run --cwd apps/tauri tauri build --verbose --target x86_64-pc-windows-msvc --bundles "$bundles"
+          updater=()
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            updater=(--config '{"bundle":{"createUpdaterArtifacts":true}}')
+          fi
+          bun run --cwd apps/tauri tauri build --verbose --target x86_64-pc-windows-msvc --bundles "$bundles" "${updater[@]}"
       - name: Verify the NSIS installer
         shell: pwsh
         run: |
@@ -107,6 +115,9 @@ jobs:
           fi
           mkdir dist
           cp target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe "dist/WingDrive-$version-x64-setup.exe"
+          for sig in target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe.sig; do
+            [ -f "$sig" ] && cp "$sig" "dist/WingDrive-$version-x64-setup.exe.sig"
+          done
           case "$RELEASE_TAG" in
             *-*) ;;
             *) cp target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi "dist/WingDrive-$version-x64.msi" ;;

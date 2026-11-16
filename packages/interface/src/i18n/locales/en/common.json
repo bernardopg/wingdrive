@@ -229,22 +229,6 @@
 			"transparentWindow": "- transparent window positioned at cursor"
 		}
 	},
-	"updater": {
-		"latest": "You are running the latest version!",
-		"checkFailed": "Failed to check for updates",
-		"downloadFailed": "Failed to download update",
-		"installFailed": "Failed to install update",
-		"confirm": "A new version (v{{version}}) is available!\n\nCurrent version: v{{currentVersion}}\n\n{{notes}}\n\nWould you like to download and install it now?",
-		"noReleaseNotes": "No release notes available",
-		"failed": "Update failed: {{error}}",
-		"formatBytes": "{{value}} {{unit}}",
-		"units": {
-			"bytes": "Bytes",
-			"kb": "KB",
-			"mb": "MB",
-			"gb": "GB"
-		}
-	},
 	"keybinds": {
 		"explorer": {
 			"undo": "Undo",

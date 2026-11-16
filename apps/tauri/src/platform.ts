@@ -12,7 +12,10 @@ import {i18n} from '@wingdrive/interface';
 import type {
 	AdminOperation,
 	ContextAction,
+	AvailableUpdate,
 	DesktopSettings,
+	UpdateProgress,
+	UpdaterInfo,
 	DiscoveredServer,
 	FileChooserPortalStatus,
 	FilePickerRequest,
@@ -327,6 +330,25 @@ export const platform: Platform = {
 
 	async setDesktopSettings(settings: DesktopSettings) {
 		return await invoke<DesktopSettings>('set_desktop_settings', {settings});
+	},
+
+	async getUpdaterInfo() {
+		return await invoke<UpdaterInfo>('updater_info');
+	},
+
+	async checkForUpdate() {
+		return await invoke<AvailableUpdate | null>('check_for_update');
+	},
+
+	async installUpdate(onProgress?: (progress: UpdateProgress) => void) {
+		const unlisten = onProgress
+			? await listen<UpdateProgress>('updater://progress', (event) => onProgress(event.payload))
+			: undefined;
+		try {
+			await invoke('install_update');
+		} finally {
+			unlisten?.();
+		}
 	},
 
 	async takeOpenRequests() {

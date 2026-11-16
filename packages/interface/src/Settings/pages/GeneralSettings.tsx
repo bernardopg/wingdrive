@@ -19,6 +19,7 @@ import {
   errorMessage,
   inputClass,
 } from "../components";
+import { UpdatesSection } from "./UpdatesSection";
 
 interface DeviceSettingsForm {
   name: string;
@@ -243,6 +244,11 @@ export function GeneralSettings() {
           </SettingsRow>
         </SettingsSection>
       )}
+
+      <UpdatesSection
+        desktopSettings={desktopSettings}
+        onSettingChange={(value) => updateDesktopSetting("check_for_updates", value)}
+      />
 
       {portal && (
         <SettingsSection title={t("general.fileChooser.title")}>

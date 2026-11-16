@@ -161,6 +161,15 @@ export type Platform = {
 	/** Save desktop shell settings and apply the login autostart entry (Tauri only) */
 	setDesktopSettings?(settings: DesktopSettings): Promise<DesktopSettings>;
 
+	/** Who installs updates of this copy and its version (Tauri only) */
+	getUpdaterInfo?(): Promise<UpdaterInfo>;
+
+	/** Look for a newer signed release; null means up to date (Tauri only) */
+	checkForUpdate?(): Promise<AvailableUpdate | null>;
+
+	/** Download, verify and install the newest release, then restart (Tauri only) */
+	installUpdate?(onProgress?: (progress: UpdateProgress) => void): Promise<void>;
+
 	/** Take folders queued by launchers, `xdg-open` or other apps (Tauri only) */
 	takeOpenRequests?(): Promise<OpenRequest[]>;
 
@@ -309,8 +318,32 @@ export interface DesktopSettings {
 	start_at_login: boolean;
 	/** A login start stays in the tray instead of showing the window */
 	start_minimized: boolean;
+	/** Look for a new signed release after startup (AppImage and Windows) */
+	check_for_updates: boolean;
 	/** Terminal command for Open Terminal Here; null detects one */
 	terminal_command: string | null;
+}
+
+/**
+ * Who installs new versions: WingDrive itself (AppImage, Windows), the system
+ * package manager (pacman, yay, apt), or nobody yet (macOS)
+ */
+export type UpdateChannel = 'self_update' | 'package_manager' | 'unsupported';
+
+export interface UpdaterInfo {
+	channel: UpdateChannel;
+	current_version: string;
+}
+
+export interface AvailableUpdate {
+	version: string;
+	date: string | null;
+	notes: string | null;
+}
+
+export interface UpdateProgress {
+	downloaded: number;
+	total: number | null;
 }
 
 /** Which portal method opened a file picker window */

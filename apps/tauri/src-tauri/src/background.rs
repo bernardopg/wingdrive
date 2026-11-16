@@ -39,6 +39,8 @@ pub struct DesktopSettings {
 	pub start_at_login: bool,
 	/// A login start keeps WingDrive in the tray instead of showing its window.
 	pub start_minimized: bool,
+	/// Look for a new signed release after startup (AppImage and Windows only).
+	pub check_for_updates: bool,
 	/// Terminal command for "Open Terminal Here"; empty means detect.
 	pub terminal_command: Option<String>,
 }
@@ -49,6 +51,7 @@ impl Default for DesktopSettings {
 			keep_in_background: true,
 			start_at_login: false,
 			start_minimized: true,
+			check_for_updates: true,
 			terminal_command: None,
 		}
 	}
@@ -450,6 +453,7 @@ mod tests {
 			keep_in_background: false,
 			start_at_login: true,
 			start_minimized: false,
+			check_for_updates: false,
 			terminal_command: Some("kitty".into()),
 		};
 		state.save(changed.clone()).unwrap();
@@ -637,8 +641,9 @@ mod tests {
 		let settings = DesktopSettingsState::load(dir.path()).get();
 		assert!(settings.keep_in_background);
 		assert!(settings.start_at_login);
-		// Settings saved before the option existed keep starting in the tray.
+		// Settings saved before the options existed keep starting in the tray and checking.
 		assert!(settings.start_minimized);
+		assert!(settings.check_for_updates);
 	}
 
 	#[cfg(target_os = "windows")]

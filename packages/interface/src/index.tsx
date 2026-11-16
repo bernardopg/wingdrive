@@ -26,7 +26,11 @@ export { Overview } from "./routes/overview";
 export type {
 	AdminOperation,
 	ContextAction,
+	AvailableUpdate,
 	DesktopSettings,
+	UpdateChannel,
+	UpdateProgress,
+	UpdaterInfo,
 	DiscoveredServer,
 	FileChooserPortalStatus,
 	FilePickerRequest,

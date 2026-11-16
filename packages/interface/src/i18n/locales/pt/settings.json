@@ -68,6 +68,23 @@
 			"button": "Redefinir",
 			"pending": "Redefinindo...",
 			"zone": "Zona de perigo"
+		},
+		"updates": {
+			"title": "Atualizações",
+			"version": "WingDrive {{version}}",
+			"check": "Verificar atualizações",
+			"install": "Instalar e reiniciar",
+			"checking": "Verificando atualizações…",
+			"upToDate": "O WingDrive está atualizado",
+			"available": "O WingDrive {{version}} está disponível",
+			"installing": "Instalando a atualização…",
+			"downloading": "Baixando a atualização: {{percent}}%",
+			"failed": "A atualização falhou: {{error}}",
+			"selfHint": "O WingDrive instala versões assinadas do GitHub",
+			"packageManagerHint": "Seu gerenciador de pacotes instala as atualizações. No Arch, rode yay -Syu ou pacman -Syu",
+			"unsupportedHint": "Neste sistema, as atualizações vêm de novos downloads no wingdrive.org",
+			"automatic": "Verificar atualizações automaticamente",
+			"automaticHint": "Procurar uma versão nova depois que o WingDrive abrir e mostrar uma notificação"
 		}
 	},
 	"appearance": {

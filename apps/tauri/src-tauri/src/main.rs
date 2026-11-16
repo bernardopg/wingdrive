@@ -23,6 +23,7 @@ mod network_discovery;
 mod notifications;
 mod server;
 mod terminal;
+mod updates;
 mod windows;
 
 use serde::{Deserialize, Serialize};
@@ -1264,7 +1265,7 @@ async fn check_daemon_installed() -> Result<bool, String> {
 	#[cfg(target_os = "windows")]
 	{
 		for task in ["WingDriveDaemon", "SpacedriveDaemon"] {
-			let output = std::process::Command::new("schtasks")
+			let output = hide_console_window(&mut std::process::Command::new("schtasks"))
 				.args(["/Query", "/TN", task, "/FO", "LIST"])
 				.output()
 				.map_err(|e| format!("Failed to query scheduled task: {}", e))?;
@@ -1459,7 +1460,7 @@ async fn install_daemon_service(
 		let daemon_path = find_daemon_binary()?;
 
 		// Delete existing task if it exists
-		let _ = std::process::Command::new("schtasks")
+		let _ = hide_console_window(&mut std::process::Command::new("schtasks"))
 			.args(["/Delete", "/TN", "WingDriveDaemon", "/F"])
 			.output();
 
@@ -1517,7 +1518,7 @@ async fn install_daemon_service(
 		drop(file);
 
 		// Create the scheduled task
-		let output = std::process::Command::new("schtasks")
+		let output = hide_console_window(&mut std::process::Command::new("schtasks"))
 			.args([
 				"/Create",
 				"/TN",
@@ -1538,7 +1539,7 @@ async fn install_daemon_service(
 		}
 
 		// Start the task
-		let output = std::process::Command::new("schtasks")
+		let output = hide_console_window(&mut std::process::Command::new("schtasks"))
 			.args(["/Run", "/TN", "WingDriveDaemon"])
 			.output()
 			.map_err(|e| format!("Failed to start scheduled task: {}", e))?;
@@ -1595,10 +1596,10 @@ async fn uninstall_daemon_service() -> Result<(), String> {
 	#[cfg(target_os = "windows")]
 	{
 		for task in ["WingDriveDaemon", "SpacedriveDaemon"] {
-			let _ = std::process::Command::new("schtasks")
+			let _ = hide_console_window(&mut std::process::Command::new("schtasks"))
 				.args(["/End", "/TN", task])
 				.output();
-			let output = std::process::Command::new("schtasks")
+			let output = hide_console_window(&mut std::process::Command::new("schtasks"))
 				.args(["/Delete", "/TN", task, "/F"])
 				.output()
 				.map_err(|e| format!("Failed to delete scheduled task: {}", e))?;
@@ -1745,6 +1746,20 @@ fn build_daemon_command(
 	command.arg("--data-dir").arg(base_data_dir);
 	if let Some(instance) = instance {
 		command.arg("--instance").arg(instance);
+	}
+	hide_console_window(&mut command);
+	command
+}
+
+/// Keeps a console program the app starts (the daemon, `schtasks`) from opening a
+/// console window on Windows (TAURI-019). Elsewhere it changes nothing.
+fn hide_console_window(command: &mut std::process::Command) -> &mut std::process::Command {
+	#[cfg(windows)]
+	{
+		use std::os::windows::process::CommandExt;
+		/// `CREATE_NO_WINDOW` from the Windows process creation flags.
+		const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+		command.creation_flags(CREATE_NO_WINDOW);
 	}
 	command
 }
@@ -2566,6 +2581,9 @@ fn main() {
 			launch::take_open_requests,
 			launch::take_initial_open_request,
 			background::get_desktop_settings,
+			updates::updater_info,
+			updates::check_for_update,
+			updates::install_update,
 			background::set_desktop_settings,
 			background::set_tray_labels,
 			get_daemon_socket,
@@ -2866,7 +2884,9 @@ fn manage_app_state<R: Runtime>(
 		subscription_manager: SubscriptionManager::new(),
 	};
 
-	app.manage(background::DesktopSettingsState::load(&data_dir));
+	let desktop_settings = background::DesktopSettingsState::load(&data_dir);
+	updates::spawn_startup_check(app.clone(), desktop_settings.get().check_for_updates);
+	app.manage(desktop_settings);
 	#[cfg(target_os = "linux")]
 	app.manage(file_chooser::PortalStateFile(
 		data_dir.join("file-chooser-portal.json"),

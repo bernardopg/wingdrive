@@ -68,6 +68,23 @@
 			"button": "Reset",
 			"pending": "Resetting...",
 			"zone": "Danger zone"
+		},
+		"updates": {
+			"title": "Updates",
+			"version": "WingDrive {{version}}",
+			"check": "Check for updates",
+			"install": "Install and restart",
+			"checking": "Checking for updates…",
+			"upToDate": "WingDrive is up to date",
+			"available": "WingDrive {{version}} is available",
+			"installing": "Installing the update…",
+			"downloading": "Downloading the update: {{percent}}%",
+			"failed": "The update failed: {{error}}",
+			"selfHint": "WingDrive installs signed releases from GitHub",
+			"packageManagerHint": "Your package manager installs updates. On Arch, run yay -Syu or pacman -Syu",
+			"unsupportedHint": "Updates on this system come from new downloads on wingdrive.org",
+			"automatic": "Check for updates automatically",
+			"automaticHint": "Look for a new version after WingDrive starts and show a notification"
 		}
 	},
 	"appearance": {
