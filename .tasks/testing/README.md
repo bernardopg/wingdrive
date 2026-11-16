@@ -44,7 +44,7 @@ critérios e a Definition of Done, incluindo merge no main.
 
 Registrar SHA, ambiente/plataforma, comandos, contagens cobertas/instrumentadas por arquivo e
 componente, LCOV/summary e duração. Todos os testes novos entram no runner normal e no de
-cobertura. `just ci-local` deve passar antes de qualquer push.
+cobertura. Rodar os testes da área alterada antes do push; `just ci-local` é opcional.
 
 Usar diretórios temporários, SQLite local descartável e processos/endpoints exclusivos.
 Não alterar HOME/XDG do processo principal nem o daemon do autor. Serviços reais só entram

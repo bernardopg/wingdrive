@@ -684,8 +684,13 @@ cargo test -- --nocapture     # Show output
 
 ## Before every push
 
-CI is the last gate, not the place to find errors: a Rust run costs about an hour.
-Run the same gates locally first, on the warm `target/` directory:
+CI is the gate for every pull request. Before a push, run the checks that cover your change:
+`cargo clippy` and `cargo test` for the crates you touched, `bun run typecheck` (every package) for
+TypeScript, and the `bun test` files next to the code you changed.
+
+`just ci-local` is optional. It runs every CI gate on the warm `target/` directory, which is useful
+for wide changes (toolchain or dependency bumps, workspace-wide refactors) or to reproduce a CI
+failure:
 
 ```bash
 just ci-local        # scripts/ci-local.sh; skips Rust steps when no Rust-relevant file changed
@@ -694,16 +699,17 @@ just ci-local --all  # force the Rust steps
 
 Rules for agents and contributors:
 
-- Push only after `just ci-local` passes. Fix failures locally, then push once.
+- `just ci-local` is not required before a push. Run the checks for your change, push, and let CI
+  run the full gates.
 - Push to `origin` (`bernardopg/wingdrive`) and open pull requests there
   (`gh pr create --repo bernardopg/wingdrive`). It is the only remote.
 - Pipe `just ci-local` through `tail` only after saving its exit code: `just ci-local | tail` reports
   `tail`'s status, so a failed run looks green.
 - After a stacked pull request merges into its base branch, merge `origin/main` into the base.
   `.github/workflows/ci.yml` usually conflicts on the `bun test` list; keep both sides.
-- Never push to "see what CI says", and never push a series of small fix commits to
-  iterate against CI. Reproduce the CI failure locally (same `cargo test` or `bun test`
-  command from `.github/workflows/ci.yml`), fix it, rerun, then push.
+- When CI fails, reproduce the failure locally (same `cargo test` or `bun test` command from
+  `.github/workflows/ci.yml`, or `just ci-local`), fix it, rerun, then push. Avoid a series of small
+  fix commits against CI.
 - Reuse the local `target/`; do not `cargo clean` and do not use a separate `--target-dir`
   for checks. Run one cargo command at a time (concurrent cargo runs block on the build lock).
 - After a push, check CI once when it finishes (`gh pr checks <n> --watch -R bernardopg/wingdrive`).

@@ -137,7 +137,7 @@ A full release looks like this:
 # 1. Bump the version on a branch and add the CHANGELOG section
 git switch -c release/v3.1.0
 cargo xtask bump 3.1.0
-just ci-local
+just ci-local   # optional: every CI gate locally
 gh pr create --title "chore(release): 3.1.0"
 
 # 2. After the pull request merges and main's CI finishes, tag the merge commit

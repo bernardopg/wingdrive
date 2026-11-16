@@ -3,7 +3,7 @@
 ## Build/Test Commands
 
 - `cargo build` - Build the project
-- `cargo test -p wing-core --lib` - Run the core's unit tests; `just ci-local` runs the CI gates before a push
+- `cargo test -p wing-core --lib` - Run the core's unit tests; `just ci-local` (optional) runs every CI gate locally
 - `cargo test <test_name>` - Run specific test (e.g., `cargo test library_test`)
 - `cargo clippy` - Lint code
 - `cargo fmt` - Format code
