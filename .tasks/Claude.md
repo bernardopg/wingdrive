@@ -3,6 +3,12 @@
 > **Planning entry point:** read [PLANNING.md](PLANNING.md) (method, hierarchy, Definition of Done),
 > [ROADMAP.md](ROADMAP.md) (milestones), and the current sprint in [sprints/](sprints/).
 > Tasks carry `parent` (epic), `milestone` (M1..), and `sprint` (S01..) in front matter.
+>
+> **Prefer the `wingdrive-board` MCP tools** (`overview`, `list_tasks`, `get_task`, `update_task`,
+> `set_checklist_item`, `create_task`, `sprint_log`, `check`) over editing front matter by hand: they
+> validate references, stamp `last_updated`, warn on WIP and keep the generated sprint and roadmap
+> tables current. Editing the files directly still works; run `just board-sync` afterwards.
+> See [tools/board/README.md](../tools/board/README.md).
 
 Hi Claude, Claude here. Your owner has pointed you here with absolutely no context. This document is your prompt.
 

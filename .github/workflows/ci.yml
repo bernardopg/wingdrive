@@ -79,6 +79,21 @@ jobs:
       - name: Validate task files
         run: cargo run -p task-validator -- validate
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.3"
+
+      # tools/board keeps .tasks/ consistent: broken references fail, and the progress tables in the
+      # sprint files and ROADMAP.md must match the task front matter (`just board-sync`).
+      - name: Check the task board
+        working-directory: tools/board
+        run: |
+          bun install --frozen-lockfile
+          bun run typecheck
+          bun test
+          bun src/cli.ts check --strict
+
       - name: Check repository independence
         run: ./scripts/check-wingdrive-independence.sh
 

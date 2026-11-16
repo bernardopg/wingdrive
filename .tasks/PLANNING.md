@@ -62,9 +62,24 @@ atribuição legal ao upstream, centralizada em `CREDITS.md`.
 | Fim do sprint | Tasks não concluídas voltam ao backlog ou vão ao próximo sprint | campo `sprint` |
 | Fim do milestone | Atualizar `ROADMAP.md` (Now/Next/Later) | `ROADMAP.md` |
 
+## Board
+
+`just board` abre o quadro em <http://127.0.0.1:7357>: colunas To Do, In Progress e Done do sprint
+atual, arrastar entre colunas, filtros por sprint, milestone e épico, progresso por sprint e por
+milestone, e edição de status, sprint e checklist de cada task. Os agentes usam o mesmo board pelo
+servidor MCP `wingdrive-board` (`.mcp.json`). Os dois editam os arquivos daqui, então o `.md`
+continua sendo a fonte de verdade. Detalhes em [tools/board/README.md](../tools/board/README.md).
+
+As tabelas **Quadro** (em cada sprint) e **Progresso** (no ROADMAP) são geradas do front matter
+entre marcadores `<!-- board:begin … -->`. Não edite à mão: `just board-sync` as refaz, e o CI falha
+quando estão desatualizadas. O resto do sprint (meta, ordem do compromisso, log, review e retro)
+continua escrito à mão.
+
 ## Comandos
 
 ```bash
+just board-check                                                 # referências quebradas, WIP, tabelas
+just board-sync                                                  # refaz as tabelas geradas
 cargo run --bin task-validator -- list --milestone M1            # escopo do milestone
 cargo run --bin task-validator -- list --sprint S01              # quadro do sprint
 cargo run --bin task-validator -- list --milestone M1 --status "To Do"   # backlog do milestone
