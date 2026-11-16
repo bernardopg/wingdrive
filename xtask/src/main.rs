@@ -537,6 +537,29 @@ fn build_ios() -> Result<()> {
 
 /// Build wing-mobile-core for React Native (iOS and Android)
 ///
+/// `CFLAGS` and `CXXFLAGS` without the flags that name this machine's CPU.
+///
+/// The NDK's clang rejects `-march=native` for Android targets, so a host that exports it
+/// (for example `CFLAGS="-O3 -march=native"`) breaks every C dependency of the core. The
+/// Gradle build script strips the same flags.
+fn cross_compile_c_flags() -> Vec<(&'static str, String)> {
+	["CFLAGS", "CXXFLAGS"]
+		.into_iter()
+		.filter_map(|name| {
+			let flags = std::env::var(name).ok()?;
+			Some((name, without_native_cpu_flags(&flags)))
+		})
+		.collect()
+}
+
+fn without_native_cpu_flags(flags: &str) -> String {
+	flags
+		.split_whitespace()
+		.filter(|flag| !matches!(*flag, "-march=native" | "-mtune=native" | "-mcpu=native"))
+		.collect::<Vec<_>>()
+		.join(" ")
+}
+
 /// This task builds the mobile core for use with Expo/React Native.
 /// For iOS: Builds static libraries for device and simulator targets
 /// For Android: Builds shared libraries for arm64-v8a (and optionally x86_64)
@@ -619,6 +642,7 @@ fn build_mobile() -> Result<()> {
 					target,
 				])
 				.current_dir(&project_root)
+				.envs(cross_compile_c_flags())
 				.status()
 				.context(format!("Failed to build for {}", target))?;
 
@@ -772,4 +796,23 @@ fn test_core_command(verbose: bool) -> Result<()> {
 	}
 
 	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::without_native_cpu_flags;
+
+	#[test]
+	fn android_builds_drop_the_host_cpu_flags_and_keep_the_rest() {
+		assert_eq!(
+			without_native_cpu_flags("-O3 -march=native -pipe"),
+			"-O3 -pipe"
+		);
+		assert_eq!(without_native_cpu_flags("-march=native -mtune=native"), "");
+		assert_eq!(without_native_cpu_flags("-mcpu=native"), "");
+		assert_eq!(
+			without_native_cpu_flags("-O2 -march=armv8-a -I/opt/include"),
+			"-O2 -march=armv8-a -I/opt/include"
+		);
+	}
 }

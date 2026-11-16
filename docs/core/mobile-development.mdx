@@ -26,7 +26,7 @@ just dev-mobile               # Metro; the dev client connects to it
 
 `just mobile-install-android arm64-v8a` builds for a USB device such as the Moto G7. Gradle installs on every connected device, so with both the emulator and a phone attached, set `ANDROID_SERIAL` (for example `ANDROID_SERIAL=emulator-5554`) to pick one. `adb reverse tcp:8081 tcp:8081` lets a USB device reach Metro without Wi-Fi. `scrcpy` mirrors and controls the device from the desktop.
 
-The Gradle `preBuild` step runs `modules/wing-mobile-core/android/build-scripts/build.sh`. It reads `WING_ANDROID_ABIS` (default `arm64-v8a`), uses `sccache` when installed, and deletes the hashed dependency `.so` copies that `cargo-ndk` leaves in `jniLibs`. An APK whose architecture list includes an ABI without `libwing_mobile_core.so` crashes at launch with `UnsatisfiedLinkError`, so the ABI you pass to Gradle and to the script must match.
+The Gradle `preBuild` step runs `modules/wing-mobile-core/android/build-scripts/build.sh`. It reads `WING_ANDROID_ABIS` (default `arm64-v8a`), uses `sccache` when installed, and deletes the hashed dependency `.so` copies that `cargo-ndk` leaves in `jniLibs`. It also drops `CFLAGS` and `CXXFLAGS` from the environment: the NDK's clang rejects host flags such as `-march=native`, and `cargo-ndk` adds its `--target` to a generic `CFLAGS`, which the host compiler of build scripts reads too. An APK whose architecture list includes an ABI without `libwing_mobile_core.so` crashes at launch with `UnsatisfiedLinkError`, so the ABI you pass to Gradle and to the script must match.
 
 ## CI and releases
 

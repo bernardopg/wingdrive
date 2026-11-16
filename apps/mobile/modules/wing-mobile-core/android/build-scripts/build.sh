@@ -22,6 +22,12 @@ if [ -z "$RUSTC_WRAPPER" ] && command -v sccache >/dev/null 2>&1; then
 	export RUSTC_WRAPPER=sccache
 fi
 
+# Host C flags break the Android build in two ways. The NDK's clang rejects CPU flags such as
+# `-march=native` ("unsupported argument 'native' to option '-march='"), and cargo-ndk writes
+# its `--target=aarch64-linux-android24` into a generic CFLAGS it finds, so the host compiler
+# of build scripts receives it too. Without them, cargo-ndk sets per-target flags only.
+unset CFLAGS CXXFLAGS
+
 # CI checks the Gradle side on its own and builds Rust in a separate job.
 if [ -n "$WING_SKIP_RUST" ]; then
 	echo "WING_SKIP_RUST set, skipping the Rust build"
