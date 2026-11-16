@@ -8,7 +8,7 @@ priority: High
 milestone: M5
 sprint: S05
 tags: [integrations, google, oauth, verification, security]
-last_updated: 2026-11-13
+last_updated: 2026-11-16
 related_tasks: [INTG-001, INTG-002]
 ---
 
@@ -36,8 +36,16 @@ and the project is capped at 100 users. Brand verification started with the doma
 120x120 logo is in `docs/logo/wingdrive-logo-120.png` for the consent screen. The scope decision
 (`drive` with CASA or `drive.file`) is still open.
 
+## Decision (2026-11-16)
+
+No recurring cost for now: the bundled client asks for `drive.file` and the custom-client mode keeps
+full `drive` (ADR in `docs/design/GOOGLE-DRIVE-SCOPE.md`). The Data Access page lists only
+non-restricted scopes; the two sensitive Photos scopes carry the justification. Branding and the
+Search Console domain property for `wingdrive.org` are verified (TXT record added through the
+Hostinger API). Demo video: https://youtu.be/qsLpemmndok (unlisted, personal photos and other accounts hidden). Verification request sent the same day.
+
 ## Acceptance Criteria
 
 - [ ] Any Google account signs in without the unverified-app warning.
 - [ ] Grants no longer expire after 7 days.
-- [ ] The yearly renewal date is tracked.
+- [ ] No restricted scope is requested by WingDrive's own client, so no yearly CASA assessment is needed (decision of 2026-11-16).

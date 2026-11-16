@@ -230,7 +230,8 @@
 						"Tokens stay encrypted in this library. No WingDrive server sees your files."
 					],
 					"cons": [
-						"Depends on the client included in the build; builds from source may not have one.",
+						"Google Drive shows only the files WingDrive created or opened, not your whole Drive. To browse all of Drive, connect with Google Cloud and your own client.",
+									"Depends on the client included in the build; builds from source may not have one.",
 						"Until Google verifies the WingDrive app, Google shows an \"unverified app\" warning and caps how many people can sign in.",
 						"API quotas are shared by everyone who uses WingDrive's client."
 					],
@@ -248,7 +249,8 @@
 					"summary": "Use an OAuth client from your own Google Cloud project.",
 					"intro": "You create a \"Desktop app\" OAuth client in your own Google Cloud project and WingDrive signs in with it. Nothing depends on WingDrive's client.",
 					"pros": [
-						"The project and its API quotas are yours alone.",
+						"Browses and syncs your whole Google Drive, not only the files WingDrive created.",
+									"The project and its API quotas are yours alone.",
 						"Works in any build, including builds from source.",
 						"You decide which APIs and accounts have access, and can revoke everything in your project."
 					],
@@ -335,6 +337,7 @@
 		},
 		"google": {
 			"serviceDrive": "Google Drive",
+			"driveAppFiles": "Drive shows only files WingDrive created or opened. Connect with your own Google Cloud client to see all of Drive.",
 			"servicePhotos": "Google Photos",
 			"reconnected": "Account access updated",
 			"driveMounted": "Show Google Drive in WingDrive",

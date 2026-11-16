@@ -1024,6 +1024,13 @@ export type DownloadWhisperModelOutput = {
 	job_id: string,
 };
 
+/**  How much of Drive a sign-in asks for. */
+export type DriveAccess = 
+/**  Every file in My Drive (`drive`, restricted). */
+"full" | 
+/**  Files WingDrive created or the user opened with it (`drive.file`). */
+"app_files";
+
 /**
  *  The storage volume of an account, addressable as `gdrive://<identifier>/`
  *  for Google Drive or `onedrive://<identifier>/` for OneDrive.
@@ -2178,6 +2185,11 @@ export type IntegrationAccountInfo = {
 	mode: ConnectionMode,
 	connected_at: string,
 	drive: DriveMountInfo | null,
+	/**
+	 *  How much of Google Drive the account granted; `None` for Microsoft and
+	 *  for Google accounts without Drive.
+	 */
+	drive_access: DriveAccess | null,
 };
 
 /**  Disconnects an account from the library. */

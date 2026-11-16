@@ -18,7 +18,7 @@
 //! let listener = LoopbackListener::bind().await?;
 //! let pkce = Pkce::generate();
 //! let state = random_token();
-//! let url = authorization_url(&endpoints, &client, &listener.redirect_uri(), &scopes_for(&[GoogleService::Drive]), &state, &pkce.challenge, None);
+//! let url = authorization_url(&endpoints, &client, &listener.redirect_uri(), &scopes_for(&[GoogleService::Drive], DriveAccess::Full), &state, &pkce.challenge, None);
 //! // Open `url` in the browser, then:
 //! let code = listener.wait_for_code(&state, std::time::Duration::from_secs(600)).await?;
 //! let tokens = exchange_code(&http, &endpoints, &client, &code, &pkce.verifier, &listener.redirect_uri()).await?;
@@ -42,7 +42,17 @@ use super::error::{GoogleError, GoogleResult};
 pub const IDENTITY_SCOPES: [&str; 3] = ["openid", "email", "profile"];
 
 /// Full Drive access: browse, download, upload, edit and delete any file.
+///
+/// Restricted by Google: an app that asks for it needs a yearly paid security
+/// assessment (CASA), so only custom clients, whose project belongs to the
+/// user, request it.
 pub const DRIVE_SCOPE: &str = "https://www.googleapis.com/auth/drive";
+
+/// Drive access limited to files WingDrive created or the user opened with it.
+///
+/// Not sensitive, so WingDrive's own client asks for this one and passes
+/// Google verification without a security assessment.
+pub const DRIVE_FILE_SCOPE: &str = "https://www.googleapis.com/auth/drive.file";
 
 /// Upload to Google Photos. Since March 2025 the Library API only lists and
 /// edits media this app created, so the picker covers everything else.
@@ -74,20 +84,49 @@ pub enum GoogleService {
 	Photos,
 }
 
-impl GoogleService {
-	/// The scopes this service needs.
-	pub fn scopes(self) -> Vec<&'static str> {
+/// How much of Drive a sign-in asks for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Type)]
+#[serde(rename_all = "snake_case")]
+pub enum DriveAccess {
+	/// Every file in My Drive (`drive`, restricted).
+	Full,
+	/// Files WingDrive created or the user opened with it (`drive.file`).
+	AppFiles,
+}
+
+impl DriveAccess {
+	fn scope(self) -> &'static str {
 		match self {
-			Self::Drive => vec![DRIVE_SCOPE],
+			Self::Full => DRIVE_SCOPE,
+			Self::AppFiles => DRIVE_FILE_SCOPE,
+		}
+	}
+
+	/// The access `granted` gives, the broadest first; `None` without Drive.
+	pub fn granted(granted: &[String]) -> Option<Self> {
+		[Self::Full, Self::AppFiles]
+			.into_iter()
+			.find(|access| granted.iter().any(|g| g == access.scope()))
+	}
+}
+
+impl GoogleService {
+	/// The scopes this service needs, asking for `drive` Drive access.
+	pub fn scopes(self, drive: DriveAccess) -> Vec<&'static str> {
+		match self {
+			Self::Drive => vec![drive.scope()],
 			Self::Photos => PHOTOS_SCOPES.to_vec(),
 		}
 	}
 
-	/// Whether `granted` covers this service.
+	/// Whether `granted` covers this service; either Drive scope counts for Drive.
 	pub fn is_granted(self, granted: &[String]) -> bool {
-		self.scopes()
-			.iter()
-			.all(|scope| granted.iter().any(|g| g == scope))
+		match self {
+			Self::Drive => DriveAccess::granted(granted).is_some(),
+			Self::Photos => PHOTOS_SCOPES
+				.iter()
+				.all(|scope| granted.iter().any(|g| g == scope)),
+		}
 	}
 }
 
@@ -127,10 +166,10 @@ pub fn random_token() -> String {
 }
 
 /// All scopes to request for `services`, identity first.
-pub fn scopes_for(services: &[GoogleService]) -> Vec<String> {
+pub fn scopes_for(services: &[GoogleService], drive: DriveAccess) -> Vec<String> {
 	let mut scopes: Vec<String> = IDENTITY_SCOPES.iter().map(|s| s.to_string()).collect();
 	for service in services {
-		for scope in service.scopes() {
+		for scope in service.scopes(drive) {
 			if !scopes.iter().any(|s| s == scope) {
 				scopes.push(scope.to_string());
 			}
@@ -572,11 +611,14 @@ mod tests {
 
 	#[test]
 	fn scopes_include_identity_and_deduplicate() {
-		let scopes = scopes_for(&[
-			GoogleService::Drive,
-			GoogleService::Photos,
-			GoogleService::Drive,
-		]);
+		let scopes = scopes_for(
+			&[
+				GoogleService::Drive,
+				GoogleService::Photos,
+				GoogleService::Drive,
+			],
+			DriveAccess::Full,
+		);
 		assert_eq!(&scopes[..3], &["openid", "email", "profile"]);
 		assert_eq!(scopes.iter().filter(|s| *s == DRIVE_SCOPE).count(), 1);
 		assert!(scopes.iter().any(|s| s == PHOTOS_PICKER_SCOPE));
@@ -592,6 +634,19 @@ mod tests {
 	}
 
 	#[test]
+	fn app_files_access_asks_for_drive_file_only() {
+		let scopes = scopes_for(&[GoogleService::Drive], DriveAccess::AppFiles);
+		assert!(scopes.iter().any(|s| s == DRIVE_FILE_SCOPE));
+		assert!(!scopes.iter().any(|s| s == DRIVE_SCOPE));
+		let granted = vec![DRIVE_FILE_SCOPE.to_string()];
+		assert!(GoogleService::Drive.is_granted(&granted));
+		assert_eq!(DriveAccess::granted(&granted), Some(DriveAccess::AppFiles));
+		let both = vec![DRIVE_FILE_SCOPE.to_string(), DRIVE_SCOPE.to_string()];
+		assert_eq!(DriveAccess::granted(&both), Some(DriveAccess::Full));
+		assert_eq!(DriveAccess::granted(&[]), None);
+	}
+
+	#[test]
 	fn authorization_url_carries_pkce_and_offline_access() {
 		let client = OAuthClient {
 			client_id: "client-1".into(),
@@ -601,7 +656,7 @@ mod tests {
 			&GoogleEndpoints::default(),
 			&client,
 			"http://127.0.0.1:4000/oauth/callback",
-			&scopes_for(&[GoogleService::Drive]),
+			&scopes_for(&[GoogleService::Drive], DriveAccess::Full),
 			"state-1",
 			"challenge-1",
 			Some("me@example.com"),
