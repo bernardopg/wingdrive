@@ -30,8 +30,15 @@ marked.use({
 // ---------------------------------------------------------------------------------------------
 // Data
 
+/** Path of one task's endpoint; ids come from the URL hash, so they are checked and encoded. */
+function taskPath(id: string, suffix = ""): string {
+	if (!/^[A-Za-z]+-\d+$/.test(id)) throw new Error(`invalid task id ${id}`);
+	return `/api/tasks/${encodeURIComponent(id)}${suffix}`;
+}
+
 async function api<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
-	const res = await fetch(path, {
+	if (!path.startsWith("/api/")) throw new Error(`refusing request to ${path}`);
+	const res = await fetch(new URL(path, location.origin), {
 		...init,
 		headers: init?.json !== undefined ? { "content-type": "application/json" } : undefined,
 		body: init?.json !== undefined ? JSON.stringify(init.json) : undefined,
@@ -205,7 +212,7 @@ function App() {
 				setData({ ...data, tasks: data.tasks.map((t) => (t.id === id ? ({ ...t, ...patch } as Task) : t)) });
 			}
 			try {
-				const res = await api<{ task: TaskDetail; warnings: string[] }>(`/api/tasks/${id}`, { method: "PATCH", json: patch });
+				const res = await api<{ task: TaskDetail; warnings: string[] }>(taskPath(id), { method: "PATCH", json: patch });
 				for (const w of res.warnings) toast(w, "warn");
 				await refresh();
 				setRefreshKey((k) => k + 1);
@@ -792,7 +799,7 @@ function Drawer({
 	const bodyRef = useRef<HTMLDivElement>(null);
 
 	const load = useCallback(() => {
-		api<TaskDetail>(`/api/tasks/${id}`)
+		api<TaskDetail>(taskPath(id))
 			.then((t) => {
 				setTask(t);
 				setMissing(undefined);
@@ -822,7 +829,7 @@ function Drawer({
 		const done = box.checked;
 		onChecked();
 		try {
-			const res = await api<{ task: TaskDetail }>(`/api/tasks/${task.id}/checklist`, { method: "POST", json: { index, done } });
+			const res = await api<{ task: TaskDetail }>(taskPath(task.id, "/checklist"), { method: "POST", json: { index, done } });
 			setTask(res.task);
 		} catch (err) {
 			box.checked = !done;

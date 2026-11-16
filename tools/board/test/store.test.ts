@@ -158,3 +158,21 @@ describe("generated blocks and checks", () => {
 		expect(checkBoard(b)).toContainEqual(expect.objectContaining({ level: "error", file: ".tasks/core/CORE-099-bad.md" }));
 	});
 });
+
+test("generated table cells escape backslashes and pipes", () => {
+	const t = mkdtempSync(join(tmpdir(), "board-cell-"));
+	try {
+		mkdirSync(join(t, ".tasks", "core"), { recursive: true });
+		mkdirSync(join(t, ".tasks", "sprints"), { recursive: true });
+		writeFileSync(join(t, ".tasks", "PLANNING.md"), "# P\n");
+		writeFileSync(join(t, ".tasks", "sprints", "S01.md"), "# Sprint S01 — 2026-11-10 a 2026-11-23\n");
+		writeFileSync(
+			join(t, ".tasks", "core", "CORE-001-x.md"),
+			"---\nid: CORE-001\ntitle: 'Path C:\\dir | pipe'\nstatus: To Do\nassignee: me\npriority: Low\nmilestone: M1\nsprint: S01\ntags: []\n---\n",
+		);
+		syncGenerated(loadBoard(t));
+		expect(readFileSync(join(t, ".tasks", "sprints", "S01.md"), "utf8")).toContain("Path C:\\\\dir \\| pipe");
+	} finally {
+		rmSync(t, { recursive: true, force: true });
+	}
+});
