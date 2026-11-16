@@ -105,8 +105,7 @@ impl ExifMetadata {
 				),
 				zoom: reader
 					.get_tag(Tag::DigitalZoomRatio)
-					.map(|x: String| x.replace("unused", "1").parse().ok())
-					.unwrap_or_default(),
+					.map_or_default(|x: String| x.replace("unused", "1").parse().ok()),
 				iso: reader.get_tag(Tag::PhotographicSensitivity),
 				software: reader.get_tag(Tag::Software),
 				serial_number: reader.get_tag(Tag::BodySerialNumber),

@@ -357,7 +357,8 @@ pub async fn run(ctx: &Context, cmd: IndexCmd) -> Result<()> {
 						]);
 
 						let total = breakdown.arena
-							+ breakdown.cache + breakdown.registry
+							+ breakdown.cache
+							+ breakdown.registry
 							+ breakdown.path_index_overhead
 							+ breakdown.path_index_entries
 							+ breakdown.entry_uuids_overhead

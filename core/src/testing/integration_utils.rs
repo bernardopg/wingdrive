@@ -153,10 +153,10 @@ impl TestConfigBuilder {
 			// Locations require a resolved volume, and volumes are only detected when
 			// monitoring is on, so with it off no indexing test could add a location.
 			volume_monitoring_enabled: true,
-			fs_watcher_enabled: true,           // Usually needed for indexing tests
+			fs_watcher_enabled: true, // Usually needed for indexing tests
 			statistics_listener_enabled: false, // Disable for faster tests
-			job_logging_enabled: true,          // Usually needed for job tests
-			telemetry_enabled: false,           // Disable for tests
+			job_logging_enabled: true, // Usually needed for job tests
+			telemetry_enabled: false, // Disable for tests
 		}
 	}
 

@@ -88,7 +88,8 @@ impl FileOpener for WindowsFileOpener {
 
 				if handlers
 					.Next(&mut handler_array, Some(&mut fetched))
-					.is_err() || fetched == 0
+					.is_err()
+					|| fetched == 0
 				{
 					break;
 				}
@@ -139,7 +140,8 @@ fn list_apps_for_extension(ext: &str) -> std::result::Result<Vec<OpenWithApp>, S
 
 			if handlers
 				.Next(&mut handler_array, Some(&mut fetched))
-				.is_err() || fetched == 0
+				.is_err()
+				|| fetched == 0
 			{
 				break;
 			}

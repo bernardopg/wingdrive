@@ -79,9 +79,12 @@ impl ConvertibleExtension {
 		!matches!(
 			self,
 			Self::Hif
-				| Self::Heif | Self::Heifs
-				| Self::Heic | Self::Heics
-				| Self::Avif | Self::Avci
+				| Self::Heif
+				| Self::Heifs
+				| Self::Heic
+				| Self::Heics
+				| Self::Avif
+				| Self::Avci
 				| Self::Avcs
 		)
 	}

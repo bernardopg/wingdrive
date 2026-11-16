@@ -193,7 +193,7 @@ pub async fn create_test_volume(
 		tracked_at: Set(Utc::now()),
 		last_seen_at: Set(Utc::now()),
 		is_online: Set(true),
-		total_capacity: Set(Some(500_000_000_000)),     // 500GB
+		total_capacity: Set(Some(500_000_000_000)), // 500GB
 		available_capacity: Set(Some(250_000_000_000)), // 250GB available
 		unique_bytes: Set(None),
 		read_speed_mbps: Set(Some(500)),

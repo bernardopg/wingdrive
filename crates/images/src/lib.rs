@@ -63,7 +63,8 @@ pub trait ImageHandler {
 	{
 		if fs::metadata(path)
 			.map_err(|e| Error::Io(e, path.to_path_buf().into_boxed_path()))?
-			.len() <= MAXIMUM_FILE_SIZE
+			.len()
+			<= MAXIMUM_FILE_SIZE
 		{
 			Ok(())
 		} else {

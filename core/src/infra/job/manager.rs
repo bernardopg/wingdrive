@@ -532,11 +532,11 @@ impl JobManager {
 										let generic_progress = match final_progress {
 											Progress::Structured(value) => {
 												// Try to deserialize CopyProgress and convert to GenericProgress
-												if let Ok(copy_progress) =
-													serde_json::from_value::<
-														crate::ops::files::copy::CopyProgress,
-													>(value.clone())
-												{
+												if let Ok(copy_progress) = serde_json::from_value::<
+													crate::ops::files::copy::CopyProgress,
+												>(
+													value.clone()
+												) {
 													use crate::infra::job::generic_progress::ToGenericProgress;
 													Some(copy_progress.to_generic_progress())
 												} else {
@@ -1002,11 +1002,11 @@ impl JobManager {
 										let generic_progress = match final_progress {
 											Progress::Structured(value) => {
 												// Try to deserialize CopyProgress and convert to GenericProgress
-												if let Ok(copy_progress) =
-													serde_json::from_value::<
-														crate::ops::files::copy::CopyProgress,
-													>(value.clone())
-												{
+												if let Ok(copy_progress) = serde_json::from_value::<
+													crate::ops::files::copy::CopyProgress,
+												>(
+													value.clone()
+												) {
 													use crate::infra::job::generic_progress::ToGenericProgress;
 													Some(copy_progress.to_generic_progress())
 												} else {
@@ -1586,8 +1586,9 @@ impl JobManager {
 										// Try to deserialize CopyProgress and convert to GenericProgress
 										if let Ok(copy_progress) = serde_json::from_value::<
 											crate::ops::files::copy::CopyProgress,
-										>(value.clone())
-										{
+										>(
+											value.clone()
+										) {
 											use crate::infra::job::generic_progress::ToGenericProgress;
 											Some(copy_progress.to_generic_progress())
 										} else {

@@ -144,9 +144,8 @@ unsafe fn extract_and_convert_frame(frame: &AVFrame) -> Result<Vec<f32>, Error> 
 			// Planar f32 - interleave it
 			let mut output = Vec::with_capacity(nb_samples * channels);
 			for i in 0..nb_samples {
-				for ch in 0..channels {
-					let channel_data =
-						slice::from_raw_parts(frame.data[ch] as *const f32, nb_samples);
+				for plane in frame.data.iter().take(channels) {
+					let channel_data = slice::from_raw_parts(*plane as *const f32, nb_samples);
 					output.push(channel_data[i]);
 				}
 			}
@@ -161,9 +160,8 @@ unsafe fn extract_and_convert_frame(frame: &AVFrame) -> Result<Vec<f32>, Error> 
 			// Planar s16 - interleave and convert
 			let mut output = Vec::with_capacity(nb_samples * channels);
 			for i in 0..nb_samples {
-				for ch in 0..channels {
-					let channel_data =
-						slice::from_raw_parts(frame.data[ch] as *const i16, nb_samples);
+				for plane in frame.data.iter().take(channels) {
+					let channel_data = slice::from_raw_parts(*plane as *const i16, nb_samples);
 					output.push(f32::from(channel_data[i]) / 32768.0);
 				}
 			}
@@ -178,9 +176,8 @@ unsafe fn extract_and_convert_frame(frame: &AVFrame) -> Result<Vec<f32>, Error> 
 			// Planar s32 - interleave and convert
 			let mut output = Vec::with_capacity(nb_samples * channels);
 			for i in 0..nb_samples {
-				for ch in 0..channels {
-					let channel_data =
-						slice::from_raw_parts(frame.data[ch] as *const i32, nb_samples);
+				for plane in frame.data.iter().take(channels) {
+					let channel_data = slice::from_raw_parts(*plane as *const i32, nb_samples);
 					output.push(channel_data[i] as f32 / 2_147_483_648.0);
 				}
 			}
