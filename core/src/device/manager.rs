@@ -601,7 +601,10 @@ fn detect_os_version() -> Option<String> {
 	{
 		use std::process::Command;
 
-		let output = Command::new("cmd").args(["/c", "ver"]).output().ok()?;
+		let output =
+			crate::common::process::hide_console_window(Command::new("cmd").args(["/c", "ver"]))
+				.output()
+				.ok()?;
 
 		if output.status.success() {
 			let stdout = String::from_utf8_lossy(&output.stdout);

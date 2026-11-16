@@ -143,6 +143,7 @@ async fn find_work_tree(folder: &Path) -> Option<PathBuf> {
 /// is missing, refuses the folder, or takes too long.
 async fn run_git_status(folder: &Path) -> Option<Vec<u8>> {
 	let mut command = tokio::process::Command::new("git");
+	crate::common::process::hide_console_window_async(&mut command);
 	command
 		.arg("-C")
 		.arg(folder)

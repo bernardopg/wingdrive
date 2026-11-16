@@ -38,6 +38,7 @@ pub async fn generate_splat_from_image(
 
 	// Build command
 	let mut cmd = Command::new("sharp");
+	crate::common::process::hide_console_window_async(&mut cmd);
 	cmd.arg("predict")
 		.arg("-i")
 		.arg(source_path)
@@ -81,10 +82,12 @@ pub async fn generate_splat_from_image(
 
 /// Check if SHARP CLI is available in PATH
 pub async fn check_sharp_available() -> Result<bool> {
-	let output = tokio::process::Command::new("sharp")
-		.arg("--help")
-		.output()
-		.await;
+	let output = crate::common::process::hide_console_window_async(
+		&mut tokio::process::Command::new("sharp"),
+	)
+	.arg("--help")
+	.output()
+	.await;
 
 	Ok(output.is_ok())
 }

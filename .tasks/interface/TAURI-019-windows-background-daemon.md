@@ -1,15 +1,15 @@
 ---
 id: TAURI-019
 title: Windows daemon runs without a console window, with a tray icon
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: TAURI-000
 priority: High
 milestone: M3
-sprint: S07
+sprint: S06
 tags: [tauri, windows, daemon, tray]
 related_tasks: [TAURI-012, TAURI-016, TAURI-017, DESK-003]
-last_updated: 2026-11-15
+last_updated: 2026-11-16
 ---
 
 ## Description
@@ -28,10 +28,10 @@ and the background settings, and quits.
 
 ## Implementation Steps
 
-- [ ] Start the daemon with no console: build `wing-daemon` for Windows as a GUI-subsystem program
+- [x] Start the daemon with no console: build `wing-daemon` for Windows as a GUI-subsystem program
       that logs to its log file, or start it with `CREATE_NO_WINDOW`; the scheduled task keeps
       working without a window either way.
-- [ ] `wing daemon start` and `wing restart` on Windows start it the same way.
+- [x] `wing daemon start` and `wing restart` on Windows start it the same way.
 - [ ] The notification-area icon belongs to the WingDrive app in background mode (DESK-003), which on
       Windows keeps running hidden when "Keep running in the background" is on. Check that the icon,
       its menu and "Start at login" work there, and that the daemon keeps running when the window
@@ -43,3 +43,20 @@ and the background settings, and quits.
 - [ ] On a real Windows machine, logging in starts the daemon and WingDrive with no console window.
 - [ ] Closing every WingDrive window leaves the daemon running and the tray icon in place.
 - [ ] Quitting from the tray stops the app; the daemon follows the "Keep running" setting.
+
+## Progress (2026-11-16, without a Windows machine)
+
+- `wing-daemon` is a GUI-subsystem program in Windows release builds
+  (`windows_subsystem = "windows"` in `core/src/bin/daemon.rs`), so the scheduled task and every
+  other start open no console. Debug builds keep the console for development, and
+  `wing start --foreground` still shows the output through inherited handles.
+- The app starts the daemon and `schtasks` with `CREATE_NO_WINDOW`; `wing start` and `wing restart`
+  do the same in background mode.
+- Console programs the daemon itself runs (`cmd /c ver` for the device info, `git` for the status
+  emblems, `ffmpeg`, `ffprobe`, `sharp`) get `CREATE_NO_WINDOW` through
+  `wing_core::common::process::hide_console_window`, so a GUI daemon never flashes their windows.
+- The tray icon already exists on Windows: `background::create_tray` runs on every platform and
+  "Keep running in the background" is on by default, so closing the window leaves WingDrive in the
+  notification area with Open, New tab and Quit. Logs are in `%APPDATA%` under the data folder's
+  `logs/daemon.log`.
+- Left for the author on Windows: the acceptance criteria below with the next release's installer.

@@ -55,7 +55,7 @@ impl HardwareAccel {
 /// Detect available hardware acceleration
 pub fn detect_hardware_accel() -> Option<HardwareAccel> {
 	// Try to run ffmpeg -encoders and check which hardware encoders are available
-	let output = match Command::new("ffmpeg")
+	let output = match crate::common::process::hide_console_window(&mut Command::new("ffmpeg"))
 		.args(["-hide_banner", "-encoders"])
 		.output()
 	{
