@@ -10,6 +10,8 @@ import { imageSource } from "../../../utils/imageSource";
 interface ListViewProps {
 	files: File[];
 	onFilePress: (file: File) => void;
+	/** Shown instead of "No items" when the listing is empty */
+	emptyState?: React.ReactNode;
 }
 
 function formatBytes(bytes: number): string {
@@ -103,13 +105,13 @@ function FileRow({ file, onPress }: { file: File; onPress: () => void }) {
 	);
 }
 
-export function ListView({ files, onFilePress }: ListViewProps) {
+export function ListView({ files, onFilePress, emptyState }: ListViewProps) {
 	// Edge-to-edge on Android: keep the last row above the navigation bar.
 	const insets = useSafeAreaInsets();
 	if (files.length === 0) {
 		return (
 			<View className="flex-1 items-center justify-center">
-				<Text className="text-ink-dull">No items</Text>
+				{emptyState ?? <Text className="text-ink-dull">No items</Text>}
 			</View>
 		);
 	}

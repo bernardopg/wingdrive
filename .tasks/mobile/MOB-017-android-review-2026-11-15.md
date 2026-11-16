@@ -39,8 +39,8 @@ What is wrong, most important first:
    show a measured value or nothing.
 5. **Layout:** after scrolling the Overview, the large "My Library" title and the header buttons
    draw under the status bar clock and icons (MOB-015 fixed this for the first screen only).
-6. **Disabled search:** the search field on the Overview and Explore is visible but disabled, with
-   no hint why.
+6. ~~Disabled search~~: not a bug. The field is a button that opens the search screen; the
+   review tapped it later and it worked.
 7. **Slow taps:** switching tabs or opening a device takes 1 to 3 seconds before the screen changes
    on this phone.
 8. **"Criar espaço" does nothing.** The last page of Explore shows a "+" and "Criar espaço", but
@@ -59,3 +59,19 @@ What is wrong, most important first:
 - [ ] Items 1 and 2 have tasks of their own or are closed by MOB-008, with the phone showing its
       shared storage and a paired desktop's files.
 - [ ] Items 3 to 9 fixed and checked on the moto g(7) with screenshots.
+
+## Progress (2026-11-16)
+
+- Item 1: the core detects Android volumes (`core/src/volume/platform/android.rs`): shared storage
+  `/storage/emulated/0` as "Internal storage" and each card under `/storage/<id>`, with capacity from
+  `statvfs`. The app declares `MANAGE_EXTERNAL_STORAGE`, the native module answers
+  `hasAllFilesAccess()` and opens the system page with `openAllFilesAccessSettings()`, and Explore
+  shows an "Allow access to files" card until the user grants it (checked again when the app comes
+  back to the foreground). The empty view of this device shows the same card.
+- Item 2: a paired device that shares no folders shows "This device shares no folders with this
+  library yet..." instead of "No items".
+- Item 3: "Files Indexed", "used", "Sources", "All Devices" and "Internal storage" translated.
+- Item 4: the AI compute card is gone; the first page shows storage, files, devices and library size.
+- Item 5: the title row fades before it reaches the status bar.
+- Item 8: "Create New Wing" opens a name prompt and creates the wing with `wings.create`.
+- Left: item 7 (slow taps) and the check on a device or emulator with screenshots.

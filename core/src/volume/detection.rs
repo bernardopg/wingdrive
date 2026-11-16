@@ -41,6 +41,11 @@ pub async fn detect_volumes(
 		volumes.extend(detect_ios_volumes(device_id, config).await?);
 	}
 
+	#[cfg(target_os = "android")]
+	{
+		volumes.extend(crate::volume::platform::android::detect_volumes(device_id, config).await?);
+	}
+
 	// Enhance volumes with filesystem-specific capabilities
 	enhance_volumes_with_fs_capabilities(&mut volumes).await?;
 
