@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WingDrive social</title>
+<style>
+@font-face { font-family: "SG"; src: url(assets/fonts/space-grotesk-latin-wght-normal.woff2) format("woff2"); font-weight: 300 700; }
+@font-face { font-family: "Inter"; src: url(assets/fonts/inter-latin-wght-normal.woff2) format("woff2"); font-weight: 100 900; }
+@font-face { font-family: "JBM"; src: url(assets/fonts/jetbrains-mono-latin-wght-normal.woff2) format("woff2"); font-weight: 100 800; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000; }
+#c {
+	position: relative; overflow: hidden; color: #f5f3ff; font-family: "Inter";
+	background:
+		radial-gradient(ellipse 55% 60% at 78% 30%, rgba(109,40,217,.32), transparent 70%),
+		radial-gradient(ellipse 50% 50% at 15% 95%, rgba(67,56,202,.22), transparent 70%),
+		#05040b;
+}
+.h { font-family: "SG"; font-weight: 600; letter-spacing: -.035em; line-height: 1.02; }
+.g { background: linear-gradient(100deg, #ede9fe, #c4b5fd 30%, #8b5cf6 62%, #6366f1); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.eb { font-family: "JBM"; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: #a78bfa; }
+.b { color: #a19fb8; }
+.win { position: absolute; border-radius: 18px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); box-shadow: 0 50px 140px rgba(0,0,0,.8), 0 10px 60px rgba(76,29,149,.3); background: #12111a; }
+.win img { display: block; width: 100%; }
+.logo { position: absolute; }
+.pill { display: inline-block; font-family: "JBM"; border-radius: 999px; border: 1px solid rgba(196,181,253,.35); background: rgba(139,92,246,.1); }
+</style>
+</head>
+<body>
+<div id="c"></div>
+<script>
+const kind = new URLSearchParams(location.search).get("kind");
+const c = document.getElementById("c");
+const logo = (s) => `<img class="logo" src="../../../media-kit/logo/wingdrive-icon.svg" style="width:${s}px;height:${s}px">`;
+const L = {
+	// YouTube thumbnail 1280x720
+	thumb: [1280, 720, `
+		<div class="win" style="width:820px;left:660px;top:170px;transform:perspective(1800px) rotateY(-16deg) rotateX(4deg)"><img src="assets/shots/WingGridView.webp"></div>
+		<div style="position:absolute;left:70px;top:70px">${logo(120)}</div>
+		<div class="h" style="position:absolute;left:70px;top:230px;font-size:96px">Every drive.<br><span class="g">One app.</span></div>
+		<div class="eb" style="position:absolute;left:74px;top:520px;font-size:24px">Open-source file manager</div>
+		<div class="b" style="position:absolute;left:74px;top:566px;font-size:28px">Local-first · No account · No telemetry</div>`],
+	// GitHub social preview 1280x640
+	social: [1280, 640, `
+		<div class="win" style="width:640px;left:720px;top:150px;transform:perspective(1800px) rotateY(-14deg)"><img src="assets/shots/WingOverview.webp"></div>
+		<div style="position:absolute;left:70px;top:72px;display:flex;align-items:center;gap:26px">${logo(96).replace('class="logo"', '')}<span class="h" style="font-size:72px">Wing<span class="g">Drive</span></span></div>
+		<div class="h" style="position:absolute;left:72px;top:210px;font-size:54px">Every drive you own,<br><span class="g">one fast<br>file manager.</span></div>
+		<div class="b" style="position:absolute;left:74px;top:470px;font-size:24px;max-width:520px;line-height:1.45">Local-first. Indexed. Yours.<br>Linux · Windows · Server</div>
+		<div class="pill" style="position:absolute;left:72px;top:556px;font-size:22px;padding:8px 24px">wingdrive.org</div>`],
+	// YouTube channel banner 2560x1440 (safe area 1546x423 in the center)
+	banner: [2560, 1440, `
+		<div style="position:absolute;left:507px;top:508px;width:1546px;height:423px;display:flex;align-items:center;gap:56px;justify-content:center">
+			${logo(220).replace('class="logo"', '')}
+			<div><div class="h" style="font-size:150px">Wing<span class="g">Drive</span></div>
+			<div class="eb" style="font-size:30px;margin-top:18px;color:#b8a6f8">The file manager for every drive you own</div></div>
+		</div>`],
+	// Vertical poster 1080x1920 (Shorts cover / stories)
+	poster: [1080, 1920, `
+		<div style="position:absolute;left:0;width:1080px;top:300px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:40px">
+			${logo(220).replace('class="logo"', '')}
+			<div class="h" style="font-size:118px">Every drive<br>you own.<br><span class="g">One app.</span></div>
+			<div class="b" style="font-size:34px">Local-first · No account · No telemetry</div>
+		</div>
+		<div class="win" style="width:1000px;left:40px;top:1240px;transform:perspective(1800px) rotateX(18deg)"><img src="assets/shots/WingMediaView.webp"></div>`],
+};
+const [w, h, html] = L[kind];
+Object.assign(c.style, { width: w + "px", height: h + "px" });
+c.innerHTML = html;
+window.SIZE = [w, h];
+window.__ready = Promise.all([document.fonts.ready, ...[...document.images].map((i) => i.decode().catch(() => {}))]);
+</script>
+</body>
+</html>
