@@ -1,12 +1,14 @@
 ---
 import Icon from "./Icon.astro";
 import { t, href, type Lang } from "../i18n/strings";
+import { latestRelease, minorVersion } from "../i18n/release";
 
 interface Props {
 	lang: Lang;
 }
 const { lang } = Astro.props;
 const s = t[lang].hero;
+const v = minorVersion(await latestRelease());
 ---
 
 <section class="hero">
@@ -28,7 +30,7 @@ const s = t[lang].hero;
 	<div class="veil"></div>
 	<div class="wrap inner">
 		<a class="pill badge reveal" href={href(lang, "/changelog/")}>
-			<span class="dot"></span>{s.badge}<Icon name="arrow" size={15} />
+			<span class="dot"></span>{s.badge.replace("{v}", v)}<Icon name="arrow" size={15} />
 		</a>
 		<h1 class="h-xl reveal" style="--d:80ms">
 			<span>{s.title1}</span>

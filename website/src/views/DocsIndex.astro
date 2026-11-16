@@ -3,12 +3,14 @@ import Base from "../layouts/Base.astro";
 import Icon from "../components/Icon.astro";
 import { getCollection } from "astro:content";
 import { t, href, type Lang, REPO } from "../i18n/strings";
+import { latestRelease, minorVersion } from "../i18n/release";
 
 interface Props {
 	lang: Lang;
 }
 const { lang } = Astro.props;
 const s = t[lang].docs;
+const v = minorVersion(await latestRelease());
 const all = (await getCollection("docs", (d) => d.id.startsWith(`${lang}/`))).sort((a, b) => a.data.order - b.data.order);
 const groups = [...new Set(all.map((d) => d.data.group))].map((g) => ({ g, items: all.filter((d) => d.data.group === g) }));
 const icons = ["sparkle", "download", "check", "views", "copy", "globe", "server", "tux", "terminal", "server", "code", "chat"];
@@ -42,7 +44,7 @@ const icons = ["sparkle", "download", "check", "views", "copy", "globe", "server
 				}
 			</ol>
 			<a class="new reveal" href={href(lang, lang === "pt" ? "/docs/installation/#atualizações" : "/docs/installation/#updates")}>
-				<span class="tag">{s.newTitle}</span>
+				<span class="tag">{s.newTitle.replace("{v}", v)}</span>
 				<span class="txt">{s.newText}</span>
 				<span class="go">{s.newLink} →</span>
 			</a>
@@ -70,10 +72,13 @@ const icons = ["sparkle", "download", "check", "views", "copy", "globe", "server
 </Base>
 
 <style>
+	/* The glow fades into the next section; body clips it horizontally. */
+	.head .glow-orb {
+		z-index: -1;
+	}
 	.head {
 		position: relative;
 		padding: 150px 0 40px;
-		overflow: hidden;
 	}
 	.head .wrap {
 		display: grid;
