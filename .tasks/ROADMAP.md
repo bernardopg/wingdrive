@@ -30,7 +30,7 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | M2 — Gerenciador de arquivos padrão no Linux | Done | 76 | 0 | 0 | 100% |
 | M3 — Desktop multiplataforma e release | Now | 8 | 13 | 8 | 28% |
 | M4 — Integração entre dispositivos | Later | 0 | 4 | 17 | 0% |
-| M5 — Opcionais | Later | 15 | 23 | 53 | 16% |
+| M5 — Opcionais | Later | 15 | 23 | 54 | 16% |
 
 | Sprint | Datas | Done | In Progress | Progresso |
 |---|---|---|---|---|
@@ -47,7 +47,7 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | [S11](sprints/S11.md) | 2027-02-04 a 2027-02-17 | 0/11 | 0 | 0% |
 | [S12](sprints/S12.md) | 2027-02-18 a 2027-03-03 | 0/12 | 0 | 0% |
 | [S13](sprints/S13.md) | 2027-03-04 a 2027-03-17 | 0/12 | 0 | 0% |
-| [S14](sprints/S14.md) | 2027-03-18 a 2027-03-31 | 0/9 | 0 | 0% |
+| [S14](sprints/S14.md) | 2027-03-18 a 2027-03-31 | 0/10 | 0 | 0% |
 <!-- board:end progresso -->
 
 ## Done — M0: Base herdada do upstream
