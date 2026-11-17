@@ -64,6 +64,21 @@ clean-stale:
 
 # Same gates as CI, run against the local warm target/ before every push.
 # Rust steps are skipped when no Rust-relevant file changed against origin/main.
+# Task board: kanban UI for .tasks/ on http://127.0.0.1:7357 (tools/board/README.md).
+board *ARGS: _board-deps
+	bun tools/board/src/cli.ts serve {{ARGS}}
+
+# Rebuilds the progress tables in the sprint files and ROADMAP.md from the task front matter.
+board-sync: _board-deps
+	bun tools/board/src/cli.ts sync
+
+# Broken references, invalid fields and stale tables in .tasks/.
+board-check: _board-deps
+	bun tools/board/src/cli.ts check
+
+_board-deps:
+	@[ -d tools/board/node_modules ] || bun install --cwd tools/board --frozen-lockfile
+
 ci-local *ARGS:
 	./scripts/ci-local.sh {{ARGS}}
 

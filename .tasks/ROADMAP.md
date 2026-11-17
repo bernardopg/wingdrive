@@ -18,6 +18,38 @@ Os sprints futuros são um plano de backlog: ao abrir cada um, revisar a lista c
 | [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | M4 | Fechar o M4 |
 | [S09](sprints/S09.md) a [S14](sprints/S14.md) | 2027-01-07 a 2027-03-31 | M5 | Opcionais por prioridade |
 
+<!-- board:begin progresso -->
+## Progresso
+
+_Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à mão._
+
+| Milestone | Fase | Done | In Progress | To Do | Progresso |
+|---|---|---|---|---|---|
+| M0 — Base herdada do upstream | Done | 78 | 0 | 0 | 100% |
+| M1 — File manager desktop Linux 1.0 | Done | 22 | 0 | 0 | 100% |
+| M2 — Gerenciador de arquivos padrão no Linux | Done | 76 | 0 | 0 | 100% |
+| M3 — Desktop multiplataforma e release | Now | 8 | 13 | 8 | 28% |
+| M4 — Integração entre dispositivos | Later | 0 | 4 | 17 | 0% |
+| M5 — Opcionais | Later | 15 | 23 | 53 | 16% |
+
+| Sprint | Datas | Done | In Progress | Progresso |
+|---|---|---|---|---|
+| [S01](sprints/S01.md) | 2026-10-01 a 2026-10-14 | 17/17 | 0 | 100% |
+| [S02](sprints/S02.md) | 2026-10-15 a 2026-10-28 | 3/3 | 0 | 100% |
+| [S03](sprints/S03.md) | 2026-10-07 a 2026-10-28 | 32/32 | 0 | 100% |
+| [S04](sprints/S04.md) | 2026-10-29 a 2026-11-11 | 37/37 | 0 | 100% |
+| **[S05](sprints/S05.md)** (atual) | 2026-11-12 a 2026-11-25 | 23/30 | 6 | 77% |
+| [S06](sprints/S06.md) | 2026-11-26 a 2026-12-09 | 0/22 | 14 | 0% |
+| [S07](sprints/S07.md) | 2026-12-10 a 2026-12-23 | 0/11 | 3 | 0% |
+| [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | 0/10 | 0 | 0% |
+| [S09](sprints/S09.md) | 2027-01-07 a 2027-01-20 | 0/12 | 12 | 0% |
+| [S10](sprints/S10.md) | 2027-01-21 a 2027-02-03 | 0/12 | 5 | 0% |
+| [S11](sprints/S11.md) | 2027-02-04 a 2027-02-17 | 0/11 | 0 | 0% |
+| [S12](sprints/S12.md) | 2027-02-18 a 2027-03-03 | 0/12 | 0 | 0% |
+| [S13](sprints/S13.md) | 2027-03-04 a 2027-03-17 | 0/12 | 0 | 0% |
+| [S14](sprints/S14.md) | 2027-03-18 a 2027-03-31 | 0/9 | 0 | 0% |
+<!-- board:end progresso -->
+
 ## Done — M0: Base herdada do upstream
 
 Tasks concluídas no Spacedrive antes do fork, sem milestone até 2026-11-13. Ficam como registro do
@@ -196,6 +228,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-16 | Release `v3.4.0`: atualizações assinadas do AppImage e do Windows (REL-001), daemon sem console no Windows (TAURI-019), `drive.file` no cliente Google do WingDrive (INTG-003, #407; verificação do Google enviada, Acesso a dados em análise), board de tasks e MCP (DEV-007, #406), CORE-022, CORE-023, MOB-017 e Wings (BRAND-003) |
 | 2026-11-15 | **M2 Done**: DESK-051 conferida pelo autor, BRAND-003 com barra lateral e sync com celular na 3.3.1, CORE-021 com 15 rodadas do smoke, DESK-097 (janela no login) corrigida; DESK-000 Done. M3 vira o Now. Tasks novas: TAURI-018 (smoke do Explorer no CI), TAURI-019 (daemon no Windows em segundo plano), CORE-022 (ruído de log), CORE-023 (full sync em loop), MOB-017 (revisão Android). Cobertura no `main`: core 53,7%, desktop 90,7%, CLI 65,9%, interface 74,5%; metas do M3 batidas e as COV abertas foram para o M3 |
 | 2026-11-15 | Release `v3.3.1` e Wings no código (#397). Plano do app desktop: o S05 fecha o M2 com BRAND-003, DESK-051 e CORE-021 (veio do S06) e solta a 3.4.0; o S06 abre com o updater assinado (REL-001), a nova TAURI-018 (smoke do Explorer em todo pull request) e a rodada Windows da TAURI-012 antes das integrações. Build Android funciona com `CFLAGS=-march=native` no host |
 | 2026-11-13 | Release `v3.3.0` (#393): login no Google com um botão pelo cliente OAuth do WingDrive embutido no build (secrets do repositório), modo com cliente próprio, OneDrive por login no navegador, catálogo de integrações, `/privacy` e `/service-terms` |

@@ -3,7 +3,7 @@ id: VSS-003
 title: "Reference Sidecars for Live Photo Support"
 status: Done
 assignee: bernardopg
-parent: VSS-000
+parent: CORE-008
 priority: Medium
 milestone: M0
 tags: [vss, feature, photos, indexing, deprecated]

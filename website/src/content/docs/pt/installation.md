@@ -53,6 +53,14 @@ Baixe o instalador NSIS (`.exe`) ou o `.msi` para x64. Os instaladores ainda nã
 Get-FileHash .\WingDrive-*-x64-setup.exe -Algorithm SHA256
 ```
 
+## Atualizações
+
+O AppImage e os instaladores do Windows se atualizam sozinhos. Em **Configurações → Geral → Atualizações** você vê o canal, procura atualizações quando quiser e instala com uma reinicialização; o WingDrive também pode procurar uma vez depois de abrir e avisar. Toda atualização é assinada com a chave de atualização do WingDrive e conferida antes de instalar.
+
+Os pacotes do AUR e o `.deb` se atualizam pelo gerenciador de pacotes (`yay`, `pacman` ou `apt`), então o WingDrive nunca sobrescreve arquivos que pertencem ao gerenciador.
+
+A atualização automática começa na 3.4.0. Se você usa um AppImage ou instalador do Windows mais antigo, baixe a 3.4.0 à mão uma vez.
+
 ## macOS
 
 Versões pré-compiladas e assinadas estão planejadas para o marco M3. Até lá, compile a partir do código-fonte (abaixo).

@@ -41,6 +41,15 @@ Repita para adicionar outras contas. Cada uma mantém o próprio acesso ao Drive
 
 </div>
 
+### Quais arquivos do Drive o WingDrive vê
+
+O quanto do Drive você vê depende do cliente usado no login:
+
+- **Conta Google** (cliente do próprio WingDrive): o WingDrive vê os arquivos e pastas que ele criou e os que você abrir com ele. Isso usa a permissão `drive.file` do Google, que mantém gratuita a verificação do WingDrive no Google, por ser um projeto de código aberto.
+- **Google Cloud** (seu próprio cliente OAuth): o WingDrive vê todo o Meu Drive, inclusive pastas que já existem para sincronizar. O projeto do Google Cloud é seu, então a permissão mais ampla não passa por revisão do Google.
+
+Contas conectadas antes da 3.4.0 mantêm o acesso que já concederam.
+
 ### O que dá para fazer no Drive
 
 - **Navegar ao vivo.** As pastas vêm direto do Drive. Documentos, Planilhas e Apresentações Google aparecem como `.docx`, `.xlsx` e `.pptx` e abrem no navegador.
