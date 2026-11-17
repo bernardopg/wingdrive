@@ -278,5 +278,8 @@
 	"Root": "Raiz",
 	"Tracked": "Rastreado",
 	"Not tracked": "Não rastreado",
-	"My Library": "Minha biblioteca"
+	"My Library": "Minha biblioteca",
+	"Remove location?": "Remover local?",
+	"The files stay where they are. WingDrive stops indexing and watching them.": "Os arquivos continuam onde estão. O WingDrive para de indexá-los e observá-los.",
+	"Remove": "Remover"
 }
