@@ -18,6 +18,10 @@ mod keybinds;
 mod launch;
 #[cfg(target_os = "linux")]
 mod network_discovery;
+// Off Windows only the tests use it.
+#[cfg(any(target_os = "windows", test))]
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+mod scheduled_task;
 // The Notify and portal builders serve only the Linux sender; Windows sends a toast.
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 mod notifications;
@@ -1264,7 +1268,7 @@ async fn check_daemon_installed() -> Result<bool, String> {
 
 	#[cfg(target_os = "windows")]
 	{
-		for task in ["WingDriveDaemon", "SpacedriveDaemon"] {
+		for task in [scheduled_task::TASK_NAME, "SpacedriveDaemon"] {
 			let output = hide_console_window(&mut std::process::Command::new("schtasks"))
 				.args(["/Query", "/TN", task, "/FO", "LIST"])
 				.output()
@@ -1437,8 +1441,6 @@ async fn install_daemon_service(
 
 	#[cfg(target_os = "windows")]
 	{
-		use std::io::Write;
-
 		tracing::info!("Installing daemon as Windows scheduled task");
 
 		// Stop any existing daemon child process first
@@ -1461,71 +1463,20 @@ async fn install_daemon_service(
 
 		// Delete existing task if it exists
 		let _ = hide_console_window(&mut std::process::Command::new("schtasks"))
-			.args(["/Delete", "/TN", "WingDriveDaemon", "/F"])
+			.args(["/Delete", "/TN", scheduled_task::TASK_NAME, "/F"])
 			.output();
 
-		// Create XML for scheduled task
-		let task_xml = format!(
-			r#"<?xml version="1.0" encoding="UTF-16"?>
-<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-  <RegistrationInfo>
-    <Description>WingDrive Daemon Background Service</Description>
-  </RegistrationInfo>
-  <Triggers>
-    <LogonTrigger>
-      <Enabled>true</Enabled>
-    </LogonTrigger>
-  </Triggers>
-  <Principals>
-    <Principal>
-      <LogonType>InteractiveToken</LogonType>
-      <RunLevel>LeastPrivilege</RunLevel>
-    </Principal>
-  </Principals>
-  <Settings>
-    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
-    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
-    <AllowHardTerminate>true</AllowHardTerminate>
-    <StartWhenAvailable>true</StartWhenAvailable>
-    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
-    <AllowStartOnDemand>true</AllowStartOnDemand>
-    <Enabled>true</Enabled>
-    <Hidden>false</Hidden>
-    <RunOnlyIfIdle>false</RunOnlyIfIdle>
-    <WakeToRun>false</WakeToRun>
-    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
-    <Priority>7</Priority>
-  </Settings>
-  <Actions>
-    <Exec>
-      <Command>{}</Command>
-      <Arguments>--data-dir "{}"</Arguments>
-    </Exec>
-  </Actions>
-</Task>"#,
-			daemon_path.display(),
-			data_dir.display()
-		);
-
-		// Write XML to temp file
-		let temp_dir = std::env::temp_dir();
-		let xml_path = temp_dir.join("wingdrive-task.xml");
-		let mut file = std::fs::File::create(&xml_path)
-			.map_err(|e| format!("Failed to create task XML: {}", e))?;
-		file.write_all(task_xml.as_bytes())
+		// The definition declares UTF-16, so it is written in UTF-16 (scheduled_task.rs).
+		let task_xml = scheduled_task::task_xml(&daemon_path, &data_dir);
+		let xml_path =
+			std::env::temp_dir().join(format!("wingdrive-task-{}.xml", std::process::id()));
+		std::fs::write(&xml_path, scheduled_task::task_file_bytes(&task_xml))
 			.map_err(|e| format!("Failed to write task XML: {}", e))?;
-		drop(file);
 
 		// Create the scheduled task
 		let output = hide_console_window(&mut std::process::Command::new("schtasks"))
-			.args([
-				"/Create",
-				"/TN",
-				"WingDriveDaemon",
-				"/XML",
-				xml_path.to_str().unwrap(),
-			])
+			.args(["/Create", "/TN", scheduled_task::TASK_NAME, "/XML"])
+			.arg(&xml_path)
 			.output()
 			.map_err(|e| format!("Failed to create scheduled task: {}", e))?;
 
@@ -1540,7 +1491,7 @@ async fn install_daemon_service(
 
 		// Start the task
 		let output = hide_console_window(&mut std::process::Command::new("schtasks"))
-			.args(["/Run", "/TN", "WingDriveDaemon"])
+			.args(["/Run", "/TN", scheduled_task::TASK_NAME])
 			.output()
 			.map_err(|e| format!("Failed to start scheduled task: {}", e))?;
 
@@ -1595,7 +1546,7 @@ async fn uninstall_daemon_service() -> Result<(), String> {
 
 	#[cfg(target_os = "windows")]
 	{
-		for task in ["WingDriveDaemon", "SpacedriveDaemon"] {
+		for task in [scheduled_task::TASK_NAME, "SpacedriveDaemon"] {
 			let _ = hide_console_window(&mut std::process::Command::new("schtasks"))
 				.args(["/End", "/TN", task])
 				.output();
