@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { WingPath } from "@wingdrive/ts-client";
-import { isLibraryView, libraryViewInput, localPath, previewKind, relativeDate } from "./fileLogic";
+import { isInLocation, isLibraryView, libraryViewInput, localPath, previewKind, relativeDate } from "./fileLogic";
 
 const physical = (device_slug: string, path: string) =>
 	({ Physical: { device_slug, path } }) as WingPath;
@@ -88,5 +88,19 @@ describe("previewKind", () => {
 		expect(previewKind("pdf")).toBeNull();
 		expect(previewKind(null)).toBeNull();
 		expect(previewKind("")).toBeNull();
+	});
+});
+
+describe("isInLocation", () => {
+	const roots = ["/storage/emulated/0/WingDriveTest"];
+
+	test("covers the root and its subfolders", () => {
+		expect(isInLocation("/storage/emulated/0/WingDriveTest", roots)).toBe(true);
+		expect(isInLocation("/storage/emulated/0/WingDriveTest/Documentos", roots)).toBe(true);
+	});
+
+	test("leaves siblings that share a prefix and parents alone", () => {
+		expect(isInLocation("/storage/emulated/0/WingDriveTest2", roots)).toBe(false);
+		expect(isInLocation("/storage/emulated/0", roots)).toBe(false);
 	});
 });

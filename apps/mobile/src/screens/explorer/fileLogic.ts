@@ -7,6 +7,13 @@ export function localPath(path: WingPath, currentDeviceSlug: string | undefined)
 	return physical.device_slug === currentDeviceSlug ? physical.path : null;
 }
 
+/** Whether `path` is a location root or inside one; such a folder cannot become a location. */
+export function isInLocation(path: string, locationRoots: string[]): boolean {
+	return locationRoots.some(
+		(root) => path === root || path.startsWith(root.endsWith("/") ? root : `${root}/`),
+	);
+}
+
 /** Library-wide lists opened from a wing item, the same queries as the desktop's views (MOB-017). */
 export const LIBRARY_VIEWS = ["recents", "favorites"] as const;
 export type LibraryView = (typeof LIBRARY_VIEWS)[number];

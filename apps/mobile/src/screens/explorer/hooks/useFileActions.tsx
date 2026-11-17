@@ -9,7 +9,7 @@ import { ArrowSquareOut, PencilSimple, ShareNetwork, Trash } from "phosphor-reac
 import { useLibraryAction, useNormalizedQuery } from "../../../client";
 import { RenameDialog } from "../../../components/RenameDialog";
 import { FileActionsSheet, type FileAction } from "../components/FileActionsSheet";
-import { localPath } from "../fileLogic";
+import { isInLocation, localPath } from "../fileLogic";
 
 const ICON = "hsl(235, 10%, 55%)";
 
@@ -159,14 +159,15 @@ export function useFileActions() {
 		[currentDeviceSlug],
 	);
 
-	/** Whether a folder of this phone can become a location: it is not one already. */
+	/** Whether a folder of this phone can become a location: neither one already nor inside one. */
 	const canAddLocation = useCallback(
 		(folder: WingPath | null) => {
 			const path = folder ? localPath(folder, currentDeviceSlug) : null;
 			if (!path) return false;
-			return !(locationsData?.locations ?? []).some(
-				(location) => localPath(location.wing_path, currentDeviceSlug) === path,
-			);
+			const roots = (locationsData?.locations ?? [])
+				.map((location) => localPath(location.wing_path, currentDeviceSlug))
+				.filter((root): root is string => !!root);
+			return !isInLocation(path, roots);
 		},
 		[currentDeviceSlug, locationsData],
 	);
