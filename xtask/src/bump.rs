@@ -26,6 +26,9 @@ fn version_files(root: &Path) -> Vec<(PathBuf, FileType)> {
 			FileType::Json,
 		),
 		(root.join("apps/tauri/package.json"), FileType::Json),
+		// The Android app's versionName comes from app.json (apps/mobile/android/app/build.gradle).
+		(root.join("apps/mobile/app.json"), FileType::Json),
+		(root.join("apps/mobile/package.json"), FileType::Json),
 	]
 }
 
