@@ -239,5 +239,9 @@
 	"Allow access to files": "Allow access to files",
 	"WingDrive needs All files access to show and manage the files on this device.": "WingDrive needs All files access to show and manage the files on this device.",
 	"Open settings": "Open settings",
-	"This device shares no folders with this library yet. Add a location on it to browse its files here.": "This device shares no folders with this library yet. Add a location on it to browse its files here."
+	"This device shares no folders with this library yet. Add a location on it to browse its files here.": "This device shares no folders with this library yet. Add a location on it to browse its files here.",
+	"{{size}} free": "{{size}} free",
+	"Internal": "Internal",
+	"External": "External",
+	"Cloud": "Cloud"
 }

@@ -24,6 +24,7 @@ export function ExplorerScreen() {
 		path?: string;
 		view?: string;
 		id?: string;
+		title?: string;
 	}>();
 	const [viewMode, setViewMode] = useState<ViewMode>("list");
 	const { isSearchMode, query } = useSearchStore();
@@ -95,6 +96,9 @@ export function ExplorerScreen() {
 		}
 
 		if (params?.type === "path") {
+			// Set by the screen that opened this folder: a volume's name rather than the last
+			// segment of its mount point, which is "0" for /storage/emulated/0 (MOB-017).
+			if (searchParams.title) return searchParams.title;
 			try {
 				const wdPath = JSON.parse(params.path);
 				if (wdPath.Physical) {
@@ -123,6 +127,7 @@ export function ExplorerScreen() {
 				params: {
 					type: "path",
 					path: JSON.stringify(file.wing_path),
+					title: file.name,
 				},
 			});
 		}

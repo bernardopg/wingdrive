@@ -1,5 +1,6 @@
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { View, Image, ScrollView, Pressable, Modal } from "react-native";
 import DatabaseIcon from "@wingdrive/assets/icons/Database.webp";
 import DriveAmazonS3Icon from "@wingdrive/assets/icons/Drive-AmazonS3.webp";
@@ -20,6 +21,7 @@ import { getDeviceIcon } from "@wingdrive/ts-client";
 import { useNormalizedQuery, useLibraryAction, useWingDriveClient } from "../../../client";
 import { useVolumeIndexingStore } from "../../../stores";
 import { imageSource } from "../../../utils/imageSource";
+import { fileSystemLabel, volumeTypeLabel } from "./volumeLabels";
 
 
 function formatBytes(bytes: number): string {
@@ -612,6 +614,7 @@ interface IndexingProgress {
 }
 
 function VolumeBar({ volume }: VolumeBarProps) {
+	const { t } = useTranslation("common");
 	const [indexingProgress, setIndexingProgress] = useState<IndexingProgress | null>(null);
 	const [menuVisible, setMenuVisible] = useState(false);
 	const client = useWingDriveClient();
@@ -727,14 +730,7 @@ function VolumeBar({ volume }: VolumeBarProps) {
 	};
 
 	// Convert enum values to strings for safe rendering
-	const fileSystem = filterUnknown(
-		volume.file_system
-			? typeof volume.file_system === "string"
-				? volume.file_system
-				: (volume.file_system as any)?.Other ||
-					JSON.stringify(volume.file_system)
-			: null
-	);
+	const fileSystem = fileSystemLabel(volume.file_system);
 	const diskType = filterUnknown(
 		volume.disk_type
 			? typeof volume.disk_type === "string"
@@ -745,12 +741,8 @@ function VolumeBar({ volume }: VolumeBarProps) {
 	);
 
 	const iconSrc = getVolumeIcon(volume.volume_type, volume.name);
-	const volumeTypeStr = filterUnknown(
-		typeof volume.volume_type === "string"
-			? volume.volume_type
-			: (volume.volume_type as any)?.Other ||
-					JSON.stringify(volume.volume_type)
-	);
+	// "Primary" and friends become words the user knows, translated by LocalizedText (MOB-017).
+	const volumeTypeStr = volumeTypeLabel(volume.volume_type);
 
 	return (
 		<>
@@ -822,7 +814,7 @@ function VolumeBar({ volume }: VolumeBarProps) {
 							{formatBytes(totalCapacity)}
 						</Text>
 						<Text className="text-ink-dull text-[10px]">
-							{formatBytes(availableBytes)} free
+							{t("{{size}} free", { size: formatBytes(availableBytes) })}
 						</Text>
 					</View>
 
