@@ -156,13 +156,39 @@ they expire or push useful entries out.
 
 ## Recommendations still open
 
-1. Merge `generate_typescript_types` into the test build of `scripts/ci-rust.sh` (build it with the same
-   features and profile as the test binaries). Saving: up to 3 minutes of every full `Rust Workspace`
-   run. Needs a check that the generated output does not depend on the feature set.
-2. A merge queue does not help at the current volume: `strict_required_status_checks_policy` is off,
+1. A merge queue does not help at the current volume: `strict_required_status_checks_policy` is off,
    so pull requests never wait for each other.
-3. sccache with the GitHub Actions backend would share the same 10 GB budget, so it does not fix
+2. sccache with the GitHub Actions backend would share the same 10 GB budget, so it does not fix
    eviction. A remote cache (S3, R2) would, at the cost of a secret and a service.
+
+## One feature set for the Rust tests (2026-11-17)
+
+PR #410 moved the toolchain to Rust 1.100, so no saved cache matched and the `Rust Workspace (Windows)`
+job compiled from scratch: 2 hours, against 38 minutes with a warm cache. Its log showed the workspace
+compiled four times. Each `cargo test -p <one package>` resolves features for that package alone (wing-cli
+turns on wing-core's `cli`; tokio, windows-sys and others differ), so Cargo rebuilt the shared crates and
+everything above them for wing-core's tests, for the desktop shell, for wing-cli and again for wing-bench.
+`cargo run --bin generate_typescript_types` added one more build without dev-dependencies.
+
+| Cold Windows run of #410 | Minutes |
+| --- | --- |
+| clippy (workspace) | 29 |
+| `generate_typescript_types` build | 28 |
+| Test binaries: wing-core, desktop shell, wing-cli | 45 |
+| wing-bench rebuild for its two tests | 10 |
+
+`scripts/ci-rust.sh` now:
+
+1. Builds and runs every test of wing-core, wing-cli, wing-bench and the desktop shell with the same `-p`
+   list, so their dependencies compile once. Only small crates with their own trees (wing-branding and the
+   file-opening and clipboard backends) still build apart.
+2. Checks the generated TypeScript types with the generator the test build already linked, and only on
+   Linux, since the types do not depend on the platform. The output is the same with wing-core's `cli`
+   feature on.
+3. Drops the separate `cargo build --bin wing-daemon`: building wing-core's integration tests builds its
+   binaries too.
+
+Expected: about 20 minutes off a warm Windows run (38 to about 18) and about 6 off a warm Linux run.
 
 ## How #318 failed
 
