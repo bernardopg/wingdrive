@@ -9,7 +9,7 @@ milestone: M5
 sprint: S07
 tags: [mobile, android, ui, i18n, review]
 related_tasks: [MOB-007, MOB-008, MOB-015, BRAND-003]
-last_updated: 2026-11-15
+last_updated: 2026-11-17
 ---
 
 ## Description
@@ -107,3 +107,15 @@ Still wrong, found in this check:
 8. Item 7 of the review (taps taking 1 to 3 s) still has no cause: `gfxinfo` shows no slow frame,
    so the next step is a Hermes profile of the JS thread.
 
+## Progress (2026-11-17)
+
+Pull requests for the items of "Still wrong", not yet checked on the moto g(7):
+
+- Items 1 to 3: #419. The folder view takes the item's name as its title ("Internal storage"),
+  the volume row hides the "android" placeholder and shows Internal, External, Network or Cloud,
+  "free" is translated, and Total Storage counts the detected volumes when the library tracks none.
+- Item 4: #416. The app follows the phone's language until the user picks one in Settings, which
+  gains "System default".
+- Item 5: #417. The native module holds a Wi-Fi multicast lock while the core runs and declares
+  `CHANGE_WIFI_MULTICAST_STATE`.
+- Item 7: #418. Every Android build carries the product version from `app.json` (MOB-009).

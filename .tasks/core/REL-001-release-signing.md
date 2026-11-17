@@ -9,7 +9,7 @@ milestone: M3
 sprint: S06
 tags: [release, signing, updater, ci]
 related_tasks: [MOB-009, TAURI-012]
-last_updated: 2026-11-16
+last_updated: 2026-11-17
 ---
 
 ## Description
@@ -86,3 +86,11 @@ removed on 2026-11-02; the history is in git).
    updater artifact for macOS (`.app.tar.gz` and `.sig`) joins `latest.json` as `darwin-aarch64` and
    `darwin-x86_64`.
 4. Run the TAURI-012 matrix on a Mac before the first signed macOS release.
+
+## Authenticode in the workflow (2026-11-17)
+
+#422 does step 3 of the plan: `windows-bundle.yml` signs a tagged release through Azure Artifact
+Signing (`artifact-signing-cli` 0.12.0 as Tauri's `signCommand`) when the six secrets listed in
+`docs/core/releases.mdx` exist, and fails the run when an installer has no valid signature. Without
+them the run warns and ships unsigned installers. Left for the author: the Azure account,
+certificate profile and secrets, then one signed tag run checked on a clean machine.

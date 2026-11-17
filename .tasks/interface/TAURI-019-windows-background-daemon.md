@@ -9,7 +9,7 @@ milestone: M3
 sprint: S06
 tags: [tauri, windows, daemon, tray]
 related_tasks: [TAURI-012, TAURI-016, TAURI-017, DESK-003]
-last_updated: 2026-11-16
+last_updated: 2026-11-17
 ---
 
 ## Description
@@ -60,3 +60,11 @@ and the background settings, and quits.
   notification area with Open, New tab and Quit. Logs are in `%APPDATA%` under the data folder's
   `logs/daemon.log`.
 - Left for the author on Windows: the acceptance criteria below with the next release's installer.
+
+## Progress (2026-11-17, without a Windows machine)
+
+- #423: the tray menu has "Open Logs Folder", which opens `<data dir>/logs` with the platform's
+  default handler. The tray's "New Tab" used `$HOME`, unset on Windows, and now uses Tauri's home
+  folder. The logs item still needs a check on Windows.
+- #420: the `WingDriveDaemon` scheduled task definition is written as UTF-16, as it declares, with
+  the paths escaped for XML and quoted for the command line (`scheduled_task.rs`, tested on Linux).
