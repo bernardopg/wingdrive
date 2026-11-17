@@ -18,6 +18,14 @@ unmaintained = "workspace"
 ignore = [
 	"RUSTSEC-2023-0071", # rsa via opendal's reqsign, see .cargo/audit.toml
 	"RUSTSEC-2026-0344", # ruzstd via wasmer-compiler, see .cargo/audit.toml
+	# chrono was declared unmaintained on 2026-11-17 and has no successor release. Nine workspace
+	# crates use it directly, and sea-orm, sea-query, specta, rusqlite and pdfium-render pull it in
+	# too, so it stays until those move to jiff or time. It is an unmaintained notice, not a
+	# vulnerability; drop this entry once the tree no longer contains chrono.
+	"RUSTSEC-2026-0543",
+	# humantime wraps chrono and is unmaintained with it (2026-11-17). Only wing-bench uses it,
+	# through humantime-serde, to parse durations in benchmark configs.
+	"RUSTSEC-2026-0542",
 ]
 
 [sources]
