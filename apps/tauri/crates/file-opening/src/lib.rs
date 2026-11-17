@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 pub struct OpenWithApp {
 	/// Platform-specific identifier:
 	/// - macOS: bundle ID (com.apple.Preview)
-	/// - Windows: application name
+	/// - Windows: full path of the program (`IAssocHandler::GetName`)
 	/// - Linux: desktop entry ID (org.gnome.Evince.desktop)
 	pub id: String,
 
