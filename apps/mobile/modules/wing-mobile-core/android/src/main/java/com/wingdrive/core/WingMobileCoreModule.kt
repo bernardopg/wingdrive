@@ -144,6 +144,54 @@ class WingMobileCoreModule : Module() {
                 false
             }
         }
+
+        // Opens a file of this device in the app the user picks (MOB-007). False when no
+        // installed app handles its type.
+        Function("openFile") { path: String, mimeType: String? ->
+            launchFileIntent(path, mimeType, share = false)
+        }
+
+        // Shows the system share sheet for a file of this device.
+        Function("shareFile") { path: String, mimeType: String? ->
+            launchFileIntent(path, mimeType, share = true)
+        }
+    }
+
+    private fun launchFileIntent(path: String, mimeType: String?, share: Boolean): Boolean {
+        val context = appContext.reactContext ?: return false
+        val file = java.io.File(path)
+        if (!file.isFile) throw IllegalArgumentException("Not a file: $path")
+        val uri = androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.wingdrive.files",
+            file,
+        )
+        val type = mimeType
+            ?: android.webkit.MimeTypeMap.getSingleton()
+                .getMimeTypeFromExtension(file.extension.lowercase())
+            ?: "*/*"
+        val target = if (share) {
+            android.content.Intent(android.content.Intent.ACTION_SEND)
+                .setType(type)
+                .putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                .apply { clipData = android.content.ClipData.newRawUri(file.name, uri) }
+        } else {
+            android.content.Intent(android.content.Intent.ACTION_VIEW).setDataAndType(uri, type)
+        }
+        target.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val intent = if (share) android.content.Intent.createChooser(target, file.name) else target
+        val activity = appContext.currentActivity
+        return try {
+            if (activity != null) {
+                activity.startActivity(intent)
+            } else {
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            }
+            true
+        } catch (e: android.content.ActivityNotFoundException) {
+            false
+        }
     }
 
     private fun acquireMulticastLock() {

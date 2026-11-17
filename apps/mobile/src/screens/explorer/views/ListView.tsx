@@ -6,10 +6,14 @@ import type { File } from "@wingdrive/ts-client";
 import { getVirtualMetadata, isVirtualFile, getFileKindForIcon } from "@wingdrive/ts-client";
 import { getIcon } from "@wingdrive/assets/util/mobile";
 import { imageSource } from "../../../utils/imageSource";
+import { useTranslation } from "react-i18next";
+import { relativeDate } from "../fileLogic";
 
 interface ListViewProps {
 	files: File[];
 	onFilePress: (file: File) => void;
+	/** Long press: the file's actions */
+	onFileLongPress?: (file: File) => void;
 	/** Shown instead of "No items" when the listing is empty */
 	emptyState?: React.ReactNode;
 }
@@ -22,24 +26,19 @@ function formatBytes(bytes: number): string {
 	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-function formatDate(dateStr: string | null): string {
-	if (!dateStr) return "";
-	const date = new Date(dateStr);
-	const now = new Date();
-	const diffMs = now.getTime() - date.getTime();
-	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-	if (diffDays === 0) return "Today";
-	if (diffDays === 1) return "Yesterday";
-	if (diffDays < 7) return `${diffDays} days ago`;
-	if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-	if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-	return `${Math.floor(diffDays / 365)} years ago`;
-}
-
-function FileRow({ file, onPress }: { file: File; onPress: () => void }) {
+function FileRow({
+	file,
+	onPress,
+	onLongPress,
+}: {
+	file: File;
+	onPress: () => void;
+	onLongPress?: () => void;
+}) {
+	const { t } = useTranslation("common");
 	const virtualMetadata = getVirtualMetadata(file);
 	const isVirtual = isVirtualFile(file);
+	const modified = relativeDate(file.modified_at);
 
 	// Get icon source
 	const iconSource = (() => {
@@ -61,6 +60,7 @@ function FileRow({ file, onPress }: { file: File; onPress: () => void }) {
 	return (
 		<Pressable
 			onPress={onPress}
+			onLongPress={onLongPress}
 			className="flex-row items-center px-4 py-3 border-b border-app-line active:bg-app-hover"
 		>
 			{/* Icon */}
@@ -81,11 +81,11 @@ function FileRow({ file, onPress }: { file: File; onPress: () => void }) {
 							{formatBytes(file.size)}
 						</Text>
 					)}
-					{!isVirtual && file.modified_at && (
+					{!isVirtual && modified && (
 						<>
 							<Text className="text-ink-faint text-xs">•</Text>
 							<Text className="text-ink-faint text-xs">
-								{formatDate(file.modified_at)}
+								{t(modified.key, { count: modified.count })}
 							</Text>
 						</>
 					)}
@@ -105,7 +105,7 @@ function FileRow({ file, onPress }: { file: File; onPress: () => void }) {
 	);
 }
 
-export function ListView({ files, onFilePress, emptyState }: ListViewProps) {
+export function ListView({ files, onFilePress, onFileLongPress, emptyState }: ListViewProps) {
 	// Edge-to-edge on Android: keep the last row above the navigation bar.
 	const insets = useSafeAreaInsets();
 	if (files.length === 0) {
@@ -121,7 +121,11 @@ export function ListView({ files, onFilePress, emptyState }: ListViewProps) {
 			data={files}
 			keyExtractor={(item) => item.id}
 			renderItem={({ item }) => (
-				<FileRow file={item} onPress={() => onFilePress(item)} />
+				<FileRow
+					file={item}
+					onPress={() => onFilePress(item)}
+					onLongPress={onFileLongPress && (() => onFileLongPress(item))}
+				/>
 			)}
 			contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
 			className="flex-1"

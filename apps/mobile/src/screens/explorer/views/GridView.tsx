@@ -10,6 +10,8 @@ import { imageSource } from "../../../utils/imageSource";
 interface GridViewProps {
 	files: File[];
 	onFilePress: (file: File) => void;
+	/** Long press: the file's actions */
+	onFileLongPress?: (file: File) => void;
 	/** Shown instead of "No items" when the listing is empty */
 	emptyState?: React.ReactNode;
 }
@@ -32,7 +34,15 @@ function formatBytes(bytes: number | bigint | null): string {
 	return Math.round(numBytes / Math.pow(k, i)) + " " + sizes[i];
 }
 
-function FileCard({ file, onPress }: { file: File; onPress: () => void }) {
+function FileCard({
+	file,
+	onPress,
+	onLongPress,
+}: {
+	file: File;
+	onPress: () => void;
+	onLongPress?: () => void;
+}) {
 	const virtualMetadata = getVirtualMetadata(file);
 
 	// Get icon source
@@ -55,6 +65,7 @@ function FileCard({ file, onPress }: { file: File; onPress: () => void }) {
 	return (
 		<Pressable
 			onPress={onPress}
+			onLongPress={onLongPress}
 			style={{ width: ITEM_WIDTH }}
 			className="mb-4 active:opacity-70"
 		>
@@ -82,7 +93,7 @@ function FileCard({ file, onPress }: { file: File; onPress: () => void }) {
 	);
 }
 
-export function GridView({ files, onFilePress, emptyState }: GridViewProps) {
+export function GridView({ files, onFilePress, onFileLongPress, emptyState }: GridViewProps) {
 	// Edge-to-edge on Android: keep the last row above the navigation bar.
 	const insets = useSafeAreaInsets();
 	if (files.length === 0) {
@@ -98,7 +109,11 @@ export function GridView({ files, onFilePress, emptyState }: GridViewProps) {
 			data={files}
 			keyExtractor={(item) => item.id}
 			renderItem={({ item }) => (
-				<FileCard file={item} onPress={() => onFilePress(item)} />
+				<FileCard
+					file={item}
+					onPress={() => onFilePress(item)}
+					onLongPress={onFileLongPress && (() => onFileLongPress(item))}
+				/>
 			)}
 			numColumns={NUM_COLUMNS}
 			columnWrapperStyle={{

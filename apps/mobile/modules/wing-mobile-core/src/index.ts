@@ -34,6 +34,12 @@ export interface CoreModule {
   hasAllFilesAccess(): boolean;
   /** Opens the system page that grants storage access; false when it could not */
   openAllFilesAccessSettings(): boolean;
+  /** Opens a file of this device in another app; false when none handles it or on iOS */
+  openFile(path: string, mimeType?: string): boolean;
+  /** Shows the share sheet for a file of this device; false on iOS */
+  shareFile(path: string, mimeType?: string): boolean;
+  /** Whether this platform can open and share files (Android only for now) */
+  canOpenFiles: boolean;
 }
 
 interface WingMobileCoreNativeModule extends NativeModule<WingMobileCoreEvents> {
@@ -47,6 +53,8 @@ interface WingMobileCoreNativeModule extends NativeModule<WingMobileCoreEvents> 
   addLogListener(callback: (log: CoreLog) => void): () => void;
   hasAllFilesAccess?(): boolean;
   openAllFilesAccessSettings?(): boolean;
+  openFile?(path: string, mimeType: string | null): boolean;
+  shareFile?(path: string, mimeType: string | null): boolean;
 }
 
 const WingMobileCoreModule =
@@ -80,4 +88,9 @@ export const WingMobileCore: CoreModule = {
   hasAllFilesAccess: () => WingMobileCoreModule.hasAllFilesAccess?.() ?? true,
   openAllFilesAccessSettings: () =>
     WingMobileCoreModule.openAllFilesAccessSettings?.() ?? false,
+  openFile: (path: string, mimeType?: string) =>
+    WingMobileCoreModule.openFile?.(path, mimeType ?? null) ?? false,
+  shareFile: (path: string, mimeType?: string) =>
+    WingMobileCoreModule.shareFile?.(path, mimeType ?? null) ?? false,
+  canOpenFiles: typeof WingMobileCoreModule.openFile === "function",
 };

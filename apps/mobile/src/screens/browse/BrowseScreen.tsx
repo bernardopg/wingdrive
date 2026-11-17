@@ -127,6 +127,16 @@ function WingContent({
 			{groups.map(({ group, items }) => (
 				<WingGroupComponent key={group.id} group={group} items={items} />
 			))}
+
+			{/* A new wing has nothing in it, and items are added on the desktop for now (MOB-017). */}
+			{layout && wingItems.length === 0 && groups.length === 0 && (
+				<View className="items-center px-6 py-10">
+					<Text className="text-ink font-semibold text-base mb-2 text-center">This Wing is empty</Text>
+					<Text className="text-ink-dull text-sm text-center">
+						Add folders, devices and shortcuts to it from the sidebar of WingDrive on your computer. They show up here once the devices sync.
+					</Text>
+				</View>
+			)}
 		</Animated.ScrollView>
 	);
 }
