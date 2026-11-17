@@ -1,5 +1,5 @@
 import { LocalizedText as Text } from "../../i18n/LocalizedText";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, Alert, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -13,7 +13,8 @@ import {
 } from "../../client";
 import { useCurrentLibraryId } from "../../client/hooks/useQuery";
 import { useAppReset } from "../../contexts";
-import { applyLanguage } from "../../i18n";
+import { chooseLanguage as storeLanguageChoice, loadLanguageChoice } from "../../i18n";
+import type { LanguageChoice } from "../../i18n/language";
 import { usePreferencesStore } from "../../stores/preferences";
 import { SettingsGroup, SettingsLink, SettingsOption, SettingsToggle } from "../../components/primitive";
 import { RenameDialog } from "../../components/RenameDialog";
@@ -26,6 +27,11 @@ export function SettingsScreen() {
 	const { resetApp } = useAppReset();
 	const libraryId = useCurrentLibraryId();
 	const [renaming, setRenaming] = useState<"device" | "library" | null>(null);
+	const [languageChoice, setLanguageChoice] = useState<LanguageChoice | null>(null);
+
+	useEffect(() => {
+		void loadLanguageChoice().then(setLanguageChoice);
+	}, []);
 
 	const status = useCoreQuery("core.status", {});
 	const appConfig = useCoreQuery("config.app.get", null);
@@ -50,6 +56,10 @@ export function SettingsScreen() {
 	const library = libraryConfig.data;
 	const device = status.data?.device_info;
 	const language = config?.preferences.language === "pt" ? "pt" : "en";
+	// No stored choice means the app follows the phone, unless the core already says "pt".
+	const shownChoice: LanguageChoice = languageChoice ?? (language === "pt" ? "pt" : "system");
+	const languageLabel =
+		shownChoice === "pt" ? "Português" : shownChoice === "en" ? "English" : t("System default");
 
 	const setAppConfig = (input: UpdateAppConfigInput) =>
 		updateApp.mutate(input, {
@@ -61,11 +71,12 @@ export function SettingsScreen() {
 		});
 
 	const chooseLanguage = () => {
-		const pick = (next: "en" | "pt") => {
-			applyLanguage(next);
-			setAppConfig({ language: next });
+		const pick = (next: LanguageChoice) => {
+			setLanguageChoice(next);
+			void storeLanguageChoice(next).then((shown) => setAppConfig({ language: shown }));
 		};
 		Alert.alert(t("Language"), undefined, [
+			{ text: t("System default"), onPress: () => pick("system") },
 			{ text: "English", onPress: () => pick("en") },
 			{ text: "Português", onPress: () => pick("pt") },
 			{ text: t("Cancel"), style: "cancel" },
@@ -138,7 +149,7 @@ export function SettingsScreen() {
 			<SettingsGroup header="General">
 				<SettingsOption
 					label="Language"
-					value={language === "pt" ? "Português" : "English"}
+					value={languageLabel}
 					onPress={chooseLanguage}
 				/>
 				<SettingsToggle

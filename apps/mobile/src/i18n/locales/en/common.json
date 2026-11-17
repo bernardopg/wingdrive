@@ -243,5 +243,6 @@
 	"{{size}} free": "{{size}} free",
 	"Internal": "Internal",
 	"External": "External",
-	"Cloud": "Cloud"
+	"Cloud": "Cloud",
+	"System default": "System default"
 }
