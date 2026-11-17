@@ -6,7 +6,7 @@ assignee: bernardopg
 priority: High
 tags: [core, platform, file-operations]
 whitepaper: DESIGN-open-with.md
-last_updated: 2026-11-15
+last_updated: 2026-11-17
 related_tasks: [EXPL-004, DESK-004]
 milestone: M3
 sprint: S06
@@ -120,3 +120,9 @@ moves to M3 and runs with the TAURI-012 matrix in S05.
 2026-11-05: `file-opening-windows` builds, passes clippy and runs its tests on the Windows CI
 runner, and ships in the `v3.0.0` installers. The Windows boxes above still need a check by hand
 on a real machine, listed in TAURI-012.
+
+2026-11-17 (#421): the Windows backend shows each app's display name (`GetUIName`) instead of its
+program path, marks the default program from `AssocQueryStringW` and lists it first, frees the
+strings the shell allocates, and reports a missing file before invoking a handler. New tests list
+the handlers of the Windows CI runner without starting a program. The boxes above stay open until
+the TAURI-012 check on a real machine.
