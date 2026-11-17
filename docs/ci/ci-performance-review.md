@@ -190,6 +190,30 @@ everything above them for wing-core's tests, for the desktop shell, for wing-cli
 
 Expected: about 20 minutes off a warm Windows run (38 to about 18) and about 6 off a warm Linux run.
 
+First measurement, on #413's own run: the `main` cache restored with a full match but held the old
+per-package builds, so the single feature set compiled almost from scratch. `Rust Workspace (Windows)`
+took 34 minutes (24 of them building test binaries) and `Rust Workspace` 30 minutes (16). The saving shows
+once `main` saves a cache built the new way; #410's move to Rust 1.100 also makes that first `main` run
+cold.
+
+## Dev Drive for the Windows job: rejected (2026-11-17)
+
+#414 tried a trusted ReFS Dev Drive (`samypr100/setup-dev-drive` v4.1.0) mounted at `target/`, so
+rust-cache would keep its path and key. It did not work:
+
+- rust-cache could not read the mount point (`ENOENT: no such file or directory, scandir
+  'D:\a\wingdrive\wingdrive\target'`), so it restored nothing and the job built cold.
+- The cold build was not faster: clippy took 44 minutes on the Dev Drive against 29 on #410's cold
+  run on the normal disk, and the whole job 96 minutes. Defender real-time scanning is already off
+  in `setup-system`, which removes most of what a Dev Drive saves.
+
+Mounting the drive elsewhere would change the cache path, and so the cache version, for one cold run
+on `main`, with no measured gain to pay for it. The job stays on the runner's D: drive.
+
+The same pull request keeps one fix: `setup-system` downloads mold to a file with `curl --fail` and
+retries. Piped into `tar`, a bad response failed #410's Explorer smoke with `gzip: stdin: not in gzip
+format`.
+
 ## How #318 failed
 
 The `TypeScript` job's stale `dist/` gate failed because commit `5d25b5cdf` (PR #319) changed

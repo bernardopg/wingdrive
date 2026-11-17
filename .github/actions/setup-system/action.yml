@@ -125,8 +125,12 @@ runs:
       shell: bash
       if: ${{ runner.os == 'Linux' }}
       run: |
-        curl -L# 'https://github.com/rui314/mold/releases/download/v2.4.0/mold-2.4.0-x86_64-linux.tar.gz' \
-        | sudo tar -xzf- -C /usr/local
+        # Download to a file first: piped into tar, a truncated or error response failed the
+        # job with "gzip: stdin: not in gzip format" and could not be retried.
+        archive="$RUNNER_TEMP/mold.tar.gz"
+        curl --fail --location --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 \
+          -o "$archive" 'https://github.com/rui314/mold/releases/download/v2.4.0/mold-2.4.0-x86_64-linux.tar.gz'
+        sudo tar -xzf "$archive" -C /usr/local
 
     - name: Remove 32-bit libs and incompatible pre-installed pkgs from Runner
       shell: bash
