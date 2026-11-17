@@ -79,22 +79,89 @@ jobs:
           persist-credentials: false
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
+      # Authenticode (REL-001): a tagged release signs the programs and installers through Azure
+      # Artifact Signing when its secrets exist. Without them the installers ship unsigned with a
+      # warning on the run, and pull requests never sign.
+      - name: Prepare Authenticode signing
+        id: authenticode
+        if: ${{ inputs.release-tag != '' }}
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          SIGNING_ENDPOINT: ${{ secrets.WINDOWS_SIGNING_ENDPOINT }}
+          SIGNING_ACCOUNT: ${{ secrets.WINDOWS_SIGNING_ACCOUNT }}
+          SIGNING_PROFILE: ${{ secrets.WINDOWS_SIGNING_PROFILE }}
+        run: |
+          missing=()
+          for name in AZURE_TENANT_ID AZURE_CLIENT_ID AZURE_CLIENT_SECRET SIGNING_ENDPOINT SIGNING_ACCOUNT SIGNING_PROFILE; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::warning title=Unsigned Windows installers::$RELEASE_TAG ships without Authenticode; missing ${missing[*]} (REL-001)."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          cargo install --locked artifact-signing-cli --version 0.12.0
+          # Tauri runs the command on every program it bundles and on each installer; -d is the
+          # name the UAC prompt shows for the MSI.
+          config="$RUNNER_TEMP/authenticode.json"
+          python - "$config" <<'PY'
+          import json, os, sys
+          command = " ".join([
+              "artifact-signing-cli",
+              "-e", os.environ["SIGNING_ENDPOINT"],
+              "-a", os.environ["SIGNING_ACCOUNT"],
+              "-c", os.environ["SIGNING_PROFILE"],
+              "-d", "WingDrive",
+              "%1",
+          ])
+          with open(sys.argv[1], "w", encoding="utf-8") as file:
+              json.dump({"bundle": {"windows": {"signCommand": command}}}, file)
+          PY
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+          echo "config=$config" >> "$GITHUB_OUTPUT"
       - name: Build production installers
         env:
           # The updater key (REL-001) signs the installers of tagged releases.
           TAURI_SIGNING_PRIVATE_KEY: ${{ inputs.release-tag != '' && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ inputs.release-tag != '' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
+          # artifact-signing-cli reads the Azure credentials; empty unless the step above enabled signing.
+          AZURE_TENANT_ID: ${{ steps.authenticode.outputs.enabled == 'true' && secrets.AZURE_TENANT_ID || '' }}
+          AZURE_CLIENT_ID: ${{ steps.authenticode.outputs.enabled == 'true' && secrets.AZURE_CLIENT_ID || '' }}
+          AZURE_CLIENT_SECRET: ${{ steps.authenticode.outputs.enabled == 'true' && secrets.AZURE_CLIENT_SECRET || '' }}
+          AUTHENTICODE_CONFIG: ${{ steps.authenticode.outputs.config }}
         run: |
           # WiX accepts only a numeric pre-release, so alpha, beta and rc tags ship the NSIS installer alone.
           case "$RELEASE_TAG" in
             *-*) bundles=nsis ;;
             *) bundles=nsis,msi ;;
           esac
-          updater=()
+          # Each --config is merged over the last.
+          configs=()
           if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            updater=(--config '{"bundle":{"createUpdaterArtifacts":true}}')
+            configs+=(--config '{"bundle":{"createUpdaterArtifacts":true}}')
           fi
-          bun run --cwd apps/tauri tauri build --verbose --target x86_64-pc-windows-msvc --bundles "$bundles" "${updater[@]}"
+          if [ -n "$AUTHENTICODE_CONFIG" ]; then
+            configs+=(--config "$AUTHENTICODE_CONFIG")
+          fi
+          bun run --cwd apps/tauri tauri build --verbose --target x86_64-pc-windows-msvc --bundles "$bundles" "${configs[@]}"
+      - name: Check Authenticode signatures
+        if: ${{ steps.authenticode.outputs.enabled == 'true' }}
+        shell: pwsh
+        run: |
+          # The installers must be signed; the programs inside are listed for the log.
+          $release = 'target/x86_64-pc-windows-msvc/release'
+          $installers = @(Get-ChildItem "$release/bundle/nsis/*-setup.exe") +
+            @(Get-ChildItem "$release/bundle/msi/*.msi" -ErrorAction SilentlyContinue)
+          $programs = @('WingDrive.exe', 'wing-daemon.exe', 'wing.exe') |
+            ForEach-Object { Get-Item "$release/$_" -ErrorAction SilentlyContinue }
+          foreach ($file in $installers + $programs) {
+            $signature = Get-AuthenticodeSignature $file.FullName
+            Write-Output "$($signature.Status) $($file.Name) $($signature.SignerCertificate.Subject)"
+          }
+          $unsigned = $installers | Where-Object { (Get-AuthenticodeSignature $_.FullName).Status -ne 'Valid' }
+          if ($unsigned) { throw "Installers not signed: $($unsigned.Name -join ', ')" }
       - name: Verify the NSIS installer
         shell: pwsh
         run: |
