@@ -5,6 +5,44 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+## 3.4.1 — 2026-11-17
+
+A maintenance release: Rust 1.100, every pending dependency update in one
+place, the code scanning alerts resolved, and a promo film and media kit on
+the website (#410, #412, #413, #414).
+
+### Fixed
+
+- The Windows installer builds again with Cargo 1.100. Cargo now nests build
+  script output one level deeper, and the desktop build script looked for the
+  bundled daemon in the wrong profile directory ("Release sidecar is
+  missing").
+- SVG thumbnails build with resvg 0.50.
+- Two Portuguese strings in Settings had broken indentation from Crowdin.
+- The placeholder URL for a Google request that cannot be built uses
+  `https` (CodeQL `rust/non-https-url`).
+
+### Changed
+
+- Rust 1.100.0, Bun 1.4.4 and TruffleHog 3.99.9. The six open dependabot
+  updates (GitHub Actions, Cargo, Bun, resvg, typescript-eslint, Expo) and
+  the npm updates dependabot does not track land together, with
+  `cargo update` in every workspace. `node-forge` is pinned to 1.4.3 or
+  newer for its advisories.
+- 24 unused workspace dependencies are gone (Cargo 1.100's
+  `unused_workspace_dependencies` lint).
+- The website has a 35-second film on the home page, a 1:39 tour, a vertical
+  cut for Shorts and a media kit (`/media-kit`) with the icon, wordmark,
+  lockups, palette and social images. The release badges follow the latest
+  release.
+
+### Contributors
+
+- CI builds the Rust tests of wing-core, wing-cli, wing-bench and the
+  desktop shell with one feature set, so their dependencies compile once,
+  and checks the generated TypeScript types on Linux only.
+- The mold download in CI retries and fails cleanly on a bad response.
+
 ## 3.4.0 — 2026-11-16
 
 The AppImage and the Windows installers update themselves with signed

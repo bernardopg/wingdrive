@@ -205,7 +205,7 @@ pub fn bump(root: &Path, new_version: &str) -> Result<()> {
 	// so committing or tagging here would put the tag on a commit main never has.
 	println!();
 	println!("Updated the version files and Cargo.lock to {new_version}. Next:");
-	println!("  1. Add the CHANGELOG section, run `just ci-local` and open a pull request.");
+	println!("  1. Add the CHANGELOG section, run the checks that cover the change and open a pull request.");
 	println!("  2. After it merges and main's CI finishes, tag the merge commit:");
 	println!("     git tag -a {tag} -m \"WingDrive {new_version}\" && git push origin {tag}");
 
