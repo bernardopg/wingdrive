@@ -243,5 +243,6 @@
 	"{{size}} free": "{{size}} livres",
 	"Internal": "Interno",
 	"External": "Externo",
-	"Cloud": "Nuvem"
+	"Cloud": "Nuvem",
+	"System default": "Padrão do sistema"
 }

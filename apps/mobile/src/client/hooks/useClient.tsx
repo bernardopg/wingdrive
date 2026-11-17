@@ -13,7 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { usePreferencesStore } from "../../stores/preferences";
 import { useSidebarStore } from "../../stores/sidebar";
 import { useReactQueryDevTools } from "@dev-plugins/react-query";
-import { applyLanguage } from "../../i18n";
+import { applyStartupLanguage } from "../../i18n";
 
 /**
  * Returns the mobile client.
@@ -71,9 +71,9 @@ export function WingDriveProvider({
             "config.app.get",
             null,
           );
-          applyLanguage(config?.preferences?.language);
+          await applyStartupLanguage(config?.preferences?.language);
         } catch {
-          applyLanguage("en");
+          await applyStartupLanguage(null);
         }
 
         // // Subscribe to core logs AFTER core is initialized
