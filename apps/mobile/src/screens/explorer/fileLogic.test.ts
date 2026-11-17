@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { WingPath } from "@wingdrive/ts-client";
-import { isLibraryView, libraryViewInput, localPath, relativeDate } from "./fileLogic";
+import { isLibraryView, libraryViewInput, localPath, previewKind, relativeDate } from "./fileLogic";
 
 const physical = (device_slug: string, path: string) =>
 	({ Physical: { device_slug, path } }) as WingPath;
@@ -74,5 +74,19 @@ describe("relativeDate", () => {
 		expect(relativeDate(daysAgo(-2), now)).toEqual({ key: "Today" });
 		expect(relativeDate(null, now)).toBeNull();
 		expect(relativeDate("not a date", now)).toBeNull();
+	});
+});
+
+describe("previewKind", () => {
+	test("recognizes images and videos in any case", () => {
+		expect(previewKind("JPG")).toBe("image");
+		expect(previewKind("heic")).toBe("image");
+		expect(previewKind("mp4")).toBe("video");
+	});
+
+	test("has no preview for other files", () => {
+		expect(previewKind("pdf")).toBeNull();
+		expect(previewKind(null)).toBeNull();
+		expect(previewKind("")).toBeNull();
 	});
 });

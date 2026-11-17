@@ -272,6 +272,7 @@ export function ExplorerScreen() {
 							files={files}
 							onFilePress={handleFilePress}
 							onFileLongPress={handleFileLongPress}
+							localPathOf={fileActions.localPathOf}
 							emptyState={emptyState}
 						/>
 					) : (
@@ -279,6 +280,7 @@ export function ExplorerScreen() {
 							files={files}
 							onFilePress={handleFilePress}
 							onFileLongPress={handleFileLongPress}
+							localPathOf={fileActions.localPathOf}
 							emptyState={emptyState}
 						/>
 					)}

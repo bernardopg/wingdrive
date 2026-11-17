@@ -215,8 +215,14 @@ export function useFileActions() {
 		</>
 	);
 
+	const localPathOf = useCallback(
+		(file: File) => localPath(file.wing_path, currentDeviceSlug),
+		[currentDeviceSlug],
+	);
+
 	return {
 		element,
+		localPathOf,
 		hasActions,
 		showActions: setSelected,
 		openIfLocal,

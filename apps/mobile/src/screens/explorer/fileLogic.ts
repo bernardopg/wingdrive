@@ -65,3 +65,15 @@ export function relativeDate(
 				: ["year", Math.floor(diffDays / 365)];
 	return count === 1 ? { key: `1 ${unit} ago` } : { key: `{{count}} ${unit}s ago`, count };
 }
+
+const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif", "bmp", "heic", "heif", "avif"]);
+const VIDEO_EXTENSIONS = new Set(["mp4", "m4v", "mov", "mkv", "webm", "3gp"]);
+
+/** Whether the phone can draw a preview of a file itself: images, and a frame of videos. */
+export function previewKind(extension: string | null | undefined): "image" | "video" | null {
+	const ext = extension?.toLowerCase();
+	if (!ext) return null;
+	if (IMAGE_EXTENSIONS.has(ext)) return "image";
+	if (VIDEO_EXTENSIONS.has(ext)) return "video";
+	return null;
+}

@@ -1,17 +1,15 @@
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View, FlatList, Pressable, Image, Text as NativeText } from "react-native";
+import { View, FlatList, Pressable, Text as NativeText } from "react-native";
 import type { File } from "@wingdrive/ts-client";
 import {
 	getVirtualMetadata,
 	isVirtualFile,
-	getFileKindForIcon,
 	fileDisplayName,
 	fileDisplaySize,
 } from "@wingdrive/ts-client";
-import { getIcon } from "@wingdrive/assets/util/mobile";
-import { imageSource } from "../../../utils/imageSource";
+import { FileIcon } from "../components/FileIcon";
 import { useTranslation } from "react-i18next";
 import { relativeDate } from "../fileLogic";
 
@@ -20,6 +18,8 @@ interface ListViewProps {
 	onFilePress: (file: File) => void;
 	/** Long press: the file's actions */
 	onFileLongPress?: (file: File) => void;
+	/** The path of a file on this phone, for image and video previews */
+	localPathOf?: (file: File) => string | null;
 	/** Shown instead of "No items" when the listing is empty */
 	emptyState?: React.ReactNode;
 }
@@ -36,10 +36,12 @@ function FileRow({
 	file,
 	onPress,
 	onLongPress,
+	localPath,
 }: {
 	file: File;
 	onPress: () => void;
 	onLongPress?: () => void;
+	localPath: string | null;
 }) {
 	const { t } = useTranslation("common");
 	const virtualMetadata = getVirtualMetadata(file);
@@ -48,23 +50,6 @@ function FileRow({
 	// A folder's own metadata size is not its contents; show it only once measured.
 	const size = fileDisplaySize(file);
 
-	// Get icon source
-	const iconSource = (() => {
-		// Virtual files have custom icons
-		if (virtualMetadata?.iconUrl) {
-			return virtualMetadata.iconUrl;
-		}
-
-		// Use getIcon from mobile-compatible util
-		const kindForIcon = getFileKindForIcon(file);
-		return getIcon(
-			kindForIcon,
-			true, // isDark - use dark mode icons for mobile
-			file.extension,
-			file.kind === "Directory",
-		);
-	})();
-
 	return (
 		<Pressable
 			onPress={onPress}
@@ -72,11 +57,9 @@ function FileRow({
 			className="flex-row items-center px-4 py-3 border-b border-app-line active:bg-app-hover"
 		>
 			{/* Icon */}
-			<Image
-				source={imageSource(iconSource)}
-				className="w-10 h-10 mr-3"
-				style={{ resizeMode: "contain" }}
-			/>
+			<View className="mr-3">
+				<FileIcon file={file} localPath={localPath} size={40} />
+			</View>
 
 			{/* File info */}
 			<View className="flex-1">
@@ -114,7 +97,13 @@ function FileRow({
 	);
 }
 
-export function ListView({ files, onFilePress, onFileLongPress, emptyState }: ListViewProps) {
+export function ListView({
+	files,
+	onFilePress,
+	onFileLongPress,
+	localPathOf,
+	emptyState,
+}: ListViewProps) {
 	// Edge-to-edge on Android: keep the last row above the navigation bar.
 	const insets = useSafeAreaInsets();
 	if (files.length === 0) {
@@ -134,6 +123,7 @@ export function ListView({ files, onFilePress, onFileLongPress, emptyState }: Li
 					file={item}
 					onPress={() => onFilePress(item)}
 					onLongPress={onFileLongPress && (() => onFileLongPress(item))}
+					localPath={localPathOf?.(item) ?? null}
 				/>
 			)}
 			contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
