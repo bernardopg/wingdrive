@@ -10,6 +10,11 @@ class WingMobileCoreModule : Module() {
     private var registeredWithRust = false
     private var logRegisteredWithRust = false
 
+    // Android drops multicast packets for apps that hold no multicast lock, so the core's mDNS
+    // discovery never saw other devices and logged "error sending mDNS: Operation not
+    // permitted" every few seconds (MOB-017). Held while the core runs.
+    private var multicastLock: android.net.wifi.WifiManager.MulticastLock? = null
+
     init {
         try {
             System.loadLibrary("wing_mobile_core")
@@ -73,6 +78,7 @@ class WingMobileCoreModule : Module() {
             val dir = dataDir ?: appContext.persistentFilesDirectory?.absolutePath
                 ?: throw Exception("No data directory available")
 
+            acquireMulticastLock()
             try {
                 initializeCore(dir, deviceName)
             } catch (e: Exception) {
@@ -95,6 +101,11 @@ class WingMobileCoreModule : Module() {
             } catch (e: Exception) {
                 android.util.Log.e("WingMobileCore", "Failed to shutdown core: ${e.message}")
             }
+            releaseMulticastLock()
+        }
+
+        OnDestroy {
+            releaseMulticastLock()
         }
 
         // A file manager needs to read shared storage: "All files access" on Android 11+,
@@ -133,6 +144,33 @@ class WingMobileCoreModule : Module() {
                 false
             }
         }
+    }
+
+    private fun acquireMulticastLock() {
+        if (multicastLock?.isHeld == true) return
+        val context = appContext.reactContext?.applicationContext ?: return
+        try {
+            val service = context.getSystemService(android.content.Context.WIFI_SERVICE)
+            val wifi = service as? android.net.wifi.WifiManager ?: return
+            multicastLock = wifi.createMulticastLock("WingDriveDiscovery").apply {
+                // One release undoes any number of acquires.
+                setReferenceCounted(false)
+                acquire()
+            }
+            android.util.Log.i("WingMobileCore", "Multicast lock held for local discovery")
+        } catch (e: Exception) {
+            // Without the lock, devices are still found through the relay and by pairing code.
+            android.util.Log.w("WingMobileCore", "Failed to acquire multicast lock: ${e.message}")
+        }
+    }
+
+    private fun releaseMulticastLock() {
+        try {
+            multicastLock?.takeIf { it.isHeld }?.release()
+        } catch (e: Exception) {
+            android.util.Log.w("WingMobileCore", "Failed to release multicast lock: ${e.message}")
+        }
+        multicastLock = null
     }
 
     fun getDataDirectory(): String {

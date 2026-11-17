@@ -1,3 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- The core finds devices on the local network over mDNS, which needs a multicast lock. -->
+  <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
 </manifest>
