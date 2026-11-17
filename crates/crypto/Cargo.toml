@@ -16,6 +16,7 @@ edition.workspace      = true
 keywords               = ["crypto"]
 license.workspace      = true
 readme                 = "README.md"
+homepage.workspace     = true
 repository.workspace   = true
 rust-version.workspace = true
 

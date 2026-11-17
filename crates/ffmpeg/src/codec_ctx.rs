@@ -257,9 +257,9 @@ impl FFmpegCodecContext {
 		let mut channel_layout = ptr::null_mut();
 		let channel_layout = if unsafe {
 			av_channel_layout_describe_bprint(&raw const ctx.ch_layout, &raw mut bprint)
-		} < 0 || unsafe {
-			av_bprint_finalize(&raw mut bprint, &raw mut channel_layout)
-		} < 0 || channel_layout.is_null()
+		} < 0
+			|| unsafe { av_bprint_finalize(&raw mut bprint, &raw mut channel_layout) } < 0
+			|| channel_layout.is_null()
 		{
 			None
 		} else {

@@ -10,6 +10,7 @@ Handles platform-specific quirks like macOS rename detection and event buffering
 
 edition.workspace = true
 license.workspace = true
+homepage.workspace   = true
 repository.workspace = true
 rust-version.workspace = true
 
@@ -21,7 +22,6 @@ debug = []
 [dependencies]
 # Workspace dependencies
 async-trait = { workspace = true }
-futures = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["sync", "time", "rt", "macros", "fs"] }

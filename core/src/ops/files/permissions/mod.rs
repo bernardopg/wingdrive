@@ -404,7 +404,8 @@ mod tests {
 		std::fs::symlink_metadata(path)
 			.unwrap()
 			.permissions()
-			.mode() & 0o7777
+			.mode()
+			& 0o7777
 	}
 
 	#[test]

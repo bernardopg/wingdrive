@@ -118,12 +118,12 @@ impl From<&FFmpegDictionary> for FFmpegMetadata {
 		for (key, value) in dict {
 			if let Some(value) = value {
 				match key.as_str() {
-					"album" => media_metadata.album = Some(value.clone()),
-					"album_artist" => media_metadata.album_artist = Some(value.clone()),
-					"artist" => media_metadata.artist = Some(value.clone()),
-					"comment" => media_metadata.comment = Some(value.clone()),
-					"composer" => media_metadata.composer = Some(value.clone()),
-					"copyright" => media_metadata.copyright = Some(value.clone()),
+					"album" => media_metadata.album = Some(value),
+					"album_artist" => media_metadata.album_artist = Some(value),
+					"artist" => media_metadata.artist = Some(value),
+					"comment" => media_metadata.comment = Some(value),
+					"composer" => media_metadata.composer = Some(value),
+					"copyright" => media_metadata.copyright = Some(value),
 					"creation_time" => {
 						if let Ok(creation_time) = DateTime::parse_from_rfc2822(&value) {
 							media_metadata.creation_time = Some(creation_time.into());
@@ -143,16 +143,16 @@ impl From<&FFmpegDictionary> for FFmpegMetadata {
 							media_metadata.disc = Some(disc);
 						}
 					}
-					"encoder" => media_metadata.encoder = Some(value.clone()),
-					"encoded_by" => media_metadata.encoded_by = Some(value.clone()),
-					"filename" => media_metadata.filename = Some(value.clone()),
-					"genre" => media_metadata.genre = Some(value.clone()),
-					"language" => media_metadata.language = Some(value.clone()),
-					"performer" => media_metadata.performer = Some(value.clone()),
-					"publisher" => media_metadata.publisher = Some(value.clone()),
-					"service_name" => media_metadata.service_name = Some(value.clone()),
-					"service_provider" => media_metadata.service_provider = Some(value.clone()),
-					"title" => media_metadata.title = Some(value.clone()),
+					"encoder" => media_metadata.encoder = Some(value),
+					"encoded_by" => media_metadata.encoded_by = Some(value),
+					"filename" => media_metadata.filename = Some(value),
+					"genre" => media_metadata.genre = Some(value),
+					"language" => media_metadata.language = Some(value),
+					"performer" => media_metadata.performer = Some(value),
+					"publisher" => media_metadata.publisher = Some(value),
+					"service_name" => media_metadata.service_name = Some(value),
+					"service_provider" => media_metadata.service_provider = Some(value),
+					"title" => media_metadata.title = Some(value),
 					"track" => {
 						if let Ok(track) = value.parse() {
 							media_metadata.track = Some(track);
@@ -164,7 +164,7 @@ impl From<&FFmpegDictionary> for FFmpegMetadata {
 						}
 					}
 					_ => {
-						media_metadata.custom.insert(key.clone(), value.clone());
+						media_metadata.custom.insert(key.clone(), value);
 					}
 				}
 			}

@@ -27,7 +27,7 @@ pub fn convert_image(path: impl AsRef<Path>, desired_ext: &OsStr) -> Result<Dyna
 
 #[allow(clippy::useless_let_if_seq)]
 fn match_to_handler(ext: Option<&OsStr>) -> Result<Box<dyn ImageHandler>> {
-	let ext = ext.map(OsStr::to_ascii_lowercase).unwrap_or_default();
+	let ext = ext.map_or_default(OsStr::to_ascii_lowercase);
 	let mut handler: Option<Box<dyn ImageHandler>> = None;
 
 	if consts::GENERIC_EXTENSIONS

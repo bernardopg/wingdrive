@@ -394,14 +394,16 @@ impl DirectoryListingQuery {
 			);
 
 			// Load user_metadata for entries and content
-			let mut metadata_records = user_metadata::Entity::find()
-				.filter(
-					user_metadata::Column::EntryUuid
-						.is_in(entry_uuids.clone())
-						.or(user_metadata::Column::ContentIdentityUuid.is_in(content_uuids.clone())),
-				)
-				.all(db)
-				.await?;
+			let mut metadata_records =
+				user_metadata::Entity::find()
+					.filter(
+						user_metadata::Column::EntryUuid
+							.is_in(entry_uuids.clone())
+							.or(user_metadata::Column::ContentIdentityUuid
+								.is_in(content_uuids.clone())),
+					)
+					.all(db)
+					.await?;
 
 			tracing::debug!("Found {} metadata records", metadata_records.len());
 

@@ -807,8 +807,9 @@ impl NetworkingService {
 										// Verify it's a pong
 										if let Ok(msg) = serde_json::from_slice::<
 											crate::service::network::protocol::messaging::Message,
-										>(&resp_buf)
-										{
+										>(
+											&resp_buf
+										) {
 											matches!(msg, crate::service::network::protocol::messaging::Message::Pong { .. })
 										} else {
 											false

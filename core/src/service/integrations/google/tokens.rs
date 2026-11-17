@@ -199,7 +199,7 @@ impl QueryPairs for reqwest::RequestBuilder {
 			Err(error) => {
 				// Keep the build error; `send` reports it.
 				debug!(%error, "Could not build Google request");
-				client.get("http://invalid.invalid/")
+				client.get("https://invalid.invalid/")
 			}
 		}
 	}

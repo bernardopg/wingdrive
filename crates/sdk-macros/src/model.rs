@@ -69,10 +69,12 @@ fn is_model_field_attribute(attr: &Attribute) -> bool {
 		matches!(
 			name.as_str(),
 			"entry"
-				| "sidecar" | "metadata"
+				| "sidecar"
+				| "metadata"
 				| "custom_field"
 				| "user_metadata"
-				| "computed" | "blob_data"
+				| "computed"
+				| "blob_data"
 				| "vectorized"
 				| "sync"
 		)

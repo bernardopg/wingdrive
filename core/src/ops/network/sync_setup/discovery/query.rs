@@ -115,17 +115,17 @@ impl CoreQuery for DiscoverRemoteLibrariesQuery {
 							total_files: lib.total_entries,
 							total_size: lib.total_size_bytes,
 							location_count: lib.total_locations as u32,
-							tag_count: 0,                   // Not available from network protocol
-							device_count: 0,                // Not available from network protocol
-							unique_content_count: 0,        // Not available from network protocol
-							total_capacity: 0,              // Not available from network protocol
-							available_capacity: 0,          // Not available from network protocol
-							thumbnail_count: 0,             // Not available from network protocol
-							database_size: 0,               // Not available from network protocol
-							sidecar_count: 0,               // Not available from network protocol
-							sidecar_size: 0,                // Not available from network protocol
-							browsed_file_count: 0,          // Not available from network protocol
-							last_indexed: None,             // Not available from network protocol
+							tag_count: 0,    // Not available from network protocol
+							device_count: 0, // Not available from network protocol
+							unique_content_count: 0, // Not available from network protocol
+							total_capacity: 0, // Not available from network protocol
+							available_capacity: 0, // Not available from network protocol
+							thumbnail_count: 0, // Not available from network protocol
+							database_size: 0, // Not available from network protocol
+							sidecar_count: 0, // Not available from network protocol
+							sidecar_size: 0, // Not available from network protocol
+							browsed_file_count: 0, // Not available from network protocol
+							last_indexed: None, // Not available from network protocol
 							updated_at: chrono::Utc::now(), // Current time
 						},
 					})

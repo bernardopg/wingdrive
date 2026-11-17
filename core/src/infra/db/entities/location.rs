@@ -324,7 +324,7 @@ impl Syncable for Model {
 				.get("total_byte_size")
 				.and_then(|v| v.as_i64())
 				.unwrap_or(0)),
-			job_policies: NotSet,                       // Local config, not synced
+			job_policies: NotSet, // Local config, not synced
 			created_at: Set(chrono::Utc::now().into()), // Local timestamp
 			updated_at: Set(chrono::Utc::now().into()), // Local timestamp
 		};

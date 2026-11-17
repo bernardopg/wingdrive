@@ -50,7 +50,6 @@ impl ExifReader {
 	pub(crate) fn get_tag_int(&self, tag: Tag) -> Option<u32> {
 		self.0
 			.get_field(tag, In::PRIMARY)
-			.map(|x| x.value.get_uint(0))
-			.unwrap_or_default()
+			.map_or_default(|x| x.value.get_uint(0))
 	}
 }

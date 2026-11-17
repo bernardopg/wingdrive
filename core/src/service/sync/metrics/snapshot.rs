@@ -259,7 +259,8 @@ impl SyncMetricsSnapshot {
 						last_seen: DateTime::from_timestamp(
 							device_metrics
 								.last_seen
-								.load(std::sync::atomic::Ordering::Relaxed) as i64,
+								.load(std::sync::atomic::Ordering::Relaxed)
+								as i64,
 							0,
 						)
 						.unwrap_or_else(|| Utc::now()),

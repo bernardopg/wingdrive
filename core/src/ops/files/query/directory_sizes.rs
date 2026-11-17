@@ -272,9 +272,10 @@ mod tests {
 		let expected = 3
 			+ std::fs::symlink_metadata(child.join("cycle"))
 				.unwrap()
-				.len() + std::fs::symlink_metadata(child.join("dangling"))
-			.unwrap()
-			.len();
+				.len()
+			+ std::fs::symlink_metadata(child.join("dangling"))
+				.unwrap()
+				.len();
 		assert_eq!(measure_directory(&child, &never).unwrap(), expected);
 	}
 

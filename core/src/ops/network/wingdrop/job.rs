@@ -292,7 +292,11 @@ impl JobHandler for WingdropSendJob {
 							format!("{label} to {to}"),
 						)
 						.with_bytes(now.min(total_bytes), total_bytes)
-						.with_performance(0.0, None, Some(started.elapsed())),
+						.with_performance(
+							0.0,
+							None,
+							Some(started.elapsed()),
+						),
 					));
 				};
 				let report: crate::ops::files::copy::strategy::ProgressCallback<'_> =
