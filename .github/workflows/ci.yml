@@ -331,7 +331,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     runs-on: windows-2025
-    # A cold build takes about 60 minutes, a cached one about 18. The nightly run on main
+    # A cold build takes about 40 minutes, a cached one about 18. The nightly run on main
     # saves the cache.
     timeout-minutes: 150
     defaults:
@@ -347,8 +347,16 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           target: x86_64-pc-windows-msvc
           save-cache: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
-          cache-key: ci
+          # Dependencies build at opt-level 1 here (below), so they need their own cache.
+          cache-key: ci-deps-o1
           xtask-setup-args: --no-daemon
+
+      # The dev profile builds dependencies at opt-level 3 for fast local runs. At opt-level 1 a
+      # cold Windows build is about 9 minutes shorter (50 to 41) and the tests take as long
+      # (docs/ci/ci-performance-review.md). Linux keeps opt-level 3: it gains 2.5 minutes there,
+      # and the Explorer smoke shares its cache and times the backend.
+      - name: Build dependencies at opt-level 1
+        run: printf '\n[profile.dev.package."*"]\nopt-level = 1\n' >> .cargo/config.toml
 
       - name: Rust gates (${{ needs.changes.outputs.scope }})
         run: scripts/ci-rust.sh ${{ needs.changes.outputs.scope }}

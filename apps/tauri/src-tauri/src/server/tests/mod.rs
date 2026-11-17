@@ -572,23 +572,26 @@ async fn host_tools_that_fail_hang_or_print_nothing_are_errors() {
 	};
 	let short = std::time::Duration::from_millis(200);
 	assert_eq!(
-		tool_png_within("sh", &sh("sleep 5"), short)
+		tool_png_within("sh", &sh("sleep 30"), short)
 			.await
 			.unwrap_err(),
 		"sh timed out"
 	);
+	// Starting Git's sh on a busy Windows runner can take longer than `short`, so the tools
+	// that finish get a budget they cannot miss.
+	let ample = std::time::Duration::from_secs(20);
 	assert_eq!(
-		tool_png_within("sh", &sh("exit 1"), short)
+		tool_png_within("sh", &sh("exit 1"), ample)
 			.await
 			.unwrap_err(),
 		"sh produced no image"
 	);
 	assert_eq!(
-		tool_png_within("sh", &sh("true"), short).await.unwrap_err(),
+		tool_png_within("sh", &sh("true"), ample).await.unwrap_err(),
 		"sh produced no image"
 	);
 	assert_eq!(
-		tool_png_within("sh", &sh("printf png"), short)
+		tool_png_within("sh", &sh("printf png"), ample)
 			.await
 			.unwrap(),
 		b"png"

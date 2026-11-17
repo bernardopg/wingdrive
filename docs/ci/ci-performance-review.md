@@ -214,6 +214,31 @@ The same pull request keeps one fix: `setup-system` downloads mold to a file wit
 retries. Piped into `tar`, a bad response failed #410's Explorer smoke with `gzip: stdin: not in gzip
 format`.
 
+## Compile options benchmark (2026-11-17)
+
+Run 44147352654 built `scripts/ci-rust.sh full` from scratch six times, each job with its own cache key
+and nothing saved. Minutes per phase:
+
+| Job | clippy | Test build | Whole job |
+| --- | --- | --- | --- |
+| Windows, as on main | 21.4 | 21.9 | 50.2 |
+| Windows, rust-lld | 21.4 | 22.2 | 51.3 |
+| Windows, dependencies at opt-level 1 | 16.9 | 18.9 | 39.7 |
+| Windows, opt-level 1 and rust-lld | 16.6 | 18.1 | 41.4 |
+| Linux, as on main | 8.7 | 13.3 | 30.0 |
+| Linux, dependencies at opt-level 1 | 7.1 | 12.1 | 27.5 |
+
+- Dependencies at opt-level 1 (the dev profile builds them at 3) save about 9 minutes of a cold Windows
+  run. The tests took as long: two-device sync 3.0 minutes in both, 814 tests passed. The one failure,
+  `host_tools_that_fail_hang_or_print_nothing_are_errors`, gave Git's `sh` 200 ms to exit, which a busy
+  runner can miss; the test now waits 20 seconds for tools that finish.
+- rust-lld saves nothing: linking is not where the Windows job spends its time.
+- `Rust Workspace (Windows)` now builds dependencies at opt-level 1 under its own cache key
+  (`ci-deps-o1`). Linux keeps opt-level 3: it gains 2.5 minutes, and the Explorer smoke restores the same
+  cache and measures the backend's latency.
+- A warm run rebuilds only workspace crates, so these options change little there; they help the runs
+  after a toolchain or `Cargo.lock` change, which build every dependency again.
+
 ## How #318 failed
 
 The `TypeScript` job's stale `dist/` gate failed because commit `5d25b5cdf` (PR #319) changed
