@@ -21,6 +21,7 @@ if (getCurrentWebviewWindow().label === 'main') {
 			labels: {
 				open: i18n.t('common:tray.open'),
 				new_tab: i18n.t('common:tray.newTab'),
+				logs: i18n.t('common:tray.logs'),
 				quit: i18n.t('common:tray.quit')
 			}
 		}).catch(() => {

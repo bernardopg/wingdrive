@@ -36,6 +36,12 @@ impl FileOpeningService {
 	}
 }
 
+/// Opens `path` with the platform's default handler, for callers outside a command such as the
+/// tray menu. Blocks while it spawns the handler, so call it from a blocking task.
+pub fn open_default(path: &std::path::Path) -> Result<OpenResult, String> {
+	PlatformOpener.open_with_default(path)
+}
+
 /// Get applications that can open the given file paths
 /// Returns intersection of compatible apps for multiple files
 #[tauri::command]
