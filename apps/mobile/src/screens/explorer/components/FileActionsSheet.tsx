@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { Modal, Pressable, View } from "react-native";
+import { Modal, Pressable, Text as NativeText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { File } from "@wingdrive/ts-client";
+import { fileDisplayName, type File } from "@wingdrive/ts-client";
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 
 export interface FileAction {
@@ -30,9 +30,9 @@ export function FileActionsSheet({
 					style={{ paddingBottom: insets.bottom + 8 }}
 					onPress={() => {}}
 				>
-					<Text className="text-ink-dull text-sm px-5 py-3" numberOfLines={1}>
-						{file.name}
-					</Text>
+					<NativeText className="text-ink-dull text-sm px-5 py-3" numberOfLines={1}>
+						{fileDisplayName(file)}
+					</NativeText>
 					{actions.map((action) => (
 						<Pressable
 							key={action.label}

@@ -14,7 +14,7 @@ import { SearchToolbar } from "../../components/SearchToolbar";
 import { StorageAccessCard } from "../../components/StorageAccessCard";
 import { useSearchStore } from "./context/SearchContext";
 import { List, ArrowLeft, FolderPlus, MapPin } from "phosphor-react-native";
-import type { File, WingPath } from "@wingdrive/ts-client";
+import { fileDisplayName, type File, type WingPath } from "@wingdrive/ts-client";
 
 type ViewMode = "list" | "grid";
 
@@ -153,7 +153,7 @@ export function ExplorerScreen() {
 				params: {
 					type: "path",
 					path: JSON.stringify(file.wing_path),
-					title: file.name,
+					title: fileDisplayName(file),
 				},
 			});
 			return;

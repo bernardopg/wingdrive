@@ -3,7 +3,7 @@ import { Alert } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import type { File, WingPath } from "@wingdrive/ts-client";
-import { isVirtualFile, useJobs } from "@wingdrive/ts-client";
+import { fileDisplayName, isVirtualFile, useJobs } from "@wingdrive/ts-client";
 import { WingMobileCore } from "wing-mobile-core";
 import { ArrowSquareOut, PencilSimple, ShareNetwork, Trash } from "phosphor-react-native";
 import { useLibraryAction, useNormalizedQuery } from "../../../client";
@@ -64,7 +64,7 @@ export function useFileActions() {
 		(file: File, path: string) => {
 			try {
 				if (!WingMobileCore.openFile(path)) {
-					Alert.alert(t("No app can open this file"), file.name);
+					Alert.alert(t("No app can open this file"), fileDisplayName(file));
 				}
 			} catch (error) {
 				showError(error as Error);
@@ -76,7 +76,7 @@ export function useFileActions() {
 	const confirmDelete = useCallback(
 		(file: File) => {
 			// Android has no trash for plain files, so a delete is permanent.
-			Alert.alert(t("Delete permanently?"), `${file.name}\n\n${t("This cannot be undone.")}`, [
+			Alert.alert(t("Delete permanently?"), `${fileDisplayName(file)}\n\n${t("This cannot be undone.")}`, [
 				{ text: t("Cancel"), style: "cancel" },
 				{
 					text: t("Delete"),
@@ -190,7 +190,10 @@ export function useFileActions() {
 			{prompt?.kind === "rename" && (
 				<RenameDialog
 					title={t("Rename")}
-					initialValue={prompt.file.name}
+					// The full name: `name` alone has no extension, and renaming to it dropped
+					// the extension from the file on disk.
+					initialValue={fileDisplayName(prompt.file)}
+					selectUntil={prompt.file.kind === "Directory" ? undefined : prompt.file.name.length}
 					onClose={() => setPrompt(null)}
 					onSubmit={(name) => {
 						setPrompt(null);

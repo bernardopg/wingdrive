@@ -65,6 +65,8 @@ export function VolumesGroup() {
 									params: {
 										type: "path",
 										path: JSON.stringify(wdPath),
+										// Otherwise the title is the mount point's last segment: "0".
+										title: volume.display_name || volume.name,
 									},
 								});
 							}

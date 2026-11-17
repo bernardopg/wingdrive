@@ -8,16 +8,23 @@ import { Button } from "./primitive";
 export function RenameDialog({
 	title,
 	initialValue,
+	selectUntil,
 	onSubmit,
 	onClose,
 }: {
 	title: string;
 	initialValue: string;
+	/** Selects only the first characters, such as a file name without its extension */
+	selectUntil?: number;
 	onSubmit: (value: string) => void;
 	onClose: () => void;
 }) {
 	const { t } = useTranslation("common");
 	const [value, setValue] = useState(initialValue);
+	// Applied once on focus, then left to the user.
+	const [selection, setSelection] = useState<{ start: number; end: number } | undefined>(
+		selectUntil === undefined ? undefined : { start: 0, end: selectUntil },
+	);
 	const trimmed = value.trim();
 
 	return (
@@ -29,7 +36,9 @@ export function RenameDialog({
 						value={value}
 						onChangeText={setValue}
 						autoFocus
-						selectTextOnFocus
+						selectTextOnFocus={selectUntil === undefined}
+						selection={selection}
+						onSelectionChange={() => selection && setSelection(undefined)}
 						maxLength={64}
 						className="h-12 px-4 rounded-xl border border-app-line text-ink"
 						placeholderTextColor="hsl(235, 10%, 55%)"

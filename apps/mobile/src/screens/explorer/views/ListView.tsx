@@ -1,9 +1,15 @@
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View, FlatList, Pressable, Image } from "react-native";
+import { View, FlatList, Pressable, Image, Text as NativeText } from "react-native";
 import type { File } from "@wingdrive/ts-client";
-import { getVirtualMetadata, isVirtualFile, getFileKindForIcon } from "@wingdrive/ts-client";
+import {
+	getVirtualMetadata,
+	isVirtualFile,
+	getFileKindForIcon,
+	fileDisplayName,
+	fileDisplaySize,
+} from "@wingdrive/ts-client";
 import { getIcon } from "@wingdrive/assets/util/mobile";
 import { imageSource } from "../../../utils/imageSource";
 import { useTranslation } from "react-i18next";
@@ -39,6 +45,8 @@ function FileRow({
 	const virtualMetadata = getVirtualMetadata(file);
 	const isVirtual = isVirtualFile(file);
 	const modified = relativeDate(file.modified_at);
+	// A folder's own metadata size is not its contents; show it only once measured.
+	const size = fileDisplaySize(file);
 
 	// Get icon source
 	const iconSource = (() => {
@@ -72,13 +80,14 @@ function FileRow({
 
 			{/* File info */}
 			<View className="flex-1">
-				<Text className="text-ink font-medium" numberOfLines={1}>
-					{file.name}
-				</Text>
+				{/* User data, never looked up in the catalog ("Notifications" stays as is) */}
+				<NativeText className="text-ink font-medium" numberOfLines={1}>
+					{fileDisplayName(file)}
+				</NativeText>
 				<View className="flex-row gap-2 mt-0.5">
-					{!isVirtual && file.size > 0 && (
+					{!isVirtual && !!size && (
 						<Text className="text-ink-faint text-xs">
-							{formatBytes(file.size)}
+							{formatBytes(size)}
 						</Text>
 					)}
 					{!isVirtual && modified && (

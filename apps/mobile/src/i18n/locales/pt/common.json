@@ -271,5 +271,11 @@
 	"1 month ago": "há 1 mês",
 	"{{count}} months ago": "há {{count}} meses",
 	"1 year ago": "há 1 ano",
-	"{{count}} years ago": "há {{count}} anos"
+	"{{count}} years ago": "há {{count}} anos",
+	"Location": "Local",
+	"This Folder": "Esta pasta",
+	"Device": "Dispositivo",
+	"Root": "Raiz",
+	"Tracked": "Rastreado",
+	"Not tracked": "Não rastreado"
 }

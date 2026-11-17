@@ -1,9 +1,14 @@
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View, FlatList, Pressable, Image, Dimensions } from "react-native";
+import { View, FlatList, Pressable, Image, Dimensions, Text as NativeText } from "react-native";
 import type { File } from "@wingdrive/ts-client";
-import { getVirtualMetadata, getFileKindForIcon } from "@wingdrive/ts-client";
+import {
+	getVirtualMetadata,
+	getFileKindForIcon,
+	fileDisplayName,
+	fileDisplaySize,
+} from "@wingdrive/ts-client";
 import { getIcon } from "@wingdrive/assets/util/mobile";
 import { imageSource } from "../../../utils/imageSource";
 
@@ -44,6 +49,7 @@ function FileCard({
 	onLongPress?: () => void;
 }) {
 	const virtualMetadata = getVirtualMetadata(file);
+	const size = fileDisplaySize(file);
 
 	// Get icon source
 	const iconSource = (() => {
@@ -78,15 +84,15 @@ function FileCard({
 				/>
 			</View>
 
-			{/* File name */}
-			<Text className="text-ink text-xs text-center" numberOfLines={2}>
-				{file.name}
-			</Text>
+			{/* File name: user data, never looked up in the catalog */}
+			<NativeText className="text-ink text-xs text-center" numberOfLines={2}>
+				{fileDisplayName(file)}
+			</NativeText>
 
-			{/* File size */}
-			{file.size > 0 && (
+			{/* File size; a folder's only once its contents were measured */}
+			{!!size && (
 				<Text className="text-ink-dull text-[10px] text-center mt-0.5">
-					{formatBytes(file.size)}
+					{formatBytes(size)}
 				</Text>
 			)}
 		</Pressable>

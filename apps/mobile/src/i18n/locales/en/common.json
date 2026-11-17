@@ -271,5 +271,11 @@
 	"1 month ago": "1 month ago",
 	"{{count}} months ago": "{{count}} months ago",
 	"1 year ago": "1 year ago",
-	"{{count}} years ago": "{{count}} years ago"
+	"{{count}} years ago": "{{count}} years ago",
+	"Location": "Location",
+	"This Folder": "This Folder",
+	"Device": "Device",
+	"Root": "Root",
+	"Tracked": "Tracked",
+	"Not tracked": "Not tracked"
 }
