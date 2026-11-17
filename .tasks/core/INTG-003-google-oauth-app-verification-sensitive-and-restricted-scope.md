@@ -8,8 +8,8 @@ priority: High
 milestone: M5
 sprint: S05
 tags: [integrations, google, oauth, verification, security]
-last_updated: 2026-11-16
-related_tasks: [INTG-001, INTG-002]
+last_updated: 2026-11-17
+related_tasks: [INTG-001, INTG-002, INTG-011]
 ---
 
 ## Description
@@ -43,6 +43,16 @@ full `drive` (ADR in `docs/design/GOOGLE-DRIVE-SCOPE.md`). The Data Access page 
 non-restricted scopes; the two sensitive Photos scopes carry the justification. Branding and the
 Search Console domain property for `wingdrive.org` are verified (TXT record added through the
 Hostinger API). Demo video: https://youtu.be/qsLpemmndok (unlisted, personal photos and other accounts hidden). Verification request sent the same day.
+
+## Progress (2026-11-17)
+
+Google sent the automated checklist ("[Action Needed] Your Google APIs Verification Request") and
+asked for a reply. Audit result: the consent screen, the demo video and the privacy policy already
+covered the sensitive scopes. Changes for least privilege and completeness: the unused
+`photoslibrary.edit.appcreateddata` scope was dropped (INTG-011), the Drive Picker extends
+`drive.file`, and the privacy policy now states what is cached locally, for how long, and that
+traffic uses HTTPS. After the release ships, update Data Access (remove the scope, new video) and
+reply to the email.
 
 ## Acceptance Criteria
 

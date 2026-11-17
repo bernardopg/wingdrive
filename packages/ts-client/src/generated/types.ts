@@ -1042,6 +1042,17 @@ export type DriveMountInfo = {
 	mounted: boolean,
 };
 
+/**  Where a Drive picker session stands. */
+export type DrivePickerState = 
+/**  The page is open and the user has not picked yet. */
+{ state: "waiting" } | 
+/**  The user picked `count` files or folders, now part of the grant. */
+{ state: "picked"; count: number } | 
+/**  The user closed the Picker without picking. */
+{ state: "cancelled" } | 
+/**  The session timed out before the user finished. */
+{ state: "expired" };
+
 /**  Input for file duplicate detection operations */
 export type DuplicateDetectionInput = {
 	/**  Paths to search for duplicates */
@@ -1915,6 +1926,26 @@ export type GoogleDriveMountOutput = {
 	drive: DriveMountInfo | null,
 };
 
+/**
+ *  Opens the Google Picker for an account with `drive.file` access, so the
+ *  user can add existing Drive files to WingDrive. Open `picker_url` in the
+ *  browser and poll `integrations.google.drive.picker.status`.
+ */
+export type GoogleDrivePickerStartInput = {
+	account_id: string,
+	/**  UI language for the Picker, such as `pt-BR`. */
+	locale?: string | null,
+};
+
+export type GoogleDrivePickerStartOutput = {
+	session_id: string,
+	picker_url: string,
+};
+
+export type GoogleDrivePickerStatusInput = {
+	session_id: string,
+};
+
 /**  Google services an account can enable. */
 export type GoogleService = 
 /**  Google Drive as a browsable cloud volume. */
@@ -2190,6 +2221,11 @@ export type IntegrationAccountInfo = {
 	 *  for Google accounts without Drive.
 	 */
 	drive_access: DriveAccess | null,
+	/**
+	 *  Whether the account can open existing Drive files through the Google
+	 *  Picker: it has `drive.file` access and the build has a Picker API key.
+	 */
+	drive_picker: boolean,
 };
 
 /**  Disconnects an account from the library. */
@@ -5187,6 +5223,7 @@ export type LibraryAction =
   |  { type: 'integrations.google.connect'; input: GoogleConnectInput; output: GoogleConnectOutput }
   |  { type: 'integrations.google.connect_cancel'; input: GoogleConnectCancelInput; output: GoogleConnectCancelOutput }
   |  { type: 'integrations.google.drive.mount'; input: GoogleDriveMountInput; output: GoogleDriveMountOutput }
+  |  { type: 'integrations.google.drive.picker.start'; input: GoogleDrivePickerStartInput; output: GoogleDrivePickerStartOutput }
   |  { type: 'integrations.google.photos.picker.import'; input: PhotosPickerImportInput; output: JobReceipt }
   |  { type: 'integrations.google.photos.picker.start'; input: PhotosPickerStartInput; output: PhotosPickerStartOutput }
   |  { type: 'integrations.google.photos.upload'; input: PhotosUploadInput; output: JobReceipt }
@@ -5288,6 +5325,7 @@ export type LibraryQuery =
   |  { type: 'integrations.accounts.list'; input: IntegrationAccountsListInput; output: IntegrationAccountInfo[] }
   |  { type: 'integrations.google.client'; input: GoogleClientInfoInput; output: OAuthClientsInfo }
   |  { type: 'integrations.google.connect_status'; input: GoogleConnectStatusInput; output: ConnectStatus }
+  |  { type: 'integrations.google.drive.picker.status'; input: GoogleDrivePickerStatusInput; output: DrivePickerState }
   |  { type: 'integrations.google.photos.albums'; input: PhotosAlbumsInput; output: PhotosAlbum[] }
   |  { type: 'integrations.google.photos.picker.status'; input: PhotosPickerStatusInput; output: PhotosPickerStatus }
   |  { type: 'integrations.microsoft.client'; input: MicrosoftClientInfoInput; output: OAuthClientsInfo }
@@ -5377,6 +5415,7 @@ export const WIRE_METHODS = {
     'integrations.google.connect': 'action:integrations.google.connect.input',
     'integrations.google.connect_cancel': 'action:integrations.google.connect_cancel.input',
     'integrations.google.drive.mount': 'action:integrations.google.drive.mount.input',
+    'integrations.google.drive.picker.start': 'action:integrations.google.drive.picker.start.input',
     'integrations.google.photos.picker.import': 'action:integrations.google.photos.picker.import.input',
     'integrations.google.photos.picker.start': 'action:integrations.google.photos.picker.start.input',
     'integrations.google.photos.upload': 'action:integrations.google.photos.upload.input',
@@ -5478,6 +5517,7 @@ export const WIRE_METHODS = {
     'integrations.accounts.list': 'query:integrations.accounts.list',
     'integrations.google.client': 'query:integrations.google.client',
     'integrations.google.connect_status': 'query:integrations.google.connect_status',
+    'integrations.google.drive.picker.status': 'query:integrations.google.drive.picker.status',
     'integrations.google.photos.albums': 'query:integrations.google.photos.albums',
     'integrations.google.photos.picker.status': 'query:integrations.google.photos.picker.status',
     'integrations.microsoft.client': 'query:integrations.microsoft.client',

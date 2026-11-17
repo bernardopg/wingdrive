@@ -23,6 +23,11 @@
 //! - `Custom`: a client the user registered in their own Google Cloud project
 //!   or Microsoft Entra tenant and saved in the library.
 //!
+//! WingDrive's own Google client asks only for `drive.file`, so its accounts
+//! open existing Drive files through the Google Picker
+//! (`start_drive_picker`). The Picker needs a browser API key of the same Cloud
+//! project, from `WINGDRIVE_GOOGLE_API_KEY` in the environment or at build time.
+//!
 //! Each account remembers the client it signed in with, because refreshing a
 //! token needs the same client. `WINGDRIVE_GOOGLE_ENDPOINTS_BASE` and
 //! `WINGDRIVE_MICROSOFT_ENDPOINTS_BASE` point sign-in at another server, which
@@ -35,7 +40,7 @@ pub mod store;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Utc};
@@ -45,9 +50,11 @@ use tokio::sync::Mutex;
 use tracing::{info, warn};
 use uuid::Uuid;
 
+use google::drive_picker::project_number;
 use google::oauth::{self, GoogleService, OAuthClient};
 use google::{
-	GoogleApi, GoogleDriveBackend, GoogleEndpoints, GoogleError, GoogleResult, GoogleTokenSource,
+	DrivePickerConfig, DrivePickerServer, DrivePickerState, GoogleApi, GoogleDriveBackend,
+	GoogleEndpoints, GoogleError, GoogleResult, GoogleTokenSource,
 };
 use microsoft::{MicrosoftClient, MicrosoftEndpoints, MicrosoftError, MicrosoftTokenSource};
 use store::{IntegrationStore, StoredGoogleAccount, StoredMicrosoftAccount};
@@ -62,6 +69,10 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 
 /// Finished sign-in sessions stay readable this long so a slow UI poll still sees the result.
 const FINISHED_SESSION_TTL: Duration = Duration::from_secs(10 * 60);
+
+/// How long the Drive picker page waits for the user. Its access token lasts
+/// an hour, so the page never outlives it.
+const DRIVE_PICKER_TIMEOUT: Duration = Duration::from_secs(20 * 60);
 
 /// Providers WingDrive can connect.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
@@ -149,6 +160,9 @@ pub struct IntegrationAccountInfo {
 	/// How much of Google Drive the account granted; `None` for Microsoft and
 	/// for Google accounts without Drive.
 	pub drive_access: Option<oauth::DriveAccess>,
+	/// Whether the account can open existing Drive files through the Google
+	/// Picker: it has `drive.file` access and the build has a Picker API key.
+	pub drive_picker: bool,
 }
 
 /// Progress of a browser sign-in.
@@ -164,6 +178,16 @@ pub enum ConnectStatus {
 		message: String,
 	},
 	Cancelled,
+}
+
+/// A Drive picker page waiting for the user.
+struct DrivePickerSession {
+	library_id: Uuid,
+	account_id: String,
+	server: DrivePickerServer,
+	started_at: Instant,
+	/// Whether the Drive listings were refreshed after the pick.
+	refreshed: bool,
 }
 
 struct ConnectSession {
@@ -190,6 +214,9 @@ pub enum IntegrationError {
 	Store(#[from] crate::crypto::cloud_credentials::CloudCredentialError),
 	#[error("No connected account with ID {0}")]
 	AccountNotFound(String),
+	/// The Google Picker cannot open for this account.
+	#[error("Google Drive picker is not available: {0}")]
+	DrivePickerUnavailable(&'static str),
 	#[error("{0}")]
 	Volume(String),
 }
@@ -207,6 +234,10 @@ pub struct IntegrationService {
 	/// Serializes read-modify-write of stored Microsoft accounts, because a
 	/// token rotation and a mount can update the same account at once.
 	microsoft_writes: Arc<Mutex<()>>,
+	/// Mounted Drive backends by library and account, to refresh their
+	/// listings after a pick in the Google Picker.
+	drive_backends: Mutex<HashMap<(Uuid, String), Weak<GoogleDriveBackend>>>,
+	drive_pickers: Mutex<HashMap<Uuid, DrivePickerSession>>,
 	pub cloud_edits: cloud_edit::CloudEditService,
 }
 
@@ -285,6 +316,8 @@ impl IntegrationService {
 			token_sources: Mutex::new(HashMap::new()),
 			microsoft_tokens: Mutex::new(HashMap::new()),
 			microsoft_writes: Arc::new(Mutex::new(())),
+			drive_backends: Mutex::new(HashMap::new()),
+			drive_pickers: Mutex::new(HashMap::new()),
 			cloud_edits: cloud_edit::CloudEditService::new(data_dir.join("cloud-edit")),
 		}
 	}
@@ -319,6 +352,22 @@ impl IntegrationService {
 		self.bundled_google_client
 			.clone()
 			.map(|client| (client, OAuthClientSource::Bundled))
+	}
+
+	/// Browser API key for the Google Picker, from the environment or the build.
+	pub fn google_api_key(&self) -> Option<String> {
+		std::env::var("WINGDRIVE_GOOGLE_API_KEY")
+			.ok()
+			.or_else(|| option_env!("WINGDRIVE_GOOGLE_API_KEY").map(str::to_string))
+			.map(|key| key.trim().to_string())
+			.filter(|key| !key.is_empty())
+	}
+
+	/// Whether `account` can use the Drive picker.
+	fn drive_picker_available(&self, account: &StoredGoogleAccount) -> bool {
+		oauth::DriveAccess::granted(&account.scopes) == Some(oauth::DriveAccess::AppFiles)
+			&& project_number(&account.client.client_id).is_some()
+			&& self.google_api_key().is_some()
 	}
 
 	/// The Google clients `library` can sign in with.
@@ -803,9 +852,108 @@ impl IntegrationService {
 		})
 	}
 
-	fn google_drive_backend(&self, tokens: Arc<GoogleTokenSource>) -> Arc<dyn VolumeBackend> {
+	async fn google_drive_backend(
+		&self,
+		library_id: Uuid,
+		account: &StoredGoogleAccount,
+		tokens: Arc<GoogleTokenSource>,
+	) -> Arc<dyn VolumeBackend> {
 		let api = GoogleApi::new(self.http.clone(), self.endpoints.clone(), tokens);
-		Arc::new(GoogleDriveBackend::new(api, None))
+		let app_files =
+			oauth::DriveAccess::granted(&account.scopes) == Some(oauth::DriveAccess::AppFiles);
+		let backend = Arc::new(GoogleDriveBackend::new(api, None).with_app_files(app_files));
+		self.drive_backends
+			.lock()
+			.await
+			.insert((library_id, account.id.clone()), Arc::downgrade(&backend));
+		backend
+	}
+
+	/// Opens the Google Picker so a `drive.file` account can add existing
+	/// Drive files to WingDrive. Returns the session ID and the page to open.
+	pub async fn start_drive_picker(
+		&self,
+		library: &Library,
+		account_id: &str,
+		locale: Option<String>,
+	) -> Result<(Uuid, String), IntegrationError> {
+		let (account, api) = self.google_api(library, account_id).await?;
+		if oauth::DriveAccess::granted(&account.scopes) != Some(oauth::DriveAccess::AppFiles) {
+			return Err(IntegrationError::DrivePickerUnavailable(
+				"this account already sees all of Google Drive",
+			));
+		}
+		let app_id = project_number(&account.client.client_id)
+			.ok_or(IntegrationError::DrivePickerUnavailable(
+				"the account's OAuth client ID has no project number",
+			))?
+			.to_string();
+		let api_key = self
+			.google_api_key()
+			.ok_or(IntegrationError::DrivePickerUnavailable(
+				"this build has no Google Picker API key",
+			))?;
+		let access_token = api.tokens.access_token().await?;
+		let server = DrivePickerServer::start(
+			DrivePickerConfig {
+				api_key,
+				app_id,
+				access_token,
+				locale,
+			},
+			DRIVE_PICKER_TIMEOUT,
+		)
+		.await
+		.map_err(|error| IntegrationError::Google(GoogleError::Io(error)))?;
+		let url = server.url().to_string();
+		let id = Uuid::new_v4();
+		let mut pickers = self.drive_pickers.lock().await;
+		pickers.retain(|_, session| session.started_at.elapsed() < DRIVE_PICKER_TIMEOUT * 2);
+		pickers.insert(
+			id,
+			DrivePickerSession {
+				library_id: library.id(),
+				account_id: account.id,
+				server,
+				started_at: Instant::now(),
+				refreshed: false,
+			},
+		);
+		Ok((id, url))
+	}
+
+	/// State of a Drive picker session of `library_id`, `None` when unknown.
+	/// After a pick, the account's Drive listings are refreshed once so the
+	/// new files show at the top of the volume.
+	pub async fn drive_picker_status(
+		&self,
+		library_id: Uuid,
+		session_id: Uuid,
+	) -> Option<DrivePickerState> {
+		let (state, refresh) = {
+			let mut pickers = self.drive_pickers.lock().await;
+			let session = pickers
+				.get_mut(&session_id)
+				.filter(|s| s.library_id == library_id)?;
+			let state = session.server.state().await;
+			let refresh = matches!(state, DrivePickerState::Picked { .. }) && !session.refreshed;
+			if refresh {
+				session.refreshed = true;
+			}
+			(state, refresh.then(|| session.account_id.clone()))
+		};
+		if let Some(account_id) = refresh {
+			let backend = self
+				.drive_backends
+				.lock()
+				.await
+				.get(&(library_id, account_id))
+				.and_then(Weak::upgrade);
+			if let Some(backend) = backend {
+				backend.forget_listings().await;
+			}
+		}
+		Some(state)
 	}
 
 	/// Mounts the account's Google Drive and remembers it on the account.
@@ -820,7 +968,8 @@ impl IntegrationService {
 			.mount_volume(
 				library,
 				&mount,
-				self.google_drive_backend(tokens),
+				self.google_drive_backend(library.id(), account, tokens)
+					.await,
 				account.drive_fingerprint.is_none(),
 			)
 			.await?;
@@ -857,7 +1006,8 @@ impl IntegrationService {
 							.register_mount(
 								library,
 								&mount,
-								self.google_drive_backend(tokens),
+								self.google_drive_backend(library.id(), account, tokens)
+									.await,
 								false,
 							)
 							.await
@@ -978,6 +1128,7 @@ impl IntegrationService {
 				.mount_info(library, &account.drive_fingerprint, &account.email)
 				.await,
 			drive_access: oauth::DriveAccess::granted(&account.scopes),
+			drive_picker: self.drive_picker_available(account),
 		})
 	}
 
@@ -1000,6 +1151,7 @@ impl IntegrationService {
 				.mount_info(library, &account.drive_fingerprint, &account.email)
 				.await,
 			drive_access: None,
+			drive_picker: false,
 		}
 	}
 
@@ -1404,7 +1556,8 @@ impl From<IntegrationError> for crate::infra::action::error::ActionError {
 			IntegrationError::AccountNotFound(_) => Self::InvalidInput(error.to_string()),
 			IntegrationError::Google(GoogleError::NotConfigured)
 			| IntegrationError::AppClientMissing(_)
-			| IntegrationError::CustomClientMissing(_) => Self::InvalidInput(error.to_string()),
+			| IntegrationError::CustomClientMissing(_)
+			| IntegrationError::DrivePickerUnavailable(_) => Self::InvalidInput(error.to_string()),
 			other => Self::Internal(other.to_string()),
 		}
 	}
@@ -1413,5 +1566,198 @@ impl From<IntegrationError> for crate::infra::action::error::ActionError {
 impl From<IntegrationError> for crate::infra::query::QueryError {
 	fn from(error: IntegrationError) -> Self {
 		Self::Internal(error.to_string())
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::infra::action::error::ActionError;
+	use crate::volume::backend::local::LocalBackend;
+
+	fn google_account(id: &str, email: &str, scopes: &[&str]) -> StoredGoogleAccount {
+		StoredGoogleAccount {
+			id: id.into(),
+			email: email.into(),
+			name: None,
+			picture: None,
+			scopes: scopes.iter().map(|s| s.to_string()).collect(),
+			client: OAuthClient {
+				client_id: "123-abc.apps.googleusercontent.com".into(),
+				client_secret: "secret".into(),
+			},
+			refresh_token: "rt".into(),
+			connected_at: Utc::now(),
+			drive_fingerprint: None,
+			mode: Some(ConnectionMode::App),
+		}
+	}
+
+	#[test]
+	fn clients_need_both_values_and_are_trimmed() {
+		assert_eq!(
+			client_from(Some(" id ".into()), Some(" secret\n".into())),
+			Some(OAuthClient {
+				client_id: "id".into(),
+				client_secret: "secret".into(),
+			})
+		);
+		assert_eq!(client_from(Some("id".into()), None), None);
+		assert_eq!(client_from(None, Some("secret".into())), None);
+		assert_eq!(client_from(Some("  ".into()), Some("secret".into())), None);
+		assert_eq!(client_from(Some("id".into()), Some("".into())), None);
+		assert_eq!(
+			microsoft_client_from(Some(" app ".into())).map(|c| c.client_id),
+			Some("app".to_string())
+		);
+		assert!(microsoft_client_from(Some(" ".into())).is_none());
+		assert!(microsoft_client_from(None).is_none());
+	}
+
+	#[test]
+	fn only_custom_clients_ask_for_all_of_drive() {
+		assert_eq!(
+			ConnectionMode::App.drive_access(),
+			oauth::DriveAccess::AppFiles
+		);
+		assert_eq!(
+			ConnectionMode::Custom.drive_access(),
+			oauth::DriveAccess::Full
+		);
+	}
+
+	#[test]
+	fn cloud_mounts_are_stable_per_account_and_provider() {
+		let ana = google_account("1001", "ana@example.com", &[]);
+		let mount = CloudMount::google_drive(&ana);
+		assert_eq!(mount.name(), "Google Drive (ana@example.com)");
+		assert_eq!(mount.root(), "gdrive://ana@example.com/");
+		assert_eq!(
+			mount.fingerprint(),
+			CloudMount::google_drive(&ana).fingerprint()
+		);
+		let bruno = google_account("2002", "bruno@example.com", &[]);
+		assert_ne!(
+			mount.fingerprint(),
+			CloudMount::google_drive(&bruno).fingerprint()
+		);
+		let onedrive = CloudMount::onedrive(&StoredMicrosoftAccount {
+			id: "1001".into(),
+			email: "ana@example.com".into(),
+			name: None,
+			client: MicrosoftClient {
+				client_id: "app".into(),
+			},
+			refresh_token: "rt".into(),
+			connected_at: Utc::now(),
+			mode: ConnectionMode::App,
+			drive_fingerprint: None,
+		});
+		assert_eq!(onedrive.root(), "onedrive://ana@example.com/");
+		assert_ne!(
+			mount.fingerprint(),
+			onedrive.fingerprint(),
+			"the same account ID on two providers is two volumes"
+		);
+	}
+
+	#[test]
+	fn cloud_mount_volumes_are_visible_network_volumes() {
+		let mount = CloudMount::google_drive(&google_account("1001", "ana@example.com", &[]));
+		let device = Uuid::new_v4();
+		let volume = mount.volume(Arc::new(LocalBackend::new("/tmp")), device, Some((100, 40)));
+		assert_eq!(volume.device_id, device);
+		assert_eq!(volume.fingerprint, mount.fingerprint());
+		assert_eq!(volume.total_capacity, 100);
+		assert_eq!(volume.available_space, 40);
+		assert_eq!(volume.cloud_identifier.as_deref(), Some("ana@example.com"));
+		assert_eq!(
+			volume.cloud_config,
+			Some(serde_json::json!({"integration": "google", "account_id": "1001"}))
+		);
+		assert_eq!(
+			volume.mount_point,
+			PathBuf::from("gdrive://ana@example.com")
+		);
+		assert!(volume.is_user_visible && volume.is_mounted && !volume.is_read_only);
+		assert!(volume.backend.is_some());
+		// The volume ID only depends on the provider and the account.
+		let again = mount.volume(Arc::new(LocalBackend::new("/tmp")), Uuid::new_v4(), None);
+		assert_eq!(again.id, volume.id);
+		assert_eq!((again.total_capacity, again.available_space), (0, 0));
+	}
+
+	#[test]
+	fn user_errors_are_invalid_input_and_the_rest_internal() {
+		for error in [
+			IntegrationError::AccountNotFound("x".into()),
+			IntegrationError::Google(GoogleError::NotConfigured),
+			IntegrationError::AppClientMissing("Google"),
+			IntegrationError::CustomClientMissing("Google"),
+			IntegrationError::DrivePickerUnavailable("no key"),
+		] {
+			assert!(
+				matches!(ActionError::from(error), ActionError::InvalidInput(_)),
+				"user-fixable errors are invalid input"
+			);
+		}
+		assert!(matches!(
+			ActionError::from(IntegrationError::Google(GoogleError::InvalidGrant)),
+			ActionError::Internal(_)
+		));
+		assert!(matches!(
+			ActionError::from(IntegrationError::Volume("gone".into())),
+			ActionError::Internal(message) if message == "gone"
+		));
+	}
+
+	#[test]
+	fn accounts_report_the_services_their_scopes_cover() {
+		let drive_file = "https://www.googleapis.com/auth/drive.file";
+		let mut scopes = vec![drive_file];
+		scopes.extend(oauth::PHOTOS_SCOPES);
+		let account = google_account("1", "a@example.com", &scopes);
+		assert_eq!(
+			account.granted_services(),
+			vec![GoogleService::Drive, GoogleService::Photos]
+		);
+		// Unticking one Photos scope on the consent page drops Photos.
+		let partial = google_account(
+			"1",
+			"a@example.com",
+			&[drive_file, oauth::PHOTOS_APPEND_SCOPE],
+		);
+		assert_eq!(partial.granted_services(), vec![GoogleService::Drive]);
+		assert!(google_account("1", "a@example.com", &[])
+			.granted_services()
+			.is_empty());
+	}
+
+	#[tokio::test]
+	async fn picker_availability_needs_drive_file_and_a_project_number() {
+		let service = IntegrationService::with_endpoints(
+			GoogleEndpoints::default(),
+			None,
+			std::env::temp_dir().join("wing-integrations-test"),
+		);
+		let drive_file = "https://www.googleapis.com/auth/drive.file";
+		let full = google_account("1", "a@example.com", &[oauth::DRIVE_SCOPE]);
+		assert!(!service.drive_picker_available(&full));
+		let mut no_number = google_account("1", "a@example.com", &[drive_file]);
+		no_number.client.client_id = "abc.apps.googleusercontent.com".into();
+		assert!(!service.drive_picker_available(&no_number));
+		let app = google_account("1", "a@example.com", &[drive_file]);
+		assert_eq!(
+			service.drive_picker_available(&app),
+			service.google_api_key().is_some(),
+			"with drive.file and a project number only the key decides"
+		);
+		// Unknown sessions read as missing.
+		assert_eq!(
+			service
+				.drive_picker_status(Uuid::new_v4(), Uuid::new_v4())
+				.await,
+			None
+		);
 	}
 }

@@ -26,6 +26,7 @@ Each account stores the client it signed in with and its mode (`IntegrationAccou
 | --- | --- |
 | Connect several Google accounts per library | Settings > Integrations, `wing integrations connect google` |
 | Browse each account's Drive in the Explorer | Sidebar location `Google Drive (email)` |
+| Add existing Drive files and folders to WingDrive (mode `app`, Google Picker) | Settings > Integrations > Add files from Google Drive |
 | Download, upload, copy, move and rename between local folders and Drive | Copy, paste, drag and drop, `wing file copy` |
 | Create folders and files (also from templates) and move items to the Drive trash | Explorer |
 | Upload by dropping files from the desktop, by pasting, or with **Upload Files Here…** | Explorer (desktop app) |
@@ -77,9 +78,20 @@ A desktop client secret is not confidential, but Google still requires it in the
 | Identity | `openid`, `email`, `profile` |
 | Drive, mode `app` | `https://www.googleapis.com/auth/drive.file` |
 | Drive, mode `custom` | `https://www.googleapis.com/auth/drive` |
-| Photos | `photoslibrary.appendonly`, `photoslibrary.readonly.appcreateddata`, `photoslibrary.edit.appcreateddata`, `photospicker.mediaitems.readonly` |
+| Photos | `photoslibrary.appendonly`, `photoslibrary.readonly.appcreateddata`, `photospicker.mediaitems.readonly` |
 
 The full `drive` scope is restricted: an app that asks for it through a public client passes Google verification only with a paid security assessment (CASA) every year. WingDrive's own client therefore asks for `drive.file`, which shows the files WingDrive created or the user opened with it. A custom client belongs to the user, so it keeps the full scope (`ConnectionMode::drive_access`, ADR in `docs/design/GOOGLE-DRIVE-SCOPE.md`). Either scope counts as Drive granted, and `IntegrationAccountInfo.drive_access` (`full` or `app_files`) tells the UI and the CLI which one an account has, so accounts connected before 3.4.0 with `drive` keep working.
+
+Each Photos scope is the narrowest for its feature: `appendonly` uploads and creates albums, `readonly.appcreateddata` lists the albums WingDrive created, and the picker scope reads only the items the user picks. Before 3.5.0 WingDrive also asked for `photoslibrary.edit.appcreateddata`, which no feature used; accounts that granted it keep working.
+
+### Google Picker for `drive.file`
+
+With `drive.file`, Drive returns only the files WingDrive created or the user opened with it, often inside folders the grant does not cover. Two pieces make existing files reachable:
+
+- **Add files from Google Drive** (`integrations.google.drive.picker.start`) serves a page on a random `127.0.0.1` port and opens it in the browser. The page loads the [Google Picker](https://developers.google.com/drive/picker) with the account's access token, WingDrive's browser API key and the Cloud project number as app ID (the numeric prefix of the client ID). Every file or folder the user picks joins the `drive.file` grant at Google. The page only reports how many items were picked; their IDs never travel back. `integrations.google.drive.picker.status` returns `waiting`, `picked`, `cancelled` or `expired` (after 20 minutes) and, on a pick, refreshes the Drive volume's listings.
+- In mode `app`, the Drive volume's root lists every granted item whose parent folder is not granted, instead of the children of My Drive. Picked files therefore show at the top level, next to the folders WingDrive created. A picked folder shows the files inside it that are also granted; picking a folder does not grant its contents.
+
+The API key comes from `WINGDRIVE_GOOGLE_API_KEY` in the daemon's environment or at build time. Create it in the same Cloud project as the client, enable the Google Picker API, and restrict the key to that API. `IntegrationAccountInfo.drive_picker` is true when an account has `drive.file` access, its client ID carries a project number and a key is available. Custom clients see all of Drive, so they never need the Picker.
 
 Users can untick scopes on the consent page. WingDrive reads the scopes Google actually granted and only offers the services they cover.
 
@@ -194,6 +206,7 @@ wing integrations photos import <account-id> ~/Pictures/From-Google
 | `integrations.google.client`, `integrations.google.set_client` | Query, action |
 | `integrations.google.connect`, `.connect_status`, `.connect_cancel` | Action, query, action (status and cancel serve Microsoft sign-ins too) |
 | `integrations.google.drive.mount` | Action |
+| `integrations.google.drive.picker.start`, `.picker.status` | Action, query |
 | `integrations.microsoft.client`, `integrations.microsoft.set_client`, `integrations.microsoft.connect` | Query, action, action |
 | `integrations.onedrive.mount` | Action |
 | `integrations.google.photos.albums`, `.upload`, `.picker.start`, `.picker.status`, `.picker.import` | Mixed |

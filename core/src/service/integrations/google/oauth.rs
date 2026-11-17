@@ -54,12 +54,15 @@ pub const DRIVE_SCOPE: &str = "https://www.googleapis.com/auth/drive";
 /// Google verification without a security assessment.
 pub const DRIVE_FILE_SCOPE: &str = "https://www.googleapis.com/auth/drive.file";
 
-/// Upload to Google Photos. Since March 2025 the Library API only lists and
-/// edits media this app created, so the picker covers everything else.
-pub const PHOTOS_SCOPES: [&str; 4] = [
+/// Google Photos access, each scope the narrowest for its feature:
+/// `appendonly` uploads and creates albums, `readonly.appcreateddata` lists the
+/// albums WingDrive created, and the picker scope reads what the user picks.
+/// Since March 2025 the Library API only reads media this app created, so the
+/// picker covers the rest of the library. WingDrive never renames albums or
+/// edits descriptions, so it does not ask for `edit.appcreateddata`.
+pub const PHOTOS_SCOPES: [&str; 3] = [
 	"https://www.googleapis.com/auth/photoslibrary.appendonly",
 	"https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata",
-	"https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata",
 	"https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
 ];
 
