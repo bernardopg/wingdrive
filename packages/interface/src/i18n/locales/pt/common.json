@@ -318,6 +318,7 @@
 	"tray": {
 		"open": "Abrir o WingDrive",
 		"newTab": "Nova aba",
+		"logs": "Abrir pasta de logs",
 		"quit": "Sair do WingDrive"
 	},
 	"admin": {

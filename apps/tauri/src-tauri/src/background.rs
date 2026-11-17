@@ -96,6 +96,7 @@ impl DesktopSettingsState {
 struct TrayMenu<R: Runtime = tauri::Wry> {
 	open: MenuItem<R>,
 	new_tab: MenuItem<R>,
+	logs: MenuItem<R>,
 	quit: MenuItem<R>,
 }
 
@@ -103,10 +104,14 @@ struct TrayMenu<R: Runtime = tauri::Wry> {
 ///
 /// The last labels received are saved so the next launch builds the tray in
 /// the user's language before the webview has loaded the daemon config.
+///
+/// Fields missing from an older saved file or webview keep their English default.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct TrayLabels {
 	open: String,
 	new_tab: String,
+	logs: String,
 	quit: String,
 }
 
@@ -115,6 +120,7 @@ impl Default for TrayLabels {
 		Self {
 			open: "Open WingDrive".into(),
 			new_tab: "New Tab".into(),
+			logs: "Open Logs Folder".into(),
 			quit: "Quit WingDrive".into(),
 		}
 	}
@@ -139,7 +145,7 @@ pub fn keeps_running<R: Runtime>(app: &AppHandle<R>) -> bool {
 		.is_some_and(|state| state.get().keep_in_background)
 }
 
-/// Adds the tray icon with Open, New Tab and Quit.
+/// Adds the tray icon with Open, New Tab, Open Logs Folder and Quit.
 ///
 /// Linux trays built on AppIndicator deliver no click events, so every action
 /// lives in the menu rather than on the icon itself.
@@ -166,11 +172,13 @@ fn build_tray_menu<R: Runtime>(
 ) -> tauri::Result<(Menu<R>, TrayMenu<R>)> {
 	let open = MenuItemBuilder::with_id("tray-open", labels.open).build(app)?;
 	let new_tab = MenuItemBuilder::with_id("tray-new-tab", labels.new_tab).build(app)?;
+	let logs = MenuItemBuilder::with_id("tray-logs", labels.logs).build(app)?;
 	let quit = MenuItemBuilder::with_id("tray-quit", labels.quit).build(app)?;
 	let menu = MenuBuilder::new(app)
 		.item(&open)
 		.item(&new_tab)
 		.item(&PredefinedMenuItem::separator(app)?)
+		.item(&logs)
 		.item(&quit)
 		.build()?;
 	Ok((
@@ -178,6 +186,7 @@ fn build_tray_menu<R: Runtime>(
 		TrayMenu {
 			open,
 			new_tab,
+			logs,
 			quit,
 		},
 	))
@@ -188,9 +197,8 @@ fn on_tray_menu<R: Runtime>(app: &AppHandle<R>, id: &str) {
 	match id {
 		"tray-open" => launch::show_main_window(app),
 		"tray-new-tab" => {
-			let home = std::env::var_os("HOME")
-				.map(PathBuf::from)
-				.unwrap_or_else(|| "/".into());
+			// $HOME is unset on Windows, where this opened the root of the current drive.
+			let home = app.path().home_dir().unwrap_or_else(|_| "/".into());
 			launch::deliver(
 				app,
 				vec![launch::OpenRequest {
@@ -199,9 +207,42 @@ fn on_tray_menu<R: Runtime>(app: &AppHandle<R>, id: &str) {
 				}],
 			);
 		}
+		"tray-logs" => open_logs_folder(app),
 		"tray-quit" => app.exit(0),
 		_ => {}
 	}
+}
+
+/// The daemon's log folder inside its data directory, where `wing logs` reads too.
+pub fn logs_folder_in(data_dir: &Path) -> PathBuf {
+	data_dir.join("logs")
+}
+
+/// Opens the daemon's log folder in the system file manager.
+///
+/// A daemon started at login has no console on Windows (TAURI-019), so its log file is the only
+/// place its output reaches, and users need a way to find it.
+fn open_logs_folder<R: Runtime>(app: &AppHandle<R>) {
+	let Some(data_dir) = app
+		.try_state::<DesktopSettingsState>()
+		.and_then(|state| state.path.parent().map(Path::to_path_buf))
+	else {
+		return;
+	};
+	let folder = logs_folder_in(&data_dir);
+	tauri::async_runtime::spawn_blocking(move || {
+		// The daemon creates it on its first start; an empty folder still opens.
+		if let Err(error) = std::fs::create_dir_all(&folder) {
+			tracing::warn!(%error, folder = %folder.display(), "Could not create the logs folder");
+			return;
+		}
+		match crate::file_opening::open_default(&folder) {
+			Ok(file_opening::OpenResult::Success) => {}
+			result => {
+				tracing::warn!(?result, folder = %folder.display(), "Could not open the logs folder")
+			}
+		}
+	});
 }
 
 /// A left click on trays that report clicks opens the main window.
@@ -232,6 +273,7 @@ pub fn set_tray_labels<R: Runtime>(app: AppHandle<R>, labels: TrayLabels) -> Res
 	for (item, text) in [
 		(&menu.open, labels.open),
 		(&menu.new_tab, labels.new_tab),
+		(&menu.logs, labels.logs),
 		(&menu.quit, labels.quit),
 	] {
 		item.set_text(text).map_err(|e| e.to_string())?;
@@ -444,6 +486,22 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn tray_labels_saved_before_the_logs_item_still_load() {
+		let labels: TrayLabels =
+			serde_json::from_str(r#"{"open":"Abrir","new_tab":"Nova aba","quit":"Sair"}"#).unwrap();
+		assert_eq!(labels.open, "Abrir");
+		assert_eq!(labels.logs, "Open Logs Folder");
+	}
+
+	#[test]
+	fn logs_folder_is_inside_the_data_directory() {
+		assert_eq!(
+			logs_folder_in(Path::new("/data/wingdrive")),
+			PathBuf::from("/data/wingdrive/logs")
+		);
+	}
+
+	#[test]
 	fn settings_default_when_missing_and_round_trip() {
 		let dir = tempfile::tempdir().unwrap();
 		let state = DesktopSettingsState::load(dir.path());
@@ -490,6 +548,7 @@ mod tests {
 		let labels = TrayLabels {
 			open: "Open".into(),
 			new_tab: "Tab".into(),
+			logs: "Logs".into(),
 			quit: "Quit".into(),
 		};
 		// Without a tray the labels are still saved for the next launch.
@@ -532,12 +591,14 @@ mod tests {
 		let labels = TrayLabels {
 			open: "Abrir o WingDrive".into(),
 			new_tab: "Nova aba".into(),
+			logs: "Abrir pasta de logs".into(),
 			quit: "Sair do WingDrive".into(),
 		};
 		set_tray_labels(app.handle().clone(), labels).unwrap();
 		let items = app.state::<TrayMenu<tauri::test::MockRuntime>>();
 		assert_eq!(items.open.text().unwrap(), "Abrir o WingDrive");
 		assert_eq!(items.new_tab.text().unwrap(), "Nova aba");
+		assert_eq!(items.logs.text().unwrap(), "Abrir pasta de logs");
 		assert_eq!(items.quit.text().unwrap(), "Sair do WingDrive");
 	}
 
