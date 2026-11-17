@@ -103,43 +103,63 @@ if [ "$(uname -s)" = Linux ]; then
 	)
 fi
 
+# Every test command below builds the same packages, so Cargo resolves one feature set
+# and compiles each dependency once. Narrowing `-p` to one package resolves different
+# features for shared crates (wing-core gains `cli` from wing-cli; tokio, windows-sys and
+# others differ), and Cargo rebuilds them and everything above them: on a cold Windows
+# runner that cost about 35 minutes per extra package set.
+test_packages=(-p wing-core -p wing-cli -p wing-bench -p wingdrive)
+cargo_test() {
+	cargo test --locked "${test_packages[@]}" "$@"
+}
+
+# Core unit tests that run on Windows and macOS. Every core unit test passed on Linux; other
+# platforms keep the modules already proven there until a run shows the rest pass too.
+# `recipe::` is wing-bench's only test module, which shares the `--lib` run.
+non_linux_lib_tests=(
+	crypto::key_manager::tests
+	ops::files::query::file_checksum
+	ops::files::query::vcs_status
+	ops::files::query::templates
+	ops::files::create_entry
+	domain::content_identity::tests
+	recipe::
+)
+
 run_full_tests() {
-	# One build of every test binary, so the runs below only execute them.
+	# One build of every test binary, so the runs below only execute them. Building
+	# wing-core's integration tests also builds its binaries (wing-daemon and the type
+	# generators) with the same features.
 	step "Build test binaries"
-	cargo build --locked --bin wing-daemon
 	local core_test_flags=()
 	for test in "${core_contract_tests[@]}" ${core_filesystem_tests[@]+"${core_filesystem_tests[@]}"}; do
 		core_test_flags+=(--test "$test")
 	done
-	cargo test --locked --no-run -p wing-core --lib \
+	cargo_test --no-run --lib --bin WingDrive --bin wing \
 		"${core_test_flags[@]}" \
 		--test branding_legacy_paths \
 		--test sync_metrics_test \
 		--test sync_realtime_test \
 		--test sync_backfill_test
-	cargo test --locked --no-run -p wingdrive --bin WingDrive
-	cargo test --locked --no-run -p wing-cli --bin wing
+	# Small crates with their own dependency trees; building them apart costs seconds.
 	cargo test --locked --no-run -p wing-branding
+	cargo test --locked --no-run -p "$file_opening_crate"
+	cargo test --locked --no-run -p file-clipboard-windows
 
 	step "Test branding, key storage and legacy path resolution"
 	cargo test --locked -p wing-branding
-	# Every core unit test passed on Linux; other platforms keep the modules
-	# already proven there until a run shows the rest pass too.
+	cargo_test --test branding_legacy_paths
+
+	step "Test core and developer tool units"
 	if [ "$(uname -s)" = Linux ]; then
-		cargo test --locked -p wing-core --lib
+		cargo_test --lib
 	else
-		cargo test --locked -p wing-core --lib crypto::key_manager::tests
-		cargo test --locked -p wing-core --lib ops::files::query::file_checksum
-		cargo test --locked -p wing-core --lib ops::files::query::vcs_status
-		cargo test --locked -p wing-core --lib ops::files::query::templates
-		cargo test --locked -p wing-core --lib ops::files::create_entry
-		cargo test --locked -p wing-core --lib domain::content_identity::tests
+		cargo_test --lib -- "${non_linux_lib_tests[@]}"
 	fi
-	cargo test --locked -p wing-core --test branding_legacy_paths
 
 	step "Test core contracts"
 	for test in "${core_contract_tests[@]}"; do
-		cargo test --locked -p wing-core --test "$test"
+		cargo_test --test "$test"
 	done
 
 	if [ "${#core_filesystem_tests[@]}" -gt 0 ]; then
@@ -151,28 +171,39 @@ run_full_tests() {
 				# Core, which sets the process-wide current device ID; in parallel, one case
 				# could resolve "local" paths against another case's device and find nothing.
 				indexing_test | library_test | file_queries_test | google_integration_test)
-					cargo test --locked -p wing-core --test "$test" -- --test-threads=1 ;;
-				*) cargo test --locked -p wing-core --test "$test" ;;
+					cargo_test --test "$test" -- --test-threads=1 ;;
+				*) cargo_test --test "$test" ;;
 			esac
 		done
 	fi
 
 	step "Test CLI contracts and configuration"
-	cargo test --locked -p wing-cli --bin wing
+	cargo_test --bin wing
 
 	step "Test desktop IPC and launch handling"
-	cargo test --locked -p wingdrive --bin WingDrive
+	cargo_test --bin WingDrive
 	cargo test --locked -p "$file_opening_crate"
 	cargo test --locked -p file-clipboard-windows
 
-	step "Test developer tools"
-	cargo test --locked -p wing-bench --lib
-
 	step "Test two-device sync"
-	cargo test --locked -p wing-core \
+	cargo_test \
 		--test sync_metrics_test \
 		--test sync_realtime_test \
 		--test sync_backfill_test
+}
+
+# The TypeScript client is generated from Rust types; a stale copy compiles but sends or
+# reads the wrong shapes at runtime. It runs the generator the test build already linked,
+# so it adds no build of its own. The types do not depend on the platform, so Windows and
+# macOS skip it.
+check_generated_types() {
+	[ "$(uname -s)" = Linux ] || return 0
+	step "Generated TypeScript types are current"
+	"${CARGO_TARGET_DIR:-target}/debug/generate_typescript_types"
+	if ! git diff --exit-code -- packages/ts-client/src/generated; then
+		echo "error: packages/ts-client/src/generated is out of date. Run 'cargo run --bin generate_typescript_types' and commit the result." >&2
+		exit 1
+	fi
 }
 
 if [ "$1" = "tests" ]; then
@@ -183,16 +214,8 @@ elif [ "$1" = "full" ]; then
 	step "clippy (workspace)"
 	cargo clippy --workspace --locked -- -D warnings
 
-	# The TypeScript client is generated from Rust types; a stale copy compiles
-	# but sends or reads the wrong shapes at runtime.
-	step "Generated TypeScript types are current"
-	cargo run --locked --bin generate_typescript_types
-	if ! git diff --exit-code -- packages/ts-client/src/generated; then
-		echo "error: packages/ts-client/src/generated is out of date. Run 'cargo run --bin generate_typescript_types' and commit the result." >&2
-		exit 1
-	fi
-
 	run_full_tests
+	check_generated_types
 else
 	packages=()
 	for area in "$@"; do
