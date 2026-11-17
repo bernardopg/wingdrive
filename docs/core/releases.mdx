@@ -55,7 +55,8 @@ and an `.msi` for Windows. `release.yml` first waits for every CI job on the tag
 `ci` gate), so a red Windows job also blocks a Linux release. The Windows installers come from
 `windows-bundle.yml`, which installs each one, starts the daemon and the app, waits for the main
 window and uninstalls it. Alpha, beta and rc tags ship the `.exe` only, because WiX accepts only
-numeric pre-release versions. The installers are not signed yet (REL-001). The release
+numeric pre-release versions. The installers are Authenticode-signed only when the signing
+secrets below exist (REL-001); without them the run warns and ships them unsigned. The release
 runner uses Ubuntu 24.04. The AUR package `wingdrive-bin` extracts the AppImage,
 so launching the installed package does not require FUSE.
 
@@ -181,6 +182,10 @@ The release requires `AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS` for AUR publica
 
 `discord.yml` reads `DISCORD_WEBHOOK_COMMITS` and `DISCORD_WEBHOOK_CHANGELOG`, the Discord webhook URLs of `#commits` and `#changelog`; without them it posts nothing and leaves a notice.
 
-`release.yml` and `windows-bundle.yml` read `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` to sign the updater artifacts; without them the bundles build unsigned and `latest.json` lists nothing. No workflow uses Apple, Authenticode or Sentry secrets yet.
+`release.yml` and `windows-bundle.yml` read `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` to sign the updater artifacts; without them the bundles build unsigned and `latest.json` lists nothing.
+
+`windows-bundle.yml` signs a tagged release with Authenticode through Azure Artifact Signing when six secrets exist: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID` and `AZURE_CLIENT_SECRET` (the app registration that may sign), and `WINDOWS_SIGNING_ENDPOINT`, `WINDOWS_SIGNING_ACCOUNT` and `WINDOWS_SIGNING_PROFILE` (the account's regional endpoint, such as `https://wus2.codesigning.azure.net`, its name and the certificate profile). The run installs `artifact-signing-cli`, Tauri signs every program it bundles and both installers, and a step fails the run if an installer has no valid signature. A secret missing leaves a warning on the run and unsigned installers. Pull requests never sign.
+
+No workflow uses Apple or Sentry secrets yet.
 
 The Docker workflow uses only `GITHUB_TOKEN` which is provided automatically.
