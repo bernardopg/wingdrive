@@ -15,6 +15,7 @@ import Animated, {
 import { BlurView } from "expo-blur";
 import { useNormalizedQuery } from "../../client";
 import { HeroStats, DevicePanel, ActionButtons } from "./components";
+import { storageTotals } from "./components/volumeLabels";
 import { PairingPanel } from "../../components/PairingPanel";
 import { LibrarySwitcherPanel } from "../../components/LibrarySwitcherPanel";
 import { GlassButton } from "../../components/GlassButton";
@@ -75,6 +76,13 @@ export function OverviewScreen() {
 		query: "libraries.info",
 		input: null,
 		resourceType: "library",
+	});
+
+	// Detected volumes, counted when the library tracks none (MOB-017).
+	const { data: volumes } = useNormalizedQuery({
+		query: "volumes.list",
+		input: { filter: "All" },
+		resourceType: "volume",
 	});
 
 	// Entrance animation on mount
@@ -297,6 +305,10 @@ export function OverviewScreen() {
 	}
 
 	const stats = libraryInfo.statistics;
+	const storage = storageTotals(
+		{ total: stats.total_capacity ?? 0, available: stats.available_capacity ?? 0 },
+		volumes?.volumes,
+	);
 
 	return (
 		<View className="flex-1 bg-black">
@@ -382,8 +394,8 @@ export function OverviewScreen() {
 					{/* Wrapper to elevate HeroStats above ScrollView for touch events */}
 					<View style={{ position: "relative", zIndex: 25 }} pointerEvents="auto">
 						<HeroStats
-							totalStorage={stats.total_capacity ?? 0}
-							usedStorage={(stats.total_capacity ?? 0) - (stats.available_capacity ?? 0)}
+							totalStorage={storage.total}
+							usedStorage={storage.total - storage.available}
 							totalFiles={Number(stats.total_files)}
 							locationCount={stats.location_count}
 							tagCount={stats.tag_count}

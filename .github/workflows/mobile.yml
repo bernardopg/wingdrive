@@ -131,6 +131,9 @@ jobs:
       - name: Translation catalogs match
         run: bun run check:i18n
         working-directory: apps/mobile
+      - name: Unit tests
+        run: bun test ./src
+        working-directory: apps/mobile
       # Checked against the installed expo package, not Expo's live version list: the online
       # check failed every pull request whenever Expo shipped an SDK patch. New patches are
       # reported weekly by expo-sdk-patches.yml instead.
