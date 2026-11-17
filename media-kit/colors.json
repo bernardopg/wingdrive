@@ -1,0 +1,34 @@
+{
+  "violet": {
+    "hex": "#8B5CF6",
+    "use": "Primary accent, feather highlight"
+  },
+  "indigo": {
+    "hex": "#4338CA",
+    "use": "Feather shadow, gradient end"
+  },
+  "lilac": {
+    "hex": "#C4B5FD",
+    "use": "Highlights on dark, gradient text start"
+  },
+  "lavender": {
+    "hex": "#EDE9FE",
+    "use": "Text on dark, lightest tint"
+  },
+  "night": {
+    "hex": "#0F0A1F",
+    "use": "App icon tile"
+  },
+  "ink": {
+    "hex": "#05040B",
+    "use": "Video and page background"
+  },
+  "mist": {
+    "hex": "#A19FB8",
+    "use": "Body text on dark"
+  },
+  "paper": {
+    "hex": "#FAF9FF",
+    "use": "Light background"
+  }
+}

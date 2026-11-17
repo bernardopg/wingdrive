@@ -40,6 +40,11 @@
   <img src="docs/public/WingGridView.webp" alt="WingDrive grid view with the Inspector, dark theme" width="900"/>
 </p>
 
+<p align="center">
+  <a href="https://wingdrive.org/#film"><img src="media-kit/social/readme-film-poster.png" alt="Watch the 35-second WingDrive film" width="720"/></a><br/>
+  <sub>Watch the 35-second film · <a href="website/public/video/wingdrive-film.mp4">MP4</a> · <a href="media-kit/">Media kit</a></sub>
+</p>
+
 WingDrive is a desktop file manager for Linux with a daemon that indexes your folders, external
 drives and cloud volumes into one library. Files stay where they are; the index makes them fast to
 browse, search and recognize across your own devices. No account, no telemetry, no central server.

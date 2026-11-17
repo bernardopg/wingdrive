@@ -1,0 +1,4 @@
+assets/
+out/
+node_modules/
+.venv/

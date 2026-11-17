@@ -25,10 +25,13 @@ const { lang, title, lead } = Astro.props;
 </Base>
 
 <style>
+	/* The glow fades into the next section; body clips it horizontally. */
+	.head .glow-orb {
+		z-index: -1;
+	}
 	.head {
 		position: relative;
 		padding: 150px 0 40px;
-		overflow: hidden;
 	}
 	.head .wrap {
 		display: grid;

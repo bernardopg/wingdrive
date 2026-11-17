@@ -44,7 +44,8 @@ const en = {
 		lang: "Português",
 	},
 	hero: {
-		badge: "3.4 is out · Signed updates",
+		// {v} is the latest release (major.minor), filled at build time.
+		badge: "{v} is out · Signed updates",
 		title1: "Every drive you own,",
 		title2: "in one fast file manager.",
 		lead: "WingDrive indexes your folders, external drives and cloud volumes into one library. Files stay where they are; the index makes them fast to browse, search and recognize across your own devices.",
@@ -81,6 +82,12 @@ const en = {
 			{ icon: "linux", t: "Feels native on Linux", d: "Opens folders for xdg-open and “Show in folder”, starts with your session and lives in the tray." },
 			{ icon: "palette", t: "Make it yours", d: "Catppuccin, Gruvbox, Dracula and Tokyo Night themes, in English and Brazilian Portuguese." },
 		],
+	},
+	film: {
+		eyebrow: "Watch",
+		title: "WingDrive in 35 seconds.",
+		full: "Full tour",
+		shorts: "Vertical cut",
 	},
 	showcase: {
 		eyebrow: "A closer look",
@@ -350,7 +357,7 @@ const en = {
 			{ slug: "first-run", t: "Add your folders", d: "Create a library and pick the folders WingDrive indexes." },
 			{ slug: "explorer", t: "Find your way", d: "Views, search, Quick Preview, tabs and shortcuts." },
 		],
-		newTitle: "New in 3.4",
+		newTitle: "New in {v}",
 		newText: "The AppImage and the Windows installers update themselves with signed updates, and the daemon runs without a console window on Windows.",
 		newLink: "How updates work",
 		prev: "Previous",
@@ -385,7 +392,7 @@ const pt: Strings = {
 		lang: "English",
 	},
 	hero: {
-		badge: "3.4 saiu · Atualizações assinadas",
+		badge: "{v} saiu · Atualizações assinadas",
 		title1: "Todos os seus drives,",
 		title2: "em um gerenciador de arquivos rápido.",
 		lead: "O WingDrive indexa suas pastas, drives externos e volumes na nuvem em uma só biblioteca. Os arquivos ficam onde estão; o índice deixa tudo rápido de navegar, buscar e reconhecer entre os seus dispositivos.",
@@ -422,6 +429,12 @@ const pt: Strings = {
 			{ icon: "linux", t: "Nativo no Linux", d: "Abre pastas para o xdg-open e o “Mostrar na pasta”, inicia com a sessão e fica na bandeja." },
 			{ icon: "palette", t: "Do seu jeito", d: "Temas Catppuccin, Gruvbox, Dracula e Tokyo Night, em inglês e português do Brasil." },
 		],
+	},
+	film: {
+		eyebrow: "Assista",
+		title: "O WingDrive em 35 segundos.",
+		full: "Tour completo",
+		shorts: "Versão vertical",
 	},
 	showcase: {
 		eyebrow: "De perto",
@@ -691,7 +704,7 @@ const pt: Strings = {
 			{ slug: "first-run", t: "Adicione suas pastas", d: "Crie uma biblioteca e escolha as pastas que o WingDrive indexa." },
 			{ slug: "explorer", t: "Encontre o caminho", d: "Visualizações, busca, Visualização Rápida, abas e atalhos." },
 		],
-		newTitle: "Novo na 3.4",
+		newTitle: "Novo na {v}",
 		newText: "O AppImage e os instaladores do Windows se atualizam sozinhos com atualizações assinadas, e o daemon roda sem janela de console no Windows.",
 		newLink: "Como funcionam as atualizações",
 		prev: "Anterior",

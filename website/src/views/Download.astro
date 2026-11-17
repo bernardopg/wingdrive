@@ -113,10 +113,13 @@ const notesUrl = `${RELEASES}/tag/${r.tag}`;
 </script>
 
 <style>
+	/* The glow fades into the next section; body clips it horizontally. */
+	.head .glow-orb {
+		z-index: -1;
+	}
 	.head {
 		position: relative;
 		padding: 150px 0 50px;
-		overflow: hidden;
 		text-align: center;
 	}
 	.head .wrap {

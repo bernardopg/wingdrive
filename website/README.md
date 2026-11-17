@@ -25,6 +25,8 @@ bun run build                                  # static output in website/dist/
   (`blender -b -P winged_drive.py -- <out-dir> anim`, then encode the frames with ffmpeg).
 - `raw-assets/blender/drive_loop.py`: an earlier 120-frame turntable loop of the drive, kept for
   reference (`blender -b -P drive_loop.py -- <out-dir>`).
+- `raw-assets/promo/`: the promo videos (YouTube, GitHub and Shorts cuts) and the generator of the
+  media kit in `/media-kit`. See its README.
 - `bun run assets` rebuilds the image sizes, the hero sparkle points
   (`src/data/hero-points.json`), favicons, manifest icons and `public/og.png`.
 

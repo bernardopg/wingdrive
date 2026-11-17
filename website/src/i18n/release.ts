@@ -2,19 +2,19 @@
 export type Release = { tag: string; version: string; date: string; assets: { name: string; url: string; size: number }[] };
 
 const FALLBACK: Release = {
-	tag: "v3.1.0",
-	version: "3.1.0",
-	date: "2026-11-11T01:37:16Z",
+	tag: "v3.4.0",
+	version: "3.4.0",
+	date: "2026-11-17T00:57:01Z",
 	assets: [
-		"WingDrive-3.1.0-x86_64.AppImage",
-		"WingDrive-3.1.0-amd64.deb",
-		"WingDrive-3.1.0-x64-setup.exe",
-		"WingDrive-3.1.0-x64.msi",
-		"WingDrive-3.1.0-android-arm64-v8a.apk",
+		"WingDrive-3.4.0-x86_64.AppImage",
+		"WingDrive-3.4.0-amd64.deb",
+		"WingDrive-3.4.0-x64-setup.exe",
+		"WingDrive-3.4.0-x64.msi",
+		"WingDrive-3.4.0-android-arm64-v8a.apk",
 		"SHA256SUMS",
 		"SHA256SUMS-windows",
 		"SHA256SUMS-android",
-	].map((name) => ({ name, url: `https://github.com/bernardopg/wingdrive/releases/download/v3.1.0/${name}`, size: 0 })),
+	].map((name) => ({ name, url: `https://github.com/bernardopg/wingdrive/releases/download/v3.4.0/${name}`, size: 0 })),
 };
 
 let cached: Release | undefined;
@@ -53,4 +53,9 @@ export function pick(r: Release, re: RegExp) {
 export function fmtSize(bytes: number) {
 	if (!bytes) return "";
 	return `${(bytes / 1024 / 1024).toFixed(0)} MB`;
+}
+
+/** "3.3" for 3.3.1: the feature release the badges announce. */
+export function minorVersion(r: Release) {
+	return r.version.split(".").slice(0, 2).join(".");
 }
