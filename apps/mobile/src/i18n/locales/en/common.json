@@ -277,5 +277,6 @@
 	"Device": "Device",
 	"Root": "Root",
 	"Tracked": "Tracked",
-	"Not tracked": "Not tracked"
+	"Not tracked": "Not tracked",
+	"My Library": "My Library"
 }

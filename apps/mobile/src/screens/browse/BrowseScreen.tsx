@@ -18,6 +18,7 @@ import { useRouter } from "expo-router";
 import { WingItem as WingItemComponent, WingGroupComponent } from "./components";
 import { SettingsGroup } from "../../components/primitive";
 import { StorageAccessCard } from "../../components/StorageAccessCard";
+import { displayName } from "../../utils/defaultNames";
 
 interface Wing {
 	id: string;
@@ -35,6 +36,7 @@ function WingContent({
 	insets: EdgeInsets;
 }) {
 	const router = useRouter();
+	const { t } = useTranslation("common");
 	const scrollY = useSharedValue(0);
 
 	const scrollHandler = useAnimatedScrollHandler({
@@ -100,7 +102,7 @@ function WingContent({
 						style={[wingNameScale]}
 						className="text-ink text-[30px] font-bold"
 					>
-						{wing.name}
+						{displayName(wing.name, t)}
 					</Animated.Text>
 				</View>
 			</View>

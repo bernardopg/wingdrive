@@ -24,6 +24,8 @@ import { JobManagerPanel } from "../../components/JobManagerPanel";
 import { useRouter } from "expo-router";
 import { CircleNotch, ListBullets } from "phosphor-react-native";
 import { useJobs } from "../../hooks/useJobs";
+import { useTranslation } from "react-i18next";
+import { displayName } from "../../utils/defaultNames";
 
 const HEADER_INITIAL_HEIGHT = 40;
 const HERO_HEIGHT = 430 + HEADER_INITIAL_HEIGHT;
@@ -31,6 +33,7 @@ const HEADER_HEIGHT = 60;
 const NETWORK_HEADER_HEIGHT = 50;
 
 export function OverviewScreen() {
+	const { t } = useTranslation("common");
 	const insets = useSafeAreaInsets();
 	const router = useRouter();
 	const scrollY = useSharedValue(0);
@@ -345,7 +348,7 @@ export function OverviewScreen() {
 							style={[libraryNameScale]}
 							className="text-ink text-[30px] font-bold flex-1"
 						>
-							{libraryInfo.name}
+							{displayName(libraryInfo.name, t)}
 						</Animated.Text>
 						<GlassButton
 							onPress={handleJobsPress}
@@ -478,7 +481,7 @@ export function OverviewScreen() {
 						style={{ paddingTop: insets.top }}
 					>
 						<Text className="text-ink text-xl font-bold flex-1">
-							{libraryInfo.name}
+							{displayName(libraryInfo.name, t)}
 						</Text>
 						<GlassButton
 							icon={
