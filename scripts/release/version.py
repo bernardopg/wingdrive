@@ -16,4 +16,10 @@ for name in ("core", "apps/server", "apps/cli", "apps/tauri/src-tauri", "apps/ta
 for name in ("apps/tauri/package.json", "apps/tauri/src-tauri/tauri.conf.json"):
     found = json.loads(Path(name).read_text())["version"]
     assert found == version, f"{name}: {found} != {version}"
+for name in ("apps/mobile/app.json",):
+    found = json.loads(Path(name).read_text())["expo"]["version"]
+    assert found == version, f"{name}: {found} != {version}"
+for name in ("apps/mobile/package.json",):
+    found = json.loads(Path(name).read_text())["version"]
+    assert found == version, f"{name}: {found} != {version}"
 print(version)

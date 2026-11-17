@@ -81,6 +81,20 @@ def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBu
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// The product version that `cargo xtask bump` writes to app.json.
+def appVersionName = new groovy.json.JsonSlurper().parse(file('../../app.json')).expo.version
+
+// Same scheme as scripts/release/android_version.py: MAJOR * 1000000 + MINOR * 10000 + PATCH * 100
+// + stage, where alpha.N is N, beta.N is 30 + N, rc.N is 60 + N and a final release is 99.
+def androidVersionCode(String name) {
+    def match = name =~ /^(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)\.(\d+))?$/
+    if (!match.matches()) {
+        throw new GradleException("app.json version '${name}' is not X.Y.Z or X.Y.Z-(alpha|beta|rc).N")
+    }
+    def stage = match.group(4) == null ? 99 : [alpha: 0, beta: 30, rc: 60][match.group(4)] + (match.group(5) as int)
+    return (match.group(1) as int) * 1000000 + (match.group(2) as int) * 10000 + (match.group(3) as int) * 100 + stage
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -93,8 +107,10 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Release builds pass -Pwingdrive.versionCode and -Pwingdrive.versionName (see the mobile workflow).
-        versionCode((findProperty('wingdrive.versionCode') ?: '1') as int)
-        versionName findProperty('wingdrive.versionName') ?: "1.0.0"
+        // Other builds carry the workspace version from app.json, which `cargo xtask bump` updates,
+        // so a development or pull request build no longer reports 1.0.0 (MOB-017).
+        versionCode((findProperty('wingdrive.versionCode') ?: androidVersionCode(appVersionName)) as int)
+        versionName findProperty('wingdrive.versionName') ?: appVersionName
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
