@@ -119,3 +119,19 @@ Pull requests for the items of "Still wrong", not yet checked on the moto g(7):
 - Item 5: #417. The native module holds a Wi-Fi multicast lock while the core runs and declares
   `CHANGE_WIFI_MULTICAST_STATE`.
 - Item 7: #418. Every Android build carries the product version from `app.json` (MOB-009).
+
+## Checked on the moto g(7) (2026-11-17)
+
+Debug build of `main` plus this branch, installed as `com.wingdrive.app.review`:
+
+- #416, #417, #418 and #419 hold: the app starts in Portuguese, Internal storage (50 GB) is on the
+  Overview with "Armazenamento interno", "Interno" and "livres", and the folder of the volume is
+  titled with its name when opened from the Explore volumes list (that path still said "0").
+- Item 6: an empty wing explains that its items are added from the desktop sidebar.
+- Item 9: Recents and Favorites items open library-wide lists.
+- "My Library" and "All Devices" show translated while the user keeps the seeded names.
+- File names are no longer translated (a folder named Notifications showed "Notificações"), and
+  names show their extension.
+- Images and videos on the phone show previews.
+- Still open: item 7 (slow taps). In the debug build a long press needs more than a second and
+  taps lag; check again in a release build before profiling.

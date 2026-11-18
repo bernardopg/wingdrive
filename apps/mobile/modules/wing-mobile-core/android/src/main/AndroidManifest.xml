@@ -2,4 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <!-- The core finds devices on the local network over mDNS, which needs a multicast lock. -->
   <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+
+  <application>
+    <!-- Hands files of this device to other apps when the user opens or shares them (MOB-007). -->
+    <provider
+      android:name="com.wingdrive.core.WingFileProvider"
+      android:authorities="${applicationId}.wingdrive.files"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/wingdrive_file_paths" />
+    </provider>
+  </application>
 </manifest>

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCoreQuery, useCoreAction, useWingDriveClient } from "../client";
 import { useTranslation } from "react-i18next";
 import { useSidebarStore } from "../stores";
+import { displayName } from "../utils/defaultNames";
 
 interface LibrarySwitcherPanelProps {
 	isOpen: boolean;
@@ -165,7 +166,7 @@ export function LibrarySwitcherPanel({
 																: "text-ink"
 														}`}
 													>
-														{lib.name}
+														{displayName(lib.name, t)}
 													</Text>
 													{/* A library shared from another device can carry the same name as a local one. */}
 													<Text className="text-xs text-ink-faint mt-0.5">

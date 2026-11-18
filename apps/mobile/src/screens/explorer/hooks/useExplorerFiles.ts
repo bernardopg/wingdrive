@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import type { File, WingPath } from "@wingdrive/ts-client";
+import { isLibraryView, libraryViewInput } from "../fileLogic";
 import { useNormalizedQuery } from "@wingdrive/ts-client";
 import { useVirtualListing } from "./useVirtualListing";
 
-export type FileSource = "virtual" | "directory";
+export type FileSource = "virtual" | "directory" | "search";
 
 export interface ExplorerFilesResult {
 	files: File[];
@@ -25,8 +26,9 @@ export function useExplorerFiles(
 		| undefined,
 ): ExplorerFilesResult {
 	// Check for virtual listing first
+	const libraryView = params?.type === "view" && isLibraryView(params.view) ? params.view : null;
 	const { files: virtualFiles, isVirtualView, isLoading: virtualLoading } =
-		useVirtualListing(params);
+		useVirtualListing(libraryView ? undefined : params);
 
 	// Parse path for directory listing
 	const currentPath: WingPath | null = useMemo(() => {
@@ -58,17 +60,32 @@ export function useExplorerFiles(
 		pathScope: currentPath ?? undefined,
 	});
 
-	// Determine source and files with priority: virtual > directory
-	const source: FileSource = isVirtualView ? "virtual" : "directory";
+	const searchQuery = useNormalizedQuery({
+		query: "search.files",
+		input: libraryView ? libraryViewInput(libraryView) : (null as any),
+		resourceType: "file",
+		refetchOnResourceChange: libraryView === "favorites",
+		enabled: !!libraryView,
+	});
+
+	// Determine source and files with priority: virtual > library view > directory
+	const source: FileSource = isVirtualView ? "virtual" : libraryView ? "search" : "directory";
 
 	const files = useMemo(() => {
 		if (isVirtualView) {
 			return virtualFiles || [];
 		}
+		if (libraryView) {
+			return searchQuery.data?.files || [];
+		}
 		return (directoryQuery.data as { files?: File[] })?.files || [];
-	}, [isVirtualView, virtualFiles, directoryQuery.data]);
+	}, [isVirtualView, virtualFiles, libraryView, searchQuery.data, directoryQuery.data]);
 
-	const isLoading = isVirtualView ? virtualLoading : directoryQuery.isLoading;
+	const isLoading = isVirtualView
+		? virtualLoading
+		: libraryView
+			? searchQuery.isLoading
+			: directoryQuery.isLoading;
 
 	return {
 		files,

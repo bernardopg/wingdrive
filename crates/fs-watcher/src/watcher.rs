@@ -176,7 +176,7 @@ struct FsWatcherInner {
 impl FsWatcherInner {
 	/// Add a watch with reference counting
 	async fn add_watch(&self, path: PathBuf, config: WatchConfig) -> Result<()> {
-		if Self::increment_ref(&mut *self.watched_paths.write().await, &path) {
+		if Self::increment_ref(&mut *self.watched_paths.write().await, &path, &config) {
 			return Ok(());
 		}
 
@@ -196,12 +196,23 @@ impl FsWatcherInner {
 		};
 
 		let mut watched = self.watched_paths.write().await;
-		if Self::increment_ref(&mut watched, &path) {
+		if Self::increment_ref(&mut watched, &path, &config) {
 			return Ok(());
 		}
+		// A shallow watch of this path exists (a browsed folder) and this holder needs the
+		// whole tree (a location): register the tree and keep the wider config for both.
+		#[cfg(not(target_os = "linux"))]
+		let upgrade = watched.contains_key(&path);
 
 		// Register with notify if we're running
 		if self.is_running.load(Ordering::SeqCst) {
+			#[cfg(not(target_os = "linux"))]
+			if upgrade {
+				// Watching a watched path again is not a mode change on every backend.
+				if let Some(watcher) = self.notify_watcher.write().await.as_mut() {
+					let _ = watcher.unwatch(&path);
+				}
+			}
 			#[cfg(target_os = "linux")]
 			match tree {
 				Some(dirs) => self.register_tree_dirs(&path, dirs).await,
@@ -211,6 +222,16 @@ impl FsWatcherInner {
 			self.register_os_watch(&path, &config).await?;
 		}
 
+		if let Some(state) = watched.get_mut(&path) {
+			state.config = config;
+			state.ref_count += 1;
+			debug!(
+				"Widened the watch of {} to recursive: {} holders",
+				path.display(),
+				state.ref_count
+			);
+			return Ok(());
+		}
 		watched.insert(
 			path.clone(),
 			WatchState {
@@ -225,11 +246,20 @@ impl FsWatcherInner {
 
 	/// Count one more holder of an already watched path.
 	///
-	/// Returns false when the path is not watched yet.
-	fn increment_ref(watched: &mut HashMap<PathBuf, WatchState>, path: &Path) -> bool {
+	/// Returns false when the path is not watched yet, or when its watch is shallow and
+	/// `config` needs a recursive one: sharing it would miss changes below the first level.
+	/// The watch stays recursive until its last holder leaves.
+	fn increment_ref(
+		watched: &mut HashMap<PathBuf, WatchState>,
+		path: &Path,
+		config: &WatchConfig,
+	) -> bool {
 		let Some(state) = watched.get_mut(path) else {
 			return false;
 		};
+		if config.recursive && !state.config.recursive {
+			return false;
+		}
 		state.ref_count += 1;
 		debug!(
 			"Incremented ref count for {}: {}",
@@ -977,6 +1007,55 @@ mod tests {
 
 		let paths = watcher.watched_paths().await;
 		assert_eq!(paths.len(), 0);
+
+		watcher.stop().await.unwrap();
+	}
+
+	/// Browsing a folder watches it shallowly; adding it as a location afterwards asks for a
+	/// recursive watch of the same path. Sharing the shallow watch missed every change in its
+	/// subfolders until a restart (found on Android, MOB-017).
+	#[tokio::test]
+	async fn test_recursive_watch_upgrades_a_shallow_one() {
+		let watcher = FsWatcher::new(WatcherConfig::default());
+		watcher.start().await.unwrap();
+
+		let temp_dir = TempDir::new().unwrap();
+		let nested = temp_dir.path().join("nested");
+		std::fs::create_dir(&nested).unwrap();
+
+		// TempDir names start with a dot, which the default filters skip.
+		let all = crate::config::EventFilters::allow_all;
+		watcher
+			.watch_path(temp_dir.path(), WatchConfig::shallow().with_filters(all()))
+			.await
+			.unwrap();
+		watcher
+			.watch_path(
+				temp_dir.path(),
+				WatchConfig::recursive().with_filters(all()),
+			)
+			.await
+			.unwrap();
+		let mut events = watcher.subscribe();
+
+		let file = nested.join("note.txt");
+		std::fs::write(&file, b"x").unwrap();
+
+		let deadline = tokio::time::Instant::now() + Duration::from_secs(2);
+		let mut saw_file = false;
+		while let Ok(event) = tokio::time::timeout_at(deadline, events.recv()).await {
+			saw_file |= event.unwrap().path == file;
+		}
+		assert!(
+			saw_file,
+			"a recursive watch shared a shallow one and missed a subfolder"
+		);
+
+		// Both holders release the path.
+		watcher.unwatch(temp_dir.path()).await.unwrap();
+		assert_eq!(watcher.watched_paths().await.len(), 1);
+		watcher.unwatch(temp_dir.path()).await.unwrap();
+		assert_eq!(watcher.watched_paths().await.len(), 0);
 
 		watcher.stop().await.unwrap();
 	}

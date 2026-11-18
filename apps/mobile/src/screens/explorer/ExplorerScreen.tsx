@@ -4,6 +4,7 @@ import { View, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useExplorerFiles } from "./hooks/useExplorerFiles";
+import { useFileActions } from "./hooks/useFileActions";
 import { ListView } from "./views/ListView";
 import { GridView } from "./views/GridView";
 import { useNormalizedQuery } from "../../client";
@@ -12,7 +13,8 @@ import { GlassContextMenu } from "../../components/GlassContextMenu";
 import { SearchToolbar } from "../../components/SearchToolbar";
 import { StorageAccessCard } from "../../components/StorageAccessCard";
 import { useSearchStore } from "./context/SearchContext";
-import { List, ArrowLeft } from "phosphor-react-native";
+import { List, ArrowLeft, FolderPlus, MapPin } from "phosphor-react-native";
+import { fileDisplayName, type File, type WingPath } from "@wingdrive/ts-client";
 
 type ViewMode = "list" | "grid";
 
@@ -46,6 +48,18 @@ export function ExplorerScreen() {
 
 	// Fetch files
 	const { files, isLoading } = useExplorerFiles(params);
+	const fileActions = useFileActions();
+	const currentFolder = useMemo((): WingPath | null => {
+		if (params?.type !== "path") return null;
+		try {
+			return JSON.parse(params.path) as WingPath;
+		} catch {
+			return null;
+		}
+	}, [params]);
+	const handleFileLongPress = (file: File) => {
+		if (fileActions.hasActions(file)) fileActions.showActions(file);
+	};
 
 	// Devices listed in the library, to explain an empty device view.
 	const { data: libraryDevices } = useNormalizedQuery({
@@ -60,7 +74,17 @@ export function ExplorerScreen() {
 			: undefined;
 	// An empty device view means missing storage access on this phone, or a
 	// device that shares no folders with this library (MOB-017).
-	const emptyState = viewedDevice ? (
+	const libraryViewEmpty =
+		params?.type === "view" && params.view === "favorites" ? (
+			<Text className="text-ink-dull text-center px-8">
+				Files marked as favorite on any device of this library show up here.
+			</Text>
+		) : params?.type === "view" && params.view === "recents" ? (
+			<Text className="text-ink-dull text-center px-8">
+				Files indexed recently in this library show up here.
+			</Text>
+		) : undefined;
+	const emptyState = libraryViewEmpty ?? (viewedDevice ? (
 		viewedDevice.is_current ? (
 			<View className="px-6 w-full">
 				<StorageAccessCard />
@@ -71,7 +95,7 @@ export function ExplorerScreen() {
 				This device shares no folders with this library yet. Add a location on it to browse its files here.
 			</Text>
 		)
-	) : undefined;
+	) : undefined);
 
 	// Fetch device for path display
 	const { data: devices } = useNormalizedQuery({
@@ -89,6 +113,8 @@ export function ExplorerScreen() {
 	const title = (() => {
 		if (params?.type === "view") {
 			if (params.view === "devices") return "Devices";
+			if (params.view === "recents") return "Recents";
+			if (params.view === "favorites") return "Favorites";
 			if (params.view === "device" && params.id) {
 				const device = devices?.find((d) => d.id === params.id);
 				return device?.name || "Device";
@@ -119,7 +145,7 @@ export function ExplorerScreen() {
 		return "Explorer";
 	})();
 
-	const handleFilePress = (file: any) => {
+	const handleFilePress = (file: File) => {
 		// If it's a directory, navigate into it
 		if (file.kind === "Directory") {
 			router.push({
@@ -127,11 +153,15 @@ export function ExplorerScreen() {
 				params: {
 					type: "path",
 					path: JSON.stringify(file.wing_path),
-					title: file.name,
+					title: fileDisplayName(file),
 				},
 			});
+			return;
 		}
-		// TODO: Handle file preview
+		// Files of this phone open in the app the user picks; there is no built-in preview yet.
+		if (!fileActions.openIfLocal(file) && fileActions.hasActions(file)) {
+			fileActions.showActions(file);
+		}
 	};
 
 	return (
@@ -161,6 +191,24 @@ export function ExplorerScreen() {
 					{/* View mode menu */}
 					<GlassContextMenu
 						items={[
+							...(currentFolder && fileActions.canCreateIn(currentFolder)
+								? [
+										{
+											label: "New Folder",
+											onPress: () => fileActions.newFolder(currentFolder),
+											icon: <FolderPlus size={20} color="hsl(235, 10%, 55%)" weight="bold" />,
+										},
+									]
+								: []),
+							...(currentFolder && fileActions.canAddLocation(currentFolder)
+								? [
+										{
+											label: "Add as Location",
+											onPress: () => fileActions.addAsLocation(currentFolder, title),
+											icon: <MapPin size={20} color="hsl(235, 10%, 55%)" weight="bold" />,
+										},
+									]
+								: []),
 							{
 								label: "List View",
 								onPress: () => setViewMode("list"),
@@ -220,12 +268,25 @@ export function ExplorerScreen() {
 			) : (
 				<>
 					{viewMode === "list" ? (
-						<ListView files={files} onFilePress={handleFilePress} emptyState={emptyState} />
+						<ListView
+							files={files}
+							onFilePress={handleFilePress}
+							onFileLongPress={handleFileLongPress}
+							localPathOf={fileActions.localPathOf}
+							emptyState={emptyState}
+						/>
 					) : (
-						<GridView files={files} onFilePress={handleFilePress} emptyState={emptyState} />
+						<GridView
+							files={files}
+							onFilePress={handleFilePress}
+							onFileLongPress={handleFileLongPress}
+							localPathOf={fileActions.localPathOf}
+							emptyState={emptyState}
+						/>
 					)}
 				</>
 			)}
+			{fileActions.element}
 		</View>
 	);
 }

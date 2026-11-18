@@ -107,8 +107,14 @@ function getItemNavigation(itemType: ItemType, itemWingPath?: WingPath): Href | 
 	if (isOverviewItem(itemType)) {
 		return { pathname: "/" };
 	}
-	// Recents, Favorites and File Kinds have no mobile screen yet (MOB-007), so they stay hidden.
-	if (isRecentsItem(itemType) || isFavoritesItem(itemType) || isFileKindsItem(itemType)) {
+	if (isRecentsItem(itemType) || isFavoritesItem(itemType)) {
+		return {
+			pathname: "/explorer",
+			params: { type: "view", view: isRecentsItem(itemType) ? "recents" : "favorites" },
+		};
+	}
+	// File Kinds has no mobile screen yet (MOB-007), so it stays hidden.
+	if (isFileKindsItem(itemType)) {
 		return null;
 	}
 
