@@ -8,7 +8,7 @@ priority: High
 milestone: M5
 sprint: S05
 tags: [integrations, google, oauth, verification, security]
-last_updated: 2026-11-17
+last_updated: 2026-11-18
 related_tasks: [INTG-001, INTG-002, INTG-011]
 ---
 
@@ -53,6 +53,14 @@ covered the sensitive scopes. Changes for least privilege and completeness: the 
 `drive.file`, and the privacy policy now states what is cached locally, for how long, and that
 traffic uses HTTPS. After the release ships, update Data Access (remove the scope, new video) and
 reply to the email.
+
+## Progress (2026-11-18)
+
+v3.5.0 shipped the Picker and the smaller scope set. Data Access now lists exactly the app's scopes
+(`photoslibrary.edit.appcreateddata` removed), with an updated justification and a new unlisted demo
+video, https://youtu.be/YghrdeRQiLM (consent screen in English with every scope, the client ID in
+the address bar, each scope's effect in Drive and Photos). The checklist email was answered on
+2026-11-18 with the audit per item. Data Access is back "em análise"; wait for Google.
 
 ## Acceptance Criteria
 
