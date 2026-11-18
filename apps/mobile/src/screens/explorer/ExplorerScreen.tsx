@@ -1,6 +1,7 @@
 import { LocalizedText as Text } from "../../i18n/LocalizedText";
 import React, { useState, useMemo } from "react";
 import { View, ActivityIndicator } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useExplorerFiles } from "./hooks/useExplorerFiles";
@@ -21,6 +22,7 @@ type ViewMode = "list" | "grid";
 
 export function ExplorerScreen() {
 	const insets = useSafeAreaInsets();
+	const { t } = useTranslation("common");
 	const router = useRouter();
 	const searchParams = useLocalSearchParams<{
 		type?: string;
@@ -172,19 +174,19 @@ export function ExplorerScreen() {
 				className="bg-app-box border-b border-app-line"
 				style={{ paddingTop: insets.top }}
 			>
-				<View className="relative flex-row items-center justify-between px-4 h-14">
+				<View className="flex-row items-center gap-2 px-4 h-14">
 					{/* Back button */}
 					<GlassButton
+						accessibilityLabel={t("Go back")}
 						onPress={() => router.back()}
 						icon={
 							<ArrowLeft size={20} color="hsl(235, 10%, 55%)" weight="bold" />
 						}
 					/>
 
-					{/* Title - absolutely centered */}
 					<Text
-						className="absolute left-0 right-0 text-ink font-semibold text-lg text-center"
-						pointerEvents="none"
+						className="flex-1 text-ink font-semibold text-lg text-center"
+						numberOfLines={1}
 					>
 						{title}
 					</Text>
