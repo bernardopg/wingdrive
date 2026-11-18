@@ -104,6 +104,11 @@ android {
     namespace 'com.wingdrive.app'
     defaultConfig {
         applicationId 'com.wingdrive.app'
+        // -Pwingdrive.applicationIdSuffix=.review installs a test build beside the everyday app,
+        // which is release-signed and would refuse a debug-signed update.
+        if (findProperty('wingdrive.applicationIdSuffix')) {
+            applicationIdSuffix findProperty('wingdrive.applicationIdSuffix')
+        }
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Release builds pass -Pwingdrive.versionCode and -Pwingdrive.versionName (see the mobile workflow).

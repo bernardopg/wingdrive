@@ -1,15 +1,18 @@
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View, FlatList, Pressable, Image, Dimensions } from "react-native";
+import { View, FlatList, Pressable, Dimensions, Text as NativeText } from "react-native";
 import type { File } from "@wingdrive/ts-client";
-import { getVirtualMetadata, getFileKindForIcon } from "@wingdrive/ts-client";
-import { getIcon } from "@wingdrive/assets/util/mobile";
-import { imageSource } from "../../../utils/imageSource";
+import { fileDisplayName, fileDisplaySize } from "@wingdrive/ts-client";
+import { FileIcon } from "../components/FileIcon";
 
 interface GridViewProps {
 	files: File[];
 	onFilePress: (file: File) => void;
+	/** Long press: the file's actions */
+	onFileLongPress?: (file: File) => void;
+	/** The path of a file on this phone, for image and video previews */
+	localPathOf?: (file: File) => string | null;
 	/** Shown instead of "No items" when the listing is empty */
 	emptyState?: React.ReactNode;
 }
@@ -32,57 +35,53 @@ function formatBytes(bytes: number | bigint | null): string {
 	return Math.round(numBytes / Math.pow(k, i)) + " " + sizes[i];
 }
 
-function FileCard({ file, onPress }: { file: File; onPress: () => void }) {
-	const virtualMetadata = getVirtualMetadata(file);
-
-	// Get icon source
-	const iconSource = (() => {
-		// Virtual files have custom icons
-		if (virtualMetadata?.iconUrl) {
-			return virtualMetadata.iconUrl;
-		}
-
-		// Use getIcon from mobile-compatible util
-		const kindForIcon = getFileKindForIcon(file);
-		return getIcon(
-			kindForIcon,
-			true, // isDark - use dark mode icons for mobile
-			file.extension,
-			file.kind === "Directory",
-		);
-	})();
+function FileCard({
+	file,
+	onPress,
+	onLongPress,
+	localPath,
+}: {
+	file: File;
+	onPress: () => void;
+	onLongPress?: () => void;
+	localPath: string | null;
+}) {
+	const size = fileDisplaySize(file);
 
 	return (
 		<Pressable
 			onPress={onPress}
+			onLongPress={onLongPress}
 			style={{ width: ITEM_WIDTH }}
 			className="mb-4 active:opacity-70"
 		>
 			{/* Icon container - transparent bg matching web FileCard */}
 			<View className="rounded-lg p-2 items-center justify-center aspect-square mb-2">
-				<Image
-					source={imageSource(iconSource)}
-					className="w-20 h-20"
-					style={{ resizeMode: "contain" }}
-				/>
+				<FileIcon file={file} localPath={localPath} size={80} />
 			</View>
 
-			{/* File name */}
-			<Text className="text-ink text-xs text-center" numberOfLines={2}>
-				{file.name}
-			</Text>
+			{/* File name: user data, never looked up in the catalog */}
+			<NativeText className="text-ink text-xs text-center" numberOfLines={2}>
+				{fileDisplayName(file)}
+			</NativeText>
 
-			{/* File size */}
-			{file.size > 0 && (
+			{/* File size; a folder's only once its contents were measured */}
+			{!!size && (
 				<Text className="text-ink-dull text-[10px] text-center mt-0.5">
-					{formatBytes(file.size)}
+					{formatBytes(size)}
 				</Text>
 			)}
 		</Pressable>
 	);
 }
 
-export function GridView({ files, onFilePress, emptyState }: GridViewProps) {
+export function GridView({
+	files,
+	onFilePress,
+	onFileLongPress,
+	localPathOf,
+	emptyState,
+}: GridViewProps) {
 	// Edge-to-edge on Android: keep the last row above the navigation bar.
 	const insets = useSafeAreaInsets();
 	if (files.length === 0) {
@@ -98,7 +97,12 @@ export function GridView({ files, onFilePress, emptyState }: GridViewProps) {
 			data={files}
 			keyExtractor={(item) => item.id}
 			renderItem={({ item }) => (
-				<FileCard file={item} onPress={() => onFilePress(item)} />
+				<FileCard
+					file={item}
+					onPress={() => onFilePress(item)}
+					onLongPress={onFileLongPress && (() => onFileLongPress(item))}
+					localPath={localPathOf?.(item) ?? null}
+				/>
 			)}
 			numColumns={NUM_COLUMNS}
 			columnWrapperStyle={{

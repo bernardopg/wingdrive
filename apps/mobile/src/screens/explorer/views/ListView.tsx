@@ -1,15 +1,25 @@
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View, FlatList, Pressable, Image } from "react-native";
+import { View, FlatList, Pressable, Text as NativeText } from "react-native";
 import type { File } from "@wingdrive/ts-client";
-import { getVirtualMetadata, isVirtualFile, getFileKindForIcon } from "@wingdrive/ts-client";
-import { getIcon } from "@wingdrive/assets/util/mobile";
-import { imageSource } from "../../../utils/imageSource";
+import {
+	getVirtualMetadata,
+	isVirtualFile,
+	fileDisplayName,
+	fileDisplaySize,
+} from "@wingdrive/ts-client";
+import { FileIcon } from "../components/FileIcon";
+import { useTranslation } from "react-i18next";
+import { relativeDate } from "../fileLogic";
 
 interface ListViewProps {
 	files: File[];
 	onFilePress: (file: File) => void;
+	/** Long press: the file's actions */
+	onFileLongPress?: (file: File) => void;
+	/** The path of a file on this phone, for image and video previews */
+	localPathOf?: (file: File) => string | null;
 	/** Shown instead of "No items" when the listing is empty */
 	emptyState?: React.ReactNode;
 }
@@ -22,70 +32,52 @@ function formatBytes(bytes: number): string {
 	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-function formatDate(dateStr: string | null): string {
-	if (!dateStr) return "";
-	const date = new Date(dateStr);
-	const now = new Date();
-	const diffMs = now.getTime() - date.getTime();
-	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-	if (diffDays === 0) return "Today";
-	if (diffDays === 1) return "Yesterday";
-	if (diffDays < 7) return `${diffDays} days ago`;
-	if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-	if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-	return `${Math.floor(diffDays / 365)} years ago`;
-}
-
-function FileRow({ file, onPress }: { file: File; onPress: () => void }) {
+function FileRow({
+	file,
+	onPress,
+	onLongPress,
+	localPath,
+}: {
+	file: File;
+	onPress: () => void;
+	onLongPress?: () => void;
+	localPath: string | null;
+}) {
+	const { t } = useTranslation("common");
 	const virtualMetadata = getVirtualMetadata(file);
 	const isVirtual = isVirtualFile(file);
-
-	// Get icon source
-	const iconSource = (() => {
-		// Virtual files have custom icons
-		if (virtualMetadata?.iconUrl) {
-			return virtualMetadata.iconUrl;
-		}
-
-		// Use getIcon from mobile-compatible util
-		const kindForIcon = getFileKindForIcon(file);
-		return getIcon(
-			kindForIcon,
-			true, // isDark - use dark mode icons for mobile
-			file.extension,
-			file.kind === "Directory",
-		);
-	})();
+	const modified = relativeDate(file.modified_at);
+	// A folder's own metadata size is not its contents; show it only once measured.
+	const size = fileDisplaySize(file);
 
 	return (
 		<Pressable
 			onPress={onPress}
+			onLongPress={onLongPress}
 			className="flex-row items-center px-4 py-3 border-b border-app-line active:bg-app-hover"
 		>
 			{/* Icon */}
-			<Image
-				source={imageSource(iconSource)}
-				className="w-10 h-10 mr-3"
-				style={{ resizeMode: "contain" }}
-			/>
+			<View className="mr-3">
+				<FileIcon file={file} localPath={localPath} size={40} />
+			</View>
 
 			{/* File info */}
 			<View className="flex-1">
-				<Text className="text-ink font-medium" numberOfLines={1}>
-					{file.name}
-				</Text>
+				{/* User data, never looked up in the catalog ("Notifications" stays as is) */}
+				<NativeText className="text-ink font-medium" numberOfLines={1}>
+					{fileDisplayName(file)}
+				</NativeText>
 				<View className="flex-row gap-2 mt-0.5">
-					{!isVirtual && file.size > 0 && (
+					{!isVirtual && !!size && (
 						<Text className="text-ink-faint text-xs">
-							{formatBytes(file.size)}
+							{formatBytes(size)}
 						</Text>
 					)}
-					{!isVirtual && file.modified_at && (
+					{!isVirtual && modified && (
 						<>
 							<Text className="text-ink-faint text-xs">•</Text>
 							<Text className="text-ink-faint text-xs">
-								{formatDate(file.modified_at)}
+								{t(modified.key, { count: modified.count })}
 							</Text>
 						</>
 					)}
@@ -105,7 +97,13 @@ function FileRow({ file, onPress }: { file: File; onPress: () => void }) {
 	);
 }
 
-export function ListView({ files, onFilePress, emptyState }: ListViewProps) {
+export function ListView({
+	files,
+	onFilePress,
+	onFileLongPress,
+	localPathOf,
+	emptyState,
+}: ListViewProps) {
 	// Edge-to-edge on Android: keep the last row above the navigation bar.
 	const insets = useSafeAreaInsets();
 	if (files.length === 0) {
@@ -121,7 +119,12 @@ export function ListView({ files, onFilePress, emptyState }: ListViewProps) {
 			data={files}
 			keyExtractor={(item) => item.id}
 			renderItem={({ item }) => (
-				<FileRow file={item} onPress={() => onFilePress(item)} />
+				<FileRow
+					file={item}
+					onPress={() => onFilePress(item)}
+					onLongPress={onFileLongPress && (() => onFileLongPress(item))}
+					localPath={localPathOf?.(item) ?? null}
+				/>
 			)}
 			contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
 			className="flex-1"
