@@ -13,7 +13,9 @@ const accounts = [
 		services: ['drive', 'photos'],
 		mode: 'app',
 		connected_at: '2026-11-12T10:00:00Z',
-		drive: {fingerprint: 'fp', identifier: 'ana@example.com', mounted: true}
+		drive: {fingerprint: 'fp', identifier: 'ana@example.com', mounted: true},
+		drive_access: 'app_files',
+		drive_picker: true
 	},
 	{
 		id: '2002',
@@ -129,6 +131,24 @@ describe('integrations settings', () => {
 		expect(html).toContain('Grant Drive and Photos access');
 	});
 
+	it('offers the Google Picker only to drive.file accounts that can use it', () => {
+		const html = render(<IntegrationsSettings />);
+		expect(html).toContain('Add files from Google Drive');
+		expect(html).toContain('Choose files...');
+		expect(html).toContain('the ones you add below');
+		// One button: Bruno has no Drive and Carla is on OneDrive.
+		expect(html.match(/Choose files\.\.\./g)?.length).toBe(1);
+		const ana = accounts[0] as {drive_picker: boolean};
+		ana.drive_picker = false;
+		try {
+			const withoutKey = render(<IntegrationsSettings />);
+			expect(withoutKey).not.toContain('Add files from Google Drive');
+			expect(withoutKey).toContain('Drive shows only files WingDrive created or opened');
+		} finally {
+			ana.drive_picker = true;
+		}
+	});
+
 	it('explains a mode with advantages, disadvantages and steps', () => {
 		const html = render(
 			<ConnectPanel entry={{provider: 'microsoft', mode: 'custom'}} clients={bundledClients as never} onSaved={() => {}} />
@@ -175,6 +195,7 @@ describe('integrations settings', () => {
 			expect(html).toContain('Conta Google');
 			expect(html).toContain('Contas conectadas');
 			expect(html).toContain('Sincronização com a nuvem');
+			expect(html).toContain('Adicionar arquivos do Google Drive');
 			const panel = render(
 				<ConnectPanel entry={{provider: 'google', mode: 'custom'}} clients={bundledClients as never} onSaved={() => {}} />
 			);

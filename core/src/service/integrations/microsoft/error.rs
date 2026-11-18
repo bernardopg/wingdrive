@@ -77,3 +77,67 @@ impl From<MicrosoftError> for VolumeError {
 }
 
 pub type MicrosoftResult<T> = Result<T, MicrosoftError>;
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn loopback_errors_map_to_microsoft_errors() {
+		assert!(matches!(
+			MicrosoftError::from(GoogleError::Expired),
+			MicrosoftError::Expired
+		));
+		assert!(matches!(
+			MicrosoftError::from(GoogleError::Authorization("access_denied".into())),
+			MicrosoftError::Authorization(message) if message == "access_denied"
+		));
+		assert!(matches!(
+			MicrosoftError::from(GoogleError::Io(std::io::Error::other("port"))),
+			MicrosoftError::Network(message) if message.contains("port")
+		));
+		assert!(matches!(
+			MicrosoftError::from(GoogleError::NotConfigured),
+			MicrosoftError::Authorization(_)
+		));
+	}
+
+	#[test]
+	fn io_and_json_errors_are_network_and_response_errors() {
+		assert!(matches!(
+			MicrosoftError::from(std::io::Error::other("reset")),
+			MicrosoftError::Network(_)
+		));
+		let json = serde_json::from_str::<serde_json::Value>("[").unwrap_err();
+		assert!(matches!(
+			MicrosoftError::from(json),
+			MicrosoftError::InvalidResponse(_)
+		));
+	}
+
+	#[test]
+	fn volume_errors_deny_on_revoked_grants_and_403() {
+		assert!(matches!(
+			VolumeError::from(MicrosoftError::InvalidGrant),
+			VolumeError::PermissionDenied(_)
+		));
+		assert!(matches!(
+			VolumeError::from(MicrosoftError::Api {
+				status: 403,
+				message: "no".into()
+			}),
+			VolumeError::PermissionDenied(_)
+		));
+		assert!(matches!(
+			VolumeError::from(MicrosoftError::Api {
+				status: 502,
+				message: "gateway".into()
+			}),
+			VolumeError::Service(_)
+		));
+		assert!(matches!(
+			VolumeError::from(MicrosoftError::Expired),
+			VolumeError::Service(_)
+		));
+	}
+}

@@ -55,3 +55,52 @@ impl GoogleEndpoints {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn default_endpoints_are_google_over_https() {
+		let endpoints = GoogleEndpoints::default();
+		for url in [
+			&endpoints.authorize,
+			&endpoints.token,
+			&endpoints.revoke,
+			&endpoints.userinfo,
+			&endpoints.drive,
+			&endpoints.drive_upload,
+			&endpoints.photos,
+			&endpoints.picker,
+		] {
+			assert!(url.starts_with("https://"), "{url}");
+			assert!(!url.ends_with('/'), "{url}");
+		}
+		assert!(endpoints
+			.authorize
+			.starts_with("https://accounts.google.com/"));
+	}
+
+	#[test]
+	fn a_base_url_keeps_google_paths_and_drops_the_trailing_slash() {
+		let endpoints = GoogleEndpoints::for_base_url("http://127.0.0.1:9000/");
+		assert_eq!(
+			endpoints.authorize,
+			"http://127.0.0.1:9000/o/oauth2/v2/auth"
+		);
+		assert_eq!(endpoints.token, "http://127.0.0.1:9000/token");
+		assert_eq!(endpoints.revoke, "http://127.0.0.1:9000/revoke");
+		assert_eq!(endpoints.userinfo, "http://127.0.0.1:9000/v1/userinfo");
+		assert_eq!(endpoints.drive, "http://127.0.0.1:9000/drive/v3");
+		assert_eq!(
+			endpoints.drive_upload,
+			"http://127.0.0.1:9000/upload/drive/v3"
+		);
+		assert_eq!(endpoints.photos, "http://127.0.0.1:9000/photos");
+		assert_eq!(endpoints.picker, "http://127.0.0.1:9000/picker");
+		assert_eq!(
+			GoogleEndpoints::for_base_url("http://127.0.0.1:9000"),
+			endpoints
+		);
+	}
+}

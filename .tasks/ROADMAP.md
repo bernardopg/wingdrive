@@ -30,7 +30,7 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | M2 — Gerenciador de arquivos padrão no Linux | Done | 76 | 0 | 0 | 100% |
 | M3 — Desktop multiplataforma e release | Now | 8 | 13 | 8 | 28% |
 | M4 — Integração entre dispositivos | Later | 0 | 4 | 17 | 0% |
-| M5 — Opcionais | Later | 16 | 24 | 52 | 17% |
+| M5 — Opcionais | Later | 17 | 24 | 52 | 18% |
 
 | Sprint | Datas | Done | In Progress | Progresso |
 |---|---|---|---|---|
@@ -38,7 +38,7 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | [S02](sprints/S02.md) | 2026-10-15 a 2026-10-28 | 3/3 | 0 | 100% |
 | [S03](sprints/S03.md) | 2026-10-07 a 2026-10-28 | 32/32 | 0 | 100% |
 | [S04](sprints/S04.md) | 2026-10-29 a 2026-11-11 | 37/37 | 0 | 100% |
-| **[S05](sprints/S05.md)** (atual) | 2026-11-12 a 2026-11-25 | 23/30 | 6 | 77% |
+| **[S05](sprints/S05.md)** (atual) | 2026-11-12 a 2026-11-25 | 24/31 | 6 | 77% |
 | [S06](sprints/S06.md) | 2026-11-26 a 2026-12-09 | 0/22 | 14 | 0% |
 | [S07](sprints/S07.md) | 2026-12-10 a 2026-12-23 | 0/11 | 3 | 0% |
 | [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | 0/10 | 0 | 0% |

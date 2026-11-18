@@ -50,6 +50,7 @@ impl FakeFile {
 			"createdTime": self.created,
 			"webViewLink": format!("https://drive.google.com/file/d/{}/view", self.id),
 			"version": self.version.to_string(),
+			"parents": self.parents,
 		});
 		if !self.mime.starts_with("application/vnd.google-apps.") {
 			value["size"] = json!(self.content.len().to_string());
@@ -100,6 +101,11 @@ pub struct FakeState {
 	pub picked: Vec<(String, String, String, Vec<u8>)>,
 	pub picker_deleted: bool,
 	pub base_url: String,
+	/// Scopes the token endpoint grants; `None` grants full `drive` and Photos.
+	pub granted_scope: Option<String>,
+	/// Simulates a `drive.file` grant: when set, listings return only these
+	/// file IDs, and files the app creates join the set.
+	pub granted_files: Option<std::collections::HashSet<String>>,
 }
 
 impl FakeState {
@@ -111,6 +117,9 @@ impl FakeState {
 	/// Adds a file or folder directly, as if created in the Drive web UI.
 	pub fn insert(&mut self, name: &str, mime: &str, parent: &str, content: &[u8]) -> String {
 		let id = self.id("f");
+		if let Some(granted) = self.granted_files.as_mut() {
+			granted.insert(id.clone());
+		}
 		let created = format!("2026-01-01T00:00:{:02}.000Z", self.next_id % 60);
 		self.files.insert(
 			id.clone(),
@@ -180,7 +189,10 @@ async fn token(State(state): State<Shared>, body: Bytes) -> Response {
 	let form = parse_form(&body);
 	let mut s = state.lock().unwrap();
 	s.token_requests += 1;
-	let scope = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/photoslibrary.appendonly https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata https://www.googleapis.com/auth/photospicker.mediaitems.readonly";
+	// The default grant includes `photoslibrary.edit.appcreateddata`, which
+	// WingDrive no longer asks for: accounts that granted it keep working.
+	let scope = s.granted_scope.clone().unwrap_or_else(|| "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/photoslibrary.appendonly https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata https://www.googleapis.com/auth/photospicker.mediaitems.readonly".to_string());
+	let scope = scope.as_str();
 	match form.get("grant_type").map(String::as_str) {
 		Some("authorization_code") => {
 			let Some(user) = s
@@ -272,16 +284,17 @@ async fn list_files(
 		return r;
 	}
 	let q = query.get("q").cloned().unwrap_or_default();
+	// "trashed=false" alone lists every file, as Drive does for a drive.file grant.
 	let parent = q
 		.strip_prefix('\'')
 		.and_then(|rest| rest.split("' in parents").next())
-		.unwrap_or("root")
-		.replace("\\'", "'");
+		.map(|p| p.replace("\\'", "'"));
 	let s = state.lock().unwrap();
 	let mut files: Vec<&FakeFile> = s
 		.files
 		.values()
-		.filter(|f| !f.trashed && f.parents.contains(&parent))
+		.filter(|f| !f.trashed && parent.as_ref().is_none_or(|p| f.parents.contains(p)))
+		.filter(|f| s.granted_files.as_ref().is_none_or(|g| g.contains(&f.id)))
 		.collect();
 	files.sort_by(|a, b| a.id.cmp(&b.id));
 	let page_size = if s.page_size > 0 { s.page_size } else { 1000 };

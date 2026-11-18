@@ -103,3 +103,82 @@ impl From<GoogleError> for VolumeError {
 }
 
 pub type GoogleResult<T> = Result<T, GoogleError>;
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn only_network_rate_limit_and_server_errors_are_transient() {
+		let api = |status| GoogleError::Api {
+			status,
+			message: String::new(),
+		};
+		assert!(GoogleError::Network("reset".into()).is_transient());
+		assert!(api(429).is_transient());
+		assert!(api(500).is_transient());
+		assert!(api(503).is_transient());
+		assert!(!api(400).is_transient());
+		assert!(!api(403).is_transient());
+		assert!(!api(404).is_transient());
+		assert!(!GoogleError::InvalidGrant.is_transient());
+		assert!(!GoogleError::Expired.is_transient());
+		assert!(!GoogleError::InvalidResponse("x".into()).is_transient());
+	}
+
+	#[test]
+	fn volume_errors_keep_the_meaning_of_google_errors() {
+		let not_found = VolumeError::from(GoogleError::NotFound("a/b.txt".into()));
+		assert!(
+			matches!(&not_found, VolumeError::Io(io) if io.kind() == std::io::ErrorKind::NotFound)
+		);
+		assert!(matches!(
+			VolumeError::from(GoogleError::Io(std::io::Error::other("disk"))),
+			VolumeError::Io(_)
+		));
+		assert!(matches!(
+			VolumeError::from(GoogleError::Unsupported("forms".into())),
+			VolumeError::Unsupported(message) if message == "forms"
+		));
+		for denied in [
+			GoogleError::InvalidGrant,
+			GoogleError::MissingScope("Drive".into()),
+			GoogleError::Api {
+				status: 403,
+				message: "forbidden".into(),
+			},
+		] {
+			assert!(matches!(
+				VolumeError::from(denied),
+				VolumeError::PermissionDenied(_)
+			));
+		}
+		assert!(matches!(
+			VolumeError::from(GoogleError::Api {
+				status: 500,
+				message: "boom".into()
+			}),
+			VolumeError::Service(message) if message.contains("500") && message.contains("boom")
+		));
+	}
+
+	#[test]
+	fn json_errors_read_as_invalid_responses() {
+		let error = serde_json::from_str::<serde_json::Value>("{").unwrap_err();
+		assert!(matches!(
+			GoogleError::from(error),
+			GoogleError::InvalidResponse(_)
+		));
+	}
+
+	#[test]
+	fn messages_tell_the_user_what_to_do() {
+		assert!(GoogleError::InvalidGrant.to_string().contains("reconnect"));
+		assert!(GoogleError::MissingScope("Google Photos".into())
+			.to_string()
+			.contains("Google Photos"));
+		assert!(GoogleError::NotConfigured
+			.to_string()
+			.contains("Settings > Integrations"));
+	}
+}
