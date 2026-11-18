@@ -16,7 +16,7 @@ import { PageIndicator } from "../../components/PageIndicator";
 import { GlassSearchBar } from "../../components/GlassSearchBar";
 import { useRouter } from "expo-router";
 import { WingItem as WingItemComponent, WingGroupComponent } from "./components";
-import { SettingsGroup } from "../../components/primitive";
+import { SettingsGroup, SettingsLink } from "../../components/primitive";
 import { StorageAccessCard } from "../../components/StorageAccessCard";
 import { displayName } from "../../utils/defaultNames";
 
@@ -124,6 +124,12 @@ function WingContent({
 					</SettingsGroup>
 				</View>
 			)}
+
+			<View className="mb-6">
+				<SettingsGroup>
+					<SettingsLink label="Trash" onPress={() => router.push("/trash")} />
+				</SettingsGroup>
+			</View>
 
 			{/* Groups */}
 			{groups.map(({ group, items }) => (

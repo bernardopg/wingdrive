@@ -32,8 +32,18 @@ pub struct TrashEntry {
 	pub size: Option<u64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[derive(Debug, Clone, Serialize, Type)]
 pub struct TrashListInput {}
+
+impl<'de> Deserialize<'de> for TrashListInput {
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		#[derive(Deserialize)]
+		struct Empty {}
+
+		// The embedded mobile bridge represents parameterless queries as null.
+		Option::<Empty>::deserialize(deserializer).map(|_| Self {})
+	}
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct TrashListOutput {
@@ -70,6 +80,19 @@ pub struct TrashPurgeOutput {
 	pub purged: u32,
 }
 
+#[cfg(any(target_os = "android", all(test, target_os = "linux")))]
+mod android;
+
+#[cfg(target_os = "android")]
+pub(crate) async fn put_android(
+	data_dir: std::path::PathBuf,
+	path: std::path::PathBuf,
+) -> std::io::Result<()> {
+	tokio::task::spawn_blocking(move || android::put(&data_dir, &path))
+		.await
+		.map_err(std::io::Error::other)?
+}
+
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 mod platform {
 	use super::TrashEntry;
@@ -78,7 +101,7 @@ mod platform {
 
 	pub const SUPPORTED: bool = true;
 
-	pub fn list() -> Result<Vec<TrashEntry>, String> {
+	pub fn list(_data_dir: &std::path::Path) -> Result<Vec<TrashEntry>, String> {
 		let mut items = os_limited::list().map_err(|e| e.to_string())?;
 		items.sort_by_key(|item| std::cmp::Reverse(item.time_deleted));
 		Ok(items
@@ -123,7 +146,11 @@ mod platform {
 		Ok(chosen)
 	}
 
-	pub fn restore(ids: &[String], paths: &[String]) -> Result<u32, String> {
+	pub fn restore(
+		_data_dir: &std::path::Path,
+		ids: &[String],
+		paths: &[String],
+	) -> Result<u32, String> {
 		let items = select(ids, paths)?;
 		let count = items.len() as u32;
 		os_limited::restore_all(items).map_err(|e| e.to_string())?;
@@ -132,6 +159,7 @@ mod platform {
 
 	/// The newest trash item of each original path.
 	pub fn newest_ids(
+		_data_dir: &std::path::Path,
 		paths: &[std::path::PathBuf],
 	) -> Result<std::collections::HashMap<std::path::PathBuf, String>, String> {
 		let mut items = os_limited::list().map_err(|e| e.to_string())?;
@@ -153,7 +181,7 @@ mod platform {
 		Ok(ids)
 	}
 
-	pub fn purge(ids: &[String]) -> Result<u32, String> {
+	pub fn purge(_data_dir: &std::path::Path, ids: &[String]) -> Result<u32, String> {
 		let items = select(ids, &[])?;
 		let count = items.len() as u32;
 		os_limited::purge_all(items).map_err(|e| e.to_string())?;
@@ -161,26 +189,31 @@ mod platform {
 	}
 }
 
-#[cfg(not(any(target_os = "windows", target_os = "linux")))]
+#[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "android")))]
 mod platform {
 	use super::TrashEntry;
 
 	pub const SUPPORTED: bool = false;
 	const UNSUPPORTED: &str = "the system trash cannot be read on this platform";
 
-	pub fn list() -> Result<Vec<TrashEntry>, String> {
+	pub fn list(_data_dir: &std::path::Path) -> Result<Vec<TrashEntry>, String> {
 		Ok(Vec::new())
 	}
 
-	pub fn restore(_ids: &[String], _paths: &[String]) -> Result<u32, String> {
+	pub fn restore(
+		_data_dir: &std::path::Path,
+		_ids: &[String],
+		_paths: &[String],
+	) -> Result<u32, String> {
 		Err(UNSUPPORTED.to_string())
 	}
 
-	pub fn purge(_ids: &[String]) -> Result<u32, String> {
+	pub fn purge(_data_dir: &std::path::Path, _ids: &[String]) -> Result<u32, String> {
 		Err(UNSUPPORTED.to_string())
 	}
 
 	pub fn newest_ids(
+		_data_dir: &std::path::Path,
 		_paths: &[std::path::PathBuf],
 	) -> Result<std::collections::HashMap<std::path::PathBuf, String>, String> {
 		Ok(std::collections::HashMap::new())
@@ -211,13 +244,51 @@ async fn blocking<T: Send + 'static>(
 		.map_err(|e| e.to_string())?
 }
 
+#[cfg(target_os = "android")]
+mod platform {
+	use super::{android, TrashEntry};
+	use std::{
+		collections::HashMap,
+		path::{Path, PathBuf},
+	};
+
+	pub const SUPPORTED: bool = true;
+
+	pub fn list(data_dir: &Path) -> Result<Vec<TrashEntry>, String> {
+		android::list(data_dir)
+	}
+
+	pub fn restore(data_dir: &Path, ids: &[String], paths: &[String]) -> Result<u32, String> {
+		android::update(data_dir, ids, paths, true)
+	}
+
+	pub fn purge(data_dir: &Path, ids: &[String]) -> Result<u32, String> {
+		android::update(data_dir, ids, &[], false)
+	}
+
+	pub fn newest_ids(
+		data_dir: &Path,
+		paths: &[PathBuf],
+	) -> Result<HashMap<PathBuf, String>, String> {
+		let mut ids = HashMap::new();
+		for entry in list(data_dir)? {
+			let path = PathBuf::from(entry.original_path);
+			if paths.contains(&path) {
+				ids.entry(path).or_insert(entry.id);
+			}
+		}
+		Ok(ids)
+	}
+}
+
 /// Trash identifiers of items a job just trashed, by original path.
 ///
 /// Empty where the platform cannot list its trash.
 pub(crate) async fn trashed_ids(
+	data_dir: std::path::PathBuf,
 	paths: Vec<std::path::PathBuf>,
 ) -> std::collections::HashMap<std::path::PathBuf, String> {
-	blocking(move || platform::newest_ids(&paths))
+	blocking(move || platform::newest_ids(&data_dir, &paths))
 		.await
 		.unwrap_or_default()
 }
@@ -226,12 +297,13 @@ pub(crate) async fn trashed_ids(
 ///
 /// With no identifier, the newest item trashed from `original` is restored.
 pub(crate) async fn restore_one(
+	data_dir: std::path::PathBuf,
 	trash_id: Option<String>,
 	original: std::path::PathBuf,
 ) -> Result<(), String> {
 	let restored = blocking(move || match trash_id {
-		Some(id) => platform::restore(&[id], &[]),
-		None => platform::restore(&[], &[original.to_string_lossy().into_owned()]),
+		Some(id) => platform::restore(&data_dir, &[id], &[]),
+		None => platform::restore(&data_dir, &[], &[original.to_string_lossy().into_owned()]),
 	})
 	.await?;
 	if restored == 0 {
@@ -252,10 +324,10 @@ impl CoreQuery for TrashListQuery {
 
 	async fn execute(
 		self,
-		_context: Arc<CoreContext>,
+		context: Arc<CoreContext>,
 		_session: SessionContext,
 	) -> QueryResult<Self::Output> {
-		let items = blocking(platform::list)
+		let items = blocking(move || platform::list(&context.data_dir))
 			.await
 			.map_err(QueryError::Internal)?;
 		Ok(TrashListOutput {
@@ -282,14 +354,27 @@ impl CoreAction for TrashRestoreAction {
 		Ok(Self { input })
 	}
 
-	async fn execute(self, _context: Arc<CoreContext>) -> Result<Self::Output, ActionError> {
+	async fn execute(self, context: Arc<CoreContext>) -> Result<Self::Output, ActionError> {
 		let TrashRestoreInput {
 			ids,
 			original_paths,
 		} = self.input;
-		let restored = blocking(move || platform::restore(&ids, &original_paths))
-			.await
-			.map_err(ActionError::Internal)?;
+		let restored = blocking(move || {
+			#[cfg(target_os = "android")]
+			let items = platform::list(&context.data_dir)?;
+			let restored = platform::restore(&context.data_dir, &ids, &original_paths)?;
+			#[cfg(target_os = "android")]
+			for item in items {
+				if ids.contains(&item.id) || original_paths.contains(&item.original_path) {
+					if let Some(parent) = std::path::Path::new(&item.original_path).parent() {
+						context.ephemeral_cache().invalidate_path(parent);
+					}
+				}
+			}
+			Ok(restored)
+		})
+		.await
+		.map_err(ActionError::Internal)?;
 		Ok(TrashRestoreOutput { restored })
 	}
 
@@ -315,9 +400,9 @@ impl CoreAction for TrashPurgeAction {
 		Ok(Self { input })
 	}
 
-	async fn execute(self, _context: Arc<CoreContext>) -> Result<Self::Output, ActionError> {
+	async fn execute(self, context: Arc<CoreContext>) -> Result<Self::Output, ActionError> {
 		let ids = self.input.ids;
-		let purged = blocking(move || platform::purge(&ids))
+		let purged = blocking(move || platform::purge(&context.data_dir, &ids))
 			.await
 			.map_err(ActionError::Internal)?;
 		Ok(TrashPurgeOutput { purged })
@@ -336,6 +421,14 @@ mod tests {
 
 	/// The tests point XDG_DATA_HOME, which is process-wide, at their own trash.
 	static TRASH_ENV: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+	#[test]
+	fn accepts_mobile_and_daemon_trash_query_inputs() {
+		for payload in ["null", "{}"] {
+			assert!(serde_json::from_str::<super::TrashListInput>(payload).is_ok());
+		}
+		assert!(serde_json::from_str::<super::TrashListInput>("42").is_err());
+	}
 
 	#[test]
 	fn trash_location_resolves_a_symlinked_parent_only() {
@@ -369,21 +462,27 @@ mod tests {
 		std::fs::write(&file, b"hello").unwrap();
 
 		trash::delete(&file).unwrap();
-		let ids = super::trashed_ids(vec![file.clone()]).await;
+		let ids = super::trashed_ids(std::path::PathBuf::new(), vec![file.clone()]).await;
 		assert!(
 			ids.contains_key(&file),
 			"the journal path finds its trash item"
 		);
 
 		// Without an id, undo falls back to the newest item of the path.
-		super::restore_one(None, file.clone()).await.unwrap();
+		super::restore_one(std::path::PathBuf::new(), None, file.clone())
+			.await
+			.unwrap();
 		assert_eq!(std::fs::read(&file).unwrap(), b"hello");
 
 		trash::delete(&file).unwrap();
-		let ids = super::trashed_ids(vec![file.clone()]).await;
-		super::restore_one(ids.get(&file).cloned(), file.clone())
-			.await
-			.unwrap();
+		let ids = super::trashed_ids(std::path::PathBuf::new(), vec![file.clone()]).await;
+		super::restore_one(
+			std::path::PathBuf::new(),
+			ids.get(&file).cloned(),
+			file.clone(),
+		)
+		.await
+		.unwrap();
 		assert_eq!(std::fs::read(real.join("notes.txt")).unwrap(), b"hello");
 	}
 
@@ -400,22 +499,25 @@ mod tests {
 
 		trash::delete(&file).unwrap();
 		assert!(!file.exists());
-		let listed = platform::list().unwrap();
+		let listed = platform::list(root.path()).unwrap();
 		let entry = listed.iter().find(|e| e.original_path == original).unwrap();
 		assert_eq!(entry.size, Some(5));
 
-		assert_eq!(platform::restore(&[], &[original.clone()]).unwrap(), 1);
+		assert_eq!(
+			platform::restore(root.path(), &[], &[original.clone()]).unwrap(),
+			1
+		);
 		assert_eq!(std::fs::read(&file).unwrap(), b"hello");
 
 		trash::delete(&file).unwrap();
-		let id = platform::list()
+		let id = platform::list(root.path())
 			.unwrap()
 			.into_iter()
 			.find(|e| e.original_path == original)
 			.unwrap()
 			.id;
-		assert_eq!(platform::purge(&[id]).unwrap(), 1);
-		assert!(platform::list()
+		assert_eq!(platform::purge(root.path(), &[id]).unwrap(), 1);
+		assert!(platform::list(root.path())
 			.unwrap()
 			.iter()
 			.all(|e| e.original_path != original));

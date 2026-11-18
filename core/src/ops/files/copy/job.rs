@@ -836,6 +836,26 @@ impl JobHandler for FileCopyJob {
 				}
 			}
 
+			#[cfg(target_os = "android")]
+			{
+				// Shared storage can miss watcher events for writes made by this app.
+				let cache = ctx.library().core_context().ephemeral_cache();
+				if let Some(parent) = final_destination
+					.as_local_path()
+					.and_then(std::path::Path::parent)
+				{
+					cache.invalidate_path(parent);
+				}
+				if is_move {
+					if let Some(parent) = resolved_source
+						.as_local_path()
+						.and_then(std::path::Path::parent)
+					{
+						cache.invalidate_path(parent);
+					}
+				}
+			}
+
 			// Persist after every file so UI can show real-time checkbox updates
 			self.persist_job_state_to_db(&ctx).await?;
 

@@ -31,7 +31,7 @@ Cópias, substituições, movimentações, renomeações, envios à lixeira e no
 
 ## Quais plataformas são compatíveis?
 
-Linux é compatível. Windows 10 e 11 estão em beta. No macOS, a compilação é feita a partir do código-fonte até a chegada de versões assinadas no marco M3. Uma prévia para Android acompanha as versões lançadas.
+Linux é compatível. Windows 10 e 11 estão em beta. No macOS, a compilação é feita a partir do código-fonte até a chegada de versões assinadas no marco M3. O Android está em beta, com APK ARM64 disponível nas [releases](https://github.com/bernardopg/wingdrive/releases/latest).
 
 ## Por que o Windows exibe um aviso sobre o instalador?
 

@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import type {JobListItem, GenericProgress} from '../generated/types';
+import type {JobListItem, GenericProgress, JobOutput} from '../generated/types';
 import {useLibraryMutation} from './useMutation';
 import {useLibraryQuery} from './useQuery';
 import {useWingDriveClient} from './useClient';
@@ -46,7 +46,7 @@ export interface UseJobsOptions {
 	/**
 	 * Callback when a job completes successfully
 	 */
-	onJobCompleted?: (jobId: string, jobType: string) => void;
+	onJobCompleted?: (jobId: string, jobType: string, output: JobOutput) => void;
 	/**
 	 * Callback when a job fails
 	 */
@@ -173,8 +173,8 @@ export function useJobs(options: UseJobsOptions = {}): UseJobsReturn {
 
 						// Call callbacks
 						if ('JobCompleted' in event) {
-							const jobType = event.JobCompleted?.job_type || '';
-							callbacksRef.current.onJobCompleted?.(jobId, jobType);
+							const { job_type, output } = event.JobCompleted;
+							callbacksRef.current.onJobCompleted?.(jobId, job_type, output);
 						} else if ('JobFailed' in event) {
 							callbacksRef.current.onJobFailed?.(jobId);
 						} else if ('JobCancelled' in event) {

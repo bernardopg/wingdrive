@@ -7,6 +7,7 @@ import {
 
 interface GlassButtonProps {
 	onPress?: () => void;
+	accessibilityLabel?: string;
 	icon?: ReactNode;
 	active?: boolean;
 	className?: string;
@@ -15,6 +16,7 @@ interface GlassButtonProps {
 
 export function GlassButton({
 	onPress,
+	accessibilityLabel,
 	icon,
 	active,
 	className,
@@ -47,6 +49,8 @@ export function GlassButton({
 	if (isLiquidGlassSupported) {
 		return (
 			<Pressable
+				accessibilityRole={accessibilityLabel ? "button" : undefined}
+				accessibilityLabel={accessibilityLabel}
 				onPress={onPress}
 				className={className}
 				style={({ pressed }) => ({
@@ -77,6 +81,8 @@ export function GlassButton({
 	// clip to borderRadius, so the old BlurView plus an inset square showed as a dark box.
 	return (
 		<Pressable
+			accessibilityRole={accessibilityLabel ? "button" : undefined}
+			accessibilityLabel={accessibilityLabel}
 			onPress={onPress}
 			className={className}
 			android_ripple={{ color: "rgba(255, 255, 255, 0.12)", foreground: true }}

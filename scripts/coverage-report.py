@@ -28,7 +28,7 @@ COMPONENTS = [
 	("desktop", "Desktop: Tauri shell and its crates", ["apps/tauri/"]),
 	("cli", "CLI (`wing`)", ["apps/cli/"]),
 	("server", "Server (`wing-server`)", ["apps/server/"]),
-	("mobile", "Mobile core", ["apps/mobile/"]),
+	("mobile", "Mobile app (Android / iOS)", ["apps/mobile/"]),
 	("crates", "Shared crates", ["crates/"]),
 	("interface", "Interface (React)", ["packages/interface/"]),
 	("ts-client", "TypeScript client", ["packages/ts-client/"]),

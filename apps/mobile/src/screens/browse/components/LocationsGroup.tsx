@@ -1,12 +1,17 @@
 import React from "react";
-import { Image } from "react-native";
+import { Alert, Image } from "react-native";
 import { useRouter } from "expo-router";
-import { useNormalizedQuery } from "../../../client";
+import { useLibraryAction, useNormalizedQuery } from "../../../client";
 import { SettingsGroup, SettingsLink } from "../../../components/primitive";
+import { useTranslation } from "react-i18next";
 import FolderIcon from "@wingdrive/assets/icons/Folder.webp";
 
 export function LocationsGroup() {
 	const router = useRouter();
+	const { t } = useTranslation("common");
+	const removeLocation = useLibraryAction("locations.remove", {
+		onError: (error) => Alert.alert(t("Error"), error.message),
+	});
 	const { data: locationsData } = useNormalizedQuery({
 		query: "locations.list",
 		input: null,
@@ -51,6 +56,21 @@ export function LocationsGroup() {
 					}
 					label={location.name || "Unnamed"}
 					description={getDeviceName(location)}
+					onLongPress={() =>
+						// Removing a location forgets its index; the files stay on the device.
+						Alert.alert(
+							t("Remove location?"),
+							`${location.name}\n\n${t("The files stay where they are. WingDrive stops indexing and watching them.")}`,
+							[
+								{ text: t("Cancel"), style: "cancel" },
+								{
+									text: t("Remove"),
+									style: "destructive",
+									onPress: () => removeLocation.mutate({ location_id: location.id }),
+								},
+							],
+						)
+					}
 					onPress={() => {
 						router.push({
 							pathname: "/explorer",

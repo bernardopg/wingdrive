@@ -89,6 +89,15 @@ impl DeleteStrategy for LocalDeleteStrategy {
 					let size = self.get_path_size(local_path).await.unwrap_or(0);
 
 					let deletion_result = match mode {
+						#[cfg(target_os = "android")]
+						DeleteMode::Trash => {
+							crate::ops::trash::put_android(
+								ctx.library().core_context().data_dir.clone(),
+								local_path.to_path_buf(),
+							)
+							.await
+						}
+						#[cfg(not(target_os = "android"))]
 						DeleteMode::Trash => self.move_to_trash(local_path).await,
 						DeleteMode::Permanent => self.permanent_delete(local_path).await,
 						DeleteMode::Secure => self.secure_delete(local_path).await,

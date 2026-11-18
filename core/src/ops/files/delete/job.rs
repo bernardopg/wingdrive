@@ -155,7 +155,11 @@ impl JobHandler for DeleteJob {
 		if matches!(self.mode, DeleteMode::Trash) && !deleted_paths.is_empty() {
 			use crate::ops::files::journal::{Effect, Journal};
 			let journal = Journal::open(&ctx, "delete").await;
-			let mut trash_ids = crate::ops::trash::trashed_ids(deleted_paths.clone()).await;
+			let mut trash_ids = crate::ops::trash::trashed_ids(
+				ctx.library().core_context().data_dir.clone(),
+				deleted_paths.clone(),
+			)
+			.await;
 			for original in &deleted_paths {
 				journal
 					.record(&Effect::Trashed {
