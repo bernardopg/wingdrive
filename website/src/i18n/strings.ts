@@ -261,7 +261,7 @@ const en = {
 	privacy: {
 		title: "Privacy Policy",
 		lead: "Short version: WingDrive collects nothing. Your files and accounts stay on your devices.",
-		updated: "Last updated: November 16, 2026",
+		updated: "Last updated: November 17, 2026",
 		sections: [
 			{
 				h: "The app",
@@ -273,9 +273,9 @@ const en = {
 			{
 				h: "Google accounts",
 				p: [
-					"When you connect a Google account in Settings > Integrations, your browser shows Google's consent page and WingDrive asks only for the access you choose: your basic profile (name, email address and picture) to name the account, Google Drive to browse, download, upload, rename, move and delete the files WingDrive created or that you open with it (with your own Google Cloud client, all of your Drive), and Google Photos to upload photos and videos, manage albums WingDrive created and import the items you pick.",
-					"WingDrive uses this data only to show your Drive and Photos inside the app and to run the actions you start, such as copying files, syncing folders or uploading photos. It does not use Google data for advertising, does not sell it, does not transfer it to anyone, and does not use it to train AI or machine-learning models. No person reads it.",
-					"The OAuth refresh token and the account profile are stored only on your device, encrypted with your library's key. Files you download are saved where you choose. Nothing is sent to a WingDrive server, because there is none.",
+					"When you connect a Google account in Settings > Integrations, your browser shows Google's consent page and WingDrive asks only for the access you choose: your basic profile (name, email address and picture) to name the account; Google Drive, limited to the files WingDrive created and the files and folders you pick in Google's file picker, to browse, download, upload, rename, move and delete them (with your own Google Cloud client, all of your Drive); and Google Photos, to upload the photos and videos you choose, list and fill the albums WingDrive created, and import the items you pick in Google's photo picker. WingDrive cannot see the rest of your Photos library.",
+					"WingDrive uses this data only to show your Drive and Photos inside the app and to run the actions you start, such as copying files, syncing folders or uploading photos. It does not use Google data for advertising, does not sell it, does not transfer it to anyone, and does not use it to train AI or machine-learning models. No person reads it. Data leaves your device only when you move it yourself, for example by copying a Drive file to another of your paired devices.",
+					"WingDrive talks to Google directly from your device over HTTPS (TLS). The OAuth refresh token and the account profile are stored only on your device, encrypted with your library's key. While you browse, names, sizes and dates of Drive items are kept in memory; cloud sync keeps the names and revisions of the files it syncs in your library. Files you preview or open from Drive are copied to a cache folder on your device, removed after 7 days. Files you download or import are saved where you choose and stay yours. Nothing is sent to a WingDrive server, because there is none.",
 					"WingDrive's use and transfer to any other app of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.",
 				],
 			},
@@ -608,7 +608,7 @@ const pt: Strings = {
 	privacy: {
 		title: "Política de Privacidade",
 		lead: "Versão curta: o WingDrive não coleta nada. Seus arquivos e contas ficam nos seus dispositivos.",
-		updated: "Última atualização: 16 de novembro de 2026",
+		updated: "Última atualização: 17 de novembro de 2026",
 		sections: [
 			{
 				h: "O app",
@@ -620,9 +620,9 @@ const pt: Strings = {
 			{
 				h: "Contas Google",
 				p: [
-					"Quando você conecta uma conta Google em Configurações > Integrações, o navegador mostra a página de consentimento do Google e o WingDrive pede só o acesso que você escolher: seu perfil básico (nome, e-mail e foto) para identificar a conta, o Google Drive para navegar, baixar, enviar, renomear, mover e excluir os arquivos que o WingDrive criou ou que você abrir com ele (com seu próprio cliente do Google Cloud, todo o seu Drive), e o Google Fotos para enviar fotos e vídeos, gerenciar álbuns criados pelo WingDrive e importar os itens que você escolher.",
-					"O WingDrive usa esses dados só para mostrar seu Drive e seu Fotos dentro do app e para executar as ações que você inicia, como copiar arquivos, sincronizar pastas ou enviar fotos. Ele não usa dados do Google para publicidade, não os vende, não os transfere para ninguém e não os usa para treinar modelos de IA ou de aprendizado de máquina. Nenhuma pessoa os lê.",
-					"O token de atualização OAuth e o perfil da conta ficam só no seu dispositivo, criptografados com a chave da sua biblioteca. Os arquivos que você baixa vão para onde você escolher. Nada é enviado a um servidor do WingDrive, porque ele não existe.",
+					"Quando você conecta uma conta Google em Configurações > Integrações, o navegador mostra a página de consentimento do Google e o WingDrive pede só o acesso que você escolher: seu perfil básico (nome, e-mail e foto) para identificar a conta; o Google Drive, limitado aos arquivos que o WingDrive criou e aos arquivos e pastas que você escolher no seletor de arquivos do Google, para navegar, baixar, enviar, renomear, mover e excluir esses itens (com seu próprio cliente do Google Cloud, todo o seu Drive); e o Google Fotos, para enviar as fotos e vídeos que você escolher, listar e preencher os álbuns criados pelo WingDrive e importar os itens que você escolher no seletor de fotos do Google. O WingDrive não vê o restante da sua biblioteca do Fotos.",
+					"O WingDrive usa esses dados só para mostrar seu Drive e seu Fotos dentro do app e para executar as ações que você inicia, como copiar arquivos, sincronizar pastas ou enviar fotos. Ele não usa dados do Google para publicidade, não os vende, não os transfere para ninguém e não os usa para treinar modelos de IA ou de aprendizado de máquina. Nenhuma pessoa os lê. Os dados só saem do seu dispositivo quando você mesmo os move, por exemplo ao copiar um arquivo do Drive para outro dispositivo seu pareado.",
+					"O WingDrive fala com o Google direto do seu dispositivo, por HTTPS (TLS). O token de atualização OAuth e o perfil da conta ficam só no seu dispositivo, criptografados com a chave da sua biblioteca. Enquanto você navega, nomes, tamanhos e datas dos itens do Drive ficam na memória; a sincronização com a nuvem guarda na sua biblioteca os nomes e revisões dos arquivos que sincroniza. Arquivos do Drive que você pré-visualiza ou abre são copiados para uma pasta de cache no seu dispositivo e removidos depois de 7 dias. Os arquivos que você baixa ou importa vão para onde você escolher e continuam seus. Nada é enviado a um servidor do WingDrive, porque ele não existe.",
 					"O uso e a transferência, para qualquer outro app, de informações recebidas das APIs do Google pelo WingDrive seguem a Política de Dados do Usuário dos Serviços de API do Google, incluindo os requisitos de Uso Limitado.",
 				],
 			},

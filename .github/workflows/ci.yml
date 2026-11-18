@@ -263,6 +263,8 @@ jobs:
           /tmp/wingdrive-playwright/node_modules/.bin/playwright install --with-deps chromium
 
       - name: Run the Explorer smoke
+        env:
+          WINGDRIVE_TAB_SWITCH_BUDGET_MS: '75'
         run: |
           export LD_LIBRARY_PATH="$PWD/apps/.deps/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           target/debug/wing-server --host 127.0.0.1 --port 18765 --auth disabled \

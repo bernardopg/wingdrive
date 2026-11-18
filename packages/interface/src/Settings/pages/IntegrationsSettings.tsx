@@ -7,6 +7,7 @@ import {
 	WIRE_METHODS,
 	type CloudSyncPairInfo,
 	type ConnectionMode,
+	type DrivePickerState,
 	type GoogleService,
 	type IntegrationAccountInfo,
 	type IntegrationProvider,
@@ -18,7 +19,8 @@ import {
 import { usePlatform } from "../../contexts/PlatformContext";
 import { useLibraryMutation, useLibraryQuery, useWingDriveClient } from "../../contexts/WingDriveContext";
 import { INTEGRATION_QUERY_KEYS, useIntegrationConnect } from "../../hooks/useIntegrationConnect";
-import { useTranslation } from "../../i18n";
+import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
+import { i18n, useTranslation } from "../../i18n";
 import {
 	LibraryGate,
 	Notice,
@@ -601,12 +603,16 @@ function AccountRow({ account }: { account: IntegrationAccountInfo }) {
 								: t("integrations.accounts.driveHint")}
 						</p>
 						{account.drive_access === "app_files" && (
-							<p className="text-xs text-ink-dull">{t("integrations.google.driveAppFiles")}</p>
+							<p className="text-xs text-ink-dull">
+								{t(account.drive_picker ? "integrations.google.driveAppFilesPicker" : "integrations.google.driveAppFiles")}
+							</p>
 						)}
 					</div>
 					<Switch checked={!!account.drive?.mounted} disabled={mounting} onChange={(value) => void toggleDrive(value)} />
 				</div>
 			)}
+
+			{account.drive_picker && <DrivePicker account={account} />}
 
 			{hasPhotos && <PhotosImport account={account} />}
 
@@ -649,6 +655,66 @@ function AccountRow({ account }: { account: IntegrationAccountInfo }) {
 			{reconnect.state.phase === "error" && (
 				<Notice tone="warning">{t("integrations.accounts.failed", { error: reconnect.state.message })}</Notice>
 			)}
+		</div>
+	);
+}
+
+/** Opens the Google Picker so a `drive.file` account adds existing Drive files to WingDrive. */
+function DrivePicker({ account }: { account: IntegrationAccountInfo }) {
+	const { t } = useTranslation();
+	const platform = usePlatform();
+	const client = useWingDriveClient();
+	const refetchListings = useRefetchFileListings();
+	const startPicker = useLibraryMutation("integrations.google.drive.picker.start");
+	const [waiting, setWaiting] = useState(false);
+	const active = useRef(true);
+	useEffect(
+		() => () => {
+			active.current = false;
+		},
+		[]
+	);
+
+	const run = async () => {
+		try {
+			const session = await startPicker.mutateAsync({
+				account_id: account.id,
+				locale: i18n.language === "pt" ? "pt-BR" : "en",
+			});
+			platform.openLink(session.picker_url);
+			setWaiting(true);
+			for (;;) {
+				await new Promise((resolve) => setTimeout(resolve, 2000));
+				if (!active.current) return;
+				const status = await client.execute<{ session_id: string }, DrivePickerState>(
+					WIRE_METHODS.libraryQueries["integrations.google.drive.picker.status"],
+					{ session_id: session.session_id }
+				);
+				if (status.state === "waiting") continue;
+				if (status.state === "picked") {
+					refetchListings();
+					toast.success(t("integrations.google.drivePicked", { count: status.count }));
+				} else if (status.state === "expired") {
+					toast.error(t("integrations.google.drivePickerExpired"));
+				}
+				break;
+			}
+		} catch (error) {
+			toast.error(t("integrations.google.drivePickerFailed", { error: errorMessage(error) }));
+		} finally {
+			setWaiting(false);
+		}
+	};
+
+	return (
+		<div className="flex items-center justify-between gap-3">
+			<div className="min-w-0">
+				<p className="text-sm text-ink">{t("integrations.google.drivePicker")}</p>
+				<p className="text-xs text-ink-dull">{t("integrations.google.drivePickerHint")}</p>
+			</div>
+			<button type="button" className={`${secondaryButton} shrink-0`} disabled={waiting} onClick={() => void run()}>
+				{waiting ? t("integrations.photos.waiting") : t("integrations.google.drivePickerChoose")}
+			</button>
 		</div>
 	);
 }

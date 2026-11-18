@@ -14,6 +14,8 @@
 //!   `integrations.microsoft.connect` and `integrations.onedrive.mount`: the
 //!   same for Microsoft accounts and their OneDrive.
 //! - `integrations.google.drive.mount`: mount or unmount an account's Drive.
+//! - `integrations.google.drive.picker.*`: open the Google Picker so an account
+//!   with `drive.file` access adds existing Drive files to WingDrive.
 //! - `integrations.google.photos.*`: albums, upload and picker import.
 //! - `files.cloud_edit.*`: open cloud files in local apps and write edits back.
 

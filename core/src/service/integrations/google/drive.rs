@@ -13,6 +13,12 @@
 //! exported and are hidden. Listings are cached for `LISTING_TTL` and every
 //! write invalidates the folders it touches.
 //!
+//! With WingDrive's own client the grant is `drive.file`: Drive returns only
+//! the files WingDrive created or the user opened with it, often inside folders
+//! the grant does not cover. In that mode (`with_app_files`) the volume root
+//! lists every granted item whose parent folder is not granted, so files the
+//! user picks in the Google Picker (`drive_picker`) appear at the top level.
+//!
 //! Uploads use Drive's resumable protocol in `TRANSFER_CHUNK_SIZE` chunks, so a
 //! large file never sits in memory whole and a dropped connection resumes from
 //! the last byte Google confirmed.
@@ -40,7 +46,7 @@ use crate::volume::error::VolumeError;
 
 /// Fields requested for every file so listings and lookups share one shape.
 const FILE_FIELDS: &str =
-	"id,name,mimeType,size,modifiedTime,createdTime,md5Checksum,webViewLink,version";
+	"id,name,mimeType,size,modifiedTime,createdTime,md5Checksum,webViewLink,version,parents";
 
 const FOLDER_MIME: &str = "application/vnd.google-apps.folder";
 
@@ -69,6 +75,9 @@ pub struct DriveFile {
 	pub web_view_link: Option<String>,
 	#[serde(default)]
 	pub version: Option<String>,
+	/// Parent folder IDs; empty for a shared item whose parent is not visible.
+	#[serde(default)]
+	pub parents: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -258,6 +267,9 @@ enum UploadSource<'a> {
 pub struct GoogleDriveBackend {
 	api: GoogleApi,
 	root_id: String,
+	/// The grant is `drive.file`, so the root lists granted items whose parent
+	/// is not granted instead of the children of "My Drive".
+	app_files: bool,
 	listings: Mutex<HashMap<String, CachedListing>>,
 }
 
@@ -265,6 +277,7 @@ impl std::fmt::Debug for GoogleDriveBackend {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.debug_struct("GoogleDriveBackend")
 			.field("root_id", &self.root_id)
+			.field("app_files", &self.app_files)
 			.finish_non_exhaustive()
 	}
 }
@@ -275,8 +288,20 @@ impl GoogleDriveBackend {
 		Self {
 			api,
 			root_id: root_id.unwrap_or_else(|| "root".to_string()),
+			app_files: false,
 			listings: Mutex::new(HashMap::new()),
 		}
+	}
+
+	/// Lists the root for a `drive.file` grant, see the module docs.
+	pub fn with_app_files(mut self, app_files: bool) -> Self {
+		self.app_files = app_files;
+		self
+	}
+
+	/// Forgets every cached listing, so new grants show on the next read.
+	pub async fn forget_listings(&self) {
+		self.listings.lock().await.clear();
 	}
 
 	fn url(&self, suffix: &str) -> String {
@@ -288,10 +313,21 @@ impl GoogleDriveBackend {
 	}
 
 	async fn list_folder(&self, folder_id: &str) -> GoogleResult<Vec<DriveFile>> {
-		let query = format!(
+		self.list_query(&format!(
 			"'{}' in parents and trashed=false",
 			query_literal(folder_id)
-		);
+		))
+		.await
+	}
+
+	/// Granted items whose parent folder is not granted, for a `drive.file`
+	/// root. The children of "My Drive" are among them, because the grant
+	/// never covers "My Drive" itself.
+	async fn list_granted_roots(&self) -> GoogleResult<Vec<DriveFile>> {
+		Ok(granted_roots(self.list_query("trashed=false").await?))
+	}
+
+	async fn list_query(&self, query: &str) -> GoogleResult<Vec<DriveFile>> {
 		let fields = format!("nextPageToken,files({FILE_FIELDS})");
 		let mut files = Vec::new();
 		let mut page_token: Option<String> = None;
@@ -301,7 +337,7 @@ impl GoogleDriveBackend {
 				.api
 				.send_json(|http| {
 					let mut request = http.get(&url).query_pairs(&[
-						("q", query.as_str()),
+						("q", query),
 						("fields", fields.as_str()),
 						("pageSize", &PAGE_SIZE.to_string()),
 						("spaces", "drive"),
@@ -333,7 +369,12 @@ impl GoogleDriveBackend {
 				}
 			}
 		}
-		let children = Arc::new(display_names(self.list_folder(folder_id).await?));
+		let files = if key.is_empty() && self.app_files {
+			self.list_granted_roots().await?
+		} else {
+			self.list_folder(folder_id).await?
+		};
+		let children = Arc::new(display_names(files));
 		self.listings.lock().await.insert(
 			key.to_string(),
 			CachedListing {
@@ -648,6 +689,15 @@ impl GoogleDriveBackend {
 	}
 }
 
+/// Keeps the items none of whose parents is in the list.
+fn granted_roots(files: Vec<DriveFile>) -> Vec<DriveFile> {
+	let granted: HashSet<String> = files.iter().map(|f| f.id.clone()).collect();
+	files
+		.into_iter()
+		.filter(|f| !f.parents.iter().any(|p| granted.contains(p)))
+		.collect()
+}
+
 fn slice(bytes: Bytes, range: Range<u64>) -> Bytes {
 	let len = bytes.len() as u64;
 	let start = range.start.min(len) as usize;
@@ -960,6 +1010,7 @@ mod tests {
 			md5_checksum: None,
 			web_view_link: None,
 			version: None,
+			parents: Vec::new(),
 		}
 	}
 
@@ -1017,6 +1068,23 @@ mod tests {
 		assert!(names.contains(&("Plan.docx", "d")));
 		assert!(names.contains(&("Untitled", "f")));
 		assert!(!names.iter().any(|(_, id)| *id == "e"), "forms are hidden");
+	}
+
+	#[test]
+	fn granted_roots_keep_items_whose_parent_is_not_granted() {
+		let with_parent = |id: &str, parent: &str| DriveFile {
+			parents: vec![parent.into()],
+			..file(id, id, "text/plain", "2026-01-01T00:00:00Z")
+		};
+		let roots = granted_roots(vec![
+			with_parent("in-my-drive", "my-drive-id"),
+			with_parent("folder", "my-drive-id"),
+			with_parent("inside-folder", "folder"),
+			with_parent("picked-deep", "ungranted-folder"),
+			file("shared", "shared", "text/plain", "2026-01-01T00:00:00Z"),
+		]);
+		let ids: Vec<&str> = roots.iter().map(|f| f.id.as_str()).collect();
+		assert_eq!(ids, ["in-my-drive", "folder", "picked-deep", "shared"]);
 	}
 
 	#[test]

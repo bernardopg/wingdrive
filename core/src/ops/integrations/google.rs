@@ -1,4 +1,4 @@
-//! Google sign-in, OAuth client settings and Drive mounting.
+//! Google sign-in, OAuth client settings, Drive mounting and the Drive picker.
 
 use std::sync::Arc;
 
@@ -11,6 +11,7 @@ use crate::infra::action::{error::ActionError, LibraryAction};
 use crate::infra::query::{LibraryQuery, QueryResult};
 use crate::library::Library;
 use crate::service::integrations::google::oauth::{GoogleService, OAuthClient};
+use crate::service::integrations::google::DrivePickerState;
 use crate::service::integrations::store::IntegrationStore;
 use crate::service::integrations::{
 	ConnectStatus, ConnectionMode, DriveMountInfo, IntegrationError, OAuthClientsInfo,
@@ -323,3 +324,95 @@ impl LibraryAction for GoogleDriveMountAction {
 }
 
 crate::register_library_action!(GoogleDriveMountAction, "integrations.google.drive.mount");
+
+/// Opens the Google Picker for an account with `drive.file` access, so the
+/// user can add existing Drive files to WingDrive. Open `picker_url` in the
+/// browser and poll `integrations.google.drive.picker.status`.
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct GoogleDrivePickerStartInput {
+	pub account_id: String,
+	/// UI language for the Picker, such as `pt-BR`.
+	#[serde(default)]
+	pub locale: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct GoogleDrivePickerStartOutput {
+	pub session_id: Uuid,
+	pub picker_url: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GoogleDrivePickerStartAction {
+	input: GoogleDrivePickerStartInput,
+}
+
+impl LibraryAction for GoogleDrivePickerStartAction {
+	type Input = GoogleDrivePickerStartInput;
+	type Output = GoogleDrivePickerStartOutput;
+
+	fn from_input(input: Self::Input) -> Result<Self, String> {
+		Ok(Self { input })
+	}
+
+	async fn execute(
+		self,
+		library: Arc<Library>,
+		context: Arc<CoreContext>,
+	) -> Result<Self::Output, ActionError> {
+		let (session_id, picker_url) = context
+			.integrations
+			.start_drive_picker(&library, &self.input.account_id, self.input.locale)
+			.await?;
+		Ok(GoogleDrivePickerStartOutput {
+			session_id,
+			picker_url,
+		})
+	}
+
+	fn action_kind(&self) -> &'static str {
+		"integrations.google.drive.picker.start"
+	}
+}
+
+crate::register_library_action!(
+	GoogleDrivePickerStartAction,
+	"integrations.google.drive.picker.start"
+);
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct GoogleDrivePickerStatusInput {
+	pub session_id: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GoogleDrivePickerStatusQuery {
+	input: GoogleDrivePickerStatusInput,
+}
+
+impl LibraryQuery for GoogleDrivePickerStatusQuery {
+	type Input = GoogleDrivePickerStatusInput;
+	type Output = DrivePickerState;
+
+	fn from_input(input: Self::Input) -> QueryResult<Self> {
+		Ok(Self { input })
+	}
+
+	async fn execute(
+		self,
+		context: Arc<CoreContext>,
+		session: crate::infra::api::SessionContext,
+	) -> QueryResult<Self::Output> {
+		let library = super::session_library(&context, &session).await?;
+		Ok(context
+			.integrations
+			.drive_picker_status(library.id(), self.input.session_id)
+			.await
+			.unwrap_or(DrivePickerState::Expired))
+	}
+}
+
+crate::register_library_query!(
+	GoogleDrivePickerStatusQuery,
+	"integrations.google.drive.picker.status"
+);

@@ -30,7 +30,7 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | M2 — Gerenciador de arquivos padrão no Linux | Done | 76 | 0 | 0 | 100% |
 | M3 — Desktop multiplataforma e release | Now | 8 | 13 | 8 | 28% |
 | M4 — Integração entre dispositivos | Later | 0 | 4 | 17 | 0% |
-| M5 — Opcionais | Later | 17 | 23 | 52 | 18% |
+| M5 — Opcionais | Later | 18 | 23 | 52 | 19% |
 
 | Sprint | Datas | Done | In Progress | Progresso |
 |---|---|---|---|---|
@@ -38,7 +38,7 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | [S02](sprints/S02.md) | 2026-10-15 a 2026-10-28 | 3/3 | 0 | 100% |
 | [S03](sprints/S03.md) | 2026-10-07 a 2026-10-28 | 32/32 | 0 | 100% |
 | [S04](sprints/S04.md) | 2026-10-29 a 2026-11-11 | 37/37 | 0 | 100% |
-| **[S05](sprints/S05.md)** (atual) | 2026-11-12 a 2026-11-25 | 23/30 | 6 | 77% |
+| **[S05](sprints/S05.md)** (atual) | 2026-11-12 a 2026-11-25 | 24/31 | 6 | 77% |
 | [S06](sprints/S06.md) | 2026-11-26 a 2026-12-09 | 0/22 | 14 | 0% |
 | [S07](sprints/S07.md) | 2026-12-10 a 2026-12-23 | 0/11 | 3 | 0% |
 | [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | 0/10 | 0 | 0% |
@@ -228,6 +228,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-17 | Release `v3.5.0`: Google Picker para contas `drive.file` e um escopo do Fotos a menos (INTG-011, INTG-003, #428), resposta à verificação OAuth do Google; correções de Windows (#420, #421) e Android (#416 a #419), logs pela bandeja (#423), Authenticode condicional (#422). |
 | 2026-11-17 | Release `v3.4.1`: Rust 1.100, dependências do dependabot e não rastreadas num PR só, alertas de code scanning resolvidos (#410), filme e media kit no site (#412), CI Rust com um conjunto de features (#413) |
 | 2026-11-16 | Release `v3.4.0`: atualizações assinadas do AppImage e do Windows (REL-001), daemon sem console no Windows (TAURI-019), `drive.file` no cliente Google do WingDrive (INTG-003, #407; verificação do Google enviada, Acesso a dados em análise), board de tasks e MCP (DEV-007, #406), CORE-022, CORE-023, MOB-017 e Wings (BRAND-003) |
 | 2026-11-15 | **M2 Done**: DESK-051 conferida pelo autor, BRAND-003 com barra lateral e sync com celular na 3.3.1, CORE-021 com 15 rodadas do smoke, DESK-097 (janela no login) corrigida; DESK-000 Done. M3 vira o Now. Tasks novas: TAURI-018 (smoke do Explorer no CI), TAURI-019 (daemon no Windows em segundo plano), CORE-022 (ruído de log), CORE-023 (full sync em loop), MOB-017 (revisão Android). Cobertura no `main`: core 53,7%, desktop 90,7%, CLI 65,9%, interface 74,5%; metas do M3 batidas e as COV abertas foram para o M3 |
