@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the frontend tests CI runs with coverage and writes one lcov per test file.
+# Collects the shared frontend and mobile CI suites with coverage.
 #
 # CI runs each test file in its own process (module mocks leak between files),
 # so this does the same. scripts/coverage-report.py merges the reports.
@@ -16,4 +16,8 @@ while read -r _ _ file; do
 	i=$((i + 1))
 	bun test --coverage --coverage-reporter=lcov --coverage-dir="$out/$i" "$file"
 done < <(grep -oE 'bun test [^ ]+' .github/workflows/ci.yml)
-printf '\nFrontend coverage for %d test files written to %s\n' "$i" "$out"
+mobile_out="$(realpath "$out")/mobile"
+(cd apps/mobile && bun test --coverage --coverage-reporter=lcov --coverage-dir="$mobile_out" ./src)
+# Bun writes paths relative to the directory that ran the suite.
+sed -i 's|^SF:src/|SF:apps/mobile/src/|' "$mobile_out/lcov.info"
+printf '\nFrontend coverage for %d shared test files and the mobile suite written to %s\n' "$i" "$out"

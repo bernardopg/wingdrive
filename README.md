@@ -22,7 +22,7 @@
   <img src="https://img.shields.io/badge/Linux-supported-2ea44f?logo=linux&logoColor=white" alt="Linux: supported"/>
   <img src="https://img.shields.io/badge/macOS-planned%20(M3)-6b7280?logo=apple&logoColor=white" alt="macOS: planned"/>
   <img src="https://img.shields.io/badge/Windows-beta-d97706?logo=windows&logoColor=white" alt="Windows: beta"/>
-  <img src="https://img.shields.io/badge/Android-in%20development-6b7280?logo=android&logoColor=white" alt="Android: in development"/>
+  <img src="https://img.shields.io/badge/Android-beta-d97706?logo=android&logoColor=white" alt="Android: beta"/>
   <a href="https://github.com/sponsors/bernardopg"><img src="https://img.shields.io/badge/sponsor-%E2%99%A5-db2777?logo=githubsponsors&logoColor=white" alt="Sponsor"/></a>
 </p>
 
@@ -60,6 +60,7 @@ browse, search and recognize across your own devices. No account, no telemetry, 
 | Arch Linux and derivatives | `yay -S wingdrive-bin` (stable), or `yay -S wingdrive-nightly` for every release including alpha, beta and rc |
 | Any Linux (x86_64) | AppImage or `.deb` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS` |
 | Windows 10 and 11 (x64), beta | `.exe` or `.msi` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS-windows`. Unsigned, so SmartScreen warns |
+| Android (ARM64), beta | Install the APK from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) and verify it with `SHA256SUMS-android` |
 | Headless server | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |
 | From source | `just setup && just dev-desktop` ([guide](./docs/readme/installation.md)) |
 
@@ -161,7 +162,7 @@ filesystems, copies refuse to write into their own source, system mounts are nev
 | **M2** · now | The default file manager on Linux: dual-pane Explorer (F3), a full day of use without falling back |
 | **M3** · next | Signed releases for macOS and Windows and auto-updates. Copy preflight (3.0) and undo for copy, move and trash (3.1) already shipped |
 | **M4** | File sync between devices, public sharing links, Wingdrop to nearby devices, Tailscale |
-| **M5** | Semantic search, WASM extensions, encryption at rest, Android and iOS releases |
+| **M5** | Semantic search, WASM extensions, encryption at rest, Android beta improvements and iOS releases |
 
 The live plan, sprint by sprint, is in [`.tasks/`](./.tasks/ROADMAP.md) (Portuguese).
 

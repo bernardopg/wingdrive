@@ -19,7 +19,7 @@ latest run and nobody edits them by hand.
 | CLI | ![cli](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Fcomponent-cli.json) | `wing` (`apps/cli/`) |
 | Server | ![server](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Fcomponent-server.json) | `wing-server` (`apps/server/`) |
 | Shared crates | ![crates](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Fcomponent-crates.json) | Crypto, archive, file watcher, branding and the rest of `crates/` |
-| Mobile core | ![mobile](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Fcomponent-mobile.json) | Rust core embedded by the mobile app (`apps/mobile/`) |
+| Mobile app | ![mobile](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Fcomponent-mobile.json) | React Native application and embedded core (`apps/mobile/`) |
 | Interface | ![interface](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Fcomponent-interface.json) | React UI shared by desktop, web and mobile (`packages/interface/`) |
 | TypeScript client | ![ts-client](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Fcomponent-ts-client.json) | Generated types, hooks and transport (`packages/ts-client/`) |
 | Other packages | ![packages](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbernardopg%2Fwingdrive%2Fbadges%2Fcomponent-packages.json) | Primitives, AI and assets (`packages/`) |
@@ -33,7 +33,8 @@ latest run and nobody edits them by hand.
   runs, including the CLI contracts) plus the unit and integration tests of the server and shared crates. Doctests
   are not run.
 - **Frontend:** `scripts/coverage-frontend.sh` runs every `bun test` file from the CI workflow with
-  `--coverage`, one process per file, as CI does.
+  `--coverage`, one process per file, and includes the mobile workflow’s `bun test ./src` suite.
+  The mobile suite measures JavaScript and TypeScript executed by Bun. Android device and JNI execution are outside that measurement.
 - **Report:** `scripts/coverage-report.py` merges the lcov files. A line counts as covered when any
   test ran it. Test files, benchmarks, generated code and dependencies are left out. It writes the
   badges (branch [`badges`](https://github.com/bernardopg/wingdrive/tree/badges)), the HTML report

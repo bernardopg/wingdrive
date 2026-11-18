@@ -16,6 +16,7 @@ const deb = pick(r, /amd64\.deb$/);
 const exe = pick(r, /setup\.exe$/);
 const msi = pick(r, /\.msi$/);
 const apk = pick(r, /arm64-v8a\.apk$/);
+const androidChecksums = pick(r, /^SHA256SUMS-android$/);
 const date = new Date(r.date).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US", { year: "numeric", month: "long", day: "numeric" });
 const notesUrl = `${RELEASES}/tag/${r.tag}`;
 ---
@@ -70,10 +71,11 @@ const notesUrl = `${RELEASES}/tag/${r.tag}`;
 
 		<article class="card plat" data-os="android">
 			<span class="rec">{s.recommended}</span>
-			<header><Icon name="android" size={28} /><div><h2>{s.android.t}</h2><span class="pill"><span class="dot dim"></span>{s.android.s}</span></div></header>
+			<header><Icon name="android" size={28} /><div><h2>{s.android.t}</h2><span class="pill"><span class="dot warn"></span>{s.android.s}</span></div></header>
 			<p>{s.android.d}</p>
 			<div class="btns">
 				{apk && <a class="btn" href={apk.url}><Icon name="download" size={17} />APK <small>{fmtSize(apk.size)}</small></a>}
+				{androidChecksums && <a class="btn secondary" href={androidChecksums.url}>SHA256SUMS-android</a>}
 			</div>
 		</article>
 

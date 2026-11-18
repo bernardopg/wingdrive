@@ -144,7 +144,7 @@ const en = {
 			{ os: "Windows 10 / 11", s: "Beta", tone: "warn", d: ".exe and .msi installers. Unsigned for now, so SmartScreen warns." },
 			{ os: "macOS", s: "From source", tone: "dim", d: "Signed builds and auto-updates are planned for milestone M3." },
 			{ os: "Server", s: "Supported", tone: "ok", d: "Docker image for x86_64 and ARM64, or a static Linux binary." },
-			{ os: "Android", s: "In development", tone: "dim", d: "Preview APKs ship with releases. Not ready for daily use." },
+			{ os: "Android", s: "Beta", tone: "warn", d: "Download the ARM64 APK to test WingDrive on Android." },
 		],
 	},
 	roadmap: {
@@ -155,7 +155,7 @@ const en = {
 			{ m: "M2", s: "Now", t: "The default file manager on Linux: dual-pane Explorer and a full day of use without falling back." },
 			{ m: "M3", s: "Next", t: "Signed releases for macOS and Windows, and auto-updates. Copy preflight and undo already shipped." },
 			{ m: "M4", s: "Later", t: "File sync between devices, public sharing links, Wingdrop to nearby devices, Tailscale." },
-			{ m: "M5", s: "Later", t: "Semantic search, WASM extensions, encryption at rest, Android and iOS releases." },
+			{ m: "M5", s: "Later", t: "Semantic search, WASM extensions, encryption at rest, Android beta improvements and iOS releases." },
 		],
 	},
 	cta: {
@@ -218,8 +218,8 @@ const en = {
 		},
 		android: {
 			t: "Android",
-			s: "Preview",
-			d: "arm64-v8a. An early preview of the mobile app that embeds the same Rust core. Expect rough edges.",
+			s: "Beta",
+			d: "Install the ARM64 APK to browse and manage files on Android.",
 		},
 		server: {
 			t: "Headless server",
@@ -353,7 +353,7 @@ const en = {
 		editPage: "Edit this page",
 		quickTitle: "Start in three steps",
 		quick: [
-			{ slug: "installation", t: "Install", d: "AUR, AppImage, .deb, Windows installer or Docker." },
+			{ slug: "installation", t: "Install", d: "AUR, AppImage, .deb, Windows installer, Android APK or Docker." },
 			{ slug: "first-run", t: "Add your folders", d: "Create a library and pick the folders WingDrive indexes." },
 			{ slug: "explorer", t: "Find your way", d: "Views, search, Quick Preview, tabs and shortcuts." },
 		],
@@ -491,7 +491,7 @@ const pt: Strings = {
 			{ os: "Windows 10 / 11", s: "Beta", tone: "warn", d: "Instaladores .exe e .msi. Ainda sem assinatura, então o SmartScreen avisa." },
 			{ os: "macOS", s: "Pelo código-fonte", tone: "dim", d: "Builds assinados e atualização automática estão planejados para o marco M3." },
 			{ os: "Servidor", s: "Suportado", tone: "ok", d: "Imagem Docker para x86_64 e ARM64, ou um binário estático para Linux." },
-			{ os: "Android", s: "Em desenvolvimento", tone: "dim", d: "APKs de prévia saem com as releases. Ainda não é para uso diário." },
+			{ os: "Android", s: "Beta", tone: "warn", d: "Baixe o APK ARM64 para testar o WingDrive no Android." },
 		],
 	},
 	roadmap: {
@@ -502,7 +502,7 @@ const pt: Strings = {
 			{ m: "M2", s: "Agora", t: "O gerenciador de arquivos padrão no Linux: Explorer em dois painéis e um dia inteiro de uso sem voltar ao antigo." },
 			{ m: "M3", s: "Próximo", t: "Releases assinadas para macOS e Windows e atualização automática. Pré-checagem de cópia e desfazer já saíram." },
 			{ m: "M4", s: "Depois", t: "Sincronização de arquivos entre dispositivos, links públicos, Wingdrop para dispositivos próximos, Tailscale." },
-			{ m: "M5", s: "Depois", t: "Busca semântica, extensões WASM, criptografia em repouso, releases para Android e iOS." },
+			{ m: "M5", s: "Depois", t: "Busca semântica, extensões WASM, criptografia em repouso, melhorias no beta para Android e lançamento para iOS." },
 		],
 	},
 	cta: {
@@ -565,8 +565,8 @@ const pt: Strings = {
 		},
 		android: {
 			t: "Android",
-			s: "Prévia",
-			d: "arm64-v8a. Uma prévia inicial do app mobile, que embute o mesmo core em Rust. Espere arestas.",
+			s: "Beta",
+			d: "Instale o APK ARM64 para navegar e gerenciar arquivos no Android.",
 		},
 		server: {
 			t: "Servidor headless",
@@ -700,7 +700,7 @@ const pt: Strings = {
 		editPage: "Editar esta página",
 		quickTitle: "Comece em três passos",
 		quick: [
-			{ slug: "installation", t: "Instale", d: "AUR, AppImage, .deb, instalador do Windows ou Docker." },
+			{ slug: "installation", t: "Instale", d: "AUR, AppImage, .deb, instalador do Windows, APK para Android ou Docker." },
 			{ slug: "first-run", t: "Adicione suas pastas", d: "Crie uma biblioteca e escolha as pastas que o WingDrive indexa." },
 			{ slug: "explorer", t: "Encontre o caminho", d: "Visualizações, busca, Visualização Rápida, abas e atalhos." },
 		],

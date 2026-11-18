@@ -31,7 +31,7 @@ Copy, overwrite, move, rename, trash and new folders, files and links can be und
 
 ## Which platforms are supported?
 
-Linux is supported. Windows 10 and 11 are in beta. macOS builds from source until signed builds land in milestone M3. An Android preview ships with releases.
+Linux is supported. Windows 10 and 11 are in beta. macOS builds from source until signed builds land in milestone M3. Android is in beta, with an ARM64 APK available in [Releases](https://github.com/bernardopg/wingdrive/releases/latest).
 
 ## Why does Windows warn about the installer?
 

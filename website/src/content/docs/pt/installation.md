@@ -1,6 +1,6 @@
 ---
 title: Instalação
-description: Instale o WingDrive no Linux, Windows ou em um servidor, ou compile-o a partir do código-fonte.
+description: Instale o WingDrive no Linux, Windows, Android ou em um servidor, ou compile-o a partir do código-fonte.
 order: 2
 group: Início
 ---
@@ -52,6 +52,10 @@ Baixe o instalador NSIS (`.exe`) ou o `.msi` para x64. Os instaladores ainda nã
 ```powershell
 Get-FileHash .\WingDrive-*-x64-setup.exe -Algorithm SHA256
 ```
+
+## Android (beta)
+
+Baixe o APK ARM64 na [página de download](/pt/download/) e compare o resumo SHA-256 com o arquivo `SHA256SUMS-android`. Abra o APK no celular para instalar. O Android pode pedir autorização para instalar pelo app que abriu o arquivo.
 
 ## Atualizações
 
