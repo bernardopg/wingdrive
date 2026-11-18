@@ -610,7 +610,12 @@ pub static NO_SYSTEM_FILES: Lazy<SystemIndexerRule> = Lazy::new(|| {
 pub static NEVER_INDEX: Lazy<SystemIndexerRule> = Lazy::new(|| SystemIndexerRule {
 	name: "Never index",
 	default: true,
-	rules: vec![RulePerKind::new_reject_files_by_globs_str(["/{dev,sys,proc}"]).expect("valid")],
+	rules: vec![RulePerKind::new_reject_files_by_globs_str([
+		"/{dev,sys,proc}",
+		#[cfg(target_os = "android")]
+		"**/.wingdrive-trash",
+	])
+	.expect("valid")],
 });
 
 pub static NO_HIDDEN: Lazy<SystemIndexerRule> = Lazy::new(|| SystemIndexerRule {

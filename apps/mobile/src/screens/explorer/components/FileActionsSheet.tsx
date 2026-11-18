@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Modal, Pressable, Text as NativeText, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text as NativeText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fileDisplayName, type File } from "@wingdrive/ts-client";
 import { LocalizedText as Text } from "../../../i18n/LocalizedText";
@@ -26,31 +26,33 @@ export function FileActionsSheet({
 		<Modal transparent animationType="fade" onRequestClose={onClose}>
 			<Pressable className="flex-1 bg-black/60 justify-end" onPress={onClose}>
 				<Pressable
-					className="bg-app-box border-t border-app-line rounded-t-2xl pt-2"
+					className="bg-app-box border-t border-app-line rounded-t-2xl pt-2 max-h-[85%]"
 					style={{ paddingBottom: insets.bottom + 8 }}
 					onPress={() => {}}
 				>
 					<NativeText className="text-ink-dull text-sm px-5 py-3" numberOfLines={1}>
 						{fileDisplayName(file)}
 					</NativeText>
-					{actions.map((action) => (
-						<Pressable
-							key={action.label}
-							accessibilityRole="button"
-							onPress={() => {
-								onClose();
-								action.onPress();
-							}}
-							className="flex-row items-center gap-4 px-5 py-4 active:bg-app-hover"
-						>
-							<View className="w-6 items-center">{action.icon}</View>
-							<Text
-								className={`text-base ${action.destructive ? "text-red-500" : "text-ink"}`}
+					<ScrollView keyboardShouldPersistTaps="handled">
+						{actions.map((action) => (
+							<Pressable
+								key={action.label}
+								accessibilityRole="button"
+								onPress={() => {
+									onClose();
+									action.onPress();
+								}}
+								className="flex-row items-center gap-4 px-5 py-4 active:bg-app-hover"
 							>
-								{action.label}
-							</Text>
-						</Pressable>
-					))}
+								<View className="w-6 items-center">{action.icon}</View>
+								<Text
+									className={`text-base ${action.destructive ? "text-red-500" : "text-ink"}`}
+								>
+									{action.label}
+								</Text>
+							</Pressable>
+						))}
+					</ScrollView>
 				</Pressable>
 			</Pressable>
 		</Modal>

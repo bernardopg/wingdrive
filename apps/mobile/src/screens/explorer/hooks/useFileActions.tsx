@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
+import { useIsFocused } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import type { File, WingPath } from "@wingdrive/ts-client";
@@ -11,14 +12,17 @@ import {
 	Copy,
 	PencilSimple,
 	ShareNetwork,
+	Tag,
 	Trash,
 } from "phosphor-react-native";
 import { useLibraryAction, useNormalizedQuery } from "../../../client";
 import { RenameDialog } from "../../../components/RenameDialog";
 import { useFileClipboard, type ClipboardMode } from "../../../stores/fileClipboard";
 import { FileActionsSheet, type FileAction } from "../components/FileActionsSheet";
+import { FileMetadataSheet } from "../components/FileMetadataSheet";
 import { isInLocation, localPath, pasteBlocker } from "../fileLogic";
 
+const HAS_TRASH = Platform.OS === "android";
 const ICON = "hsl(235, 10%, 55%)";
 
 type Prompt = { kind: "rename"; file: File } | { kind: "newFolder"; parent: WingPath };
@@ -31,7 +35,9 @@ type Prompt = { kind: "rename"; file: File } | { kind: "newFolder"; parent: Wing
 export function useFileActions() {
 	const { t } = useTranslation("common");
 	const queryClient = useQueryClient();
+	const focused = useIsFocused();
 	const [selected, setSelected] = useState<File | null>(null);
+	const [metadataFile, setMetadataFile] = useState<File | null>(null);
 	const [prompt, setPrompt] = useState<Prompt | null>(null);
 
 	const { data: devices } = useNormalizedQuery({
@@ -47,7 +53,16 @@ export function useFileActions() {
 
 	// A failed or cancelled job can also leave changes on disk.
 	useJobs({
-		onJobCompleted: invalidateListings,
+		onJobCompleted: (_id, _type, output) => {
+			invalidateListings();
+			if (output?.type === "FileDelete") {
+				void queryClient.invalidateQueries({ queryKey: ["core", "trash.list"] });
+				void queryClient.invalidateQueries({ queryKey: ["query:search.files"] });
+				if (focused && output.data.failed_count > 0) {
+					Alert.alert(t("Error"), t(HAS_TRASH ? "Could not move the item to Trash" : "Could not delete the item"));
+				}
+			}
+		},
 		onJobFailed: invalidateListings,
 		onJobCancelled: invalidateListings,
 	});
@@ -65,8 +80,11 @@ export function useFileActions() {
 	});
 	const addLocation = useLibraryAction("locations.add", {
 		onError: showError,
-		onSuccess: (_output, input) =>
-			Alert.alert(t("Location added"), input.name ?? undefined),
+		onSuccess: (_output, input) => {
+			void queryClient.invalidateQueries({ queryKey: ["query:locations.list"] });
+			invalidateListings();
+			Alert.alert(t("Location added"), input.name ?? undefined);
+		},
 	});
 	const clipboard = useFileClipboard();
 	const copy = useLibraryAction("files.copy", {
@@ -95,16 +113,17 @@ export function useFileActions() {
 
 	const confirmDelete = useCallback(
 		(file: File) => {
-			// Android has no trash for plain files, so a delete is permanent.
-			Alert.alert(t("Delete permanently?"), `${fileDisplayName(file)}\n\n${t("This cannot be undone.")}`, [
+			const name = fileDisplayName(file);
+			const message = HAS_TRASH ? name : `${name}\n\n${t("This cannot be undone.")}`;
+			Alert.alert(t(HAS_TRASH ? "Move to Trash?" : "Delete permanently?"), message, [
 				{ text: t("Cancel"), style: "cancel" },
 				{
-					text: t("Delete"),
+					text: t(HAS_TRASH ? "Move to Trash" : "Delete"),
 					style: "destructive",
 					onPress: () =>
 						remove.mutate({
 							targets: { paths: [file.wing_path] },
-							permanent: true,
+							permanent: !HAS_TRASH,
 							recursive: file.kind === "Directory",
 						}),
 				},
@@ -118,6 +137,17 @@ export function useFileActions() {
 			const path = localPath(file.wing_path, currentDeviceSlug);
 			if (!path) return [];
 			const actions: FileAction[] = [];
+			const indexed = locationsData?.locations.some((location) => {
+				const root = localPath(location.wing_path, currentDeviceSlug);
+				return location.index_mode !== "None" && root != null && isInLocation(path, [root]);
+			});
+			if (indexed && !file.archive) {
+				actions.push({
+					label: "Favorites and tags",
+					icon: <Tag size={22} color={ICON} weight="bold" />,
+					onPress: () => setMetadataFile(file),
+				});
+			}
 			if (file.kind !== "Directory" && WingMobileCore.canOpenFiles) {
 				actions.push(
 					{
@@ -138,6 +168,7 @@ export function useFileActions() {
 					},
 				);
 			}
+			if (file.archive) return actions;
 			const hold = (mode: ClipboardMode) =>
 				clipboard.set(mode, [
 					{
@@ -164,7 +195,7 @@ export function useFileActions() {
 					onPress: () => setPrompt({ kind: "rename", file }),
 				},
 				{
-					label: "Delete",
+					label: HAS_TRASH ? "Move to Trash" : "Delete",
 					icon: <Trash size={22} color="#ef4444" weight="bold" />,
 					onPress: () => confirmDelete(file),
 					destructive: true,
@@ -172,7 +203,7 @@ export function useFileActions() {
 			);
 			return actions;
 		},
-		[clipboard, confirmDelete, currentDeviceSlug, openFile, showError],
+		[clipboard, confirmDelete, currentDeviceSlug, locationsData, openFile, showError],
 	);
 
 	/** Whether a long press on this file has anything to offer. */
@@ -220,6 +251,7 @@ export function useFileActions() {
 
 	const element = (
 		<>
+			{metadataFile && <FileMetadataSheet file={metadataFile} onClose={() => setMetadataFile(null)} />}
 			{selected && (
 				<FileActionsSheet
 					file={selected}

@@ -101,7 +101,7 @@ impl JobHandler for FileUndoJob {
 			ctx.check_interrupt().await?;
 			ctx.progress(Progress::percentage(index as f32 / total.max(1) as f32));
 
-			match reverse(&effect).await {
+			match reverse(&effect, &ctx.library().core_context().data_dir).await {
 				Ok(()) => {
 					journal::mark_undone(&db, row)
 						.await
@@ -129,7 +129,7 @@ impl JobHandler for FileUndoJob {
 }
 
 /// Reverses one effect, or says why it was left alone.
-async fn reverse(effect: &Effect) -> Result<(), String> {
+async fn reverse(effect: &Effect, data_dir: &Path) -> Result<(), String> {
 	match effect {
 		Effect::Created { path, seal } => {
 			check_seal(seal, path).await?;
@@ -172,7 +172,12 @@ async fn reverse(effect: &Effect) -> Result<(), String> {
 			if exists(original).await {
 				return Err("something else is at its place now".to_string());
 			}
-			crate::ops::trash::restore_one(trash_id.clone(), original.clone()).await
+			crate::ops::trash::restore_one(
+				data_dir.to_path_buf(),
+				trash_id.clone(),
+				original.clone(),
+			)
+			.await
 		}
 		Effect::Merged { .. } => Err(
 			"it was merged into a folder that already existed, which cannot be undone".to_string(),
@@ -493,10 +498,13 @@ mod tests {
 		std::fs::rename(&path, root.path().join("original")).unwrap();
 		std::fs::write(&path, "new data").unwrap();
 
-		assert!(reverse(&Effect::Created {
-			path: path.clone(),
-			seal
-		})
+		assert!(reverse(
+			&Effect::Created {
+				path: path.clone(),
+				seal
+			},
+			root.path()
+		)
 		.await
 		.is_err());
 		assert_eq!(std::fs::read(&path).unwrap(), b"new data");
@@ -514,10 +522,13 @@ mod tests {
 		std::fs::remove_file(&path).unwrap();
 		std::os::unix::fs::symlink(&target, &path).unwrap();
 
-		assert!(reverse(&Effect::Created {
-			path: path.clone(),
-			seal
-		})
+		assert!(reverse(
+			&Effect::Created {
+				path: path.clone(),
+				seal
+			},
+			root.path()
+		)
 		.await
 		.is_err());
 		assert_eq!(std::fs::read_link(&path).unwrap(), target);
@@ -536,10 +547,13 @@ mod tests {
 		std::fs::create_dir(&parent).unwrap();
 		std::fs::write(&path, "new data").unwrap();
 
-		assert!(reverse(&Effect::Created {
-			path: path.clone(),
-			seal
-		})
+		assert!(reverse(
+			&Effect::Created {
+				path: path.clone(),
+				seal
+			},
+			root.path()
+		)
 		.await
 		.is_err());
 		assert_eq!(std::fs::read(&path).unwrap(), b"new data");

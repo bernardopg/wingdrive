@@ -30,7 +30,7 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | M2 — Gerenciador de arquivos padrão no Linux | Done | 76 | 0 | 0 | 100% |
 | M3 — Desktop multiplataforma e release | Now | 8 | 13 | 8 | 28% |
 | M4 — Integração entre dispositivos | Later | 0 | 4 | 17 | 0% |
-| M5 — Opcionais | Later | 16 | 24 | 52 | 17% |
+| M5 — Opcionais | Later | 17 | 23 | 52 | 18% |
 
 | Sprint | Datas | Done | In Progress | Progresso |
 |---|---|---|---|---|
@@ -46,7 +46,7 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | [S10](sprints/S10.md) | 2027-01-21 a 2027-02-03 | 0/12 | 5 | 0% |
 | [S11](sprints/S11.md) | 2027-02-04 a 2027-02-17 | 0/11 | 0 | 0% |
 | [S12](sprints/S12.md) | 2027-02-18 a 2027-03-03 | 0/12 | 0 | 0% |
-| [S13](sprints/S13.md) | 2027-03-04 a 2027-03-17 | 1/12 | 1 | 8% |
+| [S13](sprints/S13.md) | 2027-03-04 a 2027-03-17 | 2/12 | 0 | 17% |
 | [S14](sprints/S14.md) | 2027-03-18 a 2027-03-31 | 0/10 | 0 | 0% |
 <!-- board:end progresso -->
 
