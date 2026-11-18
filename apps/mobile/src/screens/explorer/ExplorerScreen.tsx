@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useExplorerFiles } from "./hooks/useExplorerFiles";
 import { useFileActions } from "./hooks/useFileActions";
+import { PasteBar } from "./components/PasteBar";
 import { ListView } from "./views/ListView";
 import { GridView } from "./views/GridView";
 import { useNormalizedQuery } from "../../client";
@@ -285,6 +286,16 @@ export function ExplorerScreen() {
 						/>
 					)}
 				</>
+			)}
+			{fileActions.clipboard.mode && fileActions.clipboard.items.length > 0 && (
+				<PasteBar
+					mode={fileActions.clipboard.mode}
+					items={fileActions.clipboard.items}
+					blocker={fileActions.pasteBlockerIn(currentFolder)}
+					pending={!!fileActions.clipboard.pendingPaths}
+					onPaste={() => currentFolder && fileActions.paste(currentFolder)}
+					onCancel={fileActions.clipboard.clear}
+				/>
 			)}
 			{fileActions.element}
 		</View>

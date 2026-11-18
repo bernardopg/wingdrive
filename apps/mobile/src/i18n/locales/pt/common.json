@@ -281,5 +281,14 @@
 	"My Library": "Minha biblioteca",
 	"Remove location?": "Remover local?",
 	"The files stay where they are. WingDrive stops indexing and watching them.": "Os arquivos continuam onde estão. O WingDrive para de indexá-los e observá-los.",
-	"Remove": "Remover"
+	"Remove": "Remover",
+	"Copy": "Copiar",
+	"Move": "Mover",
+	"Copy here": "Copiar para cá",
+	"Move here": "Mover para cá",
+	"Paste": "Colar",
+	"Pasting…": "Colando…",
+	"A folder cannot go inside itself": "Uma pasta não pode ir para dentro dela mesma",
+	"The items are already in this folder": "Os itens já estão nesta pasta",
+	"Open a folder on this device": "Abra uma pasta deste aparelho"
 }

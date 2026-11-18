@@ -281,5 +281,14 @@
 	"My Library": "My Library",
 	"Remove location?": "Remove location?",
 	"The files stay where they are. WingDrive stops indexing and watching them.": "The files stay where they are. WingDrive stops indexing and watching them.",
-	"Remove": "Remove"
+	"Remove": "Remove",
+	"Copy": "Copy",
+	"Move": "Move",
+	"Copy here": "Copy here",
+	"Move here": "Move here",
+	"Paste": "Paste",
+	"Pasting…": "Pasting…",
+	"A folder cannot go inside itself": "A folder cannot go inside itself",
+	"The items are already in this folder": "The items are already in this folder",
+	"Open a folder on this device": "Open a folder on this device"
 }

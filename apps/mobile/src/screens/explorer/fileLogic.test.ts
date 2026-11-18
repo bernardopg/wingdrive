@@ -1,6 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import type { WingPath } from "@wingdrive/ts-client";
-import { isInLocation, isLibraryView, libraryViewInput, localPath, previewKind, relativeDate } from "./fileLogic";
+import { useFileClipboard } from "../../stores/fileClipboard";
+import {
+	isInLocation,
+	isLibraryView,
+	libraryViewInput,
+	localPath,
+	pasteBlocker,
+	previewKind,
+	relativeDate,
+} from "./fileLogic";
 
 const physical = (device_slug: string, path: string) =>
 	({ Physical: { device_slug, path } }) as WingPath;
@@ -102,5 +111,66 @@ describe("isInLocation", () => {
 	test("leaves siblings that share a prefix and parents alone", () => {
 		expect(isInLocation("/storage/emulated/0/WingDriveTest2", roots)).toBe(false);
 		expect(isInLocation("/storage/emulated/0", roots)).toBe(false);
+	});
+});
+
+describe("pasteBlocker", () => {
+	const photo = { localPath: "/s/0/Fotos/a.jpg", isDirectory: false };
+	const fotos = { localPath: "/s/0/Fotos", isDirectory: true };
+
+	test("allows copies and moves to another folder", () => {
+		expect(pasteBlocker("copy", [photo], "/s/0/Docs")).toBeNull();
+		expect(pasteBlocker("move", [photo, fotos], "/s/0/Docs")).toBeNull();
+	});
+
+	test("allows a copy into the same folder, which gets a new name", () => {
+		expect(pasteBlocker("copy", [photo], "/s/0/Fotos")).toBeNull();
+	});
+
+	test("blocks a move into the folder the item is in", () => {
+		expect(pasteBlocker("move", [{ ...photo, localPath: "/a.jpg" }], "/")).toBe("The items are already in this folder");
+		expect(pasteBlocker("move", [photo], "/s/0/Fotos")).toBe("The items are already in this folder");
+		expect(pasteBlocker("move", [photo], "/s/0/Fotos/")).toBe("The items are already in this folder");
+	});
+
+	test("blocks a folder going into itself or a subfolder", () => {
+		expect(pasteBlocker("copy", [fotos], "/s/0/Fotos")).toBe("A folder cannot go inside itself");
+		expect(pasteBlocker("move", [fotos], "/s/0/Fotos/Sub")).toBe("A folder cannot go inside itself");
+		expect(pasteBlocker("copy", [fotos], "/s/0/Fotos2")).toBeNull();
+	});
+});
+
+describe("file clipboard", () => {
+	const file = {
+		path: physical("moto-g7", "/source/photo.jpg"),
+		localPath: "/source/photo.jpg",
+		name: "photo.jpg",
+		isDirectory: false,
+	};
+
+	test("blocks duplicate submissions and allows retry after a dispatch failure", () => {
+		const clipboard = useFileClipboard.getState();
+		clipboard.set("move", [file]);
+		expect(clipboard.beginPaste("/source")).toBeNull();
+		const first = clipboard.beginPaste("/destination")!;
+		expect(first).toEqual({ mode: "move", paths: [file.path] });
+		expect(clipboard.beginPaste("/destination")).toBeNull();
+		clipboard.finishPaste(first.paths, false);
+		expect(useFileClipboard.getState().items).toEqual([file]);
+		const retry = clipboard.beginPaste("/destination")!;
+		clipboard.finishPaste(retry.paths, true);
+		expect(useFileClipboard.getState().items).toEqual([]);
+	});
+
+	test("an older dispatch cannot clear a newer selection", () => {
+		const clipboard = useFileClipboard.getState();
+		clipboard.set("move", [file]);
+		const old = clipboard.beginPaste("/destination")!;
+		clipboard.set("copy", [file]);
+		const current = clipboard.beginPaste("/destination")!;
+		clipboard.finishPaste(old.paths, true);
+		expect(useFileClipboard.getState().pendingPaths).toBe(current.paths);
+		expect(useFileClipboard.getState().mode).toBe("copy");
+		clipboard.finishPaste(current.paths, true);
 	});
 });

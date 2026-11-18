@@ -84,3 +84,30 @@ export function previewKind(extension: string | null | undefined): "image" | "vi
 	if (VIDEO_EXTENSIONS.has(ext)) return "video";
 	return null;
 }
+
+function parentOf(path: string): string {
+	const trimmed = path.replace(/\/+$/, "");
+	const slash = trimmed.lastIndexOf("/");
+	return slash <= 0 ? "/" : trimmed.slice(0, slash);
+}
+
+/**
+ * Why the held items cannot be pasted into `destination`, as a catalog key, or null when they can.
+ * A folder cannot go into itself or one of its subfolders, and a move into the folder an item
+ * already sits in changes nothing.
+ */
+export function pasteBlocker(
+	mode: "copy" | "move",
+	items: { localPath: string; isDirectory: boolean }[],
+	destination: string,
+): string | null {
+	for (const item of items) {
+		if (item.isDirectory && isInLocation(destination, [item.localPath])) {
+			return "A folder cannot go inside itself";
+		}
+		if (mode === "move" && parentOf(item.localPath) === (destination.replace(/\/+$/, "") || "/")) {
+			return "The items are already in this folder";
+		}
+	}
+	return null;
+}

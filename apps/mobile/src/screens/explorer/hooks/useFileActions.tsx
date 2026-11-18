@@ -5,19 +5,28 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { File, WingPath } from "@wingdrive/ts-client";
 import { fileDisplayName, isVirtualFile, useJobs } from "@wingdrive/ts-client";
 import { WingMobileCore } from "wing-mobile-core";
-import { ArrowSquareOut, PencilSimple, ShareNetwork, Trash } from "phosphor-react-native";
+import {
+	ArrowSquareOut,
+	ArrowsLeftRight,
+	Copy,
+	PencilSimple,
+	ShareNetwork,
+	Trash,
+} from "phosphor-react-native";
 import { useLibraryAction, useNormalizedQuery } from "../../../client";
 import { RenameDialog } from "../../../components/RenameDialog";
+import { useFileClipboard, type ClipboardMode } from "../../../stores/fileClipboard";
 import { FileActionsSheet, type FileAction } from "../components/FileActionsSheet";
-import { isInLocation, localPath } from "../fileLogic";
+import { isInLocation, localPath, pasteBlocker } from "../fileLogic";
 
 const ICON = "hsl(235, 10%, 55%)";
 
 type Prompt = { kind: "rename"; file: File } | { kind: "newFolder"; parent: WingPath };
 
 /**
- * Explorer file operations (MOB-007): open, share, rename and delete through a long press, and a
- * new folder from the header menu. Listings refetch when an operation's job ends.
+ * Explorer file operations (MOB-007): open, share, copy, move, rename and delete through a long
+ * press, and a new folder from the header menu. Copy and move hold the file until the user pastes
+ * it in another folder. Listings refetch when an operation's job ends.
  */
 export function useFileActions() {
 	const { t } = useTranslation("common");
@@ -32,12 +41,16 @@ export function useFileActions() {
 	});
 	const currentDeviceSlug = devices?.find((device) => device.is_current)?.slug;
 
-	const refetchListings = useCallback(() => {
-		void queryClient.refetchQueries({ queryKey: ["query:files.directory_listing"], exact: false });
+	const invalidateListings = useCallback(() => {
+		void queryClient.invalidateQueries({ queryKey: ["query:files.directory_listing"] });
 	}, [queryClient]);
 
-	// Rename and delete run as jobs; the listing changes when they end.
-	useJobs({ onJobCompleted: refetchListings, onJobFailed: refetchListings });
+	// A failed or cancelled job can also leave changes on disk.
+	useJobs({
+		onJobCompleted: invalidateListings,
+		onJobFailed: invalidateListings,
+		onJobCancelled: invalidateListings,
+	});
 
 	const showError = useCallback(
 		(error: Error) => Alert.alert(t("Error"), error.message),
@@ -55,9 +68,16 @@ export function useFileActions() {
 		onSuccess: (_output, input) =>
 			Alert.alert(t("Location added"), input.name ?? undefined),
 	});
+	const clipboard = useFileClipboard();
+	const copy = useLibraryAction("files.copy", {
+		onError: showError,
+		onSettled: (_receipt, error, input) => {
+			useFileClipboard.getState().finishPaste(input.sources.paths, !error);
+		},
+	});
 	const createFolder = useLibraryAction("files.createFolder", {
 		onError: showError,
-		onSuccess: refetchListings,
+		onSuccess: invalidateListings,
 	});
 
 	const openFile = useCallback(
@@ -118,7 +138,26 @@ export function useFileActions() {
 					},
 				);
 			}
+			const hold = (mode: ClipboardMode) =>
+				clipboard.set(mode, [
+					{
+						path: file.wing_path,
+						localPath: path,
+						name: fileDisplayName(file),
+						isDirectory: file.kind === "Directory",
+					},
+				]);
 			actions.push(
+				{
+					label: "Copy",
+					icon: <Copy size={22} color={ICON} weight="bold" />,
+					onPress: () => hold("copy"),
+				},
+				{
+					label: "Move",
+					icon: <ArrowsLeftRight size={22} color={ICON} weight="bold" />,
+					onPress: () => hold("move"),
+				},
 				{
 					label: "Rename",
 					icon: <PencilSimple size={22} color={ICON} weight="bold" />,
@@ -133,7 +172,7 @@ export function useFileActions() {
 			);
 			return actions;
 		},
-		[confirmDelete, currentDeviceSlug, openFile, showError],
+		[clipboard, confirmDelete, currentDeviceSlug, openFile, showError],
 	);
 
 	/** Whether a long press on this file has anything to offer. */
@@ -216,6 +255,37 @@ export function useFileActions() {
 		</>
 	);
 
+	/** Why the held files cannot go into `folder`, or null when they can be pasted there. */
+	const pasteBlockerIn = useCallback(
+		(folder: WingPath | null) => {
+			const destination = folder ? localPath(folder, currentDeviceSlug) : null;
+			if (!destination || !clipboard.mode) return "Open a folder on this device";
+			return pasteBlocker(clipboard.mode, clipboard.items, destination);
+		},
+		[clipboard.items, clipboard.mode, currentDeviceSlug],
+	);
+
+	/** Copies or moves the held files into `folder`; a name already taken gets a new one. */
+	const paste = useCallback(
+		(folder: WingPath) => {
+			const destination = localPath(folder, currentDeviceSlug);
+			if (!destination) return;
+			const source = useFileClipboard.getState().beginPaste(destination);
+			if (!source) return;
+			copy.mutate({
+				sources: { paths: source.paths },
+				destination: folder,
+				overwrite: false,
+				verify_checksum: false,
+				preserve_timestamps: true,
+				move_files: source.mode === "move",
+				copy_method: "Auto",
+				on_conflict: "AutoModifyName",
+			});
+		},
+		[copy, currentDeviceSlug],
+	);
+
 	const localPathOf = useCallback(
 		(file: File) => localPath(file.wing_path, currentDeviceSlug),
 		[currentDeviceSlug],
@@ -224,6 +294,9 @@ export function useFileActions() {
 	return {
 		element,
 		localPathOf,
+		clipboard,
+		pasteBlockerIn,
+		paste,
 		hasActions,
 		showActions: setSelected,
 		openIfLocal,

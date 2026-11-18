@@ -35,5 +35,10 @@ Checked on the moto g(7) with the files in `/sdcard/WingDriveTest`:
   and the core's `move_to_trash` is unsupported there.
 - New Folder in the header menu created "Criada no app".
 - The Favorites screen exists (Recents and Favorites wing items open library-wide lists).
-- Still to do: copy and move (need a destination picker), favorite and tag from the sheet (only
-  indexed entries can be favorited), a Trash screen.
+- Copy and Move hold a local file or folder while you browse to the destination. On Android 15
+  with the review debug APK, copying a file preserved its source and checksum. Moving another
+  file removed it from the source on disk and in the Explorer. Both appeared in the destination
+  without a manual refresh. A copy into a folder with an existing file of the same name created a
+  numbered copy. The paste bar blocked moving a folder into itself.
+- Still to do: favorite and tag from the sheet (only indexed entries can be favorited), and a
+  Trash screen.
