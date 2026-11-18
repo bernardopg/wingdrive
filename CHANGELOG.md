@@ -5,6 +5,46 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+## 3.5.0 — 2026-11-17
+
+Google Drive with WingDrive's own sign-in reaches existing files through the
+Google Picker, and the Google integration asks for one scope less, as part of
+Google's OAuth verification (#428). Windows and Android fixes from the same
+day ride along.
+
+### Added
+
+- **Add files from Google Drive** (Settings > Integrations) opens the Google
+  Picker for accounts connected with WingDrive's own client, which only hold
+  `drive.file`. Picked files and folders appear at the top of that account's
+  Drive in WingDrive. Accounts on a Google Cloud client of their own still see
+  all of Drive.
+- The tray menu opens the daemon's logs folder (#423).
+- Android builds carry the product version (#418), and the app follows the
+  phone's language until you pick one (#416).
+
+### Changed
+
+- WingDrive no longer asks Google for `photoslibrary.edit.appcreateddata`:
+  no feature used it. Accounts that granted it keep working.
+- The privacy policy states what WingDrive caches on your device, for how
+  long, and that it talks to Google over HTTPS.
+- Tagged Windows installers are signed with Authenticode when the signing
+  secrets exist (#422).
+
+### Fixed
+
+- Windows: the daemon's scheduled task is valid UTF-16 XML (#420), and Open
+  with shows app names with the default app first (#421).
+- Android: a Wi-Fi multicast lock keeps nearby devices discoverable while the
+  core runs (#417), and storage and volume details are named in words (#419).
+
+### Contributors
+
+- CI builds Windows dependencies at opt-level 1 (#427). `cargo deny` accepts
+  the chrono and humantime unmaintained notices until CORE-024 replaces
+  chrono (#425, #426).
+
 ## 3.4.1 — 2026-11-17
 
 A maintenance release: Rust 1.100, every pending dependency update in one

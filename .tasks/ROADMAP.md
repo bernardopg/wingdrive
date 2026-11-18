@@ -228,6 +228,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-17 | Release `v3.5.0`: Google Picker para contas `drive.file` e um escopo do Fotos a menos (INTG-011, INTG-003, #428), resposta à verificação OAuth do Google; correções de Windows (#420, #421) e Android (#416 a #419), logs pela bandeja (#423), Authenticode condicional (#422). |
 | 2026-11-17 | Release `v3.4.1`: Rust 1.100, dependências do dependabot e não rastreadas num PR só, alertas de code scanning resolvidos (#410), filme e media kit no site (#412), CI Rust com um conjunto de features (#413) |
 | 2026-11-16 | Release `v3.4.0`: atualizações assinadas do AppImage e do Windows (REL-001), daemon sem console no Windows (TAURI-019), `drive.file` no cliente Google do WingDrive (INTG-003, #407; verificação do Google enviada, Acesso a dados em análise), board de tasks e MCP (DEV-007, #406), CORE-022, CORE-023, MOB-017 e Wings (BRAND-003) |
 | 2026-11-15 | **M2 Done**: DESK-051 conferida pelo autor, BRAND-003 com barra lateral e sync com celular na 3.3.1, CORE-021 com 15 rodadas do smoke, DESK-097 (janela no login) corrigida; DESK-000 Done. M3 vira o Now. Tasks novas: TAURI-018 (smoke do Explorer no CI), TAURI-019 (daemon no Windows em segundo plano), CORE-022 (ruído de log), CORE-023 (full sync em loop), MOB-017 (revisão Android). Cobertura no `main`: core 53,7%, desktop 90,7%, CLI 65,9%, interface 74,5%; metas do M3 batidas e as COV abertas foram para o M3 |
