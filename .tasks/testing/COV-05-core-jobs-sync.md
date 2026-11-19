@@ -36,4 +36,4 @@ COV-04. Escopo, metas e ordem em [README.md](README.md).
 
 - [ ] Ao menos 70% nos módulos selecionados de job/sync com contagens por arquivo.
 - [ ] Sem operações duplicadas após retomar ou reenviar eventos.
-- [ ] Core atinge pelo menos 50% de linhas no relatório completo, sem reduzir denominador para cumprir a meta.
+- [ ] Core atinge pelo menos 65% de linhas no relatório completo, sem reduzir denominador para cumprir a meta.
