@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [epic, coverage, testing, core, desktop, cli]
-last_updated: 2026-11-10
+last_updated: 2026-11-18
 ---
 
 ## Description
@@ -35,7 +35,7 @@ gates finais fecham no M3. A divisão e os critérios de medição estão em [RE
 
 ## Acceptance Criteria
 
-- [ ] Core com pelo menos 50% de linhas cobertas, desktop 75% e CLI 60% no relatório completo.
+- [ ] Core com pelo menos 65% de linhas cobertas, desktop 100% e CLI 75% no relatório completo.
 - [ ] Interface React compartilhada com pelo menos 60%, medida separadamente do shell desktop.
 - [ ] Pelo menos 80% de cobertura nas linhas de produção alteradas, com erros e limites relevantes.
 - [ ] Código não instrumentado listado; exclusões justificadas, sem remover arquivos para atingir metas.

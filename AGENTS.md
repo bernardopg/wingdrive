@@ -890,6 +890,11 @@ cargo run -p task-validator -- validate
 
 Full documentation: `/docs/core/task-tracking.mdx`
 
+## Test coverage
+
+For coverage work in any component, use the [WingDrive test coverage skill](.agents/skills/wingdrive-test-coverage/SKILL.md).
+It defines measurement, diagnostics, defect records, regression validation and PR delivery.
+
 ## Debugging
 
 ### Log Files
