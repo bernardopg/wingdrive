@@ -27,6 +27,6 @@ COV-01, COV-05, COV-07, COV-08, COV-10. Escopo, metas e ordem em [README.md](REA
 
 ## Acceptance Criteria
 
-- [ ] Pisos finais: core 50%, desktop 75%, CLI 60%, interface 60%; linhas de produção alteradas pelo menos 80%.
+- [ ] Pisos finais: core 65%, desktop 100%, CLI 75%, interface 60%; linhas de produção alteradas pelo menos 80%.
 - [ ] Gate testa limites, ausência de dados e diferenças de paths com LCOV sintético.
 - [ ] PR executa escopo necessário sem duplicar builds; main publica relatório completo e status por componente.

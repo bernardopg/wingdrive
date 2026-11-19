@@ -46,6 +46,9 @@ files that no test imports do not appear in the totals. The report lists the fil
 The [COV-00 plan](.tasks/testing/README.md) defines progressive targets for the core, desktop,
 CLI and shared interface, with tasks, dependencies and evidence requirements.
 
+For any coverage change, follow the [WingDrive test coverage skill](.agents/skills/wingdrive-test-coverage/SKILL.md).
+Record diagnostics and fixes in the owning task, the bug log and Headroom when you confirm a defect.
+
 ## Run it locally
 
 ```bash

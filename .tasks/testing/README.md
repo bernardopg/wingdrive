@@ -6,17 +6,17 @@ A DEV-006 já entrega runners, LCOV, badges e publicação; este plano amplia os
 
 ## Metas de linhas
 
-| Componente do relatório | Referência no main | Primeira etapa | Conclusão |
-|---|---|---|---|
-| Core (`core/`) | 19,6% (15.875/81.068) | 30% | 50% |
-| Desktop (`apps/tauri/`) | 45,2% (2.702/5.981) | 60% | 75% |
-| CLI (`apps/cli/`) | 0,4% (20/5.128) | 25% | 60% |
-| Interface (`packages/interface/`) | 39,6% (2.189/5.527) | 50% | 60% |
+| Componente | Referência publicada | Meta final |
+|---|---:|---:|
+| Core (`core/`) | 52,4% (47.789/91.258) | 65% |
+| Desktop (`apps/tauri/`) | 88,7% (7.892/8.896) | 100% |
+| CLI (`apps/cli/`) | 65,6% (4.715/7.192) | 75% |
+| Interface (`packages/interface/`) | Medida separadamente | 60% |
 
-Referência verificada em 2026-11-03, gerada às 17:58 UTC no SHA
-`1064b6b8b6e94f5b7040e3c112e784d5c0e57271`. Fonte: `summary.json` do branch
-[badges](https://github.com/bernardopg/wingdrive/blob/badges/summary.json).
-São metas, não resultados já obtidos neste branch.
+A [referência publicada](https://github.com/bernardopg/wingdrive/actions/runs/44300266610)
+mede o SHA `92f507c3270f9006faf91c64de5ea21bfc39564f` em 2026-11-18. As metas usam o
+relatório completo e os contadores de linhas. Para 100%, os contadores de linhas
+cobertas e instrumentadas precisam ser iguais.
 
 As porcentagens contam linhas instrumentadas, conforme [COVERAGE.md](../../COVERAGE.md).
 Código Rust não compilado e TypeScript não importado podem ficar fora do denominador.
@@ -41,6 +41,12 @@ S06 nem datas antes do planning. Um teste implementado neste branch só vira Don
 critérios e a Definition of Done, incluindo merge no main.
 
 ## Evidência por entrega
+
+Siga a [skill de cobertura](../../.agents/skills/wingdrive-test-coverage/SKILL.md) para
+triagem de diagnósticos, registro de bugs e publicação. O relatório oficial de componente
+é a métrica da meta geral do CLI. A medição restrita a código de produção continua útil
+para direcionar os testes da COV-09.
+
 
 Registrar SHA, ambiente/plataforma, comandos, contagens cobertas/instrumentadas por arquivo e
 componente, LCOV/summary e duração. Todos os testes novos entram no runner normal e no de
