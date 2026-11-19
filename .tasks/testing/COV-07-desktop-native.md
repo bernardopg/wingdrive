@@ -283,3 +283,10 @@ two existing ignores. Separate LLVM profiles of the same binary put instrumented
 `filemanager1.rs` at 102/163 before the new case and 134/163 with it. The denominator includes
 existing inline tests. The full component target stays open. Logs and profiles are in
 `coverage/goal/next/` in the primary checkout.
+
+### Linux terminal discovery
+
+The file opener now has a subprocess test for Linux terminal discovery with a private PATH.
+It verifies the priority of `xdg-terminal-exec`, a configured `TERMINAL`, known fallback
+emulators, and the absence of a terminal. All five terminal tests passed under LLVM
+instrumentation. The test checks the selected executable and argument boundaries.
