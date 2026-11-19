@@ -685,3 +685,12 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Impacto: o serviço iniciava o daemon na pasta errada ou falhava na leitura dos argumentos, e o app esperava 3 s antes de mostrar "Daemon failed to start after installing service". Identificado pela especificação de linha de comando do `systemd.service`; não foi reproduzido contra um gerenciador systemd real, porque os testes não alcançam o systemd do usuário.
 - Correção: cada argumento de `ExecStart` vai entre aspas duplas, com `\` e `"` escapados, `%` como `%%`, `$` como `$$` e quebra de linha como `\n`.
 - Limite: o serviço continua usando a pasta da instância como `--data-dir` e não passa `--instance`, então instalar o serviço a partir de uma instância nomeada inicia o daemon padrão na porta 6969. Não foi alterado aqui.
+
+## Montagem GVFS pode expirar antes de ler o diagnóstico do GIO
+
+- Estado: reproduzido em harness isolado da função `run_mount_command` no Linux.
+- Local: `apps/tauri/src-tauri/src/gvfs.rs`.
+- Reprodução: use um processo local que escreva 256 KiB no stderr, emita `gio: Permission denied` e saia com código 1. Com prazo de 1 segundo, WingDrive retorna `Timed out connecting`.
+- Causa: o processo preenche o pipe enquanto WingDrive aguarda seu término para ler a saída. A montagem pode ocultar o diagnóstico original ou ficar bloqueada até o prazo.
+- Correção: executar o GIO com Tokio, consumir stderr enquanto o processo roda, descartar stdout e encerrar o filho se o prazo expirar ou a espera for cancelada.
+- Verificação: a suíte instrumentada `WingDrive gvfs::` passou 11 testes. O subprocesso com stderr de 256 KiB devolveu `Permission denied`. Também passaram os casos de senha sintética, processo ausente e prazo excedido. Nenhuma montagem real foi usada.
