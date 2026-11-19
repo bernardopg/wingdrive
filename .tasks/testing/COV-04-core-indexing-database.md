@@ -108,3 +108,11 @@ All 12 passed on Linux with LLVM instrumentation and the collector's Cargo packa
 The focused run had zero failures, ignored tests or compiler warnings. The full report must be
 regenerated before attributing any percentage gain to these suites. The collector now invokes
 `cargo llvm-cov show-env --sh` to remove the deprecated `--export-prefix` warning.
+
+### Offline sidecar recovery
+
+A temporary library fixture verifies sidecar discovery from disk, the ready lookup, database
+presence, size updates, local availability after removal and the uninitialized library error.
+The instrumented Linux test passed. It hit 365 of 569 lines in `sidecar_manager.rs`. The prior
+complete profile hit 20 of 569. These are per-file profiles. The next complete collector measures
+the combined core impact. The test requires no external services or media decoder.
