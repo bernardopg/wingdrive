@@ -94,3 +94,85 @@ async fn push_stream_writes_the_file_and_returns_the_final_acknowledgment() {
 		TransferState::Completed
 	);
 }
+
+#[tokio::test]
+async fn pull_stream_reports_metadata_chunks_and_the_full_checksum() {
+	let root = tempfile::tempdir().unwrap();
+	let allowed = root.path().canonicalize().unwrap();
+	let source = allowed.join("source.bin");
+	let payload = b"first chunk through last chunk";
+	tokio::fs::write(&source, payload).await.unwrap();
+	let handler = FileTransferProtocolHandler::new(
+		TransferConfig {
+			chunk_size: 8,
+			..TransferConfig::default()
+		},
+		Arc::new(SilentLogger),
+	);
+	handler.set_allowed_paths(vec![allowed]);
+	let (mut client, server) = tokio::io::duplex(8192);
+	let (server_read, server_write) = tokio::io::split(server);
+	let node = iroh::SecretKey::generate().public();
+	let stream = handler.handle_stream(Box::new(server_write), Box::new(server_read), node);
+	let id = Uuid::new_v4();
+	let exchange = async {
+		send(
+			&mut client,
+			&FileTransferMessage::PullRequest {
+				transfer_id: id,
+				source_path: source,
+				requested_by: Uuid::new_v4(),
+			},
+		)
+		.await;
+
+		let FileTransferMessage::PullResponse {
+			transfer_id,
+			file_metadata: Some(metadata),
+			accepted: true,
+			error: None,
+		} = receive(&mut client).await
+		else {
+			panic!("expected pull acceptance with metadata");
+		};
+		assert_eq!(transfer_id, id);
+		assert_eq!(metadata.name, "source.bin");
+		assert_eq!(metadata.size, payload.len() as u64);
+		assert!(!metadata.is_directory);
+
+		for (index, expected) in payload.chunks(8).enumerate() {
+			let FileTransferMessage::FileChunk {
+				transfer_id,
+				chunk_index,
+				data,
+				chunk_checksum,
+				..
+			} = receive(&mut client).await
+			else {
+				panic!("expected a pull data chunk");
+			};
+			assert_eq!(transfer_id, id);
+			assert_eq!(chunk_index, index as u32);
+			assert_eq!(data, expected);
+			assert_eq!(chunk_checksum, *blake3::hash(expected).as_bytes());
+		}
+
+		let FileTransferMessage::TransferComplete {
+			transfer_id,
+			final_checksum,
+			total_bytes,
+		} = receive(&mut client).await
+		else {
+			panic!("expected pull completion");
+		};
+		assert_eq!(transfer_id, id);
+		assert_eq!(total_bytes, payload.len() as u64);
+		assert_eq!(final_checksum, blake3::hash(payload).to_hex().as_str());
+		client.shutdown().await.unwrap();
+	};
+	tokio::time::timeout(std::time::Duration::from_secs(5), async {
+		tokio::join!(stream, exchange)
+	})
+	.await
+	.unwrap();
+}
