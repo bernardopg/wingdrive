@@ -53,6 +53,19 @@ used LLVM instrumentation on Linux and had zero failures, ignored tests or compi
 The logs are in `coverage/goal/cloud-removal-final-rpc.log`, `cloud-neighbors.log` and
 `cloud-setup-after.log`. The pseudo-terminal suite currently runs on Unix.
 
+## Legacy cloud volume classification
+
+The cloud wizard and removal RPC now use the same classification for provider mounts stored
+as `Network`. The fixtures include a legacy S3 mount without cloud fields in the CLI
+response and a network share that must stay outside the cloud menu. The SQLite contract
+also checks credentials and tracked rows after allowing or refusing each removal.
+The instrumented baseline rejected the legacy S3 row with `Volume is not tracked`. The first
+PTY regression waited for a cloud listing and timed out when the menu treated the library as
+empty. Its fixture now waits for the next menu before checking the rendered provider list.
+The corrected combined build passed 584 CLI tests and seven RPC contracts. See [BUGS.md](BUGS.md).
+Logs are in `coverage/goal/next/legacy-before-{core,cli}.log` and
+`coverage/goal/next/legacy-cloud-and-provider-tests.log` in the primary checkout.
+
 ## Dependencies
 
 COV-09, COV-03. Escopo, metas e ordem em [README.md](README.md).

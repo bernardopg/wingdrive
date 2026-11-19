@@ -11,10 +11,7 @@ use wing_core::ops::volumes::{
 	list::VolumeListQueryInput,
 	remove_cloud::{VolumeRemoveCloudInput, VolumeRemoveCloudOutput},
 };
-use wing_core::{
-	domain::volume::{Volume, VolumeType},
-	volume::backend::CloudServiceType,
-};
+use wing_core::{domain::volume::Volume, volume::backend::CloudServiceType};
 
 pub async fn run_interactive(ctx: &Context) -> Result<()> {
 	loop {
@@ -323,7 +320,7 @@ async fn tracked_cloud_volumes(ctx: &Context) -> Result<Vec<Volume>> {
 	Ok(volumes
 		.volumes
 		.into_iter()
-		.filter(|volume| volume.volume_type == VolumeType::Cloud)
+		.filter(Volume::is_cloud)
 		.collect())
 }
 
