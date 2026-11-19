@@ -447,6 +447,7 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução: execute `wing daemon install` com binário em `program files` e data-dir com espaços, aspas, `%` e `$`. A unidade registra `ExecStart` sem aspas. O systemd divide os caminhos e pode expandir os caracteres especiais.
 - Causa adicional: a detecção buscava um fragmento em todo o arquivo. Uma unidade para `/data/backup-longer` podia ser usada para `/data/backup`, enquanto a unidade do desktop com argumento protegido passava despercebida.
 - Correção: mover a rotina de escape do desktop para `wing-branding` e usar a mesma representação na CLI. Comparar o argumento completo na diretiva `ExecStart` e conferir a instância, aceitando unidades anteriores com caminhos simples.
+- Verificação focada: o helper extraído passou casos de aspas e correspondência exata. `systemd-analyze verify` aceitou a unidade com os dois caminhos protegidos. Os testes completos do novo binário estão no lote de validação local.
 
 ## CLI: busca aceitava `--wing-path` e `--location` juntos
 

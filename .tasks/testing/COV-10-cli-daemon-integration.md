@@ -25,6 +25,12 @@ diagnosis and correction are recorded in [BUGS.md](BUGS.md). The baseline output
 E0463 loading `tempfile`. This isolated linker failure is in
 `coverage/goal/cli-systemd/rustc-harness.log`; use the Cargo integration binary for verification.
 
+The four process cases executed against the previous binary in a standalone fixture. Three passed
+and the quoting case reproduced the error. The corrected path helper and matcher passed the
+focused harness, and `systemd-analyze verify --man=no --generators=no` accepted the generated
+fixture unit. The corrected binary's integrated verification has been queued. Logs are in
+`coverage/goal/cli-systemd/{baseline-fixture,helper,systemd-verify}.log`.
+
 ## Interactive cloud setup regression 2026-11-19
 
 Scripted pseudo-terminal sessions exercise the actual CLI wizard against localhost RPC. They
