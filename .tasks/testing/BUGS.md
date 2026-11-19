@@ -783,3 +783,11 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: a listagem avaliava o stdout sem conferir o código de saída.
 - Correção: retornar o diagnóstico do GIO em caso de falha e oferecer nova tentativa na barra lateral. Uma listagem vazia bem-sucedida continua válida.
 - Verificação: a regressão falhou com `unwrap_err()` sobre `Ok([])` antes da correção. Depois, 12 testes instrumentados de GVFS e um teste React passaram. Os testes também cobrem erro sem stderr, executável ausente e recuperação após nova tentativa. Usam subprocessos descartáveis e uma plataforma de teste.
+
+## Desktop: inicialização GTK registrava avisos de aceleradores descartados
+
+- Local: `setup_menu` e `setup_menus` em `apps/tauri/src-tauri/src/main.rs`.
+- Reprodução: inicie e encerre o desktop Linux sob Xvfb e D-Bus privados. O pacote AUR emitiu dez avisos `no accelerator ... installed`. O binário instrumentado do checkout emitiu onze.
+- Causa: o startup instalava o menu completo e substituía seu menu efetivo por um vazio no Linux e no Windows.
+- Correção: instalar diretamente o menu vazio nesses dois sistemas. Os itens usados pelo IPC de seleção continuam acessíveis no estado.
+- Verificação: oito testes de menu passaram. O binário instrumentado abriu a janela, respondeu ao Ping do daemon e encerrou com status zero. O replay teve zero avisos de aceleradores GTK.
