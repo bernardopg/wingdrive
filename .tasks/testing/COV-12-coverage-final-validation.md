@@ -68,3 +68,23 @@ Raw logs, LCOV and report artifacts are in `coverage/goal/combined/`. The earlie
 export in `partial-site/` omits the server and shared-crate stage. Use `site/summary.json` for the
 complete local result. The next process, D-Bus and pairing suites are tracked in COV-05, COV-07
 and COV-10. The component targets remain open.
+
+### Full collector after the service, FileManager1, updater and pairing tests
+
+Local verification commit `c457b9fe09872a73ffc29641acdaf74f392a0dbc` on Linux, with the
+same Rust, LLVM, Bun and reporting filters. Both collectors exited zero.
+The full coverage report is in `coverage/goal/next/full/site/summary.json` in the primary worktree.
+
+| Component | Covered / instrumented | Coverage | Target | Remaining lines at this denominator |
+|---|---:|---:|---:|---:|
+| Desktop | 8,022 / 8,898 | 90.2% | 100% | 876 |
+| Core | 49,642 / 91,525 | 54.2% | 65% | 9,850 |
+| CLI | 5,781 / 7,311 | 79.1% | 75% | 0 |
+
+Rust passed 2,188 tests across 81 reports. The four ignored occurrences have the same scope
+as the previous result, with GTK exercised again on Xvfb. Frontend passed 370 tests.
+The Rust collector ran without compiler warnings. The prior unused server dependency
+warning was absent after the manifest and lockfile change. The frontend logged the same two
+expected rename error fixtures. The CLI production-only diagnostic measured 3,892/5,421 (71.8%).
+The CLI reaches its target under the official line filter on this local commit.
+Desktop and core remain open, and this result awaits a full report on a merged SHA.
