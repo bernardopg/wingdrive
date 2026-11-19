@@ -295,3 +295,60 @@ fn linux_service_and_context_actions_use_the_user_desktop_files() {
 		String::from_utf8_lossy(&output.stderr)
 	);
 }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn default_host_opener_falls_back_without_changing_the_path() {
+	use std::{os::unix::fs::PermissionsExt, process::Command};
+
+	const ROOT: &str = "WING_TEST_HOST_OPENER_ROOT";
+	if let Some(root) = std::env::var_os(ROOT) {
+		let root = Path::new(&root);
+		let folder = root.join("logs with spaces");
+		assert!(matches!(
+			super::open_default(&folder).unwrap(),
+			OpenResult::Success
+		));
+		assert_eq!(
+			std::fs::read_to_string(root.join("arguments")).unwrap(),
+			format!("open\n{}\n", folder.display())
+		);
+
+		std::fs::remove_file(root.join("gio")).unwrap();
+		assert!(matches!(
+			super::open_default(&folder).unwrap(),
+			OpenResult::PlatformError { .. }
+		));
+		return;
+	}
+
+	let root = tempfile::tempdir().unwrap();
+	std::fs::create_dir(root.path().join("logs with spaces")).unwrap();
+	for (name, contents) in [
+		("xdg-open", "#!/bin/sh\nexit 1\n"),
+		(
+			"gio",
+			"#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$WING_TEST_HOST_OPENER_ROOT/arguments\"\n",
+		),
+	] {
+		let path = root.path().join(name);
+		std::fs::write(&path, contents).unwrap();
+		std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700)).unwrap();
+	}
+	let output = Command::new(std::env::current_exe().unwrap())
+		.args([
+			"--exact",
+			"file_opening::tests::default_host_opener_falls_back_without_changing_the_path",
+		])
+		.env(ROOT, root.path())
+		.env("PATH", root.path())
+		.env_remove("APPDIR")
+		.output()
+		.unwrap();
+	assert!(
+		output.status.success(),
+		"child failed: {}{}",
+		String::from_utf8_lossy(&output.stdout),
+		String::from_utf8_lossy(&output.stderr)
+	);
+}

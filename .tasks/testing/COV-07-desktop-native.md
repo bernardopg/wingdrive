@@ -298,3 +298,10 @@ absent. A separate mock-app case verifies that a hidden autostart queues nothing
 hidden invocation with a folder delivers the request. All 21 launch tests passed with LLVM
 instrumentation. The focused profile hit 219/227 lines in `launch.rs`, including 16 lines missed
 by the previous full collector. This test uses a private bus and the mock window runtime.
+
+### Linux default opener
+
+A child process with a private PATH verifies that the desktop's default opener falls back
+from a failing `xdg-open` to GIO and passes a directory containing spaces as one argument.
+With both launchers unavailable or failing, the command returns a platform error. All five
+instrumented file-opening tests passed. See `coverage/goal/after-sidecars/default-opener.log`.
