@@ -31,6 +31,23 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 - [x] Undo nunca sobrescreve dados criados depois da operação original.
 - [x] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
 
+## GTK clipboard coverage 2026-11-19
+
+The Linux coverage collector now explicitly runs the existing GTK clipboard integration test.
+It creates a private Xvfb display and checks GNOME, KDE and plain URI clipboard targets.
+The coverage workflow installs Xvfb if the runner does not already have it.
+Both instrumented runs passed with zero failures or compiler warnings. Adding the clipboard
+profile to the existing partial baseline of the same `clipboard.rs` source covers 88/95 lines
+instead of 45/95. The focused run and LCOV are under `coverage/goal/desktop-clipboard/`.
+The full desktop measurement is tracked separately.
+
+## Desktop updater checks 2026-11-19
+
+Four updater tests passed with LLVM on Linux. The new tests serve a synthetic release
+manifest, an empty response and malformed JSON on loopback. They exercise the plugin
+through the desktop lookup function without downloading an installer. The log is
+`coverage/goal/next/updater.log` in the primary checkout.
+
 ## Evidence
 
 - 2026-11-06: suítes novas em `apps/tauri/src-tauri/src/{main,keybinds,file_opening,windows}/tests/`
@@ -192,6 +209,17 @@ mesma falha foi reproduzida na base limpa `6152c8ecd`. O caso está em [BUGS.md]
 Não houve validação gráfica ou de polkit real. A cobertura e os
 critérios restantes mantêm a tarefa em andamento.
 
+## Regressão do subprocesso GIO
+
+O [registro em BUGS.md](BUGS.md#montagem-gvfs-pode-expirar-antes-de-ler-o-diagnóstico-do-gio)
+detalha a espera circular observada quando o GIO escreve mais dados do que o pipe comporta.
+
+A correção usa I/O assíncrono e mantém o prazo da operação enquanto lê stderr.
+`cargo test --locked --offline -p wing-core -p wing-cli -p wing-bench -p wingdrive --bin WingDrive gvfs::`
+com ambiente LLVM passou 11 testes em Linux. Os primeiros harnesses avulsos falharam
+com E0463 ao resolver dependências de Tokio. A suíte do binário recompilou o código com
+o grafo correto. A medição focada ainda deixa a meta global de desktop em aberto.
+
 ### 2026-11-13
 
 Cobertura de linhas do componente desktop (`apps/tauri/`, sem arquivos de teste): **80,5% para 91,6%**
@@ -230,3 +258,16 @@ use a temporary directory and a loopback port.
 Profiles of the same test binary show 209/438 production lines of `server.rs` covered with its
 existing tests and 368/438 with all seven. There were zero failures, ignored tests or compiler
 warnings. Logs and LCOV are under `coverage/goal/desktop-server/`. The full desktop report is pending.
+
+### GVFS device-list failure and retry
+
+The Linux command test reproduced a successful empty result for a GIO process that exited 1 with
+a diagnostic. The regression now verifies successful empty output, stderr on failure, exit status
+without stderr and failure to start the executable. All 12 instrumented GVFS tests passed.
+The sidebar test verifies the error indicator and a successful retry through React Query. It passed
+with five assertions and runs in CI and the frontend coverage collector.
+
+See [BUGS.md](BUGS.md#desktop-a-listagem-de-volumes-do-gio-escondia-falhas) for the cause and fix.
+The logs are in `coverage/goal/next/gvfs-list-*.log` and `gvfs-network-ui.log`. Fixtures used
+local subprocesses and a simulated device. System GIO and real phone connections were outside
+this verification.
