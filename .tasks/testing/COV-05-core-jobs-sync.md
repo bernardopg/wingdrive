@@ -31,6 +31,18 @@ incremental comparison and the full published component measurement remains sepa
 Logs and LCOV are in `coverage/goal/core-sync-backfill-final.log` and
 `coverage/goal/core-sync-backfill/`.
 
+## Offline pairing sessions 2026-11-19
+
+An isolated handler fixture creates local session codes, rejects duplicate joins, removes expired
+sessions, and checks the selected code through cancellation. The old lookup took the last value
+from a hash map. The direct algorithm reproducer found an older code after the third insertion.
+See [BUGS.md](BUGS.md) and `coverage/goal/pairing/hash-map-before.log`.
+
+The three instrumented cases passed twice, including the signed exchange between two
+temporary registries, persistence on both peers and matching directional keys. The focused
+pairing profile exercised 230 lines of the handler, 165 lines on the initiator and 126 on
+the joiner. Logs and LCOV are under `coverage/goal/next/pairing/` in the primary checkout.
+
 ## Dependencies
 
 COV-04. Escopo, metas e ordem em [README.md](README.md).
@@ -58,7 +70,7 @@ dessa medição. Logs em `coverage/goal/next/thumbnail-checkpoint-*.log`.
 
 - [ ] Ao menos 70% nos módulos selecionados de job/sync com contagens por arquivo.
 - [ ] Sem operações duplicadas após retomar ou reenviar eventos.
-- [ ] Core atinge pelo menos 50% de linhas no relatório completo, sem reduzir denominador para cumprir a meta.
+- [ ] Core atinge pelo menos 65% de linhas no relatório completo, sem reduzir denominador para cumprir a meta.
 
 ## Job failure diagnostics 2026-11-19
 
