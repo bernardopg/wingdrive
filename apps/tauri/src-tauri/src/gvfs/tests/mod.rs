@@ -116,54 +116,62 @@ fn mount_script(script: &str) -> std::process::Command {
 	command
 }
 
-#[test]
-fn mount_reports_gio_results_and_answers_the_password_prompt() {
+#[tokio::test]
+async fn mount_reports_gio_results_and_answers_the_password_prompt() {
 	use std::time::Duration;
 
 	use super::run_mount_command;
 
-	let run = |script: &str, password: Option<&str>| {
+	async fn run(script: &str, password: Option<&str>) -> Result<(), String> {
 		run_mount_command(
 			mount_script(script),
 			"sftp://server/",
 			password,
 			Duration::from_secs(10),
 		)
-	};
-	run("exit 0", None).unwrap();
+		.await
+	}
+	run("exit 0", None).await.unwrap();
 	// The password is the only line gio reads from stdin.
-	run("read line; [ \"$line\" = secret ]", Some("secret")).unwrap();
-	assert!(run("read line; [ \"$line\" = secret ]", Some("wrong")).is_err());
+	run("read line; [ \"$line\" = secret ]", Some("secret"))
+		.await
+		.unwrap();
+	assert!(run("read line; [ \"$line\" = secret ]", Some("wrong"))
+		.await
+		.is_err());
 	// A location that is already mounted is what the caller wanted.
 	run(
 		"echo 'gio: sftp://server/: Location is already mounted' >&2; exit 2",
 		None,
 	)
+	.await
 	.unwrap();
 	assert_eq!(
 		run(
 			"echo 'first' >&2; echo 'gio: sftp://server/: Permission denied' >&2; exit 2",
 			None
 		)
+		.await
 		.unwrap_err(),
 		"sftp://server/: Permission denied"
 	);
 	assert_eq!(
-		run("exit 1", None).unwrap_err(),
+		run("exit 1", None).await.unwrap_err(),
 		"Could not mount sftp://server/"
 	);
 }
 
-#[test]
-fn mount_gives_up_on_a_prompt_that_never_ends() {
+#[tokio::test]
+async fn mount_gives_up_on_a_prompt_that_never_ends() {
 	use std::time::Duration;
 
 	let error = super::run_mount_command(
-		mount_script("sleep 30"),
+		mount_script("exec sleep 30"),
 		"sftp://server/",
 		None,
 		Duration::from_millis(200),
 	)
+	.await
 	.unwrap_err();
 	assert_eq!(error, "Timed out connecting to sftp://server/");
 	let error = super::run_mount_command(
@@ -172,6 +180,45 @@ fn mount_gives_up_on_a_prompt_that_never_ends() {
 		None,
 		Duration::from_secs(1),
 	)
+	.await
 	.unwrap_err();
 	assert!(error.starts_with("gio is not available"), "{error}");
+}
+
+#[tokio::test]
+async fn mount_drains_diagnostics_before_the_child_exits() {
+	let script = "head -c 262144 /dev/zero >&2; printf '\ngio: Permission denied\n' >&2; exit 1";
+	let error = run_mount_command(
+		mount_script(script),
+		"sftp://fixture.invalid/",
+		None,
+		Duration::from_secs(3),
+	)
+	.await
+	.unwrap_err();
+	assert_eq!(error, "Permission denied");
+}
+
+#[tokio::test]
+async fn mountable_listing_distinguishes_a_failed_command_from_an_empty_list() {
+	assert!(list_mountable_command(mount_script("exit 0"))
+		.await
+		.unwrap()
+		.is_empty());
+	let result = list_mountable_command(mount_script(
+		"printf 'gio: volume monitor unavailable\\n' >&2; exit 1",
+	))
+	.await;
+	assert_eq!(result.unwrap_err(), "volume monitor unavailable");
+	let error = list_mountable_command(mount_script("exit 2"))
+		.await
+		.unwrap_err();
+	assert!(
+		error.contains("gio mount -li failed") && error.contains("2"),
+		"{error}"
+	);
+	let error = list_mountable_command(Command::new("/nonexistent/gio"))
+		.await
+		.unwrap_err();
+	assert!(error.starts_with("gio is not available:"), "{error}");
 }

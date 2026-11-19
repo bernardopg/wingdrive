@@ -859,6 +859,11 @@ impl Volume {
 		crate::volume::fs::contains_path(self, path)
 	}
 
+	/// Whether this is provider storage, including volumes recorded as network mounts.
+	pub fn is_cloud(&self) -> bool {
+		self.volume_type == VolumeType::Cloud || self.parse_cloud_identity().is_some()
+	}
+
 	/// Parse cloud service and identifier from cloud_identifier or mount point
 	/// Returns None for non-cloud volumes or unparseable mount points
 	///

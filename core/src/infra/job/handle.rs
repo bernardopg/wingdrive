@@ -123,6 +123,15 @@ impl JobHandle {
 		self.progress_rx.resubscribe()
 	}
 
+	pub(crate) async fn failure(&self) -> Option<JobError> {
+		self.output
+			.lock()
+			.await
+			.as_ref()
+			.and_then(|result| result.as_ref().err())
+			.cloned()
+	}
+
 	/// Wait for the job to complete
 	pub async fn wait(&self) -> JobResult<JobOutput> {
 		// Wait for terminal status
@@ -146,7 +155,10 @@ impl JobHandle {
 					None => Ok(JobOutput::Success),
 				}
 			}
-			JobStatus::Failed => Err(JobError::ExecutionFailed("Job failed".into())),
+			JobStatus::Failed => Err(self
+				.failure()
+				.await
+				.unwrap_or_else(|| JobError::ExecutionFailed("Job failed".into()))),
 			JobStatus::Cancelled => Err(JobError::Interrupted),
 			_ => unreachable!("Non-terminal status after wait"),
 		}

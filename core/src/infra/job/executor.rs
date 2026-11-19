@@ -394,9 +394,6 @@ impl<J: JobHandler> JobExecutor<J> {
 				} else {
 					error!("Job {} failed: {}", self.state.job_id, e);
 
-					// Update status with current progress
-					let _ = self.state.status_tx.send(JobStatus::Failed);
-
 					// Persist failure status with latest progress and error message
 					if self.state.should_persist {
 						let latest_progress = self.state.latest_progress.lock().await.clone();
@@ -415,6 +412,8 @@ impl<J: JobHandler> JobExecutor<J> {
 						}
 					}
 
+					// Publish the failure after the history row can report its cause.
+					let _ = self.state.status_tx.send(JobStatus::Failed);
 					Err(e)
 				}
 			}

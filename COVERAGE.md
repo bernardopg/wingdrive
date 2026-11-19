@@ -29,9 +29,10 @@ latest run and nobody edits them by hand.
 ## How it is measured
 
 - **Rust:** [`cargo-llvm-cov`](https://github.com/taiki-e/cargo-llvm-cov) runs
-  `scripts/coverage-rust.sh`: the tests from `scripts/ci-rust.sh tests` (the same ones the CI gate
-  runs, including the CLI contracts) plus the unit and integration tests of the server and shared crates. Doctests
-  are not run.
+  `scripts/coverage-rust.sh`. It covers the tests from `scripts/ci-rust.sh tests`, the unit and
+  integration tests of the server and shared crates, and the Linux GTK clipboard test. Install
+  `Xvfb` before collecting Linux coverage. The clipboard test starts its own X display.
+  Doctests are outside the reported scope.
 - **Frontend:** `scripts/coverage-frontend.sh` runs every `bun test` file from the CI workflow with
   `--coverage`, one process per file, and includes the mobile workflow’s `bun test ./src` suite.
   The mobile suite measures JavaScript and TypeScript executed by Bun. Android device and JNI execution are outside that measurement.

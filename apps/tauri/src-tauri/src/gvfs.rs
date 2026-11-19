@@ -15,12 +15,12 @@
 //! let mounted = gvfs::mount("sftp://me@server/".into(), None).await?;
 //! ```
 
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::Duration;
 
 use serde::Serialize;
+use tokio::io::AsyncWriteExt;
 
 #[cfg(test)]
 #[path = "gvfs/tests/mod.rs"]
@@ -211,10 +211,25 @@ pub fn list_network_mounts() -> Vec<NetworkMount> {
 /// Devices such as phones and cameras that gvfs can mount.
 #[tauri::command]
 pub async fn list_mountable_volumes() -> Result<Vec<MountableVolume>, String> {
-	let output = tokio::task::spawn_blocking(|| gio().args(["mount", "-li"]).output())
+	let mut command = gio();
+	command.args(["mount", "-li"]);
+	list_mountable_command(command).await
+}
+
+async fn list_mountable_command(mut command: Command) -> Result<Vec<MountableVolume>, String> {
+	let output = tokio::task::spawn_blocking(move || command.output())
 		.await
 		.map_err(|e| e.to_string())?
 		.map_err(|e| format!("gio is not available: {e}"))?;
+	if !output.status.success() {
+		let stderr = String::from_utf8_lossy(&output.stderr);
+		let message = stderr.trim().trim_start_matches("gio: ");
+		return Err(if message.is_empty() {
+			format!("gio mount -li failed ({})", output.status)
+		} else {
+			message.to_string()
+		});
+	}
 	Ok(parse_mountable(&String::from_utf8_lossy(&output.stdout)))
 }
 
@@ -232,9 +247,7 @@ pub async fn mount_network_location(
 		return Err("Enter an address such as sftp://user@server/ or smb://server/share".into());
 	}
 	let before = list_network_mounts();
-	tokio::task::spawn_blocking(move || run_mount(&uri, password.as_deref()))
-		.await
-		.map_err(|e| e.to_string())??;
+	run_mount(&uri, password.as_deref()).await?;
 	let after = list_network_mounts();
 	after
 		.iter()
@@ -244,55 +257,53 @@ pub async fn mount_network_location(
 		.ok_or_else(|| "Mounted, but the location did not appear under gvfs".to_string())
 }
 
-fn run_mount(uri: &str, password: Option<&str>) -> Result<(), String> {
+async fn run_mount(uri: &str, password: Option<&str>) -> Result<(), String> {
 	let mut command = gio();
 	command.args(["mount", uri]);
-	run_mount_command(command, uri, password, Duration::from_secs(90))
+	run_mount_command(command, uri, password, Duration::from_secs(90)).await
 }
 
 /// Runs a prepared `gio mount` command, answering the password prompt and
 /// giving up after `timeout`.
-fn run_mount_command(
-	mut command: Command,
+async fn run_mount_command(
+	command: Command,
 	uri: &str,
 	password: Option<&str>,
 	timeout: Duration,
 ) -> Result<(), String> {
-	let mut child = command
+	let mut child = tokio::process::Command::from(command)
 		.stdin(Stdio::piped())
-		.stdout(Stdio::piped())
+		.stdout(Stdio::null())
 		.stderr(Stdio::piped())
+		.kill_on_drop(true)
 		.spawn()
-		.map_err(|e| format!("gio is not available: {e}"))?;
-	if let Some(mut stdin) = child.stdin.take() {
-		if let Some(password) = password {
-			let _ = writeln!(stdin, "{password}");
+		.map_err(|error| format!("gio is not available: {error}"))?;
+
+	let stdin = child.stdin.take();
+	let answer = async move {
+		if let (Some(mut stdin), Some(password)) = (stdin, password) {
+			// GIO may finish before reading stdin, such as for an existing mount.
+			let _ = stdin.write_all(format!("{password}\n").as_bytes()).await;
 		}
-		// Closing stdin makes any further prompt fail instead of waiting.
+	};
+	// Drain diagnostics while GIO runs so a full stderr pipe cannot stop it.
+	let output = tokio::time::timeout(timeout, async {
+		let (_, output) = tokio::join!(answer, child.wait_with_output());
+		output
+	})
+	.await
+	.map_err(|_| format!("Timed out connecting to {uri}"))?
+	.map_err(|error| error.to_string())?;
+	let stderr = String::from_utf8_lossy(&output.stderr);
+	if output.status.success() || stderr.contains("already mounted") {
+		return Ok(());
 	}
-	let deadline = std::time::Instant::now() + timeout;
-	loop {
-		if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
-			let output = child.wait_with_output().map_err(|e| e.to_string())?;
-			let stderr = String::from_utf8_lossy(&output.stderr);
-			// "Already mounted" counts as success for the caller.
-			if status.success() || stderr.contains("already mounted") {
-				return Ok(());
-			}
-			let message = stderr.lines().last().unwrap_or("").trim();
-			return Err(if message.is_empty() {
-				format!("Could not mount {uri}")
-			} else {
-				message.trim_start_matches("gio: ").to_string()
-			});
-		}
-		if std::time::Instant::now() > deadline {
-			let _ = child.kill();
-			let _ = child.wait();
-			return Err(format!("Timed out connecting to {uri}"));
-		}
-		std::thread::sleep(Duration::from_millis(100));
-	}
+	let message = stderr.lines().last().unwrap_or("").trim();
+	Err(if message.is_empty() {
+		format!("Could not mount {uri}")
+	} else {
+		message.trim_start_matches("gio: ").to_string()
+	})
 }
 
 /// Unmounts the mount whose FUSE folder is `path`.

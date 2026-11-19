@@ -16,14 +16,12 @@
 
 mod helpers;
 
-#[allow(deprecated)]
-use helpers::set_all_devices_synced;
 use helpers::{
-	add_and_index_location, create_snapshot_dir, init_test_tracing, register_device, MockTransport,
-	TestConfigBuilder, TestDataDir,
+	add_and_index_location, init_test_tracing, register_device, MockTransport, TestConfigBuilder,
+	TestDataDir,
 };
-use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-use std::{path::PathBuf, sync::Arc};
+use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QuerySelect};
+use std::{collections::BTreeSet, path::PathBuf, sync::Arc};
 use tokio::{fs, time::Duration};
 use uuid::Uuid;
 use wing_core::{
@@ -35,10 +33,10 @@ use wing_core::{
 
 /// Test harness for backfill race condition testing
 struct BackfillRaceHarness {
-	_test_data_alice: TestDataDir,
+	test_data_alice: TestDataDir,
 	_test_data_bob: TestDataDir,
 	core_alice: Core,
-	_core_bob: Core,
+	core_bob: Core,
 	library_alice: Arc<Library>,
 	library_bob: Arc<Library>,
 	device_alice_id: Uuid,
@@ -51,9 +49,6 @@ struct BackfillRaceHarness {
 impl BackfillRaceHarness {
 	/// Create test harness - Bob will need to backfill (not set to Ready)
 	async fn new(test_name: &str) -> anyhow::Result<Self> {
-		let snapshot_dir = create_snapshot_dir(test_name).await?;
-		init_test_tracing(test_name, &snapshot_dir)?;
-
 		// Use TestDataDir helper for proper cross-platform directory management.
 		// TestDataDir paths are deterministic on Linux, so two tests in this binary
 		// running in parallel would otherwise share one persisted device_id and
@@ -61,6 +56,8 @@ impl BackfillRaceHarness {
 		let test_data_alice = TestDataDir::new(format!("{test_name}_alice"))?;
 		let test_data_bob = TestDataDir::new(format!("{test_name}_bob"))?;
 
+		let snapshot_dir = test_data_alice.logs_path();
+		init_test_tracing(test_name, &snapshot_dir)?;
 		let temp_dir_alice = test_data_alice.core_data_path();
 		let temp_dir_bob = test_data_bob.core_data_path();
 
@@ -101,11 +98,6 @@ impl BackfillRaceHarness {
 
 		register_device(&library_alice, device_bob_id, "Bob").await?;
 		register_device(&library_bob, device_alice_id, "Alice").await?;
-
-		// NOTE: set_all_devices_synced is deprecated - last_sync_at no longer controls sync
-		// Bob will be detected as a new peer based on missing watermarks in sync.db
-		#[allow(deprecated)]
-		set_all_devices_synced(&library_alice).await?;
 
 		tracing::info!(
 			alice_device = %device_alice_id,
@@ -173,13 +165,11 @@ impl BackfillRaceHarness {
 			bob_state
 		);
 
-		tokio::time::sleep(Duration::from_millis(100)).await;
-
 		Ok(Self {
-			_test_data_alice: test_data_alice,
+			test_data_alice,
 			_test_data_bob: test_data_bob,
 			core_alice,
-			_core_bob: core_bob,
+			core_bob,
 			library_alice,
 			library_bob,
 			device_alice_id,
@@ -229,48 +219,58 @@ impl BackfillRaceHarness {
 		Ok(())
 	}
 
-	/// Wait for sync to stabilize
-	async fn wait_for_sync(&self, max_duration: Duration) -> anyhow::Result<()> {
-		let start = std::time::Instant::now();
-		let mut last_alice = 0u64;
-		let mut last_bob = 0u64;
-		let mut stable = 0;
-
-		while start.elapsed() < max_duration {
-			tokio::time::sleep(Duration::from_millis(500)).await;
-
-			let alice = entities::entry::Entity::find()
-				.count(self.library_alice.db().conn())
-				.await?;
-			let bob = entities::entry::Entity::find()
-				.count(self.library_bob.db().conn())
-				.await?;
-
-			tracing::debug!(alice = alice, bob = bob, "Entry counts");
-
-			if alice == last_alice && bob == last_bob && alice > 0 {
-				stable += 1;
-				if stable >= 6 && alice == bob {
-					tracing::info!(count = alice, "Sync complete - counts match");
-					return Ok(());
-				}
-				if stable >= 10 {
-					tracing::warn!(
-						alice = alice,
-						bob = bob,
-						"Sync stabilized but counts don't match!"
-					);
-					return Ok(());
-				}
-			} else {
-				stable = 0;
-			}
-
-			last_alice = alice;
-			last_bob = bob;
+	async fn fixture(&self, name: &str) -> anyhow::Result<PathBuf> {
+		let path = self.test_data_alice.locations_path().join(name);
+		fs::create_dir(&path).await?;
+		for number in 0..64 {
+			let stem = format!("coverage-{name}-{number:03}");
+			fs::write(path.join(format!("{stem}.txt")), stem).await?;
 		}
+		Ok(path)
+	}
 
-		tracing::warn!("Sync timed out");
+	async fn wait_for_sync(&self) -> anyhow::Result<()> {
+		let deadline = tokio::time::Instant::now() + Duration::from_secs(30);
+		let expected = ["first", "second"]
+			.into_iter()
+			.flat_map(|name| (0..64).map(move |number| format!("coverage-{name}-{number:03}")))
+			.collect::<BTreeSet<_>>();
+		loop {
+			let mut complete = true;
+			for library in [&self.library_alice, &self.library_bob] {
+				let names = entities::entry::Entity::find()
+					.filter(entities::entry::Column::Name.starts_with("coverage-"))
+					.select_only()
+					.column(entities::entry::Column::Name)
+					.into_tuple::<String>()
+					.all(library.db().conn())
+					.await?;
+				let count = names.len();
+				let received = names.into_iter().collect::<BTreeSet<_>>();
+				if received != expected || count != expected.len() {
+					complete = false;
+					anyhow::ensure!(
+						tokio::time::Instant::now() < deadline,
+						"Peer library {} received {count} fixture rows, {} distinct, expected {}",
+						library.id(),
+						received.len(),
+						expected.len()
+					);
+				}
+			}
+			if complete {
+				return Ok(());
+			}
+			tokio::time::sleep(Duration::from_millis(100)).await;
+		}
+	}
+
+	async fn shutdown(&self) -> anyhow::Result<()> {
+		self.core_bob.shutdown().await.map_err(anyhow::Error::msg)?;
+		self.core_alice
+			.shutdown()
+			.await
+			.map_err(anyhow::Error::msg)?;
 		Ok(())
 	}
 
@@ -389,6 +389,7 @@ async fn test_backfill_renames_colliding_device_slug() -> anyhow::Result<()> {
 	assert_eq!(holder.slug, "shared-host");
 	assert_eq!(synced.slug, "shared-host-2");
 
+	harness.shutdown().await?;
 	Ok(())
 }
 
@@ -397,20 +398,13 @@ async fn test_backfill_renames_colliding_device_slug() -> anyhow::Result<()> {
 async fn test_backfill_with_concurrent_indexing() -> anyhow::Result<()> {
 	let harness = BackfillRaceHarness::new("backfill_race").await?;
 
-	// Step 1: Alice indexes first location
-	// Use WingDrive crates directory for deterministic testing
-	let project_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-		.parent()
-		.unwrap()
-		.to_path_buf();
-	let crates_path = project_root.join("crates");
-	tracing::info!("Step 1: Alice indexes crates");
-
+	let first_path = harness.fixture("first").await?;
+	let second_path = harness.fixture("second").await?;
 	add_and_index_location(
 		&harness.library_alice,
 		&harness.core_alice.volumes,
-		crates_path.to_str().unwrap(),
-		"crates",
+		first_path.to_str().unwrap(),
+		"first",
 	)
 	.await?;
 
@@ -442,33 +436,19 @@ async fn test_backfill_with_concurrent_indexing() -> anyhow::Result<()> {
 	// Step 2: Start backfill on Bob while Alice continues indexing
 	tracing::info!("Step 2: Starting Bob's backfill AND Alice's second indexing concurrently");
 
-	// Use WingDrive source code for deterministic testing across all environments
-	let test_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-		.parent()
-		.unwrap()
-		.to_path_buf();
-
 	let backfill_future = harness.trigger_bob_backfill();
 	let indexing_future = add_and_index_location(
 		&harness.library_alice,
 		&harness.core_alice.volumes,
-		test_path.to_str().unwrap(),
-		"wingdrive",
+		second_path.to_str().unwrap(),
+		"second",
 	);
 
-	// Run concurrently - this is the key to triggering the race
-	let (backfill_result, indexing_result) = tokio::join!(backfill_future, indexing_future);
-
-	if let Err(e) = backfill_result {
-		tracing::warn!(error = %e, "Backfill had error (may be expected if racing)");
-	}
-	if let Err(e) = indexing_result {
-		tracing::warn!(error = %e, "Indexing had error");
-	}
+	tokio::try_join!(backfill_future, indexing_future)?;
 
 	// Step 3: Wait for everything to stabilize
 	tracing::info!("Step 3: Waiting for sync to stabilize");
-	harness.wait_for_sync(Duration::from_secs(60)).await?;
+	harness.wait_for_sync().await?;
 
 	// Capture snapshot
 	harness.capture_snapshot("final_state").await?;
@@ -517,6 +497,7 @@ async fn test_backfill_with_concurrent_indexing() -> anyhow::Result<()> {
 		diff
 	);
 
+	harness.shutdown().await?;
 	Ok(())
 }
 
@@ -525,28 +506,22 @@ async fn test_backfill_with_concurrent_indexing() -> anyhow::Result<()> {
 async fn test_sequential_backfill_control() -> anyhow::Result<()> {
 	let harness = BackfillRaceHarness::new("sequential_control").await?;
 
-	// Alice indexes both locations first
-	// Use WingDrive source code for deterministic testing
-	let project_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-		.parent()
-		.unwrap()
-		.to_path_buf();
-	let core_path = project_root.join("core");
-	let apps_path = project_root.join("apps");
+	let first_path = harness.fixture("first").await?;
+	let second_path = harness.fixture("second").await?;
 
 	tracing::info!("Indexing both locations on Alice first");
 
 	add_and_index_location(
 		&harness.library_alice,
 		&harness.core_alice.volumes,
-		core_path.to_str().unwrap(),
+		first_path.to_str().unwrap(),
 		"core",
 	)
 	.await?;
 	add_and_index_location(
 		&harness.library_alice,
 		&harness.core_alice.volumes,
-		apps_path.to_str().unwrap(),
+		second_path.to_str().unwrap(),
 		"apps",
 	)
 	.await?;
@@ -562,7 +537,7 @@ async fn test_sequential_backfill_control() -> anyhow::Result<()> {
 	harness.trigger_bob_backfill().await?;
 
 	// Wait for sync
-	harness.wait_for_sync(Duration::from_secs(60)).await?;
+	harness.wait_for_sync().await?;
 
 	// Capture snapshot
 	harness.capture_snapshot("final_state").await?;
@@ -590,5 +565,6 @@ async fn test_sequential_backfill_control() -> anyhow::Result<()> {
 		diff
 	);
 
+	harness.shutdown().await?;
 	Ok(())
 }
