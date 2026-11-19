@@ -21,23 +21,27 @@ const { chromium } = require('playwright');
     ...(process.env.CHROMIUM_PATH ? {executablePath: process.env.CHROMIUM_PATH} : {}),
     args: ['--no-sandbox']});
   const page = await browser.newPage({viewport: {width: 1400, height: 900}});
-  page.setDefaultTimeout(20000);
+  let diagnosticPage = page;
   const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
-  // A server error on an RPC call fails the smoke even when the page recovers (TAURI-018).
-  // Expected failures, such as the missing location checked below, answer with a 4xx or a
-  // JSON error body, not a 5xx.
-  page.on('response', response => {
-    if (response.url().endsWith('/rpc') && response.status() >= 500) {
-      errors.push(`RPC ${response.status()} from ${response.url()}`);
-    }
-  });
-  if (process.env.RPC_URL) {
-    await page.route('**/rpc', async route => {
-      const response = await route.fetch({url: process.env.RPC_URL});
-      await route.fulfill({response});
+  const configurePage = async page => {
+    page.setDefaultTimeout(20000);
+    page.on('pageerror', error => errors.push(error.message));
+    // A server error on an RPC call fails the smoke even when the page recovers (TAURI-018).
+    // Expected failures, such as the missing location checked below, answer with a 4xx or a
+    // JSON error body, not a 5xx.
+    page.on('response', response => {
+      if (response.url().endsWith('/rpc') && response.status() >= 500) {
+        errors.push(`RPC ${response.status()} from ${response.url()}`);
+      }
     });
-  }
+    if (process.env.RPC_URL) {
+      await page.route('**/rpc', async route => {
+        const response = await route.fetch({url: process.env.RPC_URL});
+        await route.fulfill({response});
+      });
+    }
+  };
+  await configurePage(page);
   const urlFor = dir => '/explorer?path=' + encodeURIComponent(JSON.stringify({Physical: {device_slug: 'local', path: dir}}));
   const location = urlFor(fixture);
   const perfDirectory = path.join(fixture, 'folder-B');
@@ -223,18 +227,15 @@ const { chromium } = require('playwright');
     assert(browserMemoryAfter.renderer < 500 * 1024 * 1024, '15 tabs exceeded 500 MB renderer memory');
     assert(memoryAfter - memoryBefore < 100 * 1024 * 1024, '100 tab switches retained excessive memory');
     console.log('Missing location');
-    await page.evaluate(location => {
-      const state = JSON.parse(localStorage.getItem('wing-tabs-state'));
-      const tab = state.tabs.find(tab => tab.id === state.activeTabId);
-      tab.savedPath = location;
-      tab.history = [location];
-      tab.historyIndex = 0;
-      localStorage.setItem('wing-tabs-state', JSON.stringify(state));
-    }, urlFor(path.join(fixture, 'deleted-location')));
-    await page.goto(base + urlFor(path.join(fixture, 'deleted-location')));
-    await page.getByRole('alert').filter({hasText: 'Could not open this location'}).waitFor();
-    await page.getByRole('button', {name: 'Go to Overview', exact: true}).click();
-    await page.waitForURL(base + '/');
+    // Reopen the deep link in a clean session. The performance fixture
+    // leaves 15 routers and pending tab-state writes in the first session.
+    const recoveryPage = await browser.newPage({viewport: {width: 1400, height: 900}});
+    diagnosticPage = recoveryPage;
+    await configurePage(recoveryPage);
+    await recoveryPage.goto(base + urlFor(path.join(fixture, 'deleted-location')));
+    const locationError = recoveryPage.getByRole('alert').filter({hasText: 'Could not open this location'});
+    await locationError.getByRole('button', {name: 'Go to Overview', exact: true}).click();
+    await recoveryPage.waitForURL(base + '/');
     assert.equal(errors.length, 0, errors.join('\n'));
     const report = {files: 10003, performanceFilesPerTab: 50, gridMounted, cycles: 100, tabs: 15,
       switchMedianMs: timings.sort((a,b)=>a-b)[50], switchP95Ms: timings[95],
@@ -247,9 +248,9 @@ const { chromium } = require('playwright');
     assert(Number.isFinite(switchBudget) && switchBudget > 0 && switchMedian < switchBudget,
       `Tab switch median ${switchMedian.toFixed(1)} ms exceeded ${switchBudget} ms budget`);
   } catch (error) {
-    await page.screenshot({path: path.join(output, "failure.png")});
-    console.log("Failure state", page.url(), (await page.locator("body").innerText()).slice(-2400));
-    console.log("Storage", await page.evaluate(() => {
+    await diagnosticPage.screenshot({path: path.join(output, "failure.png")});
+    console.log("Failure state", diagnosticPage.url(), (await diagnosticPage.locator("body").innerText()).slice(-2400));
+    console.log("Storage", await diagnosticPage.evaluate(() => {
       try { return localStorage.getItem("wing-tabs-state"); }
       catch { return 'Storage unavailable'; }
     }));

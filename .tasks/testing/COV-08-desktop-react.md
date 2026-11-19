@@ -87,3 +87,10 @@ Moved to M3 with the rest of the coverage epic, since its open criteria are modu
 not M2 work.
 
 The interface is at 74.5%.
+
+### GitHub Actions · recuperação de caminho ausente no Explorer
+
+No PR #468, o alerta do caminho ausente apareceu, mas o botão de voltar à visão
+geral saiu do DOM durante o clique. O smoke reutilizava a sessão do benchmark de
+15 abas. Execute a recuperação em um contexto de navegador novo para testar o
+link direto e o botão sem depender dos dados persistidos pelo benchmark.
