@@ -637,6 +637,14 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: em `album_x`, o padrão `LIKE 'album_x/%'` também casava `albumYx/sub/`, e a listagem trazia a mídia da pasta vizinha. O teste falhava com `["inside", "outside"]`.
 - Correção: o padrão vem de `directory_subtree_patterns`, que escapa `%`, `_` e `\` e já era usado pela busca e pelo preflight; a consulta declara `ESCAPE '\'`.
 
+## Core: checkpoints de miniaturas perdiam opções e podiam impedir a retomada
+
+- Local: `ThumbnailJob` e `ThumbnailJobConfig` em `core/src/ops/media/thumbnail/job.rs`.
+- Reprodução: serialize um job pendente ou em processamento sem local com `rmp_serde::to_vec` e leia com `rmp_serde::from_slice`, como faz a fila de jobs. A leitura falhava com tamanho inválido ou tentava ler o estado de processamento como UUID. Uma seleção de variantes personalizada também era omitida no checkpoint.
+- Causa: o MessagePack gravava a estrutura como sequência. Campos opcionais omitidos deslocavam as posições e as variantes tinham `serde(skip)`.
+- Correção: gravar posição para local e estado e persistir as variantes. O leitor aceita o formato antigo, recupera progresso e local conforme os campos presentes e usa variantes padrão quando a gravação anterior tiver omitido a seleção. Novos checkpoints preservam a seleção vazia explícita.
+- Verificação: a fixture isolada com as estruturas Rust do checkpoint reproduziu a omissão da variante e os erros de leitura. Após a correção, os quatro testes de formato passaram, abrangendo seleção personalizada, vazia e quatro combinações históricas de local e progresso.
+
 ## A consulta de jobs perde o motivo de uma falha
 
 - Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.

@@ -35,6 +35,19 @@ Logs and LCOV are in `coverage/goal/core-sync-backfill-final.log` and
 
 COV-04. Escopo, metas e ordem em [README.md](README.md).
 
+### Checkpoints de miniaturas
+
+Os testes do formato MessagePack cobrem retomada sem local, variantes personalizadas e seleção
+vazia explícita. Também carregam quatro registros antigos, com local e progresso ausentes,
+presentes em conjunto ou presentes isoladamente. O teste de compatibilidade verifica os
+parâmetros originais, o progresso e a seleção padrão aplicada quando variantes não foram gravadas.
+O diagnóstico e a correção constam no [registro de bugs](BUGS.md#core-checkpoints-de-miniaturas-perdiam-opções-e-podiam-impedir-a-retomada).
+
+O ensaio isolado compilou as estruturas de serialização contra Serde e MessagePack da workspace.
+Três casos falharam no código anterior e os quatro passaram com a correção. O ensaio verifica
+o formato persistido. A execução da fila de miniaturas e a geração de imagens não fazem parte
+dessa medição. Logs em `coverage/goal/next/thumbnail-checkpoint-*.log`.
+
 ## Implementation Steps
 
 - [ ] Testar retomada de checkpoint, cancelamento, retries, estados terminais e limpeza.
