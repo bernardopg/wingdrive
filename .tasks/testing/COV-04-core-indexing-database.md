@@ -15,6 +15,18 @@ last_updated: 2026-11-15
 
 Listagens e metadados devem permanecer consistentes quando o filesystem muda durante a indexação.
 
+## Regressão de eventos em diretório temporário
+
+O watcher efêmero expirava após criar `document.txt` sob uma raiz temporária com
+`.tmp` no nome. O log `coverage/goal/after-sidecars/watchers.log` registra a inscrição
+bem-sucedida, a criação e a ausência de eventos. O filtro agora compara o nome da entrada,
+e a fixture isola os arquivos sem alterar o `HOME`. Detalhes em [BUGS.md](BUGS.md).
+Os 31 testes instrumentados do crate de watcher e as duas suítes de integração passaram.
+O boot temporário registrou a criação da configuração padrão e o fallback de identificação
+de volumes sem permissão de escrita. A suíte persistente registrou uma colisão concorrente
+de MIME, registrada separadamente no histórico de bugs.
+
+
 ## Dependencies
 
 COV-03. Escopo, metas e ordem em [README.md](README.md).

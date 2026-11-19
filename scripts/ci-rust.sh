@@ -89,6 +89,8 @@ if [ "$(uname -s)" = Linux ]; then
 		file_undo_test
 		app_config_action_test
 		indexing_test
+		fs_watcher_test
+		ephemeral_watcher_test
 		library_test
 		file_queries_test
 		google_integration_test

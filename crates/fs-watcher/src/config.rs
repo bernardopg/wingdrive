@@ -118,13 +118,14 @@ impl EventFilters {
 			return true;
 		}
 
-		// Check temp files
+		let name = path.file_name().map(|name| name.to_string_lossy());
+		// A watched location can itself live under a temporary directory.
 		if self.skip_temp_files
-			&& (path_str.contains(".tmp")
-				|| path_str.contains(".temp")
-				|| path_str.ends_with("~")
-				|| path_str.ends_with(".swp"))
-		{
+			&& name.as_deref().is_some_and(|name| {
+				[".tmp", ".temp", "~", ".swp"]
+					.iter()
+					.any(|suffix| name.ends_with(suffix))
+			}) {
 			return true;
 		}
 
@@ -244,6 +245,17 @@ mod tests {
 
 		// Should NOT skip normal files
 		assert!(!filters.should_skip(&PathBuf::from("/test/file.txt")));
+	}
+
+	#[test]
+	fn temporary_file_filter_checks_the_changed_entry_name() {
+		let filters = EventFilters::default();
+		let root = std::path::Path::new("/test/.tmp-fixture/project.temp-data");
+		assert!(!filters.should_skip(&root.join("document.txt")));
+		assert!(!filters.should_skip(&root.join("notes.tmp.txt")));
+		for name in ["file.tmp", "file.temp", "file~", "file.swp"] {
+			assert!(filters.should_skip(&root.join(name)), "{name}");
+		}
 	}
 
 	#[test]

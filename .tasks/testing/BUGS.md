@@ -672,6 +672,21 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - O dispositivo era procurado pelo slug literal, então o placeholder `local` de `WingPath::local`, usado por clientes sem dispositivo registrado, nunca resolvia. As locations eram alcançadas só pelos volumes do dispositivo, e uma location com `volume_id` nulo (preenchido só no primeiro índice) ficava de fora. Os dois casos foram apontados na revisão do PR.
 - Correção: cada componente casa uma entrada com o nome inteiro e sem extensão, ou um arquivo com o radical e a extensão em minúsculas; a location é escolhida por `Path::starts_with`, que compara componentes. `local` e o UUID do dispositivo valem como este dispositivo, e as locations são buscadas por `device_id`.
 
+## Core: watcher descartava arquivos normais em pastas com ponto e sufixo temporário
+
+- Local: `EventFilters::should_skip` em `crates/fs-watcher/src/config.rs`.
+- Reprodução: no Linux, abra um diretório dentro de uma pasta cujo nome contém `.tmp`, como a raiz padrão de `tempfile::TempDir`. Após o índice efêmero carregar, crie `document.txt`. A suíte registrou o watch, mas expirou sem receber o arquivo.
+- Causa: o filtro buscava `.tmp` e `.temp` em todo o caminho. Qualquer pasta ancestral com esses caracteres descartava os eventos dos descendentes.
+- Correção: verificar os sufixos temporários no nome da entrada alterada. Os testes usam diretórios isolados para o daemon, a pasta observada e o destino de restauração.
+- Verificação: 31 testes do crate de watcher e uma suíte persistente e outra efêmera passaram instrumentados no Linux. A regressão cobre arquivos normais sob `.tmp` e os quatro sufixos temporários filtrados.
+
+## Core: indexadores concorrentes podem colidir ao gravar o mesmo MIME
+
+- Local: `DatabaseStorage::link_to_content_identity` em `core/src/ops/indexing/database_storage.rs`.
+- Reprodução: a suíte persistente do watcher registrou SQLite 2067 em `mime_types.mime_type` enquanto o job de identificação e o watcher processavam arquivos. O log está em `coverage/goal/after-sidecars/persistent-watcher-fixed.log`.
+- Causa: a consulta e a criação do MIME são instruções separadas. Dois indexadores podem observar a linha ausente e tentar inseri-la. A segunda operação falha antes de vincular a identidade.
+
+
 ## Core: verificação de índice acusava a própria pasta e seus ancestrais
 
 - Estado: corrigido; `a_fresh_index_matches_the_filesystem` em `core/tests/index_verify_test.rs`.
