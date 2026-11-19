@@ -94,3 +94,11 @@ The test resumes it by ID through JobManager, verifies the copied bytes and chec
 persisted terminal status. It also checks missing-job errors and the refusal to resume
 a terminal job. All three instrumented shutdown and resume tests passed on Linux.
 See `coverage/goal/next/job-resume-tests.log` in the primary checkout.
+
+## File transfer stream contracts
+
+The instrumented file transfer suite passed 14 tests on Linux, including the new push and
+pull cases. The tests run the framed stream handler in memory with temporary files. Push
+checks the destination bytes, terminal session and acknowledgment. Pull checks metadata,
+chunk order, per-chunk hashes and the final checksum. The log is
+`coverage/goal/next/transfer-stream-tests.log` in the primary checkout.
