@@ -695,3 +695,13 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Impacto: uma cópia com conflito usa o primeiro prompt e pode ficar presa quando stdin fecha durante o uso em scripts.
 - Correção: encerrar ao receber EOF, rejeitar listas vazias e manter o índice escolhido mesmo quando os rótulos se repetem. Respostas inválidas com entrada aberta continuam permitindo nova tentativa.
 - Verificação: os três processos passaram a sair com código 1 e `Aborted by user: end of input`. Cinco testes das funções passaram em um harness Rust isolado, incluindo erro de leitura e resposta em branco. O harness usa o contrato mínimo de `ConfirmationRequest` e cobre os prompts de stdin/stdout, sem terminal interativo.
+
+## A consulta de jobs perde o motivo de uma falha
+
+- Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.
+- Local: `JobExecutor::run`, `JobHandle::wait` e as consultas e monitores de `JobManager`, em `core/src/infra/job/`.
+- Reprodução: adicione uma localização dentro do diretório de dados de um daemon descartável. O indexador registra que a pasta de dados não pode ser indexada. Ao consultar jobs com status `Failed`, a mensagem aparece vazia na suíte `own_data_location_test`. A repetição com rede desabilitada reproduziu a falha.
+- Causa: o executor publicava `Failed` antes de persistir o erro. As consultas em memória preenchiam `error_message` com `None`, mesmo com o erro disponível no handle. O monitor de eventos buscava a mensagem no banco sujeito à mesma ordem de gravação.
+- Impacto: o usuário recebe um job com falha e pode perder a explicação necessária para corrigir a localização. A recusa da pasta de dados continua correta.
+- Correção: persistir status, progresso e causa antes de notificar `Failed`. Usar o resultado compartilhado do job para as consultas em memória, para a notificação e para quem espera pelo handle. Consultas de histórico continuam consultando o banco.
+- Verificação: 25 testes instrumentados nas suítes de pasta de dados, shutdown de jobs, falhas de cópia, exclusão de location e eventos passaram. A regressão confere a causa em listagem, detalhes e evento, além de verificar que uma pasta vizinha continua indexável.
