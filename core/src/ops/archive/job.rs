@@ -86,10 +86,10 @@ impl LibraryAction for ArchiveCompressAction {
 			field: "name".to_string(),
 			message: e.to_string(),
 		})?;
-		if !self.input.format.can_write() {
+		if self.input.format == ArchiveFormat::Bzip2 && self.input.sources.len() != 1 {
 			return Err(ActionError::Validation {
-				field: "format".to_string(),
-				message: "This format can only be extracted".to_string(),
+				field: "sources".to_string(),
+				message: "Standalone Bzip2 accepts one regular file".to_string(),
 			});
 		}
 		Ok(ValidationResult::Success { metadata: None })

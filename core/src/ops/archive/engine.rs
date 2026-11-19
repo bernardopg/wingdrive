@@ -10,6 +10,7 @@ use std::fs::File;
 use std::io::{self, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use thiserror::Error;
@@ -24,6 +25,8 @@ pub enum ArchiveError {
 	Zip(#[from] zip::result::ZipError),
 	#[error("7-Zip error: {0}")]
 	SevenZip(String),
+	#[error("RAR error: {0}")]
+	Rar(#[from] rars::Error),
 	#[error("Unsafe archive entry rejected: {0}")]
 	Unsafe(String),
 	#[error("{0}")]
@@ -35,9 +38,9 @@ pub enum ArchiveError {
 /// Shared between the blocking worker and the job that watches it.
 #[derive(Debug, Default)]
 pub struct Control {
-	pub cancel: AtomicBool,
+	pub cancel: Arc<AtomicBool>,
 	/// Bytes of input consumed so far
-	pub done: AtomicU64,
+	pub done: Arc<AtomicU64>,
 	/// Entries written so far
 	pub entries: AtomicU64,
 }
@@ -216,6 +219,22 @@ pub fn extract_only(
 	match format {
 		ArchiveFormat::Zip => extract_zip(file, dest, only, control),
 		ArchiveFormat::SevenZip => extract_7z(archive, dest, only, control),
+		ArchiveFormat::Rar => extract_rar(file, dest, only, control),
+		ArchiveFormat::Bzip2 => {
+			let relative = bzip2_member(archive)?;
+			if wanted(&relative, only) {
+				let tracked = Tracked {
+					inner: io::BufReader::new(file),
+					control,
+				};
+				let mut decoder = bzip2::read::MultiBzDecoder::new(tracked);
+				let mut output = create_file(dest, &relative)?;
+				io::copy(&mut decoder, &mut output)
+					.map_err(|error| cancelled_or(control, error))?;
+				control.entries.fetch_add(1, Ordering::Relaxed);
+			}
+			Ok(())
+		}
 		_ => extract_tar(tar_reader(file, format, control)?, dest, only, control),
 	}
 }
@@ -241,9 +260,10 @@ fn tar_reader<'a>(
 		ArchiveFormat::TarBz2 => Box::new(bzip2::read::MultiBzDecoder::new(tracked)),
 		ArchiveFormat::TarXz => Box::new(xz2::read::XzDecoder::new_multi_decoder(tracked)),
 		ArchiveFormat::TarZst => Box::new(zstd::stream::read::Decoder::new(tracked)?),
-		ArchiveFormat::Zip | ArchiveFormat::SevenZip => {
-			return Err(ArchiveError::Unsupported("Not a tar archive".into()))
-		}
+		ArchiveFormat::Zip
+		| ArchiveFormat::SevenZip
+		| ArchiveFormat::Rar
+		| ArchiveFormat::Bzip2 => return Err(ArchiveError::Unsupported("Not a tar archive".into())),
 	})
 }
 
@@ -297,6 +317,18 @@ pub fn list(archive: &Path, format: ArchiveFormat) -> Result<Vec<Member>, Archiv
 				);
 			}
 		}
+		ArchiveFormat::Rar => {
+			let rar = rars::ArchiveReader::read_path_with_options(archive, rar_read_options())?;
+			for member in rar.members().filter(|member| !member.meta.is_redirection) {
+				push(
+					Path::new(&member.meta.name_lossy()),
+					member.meta.is_directory,
+					member.meta.unpacked_size,
+					member.meta.modification_time(),
+				);
+			}
+		}
+		ArchiveFormat::Bzip2 => push(&bzip2_member(archive)?, false, 0, None),
 		_ => {
 			let control = Control::default();
 			let mut tar = tar::Archive::new(tar_reader(File::open(archive)?, format, &control)?);
@@ -489,6 +521,83 @@ fn extract_tar(
 	Ok(())
 }
 
+fn bzip2_member(archive: &Path) -> Result<PathBuf, ArchiveError> {
+	let stem = ArchiveFormat::stem(archive)
+		.ok_or_else(|| ArchiveError::Unsupported("Invalid Bzip2 file name".into()))?;
+	safe_relative(Path::new(&stem))
+}
+
+fn rar_read_options() -> rars::ArchiveReadOptions<'static> {
+	let mut options = rars::ArchiveReadOptions::new();
+	options.rar50_dictionary_size_limit = Some(256 * 1024 * 1024);
+	options.rar50_buffered_decode_limit = Some(32 * 1024 * 1024);
+	options
+}
+
+struct RarOutput {
+	writer: Box<dyn Write>,
+	cancel: Arc<AtomicBool>,
+	done: Arc<AtomicU64>,
+}
+
+impl Write for RarOutput {
+	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+		if self.cancel.load(Ordering::Relaxed) {
+			return Err(io::Error::other("cancelled"));
+		}
+		let length = self.writer.write(buf)?;
+		self.done.fetch_add(length as u64, Ordering::Relaxed);
+		Ok(length)
+	}
+
+	fn flush(&mut self) -> io::Result<()> {
+		self.writer.flush()
+	}
+}
+
+fn extract_rar(
+	file: File,
+	dest: &Path,
+	only: Option<&Path>,
+	control: &Control,
+) -> Result<(), ArchiveError> {
+	use rars::ExtractionDecision;
+
+	control.check()?;
+	let options = rar_read_options();
+	let rar = rars::ArchiveReader::read_reader_with_options(io::BufReader::new(file), options)?;
+	let result = rar.extract_with_control(options, |member| {
+		if control.cancel.load(Ordering::Relaxed) {
+			return Err(io::Error::other("cancelled").into());
+		}
+		if member.meta.is_redirection {
+			return Ok(ExtractionDecision::Skip);
+		}
+		let relative =
+			safe_relative(Path::new(&member.meta.name_lossy())).map_err(io::Error::other)?;
+		let writer: Box<dyn Write> = if !wanted(&relative, only) {
+			// Solid archives need bytes from preceding members for their dictionary.
+			Box::new(io::sink())
+		} else if member.meta.is_directory {
+			create_dir(dest, &relative).map_err(io::Error::other)?;
+			control.entries.fetch_add(1, Ordering::Relaxed);
+			Box::new(io::sink())
+		} else {
+			let output = create_file(dest, &relative).map_err(io::Error::other)?;
+			control.entries.fetch_add(1, Ordering::Relaxed);
+			Box::new(output)
+		};
+		Ok(ExtractionDecision::Extract(Box::new(RarOutput {
+			writer,
+			cancel: Arc::clone(&control.cancel),
+			done: Arc::clone(&control.done),
+		})))
+	});
+	control.check()?;
+	result?;
+	Ok(())
+}
+
 fn extract_7z(
 	archive: &Path,
 	dest: &Path,
@@ -612,10 +721,8 @@ pub fn compress(
 	output: &Path,
 	control: &Control,
 ) -> Result<(), ArchiveError> {
-	if !format.can_write() {
-		return Err(ArchiveError::Unsupported(
-			"Creating 7-Zip archives is not supported".into(),
-		));
+	if format == ArchiveFormat::Bzip2 {
+		return compress_bzip2(sources, output, control);
 	}
 	let (items, _) = collect(sources, control)?;
 	let file = File::options().write(true).create_new(true).open(output)?;
@@ -639,8 +746,131 @@ pub fn compress(
 			let encoder = zstd::stream::write::Encoder::new(writer, 3)?;
 			finish_tar(tar_builder(&items, encoder, control)?.finish()?)
 		}
-		ArchiveFormat::SevenZip => unreachable!(),
+		ArchiveFormat::SevenZip => compress_7z(&items, writer, control),
+		ArchiveFormat::Rar => compress_rar(&items, writer, control),
+		ArchiveFormat::Bzip2 => unreachable!(),
 	}
+}
+
+fn compress_bzip2(
+	sources: &[PathBuf],
+	output: &Path,
+	control: &Control,
+) -> Result<(), ArchiveError> {
+	let [source] = sources else {
+		return Err(ArchiveError::Unsupported(
+			"Standalone Bzip2 accepts one regular file".into(),
+		));
+	};
+	control.check()?;
+	if !std::fs::symlink_metadata(source)?.is_file() {
+		return Err(ArchiveError::Unsupported(
+			"Standalone Bzip2 accepts one regular file".into(),
+		));
+	}
+	let mut input = Tracked {
+		inner: io::BufReader::new(File::open(source)?),
+		control,
+	};
+	let file = File::options().write(true).create_new(true).open(output)?;
+	let mut encoder =
+		bzip2::write::BzEncoder::new(io::BufWriter::new(file), bzip2::Compression::default());
+	io::copy(&mut input, &mut encoder).map_err(|error| cancelled_or(control, error))?;
+	finish_tar(encoder.finish()?)?;
+	control.entries.fetch_add(1, Ordering::Relaxed);
+	Ok(())
+}
+
+fn compress_7z<W: Write + io::Seek>(
+	items: &[Item],
+	writer: W,
+	control: &Control,
+) -> Result<(), ArchiveError> {
+	let zip_error = |error: sevenz_rust2::Error| ArchiveError::SevenZip(error.to_string());
+	let mut writer = sevenz_rust2::ArchiveWriter::new(writer).map_err(zip_error)?;
+	for item in items {
+		control.check()?;
+		let name = archive_name(&item.name);
+		if item.meta.is_dir() {
+			writer
+				.push_archive_entry::<File>(sevenz_rust2::ArchiveEntry::new_directory(&name), None)
+				.map_err(zip_error)?;
+		} else if item.meta.is_file() {
+			let entry = sevenz_rust2::ArchiveEntry::from_path(&item.path, name);
+			let reader = Tracked {
+				inner: File::open(&item.path)?,
+				control,
+			};
+			let result = writer.push_archive_entry(entry, Some(reader));
+			control.check()?;
+			result.map_err(zip_error)?;
+		} else {
+			return Err(ArchiveError::Unsupported(format!(
+				"7-Zip creation requires regular files and folders: {}",
+				item.path.display()
+			)));
+		}
+		control.entries.fetch_add(1, Ordering::Relaxed);
+	}
+	finish_tar(writer.finish()?)
+}
+
+fn compress_rar<W: Write>(
+	items: &[Item],
+	mut writer: W,
+	control: &Control,
+) -> Result<(), ArchiveError> {
+	use rars::rar50::{
+		write_streaming_archive_with_progress, ArchiveEntry, ArchiveExtras, WriterOptions,
+	};
+	struct Progress<'a>(&'a Control);
+	impl rars::WriteProgress for Progress<'_> {
+		fn report(&self, event: rars::WriteProgressEvent<'_>) {
+			if let rars::WriteProgressEvent::EntryFinished {
+				operation: rars::WriteOperation::Compression,
+				input_bytes,
+				..
+			} = event
+			{
+				self.0.done.fetch_add(input_bytes, Ordering::Relaxed);
+				self.0.entries.fetch_add(1, Ordering::Relaxed);
+			}
+		}
+		fn is_cancelled(&self) -> bool {
+			self.0.cancel.load(Ordering::Relaxed)
+		}
+	}
+
+	let mut entries = Vec::with_capacity(items.len());
+	for item in items {
+		control.check()?;
+		let source = if item.meta.is_dir() {
+			rars::EntrySource::from_bytes(&[][..])
+		} else if item.meta.is_file() {
+			rars::EntrySource::from_path(&item.path)
+		} else {
+			return Err(ArchiveError::Unsupported(format!(
+				"RAR creation requires regular files and folders: {}",
+				item.path.display()
+			)));
+		};
+		entries.push(
+			ArchiveEntry::new(archive_name(&item.name).into_bytes(), source)
+				.with_directory(item.meta.is_dir()),
+		);
+	}
+	let result = write_streaming_archive_with_progress(
+		&entries,
+		WriterOptions::default().with_compression_level(3),
+		ArchiveExtras::default(),
+		&rars::WriterResources::default(),
+		Some(&Progress(control)),
+		&mut writer,
+	);
+	control.check()?;
+	result?;
+	writer.flush()?;
+	Ok(())
 }
 
 fn finish_tar<W: Write>(mut writer: W) -> Result<(), ArchiveError> {
@@ -769,13 +999,19 @@ mod tests {
 	}
 
 	#[test]
-	fn seven_zip_archives_extract() {
+	fn seven_zip_archives_round_trip() {
 		let dir = tempfile::tempdir().unwrap();
 		let src = dir.path().join("src");
 		std::fs::create_dir_all(src.join("inner")).unwrap();
 		std::fs::write(src.join("inner/note.txt"), "seven").unwrap();
 		let archive = dir.path().join("set.7z");
-		sevenz_rust2::compress_to_path(&src, &archive).unwrap();
+		compress(
+			&[src],
+			ArchiveFormat::SevenZip,
+			&archive,
+			&Control::default(),
+		)
+		.unwrap();
 
 		let dest = dir.path().join("out");
 		std::fs::create_dir(&dest).unwrap();
@@ -786,10 +1022,70 @@ mod tests {
 			&Control::default(),
 		)
 		.unwrap();
-		let found = std::fs::read_to_string(dest.join("inner/note.txt"))
-			.or_else(|_| std::fs::read_to_string(dest.join("src/inner/note.txt")))
-			.unwrap();
-		assert_eq!(found, "seven");
+		assert_eq!(
+			std::fs::read_to_string(dest.join("src/inner/note.txt")).unwrap(),
+			"seven"
+		);
+	}
+
+	#[test]
+	fn rar_lists_and_extracts_a_selected_member() {
+		let dir = tempfile::tempdir().unwrap();
+		let src = dir.path().join("src");
+		std::fs::create_dir(&src).unwrap();
+		std::fs::write(src.join("first.txt"), "one").unwrap();
+		std::fs::write(src.join("selected.txt"), "second file".repeat(1024)).unwrap();
+		let archive = dir.path().join("archive.rar");
+		compress(&[src], ArchiveFormat::Rar, &archive, &Control::default()).unwrap();
+		let member = Path::new("src/selected.txt");
+		let members = list(&archive, ArchiveFormat::Rar).unwrap();
+		assert!(members
+			.iter()
+			.any(|entry| entry.path == member && !entry.is_dir));
+		let dest = dir.path().join("out");
+		std::fs::create_dir(&dest).unwrap();
+		extract_only(
+			&archive,
+			ArchiveFormat::Rar,
+			&dest,
+			Some(member),
+			&Control::default(),
+		)
+		.unwrap();
+		assert_eq!(
+			std::fs::read_to_string(dest.join(member)).unwrap(),
+			"second file".repeat(1024)
+		);
+		assert!(!dest.join("src/first.txt").exists());
+	}
+
+	#[test]
+	fn standalone_bzip2_lists_and_extracts_one_file() {
+		let dir = tempfile::tempdir().unwrap();
+		let archive = dir.path().join("message.txt.bz2");
+		let source = dir.path().join("message.txt");
+		std::fs::write(&source, b"hello").unwrap();
+		compress(
+			&[source],
+			ArchiveFormat::Bzip2,
+			&archive,
+			&Control::default(),
+		)
+		.unwrap();
+		let members = list(&archive, ArchiveFormat::Bzip2).unwrap();
+		assert_eq!(members.len(), 1);
+		assert_eq!(members[0].path, Path::new("message.txt"));
+		let dest = dir.path().join("out");
+		std::fs::create_dir(&dest).unwrap();
+		extract_only(
+			&archive,
+			ArchiveFormat::Bzip2,
+			&dest,
+			Some(&members[0].path),
+			&Control::default(),
+		)
+		.unwrap();
+		assert_eq!(std::fs::read(dest.join("message.txt")).unwrap(), b"hello");
 	}
 
 	#[test]

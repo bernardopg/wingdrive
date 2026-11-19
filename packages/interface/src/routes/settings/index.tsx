@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import clsx from "clsx";
 import {
   Books,
@@ -23,27 +23,29 @@ import {
   AdvancedSettings,
   AboutSettings,
 } from "../../Settings/pages";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { getCurrentPlatform } from "../../util/keybinds/platform";
 import { useTranslation } from "../../i18n";
 
-interface SettingsSidebarProps {
-  currentPage: string;
-  onPageChange: (page: string) => void;
-}
+const sections = {
+  general: { icon: GearSix, Page: GeneralSettings },
+  appearance: { icon: PaintBrush, Page: AppearanceSettings },
+  library: { icon: Books, Page: LibrarySettings },
+  indexer: { icon: MagnifyingGlass, Page: IndexerSettings },
+  services: { icon: Cpu, Page: ServicesSettings },
+  integrations: { icon: PlugsConnected, Page: IntegrationsSettings },
+  privacy: { icon: ShieldCheck, Page: PrivacySettings },
+  advanced: { icon: Wrench, Page: AdvancedSettings },
+  about: { icon: Info, Page: AboutSettings },
+} satisfies Record<string, { icon: Icon; Page: React.ComponentType }>;
 
-const sections: { id: string; icon: Icon }[] = [
-  { id: "general", icon: GearSix },
-  { id: "appearance", icon: PaintBrush },
-  { id: "library", icon: Books },
-  { id: "indexer", icon: MagnifyingGlass },
-  { id: "services", icon: Cpu },
-  { id: "integrations", icon: PlugsConnected },
-  { id: "privacy", icon: ShieldCheck },
-  { id: "advanced", icon: Wrench },
-  { id: "about", icon: Info },
-];
+type SettingsPage = keyof typeof sections;
+const pageIds = Object.keys(sections) as SettingsPage[];
+
+function pageFromUrl(): SettingsPage {
+  const requested = window.location.pathname.split("/").filter(Boolean)[1];
+  return pageIds.find((id) => id === requested) ?? "general";
+}
 
 // The 52px top inset only makes sense on macOS, where the window has no
 // native titlebar and the traffic lights overlay the content. On Linux and
@@ -51,89 +53,82 @@ const sections: { id: string; icon: Icon }[] = [
 // as a dead strip and the drag region swallowed clicks on the nav header.
 const isMacOS = getCurrentPlatform() === "macos";
 
-function SettingsSidebar({ currentPage, onPageChange }: SettingsSidebarProps) {
+function SettingsSidebar({
+  currentPage,
+  onPageChange,
+}: {
+  currentPage: SettingsPage;
+  onPageChange: (page: SettingsPage) => void;
+}) {
   const { t } = useTranslation();
-  const listRef = useRef<HTMLDivElement>(null);
-
-  // On narrow windows the nav is a horizontal strip; keep the open page visible in it
-  useEffect(() => {
-    listRef.current
-      ?.querySelector('[aria-current="page"]')
-      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [currentPage]);
-
   return (
-    <div ref={listRef} className="flex gap-1 overflow-x-auto sm:flex-col sm:overflow-visible">
-      {sections.map(({ id, icon: SectionIcon }) => (
-        <button
-          key={id}
-          type="button"
-          aria-current={currentPage === id ? "page" : undefined}
-          onClick={() => onPageChange(id)}
-          className={clsx(
-            "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors duration-300 sm:w-full",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-            currentPage === id
-              ? "bg-sidebar-selected text-sidebar-ink"
-              : "text-sidebar-ink-dull hover:text-sidebar-ink hover:bg-sidebar-box"
-          )}
-        >
-          <SectionIcon className="size-4 shrink-0" weight={currentPage === id ? "fill" : "regular"} />
-          {t(`sections.${id}`)}
-        </button>
-      ))}
-    </div>
+    <>
+      <select
+        aria-label={t("title")}
+        className="w-full rounded-md border border-sidebar-line bg-sidebar-box px-3 py-2 text-sm text-sidebar-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:hidden"
+        value={currentPage}
+        onChange={(event) => {
+          const selected = pageIds.find((id) => id === event.target.value);
+          if (selected) onPageChange(selected);
+        }}
+      >
+        {pageIds.map((id) => <option key={id} value={id}>{t(`sections.${id}`)}</option>)}
+      </select>
+      <div className="hidden flex-col gap-1 p-0.5 md:flex">
+        {pageIds.map((id) => {
+          const SectionIcon = sections[id].icon;
+          const active = currentPage === id;
+          return (
+            <a
+              key={id}
+              href={`/settings/${id}`}
+              aria-current={active ? "page" : undefined}
+              onClick={(event) => {
+                if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                onPageChange(id);
+              }}
+              className={clsx(
+                "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                active
+                  ? "bg-sidebar-selected text-sidebar-ink"
+                  : "text-sidebar-ink-dull hover:bg-sidebar-box hover:text-sidebar-ink"
+              )}
+            >
+              <SectionIcon className="size-4 shrink-0" weight={active ? "fill" : "regular"} aria-hidden />
+              {t(`sections.${id}`)}
+            </a>
+          );
+        })}
+      </div>
+    </>
   );
-}
-
-interface SettingsContentProps {
-  page: string;
-}
-
-function SettingsContent({ page }: SettingsContentProps) {
-  switch (page) {
-    case "general":
-      return <GeneralSettings />;
-    case "appearance":
-      return <AppearanceSettings />;
-    case "library":
-      return <LibrarySettings />;
-    case "indexer":
-      return <IndexerSettings />;
-    case "services":
-      return <ServicesSettings />;
-    case "integrations":
-      return <IntegrationsSettings />;
-    case "privacy":
-      return <PrivacySettings />;
-    case "advanced":
-      return <AdvancedSettings />;
-    case "about":
-      return <AboutSettings />;
-    default:
-      return <GeneralSettings />;
-  }
 }
 
 function SettingsContentWrapper() {
   const { t } = useTranslation();
-  const pathname = window.location.pathname;
-  const requested = pathname.split("/").filter(Boolean)[1];
-  const initialPage = sections.some((s) => s.id === requested) ? requested! : "general";
-  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [currentPage, setCurrentPage] = useState(pageFromUrl);
+  const mainRef = useRef<HTMLElement>(null);
+  const Page = sections[currentPage].Page;
 
-  // Keep the URL on the open page so a reload or a reopened window lands there
-  const changePage = (page: string) => {
+  useEffect(() => {
+    const syncPage = () => setCurrentPage(pageFromUrl());
+    window.addEventListener("popstate", syncPage);
+    return () => window.removeEventListener("popstate", syncPage);
+  }, []);
+
+  const changePage = (page: SettingsPage) => {
+    if (page === currentPage) return;
+    window.history.pushState(window.history.state, "", `/settings/${page}`);
     setCurrentPage(page);
-    window.history.replaceState(null, "", `/settings/${page}`);
   };
 
+  useLayoutEffect(() => {
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+  }, [currentPage]);
+
   return (
-    <div
-      className={clsx(
-        "h-screen flex flex-col sm:flex-row bg-app relative"
-      )}
-    >
+    <div className="relative flex h-screen flex-col overflow-hidden bg-app [scrollbar-color:var(--color-app-frame)_transparent] [scrollbar-width:thin] md:flex-row">
       {/* Drag region for macOS traffic lights area */}
       {isMacOS && (
         <div
@@ -144,13 +139,14 @@ function SettingsContentWrapper() {
 
       {/* Sidebar */}
       <nav
+        aria-label={t("title")}
         className={clsx(
-          "shrink-0 border-b p-2 transition-all duration-500 sm:w-52 sm:border-b-0 sm:border-r sm:p-4",
+          "shrink-0 border-b p-2 md:w-48 md:overflow-y-auto md:border-b-0 md:border-r md:p-4",
           "bg-sidebar border-sidebar-line",
           isMacOS && "pt-[52px]"
         )}
       >
-        <div className="mb-6 hidden sm:block">
+        <div className="mb-6 hidden md:block">
           <h1
             className="text-xl font-semibold text-sidebar-ink"
           >
@@ -162,13 +158,15 @@ function SettingsContentWrapper() {
 
       {/* Main content */}
       <main
+        ref={mainRef}
+        aria-label={t(`sections.${currentPage}`)}
         className={clsx(
-          "flex-1 overflow-auto px-4 py-6 sm:px-8 sm:py-8",
-          isMacOS && "pt-[52px]"
+          "min-h-0 min-w-0 flex-1 overflow-auto px-4 py-6 md:px-6 md:py-8",
+          isMacOS && "md:pt-[52px]"
         )}
       >
-        <div className={clsx("mx-auto", currentPage !== "about" && "max-w-3xl")}>
-          <SettingsContent page={currentPage} />
+        <div className="mx-auto max-w-3xl">
+          <Page />
         </div>
       </main>
     </div>
@@ -191,13 +189,5 @@ export function Settings() {
     }
   }, [platform]);
 
-  return (
-    <>
-      <SettingsContentWrapper />
-      <ReactQueryDevtools
-        initialIsOpen={false}
-        buttonPosition="bottom-right"
-      />
-    </>
-  );
+  return <SettingsContentWrapper />;
 }

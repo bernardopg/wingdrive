@@ -47,12 +47,14 @@ export function useIntegrationConnect(onConnected?: (account: IntegrationAccount
 	const cancelSession = useLibraryMutation("integrations.google.connect_cancel");
 	const [state, setState] = useState<ConnectState>({ phase: "idle" });
 	const active = useRef<string | null>(null);
+	const attempt = useRef<symbol | null>(null);
 	const onConnectedRef = useRef(onConnected);
 	onConnectedRef.current = onConnected;
 
 	useEffect(
 		() => () => {
 			const sessionId = active.current;
+			attempt.current = null;
 			active.current = null;
 			if (sessionId) cancelSession.mutate({ session_id: sessionId });
 		},
@@ -62,6 +64,9 @@ export function useIntegrationConnect(onConnected?: (account: IntegrationAccount
 
 	const start = useCallback(
 		async (request: ConnectRequest) => {
+			if (attempt.current) return;
+			const requestId = Symbol();
+			attempt.current = requestId;
 			let sessionId: string;
 			try {
 				const out =
@@ -76,10 +81,18 @@ export function useIntegrationConnect(onConnected?: (account: IntegrationAccount
 								login_hint: request.loginHint ?? null,
 							});
 				sessionId = out.session_id;
+				if (attempt.current !== requestId) {
+					cancelSession.mutate({ session_id: sessionId });
+					return;
+				}
 				active.current = sessionId;
 				setState({ phase: "waiting", authUrl: out.auth_url, sessionId });
 				platform.openLink(out.auth_url);
 			} catch (error) {
+				if (attempt.current !== requestId) return;
+				attempt.current = null;
+				if (active.current) cancelSession.mutate({ session_id: active.current });
+				active.current = null;
 				setState({ phase: "error", message: error instanceof Error ? error.message : String(error) });
 				return;
 			}
@@ -96,7 +109,9 @@ export function useIntegrationConnect(onConnected?: (account: IntegrationAccount
 					// A dropped request is retried on the next tick.
 					continue;
 				}
+				if (active.current !== sessionId) return;
 				if (status.status === "pending") continue;
+				attempt.current = null;
 				active.current = null;
 				if (status.status === "completed") {
 					setState({ phase: "done", account: status.account });
@@ -111,11 +126,12 @@ export function useIntegrationConnect(onConnected?: (account: IntegrationAccount
 				}
 			}
 		},
-		[client, connectGoogle, connectMicrosoft, platform, queryClient]
+		[client, connectGoogle, connectMicrosoft, cancelSession, platform, queryClient]
 	);
 
 	const cancel = useCallback(async () => {
 		const sessionId = active.current;
+		attempt.current = null;
 		active.current = null;
 		setState({ phase: "idle" });
 		if (sessionId) await cancelSession.mutateAsync({ session_id: sessionId }).catch(() => {});

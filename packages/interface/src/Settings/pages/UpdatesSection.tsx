@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
 import {
   usePlatform,
@@ -7,7 +7,7 @@ import {
   type UpdaterInfo,
 } from "../../contexts/PlatformContext";
 import { useTranslation } from "../../i18n";
-import { SettingsRow, SettingsSection, SwitchRow, buttonClass, errorMessage } from "../components";
+import { SettingsUnavailable, SettingsRow, SettingsSection, SwitchRow, buttonClass, errorMessage } from "../components";
 
 type CheckState =
   | { kind: "idle" }
@@ -25,8 +25,10 @@ type CheckState =
 export function UpdatesSection({
   desktopSettings,
   onSettingChange,
+  settingsBusy = false,
 }: {
   desktopSettings: DesktopSettings | null;
+  settingsBusy?: boolean;
   onSettingChange: (value: boolean) => void;
 }) {
   const { t } = useTranslation();
@@ -34,11 +36,25 @@ export function UpdatesSection({
   const [info, setInfo] = useState<UpdaterInfo | null>(null);
   const [state, setState] = useState<CheckState>({ kind: "idle" });
 
-  useEffect(() => {
-    platform.getUpdaterInfo?.().then(setInfo).catch(() => setInfo(null));
+  const [loadFailed, setLoadFailed] = useState(false);
+  const load = useCallback(async () => {
+    if (!platform.getUpdaterInfo) return;
+    setLoadFailed(false);
+    try {
+      setInfo(await platform.getUpdaterInfo());
+    } catch {
+      setLoadFailed(true);
+    }
   }, [platform]);
-
-  if (!info) return null;
+  useEffect(() => { void load(); }, [load]);
+  if (!platform.getUpdaterInfo && !info) return null;
+  if (!info) return (
+    <SettingsSection title={t("general.updates.title")}>
+      <div className="p-3">
+        <SettingsUnavailable loading={!loadFailed} retry={() => void load()} />
+      </div>
+    </SettingsSection>
+  );
 
   const check = async () => {
     if (!platform.checkForUpdate) return;
@@ -93,7 +109,7 @@ export function UpdatesSection({
         label={t("general.updates.version", { version: info.current_version })}
         hint={
           info.channel === "self_update"
-            ? (status ?? t("general.updates.selfHint"))
+            ? (status ? <span role="status">{status}</span> : t("general.updates.selfHint"))
             : info.channel === "package_manager"
               ? t("general.updates.packageManagerHint")
               : t("general.updates.unsupportedHint")
@@ -109,7 +125,7 @@ export function UpdatesSection({
               {t("general.updates.install")}
             </button>
           ) : (
-            <button type="button" onClick={check} disabled={busy} className={buttonClass}>
+            <button type="button" onClick={check} disabled={busy} className={`${buttonClass} bg-app-button text-ink hover:bg-app-hover`}>
               {t("general.updates.check")}
             </button>
           ))}
@@ -119,6 +135,7 @@ export function UpdatesSection({
           label={t("general.updates.automatic")}
           hint={t("general.updates.automaticHint")}
           checked={desktopSettings.check_for_updates}
+          disabled={settingsBusy}
           onChange={onSettingChange}
         />
       )}

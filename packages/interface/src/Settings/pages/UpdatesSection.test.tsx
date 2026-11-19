@@ -44,7 +44,7 @@ function button(host: HTMLElement, text: string) {
 }
 
 describe('updates section', () => {
-	it('sends package-manager installs to pacman or apt and offers no download', async () => {
+	it('directs package-manager installs to their package manager', async () => {
 		platform = {
 			getUpdaterInfo: async () => ({channel: 'package_manager', current_version: '3.4.0'}),
 			checkForUpdate: async () => {
@@ -53,7 +53,7 @@ describe('updates section', () => {
 		};
 		const {host, root} = await render();
 		expect(host.textContent).toContain('WingDrive 3.4.0');
-		expect(host.textContent).toContain('yay -Syu');
+		expect(host.textContent).toContain('the package manager you used to install it');
 		expect(button(host, 'Check for updates')).toBeUndefined();
 		expect(host.textContent).not.toContain('Check for updates automatically');
 		act(() => root.unmount());
@@ -75,6 +75,21 @@ describe('updates section', () => {
 		expect(host.textContent).toContain('WingDrive 3.4.0 is available');
 		await act(async () => button(host, 'Install and restart')!.click());
 		expect(installed).toEqual(['3.4.0']);
+		act(() => root.unmount());
+	});
+
+	it('shows a retry after failing to load update information', async () => {
+		let requests = 0;
+		platform = {
+			getUpdaterInfo: async () => {
+				if (++requests === 1) throw new Error('Unavailable');
+				return {channel: 'package_manager', current_version: '3.4.0'};
+			}
+		};
+		const {host, root} = await render();
+		expect(host.querySelector('[role="alert"]')?.textContent).toBe('Could not load settings.');
+		await act(async () => button(host, 'Try again')!.click());
+		expect(host.textContent).toContain('WingDrive 3.4.0');
 		act(() => root.unmount());
 	});
 

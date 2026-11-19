@@ -215,6 +215,7 @@ tar = "0.4"
 flate2 = "1"
 xz2 = "0.1"
 bzip2 = "0.6.1"
+rars = { version = "0.12.3", default-features = false, features = ["write"] }
 sevenz-rust2 = { version = "0.25.0", default-features = false, features = ["compress", "util"] }
 
 [build-dependencies]

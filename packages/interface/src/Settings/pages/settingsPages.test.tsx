@@ -1,7 +1,11 @@
+import {GlobalRegistrator} from '@happy-dom/global-registrator';
 import {describe, expect, it, mock} from 'bun:test';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import type {ReactElement} from 'react';
+import {act, type ReactElement} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
+
+if (!GlobalRegistrator.isRegistered) GlobalRegistrator.register({url: 'http://localhost/'});
+(globalThis as {IS_REACT_ACT_ENVIRONMENT?: boolean}).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mutation = {mutateAsync: async () => ({}), isPending: false};
 const appConfig = {
@@ -10,6 +14,7 @@ const appConfig = {
 	log_level: 'info',
 	telemetry_enabled: true
 };
+let configAvailable = true;
 const libraryConfig = {
 	generate_thumbnails: true,
 	thumbnail_quality: 85,
@@ -26,7 +31,7 @@ mock.module('../../contexts/WingDriveContext', () => ({
 	...actualContext,
 	useCoreQuery: () => ({data: appConfig, refetch: () => {}}),
 	useCoreMutation: () => mutation,
-	useLibraryQuery: () => ({data: libraryConfig, refetch: () => {}, isLoading: false}),
+	useLibraryQuery: () => ({data: configAvailable ? libraryConfig : undefined, refetch: () => {}, isLoading: false}),
 	useLibraryMutation: () => mutation,
 	useWingDriveClient: () => ({getCurrentLibraryId: () => 'library'})
 }));
@@ -35,6 +40,9 @@ mock.module('../../contexts/PlatformContext', () => ({
 	usePlatform: () => ({platform: 'web', openLink: () => {}})
 }));
 
+mock.module('@wingdrive/assets/images', () => ({WingDriveLogo: 'logo.svg'}));
+const {createRoot} = await import('react-dom/client');
+const {Settings} = await import('../../routes/settings');
 const {LibrarySettings} = await import('./LibrarySettings');
 const {AppearanceSettings} = await import('./AppearanceSettings');
 const {PrivacySettings} = await import('./PrivacySettings');
@@ -57,6 +65,18 @@ describe('settings pages only offer settings with an effect', () => {
 		expect(html).toContain('External Volumes');
 	});
 
+	it('offers a retry instead of editable defaults when library settings fail to load', () => {
+		configAvailable = false;
+		try {
+			const html = render(<LibrarySettings />);
+			expect(html).toContain('Could not load settings.');
+			expect(html).toContain('Try again');
+			expect(html).not.toContain('role="switch"');
+		} finally {
+			configAvailable = true;
+		}
+	});
+
 	it('appearance offers the language picker', () => {
 		const html = render(<AppearanceSettings />);
 		expect(html).toContain('<select');
@@ -74,6 +94,43 @@ describe('settings pages only offer settings with an effect', () => {
 		expect(html).not.toContain('Daemon Log Level');
 		expect(html).not.toContain('Enable Job Logging');
 		expect(html).toContain('Include Debug Logs');
+	});
+
+	it('keeps the native-sized selector, sidebar, URL and current page in sync', async () => {
+		const originalUrl = window.location.href;
+		window.history.replaceState(null, '', '/settings/library');
+		const host = document.createElement('div');
+		const root = createRoot(host);
+		try {
+			await act(async () => root.render(
+				<QueryClientProvider client={new QueryClient()}><Settings /></QueryClientProvider>
+			));
+			const nav = host.querySelector('nav')!;
+			const main = host.querySelector('main')!;
+			const select = nav.querySelector('select')!;
+			expect(select.options).toHaveLength(9);
+			expect(select.value).toBe('library');
+
+			main.scrollTop = 80;
+			await act(async () => {
+				select.value = 'privacy';
+				select.dispatchEvent(new window.Event('change', {bubbles: true}));
+			});
+			expect(main.scrollTop).toBe(0);
+			expect(window.location.pathname).toBe('/settings/privacy');
+			expect(nav.querySelector('[aria-current="page"]')?.textContent).toBe('Privacy');
+			expect(main.textContent).toContain('does not collect usage data');
+
+			await act(async () => {
+				window.history.replaceState(null, '', '/settings/advanced');
+				window.dispatchEvent(new window.PopStateEvent('popstate'));
+			});
+			expect(select.value).toBe('advanced');
+			expect(main.textContent).toContain('Include Debug Logs');
+		} finally {
+			await act(async () => root.unmount());
+			window.history.replaceState(null, '', originalUrl);
+		}
 	});
 
 	it('pages render in Portuguese when the language is pt', async () => {

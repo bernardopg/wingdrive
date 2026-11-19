@@ -6,6 +6,8 @@ describe('archive names', () => {
 	test('detects archives by suffix', () => {
 		expect(isArchiveName('photos.TAR.GZ')).toBe(true);
 		expect(isArchiveName('a.7z')).toBe(true);
+		expect(isArchiveName('a.RAR')).toBe(true);
+		expect(isArchiveName('a.txt.bz2')).toBe(true);
 		expect(isArchiveName('notes.txt')).toBe(false);
 		expect(isArchiveName('.zip')).toBe(false);
 	});

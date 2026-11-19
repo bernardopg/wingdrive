@@ -20,11 +20,12 @@ import { usePlatform } from "../../contexts/PlatformContext";
 import { useLibraryMutation, useLibraryQuery, useWingDriveClient } from "../../contexts/WingDriveContext";
 import { INTEGRATION_QUERY_KEYS, useIntegrationConnect } from "../../hooks/useIntegrationConnect";
 import { useRefetchFileListings } from "../../hooks/useRefetchFileListings";
-import { i18n, useTranslation } from "../../i18n";
+import { i18n, uiLocale, useTranslation } from "../../i18n";
 import {
 	LibraryGate,
 	Notice,
 	SettingsHeader,
+	SettingsUnavailable,
 	SettingsRow,
 	SettingsSection,
 	Switch,
@@ -106,9 +107,20 @@ export function IntegrationsSettings() {
 		{ enabled: !!libraryId }
 	);
 	const [selected, setSelected] = useState<string | null>(null);
+	const [upgradeAccount, setUpgradeAccount] = useState<IntegrationAccountInfo | null>(null);
+	const upgradeDrive = (account: IntegrationAccountInfo) => {
+		setUpgradeAccount(account);
+		setSelected("google-custom");
+	};
+	const connectRegion = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (!upgradeAccount || selected !== "google-custom") return;
+		connectRegion.current?.focus();
+		connectRegion.current?.scrollIntoView({ block: "start" });
+	}, [upgradeAccount, selected]);
 
-	if (!libraryId || accounts.isLoading) {
-		return <LibraryGate title={t("sections.integrations")} libraryId={libraryId} isLoading={accounts.isLoading} />;
+	if (!libraryId) {
+		return <LibraryGate title={t("sections.integrations")} />;
 	}
 
 	const list = accounts.data ?? [];
@@ -125,18 +137,30 @@ export function IntegrationsSettings() {
 				accounts={list}
 				clients={clients}
 				selected={selected}
-				onSelect={(id) => setSelected((previous) => (previous === id ? null : id))}
+				onSelect={(id) => {
+					setUpgradeAccount(null);
+					setSelected((previous) => (previous === id ? null : id));
+				}}
 			/>
 			{current && (
-				<ConnectPanel
-					key={entryId(current)}
-					entry={current}
-					clients={clients[current.provider]}
-					onSaved={() => void (current.provider === "google" ? googleClients : microsoftClients).refetch()}
-				/>
+				<div ref={connectRegion} tabIndex={-1}>
+					<ConnectPanel
+						key={upgradeAccount ? `${entryId(current)}-${upgradeAccount.id}` : entryId(current)}
+						entry={current}
+						clients={clients[current.provider]}
+						onSaved={() => void (current.provider === "google" ? googleClients : microsoftClients).refetch()}
+						upgradeAccount={upgradeAccount}
+					/>
+				</div>
 			)}
-			<ConnectedAccounts accounts={list} />
-			<CloudSyncSection accounts={list} />
+			{accounts.data ? (
+				<>
+					<ConnectedAccounts accounts={list} onUpgradeDrive={upgradeDrive} />
+					<CloudSyncSection accounts={list} />
+				</>
+			) : (
+				<SettingsUnavailable loading={accounts.isLoading} retry={() => void accounts.refetch()} />
+			)}
 			<CloudEditSection />
 		</div>
 	);
@@ -178,7 +202,7 @@ function IntegrationCatalog({
 				</h3>
 				<p className="mt-0.5 text-xs text-ink-dull">{t("integrations.catalog.description")}</p>
 			</div>
-			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+			<div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-3">
 				{CATALOG.map((entry) => {
 					const id = entryId(entry);
 					const key = modeKey(entry.provider, entry.mode);
@@ -240,18 +264,21 @@ export function ConnectPanel({
 	entry,
 	clients,
 	onSaved,
+	upgradeAccount,
 }: {
 	entry: CatalogEntry;
 	clients: OAuthClientsInfo | undefined;
 	onSaved: () => void;
+	upgradeAccount?: IntegrationAccountInfo | null;
 }) {
 	const { t } = useTranslation();
 	const key = modeKey(entry.provider, entry.mode);
+	const platform = usePlatform();
 	const pros = useLines(`${key}.pros`);
 	const cons = useLines(`${key}.cons`);
 	const steps = useLines(`${key}.steps`);
 	const [drive, setDrive] = useState(true);
-	const [photos, setPhotos] = useState(true);
+	const [photos, setPhotos] = useState(upgradeAccount?.services.includes("photos") ?? true);
 	const { state, start, cancel, reset, isStarting } = useIntegrationConnect((account) =>
 		toast.success(t("integrations.accounts.connected", { email: account.email }))
 	);
@@ -263,7 +290,7 @@ export function ConnectPanel({
 	const connect = () =>
 		void start(
 			entry.provider === "google"
-				? { provider: "google", mode: entry.mode, services }
+				? { provider: "google", mode: entry.mode, services, loginHint: upgradeAccount?.email }
 				: { provider: "microsoft", mode: entry.mode }
 		);
 
@@ -283,7 +310,7 @@ export function ConnectPanel({
 				</div>
 			</header>
 
-			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+			<div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-4">
 				<div>
 					<h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">
 						{t("integrations.catalog.pros")}
@@ -348,9 +375,9 @@ export function ConnectPanel({
 				{state.phase === "waiting" ? (
 					<div className="flex flex-wrap items-center gap-2">
 						<span className="text-sm text-ink-dull">{t("integrations.accounts.waiting")}</span>
-						<a className="text-sm text-accent underline" href={state.authUrl} target="_blank" rel="noreferrer">
+						<button type="button" className={secondaryButton} onClick={() => platform.openLink(state.authUrl)}>
 							{t("integrations.accounts.openAgain")}
-						</a>
+						</button>
 						<button type="button" className={secondaryButton} onClick={() => void cancel()}>
 							{t("cancel")}
 						</button>
@@ -398,7 +425,7 @@ function GoogleClientForm({ clients, onSaved }: { clients: OAuthClientsInfo | un
 	return (
 		<div className="space-y-3 rounded-lg border border-app-line p-3">
 			<SavedClient clientId={clients?.custom_client_id} disabled={save.isPending} onClear={() => void submit(true)} />
-			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+			<div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-3">
 				<div className="space-y-1">
 					<label htmlFor={ids.id} className="block text-sm text-ink">
 						{t("integrations.client.clientId")}
@@ -508,19 +535,31 @@ function SavedClient({
 	);
 }
 
-function ConnectedAccounts({ accounts }: { accounts: IntegrationAccountInfo[] }) {
+function ConnectedAccounts({
+	accounts,
+	onUpgradeDrive,
+}: {
+	accounts: IntegrationAccountInfo[];
+	onUpgradeDrive: (account: IntegrationAccountInfo) => void;
+}) {
 	const { t } = useTranslation();
 	return (
 		<SettingsSection title={t("integrations.accounts.title")} description={t("integrations.accounts.description")}>
 			{accounts.map((account) => (
-				<AccountRow key={`${account.provider}-${account.id}`} account={account} />
+				<AccountRow key={`${account.provider}-${account.id}`} account={account} onUpgradeDrive={onUpgradeDrive} />
 			))}
 			{accounts.length === 0 && <p className="px-4 py-3 text-sm text-ink-dull">{t("integrations.accounts.none")}</p>}
 		</SettingsSection>
 	);
 }
 
-function AccountRow({ account }: { account: IntegrationAccountInfo }) {
+function AccountRow({
+	account,
+	onUpgradeDrive,
+}: {
+	account: IntegrationAccountInfo;
+	onUpgradeDrive: (account: IntegrationAccountInfo) => void;
+}) {
 	const { t } = useTranslation();
 	const queryClient = useQueryClient();
 	const mountGoogle = useLibraryMutation("integrations.google.drive.mount");
@@ -528,6 +567,7 @@ function AccountRow({ account }: { account: IntegrationAccountInfo }) {
 	const remove = useLibraryMutation("integrations.accounts.remove");
 	const reconnect = useIntegrationConnect(() => toast.success(t("integrations.google.reconnected")));
 	const [confirming, setConfirming] = useState(false);
+	const [failedPicture, setFailedPicture] = useState<string | null>(null);
 	const microsoft = account.provider === "microsoft";
 	const hasDrive = microsoft || account.services.includes("drive");
 	const hasPhotos = account.services.includes("photos");
@@ -560,11 +600,17 @@ function AccountRow({ account }: { account: IntegrationAccountInfo }) {
 
 	return (
 		<div className="space-y-3 px-4 py-3">
-			<div className="flex items-center gap-3">
-				{account.picture ? (
-					<img src={account.picture} alt="" className="size-9 rounded-full" referrerPolicy="no-referrer" />
+			<div className="flex flex-wrap items-center gap-3">
+				{account.picture && account.picture !== failedPicture ? (
+					<img
+						src={account.picture}
+						alt=""
+						className="size-9 shrink-0 rounded-full object-cover"
+						referrerPolicy="no-referrer"
+						onError={() => setFailedPicture(account.picture)}
+					/>
 				) : (
-					<div className="flex size-9 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent">
+					<div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent">
 						{(account.name ?? account.email).slice(0, 1).toUpperCase()}
 					</div>
 				)}
@@ -597,21 +643,29 @@ function AccountRow({ account }: { account: IntegrationAccountInfo }) {
 						<p className="text-sm text-ink">
 							{t(microsoft ? "integrations.accounts.oneDriveMounted" : "integrations.google.driveMounted")}
 						</p>
-						<p className="text-xs text-ink-dull">
+						<p className="break-all text-xs text-ink-dull">
 							{account.drive
 								? `${driveScheme(account.provider)}://${account.drive.identifier}/`
 								: t("integrations.accounts.driveHint")}
 						</p>
+						{account.drive_access === "full" && (
+							<p className="text-xs text-ink-dull">{t("integrations.google.driveFullAccess")}</p>
+						)}
 						{account.drive_access === "app_files" && (
 							<p className="text-xs text-ink-dull">
 								{t(account.drive_picker ? "integrations.google.driveAppFilesPicker" : "integrations.google.driveAppFiles")}
 							</p>
 						)}
 					</div>
-					<Switch checked={!!account.drive?.mounted} disabled={mounting} onChange={(value) => void toggleDrive(value)} />
+					<Switch label={t(microsoft ? "integrations.accounts.oneDriveMounted" : "integrations.google.driveMounted")} checked={!!account.drive?.mounted} disabled={mounting} onChange={(value) => void toggleDrive(value)} />
 				</div>
 			)}
 
+			{account.drive_access === "app_files" && (
+				<button type="button" className={secondaryButton} onClick={() => onUpgradeDrive(account)}>
+					{t("integrations.google.configureFullDrive")}
+				</button>
+			)}
 			{account.drive_picker && <DrivePicker account={account} />}
 
 			{hasPhotos && <PhotosImport account={account} />}
@@ -621,7 +675,7 @@ function AccountRow({ account }: { account: IntegrationAccountInfo }) {
 					<button
 						type="button"
 						className={secondaryButton}
-						disabled={reconnect.state.phase === "waiting"}
+						disabled={reconnect.isStarting || reconnect.state.phase === "waiting"}
 						onClick={() =>
 							void reconnect.start({
 								provider: "google",
@@ -668,21 +722,20 @@ function DrivePicker({ account }: { account: IntegrationAccountInfo }) {
 	const startPicker = useLibraryMutation("integrations.google.drive.picker.start");
 	const [waiting, setWaiting] = useState(false);
 	const active = useRef(true);
-	useEffect(
-		() => () => {
-			active.current = false;
-		},
-		[]
-	);
+	useEffect(() => {
+		active.current = true;
+		return () => { active.current = false; };
+	}, []);
 
 	const run = async () => {
+		setWaiting(true);
 		try {
 			const session = await startPicker.mutateAsync({
 				account_id: account.id,
 				locale: i18n.language === "pt" ? "pt-BR" : "en",
 			});
+			if (!active.current) return;
 			platform.openLink(session.picker_url);
-			setWaiting(true);
 			for (;;) {
 				await new Promise((resolve) => setTimeout(resolve, 2000));
 				if (!active.current) return;
@@ -690,6 +743,7 @@ function DrivePicker({ account }: { account: IntegrationAccountInfo }) {
 					WIRE_METHODS.libraryQueries["integrations.google.drive.picker.status"],
 					{ session_id: session.session_id }
 				);
+				if (!active.current) return;
 				if (status.state === "waiting") continue;
 				if (status.state === "picked") {
 					refetchListings();
@@ -730,21 +784,20 @@ function PhotosImport({ account }: { account: IntegrationAccountInfo }) {
 	const [waiting, setWaiting] = useState(false);
 	const active = useRef(true);
 	const inputId = useId();
-	useEffect(
-		() => () => {
-			active.current = false;
-		},
-		[]
-	);
+	useEffect(() => {
+		active.current = true;
+		return () => { active.current = false; };
+	}, []);
 
 	const run = async () => {
-		const folder = destination.trim() || (await pickFolder(platform, t("integrations.photos.destination")));
-		if (!folder) return;
-		setDestination(folder);
+		setWaiting(true);
 		try {
+			const folder = destination.trim() || (await pickFolder(platform, t("integrations.photos.destination")));
+			if (!folder || !active.current) return;
+			setDestination(folder);
 			const session = await startPicker.mutateAsync({ account_id: account.id });
+			if (!active.current) return;
 			platform.openLink(session.picker_uri);
-			setWaiting(true);
 			// Google suggests the interval; the picker session itself expires after some minutes.
 			for (;;) {
 				await new Promise((resolve) => setTimeout(resolve, Math.max(1, session.poll_interval_seconds) * 1000));
@@ -753,7 +806,12 @@ function PhotosImport({ account }: { account: IntegrationAccountInfo }) {
 					WIRE_METHODS.libraryQueries["integrations.google.photos.picker.status"],
 					{ account_id: account.id, session_id: session.session_id }
 				);
+				if (!active.current) return;
 				if (status.ready) break;
+				if (status.expire_time && Date.parse(status.expire_time) <= Date.now()) {
+					toast.error(t("integrations.photos.expired"));
+					return;
+				}
 			}
 			await importPicked.mutateAsync({
 				account_id: account.id,
@@ -771,19 +829,20 @@ function PhotosImport({ account }: { account: IntegrationAccountInfo }) {
 	return (
 		<div className="space-y-2">
 			<label htmlFor={inputId} className="block text-sm text-ink">
-				{t("integrations.photos.import")}
+				{t("integrations.photos.destination")}
 			</label>
 			<p className="text-xs text-ink-dull">{t("integrations.photos.importHint")}</p>
-			<div className="flex gap-2">
+			<div className="flex flex-wrap gap-2">
 				<input
 					id={inputId}
 					className={inputClass}
 					value={destination}
+					disabled={waiting}
 					placeholder={t("integrations.photos.destinationPlaceholder")}
 					onChange={(e) => setDestination(e.target.value)}
 				/>
 				<button type="button" className={`${secondaryButton} shrink-0`} disabled={waiting} onClick={() => void run()}>
-					{waiting ? t("integrations.photos.waiting") : t("integrations.photos.choose")}
+					{waiting ? t("integrations.photos.waiting") : t("integrations.photos.import")}
 				</button>
 			</div>
 		</div>
@@ -793,7 +852,7 @@ function PhotosImport({ account }: { account: IntegrationAccountInfo }) {
 function pairStatus(pair: CloudSyncPairInfo, t: (key: string, options?: Record<string, unknown>) => string): string {
 	if (pair.running) return t("integrations.sync.running");
 	if (!pair.last_run_at) return t("integrations.sync.never");
-	const when = new Date(pair.last_run_at).toLocaleString();
+	const when = new Date(pair.last_run_at).toLocaleString(uiLocale(), { dateStyle: "medium", timeStyle: "short" });
 	const report = pair.last_report;
 	if (pair.last_status === "failed") return t("integrations.sync.failedAt", { when, error: pair.last_error ?? "" });
 	if (!report) return t("integrations.sync.ranAt", { when });
@@ -826,12 +885,17 @@ function CloudSyncSection({ accounts }: { accounts: IntegrationAccountInfo[] }) 
 
 	return (
 		<SettingsSection title={t("integrations.sync.title")} description={t("integrations.sync.description")}>
+			{!pairs.data && (
+				<div className="p-3">
+					<SettingsUnavailable loading={pairs.isLoading} retry={() => void pairs.refetch()} />
+				</div>
+			)}
 			{(pairs.data ?? []).map((pair) => (
 				<div key={pair.id} className="space-y-2 px-4 py-3">
 					<div className="flex items-start justify-between gap-3">
 						<div className="min-w-0">
 							<p className="truncate text-sm font-medium text-ink">{pair.name}</p>
-							<p className="truncate text-xs text-ink-dull">
+							<p className="text-xs text-ink-dull [overflow-wrap:anywhere]">
 								{pair.local_path} {pair.mode === "upload" ? "→" : pair.mode === "download" ? "←" : "⇄"} {cloudLabel(pair.remote)}
 							</p>
 							<p className={clsx("text-xs", pair.last_status === "failed" ? "text-status-error" : "text-ink-faint")}>
@@ -839,11 +903,13 @@ function CloudSyncSection({ accounts }: { accounts: IntegrationAccountInfo[] }) 
 							</p>
 						</div>
 						<Switch
+							label={pair.name}
 							checked={pair.enabled}
+							disabled={update.isPending || remove.isPending}
 							onChange={(enabled) => void act(() => update.mutateAsync({ id: pair.id, name: null, mode: null, propagate_deletes: null, interval_minutes: null, enabled }))}
 						/>
 					</div>
-					<div className="flex gap-2">
+					<div className="flex flex-wrap gap-2">
 						<button
 							type="button"
 							className={secondaryButton}
@@ -855,7 +921,7 @@ function CloudSyncSection({ accounts }: { accounts: IntegrationAccountInfo[] }) 
 						<button
 							type="button"
 							className={dangerButton}
-							disabled={pair.running}
+							disabled={pair.running || remove.isPending || run.isPending}
 							onClick={() => void act(() => remove.mutateAsync({ id: pair.id }))}
 						>
 							{t("integrations.sync.remove")}
@@ -863,7 +929,7 @@ function CloudSyncSection({ accounts }: { accounts: IntegrationAccountInfo[] }) 
 					</div>
 				</div>
 			))}
-			{(pairs.data ?? []).length === 0 && <p className="px-4 py-3 text-sm text-ink-dull">{t("integrations.sync.empty")}</p>}
+			{pairs.data?.length === 0 && <p className="px-4 py-3 text-sm text-ink-dull">{t("integrations.sync.empty")}</p>}
 			<div className="px-4 py-3">
 				{adding ? (
 					<NewSyncPair drives={drives} onDone={() => { setAdding(false); void pairs.refetch(); }} />
@@ -923,7 +989,7 @@ function NewSyncPair({ drives, onDone }: { drives: IntegrationAccountInfo[]; onD
 				<input id={ids.name} className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
 			</SettingsRow>
 			<SettingsRow label={t("integrations.sync.localFolder")} controlId={ids.local} stacked>
-				<div className="flex gap-2">
+				<div className="flex flex-wrap gap-2">
 					<input id={ids.local} className={inputClass} value={local} placeholder="/home/…" onChange={(e) => setLocal(e.target.value)} />
 					{platform.openDirectoryPickerDialog && (
 						<button
@@ -975,7 +1041,7 @@ function NewSyncPair({ drives, onDone }: { drives: IntegrationAccountInfo[]; onD
 				checked={propagate}
 				onChange={setPropagate}
 			/>
-			<div className="flex gap-2">
+			<div className="flex flex-wrap gap-2">
 				<button type="button" className={primaryButton} disabled={!local.trim() || !target || create.isPending} onClick={() => void submit()}>
 					{t("integrations.sync.create")}
 				</button>
@@ -993,6 +1059,13 @@ function CloudEditSection() {
 	const sessions = useLibraryQuery({ type: "files.cloud_edit.list", input: {} }, { refetchInterval: 3000 });
 	const close = useLibraryMutation("files.cloud_edit.close");
 	const list = sessions.data ?? [];
+	if (sessions.isError && !sessions.data) return (
+		<SettingsSection title={t("integrations.edit.title")}>
+			<div className="p-3">
+				<SettingsUnavailable loading={false} retry={() => void sessions.refetch()} />
+			</div>
+		</SettingsSection>
+	);
 	if (list.length === 0) return null;
 
 	const stateLabel = (state: (typeof list)[number]["state"]) => {
@@ -1013,7 +1086,7 @@ function CloudEditSection() {
 	return (
 		<SettingsSection title={t("integrations.edit.title")} description={t("integrations.edit.description")}>
 			{list.map((session) => (
-				<div key={session.id} className="flex items-center justify-between gap-3 px-4 py-3">
+				<div key={session.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
 					<div className="min-w-0">
 						<p className="truncate text-sm text-ink">{cloudLabel(session.path)}</p>
 						<p className="text-xs text-ink-dull">{stateLabel(session.state)}</p>
@@ -1021,6 +1094,7 @@ function CloudEditSection() {
 					<button
 						type="button"
 						className={secondaryButton}
+						disabled={close.isPending}
 						onClick={async () => {
 							try {
 								await close.mutateAsync({ id: session.id });

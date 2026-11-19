@@ -62,7 +62,7 @@ export function useArchiveActions() {
 				compressMutation.mutateAsync({
 					sources: files.map((f) => f.wing_path),
 					destination,
-					name: archiveBaseName(files.map(diskName)),
+					name: format === 'bzip2' ? diskName(files[0]) : archiveBaseName(files.map(diskName)),
 					format
 				})
 			);

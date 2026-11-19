@@ -154,7 +154,7 @@ impl WingDriveWindow {
 					&url,
 					"Settings",
 					(900.0, 700.0),
-					(600.0, 400.0),
+					(420.0, 360.0),
 					true,
 					false,
 					false,

@@ -230,6 +230,10 @@ title={isSlideshow ? t("inspector.preview.stopSlideshow") : t("inspector.preview
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0 }}
 					transition={{ duration: 0.2 }}
+					data-quick-preview
+					onPointerDown={(event) => {
+						if (event.target === event.currentTarget) onClose();
+					}}
 					className={`absolute inset-0 flex flex-col ${getBackgroundClass()}`}
 				>
 					{!file && isLoading ? (

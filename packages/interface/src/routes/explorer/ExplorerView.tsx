@@ -2,7 +2,6 @@ import {
 	ArrowLeft,
 	ArrowRight,
 	Info,
-	SidebarSimple,
 	SquareSplitHorizontal,
 	Tag as TagIcon,
 	TerminalWindow
@@ -47,8 +46,6 @@ const TerminalPanel = lazy(() => import('./terminal/TerminalPanel'));
 export function ExplorerView() {
 	const {t} = useTranslation('explorer');
 	const {
-		sidebarVisible,
-		setSidebarVisible,
 		inspectorVisible,
 		setInspectorVisible,
 		tagModeActive,
@@ -223,23 +220,6 @@ export function ExplorerView() {
 				<TopBarPortal
 					left={
 						<>
-							<TopBarItem
-								id="sidebar-toggle"
-								label={t('topBar.sidebar')}
-								priority="normal"
-								onClick={() =>
-									setSidebarVisible(!sidebarVisible)
-								}
-							>
-								<CircleButton
-									icon={SidebarSimple}
-									onClick={() =>
-										setSidebarVisible(!sidebarVisible)
-									}
-									active={!sidebarVisible}
-									title={t('topBar.sidebar')}
-								/>
-							</TopBarItem>
 							<TopBarItem
 								id="navigation"
 								label={t('topBar.navigation')}

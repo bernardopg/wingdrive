@@ -1,11 +1,18 @@
 import { useTranslation } from "../../i18n";
-import { Notice, SettingsHeader, SettingsSection, SwitchRow, useAppConfig } from "../components";
+import { Notice, SettingsUnavailable, SettingsHeader, SettingsSection, SwitchRow, useAppConfig } from "../components";
 
 // The daemon always writes job logs and takes its log level from RUST_LOG,
 // so only the debug switch, which the job logger reads at startup, is shown.
 export function AdvancedSettings() {
   const { t } = useTranslation();
-  const { config, save, isSaving } = useAppConfig();
+  const { config, isLoading, refetch, save, isSaving } = useAppConfig();
+
+  if (!config) return (
+    <div className="space-y-6">
+      <SettingsHeader title={t("sections.advanced")} description={t("advanced.description")} />
+      <SettingsUnavailable loading={isLoading} retry={() => void refetch()} />
+    </div>
+  );
 
   return (
     <div className="space-y-6">

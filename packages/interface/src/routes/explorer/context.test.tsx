@@ -385,6 +385,13 @@ describe('ExplorerProvider', () => {
 		expect(ctx.quickPreviewFileId).toBeNull();
 	});
 
+	it('closes quick preview when navigating to another folder', async () => {
+		await mount();
+		await run(() => ctx.openQuickPreview('f1'));
+		await run(() => ctx.navigateToPath(docs));
+		expect(ctx.quickPreviewFileId).toBeNull();
+	});
+
 	it('useExplorer outside the provider throws; the optional variant returns null', async () => {
 		let optional: unknown = 'unset';
 		function Outside() {

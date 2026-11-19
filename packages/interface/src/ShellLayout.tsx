@@ -1,3 +1,5 @@
+import {SidebarSimple} from '@phosphor-icons/react';
+import {CircleButton} from '@wingdrive/primitives';
 import type {Location} from '@wingdrive/ts-client';
 import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
@@ -29,7 +31,8 @@ import {FileContextMenuProvider} from './routes/explorer/FileContextMenuProvider
 import {OpenFileProvider} from './routes/explorer/OpenFileProvider';
 import {SelectionProvider} from './routes/explorer/SelectionContext';
 import {TagAssignmentMode} from './routes/explorer/TagAssignmentMode';
-import {TopBar, TopBarProvider} from './TopBar';
+import {TopBar, TopBarItem, TopBarPortal, TopBarProvider} from './TopBar';
+import {useTranslation} from './i18n';
 
 /* Shared chrome metrics. The TopBar, floating tab bar and quick preview all
    offset themselves by these, and previously drifted 4px apart. */
@@ -40,9 +43,11 @@ function ShellLayoutContent() {
 	const location = useLocation();
 	const params = useParams();
 	const platform = usePlatform();
+	const {t} = useTranslation('explorer');
 	const pane = usePane();
 	const {
 		sidebarVisible: sidebarSetting,
+		setSidebarVisible,
 		inspectorVisible: inspectorSetting,
 		setInspectorVisible,
 		quickPreviewFileId,
@@ -175,6 +180,25 @@ function ShellLayoutContent() {
 				className="pointer-events-none absolute left-0 right-0 top-0 z-[37] h-32 bg-gradient-to-b from-app to-transparent"
 			/>
 
+			{showTabBar && !isPreviewActive && (
+				<TopBarPortal
+					left={
+						<TopBarItem
+							id="sidebar-toggle"
+							label={t('topBar.sidebar')}
+							priority="high"
+							onClick={() => setSidebarVisible(!sidebarSetting)}
+						>
+							<CircleButton
+								icon={SidebarSimple}
+								onClick={() => setSidebarVisible(!sidebarSetting)}
+								active={!sidebarSetting}
+								title={t('topBar.sidebar')}
+							/>
+						</TopBarItem>
+					}
+				/>
+			)}
 			<TopBar
 				sidebarWidth={sidebarVisible ? SIDEBAR_WIDTH : 0}
 				inspectorWidth={

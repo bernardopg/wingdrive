@@ -203,8 +203,8 @@ export type ArchiveExtractInput = {
 	destination: WingPath,
 };
 
-/**  Archive formats WingDrive can read; all but 7-Zip can also be written. */
-export type ArchiveFormat = "zip" | "tar" | "tar_gz" | "tar_bz2" | "tar_xz" | "tar_zst" | "seven_zip";
+/**  Archive formats WingDrive reads and writes. */
+export type ArchiveFormat = "zip" | "tar" | "tar_gz" | "tar_bz2" | "tar_xz" | "tar_zst" | "seven_zip" | "rar" | "bzip2";
 
 /**  Input for opening a file that may lie inside an archive */
 export type ArchiveOpenMemberInput = {

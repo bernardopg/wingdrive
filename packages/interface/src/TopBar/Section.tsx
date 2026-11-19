@@ -31,7 +31,7 @@ function ItemWrapper({ id, children }: { id: string; children: React.ReactNode }
 	}, [id, updateItemWidth]);
 
 	return (
-		<div ref={ref} className="inline-flex">
+		<div ref={ref} className="inline-flex" data-quick-preview={id.startsWith("preview-") || undefined}>
 			{children}
 		</div>
 	);

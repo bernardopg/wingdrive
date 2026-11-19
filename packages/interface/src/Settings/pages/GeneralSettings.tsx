@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Copy, FolderOpen } from "@phosphor-icons/react";
 import { toast } from "@wingdrive/primitives";
@@ -12,6 +12,7 @@ import {
 import { useTranslation } from "../../i18n";
 import {
   SettingsHeader,
+  SettingsUnavailable,
   SettingsRow,
   SettingsSection,
   SwitchRow,
@@ -19,6 +20,7 @@ import {
   errorMessage,
   inputClass,
 } from "../components";
+import { getCurrentPlatform } from "../../util/keybinds/platform";
 import { UpdatesSection } from "./UpdatesSection";
 
 interface DeviceSettingsForm {
@@ -33,12 +35,13 @@ function formatBuildDate(value: string, language: string) {
   return date.toLocaleString(language === "pt" ? "pt-BR" : "en-US", { dateStyle: "medium", timeStyle: "short" });
 }
 
+const desktopOs = getCurrentPlatform();
 const SLUG_PATTERN = /^[\p{L}\p{N}-]{1,50}$/u;
 
 export function GeneralSettings() {
   const { t, i18n } = useTranslation();
-  const statusQuery = useCoreQuery({ type: "core.status", input: null as any });
-  const configQuery = useCoreQuery({ type: "config.app.get", input: null as any });
+  const statusQuery = useCoreQuery({ type: "core.status", input: {} });
+  const configQuery = useCoreQuery({ type: "config.app.get", input: null });
   const updateDevice = useCoreMutation("device.update");
   const resetData = useCoreMutation("core.reset");
   const platform = usePlatform();
@@ -47,9 +50,19 @@ export function GeneralSettings() {
   const terminalId = useId();
 
   const [desktopSettings, setDesktopSettings] = useState<DesktopSettings | null>(null);
-  useEffect(() => {
-    platform.getDesktopSettings?.().then(setDesktopSettings).catch(() => setDesktopSettings(null));
+  const [desktopError, setDesktopError] = useState(false);
+  const [desktopBusy, setDesktopBusy] = useState(false);
+  const [terminalDraft, setTerminalDraft] = useState<string | null>(null);
+  const loadDesktopSettings = useCallback(async () => {
+    if (!platform.getDesktopSettings) return;
+    setDesktopError(false);
+    try {
+      setDesktopSettings(await platform.getDesktopSettings());
+    } catch {
+      setDesktopError(true);
+    }
   }, [platform]);
+  useEffect(() => { void loadDesktopSettings(); }, [loadDesktopSettings]);
 
   const [portal, setPortal] = useState<FileChooserPortalStatus | null>(null);
   const [portalBusy, setPortalBusy] = useState(false);
@@ -73,11 +86,14 @@ export function GeneralSettings() {
     key: K,
     value: DesktopSettings[K],
   ) => {
-    if (!desktopSettings || !platform.setDesktopSettings) return;
+    if (!desktopSettings || !platform.setDesktopSettings || desktopBusy) return;
+    setDesktopBusy(true);
     try {
       setDesktopSettings(await platform.setDesktopSettings({ ...desktopSettings, [key]: value }));
     } catch (error) {
       toast.error(t("general.saveFailed", { error: errorMessage(error) }));
+    } finally {
+      setDesktopBusy(false);
     }
   };
 
@@ -96,22 +112,23 @@ export function GeneralSettings() {
   // edits: react-hook-form's `values` option resets on every reference change,
   // so any background refetch of core.status wiped in-progress typing and
   // cleared isDirty, making the Save button disappear mid-edit.
+  const { errors, isDirty } = deviceForm.formState;
   useEffect(() => {
-    if (!status?.device_info || deviceForm.formState.isDirty) return;
+    if (!status?.device_info || isDirty) return;
     deviceForm.reset({
       name: status.device_info.name || "",
       slug: status.device_info.slug || "",
     });
-  }, [status, deviceForm]);
+  }, [status, deviceForm, isDirty]);
 
   const onDeviceSubmit = deviceForm.handleSubmit(async (data) => {
     try {
-      await updateDevice.mutateAsync({
+      const updated = await updateDevice.mutateAsync({
         name: data.name.trim(),
         slug: data.slug,
       });
       await statusQuery.refetch();
-      deviceForm.reset(data);
+      deviceForm.reset({ name: updated.name, slug: updated.slug });
       toast.success(t("general.device.saved"));
     } catch (error) {
       toast.error(t("general.device.saveFailed", { error: errorMessage(error) }));
@@ -124,7 +141,7 @@ export function GeneralSettings() {
       await navigator.clipboard.writeText(dataDir);
       toast.success(t("general.dataDir.copied"));
     } catch (error) {
-      toast.error(errorMessage(error));
+      toast.error(t("general.dataDir.copyFailed", { error: errorMessage(error) }));
     }
   };
 
@@ -139,12 +156,11 @@ export function GeneralSettings() {
           { confirm: true },
           {
             onSuccess: (result) => {
-              toast.success(
-                result.message || t("general.reset.done")
-              );
+              if (result.success) toast.success(t("general.reset.done"));
+              else toast.error(t("general.reset.failed", { error: result.message }));
             },
             onError: (error) => {
-              toast.error(error.message || t("general.reset.failed"));
+              toast.error(t("general.reset.failed", { error: errorMessage(error) }));
             },
           }
         );
@@ -152,12 +168,12 @@ export function GeneralSettings() {
     );
   };
 
-  const { errors, isDirty } = deviceForm.formState;
 
   return (
     <div className="space-y-6">
       <SettingsHeader title={t("sections.general")} description={t("general.description")} />
 
+      {status?.device_info ? (
       <form onSubmit={onDeviceSubmit}>
         <SettingsSection title={t("general.device.title")}>
           <SettingsRow label={t("general.device.name")} hint={t("general.device.nameHint")} controlId={nameId} stacked>
@@ -166,24 +182,31 @@ export function GeneralSettings() {
               type="text"
               {...deviceForm.register("name", { required: true, validate: (v) => v.trim().length > 0 })}
               className={inputClass}
+              disabled={updateDevice.isPending}
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? `${nameId}-error` : undefined}
               placeholder={t("general.device.namePlaceholder")}
             />
+            {errors.name && <p id={`${nameId}-error`} role="alert" className="mt-1 text-xs text-status-error">{t("general.device.nameInvalid")}</p>}
           </SettingsRow>
           <SettingsRow label={t("general.device.slug")} hint={t("general.device.slugHint")} controlId={slugId} stacked>
             <input
               id={slugId}
               type="text"
               aria-invalid={!!errors.slug}
+              aria-describedby={errors.slug ? `${slugId}-error` : undefined}
+              disabled={updateDevice.isPending}
               {...deviceForm.register("slug", { required: true, pattern: SLUG_PATTERN })}
               className={clsx(inputClass, "font-mono", errors.slug && "ring-2 ring-status-error")}
               placeholder="my-computer"
             />
-            {errors.slug && <p className="mt-1 text-xs text-status-error">{t("general.device.slugInvalid")}</p>}
+            {errors.slug && <p id={`${slugId}-error`} role="alert" className="mt-1 text-xs text-status-error">{t("general.device.slugInvalid")}</p>}
           </SettingsRow>
           {isDirty && (
             <div className="flex justify-end gap-2 px-4 py-3">
               <button
                 type="button"
+                disabled={updateDevice.isPending}
                 onClick={() => deviceForm.reset()}
                 className={clsx(buttonClass, "text-ink-dull hover:bg-app-hover hover:text-ink")}
               >
@@ -200,46 +223,64 @@ export function GeneralSettings() {
           )}
         </SettingsSection>
       </form>
+      ) : (
+        <SettingsSection title={t("general.device.title")}>
+          <div className="p-3">
+            <SettingsUnavailable loading={statusQuery.isLoading} retry={() => void statusQuery.refetch()} />
+          </div>
+        </SettingsSection>
+      )}
 
+      {desktopError && <SettingsUnavailable loading={false} retry={() => void loadDesktopSettings()} />}
       {desktopSettings && (
         <SettingsSection title={t("general.background.title")}>
           <SwitchRow
             label={t("general.background.keepRunning")}
             hint={t("general.background.keepRunningHint")}
             checked={desktopSettings.keep_in_background}
+            disabled={desktopBusy}
             onChange={(value) => updateDesktopSetting("keep_in_background", value)}
           />
           <SwitchRow
             label={t("general.background.startAtLogin")}
             hint={t("general.background.startAtLoginHint")}
             checked={desktopSettings.start_at_login}
+            disabled={desktopBusy}
             onChange={(value) => updateDesktopSetting("start_at_login", value)}
           />
           <SwitchRow
             label={t("general.background.startMinimized")}
             hint={t("general.background.startMinimizedHint")}
             checked={desktopSettings.start_minimized}
-            disabled={!desktopSettings.start_at_login}
+            disabled={desktopBusy || !desktopSettings.start_at_login}
             onChange={(value) => updateDesktopSetting("start_minimized", value)}
           />
           <SettingsRow
             label={t("general.background.terminal")}
-            hint={t("general.background.terminalHint")}
+            hint={t(desktopOs === "macos" ? "general.background.terminalHintMac" : desktopOs === "windows" ? "general.background.terminalHintWindows" : "general.background.terminalHint")}
             controlId={terminalId}
             stacked
           >
             <input
               id={terminalId}
               type="text"
-              defaultValue={desktopSettings.terminal_command ?? ""}
-              onBlur={(e) => {
-                const value = e.target.value.trim();
-                if (value !== (desktopSettings.terminal_command ?? "")) {
-                  void updateDesktopSetting("terminal_command", value || null);
+              value={terminalDraft ?? desktopSettings.terminal_command ?? ""}
+              disabled={desktopBusy}
+              onChange={(event) => setTerminalDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.currentTarget.blur();
+                if (event.key === "Escape") setTerminalDraft(null);
+              }}
+              onBlur={() => {
+                const value = terminalDraft?.trim() || null;
+                if (terminalDraft !== null && value !== desktopSettings.terminal_command) {
+                  void updateDesktopSetting("terminal_command", value).then(() => setTerminalDraft(null));
+                } else {
+                  setTerminalDraft(null);
                 }
               }}
               className={clsx(inputClass, "font-mono")}
-              placeholder="kitty --single-instance"
+              placeholder={desktopOs === "macos" ? "Terminal" : desktopOs === "windows" ? "wt" : "kitty --single-instance"}
             />
           </SettingsRow>
         </SettingsSection>
@@ -247,6 +288,7 @@ export function GeneralSettings() {
 
       <UpdatesSection
         desktopSettings={desktopSettings}
+        settingsBusy={desktopBusy}
         onSettingChange={(value) => updateDesktopSetting("check_for_updates", value)}
       />
 
@@ -268,15 +310,15 @@ export function GeneralSettings() {
 
       <SettingsSection title={t("general.version.title")}>
         <SettingsRow label={t("general.version.version")}>
-          <span className="font-mono text-sm text-ink-dull">{status?.version || t("loading")}</span>
+          <span className="font-mono text-sm text-ink-dull">{status?.version || (statusQuery.isLoading ? t("loading") : t("unavailable"))}</span>
         </SettingsRow>
         <SettingsRow label={t("general.version.built")}>
-          <span className="font-mono text-sm text-ink-dull">{status?.built_at ? formatBuildDate(status.built_at, i18n.language) : t("loading")}</span>
+          <span className="font-mono text-sm text-ink-dull">{status?.built_at ? formatBuildDate(status.built_at, i18n.language) : statusQuery.isLoading ? t("loading") : t("unavailable")}</span>
         </SettingsRow>
         <SettingsRow label={t("general.dataDir.title")} hint={t("general.dataDir.hint")} stacked>
           <div className="flex items-center gap-2">
             <code className="min-w-0 flex-1 truncate rounded-md bg-app px-2 py-1.5 text-xs text-ink-dull" title={dataDir}>
-              {dataDir || t("loading")}
+              {dataDir || (configQuery.isLoading || statusQuery.isLoading ? t("loading") : t("unavailable"))}
             </code>
             <button
               type="button"
@@ -308,7 +350,7 @@ export function GeneralSettings() {
         <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-status-error">
           {t("general.reset.zone")}
         </h3>
-        <div className="flex flex-col gap-3 rounded-lg border border-status-error/30 bg-status-error/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-lg border border-status-error/30 bg-status-error/5 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-medium text-ink">{t("general.reset.title")}</p>
             <p className="mt-0.5 text-xs text-ink-dull">{t("general.reset.hint")}</p>

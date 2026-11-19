@@ -15,7 +15,9 @@ const ARCHIVE_SUFFIXES = [
 	'.tar',
 	'.zip',
 	'.jar',
-	'.7z'
+	'.7z',
+	'.rar',
+	'.bz2'
 ];
 
 export function isArchiveName(name: string): boolean {
@@ -25,10 +27,14 @@ export function isArchiveName(name: string): boolean {
 
 export const COMPRESS_FORMATS: {format: ArchiveFormat; label: string}[] = [
 	{format: 'zip', label: 'archive.zip'},
+	{format: 'seven_zip', label: 'archive.sevenZip'},
+	{format: 'rar', label: 'archive.rar'},
+	{format: 'tar', label: 'archive.tar'},
 	{format: 'tar_gz', label: 'archive.tarGz'},
 	{format: 'tar_xz', label: 'archive.tarXz'},
 	{format: 'tar_zst', label: 'archive.tarZst'},
-	{format: 'tar_bz2', label: 'archive.tarBz2'}
+	{format: 'tar_bz2', label: 'archive.tarBz2'},
+	{format: 'bzip2', label: 'archive.bzip2'}
 ];
 
 /** Archive name for a selection: the item's own name, or "Archive" for several. */

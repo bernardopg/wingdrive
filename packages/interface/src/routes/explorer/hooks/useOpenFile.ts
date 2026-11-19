@@ -73,6 +73,10 @@ export function useOpenFile(navigate?: (path: WingPath) => void) {
 				return;
 			}
 		}
+		if (!inArchive && file.kind === "Symlink" && isArchiveName(path)) {
+		  go({ Physical: { ...file.wing_path.Physical, path } });
+		  return;
+		}
 		await openWithDefault(path);
 	};
 }
