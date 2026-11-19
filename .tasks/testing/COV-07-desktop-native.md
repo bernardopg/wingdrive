@@ -1,14 +1,14 @@
 ---
 id: COV-07
 title: "Cobrir shell desktop, IPC e segurança do undo"
-status: Done
+status: In Progress
 assignee: bernardopg
 parent: COV-00
 priority: High
 milestone: M2
 sprint: S05
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-13
+last_updated: 2026-11-19
 ---
 
 ## Description
@@ -31,6 +31,12 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 - [ ] Desktop apps/tauri atinge 100% de linhas instrumentadas na medição completa.
 - [x] Undo nunca sobrescreve dados criados depois da operação original.
 - [x] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
+
+## Reabertura da meta de cobertura
+
+O trabalho de 13 de novembro cumpriu a meta anterior do shell desktop. A meta vigente de 100%
+continua aberta. O relatório Linux tem 8.035/8.910 linhas cobertas (90,2%). A validação COV-12
+registra o SHA, a coleta e as 875 linhas que faltam na medição.
 
 ## GTK clipboard coverage 2026-11-19
 
@@ -290,3 +296,11 @@ The file opener now has a subprocess test for Linux terminal discovery with a pr
 It verifies the priority of `xdg-terminal-exec`, a configured `TERMINAL`, known fallback
 emulators, and the absence of a terminal. All five terminal tests passed under LLVM
 instrumentation. The test checks the selected executable and argument boundaries.
+### Linux resident launch forwarding
+
+The private D-Bus test starts a child process and exercises the path that forwards its arguments
+and working directory to a running instance. It also checks the result when the destination is
+absent. A separate mock-app case verifies that a hidden autostart queues nothing and that a
+hidden invocation with a folder delivers the request. All 21 launch tests passed with LLVM
+instrumentation. The focused profile hit 219/227 lines in `launch.rs`, including 16 lines missed
+by the previous full collector. This test uses a private bus and the mock window runtime.
