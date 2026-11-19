@@ -27,7 +27,8 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 
 ## Acceptance Criteria
 
-- [x] Desktop apps/tauri atinge pelo menos 60% na primeira etapa e 75% na conclusão.
+- [x] Desktop apps/tauri atingiu as metas intermediárias de 60% e 75%.
+- [ ] Desktop apps/tauri atinge 100% de linhas instrumentadas na medição completa.
 - [x] Undo nunca sobrescreve dados criados depois da operação original.
 - [x] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
 
@@ -271,3 +272,14 @@ See [BUGS.md](BUGS.md#desktop-a-listagem-de-volumes-do-gio-escondia-falhas) for 
 The logs are in `coverage/goal/next/gvfs-list-*.log` and `gvfs-network-ui.log`. Fixtures used
 local subprocesses and a simulated device. System GIO and real phone connections were outside
 this verification.
+
+### FileManager1 on a private session bus
+
+The FileManager1 contract test starts its own D-Bus daemon and verifies the requests delivered
+by ShowFolders, ShowItems and ShowItemProperties for a temporary directory and a file with a
+space in its name. It shares the existing private bus fixture with the file chooser.
+The combined Linux desktop suite passed 319 tests, including both D-Bus integrations, with
+two existing ignores. Separate LLVM profiles of the same binary put instrumented coverage of
+`filemanager1.rs` at 102/163 before the new case and 134/163 with it. The denominator includes
+existing inline tests. The full component target stays open. Logs and profiles are in
+`coverage/goal/next/` in the primary checkout.

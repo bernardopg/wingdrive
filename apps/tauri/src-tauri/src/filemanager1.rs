@@ -31,7 +31,7 @@ const BUS_NAME: &str = "org.freedesktop.FileManager1";
 const OBJECT_PATH: &str = "/org/freedesktop/FileManager1";
 
 struct FileManager1 {
-	app: AppHandle,
+	open: Box<dyn Fn(Vec<OpenRequest>) + Send + Sync>,
 }
 
 #[zbus::interface(name = "org.freedesktop.FileManager1")]
@@ -39,13 +39,13 @@ impl FileManager1 {
 	/// Opens each folder in a tab.
 	#[zbus(name = "ShowFolders")]
 	fn show_folders(&self, uris: Vec<String>, _startup_id: String) {
-		launch::deliver(&self.app, folder_requests(&uris));
+		(self.open)(folder_requests(&uris));
 	}
 
 	/// Opens the parent folder of each item with the item selected.
 	#[zbus(name = "ShowItems")]
 	fn show_items(&self, uris: Vec<String>, _startup_id: String) {
-		launch::deliver(&self.app, item_requests(&uris));
+		(self.open)(item_requests(&uris));
 	}
 
 	/// Selects the items; the Inspector shows the selection's properties.
@@ -131,8 +131,27 @@ pub async fn serve(app: AppHandle) {
 }
 
 async fn try_serve(app: AppHandle) -> zbus::Result<()> {
-	let connection = zbus::connection::Builder::session()
-		.serve_at(OBJECT_PATH, FileManager1 { app })
+	let connection = claim_name(zbus::connection::Builder::session(), move |requests| {
+		launch::deliver(&app, requests);
+	})
+	.await?;
+	// The connection serves requests while alive; hold it until the app exits.
+	std::future::pending::<()>().await;
+	drop(connection);
+	Ok(())
+}
+
+async fn claim_name(
+	builder: zbus::connection::Builder<'_>,
+	open: impl Fn(Vec<OpenRequest>) + Send + Sync + 'static,
+) -> zbus::Result<zbus::Connection> {
+	let connection = builder
+		.serve_at(
+			OBJECT_PATH,
+			FileManager1 {
+				open: Box::new(open),
+			},
+		)
 		.build()
 		.await?;
 	let reply = connection
@@ -142,15 +161,14 @@ async fn try_serve(app: AppHandle) -> zbus::Result<()> {
 		)
 		.await?;
 	tracing::info!(?reply, "Requested {BUS_NAME}");
-	// The connection serves requests while alive; hold it until the app exits.
-	std::future::pending::<()>().await;
-	drop(connection);
-	Ok(())
+	Ok(connection)
 }
 
 #[cfg(test)]
 mod tests {
 	use super::should_serve;
+
+	mod private_bus;
 
 	#[test]
 	fn override_aliases_are_case_insensitive_and_unknown_values_use_the_default() {
