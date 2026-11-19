@@ -67,3 +67,11 @@ to 369/400 lines. Both profile runs had zero failures or ignored tests, and the 
 emitted no compiler warnings. Logs and LCOV files are under `coverage/goal/cli-integration-rpc/`.
 This measurement uses only the CLI binary. The full component measurement and the process-level
 daemon cases remain open.
+
+### Cloud provider prompt contracts
+
+Three new cases drive the CLI wizard through its existing pseudo-terminal fixture. They
+check S3-compatible provider selection, default regions and endpoints, Azure Blob fields
+and Dropbox OAuth fields. The fixture sends synthetic values to loopback and never contacts
+a provider. All eight cloud wizard tests passed on Linux in the instrumented verification
+tree. See `coverage/goal/next/cloud-pty-final.log` in the primary checkout.
