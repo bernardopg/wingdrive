@@ -131,3 +131,9 @@ All 12 passed on Linux with LLVM instrumentation and the collector's Cargo packa
 The focused run had zero failures, ignored tests or compiler warnings. The full report must be
 regenerated before attributing any percentage gain to these suites. The collector now invokes
 `cargo llvm-cov show-env --sh` to remove the deprecated `--export-prefix` warning.
+
+### GitHub Actions · promoção de arquivo observada no PR #474
+
+O log completo do job confirmou a entrega do evento e uma inferência de move incorreta por inode.
+O teste de watcher deve indexar o arquivo promovido sem mover nem substituir a raiz da localização.
+Veja [registro de bugs](BUGS.md#core-reutilização-de-inode-quebrava-a-promoção-de-um-arquivo-no-watcher).

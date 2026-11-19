@@ -329,6 +329,32 @@ pub async fn apply_batch<H: ChangeHandler>(
 	Ok(())
 }
 
+/// Inodes can be reused or shared. Only a missing path of the same kind can
+/// be the old name of this entry.
+async fn find_move_source<H: ChangeHandler>(
+	handler: &H,
+	metadata: &DirEntry,
+	config: &ChangeConfig<'_>,
+) -> Result<Option<EntryRef>> {
+	let Some(inode) = metadata.inode else {
+		return Ok(None);
+	};
+	let Some(existing) = handler.find_by_inode(inode).await? else {
+		return Ok(None);
+	};
+	if existing.path == metadata.path
+		|| existing.kind != metadata.kind
+		|| existing.path == config.location_root
+		|| !existing.path.starts_with(config.location_root)
+		|| !matches!(
+			path_exists_safe(&existing.path, config.volume_backend).await,
+			Ok(false)
+		) {
+		return Ok(None);
+	}
+	Ok(Some(existing))
+}
+
 /// Handle a create event.
 pub async fn handle_create<H: ChangeHandler>(
 	handler: &mut H,
@@ -385,31 +411,27 @@ pub async fn handle_create<H: ChangeHandler>(
 		return handle_modify(handler, path, config).await;
 	}
 
-	if let Some(inode) = metadata.inode {
-		if let Some(existing) = handler.find_by_inode(inode).await? {
-			if existing.path != path {
-				tracing::debug!(
-					"Detected inode-based move: {} -> {}",
-					existing.path.display(),
-					path.display()
-				);
-				let old_path = existing.path.clone();
-				handler
-					.move_entry(
-						&existing,
-						&old_path,
-						path,
-						path.parent().unwrap_or(Path::new("/")),
-					)
-					.await?;
-				let moved = EntryRef {
-					path: path.to_path_buf(),
-					..existing
-				};
-				handler.emit_change_event(&moved, ChangeType::Moved).await?;
-				return Ok(());
-			}
-		}
+	if let Some(existing) = find_move_source(handler, &metadata, config).await? {
+		tracing::debug!(
+			"Detected inode-based move: {} -> {}",
+			existing.path.display(),
+			path.display()
+		);
+		let old_path = existing.path.clone();
+		handler
+			.move_entry(
+				&existing,
+				&old_path,
+				path,
+				path.parent().unwrap_or(Path::new("/")),
+			)
+			.await?;
+		let moved = EntryRef {
+			path: path.to_path_buf(),
+			..existing
+		};
+		handler.emit_change_event(&moved, ChangeType::Moved).await?;
+		return Ok(());
 	}
 
 	let parent_path = path.parent().unwrap_or(Path::new("/"));
@@ -493,31 +515,27 @@ pub async fn handle_modify<H: ChangeHandler>(
 		Err(e) => return Err(e),
 	};
 
-	if let Some(inode) = metadata.inode {
-		if let Some(existing) = handler.find_by_inode(inode).await? {
-			if existing.path != path {
-				tracing::debug!(
-					"Detected inode-based move during modify: {} -> {}",
-					existing.path.display(),
-					path.display()
-				);
-				let old_path = existing.path.clone();
-				handler
-					.move_entry(
-						&existing,
-						&old_path,
-						path,
-						path.parent().unwrap_or(Path::new("/")),
-					)
-					.await?;
-				let moved = EntryRef {
-					path: path.to_path_buf(),
-					..existing
-				};
-				handler.emit_change_event(&moved, ChangeType::Moved).await?;
-				return Ok(());
-			}
-		}
+	if let Some(existing) = find_move_source(handler, &metadata, config).await? {
+		tracing::debug!(
+			"Detected inode-based move during modify: {} -> {}",
+			existing.path.display(),
+			path.display()
+		);
+		let old_path = existing.path.clone();
+		handler
+			.move_entry(
+				&existing,
+				&old_path,
+				path,
+				path.parent().unwrap_or(Path::new("/")),
+			)
+			.await?;
+		let moved = EntryRef {
+			path: path.to_path_buf(),
+			..existing
+		};
+		handler.emit_change_event(&moved, ChangeType::Moved).await?;
+		return Ok(());
 	}
 
 	if let Some(entry) = handler.find_by_path(path).await? {

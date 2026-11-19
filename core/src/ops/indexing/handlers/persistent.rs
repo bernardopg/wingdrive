@@ -578,7 +578,10 @@ impl PersistentEventHandler {
 			match &event.kind {
 				FsEventKind::Remove => {
 					// Query database for inode
-					let inode = Self::get_inode_from_db(db, &event.path).await;
+					let inode = Self::get_entry_from_db(db, &event.path)
+						.await
+						.and_then(|entry| entry.inode)
+						.map(|inode| inode as u64);
 					if let Some(inode) = inode {
 						debug!(
 							"Buffering Remove event: {} with inode {} for potential rename",
@@ -603,7 +606,7 @@ impl PersistentEventHandler {
 							// ext4 hands a freed inode to the next new file, so an inode
 							// match alone is not a rename: the file must also keep the
 							// recorded size and modification time.
-							if !Self::matches_recorded_file(db, &old_path, &event.path).await {
+							if !Self::matches_recorded_entry(db, &old_path, &event.path).await {
 								debug!(
 									"Inode {} reused: {} removed, {} created",
 									inode,
@@ -644,23 +647,32 @@ impl PersistentEventHandler {
 
 	/// Whether the file now at `new_path` is the one recorded at `old_path`.
 	///
-	/// A rename keeps size and modification time; a new file that inherited
-	/// the inode almost never matches both. Directories have no stable size, so
-	/// they keep matching on inode alone.
-	async fn matches_recorded_file(
+	/// A rename preserves the entry kind. For files also compare size and
+	/// modification time to detect inode reuse.
+	async fn matches_recorded_entry(
 		db: &sea_orm::DatabaseConnection,
 		old_path: &std::path::Path,
 		new_path: &std::path::Path,
 	) -> bool {
-		let Ok(metadata) = tokio::fs::metadata(new_path).await else {
-			return true;
+		let Ok(metadata) = tokio::fs::symlink_metadata(new_path).await else {
+			return false;
 		};
+		let Some(entry) = Self::get_entry_from_db(db, old_path).await else {
+			return false;
+		};
+		let kind = if metadata.is_dir() {
+			1
+		} else if metadata.is_symlink() {
+			2
+		} else {
+			0
+		};
+		if entry.kind != kind {
+			return false;
+		}
 		if metadata.is_dir() {
 			return true;
 		}
-		let Some(entry) = Self::get_file_entry_from_db(db, old_path).await else {
-			return true;
-		};
 		let same_size = entry.size == metadata.len() as i64;
 		let same_mtime = metadata
 			.modified()
@@ -699,35 +711,26 @@ impl PersistentEventHandler {
 		query.one(db).await.ok()?
 	}
 
-	/// Get the inode for a path from the database.
-	async fn get_inode_from_db(
+	/// Find the indexed entry of either kind without stripping dots from directory names.
+	async fn get_entry_from_db(
 		db: &sea_orm::DatabaseConnection,
 		path: &std::path::Path,
-	) -> Option<u64> {
+	) -> Option<crate::infra::db::entities::entry::Model> {
 		use crate::infra::db::entities::{directory_paths, entry};
 		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
-		// First try as directory (lookup via directory_paths)
-		let path_str = path.to_string_lossy().to_string();
-		if let Ok(Some(dir_record)) = directory_paths::Entity::find()
-			.filter(directory_paths::Column::Path.eq(&path_str))
+		if let Some(directory) = directory_paths::Entity::find()
+			.filter(directory_paths::Column::Path.eq(path.to_string_lossy().as_ref()))
 			.one(db)
 			.await
+			.ok()?
 		{
-			if let Ok(Some(entry_record)) =
-				entry::Entity::find_by_id(dir_record.entry_id).one(db).await
-			{
-				if let Some(inode) = entry_record.inode {
-					return Some(inode as u64);
-				}
-			}
+			return entry::Entity::find_by_id(directory.entry_id)
+				.one(db)
+				.await
+				.ok()?;
 		}
-
-		// Try as file (lookup via parent directory + name)
-		Self::get_file_entry_from_db(db, path)
-			.await?
-			.inode
-			.map(|i| i as u64)
+		Self::get_file_entry_from_db(db, path).await
 	}
 
 	/// Get the inode for a path from the filesystem.
@@ -735,7 +738,10 @@ impl PersistentEventHandler {
 		#[cfg(unix)]
 		{
 			use std::os::unix::fs::MetadataExt;
-			tokio::fs::metadata(path).await.ok().map(|m| m.ino())
+			tokio::fs::symlink_metadata(path)
+				.await
+				.ok()
+				.map(|m| m.ino())
 		}
 		#[cfg(not(unix))]
 		{

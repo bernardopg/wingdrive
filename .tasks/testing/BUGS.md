@@ -801,3 +801,10 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: a listagem avaliava o stdout sem conferir o código de saída.
 - Correção: retornar o diagnóstico do GIO em caso de falha e oferecer nova tentativa na barra lateral. Uma listagem vazia bem-sucedida continua válida.
 - Verificação: a regressão falhou com `unwrap_err()` sobre `Ok([])` antes da correção. Depois, 12 testes instrumentados de GVFS e um teste React passaram. Os testes também cobrem erro sem stderr, executável ausente e recuperação após nova tentativa. Usam subprocessos descartáveis e uma plataforma de teste.
+
+## Core: reutilização de inode quebrava a promoção de um arquivo no watcher
+
+- Evidência: em `Rust Workspace` do PR #474, `test_location_watcher` recebeu o Create de `promoted.txt`. O indexador tentou mover a raiz `watched` para o arquivo e SQLite rejeitou a mudança com `UNIQUE constraint failed` na tabela de fechamento.
+- Causa: o fallback por inode aceitava entradas de outro tipo, incluindo a raiz e caminhos ainda existentes. O pareamento de Remove/Create também podia tratar o inode reciclado de um diretório como o mesmo arquivo.
+- Correção: só inferir mudança por inode dentro da localização para entradas do mesmo tipo com origem ausente. Ao parear remoções, comparar o tipo registrado e verificar tamanho e mtime de arquivos.
+- Regressão: o cenário de mover `node_modules/promoted.txt` para a raiz continua exigindo a entrada no banco. As histórias vizinhas exercitam renomeação, exclusão e reutilização de inode.
