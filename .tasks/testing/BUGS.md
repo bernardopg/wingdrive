@@ -791,3 +791,10 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: o startup instalava o menu completo e substituía seu menu efetivo por um vazio no Linux e no Windows.
 - Correção: instalar diretamente o menu vazio nesses dois sistemas. Os itens usados pelo IPC de seleção continuam acessíveis no estado.
 - Verificação: oito testes de menu passaram. O binário instrumentado abriu a janela, respondeu ao Ping do daemon e encerrou com status zero. O replay teve zero avisos de aceleradores GTK.
+
+## Core: remover uma localização retornava antes de o indexador parar
+
+- Evidência: em `Rust Workspace` dos PRs #468 e #470, `removing_a_location_cancels_its_jobs` falhou com `cancelled job still reports Running`. As mensagens de arquivos ausentes e a queda do canal do task vieram depois do encerramento da fixture.
+- Causa: o gerenciador esperava 100 ms após o pedido em vez de aguardar o resultado da tarefa. O worker podia perder o cancelamento entre a leitura do sinal de cancelado e a publicação de que a tarefa estava rodando. A descoberta paralela também podia deixar subtarefas no runtime ao interromper o job.
+- Correção: coordenar a transição do worker com a sinalização de cancelamento, encerrar os workers da descoberta antes de devolver o erro de interrupção e aguardar o término real antes de apagar o registro do job.
+- Regressão: o teste exige a transição para `Cancelled` antes de remover a localização e verificar o banco.

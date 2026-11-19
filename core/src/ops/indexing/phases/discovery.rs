@@ -215,7 +215,17 @@ async fn run_parallel_discovery(
 			}
 		}
 
-		ctx.check_interrupt().await?;
+		if let Err(error) = ctx.check_interrupt().await {
+			monitor.abort();
+			for worker in &workers {
+				worker.abort();
+			}
+			for worker in workers {
+				let _ = worker.await;
+			}
+			let _ = monitor.await;
+			return Err(error);
+		}
 	}
 
 	monitor
