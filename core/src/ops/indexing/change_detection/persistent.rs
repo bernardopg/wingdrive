@@ -733,6 +733,27 @@ impl ChangeHandler for DatabaseAdapter {
 		Ok(())
 	}
 
+	async fn emit_move_event(&self, entry: &EntryRef, old_path: &Path) -> Result<()> {
+		let Some(uuid) = entry.uuid else {
+			return self.emit_change_event(entry, ChangeType::Moved).await;
+		};
+		let resources = crate::domain::ResourceManager::new(
+			Arc::new(self.db.clone()),
+			self.context.events.clone(),
+		);
+		if let Err(error) = resources
+			.emit_resource_events_with_paths(
+				"entry",
+				vec![uuid],
+				&[crate::domain::WingPath::local(old_path)],
+			)
+			.await
+		{
+			tracing::warn!(%error, path = %entry.path.display(), "Failed to emit move event");
+		}
+		Ok(())
+	}
+
 	async fn emit_change_event(&self, entry: &EntryRef, change_type: ChangeType) -> Result<()> {
 		use crate::domain::ResourceManager;
 		use crate::infra::event::Event;
