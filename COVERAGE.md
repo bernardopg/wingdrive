@@ -54,6 +54,7 @@ Record diagnostics and fixes in the owning task, the bug log and Headroom when y
 
 ```bash
 cargo install cargo-llvm-cov && rustup component add llvm-tools-preview
+bun install --frozen-lockfile
 scripts/coverage-rust.sh coverage/rust/rust.lcov
 scripts/coverage-frontend.sh coverage/frontend
 python3 scripts/coverage-report.py coverage/site coverage/rust/rust.lcov $(find coverage/frontend -name lcov.info)

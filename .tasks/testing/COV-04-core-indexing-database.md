@@ -109,6 +109,20 @@ The focused run had zero failures, ignored tests or compiler warnings. The full 
 regenerated before attributing any percentage gain to these suites. The collector now invokes
 `cargo llvm-cov show-env --sh` to remove the deprecated `--export-prefix` warning.
 
+### Ponte de eventos Rust e TypeScript
+
+A suíte de cache usa o cliente real por TCP e verifica eventos do watcher depois de
+movimentar, renomear e excluir arquivos descartáveis. O primeiro replay registrou quatro
+falhas de fixture por interceptar a API privada de assinaturas. Depois de remover essa
+interceptação, restaram as duas falhas de movimentação, que preservavam entradas na origem.
+A correção encaminha o evento aos dois escopos. Ver [BUGS.md](BUGS.md).
+
+O replay completo da ponte de cache passou seis testes no Linux com LLVM. Outros 15
+testes de busca, eventos efêmeros e filtros passaram no mesmo checkout. Os logs
+`coverage/goal/after-watchers/typescript-bridge-routing.log` e
+`bridge-routing-neighbors.log` não registraram avisos de compilação. As três suítes de
+ponte entram no CI Linux e no coletor. As duas configurações passaram no `actionlint`.
+
 ### Offline sidecar recovery
 
 A temporary library fixture verifies sidecar discovery from disk, the ready lookup, database

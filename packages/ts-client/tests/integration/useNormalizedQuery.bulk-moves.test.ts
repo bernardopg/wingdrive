@@ -3,7 +3,6 @@ import { beforeAllBridge, describeBridge } from "./bridge";
 import {
 	test,
 	expect,
-	afterAll,
 	afterEach,
 } from "bun:test";
 import { readFile } from "fs/promises";
@@ -28,7 +27,7 @@ interface BridgeConfig {
 describeBridge("useNormalizedQuery - Bulk Moves Integration", () => {
 	let bridgeConfig: BridgeConfig;
 	let client: WingDriveClient;
-	const allEventsReceived: any[] = []; // Collect all events for debugging
+
 
 	beforeAllBridge(async () => {
 		// Read bridge config from path provided by Rust test
@@ -51,47 +50,8 @@ describeBridge("useNormalizedQuery - Bulk Moves Integration", () => {
 		// Set library context
 		client.setCurrentLibrary(bridgeConfig.library_id);
 		console.log(`[TS] Library set to: ${bridgeConfig.library_id}`);
-
-		// Hook into the subscription manager to collect all events
-		const originalCreateSubscription = (client as any).subscriptionManager
-			.createSubscription;
-		(client as any).subscriptionManager.createSubscription = function (
-			filter: any,
-			callback: any,
-		) {
-			const wrappedCallback = (event: any) => {
-				allEventsReceived.push({
-					timestamp: new Date().toISOString(),
-					filter,
-					event,
-				});
-				console.log(
-					`[TS] 🔔 Event received:`,
-					JSON.stringify(event, null, 2),
-				);
-				callback(event);
-			};
-			return originalCreateSubscription.call(
-				this,
-				filter,
-				wrappedCallback,
-			);
-		};
 	});
 
-	afterAll(async () => {
-		// Log all events at the end for debugging
-		console.log(
-			`[TS] ===== ALL EVENTS RECEIVED (${allEventsReceived.length}) =====`,
-		);
-		allEventsReceived.forEach((item, idx) => {
-			console.log(`[TS] Event ${idx + 1} at ${item.timestamp}:`);
-			console.log(`[TS]   Filter:`, JSON.stringify(item.filter, null, 2));
-			console.log(`[TS]   Event:`, JSON.stringify(item.event, null, 2));
-		});
-		console.log(`[TS] ===== END OF EVENTS =====`);
-		// No explicit disconnect needed for stateless transports
-	});
 
 	afterEach(cleanup); // Clean up React Testing Library after each test
 
