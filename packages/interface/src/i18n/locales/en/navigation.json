@@ -345,6 +345,7 @@
 		"unmountNamed": "Unmount {{name}}",
 		"unmount": "Unmount",
 		"mountNamed": "Mount {{name}}",
+		"retryListDevices": "Could not list devices. Retry",
 		"connectToServer": "Connect to Server...",
 		"mountFailed": "Could not mount {{name}}: {{error}}",
 		"unmountFailed": "Could not unmount {{name}}: {{error}}",

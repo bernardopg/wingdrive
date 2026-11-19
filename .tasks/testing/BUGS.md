@@ -751,3 +751,11 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: `Some(None)` e `None` produzem o mesmo JSON. A desserialização perdia a distinção entre limpar o intervalo e preservar o valor.
 - Correção: o protocolo de atualização interpreta zero como limpar o agendamento, conserva o intervalo com campo ausente ou `null` e mantém a validação dos intervalos positivos. A CLI transmite o zero explícito.
 - Verificação: 562 testes da CLI e os 6 testes do contrato RPC passaram instrumentados no Linux, sem ignorados nem avisos do compilador. O teste com SQLite descartável verifica a atualização positiva, a rejeição de 1 minuto, a preservação em `null` e a limpeza em zero. O teste de loopback verifica o zero enviado pela CLI.
+
+## Desktop: a listagem de volumes do GIO escondia falhas
+
+- Local: `list_mountable_volumes` em `apps/tauri/src-tauri/src/gvfs.rs` e `NetworkSection.tsx`.
+- Reprodução: no Linux, substitua o subprocesso por uma fixture que emita `gio: volume monitor unavailable` no stderr e termine com código 1. A chamada retornava `Ok([])` e a barra lateral ficava vazia.
+- Causa: a listagem avaliava o stdout sem conferir o código de saída.
+- Correção: retornar o diagnóstico do GIO em caso de falha e oferecer nova tentativa na barra lateral. Uma listagem vazia bem-sucedida continua válida.
+- Verificação: a regressão falhou com `unwrap_err()` sobre `Ok([])` antes da correção. Depois, 12 testes instrumentados de GVFS e um teste React passaram. Os testes também cobrem erro sem stderr, executável ausente e recuperação após nova tentativa. Usam subprocessos descartáveis e uma plataforma de teste.

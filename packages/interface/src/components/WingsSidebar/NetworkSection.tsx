@@ -237,6 +237,19 @@ export function NetworkSection({groupId}: {groupId: string}) {
 				</button>
 				)}
 			</SortableDynamicList>
+			{mountable.isError && (
+				<button
+					type="button"
+					className={rowClass}
+					disabled={mountable.isFetching}
+					title={String(mountable.error)}
+					onClick={() => void mountable.refetch()}
+				>
+					<ArrowClockwise className="size-4 shrink-0" weight="bold" aria-hidden />
+					<span>{t('network.retryListDevices')}</span>
+				</button>
+			)}
+
 			{(servers.length > 0 || discovered.isFetching) && (
 				<div className="pt-1">
 					<div className="text-sidebar-ink-faint flex items-center justify-between px-2 py-0.5 text-[11px] font-semibold">
