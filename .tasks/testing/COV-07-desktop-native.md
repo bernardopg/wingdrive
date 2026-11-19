@@ -283,3 +283,12 @@ two existing ignores. Separate LLVM profiles of the same binary put instrumented
 `filemanager1.rs` at 102/163 before the new case and 134/163 with it. The denominator includes
 existing inline tests. The full component target stays open. Logs and profiles are in
 `coverage/goal/next/` in the primary checkout.
+
+### Linux resident launch forwarding
+
+The private D-Bus test starts a child process and exercises the path that forwards its arguments
+and working directory to a running instance. It also checks the result when the destination is
+absent. A separate mock-app case verifies that a hidden autostart queues nothing and that a
+hidden invocation with a folder delivers the request. All 21 launch tests passed with LLVM
+instrumentation. The focused profile hit 219/227 lines in `launch.rs`, including 16 lines missed
+by the previous full collector. This test uses a private bus and the mock window runtime.
