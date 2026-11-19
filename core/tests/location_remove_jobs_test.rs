@@ -11,7 +11,7 @@ use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use tokio::fs;
 use wing_core::{
 	domain::addressing::WingPath,
-	infra::db::entities,
+	infra::{db::entities, job::types::JobStatus},
 	location::{IndexMode, LocationManager},
 	ops::indexing::{self, IndexerJob, IndexerJobConfig},
 };
@@ -52,11 +52,7 @@ async fn removing_a_location_cancels_its_jobs() -> anyhow::Result<()> {
 		.cancel_location_jobs(location.uuid)
 		.await;
 	assert_eq!(cancelled, 1, "the location's indexer job was not cancelled");
-	assert!(
-		!handle.status().is_active(),
-		"cancelled job still reports {:?}",
-		handle.status()
-	);
+	assert_eq!(handle.status(), JobStatus::Cancelled);
 
 	// Jobs of other locations are left alone.
 	assert_eq!(

@@ -82,6 +82,7 @@ if [ "$(uname -s)" = Linux ]; then
 		tag_integration_test
 		tagging_persistence_test
 		move_streaming_test
+		file_move_test
 		entry_move_integrity_test
 		location_remove_jobs_test
 		copy_symlink_test
@@ -91,6 +92,8 @@ if [ "$(uname -s)" = Linux ]; then
 		file_undo_test
 		app_config_action_test
 		indexing_test
+		fs_watcher_test
+		ephemeral_watcher_test
 		library_test
 		file_queries_test
 		google_integration_test
@@ -105,6 +108,7 @@ if [ "$(uname -s)" = Linux ]; then
 		database_migration_test
 		event_system_test
 		job_shutdown_test
+		sidecar_lifecycle_test
 		ephemeral_bridge_test
 		typescript_bridge_test
 		typescript_search_bridge_test
@@ -188,7 +192,7 @@ run_full_tests() {
 				# Each case of file_queries_test and google_integration_test starts its own
 				# Core, which sets the process-wide current device ID; in parallel, one case
 				# could resolve "local" paths against another case's device and find nothing.
-				indexing_test | library_test | file_queries_test | google_integration_test | typescript_bridge_test)
+				indexing_test | library_test | file_queries_test | google_integration_test | file_move_test | typescript_bridge_test)
 					cargo_test --test "$test" -- --test-threads=1 ;;
 				*) cargo_test --test "$test" ;;
 			esac

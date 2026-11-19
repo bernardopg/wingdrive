@@ -102,3 +102,9 @@ pull cases. The tests run the framed stream handler in memory with temporary fil
 checks the destination bytes, terminal session and acknowledgment. Pull checks metadata,
 chunk order, per-chunk hashes and the final checksum. The log is
 `coverage/goal/next/transfer-stream-tests.log` in the primary checkout.
+
+### GitHub Actions · remoção de localização durante indexação
+
+Os PRs #468 e #470 expuseram a corrida de cancelamento em `location_remove_jobs_test`.
+O teste exige estado terminal `Cancelled` antes de apagar a localização.
+Veja [registro de bugs](BUGS.md#core-remover-uma-localização-retornava-antes-de-o-indexador-parar).

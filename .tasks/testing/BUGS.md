@@ -672,6 +672,24 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - O dispositivo era procurado pelo slug literal, então o placeholder `local` de `WingPath::local`, usado por clientes sem dispositivo registrado, nunca resolvia. As locations eram alcançadas só pelos volumes do dispositivo, e uma location com `volume_id` nulo (preenchido só no primeiro índice) ficava de fora. Os dois casos foram apontados na revisão do PR.
 - Correção: cada componente casa uma entrada com o nome inteiro e sem extensão, ou um arquivo com o radical e a extensão em minúsculas; a location é escolhida por `Path::starts_with`, que compara componentes. `local` e o UUID do dispositivo valem como este dispositivo, e as locations são buscadas por `device_id`.
 
+## Core: watcher descartava arquivos normais em pastas com ponto e sufixo temporário
+
+- Local: `EventFilters::should_skip` em `crates/fs-watcher/src/config.rs`.
+- Reprodução: no Linux, abra um diretório dentro de uma pasta cujo nome contém `.tmp`, como a raiz padrão de `tempfile::TempDir`. Após o índice efêmero carregar, crie `document.txt`. A suíte registrou o watch, mas expirou sem receber o arquivo.
+- Causa: o filtro buscava `.tmp` e `.temp` em todo o caminho. Qualquer pasta ancestral com esses caracteres descartava os eventos dos descendentes.
+- Correção: verificar os sufixos temporários no nome da entrada alterada. Os testes usam diretórios isolados para o daemon, a pasta observada e o destino de restauração.
+- Verificação: 31 testes do crate de watcher e uma suíte persistente e outra efêmera passaram instrumentados no Linux. A regressão cobre arquivos normais sob `.tmp` e os quatro sufixos temporários filtrados.
+
+## Core: indexadores concorrentes podem colidir ao gravar o mesmo MIME
+
+- Local: `DatabaseStorage::link_to_content_identity` em `core/src/ops/indexing/database_storage.rs`.
+- Reprodução: a suíte persistente do watcher registrou SQLite 2067 em `mime_types.mime_type` enquanto o job de identificação e o watcher processavam arquivos. O log está em `coverage/goal/after-sidecars/persistent-watcher-fixed.log`.
+- Causa: a consulta e a criação do MIME são instruções separadas. Dois indexadores podem observar a linha ausente e tentar inseri-la. A segunda operação falha antes de vincular a identidade.
+- Correção: inserir com tratamento de conflito na coluna MIME e ler a linha compartilhada. Só quem cria a linha a marca como nova.
+- Verificação: dois inserts concorrentes em SQLite retornaram a mesma linha, com um único criador. A suíte persistente instrumentada passou sem colisão de MIME.
+
+
+
 ## Core: verificação de índice acusava a própria pasta e seus ancestrais
 
 - Estado: corrigido; `a_fresh_index_matches_the_filesystem` em `core/tests/index_verify_test.rs`.
@@ -808,3 +826,16 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: cada raiz percorria novamente os caminhos que outra raiz já havia visitado.
 - Correção: resolver cada raiz uma vez e compartilhar os caminhos visitados. Links simbólicos continuam fora do conjunto, e o caminho apresentado mantém a primeira seleção.
 - Verificação: a regressão instrumentada confirmou um grupo e 2.048 bytes recuperáveis nos modos hash, verificação completa e nome/tamanho. O modo só por tamanho retorna os três arquivos distintos. O primeiro build do teste exigiu explicitar o tipo coletado após E0283.
+
+## Core: reutilização de inode quebrava a promoção de um arquivo no watcher
+
+- Evidência: em `Rust Workspace` do PR #474, `test_location_watcher` recebeu o Create de `promoted.txt`. O indexador tentou mover a raiz `watched` para o arquivo e SQLite rejeitou a mudança com `UNIQUE constraint failed` na tabela de fechamento.
+- Causa: o fallback por inode aceitava entradas de outro tipo, incluindo a raiz e caminhos ainda existentes. O pareamento de Remove/Create também podia tratar o inode reciclado de um diretório como o mesmo arquivo.
+- Correção: só inferir mudança por inode dentro da localização para entradas do mesmo tipo com origem ausente. Ao parear remoções, comparar o tipo registrado e verificar tamanho e mtime de arquivos.
+- Regressão: o cenário de mover `node_modules/promoted.txt` para a raiz continua exigindo a entrada no banco. As histórias vizinhas exercitam renomeação, exclusão e reutilização de inode.
+## Core: remover uma localização retornava antes de o indexador parar
+
+- Evidência: em `Rust Workspace` dos PRs #468 e #470, `removing_a_location_cancels_its_jobs` falhou com `cancelled job still reports Running`. As mensagens de arquivos ausentes e a queda do canal do task vieram depois do encerramento da fixture.
+- Causa: o gerenciador esperava 100 ms após o pedido em vez de aguardar o resultado da tarefa. O worker podia perder o cancelamento entre a leitura do sinal de cancelado e a publicação de que a tarefa estava rodando. A descoberta paralela também podia deixar subtarefas no runtime ao interromper o job.
+- Correção: coordenar a transição do worker com a sinalização de cancelamento, encerrar os workers da descoberta antes de devolver o erro de interrupção e aguardar o término real antes de apagar o registro do job.
+- Regressão: o teste exige a transição para `Cancelled` antes de remover a localização e verificar o banco.

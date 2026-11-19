@@ -15,6 +15,29 @@ last_updated: 2026-11-15
 
 Listagens e metadados devem permanecer consistentes quando o filesystem muda durante a indexação.
 
+## Regressão de eventos em diretório temporário
+
+O watcher efêmero expirava após criar `document.txt` sob uma raiz temporária com
+`.tmp` no nome. O log `coverage/goal/after-sidecars/watchers.log` registra a inscrição
+bem-sucedida, a criação e a ausência de eventos. O filtro agora compara o nome da entrada,
+e a fixture isola os arquivos sem alterar o `HOME`. Detalhes em [BUGS.md](BUGS.md).
+Os 31 testes instrumentados do crate de watcher e as duas suítes de integração passaram.
+O boot temporário registrou a criação da configuração padrão e o fallback de identificação
+de volumes sem permissão de escrita. A suíte persistente registrou uma colisão concorrente
+de MIME, registrada separadamente no histórico de bugs.
+
+Dois escritores de MIME agora reutilizam a mesma linha SQLite. A regressão concorrente e
+o replay instrumentado do watcher persistente passaram. O replay criou a configuração
+padrão e registrou o fallback de identificação dos volumes protegidos. Também emitiu
+uma ocorrência não crítica de `ENOENT` ao calcular o hash do arquivo que o cenário de
+extração exclui durante a indexação. O teste confirmou a exclusão. Os logs estão em
+`coverage/goal/after-sidecars/mime-fix.log` e `persistent-watcher-mime-fix.log`.
+O primeiro build do patch denunciou um delimitador Rust faltante, corrigido antes do replay.
+A tentativa com `RETURNING` foi interrompida ao confirmar que o ORM trata zero linhas como
+`RecordNotFound`. A versão validada usa a contagem de linhas do insert.
+
+
+
 ## Dependencies
 
 COV-03. Escopo, metas e ordem em [README.md](README.md).
@@ -122,3 +145,17 @@ testes de busca, eventos efêmeros e filtros passaram no mesmo checkout. Os logs
 `coverage/goal/after-watchers/typescript-bridge-routing.log` e
 `bridge-routing-neighbors.log` não registraram avisos de compilação. As três suítes de
 ponte entram no CI Linux e no coletor. As duas configurações passaram no `actionlint`.
+
+### GitHub Actions · promoção de arquivo observada no PR #474
+
+O log completo do job confirmou a entrega do evento e uma inferência de move incorreta por inode.
+O teste de watcher deve indexar o arquivo promovido sem mover nem substituir a raiz da localização.
+Veja [registro de bugs](BUGS.md#core-reutilização-de-inode-quebrava-a-promoção-de-um-arquivo-no-watcher).
+
+### Offline sidecar recovery
+
+A temporary library fixture verifies sidecar discovery from disk, the ready lookup, database
+presence, size updates, local availability after removal and the uninitialized library error.
+The instrumented Linux test passed. It hit 365 of 569 lines in `sidecar_manager.rs`. The prior
+complete profile hit 20 of 569. These are per-file profiles. The next complete collector measures
+the combined core impact. The test requires no external services or media decoder.

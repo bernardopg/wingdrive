@@ -359,7 +359,7 @@ impl CoreEventCollector {
 
 /// Test harness for ephemeral watcher testing with reusable operations
 struct TestHarness {
-	_core_data_dir: TempDir,
+	fixture_root: TempDir,
 	core: Arc<Core>,
 	library: Arc<Library>,
 	test_dir: PathBuf,
@@ -380,7 +380,7 @@ impl TestHarness {
 
 		// Create core
 		let temp_dir = TempDir::new()?;
-		let core = Core::new(temp_dir.path().to_path_buf()).await?;
+		let core = Core::new(temp_dir.path().join("daemon")).await?;
 
 		println!("✓ Created core");
 
@@ -392,27 +392,7 @@ impl TestHarness {
 
 		println!("✓ Created library: {}", library.id());
 
-		// Create test directory in user's home (cross-platform)
-		let home_dir = if cfg!(windows) {
-			std::env::var("USERPROFILE").unwrap_or_else(|_| {
-				let drive = std::env::var("HOMEDRIVE").unwrap_or_else(|_| "C:".to_string());
-				let path = std::env::var("HOMEPATH").unwrap_or_else(|_| {
-					let username =
-						std::env::var("USERNAME").expect("Could not determine username on Windows");
-					format!("\\Users\\{}", username)
-				});
-				format!("{}{}", drive, path)
-			})
-		} else {
-			std::env::var("HOME").expect("HOME environment variable not set")
-		};
-
-		let test_dir = PathBuf::from(home_dir).join("WING_EPHEMERAL_TEST_DIR");
-
-		// Clear and recreate test directory
-		if test_dir.exists() {
-			tokio::fs::remove_dir_all(&test_dir).await?;
-		}
+		let test_dir = temp_dir.path().join("watched");
 		tokio::fs::create_dir_all(&test_dir).await?;
 		println!("✓ Created test directory: {}", test_dir.display());
 
@@ -467,7 +447,7 @@ impl TestHarness {
 		let context = core.context.clone();
 
 		Ok(Self {
-			_core_data_dir: temp_dir,
+			fixture_root: temp_dir,
 			core: Arc::new(core),
 			library,
 			test_dir,
@@ -817,7 +797,10 @@ impl TestHarness {
 		self.core_event_collector.print_summary().await;
 
 		// Write FsWatcher events to file
-		let fs_log_path = std::env::temp_dir().join("ephemeral_watcher_fs_events.log");
+		let fs_log_path = self
+			.fixture_root
+			.path()
+			.join("ephemeral_watcher_fs_events.log");
 		if let Err(e) = self.fs_event_collector.dump_to_file(&fs_log_path).await {
 			eprintln!("Failed to write FsEvent log: {}", e);
 		} else {
@@ -825,7 +808,10 @@ impl TestHarness {
 		}
 
 		// Write Core events to file
-		let core_log_path = std::env::temp_dir().join("ephemeral_watcher_core_events.log");
+		let core_log_path = self
+			.fixture_root
+			.path()
+			.join("ephemeral_watcher_core_events.log");
 		if let Err(e) = self.core_event_collector.dump_to_file(&core_log_path).await {
 			eprintln!("Failed to write Core event log: {}", e);
 		} else {
@@ -1011,15 +997,8 @@ async fn run_test_scenarios(
 	println!("\n--- Scenario 9: Delete + Undo (Restore) Pattern ---");
 	println!("This tests for the duplicate entry bug when files are restored after deletion");
 
-	// Create a temporary "trash" directory outside the watched directory
-	// Beside the watched directory, not in temp_dir: /tmp is often a separate
-	// tmpfs, and rename(2) cannot move files across filesystems.
-	let trash_dir =
-		std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "/tmp".into()))
-			.join(".wing_test_trash");
-	if trash_dir.exists() {
-		tokio::fs::remove_dir_all(&trash_dir).await?;
-	}
+	// Keep the restore target outside the watch and on the same filesystem.
+	let trash_dir = harness.fixture_root.path().join("trash");
 	tokio::fs::create_dir_all(&trash_dir).await?;
 	println!("Created trash directory: {}", trash_dir.display());
 

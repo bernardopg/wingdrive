@@ -79,3 +79,11 @@ The Linux integration test dispatches the duplicate job in four modes. It verifi
 paths, duplicate counts and potential savings for overlapping folders and a path with
 `..`. The instrumented baseline overcounted real files and the corrected run passed.
 See [BUGS.md](BUGS.md) and `coverage/goal/after-watchers/duplicate-*.log`.
+
+### File moves through reindexing and watchers
+
+The Linux CI and coverage collector now run the existing move suite against temporary libraries
+and directories. It verifies persistent and ephemeral moves, event delivery and identity across
+reindexing and filesystem watcher paths. The four move scenarios and two fixture assertions
+passed in two serial instrumented runs. Logs are in
+`coverage/goal/next/file-move-{baseline,replay}.log`.
