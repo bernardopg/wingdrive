@@ -192,6 +192,17 @@ mesma falha foi reproduzida na base limpa `6152c8ecd`. O caso está em [BUGS.md]
 Não houve validação gráfica ou de polkit real. A cobertura e os
 critérios restantes mantêm a tarefa em andamento.
 
+## Regressão do subprocesso GIO
+
+O [registro em BUGS.md](BUGS.md#montagem-gvfs-pode-expirar-antes-de-ler-o-diagnóstico-do-gio)
+detalha a espera circular observada quando o GIO escreve mais dados do que o pipe comporta.
+
+A correção usa I/O assíncrono e mantém o prazo da operação enquanto lê stderr.
+`cargo test --locked --offline -p wing-core -p wing-cli -p wing-bench -p wingdrive --bin WingDrive gvfs::`
+com ambiente LLVM passou 11 testes em Linux. Os primeiros harnesses avulsos falharam
+com E0463 ao resolver dependências de Tokio. A suíte do binário recompilou o código com
+o grafo correto. A medição focada ainda deixa a meta global de desktop em aberto.
+
 ### 2026-11-13
 
 Cobertura de linhas do componente desktop (`apps/tauri/`, sem arquivos de teste): **80,5% para 91,6%**
