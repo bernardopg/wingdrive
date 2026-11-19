@@ -61,3 +61,11 @@ message in the list, details and matching event. LLVM runs of `own_data_location
 `job_shutdown_test`, `copy_failure_test`, `location_remove_jobs_test` and `event_system_test`
 passed 25 tests with zero failures, ignored tests or compiler warnings.
 The successful run is in `coverage/goal/job-failure-after.log`.
+
+## Manual resume from persisted state
+
+A paused copy row with serialized job state is inserted into a disposable job database.
+The test resumes it by ID through JobManager, verifies the copied bytes and checks the
+persisted terminal status. It also checks missing-job errors and the refusal to resume
+a terminal job. All three instrumented shutdown and resume tests passed on Linux.
+See `coverage/goal/next/job-resume-tests.log` in the primary checkout.
