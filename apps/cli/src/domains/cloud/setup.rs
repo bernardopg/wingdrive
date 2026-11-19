@@ -9,9 +9,12 @@ use anyhow::Result;
 use wing_core::ops::volumes::{
 	add_cloud::{CloudStorageConfig, VolumeAddCloudInput},
 	list::VolumeListQueryInput,
-	remove_cloud::VolumeRemoveCloudInput,
+	remove_cloud::{VolumeRemoveCloudInput, VolumeRemoveCloudOutput},
 };
-use wing_core::volume::backend::CloudServiceType;
+use wing_core::{
+	domain::volume::{Volume, VolumeType},
+	volume::backend::CloudServiceType,
+};
 
 pub async fn run_interactive(ctx: &Context) -> Result<()> {
 	loop {
@@ -306,10 +309,10 @@ async fn execute_add_cloud(ctx: &Context, input: VolumeAddCloudInput) -> Result<
 	println!("   Service:     {:?}", output.service);
 	println!("\nYou can now add a location with interactive mode:\n  wing location add");
 
-	std::process::exit(0);
+	Ok(())
 }
 
-async fn list_volumes(ctx: &Context) -> Result<()> {
+async fn tracked_cloud_volumes(ctx: &Context) -> Result<Vec<Volume>> {
 	let volumes: wing_core::ops::volumes::list::VolumeListOutput = execute_query!(
 		ctx,
 		VolumeListQueryInput {
@@ -317,14 +320,23 @@ async fn list_volumes(ctx: &Context) -> Result<()> {
 		}
 	);
 
-	if volumes.volumes.is_empty() {
+	Ok(volumes
+		.volumes
+		.into_iter()
+		.filter(|volume| volume.volume_type == VolumeType::Cloud)
+		.collect())
+}
+
+async fn list_volumes(ctx: &Context) -> Result<()> {
+	let volumes = tracked_cloud_volumes(ctx).await?;
+	if volumes.is_empty() {
 		println!("\nNo cloud volumes found.");
 		println!("   Add one with the 'Add cloud storage' option.");
 		return Ok(());
 	}
 
 	println!("\nCloud Volumes:\n");
-	for vol in &volumes.volumes {
+	for vol in &volumes {
 		println!("  • {} ({})", vol.name, vol.fingerprint.short_id());
 		println!("    UUID:   {}", vol.id);
 		println!("    Type:   {}", vol.volume_type);
@@ -336,14 +348,8 @@ async fn list_volumes(ctx: &Context) -> Result<()> {
 }
 
 async fn remove_volume_interactive(ctx: &Context) -> Result<()> {
-	let volumes: wing_core::ops::volumes::list::VolumeListOutput = execute_query!(
-		ctx,
-		VolumeListQueryInput {
-			filter: wing_core::ops::volumes::VolumeFilter::TrackedOnly
-		}
-	);
-
-	if volumes.volumes.is_empty() {
+	let volumes = tracked_cloud_volumes(ctx).await?;
+	if volumes.is_empty() {
 		println!("\nNo cloud volumes to remove.");
 		return Ok(());
 	}
@@ -351,13 +357,12 @@ async fn remove_volume_interactive(ctx: &Context) -> Result<()> {
 	println!("\n=== Remove Cloud Volume ===\n");
 
 	let volume_choices: Vec<String> = volumes
-		.volumes
 		.iter()
 		.map(|v| format!("{} ({})", v.name, v.fingerprint.short_id()))
 		.collect();
 
 	let volume_idx = select("Select volume to remove", &volume_choices)?;
-	let selected_volume = &volumes.volumes[volume_idx];
+	let selected_volume = &volumes[volume_idx];
 
 	println!(
 		"\n️  This will remove cloud volume '{}' from your library.",
@@ -372,7 +377,7 @@ async fn remove_volume_interactive(ctx: &Context) -> Result<()> {
 		fingerprint: selected_volume.fingerprint.clone(),
 	};
 
-	let _: () = execute_action!(ctx, input);
+	let _: VolumeRemoveCloudOutput = execute_action!(ctx, input);
 
 	println!("\nRemoved cloud volume '{}'", selected_volume.name);
 

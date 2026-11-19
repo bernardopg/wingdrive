@@ -1,5 +1,15 @@
 # Bugs encontrados na ampliação de cobertura
 
+## Assistente de nuvem oferece discos locais e interpreta a remoção como erro
+
+- Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.
+- Local: `apps/cli/src/domains/cloud/setup.rs`, listagem, remoção e retorno de adição. No daemon, `VolumeRemoveCloudAction::execute` usava a remoção genérica sem filtrar a classificação persistida.
+- Reprodução: no pseudoterminal, inicie `wing cloud` com um daemon de teste que lista um disco primário e um volume de nuvem. O disco aparece nos menus de nuvem; a opção 1 enviava o fingerprint do disco. Após uma remoção válida com resposta `{"fingerprint": "..."}`, a CLI encerrava com `invalid type: map, expected unit`. A adição de um volume GCS também encerrava o assistente imediatamente após o sucesso.
+- Reprodução do daemon: em SQLite descartável, o handler RPC de remoção na nuvem aceitou um volume primário e removeu o registro. A rotina síncrona de credenciais também reproduziu um panic com runtime Tokio de thread única.
+- Causa: ambas as telas consultavam todos os volumes rastreados, a resposta da remoção era desserializada como `()` e a adição concluía com `std::process::exit(0)`. O daemon passava o fingerprint à remoção genérica e acessava as credenciais depois, com `block_in_place`.
+- Correção: ambos os menus filtram a classificação de nuvem e a remoção lê `VolumeRemoveCloudOutput`. A adição retorna ao menu. O daemon valida a classificação e exclui o volume, as credenciais e registra o tombstone na mesma transação SQLite assíncrona.
+- Verificação: quatro cenários no pseudoterminal e o contrato RPC passaram no Linux. A CLI completa passou 566 testes antes da incorporação do lote de integrações. Os testes verificam que o disco local e suas credenciais permanecem no banco e que a remoção de nuvem funciona com runtime Tokio de thread única.
+
 ## Undo da lixeira não encontra itens em caminhos com diretório pai por symlink
 
 - Estado: corrigido em 2026-11-12. Reproduzido com `TMPDIR`, `HOME` e `XDG_DATA_HOME` apontando para um diretório por symlink (`file_undo_test`: 3 itens "no longer in the trash"); com a correção os 18 testes passam no mesmo ambiente.
