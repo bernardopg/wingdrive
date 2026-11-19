@@ -2,7 +2,7 @@
 
 ## O filtro de nuvem omite volumes de provedores gravados como Network
 
-- Estado: incompatibilidade identificada por inspeção dos caminhos de cadastro, restauração, listagem e remoção. As regressões instrumentadas estão pendentes.
+- Estado: corrigido. A reprodução no daemon retornou `Volume is not tracked: fixture-legacy-s3`. Depois da correção, os sete contratos RPC passaram.
 - Gatilho: depois do PR #449, um volume de provedor cadastrado no fluxo `volumes.add_cloud` pode aparecer com `volume_type: Network`. O menu filtra apenas `Cloud`, e o RPC de remoção filtra a mesma classificação no banco.
 - Causa: o cadastro e a restauração anteriores usavam `Network` tanto para armazenamento de provedores quanto para volumes de rede. O esquema da URI do provedor está presente no ponto de montagem.
 - Correção: usar a classificação `Cloud` ou uma identidade de provedor reconhecida na CLI e na seleção do registro SQLite. Classificar novos volumes e backends restaurados como `Cloud`.
