@@ -27,7 +27,8 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 
 ## Acceptance Criteria
 
-- [x] Desktop apps/tauri atinge pelo menos 60% na primeira etapa e 75% na conclusão.
+- [x] Desktop apps/tauri atingiu as metas intermediárias de 60% e 75%.
+- [ ] Desktop apps/tauri atinge 100% de linhas instrumentadas na medição completa.
 - [x] Undo nunca sobrescreve dados criados depois da operação original.
 - [x] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
 
