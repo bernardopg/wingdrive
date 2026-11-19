@@ -119,3 +119,48 @@ the systemd fixture race and its 120 passing replay executions.
 
 Local evidence is in `coverage/goal/next/with-gvfs/`, including `rust.log`,
 `rust-resumed.log`, `frontend.log`, `rust.lcov` and `site/summary.json`.
+
+## Full Linux measurement with sidecar, move and resident launch tests
+
+Both collectors exited zero on `afae3683fb9f41401876d11b6073b28c164b0dd1`, a local
+verification tree with the Linux sidecar and move suites and the desktop resident launch
+test. The Rust collector passed 2,208 cases and the frontend collector passed 371.
+
+| Component | Covered / instrumented | Coverage | Target | Additional hits at this denominator |
+|---|---:|---:|---:|---:|
+| Desktop | 8,051 / 8,910 | 90.4% | 100% | 859 |
+| Core | 50,481 / 91,620 | 55.1% | 65% | 9,072 |
+| CLI | 5,914 / 7,312 | 80.9% | 75% | 0 |
+
+The standalone CLI production diagnostic measured 4,025 / 5,422 (74.2%). Coverage measures
+the Linux shell and the configured test scope. It does not measure execution on other platforms.
+
+The machine recorded no compiler warnings and no failed tests. The collector ran the GTK
+clipboard case on private Xvfb after its initial ignore. The three excluded cases are S3,
+large reconciliation timing and polkit. The only frontend errors logged were
+`permission denied` and `errors.renameIncomplete` from the intentional failed-rename test.
+Board validation passed with zero errors. Reopening COV-07 clears its unchecked-criterion
+warning and leaves 30 warnings, including the existing S05 WIP overage.
+
+The full logs, LCOV and JSON summary are under `coverage/goal/after-sidecars/`.
+
+## Full Linux measurement after watcher and native desktop regressions
+
+Both collectors exited zero on `696a845879419a74489737d09810c0921303d500`. This local
+verification tree includes the persisted and ephemeral watcher suites, the concurrent MIME
+regression, terminal discovery and the native default opener fallback.
+
+| Component | Covered / instrumented | Coverage | Target | Additional hits at this denominator |
+|---|---:|---:|---:|---:|
+| Desktop | 8,131 / 8,960 | 90.7% | 100% | 829 |
+| Core | 50,790 / 91,653 | 55.4% | 65% | 8,785 |
+| CLI | 5,914 / 7,312 | 80.9% | 75% | 0 |
+
+The Rust collector passed 2,214 cases and the frontend collector passed 371. The Rust log
+contains no compiler warnings or failed tests. GTK clipboard passed in the separate Xvfb
+stage. S3, the large reconciliation timing test and polkit remain excluded. The frontend
+emitted the two deliberate failed-rename diagnostics, `permission denied` and
+`errors.renameIncomplete`. The CLI production diagnostic measured 4,025/5,422 (74.2%).
+
+The logs, LCOV and summary are in `coverage/goal/after-watchers/`. This component report
+measures Linux execution. The real startup probe of the installed AUR binary is separate.

@@ -7,7 +7,7 @@
 # target/llvm-cov-target, so it never invalidates the normal target/.
 #
 # Usage: scripts/coverage-rust.sh [output.lcov]   (default: coverage/rust.lcov)
-# Needs: cargo-llvm-cov and the llvm-tools-preview rustup component.
+# Needs: cargo-llvm-cov and llvm-tools-preview. Linux also needs Xvfb and Bun workspace dependencies.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 out="${1:-coverage/rust.lcov}"

@@ -50,6 +50,33 @@ async fn forwarding_delivers_arguments_and_working_directory_on_a_private_bus() 
 		.build()
 		.await
 		.unwrap();
+	let cwd = tempfile::tempdir().unwrap();
+	let child_test = "launch::coverage_tests::resident_launch_child";
+	let result = tokio::time::timeout(
+		std::time::Duration::from_secs(10),
+		tokio::process::Command::new(std::env::current_exe().unwrap())
+			.args(["--exact", child_test])
+			.env("DBUS_SESSION_BUS_ADDRESS", address)
+			.env("WING_TEST_RESIDENT_LAUNCH", &id)
+			.current_dir(cwd.path())
+			.kill_on_drop(true)
+			.output(),
+	)
+	.await
+	.unwrap()
+	.unwrap();
+	assert!(
+		result.status.success(),
+		"{}{}",
+		String::from_utf8_lossy(&result.stdout),
+		String::from_utf8_lossy(&result.stderr),
+	);
+	let (child_args, child_cwd) = received
+		.recv_timeout(std::time::Duration::from_secs(2))
+		.unwrap();
+	assert_eq!(&child_args[1..], ["--exact", child_test]);
+	assert_eq!(std::path::PathBuf::from(child_cwd), cwd.path());
+
 	let argv = vec!["wingdrive".into(), "a b".into(), "--hidden".into()];
 	assert!(call_instance_on(&client, &id, argv.clone(), "/other cwd".into()).await);
 	assert_eq!(
@@ -67,6 +94,58 @@ async fn forwarding_delivers_arguments_and_working_directory_on_a_private_bus() 
 		)
 		.await
 	);
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn resident_launch_child() {
+	let Ok(id) = std::env::var("WING_TEST_RESIDENT_LAUNCH") else {
+		return;
+	};
+	assert!(forward_to_running_instance(
+		&id,
+		&std::env::current_dir().unwrap()
+	));
+	assert!(!forward_to_running_instance(
+		&single_instance_id(Some("absent")),
+		&std::env::current_dir().unwrap(),
+	));
+}
+
+#[test]
+fn forwarded_autostart_stays_hidden_but_a_folder_request_is_delivered() {
+	use tauri::Manager;
+	let app = tauri::test::mock_app();
+	app.manage(PendingOpenRequests::new(Vec::new()));
+	assert!(!shows_window(&LaunchOptions {
+		hidden: true,
+		requests: vec![]
+	}));
+	deliver_forwarded(
+		app.handle(),
+		LaunchOptions {
+			hidden: true,
+			requests: vec![],
+		},
+	);
+	assert!(take_open_requests(app.state()).is_empty());
+
+	let folder = tempfile::tempdir().unwrap();
+	let request = OpenRequest {
+		directory: folder.path().into(),
+		select: None,
+	};
+	let options = LaunchOptions {
+		hidden: true,
+		requests: vec![request.clone()],
+	};
+	assert!(shows_window(&options));
+	deliver_forwarded(app.handle(), options);
+	assert_eq!(take_open_requests(app.state()), [request]);
+	assert!(shows_window(&LaunchOptions {
+		hidden: false,
+		requests: vec![]
+	}));
 }
 
 #[test]
