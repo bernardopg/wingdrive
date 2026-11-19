@@ -5,10 +5,12 @@ use std::{
 	os::unix::fs::PermissionsExt,
 	path::{Path, PathBuf},
 	process::{Command, Output},
+	sync::{Mutex, MutexGuard},
 };
 use tempfile::TempDir;
 
 const SERVICE: &str = "wingdrive-daemon@fixture.service";
+static PROCESS_FIXTURES: Mutex<()> = Mutex::new(());
 
 struct Fixture {
 	root: TempDir,
@@ -17,10 +19,15 @@ struct Fixture {
 	home: PathBuf,
 	data: PathBuf,
 	log: PathBuf,
+	_process_guard: MutexGuard<'static, ()>,
 }
 
 impl Fixture {
 	fn new() -> Self {
+		// A concurrent fork can inherit a writable executable descriptor until exec.
+		let process_guard = PROCESS_FIXTURES
+			.lock()
+			.unwrap_or_else(|error| error.into_inner());
 		let root = TempDir::new().unwrap();
 		let bin = root.path().join("program files");
 		let home = root.path().join("isolated-home");
@@ -53,6 +60,7 @@ fi
 			home,
 			data,
 			log,
+			_process_guard: process_guard,
 		}
 	}
 
