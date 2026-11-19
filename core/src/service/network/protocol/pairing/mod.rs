@@ -9,6 +9,9 @@ pub mod security;
 pub mod types;
 pub mod vouching_queue;
 
+#[cfg(test)]
+mod pairing_session_test;
+
 /// Maximum message size for pairing protocol (1MB)
 /// Prevents DoS attacks via oversized message claims
 const MAX_MESSAGE_SIZE: usize = 1024 * 1024;
