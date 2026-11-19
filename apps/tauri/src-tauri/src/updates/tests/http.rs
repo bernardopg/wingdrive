@@ -52,12 +52,15 @@ async fn check(
 	status: &str,
 	manifest: &str,
 ) -> Result<Option<tauri_plugin_updater::Update>, String> {
-	let (url, server) = endpoint(status, manifest).await;
+	let (url, mut server) = endpoint(status, manifest).await;
 	let app = app_for(url);
 	let result = tokio::time::timeout(std::time::Duration::from_secs(5), find_update(app.handle()))
 		.await
 		.expect("local updater check timed out");
-	server.await.unwrap();
+	tokio::time::timeout(std::time::Duration::from_secs(2), &mut server)
+		.await
+		.expect("updater never contacted the test endpoint")
+		.unwrap();
 	result
 }
 
