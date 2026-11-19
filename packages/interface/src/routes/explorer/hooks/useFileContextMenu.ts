@@ -203,6 +203,8 @@ export function useFileContextMenu({
 		targetFiles.length > 0
 			? targetFiles.every((f) => !!f.archive)
 			: currentFiles.some((f) => !!f.archive);
+	const canCompress = targetFiles.length > 0 &&
+		targetFiles.every((target) => 'Physical' in target.wing_path && target.is_local);
 	const archiveItems: ContextMenuItem[] = [];
 	const forArchive = (item: ContextMenuItem) => {
 		archiveItems.push(item);
@@ -296,7 +298,9 @@ export function useFileContextMenu({
 			condition: () => !!file && 'Cloud' in file.wing_path && targetFiles.length === 1
 		},
 		...contextActionMenus(
-			contextActions.actions,
+			contextActions.actions.filter((action) =>
+				!canCompress || !action.id.startsWith('compress-items.desktop#')
+			),
 			t('contextMenu.actions'),
 			Lightning,
 			contextActions.run
@@ -460,10 +464,10 @@ export function useFileContextMenu({
 			type: 'submenu',
 			icon: Package,
 			label: t('contextMenu.compress'),
-			condition: () =>
-				targetFiles.length > 0 &&
-				targetFiles.every((f) => 'Physical' in f.wing_path && f.is_local),
-			submenu: COMPRESS_FORMATS.map(({format, label}) => ({
+			condition: () => canCompress,
+			submenu: COMPRESS_FORMATS.filter(({format}) =>
+				format !== 'bzip2' || (targetFiles.length === 1 && targetFiles[0].kind === 'File')
+			).map(({format, label}) => ({
 				label: t(label),
 				onClick: () => archive.compress(targetFiles, format)
 			}))

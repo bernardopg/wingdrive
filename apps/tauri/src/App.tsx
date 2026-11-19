@@ -56,6 +56,17 @@ function getInitialRoute() {
 	return "/";
 }
 
+function SettingsWindow() {
+	const { t } = useTranslation("settings");
+	const title = `WingDrive · ${t("title")}`;
+	useEffect(() => {
+		void getCurrentWebviewWindow().setTitle(title).catch((error) => {
+			console.warn("Failed to set settings window title:", error);
+		});
+	}, [title]);
+	return <Settings />;
+}
+
 function App() {
 	const { t } = useTranslation("common");
 	const [client, setClient] = useState<WingDriveClient | null>(null);
@@ -244,7 +255,7 @@ function App() {
 		return (
 			<PlatformProvider platform={platform}>
 				<AuxiliaryWindow client={client}>
-					<Settings />
+					<SettingsWindow />
 				</AuxiliaryWindow>
 			</PlatformProvider>
 		);

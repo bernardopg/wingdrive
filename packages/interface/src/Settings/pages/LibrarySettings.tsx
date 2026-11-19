@@ -1,16 +1,23 @@
 import { useTranslation } from "../../i18n";
-import { LibraryGate, SettingsHeader, SettingsSection, SwitchRow, useLibraryConfig } from "../components";
+import { LibraryGate, SettingsUnavailable, SettingsHeader, SettingsSection, SwitchRow, useLibraryConfig } from "../components";
 
 // Only settings the daemon reads are shown. Thumbnail, AI tagging, sync and
 // encryption flags are stored in the library config but nothing consumes
 // them, so offering them as switches would promise behavior that does not exist.
 export function LibrarySettings() {
   const { t } = useTranslation();
-  const { libraryId, config, isLoading, save, isSaving } = useLibraryConfig();
+  const { libraryId, config, isLoading, refetch, save, isSaving } = useLibraryConfig();
 
-  if (!libraryId || isLoading) {
-    return <LibraryGate title={t("sections.library")} libraryId={libraryId} isLoading={isLoading} />;
+  if (!libraryId) {
+    return <LibraryGate title={t("sections.library")} />;
   }
+
+  if (!config) return (
+    <div className="space-y-6">
+      <SettingsHeader title={t("sections.library")} description={t("library.description")} />
+      <SettingsUnavailable loading={isLoading} retry={() => void refetch()} />
+    </div>
+  );
 
   return (
     <div className="space-y-6">

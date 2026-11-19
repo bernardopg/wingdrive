@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { useExplorer } from "../../routes/explorer";
 import { useSelection } from "../../routes/explorer/SelectionContext";
 import { QuickPreviewFullscreen } from "./QuickPreviewFullscreen";
@@ -38,6 +38,15 @@ export const QuickPreviewController = memo(function QuickPreviewController({
 		if (previous) selectFile(previous, currentFiles, false, false);
 	}, [currentFiles, currentIndex, selectFile]);
 
+	useEffect(() => {
+		if (!quickPreviewFileId) return;
+		const dismiss = (event: PointerEvent) => {
+			if (event.target instanceof Element && event.target.closest("[data-quick-preview]")) return;
+			closeQuickPreview();
+		};
+		document.addEventListener("pointerdown", dismiss, true);
+		return () => document.removeEventListener("pointerdown", dismiss, true);
+	}, [quickPreviewFileId, closeQuickPreview]);
 	// Hooks above run unconditionally; bail out after them.
 	if (!quickPreviewFileId) return null;
 

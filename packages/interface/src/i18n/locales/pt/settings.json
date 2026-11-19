@@ -23,11 +23,12 @@
 			"name": "Nome do dispositivo",
 			"nameHint": "Nome amigável para este dispositivo",
 			"namePlaceholder": "Meu computador",
-			"slug": "Slug do dispositivo",
+			"slug": "Identificador do dispositivo",
 			"slugHint": "Identificador único deste dispositivo (apenas letras, números e hífens)",
 			"saved": "Configurações do dispositivo salvas",
 			"saveFailed": "Falha ao salvar as configurações do dispositivo: {{error}}",
-			"slugInvalid": "Use apenas letras, números e hífens, com até 50 caracteres."
+			"slugInvalid": "Use apenas letras, números e hífens, com até 50 caracteres.",
+			"nameInvalid": "Digite um nome para o dispositivo."
 		},
 		"background": {
 			"title": "Segundo plano",
@@ -38,7 +39,9 @@
 			"startMinimized": "Iniciar minimizado na bandeja",
 			"startMinimizedHint": "Ao entrar, manter o WingDrive na bandeja sem abrir a janela",
 			"terminal": "Terminal",
-			"terminalHint": "Comando para Abrir terminal aqui. Deixe vazio para usar xdg-terminal-exec, $TERMINAL ou um terminal instalado."
+			"terminalHint": "Comando usado em Abrir terminal aqui. Deixe vazio para escolher automaticamente um terminal instalado.",
+			"terminalHintMac": "Nome do aplicativo de terminal. Deixe vazio para usar o Terminal do macOS.",
+			"terminalHintWindows": "Nome ou caminho do executável. Deixe vazio para usar o Windows Terminal."
 		},
 		"fileChooser": {
 			"title": "Seletor de arquivos",
@@ -57,14 +60,15 @@
 			"hint": "Onde o WingDrive armazena seus dados",
 			"copy": "Copiar caminho",
 			"copied": "Caminho copiado",
-			"open": "Abrir pasta"
+			"open": "Abrir pasta",
+			"copyFailed": "Não foi possível copiar o caminho: {{error}}"
 		},
 		"reset": {
 			"title": "Redefinir todos os dados",
 			"hint": "Excluir permanentemente todas as bibliotecas e configurações",
 			"confirm": "Redefinir todos os dados\n\nIsso excluirá permanentemente todas as bibliotecas, configurações e dados em cache. O aplicativo precisará ser reiniciado. Tem certeza?",
 			"done": "Os dados foram redefinidos. Reinicie o aplicativo.",
-			"failed": "Falha ao redefinir os dados",
+			"failed": "Não foi possível redefinir os dados: {{error}}",
 			"button": "Redefinir",
 			"pending": "Redefinindo...",
 			"zone": "Zona de perigo"
@@ -81,7 +85,7 @@
 			"downloading": "Baixando a atualização: {{percent}}%",
 			"failed": "A atualização falhou: {{error}}",
 			"selfHint": "O WingDrive instala versões assinadas do GitHub",
-			"packageManagerHint": "Seu gerenciador de pacotes instala as atualizações. No Arch, rode yay -Syu ou pacman -Syu",
+			"packageManagerHint": "Use o gerenciador de pacotes que instalou o WingDrive para atualizá-lo.",
 			"unsupportedHint": "Neste sistema, as atualizações vêm de novos downloads no wingdrive.org",
 			"automatic": "Verificar atualizações automaticamente",
 			"automaticHint": "Procurar uma versão nova depois que o WingDrive abrir e mostrar uma notificação"
@@ -156,8 +160,8 @@
 		"volumeMonitoringHint": "Monitorar volumes conectados e desconectados",
 		"fsWatcher": "Observador do sistema de arquivos",
 		"fsWatcherHint": "Observar alterações de arquivos nos locais rastreados",
-		"statistics": "Ouvinte de estatísticas",
-		"statisticsHint": "Ouvir e atualizar as estatísticas da biblioteca",
+		"statistics": "Estatísticas da biblioteca",
+		"statisticsHint": "Manter as estatísticas da biblioteca atualizadas em segundo plano.",
 		"background": "Serviços em segundo plano",
 		"pairing": "Pareamento de dispositivos",
 		"pairingDescription": "Depois de parear dois dispositivos diretamente, um dispositivo pareado pode apresentar um novo aos seus outros dispositivos.",
@@ -173,12 +177,13 @@
 		"wingdropAutoAcceptHint": "Salvar na hora os arquivos de dispositivos pareados",
 		"wingdropFolder": "Pasta",
 		"wingdropFolderHint": "Onde os arquivos recebidos são salvos. Deixe vazio para usar Downloads.",
-		"wingdropChoose": "Escolher…"
+		"wingdropChoose": "Escolher…",
+		"wingdropChooseFailed": "Não foi possível abrir o seletor de pastas: {{error}}"
 	},
 	"privacy": {
-		"description": "O que o WingDrive compartilha sobre você.",
+		"description": "Como o WingDrive usa seus dados.",
 		"telemetry": "Telemetria",
-		"telemetryBody": "O WingDrive não coleta dados de uso. Seus arquivos, nomes de arquivos e o conteúdo da biblioteca ficam nos seus dispositivos, a menos que você os compartilhe.",
+		"telemetryBody": "O WingDrive não coleta dados de uso. Ao conectar uma conta ou configurar sincronização, você escolhe quais arquivos enviar e quais serviços podem acessá-los.",
 		"securityPolicy": "Ler a política de segurança"
 	},
 	"advanced": {
@@ -190,10 +195,12 @@
 		"debugLogsBody": "Cada tarefa em segundo plano grava um log. Entradas de depuração deixam esses logs bem maiores e passam a valer após reiniciar o daemon. Defina o nível de log do daemon com a variável de ambiente RUST_LOG."
 	},
 	"about": {
-		"tagline": "Um explorador de arquivos do futuro.",
-		"manifesto": "Infraestrutura para a próxima era da computação. Uma arquitetura projetada desde o início para ambientes com vários dispositivos — não serviços em nuvem adaptados para funcionar offline, mas sincronização local-first que escala para a nuvem quando você quiser.",
 		"website": "Site",
-		"discussions": "Discussões"
+		"discussions": "Discussões",
+		"description": "Projeto, código-fonte, colaboradores e licença.",
+		"overview": "Gerenciador de arquivos de código aberto para organizar, buscar e sincronizar arquivos entre dispositivos.",
+		"credits": "Colaboradores",
+		"license": "Licença"
 	},
 	"cancel": "Cancelar",
 	"restartNeeded": "Algumas alterações passam a valer após reiniciar o daemon.",
@@ -247,21 +254,21 @@
 				"custom": {
 					"modality": "Google Cloud",
 					"summary": "Use um cliente OAuth do seu próprio projeto no Google Cloud.",
-					"intro": "Você cria um cliente OAuth do tipo \"App para computador\" no seu projeto do Google Cloud e o WingDrive entra com ele. Nada depende do cliente do WingDrive.",
+					"intro": "Crie um cliente OAuth do tipo “App para computador” no seu projeto do Google Cloud e use-o para conectar sua conta.",
 					"pros": [
-						"Navega e sincroniza o Google Drive inteiro, não só os arquivos que o WingDrive criou.",
+						"Acesse o Drive inteiro para navegar, editar e sincronizar os arquivos permitidos.",
 						"O projeto e as cotas de API são só seus.",
-						"Funciona em qualquer versão, inclusive compilada a partir do código-fonte.",
+						"Funciona também em versões compiladas a partir do código-fonte.",
 						"Você decide quais APIs e contas têm acesso e pode revogar tudo no seu projeto."
 					],
 					"cons": [
 						"Leva uns dez minutos no Google Cloud Console.",
-						"Enquanto a tela de consentimento estiver em modo de teste, o Google encerra o acesso a cada 7 dias. Publique a tela para evitar isso, mesmo sem verificação.",
+						"Em modo de teste, o acesso pode expirar após sete dias e exigir uma nova conexão.",
 						"O cliente fica salvo só nesta biblioteca; outras bibliotecas precisam salvá-lo de novo."
 					],
 					"steps": [
 						"Abra console.cloud.google.com e crie um projeto.",
-						"Em APIs e serviços > Biblioteca, ative Google Drive API, Photos Library API e Photos Picker API.",
+						"Ative a Google Drive API para o Drive. Para o Google Fotos, ative também a Photos Library API e a Photos Picker API.",
 						"Em Tela de consentimento OAuth, escolha Externo, preencha o nome do app e adicione suas contas Google como usuários de teste.",
 						"Em Credenciais, crie um ID do cliente OAuth do tipo App para computador.",
 						"Cole abaixo o ID e a chave secreta do cliente e salve.",
@@ -337,6 +344,8 @@
 		},
 		"google": {
 			"serviceDrive": "Google Drive",
+			"configureFullDrive": "Configurar acesso a todo o Drive",
+			"driveFullAccess": "Acesso a todo o Drive. Abra a unidade montada no Explorador para enviar, renomear, mover ou excluir arquivos que você tem permissão para editar.",
 			"driveAppFiles": "O Drive mostra só os arquivos que o WingDrive criou ou abriu. Conecte com seu próprio cliente do Google Cloud para ver o Drive inteiro.",
 			"driveAppFilesPicker": "O Drive mostra os arquivos que o WingDrive criou e os que você adicionar abaixo. Conecte com seu próprio cliente do Google Cloud para ver o Drive inteiro.",
 			"drivePicker": "Adicionar arquivos do Google Drive",
@@ -359,7 +368,8 @@
 			"choose": "Escolher…",
 			"waiting": "Aguardando sua seleção…",
 			"importStarted": "Baixando sua seleção para {{folder}}",
-			"importFailed": "A importação do Google Fotos falhou: {{error}}"
+			"importFailed": "A importação do Google Fotos falhou: {{error}}",
+			"expired": "A seleção do Google Fotos expirou. Abra-a novamente para importar."
 		},
 		"sync": {
 			"title": "Sincronização com a nuvem",
@@ -385,7 +395,7 @@
 			"create": "Criar e executar",
 			"created": "Sincronização criada; a primeira execução começou",
 			"runNow": "Sincronizar agora",
-			"remove": "Excluir",
+			"remove": "Remover sincronização",
 			"running": "Sincronizando…",
 			"never": "Ainda não executada",
 			"ranAt": "Última execução em {{when}}",
@@ -418,5 +428,8 @@
 			"cleared": "Cliente esquecido",
 			"failed": "Não foi possível salvar o cliente: {{error}}"
 		}
-	}
+	},
+	"loadFailed": "Não foi possível carregar as configurações.",
+	"retry": "Tentar novamente",
+	"unavailable": "Indisponível"
 }

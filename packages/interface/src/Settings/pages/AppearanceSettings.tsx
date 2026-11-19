@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { useId } from "react";
 import { applyTheme, themePreviewClass } from "../../hooks/useTheme";
 import { LANGUAGES, applyLanguage, useTranslation } from "../../i18n";
-import { SettingsHeader, SettingsRow, SettingsSection, inputClass, useAppConfig } from "../components";
+import { SettingsUnavailable, SettingsHeader, SettingsRow, SettingsSection, inputClass, useAppConfig } from "../components";
 
 // Each entry's preview renders inside its own theme class, so swatches always
 // match the real colors. Adaptive themes follow the system light/dark setting.
@@ -17,21 +17,24 @@ const ADAPTIVE = new Set(["system", "t3-code", "t3-chat", "grove", "ocean", "emb
 
 export function AppearanceSettings() {
   const { t } = useTranslation();
-  const { config, save } = useAppConfig();
+  const { config, isLoading, isSaving, refetch, save } = useAppConfig();
   const languageId = useId();
   const theme = config?.preferences?.theme || "system";
   const language = config?.preferences?.language || "en";
 
-  // Apply locally first so the change is instant; the daemon broadcasts it to other windows.
-  const handleThemeChange = (themeId: string) => {
-    applyTheme(themeId);
-    void save({ theme: themeId });
+  const handleThemeChange = async (themeId: string) => {
+    if (themeId !== theme && await save({ theme: themeId })) applyTheme(themeId);
+  };
+  const handleLanguageChange = async (next: string) => {
+    if (next !== language && await save({ language: next })) applyLanguage(next);
   };
 
-  const handleLanguageChange = (next: string) => {
-    applyLanguage(next);
-    void save({ language: next });
-  };
+  if (!config) return (
+    <div className="space-y-6">
+      <SettingsHeader title={t("sections.appearance")} description={t("appearance.description")} />
+      <SettingsUnavailable loading={isLoading} retry={() => void refetch()} />
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -42,7 +45,8 @@ export function AppearanceSettings() {
           <select
             id={languageId}
             value={language}
-            onChange={(e) => handleLanguageChange(e.target.value)}
+            disabled={isSaving}
+            onChange={(e) => void handleLanguageChange(e.target.value)}
             className={clsx(inputClass, "sm:w-56")}
           >
             {LANGUAGES.map((option) => (
@@ -59,7 +63,7 @@ export function AppearanceSettings() {
           <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-faint">
             {group.id === "wingdrive" ? t("appearance.theme") : t(`appearance.themeGroups.${group.id}`)}
           </h3>
-          <div role="radiogroup" aria-label={t(`appearance.themeGroups.${group.id}`)} className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+          <div role="group" aria-label={t(`appearance.themeGroups.${group.id}`)} className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,9rem),1fr))] gap-2">
             {group.themes.map((id) => (
               <ThemeOption
                 key={id}
@@ -67,7 +71,8 @@ export function AppearanceSettings() {
                 label={t(`appearance.themes.${id}`)}
                 adaptiveHint={ADAPTIVE.has(id) ? t("appearance.adaptive") : undefined}
                 selected={theme === id}
-                onSelect={() => handleThemeChange(id)}
+                disabled={isSaving}
+              onSelect={() => void handleThemeChange(id)}
               />
             ))}
           </div>
@@ -83,22 +88,24 @@ function ThemeOption({
   adaptiveHint,
   selected,
   onSelect,
+  disabled,
 }: {
   id: string;
   label: string;
   adaptiveHint?: string;
   selected: boolean;
   onSelect: () => void;
+  disabled: boolean;
 }) {
   return (
     <button
       type="button"
-      role="radio"
-      aria-checked={selected}
+      aria-pressed={selected}
+      disabled={disabled}
       onClick={onSelect}
-      title={adaptiveHint}
+      title={adaptiveHint ? `${label} · ${adaptiveHint}` : label}
       className={clsx(
-        "group rounded-lg border p-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+        "group rounded-lg border disabled:opacity-60 p-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
         selected ? "border-accent bg-accent/10" : "border-app-line bg-app-box hover:border-ink-faint"
       )}
     >

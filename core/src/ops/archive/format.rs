@@ -5,7 +5,7 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-/// Archive formats WingDrive can read; all but 7-Zip can also be written.
+/// Archive formats WingDrive reads and writes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "snake_case")]
 pub enum ArchiveFormat {
@@ -17,6 +17,8 @@ pub enum ArchiveFormat {
 	TarXz,
 	TarZst,
 	SevenZip,
+	Rar,
+	Bzip2,
 }
 
 /// Suffixes longest first, so `.tar.gz` wins over `.gz`.
@@ -34,6 +36,8 @@ const SUFFIXES: &[(&str, ArchiveFormat)] = &[
 	(".zip", ArchiveFormat::Zip),
 	(".jar", ArchiveFormat::Zip),
 	(".7z", ArchiveFormat::SevenZip),
+	(".rar", ArchiveFormat::Rar),
+	(".bz2", ArchiveFormat::Bzip2),
 ];
 
 impl ArchiveFormat {
@@ -66,11 +70,9 @@ impl ArchiveFormat {
 			Self::TarXz => "tar.xz",
 			Self::TarZst => "tar.zst",
 			Self::SevenZip => "7z",
+			Self::Rar => "rar",
+			Self::Bzip2 => "bz2",
 		}
-	}
-
-	pub fn can_write(self) -> bool {
-		self != Self::SevenZip
 	}
 }
 
@@ -214,7 +216,18 @@ mod tests {
 	);
 	format_case!(reject_empty_path, "", None, None);
 	format_case!(reject_suffix_only, ".tar.gz", None, None);
-	format_case!(reject_unknown_suffix, "backup.rar", None, None);
+	format_case!(
+		detect_rar,
+		"backup.rar",
+		Some(ArchiveFormat::Rar),
+		Some("backup")
+	);
+	format_case!(
+		detect_bzip2,
+		"backup.bz2",
+		Some(ArchiveFormat::Bzip2),
+		Some("backup")
+	);
 	format_case!(reject_bare_gz, "backup.gz", None, None);
 	format_case!(reject_trailing_extension, "backup.zip.txt", None, None);
 	format_case!(reject_missing_dot, "backupzip", None, None);

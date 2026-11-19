@@ -23,11 +23,12 @@
 			"name": "Device Name",
 			"nameHint": "User-friendly name for this device",
 			"namePlaceholder": "My Computer",
-			"slug": "Device Slug",
+			"slug": "Device identifier",
 			"slugHint": "Unique identifier for this device (alphanumeric and hyphens only)",
 			"saved": "Device settings saved",
 			"saveFailed": "Failed to save device settings: {{error}}",
-			"slugInvalid": "Use only letters, numbers and hyphens, up to 50 characters."
+			"slugInvalid": "Use only letters, numbers and hyphens, up to 50 characters.",
+			"nameInvalid": "Enter a device name."
 		},
 		"background": {
 			"title": "Background",
@@ -38,7 +39,9 @@
 			"startMinimized": "Start minimized in the tray",
 			"startMinimizedHint": "At login, keep WingDrive in the tray without opening its window",
 			"terminal": "Terminal",
-			"terminalHint": "Command for Open Terminal Here. Leave empty to use xdg-terminal-exec, $TERMINAL or an installed terminal."
+			"terminalHint": "Command used by Open Terminal Here. Leave it blank to select an installed terminal automatically.",
+			"terminalHintMac": "Name of a terminal app. Leave it blank to use macOS Terminal.",
+			"terminalHintWindows": "Executable name or path. Leave it blank to use Windows Terminal."
 		},
 		"fileChooser": {
 			"title": "File chooser",
@@ -57,14 +60,15 @@
 			"hint": "Where WingDrive stores its data",
 			"copy": "Copy path",
 			"copied": "Path copied",
-			"open": "Open folder"
+			"open": "Open folder",
+			"copyFailed": "Could not copy the path: {{error}}"
 		},
 		"reset": {
 			"title": "Reset All Data",
 			"hint": "Permanently delete all libraries and settings",
 			"confirm": "Reset All Data\n\nThis will permanently delete all libraries, settings, and cached data. The app will need to be restarted. Are you sure?",
 			"done": "Data has been reset. Please restart the application.",
-			"failed": "Failed to reset data",
+			"failed": "Could not reset the data: {{error}}",
 			"button": "Reset",
 			"pending": "Resetting...",
 			"zone": "Danger zone"
@@ -81,7 +85,7 @@
 			"downloading": "Downloading the update: {{percent}}%",
 			"failed": "The update failed: {{error}}",
 			"selfHint": "WingDrive installs signed releases from GitHub",
-			"packageManagerHint": "Your package manager installs updates. On Arch, run yay -Syu or pacman -Syu",
+			"packageManagerHint": "Update WingDrive through the package manager you used to install it.",
 			"unsupportedHint": "Updates on this system come from new downloads on wingdrive.org",
 			"automatic": "Check for updates automatically",
 			"automaticHint": "Look for a new version after WingDrive starts and show a notification"
@@ -156,8 +160,8 @@
 		"volumeMonitoringHint": "Monitor for connected and disconnected volumes",
 		"fsWatcher": "Filesystem Watcher",
 		"fsWatcherHint": "Watch for file changes in tracked locations",
-		"statistics": "Statistics Listener",
-		"statisticsHint": "Listen for and update library statistics",
+		"statistics": "Library statistics",
+		"statisticsHint": "Keep library statistics up to date in the background.",
 		"background": "Background services",
 		"pairing": "Device pairing",
 		"pairingDescription": "After you pair two devices directly, a paired device can introduce a new one to the rest of your devices.",
@@ -173,12 +177,13 @@
 		"wingdropAutoAcceptHint": "Save files from paired devices right away",
 		"wingdropFolder": "Folder",
 		"wingdropFolderHint": "Where received files are saved. Leave empty for Downloads.",
-		"wingdropChoose": "Choose…"
+		"wingdropChoose": "Choose…",
+		"wingdropChooseFailed": "Could not open the folder picker: {{error}}"
 	},
 	"privacy": {
-		"description": "What WingDrive shares about you.",
+		"description": "How WingDrive handles your data.",
 		"telemetry": "Telemetry",
-		"telemetryBody": "WingDrive does not collect usage data. Your files, file names and library contents stay on your devices unless you share them.",
+		"telemetryBody": "WingDrive does not collect usage data. When you connect an account or set up sync, you choose which files to send and which services can access them.",
 		"securityPolicy": "Read the security policy"
 	},
 	"advanced": {
@@ -190,10 +195,12 @@
 		"debugLogsBody": "Every background job writes a log. Debug entries make those logs much larger and take effect after the daemon restarts. Set the daemon log level with the RUST_LOG environment variable."
 	},
 	"about": {
-		"tagline": "A file explorer from the future.",
-		"manifesto": "Infrastructure for the next era of computing. An architecture designed for multi-device environments from the ground up—not cloud services retrofitted with offline support, but local-first sync that scales to the cloud when you want it.",
 		"website": "Website",
-		"discussions": "Discussions"
+		"discussions": "Discussions",
+		"description": "Project, source code, contributors and license.",
+		"overview": "An open-source file manager for organizing, searching and syncing files across devices.",
+		"credits": "Contributors",
+		"license": "License"
 	},
 	"cancel": "Cancel",
 	"restartNeeded": "Some changes take effect after the daemon restarts.",
@@ -231,7 +238,7 @@
 					],
 					"cons": [
 						"Google Drive shows only the files WingDrive created or opened, not your whole Drive. To browse all of Drive, connect with Google Cloud and your own client.",
-									"Depends on the client included in the build; builds from source may not have one.",
+						"Depends on the client included in the build; builds from source may not have one.",
 						"Until Google verifies the WingDrive app, Google shows an \"unverified app\" warning and caps how many people can sign in.",
 						"API quotas are shared by everyone who uses WingDrive's client."
 					],
@@ -247,24 +254,24 @@
 				"custom": {
 					"modality": "Google Cloud",
 					"summary": "Use an OAuth client from your own Google Cloud project.",
-					"intro": "You create a \"Desktop app\" OAuth client in your own Google Cloud project and WingDrive signs in with it. Nothing depends on WingDrive's client.",
+					"intro": "Create a Desktop app OAuth client in your Google Cloud project and use it to connect your account.",
 					"pros": [
-						"Browses and syncs your whole Google Drive, not only the files WingDrive created.",
-									"The project and its API quotas are yours alone.",
+						"Browse, edit and sync files across your Drive, subject to your existing permissions.",
+						"Your project has its own API quotas.",
 						"Works in any build, including builds from source.",
-						"You decide which APIs and accounts have access, and can revoke everything in your project."
+						"You control which APIs and accounts have access and can revoke that access in your project."
 					],
 					"cons": [
 						"Takes about ten minutes in Google Cloud Console.",
-						"While the consent screen is in testing mode, Google ends access every 7 days. Publish it to avoid that, even without verification.",
-						"The client is saved in this library only; other libraries need it saved again."
+						"In testing mode, access can expire after seven days and require you to reconnect.",
+						"The client is saved in this library. Set it up separately in other libraries."
 					],
 					"steps": [
 						"Open console.cloud.google.com and create a project.",
-						"In APIs & Services > Library, enable Google Drive API, Photos Library API and Photos Picker API.",
-						"In OAuth consent screen, choose External, fill in the app name and add your Google accounts as test users.",
+						"Enable the Google Drive API for Drive. For Google Photos, also enable the Photos Library API and Photos Picker API.",
+						"In the OAuth consent screen, choose External, enter the app name and add your Google accounts as test users.",
 						"In Credentials, create an OAuth client ID of type Desktop app.",
-						"Paste the client ID and client secret below and save.",
+						"Paste the client ID and secret below, then save.",
 						"Click Sign in with Google Cloud."
 					],
 					"connect": "Sign in with Google Cloud"
@@ -337,8 +344,10 @@
 		},
 		"google": {
 			"serviceDrive": "Google Drive",
-			"driveAppFiles": "Drive shows only files WingDrive created or opened. Connect with your own Google Cloud client to see all of Drive.",
-			"driveAppFilesPicker": "Drive shows the files WingDrive created and the ones you add below. Connect with your own Google Cloud client to see all of Drive.",
+			"configureFullDrive": "Set up full Drive access",
+			"driveFullAccess": "Full Drive access. Open the mounted drive in the Explorer to upload, rename, move or delete files you can edit.",
+			"driveAppFiles": "Drive shows only files WingDrive created or opened. Set up Google Cloud access to see your entire Drive.",
+			"driveAppFilesPicker": "Drive shows files WingDrive created and the ones you add below. Set up Google Cloud access to see your entire Drive.",
 			"drivePicker": "Add files from Google Drive",
 			"drivePickerHint": "Google opens a page where you pick files or folders. They appear at the top of this account's Drive in WingDrive.",
 			"drivePickerChoose": "Choose files...",
@@ -353,25 +362,26 @@
 		},
 		"photos": {
 			"import": "Import from Google Photos",
-			"importHint": "Google opens a page where you pick photos and videos. WingDrive downloads them at full quality into the folder you choose.",
+			"importHint": "Choose photos and videos in your browser. WingDrive downloads them at full quality into the folder you choose.",
 			"destination": "Folder for imported photos",
 			"destinationPlaceholder": "Folder to download into",
 			"choose": "Choose…",
 			"waiting": "Waiting for your selection…",
 			"importStarted": "Downloading your selection to {{folder}}",
-			"importFailed": "Google Photos import failed: {{error}}"
+			"importFailed": "Google Photos import failed: {{error}}",
+			"expired": "The Google Photos selection expired. Open it again to import."
 		},
 		"sync": {
 			"title": "Cloud sync",
-			"description": "Keep a folder on this device in step with a folder in Google Drive or OneDrive.",
+			"description": "Keep a folder on this device in sync with a folder in Google Drive or OneDrive.",
 			"empty": "No synced folders yet.",
 			"add": "Sync a folder",
-			"needsDrive": "Connect an account with Google Drive or OneDrive shown in WingDrive to sync folders.",
+			"needsDrive": "Mount Google Drive or OneDrive in WingDrive to sync folders.",
 			"name": "Name",
 			"localFolder": "Folder on this device",
 			"account": "Cloud account",
 			"remoteFolder": "Folder in the cloud",
-			"remoteFolderHint": "Path from the root of the drive, such as Backup/Laptop. It is created if missing.",
+			"remoteFolderHint": "Path from the root of the drive, such as Backup/Laptop. WingDrive creates it if needed.",
 			"mode": "Direction",
 			"modeTwoWay": "Both ways",
 			"modeUpload": "Upload only (the cloud mirrors this device)",
@@ -381,11 +391,11 @@
 			"everyMinutes_one": "Every {{count}} minute",
 			"everyMinutes_other": "Every {{count}} minutes",
 			"propagateDeletes": "Sync deletions",
-			"propagateDeletesHint": "Deleting a synced file on one side moves it to the trash on the other",
+			"propagateDeletesHint": "Deleting a synced file on one side moves it to the trash on the other.",
 			"create": "Create and run",
-			"created": "Folder sync created; the first run has started",
+			"created": "Folder sync is ready and the first run has started.",
 			"runNow": "Run now",
-			"remove": "Delete",
+			"remove": "Remove sync",
 			"running": "Syncing…",
 			"never": "Not run yet",
 			"ranAt": "Last run {{when}}",
@@ -397,11 +407,11 @@
 		},
 		"edit": {
 			"title": "Cloud files being edited",
-			"description": "Files opened from the cloud upload back each time you save them.",
+			"description": "When you save a cloud file opened locally, WingDrive uploads your changes.",
 			"synced": "Up to date in the cloud",
 			"modified": "Saved changes waiting to upload",
 			"uploading": "Uploading…",
-			"conflict": "Changed in the cloud meanwhile; your version was saved as {{name}}",
+			"conflict": "The cloud file changed. Your version was saved as {{name}}.",
 			"error": "Upload failed: {{error}}",
 			"finish": "Finish editing",
 			"closeFailed": "Could not upload the last changes: {{error}}"
@@ -418,5 +428,8 @@
 			"cleared": "Client forgotten",
 			"failed": "Could not save the client: {{error}}"
 		}
-	}
+	},
+	"loadFailed": "Could not load settings.",
+	"retry": "Try again",
+	"unavailable": "Unavailable"
 }

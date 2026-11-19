@@ -1,7 +1,11 @@
+import {GlobalRegistrator} from '@happy-dom/global-registrator';
 import {describe, expect, it, mock} from 'bun:test';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import type {ReactElement} from 'react';
+import {act, type ReactElement} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
+
+if (!GlobalRegistrator.isRegistered) GlobalRegistrator.register();
+(globalThis as {IS_REACT_ACT_ENVIRONMENT?: boolean}).IS_REACT_ACT_ENVIRONMENT = true;
 
 const accounts = [
 	{
@@ -75,6 +79,8 @@ const data: Record<string, unknown> = {
 	'files.cloud_edit.list': editSessions
 };
 const mutation = {mutateAsync: async () => ({}), mutate: () => {}, isPending: false};
+const mutationOverrides = new Map<string, unknown>();
+const openedUrls: string[] = [];
 
 // Bun module mocks leak into other test files, so keep the real exports and override only these
 const actualContext = await import('../../contexts/WingDriveContext');
@@ -85,13 +91,14 @@ mock.module('../../contexts/WingDriveContext', () => ({
 		isLoading: false,
 		refetch: async () => {}
 	}),
-	useLibraryMutation: () => mutation,
+	useLibraryMutation: (type: string) => mutationOverrides.get(type) ?? mutation,
 	useWingDriveClient: () => ({getCurrentLibraryId: () => 'library', execute: async () => ({})})
 }));
 mock.module('../../contexts/PlatformContext', () => ({
-	usePlatform: () => ({platform: 'web', openLink: () => {}})
+	usePlatform: () => ({platform: 'web', openLink: (url: string) => openedUrls.push(url)})
 }));
 
+const {createRoot} = await import('react-dom/client');
 const {ConnectPanel, IntegrationsSettings} = await import('./IntegrationsSettings');
 const {i18n} = await import('../../i18n');
 
@@ -136,6 +143,7 @@ describe('integrations settings', () => {
 		expect(html).toContain('Add files from Google Drive');
 		expect(html).toContain('Choose files...');
 		expect(html).toContain('the ones you add below');
+		expect(html).toContain('Set up full Drive access');
 		// One button: Bruno has no Drive and Carla is on OneDrive.
 		expect(html.match(/Choose files\.\.\./g)?.length).toBe(1);
 		const ana = accounts[0] as {drive_picker: boolean};
@@ -161,6 +169,34 @@ describe('integrations settings', () => {
 		expect(html).toContain('Application (client) ID');
 		// No app of the user's own is saved yet, so sign-in waits for one.
 		expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Sign in with Microsoft Entra/);
+	});
+
+	it('cancels sign-in when the settings panel closes before the provider responds', async () => {
+		let finish: ((session: {session_id: string; auth_url: string}) => void) | undefined;
+		const cancelled: string[] = [];
+		mutationOverrides.set('integrations.google.connect', {
+			...mutation, mutateAsync: () => new Promise((resolve) => { finish = resolve; })
+		});
+		mutationOverrides.set('integrations.google.connect_cancel', {
+			...mutation, mutate: ({session_id}: {session_id: string}) => cancelled.push(session_id)
+		});
+		const host = document.createElement('div');
+		const root = createRoot(host);
+		try {
+			await act(async () => root.render(
+				<QueryClientProvider client={new QueryClient()}>
+					<ConnectPanel entry={{provider: 'google', mode: 'app'}} clients={bundledClients as never} onSaved={() => {}} />
+				</QueryClientProvider>
+			));
+			const connect = [...host.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Sign in with Google')!;
+			await act(async () => connect.click());
+			await act(async () => root.unmount());
+			await act(async () => finish!({session_id: 'pending', auth_url: 'https://example.invalid/oauth'}));
+			expect(cancelled).toEqual(['pending']);
+			expect(openedUrls).toEqual([]);
+		} finally {
+			mutationOverrides.clear();
+		}
 	});
 
 	it('warns when the build has no WingDrive client', () => {
@@ -196,6 +232,7 @@ describe('integrations settings', () => {
 			expect(html).toContain('Contas conectadas');
 			expect(html).toContain('Sincronização com a nuvem');
 			expect(html).toContain('Adicionar arquivos do Google Drive');
+			expect(html).toContain('Configurar acesso a todo o Drive');
 			const panel = render(
 				<ConnectPanel entry={{provider: 'google', mode: 'custom'}} clients={bundledClients as never} onSaved={() => {}} />
 			);

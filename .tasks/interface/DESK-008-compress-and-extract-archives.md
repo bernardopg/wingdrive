@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S03
 tags: [core, jobs, interface]
-last_updated: 2026-10-07
+last_updated: 2026-11-18
 ---
 
 ## Description
@@ -22,6 +22,9 @@ Compress and Extract are standard file manager actions. They must run as resumab
 - [x] Reject paths that escape the destination (zip slip) and symlinks pointing outside
 - [x] Context menu: Compress..., Extract Here, Extract To...
 - [x] Progress and cancellation through the job system
+
+- [x] Create and extract 7z and RAR archives with regular files and folders
+- [x] Create and extract single-file Bzip2 streams
 
 ## Acceptance Criteria
 

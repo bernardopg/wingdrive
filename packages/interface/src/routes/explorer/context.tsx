@@ -18,6 +18,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useReducer,
 	useRef,
@@ -863,6 +864,11 @@ export function ExplorerProvider({
 		uiDispatch({type: 'SET_QUICK_PREVIEW', fileId: null});
 	}, []);
 
+	// Preview belongs to the collection and tab it was opened in.
+	const previewPathKey = JSON.stringify(operationalPath);
+	useLayoutEffect(() => {
+		closeQuickPreview();
+	}, [activeTabId, location.pathname, location.search, previewPathKey, closeQuickPreview]);
 	const setTagModeActive = useCallback((active: boolean) => {
 		uiDispatch({type: 'SET_TAG_MODE', active});
 	}, []);

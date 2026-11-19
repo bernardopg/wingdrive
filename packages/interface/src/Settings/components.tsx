@@ -1,8 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
+import type { UpdateAppConfigInput, UpdateLibraryConfigInput } from "@wingdrive/ts-client";
 import { toast } from "@wingdrive/primitives";
 import { Info, Warning } from "@phosphor-icons/react";
 import clsx from "clsx";
-import { useId, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   useCoreMutation,
   useCoreQuery,
@@ -10,7 +11,7 @@ import {
   useLibraryQuery,
   useWingDriveClient,
 } from "../contexts/WingDriveContext";
-import { i18n } from "../i18n";
+import { i18n, useTranslation } from "../i18n";
 
 export function SettingsHeader({ title, description }: { title: string; description: string }) {
   return (
@@ -50,27 +51,29 @@ export function SettingsRow({
   children,
   controlId,
   stacked,
+  fixedControl,
 }: {
   label: ReactNode;
   hint?: ReactNode;
   children: ReactNode;
   controlId?: string;
   stacked?: boolean;
+  fixedControl?: boolean;
 }) {
   return (
     <div
       className={clsx(
-        "flex gap-3 px-4 py-3",
-        stacked ? "flex-col" : "items-center justify-between sm:gap-6"
+        "flex gap-3 px-3 py-3 sm:px-4",
+        stacked ? "flex-col" : clsx("items-center justify-between", !fixedControl && "flex-wrap")
       )}
     >
-      <div className="min-w-0">
+      <div className={clsx("min-w-0 break-words", !stacked && "flex-1", !stacked && !fixedControl && "basis-40")}>
         <label htmlFor={controlId} className="block text-sm font-medium text-ink">
           {label}
         </label>
-        {hint && <p className="mt-0.5 text-xs text-ink-dull">{hint}</p>}
+        {hint && <p className="mt-0.5 text-xs leading-relaxed text-ink-dull [overflow-wrap:anywhere]">{hint}</p>}
       </div>
-      <div className={clsx("shrink-0", stacked && "w-full")}>{children}</div>
+      <div className={clsx("max-w-full", stacked && "w-full")}>{children}</div>
     </div>
   );
 }
@@ -91,7 +94,7 @@ export function SwitchRow({
 }) {
   const id = useId();
   return (
-    <SettingsRow label={label} hint={hint} controlId={id}>
+    <SettingsRow label={label} hint={hint} controlId={id} fixedControl>
       <Switch id={id} checked={checked} onChange={onChange} disabled={disabled} />
     </SettingsRow>
   );
@@ -99,11 +102,13 @@ export function SwitchRow({
 
 export function Switch({
   id,
+  label,
   checked,
   onChange,
   disabled,
 }: {
   id?: string;
+  label?: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
@@ -113,11 +118,12 @@ export function Switch({
       id={id}
       type="button"
       role="switch"
+      aria-label={label}
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={clsx(
-        "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
+        "relative inline-flex h-5 w-9 min-w-9 shrink-0 items-center align-middle rounded-full transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-app-box",
         "disabled:cursor-not-allowed disabled:opacity-50",
         checked ? "bg-accent" : "bg-app-line"
@@ -134,10 +140,10 @@ export function Switch({
 }
 
 export const inputClass =
-  "w-full rounded-md border border-app-line bg-app-input px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent";
+  "w-full min-w-0 rounded-md border border-app-line bg-app-input px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent";
 
 export const buttonClass =
-  "rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Notice({ tone = "info", children }: { tone?: "info" | "warning"; children: ReactNode }) {
   const Icon = tone === "warning" ? Warning : Info;
@@ -151,7 +157,7 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "warning";
       )}
     >
       <Icon className="mt-0.5 size-4 shrink-0" weight="fill" />
-      <div>{children}</div>
+      <div className="min-w-0 [overflow-wrap:anywhere]">{children}</div>
     </div>
   );
 }
@@ -167,47 +173,73 @@ export function errorMessage(error: unknown) {
  */
 export function useAppConfig() {
   const queryClient = useQueryClient();
-  const query = useCoreQuery({ type: "config.app.get", input: null as any });
+  const query = useCoreQuery({ type: "config.app.get", input: null });
   const mutation = useCoreMutation("config.app.update");
 
-  const save = async (patch: Record<string, unknown>) => {
+  const [refreshing, setRefreshing] = useState(false);
+  const save = async (patch: UpdateAppConfigInput) => {
+    setRefreshing(true);
     try {
-      const result = await mutation.mutateAsync(patch as any);
+      const result = await mutation.mutateAsync(patch);
+      if (!result.success) throw new Error(result.message);
       await queryClient.refetchQueries({ queryKey: ["config.app.get"] });
-      if (result?.requires_restart) toast.info(i18n.t("settings:restartNeeded"));
+      if (result.requires_restart) toast.info(i18n.t("settings:restartNeeded"));
+      return true;
     } catch (error) {
       toast.error(i18n.t("settings:saveFailed", { error: errorMessage(error) }));
+      return false;
+    } finally {
+      setRefreshing(false);
     }
   };
 
-  return { config: query.data, isLoading: query.isLoading, save, isSaving: mutation.isPending };
+  return { ...query, config: query.data, save, isSaving: mutation.isPending || refreshing };
 }
 
 /** Library config for the current library, saved per change like {@link useAppConfig}. */
 export function useLibraryConfig() {
   const client = useWingDriveClient();
   const libraryId = client.getCurrentLibraryId();
-  const query = useLibraryQuery({ type: "config.library.get", input: null as any }, { enabled: !!libraryId });
+  const query = useLibraryQuery({ type: "config.library.get", input: null }, { enabled: !!libraryId });
   const mutation = useLibraryMutation("config.library.update");
 
-  const save = async (patch: Record<string, unknown>) => {
+  const [refreshing, setRefreshing] = useState(false);
+  const save = async (patch: UpdateLibraryConfigInput) => {
+    setRefreshing(true);
     try {
-      await mutation.mutateAsync(patch as any);
+      const result = await mutation.mutateAsync(patch);
+      if (!result.success) throw new Error(result.message);
       await query.refetch();
     } catch (error) {
       toast.error(i18n.t("settings:saveFailed", { error: errorMessage(error) }));
+    } finally {
+      setRefreshing(false);
     }
   };
 
-  return { libraryId, config: query.data, isLoading: query.isLoading, save, isSaving: mutation.isPending };
+  return { ...query, libraryId, config: query.data, save, isSaving: mutation.isPending || refreshing };
 }
 
-/** Placeholder body for library pages when no library is open or it is loading. */
-export function LibraryGate({ title, libraryId, isLoading }: { title: string; libraryId: string | null; isLoading: boolean }) {
+export function LibraryGate({ title }: { title: string }) {
+  const { t } = useTranslation("settings");
+  return <SettingsHeader title={title} description={t("noLibrary")} />;
+}
+
+export function SettingsUnavailable({
+  loading,
+  retry,
+}: {
+  loading: boolean;
+  retry: () => void;
+}) {
+  const { t } = useTranslation("settings");
+  if (loading) return <p role="status" className="text-sm text-ink-dull">{t("loading")}</p>;
   return (
-    <div>
-      <SettingsHeader title={title} description={i18n.t(libraryId ? "settings:loading" : "settings:noLibrary")} />
-      {libraryId && isLoading && <div className="h-32 animate-pulse rounded-lg border border-app-line bg-app-box" />}
-    </div>
+    <Notice tone="warning">
+      <p role="alert">{t("loadFailed")}</p>
+      <button type="button" className="mt-2 rounded text-accent underline focus-visible:ring-2 focus-visible:ring-accent" onClick={retry}>
+        {t("retry")}
+      </button>
+    </Notice>
   );
 }

@@ -1,38 +1,50 @@
-import { useEffect, useId, useState } from "react";
+import { toast } from "@wingdrive/primitives";
+import { useId, useState } from "react";
 import { usePlatform } from "../../contexts/PlatformContext";
 import { useTranslation } from "../../i18n";
 import {
   Notice,
-  SettingsHeader,
+  SettingsUnavailable, SettingsHeader,
   SettingsRow,
   SettingsSection,
   SwitchRow,
   buttonClass,
   inputClass,
+  errorMessage,
   useAppConfig,
 } from "../components";
 
 export function ServicesSettings() {
   const { t } = useTranslation();
-  const { config, save, isSaving } = useAppConfig();
+  const { config, isLoading, refetch, save, isSaving } = useAppConfig();
   const services = config?.services;
   const pairing = config?.proxy_pairing;
   const wingdrop = config?.wingdrop;
   const platform = usePlatform();
   const folderId = useId();
-  const [folder, setFolder] = useState("");
-  useEffect(() => setFolder(wingdrop?.destination ?? ""), [wingdrop?.destination]);
-  const saveFolder = (value: string) => {
-    if (value.trim() !== (wingdrop?.destination ?? "")) void save({ wingdrop_destination: value.trim() });
-  };
-  const chooseFolder = async () => {
-    const picked = await platform.openDirectoryPickerDialog?.({ title: t("services.wingdropFolder") });
-    const path = Array.isArray(picked) ? picked[0] : picked;
-    if (path) {
-      setFolder(path);
-      saveFolder(path);
+  const [folderDraft, setFolderDraft] = useState<string | null>(null);
+  const folder = folderDraft ?? wingdrop?.destination ?? "";
+  const saveFolder = async (value: string) => {
+    const next = value.trim();
+    if (next === (wingdrop?.destination ?? "") || await save({ wingdrop_destination: next })) {
+      setFolderDraft(null);
     }
   };
+  const chooseFolder = async () => {
+    try {
+      const picked = await platform.openDirectoryPickerDialog?.({ title: t("services.wingdropFolder") });
+      const path = Array.isArray(picked) ? picked[0] : picked;
+      if (path) await saveFolder(path);
+    } catch (error) {
+      toast.error(t("services.wingdropChooseFailed", { error: errorMessage(error) }));
+    }
+  };
+  if (!config) return (
+    <div className="space-y-6">
+      <SettingsHeader title={t("sections.services")} description={t("services.description")} />
+      <SettingsUnavailable loading={isLoading} retry={() => void refetch()} />
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -103,18 +115,14 @@ export function ServicesSettings() {
           onChange={(value) => save({ wingdrop_auto_accept: value })}
         />
         <SettingsRow label={t("services.wingdropFolder")} hint={t("services.wingdropFolderHint")} controlId={folderId} stacked>
-          <div className="flex gap-2">
+          <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); void saveFolder(folder); }}>
             <input
               id={folderId}
-              className={inputClass}
+              className={`${inputClass} flex-1 basis-40`}
               value={folder}
               placeholder={wingdrop?.effective_destination ?? ""}
               disabled={!config || isSaving || wingdrop?.enabled === false}
-              onChange={(e) => setFolder(e.target.value)}
-              onBlur={(e) => saveFolder(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") saveFolder(e.currentTarget.value);
-              }}
+              onChange={(e) => setFolderDraft(e.target.value)}
             />
             {platform.openDirectoryPickerDialog && (
               <button
@@ -126,7 +134,10 @@ export function ServicesSettings() {
                 {t("services.wingdropChoose")}
               </button>
             )}
-          </div>
+            <button type="submit" className={`${buttonClass} bg-app-button text-ink hover:bg-app-hover`} disabled={isSaving || wingdrop?.enabled === false || folderDraft === null}>
+              {t("saveChanges")}
+            </button>
+          </form>
         </SettingsRow>
       </SettingsSection>
     </div>

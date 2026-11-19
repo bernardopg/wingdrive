@@ -1,5 +1,5 @@
 import { useTranslation } from "../../i18n";
-import { LibraryGate, Notice, SettingsHeader, SettingsSection, SwitchRow, useLibraryConfig } from "../components";
+import { LibraryGate, Notice, SettingsUnavailable, SettingsHeader, SettingsSection, SwitchRow, useLibraryConfig } from "../components";
 
 type IndexerKey = "no_system_files" | "no_git" | "no_dev_dirs" | "no_hidden" | "gitignore" | "only_images";
 
@@ -26,10 +26,10 @@ const FILTERS: [IndexerKey, string][] = [
 
 export function IndexerSettings() {
   const { t } = useTranslation();
-  const { libraryId, config, isLoading, save, isSaving } = useLibraryConfig();
+  const { libraryId, config, isLoading, refetch, save, isSaving } = useLibraryConfig();
 
-  if (!libraryId || isLoading) {
-    return <LibraryGate title={t("sections.indexer")} libraryId={libraryId} isLoading={isLoading} />;
+  if (!libraryId) {
+    return <LibraryGate title={t("sections.indexer")} />;
   }
 
   const row = ([key, label]: [IndexerKey, string]) => (
@@ -41,6 +41,13 @@ export function IndexerSettings() {
       disabled={isSaving}
       onChange={(value) => save({ [key]: value })}
     />
+  );
+
+  if (!config) return (
+    <div className="space-y-6">
+      <SettingsHeader title={t("sections.indexer")} description={t("indexer.description")} />
+      <SettingsUnavailable loading={isLoading} retry={() => void refetch()} />
+    </div>
   );
 
   return (

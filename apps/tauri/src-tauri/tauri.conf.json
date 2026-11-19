@@ -47,7 +47,7 @@
       "csp": {
         "default-src": "'self' customprotocol: asset:",
         "connect-src": "ipc: http://ipc.localhost http://127.0.0.1:* http://localhost:*",
-        "img-src": "'self' asset: http://asset.localhost http://127.0.0.1:* http://localhost:* blob: data:",
+        "img-src": "'self' asset: http://asset.localhost http://127.0.0.1:* http://localhost:* blob: data: https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com",
         "media-src": "'self' asset: http://asset.localhost http://127.0.0.1:* http://localhost:* blob: data:",
         "style-src": "'self' 'unsafe-inline'"
       },

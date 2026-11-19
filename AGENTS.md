@@ -682,38 +682,29 @@ cargo test --lib              # Library tests only
 cargo test -- --nocapture     # Show output
 ```
 
-## Before every push
+## Pull request validation
 
-CI is the gate for every pull request. Before a push, run the checks that cover your change:
-`cargo clippy` and `cargo test` for the crates you touched, `bun run typecheck` (every package) for
-TypeScript, and the `bun test` files next to the code you changed.
-
-`just ci-local` is optional. It runs every CI gate on the warm `target/` directory, which is useful
-for wide changes (toolchain or dependency bumps, workspace-wide refactors) or to reproduce a CI
-failure:
-
-```bash
-just ci-local        # scripts/ci-local.sh; skips Rust steps when no Rust-relevant file changed
-just ci-local --all  # force the Rust steps
-```
+Open the pull request as soon as the change is ready for review. GitHub Actions runs the full gates
+and determines merge readiness. Full local CI is optional. Use `just ci-local` for a broad check
+when needed, or run focused checks to answer a specific question about the change.
 
 Rules for agents and contributors:
 
-- `just ci-local` is not required before a push. Run the checks for your change, push, and let CI
-  run the full gates.
 - Push to `origin` (`bernardopg/wingdrive`) and open pull requests there
   (`gh pr create --repo bernardopg/wingdrive`). It is the only remote.
 - Pipe `just ci-local` through `tail` only after saving its exit code: `just ci-local | tail` reports
   `tail`'s status, so a failed run looks green.
 - After a stacked pull request merges into its base branch, merge `origin/main` into the base.
   `.github/workflows/ci.yml` usually conflicts on the `bun test` list; keep both sides.
-- When CI fails, reproduce the failure locally (same `cargo test` or `bun test` command from
-  `.github/workflows/ci.yml`, or `just ci-local`), fix it, rerun, then push. Avoid a series of small
-  fix commits against CI.
-- Reuse the local `target/`; do not `cargo clean` and do not use a separate `--target-dir`
-  for checks. Run one cargo command at a time (concurrent cargo runs block on the build lock).
-- After a push, check CI once when it finishes (`gh pr checks <n> --watch -R bernardopg/wingdrive`).
-  Rerun only for infrastructure failures (runner timeout, network); a test failure is fixed locally first.
+- When CI fails, read the failed step log. For code failures, reproduce with the smallest matching
+  command, fix the cause, verify the fix and push. Rerun only the affected job for a runner, network
+  or tool download failure. See [Android CI and releases](docs/core/mobile-development.mdx#ci-and-releases)
+  for NDK installation errors.
+- Record each resolved CI failure in the pull request with the failed job and step, a short error
+  excerpt, the cause, the fix and the verification result. Add recurring failure guidance to the
+  affected development guide.
+- Reuse the local `target/` directory and run one Cargo command at a time.
+- Follow required checks on the current PR commit through merge when asked.
 - Changes limited to `.tasks/`, `docs/`, Markdown, `packages/` or the frontend skip the Rust CI job;
   `just ci-local` applies the same filter.
 - Changes limited to one app's Rust crates (`apps/tauri/`, `apps/server/`, `apps/cli/`,
