@@ -53,6 +53,14 @@ used LLVM instrumentation on Linux and had zero failures, ignored tests or compi
 The logs are in `coverage/goal/cloud-removal-final-rpc.log`, `cloud-neighbors.log` and
 `cloud-setup-after.log`. The pseudo-terminal suite currently runs on Unix.
 
+## Reexecução da fixture systemd no Linux
+
+A coleta instrumentada encontrou `ETXTBSY` mesmo com cópias em inodes distintos. Um replay
+com quatro threads reproduziu o erro na segunda tentativa, em outro teste da fixture. Um mutex
+mantém a preparação e os processos da fixture juntos. Os quatro testes passaram instrumentados
+e 30 replays com quatro threads concluíram 120 execuções sem falha. Os logs ficam em
+`coverage/goal/next/cli-race-{before,after}/` e `coverage/goal/next/with-gvfs/rust*.log`.
+
 ## Legacy cloud volume classification
 
 The cloud wizard and removal RPC now use the same classification for provider mounts stored
