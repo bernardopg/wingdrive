@@ -748,6 +748,14 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Correção: cada argumento de `ExecStart` vai entre aspas duplas, com `\` e `"` escapados, `%` como `%%`, `$` como `$$` e quebra de linha como `\n`.
 - Limite: o serviço continua usando a pasta da instância como `--data-dir` e não passa `--instance`, então instalar o serviço a partir de uma instância nomeada inicia o daemon padrão na porta 6969. Não foi alterado aqui.
 
+## CLI: fixture de systemd falhava ao executar a cópia do binário
+
+- Local: `apps/cli/tests/daemon_service_test.rs`.
+- Reprodução: execute o binário instrumentado com `--test-threads=4`. A coleta falhou no teste de daemon ausente. O segundo replay falhou no teste de ativação com `ETXTBSY` (erro 26).
+- Causa: o erro persistiu com inodes separados e apenas um Cargo ativo. A execução concorrente da fixture permite que um processo recém-criado herde temporariamente o descritor gravável da cópia que outra fixture está preparando.
+- Correção: serializar a preparação e a execução dessas fixtures num mesmo processo. Cada cenário continua isolado em diretório temporário.
+- Verificação: os quatro testes instrumentados passaram. Trinta replays com quatro threads concluíram 120 testes sem falhas.
+
 ## Prompts do CLI repetem indefinidamente com stdin fechado
 
 - Estado: reproduzido no SHA `423a8686d`.
@@ -775,3 +783,18 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: a listagem avaliava o stdout sem conferir o código de saída.
 - Correção: retornar o diagnóstico do GIO em caso de falha e oferecer nova tentativa na barra lateral. Uma listagem vazia bem-sucedida continua válida.
 - Verificação: a regressão falhou com `unwrap_err()` sobre `Ok([])` antes da correção. Depois, 12 testes instrumentados de GVFS e um teste React passaram. Os testes também cobrem erro sem stderr, executável ausente e recuperação após nova tentativa. Usam subprocessos descartáveis e uma plataforma de teste.
+
+## Desktop: inicialização GTK registrava avisos de aceleradores descartados
+
+- Local: `setup_menu` e `setup_menus` em `apps/tauri/src-tauri/src/main.rs`.
+- Reprodução: inicie e encerre o desktop Linux sob Xvfb e D-Bus privados. O pacote AUR emitiu dez avisos `no accelerator ... installed`. O binário instrumentado do checkout emitiu onze.
+- Causa: o startup instalava o menu completo e substituía seu menu efetivo por um vazio no Linux e no Windows.
+- Correção: instalar diretamente o menu vazio nesses dois sistemas. Os itens usados pelo IPC de seleção continuam acessíveis no estado.
+- Verificação: oito testes de menu passaram. O binário instrumentado abriu a janela, respondeu ao Ping do daemon e encerrou com status zero. O replay teve zero avisos de aceleradores GTK.
+
+## Core: remover uma localização retornava antes de o indexador parar
+
+- Evidência: em `Rust Workspace` dos PRs #468 e #470, `removing_a_location_cancels_its_jobs` falhou com `cancelled job still reports Running`. As mensagens de arquivos ausentes e a queda do canal do task vieram depois do encerramento da fixture.
+- Causa: o gerenciador esperava 100 ms após o pedido em vez de aguardar o resultado da tarefa. O worker podia perder o cancelamento entre a leitura do sinal de cancelado e a publicação de que a tarefa estava rodando. A descoberta paralela também podia deixar subtarefas no runtime ao interromper o job.
+- Correção: coordenar a transição do worker com a sinalização de cancelamento, encerrar os workers da descoberta antes de devolver o erro de interrupção e aguardar o término real antes de apagar o registro do job.
+- Regressão: o teste exige a transição para `Cancelled` antes de remover a localização e verificar o banco.
