@@ -199,6 +199,30 @@ fn libraries_dir_in(home: &Path) -> PathBuf {
 	)
 }
 
+/// Quotes `value` as a single `ExecStart` argument.
+///
+/// systemd splits an unquoted argument at whitespace and expands `%`
+/// specifiers and `$` variables in it, so a data folder such as
+/// "My Files" reached the daemon as two arguments.
+#[cfg(target_os = "linux")]
+pub fn systemd_exec_argument(value: &Path) -> String {
+	let mut quoted = String::from("\"");
+	for character in value.to_string_lossy().chars() {
+		match character {
+			'"' | '\\' => {
+				quoted.push('\\');
+				quoted.push(character);
+			}
+			'\n' => quoted.push_str("\\n"),
+			'%' => quoted.push_str("%%"),
+			'$' => quoted.push_str("$$"),
+			_ => quoted.push(character),
+		}
+	}
+	quoted.push('"');
+	quoted
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;

@@ -211,10 +211,25 @@ pub fn list_network_mounts() -> Vec<NetworkMount> {
 /// Devices such as phones and cameras that gvfs can mount.
 #[tauri::command]
 pub async fn list_mountable_volumes() -> Result<Vec<MountableVolume>, String> {
-	let output = tokio::task::spawn_blocking(|| gio().args(["mount", "-li"]).output())
+	let mut command = gio();
+	command.args(["mount", "-li"]);
+	list_mountable_command(command).await
+}
+
+async fn list_mountable_command(mut command: Command) -> Result<Vec<MountableVolume>, String> {
+	let output = tokio::task::spawn_blocking(move || command.output())
 		.await
 		.map_err(|e| e.to_string())?
 		.map_err(|e| format!("gio is not available: {e}"))?;
+	if !output.status.success() {
+		let stderr = String::from_utf8_lossy(&output.stderr);
+		let message = stderr.trim().trim_start_matches("gio: ");
+		return Err(if message.is_empty() {
+			format!("gio mount -li failed ({})", output.status)
+		} else {
+			message.to_string()
+		});
+	}
 	Ok(parse_mountable(&String::from_utf8_lossy(&output.stdout)))
 }
 

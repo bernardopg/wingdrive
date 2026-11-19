@@ -22,7 +22,12 @@ async fn cloud_removal_leaves_local_volumes_tracked() -> anyhow::Result<()> {
 	let db = library.db().conn();
 	let device_id = core.device.device_id()?;
 	let mut volumes = Vec::new();
-	for (fingerprint, kind) in [("fixture-local", "Primary"), ("fixture-cloud", "Cloud")] {
+	for (fingerprint, kind, location) in [
+		("fixture-local", "Primary", "/local"),
+		("fixture-cloud", "Cloud", "gdrive://fixture@example.test"),
+		("fixture-legacy-s3", "Network", "s3://fixture-bucket"),
+		("fixture-lan", "Network", "smb://fixture/share"),
+	] {
 		let now = chrono::Utc::now();
 		let volume = entities::volume::ActiveModel {
 			uuid: Set(Uuid::new_v4()),
@@ -32,6 +37,7 @@ async fn cloud_removal_leaves_local_volumes_tracked() -> anyhow::Result<()> {
 			last_seen_at: Set(now),
 			is_online: Set(true),
 			volume_type: Set(Some(kind.to_string())),
+			mount_point: Set(Some(location.to_string())),
 			..Default::default()
 		}
 		.insert(db)
@@ -57,28 +63,31 @@ async fn cloud_removal_leaves_local_volumes_tracked() -> anyhow::Result<()> {
 			&core,
 		)
 	};
-	let local = remove("fixture-local").await;
-	assert!(local.is_err(), "a local volume must not be removed");
-	assert!(entities::volume::Entity::find_by_id(volumes[0].0)
-		.one(db)
-		.await?
-		.is_some());
-
-	let cloud = remove("fixture-cloud").await.map_err(anyhow::Error::msg)?;
-	assert_eq!(cloud["fingerprint"], "fixture-cloud");
-	assert!(entities::volume::Entity::find_by_id(volumes[1].0)
-		.one(db)
-		.await?
-		.is_none());
-
-	assert!(entities::cloud_credential::Entity::find_by_id(volumes[0].1)
-		.one(db)
-		.await?
-		.is_some());
-	assert!(entities::cloud_credential::Entity::find_by_id(volumes[1].1)
-		.one(db)
-		.await?
-		.is_none());
+	for (index, fingerprint, removable) in [
+		(0, "fixture-local", false),
+		(1, "fixture-cloud", true),
+		(2, "fixture-legacy-s3", true),
+		(3, "fixture-lan", false),
+	] {
+		let result = remove(fingerprint).await;
+		if removable {
+			assert_eq!(
+				result.map_err(anyhow::Error::msg)?["fingerprint"],
+				fingerprint
+			);
+		} else {
+			assert!(result.is_err(), "{fingerprint} must remain tracked");
+		}
+		let (volume_id, credential_id) = volumes[index];
+		let tracked = entities::volume::Entity::find_by_id(volume_id)
+			.one(db)
+			.await?;
+		let credential = entities::cloud_credential::Entity::find_by_id(credential_id)
+			.one(db)
+			.await?;
+		assert_eq!(tracked.is_none(), removable, "{fingerprint}");
+		assert_eq!(credential.is_none(), removable, "{fingerprint}");
+	}
 
 	core.shutdown().await.unwrap();
 	Ok(())
