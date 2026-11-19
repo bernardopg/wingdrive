@@ -2,8 +2,6 @@
 //! the user's bus and portal never see it. Skipped where `dbus-daemon` is missing.
 
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader};
-use std::process::{Child, Command, Stdio};
 use std::time::Duration;
 
 use zbus::{ObjectPath, OwnedVariant as OwnedValue, Variant as Value};
@@ -11,46 +9,9 @@ use zbus::{ObjectPath, OwnedVariant as OwnedValue, Variant as Value};
 use super::super::portal::{FileChooser, BUS_NAME, OBJECT_PATH};
 use super::super::*;
 use super::FakeHost;
+use crate::test_support::PrivateBus;
 
 const IFACE: &str = "org.freedesktop.impl.portal.FileChooser";
-
-struct PrivateBus {
-	daemon: Child,
-	address: String,
-}
-
-impl PrivateBus {
-	fn start() -> Option<Self> {
-		let mut daemon = Command::new("dbus-daemon")
-			.args(["--session", "--nofork", "--print-address=1"])
-			.stdout(Stdio::piped())
-			.stderr(Stdio::null())
-			.spawn()
-			.ok()?;
-		let mut address = String::new();
-		BufReader::new(daemon.stdout.take()?)
-			.read_line(&mut address)
-			.ok()?;
-		Some(Self {
-			daemon,
-			address: address.trim().to_string(),
-		})
-	}
-
-	async fn connect(&self) -> zbus::Connection {
-		zbus::connection::Builder::address(self.address.as_str())
-			.build()
-			.await
-			.unwrap()
-	}
-}
-
-impl Drop for PrivateBus {
-	fn drop(&mut self) {
-		self.daemon.kill().ok();
-		self.daemon.wait().ok();
-	}
-}
 
 struct Backend {
 	bus: PrivateBus,
@@ -67,7 +28,8 @@ async fn backend() -> Option<Backend> {
 	};
 	let host = FakeHost::default();
 	let broker = Broker::new(host.clone());
-	let server = zbus::connection::Builder::address(bus.address.as_str())
+	let server = bus
+		.builder()
 		.serve_at(
 			OBJECT_PATH,
 			FileChooser::new(broker.clone(), std::env::temp_dir()),
@@ -319,7 +281,9 @@ async fn invalid_options_and_a_failed_window_answer_two() {
 		..FakeHost::default()
 	};
 	let broker = Broker::new(failing);
-	let server = zbus::connection::Builder::address(backend.bus.address.as_str())
+	let server = backend
+		.bus
+		.builder()
 		.serve_at(OBJECT_PATH, FileChooser::new(broker, std::env::temp_dir()))
 		.build()
 		.await
@@ -351,7 +315,7 @@ async fn connect_serves_the_backend_on_the_given_bus() {
 		return;
 	};
 	let broker = Broker::new(FakeHost::default());
-	let builder = zbus::connection::Builder::address(bus.address.as_str());
+	let builder = bus.builder();
 	let _server = super::super::portal::connect(builder, broker)
 		.await
 		.unwrap();
@@ -373,12 +337,9 @@ async fn the_name_is_served_before_the_host_attaches() {
 		return;
 	};
 	let broker = Broker::detached(HOST_WAIT);
-	let _server = super::super::portal::connect(
-		zbus::connection::Builder::address(bus.address.as_str()),
-		broker.clone(),
-	)
-	.await
-	.unwrap();
+	let _server = super::super::portal::connect(bus.builder(), broker.clone())
+		.await
+		.unwrap();
 	let client = bus.connect().await;
 	let dbus = zbus::fdo::DBusProxy::new(&client).await.unwrap();
 	assert!(dbus

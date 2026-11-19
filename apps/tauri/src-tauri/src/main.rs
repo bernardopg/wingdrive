@@ -27,6 +27,8 @@ mod scheduled_task;
 mod notifications;
 mod server;
 mod terminal;
+#[cfg(all(test, target_os = "linux"))]
+mod test_support;
 mod updates;
 mod windows;
 
