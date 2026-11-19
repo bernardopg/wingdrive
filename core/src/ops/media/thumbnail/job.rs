@@ -51,10 +51,6 @@ fn available_memory() -> u64 {
 /// Configuration for thumbnail generation job
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThumbnailJobConfig {
-	/// Target thumbnail variants to generate
-	#[serde(skip)]
-	pub variants: Vec<ThumbnailVariantConfig>,
-
 	/// Whether to regenerate existing thumbnails
 	pub regenerate: bool,
 
@@ -67,6 +63,9 @@ pub struct ThumbnailJobConfig {
 	/// Whether to run this job in the background (not persisted to database, no UI updates)
 	#[serde(default)]
 	pub run_in_background: bool,
+	// Keep this field last because older MessagePack checkpoints omitted it.
+	#[serde(default = "ThumbnailVariants::defaults")]
+	pub variants: Vec<ThumbnailVariantConfig>,
 }
 
 impl Default for ThumbnailJobConfig {
@@ -126,7 +125,7 @@ pub struct ThumbnailProgress {
 impl JobProgress for ThumbnailProgress {}
 
 /// Thumbnail generation job
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 pub struct ThumbnailJob {
 	/// Entry IDs to process for thumbnails (if None, process all suitable entries)
 	pub entry_ids: Option<Vec<Uuid>>,
@@ -135,12 +134,44 @@ pub struct ThumbnailJob {
 	pub config: ThumbnailJobConfig,
 
 	/// Location whose entries this job covers, when dispatched for one
-	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub location_id: Option<Uuid>,
 
-	// Resumable state
-	#[serde(skip_serializing_if = "Option::is_none")]
 	state: Option<ThumbnailState>,
+}
+
+impl<'de> Deserialize<'de> for ThumbnailJob {
+	fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		#[derive(Deserialize)]
+		#[serde(untagged)]
+		enum LocationOrState {
+			Location(Uuid),
+			State(Box<ThumbnailState>),
+		}
+
+		#[derive(Deserialize)]
+		struct Checkpoint {
+			entry_ids: Option<Vec<Uuid>>,
+			config: ThumbnailJobConfig,
+			#[serde(default, rename = "location_id")]
+			location_or_state: Option<LocationOrState>,
+			#[serde(default)]
+			state: Option<ThumbnailState>,
+		}
+
+		let checkpoint = Checkpoint::deserialize(deserializer)?;
+		// In older positional checkpoints, state occupied the third field when location was absent.
+		let (location_id, state) = match checkpoint.location_or_state {
+			Some(LocationOrState::Location(id)) => (Some(id), checkpoint.state),
+			Some(LocationOrState::State(state)) => (None, Some(*state)),
+			None => (None, checkpoint.state),
+		};
+		Ok(Self {
+			entry_ids: checkpoint.entry_ids,
+			config: checkpoint.config,
+			location_id,
+			state,
+		})
+	}
 }
 
 impl Job for ThumbnailJob {
@@ -950,6 +981,97 @@ impl ThumbnailJob {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn checkpoint_preserves_custom_variants_and_processing_state_without_location() {
+		let entry_id = Uuid::new_v4();
+		let mut job = ThumbnailJob::for_entries(
+			vec![entry_id],
+			ThumbnailJobConfig::with_variants(vec![ThumbnailVariantConfig::new(
+				320, "fixture", 73,
+			)]),
+		);
+		let mut state = ThumbnailState::new();
+		state.phase = ThumbnailPhase::Processing;
+		state.current_batch_index = 2;
+		state.record_generated(128);
+		job.state = Some(state);
+
+		let bytes = rmp_serde::to_vec(&job).unwrap();
+		let recovered: ThumbnailJob = rmp_serde::from_slice(&bytes).unwrap();
+		assert_eq!(recovered.entry_ids, Some(vec![entry_id]));
+		assert_eq!(recovered.location_id, None);
+		assert_eq!(recovered.config.variants.len(), 1);
+		let variant = &recovered.config.variants[0];
+		assert_eq!(
+			(variant.size, variant.variant.as_str(), variant.quality),
+			(320, "fixture", 73)
+		);
+		let state = recovered.state.unwrap();
+		assert_eq!(state.phase, ThumbnailPhase::Processing);
+		assert_eq!(state.current_batch_index, 2);
+		assert_eq!(state.stats.thumbnails_size_bytes, 128);
+	}
+
+	#[test]
+	fn checkpoint_configuration_preserves_selection_even_before_processing() {
+		let config = ThumbnailJobConfig::from_sizes(vec![512]);
+		let bytes = rmp_serde::to_vec(&config).unwrap();
+		let recovered: ThumbnailJobConfig = rmp_serde::from_slice(&bytes).unwrap();
+		assert_eq!(recovered.variants.len(), 1);
+		assert_eq!(recovered.variants[0].size, 512);
+	}
+
+	#[test]
+	fn checkpoint_preserves_an_explicitly_empty_variant_selection() {
+		let job = ThumbnailJob::new(ThumbnailJobConfig::with_variants(Vec::new()));
+		let bytes = rmp_serde::to_vec(&job).unwrap();
+		let recovered: ThumbnailJob = rmp_serde::from_slice(&bytes).unwrap();
+		assert!(recovered.config.variants.is_empty());
+	}
+
+	#[test]
+	fn older_positional_checkpoints_recover_location_or_progress() {
+		let entry_id = Uuid::new_v4();
+		let location_id = Uuid::new_v4();
+		let entry_ids = Some(vec![entry_id]);
+		let old_config = (true, 7_u64, 3_u64, false);
+		let mut progress = ThumbnailState::new();
+		progress.phase = ThumbnailPhase::Cleanup;
+		progress.record_skipped();
+
+		let no_state = rmp_serde::to_vec(&(&entry_ids, old_config)).unwrap();
+		let location_only = rmp_serde::to_vec(&(&entry_ids, old_config, location_id)).unwrap();
+		let state_only = rmp_serde::to_vec(&(&entry_ids, old_config, &progress)).unwrap();
+		let both = rmp_serde::to_vec(&(&entry_ids, old_config, location_id, &progress)).unwrap();
+
+		for (bytes, location, phase) in [
+			(no_state, None, None),
+			(location_only, Some(location_id), None),
+			(state_only, None, Some(ThumbnailPhase::Cleanup)),
+			(both, Some(location_id), Some(ThumbnailPhase::Cleanup)),
+		] {
+			let recovered: ThumbnailJob = rmp_serde::from_slice(&bytes).unwrap();
+			assert_eq!(recovered.entry_ids, entry_ids);
+			assert_eq!(recovered.location_id, location);
+			assert!(recovered.config.regenerate);
+			assert_eq!(recovered.config.batch_size, 7);
+			assert_eq!(recovered.config.max_concurrent, 3);
+			assert_eq!(
+				recovered
+					.config
+					.variants
+					.iter()
+					.map(|variant| variant.size)
+					.collect::<Vec<_>>(),
+				[256, 512, 1024],
+			);
+			if let Some(progress) = &recovered.state {
+				assert_eq!(progress.stats.skipped_count, 1);
+			}
+			assert_eq!(recovered.state.map(|state| state.phase), phase);
+		}
+	}
 
 	const GIB: u64 = DECODE_BUDGET;
 

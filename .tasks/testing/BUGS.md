@@ -743,3 +743,11 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: `Some(None)` e `None` produzem o mesmo JSON. A desserialização perdia a distinção entre limpar o intervalo e preservar o valor.
 - Correção: o protocolo de atualização interpreta zero como limpar o agendamento, conserva o intervalo com campo ausente ou `null` e mantém a validação dos intervalos positivos. A CLI transmite o zero explícito.
 - Verificação: 562 testes da CLI e os 6 testes do contrato RPC passaram instrumentados no Linux, sem ignorados nem avisos do compilador. O teste com SQLite descartável verifica a atualização positiva, a rejeição de 1 minuto, a preservação em `null` e a limpeza em zero. O teste de loopback verifica o zero enviado pela CLI.
+
+## Core: checkpoints de miniaturas perdiam opções e podiam impedir a retomada
+
+- Local: `ThumbnailJob` e `ThumbnailJobConfig` em `core/src/ops/media/thumbnail/job.rs`.
+- Reprodução: serialize um job pendente ou em processamento sem local com `rmp_serde::to_vec` e leia com `rmp_serde::from_slice`, como faz a fila de jobs. A leitura falhava com tamanho inválido ou tentava ler o estado de processamento como UUID. Uma seleção de variantes personalizada também era omitida no checkpoint.
+- Causa: o MessagePack gravava a estrutura como sequência. Campos opcionais omitidos deslocavam as posições e as variantes tinham `serde(skip)`.
+- Correção: gravar posição para local e estado e persistir as variantes. O leitor aceita o formato antigo, recupera progresso e local conforme os campos presentes e usa variantes padrão quando a gravação anterior tiver omitido a seleção. Novos checkpoints preservam a seleção vazia explícita.
+- Verificação: a fixture isolada com as estruturas Rust do checkpoint reproduziu a omissão da variante e os erros de leitura. Após a correção, os quatro testes de formato passaram, abrangendo seleção personalizada, vazia e quatro combinações históricas de local e progresso.
