@@ -42,6 +42,8 @@ use tauri_plugin_global_shortcut::ShortcutState;
 use tokio::sync::oneshot;
 use tokio::sync::RwLock;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+#[cfg(target_os = "linux")]
+use wing_branding::systemd_exec_argument;
 
 /// Default event subscription list - mirrors `DEFAULT_EVENT_SUBSCRIPTION` in
 /// packages/ts-client/src/event-filter.ts, which a test keeps in step.
@@ -1795,30 +1797,6 @@ fn systemd_service_installed(systemd_dir: &Path) -> bool {
 	SYSTEMD_UNITS
 		.iter()
 		.any(|name| systemd_dir.join(name).exists())
-}
-
-/// Quotes `value` as a single `ExecStart` argument.
-///
-/// systemd splits an unquoted argument at whitespace and expands `%`
-/// specifiers and `$` variables in it, so a data folder such as
-/// "My Files" reached the daemon as two arguments.
-#[cfg(target_os = "linux")]
-fn systemd_exec_argument(value: &Path) -> String {
-	let mut quoted = String::from("\"");
-	for character in value.to_string_lossy().chars() {
-		match character {
-			'"' | '\\' => {
-				quoted.push('\\');
-				quoted.push(character);
-			}
-			'\n' => quoted.push_str("\\n"),
-			'%' => quoted.push_str("%%"),
-			'$' => quoted.push_str("$$"),
-			_ => quoted.push(character),
-		}
-	}
-	quoted.push('"');
-	quoted
 }
 
 /// The user unit that runs `daemon_path` on `data_dir` at login.

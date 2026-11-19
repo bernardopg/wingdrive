@@ -15,6 +15,16 @@ last_updated: 2026-11-03
 
 Testes de parsing não provam que wing envia requests corretos, aguarda jobs e informa falhas com exit code adequado.
 
+## Linux daemon service cycle 2026-11-19
+
+The CLI emitted an unquoted `ExecStart` for paths containing spaces and special characters
+when run with a fake `systemctl`. The fixture uses a
+disposable HOME, a temporary executable directory, a stub daemon and a command log. The
+diagnosis and correction are recorded in [BUGS.md](BUGS.md). The baseline output is in
+`coverage/goal/cli-systemd/before.log` from the primary checkout. A direct Rust harness using cached dependencies failed with
+E0463 loading `tempfile`. This isolated linker failure is in
+`coverage/goal/cli-systemd/rustc-harness.log`; use the Cargo integration binary for verification.
+
 ## Dependencies
 
 COV-09, COV-03. Escopo, metas e ordem em [README.md](README.md).

@@ -25,8 +25,32 @@ pub fn installed_service(data_dir: &std::path::Path, instance: Option<&str>) -> 
 		.join(".config/systemd/user")
 		.join(&service_name);
 	let content = std::fs::read_to_string(unit).ok()?;
-	let flag = format!("--data-dir {}", data_dir.display());
-	content.contains(&flag).then_some(service_name)
+	unit_matches_daemon(&content, data_dir, instance).then_some(service_name)
+}
+
+#[cfg(target_os = "linux")]
+fn unit_matches_daemon(content: &str, data_dir: &std::path::Path, instance: Option<&str>) -> bool {
+	let quoted = format!(
+		" --data-dir {}",
+		wing_core::branding::systemd_exec_argument(data_dir)
+	);
+	let path = data_dir.to_string_lossy();
+	let legacy = (!path
+		.chars()
+		.any(|character| character.is_whitespace() || matches!(character, '"' | '\\' | '%' | '$')))
+	.then(|| format!(" --data-dir {path}"));
+	let instance_arg = instance.map_or_else(String::new, |name| format!(" --instance {name}"));
+
+	content
+		.lines()
+		.filter_map(|line| line.trim().strip_prefix("ExecStart="))
+		.filter_map(|command| command.strip_suffix(&instance_arg))
+		.any(|command| {
+			command.ends_with(&quoted)
+				|| legacy
+					.as_ref()
+					.is_some_and(|legacy| command.ends_with(legacy))
+		})
 }
 
 #[cfg(not(target_os = "linux"))]
@@ -329,8 +353,8 @@ async fn install_launchd_service(data_dir: PathBuf, instance: Option<String>) ->
 	// Build ExecStart command
 	let mut exec_start = format!(
 		"{} --data-dir {}",
-		daemon_path.display(),
-		data_dir.display()
+		wing_core::branding::systemd_exec_argument(&daemon_path),
+		wing_core::branding::systemd_exec_argument(&data_dir)
 	);
 	if let Some(ref inst) = instance {
 		exec_start.push_str(&format!(" --instance {}", inst));
@@ -539,6 +563,40 @@ async fn check_launchd_status(_instance: Option<String>) -> Result<()> {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[cfg(target_os = "linux")]
+	#[test]
+	fn installed_unit_matches_the_exact_data_path_and_instance() {
+		use std::path::Path;
+
+		let path = Path::new("/data/backup room");
+		let quoted = "ExecStart=\"/usr/local/bin/wing-daemon\" --data-dir \"/data/backup room\" --instance test";
+		assert!(super::unit_matches_daemon(quoted, path, Some("test")));
+		assert!(!super::unit_matches_daemon(quoted, path, Some("other")));
+		assert!(!super::unit_matches_daemon(
+			quoted,
+			Path::new("/data/backup"),
+			Some("test")
+		));
+		assert!(!super::unit_matches_daemon(quoted, path, None));
+
+		let legacy = "ExecStart=/usr/bin/wing-daemon --data-dir /data/backup-longer";
+		assert!(super::unit_matches_daemon(
+			legacy,
+			Path::new("/data/backup-longer"),
+			None
+		));
+		assert!(!super::unit_matches_daemon(
+			legacy,
+			Path::new("/data/backup"),
+			None
+		));
+		assert!(!super::unit_matches_daemon(
+			"Description=Daemon --data-dir /data/backup",
+			Path::new("/data/backup"),
+			None,
+		));
+	}
 
 	#[test]
 	fn preserves_named_service_instances() {

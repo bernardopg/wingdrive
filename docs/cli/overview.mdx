@@ -112,7 +112,7 @@ wing daemon uninstall
 The install command creates a LaunchAgent that starts the daemon on login and restarts it if it crashes. Logs write to your data directory at `~/Library/Application Support/wingdrive/logs/`. This works with multiple instances by passing `--instance` before the daemon command.
 
 <Note>
-Auto-start is currently macOS-only. Linux systemd support is planned.
+Auto-start uses systemd user services on Linux and LaunchAgents on macOS.
 </Note>
 
 ### Multiple Daemon Instances
