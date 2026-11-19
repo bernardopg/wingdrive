@@ -601,6 +601,16 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: em `album_x`, o padrão `LIKE 'album_x/%'` também casava `albumYx/sub/`, e a listagem trazia a mídia da pasta vizinha. O teste falhava com `["inside", "outside"]`.
 - Correção: o padrão vem de `directory_subtree_patterns`, que escapa `%`, `_` e `\` e já era usado pela busca e pelo preflight; a consulta declara `ESCAPE '\'`.
 
+## A consulta de jobs perde o motivo de uma falha
+
+- Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.
+- Local: `JobExecutor::run`, `JobHandle::wait` e as consultas e monitores de `JobManager`, em `core/src/infra/job/`.
+- Reprodução: adicione uma localização dentro do diretório de dados de um daemon descartável. O indexador registra que a pasta de dados não pode ser indexada. Ao consultar jobs com status `Failed`, a mensagem aparece vazia na suíte `own_data_location_test`. A repetição com rede desabilitada reproduziu a falha.
+- Causa: o executor publicava `Failed` antes de persistir o erro. As consultas em memória preenchiam `error_message` com `None`, mesmo com o erro disponível no handle. O monitor de eventos buscava a mensagem no banco sujeito à mesma ordem de gravação.
+- Impacto: o usuário recebe um job com falha e pode perder a explicação necessária para corrigir a localização. A recusa da pasta de dados continua correta.
+- Correção: persistir status, progresso e causa antes de notificar `Failed`. Usar o resultado compartilhado do job para as consultas em memória, para a notificação e para quem espera pelo handle. Consultas de histórico continuam consultando o banco.
+- Verificação: 25 testes instrumentados nas suítes de pasta de dados, shutdown de jobs, falhas de cópia, exclusão de location e eventos passaram. A regressão confere a causa em listagem, detalhes e evento, além de verificar que uma pasta vizinha continua indexável.
+
 ## Core: resolução de caminho não achava pasta com ponto no nome
 
 - Estado: corrigido; `paths_resolve_through_dotted_folders_and_sibling_locations` em `core/tests/file_queries_test.rs`. Com o resolvedor antigo o teste falha em `dotted folder`.
@@ -696,12 +706,12 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Correção: encerrar ao receber EOF, rejeitar listas vazias e manter o índice escolhido mesmo quando os rótulos se repetem. Respostas inválidas com entrada aberta continuam permitindo nova tentativa.
 - Verificação: os três processos passaram a sair com código 1 e `Aborted by user: end of input`. Cinco testes das funções passaram em um harness Rust isolado, incluindo erro de leitura e resposta em branco. O harness usa o contrato mínimo de `ConfirmationRequest` e cobre os prompts de stdin/stdout, sem terminal interativo.
 
-## A consulta de jobs perde o motivo de uma falha
+## A CLI não desativa o agendamento de sincronização na nuvem
 
 - Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.
-- Local: `JobExecutor::run`, `JobHandle::wait` e as consultas e monitores de `JobManager`, em `core/src/infra/job/`.
-- Reprodução: adicione uma localização dentro do diretório de dados de um daemon descartável. O indexador registra que a pasta de dados não pode ser indexada. Ao consultar jobs com status `Failed`, a mensagem aparece vazia na suíte `own_data_location_test`. A repetição com rede desabilitada reproduziu a falha.
-- Causa: o executor publicava `Failed` antes de persistir o erro. As consultas em memória preenchiam `error_message` com `None`, mesmo com o erro disponível no handle. O monitor de eventos buscava a mensagem no banco sujeito à mesma ordem de gravação.
-- Impacto: o usuário recebe um job com falha e pode perder a explicação necessária para corrigir a localização. A recusa da pasta de dados continua correta.
-- Correção: persistir status, progresso e causa antes de notificar `Failed`. Usar o resultado compartilhado do job para as consultas em memória, para a notificação e para quem espera pelo handle. Consultas de histórico continuam consultando o banco.
-- Verificação: 25 testes instrumentados nas suítes de pasta de dados, shutdown de jobs, falhas de cópia, exclusão de location e eventos passaram. A regressão confere a causa em listagem, detalhes e evento, além de verificar que uma pasta vizinha continua indexável.
+- Local: `apps/cli/src/domains/integrations/mod.rs`, `cloud_sync`, e `core/src/ops/cloud_sync/ops.rs`, `CloudSyncUpdateInput` e `CloudSyncUpdateAction::execute`.
+- Reprodução: execute `wing integrations cloud-sync update <id> --every 0` para um par com agendamento. O teste de contrato capturou `interval_minutes: null`. O handler RPC preservou o intervalo com `null` e antes da correção rejeitou zero com `Use at least 5 minutes between runs`.
+- Impacto: o comando termina com sucesso e a sincronização automática continua quando o usuário pediu execução manual.
+- Causa: `Some(None)` e `None` produzem o mesmo JSON. A desserialização perdia a distinção entre limpar o intervalo e preservar o valor.
+- Correção: o protocolo de atualização interpreta zero como limpar o agendamento, conserva o intervalo com campo ausente ou `null` e mantém a validação dos intervalos positivos. A CLI transmite o zero explícito.
+- Verificação: 562 testes da CLI e os 6 testes do contrato RPC passaram instrumentados no Linux, sem ignorados nem avisos do compilador. O teste com SQLite descartável verifica a atualização positiva, a rejeição de 1 minuto, a preservação em `null` e a limpeza em zero. O teste de loopback verifica o zero enviado pela CLI.

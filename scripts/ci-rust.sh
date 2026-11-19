@@ -60,6 +60,11 @@ core_filesystem_tests=()
 if [ "$(uname -s)" = Linux ]; then
 	core_filesystem_tests=(
 		archive_contract_test
+		aggregate_sizes_watcher_test
+		google_drive_picker_test
+		microsoft_integration_test
+		uuid_reconciliation_test
+		volume_offline_test
 		tag_manager_contract_test
 		indexing_rules_test
 		rpc_validation_contract_test
