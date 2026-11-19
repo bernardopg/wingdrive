@@ -31,10 +31,7 @@ impl Fixture {
 		fs::create_dir(&bin).unwrap();
 		fs::create_dir(&home).unwrap();
 		let cli = bin.join("wing");
-		let built_cli = env!("CARGO_BIN_EXE_wing");
-		if fs::hard_link(built_cli, &cli).is_err() {
-			fs::copy(built_cli, &cli).unwrap();
-		}
+		fs::copy(env!("CARGO_BIN_EXE_wing"), &cli).unwrap();
 		Self::executable(&bin.join("wing-daemon"), "#!/bin/sh\nexit 0\n");
 		Self::executable(
 			&bin.join("systemctl"),

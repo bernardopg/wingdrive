@@ -89,3 +89,8 @@ The combined desktop build reported E0432 because the shell imported the brandin
 directly. The shell now uses the existing dependency on `wing-tauri-core`, which re-exports
 the shared helper on Linux. The logs are in `coverage/goal/next/cli.log` and
 `coverage/goal/next/desktop.log` in the primary checkout.
+
+An independent coverage replay overlapped a Cargo build and a hard-linked CLI fixture
+returned ETXTBSY (OS error 26). Each fixture now copies the executable so that it has its
+own inode. The failed replay is recorded in `coverage/goal/next/cli-instrumented/service.log`
+at the time of diagnosis.
