@@ -143,3 +143,24 @@ Board validation passed with zero errors. Reopening COV-07 clears its unchecked-
 warning and leaves 30 warnings, including the existing S05 WIP overage.
 
 The full logs, LCOV and JSON summary are under `coverage/goal/after-sidecars/`.
+
+## Full Linux measurement after watcher and native desktop regressions
+
+Both collectors exited zero on `696a845879419a74489737d09810c0921303d500`. This local
+verification tree includes the persisted and ephemeral watcher suites, the concurrent MIME
+regression, terminal discovery and the native default opener fallback.
+
+| Component | Covered / instrumented | Coverage | Target | Additional hits at this denominator |
+|---|---:|---:|---:|---:|
+| Desktop | 8,131 / 8,960 | 90.7% | 100% | 829 |
+| Core | 50,790 / 91,653 | 55.4% | 65% | 8,785 |
+| CLI | 5,914 / 7,312 | 80.9% | 75% | 0 |
+
+The Rust collector passed 2,214 cases and the frontend collector passed 371. The Rust log
+contains no compiler warnings or failed tests. GTK clipboard passed in the separate Xvfb
+stage. S3, the large reconciliation timing test and polkit remain excluded. The frontend
+emitted the two deliberate failed-rename diagnostics, `permission denied` and
+`errors.renameIncomplete`. The CLI production diagnostic measured 4,025/5,422 (74.2%).
+
+The logs, LCOV and summary are in `coverage/goal/after-watchers/`. This component report
+measures Linux execution. The real startup probe of the installed AUR binary is separate.
