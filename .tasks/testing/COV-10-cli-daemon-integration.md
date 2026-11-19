@@ -92,5 +92,10 @@ the shared helper on Linux. The logs are in `coverage/goal/next/cli.log` and
 
 An independent coverage replay overlapped a Cargo build and a hard-linked CLI fixture
 returned ETXTBSY (OS error 26). Each fixture now copies the executable so that it has its
-own inode. The failed replay is recorded in `coverage/goal/next/cli-instrumented/service.log`
-at the time of diagnosis.
+own inode. The failed replay is recorded in `coverage/goal/next/cli-profile-attempts/service.log` was superseded by an isolated successful
+profile replay. The original failing console output is captured in this task.
+
+The instrumented CLI unit binary, process test binary and CLI executables were exported together.
+The focused report covered 5,781/7,311 CLI lines (79.1%) using the official filter. The
+production-only CLI diagnostic was 3,892/5,421 (71.8%). Both figures come from the isolated
+verification tree, pending comparison with a full run on the merged SHA.
