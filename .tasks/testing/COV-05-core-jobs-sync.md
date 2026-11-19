@@ -61,3 +61,11 @@ message in the list, details and matching event. LLVM runs of `own_data_location
 `job_shutdown_test`, `copy_failure_test`, `location_remove_jobs_test` and `event_system_test`
 passed 25 tests with zero failures, ignored tests or compiler warnings.
 The successful run is in `coverage/goal/job-failure-after.log`.
+
+## File transfer stream contracts
+
+The instrumented file transfer suite passed 14 tests on Linux, including the new push and
+pull cases. The tests run the framed stream handler in memory with temporary files. Push
+checks the destination bytes, terminal session and acknowledgment. Pull checks metadata,
+chunk order, per-chunk hashes and the final checksum. The log is
+`coverage/goal/next/transfer-stream-tests.log` in the primary checkout.
