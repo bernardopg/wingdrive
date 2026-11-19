@@ -158,6 +158,11 @@ wing daemon status
 wing daemon uninstall
 ```
 
+The installer quotes the daemon executable and data directory for systemd. Paths containing
+spaces, double quotes, percent signs or dollar signs keep their original values.
+For an existing installation with a malformed unit, rerun `wing daemon install` with its
+original data directory and instance to regenerate the unit.
+
 This creates a systemd user service at:
 ```
 ~/.config/systemd/user/wingdrive-daemon.service

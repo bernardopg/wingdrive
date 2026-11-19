@@ -143,7 +143,12 @@ run_full_tests() {
 	for test in "${core_contract_tests[@]}" ${core_filesystem_tests[@]+"${core_filesystem_tests[@]}"}; do
 		core_test_flags+=(--test "$test")
 	done
+	local cli_test_flags=()
+	if [ "$(uname -s)" = Linux ]; then
+		cli_test_flags+=(--test daemon_service_test)
+	fi
 	cargo_test --no-run --lib --bin WingDrive --bin wing \
+		"${cli_test_flags[@]}" \
 		"${core_test_flags[@]}" \
 		--test branding_legacy_paths \
 		--test sync_metrics_test \
@@ -187,6 +192,9 @@ run_full_tests() {
 
 	step "Test CLI contracts and configuration"
 	cargo_test --bin wing
+	if [ "$(uname -s)" = Linux ]; then
+		cargo_test --test daemon_service_test
+	fi
 
 	step "Test desktop IPC and launch handling"
 	cargo_test --bin WingDrive
@@ -247,6 +255,9 @@ else
 	if [[ " $* " == *" cli "* ]]; then
 		step "Test CLI contracts and configuration"
 		cargo test --locked -p wing-cli --bin wing
+		if [ "$(uname -s)" = Linux ]; then
+			cargo test --locked -p wing-cli --test daemon_service_test
+		fi
 	fi
 fi
 
