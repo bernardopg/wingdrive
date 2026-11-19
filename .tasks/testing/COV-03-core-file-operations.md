@@ -72,3 +72,11 @@ Moved to M3 with the rest of the coverage epic, since its open criteria are modu
 not M2 work.
 
 `core/src/ops/files` is at 63.9% overall; the 80% criterion applies to the changed modules listed in the task.
+
+### File moves through reindexing and watchers
+
+The Linux CI and coverage collector now run the existing move suite against temporary libraries
+and directories. It verifies persistent and ephemeral moves, event delivery and identity across
+reindexing and filesystem watcher paths. The four move scenarios and two fixture assertions
+passed in two serial instrumented runs. Logs are in
+`coverage/goal/next/file-move-{baseline,replay}.log`.
