@@ -11,7 +11,7 @@ use std::{path::Path, sync::Arc, time::Duration};
 use tempfile::TempDir;
 use wing_core::{
 	domain::WingPath,
-	infra::{action::LibraryAction, db::entities, job::types::JobStatus},
+	infra::{action::LibraryAction, db::entities, event::Event, job::types::JobStatus},
 	library::Library,
 	ops::locations::add::action::{LocationAddAction, LocationAddInput},
 	Core,
@@ -60,7 +60,9 @@ async fn wait_for_jobs(
 async fn a_location_inside_the_data_folder_fails_and_one_beside_it_indexes() -> TestResult {
 	let temp_dir = TempDir::new()?;
 	let data_dir = temp_dir.path().join("data");
-	let core = Core::new(data_dir.clone()).await?;
+	let mut config = wing_core::config::AppConfig::default_with_dir(data_dir.clone());
+	config.services.networking_enabled = false;
+	let core = Core::new_with_config(data_dir.clone(), Some(config), None).await?;
 
 	let inside = data_dir.join("inside");
 	let beside = temp_dir.path().join("beside");
@@ -86,6 +88,7 @@ async fn a_location_inside_the_data_folder_fails_and_one_beside_it_indexes() -> 
 		model.insert(library.db().conn()).await?;
 	}
 
+	let mut events = core.events.subscribe();
 	add_location(&core, &library, &slug, &inside).await?;
 	let failed = wait_for_jobs(&library, JobStatus::Failed, 0).await?;
 	let message = failed[0].error_message.clone().unwrap_or_default();
@@ -93,6 +96,22 @@ async fn a_location_inside_the_data_folder_fails_and_one_beside_it_indexes() -> 
 		message.contains("own data folder"),
 		"unexpected failure: {message}"
 	);
+
+	let details = library.jobs().get_job_info(failed[0].id).await?.unwrap();
+	assert_eq!(details.error_message.as_deref(), Some(message.as_str()));
+
+	let id = failed[0].id.to_string();
+	let event_error = tokio::time::timeout(
+		Duration::from_secs(10),
+		events.recv_filtered(
+			|event| matches!(event, Event::JobFailed { job_id, .. } if job_id == &id),
+		),
+	)
+	.await??;
+	let Event::JobFailed { error, .. } = event_error else {
+		unreachable!("the receiver filters for JobFailed")
+	};
+	assert_eq!(error, message);
 
 	let completed_before = library
 		.jobs()
