@@ -345,6 +345,7 @@
 		"unmountNamed": "Desmontar {{name}}",
 		"unmount": "Desmontar",
 		"mountNamed": "Montar {{name}}",
+		"retryListDevices": "Falha ao listar dispositivos. Tentar novamente",
 		"connectToServer": "Conectar ao servidor...",
 		"mountFailed": "Não foi possível montar {{name}}: {{error}}",
 		"unmountFailed": "Não foi possível desmontar {{name}}: {{error}}",

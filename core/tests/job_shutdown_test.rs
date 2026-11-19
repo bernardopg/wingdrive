@@ -136,3 +136,87 @@ async fn test_shutdown_with_no_running_jobs() -> Result<(), Box<dyn std::error::
 
 	Ok(())
 }
+
+#[tokio::test]
+async fn a_persisted_copy_can_be_resumed_by_id_and_records_completion(
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+	use sea_orm::{ActiveModelTrait, Set};
+	use wing_core::{
+		config::AppConfig,
+		domain::WingPath,
+		infra::job::{database::jobs, traits::SerializableJob},
+		ops::files::copy::job::FileCopyJob,
+	};
+
+	let root = TempDir::new()?;
+	let data_dir = root.path().join("data");
+	let mut config = AppConfig::default_with_dir(data_dir.clone());
+	config.services.networking_enabled = false;
+	let core = Core::new_with_config(data_dir, Some(config), None).await?;
+	let library = core.libraries.list().await[0].clone();
+	let manager = library.jobs();
+	let missing = JobId::new();
+	assert!(manager.pause_job(missing).await.is_err());
+	assert!(manager.resume_job(missing).await.is_err());
+	assert!(manager.cancel_job(missing).await.is_err());
+	assert!(manager.get_job_info(missing.0).await?.is_none());
+	assert!(manager
+		.dispatch_by_name("unknown-test-job", serde_json::json!({}))
+		.await
+		.is_err());
+
+	let source = root.path().join("payload.txt");
+	let destination = root.path().join("destination");
+	tokio::fs::write(&source, b"resumed bytes").await?;
+	tokio::fs::create_dir(&destination).await?;
+	let job = FileCopyJob::from_paths(
+		vec![WingPath::local(source)],
+		WingPath::local(destination.clone()),
+	);
+
+	let id = JobId::new();
+	let db = manager.database();
+	jobs::ActiveModel {
+		id: Set(id.to_string()),
+		name: Set("file_copy".to_string()),
+		state: Set(job.serialize_state()?),
+		status: Set(JobStatus::Paused.to_string()),
+		priority: Set(0),
+		created_at: Set(chrono::Utc::now()),
+		paused_at: Set(Some(chrono::Utc::now())),
+		..Default::default()
+	}
+	.insert(db.conn())
+	.await?;
+	assert_eq!(
+		manager.get_job_info(id.0).await?.unwrap().status,
+		JobStatus::Paused
+	);
+
+	manager.resume_job(id).await?;
+	let completed = tokio::time::timeout(Duration::from_secs(10), async {
+		loop {
+			let row = db.get_job(id).await?.expect("resumed copy history");
+			if row.status == JobStatus::Completed.to_string()
+				|| row.status == JobStatus::Failed.to_string()
+			{
+				return Ok::<_, wing_core::infra::job::error::JobError>(row);
+			}
+			sleep(Duration::from_millis(25)).await;
+		}
+	})
+	.await??;
+	assert_eq!(
+		completed.status,
+		JobStatus::Completed.to_string(),
+		"{:?}",
+		completed.error_message
+	);
+	assert_eq!(
+		tokio::fs::read(destination.join("payload.txt")).await?,
+		b"resumed bytes"
+	);
+	assert!(manager.resume_job(id).await.is_err());
+	core.shutdown().await?;
+	Ok(())
+}

@@ -1,5 +1,13 @@
 # Bugs encontrados na ampliação de cobertura
 
+## O filtro de nuvem omite volumes de provedores gravados como Network
+
+- Estado: corrigido. A reprodução no daemon retornou `Volume is not tracked: fixture-legacy-s3`. Depois da correção, os sete contratos RPC passaram.
+- Gatilho: depois do PR #449, um volume de provedor cadastrado no fluxo `volumes.add_cloud` pode aparecer com `volume_type: Network`. O menu filtra apenas `Cloud`, e o RPC de remoção filtra a mesma classificação no banco.
+- Causa: o cadastro e a restauração anteriores usavam `Network` tanto para armazenamento de provedores quanto para volumes de rede. O esquema da URI do provedor está presente no ponto de montagem.
+- Correção: usar a classificação `Cloud` ou uma identidade de provedor reconhecida na CLI e na seleção do registro SQLite. Classificar novos volumes e backends restaurados como `Cloud`.
+- Testes: fixtures de S3 legado, Google Drive, SMB e disco local. Conferir os volumes que podem ser selecionados e a preservação das linhas de volumes e credenciais recusadas.
+
 ## Assistente de nuvem oferece discos locais e interpreta a remoção como erro
 
 - Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.
@@ -440,6 +448,15 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: `wing search files report --wing-path content://invalid` era aceito. A conversão imprimia um aviso e usava `SearchScope::Library`, ampliando a busca em vez de restringi-la ao caminho pedido.
 - Correção: o Clap interpreta o valor com `WingPath::from_uri` e rejeita o endereço que não converte. Um endereço válido continua virando `SearchScope::Path`.
 
+## CLI cria e reconhece incorretamente o serviço systemd
+
+- Estado: reproduzido no Linux com o binário `wing` e um `systemctl` falso. O processo real do usuário não é chamado pelo teste.
+- Local: `apps/cli/src/domains/daemon/mod.rs`, instalação e seleção de serviço.
+- Reprodução: execute `wing daemon install` com binário em `program files` e data-dir com espaços, aspas, `%` e `$`. A unidade registra `ExecStart` sem aspas. O systemd divide os caminhos e pode expandir os caracteres especiais.
+- Causa adicional: a detecção buscava um fragmento em todo o arquivo. Uma unidade para `/data/backup-longer` podia ser usada para `/data/backup`, enquanto a unidade do desktop com argumento protegido passava despercebida.
+- Correção: mover a rotina de escape do desktop para `wing-branding` e usar a mesma representação na CLI. Comparar o argumento completo na diretiva `ExecStart` e conferir a instância, aceitando unidades anteriores com caminhos simples.
+- Verificação focada: o helper extraído passou casos de aspas e correspondência exata. `systemd-analyze verify` aceitou a unidade com os dois caminhos protegidos. Os testes completos do novo binário estão no lote de validação local.
+
 ## CLI: busca aceitava `--wing-path` e `--location` juntos
 
 - Estado: corrigido; a rejeição é verificada no parser de busca e na árvore real de comandos.
@@ -620,6 +637,24 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: em `album_x`, o padrão `LIKE 'album_x/%'` também casava `albumYx/sub/`, e a listagem trazia a mídia da pasta vizinha. O teste falhava com `["inside", "outside"]`.
 - Correção: o padrão vem de `directory_subtree_patterns`, que escapa `%`, `_` e `\` e já era usado pela busca e pelo preflight; a consulta declara `ESCAPE '\'`.
 
+## Core: checkpoints de miniaturas perdiam opções e podiam impedir a retomada
+
+- Local: `ThumbnailJob` e `ThumbnailJobConfig` em `core/src/ops/media/thumbnail/job.rs`.
+- Reprodução: serialize um job pendente ou em processamento sem local com `rmp_serde::to_vec` e leia com `rmp_serde::from_slice`, como faz a fila de jobs. A leitura falhava com tamanho inválido ou tentava ler o estado de processamento como UUID. Uma seleção de variantes personalizada também era omitida no checkpoint.
+- Causa: o MessagePack gravava a estrutura como sequência. Campos opcionais omitidos deslocavam as posições e as variantes tinham `serde(skip)`.
+- Correção: gravar posição para local e estado e persistir as variantes. O leitor aceita o formato antigo, recupera progresso e local conforme os campos presentes e usa variantes padrão quando a gravação anterior tiver omitido a seleção. Novos checkpoints preservam a seleção vazia explícita.
+- Verificação: a fixture isolada com as estruturas Rust do checkpoint reproduziu a omissão da variante e os erros de leitura. Após a correção, os quatro testes de formato passaram, abrangendo seleção personalizada, vazia e quatro combinações históricas de local e progresso.
+
+## A consulta de jobs perde o motivo de uma falha
+
+- Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.
+- Local: `JobExecutor::run`, `JobHandle::wait` e as consultas e monitores de `JobManager`, em `core/src/infra/job/`.
+- Reprodução: adicione uma localização dentro do diretório de dados de um daemon descartável. O indexador registra que a pasta de dados não pode ser indexada. Ao consultar jobs com status `Failed`, a mensagem aparece vazia na suíte `own_data_location_test`. A repetição com rede desabilitada reproduziu a falha.
+- Causa: o executor publicava `Failed` antes de persistir o erro. As consultas em memória preenchiam `error_message` com `None`, mesmo com o erro disponível no handle. O monitor de eventos buscava a mensagem no banco sujeito à mesma ordem de gravação.
+- Impacto: o usuário recebe um job com falha e pode perder a explicação necessária para corrigir a localização. A recusa da pasta de dados continua correta.
+- Correção: persistir status, progresso e causa antes de notificar `Failed`. Usar o resultado compartilhado do job para as consultas em memória, para a notificação e para quem espera pelo handle. Consultas de histórico continuam consultando o banco.
+- Verificação: 25 testes instrumentados nas suítes de pasta de dados, shutdown de jobs, falhas de cópia, exclusão de location e eventos passaram. A regressão confere a causa em listagem, detalhes e evento, além de verificar que uma pasta vizinha continua indexável.
+
 ## Core: resolução de caminho não achava pasta com ponto no nome
 
 - Estado: corrigido; `paths_resolve_through_dotted_folders_and_sibling_locations` em `core/tests/file_queries_test.rs`. Com o resolvedor antigo o teste falha em `dotted folder`.
@@ -724,3 +759,11 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: `Some(None)` e `None` produzem o mesmo JSON. A desserialização perdia a distinção entre limpar o intervalo e preservar o valor.
 - Correção: o protocolo de atualização interpreta zero como limpar o agendamento, conserva o intervalo com campo ausente ou `null` e mantém a validação dos intervalos positivos. A CLI transmite o zero explícito.
 - Verificação: 562 testes da CLI e os 6 testes do contrato RPC passaram instrumentados no Linux, sem ignorados nem avisos do compilador. O teste com SQLite descartável verifica a atualização positiva, a rejeição de 1 minuto, a preservação em `null` e a limpeza em zero. O teste de loopback verifica o zero enviado pela CLI.
+
+## Desktop: a listagem de volumes do GIO escondia falhas
+
+- Local: `list_mountable_volumes` em `apps/tauri/src-tauri/src/gvfs.rs` e `NetworkSection.tsx`.
+- Reprodução: no Linux, substitua o subprocesso por uma fixture que emita `gio: volume monitor unavailable` no stderr e termine com código 1. A chamada retornava `Ok([])` e a barra lateral ficava vazia.
+- Causa: a listagem avaliava o stdout sem conferir o código de saída.
+- Correção: retornar o diagnóstico do GIO em caso de falha e oferecer nova tentativa na barra lateral. Uma listagem vazia bem-sucedida continua válida.
+- Verificação: a regressão falhou com `unwrap_err()` sobre `Ok([])` antes da correção. Depois, 12 testes instrumentados de GVFS e um teste React passaram. Os testes também cobrem erro sem stderr, executável ausente e recuperação após nova tentativa. Usam subprocessos descartáveis e uma plataforma de teste.

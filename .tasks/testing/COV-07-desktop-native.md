@@ -41,6 +41,13 @@ profile to the existing partial baseline of the same `clipboard.rs` source cover
 instead of 45/95. The focused run and LCOV are under `coverage/goal/desktop-clipboard/`.
 The full desktop measurement is tracked separately.
 
+## Desktop updater checks 2026-11-19
+
+Four updater tests passed with LLVM on Linux. The new tests serve a synthetic release
+manifest, an empty response and malformed JSON on loopback. They exercise the plugin
+through the desktop lookup function without downloading an installer. The log is
+`coverage/goal/next/updater.log` in the primary checkout.
+
 ## Evidence
 
 - 2026-11-06: suítes novas em `apps/tauri/src-tauri/src/{main,keybinds,file_opening,windows}/tests/`
@@ -251,3 +258,16 @@ use a temporary directory and a loopback port.
 Profiles of the same test binary show 209/438 production lines of `server.rs` covered with its
 existing tests and 368/438 with all seven. There were zero failures, ignored tests or compiler
 warnings. Logs and LCOV are under `coverage/goal/desktop-server/`. The full desktop report is pending.
+
+### GVFS device-list failure and retry
+
+The Linux command test reproduced a successful empty result for a GIO process that exited 1 with
+a diagnostic. The regression now verifies successful empty output, stderr on failure, exit status
+without stderr and failure to start the executable. All 12 instrumented GVFS tests passed.
+The sidebar test verifies the error indicator and a successful retry through React Query. It passed
+with five assertions and runs in CI and the frontend coverage collector.
+
+See [BUGS.md](BUGS.md#desktop-a-listagem-de-volumes-do-gio-escondia-falhas) for the cause and fix.
+The logs are in `coverage/goal/next/gvfs-list-*.log` and `gvfs-network-ui.log`. Fixtures used
+local subprocesses and a simulated device. System GIO and real phone connections were outside
+this verification.

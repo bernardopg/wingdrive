@@ -115,6 +115,9 @@ fn tracked(kind: VolumeType, name: &str, fingerprint: &str) -> Volume {
 	);
 	volume.track(Some(library()));
 	volume.volume_type = kind;
+	if kind == VolumeType::Network && fingerprint == CLOUD_FINGERPRINT {
+		volume.mount_point = PathBuf::from("s3://fixture-bucket");
+	}
 	volume
 }
 
@@ -124,7 +127,8 @@ fn mixed_volumes() -> Step {
 		Some(library()),
 		json!({"volumes":[
 			tracked(VolumeType::Primary, "Fixture local disk", LOCAL_FINGERPRINT),
-			tracked(VolumeType::Cloud, "Fixture cloud volume", CLOUD_FINGERPRINT)
+			tracked(VolumeType::Network, "Fixture cloud volume", CLOUD_FINGERPRINT),
+			tracked(VolumeType::Network, "Fixture LAN share", "abcdabcdabcdabcd")
 		]}),
 	)
 }
@@ -132,13 +136,18 @@ fn mixed_volumes() -> Step {
 #[tokio::test]
 async fn cloud_setup_list_does_not_show_local_volumes() {
 	let (succeeded, output, requests) = run_cloud(
-		&[(MENU, "\x1b[B\r"), ("Cloud Volumes:", ""), (MENU, EXIT)],
+		&[
+			(MENU, "\x1b[B\r"),
+			("WingDrive Cloud Storage Setup", ""),
+			(MENU, EXIT),
+		],
 		vec![listing(), mixed_volumes()],
 	)
 	.await;
 	assert!(succeeded, "{output}");
 	assert!(output.contains("Fixture cloud volume"));
 	assert!(!output.contains("Fixture local disk"));
+	assert!(!output.contains("Fixture LAN share"));
 	assert_eq!(requests[1], json!({"filter":"TrackedOnly"}));
 }
 
@@ -161,6 +170,7 @@ async fn cloud_setup_removes_the_selected_cloud_volume_and_reads_the_response() 
 	assert!(succeeded, "{output}");
 	assert!(output.contains("Removed cloud volume 'Fixture cloud volume'"));
 	assert!(!output.contains("Fixture local disk"));
+	assert!(!output.contains("Fixture LAN share"));
 }
 
 #[tokio::test]

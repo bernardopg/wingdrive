@@ -184,6 +184,8 @@ pub fn spawn_startup_check<R: Runtime>(app: AppHandle<R>, enabled: bool) {
 
 #[cfg(test)]
 mod tests {
+	mod http;
+
 	use super::*;
 
 	#[test]
