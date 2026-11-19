@@ -1,14 +1,14 @@
 ---
 id: COV-07
 title: "Cobrir shell desktop, IPC e segurança do undo"
-status: Done
+status: In Progress
 assignee: bernardopg
 parent: COV-00
 priority: High
 milestone: M2
 sprint: S05
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-13
+last_updated: 2026-11-19
 ---
 
 ## Description
@@ -31,6 +31,12 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 - [ ] Desktop apps/tauri atinge 100% de linhas instrumentadas na medição completa.
 - [x] Undo nunca sobrescreve dados criados depois da operação original.
 - [x] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
+
+## Reabertura da meta de cobertura
+
+O trabalho de 13 de novembro cumpriu a meta anterior do shell desktop. A meta vigente de 100%
+continua aberta. O relatório Linux tem 8.035/8.910 linhas cobertas (90,2%). A validação COV-12
+registra o SHA, a coleta e as 875 linhas que faltam na medição.
 
 ## GTK clipboard coverage 2026-11-19
 
