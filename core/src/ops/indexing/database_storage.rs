@@ -848,6 +848,37 @@ impl DatabaseStorage {
 		}
 	}
 
+	async fn insert_or_reuse_mime_type(
+		db: &DatabaseConnection,
+		mime: &str,
+	) -> Result<(entities::mime_type::Model, bool), JobError> {
+		use entities::mime_type::{ActiveModel, Column, Entity};
+		use sea_orm::TryInsertResult;
+
+		let insert = Entity::insert(ActiveModel {
+			uuid: Set(entities::mime_type::Model::deterministic_uuid(mime)),
+			mime_type: Set(mime.to_owned()),
+			created_at: Set(chrono::Utc::now()),
+			..Default::default()
+		})
+		.on_conflict_do_nothing_on([Column::MimeType])
+		.exec_without_returning(db)
+		.await
+		.map_err(|error| JobError::execution(format!("Failed to create MIME type: {error}")))?;
+
+		let inserted = matches!(insert, TryInsertResult::Inserted(1));
+		// Another indexer or a sync write may have created the row after the initial lookup.
+		let record = Entity::find()
+			.filter(Column::MimeType.eq(mime))
+			.one(db)
+			.await
+			.map_err(|error| JobError::execution(format!("Failed to query MIME type: {error}")))?
+			.ok_or_else(|| {
+				JobError::execution(format!("MIME type disappeared after insert: {mime}"))
+			})?;
+		Ok((record, inserted))
+	}
+
 	/// Links an entry to its content identity, deduplicating files with identical hashes.
 	///
 	/// Content identities are shared across all entries with the same content hash
@@ -907,42 +938,27 @@ impl DatabaseStorage {
 				Ok(result) => {
 					let kind_id = result.file_type.category as i32;
 
-					let (mime_type_id, mime_type_model, is_new_mime_type) = if let Some(mime_str) =
-						result.file_type.primary_mime_type()
-					{
-						let existing = entities::mime_type::Entity::find()
-							.filter(entities::mime_type::Column::MimeType.eq(mime_str))
-							.one(db)
-							.await
-							.map_err(|e| {
-								JobError::execution(format!("Failed to query mime type: {}", e))
-							})?;
-
-						match existing {
-							Some(mime_record) => (Some(mime_record.id), Some(mime_record), false),
-							None => {
-								let new_mime = entities::mime_type::ActiveModel {
-									uuid: Set(entities::mime_type::Model::deterministic_uuid(
-										mime_str,
-									)),
-									mime_type: Set(mime_str.to_string()),
-									created_at: Set(chrono::Utc::now()),
-									..Default::default()
-								};
-
-								let mime_result = new_mime.insert(db).await.map_err(|e| {
-									JobError::execution(format!(
-										"Failed to create mime type: {}",
-										e
-									))
+					let (mime_type_id, mime_type_model, is_new_mime_type) =
+						if let Some(mime_str) = result.file_type.primary_mime_type() {
+							let existing = entities::mime_type::Entity::find()
+								.filter(entities::mime_type::Column::MimeType.eq(mime_str))
+								.one(db)
+								.await
+								.map_err(|e| {
+									JobError::execution(format!("Failed to query mime type: {}", e))
 								})?;
 
-								(Some(mime_result.id), Some(mime_result), true)
+							match existing {
+								Some(record) => (Some(record.id), Some(record), false),
+								None => {
+									let (record, inserted) =
+										Self::insert_or_reuse_mime_type(db, mime_str).await?;
+									(Some(record.id), Some(record), inserted)
+								}
 							}
-						}
-					} else {
-						(None, None, false)
-					};
+						} else {
+							(None, None, false)
+						};
 
 					(kind_id, mime_type_id, mime_type_model, is_new_mime_type)
 				}
@@ -1366,6 +1382,38 @@ mod stored_name_tests {
 		assert_eq!(
 			stored_name_and_extension(Path::new("/a/release-v1.2"), false),
 			("release-v1.2".to_string(), None)
+		);
+	}
+}
+
+#[cfg(test)]
+mod mime_type_tests {
+	use super::*;
+
+	#[tokio::test]
+	async fn simultaneous_discovery_reuses_one_mime_type_row() {
+		let dir = tempfile::tempdir().unwrap();
+		let database = crate::infra::db::Database::create(&dir.path().join("library.db"))
+			.await
+			.unwrap();
+		database.migrate().await.unwrap();
+		let db = database.conn();
+		let mime = "application/x-wingdrive-fixture";
+		let (first, second) = tokio::join!(
+			DatabaseStorage::insert_or_reuse_mime_type(db, mime),
+			DatabaseStorage::insert_or_reuse_mime_type(db, mime),
+		);
+		let (first, first_inserted) = first.unwrap();
+		let (second, second_inserted) = second.unwrap();
+		assert_eq!(first.id, second.id);
+		assert_eq!(
+			first.uuid,
+			entities::mime_type::Model::deterministic_uuid(mime)
+		);
+		assert_eq!(first.mime_type, mime);
+		assert_eq!(
+			usize::from(first_inserted) + usize::from(second_inserted),
+			1
 		);
 	}
 }

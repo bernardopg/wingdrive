@@ -26,6 +26,17 @@ O boot temporário registrou a criação da configuração padrão e o fallback 
 de volumes sem permissão de escrita. A suíte persistente registrou uma colisão concorrente
 de MIME, registrada separadamente no histórico de bugs.
 
+Dois escritores de MIME agora reutilizam a mesma linha SQLite. A regressão concorrente e
+o replay instrumentado do watcher persistente passaram. O replay criou a configuração
+padrão e registrou o fallback de identificação dos volumes protegidos. Também emitiu
+uma ocorrência não crítica de `ENOENT` ao calcular o hash do arquivo que o cenário de
+extração exclui durante a indexação. O teste confirmou a exclusão. Os logs estão em
+`coverage/goal/after-sidecars/mime-fix.log` e `persistent-watcher-mime-fix.log`.
+O primeiro build do patch denunciou um delimitador Rust faltante, corrigido antes do replay.
+A tentativa com `RETURNING` foi interrompida ao confirmar que o ORM trata zero linhas como
+`RecordNotFound`. A versão validada usa a contagem de linhas do insert.
+
+
 
 ## Dependencies
 
