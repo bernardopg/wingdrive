@@ -1,5 +1,13 @@
 # Bugs encontrados na ampliação de cobertura
 
+## O filtro de nuvem omite volumes de provedores gravados como Network
+
+- Estado: corrigido. A reprodução no daemon retornou `Volume is not tracked: fixture-legacy-s3`. Depois da correção, os sete contratos RPC passaram.
+- Gatilho: depois do PR #449, um volume de provedor cadastrado no fluxo `volumes.add_cloud` pode aparecer com `volume_type: Network`. O menu filtra apenas `Cloud`, e o RPC de remoção filtra a mesma classificação no banco.
+- Causa: o cadastro e a restauração anteriores usavam `Network` tanto para armazenamento de provedores quanto para volumes de rede. O esquema da URI do provedor está presente no ponto de montagem.
+- Correção: usar a classificação `Cloud` ou uma identidade de provedor reconhecida na CLI e na seleção do registro SQLite. Classificar novos volumes e backends restaurados como `Cloud`.
+- Testes: fixtures de S3 legado, Google Drive, SMB e disco local. Conferir os volumes que podem ser selecionados e a preservação das linhas de volumes e credenciais recusadas.
+
 ## Assistente de nuvem oferece discos locais e interpreta a remoção como erro
 
 - Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.
@@ -614,6 +622,14 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Correção: uma thread lê o stdout enquanto o processo roda.
 - Limite: verificado com um script no lugar do `avahi-browse`, sem rede mDNS real.
 
+## Seleção da sessão de pareamento pode devolver um código anterior
+
+- Estado: corrigido. Os três testes instrumentados do handler passaram no Linux.
+- Local: `PairingProtocolHandler::get_current_pairing_code`, no protocolo de pareamento do core.
+- Impacto: com vários códigos de pareamento ativos, o QR pode refletir uma sessão diferente daquela criada mais recentemente. A seleção usava o último elemento da iteração de um `HashMap`.
+- Reprodução: insira IDs sequenciais no mesmo algoritmo. Em `coverage/goal/pairing/hash-map-before.log`, o terceiro ID retornou o segundo. A regressão do handler gera vários códigos sem endpoints de rede e verifica atribuição e cancelamento.
+- Correção: usar um mapa com ordem de inserção e remover mantendo essa ordem. O código atual passa a acompanhar a última sessão ainda presente no mapa.
+
 ## Core: listagem de mídia nunca indicava resultados além do limite
 
 - Estado: corrigido; `media_listing_reports_more_results_than_the_limit` em `core/tests/file_queries_test.rs`.
@@ -628,6 +644,14 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Local: `files.media_listing` com `include_descendants: true`.
 - Reprodução anterior: em `album_x`, o padrão `LIKE 'album_x/%'` também casava `albumYx/sub/`, e a listagem trazia a mídia da pasta vizinha. O teste falhava com `["inside", "outside"]`.
 - Correção: o padrão vem de `directory_subtree_patterns`, que escapa `%`, `_` e `\` e já era usado pela busca e pelo preflight; a consulta declara `ESCAPE '\'`.
+
+## Core: checkpoints de miniaturas perdiam opções e podiam impedir a retomada
+
+- Local: `ThumbnailJob` e `ThumbnailJobConfig` em `core/src/ops/media/thumbnail/job.rs`.
+- Reprodução: serialize um job pendente ou em processamento sem local com `rmp_serde::to_vec` e leia com `rmp_serde::from_slice`, como faz a fila de jobs. A leitura falhava com tamanho inválido ou tentava ler o estado de processamento como UUID. Uma seleção de variantes personalizada também era omitida no checkpoint.
+- Causa: o MessagePack gravava a estrutura como sequência. Campos opcionais omitidos deslocavam as posições e as variantes tinham `serde(skip)`.
+- Correção: gravar posição para local e estado e persistir as variantes. O leitor aceita o formato antigo, recupera progresso e local conforme os campos presentes e usa variantes padrão quando a gravação anterior tiver omitido a seleção. Novos checkpoints preservam a seleção vazia explícita.
+- Verificação: a fixture isolada com as estruturas Rust do checkpoint reproduziu a omissão da variante e os erros de leitura. Após a correção, os quatro testes de formato passaram, abrangendo seleção personalizada, vazia e quatro combinações históricas de local e progresso.
 
 ## A consulta de jobs perde o motivo de uma falha
 
@@ -751,3 +775,11 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: `Some(None)` e `None` produzem o mesmo JSON. A desserialização perdia a distinção entre limpar o intervalo e preservar o valor.
 - Correção: o protocolo de atualização interpreta zero como limpar o agendamento, conserva o intervalo com campo ausente ou `null` e mantém a validação dos intervalos positivos. A CLI transmite o zero explícito.
 - Verificação: 562 testes da CLI e os 6 testes do contrato RPC passaram instrumentados no Linux, sem ignorados nem avisos do compilador. O teste com SQLite descartável verifica a atualização positiva, a rejeição de 1 minuto, a preservação em `null` e a limpeza em zero. O teste de loopback verifica o zero enviado pela CLI.
+
+## Desktop: a listagem de volumes do GIO escondia falhas
+
+- Local: `list_mountable_volumes` em `apps/tauri/src-tauri/src/gvfs.rs` e `NetworkSection.tsx`.
+- Reprodução: no Linux, substitua o subprocesso por uma fixture que emita `gio: volume monitor unavailable` no stderr e termine com código 1. A chamada retornava `Ok([])` e a barra lateral ficava vazia.
+- Causa: a listagem avaliava o stdout sem conferir o código de saída.
+- Correção: retornar o diagnóstico do GIO em caso de falha e oferecer nova tentativa na barra lateral. Uma listagem vazia bem-sucedida continua válida.
+- Verificação: a regressão falhou com `unwrap_err()` sobre `Ok([])` antes da correção. Depois, 12 testes instrumentados de GVFS e um teste React passaram. Os testes também cobrem erro sem stderr, executável ausente e recuperação após nova tentativa. Usam subprocessos descartáveis e uma plataforma de teste.

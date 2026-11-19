@@ -61,6 +61,19 @@ mantém a preparação e os processos da fixture juntos. Os quatro testes passar
 e 30 replays com quatro threads concluíram 120 execuções sem falha. Os logs ficam em
 `coverage/goal/next/cli-race-{before,after}/` e `coverage/goal/next/with-gvfs/rust*.log`.
 
+## Legacy cloud volume classification
+
+The cloud wizard and removal RPC now use the same classification for provider mounts stored
+as `Network`. The fixtures include a legacy S3 mount without cloud fields in the CLI
+response and a network share that must stay outside the cloud menu. The SQLite contract
+also checks credentials and tracked rows after allowing or refusing each removal.
+The instrumented baseline rejected the legacy S3 row with `Volume is not tracked`. The first
+PTY regression waited for a cloud listing and timed out when the menu treated the library as
+empty. Its fixture now waits for the next menu before checking the rendered provider list.
+The corrected combined build passed 584 CLI tests and seven RPC contracts. See [BUGS.md](BUGS.md).
+Logs are in `coverage/goal/next/legacy-before-{core,cli}.log` and
+`coverage/goal/next/legacy-cloud-and-provider-tests.log` in the primary checkout.
+
 ## Dependencies
 
 COV-09, COV-03. Escopo, metas e ordem em [README.md](README.md).
@@ -107,3 +120,11 @@ The instrumented CLI unit binary, process test binary and CLI executables were e
 The focused report covered 5,781/7,311 CLI lines (79.1%) using the official filter. The
 production-only CLI diagnostic was 3,892/5,421 (71.8%). Both figures come from the isolated
 verification tree, pending comparison with a full run on the merged SHA.
+
+### Cloud provider prompt contracts
+
+Three new cases drive the CLI wizard through its existing pseudo-terminal fixture. They
+check S3-compatible provider selection, default regions and endpoints, Azure Blob fields
+and Dropbox OAuth fields. The fixture sends synthetic values to loopback and never contacts
+a provider. All eight cloud wizard tests passed on Linux in the instrumented verification
+tree. See `coverage/goal/next/cloud-pty-final.log` in the primary checkout.

@@ -1111,7 +1111,7 @@ impl DeviceRegistry {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
 	use super::*;
 	use crate::service::network::device::DeviceType;
 	use crate::service::network::protocol::PeerDeviceInfo;

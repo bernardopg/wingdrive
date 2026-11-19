@@ -350,7 +350,7 @@ impl VolumeManager {
 									is_tracked: true,
 									mount_point: std::path::PathBuf::from(mount_point_str),
 									mount_points: vec![std::path::PathBuf::from(mount_point_str)],
-									volume_type: crate::volume::types::VolumeType::Network,
+									volume_type: crate::volume::types::VolumeType::Cloud,
 									mount_type: crate::volume::types::MountType::Network,
 									disk_type: crate::volume::types::DiskType::Unknown,
 									file_system: crate::volume::types::FileSystem::Other(format!(
@@ -1603,16 +1603,22 @@ impl VolumeManager {
 			.map_err(|e| VolumeError::Database(e.to_string()))?;
 
 		// Find the volume first to get its UUID and device info
-		let mut query = entities::volume::Entity::find()
+		let query = entities::volume::Entity::find()
 			.filter(entities::volume::Column::Fingerprint.eq(fingerprint.0.clone()));
-		if cloud_only {
-			query = query.filter(entities::volume::Column::VolumeType.eq("Cloud"));
+		let volume = if cloud_only {
+			query
+				.all(&txn)
+				.await
+				.map_err(|e| VolumeError::Database(e.to_string()))?
+				.into_iter()
+				.find(|row| row.to_tracked_volume().to_offline_volume().is_cloud())
+		} else {
+			query
+				.one(&txn)
+				.await
+				.map_err(|e| VolumeError::Database(e.to_string()))?
 		}
-		let volume = query
-			.one(&txn)
-			.await
-			.map_err(|e| VolumeError::Database(e.to_string()))?
-			.ok_or_else(|| VolumeError::NotTracked(fingerprint.to_string()))?;
+		.ok_or_else(|| VolumeError::NotTracked(fingerprint.to_string()))?;
 
 		// Find the device's internal ID (required for tombstone)
 		let device = entities::device::Entity::find()

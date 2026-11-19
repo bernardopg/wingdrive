@@ -27,7 +27,8 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 
 ## Acceptance Criteria
 
-- [x] Desktop apps/tauri atinge pelo menos 60% na primeira etapa e 75% na conclusão.
+- [x] Desktop apps/tauri atingiu as metas intermediárias de 60% e 75%.
+- [ ] Desktop apps/tauri atinge 100% de linhas instrumentadas na medição completa.
 - [x] Undo nunca sobrescreve dados criados depois da operação original.
 - [x] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
 
@@ -258,3 +259,27 @@ use a temporary directory and a loopback port.
 Profiles of the same test binary show 209/438 production lines of `server.rs` covered with its
 existing tests and 368/438 with all seven. There were zero failures, ignored tests or compiler
 warnings. Logs and LCOV are under `coverage/goal/desktop-server/`. The full desktop report is pending.
+
+### GVFS device-list failure and retry
+
+The Linux command test reproduced a successful empty result for a GIO process that exited 1 with
+a diagnostic. The regression now verifies successful empty output, stderr on failure, exit status
+without stderr and failure to start the executable. All 12 instrumented GVFS tests passed.
+The sidebar test verifies the error indicator and a successful retry through React Query. It passed
+with five assertions and runs in CI and the frontend coverage collector.
+
+See [BUGS.md](BUGS.md#desktop-a-listagem-de-volumes-do-gio-escondia-falhas) for the cause and fix.
+The logs are in `coverage/goal/next/gvfs-list-*.log` and `gvfs-network-ui.log`. Fixtures used
+local subprocesses and a simulated device. System GIO and real phone connections were outside
+this verification.
+
+### FileManager1 on a private session bus
+
+The FileManager1 contract test starts its own D-Bus daemon and verifies the requests delivered
+by ShowFolders, ShowItems and ShowItemProperties for a temporary directory and a file with a
+space in its name. It shares the existing private bus fixture with the file chooser.
+The combined Linux desktop suite passed 319 tests, including both D-Bus integrations, with
+two existing ignores. Separate LLVM profiles of the same binary put instrumented coverage of
+`filemanager1.rs` at 102/163 before the new case and 134/163 with it. The denominator includes
+existing inline tests. The full component target stays open. Logs and profiles are in
+`coverage/goal/next/` in the primary checkout.

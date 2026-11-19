@@ -31,9 +31,34 @@ incremental comparison and the full published component measurement remains sepa
 Logs and LCOV are in `coverage/goal/core-sync-backfill-final.log` and
 `coverage/goal/core-sync-backfill/`.
 
+## Offline pairing sessions 2026-11-19
+
+An isolated handler fixture creates local session codes, rejects duplicate joins, removes expired
+sessions, and checks the selected code through cancellation. The old lookup took the last value
+from a hash map. The direct algorithm reproducer found an older code after the third insertion.
+See [BUGS.md](BUGS.md) and `coverage/goal/pairing/hash-map-before.log`.
+
+The three instrumented cases passed twice, including the signed exchange between two
+temporary registries, persistence on both peers and matching directional keys. The focused
+pairing profile exercised 230 lines of the handler, 165 lines on the initiator and 126 on
+the joiner. Logs and LCOV are under `coverage/goal/next/pairing/` in the primary checkout.
+
 ## Dependencies
 
 COV-04. Escopo, metas e ordem em [README.md](README.md).
+
+### Checkpoints de miniaturas
+
+Os testes do formato MessagePack cobrem retomada sem local, variantes personalizadas e seleção
+vazia explícita. Também carregam quatro registros antigos, com local e progresso ausentes,
+presentes em conjunto ou presentes isoladamente. O teste de compatibilidade verifica os
+parâmetros originais, o progresso e a seleção padrão aplicada quando variantes não foram gravadas.
+O diagnóstico e a correção constam no [registro de bugs](BUGS.md#core-checkpoints-de-miniaturas-perdiam-opções-e-podiam-impedir-a-retomada).
+
+O ensaio isolado compilou as estruturas de serialização contra Serde e MessagePack da workspace.
+Três casos falharam no código anterior e os quatro passaram com a correção. O ensaio verifica
+o formato persistido. A execução da fila de miniaturas e a geração de imagens não fazem parte
+dessa medição. Logs em `coverage/goal/next/thumbnail-checkpoint-*.log`.
 
 ## Implementation Steps
 
@@ -45,7 +70,7 @@ COV-04. Escopo, metas e ordem em [README.md](README.md).
 
 - [ ] Ao menos 70% nos módulos selecionados de job/sync com contagens por arquivo.
 - [ ] Sem operações duplicadas após retomar ou reenviar eventos.
-- [ ] Core atinge pelo menos 50% de linhas no relatório completo, sem reduzir denominador para cumprir a meta.
+- [ ] Core atinge pelo menos 65% de linhas no relatório completo, sem reduzir denominador para cumprir a meta.
 
 ## Job failure diagnostics 2026-11-19
 
@@ -61,3 +86,19 @@ message in the list, details and matching event. LLVM runs of `own_data_location
 `job_shutdown_test`, `copy_failure_test`, `location_remove_jobs_test` and `event_system_test`
 passed 25 tests with zero failures, ignored tests or compiler warnings.
 The successful run is in `coverage/goal/job-failure-after.log`.
+
+## Manual resume from persisted state
+
+A paused copy row with serialized job state is inserted into a disposable job database.
+The test resumes it by ID through JobManager, verifies the copied bytes and checks the
+persisted terminal status. It also checks missing-job errors and the refusal to resume
+a terminal job. All three instrumented shutdown and resume tests passed on Linux.
+See `coverage/goal/next/job-resume-tests.log` in the primary checkout.
+
+## File transfer stream contracts
+
+The instrumented file transfer suite passed 14 tests on Linux, including the new push and
+pull cases. The tests run the framed stream handler in memory with temporary files. Push
+checks the destination bytes, terminal session and acknowledgment. Pull checks metadata,
+chunk order, per-chunk hashes and the final checksum. The log is
+`coverage/goal/next/transfer-stream-tests.log` in the primary checkout.

@@ -27,6 +27,9 @@ mod scheduled_task;
 mod notifications;
 mod server;
 mod terminal;
+#[cfg(all(test, target_os = "linux"))]
+#[path = "main/tests/support.rs"]
+mod test_support;
 mod updates;
 mod windows;
 
