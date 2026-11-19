@@ -25,6 +25,28 @@ diagnosis and correction are recorded in [BUGS.md](BUGS.md). The baseline output
 E0463 loading `tempfile`. This isolated linker failure is in
 `coverage/goal/cli-systemd/rustc-harness.log`; use the Cargo integration binary for verification.
 
+## Interactive cloud setup regression 2026-11-19
+
+Scripted pseudo-terminal sessions exercise the actual CLI wizard against localhost RPC. They
+cover mixed volume listing, removal of the selected cloud volume, decoding a structured removal
+response and returning to the menu after adding GCS from a disposable file. An isolated SQLite
+RPC test verifies that local rows and credentials are preserved and cloud rows and credentials
+are removed. No real provider was contacted. The diagnosis and correction are in [BUGS.md](BUGS.md).
+
+The initial pipe-based fixture hit four request timeouts because the prompts require a terminal.
+The pseudo-terminal reuses `portable-pty` already present in the workspace. An intermediate
+test build raised E0308 because the registered handler takes `&Arc<Core>`. Wrapping the fixture
+core in `Arc` resolved it. The compile step's waiting-for-other-jobs warning accompanied that
+same failure. The original logs are under `coverage/goal/cloud-setup-pipe.log`,
+`cloud-setup-compile.log`, `cloud-setup-before.log`, `cloud-removal-core-before.log` and
+`cloud-removal-core-single-thread-panic.log` in the same directory.
+
+The final RPC suite passed six tests and the adjacent Google, Google Picker and Microsoft
+suites passed four. The CLI passed 566 tests including the pseudo-terminal cases. These runs
+used LLVM instrumentation on Linux and had zero failures, ignored tests or compiler warnings.
+The logs are in `coverage/goal/cloud-removal-final-rpc.log`, `cloud-neighbors.log` and
+`cloud-setup-after.log`. The pseudo-terminal suite currently runs on Unix.
+
 ## Dependencies
 
 COV-09, COV-03. Escopo, metas e ordem em [README.md](README.md).

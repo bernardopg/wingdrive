@@ -14431,6 +14431,7 @@ dependencies = [
  "dirs",
  "indicatif",
  "inquire",
+ "portable-pty",
  "qr2term",
  "ratatui",
  "reqwest 0.12.28",

@@ -6,7 +6,6 @@
 use super::output::VolumeRemoveCloudOutput;
 use crate::{
 	context::CoreContext,
-	crypto::cloud_credentials::CloudCredentialManager,
 	infra::action::{error::ActionError, LibraryAction},
 	volume::VolumeFingerprint,
 };
@@ -42,27 +41,11 @@ impl LibraryAction for VolumeRemoveCloudAction {
 		library: std::sync::Arc<crate::library::Library>,
 		context: std::sync::Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
-		let library_id = library.id();
-
 		context
 			.volume_manager
-			.untrack_volume(&library, &self.input.fingerprint)
+			.untrack_cloud_volume(&library, &self.input.fingerprint)
 			.await
 			.map_err(|e| ActionError::InvalidInput(format!("Volume untracking failed: {}", e)))?;
-
-		let credential_manager = CloudCredentialManager::new(
-			context.key_manager.clone(),
-			library.db().clone(),
-			library_id,
-		);
-		if let Err(e) = credential_manager.delete_credential(library_id, &self.input.fingerprint.0)
-		{
-			tracing::warn!(
-				"Failed to delete credentials for volume {}: {}",
-				self.input.fingerprint.0,
-				e
-			);
-		}
 
 		Ok(VolumeRemoveCloudOutput::new(self.input.fingerprint))
 	}
