@@ -38,8 +38,6 @@ pub struct DuplicateDetectionJob {
 
 	// Internal state for resumption
 	#[serde(skip)]
-	processed_files: HashSet<PathBuf>,
-	#[serde(skip)]
 	size_groups: HashMap<u64, Vec<FileInfo>>,
 	#[serde(skip, default = "Instant::now")]
 	started_at: Instant,
@@ -147,7 +145,6 @@ impl DuplicateDetectionJob {
 			min_file_size: 1024, // 1KB minimum
 			max_file_size: None,
 			file_extensions: None,
-			processed_files: HashSet::new(),
 			size_groups: HashMap::new(),
 			started_at: Instant::now(),
 		}
@@ -174,13 +171,20 @@ impl DuplicateDetectionJob {
 	/// Collect all files to scan
 	async fn collect_files(&self, ctx: &JobContext<'_>) -> JobResult<Vec<FileInfo>> {
 		let mut files = Vec::new();
+		let mut visited = HashSet::new();
 
 		for search_path in &self.search_paths.paths {
 			ctx.check_interrupt().await?;
 
 			if let Some(local_path) = search_path.as_local_path() {
-				self.collect_files_recursive(local_path, search_path, &mut files, ctx)
-					.await?;
+				self.collect_files_recursive(
+					local_path,
+					search_path,
+					&mut files,
+					&mut visited,
+					ctx,
+				)
+				.await?;
 			}
 		}
 
@@ -193,12 +197,30 @@ impl DuplicateDetectionJob {
 		path: &std::path::Path,
 		wing_path: &WingPath,
 		files: &mut Vec<FileInfo>,
+		visited: &mut HashSet<PathBuf>,
 		ctx: &JobContext<'_>,
 	) -> JobResult<()> {
-		let mut stack = vec![(path.to_path_buf(), wing_path.clone())];
+		let root = match fs::symlink_metadata(path).await {
+			Ok(metadata) if metadata.is_symlink() => return Ok(()),
+			Ok(_) => fs::canonicalize(path).await,
+			Err(error) => Err(error),
+		};
+		let root = match root {
+			Ok(root) => root,
+			Err(error) => {
+				ctx.add_non_critical_error(format!("{}: {error}", path.display()));
+				return Ok(());
+			}
+		};
+		// Canonicalize each root once. Descendants are already under that root and
+		// symbolic links are never traversed.
+		let mut stack = vec![(root, wing_path.clone())];
 
 		while let Some((current_path, current_wing_path)) = stack.pop() {
 			ctx.check_interrupt().await?;
+			if !visited.insert(current_path.clone()) {
+				continue;
+			}
 
 			// Symlinks are skipped: following them can loop, and a link listed
 			// beside its own target would offer the original for deletion.

@@ -783,3 +783,11 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: a listagem avaliava o stdout sem conferir o código de saída.
 - Correção: retornar o diagnóstico do GIO em caso de falha e oferecer nova tentativa na barra lateral. Uma listagem vazia bem-sucedida continua válida.
 - Verificação: a regressão falhou com `unwrap_err()` sobre `Ok([])` antes da correção. Depois, 12 testes instrumentados de GVFS e um teste React passaram. Os testes também cobrem erro sem stderr, executável ausente e recuperação após nova tentativa. Usam subprocessos descartáveis e uma plataforma de teste.
+
+## Core: raízes de busca sobrepostas inflavam o resultado de duplicatas
+
+- Local: `DuplicateDetectionJob::collect_files` em `core/src/ops/files/duplicate_detection/job.rs`.
+- Reprodução: buscar duas cópias de 2.048 bytes selecionando a pasta pai, uma subpasta, um arquivo e um caminho equivalente com `..`. Com um terceiro arquivo do mesmo tamanho e conteúdo diferente, o modo hash retornava dois grupos, seis duplicatas e 12.288 bytes.
+- Causa: cada raiz percorria novamente os caminhos que outra raiz já havia visitado.
+- Correção: resolver cada raiz uma vez e compartilhar os caminhos visitados. Links simbólicos continuam fora do conjunto, e o caminho apresentado mantém a primeira seleção.
+- Verificação: a regressão instrumentada confirmou um grupo e 2.048 bytes recuperáveis nos modos hash, verificação completa e nome/tamanho. O modo só por tamanho retorna os três arquivos distintos. O primeiro build do teste exigiu explicitar o tipo coletado após E0283.

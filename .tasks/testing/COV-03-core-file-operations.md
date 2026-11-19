@@ -72,3 +72,10 @@ Moved to M3 with the rest of the coverage epic, since its open criteria are modu
 not M2 work.
 
 `core/src/ops/files` is at 63.9% overall; the 80% criterion applies to the changed modules listed in the task.
+
+### Duplicate detection with overlapping roots
+
+The Linux integration test dispatches the duplicate job in four modes. It verifies exact
+paths, duplicate counts and potential savings for overlapping folders and a path with
+`..`. The instrumented baseline overcounted real files and the corrected run passed.
+See [BUGS.md](BUGS.md) and `coverage/goal/after-watchers/duplicate-*.log`.
