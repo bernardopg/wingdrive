@@ -235,8 +235,8 @@ pub struct CloudSyncUpdateInput {
 	pub name: Option<String>,
 	pub mode: Option<SyncMode>,
 	pub propagate_deletes: Option<bool>,
-	/// `Some(None)` clears the interval.
-	pub interval_minutes: Option<Option<u32>>,
+	/// Zero clears the schedule. Null or omission keeps the current interval.
+	pub interval_minutes: Option<u32>,
 	pub enabled: Option<bool>,
 }
 
@@ -258,9 +258,11 @@ impl LibraryAction for CloudSyncUpdateAction {
 		library: Arc<Library>,
 		_context: Arc<CoreContext>,
 	) -> Result<Self::Output, ActionError> {
-		if let Some(interval) = self.input.interval_minutes {
-			validate_interval(interval)?;
-		}
+		let interval = self
+			.input
+			.interval_minutes
+			.map(|minutes| (minutes != 0).then_some(minutes));
+		validate_interval(interval.flatten())?;
 		let pair = find_pair(&library, self.input.id).await?;
 		let mut active: cloud_sync_pair::ActiveModel = pair.into();
 		if let Some(name) = self.input.name.filter(|n| !n.trim().is_empty()) {
@@ -272,7 +274,7 @@ impl LibraryAction for CloudSyncUpdateAction {
 		if let Some(propagate) = self.input.propagate_deletes {
 			active.propagate_deletes = Set(propagate);
 		}
-		if let Some(interval) = self.input.interval_minutes {
+		if let Some(interval) = interval {
 			active.interval_minutes = Set(interval.map(|m| m as i32));
 		}
 		if let Some(enabled) = self.input.enabled {
