@@ -685,6 +685,9 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Local: `DatabaseStorage::link_to_content_identity` em `core/src/ops/indexing/database_storage.rs`.
 - Reprodução: a suíte persistente do watcher registrou SQLite 2067 em `mime_types.mime_type` enquanto o job de identificação e o watcher processavam arquivos. O log está em `coverage/goal/after-sidecars/persistent-watcher-fixed.log`.
 - Causa: a consulta e a criação do MIME são instruções separadas. Dois indexadores podem observar a linha ausente e tentar inseri-la. A segunda operação falha antes de vincular a identidade.
+- Correção: inserir com tratamento de conflito na coluna MIME e ler a linha compartilhada. Só quem cria a linha a marca como nova.
+- Verificação: dois inserts concorrentes em SQLite retornaram a mesma linha, com um único criador. A suíte persistente instrumentada passou sem colisão de MIME.
+
 
 
 ## Core: verificação de índice acusava a própria pasta e seus ancestrais
