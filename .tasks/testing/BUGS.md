@@ -598,7 +598,7 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 
 ## Seleção da sessão de pareamento pode devolver um código anterior
 
-- Estado: reproduzido no algoritmo de seleção no Linux. O teste isolado do handler está em validação.
+- Estado: corrigido. Os três testes instrumentados do handler passaram no Linux.
 - Local: `PairingProtocolHandler::get_current_pairing_code`, no protocolo de pareamento do core.
 - Impacto: com vários códigos de pareamento ativos, o QR pode refletir uma sessão diferente daquela criada mais recentemente. A seleção usava o último elemento da iteração de um `HashMap`.
 - Reprodução: insira IDs sequenciais no mesmo algoritmo. Em `coverage/goal/pairing/hash-map-before.log`, o terceiro ID retornou o segundo. A regressão do handler gera vários códigos sem endpoints de rede e verifica atribuição e cancelamento.

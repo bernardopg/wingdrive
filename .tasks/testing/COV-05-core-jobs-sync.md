@@ -22,6 +22,11 @@ sessions, and checks the selected code through cancellation. The old lookup took
 from a hash map. The direct algorithm reproducer found an older code after the third insertion.
 See [BUGS.md](BUGS.md) and `coverage/goal/pairing/hash-map-before.log`.
 
+The three instrumented cases passed twice, including the signed exchange between two
+temporary registries, persistence on both peers and matching directional keys. The focused
+pairing profile exercised 230 lines of the handler, 165 lines on the initiator and 126 on
+the joiner. Logs and LCOV are under `coverage/goal/next/pairing/` in the primary checkout.
+
 ## Dependencies
 
 COV-04. Escopo, metas e ordem em [README.md](README.md).
