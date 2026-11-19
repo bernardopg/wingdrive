@@ -290,6 +290,12 @@ two existing ignores. Separate LLVM profiles of the same binary put instrumented
 existing inline tests. The full component target stays open. Logs and profiles are in
 `coverage/goal/next/` in the primary checkout.
 
+### Linux terminal discovery
+
+The file opener now has a subprocess test for Linux terminal discovery with a private PATH.
+It verifies the priority of `xdg-terminal-exec`, a configured `TERMINAL`, known fallback
+emulators, and the absence of a terminal. All five terminal tests passed under LLVM
+instrumentation. The test checks the selected executable and argument boundaries.
 ### Linux resident launch forwarding
 
 The private D-Bus test starts a child process and exercises the path that forwards its arguments

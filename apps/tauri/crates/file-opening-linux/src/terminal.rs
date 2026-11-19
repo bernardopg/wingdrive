@@ -100,6 +100,72 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn default_terminal_resolution_uses_the_isolated_path_and_environment() {
+		use std::os::unix::fs::PermissionsExt;
+
+		const EXPECTED: &str = "WING_TEST_EXPECTED_TERMINAL";
+		if let Ok(expected) = std::env::var(EXPECTED) {
+			let terminal = resolve(None);
+			match expected.as_str() {
+				"xdg" => assert_eq!(
+					terminal.unwrap(),
+					Terminal {
+						program: vec!["xdg-terminal-exec".into()],
+						exec_flag: None
+					}
+				),
+				"env" => assert_eq!(
+					terminal.unwrap(),
+					Terminal {
+						program: vec!["fixture-terminal".into(), "--fixture".into()],
+						exec_flag: Some(vec!["-e".into()]),
+					}
+				),
+				"known" => assert_eq!(
+					terminal.unwrap(),
+					Terminal {
+						program: vec!["wezterm".into()],
+						exec_flag: Some(vec!["start".into(), "--".into()]),
+					}
+				),
+				"missing" => assert!(terminal.is_none()),
+				_ => panic!("unknown fixture: {expected}"),
+			}
+			return;
+		}
+
+		for (expected, executables) in [
+			(
+				"xdg",
+				&["xdg-terminal-exec", "fixture-terminal", "wezterm"][..],
+			),
+			("env", &["fixture-terminal", "wezterm"][..]),
+			("known", &["wezterm"][..]),
+			("missing", &[][..]),
+		] {
+			let root = tempfile::tempdir().unwrap();
+			for name in executables {
+				let path = root.path().join(name);
+				std::fs::write(&path, b"#!/bin/sh\nexit 0\n").unwrap();
+				std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o700)).unwrap();
+			}
+			let result = Command::new(std::env::current_exe().unwrap())
+				.args(["--exact", "terminal::tests::default_terminal_resolution_uses_the_isolated_path_and_environment"])
+				.env(EXPECTED, expected)
+				.env("PATH", root.path())
+				.env("TERMINAL", "fixture-terminal --fixture")
+				.output()
+				.unwrap();
+			assert!(
+				result.status.success(),
+				"{expected}: {}{}",
+				String::from_utf8_lossy(&result.stdout),
+				String::from_utf8_lossy(&result.stderr)
+			);
+		}
+	}
+
+	#[test]
 	fn opening_a_terminal_without_a_command_omits_execution_flags() {
 		let terminal = resolve(Some("  wezterm  --config-file /tmp/config  ")).unwrap();
 		let root = tempfile::tempdir().unwrap();
