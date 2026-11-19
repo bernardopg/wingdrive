@@ -1995,6 +1995,8 @@ impl NetworkingError {
 
 #[cfg(test)]
 mod tests {
+	mod stream;
+
 	use super::*;
 	use crate::service::network::protocol::ProtocolHandler;
 	use crate::service::network::utils::logging::SilentLogger;
