@@ -162,6 +162,7 @@ jobs:
           bun test packages/interface/src/routes/explorer/views/grouping.test.ts
           bun test packages/interface/src/routes/explorer/hooks/useContextActions.test.ts
           bun test packages/interface/src/components/WingsSidebar/FolderTree/folderTreePaths.test.ts
+          bun test packages/interface/src/components/WingsSidebar/NetworkSection.test.tsx
           bun test packages/interface/src/components/WingsSidebar/reorderItems.test.ts
           bun test packages/interface/src/routes/explorer/views/ListView/listExpansion.test.ts
           bun test packages/interface/src/hooks/adminRetry.test.ts

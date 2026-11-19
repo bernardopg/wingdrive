@@ -198,3 +198,27 @@ async fn mount_drains_diagnostics_before_the_child_exits() {
 	.unwrap_err();
 	assert_eq!(error, "Permission denied");
 }
+
+#[tokio::test]
+async fn mountable_listing_distinguishes_a_failed_command_from_an_empty_list() {
+	assert!(list_mountable_command(mount_script("exit 0"))
+		.await
+		.unwrap()
+		.is_empty());
+	let result = list_mountable_command(mount_script(
+		"printf 'gio: volume monitor unavailable\\n' >&2; exit 1",
+	))
+	.await;
+	assert_eq!(result.unwrap_err(), "volume monitor unavailable");
+	let error = list_mountable_command(mount_script("exit 2"))
+		.await
+		.unwrap_err();
+	assert!(
+		error.contains("gio mount -li failed") && error.contains("2"),
+		"{error}"
+	);
+	let error = list_mountable_command(Command::new("/nonexistent/gio"))
+		.await
+		.unwrap_err();
+	assert!(error.starts_with("gio is not available:"), "{error}");
+}
