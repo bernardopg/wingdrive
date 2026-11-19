@@ -30,6 +30,12 @@ The Gradle `preBuild` step runs `modules/wing-mobile-core/android/build-scripts/
 
 ## CI and releases
 
+If `Install Android NDK` fails with `Error on ZipFile unknown archive`, the SDK manager could not
+read the downloaded NDK archive. Gradle has yet to run at that point. Rerun the failed job on a
+fresh runner. If the error repeats, check the SDK download and the pinned NDK version before
+changing project code. This occurred while installing NDK `27.1.12297006` in
+[PR #434](https://github.com/bernardopg/wingdrive/actions/runs/44434528067/job/135260078055).
+
 `.github/workflows/mobile.yml` runs on pull requests and on `main` when the app, `ts-client`, the core or the lockfiles change. It runs three jobs in parallel. The first runs ESLint with zero warnings, checks that the English and Portuguese catalogs have the same keys, and runs `expo install --check`. The second runs clippy on `wing-mobile-core` for `aarch64-linux-android` with `-D warnings`. The third assembles the release APK with `WING_SKIP_RUST=1`, which checks the JavaScript bundle, Kotlin and the native modules without compiling the core twice.
 
 `release.yml` calls the same workflow with the tag. It builds the core in the `release` profile, then a signed APK and AAB whose `versionCode` comes from `scripts/release/android_version.py` (`v2.0.0-alpha.18` becomes `2000018`). The APK, the AAB and `SHA256SUMS-android` go to the GitHub Release next to the desktop assets. Signing needs four repository secrets: `WINGDRIVE_ANDROID_KEYSTORE_BASE64` (the upload keystore, `base64 -w0`), `WINGDRIVE_ANDROID_KEYSTORE_PASSWORD`, `WINGDRIVE_ANDROID_KEY_ALIAS` and `WINGDRIVE_ANDROID_KEY_PASSWORD`. Without them the release still builds the Android app but publishes nothing for it.
