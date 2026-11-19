@@ -95,6 +95,8 @@ if [ "$(uname -s)" = Linux ]; then
 		index_verify_test
 		wing_layout_test
 		file_sync_test
+		file_sync_simple_test
+		sync_backfill_race_test
 		folder_rename_test
 		copy_progress_test
 		config_persistence_test
