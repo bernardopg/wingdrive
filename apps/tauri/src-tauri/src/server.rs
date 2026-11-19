@@ -669,6 +669,8 @@ pub async fn start_server(
 
 #[cfg(test)]
 mod tests {
+	mod preview;
+
 	use super::*;
 	use tokio::io::AsyncWriteExt;
 
@@ -705,12 +707,16 @@ mod tests {
 	}
 
 	async fn get(url: &str, target: &str) -> Vec<u8> {
+		get_with_headers(url, target, "").await
+	}
+
+	async fn get_with_headers(url: &str, target: &str, headers: &str) -> Vec<u8> {
 		let mut connection = tokio::net::TcpStream::connect(url.trim_start_matches("http://"))
 			.await
 			.unwrap();
 		connection
 			.write_all(
-				format!("GET {target} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
+				format!("GET {target} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n{headers}\r\n")
 					.as_bytes(),
 			)
 			.await
