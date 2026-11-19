@@ -41,6 +41,13 @@ profile to the existing partial baseline of the same `clipboard.rs` source cover
 instead of 45/95. The focused run and LCOV are under `coverage/goal/desktop-clipboard/`.
 The full desktop measurement is tracked separately.
 
+## Desktop updater checks 2026-11-19
+
+Four updater tests passed with LLVM on Linux. The new tests serve a synthetic release
+manifest, an empty response and malformed JSON on loopback. They exercise the plugin
+through the desktop lookup function without downloading an installer. The log is
+`coverage/goal/next/updater.log` in the primary checkout.
+
 ## Evidence
 
 - 2026-11-06: suítes novas em `apps/tauri/src-tauri/src/{main,keybinds,file_opening,windows}/tests/`
