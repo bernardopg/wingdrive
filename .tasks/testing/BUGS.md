@@ -1,5 +1,13 @@
 # Bugs encontrados na ampliação de cobertura
 
+## O filtro de nuvem omite volumes de provedores gravados como Network
+
+- Estado: incompatibilidade identificada por inspeção dos caminhos de cadastro, restauração, listagem e remoção. As regressões instrumentadas estão pendentes.
+- Gatilho: depois do PR #449, um volume de provedor cadastrado no fluxo `volumes.add_cloud` pode aparecer com `volume_type: Network`. O menu filtra apenas `Cloud`, e o RPC de remoção filtra a mesma classificação no banco.
+- Causa: o cadastro e a restauração anteriores usavam `Network` tanto para armazenamento de provedores quanto para volumes de rede. O esquema da URI do provedor está presente no ponto de montagem.
+- Correção: usar a classificação `Cloud` ou uma identidade de provedor reconhecida na CLI e na seleção do registro SQLite. Classificar novos volumes e backends restaurados como `Cloud`.
+- Testes: fixtures de S3 legado, Google Drive, SMB e disco local. Conferir os volumes que podem ser selecionados e a preservação das linhas de volumes e credenciais recusadas.
+
 ## Assistente de nuvem oferece discos locais e interpreta a remoção como erro
 
 - Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.

@@ -37,6 +37,14 @@ used LLVM instrumentation on Linux and had zero failures, ignored tests or compi
 The logs are in `coverage/goal/cloud-removal-final-rpc.log`, `cloud-neighbors.log` and
 `cloud-setup-after.log`. The pseudo-terminal suite currently runs on Unix.
 
+## Legacy cloud volume classification
+
+The cloud wizard and removal RPC now use the same classification for provider mounts stored
+as `Network`. The fixtures include a legacy S3 mount without cloud fields in the CLI
+response and a network share that must stay outside the cloud menu. The SQLite contract
+also checks credentials and tracked rows after allowing or refusing each removal.
+See [BUGS.md](BUGS.md). Instrumented verification remains pending.
+
 ## Dependencies
 
 COV-09, COV-03. Escopo, metas e ordem em [README.md](README.md).

@@ -364,7 +364,7 @@ impl LibraryAction for VolumeAddCloudAction {
 			is_tracked: false,
 			mount_point: mount_point.clone(),
 			mount_points: vec![mount_point],
-			volume_type: crate::volume::types::VolumeType::Network,
+			volume_type: crate::volume::types::VolumeType::Cloud,
 			mount_type: crate::volume::types::MountType::Network,
 			disk_type: crate::volume::types::DiskType::Unknown,
 			file_system: crate::volume::types::FileSystem::Other(format!(
