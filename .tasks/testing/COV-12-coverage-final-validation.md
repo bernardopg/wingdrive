@@ -119,3 +119,27 @@ the systemd fixture race and its 120 passing replay executions.
 
 Local evidence is in `coverage/goal/next/with-gvfs/`, including `rust.log`,
 `rust-resumed.log`, `frontend.log`, `rust.lcov` and `site/summary.json`.
+
+## Full Linux measurement with sidecar, move and resident launch tests
+
+Both collectors exited zero on `afae3683fb9f41401876d11b6073b28c164b0dd1`, a local
+verification tree with the Linux sidecar and move suites and the desktop resident launch
+test. The Rust collector passed 2,208 cases and the frontend collector passed 371.
+
+| Component | Covered / instrumented | Coverage | Target | Additional hits at this denominator |
+|---|---:|---:|---:|---:|
+| Desktop | 8,051 / 8,910 | 90.4% | 100% | 859 |
+| Core | 50,481 / 91,620 | 55.1% | 65% | 9,072 |
+| CLI | 5,914 / 7,312 | 80.9% | 75% | 0 |
+
+The standalone CLI production diagnostic measured 4,025 / 5,422 (74.2%). Coverage measures
+the Linux shell and the configured test scope. It does not measure execution on other platforms.
+
+The machine recorded no compiler warnings and no failed tests. The collector ran the GTK
+clipboard case on private Xvfb after its initial ignore. The three excluded cases are S3,
+large reconciliation timing and polkit. The only frontend errors logged were
+`permission denied` and `errors.renameIncomplete` from the intentional failed-rename test.
+Board validation passed with zero errors. Reopening COV-07 clears its unchecked-criterion
+warning and leaves 30 warnings, including the existing S05 WIP overage.
+
+The full logs, LCOV and JSON summary are under `coverage/goal/after-sidecars/`.
