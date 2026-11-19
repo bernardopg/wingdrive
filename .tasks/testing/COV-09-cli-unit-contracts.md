@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, cli]
-last_updated: 2026-11-15
+last_updated: 2026-11-18
 ---
 
 ## Description
@@ -108,3 +108,14 @@ Moved to M3 with the rest of the coverage epic, since its open criteria are modu
 not M2 work.
 
 The CLI is at 65.9%.
+
+## EOF em prompts interativos
+
+A leitura de EOF nos prompts de escolha e de texto obrigatório repetia até o processo ser interrompido. Veja [o diagnóstico em BUGS.md](BUGS.md#prompts-do-cli-repetem-indefinidamente-com-stdin-fechado). Casos de teste devem verificar encerramento, entrada inválida seguida de escolha válida, opção vazia e erro de I/O.
+
+A correção retorna erro em EOF, preserva novas tentativas em entrada inválida e rejeita
+listas sem opções. Cinco testes dos prompts passaram no harness isolado. A execução de
+processo repetiu os três casos originais e terminou com código 1 em todos. As unidades
+ficam na suíte do binário `wing` e a medição completa do componente permanece pendente.
+O primeiro build do harness tentou reutilizar dependências de outro toolchain e falhou
+com E0514. A repetição usou `anyhow` do rustc atual e as funções sem suporte a TTY.

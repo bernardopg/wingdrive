@@ -685,3 +685,13 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Impacto: o serviço iniciava o daemon na pasta errada ou falhava na leitura dos argumentos, e o app esperava 3 s antes de mostrar "Daemon failed to start after installing service". Identificado pela especificação de linha de comando do `systemd.service`; não foi reproduzido contra um gerenciador systemd real, porque os testes não alcançam o systemd do usuário.
 - Correção: cada argumento de `ExecStart` vai entre aspas duplas, com `\` e `"` escapados, `%` como `%%`, `$` como `$$` e quebra de linha como `\n`.
 - Limite: o serviço continua usando a pasta da instância como `--data-dir` e não passa `--instance`, então instalar o serviço a partir de uma instância nomeada inicia o daemon padrão na porta 6969. Não foi alterado aqui.
+
+## Prompts do CLI repetem indefinidamente com stdin fechado
+
+- Estado: reproduzido no SHA `423a8686d`.
+- Local: `apps/cli/src/util/confirm.rs`, nas funções `prompt_for_choice`, `prompt_for_list` e `prompt_for_text`.
+- Reprodução: execute cada prompt com stdin redirecionado de `/dev/null`. Um harness isolado das funções originais atingiu o limite de 200 ms nos três casos e saiu com código 124 do `timeout`.
+- Causa: `read_line` retorna zero bytes ao final da entrada. Os loops tratavam EOF como resposta inválida e repetiam a leitura e a impressão.
+- Impacto: uma cópia com conflito usa o primeiro prompt e pode ficar presa quando stdin fecha durante o uso em scripts.
+- Correção: encerrar ao receber EOF, rejeitar listas vazias e manter o índice escolhido mesmo quando os rótulos se repetem. Respostas inválidas com entrada aberta continuam permitindo nova tentativa.
+- Verificação: os três processos passaram a sair com código 1 e `Aborted by user: end of input`. Cinco testes das funções passaram em um harness Rust isolado, incluindo erro de leitura e resposta em branco. O harness usa o contrato mínimo de `ConfirmationRequest` e cobre os prompts de stdin/stdout, sem terminal interativo.
