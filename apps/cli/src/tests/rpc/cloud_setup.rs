@@ -236,3 +236,136 @@ async fn cloud_setup_returns_to_menu_after_adding_storage() {
 	assert_eq!(requests[1]["config"]["root"], "backup");
 	assert_eq!(requests[1]["config"]["credential"], document);
 }
+
+#[tokio::test]
+async fn cloud_setup_preserves_s3_provider_regions_endpoints_and_credentials() {
+	for (index, service, custom_region, endpoint_prompt) in [
+		(0, "s3", false, None),
+		(1, "s3", true, Some("Cloudflare R2 account endpoint")),
+		(2, "b2", false, None),
+		(3, "wasabi", false, None),
+		(4, "spaces", false, None),
+		(5, "s3", true, Some("MinIO server endpoint")),
+		(6, "cloud", true, Some("Custom endpoint URL")),
+	] {
+		let choice = "\x1b[B".repeat(index) + "\r";
+		let mut input = vec![
+			(MENU, "\r"),
+			("Select cloud storage category", "\r"),
+			("Select S3-compatible storage provider", choice.as_str()),
+			("Volume name", "Fixture S3\r"),
+			("Bucket name", "fixture-bucket\r"),
+			(
+				"Region",
+				if custom_region {
+					"\r"
+				} else {
+					"fixture-region\r"
+				},
+			),
+		];
+		if let Some(prompt) = endpoint_prompt {
+			input.push((prompt, "https://example.invalid\r"));
+		}
+		input.extend([
+			("Access Key ID", "fixture-id\r"),
+			("Secret Access Key", "fixture-key\r"),
+			("Add this cloud volume?", "y\n"),
+			(MENU, EXIT),
+		]);
+		let (succeeded, output, requests) = run_cloud(
+			&input,
+			vec![
+				listing(),
+				success(
+					"action:volumes.add_cloud.input",
+					Some(library()),
+					json!({"fingerprint":CLOUD_FINGERPRINT,"volume_name":"Fixture S3","service":service}),
+				),
+			],
+		)
+		.await;
+		assert!(succeeded, "{output}");
+		assert_eq!(requests[1]["service"], service);
+		let region = match index {
+			1 => "auto",
+			5 | 6 => "us-east-1",
+			_ => "fixture-region",
+		};
+		assert_eq!(requests[1]["config"]["region"], region);
+		assert_eq!(requests[1]["config"]["bucket"], "fixture-bucket");
+		assert_eq!(requests[1]["config"]["access_key_id"], "fixture-id");
+		assert_eq!(requests[1]["config"]["secret_access_key"], "fixture-key");
+		assert_eq!(
+			requests[1]["config"]["endpoint"],
+			json!(endpoint_prompt.map(|_| "https://example.invalid"))
+		);
+	}
+}
+
+#[tokio::test]
+async fn cloud_setup_preserves_azure_container_and_optional_endpoint() {
+	let (succeeded, output, requests) = run_cloud(
+		&[
+			(MENU, "\r"),
+			(
+				"Select cloud storage category",
+				"\x1b[B\x1b[B\x1b[B\x1b[B\r",
+			),
+			("Volume name", "Fixture Azure\r"),
+			("Container name", "fixture-container\r"),
+			("Storage account name", "fixture-account\r"),
+			("Custom endpoint", "\r"),
+			("Storage account key", "fixture-key\r"),
+			("Add this cloud volume?", "y\n"),
+			(MENU, EXIT),
+		],
+		vec![
+			listing(),
+			success(
+				"action:volumes.add_cloud.input",
+				Some(library()),
+				json!({"fingerprint":CLOUD_FINGERPRINT,"volume_name":"Fixture Azure","service":"azblob"}),
+			),
+		],
+	)
+	.await;
+	assert!(succeeded, "{output}");
+	assert_eq!(requests[1]["service"], "azblob");
+	assert_eq!(requests[1]["config"]["container"], "fixture-container");
+	assert_eq!(requests[1]["config"]["account_name"], "fixture-account");
+	assert_eq!(requests[1]["config"]["account_key"], "fixture-key");
+	assert!(requests[1]["config"]["endpoint"].is_null());
+}
+
+#[tokio::test]
+async fn cloud_setup_preserves_dropbox_optional_folder_and_oauth_fields() {
+	let (succeeded, output, requests) = run_cloud(
+		&[
+			(MENU, "\r"),
+			("Select cloud storage category", "\x1b[B\x1b[B\x1b[B\r"),
+			("Volume name", "Fixture Dropbox\r"),
+			("Root folder path", "fixture-root\r"),
+			("App Key (Client ID)", "fixture-id\r"),
+			("App Secret (Client Secret)", "fixture-secret\r"),
+			("Refresh Token", "fixture-refresh\r"),
+			("Add this cloud volume?", "y\n"),
+			(MENU, EXIT),
+		],
+		vec![
+			listing(),
+			success(
+				"action:volumes.add_cloud.input",
+				Some(library()),
+				json!({"fingerprint":CLOUD_FINGERPRINT,"volume_name":"Fixture Dropbox","service":"dropbox"}),
+			),
+		],
+	)
+	.await;
+	assert!(succeeded, "{output}");
+	assert_eq!(requests[1]["service"], "dropbox");
+	assert_eq!(requests[1]["config"]["root"], "fixture-root");
+	assert_eq!(requests[1]["config"]["client_id"], "fixture-id");
+	assert_eq!(requests[1]["config"]["client_secret"], "fixture-secret");
+	assert_eq!(requests[1]["config"]["refresh_token"], "fixture-refresh");
+}

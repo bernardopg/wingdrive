@@ -112,3 +112,11 @@ The instrumented CLI unit binary, process test binary and CLI executables were e
 The focused report covered 5,781/7,311 CLI lines (79.1%) using the official filter. The
 production-only CLI diagnostic was 3,892/5,421 (71.8%). Both figures come from the isolated
 verification tree, pending comparison with a full run on the merged SHA.
+
+### Cloud provider prompt contracts
+
+Three new cases drive the CLI wizard through its existing pseudo-terminal fixture. They
+check S3-compatible provider selection, default regions and endpoints, Azure Blob fields
+and Dropbox OAuth fields. The fixture sends synthetic values to loopback and never contacts
+a provider. All eight cloud wizard tests passed on Linux in the instrumented verification
+tree. See `coverage/goal/next/cloud-pty-final.log` in the primary checkout.
