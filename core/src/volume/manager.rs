@@ -1573,6 +1573,25 @@ impl VolumeManager {
 		library: &crate::library::Library,
 		fingerprint: &VolumeFingerprint,
 	) -> VolumeResult<()> {
+		self.untrack_volume_matching(library, fingerprint, false)
+			.await
+	}
+
+	pub(crate) async fn untrack_cloud_volume(
+		&self,
+		library: &crate::library::Library,
+		fingerprint: &VolumeFingerprint,
+	) -> VolumeResult<()> {
+		self.untrack_volume_matching(library, fingerprint, true)
+			.await
+	}
+
+	async fn untrack_volume_matching(
+		&self,
+		library: &crate::library::Library,
+		fingerprint: &VolumeFingerprint,
+		cloud_only: bool,
+	) -> VolumeResult<()> {
 		use sea_orm::{sea_query::OnConflict, TransactionTrait};
 
 		let db = library.db().conn();
@@ -1584,8 +1603,12 @@ impl VolumeManager {
 			.map_err(|e| VolumeError::Database(e.to_string()))?;
 
 		// Find the volume first to get its UUID and device info
-		let volume = entities::volume::Entity::find()
-			.filter(entities::volume::Column::Fingerprint.eq(fingerprint.0.clone()))
+		let mut query = entities::volume::Entity::find()
+			.filter(entities::volume::Column::Fingerprint.eq(fingerprint.0.clone()));
+		if cloud_only {
+			query = query.filter(entities::volume::Column::VolumeType.eq("Cloud"));
+		}
+		let volume = query
 			.one(&txn)
 			.await
 			.map_err(|e| VolumeError::Database(e.to_string()))?
@@ -1606,6 +1629,16 @@ impl VolumeManager {
 			.exec(&txn)
 			.await
 			.map_err(|e| VolumeError::Database(e.to_string()))?;
+
+		if cloud_only {
+			entities::cloud_credential::Entity::delete_many()
+				.filter(
+					entities::cloud_credential::Column::VolumeFingerprint.eq(fingerprint.0.clone()),
+				)
+				.exec(&txn)
+				.await
+				.map_err(|e| VolumeError::Database(e.to_string()))?;
+		}
 
 		// Create tombstone for device-owned deletion sync
 		let tombstone = entities::device_state_tombstone::ActiveModel {
