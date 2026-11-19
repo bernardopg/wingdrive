@@ -65,6 +65,10 @@ pub trait ChangeHandler: Send + Sync {
 
 	/// Emit appropriate events for UI updates.
 	async fn emit_change_event(&self, entry: &EntryRef, change_type: ChangeType) -> Result<()>;
+	/// Emit a move to subscribers of both directories.
+	async fn emit_move_event(&self, entry: &EntryRef, _old_path: &Path) -> Result<()> {
+		self.emit_change_event(entry, ChangeType::Moved).await
+	}
 
 	/// Handle directory recursion after creation.
 	/// Persistent: spawns indexer job. Ephemeral: inline shallow index.
@@ -406,7 +410,7 @@ pub async fn handle_create<H: ChangeHandler>(
 					path: path.to_path_buf(),
 					..existing
 				};
-				handler.emit_change_event(&moved, ChangeType::Moved).await?;
+				handler.emit_move_event(&moved, &old_path).await?;
 				return Ok(());
 			}
 		}
@@ -514,7 +518,7 @@ pub async fn handle_modify<H: ChangeHandler>(
 					path: path.to_path_buf(),
 					..existing
 				};
-				handler.emit_change_event(&moved, ChangeType::Moved).await?;
+				handler.emit_move_event(&moved, &old_path).await?;
 				return Ok(());
 			}
 		}
@@ -612,7 +616,7 @@ pub async fn handle_rename<H: ChangeHandler>(
 			path: to.to_path_buf(),
 			..entry
 		};
-		handler.emit_change_event(&moved, ChangeType::Moved).await?;
+		handler.emit_move_event(&moved, from).await?;
 		tracing::debug!("Moved entry {} -> {}", from.display(), to.display());
 	} else {
 		// The source was never indexed, e.g. a temp folder created and renamed

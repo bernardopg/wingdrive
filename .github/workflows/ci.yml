@@ -216,6 +216,14 @@ jobs:
           phase: wait
 
       # Same script as `just ci-local`. Scoped runs lint and test only the apps that changed.
+      - name: Setup Bun for bridge tests
+        if: needs.changes.outputs.scope == 'full'
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.4"
+      - name: Install bridge test dependencies
+        if: needs.changes.outputs.scope == 'full'
+        run: bun install --frozen-lockfile
       - name: Rust gates (${{ needs.changes.outputs.scope }})
         run: scripts/ci-rust.sh ${{ needs.changes.outputs.scope }}
 
