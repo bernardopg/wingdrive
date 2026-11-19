@@ -219,3 +219,14 @@ do daemon quebrando caminhos com espaço, e import de exports de location anteri
 
 Ficam sem cobertura por exigirem display ou sessão D-Bus real: `clipboard.rs` e `file_drag.rs` (GTK),
 `serve` de `filemanager1.rs` e `file_chooser.rs`, e partes de `gvfs.rs` que chamam o `gio` do sistema.
+
+### 2026-11-19
+
+Seven HTTP server tests passed under LLVM instrumentation on Linux. Three new tests exercise
+full and partial media responses, suffix and open-ended ranges, unsatisfiable and malformed ranges,
+zero-byte files, missing paths, and sidecar resolution, MIME types and authorization. The fixtures
+use a temporary directory and a loopback port.
+
+Profiles of the same test binary show 209/438 production lines of `server.rs` covered with its
+existing tests and 368/438 with all seven. There were zero failures, ignored tests or compiler
+warnings. Logs and LCOV are under `coverage/goal/desktop-server/`. The full desktop report is pending.
