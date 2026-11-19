@@ -2,10 +2,12 @@
 //!
 //! Defines the standard thumbnail sizes and their variant names for the sidecar system.
 
+use serde::{Deserialize, Serialize};
+
 use crate::ops::sidecar::types::{SidecarFormat, SidecarVariant};
 
 /// Standard thumbnail configuration
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThumbnailVariantConfig {
 	pub size: u32,
 	pub variant: SidecarVariant,
