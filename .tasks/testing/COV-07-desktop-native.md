@@ -1,14 +1,14 @@
 ---
 id: COV-07
 title: "Cobrir shell desktop, IPC e segurança do undo"
-status: Done
+status: In Progress
 assignee: bernardopg
 parent: COV-00
 priority: High
 milestone: M2
 sprint: S05
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-13
+last_updated: 2026-11-19
 ---
 
 ## Description
@@ -31,6 +31,12 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 - [ ] Desktop apps/tauri atinge 100% de linhas instrumentadas na medição completa.
 - [x] Undo nunca sobrescreve dados criados depois da operação original.
 - [x] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
+
+## Reabertura da meta de cobertura
+
+O trabalho de 13 de novembro cumpriu a meta anterior do shell desktop. A meta vigente de 100%
+continua aberta. O relatório Linux tem 8.035/8.910 linhas cobertas (90,2%). A validação COV-12
+registra o SHA, a coleta e as 875 linhas que faltam na medição.
 
 ## GTK clipboard coverage 2026-11-19
 
@@ -283,3 +289,38 @@ two existing ignores. Separate LLVM profiles of the same binary put instrumented
 `filemanager1.rs` at 102/163 before the new case and 134/163 with it. The denominator includes
 existing inline tests. The full component target stays open. Logs and profiles are in
 `coverage/goal/next/` in the primary checkout.
+
+### Linux terminal discovery
+
+The file opener now has a subprocess test for Linux terminal discovery with a private PATH.
+It verifies the priority of `xdg-terminal-exec`, a configured `TERMINAL`, known fallback
+emulators, and the absence of a terminal. All five terminal tests passed under LLVM
+instrumentation. The test checks the selected executable and argument boundaries.
+### Linux resident launch forwarding
+
+The private D-Bus test starts a child process and exercises the path that forwards its arguments
+and working directory to a running instance. It also checks the result when the destination is
+absent. A separate mock-app case verifies that a hidden autostart queues nothing and that a
+hidden invocation with a folder delivers the request. All 21 launch tests passed with LLVM
+instrumentation. The focused profile hit 219/227 lines in `launch.rs`, including 16 lines missed
+by the previous full collector. This test uses a private bus and the mock window runtime.
+
+### Linux default opener
+
+A child process with a private PATH verifies that the desktop's default opener falls back
+from a failing `xdg-open` to GIO and passes a directory containing spaces as one argument.
+With both launchers unavailable or failing, the command returns a platform error. All five
+instrumented file-opening tests passed. See `coverage/goal/after-sidecars/default-opener.log`.
+
+### Linux native startup and menu
+
+The installed binary and the instrumented checkout both opened a visible window, connected to
+an isolated daemon and exited after an X11 close event. The instrumented baseline emitted eleven
+GTK accelerator warnings. The corrected binary passed the same probe with zero accelerator
+warnings. All eight menu tests also passed. See [BUGS.md](BUGS.md).
+
+The private X11, D-Bus and network namespace logged document-portal FUSE limitations and
+multicast `ENODEV`. The frontend build reported eight MapLibre BigInt target warnings and one
+ineffective Tauri event import warning. The build and the startup probe both returned zero.
+Logs are under `coverage/goal/after-watchers/native-smoke/`. The runtime profile remains
+separate from the last complete collector.

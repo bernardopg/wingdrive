@@ -457,34 +457,21 @@ impl TaskRemoteController {
 			return Ok(());
 		}
 
-		let is_canceled = self.worktable.has_canceled();
-		let is_done = self.worktable.is_done();
-
-		trace!(%is_canceled, %is_done, "Received cancel command task");
-
-		if !is_canceled && !is_done {
+		// Pair with the worker marking the task started before it checks the
+		// cancellation flag. Either it sees the flag or we send an interrupt.
+		if !self.worktable.has_canceled.swap(true, Ordering::SeqCst) {
 			if self.worktable.is_running() {
 				let (tx, rx) = oneshot::channel();
-
 				trace!("Task is running, sending cancel request");
-
 				self.worktable.cancel(tx);
-
 				rx.await.expect("Worker failed to ack cancel request");
 			} else {
-				trace!(
-					"Task is not running, setting is_canceled flag and communicating with system"
-				);
-				self.worktable.has_canceled.store(true, Ordering::Release);
-
 				let (tx, rx) = oneshot::channel();
-
 				self.system_comm.cancel_not_running_task(
 					self.task_id,
 					Arc::clone(&self.worktable),
 					tx,
 				);
-
 				return rx
 					.await
 					.expect("Worker failed to ack cancel not running task request");
@@ -688,7 +675,7 @@ impl TaskWorktable {
 
 	pub fn set_started(&self) {
 		self.started.store(true, Ordering::Relaxed);
-		self.is_running.store(true, Ordering::Relaxed);
+		self.is_running.store(true, Ordering::SeqCst);
 	}
 
 	pub fn set_completed(&self) {
@@ -828,7 +815,7 @@ impl TaskWorktable {
 	}
 
 	pub fn is_running(&self) -> bool {
-		self.is_running.load(Ordering::Acquire)
+		self.is_running.load(Ordering::SeqCst)
 	}
 
 	pub fn is_paused(&self) -> bool {
@@ -836,7 +823,7 @@ impl TaskWorktable {
 	}
 
 	pub fn has_canceled(&self) -> bool {
-		self.has_canceled.load(Ordering::Acquire)
+		self.has_canceled.load(Ordering::SeqCst)
 	}
 
 	pub fn has_failed(&self) -> bool {

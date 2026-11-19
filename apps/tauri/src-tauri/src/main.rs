@@ -2254,7 +2254,14 @@ fn setup_menu<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::error::
 		.item(&file_menu)
 		.item(&edit_menu);
 	let menu = menu.item(&view_menu);
-	let menu = menu.build()?;
+	let _native_menu = menu.build()?;
+
+	// Keep the menu items for selection updates without attaching their
+	// accelerators to a window that will never display the menu bar.
+	#[cfg(any(target_os = "windows", target_os = "linux"))]
+	let menu = MenuBuilder::new(app).build()?;
+	#[cfg(not(any(target_os = "windows", target_os = "linux")))]
+	let menu = _native_menu;
 
 	app.set_menu(menu)?;
 
@@ -2760,22 +2767,10 @@ fn forced_gdk_backend(
 		.then_some(file_opening_linux::PREFERRED_GDK_BACKEND)
 }
 
-/// Installs the native menu, then hides the menu bar outside macOS.
+/// Installs the platform menu and initializes its selection state.
 fn setup_menus<R: Runtime>(app: &AppHandle<R>) {
-	if let Err(e) = setup_menu(app) {
-		tracing::warn!("Failed to setup menu: {}", e);
-	}
-
-	// Remove the menu bar on Windows and Linux. It is the macOS app menu, and on
-	// Linux GTK draws it outside the app theme. Shortcuts run through the web
-	// keybind listener, so nothing depends on its accelerators there.
-	#[cfg(any(target_os = "windows", target_os = "linux"))]
-	{
-		use tauri::menu::MenuBuilder;
-		// Create an empty menu to ensure no menu bar is shown
-		if let Ok(empty_menu) = MenuBuilder::new(app).build() {
-			let _ = app.set_menu(empty_menu);
-		}
+	if let Err(error) = setup_menu(app) {
+		tracing::warn!(%error, "Failed to set up the native menu");
 	}
 }
 

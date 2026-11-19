@@ -1041,25 +1041,22 @@ fn handle_run_task_attempt<E: RunError>(
 ) -> JoinHandle<RunTaskOutput<E>> {
 	spawn({
 		let already_paused = worktable.is_paused();
-		let already_canceled = worktable.has_canceled();
 		let already_aborted = worktable.has_aborted();
 
 		let early_result = if already_paused {
 			trace!("Task was paused before running");
-
 			Some(Ok(Ok(ExecStatus::Paused)))
-		} else if already_canceled {
-			trace!("Task was canceled before running");
-
-			Some(Ok(Ok(ExecStatus::Canceled)))
 		} else if already_aborted {
 			trace!("Task was aborted before running");
-
 			Some(Err(SystemError::TaskAborted(task_id)))
 		} else {
-			// We can mark that the task has actually started now
 			worktable.set_started();
-			None
+			if worktable.has_canceled() {
+				trace!("Task was canceled before running");
+				Some(Ok(Ok(ExecStatus::Canceled)))
+			} else {
+				None
+			}
 		};
 
 		async move {
