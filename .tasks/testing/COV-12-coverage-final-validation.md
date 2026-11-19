@@ -88,3 +88,34 @@ warning was absent after the manifest and lockfile change. The frontend logged t
 expected rename error fixtures. The CLI production-only diagnostic measured 3,892/5,421 (71.8%).
 The CLI reaches its target under the official line filter on this local commit.
 Desktop and core remain open, and this result awaits a full report on a merged SHA.
+
+## Linux measurement after the GVFS and systemd fixture changes
+
+The local verification tree at `aeeb1e1940a60272be1bec5b71b5f9853a2a8240` combines the
+pairing, transfer, provider wizard, job resume, D-Bus and GVFS tests with the systemd fixture fix.
+The thumbnail checkpoint repair was verified separately and is outside this report.
+
+| Component | Covered / instrumented | Coverage | Target | Additional hits at this denominator |
+|---|---:|---:|---:|---:|
+| Desktop | 8,035 / 8,910 | 90.2% | 100% | 875 |
+| Core | 50,120 / 91,531 | 54.8% | 65% | 9,376 |
+| CLI | 5,914 / 7,312 | 80.9% | 75% | 0 |
+
+The coverage collector stopped in its CLI systemd process stage after one fixture reported
+`ETXTBSY`. The resume command used the same instrumentation and kept the profiles from the
+earlier test stages. The source difference between the two verification commits affects only the
+systemd test fixture. The remaining stages finished with all tests passing after the fix.
+The two logs record 2,195 successful Rust cases after counting the three repeated successful
+systemd cases once, and 371 frontend successes. The report includes profiles from the initial
+systemd run. The CLI production-only diagnostic measured 4,025 / 5,422 (74.2%). The official
+report published from `bd8031e9bd8eeea3664abfa2f90430775e688379` also measured CLI at 80.9%.
+Windows and macOS remain outside the local measurement.
+
+The Linux Rust build produced no compiler warnings. Two sync warnings came from the expected
+absent-library fixture. The React error cases emitted `permission denied` and
+`errors.renameIncomplete`. The GTK clipboard case ran separately under Xvfb. The S3, long
+reconciliation timing and privileged polkit cases remain excluded. See COV-10 and BUGS.md for
+the systemd fixture race and its 120 passing replay executions.
+
+Local evidence is in `coverage/goal/next/with-gvfs/`, including `rust.log`,
+`rust-resumed.log`, `frontend.log`, `rust.lcov` and `site/summary.json`.
