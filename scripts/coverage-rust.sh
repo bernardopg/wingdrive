@@ -13,7 +13,7 @@ cd "$(git rev-parse --show-toplevel)"
 out="${1:-coverage/rust.lcov}"
 mkdir -p "$(dirname "$out")"
 
-eval "$(cargo llvm-cov show-env --export-prefix)"
+eval "$(cargo llvm-cov show-env --sh)"
 cargo llvm-cov clean --workspace
 
 scripts/ci-rust.sh tests

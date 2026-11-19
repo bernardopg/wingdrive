@@ -52,3 +52,18 @@ COV-09, COV-03. Escopo, metas e ordem em [README.md](README.md).
 - [ ] CLI atinge pelo menos 60% de linhas na medição completa.
 - [ ] Cópia/move/rename/delete/mkdir têm cenários de sucesso e erro no CLI real.
 - [ ] Sem tocar daemon, serviços, portas ou bibliotecas do autor; teardown funciona após falhas.
+
+## Loopback RPC evidence 2026-11-19
+
+Thirteen tests exercise account listing and removal, Google and Microsoft OAuth client settings,
+sign-in polling, Drive and OneDrive mount dispatch, Photos albums and picker import, and cloud sync
+pair creation, presentation, execution, deletion and invalid URI handling. The fixture starts a
+loopback TCP server and asserts the method, library and payload. It uses synthetic accounts,
+disabled browser launch and disposable local paths.
+
+The Linux CLI binary passed 574 tests with LLVM instrumentation. Separate profiles from that exact
+binary, with and without the 13 new tests, show `domains/integrations/mod.rs` improving from 0/400
+to 369/400 lines. Both profile runs had zero failures or ignored tests, and the focused build
+emitted no compiler warnings. Logs and LCOV files are under `coverage/goal/cli-integration-rpc/`.
+This measurement uses only the CLI binary. The full component measurement and the process-level
+daemon cases remain open.

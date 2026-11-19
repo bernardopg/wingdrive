@@ -90,3 +90,21 @@ Moved to M3 with the rest of the coverage epic, since its open criteria are modu
 not M2 work.
 
 Indexing is at 73.7%, above the 70% goal; persistence (`infra/db`) is at 54.6%.
+
+## Evidence 2026-11-19
+
+The Linux Rust gate explicitly enumerates integration suites. Five existing suites were absent from
+that list and consequently from the official Rust coverage collector. The gate now runs them.
+
+| Suite | Passed | Behavior exercised |
+|---|---:|---|
+| `aggregate_sizes_watcher_test` | 3 | Watcher updates to aggregate directory sizes |
+| `google_drive_picker_test` | 1 | Drive Picker integration with a local test server |
+| `microsoft_integration_test` | 1 | Microsoft integration with a local test server |
+| `uuid_reconciliation_test` | 6 | Persistent and ephemeral UUID identity, tags and library isolation |
+| `volume_offline_test` | 1 | Per-device offline state |
+
+All 12 passed on Linux with LLVM instrumentation and the collector's Cargo package selection.
+The focused run had zero failures, ignored tests or compiler warnings. The full report must be
+regenerated before attributing any percentage gain to these suites. The collector now invokes
+`cargo llvm-cov show-env --sh` to remove the deprecated `--export-prefix` warning.
