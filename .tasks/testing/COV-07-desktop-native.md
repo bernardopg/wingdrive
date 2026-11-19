@@ -192,6 +192,17 @@ mesma falha foi reproduzida na base limpa `6152c8ecd`. O caso está em [BUGS.md]
 Não houve validação gráfica ou de polkit real. A cobertura e os
 critérios restantes mantêm a tarefa em andamento.
 
+## Regressão do subprocesso GIO
+
+O [registro em BUGS.md](BUGS.md#montagem-gvfs-pode-expirar-antes-de-ler-o-diagnóstico-do-gio)
+detalha a espera circular observada quando o GIO escreve mais dados do que o pipe comporta.
+
+A correção usa I/O assíncrono e mantém o prazo da operação enquanto lê stderr.
+`cargo test --locked --offline -p wing-core -p wing-cli -p wing-bench -p wingdrive --bin WingDrive gvfs::`
+com ambiente LLVM passou 11 testes em Linux. Os primeiros harnesses avulsos falharam
+com E0463 ao resolver dependências de Tokio. A suíte do binário recompilou o código com
+o grafo correto. A medição focada ainda deixa a meta global de desktop em aberto.
+
 ### 2026-11-13
 
 Cobertura de linhas do componente desktop (`apps/tauri/`, sem arquivos de teste): **80,5% para 91,6%**
@@ -220,13 +231,13 @@ do daemon quebrando caminhos com espaço, e import de exports de location anteri
 Ficam sem cobertura por exigirem display ou sessão D-Bus real: `clipboard.rs` e `file_drag.rs` (GTK),
 `serve` de `filemanager1.rs` e `file_chooser.rs`, e partes de `gvfs.rs` que chamam o `gio` do sistema.
 
-## Regressão do subprocesso GIO
+### 2026-11-19
 
-O [registro em BUGS.md](BUGS.md#montagem-gvfs-pode-expirar-antes-de-ler-o-diagnóstico-do-gio)
-detalha a espera circular observada quando o GIO escreve mais dados do que o pipe comporta.
+Seven HTTP server tests passed under LLVM instrumentation on Linux. Three new tests exercise
+full and partial media responses, suffix and open-ended ranges, unsatisfiable and malformed ranges,
+zero-byte files, missing paths, and sidecar resolution, MIME types and authorization. The fixtures
+use a temporary directory and a loopback port.
 
-A correção usa I/O assíncrono e mantém o prazo da operação enquanto lê stderr.
-`cargo test --locked --offline -p wing-core -p wing-cli -p wing-bench -p wingdrive --bin WingDrive gvfs::`
-com ambiente LLVM passou 11 testes em Linux. Os primeiros harnesses avulsos falharam
-com E0463 ao resolver dependências de Tokio. A suíte do binário recompilou o código com
-o grafo correto. A medição focada ainda deixa a meta global de desktop em aberto.
+Profiles of the same test binary show 209/438 production lines of `server.rs` covered with its
+existing tests and 368/438 with all seven. There were zero failures, ignored tests or compiler
+warnings. Logs and LCOV are under `coverage/goal/desktop-server/`. The full desktop report is pending.

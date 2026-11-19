@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, cli]
-last_updated: 2026-11-15
+last_updated: 2026-11-18
 ---
 
 ## Description
@@ -108,3 +108,32 @@ Moved to M3 with the rest of the coverage epic, since its open criteria are modu
 not M2 work.
 
 The CLI is at 65.9%.
+
+## EOF em prompts interativos
+
+A leitura de EOF nos prompts de escolha e de texto obrigatório repetia até o processo ser interrompido. Veja [o diagnóstico em BUGS.md](BUGS.md#prompts-do-cli-repetem-indefinidamente-com-stdin-fechado). Casos de teste devem verificar encerramento, entrada inválida seguida de escolha válida, opção vazia e erro de I/O.
+
+A correção retorna erro em EOF, preserva novas tentativas em entrada inválida e rejeita
+listas sem opções. Cinco testes dos prompts passaram no harness isolado. A execução de
+processo repetiu os três casos originais e terminou com código 1 em todos. As unidades
+ficam na suíte do binário `wing` e a medição completa do componente permanece pendente.
+O primeiro build do harness tentou reutilizar dependências de outro toolchain e falhou
+com E0514. A repetição usou `anyhow` do rustc atual e as funções sem suporte a TTY.
+
+## Cloud sync schedule regression 2026-11-19
+
+The CLI loopback fixture confirmed that `integrations cloud-sync update <id> --every 0` sent
+`null` in the old build. A separate test called the registered RPC handler with a disposable
+SQLite library. It confirmed that `null` preserved the interval and that zero failed validation
+before the correction. Both baseline failures are retained in
+`coverage/goal/cloud-sync-cli-before.log` and `coverage/goal/cloud-sync-before.log`.
+The baseline core log also contains expected sync event debug traces for the temporary library.
+The protocol diagnosis and correction are recorded in [BUGS.md](BUGS.md).
+
+After correction, the instrumented CLI suite passed 562 tests and
+`rpc_validation_contract_test` passed six, with no failures, ignored tests or compiler warnings.
+The Linux type generator ran and only changed the documentation on the generated field.
+The first correction build had two E0308 errors and one E0605 error because the field still used
+the nested option. Replacing the field type resolved all three errors. The intermediate compiler
+diagnostics are in `coverage/goal/cloud-sync-compile.log`; the successful run and generator output
+are in `coverage/goal/cloud-sync-after.log`.

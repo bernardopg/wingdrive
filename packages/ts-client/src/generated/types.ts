@@ -371,7 +371,7 @@ export type CloudSyncUpdateInput = {
 	name: string | null,
 	mode: SyncMode | null,
 	propagate_deletes: boolean | null,
-	/**  `Some(None)` clears the interval. */
+	/**  Zero clears the schedule. Null or omission keeps the current interval. */
 	interval_minutes: number | null,
 	enabled: boolean | null,
 };

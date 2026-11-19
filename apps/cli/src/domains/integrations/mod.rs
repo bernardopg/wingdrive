@@ -740,7 +740,7 @@ async fn cloud_sync(ctx: &Context, cmd: CloudSyncCmd) -> Result<()> {
 					name: None,
 					mode: mode.map(Into::into),
 					propagate_deletes,
-					interval_minutes: every.map(|m| (m > 0).then_some(m)),
+					interval_minutes: every,
 					enabled,
 				}
 			);

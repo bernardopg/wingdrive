@@ -540,6 +540,15 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: um braço anterior do `match` respondia só `Configuration changed` e tornava inalcançável o braço que incluía o nome do campo.
 - Correção: remover o braço duplicado.
 
+## Montagem GVFS pode expirar antes de ler o diagnóstico do GIO
+
+- Estado: reproduzido em harness isolado da função `run_mount_command` no Linux.
+- Local: `apps/tauri/src-tauri/src/gvfs.rs`.
+- Reprodução: use um processo local que escreva 256 KiB no stderr, emita `gio: Permission denied` e saia com código 1. Com prazo de 1 segundo, WingDrive retorna `Timed out connecting`.
+- Causa: o processo preenche o pipe enquanto WingDrive aguarda seu término para ler a saída. A montagem pode ocultar o diagnóstico original ou ficar bloqueada até o prazo.
+- Correção: executar o GIO com Tokio, consumir stderr enquanto o processo roda, descartar stdout e encerrar o filho se o prazo expirar ou a espera for cancelada.
+- Verificação: a suíte instrumentada `WingDrive gvfs::` passou 11 testes. O subprocesso com stderr de 256 KiB devolveu `Permission denied`. Também passaram os casos de senha sintética, processo ausente e prazo excedido. Nenhuma montagem real foi usada.
+
 ## Desktop: "Open Library..." tratava a recusa do daemon como sucesso
 
 - Estado: corrigido; `opening_a_library_returns_the_daemon_answer_or_its_error` em `apps/tauri/src-tauri/src/main/tests/events.rs`.
@@ -686,11 +695,22 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Correção: cada argumento de `ExecStart` vai entre aspas duplas, com `\` e `"` escapados, `%` como `%%`, `$` como `$$` e quebra de linha como `\n`.
 - Limite: o serviço continua usando a pasta da instância como `--data-dir` e não passa `--instance`, então instalar o serviço a partir de uma instância nomeada inicia o daemon padrão na porta 6969. Não foi alterado aqui.
 
-## Montagem GVFS pode expirar antes de ler o diagnóstico do GIO
+## Prompts do CLI repetem indefinidamente com stdin fechado
 
-- Estado: reproduzido em harness isolado da função `run_mount_command` no Linux.
-- Local: `apps/tauri/src-tauri/src/gvfs.rs`.
-- Reprodução: use um processo local que escreva 256 KiB no stderr, emita `gio: Permission denied` e saia com código 1. Com prazo de 1 segundo, WingDrive retorna `Timed out connecting`.
-- Causa: o processo preenche o pipe enquanto WingDrive aguarda seu término para ler a saída. A montagem pode ocultar o diagnóstico original ou ficar bloqueada até o prazo.
-- Correção: executar o GIO com Tokio, consumir stderr enquanto o processo roda, descartar stdout e encerrar o filho se o prazo expirar ou a espera for cancelada.
-- Verificação: a suíte instrumentada `WingDrive gvfs::` passou 11 testes. O subprocesso com stderr de 256 KiB devolveu `Permission denied`. Também passaram os casos de senha sintética, processo ausente e prazo excedido. Nenhuma montagem real foi usada.
+- Estado: reproduzido no SHA `423a8686d`.
+- Local: `apps/cli/src/util/confirm.rs`, nas funções `prompt_for_choice`, `prompt_for_list` e `prompt_for_text`.
+- Reprodução: execute cada prompt com stdin redirecionado de `/dev/null`. Um harness isolado das funções originais atingiu o limite de 200 ms nos três casos e saiu com código 124 do `timeout`.
+- Causa: `read_line` retorna zero bytes ao final da entrada. Os loops tratavam EOF como resposta inválida e repetiam a leitura e a impressão.
+- Impacto: uma cópia com conflito usa o primeiro prompt e pode ficar presa quando stdin fecha durante o uso em scripts.
+- Correção: encerrar ao receber EOF, rejeitar listas vazias e manter o índice escolhido mesmo quando os rótulos se repetem. Respostas inválidas com entrada aberta continuam permitindo nova tentativa.
+- Verificação: os três processos passaram a sair com código 1 e `Aborted by user: end of input`. Cinco testes das funções passaram em um harness Rust isolado, incluindo erro de leitura e resposta em branco. O harness usa o contrato mínimo de `ConfirmationRequest` e cobre os prompts de stdin/stdout, sem terminal interativo.
+
+## A CLI não desativa o agendamento de sincronização na nuvem
+
+- Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.
+- Local: `apps/cli/src/domains/integrations/mod.rs`, `cloud_sync`, e `core/src/ops/cloud_sync/ops.rs`, `CloudSyncUpdateInput` e `CloudSyncUpdateAction::execute`.
+- Reprodução: execute `wing integrations cloud-sync update <id> --every 0` para um par com agendamento. O teste de contrato capturou `interval_minutes: null`. O handler RPC preservou o intervalo com `null` e antes da correção rejeitou zero com `Use at least 5 minutes between runs`.
+- Impacto: o comando termina com sucesso e a sincronização automática continua quando o usuário pediu execução manual.
+- Causa: `Some(None)` e `None` produzem o mesmo JSON. A desserialização perdia a distinção entre limpar o intervalo e preservar o valor.
+- Correção: o protocolo de atualização interpreta zero como limpar o agendamento, conserva o intervalo com campo ausente ou `null` e mantém a validação dos intervalos positivos. A CLI transmite o zero explícito.
+- Verificação: 562 testes da CLI e os 6 testes do contrato RPC passaram instrumentados no Linux, sem ignorados nem avisos do compilador. O teste com SQLite descartável verifica a atualização positiva, a rejeição de 1 minuto, a preservação em `null` e a limpeza em zero. O teste de loopback verifica o zero enviado pela CLI.

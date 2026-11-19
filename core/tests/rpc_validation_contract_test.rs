@@ -190,3 +190,63 @@ async fn folder_validation_rejects_invalid_names_and_address_kinds() -> anyhow::
 	harness.shutdown().await?;
 	Ok(())
 }
+
+#[tokio::test]
+async fn cloud_sync_update_preserves_null_and_clears_zero_interval() -> anyhow::Result<()> {
+	use sea_orm::{ActiveModelTrait, Set};
+	use wing_core::infra::{daemon::rpc::RpcServer, db::entities::cloud_sync_pair};
+
+	let harness = IndexingHarnessBuilder::new("cloud_sync_interval")
+		.disable_watcher()
+		.build()
+		.await?;
+	let id = Uuid::new_v4();
+	let now = chrono::Utc::now();
+	cloud_sync_pair::ActiveModel {
+		uuid: Set(id),
+		name: Set("Backup".into()),
+		local_path: Set(harness.temp_path().to_string_lossy().into_owned()),
+		remote_service: Set("gdrive".into()),
+		remote_identifier: Set("fixture@example.test".into()),
+		remote_path: Set("Backup".into()),
+		mode: Set("two_way".into()),
+		propagate_deletes: Set(false),
+		interval_minutes: Set(Some(60)),
+		enabled: Set(true),
+		created_at: Set(now),
+		updated_at: Set(now),
+		..Default::default()
+	}
+	.insert(harness.library.db().conn())
+	.await?;
+
+	let update = |payload| {
+		RpcServer::execute_json_operation(
+			"action:cloud_sync.update.input",
+			Some(harness.library.id()),
+			payload,
+			&harness.core,
+		)
+	};
+	let result = update(json!({"id": id, "enabled": false, "interval_minutes": null}))
+		.await
+		.map_err(anyhow::Error::msg)?;
+	assert_eq!(result["enabled"], false);
+	assert_eq!(result["interval_minutes"], 60);
+
+	let result = update(json!({"id": id, "interval_minutes": 15}))
+		.await
+		.map_err(anyhow::Error::msg)?;
+	assert_eq!(result["interval_minutes"], 15);
+	assert!(update(json!({"id": id, "interval_minutes": 1}))
+		.await
+		.is_err());
+
+	let result = update(json!({"id": id, "interval_minutes": 0}))
+		.await
+		.map_err(anyhow::Error::msg)?;
+	assert_eq!(result["interval_minutes"], serde_json::Value::Null);
+
+	harness.shutdown().await?;
+	Ok(())
+}
