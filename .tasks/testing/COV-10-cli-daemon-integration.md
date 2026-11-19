@@ -59,7 +59,7 @@ COV-09, COV-03. Escopo, metas e ordem em [README.md](README.md).
 
 ## Acceptance Criteria
 
-- [ ] CLI atinge pelo menos 60% de linhas na medição completa.
+- [ ] CLI atinge pelo menos 75% de linhas na medição completa.
 - [ ] Cópia/move/rename/delete/mkdir têm cenários de sucesso e erro no CLI real.
 - [ ] Sem tocar daemon, serviços, portas ou bibliotecas do autor; teardown funciona após falhas.
 
