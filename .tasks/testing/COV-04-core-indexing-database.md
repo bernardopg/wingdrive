@@ -151,3 +151,11 @@ ponte entram no CI Linux e no coletor. As duas configurações passaram no `acti
 O log completo do job confirmou a entrega do evento e uma inferência de move incorreta por inode.
 O teste de watcher deve indexar o arquivo promovido sem mover nem substituir a raiz da localização.
 Veja [registro de bugs](BUGS.md#core-reutilização-de-inode-quebrava-a-promoção-de-um-arquivo-no-watcher).
+
+### Offline sidecar recovery
+
+A temporary library fixture verifies sidecar discovery from disk, the ready lookup, database
+presence, size updates, local availability after removal and the uninitialized library error.
+The instrumented Linux test passed. It hit 365 of 569 lines in `sidecar_manager.rs`. The prior
+complete profile hit 20 of 569. These are per-file profiles. The next complete collector measures
+the combined core impact. The test requires no external services or media decoder.

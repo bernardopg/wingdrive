@@ -833,3 +833,10 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Causa: o fallback por inode aceitava entradas de outro tipo, incluindo a raiz e caminhos ainda existentes. O pareamento de Remove/Create também podia tratar o inode reciclado de um diretório como o mesmo arquivo.
 - Correção: só inferir mudança por inode dentro da localização para entradas do mesmo tipo com origem ausente. Ao parear remoções, comparar o tipo registrado e verificar tamanho e mtime de arquivos.
 - Regressão: o cenário de mover `node_modules/promoted.txt` para a raiz continua exigindo a entrada no banco. As histórias vizinhas exercitam renomeação, exclusão e reutilização de inode.
+
+## Core: remover uma localização retornava antes de o indexador parar
+
+- Evidência: em `Rust Workspace` dos PRs #468 e #470, `removing_a_location_cancels_its_jobs` falhou com `cancelled job still reports Running`. As mensagens de arquivos ausentes e a queda do canal do task vieram depois do encerramento da fixture.
+- Causa: o gerenciador esperava 100 ms após o pedido em vez de aguardar o resultado da tarefa. O worker podia perder o cancelamento entre a leitura do sinal de cancelado e a publicação de que a tarefa estava rodando. A descoberta paralela também podia deixar subtarefas no runtime ao interromper o job.
+- Correção: coordenar a transição do worker com a sinalização de cancelamento, encerrar os workers da descoberta antes de devolver o erro de interrupção e aguardar o término real antes de apagar o registro do job.
+- Regressão: o teste exige a transição para `Cancelled` antes de remover a localização e verificar o banco.

@@ -1974,18 +1974,9 @@ impl JobManager {
 	pub async fn cancel_job(&self, job_id: JobId) -> JobResult<()> {
 		use database::jobs;
 
-		// Check if job is in running_jobs memory map
-		let is_in_memory = {
-			let running_jobs = self.running_jobs.read().await;
-			running_jobs.contains_key(&job_id)
-		};
-
-		// Cancel if in memory
-		if is_in_memory {
+		let running_job = {
 			let mut running_jobs = self.running_jobs.write().await;
-
-			if let Some(running_job) = running_jobs.get_mut(&job_id) {
-				// Check if job is in a cancellable state
+			if let Some(running_job) = running_jobs.get(&job_id) {
 				let current_status = running_job.handle.status();
 				if current_status.is_terminal() {
 					return Err(JobError::invalid_state(&format!(
@@ -1994,18 +1985,32 @@ impl JobManager {
 					)));
 				}
 
-				// Cancel the task
-				if let Err(e) = running_job.task_handle.cancel().await {
-					warn!("Failed to send cancel signal to job {}: {}", job_id, e);
-				}
+				running_job.task_handle.cancel().await.map_err(|error| {
+					JobError::Other(format!("Failed to cancel job {job_id}: {error}"))
+				})?;
 			}
+			running_jobs.remove(&job_id)
+		};
+		let is_in_memory = running_job.is_some();
 
-			// Remove from running jobs map
-			running_jobs.remove(&job_id);
-			drop(running_jobs);
-
-			// Wait for cancellation to complete
-			tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+		if let Some(running_job) = running_job {
+			// The task acknowledges the request at an interruption point.
+			// Wait for it to finish before deleting rows it can still write.
+			let status = running_job.task_handle.await.map_err(|error| {
+				JobError::Other(format!(
+					"Failed waiting for cancelled job {job_id}: {error}"
+				))
+			})?;
+			if matches!(status, wing_task_system::TaskStatus::Canceled) {
+				// A queued job can be cancelled before its executor starts.
+				running_job.status_tx.send_if_modified(|status| {
+					if status.is_terminal() {
+						return false;
+					}
+					*status = JobStatus::Cancelled;
+					true
+				});
+			}
 		}
 
 		// Check if job exists in database

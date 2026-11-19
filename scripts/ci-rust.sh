@@ -107,6 +107,7 @@ if [ "$(uname -s)" = Linux ]; then
 		database_migration_test
 		event_system_test
 		job_shutdown_test
+		sidecar_lifecycle_test
 		ephemeral_bridge_test
 		typescript_bridge_test
 		typescript_search_bridge_test
