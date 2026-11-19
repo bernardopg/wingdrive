@@ -72,7 +72,9 @@ if [ "$(uname -s)" = Linux ]; then
 		search_test
 		directory_listing_first_response_test
 		ephemeral_coverage_test
+		thumbnail_generation_test
 		copy_action_test
+		duplicate_detection_test
 		location_export_import_test
 		event_filtering_test
 		job_registration_test
