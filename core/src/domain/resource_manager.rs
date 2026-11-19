@@ -116,6 +116,16 @@ impl ResourceManager {
 		resource_type: &str,
 		resource_ids: Vec<Uuid>,
 	) -> Result<()> {
+		self.emit_resource_events_with_paths(resource_type, resource_ids, &[])
+			.await
+	}
+
+	pub(crate) async fn emit_resource_events_with_paths(
+		&self,
+		resource_type: &str,
+		resource_ids: Vec<Uuid>,
+		previous_paths: &[crate::domain::WingPath],
+	) -> Result<()> {
 		use crate::domain::resource::map_dependency_to_virtual_ids;
 
 		if resource_ids.is_empty() {
@@ -147,6 +157,9 @@ impl ResourceManager {
 				// Extract affected paths for file resources
 				let affected_paths = if resource_type == "file" {
 					Self::extract_file_paths(&resources_json)
+						.into_iter()
+						.chain(previous_paths.iter().cloned())
+						.collect()
 				} else {
 					vec![]
 				};
@@ -232,6 +245,9 @@ impl ResourceManager {
 
 			let affected_paths = if virtual_type == "file" {
 				Self::extract_file_paths(&resources_json)
+					.into_iter()
+					.chain(previous_paths.iter().cloned())
+					.collect()
 			} else {
 				vec![]
 			};

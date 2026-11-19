@@ -792,6 +792,15 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Correção: instalar diretamente o menu vazio nesses dois sistemas. Os itens usados pelo IPC de seleção continuam acessíveis no estado.
 - Verificação: oito testes de menu passaram. O binário instrumentado abriu a janela, respondeu ao Ping do daemon e encerrou com status zero. O replay teve zero avisos de aceleradores GTK.
 
+## Desktop: a listagem de origem mantinha o arquivo depois de uma movimentação
+
+- Reprodução: abra as duas pastas com listagens normalizadas e mova um arquivo entre elas por fora do app. A pasta de destino recebe o arquivo, mas a origem mantém a linha antiga. A suíte de ponte reproduziu também o caso de 20 arquivos.
+- Causa: o evento de recurso continha apenas os caminhos atuais. O daemon filtrava a assinatura da pasta de origem antes que o cliente pudesse remover do cache o item fora de escopo.
+- Correção: incluir o caminho anterior nos metadados de roteamento do evento, mantendo o recurso com seu caminho atual.
+- Diagnóstico da fixture: quatro cenários falhavam primeiro por interceptar o método privado de assinatura com a assinatura antiga. Remover a interceptação recuperou exclusão e renomeação e isolou as duas falhas de movimentação.
+- Verificação: passaram os seis testes da ponte de cache e os 15 testes vizinhos de busca,
+  eventos efêmeros e filtros. A suíte usa o daemon real, Bun e diretórios temporários.
+
 ## Core: remover uma localização retornava antes de o indexador parar
 
 - Evidência: em `Rust Workspace` dos PRs #468 e #470, `removing_a_location_cancels_its_jobs` falhou com `cancelled job still reports Running`. As mensagens de arquivos ausentes e a queda do canal do task vieram depois do encerramento da fixture.
