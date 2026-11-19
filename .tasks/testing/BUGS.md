@@ -724,6 +724,14 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Correção: cada argumento de `ExecStart` vai entre aspas duplas, com `\` e `"` escapados, `%` como `%%`, `$` como `$$` e quebra de linha como `\n`.
 - Limite: o serviço continua usando a pasta da instância como `--data-dir` e não passa `--instance`, então instalar o serviço a partir de uma instância nomeada inicia o daemon padrão na porta 6969. Não foi alterado aqui.
 
+## CLI: fixture de systemd falhava ao executar a cópia do binário
+
+- Local: `apps/cli/tests/daemon_service_test.rs`.
+- Reprodução: execute o binário instrumentado com `--test-threads=4`. A coleta falhou no teste de daemon ausente. O segundo replay falhou no teste de ativação com `ETXTBSY` (erro 26).
+- Causa: o erro persistiu com inodes separados e apenas um Cargo ativo. A execução concorrente da fixture permite que um processo recém-criado herde temporariamente o descritor gravável da cópia que outra fixture está preparando.
+- Correção: serializar a preparação e a execução dessas fixtures num mesmo processo. Cada cenário continua isolado em diretório temporário.
+- Verificação: os quatro testes instrumentados passaram. Trinta replays com quatro threads concluíram 120 testes sem falhas.
+
 ## Prompts do CLI repetem indefinidamente com stdin fechado
 
 - Estado: reproduzido no SHA `423a8686d`.
