@@ -136,7 +136,11 @@ fn mixed_volumes() -> Step {
 #[tokio::test]
 async fn cloud_setup_list_does_not_show_local_volumes() {
 	let (succeeded, output, requests) = run_cloud(
-		&[(MENU, "\x1b[B\r"), ("Cloud Volumes:", ""), (MENU, EXIT)],
+		&[
+			(MENU, "\x1b[B\r"),
+			("WingDrive Cloud Storage Setup", ""),
+			(MENU, EXIT),
+		],
 		vec![listing(), mixed_volumes()],
 	)
 	.await;
