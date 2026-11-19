@@ -35,6 +35,8 @@ async fn the_latest_pairing_code_follows_session_order_and_cancellation() {
 		);
 	}
 
+	handler.cancel_session(session_ids.remove(8)).await.unwrap();
+
 	while let Some(id) = session_ids.pop() {
 		handler.cancel_session(id).await.unwrap();
 		assert_eq!(

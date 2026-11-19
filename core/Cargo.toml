@@ -26,6 +26,7 @@ wasm = ["dep:wasmer", "dep:wasmer-middlewares"]
 
 
 [dependencies]
+indexmap = { workspace = true }
 # Async runtime
 async-channel = { workspace = true }
 async-trait   = "0.1"

@@ -586,6 +586,14 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Correção: uma thread lê o stdout enquanto o processo roda.
 - Limite: verificado com um script no lugar do `avahi-browse`, sem rede mDNS real.
 
+## Seleção da sessão de pareamento pode devolver um código anterior
+
+- Estado: reproduzido no algoritmo de seleção no Linux. O teste isolado do handler está em validação.
+- Local: `PairingProtocolHandler::get_current_pairing_code`, no protocolo de pareamento do core.
+- Impacto: com vários códigos de pareamento ativos, o QR pode refletir uma sessão diferente daquela criada mais recentemente. A seleção usava o último elemento da iteração de um `HashMap`.
+- Reprodução: insira IDs sequenciais no mesmo algoritmo. Em `coverage/goal/pairing/hash-map-before.log`, o terceiro ID retornou o segundo. A regressão do handler gera vários códigos sem endpoints de rede e verifica atribuição e cancelamento.
+- Correção: usar um mapa com ordem de inserção e remover mantendo essa ordem. O código atual passa a acompanhar a última sessão ainda presente no mapa.
+
 ## Core: listagem de mídia nunca indicava resultados além do limite
 
 - Estado: corrigido; `media_listing_reports_more_results_than_the_limit` em `core/tests/file_queries_test.rs`.

@@ -30,6 +30,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use blake3;
+use indexmap::IndexMap;
 use iroh::{endpoint::Connection, Endpoint, EndpointAddr, EndpointId, Watcher};
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -59,8 +60,8 @@ pub struct PairingProtocolHandler {
 	/// Active pairing sessions
 	active_sessions: Arc<RwLock<HashMap<Uuid, PairingSession>>>,
 
-	/// Pairing codes for active sessions (session_id -> pairing_code)
-	pairing_codes: Arc<RwLock<HashMap<Uuid, PairingCode>>>,
+	/// Pairing codes in session insertion order.
+	pairing_codes: Arc<RwLock<IndexMap<Uuid, PairingCode>>>,
 
 	/// Logger for structured logging
 	logger: Arc<dyn NetworkLogger>,
@@ -128,7 +129,7 @@ impl PairingProtocolHandler {
 			identity,
 			device_registry,
 			active_sessions: Arc::new(RwLock::new(HashMap::new())),
-			pairing_codes: Arc::new(RwLock::new(HashMap::new())),
+			pairing_codes: Arc::new(RwLock::new(IndexMap::new())),
 			logger,
 			command_sender,
 			role: None,
@@ -161,7 +162,7 @@ impl PairingProtocolHandler {
 			identity,
 			device_registry,
 			active_sessions: Arc::new(RwLock::new(HashMap::new())),
-			pairing_codes: Arc::new(RwLock::new(HashMap::new())),
+			pairing_codes: Arc::new(RwLock::new(IndexMap::new())),
 			logger,
 			command_sender,
 			role: None,
@@ -433,7 +434,7 @@ impl PairingProtocolHandler {
 	/// Cancel a pairing session
 	pub async fn cancel_session(&self, session_id: Uuid) -> Result<()> {
 		self.active_sessions.write().await.remove(&session_id);
-		self.pairing_codes.write().await.remove(&session_id);
+		self.pairing_codes.write().await.shift_remove(&session_id);
 		self.save_sessions_to_persistence().await?;
 		Ok(())
 	}
@@ -468,7 +469,7 @@ impl PairingProtocolHandler {
 		// Remove expired sessions and their pairing codes
 		for session_id in &sessions_to_remove {
 			sessions.remove(session_id);
-			pairing_codes.remove(session_id);
+			pairing_codes.shift_remove(session_id);
 		}
 
 		let cleaned_count = sessions_to_remove.len();

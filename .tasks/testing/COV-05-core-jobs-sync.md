@@ -15,6 +15,13 @@ last_updated: 2026-11-03
 
 Retomada e sincronização precisam de evidência sobre recuperação de falhas e consistência, além do caminho feliz.
 
+## Offline pairing sessions 2026-11-19
+
+An isolated handler fixture creates local session codes, rejects duplicate joins, removes expired
+sessions, and checks the selected code through cancellation. The old lookup took the last value
+from a hash map. The direct algorithm reproducer found an older code after the third insertion.
+See [BUGS.md](BUGS.md) and `coverage/goal/pairing/hash-map-before.log`.
+
 ## Dependencies
 
 COV-04. Escopo, metas e ordem em [README.md](README.md).
