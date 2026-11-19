@@ -231,3 +231,14 @@ use a temporary directory and a loopback port.
 Profiles of the same test binary show 209/438 production lines of `server.rs` covered with its
 existing tests and 368/438 with all seven. There were zero failures, ignored tests or compiler
 warnings. Logs and LCOV are under `coverage/goal/desktop-server/`. The full desktop report is pending.
+
+### FileManager1 on a private session bus
+
+The FileManager1 contract test starts its own D-Bus daemon and verifies the requests delivered
+by ShowFolders, ShowItems and ShowItemProperties for a temporary directory and a file with a
+space in its name. It shares the existing private bus fixture with the file chooser.
+The combined Linux desktop suite passed 319 tests, including both D-Bus integrations, with
+two existing ignores. Separate LLVM profiles of the same binary put instrumented coverage of
+`filemanager1.rs` at 102/163 before the new case and 134/163 with it. The denominator includes
+existing inline tests. The full component target stays open. Logs and profiles are in
+`coverage/goal/next/` in the primary checkout.
