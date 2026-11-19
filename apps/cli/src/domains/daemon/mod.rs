@@ -565,38 +565,7 @@ mod tests {
 	use super::*;
 
 	#[cfg(target_os = "linux")]
-	#[test]
-	fn installed_unit_matches_the_exact_data_path_and_instance() {
-		use std::path::Path;
-
-		let path = Path::new("/data/backup room");
-		let quoted = "ExecStart=\"/usr/local/bin/wing-daemon\" --data-dir \"/data/backup room\" --instance test";
-		assert!(super::unit_matches_daemon(quoted, path, Some("test")));
-		assert!(!super::unit_matches_daemon(quoted, path, Some("other")));
-		assert!(!super::unit_matches_daemon(
-			quoted,
-			Path::new("/data/backup"),
-			Some("test")
-		));
-		assert!(!super::unit_matches_daemon(quoted, path, None));
-
-		let legacy = "ExecStart=/usr/bin/wing-daemon --data-dir /data/backup-longer";
-		assert!(super::unit_matches_daemon(
-			legacy,
-			Path::new("/data/backup-longer"),
-			None
-		));
-		assert!(!super::unit_matches_daemon(
-			legacy,
-			Path::new("/data/backup"),
-			None
-		));
-		assert!(!super::unit_matches_daemon(
-			"Description=Daemon --data-dir /data/backup",
-			Path::new("/data/backup"),
-			None,
-		));
-	}
+	mod service_matcher;
 
 	#[test]
 	fn preserves_named_service_instances() {
