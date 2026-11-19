@@ -1950,3 +1950,29 @@ async fn undo_daemon_error_is_returned_to_caller() {
 	.await;
 	assert!(result.unwrap_err().to_string().contains("nothing to undo"));
 }
+
+#[tokio::test]
+async fn integrations_cloud_sync_update_forwards_manual_interval() {
+	let (result, requests) = run(
+		&[
+			"wing", "integrations", "cloud-sync", "update", TAG, "--every", "0",
+		],
+		OutputFormat::Human,
+		vec![
+			listing(),
+			success(
+				"action:cloud_sync.update.input",
+				Some(library()),
+				json!({
+					"id": TAG, "name": "Backup", "local_path": "/fixture",
+					"remote": {"Cloud": {"service": "gdrive", "identifier": "fixture@example.test", "path": "Backup"}},
+					"mode": "two_way", "propagate_deletes": false, "enabled": true,
+					"interval_minutes": null, "running": false
+				}),
+			),
+		],
+	)
+	.await;
+	result.unwrap();
+	assert_eq!(requests[1]["interval_minutes"], 0);
+}

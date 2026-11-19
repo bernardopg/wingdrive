@@ -695,3 +695,13 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Impacto: uma cópia com conflito usa o primeiro prompt e pode ficar presa quando stdin fecha durante o uso em scripts.
 - Correção: encerrar ao receber EOF, rejeitar listas vazias e manter o índice escolhido mesmo quando os rótulos se repetem. Respostas inválidas com entrada aberta continuam permitindo nova tentativa.
 - Verificação: os três processos passaram a sair com código 1 e `Aborted by user: end of input`. Cinco testes das funções passaram em um harness Rust isolado, incluindo erro de leitura e resposta em branco. O harness usa o contrato mínimo de `ConfirmationRequest` e cobre os prompts de stdin/stdout, sem terminal interativo.
+
+## A CLI não desativa o agendamento de sincronização na nuvem
+
+- Estado: reproduzido em 2026-11-19, Linux, em `b980cc1fd`.
+- Local: `apps/cli/src/domains/integrations/mod.rs`, `cloud_sync`, e `core/src/ops/cloud_sync/ops.rs`, `CloudSyncUpdateInput` e `CloudSyncUpdateAction::execute`.
+- Reprodução: execute `wing integrations cloud-sync update <id> --every 0` para um par com agendamento. O teste de contrato capturou `interval_minutes: null`. O handler RPC preservou o intervalo com `null` e antes da correção rejeitou zero com `Use at least 5 minutes between runs`.
+- Impacto: o comando termina com sucesso e a sincronização automática continua quando o usuário pediu execução manual.
+- Causa: `Some(None)` e `None` produzem o mesmo JSON. A desserialização perdia a distinção entre limpar o intervalo e preservar o valor.
+- Correção: o protocolo de atualização interpreta zero como limpar o agendamento, conserva o intervalo com campo ausente ou `null` e mantém a validação dos intervalos positivos. A CLI transmite o zero explícito.
+- Verificação: 562 testes da CLI e os 6 testes do contrato RPC passaram instrumentados no Linux, sem ignorados nem avisos do compilador. O teste com SQLite descartável verifica a atualização positiva, a rejeição de 1 minuto, a preservação em `null` e a limpeza em zero. O teste de loopback verifica o zero enviado pela CLI.
