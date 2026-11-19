@@ -311,3 +311,16 @@ A child process with a private PATH verifies that the desktop's default opener f
 from a failing `xdg-open` to GIO and passes a directory containing spaces as one argument.
 With both launchers unavailable or failing, the command returns a platform error. All five
 instrumented file-opening tests passed. See `coverage/goal/after-sidecars/default-opener.log`.
+
+### Linux native startup and menu
+
+The installed binary and the instrumented checkout both opened a visible window, connected to
+an isolated daemon and exited after an X11 close event. The instrumented baseline emitted eleven
+GTK accelerator warnings. The corrected binary passed the same probe with zero accelerator
+warnings. All eight menu tests also passed. See [BUGS.md](BUGS.md).
+
+The private X11, D-Bus and network namespace logged document-portal FUSE limitations and
+multicast `ENODEV`. The frontend build reported eight MapLibre BigInt target warnings and one
+ineffective Tauri event import warning. The build and the startup probe both returned zero.
+Logs are under `coverage/goal/after-watchers/native-smoke/`. The runtime profile remains
+separate from the last complete collector.
