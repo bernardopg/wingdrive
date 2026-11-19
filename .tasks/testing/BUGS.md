@@ -558,6 +558,15 @@ Encontrados ao rodar as correções num daemon isolado e no app Tauri de verdade
 - Reprodução anterior: um braço anterior do `match` respondia só `Configuration changed` e tornava inalcançável o braço que incluía o nome do campo.
 - Correção: remover o braço duplicado.
 
+## Montagem GVFS pode expirar antes de ler o diagnóstico do GIO
+
+- Estado: reproduzido em harness isolado da função `run_mount_command` no Linux.
+- Local: `apps/tauri/src-tauri/src/gvfs.rs`.
+- Reprodução: use um processo local que escreva 256 KiB no stderr, emita `gio: Permission denied` e saia com código 1. Com prazo de 1 segundo, WingDrive retorna `Timed out connecting`.
+- Causa: o processo preenche o pipe enquanto WingDrive aguarda seu término para ler a saída. A montagem pode ocultar o diagnóstico original ou ficar bloqueada até o prazo.
+- Correção: executar o GIO com Tokio, consumir stderr enquanto o processo roda, descartar stdout e encerrar o filho se o prazo expirar ou a espera for cancelada.
+- Verificação: a suíte instrumentada `WingDrive gvfs::` passou 11 testes. O subprocesso com stderr de 256 KiB devolveu `Permission denied`. Também passaram os casos de senha sintética, processo ausente e prazo excedido. Nenhuma montagem real foi usada.
+
 ## Desktop: "Open Library..." tratava a recusa do daemon como sucesso
 
 - Estado: corrigido; `opening_a_library_returns_the_daemon_answer_or_its_error` em `apps/tauri/src-tauri/src/main/tests/events.rs`.
