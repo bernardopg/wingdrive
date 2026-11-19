@@ -31,6 +31,16 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 - [x] Undo nunca sobrescreve dados criados depois da operação original.
 - [x] Testes sem display rodam no CI; evidência Tauri/Linux cobre integrações reais e M3 registra macOS/Windows pendentes.
 
+## GTK clipboard coverage 2026-11-19
+
+The Linux coverage collector now explicitly runs the existing GTK clipboard integration test.
+It creates a private Xvfb display and checks GNOME, KDE and plain URI clipboard targets.
+The coverage workflow installs Xvfb if the runner does not already have it.
+Both instrumented runs passed with zero failures or compiler warnings. Adding the clipboard
+profile to the existing partial baseline of the same `clipboard.rs` source covers 88/95 lines
+instead of 45/95. The focused run and LCOV are under `coverage/goal/desktop-clipboard/`.
+The full desktop measurement is tracked separately.
+
 ## Evidence
 
 - 2026-11-06: suítes novas em `apps/tauri/src-tauri/src/{main,keybinds,file_opening,windows}/tests/`
