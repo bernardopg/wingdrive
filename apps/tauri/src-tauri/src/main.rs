@@ -43,7 +43,7 @@ use tokio::sync::oneshot;
 use tokio::sync::RwLock;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[cfg(target_os = "linux")]
-use wing_branding::systemd_exec_argument;
+use wing_tauri_core::systemd_exec_argument;
 
 /// Default event subscription list - mirrors `DEFAULT_EVENT_SUBSCRIPTION` in
 /// packages/ts-client/src/event-filter.ts, which a test keeps in step.

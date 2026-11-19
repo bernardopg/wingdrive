@@ -83,3 +83,9 @@ to 369/400 lines. Both profile runs had zero failures or ignored tests, and the 
 emitted no compiler warnings. Logs and LCOV files are under `coverage/goal/cli-integration-rpc/`.
 This measurement uses only the CLI binary. The full component measurement and the process-level
 daemon cases remain open.
+
+The corrected CLI passed 581 unit tests and four process tests under LLVM instrumentation.
+The combined desktop build reported E0432 because the shell imported the branding crate
+directly. The shell now uses the existing dependency on `wing-tauri-core`, which re-exports
+the shared helper on Linux. The logs are in `coverage/goal/next/cli.log` and
+`coverage/goal/next/desktop.log` in the primary checkout.

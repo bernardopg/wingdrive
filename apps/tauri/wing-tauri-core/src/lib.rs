@@ -45,3 +45,6 @@ pub mod commands {
 pub fn default_data_dir() -> anyhow::Result<std::path::PathBuf> {
 	wing_branding::data_dir()
 }
+
+#[cfg(target_os = "linux")]
+pub use wing_branding::systemd_exec_argument;
