@@ -1,0 +1,96 @@
+{
+  "commit": "f01aae42b376f153f7d5c0c10289a085b8e04581",
+  "generated": "2026-11-20T06:53Z",
+  "total": {
+    "files": 832,
+    "lines": 129334,
+    "covered": 77319,
+    "percent": 59.8
+  },
+  "rust": {
+    "files": 715,
+    "lines": 114957,
+    "covered": 69052,
+    "percent": 60.1
+  },
+  "frontend": {
+    "files": 117,
+    "lines": 14377,
+    "covered": 8267,
+    "percent": 57.5
+  },
+  "components": [
+    {
+      "id": "core",
+      "title": "Core: daemon, operations, sync",
+      "files": 568,
+      "lines": 91730,
+      "covered": 51594,
+      "percent": 56.2
+    },
+    {
+      "id": "desktop",
+      "title": "Desktop: Tauri shell and its crates",
+      "files": 36,
+      "lines": 8958,
+      "covered": 8226,
+      "percent": 91.8
+    },
+    {
+      "id": "cli",
+      "title": "CLI (`wing`)",
+      "files": 50,
+      "lines": 7312,
+      "covered": 5914,
+      "percent": 80.9
+    },
+    {
+      "id": "server",
+      "title": "Server (`wing-server`)",
+      "files": 1,
+      "lines": 385,
+      "covered": 3,
+      "percent": 0.8
+    },
+    {
+      "id": "mobile",
+      "title": "Mobile app (Android / iOS)",
+      "files": 5,
+      "lines": 151,
+      "covered": 151,
+      "percent": 100.0
+    },
+    {
+      "id": "crates",
+      "title": "Shared crates",
+      "files": 61,
+      "lines": 6580,
+      "covered": 3323,
+      "percent": 50.5
+    },
+    {
+      "id": "interface",
+      "title": "Interface (React)",
+      "files": 85,
+      "lines": 7360,
+      "covered": 5450,
+      "percent": 74.0
+    },
+    {
+      "id": "ts-client",
+      "title": "TypeScript client",
+      "files": 20,
+      "lines": 1862,
+      "covered": 591,
+      "percent": 31.7
+    },
+    {
+      "id": "packages",
+      "title": "Other packages",
+      "files": 6,
+      "lines": 4996,
+      "covered": 2067,
+      "percent": 41.4
+    }
+  ]
+}
