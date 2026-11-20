@@ -49,9 +49,9 @@ WingDrive is a desktop file manager for Linux with a daemon that indexes your fo
 drives and cloud volumes into one library. Files stay where they are; the index makes them fast to
 browse, search and recognize across your own devices. No account, no telemetry, no central server.
 
-> **Alpha.** Linux is the supported platform. The current goal (milestone M2) is to replace
-> Dolphin, Nautilus or Yazi as the default file manager. Windows installers ship since 3.0 as a
-> beta: they are unsigned and less tested than Linux. macOS builds from source.
+> **Alpha.** Linux is the supported platform, including use as the default file manager.
+> Windows and Android ship in beta. Android Explorer supports local copy, move, and trash.
+> macOS builds from source. Milestone M3 focuses on desktop releases for Windows and macOS.
 
 ## Install
 
@@ -59,7 +59,7 @@ browse, search and recognize across your own devices. No account, no telemetry, 
 |---|---|
 | Arch Linux and derivatives | `yay -S wingdrive-bin` (stable), or `yay -S wingdrive-nightly` for every release including alpha, beta and rc |
 | Any Linux (x86_64) | AppImage or `.deb` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS` |
-| Windows 10 and 11 (x64), beta | `.exe` or `.msi` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS-windows`. Unsigned, so SmartScreen warns |
+| Windows 10 and 11 (x64), beta | `.exe` or `.msi` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS-windows`. SmartScreen may warn when a build ships without Authenticode signing |
 | Android (ARM64), beta | Install the APK from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) and verify it with `SHA256SUMS-android` |
 | Headless server | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |
 | From source | `just setup && just dev-desktop` ([guide](./docs/readme/installation.md)) |
@@ -159,8 +159,8 @@ filesystems, copies refuse to write into their own source, system mounts are nev
 | Milestone | What it brings |
 |---|---|
 | **M1** · done | A reliable desktop file manager on Linux, from a production bundle |
-| **M2** · now | The default file manager on Linux: dual-pane Explorer (F3), a full day of use without falling back |
-| **M3** · next | Signed releases for macOS and Windows and auto-updates. Copy preflight (3.0) and undo for copy, move and trash (3.1) already shipped |
+| **M2** · done | Default file manager integration on Linux and dual-pane Explorer (F3). Desktop coverage follow-up remains open |
+| **M3** · now | Desktop releases for Windows and macOS. Linux and Windows already support signed updates, and platform validation continues |
 | **M4** | File sync between devices, public sharing links, Wingdrop to nearby devices, Tailscale |
 | **M5** | Semantic search, WASM extensions, encryption at rest, Android beta improvements and iOS releases |
 

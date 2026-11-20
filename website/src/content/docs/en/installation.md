@@ -47,7 +47,7 @@ makepkg -si
 
 ## Windows 10 and 11 (beta)
 
-Download the NSIS installer (`.exe`) or the `.msi` for x64. The installers are not signed yet, so SmartScreen warns on first run: choose **More info**, then **Run anyway**. Check the file against `SHA256SUMS-windows`:
+Download the NSIS installer (`.exe`) or the `.msi` for x64. SmartScreen may warn on builds without Authenticode signing. Check the file against `SHA256SUMS-windows`:
 
 ```powershell
 Get-FileHash .\WingDrive-*-x64-setup.exe -Algorithm SHA256
