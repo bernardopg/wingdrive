@@ -90,8 +90,13 @@ jobs:
         with:
           phase: wait
 
-      - name: Install virtual display for GTK coverage
-        run: command -v Xvfb >/dev/null || sudo apt-get install -y xvfb
+      - name: Install GTK and preview tools for desktop coverage
+        run: |
+          packages=()
+          command -v Xvfb >/dev/null || packages+=(xvfb)
+          command -v ffmpeg >/dev/null || packages+=(ffmpeg)
+          command -v pdftoppm >/dev/null || packages+=(poppler-utils)
+          if (( ${#packages[@]} )); then sudo apt-get install -y "${packages[@]}"; fi
       - name: Setup Bun for bridge tests
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
