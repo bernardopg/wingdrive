@@ -5,6 +5,36 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+## 3.6.0 — 2026-11-20
+
+Android Explorer adds local file operations. This release also fixes
+desktop settings and archive workflows, cloud volume handling, and
+core indexing and pairing behavior.
+
+### Added
+
+- Android Explorer can copy and move local files, show file metadata,
+  and move files to the trash. The Trash screen supports restore and
+  permanent deletion (#431).
+- Android users can remove a location by long-pressing it in Browse
+  (#431).
+
+### Fixed
+
+- Desktop settings, Quick Preview, and archive operations handle more
+  file and window states (#434). Network mount errors and device-list
+  failures surface GIO and GVFS diagnostics (#440, #464).
+- The CLI can clear automatic cloud sync schedules. Removing a cloud
+  volume leaves other volume types alone, and legacy cloud volumes are
+  recognized again (#443, #449, #462).
+- Pairing keeps the current code active. Thumbnail jobs preserve their
+  checkpoint, and duplicate detection counts each candidate path once
+  (#457, #465, #478).
+- The filesystem watcher filters temporary suffixes on the changed
+  entry, refreshes both directories after moves, and rejects unrelated
+  moves when the filesystem reuses an inode (#474).
+
+
 ## 3.5.0 — 2026-11-17
 
 Google Drive with WingDrive's own sign-in reaches existing files through the
