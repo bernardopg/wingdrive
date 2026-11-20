@@ -1,6 +1,6 @@
 # Roadmap do WingDrive
 
-Atualizado em 2026-11-15. Método e regras em [PLANNING.md](PLANNING.md).
+Atualizado em 2026-11-20. Método e regras em [PLANNING.md](PLANNING.md).
 
 Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
 entre dispositivos.
@@ -133,6 +133,10 @@ sync com um celular na `3.3.1`, a CORE-021 passou em 15 rodadas do smoke do Expl
 (janela aberta no login) foi corrigida. Com todas as filhas Done e o dia de uso da DESK-017, o
 DESK-000 fechou. As tasks de cobertura que estavam no M2 foram para o M3, onde ficam as metas.
 
+A [COV-07](testing/COV-07-desktop-native.md) foi reaberta no M2 em 2026-11-19 para a meta de
+100% de cobertura de linhas do shell desktop. A entrega do gerenciador padrão foi fechada em
+2026-11-15, e o M3 segue como foco.
+
 ## Now — M3: Desktop multiplataforma e release
 
 Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
@@ -150,7 +154,7 @@ lixeira no core, no CLI e na web UI, e cópias que não perdem dados quando canc
 
 | Ordem | Task | O que falta | Sprint |
 |---|---|---|---|
-| 1 | REL-001 | Assinatura: primeiro o updater do Tauri, depois Authenticode, Apple e Google Play; AUR só em tags estáveis | S06 |
+| 1 | REL-001 | Credenciais e validação de Authenticode, assinatura e notarização Apple, chave do Google Play | S06 |
 | 2 | TAURI-018 | Smoke do Explorer (`scripts/release/explorer.cjs`) em todo pull request e 10 execuções agendadas; job no `ci.yml` desde 2026-11-15 | S05 |
 | 3 | CORE-022 | Logs do daemon e do app sem ruído de condições normais (`/tmp` sem permissão, arquivos temporários, teardown) | S06 |
 | 4 | TAURI-019 | Daemon no Windows sem janela de console, com ícone na bandeja (precisa de máquina Windows) | S07 |
@@ -160,6 +164,10 @@ lixeira no core, no CLI e na web UI, e cópias que não perdem dados quando canc
 | 8 | CLI-002 | `wing update` não acha binários nos releases do WingDrive (Done em 2026-11-05) | — |
 | 9 | FILE-008 | Done em 2026-11-12: todo undo do Explorer passa pelo journal do core (#378) | — |
 | 10 | TAURI-000 | Fecha quando REL-001, TAURI-018 e TAURI-012 fecharem | S06 |
+
+O AppImage e os instaladores Windows têm atualizações assinadas desde a `v3.4.0`. Desde a
+`v3.5.0`, a assinatura Authenticode dos instaladores Windows é habilitada quando as credenciais
+estão configuradas. Isso mantém REL-001 e a validação por plataforma em andamento.
 
 O M3 fecha com a TAURI-012 Done em Windows e macOS, e um release assinado em todas as plataformas
 que têm credencial.
@@ -228,6 +236,7 @@ Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`
 
 | Data | Mudança |
 |---|---|
+| 2026-11-20 | Preparação da `v3.6.0`: operações locais, favoritos, tags e lixeira no Explorer Android (MOB-007, #431), correções no desktop, CLI e core. A COV-07 continua aberta. |
 | 2026-11-17 | Release `v3.5.0`: Google Picker para contas `drive.file` e um escopo do Fotos a menos (INTG-011, INTG-003, #428), resposta à verificação OAuth do Google; correções de Windows (#420, #421) e Android (#416 a #419), logs pela bandeja (#423), Authenticode condicional (#422). |
 | 2026-11-17 | Release `v3.4.1`: Rust 1.100, dependências do dependabot e não rastreadas num PR só, alertas de code scanning resolvidos (#410), filme e media kit no site (#412), CI Rust com um conjunto de features (#413) |
 | 2026-11-16 | Release `v3.4.0`: atualizações assinadas do AppImage e do Windows (REL-001), daemon sem console no Windows (TAURI-019), `drive.file` no cliente Google do WingDrive (INTG-003, #407; verificação do Google enviada, Acesso a dados em análise), board de tasks e MCP (DEV-007, #406), CORE-022, CORE-023, MOB-017 e Wings (BRAND-003) |

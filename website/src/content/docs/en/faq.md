@@ -35,7 +35,7 @@ Linux is supported. Windows 10 and 11 are in beta. macOS builds from source unti
 
 ## Why does Windows warn about the installer?
 
-The Windows installers are not signed yet. Choose *More info*, then *Run anyway*, and check the file against `SHA256SUMS-windows`. Signed releases are part of milestone M3.
+Tagged releases use Authenticode when signing credentials are configured. Windows SmartScreen may warn on builds without Authenticode signing. Verify the file against `SHA256SUMS-windows`.
 
 ## How do I report a bug or ask for a feature?
 

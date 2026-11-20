@@ -9,7 +9,7 @@ O WingDrive é um gerenciador de arquivos para desktop com um daemon em segundo 
 
 Não há conta, telemetria nem servidor central. A indexação, as miniaturas e a pesquisa são executadas na sua máquina.
 
-> **Alpha.** Linux é a plataforma compatível, e o objetivo atual (marco M2) é substituir Dolphin, Nautilus ou Yazi como seu gerenciador de arquivos padrão. Os instaladores para Windows são distribuídos em versão beta desde a 3.0. No macOS, a compilação é feita a partir do código-fonte.
+> **Alpha.** No Linux, o WingDrive pode ser usado como gerenciador de arquivos padrão. As versões para Windows e Android estão em beta. No macOS, a compilação é feita a partir do código-fonte. O marco M3 prioriza as versões desktop para Windows e macOS.
 
 <figure class="shot">
 <a href="/img/shots/WingGridView-1600.webp"><img src="/img/shots/WingGridView-1600.webp" srcset="/img/shots/WingGridView-800.webp 800w, /img/shots/WingGridView-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="Visualização em grade do WingDrive com o Inspetor"></a>

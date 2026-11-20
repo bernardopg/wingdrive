@@ -35,7 +35,7 @@ Linux é compatível. Windows 10 e 11 estão em beta. No macOS, a compilação �
 
 ## Por que o Windows exibe um aviso sobre o instalador?
 
-Os instaladores para Windows ainda não são assinados. Selecione *More info* e depois *Run anyway*, e confira o arquivo com `SHA256SUMS-windows`. Versões assinadas fazem parte do marco M3.
+As versões com tag usam Authenticode quando as credenciais de assinatura estão configuradas. O SmartScreen pode exibir um alerta em instaladores sem essa assinatura. Confira o arquivo com `SHA256SUMS-windows`.
 
 ## Como relato um erro ou solicito uma funcionalidade?
 

@@ -25,7 +25,7 @@ removed on 2026-11-02; the history is in git).
 ## Acceptance Criteria
 
 - [x] Tauri updater key generated; the public key in `tauri.conf.json` and the private key in repository secrets (2026-11-16)
-- [ ] A tag run publishes signed updater artifacts and `latest.json`
+- [x] A tag run publishes signed updater artifacts and `latest.json` ([v3.5.0 release](https://github.com/bernardopg/wingdrive/releases/tag/v3.5.0))
 - [x] Apple signing and notarization plan written (Developer ID, secrets, workflow step)
 - [x] Windows Authenticode signing plan written for the `.exe` and `.msi` from TAURI-016
 - [ ] Google Play upload key and the four `WINGDRIVE_ANDROID_KEYSTORE_*` secrets in place (with MOB-009)
