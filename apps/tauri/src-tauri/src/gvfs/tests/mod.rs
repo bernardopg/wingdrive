@@ -222,3 +222,84 @@ async fn mountable_listing_distinguishes_a_failed_command_from_an_empty_list() {
 		.unwrap_err();
 	assert!(error.starts_with("gio is not available:"), "{error}");
 }
+
+#[tokio::test]
+async fn network_commands_use_gio_and_the_session_mount_directory() {
+	use std::os::unix::fs::PermissionsExt;
+
+	const FIXTURE: &str = "WINGDRIVE_TEST_GVFS_RUNTIME";
+	if let Some(runtime) = std::env::var_os(FIXTURE) {
+		let gvfs = PathBuf::from(runtime).join("gvfs");
+		assert!(list_network_mounts().is_empty());
+		assert_eq!(
+			list_mountable_volumes().await.unwrap(),
+			[MountableVolume {
+				name: "Fixture phone".into(),
+				uri: "mtp://fixture/".into(),
+			}]
+		);
+
+		let mount = mount_network_location(" sftp://fixture/docs ".into(), Some("fixture".into()))
+			.await
+			.unwrap();
+		let path = gvfs.join("sftp:host=fixture,user=guest");
+		assert_eq!(mount.name, "guest on fixture (SFTP)");
+		assert_eq!(Path::new(&mount.path), path);
+		assert_eq!(list_network_mounts(), [mount.clone()]);
+		assert_eq!(
+			mount_network_location("sftp://fixture/docs".into(), None)
+				.await
+				.unwrap(),
+			mount
+		);
+
+		assert_eq!(
+			unmount_network_location(gvfs.join("missing").to_string_lossy().into_owned())
+				.await
+				.unwrap_err(),
+			"No such mount"
+		);
+		unmount_network_location(mount.path).await.unwrap();
+		assert!(!path.exists());
+		assert_eq!(
+			mount_network_location("sftp://fixture/missing".into(), None)
+				.await
+				.unwrap_err(),
+			"Mounted, but the location did not appear under gvfs"
+		);
+		return;
+	}
+
+	let runtime = tempfile::tempdir().unwrap();
+	std::fs::create_dir(runtime.path().join("gvfs")).unwrap();
+	let gio = runtime.path().join("gio");
+	std::fs::write(
+		&gio,
+		r#"#!/bin/sh
+[ "$1" = mount ] || exit 2
+case "$2" in
+	-li) printf 'Volume(0): Fixture phone\n  activation_root=mtp://fixture/\n  can_mount=1\n' ;;
+	-u) /usr/bin/rmdir -- "$3" 2>/dev/null || { printf 'gio: No such mount\n' >&2; exit 1; } ;;
+	sftp://fixture/docs)
+		mount="$XDG_RUNTIME_DIR/gvfs/sftp:host=fixture,user=guest"
+		if [ -d "$mount" ]; then printf 'gio: Location already mounted\n' >&2; exit 1; fi
+		IFS= read -r password && [ "$password" = fixture ] && /usr/bin/mkdir -- "$mount"
+		;;
+	sftp://fixture/missing) exit 0 ;;
+	*) exit 2 ;;
+esac
+"#,
+	)
+	.unwrap();
+	std::fs::set_permissions(&gio, std::fs::Permissions::from_mode(0o700)).unwrap();
+	crate::test_support::run_child_test(
+		"gvfs::contract_tests::network_commands_use_gio_and_the_session_mount_directory",
+		|command| {
+			command
+				.env(FIXTURE, runtime.path())
+				.env("XDG_RUNTIME_DIR", runtime.path())
+				.env("PATH", runtime.path())
+				.env_remove("APPDIR");
+		},
+	);
+}

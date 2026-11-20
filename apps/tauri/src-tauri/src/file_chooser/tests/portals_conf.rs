@@ -427,3 +427,61 @@ fn a_corrupt_state_file_is_ignored() {
 	assert!(!read(&config).contains("wingdrive"));
 	assert!(!fixture.paths.state_file.exists());
 }
+
+#[tokio::test]
+async fn settings_switch_restores_the_previous_portal_and_restarts_it() {
+	use std::os::unix::fs::PermissionsExt;
+
+	use tauri::Manager;
+
+	use super::super::{file_chooser_portal_set, file_chooser_portal_status, PortalStateFile};
+
+	const FIXTURE: &str = "WINGDRIVE_TEST_PORTAL_SETTINGS";
+	if let Some(root) = std::env::var_os(FIXTURE).map(PathBuf::from) {
+		let config = root.join("config/xdg-desktop-portal/portals.conf");
+		let original = std::fs::read_to_string(&config).unwrap();
+		let saved = root.join("data/file-chooser-portal.json");
+		let app = tauri::test::mock_app();
+		app.manage(PortalStateFile(saved.clone()));
+		assert!(!file_chooser_portal_status(app.state()).enabled);
+
+		let enabled = file_chooser_portal_set(app.state(), true).await.unwrap();
+		assert!(enabled.enabled);
+		assert_eq!(enabled.value.as_deref(), Some("wingdrive;gtk"));
+		assert!(file_chooser_portal_status(app.state()).enabled);
+		assert!(saved.exists());
+
+		let disabled = file_chooser_portal_set(app.state(), false).await.unwrap();
+		assert!(!disabled.enabled);
+		assert_eq!(disabled.value.as_deref(), Some("gtk"));
+		assert_eq!(std::fs::read_to_string(config).unwrap(), original);
+		assert!(!saved.exists());
+		assert_eq!(
+			std::fs::read_to_string(root.join("restarts")).unwrap(),
+			"--user try-restart xdg-desktop-portal.service\n--user try-restart xdg-desktop-portal.service\n"
+		);
+		return;
+	}
+
+	let fixture = Fixture::new("Hyprland");
+	fixture.write(
+		"portals.conf",
+		"[preferred]\norg.freedesktop.impl.portal.FileChooser=gtk\n",
+	);
+	let root = fixture._dir.path();
+	let systemctl = root.join("systemctl");
+	std::fs::write(
+		&systemctl,
+		"#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$WINGDRIVE_TEST_PORTAL_SETTINGS/restarts\"\n",
+	)
+	.unwrap();
+	std::fs::set_permissions(&systemctl, std::fs::Permissions::from_mode(0o700)).unwrap();
+	crate::test_support::run_child_test("file_chooser::tests::portals_conf::settings_switch_restores_the_previous_portal_and_restarts_it", |command| {
+		command
+			.env(FIXTURE, root)
+			.env("XDG_CONFIG_HOME", root.join("config"))
+			.env("XDG_DESKTOP_PORTAL_DIR", root.join("share/xdg-desktop-portal/portals"))
+			.env("XDG_CURRENT_DESKTOP", "Hyprland")
+			.env("PATH", root);
+	});
+}

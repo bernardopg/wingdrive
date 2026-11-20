@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S05
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-19
+last_updated: 2026-11-20
 ---
 
 ## Description
@@ -324,3 +324,35 @@ multicast `ENODEV`. The frontend build reported eight MapLibre BigInt target war
 ineffective Tauri event import warning. The build and the startup probe both returned zero.
 Logs are under `coverage/goal/after-watchers/native-smoke/`. The runtime profile remains
 separate from the last complete collector.
+
+## Medição completa em 2026-11-20
+
+| Execução Linux x86_64 | Linhas cobertas | Cobertura | Linhas sem execução |
+|---|---:|---:|---:|
+| [CI da main em `1337cc0df`](https://github.com/bernardopg/wingdrive/actions/runs/44630889175) | 8.069 / 8.958 | 90,1% | 889 |
+| Coleta oficial em `e9d2388a4cd0bfb1dea19b1977dfef42c81b5499` | 8.244 / 8.958 | 92,0% | 714 |
+| Mesma coleta com perfil do binário nativo | 8.388 / 8.958 | 93,6% | 570 |
+
+Os coletores oficiais passaram com Rust 1.100.0, cargo-llvm-cov 0.9.1 e Bun 1.4.5.
+Foram 2.234 testes Rust e 371 de frontend sem falhas, com quatro casos Rust ignorados.
+O teste GTK de clipboard passou em Xvfb. A coleta preservou os filtros do repositório.
+Os subprocessos verificam as montagens GIO, a troca e restauração do seletor de arquivos,
+a remoção do serviço systemd e os comandos de atualização. O atualizador emite progresso
+para o download de teste e preserva o AppImage quando a assinatura é inválida.
+
+O perfil suplementar iniciou e encerrou a janela nativa, verificou o ping do daemon e
+o encaminhamento da segunda instância, chamou FileManager1 e confirmou que fechar a janela
+do seletor cancela o pedido D-Bus. A execução usou Xvfb, D-Bus, HOME e rede privados.
+As maiores lacunas após esse perfil estão em `main.rs` (182 linhas), `server.rs` e
+`file_drag.rs` (34 cada) e `updates.rs` (29). Faltam, entre outros fluxos, o arraste GTK
+entre apps e a instalação seguida de reinício do atualizador. macOS e Windows não entram
+nesta medição Linux.
+
+Os relatórios ficam em `coverage/cov07/site/` e `coverage/cov07/with-native/` no worktree.
+O Cargo registrou dois avisos de limpeza do cache copiado por ausência de `CACHEDIR.TAG`.
+O marcador foi restaurado. A coleta usou perfis novos e terminou com código zero.
+O frontend emitiu dois erros esperados no teste de renomeação. O build da interface
+indicou oito avisos de BigInt do MapLibre e um de importação dinâmica do evento Tauri.
+No smoke, a inicialização recusou duas conexões antes de o daemon responder. Os avisos
+de portal, PipeWire, AT-SPI, DRI3, AppIndicator e multicast constam do log em
+`coverage/cov07/native/instrumented.log`. O smoke terminou com código zero.

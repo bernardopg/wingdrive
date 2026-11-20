@@ -241,4 +241,52 @@ mod systemd {
 			"{error}"
 		);
 	}
+
+	#[tokio::test]
+	async fn service_commands_use_only_the_daemon_units_in_the_session() {
+		use std::os::unix::fs::PermissionsExt;
+		use std::path::PathBuf;
+
+		use crate::{check_daemon_installed, daemon_service_active, uninstall_daemon_service};
+
+		const FIXTURE: &str = "WINGDRIVE_TEST_SYSTEMD_HOME";
+		if let Some(home) = std::env::var_os(FIXTURE).map(PathBuf::from) {
+			let systemd_dir = home.join(".config/systemd/user");
+			std::fs::create_dir_all(&systemd_dir).unwrap();
+			assert!(!check_daemon_installed().await.unwrap());
+			let unit = systemd_dir.join("wingdrive-daemon.service");
+			let other = systemd_dir.join("other.service");
+			std::fs::write(&unit, "").unwrap();
+			std::fs::write(&other, "untouched").unwrap();
+			assert!(check_daemon_installed().await.unwrap());
+			assert!(!daemon_service_active(Some("named")));
+			assert!(daemon_service_active(None));
+
+			uninstall_daemon_service().await.unwrap();
+			assert!(!check_daemon_installed().await.unwrap());
+			assert!(!unit.exists());
+			assert_eq!(std::fs::read_to_string(other).unwrap(), "untouched");
+			assert_eq!(
+				std::fs::read_to_string(home.join("calls")).unwrap(),
+				"--user is-active --quiet wingdrive-daemon.service\n--user stop wingdrive-daemon.service\n--user disable wingdrive-daemon.service\n--user daemon-reload\n"
+			);
+			return;
+		}
+
+		let home = tempfile::tempdir().unwrap();
+		let systemctl = home.path().join("systemctl");
+		std::fs::write(
+			&systemctl,
+			"#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$HOME/calls\"\n",
+		)
+		.unwrap();
+		std::fs::set_permissions(&systemctl, std::fs::Permissions::from_mode(0o700)).unwrap();
+		crate::test_support::run_child_test("command_tests::service::systemd::service_commands_use_only_the_daemon_units_in_the_session", |command| {
+		command
+			.env(FIXTURE, home.path())
+			.env("HOME", home.path())
+			.env("PATH", home.path())
+			.env_remove("APPDIR");
+	});
+	}
 }
