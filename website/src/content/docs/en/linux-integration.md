@@ -5,7 +5,7 @@ order: 8
 group: Using WingDrive
 ---
 
-WingDrive's current milestone (M2) is to be your **default file manager** on Linux. It integrates with the desktop the way Dolphin or Nautilus do.
+WingDrive can serve as your **default file manager** on Linux. It integrates with the desktop the way Dolphin or Nautilus do.
 
 ## Default file manager
 

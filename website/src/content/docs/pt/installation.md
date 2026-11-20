@@ -47,7 +47,7 @@ makepkg -si
 
 ## Windows 10 e 11 (beta)
 
-Baixe o instalador NSIS (`.exe`) ou o `.msi` para x64. Os instaladores ainda não são assinados, então o SmartScreen exibe um aviso na primeira execução: selecione **More info** e depois **Run anyway**. Confira o arquivo com `SHA256SUMS-windows`:
+Baixe o instalador NSIS (`.exe`) ou o `.msi` para x64. O SmartScreen pode exibir um alerta em instaladores sem assinatura Authenticode. Confira o arquivo com `SHA256SUMS-windows`:
 
 ```powershell
 Get-FileHash .\WingDrive-*-x64-setup.exe -Algorithm SHA256

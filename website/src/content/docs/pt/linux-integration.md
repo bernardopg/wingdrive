@@ -5,7 +5,7 @@ order: 8
 group: Usando o WingDrive
 ---
 
-O marco atual do WingDrive (M2) é ser seu **gerenciador de arquivos padrão** no Linux. Ele se integra ao desktop da mesma forma que Dolphin ou Nautilus.
+O WingDrive pode ser seu **gerenciador de arquivos padrão** no Linux. Ele se integra ao desktop da mesma forma que Dolphin ou Nautilus.
 
 ## Gerenciador de arquivos padrão
 

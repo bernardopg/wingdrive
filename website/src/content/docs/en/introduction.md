@@ -9,7 +9,7 @@ WingDrive is a desktop file manager with a background daemon that indexes your f
 
 There is no account, no telemetry and no central server. Indexing, thumbnails and search run on your machine.
 
-> **Alpha.** Linux is the supported platform, and the current goal (milestone M2) is to replace Dolphin, Nautilus or Yazi as your default file manager. Windows installers ship as a beta since 3.0. macOS builds from source.
+> **Alpha.** Linux is the supported platform, including use as the default file manager. Windows and Android ship in beta. macOS builds from source. Milestone M3 focuses on desktop releases for Windows and macOS.
 
 <figure class="shot">
 <a href="/img/shots/WingGridView-1600.webp"><img src="/img/shots/WingGridView-1600.webp" srcset="/img/shots/WingGridView-800.webp 800w, /img/shots/WingGridView-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="WingDrive grid view with the Inspector"></a>

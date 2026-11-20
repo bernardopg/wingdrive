@@ -5,6 +5,53 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+## 3.6.0 — 2026-11-20
+
+Android Explorer adds local file operations. This release also fixes
+desktop settings and archive workflows, cloud volume handling, and
+core indexing and pairing behavior.
+
+### Added
+
+- Android Explorer can copy and move local files and folders, show file
+  metadata, and manage favorites and tags for indexed files. On writable
+  local storage, users can move files to the trash, restore them, or delete
+  them permanently (#431).
+- Desktop can create and extract 7z and RAR archives and single-file
+  Bzip2 streams (#434).
+- Android users can remove a location by long-pressing it in Browse
+  (#431).
+
+### Fixed
+
+- Desktop settings and Quick Preview handle more file and window states
+  (#434). Hidden GTK menus no longer install accelerators, and network mount
+  and device-list failures surface GIO and GVFS diagnostics (#440, #464,
+  #479).
+- Android Explorer restores the back button touch target (#431).
+- CLI confirmation prompts exit on closed input, and daemon service paths
+  with spaces are quoted for systemd (#438, #453).
+- The CLI can clear automatic cloud sync schedules. Removing a cloud
+  volume leaves other volume types alone, and legacy cloud volumes are
+  recognized again (#443, #449, #462).
+- Pairing keeps the current code active. Thumbnail jobs preserve their
+  checkpoint, and duplicate detection counts each candidate path once
+  (#457, #465, #478).
+- Removing a location waits for its jobs to stop, failed jobs retain
+  their diagnostics, and concurrent indexers reuse matching MIME records
+  (#447, #474).
+- The filesystem watcher filters temporary suffixes on the changed
+  entry, refreshes both directories after moves, and rejects unrelated
+  moves when the filesystem reuses an inode (#474, #480).
+
+### Contributors
+
+- Added regression coverage for the filesystem watcher, file transfer,
+  job resume, thumbnail generation, desktop integrations, and CLI
+  service and cloud workflows. The Linux coverage backlog tracks the
+  remaining gaps in [COV-00](.tasks/testing/COV-00-test-coverage.md).
+
+
 ## 3.5.0 — 2026-11-17
 
 Google Drive with WingDrive's own sign-in reaches existing files through the

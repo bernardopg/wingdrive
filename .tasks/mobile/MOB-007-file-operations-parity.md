@@ -13,9 +13,9 @@ last_updated: 2026-11-18
 
 ## Description
 
-The mobile Explorer only lists. The desktop offers copy, move, rename, delete, new folder, tags,
-favorites, trash and space editing through `files.*`, `tags.*`, `metadata.set_favorite`, `trash.*`
-and `spaces.*` actions.
+The Android Explorer supports local file operations, favorites and tags in indexed
+locations, and a Trash screen for writable local storage. Trash entries belong to
+the app installation.
 
 ## Acceptance Criteria
 
