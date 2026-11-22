@@ -45,6 +45,9 @@ pub struct StoredGoogleAccount {
 	/// How the account signed in. Accounts saved before modes existed have none.
 	#[serde(default)]
 	pub mode: Option<ConnectionMode>,
+	/// The refresh token no longer works; the user must sign in again.
+	#[serde(default)]
+	pub needs_reconnect: bool,
 }
 
 /// A Microsoft account connected to a library, with its grant.
@@ -264,6 +267,7 @@ mod tests {
 			connected_at: Utc::now(),
 			drive_fingerprint: None,
 			mode: Some(ConnectionMode::App),
+			needs_reconnect: false,
 		}
 	}
 

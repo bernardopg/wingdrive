@@ -374,6 +374,13 @@ pub enum Event {
 		status: crate::service::wingdrop::WingdropStatus,
 	},
 
+	// Integration events
+	/// A connected account changed: reconnected, disconnected, or needs reconnection.
+	IntegrationAccountChanged {
+		library_id: Uuid,
+		account_id: String,
+	},
+
 	// Custom events for extensibility
 	Custom {
 		event_type: String,

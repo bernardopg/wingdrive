@@ -71,7 +71,7 @@ mod tests {
 		let db = Database::connect("sqlite::memory:").await.unwrap();
 		Migrator::up(&db, None).await.unwrap();
 		// Back to the schema of 3.3.1, then a sidebar as that version saved it.
-		Migrator::down(&db, Some(1)).await.unwrap();
+		Migrator::down(&db, Some(2)).await.unwrap();
 		assert_eq!(tables(&db).await, ["space_groups", "space_items", "spaces"]);
 		db.execute_unprepared(
 			"INSERT INTO spaces (id, uuid, name, icon, color, \"order\", created_at, updated_at)
@@ -123,7 +123,7 @@ mod tests {
 	async fn a_failed_rename_keeps_the_old_tables() {
 		let db = Database::connect("sqlite::memory:").await.unwrap();
 		Migrator::up(&db, None).await.unwrap();
-		Migrator::down(&db, Some(1)).await.unwrap();
+		Migrator::down(&db, Some(2)).await.unwrap();
 		// A table already under the new name makes the second rename fail.
 		db.execute_unprepared("CREATE TABLE wing_groups (id INTEGER PRIMARY KEY)")
 			.await

@@ -168,6 +168,20 @@ impl Core {
 
 		// Create the shared context
 		let context = Arc::new(context_inner);
+		{
+			let integrations = context.integrations.clone();
+			let hook_context = context.clone();
+			let hook_integrations = integrations.clone();
+			integrations.set_invalid_grant_hook(Arc::new(move |library_id, account_id| {
+				let integrations = hook_integrations.clone();
+				let hook_context = hook_context.clone();
+				tokio::spawn(async move {
+					integrations
+						.handle_google_invalid_grant(&hook_context, library_id, &account_id)
+						.await;
+				});
+			}));
+		}
 
 		// Initialize library manager with libraries directory and context
 		let libraries_dir = config.read().await.libraries_dir();

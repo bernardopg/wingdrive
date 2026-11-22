@@ -468,6 +468,11 @@ fn summarize_event(event: &Event) -> String {
 			)
 		}
 
+		// Integration events
+		Event::IntegrationAccountChanged { library_id, account_id } => {
+			format!("Integration account changed: {} in library {}", account_id, library_id)
+		}
+
 		// Custom events
 		Event::Custom { event_type, data } => {
 			format!("Custom event: {} - {:?}", event_type, data)

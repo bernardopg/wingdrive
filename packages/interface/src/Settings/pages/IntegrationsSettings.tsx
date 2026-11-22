@@ -96,6 +96,7 @@ async function pickFolder(
 export function IntegrationsSettings() {
 	const { t } = useTranslation();
 	const client = useWingDriveClient();
+	const queryClient = useQueryClient();
 	const libraryId = client.getCurrentLibraryId();
 	const accounts = useLibraryQuery(
 		{ type: "integrations.accounts.list", input: {} },
@@ -106,6 +107,36 @@ export function IntegrationsSettings() {
 		{ type: "integrations.microsoft.client", input: {} },
 		{ enabled: !!libraryId }
 	);
+	useEffect(() => {
+		if (!libraryId) return;
+		let cancelled = false;
+		let unsubscribe: (() => void) | undefined;
+		void client
+			.subscribe((event) => {
+				if (
+					typeof event === "object" &&
+					event !== null &&
+					"IntegrationAccountChanged" in event
+				) {
+					const changed = (
+						event as { IntegrationAccountChanged: { library_id: string } }
+					).IntegrationAccountChanged;
+					if (changed.library_id === libraryId) {
+						void queryClient.invalidateQueries({
+							queryKey: ["integrations.accounts.list"],
+						});
+					}
+				}
+			})
+			.then((unsub) => {
+				if (cancelled) unsub();
+				else unsubscribe = unsub;
+			});
+		return () => {
+			cancelled = true;
+			unsubscribe?.();
+		};
+	}, [client, libraryId, queryClient]);
 	const [selected, setSelected] = useState<string | null>(null);
 	const [upgradeAccount, setUpgradeAccount] = useState<IntegrationAccountInfo | null>(null);
 	const upgradeDrive = (account: IntegrationAccountInfo) => {
@@ -130,9 +161,16 @@ export function IntegrationsSettings() {
 	};
 	const current = CATALOG.find((entry) => entryId(entry) === selected);
 
+	const needsReconnect = list.filter((account) => account.needs_reconnect);
+
 	return (
 		<div className="space-y-6">
 			<SettingsHeader title={t("sections.integrations")} description={t("integrations.description")} />
+			{needsReconnect.length > 0 && (
+				<Notice tone="warning">
+					{t("integrations.accounts.reconnectBanner", { count: needsReconnect.length })}
+				</Notice>
+			)}
 			<IntegrationCatalog
 				accounts={list}
 				clients={clients}
@@ -657,8 +695,35 @@ function AccountRow({
 							</p>
 						)}
 					</div>
-					<Switch label={t(microsoft ? "integrations.accounts.oneDriveMounted" : "integrations.google.driveMounted")} checked={!!account.drive?.mounted} disabled={mounting} onChange={(value) => void toggleDrive(value)} />
+					<Switch label={t(microsoft ? "integrations.accounts.oneDriveMounted" : "integrations.google.driveMounted")} checked={!!account.drive?.mounted} disabled={mounting || account.needs_reconnect} onChange={(value) => void toggleDrive(value)} />
 				</div>
+			)}
+
+			{account.needs_reconnect && (
+				<Notice tone="warning">
+					<div className="flex flex-wrap items-center gap-2">
+						<span>{t("integrations.accounts.reconnectNeeded")}</span>
+						{!microsoft && (
+							<button
+								type="button"
+								className={secondaryButton}
+								disabled={reconnect.isStarting || reconnect.state.phase === "waiting"}
+								onClick={() =>
+									void reconnect.start({
+										provider: "google",
+										mode: account.mode,
+										services: account.services.length > 0 ? account.services : ["drive"],
+										loginHint: account.email,
+									})
+								}
+							>
+								{reconnect.state.phase === "waiting"
+									? t("integrations.accounts.waiting")
+									: t("integrations.accounts.reconnect")}
+							</button>
+						)}
+					</div>
+				</Notice>
 			)}
 
 			{account.drive_access === "app_files" && (

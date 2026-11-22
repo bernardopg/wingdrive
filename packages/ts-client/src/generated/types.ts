@@ -1411,6 +1411,11 @@ export type Event = "CoreStarted" | "CoreShutdown" | ({ LibraryCreated: {
 ({ WingdropUpdated: {
 	drop_id: string,
 	status: WingdropStatus,
+} }) | 
+/**  A connected account changed: reconnected, disconnected, or needs reconnection. */
+({ IntegrationAccountChanged: {
+	library_id: string,
+	account_id: string,
 } }) | ({ Custom: {
 	event_type: string,
 } });
@@ -2244,6 +2249,8 @@ export type IntegrationAccountInfo = {
 	 *  Picker: it has `drive.file` access and the build has a Picker API key.
 	 */
 	drive_picker: boolean,
+	/**  The account's grant no longer works and the user must sign in again. */
+	needs_reconnect?: boolean,
 };
 
 /**  Disconnects an account from the library. */
