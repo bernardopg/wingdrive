@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, core]
-last_updated: 2026-11-15
+last_updated: 2026-11-22
 ---
 
 ## Description
@@ -47,6 +47,15 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
   arquivo de 300 KB com data de 2017 e de um link quebrado; o destino ficou com os mesmos bytes, a
   data de 2017 e o link.
   Falta a medição LCOV por arquivo de `ops/files`, que decide o critério de 80%.
+- 2026-11-22: `core/tests/file_ops_safety_test.rs` (11 casos, adicionado ao gate Linux de
+  `scripts/ci-rust.sh`) cobre prevenção de perda de dados em criação/rename/exclusão: criação de
+  arquivo vazio, conflito de nome existente, nome de pasta inválido, symlink criado e conflito
+  recusado, exclusão permanente de arquivos e diretórios vazios, rejeição de alvo ausente sem tocar
+  outros alvos, exclusão permanente de symlink sem tocar o alvo, envio para lixeira em sandbox XDG,
+  rename recusado quando o destino já existe e rename bem-sucedido preservando conteúdo. Execução
+  direcionada: `CARGO_BUILD_JOBS=2 cargo test -p wing-core --test file_ops_safety_test -- --nocapture`
+  => 11 passed, 0 failed. Não houve medição LCOV antes/depois neste ambiente; critério de 80% por
+  módulo alterado de `ops/files` permanece pendente e explícito.
 
 ## Measurement 2026-11-15
 
