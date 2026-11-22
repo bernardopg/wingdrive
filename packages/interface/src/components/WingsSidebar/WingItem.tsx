@@ -39,6 +39,8 @@ export interface WingItemProps {
 	// Overrides
 	overrides?: WingItemOverrides;
 	rightComponent?: React.ReactNode;
+	/** Rendered outside the main button, for actions like reconnect. */
+	rightAction?: React.ReactNode;
 	// Legacy props (for backwards compatibility during migration)
 	volumeData?: { device_slug: string; mount_path: string };
 	customIcon?: string;
@@ -196,6 +198,7 @@ const WingItemBody = memo(function WingItemBody({
 	isLastItem = false,
 	overrides,
 	rightComponent,
+	rightAction,
 	// Legacy props
 	volumeData,
 	customIcon,
@@ -370,6 +373,7 @@ const WingItemBody = memo(function WingItemBody({
 					<span className="flex-1 truncate text-left">{label}</span>
 					{rightComponent}
 				</button>
+				{rightAction}
 				{sortable && (
 					<button ref={setActivatorNodeRef} type="button" {...sortableAttributes} {...sortableListeners}
 						aria-label={t("sidebar.reorderItem", {name: label})}

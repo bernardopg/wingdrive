@@ -29,6 +29,9 @@ pub struct Model {
 	pub last_report: Option<String>,
 	/// JSON `Manifest` of the last run.
 	pub manifest: Option<String>,
+	/// Disabled automatically because the cloud account needs reconnection.
+	#[sea_orm(default_value = false)]
+	pub paused_by_reconnect: bool,
 	pub created_at: DateTimeUtc,
 	pub updated_at: DateTimeUtc,
 }

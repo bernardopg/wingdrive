@@ -47,6 +47,7 @@ mod m20261015_000001_repair_entry_closure;
 mod m20261111_000001_fix_sync_conduit_entry_fk;
 mod m20261112_000001_create_cloud_sync_pairs;
 mod m20261115_000001_rename_spaces_to_wings;
+mod m20261122_000001_add_paused_by_reconnect_to_cloud_sync_pairs;
 
 pub struct Migrator;
 
@@ -99,6 +100,7 @@ impl MigratorTrait for Migrator {
 			Box::new(m20261111_000001_fix_sync_conduit_entry_fk::Migration),
 			Box::new(m20261112_000001_create_cloud_sync_pairs::Migration),
 			Box::new(m20261115_000001_rename_spaces_to_wings::Migration),
+			Box::new(m20261122_000001_add_paused_by_reconnect_to_cloud_sync_pairs::Migration),
 		]
 	}
 }

@@ -658,3 +658,76 @@ async fn two_accounts_drive_photos_sync_edit_and_removal() -> TestResult {
 	core.shutdown().await?;
 	Ok(())
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn google_invalid_grant_marks_account_for_reconnect() -> TestResult {
+	let fake = FakeGoogle::start(users()).await;
+	std::env::set_var(
+		"WINGDRIVE_GOOGLE_CLIENT_ID",
+		"test.apps.googleusercontent.com",
+	);
+	std::env::set_var("WINGDRIVE_GOOGLE_CLIENT_SECRET", "test-secret");
+	std::env::set_var("WINGDRIVE_GOOGLE_ENDPOINTS_BASE", fake.base_url.clone());
+
+	let dir = TempDir::new()?;
+	let mut core = Core::new(dir.path().join("core")).await?;
+	core.services
+		.volume_monitoring
+		.set_enabled(&core.context, false)
+		.await
+		.ok();
+	let library = core
+		.libraries
+		.create("Intg", None, core.context.clone())
+		.await?;
+
+	let integrations = core.context.integrations.clone();
+	let status = connect(&core, &library, "code-ana").await?;
+	let ConnectStatus::Completed { account } = status else {
+		panic!("expected completed sign-in");
+	};
+	assert!(!account.needs_reconnect);
+
+	// Revoke the refresh token on the fake so the next refresh returns invalid_grant.
+	{
+		let mut state = fake.state.lock().unwrap();
+		state.refresh_tokens.remove("rt-1001");
+	}
+	let (_stored, api) = integrations.google_api(&library, &account.id).await?;
+	api.tokens.invalidate().await;
+	let err = api.tokens.access_token().await.unwrap_err();
+	assert!(matches!(
+		err,
+		wing_core::service::integrations::google::GoogleError::InvalidGrant
+	));
+
+	// The hook runs async; wait for the persisted flag.
+	let store = wing_core::service::integrations::store::IntegrationStore::for_library(&library);
+	let mut marked = false;
+	for _ in 0..40 {
+		if let Some(stored) = store.google_account(&account.id).await? {
+			if stored.needs_reconnect {
+				marked = true;
+				break;
+			}
+		}
+		tokio::time::sleep(Duration::from_millis(50)).await;
+	}
+	assert!(marked, "account should be marked needs_reconnect");
+
+	let listed = integrations.list_accounts(&library).await?;
+	let account = listed.into_iter().find(|a| a.id == account.id).unwrap();
+	assert!(account.needs_reconnect);
+
+	// Reconnecting through the normal sign-in clears the flag.
+	let status = connect(&core, &library, "code-ana").await?;
+	let ConnectStatus::Completed { account } = status else {
+		panic!("expected completed reconnect");
+	};
+	assert!(!account.needs_reconnect);
+	let stored = store.google_account(&account.id).await?.unwrap();
+	assert!(!stored.needs_reconnect);
+
+	core.shutdown().await?;
+	Ok(())
+}

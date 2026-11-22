@@ -205,6 +205,7 @@ impl LibraryAction for CloudSyncCreateAction {
 			last_error: Set(None),
 			last_report: Set(None),
 			manifest: Set(None),
+			paused_by_reconnect: Set(false),
 			created_at: Set(now),
 			updated_at: Set(now),
 		}

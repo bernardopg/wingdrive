@@ -340,7 +340,11 @@
 			"confirmDisconnect": "Desconectar esta conta e revogar o acesso do WingDrive?",
 			"confirmDisconnectMicrosoft": "Desconectar esta conta? Para revogar o acesso, remova também o WingDrive em account.live.com/consent/Manage.",
 			"disconnected": "{{email}} desconectada",
-			"disconnectFailed": "Não foi possível desconectar: {{error}}"
+			"disconnectFailed": "Não foi possível desconectar: {{error}}",
+			"reconnectNeeded": "O acesso desta conta foi revogado ou expirou. Reconecte para restaurar o Drive e a sincronização.",
+			"reconnect": "Reconectar",
+			"reconnectBanner_one": "{{count}} conta conectada precisa ser reconectada.",
+			"reconnectBanner_other": "{{count}} contas conectadas precisam ser reconectadas."
 		},
 		"google": {
 			"serviceDrive": "Google Drive",

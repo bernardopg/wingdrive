@@ -12,10 +12,15 @@ use std::time::{Duration, Instant};
 use reqwest::{RequestBuilder, Response, StatusCode};
 use tokio::sync::Mutex;
 use tracing::{debug, warn};
+use uuid::Uuid;
 
 use super::endpoints::GoogleEndpoints;
 use super::error::{GoogleError, GoogleResult};
 use super::oauth::{refresh_access_token, OAuthClient};
+
+/// Called when a refresh fails with `invalid_grant`, meaning the account
+/// must be reconnected. Runs synchronously; implementations should spawn work.
+pub type InvalidGrantHook = Arc<dyn Fn(Uuid, String) + Send + Sync>;
 
 /// Refresh this long before Google's stated expiry to absorb clock skew and slow requests.
 const EXPIRY_MARGIN: Duration = Duration::from_secs(120);
@@ -30,13 +35,23 @@ struct CachedToken {
 }
 
 /// Hands out valid access tokens for one account.
-#[derive(Debug)]
 pub struct GoogleTokenSource {
 	http: reqwest::Client,
 	endpoints: GoogleEndpoints,
 	client: OAuthClient,
 	refresh_token: String,
 	cached: Mutex<Option<CachedToken>>,
+	library_id: Option<Uuid>,
+	account_id: Option<String>,
+	invalid_grant_hook: Option<InvalidGrantHook>,
+}
+
+impl std::fmt::Debug for GoogleTokenSource {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.debug_struct("GoogleTokenSource")
+			.field("account_id", &self.account_id)
+			.finish_non_exhaustive()
+	}
 }
 
 impl GoogleTokenSource {
@@ -52,7 +67,24 @@ impl GoogleTokenSource {
 			client,
 			refresh_token,
 			cached: Mutex::new(None),
+			library_id: None,
+			account_id: None,
+			invalid_grant_hook: None,
 		}
+	}
+
+	/// Reports `invalid_grant` refresh failures for this account so the UI
+	/// can prompt the user to reconnect.
+	pub fn with_invalid_grant_handler(
+		mut self,
+		library_id: Uuid,
+		account_id: String,
+		hook: InvalidGrantHook,
+	) -> Self {
+		self.library_id = Some(library_id);
+		self.account_id = Some(account_id);
+		self.invalid_grant_hook = Some(hook);
+		self
 	}
 
 	/// Stores a token the caller already has, such as the one from the code exchange.
@@ -72,13 +104,28 @@ impl GoogleTokenSource {
 			}
 		}
 		debug!("Refreshing Google access token");
-		let response = refresh_access_token(
+		let response = match refresh_access_token(
 			&self.http,
 			&self.endpoints,
 			&self.client,
 			&self.refresh_token,
 		)
-		.await?;
+		.await
+		{
+			Ok(response) => response,
+			Err(GoogleError::InvalidGrant) => {
+				*cached = None;
+				if let (Some(hook), Some(library_id), Some(account_id)) = (
+					&self.invalid_grant_hook,
+					self.library_id,
+					self.account_id.as_ref(),
+				) {
+					hook(library_id, account_id.clone());
+				}
+				return Err(GoogleError::InvalidGrant);
+			}
+			Err(error) => return Err(error),
+		};
 		let value = response.access_token.clone();
 		*cached = Some(CachedToken {
 			value: response.access_token,
@@ -223,8 +270,23 @@ pub fn api_error(status: StatusCode, body: &str) -> GoogleError {
 	if status == StatusCode::NOT_FOUND {
 		return GoogleError::NotFound(message);
 	}
+	if status == StatusCode::FORBIDDEN && body.contains("storageQuotaExceeded") {
+		return GoogleError::Api {
+			status: status.as_u16(),
+			message: "Google Drive storage quota exceeded. Free up space in your Google account or upgrade your storage plan.".to_string(),
+		};
+	}
 	if status == StatusCode::FORBIDDEN && message.contains("insufficient") {
 		return GoogleError::MissingScope(message);
+	}
+	if status == StatusCode::TOO_MANY_REQUESTS
+		|| (status == StatusCode::FORBIDDEN
+			&& (body.contains("rateLimitExceeded") || body.contains("userRateLimitExceeded")))
+	{
+		return GoogleError::Api {
+			status: status.as_u16(),
+			message: "Google API rate limit exceeded. Try again in a few moments.".to_string(),
+		};
 	}
 	GoogleError::Api {
 		status: status.as_u16(),
@@ -260,5 +322,23 @@ mod tests {
 		assert_eq!(backoff(1), Duration::from_millis(500));
 		assert_eq!(backoff(2), Duration::from_millis(1000));
 		assert_eq!(backoff(3), Duration::from_millis(2000));
+	}
+
+	#[test]
+	fn api_error_maps_storage_quota_and_rate_limits() {
+		let quota = r#"{"error":{"code":403,"message":"The user's Drive storage quota has been exceeded.","errors":[{"reason":"storageQuotaExceeded"}]}}"#;
+		let err = api_error(StatusCode::FORBIDDEN, quota);
+		assert!(matches!(err, GoogleError::Api { status: 403, .. }));
+		assert!(err.to_string().contains("storage quota exceeded"));
+
+		let rate = r#"{"error":{"code":403,"message":"Rate Limit Exceeded","errors":[{"reason":"userRateLimitExceeded"}]}}"#;
+		let err = api_error(StatusCode::FORBIDDEN, rate);
+		assert!(matches!(err, GoogleError::Api { status: 403, .. }));
+		assert!(err.to_string().contains("rate limit exceeded"));
+
+		let too_many = r#"{"error":{"code":429,"message":"Too many requests"}}"#;
+		let err = api_error(StatusCode::TOO_MANY_REQUESTS, too_many);
+		assert!(matches!(err, GoogleError::Api { status: 429, .. }));
+		assert!(err.to_string().contains("rate limit exceeded"));
 	}
 }

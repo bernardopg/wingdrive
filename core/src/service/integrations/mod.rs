@@ -40,7 +40,7 @@ pub mod store;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::{Arc, Weak};
+use std::sync::{Arc, OnceLock, Weak};
 use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Utc};
@@ -163,6 +163,9 @@ pub struct IntegrationAccountInfo {
 	/// Whether the account can open existing Drive files through the Google
 	/// Picker: it has `drive.file` access and the build has a Picker API key.
 	pub drive_picker: bool,
+	/// The account's grant no longer works and the user must sign in again.
+	#[serde(default)]
+	pub needs_reconnect: bool,
 }
 
 /// Progress of a browser sign-in.
@@ -239,6 +242,7 @@ pub struct IntegrationService {
 	drive_backends: Mutex<HashMap<(Uuid, String), Weak<GoogleDriveBackend>>>,
 	drive_pickers: Mutex<HashMap<Uuid, DrivePickerSession>>,
 	pub cloud_edits: cloud_edit::CloudEditService,
+	invalid_grant_hook: OnceLock<google::tokens::InvalidGrantHook>,
 }
 
 impl std::fmt::Debug for IntegrationService {
@@ -319,6 +323,7 @@ impl IntegrationService {
 			drive_backends: Mutex::new(HashMap::new()),
 			drive_pickers: Mutex::new(HashMap::new()),
 			cloud_edits: cloud_edit::CloudEditService::new(data_dir.join("cloud-edit")),
+			invalid_grant_hook: OnceLock::new(),
 		}
 	}
 
@@ -339,6 +344,12 @@ impl IntegrationService {
 
 	pub fn http(&self) -> &reqwest::Client {
 		&self.http
+	}
+
+	/// Installs the handler called when any Google account refresh fails with
+	/// `invalid_grant`. The handler should mark the account and update the UI.
+	pub fn set_invalid_grant_hook(&self, hook: google::tokens::InvalidGrantHook) {
+		let _ = self.invalid_grant_hook.set(hook);
 	}
 
 	/// WingDrive's own Google client, from the environment or the build.
@@ -593,15 +604,21 @@ impl IntegrationService {
 				.unwrap_or_else(Utc::now),
 			drive_fingerprint: previous.as_ref().and_then(|p| p.drive_fingerprint.clone()),
 			mode: Some(mode),
+			needs_reconnect: false,
 		};
 		store.save_google_account(&account).await?;
 
-		let source = Arc::new(GoogleTokenSource::new(
+		let mut source = GoogleTokenSource::new(
 			self.http.clone(),
 			self.endpoints.clone(),
 			account.client.clone(),
 			account.refresh_token.clone(),
-		));
+		);
+		if let Some(hook) = self.invalid_grant_hook.get() {
+			source =
+				source.with_invalid_grant_handler(library.id(), account.id.clone(), hook.clone());
+		}
+		let source = Arc::new(source);
 		source.seed(tokens.access_token, tokens.expires_in).await;
 		self.token_sources
 			.lock()
@@ -613,6 +630,26 @@ impl IntegrationService {
 				warn!(%error, "Connected Google account but could not mount Drive");
 			}
 		}
+		match self.resume_google_sync_pairs(library, &account.email).await {
+			Ok(resumed) if !resumed.is_empty() => {
+				info!(
+					account = %account.id,
+					count = resumed.len(),
+					"Resumed cloud sync pairs after Google reconnect"
+				);
+			}
+			Ok(_) => {}
+			Err(error) => {
+				warn!(%error, account = %account.id, "Could not resume cloud sync pairs after reconnect");
+			}
+		}
+		library
+			.core_context()
+			.events
+			.emit(crate::infra::event::Event::IntegrationAccountChanged {
+				library_id: library.id(),
+				account_id: account.id.clone(),
+			});
 		info!(account = %account.id, "Connected Google account");
 		self.account_info(library, &account).await
 	}
@@ -660,12 +697,20 @@ impl IntegrationService {
 		sources
 			.entry((library_id, account.id.clone()))
 			.or_insert_with(|| {
-				Arc::new(GoogleTokenSource::new(
+				let mut source = GoogleTokenSource::new(
 					self.http.clone(),
 					self.endpoints.clone(),
 					account.client.clone(),
 					account.refresh_token.clone(),
-				))
+				);
+				if let Some(hook) = self.invalid_grant_hook.get() {
+					source = source.with_invalid_grant_handler(
+						library_id,
+						account.id.clone(),
+						hook.clone(),
+					);
+				}
+				Arc::new(source)
 			})
 			.clone()
 	}
@@ -1041,6 +1086,133 @@ impl IntegrationService {
 		}
 	}
 
+	/// Marks a Google account as needing reconnection, pauses its sync pairs,
+	/// and notifies the UI. Called when a token refresh returns `invalid_grant`.
+	pub async fn handle_google_invalid_grant(
+		&self,
+		context: &Arc<crate::context::CoreContext>,
+		library_id: Uuid,
+		account_id: &str,
+	) {
+		let Some(library) = context.get_library(library_id).await else {
+			warn!(%library_id, account_id, "Google account needs reconnect but library is not loaded");
+			return;
+		};
+		let store = IntegrationStore::for_library(&library);
+		let mut account = match store.google_account(account_id).await {
+			Ok(Some(account)) => account,
+			Ok(None) => {
+				warn!(
+					account_id,
+					"Google account needs reconnect but was not found"
+				);
+				return;
+			}
+			Err(error) => {
+				warn!(%error, account_id, "Could not load Google account for reconnect flag");
+				return;
+			}
+		};
+		if account.needs_reconnect {
+			return;
+		}
+		account.needs_reconnect = true;
+		if let Err(error) = store.save_google_account(&account).await {
+			warn!(%error, account_id, "Could not persist Google reconnect flag");
+			return;
+		}
+		if let Some(source) = self
+			.token_sources
+			.lock()
+			.await
+			.get(&(library_id, account_id.to_string()))
+		{
+			source.invalidate().await;
+		}
+		match self.pause_google_sync_pairs(&library, &account.email).await {
+			Ok(paused) if !paused.is_empty() => {
+				info!(
+					account_id,
+					count = paused.len(),
+					"Paused cloud sync pairs until Google reconnect"
+				);
+			}
+			Ok(_) => {}
+			Err(error) => {
+				warn!(%error, account_id, "Could not pause cloud sync pairs for reconnect");
+			}
+		}
+		context
+			.events
+			.emit(crate::infra::event::Event::IntegrationAccountChanged {
+				library_id,
+				account_id: account_id.to_string(),
+			});
+		info!(account_id, "Google account marked as needing reconnection");
+	}
+
+	async fn pause_google_sync_pairs(
+		&self,
+		library: &Library,
+		account_email: &str,
+	) -> Result<Vec<Uuid>, IntegrationError> {
+		use crate::infra::db::entities::cloud_sync_pair;
+		use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+
+		let pairs = cloud_sync_pair::Entity::find()
+			.filter(cloud_sync_pair::Column::RemoteService.eq("gdrive"))
+			.filter(cloud_sync_pair::Column::RemoteIdentifier.eq(account_email))
+			.filter(cloud_sync_pair::Column::Enabled.eq(true))
+			.all(library.db().conn())
+			.await
+			.map_err(|e| IntegrationError::Volume(e.to_string()))?;
+		let mut paused = Vec::new();
+		for pair in pairs {
+			let uuid = pair.uuid;
+			let mut active: cloud_sync_pair::ActiveModel = pair.into();
+			active.enabled = Set(false);
+			active.paused_by_reconnect = Set(true);
+			active.updated_at = Set(Utc::now());
+			active
+				.update(library.db().conn())
+				.await
+				.map_err(|e| IntegrationError::Volume(e.to_string()))?;
+			paused.push(uuid);
+		}
+		Ok(paused)
+	}
+
+	async fn resume_google_sync_pairs(
+		&self,
+		library: &Library,
+		account_email: &str,
+	) -> Result<Vec<Uuid>, IntegrationError> {
+		use crate::infra::db::entities::cloud_sync_pair;
+		use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+
+		let pairs = cloud_sync_pair::Entity::find()
+			.filter(cloud_sync_pair::Column::RemoteService.eq("gdrive"))
+			.filter(cloud_sync_pair::Column::RemoteIdentifier.eq(account_email))
+			.filter(cloud_sync_pair::Column::PausedByReconnect.eq(true))
+			.all(library.db().conn())
+			.await
+			.map_err(|e| IntegrationError::Volume(e.to_string()))?;
+		let mut resumed = Vec::new();
+		for pair in pairs {
+			let uuid = pair.uuid;
+			let mut active: cloud_sync_pair::ActiveModel = pair.into();
+			active.enabled = Set(true);
+			active.paused_by_reconnect = Set(false);
+			active.updated_at = Set(Utc::now());
+			active
+				.update(library.db().conn())
+				.await
+				.map_err(|e| IntegrationError::Volume(e.to_string()))?;
+			resumed.push(uuid);
+		}
+		Ok(resumed)
+	}
+
 	/// Disconnects an account of either provider.
 	///
 	/// Google grants are revoked at Google when `revoke` is set. Microsoft has
@@ -1129,6 +1301,7 @@ impl IntegrationService {
 				.await,
 			drive_access: oauth::DriveAccess::granted(&account.scopes),
 			drive_picker: self.drive_picker_available(account),
+			needs_reconnect: account.needs_reconnect,
 		})
 	}
 
@@ -1152,6 +1325,7 @@ impl IntegrationService {
 				.await,
 			drive_access: None,
 			drive_picker: false,
+			needs_reconnect: false,
 		}
 	}
 
@@ -1590,6 +1764,7 @@ mod tests {
 			connected_at: Utc::now(),
 			drive_fingerprint: None,
 			mode: Some(ConnectionMode::App),
+			needs_reconnect: false,
 		}
 	}
 
