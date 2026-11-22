@@ -204,7 +204,7 @@ impl PeerLog {
 			.map_err(|e| PeerLogError::SerializationError(e.to_string()))?;
 		let created_at = chrono::Utc::now().to_rfc3339();
 
-		self.conn
+		match self.conn
 			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"
@@ -221,9 +221,17 @@ impl PeerLog {
 				],
 			))
 			.await
-			.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
-
-		Ok(())
+		{
+			Ok(_) => Ok(()),
+			Err(e) => {
+				let msg = e.to_string();
+				if msg.contains("UNIQUE constraint failed") {
+					Ok(())
+				} else {
+					Err(PeerLogError::QueryError(msg))
+				}
+			}
+		}
 	}
 
 	/// Get changes since a given HLC, up to an optional limit
