@@ -37,6 +37,8 @@ same. The age in the message is the sentinel, not a real age.
 - [x] Find what triggers a catch-up every 5 seconds with an idle peer, and stop it while the peer is
       Ready and nothing changed.
 - [x] "No entries found for device" is a normal answer for a device without locations: DEBUG.
+- [x] A peer with no device-owned watermarks but a recent successful catch-up is skipped by the sync
+      loop, instead of being treated as a new peer on every pass (`run_sync_loop`).
 - [ ] Regression test with two in-process cores where one side owns no device data: one full sync,
       then incremental catch-ups only.
 
@@ -55,5 +57,6 @@ pass, and a quiet peer's watermark only ages. `catch_up_from_peer` then read the
 as `Duration::max_value()`, hence "106751991167 days old" and a forced full sync each time.
 
 The loop now remembers the last successful catch-up per peer and skips the peer for 60 s after it
-(`CATCH_UP_INTERVAL`), whatever its watermarks say. Real-time broadcasts carry the changes in
-between, and the catch-up only repairs gaps.
+(`CATCH_UP_INTERVAL`), whatever its watermarks say. After that window, a peer with no device-owned
+watermarks is skipped when it has already been caught up, because the empty delta will not produce a
+watermark; real-time broadcasts carry later changes and catch-up only repairs gaps.

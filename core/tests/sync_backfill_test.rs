@@ -1517,3 +1517,225 @@ async fn test_backfill_skipped_once_device_is_ready() -> anyhow::Result<()> {
 
 	Ok(())
 }
+
+/// CORE-023: a peer with no device-owned data must not trigger repeated full syncs.
+///
+/// Bob never indexes any locations, so he never produces device-owned watermarks.
+/// Alice should catch up from Bob once, then skip him until he has real changes.
+/// Regression: empty watermarks were treated as "new peer" on every loop pass.
+#[tokio::test]
+async fn test_no_device_data_peer_does_not_force_repeated_full_sync() -> anyhow::Result<()> {
+	let snapshot_dir = create_snapshot_dir("no_device_data_peer").await?;
+	init_test_tracing("no_device_data_peer", &snapshot_dir)?;
+
+	let test_data_alice = TestDataDir::new("no_data_peer_alice")?;
+	let test_data_bob = TestDataDir::new("no_data_peer_bob")?;
+
+	let temp_dir_alice = test_data_alice.core_data_path();
+	let temp_dir_bob = test_data_bob.core_data_path();
+
+	TestConfigBuilder::new(temp_dir_alice.clone()).build()?;
+	TestConfigBuilder::new(temp_dir_bob.clone()).build()?;
+
+	let library_id = Uuid::new_v4();
+
+	let core_alice = Core::new(temp_dir_alice.clone())
+		.await
+		.map_err(|e| anyhow::anyhow!("Failed to create Alice core: {}", e))?;
+	let device_alice_id = core_alice.device.device_id()?;
+	let library_alice = core_alice
+		.libraries
+		.create_library_with_id(
+			library_id,
+			"No Data Peer Test",
+			None,
+			core_alice.context.clone(),
+		)
+		.await?;
+
+	// Alice indexes a small real location so she has device-owned data/watermarks.
+	let device_record = entities::device::Entity::find()
+		.one(library_alice.db().conn())
+		.await?
+		.ok_or_else(|| anyhow::anyhow!("Device not found"))?;
+
+	let test_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/service/sync"); // small, stable directory
+	let location_args = LocationCreateArgs {
+		path: test_path,
+		name: Some("sync-src".to_string()),
+		index_mode: IndexMode::Content,
+	};
+	let location_db_id = create_location(
+		library_alice.clone(),
+		library_alice.event_bus(),
+		location_args,
+		device_record.id,
+	)
+	.await?;
+
+	let _ = create_test_volume(
+		&library_alice,
+		device_alice_id,
+		"test-vol-alice",
+		"Alice Volume",
+	)
+	.await?;
+	let volume = entities::volume::Entity::find()
+		.filter(entities::volume::Column::DeviceId.eq(device_alice_id))
+		.one(library_alice.db().conn())
+		.await?
+		.ok_or_else(|| anyhow::anyhow!("Alice volume not found"))?;
+	let location_record = entities::location::Entity::find()
+		.filter(entities::location::Column::Id.eq(location_db_id))
+		.one(library_alice.db().conn())
+		.await?
+		.ok_or_else(|| anyhow::anyhow!("Location not found"))?;
+	let location_entry_id = location_record
+		.entry_id
+		.ok_or_else(|| anyhow::anyhow!("Location has no entry_id"))?;
+	entities::location::Entity::update_many()
+		.filter(entities::location::Column::Id.eq(location_db_id))
+		.col_expr(
+			entities::location::Column::VolumeId,
+			sea_orm::sea_query::Expr::value(volume.id),
+		)
+		.exec(library_alice.db().conn())
+		.await?;
+	entities::entry::Entity::update_many()
+		.filter(entities::entry::Column::Id.eq(location_entry_id))
+		.col_expr(
+			entities::entry::Column::VolumeId,
+			sea_orm::sea_query::Expr::value(volume.id),
+		)
+		.exec(library_alice.db().conn())
+		.await?;
+
+	wait_for_indexing(&library_alice, location_db_id, Duration::from_secs(120)).await?;
+
+	// Bob connects with no locations and no device-owned data.
+	let core_bob = Core::new(temp_dir_bob.clone())
+		.await
+		.map_err(|e| anyhow::anyhow!("Failed to create Bob core: {}", e))?;
+	let device_bob_id = core_bob.device.device_id()?;
+	let library_bob = core_bob
+		.libraries
+		.create_library_with_id(
+			library_id,
+			"No Data Peer Test",
+			None,
+			core_bob.context.clone(),
+		)
+		.await?;
+
+	register_device(&library_alice, device_bob_id, "Bob").await?;
+	register_device(&library_bob, device_alice_id, "Alice").await?;
+
+	let (transport_alice, transport_bob) = MockTransport::new_pair(device_alice_id, device_bob_id);
+
+	library_alice
+		.init_sync_service(
+			device_alice_id,
+			transport_alice.clone() as Arc<dyn NetworkTransport>,
+		)
+		.await?;
+	library_bob
+		.init_sync_service(
+			device_bob_id,
+			transport_bob.clone() as Arc<dyn NetworkTransport>,
+		)
+		.await?;
+
+	transport_alice
+		.register_sync_service(
+			device_alice_id,
+			Arc::downgrade(library_alice.sync_service().unwrap()),
+		)
+		.await;
+	transport_bob
+		.register_sync_service(
+			device_bob_id,
+			Arc::downgrade(library_bob.sync_service().unwrap()),
+		)
+		.await;
+
+	library_alice.sync_service().unwrap().start().await?;
+	library_bob.sync_service().unwrap().start().await?;
+
+	wait_for_sync(&library_alice, &library_bob, Duration::from_secs(120)).await?;
+
+	// Give the sync loop a moment to settle after initial convergence.
+	tokio::time::sleep(Duration::from_secs(5)).await;
+
+	async fn watermark_age_sync_errors(
+		library: &wing_core::library::Library,
+	) -> anyhow::Result<i64> {
+		use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
+		let stmt = Statement::from_string(
+			DatabaseBackend::Sqlite,
+			"SELECT COUNT(*) AS cnt FROM sync_event_log \
+			 WHERE event_type = 'sync_error' \
+			 AND summary LIKE '%Watermark too old%'"
+				.to_string(),
+		);
+		let row = library
+			.sync_service()
+			.unwrap()
+			.event_logger()
+			.conn()
+			.query_one_raw(stmt)
+			.await?
+			.ok_or_else(|| anyhow::anyhow!("missing count row"))?;
+		let cnt: i64 = row.try_get("", "cnt")?;
+		Ok(cnt)
+	}
+
+	async fn backfill_completed(library: &wing_core::library::Library) -> anyhow::Result<i64> {
+		use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
+		let stmt = Statement::from_string(
+			DatabaseBackend::Sqlite,
+			"SELECT COUNT(*) AS cnt FROM sync_event_log \
+			 WHERE event_type = 'backfill_session_completed'"
+				.to_string(),
+		);
+		let row = library
+			.sync_service()
+			.unwrap()
+			.event_logger()
+			.conn()
+			.query_one_raw(stmt)
+			.await?
+			.ok_or_else(|| anyhow::anyhow!("missing count row"))?;
+		let cnt: i64 = row.try_get("", "cnt")?;
+		Ok(cnt)
+	}
+
+	let alice_errors_before = watermark_age_sync_errors(&library_alice).await?;
+	let bob_errors_before = watermark_age_sync_errors(&library_bob).await?;
+	let alice_backfills_before = backfill_completed(&library_alice).await?;
+
+	// CATCH_UP_INTERVAL is 60s; wait long enough for a stale loop pass to happen.
+	tokio::time::sleep(Duration::from_secs(75)).await;
+
+	let alice_errors_after = watermark_age_sync_errors(&library_alice).await?;
+	let bob_errors_after = watermark_age_sync_errors(&library_bob).await?;
+	let alice_backfills_after = backfill_completed(&library_alice).await?;
+
+	assert_eq!(
+		alice_errors_before, alice_errors_after,
+		"Alice should not log watermark-age forced full sync errors for a no-data peer"
+	);
+	assert_eq!(
+		bob_errors_before, bob_errors_after,
+		"Bob should not log watermark-age forced full sync errors"
+	);
+	assert!(
+		alice_backfills_after <= alice_backfills_before + 1,
+		"Alice should not repeatedly backfill from a no-data peer (before={}, after={})",
+		alice_backfills_before,
+		alice_backfills_after
+	);
+
+	core_alice.shutdown().await;
+	core_bob.shutdown().await;
+	Ok(())
+}
