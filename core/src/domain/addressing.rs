@@ -1261,4 +1261,46 @@ mod join_entry_path_tests {
 			r"/home/me/odd\name/a.txt"
 		);
 	}
+
+	#[test]
+	fn parse_errors_cover_display_and_error_trait() {
+		use super::{PathResolutionError, WingPathParseError};
+		let err = WingPathParseError::InvalidFormat;
+		let _ = &err as &dyn std::error::Error;
+		assert_eq!(err.to_string(), "Invalid WingPath URI format");
+		let res = PathResolutionError::NoActiveLibrary;
+		assert_eq!(res.to_string(), "No active library");
+		let db: PathResolutionError = sea_orm::DbErr::Custom("x".into()).into();
+		assert_eq!(db.to_string(), "Database error: x");
+	}
+
+	#[test]
+	fn wingpath_batch_default_and_local_only() {
+		use super::{WingPath, WingPathBatch};
+		let batch = WingPathBatch::default();
+		assert!(batch.paths.is_empty());
+		assert!(batch.local_only().is_empty());
+		assert!(batch.by_device().is_empty());
+		let batch = WingPathBatch::new(vec![WingPath::content(uuid::Uuid::nil())]);
+		assert!(batch.local_only().is_empty());
+	}
+
+	#[test]
+	#[should_panic(expected = "Cannot join paths to content addresses")]
+	fn join_panics_for_content() {
+		use super::WingPath;
+		let _ = WingPath::content(uuid::Uuid::nil()).join("x");
+	}
+
+	#[test]
+	#[should_panic(expected = "Cannot join paths to sidecar addresses")]
+	fn join_panics_for_sidecar() {
+		use super::WingPath;
+		let id = uuid::Uuid::nil();
+		let path =
+			WingPath::from_uri("sidecar://00000000-0000-0000-0000-000000000000/ocr/default.json")
+				.unwrap();
+		let _ = path.join("x");
+		let _ = id;
+	}
 }

@@ -1,3 +1,6 @@
+mod helpers;
+
+use helpers::IndexingHarnessBuilder;
 use wing_core::domain::addressing::{WingPath, WingPathBatch, WingPathParseError};
 
 #[test]
@@ -255,6 +258,199 @@ fn physical_join_and_parent_preserve_non_utf8_bytes_without_following_links() {
 		std::fs::read_link(link).unwrap(),
 		std::path::Path::new("missing")
 	);
+}
+
+#[test]
+fn invalid_uris_and_unicode_inputs_are_rejected_or_round_tripped() {
+	let id = uuid::Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap();
+	let unicode = "café/文件 名 #1.txt";
+	let physical = WingPath::physical("dev-ß".into(), format!("/tmp/{unicode}"));
+	assert_eq!(physical.device_slug(), Some("dev-ß"));
+	assert_eq!(
+		physical.path().unwrap().to_string_lossy(),
+		format!("/tmp/{unicode}")
+	);
+	assert!(matches!(
+		physical.file_name(),
+		Some(std::borrow::Cow::Borrowed("文件 名 #1.txt"))
+	));
+
+	let local_uri_path = "/tmp/café/文件.txt";
+	let parsed_local = WingPath::from_uri(local_uri_path).unwrap();
+	assert_eq!(
+		parsed_local.as_local_path().is_some(),
+		parsed_local.is_local()
+	);
+
+	let local_scheme = WingPath::from_uri("local://peer/café/文件.txt").unwrap();
+	assert_eq!(local_scheme.device_slug(), Some("peer"));
+	assert_eq!(
+		local_scheme.path().unwrap(),
+		std::path::Path::new("/café/文件.txt")
+	);
+	assert_eq!(local_scheme.to_uri(), "local://peer//café/文件.txt");
+
+	let content = WingPath::from_uri("content://550e8400-e29b-41d4-a716-446655440000").unwrap();
+	assert_eq!(content.content_id(), Some(id));
+	assert!(content.is_content());
+	assert_eq!(content.file_name(), None);
+
+	assert!(matches!(
+		WingPath::from_uri("content://"),
+		Err(WingPathParseError::InvalidContentId)
+	));
+	assert!(matches!(
+		WingPath::from_uri("content://550e8400-e29b-41d4-a716-446655440000/extra"),
+		Err(WingPathParseError::InvalidContentId)
+	));
+	assert!(matches!(
+		WingPath::from_uri("cloud://bucket/key"),
+		Err(WingPathParseError::UnknownScheme)
+	));
+	assert!(matches!(
+		WingPath::from_uri("sidecar://550e8400-e29b-41d4-a716-446655440000//grid.webp"),
+		Err(WingPathParseError::InvalidSidecarKind)
+	));
+	assert!(matches!(
+		WingPath::from_uri("sidecar://550e8400-e29b-41d4-a716-446655440000/thumbs/grid.webp/extra"),
+		Err(WingPathParseError::InvalidSidecarPath)
+	));
+	assert!(matches!(
+		WingPath::from_uri("content://not-a-uuid"),
+		Err(WingPathParseError::InvalidContentId)
+	));
+	let empty_local = WingPath::from_uri("local://").unwrap();
+	assert_eq!(empty_local.device_slug(), Some(""));
+	assert_eq!(empty_local.path().unwrap(), std::path::Path::new("/"));
+}
+
+#[test]
+fn batch_helpers_cover_empty_cloud_and_local_filtering() {
+	let mut batch = WingPathBatch::default();
+	assert!(batch.local_only().is_empty());
+	assert!(batch.by_device().is_empty());
+	batch.extend(vec![
+		WingPath::content(uuid::Uuid::nil()),
+		WingPath::from_uri("s3://bucket/key").unwrap(),
+	]);
+	assert!(batch.local_only().is_empty());
+	assert!(batch.by_device().is_empty());
+
+	let local = WingPath::physical("local".into(), "/tmp/a.txt");
+	let remote = WingPath::physical("remote".into(), "/tmp/b.txt");
+	let batch = WingPathBatch::new(vec![local.clone(), remote.clone(), local.clone()]);
+	assert_eq!(batch.local_only().len(), 2);
+	let groups = batch.by_device();
+	assert_eq!(groups.get("local").map(|v| v.len()), Some(2));
+	assert_eq!(groups.get("remote").map(|v| v.len()), Some(1));
+}
+
+#[test]
+fn wingpath_accessors_and_display_cover_all_variants() {
+	let id = uuid::Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap();
+	let physical = WingPath::physical("dev".into(), "/a/b.txt");
+	assert!(physical.is_physical());
+	assert_eq!(physical.path().unwrap(), std::path::Path::new("/a/b.txt"));
+	assert_eq!(physical.as_physical().unwrap().0, "dev");
+	assert_eq!(physical.cloud_identity(), None);
+	assert_eq!(physical.cloud_path(), None);
+	assert_eq!(physical.content_id(), None);
+	assert_eq!(physical.as_cloud(), None);
+	assert_eq!(physical.as_sidecar(), None);
+	assert_eq!(physical.to_uri(), "local://dev//a/b.txt");
+
+	let cloud = WingPath::from_uri("s3://bucket/folder/file").unwrap();
+	assert!(cloud.is_cloud());
+	assert_eq!(cloud.cloud_path(), Some("folder/file"));
+	let (svc, ident) = cloud.cloud_identity().unwrap();
+	assert_eq!(svc.scheme(), "s3");
+	assert_eq!(ident, "bucket");
+	assert!(cloud.as_cloud().is_some());
+	assert_eq!(cloud.device_slug(), None);
+	assert_eq!(cloud.path(), None);
+
+	let content = WingPath::content(id);
+	assert!(content.is_content());
+	assert_eq!(content.content_id(), Some(id));
+	assert_eq!(content.display(), format!("content://{id}"));
+
+	let sidecar =
+		WingPath::from_uri("sidecar://550e8400-e29b-41d4-a716-446655440000/thumbs/grid@2x.webp")
+			.unwrap();
+	assert!(sidecar.is_sidecar());
+	assert_eq!(sidecar.content_id(), Some(id));
+	assert!(sidecar.as_sidecar().is_some());
+	assert_eq!(sidecar.device_slug(), None);
+	assert_eq!(sidecar.path(), None);
+
+	assert_eq!(format!("{}", physical), physical.display());
+	#[allow(deprecated)]
+	{
+		assert_eq!(physical.device_id(), None);
+		assert_eq!(physical.volume_fingerprint(), None);
+	}
+}
+
+#[test]
+fn parse_errors_have_stable_display() {
+	let cases = [
+		(
+			WingPathParseError::InvalidFormat,
+			"Invalid WingPath URI format",
+		),
+		(
+			WingPathParseError::InvalidDeviceId,
+			"Invalid device ID in WingPath URI",
+		),
+		(
+			WingPathParseError::InvalidVolumeId,
+			"Invalid volume ID in WingPath URI",
+		),
+		(
+			WingPathParseError::InvalidContentId,
+			"Invalid content ID in WingPath URI",
+		),
+		(WingPathParseError::UnknownScheme, "Unknown URI scheme"),
+		(WingPathParseError::VolumeNotFound, "Cloud volume not found"),
+		(
+			WingPathParseError::DeviceNotFound,
+			"Device not found by slug",
+		),
+		(
+			WingPathParseError::InvalidSidecarPath,
+			"Invalid sidecar path format",
+		),
+		(
+			WingPathParseError::InvalidSidecarKind,
+			"Invalid sidecar kind",
+		),
+		(
+			WingPathParseError::InvalidSidecarFormat,
+			"Invalid sidecar format",
+		),
+		(
+			WingPathParseError::MissingExtension,
+			"Missing file extension in sidecar path",
+		),
+	];
+	for (err, msg) in cases {
+		assert_eq!(err.to_string(), msg);
+	}
+}
+
+#[tokio::test]
+async fn from_uri_with_context_matches_from_uri() {
+	let harness = IndexingHarnessBuilder::new("addr_context")
+		.disable_watcher()
+		.build()
+		.await
+		.unwrap();
+	let ctx = harness.core.context.clone();
+	let uri = "s3://bucket/café/文件.txt";
+	let a = WingPath::from_uri(uri).unwrap();
+	let b = WingPath::from_uri_with_context(uri, &ctx).await.unwrap();
+	assert_eq!(a, b);
+	harness.shutdown().await.unwrap();
 }
 
 #[test]
