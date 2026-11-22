@@ -225,6 +225,8 @@ impl PeerLog {
 			Ok(_) => Ok(()),
 			Err(e) => {
 				let msg = e.to_string();
+				// Idempotent append: a duplicate HLC means this change (or an
+				// identical causal entry) is already recorded in the peer log.
 				if msg.contains("UNIQUE constraint failed") {
 					Ok(())
 				} else {
