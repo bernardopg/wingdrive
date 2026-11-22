@@ -94,6 +94,14 @@ async fn updater_preserves_no_release_and_reports_invalid_manifests() {
 	assert!(result.is_err());
 }
 
+#[test]
+fn updater_info_reports_current_version_and_channel() {
+	let app = mock_builder().build(mock_context(noop_assets())).unwrap();
+	let info = updater_info(app.handle().clone());
+	assert_eq!(info.current_version, app.package_info().version.to_string());
+	assert_eq!(info.channel, channel());
+}
+
 #[cfg(target_os = "linux")]
 #[tokio::test]
 async fn updater_commands_respect_the_appimage_boundary() {
