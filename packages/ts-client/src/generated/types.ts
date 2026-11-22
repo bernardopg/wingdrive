@@ -933,6 +933,24 @@ export type DeviceSyncState =
 /**  Sync paused (offline or user disabled) */
 "Paused";
 
+export type DiffEntry = {
+	relative_path: string,
+	wing_path: WingPath,
+	uuid: string | null,
+	size: number,
+	modified_at: number | null,
+	content_id: string | null,
+	kind: EntryKind,
+};
+
+export type DiffStrategy = 
+/**  Compare by relative path + size + mtime. Fast, no hashing. */
+"heuristic" | 
+/**  Compare by BLAKE3 content hash. Catches renames/moves. */
+"content" | 
+/**  Heuristic first, content-verify ambiguous matches. */
+"hybrid";
+
 /**  Input for directory listing */
 export type DirectoryListingInput = {
 	/**  The directory path to list contents for */
@@ -3364,6 +3382,23 @@ export type PairingSessionSummary = {
 	expires_at: string | null,
 };
 
+export type PathDiffInput = {
+	source: WingPath,
+	target: WingPath,
+	strategy?: DiffStrategy,
+	/**  When false, use a complete scan for full coverage. */
+	use_index_rules?: boolean,
+};
+
+export type PathDiffResult = {
+	only_in_source: DiffEntry[],
+	only_in_target: DiffEntry[],
+	modified: DiffEntry[],
+	matched_count: number,
+	copy_size: number,
+	total_scanned: number,
+};
+
 /**  Path mapping for resolving virtual paths to actual storage locations */
 export type PathMapping = {
 	virtual_path: string,
@@ -5212,6 +5247,7 @@ export type LibraryAction =
   |  { type: 'files.createFromTemplate'; input: CreateFromTemplateInput; output: CreateEntryOutput }
   |  { type: 'files.createSymlink'; input: CreateSymlinkInput; output: CreateEntryOutput }
   |  { type: 'files.delete'; input: FileDeleteInput; output: JobReceipt }
+  |  { type: 'files.diff'; input: PathDiffInput; output: PathDiffResult }
   |  { type: 'files.duplicate_detection'; input: DuplicateDetectionInput; output: JobReceipt }
   |  { type: 'files.rename'; input: FileRenameInput; output: JobReceipt }
   |  { type: 'files.setGroup'; input: SetGroupInput; output: PermissionsChanged }
@@ -5404,6 +5440,7 @@ export const WIRE_METHODS = {
     'files.createFromTemplate': 'action:files.createFromTemplate.input',
     'files.createSymlink': 'action:files.createSymlink.input',
     'files.delete': 'action:files.delete.input',
+    'files.diff': 'action:files.diff.input',
     'files.duplicate_detection': 'action:files.duplicate_detection.input',
     'files.rename': 'action:files.rename.input',
     'files.setGroup': 'action:files.setGroup.input',
