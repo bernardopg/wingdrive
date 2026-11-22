@@ -1,7 +1,15 @@
-import {describe, expect, test} from 'bun:test';
+import {describe, expect, mock, test} from 'bun:test';
 import type {File} from '@wingdrive/ts-client';
 
-import {canUploadToPhotos, isPhotosMedia} from './useGooglePhotosUpload';
+mock.module('@wingdrive/primitives', () => ({toast: {info() {}, error() {}, success() {}}}));
+mock.module('../../../contexts/WingDriveContext', () => ({
+	useLibraryMutation: () => ({mutateAsync: async () => {}}),
+	useLibraryQuery: () => ({data: []})
+}));
+mock.module('../../../hooks/useWaitForJob', () => ({useWaitForJob: () => async (fn: () => unknown) => fn()}));
+mock.module('../../../i18n', () => ({useTranslation: () => ({t: (k: string) => k})}));
+
+const {canUploadToPhotos, isPhotosMedia} = await import('./useGooglePhotosUpload');
 
 // Like the daemon: `name` is the stem and the extension is a separate field.
 const file = (fullName: string, extra: Partial<Record<string, unknown>> = {}) => {
@@ -40,5 +48,10 @@ describe('Upload to Google Photos', () => {
 				file('a.jpg', {wing_path: {Cloud: {service: 'gdrive', identifier: 'me@x.com', path: 'a.jpg'}}})
 			])
 		).toBe(false);
+	});
+
+	test('accepts several selected daemon-shaped photos (DESK-098)', () => {
+		expect(canUploadToPhotos([file('IMG_0001.jpg'), file('IMG_0002.png'), file('IMG_0003.heic')])).toBe(true);
+		expect(canUploadToPhotos([file('IMG_0001.JPG'), file('clip.mov'), file('scan.HEIC')])).toBe(true);
 	});
 });
