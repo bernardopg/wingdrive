@@ -343,7 +343,7 @@ fn top_level_aliases_and_command_shapes_parse() {
 	assert!(matches!(cli.command, Commands::Wings(WingsCmd::List)));
 
 	// Legacy network subcommand alias kept for compatibility.
-	let cli = Cli::try_parse_from(["wing", "network", "spacedrop", "list"]).unwrap();
+	let cli = Cli::try_parse_from(["wing", "network", "spacedrop", "pending"]).unwrap();
 	assert!(matches!(
 		cli.command,
 		Commands::Network(NetworkCmd::Wingdrop(_))
