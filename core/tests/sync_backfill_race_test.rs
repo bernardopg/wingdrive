@@ -25,7 +25,10 @@ use std::{collections::BTreeSet, path::PathBuf, sync::Arc};
 use tokio::{fs, time::Duration};
 use uuid::Uuid;
 use wing_core::{
-	infra::{db::entities, sync::NetworkTransport},
+	infra::{
+		db::entities,
+		sync::{ChangeType, NetworkTransport, SharedChangeEntry, SystemTimeSource, HLC},
+	},
 	library::Library,
 	service::{sync::state::DeviceSyncState, Service},
 	Core,
@@ -565,6 +568,239 @@ async fn test_sequential_backfill_control() -> anyhow::Result<()> {
 		diff
 	);
 
+	harness.shutdown().await?;
+	Ok(())
+}
+
+/// Changes received during an incremental catch-up are buffered, and the
+/// catch-up then returns to Ready without going through
+/// `transition_to_ready`, which is the only other place the buffer is
+/// drained. Ending the catch-up must apply them, or they are lost.
+#[tokio::test]
+async fn test_changes_buffered_during_catch_up_are_applied() -> anyhow::Result<()> {
+	let test_data = TestDataDir::new("catch_up_buffer")?;
+	let dir = test_data.core_data_path();
+	TestConfigBuilder::new(dir.clone()).build()?;
+
+	let core = Core::new(dir)
+		.await
+		.map_err(|e| anyhow::anyhow!("Failed to create core: {}", e))?;
+	let device_id = core.device.device_id()?;
+	let library = core
+		.libraries
+		.create_library_no_sync("Catch Up Buffer", None, core.context.clone())
+		.await?;
+	library
+		.init_sync_service(
+			device_id,
+			MockTransport::new_single(device_id) as Arc<dyn NetworkTransport>,
+		)
+		.await?;
+	let peer_sync = library.sync_service().unwrap().peer_sync();
+
+	let peer = Uuid::new_v4();
+	peer_sync
+		.set_state_for_test(DeviceSyncState::CatchingUp { buffered_count: 0 })
+		.await;
+
+	let tag_uuid = Uuid::new_v4();
+	let now = chrono::Utc::now();
+	peer_sync
+		.on_shared_change_received(SharedChangeEntry {
+			hlc: HLC::now(peer, &SystemTimeSource),
+			model_type: "tag".to_string(),
+			record_uuid: tag_uuid,
+			change_type: ChangeType::Insert,
+			data: serde_json::json!({
+				"uuid": tag_uuid,
+				"canonical_name": "from-peer",
+				"display_name": "From peer",
+				"tag_type": "Standard",
+				"privacy_level": "Normal",
+				"is_organizational_anchor": false,
+				"search_weight": 0,
+				"icon": "Planet",
+				"color": "#000000",
+				"created_at": now,
+				"updated_at": now,
+			}),
+		})
+		.await?;
+
+	let tag_count = || async {
+		entities::tag::Entity::find()
+			.filter(entities::tag::Column::Uuid.eq(tag_uuid))
+			.count(library.db().conn())
+			.await
+	};
+	assert_eq!(
+		tag_count().await?,
+		0,
+		"the change must be buffered while catching up"
+	);
+
+	peer_sync.finish_catch_up(peer, "catchup_completed").await;
+
+	assert!(peer_sync.state().await.is_ready());
+	assert_eq!(
+		tag_count().await?,
+		1,
+		"the change buffered during catch-up was never applied"
+	);
+
+	Ok(())
+}
+
+#[tokio::test]
+async fn idle_peer_without_locations_does_not_catch_up_each_tick() -> anyhow::Result<()> {
+	use wing_core::service::network::protocol::sync::messages::SyncMessage;
+
+	let harness = BackfillRaceHarness::new("catchup_empty_peer").await?;
+	let location = harness.fixture("first").await?;
+	add_and_index_location(
+		&harness.library_alice,
+		&harness.core_alice.volumes,
+		location.to_str().unwrap(),
+		"first",
+	)
+	.await?;
+	harness.trigger_bob_backfill().await?;
+
+	let alice = harness.library_alice.sync_service().unwrap().peer_sync();
+	let bob_id = entities::device::Entity::find()
+		.filter(entities::device::Column::Uuid.eq(harness.device_bob_id))
+		.one(harness.library_bob.db().conn())
+		.await?
+		.unwrap()
+		.id;
+	assert_eq!(
+		entities::location::Entity::find()
+			.filter(entities::location::Column::DeviceId.eq(bob_id))
+			.count(harness.library_bob.db().conn())
+			.await?,
+		0
+	);
+	let catchup_requests = || async {
+		harness
+			.transport_alice
+			.get_messages_between(harness.device_alice_id, harness.device_bob_id)
+			.await
+			.into_iter()
+			.filter(|request| matches!(request, SyncMessage::SharedChangeRequest { .. }))
+			.count()
+	};
+	let first = tokio::time::timeout(Duration::from_secs(85), async {
+		loop {
+			let count = catchup_requests().await;
+			if count > 0 && alice.state().await.is_ready() {
+				break count;
+			}
+			tokio::time::sleep(Duration::from_millis(100)).await;
+		}
+	})
+	.await?;
+	// Three default poll intervals fit inside the per-peer catch-up cooldown.
+	tokio::time::sleep(Duration::from_secs(16)).await;
+	assert_eq!(
+		catchup_requests().await,
+		first,
+		"idle peer restarted catch-up"
+	);
+	harness.shutdown().await?;
+	Ok(())
+}
+
+#[tokio::test]
+async fn offline_updates_to_the_same_tag_converge_on_the_later_hlc() -> anyhow::Result<()> {
+	use sea_orm::{ActiveModelTrait, Set};
+	use wing_core::{ops::tags::manager::TagManager, service::Service};
+
+	let harness = BackfillRaceHarness::new("offline_same_tag").await?;
+	let alice = &harness.library_alice;
+	let bob = &harness.library_bob;
+	let manager = TagManager::new(Arc::new(alice.db().conn().clone()));
+	let tag = manager
+		.create_tag_entity("offline-edit".into(), None, harness.device_alice_id)
+		.await?;
+	alice.sync_model(&tag, ChangeType::Insert).await?;
+	harness.trigger_bob_backfill().await?;
+	let sync_a = alice.sync_service().unwrap();
+	let sync_b = bob.sync_service().unwrap();
+	let bob_tag = entities::tag::Entity::find()
+		.filter(entities::tag::Column::Uuid.eq(tag.uuid))
+		.one(bob.db().conn())
+		.await?
+		.expect("backfill replicated the tag");
+
+	// Stop polling and drop broadcasts while each profile edits its own copy.
+	sync_a.stop().await?;
+	sync_b.stop().await?;
+	harness
+		.transport_alice
+		.block_device(harness.device_alice_id)
+		.await;
+	harness
+		.transport_bob
+		.block_device(harness.device_bob_id)
+		.await;
+	let watermark_a = sync_a.peer_sync().get_watermarks().await.1;
+	let watermark_b = sync_b.peer_sync().get_watermarks().await.1;
+
+	for (library, tag, name) in [(alice, tag.clone(), "Alice"), (bob, bob_tag, "Bob")] {
+		let mut active: entities::tag::ActiveModel = tag.into();
+		active.display_name = Set(Some(name.to_owned()));
+		active.updated_at = Set(chrono::Utc::now());
+		let updated = active.update(library.db().conn()).await?;
+		library.sync_model(&updated, ChangeType::Update).await?;
+	}
+	let hlc_a = sync_a
+		.peer_sync()
+		.peer_log()
+		.get_latest_hlc_for_record(tag.uuid)
+		.await?
+		.unwrap();
+	let hlc_b = sync_b
+		.peer_sync()
+		.peer_log()
+		.get_latest_hlc_for_record(tag.uuid)
+		.await?
+		.unwrap();
+	assert_ne!(hlc_a, hlc_b);
+	let winner = if hlc_a > hlc_b { "Alice" } else { "Bob" };
+
+	harness
+		.transport_alice
+		.unblock_device(harness.device_alice_id)
+		.await;
+	harness
+		.transport_bob
+		.unblock_device(harness.device_bob_id)
+		.await;
+
+	sync_a
+		.backfill_manager()
+		.catch_up_from_peer(
+			harness.device_bob_id,
+			None,
+			watermark_a.map(|hlc| hlc.to_string()),
+		)
+		.await?;
+	sync_b
+		.backfill_manager()
+		.catch_up_from_peer(
+			harness.device_alice_id,
+			None,
+			watermark_b.map(|hlc| hlc.to_string()),
+		)
+		.await?;
+	for library in [alice, bob] {
+		let after = entities::tag::Entity::find()
+			.filter(entities::tag::Column::Uuid.eq(tag.uuid))
+			.one(library.db().conn())
+			.await?
+			.unwrap();
+		assert_eq!(after.display_name.as_deref(), Some(winner));
+	}
 	harness.shutdown().await?;
 	Ok(())
 }

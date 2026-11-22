@@ -747,6 +747,8 @@ impl DatabaseStorage {
 		let new_name_value = Some(name_string.clone());
 		entry_active.name = Set(name_string);
 		entry_active.extension = Set(extension);
+		// A rename can preserve filesystem mtime, while offline peers replay by indexed_at.
+		entry_active.indexed_at = Set(Some(chrono::Utc::now()));
 
 		entry_active
 			.update(txn)
@@ -1102,6 +1104,8 @@ impl DatabaseStorage {
 		let (name, extension) = stored_name_and_extension(new_path, is_file);
 		entry_active.name = Set(name);
 		entry_active.extension = Set(extension);
+		// A rename can preserve filesystem mtime, while offline peers replay by indexed_at.
+		entry_active.indexed_at = Set(Some(chrono::Utc::now()));
 
 		entry_active
 			.update(txn)

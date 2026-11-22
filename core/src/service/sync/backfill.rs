@@ -283,6 +283,11 @@ impl BackfillManager {
 		)
 		.await?;
 
+		self.peer_sync
+			.peer_log()
+			.complete_initial_backfill()
+			.await?;
+
 		// Record metrics
 		self.metrics.record_backfill_session_complete();
 
@@ -940,7 +945,6 @@ impl BackfillManager {
 		let mut last_hlc = since_hlc;
 		let mut total_applied = 0;
 		let mut last_progress_log = 0;
-		let mut received_any_data = false;
 
 		loop {
 			let response = self
@@ -963,7 +967,6 @@ impl BackfillManager {
 				// The snapshot contains base data that peer log entries may depend on
 				// This prevents FK constraint errors when peer log references snapshot data
 				if let Some(state) = current_state {
-					received_any_data = true;
 					if let Some(state_map) = state.as_object() {
 						// Get dependency-ordered list of models to prevent FK violations
 						// CRITICAL: Must apply parent models before children (e.g., user_metadata before user_metadata_tag)
@@ -1003,6 +1006,16 @@ impl BackfillManager {
 										{
 											if let Some(uuid_str) = uuid_value.as_str() {
 												if let Ok(record_uuid) = Uuid::parse_str(uuid_str) {
+													// Snapshot rows carry no HLC, so preserve any versioned row.
+													if self
+														.peer_sync
+														.peer_log()
+														.get_latest_hlc_for_record(record_uuid)
+														.await?
+														.is_some()
+													{
+														continue;
+													}
 													// Construct a synthetic SharedChangeEntry for application
 													// Generate HLC for ordering (pre-sync data gets current HLC)
 													let hlc = {
@@ -1409,29 +1422,9 @@ impl BackfillManager {
 			total_applied
 		);
 
-		// Return the max HLC from received data for accurate watermark tracking
-		//
-		// Special case: If we received snapshot data but no peer log entries,
-		// generate a watermark HLC representing "synced up to now".
-		//
-		// This happens on initial sync when the peer's log is empty/pruned and they
-		// send only a current_state snapshot. Snapshots contain raw data without HLC
-		// metadata (protocol limitation - timestamps are discarded during serialization).
-		//
-		// We generate an HLC with our device_id and current timestamp. This works because:
-		// - HLC comparison uses timestamp first, device_id only as tiebreaker
-		// - Next sync will request entries with timestamp > this watermark
-		// - Any peer entries created after now will have higher timestamp regardless of device_id
-		if last_hlc.is_none() && received_any_data {
-			let watermark_hlc = self.peer_sync.hlc_generator().lock().await.next();
-			debug!(
-				watermark_hlc = %watermark_hlc,
-				"Snapshot-only sync (no peer log entries), using current time as watermark"
-			);
-			Ok(Some(watermark_hlc))
-		} else {
-			Ok(last_hlc)
-		}
+		// A snapshot has no peer log cursor. A watermark from the local
+		// clock could skip writes on a peer whose clock runs behind ours.
+		Ok(last_hlc)
 	}
 
 	/// Request state batch from peer

@@ -122,7 +122,25 @@ impl FileSyncTestSetup {
 			..Default::default()
 		};
 
-		Ok(entry.insert(self.library.db().conn()).await?)
+		let db = self.library.db().conn();
+		let entry = entry.insert(db).await?;
+		if kind == 1 {
+			use wing_core::infra::db::entities::directory_paths;
+			use wing_core::ops::indexing::path_resolver::PathResolver;
+			let parent = match parent_id {
+				Some(id) => PathResolver::get_full_path(db, id).await?,
+				None => self._temp_dir.path().to_path_buf(),
+			};
+			let path = parent.join(name);
+			fs::create_dir_all(&path).await?;
+			directory_paths::ActiveModel {
+				entry_id: Set(entry.id),
+				path: Set(path.to_string_lossy().into_owned()),
+			}
+			.insert(db)
+			.await?;
+		}
+		Ok(entry)
 	}
 }
 
@@ -545,4 +563,41 @@ async fn test_generation_tracking() {
 
 	println!("✓ Generation tracking working correctly");
 	println!("  Generation increments on each sync: 0 -> 1 -> 2");
+}
+
+#[tokio::test]
+async fn conduit_preview_keeps_identically_named_files_in_different_directories(
+) -> anyhow::Result<()> {
+	use wing_core::service::file_sync::resolver::SyncResolver;
+	let setup = FileSyncTestSetup::new().await?;
+	let source = setup.create_entry("source", 1, None, 0).await?;
+	let target = setup.create_entry("target", 1, None, 0).await?;
+	for directory in ["north", "south"] {
+		let folder = setup.create_entry(directory, 1, Some(source.id), 0).await?;
+		setup
+			.create_entry("notes.txt", 0, Some(folder.id), 10)
+			.await?;
+	}
+	let service = setup.library.file_sync_service().unwrap();
+	let conduit = service
+		.conduit_manager()
+		.create_conduit(
+			source.id,
+			target.id,
+			sync_conduit::SyncMode::Mirror,
+			"manual".into(),
+		)
+		.await?;
+	let resolver = SyncResolver::new(Arc::new(setup.library.db().conn().clone()));
+	let plan = resolver.calculate_operations(&conduit).await?;
+	for directory in ["north", "south"] {
+		let relative = std::path::Path::new(directory).join("notes.txt");
+		assert!(plan
+			.source_to_target
+			.to_copy
+			.iter()
+			.any(|file| file.relative_path == relative
+				&& file.full_path == setup._temp_dir.path().join("source").join(&relative)));
+	}
+	Ok(())
 }

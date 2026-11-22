@@ -581,37 +581,13 @@ impl SyncService {
 												retry_state.record_success();
 												last_catch_up.insert(partner_id, std::time::Instant::now());
 												// Transition back to Ready
-												let old_state = peer_sync.state().await;
-												let mut state = peer_sync.state.write().await;
-												*state = DeviceSyncState::Ready;
-												info!(
-													from_state = ?old_state,
-													to_state = ?DeviceSyncState::Ready,
-													peer = %partner_id,
-													reason = "catchup_completed",
-													"Sync state transition"
-												);
-												drop(state);
-												// Changes received during the catch-up were buffered.
-												peer_sync.apply_buffered_updates().await;
+												peer_sync.finish_catch_up(partner_id, "catchup_completed").await;
 											}
 											Err(e) => {
 												warn!(peer = %partner_id, error = %e, "Incremental catch-up failed");
 												retry_state.record_failure();
 												// Transition back to Ready even on error
-												let old_state = peer_sync.state().await;
-												let mut state = peer_sync.state.write().await;
-												*state = DeviceSyncState::Ready;
-												info!(
-													from_state = ?old_state,
-													to_state = ?DeviceSyncState::Ready,
-													peer = %partner_id,
-													reason = "catchup_failed_but_continuing",
-													"Sync state transition"
-												);
-												drop(state);
-												// Changes received during the catch-up were buffered.
-												peer_sync.apply_buffered_updates().await;
+												peer_sync.finish_catch_up(partner_id, "catchup_failed_but_continuing").await;
 											}
 										}
 

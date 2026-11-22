@@ -129,24 +129,8 @@ impl SyncResolver {
 		&self,
 		conduit: &sync_conduit::Model,
 	) -> Result<SyncOperations> {
-		// Get source and target root entries
-		let source_root = entry::Entity::find_by_id(conduit.source_entry_id)
-			.one(&*self.db)
-			.await?
-			.ok_or_else(|| anyhow::anyhow!("Source entry not found"))?;
-
-		let target_root = entry::Entity::find_by_id(conduit.target_entry_id)
-			.one(&*self.db)
-			.await?
-			.ok_or_else(|| anyhow::anyhow!("Target entry not found"))?;
-
-		// Load all entries under each root
-		let source_entries = self
-			.get_entries_recursive(conduit.source_entry_id, &source_root)
-			.await?;
-		let target_entries = self
-			.get_entries_recursive(conduit.target_entry_id, &target_root)
-			.await?;
+		let source_entries = self.get_entries_recursive(conduit.source_entry_id).await?;
+		let target_entries = self.get_entries_recursive(conduit.target_entry_id).await?;
 
 		// Build path maps
 		let source_map = self.build_path_map(&source_entries);
@@ -165,54 +149,38 @@ impl SyncResolver {
 		}
 	}
 
-	/// Get all entries under a directory recursively
-	/// This is a simplified implementation - in a real implementation,
-	/// we'd need to reconstruct full paths by walking parent relationships
-	async fn get_entries_recursive(
-		&self,
-		root_id: i32,
-		root_entry: &entry::Model,
-	) -> Result<Vec<EntryWithPath>> {
+	/// Materialize each indexed path using the owning device's path separator.
+	async fn get_entries_recursive(&self, root_id: i32) -> Result<Vec<EntryWithPath>> {
+		let root = PathResolver::get_directory_path(&*self.db, root_id).await?;
+		let mut pending = vec![(root_id, PathBuf::new(), root)];
+		let mut seen = HashSet::from([root_id]);
 		let mut results = Vec::new();
-
-		// Simple recursive query - find all entries with this root as ancestor
-		// This is a simplified approach. In production, we'd need proper path reconstruction
-		let entries = self.find_children_recursive(root_id).await?;
-
-		// For MVP, we'll use a simple relative path construction
-		// In production, this should walk parent links to build full paths
-		for entry in entries {
-			let relative_path = PathBuf::from(&entry.name);
-			let full_path = PathBuf::from(&entry.name); // Simplified
-
-			results.push(EntryWithPath {
-				entry,
-				relative_path,
-				full_path,
-			});
-		}
-
-		Ok(results)
-	}
-
-	/// Find all children of an entry recursively using parent_id relationship
-	async fn find_children_recursive(&self, parent_id: i32) -> Result<Vec<entry::Model>> {
-		let mut all_children = Vec::new();
-		let mut to_process = vec![parent_id];
-
-		while let Some(current_parent) = to_process.pop() {
+		while let Some((parent, relative_parent, absolute_parent)) = pending.pop() {
 			let children = entry::Entity::find()
-				.filter(entry::Column::ParentId.eq(current_parent))
+				.filter(entry::Column::ParentId.eq(parent))
 				.all(&*self.db)
 				.await?;
-
-			for child in children {
-				to_process.push(child.id);
-				all_children.push(child);
+			for entry in children {
+				anyhow::ensure!(seen.insert(entry.id), "Cycle in conduit subtree");
+				let name = match &entry.extension {
+					Some(extension) if !extension.is_empty() => {
+						format!("{}.{}", entry.name, extension)
+					}
+					_ => entry.name.clone(),
+				};
+				let relative_path = relative_parent.join(&name);
+				let full = crate::domain::addressing::join_entry_path(&absolute_parent, &name);
+				if entry.entry_kind() == entry::EntryKind::Directory {
+					pending.push((entry.id, relative_path.clone(), full.clone()));
+				}
+				results.push(EntryWithPath {
+					entry,
+					relative_path,
+					full_path: PathBuf::from(full),
+				});
 			}
 		}
-
-		Ok(all_children)
+		Ok(results)
 	}
 
 	/// Build map of relative path -> entry with path

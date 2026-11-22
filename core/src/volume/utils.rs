@@ -8,7 +8,7 @@ use crate::{
 	},
 };
 use std::path::Path;
-use tracing::{debug, info, warn};
+use tracing::warn;
 use uuid::Uuid;
 
 /// Parse size strings from df output (e.g., "1.5G", "931Gi", "1024K")
@@ -209,58 +209,13 @@ pub async fn read_or_create_dotfile(
 	device_id: Uuid,
 	library_id: Option<Uuid>,
 ) -> Option<Uuid> {
-	let id_file_path = crate::branding::volume_id_file(mount_point);
-
-	// Try to read existing dotfile
-	if let Ok(content) = tokio::fs::read_to_string(&id_file_path).await {
-		if let Ok(wingdrive_id) = serde_json::from_str::<WingDriveVolumeId>(&content) {
-			debug!(
-				"Found existing dotfile ID: {} at {}",
-				wingdrive_id.id,
-				id_file_path.display()
-			);
-			return Some(wingdrive_id.id);
-		}
-	}
-
-	// Try to create new dotfile (if writable)
-	if !mount_point.exists() {
-		return None;
-	}
-
-	let wingdrive_id = WingDriveVolumeId {
-		id: Uuid::new_v4(),
-		created: chrono::Utc::now(),
-		device_name: None,
-		volume_name: mount_point
-			.file_name()
-			.map(|n| n.to_string_lossy().to_string())
-			.unwrap_or_else(|| "Unknown".to_string()),
-		device_id,
-		library_id: library_id.unwrap_or(Uuid::nil()),
-	};
-
-	if let Ok(content) = serde_json::to_string_pretty(&wingdrive_id) {
-		match tokio::fs::write(&id_file_path, content).await {
-			Ok(()) => {
-				info!(
-					"Created dotfile with ID: {} at {}",
-					wingdrive_id.id,
-					id_file_path.display()
-				);
-				return Some(wingdrive_id.id);
-			}
-			Err(e) => {
-				debug!(
-					"Could not write dotfile to {}: {}",
-					id_file_path.display(),
-					e
-				);
-			}
-		}
-	}
-
-	None
+	let mount_point = mount_point.to_owned();
+	tokio::task::spawn_blocking(move || {
+		read_or_create_dotfile_sync(&mount_point, device_id, library_id)
+	})
+	.await
+	.ok()
+	.flatten()
 }
 
 /// Read or create .wingdrive-volume-id file on external volumes (sync version)
@@ -273,23 +228,16 @@ pub fn read_or_create_dotfile_sync(
 ) -> Option<Uuid> {
 	let id_file_path = crate::branding::volume_id_file(mount_point);
 
-	// Try to read existing dotfile
-	if let Ok(content) = std::fs::read_to_string(&id_file_path) {
-		if let Ok(wingdrive_id) = serde_json::from_str::<WingDriveVolumeId>(&content) {
-			debug!(
-				"Found existing dotfile ID: {} at {}",
-				wingdrive_id.id,
-				id_file_path.display()
-			);
-			return Some(wingdrive_id.id);
-		}
+	let read_id = || -> std::io::Result<Uuid> {
+		let file = std::fs::File::open(&id_file_path)?;
+		let marker: WingDriveVolumeId = serde_json::from_reader(file)?;
+		Ok(marker.id)
+	};
+	match read_id() {
+		Ok(id) => return Some(id),
+		Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+		Err(_) => return None,
 	}
-
-	// Try to create new dotfile (if writable)
-	if !mount_point.exists() {
-		return None;
-	}
-
 	let wingdrive_id = WingDriveVolumeId {
 		id: Uuid::new_v4(),
 		created: chrono::Utc::now(),
@@ -302,31 +250,76 @@ pub fn read_or_create_dotfile_sync(
 		library_id: library_id.unwrap_or(Uuid::nil()),
 	};
 
-	if let Ok(content) = serde_json::to_string_pretty(&wingdrive_id) {
-		match std::fs::write(&id_file_path, content) {
-			Ok(()) => {
-				info!(
-					"Created dotfile with ID: {} at {}",
-					wingdrive_id.id,
-					id_file_path.display()
-				);
-				return Some(wingdrive_id.id);
-			}
-			Err(e) => {
-				debug!(
-					"Could not write dotfile to {}: {}",
-					id_file_path.display(),
-					e
-				);
-			}
-		}
+	let mut staged = tempfile::NamedTempFile::new_in(mount_point).ok()?;
+	serde_json::to_writer_pretty(staged.as_file_mut(), &wingdrive_id).ok()?;
+	staged.as_file().sync_all().ok()?;
+	match staged.persist_noclobber(&id_file_path) {
+		Ok(_) => Some(wingdrive_id.id),
+		Err(error) if error.error.kind() == std::io::ErrorKind::AlreadyExists => read_id().ok(),
+		Err(_) => None,
 	}
-
-	None
 }
 
 #[cfg(test)]
 mod tests {
+	#[test]
+	fn simultaneous_hosts_read_the_same_portable_marker() {
+		let volume = tempfile::tempdir().unwrap();
+		let barrier = std::sync::Barrier::new(4);
+		let ids = std::thread::scope(|scope| {
+			let workers: Vec<_> = (0..4)
+				.map(|_| {
+					scope.spawn(|| {
+						barrier.wait();
+						super::read_or_create_dotfile_sync(
+							volume.path(),
+							uuid::Uuid::new_v4(),
+							None,
+						)
+						.unwrap()
+					})
+				})
+				.collect();
+			workers
+				.into_iter()
+				.map(|worker| worker.join().unwrap())
+				.collect::<Vec<_>>()
+		});
+		assert!(ids.iter().all(|id| id == &ids[0]));
+	}
+
+	#[test]
+	fn portable_marker_keeps_its_identity_at_a_new_mount_path() {
+		let host = tempfile::tempdir().unwrap();
+		let old_mount = host.path().join("old-mount");
+		let new_mount = host.path().join("new-mount");
+		std::fs::create_dir(&old_mount).unwrap();
+		let first_host = uuid::Uuid::new_v4();
+		let new_host = uuid::Uuid::new_v4();
+		let id = super::read_or_create_dotfile_sync(&old_mount, first_host, None).unwrap();
+		std::fs::rename(&old_mount, &new_mount).unwrap();
+		assert_eq!(
+			super::read_or_create_dotfile_sync(&new_mount, new_host, None),
+			Some(id)
+		);
+		let marker: crate::domain::volume::WingDriveVolumeId = serde_json::from_reader(
+			std::fs::File::open(crate::branding::volume_id_file(&new_mount)).unwrap(),
+		)
+		.unwrap();
+		assert_eq!(marker.device_id, first_host);
+	}
+
+	#[test]
+	fn damaged_portable_marker_survives_detection() {
+		let volume = tempfile::tempdir().unwrap();
+		let marker = crate::branding::volume_id_file(volume.path());
+		std::fs::write(&marker, b"broken").unwrap();
+		assert!(
+			super::read_or_create_dotfile_sync(volume.path(), uuid::Uuid::new_v4(), None).is_none()
+		);
+		assert_eq!(std::fs::read(marker).unwrap(), b"broken");
+	}
+
 	use super::*;
 
 	#[test]

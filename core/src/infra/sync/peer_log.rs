@@ -48,6 +48,14 @@ impl PeerLog {
 
 	/// Create sync.db tables
 	async fn create_tables(conn: &DatabaseConnection) -> Result<(), PeerLogError> {
+		conn.execute_raw(Statement::from_string(
+			DbBackend::Sqlite,
+			"CREATE TABLE IF NOT EXISTS completed_initial_backfills (device_id TEXT PRIMARY KEY)"
+				.to_string(),
+		))
+		.await
+		.map_err(|error| PeerLogError::QueryError(error.to_string()))?;
+
 		// shared_changes table
 		conn.execute_raw(Statement::from_string(
 			DbBackend::Sqlite,
@@ -78,6 +86,13 @@ impl PeerLog {
 			DbBackend::Sqlite,
 			"CREATE INDEX IF NOT EXISTS idx_shared_changes_model ON shared_changes(model_type)"
 				.to_string(),
+		))
+		.await
+		.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
+
+		conn.execute_raw(Statement::from_string(
+			DbBackend::Sqlite,
+			"CREATE INDEX IF NOT EXISTS idx_shared_changes_record_hlc ON shared_changes(record_uuid, hlc DESC)".to_string(),
 		))
 		.await
 		.map_err(|e| PeerLogError::QueryError(e.to_string()))?;
@@ -453,6 +468,31 @@ impl PeerLog {
 		}
 	}
 
+	/// Check whether this device has already applied an initial snapshot.
+	pub(crate) async fn has_completed_initial_backfill(&self) -> Result<bool, DbErr> {
+		let row = self
+			.conn
+			.query_one_raw(Statement::from_sql_and_values(
+				DbBackend::Sqlite,
+				"SELECT 1 FROM completed_initial_backfills WHERE device_id = ?",
+				[self.device_id.to_string().into()],
+			))
+			.await?;
+		Ok(row.is_some())
+	}
+
+	/// Record the initial download even when it yielded no device-owned rows.
+	pub(crate) async fn complete_initial_backfill(&self) -> Result<(), DbErr> {
+		self.conn
+			.execute_raw(Statement::from_sql_and_values(
+				DbBackend::Sqlite,
+				"INSERT OR IGNORE INTO completed_initial_backfills (device_id) VALUES (?)",
+				[self.device_id.to_string().into()],
+			))
+			.await?;
+		Ok(())
+	}
+
 	/// Get database connection (for advanced queries)
 	pub fn conn(&self) -> &DatabaseConnection {
 		&self.conn
@@ -531,6 +571,22 @@ mod tests {
 			.unwrap();
 
 		(peer_log, temp_dir)
+	}
+
+	#[tokio::test]
+	async fn initial_backfill_completion_survives_reopen_and_is_device_scoped() {
+		let (log, temp) = create_test_peer_log().await;
+		let (library, device) = (log.library_id, log.device_id);
+		assert!(!log.has_completed_initial_backfill().await.unwrap());
+		log.complete_initial_backfill().await.unwrap();
+		log.complete_initial_backfill().await.unwrap();
+		drop(log);
+		let reopened = PeerLog::open(library, device, temp.path()).await.unwrap();
+		assert!(reopened.has_completed_initial_backfill().await.unwrap());
+		let other = PeerLog::open(library, Uuid::new_v4(), temp.path())
+			.await
+			.unwrap();
+		assert!(!other.has_completed_initial_backfill().await.unwrap());
 	}
 
 	#[tokio::test]

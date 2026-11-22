@@ -44,19 +44,88 @@ impl LibraryQuery for FileChecksumQuery {
 
 	async fn execute(
 		self,
-		_context: std::sync::Arc<CoreContext>,
-		_session: crate::infra::api::SessionContext,
+		context: std::sync::Arc<CoreContext>,
+		session: crate::infra::api::SessionContext,
 	) -> QueryResult<Self::Output> {
-		let path = self.input.path.as_local_path().ok_or_else(|| {
-			QueryError::InvalidInput("Checksums are only available for local files".into())
-		})?;
-		let sha256 = checksum_local_file(path).await?;
+		let input = self.input.path;
+		let sha256 = if let Some(path) = input.as_local_path() {
+			checksum_local_file(path).await?
+		} else {
+			let (slug, path) = input.as_physical().ok_or_else(|| {
+				QueryError::InvalidInput("Checksums require a physical file".into())
+			})?;
+			let library_id = session
+				.current_library_id
+				.ok_or_else(|| QueryError::InvalidInput("Select a library".into()))?;
+			let library = context
+				.libraries()
+				.await
+				.get_library(library_id)
+				.await
+				.ok_or(QueryError::LibraryNotFound(library_id))?;
+			let peer = library.resolve_device_slug(slug).ok_or_else(|| {
+				QueryError::InvalidInput("Device is missing from the library".into())
+			})?;
+			remote_checksum(&context, peer, path)
+				.await
+				.map_err(|e| QueryError::Internal(e.to_string()))?
+		};
 		Ok(FileChecksumOutput { sha256 })
 	}
 }
 
+async fn remote_checksum(
+	context: &CoreContext,
+	peer: uuid::Uuid,
+	path: &Path,
+) -> anyhow::Result<String> {
+	use crate::service::network::protocol::file_transfer::FileTransferMessage;
+	use anyhow::{ensure, Context};
+	use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+	let network = context
+		.get_networking()
+		.await
+		.context("Networking is unavailable")?;
+	let node = network
+		.device_registry()
+		.read()
+		.await
+		.get_node_by_device(peer)
+		.context("Device is unavailable")?;
+	let endpoint = network
+		.endpoint()
+		.context("Networking endpoint is unavailable")?;
+	let request = rmp_serde::to_vec(&FileTransferMessage::DigestRequest {
+		source_path: path.to_owned(),
+	})?;
+	let checksum = tokio::time::timeout(std::time::Duration::from_secs(30), async {
+		let connection = endpoint
+			.connect(iroh::EndpointAddr::new(node), b"wingdrive/filetransfer/1")
+			.await?;
+		let (mut sender, mut receiver) = connection.open_bi().await?;
+		sender.write_u8(0).await?;
+		sender.write_u32(u32::try_from(request.len())?).await?;
+		sender.write_all(&request).await?;
+		sender.flush().await?;
+		ensure!(receiver.read_u8().await? == 0, "Unexpected digest response");
+		let len = receiver.read_u32().await? as usize;
+		ensure!(len <= 512, "Invalid digest response size");
+		let mut response = vec![0; len];
+		receiver.read_exact(&mut response).await?;
+		match rmp_serde::from_slice::<FileTransferMessage>(&response)? {
+			FileTransferMessage::DigestResponse {
+				sha256: Some(digest),
+			} => Ok(digest),
+			_ => anyhow::bail!("Peer could not hash the source"),
+		}
+	})
+	.await??;
+	Ok(checksum)
+}
+
 /// Validates and hashes one local file; the query's body, kept apart so tests reach it.
-async fn checksum_local_file(path: &Path) -> QueryResult<String> {
+pub(crate) async fn checksum_local_file(path: &Path) -> QueryResult<String> {
 	if !path.is_absolute() {
 		return Err(QueryError::InvalidInput(format!(
 			"Path is not absolute: {}",

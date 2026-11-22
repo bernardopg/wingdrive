@@ -1,4 +1,5 @@
 mod args;
+mod fetch;
 
 use anyhow::Result;
 use chrono::{DateTime, Utc};
@@ -19,6 +20,15 @@ use self::args::*;
 
 #[derive(Subcommand, Debug)]
 pub enum SyncCmd {
+	/// Preview or fetch one indexed file into an existing local directory
+	Fetch {
+		entry: uuid::Uuid,
+		directory: std::path::PathBuf,
+		/// Dispatch a verified copy after inspecting the plan
+		#[arg(long)]
+		apply: bool,
+	},
+
 	/// Show sync metrics
 	Metrics(SyncMetricsArgs),
 
@@ -31,6 +41,11 @@ pub enum SyncCmd {
 
 pub async fn run(ctx: &Context, cmd: SyncCmd) -> Result<()> {
 	match cmd {
+		SyncCmd::Fetch {
+			entry,
+			directory,
+			apply,
+		} => fetch::run(ctx, entry, directory, apply).await?,
 		SyncCmd::Partners => show_partners(ctx).await?,
 		SyncCmd::Events(args) => export_events(ctx, args).await?,
 		SyncCmd::Metrics(args) => {
