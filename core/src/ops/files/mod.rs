@@ -5,6 +5,7 @@ pub mod copy;
 pub mod create_entry;
 pub mod create_folder;
 pub mod delete;
+pub mod diff;
 pub mod duplicate_detection;
 pub mod journal;
 pub mod permissions;
