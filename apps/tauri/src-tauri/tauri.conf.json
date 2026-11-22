@@ -82,7 +82,8 @@
     ],
     "externalBin": [
       "../../../target/release/wing-daemon",
-      "../../../target/release/wing"
+      "../../../target/release/wing",
+      "../../../target/release/wing-elevate"
     ],
     "resources": {
       "gen/**/*": "./",

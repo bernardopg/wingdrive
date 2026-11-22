@@ -103,8 +103,8 @@ export type Platform = {
 	getContextActions?(paths: string[]): Promise<ContextAction[]>;
 	/** Run a context menu action from `getContextActions` on these local paths */
 	runContextAction?(id: string, paths: string[]): Promise<void>;
-	/** Repeat a file operation as root after polkit authentication (Linux) */
-	runAsAdmin?(operation: AdminOperation): Promise<void>;
+	/** Repeat a file operation with administrator rights (Linux polkit, Windows UAC) */
+	runAsAdmin?(operation: AdminOperation): Promise<AdminRunOutcome>;
 	resolveSymlink?(path: string): Promise<[string, boolean]>;
 	writeFileClipboard?(paths: string[], cut: boolean): Promise<void>;
 	/** Hand absolute local paths to an OS drag that other apps can drop (Linux) */
@@ -466,6 +466,18 @@ export type AdminOperation =
 	| {type: 'rename'; path: string; new_name: string}
 	| {type: 'create_folder'; parent: string; name: string}
 	| {type: 'transfer'; sources: string[]; destination: string; move_files: boolean};
+
+/** One file or folder that an administrator retry could not change */
+export interface AdminItemFailure {
+	path: string;
+	error: string;
+}
+
+/** Result of repeating an operation with administrator rights */
+export type AdminRunOutcome =
+	| {status: 'completed'}
+	| {status: 'cancelled'}
+	| {status: 'partial'; failures: AdminItemFailure[]};
 
 /** A command the user added to the context menu, such as a Dolphin service menu action */
 export interface ContextAction {
