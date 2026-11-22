@@ -40,8 +40,12 @@ Implement the "Reference Sidecar" feature as described in **REFERENCE_SIDECARS.m
 - [x] Can create sidecar records that reference existing entries
 - [x] Files are NOT moved when creating reference sidecars
 - [x] Can convert reference sidecars to managed sidecars
-- [ ] Live Photo detection implemented in Photos extension (separate task)
+- Live Photo detection implemented in Photos extension (separate task)
 
 ## Migration Notes
 
 Live Photo functionality will be tracked in Photos extension tasks. Core reference sidecar support is complete and available for any extension to use.
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

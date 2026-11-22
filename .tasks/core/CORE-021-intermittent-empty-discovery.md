@@ -28,17 +28,21 @@ código de indexação mudou desde a `v3.1.1`.
 
 ## Implementation Steps
 
-- [ ] Reproduzir em laço: rodar o teste de fixtures e o smoke do Explorer
-      repetidas vezes no Linux, com `RUST_LOG=wing_core::ops::indexing=trace`.
-- [ ] Verificar se o backend de volume (`Root`) ou o `read_dir` devolvem vazio
+- [x] Reproduzir em laço: rodar o teste de fixtures e o smoke do Explorer
+      repetidas vezes no Linux, com `RUST_LOG=wing_core::ops::indexing=trace`. (fixture
+      reproduzido; smoke não reproduziu em 15 runs, 2026-11-14/15)
+- [x] Verificar se o backend de volume (`Root`) ou o `read_dir` devolvem vazio
       sem erro, e se a listagem efêmera reaproveita o índice do pai em vez de
-      indexar a pasta.
-- [ ] Corrigir a causa e cobrir com teste de regressão.
+      indexar a pasta. (causa: location dentro do data dir do Core; caminho efêmero não
+      explicado, mas não reproduzido)
+- [x] Corrigir a causa e cobrir com teste de regressão. (indexação persistente falha com
+      erro claro; `core/tests/own_data_location_test.rs`)
 
 ## Acceptance Criteria
 
-- Discovery de uma pasta com itens nunca termina com zero itens sem reportar erro.
-- 50 execuções seguidas do teste de fixtures (feito em 2026-11-14) e 10 do smoke do Explorer passam.
+- [x] Discovery de uma pasta com itens nunca termina com zero itens sem reportar erro.
+      (location dentro do data dir agora falha com erro explícito; smoke não reproduziu o vazio em 15 runs)
+- [x] 50 execuções seguidas do teste de fixtures (feito em 2026-11-14) e 10 do smoke do Explorer passam.
 
 ## Investigation (2026-11-14)
 

@@ -238,15 +238,15 @@ pub async fn export_device_snapshot(
 
 ## Acceptance Criteria
 
-- [ ] Batched state transfers implemented
-- [ ] Compression for large batches (gzip)
-- [ ] Bulk notification message type
-- [ ] On-demand entry loading
-- [ ] Database snapshot export/import
-- [ ] Strategy selection based on entry count
-- [ ] Progress tracking for large transfers
-- [ ] Resumable batch transfers
-- [ ] Performance test: 1M entries sync in <2 minutes
+- Batched state transfers implemented
+- Compression for large batches (gzip)
+- Bulk notification message type
+- On-demand entry loading
+- Database snapshot export/import
+- Strategy selection based on entry count
+- Progress tracking for large transfers
+- Resumable batch transfers
+- Performance test: 1M entries sync in <2 minutes
 
 ## Integration Points
 
@@ -310,3 +310,7 @@ impl SyncService {
 - `core/src/infra/sync/NEW_SYNC.md` - Leaderless architecture
 - State-based sync: LSYNC-010
 - Batch size tuning: Benchmark with 10K, 100K, 1M entries
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

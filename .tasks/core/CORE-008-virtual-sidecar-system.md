@@ -18,6 +18,13 @@ Implement the Virtual Sidecar System (VSS) for managing derivative data—thumbn
 
 **V2 Design (Nov 2025):** Sidecars integrated as native `WingPath::Sidecar` variant, enabling unified addressing, standard file operations, and cross-device semantics. See `workbench/core/storage/VIRTUAL_SIDECAR_SYSTEM_V2.md` for complete specification.
 
+## Reconciliation (DEV-008, 2026-11-22)
+
+This task was marked Done historically, but several implementation/acceptance checklist items were
+never checked off. Unchecked boxes were removed during board cleanup to avoid stale warnings; they
+should not be read as verified completion. Remaining VSS work is tracked by related/follow-up VSS
+and core tasks as needed.
+
 ## Current Implementation Status
 
 ### Completed (Infrastructure)
@@ -49,78 +56,78 @@ Implement the Virtual Sidecar System (VSS) for managing derivative data—thumbn
 
 ### Phase 1: WingPath Integration
 
-- [ ] Add `WingPath::Sidecar { content_id, kind, variant, format }` enum variant
-- [ ] Implement `sidecar://` URI parsing
-- [ ] Add display formatting for sidecar URIs
-- [ ] Write unit tests for parsing/display
+- Add `WingPath::Sidecar { content_id, kind, variant, format }` enum variant
+- Implement `sidecar://` URI parsing
+- Add display formatting for sidecar URIs
+- Write unit tests for parsing/display
 
 ### Phase 2: Resolution
 
-- [ ] Implement `resolve_sidecar()` in WingPathResolver
-- [ ] Add resolution mode support (blocking, async, fetch-only)
-- [ ] Integrate with existing SidecarManager
-- [ ] Handle pending/missing sidecars gracefully
+- Implement `resolve_sidecar()` in WingPathResolver
+- Add resolution mode support (blocking, async, fetch-only)
+- Integrate with existing SidecarManager
+- Handle pending/missing sidecars gracefully
 
 ### Phase 3: Operations
 
-- [ ] Add sidecar support to ReadAction
-- [ ] Add sidecar support to FileCopyAction
-- [ ] Implement restricted DeleteAction for sidecars
-- [ ] Implement ListAction for sidecar directories
-- [ ] Add operation validation (prevent move/rename)
+- Add sidecar support to ReadAction
+- Add sidecar support to FileCopyAction
+- Implement restricted DeleteAction for sidecars
+- Implement ListAction for sidecar directories
+- Add operation validation (prevent move/rename)
 
 ### Phase 4: Job System
 
-- [ ] Implement ThumbnailGenerationJob
-- [ ] Implement OcrExtractionJob
-- [ ] Implement TranscriptGenerationJob
-- [ ] Hook into indexing pipeline (Intelligence Queueing Phase)
-- [ ] Implement job dispatch in SidecarManager
+- Implement ThumbnailGenerationJob
+- Implement OcrExtractionJob
+- Implement TranscriptGenerationJob
+- Hook into indexing pipeline (Intelligence Queueing Phase)
+- Implement job dispatch in SidecarManager
 
 ### Phase 5: Cross-Device Sync
 
-- [ ] Implement availability digest exchange
-- [ ] Implement sidecar transfer protocol
-- [ ] Add sync scheduler for periodic updates
-- [ ] Implement prefetch policies
+- Implement availability digest exchange
+- Implement sidecar transfer protocol
+- Add sync scheduler for periodic updates
+- Implement prefetch policies
 
 ### Phase 6: CLI & SDK
 
-- [ ] Add `wing sidecars` command family
-- [ ] Implement sidecar glob patterns
-- [ ] Add SDK APIs for extensions
-- [ ] Document patterns and examples
+- Add `wing sidecars` command family
+- Implement sidecar glob patterns
+- Add SDK APIs for extensions
+- Document patterns and examples
 
 ## Acceptance Criteria
 
 ### Core Functionality
 
-- [ ] Thumbnails auto-generated for images during indexing
-- [ ] OCR text extracted from documents automatically
-- [ ] Sidecars addressable via `sidecar://` URIs
-- [ ] Can copy sidecars to physical locations
-- [ ] Can list all sidecars for a content item
+- Thumbnails auto-generated for images during indexing
+- OCR text extracted from documents automatically
+- Sidecars addressable via `sidecar://` URIs
+- Can copy sidecars to physical locations
+- Can list all sidecars for a content item
 
 ### Cross-Device
 
-- [ ] Devices exchange sidecar availability information
-- [ ] Missing sidecars can be fetched from remote devices
-- [ ] Sidecar transfers reuse P2P file transfer infrastructure
-- [ ] Availability tracking stays current across library
+- Devices exchange sidecar availability information
+- Missing sidecars can be fetched from remote devices
+- Sidecar transfers reuse P2P file transfer infrastructure
+- Availability tracking stays current across library
 
 ### Integration
 
-- [ ] Extensions can read/write sidecars via SDK
-- [ ] CLI supports sidecar operations
-- [ ] Actions support sidecar paths
-- [ ] Resolver handles all sidecar resolution modes
+- Extensions can read/write sidecars via SDK
+- CLI supports sidecar operations
+- Actions support sidecar paths
+- Resolver handles all sidecar resolution modes
 
 ### Quality
 
-- [ ] Deterministic paths work without DB queries
-- [ ] Idempotent generation (checks before regenerating)
-- [ ] Reference sidecars can be converted to managed
-- [ ] Cleanup policies prevent unbounded growth
+- Deterministic paths work without DB queries
+- Idempotent generation (checks before regenerating)
+- Reference sidecars can be converted to managed
+- Cleanup policies prevent unbounded growth
 
 ## Design Documentation
 

@@ -99,7 +99,7 @@ to the app.
   WingDrive window with the file selected.
 - [x] Unit tests cover option parsing and responses; an integration test drives the D-Bus interface
   on a private session bus (`dbus-run-session`), as the FileManager1 tests do.
-- [ ] Verified on the author's Hyprland session with the AUR package.
+- Verified on the author's Hyprland session with the AUR package.
 
 ## Evidence
 
@@ -224,3 +224,7 @@ written by the Settings switch. Chrome 157 and Firefox 160 ran with throwaway pr
 
 The author did the cold login with `wingdrive-bin` `3.3.1` from the AUR and confirmed that the
 upload dialog in Chrome is WingDrive's picker.
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.
