@@ -322,7 +322,7 @@ fn shell_execute_runas(
 	info.lpFile = file.as_ptr();
 	info.lpParameters = params.as_ptr();
 	info.lpDirectory = dir.as_ptr();
-	info.nShow = SW_HIDE as i32;
+	info.nShow = SW_HIDE;
 
 	let ok = unsafe { ShellExecuteExW(&mut info) };
 	if ok == 0 {
