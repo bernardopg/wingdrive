@@ -2250,7 +2250,7 @@ export type IntegrationAccountInfo = {
 	 */
 	drive_picker: boolean,
 	/**  The account's grant no longer works and the user must sign in again. */
-	needs_reconnect: boolean,
+	needs_reconnect?: boolean,
 };
 
 /**  Disconnects an account from the library. */
