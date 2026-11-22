@@ -7,7 +7,7 @@ parent: LSYNC-000
 priority: High
 milestone: M0
 tags: [sync, replication, service, peer-to-peer, leaderless]
-depends_on: [LSYNC-006, LSYNC-014, LSYNC-015, LSYNC-016, LSYNC-013]
+depends_on: [LSYNC-006, LSYNC-013]
 design_doc: core/src/infra/sync/NEW_SYNC.md
 last_updated: 2025-12-02
 ---
@@ -156,7 +156,7 @@ impl SyncService {
 - [x] Service stops gracefully on library close (via Library::shutdown) ✅
 - [x] Late initialization support (if networking loads after libraries) ✅
 - [x] Automatic backfill detection in run_sync_loop ✅
-- [ ] Service config supports enable/disable (sync always enabled if networking available)
+- Service config supports enable/disable (sync always enabled if networking available)
 
 ### State-Based Sync (Core)
 
@@ -165,8 +165,8 @@ impl SyncService {
 - [x] No sync log for device-owned data ✅
 - [x] Parallel sends with timeout ✅
 - [x] Retry queue for failed sends ✅
-- [ ] Batch optimization (100ms window)
-- [ ] Incremental sync via timestamps
+- Batch optimization (100ms window)
+- Incremental sync via timestamps
 
 ### Log-Based Sync (Core)
 
@@ -187,8 +187,8 @@ impl SyncService {
 - [x] on_peer_connected() event handler ✅
 - [x] on_peer_disconnected() event handler ✅
 - [x] Queue changes for offline peers (PeerLog IS the persistent queue) ✅
-- [ ] Wire network event receiver from NetworkingService to PeerSync
-- [ ] Detect stale connections (optional health checks)
+- Wire network event receiver from NetworkingService to PeerSync
+- Detect stale connections (optional health checks)
 
 ### Startup/Reconnection Sync - COMPLETE ✅
 
@@ -199,7 +199,7 @@ impl SyncService {
 - [x] Trigger catch-up if diverged (SharedChangeRequest sent) ✅
 - [x] "Sync on reconnect" event handler (trigger_watermark_exchange) ✅
 - [x] Incremental catch-up for shared resources (HLC-based) ✅
-- [ ] Incremental state catch-up (logged as TODO, state is idempotent)
+- Incremental state catch-up (logged as TODO, state is idempotent)
 
 ### Backfill Protocol - ~70% COMPLETE
 
@@ -211,25 +211,25 @@ impl SyncService {
 - [x] request_state_batch() sends request via network ✅
 - [x] request_shared_changes() sends request via network ✅
 - [x] StateRequest/SharedChangeRequest handlers implemented ✅
-- [ ] Response correlation/await mechanism (design limitation)
-- [ ] Checkpoint persistence for crash recovery
+- Response correlation/await mechanism (design limitation)
+- Checkpoint persistence for crash recovery
 
 ### Heartbeat & Monitoring
 
 - [x] Heartbeat message handler ✅
-- [ ] Periodic heartbeat sender
-- [ ] Health check metrics
-- [ ] Watermark exchange in heartbeat
+- Periodic heartbeat sender
+- Health check metrics
+- Watermark exchange in heartbeat
 
 ### Integration Testing
 
-- [ ] Service lifecycle test
-- [ ] Two-peer state sync test
-- [ ] Conflict resolution via HLC test
-- [ ] Multi-peer scenario (3+ devices)
-- [ ] Offline peer handling test
-- [ ] Reconnection sync test
-- [ ] New device backfill test
+- Service lifecycle test
+- Two-peer state sync test
+- Conflict resolution via HLC test
+- Multi-peer scenario (3+ devices)
+- Offline peer handling test
+- Reconnection sync test
+- New device backfill test
 
 ## Implementation Progress (Oct 9, 2025)
 
@@ -656,3 +656,7 @@ Database schema ready (Oct 14, 2025). Priority 2 connection handlers ready (Oct 
 - HLC: LSYNC-014
 - Protocol: LSYNC-013
 - TransactionManager: LSYNC-006
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

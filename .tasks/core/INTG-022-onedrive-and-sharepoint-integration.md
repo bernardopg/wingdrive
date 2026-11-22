@@ -1,14 +1,14 @@
 ---
 id: INTG-022
 title: OneDrive and SharePoint integration
-status: In Progress
+status: To Do
 assignee: bernardopg
 parent: INTG-000
 priority: High
 milestone: M5
 sprint: S05
-tags: [integrations, onedrive, microsoft, oauth]
-last_updated: 2026-11-13
+tags: [integrations, onedrive, microsoft, oauth, blocked]
+last_updated: 2026-11-22
 related_tasks: [INTG-020, INTG-010]
 ---
 
@@ -36,6 +36,10 @@ platform. File operations go through OpenDAL's OneDrive service with an access t
 Left: register WingDrive's app in Microsoft Entra and pass `WINGDRIVE_MICROSOFT_CLIENT_ID` to
 release builds (as INTG-001 does for Google), a round trip against the real OneDrive, SharePoint
 libraries and "Shared with me", delta queries, and publisher verification.
+
+> 2026-11-22 (DEV-008): moved to `To Do` during S05 board cleanup. Blocked on third party: Microsoft
+> Entra app registration, publisher verification, and real OneDrive/SharePoint validation; not
+> actively in progress.
 
 ## Acceptance Criteria
 

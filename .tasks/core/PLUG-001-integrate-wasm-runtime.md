@@ -29,9 +29,9 @@ Integrate a WebAssembly runtime (e.g., Wasmer or Wasmtime) into the WingDrive co
 
 ## Remaining Work
 
-- [ ] Complete WASM memory interaction helpers (read_string_from_wasm, write_json_to_wasm)
-- [ ] Integrate with guest allocator for memory management
-- [ ] Add hot-reload support for development
+- Complete WASM memory interaction helpers (read_string_from_wasm, write_json_to_wasm)
+- Integrate with guest allocator for memory management
+- Add hot-reload support for development
 
 ## Acceptance Criteria
 
@@ -44,3 +44,7 @@ Integrate a WebAssembly runtime (e.g., Wasmer or Wasmtime) into the WingDrive co
 - core/src/infra/extension/manager.rs - PluginManager
 - core/src/infra/extension/README.md - Architecture and status
 - extensions/test-extension/ - Working test extension
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

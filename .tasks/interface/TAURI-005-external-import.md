@@ -20,7 +20,7 @@ Support dropping operating-system files into a physical Explorer destination. Th
 - [x] Validate conflicts before starting the operation
 - [x] Dispatch the existing copy or ingestion job
 - [x] Show progress and per-file failures
-- [ ] Verify copy semantics on Linux, macOS, and Windows
+- Verify copy semantics on Linux, macOS, and Windows
 
 ## Implementation
 
@@ -34,3 +34,7 @@ Support dropping operating-system files into a physical Explorer destination. Th
 
 - Typecheck, production Vite build, and the `resolveExternalDrop` bun tests pass.
 - Live drop-to-import verification on Linux is pending the TAURI-006 runtime matrix; macOS and Windows require their CI runners.
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.
