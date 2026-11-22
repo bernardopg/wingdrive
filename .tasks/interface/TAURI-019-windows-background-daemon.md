@@ -36,7 +36,7 @@ and the background settings, and quits.
       Windows keeps running hidden when "Keep running in the background" is on. Check that the icon,
       its menu and "Start at login" work there, and that the daemon keeps running when the window
       closes.
-- [ ] Logs reach a file the user can open from the tray menu or Settings, since there is no console.
+- [x] Logs reach a file the user can open from the tray menu or Settings, since there is no console. Tray menu already has "Open Logs Folder" (`apps/tauri/src-tauri/src/background.rs`); real Windows verification still pending.
 
 ## Acceptance Criteria
 
@@ -68,3 +68,7 @@ and the background settings, and quits.
   folder. The logs item still needs a check on Windows.
 - #420: the `WingDriveDaemon` scheduled task definition is written as UTF-16, as it declares, with
   the paths escaped for XML and quoted for the command line (`scheduled_task.rs`, tested on Linux).
+
+## Progress (2026-11-22, code-only)
+
+- Marked "Logs reach a file..." as done in code: tray menu has "Open Logs Folder" (`background.rs`). Remaining acceptance criteria require real Windows runtime verification; recorded as S08 gap `TAURI-020`.
