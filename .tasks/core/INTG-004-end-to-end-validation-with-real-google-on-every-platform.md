@@ -1,14 +1,14 @@
 ---
 id: INTG-004
 title: End-to-end validation with real Google on every platform
-status: In Progress
+status: To Do
 assignee: bernardopg
 parent: INTG-000
 priority: High
 milestone: M5
 sprint: S05
-tags: [integrations, google, testing, linux, windows, macos]
-last_updated: 2026-11-13
+tags: [integrations, google, testing, linux, windows, macos, blocked]
+last_updated: 2026-11-22
 related_tasks: [CLOUD-004, TAURI-012]
 ---
 
@@ -29,6 +29,9 @@ CLOUD-004 was verified against a fake Google (`core/tests/google_integration_tes
 - 2026-11-13: first real round trip. The author connected their Google account from the desktop
   app of branch `feat/integrations-connection-modes` (debug build, Linux, isolated instance) with
   the bundled INTG-001 client in the "Google account" mode. The rest of the matrix is pending.
+- 2026-11-22 (DEV-008): moved to `To Do` during S05 board cleanup. Blocked on third-party/external
+  access: real Google validation on Windows/macOS packages and remaining matrix need external
+  accounts/machines; not actively in progress.
 
 ## Acceptance Criteria
 

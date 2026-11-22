@@ -144,14 +144,14 @@ async fn on_ack(peer_id: Uuid, up_to_hlc: HLC) {
 
 ## Acceptance Criteria
 
-- [ ] `sync.db` created per library
-- [ ] Migration created and tested
-- [ ] SeaORM entities implemented
-- [ ] HLC-based indexes
-- [ ] SyncDb wrapper functional
-- [ ] Pruning logic works
-- [ ] Log stays small (<1000 entries under normal use)
-- [ ] Documentation complete
+- `sync.db` created per library
+- Migration created and tested
+- SeaORM entities implemented
+- HLC-based indexes
+- SyncDb wrapper functional
+- Pruning logic works
+- Log stays small (<1000 entries under normal use)
+- Documentation complete
 
 ## Migration from sync_log.db
 
@@ -172,3 +172,7 @@ async fn on_ack(peer_id: Uuid, up_to_hlc: HLC) {
 - `core/src/infra/sync/NEW_SYNC.md` - Shared changes log design
 - HLC: LSYNC-009
 - Pruning: Lines 407-429 in NEW_SYNC.md
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

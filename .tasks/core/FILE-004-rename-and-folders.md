@@ -92,8 +92,8 @@ Implement file rename, new folder creation, and new folder with items operations
 - [x] Navigation during rename → Cancel rename before navigating
 - [x] Selection change during rename → Cancel rename
 - [x] Multiple rapid Enter presses → Debounce or disable during save
-- [ ] Folder creation failure → Show error toast
-- [ ] Copy job failure for "new folder with items" → Folder still created, show job status
+- Folder creation failure → Show error toast
+- Copy job failure for "new folder with items" → Folder still created, show job status
 
 ## Implementation Plan
 
@@ -605,3 +605,7 @@ const createFolderWithItems = async () => {
 - Depends on unified keybind system (already implemented)
 - Depends on VolumeBackend architecture (already implemented)
 - Depends on FileCopyJob (already implemented)
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

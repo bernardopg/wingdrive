@@ -336,14 +336,14 @@ async fn test_entry_closure_rebuilt_during_sync() {
 
 ## Acceptance Criteria
 
-- [ ] `entry_closure` rebuilt in `apply_state_change()`
-- [ ] Bulk rebuild runs after backfill completes
-- [ ] Tag closure also rebuilt if needed
-- [ ] Synced entries have full closure records (not just self-refs)
-- [ ] Can query descendants of synced entries
-- [ ] INDEX-003 location scoping works on synced entries
-- [ ] Delete subtree works on synced entries
-- [ ] Test suite passes
+- `entry_closure` rebuilt in `apply_state_change()`
+- Bulk rebuild runs after backfill completes
+- Tag closure also rebuilt if needed
+- Synced entries have full closure records (not just self-refs)
+- Can query descendants of synced entries
+- INDEX-003 location scoping works on synced entries
+- Delete subtree works on synced entries
+- Test suite passes
 
 ## References
 
@@ -351,3 +351,7 @@ async fn test_entry_closure_rebuilt_during_sync() {
 - [Backfill Manager](../../core/src/service/sync/backfill.rs)
 - [CORE-004](./CORE-004-closure-table.md) - Closure table architecture
 - [INDEX-003](./INDEX-003-watcher-device-ownership-violation.md) - Depends on closure table
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

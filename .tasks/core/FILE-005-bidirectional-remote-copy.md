@@ -446,11 +446,11 @@ Device A (local):  Receives chunks, writes to destination
 - [x] Security: Only paired devices can request PULL
 - [x] Checksums are verified end-to-end (Blake3)
 - [x] Progress reporting works for PULL (byte-level updates)
-- [ ] Resume works for interrupted PULL transfers
+- Resume works for interrupted PULL transfers
 - [x] Error messages are clear (offline device, permission denied, file not found)
 - [x] UI drag-and-drop from remote device to local folder works seamlessly
 - [x] Integration tests cover basic PULL, large files, errors, and resume
-- [ ] PULL performance is comparable to PUSH (same throughput)
+- PULL performance is comparable to PUSH (same throughput)
 
 ## Related Tasks
 
@@ -464,3 +464,7 @@ Device A (local):  Receives chunks, writes to destination
 - `core/src/service/network/protocol/file_transfer.rs` - Add PULL protocol messages and handlers
 - `core/tests/file_copy_pull.rs` - Integration tests
 - `packages/interface/src/app/$libraryId/Explorer/DragAndDrop.tsx` - UI updates
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

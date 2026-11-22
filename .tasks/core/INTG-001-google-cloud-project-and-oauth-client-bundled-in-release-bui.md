@@ -1,14 +1,14 @@
 ---
 id: INTG-001
 title: Google Cloud project and OAuth client bundled in release builds
-status: In Progress
+status: To Do
 assignee: bernardopg
 parent: INTG-000
 priority: High
 milestone: M5
 sprint: S05
-tags: [integrations, google, oauth, release, ci]
-last_updated: 2026-11-13
+tags: [integrations, google, oauth, release, ci, blocked]
+last_updated: 2026-11-22
 related_tasks: [CLOUD-004, REL-001]
 ---
 
@@ -31,6 +31,10 @@ Google treats a "Desktop app" client secret as not confidential, so embedding it
 9. Add a CI check that release artifacts report `integrations.google.client` source `bundled`.
 
 ## Progress (2026-11-13)
+
+> 2026-11-22 (DEV-008): moved to `To Do` during S05 board cleanup. Bundled client and secrets are
+> in place; remaining work (AUR nightly, Docker, Flatpak, mobile, CI client-source check) is paused,
+> not actively in progress.
 
 - Project `wingdrive-514618` created under the author's account, with Google Drive API, Photos
   Library API and Photos Picker API enabled.
