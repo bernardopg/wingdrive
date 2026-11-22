@@ -22,6 +22,7 @@ pub enum AdminRunOutcome {
 	/// The user declined or the system refused the elevation prompt.
 	Cancelled,
 	/// Some items completed and some failed.
+	#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 	Partial { failures: Vec<AdminItemFailure> },
 }
 
