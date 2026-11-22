@@ -671,14 +671,9 @@ async fn google_invalid_grant_marks_account_for_reconnect() -> TestResult {
 
 	let dir = TempDir::new()?;
 	let mut core = Core::new(dir.path().join("core")).await?;
-	core.services
-		.volume_monitoring
-		.set_enabled(&core.context, false)
-		.await
-		.ok();
 	let library = core
 		.libraries
-		.create("Intg", None, core.context.clone())
+		.create_library_no_sync("Intg", None, core.context.clone())
 		.await?;
 
 	let integrations = core.context.integrations.clone();
