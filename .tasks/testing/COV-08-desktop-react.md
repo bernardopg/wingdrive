@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-15
+last_updated: 2026-11-22
 ---
 
 ## Description
@@ -22,8 +22,8 @@ COV-02. Escopo, metas e ordem em [README.md](README.md).
 ## Implementation Steps
 
 - [x] Cobrir seleção, expansão, navegação, busca, filtros e eventos que invalidam queries.
-- [ ] Testar copiar/recortar/colar, confirmação de exclusão, erros e restauração de foco.
-- [ ] Validar labels acessíveis e catálogos en/pt; executar testes com mocks isolados por processo.
+- [x] Testar copiar/recortar/colar, confirmação de exclusão e erros no nível de hooks; restauração de foco segue coberta pelos testes existentes de seleção/foco, sem smoke novo.
+- [ ] Validar labels acessíveis e catálogos en/pt; executar testes com mocks isolados por processo. (Paridade en/pt coberta por `catalogParity.test.ts`; faltam asserções dedicadas de labels/ARIA e smoke isolado.)
 
 ## Acceptance Criteria
 
@@ -62,6 +62,33 @@ instrumentadas difere do CI por versão do bun; o número oficial é o do workfl
 Falta: copiar/recortar/colar e exclusão pela UI, labels acessíveis e catálogos en/pt, e o smoke de
 Explorer/sidebar com web UI e daemon isolado. Maiores déficits restantes: `TabBar.tsx`,
 `WebContextMenuContext.tsx`, `useContextMenu.ts` e `IntegrationsSettings.tsx`.
+
+### 2026-11-22, branch `test/cov-08-desktop-react`
+
+Adicionados testes de hooks do Explorer focados nos fluxos de clipboard e exclusão, com mocks
+isolados por processo (mesmo padrão `mock.module` + `GlobalRegistrator` dos testes existentes):
+
+- `packages/interface/src/routes/explorer/hooks/usePasteFiles.test.tsx`: ignora destino vazio ou
+  clipboard vazio, abre operação copy/move conforme clipboard, marca `confirmOnlyOnConflict`, limpa
+  clipboard de cut após conclusão e reporta erros de leitura/finalização.
+- `packages/interface/src/routes/explorer/hooks/useDeleteFiles.test.tsx`: ignora seleção vazia,
+  mutação pendente e alvos virtuais; confirmação cancela sem mutar; confirmação executa delete,
+  refaz listagens, reporta sucesso e registra undo journalado para lixo local; delete permanente e
+  cloud-only não registram undo; falha parcial reporta outcome; exceção reporta erro com retry de
+  administrador para caminhos locais.
+- `packages/interface/src/i18n/catalogParity.test.ts`: verifica pastas `en`/`pt`, chaves idênticas
+  por namespace e valores não vazios em todos os catálogos.
+
+CI: adicionados os três arquivos em `.github/workflows/ci.yml` para execução por processo.
+
+Verificação local (worktree `/home/bitter/.cache/opencode/wt/cov-08`, `bun install` no worktree):
+
+- `bun test packages/interface/src/routes/explorer/hooks/usePasteFiles.test.tsx packages/interface/src/routes/explorer/hooks/useDeleteFiles.test.tsx packages/interface/src/i18n/catalogParity.test.ts` — 16 pass, 0 fail.
+- `cd packages/interface && bun run typecheck` (`bun check`) — 388 arquivos, sem erros de tipo.
+
+Lacunas restantes: sem teste novo de keyboard copy/cut/delete no `useExplorerKeyboard`; sem asserções
+dedicadas de labels acessíveis/ARIA nos fluxos Explorer/sidebar; sem smoke com web UI + daemon
+isolado; cobertura de linhas dos módulos alterados não medida nesta execução.
 
 ## Measurement 2026-11-15
 

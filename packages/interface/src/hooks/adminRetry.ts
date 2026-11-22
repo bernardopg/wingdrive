@@ -23,8 +23,19 @@ export function useAdminRetry() {
 		async (operation: AdminOperation) => {
 			if (!platform.runAsAdmin) return false;
 			try {
-				await platform.runAsAdmin(operation);
+				const outcome = await platform.runAsAdmin(operation);
+				if (outcome.status === 'cancelled') {
+					toast.info(t('admin.cancelled'));
+					return false;
+				}
 				refetchListings();
+				if (outcome.status === 'partial') {
+					const error = outcome.failures
+						.map((failure) => `${failure.path}: ${failure.error}`)
+						.join('; ');
+					toast.error(t('admin.partial', {error}));
+					return true;
+				}
 				toast.success(t('admin.done'));
 				return true;
 			} catch (error) {
