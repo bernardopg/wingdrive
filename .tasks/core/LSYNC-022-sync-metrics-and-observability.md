@@ -446,20 +446,20 @@ ON sync_metrics_snapshots(library_id, timestamp);
 
 ## Acceptance Criteria
 
-- [ ] All metric types defined with thread-safe atomic counters
-- [ ] `SyncMetricsCollector` integrated into sync components
-- [ ] State transitions tracked and recorded
-- [ ] Operation counters updated in real-time
-- [ ] CLI command `wing sync metrics` displays formatted metrics
-- [ ] CLI supports time range filtering (`--since`)
-- [ ] CLI supports real-time watching (`--watch`)
-- [ ] CLI supports per-device and per-model filtering
-- [ ] Metrics exported as JSON for programmatic access
-- [ ] Error events tracked with ring buffer
-- [ ] Latency histograms track min/max/avg
-- [ ] Zero measurable performance impact when metrics disabled
-- [ ] Documentation added to library-sync.mdx
-- [ ] Integration test validates metrics accuracy
+- All metric types defined with thread-safe atomic counters
+- `SyncMetricsCollector` integrated into sync components
+- State transitions tracked and recorded
+- Operation counters updated in real-time
+- CLI command `wing sync metrics` displays formatted metrics
+- CLI supports time range filtering (`--since`)
+- CLI supports real-time watching (`--watch`)
+- CLI supports per-device and per-model filtering
+- Metrics exported as JSON for programmatic access
+- Error events tracked with ring buffer
+- Latency histograms track min/max/avg
+- Zero measurable performance impact when metrics disabled
+- Documentation added to library-sync.mdx
+- Integration test validates metrics accuracy
 
 ## Testing Strategy
 
@@ -540,3 +540,7 @@ async fn test_sync_metrics_tracking() {
 - `core/src/service/sync/state.rs`
 - `core/src/service/network/protocol/sync/handler.rs`
 - `docs/core/library-sync.mdx`
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

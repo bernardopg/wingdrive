@@ -1,14 +1,14 @@
 ---
 id: INTG-003
 title: Google OAuth app verification (sensitive and restricted scopes)
-status: In Progress
+status: To Do
 assignee: bernardopg
 parent: INTG-000
 priority: High
 milestone: M5
 sprint: S05
-tags: [integrations, google, oauth, verification, security]
-last_updated: 2026-11-18
+tags: [integrations, google, oauth, verification, security, blocked]
+last_updated: 2026-11-22
 related_tasks: [INTG-001, INTG-002, INTG-011]
 ---
 
@@ -61,6 +61,9 @@ v3.5.0 shipped the Picker and the smaller scope set. Data Access now lists exact
 video, https://youtu.be/YghrdeRQiLM (consent screen in English with every scope, the client ID in
 the address bar, each scope's effect in Drive and Photos). The checklist email was answered on
 2026-11-18 with the audit per item. Data Access is back "em análise"; wait for Google.
+
+> 2026-11-22 (DEV-008): moved to `To Do` during S05 board cleanup. Blocked on third party: waiting
+> for Google's OAuth verification review response. No active internal work in this sprint.
 
 ## Acceptance Criteria
 

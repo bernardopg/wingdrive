@@ -70,12 +70,9 @@ Object.entries(resourceTypeMap).forEach(([type, TypeClass]) => {
 
 ## Acceptance Criteria
 
-- [ ] ResourceTypeRegistry implemented
-- [ ] Auto-generated resourceTypeMap from specta
-- [ ] Type safety preserved through generics
-- [ ] Error handling for unknown types
-- [ ] Unit tests for registration and decoding
-- [ ] Integration with EventCacheUpdater
+Superseded by `useNormalizedQuery` in `packages/ts-client/src/hooks/useNormalizedQuery.ts`, typed by
+generated `packages/ts-client/src/generated/types.ts` and covered by hook tests. No separate
+`ResourceTypeRegistry` or `EventCacheUpdater` is needed.
 
 ## References
 

@@ -7,7 +7,7 @@ parent: LSYNC-000
 priority: High
 milestone: M0
 tags: [sync, networking, protocol, peer-to-peer, leaderless]
-depends_on: [LSYNC-014, LSYNC-015, LSYNC-016]
+depends_on: []
 design_doc: core/src/infra/sync/NEW_SYNC.md
 completed: 2025-10-09
 ---
@@ -195,7 +195,7 @@ impl SyncProtocolHandler {
 - [x] ACK mechanism for log pruning ✅
 - [x] BiStream communication working ✅
 - [x] Protocol registered with ALPN ✅
-- [ ] Integration tests validate peer-to-peer flow (pending)
+- Integration tests validate peer-to-peer flow (pending)
 
 ## Implementation Notes (Oct 9, 2025)
 
@@ -224,3 +224,7 @@ Successfully implemented in `core/src/service/network/protocol/sync/handler.rs`:
 - HLC implementation: LSYNC-014
 - State-based sync: LSYNC-015
 - Log-based sync: LSYNC-016
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

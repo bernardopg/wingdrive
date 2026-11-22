@@ -23,6 +23,10 @@ Implement a secure credential vault for storing API keys and other secrets for c
 
 ## Acceptance Criteria
 
-- [ ] Credentials are encrypted at rest in the database.
-- [ ] The master encryption key is stored securely.
-- [ ] The system can retrieve credentials to authenticate with cloud services.
+- Credentials are encrypted at rest in the database.
+- The master encryption key is stored securely.
+- The system can retrieve credentials to authenticate with cloud services.
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

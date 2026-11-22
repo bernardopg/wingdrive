@@ -122,29 +122,29 @@ Result:
 ## Acceptance Criteria
 
 ### Core Implementation
-- [ ] Add `windows-sys` dependency for File ID access
-- [ ] Implement `get_inode()` for Windows using `GetFileInformationByHandle`
-- [ ] Extract 64-bit File ID from `nFileIndexHigh` and `nFileIndexLow`
-- [ ] Return `None` gracefully for non-NTFS filesystems (FAT32, exFAT)
-- [ ] Add tracing/logging for File ID extraction success/failure
+- Add `windows-sys` dependency for File ID access
+- Implement `get_inode()` for Windows using `GetFileInformationByHandle`
+- Extract 64-bit File ID from `nFileIndexHigh` and `nFileIndexLow`
+- Return `None` gracefully for non-NTFS filesystems (FAT32, exFAT)
+- Add tracing/logging for File ID extraction success/failure
 
 ### Change Detection
-- [ ] File renames detected as moves (not delete + create)
-- [ ] UUIDs preserved across renames within a volume
-- [ ] Tags and metadata preserved across renames
-- [ ] Cross-volume copies create new UUIDs (expected behavior)
+- File renames detected as moves (not delete + create)
+- UUIDs preserved across renames within a volume
+- Tags and metadata preserved across renames
+- Cross-volume copies create new UUIDs (expected behavior)
 
 ### Error Handling
-- [ ] Handle FAT32/exFAT gracefully (return `None`, fall back to path matching)
-- [ ] Handle permission errors (return `None`, log debug message)
-- [ ] Handle invalid handles (return `None`, log debug message)
-- [ ] No panics or crashes on unsupported filesystems
+- Handle FAT32/exFAT gracefully (return `None`, fall back to path matching)
+- Handle permission errors (return `None`, log debug message)
+- Handle invalid handles (return `None`, log debug message)
+- No panics or crashes on unsupported filesystems
 
 ### Documentation
-- [ ] Update code comments to reflect actual File ID stability
-- [ ] Document NTFS requirement for File ID support
-- [ ] Document known limitations (cross-volume, FAT32, defrag edge case)
-- [ ] Add platform comparison table to developer docs
+- Update code comments to reflect actual File ID stability
+- Document NTFS requirement for File ID support
+- Document known limitations (cross-volume, FAT32, defrag edge case)
+- Add platform comparison table to developer docs
 
 ## Implementation Plan
 
@@ -265,11 +265,11 @@ NTFS supports hard links for files (not directories):
 
 ## Success Metrics
 
-- [ ] File renames preserve UUIDs on Windows NTFS volumes
-- [ ] Tags and metadata survive renames on Windows
-- [ ] No crashes or errors on FAT32/exFAT volumes
-- [ ] File ID extraction success rate > 99% on NTFS
-- [ ] No performance regression (File ID extraction is O(1))
+- File renames preserve UUIDs on Windows NTFS volumes
+- Tags and metadata survive renames on Windows
+- No crashes or errors on FAT32/exFAT volumes
+- File ID extraction success rate > 99% on NTFS
+- No performance regression (File ID extraction is O(1))
 
 ## Platform Comparison
 
@@ -331,3 +331,7 @@ NTFS supports hard links for files (not directories):
 - User reports increase about lost tags/metadata on Windows
 - Preparing major Windows release
 - Windows becomes primary platform
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.
