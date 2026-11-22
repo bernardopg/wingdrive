@@ -7,7 +7,7 @@ This page records how to build and test WingDrive on Windows, and what still
 differs from Linux. The Windows installers ship since `v3.0.0`, as a beta.
 The port's history is in `.tasks/interface/TAURI-016-windows-port.md` (Done).
 Open work: the manual regression matrix in `TAURI-012`, signing in `REL-001`
-and administrator retries in `TAURI-017`.
+and Windows administrator retries in `TAURI-017`.
 
 ## Set up a machine
 
@@ -143,8 +143,10 @@ samples.
 
 ## Known differences from Linux
 
-- "Administrator retries" (`run_as_admin`) exist only on Linux, through `pkexec`.
-  The Windows design through UAC is `TAURI-017`.
+- "Administrator retries" (`run_as_admin`) use `pkexec` on Linux and a
+  `wing-elevate.exe` helper through UAC on Windows (TAURI-017). The Windows
+  helper reads its request from a file, not the command line, and is not yet
+  signed with the release Authenticode certificate (REL-001).
 - The system file clipboard works on Linux and Windows. On Windows,
   `file-clipboard-windows` reads and writes `CF_HDROP` and `Preferred DropEffect`;
   the exchange with Explorer still waits for a check by hand (`TAURI-012`).

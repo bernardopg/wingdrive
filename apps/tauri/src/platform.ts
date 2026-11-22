@@ -11,6 +11,7 @@ import {open as shellOpen} from '@tauri-apps/plugin-shell';
 import {i18n} from '@wingdrive/interface';
 import type {
 	AdminOperation,
+	AdminRunOutcome,
 	ContextAction,
 	AvailableUpdate,
 	DesktopSettings,
@@ -70,10 +71,12 @@ export const platform: Platform = {
 					invoke<FileChooserPortalStatus>('file_chooser_portal_status'),
 				setFileChooserPortal: (enabled: boolean) =>
 					invoke<FileChooserPortalStatus>('file_chooser_portal_set', {enabled}),
-				// Administrator retries run through polkit; Windows has no UAC path yet.
-				runAsAdmin: async (operation: AdminOperation) => {
-					await invoke('run_as_admin', {operation});
-				}
+			}
+		: {}),
+	...(navigator.platform.startsWith('Linux') || navigator.platform.startsWith('Win')
+		? {
+				runAsAdmin: async (operation: AdminOperation) =>
+					await invoke<AdminRunOutcome>('run_as_admin', {operation})
 			}
 		: {}),
 	...(navigator.platform.startsWith('Linux') || navigator.platform.startsWith('Win')

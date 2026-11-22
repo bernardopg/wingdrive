@@ -296,6 +296,33 @@ jobs:
             echo "::endgroup::"
           done
           echo "Explorer smoke: $((SMOKE_RUNS - failed)) of $SMOKE_RUNS runs passed" | tee -a "$GITHUB_STEP_SUMMARY"
+          # CORE-022: normal browsing must not flood the journal. Ignore third-party targets.
+          python3 - <<'PY'
+          import pathlib, re, sys
+          log = pathlib.Path('/tmp/wingdrive-server.log')
+          own = ('wing_core', 'wingdrive', 'wing_server', 'wing_', 'notify::', 'wing_task_system', 'wing_fs_watcher')
+          benign = (
+              'No config found, creating default',
+              'Task done channel closed before sending done response',
+              'Unable to remove the path from the watches: Error { kind: WatchNotFound',
+              'Could not keep the modification time of a copy',
+          )
+          noise = []
+          for line in log.read_text(errors='replace').splitlines():
+              if not re.search(r'\b(WARN|ERROR)\b', line):
+                  continue
+              if not any(p in line for p in own):
+                  continue
+              if any(p in line for p in benign):
+                  continue
+              noise.append(line)
+          if noise:
+              print(f'Explorer smoke server log has {len(noise)} WARN/ERROR line(s):', file=sys.stderr)
+              for line in noise[:30]:
+                  print(line, file=sys.stderr)
+              sys.exit(1)
+          print('PASS: no WARN/ERROR from own targets in explorer smoke server log')
+          PY
           test "$failed" -eq 0
 
       - name: Preserve Explorer smoke evidence

@@ -5,6 +5,12 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Fixed
+
+- The hidden Linux/Windows native menu no longer builds accelerators, avoiding GTK "no accelerator
+  installed in accel group" startup warnings (CORE-022). The daemon and Explorer smokes now fail if
+  own targets emit WARN/ERROR during idle browsing.
+
 ## 3.6.0 — 2026-11-20
 
 Android Explorer adds local file operations. This release also fixes

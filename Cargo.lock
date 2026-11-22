@@ -14583,6 +14583,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "wing-elevate"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "wing-fda"
 version = "0.1.0"
 dependencies = [
@@ -14783,6 +14792,7 @@ dependencies = [
  "webp",
  "windows-sys 0.52.0",
  "wing-desktop-macos",
+ "wing-elevate",
  "wing-tauri-core",
  "zbus 6.3.0",
 ]
