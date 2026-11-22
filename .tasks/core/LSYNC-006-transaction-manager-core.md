@@ -108,9 +108,9 @@ impl TransactionManager {
 - [x] TransactionManager commits shared resources (with HLC log) ✅
 - [x] No leader checks anywhere! ✅
 - [x] Events emitted automatically ✅
-- [ ] Batch operations supported (pending)
-- [ ] Unit tests verify atomicity (pending)
-- [ ] Integration tests validate both sync strategies (pending)
+- Batch operations supported (pending)
+- Unit tests verify atomicity (pending)
+- Integration tests validate both sync strategies (pending)
 
 ## Implementation Notes (Oct 9, 2025)
 
@@ -143,3 +143,7 @@ Successfully implemented in `core/src/infra/sync/transaction.rs`:
 - `core/src/infra/sync/NEW_SYNC.md` - Leaderless architecture
 - HLC: LSYNC-009
 - Syncable trait: LSYNC-007
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

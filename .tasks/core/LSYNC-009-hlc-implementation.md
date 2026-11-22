@@ -102,13 +102,13 @@ impl HLCGenerator {
 
 ## Acceptance Criteria
 
-- [ ] HLC struct with proper Ord implementation
-- [ ] HLCGenerator per device
-- [ ] Causality tracking on message receive
-- [ ] Total ordering test (1000 random HLCs sort correctly)
-- [ ] Integration with shared_changes table
-- [ ] Serialization/deserialization works
-- [ ] No leader checks in TransactionManager
+- HLC struct with proper Ord implementation
+- HLCGenerator per device
+- Causality tracking on message receive
+- Total ordering test (1000 random HLCs sort correctly)
+- Integration with shared_changes table
+- Serialization/deserialization works
+- No leader checks in TransactionManager
 
 ## Migration
 
@@ -129,3 +129,7 @@ impl HLCGenerator {
 - Paper: "Logical Physical Clocks and Consistent Snapshots" (Kulkarni et al.)
 - `core/src/infra/sync/NEW_SYNC.md` - Leaderless architecture
 - Similar implementations: CockroachDB, TiDB
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.

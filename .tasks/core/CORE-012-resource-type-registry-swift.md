@@ -61,12 +61,8 @@ class ResourceTypeRegistry {
 
 ## Acceptance Criteria
 
-- [ ] ResourceTypeRegistry implemented
-- [ ] All domain resources conform to CacheableResource
-- [ ] Auto-registration on app init
-- [ ] Error handling for unknown types
-- [ ] Unit tests for registration and decoding
-- [ ] Integration with EventCacheUpdater
+Obsolete, not implemented. WingDrive has no native Swift client; the TypeScript client uses
+`useNormalizedQuery` instead. No checklist items apply.
 
 ## References
 

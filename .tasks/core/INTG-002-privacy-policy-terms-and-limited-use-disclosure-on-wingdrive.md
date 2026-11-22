@@ -1,14 +1,14 @@
 ---
 id: INTG-002
 title: Privacy policy, terms and Limited Use disclosure on wingdrive.org
-status: In Progress
+status: To Do
 assignee: bernardopg
 parent: INTG-000
 priority: High
 milestone: M5
 sprint: S05
-tags: [integrations, google, website, legal]
-last_updated: 2026-11-13
+tags: [integrations, google, website, legal, blocked]
+last_updated: 2026-11-22
 related_tasks: [INTG-001]
 ---
 
@@ -24,6 +24,10 @@ Google's OAuth consent screen and app verification require a public privacy poli
 4. Link the pages from the website footer and from Settings > About.
 
 ## Progress (2026-11-13)
+
+> 2026-11-22 (DEV-008): moved to `To Do` during S05 board cleanup. Waiting on third-party/domain
+> verification (Search Console DNS propagation) and the remaining About-page link; not actively in
+> progress.
 
 `website/` has `/privacy` and `/service-terms` in English and Portuguese (`LegalPage.astro`,
 strings in `src/i18n/strings.ts`), linked from the footer. The privacy policy lists the Google and
