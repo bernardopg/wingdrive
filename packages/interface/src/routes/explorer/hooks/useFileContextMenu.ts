@@ -123,6 +123,14 @@ export function useFileContextMenu({
 	const openFiles = useOpenFiles();
 	const {startRename} = useSelection();
 
+	// A right-click on an unselected item acts on that item alone.
+	const fileInSelection = !!file && selectedFiles.some((f) => f.id === file.id);
+	const targetFiles = fileInSelection && selectedFiles.length > 0
+		? selectedFiles
+		: file
+			? [file]
+			: [];
+
 	const openTargets = (fileInSelection && selectedFiles.length > 0 ? selectedFiles : [file]).filter(
 		(f): f is File =>
 			f != null && f.wing_path != null && 'Physical' in f.wing_path
@@ -173,13 +181,6 @@ export function useFileContextMenu({
 		}
 	};
 
-	// A right-click on an unselected item acts on that item alone.
-	const fileInSelection = !!file && selectedFiles.some((f) => f.id === file.id);
-	const targetFiles = fileInSelection && selectedFiles.length > 0
-		? selectedFiles
-		: file
-			? [file]
-			: [];
 	const capabilities = selectionCapabilities(targetFiles);
 	const hasVirtualFiles = capabilities.hasVirtual;
 	const getTargetFiles = () => capabilities.operable;
