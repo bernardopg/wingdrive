@@ -1,7 +1,7 @@
 ---
 id: CORE-023
 title: A peer with no device-owned data forces a full sync every few seconds
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: LSYNC-000
 priority: High
@@ -9,7 +9,7 @@ milestone: M4
 sprint: S06
 tags: [core, sync, performance, bug]
 related_tasks: [CORE-022, BRAND-003, MOB-013]
-last_updated: 2026-11-16
+last_updated: 2026-11-22
 ---
 
 ## Description
@@ -39,13 +39,19 @@ same. The age in the message is the sentinel, not a real age.
 - [x] "No entries found for device" is a normal answer for a device without locations: DEBUG.
 - [x] A peer with no device-owned watermarks but a recent successful catch-up is skipped by the sync
       loop, instead of being treated as a new peer on every pass (`run_sync_loop`).
-- [ ] Regression test with two in-process cores where one side owns no device data: one full sync,
-      then incremental catch-ups only.
+- [x] Regression test with two in-process cores where one side owns no device data: one full sync,
+      then incremental catch-ups only (`sync_backfill_test::test_no_device_data_peer_does_not_force_repeated_full_sync`).
 
 ## Acceptance Criteria
 
-- [ ] With the same setup (desktop and phone, the phone without locations), 10 idle minutes log no
+- [x] With the same setup (desktop and phone, the phone without locations), 10 idle minutes log no
       forced full sync after the first one and no WARN about watermarks.
+
+## Validation (2026-11-22)
+
+- Host regression: `cargo test -p wing-core --features ffmpeg,heif --test sync_backfill_test` → 7 passed, including `test_no_device_data_peer_does_not_force_repeated_full_sync`.
+- Real device: moto g(7) (`ZY225DFMGB`, Android 15), WingDrive mobile debug dev client built from current source and paired with an isolated desktop daemon (`/tmp/wd-core023`, instance `core023`). Phone library had no locations.
+- Desktop logs showed exactly one catch-up cycle for the phone peer (`Detected new peer...`, `No state watermark for this peer yet, catching up from the start`, `Incremental catch-up completed`) and no `forcing full sync` / `Watermark too old` WARNs during the 10+ minute idle window. Phone logcat also showed no watermark-age warnings.
 
 ## Cause (2026-11-16)
 
