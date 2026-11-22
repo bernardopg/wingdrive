@@ -574,8 +574,23 @@ mod tests {
 			"com.wingdrive.daemon.photos"
 		);
 		assert_eq!(
+			qualified_service_name("com.wingdrive.daemon", None),
+			"com.wingdrive.daemon"
+		);
+		assert_eq!(
 			systemd_service_name("wingdrive-daemon", Some("photos")),
 			"wingdrive-daemon@photos.service"
 		);
+		assert_eq!(
+			systemd_service_name("wingdrive-daemon", None),
+			"wingdrive-daemon.service"
+		);
+	}
+
+	#[test]
+	fn service_active_reports_false_for_unknown_unit() {
+		assert!(!service_active(
+			"wingdrive-nonexistent-fixture-unit.service"
+		));
 	}
 }
