@@ -338,6 +338,8 @@ The preview reads the local catalog and reports the source, alternate indexed pa
 
 Use a disposable library on two peers. Create a location on A and leave B without local locations. Run a deep index on A. On B, find the file with `wing search files NAME` and keep its entry UUID. Take A offline and run the fetch preview on B. The entry should remain searchable and the preview should show the source peer as offline. Reconnect A, apply the plan on B and wait for the copy job. Compare full hashes on both devices and apply the same fetch again. A matching copy reports `bytes_to_copy: 0`.
 
+An initial catalog download records completion in `sync.db`. Reopening the library resumes incremental recovery from its existing cursors. A rename advances the index cursor even if the filesystem mtime is unchanged.
+
 For catalog recovery, rename an indexed file on A and edit shared metadata on both devices while disconnected. After reconnecting and restarting, check the resolved path and shared fields on both sides. Observe the sync event log for ten idle minutes. For receive failure testing, use synthetic files with known hashes and keep a distinct file at the destination. Interrupt the stream or exercise checksum rejection, then verify the previous bytes survived and the failed receive left no partial.
 
 ### Portable volume identifiers

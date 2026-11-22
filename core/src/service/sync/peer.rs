@@ -192,12 +192,17 @@ impl PeerSync {
 		// Create watermark store for per-resource tracking
 		let watermark_store = ResourceWatermarkStore::new(device_id);
 
+		let initial_state = if peer_log.has_completed_initial_backfill().await? {
+			DeviceSyncState::Ready
+		} else {
+			DeviceSyncState::Uninitialized
+		};
 		Ok(Self {
 			library_id,
 			device_id,
 			db: Arc::new(library.db().conn().clone()),
 			network,
-			state: Arc::new(RwLock::new(DeviceSyncState::Uninitialized)),
+			state: Arc::new(RwLock::new(initial_state)),
 			buffer: Arc::new(BufferQueue::new()),
 			last_realtime_activity: Arc::new(RwLock::new(None)),
 			hlc_generator: Arc::new(tokio::sync::Mutex::new(HLCGenerator::new(
@@ -2328,7 +2333,7 @@ impl PeerSync {
 	}
 
 	/// Apply shared change to database with conflict resolution
-	async fn apply_shared_change(&self, entry: SharedChangeEntry) -> Result<()> {
+	pub(super) async fn apply_shared_change(&self, entry: SharedChangeEntry) -> Result<()> {
 		// Record start time for latency tracking
 		let start_time = std::time::Instant::now();
 

@@ -991,10 +991,24 @@ async fn run_test_scenarios(
 
 	println!("\n--- Scenario 4: Rename Files ---");
 
+	let original_notes = get_location_entries(&harness.library, harness.location_id)
+		.await?
+		.into_iter()
+		.find(|entry| entry.name == "notes")
+		.unwrap();
 	harness.rename_file("notes.md", "notes-renamed.md").await?;
 	harness.verify_entry_exists("notes-renamed").await?;
 	harness.verify_entry_not_exists("notes").await?;
 	harness.verify_is_file("notes-renamed").await?;
+	let renamed_notes = get_location_entries(&harness.library, harness.location_id)
+		.await?
+		.into_iter()
+		.find(|entry| entry.name == "notes-renamed")
+		.unwrap();
+	assert_eq!(renamed_notes.uuid, original_notes.uuid);
+	assert_eq!(renamed_notes.modified_at, original_notes.modified_at);
+	assert!(renamed_notes.indexed_at > original_notes.indexed_at);
+
 	harness.verify_entry_count(4).await?; // Count unchanged (rename doesn't add/remove)
 
 	// Scenario 5: Delete Files

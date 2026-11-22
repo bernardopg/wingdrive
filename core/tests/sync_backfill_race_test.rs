@@ -709,3 +709,98 @@ async fn idle_peer_without_locations_does_not_catch_up_each_tick() -> anyhow::Re
 	harness.shutdown().await?;
 	Ok(())
 }
+
+#[tokio::test]
+async fn offline_updates_to_the_same_tag_converge_on_the_later_hlc() -> anyhow::Result<()> {
+	use sea_orm::{ActiveModelTrait, Set};
+	use wing_core::{ops::tags::manager::TagManager, service::Service};
+
+	let harness = BackfillRaceHarness::new("offline_same_tag").await?;
+	let alice = &harness.library_alice;
+	let bob = &harness.library_bob;
+	let manager = TagManager::new(Arc::new(alice.db().conn().clone()));
+	let tag = manager
+		.create_tag_entity("offline-edit".into(), None, harness.device_alice_id)
+		.await?;
+	alice.sync_model(&tag, ChangeType::Insert).await?;
+	harness.trigger_bob_backfill().await?;
+	let sync_a = alice.sync_service().unwrap();
+	let sync_b = bob.sync_service().unwrap();
+	let bob_tag = entities::tag::Entity::find()
+		.filter(entities::tag::Column::Uuid.eq(tag.uuid))
+		.one(bob.db().conn())
+		.await?
+		.expect("backfill replicated the tag");
+
+	// Stop polling and drop broadcasts while each profile edits its own copy.
+	sync_a.stop().await?;
+	sync_b.stop().await?;
+	harness
+		.transport_alice
+		.block_device(harness.device_alice_id)
+		.await;
+	harness
+		.transport_bob
+		.block_device(harness.device_bob_id)
+		.await;
+	let watermark_a = sync_a.peer_sync().get_watermarks().await.1;
+	let watermark_b = sync_b.peer_sync().get_watermarks().await.1;
+
+	for (library, tag, name) in [(alice, tag.clone(), "Alice"), (bob, bob_tag, "Bob")] {
+		let mut active: entities::tag::ActiveModel = tag.into();
+		active.display_name = Set(Some(name.to_owned()));
+		active.updated_at = Set(chrono::Utc::now());
+		let updated = active.update(library.db().conn()).await?;
+		library.sync_model(&updated, ChangeType::Update).await?;
+	}
+	let hlc_a = sync_a
+		.peer_sync()
+		.peer_log()
+		.get_latest_hlc_for_record(tag.uuid)
+		.await?
+		.unwrap();
+	let hlc_b = sync_b
+		.peer_sync()
+		.peer_log()
+		.get_latest_hlc_for_record(tag.uuid)
+		.await?
+		.unwrap();
+	assert_ne!(hlc_a, hlc_b);
+	let winner = if hlc_a > hlc_b { "Alice" } else { "Bob" };
+
+	harness
+		.transport_alice
+		.unblock_device(harness.device_alice_id)
+		.await;
+	harness
+		.transport_bob
+		.unblock_device(harness.device_bob_id)
+		.await;
+
+	sync_a
+		.backfill_manager()
+		.catch_up_from_peer(
+			harness.device_bob_id,
+			None,
+			watermark_a.map(|hlc| hlc.to_string()),
+		)
+		.await?;
+	sync_b
+		.backfill_manager()
+		.catch_up_from_peer(
+			harness.device_alice_id,
+			None,
+			watermark_b.map(|hlc| hlc.to_string()),
+		)
+		.await?;
+	for library in [alice, bob] {
+		let after = entities::tag::Entity::find()
+			.filter(entities::tag::Column::Uuid.eq(tag.uuid))
+			.one(library.db().conn())
+			.await?
+			.unwrap();
+		assert_eq!(after.display_name.as_deref(), Some(winner));
+	}
+	harness.shutdown().await?;
+	Ok(())
+}

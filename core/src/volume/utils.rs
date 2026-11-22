@@ -289,6 +289,27 @@ mod tests {
 	}
 
 	#[test]
+	fn portable_marker_keeps_its_identity_at_a_new_mount_path() {
+		let host = tempfile::tempdir().unwrap();
+		let old_mount = host.path().join("old-mount");
+		let new_mount = host.path().join("new-mount");
+		std::fs::create_dir(&old_mount).unwrap();
+		let first_host = uuid::Uuid::new_v4();
+		let new_host = uuid::Uuid::new_v4();
+		let id = super::read_or_create_dotfile_sync(&old_mount, first_host, None).unwrap();
+		std::fs::rename(&old_mount, &new_mount).unwrap();
+		assert_eq!(
+			super::read_or_create_dotfile_sync(&new_mount, new_host, None),
+			Some(id)
+		);
+		let marker: crate::domain::volume::WingDriveVolumeId = serde_json::from_reader(
+			std::fs::File::open(crate::branding::volume_id_file(&new_mount)).unwrap(),
+		)
+		.unwrap();
+		assert_eq!(marker.device_id, first_host);
+	}
+
+	#[test]
 	fn damaged_portable_marker_survives_detection() {
 		let volume = tempfile::tempdir().unwrap();
 		let marker = crate::branding::volume_id_file(volume.path());
