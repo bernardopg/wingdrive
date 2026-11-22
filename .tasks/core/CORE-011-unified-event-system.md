@@ -39,12 +39,12 @@ Refactor the event system from 40+ specialized event variants to a unified gener
 
 ## Acceptance Criteria
 
-- [ ] New event structure defined
-- [ ] EventEnvelope includes id, timestamp, library_id, sequence
-- [ ] ResourceChanged auto-emitted by TransactionManager
-- [ ] Infrastructure events (Job, CoreStarted) preserved
-- [ ] No breaking changes (parallel systems initially)
-- [ ] Documentation updated
+- New event structure defined
+- EventEnvelope includes id, timestamp, library_id, sequence
+- ResourceChanged auto-emitted by TransactionManager
+- Infrastructure events (Job, CoreStarted) preserved
+- No breaking changes (parallel systems initially)
+- Documentation updated
 
 ## Migration Strategy
 
@@ -57,3 +57,7 @@ Refactor the event system from 40+ specialized event variants to a unified gener
 
 - `docs/core/events.md` - Complete specification
 - Current: `core/src/infra/event/mod.rs`
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.
