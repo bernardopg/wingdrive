@@ -28,9 +28,9 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | M0 — Base herdada do upstream | Done | 78 | 0 | 0 | 100% |
 | M1 — File manager desktop Linux 1.0 | Done | 22 | 0 | 0 | 100% |
 | M2 — Gerenciador de arquivos padrão no Linux | Done | 75 | 1 | 0 | 99% |
-| M3 — Desktop multiplataforma e release | Now | 9 | 14 | 7 | 30% |
+| M3 — Desktop multiplataforma e release | Now | 9 | 14 | 8 | 29% |
 | M4 — Integração entre dispositivos | Later | 1 | 3 | 17 | 5% |
-| M5 — Opcionais | Later | 18 | 18 | 57 | 19% |
+| M5 — Opcionais | Later | 18 | 18 | 58 | 19% |
 
 | Sprint | Datas | Done | In Progress | Progresso |
 |---|---|---|---|---|
@@ -41,7 +41,7 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | **[S05](sprints/S05.md)** (atual) | 2026-11-12 a 2026-11-25 | 24/31 | 2 | 77% |
 | [S06](sprints/S06.md) | 2026-11-26 a 2026-12-09 | 1/22 | 14 | 5% |
 | [S07](sprints/S07.md) | 2026-12-10 a 2026-12-23 | 0/11 | 3 | 0% |
-| [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | 0/11 | 0 | 0% |
+| [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | 0/13 | 0 | 0% |
 | [S09](sprints/S09.md) | 2027-01-07 a 2027-01-20 | 0/12 | 12 | 0% |
 | [S10](sprints/S10.md) | 2027-01-21 a 2027-02-03 | 0/12 | 5 | 0% |
 | [S11](sprints/S11.md) | 2027-02-04 a 2027-02-17 | 0/11 | 0 | 0% |
