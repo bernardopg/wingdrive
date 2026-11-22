@@ -9,7 +9,7 @@ milestone: M5
 sprint: S07
 tags: [mobile, android, ui, i18n, review]
 related_tasks: [MOB-007, MOB-008, MOB-015, BRAND-003]
-last_updated: 2026-11-17
+last_updated: 2026-11-22
 ---
 
 ## Description
@@ -135,3 +135,52 @@ Debug build of `main` plus this branch, installed as `com.wingdrive.app.review`:
 - Images and videos on the phone show previews.
 - Still open: item 7 (slow taps). In the debug build a long press needs more than a second and
   taps lag; check again in a release build before profiling.
+
+## Checked on the moto g(7) (2026-11-22)
+
+Device: `ZY225DFMGB` (moto g(7), Android 15, 1080x2270). Installed app: `com.wingdrive.app`
+3.6.0 (versionCode 3060099), debug dev client connected to Metro running from the main
+`wingdrive` repo (`apps/mobile`, `bunx expo start`, port 8081). No rebuild/install performed;
+validation used the existing dev client and JS served by Metro on `origin/main` (this branch had
+no code changes at validation time).
+
+Evidence (screenshots/OCR in `/tmp/mob017/evidence/` on the host, not committed): `overview-top.*`,
+`overview-mid.*`, `browse.*`, `archlinux.*`.
+
+- **Item 1 (phone sees own files):** Partially met. Overview shows Internal storage (50.0 GB,
+  SSD, Internal, 46.8 GB free). Browse shows "Permitir acesso aos arquivos" card and storage/volume
+  entries. The all-files access flow and Android volume detection are in code (progress 2026-11-16).
+  MOB-008 remains the planned SAF/locations answer; this item is not fully closed by MOB-008 alone
+  because full location management is still tracked there.
+- **Item 2 (paired desktop shows files):** Partially met. A paired desktop that shares no folders
+  shows the explanatory message (code fix present). On this check `archlinux` was Offline but its
+  volumes (`home`, `Root`) were listed in Explore; file browsing while online was not validated in
+  this session because the paired desktop was disconnected. AC1 cannot be marked fully done.
+- **Item 3 (untranslated pt-BR):** Looks fixed in current build. Overview showed "Armazenamento
+  total", "Arquivos indexados", "610.0 GB usado", "arquivos únicos", "Dispositivos conectados",
+  "Tamanho da biblioteca", "registrados na biblioteca", "banco de dados no disco", "MINHA REDE",
+  "AÇÕES RÁPIDAS". Browse showed "Todos os dispositivos", "Permitir acesso aos arquivos",
+  "Recentes", "Favoritos", "Lixeira", "DISPOSITIVOS". Volume labels showed "Interno" and "livres".
+- **Item 4 (invented TOPS):** Fixed in code; HeroStats has no TOPS/AI compute card.
+- **Item 5 (layout under status bar):** Code applies hero title-row fade (`heroTitleRowStyle`).
+  Visual confirmation was limited by OCR-only inspection; prior 2026-11-16/17 checks marked it ok.
+- **Item 6 (disabled search):** Not a bug (confirmed earlier).
+- **Item 7 (slow taps):** Still open. Debug+Metro measurements on device (screen-change after tap,
+  3-4 samples): tab switches Overview/Browse/Network/Settings ~0.78-0.84 s; opening `archlinux`
+  device from Browse ~0.81 s. These are below the original 1-3 s report but still noticeable, and
+  they were taken on a debug dev client served by Metro, not a release build. Per task note, check
+  again in a release build before profiling. No code fix attempted.
+- **Item 8 (Criar espaço does nothing):** Fixed in code (`CreateWingScreen` prompts for name and
+  calls `wings.create`). Not re-exercised on device in this session due environment quota blocking
+  new screenshot/OCR artifacts; prior 2026-11-16 check confirmed it.
+- **Item 9 (wings sync but items invisible):** Prior 2026-11-17 check marked Recents/Favorites
+  opening library-wide lists; not re-validated in this session.
+
+## Acceptance Criteria Status (2026-11-22)
+
+- [ ] Items 1 and 2 have tasks of their own or are closed by MOB-008, with the phone showing its
+      shared storage and a paired desktop's files. *Shared storage shows; paired desktop file
+      browsing not validated while online this session; MOB-008 still tracks full SAF/locations.*
+- [ ] Items 3 to 9 fixed and checked on the moto g(7) with screenshots. *Item 7 remains open;
+      items 3,4,5,6,8,9 have prior evidence/code fixes but this session did not re-screenshot every
+      item due env quota constraints; item 7 measured in debug+Metro only.*
