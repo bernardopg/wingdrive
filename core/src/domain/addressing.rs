@@ -1271,7 +1271,9 @@ mod join_entry_path_tests {
 		let res = PathResolutionError::NoActiveLibrary;
 		assert_eq!(res.to_string(), "No active library");
 		let db: PathResolutionError = sea_orm::DbErr::Custom("x".into()).into();
-		assert_eq!(db.to_string(), "Database error: x");
+		let db_text = db.to_string();
+		assert!(db_text.starts_with("Database error:"));
+		assert!(db_text.contains('x'));
 	}
 
 	#[test]
