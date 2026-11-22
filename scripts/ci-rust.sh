@@ -115,6 +115,7 @@ if [ "$(uname -s)" = Linux ]; then
 		own_data_location_test
 		normalized_cache_fixtures_test
 		indexing_responder_reindex_test
+		indexing_database_reconciliation_test
 		proxy_pairing_protocol_test
 		analyze_events
 	)
@@ -192,7 +193,7 @@ run_full_tests() {
 				# Each case of file_queries_test and google_integration_test starts its own
 				# Core, which sets the process-wide current device ID; in parallel, one case
 				# could resolve "local" paths against another case's device and find nothing.
-				indexing_test | library_test | file_queries_test | google_integration_test | file_move_test | typescript_bridge_test)
+				indexing_test | indexing_database_reconciliation_test | library_test | file_queries_test | google_integration_test | file_move_test | typescript_bridge_test)
 					cargo_test --test "$test" -- --test-threads=1 ;;
 				*) cargo_test --test "$test" ;;
 			esac
