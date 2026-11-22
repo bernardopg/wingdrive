@@ -8,7 +8,7 @@ priority: Medium
 milestone: M3
 sprint: S06
 tags: [coverage, testing, ci]
-last_updated: 2026-11-19
+last_updated: 2026-11-22
 ---
 
 ## Description
@@ -164,3 +164,71 @@ emitted the two deliberate failed-rename diagnostics, `permission denied` and
 
 The logs, LCOV and summary are in `coverage/goal/after-watchers/`. This component report
 measures Linux execution. The real startup probe of the installed AUR binary is separate.
+
+## Audit 2026-11-22 (COV-12)
+
+Scope: audit only. No full coverage collectors were rerun in this pass; no 100% coverage claim is made.
+
+### Evidence snapshot (latest recorded local Linux report)
+
+Source: "Full Linux measurement after watcher and native desktop regressions" above, local verification tree `696a845879419a74489737d09810c0921303d500` (not a merged `main` SHA). Both collectors exited zero; Rust 2,214 passed, frontend 371 passed.
+
+| Component | Covered / instrumented | Coverage | Target | Gap |
+|---|---:|---:|---:|---:|
+| Desktop (`apps/tauri/`) | 8,131 / 8,960 | 90.7% | 100% | 829 lines |
+| Core (`core/`) | 50,790 / 91,653 | 55.4% | 65% | 8,785 lines at this denominator |
+| CLI (`apps/cli/`) | 5,914 / 7,312 | 80.9% | 75% | target met (+0 required) |
+| Interface (`packages/interface/`) | measured separately by frontend collector | COV-08 reports >=60% | 60% | needs same-SHA full report confirmation |
+
+CLI production-only diagnostic (from same record): 4,025/5,422 (74.2%). Official component report remains the gate metric.
+
+### COV epic status
+
+| Task | Status | Notes |
+|---|---|---|
+| COV-00 | In Progress | Epic open; targets not all met on a merged main SHA. |
+| COV-01 | In Progress | Baseline/inventory partially recorded; inventory completeness still open. |
+| COV-02 | Done | Merged contract regression baseline. |
+| COV-03 | In Progress | PR work not in open COV PR set audited here; criteria still open. |
+| COV-04 | In Progress | Criteria open. |
+| COV-05 | To Do | PR #502 open, has CI failures (1 FAILURE observed). |
+| COV-06 | In Progress | PR #501 open, has CI failures (2 FAILURE observed). |
+| COV-07 | In Progress | PR #503 merged; desktop still 90.7% vs 100% target. |
+| COV-08 | In Progress | PR #498 open; checks mostly SUCCESS/pending at audit time. |
+| COV-09 | In Progress | PR #504 open, mergeable, checks pending/success at audit time. |
+| COV-10 | In Progress | PR #494 merged; CLI target met in local full report, COV-10 criterion text still unchecked. |
+| COV-11 | To Do | PR #499 open; checks mostly SUCCESS/pending at audit time. |
+| COV-12 | In Progress | This audit; final validation criteria not met. |
+
+### Open/related PRs (observed 2026-11-22 via `gh pr view`)
+
+| PR | Task | State | Mergeable | Checks (observed) | Note |
+|---|---|---|---|---|---|
+| #494 | COV-10 | MERGED | UNKNOWN | 19 SUCCESS, 2 SKIPPED | Merged. |
+| #498 | COV-08 | OPEN | UNKNOWN | 17 SUCCESS, 2 SKIPPED, 2 pending/blank | No review decision. |
+| #499 | COV-11 | OPEN | UNKNOWN | 17 SUCCESS, 2 SKIPPED, 2 pending/blank | No review decision. |
+| #501 | COV-06 | OPEN | UNKNOWN | 20 SUCCESS, 4 SKIPPED, 2 FAILURE, 1 pending/blank | Needs CI failure triage. |
+| #502 | COV-05 | OPEN | UNKNOWN | 20 SUCCESS, 4 SKIPPED, 1 FAILURE, 2 pending/blank | Needs CI failure triage. |
+| #503 | COV-07 | MERGED | - | - | Merged. |
+| #504 | COV-09 | OPEN | MERGEABLE | 16 SUCCESS, 2 SKIPPED, 4 pending/blank | No review decision. |
+
+Check snapshots are point-in-time; recheck before merge.
+
+### Gaps / blocked / unmeasured
+
+- **Not met:** Core 55.4% < 65%; Desktop 90.7% < 100%; no same-SHA merged-`main` full report proving final COV-00 targets.
+- **COV-11 gate missing:** progressive per-component ratchet not merged; altered-line >=80% gate not enforced.
+- **Stability not proven:** COV-12 requires three complete suite runs to detect flakiness/state leakage; not executed.
+- **Platform limits:** Linux-only evidence. Windows/macOS not measured locally. Real mobile-device execution not measured. GTK clipboard exercised under Xvfb; S3, 100K reconciliation timing, and privileged polkit remain excluded.
+- **Open PR risk:** #501/#502 have observed CI failures; #498/#499/#504 have pending checks/no review.
+- **Evidence hygiene:** several measurements are local verification trees, not merged main SHAs; do not reuse as final closure evidence.
+
+### S08 / follow-up recording
+
+No small, cheap, safe test gap was added in this audit pass (audit-only, no coverage artifacts present in worktree). Carryover for S08 planning:
+
+- Close Core gap to 65% and Desktop gap to 100% with targeted suites guided by fresh LCOV on a merged SHA.
+- Merge/fix #501, #502, #498, #499, #504; re-run full report after merges.
+- Implement/merge COV-11 ratchet before claiming epic closure.
+- Run three consecutive full-suite passes on same environment/SHA and record flakiness.
+- Obtain/record Windows/macOS/native CI or explicit platform exclusions in COV-12 evidence.
