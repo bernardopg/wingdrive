@@ -96,6 +96,7 @@ async function pickFolder(
 export function IntegrationsSettings() {
 	const { t } = useTranslation();
 	const client = useWingDriveClient();
+	const queryClient = useQueryClient();
 	const libraryId = client.getCurrentLibraryId();
 	const accounts = useLibraryQuery(
 		{ type: "integrations.accounts.list", input: {} },

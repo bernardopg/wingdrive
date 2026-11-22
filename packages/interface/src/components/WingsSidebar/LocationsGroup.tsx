@@ -79,7 +79,6 @@ export function LocationsGroup({
   sortableListeners,
 }: LocationsGroupProps) {
   const { t } = useTranslation("navigation");
-  const { t: tSettings } = useTranslation();
   const client = useWingDriveClient();
   const queryClient = useQueryClient();
   const libraryId = client.getCurrentLibraryId();
