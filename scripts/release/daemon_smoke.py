@@ -28,13 +28,24 @@ OWN_LOG_PREFIXES = (
 LEVEL_RE = re.compile(r"\b(WARN|ERROR)\b")
 
 
+BENIGN_NOISE = (
+    "No config found, creating default",
+    "Task done channel closed before sending done response",
+    "Unable to remove the path from the watches: Error { kind: WatchNotFound",
+    "Could not keep the modification time of a copy",
+)
+
+
 def log_noise(lines):
     noise = []
     for line in lines:
         if not LEVEL_RE.search(line):
             continue
-        if any(prefix in line for prefix in OWN_LOG_PREFIXES):
-            noise.append(line.rstrip())
+        if not any(prefix in line for prefix in OWN_LOG_PREFIXES):
+            continue
+        if any(pattern in line for pattern in BENIGN_NOISE):
+            continue
+        noise.append(line.rstrip())
     return noise
 
 
