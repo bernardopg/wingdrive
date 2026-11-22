@@ -291,6 +291,72 @@ fn named_instances_keep_daemon_state_under_their_own_directory() {
 	);
 }
 
+#[test]
+fn cloud_command_parses_without_extra_arguments() {
+	let cli = Cli::try_parse_from(["wing", "cloud"]).unwrap();
+	assert!(matches!(cli.command, Commands::Cloud));
+	for args in [
+		vec!["wing", "cloud", "extra"],
+		vec!["wing", "cloud", "--unknown"],
+		vec!["wing", "cloud", "setup"],
+	] {
+		assert!(Cli::try_parse_from(&args).is_err(), "{args:?}");
+	}
+}
+
+#[test]
+fn daemon_subcommands_parse_and_reject_invalid_shapes() {
+	for (args, expected) in [
+		(vec!["wing", "daemon", "install"], "install"),
+		(vec!["wing", "daemon", "uninstall"], "uninstall"),
+		(vec!["wing", "daemon", "status"], "status"),
+	] {
+		let cli = Cli::try_parse_from(&args).unwrap();
+		let Commands::Daemon(cmd) = cli.command else {
+			panic!("expected daemon command for {args:?}")
+		};
+		let name = match cmd {
+			DaemonCmd::Install => "install",
+			DaemonCmd::Uninstall => "uninstall",
+			DaemonCmd::Status => "status",
+		};
+		assert_eq!(name, expected);
+	}
+	for args in [
+		vec!["wing", "daemon"],
+		vec!["wing", "daemon", "unknown"],
+		vec!["wing", "daemon", "install", "--now"],
+		vec!["wing", "daemon", "status", "extra"],
+		vec!["wing", "daemon", "install", "extra"],
+		vec!["wing", "daemon", "uninstall", "extra"],
+	] {
+		assert!(Cli::try_parse_from(&args).is_err(), "{args:?}");
+	}
+}
+
+#[test]
+fn top_level_aliases_and_command_shapes_parse() {
+	let cli = Cli::try_parse_from(["wing", "spaces", "list"]).unwrap();
+	assert!(matches!(cli.command, Commands::Wings(WingsCmd::List)));
+
+	let cli = Cli::try_parse_from(["wing", "wings", "list"]).unwrap();
+	assert!(matches!(cli.command, Commands::Wings(WingsCmd::List)));
+
+	// Legacy network subcommand alias kept for compatibility.
+	let cli = Cli::try_parse_from(["wing", "network", "spacedrop", "list"]).unwrap();
+	assert!(matches!(
+		cli.command,
+		Commands::Network(NetworkCmd::Wingdrop(_))
+	));
+
+	for args in [
+		vec!["wing", "cloud", "--format", "json"],
+		vec!["wing", "daemon", "install", "--format", "json"],
+	] {
+		assert!(Cli::try_parse_from(&args).is_err(), "{args:?}");
+	}
+}
+
 mod rpc;
 
 mod coverage;
