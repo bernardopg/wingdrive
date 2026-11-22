@@ -279,3 +279,10 @@ The SyncResolver should use the ephemeral cache (with complete scan) as its data
 Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
 `.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
 WingDrive code before pulling it into a sprint.
+
+## Progress (2026-11-22, S07 step 3)
+
+- Added `FileSyncService::preview_sync()` and opened PR #490 for preview/step 2 support.
+- S07 step 3 (recebimento temporário verificado antes de promover): `core/src/service/network/protocol/staged_receive.rs` already writes to a hidden sibling partial, fsyncs, and commits only after verification; `file_transfer.rs` verifies size and final blake3 hash before commit and removes partial on failure. `sweep()` removes abandoned partials from journal on next start.
+- Added Windows-safe replacement in `staged_receive::commit()` (`MoveFileExW` with `MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH`) because `std::fs::rename` does not replace existing destination on Windows; this targets the S07 "substituição no Windows" criterion.
+- Evidence present in code/tests: `staged_receive` tests (`commit_replaces_destination_and_clears_journal`, `sweep_removes_partials_a_killed_receive_left`), `file_transfer` tests including `test_push_replaces_longer_destination_without_stale_bytes`. Full Windows substitution still requires Windows CI/runtime validation.

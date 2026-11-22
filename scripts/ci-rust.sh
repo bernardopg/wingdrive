@@ -89,6 +89,7 @@ if [ "$(uname -s)" = Linux ]; then
 		copy_conflict_test
 		delete_strategy_test
 		copy_failure_test
+		file_ops_safety_test
 		file_undo_test
 		app_config_action_test
 		indexing_test

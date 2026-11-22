@@ -2151,119 +2151,139 @@ mod start_daemon_integration_tests {
 }
 
 fn setup_menu<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
-	use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
+	use tauri::menu::{MenuBuilder, MenuItemBuilder};
+	#[cfg(target_os = "macos")]
+	use tauri::menu::{PredefinedMenuItem, SubmenuBuilder};
 
 	// Store menu items for dynamic updates
 	let mut menu_items_map = HashMap::new();
 
-	// Application menu (macOS standard)
-	let app_menu = SubmenuBuilder::new(app, "WingDrive")
-		.item(&PredefinedMenuItem::about(app, None, None)?)
-		.separator()
-		.item(&PredefinedMenuItem::hide(app, None)?)
-		.item(&PredefinedMenuItem::hide_others(app, None)?)
-		.item(&PredefinedMenuItem::show_all(app, None)?)
-		.separator()
-		.item(&PredefinedMenuItem::quit(app, None)?)
-		.build()?;
+	// On Linux and Windows the menu bar is hidden and shortcuts go through the web
+	// keybind listener. Building native menu items with accelerators but never
+	// attaching them to a window makes GTK log "no accelerator installed in accel
+	// group" for each one on startup, so we only build the full native menu on macOS.
+	#[cfg(target_os = "macos")]
+	{
+		// Application menu (macOS standard)
+		let app_menu = SubmenuBuilder::new(app, "WingDrive")
+			.item(&PredefinedMenuItem::about(app, None, None)?)
+			.separator()
+			.item(&PredefinedMenuItem::hide(app, None)?)
+			.item(&PredefinedMenuItem::hide_others(app, None)?)
+			.item(&PredefinedMenuItem::show_all(app, None)?)
+			.separator()
+			.item(&PredefinedMenuItem::quit(app, None)?)
+			.build()?;
 
-	// File menu with explorer actions
-	let open_library_item = MenuItemBuilder::with_id("open-library", "Open Library...")
-		// CmdOrCtrl maps to Command on macOS and Control elsewhere. "Cmd" alone
-		// parses to META, which GTK cannot bind to a real key on Linux: the
-		// accelerator degrades to the bare key and swallows plain "o" typing.
-		.accelerator("CmdOrCtrl+O")
-		.build(app)?;
+		// File menu with explorer actions
+		let open_library_item = MenuItemBuilder::with_id("open-library", "Open Library...")
+			// CmdOrCtrl maps to Command on macOS and Control elsewhere. "Cmd" alone
+			// parses to META, which GTK cannot bind to a real key on Linux: the
+			// accelerator degrades to the bare key and swallows plain "o" typing.
+			.accelerator("CmdOrCtrl+O")
+			.build(app)?;
 
-	let duplicate_item = MenuItemBuilder::with_id("duplicate", "Duplicate")
-		.accelerator("CmdOrCtrl+D")
-		.enabled(false)
-		.build(app)?;
-	menu_items_map.insert("duplicate".to_string(), duplicate_item.clone());
+		let duplicate_item = MenuItemBuilder::with_id("duplicate", "Duplicate")
+			.accelerator("CmdOrCtrl+D")
+			.enabled(false)
+			.build(app)?;
+		menu_items_map.insert("duplicate".to_string(), duplicate_item.clone());
 
-	let rename_item = MenuItemBuilder::with_id("rename", "Rename")
-		// No accelerator: Enter must reach text inputs and the inline rename
-		// editor. The web layer binds Enter for explorer rename when a file row
-		// is focused; a native bare-Enter accelerator would steal it everywhere.
-		.enabled(false)
-		.build(app)?;
-	menu_items_map.insert("rename".to_string(), rename_item.clone());
+		let rename_item = MenuItemBuilder::with_id("rename", "Rename")
+			// No accelerator: Enter must reach text inputs and the inline rename
+			// editor. The web layer binds Enter for explorer rename when a file row
+			// is focused; a native bare-Enter accelerator would steal it everywhere.
+			.enabled(false)
+			.build(app)?;
+		menu_items_map.insert("rename".to_string(), rename_item.clone());
 
-	let delete_item = MenuItemBuilder::with_id("delete", "Move to Trash")
-		.accelerator("CmdOrCtrl+Backspace")
-		.enabled(false)
-		.build(app)?;
-	menu_items_map.insert("delete".to_string(), delete_item.clone());
+		let delete_item = MenuItemBuilder::with_id("delete", "Move to Trash")
+			.accelerator("CmdOrCtrl+Backspace")
+			.enabled(false)
+			.build(app)?;
+		menu_items_map.insert("delete".to_string(), delete_item.clone());
 
-	let file_menu = SubmenuBuilder::new(app, "File")
-		.item(&open_library_item)
-		.separator()
-		.item(&duplicate_item)
-		.separator()
-		.item(&rename_item)
-		.separator()
-		.item(&delete_item)
-		.build()?;
+		let file_menu = SubmenuBuilder::new(app, "File")
+			.item(&open_library_item)
+			.separator()
+			.item(&duplicate_item)
+			.separator()
+			.item(&rename_item)
+			.separator()
+			.item(&delete_item)
+			.build()?;
 
-	// Edit menu with custom file operations and native text operations
-	// Accelerators are handled smartly: native clipboard for text inputs, file ops for explorer
-	// IMPORTANT: Keep these always enabled so accelerators work in text inputs
-	let cut_item = MenuItemBuilder::with_id("cut", "Cut")
-		.accelerator("CmdOrCtrl+X")
-		.enabled(true)
-		.build(app)?;
-	menu_items_map.insert("cut".to_string(), cut_item.clone());
+		// Edit menu with custom file operations and native text operations
+		// Accelerators are handled smartly: native clipboard for text inputs, file ops for explorer
+		// IMPORTANT: Keep these always enabled so accelerators work in text inputs
+		let cut_item = MenuItemBuilder::with_id("cut", "Cut")
+			.accelerator("CmdOrCtrl+X")
+			.enabled(true)
+			.build(app)?;
+		menu_items_map.insert("cut".to_string(), cut_item.clone());
 
-	let copy_item = MenuItemBuilder::with_id("copy", "Copy")
-		.accelerator("CmdOrCtrl+C")
-		.enabled(true)
-		.build(app)?;
-	menu_items_map.insert("copy".to_string(), copy_item.clone());
+		let copy_item = MenuItemBuilder::with_id("copy", "Copy")
+			.accelerator("CmdOrCtrl+C")
+			.enabled(true)
+			.build(app)?;
+		menu_items_map.insert("copy".to_string(), copy_item.clone());
 
-	let paste_item = PredefinedMenuItem::paste(app, None)?;
+		let paste_item = PredefinedMenuItem::paste(app, None)?;
 
-	let edit_menu = SubmenuBuilder::new(app, "Edit")
-		.item(&PredefinedMenuItem::undo(app, None)?)
-		.item(&PredefinedMenuItem::redo(app, None)?)
-		.separator()
-		.item(&cut_item)
-		.item(&copy_item)
-		.item(&paste_item)
-		.item(&PredefinedMenuItem::select_all(app, None)?)
-		.build()?;
+		let edit_menu = SubmenuBuilder::new(app, "Edit")
+			.item(&PredefinedMenuItem::undo(app, None)?)
+			.item(&PredefinedMenuItem::redo(app, None)?)
+			.separator()
+			.item(&cut_item)
+			.item(&copy_item)
+			.item(&paste_item)
+			.item(&PredefinedMenuItem::select_all(app, None)?)
+			.build()?;
 
-	// Wingdrop sends files to a paired device. The drag demo is a prototype
-	// that only debug builds show.
-	let view_menu = SubmenuBuilder::new(app, "View");
-	#[cfg(debug_assertions)]
-	let view_menu = view_menu.item(
-		&MenuItemBuilder::with_id("drag-demo", "Drag Demo")
-			.accelerator("CmdOrCtrl+Shift+D")
-			.build(app)?,
-	);
-	let view_menu = view_menu
-		.item(
-			&MenuItemBuilder::with_id("wingdrop", "Wingdrop")
-				.accelerator("CmdOrCtrl+Shift+S")
+		// Wingdrop sends files to a paired device. The drag demo is a prototype
+		// that only debug builds show.
+		let view_menu = SubmenuBuilder::new(app, "View");
+		#[cfg(debug_assertions)]
+		let view_menu = view_menu.item(
+			&MenuItemBuilder::with_id("drag-demo", "Drag Demo")
+				.accelerator("CmdOrCtrl+Shift+D")
 				.build(app)?,
-		)
-		.build()?;
+		);
+		let view_menu = view_menu
+			.item(
+				&MenuItemBuilder::with_id("wingdrop", "Wingdrop")
+					.accelerator("CmdOrCtrl+Shift+S")
+					.build(app)?,
+			)
+			.build()?;
 
-	let menu = MenuBuilder::new(app)
-		.item(&app_menu)
-		.item(&file_menu)
-		.item(&edit_menu);
-	let menu = menu.item(&view_menu);
-	let _native_menu = menu.build()?;
+		let menu = MenuBuilder::new(app)
+			.item(&app_menu)
+			.item(&file_menu)
+			.item(&edit_menu)
+			.item(&view_menu)
+			.build()?;
+		app.set_menu(menu)?;
+	}
 
-	// Keep the menu items for selection updates without attaching their
-	// accelerators to a window that will never display the menu bar.
 	#[cfg(any(target_os = "windows", target_os = "linux"))]
-	let menu = MenuBuilder::new(app).build()?;
-	#[cfg(not(any(target_os = "windows", target_os = "linux")))]
-	let menu = _native_menu;
-
-	app.set_menu(menu)?;
+	{
+		// Keep menu item handles for selection updates, but never attach them to a
+		// window. Their accelerators would warn on GTK and are not needed here.
+		for (id, label, enabled) in [
+			("duplicate", "Duplicate", false),
+			("rename", "Rename", false),
+			("delete", "Move to Trash", false),
+			("cut", "Cut", true),
+			("copy", "Copy", true),
+		] {
+			let item = MenuItemBuilder::with_id(id, label)
+				.enabled(enabled)
+				.build(app)?;
+			menu_items_map.insert(id.to_string(), item);
+		}
+		app.set_menu(MenuBuilder::new(app).build()?)?;
+	}
 
 	// Store menu items in app state
 	let menu_state = MenuState {
