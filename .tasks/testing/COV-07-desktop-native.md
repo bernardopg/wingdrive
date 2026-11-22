@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S05
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-20
+last_updated: 2026-11-22
 ---
 
 ## Description
@@ -356,3 +356,34 @@ indicou oito avisos de BigInt do MapLibre e um de importação dinâmica do even
 No smoke, a inicialização recusou duas conexões antes de o daemon responder. Os avisos
 de portal, PipeWire, AT-SPI, DRI3, AppIndicator e multicast constam do log em
 `coverage/cov07/native/instrumented.log`. O smoke terminou com código zero.
+
+### 2026-11-22
+
+Avanço focado em lacunas testáveis do shell desktop sem GUI real, no worktree
+`/home/bitter/.cache/opencode/wt/cov-07` (branch `test/cov-07-desktop-native`).
+
+- `apps/tauri/src-tauri/src/server/tests/mod.rs`: novos testes unitários e de
+  handler para caminhos puros e rejeições do servidor HTTP local:
+  `parse_range` (formas válidas, sufixo, aberto e rejeições ambíguas),
+  `content_type_for` (mapeamentos conhecidos/desconhecidos), `thumb_bucket`
+  (clamping), `thumb_kind` (imagem/vídeo/PDF/desconhecido) e `serve_thumb`
+  (token inválido, caminho relativo, mídia não suportada, diretório, diretório
+  com extensão de imagem e arquivo ausente).
+- `apps/tauri/src-tauri/src/updates/tests/http.rs`: teste de app mockado para
+  `updater_info`, validando versão atual e canal reportado.
+
+Validação direcionada (Linux x86_64, Rust 1.100.0, `CARGO_TARGET_DIR=$PWD/target`):
+
+```bash
+cargo fmt -p wingdrive -- --check
+cargo test --locked -j 4 -p wingdrive --bin WingDrive server::contract_tests
+cargo test --locked -j 4 -p wingdrive --bin WingDrive server::tests
+cargo test --locked -j 4 -p wingdrive --bin WingDrive updates::tests
+```
+
+Resultados: fmt OK; `server::contract_tests` 24 passed, 0 failed; `server::tests`
+7 passed, 0 failed; `updates::tests` 6 passed, 0 failed. Sem execução de suíte
+GUI/Wayland/GTK real, sem polkit real e sem medição LCOV completa nesta rodada.
+A meta de 100% instrumentada em medição completa permanece aberta, com lacunas
+conhecidas em áreas dependentes de runtime gráfico/native (ex.: `main.rs`,
+`file_drag.rs`, `server.rs`, `updates.rs` conforme medição 2026-11-20).

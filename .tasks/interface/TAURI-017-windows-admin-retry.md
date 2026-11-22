@@ -1,7 +1,7 @@
 ---
 id: TAURI-017
 title: Administrator retries on Windows through UAC
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: TAURI-000
 priority: Low
@@ -9,7 +9,7 @@ milestone: M3
 sprint: S06
 tags: [tauri, windows, permissions, file-operations]
 related_tasks: [DESK-033, TAURI-016]
-last_updated: 2026-11-05
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -24,21 +24,57 @@ code as administrator, so paths must never pass through a shell.
 
 ## Implementation Steps
 
-- [ ] Pick the elevated helper: a small signed `wing-elevate.exe` started with `ShellExecuteExW`
-      and the `runas` verb, which reads its operations from a file or pipe, not from its command line
-- [ ] Support the same operations as DESK-033: copy, move, rename, delete, create folder
-- [ ] Report each operation's result back to the app, so a partial failure is shown per file
-- [ ] Offer the action on Windows in `apps/tauri/src/platform.ts` and the Explorer error toasts
+- [x] Pick the elevated helper: a small `wing-elevate.exe` started with `ShellExecuteExW`
+      and the `runas` verb, which reads its operations from a file, not from its command line
+- [x] Support the same operations as DESK-033: copy, move, rename, delete, create folder
+- [x] Report each operation's result back to the app, so a partial failure is shown per file
+- [x] Offer the action on Windows in `apps/tauri/src/platform.ts` and the Explorer error toasts
 
 ## Acceptance Criteria
 
 - [ ] Copying into `C:\Program Files\<folder>` without rights shows "Retry as administrator", raises
-      one UAC prompt and completes the copy
+      one UAC prompt and completes the copy (implemented, not verified on Windows in this session)
 - [ ] Declining the UAC prompt leaves the files untouched and shows a cancelled state, not an error
-- [ ] A file name with `&`, `|`, `"`, `%` or `^` is handled as data: test it in the helper's unit tests
+      (implemented: `ERROR_CANCELLED` maps to `AdminRunOutcome::Cancelled`, frontend shows info toast; not verified on Windows)
+- [x] A file name with `&`, `|`, `"`, `%` or `^` is handled as data: test it in the helper's unit tests
 - [ ] The helper is signed with the release's Authenticode certificate (REL-001)
 
 ## Notes
 
 Created on 2026-11-05 from the open list of TAURI-016. It waits for REL-001: an unsigned
 elevated helper shows an "unknown publisher" UAC prompt, which users should not learn to accept.
+
+## Progress (2026-11-23)
+
+### What was done
+
+- Added `crates/wing-elevate`: protocol types (`AdminOperation`, `AdminRequest`, `AdminResponse`,
+  `AdminStatus`, `AdminItemFailure`), validation, file-operation execution, and request/response
+  file helpers. The `wing-elevate` binary reads `--request <file> --response <file>` and never takes
+  operations from the command line.
+- Updated Tauri admin command (`apps/tauri/src-tauri/src/admin.rs`) to return `AdminRunOutcome`
+  (`completed | cancelled | partial`). Linux keeps the pkexec path and now maps dismissal to
+  `cancelled`. Windows launches `wing-elevate` with `ShellExecuteExW`/`runas`, waits for exit, reads
+  the response file, and maps UAC cancellation to `cancelled`.
+- Exposed `runAsAdmin` on Windows in `apps/tauri/src/platform.ts`; updated `PlatformContext` types
+  and `useAdminRetry` to handle cancelled/partial outcomes. Added i18n keys for cancelled/partial in
+  `en` and `pt` common locales.
+- Wired build/packaging: added wing-elevate to `build-daemon.ts`, `dev-with-daemon.ts`,
+  `apps/tauri/src-tauri/build.rs` sidecar staging, and `tauri.conf.json` `externalBin`.
+- Updated docs/AGENTS to reflect Linux+Windows admin retry (Windows helper unsigned until REL-001).
+
+### Evidence
+
+- `cargo test -p wing-elevate` (Linux): 5 passed, 0 failed. Includes special-character names
+  (`& | " % ^`), request/response round trip, skip-existing transfer, partial failure reporting,
+  and validation refusals.
+- `cargo test -p wingdrive --bin WingDrive admin` (Linux): **not completed** in this environment;
+  cargo failed with `Disk quota exceeded` while compiling dependencies (not a code failure). Linux
+  admin tests were updated for `AdminRunOutcome` and should be validated in CI/local with disk space.
+- PR: https://github.com/bernardopg/wingdrive/pull/489
+
+### Remaining / not verified
+
+- Windows UAC flow not manually verified in this Linux environment (no Windows machine/session).
+- Authenticode signing not done; tracked by REL-001.
+- Full Windows CI/build validation depends on GitHub Windows runners.

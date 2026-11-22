@@ -610,3 +610,126 @@ async fn cors_header_is_added_to_error_responses_too() {
 	assert!(response.contains("access-control-allow-origin: *"));
 	shutdown.send(()).await.unwrap();
 }
+
+#[test]
+fn parse_range_handles_valid_suffix_open_and_bounded_ranges() {
+	assert_eq!(parse_range("bytes=0-4", 10), Some((0, 4)));
+	assert_eq!(parse_range("bytes=7-", 10), Some((7, 9)));
+	assert_eq!(parse_range("bytes=-3", 10), Some((7, 9)));
+	assert_eq!(parse_range("bytes=8-99", 10), Some((8, 9)));
+	assert_eq!(parse_range("bytes=0-0", 10), Some((0, 0)));
+}
+
+#[test]
+fn parse_range_rejects_invalid_or_ambiguous_forms() {
+	for range in [
+		"items=1-2",
+		"bytes=0-1,3-4",
+		"bytes=-",
+		"bytes=abc-5",
+		"bytes=0-abc",
+		"bytes=6-2",
+		"",
+		"bytes=",
+	] {
+		assert_eq!(parse_range(range, 10), None, "{range}");
+	}
+}
+
+#[test]
+fn content_type_for_known_and_unknown_extensions() {
+	for (path, expected) in [
+		("clip.mp4", "video/mp4"),
+		("clip.M4V", "video/mp4"),
+		("clip.mov", "video/quicktime"),
+		("clip.webm", "video/webm"),
+		("clip.mkv", "video/x-matroska"),
+		("track.mp3", "audio/mpeg"),
+		("track.flac", "audio/flac"),
+		("track.ogg", "audio/ogg"),
+		("file.bin", "application/octet-stream"),
+		("noext", "application/octet-stream"),
+	] {
+		let value = content_type_for(std::path::Path::new(path));
+		assert_eq!(value, HeaderValue::from_static(expected), "{path}");
+	}
+}
+
+#[test]
+fn thumb_bucket_clamps_requested_sizes() {
+	assert_eq!(thumb_bucket(0), 128);
+	assert_eq!(thumb_bucket(1), 128);
+	assert_eq!(thumb_bucket(128), 128);
+	assert_eq!(thumb_bucket(129), 256);
+	assert_eq!(thumb_bucket(256), 256);
+	assert_eq!(thumb_bucket(257), 512);
+	assert_eq!(thumb_bucket(4096), 512);
+}
+
+#[test]
+fn thumb_kind_detects_supported_media_and_rejects_unknown() {
+	assert!(matches!(
+		thumb_kind(std::path::Path::new("photo.JPEG")),
+		Some(ThumbKind::Image)
+	));
+	assert!(matches!(
+		thumb_kind(std::path::Path::new("clip.mkv")),
+		Some(ThumbKind::Video)
+	));
+	assert!(matches!(
+		thumb_kind(std::path::Path::new("doc.PDF")),
+		Some(ThumbKind::Pdf)
+	));
+	assert!(thumb_kind(std::path::Path::new("archive.zip")).is_none());
+	assert!(thumb_kind(std::path::Path::new("noext")).is_none());
+}
+
+#[tokio::test]
+async fn serve_thumb_rejects_bad_token_path_and_unsupported_media() {
+	let dir = tempfile::tempdir().unwrap();
+	let unsupported = dir.path().join("notes.txt");
+	tokio::fs::write(&unsupported, b"hello").await.unwrap();
+	let folder = dir.path().join("folder");
+	tokio::fs::create_dir(&folder).await.unwrap();
+	let image_dir = dir.path().join("looks-like.png");
+	tokio::fs::create_dir(&image_dir).await.unwrap();
+	let missing = dir.path().join("missing.png");
+
+	let call = |path: &std::path::Path, token: &str| {
+		serve_thumb(
+			State(state(dir.path().to_path_buf())),
+			Query(ThumbQuery {
+				path: path.to_string_lossy().into_owned(),
+				size: 128,
+				token: token.into(),
+			}),
+		)
+	};
+
+	assert_eq!(
+		call(&unsupported, "bad-token").await.unwrap_err(),
+		StatusCode::FORBIDDEN
+	);
+	assert_eq!(
+		call(std::path::Path::new("relative.png"), "test-token")
+			.await
+			.unwrap_err(),
+		StatusCode::BAD_REQUEST
+	);
+	assert_eq!(
+		call(&unsupported, "test-token").await.unwrap_err(),
+		StatusCode::UNSUPPORTED_MEDIA_TYPE
+	);
+	assert_eq!(
+		call(&folder, "test-token").await.unwrap_err(),
+		StatusCode::UNSUPPORTED_MEDIA_TYPE
+	);
+	assert_eq!(
+		call(&image_dir, "test-token").await.unwrap_err(),
+		StatusCode::BAD_REQUEST
+	);
+	assert_eq!(
+		call(&missing, "test-token").await.unwrap_err(),
+		StatusCode::NOT_FOUND
+	);
+}
