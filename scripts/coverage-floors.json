@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "description": "Versioned coverage floors per component. Floors never decrease automatically; raise them manually when coverage improves. min_lines guards against unexpectedly smaller denominators.",
+  "source_summary": {
+    "commit": "bdf6f6b7a6240d9d2b2fe938f271fc16f7326d53",
+    "generated": "2026-11-22T06:58Z"
+  },
+  "components": {
+    "core": {
+      "min_percent": 56.7,
+      "target_percent": 65.0,
+      "min_lines": 92102
+    },
+    "desktop": {
+      "min_percent": 91.8,
+      "target_percent": 100.0,
+      "min_lines": 8958
+    },
+    "cli": {
+      "min_percent": 75.0,
+      "target_percent": 75.0,
+      "min_lines": 7421
+    },
+    "interface": {
+      "min_percent": 60.0,
+      "target_percent": 60.0,
+      "min_lines": 7360
+    }
+  },
+  "changed_production_lines": {
+    "min_percent": 80.0
+  }
+}
