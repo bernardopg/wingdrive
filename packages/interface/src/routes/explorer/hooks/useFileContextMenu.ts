@@ -123,9 +123,7 @@ export function useFileContextMenu({
 	const openFiles = useOpenFiles();
 	const {startRename} = useSelection();
 
-	const openTargets = (
-		selected && selectedFiles.length > 0 ? selectedFiles : [file]
-	).filter(
+	const openTargets = (fileInSelection && selectedFiles.length > 0 ? selectedFiles : [file]).filter(
 		(f): f is File =>
 			f != null && f.wing_path != null && 'Physical' in f.wing_path
 	);
@@ -176,7 +174,8 @@ export function useFileContextMenu({
 	};
 
 	// A right-click on an unselected item acts on that item alone.
-	const targetFiles = selected && selectedFiles.length > 0
+	const fileInSelection = !!file && selectedFiles.some((f) => f.id === file.id);
+	const targetFiles = fileInSelection && selectedFiles.length > 0
 		? selectedFiles
 		: file
 			? [file]
