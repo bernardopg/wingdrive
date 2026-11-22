@@ -1,12 +1,12 @@
 ---
 id: FILE-006
 title: Path Intersection & Smart Diff
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: FILE-000
 priority: High
 tags: [files, operations, diff, copy, index, deduplication, upstream-backlog]
-last_updated: 2026-10-16
+last_updated: 2026-11-22
 related_tasks: [INDEX-010, INDEX-011, FILE-001, FSYNC-003]
 milestone: M4
 sprint: S07
@@ -81,6 +81,16 @@ let copy_input = FileCopyInput {
 ```
 
 ## Implementation Steps
+
+- [x] Define core diff types (`DiffStrategy`, `PathDiffInput`, `DiffEntry`, `PathDiffResult`)
+- [x] Register `PathDiffAction` as `files.diff` library action
+- [x] Acquire index coverage through ephemeral indexer (complete scan or rule-filtered browse)
+- [x] Build relative path maps from ephemeral index entries
+- [x] Implement heuristic diff (path+size+mtime)
+- [x] Add baseline unit test for heuristic diff
+- [ ] Wire content-id comparison when persistent/content-indexed metadata is available
+- [ ] Feed diff result into FileCopyJob smart-copy flow
+- [ ] Add integration test with two indexed directories
 
 ### 1. Define Core Types
 
