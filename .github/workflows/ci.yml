@@ -161,6 +161,9 @@ jobs:
           bun test packages/interface/src/routes/explorer/components/vcsStatus.test.ts
           bun test packages/interface/src/routes/explorer/views/grouping.test.ts
           bun test packages/interface/src/routes/explorer/hooks/useContextActions.test.ts
+          bun test packages/interface/src/routes/explorer/hooks/usePasteFiles.test.tsx
+          bun test packages/interface/src/routes/explorer/hooks/useDeleteFiles.test.tsx
+          bun test packages/interface/src/i18n/catalogParity.test.ts
           bun test packages/interface/src/components/WingsSidebar/FolderTree/folderTreePaths.test.ts
           bun test packages/interface/src/components/WingsSidebar/NetworkSection.test.tsx
           bun test packages/interface/src/components/WingsSidebar/reorderItems.test.ts
