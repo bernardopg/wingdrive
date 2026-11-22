@@ -68,8 +68,10 @@ elevated helper shows an "unknown publisher" UAC prompt, which users should not 
 - `cargo test -p wing-elevate` (Linux): 5 passed, 0 failed. Includes special-character names
   (`& | " % ^`), request/response round trip, skip-existing transfer, partial failure reporting,
   and validation refusals.
-- `cargo test -p wingdrive --bin WingDrive admin` (Linux): see PR/testing section; Linux admin tests
-  updated for `AdminRunOutcome`.
+- `cargo test -p wingdrive --bin WingDrive admin` (Linux): **not completed** in this environment;
+  cargo failed with `Disk quota exceeded` while compiling dependencies (not a code failure). Linux
+  admin tests were updated for `AdminRunOutcome` and should be validated in CI/local with disk space.
+- PR: https://github.com/bernardopg/wingdrive/pull/489
 
 ### Remaining / not verified
 
