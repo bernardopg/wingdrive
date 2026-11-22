@@ -24,7 +24,9 @@ export { Overview } from "./routes/overview";
 
 // Platform abstraction
 export type {
+	AdminItemFailure,
 	AdminOperation,
+	AdminRunOutcome,
 	ContextAction,
 	AvailableUpdate,
 	DesktopSettings,

@@ -71,6 +71,15 @@ impl FileSyncService {
 		}
 	}
 
+	/// Preview what a sync would do without dispatching jobs.
+	pub async fn preview_sync(&self, conduit_id: i32) -> Result<resolver::SyncOperations> {
+		let conduit = self.conduit_manager.get_conduit(conduit_id).await?;
+		self.resolver
+			.ensure_index_coverage(&self.library, &conduit)
+			.await?;
+		self.resolver.calculate_operations(&conduit).await
+	}
+
 	/// Trigger sync for a conduit
 	pub async fn sync_now(&self, conduit_id: i32) -> Result<SyncHandle> {
 		// Load conduit

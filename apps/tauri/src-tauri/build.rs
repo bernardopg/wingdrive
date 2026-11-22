@@ -85,8 +85,9 @@ fn main() {
 		.expect("Missing Cargo profile directory");
 
 	// The daemon runs the app; the CLI ships beside it so the commands the
-	// disconnected-daemon screen suggests exist on the user's machine.
-	for name in ["wing-daemon", "wing"] {
+	// disconnected-daemon screen suggests exist on the user's machine. The
+	// elevate helper runs administrator retries on Windows (TAURI-017).
+	for name in ["wing-daemon", "wing", "wing-elevate"] {
 		let source = profile_dir.join(format!("{name}{exe_ext}"));
 		let fallback =
 			std::path::PathBuf::from(format!("{workspace_dir}/target/{profile}/{name}{exe_ext}"));
