@@ -4,6 +4,7 @@ const release = process.argv.includes("--release");
 const builds = [
 	["--bin", "wing-daemon", "--features", "ffmpeg,heif"],
 	["--bin", "wing"],
+	["--bin", "wing-elevate"],
 ];
 for (const args of builds) {
 	const command = ["cargo", "build", "--locked", "--manifest-path", "../../Cargo.toml", ...args];

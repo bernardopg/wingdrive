@@ -8,13 +8,11 @@ fn args(operation: AdminOperation) -> Vec<String> {
 #[tokio::test]
 async fn elevated_exit_codes_become_results() {
 	let sh = |script: &str| vec!["-c".to_string(), script.to_string()];
-	run_elevated("sh", sh("exit 0")).await.unwrap();
+	assert_eq!(run_elevated("sh", sh("exit 0")).await.unwrap(), AdminRunOutcome::Completed);
 	for code in PKEXEC_DISMISSED {
 		assert_eq!(
-			run_elevated("sh", sh(&format!("exit {code}")))
-				.await
-				.unwrap_err(),
-			"Authentication was cancelled or refused"
+			run_elevated("sh", sh(&format!("exit {code}"))).await.unwrap(),
+			AdminRunOutcome::Cancelled
 		);
 	}
 	assert_eq!(

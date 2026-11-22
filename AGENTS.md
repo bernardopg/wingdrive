@@ -747,8 +747,9 @@ releases:
 - Join stored paths with the stored path's own separator (`join_entry_path`), not `/`.
 - SQLite with its default journal is very slow on Windows. Open every database through
   `crate::infra::db::connect_sqlite` (WAL, `synchronous=NORMAL`).
-- Linux-only features (`run_as_admin`, the `pkexec` retry) must stay hidden off Linux in
-  `apps/tauri/src/platform.ts`, not fail when clicked. Windows administrator retries are TAURI-017.
+- `run_as_admin` exists on Linux (`pkexec`) and Windows (a UAC helper, TAURI-017). Keep it hidden
+  on platforms that do not implement it in `apps/tauri/src/platform.ts`, not fail when clicked. The
+  Windows helper is unsigned until REL-001.
 - Without a Windows machine, check with `cargo clippy --target x86_64-pc-windows-msvc` for the
   crates that build on Linux, and let `Rust Workspace (Windows)` run the rest.
 

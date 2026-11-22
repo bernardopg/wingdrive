@@ -96,7 +96,7 @@ impl StagedReceive {
 			.await?
 			.sync_all()
 			.await?;
-		fs::rename(&self.partial, destination).await?;
+		rename_replace(&self.partial, destination).await?;
 		self.settled = true;
 		if let Some(entry) = self.journal_entry.take() {
 			let _ = fs::remove_file(entry).await;
@@ -121,6 +121,52 @@ impl Drop for StagedReceive {
 			}
 			Err(_) => discard(partial, entry),
 		}
+	}
+}
+
+async fn rename_replace(source: &Path, destination: &Path) -> std::io::Result<()> {
+	#[cfg(windows)]
+	{
+		let source = source.to_path_buf();
+		let destination = destination.to_path_buf();
+		tokio::task::spawn_blocking(move || rename_replace_windows(&source, &destination))
+			.await
+			.map_err(std::io::Error::other)?
+	}
+	#[cfg(not(windows))]
+	{
+		fs::rename(source, destination).await
+	}
+}
+
+#[cfg(windows)]
+fn rename_replace_windows(source: &Path, destination: &Path) -> std::io::Result<()> {
+	use std::os::windows::ffi::OsStrExt;
+	use windows_sys::Win32::Storage::FileSystem::{
+		MoveFileExW, MOVEFILE_REPLACE_EXISTING, MOVEFILE_WRITE_THROUGH,
+	};
+
+	fn wide(path: &Path) -> Vec<u16> {
+		path.as_os_str()
+			.encode_wide()
+			.chain(std::iter::once(0))
+			.collect()
+	}
+
+	let from = wide(source);
+	let to = wide(destination);
+	// SAFETY: pointers are NUL-terminated wide strings valid for the call.
+	let ok = unsafe {
+		MoveFileExW(
+			from.as_ptr(),
+			to.as_ptr(),
+			MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
+		)
+	};
+	if ok == 0 {
+		Err(std::io::Error::last_os_error())
+	} else {
+		Ok(())
 	}
 }
 

@@ -154,6 +154,22 @@ async function main() {
 			});
 		});
 
+		const elevateBuild = spawn('cargo', ['build', '--bin', 'wing-elevate'], {
+			cwd: PROJECT_ROOT,
+			stdio: 'inherit',
+			shell: IS_WIN
+		});
+
+		await new Promise<void>((resolve, reject) => {
+			elevateBuild.on('exit', (code) => {
+				if (code === 0) {
+					resolve();
+				} else {
+					reject(new Error(`wing-elevate build failed with code ${code}`));
+				}
+			});
+		});
+
 		console.log('Daemon built successfully');
 		// Start daemon
 		console.log(

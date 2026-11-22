@@ -1,14 +1,14 @@
 ---
 id: COV-10
 title: "Testar CLI com daemon isolado e filesystem real"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: COV-00
 priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, cli]
-last_updated: 2026-11-03
+last_updated: 2026-11-22
 ---
 
 ## Description
@@ -80,15 +80,15 @@ COV-09, COV-03. Escopo, metas e ordem em [README.md](README.md).
 
 ## Implementation Steps
 
-- [ ] Subir daemon com diretório, instância e endpoints exclusivos de cada teste.
-- [ ] Executar library/location/file/search/job/status, verificando JSON, exit code e bytes em disco.
-- [ ] Cobrir daemon indisponível, timeout, biblioteca ausente e falha de operação; encerrar apenas PIDs criados pelo teste.
+- [x] Subir daemon com diretório, instância e endpoints exclusivos de cada teste.
+- [x] Executar library/location/file/search/job/status, verificando JSON, exit code e bytes em disco.
+- [~] Cobrir daemon indisponível, timeout, biblioteca ausente e falha de operação; encerrar apenas PIDs criados pelo teste.
 
 ## Acceptance Criteria
 
 - [ ] CLI atinge pelo menos 75% de linhas na medição completa.
-- [ ] Cópia/move/rename/delete/mkdir têm cenários de sucesso e erro no CLI real.
-- [ ] Sem tocar daemon, serviços, portas ou bibliotecas do autor; teardown funciona após falhas.
+- [x] Cópia/move/rename/delete/mkdir têm cenários de sucesso e erro no CLI real.
+- [x] Sem tocar daemon, serviços, portas ou bibliotecas do autor; teardown funciona após falhas.
 
 ## Loopback RPC evidence 2026-11-19
 
@@ -128,3 +128,12 @@ check S3-compatible provider selection, default regions and endpoints, Azure Blo
 and Dropbox OAuth fields. The fixture sends synthetic values to loopback and never contacts
 a provider. All eight cloud wizard tests passed on Linux in the instrumented verification
 tree. See `coverage/goal/next/cloud-pty-final.log` in the primary checkout.
+
+
+## Real daemon CLI integration (2026-11-22, test/cov-10-cli-daemon)
+
+Added `apps/cli/tests/cli_daemon.rs` (Unix) with an isolated fixture that spawns
+`wing-daemon` per test using a unique instance name/port and a disposable data
+directory under `/home/bitter/.cache/opencode/cov10-tmp` (tmpfs `/tmp` had
+EDQUOT during execution). Each fixture kills the daemon process it spawned on
+drop. No author daemon, servic

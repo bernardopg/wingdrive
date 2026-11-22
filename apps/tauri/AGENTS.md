@@ -8,8 +8,8 @@ Read the root `AGENTS.md` first. This file adds the rules for `apps/tauri/`.
 - `src-tauri` must not depend on `wing-core` (CI checks it). Shared code goes in `crates/` or in
   `apps/tauri/crates/` (`file-opening-*`, `file-clipboard-windows`).
 - Platform features are declared in `src/platform.ts`. Expose a feature only on the platforms that
-  implement it: `runAsAdmin` is Linux-only, the file clipboard is Linux and Windows. A hidden
-  action beats one that fails with "only available on Linux".
+  implement it: `runAsAdmin` is Linux (`pkexec`) and Windows (UAC helper, TAURI-017), the file
+  clipboard is Linux and Windows. A hidden action beats one that fails on an unsupported platform.
 - Bundles: `tauri.conf.json`, plus `tauri.linux.conf.json` and `tauri.windows.conf.json`. A file the
   app loads at runtime (such as the toast logo `icons/128x128.png`) must be listed as a resource,
   and `scripts/release/windows_smoke.ps1` should check it is installed.
