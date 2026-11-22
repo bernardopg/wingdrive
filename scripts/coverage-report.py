@@ -158,11 +158,34 @@ def html_report(summary, per_component, files):
 		cards="".join(cards), rows="\n".join(rows))
 
 
+def load_floors(path):
+	if not path:
+		return {}
+	data = json.loads(Path(path).read_text())
+	return data.get("components", {})
+
+
+def floor_status(percent, floors_cfg):
+	if not floors_cfg:
+		return None
+	min_percent = float(floors_cfg.get("min_percent", 0))
+	if percent is None:
+		return "missing"
+	return "ok" if percent + 1e-9 >= min_percent else "below"
+
+
 def main():
-	out, *reports = sys.argv[1:]
+	args = sys.argv[1:]
+	floors_path = None
+	if "--floors" in args:
+		i = args.index("--floors")
+		floors_path = args[i + 1]
+		args = args[:i] + args[i + 2:]
+	out, *reports = args
 	out = Path(out)
 	(out / "badges").mkdir(parents=True, exist_ok=True)
 	lines = merge(reports)
+	floors = load_floors(floors_path)
 
 	groups = {"total": lines, "rust": {}, "frontend": {}}
 	per_component = {cid: {} for cid, _, _ in COMPONENTS}
@@ -172,28 +195,45 @@ def main():
 		if cid:
 			per_component[cid][rel] = counts
 
+	components = []
+	for cid, title, _ in COMPONENTS:
+		s = stats(per_component[cid])
+		cfg = floors.get(cid)
+		status = floor_status(s["percent"], cfg)
+		entry = {"id": cid, "title": title, **s}
+		if cfg:
+			entry["floor_percent"] = float(cfg.get("min_percent", 0))
+			entry["target_percent"] = float(cfg.get("target_percent", cfg.get("min_percent", 0)))
+			entry["min_lines"] = int(cfg.get("min_lines", 0))
+			entry["floor_status"] = status
+		components.append(entry)
+
 	summary = {
 		"commit": os.environ.get("GITHUB_SHA", ""),
 		"generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
 		"total": stats(groups["total"]),
 		"rust": stats(groups["rust"]),
 		"frontend": stats(groups["frontend"]),
-		"components": [{"id": cid, "title": title, **stats(per_component[cid])} for cid, title, _ in COMPONENTS],
+		"components": components,
 	}
 
 	writes = {"coverage": ("coverage", summary["total"]), "rust": ("rust coverage", summary["rust"]),
 		"frontend-coverage": ("frontend coverage", summary["frontend"])}
-	for cid, title, _ in COMPONENTS:
-		writes[f"component-{cid}"] = (cid, stats(per_component[cid]))
+	for c in summary["components"]:
+		writes[f"component-{c['id']}"] = (c["id"], c)
 	for name, (label, s) in writes.items():
 		(out / "badges" / f"{name}.json").write_text(json.dumps(badge(label, s)) + "\n")
 	(out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 
 	def row(title, s):
 		pct = f"{s['percent']:.1f}%" if s["percent"] is not None else "no tests"
-		return f"| {title} | {pct} | {s['covered']:,} / {s['lines']:,} | {s['files']} |"
+		floor = s.get("floor_percent")
+		status = s.get("floor_status")
+		floor_cell = f"{floor:.1f}%" if isinstance(floor, (int, float)) else "-"
+		status_cell = status if status else "-"
+		return f"| {title} | {pct} | {floor_cell} | {status_cell} | {s['covered']:,} / {s['lines']:,} | {s['files']} |"
 
-	md = ["| Area | Lines covered | Covered / instrumented | Files |", "|---|---|---|---|",
+	md = ["| Area | Lines covered | Floor | Status | Covered / instrumented | Files |", "|---|---|---|---|---|---|",
 		row("**Total**", summary["total"]), row("Rust", summary["rust"]), row("Frontend", summary["frontend"])]
 	md += [row(c["title"], c) for c in summary["components"]]
 	(out / "summary.md").write_text("\n".join(md) + "\n")
