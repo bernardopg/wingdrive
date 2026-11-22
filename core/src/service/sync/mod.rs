@@ -474,9 +474,21 @@ impl SyncService {
 											debug!(peer = %partner_id, "Caught up with peer recently, skipping");
 											false
 										} else if peer_watermarks.is_empty() {
-											// NEW PEER - never synced with them before
-											info!(peer = %partner_id, "Detected new peer, no watermarks exist - initiating sync");
-											true
+											if last_catch_up.contains_key(&partner_id) {
+												// A peer with no device-owned data never produces
+												// state watermarks. Catching up again would loop
+												// forever over an empty delta, so trust the last
+												// successful catch-up until real-time updates land.
+												debug!(
+													peer = %partner_id,
+													"Caught up with peer that has no device-owned watermarks, skipping"
+												);
+												false
+											} else {
+												// NEW PEER - never synced with them before
+												info!(peer = %partner_id, "Detected new peer, no watermarks exist - initiating sync");
+												true
+											}
 										} else {
 											// EXISTING PEER - check if watermarks are stale
 											let oldest_watermark = peer_watermarks.iter()

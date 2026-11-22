@@ -23,6 +23,9 @@ Implement the graph-based semantic tagging architecture. This will allow users t
 
 ## Acceptance Criteria
 
-- [ ] A user can create and manage a hierarchy of tags.
-- [ ] A user can assign multiple tags to a file or directory.
-- [ ] A user can search for files based on their tags.
+- [x] A user can create and manage a hierarchy of tags. (tag domain/model supports parent
+      relationships; legacy checklist reconciled in DEV-008)
+- [x] A user can assign multiple tags to a file or directory. (tag application/relationships exist
+      in core; legacy checklist reconciled in DEV-008)
+- [x] A user can search for files based on their tags. (tag filtering/search exists in core/UI;
+      legacy checklist reconciled in DEV-008)

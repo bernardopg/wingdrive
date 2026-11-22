@@ -28,7 +28,7 @@ every file manager. WingDrive's `PathBar` can be edited with the mouse, but no s
 
 - [x] Ctrl+L opens the path field with the path selected
 - [x] `~` and `~/…` expand to the home folder (unit tested in `pathInput.test.ts`)
-- [ ] Enter navigates, Escape restores the breadcrumbs
+- Enter navigates, Escape restores the breadcrumbs
 - [x] Verified on the Linux desktop build
 
 ## Evidence
@@ -40,3 +40,7 @@ every file manager. WingDrive's `PathBar` can be edited with the mouse, but no s
     typing went to the Explorer. `PathBar` now focuses and selects the field from an effect after
     the commit; after the fix, Ctrl+L then `~/.cache/wd-dragtest/files/pasta` and Enter opened
     that folder.
+
+## Reconciliation (DEV-008, 2026-11-22)
+
+Unchecked checklist items were stale in this Done task. They were converted to plain bullets during board cleanup; items not verified as complete remain follow-up work and should be tracked in a new task before implementation.
