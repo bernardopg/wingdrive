@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, cli]
-last_updated: 2026-11-18
+last_updated: 2026-11-22
 ---
 
 ## Description
@@ -137,3 +137,28 @@ The first correction build had two E0308 errors and one E0605 error because the 
 the nested option. Replacing the field type resolved all three errors. The intermediate compiler
 diagnostics are in `coverage/goal/cloud-sync-compile.log`; the successful run and generator output
 are in `coverage/goal/cloud-sync-after.log`.
+
+## Evidence 2026-11-22 (cov-09 worktree)
+
+Branch: `test/cov-09-cli-contracts` (worktree `/home/bitter/.cache/opencode/wt/cov-09`, based on `origin/main`).
+
+### Changes
+
+- `apps/cli/src/tests/mod.rs`: added parsing/dispatch contract tests for `cloud` (rejects extra args/unknown shape), `daemon` subcommands (install/uninstall/status parse and invalid shapes), and top-level aliases/shapes (`wings`/`spaces`, legacy `network spacedrop` alias, invalid global flag positions).
+- `apps/cli/src/domains/daemon/mod.rs`: expanded `qualified_service_name`/`systemd_service_name` default-instance assertions and added safe `service_active` unknown-unit test (returns false; no system mutation).
+- `apps/cli/tests/cli_process.rs`: added reusable JSON RPC fixture helper; added structural JSON stdout validation for `tag search --format json` (asserts JSON shape/fields and request payload); added JSON error-path process test asserting daemon validation error context is preserved on stderr and stdout has no fake success payload; added `stop --reset` process test with `WING_CLI_YES=1` on isolated temp data dir/instance verifying confirmation bypass and safe v2-only reset.
+
+### Validation
+
+| Command | Result |
+|---|---|
+| `cargo fmt -p wing-cli` | Passed. |
+| `cargo test -p wing-cli --bin wing` | **Not completed in this environment**: 3 attempts in cov-09 were SIGTERM'd after 900s during compilation before test execution. |
+| `cargo test -p wing-cli --test cli_process` | Not run separately (compile did not complete). |
+| Coverage (`cargo llvm-cov` / `scripts/coverage-cli-production.py`) | Not run; compile-time blocked, not cheap in this env. |
+
+### Gaps / honesty
+
+- Task-named gaps `cloud setup`, `daemon`, and `confirm` received targeted contract/process coverage additions, but fresh line-coverage numbers were not produced due environment compile-time SIGTERM.
+- `daemon install/uninstall/status` runtime paths remain OS/systemd-interactive; tests avoid mutating real user services. Deeper runtime coverage needs isolated system fixtures or a warm CI environment.
+- JSON structural validation improved by process tests, but is not yet comprehensive across all JSON-producing commands.

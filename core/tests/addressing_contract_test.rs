@@ -304,7 +304,7 @@ fn invalid_uris_and_unicode_inputs_are_rejected_or_round_tripped() {
 		Err(WingPathParseError::InvalidContentId)
 	));
 	assert!(matches!(
-		WingPath::from_uri("cloud://bucket/key"),
+		WingPath::from_uri("zzz://bucket/key"),
 		Err(WingPathParseError::UnknownScheme)
 	));
 	assert!(matches!(
