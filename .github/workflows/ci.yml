@@ -293,6 +293,22 @@ jobs:
             echo "::endgroup::"
           done
           echo "Explorer smoke: $((SMOKE_RUNS - failed)) of $SMOKE_RUNS runs passed" | tee -a "$GITHUB_STEP_SUMMARY"
+          # CORE-022: normal browsing must not flood the journal. Ignore third-party targets.
+          python3 - <<'PY'
+          import pathlib, re, sys
+          log = pathlib.Path('/tmp/wingdrive-server.log')
+          own = ('wing_core', 'wingdrive', 'wing_server', 'wing_', 'notify::', 'wing_task_system', 'wing_fs_watcher')
+          noise = []
+          for line in log.read_text(errors='replace').splitlines():
+              if re.search(r'\b(WARN|ERROR)\b', line) and any(p in line for p in own):
+                  noise.append(line)
+          if noise:
+              print(f'Explorer smoke server log has {len(noise)} WARN/ERROR line(s):', file=sys.stderr)
+              for line in noise[:30]:
+                  print(line, file=sys.stderr)
+              sys.exit(1)
+          print('PASS: no WARN/ERROR from own targets in explorer smoke server log')
+          PY
           test "$failed" -eq 0
 
       - name: Preserve Explorer smoke evidence
