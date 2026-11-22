@@ -17,7 +17,7 @@ use sea_orm::{
 };
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 use uuid::Uuid;
 
 /// Query to get a file by its ID with all related data
@@ -356,10 +356,11 @@ impl FileByIdQuery {
 			.ok_or_else(|| QueryError::Internal("Location root path not found".to_string()))?;
 
 		// Build absolute path: location_root + relative components
-		let mut absolute_path = PathBuf::from(&location_root_path.path);
-		for component in path_components {
-			absolute_path.push(component);
-		}
+		let absolute_path = path_components
+			.into_iter()
+			.fold(location_root_path.path, |parent, name| {
+				crate::domain::addressing::join_entry_path(&parent, &name)
+			});
 
 		Ok(WingPath::Physical {
 			device_slug: device_model.slug,

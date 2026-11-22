@@ -2585,6 +2585,15 @@ impl PeerSync {
 		}
 	}
 
+	pub async fn finish_catch_up(&self, peer: Uuid, reason: &str) {
+		let previous = {
+			let mut state = self.state.write().await;
+			std::mem::replace(&mut *state, DeviceSyncState::Ready)
+		};
+		tracing::info!(from_state = ?previous, to_state = ?DeviceSyncState::Ready, %peer, reason, "Sync state transition");
+		self.apply_buffered_updates().await;
+	}
+
 	/// Get dependency tracker for event-driven FK retry
 	pub fn dependency_tracker(&self) -> &Arc<super::dependency::DependencyTracker> {
 		&self.dependency_tracker

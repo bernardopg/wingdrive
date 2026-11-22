@@ -1520,7 +1520,7 @@ export type FileByPathQuery = {
 
 /**  Input for hashing one local file. */
 export type FileChecksumInput = {
-	/**  Physical path of the file on this device. */
+	/**  Physical path of a local file or an indexed file on a paired peer. */
 	path: WingPath,
 };
 

@@ -536,8 +536,25 @@ impl RemoteTransferStrategy {
 				local_dest_path.to_path_buf()
 			};
 
-		// Create file for writing
-		let mut file = fs::File::create(&final_dest_path).await?;
+		// Bytes land in a partial beside the destination, renamed into place
+		// only after the size and hash check out. Dropping it on any early
+		// return removes it and leaves the destination as it was.
+		let staged = {
+			let protocol_registry = networking_guard.protocol_registry();
+			let registry_guard = protocol_registry.read().await;
+			let handler = registry_guard
+				.get_handler("file_transfer")
+				.ok_or_else(|| anyhow::anyhow!("File transfer protocol not registered"))?;
+			let file_transfer = handler
+				.as_any()
+				.downcast_ref::<crate::service::network::protocol::FileTransferProtocolHandler>()
+				.ok_or_else(|| anyhow::anyhow!("Invalid file transfer protocol handler"))?;
+			file_transfer.stage_receive(&final_dest_path).await?
+		};
+		let mut file = fs::OpenOptions::new()
+			.write(true)
+			.open(staged.path())
+			.await?;
 		let mut hasher = if verify_checksum {
 			Some(blake3::Hasher::new())
 		} else {
@@ -565,7 +582,6 @@ impl RemoteTransferStrategy {
 						// Connection closed - will check transfer_completed below
 						break;
 					}
-					let _ = fs::remove_file(&final_dest_path).await;
 					return Err(anyhow::anyhow!("Failed to read message type: {}", e));
 				}
 			}
@@ -621,8 +637,7 @@ impl RemoteTransferStrategy {
 					..
 				} => {
 					// Verify byte count first
-					if total_bytes != total_bytes_received {
-						let _ = fs::remove_file(&final_dest_path).await;
+					if total_bytes != total_bytes_received || file_size != total_bytes_received {
 						return Err(anyhow::anyhow!(
 							"Byte count mismatch: expected {}, got {}",
 							total_bytes,
@@ -637,14 +652,12 @@ impl RemoteTransferStrategy {
 							let calculated_hex = calculated.to_hex().to_string();
 
 							if final_checksum.is_empty() {
-								// Warn when checksum verification enabled but no checksum provided
-								ctx.log("Warning: checksum verification enabled but remote did not provide checksum".to_string());
+								return Err(anyhow::anyhow!("Missing final checksum"));
 							} else if calculated_hex != final_checksum {
 								error!(
 									"Final checksum mismatch: expected {}, got {}",
 									final_checksum, calculated_hex
 								);
-								let _ = fs::remove_file(&final_dest_path).await;
 								return Err(anyhow::anyhow!("Final checksum mismatch"));
 							}
 						}
@@ -661,8 +674,6 @@ impl RemoteTransferStrategy {
 					message,
 					..
 				} => {
-					// Clean up partial file
-					let _ = fs::remove_file(&final_dest_path).await;
 					return Err(anyhow::anyhow!("Transfer error: {}", message));
 				}
 				_ => {
@@ -673,7 +684,6 @@ impl RemoteTransferStrategy {
 
 		// Verify transfer completed properly
 		if !transfer_completed {
-			let _ = fs::remove_file(&final_dest_path).await;
 			return Err(anyhow::anyhow!(
 				"Transfer interrupted: received {} of {} bytes before connection closed",
 				total_bytes_received,
@@ -682,7 +692,8 @@ impl RemoteTransferStrategy {
 		}
 
 		file.flush().await?;
-		file.sync_all().await?;
+		drop(file);
+		staged.commit(&final_dest_path).await?;
 
 		info!(
 			"PULL transfer completed: {} bytes from device:{} to {}",
@@ -928,7 +939,7 @@ pub(crate) fn is_interruption(error: &anyhow::Error) -> bool {
 /// A copy is written here and renamed into place when it is complete, so a
 /// cancelled or failed copy leaves neither a truncated file under the real
 /// name nor a hole where the file it was replacing used to be.
-fn partial_path(destination: &Path) -> PathBuf {
+pub(crate) fn partial_path(destination: &Path) -> PathBuf {
 	destination.with_file_name(format!(".wing-part-{}", uuid::Uuid::new_v4().simple()))
 }
 

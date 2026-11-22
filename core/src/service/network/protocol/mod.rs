@@ -8,6 +8,7 @@ pub mod library_messages;
 pub mod messaging;
 pub mod pairing;
 pub mod registry;
+pub(crate) mod staged_receive;
 pub mod sync;
 
 use crate::service::network::{NetworkingError, Result};

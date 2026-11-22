@@ -2179,59 +2179,13 @@ impl VolumeManager {
 			return None;
 		}
 
-		let id_file_path = crate::branding::volume_id_file(&volume.mount_point);
-
-		// Try to read existing identifier file
-		if let Ok(content) = fs::read_to_string(&id_file_path).await {
-			if let Ok(wingdrive_id) = serde_json::from_str::<WingDriveVolumeId>(&content) {
-				debug!(
-					"Found existing WingDrive ID {} for volume {}",
-					wingdrive_id.id, volume.name
-				);
-				return Some(wingdrive_id.id);
-			}
+		if volume.is_read_only {
+			return self
+				.read_wingdrive_identifier(&volume.mount_point)
+				.await
+				.map(|marker| marker.id);
 		}
-
-		// Try to create new identifier file if volume is writable
-		if !volume.is_read_only && volume.mount_point.exists() {
-			let wingdrive_id = WingDriveVolumeId {
-				id: Uuid::new_v4(),
-				created: chrono::Utc::now(),
-				device_name: None, // TODO: Get from DeviceManager when available
-				volume_name: volume.name.clone(),
-				device_id: volume.device_id,
-				library_id: Uuid::nil(), // TODO: Populate from library context when available
-			};
-
-			if let Ok(content) = serde_json::to_string_pretty(&wingdrive_id) {
-				match fs::write(&id_file_path, content).await {
-					Ok(()) => {
-						info!(
-							"Created WingDrive ID {} for volume {} at {}",
-							wingdrive_id.id,
-							volume.name,
-							id_file_path.display()
-						);
-						return Some(wingdrive_id.id);
-					}
-					Err(e) => {
-						debug!(
-							"Failed to write WingDrive ID file to {}: {}",
-							id_file_path.display(),
-							e
-						);
-					}
-				}
-			}
-		}
-
-		debug!(
-			"Could not create or read WingDrive identifier for volume {} (read_only: {}, exists: {})",
-			volume.name,
-			volume.is_read_only,
-			volume.mount_point.exists()
-		);
-		None
+		super::utils::read_or_create_dotfile(&volume.mount_point, volume.device_id, None).await
 	}
 
 	/// Read WingDrive identifier file from a volume if it exists
