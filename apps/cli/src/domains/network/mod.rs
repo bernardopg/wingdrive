@@ -1,5 +1,7 @@
 mod args;
 
+pub use args::PairCmd;
+
 use anyhow::Result;
 use clap::Subcommand;
 
