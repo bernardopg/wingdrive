@@ -669,10 +669,597 @@ async fn shutdown_signal(daemon_handle: Option<Arc<RwLock<tokio::task::JoinHandl
 
 #[cfg(test)]
 mod tests {
-	use super::WebAssets;
+	use super::*;
+	use axum::{
+		body::{to_bytes, Body},
+		http::{header, Request, StatusCode},
+		middleware,
+		routing::get,
+		Router,
+	};
+	use rust_embed::RustEmbed;
+	use serde_json::json;
+	use std::{collections::HashMap, net::SocketAddr, path::Path};
+	use tokio::{
+		io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
+		net::TcpListener,
+	};
+	use tower::ServiceExt;
+
+	fn test_state(
+		auth: HashMap<String, SecStr>,
+		data_dir: PathBuf,
+		socket_addr: String,
+	) -> AppState {
+		AppState {
+			auth,
+			socket_addr,
+			data_dir,
+		}
+	}
+
+	async fn response_body_string(response: Response) -> String {
+		let bytes = to_bytes(response.into_body(), usize::MAX)
+			.await
+			.expect("body should be readable");
+		String::from_utf8(bytes.to_vec()).expect("body should be utf-8")
+	}
+
+	async fn spawn_mock_daemon<F, Fut>(handler: F) -> SocketAddr
+	where
+		F: FnOnce(tokio::net::TcpStream) -> Fut + Send + 'static,
+		Fut: std::future::Future<Output = ()> + Send + 'static,
+	{
+		let listener = TcpListener::bind("127.0.0.1:0")
+			.await
+			.expect("bind mock daemon");
+		let addr = listener.local_addr().expect("local addr");
+		tokio::spawn(async move {
+			if let Ok((stream, _)) = listener.accept().await {
+				handler(stream).await;
+			}
+		});
+		addr
+	}
 
 	#[test]
 	fn source_maps_are_not_embedded() {
 		assert!(WebAssets::iter().all(|path| !path.ends_with(".map")));
+	}
+
+	#[test]
+	fn parse_auth_none_returns_empty() {
+		let (auth, disabled) = parse_auth(None);
+		assert!(auth.is_empty());
+		assert!(!disabled);
+	}
+
+	#[test]
+	fn parse_auth_disabled() {
+		let (auth, disabled) = parse_auth(Some("disabled"));
+		assert!(auth.is_empty());
+		assert!(disabled);
+	}
+
+	#[test]
+	fn parse_auth_single_credential() {
+		let (auth, disabled) = parse_auth(Some("alice:secret"));
+		assert!(!disabled);
+		assert_eq!(auth.len(), 1);
+		assert_eq!(auth.get("alice"), Some(&SecStr::from("secret")));
+	}
+
+	#[test]
+	fn parse_auth_multiple_credentials_and_skips_invalid() {
+		let (auth, disabled) = parse_auth(Some("alice:secret,,bob:pass2,invalid"));
+		assert!(!disabled);
+		assert_eq!(auth.len(), 2);
+		assert_eq!(auth.get("alice"), Some(&SecStr::from("secret")));
+		assert_eq!(auth.get("bob"), Some(&SecStr::from("pass2")));
+	}
+
+	#[test]
+	fn parse_auth_password_with_colon_keeps_first_separator_behavior() {
+		let (auth, disabled) = parse_auth(Some("user:pass:extra"));
+		assert!(!disabled);
+		assert_eq!(auth.get("user"), Some(&SecStr::from("pass")));
+	}
+
+	#[test]
+	fn parse_auth_empty_username_or_password_is_accepted_as_written() {
+		let (auth, disabled) = parse_auth(Some(":emptyuser,emptypass:"));
+		assert!(!disabled);
+		assert_eq!(auth.get(""), Some(&SecStr::from("emptyuser")));
+		assert_eq!(auth.get("emptypass"), Some(&SecStr::from("")));
+	}
+
+	#[tokio::test]
+	async fn health_returns_ok() {
+		assert_eq!(health().await, "OK");
+	}
+
+	#[tokio::test]
+	async fn plain_status_sets_status_content_type_and_body() {
+		let response = plain_status(StatusCode::BAD_REQUEST, "bad input");
+		assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+		assert_eq!(
+			response.headers().get(header::CONTENT_TYPE).unwrap(),
+			"text/plain; charset=utf-8"
+		);
+		assert_eq!(response_body_string(response).await, "bad input");
+	}
+
+	#[tokio::test]
+	async fn serve_web_falls_back_to_index_html_for_unknown_path() {
+		let response = serve_web(Uri::from_static("/missing/path")).await;
+		assert_eq!(response.status(), StatusCode::OK);
+		let content_type = response
+			.headers()
+			.get(header::CONTENT_TYPE)
+			.unwrap()
+			.to_str()
+			.unwrap();
+		assert!(
+			content_type.starts_with("text/html"),
+			"unexpected content-type: {content_type}"
+		);
+		let body = response_body_string(response).await;
+		assert!(body.contains("<html>"));
+	}
+
+	#[tokio::test]
+	async fn serve_web_serves_index_html_for_root() {
+		let response = serve_web(Uri::from_static("/")).await;
+		assert_eq!(response.status(), StatusCode::OK);
+		let content_type = response
+			.headers()
+			.get(header::CONTENT_TYPE)
+			.unwrap()
+			.to_str()
+			.unwrap();
+		assert!(
+			content_type.starts_with("text/html"),
+			"unexpected content-type: {content_type}"
+		);
+		let body = response_body_string(response).await;
+		assert!(body.contains("<html>"));
+	}
+
+	fn basic_auth_app(state: AppState) -> Router {
+		Router::new()
+			.route("/protected", get(|| async { "ok" }))
+			.layer(middleware::from_fn_with_state(state.clone(), basic_auth))
+			.with_state(state)
+	}
+
+	#[tokio::test]
+	async fn basic_auth_rejects_missing_header_when_auth_configured() {
+		let mut auth = HashMap::new();
+		auth.insert("alice".to_string(), SecStr::from("secret"));
+		let app = basic_auth_app(test_state(
+			auth,
+			PathBuf::from("/tmp"),
+			"127.0.0.1:1".into(),
+		));
+
+		let response = app
+			.oneshot(
+				Request::builder()
+					.uri("/protected")
+					.body(Body::empty())
+					.unwrap(),
+			)
+			.await
+			.unwrap();
+
+		assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+		assert_eq!(
+			response.headers().get(header::WWW_AUTHENTICATE).unwrap(),
+			"Basic realm=\"WingDrive\""
+		);
+	}
+
+	#[tokio::test]
+	async fn basic_auth_rejects_wrong_credentials() {
+		let mut auth = HashMap::new();
+		auth.insert("alice".to_string(), SecStr::from("secret"));
+		let app = basic_auth_app(test_state(
+			auth,
+			PathBuf::from("/tmp"),
+			"127.0.0.1:1".into(),
+		));
+
+		let response = app
+			.oneshot(
+				Request::builder()
+					.uri("/protected")
+					.header(header::AUTHORIZATION, "Basic YWxpY2U6d3Jvbmc=") // alice:wrong
+					.body(Body::empty())
+					.unwrap(),
+			)
+			.await
+			.unwrap();
+
+		assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+	}
+
+	#[tokio::test]
+	async fn basic_auth_accepts_valid_credentials() {
+		let mut auth = HashMap::new();
+		auth.insert("alice".to_string(), SecStr::from("secret"));
+		let app = basic_auth_app(test_state(
+			auth,
+			PathBuf::from("/tmp"),
+			"127.0.0.1:1".into(),
+		));
+
+		let response = app
+			.oneshot(
+				Request::builder()
+					.uri("/protected")
+					.header(header::AUTHORIZATION, "Basic YWxpY2U6c2VjcmV0") // alice:secret
+					.body(Body::empty())
+					.unwrap(),
+			)
+			.await
+			.unwrap();
+
+		assert_eq!(response.status(), StatusCode::OK);
+		assert_eq!(response_body_string(response).await, "ok");
+	}
+
+	#[tokio::test]
+	async fn basic_auth_passes_through_when_auth_disabled() {
+		let app = basic_auth_app(test_state(
+			HashMap::new(),
+			PathBuf::from("/tmp"),
+			"127.0.0.1:1".into(),
+		));
+
+		let response = app
+			.oneshot(
+				Request::builder()
+					.uri("/protected")
+					.body(Body::empty())
+					.unwrap(),
+			)
+			.await
+			.unwrap();
+
+		assert_eq!(response.status(), StatusCode::OK);
+	}
+
+	async fn write_library(data_dir: &Path, folder_name: &str, library_id: &str) {
+		let lib_dir = data_dir.join("libraries").join(folder_name);
+		tokio::fs::create_dir_all(&lib_dir)
+			.await
+			.expect("create library dir");
+		tokio::fs::write(
+			lib_dir.join("library.json"),
+			format!("{{\"id\":\"{}\",\"name\":\"Test\"}}", library_id),
+		)
+		.await
+		.expect("write library.json");
+	}
+
+	#[tokio::test]
+	async fn find_library_folder_returns_matching_library() {
+		let tmp = tempfile::tempdir().expect("tempdir");
+		write_library(tmp.path(), "My Library.winglibrary", "lib-123").await;
+		write_library(tmp.path(), "Other.winglibrary", "lib-other").await;
+
+		let found = find_library_folder(tmp.path(), "lib-123").await;
+		assert_eq!(
+			found,
+			Some(tmp.path().join("libraries").join("My Library.winglibrary"))
+		);
+	}
+
+	#[tokio::test]
+	async fn find_library_folder_ignores_non_library_dirs_and_bad_json() {
+		let tmp = tempfile::tempdir().expect("tempdir");
+		let libraries = tmp.path().join("libraries");
+		tokio::fs::create_dir_all(libraries.join("not-a-library"))
+			.await
+			.unwrap();
+		tokio::fs::write(
+			libraries.join("not-a-library/library.json"),
+			"{\"id\":\"bad\"}",
+		)
+		.await
+		.unwrap();
+		tokio::fs::create_dir_all(libraries.join("Broken.winglibrary"))
+			.await
+			.unwrap();
+		tokio::fs::write(
+			libraries.join("Broken.winglibrary/library.json"),
+			"not json",
+		)
+		.await
+		.unwrap();
+
+		let found = find_library_folder(tmp.path(), "bad").await;
+		assert!(found.is_none());
+	}
+
+	#[tokio::test]
+	async fn serve_sidecar_rejects_invalid_inputs() {
+		let tmp = tempfile::tempdir().expect("tempdir");
+		let state = test_state(
+			HashMap::new(),
+			tmp.path().to_path_buf(),
+			"127.0.0.1:1".into(),
+		);
+		let app = Router::new()
+			.route(
+				"/sidecar/{library_id}/{content_uuid}/{kind}/{*variant}",
+				get(serve_sidecar),
+			)
+			.with_state(state);
+
+		let cases = [
+			(
+				"/sidecar/lib/not-a-uuid/thumb/default.webp",
+				StatusCode::BAD_REQUEST,
+				"invalid content uuid",
+			),
+			(
+				"/sidecar/lib/00000000-0000-0000-0000-000000000001/nope/default.webp",
+				StatusCode::BAD_REQUEST,
+				"invalid sidecar kind",
+			),
+			(
+				"/sidecar/lib/00000000-0000-0000-0000-000000000001/thumb/default",
+				StatusCode::BAD_REQUEST,
+				"variant must carry an extension",
+			),
+			(
+				"/sidecar/lib/00000000-0000-0000-0000-000000000001/thumb/bad..name.webp",
+				StatusCode::BAD_REQUEST,
+				"invalid variant",
+			),
+			(
+				"/sidecar/lib/00000000-0000-0000-0000-000000000001/thumb/default.exe",
+				StatusCode::BAD_REQUEST,
+				"invalid sidecar format",
+			),
+		];
+
+		for (uri, status, msg) in cases {
+			let response = app
+				.clone()
+				.oneshot(Request::builder().uri(uri).body(Body::empty()).unwrap())
+				.await
+				.unwrap();
+			assert_eq!(response.status(), status, "uri {uri}");
+			let body = response_body_string(response).await;
+			assert_eq!(body, msg, "uri {uri}");
+		}
+	}
+
+	#[tokio::test]
+	async fn serve_sidecar_returns_not_found_for_unknown_library_or_missing_file() {
+		let tmp = tempfile::tempdir().expect("tempdir");
+		let state = test_state(
+			HashMap::new(),
+			tmp.path().to_path_buf(),
+			"127.0.0.1:1".into(),
+		);
+		let app = Router::new()
+			.route(
+				"/sidecar/{library_id}/{content_uuid}/{kind}/{*variant}",
+				get(serve_sidecar),
+			)
+			.with_state(state);
+		let uuid = "00000000-0000-0000-0000-000000000001";
+
+		let response = app
+			.clone()
+			.oneshot(
+				Request::builder()
+					.uri(format!("/sidecar/missing/{uuid}/thumb/default.webp"))
+					.body(Body::empty())
+					.unwrap(),
+			)
+			.await
+			.unwrap();
+		assert_eq!(response.status(), StatusCode::NOT_FOUND);
+		assert_eq!(response_body_string(response).await, "unknown library");
+
+		write_library(tmp.path(), "Lib.winglibrary", "lib-1").await;
+		let response = app
+			.oneshot(
+				Request::builder()
+					.uri(format!("/sidecar/lib-1/{uuid}/thumb/default.webp"))
+					.body(Body::empty())
+					.unwrap(),
+			)
+			.await
+			.unwrap();
+		assert_eq!(response.status(), StatusCode::NOT_FOUND);
+		assert_eq!(response_body_string(response).await, "sidecar not found");
+	}
+
+	#[tokio::test]
+	async fn serve_sidecar_serves_existing_file_with_headers() {
+		use wing_core::ops::sidecar::{
+			SidecarFormat, SidecarKind, SidecarPathBuilder, SidecarVariant,
+		};
+
+		let tmp = tempfile::tempdir().expect("tempdir");
+		let library_id = "lib-1";
+		let library_folder = tmp.path().join("libraries").join("Lib.winglibrary");
+		write_library(tmp.path(), "Lib.winglibrary", library_id).await;
+
+		let content_uuid = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+		let path = SidecarPathBuilder::new(&library_folder)
+			.build(
+				&content_uuid,
+				&SidecarKind::Thumb,
+				&SidecarVariant::from("default"),
+				&SidecarFormat::Webp,
+			)
+			.absolute_path;
+		tokio::fs::create_dir_all(path.parent().unwrap())
+			.await
+			.unwrap();
+		tokio::fs::write(&path, b"fake-webp").await.unwrap();
+
+		let state = test_state(
+			HashMap::new(),
+			tmp.path().to_path_buf(),
+			"127.0.0.1:1".into(),
+		);
+		let app = Router::new()
+			.route(
+				"/sidecar/{library_id}/{content_uuid}/{kind}/{*variant}",
+				get(serve_sidecar),
+			)
+			.with_state(state);
+
+		let response = app
+			.oneshot(
+				Request::builder()
+					.uri("/sidecar/lib-1/00000000-0000-0000-0000-000000000001/thumb/default.webp")
+					.body(Body::empty())
+					.unwrap(),
+			)
+			.await
+			.unwrap();
+
+		assert_eq!(response.status(), StatusCode::OK);
+		assert_eq!(
+			response.headers().get(header::CONTENT_TYPE).unwrap(),
+			"image/webp"
+		);
+		assert_eq!(
+			response.headers().get(header::CACHE_CONTROL).unwrap(),
+			"public, max-age=31536000, immutable"
+		);
+		assert_eq!(
+			response
+				.headers()
+				.get(header::ACCESS_CONTROL_ALLOW_ORIGIN)
+				.unwrap(),
+			"*"
+		);
+		assert_eq!(response.headers().get(header::CONTENT_LENGTH).unwrap(), "9");
+		assert_eq!(response_body_string(response).await, "fake-webp");
+	}
+
+	#[tokio::test]
+	async fn is_daemon_running_false_when_unreachable() {
+		assert!(!is_daemon_running("127.0.0.1:1").await);
+	}
+
+	#[tokio::test]
+	async fn is_daemon_running_true_when_ping_gets_response() {
+		let addr = spawn_mock_daemon(|stream| async move {
+			let (reader, mut writer) = stream.into_split();
+			let mut reader = BufReader::new(reader);
+			let mut line = String::new();
+			if reader.read_line(&mut line).await.is_ok() {
+				let _ = writer.write_all(b"{\"Pong\":null}\n").await;
+			}
+		})
+		.await;
+
+		assert!(is_daemon_running(&addr.to_string()).await);
+	}
+
+	#[tokio::test]
+	async fn daemon_rpc_proxies_request_and_returns_response() {
+		let addr = spawn_mock_daemon(|stream| async move {
+			let (reader, mut writer) = stream.into_split();
+			let mut reader = BufReader::new(reader);
+			let mut line = String::new();
+			if reader.read_line(&mut line).await.is_ok() {
+				let req: serde_json::Value = serde_json::from_str(line.trim()).unwrap();
+				let resp = json!({"ok": true, "echo": req["method"]});
+				let _ = writer
+					.write_all(format!("{}\n", serde_json::to_string(&resp).unwrap()).as_bytes())
+					.await;
+			}
+		})
+		.await;
+
+		let state = test_state(HashMap::new(), PathBuf::from("/tmp"), addr.to_string());
+		let payload = json!({"jsonrpc":"2.0","method":"ping","id":1});
+		let Json(response) = daemon_rpc(State(state), Json(payload))
+			.await
+			.expect("rpc should succeed");
+		assert_eq!(response["ok"], true);
+		assert_eq!(response["echo"], "ping");
+	}
+
+	#[tokio::test]
+	async fn daemon_rpc_returns_service_unavailable_when_daemon_missing() {
+		let state = test_state(
+			HashMap::new(),
+			PathBuf::from("/tmp"),
+			"127.0.0.1:1".to_string(),
+		);
+		let err = daemon_rpc(State(state), Json(json!({"ping":true})))
+			.await
+			.expect_err("should fail");
+		assert_eq!(err.0, StatusCode::SERVICE_UNAVAILABLE);
+		assert!(err.1.contains("Daemon not available"));
+	}
+
+	#[tokio::test]
+	async fn daemon_rpc_returns_internal_error_on_invalid_daemon_response() {
+		let addr = spawn_mock_daemon(|stream| async move {
+			let (reader, mut writer) = stream.into_split();
+			let mut reader = BufReader::new(reader);
+			let mut line = String::new();
+			if reader.read_line(&mut line).await.is_ok() {
+				let _ = writer.write_all(b"not-json\n").await;
+			}
+		})
+		.await;
+
+		let state = test_state(HashMap::new(), PathBuf::from("/tmp"), addr.to_string());
+		let err = daemon_rpc(State(state), Json(json!({"ping":true})))
+			.await
+			.expect_err("should fail");
+		assert_eq!(err.0, StatusCode::INTERNAL_SERVER_ERROR);
+		assert!(err.1.contains("Invalid response"));
+	}
+
+	#[tokio::test]
+	async fn bridge_daemon_events_forwards_event_and_log_lines_only() {
+		let addr = spawn_mock_daemon(|stream| async move {
+			let (reader, mut writer) = stream.into_split();
+			let mut reader = BufReader::new(reader);
+			let mut subscribe_line = String::new();
+			if reader.read_line(&mut subscribe_line).await.is_ok() {
+				let subscribe: serde_json::Value =
+					serde_json::from_str(subscribe_line.trim()).unwrap();
+				assert!(subscribe.get("Subscribe").is_some());
+				let lines = [
+					"{\"Subscribed\":true}\n",
+					"{\"Event\":{\"kind\":\"test\"}}\n",
+					"not-json\n",
+					"{\"LogMessage\":{\"msg\":\"hello\"}}\n",
+				];
+				for line in lines {
+					let _ = writer.write_all(line.as_bytes()).await;
+				}
+			}
+		})
+		.await;
+
+		let (tx, mut rx) = mpsc::channel::<String>(8);
+		bridge_daemon_events(addr.to_string(), tx)
+			.await
+			.expect("bridge should complete");
+
+		let mut received = Vec::new();
+		while let Ok(line) = rx.try_recv() {
+			received.push(line);
+		}
+		assert_eq!(received.len(), 2);
+		assert!(received[0].contains("\"Event\""));
+		assert!(received[1].contains("\"LogMessage\""));
 	}
 }
