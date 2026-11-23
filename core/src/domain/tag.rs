@@ -526,3 +526,311 @@ impl Tag {
 
 // Register Tag as a simple resource
 crate::register_resource!(Tag);
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use chrono::Utc;
+	use std::collections::HashMap;
+
+	fn device_id() -> Uuid {
+		Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+	}
+
+	fn make_db_model() -> crate::infra::db::entities::tag::Model {
+		let now = Utc::now();
+		crate::infra::db::entities::tag::Model {
+			id: 1,
+			uuid: Uuid::parse_str("00000000-0000-0000-0000-000000000099").unwrap(),
+			canonical_name: "Rust".to_string(),
+			display_name: Some("Rust Lang".to_string()),
+			formal_name: Some("Rust Programming Language".to_string()),
+			abbreviation: Some("rs".to_string()),
+			aliases: Some(serde_json::json!(["rustlang", "rust-lang"])),
+			namespace: Some("tech".to_string()),
+			tag_type: "organizational".to_string(),
+			color: Some("#ff0000".to_string()),
+			icon: Some("rust".to_string()),
+			description: Some("Systems language".to_string()),
+			is_organizational_anchor: true,
+			privacy_level: "archive".to_string(),
+			search_weight: 42,
+			attributes: Some(serde_json::json!({"kind": "language", "year": 2015})),
+			composition_rules: Some(serde_json::json!([{
+				"operator": "And",
+				"operands": ["systems", "fast"],
+				"result_attribute": "tier"
+			}])),
+			created_at: now,
+			updated_at: now,
+			created_by_device: Some(device_id()),
+		}
+	}
+
+	#[test]
+	fn tag_type_roundtrip() {
+		for (variant, name) in [
+			(TagType::Standard, "standard"),
+			(TagType::Organizational, "organizational"),
+			(TagType::Privacy, "privacy"),
+			(TagType::System, "system"),
+		] {
+			assert_eq!(variant.as_str(), name);
+			assert_eq!(TagType::from_str(name), Some(variant));
+		}
+		assert_eq!(TagType::from_str("unknown"), None);
+	}
+
+	#[test]
+	fn privacy_level_roundtrip() {
+		for (variant, name) in [
+			(PrivacyLevel::Normal, "normal"),
+			(PrivacyLevel::Archive, "archive"),
+			(PrivacyLevel::Hidden, "hidden"),
+		] {
+			assert_eq!(variant.as_str(), name);
+			assert_eq!(PrivacyLevel::from_str(name), Some(variant));
+		}
+		assert_eq!(PrivacyLevel::from_str("secret"), None);
+	}
+
+	#[test]
+	fn relationship_type_roundtrip() {
+		for (variant, name) in [
+			(RelationshipType::ParentChild, "parent_child"),
+			(RelationshipType::Synonym, "synonym"),
+			(RelationshipType::Related, "related"),
+		] {
+			assert_eq!(variant.as_str(), name);
+			assert_eq!(RelationshipType::from_str(name), Some(variant));
+		}
+		assert_eq!(RelationshipType::from_str("other"), None);
+	}
+
+	#[test]
+	fn new_tag_has_defaults() {
+		let dev = device_id();
+		let tag = Tag::new("MyTag".to_string(), dev);
+
+		assert_eq!(tag.canonical_name, "MyTag");
+		assert_eq!(tag.display_name, None);
+		assert_eq!(tag.formal_name, None);
+		assert_eq!(tag.abbreviation, None);
+		assert!(tag.aliases.is_empty());
+		assert_eq!(tag.namespace, None);
+		assert_eq!(tag.tag_type, TagType::Standard);
+		assert_eq!(tag.color, None);
+		assert_eq!(tag.icon, None);
+		assert_eq!(tag.description, None);
+		assert!(!tag.is_organizational_anchor);
+		assert_eq!(tag.privacy_level, PrivacyLevel::Normal);
+		assert_eq!(tag.search_weight, 100);
+		assert!(tag.attributes.is_empty());
+		assert!(tag.composition_rules.is_empty());
+		assert_eq!(tag.created_by_device, dev);
+		assert_eq!(tag.created_at, tag.updated_at);
+	}
+
+	#[test]
+	fn display_name_prefers_explicit_display() {
+		let mut tag = Tag::new("canon".to_string(), device_id());
+		assert_eq!(tag.get_display_name(None), "canon");
+
+		tag.display_name = Some("Display".to_string());
+		assert_eq!(tag.get_display_name(None), "Display");
+		assert_eq!(tag.get_display_name(Some("any")), "Display");
+	}
+
+	#[test]
+	fn get_all_names_and_matches_case_insensitive() {
+		let mut tag = Tag::new("Canon".to_string(), device_id());
+		tag.formal_name = Some("Formal Name".to_string());
+		tag.abbreviation = Some("CN".to_string());
+		tag.aliases = vec!["alias1".to_string(), "alias2".to_string()];
+
+		let names = tag.get_all_names();
+		assert_eq!(
+			names,
+			vec!["Canon", "Formal Name", "CN", "alias1", "alias2"]
+		);
+
+		assert!(tag.matches_name("canon"));
+		assert!(tag.matches_name("FORMAL NAME"));
+		assert!(tag.matches_name("cn"));
+		assert!(tag.matches_name("ALIAS2"));
+		assert!(!tag.matches_name("missing"));
+	}
+
+	#[test]
+	fn add_alias_deduplicates_and_updates_timestamp() {
+		let mut tag = Tag::new("t".to_string(), device_id());
+		let before = tag.updated_at;
+
+		tag.add_alias("a".to_string());
+		assert_eq!(tag.aliases, vec!["a"]);
+		assert!(tag.updated_at >= before);
+
+		let after_first = tag.updated_at;
+		tag.add_alias("a".to_string());
+		assert_eq!(tag.aliases, vec!["a"]);
+		assert_eq!(tag.updated_at, after_first);
+	}
+
+	#[test]
+	fn set_and_get_attribute() {
+		let mut tag = Tag::new("t".to_string(), device_id());
+		tag.set_attribute("count".to_string(), 3_i32).unwrap();
+		tag.set_attribute("name".to_string(), "value").unwrap();
+
+		let count: Option<i32> = tag.get_attribute("count").unwrap();
+		let name: Option<String> = tag.get_attribute("name").unwrap();
+		let missing: Option<i32> = tag.get_attribute("missing").unwrap();
+
+		assert_eq!(count, Some(3));
+		assert_eq!(name, Some("value".to_string()));
+		assert_eq!(missing, None);
+	}
+
+	#[test]
+	fn is_searchable_reflects_privacy_level() {
+		let mut tag = Tag::new("t".to_string(), device_id());
+		assert!(tag.is_searchable());
+
+		tag.privacy_level = PrivacyLevel::Archive;
+		assert!(!tag.is_searchable());
+
+		tag.privacy_level = PrivacyLevel::Hidden;
+		assert!(!tag.is_searchable());
+	}
+
+	#[test]
+	fn get_qualified_name_includes_namespace() {
+		let mut tag = Tag::new("name".to_string(), device_id());
+		assert_eq!(tag.get_qualified_name(), "name");
+
+		tag.namespace = Some("ns".to_string());
+		assert_eq!(tag.get_qualified_name(), "ns::name");
+	}
+
+	#[test]
+	fn tag_application_constructors() {
+		let tag_id = Uuid::new_v4();
+		let dev = device_id();
+
+		let user = TagApplication::user_applied(tag_id, dev);
+		assert_eq!(user.tag_id, tag_id);
+		assert_eq!(user.source, TagSource::User);
+		assert_eq!(user.confidence, 1.0);
+		assert_eq!(user.device_uuid, dev);
+		assert!(user.applied_context.is_none());
+		assert!(user.applied_variant.is_none());
+		assert!(user.instance_attributes.is_empty());
+		assert!(user.is_high_confidence());
+
+		let ai = TagApplication::ai_applied(tag_id, 0.5, dev);
+		assert_eq!(ai.source, TagSource::AI);
+		assert_eq!(ai.confidence, 0.5);
+		assert!(!ai.is_high_confidence());
+
+		let ai_high = TagApplication::ai_applied(tag_id, 0.8, dev);
+		assert!(ai_high.is_high_confidence());
+	}
+
+	#[test]
+	fn tag_application_instance_attributes() {
+		let mut app = TagApplication::user_applied(Uuid::new_v4(), device_id());
+		app.set_instance_attribute("k".to_string(), "v").unwrap();
+		assert_eq!(
+			app.instance_attributes.get("k"),
+			Some(&serde_json::json!("v"))
+		);
+	}
+
+	#[test]
+	fn from_db_model_maps_fields_and_defaults() {
+		let model = make_db_model();
+		let tag = Tag::from_db_model(model.clone());
+
+		assert_eq!(tag.id, model.uuid);
+		assert_eq!(tag.canonical_name, "Rust");
+		assert_eq!(tag.display_name.as_deref(), Some("Rust Lang"));
+		assert_eq!(
+			tag.formal_name.as_deref(),
+			Some("Rust Programming Language")
+		);
+		assert_eq!(tag.abbreviation.as_deref(), Some("rs"));
+		assert_eq!(tag.aliases, vec!["rustlang", "rust-lang"]);
+		assert_eq!(tag.namespace.as_deref(), Some("tech"));
+		assert_eq!(tag.tag_type, TagType::Organizational);
+		assert_eq!(tag.color.as_deref(), Some("#ff0000"));
+		assert_eq!(tag.icon.as_deref(), Some("rust"));
+		assert_eq!(tag.description.as_deref(), Some("Systems language"));
+		assert!(tag.is_organizational_anchor);
+		assert_eq!(tag.privacy_level, PrivacyLevel::Archive);
+		assert_eq!(tag.search_weight, 42);
+		assert_eq!(
+			tag.attributes.get("kind"),
+			Some(&serde_json::json!("language"))
+		);
+		assert_eq!(tag.attributes.get("year"), Some(&serde_json::json!(2015)));
+		assert_eq!(tag.composition_rules.len(), 1);
+		assert_eq!(tag.composition_rules[0].result_attribute, "tier");
+		assert_eq!(tag.created_by_device, device_id());
+	}
+
+	#[test]
+	fn from_db_model_handles_invalid_or_missing_json() {
+		let now = Utc::now();
+		let model = crate::infra::db::entities::tag::Model {
+			id: 2,
+			uuid: Uuid::new_v4(),
+			canonical_name: "x".to_string(),
+			display_name: None,
+			formal_name: None,
+			abbreviation: None,
+			aliases: Some(serde_json::json!("not-an-array")),
+			namespace: None,
+			tag_type: "bogus".to_string(),
+			color: None,
+			icon: None,
+			description: None,
+			is_organizational_anchor: false,
+			privacy_level: "bogus".to_string(),
+			search_weight: 1,
+			attributes: Some(serde_json::json!("nope")),
+			composition_rules: Some(serde_json::json!(123)),
+			created_at: now,
+			updated_at: now,
+			created_by_device: None,
+		};
+
+		let tag = Tag::from_db_model(model);
+		assert!(tag.aliases.is_empty());
+		assert_eq!(tag.tag_type, TagType::Standard);
+		assert_eq!(tag.privacy_level, PrivacyLevel::Normal);
+		assert!(tag.attributes.is_empty());
+		assert!(tag.composition_rules.is_empty());
+		assert_eq!(tag.created_by_device, Uuid::nil());
+	}
+
+	#[test]
+	fn tag_error_display() {
+		assert_eq!(TagError::TagNotFound.to_string(), "Tag not found");
+		assert_eq!(
+			TagError::InvalidRelationship("bad".to_string()).to_string(),
+			"Invalid tag relationship: bad"
+		);
+		assert_eq!(
+			TagError::CircularReference.to_string(),
+			"Circular reference detected"
+		);
+		assert_eq!(
+			TagError::NameConflict("ns".to_string()).to_string(),
+			"Conflicting tag names in namespace: ns"
+		);
+		assert_eq!(
+			TagError::InvalidCompositionRule("r".to_string()).to_string(),
+			"Invalid composition rule: r"
+		);
+	}
+}

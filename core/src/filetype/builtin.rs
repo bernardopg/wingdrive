@@ -29,3 +29,35 @@ pub static BUILTIN_DEFINITIONS: Lazy<Vec<&'static str>> = Lazy::new(|| {
 pub fn get_builtin_toml_definitions() -> &'static [&'static str] {
 	&BUILTIN_DEFINITIONS
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn builtin_definitions_are_loaded() {
+		let defs = get_builtin_toml_definitions();
+		assert_eq!(defs.len(), 15);
+		assert!(defs.iter().all(|d| !d.trim().is_empty()));
+	}
+
+	#[test]
+	fn builtin_definitions_include_expected_categories() {
+		let all = get_builtin_toml_definitions().join("\n");
+		for needle in [
+			"image",
+			"video",
+			"audio",
+			"document",
+			"code",
+			"archive",
+			"spreadsheet",
+			"presentation",
+		] {
+			assert!(
+				all.to_lowercase().contains(needle),
+				"missing {needle} in builtin definitions"
+			);
+		}
+	}
+}
