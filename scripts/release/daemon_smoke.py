@@ -33,6 +33,7 @@ BENIGN_NOISE = (
     "Task done channel closed before sending done response",
     "Unable to remove the path from the watches: Error { kind: WatchNotFound",
     "Could not keep the modification time of a copy",
+    "Rejected an RPC connection from another local user",
 )
 
 

@@ -169,7 +169,7 @@ def session(app, root, number, full):
 
 with tempfile.TemporaryDirectory(prefix="wingdrive-bundle-") as directory:
     root = Path(directory)
-    memory_budget_mib = float(os.environ.get('WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB', '550'))
+    memory_budget_mib = float(os.environ.get('WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB', '600'))
     memory_budget = int(memory_budget_mib * 1048576)
     if image.is_dir():
         app = image
