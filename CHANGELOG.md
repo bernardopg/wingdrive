@@ -3,13 +3,16 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 3.6.1 — 2026-11-23
 
 ### Fixed
 
 - The hidden Linux/Windows native menu no longer builds accelerators, avoiding GTK "no accelerator
   installed in accel group" startup warnings (CORE-022). The daemon and Explorer smokes now fail if
   own targets emit WARN/ERROR during idle browsing.
+- `wing sync fetch` preview now verifies an existing destination via RPC checksums when the source
+  peer is online, even without `--apply`, so synced catalogs missing `integrity_hash` can report
+  `already_verified` correctly.
 
 ## 3.6.0 — 2026-11-20
 
