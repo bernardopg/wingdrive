@@ -13,7 +13,7 @@ use axum::{
 use axum_extra::{headers::authorization::Basic, headers::Authorization, TypedHeader};
 use clap::Parser;
 use futures::stream::{Stream, StreamExt};
-use rust_embed::{Embed, RustEmbed};
+use rust_embed::Embed;
 use secstr::SecStr;
 use std::{
 	collections::HashMap, convert::Infallible, net::SocketAddr, path::PathBuf, sync::Arc,
