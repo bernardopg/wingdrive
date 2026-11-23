@@ -6,7 +6,7 @@ assignee: bernardopg
 parent: FILE-000
 priority: High
 tags: [files, operations, diff, copy, index, deduplication, upstream-backlog]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 related_tasks: [INDEX-010, INDEX-011, FILE-001, FSYNC-003]
 milestone: M4
 sprint: S07
@@ -334,3 +334,7 @@ wing-cli files diff /path/a /path/b --no-rules
 Inherited from upstream Spacedrive. It belongs to multi-device integration (M4 in
 `.tasks/ROADMAP.md`), which starts only after M2 and M3. Re-check the design against current
 WingDrive code before pulling it into a sprint.
+
+## Realignment (2026-11-23)
+
+- PR #488 merged (feat/files: add path diff preview action). MVP `files.diff` action and heuristic unit test landed; full ACs (preview storage overhead, large-index p95, cross-device mapping, stable logical IDs) still need evidence/implementation. Kept In Progress.

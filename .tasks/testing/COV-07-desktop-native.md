@@ -8,7 +8,7 @@ priority: High
 milestone: M2
 sprint: S05
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -387,3 +387,7 @@ GUI/Wayland/GTK real, sem polkit real e sem medição LCOV completa nesta rodada
 A meta de 100% instrumentada em medição completa permanece aberta, com lacunas
 conhecidas em áreas dependentes de runtime gráfico/native (ex.: `main.rs`,
 `file_drag.rs`, `server.rs`, `updates.rs` conforme medição 2026-11-20).
+
+## Realignment (2026-11-23)
+
+- PR #503 merged with server/updater desktop tests. No real GUI/polkit/LCOV full run; 100% desktop lines target unmet. Remains In Progress.

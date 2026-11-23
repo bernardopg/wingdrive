@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, core]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -96,3 +96,7 @@ and directories. It verifies persistent and ephemeral moves, event delivery and 
 reindexing and filesystem watcher paths. The four move scenarios and two fixture assertions
 passed in two serial instrumented runs. Logs are in
 `coverage/goal/next/file-move-{baseline,replay}.log`.
+
+## Realignment (2026-11-23)
+
+- PR #506 merged with targeted file-op safety tests (11 passed). AC >=80% altered core/src/ops/files lines not measured; remains In Progress.

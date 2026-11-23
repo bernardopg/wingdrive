@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, ci]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -51,3 +51,7 @@ COV-01, COV-05, COV-07, COV-08, COV-10. Escopo, metas e ordem em [README.md](REA
 - O gate de linhas alteradas considera linhas presentes nos registros DA do LCOV. Arquivos de produção alterados sem entrada no LCOV não são contados como instrumentados; isso evita falso positivo, mas pode subestimar lacunas quando a coleta não instrumenta o arquivo.
 - O workflow de coverage continua disparando em push main/schedule/dispatch. O critério "PR executa escopo necessário sem duplicar builds" não foi totalmente implementado porque as coletas Rust/frontend instrumentadas duplicariam builds; falta desenho de escopo por paths/componentes ou reaproveitamento seguro de artefatos.
 - Não executei o workflow Coverage completo localmente (custo alto, LLVM/Xvfb/Bun/mobile). A validação local cobriu scripts Python e cenários sintéticos.
+
+## Realignment (2026-11-23)
+
+- PR #499 merged with progressive coverage ratchet (floors/ratchet script/workflow integration). Final AC floors/PR-scope no-duplicate-builds/full workflow E2E validation remain. Remains In Progress.

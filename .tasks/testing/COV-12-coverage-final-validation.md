@@ -8,7 +8,7 @@ priority: Medium
 milestone: M3
 sprint: S06
 tags: [coverage, testing, ci]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -232,3 +232,7 @@ No small, cheap, safe test gap was added in this audit pass (audit-only, no cove
 - Implement/merge COV-11 ratchet before claiming epic closure.
 - Run three consecutive full-suite passes on same environment/SHA and record flakiness.
 - Obtain/record Windows/macOS/native CI or explicit platform exclusions in COV-12 evidence.
+
+## Realignment (2026-11-23)
+
+- PR #505 merged with COV-12 audit. Core/Desktop targets unmet on same-SHA merged-main evidence; 3x stability runs and Win/mac/native evidence pending. Remains In Progress.

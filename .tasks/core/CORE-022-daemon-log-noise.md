@@ -9,7 +9,7 @@ milestone: M3
 sprint: S06
 tags: [core, logging, watcher, indexing, network]
 related_tasks: [CORE-021, WATCH-007, NET-007]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -95,3 +95,7 @@ handshake"), since the dialing side reports its own failure and nothing is lost.
   WARN/ERROR from own targets.
 - Evidence: `cargo check -p wing-tauri-core` and `cargo check -p wingdrive` pass on Linux. Full 10
   minute "/tmp open in Explorer" acceptance was not executed.
+
+## Realignment (2026-11-23)
+
+- PR #491 merged (quiet idle log noise and smoke guards). Smoke guards added; 10-minute `/tmp` open Explorer idle AC and real-device reconnect validation remain unproven in this session. Kept In Progress.

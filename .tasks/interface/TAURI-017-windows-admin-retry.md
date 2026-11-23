@@ -78,3 +78,7 @@ elevated helper shows an "unknown publisher" UAC prompt, which users should not 
 - Windows UAC flow not manually verified in this Linux environment (no Windows machine/session).
 - Authenticode signing not done; tracked by REL-001.
 - Full Windows CI/build validation depends on GitHub Windows runners.
+
+## Realignment (2026-11-23)
+
+- PR #489 merged with Windows UAC helper scaffolding and frontend wiring. Windows runtime verification, Authenticode signing (REL-001), and ACs requiring a real Windows machine remain open. Kept In Progress.

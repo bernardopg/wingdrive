@@ -9,7 +9,7 @@ milestone: M5
 sprint: S07
 tags: [mobile, android, ui, i18n, review]
 related_tasks: [MOB-007, MOB-008, MOB-015, BRAND-003]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -184,3 +184,7 @@ Evidence (screenshots/OCR in `/tmp/mob017/evidence/` on the host, not committed)
 - [ ] Items 3 to 9 fixed and checked on the moto g(7) with screenshots. *Item 7 remains open;
       items 3,4,5,6,8,9 have prior evidence/code fixes but this session did not re-screenshot every
       item due env quota constraints; item 7 measured in debug+Metro only.*
+
+## Realignment (2026-11-23)
+
+- PR #493 merged with device validation notes on moto g(7). AC1 (paired desktop files online) and AC2 (item 7 release-build/profile) remain unclosed; no code fix for item 7 without release profiling. Kept To Do.

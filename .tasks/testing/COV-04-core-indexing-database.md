@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, core]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -192,3 +192,7 @@ e persistência selecionados no inventário permanece aberto e requer medição 
 criar config de teste (ambiente, não regressão confirmada). Não adicionei teste de watcher de
 eventos duplicados em tempo real além do cenário de dispatch concorrente; cobertura de watcher
 continua dependendo das suítes existentes (`fs_watcher_test`, `ephemeral_watcher_test`).
+
+## Realignment (2026-11-23)
+
+- PR #507 merged with indexing/database reconciliation tests (6 passed). 70% LCOV criterion and uuid_reconciliation env run still open; remains In Progress.

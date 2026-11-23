@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, cli]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -162,3 +162,7 @@ Branch: `test/cov-09-cli-contracts` (worktree `/home/bitter/.cache/opencode/wt/c
 - Task-named gaps `cloud setup`, `daemon`, and `confirm` received targeted contract/process coverage additions, but fresh line-coverage numbers were not produced due environment compile-time SIGTERM.
 - `daemon install/uninstall/status` runtime paths remain OS/systemd-interactive; tests avoid mutating real user services. Deeper runtime coverage needs isolated system fixtures or a warm CI environment.
 - JSON structural validation improved by process tests, but is not yet comprehensive across all JSON-producing commands.
+
+## Realignment (2026-11-23)
+
+- PR #504 merged with CLI parsing/JSON/error-context tests. Coverage not measured due compile SIGTERM; daemon install/uninstall runtime coverage limited. Remains In Progress.

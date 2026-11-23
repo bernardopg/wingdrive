@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, cli]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -137,3 +137,7 @@ Added `apps/cli/tests/cli_daemon.rs` (Unix) with an isolated fixture that spawns
 directory under `/home/bitter/.cache/opencode/cov10-tmp` (tmpfs `/tmp` had
 EDQUOT during execution). Each fixture kills the daemon process it spawned on
 drop. No author daemon, servic
+
+## Realignment (2026-11-23)
+
+- PR #494 merged with isolated CLI+daemon integration tests. AC1 (CLI >=75% full measurement) and timeout-dedicated assertion remain open; local coverage measurement blocked by SIGTERM/resource pressure. Kept In Progress.
