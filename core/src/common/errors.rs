@@ -63,3 +63,83 @@ impl From<String> for FileOpError {
 
 /// Result type alias for core operations
 pub type Result<T> = std::result::Result<T, CoreError>;
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use std::io;
+
+	#[test]
+	fn core_error_display() {
+		let db_err = CoreError::Database(sea_orm::DbErr::Custom("db".to_string()));
+		assert_eq!(db_err.to_string(), "Database error: Custom Error: db");
+
+		let io_err = CoreError::Io(io::Error::other("io"));
+		assert_eq!(io_err.to_string(), "IO error: io");
+
+		let file_err = CoreError::FileOp(FileOpError::FileExists("f".to_string()));
+		assert_eq!(file_err.to_string(), "File operation error: File exists: f");
+
+		let not_found = CoreError::NotFound("x".to_string());
+		assert_eq!(not_found.to_string(), "Not found: x");
+
+		let invalid = CoreError::InvalidOperation("bad".to_string());
+		assert_eq!(invalid.to_string(), "Invalid operation: bad");
+
+		let other = CoreError::Other(anyhow::anyhow!("boom"));
+		assert_eq!(other.to_string(), "Other error: boom");
+	}
+
+	#[test]
+	fn file_op_error_display() {
+		assert_eq!(
+			FileOpError::SourceNotFound("a".to_string()).to_string(),
+			"Source not found: a"
+		);
+		assert_eq!(
+			FileOpError::DestinationNotFound("b".to_string()).to_string(),
+			"Destination not found: b"
+		);
+		assert_eq!(
+			FileOpError::PermissionDenied("c".to_string()).to_string(),
+			"Permission denied: c"
+		);
+		assert_eq!(
+			FileOpError::FileExists("d".to_string()).to_string(),
+			"File exists: d"
+		);
+		assert_eq!(
+			FileOpError::NotADirectory("e".to_string()).to_string(),
+			"Not a directory: e"
+		);
+		assert_eq!(
+			FileOpError::Io(io::Error::other("io")).to_string(),
+			"IO error: io"
+		);
+		assert_eq!(FileOpError::Other("z".to_string()).to_string(), "Other: z");
+	}
+
+	#[test]
+	fn file_op_error_from_str_and_string() {
+		let from_str: FileOpError = "msg".into();
+		assert!(matches!(from_str, FileOpError::Other(s) if s == "msg"));
+
+		let from_string: FileOpError = String::from("owned").into();
+		assert!(matches!(from_string, FileOpError::Other(s) if s == "owned"));
+	}
+
+	#[test]
+	fn core_error_from_conversions() {
+		let io_err = io::Error::other("io");
+		let core: CoreError = io_err.into();
+		assert!(matches!(core, CoreError::Io(_)));
+
+		let file_err = FileOpError::Other("x".to_string());
+		let core: CoreError = file_err.into();
+		assert!(matches!(core, CoreError::FileOp(_)));
+
+		let any = anyhow::anyhow!("any");
+		let core: CoreError = any.into();
+		assert!(matches!(core, CoreError::Other(_)));
+	}
+}

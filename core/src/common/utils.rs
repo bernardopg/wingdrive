@@ -41,3 +41,16 @@ pub fn strip_windows_extended_prefix(path: std::path::PathBuf) -> std::path::Pat
 pub fn strip_windows_extended_prefix(path: std::path::PathBuf) -> std::path::PathBuf {
 	path
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use std::path::PathBuf;
+
+	#[test]
+	fn strip_windows_extended_prefix_returns_path_unchanged_on_non_windows() {
+		let path = PathBuf::from("/tmp/some/path");
+		let out = strip_windows_extended_prefix(path.clone());
+		assert_eq!(out, path);
+	}
+}
