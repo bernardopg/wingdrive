@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, core]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -124,3 +124,7 @@ chunk order, per-chunk hashes and the final checksum. The log is
 Os PRs #468 e #470 expuseram a corrida de cancelamento em `location_remove_jobs_test`.
 O teste exige estado terminal `Cancelled` antes de apagar a localização.
 Veja [registro de bugs](BUGS.md#core-remover-uma-localização-retornava-antes-de-o-indexador-parar).
+
+## Realignment (2026-11-23)
+
+- PR #502 merged with job lifecycle/sync resilience tests. Local compile/tests hit SIGTERM under host pressure; coverage not measured. Remains In Progress.

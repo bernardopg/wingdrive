@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, core]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -182,3 +182,7 @@ Comandos executados:
 | `cargo fmt -p wing-core` | Aprovado, código 0. |
 
 Lacunas: execução de testes Cargo bloqueada por OOM/SIGTERM no ambiente ao compilar `wing-core`; não foi possível confirmar passagem dos novos testes nem medir cobertura LCOV. Critério de 85% de linhas continua sem comprovação. Registro/erros RPC e formatos públicos já tinham evidência anterior; esta tranche apenas reforça casos de addressing/URI/Unicode/batch sem alterar tipos públicos.
+
+## Realignment (2026-11-23)
+
+- PR #501 merged with addressing/RPC contract tests; DbErr display assertion fixed post-CI. >=85% addressing/validation coverage still unproven. Remains In Progress.

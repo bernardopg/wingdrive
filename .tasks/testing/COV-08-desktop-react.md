@@ -8,7 +8,7 @@ priority: High
 milestone: M3
 sprint: S06
 tags: [coverage, testing, desktop]
-last_updated: 2026-11-22
+last_updated: 2026-11-23
 ---
 
 ## Description
@@ -121,3 +121,7 @@ No PR #468, o alerta do caminho ausente apareceu, mas o botão de voltar à vis�
 geral saiu do DOM durante o clique. O smoke reutilizava a sessão do benchmark de
 15 abas. Execute a recuperação em um contexto de navegador novo para testar o
 link direto e o botão sem depender dos dados persistidos pelo benchmark.
+
+## Realignment (2026-11-23)
+
+- PR #498 merged with Explorer clipboard/delete/i18n parity tests. No web UI+daemon smoke in sandbox, no 80% changed-module LCOV. Remains In Progress.

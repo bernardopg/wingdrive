@@ -7,7 +7,7 @@ parent: FSYNC-000
 priority: High
 tags: [service, core, orchestration, resolver, upstream-backlog]
 design_doc: workbench/FILE_SYNC_IMPLEMENTATION_PLAN.md
-last_updated: 2026-10-16
+last_updated: 2026-11-23
 related_tasks: [FSYNC-001, FSYNC-002, INDEX-010, INDEX-011, FILE-006]
 milestone: M4
 sprint: S07
@@ -286,3 +286,7 @@ WingDrive code before pulling it into a sprint.
 - S07 step 3 (recebimento temporário verificado antes de promover): `core/src/service/network/protocol/staged_receive.rs` already writes to a hidden sibling partial, fsyncs, and commits only after verification; `file_transfer.rs` verifies size and final blake3 hash before commit and removes partial on failure. `sweep()` removes abandoned partials from journal on next start.
 - Added Windows-safe replacement in `staged_receive::commit()` (`MoveFileExW` with `MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH`) because `std::fs::rename` does not replace existing destination on Windows; this targets the S07 "substituição no Windows" criterion.
 - Evidence present in code/tests: `staged_receive` tests (`commit_replaces_destination_and_clears_journal`, `sweep_removes_partials_a_killed_receive_left`), `file_transfer` tests including `test_push_replaces_longer_destination_without_stale_bytes`. Full Windows substitution still requires Windows CI/runtime validation.
+
+## Realignment (2026-11-23)
+
+- PR #490 merged with `preview_sync()` and Windows-safe staged receive replacement (`MoveFileExW` MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH). S07 step 3 evidence needs Windows CI/runtime confirmation; step 4 CLI consulta/obtenção flow remains pending. Kept In Progress.
