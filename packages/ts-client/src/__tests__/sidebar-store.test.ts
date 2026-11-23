@@ -40,4 +40,39 @@ describe('sidebar store', () => {
 		expect(migrateSidebar({currentSpaceId: null}, 0)).toEqual({currentWingId: null} as never);
 		expect(migrateSidebar({currentWingId: 'w'}, 1)).toEqual({currentWingId: 'w'} as never);
 	});
+
+	it('updates folder tree positions and dynamic order', () => {
+		const state = useSidebarStore.getState();
+		state.setFolderTreePosition('wing-1', 'group-1');
+		expect(useSidebarStore.getState().folderTreePositions).toEqual({'wing-1': 'group-1'});
+		state.setFolderTreePosition('wing-1', null);
+		expect(useSidebarStore.getState().folderTreePositions).toEqual({'wing-1': null});
+		state.setFolderTreePosition('wing-1', undefined);
+		expect(useSidebarStore.getState().folderTreePositions).toEqual({});
+
+		state.setDynamicItemOrder('g1', ['a', 'b']);
+		expect(useSidebarStore.getState().dynamicItemOrder.g1).toEqual(['a', 'b']);
+	});
+
+	it('toggles and collapses groups', () => {
+		const state = useSidebarStore.getState();
+		state.expandAll();
+		expect(useSidebarStore.getState().collapsedGroups.size).toBe(0);
+		state.toggleGroup('g1');
+		expect(useSidebarStore.getState().collapsedGroups.has('g1')).toBe(true);
+		state.toggleGroup('g1');
+		expect(useSidebarStore.getState().collapsedGroups.has('g1')).toBe(false);
+		state.collapseAll(['g1', 'g2']);
+		expect([...useSidebarStore.getState().collapsedGroups].sort()).toEqual(['g1', 'g2']);
+		state.expandAll();
+		expect(useSidebarStore.getState().collapsedGroups.size).toBe(0);
+	});
+
+	it('tracks dragged item ephemerally', () => {
+		const item = {type: 'file' as const, data: {id: 'f1'}};
+		useSidebarStore.getState().setDraggedItem(item);
+		expect(useSidebarStore.getState().draggedItem).toEqual(item);
+		useSidebarStore.getState().setDraggedItem(null);
+		expect(useSidebarStore.getState().draggedItem).toBeNull();
+	});
 });
