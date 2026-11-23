@@ -188,3 +188,23 @@ Evidence (screenshots/OCR in `/tmp/mob017/evidence/` on the host, not committed)
 ## Realignment (2026-11-23)
 
 - PR #493 merged with device validation notes on moto g(7). AC1 (paired desktop files online) and AC2 (item 7 release-build/profile) remain unclosed; no code fix for item 7 without release profiling. Kept To Do.
+
+## Progress (2026-11-23, evidence collection)
+
+Device: `ZY225DFMGB` (moto g(7), Android 15, 1080x2270). Installed app: `com.wingdrive.app` 3.6.0 (versionCode 3060099), **debuggable** build (`dumpsys package` flags include DEBUGGABLE). Host evidence: `/tmp/opencode/mob017/*.png` + OCR via `tesseract` (not committed).
+
+Observed:
+
+- **Item 1 (storage/own files):** Overview shows "Armazenamento interno 50.0 GB, SSD Interno 46.8 GB livres" under motorola moto g(7). Browse shows "Permitir acesso aos arquivos" card and device/volume entries. MOB-008 is Done; shared storage visible.
+- **Item 2 (paired desktop files):** Network shows archlinux paired, Disconnected, v3.6.0. Browse shows archlinux Desconectado; opening it shows Root/home volumes. Full online file browsing not validated in this session (desktop offline). AC1 remains open.
+- **Item 3 (pt-BR):** Overview/Browse/Network/Settings labels observed in pt-BR (Armazenamento total, Arquivos indexados, Dispositivos conectados, Tamanho da biblioteca, MINHA REDE, Interno, livres, Todos os dispositivos, Permitir acesso aos arquivos, Recentes, Favoritos, Lixeira, Rede, P2P ativado, Dispositivos pareados, Configurações).
+- **Item 4 (invented TOPS):** No TOPS/AI compute card visible on Overview; HeroStats fix remains in code.
+- **Item 5 (status bar layout):** Hero title-row fade present in code; no visual regression observed in OCR/layout checks, but no new pixel-level screenshot assertion added.
+- **Item 7 (slow taps):** Not re-measured in release build. Installed app is debuggable dev client; prior 2026-11-22 debug+Metro measurement was ~0.78-0.84s. Release-build profile still required before closing.
+- **Item 8 (Criar espaço):** Prior fix present; not re-exercised this session.
+- **Item 9 (Recents/Favorites):** Recents shows "Arquivos indexados recentemente nesta biblioteca aparecem aqui."; Favorites shows "Arquivos marcados como favoritos em qualquer dispositivo desta biblioteca aparecem aqui."
+
+## Blockers
+
+- AC1 cannot be fully closed without a paired desktop online and sharing files/library content visible on the phone.
+- AC2 item 7 cannot be closed without release-build measurement/profiling on moto g(7).
