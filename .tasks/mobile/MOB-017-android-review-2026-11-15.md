@@ -208,3 +208,14 @@ Observed:
 
 - AC1 cannot be fully closed without a paired desktop online and sharing files/library content visible on the phone.
 - AC2 item 7 cannot be closed without release-build measurement/profiling on moto g(7).
+
+## Progress (2026-11-23, final pass)
+
+- Homelab (arch-legacy, wingdrive server docker host-network :8095), laptop (real wing-daemon running) and moto g(7) ZY225DFMGB (192.168.15.12, same LAN) available. Phone Network screen shows archlinux paired but Disconnected; laptop daemon shows moto g(7) offline. No online paired-desktop file browse validated this session.
+- Release-build profiling (item 7): v3.5.0 release APK download available but cannot be installed over 3.6.0 debug without uninstall/signature mismatch (would wipe data). Local `cargo xtask build-mobile` release failed due Android NDK/linker env (`-llog` with `cc`). AC2 item 7 remains blocked for release-build evidence.
+- COV/CI: #512 merged after Explorer smoke rerun (failure was unrelated server-log WARN). No open PRs at finalize time.
+
+## Remaining blockers
+
+- **AC1**: needs paired desktop online and sharing files/library visible on moto g(7). Pairing exists; runtime connectivity/file-sharing evidence still missing.
+- **AC2 item 7**: needs release-build tap/profile on moto g(7) with safe install path (signed release or separate package/debug-signable release).
