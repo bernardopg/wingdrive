@@ -75,7 +75,7 @@ pub(super) async fn run(ctx: &Context, entry: Uuid, directory: PathBuf, apply: b
 			if owner.is_some_and(|device| device.is_current) {
 				let expected = ContentHashGenerator::generate_integrity_hash(source_path).await?;
 				ContentHashGenerator::generate_integrity_hash(&destination).await? == expected
-			} else if apply && online == Some(true) {
+			} else if online == Some(true) {
 				let source_hash = checksum(ctx, library, source.clone()).await?;
 				let target_hash = checksum(ctx, library, WingPath::local(&destination)).await?;
 				source_hash == target_hash

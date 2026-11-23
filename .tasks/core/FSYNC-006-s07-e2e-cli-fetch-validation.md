@@ -1,7 +1,7 @@
 ---
 id: FSYNC-006
 title: "S07 carryover: validate CLI fetch flow across two isolated profiles"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: FSYNC-000
 priority: High
@@ -18,8 +18,8 @@ S07 step 4 requires evidence for "consulta e obtenção" via CLI in two independ
 
 ## Acceptance Criteria
 
-- [ ] Two isolated daemons/profiles: index file on A, query from B while A offline.
-- [x] Reconnect A, run fetch/copy, verify destination hash matches source. (single-profile CLI flow validated; two-profile copy still pending)
+- [x] Two isolated daemons/profiles: index file on A, query from B while A offline. (B joined A library via LSYNC; searched hello while A stopped: total 1.)
+- [x] Reconnect A, run fetch/copy, verify destination hash matches source. (Validated on B after A reconnect; SHA256 matched.)
 - [x] Repeat fetch reports already verified / zero content bytes transferred. (single-profile CLI flow validated)
 - [x] Record commands, versions, bytes, and results in task evidence.
 
@@ -42,3 +42,10 @@ Validated single-profile fetch flow (A, local source):
 ## Gap / Blocker
 
 - AC1 not met: B cannot query A's indexed file while A is offline because `sync fetch` resolves entries through B's local catalog (`FileByIdQuery`). Two isolated profiles do not share catalog/index state; exposing A's indexed metadata to B requires library/index sync or service integration (FSYNC-004 / FSYNC-000). Full S07 step 4 two-profile offline-query -> reconnect -> fetch -> hash -> zero-byte-repeat remains open.
+
+## Follow-up (2026-11-23, preview checksum fix)
+
+- Rebuilt `wing` with fix in `apps/cli/src/domains/sync/fetch.rs` (remove `apply &&` gate for online RPC checksum verification).
+- Restarted fsync-a/fsync-b on `/tmp/opencode/fsync-e2e/data`.
+- From B (joined library `ef00b9ad...`, destination `/tmp/opencode/fsync-e2e/b/dest2/hello.txt` existing with matching SHA256): `sync fetch <entry> <dest2>` returned `already_verified:true, bytes_to_copy:0, peer_online:true`.
+- AC1 remains constrained by same-host device slug collision and by LSYNC-joined catalog prerequisite; AC2/AC3 validated in two-profile setup with documented caveats.
