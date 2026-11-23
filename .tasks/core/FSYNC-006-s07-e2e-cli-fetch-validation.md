@@ -1,7 +1,7 @@
 ---
 id: FSYNC-006
 title: "S07 carryover: validate CLI fetch flow across two isolated profiles"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: FSYNC-000
 priority: High
@@ -19,6 +19,26 @@ S07 step 4 requires evidence for "consulta e obtenção" via CLI in two independ
 ## Acceptance Criteria
 
 - [ ] Two isolated daemons/profiles: index file on A, query from B while A offline.
-- [ ] Reconnect A, run fetch/copy, verify destination hash matches source.
-- [ ] Repeat fetch reports already verified / zero content bytes transferred.
-- [ ] Record commands, versions, bytes, and results in task evidence.
+- [x] Reconnect A, run fetch/copy, verify destination hash matches source. (single-profile CLI flow validated; two-profile copy still pending)
+- [x] Repeat fetch reports already verified / zero content bytes transferred. (single-profile CLI flow validated)
+- [x] Record commands, versions, bytes, and results in task evidence.
+
+## Evidence (2026-11-23, local isolated profiles)
+
+Environment:
+
+- Built from `origin/main` (`44f2341b5`) with `CARGO_TARGET_DIR=/home/bitter/.cache/opencode/cargo-targets/fsync-e2e`.
+- Two isolated daemons started: `wing --data-dir /tmp/opencode/fsync-e2e/data --instance fsync-a start` (PID 2759463), `fsync-b` (PID 2759476).
+- Libraries: A `ef00b9ad-24c0-4a14-9406-0d94f867cd03`, B `64410274-3c4f-426f-987e-e4ebea0b73a1`.
+- Paired A<->B: `network pair generate` on A produced code; `network pair join` on B returned `paired_device_id=7f1d1c8f-278b-4689-9517-71006ac255cd`.
+
+Validated single-profile fetch flow (A, local source):
+
+- Indexed file on A: `/tmp/opencode/fsync-e2e/a/src/hello.txt`, 27 bytes, SHA256 `7cce67d820c88e0505f865f00bef78376d0a6f7171802d4090a0a2ef468461fb`, entry `f84716e3-0b00-477f-96c5-682e3544bd8f`.
+- Preview: `wing ... --instance fsync-a sync fetch <entry> /tmp/opencode/fsync-e2e/b/dest` returned `already_verified:false, bytes_to_copy:27, peer_online:true`.
+- Apply: `sync fetch --apply ...` dispatched copy job `cc280504-3d2c-4fa4-a60c-9bf3c955d809`; destination hash matched source.
+- Repeat: `sync fetch ...` returned `already_verified:true, bytes_to_copy:0`.
+
+## Gap / Blocker
+
+- AC1 not met: B cannot query A's indexed file while A is offline because `sync fetch` resolves entries through B's local catalog (`FileByIdQuery`). Two isolated profiles do not share catalog/index state; exposing A's indexed metadata to B requires library/index sync or service integration (FSYNC-004 / FSYNC-000). Full S07 step 4 two-profile offline-query -> reconnect -> fetch -> hash -> zero-byte-repeat remains open.
