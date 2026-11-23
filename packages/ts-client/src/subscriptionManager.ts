@@ -94,6 +94,12 @@ export class SubscriptionManager {
 			entry = await subscriptionPromise;
 			entry.refCount++;
 			return this.createCleanup(key, callback);
+		} catch (error) {
+			const failed = this.subscriptions.get(key);
+			if (failed && failed.refCount === 0) {
+				this.subscriptions.delete(key);
+			}
+			throw error;
 		} finally {
 			this.pendingSubscriptions.delete(key);
 		}

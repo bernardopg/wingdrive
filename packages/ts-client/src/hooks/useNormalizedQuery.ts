@@ -1005,13 +1005,16 @@ export function safeMerge(
 			? existing
 			: incoming;
 	}
+	if (existing === null || existing === undefined) {
+		return incoming;
+	}
 
 	// Shallow merge with incoming winning, but deep merge nested objects
 	const result: any = { ...existing };
 
 	for (const key of Object.keys(incoming)) {
 		const incomingVal = incoming[key];
-		const existingVal = existing[key];
+		const existingVal = (existing as any)[key];
 
 		// noMergeFields: incoming always wins
 		if (noMergeFields.includes(key)) {
