@@ -3,6 +3,14 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Fixed
+
+- Settings > General shows the device name, version and build date again. Since 3.6.0 the page
+  asked the daemon for its status in a form it rejected and showed "Could not load settings".
+  The daemon now accepts both forms of an empty request.
+
 ## 3.7.0 — 2026-11-24
 
 WingDrive now ships for every platform it runs on from one release page: a Flatpak, a first macOS

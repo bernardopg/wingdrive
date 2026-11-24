@@ -11,6 +11,24 @@ use serde::de::DeserializeOwned;
 use std::{collections::HashMap, sync::Arc};
 use uuid::Uuid;
 
+/// Decodes an operation input from its JSON payload.
+///
+/// The generated TypeScript type for a `()` input is `Empty`
+/// (`Record<string, never>`), so clients send `{}`, while serde only accepts
+/// `null` for `()`. An empty object that fails to decode is retried as `null`,
+/// which keeps inputless operations such as `core.status` working for every
+/// client. Other payloads keep their original decode error.
+fn decode_input<T: DeserializeOwned>(payload: serde_json::Value) -> Result<T, String> {
+	let empty_object = payload.as_object().is_some_and(|map| map.is_empty());
+	match serde_json::from_value(payload) {
+		Ok(input) => Ok(input),
+		Err(error) if empty_object => {
+			serde_json::from_value(serde_json::Value::Null).map_err(|_| error.to_string())
+		}
+		Err(error) => Err(error.to_string()),
+	}
+}
+
 /// Registry handler for library queries - thin wrapper calling business logic
 pub fn handle_library_query<Q>(
 	context: Arc<crate::context::CoreContext>,
@@ -29,7 +47,7 @@ where
 		let dispatcher = crate::infra::api::dispatcher::ApiDispatcher::new(context.clone());
 
 		// Deserialize input
-		let input: Q::Input = serde_json::from_value(payload).map_err(|e| e.to_string())?;
+		let input: Q::Input = decode_input(payload)?;
 
 		// Call business logic method
 		let output = dispatcher
@@ -60,7 +78,7 @@ where
 		let dispatcher = crate::infra::api::dispatcher::ApiDispatcher::new(context.clone());
 
 		// Deserialize input
-		let input: Q::Input = serde_json::from_value(payload).map_err(|e| e.to_string())?;
+		let input: Q::Input = decode_input(payload)?;
 
 		// Call business logic method
 		let output = dispatcher
@@ -91,7 +109,7 @@ where
 		let dispatcher = crate::infra::api::dispatcher::ApiDispatcher::new(context.clone());
 
 		// Deserialize input
-		let input: A::Input = serde_json::from_value(payload).map_err(|e| e.to_string())?;
+		let input: A::Input = decode_input(payload)?;
 
 		// Call business logic method
 		let output = dispatcher
@@ -126,7 +144,7 @@ where
 			.map_err(|e| e.to_string())?;
 
 		// Deserialize input
-		let input: A::Input = serde_json::from_value(payload).map_err(|e| e.to_string())?;
+		let input: A::Input = decode_input(payload)?;
 
 		// Call business logic method
 		let output = dispatcher
@@ -240,6 +258,21 @@ mod tests {
 	use std::collections::HashSet;
 
 	use super::*;
+
+	#[test]
+	fn decode_input_accepts_empty_object_for_unit_inputs() {
+		decode_input::<()>(serde_json::json!({})).expect("{} decodes as ()");
+		decode_input::<()>(serde_json::Value::Null).expect("null decodes as ()");
+
+		#[derive(Debug, serde::Deserialize)]
+		struct Named {
+			#[allow(dead_code)]
+			name: String,
+		}
+		let error = decode_input::<Named>(serde_json::json!({})).unwrap_err();
+		assert!(error.contains("missing field `name`"), "{error}");
+		assert!(decode_input::<()>(serde_json::json!({ "extra": 1 })).is_err());
+	}
 
 	#[test]
 	fn registered_methods_are_unique_well_formed_and_never_lost_in_maps() {
