@@ -9,7 +9,7 @@ type View = "board" | "sprints" | "roadmap";
 
 const STATUSES: Status[] = ["To Do", "In Progress", "Done"];
 const PRIORITIES: Priority[] = ["High", "Medium", "Low"];
-const AREAS = ["core", "interface", "mobile", "testing"];
+const AREAS = ["core", "interface", "mobile", "testing", "adapters"];
 const WIP_LIMIT = 2;
 const DONE_PAGE = 24;
 const STATUS_HINT: Record<Status, string> = {

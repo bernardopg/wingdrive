@@ -10,7 +10,7 @@ export const STATUSES = ["To Do", "In Progress", "Done"] as const;
 export type Status = (typeof STATUSES)[number];
 export const PRIORITIES = ["High", "Medium", "Low"] as const;
 export type Priority = (typeof PRIORITIES)[number];
-export const AREAS = ["core", "interface", "mobile", "testing"] as const;
+export const AREAS = ["core", "interface", "mobile", "testing", "adapters"] as const;
 export type Area = (typeof AREAS)[number];
 export type Phase = "Done" | "Now" | "Next" | "Later";
 

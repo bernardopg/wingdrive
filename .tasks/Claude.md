@@ -16,6 +16,8 @@ This directory tracks the complete development of WingDrive. Tasks are organized
 - `core/` - Backend/Rust tasks (CORE, JOB, INDEX, LSYNC, etc.)
 - `interface/` - Frontend/React tasks (UI, EXPL, SETS, MEDIA, etc.)
 - `mobile/` - Mobile-specific tasks (IOS, MACOS, AND)
+- `testing/` - Test coverage plan and bug log (COV)
+- `adapters/` - Data source adapters (ADAPT)
 
 Tasks are always kept up-to-date, though some may need updating based on recent work. Your job is to check git history for changes, validate completed tasks against the instructions below, and update their status accordingly.
 

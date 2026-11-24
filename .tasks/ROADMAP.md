@@ -30,7 +30,7 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | M2 — Gerenciador de arquivos padrão no Linux | Done | 75 | 1 | 0 | 99% |
 | M3 — Desktop multiplataforma e release | Now | 11 | 19 | 3 | 33% |
 | M4 — Integração entre dispositivos | Later | 2 | 4 | 16 | 9% |
-| M5 — Opcionais | Later | 19 | 18 | 57 | 20% |
+| M5 — Opcionais | Later | 19 | 18 | 82 | 16% |
 
 | Sprint | Datas | Done | In Progress | Progresso |
 |---|---|---|---|---|
@@ -39,10 +39,10 @@ _Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à 
 | [S03](sprints/S03.md) | 2026-10-07 a 2026-10-28 | 32/32 | 0 | 100% |
 | [S04](sprints/S04.md) | 2026-10-29 a 2026-11-11 | 37/37 | 0 | 100% |
 | **[S05](sprints/S05.md)** (atual) | 2026-11-12 a 2026-11-25 | 25/32 | 2 | 78% |
-| [S06](sprints/S06.md) | 2026-11-26 a 2026-12-09 | 3/22 | 18 | 14% |
-| [S07](sprints/S07.md) | 2026-12-10 a 2026-12-23 | 0/11 | 4 | 0% |
+| [S06](sprints/S06.md) | 2026-11-26 a 2026-12-09 | 3/33 | 18 | 9% |
+| [S07](sprints/S07.md) | 2026-12-10 a 2026-12-23 | 0/17 | 4 | 0% |
 | [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | 1/15 | 1 | 7% |
-| [S09](sprints/S09.md) | 2027-01-07 a 2027-01-20 | 0/12 | 12 | 0% |
+| [S09](sprints/S09.md) | 2027-01-07 a 2027-01-20 | 0/20 | 12 | 0% |
 | [S10](sprints/S10.md) | 2027-01-21 a 2027-02-03 | 0/12 | 5 | 0% |
 | [S11](sprints/S11.md) | 2027-02-04 a 2027-02-17 | 0/11 | 0 | 0% |
 | [S12](sprints/S12.md) | 2027-02-18 a 2027-03-03 | 0/12 | 0 | 0% |
@@ -212,6 +212,14 @@ Em 2026-11-13 o login só com o botão funcionou com o Google real: cada provedo
 (Google Cloud ou Microsoft Entra), escolhidos num catálogo de cards em Configurações > Integrações
 (INTG-010). OneDrive (INTG-022) já entra por login no navegador; falta registrar o app do WingDrive
 na Microsoft. INTG-001 a INTG-004 andaram no S05.
+
+Exception decided on 2026-11-24: an adapter store (epic `ADAPT-000`, folder `.tasks/adapters/`).
+Sources > Add source shows "No adapters installed" on every install, because no package ships the
+adapters. Instead of bundling them, each adapter gets its own repository, a signed registry lists
+them, bots review submissions, and the app installs adapters from a store with cards, as
+DankMaterialShell does with plugins. The store platform (ADAPT-001, 003, 004, 005, 007, 008, 009)
+enters S06; the Obsidian, GitHub, Thunderbird and coding agent session adapters and the
+wingdrive.org/adapters catalog follow in S07. The other adapters stay in the backlog.
 
 Exceção decidida em 2026-10-17: o épico mobile `MOB-000` (Android funcional, loop de dev rápido,
 paridade com o desktop) foi puxado para agora. MOB-001 a MOB-005 entram no S03.
