@@ -1,7 +1,7 @@
 ---
 id: ADAPT-004
 title: "Store backend in the daemon: install, update, remove and lockfile"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: ADAPT-000
 priority: High
@@ -21,8 +21,8 @@ every library can use them. Installs are pinned and recorded in a lockfile, like
 
 ## Implementation Steps
 
-- [ ] Fetch and cache the index; verify the signature with the bundled public key before parsing; keep the last good index for offline use
-- [ ] Install: download the archive, check its SHA-256 against the index, unpack into a staging directory, validate the manifest and contract version, then move it into place atomically
+- [x] Fetch and cache the index; verify the signature with the bundled public key before parsing; keep the last good index for offline use
+- [x] Install: download the archive, check its SHA-256 against the index, unpack into a staging directory, validate the manifest and contract version, then move it into place atomically
 - [ ] Update when the index pins a new commit; remove; reinstall from the lockfile
 - [ ] Show the permissions an adapter asks for and require consent before install and when an update asks for more
 - [ ] Operations `adapters.store.list`, `adapters.store.install`, `adapters.store.update`, `adapters.store.remove` and `adapters.store.refresh`, with TypeScript types generated
@@ -31,6 +31,6 @@ every library can use them. Installs are pinned and recorded in a lockfile, like
 
 ## Acceptance Criteria
 
-- [ ] Unit tests: bad signature, bad checksum, unknown contract version, path traversal in the archive, interrupted install
+- [x] Unit tests: bad signature, bad checksum, unknown contract version, path traversal in the archive, interrupted install
 - [ ] Integration test installs the template adapter from a local registry and syncs it
 - [ ] Installed AUR package installs and updates an adapter from the official registry on the author's machine

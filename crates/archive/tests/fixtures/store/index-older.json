@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "sequence": 4,
+  "generated_at": "2026-11-24T00:00:00Z",
+  "registry": "https://github.com/bernardopg/wingdrive-adapters",
+  "adapters": [
+    {
+      "id": "sample",
+      "name": "Sample",
+      "summary": "A fixture adapter for the store tests.",
+      "description": "",
+      "version": "1.0.0",
+      "author": "WingDrive",
+      "license": "Apache-2.0",
+      "categories": [],
+      "trust": "official",
+      "contract": 1,
+      "runtime": {
+        "kind": "python3",
+        "entry": "sync.py"
+      },
+      "platforms": [
+        "linux",
+        "macos",
+        "windows"
+      ],
+      "permissions": {
+        "read": [
+          "~/Notes"
+        ]
+      },
+      "source": {
+        "type": "local",
+        "path": "adapters/sample",
+        "commit": "0000000000000000000000000000000000000000"
+      },
+      "icon": {
+        "url": "https://example.test/sample.svg",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "artifacts": [
+        {
+          "target": "any",
+          "url": "https://example.test/sample-1.0.0.tar.gz",
+          "sha256": "6a01360435e90ccc4f78f4b237ca4d259c63fc48596e221c8bf1dd89677c864c",
+          "size": 502
+        }
+      ]
+    }
+  ],
+  "revoked": []
+}

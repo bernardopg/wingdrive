@@ -23,6 +23,13 @@ futures     = { workspace = true }
 indexmap = { workspace = true, features = ["serde"] }
 dashmap  = { workspace = true }
 
+# Adapter store: signed index, archive checksums and unpacking
+minisign-verify = "0.3"
+flate2          = "1"
+tar             = "0.4"
+sha2            = "0.11"
+hex             = "0.4"
+
 # Heavy dependencies for search/embedding - disabled for now to speed up integration
 # These will be enabled once core archive system is integrated
 # lancedb  = { workspace = true }
@@ -34,6 +41,9 @@ dashmap  = { workspace = true }
 # ort         = { version = "2.0.0-rc.9", optional = true, features = ["download-binaries", "tls-native"] }
 # tokenizers  = { version = "0.21", optional = true }
 # hf-hub      = { version = "0.4", optional = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
 
 [features]
 default = []

@@ -43,6 +43,7 @@ pub mod safety;
 pub mod schema;
 pub mod search;
 pub mod source;
+pub mod store;
 
 // Re-export primary types at crate root
 pub use adapter::script::ConfigField;

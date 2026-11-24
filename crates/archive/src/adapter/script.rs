@@ -50,9 +50,52 @@ pub struct AdapterMeta {
 	pub min_wingdrive: Option<String>,
 	#[serde(default)]
 	pub trust_tier: Option<String>,
+	/// Up to two lines for the store card. Contract 1 requires it.
+	#[serde(default)]
+	pub summary: Option<String>,
+	/// Version of the stdin/stdout protocol the adapter speaks. Prototypes written before the
+	/// store omit it and run as contract 0.
+	#[serde(default)]
+	pub contract: u32,
+	#[serde(default)]
+	pub platforms: Vec<String>,
+	#[serde(default)]
+	pub categories: Vec<String>,
+	#[serde(default)]
+	pub permissions: Permissions,
 	pub runtime: RuntimeConfig,
 	#[serde(default)]
 	pub config: Vec<ConfigField>,
+}
+
+/// The newest adapter contract this build understands.
+pub const SUPPORTED_CONTRACT: u32 = 1;
+
+/// What an adapter may touch, declared in `[adapter.permissions]` and shown before install.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Permissions {
+	/// Paths the adapter reads; `~` stands for the user's home.
+	#[serde(default)]
+	pub read: Vec<String>,
+	/// Hosts the adapter contacts. Empty means no network.
+	#[serde(default)]
+	pub network: Vec<String>,
+	/// Secret keys the adapter receives from the secret store.
+	#[serde(default)]
+	pub secrets: Vec<String>,
+	/// External programs the adapter runs.
+	#[serde(default)]
+	pub tools: Vec<String>,
+}
+
+/// How a contract 1 adapter is started.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum RuntimeKind {
+	/// `python3 <entry>`.
+	Python3,
+	/// A compiled program at `<entry>`, built by the registry's CI.
+	Binary,
 }
 
 fn default_version() -> String {
@@ -60,9 +103,17 @@ fn default_version() -> String {
 }
 
 /// The `[adapter.runtime]` section.
+///
+/// Contract 1 adapters name a `kind` and an `entry` and run without a shell. Prototypes still give a
+/// `command` line that runs through `sh -c`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuntimeConfig {
-	pub command: String,
+	#[serde(default)]
+	pub kind: Option<RuntimeKind>,
+	#[serde(default)]
+	pub entry: Option<String>,
+	#[serde(default)]
+	pub command: Option<String>,
 	#[serde(default)]
 	pub watch_command: Option<String>,
 	#[serde(default = "default_timeout")]
@@ -108,11 +159,52 @@ fn default_config_type() -> String {
 
 impl AdapterManifest {
 	/// Parse an `adapter.toml` file.
+	///
+	/// Refuses a contract this build does not understand and a runtime that cannot be started, so
+	/// an adapter installed from the store either runs or never registers.
 	pub fn parse(toml_str: &str) -> Result<Self> {
 		let mut manifest: Self = toml::from_str(toml_str)
 			.map_err(|e| Error::SchemaParse(format!("adapter.toml: {e}")))?;
 		manifest.raw_toml = toml_str.to_string();
+		manifest.check_runtime()?;
 		Ok(manifest)
+	}
+
+	fn check_runtime(&self) -> Result<()> {
+		let meta = &self.adapter;
+		if meta.contract > SUPPORTED_CONTRACT {
+			return Err(Error::SchemaParse(format!(
+				"adapter.toml: {} needs adapter contract {}, this WingDrive supports up to {}",
+				meta.id, meta.contract, SUPPORTED_CONTRACT
+			)));
+		}
+		let runtime = &meta.runtime;
+		if meta.contract >= 1 {
+			let entry = runtime.entry.as_deref().unwrap_or_default();
+			if runtime.kind.is_none() || entry.is_empty() {
+				return Err(Error::SchemaParse(format!(
+					"adapter.toml: {} uses contract 1 and needs runtime.kind and runtime.entry",
+					meta.id
+				)));
+			}
+			let path = Path::new(entry);
+			if path.is_absolute()
+				|| path
+					.components()
+					.any(|c| matches!(c, std::path::Component::ParentDir))
+			{
+				return Err(Error::SchemaParse(format!(
+					"adapter.toml: {} runtime.entry must stay inside the adapter folder",
+					meta.id
+				)));
+			}
+		} else if runtime.command.as_deref().unwrap_or_default().is_empty() {
+			return Err(Error::SchemaParse(format!(
+				"adapter.toml: {} needs runtime.command (or contract = 1 with kind and entry)",
+				meta.id
+			)));
+		}
+		Ok(())
 	}
 
 	/// Parse from a file path.
@@ -313,6 +405,15 @@ impl SyncOperation {
 	}
 }
 
+/// The Python interpreter adapters run with: `python3` on Unix, `python` on Windows.
+pub fn python_interpreter() -> &'static str {
+	if cfg!(windows) {
+		"python"
+	} else {
+		"python3"
+	}
+}
+
 /// A script adapter loaded from a directory containing `adapter.toml`.
 pub struct ScriptAdapter {
 	dir: PathBuf,
@@ -363,6 +464,55 @@ impl ScriptAdapter {
 	/// Get the adapter kind.
 	pub fn kind(&self) -> AdapterKind {
 		AdapterKind::Script
+	}
+
+	/// The process that runs one sync.
+	///
+	/// Contract 1 adapters start without a shell and without the daemon's environment, so tokens
+	/// and paths the daemon holds never reach third-party code; they get a minimal `PATH`,
+	/// `HOME`, locale and their own variables. Prototypes keep the old `sh -c` behavior.
+	fn command(&self, config: &serde_json::Value) -> Command {
+		let runtime = &self.manifest.adapter.runtime;
+		let mut command = match (
+			self.manifest.adapter.contract,
+			runtime.kind,
+			runtime.entry.as_deref(),
+		) {
+			(1.., Some(RuntimeKind::Python3), Some(entry)) => {
+				let mut command = Command::new(python_interpreter());
+				command.arg("-I").arg(self.dir.join(entry));
+				command
+			}
+			(1.., Some(RuntimeKind::Binary), Some(entry)) => Command::new(self.dir.join(entry)),
+			_ => {
+				let mut command = Command::new("sh");
+				command
+					.arg("-c")
+					.arg(runtime.command.as_deref().unwrap_or_default());
+				command
+			}
+		};
+		if self.manifest.adapter.contract >= 1 {
+			command.env_clear();
+			for key in [
+				"PATH",
+				"HOME",
+				"LANG",
+				"LC_ALL",
+				"TZ",
+				"TMPDIR",
+				"SYSTEMROOT",
+				"USERPROFILE",
+				"APPDATA",
+				"LOCALAPPDATA",
+			] {
+				if let Ok(value) = std::env::var(key) {
+					command.env(key, value);
+				}
+			}
+		}
+		command.current_dir(&self.dir).envs(self.build_env(config));
+		command
 	}
 
 	/// Build the sanitized environment for the subprocess.
@@ -464,14 +614,8 @@ impl Adapter for ScriptAdapter {
 				error: None,
 			};
 
-			let env = self.build_env(config);
-			let cmd = &self.manifest.adapter.runtime.command;
-
-			let mut child = Command::new("sh")
-				.arg("-c")
-				.arg(cmd)
-				.current_dir(&self.dir)
-				.envs(&env)
+			let mut child = self
+				.command(config)
 				.stdin(std::process::Stdio::piped())
 				.stdout(std::process::Stdio::piped())
 				.stderr(std::process::Stdio::piped())
