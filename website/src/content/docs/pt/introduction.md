@@ -9,7 +9,7 @@ O WingDrive é um gerenciador de arquivos para desktop com um daemon em segundo 
 
 Não há conta, telemetria nem servidor central. A indexação, as miniaturas e a pesquisa são executadas na sua máquina.
 
-> **Alpha.** No Linux, o WingDrive pode ser usado como gerenciador de arquivos padrão. As versões para Windows e Android estão em beta. No macOS, a compilação é feita a partir do código-fonte. O marco M3 prioriza as versões desktop para Windows e macOS.
+> **Alpha.** No Linux, o WingDrive pode ser usado como gerenciador de arquivos padrão. As versões para Windows e Android estão em beta. O macOS em Apple silicon sai como `.dmg` de prévia. O marco M3 prioriza as versões desktop para Windows e macOS.
 
 <figure class="shot">
 <a href="/img/shots/WingGridView-1600.webp"><img src="/img/shots/WingGridView-1600.webp" srcset="/img/shots/WingGridView-800.webp 800w, /img/shots/WingGridView-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="Visualização em grade do WingDrive com o Inspetor"></a>
@@ -24,7 +24,8 @@ Não há conta, telemetria nem servidor central. A indexação, as miniaturas e 
 - **Identidade de conteúdo**: cada arquivo recebe um hash BLAKE3, para que o mesmo arquivo em dois dispositivos seja reconhecido como um só.
 - **Dispositivos**: emparelhe suas máquinas via Iroh/QUIC para sincronizar a biblioteca e enviar arquivos com o Wingdrop.
 - **Google Drive e Google Fotos** com várias contas: navegue, copie, edite nos seus apps, sincronize pastas e envie fotos.
-- **Volumes na nuvem** por meio do OpenDAL: S3 e serviços compatíveis, Dropbox, OneDrive, Azure Blob e GCS.
+- **OneDrive** com conta Microsoft pessoal, corporativa ou de estudante, por um registro de app Microsoft seu.
+- **Volumes na nuvem** por meio do OpenDAL: S3 e serviços compatíveis, Dropbox, Azure Blob e GCS.
 - **CLI `wing` e `wing-server`** para scripts e máquinas sem interface gráfica, no mesmo daemon.
 
 ## Conceitos principais

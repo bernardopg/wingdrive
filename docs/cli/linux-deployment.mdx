@@ -7,7 +7,7 @@ description: "Deploy WingDrive CLI and daemon on Linux systems"
 
 The WingDrive daemon and CLI can be deployed on Linux systems in several ways:
 - **Docker** - Recommended for easy deployment and isolation
-- **Native binaries** - Direct installation for TrueNAS, Raspberry Pi, and other Linux systems
+- **Native binaries** - The `.deb` or AUR package, or the `wing-server` release archive, on TrueNAS SCALE and other x86_64 Linux systems
 - **Systemd service** - Auto-start on boot with native binaries
 
 ## Docker Deployment
@@ -68,13 +68,13 @@ docker run -d \
   wingdrive:latest
 
 # View status
-docker exec wingdrive-daemon wing-cli status
+docker exec wingdrive-daemon wing status
 
 # View logs
 docker logs -f wingdrive-daemon
 
 # Execute CLI commands
-docker exec wingdrive-daemon wing-cli library list
+docker exec wingdrive-daemon wing library list
 ```
 
 ### Multi-Architecture Support
@@ -99,27 +99,21 @@ docker buildx build \
 
 ### Installation
 
-1. **Download binaries**:
+Releases ship native binaries for Linux x86_64 only. On ARM64 (Raspberry Pi), use the Docker image
+or build from source.
+
+- **`wing` and `wing-daemon`:** the `.deb` (`sudo apt install ./WingDrive-<version>-amd64.deb`)
+  installs both in `/usr/bin` with the desktop app. On Arch, `wingdrive-bin` puts them in
+  `/opt/wingdrive/usr/bin` and links `/usr/bin/wing`.
+- **`wing-server` and `wing`, no desktop app:** the `wing-server-<version>-linux-x86_64` archive.
+  `wing-server` runs the daemon and the web interface in one process; see
+  [Self-hosting](../overview/self-hosting.mdx).
+- **From source:** `cargo build --release --bin wing --bin wing-daemon`, then copy both from
+  `target/release/` to `/usr/local/bin`. `wing start` looks for `wing-daemon` next to `wing`.
 
 ```bash
-# For x86_64 Linux
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/wingdrive-cli-linux-x86_64
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-x86_64
-
-# For ARM64 (Raspberry Pi)
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/wingdrive-cli-linux-aarch64
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-aarch64
-```
-
-2. **Install binaries**:
-
-```bash
-# Move to PATH
-sudo mv wingdrive-cli-linux-* /usr/local/bin/wing-cli
-sudo mv wing-daemon-linux-* /usr/local/bin/wing-daemon
-
-# Set permissions
-sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
+# Verify a downloaded release file
+sha256sum -c SHA256SUMS --ignore-missing
 
 # Test installation
 wing --version
@@ -129,16 +123,16 @@ wing --version
 
 ```bash
 # Start in foreground (for testing)
-wing-cli start --foreground
+wing start --foreground
 
 # Start in background
-wing-cli start
+wing start
 
 # Check status
-wing-cli status
+wing status
 
 # Stop daemon
-wing-cli stop
+wing stop
 ```
 
 ## Systemd Service (Auto-Start)
@@ -229,20 +223,15 @@ TrueNAS SCALE supports Docker, so you can use either method:
 # SSH into TrueNAS
 ssh admin@truenas
 
-# Download and install binaries
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/wingdrive-cli-linux-x86_64
-curl -LO https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-x86_64
-
-sudo mv wingdrive-cli-linux-x86_64 /usr/local/bin/wing-cli
-sudo mv wing-daemon-linux-x86_64 /usr/local/bin/wing-daemon
-sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
+# Install wing and wing-daemon (built from source, see Native Binary Deployment)
+sudo install -m 755 wing wing-daemon /usr/local/bin/
 
 # Set up systemd service
 wing daemon install
 
 # Index your pools
-wing-cli location add /mnt/pool1
-wing-cli location add /mnt/pool2
+wing location add /mnt/pool1
+wing location add /mnt/pool2
 ```
 
 ### TrueNAS CORE (FreeBSD)
@@ -263,14 +252,11 @@ Currently unsupported. Use TrueNAS SCALE (recommended) or run in a Linux VM.
 # Update system
 sudo apt-get update && sudo apt-get upgrade -y
 
-# Download ARM64 binaries
-wget https://github.com/YOUR_ORG/releases/latest/download/wingdrive-cli-linux-aarch64
-wget https://github.com/YOUR_ORG/releases/latest/download/wing-daemon-linux-aarch64
+# No ARM64 release binaries: build on the Pi (or cross-compile) from a source checkout
+cargo build --release --bin wing --bin wing-daemon
 
 # Install
-sudo mv wingdrive-cli-linux-aarch64 /usr/local/bin/wing-cli
-sudo mv wing-daemon-linux-aarch64 /usr/local/bin/wing-daemon
-sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
+sudo install -m 755 target/release/wing target/release/wing-daemon /usr/local/bin/
 
 # Install auto-start
 wing daemon install
@@ -282,7 +268,7 @@ sudo systemctl --user start wingdrive-daemon
 ### Performance Tips
 
 - Use external SSD for better I/O performance
-- Limit concurrent indexing jobs: `wing-cli config set jobs.max_concurrent 2`
+- Limit concurrent indexing jobs: `wing config set jobs.max_concurrent 2`
 - Disable thumbnail generation for large libraries to save RAM
 
 ## Configuration
@@ -331,7 +317,7 @@ wing --instance personal daemon install
 
 ```bash
 # Check daemon status
-wing-cli status
+wing status
 
 # Check systemd service
 systemctl --user status wingdrive-daemon
@@ -340,7 +326,7 @@ systemctl --user status wingdrive-daemon
 journalctl --user -u wingdrive-daemon --since "1 hour ago"
 
 # Follow logs in real-time
-wing-cli logs follow
+wing logs follow
 ```
 
 ### Resource Usage
@@ -365,17 +351,17 @@ htop -p $(pgrep wing-daemon)
 journalctl --user -u wingdrive-daemon -n 50
 
 # Or with CLI
-wing-cli logs follow
+wing logs follow
 
 # Reset data and restart
-wing-cli restart --reset
+wing restart --reset
 ```
 
 ### Permission Issues
 
 ```bash
 # Fix binary permissions
-sudo chmod +x /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
+sudo chmod +x /usr/local/bin/wing /usr/local/bin/wing-daemon
 
 # Fix data directory permissions
 chmod -R u+rw ~/.local/share/wingdrive
@@ -393,7 +379,7 @@ lsof ~/.local/share/wingdrive/daemon/daemon.sock
 pkill wing-daemon
 
 # Restart
-wing-cli start
+wing start
 ```
 
 ### Out of Memory (Raspberry Pi)
@@ -403,10 +389,10 @@ wing-cli start
 free -h
 
 # Reduce concurrent jobs
-wing-cli config set jobs.max_concurrent 1
+wing config set jobs.max_concurrent 1
 
 # Restart daemon
-wing-cli restart
+wing restart
 ```
 
 ## Security Considerations
@@ -417,10 +403,10 @@ Always run as a regular user, never as root:
 
 ```bash
 # DON'T do this
-sudo wing-cli start  # ❌
+sudo wing start  # ❌
 
 # DO this instead
-wing-cli start  # ✓
+wing start  # ✓
 ```
 
 ### Firewall Configuration
@@ -453,13 +439,13 @@ chmod -R u+r /path/to/index
 
 ```bash
 # Stop daemon
-wing-cli stop
+wing stop
 
 # Remove auto-start
 wing daemon uninstall
 
 # Remove binaries
-sudo rm /usr/local/bin/wing-cli /usr/local/bin/wing-daemon
+sudo rm /usr/local/bin/wing /usr/local/bin/wing-daemon
 
 # Remove data (optional)
 rm -rf ~/.local/share/wingdrive

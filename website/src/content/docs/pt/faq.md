@@ -31,11 +31,11 @@ Cópias, substituições, movimentações, renomeações, envios à lixeira e no
 
 ## Quais plataformas são compatíveis?
 
-Linux é compatível. Windows 10 e 11 estão em beta. No macOS, a compilação é feita a partir do código-fonte até a chegada de versões assinadas no marco M3. O Android está em beta, com APK ARM64 disponível nas [releases](https://github.com/bernardopg/wingdrive/releases/latest).
+Linux é compatível. Windows 10 e 11 estão em beta. Macs com Apple silicon têm um `.dmg` de prévia, com assinatura ad hoc e sem notarização até o marco M3. O Android está em beta, com APK ARM64 disponível nas [releases](https://github.com/bernardopg/wingdrive/releases/latest).
 
 ## Por que o Windows exibe um aviso sobre o instalador?
 
-As versões com tag usam Authenticode quando as credenciais de assinatura estão configuradas. O SmartScreen pode exibir um alerta em instaladores sem essa assinatura. Confira o arquivo com `SHA256SUMS-windows`.
+As versões com tag usam Authenticode quando as credenciais de assinatura estão configuradas. O SmartScreen pode exibir um alerta em instaladores sem essa assinatura. Confira o arquivo com `SHA256SUMS`.
 
 ## Como relato um erro ou solicito uma funcionalidade?
 

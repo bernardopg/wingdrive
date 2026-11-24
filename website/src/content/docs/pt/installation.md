@@ -5,7 +5,7 @@ order: 2
 group: Início
 ---
 
-Obtenha pacotes pré-compilados na [página de download](/pt/download/) ou no [GitHub Releases](https://github.com/bernardopg/wingdrive/releases/latest). Cada versão inclui arquivos `SHA256SUMS` para verificar o download.
+Obtenha pacotes pré-compilados na [página de download](/pt/download/) ou no [GitHub Releases](https://github.com/bernardopg/wingdrive/releases/latest). Cada versão inclui um único arquivo `SHA256SUMS` para verificar qualquer download.
 
 ## Linux
 
@@ -25,6 +25,17 @@ chmod +x WingDrive-*-x86_64.AppImage
 ```bash
 sudo apt install ./WingDrive-*-amd64.deb
 ```
+
+### Flatpak
+
+A versão também traz um pacote Flatpak no runtime GNOME 51:
+
+```bash
+flatpak install --user WingDrive-*-x86_64.flatpak
+flatpak run com.wingdrive.desktop
+```
+
+O sandbox enxerga menos montagens que uma instalação nativa, então o `.deb`, o AppImage e os pacotes do AUR continuam sendo as instalações recomendadas no Linux.
 
 ### Arch Linux e derivados (AUR)
 
@@ -47,7 +58,7 @@ makepkg -si
 
 ## Windows 10 e 11 (beta)
 
-Baixe o instalador NSIS (`.exe`) ou o `.msi` para x64. O SmartScreen pode exibir um alerta em instaladores sem assinatura Authenticode. Confira o arquivo com `SHA256SUMS-windows`:
+Baixe o instalador NSIS (`.exe`) ou o `.msi` para x64. O SmartScreen pode exibir um alerta em instaladores sem assinatura Authenticode. Confira o arquivo com `SHA256SUMS`:
 
 ```powershell
 Get-FileHash .\WingDrive-*-x64-setup.exe -Algorithm SHA256
@@ -55,7 +66,7 @@ Get-FileHash .\WingDrive-*-x64-setup.exe -Algorithm SHA256
 
 ## Android (beta)
 
-Baixe o APK ARM64 na [página de download](/pt/download/) e compare o resumo SHA-256 com o arquivo `SHA256SUMS-android`. Abra o APK no celular para instalar. O Android pode pedir autorização para instalar pelo app que abriu o arquivo.
+Baixe o APK ARM64 na [página de download](/pt/download/) e compare o resumo SHA-256 com o arquivo `SHA256SUMS`. Abra o APK no celular para instalar. O Android pode pedir autorização para instalar pelo app que abriu o arquivo.
 
 ## Atualizações
 
@@ -65,9 +76,15 @@ Os pacotes do AUR e o `.deb` se atualizam pelo gerenciador de pacotes (`yay`, `p
 
 A atualização automática começa na 3.4.0. Se você usa um AppImage ou instalador do Windows mais antigo, baixe a 3.4.0 à mão uma vez.
 
-## macOS
+## macOS (prévia)
 
-Versões pré-compiladas e assinadas estão planejadas para o marco M3. Até lá, compile a partir do código-fonte (abaixo).
+Baixe o `WingDrive-*-aarch64.dmg` para Macs com Apple silicon, abra o arquivo e arraste o WingDrive para Aplicativos. O app tem assinatura ad hoc e ainda não é notarizado, então remova a quarentena uma vez antes de abrir:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/WingDrive.app
+```
+
+O app do macOS ainda não se atualiza sozinho: baixe cada novo `.dmg` na [página de download](/pt/download/). Versões notarizadas estão planejadas para o marco M3. Macs com Intel precisam compilar a partir do código-fonte (abaixo).
 
 ## Servidor sem interface gráfica
 
@@ -81,7 +98,9 @@ docker run -d --name wingdrive \
   ghcr.io/bernardopg/wingdrive/server:latest
 ```
 
-Consulte [Auto-hospedagem](/pt/docs/self-hosting/) para configurações com Compose, systemd e proxy reverso.
+Sem Docker, use o arquivo `wing-server-*-linux-x86_64` (`.tar.gz`, `.tar.xz` ou `.zip`): ele traz o `wing-server`, a CLI `wing` e as bibliotecas de mídia que eles carregam. Consulte [Auto-hospedagem](/pt/docs/self-hosting/) para o arquivo, Compose, systemd e proxy reverso.
+
+No Windows, o `wing-*-windows-x64.zip` traz o `wing.exe` e o `wing-daemon.exe` para scripts e servidores sem o app desktop.
 
 ## Compile a partir do código-fonte
 

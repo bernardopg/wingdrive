@@ -9,7 +9,7 @@ WingDrive is a desktop file manager with a background daemon that indexes your f
 
 There is no account, no telemetry and no central server. Indexing, thumbnails and search run on your machine.
 
-> **Alpha.** Linux is the supported platform, including use as the default file manager. Windows and Android ship in beta. macOS builds from source. Milestone M3 focuses on desktop releases for Windows and macOS.
+> **Alpha.** Linux is the supported platform, including use as the default file manager. Windows and Android ship in beta. macOS on Apple silicon ships as a preview `.dmg`. Milestone M3 focuses on desktop releases for Windows and macOS.
 
 <figure class="shot">
 <a href="/img/shots/WingGridView-1600.webp"><img src="/img/shots/WingGridView-1600.webp" srcset="/img/shots/WingGridView-800.webp 800w, /img/shots/WingGridView-1600.webp 1400w" sizes="(max-width: 960px) 100vw, 760px" width="1400" height="900" loading="lazy" alt="WingDrive grid view with the Inspector"></a>
@@ -24,7 +24,8 @@ There is no account, no telemetry and no central server. Indexing, thumbnails an
 - **Content identity**: every file gets a BLAKE3 hash, so the same file on two devices is one file.
 - **Devices**: pair your own machines over Iroh/QUIC to sync the library and send files with Wingdrop.
 - **Google Drive and Google Photos** with several accounts: browse, copy, edit in your own apps, sync folders and upload photos.
-- **Cloud volumes** through OpenDAL: S3 and compatible services, Dropbox, OneDrive, Azure Blob and GCS.
+- **OneDrive** with a personal, work or school Microsoft account, through your own Microsoft app registration.
+- **Cloud volumes** through OpenDAL: S3 and compatible services, Dropbox, Azure Blob and GCS.
 - **`wing` CLI and `wing-server`** for scripts and headless machines, on the same daemon.
 
 ## Core ideas

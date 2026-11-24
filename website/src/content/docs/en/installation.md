@@ -1,11 +1,11 @@
 ---
 title: Installation
-description: Install WingDrive on Linux, Windows, Android, a server, or build it from source.
+description: Install WingDrive on Linux, Windows, macOS, Android, a server, or build it from source.
 order: 2
 group: Start
 ---
 
-Get prebuilt packages from the [download page](/download/) or from [GitHub Releases](https://github.com/bernardopg/wingdrive/releases/latest). Every release ships `SHA256SUMS` files to verify your download.
+Get prebuilt packages from the [download page](/download/) or from [GitHub Releases](https://github.com/bernardopg/wingdrive/releases/latest). Every release ships one `SHA256SUMS` file to verify any download.
 
 ## Linux
 
@@ -25,6 +25,17 @@ chmod +x WingDrive-*-x86_64.AppImage
 ```bash
 sudo apt install ./WingDrive-*-amd64.deb
 ```
+
+### Flatpak
+
+The release also ships a Flatpak bundle on the GNOME 51 runtime:
+
+```bash
+flatpak install --user WingDrive-*-x86_64.flatpak
+flatpak run com.wingdrive.desktop
+```
+
+The sandbox sees fewer mounts than a native install, so the `.deb`, the AppImage and the AUR packages remain the recommended Linux installs.
 
 ### Arch Linux and derivatives (AUR)
 
@@ -47,7 +58,7 @@ makepkg -si
 
 ## Windows 10 and 11 (beta)
 
-Download the NSIS installer (`.exe`) or the `.msi` for x64. SmartScreen may warn on builds without Authenticode signing. Check the file against `SHA256SUMS-windows`:
+Download the NSIS installer (`.exe`) or the `.msi` for x64. SmartScreen may warn on builds without Authenticode signing. Check the file against `SHA256SUMS`:
 
 ```powershell
 Get-FileHash .\WingDrive-*-x64-setup.exe -Algorithm SHA256
@@ -55,7 +66,7 @@ Get-FileHash .\WingDrive-*-x64-setup.exe -Algorithm SHA256
 
 ## Android (beta)
 
-Download the ARM64 APK from the [download page](/download/) and compare its SHA-256 digest with `SHA256SUMS-android`. Open the APK on your phone to install it. Android may ask you to allow installation from the app that opened the file.
+Download the ARM64 APK from the [download page](/download/) and compare its SHA-256 digest with `SHA256SUMS`. Open the APK on your phone to install it. Android may ask you to allow installation from the app that opened the file.
 
 ## Updates
 
@@ -65,9 +76,15 @@ The AUR packages and the `.deb` update through your package manager (`yay`, `pac
 
 Self-updating starts with 3.4.0. If you run an older AppImage or Windows installer, download 3.4.0 by hand once.
 
-## macOS
+## macOS (preview)
 
-Prebuilt, signed builds are planned for milestone M3. Until then, build from source (below).
+Download `WingDrive-*-aarch64.dmg` for Macs with Apple silicon, open it and drag WingDrive to Applications. The app is signed ad hoc and not notarized yet, so clear the quarantine once before the first launch:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/WingDrive.app
+```
+
+The macOS app does not update itself yet: download each new `.dmg` from the [download page](/download/). Notarized builds are planned for milestone M3. Intel Macs need a build from source (below).
 
 ## Headless server
 
@@ -81,7 +98,9 @@ docker run -d --name wingdrive \
   ghcr.io/bernardopg/wingdrive/server:latest
 ```
 
-See [Self-hosting](/docs/self-hosting/) for Compose, systemd and reverse proxy setups.
+Without Docker, use the `wing-server-*-linux-x86_64` archive (`.tar.gz`, `.tar.xz` or `.zip`): it holds `wing-server`, the `wing` CLI and the media libraries they load. See [Self-hosting](/docs/self-hosting/) for the archive, Compose, systemd and reverse proxy setups.
+
+On Windows, `wing-*-windows-x64.zip` holds `wing.exe` and `wing-daemon.exe` for scripts and servers without the desktop app.
 
 ## Build from source
 
