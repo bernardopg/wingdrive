@@ -519,30 +519,36 @@ pub async fn handle_modify<H: ChangeHandler>(
 		Err(e) => return Err(e),
 	};
 
-	if let Some(existing) = find_move_source(handler, &metadata, config).await? {
-		tracing::debug!(
-			"Detected inode-based move during modify: {} -> {}",
-			existing.path.display(),
-			path.display()
-		);
-		let old_path = existing.path.clone();
-		handler
-			.move_entry(
-				&existing,
-				&old_path,
-				path,
-				path.parent().unwrap_or(Path::new("/")),
-			)
-			.await?;
-		let moved = EntryRef {
-			path: path.to_path_buf(),
-			..existing
-		};
-		handler.emit_move_event(&moved, &old_path).await?;
-		return Ok(());
+	// An entry already indexed at this path wins over an inode match elsewhere:
+	// moving that stale entry here would collide on (parent_id, name). The
+	// indexer drops the stale one when it rescans its missing path.
+	let at_path = handler.find_by_path(path).await?;
+	if at_path.is_none() {
+		if let Some(existing) = find_move_source(handler, &metadata, config).await? {
+			tracing::debug!(
+				"Detected inode-based move during modify: {} -> {}",
+				existing.path.display(),
+				path.display()
+			);
+			let old_path = existing.path.clone();
+			handler
+				.move_entry(
+					&existing,
+					&old_path,
+					path,
+					path.parent().unwrap_or(Path::new("/")),
+				)
+				.await?;
+			let moved = EntryRef {
+				path: path.to_path_buf(),
+				..existing
+			};
+			handler.emit_move_event(&moved, &old_path).await?;
+			return Ok(());
+		}
 	}
 
-	if let Some(entry) = handler.find_by_path(path).await? {
+	if let Some(entry) = at_path {
 		handler.update(&entry, &metadata).await?;
 
 		if !entry.is_directory() {
@@ -745,6 +751,90 @@ mod tests {
 		handle_create(&mut EmptyIndex, &file, &config)
 			.await
 			.unwrap();
+	}
+
+	/// An index holding the folder at its new path and a stale entry, with the
+	/// same inode, at a path that no longer exists.
+	struct StaleInode {
+		live: EntryRef,
+		stale: EntryRef,
+		moved: bool,
+		updated: bool,
+	}
+
+	#[async_trait::async_trait]
+	impl ChangeHandler for StaleInode {
+		async fn find_by_path(&self, path: &Path) -> Result<Option<EntryRef>> {
+			Ok((path == self.live.path).then(|| self.live.clone()))
+		}
+		async fn find_by_inode(&self, _inode: u64) -> Result<Option<EntryRef>> {
+			Ok(Some(self.stale.clone()))
+		}
+		async fn create(&mut self, _metadata: &DirEntry, parent_path: &Path) -> Result<EntryRef> {
+			Err(ParentNotIndexed(parent_path.to_path_buf()).into())
+		}
+		async fn update(&mut self, _entry: &EntryRef, _metadata: &DirEntry) -> Result<()> {
+			self.updated = true;
+			Ok(())
+		}
+		async fn move_entry(
+			&mut self,
+			_entry: &EntryRef,
+			_old_path: &Path,
+			_new_path: &Path,
+			_new_parent_path: &Path,
+		) -> Result<()> {
+			self.moved = true;
+			Ok(())
+		}
+		async fn delete(&mut self, _entry: &EntryRef) -> Result<()> {
+			Ok(())
+		}
+		async fn run_processors(&self, _entry: &EntryRef, _is_new: bool) -> Result<()> {
+			Ok(())
+		}
+		async fn emit_change_event(
+			&self,
+			_entry: &EntryRef,
+			_change_type: ChangeType,
+		) -> Result<()> {
+			Ok(())
+		}
+		async fn handle_new_directory(&self, _path: &Path) -> Result<()> {
+			Ok(())
+		}
+	}
+
+	/// After a parent folder is renamed and reindexed, a modify event on a child
+	/// updates the entry at the new path instead of moving the stale entry onto
+	/// it, which failed with "UNIQUE constraint failed: entries.parent_id, entries.name".
+	#[tokio::test]
+	async fn modify_keeps_the_entry_already_at_the_path() {
+		let root = tempfile::tempdir().unwrap();
+		let live = root.path().join("Bitter/gravacoes");
+		std::fs::create_dir_all(&live).unwrap();
+		let entry = |id, path: PathBuf| EntryRef {
+			id,
+			uuid: None,
+			path,
+			kind: EntryKind::Directory,
+		};
+		let mut index = StaleInode {
+			live: entry(2, live.clone()),
+			stale: entry(1, root.path().join("estudo/gravacoes")),
+			moved: false,
+			updated: false,
+		};
+		let config = ChangeConfig {
+			rule_toggles: RuleToggles::default(),
+			location_root: root.path(),
+			volume_backend: None,
+		};
+
+		handle_modify(&mut index, &live, &config).await.unwrap();
+
+		assert!(!index.moved);
+		assert!(index.updated);
 	}
 
 	#[test]
