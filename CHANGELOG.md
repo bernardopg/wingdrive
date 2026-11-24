@@ -15,8 +15,17 @@ version in the workspace manifests and the matching `v*` git tag.
   entries.parent_id, entries.name": a change inside the renamed folder updates the entry at the
   new path instead of moving the old entry onto it.
 
+### Security
+
+- Adapters that declare the new contract 1 run without a shell and without the daemon's
+  environment variables, so tokens the daemon holds never reach adapter code (ADAPT-003).
+
 ### Internal
 
+- The adapter store core verifies the registry's signed index with the two public keys built into
+  WingDrive, refuses an older index, installs adapter archives only when their SHA-256 matches,
+  refuses archives that leave their folder, and records installs in `adapters.lock.json`
+  (ADAPT-001, ADAPT-004).
 - README, installation, self-hosting, Linux deployment and wingdrive.org pages list the Flatpak,
   the macOS preview `.dmg`, the server and command line archives, OneDrive and the single
   `SHA256SUMS`, mark the Google Picker as available, and drop release file names that never existed.

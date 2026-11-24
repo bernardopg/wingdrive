@@ -44,6 +44,9 @@ pub enum Error {
 	#[error("adapter sync error: {0}")]
 	AdapterSync(String),
 
+	#[error("adapter store: {0}")]
+	Store(String),
+
 	#[error("path not found: {0}")]
 	PathNotFound(PathBuf),
 
