@@ -143,6 +143,10 @@ jobs:
         run: |
           mapfile -t images < <(find target/x86_64-unknown-linux-gnu/release/bundle -name '*.AppImage')
           test "${#images[@]}" -eq 1
+          # pdfium is opened with dlopen from usr/lib/wingdrive, so no ldd check catches it missing.
+          image=$(realpath "${images[0]}")
+          (cd "$(mktemp -d)" && "$image" --appimage-extract usr/lib/wingdrive/libpdfium.so > /dev/null \
+            && test -f squashfs-root/usr/lib/wingdrive/libpdfium.so)
           # The smoke test comes from the workflow commit, like the daemon check, so a
           # dispatch from main can re-verify an older tag with the current gate.
           xvfb-run -a -s '-screen 0 1920x1080x24' python3 release-tooling/scripts/release/smoke.py "${images[0]}"
@@ -287,6 +291,7 @@ jobs:
             esac
             root="$out/wing-server-$version-linux-x86_64"
             test -f "$root/LICENSE" && test -f "$root/NOTICE" && test -f "$root/README.md"
+            test -f "$root/lib/wingdrive/libpdfium.so"
             if ldd "$root/bin/wing-server" "$root/bin/wing" | grep "not found"; then exit 1; fi
             env -i HOME="$out" "$root/bin/wing" --help > /dev/null
             env -i HOME="$out" "$root/bin/wing-server" --host 127.0.0.1 --port "$port" --auth disabled \
@@ -529,6 +534,7 @@ jobs:
             pacman -U --noconfirm ./*.pkg.tar.zst
             runuser -u builder -- test -x /opt/wingdrive/usr/bin/WingDrive
             runuser -u builder -- test ! -e /opt/wingdrive/usr/lib/libwebkit2gtk-4.1.so.0
+            runuser -u builder -- test -f /opt/wingdrive/usr/lib/wingdrive/libpdfium.so
             runuser -u builder -- env WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB="$WINGDRIVE_NATIVE_MEMORY_BUDGET_MIB" WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 WINGDRIVE_TEST_LAUNCHER=/usr/bin/wingdrive xvfb-run -a python /work/scripts/release/smoke.py /opt/wingdrive
             runuser -u builder -- makepkg --printsrcinfo > /work/packaging/aur/.SRCINFO
           '

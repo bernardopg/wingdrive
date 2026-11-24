@@ -81,6 +81,8 @@ package() {{
   install -d "$app/usr/lib"
   cp -a squashfs-root/usr/lib/WingDrive "$app/usr/lib/"
   (cd squashfs-root/usr/lib && cp -a $_bundled_libs "$app/usr/lib/")
+  # PDF thumbnails dlopen pdfium from <bin>/../lib/wingdrive, which ldd never sees.
+  install -Dm644 squashfs-root/usr/lib/wingdrive/libpdfium.so "$app/usr/lib/wingdrive/libpdfium.so"
 
   local missing
   missing="$(ldd "$app/usr/bin/WingDrive" "$app/usr/bin/wing-daemon" "$app/usr/bin/wing" "$app"/usr/lib/*.so.* | grep 'not found' | sort -u || true)"

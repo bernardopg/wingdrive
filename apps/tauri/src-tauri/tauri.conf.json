@@ -121,7 +121,10 @@
         }
       },
       "appimage": {
-        "bundleMediaFramework": true
+        "bundleMediaFramework": true,
+        "files": {
+          "/usr/lib/wingdrive/libpdfium.so": "../../.deps/lib/libpdfium.so"
+        }
       }
     },
     "macOS": {

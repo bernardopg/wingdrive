@@ -5,6 +5,16 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Fixed
+
+- PDF thumbnails work again on Linux. Only the first PDF a daemon rendered got a thumbnail:
+  pdfium was bound again for every file and refused the second binding. The AppImage, the AUR
+  packages and the server archives also left out `libpdfium.so`, so they showed no PDF
+  thumbnail at all; the release now checks it is there.
+- Renaming a folder that holds an indexed folder no longer logs "UNIQUE constraint failed:
+  entries.parent_id, entries.name": a change inside the renamed folder updates the entry at the
+  new path instead of moving the old entry onto it.
+
 ### Internal
 
 - README, installation, self-hosting, Linux deployment and wingdrive.org pages list the Flatpak,
