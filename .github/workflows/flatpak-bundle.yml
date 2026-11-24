@@ -44,9 +44,11 @@ jobs:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
       options: --privileged
     steps:
+      # The manifest is release tooling, like scripts/release: it comes from the workflow
+      # commit, so a dispatch from main can repackage an older tag's .deb.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.release-tag || github.sha }}
+          ref: ${{ github.workflow_sha }}
           persist-credentials: false
       - name: Get the Debian package from this run
         if: ${{ inputs.deb-artifact != '' }}
