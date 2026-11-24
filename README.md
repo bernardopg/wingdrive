@@ -20,7 +20,7 @@
 <p align="center">
   <a href="https://aur.archlinux.org/packages/wingdrive-bin/"><img src="https://img.shields.io/aur/version/wingdrive-bin?logo=archlinux&logoColor=white&label=AUR&color=1793d1" alt="AUR"/></a>
   <img src="https://img.shields.io/badge/Linux-supported-2ea44f?logo=linux&logoColor=white" alt="Linux: supported"/>
-  <img src="https://img.shields.io/badge/macOS-planned%20(M3)-6b7280?logo=apple&logoColor=white" alt="macOS: planned"/>
+  <img src="https://img.shields.io/badge/macOS-preview-d97706?logo=apple&logoColor=white" alt="macOS: preview"/>
   <img src="https://img.shields.io/badge/Windows-beta-d97706?logo=windows&logoColor=white" alt="Windows: beta"/>
   <img src="https://img.shields.io/badge/Android-beta-d97706?logo=android&logoColor=white" alt="Android: beta"/>
   <a href="https://github.com/sponsors/bernardopg"><img src="https://img.shields.io/badge/sponsor-%E2%99%A5-db2777?logo=githubsponsors&logoColor=white" alt="Sponsor"/></a>
@@ -51,18 +51,23 @@ browse, search and recognize across your own devices. No account, no telemetry, 
 
 > **Alpha.** Linux is the supported platform, including use as the default file manager.
 > Windows and Android ship in beta. Android Explorer supports local copy, move, and trash.
-> macOS builds from source. Milestone M3 focuses on desktop releases for Windows and macOS.
+> macOS on Apple silicon ships as a preview `.dmg`, signed ad hoc and not notarized yet.
+> Milestone M3 focuses on desktop releases for Windows and macOS.
 
 ## Install
 
 | Where | How |
 |---|---|
 | Arch Linux and derivatives | `yay -S wingdrive-bin` (stable), or `yay -S wingdrive-nightly` for every release including alpha, beta and rc |
-| Any Linux (x86_64) | AppImage or `.deb` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS` |
-| Windows 10 and 11 (x64), beta | `.exe` or `.msi` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest), with `SHA256SUMS-windows`. SmartScreen may warn when a build ships without Authenticode signing |
-| Android (ARM64), beta | Install the APK from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) and verify it with `SHA256SUMS-android` |
-| Headless server | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |
+| Any Linux (x86_64) | AppImage, `.deb` or Flatpak bundle from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) |
+| Windows 10 and 11 (x64), beta | `.exe` or `.msi` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest). SmartScreen may warn when a build ships without Authenticode signing |
+| macOS on Apple silicon, preview | `.dmg` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest). Not notarized yet: run `xattr -dr com.apple.quarantine /Applications/WingDrive.app` once after copying the app |
+| Android (ARM64), beta | APK from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) |
+| Headless server | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server`, or the `wing-server` archive for Linux x86_64 from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) |
+| Command line | `wing` ships with every desktop package and in the `wing-server` archive; Windows also gets `wing-<version>-windows-x64.zip` with `wing.exe` and `wing-daemon.exe` |
 | From source | `just setup && just dev-desktop` ([guide](./docs/readme/installation.md)) |
+
+Every release lists one `SHA256SUMS` for all files: `sha256sum -c SHA256SUMS --ignore-missing`.
 
 After installing, WingDrive can open folders for `xdg-open` and for "Show in folder" in other apps,
 start with your session and stay in the tray.
@@ -126,7 +131,8 @@ The [user guide on wingdrive.org](https://wingdrive.org/docs/) walks through eac
 - Every file gets a BLAKE3 content identity, so the same file on two devices is one file.
 - Pair your own devices over Iroh/QUIC to sync the library and send files with Wingdrop.
 - Google Drive and Google Photos with several accounts: browse, copy, edit in local apps, sync folders
-  and upload photos. S3, Dropbox, OneDrive, Azure Blob and GCS as volumes through OpenDAL.
+  and upload photos. OneDrive with your own Microsoft app registration. S3, Dropbox, Azure Blob and
+  GCS as volumes through OpenDAL.
 - `wing` CLI and `wing-server` for scripts and headless machines, both on the same daemon.
 - English and Brazilian Portuguese, and themes such as Catppuccin, Gruvbox, Dracula and Tokyo Night.
 
@@ -160,7 +166,7 @@ filesystems, copies refuse to write into their own source, system mounts are nev
 |---|---|
 | **M1** · done | A reliable desktop file manager on Linux, from a production bundle |
 | **M2** · done | Default file manager integration on Linux and dual-pane Explorer (F3). Desktop coverage follow-up remains open |
-| **M3** · now | Desktop releases for Windows and macOS. Linux and Windows already support signed updates, and platform validation continues |
+| **M3** · now | Desktop releases for Windows and macOS. Linux and Windows already support signed updates, macOS ships a preview `.dmg`, and notarization and platform validation continue |
 | **M4** | File sync between devices, public sharing links, Wingdrop to nearby devices, Tailscale |
 | **M5** | Semantic search, WASM extensions, encryption at rest, Android beta improvements and iOS releases |
 

@@ -271,7 +271,7 @@ Official builds since 3.3.0 ship WingDrive's Google client; builds from source w
 
 ## Limitations
 
-- In mode `app`, Drive shows only files WingDrive created or opened (`drive.file`). Opening existing files there needs the Google Picker, which is not wired yet; use mode `custom` for all of My Drive.
+- In mode `app`, Drive shows only files WingDrive created or opened (`drive.file`). To reach other files, pick them with **Add files from Google Drive** (Settings > Integrations), which opens the Google Picker, or use mode `custom` for all of My Drive.
 - Shared drives and "Shared with me" are not browsed; only "My Drive".
 - Drive folders are listed live and not indexed, so Drive files do not appear in library search. Enabling indexing on the Drive location runs the generic cloud indexer, which has not been validated against Google Drive.
 - Changes made in Drive appear on the next listing (cache of 30 seconds); there is no push notification channel.

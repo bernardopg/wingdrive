@@ -14,13 +14,14 @@ WingDrive runs a background service (the daemon) and a separate window. Closing 
 | Platform | How |
 |---|---|
 | Arch Linux and derivatives | `yay -S wingdrive-bin` (stable) or `yay -S wingdrive-nightly` (every release, including alpha, beta and rc) |
-| Any Linux (x86_64) | AppImage or `.deb` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) |
-| Windows 10 and 11 (x64), beta | `.exe` or `.msi` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest). Unsigned, so SmartScreen warns |
-| Headless server | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |
-| macOS | Build from source ([installation guide](../readme/installation.md)) |
+| Any Linux (x86_64) | AppImage, `.deb` or Flatpak bundle from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) |
+| Windows 10 and 11 (x64), beta | `.exe` or `.msi` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest). SmartScreen may warn on builds without Authenticode signing |
+| macOS on Apple silicon, preview | `.dmg` from [Releases](https://github.com/bernardopg/wingdrive/releases/latest). Not notarized yet: run `xattr -dr com.apple.quarantine /Applications/WingDrive.app` once |
+| Android (ARM64), beta | APK from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) |
+| Headless server | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server`, or the `wing-server` archive from [Releases](https://github.com/bernardopg/wingdrive/releases/latest) ([Self-hosting](./self-hosting.mdx)) |
 
 <Note>
-Linux is the supported platform. Windows installers are a beta. Signed macOS and Windows builds are planned for milestone M3.
+Linux is the supported platform. Windows and Android are in beta, and macOS is a preview. The AppImage and the Windows installers update themselves with signed updates; notarized macOS builds are planned for milestone M3.
 </Note>
 
 ## Create Your First Library

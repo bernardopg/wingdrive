@@ -85,18 +85,19 @@ This is infrastructure for the next era of computing.
 
 **Platform Support**
 
-- Linux: Supported (AppImage, `.deb`, AUR `wingdrive-bin`)
-- Windows 10 and 11 (x64): Beta, unsigned installers since 3.0.0
-- macOS: Builds from source; signed releases planned for milestone M3
-- Android: In development
+- Linux: Supported (AppImage, `.deb`, Flatpak bundle, AUR `wingdrive-bin` and `wingdrive-nightly`)
+- Windows 10 and 11 (x64): Beta since 3.0.0, `.exe` and `.msi` with signed updates
+- macOS on Apple silicon: Preview `.dmg` since 3.7.0, signed ad hoc and not notarized
+- Android (ARM64): Beta APK
+- Server: Docker image (amd64 and arm64) and `wing-server` archives for Linux x86_64
 - iOS: Private prototype
 
 ### Coming Soon
 
-- **Milestone M3**: signed releases for Windows and macOS
+- **Milestone M3**: notarized macOS builds and Windows validation
 - **Future releases**:
   - iOS app
-  - Android app
+  - Android app out of beta
   - Extension SDK (stable API)
   - AI integration with local models
 

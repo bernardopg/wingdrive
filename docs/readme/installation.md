@@ -6,12 +6,30 @@ WingDrive builds with the Rust toolchain pinned in `rust-toolchain.toml` (instal
 
 Get the latest build from [GitHub Releases](https://github.com/bernardopg/wingdrive/releases):
 
-- **Linux:** AppImage or Debian package
-- **Windows 10 and 11 (x64), beta:** NSIS installer (`.exe`) or `.msi`. Verify the download
-  against `SHA256SUMS-windows`. SmartScreen may warn on builds without Authenticode signing.
-- **Android (ARM64), beta:** APK. Verify the download against `SHA256SUMS-android`.
-- **macOS:** build from source for now; prebuilt releases are planned for milestone M3
-- **Docker:** `ghcr.io/bernardopg/wingdrive/server` for headless deployments
+- **Linux (x86_64):** AppImage, Debian package or Flatpak bundle. The `.deb`, the AppImage and the
+  AUR packages see every mount; the Flatpak sandbox sees fewer volumes.
+- **Windows 10 and 11 (x64), beta:** NSIS installer (`.exe`) or `.msi`. SmartScreen may warn on
+  builds without Authenticode signing.
+- **macOS on Apple silicon, preview:** `.dmg`, signed ad hoc and not notarized yet. After copying
+  the app to Applications, run `xattr -dr com.apple.quarantine /Applications/WingDrive.app` once.
+  The macOS app does not update itself yet.
+- **Android (ARM64), beta:** APK.
+- **Server and command line:** `wing-server-<version>-linux-x86_64` as `.tar.gz`, `.tar.xz` or
+  `.zip`, and `wing-<version>-windows-x64.zip` with `wing.exe` and `wing-daemon.exe`.
+- **Docker:** `ghcr.io/bernardopg/wingdrive/server` (amd64 and arm64) for headless deployments
+
+Every release has one `SHA256SUMS` for all its files:
+
+```bash
+sha256sum -c SHA256SUMS --ignore-missing
+```
+
+Install the Flatpak bundle with:
+
+```bash
+flatpak install --user WingDrive-<version>-x86_64.flatpak
+flatpak run com.wingdrive.desktop
+```
 
 ## Option 2: Arch-based systems (AUR)
 

@@ -44,6 +44,18 @@ volumes:
   wingdrive-data:
 ```
 
+## Arquivo da versão
+
+Sem um runtime de contêineres, use o arquivo `wing-server-<versão>-linux-x86_64` da [página de download](/pt/download/) (`.tar.gz`, `.tar.xz` ou `.zip`). Ele traz `bin/wing-server`, a CLI `bin/wing` e as bibliotecas FFmpeg e libheif que eles carregam em `lib/wingdrive/`, e exige glibc 2.39 ou mais recente.
+
+```bash
+VERSION=3.7.1
+sudo tar -xJf wing-server-$VERSION-linux-x86_64.tar.xz -C /opt
+sudo ln -sfn /opt/wing-server-$VERSION-linux-x86_64 /opt/wingdrive-server
+```
+
+Mantenha `bin/` e `lib/` juntos. Para atualizar, extraia o novo arquivo e mova o link `/opt/wingdrive-server`.
+
 ## systemd
 
 Crie `/etc/systemd/system/wingdrive.service`:
@@ -59,7 +71,7 @@ User=wingdrive
 Group=wingdrive
 Environment="DATA_DIR=/var/lib/wingdrive"
 Environment="WING_AUTH=admin:your-secure-password"
-ExecStart=/usr/local/bin/wingdrive-server --data-dir /var/lib/wingdrive
+ExecStart=/opt/wingdrive-server/bin/wing-server --data-dir /var/lib/wingdrive
 Restart=on-failure
 RestartSec=5s
 

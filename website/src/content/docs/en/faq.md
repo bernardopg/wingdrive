@@ -31,11 +31,11 @@ Copy, overwrite, move, rename, trash and new folders, files and links can be und
 
 ## Which platforms are supported?
 
-Linux is supported. Windows 10 and 11 are in beta. macOS builds from source until signed builds land in milestone M3. Android is in beta, with an ARM64 APK available in [Releases](https://github.com/bernardopg/wingdrive/releases/latest).
+Linux is supported. Windows 10 and 11 are in beta. Macs with Apple silicon get a preview `.dmg`, signed ad hoc and not notarized until milestone M3. Android is in beta, with an ARM64 APK available in [Releases](https://github.com/bernardopg/wingdrive/releases/latest).
 
 ## Why does Windows warn about the installer?
 
-Tagged releases use Authenticode when signing credentials are configured. Windows SmartScreen may warn on builds without Authenticode signing. Verify the file against `SHA256SUMS-windows`.
+Tagged releases use Authenticode when signing credentials are configured. Windows SmartScreen may warn on builds without Authenticode signing. Verify the file against `SHA256SUMS`.
 
 ## How do I report a bug or ask for a feature?
 

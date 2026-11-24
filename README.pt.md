@@ -20,9 +20,9 @@
 <p align="center">
   <a href="https://aur.archlinux.org/packages/wingdrive-bin/"><img src="https://img.shields.io/aur/version/wingdrive-bin?logo=archlinux&logoColor=white&label=AUR&color=1793d1" alt="AUR"/></a>
   <img src="https://img.shields.io/badge/Linux-suportado-2ea44f?logo=linux&logoColor=white" alt="Linux: suportado"/>
-  <img src="https://img.shields.io/badge/macOS-planejado%20(M3)-6b7280?logo=apple&logoColor=white" alt="macOS: planejado"/>
+  <img src="https://img.shields.io/badge/macOS-pr%C3%A9via-d97706?logo=apple&logoColor=white" alt="macOS: prévia"/>
   <img src="https://img.shields.io/badge/Windows-beta-d97706?logo=windows&logoColor=white" alt="Windows: beta"/>
-  <img src="https://img.shields.io/badge/Android-em%20desenvolvimento-6b7280?logo=android&logoColor=white" alt="Android: em desenvolvimento"/>
+  <img src="https://img.shields.io/badge/Android-beta-d97706?logo=android&logoColor=white" alt="Android: beta"/>
   <a href="https://github.com/sponsors/bernardopg"><img src="https://img.shields.io/badge/patrocinar-%E2%99%A5-db2777?logo=githubsponsors&logoColor=white" alt="Patrocinar"/></a>
 </p>
 
@@ -50,19 +50,25 @@ discos externos e volumes de nuvem numa biblioteca só. Os arquivos ficam onde e
 tudo rápido de navegar, buscar e reconhecer entre os seus aparelhos. Sem conta, sem telemetria, sem
 servidor central.
 
-> **Alpha.** O Linux é a plataforma suportada. A meta atual (milestone M2) é substituir o Dolphin,
-> o Nautilus ou o Yazi como gerenciador de arquivos padrão. Desde a 3.0 há instaladores para Windows,
-> em beta: não são assinados e foram menos testados que no Linux. O macOS compila a partir do código.
+> **Alpha.** O Linux é a plataforma suportada, inclusive como gerenciador de arquivos padrão.
+> Windows e Android saem em beta. O Explorer do Android copia, move e manda para a lixeira arquivos
+> locais. O macOS em Apple silicon sai como `.dmg` de prévia, assinado ad hoc e ainda sem
+> notarização. A milestone M3 trata das releases desktop para Windows e macOS.
 
 ## Instalação
 
 | Onde | Como |
 |---|---|
 | Arch Linux e derivados | `yay -S wingdrive-bin` (estável), ou `yay -S wingdrive-nightly` para todo release, inclusive alpha, beta e rc |
-| Qualquer Linux (x86_64) | AppImage ou `.deb` em [Releases](https://github.com/bernardopg/wingdrive/releases/latest), com `SHA256SUMS` |
-| Windows 10 e 11 (x64), beta | `.exe` ou `.msi` em [Releases](https://github.com/bernardopg/wingdrive/releases/latest), com `SHA256SUMS-windows`. Sem assinatura, então o SmartScreen avisa |
-| Servidor sem interface | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server` |
+| Qualquer Linux (x86_64) | AppImage, `.deb` ou pacote Flatpak em [Releases](https://github.com/bernardopg/wingdrive/releases/latest) |
+| Windows 10 e 11 (x64), beta | `.exe` ou `.msi` em [Releases](https://github.com/bernardopg/wingdrive/releases/latest). O SmartScreen pode avisar quando a versão sai sem assinatura Authenticode |
+| macOS em Apple silicon, prévia | `.dmg` em [Releases](https://github.com/bernardopg/wingdrive/releases/latest). Ainda sem notarização: rode `xattr -dr com.apple.quarantine /Applications/WingDrive.app` uma vez depois de copiar o app |
+| Android (ARM64), beta | APK em [Releases](https://github.com/bernardopg/wingdrive/releases/latest) |
+| Servidor sem interface | `docker run -d -p 8080:8080 -v wingdrive-data:/data ghcr.io/bernardopg/wingdrive/server`, ou o arquivo `wing-server` para Linux x86_64 em [Releases](https://github.com/bernardopg/wingdrive/releases/latest) |
+| Linha de comando | `wing` vem em todo pacote desktop e no arquivo `wing-server`; no Windows há também `wing-<versão>-windows-x64.zip` com `wing.exe` e `wing-daemon.exe` |
 | A partir do código | `just setup && just dev-desktop` ([guia](./docs/readme/installation.md)) |
+
+Cada release traz um `SHA256SUMS` único para todos os arquivos: `sha256sum -c SHA256SUMS --ignore-missing`.
 
 Depois de instalado, o WingDrive pode abrir pastas pelo `xdg-open` e pelo "Mostrar na pasta" de
 outros apps, iniciar com a sessão e ficar na bandeja.
@@ -127,7 +133,8 @@ O [guia do usuário em wingdrive.org](https://wingdrive.org/pt/docs/) mostra cad
 - Cada arquivo ganha uma identidade de conteúdo BLAKE3, então o mesmo arquivo em dois aparelhos é um só.
 - Pareie seus aparelhos via Iroh/QUIC para sincronizar a biblioteca e enviar arquivos com o Wingdrop.
 - Google Drive e Google Fotos com várias contas: navegar, copiar, editar em apps locais, sincronizar
-  pastas e enviar fotos. S3, Dropbox, OneDrive, Azure Blob e GCS como volumes via OpenDAL.
+  pastas e enviar fotos. OneDrive com um registro de app Microsoft seu. S3, Dropbox, Azure Blob e
+  GCS como volumes via OpenDAL.
 - CLI `wing` e `wing-server` para scripts e máquinas sem interface, no mesmo daemon.
 - Inglês e português do Brasil, e temas como Catppuccin, Gruvbox, Dracula e Tokyo Night.
 
@@ -163,10 +170,10 @@ sistema nunca são ejetadas).
 | Milestone | O que traz |
 |---|---|
 | **M1** · feito | Um gerenciador de arquivos desktop confiável no Linux, a partir de um bundle de produção |
-| **M2** · agora | O gerenciador padrão no Linux: Explorer com painel duplo (F3), um dia inteiro de uso sem voltar a outro |
-| **M3** · depois | Releases assinadas para macOS e Windows e atualização automática. A pré-checagem de cópia (3.0) e o desfazer de cópia, movimentação e lixeira (3.1) já saíram |
+| **M2** · feito | Integração como gerenciador de arquivos padrão no Linux e Explorer com painel duplo (F3). Falta o acompanhamento de cobertura do desktop |
+| **M3** · agora | Releases desktop para Windows e macOS. Linux e Windows já têm atualização assinada, o macOS sai como `.dmg` de prévia, e a notarização e a validação nas plataformas continuam |
 | **M4** | Sync de arquivos entre aparelhos, links públicos de compartilhamento, Wingdrop para aparelhos próximos, Tailscale |
-| **M5** | Busca semântica, extensões WASM, criptografia em repouso, releases para Android e iOS |
+| **M5** | Busca semântica, extensões WASM, criptografia em repouso, melhorias no beta do Android e releases para iOS |
 
 O plano vivo, sprint a sprint, está em [`.tasks/`](./.tasks/ROADMAP.md).
 

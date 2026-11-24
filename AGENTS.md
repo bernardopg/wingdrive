@@ -35,7 +35,7 @@ cargo run --bin wing -- <command>      # Run CLI (binary is `wing`)
 - On frontend apps, such as the interface in React, you must ALWAYS ensure type-safety based on the auto generated TypeScript types from `ts-client`. Never cast to as any or redefine backend types. our hooks are typesafe with correct input/output types, but sometimes you might need to access types directly from the `ts-client`.
 - If you have changed types on the backend that are public to the frontend (have `Type` derive), then you must regenerate the types using `cargo run --bin generate_typescript_types`
 - Read the `.mdx` files in /docs for context on any part of the app, they are kept up to date.
-- WingDrive ships for Linux (supported) and Windows (beta since 3.0.0). macOS only builds from source.
+- WingDrive ships for Linux (supported), Windows (beta since 3.0.0) and macOS on Apple silicon (preview `.dmg` since 3.7.0, ad hoc signed, not notarized, no self-update).
   Code that touches paths, processes, the clipboard or the shell needs both platforms in mind; see
   [Windows](#windows).
 

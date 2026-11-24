@@ -3,6 +3,14 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Internal
+
+- README, installation, self-hosting, Linux deployment and wingdrive.org pages list the Flatpak,
+  the macOS preview `.dmg`, the server and command line archives, OneDrive and the single
+  `SHA256SUMS`, mark the Google Picker as available, and drop release file names that never existed.
+
 ## 3.7.1 — 2026-11-24
 
 This release fixes the General page in Settings, which since 3.6.0 showed "Could not load settings"

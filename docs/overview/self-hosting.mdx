@@ -10,23 +10,32 @@ The server embeds the full WingDrive daemon with media processing capabilities. 
 
 ## Installation Methods
 
-### Static Binary
+### Release Archive
 
-Download the latest x86_64 Linux release binary. This method requires no container runtime.
+Each release ships `wing-server` and the `wing` CLI for Linux x86_64 as
+`wing-server-<version>-linux-x86_64.tar.gz`, `.tar.xz` or `.zip`. This method requires no container
+runtime. The archive carries the FFmpeg and libheif libraries the binaries load, in
+`lib/wingdrive/`, and needs glibc 2.39 or newer (Ubuntu 24.04, Debian 13, Fedora 40, Arch).
 
 ```bash
-# Download the binary and release checksums
-wget https://github.com/bernardopg/wingdrive/releases/latest/download/wingdrive-server-linux-x86_64
-wget https://github.com/bernardopg/wingdrive/releases/latest/download/SHA256SUMS
+VERSION=3.7.1
+ARCHIVE=wing-server-$VERSION-linux-x86_64.tar.xz
 
-# Verify checksum
-grep 'wingdrive-server-linux-x86_64$' SHA256SUMS | sha256sum -c -
+# Download the archive and the release checksums
+wget https://github.com/bernardopg/wingdrive/releases/download/v$VERSION/$ARCHIVE
+wget https://github.com/bernardopg/wingdrive/releases/download/v$VERSION/SHA256SUMS
 
-# Install to system
-sudo install -m 755 wingdrive-server-linux-x86_64 /usr/local/bin/wingdrive-server
+# Verify the checksum
+sha256sum -c SHA256SUMS --ignore-missing
+
+# Install under /opt, keeping bin/ and lib/ together
+sudo tar -xJf $ARCHIVE -C /opt
+sudo ln -sfn /opt/wing-server-$VERSION-linux-x86_64 /opt/wingdrive-server
 ```
 
-For ARM systems like Raspberry Pi, use the multi-architecture Docker image below.
+Keep `bin/` and `lib/wingdrive/` side by side: the binaries find their libraries through
+`$ORIGIN/../lib/wingdrive`. For ARM systems like Raspberry Pi, use the multi-architecture Docker
+image below.
 
 ### Docker Deployment
 
@@ -85,7 +94,7 @@ User=wingdrive
 Group=wingdrive
 Environment="DATA_DIR=/var/lib/wingdrive"
 Environment="WING_AUTH=admin:your-secure-password"
-ExecStart=/usr/local/bin/wingdrive-server --data-dir /var/lib/wingdrive
+ExecStart=/opt/wingdrive-server/bin/wing-server --data-dir /var/lib/wingdrive
 Restart=on-failure
 RestartSec=5s
 
@@ -301,11 +310,14 @@ docker rm wingdrive
 
 **Binary updates:**
 
-Download the new release, verify checksums, and replace the binary. Restart the systemd service.
+Download the new archive, verify it against `SHA256SUMS`, extract it next to the old one and move
+the `/opt/wingdrive-server` link. Restart the systemd service.
 
 ```bash
+VERSION=3.7.1
+sudo tar -xJf wing-server-$VERSION-linux-x86_64.tar.xz -C /opt
 sudo systemctl stop wingdrive
-sudo mv wing-server-new /usr/local/bin/wing-server
+sudo ln -sfn /opt/wing-server-$VERSION-linux-x86_64 /opt/wingdrive-server
 sudo systemctl start wingdrive
 ```
 
