@@ -14,38 +14,38 @@ their changes are part of this release.
 ### Highlights
 
 - Install WingDrive as a Flatpak, on a Mac with Apple silicon, or as a plain server archive without
-  Docker (#535).
+  Docker (#532).
 - Sending files with Wingdrop finishes again: accepting an offer no longer times out after 30
-  seconds (#535).
-- Tags applied on one device now show up on its paired devices (#535).
+  seconds (#532).
+- Tags applied on one device now show up on its paired devices (#532).
 
 ### Added
 
 - Flatpak bundle `WingDrive-3.7.0-x86_64.flatpak` on the GNOME 51 runtime, with the tray icon
-  (#535).
+  (#532).
 - macOS disk image `WingDrive-3.7.0-aarch64.dmg` for Apple silicon. It is signed ad hoc, not
   notarized yet: clear the quarantine once with `xattr -dr com.apple.quarantine
-  /Applications/WingDrive.app` (#535).
+  /Applications/WingDrive.app` (#532).
 - `wing-server` and `wing` for Linux x86_64 as `.tar.gz`, `.tar.xz` and `.zip`, with their media
-  libraries, and `wing.exe` with `wing-daemon.exe` for Windows as a `.zip` (#535).
+  libraries, and `wing.exe` with `wing-daemon.exe` for Windows as a `.zip` (#532).
 - The Arch Linux `PKGBUILD` and its `.SRCINFO` (published as `SRCINFO`) on every release page
-  (#535).
+  (#532).
 
 ### Changed
 
 - The release page has a fixed layout: changelog, download tables with sizes, verification steps
-  and the pull requests grouped by type. One `SHA256SUMS` covers every file (#535).
+  and the pull requests grouped by type. One `SHA256SUMS` covers every file (#532).
 
 ### Fixed
 
 - Wingdrop: accepting an offer on the receiving device timed out after 30 seconds and nothing was
-  sent. The sending device now listens for replies on connections it opened (#535).
+  sent. The sending device now listens for replies on connections it opened (#532).
 - Tags applied to a file never reached paired devices: the tag association was sent with the
   sender's local database IDs and before the metadata it belongs to, so the peer rejected it, or
-  could attach it to the wrong file (#535).
+  could attach it to the wrong file (#532).
 - The redundancy summary counted duplicate files on one volume once per copy and the same content on
   two volumes twice, showing values such as "Redundant 299.9%". Bytes now count each content once
-  per volume and once in the library total (#535).
+  per volume and once in the library total (#532).
 - The event stream to clients stopped for good after a burst of events, which left dialogs such as
   "Moving files" open; it now resynchronizes and continues (#529).
 - Bundled adapters could fail to load with a TOML parse error when the interface asked for sources
@@ -59,7 +59,7 @@ their changes are part of this release.
 - The Explorer smoke is a required check, apt downloads are cached in CI, and the Android release
   build uses the same thin LTO as the other platforms (#529).
 - `CHANGELOG.md` follows a checked format (`scripts/release/changelog.py`), documented in
-  `docs/core/releases.mdx` (#535).
+  `docs/core/releases.mdx` (#532).
 - More tests for the TypeScript client, the CLI, the server and the core (#516, #517, #518, #519).
 
 ## 3.6.1 — 2026-11-23
