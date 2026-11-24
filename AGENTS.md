@@ -755,15 +755,26 @@ releases:
 
 ## Releases
 
-`docs/core/releases.mdx` has the full pipeline. In short:
+`docs/core/releases.mdx` has the full pipeline, the asset list and both formats below. In short:
 
-1. `cargo xtask bump <version>` updates the seven version files and `Cargo.lock`. Open a pull
-   request with it; `main` only changes through pull requests.
+1. `cargo xtask bump <version>` updates the seven version files and `Cargo.lock`. In the same pull
+   request, rename `## Unreleased` in `CHANGELOG.md` to `## X.Y.Z — YYYY-MM-DD` and run
+   `python3 scripts/release/changelog.py check`. `main` only changes through pull requests.
 2. After it merges and `main`'s CI finishes, tag the merge commit: `git tag -a vX.Y.Z -m "WingDrive
    X.Y.Z"` and `git push origin vX.Y.Z`. `scripts/release/version.py` rejects a tag that disagrees
-   with the manifests.
-3. `release.yml` waits for CI on the tagged commit, builds and verifies the Linux, Windows and
-   Android artifacts, publishes the GitHub Release, then the AUR packages.
+   with the manifests, and `changelog.py require` one without its changelog section.
+3. `release.yml` waits for CI on the tagged commit, builds and verifies every asset (AppImage,
+   `.deb`, Flatpak, `PKGBUILD`/`SRCINFO`, Windows `.exe`/`.msi`/CLI `.zip`, macOS `.dmg`, Android
+   `.apk`/`.aab`, server `.tar.gz`/`.tar.xz`/`.zip`), publishes the GitHub Release with the body
+   `scripts/release/notes.py` writes, then the AUR packages.
+
+Changelog rules (checked in CI): each version opens with a summary paragraph, then only the
+subsections `Highlights`, `Added`, `Changed`, `Fixed`, `Performance`, `Security`, `Deprecated`,
+`Removed`, `Internal`, in that order, each a list of user-facing `- ` bullets ending with the pull
+request numbers. A pull request that changes behavior adds its bullet under `## Unreleased`. Pull
+request titles use Conventional Commits; the release page groups them by type. A new release asset
+goes into the table in `docs/core/releases.mdx`, `scripts/release/notes.py` and the website's
+download page in the same pull request.
 
 Alpha, beta and rc tags ship the Windows `.exe` only (WiX needs numeric pre-release versions) and
 publish `wingdrive-nightly` on AUR. Stable tags publish `wingdrive-bin` and `wingdrive-nightly`.

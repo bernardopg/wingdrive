@@ -97,6 +97,11 @@ jobs:
       - name: Check repository independence
         run: ./scripts/check-wingdrive-independence.sh
 
+      # The release page is built from CHANGELOG.md, so its format is checked on every change
+      # (docs/core/releases.mdx, section "Changelog").
+      - name: Check the changelog format
+        run: python3 scripts/release/changelog.py check
+
   frontend:
     name: TypeScript
     needs: changes
