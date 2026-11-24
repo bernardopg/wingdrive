@@ -324,7 +324,10 @@ pub fn list(archive: &Path, format: ArchiveFormat) -> Result<Vec<Member>, Archiv
 					Path::new(&member.meta.name_lossy()),
 					member.meta.is_directory,
 					member.meta.unpacked_size,
-					member.meta.modification_time(),
+					member
+						.meta
+						.modification_time()
+						.and_then(|time| std::time::SystemTime::try_from(time).ok()),
 				);
 			}
 		}
