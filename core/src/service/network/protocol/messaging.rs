@@ -26,6 +26,14 @@ pub struct MessagingProtocolHandler {
 
 	/// Cached connections to remote nodes (keyed by EndpointId and ALPN)
 	connections: Arc<RwLock<HashMap<(EndpointId, Vec<u8>), Connection>>>,
+
+	/// Event loop channel, used to accept the streams a peer opens on
+	/// connections this handler dials
+	command_sender: Option<
+		tokio::sync::mpsc::UnboundedSender<
+			crate::service::network::core::event_loop::EventLoopCommand,
+		>,
+	>,
 }
 
 /// Basic message types
@@ -81,7 +89,18 @@ impl MessagingProtocolHandler {
 			device_registry,
 			endpoint,
 			connections: active_connections,
+			command_sender: None,
 		}
+	}
+
+	/// Set the event loop channel after creation
+	pub fn set_command_sender(
+		&mut self,
+		sender: tokio::sync::mpsc::UnboundedSender<
+			crate::service::network::core::event_loop::EventLoopCommand,
+		>,
+	) {
+		self.command_sender = Some(sender);
 	}
 
 	/// Set context after creation
@@ -792,14 +811,33 @@ impl MessagingProtocolHandler {
 		})?;
 
 		let logger: Arc<dyn utils::NetworkLogger> = Arc::new(utils::SilentLogger);
+		let alpn = crate::service::network::core::MESSAGING_ALPN;
+		let cached = self
+			.connections
+			.read()
+			.await
+			.get(&(node_id, alpn.to_vec()))
+			.is_some_and(|conn| conn.close_reason().is_none());
 		let conn = utils::get_or_create_connection(
 			self.connections.clone(),
 			endpoint,
 			node_id,
-			crate::service::network::core::MESSAGING_ALPN,
+			alpn,
 			&logger,
 		)
 		.await?;
+		// The peer caches this connection and sends its own requests (a Wingdrop
+		// decision, a library request) on it, so accept streams on it as on any
+		// incoming connection. Without this, those requests time out.
+		if !cached {
+			if let Some(sender) = &self.command_sender {
+				use crate::service::network::core::event_loop::EventLoopCommand;
+				let _ = sender.send(EventLoopCommand::TrackOutboundConnection {
+					node_id,
+					conn: conn.clone(),
+				});
+			}
+		}
 
 		// Create new stream on existing connection
 		let (mut send, mut recv) = conn.open_bi().await.map_err(|e| {

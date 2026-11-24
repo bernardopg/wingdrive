@@ -687,7 +687,7 @@ async fn register_default_protocol_handlers(
 			networking.identity().clone(),
 			networking.device_registry(),
 			logger.clone(),
-			command_sender,
+			command_sender.clone(),
 			data_dir.clone(),
 			networking.endpoint().cloned(),
 			networking.active_connections(),
@@ -742,6 +742,7 @@ async fn register_default_protocol_handlers(
 
 	// Inject context for library operations
 	messaging_handler.set_context(context.clone());
+	messaging_handler.set_command_sender(command_sender.clone());
 
 	let mut file_transfer_handler =
 		service::network::protocol::FileTransferProtocolHandler::new_default(logger.clone());
