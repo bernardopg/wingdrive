@@ -3,7 +3,7 @@
 # The rest are advisories that cargo-deny reports without failing (unmaintained or unsound
 # crates pulled in transitively) or npm advisories in development tooling. Each one expires,
 # so the Security tab shows it again for review. Remove an entry once its fix lands.
-# Reviewed 2026-11-05.
+# Reviewed 2026-11-24.
 
 [[IgnoredVulns]]
 id = "RUSTSEC-2023-0071"
@@ -53,6 +53,11 @@ reason = "proc-macro-error: unmaintained compile-time macro helper, via glib-mac
 id = "RUSTSEC-2024-0436"
 ignoreUntil = 2027-02-05
 reason = "paste: unmaintained compile-time macro, via netlink-packet-core 0.8 in if-watch 3.2.2 (latest)."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0543"
+ignoreUntil = 2027-02-24
+reason = "chrono: unmaintained, no vulnerability. Used directly by 12 workspace crates and by sea-orm, sea-query, sqlx, rusqlite, specta and pdfium-render, all at their latest. Moving to jiff or time needs those crates to move first."
 
 # npm. Each package is only in development tooling (Jest, ESLint, the Expo CLI and SVGR),
 # runs on the repository's own files and patterns, and is not part of any shipped bundle.
