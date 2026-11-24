@@ -145,11 +145,14 @@ impl Library {
 		// the other read them, so an adapter.toml was parsed half written.
 		self.source_manager
 			.get_or_try_init(|| async {
-				let source_manager = crate::data::manager::SourceManager::new(self.path.clone())
-					.await
-					.map_err(|e| {
-						LibraryError::Other(format!("Failed to create source manager: {e}"))
-					})?;
+				let installed =
+					crate::ops::adapters::store::installed_dir(&self.core_context.data_dir);
+				let source_manager =
+					crate::data::manager::SourceManager::new(self.path.clone(), installed)
+						.await
+						.map_err(|e| {
+							LibraryError::Other(format!("Failed to create source manager: {e}"))
+						})?;
 				debug!("Source manager initialized for library {}", self.id());
 				Ok::<_, LibraryError>(Arc::new(source_manager))
 			})

@@ -2223,6 +2223,22 @@ export type IndexerStats = {
 	errors: number,
 };
 
+export type InstallAdapterInput = {
+	id: string,
+	/**
+	 *  The user saw the permissions the adapter asks for and accepted them. Required when the
+	 *  adapter declares any, and again when an update asks for more.
+	 */
+	accept_permissions?: boolean,
+};
+
+export type InstallAdapterOutput = {
+	id: string,
+	version: string,
+	/**  The version this install replaced, when it was an update. */
+	previous_version: string | null,
+};
+
 /**  A connected account as clients see it, without secrets. */
 export type IntegrationAccountInfo = {
 	id: string,
@@ -2894,6 +2910,8 @@ export type ListSourcesInput = {
 	/**  Filter by data type */
 	data_type: string | null,
 };
+
+export type ListStoreInput = Record<string, never>;
 
 export type ListWhisperModelsInput = Record<string, never>;
 
@@ -3631,6 +3649,8 @@ export type RedundancySummaryOutput = {
 	library_totals: LibraryRedundancyTotals,
 };
 
+export type RefreshStoreInput = Record<string, never>;
+
 export type RegenerateThumbnailInput = {
 	/**  UUID of the entry to regenerate thumbnails for */
 	entry_uuid: string,
@@ -3689,6 +3709,14 @@ export type RemoteLibraryInfo = {
 	createdAt: string,
 	/**  Statistics about the library */
 	statistics: LibraryStatistics,
+};
+
+export type RemoveAdapterInput = {
+	id: string,
+};
+
+export type RemoveAdapterOutput = {
+	id: string,
 };
 
 export type ReorderGroupsInput = {
@@ -4003,6 +4031,53 @@ export type StateTransition = {
 	to: DeviceSyncState,
 	timestamp: string,
 	reason: string | null,
+};
+
+/**  One adapter as the store shows it. */
+export type StoreCard = {
+	id: string,
+	name: string,
+	/**  Up to two lines for the card. */
+	summary: string,
+	description: string,
+	version: string,
+	author: string,
+	license: string,
+	homepage: string | null,
+	categories: string[],
+	/**  `official`, `verified` or `community`. */
+	trust: string,
+	permissions: StorePermissions,
+	platforms: string[],
+	/**  The adapter says it runs on this operating system. */
+	supported_here: boolean,
+	/**  The interpreter it needs (Python) is installed. */
+	runtime_available: boolean,
+	installed_version: string | null,
+	update_available: boolean,
+	/**  The update asks for permissions the installed version did not have. */
+	update_needs_consent: boolean,
+	/**  Set when the installed version is revoked; the reason says why. */
+	revoked_reason: string | null,
+	icon_svg: string | null,
+};
+
+/**  The store: every published adapter and the state of the installed ones. */
+export type StoreListing = {
+	/**  Sequence of the index shown, or `None` before the first refresh. */
+	sequence: number | null,
+	generated_at: string | null,
+	adapters: StoreCard[],
+	/**  Installed adapters with an update or a revoked version. */
+	updates: number,
+};
+
+/**  What an adapter may touch, as the store card shows it. */
+export type StorePermissions = {
+	read: string[],
+	network: string[],
+	secrets: string[],
+	tools: string[],
 };
 
 export type SuggestedLocation = {
@@ -5211,7 +5286,10 @@ export type WingsListQueryInput = null;
 // ===== API Type Unions =====
 
 export type CoreAction =
-     { type: 'config.app.update'; input: UpdateAppConfigInput; output: UpdateAppConfigOutput }
+     { type: 'adapters.store.install'; input: InstallAdapterInput; output: InstallAdapterOutput }
+  |  { type: 'adapters.store.refresh'; input: RefreshStoreInput; output: StoreListing }
+  |  { type: 'adapters.store.remove'; input: RemoveAdapterInput; output: RemoveAdapterOutput }
+  |  { type: 'config.app.update'; input: UpdateAppConfigInput; output: UpdateAppConfigOutput }
   |  { type: 'core.ephemeral_reset'; input: EphemeralCacheResetInput; output: EphemeralCacheResetOutput }
   |  { type: 'core.reset'; input: ResetDataInput; output: ResetDataOutput }
   |  { type: 'device.update'; input: UpdateDeviceInput; output: UpdateDeviceOutput }
@@ -5324,7 +5402,8 @@ export type LibraryAction =
 ;
 
 export type CoreQuery =
-     { type: 'config.app.get'; input: GetAppConfigQueryInput; output: AppConfigOutput }
+     { type: 'adapters.store.list'; input: ListStoreInput; output: StoreListing }
+  |  { type: 'config.app.get'; input: GetAppConfigQueryInput; output: AppConfigOutput }
   |  { type: 'core.ephemeral_status'; input: EphemeralCacheStatusInput; output: EphemeralCacheStatus }
   |  { type: 'core.events.list'; input: ListEventsInput; output: ListEventsOutput }
   |  { type: 'core.status'; input: Empty; output: CoreStatus }
@@ -5404,6 +5483,9 @@ export type LibraryQuery =
 
 export const WIRE_METHODS = {
   coreActions: {
+    'adapters.store.install': 'action:adapters.store.install.input',
+    'adapters.store.refresh': 'action:adapters.store.refresh.input',
+    'adapters.store.remove': 'action:adapters.store.remove.input',
     'config.app.update': 'action:config.app.update.input',
     'core.ephemeral_reset': 'action:core.ephemeral_reset.input',
     'core.reset': 'action:core.reset.input',
@@ -5517,6 +5599,7 @@ export const WIRE_METHODS = {
   },
 
   coreQueries: {
+    'adapters.store.list': 'query:adapters.store.list',
     'config.app.get': 'query:config.app.get',
     'core.ephemeral_status': 'query:core.ephemeral_status',
     'core.events.list': 'query:core.events.list',

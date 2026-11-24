@@ -575,21 +575,6 @@ impl Engine {
 		infos
 	}
 
-	/// The path to the bundled adapters directory (workspace root's adapters/).
-	pub fn source_adapters_dir(&self) -> Option<std::path::PathBuf> {
-		let candidates = [
-			std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-				.parent()
-				.map(|p| p.join("adapters")),
-			Some(self.config.data_dir.join("bundled_adapters")),
-		];
-
-		candidates
-			.into_iter()
-			.flatten()
-			.find(|candidate| candidate.is_dir())
-	}
-
 	/// Update an installed adapter from a source directory.
 	///
 	/// Backs up the installed adapter, copies new files, and re-registers.

@@ -1,3 +1,4 @@
+pub mod adapters;
 pub mod cloud;
 pub mod config;
 pub mod daemon;

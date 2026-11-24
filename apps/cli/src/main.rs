@@ -50,6 +50,7 @@ mod tests;
 
 use crate::context::{Context, OutputFormat};
 use crate::domains::{
+	adapters::{self, AdaptersCmd},
 	cloud, config as config_cmd,
 	daemon::{self, DaemonCmd},
 	devices::{self, DevicesCmd},
@@ -230,6 +231,9 @@ enum Commands {
 	/// Tag operations
 	#[command(subcommand)]
 	Tag(TagCmd),
+	/// Adapter store: browse, install, update and remove data source adapters
+	#[command(subcommand)]
+	Adapters(AdaptersCmd),
 	/// Volume operations
 	#[command(subcommand)]
 	Volume(VolumeCmd),
@@ -762,6 +766,7 @@ async fn run_client_command(
 		Commands::Search(cmd) => search::run(&ctx, cmd).await?,
 		Commands::Wings(cmd) => wings::exec(cmd, &ctx).await?,
 		Commands::Tag(cmd) => tag::run(&ctx, cmd).await?,
+		Commands::Adapters(cmd) => adapters::run(&ctx, cmd).await?,
 		Commands::Volume(cmd) => volume::run(&ctx, cmd).await?,
 		Commands::Cloud => cloud::run(&ctx).await?,
 		_ => {} // Start and Stop are handled in main
