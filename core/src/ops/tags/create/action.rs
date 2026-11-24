@@ -126,17 +126,8 @@ impl LibraryAction for CreateTagAction {
 							})?;
 
 						// Sync each user_metadata_tag model (for cross-device sync)
-						for model in models {
-							library
-								.sync_model(&model, ChangeType::Insert)
-								.await
-								.map_err(|e| {
-									ActionError::Internal(format!(
-										"Failed to sync tag association: {}",
-										e
-									))
-								})?;
-						}
+						crate::ops::tags::apply::action::sync_tag_associations(&library, &models)
+							.await?;
 
 						// Find all entries with this content_id for resource events
 						use crate::infra::db::entities::{content_identity, entry};
@@ -184,17 +175,8 @@ impl LibraryAction for CreateTagAction {
 							})?;
 
 						// Sync each user_metadata_tag model (for cross-device sync)
-						for model in models {
-							library
-								.sync_model(&model, ChangeType::Insert)
-								.await
-								.map_err(|e| {
-									ActionError::Internal(format!(
-										"Failed to sync tag association: {}",
-										e
-									))
-								})?;
-						}
+						crate::ops::tags::apply::action::sync_tag_associations(&library, &models)
+							.await?;
 
 						affected_entry_uuids.push(entry_uuid);
 					}
@@ -240,17 +222,8 @@ impl LibraryAction for CreateTagAction {
 									e
 								))
 							})?;
-						for model in models {
-							library
-								.sync_model(&model, ChangeType::Insert)
-								.await
-								.map_err(|e| {
-									ActionError::Internal(format!(
-										"Failed to sync tag association: {}",
-										e
-									))
-								})?;
-						}
+						crate::ops::tags::apply::action::sync_tag_associations(&library, &models)
+							.await?;
 						affected_entry_uuids.push(entry_uuid);
 					}
 				}

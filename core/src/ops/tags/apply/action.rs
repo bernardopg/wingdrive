@@ -94,17 +94,7 @@ impl LibraryAction for ApplyTagsAction {
 						Ok(models) => {
 							successfully_tagged_count += 1;
 							// Sync each user_metadata_tag model (for cross-device sync)
-							for model in models {
-								library
-									.sync_model(&model, crate::infra::sync::ChangeType::Insert)
-									.await
-									.map_err(|e| {
-										ActionError::Internal(format!(
-											"Failed to sync tag association: {}",
-											e
-										))
-									})?;
-							}
+							sync_tag_associations(&library, &models).await?;
 
 							// Find all entries with this content_id to emit resource events
 							use crate::infra::db::entities::{content_identity, entry};
@@ -167,17 +157,7 @@ impl LibraryAction for ApplyTagsAction {
 					{
 						Ok(models) => {
 							successfully_tagged_count += 1;
-							for model in models {
-								library
-									.sync_model(&model, crate::infra::sync::ChangeType::Insert)
-									.await
-									.map_err(|e| {
-										ActionError::Internal(format!(
-											"Failed to sync tag association: {}",
-											e
-										))
-									})?;
-							}
+							sync_tag_associations(&library, &models).await?;
 							affected_entry_uuids.push(entry_uuid);
 						}
 						Err(e) => {
@@ -216,17 +196,7 @@ impl LibraryAction for ApplyTagsAction {
 					{
 						Ok(models) => {
 							successfully_tagged_count += 1;
-							for model in models {
-								library
-									.sync_model(&model, crate::infra::sync::ChangeType::Insert)
-									.await
-									.map_err(|e| {
-										ActionError::Internal(format!(
-											"Failed to sync tag association: {}",
-											e
-										))
-									})?;
-							}
+							sync_tag_associations(&library, &models).await?;
 							affected_entry_uuids.push(entry_uuid);
 						}
 						Err(e) => {
@@ -287,3 +257,50 @@ impl LibraryAction for ApplyTagsAction {
 
 // Register library action
 crate::register_library_action!(ApplyTagsAction, "tags.apply");
+
+/// Syncs new tag associations, sending each parent `user_metadata` row first.
+///
+/// Applying a tag can create the metadata row it hangs from. A peer that has
+/// not seen that row rejects the association ("Parent user_metadata not
+/// found"), so the row goes out before its tags. Peers upsert it by UUID, so
+/// sending an existing row again is harmless. The associations reference
+/// their metadata and tag by local ID, so they go through
+/// `sync_model_with_db`, which turns those IDs into UUIDs; sent as they are,
+/// a peer would attach the tag to whichever of its own rows has that ID.
+pub(crate) async fn sync_tag_associations(
+	library: &Library,
+	models: &[crate::infra::db::entities::user_metadata_tag::Model],
+) -> Result<(), ActionError> {
+	use crate::infra::db::entities::user_metadata;
+	use crate::infra::sync::ChangeType;
+
+	let db = library.db().conn();
+	let parent_ids: Vec<i32> = models
+		.iter()
+		.map(|model| model.user_metadata_id)
+		.collect::<std::collections::BTreeSet<_>>()
+		.into_iter()
+		.collect();
+	if !parent_ids.is_empty() {
+		let parents = user_metadata::Entity::find()
+			.filter(user_metadata::Column::Id.is_in(parent_ids))
+			.all(db)
+			.await
+			.map_err(|e| ActionError::Internal(format!("Failed to load tag metadata: {}", e)))?;
+		for parent in &parents {
+			library
+				.sync_model(parent, ChangeType::Insert)
+				.await
+				.map_err(|e| {
+					ActionError::Internal(format!("Failed to sync tag metadata: {}", e))
+				})?;
+		}
+	}
+	for model in models {
+		library
+			.sync_model_with_db(model, ChangeType::Insert, db)
+			.await
+			.map_err(|e| ActionError::Internal(format!("Failed to sync tag association: {}", e)))?;
+	}
+	Ok(())
+}
