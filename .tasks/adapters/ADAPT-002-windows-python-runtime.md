@@ -8,15 +8,15 @@ priority: Medium
 milestone: M5
 sprint: S09
 tags: [adapters, windows, runtime]
-related_tasks: [ADAPT-001]
+related_tasks: [ADAPT-004]
 last_updated: 2026-11-24
 ---
 
 ## Description
 
-Adapters run `python3 sync.py`. Windows has no Python by default, so adapters cannot run there.
-Choose between shipping an embeddable Python with the installer, finding a user-installed
-interpreter (`py -3`), or porting adapters to Rust, and implement it.
+Adapters run Python scripts. Windows has no Python by default, so the store hides adapters that need
+it there today. Choose between shipping an embeddable Python with the installer, finding a
+user-installed interpreter (`py -3`), or supporting compiled adapters, and implement it.
 
 ## Implementation Steps
 
@@ -26,4 +26,4 @@ interpreter (`py -3`), or porting adapters to Rust, and implement it.
 
 ## Acceptance Criteria
 
-- [ ] An adapter syncs on a real Windows machine from the installed app
+- [ ] An adapter installed from the store syncs on a real Windows machine
