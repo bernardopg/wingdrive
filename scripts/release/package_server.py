@@ -61,6 +61,11 @@ def run(*args: str, env: dict | None = None) -> str:
     return subprocess.run(args, check=True, capture_output=True, text=True, env=env).stdout
 
 
+# Libraries the binaries open with dlopen at run time, so ldd never lists them.
+# PDF thumbnails load pdfium from ../lib/wingdrive (crates/images/src/pdf.rs).
+DLOPENED = ("libpdfium.so",)
+
+
 def native_libraries(binaries: list[pathlib.Path], lib_dir: pathlib.Path) -> list[pathlib.Path]:
     """Every library under lib_dir that the binaries load, directly or not, by soname."""
     env = dict(os.environ, LD_LIBRARY_PATH=str(lib_dir))
@@ -74,6 +79,11 @@ def native_libraries(binaries: list[pathlib.Path], lib_dir: pathlib.Path) -> lis
                 path = pathlib.Path(parts[2])
                 if path.resolve().is_relative_to(lib_dir.resolve()):
                     found[parts[0]] = path
+    for name in DLOPENED:
+        path = lib_dir / name
+        if not path.is_file():
+            raise SystemExit(f"{name} is missing from {lib_dir}")
+        found[name] = path
     return [found[name] for name in sorted(found)]
 
 

@@ -27,6 +27,8 @@ pub enum Error {
 	RgbImageConversion,
 	#[error("error with pdfium: {0}")]
 	Pdfium(#[from] pdfium_render::prelude::PdfiumError),
+	#[error("pdfium could not be loaded: {0}")]
+	PdfiumUnavailable(String),
 	#[error("error with usvg: {0}")]
 	USvg(#[from] resvg::usvg::Error),
 	#[error("failed to allocate `Pixbuf` while converting an SVG")]
