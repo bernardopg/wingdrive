@@ -350,6 +350,14 @@ Extensions can define:
 
 **Status:** the core loads WASM modules through `core/src/infra/extension/` (feature `wasm`, on by default except on mobile). Extensions are milestone M5 work (`PLUG-000`).
 
+### Adapters (store)
+
+Adapters are processes, not WASM: the daemon starts them, writes the config and the last cursor as
+JSON on stdin, and stores the JSON lines they print. The contract is `docs/core/adapters.mdx`;
+`ScriptAdapter` (`crates/archive/src/adapter/script.rs`) implements it, and a change to one needs
+the other. Official adapters live in the registry repository `bernardopg/wingdrive-adapters`, not in
+this one; the store design is `docs/design/adapter-store.md`.
+
 ## Code Standards
 
 ### Import Organization

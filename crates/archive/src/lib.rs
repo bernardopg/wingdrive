@@ -22,7 +22,7 @@
 //! This crate is designed to be embedded in WingDrive's core. It does not include
 //! the job system or operation layer — those live in `core/src/ops/sources/`.
 //!
-//! ```
+//! ```text
 //! Core
 //!   -> Library
 //!     -> SourceManager (wraps wing-archive Engine)

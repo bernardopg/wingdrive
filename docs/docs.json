@@ -81,7 +81,8 @@
               "core/library-sync",
               "core/file-sync",
               "core/cloud-integration",
-              "core/integrations"
+              "core/integrations",
+              "core/adapters"
             ]
           },
           {

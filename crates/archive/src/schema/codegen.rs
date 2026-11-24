@@ -184,10 +184,10 @@ pub fn generate_ddl(schema: &DataTypeSchema) -> Vec<String> {
 			 END"
 		));
 
-		statements.push(format!(
-			"CREATE TRIGGER IF NOT EXISTS search_index_ad AFTER DELETE ON \"{primary_table}\" BEGIN\n    \
-			 INSERT INTO search_index(search_index, rowid, {fields_quoted_str}) VALUES ('delete', old.rowid, {field_refs_old_str});\n\
-			 END"
+		statements.push(search_delete_trigger(
+			&primary_table,
+			&fields_quoted_str,
+			&field_refs_old_str,
 		));
 
 		statements.push(format!(
@@ -221,6 +221,43 @@ pub fn generate_ddl(schema: &DataTypeSchema) -> Vec<String> {
 	);
 
 	statements
+}
+
+/// The trigger that drops a deleted record from the FTS index.
+///
+/// Only records screened as safe or flagged are in the index; telling FTS5 to delete a row it
+/// never indexed corrupts the index, and SQLite then fails with "database disk image is
+/// malformed".
+fn search_delete_trigger(table: &str, fields_quoted: &str, old_refs: &str) -> String {
+	format!(
+		"CREATE TRIGGER IF NOT EXISTS search_index_ad AFTER DELETE ON \"{table}\" BEGIN\n    \
+		 INSERT INTO search_index(search_index, rowid, {fields_quoted})\n    \
+		 SELECT 'delete', old.rowid, {old_refs}\n    \
+		 WHERE old._safety_verdict IN ('safe', 'flagged');\n\
+		 END"
+	)
+}
+
+/// The current `search_index_ad` trigger for `schema`, for databases created before the trigger
+/// learned to skip records that were never indexed.
+pub fn search_delete_trigger_for(schema: &DataTypeSchema) -> Option<String> {
+	let fields: Vec<&str> = schema
+		.search
+		.search_fields
+		.iter()
+		.filter(|f| !f.starts_with("_derived."))
+		.map(|f| f.as_str())
+		.collect();
+	if fields.is_empty() {
+		return None;
+	}
+	let quoted: Vec<String> = fields.iter().map(|f| format!("\"{f}\"")).collect();
+	let old_refs: Vec<String> = fields.iter().map(|f| format!("old.\"{f}\"")).collect();
+	Some(search_delete_trigger(
+		&pluralize(&schema.search.primary_model),
+		&quoted.join(", "),
+		&old_refs.join(", "),
+	))
 }
 
 #[cfg(test)]
