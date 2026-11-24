@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import clsx from "clsx";
+import type { TFunction } from "i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle, MinusCircle } from "@phosphor-icons/react";
 import { toast } from "@wingdrive/primitives";
@@ -208,7 +209,7 @@ export function IntegrationsSettings() {
 function entryStatus(
 	entry: CatalogEntry,
 	clients: OAuthClientsInfo | undefined,
-	t: (key: string, options?: Record<string, unknown>) => string
+	t: TFunction
 ): { label: string; ready: boolean } {
 	if (entry.mode === "app") {
 		return clients?.app
@@ -914,7 +915,7 @@ function PhotosImport({ account }: { account: IntegrationAccountInfo }) {
 	);
 }
 
-function pairStatus(pair: CloudSyncPairInfo, t: (key: string, options?: Record<string, unknown>) => string): string {
+function pairStatus(pair: CloudSyncPairInfo, t: TFunction): string {
 	if (pair.running) return t("integrations.sync.running");
 	if (!pair.last_run_at) return t("integrations.sync.never");
 	const when = new Date(pair.last_run_at).toLocaleString(uiLocale(), { dateStyle: "medium", timeStyle: "short" });

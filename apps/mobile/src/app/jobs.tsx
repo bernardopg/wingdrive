@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import { GlassButton } from "../components/GlassButton";
 import { useJobs, type ExtendedJobListItem } from "../hooks/useJobs";
 import { X } from "phosphor-react-native";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 
 function formatBytes(bytes: number): string {
@@ -51,7 +52,7 @@ function getJobSubtext(job: ExtendedJobListItem, t: (key: string) => string): st
 	return job.status;
 }
 
-function formatTimeAgo(date: Date, t: (key: string, options?: any) => string): string {
+function formatTimeAgo(date: Date, t: TFunction<"common">): string {
 	const now = new Date();
 	const diffMs = now.getTime() - date.getTime();
 	const diffMins = Math.floor(diffMs / 60000);
