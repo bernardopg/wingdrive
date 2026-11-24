@@ -220,6 +220,14 @@ jobs:
     if: ${{ inputs.release-tag }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
+    # release.yml sets these for the desktop builds, but a called workflow does not inherit
+    # its env. With the workspace profile (fat LTO, one codegen unit) linking wing-core ran
+    # the hosted runner out of memory and GitHub lost it ("received a shutdown signal")
+    # in the v3.6.0 and v3.6.1 releases.
+    env:
+      CARGO_BUILD_JOBS: 4
+      CARGO_PROFILE_RELEASE_LTO: thin
+      CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '16'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

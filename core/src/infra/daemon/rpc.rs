@@ -13,6 +13,19 @@ use crate::infra::event::log_emitter::{set_global_log_bus, LogMessage};
 use crate::infra::event::{Event, EventSubscriber};
 use crate::Core;
 
+/// Who owns the process on the other end of an RPC connection.
+#[derive(Debug, PartialEq, Eq)]
+enum Peer {
+	/// The daemon's own user, or an owner that cannot be read.
+	SameUser,
+	/// A connected socket owned by another local account.
+	OtherUser,
+	/// The client already closed its end. The kernel then reports the socket
+	/// as owned by root, so it is rejected (its request could still be read
+	/// from the buffer), but it is a probe that hung up, not another user.
+	Closed,
+}
+
 /// Whether the process on the other end of `stream` runs as the daemon's user.
 ///
 /// The RPC socket listens on loopback without authentication, so any local
@@ -20,23 +33,37 @@ use crate::Core;
 /// their logs. Linux exposes the owner of each TCP socket in `/proc/net/tcp`;
 /// elsewhere, and when the owner cannot be found, the connection is accepted.
 #[cfg(target_os = "linux")]
-fn peer_is_same_user(stream: &tokio::net::TcpStream) -> bool {
+fn peer_owner(stream: &tokio::net::TcpStream) -> Peer {
 	let (Ok(std::net::SocketAddr::V4(peer)), Ok(std::net::SocketAddr::V4(local))) =
 		(stream.peer_addr(), stream.local_addr())
 	else {
-		return true;
+		return Peer::SameUser;
 	};
 	let Ok(table) = std::fs::read_to_string("/proc/net/tcp") else {
-		return true;
+		return Peer::SameUser;
 	};
 	// SAFETY: geteuid has no preconditions and cannot fail.
 	let own_uid = unsafe { libc::geteuid() };
-	socket_owner(&table, peer, local).is_none_or(|uid| uid == own_uid)
+	match socket_owner(&table, peer, local) {
+		None => Peer::SameUser,
+		Some(owner) if owner.uid == own_uid => Peer::SameUser,
+		Some(owner) if !owner.established => Peer::Closed,
+		Some(_) => Peer::OtherUser,
+	}
 }
 
 #[cfg(not(target_os = "linux"))]
-fn peer_is_same_user(_stream: &tokio::net::TcpStream) -> bool {
-	true
+fn peer_owner(_stream: &tokio::net::TcpStream) -> Peer {
+	Peer::SameUser
+}
+
+/// Owner of one socket in `/proc/net/tcp`.
+#[cfg(any(target_os = "linux", test))]
+#[derive(Debug, PartialEq, Eq)]
+struct SocketOwner {
+	uid: u32,
+	/// State `01`. A closed socket waiting to time out lists uid 0.
+	established: bool,
 }
 
 /// Owner uid of the socket bound to `local` and connected to `remote`, read
@@ -46,7 +73,7 @@ fn socket_owner(
 	table: &str,
 	local: std::net::SocketAddrV4,
 	remote: std::net::SocketAddrV4,
-) -> Option<u32> {
+) -> Option<SocketOwner> {
 	// Addresses are the IPv4 bytes as a little-endian hex word, then the port.
 	let encode = |addr: std::net::SocketAddrV4| {
 		format!(
@@ -59,7 +86,12 @@ fn socket_owner(
 	table.lines().skip(1).find_map(|line| {
 		let fields: Vec<&str> = line.split_whitespace().collect();
 		(fields.get(1) == Some(&local.as_str()) && fields.get(2) == Some(&remote.as_str()))
-			.then(|| fields.get(7)?.parse().ok())
+			.then(|| {
+				Some(SocketOwner {
+					uid: fields.get(7)?.parse().ok()?,
+					established: fields.get(3) == Some(&"01"),
+				})
+			})
 			.flatten()
 	})
 }
@@ -121,10 +153,19 @@ impl RpcServer {
 				result = listener.accept() => {
 					match result {
 						Ok((mut stream, _addr)) => {
-							if !peer_is_same_user(&stream) {
-								tracing::warn!("Rejected an RPC connection from another local user");
-								let _ = stream.shutdown().await;
-								continue;
+							match peer_owner(&stream) {
+								Peer::SameUser => {}
+								Peer::OtherUser => {
+									tracing::warn!("Rejected an RPC connection from another local user");
+									let _ = stream.shutdown().await;
+									continue;
+								}
+								Peer::Closed => {
+									// A health probe that connected and hung up.
+									tracing::debug!("Dropped an RPC connection its client already closed");
+									let _ = stream.shutdown().await;
+									continue;
+								}
 							}
 
 							// Check connection limit
@@ -204,7 +245,22 @@ impl RpcServer {
 		let event_buffer = self.event_buffer.clone();
 
 		tokio::spawn(async move {
-			while let Ok(event) = event_subscriber.recv().await {
+			loop {
+				// A burst (indexing thousands of files) can outrun this loop. A lagged
+				// receiver must keep going: ending the loop here stopped every client
+				// from getting events until the daemon restarted, so job dialogs waited
+				// forever for a JobCompleted that never came (CORE-021).
+				let event = match event_subscriber.recv().await {
+					Ok(event) => event,
+					Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+						tracing::info!(
+							skipped,
+							"Event broadcaster lagged, asking clients to refresh"
+						);
+						Event::Refresh
+					}
+					Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+				};
 				// Add to buffer before broadcasting (for subscription race condition handling)
 				event_buffer.add_event(event.clone()).await;
 
@@ -547,7 +603,13 @@ impl RpcServer {
 
 				// Spawn task to forward log messages
 				tokio::spawn(async move {
-					while let Ok(log_msg) = log_subscriber.recv().await {
+					loop {
+						// Skip lost log lines instead of ending the stream on a burst.
+						let log_msg = match log_subscriber.recv().await {
+							Ok(log_msg) => log_msg,
+							Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
+							Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+						};
 						// Apply filter if specified
 						if let Some(ref f) = filter_clone {
 							// Filter by job_id
@@ -612,12 +674,13 @@ impl RpcServer {
 
 #[cfg(test)]
 mod peer_tests {
-	use super::socket_owner;
+	use super::{socket_owner, SocketOwner};
 
 	const TABLE: &str = "  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
    0: 0100007F:1B39 00000000:0000 0A 00000000:00000000 00:00000000 00000000  1000        0 61020 1
    1: 0100007F:D2EF 0100007F:1B39 01 00000000:00000000 00:00000000 00000000  1001        0 61021 1
    2: 0100007F:1B39 0100007F:D2EF 01 00000000:00000000 00:00000000 00000000  1000        0 61022 1
+   3: 0100007F:D2F0 0100007F:1B39 06 00000000:00000000 03:00001770 00000000     0        0 0 3
 ";
 
 	#[test]
@@ -625,8 +688,14 @@ mod peer_tests {
 		let client = "127.0.0.1:53999".parse().unwrap();
 		let daemon = "127.0.0.1:6969".parse().unwrap();
 
-		assert_eq!(socket_owner(TABLE, client, daemon), Some(1001));
-		assert_eq!(socket_owner(TABLE, daemon, client), Some(1000));
+		let owner = |uid, established| Some(SocketOwner { uid, established });
+		assert_eq!(socket_owner(TABLE, client, daemon), owner(1001, true));
+		assert_eq!(socket_owner(TABLE, daemon, client), owner(1000, true));
+		// A client that hung up: TIME_WAIT, listed as root.
+		assert_eq!(
+			socket_owner(TABLE, "127.0.0.1:54000".parse().unwrap(), daemon),
+			owner(0, false)
+		);
 		assert_eq!(
 			socket_owner(TABLE, "127.0.0.1:1".parse().unwrap(), daemon),
 			None

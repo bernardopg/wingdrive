@@ -152,10 +152,45 @@ runs:
         save-cache: ${{ inputs.save-cache }}
         cache-key: ${{ inputs.cache-key }}
 
+    # The Ubuntu mirror is sometimes slow enough that downloading setup.sh's ~270 packages
+    # took 38 minutes and the Explorer smoke hit its timeout before building anything.
+    # Keep the downloaded .deb files in a cache so a slow mirror only costs `apt-get update`.
+    - name: Keep apt downloads in a cacheable directory
+      if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      run: |
+        archives="$HOME/.cache/wingdrive-apt"
+        mkdir -p "$archives/partial"
+        sudo rm -f /etc/apt/apt.conf.d/docker-clean
+        printf 'Dir::Cache::Archives "%s";\nBinary::apt::APT::Keep-Downloaded-Packages "true";\n' "$archives" \
+          | sudo tee /etc/apt/apt.conf.d/99wingdrive-cache > /dev/null
+
+    - name: Restore apt downloads
+      if: ${{ runner.os == 'Linux' }}
+      id: cache-apt
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/wingdrive-apt
+        key: apt-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/setup.sh') }}
+        restore-keys: apt-${{ runner.os }}-${{ runner.arch }}-
+
     - name: Run setup.sh script
       shell: bash
       if: ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
       run: ./scripts/setup.sh ${{ inputs.setup-arg }}
+
+    - name: Save apt downloads
+      if: ${{ runner.os == 'Linux' && steps.cache-apt.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: sudo chown -R "$USER" "$HOME/.cache/wingdrive-apt" && rm -rf "$HOME/.cache/wingdrive-apt/partial" "$HOME/.cache/wingdrive-apt/lock"
+
+    - name: Upload apt downloads to the cache
+      if: ${{ runner.os == 'Linux' && steps.cache-apt.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      continue-on-error: true
+      with:
+        path: ~/.cache/wingdrive-apt
+        key: ${{ steps.cache-apt.outputs.cache-primary-key }}
 
     - name: Run setup.ps1 script
       shell: powershell
