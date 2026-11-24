@@ -18,8 +18,8 @@ Index events from macOS Calendar. Needs calendar permission and a Mac to prove. 
 
 ## Acceptance Criteria
 
-- [ ] Lives in its own repository `<org>/wingdrive-adapter-<id>` created from the template (ADAPT-008), with README, license, icon and tests
-- [ ] Listed in the official registry through a reviewed pull request that the registry bots (ADAPT-007) pass
+- [ ] Lives in `bernardopg/wingdrive-adapters` under `adapters/<id>/`, created from the template (ADAPT-008), with README, license, icon and tests
+- [ ] Published through a reviewed pull request that Wingbot's checks (ADAPT-007) pass, like any third-party adapter
 - [ ] Installs from the store in the desktop app and from `wing adapters install <id>`
 - [ ] Defaults: the source path or account is detected on Linux and macOS (and Windows once ADAPT-002 lands); a wrong value fails `sources.create` with a message that names the field
 - [ ] Declares only the permissions it uses (ADAPT-009); runs with network off unless it declares hosts

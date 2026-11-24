@@ -14,13 +14,14 @@ last_updated: 2026-11-24
 
 ## Description
 
-Once the official adapters live in their own repositories, the eleven prototypes under `adapters/`
-leave the main repository. The ones without a finished adapter yet move to repositories marked as
-drafts, so nothing is lost and nothing half-built reaches users.
+The official adapters live in `bernardopg/wingdrive-adapters`, so the eleven prototypes under
+`adapters/` leave the app repository. The ones without a finished adapter move to
+`drafts/<id>/` in the registry repository, which the registry never publishes, so nothing is lost and
+nothing half-built reaches users.
 
 ## Implementation Steps
 
-- [ ] Move each prototype to `<org>/wingdrive-adapter-<id>` with history (`git filter-repo`) or as a fresh import with a pointer to the old path
+- [ ] Move each prototype to `bernardopg/wingdrive-adapters` (`adapters/<id>/` when finished, `drafts/<id>/` otherwise) with a pointer to its old path
 - [ ] Remove `adapters/` and the code paths that read it
 - [ ] Point the docs at the registry and the template
 

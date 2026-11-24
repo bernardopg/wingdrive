@@ -14,14 +14,15 @@ last_updated: 2026-11-24
 
 ## Description
 
-Create the official registry `<org>/wingdrive-adapters` and the format of its index. `<org>` is the GitHub organization the project moves to (decision pending: `wingdrive` is taken by an inactive personal account). Each
+Create the official registry `bernardopg/wingdrive-adapters` and the format of its index. It lives under the author's personal account, next to the app repository. Each
 entry points at an adapter repository and pins what gets installed, so an install is reproducible
 and a later push to the adapter repository changes nothing until the registry moves the pin.
 
 ## Implementation Steps
 
 - [ ] Entry schema (JSON Schema in the registry): `id`, `name`, `summary` (at most two lines, 140 characters), `description`, `icon`, `repository`, `commit`, `version`, `archive_sha256`, `author`, `license`, `platforms`, `runtime` (`python3` script or compiled `binary`), `artifacts` (one archive and SHA-256 per target for compiled adapters), `permissions`, `trust` (`official`, `verified`, `community`), `categories`, `homepage`
-- [ ] One file per adapter in `adapters/<id>.json`; the bots build `index.json` from them
+- [ ] Repository layout: `registry/<id>.json` (one entry per adapter), `adapters/<id>/` (official adapters, reviewed like any other), `templates/`, `drafts/`, `schema/`, `.github/workflows/`; Wingbot builds `index.json` from `registry/`
+- [ ] An entry points either at a folder of this repository (official adapters) or at a third-party repository and tag
 - [ ] Archive built from the pinned commit (`git archive`) and its SHA-256 recorded at publish time
 - [ ] Index signed with an Ed25519 key in minisign format. The private key lives only in a protected GitHub environment (`registry-publish`) of the registry repository that needs the maintainer's approval for every run, with an offline backup in the author's password manager; nobody else and no other workflow can read it
 - [ ] WingDrive bundles two public keys, the active one and a standby one, so a lost or leaked key is replaced by a registry release plus an app release without breaking installed apps

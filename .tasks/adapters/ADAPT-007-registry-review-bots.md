@@ -1,6 +1,6 @@
 ---
 id: ADAPT-007
-title: "Registry review bots"
+title: "Registry review checks run by Wingbot"
 status: To Do
 assignee: bernardopg
 parent: ADAPT-000
@@ -16,7 +16,7 @@ last_updated: 2026-11-24
 ## Description
 
 A pull request that adds or updates an adapter in the registry gets an automatic review before a
-human looks at it. The bot checks structure and requirements, runs the adapter's tests and the
+human looks at it. The checks run in GitHub Actions and speak as Wingbot (ADAPT-016). The bot checks structure and requirements, runs the adapter's tests and the
 contract harness in a sandbox without network, scans for risky code, and comments one report on the
 pull request. After a maintainer approves, the bot builds the archive, records its checksum, signs
 the index and publishes it.
