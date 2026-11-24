@@ -3,13 +3,20 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 3.7.1 — 2026-11-24
+
+This release fixes the General page in Settings, which since 3.6.0 showed "Could not load settings"
+instead of the device name, and "Unavailable" for the version and build date.
 
 ### Fixed
 
-- Settings > General shows the device name, version and build date again. Since 3.6.0 the page
-  asked the daemon for its status in a form it rejected and showed "Could not load settings".
-  The daemon now accepts both forms of an empty request.
+- Settings > General shows the device name, version and build date again. The page asked the daemon
+  for its status with an empty object, which the daemon rejected since 3.6.0. The daemon now accepts
+  an empty object or `null` for every request that takes no input (#533).
+
+### Internal
+
+- Updated `toml` to 1.2.2, `zbus` to 6.5.0 and `walkdir` to 2.5.1 (#531).
 
 ## 3.7.0 — 2026-11-24
 
