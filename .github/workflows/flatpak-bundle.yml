@@ -1,0 +1,147 @@
+name: WingDrive Flatpak Bundle
+
+# Repackages the Debian package as a single-file Flatpak bundle on the GNOME runtime,
+# installs it, and starts the daemon and the command line inside the sandbox. The Release
+# workflow calls this with the .deb it just built. Pull requests that change the Flatpak
+# files run it against the newest published .deb, so the manifest can be tried without
+# publishing a version. Manifest: packaging/flatpak/com.wingdrive.desktop.yml.
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/flatpak-bundle.yml
+      - packaging/flatpak/**
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      release-tag:
+        description: Version tag being released. Empty uses the newest published release.
+        type: string
+        required: false
+        default: ''
+      deb-artifact:
+        description: Artifact holding WingDrive-<version>-amd64.deb. Empty downloads it from the release.
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_TAG: ${{ inputs.release-tag }}
+  # flathub/shared-modules, for libayatana-appindicator (the tray icon). Bump deliberately.
+  SHARED_MODULES_COMMIT: 34add58f536223b780a3c9f077980cdaa51fc81f
+  FLATHUB_REPO: https://dl.flathub.org/repo/flathub.flatpakrepo
+
+jobs:
+  bundle:
+    name: Verify Linux x86_64 Flatpak bundle
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    container:
+      # The runtime version matches runtime-version in the manifest.
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.release-tag || github.sha }}
+          persist-credentials: false
+      - name: Get the Debian package from this run
+        if: ${{ inputs.deb-artifact != '' }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.deb-artifact }}
+          path: deb
+      - name: Get the Debian package of the newest release
+        if: ${{ inputs.deb-artifact == '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # The container has no gh, so this talks to the REST API.
+        run: |
+          mkdir deb
+          python3 - <<'PY'
+          import json, os, urllib.request
+          repo, tag = os.environ["GITHUB_REPOSITORY"], os.environ.get("RELEASE_TAG")
+          path = f"tags/{tag}" if tag else "latest"
+          def get(url, accept="application/vnd.github+json"):
+              request = urllib.request.Request(url, headers={"Authorization": f"Bearer {os.environ['GH_TOKEN']}", "Accept": accept})
+              return urllib.request.urlopen(request, timeout=120)
+          release = json.load(get(f"https://api.github.com/repos/{repo}/releases/{path}"))
+          asset = next(a for a in release["assets"] if a["name"].endswith("-amd64.deb"))
+          with open(f"deb/{asset['name']}", "wb") as out:
+              out.write(get(asset["url"], "application/octet-stream").read())
+          print(f"Using {asset['name']} from {release['tag_name']}")
+          PY
+      - name: Prepare the build directory
+        run: |
+          set -euo pipefail
+          debs=(deb/*-amd64.deb)
+          test "${#debs[@]}" -eq 1
+          version=$(basename "${debs[0]}" | sed -E 's/^WingDrive-(.+)-amd64\.deb$/\1/')
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          cp "${debs[0]}" packaging/flatpak/WingDrive.deb
+          git clone --quiet https://github.com/flathub/shared-modules packaging/flatpak/shared-modules
+          git -C packaging/flatpak/shared-modules checkout --quiet "$SHARED_MODULES_COMMIT"
+          # Software centers show the release list from the metainfo file.
+          python3 - "$version" "$(date -u +%F)" <<'PY'
+          import pathlib, sys
+          version, date = sys.argv[1:]
+          path = pathlib.Path("packaging/flatpak/com.wingdrive.desktop.metainfo.xml")
+          text = path.read_text(encoding="utf-8")
+          release = f'  <releases>\n    <release version="{version}" date="{date}"/>\n  </releases>\n</component>'
+          path.write_text(text.replace("</component>", release), encoding="utf-8")
+          PY
+          if command -v appstreamcli > /dev/null; then
+            appstreamcli validate --no-net packaging/flatpak/com.wingdrive.desktop.metainfo.xml
+          fi
+      - name: Build the Flatpak
+        working-directory: packaging/flatpak
+        run: |
+          flatpak remote-add --user --if-not-exists flathub "$FLATHUB_REPO"
+          flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse --force-clean \
+            --default-branch=stable --repo=repo build com.wingdrive.desktop.yml
+          flatpak build-bundle --runtime-repo="$FLATHUB_REPO" repo \
+            "WingDrive-$VERSION-x86_64.flatpak" com.wingdrive.desktop stable
+      - name: Verify the installed bundle
+        working-directory: packaging/flatpak
+        run: |
+          set -euo pipefail
+          flatpak install --user --noninteractive --assumeyes --bundle "WingDrive-$VERSION-x86_64.flatpak"
+          flatpak info --user com.wingdrive.desktop
+          # Every library the programs load resolves inside the sandbox.
+          # shellcheck disable=SC2016 # the sandboxed shell expands these
+          missing=$(flatpak run --command=sh com.wingdrive.desktop -c \
+            'for program in /app/bin/*; do ldd "$program" | grep "not found" | sed "s|^|$program: |"; done' || true)
+          if [ -n "$missing" ]; then echo "$missing"; exit 1; fi
+          flatpak run --command=sh com.wingdrive.desktop -c \
+            'test -f /app/lib/libayatana-appindicator3.so.1 && test -f /app/share/applications/com.wingdrive.desktop.desktop'
+          # The daemon starts inside the sandbox and answers the command line.
+          data=$(mktemp -d)
+          flatpak run --filesystem="$data" --command=wing-daemon com.wingdrive.desktop \
+            --data-dir "$data" --instance flatpak-ci > "$data/daemon.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            if flatpak run --filesystem="$data" --command=wing com.wingdrive.desktop \
+              --data-dir "$data" --instance flatpak-ci status > "$data/status.txt" 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          cat "$data/status.txt"
+          grep -q "Core Version *$VERSION" "$data/status.txt" || { tail -40 "$data/daemon.log"; exit 1; }
+          flatpak run --filesystem="$data" --command=wing com.wingdrive.desktop \
+            --data-dir "$data" --instance flatpak-ci stop || true
+      - name: Prepare release assets
+        working-directory: packaging/flatpak
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          mv "WingDrive-$VERSION-x86_64.flatpak" "$GITHUB_WORKSPACE/dist/"
+          cd "$GITHUB_WORKSPACE/dist"
+          sha256sum ./* > SHA256SUMS-flatpak
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wingdrive-flatpak-release
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14

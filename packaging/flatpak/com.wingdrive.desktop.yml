@@ -1,0 +1,58 @@
+# Flatpak bundle of the WingDrive desktop app.
+#
+# The release workflow builds the Debian package first, copies it here as
+# WingDrive.deb, clones flathub/shared-modules at the commit pinned in
+# .github/workflows/release.yml, and runs flatpak-builder on this file. The
+# result ships as WingDrive-<version>-x86_64.flatpak. See
+# docs/core/releases.mdx, section "Flatpak".
+app-id: com.wingdrive.desktop
+runtime: org.gnome.Platform
+runtime-version: '51'
+sdk: org.gnome.Sdk
+command: WingDrive
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # A file manager browses, copies and trashes files anywhere the user can.
+  - --filesystem=host
+  # Removable drives and network mounts.
+  - --filesystem=/media
+  - --filesystem=/run/media
+  - --filesystem=/mnt
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --talk-name=org.gtk.vfs.*
+  - --filesystem=xdg-run/gvfsd
+modules:
+  # The tray icon loads libayatana-appindicator at run time.
+  - shared-modules/libayatana-appindicator/libayatana-appindicator-gtk3.json
+
+  - name: wingdrive
+    buildsystem: simple
+    sources:
+      - type: file
+        path: WingDrive.deb
+      - type: file
+        path: com.wingdrive.desktop.metainfo.xml
+    build-commands:
+      - ar x WingDrive.deb
+      - mkdir deb && tar -xf data.tar.* -C deb
+      # The binaries carry RUNPATH $ORIGIN/../lib/wingdrive, so /app keeps the
+      # Debian layout: /app/bin next to /app/lib/wingdrive.
+      - install -Dm755 -t /app/bin deb/usr/bin/WingDrive deb/usr/bin/wing-daemon deb/usr/bin/wing
+      - cp -a deb/usr/lib/wingdrive /app/lib/wingdrive
+      - cp -a deb/usr/lib/WingDrive /app/lib/WingDrive
+      # Exported files carry the app ID in their names.
+      - >-
+        sed -e 's/^Icon=WingDrive$/Icon=com.wingdrive.desktop/'
+        deb/usr/share/applications/WingDrive.desktop > com.wingdrive.desktop.desktop
+      - install -Dm644 -t /app/share/applications com.wingdrive.desktop.desktop
+      - |
+        for icon in deb/usr/share/icons/hicolor/*/apps/WingDrive.*; do
+          size=$(basename "$(dirname "$(dirname "$icon")")")
+          install -Dm644 "$icon" "/app/share/icons/hicolor/$size/apps/com.wingdrive.desktop.${icon##*.}"
+        done
+      - install -Dm644 -t /app/share/metainfo com.wingdrive.desktop.metainfo.xml

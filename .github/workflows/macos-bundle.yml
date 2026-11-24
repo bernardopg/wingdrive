@@ -1,0 +1,148 @@
+name: WingDrive macOS Bundle
+
+# Builds the Apple silicon app, signs it ad hoc (no Developer ID yet, REL-001), packs it in a
+# disk image, and starts the daemon and the app from the mounted image. The Release workflow
+# calls this for a tag. Pull requests that change the macOS bundle run it too, so a build can
+# be tried from the run's artifacts without publishing a version.
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/macos-bundle.yml
+      - apps/tauri/src-tauri/Entitlements.plist
+      - apps/tauri/src-tauri/DaemonEntitlements.plist
+      - apps/tauri/src-tauri/Info.plist
+      - apps/tauri/scripts/fix-daemon-entitlements.sh
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      release-tag:
+        description: Version tag to build. Empty builds the current commit.
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  CARGO_PROFILE_RELEASE_LTO: thin
+  CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '16'
+  RELEASE_TAG: ${{ inputs.release-tag }}
+  TARGET: aarch64-apple-darwin
+  # WingDrive's own OAuth clients (INTG-001, INTG-022), compiled into wing-core
+  # with option_env!. Without the secrets the build still works and users sign in
+  # with a client of their own.
+  WINGDRIVE_GOOGLE_CLIENT_ID: ${{ secrets.WINGDRIVE_GOOGLE_CLIENT_ID }}
+  WINGDRIVE_GOOGLE_CLIENT_SECRET: ${{ secrets.WINGDRIVE_GOOGLE_CLIENT_SECRET }}
+  WINGDRIVE_MICROSOFT_CLIENT_ID: ${{ secrets.WINGDRIVE_MICROSOFT_CLIENT_ID }}
+  WINGDRIVE_GOOGLE_API_KEY: ${{ secrets.WINGDRIVE_GOOGLE_API_KEY }}
+
+jobs:
+  bundle:
+    name: Verify macOS Apple silicon disk image
+    runs-on: macos-15
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.release-tag || github.sha }}
+          persist-credentials: false
+      - name: Validate tag and product versions
+        if: ${{ inputs.release-tag != '' }}
+        run: |
+          git rev-parse --verify "refs/tags/$RELEASE_TAG"
+          python3 scripts/release/version.py "$RELEASE_TAG"
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.4'
+      # Tauri's beforeBuildCommand builds the release daemon, so the setup skips it.
+      - name: Setup System and Rust
+        uses: ./.github/actions/setup-system
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: aarch64-apple-darwin
+          save-cache: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+          cache-key: release-macos
+          xtask-setup-args: --no-daemon
+      # From the workflow commit, so a dispatch can re-verify an older tag with the current gate.
+      - name: Checkout release tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: release-tooling
+          sparse-checkout: scripts/release
+          persist-credentials: false
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+      - name: Build the app bundle
+        run: bun run --cwd apps/tauri tauri build --verbose --target "$TARGET" --bundles app
+      # The app carries the sandbox entitlement; the daemon cannot run inside it, so it gets
+      # its own entitlements, and the app is sealed again around the re-signed daemon.
+      - name: Sign ad hoc and pack the disk image
+        run: |
+          set -euo pipefail
+          if [ -n "$RELEASE_TAG" ]; then
+            version="${RELEASE_TAG#v}"
+          else
+            version=$(python3 -c "import json; print(json.load(open('apps/tauri/src-tauri/tauri.conf.json'))['version'])")
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          app="target/$TARGET/release/bundle/macos/WingDrive.app"
+          test -d "$app"
+          apps/tauri/scripts/fix-daemon-entitlements.sh "$app"
+          codesign --force --sign - --options runtime \
+            --entitlements apps/tauri/src-tauri/Entitlements.plist "$app"
+          codesign --verify --strict --verbose=2 "$app"
+          mkdir -p dmg-root dist
+          cp -R "$app" dmg-root/
+          ln -s /Applications dmg-root/Applications
+          hdiutil create -volname "WingDrive $version" -srcfolder dmg-root -fs HFS+ -format UDZO \
+            -ov "dist/WingDrive-$version-aarch64.dmg"
+      - name: Verify the disk image
+        run: |
+          set -euo pipefail
+          mount=$(mktemp -d)
+          hdiutil attach "dist/WingDrive-$VERSION-aarch64.dmg" -nobrowse -readonly -mountpoint "$mount"
+          trap 'hdiutil detach "$mount" -force || true' EXIT
+          app="$mount/WingDrive.app"
+          codesign --verify --strict --verbose=2 "$app"
+          test "$(defaults read "$app/Contents/Info.plist" CFBundleShortVersionString)" = "$VERSION"
+          for program in WingDrive wing-daemon wing; do
+            test -x "$app/Contents/MacOS/$program"
+            # Every library resolves; anything outside the system must ship inside the app.
+            otool -L "$app/Contents/MacOS/$program" | tail -n +2 | awk '{print $1}' | while read -r library; do
+              case "$library" in
+                /usr/lib/*|/System/*) ;;
+                @rpath/*|@executable_path/*|@loader_path/*) ;;
+                *) test -e "$library" || { echo "$program needs $library"; exit 1; } ;;
+              esac
+            done
+          done
+          python3 release-tooling/scripts/release/daemon_smoke.py "$app/Contents/MacOS/wing-daemon"
+          # The app starts, spawns its daemon and keeps running.
+          data=$(mktemp -d)
+          WINGDRIVE_DATA_DIR="$data" WINGDRIVE_INSTANCE=macos-ci "$app/Contents/MacOS/WingDrive" > "$data/app.log" 2>&1 &
+          app_pid=$!
+          for _ in $(seq 1 60); do
+            pgrep -f "wing-daemon.*macos-ci" > /dev/null && break
+            sleep 2
+          done
+          sleep 10
+          if ! kill -0 "$app_pid" || ! pgrep -f "wing-daemon.*macos-ci" > /dev/null; then
+            tail -60 "$data/app.log"
+            exit 1
+          fi
+          kill "$app_pid" || true
+          pkill -f "wing-daemon.*macos-ci" || true
+      - name: Prepare release assets
+        run: |
+          cd dist
+          shasum -a 256 ./* > SHA256SUMS-macos
+          cat SHA256SUMS-macos
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wingdrive-macos-release
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14

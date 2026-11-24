@@ -21,7 +21,7 @@ on:
         description: 'Verify only one component. Publishing needs both, so pick all to publish.'
         default: all
         type: choice
-        options: [all, desktop, server, windows]
+        options: [all, desktop, server, windows, macos]
 
 permissions:
   contents: read
@@ -56,7 +56,7 @@ jobs:
   # They share no compiled crates, so one runner only ran them one after the other.
   desktop:
     name: Verify Linux x86_64 desktop bundles
-    if: ${{ !inputs.aur_only && inputs.component != 'server' && inputs.component != 'windows' }}
+    if: ${{ !inputs.aur_only && (inputs.component == 'all' || inputs.component == 'desktop' || github.event_name == 'push') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 150
     steps:
@@ -64,10 +64,15 @@ jobs:
         with:
           ref: ${{ env.RELEASE_TAG }}
           persist-credentials: false
-      - name: Validate tag and product versions
+      # The release page starts with this version's CHANGELOG.md section, so a tag
+      # without one stops here instead of after two hours of builds.
+      - name: Validate tag, product versions and changelog
         run: |
           git rev-parse --verify "refs/tags/$RELEASE_TAG"
           python3 scripts/release/version.py "$RELEASE_TAG"
+          if [ -f scripts/release/changelog.py ]; then
+            python3 scripts/release/changelog.py require "$RELEASE_TAG"
+          fi
       # Runs during setup and is awaited before the build. Inline rather than the
       # free-disk-space action, because local actions load from the checked-out
       # tag and tags older than that action would fail to republish.
@@ -161,8 +166,16 @@ jobs:
           cp LICENSE dist/LICENSE
           python3 release-tooling/scripts/release/aur.py "$version" "dist/WingDrive-$version-x86_64.AppImage" LICENSE packaging/aur
           cp packaging/aur/PKGBUILD dist/PKGBUILD
+          # makepkg writes .SRCINFO; GitHub drops a leading dot from asset names, so it
+          # ships as SRCINFO. The AUR job pushes the real .SRCINFO.
+          docker run --rm -v "$PWD/packaging/aur:/aur:ro" archlinux:base bash -euc '
+            useradd -m builder
+            cp -r /aur /tmp/aur && chown -R builder /tmp/aur && cd /tmp/aur
+            runuser -u builder -- makepkg --printsrcinfo
+          ' > dist/SRCINFO
+          grep -q "pkgver = $version" dist/SRCINFO
           cd dist
-          sha256sum ./* > SHA256SUMS
+          sha256sum ./* > SHA256SUMS-linux
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wingdrive-linux-release
@@ -172,7 +185,7 @@ jobs:
 
   server:
     name: Verify Linux x86_64 server and command line
-    if: ${{ !inputs.aur_only && inputs.component != 'desktop' && inputs.component != 'windows' }}
+    if: ${{ !inputs.aur_only && (inputs.component == 'all' || inputs.component == 'server' || github.event_name == 'push') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
@@ -213,6 +226,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TARGET_TRIPLE: x86_64-unknown-linux-gnu
         run: cargo run --locked -p xtask -- setup --no-daemon
+      - name: Checkout release tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: release-tooling
+          sparse-checkout: scripts/release
+          persist-credentials: false
       # wing-server embeds apps/web/dist at compile time, so the web build goes first.
       - name: Build production server and command line binaries
         run: |
@@ -246,6 +266,70 @@ jobs:
           path: /tmp/wingdrive-browser-evidence/
           if-no-files-found: ignore
           retention-days: 14
+      # bin/ and lib/wingdrive/ with RUNPATH $ORIGIN/../lib/wingdrive, in three formats.
+      - name: Pack the server and command line archives
+        run: |
+          sudo apt-get install -y patchelf
+          python3 release-tooling/scripts/release/package_server.py linux "$RELEASE_TAG" \
+            target/x86_64-unknown-linux-gnu/release apps/.deps/lib dist
+      # Each archive, extracted in a fresh directory and run with an empty environment,
+      # must start the server and answer its health check without LD_LIBRARY_PATH.
+      - name: Verify the server and command line archives
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          port=18766
+          for archive in dist/wing-server-"$version"-linux-x86_64.{tar.gz,tar.xz,zip}; do
+            out=$(mktemp -d)
+            case "$archive" in
+              *.zip) unzip -q "$archive" -d "$out" ;;
+              *) tar -xf "$archive" -C "$out" ;;
+            esac
+            root="$out/wing-server-$version-linux-x86_64"
+            test -f "$root/LICENSE" && test -f "$root/NOTICE" && test -f "$root/README.md"
+            if ldd "$root/bin/wing-server" "$root/bin/wing" | grep "not found"; then exit 1; fi
+            env -i HOME="$out" "$root/bin/wing" --help > /dev/null
+            env -i HOME="$out" "$root/bin/wing-server" --host 127.0.0.1 --port "$port" --auth disabled \
+              --data-dir "$out/data" --instance "archive-$port" > "$out/server.log" 2>&1 &
+            pid=$!
+            ok=
+            for _ in {1..90}; do
+              if curl -fsS "http://127.0.0.1:$port/health" > /dev/null; then ok=1; break; fi
+              sleep 1
+            done
+            kill "$pid" || true
+            wait "$pid" || true
+            if [ -z "$ok" ]; then tail -40 "$out/server.log"; exit 1; fi
+            echo "$(basename "$archive"): server answered on port $port"
+            port=$((port + 1))
+          done
+          cd dist
+          sha256sum ./* > SHA256SUMS-server
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wingdrive-server-release
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  # The Debian package of the desktop job, repackaged on the GNOME runtime.
+  flatpak:
+    name: Flatpak
+    needs: desktop
+    if: ${{ !inputs.aur_only && needs.desktop.result == 'success' }}
+    uses: ./.github/workflows/flatpak-bundle.yml
+    with:
+      release-tag: ${{ github.event.inputs.tag || github.ref_name }}
+      deb-artifact: wingdrive-linux-release
+
+  # Apple silicon disk image, signed ad hoc until REL-001 brings a Developer ID.
+  macos:
+    name: macOS
+    if: ${{ !inputs.aur_only && (inputs.component == 'all' || inputs.component == 'macos' || github.event_name == 'push') }}
+    uses: ./.github/workflows/macos-bundle.yml
+    with:
+      release-tag: ${{ github.event.inputs.tag || github.ref_name }}
+    secrets: inherit
 
   # Unsigned NSIS and MSI installers. REL-001 tracks signing.
   windows:
@@ -316,41 +400,70 @@ jobs:
 
   publish:
     name: Publish verified GitHub Release
-    # Needing both jobs means a run that skipped one component never publishes.
-    needs: [desktop, server, windows, android, ci]
+    # Needing every job means a run that skipped one component never publishes.
+    needs: [desktop, server, flatpak, macos, windows, android, ci]
     if: (github.event_name == 'push' || inputs.publish) && !inputs.aur_only
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: write
+    env:
+      # The Android job uploads its files only when the keystore secrets exist (REL-001).
+      WINGDRIVE_REQUIRE_ANDROID: ${{ secrets.WINGDRIVE_ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
-      # wingdrive-android-release exists only when the Android upload key is configured.
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          pattern: wingdrive-{linux,windows,android}-release
+          pattern: wingdrive-*-release
           merge-multiple: true
           path: dist
+      # Every job hashed its own files; the release keeps one SHA256SUMS for all of them.
       - name: Verify artifact checksums
         run: |
+          set -euo pipefail
           cd dist
-          test -f SHA256SUMS
-          for sums in SHA256SUMS*; do sha256sum --check "$sums"; done
-      # The Tauri updater reads releases/latest/download/latest.json. It lists only
-      # signed artifacts: the AppImage and the NSIS installer (REL-001).
+          for sums in SHA256SUMS-*; do
+            echo "== $sums"
+            sha256sum --check "$sums"
+          done
+          rm SHA256SUMS-*
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.workflow_sha }}
           path: release-tooling
           sparse-checkout: scripts/release
           persist-credentials: false
-      - name: Write the updater manifest
-        run: python3 release-tooling/scripts/release/updater_manifest.py "$RELEASE_TAG" dist "$GITHUB_REPOSITORY"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          path: tagged
+          sparse-checkout: CHANGELOG.md
+          persist-credentials: false
+      # The Tauri updater reads releases/latest/download/latest.json. It lists only
+      # signed artifacts: the AppImage and the NSIS installer (REL-001).
+      - name: Write the updater manifest and checksums
+        run: |
+          python3 release-tooling/scripts/release/updater_manifest.py "$RELEASE_TAG" dist "$GITHUB_REPOSITORY"
+          cd dist
+          sha256sum -- * > SHA256SUMS
+          cat SHA256SUMS
+      # The body comes from the tagged CHANGELOG.md, the files in dist and the pull requests
+      # since the previous release (docs/core/releases.mdx, "Release page"). It fails when a
+      # required file is missing, so an incomplete release is never published.
+      - name: Write the release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp tagged/CHANGELOG.md release-tooling/CHANGELOG.md
+          python3 release-tooling/scripts/release/notes.py "$RELEASE_TAG" dist "$GITHUB_REPOSITORY" release-notes.md
+          echo "RELEASE_TITLE=WingDrive ${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+          cat release-notes.md >> "$GITHUB_STEP_SUMMARY"
       - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: WingDrive ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TITLE }}
+          body_path: release-notes.md
           prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
-          generate_release_notes: true
+          make_latest: ${{ !contains(env.RELEASE_TAG, '-') }}
           fail_on_unmatched_files: true
           files: dist/*
 
@@ -392,9 +505,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist
+          # Only what the package needs; the release also carries large bundles for other platforms.
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist \
+            --pattern 'WingDrive-*-x86_64.AppImage' --pattern LICENSE --pattern SHA256SUMS
           cd dist
-          sha256sum --check SHA256SUMS
+          sha256sum --check --ignore-missing SHA256SUMS
       - name: Generate and validate AUR package in Arch Linux
         run: |
           python3 scripts/release/aur.py "${RELEASE_TAG#v}" "dist/WingDrive-${RELEASE_TAG#v}-x86_64.AppImage" dist/LICENSE packaging/aur "$AUR_PACKAGE"
