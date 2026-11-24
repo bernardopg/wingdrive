@@ -2,7 +2,7 @@
   "expo": {
     "name": "WingDrive",
     "slug": "wingdrive",
-    "version": "3.6.1",
+    "version": "3.7.0",
     "orientation": "portrait",
     "icon": "./icon.png",
     "userInterfaceStyle": "dark",

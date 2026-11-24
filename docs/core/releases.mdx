@@ -3,7 +3,46 @@ title: Releases
 sidebarTitle: Releases
 ---
 
-WingDrive uses GitHub Actions workflows, git tags, and a custom xtask command to manage releases. This page covers the full release pipeline from version bump to published artifacts: Linux (AppImage, `.deb`, two AUR packages), Windows (NSIS `.exe` and `.msi`), Android and the server image.
+WingDrive uses GitHub Actions workflows, git tags, and a custom xtask command to manage releases. This page covers the full release pipeline from version bump to published artifacts, the asset list every release ships, the changelog standard and the layout of the release page.
+
+## Release assets
+
+Every stable release publishes exactly these files. `scripts/release/notes.py` refuses to publish a
+release that lacks one of the required files, so the list on this page and the workflow cannot drift
+apart. `<v>` is the version without the `v`.
+
+| File | Platform | Built by | Required |
+|---|---|---|---|
+| `WingDrive-<v>-x86_64.AppImage` and `.sig` | Linux x86_64 | `release.yml` › desktop | yes |
+| `WingDrive-<v>-amd64.deb` | Debian, Ubuntu | `release.yml` › desktop | yes |
+| `WingDrive-<v>-x86_64.flatpak` | Any Linux with Flatpak | `flatpak-bundle.yml` | yes |
+| `PKGBUILD`, `SRCINFO` | Arch Linux (`wingdrive-bin`) | `release.yml` › desktop | yes |
+| `WingDrive-<v>-x64-setup.exe` and `.sig` | Windows x64 | `windows-bundle.yml` | yes |
+| `WingDrive-<v>-x64.msi` | Windows x64 | `windows-bundle.yml` | stable only |
+| `WingDrive-<v>-aarch64.dmg` | macOS Apple silicon | `macos-bundle.yml` | yes |
+| `WingDrive-<v>-android-arm64-v8a.apk`, `WingDrive-<v>-android.aab` | Android | `mobile.yml` | when the keystore secrets exist |
+| `wing-server-<v>-linux-x86_64.tar.gz`, `.tar.xz`, `.zip` | Linux x86_64 server and CLI | `release.yml` › server | yes |
+| `wing-<v>-windows-x64.zip` | Windows CLI and daemon | `windows-bundle.yml` | yes |
+| `SHA256SUMS` | All files above | `release.yml` › publish | yes |
+| `latest.json` | Desktop updater | `release.yml` › publish | when the updater key exists |
+| `LICENSE` | — | `release.yml` › desktop | yes |
+
+The server image `ghcr.io/bernardopg/wingdrive/server:v<v>` (amd64 and arm64) comes from `server.yml`
+on the same tag, and the AUR packages `wingdrive-bin` and `wingdrive-nightly` from the `aur` job after
+publication.
+
+Naming rules for new assets:
+
+- Desktop and mobile packages start with `WingDrive-<v>-`, server and command line archives with
+  `wing-server-<v>-` or `wing-<v>-`. Then the platform and architecture as the platform itself names
+  them (`x86_64` on Linux and in AppImage, `amd64` in Debian, `x64` on Windows, `aarch64` on macOS).
+- One extension per format. No spaces, no leading dot: GitHub drops a leading dot from asset names,
+  which is why `.SRCINFO` ships as `SRCINFO`.
+- Add the file to the table above, to `required_assets` and the download tables in
+  `scripts/release/notes.py`, and to `website/src/views/Download.astro` in the same pull request.
+
+Each build job writes `SHA256SUMS-<job>` next to its files. The publish job checks every one of them
+after downloading the artifacts, deletes them, and writes a single `SHA256SUMS` for the release.
 
 ## Versioning
 
@@ -30,6 +69,69 @@ The version string lives in 7 files across the repo:
 
 These must stay in sync, together with `Cargo.lock`. The bump command handles this.
 
+## Changelog
+
+`CHANGELOG.md` is the source of the release page and of the changelog on wingdrive.org, so it follows
+one format, checked by `python3 scripts/release/changelog.py check` in the "Repository Metadata" CI
+job. Sections from 3.7.0 on must follow it; older sections only need a valid heading.
+
+```markdown
+## Unreleased
+
+## 3.7.0 — 2026-11-24
+
+One paragraph for users: what this release is about, in plain words.
+
+### Highlights
+
+- The two or three changes a user should read first.
+
+### Added
+
+- One sentence per change, user-facing, past behavior named where it helps, then the pull
+  request or task (#532, CORE-030).
+```
+
+- Heading: `## X.Y.Z — YYYY-MM-DD` with an em dash, the date the tag is pushed. Pre-releases use
+  `X.Y.Z-alpha.N`, `-beta.N` or `-rc.N`. Newest first, no version twice.
+- `## Unreleased` is optional and always on top. Pull requests that change behavior add their bullet
+  there; the release pull request renames it to the version.
+- A summary paragraph comes before the first subsection.
+- Subsections, only these and in this order: `Highlights`, `Added`, `Changed`, `Fixed`,
+  `Performance`, `Security`, `Deprecated`, `Removed`, `Internal`. Leave out the empty ones.
+  `Internal` holds CI, tests, documentation and dependency work that users do not see.
+- Every subsection holds `- ` bullets; continuation lines are indented two spaces. Write for users,
+  name the platform when a change is platform-specific, and end with the pull request numbers.
+
+`changelog.py require <version>` runs first in `release.yml`, so a tag without its section stops
+before any build. `changelog.py extract <version>` prints one section.
+
+## Release page
+
+The publish job writes the release body with `scripts/release/notes.py` from the tagged
+`CHANGELOG.md`, the verified files and the pull requests since the previous published release. The
+title is `WingDrive <v>`. The body always has the same parts, in this order:
+
+1. The version's `CHANGELOG.md` section. Versions tagged after the previous published release that
+   never got a page of their own (3.6.0 and 3.6.1 for 3.7.0) follow under "Also in this release".
+2. **Downloads**: tables for desktop and mobile, server and command line, and packaging and
+   verification, with sizes, built from the files actually published. A file the tables do not know
+   is listed under "Other files" rather than hidden.
+3. **Verification**: how to check `SHA256SUMS`.
+4. **Pull requests**: GitHub's generated list regrouped by Conventional Commits type (Features,
+   Fixes, Performance, Security, Refactoring, Documentation, Tests, CI and build, Dependencies,
+   Release, Maintenance), collapsed, with new contributors.
+5. The compare link to the previous release.
+
+Preview a body locally, without the GitHub API, from any directory holding the files:
+
+```bash
+python3 scripts/release/notes.py v3.7.0 <dist-dir> bernardopg/wingdrive /tmp/notes.md --offline
+```
+
+Pull request titles follow Conventional Commits (`feat(scope): …`, `fix: …`, `chore(deps): …`),
+which is what puts them in the right group.
+
 ## Bump Command
 
 `cargo xtask bump` updates all version files and `Cargo.lock`, then checks them with
@@ -50,7 +152,10 @@ Runs on every pull request and push to `main`. Handles formatting checks, lintin
 
 ### Desktop Release (`release.yml`)
 
-WingDrive releases provide an x86_64 AppImage and a Debian package for Linux, and an NSIS `.exe`
+`release.yml` runs these jobs on a `v*` tag, in parallel where they do not depend on each other:
+`desktop` (AppImage, `.deb`, `PKGBUILD`, `SRCINFO`), `server` (server and CLI archives),
+`flatpak` (after `desktop`), `macos`, `windows`, `android` and `ci`. `publish` needs all of them,
+then `discord` and `aur` run. WingDrive releases provide an x86_64 AppImage and a Debian package for Linux, and an NSIS `.exe`
 and an `.msi` for Windows. `release.yml` first waits for every CI job on the tagged commit (the
 `ci` gate), so a red Windows job also blocks a Linux release. The Windows installers come from
 `windows-bundle.yml`, which installs each one, starts the daemon and the app, waits for the main
@@ -102,6 +207,45 @@ Opening an older `secrets.redb` upgrades its redb v2 file format. WingDrive
 keeps a synced `secrets.redb.v2-<id>.backup` beside the database before the
 upgrade. Keep that file until you have verified your libraries and secrets.
 
+### Flatpak (`flatpak-bundle.yml`)
+
+`packaging/flatpak/com.wingdrive.desktop.yml` repackages the `.deb` of the same run on the GNOME 51
+runtime, adds `libayatana-appindicator` from `flathub/shared-modules` (commit pinned in the workflow)
+for the tray icon, and installs the binaries under `/app` with the Debian layout, so their RUNPATH
+`$ORIGIN/../lib/wingdrive` still finds the media libraries. The job runs in the
+`flatpak-github-actions:gnome-51` container, installs the bundle, checks that every library resolves
+inside the sandbox and that the daemon answers `wing status`. Pull requests that change
+`packaging/flatpak/` build it from the newest published `.deb`.
+
+The app gets `--filesystem=host` and the removable media folders, because it is a file manager.
+Volume detection inside the sandbox sees fewer mounts than a native install; the `.deb`, the
+AppImage and the AUR packages remain the recommended Linux installs. Try a bundle locally:
+
+```bash
+flatpak install --user WingDrive-<v>-x86_64.flatpak
+flatpak run com.wingdrive.desktop
+```
+
+### macOS (`macos-bundle.yml`)
+
+Builds the Apple silicon app on `macos-15`, re-signs the bundled daemon with
+`DaemonEntitlements.plist` (the app's sandbox entitlement would stop it), seals the app again ad hoc
+and packs `WingDrive-<v>-aarch64.dmg` with `hdiutil`. The job mounts the image, verifies the
+signature and the libraries, runs the daemon smoke test and starts the app until it spawns its
+daemon. There is no Developer ID or notarization yet (REL-001, "Apple plan"): users clear the
+quarantine once with `xattr -dr com.apple.quarantine /Applications/WingDrive.app`, and macOS is not
+in `latest.json`, so the app does not update itself there.
+
+### Server and command line archives
+
+The `server` job packs `wing-server` and `wing` with `scripts/release/package_server.py`:
+`bin/` with RUNPATH `$ORIGIN/../lib/wingdrive`, the FFmpeg and libheif libraries they load in
+`lib/wingdrive/`, `LICENSE`, `NOTICE` and a `README.md`, as `.tar.gz`, `.tar.xz` and `.zip` with
+fixed owners and timestamps. Each archive is extracted in an empty directory and started with an
+empty environment until `/health` answers. `windows-bundle.yml` packs `wing.exe`, `wing-daemon.exe`
+and their DLLs as `wing-<v>-windows-x64.zip` and runs both from the extracted folder with only
+`System32` on `PATH`.
+
 ### Server Docker (`server.yml`)
 
 Triggered by the same `v*` tag or manual dispatch. Builds a multi-arch Docker image (amd64 + arm64) and pushes it to GitHub Container Registry at `ghcr.io/bernardopg/wingdrive/server`.
@@ -135,9 +279,10 @@ Android build needs the Cargo workspace and the Android NDK, not only JavaScript
 A full release looks like this:
 
 ```bash
-# 1. Bump the version on a branch and add the CHANGELOG section
+# 1. Bump the version on a branch and turn "## Unreleased" into the version section
 git switch -c release/v3.1.0
 cargo xtask bump 3.1.0
+python3 scripts/release/changelog.py check
 just ci-local   # optional: every CI gate locally
 gh pr create --title "chore(release): 3.1.0"
 

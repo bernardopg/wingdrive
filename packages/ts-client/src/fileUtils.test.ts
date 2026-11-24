@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test';
 import type {File} from './generated/types';
-import {fileDisplaySize, withDirectorySizes} from './fileUtils';
+import {fileDisplayName, fileDisplaySize, getContentKind, getFileKindForIcon, withDirectorySizes} from './fileUtils';
 
 test('never presents directory metadata as a content total', () => {
 	expect(
@@ -49,4 +49,23 @@ test('measured directory totals replace unknown and stale stored totals', () => 
 	expect(result.map((file) => file.directory_size)).toEqual([10, 250, 7, null]);
 	expect(result[2]).toBe(files[2]);
 	expect(withDirectorySizes(files, undefined)).toBe(files);
+});
+
+
+test('getContentKind prefers content_identity then content_kind', () => {
+	expect(getContentKind({content_identity: {kind: 'image'}, content_kind: 'video', kind: 'File'} as any)).toBe('image');
+	expect(getContentKind({content_identity: null, content_kind: 'video', kind: 'File'} as any)).toBe('video');
+	expect(getContentKind({content_identity: null, content_kind: 'unknown', kind: 'File'} as any)).toBe('unknown');
+	expect(getContentKind(null)).toBe('unknown');
+});
+
+test('getFileKindForIcon returns capitalized kind', () => {
+	expect(getFileKindForIcon({content_identity: {kind: 'image'}, content_kind: 'unknown', kind: 'File', extension: 'png'} as any)).toBe('Image');
+	expect(getFileKindForIcon({content_identity: null, content_kind: 'unknown', kind: 'File', extension: 'png'} as any)).toBe('Png');
+	expect(getFileKindForIcon({content_identity: null, content_kind: 'unknown', kind: 'Directory', extension: null} as any)).toBe('Directory');
+});
+
+test('fileDisplayName includes extension when present', () => {
+	expect(fileDisplayName({name: 'photo', extension: 'jpg'} as any)).toBe('photo.jpg');
+	expect(fileDisplayName({name: 'README', extension: null} as any)).toBe('README');
 });

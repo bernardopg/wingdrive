@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.wingdrive.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <name>WingDrive</name>
+  <summary>Browse, organize and sync your files across devices</summary>
+  <developer id="org.wingdrive">
+    <name>WingDrive contributors</name>
+  </developer>
+  <description>
+    <p>
+      WingDrive is a file manager that indexes your folders, drives and cloud
+      accounts into one library and keeps it in sync between your devices
+      over a direct, encrypted connection.
+    </p>
+    <ul>
+      <li>Browse local, removable, network and cloud locations in one place</li>
+      <li>Find duplicates and see which files exist on only one device</li>
+      <li>Copy, move and trash files with preview and undo</li>
+      <li>Send files to a paired device with Wingdrop</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">com.wingdrive.desktop.desktop</launchable>
+  <url type="homepage">https://wingdrive.org</url>
+  <url type="bugtracker">https://github.com/bernardopg/wingdrive/issues</url>
+  <url type="vcs-browser">https://github.com/bernardopg/wingdrive</url>
+  <content_rating type="oars-1.1"/>
+  <categories>
+    <category>System</category>
+    <category>FileTools</category>
+    <category>FileManager</category>
+  </categories>
+  <provides>
+    <binary>wing</binary>
+  </provides>
+</component>

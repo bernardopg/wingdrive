@@ -191,8 +191,26 @@ jobs:
             *-*) ;;
             *) cp target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi "dist/WingDrive-$version-x64.msi" ;;
           esac
+          # The command line and the daemon on their own, for scripts and servers.
+          python release-tooling/scripts/release/package_server.py windows "$version" \
+            target/x86_64-pc-windows-msvc/release apps/.deps/bin dist
           cd dist
           sha256sum ./* > SHA256SUMS-windows
+      - name: Verify the command line archive
+        shell: pwsh
+        run: |
+          # Extracted somewhere new, with only Windows on PATH, both programs must start:
+          # a DLL missing from the archive stops them before --help prints anything.
+          $zip = Get-ChildItem dist/wing-*-windows-x64.zip
+          $out = Join-Path $env:RUNNER_TEMP 'wing-cli'
+          Expand-Archive -Path $zip.FullName -DestinationPath $out -Force
+          $dir = Get-ChildItem $out -Directory | Select-Object -First 1
+          $env:Path = "$env:SystemRoot\System32;$env:SystemRoot"
+          foreach ($program in 'wing.exe', 'wing-daemon.exe') {
+            $output = & (Join-Path $dir.FullName $program) --help 2>&1
+            if ($LASTEXITCODE -ne 0) { $output; throw "$program --help failed with $LASTEXITCODE" }
+            "$program --help: ok"
+          }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wingdrive-windows-release

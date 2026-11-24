@@ -118,22 +118,28 @@ impl LibraryQuery for RedundancySummaryQuery {
 		// Query 1: Per-volume at-risk content (content existing on exactly one volume)
 		let at_risk_sql = format!(
 			r#"
-			SELECT e.volume_id as volume_id,
-			       COUNT(*) as file_count,
-			       COALESCE(SUM(ci.total_size), 0) as content_bytes
-			FROM entries e
-			INNER JOIN content_identities ci ON e.content_id = ci.id
-			WHERE e.content_id IS NOT NULL
-			  AND e.volume_id IS NOT NULL
-			  AND e.kind = 0
-			  {}
-			  AND e.content_id IN (
-			      SELECT e2.content_id FROM entries e2
-			      WHERE e2.content_id IS NOT NULL AND e2.volume_id IS NOT NULL
-			      GROUP BY e2.content_id
-			      HAVING COUNT(DISTINCT e2.volume_id) = 1
-			  )
-			GROUP BY e.volume_id
+			SELECT volume_id,
+			       SUM(file_count) as file_count,
+			       COALESCE(SUM(content_size), 0) as content_bytes
+			FROM (
+			    SELECT e.volume_id as volume_id,
+			           COUNT(*) as file_count,
+			           MAX(ci.total_size) as content_size
+			    FROM entries e
+			    INNER JOIN content_identities ci ON e.content_id = ci.id
+			    WHERE e.content_id IS NOT NULL
+			      AND e.volume_id IS NOT NULL
+			      AND e.kind = 0
+			      {}
+			      AND e.content_id IN (
+			          SELECT e2.content_id FROM entries e2
+			          WHERE e2.content_id IS NOT NULL AND e2.volume_id IS NOT NULL
+			          GROUP BY e2.content_id
+			          HAVING COUNT(DISTINCT e2.volume_id) = 1
+			      )
+			    GROUP BY e.volume_id, e.content_id
+			)
+			GROUP BY volume_id
 			"#,
 			volume_where
 		);
@@ -148,22 +154,28 @@ impl LibraryQuery for RedundancySummaryQuery {
 		// Query 2: Per-volume redundant content (content existing on 2+ volumes)
 		let redundant_sql = format!(
 			r#"
-			SELECT e.volume_id as volume_id,
-			       COUNT(*) as file_count,
-			       COALESCE(SUM(ci.total_size), 0) as content_bytes
-			FROM entries e
-			INNER JOIN content_identities ci ON e.content_id = ci.id
-			WHERE e.content_id IS NOT NULL
-			  AND e.volume_id IS NOT NULL
-			  AND e.kind = 0
-			  {}
-			  AND e.content_id IN (
-			      SELECT e2.content_id FROM entries e2
-			      WHERE e2.content_id IS NOT NULL AND e2.volume_id IS NOT NULL
-			      GROUP BY e2.content_id
-			      HAVING COUNT(DISTINCT e2.volume_id) > 1
-			  )
-			GROUP BY e.volume_id
+			SELECT volume_id,
+			       SUM(file_count) as file_count,
+			       COALESCE(SUM(content_size), 0) as content_bytes
+			FROM (
+			    SELECT e.volume_id as volume_id,
+			           COUNT(*) as file_count,
+			           MAX(ci.total_size) as content_size
+			    FROM entries e
+			    INNER JOIN content_identities ci ON e.content_id = ci.id
+			    WHERE e.content_id IS NOT NULL
+			      AND e.volume_id IS NOT NULL
+			      AND e.kind = 0
+			      {}
+			      AND e.content_id IN (
+			          SELECT e2.content_id FROM entries e2
+			          WHERE e2.content_id IS NOT NULL AND e2.volume_id IS NOT NULL
+			          GROUP BY e2.content_id
+			          HAVING COUNT(DISTINCT e2.volume_id) > 1
+			      )
+			    GROUP BY e.volume_id, e.content_id
+			)
+			GROUP BY volume_id
 			"#,
 			volume_where
 		);
@@ -178,14 +190,21 @@ impl LibraryQuery for RedundancySummaryQuery {
 		// Query 3: Per-volume total file counts
 		let totals_sql = format!(
 			r#"
-			SELECT e.volume_id as volume_id,
-			       COUNT(*) as total_file_count,
-			       COALESCE(SUM(e.size), 0) as total_bytes
-			FROM entries e
-			WHERE e.volume_id IS NOT NULL
-			  AND e.kind = 0
-			  {}
-			GROUP BY e.volume_id
+			SELECT volume_id,
+			       SUM(file_count) as total_file_count,
+			       COALESCE(SUM(content_size), 0) as total_bytes
+			FROM (
+			    SELECT e.volume_id as volume_id,
+			           COUNT(*) as file_count,
+			           MAX(e.size) as content_size
+			    FROM entries e
+			    WHERE e.volume_id IS NOT NULL
+			      AND e.kind = 0
+			      {}
+			    -- Files that share content count once; files not hashed yet count each.
+			    GROUP BY e.volume_id, COALESCE('c' || e.content_id, 'e' || e.id)
+			)
+			GROUP BY volume_id
 			"#,
 			volume_where
 		);
@@ -278,6 +297,11 @@ impl LibraryQuery for RedundancySummaryQuery {
 		}
 
 		let total_unique_content_bytes = library_total.map_or(0, |r| r.total_bytes);
+		// Content on two volumes appears in both volumes' redundant bytes; the library
+		// total counts it once. At-risk content lives on one volume, so its sum is exact.
+		if volume_id_filter.is_none() {
+			lib_redundant_bytes = (total_unique_content_bytes - lib_at_risk_bytes).max(0);
+		}
 		let replication_score = if lib_at_risk_bytes + lib_redundant_bytes > 0 {
 			lib_redundant_bytes as f64 / (lib_at_risk_bytes + lib_redundant_bytes) as f64
 		} else {

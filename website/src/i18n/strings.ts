@@ -202,7 +202,7 @@ const en = {
 		linux: {
 			t: "Linux",
 			s: "Supported",
-			d: "x86_64. The AppImage runs on any distribution; the .deb fits Debian, Ubuntu and derivatives.",
+			d: "x86_64. The AppImage runs on any distribution; the .deb fits Debian, Ubuntu and derivatives; the Flatpak installs on any distribution with Flatpak.",
 			aurT: "Arch Linux and derivatives",
 			aurD: "wingdrive-bin follows stable releases. wingdrive-nightly follows every release, alpha, beta and rc included.",
 		},
@@ -215,6 +215,8 @@ const en = {
 			t: "macOS",
 			s: "From source",
 			d: "Prebuilt, signed builds are planned for milestone M3. Until then, build from source:",
+			preview: "Preview",
+			dmg: "Apple silicon. Signed ad hoc, not yet notarized: after moving WingDrive to Applications, clear the download quarantine once.",
 		},
 		android: {
 			t: "Android",
@@ -225,6 +227,9 @@ const en = {
 			t: "Headless server",
 			s: "Supported",
 			d: "Run the daemon and the web interface on a NAS, a home server or a VPS. Set WING_AUTH before exposing it.",
+			archivesT: "Without Docker",
+			archivesD: "wing-server and the wing command line with their media libraries, for Linux x86_64 (glibc 2.39 or newer). The Windows archive holds wing.exe and wing-daemon.exe.",
+			cliWindows: "Windows CLI .zip",
 		},
 		source: {
 			t: "Build from source",
@@ -549,7 +554,7 @@ const pt: Strings = {
 		linux: {
 			t: "Linux",
 			s: "Suportado",
-			d: "x86_64. O AppImage roda em qualquer distribuição; o .deb serve para Debian, Ubuntu e derivados.",
+			d: "x86_64. O AppImage roda em qualquer distribuição; o .deb serve para Debian, Ubuntu e derivados; o Flatpak instala em qualquer distribuição com Flatpak.",
 			aurT: "Arch Linux e derivados",
 			aurD: "wingdrive-bin acompanha as versões estáveis. wingdrive-nightly acompanha todas, incluindo alpha, beta e rc.",
 		},
@@ -562,6 +567,8 @@ const pt: Strings = {
 			t: "macOS",
 			s: "Pelo código-fonte",
 			d: "Builds prontos e assinados estão planejados para o marco M3. Até lá, compile pelo código-fonte:",
+			preview: "Prévia",
+			dmg: "Apple silicon. Assinado ad hoc, ainda sem notarização: depois de mover o WingDrive para Aplicativos, limpe a quarentena do download uma vez.",
 		},
 		android: {
 			t: "Android",
@@ -572,6 +579,9 @@ const pt: Strings = {
 			t: "Servidor headless",
 			s: "Suportado",
 			d: "Rode o daemon e a interface web num NAS, servidor doméstico ou VPS. Defina WING_AUTH antes de expor.",
+			archivesT: "Sem Docker",
+			archivesD: "wing-server e a linha de comando wing com as bibliotecas de mídia, para Linux x86_64 (glibc 2.39 ou mais nova). O arquivo do Windows traz wing.exe e wing-daemon.exe.",
+			cliWindows: "CLI do Windows .zip",
 		},
 		source: {
 			t: "Compilar pelo código-fonte",

@@ -16,7 +16,14 @@ const deb = pick(r, /amd64\.deb$/);
 const exe = pick(r, /setup\.exe$/);
 const msi = pick(r, /\.msi$/);
 const apk = pick(r, /arm64-v8a\.apk$/);
-const androidChecksums = pick(r, /^SHA256SUMS-android$/);
+const flatpak = pick(r, /x86_64\.flatpak$/);
+const dmg = pick(r, /aarch64\.dmg$/);
+const serverTarXz = pick(r, /^wing-server-.*-linux-x86_64\.tar\.xz$/);
+const serverTarGz = pick(r, /^wing-server-.*-linux-x86_64\.tar\.gz$/);
+const serverZip = pick(r, /^wing-server-.*-linux-x86_64\.zip$/);
+const cliWindows = pick(r, /^wing-.*-windows-x64\.zip$/);
+// Releases before 3.7.0 split the checksums per platform.
+const androidChecksums = pick(r, /^SHA256SUMS-android$/) ?? pick(r, /^SHA256SUMS$/);
 const date = new Date(r.date).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US", { year: "numeric", month: "long", day: "numeric" });
 const notesUrl = `${RELEASES}/tag/${r.tag}`;
 ---
@@ -45,6 +52,7 @@ const notesUrl = `${RELEASES}/tag/${r.tag}`;
 			<div class="btns">
 				{appimage && <a class="btn btn-primary" href={appimage.url}><Icon name="download" size={17} />AppImage <small>{fmtSize(appimage.size)}</small></a>}
 				{deb && <a class="btn" href={deb.url}><Icon name="download" size={17} />.deb <small>{fmtSize(deb.size)}</small></a>}
+				{flatpak && <a class="btn" href={flatpak.url}><Icon name="download" size={17} />Flatpak <small>{fmtSize(flatpak.size)}</small></a>}
 			</div>
 			<h3>{s.linux.aurT}</h3>
 			<p class="small">{s.linux.aurD}</p>
@@ -64,9 +72,22 @@ const notesUrl = `${RELEASES}/tag/${r.tag}`;
 
 		<article class="card plat" data-os="mac">
 			<span class="rec">{s.recommended}</span>
-			<header><Icon name="apple" size={28} /><div><h2>{s.mac.t}</h2><span class="pill"><span class="dot dim"></span>{s.mac.s}</span></div></header>
-			<p>{s.mac.d}</p>
-			<CopyCode code={"git clone https://github.com/bernardopg/wingdrive\ncd wingdrive && just setup && just dev-desktop"} />
+			{dmg ? (
+				<>
+					<header><Icon name="apple" size={28} /><div><h2>{s.mac.t}</h2><span class="pill"><span class="dot warn"></span>{s.mac.preview}</span></div></header>
+					<p>{s.mac.dmg}</p>
+					<div class="btns">
+						<a class="btn btn-primary" href={dmg.url}><Icon name="download" size={17} />Apple silicon .dmg <small>{fmtSize(dmg.size)}</small></a>
+					</div>
+					<CopyCode code="xattr -dr com.apple.quarantine /Applications/WingDrive.app" />
+				</>
+			) : (
+				<>
+					<header><Icon name="apple" size={28} /><div><h2>{s.mac.t}</h2><span class="pill"><span class="dot dim"></span>{s.mac.s}</span></div></header>
+					<p>{s.mac.d}</p>
+					<CopyCode code={"git clone https://github.com/bernardopg/wingdrive\ncd wingdrive && just setup && just dev-desktop"} />
+				</>
+			)}
 		</article>
 
 		<article class="card plat" data-os="android">
@@ -75,7 +96,7 @@ const notesUrl = `${RELEASES}/tag/${r.tag}`;
 			<p>{s.android.d}</p>
 			<div class="btns">
 				{apk && <a class="btn" href={apk.url}><Icon name="download" size={17} />APK <small>{fmtSize(apk.size)}</small></a>}
-				{androidChecksums && <a class="btn secondary" href={androidChecksums.url}>SHA256SUMS-android</a>}
+				{androidChecksums && <a class="btn secondary" href={androidChecksums.url}>{androidChecksums.name}</a>}
 			</div>
 		</article>
 
@@ -83,6 +104,18 @@ const notesUrl = `${RELEASES}/tag/${r.tag}`;
 			<header><Icon name="docker" size={28} /><div><h2>{s.server.t}</h2><span class="pill"><span class="dot"></span>{s.server.s}</span></div></header>
 			<p>{s.server.d}</p>
 			<CopyCode code={`docker run -d --name wingdrive \\\n  -p 8080:8080 -p 7373:7373 \\\n  -v wingdrive-data:/data \\\n  -e WING_AUTH=admin:change-me \\\n  ${DOCKER}:latest`} />
+			{(serverTarXz || cliWindows) && (
+				<>
+					<h3>{s.server.archivesT}</h3>
+					<p class="small">{s.server.archivesD}</p>
+					<div class="btns">
+						{serverTarXz && <a class="btn" href={serverTarXz.url}><Icon name="download" size={17} />Linux .tar.xz <small>{fmtSize(serverTarXz.size)}</small></a>}
+						{serverTarGz && <a class="btn secondary" href={serverTarGz.url}>.tar.gz</a>}
+						{serverZip && <a class="btn secondary" href={serverZip.url}>.zip</a>}
+						{cliWindows && <a class="btn" href={cliWindows.url}><Icon name="download" size={17} />{s.server.cliWindows} <small>{fmtSize(cliWindows.size)}</small></a>}
+					</div>
+				</>
+			)}
 		</article>
 
 		<article class="card plat wide">

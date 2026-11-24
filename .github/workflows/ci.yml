@@ -97,6 +97,11 @@ jobs:
       - name: Check repository independence
         run: ./scripts/check-wingdrive-independence.sh
 
+      # The release page is built from CHANGELOG.md, so its format is checked on every change
+      # (docs/core/releases.mdx, section "Changelog").
+      - name: Check the changelog format
+        run: python3 scripts/release/changelog.py check
+
   frontend:
     name: TypeScript
     needs: changes
@@ -143,6 +148,13 @@ jobs:
           bun test packages/interface/src/routes/explorer/hooks/searchQuery.test.ts
           bun test packages/ts-client/src/__tests__/tauri-transport.test.ts
           bun test packages/ts-client/src/__tests__/sidebar-store.test.ts
+          bun test packages/ts-client/src/__tests__/syncPreferences-store.test.ts
+          bun test packages/ts-client/src/__tests__/transport.test.ts
+          bun test packages/ts-client/src/__tests__/viewPreferences-store.test.ts
+          bun test packages/ts-client/src/event-filter.test.ts
+          bun test packages/ts-client/src/hooks/__tests__/useJobs.test.tsx
+          bun test packages/ts-client/src/hooks/__tests__/useSearchFiles.test.tsx
+          bun test packages/ts-client/src/subscriptionManager.test.ts
           bun test apps/tauri/src/lib/rendering.test.js
           bun test packages/interface/src/routes/explorer/FileContextMenuProvider.test.tsx
           bun test packages/interface/src/components/TabManager/tabRouter.test.ts
