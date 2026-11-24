@@ -25,9 +25,9 @@ every library can use them. Installs are pinned and recorded in a lockfile, like
 - [x] Install: download the archive, check its SHA-256 against the index, unpack into a staging directory, validate the manifest and contract version, then move it into place atomically
 - [ ] Update when the index pins a new commit; remove; reinstall from the lockfile
 - [ ] Show the permissions an adapter asks for and require consent before install and when an update asks for more
-- [ ] Operations `adapters.store.list`, `adapters.store.install`, `adapters.store.update`, `adapters.store.remove` and `adapters.store.refresh`, with TypeScript types generated
+- [x] Operations `adapters.store.list`, `adapters.store.install`, `adapters.store.update`, `adapters.store.remove` and `adapters.store.refresh`, with TypeScript types generated
 - [ ] `wing adapters browse|install|update|remove|lock|restore`
-- [ ] Report a missing runtime (no `python3`) on the card instead of failing a sync
+- [x] Report a missing runtime (no `python3`) on the card instead of failing a sync
 
 ## Acceptance Criteria
 

@@ -5,6 +5,12 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Added
+
+- `wing adapters browse`, `list`, `outdated`, `install`, `update` and `remove` manage data source
+  adapters from the adapter store. Installs show the permissions an adapter asks for and need
+  consent; updates that ask for more permissions need it again (ADAPT-004).
+
 ### Fixed
 
 - PDF thumbnails work again on Linux. Only the first PDF a daemon rendered got a thumbnail:

@@ -2,6 +2,7 @@
 
 pub mod config;
 pub mod list;
+pub mod store;
 pub mod update;
 
 pub use config::*;

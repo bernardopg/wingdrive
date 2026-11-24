@@ -93,6 +93,14 @@ impl AdapterRegistry {
 			.insert(adapter.id().to_string(), adapter);
 	}
 
+	/// Removes an adapter, for example after the store uninstalled it.
+	pub fn unregister(&self, id: &str) -> Option<Arc<dyn Adapter>> {
+		self.adapters
+			.write()
+			.expect("adapter registry poisoned")
+			.remove(id)
+	}
+
 	pub fn get(&self, id: &str) -> Option<Arc<dyn Adapter>> {
 		self.adapters
 			.read()
