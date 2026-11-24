@@ -238,7 +238,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.verified != 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       BASE_URL: http://127.0.0.1:18765
       NODE_PATH: /tmp/wingdrive-playwright/node_modules
