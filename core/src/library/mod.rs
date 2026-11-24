@@ -66,7 +66,9 @@ pub struct Library {
 	file_sync_service: OnceCell<Arc<crate::service::file_sync::FileSyncService>>,
 
 	/// Source manager for archive data (emails, notes, etc.) - initialized lazily
-	source_manager: OnceCell<Arc<crate::data::manager::SourceManager>>,
+	/// Set once by `init_source_manager`. A tokio cell so concurrent first calls
+	/// wait for one initialization instead of copying adapters twice at once.
+	source_manager: tokio::sync::OnceCell<Arc<crate::data::manager::SourceManager>>,
 
 	/// Library-specific device cache (slug → UUID)
 	/// Loaded from this library's devices table for per-library device resolution
@@ -138,23 +140,20 @@ impl Library {
 
 	/// Initialize the source manager (called during library setup)
 	pub async fn init_source_manager(self: &Arc<Self>) -> Result<()> {
-		if self.source_manager.get().is_some() {
-			warn!(
-				"Source manager already initialized for library {}",
-				self.id()
-			);
-			return Ok(());
-		}
-
-		let source_manager = crate::data::manager::SourceManager::new(self.path.clone())
-			.await
-			.map_err(|e| LibraryError::Other(format!("Failed to create source manager: {e}")))?;
-
+		// Queries call this lazily and the UI sends several at once. Two
+		// initializations used to copy the bundled adapters over each other while
+		// the other read them, so an adapter.toml was parsed half written.
 		self.source_manager
-			.set(Arc::new(source_manager))
-			.map_err(|_| LibraryError::Other("Source manager already initialized".to_string()))?;
-
-		debug!("Source manager initialized for library {}", self.id());
+			.get_or_try_init(|| async {
+				let source_manager = crate::data::manager::SourceManager::new(self.path.clone())
+					.await
+					.map_err(|e| {
+						LibraryError::Other(format!("Failed to create source manager: {e}"))
+					})?;
+				debug!("Source manager initialized for library {}", self.id());
+				Ok::<_, LibraryError>(Arc::new(source_manager))
+			})
+			.await?;
 
 		Ok(())
 	}

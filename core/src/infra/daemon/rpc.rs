@@ -204,7 +204,22 @@ impl RpcServer {
 		let event_buffer = self.event_buffer.clone();
 
 		tokio::spawn(async move {
-			while let Ok(event) = event_subscriber.recv().await {
+			loop {
+				// A burst (indexing thousands of files) can outrun this loop. A lagged
+				// receiver must keep going: ending the loop here stopped every client
+				// from getting events until the daemon restarted, so job dialogs waited
+				// forever for a JobCompleted that never came (CORE-021).
+				let event = match event_subscriber.recv().await {
+					Ok(event) => event,
+					Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+						tracing::info!(
+							skipped,
+							"Event broadcaster lagged, asking clients to refresh"
+						);
+						Event::Refresh
+					}
+					Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+				};
 				// Add to buffer before broadcasting (for subscription race condition handling)
 				event_buffer.add_event(event.clone()).await;
 
@@ -547,7 +562,13 @@ impl RpcServer {
 
 				// Spawn task to forward log messages
 				tokio::spawn(async move {
-					while let Ok(log_msg) = log_subscriber.recv().await {
+					loop {
+						// Skip lost log lines instead of ending the stream on a burst.
+						let log_msg = match log_subscriber.recv().await {
+							Ok(log_msg) => log_msg,
+							Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
+							Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+						};
 						// Apply filter if specified
 						if let Some(ref f) = filter_clone {
 							// Filter by job_id

@@ -61,7 +61,9 @@ impl VouchingQueue {
 		})?;
 
 		let db_path = networking_dir.join("vouching_queue.db");
-		let database_url = sqlite_url(&db_path, true);
+		// Same URL shape as the library database: sqlx parses Windows drive
+		// paths here, which SeaORM's `Database::connect` rejected.
+		let database_url = format!("sqlite://{}?mode=rwc", db_path.display());
 		let conn = crate::infra::db::connect_sqlite(&database_url, 1)
 			.await
 			.map_err(|e| {
@@ -71,15 +73,6 @@ impl VouchingQueue {
 		Self::init_table(&conn).await?;
 
 		Ok(Self { conn })
-	}
-
-	fn sqlite_url(path: &Path, create: bool) -> String {
-		let mut normalized = path.to_string_lossy().replace('\\', "/");
-		if !normalized.starts_with('/') {
-			normalized = format!("/{normalized}");
-		}
-		let mode = if create { "rwc" } else { "rw" };
-		format!("sqlite://{normalized}?mode={mode}")
 	}
 
 	fn serialize<T: Serialize>(value: &T) -> Result<String> {

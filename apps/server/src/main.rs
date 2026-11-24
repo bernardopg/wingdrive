@@ -804,7 +804,8 @@ mod tests {
 			"unexpected content-type: {content_type}"
 		);
 		let body = response_body_string(response).await;
-		assert!(body.contains("<html>"));
+		// The built page opens with `<html lang="en">`, so match only the tag start.
+		assert!(body.contains("<html"), "not an HTML page: {body}");
 	}
 
 	#[tokio::test]
@@ -822,7 +823,8 @@ mod tests {
 			"unexpected content-type: {content_type}"
 		);
 		let body = response_body_string(response).await;
-		assert!(body.contains("<html>"));
+		// The built page opens with `<html lang="en">`, so match only the tag start.
+		assert!(body.contains("<html"), "not an HTML page: {body}");
 	}
 
 	fn basic_auth_app(state: AppState) -> Router {

@@ -144,7 +144,14 @@ impl LibraryAction for IndexVolumeAction {
 		tokio::spawn(async move {
 			let mut event_rx = context_clone.events.subscribe();
 
-			while let Ok(event) = event_rx.recv().await {
+			loop {
+				// A lagged receiver keeps waiting for the completion event; only a
+				// closed bus ends the wait.
+				let event = match event_rx.recv().await {
+					Ok(event) => event,
+					Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
+					Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+				};
 				match event {
 					crate::infra::event::Event::JobCompleted {
 						job_id: event_job_id,
