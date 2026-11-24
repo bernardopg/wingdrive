@@ -191,11 +191,80 @@ fn extract_tar_xz(data: &[u8], dest: &Path) -> Result<()> {
 	Ok(())
 }
 
+/// Renames the framework of the macOS native-deps archive to WingDrive.framework.
+///
+/// The archive still ships the framework under its upstream name, while the app bundle
+/// (`tauri.conf.json`, `bundle.macOS.frameworks`) and this setup expect
+/// WingDrive.framework. Each dylib's install name points into the framework by name, and
+/// the app links against those names, so they are rewritten too; the dylibs are signed
+/// again afterwards by `symlink_libs_macos`. The `lib`, `include` and `licenses` links at
+/// the top of the archive follow the rename.
+#[cfg(target_os = "macos")]
+fn rename_legacy_framework(native_deps: &Path) -> Result<()> {
+	use std::os::unix::fs as unix_fs;
+
+	const LEGACY: &str = "Spacedrive.framework";
+	const CURRENT: &str = "WingDrive.framework";
+	let legacy = native_deps.join(LEGACY);
+	let current = native_deps.join(CURRENT);
+	if !legacy.exists() || current.exists() {
+		return Ok(());
+	}
+	fs::rename(&legacy, &current).context("Failed to rename the native-deps framework")?;
+
+	for name in ["lib", "include", "licenses"] {
+		let link = native_deps.join(name);
+		let Ok(target) = fs::read_link(&link) else {
+			continue;
+		};
+		let target = target.to_string_lossy().replace(LEGACY, CURRENT);
+		fs::remove_file(&link)?;
+		unix_fs::symlink(&target, &link)
+			.with_context(|| format!("Failed to relink {} to {}", link.display(), target))?;
+	}
+
+	let libraries = current.join("Versions").join("A").join("Libraries");
+	for entry in fs::read_dir(&libraries)? {
+		let path = entry?.path();
+		let is_dylib = path.extension().and_then(|s| s.to_str()) == Some("dylib");
+		if !is_dylib || path.is_symlink() {
+			continue;
+		}
+		let output = std::process::Command::new("otool")
+			.args(["-D"])
+			.arg(&path)
+			.output()
+			.context("Failed to run otool")?;
+		let id = String::from_utf8_lossy(&output.stdout)
+			.lines()
+			.nth(1)
+			.unwrap_or_default()
+			.trim()
+			.to_string();
+		if !id.contains(LEGACY) {
+			continue;
+		}
+		let status = std::process::Command::new("install_name_tool")
+			.arg("-id")
+			.arg(id.replace(LEGACY, CURRENT))
+			.arg(&path)
+			.status()
+			.context("Failed to run install_name_tool")?;
+		if !status.success() {
+			anyhow::bail!("install_name_tool failed on {}", path.display());
+		}
+	}
+	println!("   ✓ Renamed {LEGACY} to {CURRENT}");
+	Ok(())
+}
+
 /// Create symlinks for shared libraries on macOS
 pub fn symlink_libs_macos(root: &Path, native_deps: &Path) -> Result<()> {
 	#[cfg(target_os = "macos")]
 	{
 		use std::os::unix::fs as unix_fs;
+
+		rename_legacy_framework(native_deps)?;
 
 		// Create WingDrive.framework symlink for dylibs (matches v1 behavior)
 		let framework = native_deps.join("WingDrive.framework");
