@@ -20,7 +20,7 @@ check locally what the bots will check, and open a pull request to the registry.
 
 ## Implementation Steps
 
-- [ ] Template repository `bernardopg/wingdrive-adapter-template` with manifest, `sync.py`, fixtures, tests, CI that runs the harness, icon placeholder and README
+- [ ] Two template repositories, `<org>/wingdrive-adapter-template` (Python) and `<org>/wingdrive-adapter-template-rust` (compiled), each with manifest, fixtures, tests, CI that runs the harness, icon placeholder and README
 - [ ] `wing adapter init|validate|test|pack` (validate runs the same checks as the bots)
 - [ ] Guidelines in `docs/core/adapter-guidelines.mdx` and on wingdrive.org: naming, privacy (read only, no telemetry, local first), permissions, secrets, tests, review rules and reasons for rejection
 - [ ] Submission flow: issue form or pull request template in the registry with the checklist

@@ -14,9 +14,10 @@ last_updated: 2026-11-24
 
 ## Description
 
-Adapters run Python scripts. Windows has no Python by default, so the store hides adapters that need
-it there today. Choose between shipping an embeddable Python with the installer, finding a
-user-installed interpreter (`py -3`), or supporting compiled adapters, and implement it.
+Python adapters need an interpreter. Windows has none by default, so the store hides Python
+adapters there; compiled adapters (ADAPT-003) work without one. Choose between shipping an
+embeddable Python with the installer and finding a user-installed interpreter (`py -3`), and
+implement it.
 
 ## Implementation Steps
 

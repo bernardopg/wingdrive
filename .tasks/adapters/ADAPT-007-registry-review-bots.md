@@ -27,6 +27,7 @@ the index and publishes it.
 - [ ] Requirements: contract version supported, tests present and passing, harness passing against the adapter's fixtures, declared platforms and runtime
 - [ ] Security: declared permissions match what the code uses (network hosts, filesystem paths, secrets); no `eval`/`exec` of fetched code, no shell-outs except declared tools, no writes outside the adapter's state; dependency audit; secret scan
 - [ ] The pinned commit must be reachable from a tag in the adapter repository; updates show the diff since the last pin
+- [ ] Compiled adapters are built by the registry's own CI from the pinned commit for each target (Linux x86_64 and aarch64, macOS aarch64, Windows x86_64), with locked dependencies; binaries uploaded by authors are never accepted, so what users install always matches reviewed source
 - [ ] One report comment, updated on every push, with a pass/fail table and links to logs; labels `needs-changes`, `ready-for-review`, `approved`
 - [ ] Publish job after approval: archive, checksum, signed index, release asset, website dispatch
 - [ ] Same checks runnable locally with `wing adapter validate`

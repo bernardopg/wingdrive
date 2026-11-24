@@ -26,7 +26,7 @@ while the browser runs, so read a copy.
 
 ## Acceptance Criteria
 
-- [ ] Lives in its own repository `bernardopg/wingdrive-adapter-<id>` created from the template (ADAPT-008), with README, license, icon and tests
+- [ ] Lives in its own repository `<org>/wingdrive-adapter-<id>` created from the template (ADAPT-008), with README, license, icon and tests
 - [ ] Listed in the official registry through a reviewed pull request that the registry bots (ADAPT-007) pass
 - [ ] Installs from the store in the desktop app and from `wing adapters install <id>`
 - [ ] Defaults: the source path or account is detected on Linux and macOS (and Windows once ADAPT-002 lands); a wrong value fails `sources.create` with a message that names the field

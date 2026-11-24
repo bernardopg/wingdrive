@@ -23,6 +23,7 @@ reported, and how a test runs a real adapter against fixtures.
 
 - [ ] Document the manifest (`adapter.toml`), the stdin config, JSONL record, delete, cursor and error lines in `docs/core/adapters.mdx`, matching `ScriptAdapter`
 - [ ] Version the contract (`contract = 1` in the manifest) so the daemon can refuse adapters it does not understand
+- [ ] The contract is a process speaking JSONL on stdin and stdout, so it covers both Python scripts and compiled adapters (Rust, Go or any language); the manifest says `runtime = "python3"` or `runtime = "binary"`
 - [ ] Python helper package (`wingdrive-adapter-kit`) for config, emitting records, cursors, platform path defaults and secrets
 - [ ] Harness that runs an adapter folder through `ScriptAdapter` with a fixture config and checks the stored records; usable from Rust tests and as a command (`wing adapter test`)
 - [ ] The archive engine finds adapters only where the store installs them; drop the `CARGO_MANIFEST_DIR` lookups

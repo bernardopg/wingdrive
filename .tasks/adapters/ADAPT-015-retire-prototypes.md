@@ -20,7 +20,7 @@ drafts, so nothing is lost and nothing half-built reaches users.
 
 ## Implementation Steps
 
-- [ ] Move each prototype to `bernardopg/wingdrive-adapter-<id>` with history (`git filter-repo`) or as a fresh import with a pointer to the old path
+- [ ] Move each prototype to `<org>/wingdrive-adapter-<id>` with history (`git filter-repo`) or as a fresh import with a pointer to the old path
 - [ ] Remove `adapters/` and the code paths that read it
 - [ ] Point the docs at the registry and the template
 

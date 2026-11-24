@@ -22,7 +22,7 @@ handles plugins:
 
 - **One repository per adapter.** Official and third-party adapters live in their own repositories,
   built from a template, each with a manifest, an icon, tests and a license.
-- **A registry.** `bernardopg/wingdrive-adapters` lists every published adapter with a pinned commit
+- **A registry.** `<org>/wingdrive-adapters` lists every published adapter with a pinned commit
   and the checksum of its archive. The index is signed; the app refuses an index or an archive that
   does not verify. Users can add other registries by URL, like `dms registry add`.
 - **Bots that review submissions.** A pull request to the registry runs automatic checks on
