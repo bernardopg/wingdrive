@@ -18,6 +18,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 const enUrl = new URL(swapLang(Astro.url.pathname, "en"), Astro.site);
 const ptUrl = new URL(swapLang(Astro.url.pathname, "pt"), Astro.site);
 const ogImage = new URL(image, Astro.site);
+const defaultImage = image === "/og.png";
 const ld = {
 	"@context": "https://schema.org",
 	"@type": "SoftwareApplication",
@@ -54,10 +55,14 @@ const ld = {
 		<meta property="og:description" content={desc} />
 		<meta property="og:url" content={canonical} />
 		<meta property="og:image" content={ogImage} />
-		<meta property="og:image:width" content="1200" />
-		<meta property="og:image:height" content="630" />
+		{defaultImage && (
+			<>
+				<meta property="og:image:width" content="1200" />
+				<meta property="og:image:height" content="630" />
+			</>
+		)}
 		<meta property="og:locale" content={lang === "pt" ? "pt_BR" : "en_US"} />
-		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:card" content={defaultImage ? "summary_large_image" : "summary"} />
 		<meta name="twitter:title" content={fullTitle} />
 		<meta name="twitter:description" content={desc} />
 		<meta name="twitter:image" content={ogImage} />

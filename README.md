@@ -81,6 +81,8 @@ start with your session and stay in the tray.
    file operation.
 3. **Connect the rest.** **Settings → Integrations** signs in to Google Drive and Google Photos;
    **Pair** links your other computers.
+4. **Bring in your apps.** **Sources → +** opens the adapter store: install Obsidian or GitHub and
+   their notes and repositories show up in search.
 
 The [user guide on wingdrive.org](https://wingdrive.org/docs/) walks through each step with screenshots.
 
@@ -123,6 +125,18 @@ The [user guide on wingdrive.org](https://wingdrive.org/docs/) walks through eac
       <p><strong>Every drive at a glance.</strong> The Overview sums up storage, indexed files,
       devices, locations and volumes, and is where you add storage, pair devices and set up sync.</p>
     </td>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingAdapterStore.webp" alt="Obsidian's details in the adapter store: the paths it reads, no network, and the access enforced on this computer"/>
+      <p><strong>Bring your other apps in.</strong> The adapter store installs adapters for Obsidian
+      and GitHub, with the files, hosts and secrets each one needs shown before you install. On Linux
+      they run isolated in a sandbox.</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingAdapterSource.webp" alt="A synced Obsidian vault: six notes with their paths and text"/>
+      <p><strong>Search them with your files.</strong> Notes, repositories, issues and pull requests
+      become sources you browse and search; every sync reads only what changed.</p>
+    </td>
   </tr>
 </table>
 
@@ -133,6 +147,9 @@ The [user guide on wingdrive.org](https://wingdrive.org/docs/) walks through eac
 - Google Drive and Google Photos with several accounts: browse, copy, edit in local apps, sync folders
   and upload photos. OneDrive with your own Microsoft app registration. S3, Dropbox, Azure Blob and
   GCS as volumes through OpenDAL.
+- An adapter store with signed, reviewed adapters (Obsidian, GitHub) that show their permissions
+  before install, run isolated with bubblewrap on Linux and update with a badge when a new version
+  is out. Write your own in Python or any language: [registry](https://github.com/bernardopg/wingdrive-adapters).
 - `wing` CLI and `wing-server` for scripts and headless machines, both on the same daemon.
 - English and Brazilian Portuguese, and themes such as Catppuccin, Gruvbox, Dracula and Tokyo Night.
 
@@ -140,7 +157,8 @@ The [user guide on wingdrive.org](https://wingdrive.org/docs/) walks through eac
 
 | Topic | Start here |
 |---|---|
-| User guide, with screenshots | [wingdrive.org/docs](https://wingdrive.org/docs/): [First run](https://wingdrive.org/docs/first-run/) · [Explorer](https://wingdrive.org/docs/explorer/) · [Cloud volumes](https://wingdrive.org/docs/cloud/) · [Devices](https://wingdrive.org/docs/devices/) |
+| User guide, with screenshots | [wingdrive.org/docs](https://wingdrive.org/docs/): [First run](https://wingdrive.org/docs/first-run/) · [Explorer](https://wingdrive.org/docs/explorer/) · [Cloud volumes](https://wingdrive.org/docs/cloud/) · [Adapters](https://wingdrive.org/docs/adapters/) · [Devices](https://wingdrive.org/docs/devices/) |
+| Adapters | [User guide](https://wingdrive.org/docs/adapters/) · [Catalog](https://wingdrive.org/adapters/) · [Adapter contract](./docs/core/adapters.mdx) · [Store design](./docs/design/adapter-store.md) · [Publish one](https://github.com/bernardopg/wingdrive-adapters/blob/main/CONTRIBUTING.md) |
 | Install and first run | [Installation](./docs/readme/installation.md) · [Get started](./docs/overview/get-started.mdx) |
 | Libraries and locations | [Manage libraries](./docs/overview/manage-libraries.mdx) · [Add locations](./docs/overview/add-index-locations.mdx) |
 | Server and CLI | [Self-hosting](./docs/overview/self-hosting.mdx) · [Linux deployment](./docs/cli/linux-deployment.mdx) · [CLI](./docs/cli/overview.mdx) |
@@ -159,6 +177,8 @@ embeds the same Rust core. Stack: Rust, Tokio, SQLite (SeaORM), Iroh/QUIC, BLAKE
 Privacy by design: indexing, thumbnails and search run on your machine, traffic between paired
 devices is encrypted, and destructive operations are guarded (secure delete refuses copy-on-write
 filesystems, copies refuse to write into their own source, system mounts are never ejected).
+Adapters are separate processes: on Linux each runs in bubblewrap with only the paths it declares
+and no network unless it declares hosts, and it never sees WingDrive's own tokens.
 
 ## Roadmap
 

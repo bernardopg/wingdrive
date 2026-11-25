@@ -1,0 +1,182 @@
+---
+import Base from "../layouts/Base.astro";
+import Icon from "../components/Icon.astro";
+import AdapterIcon from "../components/AdapterIcon.astro";
+import CopyCode from "../components/CopyCode.astro";
+import { href, type Lang } from "../i18n/strings";
+import { adapterText, platformLabel, webUrl, type StoreAdapter } from "../i18n/adapters";
+import { adapterCopy } from "../i18n/adapter-copy";
+import { adapterReadme, adapterSource } from "../lib/adapter-readme";
+
+interface Props {
+	lang: Lang;
+	adapter: StoreAdapter;
+}
+const { lang, adapter } = Astro.props;
+const s = adapterCopy[lang];
+const { summary, description } = adapterText(adapter, lang);
+const source = adapterSource(adapter);
+const readme = source ? await adapterReadme(source, lang) : undefined;
+const sections = readme?.sections ?? [];
+const permissions = adapter.permissions ?? {};
+const groups = [
+	{ label: s.read, items: permissions.read, empty: s.none.read },
+	{ label: s.network, items: permissions.network, empty: s.offline },
+	{ label: s.secrets, items: permissions.secrets, empty: s.none.secrets },
+	{ label: s.tools, items: permissions.tools, empty: s.none.tools },
+];
+const facts = [
+	{ label: s.version, value: adapter.version },
+	{ label: s.author, value: adapter.author },
+	{ label: s.license, value: adapter.license },
+	{ label: s.platforms, value: adapter.platforms.map(platformLabel).join(" · ") },
+];
+---
+
+<Base lang={lang} title={adapter.name} description={summary} image={webUrl(adapter.icon.png?.url)}>
+	<section class="head">
+		<div class="wrap">
+			<a class="detail-link back" href={href(lang, "/adapters/")}><Icon name="arrow" size={16} />{s.back}</a>
+			<header>
+				<AdapterIcon data={adapter.iconData} size={72} />
+				<div class="heading">
+					<h1 class="h-lg">{adapter.name}</h1>
+					<div class="trust">
+						<span class="pill">{s.trust[adapter.trust].label}</span>
+						<p>{s.trust[adapter.trust].detail}</p>
+					</div>
+				</div>
+			</header>
+			<p class="lead description">{description}</p>
+			<dl class="facts">
+				{facts.map(({ label, value }) => (
+					<div><dt>{label}</dt><dd>{value}</dd></div>
+				))}
+			</dl>
+		</div>
+	</section>
+
+	<div class="wrap columns">
+		<section class="card permissions" aria-labelledby="adapter-permissions">
+			<h2 class="h-md" id="adapter-permissions"><Icon name="shield" size={24} /> {s.permissions}</h2>
+			<p>{s.permissionNote}</p>
+			<dl>
+				{groups.map(({ label, items, empty }) => (
+					<div>
+						<dt>{label}</dt>
+						<dd>
+							{items?.length ? (
+								<ul>
+									{items.map((item) => {
+										const configField = item.match(/^\{config\.([^{}]+)\}$/)?.[1];
+										return <li>{configField ? <>{s.folder} (<code>{configField}</code>)</> : <code>{item}</code>}</li>;
+									})}
+								</ul>
+							) : empty}
+						</dd>
+					</div>
+				))}
+			</dl>
+		</section>
+
+		<section class="card install" aria-labelledby="adapter-install">
+			<h2 class="h-md" id="adapter-install">{s.install}</h2>
+			<h3>{s.inApp}</h3>
+			<ol>
+				{s.steps.map((step) => <li>{step}</li>)}
+			</ol>
+			<h3>{s.cli}</h3>
+			<CopyCode code={`wing adapters install ${adapter.id}`} label={s.copy} />
+			{source && (
+				<div class="source-links">
+					<a class="detail-link" href={source.tree} rel="noopener">{s.source} <Icon name="external" size={13} /></a>
+					<a class="detail-link" href={source.commit} rel="noopener">{s.commit} <Icon name="external" size={13} /></a>
+				</div>
+			)}
+		</section>
+
+		{source && (
+			<section class="documentation" aria-labelledby="adapter-documentation">
+				<h2 class="h-md" id="adapter-documentation">{s.readme}</h2>
+				{sections.map(({ section, html }) => (
+					<div class="readme-section">
+						<h3>{s.sections[section]}</h3>
+						<div class="prose" set:html={html} />
+					</div>
+				))}
+				<a class="detail-link" href={readme?.url ?? source.readme} rel="noopener">{s.readmeLink} <Icon name="external" size={13} /></a>
+			</section>
+		)}
+	</div>
+</Base>
+
+<style>
+	.head {
+		padding: clamp(106px, 12vw, 150px) 0 34px;
+		background: radial-gradient(ellipse at 20% 0%, rgb(109 40 217 / 0.24), transparent 72%);
+	}
+	.head .wrap { display: grid; justify-items: start; gap: 20px; }
+	.detail-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--lavender);
+		font-size: 14px;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+	.detail-link :global(svg) { flex: none; }
+	.back :global(svg) { transform: rotate(180deg); }
+	header { display: flex; align-items: center; gap: 16px; min-width: 0; max-width: 100%; }
+	.heading { display: grid; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+	.trust { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; color: var(--muted); font-size: 14px; }
+	.trust .pill { padding: 3px 10px; }
+	.description { white-space: pre-line; overflow-wrap: anywhere; }
+	.facts {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px 36px;
+		margin: 0;
+		padding-top: 16px;
+		width: 100%;
+		border-top: 1px solid var(--line);
+		font-size: 15px;
+		overflow-wrap: anywhere;
+	}
+	.facts div { min-width: 0; }
+	.facts dt { color: var(--muted); font-size: 13px; }
+	dd { margin: 0; }
+	.columns {
+		display: grid;
+		grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+		align-items: start;
+		gap: 24px;
+	}
+	.permissions, .install { display: grid; gap: 12px; overflow-wrap: anywhere; }
+	.permissions h2 { display: flex; align-items: center; gap: 10px; }
+	.permissions h2 :global(svg) { flex: none; color: var(--lavender); }
+	.permissions p, .install ol { color: var(--muted); font-size: 15px; }
+	.permissions dl { margin: 4px 0 0; }
+	.permissions dl > div { border-top: 1px solid var(--line); padding: 12px 0; }
+	.permissions dl > div:last-child { padding-bottom: 0; }
+	.permissions dt { font-weight: 600; font-size: 15px; }
+	.permissions dd { color: var(--muted); font-size: 14px; margin-top: 4px; }
+	.permissions ul { list-style: none; padding: 0; margin: 0; }
+	.permissions code { color: var(--lavender); }
+	.install h3, .readme-section h3 { font-size: 19px; }
+	.install ol { margin: 0 0 6px; padding-left: 1.2em; }
+	.install li + li { margin-top: 4px; }
+	.source-links { display: flex; flex-wrap: wrap; gap: 8px 16px; padding-top: 8px; }
+	.documentation { min-width: 0; margin-top: 16px; overflow-wrap: anywhere; }
+	.documentation > .detail-link { margin-top: 20px; }
+	.readme-section { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--line); }
+	.readme-section h3 { margin-bottom: 12px; }
+	.prose :global(th:first-child), .prose :global(td:first-child) { min-width: 7.5rem; }
+	@media (max-width: 800px) {
+		.columns { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+	}
+	@media (max-width: 520px) {
+		header { align-items: flex-start; }
+		.permissions, .install { padding: 20px; }
+	}
+</style>
