@@ -3,13 +3,14 @@ import Icon from "./Icon.astro";
 
 interface Props {
 	code: string;
+	label?: string;
 }
-const { code } = Astro.props;
+const { code, label = "Copy" } = Astro.props;
 ---
 
 <div class="cc">
 	<pre><code>{code}</code></pre>
-	<button type="button" aria-label="Copy" data-copy={code}>
+	<button type="button" aria-label={label} data-copy={code}>
 		<span class="i-copy"><Icon name="copy" size={16} /></span>
 		<span class="i-ok"><Icon name="check" size={16} /></span>
 	</button>

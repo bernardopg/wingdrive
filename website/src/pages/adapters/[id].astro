@@ -1,0 +1,13 @@
+---
+import AdapterDetail from "../../views/AdapterDetail.astro";
+import { catalog, type StoreAdapter } from "../../i18n/adapters";
+
+export async function getStaticPaths() {
+	const { adapters } = await catalog();
+	return adapters.map((adapter) => ({ params: { id: adapter.id }, props: { adapter } }));
+}
+
+const { adapter } = Astro.props as { adapter: StoreAdapter };
+---
+
+<AdapterDetail lang="en" adapter={adapter} />

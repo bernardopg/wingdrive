@@ -1,234 +1,262 @@
 ---
+import { existsSync } from "node:fs";
 import Base from "../layouts/Base.astro";
 import Icon from "../components/Icon.astro";
-import CopyCode from "../components/CopyCode.astro";
-import { type Lang, DISCORD } from "../i18n/strings";
-import { catalog, REGISTRY } from "../i18n/adapters";
+import AdapterIcon from "../components/AdapterIcon.astro";
+import { type Lang, DISCORD, href } from "../i18n/strings";
+import { catalog, adapterText, platformLabel, REGISTRY } from "../i18n/adapters";
+import { adapterCopy, categoryLabel } from "../i18n/adapter-copy";
 
 interface Props {
 	lang: Lang;
 }
 const { lang } = Astro.props;
-
-const s = {
-	en: {
-		title: "Adapters",
-		lead: "Adapters bring notes, code, mail and other apps into your WingDrive library, so search finds them next to your files. Install them in the app from Sources > Add source, or with the command line.",
-		official: "Official",
-		verified: "Verified",
-		community: "Community",
-		reads: "Reads",
-		connects: "Connects to",
-		secrets: "Asks for",
-		runs: "Runs",
-		offline: "Works offline",
-		source: "Source",
-		empty: "No adapters are published yet.",
-		index: "Signed index",
-		howT: "How the store works",
-		how: [
-			"Every adapter is reviewed in a pull request to the registry before it is published.",
-			"The index is signed; the app checks the signature and each download's SHA-256 before installing.",
-			"Each adapter declares the files it reads, the hosts it contacts and the secrets it needs. The app shows them and asks before installing, and again when an update asks for more.",
-			"A version found to be unsafe is revoked and stops running on every install.",
-		],
-		publishT: "Publish your own",
-		publish: "Adapters are small programs that print JSON lines, in Python or any compiled language. Read the guide, open a pull request, and Wingbot reports what it found.",
-		guide: "Publishing guide",
-		news: "New adapters and updates are announced on Discord in #adapters.",
-	},
-	pt: {
-		title: "Adaptadores",
-		lead: "Adaptadores trazem notas, código, e-mails e outros apps para a sua biblioteca do WingDrive, e a busca encontra tudo junto com os seus arquivos. Instale no app em Fontes > Adicionar fonte, ou pela linha de comando.",
-		official: "Oficial",
-		verified: "Verificado",
-		community: "Comunidade",
-		reads: "Lê",
-		connects: "Conecta a",
-		secrets: "Pede",
-		runs: "Executa",
-		offline: "Funciona offline",
-		source: "Código",
-		empty: "Nenhum adaptador publicado ainda.",
-		index: "Índice assinado",
-		howT: "Como a loja funciona",
-		how: [
-			"Todo adaptador é revisado num pull request ao registro antes de ser publicado.",
-			"O índice é assinado; o app confere a assinatura e o SHA-256 de cada download antes de instalar.",
-			"Cada adaptador declara os arquivos que lê, os servidores que acessa e os segredos de que precisa. O app mostra isso e pede permissão antes de instalar, e de novo quando uma atualização pede mais.",
-			"Uma versão considerada insegura é revogada e para de rodar em todas as instalações.",
-		],
-		publishT: "Publique o seu",
-		publish: "Adaptadores são programas pequenos que imprimem linhas JSON, em Python ou em qualquer linguagem compilada. Leia o guia, abra um pull request e o Wingbot informa o que encontrou.",
-		guide: "Guia de publicação",
-		news: "Adaptadores novos e atualizações são anunciados no Discord, em #adapters.",
-	},
-}[lang];
-
-const c = await catalog();
-const pretty = (path: string) => (path.startsWith("{config.") ? `‹${path.slice(8, -1)}›` : path);
+const s = adapterCopy[lang];
+const { adapters, sequence } = await catalog();
+const categories = [...new Set(adapters.flatMap((adapter) => adapter.categories))]
+	.sort((a, b) => categoryLabel(a, lang).localeCompare(categoryLabel(b, lang), lang));
+const resultCount = (adapters.length === 1 ? s.oneResult : s.manyResults).replace("{count}", String(adapters.length));
+const screenshots = Object.entries(s.screenshots).flatMap(([name, copy]) => {
+	const path = `/img/adapters/${name}.png`;
+	return existsSync(`public${path}`) ? [{ path, ...copy }] : [];
+});
 ---
 
 <Base lang={lang} title={s.title} description={s.lead}>
 	<section class="head">
 		<div class="wrap">
+			{sequence > 0 && (
+				<a class="index" href={`${REGISTRY}/releases/latest`} rel="noopener">
+					{s.index} #{sequence} <Icon name="external" size={13} />
+				</a>
+			)}
 			<h1 class="h-lg">{s.title}</h1>
 			<p class="lead">{s.lead}</p>
-			{c.sequence > 0 && (
-				<a class="idx" href={`${REGISTRY}/releases/latest`} rel="noopener">{s.index} {c.sequence} <Icon name="external" size={13} /></a>
-			)}
 		</div>
 	</section>
 
-	<section class="wrap grid">
-		{c.adapters.length === 0 && <p class="muted">{s.empty}</p>}
-		{c.adapters.map((a) => {
-			const p = a.permissions ?? {};
-			return (
-				<article class="card adapter" id={a.id}>
-					<header>
-						{a.iconData ? <img src={a.iconData} alt="" width="48" height="48" /> : <span class="noicon"><Icon name="code" size={24} /></span>}
-						<div>
-							<h2>{a.name}</h2>
-							<span class="meta">
-								{a.trust !== "community" && <span class="trust">{s[a.trust]}</span>}
-								v{a.version} · {a.author} · {a.license}
-							</span>
+	<div class="wrap catalog" data-adapter-catalog>
+		{adapters.length ? (
+			<>
+				<div class="filters" data-filters hidden>
+					<div class="search-field">
+						<label for="adapter-search">{s.search}</label>
+						<input id="adapter-search" type="search" placeholder={s.searchHint} autocomplete="off" />
+					</div>
+					<fieldset>
+						<legend>{s.categories}</legend>
+						<div class="chips">
+							<label><input type="radio" name="adapter-category" value="" checked /><span>{s.all}</span></label>
+							{categories.map((category) => (
+								<label>
+									<input type="radio" name="adapter-category" value={category} />
+									<span>{categoryLabel(category, lang)}</span>
+								</label>
+							))}
 						</div>
-					</header>
-					<p class="summary">{a.summary}</p>
-					<ul class="perms">
-						{p.read?.length ? <li><b>{s.reads}</b> {p.read.map(pretty).join(", ")}</li> : null}
-						{p.network?.length ? <li><b>{s.connects}</b> {p.network.join(", ")}</li> : <li>{s.offline}</li>}
-						{p.secrets?.length ? <li><b>{s.secrets}</b> {p.secrets.join(", ")}</li> : null}
-						{p.tools?.length ? <li><b>{s.runs}</b> {p.tools.join(", ")}</li> : null}
-					</ul>
-					<CopyCode code={`wing adapters install ${a.id}`} />
-					{a.homepage && <a class="link" href={a.homepage} rel="noopener">{s.source} <Icon name="external" size={13} /></a>}
-				</article>
-			);
-		})}
-	</section>
+					</fieldset>
+				</div>
+				<p class="result-count" aria-live="polite" aria-atomic="true" data-result-count data-one={s.oneResult} data-many={s.manyResults}>{resultCount}</p>
+				<p class="card message" data-no-matches hidden>{s.noMatches}</p>
+				<div class="catalog-grid">
+					{adapters.map((adapter) => {
+						const { summary, description } = adapterText(adapter, lang);
+						const p = adapter.permissions ?? {};
+						const permissions = [
+							p.read?.length ? s.fileAccess : "",
+							p.network?.length ? p.network.join(", ") : s.offline,
+							p.secrets?.length ? s.secretAccess : "",
+							p.tools?.length ? s.toolAccess : "",
+						].filter(Boolean);
+						const searchText = [adapter.id, adapter.name, adapter.author, summary, description, ...adapter.categories.map((c) => categoryLabel(c, lang))].join(" ");
+						return (
+							<article class="card adapter" data-adapter data-search={searchText} data-categories={JSON.stringify(adapter.categories)}>
+								<header>
+									<AdapterIcon data={adapter.iconData} size={52} />
+									<div class="identity">
+										<h2>{adapter.name}</h2>
+										<p class="meta">v{adapter.version} · {adapter.author}</p>
+									</div>
+									<span class="pill trust">{s.trust[adapter.trust].label}</span>
+								</header>
+								<p class="summary">{summary}</p>
+								<p class="meta">{adapter.platforms.map(platformLabel).join(" · ")}</p>
+								<p class="permission-line"><Icon name="shield" size={16} /> <span>{permissions.join(" · ")}</span></p>
+								<a class="btn btn-sm detail" href={href(lang, `/adapters/${adapter.id}/`)} aria-label={`${s.details} (${adapter.name})`}>
+									{s.details} <Icon name="arrow" size={16} />
+								</a>
+							</article>
+						);
+					})}
+				</div>
+			</>
+		) : <p class="card message">{s.empty}</p>}
+	</div>
 
-	<section class="wrap two">
-		<div class="card">
-			<h2 class="h-md"><Icon name="shield" size={22} /> {s.howT}</h2>
-			<ul class="list">{s.how.map((line) => <li>{line}</li>)}</ul>
-		</div>
-		<div class="card">
-			<h2 class="h-md"><Icon name="code" size={22} /> {s.publishT}</h2>
+	{screenshots.length > 0 && (
+		<section class="wrap screenshots" aria-labelledby="adapter-screenshots">
+			<h2 class="h-md" id="adapter-screenshots">{s.looks}</h2>
+			<div class="shots">
+				{screenshots.map(({ path, alt, caption }) => (
+					<figure>
+						<a href={path}><img src={path} alt={alt} width="1280" loading="lazy" decoding="async" /></a>
+						<figcaption>{caption}</figcaption>
+					</figure>
+				))}
+			</div>
+		</section>
+	)}
+
+	<div class="wrap two">
+		<section class="card notes">
+			<h2 class="h-md"><Icon name="shield" size={22} /> {s.howTitle}</h2>
+			<ul>{s.how.map((line) => <li>{line}</li>)}</ul>
+		</section>
+		<section class="card notes">
+			<h2 class="h-md"><Icon name="code" size={22} /> {s.publishTitle}</h2>
 			<p>{s.publish}</p>
-			<p><a class="link" href={`${REGISTRY}/blob/main/CONTRIBUTING.md`} rel="noopener">{s.guide} <Icon name="external" size={13} /></a></p>
-			<p class="small"><a href={DISCORD} rel="noopener">{s.news}</a></p>
-		</div>
-	</section>
+			<a class="index" href={`${REGISTRY}/blob/main/CONTRIBUTING.md`} rel="noopener">{s.guide} <Icon name="external" size={13} /></a>
+			<p><a class="index" href={DISCORD} rel="noopener">{s.news}</a></p>
+		</section>
+	</div>
 </Base>
+
+<script>
+	const catalog = document.querySelector<HTMLElement>("[data-adapter-catalog]");
+	const filters = catalog?.querySelector<HTMLElement>("[data-filters]");
+	const search = filters?.querySelector<HTMLInputElement>("#adapter-search");
+	const count = catalog?.querySelector<HTMLElement>("[data-result-count]");
+	const empty = catalog?.querySelector<HTMLElement>("[data-no-matches]");
+
+	if (catalog && filters && search && count && empty) {
+		const normalize = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+		const cards = Array.from(catalog.querySelectorAll<HTMLElement>("[data-adapter]"), (card) => ({
+			card,
+			text: normalize(card.dataset.search ?? ""),
+			categories: JSON.parse(card.dataset.categories ?? "[]") as string[],
+		}));
+
+		const applyFilters = () => {
+			const terms = normalize(search.value).trim().split(/\s+/);
+			const category = filters.querySelector<HTMLInputElement>("input[name=adapter-category]:checked")?.value;
+			let visible = 0;
+			for (const { card, text, categories } of cards) {
+				const matches = terms.every((term) => text.includes(term)) && (!category || categories.includes(category));
+				card.hidden = !matches;
+				if (matches) visible++;
+			}
+			const template = visible === 1 ? count.dataset.one : count.dataset.many;
+			count.textContent = template?.replace("{count}", String(visible)) ?? "";
+			empty.hidden = visible > 0;
+		};
+
+		search.addEventListener("input", applyFilters);
+		filters.addEventListener("change", applyFilters);
+		applyFilters();
+		filters.hidden = false;
+	}
+</script>
 
 <style>
 	.head {
-		padding: 150px 0 40px;
-		text-align: center;
+		padding: clamp(106px, 12vw, 158px) 0 42px;
+		background: radial-gradient(ellipse at 20% 0%, rgb(109 40 217 / 0.24), transparent 72%);
 	}
-	.head .wrap {
-		display: grid;
-		justify-items: center;
-		gap: 16px;
-	}
-	.idx {
+	.head .wrap { display: grid; gap: 12px; justify-items: start; }
+	.index {
 		display: inline-flex;
 		align-items: center;
-		gap: 5px;
+		gap: 6px;
 		color: var(--lavender);
 		font-size: 14px;
+		text-decoration: underline;
+		text-underline-offset: 4px;
 	}
-	.grid {
+	.catalog [hidden] { display: none; }
+	.filters {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: end;
+		gap: 16px 32px;
+		border-block: 1px solid var(--line);
+		padding-block: 16px;
+	}
+	.search-field { flex: 1 1 285px; display: grid; gap: 6px; min-width: 0; }
+	.search-field label, legend { color: var(--muted); font-size: 14px; font-weight: 600; }
+	input[type="search"] {
+		width: 100%;
+		min-height: 44px;
+		padding: 8px 14px;
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--line-strong);
+		background: var(--bg-2);
+		color: var(--text);
+		font: inherit;
+		font-size: 15px;
+	}
+	input::placeholder { color: var(--muted); opacity: 1; }
+	fieldset { min-inline-size: 0; margin: 0; padding: 0; border: 0; }
+	legend { margin-bottom: 6px; padding: 0; }
+	.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+	.chips label { position: relative; cursor: pointer; }
+	.chips input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+	.chips span {
+		display: block;
+		padding: 8px 16px;
+		border: 1px solid var(--line-strong);
+		border-radius: 999px;
+		color: var(--muted);
+		font-size: 15px;
+	}
+	.chips input:checked + span { background: var(--surface-2); color: var(--text); border-color: var(--lavender); }
+	.chips input:focus-visible + span { outline: 2px solid var(--lavender); outline-offset: 3px; }
+	.result-count { margin: 14px 0; color: var(--muted); font-size: 14px; }
+	.catalog-grid, .two {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 16px;
 	}
 	.adapter {
-		display: grid;
-		align-content: start;
-		gap: 12px;
-	}
-	.adapter header {
 		display: flex;
-		gap: 14px;
-		align-items: center;
-	}
-	.adapter img,
-	.noicon {
-		border-radius: 12px;
-		flex: none;
-		width: 48px;
-		height: 48px;
-	}
-	.noicon {
-		display: grid;
-		place-items: center;
-		background: var(--surface, rgba(255, 255, 255, 0.05));
-	}
-	.adapter h2 {
-		font-size: 19px;
-		margin: 0;
-	}
-	.meta {
-		color: var(--muted);
-		font-size: 13px;
-	}
-	.trust {
-		color: var(--lavender);
-		font-weight: 600;
-		margin-right: 6px;
-	}
-	.summary {
-		margin: 0;
-	}
-	.perms {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: grid;
-		gap: 4px;
-		font-size: 13.5px;
-		color: var(--muted);
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
 		overflow-wrap: anywhere;
 	}
-	.perms b {
-		color: var(--text, inherit);
-		font-weight: 600;
+	.adapter header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; width: 100%; }
+	.identity { flex: 1 1 130px; min-width: 0; }
+	.adapter h2 { font-size: 23px; margin-bottom: 3px; }
+	.trust { padding: 3px 10px; }
+	.meta, .permission-line, .message { font-size: 14px; color: var(--muted); }
+	.summary {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		overflow: hidden;
+		margin-block: 3px;
 	}
-	.link {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		color: var(--lavender);
-		font-size: 14px;
-	}
-	.two {
+	.permission-line { display: flex; gap: 7px; align-items: start; margin-bottom: 4px; }
+	.permission-line :global(svg) { flex: none; margin-top: 4px; color: var(--lavender); }
+	.detail { margin-top: auto; }
+	.screenshots, .two { margin-top: clamp(40px, 7vw, 80px); }
+	.shots {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 16px;
-		margin-top: 40px;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 20px;
+		margin-top: 20px;
 	}
-	.two .card {
-		display: grid;
-		align-content: start;
-		gap: 12px;
-	}
-	.list {
-		margin: 0;
-		padding-left: 18px;
-		display: grid;
-		gap: 8px;
-	}
-	.small {
-		font-size: 13.5px;
-		color: var(--muted);
-	}
-	@media (max-width: 760px) {
-		.two {
-			grid-template-columns: 1fr;
-		}
+	figure { margin: 0; }
+	figure a { display: block; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); overflow: hidden; }
+	figure img { width: 100%; height: auto; }
+	figcaption { padding-top: 8px; color: var(--muted); font-size: 14px; }
+	.notes { display: grid; gap: 14px; align-content: start; justify-items: start; }
+	.notes h2 { display: flex; align-items: center; gap: 10px; }
+	.notes h2 :global(svg) { flex: none; color: var(--lavender); }
+	.notes p, .notes ul { color: var(--muted); }
+	.notes ul { margin: 0; padding-left: 1.2em; }
+	.notes li + li { margin-top: 6px; }
+	@media (max-width: 690px) {
+		.catalog-grid, .two, .shots { grid-template-columns: minmax(0, 1fr); }
+		.adapter, .notes { padding: 20px; }
 	}
 </style>
