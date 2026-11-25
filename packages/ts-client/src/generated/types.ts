@@ -4044,6 +4044,8 @@ export type StoreCard = {
 	/**  Up to two lines for the card. */
 	summary: string,
 	description: string,
+	/**  `summary` and `description` in other languages, keyed by language code (`pt`). */
+	translations: { [key in string]: StoreCardText },
 	version: string,
 	author: string,
 	license: string,
@@ -4066,10 +4068,21 @@ export type StoreCard = {
 	icon_svg: string | null,
 };
 
+/**  An adapter's store texts in one language. */
+export type StoreCardText = {
+	summary: string,
+	description: string | null,
+};
+
 /**  The store: every published adapter and the state of the installed ones. */
 export type StoreListing = {
 	/**  Sequence of the index shown, or `None` before the first refresh. */
 	sequence: number | null,
+	/**
+	 *  How adapters are confined here: `bubblewrap` (only their declared paths and, without
+	 *  declared hosts, no network), `flatpak` (the app's own sandbox) or `none`.
+	 */
+	isolation: string,
 	generated_at: string | null,
 	adapters: StoreCard[],
 	/**  Installed adapters with an update or a revoked version. */

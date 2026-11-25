@@ -1,5 +1,6 @@
 //! Adapter system: trait definition, registry, sync reporting.
 
+pub mod sandbox;
 pub mod script;
 
 use std::collections::HashMap;

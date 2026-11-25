@@ -7,6 +7,7 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Added
 
+- The store shows adapter summaries and descriptions in Portuguese when the registry has them.
 - The adapter store in Sources > Add source: cards with icon, name, trust and a two-line summary,
   a details view with what each adapter can read, which hosts it contacts and which secrets it
   needs, and install, update and remove. Installing asks for consent to that access, and an update
@@ -47,6 +48,13 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Security
 
+- On Linux, adapters run inside bubblewrap: they see only the system, their own folder, the paths
+  they declare and a private state folder, and have no network unless they declare hosts. A
+  timeout, a 2 GiB memory cap and a CPU-time cap stop runaway adapters. The AUR and `.deb`
+  packages depend on `bubblewrap`; the Flatpak relies on its own sandbox; macOS and Windows do
+  not confine adapters yet, and the store says so next to each adapter's permissions (ADAPT-009).
+- Adapters write only to `<source folder>/state`; `data_dir` no longer points at the folder that
+  holds the source's database (ADAPT-009).
 - A store adapter version that the registry revokes stops loading as soon as the daemon sees the
   new index, instead of only showing a warning (ADAPT-018).
 - Adapter icons render as images, so markup inside an SVG can never run in the app.

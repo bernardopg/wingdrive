@@ -230,6 +230,10 @@ jobs:
         with:
           phase: wait
 
+      # The adapter confinement tests run adapters inside bubblewrap.
+      - name: Install bubblewrap
+        run: sudo apt-get install -y -qq bubblewrap
+
       # Same script as `just ci-local`. Scoped runs lint and test only the apps that changed.
       - name: Setup Bun for bridge tests
         if: needs.changes.outputs.scope == 'full'

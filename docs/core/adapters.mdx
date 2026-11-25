@@ -110,6 +110,43 @@ The working directory is the adapter's folder. The environment is cleared down t
 
 Prefer stdin over these variables.
 
+## Isolation
+
+On Linux every contract 1 adapter runs inside [bubblewrap](https://github.com/containers/bubblewrap)
+(`bwrap`), with new mount, PID, IPC, UTS and user namespaces and no capabilities. Inside it the
+adapter sees only:
+
+| Path | Access |
+|---|---|
+| `/usr` and the system links into it, the dynamic loader cache, TLS certificates, DNS and time zone files under `/etc` | read |
+| The adapter's own folder | read |
+| Each path in `permissions.read` that exists, after `~` and `{config.<key>}` are expanded | read |
+| `data_dir` | read and write |
+| `/tmp` | an empty folder of its own |
+| The network | only when `permissions.network` lists at least one host; otherwise none, not even the host's loopback |
+
+The rest of the home folder, other users' files and the daemon's own data do not exist inside the
+sandbox. Hosts in `network` are checked in review, not by the sandbox: an adapter that declares any
+host can reach any host. `WINGDRIVE_ADAPTER_ISOLATION` tells the adapter how it runs
+(`bubblewrap`, `flatpak` or `none`).
+
+WingDrive checks once per start that bubblewrap works. When it is missing, or user namespaces are
+blocked (Docker's default seccomp profile, some AppArmor setups), adapters do not run and the sync
+explains why. Set `WINGDRIVE_ADAPTER_SANDBOX=off` to run them without confinement on purpose, for
+example in a container that is itself the boundary.
+
+| System | Confinement |
+|---|---|
+| Linux (AppImage, `.deb`, AUR, server archives) | bubblewrap, as above; the packages depend on it |
+| Linux Flatpak | the Flatpak sandbox around WingDrive; adapters are not limited to their declared paths |
+| Docker image | bubblewrap is installed; it needs user namespaces (`--security-opt seccomp=unconfined`) or `WINGDRIVE_ADAPTER_SANDBOX=off` |
+| macOS and Windows | none yet: the permissions are what the registry reviewed |
+
+The store shows which of these applies next to each adapter's permissions.
+
+Test an adapter the way it will run: an access it did not declare fails inside the sandbox with
+`FileNotFoundError` (the path does not exist there) or a network error.
+
 ## Input
 
 stdin holds one JSON document, then closes:
@@ -119,7 +156,7 @@ stdin holds one JSON document, then closes:
   "contract": 1,
   "config": { "vault_path": "/home/ana/Notes" },
   "cursor": "{\"v\":1,\"notes\":{}}",
-  "data_dir": "/home/ana/.local/share/wingdrive/libraries/.../sources/4f2c"
+  "data_dir": "/home/ana/.local/share/wingdrive/libraries/.../sources/4f2c/state"
 }
 ```
 
@@ -127,7 +164,7 @@ stdin holds one JSON document, then closes:
 |---|---|
 | `config` | The fields the user filled when adding the source |
 | `cursor` | The last cursor the adapter printed for this source, or `null` on the first sync |
-| `data_dir` | The source's folder; the adapter may keep files there |
+| `data_dir` | A folder for this source that only the adapter writes to (`<source folder>/state`); the source's database lives next to it, out of reach |
 
 ## Output
 

@@ -439,6 +439,12 @@
 			"officialHint": "Feito e revisado pelos mantenedores do WingDrive",
 			"verified": "Verificado",
 			"verifiedHint": "O autor já publicou adaptadores revisados"
+		},
+		"isolation": {
+			"bubblewrap": "Aplicado neste computador: o adaptador roda isolado e só alcança o que está listado.",
+			"flatpak": "O sandbox do Flatpak do WingDrive vale, mas o adaptador não fica limitado aos caminhos listados. Instale adaptadores em que você confia.",
+			"none": "Não aplicado neste sistema: a lista é o que o registro revisou, e o adaptador poderia alcançar mais. Instale adaptadores em que você confia.",
+			"unavailable": "Os adaptadores rodam isolados com o bubblewrap, que falta ou está bloqueado aqui. Instale o pacote bubblewrap para usar adaptadores."
 		}
 	}
 }
