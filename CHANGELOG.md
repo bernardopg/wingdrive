@@ -27,6 +27,9 @@ version in the workspace manifests and the matching `v*` git tag.
   "FOREIGN KEY constraint failed" or "database disk image is malformed". Sources created before
   the fix get the corrected search trigger when they open (ADAPT-003).
 - A failed adapter sync shows the last line the adapter wrote to stderr (ADAPT-003).
+- Adapters installed from the store can be added as sources. The engine looked for their schema
+  and config fields in the library's own adapters folder, so "Add source" failed with "cannot
+  resolve schema"; it now asks the loaded adapter (ADAPT-003).
 
 ### Security
 

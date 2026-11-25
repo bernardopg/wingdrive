@@ -612,6 +612,14 @@ impl Adapter for ScriptAdapter {
 		self.icon_svg.as_deref()
 	}
 
+	fn schema(&self) -> Option<&DataTypeSchema> {
+		Some(&self.schema)
+	}
+
+	fn config_fields(&self) -> &[ConfigField] {
+		&self.manifest.adapter.config
+	}
+
 	fn trust_tier(&self) -> TrustTier {
 		self.manifest
 			.adapter

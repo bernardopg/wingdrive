@@ -1,7 +1,7 @@
 ---
 id: ADAPT-010
 title: "Obsidian vault adapter"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: ADAPT-000
 priority: High
@@ -21,10 +21,10 @@ tags, wikilinks between notes, created and modified dates. Starts from the proto
 
 ## Implementation Steps
 
-- [ ] Parse YAML frontmatter, inline `#tags`, aliases and `[[wikilinks]]` (with headings and aliases) into note relations
-- [ ] Respect `.obsidian` and user exclude patterns; skip attachments but record embeds
+- [x] Parse YAML frontmatter, inline `#tags`, aliases and `[[wikilinks]]` (with headings and aliases) into note relations (bernardopg/wingdrive-adapters#1; Markdown links too, resolved by path, shortest name, then alias)
+- [x] Respect `.obsidian` and user exclude patterns; skip attachments but record embeds (note embeds become links; attachment embeds are skipped)
 - [ ] Detect vaults by their `.obsidian` folder to offer defaults
-- [ ] Incremental sync by modified time and content hash; deleted and renamed notes handled
+- [x] Incremental sync by modified time and size (a hash would mean reading every note each run); deleted and renamed notes handled
 
 ## Acceptance Criteria
 
@@ -33,7 +33,7 @@ tags, wikilinks between notes, created and modified dates. Starts from the proto
 - [ ] Installs from the store in the desktop app and from `wing adapters install <id>`
 - [ ] Defaults: the source path or account is detected on Linux and macOS (and Windows once ADAPT-002 lands); a wrong value fails `sources.create` with a message that names the field
 - [ ] Declares only the permissions it uses (ADAPT-009); runs with network off unless it declares hosts
-- [ ] Sync is incremental: a second run with no changes writes nothing new, a changed item is updated in place, and an item removed upstream is removed from the source
+- [x] Sync is incremental: a second run with no changes writes nothing new, a changed item is updated in place, and an item removed upstream is removed from the source (isolated daemon, 2026-11-25: fixture vault 3 notes, then 2 read, 1 deleted, links fixed; `~/Documentos/Bitter` 50 notes, 10 links, second run 0 read)
 - [ ] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
 - [ ] Script tests with fixtures cover parsing, cursors, deletions and malformed input, and the contract harness (ADAPT-003) passes in the adapter's CI
 - [ ] Real proof on the author's machine: install from the store, sync of real data with item counts, second run idempotent, items opened in the desktop app (screenshot in the PR)
