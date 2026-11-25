@@ -145,6 +145,33 @@ describe('adapter store', () => {
 		await i18n.changeLanguage('en');
 	});
 
+	test('labels config fields in the interface language', async () => {
+		store.adapters = [card({installed_version: '1.1.0'})];
+		fields = [
+			{
+				key: 'vault_path',
+				name: 'Vault',
+				description: 'Your vault.',
+				field_type: 'string',
+				required: true,
+				secret: false,
+				default: null,
+				path_type: 'folder',
+				suggestions: [],
+				translations: {pt: {name: 'Cofre', description: 'A pasta do seu cofre.'}}
+			}
+		];
+		await i18n.changeLanguage('pt');
+		const {root} = await render('/sources/adapters?adapter=obsidian');
+		await i18n.changeLanguage('pt');
+		await act(async () => button('Adicionar fonte')!.click());
+		expect(document.body.textContent).toContain('Cofre');
+		expect(document.body.textContent).toContain('A pasta do seu cofre.');
+		expect(document.body.textContent).not.toContain('Your vault.');
+		act(() => root.unmount());
+		await i18n.changeLanguage('en');
+	});
+
 	test('says whether the permissions are enforced here', async () => {
 		const enforced = await render('/sources/adapters?adapter=obsidian');
 		expect(document.querySelector('[role="dialog"]')!.textContent).toContain('Enforced on this computer');
@@ -206,7 +233,8 @@ describe('adapter store', () => {
 				secret: false,
 				default: null,
 				path_type: 'folder',
-				suggestions: ['/home/ana/Notes', '/home/ana/Work']
+				suggestions: ['/home/ana/Notes', '/home/ana/Work'],
+				translations: {pt: {name: 'Cofre', description: 'A pasta do seu cofre.'}}
 			},
 			{
 				key: 'include_starred',
@@ -217,7 +245,8 @@ describe('adapter store', () => {
 				secret: false,
 				default: 'true',
 				path_type: null,
-				suggestions: []
+				suggestions: [],
+				translations: {}
 			}
 		];
 		const {root} = await render('/sources/adapters?adapter=obsidian');

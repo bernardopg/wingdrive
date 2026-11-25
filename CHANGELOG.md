@@ -10,7 +10,8 @@ version in the workspace manifests and the matching `v*` git tag.
 - README (English and Portuguese) and the wingdrive.org home page present the adapter store:
   a first-steps item, highlights with screenshots, links to the guide, the catalog, the contract and
   the registry, and how adapters are isolated.
-- The store shows adapter summaries and descriptions in Portuguese when the registry has them.
+- The store shows adapter summaries, descriptions and the add source form's labels in Portuguese
+  when the adapter has them (`[adapter.i18n.pt]`).
 - The adapter store in Sources > Add source: cards with icon, name, trust and a two-line summary,
   a details view with what each adapter can read, which hosts it contacts and which secrets it
   needs, and install, update and remove. Installing asks for consent to that access, and an update
@@ -38,6 +39,8 @@ version in the workspace manifests and the matching `v*` git tag.
 - The first folder opened after the daemon starts, usually the home folder, no longer shows up
   empty. Opening it also scans its parent, and clearing the parent for that scan dropped what the
   folder's own scan had just found; the folder then listed empty until the daemon restarted.
+- Tab titles follow the interface language; they stayed in English when the saved language
+  loaded after start. A source's "idle" status is translated.
 - PDF thumbnails work again on Linux. Only the first PDF a daemon rendered got a thumbnail:
   pdfium was bound again for every file and refused the second binding. The AppImage, the AUR
   packages and the server archives also left out `libpdfium.so`, so they showed no PDF

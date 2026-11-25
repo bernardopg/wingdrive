@@ -509,6 +509,30 @@ impl Engine {
 		Ok(adapter.config_fields().to_vec())
 	}
 
+	/// Config field labels in other languages: language, then field key.
+	pub fn config_translations(
+		&self,
+		adapter_id: &str,
+	) -> Result<
+		std::collections::BTreeMap<
+			String,
+			std::collections::BTreeMap<String, crate::adapter::script::ConfigFieldTranslation>,
+		>,
+	> {
+		let adapter = self
+			.adapters
+			.get(adapter_id)
+			.ok_or_else(|| Error::AdapterNotFound(adapter_id.to_string()))?;
+		Ok(adapter
+			.translations()
+			.map(|all| {
+				all.iter()
+					.map(|(lang, text)| (lang.clone(), text.config.clone()))
+					.collect()
+			})
+			.unwrap_or_default())
+	}
+
 	/// Config values an adapter suggests for this machine (see `ScriptAdapter::detect`).
 	pub async fn detect_config(
 		&self,

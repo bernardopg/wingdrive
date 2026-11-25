@@ -84,7 +84,8 @@
 		"itemCount_one": "{{formattedCount}} item",
 		"itemCount_other": "{{formattedCount}} items",
 		"syncing": "syncing",
-		"error": "error"
+		"error": "error",
+		"idle": "idle"
 	},
 	"sync": {
 		"sync": "Sync",

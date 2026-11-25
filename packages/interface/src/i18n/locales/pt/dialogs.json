@@ -84,7 +84,8 @@
 		"itemCount_one": "{{formattedCount}} item",
 		"itemCount_other": "{{formattedCount}} itens",
 		"syncing": "Sincronizando",
-		"error": "Erro"
+		"error": "Erro",
+		"idle": "Em espera"
 	},
 	"sync": {
 		"sync": "Sincronização",
