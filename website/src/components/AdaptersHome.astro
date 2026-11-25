@@ -1,0 +1,103 @@
+---
+import Icon from "./Icon.astro";
+import { t, href, type Lang } from "../i18n/strings";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+const s = t[lang].adaptersHome;
+---
+
+<section class="section adapters-home" id="adapters">
+	<div class="wrap layout">
+		<div class="copy">
+			<span class="eyebrow reveal">{s.eyebrow}</span>
+			<h2 class="h-lg reveal" style="--d:60ms">{s.title}</h2>
+			<p class="lead reveal" style="--d:120ms">{s.lead}</p>
+			<ul class="points reveal" style="--d:180ms">
+				{s.points.map((p) => (
+					<li>
+						<span class="tick"><Icon name="check" size={15} /></span>
+						<span><b>{p.t}.</b> {p.d}</span>
+					</li>
+				))}
+			</ul>
+			<div class="ctas reveal" style="--d:240ms">
+				<a class="btn btn-primary" href={href(lang, "/adapters/")}>{s.browse} <Icon name="arrow" size={16} /></a>
+				<a class="btn" href={href(lang, "/docs/adapters/")}><Icon name="book" size={16} /> {s.guide}</a>
+			</div>
+		</div>
+		<figure class="shot reveal" style="--d:100ms">
+			<img src={`/img/adapters/details-${lang}.webp`} width="540" height="510" alt={s.alt} loading="lazy" decoding="async" />
+		</figure>
+	</div>
+</section>
+
+<style>
+	.layout {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: clamp(32px, 6vw, 80px);
+		align-items: center;
+	}
+	.copy {
+		display: grid;
+		gap: 20px;
+		justify-items: start;
+	}
+	.points {
+		list-style: none;
+		margin: 4px 0 0;
+		padding: 0;
+		display: grid;
+		gap: 12px;
+		color: var(--muted);
+	}
+	.points li {
+		display: flex;
+		gap: 12px;
+		align-items: flex-start;
+	}
+	.points b {
+		color: var(--text, #fff);
+		font-weight: 600;
+	}
+	.tick {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 24px;
+		height: 24px;
+		margin-top: 1px;
+		border-radius: 8px;
+		background: rgba(139, 92, 246, 0.16);
+		color: var(--lavender);
+	}
+	.ctas {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+		margin-top: 6px;
+	}
+	.shot {
+		margin: 0;
+		justify-self: center;
+		max-width: 540px;
+		width: 100%;
+		border-radius: 16px;
+		border: 1px solid var(--line-strong, var(--line));
+		overflow: hidden;
+		box-shadow: var(--glow, 0 30px 80px rgba(109, 40, 217, 0.25));
+	}
+	.shot img {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+	@media (max-width: 900px) {
+		.layout {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

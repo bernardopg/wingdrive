@@ -7,6 +7,9 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Added
 
+- README (English and Portuguese) and the wingdrive.org home page present the adapter store:
+  a first-steps item, highlights with screenshots, links to the guide, the catalog, the contract and
+  the registry, and how adapters are isolated.
 - The store shows adapter summaries and descriptions in Portuguese when the registry has them.
 - The adapter store in Sources > Add source: cards with icon, name, trust and a two-line summary,
   a details view with what each adapter can read, which hosts it contacts and which secrets it

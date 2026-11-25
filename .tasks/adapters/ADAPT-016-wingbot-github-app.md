@@ -1,7 +1,7 @@
 ---
 id: ADAPT-016
 title: "Wingbot GitHub App"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: ADAPT-000
 priority: High
@@ -26,7 +26,7 @@ there is no server to run.
 - [ ] Create the GitHub App "Wingbot" (name, avatar, description, homepage wingdrive.org) with the smallest permissions: contents write (registry publish), pull requests and issues write, checks write, metadata read; no organization or account permissions
 - [ ] Store the App ID as a variable and the private key as a secret in a protected environment of each repository; record the key backup in the author's password manager
 - [ ] Shared action `wingbot/act` in the registry repository that mints the token and posts or updates one comment per pull request
-- [ ] Slash commands in pull request comments from maintainers only: `/wingbot recheck`, `/wingbot publish`, `/wingbot reject <reason>`
+- [x] Slash commands in pull request comments from maintainers only: `/wingbot recheck`, `/wingbot publish`, `/wingbot reject <reason>` (`.github/workflows/commands.yml` in the registry (bernardopg/wingdrive-adapters#6))
 - [ ] Same identity used by the app repository for release notes and dependency summaries where it helps
 
 ## Acceptance Criteria

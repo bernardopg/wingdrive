@@ -82,6 +82,8 @@ outros apps, iniciar com a sessão e ficar na bandeja.
    <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz a última operação com arquivos.
 3. **Conecte o resto.** **Configurações → Integrações** entra no Google Drive e no Google Fotos;
    **Parear** liga seus outros computadores.
+4. **Traga seus apps.** **Fontes → +** abre a loja de adaptadores: instale o Obsidian ou o GitHub e
+   as notas e repositórios aparecem na busca.
 
 O [guia do usuário em wingdrive.org](https://wingdrive.org/pt/docs/) mostra cada passo com capturas de tela.
 
@@ -125,6 +127,18 @@ O [guia do usuário em wingdrive.org](https://wingdrive.org/pt/docs/) mostra cad
       indexados, aparelhos, locations e volumes, e é onde você adiciona armazenamento, pareia
       aparelhos e configura o sync.</p>
     </td>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingAdapterStore.webp" alt="Detalhes do Obsidian na loja de adaptadores: os caminhos que ele lê, sem rede, e o acesso aplicado neste computador"/>
+      <p><strong>Traga seus outros apps.</strong> A loja de adaptadores instala adaptadores para o
+      Obsidian e o GitHub, mostrando antes os arquivos, servidores e segredos de que cada um precisa.
+      No Linux eles rodam isolados num sandbox.</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/public/WingAdapterSource.webp" alt="Um cofre do Obsidian sincronizado: seis notas com caminhos e texto"/>
+      <p><strong>Busque tudo junto com seus arquivos.</strong> Notas, repositórios, issues e pull
+      requests viram fontes que você navega e busca; cada sincronização lê só o que mudou.</p>
+    </td>
   </tr>
 </table>
 
@@ -135,6 +149,9 @@ O [guia do usuário em wingdrive.org](https://wingdrive.org/pt/docs/) mostra cad
 - Google Drive e Google Fotos com várias contas: navegar, copiar, editar em apps locais, sincronizar
   pastas e enviar fotos. OneDrive com um registro de app Microsoft seu. S3, Dropbox, Azure Blob e
   GCS como volumes via OpenDAL.
+- Uma loja de adaptadores assinados e revisados (Obsidian, GitHub) que mostram as permissões antes
+  de instalar, rodam isolados com o bubblewrap no Linux e avisam quando há versão nova. Escreva o
+  seu em Python ou qualquer linguagem: [registro](https://github.com/bernardopg/wingdrive-adapters).
 - CLI `wing` e `wing-server` para scripts e máquinas sem interface, no mesmo daemon.
 - Inglês e português do Brasil, e temas como Catppuccin, Gruvbox, Dracula e Tokyo Night.
 
@@ -142,7 +159,8 @@ O [guia do usuário em wingdrive.org](https://wingdrive.org/pt/docs/) mostra cad
 
 | Assunto | Comece por |
 |---|---|
-| Guia do usuário, com capturas | [wingdrive.org/pt/docs](https://wingdrive.org/pt/docs/): [Primeira execução](https://wingdrive.org/pt/docs/first-run/) · [Explorer](https://wingdrive.org/pt/docs/explorer/) · [Nuvem](https://wingdrive.org/pt/docs/cloud/) · [Dispositivos](https://wingdrive.org/pt/docs/devices/) |
+| Guia do usuário, com capturas | [wingdrive.org/pt/docs](https://wingdrive.org/pt/docs/): [Primeira execução](https://wingdrive.org/pt/docs/first-run/) · [Explorer](https://wingdrive.org/pt/docs/explorer/) · [Nuvem](https://wingdrive.org/pt/docs/cloud/) · [Adaptadores](https://wingdrive.org/pt/docs/adapters/) · [Dispositivos](https://wingdrive.org/pt/docs/devices/) |
+| Adaptadores | [Guia do usuário](https://wingdrive.org/pt/docs/adapters/) · [Catálogo](https://wingdrive.org/pt/adapters/) · [Contrato dos adaptadores](./docs/core/adapters.mdx) · [Design da loja](./docs/design/adapter-store.md) · [Publicar um](https://github.com/bernardopg/wingdrive-adapters/blob/main/CONTRIBUTING.md) |
 | Instalação e primeiro uso | [Instalação](./docs/readme/installation.md) · [Primeiros passos](./docs/overview/get-started.mdx) |
 | Bibliotecas e locations | [Gerenciar bibliotecas](./docs/overview/manage-libraries.mdx) · [Adicionar locations](./docs/overview/add-index-locations.mdx) |
 | Servidor e CLI | [Self-hosting](./docs/overview/self-hosting.mdx) · [Deploy no Linux](./docs/cli/linux-deployment.mdx) · [CLI](./docs/cli/overview.mdx) |
@@ -163,7 +181,9 @@ o mesmo core em Rust. Stack: Rust, Tokio, SQLite (SeaORM), Iroh/QUIC, BLAKE3, Op
 Privacidade por padrão: indexação, miniaturas e busca rodam na sua máquina, o tráfego entre
 aparelhos pareados é cifrado e as operações destrutivas têm proteção (a exclusão segura recusa
 sistemas de arquivos copy-on-write, cópias não escrevem dentro da própria origem e montagens do
-sistema nunca são ejetadas).
+sistema nunca são ejetadas). Adaptadores são processos separados: no Linux cada um roda no
+bubblewrap só com os caminhos que declara e sem rede se não declarar servidores, e nunca vê os
+tokens do próprio WingDrive.
 
 ## Roadmap
 
