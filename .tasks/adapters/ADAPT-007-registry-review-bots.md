@@ -35,4 +35,4 @@ the index and publishes it.
 ## Acceptance Criteria
 
 - [ ] A good submission and four bad ones (bad schema, failing tests, undeclared network use, unsigned update) behave as expected in the registry's CI
-- [ ] Publishing an approved submission updates the signed index without manual steps
+- [x] Publishing an approved submission updates the signed index without manual steps (merge (or `/wingbot publish`) starts Publish; the only manual step is the `registry-publish` approval, by design)

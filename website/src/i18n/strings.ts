@@ -128,6 +128,19 @@ const en = {
 		title: "Every cloud, one address space.",
 		lead: "Cloud paths use the URIs you already know, like s3://, gdrive:// and onedrive://. Copy a path from WingDrive and paste it into the provider's own CLI.",
 	},
+	adaptersHome: {
+		eyebrow: "Adapters",
+		title: "Your notes and code, next to your files.",
+		lead: "Adapters bring other apps into your library: Obsidian vaults with their tags and links, GitHub repositories, stars, issues and pull requests. Install them from the store inside WingDrive; each sync reads only what changed.",
+		points: [
+			{ t: "Signed store", d: "Every adapter is reviewed before it is published, and WingDrive checks the registry's signature and each download before installing." },
+			{ t: "You see the access first", d: "The files, hosts and secrets an adapter needs are listed before you install, and again when an update asks for more." },
+			{ t: "Isolated on Linux", d: "Adapters run in a sandbox that holds only what they declare, with no network unless they need it." },
+		],
+		browse: "Browse adapters",
+		guide: "Read the guide",
+		alt: "Obsidian's details in WingDrive's adapter store: what it reads, no network, and a note that the access is enforced on this computer",
+	},
 	arch: {
 		eyebrow: "Under the hood",
 		title: "One daemon. Many thin clients.",
@@ -481,6 +494,19 @@ const pt: Strings = {
 		eyebrow: "Nuvem",
 		title: "Todas as nuvens, um só espaço de endereços.",
 		lead: "Caminhos na nuvem usam as URIs que você já conhece, como s3://, gdrive:// e onedrive://. Copie um caminho no WingDrive e cole na CLI do próprio provedor.",
+	},
+	adaptersHome: {
+		eyebrow: "Adaptadores",
+		title: "Suas notas e seu código, junto com seus arquivos.",
+		lead: "Adaptadores trazem outros apps para a sua biblioteca: cofres do Obsidian com tags e links, repositórios, estrelas, issues e pull requests do GitHub. Instale pela loja dentro do WingDrive; cada sincronização lê só o que mudou.",
+		points: [
+			{ t: "Loja assinada", d: "Todo adaptador é revisado antes de ser publicado, e o WingDrive confere a assinatura do registro e cada download antes de instalar." },
+			{ t: "Você vê o acesso antes", d: "Os arquivos, servidores e segredos de que o adaptador precisa aparecem antes de instalar, e de novo quando uma atualização pede mais." },
+			{ t: "Isolado no Linux", d: "Os adaptadores rodam num sandbox que só contém o que eles declaram, sem rede a não ser que precisem." },
+		],
+		browse: "Ver adaptadores",
+		guide: "Ler o guia",
+		alt: "Detalhes do Obsidian na loja de adaptadores do WingDrive: o que ele lê, sem rede, e o aviso de que o acesso é aplicado neste computador",
 	},
 	arch: {
 		eyebrow: "Por dentro",

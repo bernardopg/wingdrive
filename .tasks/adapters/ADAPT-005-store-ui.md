@@ -23,7 +23,7 @@ license, permissions and changelog.
 
 - [x] Cards with logo, title, two-line summary (clamped), trust badge and action button; search, category filter and an Installed tab (no category filter yet; search covers categories)
 - [x] Details view with permissions shown before install and a consent step
-- [ ] Progress and errors of install, update and remove; offline state with the cached index
+- [x] Progress and errors of install, update and remove; offline state with the cached index (buttons show Installing…/Removing…, errors inline, the store lists the cached signed index when offline and shows the refresh error)
 - [x] After install, the add-source form for that adapter opens with its detected defaults (Add Source in the details view; `runtime.detect` suggestions)
 - [x] English and Portuguese strings; keyboard navigation; works in the Tauri app and the web UI (Escape closes dialogs)
 
