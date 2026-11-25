@@ -35,6 +35,9 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Fixed
 
+- The first folder opened after the daemon starts, usually the home folder, no longer shows up
+  empty. Opening it also scans its parent, and clearing the parent for that scan dropped what the
+  folder's own scan had just found; the folder then listed empty until the daemon restarted.
 - PDF thumbnails work again on Linux. Only the first PDF a daemon rendered got a thumbnail:
   pdfium was bound again for every file and refused the second binding. The AppImage, the AUR
   packages and the server archives also left out `libpdfium.so`, so they showed no PDF
