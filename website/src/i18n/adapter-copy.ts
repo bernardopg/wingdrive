@@ -54,6 +54,7 @@ export const adapterCopy = {
 			"Registry maintainers review adapters before publishing them.",
 			"WingDrive verifies the registry signature and each download’s SHA-256 before installing.",
 			"You review the files, hosts, secrets and programs an adapter needs before granting access.",
+			"On Linux each adapter runs isolated: it sees only the paths it declares and has no network unless it declares hosts. macOS and Windows do not isolate adapters yet.",
 			"WingDrive blocks versions that the registry revokes.",
 		],
 		publishTitle: "Publish your own",
@@ -62,9 +63,9 @@ export const adapterCopy = {
 		news: "Follow #adapters on Discord for new releases.",
 		looks: "How it looks in WingDrive",
 		screenshots: {
-			store: { caption: "Browse the store", alt: "WingDrive’s adapter store showing the GitHub and Obsidian cards in the Add source dialog." },
-			details: { caption: "Review the permissions", alt: "Adapter details in WingDrive showing the version, permissions and Install button." },
-			form: { caption: "Connect a source", alt: "WingDrive’s adapter setup form for adding a source after installation." },
+			store: { caption: "Browse the store", alt: "WingDrive’s adapter store with the GitHub and Obsidian cards, each with its trust badge and a two-line summary." },
+			details: { caption: "Review the permissions", alt: "Obsidian’s details in WingDrive: the files it reads, no network, a note that the access is enforced on this computer, and the Install button." },
+			form: { caption: "Connect a source", alt: "The add source form with the Obsidian vault already filled in from the vaults found on this computer." },
 		},
 	},
 	pt: {
@@ -122,6 +123,7 @@ export const adapterCopy = {
 			"Os mantenedores do registro revisam os adaptadores antes de publicar.",
 			"O WingDrive verifica a assinatura do registro e o SHA-256 de cada download antes da instalação.",
 			"Você revisa os arquivos, servidores, credenciais e programas de que o adaptador precisa antes de conceder acesso.",
+			"No Linux cada adaptador roda isolado: só enxerga os caminhos que declara e não tem rede, a não ser que declare servidores. No macOS e no Windows os adaptadores ainda não rodam isolados.",
 			"O WingDrive bloqueia as versões que o registro revoga.",
 		],
 		publishTitle: "Publique seu adaptador",
@@ -130,9 +132,9 @@ export const adapterCopy = {
 		news: "Acompanhe o canal #adapters no Discord para ver os lançamentos.",
 		looks: "Como é no WingDrive",
 		screenshots: {
-			store: { caption: "Explore a loja", alt: "Loja de adaptadores do WingDrive com os cartões do GitHub e do Obsidian na janela Adicionar fonte." },
-			details: { caption: "Revise as permissões", alt: "Detalhes do adaptador no WingDrive com a versão, as permissões e o botão Instalar." },
-			form: { caption: "Conecte uma fonte", alt: "Formulário de configuração do WingDrive para adicionar uma fonte após instalar o adaptador." },
+			store: { caption: "Explore a loja", alt: "Loja de adaptadores do WingDrive com os cartões do GitHub e do Obsidian, cada um com o selo de confiança e um resumo de duas linhas." },
+			details: { caption: "Revise as permissões", alt: "Detalhes do Obsidian no WingDrive: os arquivos que ele lê, sem rede, o aviso de que o acesso é aplicado neste computador e o botão Instalar." },
+			form: { caption: "Conecte uma fonte", alt: "O formulário de nova fonte com o cofre do Obsidian já preenchido a partir dos cofres encontrados neste computador." },
 		},
 	},
 };

@@ -16,7 +16,8 @@ const { lang, adapter } = Astro.props;
 const s = adapterCopy[lang];
 const { summary, description } = adapterText(adapter, lang);
 const source = adapterSource(adapter);
-const sections = source ? await adapterReadme(source) : [];
+const readme = source ? await adapterReadme(source, lang) : undefined;
+const sections = readme?.sections ?? [];
 const permissions = adapter.permissions ?? {};
 const groups = [
 	{ label: s.read, items: permissions.read, empty: s.none.read },
@@ -103,7 +104,7 @@ const facts = [
 						<div class="prose" set:html={html} />
 					</div>
 				))}
-				<a class="detail-link" href={source.readme} rel="noopener">{s.readmeLink} <Icon name="external" size={13} /></a>
+				<a class="detail-link" href={readme?.url ?? source.readme} rel="noopener">{s.readmeLink} <Icon name="external" size={13} /></a>
 			</section>
 		)}
 	</div>

@@ -4,6 +4,16 @@ import { REGISTRY, webUrl, type StoreAdapter } from "../i18n/adapters";
 const sectionKeys = ["setup", "data", "privacy"] as const;
 type SectionKey = (typeof sectionKeys)[number];
 
+/** Section headings of translated READMEs (README.<lang>.md), as the registry requires them. */
+const sectionNames: Record<string, SectionKey> = {
+	setup: "setup",
+	data: "data",
+	privacy: "privacy",
+	configuração: "setup",
+	dados: "data",
+	privacidade: "privacy",
+};
+
 export function adapterSource({ source }: StoreAdapter) {
 	if (!/^[0-9a-f]{40}$/i.test(source.commit)) return;
 	const repository = source.type === "local" ? REGISTRY : webUrl(source.repository);
@@ -47,7 +57,7 @@ export function renderReadme(markdownText: string, readmeUrl: string) {
 	});
 
 	return headings.flatMap(({ i, key, tag }, index) => {
-		const section = sectionKeys.find((name) => name === key);
+		const section = sectionNames[key];
 		if (!section || tag !== "h2") return [];
 		const end = headings[index + 1]?.i ?? tokens.length;
 		const html = markdown.renderer.render(tokens.slice(i + 3, end), markdown.options, env);
@@ -55,22 +65,38 @@ export function renderReadme(markdownText: string, readmeUrl: string) {
 	});
 }
 
-const readmes = new Map<string, Promise<{ section: SectionKey; html: string }[]>>();
+const readmes = new Map<string, Promise<{ url: string; sections: { section: SectionKey; html: string }[] }>>();
 
-export function adapterReadme(source: NonNullable<ReturnType<typeof adapterSource>>) {
-	const cached = readmes.get(source.raw);
+type Source = NonNullable<ReturnType<typeof adapterSource>>;
+
+/** The README in `lang` when the adapter has `README.<lang>.md`, else the English one. */
+export async function adapterReadme(source: Source, lang = "en") {
+	if (lang !== "en") {
+		const translated = await cachedReadme(localized(source, lang));
+		if (translated.sections.length > 0) return translated;
+	}
+	return cachedReadme({ raw: source.raw, readme: source.readme });
+}
+
+function localized(source: Source, lang: string) {
+	const name = `README.${lang}.md`;
+	return { raw: source.raw.replace(/README\.md$/, name), readme: source.readme.replace(/README\.md$/, name) };
+}
+
+function cachedReadme(target: { raw: string; readme: string }) {
+	const cached = readmes.get(target.raw);
 	if (cached) return cached;
-	const pending = loadReadme(source);
-	readmes.set(source.raw, pending);
+	const pending = loadReadme(target);
+	readmes.set(target.raw, pending);
 	return pending;
 }
 
-async function loadReadme(source: NonNullable<ReturnType<typeof adapterSource>>) {
+async function loadReadme(target: { raw: string; readme: string }) {
 	try {
-		const res = await fetch(source.raw, { signal: AbortSignal.timeout(10_000) });
-		if (res.ok) return renderReadme(await res.text(), source.readme);
+		const res = await fetch(target.raw, { signal: AbortSignal.timeout(10_000) });
+		if (res.ok) return { url: target.readme, sections: renderReadme(await res.text(), target.readme) };
 	} catch {
 		// A link to the published README remains available when the fetch fails.
 	}
-	return [];
+	return { url: target.readme, sections: [] as { section: SectionKey; html: string }[] };
 }

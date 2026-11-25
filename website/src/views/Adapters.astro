@@ -16,9 +16,11 @@ const { adapters, sequence } = await catalog();
 const categories = [...new Set(adapters.flatMap((adapter) => adapter.categories))]
 	.sort((a, b) => categoryLabel(a, lang).localeCompare(categoryLabel(b, lang), lang));
 const resultCount = (adapters.length === 1 ? s.oneResult : s.manyResults).replace("{count}", String(adapters.length));
+const shotSizes: Record<string, [number, number]> = { store: [795, 300], details: [540, 510], form: [540, 470] };
 const screenshots = Object.entries(s.screenshots).flatMap(([name, copy]) => {
-	const path = `/img/adapters/${name}.png`;
-	return existsSync(`public${path}`) ? [{ path, ...copy }] : [];
+	const path = `/img/adapters/${name}-${lang}.webp`;
+	const [width, height] = shotSizes[name] ?? [795, 600];
+	return existsSync(`public${path}`) ? [{ path, width, height, ...copy }] : [];
 });
 ---
 
@@ -97,9 +99,9 @@ const screenshots = Object.entries(s.screenshots).flatMap(([name, copy]) => {
 		<section class="wrap screenshots" aria-labelledby="adapter-screenshots">
 			<h2 class="h-md" id="adapter-screenshots">{s.looks}</h2>
 			<div class="shots">
-				{screenshots.map(({ path, alt, caption }) => (
+				{screenshots.map(({ path, width, height, alt, caption }) => (
 					<figure>
-						<a href={path}><img src={path} alt={alt} width="1280" loading="lazy" decoding="async" /></a>
+						<a href={path}><img src={path} alt={alt} width={width} height={height} loading="lazy" decoding="async" /></a>
 						<figcaption>{caption}</figcaption>
 					</figure>
 				))}
@@ -241,6 +243,7 @@ const screenshots = Object.entries(s.screenshots).flatMap(([name, copy]) => {
 	.screenshots, .two { margin-top: clamp(40px, 7vw, 80px); }
 	.shots {
 		display: grid;
+		align-items: start;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 20px;
 		margin-top: 20px;
