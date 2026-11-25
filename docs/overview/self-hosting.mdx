@@ -18,7 +18,7 @@ runtime. The archive carries the FFmpeg and libheif libraries the binaries load,
 `lib/wingdrive/`, and needs glibc 2.39 or newer (Ubuntu 24.04, Debian 13, Fedora 40, Arch).
 
 ```bash
-VERSION=3.7.1
+VERSION=3.8.0
 ARCHIVE=wing-server-$VERSION-linux-x86_64.tar.xz
 
 # Download the archive and the release checksums
@@ -314,7 +314,7 @@ Download the new archive, verify it against `SHA256SUMS`, extract it next to the
 the `/opt/wingdrive-server` link. Restart the systemd service.
 
 ```bash
-VERSION=3.7.1
+VERSION=3.8.0
 sudo tar -xJf wing-server-$VERSION-linux-x86_64.tar.xz -C /opt
 sudo systemctl stop wingdrive
 sudo ln -sfn /opt/wing-server-$VERSION-linux-x86_64 /opt/wingdrive-server

@@ -2,23 +2,23 @@
 export type Release = { tag: string; version: string; date: string; assets: { name: string; url: string; size: number }[] };
 
 const FALLBACK: Release = {
-	tag: "v3.7.1",
-	version: "3.7.1",
-	date: "2026-11-24T00:00:00Z",
+	tag: "v3.8.0",
+	version: "3.8.0",
+	date: "2026-11-25T00:00:00Z",
 	assets: [
-		"WingDrive-3.7.1-x86_64.AppImage",
-		"WingDrive-3.7.1-amd64.deb",
-		"WingDrive-3.7.1-x86_64.flatpak",
-		"WingDrive-3.7.1-x64-setup.exe",
-		"WingDrive-3.7.1-x64.msi",
-		"WingDrive-3.7.1-aarch64.dmg",
-		"WingDrive-3.7.1-android-arm64-v8a.apk",
-		"wing-server-3.7.1-linux-x86_64.tar.xz",
-		"wing-server-3.7.1-linux-x86_64.tar.gz",
-		"wing-server-3.7.1-linux-x86_64.zip",
-		"wing-3.7.1-windows-x64.zip",
+		"WingDrive-3.8.0-x86_64.AppImage",
+		"WingDrive-3.8.0-amd64.deb",
+		"WingDrive-3.8.0-x86_64.flatpak",
+		"WingDrive-3.8.0-x64-setup.exe",
+		"WingDrive-3.8.0-x64.msi",
+		"WingDrive-3.8.0-aarch64.dmg",
+		"WingDrive-3.8.0-android-arm64-v8a.apk",
+		"wing-server-3.8.0-linux-x86_64.tar.xz",
+		"wing-server-3.8.0-linux-x86_64.tar.gz",
+		"wing-server-3.8.0-linux-x86_64.zip",
+		"wing-3.8.0-windows-x64.zip",
 		"SHA256SUMS",
-	].map((name) => ({ name, url: `https://github.com/bernardopg/wingdrive/releases/download/v3.7.1/${name}`, size: 0 })),
+	].map((name) => ({ name, url: `https://github.com/bernardopg/wingdrive/releases/download/v3.8.0/${name}`, size: 0 })),
 };
 
 let cached: Release | undefined;

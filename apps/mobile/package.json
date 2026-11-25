@@ -1,6 +1,6 @@
 {
 	"name": "@wingdrive/mobile",
-	"version": "3.7.1",
+	"version": "3.8.0",
 	"private": true,
 	"main": "expo-router/entry",
 	"scripts": {
