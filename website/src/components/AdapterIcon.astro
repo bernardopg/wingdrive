@@ -1,0 +1,27 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+	data?: string;
+	size?: number;
+}
+const { data, size = 48 } = Astro.props;
+---
+
+<span class="adapter-icon" style={`--icon-size: ${size}px`} aria-hidden="true">
+	{data ? <img src={data} alt="" width={size} height={size} /> : <Icon name="code" size={size / 2} />}
+</span>
+
+<style>
+	.adapter-icon {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: var(--icon-size);
+		height: var(--icon-size);
+		border-radius: 13px;
+		overflow: hidden;
+		background: var(--surface-2);
+		color: var(--lavender);
+	}
+</style>

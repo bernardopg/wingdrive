@@ -23,6 +23,8 @@ on:
     types: [completed]
   release:
     types: [published, edited]
+  repository_dispatch:
+    types: [adapters-published]
   schedule:
     - cron: '17 6 * * *'
   workflow_dispatch:

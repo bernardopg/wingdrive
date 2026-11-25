@@ -12,8 +12,12 @@ version in the workspace manifests and the matching `v*` git tag.
   a details view with what each adapter can read, which hosts it contacts and which secrets it
   needs, and install, update and remove. Installing asks for consent to that access, and an update
   that asks for more asks again (ADAPT-005).
-- wingdrive.org/adapters (and /pt/adapters) lists the published adapters with what each can access
-  and the command that installs it, read from the signed index when the site builds (ADAPT-006).
+- wingdrive.org/adapters and /pt/adapters let you search and filter the published adapter catalog.
+  Each adapter has a detail page with its permissions, install instructions and documentation from
+  the published commit. The site reads the signed index at build time (ADAPT-006).
+- The docs have an Adapters page in English and Portuguese, with screenshots: installing from
+  the store, what adapters can access on each system, adding a source, updates, removal and
+  troubleshooting.
 - Adding a source fills in what the adapter finds on this computer, such as the vaults Obsidian
   knows or the GitHub CLI's user, and folder fields get a folder picker (ADAPT-010, ADAPT-012).
 - The daemon checks the adapter store 30 seconds after it starts and every six hours. Sources in
