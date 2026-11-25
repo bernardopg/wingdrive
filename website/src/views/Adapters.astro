@@ -1,0 +1,234 @@
+---
+import Base from "../layouts/Base.astro";
+import Icon from "../components/Icon.astro";
+import CopyCode from "../components/CopyCode.astro";
+import { type Lang, DISCORD } from "../i18n/strings";
+import { catalog, REGISTRY } from "../i18n/adapters";
+
+interface Props {
+	lang: Lang;
+}
+const { lang } = Astro.props;
+
+const s = {
+	en: {
+		title: "Adapters",
+		lead: "Adapters bring notes, code, mail and other apps into your WingDrive library, so search finds them next to your files. Install them in the app from Sources > Add source, or with the command line.",
+		official: "Official",
+		verified: "Verified",
+		community: "Community",
+		reads: "Reads",
+		connects: "Connects to",
+		secrets: "Asks for",
+		runs: "Runs",
+		offline: "Works offline",
+		source: "Source",
+		empty: "No adapters are published yet.",
+		index: "Signed index",
+		howT: "How the store works",
+		how: [
+			"Every adapter is reviewed in a pull request to the registry before it is published.",
+			"The index is signed; the app checks the signature and each download's SHA-256 before installing.",
+			"Each adapter declares the files it reads, the hosts it contacts and the secrets it needs. The app shows them and asks before installing, and again when an update asks for more.",
+			"A version found to be unsafe is revoked and stops running on every install.",
+		],
+		publishT: "Publish your own",
+		publish: "Adapters are small programs that print JSON lines, in Python or any compiled language. Read the guide, open a pull request, and Wingbot reports what it found.",
+		guide: "Publishing guide",
+		news: "New adapters and updates are announced on Discord in #adapters.",
+	},
+	pt: {
+		title: "Adaptadores",
+		lead: "Adaptadores trazem notas, código, e-mails e outros apps para a sua biblioteca do WingDrive, e a busca encontra tudo junto com os seus arquivos. Instale no app em Fontes > Adicionar fonte, ou pela linha de comando.",
+		official: "Oficial",
+		verified: "Verificado",
+		community: "Comunidade",
+		reads: "Lê",
+		connects: "Conecta a",
+		secrets: "Pede",
+		runs: "Executa",
+		offline: "Funciona offline",
+		source: "Código",
+		empty: "Nenhum adaptador publicado ainda.",
+		index: "Índice assinado",
+		howT: "Como a loja funciona",
+		how: [
+			"Todo adaptador é revisado num pull request ao registro antes de ser publicado.",
+			"O índice é assinado; o app confere a assinatura e o SHA-256 de cada download antes de instalar.",
+			"Cada adaptador declara os arquivos que lê, os servidores que acessa e os segredos de que precisa. O app mostra isso e pede permissão antes de instalar, e de novo quando uma atualização pede mais.",
+			"Uma versão considerada insegura é revogada e para de rodar em todas as instalações.",
+		],
+		publishT: "Publique o seu",
+		publish: "Adaptadores são programas pequenos que imprimem linhas JSON, em Python ou em qualquer linguagem compilada. Leia o guia, abra um pull request e o Wingbot informa o que encontrou.",
+		guide: "Guia de publicação",
+		news: "Adaptadores novos e atualizações são anunciados no Discord, em #adapters.",
+	},
+}[lang];
+
+const c = await catalog();
+const pretty = (path: string) => (path.startsWith("{config.") ? `‹${path.slice(8, -1)}›` : path);
+---
+
+<Base lang={lang} title={s.title} description={s.lead}>
+	<section class="head">
+		<div class="wrap">
+			<h1 class="h-lg">{s.title}</h1>
+			<p class="lead">{s.lead}</p>
+			{c.sequence > 0 && (
+				<a class="idx" href={`${REGISTRY}/releases/latest`} rel="noopener">{s.index} {c.sequence} <Icon name="external" size={13} /></a>
+			)}
+		</div>
+	</section>
+
+	<section class="wrap grid">
+		{c.adapters.length === 0 && <p class="muted">{s.empty}</p>}
+		{c.adapters.map((a) => {
+			const p = a.permissions ?? {};
+			return (
+				<article class="card adapter" id={a.id}>
+					<header>
+						{a.iconData ? <img src={a.iconData} alt="" width="48" height="48" /> : <span class="noicon"><Icon name="code" size={24} /></span>}
+						<div>
+							<h2>{a.name}</h2>
+							<span class="meta">
+								{a.trust !== "community" && <span class="trust">{s[a.trust]}</span>}
+								v{a.version} · {a.author} · {a.license}
+							</span>
+						</div>
+					</header>
+					<p class="summary">{a.summary}</p>
+					<ul class="perms">
+						{p.read?.length ? <li><b>{s.reads}</b> {p.read.map(pretty).join(", ")}</li> : null}
+						{p.network?.length ? <li><b>{s.connects}</b> {p.network.join(", ")}</li> : <li>{s.offline}</li>}
+						{p.secrets?.length ? <li><b>{s.secrets}</b> {p.secrets.join(", ")}</li> : null}
+						{p.tools?.length ? <li><b>{s.runs}</b> {p.tools.join(", ")}</li> : null}
+					</ul>
+					<CopyCode code={`wing adapters install ${a.id}`} />
+					{a.homepage && <a class="link" href={a.homepage} rel="noopener">{s.source} <Icon name="external" size={13} /></a>}
+				</article>
+			);
+		})}
+	</section>
+
+	<section class="wrap two">
+		<div class="card">
+			<h2 class="h-md"><Icon name="shield" size={22} /> {s.howT}</h2>
+			<ul class="list">{s.how.map((line) => <li>{line}</li>)}</ul>
+		</div>
+		<div class="card">
+			<h2 class="h-md"><Icon name="code" size={22} /> {s.publishT}</h2>
+			<p>{s.publish}</p>
+			<p><a class="link" href={`${REGISTRY}/blob/main/CONTRIBUTING.md`} rel="noopener">{s.guide} <Icon name="external" size={13} /></a></p>
+			<p class="small"><a href={DISCORD} rel="noopener">{s.news}</a></p>
+		</div>
+	</section>
+</Base>
+
+<style>
+	.head {
+		padding: 150px 0 40px;
+		text-align: center;
+	}
+	.head .wrap {
+		display: grid;
+		justify-items: center;
+		gap: 16px;
+	}
+	.idx {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		color: var(--lavender);
+		font-size: 14px;
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		gap: 16px;
+	}
+	.adapter {
+		display: grid;
+		align-content: start;
+		gap: 12px;
+	}
+	.adapter header {
+		display: flex;
+		gap: 14px;
+		align-items: center;
+	}
+	.adapter img,
+	.noicon {
+		border-radius: 12px;
+		flex: none;
+		width: 48px;
+		height: 48px;
+	}
+	.noicon {
+		display: grid;
+		place-items: center;
+		background: var(--surface, rgba(255, 255, 255, 0.05));
+	}
+	.adapter h2 {
+		font-size: 19px;
+		margin: 0;
+	}
+	.meta {
+		color: var(--muted);
+		font-size: 13px;
+	}
+	.trust {
+		color: var(--lavender);
+		font-weight: 600;
+		margin-right: 6px;
+	}
+	.summary {
+		margin: 0;
+	}
+	.perms {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 4px;
+		font-size: 13.5px;
+		color: var(--muted);
+		overflow-wrap: anywhere;
+	}
+	.perms b {
+		color: var(--text, inherit);
+		font-weight: 600;
+	}
+	.link {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		color: var(--lavender);
+		font-size: 14px;
+	}
+	.two {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+		margin-top: 40px;
+	}
+	.two .card {
+		display: grid;
+		align-content: start;
+		gap: 12px;
+	}
+	.list {
+		margin: 0;
+		padding-left: 18px;
+		display: grid;
+		gap: 8px;
+	}
+	.small {
+		font-size: 13.5px;
+		color: var(--muted);
+	}
+	@media (max-width: 760px) {
+		.two {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>
