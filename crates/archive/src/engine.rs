@@ -179,16 +179,12 @@ impl Engine {
 		// Get the adapter's data type
 		let data_type = adapter.data_type().to_string();
 
-		// Extract schema from the adapter
-		let adapters_dir = self.config.data_dir.join("adapters").join(adapter_id);
-		let schema = if adapters_dir.join("adapter.toml").exists() {
-			let sa = ScriptAdapter::from_dir(&adapters_dir)?;
-			sa.schema().clone()
-		} else {
-			return Err(Error::Other(format!(
-				"cannot resolve schema for adapter '{adapter_id}' (not a script adapter with adapter.toml)"
-			)));
-		};
+		// The schema comes from the registered adapter: store installs live outside the library.
+		let schema = adapter.schema().cloned().ok_or_else(|| {
+			Error::Other(format!(
+				"adapter '{adapter_id}' does not declare a record schema"
+			))
+		})?;
 
 		// Create registry entry — trust tier comes from the adapter
 		let trust_tier = adapter.trust_tier();
@@ -232,18 +228,10 @@ impl Engine {
 			.ok_or_else(|| Error::AdapterNotFound(source_info.adapter_id.clone()))?;
 
 		// Open database with migration check
-		let adapters_dir = self
-			.config
-			.data_dir
-			.join("adapters")
-			.join(&source_info.adapter_id);
-		let db = if adapters_dir.join("adapter.toml").exists() {
-			let sa = ScriptAdapter::from_dir(&adapters_dir)?;
-			let current_schema = sa.schema().clone();
-
+		let db = if let Some(current_schema) = adapter.schema() {
 			let (db, migration_result) = self
 				.sources
-				.open_with_migration(source_id, &current_schema)
+				.open_with_migration(source_id, current_schema)
 				.await?;
 
 			if !migration_result.applied.is_empty() {
@@ -514,19 +502,11 @@ impl Engine {
 		&self,
 		adapter_id: &str,
 	) -> Result<Vec<crate::adapter::script::ConfigField>> {
-		let manifest_path = self
-			.config
-			.data_dir
-			.join("adapters")
-			.join(adapter_id)
-			.join("adapter.toml");
-
-		if !manifest_path.exists() {
-			return Err(Error::AdapterNotFound(adapter_id.to_string()));
-		}
-
-		let manifest = crate::adapter::script::AdapterManifest::from_file(&manifest_path)?;
-		Ok(manifest.adapter.config)
+		let adapter = self
+			.adapters
+			.get(adapter_id)
+			.ok_or_else(|| Error::AdapterNotFound(adapter_id.to_string()))?;
+		Ok(adapter.config_fields().to_vec())
 	}
 
 	/// Check whether a source adapter directory has changed compared to the installed version.

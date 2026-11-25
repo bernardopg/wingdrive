@@ -169,3 +169,30 @@ async fn opening_a_source_repairs_the_old_search_delete_trigger() {
 	db.delete("note", "n").await.unwrap();
 	assert_eq!(db.count("note").await.unwrap(), 0);
 }
+
+#[tokio::test]
+async fn engine_uses_adapters_installed_outside_its_data_dir() {
+	let tmp = tempfile::tempdir().unwrap();
+	// Where the store installs adapters, not `<engine data dir>/adapters`.
+	let installed = tmp.path().join("installed").join("echo");
+	std::fs::create_dir_all(&installed).unwrap();
+	write_adapter(&installed);
+
+	let engine = wing_archive::Engine::new(wing_archive::EngineConfig {
+		data_dir: tmp.path().join("library"),
+	})
+	.await
+	.unwrap();
+	engine
+		.adapters()
+		.register(std::sync::Arc::new(ScriptAdapter::from_dir(&installed).unwrap()));
+
+	assert!(engine.adapter_config_fields("echo").unwrap().is_empty());
+	let source = engine
+		.create_source("Echo", "echo", serde_json::json!({}))
+		.await
+		.unwrap();
+	let report = engine.sync(&source.id).await.unwrap();
+	assert_eq!(report.error, None);
+	assert_eq!(report.records_upserted, 3);
+}

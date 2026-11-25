@@ -67,6 +67,14 @@ pub trait Adapter: Send + Sync + 'static {
 	fn trust_tier(&self) -> TrustTier {
 		TrustTier::External
 	}
+	/// The record schema sources of this adapter use, wherever the adapter was loaded from.
+	fn schema(&self) -> Option<&crate::schema::DataTypeSchema> {
+		None
+	}
+	/// The fields a user fills when adding a source of this adapter.
+	fn config_fields(&self) -> &[script::ConfigField] {
+		&[]
+	}
 	fn sync<'a>(
 		&'a self,
 		db: &'a SourceDb,
