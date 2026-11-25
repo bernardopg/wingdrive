@@ -37,13 +37,8 @@ impl SampleJob {
 			})
 			.collect::<Vec<_>>();
 
-		let mut group = FutureGroup::from_iter(
-			task_dispatcher
-				.dispatch_many(initial_steps)
-				.await
-				.unwrap()
-				.into_iter(),
-		);
+		let mut group =
+			FutureGroup::from_iter(task_dispatcher.dispatch_many(initial_steps).await.unwrap());
 
 		while let Some(res) = group.next().await {
 			match res.unwrap() {

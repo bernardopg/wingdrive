@@ -4,11 +4,12 @@ license.workspace = true
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
+# The crate compiles to nothing on other systems (`#![cfg(target_os = "macos")]`).
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+serde = { version = "1.0", features = ["derive"] }
 file-opening = { path = "../file-opening" }
 swift-rs = { version = "1.0", features = ["serde"] }
-serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-[build-dependencies]
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.build-dependencies]
 swift-rs = { version = "1.0", features = ["build"] }

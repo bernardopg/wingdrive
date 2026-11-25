@@ -677,7 +677,6 @@ mod tests {
 		routing::get,
 		Router,
 	};
-	use rust_embed::RustEmbed;
 	use serde_json::json;
 	use std::{collections::HashMap, net::SocketAddr, path::Path};
 	use tokio::{

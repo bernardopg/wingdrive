@@ -107,7 +107,7 @@ mod tests {
 	use tokio::fs;
 
 	#[tokio::test]
-	#[ignore]
+	#[ignore = "needs the sample videos in ./samples, which the repository does not ship"]
 	async fn test_all_files() {
 		let video_file_path = [
 			Path::new("./samples/video_01.mp4"),

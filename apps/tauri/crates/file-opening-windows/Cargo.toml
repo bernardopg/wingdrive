@@ -4,7 +4,8 @@ license.workspace = true
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
+# The crate compiles to nothing on other systems (`#![cfg(target_os = "windows")]`).
+[target.'cfg(target_os = "windows")'.dependencies]
 file-opening = { path = "../file-opening" }
 windows = { version = "0.58", features = [
     "Win32_Foundation",

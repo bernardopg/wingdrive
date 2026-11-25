@@ -245,7 +245,7 @@ async fn network_commands_use_gio_and_the_session_mount_directory() {
 		let path = gvfs.join("sftp:host=fixture,user=guest");
 		assert_eq!(mount.name, "guest on fixture (SFTP)");
 		assert_eq!(Path::new(&mount.path), path);
-		assert_eq!(list_network_mounts(), [mount.clone()]);
+		assert_eq!(list_network_mounts(), std::slice::from_ref(&mount));
 		assert_eq!(
 			mount_network_location("sftp://fixture/docs".into(), None)
 				.await

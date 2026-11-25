@@ -6,7 +6,6 @@ edition = "2021"
 
 [dependencies]
 # Async runtime
-tokio = { version = "1.40", features = ["full"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -14,10 +13,8 @@ serde_json = "1.0"
 
 # Error handling
 anyhow = "1.0"
-thiserror = "2.0"
 
 # Logging
-tracing = "0.1"
 
 # WingDrive path resolution and legacy adoption, without compiling wing-core
 wing-branding = { path = "../../../crates/branding" }

@@ -43,7 +43,6 @@ rust-version = "1.89"
 # Third party dependencies used by one or more of our crates
 anyhow              = "1.0.104"
 async-channel       = "2.5"
-async-stream        = "0.3.6"
 async-trait         = "0.1.92"
 axum                = "0.8.9"
 base64              = "0.23.1"
@@ -72,7 +71,6 @@ webp                = "0.3.1"
 zeroize             = "1.9"
 sqlx                = { version = "0.9", default-features = false, features = ["sqlite", "runtime-tokio"] }
 indexmap            = "2.14"
-dashmap             = "6.2"
 toml                = "1.1"
 
 # Patches removed - project migrated from libp2p to iroh
@@ -133,8 +131,6 @@ opt-level     = 2        # Good optimization without extreme size focus
 strip         = true     # Still remove debug symbols
 
 [patch.crates-io]
-# Allow the SQLite security update until SQLx publishes its upstream fix.
-sqlx-sqlite = { path = "patches/sqlx-sqlite-0.9.0" }
 # GHSA-wrw7-89jp-8q8g backport for the GTK3 stack used by Tauri on Linux.
 # See patches/README.md.
 glib = { path = "patches/glib-0.18.5" }

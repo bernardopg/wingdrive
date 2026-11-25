@@ -104,13 +104,17 @@ async fn shared_change_replay_is_idempotent() -> anyhow::Result<()> {
 	let change = SharedChangeEntry {
 		hlc: HLC::now(harness.device_alice_id, &SystemTimeSource),
 		model_type: "entry".to_string(),
-		record_uuid: entry.uuid,
+		record_uuid: entry.uuid.expect("indexed entries have a UUID"),
 		change_type: ChangeType::Update,
 		data: serde_json::to_value(&entry)?,
 	};
 
 	for _ in 0..2 {
-		registry::apply_shared_change(change.clone(), harness.library_bob.db().clone()).await?;
+		registry::apply_shared_change(
+			change.clone(),
+			std::sync::Arc::new(harness.library_bob.db().conn().clone()),
+		)
+		.await?;
 	}
 
 	let count_after = entities::entry::Entity::find()
