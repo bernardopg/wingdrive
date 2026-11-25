@@ -202,7 +202,10 @@ async fn run_elevated(program: &'static str, args: Vec<String>) -> Result<AdminR
 #[tauri::command]
 pub async fn run_as_admin(operation: AdminOperation) -> Result<AdminRunOutcome, String> {
 	let operation_for_log = operation.clone();
-	tracing::info!(?operation_for_log, "Repeating an operation as administrator");
+	tracing::info!(
+		?operation_for_log,
+		"Repeating an operation as administrator"
+	);
 	tauri::async_runtime::spawn_blocking(move || run_elevated_windows(&operation))
 		.await
 		.map_err(|e| e.to_string())?
@@ -294,7 +297,9 @@ fn shell_execute_runas(
 	use std::os::windows::ffi::OsStrExt;
 
 	use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, HANDLE, HWND};
-	use windows_sys::Win32::System::Threading::{GetExitCodeProcess, WaitForSingleObject, INFINITE};
+	use windows_sys::Win32::System::Threading::{
+		GetExitCodeProcess, WaitForSingleObject, INFINITE,
+	};
 	use windows_sys::Win32::UI::Shell::{
 		ShellExecuteExW, SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW,
 	};

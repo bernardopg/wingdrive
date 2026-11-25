@@ -8,10 +8,15 @@ fn args(operation: AdminOperation) -> Vec<String> {
 #[tokio::test]
 async fn elevated_exit_codes_become_results() {
 	let sh = |script: &str| vec!["-c".to_string(), script.to_string()];
-	assert_eq!(run_elevated("sh", sh("exit 0")).await.unwrap(), AdminRunOutcome::Completed);
+	assert_eq!(
+		run_elevated("sh", sh("exit 0")).await.unwrap(),
+		AdminRunOutcome::Completed
+	);
 	for code in PKEXEC_DISMISSED {
 		assert_eq!(
-			run_elevated("sh", sh(&format!("exit {code}"))).await.unwrap(),
+			run_elevated("sh", sh(&format!("exit {code}")))
+				.await
+				.unwrap(),
 			AdminRunOutcome::Cancelled
 		);
 	}

@@ -111,20 +111,27 @@ async fn updater_commands_respect_the_appimage_boundary() {
 	const NO_UPDATE: &str = "WingDrive is up to date";
 	match std::env::var(FIXTURE).as_deref() {
 		Ok("package") => {
-			let app = app_for("http://127.0.0.1:1/unused".into());
+			// Package-manager copies learn about new releases but never install them.
+			let (url, _response) = endpoint(
+				"200 OK",
+				r#"{"version":"99.0.0","notes":"Fixture release","pub_date":"2026-11-19T12:00:00Z","platforms":{"fixture":{"signature":"fixture","url":"https://example.invalid/download"}}}"#,
+			)
+			.await;
+			let app = app_for(url);
 			let info = updater_info(app.handle().clone());
 			assert_eq!(info.channel, UpdateChannel::PackageManager);
 			assert_eq!(info.current_version, app.package_info().version.to_string());
-			assert_eq!(
-				check_for_update(app.handle().clone()).await.unwrap_err(),
-				"Updates come from your package manager"
-			);
+			let update = check_for_update(app.handle().clone())
+				.await
+				.unwrap()
+				.unwrap();
+			assert_eq!(update.version, "99.0.0");
 			assert_eq!(
 				install_update(app.handle().clone()).await.unwrap_err(),
 				"Updates come from your package manager"
 			);
 			spawn_startup_check(app.handle().clone(), true);
-			assert!(!STARTUP_CHECK_DONE.load(Ordering::SeqCst));
+			assert!(STARTUP_CHECK_DONE.load(Ordering::SeqCst));
 		}
 		Ok("appimage") => {
 			let (url, response) = endpoint(

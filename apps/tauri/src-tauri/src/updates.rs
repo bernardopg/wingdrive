@@ -180,7 +180,9 @@ pub fn spawn_startup_check<R: Runtime>(app: AppHandle<R>, enabled: bool) {
 					.ok()
 					.map(|dir| dir.join(NOTIFIED_FILE));
 				if let Some(path) = &notified {
-					if std::fs::read_to_string(path).ok().as_deref() == Some(update.version.as_str()) {
+					if std::fs::read_to_string(path).ok().as_deref()
+						== Some(update.version.as_str())
+					{
 						return;
 					}
 				}
