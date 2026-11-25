@@ -21,15 +21,18 @@ reported, and how a test runs a real adapter against fixtures.
 
 ## Implementation Steps
 
-- [ ] Document the manifest (`adapter.toml`), the stdin config, JSONL record, delete, cursor and error lines in `docs/core/adapters.mdx`, matching `ScriptAdapter`
+- [x] Document the manifest (`adapter.toml`), the stdin config, JSONL record, delete, cursor and error lines in `docs/core/adapters.mdx`, matching `ScriptAdapter`
 - [x] Version the contract (`contract = 1` in the manifest) so the daemon can refuse adapters it does not understand
 - [x] The contract is a process speaking JSONL on stdin and stdout, so it covers both Python scripts and compiled adapters (Rust, Go or any language); the manifest says `runtime = "python3"` or `runtime = "binary"`
 - [ ] Python helper package (`wingdrive-adapter-kit`) for config, emitting records, cursors, platform path defaults and secrets
 - [ ] Harness that runs an adapter folder through `ScriptAdapter` with a fixture config and checks the stored records; usable from Rust tests and as a command (`wing adapter test`)
 - [x] The archive engine finds adapters only where the store installs them; drop the `CARGO_MANIFEST_DIR` lookups
+- [x] Contract 1 stdin carries `config`, the last `cursor` and `data_dir`; the daemon used to store cursors and never send them back
+- [x] Deleting a linked or unscreened record works (junction rows first, FTS delete trigger only for indexed rows, old trigger repaired on open)
+- [x] A failed run reports the adapter's last stderr line
 
 ## Acceptance Criteria
 
-- [ ] Contract doc merged and referenced from AGENTS.md
+- [x] Contract doc merged and referenced from AGENTS.md (`docs/core/adapters.mdx`, AGENTS.md "Adapters (store)")
 - [ ] Harness passes on the template adapter and is used by ADAPT-007 and every adapter task
 - [ ] CI job green with the harness tests

@@ -1,0 +1,168 @@
+---
+title: Adapters
+sidebarTitle: Adapters
+---
+
+An adapter brings data from another app or service into a library as a source: notes, mail, code,
+chat, browser history. It is a process. The daemon starts it, writes one JSON document on stdin,
+and reads JSON lines from stdout. Python scripts and compiled programs speak the same contract.
+
+Users install adapters from the store (Sources > Add source > Adapters, or `wing adapters install
+<id>`). How the store publishes, signs and updates them is in
+[`docs/design/adapter-store.md`](https://github.com/bernardopg/wingdrive/blob/main/docs/design/adapter-store.md).
+This page is the contract an adapter follows. `ScriptAdapter` in `crates/archive/src/adapter/script.rs`
+implements it.
+
+## Folder
+
+```
+obsidian/
+├── adapter.toml   manifest
+├── sync.py        entry point (or a compiled binary)
+├── icon.svg       square, under 64 KB, no scripts
+├── README.md      ## Setup, ## Data, ## Privacy
+└── tests/
+```
+
+The store installs it under `<data dir>/adapters/installed/<id>/`. During development, point
+`WINGDRIVE_DEV_ADAPTERS` at a folder of adapter folders and the daemon loads them too.
+
+## Manifest
+
+```toml
+[adapter]
+id = "obsidian"
+name = "Obsidian"
+summary = "Notes, tags and links from an Obsidian vault."   # store card, up to 140 characters
+description = "Longer text for the details page."
+version = "1.0.0"
+author = "WingDrive"
+license = "Apache-2.0"
+icon = "icon.svg"
+contract = 1
+platforms = ["linux", "macos", "windows"]
+categories = ["notes"]
+
+[adapter.runtime]
+kind = "python3"        # or "binary"
+entry = "sync.py"
+timeout = 300
+
+[adapter.permissions]
+read = ["~/Documents"]  # paths it reads
+network = []            # hosts it contacts
+secrets = []            # config keys that hold secrets
+tools = []              # programs it runs
+
+[[adapter.config]]
+key = "vault_path"
+name = "Vault"
+type = "string"
+path_type = "folder"
+required = true
+
+[data_type]
+id = "obsidian"
+name = "Obsidian note"
+
+[models.note]
+fields.title = "string"
+fields.body = "text"
+fields.modified = "datetime"
+
+[models.note.relations]
+many_to_many = ["note"]
+
+[search]
+primary_model = "note"
+title = "title"
+preview = "body"
+search_fields = ["title", "body"]
+date_field = "modified"
+```
+
+`contract` is the version of this page the adapter speaks. The daemon refuses an adapter whose
+contract is newer than its own. Folders without `contract` are contract 0 prototypes, which run
+`runtime.command` through `sh -c`, inherit the daemon's environment and receive only the config on
+stdin. Nothing in the store is contract 0.
+
+Field types are `string`, `text`, `integer`, `float`, `boolean`, `datetime` and `json`. Each model
+becomes a table keyed by `external_id`. `many_to_many` creates a junction table; a model related
+to itself (`note` to `note`) gets one too.
+
+## Process
+
+| Runtime | Command |
+|---|---|
+| `python3` | `python3 -I <entry>` (`python` on Windows), so the adapter's folder is not on `sys.path` |
+| `binary` | `<entry>`, built by the registry's CI from the reviewed commit |
+
+The working directory is the adapter's folder. The environment is cleared down to `PATH`, `HOME`,
+`LANG`, `LC_ALL`, `TZ`, `TMPDIR` and, on Windows, `SYSTEMROOT`, `USERPROFILE`, `APPDATA` and
+`LOCALAPPDATA`. The daemon adds:
+
+| Variable | Value |
+|---|---|
+| `WINGDRIVE_ADAPTER_ID` | `id` from the manifest |
+| `WINGDRIVE_ADAPTER_VERSION` | `version` from the manifest |
+| `WINGDRIVE_CONFIG_<KEY>` | each config field, upper case |
+
+Prefer stdin over these variables.
+
+## Input
+
+stdin holds one JSON document, then closes:
+
+```json
+{
+  "contract": 1,
+  "config": { "vault_path": "/home/ana/Notes" },
+  "cursor": "{\"v\":1,\"notes\":{}}",
+  "data_dir": "/home/ana/.local/share/wingdrive/libraries/.../sources/4f2c"
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `config` | The fields the user filled when adding the source |
+| `cursor` | The last cursor the adapter printed for this source, or `null` on the first sync |
+| `data_dir` | The source's folder; the adapter may keep files there |
+
+## Output
+
+Each line on stdout is one JSON object. The daemon applies lines as it reads them.
+
+| Line | Effect |
+|---|---|
+| `{"upsert": "note", "external_id": "a1", "fields": {...}}` | Insert or update a record; fields not in the model are ignored |
+| `{"delete": "note", "external_id": "a1"}` | Delete a record and its links |
+| `{"link": "note", "id": "a1", "to": "note", "to_id": "b2"}` | Add a `many_to_many` link; both records must exist |
+| `{"unlink": "note", "id": "a1", "to": "note", "to_id": "b2"}` | Remove that link |
+| `{"cursor": "..."}` | Store the cursor the next sync receives |
+| `{"log": "info", "message": "..."}` | Log at `debug`, `info`, `warn` or `error` |
+
+`external_id` is the adapter's own stable key for a record; derive it from something that survives
+a restart, such as a relative path or a message id. For a `belongs_to` relation, put the parent's
+`external_id` in the `<parent>_id` field; the parent must be upserted first.
+
+Print the cursor last, after every record it covers. If the run dies before that line, the next
+sync starts from the previous cursor and sends the same records again, which upserts make harmless.
+A cursor is a string; JSON inside it is fine.
+
+## Deletions
+
+The daemon never compares what the adapter printed with what it stored, so an adapter that only
+prints new and changed records must print deletions itself. Keep enough state in the cursor (or in
+`data_dir`) to notice what disappeared since the last run.
+
+## Errors
+
+Exit with status 0 when the sync finished. Any other status marks the sync as failed, keeps what was
+already applied, and shows the last line the adapter wrote to stderr as the error. Write diagnostics
+to stderr or as `log` lines, never as plain text on stdout: the daemon skips stdout lines that are
+not JSON and logs a warning for each.
+
+## After the sync
+
+New and changed records go through the source's safety screening, which decides whether they enter
+the source's full-text index, and are embedded for semantic search.

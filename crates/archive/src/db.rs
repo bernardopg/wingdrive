@@ -105,6 +105,34 @@ impl SourceDb {
 			}
 		}
 
+		self.repair_search_delete_trigger().await
+	}
+
+	/// Replace a `search_index_ad` trigger that deletes rows the FTS index never held.
+	async fn repair_search_delete_trigger(&self) -> Result<()> {
+		let current: Option<(String,)> = sqlx::query_as(
+			"SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'search_index_ad'",
+		)
+		.fetch_optional(&self.pool)
+		.await?;
+		let Some((sql,)) = current else {
+			return Ok(());
+		};
+		if sql.contains("_safety_verdict") {
+			return Ok(());
+		}
+		let Some(trigger) = crate::schema::codegen::search_delete_trigger_for(&self.schema) else {
+			return Ok(());
+		};
+		let mut tx = self.pool.begin().await?;
+		sqlx::query("DROP TRIGGER search_index_ad")
+			.execute(&mut *tx)
+			.await?;
+		sqlx::query(sqlx::AssertSqlSafe(trigger))
+			.execute(&mut *tx)
+			.await?;
+		tx.commit().await?;
+		tracing::info!("replaced the search index delete trigger");
 		Ok(())
 	}
 
@@ -222,15 +250,29 @@ impl SourceDb {
 		Ok(row.0)
 	}
 
-	/// Delete a record by external ID.
+	/// Delete a record by external ID, with the many_to_many links that point at it.
+	///
+	/// Junction rows reference the record by foreign key, so they go first; otherwise SQLite
+	/// refuses to delete a record that is still linked.
 	pub async fn delete(&self, model: &str, external_id: &str) -> Result<()> {
 		let table = pluralize(model);
+		let mut tx = self.pool.begin().await?;
+		for (junction, column) in self.junction_columns(model) {
+			sqlx::query(sqlx::AssertSqlSafe(format!(
+				"DELETE FROM \"{junction}\" WHERE \"{column}\" IN \
+				 (SELECT id FROM \"{table}\" WHERE external_id = ?)"
+			)))
+			.bind(external_id)
+			.execute(&mut *tx)
+			.await?;
+		}
 		let result = sqlx::query(sqlx::AssertSqlSafe(format!(
 			"DELETE FROM \"{table}\" WHERE external_id = ?"
 		)))
 		.bind(external_id)
-		.execute(&self.pool)
+		.execute(&mut *tx)
 		.await?;
+		tx.commit().await?;
 
 		if result.rows_affected() == 0 {
 			return Err(Error::Other(format!(
@@ -238,6 +280,35 @@ impl SourceDb {
 			)));
 		}
 		Ok(())
+	}
+
+	/// Junction tables and columns that hold ids of `model`, in the naming `link` uses.
+	fn junction_columns(&self, model: &str) -> Vec<(String, String)> {
+		let mut columns = Vec::new();
+		for (owner, def) in &self.schema.models {
+			for target in &def.relations.many_to_many {
+				if owner != model && target != model {
+					continue;
+				}
+				let (a, b) = if owner <= target {
+					(owner.as_str(), target.as_str())
+				} else {
+					(target.as_str(), owner.as_str())
+				};
+				let junction = format!("{a}_{b}");
+				let pairs = if a == b {
+					vec![format!("{a}_id"), format!("related_{a}_id")]
+				} else {
+					vec![format!("{model}_id")]
+				};
+				for column in pairs {
+					if !columns.contains(&(junction.clone(), column.clone())) {
+						columns.push((junction.clone(), column));
+					}
+				}
+			}
+		}
+		columns
 	}
 
 	/// Insert a many_to_many junction record.

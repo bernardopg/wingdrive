@@ -527,14 +527,6 @@ impl ScriptAdapter {
 			"WINGDRIVE_ADAPTER_VERSION".to_string(),
 			self.manifest.adapter.version.clone(),
 		);
-		env.insert(
-			"WINGDRIVE_ADAPTER_ID".to_string(),
-			self.manifest.adapter.id.clone(),
-		);
-		env.insert(
-			"WINGDRIVE_ADAPTER_VERSION".to_string(),
-			self.manifest.adapter.version.clone(),
-		);
 
 		if let Some(obj) = config.as_object() {
 			for (key, value) in obj {
@@ -542,15 +534,18 @@ impl ScriptAdapter {
 					.as_str()
 					.map(|s| s.to_string())
 					.unwrap_or_else(|| value.to_string());
-				env.insert(
-					format!("WINGDRIVE_CONFIG_{}", key.to_uppercase()),
-					value.clone(),
-				);
 				env.insert(format!("WINGDRIVE_CONFIG_{}", key.to_uppercase()), value);
 			}
 		}
 
-		for var_name in &self.manifest.adapter.runtime.env {
+		// Contract 1 adapters get a cleared environment; passing host variables through would
+		// let a manifest read any secret the daemon has. They receive secrets as config fields.
+		let passthrough: &[String] = if self.manifest.adapter.contract >= 1 {
+			&[]
+		} else {
+			&self.manifest.adapter.runtime.env
+		};
+		for var_name in passthrough {
 			if let Ok(value) = std::env::var(var_name) {
 				env.insert(var_name.clone(), value);
 			}
@@ -558,6 +553,34 @@ impl ScriptAdapter {
 
 		env
 	}
+}
+
+/// The JSON a contract 1 adapter reads on stdin.
+///
+/// `config` holds the fields the user filled in; keys the engine injects (`_data_dir`) move to
+/// their own fields. `cursor` is the last value the adapter emitted, or null on the first sync.
+fn contract_input(
+	contract: u32,
+	config: &serde_json::Value,
+	cursor: Option<String>,
+) -> serde_json::Value {
+	let mut user = serde_json::Map::new();
+	let mut data_dir = serde_json::Value::Null;
+	if let Some(fields) = config.as_object() {
+		for (key, value) in fields {
+			if key == "_data_dir" {
+				data_dir = value.clone();
+			} else if !key.starts_with('_') {
+				user.insert(key.clone(), value.clone());
+			}
+		}
+	}
+	serde_json::json!({
+		"contract": contract,
+		"config": user,
+		"cursor": cursor,
+		"data_dir": data_dir,
+	})
 }
 
 impl Adapter for ScriptAdapter {
@@ -630,12 +653,36 @@ impl Adapter for ScriptAdapter {
 				.stdout
 				.take()
 				.ok_or_else(|| Error::AdapterSync("failed to open stdout".into()))?;
-			let _stderr = child
+			let stderr = child
 				.stderr
 				.take()
 				.ok_or_else(|| Error::AdapterSync("failed to open stderr".into()))?;
+			// Drain stderr so a chatty adapter never blocks on a full pipe, and keep the last
+			// line to explain a failed run.
+			let adapter_id = self.manifest.adapter.id.clone();
+			let stderr_task = tokio::spawn(async move {
+				let mut lines = BufReader::new(stderr).lines();
+				let mut last = None;
+				while let Ok(Some(line)) = lines.next_line().await {
+					if line.trim().is_empty() {
+						continue;
+					}
+					tracing::debug!(adapter = %adapter_id, "{line}");
+					last = Some(line);
+				}
+				last
+			});
 
-			let config_json = serde_json::to_string(config)
+			let input = if self.manifest.adapter.contract >= 1 {
+				contract_input(
+					self.manifest.adapter.contract,
+					config,
+					db.get_cursor("default").await?,
+				)
+			} else {
+				config.clone()
+			};
+			let config_json = serde_json::to_string(&input)
 				.map_err(|e| Error::AdapterSync(format!("failed to serialize config: {e}")))?;
 
 			tokio::spawn(async move {
@@ -719,8 +766,12 @@ impl Adapter for ScriptAdapter {
 			let status = child.wait().await?;
 			report.duration_ms = start.elapsed().as_millis() as u64;
 
+			let last_stderr = stderr_task.await.ok().flatten();
 			if !status.success() {
-				report.error = Some(format!("adapter exited with status: {status}"));
+				report.error = Some(match last_stderr {
+					Some(line) => format!("adapter exited with status: {status}: {line}"),
+					None => format!("adapter exited with status: {status}"),
+				});
 			}
 
 			Ok(report)

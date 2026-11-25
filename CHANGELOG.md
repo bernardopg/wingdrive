@@ -20,11 +20,19 @@ version in the workspace manifests and the matching `v*` git tag.
 - Renaming a folder that holds an indexed folder no longer logs "UNIQUE constraint failed:
   entries.parent_id, entries.name": a change inside the renamed folder updates the entry at the
   new path instead of moving the old entry onto it.
+- Adapter sources pick up where the last sync stopped: contract 1 adapters receive their last
+  cursor on stdin, next to the config. Before, the daemon stored the cursor but never sent it
+  back, so every sync started from scratch (ADAPT-003).
+- Deleting a record that other records link to, or one not yet screened, no longer fails with
+  "FOREIGN KEY constraint failed" or "database disk image is malformed". Sources created before
+  the fix get the corrected search trigger when they open (ADAPT-003).
+- A failed adapter sync shows the last line the adapter wrote to stderr (ADAPT-003).
 
 ### Security
 
 - Adapters that declare the new contract 1 run without a shell and without the daemon's
-  environment variables, so tokens the daemon holds never reach adapter code (ADAPT-003).
+  environment variables, so tokens the daemon holds never reach adapter code; `runtime.env` no
+  longer passes host variables through to them (ADAPT-003).
 
 ### Internal
 
