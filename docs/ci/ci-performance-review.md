@@ -245,3 +245,58 @@ The `TypeScript` job's stale `dist/` gate failed because commit `5d25b5cdf` (PR 
 `packages/wingdrive-primitives/src/CircleButton.tsx` without rebuilding the committed `dist/`.
 `just ci-local` runs the same check whenever `packages/wingdrive-primitives/` changes, so running it
 before the push would have caught the failure in under a minute.
+
+## Second review (2026-11-25)
+
+Data: every run and job started by pull request #549 (the 3.8.0 version bump), by its merge
+commit `66e0ce0c4` and by the `v3.8.0` tag, plus the `Rust Workspace`, `Explorer smoke` and
+CodeQL logs of #546, #548 and #549. Runner minutes add up every job; wall clock is the longest path.
+
+### What one release cost
+
+| Event | Runner minutes | Heaviest jobs |
+| --- | --- | --- |
+| Pull request #549 (version bump only) | 132 | Windows installers 48.7, `Rust Workspace (Windows)` 22.3, `Rust Workspace` 21.2, Explorer smoke 15.8, Android Gradle 7.9 |
+| Merge to `main` | about 110 | CodeQL Rust 29, Coverage Rust 40 to 60 (instrumented, no cache), Android Gradle 8, Android clippy 2.6 |
+| Tag `v3.8.0` | about 230 | Windows installers about 50, desktop bundles 31.3, macOS 26.2, server 22.9, Android 22.8, server image 19.7 + 16.6 |
+
+The version bump changed only version strings, yet it ran every Rust gate on Linux and Windows, the
+Explorer smoke, the Android build and the Windows installers: `tauri.conf.json` is in the installer
+workflow's path filter and `Cargo.toml` makes `ci-scope.sh` pick the full scope.
+
+The merge then repeated work its pull request had passed. CI on `main` already skips a verified merge
+(`ci-changes.sh`), but the mobile workflow did not, and Coverage and the CodeQL Rust analysis ran on
+every merge that reached Rust code. Coverage builds instrumented code that shares no cache with CI.
+
+A documentation-only pull request ran the Explorer smoke (11 minutes building `wing-server`), both
+TypeScript jobs and the WASM extensions.
+
+CodeQL Rust has no build to cache: 14 minutes to extract 1,261 files, 13 to evaluate 40 queries. It
+reports no open alert.
+
+### Changes
+
+| Change | Saving |
+| --- | --- |
+| `scripts/ci-changed-files.sh` drops version files whose only change is the product version. `ci-changes.sh`, the mobile filter and the Windows installer filter read it. | A release pull request runs only the metadata and lightweight checks: about 130 runner minutes and 25 minutes of wall clock less. |
+| `ci-changes.sh` prints `ts` and `ui`. TypeScript jobs need a TypeScript change; the Explorer smoke needs a Rust or web interface change; WASM extensions need a Rust change. | Documentation and task pull requests skip about 20 runner minutes. |
+| The mobile filter reuses `ci-changes.sh` and runs nothing on a merge whose pull request run passed on the same tree. The lint job waits for the filter. | About 11 runner minutes per merge that touches mobile, core or crates. |
+| Coverage runs nightly instead of on every push, skips a night whose commit already has a report, and checks changed lines since the commit the last report measured. | 40 to 60 runner minutes per merge. |
+| CodeQL Rust runs nightly when Rust code changed since the last nightly analysis, and on manual runs. Pushes no longer run it. | About 29 runner minutes per merge that touches Rust. Alerts surface by the next morning. |
+| 29 unused dependencies removed (`unused_dependencies` from Cargo 1.100), the unused `sqlx-sqlite` patch dropped, platform crates fetch dependencies only on their system. | 86 fewer crates to compile in every build; the vendored OpenSSL left the Android core. |
+
+Every gate stays: the nightly CI run still runs everything, and the release still builds and verifies
+every platform from the tag.
+
+### Still open
+
+1. Release Rust caches never restore. Only a `workflow_dispatch` from `main` saves them, so every tag
+   compiles cold: the server job spends 19 minutes compiling, the Windows installers 37. Saving them on
+   `main` would need about 6 GB more of the 10 GB cache budget and push the CI cache out, so the fix
+   is fewer separate release builds: the desktop and server jobs build the same release crates twice,
+   and the server image builds `wing-server` again inside Docker for amd64.
+2. The Explorer smoke compiles `wing-server` apart from `Rust Workspace` (11 minutes). Building it in
+   the `Rust Workspace` job with the test feature set and handing it over as an artifact would save that
+   build on Rust pull requests.
+3. The release tab switch budget (60 ms) sits inside the runner's spread: the same commit measured
+   34.8 ms on one run and 59.6 ms on another, and the `v3.8.0` run failed at 61.1 ms.

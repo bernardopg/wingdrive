@@ -5,17 +5,13 @@ name: Coverage
 # - the HTML report on GitHub Pages (https://bernardopg.github.io/wingdrive/),
 # - the summary table on the run page.
 # Nothing in `main` holds a number, so no file needs editing when coverage changes.
+# Nightly, not on every push: the instrumented Rust build cannot share a cache with CI and
+# takes 40 to 60 minutes, and every merge repeated it on code its pull request had already
+# tested. The night run measures everything merged since the last run, and the changed-line
+# check covers that whole range.
 on:
-  push:
-    branches: [main]
-    # These files hold no tested code, so a push that only touches them cannot move a number.
-    paths-ignore:
-      - ".tasks/**"
-      - "docs/**"
-      - "**/*.md"
-      - "**/*.mdx"
   schedule:
-    - cron: "41 5 * * 1"
+    - cron: "41 5 * * *"
   workflow_dispatch:
 
 permissions:
@@ -26,8 +22,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A night without merges would measure the same commit again.
+  changes:
+    name: Check for new commits
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+      base: ${{ steps.check.outputs.base }}
+    steps:
+      - name: Find the commit the last report measured
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          base=$(gh run list -R "$GITHUB_REPOSITORY" -w coverage.yml --branch main --status success \
+            --limit 1 --json headSha -q '.[0].headSha // empty')
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          if [ "$EVENT" = schedule ] && [ "$base" = "$GITHUB_SHA" ]; then
+            echo "Coverage of $GITHUB_SHA is already published."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   frontend:
     name: Frontend tests
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -56,6 +82,8 @@ jobs:
 
   rust:
     name: Rust tests
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
@@ -119,7 +147,7 @@ jobs:
 
   report:
     name: Report
-    needs: [frontend, rust]
+    needs: [changes, frontend, rust]
     if: ${{ !cancelled() && (needs.frontend.result == 'success' || needs.rust.result == 'success') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -157,17 +185,18 @@ jobs:
             echo "Report: https://bernardopg.github.io/wingdrive/"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Changed lines are those since the commit the last published report measured.
       - name: Check coverage floors
         if: ${{ needs.frontend.result == 'success' && needs.rust.result == 'success' }}
         env:
-          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ needs.changes.outputs.base }}
         run: |
           args=(check --floors scripts/coverage-floors.json --summary site/summary.json --json-out site/ratchet.json)
           while IFS= read -r report; do
             args+=(--lcov "$report")
           done < <(find coverage -name '*.lcov' -o -name lcov.info)
-          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ -n "${BEFORE_SHA:-}" ] && [ "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]; then
-            args+=(--diff-base "${BEFORE_SHA}")
+          if [ -n "${BASE_SHA:-}" ] && git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            args+=(--diff-base "${BASE_SHA}")
           fi
           python3 scripts/coverage-ratchet.py "${args[@]}"
 

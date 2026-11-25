@@ -42,8 +42,38 @@ env:
   WINGDRIVE_GOOGLE_API_KEY: ${{ secrets.WINGDRIVE_GOOGLE_API_KEY }}
 
 jobs:
+  # A version bump edits tauri.conf.json, which would start a 50 minute installer build on a
+  # release pull request; the release builds the installers from the tag right after.
+  changes:
+    name: Detect installer changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      build: ${{ steps.filter.outputs.build }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check whether more than the version changed
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed=$(scripts/ci-changed-files.sh "$BASE_SHA...$HEAD_SHA")
+          if grep -qE '^(\.github/workflows/windows-bundle\.yml|apps/tauri/src-tauri/tauri(\.windows)?\.conf\.json|scripts/release/(windows_smoke\.ps1|daemon_smoke\.py))$' <<< "$changed"; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          fi
+
   bundles:
     name: Verify Windows x86_64 installers
+    needs: changes
+    # The changes job runs only for pull requests; release and manual runs always build.
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.build == 'true') }}
     runs-on: windows-2025
     timeout-minutes: 180
     defaults:

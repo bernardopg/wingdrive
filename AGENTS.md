@@ -722,9 +722,14 @@ Rules for agents and contributors:
   request whose head has the same tree and already passed CI (`scripts/ci-changes.sh`). Keep a branch up
   to date with `main` before merging so the merge commit matches its tested tree. A nightly scheduled
   run on `main` runs every gate and refreshes the Rust cache that pull requests restore.
-- CodeQL analyzes Rust (about 35 minutes) only when a change touches `*.rs`, a `Cargo.toml`,
-  `Cargo.lock` or the CodeQL config; the weekly schedule always includes it. A pull request without
-  Rust changes uploads an empty Rust result, because the code scanning rule needs one per language.
+- CodeQL analyzes Rust (about 30 minutes) only in the nightly run, and only when `*.rs`, a
+  `Cargo.toml`, `Cargo.lock` or the CodeQL config changed since the last nightly analysis; manual
+  runs always include it. Pull requests upload an empty Rust result, because the code scanning rule
+  needs one per language. Coverage also runs nightly, not after every merge.
+- `scripts/ci-changed-files.sh` drops version files whose only change is the product version, so a
+  `cargo xtask bump` pull request runs no Rust gate, Explorer smoke, Android job or Windows installer
+  build. TypeScript jobs run only for TypeScript changes, the Explorer smoke only for Rust or web
+  interface changes.
 - GitHub sometimes loses a CodeQL upload: the job ends with "Timed out waiting for analysis to finish
   processing", or `Analyze (actions)` fails right after "Uploading results", and the PR stays
   `BLOCKED` with every check green ("1 configuration not found"). Rerun that one job

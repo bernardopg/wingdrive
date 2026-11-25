@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# Prints the CI scope for the current GitHub Actions event, as two output lines:
+# Prints the CI scope for the current GitHub Actions event, as four output lines:
 #
 #   scope=<value>        what scripts/ci-scope.sh prints for the changed files
+#   ts=<bool>            a change reaches TypeScript (packages, apps, Bun manifests)
+#   ui=<bool>            a change reaches the web interface the Explorer smoke drives
 #   verified=<bool>      true when a pull request run already passed on this exact tree
+#
+# Changed files come from scripts/ci-changed-files.sh, so a version bump alone
+# (`cargo xtask bump`) reaches no gate.
 #
 # Pull requests are scoped by their own diff. A push to main is scoped by what the
 # push added, and is verified when it merged a pull request whose head has the same
@@ -15,9 +20,32 @@ cd "$(git rev-parse --show-toplevel)"
 
 zero=0000000000000000000000000000000000000000
 
+# Prints the scope, ts and ui lines for the files a range changes.
+scope_of() {
+	local changed
+	changed=$(scripts/ci-changed-files.sh "$1")
+	printf '%s\n' "$changed" | scripts/ci-scope.sh
+	if grep -qE '^(packages/|apps/|bun\.lock$|package\.json$|scripts/ci-frontend-tests\.sh$|\.github/workflows/ci\.yml$)' <<< "$changed"; then
+		echo "ts=true"
+	else
+		echo "ts=false"
+	fi
+	if grep -qE '^(packages/|apps/web/|apps/tauri/(src|public)/|bun\.lock$|package\.json$|scripts/release/explorer\.cjs$|\.github/workflows/ci\.yml$)' <<< "$changed"; then
+		echo "ui=true"
+	else
+		echo "ui=false"
+	fi
+}
+
+everything() {
+	echo "scope=full"
+	echo "ts=true"
+	echo "ui=true"
+}
+
 case "${GITHUB_EVENT_NAME:-}" in
 	pull_request)
-		git diff --name-only "$BASE_SHA...$HEAD_SHA" | scripts/ci-scope.sh
+		scope_of "$BASE_SHA...$HEAD_SHA"
 		echo "verified=false"
 		;;
 	push)
@@ -35,14 +63,14 @@ case "${GITHUB_EVENT_NAME:-}" in
 			fi
 		fi
 		if [ -z "${BEFORE_SHA:-}" ] || [ "$BEFORE_SHA" = "$zero" ] || ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
-			echo "scope=full"
+			everything
 		else
-			git diff --name-only "$BEFORE_SHA" HEAD | scripts/ci-scope.sh
+			scope_of "$BEFORE_SHA..HEAD"
 		fi
 		echo "verified=$verified"
 		;;
 	*)
-		echo "scope=full"
+		everything
 		echo "verified=false"
 		;;
 esac

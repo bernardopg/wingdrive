@@ -11,7 +11,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: '23 4 * * 1'
+    - cron: '23 4 * * *'
   workflow_dispatch:
 
 permissions:
@@ -26,6 +26,9 @@ jobs:
     name: Detect Rust changes
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
     steps:
@@ -33,23 +36,28 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      # The Rust analysis takes about 35 minutes. Pull requests skip it and
-      # upload an empty result, so it never gates a merge; pushes to main run it
-      # when the change reaches Rust code, and the weekly schedule and manual
-      # runs always include it. Alerts then surface on main right after merge.
+      # The Rust analysis takes about 30 minutes (14 to extract, 13 to evaluate) and has
+      # no build to cache. Pull requests skip it and upload an empty result, so it never
+      # gates a merge. Pushes to main skip it too: the nightly run analyzes what reached
+      # Rust code since the last nightly analysis, so a merge day costs one analysis, not
+      # one per merge. Manual runs always include it. Alerts surface by the next morning.
       # See docs/ci/ci-performance-review.md.
       - name: Check whether the change reaches Rust code
         id: filter
         env:
           EVENT: ${{ github.event_name }}
-          BEFORE_SHA: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           case "$EVENT" in
-            pull_request) echo "rust=false" >> "$GITHUB_OUTPUT"; exit 0 ;;
-            push) range="$BEFORE_SHA..HEAD" ;;
-            *) echo "rust=true" >> "$GITHUB_OUTPUT"; exit 0 ;;
+            schedule)
+              base=$(gh run list -R "$GITHUB_REPOSITORY" -w codeql.yml --event schedule --branch main \
+                --status success --limit 1 --json headSha -q '.[0].headSha // empty')
+              range="$base..HEAD"
+              ;;
+            workflow_dispatch) echo "rust=true" >> "$GITHUB_OUTPUT"; exit 0 ;;
+            *) echo "rust=false" >> "$GITHUB_OUTPUT"; exit 0 ;;
           esac
-          if ! changed=$(git diff --name-only "$range" 2>/dev/null) \
+          if [ -z "$base" ] || ! changed=$(git diff --name-only "$range" 2>/dev/null) \
             || grep -qE '\.rs$|(^|/)Cargo\.(toml|lock)$|^\.github/(codeql/|workflows/codeql\.yml$)' <<< "$changed"; then
             echo "rust=true" >> "$GITHUB_OUTPUT"
           else

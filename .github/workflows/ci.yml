@@ -39,6 +39,8 @@ jobs:
     outputs:
       rust: ${{ steps.filter.outputs.scope != 'none' && steps.filter.outputs.verified != 'true' }}
       scope: ${{ steps.filter.outputs.scope }}
+      ts: ${{ steps.filter.outputs.ts }}
+      ui: ${{ steps.filter.outputs.ui }}
       verified: ${{ steps.filter.outputs.verified }}
     steps:
       - name: Checkout repository
@@ -47,8 +49,10 @@ jobs:
           fetch-depth: 0
 
       # A push to main that merged an up-to-date pull request repeats a run that
-      # already passed on the same tree, so it skips every job. Other pushes run
-      # only the gates their changes need; the nightly schedule runs everything.
+      # already passed on the same tree, so it skips every job. Other pushes and
+      # pull requests run only the gates their changes need: TypeScript for
+      # TypeScript changes, the Explorer smoke for Rust or web interface changes,
+      # and nothing for a version bump alone. The nightly schedule runs everything.
       - name: Check which gates the changed files need
         id: filter
         env:
@@ -105,7 +109,7 @@ jobs:
   frontend:
     name: TypeScript
     needs: changes
-    if: needs.changes.outputs.verified != 'true'
+    if: needs.changes.outputs.verified != 'true' && needs.changes.outputs.ts == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -252,7 +256,7 @@ jobs:
   explorer-smoke:
     name: Explorer smoke
     needs: changes
-    if: needs.changes.outputs.verified != 'true'
+    if: needs.changes.outputs.verified != 'true' && (needs.changes.outputs.scope != 'none' || needs.changes.outputs.ui == 'true')
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
@@ -359,7 +363,7 @@ jobs:
   frontend-windows:
     name: TypeScript (Windows)
     needs: changes
-    if: needs.changes.outputs.verified != 'true'
+    if: needs.changes.outputs.verified != 'true' && needs.changes.outputs.ts == 'true'
     runs-on: windows-2025
     timeout-minutes: 30
     defaults:
@@ -425,7 +429,7 @@ jobs:
   extensions:
     name: WASM Extensions
     needs: changes
-    if: needs.changes.outputs.verified != 'true'
+    if: needs.changes.outputs.verified != 'true' && needs.changes.outputs.scope != 'none'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
