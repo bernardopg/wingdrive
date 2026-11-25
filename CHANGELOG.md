@@ -3,7 +3,12 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
-## Unreleased
+## 3.8.0 — 2026-11-25
+
+This release brings the adapter store: install, update and remove data source adapters from
+Sources > Add source or with `wing adapters`, after reading what each one can access. The first
+published adapters sync an Obsidian vault and a GitHub account. On Linux adapters run inside
+bubblewrap. It also fixes the home folder showing up empty right after the daemon starts.
 
 ### Added
 
@@ -29,7 +34,6 @@ version in the workspace manifests and the matching `v*` git tag.
 - Copies installed with pacman, apt or another package manager now check for new WingDrive
   releases too: Settings > General > Updates and a desktop notification, once per version, say
   which version is out and to update through the package manager (ADAPT-018).
-
 - `wing adapters browse`, `list`, `outdated`, `install`, `update` and `remove` manage data source
   adapters from the adapter store. Installs show the permissions an adapter asks for and need
   consent; updates that ask for more permissions need it again (ADAPT-004).

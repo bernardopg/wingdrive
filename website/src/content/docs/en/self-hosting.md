@@ -49,7 +49,7 @@ volumes:
 Without a container runtime, use the `wing-server-<version>-linux-x86_64` archive from the [download page](/download/) (`.tar.gz`, `.tar.xz` or `.zip`). It holds `bin/wing-server`, the `bin/wing` CLI and the FFmpeg and libheif libraries they load in `lib/wingdrive/`, and needs glibc 2.39 or newer.
 
 ```bash
-VERSION=3.7.1
+VERSION=3.8.0
 sudo tar -xJf wing-server-$VERSION-linux-x86_64.tar.xz -C /opt
 sudo ln -sfn /opt/wing-server-$VERSION-linux-x86_64 /opt/wingdrive-server
 ```
