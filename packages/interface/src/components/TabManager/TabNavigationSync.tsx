@@ -1,5 +1,6 @@
 import {useEffect, useLayoutEffect} from 'react';
 import {useLocation} from 'react-router-dom';
+import {useTranslation} from '../../i18n';
 import {deriveTitleFromPath} from './deriveTitle';
 import {usePane} from './PaneContext';
 import {renderedLocationKeys} from './TabView';
@@ -9,6 +10,8 @@ export function TabNavigationSync() {
 	const location = useLocation();
 	const {activeTabId, router, tabs, updateTabTitle} = useTabManager();
 	const {pane} = usePane();
+	// Route titles are translated; a language change (the saved one loads after start) renames them.
+	const {i18n} = useTranslation();
 	useLayoutEffect(() => {
 		renderedLocationKeys.set(router, location.key);
 	}, [router, location.key]);
@@ -25,6 +28,6 @@ export function TabNavigationSync() {
 		const tab = tabs.find((tab) => tab.id === activeTabId);
 		if (title !== null && tab && title !== tab.title)
 			updateTabTitle(activeTabId, title);
-	}, [location, activeTabId, tabs, updateTabTitle, pane]);
+	}, [location, activeTabId, tabs, updateTabTitle, pane, i18n.language]);
 	return null;
 }

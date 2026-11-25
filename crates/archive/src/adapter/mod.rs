@@ -76,6 +76,12 @@ pub trait Adapter: Send + Sync + 'static {
 	fn config_fields(&self) -> &[script::ConfigField] {
 		&[]
 	}
+	/// Texts in other languages, from `[adapter.i18n.<lang>]`.
+	fn translations(
+		&self,
+	) -> Option<&std::collections::BTreeMap<String, script::AdapterTranslation>> {
+		None
+	}
 	/// Config values the adapter finds on this machine, keyed by config field.
 	fn detect<'a>(&'a self) -> Pin<Box<dyn Future<Output = script::Suggestions> + Send + 'a>> {
 		Box::pin(async { script::Suggestions::new() })

@@ -42,6 +42,14 @@ export type AdapterConfigField = {
 	path_type: string | null,
 	/**  Values the adapter found on this machine, best first; the form pre-fills the first. */
 	suggestions: string[],
+	/**  `name` and `description` in other languages, keyed by language code (`pt`). */
+	translations: { [key in string]: AdapterConfigFieldText },
+};
+
+/**  A config field's label and help in one language. */
+export type AdapterConfigFieldText = {
+	name: string | null,
+	description: string | null,
 };
 
 export type AdapterInfo = {

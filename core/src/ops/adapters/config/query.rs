@@ -26,6 +26,15 @@ pub struct AdapterConfigField {
 	pub path_type: Option<String>,
 	/// Values the adapter found on this machine, best first; the form pre-fills the first.
 	pub suggestions: Vec<String>,
+	/// `name` and `description` in other languages, keyed by language code (`pt`).
+	pub translations: std::collections::BTreeMap<String, AdapterConfigFieldText>,
+}
+
+/// A config field's label and help in one language.
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct AdapterConfigFieldText {
+	pub name: Option<String>,
+	pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -77,6 +86,7 @@ impl LibraryQuery for GetAdapterConfigQuery {
 			.adapter_config_fields(&self.input.adapter_id)
 			.map_err(|e| QueryError::Internal(e))?;
 
+		let translations = source_manager.config_translations(&self.input.adapter_id);
 		let mut suggestions = source_manager
 			.detect_config(&self.input.adapter_id)
 			.await
@@ -86,6 +96,20 @@ impl LibraryQuery for GetAdapterConfigQuery {
 			.into_iter()
 			.map(|f| AdapterConfigField {
 				suggestions: suggestions.remove(&f.key).unwrap_or_default(),
+				translations: translations
+					.iter()
+					.filter_map(|(lang, fields)| {
+						fields.get(&f.key).map(|text| {
+							(
+								lang.clone(),
+								AdapterConfigFieldText {
+									name: text.name.clone(),
+									description: text.description.clone(),
+								},
+							)
+						})
+					})
+					.collect(),
 				path_type: f.path_type,
 				key: f.key,
 				name: f.name,
