@@ -223,7 +223,7 @@ mod tests {
 
 		let templates = detect_templates(&logs).unwrap();
 		assert_eq!(templates.len(), 1);
-		assert!(templates[0].variables.len() > 0); // Should detect variable
+		assert!(!templates[0].variables.is_empty()); // Should detect variable
 	}
 
 	#[test]

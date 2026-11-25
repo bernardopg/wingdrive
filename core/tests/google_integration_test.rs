@@ -670,7 +670,7 @@ async fn google_invalid_grant_marks_account_for_reconnect() -> TestResult {
 	std::env::set_var("WINGDRIVE_GOOGLE_ENDPOINTS_BASE", fake.base_url.clone());
 
 	let dir = TempDir::new()?;
-	let mut core = Core::new(dir.path().join("core")).await?;
+	let core = Core::new(dir.path().join("core")).await?;
 	let library = core
 		.libraries
 		.create_library_no_sync("Intg", None, core.context.clone())

@@ -60,13 +60,13 @@ fn delete_outcome(output: &JobOutput) -> (usize, usize) {
 	}
 }
 
-async fn dispatch_action<A: LibraryAction>(
+async fn dispatch_action<A>(
 	harness: &IndexingHarness,
 	input: A::Input,
 ) -> Result<A::Output, String>
 where
+	A: LibraryAction + Send + 'static,
 	A::Input: Send,
-	A: Send + 'static,
 	A::Output: Send + 'static,
 {
 	let action = A::from_input(input).map_err(|e| e.to_string())?;

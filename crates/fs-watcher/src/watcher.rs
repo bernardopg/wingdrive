@@ -1129,7 +1129,7 @@ mod tests {
 		tokio::time::sleep(Duration::from_millis(200)).await;
 
 		// Drain any startup events
-		while let Ok(_) = rx.try_recv() {}
+		while rx.try_recv().is_ok() {}
 
 		// Create a file
 		std::fs::write(&test_file, "initial content").unwrap();
@@ -1254,14 +1254,14 @@ mod tests {
 		tokio::time::sleep(Duration::from_millis(200)).await;
 
 		// Drain any startup events
-		while let Ok(_) = rx.try_recv() {}
+		while rx.try_recv().is_ok() {}
 
 		// Create file
 		std::fs::write(&test_file, "Hello World").unwrap();
 		println!("Created file: {}", test_file.display());
 
 		// Wait for create event
-		let _create = tokio::time::timeout(Duration::from_secs(2), async {
+		tokio::time::timeout(Duration::from_secs(2), async {
 			loop {
 				if let Ok(event) = rx.recv().await {
 					if event.path == test_file

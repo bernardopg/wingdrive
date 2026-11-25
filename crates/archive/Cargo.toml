@@ -16,12 +16,9 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 chrono  = { workspace = true }
 serde_json = { workspace = true }
-async-trait = { workspace = true }
-futures     = { workspace = true }
 
 # Archive-specific dependencies - workspace versions
 indexmap = { workspace = true, features = ["serde"] }
-dashmap  = { workspace = true }
 
 # Adapter store: signed index, archive checksums and unpacking
 minisign-verify = "0.3"

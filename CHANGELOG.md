@@ -3,6 +3,27 @@
 All notable changes to WingDrive are recorded here. Versions follow the product
 version in the workspace manifests and the matching `v*` git tag.
 
+## Unreleased
+
+### Performance
+
+- The Rust build compiles 86 fewer crates: 29 dependencies that no code used are gone, among them
+  the vendored OpenSSL build of the Android core, the terminal UI stack of the command line and the
+  network watchers of `wing-core`. The platform file-opening crates fetch their dependencies only on
+  their own system.
+
+### Internal
+
+- CI skips work that repeats a passed run. A version bump alone runs no build gate, no Explorer
+  smoke and no Windows installer build; TypeScript checks run only for TypeScript changes, and the
+  Explorer smoke only for Rust or web interface changes. A merge to `main` no longer repeats the
+  Android jobs its pull request passed.
+- Coverage and the CodeQL Rust analysis run nightly instead of after every merge, and skip a night
+  without new commits or Rust changes.
+- `cargo clippy --workspace --all-targets -- -D warnings` passes: builds no longer warn about unused
+  dependencies or the unused SQLx patch, and the test targets that failed to compile or lint
+  (`sync_resilience_test`, `sync_backfill_test` and eight others) are fixed.
+
 ## 3.8.0 — 2026-11-25
 
 This release brings the adapter store: install, update and remove data source adapters from

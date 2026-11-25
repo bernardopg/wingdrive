@@ -1735,7 +1735,13 @@ async fn test_no_device_data_peer_does_not_force_repeated_full_sync() -> anyhow:
 		alice_backfills_after
 	);
 
-	core_alice.shutdown().await;
-	core_bob.shutdown().await;
+	core_alice
+		.shutdown()
+		.await
+		.map_err(|e| anyhow::anyhow!("shutdown failed: {e}"))?;
+	core_bob
+		.shutdown()
+		.await
+		.map_err(|e| anyhow::anyhow!("shutdown failed: {e}"))?;
 	Ok(())
 }

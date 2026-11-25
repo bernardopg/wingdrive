@@ -77,6 +77,10 @@ jobs:
     if: ${{ !inputs.release-tag }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
     outputs:
       gradle: ${{ steps.filter.outputs.gradle }}
       rust: ${{ steps.filter.outputs.rust }}
@@ -89,6 +93,8 @@ jobs:
         id: filter
         env:
           EVENT: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+          CHECK_WORKFLOW: mobile.yml
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           BEFORE_SHA: ${{ github.event.before }}
@@ -98,8 +104,16 @@ jobs:
             push) range="$BEFORE_SHA..HEAD" ;;
             *) range="" ;;
           esac
-          # Manual runs, and a diff that cannot be computed, run every job.
-          if [ -z "$range" ] || ! changed=$(git diff --name-only "$range" 2>/dev/null); then
+          # A push to main that merged a pull request whose run passed on the same tree
+          # repeats that run, so it runs nothing (scripts/ci-changes.sh).
+          if [ "$EVENT" = push ] && [ "$(scripts/ci-changes.sh | sed -n 's/^verified=//p')" = true ]; then
+            echo "gradle=false" >> "$GITHUB_OUTPUT"
+            echo "rust=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Manual runs, and a diff that cannot be computed, run every job. A version
+          # bump alone changes no file here (scripts/ci-changed-files.sh).
+          if [ -z "$range" ] || ! changed=$(scripts/ci-changed-files.sh "$range" 2>/dev/null); then
             echo "gradle=true" >> "$GITHUB_OUTPUT"
             echo "rust=true" >> "$GITHUB_OUTPUT"
             exit 0
@@ -113,7 +127,8 @@ jobs:
 
   js:
     name: Lint and dependencies
-    if: ${{ !inputs.release-tag }}
+    needs: changes
+    if: ${{ !inputs.release-tag && needs.changes.outputs.gradle == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

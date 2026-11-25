@@ -4,9 +4,10 @@ license.workspace = true
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-base64 = { workspace = true }
+# The crate compiles to nothing on other systems (`#![cfg(target_os = "linux")]`).
+[target.'cfg(target_os = "linux")'.dependencies]
 serde = { workspace = true, features = ["derive"] }
+base64 = { workspace = true }
 file-opening = { path = "../file-opening" }
 open = "5.3"
 
