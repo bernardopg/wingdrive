@@ -439,6 +439,12 @@
 			"officialHint": "Made and reviewed by the WingDrive maintainers",
 			"verified": "Verified",
 			"verifiedHint": "Its author has published reviewed adapters before"
+		},
+		"isolation": {
+			"bubblewrap": "Enforced on this computer: the adapter runs isolated and can reach only what is listed.",
+			"flatpak": "WingDrive's Flatpak sandbox applies, but the adapter is not limited to the paths listed. Install adapters you trust.",
+			"none": "Not enforced on this system: the list is what the registry reviewed, and the adapter could reach more. Install adapters you trust.",
+			"unavailable": "Adapters run isolated with bubblewrap, which is missing or blocked here. Install the bubblewrap package to use adapters."
 		}
 	}
 }

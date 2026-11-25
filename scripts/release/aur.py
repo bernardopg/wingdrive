@@ -45,8 +45,9 @@ pkgdesc='{PACKAGES[pkgname]}'
 arch=('x86_64')
 url='https://wingdrive.org'
 license=('Apache-2.0' 'GPL-3.0-only')
-depends=('glibc' 'libgcc' 'glib2' 'gtk3' 'webkit2gtk-4.1' 'libsoup3' 'cairo' 'gdk-pixbuf2' 'dbus' 'libheif' 'libva' 'xdg-utils' 'libayatana-appindicator')
-optdepends=('gst-plugins-good: audio and video playback in previews'
+depends=('glibc' 'libgcc' 'glib2' 'gtk3' 'webkit2gtk-4.1' 'libsoup3' 'cairo' 'gdk-pixbuf2' 'dbus' 'libheif' 'libva' 'xdg-utils' 'libayatana-appindicator' 'bubblewrap')
+optdepends=('python: adapters from the store (Obsidian, GitHub and others)'
+            'gst-plugins-good: audio and video playback in previews'
             'gvfs: network locations (SFTP, FTP, WebDAV) in the sidebar'
             'gvfs-mtp: Android phones over MTP'
             'gvfs-smb: Windows and Samba shares'

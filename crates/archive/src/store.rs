@@ -97,6 +97,17 @@ pub struct StoreAdapter {
 	pub source: serde_json::Value,
 	pub icon: StoreIcon,
 	pub artifacts: Vec<Artifact>,
+	/// Store texts in other languages, keyed by language code (`pt`).
+	#[serde(default)]
+	pub i18n: BTreeMap<String, StoreText>,
+}
+
+/// The store texts of an adapter in one language.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StoreText {
+	pub summary: String,
+	#[serde(default)]
+	pub description: Option<String>,
 }
 
 impl StoreAdapter {

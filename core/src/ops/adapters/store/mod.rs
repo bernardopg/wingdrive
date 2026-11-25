@@ -253,6 +253,8 @@ pub struct StoreCard {
 	/// Up to two lines for the card.
 	pub summary: String,
 	pub description: String,
+	/// `summary` and `description` in other languages, keyed by language code (`pt`).
+	pub translations: std::collections::BTreeMap<String, StoreCardText>,
 	pub version: String,
 	pub author: String,
 	pub license: String,
@@ -275,21 +277,40 @@ pub struct StoreCard {
 	pub icon_svg: Option<String>,
 }
 
+/// An adapter's store texts in one language.
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct StoreCardText {
+	pub summary: String,
+	pub description: Option<String>,
+}
+
 /// The store: every published adapter and the state of the installed ones.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct StoreListing {
 	/// Sequence of the index shown, or `None` before the first refresh.
 	pub sequence: Option<u32>,
+	/// How adapters are confined here: `bubblewrap` (only their declared paths and, without
+	/// declared hosts, no network), `flatpak` (the app's own sandbox) or `none`.
+	pub isolation: String,
 	pub generated_at: Option<String>,
 	pub adapters: Vec<StoreCard>,
 	/// Installed adapters with an update or a revoked version.
 	pub updates: u32,
 }
 
+fn isolation() -> String {
+	match wing_archive::adapter::sandbox::isolation() {
+		Ok(kind) => kind.as_str().to_string(),
+		// bubblewrap is missing or blocked: adapters will refuse to run until that is fixed.
+		Err(_) => "unavailable".to_string(),
+	}
+}
+
 fn listing(store: &Store, index: Option<&StoreIndex>) -> Result<StoreListing, String> {
 	let installed = store.installed().map_err(|e| e.to_string())?;
 	let Some(index) = index else {
 		return Ok(StoreListing {
+			isolation: isolation(),
 			sequence: None,
 			generated_at: None,
 			adapters: Vec::new(),
@@ -308,6 +329,19 @@ fn listing(store: &Store, index: Option<&StoreIndex>) -> Result<StoreListing, St
 				name: a.name.clone(),
 				summary: a.summary.clone(),
 				description: a.description.clone(),
+				translations: a
+					.i18n
+					.iter()
+					.map(|(lang, text)| {
+						(
+							lang.clone(),
+							StoreCardText {
+								summary: text.summary.clone(),
+								description: text.description.clone(),
+							},
+						)
+					})
+					.collect(),
 				version: a.version.clone(),
 				author: a.author.clone(),
 				license: a.license.clone(),
@@ -330,6 +364,7 @@ fn listing(store: &Store, index: Option<&StoreIndex>) -> Result<StoreListing, St
 		})
 		.collect();
 	Ok(StoreListing {
+		isolation: isolation(),
 		sequence: Some(index.sequence.min(u32::MAX as u64) as u32),
 		generated_at: Some(index.generated_at.clone()),
 		adapters,

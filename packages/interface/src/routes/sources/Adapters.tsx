@@ -7,6 +7,8 @@ import {
 	HardDrives,
 	Key,
 	SealCheck,
+	ShieldCheck,
+	ShieldWarning,
 	Terminal,
 	Warning
 } from '@phosphor-icons/react';
@@ -28,6 +30,17 @@ import {TopBarItem, TopBarPortal} from '../../TopBar';
 import {ExpandableSearchButton} from '../explorer/components/ExpandableSearchButton';
 
 type Tab = 'store' | 'installed';
+
+/** The card's summary and description in the interface language, falling back to English. */
+function useStoreText(card: StoreCard) {
+	const {i18n} = useTranslation('navigation');
+	const language = (i18n.resolvedLanguage ?? i18n.language ?? 'en').split('-')[0];
+	const translated = card.translations?.[language];
+	return {
+		summary: translated?.summary ?? card.summary,
+		description: translated?.description ?? card.description
+	};
+}
 
 /** The adapter store: cards for every published adapter, and the ones installed here. */
 export function AdaptersScreen() {
@@ -68,9 +81,13 @@ export function AdaptersScreen() {
 	const query = searchValue.trim().toLowerCase();
 	const matches = (card: StoreCard) =>
 		!query ||
-		[card.name, card.summary, card.author, ...card.categories].some((value) =>
-			value.toLowerCase().includes(query)
-		);
+		[
+			card.name,
+			card.summary,
+			card.author,
+			...card.categories,
+			...Object.values(card.translations ?? {}).map((text) => text.summary)
+		].some((value) => value.toLowerCase().includes(query));
 	const shown = (tab === 'store' ? cards : installedCards).filter(matches);
 
 	const openId = params.get('adapter');
@@ -199,6 +216,7 @@ export function AdaptersScreen() {
 				<Modal onClose={close}>
 					<AdapterDetail
 						card={openCard}
+						isolation={listing.data?.isolation ?? 'none'}
 						onAddSource={() => {
 							close();
 							setConfigureId(openCard.id);
@@ -315,6 +333,7 @@ function Pill({tone, children}: {tone: 'red' | 'blue' | 'green' | 'gray'; childr
 
 function AdapterCard({card, onOpen}: {card: StoreCard; onOpen: () => void}) {
 	const {t} = useTranslation('navigation');
+	const text = useStoreText(card);
 	return (
 		<button
 			onClick={onOpen}
@@ -333,13 +352,22 @@ function AdapterCard({card, onOpen}: {card: StoreCard; onOpen: () => void}) {
 				</div>
 				<StateBadge card={card} />
 			</div>
-			<p className="text-ink-dull line-clamp-2 text-xs leading-relaxed">{card.summary}</p>
+			<p className="text-ink-dull line-clamp-2 text-xs leading-relaxed">{text.summary}</p>
 		</button>
 	);
 }
 
-function AdapterDetail({card, onAddSource}: {card: StoreCard; onAddSource: () => void}) {
+function AdapterDetail({
+	card,
+	isolation,
+	onAddSource
+}: {
+	card: StoreCard;
+	isolation: string;
+	onAddSource: () => void;
+}) {
 	const {t} = useTranslation('navigation');
+	const text = useStoreText(card);
 	const queryClient = useQueryClient();
 	const install = useCoreMutation('adapters.store.install');
 	const remove = useCoreMutation('adapters.store.remove');
@@ -380,7 +408,7 @@ function AdapterDetail({card, onAddSource}: {card: StoreCard; onAddSource: () =>
 			</div>
 
 			<p className="text-ink-dull whitespace-pre-line text-sm leading-relaxed">
-				{card.description || card.summary}
+				{text.description || text.summary}
 			</p>
 
 			<div>
@@ -396,6 +424,7 @@ function AdapterDetail({card, onAddSource}: {card: StoreCard; onAddSource: () =>
 					<Permission icon={Key} label={t('store.permSecrets')} values={secrets} />
 					<Permission icon={Terminal} label={t('store.permTools')} values={tools} />
 				</ul>
+				<IsolationNote isolation={isolation} />
 				{card.update_needs_consent && (
 					<p className="mt-2 text-xs text-amber-400">{t('store.newPermissions')}</p>
 				)}
@@ -495,6 +524,26 @@ function Permission({
 				{values.length > 0 ? values.join(', ') : <span className="text-ink-faint">{empty}</span>}
 			</span>
 		</li>
+	);
+}
+
+/** Whether the access listed above is enforced on this system or only reviewed. */
+function IsolationNote({isolation}: {isolation: string}) {
+	const {t} = useTranslation('navigation');
+	if (isolation === 'bubblewrap') {
+		return (
+			<p className="mt-2 flex items-start gap-1.5 text-xs text-green-400">
+				<ShieldCheck size={14} className="mt-0.5 shrink-0" />
+				{t('store.isolation.bubblewrap')}
+			</p>
+		);
+	}
+	const key = isolation === 'flatpak' || isolation === 'unavailable' ? isolation : 'none';
+	return (
+		<p className="mt-2 flex items-start gap-1.5 text-xs text-amber-400">
+			<ShieldWarning size={14} className="mt-0.5 shrink-0" />
+			{t(`store.isolation.${key}`)}
+		</p>
 	);
 }
 

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 
-use crate::adapter::{Adapter, AdapterKind, SyncReport};
+use crate::adapter::{sandbox, Adapter, AdapterKind, SyncReport};
 use crate::db::SourceDb;
 use crate::error::{Error, Result};
 use crate::safety::TrustTier;
@@ -469,53 +469,101 @@ impl ScriptAdapter {
 		AdapterKind::Script
 	}
 
-	/// The process that runs one sync.
+	/// The process that runs one sync or detection.
 	///
 	/// Contract 1 adapters start without a shell and without the daemon's environment, so tokens
 	/// and paths the daemon holds never reach third-party code; they get a minimal `PATH`,
-	/// `HOME`, locale and their own variables. Prototypes keep the old `sh -c` behavior.
-	fn command(&self, config: &serde_json::Value) -> Command {
+	/// `HOME`, locale and their own variables. On Linux they also run inside bubblewrap with only
+	/// their declared paths (see [`super::sandbox`]). Prototypes keep the old `sh -c` behavior.
+	fn command(&self, config: &serde_json::Value) -> Result<Command> {
 		let runtime = &self.manifest.adapter.runtime;
-		let mut command = match (
-			self.manifest.adapter.contract,
-			runtime.kind,
-			runtime.entry.as_deref(),
-		) {
-			(1.., Some(RuntimeKind::Python3), Some(entry)) => {
-				let mut command = Command::new(python_interpreter());
-				command.arg("-I").arg(self.dir.join(entry));
-				command
-			}
-			(1.., Some(RuntimeKind::Binary), Some(entry)) => Command::new(self.dir.join(entry)),
-			_ => {
-				let mut command = Command::new("sh");
-				command
-					.arg("-c")
-					.arg(runtime.command.as_deref().unwrap_or_default());
-				command
-			}
+		if self.manifest.adapter.contract < 1 {
+			let mut command = Command::new("sh");
+			command
+				.arg("-c")
+				.arg(runtime.command.as_deref().unwrap_or_default())
+				.current_dir(&self.dir)
+				.envs(self.build_env(config));
+			return Ok(command);
+		}
+
+		let entry = runtime
+			.entry
+			.as_deref()
+			.ok_or_else(|| Error::AdapterSync("adapter.runtime.entry is missing".into()))?;
+		let dir = self.dir.canonicalize().unwrap_or_else(|_| self.dir.clone());
+		let (program, args): (PathBuf, Vec<std::ffi::OsString>) = match runtime.kind {
+			Some(RuntimeKind::Binary) => (dir.join(entry), Vec::new()),
+			_ => (
+				PathBuf::from(python_interpreter()),
+				vec!["-I".into(), dir.join(entry).into_os_string()],
+			),
 		};
-		if self.manifest.adapter.contract >= 1 {
-			command.env_clear();
-			for key in [
-				"PATH",
-				"HOME",
-				"LANG",
-				"LC_ALL",
-				"TZ",
-				"TMPDIR",
-				"SYSTEMROOT",
-				"USERPROFILE",
-				"APPDATA",
-				"LOCALAPPDATA",
-			] {
-				if let Ok(value) = std::env::var(key) {
-					command.env(key, value);
-				}
+
+		let isolation = sandbox::isolation()?;
+		let state_dir = self.state_dir(config)?;
+		let mut command = if isolation == sandbox::Isolation::Bubblewrap {
+			let home = std::env::var_os("HOME").map(PathBuf::from);
+			let grant = sandbox::Grant {
+				adapter_dir: dir.clone(),
+				state_dir: state_dir.clone(),
+				read: self
+					.manifest
+					.adapter
+					.permissions
+					.read
+					.iter()
+					.filter_map(|declared| sandbox::expand(declared, home.as_deref(), config))
+					.collect(),
+				network: !self.manifest.adapter.permissions.network.is_empty(),
+				program,
+			};
+			let mut command = sandbox::wrap(&grant)?;
+			command.args(&args);
+			command
+		} else {
+			let mut command = Command::new(program);
+			command.args(&args).current_dir(&dir);
+			command
+		};
+
+		command.env_clear();
+		for key in [
+			"PATH",
+			"HOME",
+			"LANG",
+			"LC_ALL",
+			"TZ",
+			"TMPDIR",
+			"SYSTEMROOT",
+			"USERPROFILE",
+			"APPDATA",
+			"LOCALAPPDATA",
+		] {
+			if let Ok(value) = std::env::var(key) {
+				command.env(key, value);
 			}
 		}
-		command.current_dir(&self.dir).envs(self.build_env(config));
-		command
+		if isolation == sandbox::Isolation::Bubblewrap {
+			// The sandbox has its own empty /tmp; the host's TMPDIR is not mounted.
+			command.env("TMPDIR", "/tmp");
+		}
+		command.env("WINGDRIVE_ADAPTER_ISOLATION", isolation.as_str());
+		command.envs(self.build_env(config));
+		command.kill_on_drop(true);
+		sandbox::limit_resources(&mut command, runtime.timeout.max(1));
+		Ok(command)
+	}
+
+	/// The folder a source's adapter may write to: `<source folder>/state`, created on demand.
+	/// The source's database lives next to it and stays out of the adapter's reach.
+	fn state_dir(&self, config: &serde_json::Value) -> Result<Option<PathBuf>> {
+		let Some(data_dir) = config.get("_data_dir").and_then(|v| v.as_str()) else {
+			return Ok(None);
+		};
+		let state = Path::new(data_dir).join("state");
+		std::fs::create_dir_all(&state)?;
+		Ok(Some(state.canonicalize().unwrap_or(state)))
 	}
 
 	/// Build the sanitized environment for the subprocess.
@@ -596,7 +644,7 @@ impl ScriptAdapter {
 			"data_dir": null,
 		});
 		let mut child = self
-			.command(&serde_json::json!({}))
+			.command(&serde_json::json!({}))?
 			.stdin(std::process::Stdio::piped())
 			.stdout(std::process::Stdio::piped())
 			.stderr(std::process::Stdio::null())
@@ -650,7 +698,14 @@ fn contract_input(
 	if let Some(fields) = config.as_object() {
 		for (key, value) in fields {
 			if key == "_data_dir" {
-				data_dir = value.clone();
+				data_dir = value
+					.as_str()
+					.map(|dir| {
+						serde_json::Value::String(
+							Path::new(dir).join("state").to_string_lossy().into_owned(),
+						)
+					})
+					.unwrap_or(serde_json::Value::Null);
 			} else if !key.starts_with('_') {
 				user.insert(key.clone(), value.clone());
 			}
@@ -731,7 +786,7 @@ impl Adapter for ScriptAdapter {
 			};
 
 			let mut child = self
-				.command(config)
+				.command(config)?
 				.stdin(std::process::Stdio::piped())
 				.stdout(std::process::Stdio::piped())
 				.stderr(std::process::Stdio::piped())
@@ -783,84 +838,105 @@ impl Adapter for ScriptAdapter {
 				let _ = stdin.shutdown().await;
 			});
 
-			let mut reader = BufReader::new(stdout).lines();
-			while let Some(line) = reader.next_line().await? {
-				match SyncOperation::parse_line(&line) {
-					Ok(op) => match op {
-						SyncOperation::Upsert {
-							upsert: model,
-							external_id,
-							fields,
-						} => {
-							if let Err(e) = db.upsert(&model, &external_id, &fields).await {
-								tracing::warn!(error = %e, "upsert failed");
-							} else {
-								report.records_upserted += 1;
+			let limit =
+				std::time::Duration::from_secs(self.manifest.adapter.runtime.timeout.max(1));
+			let process = async {
+				let mut reader = BufReader::new(stdout).lines();
+				while let Some(line) = reader.next_line().await? {
+					match SyncOperation::parse_line(&line) {
+						Ok(op) => match op {
+							SyncOperation::Upsert {
+								upsert: model,
+								external_id,
+								fields,
+							} => {
+								if let Err(e) = db.upsert(&model, &external_id, &fields).await {
+									tracing::warn!(error = %e, "upsert failed");
+								} else {
+									report.records_upserted += 1;
+								}
 							}
-						}
-						SyncOperation::Delete {
-							delete: model,
-							external_id,
-						} => {
-							if let Err(e) = db.delete(&model, &external_id).await {
-								tracing::warn!(error = %e, "delete failed");
-							} else {
-								report.records_deleted += 1;
+							SyncOperation::Delete {
+								delete: model,
+								external_id,
+							} => {
+								if let Err(e) = db.delete(&model, &external_id).await {
+									tracing::warn!(error = %e, "delete failed");
+								} else {
+									report.records_deleted += 1;
+								}
 							}
-						}
-						SyncOperation::Link {
-							link: model_a,
-							id: ext_id_a,
-							to: model_b,
-							to_id: ext_id_b,
-						} => {
-							if let Err(e) = db.link(&model_a, &ext_id_a, &model_b, &ext_id_b).await
-							{
-								tracing::warn!(error = %e, "link failed");
-							} else {
-								report.links_created += 1;
+							SyncOperation::Link {
+								link: model_a,
+								id: ext_id_a,
+								to: model_b,
+								to_id: ext_id_b,
+							} => {
+								if let Err(e) =
+									db.link(&model_a, &ext_id_a, &model_b, &ext_id_b).await
+								{
+									tracing::warn!(error = %e, "link failed");
+								} else {
+									report.links_created += 1;
+								}
 							}
-						}
-						SyncOperation::Unlink {
-							unlink: model_a,
-							id: ext_id_a,
-							to: model_b,
-							to_id: ext_id_b,
-						} => {
-							if let Err(e) =
-								db.unlink(&model_a, &ext_id_a, &model_b, &ext_id_b).await
-							{
-								tracing::warn!(error = %e, "unlink failed");
-							} else {
-								report.links_removed += 1;
+							SyncOperation::Unlink {
+								unlink: model_a,
+								id: ext_id_a,
+								to: model_b,
+								to_id: ext_id_b,
+							} => {
+								if let Err(e) =
+									db.unlink(&model_a, &ext_id_a, &model_b, &ext_id_b).await
+								{
+									tracing::warn!(error = %e, "unlink failed");
+								} else {
+									report.links_removed += 1;
+								}
 							}
-						}
-						SyncOperation::Cursor { cursor } => {
-							if let Err(e) = db.set_cursor("default", &cursor).await {
-								tracing::warn!(error = %e, "cursor update failed");
+							SyncOperation::Cursor { cursor } => {
+								if let Err(e) = db.set_cursor("default", &cursor).await {
+									tracing::warn!(error = %e, "cursor update failed");
+								}
 							}
-						}
-						SyncOperation::Log {
-							log: level,
-							message,
-						} => match level.as_str() {
-							"info" => tracing::info!("{message}"),
-							"warn" => tracing::warn!("{message}"),
-							"error" => tracing::error!("{message}"),
-							_ => tracing::debug!("{message}"),
+							SyncOperation::Log {
+								log: level,
+								message,
+							} => match level.as_str() {
+								"info" => tracing::info!("{message}"),
+								"warn" => tracing::warn!("{message}"),
+								"error" => tracing::error!("{message}"),
+								_ => tracing::debug!("{message}"),
+							},
 						},
-					},
-					Err(e) => {
-						tracing::warn!(line = %line, error = %e, "failed to parse JSONL line");
+						Err(e) => {
+							tracing::warn!(line = %line, error = %e, "failed to parse JSONL line");
+						}
 					}
 				}
-			}
+				Ok::<(), Error>(())
+			};
+			let timed_out = match tokio::time::timeout(limit, process).await {
+				Ok(result) => {
+					result?;
+					false
+				}
+				Err(_) => {
+					let _ = child.start_kill();
+					true
+				}
+			};
 
 			let status = child.wait().await?;
 			report.duration_ms = start.elapsed().as_millis() as u64;
 
 			let last_stderr = stderr_task.await.ok().flatten();
-			if !status.success() {
+			if timed_out {
+				report.error = Some(format!(
+					"adapter stopped after {} s (runtime.timeout)",
+					limit.as_secs()
+				));
+			} else if !status.success() {
 				report.error = Some(match last_stderr {
 					Some(line) => format!("adapter exited with status: {status}: {line}"),
 					None => format!("adapter exited with status: {status}"),

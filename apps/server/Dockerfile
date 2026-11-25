@@ -75,6 +75,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
 	libswresample6 \
 	libswscale9 \
 	libheif1 \
+	python3 \
+	bubblewrap \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Create non-root user

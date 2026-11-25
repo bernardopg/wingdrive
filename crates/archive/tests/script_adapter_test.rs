@@ -81,7 +81,8 @@ async fn contract_one_gets_config_and_cursor_and_deletes_linked_records() {
 	sources.create("s1", adapter.schema()).await.unwrap();
 	let db = sources.open("s1").await.unwrap();
 
-	let config = serde_json::json!({ "vault_path": "/notes", "_data_dir": "/data/s1" });
+	let data_dir = tmp.path().join("sources").join("s1");
+	let config = serde_json::json!({ "vault_path": "/notes", "_data_dir": data_dir });
 
 	let first = adapter.sync(&db, &config).await.unwrap();
 	assert_eq!(first.error, None);
@@ -94,7 +95,7 @@ async fn contract_one_gets_config_and_cursor_and_deletes_linked_records() {
 		serde_json::json!({ "vault_path": "/notes" })
 	);
 	assert_eq!(input["cursor"], serde_json::Value::Null);
-	assert_eq!(input["data_dir"], "/data/s1");
+	assert_eq!(input["data_dir"], data_dir.join("state").to_str().unwrap());
 	assert_eq!(
 		db.get_cursor("default").await.unwrap().as_deref(),
 		Some("one")
@@ -225,4 +226,173 @@ print(json.dumps({"suggest": {"vault_path": ["/b", "/c"], "other": [1, "x"]}}))
 	let suggestions = adapter.detect_suggestions().await;
 	assert_eq!(suggestions["vault_path"], vec!["/a", "/b", "/c"]);
 	assert_eq!(suggestions["other"], vec!["x"]);
+}
+
+/// Runs `script` as a contract 1 adapter with `permissions`, returning the JSON it printed
+/// as its only record's body.
+#[cfg(target_os = "linux")]
+async fn run_confined(
+	tmp: &Path,
+	permissions: &str,
+	script: &str,
+	config: serde_json::Value,
+) -> serde_json::Value {
+	let dir = tmp.join("probe");
+	std::fs::create_dir_all(&dir).unwrap();
+	let manifest = MANIFEST.replace(
+		"[data_type]",
+		&format!("[adapter.permissions]\n{permissions}\n\n[data_type]"),
+	);
+	std::fs::write(dir.join("adapter.toml"), manifest).unwrap();
+	let body = format!(
+		"import json, sys\ndata = json.load(sys.stdin)\nresult = {{}}\n{script}\nprint(json.dumps({{\"upsert\": \"note\", \"external_id\": \"r\", \"fields\": {{\"title\": \"r\", \"body\": json.dumps(result)}}}}))\n"
+	);
+	std::fs::write(dir.join("sync.py"), body).unwrap();
+	let adapter = ScriptAdapter::from_dir(&dir).unwrap();
+	let sources = SourceManager::new(tmp.join("sources"));
+	let _ = sources.create("s1", adapter.schema()).await;
+	let db = sources.open("s1").await.unwrap();
+	let report = adapter.sync(&db, &config).await.unwrap();
+	assert_eq!(report.error, None);
+	let items = db.list_items(10, 0).await.unwrap();
+	let item = items.iter().find(|i| i.external_id == "r").unwrap();
+	serde_json::from_str(item.preview.as_deref().unwrap()).unwrap()
+}
+
+#[cfg(target_os = "linux")]
+fn confinement_available() -> bool {
+	match wing_archive::adapter::sandbox::isolation() {
+		Ok(wing_archive::adapter::sandbox::Isolation::Bubblewrap) => true,
+		_ => {
+			eprintln!("bubblewrap is not available; skipping the confinement test");
+			false
+		}
+	}
+}
+
+#[cfg(target_os = "linux")]
+#[tokio::test]
+async fn adapters_see_only_declared_paths_and_write_only_their_state() {
+	if !confinement_available() {
+		return;
+	}
+	let tmp = tempfile::tempdir().unwrap();
+	let notes = tmp.path().join("Notes");
+	std::fs::create_dir_all(&notes).unwrap();
+	std::fs::write(notes.join("a.md"), "declared").unwrap();
+	let secret = tmp.path().join("secret.txt");
+	std::fs::write(&secret, "undeclared").unwrap();
+	let data_dir = tmp.path().join("sources").join("s1");
+
+	let script = format!(
+		r#"import os
+def read(path):
+    try:
+        return open(path).read()
+    except OSError as error:
+        return type(error).__name__
+def write(path):
+    try:
+        open(path, "w").write("x")
+        return "written"
+    except OSError as error:
+        return type(error).__name__
+result["declared"] = read({notes:?} + "/a.md")
+result["undeclared"] = read({secret:?})
+result["passwd"] = read("/etc/shadow")
+result["home"] = os.path.isdir(os.path.expanduser("~/.ssh"))
+result["state"] = write(os.path.join(data["data_dir"], "cache.json"))
+result["adapter_dir"] = write("sync.py")
+result["data_dir"] = data["data_dir"]
+result["isolation"] = os.environ.get("WINGDRIVE_ADAPTER_ISOLATION")
+"#,
+		notes = notes.to_str().unwrap(),
+		secret = secret.to_str().unwrap(),
+	);
+	let result = run_confined(
+		tmp.path(),
+		"read = [\"{config.vault_path}\"]",
+		&script,
+		serde_json::json!({ "vault_path": notes, "_data_dir": data_dir }),
+	)
+	.await;
+	assert_eq!(result["declared"], "declared");
+	assert_eq!(result["undeclared"], "FileNotFoundError");
+	assert_eq!(result["passwd"], "FileNotFoundError");
+	assert_eq!(result["home"], false);
+	assert_eq!(result["state"], "written");
+	assert_ne!(result["adapter_dir"], "written");
+	assert_eq!(result["isolation"], "bubblewrap");
+	assert_eq!(result["data_dir"], data_dir.join("state").to_str().unwrap());
+	assert!(data_dir.join("state").join("cache.json").is_file());
+}
+
+#[cfg(target_os = "linux")]
+#[tokio::test]
+async fn adapters_without_hosts_have_no_network() {
+	if !confinement_available() {
+		return;
+	}
+	let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+	let port = listener.local_addr().unwrap().port();
+	let script = format!(
+		r#"import socket
+try:
+    socket.create_connection(("127.0.0.1", {port}), timeout=3).close()
+    result["connect"] = "connected"
+except OSError as error:
+    result["connect"] = type(error).__name__
+"#
+	);
+
+	let offline = tempfile::tempdir().unwrap();
+	let result = run_confined(offline.path(), "read = []", &script, serde_json::json!({})).await;
+	assert_ne!(result["connect"], "connected");
+
+	let online = tempfile::tempdir().unwrap();
+	let result = run_confined(
+		online.path(),
+		"network = [\"api.example.org\"]",
+		&script,
+		serde_json::json!({}),
+	)
+	.await;
+	assert_eq!(result["connect"], "connected");
+	drop(listener);
+}
+
+#[tokio::test]
+async fn adapters_stop_at_their_timeout_and_memory_limit() {
+	let tmp = tempfile::tempdir().unwrap();
+	let dir = tmp.path().join("slow");
+	std::fs::create_dir_all(&dir).unwrap();
+	std::fs::write(
+		dir.join("adapter.toml"),
+		MANIFEST.replace("entry = \"sync.py\"", "entry = \"sync.py\"\ntimeout = 1"),
+	)
+	.unwrap();
+	std::fs::write(
+		dir.join("sync.py"),
+		"import json, sys, time\njson.load(sys.stdin)\n\
+		 try:\n    bytearray(3 * 1024 ** 3)\n    memory = 'unlimited'\nexcept MemoryError:\n    memory = 'limited'\n\
+		 print(json.dumps({'upsert': 'note', 'external_id': 'a', 'fields': {'title': 'a', 'body': memory}}), flush=True)\n\
+		 time.sleep(30)\n",
+	)
+	.unwrap();
+	let adapter = ScriptAdapter::from_dir(&dir).unwrap();
+	let sources = SourceManager::new(tmp.path().join("sources"));
+	sources.create("s1", adapter.schema()).await.unwrap();
+	let db = sources.open("s1").await.unwrap();
+
+	let started = std::time::Instant::now();
+	let report = adapter.sync(&db, &serde_json::json!({})).await.unwrap();
+	assert!(started.elapsed() < std::time::Duration::from_secs(10));
+	assert_eq!(
+		report.error.as_deref(),
+		Some("adapter stopped after 1 s (runtime.timeout)")
+	);
+	// What it printed before the limit is kept; the 3 GiB allocation was refused.
+	assert_eq!(report.records_upserted, 1);
+	let items = db.list_items(10, 0).await.unwrap();
+	assert_eq!(items[0].preview.as_deref(), Some("limited"));
 }

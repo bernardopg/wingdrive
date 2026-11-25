@@ -14339,6 +14339,7 @@ dependencies = [
  "futures",
  "hex",
  "indexmap 2.14.2",
+ "libc",
  "minisign-verify",
  "serde",
  "serde_json",

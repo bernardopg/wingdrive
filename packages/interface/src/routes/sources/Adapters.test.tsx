@@ -12,6 +12,7 @@ function card(overrides: Card = {}): Card {
 		name: 'Obsidian',
 		summary: 'Search your Obsidian vault.',
 		description: 'Reads every Markdown note.',
+		translations: {pt: {summary: 'Busque no seu cofre do Obsidian.', description: null}},
 		version: '1.1.0',
 		author: 'WingDrive',
 		license: 'Apache-2.0',
@@ -31,7 +32,7 @@ function card(overrides: Card = {}): Card {
 	};
 }
 
-let store: {sequence: number | null; generated_at: string | null; adapters: Card[]; updates: number};
+let store: {sequence: number | null; generated_at: string | null; isolation: string; adapters: Card[]; updates: number};
 const calls: Array<[string, unknown]> = [];
 let fields: Array<Record<string, unknown>> = [];
 
@@ -111,7 +112,7 @@ beforeEach(() => {
 	calls.length = 0;
 	fields = [];
 	document.body.innerHTML = '';
-	store = {sequence: 4, generated_at: null, adapters: [card()], updates: 0};
+	store = {sequence: 4, generated_at: null, isolation: 'bubblewrap', adapters: [card()], updates: 0};
 });
 
 describe('adapter store', () => {
@@ -123,6 +124,36 @@ describe('adapter store', () => {
 		expect(host.querySelector('[onload]')).toBeNull();
 		expect(host.querySelector('img')?.getAttribute('src')).toStartWith('data:image/svg+xml');
 		act(() => root.unmount());
+	});
+
+	test('shows the summary in the interface language', async () => {
+		await i18n.changeLanguage('pt');
+		const host = document.createElement('div');
+		document.body.appendChild(host);
+		const root = createRoot(host);
+		await act(async () => {
+			root.render(
+				<QueryClientProvider client={new QueryClient()}>
+					<MemoryRouter initialEntries={['/sources/adapters']}>
+						<AdaptersScreen />
+					</MemoryRouter>
+				</QueryClientProvider>
+			);
+		});
+		expect(host.textContent).toContain('Busque no seu cofre do Obsidian.');
+		act(() => root.unmount());
+		await i18n.changeLanguage('en');
+	});
+
+	test('says whether the permissions are enforced here', async () => {
+		const enforced = await render('/sources/adapters?adapter=obsidian');
+		expect(document.querySelector('[role="dialog"]')!.textContent).toContain('Enforced on this computer');
+		act(() => enforced.root.unmount());
+		document.body.innerHTML = '';
+		store.isolation = 'none';
+		const open = await render('/sources/adapters?adapter=obsidian');
+		expect(document.querySelector('[role="dialog"]')!.textContent).toContain('Not enforced on this system');
+		act(() => open.root.unmount());
 	});
 
 	test('lists permissions and installs with consent', async () => {
@@ -140,6 +171,7 @@ describe('adapter store', () => {
 		store = {
 			sequence: 5,
 			generated_at: null,
+			isolation: 'none',
 			updates: 1,
 			adapters: [card({installed_version: '1.0.0', update_available: true, update_needs_consent: true})]
 		};
