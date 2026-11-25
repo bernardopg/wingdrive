@@ -539,6 +539,7 @@ function ConfigureForm({
 	const {t} = useTranslation('navigation');
 	const navigate = useNavigate();
 	const platform = usePlatform();
+	const queryClient = useQueryClient();
 
 	const {
 		data: fields,
@@ -563,8 +564,11 @@ function ConfigureForm({
 		setValues((previous) => {
 			const next = {...previous};
 			for (const field of fields) {
-				if (next[field.key] === undefined && field.suggestions.length > 0) {
+				if (next[field.key] !== undefined) continue;
+				if (field.suggestions.length > 0) {
 					next[field.key] = field.suggestions[0];
+				} else if (field.field_type === 'boolean') {
+					next[field.key] = field.default === 'false' ? 'false' : 'true';
 				}
 			}
 			return next;
@@ -616,6 +620,8 @@ function ConfigureForm({
 				config: config as any
 			});
 			await syncSource.mutateAsync({source_id: source.id});
+			// The sidebar and the sources page cached the list before this source existed.
+			await queryClient.invalidateQueries();
 			setDone(true);
 		} catch (e) {
 			setError(String(e));
@@ -665,7 +671,25 @@ function ConfigureForm({
 				/>
 			</div>
 
-			{fields?.map((field) => (
+			{fields?.map((field) =>
+				field.field_type === 'boolean' ? (
+					<label key={field.key} className="flex items-start gap-2">
+						<input
+							type="checkbox"
+							checked={values[field.key] !== 'false'}
+							onChange={(e) => handleFieldChange(field.key, String(e.target.checked))}
+							className="accent-accent mt-0.5"
+						/>
+						<span>
+							<span className="text-ink-dull block text-xs font-medium">{field.name}</span>
+							{field.description && (
+								<span className="text-ink-faint block text-[11px] leading-relaxed">
+									{field.description}
+								</span>
+							)}
+						</span>
+					</label>
+				) : (
 				<div key={field.key}>
 					<label className="text-ink-dull mb-1 block text-xs font-medium">
 						{field.name}
@@ -709,7 +733,8 @@ function ConfigureForm({
 						</p>
 					)}
 				</div>
-			))}
+				)
+			)}
 
 			{error && (
 				<div className="rounded-md border border-red-400/20 p-2 text-xs text-red-400">{error}</div>

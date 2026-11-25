@@ -175,6 +175,17 @@ describe('adapter store', () => {
 				default: null,
 				path_type: 'folder',
 				suggestions: ['/home/ana/Notes', '/home/ana/Work']
+			},
+			{
+				key: 'include_starred',
+				name: 'Starred',
+				description: '',
+				field_type: 'boolean',
+				required: false,
+				secret: false,
+				default: 'true',
+				path_type: null,
+				suggestions: []
 			}
 		];
 		const {root} = await render('/sources/adapters?adapter=obsidian');
@@ -182,10 +193,13 @@ describe('adapter store', () => {
 		const input = [...document.querySelectorAll('input')].find(i => i.value === '/home/ana/Notes');
 		expect(input).toBeDefined();
 		expect(document.body.textContent).toContain('Found 2 on this computer');
+		const checkbox = document.querySelector<HTMLInputElement>('input[type=checkbox]')!;
+		expect(checkbox.checked).toBe(true);
+		await act(async () => checkbox.click());
 		await act(async () => button('Add & Sync')!.click());
 		expect(calls).toContainEqual([
 			'sources.create',
-			{name: 'Obsidian', adapter_id: 'obsidian', config: {vault_path: '/home/ana/Notes'}}
+			{name: 'Obsidian', adapter_id: 'obsidian', config: {vault_path: '/home/ana/Notes', include_starred: false}}
 		]);
 		expect(calls).toContainEqual(['sources.sync', {source_id: 'source-1'}]);
 		act(() => root.unmount());
