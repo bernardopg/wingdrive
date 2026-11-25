@@ -49,6 +49,41 @@ pub fn installed_dir(data_dir: &Path) -> PathBuf {
 	store_root(data_dir).join("installed")
 }
 
+/// How often the daemon fetches the signed index to notice adapter updates and revocations.
+const CHECK_EVERY: std::time::Duration = std::time::Duration::from_secs(6 * 60 * 60);
+
+/// Fetches the signed index shortly after start and every six hours, so the update badges and
+/// revocations stay current without the user opening the store. `WINGDRIVE_STORE_CHECK=0`
+/// turns it off.
+pub fn spawn_update_checks(context: Arc<CoreContext>) {
+	if std::env::var("WINGDRIVE_STORE_CHECK").as_deref() == Ok("0") {
+		return;
+	}
+	tokio::spawn(async move {
+		tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+		let mut interval = tokio::time::interval(CHECK_EVERY);
+		loop {
+			interval.tick().await;
+			let result = async {
+				let store = open(&context)?;
+				let index = fetch_index(&store).await?;
+				listing(&store, Some(&index))
+			}
+			.await;
+			match result {
+				Ok(listing) => {
+					if listing.updates > 0 {
+						tracing::info!(updates = listing.updates, "adapter updates available");
+					}
+					// Revocations in the new index take effect now.
+					reload_libraries(&context, None).await;
+				}
+				Err(error) => tracing::debug!(%error, "adapter store check failed"),
+			}
+		}
+	});
+}
+
 fn open(context: &CoreContext) -> Result<Store, String> {
 	Store::open(store_root(&context.data_dir)).map_err(|e| e.to_string())
 }

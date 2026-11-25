@@ -32,6 +32,7 @@ pub async fn start_default_server(
 	}
 
 	let core = Arc::new(core);
+	crate::ops::adapters::store::spawn_update_checks(core.context.clone());
 
 	info!("Starting WingDrive daemon");
 	info!("Data directory: {:?}", data_dir);

@@ -91,13 +91,13 @@ pub fn updater_info<R: Runtime>(app: AppHandle<R>) -> UpdaterInfo {
 }
 
 /// Asks the release server for a newer signed version.
+///
+/// Every channel may check; only `SelfUpdate` installs. A package-manager install learns that a
+/// release exists and is told to update through its package manager.
 #[tauri::command]
 pub async fn check_for_update<R: Runtime>(
 	app: AppHandle<R>,
 ) -> Result<Option<AvailableUpdate>, String> {
-	if channel() != UpdateChannel::SelfUpdate {
-		return Err("Updates come from your package manager".to_string());
-	}
 	find_update(&app).await.map(|update| {
 		update.map(|update| AvailableUpdate {
 			version: update.version.clone(),
@@ -148,13 +148,24 @@ async fn find_update<R: Runtime>(
 /// Set once per run so the startup check never notifies twice.
 static STARTUP_CHECK_DONE: AtomicBool = AtomicBool::new(false);
 
-/// Checks for a new release once after startup and tells the user about it
-/// with a desktop notification. Package-manager installs skip this entirely.
+/// File in the app data folder holding the last version the user was told about.
+const NOTIFIED_FILE: &str = "update-notified";
+
+/// What the notification tells the user to do on each channel.
+fn notification_body(channel: UpdateChannel) -> &'static str {
+	match channel {
+		UpdateChannel::SelfUpdate => "Install it from Settings > General > Updates.",
+		UpdateChannel::PackageManager => {
+			"Update it with the package manager you installed WingDrive with, for example yay -Syu."
+		}
+		UpdateChannel::Unsupported => "Download it from wingdrive.org.",
+	}
+}
+
+/// Checks for a new release once after startup and tells the user about it with a desktop
+/// notification, once per version: a restart does not repeat it.
 pub fn spawn_startup_check<R: Runtime>(app: AppHandle<R>, enabled: bool) {
-	if !enabled
-		|| channel() != UpdateChannel::SelfUpdate
-		|| STARTUP_CHECK_DONE.swap(true, Ordering::SeqCst)
-	{
+	if !enabled || STARTUP_CHECK_DONE.swap(true, Ordering::SeqCst) {
 		return;
 	}
 	tauri::async_runtime::spawn(async move {
@@ -163,15 +174,31 @@ pub fn spawn_startup_check<R: Runtime>(app: AppHandle<R>, enabled: bool) {
 		match find_update(&app).await {
 			Ok(Some(update)) => {
 				tracing::info!(version = %update.version, "Update available");
+				let notified = app
+					.path()
+					.app_data_dir()
+					.ok()
+					.map(|dir| dir.join(NOTIFIED_FILE));
+				if let Some(path) = &notified {
+					if std::fs::read_to_string(path).ok().as_deref() == Some(update.version.as_str()) {
+						return;
+					}
+				}
 				let request = NotificationRequest {
 					title: format!("WingDrive {} is available", update.version),
-					body: "Install it from Settings > General > Updates.".to_string(),
+					body: notification_body(channel()).to_string(),
 					kind: NotificationKind::Info,
 					open_label: None,
 				};
 				if let Some(notifier) = app.try_state::<Notifier>() {
-					if let Err(error) = notifier.send(&app, &request).await {
-						tracing::debug!(%error, "Update notification not shown");
+					match notifier.send(&app, &request).await {
+						Ok(_) => {
+							if let Some(path) = &notified {
+								let _ = std::fs::create_dir_all(path.parent().unwrap_or(path));
+								let _ = std::fs::write(path, &update.version);
+							}
+						}
+						Err(error) => tracing::debug!(%error, "Update notification not shown"),
 					}
 				}
 			}
@@ -201,6 +228,12 @@ mod tests {
 		if cfg!(target_os = "macos") {
 			assert_eq!(channel_for(false), UpdateChannel::Unsupported);
 		}
+	}
+
+	#[test]
+	fn package_manager_installs_are_told_how_to_update() {
+		assert!(notification_body(UpdateChannel::PackageManager).contains("package manager"));
+		assert!(notification_body(UpdateChannel::SelfUpdate).contains("Settings"));
 	}
 
 	#[test]

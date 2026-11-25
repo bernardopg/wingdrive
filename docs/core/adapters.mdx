@@ -47,6 +47,7 @@ categories = ["notes"]
 kind = "python3"        # or "binary"
 entry = "sync.py"
 timeout = 300
+detect = true          # answers "mode": "detect"
 
 [adapter.permissions]
 read = ["~/Documents"]  # paths it reads
@@ -148,6 +149,20 @@ a restart, such as a relative path or a message id. For a `belongs_to` relation,
 Print the cursor last, after every record it covers. If the run dies before that line, the next
 sync starts from the previous cursor and sends the same records again, which upserts make harmless.
 A cursor is a string; JSON inside it is fine.
+
+## Detect
+
+An adapter that sets `runtime.detect = true` can suggest config values found on the machine, such
+as the vaults Obsidian knows or the GitHub CLI's user. When the user opens the add source form,
+the daemon runs it with:
+
+```json
+{ "contract": 1, "mode": "detect", "config": {}, "cursor": null, "data_dir": null }
+```
+
+and reads `{"suggest": {"<config key>": ["best value", "another"]}}` lines. The form fills each
+field with its first suggestion and offers the rest. Detection has 15 seconds; a failure or a
+timeout only means no suggestions. Never put secrets in a suggestion.
 
 ## Deletions
 

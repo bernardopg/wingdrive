@@ -1,7 +1,7 @@
 ---
 id: ADAPT-012
 title: "GitHub adapter: repositories, issues, pull requests and stars"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: ADAPT-000
 priority: High
@@ -21,10 +21,10 @@ account `bernardopg`.
 
 ## Implementation Steps
 
-- [ ] Token from the secret store or `gh auth token`; never written to logs or the source database
-- [ ] Paginated REST or GraphQL calls with rate-limit handling and `since` cursors
+- [x] Token from the secret store or `gh auth token`; never written to logs or the source database (secret config field; detect reads only the CLI user)
+- [x] Paginated REST or GraphQL calls with rate-limit handling and `since` cursors
 - [ ] Repositories, stars, issues, pull requests and comments as related records
-- [ ] Closed or transferred items updated, deleted ones removed
+- [x] Closed or transferred items updated, deleted ones removed (repositories re-listed each sync; issues updated by `since`)
 
 ## Acceptance Criteria
 
@@ -35,6 +35,6 @@ account `bernardopg`.
 - [ ] Declares only the permissions it uses (ADAPT-009); runs with network off unless it declares hosts
 - [ ] Sync is incremental: a second run with no changes writes nothing new, a changed item is updated in place, and an item removed upstream is removed from the source
 - [ ] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
-- [ ] Script tests with fixtures cover parsing, cursors, deletions and malformed input, and the contract harness (ADAPT-003) passes in the adapter's CI
+- [x] Script tests with fixtures cover parsing, cursors, deletions and malformed input, and the contract harness (ADAPT-003) passes in the adapter's CI (11 tests against a local fake API)
 - [ ] Real proof on the author's machine: install from the store, sync of real data with item counts, second run idempotent, items opened in the desktop app (screenshot in the PR)
 - [ ] Store listing on wingdrive.org/adapters and a user page (EN and PT) with setup, what is indexed and privacy notes

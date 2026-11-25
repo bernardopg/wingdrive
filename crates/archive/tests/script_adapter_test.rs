@@ -183,9 +183,9 @@ async fn engine_uses_adapters_installed_outside_its_data_dir() {
 	})
 	.await
 	.unwrap();
-	engine
-		.adapters()
-		.register(std::sync::Arc::new(ScriptAdapter::from_dir(&installed).unwrap()));
+	engine.adapters().register(std::sync::Arc::new(
+		ScriptAdapter::from_dir(&installed).unwrap(),
+	));
 
 	assert!(engine.adapter_config_fields("echo").unwrap().is_empty());
 	let source = engine
@@ -195,4 +195,34 @@ async fn engine_uses_adapters_installed_outside_its_data_dir() {
 	let report = engine.sync(&source.id).await.unwrap();
 	assert_eq!(report.error, None);
 	assert_eq!(report.records_upserted, 3);
+}
+
+#[tokio::test]
+async fn detect_collects_suggestions_only_when_declared() {
+	let tmp = tempfile::tempdir().unwrap();
+	let dir = tmp.path().join("echo");
+	std::fs::create_dir_all(&dir).unwrap();
+	write_adapter(&dir);
+	std::fs::write(
+		dir.join("sync.py"),
+		r#"import json, sys
+data = json.load(sys.stdin)
+assert data["mode"] == "detect" and data["config"] == {}
+print("not json")
+print(json.dumps({"suggest": {"vault_path": ["/a", "/b"]}}))
+print(json.dumps({"suggest": {"vault_path": ["/b", "/c"], "other": [1, "x"]}}))
+"#,
+	)
+	.unwrap();
+
+	// Without `runtime.detect` the adapter is never asked.
+	let adapter = ScriptAdapter::from_dir(&dir).unwrap();
+	assert!(adapter.detect_suggestions().await.is_empty());
+
+	let manifest = MANIFEST.replace("entry = \"sync.py\"", "entry = \"sync.py\"\ndetect = true");
+	std::fs::write(dir.join("adapter.toml"), manifest).unwrap();
+	let adapter = ScriptAdapter::from_dir(&dir).unwrap();
+	let suggestions = adapter.detect_suggestions().await;
+	assert_eq!(suggestions["vault_path"], vec!["/a", "/b", "/c"]);
+	assert_eq!(suggestions["other"], vec!["x"]);
 }

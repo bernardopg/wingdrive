@@ -38,6 +38,10 @@ export type AdapterConfigField = {
 	required: boolean,
 	secret: boolean,
 	default: string | null,
+	/**  `folder` or `file` when the field holds a path, so the form can offer a picker. */
+	path_type: string | null,
+	/**  Values the adapter found on this machine, best first; the form pre-fills the first. */
+	suggestions: string[],
 };
 
 export type AdapterInfo = {

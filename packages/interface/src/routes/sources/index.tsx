@@ -4,7 +4,7 @@ import {useMemo, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {SourceCard} from '../../components/Sources/SourceCard';
 import {useTabManager} from '../../components/TabManager/useTabManager';
-import {useLibraryQuery} from '../../contexts/WingDriveContext';
+import {useCoreQuery, useLibraryQuery} from '../../contexts/WingDriveContext';
 import {TopBarItem, TopBarPortal} from '../../TopBar';
 import {useTranslation} from '../../i18n';
 
@@ -23,6 +23,8 @@ export function SourcesHome() {
 		type: 'sources.list',
 		input: {data_type: null}
 	});
+	const {data: store} = useCoreQuery({type: 'adapters.store.list', input: {}});
+	const updates = store?.updates ?? 0;
 	const filteredSources = useMemo(() => {
 		const query = searchValue.trim().toLowerCase();
 		if (!sources || !query) return sources;
@@ -68,13 +70,24 @@ export function SourcesHome() {
 							label={t('sources.add')}
 							priority="high"
 						>
-							<CircleButton
-								icon={Plus}
-								onClick={() =>
-									createTab('Adapters', '/sources/adapters')
-								}
-								title={t('sources.add')}
-							/>
+							<div className="relative">
+								<CircleButton
+									icon={Plus}
+									onClick={() =>
+										createTab('Adapters', '/sources/adapters')
+									}
+									title={
+										updates > 0
+											? t('store.updatesAvailable', {count: updates})
+											: t('sources.add')
+									}
+								/>
+								{updates > 0 && (
+									<span className="pointer-events-none absolute -right-1 -top-1 rounded-full bg-blue-500 px-1 text-[9px] font-semibold leading-4 text-white">
+										{updates}
+									</span>
+								)}
+							</div>
 						</TopBarItem>
 					</>
 				}

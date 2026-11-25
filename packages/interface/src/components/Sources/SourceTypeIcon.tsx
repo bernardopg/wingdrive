@@ -26,10 +26,13 @@ export function SourceTypeIcon({
 	size = "md",
 }: SourceTypeIconProps) {
 	if (svg) {
+		// An <img> never runs scripts or loads resources from an SVG, so an adapter's icon
+		// cannot reach the app even if it slipped past the registry's checks.
 		return (
-			<div
-				className={`shrink-0 rounded-lg [&>svg]:h-full [&>svg]:w-full ${SIZE_CLASSES[size]}`}
-				dangerouslySetInnerHTML={{ __html: svg }}
+			<img
+				alt=""
+				src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`}
+				className={`shrink-0 rounded-lg object-contain ${SIZE_CLASSES[size]}`}
 			/>
 		);
 	}

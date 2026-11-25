@@ -44,18 +44,21 @@ function button(host: HTMLElement, text: string) {
 }
 
 describe('updates section', () => {
-	it('directs package-manager installs to their package manager', async () => {
+	it('tells package-manager installs about new releases without installing them', async () => {
 		platform = {
 			getUpdaterInfo: async () => ({channel: 'package_manager', current_version: '3.4.0'}),
-			checkForUpdate: async () => {
+			checkForUpdate: async () => ({version: '3.5.0', date: null, notes: null}),
+			installUpdate: async () => {
 				throw new Error('must not be called');
 			}
 		};
 		const {host, root} = await render();
 		expect(host.textContent).toContain('WingDrive 3.4.0');
 		expect(host.textContent).toContain('the package manager you used to install it');
-		expect(button(host, 'Check for updates')).toBeUndefined();
-		expect(host.textContent).not.toContain('Check for updates automatically');
+		expect(host.textContent).toContain('Check for updates automatically');
+		await act(async () => button(host, 'Check for updates')!.click());
+		expect(host.textContent).toContain('WingDrive 3.5.0 is available. Update it with your package manager');
+		expect(button(host, 'Install and restart')).toBeUndefined();
 		act(() => root.unmount());
 	});
 

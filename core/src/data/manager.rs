@@ -53,6 +53,32 @@ impl SourceManager {
 				warn!(path = %dir.display(), error = %e, "failed to load adapters");
 			}
 		}
+		self.disable_revoked();
+	}
+
+	/// Unloads installed adapters whose version the signed index revokes, so a revoked version
+	/// stops running at once instead of waiting for the user to update it.
+	fn disable_revoked(&self) {
+		let Some(root) = self.installed_dir.parent() else {
+			return;
+		};
+		let Ok(store) = wing_archive::store::Store::open(root.to_path_buf()) else {
+			return;
+		};
+		let (Ok(Some(index)), Ok(installed)) = (store.cached_index(), store.installed()) else {
+			return;
+		};
+		for (id, entry) in installed {
+			if let Some(revocation) = index.revocation(&id, &entry.version) {
+				warn!(
+					adapter = %id,
+					version = %entry.version,
+					reason = %revocation.reason,
+					"adapter version revoked by the store; disabled"
+				);
+				self.engine.adapters().unregister(&id);
+			}
+		}
 	}
 
 	/// Drops an adapter the store removed, so it no longer appears in this library.
@@ -133,6 +159,17 @@ impl SourceManager {
 		self.engine
 			.adapter_config_fields(adapter_id)
 			.map_err(|e| format!("Failed to get adapter config: {e}"))
+	}
+
+	/// Config values the adapter suggests for this machine, keyed by config field.
+	pub async fn detect_config(
+		&self,
+		adapter_id: &str,
+	) -> Result<wing_archive::adapter::script::Suggestions, String> {
+		self.engine
+			.detect_config(adapter_id)
+			.await
+			.map_err(|e| format!("Failed to detect adapter config: {e}"))
 	}
 
 	/// Get the underlying engine.
