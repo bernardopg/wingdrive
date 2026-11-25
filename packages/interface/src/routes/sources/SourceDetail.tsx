@@ -9,6 +9,7 @@ import {
 	ArrowSquareUp,
 } from "@phosphor-icons/react";
 import {
+	useCoreQuery,
 	useLibraryQuery,
 	useLibraryMutation,
 } from "../../contexts/WingDriveContext";
@@ -77,17 +78,16 @@ export function SourceDetail() {
 		setHasMore(true);
 	}, [sourceId]);
 
-	const { data: adapters } = useLibraryQuery({
-		type: "adapters.list",
+	const { data: store } = useCoreQuery({
+		type: "adapters.store.list",
 		input: {},
 	});
 
 	const syncMutation = useLibraryMutation("sources.sync");
 	const deleteMutation = useLibraryMutation("sources.delete");
-	const updateMutation = useLibraryMutation("adapters.update");
 
 	const adapterHasUpdate =
-		adapters?.find((a) => a.id === source?.adapter_id)?.update_available ??
+		store?.adapters.find((a) => a.id === source?.adapter_id)?.update_available ??
 		false;
 
 	// Sync tab title with source name
@@ -270,11 +270,11 @@ export function SourceDetail() {
 							<MoreActionsMenu
 								adapterHasUpdate={adapterHasUpdate}
 								onUpdate={() =>
-									updateMutation.mutate({
-										adapter_id: source.adapter_id,
-									})
+									navigate(
+										`/sources/adapters?adapter=${encodeURIComponent(source.adapter_id)}`,
+									)
 								}
-								isUpdating={updateMutation.isPending}
+								isUpdating={false}
 								onDelete={() => setShowDeleteConfirm(true)}
 							/>
 						</TopBarItem>
@@ -283,29 +283,8 @@ export function SourceDetail() {
 			/>
 
 			{/* Banners */}
-			{(updateMutation.data ||
-				updateMutation.error ||
-				syncMutation.error) && (
+			{syncMutation.error && (
 				<div className="border-app-line/30 space-y-2 border-b px-6 py-3">
-					{updateMutation.data && (
-						<div className="border-accent/20 rounded-lg border p-3">
-							<p className="text-accent text-xs">
-								{t("sources.adapterUpdated", {id: updateMutation.data.adapter_id})}: v
-								{updateMutation.data.old_version} &rarr; v
-								{updateMutation.data.new_version}
-								{updateMutation.data.schema_changed
-									? ` (${t("sources.schemaChanged")})`
-									: ""}
-							</p>
-						</div>
-					)}
-					{updateMutation.error && (
-						<div className="rounded-lg border border-red-400/20 p-3">
-							<p className="text-xs text-red-400">
-								{t("sources.updateFailed", {error: String(updateMutation.error)})}
-							</p>
-						</div>
-					)}
 					{syncMutation.error && (
 						<div className="rounded-lg border border-red-400/20 p-3">
 							<p className="text-xs text-red-400">

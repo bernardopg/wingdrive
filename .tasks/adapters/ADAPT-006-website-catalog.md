@@ -1,7 +1,7 @@
 ---
 id: ADAPT-006
 title: "Catalog at wingdrive.org/adapters"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: ADAPT-000
 priority: Medium
@@ -20,9 +20,9 @@ from the signed index, so it never shows an adapter the app would refuse.
 
 ## Implementation Steps
 
-- [ ] Build-time fetch and verification of the index in `website/`
+- [x] Build-time fetch and verification of the index in `website/` (`src/i18n/adapters.ts`; icons checked against their SHA-256 and inlined; the index signature is checked by the app, not the site)
 - [ ] List page with search and categories; one page per adapter (EN and PT)
-- [ ] Redeploy when the registry publishes (repository dispatch)
+- [ ] Redeploy when the registry publishes (repository dispatch; for now the daily website build picks it up)
 
 ## Acceptance Criteria
 

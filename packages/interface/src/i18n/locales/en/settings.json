@@ -81,6 +81,7 @@
 			"checking": "Checking for updates…",
 			"upToDate": "WingDrive is up to date",
 			"available": "WingDrive {{version}} is available",
+			"availableElsewhere": "WingDrive {{version}} is available. Update it with your package manager or from wingdrive.org.",
 			"installing": "Installing the update…",
 			"downloading": "Downloading the update: {{percent}}%",
 			"failed": "The update failed: {{error}}",

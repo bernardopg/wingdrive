@@ -126,6 +126,9 @@ pub struct RuntimeConfig {
 	pub setup: Option<String>,
 	#[serde(default)]
 	pub env: Vec<String>,
+	/// The adapter answers `"mode": "detect"` with suggested config values (contract 1).
+	#[serde(default)]
+	pub detect: bool,
 }
 
 fn default_timeout() -> u64 {
@@ -555,6 +558,84 @@ impl ScriptAdapter {
 	}
 }
 
+/// How long a detect run may take before its suggestions are dropped.
+const DETECT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(15);
+
+/// Suggested values per config key, from a detect run.
+pub type Suggestions = HashMap<String, Vec<String>>;
+
+impl ScriptAdapter {
+	/// Ask the adapter for config values it can find on this machine, such as a vault folder.
+	///
+	/// Only adapters that set `runtime.detect` are asked. The adapter reads
+	/// `{"contract": 1, "mode": "detect", "config": {}, "cursor": null, "data_dir": null}` and prints
+	/// `{"suggest": {"<key>": ["value", ...]}}` lines. Failures and timeouts give no suggestions.
+	pub async fn detect_suggestions(&self) -> Suggestions {
+		if self.manifest.adapter.contract < 1 || !self.manifest.adapter.runtime.detect {
+			return Suggestions::new();
+		}
+		match tokio::time::timeout(DETECT_TIMEOUT, self.run_detect()).await {
+			Ok(Ok(suggestions)) => suggestions,
+			Ok(Err(error)) => {
+				tracing::debug!(adapter = %self.manifest.adapter.id, %error, "detect failed");
+				Suggestions::new()
+			}
+			Err(_) => {
+				tracing::debug!(adapter = %self.manifest.adapter.id, "detect timed out");
+				Suggestions::new()
+			}
+		}
+	}
+
+	async fn run_detect(&self) -> Result<Suggestions> {
+		let input = serde_json::json!({
+			"contract": self.manifest.adapter.contract,
+			"mode": "detect",
+			"config": {},
+			"cursor": null,
+			"data_dir": null,
+		});
+		let mut child = self
+			.command(&serde_json::json!({}))
+			.stdin(std::process::Stdio::piped())
+			.stdout(std::process::Stdio::piped())
+			.stderr(std::process::Stdio::null())
+			.kill_on_drop(true)
+			.spawn()
+			.map_err(|e| Error::AdapterSync(format!("failed to spawn adapter: {e}")))?;
+		if let Some(mut stdin) = child.stdin.take() {
+			stdin.write_all(input.to_string().as_bytes()).await?;
+			stdin.shutdown().await?;
+		}
+		let stdout = child
+			.stdout
+			.take()
+			.ok_or_else(|| Error::AdapterSync("failed to open stdout".into()))?;
+		let mut suggestions = Suggestions::new();
+		let mut lines = BufReader::new(stdout).lines();
+		while let Some(line) = lines.next_line().await? {
+			let Ok(value) = serde_json::from_str::<serde_json::Value>(&line) else {
+				continue;
+			};
+			let Some(suggest) = value.get("suggest").and_then(|s| s.as_object()) else {
+				continue;
+			};
+			for (key, values) in suggest {
+				let entry = suggestions.entry(key.clone()).or_default();
+				for value in values.as_array().into_iter().flatten() {
+					if let Some(text) = value.as_str() {
+						if !entry.iter().any(|v| v == text) {
+							entry.push(text.to_string());
+						}
+					}
+				}
+			}
+		}
+		child.wait().await?;
+		Ok(suggestions)
+	}
+}
+
 /// The JSON a contract 1 adapter reads on stdin.
 ///
 /// `config` holds the fields the user filled in; keys the engine injects (`_data_dir`) move to
@@ -618,6 +699,10 @@ impl Adapter for ScriptAdapter {
 
 	fn config_fields(&self) -> &[ConfigField] {
 		&self.manifest.adapter.config
+	}
+
+	fn detect<'a>(&'a self) -> std::pin::Pin<Box<dyn Future<Output = Suggestions> + Send + 'a>> {
+		Box::pin(self.detect_suggestions())
 	}
 
 	fn trust_tier(&self) -> TrustTier {

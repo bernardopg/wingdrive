@@ -75,6 +75,10 @@ pub trait Adapter: Send + Sync + 'static {
 	fn config_fields(&self) -> &[script::ConfigField] {
 		&[]
 	}
+	/// Config values the adapter finds on this machine, keyed by config field.
+	fn detect<'a>(&'a self) -> Pin<Box<dyn Future<Output = script::Suggestions> + Send + 'a>> {
+		Box::pin(async { script::Suggestions::new() })
+	}
 	fn sync<'a>(
 		&'a self,
 		db: &'a SourceDb,

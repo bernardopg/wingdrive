@@ -35,6 +35,7 @@ const en = {
 		features: "Features",
 		why: "Why WingDrive",
 		docs: "Docs",
+		adapters: "Adapters",
 		download: "Download",
 		about: "About",
 		changelog: "Changelog",
@@ -172,6 +173,7 @@ const en = {
 		links: {
 			features: "Features",
 			download: "Download",
+			adapters: "Adapters",
 			changelog: "Changelog",
 			roadmap: "Roadmap",
 			docs: "Documentation",
@@ -388,6 +390,7 @@ const pt: Strings = {
 		features: "Recursos",
 		why: "Por que WingDrive",
 		docs: "Docs",
+		adapters: "Adaptadores",
 		download: "Download",
 		about: "Sobre",
 		changelog: "Novidades",
@@ -524,6 +527,7 @@ const pt: Strings = {
 		links: {
 			features: "Recursos",
 			download: "Download",
+			adapters: "Adaptadores",
 			changelog: "Novidades",
 			roadmap: "Roadmap",
 			docs: "Documentação",

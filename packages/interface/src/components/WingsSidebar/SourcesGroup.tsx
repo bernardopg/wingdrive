@@ -1,7 +1,7 @@
 import {useLocation} from "react-router-dom";
 import {useSidebarNavigate} from "../TabManager/useSidebarNavigate";
-import { Database } from "@phosphor-icons/react";
-import { useLibraryQuery } from "../../contexts/WingDriveContext";
+import { ArrowSquareUp, Database } from "@phosphor-icons/react";
+import { useCoreQuery, useLibraryQuery } from "../../contexts/WingDriveContext";
 import { useAdapterIcons } from "../../hooks/useAdapterIcons";
 import { SortableDynamicList } from "./SortableDynamicList";
 import { GroupHeader } from "./GroupHeader";
@@ -34,6 +34,10 @@ export function SourcesGroup({
 
 	const sourcesList = sources ?? [];
 
+	// Adapter updates and revocations, from the store's cached index.
+	const { data: store } = useCoreQuery({ type: "adapters.store.list", input: {} });
+	const updates = store?.updates ?? 0;
+
 	return (
 		<div>
 			<GroupHeader
@@ -60,15 +64,14 @@ export function SourcesGroup({
 								}`}
 							>
 								{getIcon(source.adapter_id) ? (
-									<div
-										className={`size-4 shrink-0 [&>svg]:h-full [&>svg]:w-full ${
+									<img
+										alt=""
+										src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(getIcon(source.adapter_id)!)}`}
+										className={`size-4 shrink-0 object-contain ${
 											isActive
 												? "opacity-100"
 												: "opacity-60 grayscale"
 										}`}
-										dangerouslySetInnerHTML={{
-											__html: getIcon(source.adapter_id)!,
-										}}
 									/>
 								) : (
 									<Database
@@ -81,6 +84,17 @@ export function SourcesGroup({
 						);
 					}}
 					</SortableDynamicList>
+					{updates > 0 && (
+						<button
+							onClick={() => navigate("/sources/adapters")}
+							className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-xs font-medium text-blue-400 hover:text-blue-300"
+						>
+							<ArrowSquareUp className="size-4 shrink-0" weight="bold" />
+							<span className="truncate">
+								{t("store.updatesAvailable", { count: updates })}
+							</span>
+						</button>
+					)}
 				</div>
 			)}
 		</div>

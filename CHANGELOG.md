@@ -7,6 +7,20 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Added
 
+- The adapter store in Sources > Add source: cards with icon, name, trust and a two-line summary,
+  a details view with what each adapter can read, which hosts it contacts and which secrets it
+  needs, and install, update and remove. Installing asks for consent to that access, and an update
+  that asks for more asks again (ADAPT-005).
+- wingdrive.org/adapters (and /pt/adapters) lists the published adapters with what each can access
+  and the command that installs it, read from the signed index when the site builds (ADAPT-006).
+- Adding a source fills in what the adapter finds on this computer, such as the vaults Obsidian
+  knows or the GitHub CLI's user, and folder fields get a folder picker (ADAPT-010, ADAPT-012).
+- The daemon checks the adapter store 30 seconds after it starts and every six hours. Sources in
+  the sidebar and the add source button show how many adapter updates wait (ADAPT-018).
+- Copies installed with pacman, apt or another package manager now check for new WingDrive
+  releases too: Settings > General > Updates and a desktop notification, once per version, say
+  which version is out and to update through the package manager (ADAPT-018).
+
 - `wing adapters browse`, `list`, `outdated`, `install`, `update` and `remove` manage data source
   adapters from the adapter store. Installs show the permissions an adapter asks for and need
   consent; updates that ask for more permissions need it again (ADAPT-004).
@@ -33,6 +47,9 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Security
 
+- A store adapter version that the registry revokes stops loading as soon as the daemon sees the
+  new index, instead of only showing a warning (ADAPT-018).
+- Adapter icons render as images, so markup inside an SVG can never run in the app.
 - Adapters that declare the new contract 1 run without a shell and without the daemon's
   environment variables, so tokens the daemon holds never reach adapter code; `runtime.env` no
   longer passes host variables through to them (ADAPT-003).

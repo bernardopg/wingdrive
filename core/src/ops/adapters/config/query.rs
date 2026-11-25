@@ -22,6 +22,10 @@ pub struct AdapterConfigField {
 	pub required: bool,
 	pub secret: bool,
 	pub default: Option<String>,
+	/// `folder` or `file` when the field holds a path, so the form can offer a picker.
+	pub path_type: Option<String>,
+	/// Values the adapter found on this machine, best first; the form pre-fills the first.
+	pub suggestions: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,16 +77,26 @@ impl LibraryQuery for GetAdapterConfigQuery {
 			.adapter_config_fields(&self.input.adapter_id)
 			.map_err(|e| QueryError::Internal(e))?;
 
+		let mut suggestions = source_manager
+			.detect_config(&self.input.adapter_id)
+			.await
+			.unwrap_or_default();
+
 		Ok(fields
 			.into_iter()
 			.map(|f| AdapterConfigField {
+				suggestions: suggestions.remove(&f.key).unwrap_or_default(),
+				path_type: f.path_type,
 				key: f.key,
 				name: f.name,
 				description: f.description,
 				field_type: f.field_type,
 				required: f.required,
 				secret: f.secret,
-				default: f.default.map(|d| d.to_string()),
+				default: f.default.map(|d| match d {
+					toml::Value::String(text) => text,
+					other => other.to_string(),
+				}),
 			})
 			.collect())
 	}

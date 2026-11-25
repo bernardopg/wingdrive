@@ -509,6 +509,18 @@ impl Engine {
 		Ok(adapter.config_fields().to_vec())
 	}
 
+	/// Config values an adapter suggests for this machine (see `ScriptAdapter::detect`).
+	pub async fn detect_config(
+		&self,
+		adapter_id: &str,
+	) -> Result<crate::adapter::script::Suggestions> {
+		let adapter = self
+			.adapters
+			.get(adapter_id)
+			.ok_or_else(|| Error::AdapterNotFound(adapter_id.to_string()))?;
+		Ok(adapter.detect().await)
+	}
+
 	/// Check whether a source adapter directory has changed compared to the installed version.
 	pub fn check_adapter_update(
 		&self,

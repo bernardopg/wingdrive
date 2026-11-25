@@ -89,7 +89,9 @@ export function UpdatesSection({
       case "upToDate":
         return t("general.updates.upToDate");
       case "available":
-        return t("general.updates.available", { version: state.update.version });
+        return info.channel === "self_update"
+          ? t("general.updates.available", { version: state.update.version })
+          : t("general.updates.availableElsewhere", { version: state.update.version });
       case "installing":
         return state.percent === null
           ? t("general.updates.installing")
@@ -108,15 +110,19 @@ export function UpdatesSection({
       <SettingsRow
         label={t("general.updates.version", { version: info.current_version })}
         hint={
-          info.channel === "self_update"
-            ? (status ? <span role="status">{status}</span> : t("general.updates.selfHint"))
-            : info.channel === "package_manager"
-              ? t("general.updates.packageManagerHint")
-              : t("general.updates.unsupportedHint")
+          status ? (
+            <span role="status">{status}</span>
+          ) : info.channel === "self_update" ? (
+            t("general.updates.selfHint")
+          ) : info.channel === "package_manager" ? (
+            t("general.updates.packageManagerHint")
+          ) : (
+            t("general.updates.unsupportedHint")
+          )
         }
       >
-        {info.channel === "self_update" &&
-          (state.kind === "available" ? (
+        {platform.checkForUpdate &&
+          (info.channel === "self_update" && state.kind === "available" ? (
             <button
               type="button"
               onClick={install}
@@ -130,7 +136,7 @@ export function UpdatesSection({
             </button>
           ))}
       </SettingsRow>
-      {info.channel === "self_update" && desktopSettings && (
+      {desktopSettings && (
         <SwitchRow
           label={t("general.updates.automatic")}
           hint={t("general.updates.automaticHint")}
