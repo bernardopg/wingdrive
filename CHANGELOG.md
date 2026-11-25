@@ -7,7 +7,8 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Added
 
-- The store shows adapter summaries and descriptions in Portuguese when the registry has them.
+- The store shows adapter summaries, descriptions and the add source form's labels in Portuguese
+  when the adapter has them (`[adapter.i18n.pt]`).
 - The adapter store in Sources > Add source: cards with icon, name, trust and a two-line summary,
   a details view with what each adapter can read, which hosts it contacts and which secrets it
   needs, and install, update and remove. Installing asks for consent to that access, and an update
@@ -28,6 +29,8 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Fixed
 
+- Tab titles follow the interface language; they stayed in English when the saved language
+  loaded after start. A source's "idle" status is translated.
 - PDF thumbnails work again on Linux. Only the first PDF a daemon rendered got a thumbnail:
   pdfium was bound again for every file and refused the second binding. The AppImage, the AUR
   packages and the server archives also left out `libpdfium.so`, so they showed no PDF

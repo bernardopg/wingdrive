@@ -189,6 +189,7 @@ async fn engine_uses_adapters_installed_outside_its_data_dir() {
 	));
 
 	assert!(engine.adapter_config_fields("echo").unwrap().is_empty());
+	assert!(engine.config_translations("echo").unwrap().is_empty());
 	let source = engine
 		.create_source("Echo", "echo", serde_json::json!({}))
 		.await
@@ -395,4 +396,20 @@ async fn adapters_stop_at_their_timeout_and_memory_limit() {
 	assert_eq!(report.records_upserted, 1);
 	let items = db.list_items(10, 0).await.unwrap();
 	assert_eq!(items[0].preview.as_deref(), Some("limited"));
+}
+
+#[test]
+fn manifests_carry_translated_store_texts_and_config_labels() {
+	let manifest = MANIFEST.replace(
+		"[adapter.runtime]",
+		"[adapter.i18n.pt]\nsummary = \"Ecoa a entrada.\"\n\n[adapter.i18n.pt.config.vault_path]\nname = \"Cofre\"\ndescription = \"A pasta do cofre.\"\n\n[adapter.runtime]",
+	);
+	let parsed = wing_archive::adapter::script::AdapterManifest::parse(&manifest).unwrap();
+	let pt = &parsed.adapter.i18n["pt"];
+	assert_eq!(pt.summary.as_deref(), Some("Ecoa a entrada."));
+	assert_eq!(pt.config["vault_path"].name.as_deref(), Some("Cofre"));
+	assert_eq!(
+		pt.config["vault_path"].description.as_deref(),
+		Some("A pasta do cofre.")
+	);
 }

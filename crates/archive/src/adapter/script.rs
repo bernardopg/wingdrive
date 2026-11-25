@@ -66,6 +66,9 @@ pub struct AdapterMeta {
 	pub runtime: RuntimeConfig,
 	#[serde(default)]
 	pub config: Vec<ConfigField>,
+	/// Store texts and config labels in other languages, keyed by language code (`pt`).
+	#[serde(default)]
+	pub i18n: std::collections::BTreeMap<String, AdapterTranslation>,
 }
 
 /// The newest adapter contract this build understands.
@@ -133,6 +136,27 @@ pub struct RuntimeConfig {
 
 fn default_timeout() -> u64 {
 	300
+}
+
+/// `[adapter.i18n.<lang>]`: the adapter's texts in one language.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct AdapterTranslation {
+	#[serde(default)]
+	pub summary: Option<String>,
+	#[serde(default)]
+	pub description: Option<String>,
+	/// Labels of config fields, keyed by field key.
+	#[serde(default)]
+	pub config: std::collections::BTreeMap<String, ConfigFieldTranslation>,
+}
+
+/// A config field's label and help in one language.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ConfigFieldTranslation {
+	#[serde(default)]
+	pub name: Option<String>,
+	#[serde(default)]
+	pub description: Option<String>,
 }
 
 /// A `[[adapter.config]]` field declaration.
@@ -754,6 +778,10 @@ impl Adapter for ScriptAdapter {
 
 	fn config_fields(&self) -> &[ConfigField] {
 		&self.manifest.adapter.config
+	}
+
+	fn translations(&self) -> Option<&std::collections::BTreeMap<String, AdapterTranslation>> {
+		Some(&self.manifest.adapter.i18n)
 	}
 
 	fn detect<'a>(&'a self) -> std::pin::Pin<Box<dyn Future<Output = Suggestions> + Send + 'a>> {

@@ -519,10 +519,20 @@ function Permission({
 	return (
 		<li className="flex items-start gap-2">
 			<Icon size={14} className="text-ink-faint mt-0.5 shrink-0" />
-			<span>
-				<span className="text-ink">{label}</span>{' '}
-				{values.length > 0 ? values.join(', ') : <span className="text-ink-faint">{empty}</span>}
-			</span>
+			<div className="min-w-0">
+				<span className="text-ink">{label}</span>
+				{values.length > 0 ? (
+					<ul className="mt-0.5 flex flex-col gap-0.5">
+						{values.map((value) => (
+							<li key={value} className="text-ink-dull break-all font-mono text-[11px]">
+								{value}
+							</li>
+						))}
+					</ul>
+				) : (
+					<span className="text-ink-faint"> {empty}</span>
+				)}
+			</div>
 		</li>
 	);
 }
@@ -585,10 +595,17 @@ function ConfigureForm({
 	adapterName: string;
 	onDone: () => void;
 }) {
-	const {t} = useTranslation('navigation');
+	const {t, i18n} = useTranslation('navigation');
 	const navigate = useNavigate();
 	const platform = usePlatform();
 	const queryClient = useQueryClient();
+	const language = (i18n.resolvedLanguage ?? i18n.language ?? 'en').split('-')[0];
+	const label = (field: {name: string; translations?: Record<string, {name: string | null} | undefined>}) =>
+		field.translations?.[language]?.name ?? field.name;
+	const help = (field: {
+		description: string;
+		translations?: Record<string, {description: string | null} | undefined>;
+	}) => field.translations?.[language]?.description ?? field.description;
 
 	const {
 		data: fields,
@@ -649,7 +666,7 @@ function ConfigureForm({
 			for (const field of fields ?? []) {
 				const val = values[field.key]?.trim() ?? '';
 				if (field.required && !val) {
-					setError(t('sources.fieldRequired', {name: field.name}));
+					setError(t('sources.fieldRequired', {name: label(field)}));
 					return;
 				}
 				if (!val && !field.required) continue;
@@ -730,10 +747,10 @@ function ConfigureForm({
 							className="accent-accent mt-0.5"
 						/>
 						<span>
-							<span className="text-ink-dull block text-xs font-medium">{field.name}</span>
-							{field.description && (
+							<span className="text-ink-dull block text-xs font-medium">{label(field)}</span>
+							{help(field) && (
 								<span className="text-ink-faint block text-[11px] leading-relaxed">
-									{field.description}
+									{help(field)}
 								</span>
 							)}
 						</span>
@@ -741,11 +758,11 @@ function ConfigureForm({
 				) : (
 				<div key={field.key}>
 					<label className="text-ink-dull mb-1 block text-xs font-medium">
-						{field.name}
+						{label(field)}
 						{field.required && <span className="ml-1 text-red-400">*</span>}
 					</label>
-					{field.description && (
-						<p className="text-ink-faint mb-1 text-[11px] leading-relaxed">{field.description}</p>
+					{help(field) && (
+						<p className="text-ink-faint mb-1 text-[11px] leading-relaxed">{help(field)}</p>
 					)}
 					<div className="flex gap-2">
 						<input
@@ -762,7 +779,7 @@ function ConfigureForm({
 							<button
 								type="button"
 								title={t('store.browse')}
-								onClick={() => void browse(field.key, field.name)}
+								onClick={() => void browse(field.key, label(field))}
 								className="border-app-line text-ink-dull hover:text-ink hover:bg-app-hover shrink-0 rounded-md border px-2.5"
 							>
 								<FolderOpen size={16} />

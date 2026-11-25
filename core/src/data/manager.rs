@@ -161,6 +161,19 @@ impl SourceManager {
 			.map_err(|e| format!("Failed to get adapter config: {e}"))
 	}
 
+	/// Config field labels in other languages: language, then field key.
+	pub fn config_translations(
+		&self,
+		adapter_id: &str,
+	) -> std::collections::BTreeMap<
+		String,
+		std::collections::BTreeMap<String, wing_archive::adapter::script::ConfigFieldTranslation>,
+	> {
+		self.engine
+			.config_translations(adapter_id)
+			.unwrap_or_default()
+	}
+
 	/// Config values the adapter suggests for this machine, keyed by config field.
 	pub async fn detect_config(
 		&self,

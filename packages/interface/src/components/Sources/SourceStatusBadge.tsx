@@ -20,7 +20,9 @@ export function SourceStatusBadge({ status }: SourceStatusBadgeProps) {
 				? i18n.t("dialogs:sources.syncing")
 				: status === "error"
 					? i18n.t("dialogs:sources.error")
-					: status}
+					: status === "idle"
+						? i18n.t("dialogs:sources.idle")
+						: status}
 		</span>
 	);
 }
