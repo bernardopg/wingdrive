@@ -245,8 +245,21 @@ impl EphemeralIndexCache {
 	/// Removes files and unbrowsed subdirectories, preserving subdirectories
 	/// that were explicitly navigated to. Verifies preserved directories still
 	/// exist on the filesystem and removes deleted ones from tracking.
+	///
+	/// A subdirectory still being scanned counts as browsed. Opening
+	/// `/home/bitter` also lists `/home`, and both scans run at once: clearing
+	/// `/home` dropped the entries the `/home/bitter` scan had just added, and
+	/// that scan then marked the folder indexed, so it listed empty until the
+	/// daemon restarted.
 	pub async fn clear_for_reindex(&self, path: &Path) -> usize {
-		let indexed: HashSet<PathBuf> = self.indexed_paths.read().keys().cloned().collect();
+		let mut indexed: HashSet<PathBuf> = self.indexed_paths.read().keys().cloned().collect();
+		indexed.extend(
+			self.indexing_in_progress
+				.read()
+				.iter()
+				.filter(|in_progress| in_progress.as_path() != path)
+				.cloned(),
+		);
 		let mut index = self.index.write().await;
 		let (cleared, deleted_browsed_dirs) = index.clear_directory_children(path, &indexed);
 
@@ -728,5 +741,52 @@ mod tests {
 		let _index = cache.create_for_indexing(via_link.clone(), IndexScope::Current);
 		cache.mark_indexing_complete(&via_link, IndexScope::Current);
 		assert_eq!(cache.len(), 1);
+	}
+
+	/// Opening `/home/bitter` scans it and `/home` at the same time. Clearing
+	/// `/home` for its scan must keep what the `/home/bitter` scan has added.
+	#[tokio::test]
+	async fn rescanning_a_parent_keeps_a_folder_still_being_scanned() {
+		use crate::ops::indexing::{database_storage::EntryMetadata, state::EntryKind};
+
+		let temp = tempfile::tempdir().expect("tempdir");
+		let home = temp.path().join("home");
+		let user = home.join("bitter");
+		std::fs::create_dir_all(&user).expect("create dirs");
+		let note = user.join("note.txt");
+		let cache = EphemeralIndexCache::new().expect("failed to create cache");
+
+		let index = cache
+			.try_begin_indexing(user.clone())
+			.expect("claim user folder");
+		index
+			.write()
+			.await
+			.add_entry(
+				note.clone(),
+				uuid::Uuid::new_v4(),
+				EntryMetadata {
+					path: note.clone(),
+					kind: EntryKind::File,
+					size: 1,
+					modified: None,
+					accessed: None,
+					created: None,
+					inode: None,
+					permissions: None,
+					is_hidden: false,
+				},
+			)
+			.expect("add entry");
+
+		cache
+			.try_begin_indexing(home.clone())
+			.expect("claim parent folder");
+		cache.clear_for_reindex(&home).await;
+		cache.mark_indexing_complete(&user, IndexScope::Current);
+		cache.mark_indexing_complete(&home, IndexScope::Current);
+
+		let listed = index.read().await.list_directory(&user);
+		assert_eq!(listed, Some(vec![note]));
 	}
 }

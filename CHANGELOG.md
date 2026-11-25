@@ -36,6 +36,9 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Fixed
 
+- The first folder opened after the daemon starts, usually the home folder, no longer shows up
+  empty. Opening it also scans its parent, and clearing the parent for that scan dropped what the
+  folder's own scan had just found; the folder then listed empty until the daemon restarted.
 - Tab titles follow the interface language; they stayed in English when the saved language
   loaded after start. A source's "idle" status is translated.
 - PDF thumbnails work again on Linux. Only the first PDF a daemon rendered got a thumbnail:
