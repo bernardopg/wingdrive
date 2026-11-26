@@ -137,6 +137,11 @@ impl EphemeralIndexCache {
 		indexed.contains_key(path) || covering_root(&indexed, path).is_some()
 	}
 
+	/// Check if a scan ran on this exact path, not only on a recursive root above it.
+	pub fn is_indexed_directly(&self, path: &Path) -> bool {
+		self.indexed_paths.read().contains_key(path)
+	}
+
 	/// Check if indexing is in progress for a path
 	pub fn is_indexing(&self, path: &Path) -> bool {
 		self.indexing_in_progress.read().contains(path)
