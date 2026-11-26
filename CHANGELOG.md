@@ -5,6 +5,20 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+## 3.8.2 — 2026-11-26
+
+This release finishes the sync work of 3.8.1 and makes the server easy to install. Devices now
+check, once a week, that they hold exactly what each paired device has, so files deleted or
+missed before 3.8.1 settle on their own. The server installs from a single Docker Compose file
+and reports its health.
+
+### Highlights
+
+- Files deleted before 3.8.1 that still showed on other devices disappear, and files that never
+  arrived are fetched.
+- Install the server with one file: `WING_AUTH=user:password docker compose up -d`.
+- A server in a container keeps its library after a restart.
+
 ### Added
 
 - The server installs from one file: download `apps/server/docker-compose.yml` and run
@@ -26,7 +40,6 @@ version in the workspace manifests and the matching `v*` git tag.
 
 - The repository's compose file starts. It had tabs in its indentation, a health check that ran a
   `curl` the image does not have, and a default password of `changeme`.
-
 - Devices now compare everything they hold from each paired device once a week, and on the first
   sync after updating, and remove what that device no longer has. Files deleted before 3.8.1 that
   still showed on other devices disappear, and files that never arrived are fetched.

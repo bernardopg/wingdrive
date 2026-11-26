@@ -1,6 +1,6 @@
 {
   "productName": "WingDrive",
-  "version": "3.8.1",
+  "version": "3.8.2",
   "identifier": "com.wingdrive.desktop",
   "plugins": {
     "updater": {
