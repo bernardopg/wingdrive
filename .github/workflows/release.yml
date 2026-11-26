@@ -350,6 +350,12 @@ jobs:
   android:
     name: Android
     if: ${{ !inputs.aur_only && inputs.component == 'all' || github.event_name == 'push' }}
+    # A called workflow cannot ask for more than its caller grants, and the changes job of
+    # mobile.yml reads runs and pull requests; without these the release fails to start.
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
     uses: ./.github/workflows/mobile.yml
     with:
       release-tag: ${{ github.event.inputs.tag || github.ref_name }}
