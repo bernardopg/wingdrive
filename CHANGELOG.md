@@ -5,6 +5,22 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+## 3.8.1 — 2026-11-26
+
+This release makes sync between your devices dependable. Deleted and changed files now reach the
+other devices, a device that is switched off no longer slows the others down, and pairing a phone
+with a computer that already talks to a server works in both directions. Sources can also be
+edited after they are added, and their secret settings are kept encrypted.
+
+### Highlights
+
+- Deletions and changes reach your other devices right away, and wait for devices that are
+  offline instead of holding everyone else up.
+- Joining with a pairing code works on a device that is already connected to others, such as a
+  phone paired with both a computer and a server.
+- Edit source changes a source's name and settings, and access tokens are no longer stored in
+  plain text.
+
 ### Added
 
 - Sources can be edited: Edit source in a source's menu changes its name and settings. A saved
