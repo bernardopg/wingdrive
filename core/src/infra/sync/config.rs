@@ -56,6 +56,7 @@ impl SyncConfig {
 				tombstone_max_retention_days: 3,
 				peer_log_max_retention_days: 3,
 				force_full_sync_threshold_days: 2,
+				reconcile_interval_days: 1,
 			},
 			network: NetworkConfig {
 				message_timeout_secs: 15,
@@ -95,6 +96,7 @@ impl SyncConfig {
 				tombstone_max_retention_days: 30,
 				peer_log_max_retention_days: 30,
 				force_full_sync_threshold_days: 25,
+				reconcile_interval_days: 7,
 			},
 			network: NetworkConfig {
 				message_timeout_secs: 60,
@@ -132,6 +134,7 @@ impl SyncConfig {
 				tombstone_max_retention_days: 14,
 				peer_log_max_retention_days: 14,
 				force_full_sync_threshold_days: 10,
+				reconcile_interval_days: 7,
 			},
 			network: NetworkConfig {
 				message_timeout_secs: 45,
@@ -225,6 +228,19 @@ pub struct RetentionConfig {
 	/// sync and do full backfill to ensure consistency.
 	/// Default: 25 days
 	pub force_full_sync_threshold_days: u32,
+
+	/// Compare each peer's device-owned data in full against ours this often (days)
+	///
+	/// A full pass fetches everything the peer owns and removes local copies of
+	/// records the peer no longer has. It repairs deletions and creations that an
+	/// incremental catch-up missed, which tombstones and watermarks cannot recover.
+	/// Default: 7 days
+	#[serde(default = "default_reconcile_interval_days")]
+	pub reconcile_interval_days: u32,
+}
+
+fn default_reconcile_interval_days() -> u32 {
+	7
 }
 
 impl Default for RetentionConfig {
@@ -234,6 +250,7 @@ impl Default for RetentionConfig {
 			tombstone_max_retention_days: 7,
 			peer_log_max_retention_days: 7,
 			force_full_sync_threshold_days: 25,
+			reconcile_interval_days: 7,
 		}
 	}
 }

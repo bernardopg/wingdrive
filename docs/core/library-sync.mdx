@@ -835,7 +835,9 @@ This allows independent sync progress: if entries sync to timestamp T1 but locat
 
 **Shared Watermark**: HLC of the last shared resource change seen. Used for incremental sync of tags, collections, and other shared resources.
 
-**Stale Watermark Handling**: If a watermark is older than `force_full_sync_threshold_days` (default 25 days), the system forces a full sync instead of incremental catch-up. This ensures consistency when tombstones for deletions may have been pruned.
+**Stale Watermark Handling**: If a watermark is older than `force_full_sync_threshold_days` (default 25 days), the catch-up becomes a reconciliation (below) instead of an incremental one. This ensures consistency when tombstones for deletions may have been pruned.
+
+**Reconciliation**: watermarks and tombstones cannot recover a deletion whose tombstone sits behind the watermark or never existed, and a full `StateRequest` (`since` unset) returns records only, no tombstones. A reconciliation closes that gap. Every device-owned model is fetched without a watermark; for `location` and `entry` the receiver keeps the UUIDs the peer sent, then lists its own copies of that peer's records (the same ownership query the peer answered) and removes each one the peer did not send and that was last written locally before the pass started, through the model's `apply_deletion` (an entry takes its subtree). The time check keeps a record that arrived in real time during the pass. Volumes are left out because their sync timestamp is the owner's `last_seen_at`, not a local write time. A reconciliation runs on the first catch-up with each peer, when the state watermark is stale, and then every `reconcile_interval_days` (default 7); `device_state_reconciliations` in `sync.db` keeps the time of the last one per peer. `BackfillManager::reconcile_with_peer` runs one on demand.
 
 During catch-up, the device sends a `StateRequest` with the `since` parameter set to its watermark. The peer responds with only records modified after that timestamp. This is a **pull request**, not a broadcast.
 

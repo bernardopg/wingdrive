@@ -292,6 +292,29 @@ impl PeerSync {
 			.map_err(|e| anyhow::anyhow!("Failed to get resource watermark: {}", e))
 	}
 
+	/// When this peer's device-owned data was last reconciled in full against ours.
+	pub async fn get_reconciled_at(
+		&self,
+		peer_device_id: Uuid,
+	) -> Result<Option<chrono::DateTime<chrono::Utc>>> {
+		self.watermark_store
+			.get_reconciled_at(self.peer_log.conn(), peer_device_id)
+			.await
+			.map_err(|e| anyhow::anyhow!("Failed to read reconciliation time: {}", e))
+	}
+
+	/// Records a completed full reconciliation of this peer's device-owned data.
+	pub async fn set_reconciled_at(
+		&self,
+		peer_device_id: Uuid,
+		at: chrono::DateTime<chrono::Utc>,
+	) -> Result<()> {
+		self.watermark_store
+			.set_reconciled_at(self.peer_log.conn(), peer_device_id, at)
+			.await
+			.map_err(|e| anyhow::anyhow!("Failed to record reconciliation time: {}", e))
+	}
+
 	/// Update per-resource watermark after processing state changes
 	///
 	/// Only updates if the new watermark is newer than the existing one.

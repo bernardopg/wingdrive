@@ -1745,3 +1745,79 @@ async fn test_no_device_data_peer_does_not_force_repeated_full_sync() -> anyhow:
 		.map_err(|e| anyhow::anyhow!("shutdown failed: {e}"))?;
 	Ok(())
 }
+
+/// A reconciliation repairs what an incremental catch-up cannot: Bob keeps his copy
+/// of Alice's entries that she removed without a tombstone (as deletions lost before
+/// 3.8.1 did) until a full pass compares the two. Entries Alice still has stay.
+#[tokio::test]
+async fn test_reconciliation_removes_entries_the_owner_no_longer_has() -> anyhow::Result<()> {
+	let harness = helpers::TwoDeviceHarnessBuilder::new("reconcile_missed_deletion")
+		.await?
+		.build()
+		.await?;
+	let files = tempfile::tempdir()?;
+	std::fs::create_dir(files.path().join("gone"))?;
+	std::fs::write(files.path().join("gone").join("inner.txt"), "inner")?;
+	std::fs::write(files.path().join("kept.txt"), "kept")?;
+	harness
+		.add_and_index_location_alice(files.path().to_str().unwrap(), "reconcile")
+		.await?;
+	harness.wait_for_sync(Duration::from_secs(120)).await?;
+
+	let alice = harness.library_alice.db().conn();
+	let bob = harness.library_bob.db().conn();
+	let has = |db: &sea_orm::DatabaseConnection, name: &'static str| {
+		let db = db.clone();
+		async move {
+			entities::entry::Entity::find()
+				.filter(entities::entry::Column::Name.eq(name))
+				.one(&db)
+				.await
+				.map(|entry| entry.is_some())
+		}
+	};
+
+	// Bob holds the folder once sync settles.
+	let deadline = std::time::Instant::now() + Duration::from_secs(60);
+	while !(has(bob, "inner").await? && has(bob, "kept").await?) {
+		anyhow::ensure!(
+			std::time::Instant::now() < deadline,
+			"Bob never received Alice's entries"
+		);
+		tokio::time::sleep(Duration::from_millis(250)).await;
+	}
+
+	// Alice drops the folder from her index without a tombstone or a broadcast.
+	let gone = entities::entry::Entity::find()
+		.filter(entities::entry::Column::Name.eq("gone"))
+		.one(alice)
+		.await?
+		.ok_or_else(|| anyhow::anyhow!("Alice has no 'gone' entry"))?;
+	wing_core::ops::indexing::DatabaseStorage::delete_subtree(gone.id, alice).await?;
+	assert!(
+		has(bob, "gone").await?,
+		"Bob lost the folder before reconciling"
+	);
+
+	harness
+		.library_bob
+		.sync_service()
+		.unwrap()
+		.backfill_manager()
+		.reconcile_with_peer(harness.device_alice_id)
+		.await?;
+
+	assert!(
+		!has(bob, "gone").await?,
+		"stale folder survived reconciliation"
+	);
+	assert!(
+		!has(bob, "inner").await?,
+		"stale folder's child survived reconciliation"
+	);
+	assert!(
+		has(bob, "kept").await?,
+		"reconciliation removed an entry Alice still has"
+	);
+	Ok(())
+}

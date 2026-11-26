@@ -65,6 +65,22 @@ impl ResourceWatermarkStore {
 		.await
 		.map_err(|e| WatermarkError::QueryError(e.to_string()))?;
 
+		// When each peer's device-owned data was last compared in full against ours
+		conn.execute_raw(Statement::from_string(
+			DbBackend::Sqlite,
+			r#"
+			CREATE TABLE IF NOT EXISTS device_state_reconciliations (
+				device_uuid TEXT NOT NULL,
+				peer_device_uuid TEXT NOT NULL,
+				reconciled_at TEXT NOT NULL,
+				PRIMARY KEY (device_uuid, peer_device_uuid)
+			)
+			"#
+			.to_string(),
+		))
+		.await
+		.map_err(|e| WatermarkError::QueryError(e.to_string()))?;
+
 		Ok(())
 	}
 
@@ -242,6 +258,65 @@ impl ResourceWatermarkStore {
 		}
 	}
 
+	/// When the device-owned data of `peer_device_uuid` was last reconciled in full.
+	pub async fn get_reconciled_at<C: ConnectionTrait>(
+		&self,
+		conn: &C,
+		peer_device_uuid: Uuid,
+	) -> Result<Option<DateTime<Utc>>, WatermarkError> {
+		let row = conn
+			.query_one_raw(Statement::from_sql_and_values(
+				DbBackend::Sqlite,
+				r#"
+				SELECT reconciled_at FROM device_state_reconciliations
+				WHERE device_uuid = ? AND peer_device_uuid = ?
+				"#,
+				vec![
+					self.device_uuid.to_string().into(),
+					peer_device_uuid.to_string().into(),
+				],
+			))
+			.await
+			.map_err(|e| WatermarkError::QueryError(e.to_string()))?;
+
+		let Some(row) = row else {
+			return Ok(None);
+		};
+		let value: String = row
+			.try_get("", "reconciled_at")
+			.map_err(|e| WatermarkError::QueryError(e.to_string()))?;
+		let reconciled_at = DateTime::parse_from_rfc3339(&value)
+			.map_err(|e| WatermarkError::ParseError(e.to_string()))?
+			.with_timezone(&Utc);
+		Ok(Some(reconciled_at))
+	}
+
+	/// Records that the device-owned data of `peer_device_uuid` was reconciled at `at`.
+	pub async fn set_reconciled_at<C: ConnectionTrait>(
+		&self,
+		conn: &C,
+		peer_device_uuid: Uuid,
+		at: DateTime<Utc>,
+	) -> Result<(), WatermarkError> {
+		conn.execute_raw(Statement::from_sql_and_values(
+			DbBackend::Sqlite,
+			r#"
+			INSERT INTO device_state_reconciliations (device_uuid, peer_device_uuid, reconciled_at)
+			VALUES (?, ?, ?)
+			ON CONFLICT (device_uuid, peer_device_uuid)
+			DO UPDATE SET reconciled_at = excluded.reconciled_at
+			"#,
+			vec![
+				self.device_uuid.to_string().into(),
+				peer_device_uuid.to_string().into(),
+				at.to_rfc3339().into(),
+			],
+		))
+		.await
+		.map_err(|e| WatermarkError::QueryError(e.to_string()))?;
+		Ok(())
+	}
+
 	/// Delete all watermarks for a peer (cleanup on peer removal)
 	pub async fn delete_peer<C: ConnectionTrait>(
 		&self,
@@ -262,6 +337,20 @@ impl ResourceWatermarkStore {
 			))
 			.await
 			.map_err(|e| WatermarkError::QueryError(e.to_string()))?;
+
+		conn.execute_raw(Statement::from_sql_and_values(
+			DbBackend::Sqlite,
+			r#"
+			DELETE FROM device_state_reconciliations
+			WHERE device_uuid = ? AND peer_device_uuid = ?
+			"#,
+			vec![
+				self.device_uuid.to_string().into(),
+				peer_device_uuid.to_string().into(),
+			],
+		))
+		.await
+		.map_err(|e| WatermarkError::QueryError(e.to_string()))?;
 
 		Ok(result.rows_affected() as usize)
 	}
