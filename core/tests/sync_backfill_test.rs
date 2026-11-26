@@ -1748,7 +1748,8 @@ async fn test_no_device_data_peer_does_not_force_repeated_full_sync() -> anyhow:
 
 /// A reconciliation repairs what an incremental catch-up cannot: Bob keeps his copy
 /// of Alice's entries that she removed without a tombstone (as deletions lost before
-/// 3.8.1 did) until a full pass compares the two. Entries Alice still has stay.
+/// 3.8.1 did) until a full pass compares the two. Entries Alice still has stay, and
+/// one Bob never received comes back with its content identity.
 #[tokio::test]
 async fn test_reconciliation_removes_entries_the_owner_no_longer_has() -> anyhow::Result<()> {
 	let harness = helpers::TwoDeviceHarnessBuilder::new("reconcile_missed_deletion")
@@ -1799,6 +1800,21 @@ async fn test_reconciliation_removes_entries_the_owner_no_longer_has() -> anyhow
 		"Bob lost the folder before reconciling"
 	);
 
+	// Bob never got "kept" nor its content identity, a shared record that never
+	// reached Alice's log (the watcher did not send them before 3.8.1).
+	let kept = entities::entry::Entity::find()
+		.filter(entities::entry::Column::Name.eq("kept"))
+		.one(bob)
+		.await?
+		.ok_or_else(|| anyhow::anyhow!("Bob has no 'kept' entry"))?;
+	let kept_content = kept
+		.content_id
+		.ok_or_else(|| anyhow::anyhow!("'kept' has no content identity"))?;
+	wing_core::ops::indexing::DatabaseStorage::delete_subtree(kept.id, bob).await?;
+	entities::content_identity::Entity::delete_by_id(kept_content)
+		.exec(bob)
+		.await?;
+
 	harness
 		.library_bob
 		.sync_service()
@@ -1815,9 +1831,14 @@ async fn test_reconciliation_removes_entries_the_owner_no_longer_has() -> anyhow
 		!has(bob, "inner").await?,
 		"stale folder's child survived reconciliation"
 	);
+	let kept = entities::entry::Entity::find()
+		.filter(entities::entry::Column::Name.eq("kept"))
+		.one(bob)
+		.await?;
 	assert!(
-		has(bob, "kept").await?,
-		"reconciliation removed an entry Alice still has"
+		kept.as_ref()
+			.is_some_and(|entry| entry.content_id.is_some()),
+		"reconciliation did not bring back 'kept' with its content identity: {kept:?}"
 	);
 	Ok(())
 }

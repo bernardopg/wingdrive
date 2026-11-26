@@ -39,6 +39,10 @@ Nothing in sync could repair that:
   the pass started, through the model's deletion (an entry takes its subtree). The time check keeps
   a record that arrived in real time during the pass.
 - Volumes stay out: their sync timestamp is the owner's `last_seen_at`, not a local write time.
+- Shared resources are requested without an HLC watermark in the same pass, so the peer adds its
+  full shared state. Found on the homelab: `IMG_7188` to `IMG_7191` never applied because their
+  content identities were created by the watcher before #551 and never entered the laptop's peer
+  log, so no incremental catch-up could fetch them (`pending dependencies ... failed=5`).
 - A reconciliation runs on the first catch-up with each peer, whenever the state watermark is
   stale, and then every `reconcile_interval_days` (default 7, 1 in the aggressive preset). The
   time of the last one is kept per peer in `device_state_reconciliations` in `sync.db`.
@@ -49,7 +53,9 @@ Nothing in sync could repair that:
 - [x] Reconcile `location` and `entry` after a full pass, removing stale local copies.
 - [x] Schedule it per peer and record when it last ran.
 - [x] Integration test: Bob drops Alice's folder and its child that Alice removed without a
-      tombstone, and keeps her other entries (`sync_backfill_test`).
+      tombstone, keeps her other entries and gets back an entry and content identity he never
+      received (`sync_backfill_test`).
+- [x] Fetch the full shared state during a reconciliation.
 - [ ] Runtime: laptop, homelab and phone converge on one entry set after upgrading.
 
 ## Acceptance Criteria

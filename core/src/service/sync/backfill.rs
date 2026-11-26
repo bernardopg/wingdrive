@@ -391,6 +391,21 @@ impl BackfillManager {
 			.await
 	}
 
+	/// Whether a shared record is in the local database. Models without a UUID
+	/// lookup answer true, so their versioned rows keep being preserved.
+	async fn snapshot_row_exists(&self, model_type: &str, uuid: Uuid) -> bool {
+		// The registry is keyed by model type, despite the lookup's parameter name.
+		!matches!(
+			crate::infra::sync::registry::lookup_id_by_uuid(
+				model_type,
+				uuid,
+				self.peer_sync.db().clone()
+			)
+			.await,
+			Ok(None)
+		)
+	}
+
 	/// Reconciles `peer`'s device-owned data now, whether or not it is due: fetches
 	/// everything the peer owns and removes local copies of records it no longer has.
 	pub async fn reconcile_with_peer(&self, peer: Uuid) -> Result<()> {
@@ -444,9 +459,13 @@ impl BackfillManager {
 		);
 
 		// Backfill shared resources FIRST (device-owned models depend on them)
-		// Uses parsed HLC watermark for incremental sync
+		// Uses parsed HLC watermark for incremental sync. A reconciliation asks
+		// without one, so the peer adds its full shared state: a record that never
+		// reached its log (content identities the watcher created before 3.8.1)
+		// arrives that way, and entries waiting on it can apply.
+		let shared_since = if reconcile { None } else { since_hlc };
 		let max_shared_hlc = self
-			.backfill_shared_resources_since(peer, since_hlc)
+			.backfill_shared_resources_since(peer, shared_since)
 			.await?;
 
 		// Backfill device-owned state since watermark (after shared dependencies exist)
@@ -1141,13 +1160,21 @@ impl BackfillManager {
 										{
 											if let Some(uuid_str) = uuid_value.as_str() {
 												if let Ok(record_uuid) = Uuid::parse_str(uuid_str) {
-													// Snapshot rows carry no HLC, so preserve any versioned row.
+													// Snapshot rows carry no HLC, so preserve any versioned row
+													// that is still here. A versioned record whose row is gone
+													// (lost before 3.8.1) has nothing to preserve: insert it.
 													if self
 														.peer_sync
 														.peer_log()
 														.get_latest_hlc_for_record(record_uuid)
 														.await?
 														.is_some()
+														&& self
+															.snapshot_row_exists(
+																&model_type,
+																record_uuid,
+															)
+															.await
 													{
 														continue;
 													}
