@@ -753,3 +753,86 @@ async fn test_entry_updates_and_deletions_reach_the_peer() -> anyhow::Result<()>
 	assert!(named("note-2").one(bob).await?.is_some());
 	Ok(())
 }
+
+/// A file the watcher sees reaches the peer with its content identity, and later
+/// changes to it apply there.
+///
+/// The watcher linked a new content identity without sending it. The peer got the entry
+/// update that pointed to it, held it for the missing dependency, and kept the file's
+/// first size forever.
+#[tokio::test]
+async fn test_watcher_content_links_reach_the_peer() -> anyhow::Result<()> {
+	use wing_core::ops::indexing::change_detection::{ChangeHandler, DatabaseAdapter};
+	use wing_core::ops::indexing::state::{DirEntry, EntryKind};
+
+	let harness = TwoDeviceHarnessBuilder::new("watcher_content_links")
+		.await?
+		.build()
+		.await?;
+
+	let fixture = tempfile::tempdir()?;
+	std::fs::write(fixture.path().join("seed.txt"), "seed")?;
+	let location = harness
+		.add_and_index_location_alice(fixture.path().to_str().unwrap(), "fixture")
+		.await?;
+	harness.wait_for_sync(Duration::from_secs(60)).await?;
+
+	let mut adapter = DatabaseAdapter::new(
+		harness.core_alice.context.clone(),
+		harness.library_alice.id(),
+		location,
+		fixture.path(),
+		None,
+	)
+	.await?;
+	let dir_entry = |path: std::path::PathBuf| -> anyhow::Result<DirEntry> {
+		let metadata = std::fs::metadata(&path)?;
+		Ok(DirEntry {
+			path,
+			kind: EntryKind::File,
+			size: metadata.len(),
+			modified: metadata.modified().ok(),
+			created: None,
+			inode: None,
+		})
+	};
+
+	// A file created after the scan, as the watcher handles it.
+	let path = fixture.path().join("watched.txt");
+	std::fs::write(&path, "only seen by the watcher")?;
+	let entry = adapter
+		.create(&dir_entry(path.clone())?, fixture.path())
+		.await?;
+	adapter.run_processors(&entry, true).await?;
+
+	let bob = harness.library_bob.db().conn();
+	let named = || {
+		entities::entry::Entity::find()
+			.filter(entities::entry::Column::Name.eq("watched".to_string()))
+	};
+	assert!(
+		eventually(Duration::from_secs(30), || async {
+			named()
+				.one(bob)
+				.await
+				.ok()
+				.flatten()
+				.is_some_and(|e| e.content_id.is_some())
+		})
+		.await,
+		"watched.txt reached Bob without its content identity"
+	);
+
+	// The file grows: the update must apply on Bob, not wait for a dependency.
+	std::fs::write(&path, "only seen by the watcher, now longer")?;
+	let grown = dir_entry(path)?;
+	adapter.update(&entry, &grown).await?;
+	assert!(
+		eventually(Duration::from_secs(30), || async {
+			named().one(bob).await.ok().flatten().map(|e| e.size) == Some(grown.size as i64)
+		})
+		.await,
+		"Bob kept the first size of watched.txt"
+	);
+	Ok(())
+}

@@ -14,7 +14,9 @@ version in the workspace manifests and the matching `v*` git tag.
 
 - Changes and deletions reach your other devices. A file deleted on one device stayed on every
   other device, and a file that grew or changed after it was indexed kept its old size there.
-  Deletions now go out right away and are kept for devices that are offline.
+  Deletions now go out right away and are kept for devices that are offline. A file saved into a
+  location while WingDrive runs also reaches them with its content identity: before, the other
+  device held every later change to that file waiting for a record that never came.
 - Files in a folder created while WingDrive runs are seen again. Once the home folder had been
   opened, a new folder inside a location got no watch about half the time, so nothing saved in it
   was indexed until the daemon restarted.
