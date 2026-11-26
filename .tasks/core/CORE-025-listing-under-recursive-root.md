@@ -43,7 +43,9 @@ scanned folder from a covered one.
 - [x] Regression test `paths_under_recursive_root_without_node_read_the_disk` in
       `directory_listing_first_response_test`: a folder created after the walk lists its files and a
       missing one fails.
-- [ ] Explorer smoke passes in CI on the pull request.
+- [x] Explorer smoke passes in CI on the pull request (#554, 19m53s). The 3.8.2 release smoke on
+      the packaged bundles passed too. The scheduled CI run of 2026-11-26 failed on `ce7f4ec`, before
+      #554 merged; the next scheduled runs decide the last criterion.
 
 ## Acceptance Criteria
 

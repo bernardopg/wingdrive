@@ -1,7 +1,7 @@
 ---
 id: CORE-026
 title: Library lock left by an earlier run with the same PID blocks the library
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: CORE-000
 priority: Medium
@@ -29,7 +29,9 @@ same run still fails with `AlreadyInUse`.
 
 - [x] Store and compare the run ID.
 - [x] Unit test `lock_from_an_earlier_run_with_our_pid_is_stale`.
-- [ ] Homelab: drop the lock-deleting entrypoint once a release ships this.
+- [x] Homelab: drop the lock-deleting entrypoint once a release ships this. Dropped on 2026-11-26
+      with the move to the 3.8.2 image; after `docker restart` both libraries open again
+      (`Opened library … Auto-loaded library`). Same check on a fresh container in REL-004.
 
 ## Acceptance Criteria
 

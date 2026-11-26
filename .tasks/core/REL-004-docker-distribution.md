@@ -1,7 +1,7 @@
 ---
 id: REL-004
 title: One-file Docker Compose install for the server, checked in CI
-status: In Progress
+status: Done
 assignee: bernardopg
 priority: Medium
 milestone: M5
@@ -84,7 +84,13 @@ and `.git/` out of the context. What a new user meets around it is broken:
       checkout with a locally built image: refused without `WING_AUTH`, `healthy` after about a
       minute, its own daemon on 127.0.0.1:6979 next to the desktop daemon on 6969. In bridge mode
       `/health` answered 200 without credentials and `/rpc` 401.
-- [ ] A phone on the same network pairs with that server.
+- [x] A phone on the same network pairs with that server. The author's homelab runs the published
+      3.8.2 image with host networking and the same settings (no lock-deleting entrypoint any more);
+      after recreating it on 2026-11-26 the Moto G7 reconnected and finished an incremental
+      catch-up with it (`Incremental catch-up completed peer=7d3fc4d3…`), and the laptop
+      reconnected too. The container reports `healthy` and `/health` answers 200.
 - [x] Restarting the container keeps the library loaded (with CORE-026 shipped). After
       `docker restart` the log shows `Opened library … Auto-loaded library`.
-- [ ] A pull request that breaks either compose file or the Dockerfile fails CI.
+- [x] A pull request that breaks either compose file or the Dockerfile fails CI. The `Check server
+      image` job of `server.yml` ran on #555 (16m51s): compose config, missing `WING_AUTH` refused,
+      image built and `healthy`.
