@@ -28,6 +28,10 @@ pub const MESSAGING_ALPN: &[u8] = b"wingdrive/messaging/1";
 pub const SYNC_ALPN: &[u8] = b"wingdrive/sync/1";
 pub const JOB_ACTIVITY_ALPN: &[u8] = b"wingdrive/jobactivity/1";
 
+/// How long a joiner waits for the initiator to finish the pairing exchange. It covers the
+/// initiator asking its user to confirm, so it is generous.
+const PAIRING_EXCHANGE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(120);
+
 /// Central networking event types
 #[derive(Debug, Clone)]
 pub enum NetworkEvent {
@@ -1263,7 +1267,7 @@ impl NetworkingService {
 	}
 
 	/// Try to discover the initiator via mDNS (fast for local networks)
-	async fn try_mdns_discovery(&self, session_id: Uuid, force_relay: bool) -> Result<()> {
+	async fn try_mdns_discovery(&self, session_id: Uuid, force_relay: bool) -> Result<EndpointId> {
 		use futures::StreamExt;
 
 		let endpoint = self
@@ -1323,7 +1327,7 @@ impl NetworkingService {
 										connect_error = Some(e.to_string());
 									} else {
 										self.logger.info("[mDNS] Successfully connected to initiator!").await;
-										return Ok(());
+										return Ok(endpoint_id);
 									}
 								}
 							}
@@ -1358,7 +1362,7 @@ impl NetworkingService {
 	async fn try_relay_discovery(
 		&self,
 		pairing_code: &crate::service::network::protocol::pairing::PairingCode,
-	) -> Result<()> {
+	) -> Result<EndpointId> {
 		// Get the EndpointId from the pairing code
 		let node_id = pairing_code.node_id().ok_or_else(|| {
 			NetworkingError::ConnectionFailed(
@@ -1412,7 +1416,7 @@ impl NetworkingService {
 				// Spawn a task to watch for connection closure for instant reactivity
 				self.spawn_connection_watcher(conn, node_id).await;
 
-				Ok(())
+				Ok(node_id)
 			}
 			Ok(Err(e)) => {
 				self.logger
@@ -1629,11 +1633,11 @@ impl NetworkingService {
 		let discovery_result = if force_relay {
 			// Force relay: only try relay discovery
 			match self.try_relay_discovery(&pairing_code_clone).await {
-				Ok(()) => {
+				Ok(initiator) => {
 					self.logger
 						.info("Connected via relay (force relay mode)")
 						.await;
-					Ok(())
+					Ok(initiator)
 				}
 				Err(e) => {
 					self.logger
@@ -1645,9 +1649,9 @@ impl NetworkingService {
 		} else if !has_node_id {
 			// Text-based pairing code: only use mDNS (local network only)
 			match self.try_mdns_discovery(session_id, force_relay).await {
-				Ok(()) => {
+				Ok(initiator) => {
 					self.logger.info("Connected via mDNS (local network)").await;
-					Ok(())
+					Ok(initiator)
 				}
 				Err(e) => {
 					self.logger
@@ -1701,9 +1705,9 @@ impl NetworkingService {
 				.boxed();
 
 			match select_ok([mdns_fut, relay_fut]).await {
-				Ok(((), _)) => {
+				Ok((initiator, _)) => {
 					self.logger.info("Connected (dual-path discovery)").await;
-					Ok(())
+					Ok(initiator)
 				}
 				Err(_) => Err(NetworkingError::ConnectionFailed(
 					failures.lock().unwrap().join("; "),
@@ -1712,11 +1716,12 @@ impl NetworkingService {
 		};
 
 		// Handle the discovery result
-		match discovery_result {
-			Ok(()) => {
+		let initiator = match discovery_result {
+			Ok(initiator) => {
 				self.logger
 					.info("Successfully discovered and connected to initiator!")
 					.await;
+				initiator
 			}
 			Err(e) => {
 				self.logger
@@ -1737,143 +1742,83 @@ impl NetworkingService {
 				}
 				return Err(e);
 			}
-		}
+		};
 
 		// Wait a moment for connections to be properly tracked
 		tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
-		// Send pairing request to any connected nodes
-		let connected_nodes = self.get_raw_connected_nodes().await;
-		self.logger
-			.debug(&format!(
-				"Found {} raw connected nodes",
-				connected_nodes.len()
-			))
-			.await;
-
-		// If no nodes are connected yet, try to discover all peers on the network
-		// and attempt to connect to each one - the initiator will respond to our pairing request
-		if connected_nodes.is_empty() {
-			self.logger
-				.info("No connected nodes found, attempting to discover all peers on local network...")
-				.await;
-
-			// Get all discovered peers through the endpoint's discovery service
-			if let Some(endpoint) = &self.endpoint {
-				// LocalSwarmDiscovery should have discovered peers by now
-				// We need to try connecting to all discovered nodes since we don't know which one is the initiator
-
-				// Get our own node address to broadcast it
-				let our_node_addr = endpoint.addr();
-
-				self.logger
-					.info(&format!(
-						"Our node address for pairing: {:?}",
-						our_node_addr
-					))
-					.await;
-
-				// Since we can't directly query discovered nodes from LocalSwarmDiscovery,
-				// we'll implement a broadcast approach where we try to connect to any node
-				// that might be listening with the pairing ALPN
-
-				// For now, let's wait a bit longer for discovery and connection attempts
-				self.logger
-					.info("Waiting additional time for local network discovery...")
-					.await;
-				tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
-
-				// Check again for connected nodes
-				let connected_nodes = self.get_raw_connected_nodes().await;
-				if connected_nodes.is_empty() {
-					self.logger
-						.warn("Still no connected nodes after extended discovery period")
-						.await;
-					self.logger
-						.info("Ensure both devices are on the same local network and the initiator is running")
-						.await;
-
-					return Err(NetworkingError::Protocol(
-						"Failed to discover initiator on local network. Ensure both devices are on the same network.".to_string()
-					));
+		// Send the pairing request to the initiator only. Sending it to every connected node
+		// reached peers this device already talks to (a paired desktop, a server) first: they
+		// never answer a request for a session they do not have, and the join hung on them.
+		let local_device_info = {
+			let device_registry = self.device_registry();
+			let registry = device_registry.read().await;
+			registry.get_local_device_info().unwrap_or_else(|_| {
+				crate::service::network::device::DeviceInfo {
+					device_id: self.device_id(),
+					device_name: "Joiner Device".to_string(),
+					device_slug: crate::device::get_current_device_slug(),
+					device_type: crate::service::network::device::DeviceType::Desktop,
+					os_version: std::env::consts::OS.to_string(),
+					app_version: env!("CARGO_PKG_VERSION").to_string(),
+					network_fingerprint: self.identity().network_fingerprint(),
+					last_seen: chrono::Utc::now(),
 				}
-			}
-		}
+			})
+		};
+		let pairing_request =
+			crate::service::network::protocol::pairing::messages::PairingMessage::PairingRequest {
+				session_id,
+				device_info: local_device_info,
+				public_key: self.identity().public_key_bytes(),
+			};
 
-		// Get the potentially updated list of connected nodes
-		let connected_nodes = self.get_raw_connected_nodes().await;
-
-		if !connected_nodes.is_empty() {
-			self.logger
-				.info(&format!(
-					"Found {} connected nodes, sending pairing requests...",
-					connected_nodes.len()
-				))
-				.await;
-			for node_id in connected_nodes {
-				// Get local device info
-				let local_device_info = {
-					let device_registry = self.device_registry();
-					let registry = device_registry.read().await;
-					registry.get_local_device_info().unwrap_or_else(|_| {
-						crate::service::network::device::DeviceInfo {
-							device_id: self.device_id(),
-							device_name: "Joiner Device".to_string(),
-							device_slug: crate::device::get_current_device_slug(),
-							device_type: crate::service::network::device::DeviceType::Desktop,
-							os_version: std::env::consts::OS.to_string(),
-							app_version: env!("CARGO_PKG_VERSION").to_string(),
-							network_fingerprint: self.identity().network_fingerprint(),
-							last_seen: chrono::Utc::now(),
-						}
-					})
-				};
-
-				let pairing_request =
-					crate::service::network::protocol::pairing::messages::PairingMessage::PairingRequest {
-						session_id,
-						device_info: local_device_info,
-						public_key: self.identity().public_key_bytes(),
-					};
-
-				// Send via Iroh stream using the pairing handler and wait for response
-				if let Some(endpoint) = &self.endpoint {
-					let registry = self.protocol_registry();
-					let guard = registry.read().await;
-					if let Some(handler) = guard.get_handler("pairing") {
-						if let Some(pairing_handler) =
-							handler.as_any().downcast_ref::<PairingProtocolHandler>()
-						{
-							self.logger
-								.info(&format!("Sending pairing request to node {}", node_id))
-								.await;
-							match pairing_handler
-								.send_pairing_message_to_node(endpoint, node_id, &pairing_request)
-								.await
-							{
-								Ok(Some(response)) => {
-									self.logger.info("Received response from Initiator!").await;
-									// Process the response via the trait's handle_response method
-									if let Ok(msg_bytes) = serde_json::to_vec(&response) {
-										let device_id = self.device_id(); // Joiner's own device ID
-										let _ = handler
-											.handle_response(device_id, node_id, msg_bytes)
-											.await;
-									}
-									// Stop sending more requests since we got a response
-									break;
-								}
-								Ok(None) => {
-									self.logger
-										.warn("No response received from Initiator")
-										.await;
-								}
-								Err(e) => {
-									self.logger
-										.error(&format!("Failed to send pairing request: {}", e))
-										.await;
-								}
+		if let Some(endpoint) = &self.endpoint {
+			let registry = self.protocol_registry();
+			let guard = registry.read().await;
+			if let Some(handler) = guard.get_handler("pairing") {
+				if let Some(pairing_handler) =
+					handler.as_any().downcast_ref::<PairingProtocolHandler>()
+				{
+					self.logger
+						.info(&format!(
+							"Sending pairing request to initiator {}",
+							initiator
+						))
+						.await;
+					// The exchange waits on the other side; bound it so a peer that never
+					// answers fails the join instead of holding it forever.
+					let exchange = pairing_handler.send_pairing_message_to_node(
+						endpoint,
+						initiator,
+						&pairing_request,
+					);
+					match tokio::time::timeout(PAIRING_EXCHANGE_TIMEOUT, exchange).await {
+						Ok(Ok(Some(response))) => {
+							self.logger.info("Received response from Initiator!").await;
+							if let Ok(msg_bytes) = serde_json::to_vec(&response) {
+								let device_id = self.device_id(); // Joiner's own device ID
+								let _ = handler
+									.handle_response(device_id, initiator, msg_bytes)
+									.await;
 							}
+						}
+						Ok(Ok(None)) => {
+							self.logger
+								.warn("No response received from Initiator")
+								.await;
+						}
+						Ok(Err(e)) => {
+							self.logger
+								.error(&format!("Failed to send pairing request: {}", e))
+								.await;
+						}
+						Err(_) => {
+							let _ = pairing_handler.cancel_session(session_id).await;
+							return Err(NetworkingError::ConnectionFailed(format!(
+								"connected to the other device, but it did not answer the pairing request within {} seconds",
+								PAIRING_EXCHANGE_TIMEOUT.as_secs()
+							)));
 						}
 					}
 				}
