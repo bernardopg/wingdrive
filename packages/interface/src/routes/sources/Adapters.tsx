@@ -263,7 +263,7 @@ function TabButton({
 	);
 }
 
-function Modal({onClose, children}: {onClose: () => void; children: React.ReactNode}) {
+export function Modal({onClose, children}: {onClose: () => void; children: React.ReactNode}) {
 	useEffect(() => {
 		const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
 		window.addEventListener('keydown', onKey);
@@ -586,15 +586,24 @@ function PrimaryButton({
 	);
 }
 
-function ConfigureForm({
+/**
+ * Adds a source, or edits one when `sourceId` is set. Editing starts from the stored config;
+ * a secret field stays empty and keeps its saved value unless the user types a new one.
+ */
+export function ConfigureForm({
 	adapterId,
 	adapterName,
-	onDone
+	onDone,
+	sourceId,
+	sourceName
 }: {
 	adapterId: string;
 	adapterName: string;
 	onDone: () => void;
+	sourceId?: string;
+	sourceName?: string;
 }) {
+	const editing = sourceId !== undefined;
 	const {t, i18n} = useTranslation('navigation');
 	const navigate = useNavigate();
 	const platform = usePlatform();
@@ -616,21 +625,35 @@ function ConfigureForm({
 		input: {adapter_id: adapterId}
 	});
 
+	const {data: stored, isLoading: storedLoading} = useLibraryQuery(
+		{type: 'sources.config', input: {source_id: sourceId ?? ''}},
+		{enabled: editing}
+	);
+	const savedSecrets = new Set(stored?.stored_secrets ?? []);
+
 	const createSource = useLibraryMutation('sources.create');
+	const updateSource = useLibraryMutation('sources.update');
 	const syncSource = useLibraryMutation('sources.sync');
 
-	const [name, setName] = useState(adapterName);
+	const [name, setName] = useState(sourceName ?? adapterName);
 	const [values, setValues] = useState<Record<string, string>>({});
 	const [error, setError] = useState<string | null>(null);
 	const [done, setDone] = useState(false);
 
-	// Pre-fill what the adapter found on this machine.
+	// Pre-fill the stored config when editing, else what the adapter found on this machine.
 	useEffect(() => {
-		if (!fields) return;
+		if (!fields || (editing && !stored)) return;
+		const current = (stored?.config ?? {}) as Record<string, unknown>;
 		setValues((previous) => {
 			const next = {...previous};
 			for (const field of fields) {
 				if (next[field.key] !== undefined) continue;
+				if (editing) {
+					const value = current[field.key];
+					if (value !== undefined && value !== null) next[field.key] = String(value);
+					else if (field.field_type === 'boolean') next[field.key] = field.default === 'false' ? 'false' : 'true';
+					continue;
+				}
 				if (field.suggestions.length > 0) {
 					next[field.key] = field.suggestions[0];
 				} else if (field.field_type === 'boolean') {
@@ -639,7 +662,7 @@ function ConfigureForm({
 			}
 			return next;
 		});
-	}, [fields]);
+	}, [fields, editing, stored]);
 
 	const handleFieldChange = useCallback((key: string, value: string) => {
 		setValues((prev) => ({...prev, [key]: value}));
@@ -665,11 +688,17 @@ function ConfigureForm({
 			const config: Record<string, unknown> = {};
 			for (const field of fields ?? []) {
 				const val = values[field.key]?.trim() ?? '';
-				if (field.required && !val) {
+				const keepsSecret = editing && field.secret && savedSecrets.has(field.key);
+				if (field.required && !val && !keepsSecret) {
 					setError(t('sources.fieldRequired', {name: label(field)}));
 					return;
 				}
-				if (!val && !field.required) continue;
+				if (!val && !field.required) {
+					// Editing: an emptied field leaves the config; an empty secret keeps its value.
+					if (editing && !field.secret) config[field.key] = null;
+					continue;
+				}
+				if (!val) continue;
 
 				if (field.field_type === 'integer' && val) {
 					config[field.key] = parseInt(val, 10);
@@ -680,12 +709,18 @@ function ConfigureForm({
 				}
 			}
 
-			const source = await createSource.mutateAsync({
-				name: name.trim(),
-				adapter_id: adapterId,
-				config: config as any
-			});
-			await syncSource.mutateAsync({source_id: source.id});
+			const source = editing
+				? await updateSource.mutateAsync({
+						source_id: sourceId,
+						name: name.trim(),
+						config: config as any
+					})
+				: await createSource.mutateAsync({
+						name: name.trim(),
+						adapter_id: adapterId,
+						config: config as any
+					});
+			await syncSource.mutateAsync({source_id: String(source.id)});
 			// The sidebar and the sources page cached the list before this source existed.
 			await queryClient.invalidateQueries();
 			setDone(true);
@@ -694,7 +729,7 @@ function ConfigureForm({
 		}
 	};
 
-	if (isLoading) {
+	if (isLoading || (editing && storedLoading)) {
 		return <div className="text-ink-faint py-8 text-center text-sm">{t('store.detecting')}</div>;
 	}
 
@@ -710,12 +745,14 @@ function ConfigureForm({
 		return (
 			<div className="flex flex-col items-center py-6">
 				<CheckCircle size={28} className="text-green-400" weight="fill" />
-				<p className="text-ink mt-2 text-sm">{t('sources.added')}</p>
-				<p className="text-ink-faint mt-1 text-center text-xs">{t('sources.created')}</p>
+				<p className="text-ink mt-2 text-sm">{t(editing ? 'sources.saved' : 'sources.added')}</p>
+				{!editing && (
+					<p className="text-ink-faint mt-1 text-center text-xs">{t('sources.created')}</p>
+				)}
 				<button
 					onClick={() => {
 						onDone();
-						navigate('/sources');
+						if (!editing) navigate('/sources');
 					}}
 					className="bg-accent hover:bg-accent-deep mt-4 rounded-lg px-3.5 py-1.5 text-sm font-medium text-white transition-colors"
 				>
@@ -771,7 +808,11 @@ function ConfigureForm({
 							list={field.suggestions.length > 1 ? `suggest-${field.key}` : undefined}
 							onChange={(e) => handleFieldChange(field.key, e.target.value)}
 							placeholder={
-								field.default ? t('sources.defaultValue', {value: field.default}) : undefined
+								field.secret && savedSecrets.has(field.key)
+									? t('sources.secretSaved')
+									: field.default
+										? t('sources.defaultValue', {value: field.default})
+										: undefined
 							}
 							className="border-app-line bg-app-input text-ink focus:ring-accent w-full min-w-0 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1"
 						/>
@@ -809,10 +850,10 @@ function ConfigureForm({
 			<div className="mt-1 flex gap-2">
 				<button
 					onClick={handleSubmit}
-					disabled={createSource.isPending || syncSource.isPending}
+					disabled={createSource.isPending || updateSource.isPending || syncSource.isPending}
 					className="bg-accent hover:bg-accent-deep flex-1 rounded-lg px-3.5 py-1.5 text-sm font-medium text-white transition-colors disabled:opacity-40"
 				>
-					{t('sources.addSync')}
+					{t(editing ? 'sources.saveSync' : 'sources.addSync')}
 				</button>
 				<button
 					onClick={onDone}

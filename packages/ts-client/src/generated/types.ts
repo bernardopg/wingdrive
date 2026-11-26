@@ -1818,6 +1818,10 @@ export type GetFilesByTagOutput = {
 /**  Input for getting library configuration */
 export type GetLibraryConfigQueryInput = null;
 
+export type GetSourceConfigInput = {
+	source_id: string,
+};
+
 export type GetSourceInput = {
 	source_id: string,
 };
@@ -3999,6 +4003,15 @@ export type SortOptions = {
 	direction: SortDirection,
 };
 
+/**  A source's config without its secrets. */
+export type SourceConfig = {
+	adapter_id: string,
+	/**  Stored config values. Secret fields never appear here. */
+	config: Value,
+	/**  Secret fields that have a stored value, so the form can say "saved". */
+	stored_secrets: string[],
+};
+
 /**  Information about a source */
 export type SourceInfo = {
 	/**  Source ID */
@@ -4671,6 +4684,26 @@ export type UpdateLibraryConfigOutput = {
 	success: boolean,
 	/**  Message describing the result */
 	message: string,
+};
+
+/**  Input for changing a source. */
+export type UpdateSourceInput = {
+	source_id: string,
+	/**  New display name, or none to keep it. */
+	name: string | null,
+	/**
+	 *  Config fields to change, or none to keep the config. A secret field that is empty or
+	 *  missing keeps its stored value.
+	 */
+	config: Value | null,
+};
+
+/**  The source after the change. */
+export type UpdateSourceOutput = {
+	id: string,
+	name: string,
+	adapter_id: string,
+	status: string,
 };
 
 /**  Input for location path validation */
@@ -5402,6 +5435,7 @@ export type LibraryAction =
   |  { type: 'sources.create'; input: CreateSourceInput; output: CreateSourceOutput }
   |  { type: 'sources.delete'; input: DeleteSourceInput; output: DeleteSourceOutput }
   |  { type: 'sources.sync'; input: SyncSourceInput; output: JobReceipt }
+  |  { type: 'sources.update'; input: UpdateSourceInput; output: UpdateSourceOutput }
   |  { type: 'tags.apply'; input: ApplyTagsInput; output: ApplyTagsOutput }
   |  { type: 'tags.create'; input: CreateTagInput; output: CreateTagOutput }
   |  { type: 'tags.delete'; input: DeleteTagInput; output: DeleteTagOutput }
@@ -5486,6 +5520,7 @@ export type LibraryQuery =
   |  { type: 'locations.validate_path'; input: ValidateLocationPathInput; output: ValidateLocationPathOutput }
   |  { type: 'redundancy.summary'; input: RedundancySummaryInput; output: RedundancySummaryOutput }
   |  { type: 'search.files'; input: FileSearchInput; output: FileSearchOutput }
+  |  { type: 'sources.config'; input: GetSourceConfigInput; output: SourceConfig }
   |  { type: 'sources.get'; input: GetSourceInput; output: SourceInfo }
   |  { type: 'sources.list'; input: ListSourcesInput; output: SourceInfo[] }
   |  { type: 'sources.list_items'; input: ListSourceItemsInput; output: SourceItem[] }
@@ -5599,6 +5634,7 @@ export const WIRE_METHODS = {
     'sources.create': 'action:sources.create.input',
     'sources.delete': 'action:sources.delete.input',
     'sources.sync': 'action:sources.sync.input',
+    'sources.update': 'action:sources.update.input',
     'tags.apply': 'action:tags.apply.input',
     'tags.create': 'action:tags.create.input',
     'tags.delete': 'action:tags.delete.input',
@@ -5683,6 +5719,7 @@ export const WIRE_METHODS = {
     'locations.validate_path': 'query:locations.validate_path',
     'redundancy.summary': 'query:redundancy.summary',
     'search.files': 'query:search.files',
+    'sources.config': 'query:sources.config',
     'sources.get': 'query:sources.get',
     'sources.list': 'query:sources.list',
     'sources.list_items': 'query:sources.list_items',

@@ -51,6 +51,8 @@ wing adapters install obsidian  # shows the permissions and asks before installi
 
 The source then appears under **Sources**. Open it to browse its items, search inside them, sync again or delete the source.
 
+To change a source later, open it and choose **Edit source** in its menu. A token you saved stays saved unless you type a new one. WingDrive keeps tokens and passwords in its encrypted secret store, never in plain text with the other settings.
+
 <figure class="shot">
 <a href="/img/adapters/items-en.webp"><img src="/img/adapters/items-en.webp" width="795" height="485" loading="lazy" alt="The Notes source with six notes, each with its title, path and the start of its text"></a>
 <figcaption>A synced Obsidian vault: each note with its path and the start of its text.</figcaption>

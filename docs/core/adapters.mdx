@@ -162,9 +162,18 @@ stdin holds one JSON document, then closes:
 
 | Field | Meaning |
 |---|---|
-| `config` | The fields the user filled when adding the source |
+| `config` | The fields the user filled when adding or editing the source, secret ones included |
 | `cursor` | The last cursor the adapter printed for this source, or `null` on the first sync |
 | `data_dir` | A folder for this source that only the adapter writes to (`<source folder>/state`); the source's database lives next to it, out of reach |
+
+### Secrets
+
+A config field with `secret = true` (an access token, a password) is never stored with the rest of
+the source's settings. The daemon keeps it in the encrypted secret store of the WingDrive data
+folder (`secrets.redb`, key `source-secret:<library>:<source>:<field>`), adds it to `config` only
+for the run, and never returns it to the interface: editing a source shows the field as saved and
+keeps the value unless a new one is typed. Sources created before 3.9 held secrets in the archive
+registry; their next sync moves them to the secret store.
 
 ## Output
 

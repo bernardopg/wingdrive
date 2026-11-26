@@ -5,15 +5,42 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Added
+
+- Sources can be edited: Edit source in a source's menu changes its name and settings. A saved
+  token stays saved unless a new one is typed (`sources.update`, `sources.config`).
+
+### Fixed
+
+- Changes and deletions reach your other devices. A file deleted on one device stayed on every
+  other device, and a file that grew or changed after it was indexed kept its old size there.
+  Deletions now go out right away and are kept for devices that are offline.
+- Files in a folder created while WingDrive runs are seen again. Once the home folder had been
+  opened, a new folder inside a location got no watch about half the time, so nothing saved in it
+  was indexed until the daemon restarted.
+- Pairing errors say what failed on each path, and say so when the other device was found but
+  could not be reached, instead of "initiator not found". A failed join no longer blocks the next
+  try with "Session ... already exists".
+
 ### Performance
 
+- Copying a file from another device is faster: chunks are read and written through 4 MiB buffers
+  instead of one disk call per 64 KiB, and progress updates every MiB instead of every chunk.
 - The Rust build compiles 86 fewer crates: 29 dependencies that no code used are gone, among them
   the vendored OpenSSL build of the Android core, the terminal UI stack of the command line and the
   network watchers of `wing-core`. The platform file-opening crates fetch their dependencies only on
   their own system.
 
+### Security
+
+- Secret source settings, such as an access token, are kept in WingDrive's encrypted secret store
+  instead of in plain text in the archive registry. Sources created before move theirs at their next
+  sync.
+
 ### Internal
 
+- Copy logs no longer write a progress line per 64 KiB chunk, and queries log at debug level, so a
+  screen that polls every second no longer fills the log.
 - CI skips work that repeats a passed run. A version bump alone runs no build gate, no Explorer
   smoke and no Windows installer build; TypeScript checks run only for TypeScript changes, and the
   Explorer smoke only for Rust or web interface changes. A merge to `main` no longer repeats the

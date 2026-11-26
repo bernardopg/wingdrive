@@ -216,8 +216,35 @@ impl Engine {
 		Ok(())
 	}
 
+	/// One source from the registry.
+	pub async fn get_source(&self, source_id: &str) -> Result<SourceInfo> {
+		self.registry.get_source(source_id).await
+	}
+
+	/// Rename a source or replace its config. `None` leaves that field as it is.
+	pub async fn update_source(
+		&self,
+		source_id: &str,
+		name: Option<&str>,
+		config: Option<&serde_json::Value>,
+	) -> Result<SourceInfo> {
+		self.registry.update_source(source_id, name, config).await
+	}
+
 	/// Trigger a sync for a source.
 	pub async fn sync(&self, source_id: &str) -> Result<SyncReport> {
+		self.sync_with(source_id, serde_json::Map::new()).await
+	}
+
+	/// Sync a source with `secrets` added to its stored config for this run only.
+	///
+	/// Secret config values (tokens, passwords) are kept out of the registry; the caller
+	/// reads them from its own encrypted store and hands them over here.
+	pub async fn sync_with(
+		&self,
+		source_id: &str,
+		secrets: serde_json::Map<String, serde_json::Value>,
+	) -> Result<SyncReport> {
 		// Get source info
 		let source_info = self.registry.get_source(source_id).await?;
 
@@ -248,10 +275,12 @@ impl Engine {
 		};
 
 		// Build config with secrets resolved at the library level
-		let config = source_info.config.clone();
+		let mut config = source_info.config.clone();
+		if let Some(obj) = config.as_object_mut() {
+			obj.extend(secrets);
+		}
 
 		// Inject _data_dir for script adapters
-		let mut config = config;
 		let data_dir = self.sources.source_dir(source_id);
 		if let Some(obj) = config.as_object_mut() {
 			obj.insert(

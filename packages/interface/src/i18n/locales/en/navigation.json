@@ -333,7 +333,12 @@
 		"delete": "Delete source",
 		"deleteConfirm": "This will permanently delete {{name}} and all its data.",
 		"updateAdapter": "Update adapter",
-		"addSync": "Add & Sync"
+		"addSync": "Add & Sync",
+		"edit": "Edit source",
+		"editTitle": "Edit {{name}}",
+		"saved": "Source saved",
+		"saveSync": "Save & Sync",
+		"secretSaved": "Saved. Leave empty to keep it."
 	},
 	"network": {
 		"connectTitle": "Connect to Server",

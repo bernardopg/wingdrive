@@ -51,6 +51,8 @@ wing adapters install obsidian  # mostra as permissões e pergunta antes de inst
 
 A fonte aparece então em **Fontes**. Abra para navegar pelos itens, buscar dentro deles, sincronizar de novo ou apagar a fonte.
 
+Para mudar uma fonte depois, abra-a e escolha **Editar fonte** no menu dela. Um token salvo continua salvo a menos que você digite um novo. O WingDrive guarda tokens e senhas no seu cofre cifrado, nunca em texto puro junto com as outras configurações.
+
 <figure class="shot">
 <a href="/img/adapters/items-pt.webp"><img src="/img/adapters/items-pt.webp" width="795" height="485" loading="lazy" alt="A fonte Notes com seis notas, cada uma com título, caminho e o começo do texto"></a>
 <figcaption>Um cofre do Obsidian sincronizado: cada nota com o caminho e o começo do texto.</figcaption>

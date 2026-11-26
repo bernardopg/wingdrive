@@ -1,14 +1,23 @@
 //! SourceManager: library-scoped wrapper around wing-archive Engine.
 
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use tracing::{info, warn};
+use uuid::Uuid;
 use wing_archive::{Engine, EngineConfig};
 
+use crate::crypto::key_manager::{KeyManager, KeyManagerError};
+
 /// Manages archive data sources for a single library.
+///
+/// Config values of fields the adapter marks `secret` (tokens, passwords) never reach the
+/// archive registry, which stores config as plain JSON: they live in the encrypted secret
+/// store under [`SourceManager::secret_key`] and join the config only while a sync runs.
 pub struct SourceManager {
 	engine: Engine,
 	installed_dir: PathBuf,
+	secrets: Arc<KeyManager>,
+	library_id: Uuid,
 }
 
 /// Points at a folder of adapters under development, loaded next to the installed ones.
@@ -19,7 +28,12 @@ impl SourceManager {
 	///
 	/// `installed_dir` is where the adapter store installs adapters for every library
 	/// (`<data dir>/adapters/installed`); they are registered here so any library can use them.
-	pub async fn new(library_path: PathBuf, installed_dir: PathBuf) -> Result<Self, String> {
+	pub async fn new(
+		library_path: PathBuf,
+		installed_dir: PathBuf,
+		secrets: Arc<KeyManager>,
+		library_id: Uuid,
+	) -> Result<Self, String> {
 		let data_dir = library_path.join("archive");
 
 		let config = EngineConfig {
@@ -32,6 +46,8 @@ impl SourceManager {
 		let manager = Self {
 			engine,
 			installed_dir,
+			secrets,
+			library_id,
 		};
 		manager.reload_installed();
 		info!("Source manager initialized at {}", library_path.display());
@@ -94,33 +110,215 @@ impl SourceManager {
 			.map_err(|e| format!("Failed to list sources: {e}"))
 	}
 
-	/// Create a new source.
+	/// Create a new source. Secret values go to the secret store, the rest to the registry.
 	pub async fn create_source(
 		&self,
 		name: &str,
 		adapter_id: &str,
-		config: serde_json::Value,
+		mut config: serde_json::Value,
 	) -> Result<wing_archive::SourceInfo, String> {
-		self.engine
+		let secrets = self.take_secrets(adapter_id, &mut config)?;
+		let source = self
+			.engine
 			.create_source(name, adapter_id, config)
 			.await
-			.map_err(|e| format!("Failed to create source: {e}"))
+			.map_err(|e| format!("Failed to create source: {e}"))?;
+		if let Err(e) = self.store_secrets(&source.id, secrets).await {
+			let _ = self.engine.delete_source(&source.id).await;
+			return Err(e);
+		}
+		Ok(source)
 	}
 
-	/// Delete a source.
+	/// Rename a source or change its config.
+	///
+	/// `config` holds the fields to change; `null` removes a field. A secret field that is
+	/// empty or missing keeps its stored value, so a form never has to show a token to save
+	/// other changes.
+	pub async fn update_source(
+		&self,
+		source_id: &str,
+		name: Option<&str>,
+		config: Option<serde_json::Value>,
+	) -> Result<wing_archive::SourceInfo, String> {
+		let source = self.get_source(source_id).await?;
+		let new_config = match config {
+			None => None,
+			Some(mut changes) => {
+				let secrets = self.take_secrets(&source.adapter_id, &mut changes)?;
+				self.store_secrets(source_id, secrets).await?;
+				let mut merged = source.config.clone();
+				if let (Some(merged), Some(changes)) = (merged.as_object_mut(), changes.as_object())
+				{
+					for (key, value) in changes {
+						if value.is_null() {
+							merged.remove(key);
+						} else {
+							merged.insert(key.clone(), value.clone());
+						}
+					}
+				}
+				Some(merged)
+			}
+		};
+		self.engine
+			.update_source(source_id, name, new_config.as_ref())
+			.await
+			.map_err(|e| format!("Failed to update source: {e}"))
+	}
+
+	/// Delete a source and its stored secrets.
 	pub async fn delete_source(&self, source_id: &str) -> Result<(), String> {
+		let adapter_id = self.get_source(source_id).await.ok().map(|s| s.adapter_id);
 		self.engine
 			.delete_source(source_id)
 			.await
-			.map_err(|e| format!("Failed to delete source: {e}"))
+			.map_err(|e| format!("Failed to delete source: {e}"))?;
+		if let Some(adapter_id) = adapter_id {
+			for key in self.secret_fields(&adapter_id) {
+				let _ = self
+					.secrets
+					.delete_secret(&self.secret_key(source_id, &key))
+					.await;
+			}
+		}
+		Ok(())
 	}
 
-	/// Sync a source.
+	/// Sync a source, with its secrets read from the secret store for this run.
 	pub async fn sync_source(&self, source_id: &str) -> Result<wing_archive::SyncReport, String> {
+		let source = self.get_source(source_id).await?;
+
+		// Sources created before secrets left the registry still hold them in plain text.
+		let mut config = source.config.clone();
+		let legacy = self.take_secrets(&source.adapter_id, &mut config)?;
+		if !legacy.is_empty() {
+			self.store_secrets(source_id, legacy).await?;
+			self.engine
+				.update_source(source_id, None, Some(&config))
+				.await
+				.map_err(|e| format!("Failed to move secrets out of the registry: {e}"))?;
+			info!(source_id, "Moved source secrets to the secret store");
+		}
+
+		let mut secrets = serde_json::Map::new();
+		for key in self.secret_fields(&source.adapter_id) {
+			match self
+				.secrets
+				.get_secret(&self.secret_key(source_id, &key))
+				.await
+			{
+				Ok(bytes) => {
+					let value = String::from_utf8(bytes)
+						.map_err(|_| format!("Stored secret {key} is not text"))?;
+					secrets.insert(key, serde_json::Value::String(value));
+				}
+				Err(KeyManagerError::KeyNotFound(_)) => {}
+				Err(e) => return Err(format!("Failed to read secret {key}: {e}")),
+			}
+		}
+
 		self.engine
-			.sync(source_id)
+			.sync_with(source_id, secrets)
 			.await
 			.map_err(|e| format!("Failed to sync source: {e}"))
+	}
+
+	/// A source's adapter, its config without secrets (legacy plain-text ones are hidden too)
+	/// and the secret fields that have a stored value.
+	pub async fn source_config(
+		&self,
+		source_id: &str,
+	) -> Result<(String, serde_json::Value, Vec<String>), String> {
+		let source = self.get_source(source_id).await?;
+		let mut config = source.config.clone();
+		let legacy = self.take_secrets(&source.adapter_id, &mut config)?;
+		let mut stored = self.stored_secrets(source_id).await?;
+		for (key, _) in legacy {
+			if !stored.contains(&key) {
+				stored.push(key);
+			}
+		}
+		Ok((source.adapter_id, config, stored))
+	}
+
+	/// Which secret fields of a source have a stored value.
+	pub async fn stored_secrets(&self, source_id: &str) -> Result<Vec<String>, String> {
+		let source = self.get_source(source_id).await?;
+		let mut stored = Vec::new();
+		for key in self.secret_fields(&source.adapter_id) {
+			if self
+				.secrets
+				.get_secret(&self.secret_key(source_id, &key))
+				.await
+				.is_ok()
+			{
+				stored.push(key);
+			}
+		}
+		Ok(stored)
+	}
+
+	/// Secret store key of one secret config field of a source.
+	fn secret_key(&self, source_id: &str, field: &str) -> String {
+		format!("source-secret:{}:{source_id}:{field}", self.library_id)
+	}
+
+	/// Config fields the adapter marks secret.
+	fn secret_fields(&self, adapter_id: &str) -> Vec<String> {
+		self.engine
+			.adapter_config_fields(adapter_id)
+			.map(|fields| {
+				fields
+					.into_iter()
+					.filter(|field| field.secret)
+					.map(|field| field.key)
+					.collect()
+			})
+			.unwrap_or_default()
+	}
+
+	/// Remove the secret fields from `config` and return the non-empty ones.
+	fn take_secrets(
+		&self,
+		adapter_id: &str,
+		config: &mut serde_json::Value,
+	) -> Result<Vec<(String, String)>, String> {
+		let Some(object) = config.as_object_mut() else {
+			return Ok(Vec::new());
+		};
+		let mut taken = Vec::new();
+		for key in self.secret_fields(adapter_id) {
+			match object.remove(&key) {
+				Some(serde_json::Value::String(value)) if !value.is_empty() => {
+					taken.push((key, value))
+				}
+				Some(serde_json::Value::String(_)) | Some(serde_json::Value::Null) | None => {}
+				Some(other) => return Err(format!("Secret field {key} must be text, got {other}")),
+			}
+		}
+		Ok(taken)
+	}
+
+	async fn store_secrets(
+		&self,
+		source_id: &str,
+		secrets: Vec<(String, String)>,
+	) -> Result<(), String> {
+		for (key, value) in secrets {
+			self.secrets
+				.set_secret(&self.secret_key(source_id, &key), value.as_bytes())
+				.await
+				.map_err(|e| format!("Failed to store secret {key}: {e}"))?;
+		}
+		Ok(())
+	}
+
+	async fn get_source(&self, source_id: &str) -> Result<wing_archive::SourceInfo, String> {
+		self.engine
+			.get_source(source_id)
+			.await
+			.map_err(|e| format!("Failed to read source: {e}"))
 	}
 
 	/// List items from a source.

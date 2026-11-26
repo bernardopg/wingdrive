@@ -186,6 +186,30 @@ impl Registry {
 		Ok(())
 	}
 
+	/// Rename a source or replace its config. `None` leaves that field as it is.
+	pub async fn update_source(
+		&self,
+		id: &str,
+		name: Option<&str>,
+		config: Option<&serde_json::Value>,
+	) -> Result<SourceInfo> {
+		if let Some(name) = name {
+			sqlx::query("UPDATE sources SET name = ? WHERE id = ?")
+				.bind(name)
+				.bind(id)
+				.execute(&self.pool)
+				.await?;
+		}
+		if let Some(config) = config {
+			sqlx::query("UPDATE sources SET config = ? WHERE id = ?")
+				.bind(serde_json::to_string(config)?)
+				.bind(id)
+				.execute(&self.pool)
+				.await?;
+		}
+		self.get_source(id).await
+	}
+
 	/// Delete a source from the registry.
 	pub async fn delete_source(&self, id: &str) -> Result<()> {
 		let result = sqlx::query("DELETE FROM sources WHERE id = ?")

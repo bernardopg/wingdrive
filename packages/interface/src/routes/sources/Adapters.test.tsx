@@ -35,6 +35,7 @@ function card(overrides: Card = {}): Card {
 let store: {sequence: number | null; generated_at: string | null; isolation: string; adapters: Card[]; updates: number};
 const calls: Array<[string, unknown]> = [];
 let fields: Array<Record<string, unknown>> = [];
+let sourceConfig: {adapter_id: string; config: Record<string, unknown>; stored_secrets: string[]} | undefined;
 
 mock.module('../../contexts/WingDriveContext', () => ({
 	useCoreQuery: ({type}: {type: string}) =>
@@ -48,6 +49,7 @@ mock.module('../../contexts/WingDriveContext', () => ({
 			};
 		}
 		if (type === 'adapters.config') return {data: fields, isLoading: false, error: null};
+		if (type === 'sources.config') return {data: sourceConfig, isLoading: false};
 		return {data: undefined};
 	},
 	useCoreMutation: (type: string) => ({
@@ -81,7 +83,7 @@ const {act} = await import('react');
 const {createRoot} = await import('react-dom/client');
 const {MemoryRouter} = await import('react-router-dom');
 const {i18n} = await import('../../i18n');
-const {AdaptersScreen} = await import('./Adapters');
+const {AdaptersScreen, ConfigureForm} = await import('./Adapters');
 
 async function render(path = '/sources/adapters') {
 	await i18n.changeLanguage('en');
@@ -111,6 +113,7 @@ function button(text: string) {
 beforeEach(() => {
 	calls.length = 0;
 	fields = [];
+	sourceConfig = undefined;
 	document.body.innerHTML = '';
 	store = {sequence: 4, generated_at: null, isolation: 'bubblewrap', adapters: [card()], updates: 0};
 });
@@ -261,6 +264,83 @@ describe('adapter store', () => {
 		expect(calls).toContainEqual([
 			'sources.create',
 			{name: 'Obsidian', adapter_id: 'obsidian', config: {vault_path: '/home/ana/Notes', include_starred: false}}
+		]);
+		expect(calls).toContainEqual(['sources.sync', {source_id: 'source-1'}]);
+		act(() => root.unmount());
+	});
+
+	test('editing a source keeps a saved token unless a new one is typed', async () => {
+		fields = [
+			{
+				key: 'username',
+				name: 'Username',
+				description: '',
+				field_type: 'string',
+				required: true,
+				secret: false,
+				default: null,
+				path_type: null,
+				suggestions: [],
+				translations: {}
+			},
+			{
+				key: 'token',
+				name: 'Token',
+				description: '',
+				field_type: 'string',
+				required: true,
+				secret: true,
+				default: null,
+				path_type: null,
+				suggestions: [],
+				translations: {}
+			},
+			{
+				key: 'label',
+				name: 'Label',
+				description: '',
+				field_type: 'string',
+				required: false,
+				secret: false,
+				default: null,
+				path_type: null,
+				suggestions: [],
+				translations: {}
+			}
+		];
+		sourceConfig = {adapter_id: 'github', config: {username: 'ana', label: 'old'}, stored_secrets: ['token']};
+		await i18n.changeLanguage('en');
+		const host = document.createElement('div');
+		document.body.appendChild(host);
+		const root = createRoot(host);
+		await act(async () => {
+			root.render(
+				<QueryClientProvider client={new QueryClient()}>
+					<MemoryRouter>
+						<ConfigureForm
+							adapterId="github"
+							adapterName="GitHub"
+							sourceId="source-9"
+							sourceName="My GitHub"
+							onDone={() => {}}
+						/>
+					</MemoryRouter>
+				</QueryClientProvider>
+			);
+		});
+		const token = document.querySelector<HTMLInputElement>('input[type=password]')!;
+		expect(token.value).toBe('');
+		expect(token.placeholder).toBe('Saved. Leave empty to keep it.');
+		const label = [...document.querySelectorAll('input')].find(i => i.value === 'old')!;
+		const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+		await act(async () => {
+			setValue.call(label, '');
+			label.dispatchEvent(new Event('input', {bubbles: true}));
+		});
+		await act(async () => button('Save & Sync')!.click());
+		expect(calls).toContainEqual([
+			'sources.update',
+			{source_id: 'source-9', name: 'My GitHub', config: {username: 'ana', label: null}}
 		]);
 		expect(calls).toContainEqual(['sources.sync', {source_id: 'source-1'}]);
 		act(() => root.unmount());
