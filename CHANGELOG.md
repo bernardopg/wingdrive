@@ -24,6 +24,10 @@ version in the workspace manifests and the matching `v*` git tag.
   seconds for it before the next one went out, so with a phone switched off a change took minutes
   to reach the server. Changes for an offline device now wait in the retry queue, which serves
   each device on its own and no longer re-sends messages that were delivered.
+- A new device in a library gets the files the others add. Catch-up handles one peer at a time,
+  and an offline device first in the list failed every pass and was picked again, put every peer
+  in backoff and finally forced a full backfill. Backfill and catch-up now only use peers that are
+  connected.
 - Changes to shared records (a new file's content, tags) made while the device was catching up
   with a peer go out right away. They were held and then dropped as duplicates, so the other
   devices only got them a minute or more later, when they next pulled this device's log.
