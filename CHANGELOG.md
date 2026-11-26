@@ -22,7 +22,11 @@ version in the workspace manifests and the matching `v*` git tag.
   was indexed until the daemon restarted.
 - A paired device that is offline no longer slows sync for the others. Every change waited 30
   seconds for it before the next one went out, so with a phone switched off a change took minutes
-  to reach the server. Changes for an offline device now wait in the retry queue.
+  to reach the server. Changes for an offline device now wait in the retry queue, which serves
+  each device on its own and no longer re-sends messages that were delivered.
+- Changes to shared records (a new file's content, tags) made while the device was catching up
+  with a peer go out right away. They were held and then dropped as duplicates, so the other
+  devices only got them a minute or more later, when they next pulled this device's log.
 - Joining with a pairing code no longer hangs on a device that already talks to other devices.
   The request went to whichever connected device came first, such as the server, instead of the
   one that showed the code, and the join waited for an answer forever. It now goes to the device
