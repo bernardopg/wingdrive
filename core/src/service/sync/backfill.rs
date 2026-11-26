@@ -25,6 +25,11 @@ use tokio::sync::{oneshot, Mutex};
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 
+/// Device-owned models a full pass reconciles: their sync timestamp is written
+/// locally on every apply, so it tells when this device last received a record.
+/// Volumes keep the owner's `last_seen_at` and stay out.
+const RECONCILED_MODELS: &[&str] = &["location", "entry"];
+
 /// Result of a backfill request that did not fail.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BackfillOutcome {
@@ -246,7 +251,7 @@ impl BackfillManager {
 			// Phase 3: Backfill device-owned state (after shared dependencies exist)
 			// For initial backfill, don't use watermark (get everything)
 			let final_state_checkpoint = self
-				.backfill_device_owned_state(selected_peer, None)
+				.backfill_device_owned_state(selected_peer, None, false)
 				.await?;
 
 			Ok::<_, anyhow::Error>((max_shared_hlc, final_state_checkpoint))
@@ -332,7 +337,10 @@ impl BackfillManager {
 		// beginning, which is the normal first sync, not a stale one.
 		let Some(watermark) = state_watermark else {
 			info!(peer = %peer, "No state watermark for this peer yet, catching up from the start");
-			return self.catch_up_since(peer, None, shared_watermark).await;
+			let reconcile = self.reconciliation_due(peer).await;
+			return self
+				.catch_up_since(peer, None, shared_watermark, reconcile)
+				.await;
 		};
 
 		// Check watermark age - force full sync if too old (tombstones may be pruned)
@@ -377,17 +385,65 @@ impl BackfillManager {
 				state_watermark
 			};
 
-		self.catch_up_since(peer, effective_state_watermark, shared_watermark)
+		// A stale watermark means tombstones may be gone: compare everything.
+		let reconcile = effective_state_watermark.is_none() || self.reconciliation_due(peer).await;
+		self.catch_up_since(peer, effective_state_watermark, shared_watermark, reconcile)
 			.await
+	}
+
+	/// Whether a shared record is in the local database. Models without a UUID
+	/// lookup answer true, so their versioned rows keep being preserved.
+	async fn snapshot_row_exists(&self, model_type: &str, uuid: Uuid) -> bool {
+		// The registry is keyed by model type, despite the lookup's parameter name.
+		!matches!(
+			crate::infra::sync::registry::lookup_id_by_uuid(
+				model_type,
+				uuid,
+				self.peer_sync.db().clone()
+			)
+			.await,
+			Ok(None)
+		)
+	}
+
+	/// Reconciles `peer`'s device-owned data now, whether or not it is due: fetches
+	/// everything the peer owns and removes local copies of records it no longer has.
+	pub async fn reconcile_with_peer(&self, peer: Uuid) -> Result<()> {
+		let (_, shared_watermark) = self.peer_sync.get_watermarks().await;
+		self.catch_up_since(
+			peer,
+			None,
+			shared_watermark.map(|hlc| hlc.to_string()),
+			true,
+		)
+		.await
+	}
+
+	/// True when this peer's device-owned data was never reconciled in full, or
+	/// the last time is older than `reconcile_interval_days`.
+	async fn reconciliation_due(&self, peer: Uuid) -> bool {
+		let interval = chrono::Duration::days(self.config.retention.reconcile_interval_days as i64);
+		match self.peer_sync.get_reconciled_at(peer).await {
+			Ok(Some(at)) => chrono::Utc::now() - at >= interval,
+			Ok(None) => true,
+			Err(error) => {
+				warn!(peer = %peer, %error, "Could not read reconciliation time; reconciling");
+				true
+			}
+		}
 	}
 
 	/// Backfills shared changes after `shared_watermark` and device-owned state
 	/// after `state_watermark` (`None` = everything), then records the watermarks.
+	///
+	/// With `reconcile`, device-owned state is fetched in full and local copies of
+	/// records the peer no longer has are removed (`reconcile_device_owned_model`).
 	async fn catch_up_since(
 		&self,
 		peer: Uuid,
 		effective_state_watermark: Option<chrono::DateTime<chrono::Utc>>,
 		shared_watermark: Option<String>,
+		reconcile: bool,
 	) -> Result<()> {
 		// Parse shared watermark HLC for incremental sync
 		let since_hlc = shared_watermark
@@ -398,19 +454,30 @@ impl BackfillManager {
 			peer = %peer,
 			state_since = ?effective_state_watermark,
 			shared_since = ?since_hlc,
+			reconcile,
 			"Starting incremental catch-up"
 		);
 
 		// Backfill shared resources FIRST (device-owned models depend on them)
-		// Uses parsed HLC watermark for incremental sync
+		// Uses parsed HLC watermark for incremental sync. A reconciliation asks
+		// without one, so the peer adds its full shared state: a record that never
+		// reached its log (content identities the watcher created before 3.8.1)
+		// arrives that way, and entries waiting on it can apply.
+		let shared_since = if reconcile { None } else { since_hlc };
 		let max_shared_hlc = self
-			.backfill_shared_resources_since(peer, since_hlc)
+			.backfill_shared_resources_since(peer, shared_since)
 			.await?;
 
 		// Backfill device-owned state since watermark (after shared dependencies exist)
 		let final_state_checkpoint = self
-			.backfill_device_owned_state(peer, effective_state_watermark)
+			.backfill_device_owned_state(peer, effective_state_watermark, reconcile)
 			.await?;
+
+		if reconcile {
+			self.peer_sync
+				.set_reconciled_at(peer, chrono::Utc::now())
+				.await?;
+		}
 
 		// Update watermarks from actual received data (not local DB query)
 		self.set_initial_watermarks_after_backfill(peer, final_state_checkpoint, max_shared_hlc)
@@ -431,6 +498,7 @@ impl BackfillManager {
 		&self,
 		primary_peer: Uuid,
 		_since_watermark: Option<chrono::DateTime<chrono::Utc>>, // Deprecated: use per-resource watermarks
+		reconcile: bool,
 	) -> Result<Option<String>> {
 		debug!("Backfilling device-owned state with per-resource watermarks");
 
@@ -455,11 +523,15 @@ impl BackfillManager {
 		// Backfill each resource type with its own watermark
 		let mut final_checkpoint: Option<String> = None;
 		for model_type in model_types {
-			// Get per-resource watermark for this model type
-			let resource_watermark = self
-				.peer_sync
-				.get_resource_watermark(primary_peer, &model_type)
-				.await?;
+			// Get per-resource watermark for this model type. A reconciliation
+			// ignores it: it needs every record the peer owns.
+			let resource_watermark = if reconcile {
+				None
+			} else {
+				self.peer_sync
+					.get_resource_watermark(primary_peer, &model_type)
+					.await?
+			};
 
 			debug!(
 				model_type = %model_type,
@@ -474,6 +546,7 @@ impl BackfillManager {
 					vec![model_type.clone()],
 					None,
 					resource_watermark, // Per-resource watermark!
+					reconcile,
 				)
 				.await?;
 
@@ -526,6 +599,7 @@ impl BackfillManager {
 		model_types: Vec<String>,
 		checkpoint: Option<BackfillCheckpoint>,
 		since_watermark: Option<chrono::DateTime<chrono::Utc>>,
+		reconcile: bool,
 	) -> Result<(BackfillCheckpoint, Option<chrono::DateTime<chrono::Utc>>)> {
 		let mut current_checkpoint = checkpoint.unwrap_or_else(|| BackfillCheckpoint::start(peer));
 		// Track max timestamp from ONLY received records (not initialized to watermark)
@@ -542,6 +616,15 @@ impl BackfillManager {
 				model_type = %model_type,
 				"Backfilling model type"
 			);
+
+			// A full pass of a reconcilable model remembers every UUID the peer sent,
+			// so local copies it no longer has can be removed afterwards.
+			let reconcile_model = reconcile
+				&& since_watermark.is_none()
+				&& RECONCILED_MODELS.contains(&model_type.as_str());
+			let pass_started = chrono::Utc::now();
+			let mut received_uuids: std::collections::HashSet<Uuid> =
+				std::collections::HashSet::new();
 
 			// Request state in batches with cursor-based pagination
 			let mut cursor_checkpoint: Option<String> = None;
@@ -570,6 +653,9 @@ impl BackfillManager {
 
 					// Record data volume metrics before consuming records
 					let records_count = records.len() as u64;
+					if reconcile_model {
+						received_uuids.extend(records.iter().map(|record| record.uuid));
+					}
 
 					// Track max timestamp from received records for accurate watermark
 					for record in &records {
@@ -913,10 +999,78 @@ impl BackfillManager {
 				}
 			}
 
+			if reconcile_model {
+				self.reconcile_device_owned_model(peer, &model_type, &received_uuids, pass_started)
+					.await?;
+			}
+
 			current_checkpoint.mark_completed(model_type);
 		}
 
 		Ok((current_checkpoint, max_timestamp))
+	}
+
+	/// Removes local copies of `peer`'s records of `model_type` that its full pass
+	/// did not send.
+	///
+	/// Only records last written here before the pass started are removed: one the
+	/// peer created or changed during the pass may have arrived in real time after
+	/// the page that would have held it. Each removal goes through the model's
+	/// deletion, so an entry takes its subtree with it.
+	async fn reconcile_device_owned_model(
+		&self,
+		peer: Uuid,
+		model_type: &str,
+		received: &std::collections::HashSet<Uuid>,
+		pass_started: chrono::DateTime<chrono::Utc>,
+	) -> Result<usize> {
+		let batch_size = self.config.batching.backfill_batch_size;
+		let mut cursor: Option<(chrono::DateTime<chrono::Utc>, Uuid)> = None;
+		let mut stale = Vec::new();
+		loop {
+			let local = self
+				.peer_sync
+				.get_device_state(
+					vec![model_type.to_string()],
+					Some(peer),
+					None,
+					cursor,
+					batch_size,
+				)
+				.await?;
+			let has_more = local.len() >= batch_size;
+			cursor = local.last().map(|record| (record.timestamp, record.uuid));
+			stale.extend(
+				local
+					.into_iter()
+					.filter(|record| {
+						!received.contains(&record.uuid) && record.timestamp < pass_started
+					})
+					.map(|record| record.uuid),
+			);
+			if !has_more {
+				break;
+			}
+		}
+
+		let db = self.peer_sync.db().clone();
+		for uuid in &stale {
+			crate::infra::sync::registry::apply_deletion(model_type, *uuid, db.clone())
+				.await
+				.map_err(|e| anyhow::anyhow!("{}", e))?;
+		}
+
+		if stale.is_empty() {
+			debug!(peer = %peer, model_type, "Reconciliation found nothing stale");
+		} else {
+			info!(
+				peer = %peer,
+				model_type,
+				removed = stale.len(),
+				"Reconciliation removed records the peer no longer has"
+			);
+		}
+		Ok(stale.len())
 	}
 
 	/// Backfill shared resources
@@ -1006,13 +1160,21 @@ impl BackfillManager {
 										{
 											if let Some(uuid_str) = uuid_value.as_str() {
 												if let Ok(record_uuid) = Uuid::parse_str(uuid_str) {
-													// Snapshot rows carry no HLC, so preserve any versioned row.
+													// Snapshot rows carry no HLC, so preserve any versioned row
+													// that is still here. A versioned record whose row is gone
+													// (lost before 3.8.1) has nothing to preserve: insert it.
 													if self
 														.peer_sync
 														.peer_log()
 														.get_latest_hlc_for_record(record_uuid)
 														.await?
 														.is_some()
+														&& self
+															.snapshot_row_exists(
+																&model_type,
+																record_uuid,
+															)
+															.await
 													{
 														continue;
 													}

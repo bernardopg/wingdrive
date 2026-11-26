@@ -5,7 +5,7 @@
 //! 2. Alice pairs with Bob (direct) and sets up library sync
 //! 3. Bob receives Alice's data via sync
 //! 4. Bob pairs with Carol (direct) and sets up library sync
-//! 5. Bob vouches Carol to Alice (proxy pairing)
+//! 5. Bob vouches Carol to Alice (proxy pairing, `auto_vouch_to_all` on Bob)
 //! 6. Carol syncs Alice's location data directly from Alice (all devices online)
 //!
 //! This test uses:
@@ -31,6 +31,37 @@ use wing_core::{
 };
 
 const TEST_DIR: &str = "/tmp/wingdrive-transitive-sync-test";
+
+/// How long Alice and Bob stay up for Carol before giving up.
+const CAROL_DEADLINE: Duration = Duration::from_secs(240);
+
+/// Writes 8 folders of 25 small files under `root` and returns it.
+fn create_fixture(root: &std::path::Path) -> PathBuf {
+	for folder in 0..8 {
+		let dir = root.join(format!("folder-{folder}"));
+		std::fs::create_dir_all(&dir).unwrap();
+		for file in 0..25 {
+			std::fs::write(
+				dir.join(format!("file-{file:02}.txt")),
+				format!("folder {folder} file {file}"),
+			)
+			.unwrap();
+		}
+	}
+	root.to_path_buf()
+}
+
+/// Keeps a peer up until Carol reports success, so she can still sync from it.
+async fn wait_for_carol(who: &str) {
+	let start = tokio::time::Instant::now();
+	while std::fs::read_to_string(format!("{}/carol_success.txt", TEST_DIR)).is_err() {
+		if start.elapsed() > CAROL_DEADLINE {
+			println!("{who}: Carol did not finish in time");
+			return;
+		}
+		tokio::time::sleep(Duration::from_millis(500)).await;
+	}
+}
 
 /// Alice's scenario - indexes location, pairs with Bob, sets up sync
 #[tokio::test]
@@ -87,12 +118,10 @@ async fn alice_transitive_sync_scenario() {
 		.unwrap();
 	println!("Alice: Volume created: {}", volume);
 
-	// Index WingDrive source code as test data
+	// A generated tree, beside the data dir: content-indexing the whole repository
+	// took longer than the wait below on a cold debug build.
 	println!("Alice: Indexing location with real data...");
-	let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-		.parent()
-		.unwrap()
-		.to_path_buf();
+	let test_path = create_fixture(&PathBuf::from(format!("{}/alice_files", TEST_DIR)));
 
 	let location_args = LocationCreateArgs {
 		path: test_path.clone(),
@@ -158,6 +187,28 @@ async fn alice_transitive_sync_scenario() {
 			panic!("Alice: Indexing timeout");
 		}
 	}
+
+	// The location was linked to its volume after creation, so its root entry has
+	// none. Entries sync through their volume's owner: without one the root is never
+	// sent, and every folder and file below it waits on it forever on the peers.
+	let location = wing_core::infra::db::entities::location::Entity::find()
+		.filter(wing_core::infra::db::entities::location::Column::Id.eq(location_db_id))
+		.one(library.db().conn())
+		.await
+		.unwrap()
+		.expect("Location not found");
+	wing_core::infra::db::entities::entry::Entity::update_many()
+		.filter(
+			wing_core::infra::db::entities::entry::Column::Id
+				.eq(location.entry_id.expect("Location has no root entry")),
+		)
+		.col_expr(
+			wing_core::infra::db::entities::entry::Column::VolumeId,
+			sea_orm::sea_query::Expr::value(location.volume_id),
+		)
+		.exec(library.db().conn())
+		.await
+		.unwrap();
 
 	// Record entry count for verification
 	let alice_entry_count = wing_core::infra::db::entities::entry::Entity::find()
@@ -278,7 +329,7 @@ async fn alice_transitive_sync_scenario() {
 
 	// Carol should now be proxy-paired and start syncing
 	println!("Alice: Keeping sync service alive for Carol to sync...");
-	tokio::time::sleep(Duration::from_secs(30)).await;
+	wait_for_carol("Alice").await;
 
 	std::fs::write(format!("{}/alice_success.txt", TEST_DIR), "success").unwrap();
 	println!("Alice: Test completed");
@@ -334,6 +385,14 @@ async fn bob_transitive_sync_scenario() {
 	println!("Bob: Library created");
 
 	let device_id = core.device.device_id().unwrap();
+
+	// Bob pairs with Carol, so Bob is the one who vouches her to Alice; Alice
+	// accepts vouches by default.
+	{
+		let mut config = core.config.write().await;
+		config.proxy_pairing.auto_vouch_to_all = true;
+		config.save().unwrap();
+	}
 
 	// Initialize networking
 	println!("Bob: Initializing networking...");
@@ -527,7 +586,7 @@ async fn bob_transitive_sync_scenario() {
 
 	// Keep alive for Carol to sync
 	println!("Bob: Keeping sync service alive for Carol...");
-	tokio::time::sleep(Duration::from_secs(30)).await;
+	wait_for_carol("Bob").await;
 
 	std::fs::write(format!("{}/bob_success.txt", TEST_DIR), "success").unwrap();
 	println!("Bob: Test completed");

@@ -24,6 +24,18 @@ pub struct LockInfo {
 
 	/// Optional description (e.g., "indexing", "backup")
 	pub description: Option<String>,
+
+	/// Random ID of the process run that took the lock. A container starts its
+	/// server as PID 1 every time, so the PID alone made the previous run's lock
+	/// look held by the new one and the library failed to load after a restart.
+	#[serde(default)]
+	pub instance_id: Option<Uuid>,
+}
+
+/// This process run's ID, written into the locks it takes.
+fn process_instance_id() -> Uuid {
+	static INSTANCE: std::sync::OnceLock<Uuid> = std::sync::OnceLock::new();
+	*INSTANCE.get_or_init(Uuid::new_v4)
 }
 
 /// A lock that prevents concurrent access to a library
@@ -53,6 +65,7 @@ impl LibraryLock {
 					process_id: std::process::id(),
 					acquired_at: Utc::now(),
 					description: None,
+					instance_id: Some(process_instance_id()),
 				};
 
 				let json = serde_json::to_string_pretty(&lock_info)?;
@@ -96,6 +109,14 @@ impl LibraryLock {
 		// Also check if the process is still running
 		if let Ok(contents) = std::fs::read_to_string(lock_path) {
 			if let Ok(lock_info) = serde_json::from_str::<LockInfo>(&contents) {
+				// Our own PID with another run's ID: an earlier run that had the same
+				// PID (a restarted container) left it behind.
+				if lock_info.process_id == std::process::id()
+					&& lock_info.instance_id != Some(process_instance_id())
+				{
+					return Ok(true);
+				}
+
 				// Check if process is still running
 				if !is_process_running(lock_info.process_id) {
 					return Ok(true);
@@ -264,10 +285,36 @@ mod tests {
 			process_id: dead_pid,
 			acquired_at: Utc::now(),
 			description: None,
+			instance_id: None,
 		};
 		std::fs::write(&lock_path, serde_json::to_string(&lock_info).unwrap()).unwrap();
 
 		assert!(LibraryLock::is_lock_stale(&lock_path).unwrap());
+	}
+
+	/// A restarted container runs its server as PID 1 again: a lock an earlier
+	/// run left with that PID must not keep the library from loading.
+	#[test]
+	fn lock_from_an_earlier_run_with_our_pid_is_stale() {
+		let temp_dir = TempDir::new().unwrap();
+		let library_path = temp_dir.path().join("test.winglibrary");
+		std::fs::create_dir_all(&library_path).unwrap();
+		let lock_path = library_path.join(".winglibrary.lock");
+
+		for instance_id in [None, Some(Uuid::new_v4())] {
+			let lock_info = LockInfo {
+				device_id: Uuid::new_v4(),
+				process_id: std::process::id(),
+				acquired_at: Utc::now(),
+				description: None,
+				instance_id,
+			};
+			std::fs::write(&lock_path, serde_json::to_string(&lock_info).unwrap()).unwrap();
+			assert!(LibraryLock::is_lock_stale(&lock_path).unwrap());
+		}
+
+		let _lock = LibraryLock::acquire(&library_path).unwrap();
+		assert!(!LibraryLock::is_lock_stale(&lock_path).unwrap());
 	}
 
 	#[test]

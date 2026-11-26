@@ -742,6 +742,22 @@ impl DirectoryListingQuery {
 		} else {
 			None
 		};
+		// A recursive root (a volume walk) covers every path below it, including a folder
+		// created after the walk and one that no longer exists. Neither has a node in the
+		// index, and serving them from it listed "0 files" instead of the folder's entries
+		// or the error. Only a folder scanned itself, and still on disk, lists as empty.
+		let cached = match cached {
+			Some(index) => {
+				let has_node = index.read().await.list_directory(&local_path).is_some();
+				let empty_scanned_folder = !has_node
+					&& cache.is_indexed_directly(&local_path)
+					&& tokio::fs::metadata(&local_path)
+						.await
+						.is_ok_and(|metadata| metadata.is_dir());
+				(has_node || empty_scanned_folder).then_some(index)
+			}
+			None => None,
+		};
 		if let Some(index) = cached {
 			tracing::debug!(
 				"Found cached ephemeral index for path: {}",

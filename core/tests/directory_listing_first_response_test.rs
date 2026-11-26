@@ -88,3 +88,69 @@ async fn unindexed_folder_of_another_device_is_not_read_locally(
 	assert!(listing.files.is_empty(), "remote path listed local files");
 	Ok(())
 }
+
+fn listing_query(
+	device_slug: &str,
+	path: std::path::PathBuf,
+) -> Result<DirectoryListingQuery, Box<dyn std::error::Error + Send + Sync>> {
+	Ok(DirectoryListingQuery::from_input(DirectoryListingInput {
+		path: WingPath::Physical {
+			device_slug: device_slug.to_string(),
+			path,
+		},
+		folders_first: Some(false),
+		limit: None,
+		include_hidden: Some(false),
+		sort_by: DirectorySortBy::Name,
+		sort_direction: None,
+	})?)
+}
+
+/// A recursive root (a volume walk) covers every path below it. A folder created after
+/// that walk has no node in the index and used to list as "0 files"; a path that no
+/// longer exists listed empty instead of failing. Both flaked the Explorer smoke.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn paths_under_recursive_root_without_node_read_the_disk(
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+	use wing_core::ops::indexing::IndexScope;
+
+	let temp_dir = TempDir::new()?;
+	let core = Core::new(temp_dir.path().join("data")).await?;
+	let library = core
+		.libraries
+		.create_library("Listing", None, core.context.clone())
+		.await?;
+	let device = core.device.to_device()?;
+	let session =
+		SessionContext::device_session(device.id, device.name.clone()).with_library(library.id());
+
+	// The walk of the parent finished before the folder below existed.
+	let root = temp_dir.path().join("walked");
+	std::fs::create_dir_all(&root)?;
+	core.context
+		.ephemeral_cache()
+		.mark_indexing_complete(&root, IndexScope::Recursive);
+
+	let created_later = root.join("created-later");
+	std::fs::create_dir_all(&created_later)?;
+	for i in 0..5 {
+		std::fs::write(created_later.join(format!("file-{i}.txt")), "x")?;
+	}
+	let listing = listing_query(&device.slug, created_later)?
+		.execute(core.context.clone(), session.clone())
+		.await?;
+	assert_eq!(
+		listing.files.len(),
+		5,
+		"folder created after the walk listed empty"
+	);
+
+	let missing = listing_query(&device.slug, root.join("deleted-location"))?
+		.execute(core.context.clone(), session)
+		.await;
+	assert!(
+		missing.is_err(),
+		"missing folder listed as empty: {missing:?}"
+	);
+	Ok(())
+}

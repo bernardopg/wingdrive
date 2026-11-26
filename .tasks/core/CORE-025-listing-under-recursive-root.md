@@ -1,0 +1,52 @@
+---
+id: CORE-025
+title: Folders below a recursively indexed root list as empty when they are new or missing
+status: In Progress
+assignee: bernardopg
+parent: CORE-000
+priority: High
+milestone: M3
+sprint: S06
+tags: [core, indexing, explorer, bug, flaky]
+related_tasks: [CORE-021, TAURI-018]
+last_updated: 2026-11-26
+---
+
+## Description
+
+The Explorer smoke kept failing now and then after CORE-021 closed. In the CI of #551 the step that
+opens a deleted location showed "0 files" instead of the alert "Could not open this location", and
+the `v3.2.0` release smoke opened a folder with 10,002 items as "0 files" (CORE-021 never explained
+that one).
+
+Cause: the ephemeral index cache counts a path as indexed when a `Recursive` root covers it, such as
+the volume walk of `/tmp`. The listing then served the path from the index, and a path with no node
+there lists as empty. Two kinds of paths have no node under a finished walk:
+
+- a folder created after the walk (the smoke's fixture, created right after the server starts);
+- a folder that no longer exists (the smoke's `deleted-location`).
+
+Whether the walk finished before the smoke opened the folder decided the result, so the failure was
+intermittent.
+
+## Implementation
+
+`query_ephemeral_directory_impl` serves from the cache only when the folder has a node in the index,
+or when it was scanned itself (an empty folder has no node) and is still a directory on disk.
+Anything else falls through to the disk: a missing folder fails with the I/O error the Explorer
+shows, and a new one gets its own shallow scan. `EphemeralIndexCache::is_indexed_directly` tells a
+scanned folder from a covered one.
+
+## Implementation Steps
+
+- [x] Fall through to the disk for covered paths without a node.
+- [x] Regression test `paths_under_recursive_root_without_node_read_the_disk` in
+      `directory_listing_first_response_test`: a folder created after the walk lists its files and a
+      missing one fails.
+- [ ] Explorer smoke passes in CI on the pull request.
+
+## Acceptance Criteria
+
+- [x] A folder created under a walked root lists its entries on the first open.
+- [x] A missing folder under a walked root shows the error, not an empty folder.
+- [ ] The scheduled smoke runs of TAURI-018 stay green.
