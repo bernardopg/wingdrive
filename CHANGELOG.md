@@ -5,6 +5,16 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Fixed
+
+- Devices now compare everything they hold from each paired device once a week, and on the first
+  sync after updating, and remove what that device no longer has. Files deleted before 3.8.1 that
+  still showed on other devices disappear, and files that never arrived are fetched.
+- A folder created after the server finished scanning its disk opens with its files instead of
+  "0 files", and a folder that no longer exists shows an error instead of an empty folder.
+- A server restarted in a container loads its library again. The lock the previous run left looked
+  held, because the server is process 1 in every run.
+
 ## 3.8.1 — 2026-11-26
 
 This release makes sync between your devices dependable. Deleted and changed files now reach the
