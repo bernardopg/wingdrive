@@ -134,6 +134,7 @@
 	"Authenticating...": "Autenticando...",
 	"Pairing successful!": "Pareamento concluído!",
 	"Connected to {{device}}": "Conectado a {{device}}",
+	"Pairing failed: {{reason}}": "O pareamento falhou: {{reason}}",
 	"Device paired": "Dispositivo pareado",
 	"Failed to generate code": "Não foi possível gerar o código",
 	"Paste the full code or type the 12 words separated by hyphens": "Cole o código completo ou digite as 12 palavras separadas por hífen",

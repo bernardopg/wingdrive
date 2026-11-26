@@ -72,6 +72,16 @@ export function PairingPanel({
     setShowScanner(false);
   };
 
+  // A code generated on one tab keeps its session alive, and that session locked the other
+  // tab's form ("Processing...") until it expired. Switching tabs now ends it.
+  const switchMode = (next: "generate" | "join") => {
+    if (next === mode) return;
+    if (currentSession && currentSession.state !== "Completed") {
+      handleCancel();
+    }
+    setMode(next);
+  };
+
   const handleClose = () => {
     handleCancel();
     onClose();
@@ -182,7 +192,7 @@ export function PairingPanel({
           {/* Mode Tabs */}
           <View className="flex-row border-b border-app-line">
             <Pressable
-              onPress={() => setMode("generate")}
+              onPress={() => switchMode("generate")}
               className={`flex-1 px-6 py-3 ${
                 mode === "generate" ? "border-b-2 border-accent" : ""
               }`}
@@ -196,7 +206,7 @@ export function PairingPanel({
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => setMode("join")}
+              onPress={() => switchMode("join")}
               className={`flex-1 px-6 py-3 ${
                 mode === "join" ? "border-b-2 border-accent" : ""
               }`}
@@ -403,7 +413,13 @@ function JoinMode({
 }: any) {
   const { t } = useTranslation("common");
   const isLoading = joinPairing.isPending;
-  const state = currentSession?.state;
+  const sessionState = currentSession?.state;
+  // A failed session is over: show why and let the person try again instead of locking the form.
+  const failure =
+    sessionState && typeof sessionState === "object" && "Failed" in sessionState
+      ? sessionState.Failed.reason
+      : null;
+  const state = failure ? undefined : sessionState;
 
   return (
     <View className="gap-6">
@@ -485,6 +501,13 @@ function JoinMode({
       </View>
 
       {/* Status */}
+      {failure && (
+        <View className="p-3 bg-red-500/10 rounded-lg border border-red-500/30">
+          <Text className="text-sm text-red-400">
+            {t("Pairing failed: {{reason}}", { reason: failure })}
+          </Text>
+        </View>
+      )}
       {state && (
         <View className="flex-row items-center gap-2 p-3 bg-app-box/40 rounded-lg border border-app-line">
           <View className="w-2 h-2 rounded-full bg-accent" />
