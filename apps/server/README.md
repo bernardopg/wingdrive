@@ -155,14 +155,13 @@ $DATA_DIR/
 ```bash
 docker run -d \
   --name wingdrive \
-  -p 8080:8080 \
-  -p 7373:7373 \
+  --network host \
   -v /mnt/pool/wingdrive:/data \
   -v /mnt/pool/media:/media:ro \
   -e WING_AUTH=admin:password \
   -e TZ=UTC \
   --restart unless-stopped \
-  wingdrive/server:latest
+  ghcr.io/bernardopg/wingdrive/server:latest
 ```
 
 ## Building

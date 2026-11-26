@@ -1,0 +1,15 @@
+# Build the server image from this checkout instead of pulling it. Use it
+# together with docker-compose.yml, from apps/server:
+#
+#   WING_AUTH='me:a-long-password' docker compose \
+#     -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# The Dockerfile builds the web UI itself, so a clean checkout is enough.
+# The release build of wing-server needs about 5 GB of free memory.
+
+services:
+  wingdrive:
+    image: wingdrive-server:local
+    build:
+      context: ../..
+      dockerfile: apps/server/Dockerfile

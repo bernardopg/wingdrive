@@ -87,6 +87,57 @@ async fn health() -> &'static str {
 	"OK"
 }
 
+/// The HTTP routes. `/health` stays outside basic auth so container health
+/// checks and uptime monitors can reach it without credentials; it reveals
+/// nothing but "OK".
+fn app_router(state: AppState) -> Router {
+	let protected = Router::new()
+		.route("/rpc", post(daemon_rpc))
+		.route("/events", get(events_sse))
+		.route(
+			"/sidecar/{library_id}/{content_uuid}/{kind}/{*variant}",
+			get(serve_sidecar),
+		)
+		.fallback(serve_web)
+		.layer(middleware::from_fn_with_state(state.clone(), basic_auth));
+
+	Router::new()
+		.route("/health", get(health))
+		.merge(protected)
+		.with_state(state)
+}
+
+/// Whether the server bound to `host:port` answers `GET /health` with 200.
+/// A wildcard bind address is probed on the IPv6 and then the IPv4 loopback.
+fn health_check(host: std::net::IpAddr, port: u16) -> bool {
+	use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+
+	let targets: Vec<IpAddr> = if host.is_unspecified() {
+		vec![Ipv6Addr::LOCALHOST.into(), Ipv4Addr::LOCALHOST.into()]
+	} else {
+		vec![host]
+	};
+
+	targets
+		.into_iter()
+		.any(|ip| probe_health(SocketAddr::new(ip, port)).unwrap_or(false))
+}
+
+fn probe_health(addr: SocketAddr) -> std::io::Result<bool> {
+	use std::io::{Read, Write};
+
+	let timeout = Duration::from_secs(5);
+	let mut stream = std::net::TcpStream::connect_timeout(&addr, timeout)?;
+	stream.set_read_timeout(Some(timeout))?;
+	stream.set_write_timeout(Some(timeout))?;
+	stream.write_all(b"GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")?;
+
+	// The status line is all we need: "HTTP/1.1 200 OK".
+	let mut head = Vec::new();
+	stream.take(32).read_to_end(&mut head)?;
+	Ok(head.split(|b| *b == b' ').nth(1) == Some(b"200"))
+}
+
 /// Serve the embedded web UI. Looks up the requested path in `WebAssets`;
 /// if not found, falls back to `index.html` so client-side routing in the
 /// SPA continues to work for deep links like `/explorer/foo/bar`.
@@ -385,9 +436,22 @@ struct Args {
 	#[arg(long)]
 	instance: Option<String>,
 
+	/// Loopback port of the embedded daemon's RPC socket when no `--instance`
+	/// is given. A server sharing the host network with a desktop daemon,
+	/// which owns 6969, needs another one: otherwise it finds that daemon
+	/// running and serves the desktop's libraries instead of its own.
+	#[arg(long, env = "WING_DAEMON_PORT", default_value = "6969")]
+	daemon_port: u16,
+
 	/// Enable P2P networking
 	#[arg(long, env = "WING_P2P", default_value = "true")]
 	p2p: bool,
+
+	/// Ask the server already running on `--host`/`--port` whether `/health`
+	/// answers, then exit with 0 (healthy) or 1. The container image runs this
+	/// as its `HEALTHCHECK`, so the check needs no `curl` in the image.
+	#[arg(long)]
+	health_check: bool,
 }
 
 #[tokio::main]
@@ -401,6 +465,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.init();
 
 	let args = Args::parse();
+
+	if args.health_check {
+		let healthy =
+			tokio::task::spawn_blocking(move || health_check(args.host, args.port)).await?;
+		std::process::exit(if healthy { 0 } else { 1 });
+	}
 
 	// Resolve data directory
 	let base_data_dir = args.data_dir.unwrap_or_else(|| {
@@ -434,7 +504,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		let socket_addr = format!("127.0.0.1:{}", port);
 		(instance_data_dir, socket_addr)
 	} else {
-		let socket_addr = "127.0.0.1:6969".to_string();
+		let socket_addr = format!("127.0.0.1:{}", args.daemon_port);
 		(base_data_dir.clone(), socket_addr)
 	};
 
@@ -464,17 +534,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		data_dir: data_dir.clone(),
 	};
 
-	let app = Router::new()
-		.route("/health", get(health))
-		.route("/rpc", post(daemon_rpc))
-		.route("/events", get(events_sse))
-		.route(
-			"/sidecar/{library_id}/{content_uuid}/{kind}/{*variant}",
-			get(serve_sidecar),
-		)
-		.fallback(serve_web)
-		.layer(middleware::from_fn_with_state(state.clone(), basic_auth))
-		.with_state(state);
+	let app = app_router(state);
 
 	// Bind server
 	let addr = SocketAddr::new(args.host, args.port);
@@ -775,6 +835,59 @@ mod tests {
 	#[tokio::test]
 	async fn health_returns_ok() {
 		assert_eq!(health().await, "OK");
+	}
+
+	#[tokio::test]
+	async fn health_needs_no_credentials_but_other_routes_do() {
+		let mut auth = HashMap::new();
+		auth.insert("alice".to_string(), SecStr::from("secret"));
+		let app = app_router(test_state(
+			auth,
+			PathBuf::from("/tmp"),
+			"127.0.0.1:1".to_string(),
+		));
+
+		let health = app
+			.clone()
+			.oneshot(Request::get("/health").body(Body::empty()).unwrap())
+			.await
+			.unwrap();
+		assert_eq!(health.status(), StatusCode::OK);
+
+		let rpc = app
+			.oneshot(Request::post("/rpc").body(Body::empty()).unwrap())
+			.await
+			.unwrap();
+		assert_eq!(rpc.status(), StatusCode::UNAUTHORIZED);
+	}
+
+	#[tokio::test]
+	async fn health_check_reports_a_running_server_and_a_closed_port() {
+		let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+		let port = listener.local_addr().unwrap().port();
+		let app = app_router(test_state(
+			HashMap::new(),
+			PathBuf::from("/tmp"),
+			"127.0.0.1:1".to_string(),
+		));
+		tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+		let loopback = std::net::IpAddr::from([127, 0, 0, 1]);
+		assert!(
+			tokio::task::spawn_blocking(move || health_check(loopback, port))
+				.await
+				.unwrap()
+		);
+
+		// Nothing listens on the port once the probe's own listener is dropped.
+		let closed = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+		let closed_port = closed.local_addr().unwrap().port();
+		drop(closed);
+		assert!(
+			!tokio::task::spawn_blocking(move || health_check(loopback, closed_port))
+				.await
+				.unwrap()
+		);
 	}
 
 	#[tokio::test]

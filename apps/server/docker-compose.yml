@@ -1,60 +1,57 @@
+# WingDrive server: web UI, peer-to-peer sync and the headless daemon in one
+# container, from the published image. This file is all you need:
+#
+#   curl -O https://raw.githubusercontent.com/bernardopg/wingdrive/main/apps/server/docker-compose.yml
+#   WING_AUTH='me:a-long-password' docker compose up -d
+#
+# Open http://<this machine>:8080 and sign in with those credentials.
+# Update with `docker compose pull && docker compose up -d`.
+#
+# Building the image from a checkout instead: see docker-compose.build.yml.
+
+name: wingdrive
+
 services:
   wingdrive:
-    build:
-      context: ../..
-      dockerfile: apps/server/Dockerfile
-	container_name: wingdrive-server
+    image: ghcr.io/bernardopg/wingdrive/server:latest
+    container_name: wingdrive-server
     restart: unless-stopped
 
-    # Ports
-    ports:
-      - "8080:8080"  # HTTP server
-      - "7373:7373"  # P2P networking
+    # Host networking, so other devices find this server for pairing (mDNS on
+    # the local network) and peer-to-peer sync can use the UDP port it picks.
+    # Linux only: Docker Desktop on macOS and Windows has no host network.
+    network_mode: host
 
-    # Volumes
     volumes:
-		- wingdrive-data:/data
-      # Optional: Mount your file systems here
-      # - /mnt/storage:/storage:ro
+      # Libraries, settings and thumbnails.
+      - wingdrive-data:/data
+      # Folders to index. Add a location for /media in the web UI afterwards.
+      # Mount read-only (:ro) when WingDrive should never change the files.
+      # - /mnt/storage:/media/storage
 
-    # Environment variables
     environment:
-      # Data directory (inside container)
-      - DATA_DIR=/data
+      # Sign-in for the web UI: "user:password", or several separated by commas.
+      # Required: the server does not start with a default password.
+      WING_AUTH: ${WING_AUTH:?set WING_AUTH to user:password}
+      # Web UI port.
+      PORT: ${WING_PORT:-8080}
+      # Address the web UI binds to. The default (::) listens on every
+      # interface; set one address when another service, such as
+      # `tailscale serve`, holds the same port elsewhere.
+      # WING_HOST: 192.168.1.10
+      # Loopback port of the server's own daemon. Not 6969, which the desktop
+      # app's daemon owns on a machine that runs both.
+      WING_DAEMON_PORT: ${WING_DAEMON_PORT:-6979}
+      RUST_LOG: ${RUST_LOG:-info}
+      TZ: ${TZ:-UTC}
 
-      # HTTP server port
-      - PORT=8080
+    # The image's own health check (wing-server --health-check) applies; it
+    # reads PORT and WING_HOST from the environment above.
 
-      # Authentication (REQUIRED for security!)
-      # Format: "username:password,username2:password2"
-      # Or set to "disabled" to disable auth (NOT RECOMMENDED)
-      - WING_AUTH=${WING_AUTH:-admin:changeme}
-
-      # Enable P2P networking
-      - WING_P2P=true
-
-      # Logging
-      - RUST_LOG=info,wing_core=debug
-
-      # Timezone
-      - TZ=UTC
-
-    # Health check
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-    # Resource limits (adjust as needed)
     deploy:
       resources:
         limits:
           memory: 2G
-        reservations:
-          memory: 512M
 
 volumes:
-	wingdrive-data:
-    driver: local
+  wingdrive-data:
