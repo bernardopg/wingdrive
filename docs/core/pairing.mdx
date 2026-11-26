@@ -614,6 +614,34 @@ Check:
 - Verify dns.iroh.link is accessible (not blocked by corporate firewalls)
 - Try generating a fresh code
 
+### Device Found but Connection Times Out
+
+The error reads "found the other device on the local network but could not connect to it". mDNS
+reached the other device, so both are on the same network, but its QUIC packets never got back.
+Two setups cause it:
+
+- **A VPN on the phone that routes the local network.** Tailscale with a subnet router advertising
+  your LAN (for example `192.168.15.0/24`), with "Use Tailscale subnets" on, sends the app's
+  replies to the LAN through the tunnel. They come back from another address and the connection
+  never completes. Android also keeps apps under a VPN from receiving packets on other interfaces.
+  Exclude WingDrive from the VPN (Tailscale: *Settings > Excluded apps*), turn off the subnet routes
+  on the phone while at home, or let the phone generate the code instead: when the phone dials
+  out, the connection works through the VPN.
+- **A host firewall that drops incoming UDP** (UFW's default `deny incoming`), on a computer with
+  more than one interface on the LAN (cable and Wi-Fi). The other device answers on the address it
+  was told about, not the one the packet came from, and the firewall drops it. Allow UDP from the
+  LAN, or keep one interface on it.
+
+When both devices are on Tailscale, pairing can also complete over their `100.x` addresses: try
+again, since the tunnel between them may need a few seconds to come up.
+
+### Join Hangs After Connecting
+
+Fixed after 3.8.0. A device that already had connections to other peers (a paired computer, a server)
+sent its pairing request to whichever came first instead of the device that showed the code, and
+waited for an answer forever. The request now goes to the device found through the code, and the
+join fails after 120 seconds without an answer.
+
 ### Code Invalid or Expired
 
 Solutions:

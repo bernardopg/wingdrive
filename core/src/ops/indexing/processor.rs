@@ -5,7 +5,10 @@
 //! happen in a single transaction. This ensures entries either have valid content_id references
 //! or remain unlinked if processing fails.
 
-use super::{database_storage::DatabaseStorage, state::EntryKind};
+use super::{
+	database_storage::{ContentLinkResult, DatabaseStorage},
+	state::EntryKind,
+};
 use crate::domain::content_identity::ContentHashGenerator;
 use anyhow::Result;
 use sea_orm::DatabaseConnection;
@@ -142,8 +145,23 @@ impl ContentHashProcessor {
 		entry: &ProcessorEntry,
 		registry: &crate::filetype::FileTypeRegistry,
 	) -> Result<ProcessorResult> {
+		Ok(match self.link(db, entry, registry).await? {
+			Some(_) => ProcessorResult::success(1, entry.size),
+			None => ProcessorResult::success(0, 0),
+		})
+	}
+
+	/// Hashes the file and links its content identity, returning the records that
+	/// changed so the caller can send them to peers. `None` when there was nothing
+	/// to do: a directory, or a file that already has a content identity.
+	pub async fn link(
+		&self,
+		db: &DatabaseConnection,
+		entry: &ProcessorEntry,
+		registry: &crate::filetype::FileTypeRegistry,
+	) -> Result<Option<ContentLinkResult>> {
 		if !matches!(entry.kind, EntryKind::File) || entry.content_id.is_some() {
-			return Ok(ProcessorResult::success(0, 0));
+			return Ok(None);
 		}
 
 		debug!("→ Generating content hash for: {}", entry.path.display());
@@ -151,7 +169,7 @@ impl ContentHashProcessor {
 		let content_hash = ContentHashGenerator::generate_content_hash(&entry.path).await?;
 		debug!("✓ Generated content hash: {}", content_hash);
 
-		DatabaseStorage::link_to_content_identity(
+		let result = DatabaseStorage::link_to_content_identity(
 			db,
 			entry.id,
 			&entry.path,
@@ -162,7 +180,7 @@ impl ContentHashProcessor {
 
 		debug!("✓ Linked content identity for entry {}", entry.id);
 
-		Ok(ProcessorResult::success(1, entry.size))
+		Ok(Some(result))
 	}
 }
 

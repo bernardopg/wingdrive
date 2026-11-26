@@ -147,12 +147,16 @@ impl Library {
 			.get_or_try_init(|| async {
 				let installed =
 					crate::ops::adapters::store::installed_dir(&self.core_context.data_dir);
-				let source_manager =
-					crate::data::manager::SourceManager::new(self.path.clone(), installed)
-						.await
-						.map_err(|e| {
-							LibraryError::Other(format!("Failed to create source manager: {e}"))
-						})?;
+				let source_manager = crate::data::manager::SourceManager::new(
+					self.path.clone(),
+					installed,
+					self.core_context.key_manager.clone(),
+					self.id(),
+				)
+				.await
+				.map_err(|e| {
+					LibraryError::Other(format!("Failed to create source manager: {e}"))
+				})?;
 				debug!("Source manager initialized for library {}", self.id());
 				Ok::<_, LibraryError>(Arc::new(source_manager))
 			})

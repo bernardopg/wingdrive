@@ -51,6 +51,13 @@ wing network pair status
 
 Paired devices send their current name, type, operating system and app version every time they connect, so a renamed or reinstalled device shows up with its new description.
 
+### If the devices find each other but do not connect
+
+"Found the other device on the local network but could not connect to it" means the packets do not come back. Two common causes:
+
+- A VPN on the phone that routes your home network, such as Tailscale with a subnet router for your LAN. Exclude WingDrive from the VPN, or turn off the VPN's subnet routes at home. Generating the code on the phone and entering it on the computer also works.
+- A firewall on the computer that drops incoming UDP when the computer has more than one connection to the network (cable and Wi-Fi). Allow UDP from your local network.
+
 ## Remove a pairing
 
 ```bash

@@ -35,6 +35,19 @@ struct RetryEntry {
 	next_retry: DateTime<Utc>,
 }
 
+/// A due message taken out of the queue by [`RetryQueue::get_ready`].
+#[derive(Debug, Clone)]
+pub struct RetryItem {
+	/// Device the message is for
+	pub target_device: Uuid,
+
+	/// Message to send
+	pub message: SyncMessage,
+
+	/// Failed attempts so far
+	attempts: u32,
+}
+
 /// Retry queue for failed message sends
 pub struct RetryQueue {
 	queue: RwLock<VecDeque<RetryEntry>>,
@@ -60,54 +73,53 @@ impl RetryQueue {
 		self.queue.write().await.push_back(entry);
 	}
 
-	/// Get messages that are ready for retry
+	/// Takes the messages that are due out of the queue.
 	///
-	/// Processes entries in-place to avoid race conditions from popping/re-queuing.
-	/// Atomically removes ready entries and updates remaining entries in one write lock.
-	pub async fn get_ready(&self) -> Vec<(Uuid, SyncMessage)> {
+	/// The caller sends them and hands each failure back with [`RetryQueue::requeue`]. Taking a
+	/// message out only on success would keep a delivered message in the queue: it used to be
+	/// re-sent with backoff until it hit the retry limit.
+	pub async fn get_ready(&self) -> Vec<RetryItem> {
 		let now = Utc::now();
 		let mut queue = self.queue.write().await;
 		let mut ready = Vec::new();
 		let mut i = 0;
 
-		// Process entries in-place without popping the entire queue
 		while i < queue.len() {
-			let entry = &queue[i];
-
-			if entry.next_retry <= now {
-				// This entry is ready - remove it from queue
-				let mut entry = queue.remove(i).unwrap();
-				entry.attempts += 1;
-
-				if entry.attempts >= MAX_RETRIES {
-					// Max retries reached, drop it (don't re-queue)
-					tracing::warn!(
-						target_device = %entry.target_device,
-						attempts = entry.attempts,
-						"Max retries reached, dropping message"
-					);
-					// Don't increment i - we removed an element
-					continue;
-				}
-
-				// Add to ready list
-				ready.push((entry.target_device, entry.message.clone()));
-
-				// Calculate exponential backoff delay
-				let delay_secs = INITIAL_DELAY_SECS * (2_i64.pow(entry.attempts));
-				entry.next_retry = now + Duration::seconds(delay_secs);
-
-				// Re-insert at end of queue
-				queue.push_back(entry);
-
-				// Don't increment i - we removed an element
+			if queue[i].next_retry <= now {
+				let entry = queue.remove(i).expect("index checked against len");
+				ready.push(RetryItem {
+					target_device: entry.target_device,
+					message: entry.message,
+					attempts: entry.attempts,
+				});
 			} else {
-				// Not ready yet, move to next entry
 				i += 1;
 			}
 		}
 
 		ready
+	}
+
+	/// Puts back a message whose send failed, with exponential backoff, or drops it once it
+	/// has used up its attempts. Catch-up delivers what a dropped message carried.
+	pub async fn requeue(&self, item: RetryItem) {
+		let attempts = item.attempts + 1;
+		if attempts >= MAX_RETRIES {
+			tracing::warn!(
+				target_device = %item.target_device,
+				attempts,
+				"Max retries reached, dropping message"
+			);
+			return;
+		}
+
+		let delay_secs = INITIAL_DELAY_SECS * (2_i64.pow(attempts));
+		self.queue.write().await.push_back(RetryEntry {
+			target_device: item.target_device,
+			message: item.message,
+			attempts,
+			next_retry: Utc::now() + Duration::seconds(delay_secs),
+		});
 	}
 
 	/// Get current queue size
@@ -144,7 +156,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn ready_entry_uses_exponential_backoff_and_preserves_target() {
+	async fn ready_entry_is_taken_out_and_requeue_backs_off() {
 		let queue = RetryQueue::new();
 		let device_id = Uuid::new_v4();
 		let library_id = Uuid::new_v4();
@@ -163,10 +175,10 @@ mod tests {
 			q[0].next_retry = Utc::now() - Duration::seconds(1);
 		}
 
-		let ready = queue.get_ready().await;
+		let mut ready = queue.get_ready().await;
 		assert_eq!(ready.len(), 1);
-		assert_eq!(ready[0].0, device_id);
-		match &ready[0].1 {
+		assert_eq!(ready[0].target_device, device_id);
+		match &ready[0].message {
 			SyncMessage::Error {
 				library_id: id,
 				message,
@@ -176,7 +188,10 @@ mod tests {
 			}
 			other => panic!("unexpected message: {other:?}"),
 		}
+		// A delivered message is gone: nothing re-sends it.
+		assert!(queue.is_empty().await);
 
+		queue.requeue(ready.remove(0)).await;
 		let q = queue.queue.read().await;
 		assert_eq!(q.len(), 1);
 		assert_eq!(q[0].attempts, 1);
@@ -196,8 +211,9 @@ mod tests {
 				let mut q = queue.queue.write().await;
 				q[0].next_retry = Utc::now() - Duration::seconds(1);
 			}
-			let ready = queue.get_ready().await;
+			let mut ready = queue.get_ready().await;
 			assert_eq!(ready.len(), 1, "attempt {expected} should be ready");
+			queue.requeue(ready.remove(0)).await;
 			assert_eq!(queue.len().await, 1);
 		}
 
@@ -205,9 +221,13 @@ mod tests {
 			let mut q = queue.queue.write().await;
 			q[0].next_retry = Utc::now() - Duration::seconds(1);
 		}
-		let ready = queue.get_ready().await;
-		assert!(ready.is_empty(), "message should be dropped at max retries");
-		assert!(queue.is_empty().await);
+		let mut ready = queue.get_ready().await;
+		assert_eq!(ready.len(), 1);
+		queue.requeue(ready.remove(0)).await;
+		assert!(
+			queue.is_empty().await,
+			"message should be dropped at max retries"
+		);
 	}
 
 	#[tokio::test]
@@ -226,7 +246,7 @@ mod tests {
 
 		let ready = queue.get_ready().await;
 		assert_eq!(ready.len(), 1);
-		assert_eq!(ready[0].0, due_device);
-		assert_eq!(queue.len().await, 2);
+		assert_eq!(ready[0].target_device, due_device);
+		assert_eq!(queue.len().await, 1);
 	}
 }

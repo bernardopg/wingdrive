@@ -42,6 +42,14 @@ impl Library {
 	/// for frontend reactivity are emitted separately by ResourceManager when it
 	/// detects sync changes via the transaction manager.
 	pub async fn sync_model<M: Syncable>(&self, model: &M, change_type: ChangeType) -> Result<()> {
+		if change_type == ChangeType::Delete
+			&& crate::infra::sync::is_device_owned(M::SYNC_MODEL).await
+		{
+			return self
+				.sync_device_owned_deletions(M::SYNC_MODEL, vec![model.sync_id()])
+				.await;
+		}
+
 		let data = model
 			.to_sync_json()
 			.map_err(|e| anyhow::anyhow!("Failed to serialize model: {}", e))?;
@@ -71,6 +79,14 @@ impl Library {
 		change_type: ChangeType,
 		db: &DatabaseConnection,
 	) -> Result<()> {
+		if change_type == ChangeType::Delete
+			&& crate::infra::sync::is_device_owned(M::SYNC_MODEL).await
+		{
+			return self
+				.sync_device_owned_deletions(M::SYNC_MODEL, vec![model.sync_id()])
+				.await;
+		}
+
 		// For Entry model, we need the database ID before it's excluded from sync JSON
 		// This is required to fetch directory_path for location roots
 		let entry_db_id = if M::SYNC_MODEL == "entry" {
@@ -153,6 +169,17 @@ impl Library {
 			return Ok(());
 		}
 
+		if change_type == ChangeType::Delete
+			&& crate::infra::sync::is_device_owned(M::SYNC_MODEL).await
+		{
+			return self
+				.sync_device_owned_deletions(
+					M::SYNC_MODEL,
+					models.iter().map(|model| model.sync_id()).collect(),
+				)
+				.await;
+		}
+
 		debug!("Batch syncing {} {} records", models.len(), M::SYNC_MODEL);
 
 		// Convert all models to sync JSON with FK mapping
@@ -222,6 +249,76 @@ impl Library {
 	}
 
 	// ============ Internal Helpers ============
+
+	/// Announce deleted device-owned records to peers.
+	///
+	/// Device-owned records sync as their full state, so a deletion used to go out as the
+	/// record's last state and peers kept it forever. Each deletion now records a tombstone,
+	/// which a peer that is offline receives in its next catch-up, and goes out right away
+	/// as a state change carrying the deletion marker
+	/// ([`crate::infra::sync::deletion_state`]).
+	async fn sync_device_owned_deletions(&self, model_type: &str, uuids: Vec<Uuid>) -> Result<()> {
+		use crate::infra::db::entities::{device, device_state_tombstone};
+		use sea_orm::{sea_query::OnConflict, ActiveValue::NotSet, ColumnTrait, QueryFilter, Set};
+
+		if uuids.is_empty() {
+			return Ok(());
+		}
+		let device_uuid = self.device_id()?;
+		let db = self.db().conn();
+
+		match device::Entity::find()
+			.filter(device::Column::Uuid.eq(device_uuid))
+			.one(db)
+			.await?
+		{
+			Some(device) => {
+				let deleted_at = chrono::Utc::now();
+				for chunk in uuids.chunks(500) {
+					let rows = chunk
+						.iter()
+						.map(|uuid| device_state_tombstone::ActiveModel {
+							id: NotSet,
+							model_type: Set(model_type.to_string()),
+							record_uuid: Set(*uuid),
+							device_id: Set(device.id),
+							deleted_at: Set(deleted_at),
+						});
+					device_state_tombstone::Entity::insert_many(rows)
+						.on_conflict(
+							OnConflict::columns([
+								device_state_tombstone::Column::ModelType,
+								device_state_tombstone::Column::RecordUuid,
+								device_state_tombstone::Column::DeviceId,
+							])
+							.update_column(device_state_tombstone::Column::DeletedAt)
+							.to_owned(),
+						)
+						.exec(db)
+						.await?;
+				}
+			}
+			None => warn!(
+				model_type,
+				"This device has no row in the library; deletions sync only in real time"
+			),
+		}
+
+		debug!("Announcing {} deleted {} records", uuids.len(), model_type);
+		for uuid in uuids {
+			self.transaction_manager()
+				.commit_device_owned(
+					self.id(),
+					model_type,
+					uuid,
+					device_uuid,
+					crate::infra::sync::deletion_state(uuid),
+				)
+				.await
+				.map_err(|e| anyhow::anyhow!("Failed to announce deletion: {}", e))?;
+		}
+		Ok(())
+	}
 
 	/// Helper to get device ID from core context
 	fn device_id(&self) -> Result<Uuid> {

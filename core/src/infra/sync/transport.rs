@@ -147,8 +147,10 @@ pub trait NetworkTransport: Send + Sync {
 	///
 	/// `false` otherwise (device offline, not paired, etc.)
 	async fn is_device_reachable(&self, device_uuid: Uuid) -> bool {
-		// Default implementation: can be overridden for more efficient checks
-		false
+		// Sync skips partners this reports unreachable and queues their messages for retry,
+		// so a transport that cannot tell must say yes and let the send decide.
+		let _ = device_uuid;
+		true
 	}
 
 	/// Get transport name for debugging

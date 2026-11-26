@@ -33,6 +33,24 @@ fn notify_mode(recursive: bool) -> RecursiveMode {
 	}
 }
 
+/// The deepest watched root that holds `path`, among the roots `accept` admits.
+///
+/// Watches nest: a location watched recursively usually sits under folders the
+/// browser watches shallowly (the home folder, `/home`). Taking the first holder
+/// in map order picked one of those about half the time, so a folder created in
+/// the location got no watch and changes inside it were never seen, and events
+/// were filtered with the wrong root's rules.
+fn closest_root<'a>(
+	watched: &'a HashMap<PathBuf, WatchState>,
+	path: &Path,
+	accept: impl Fn(&Path, &WatchState) -> bool,
+) -> Option<(&'a PathBuf, &'a WatchState)> {
+	watched
+		.iter()
+		.filter(|(root, state)| path.starts_with(root) && accept(root, state))
+		.max_by_key(|(root, _)| root.components().count())
+}
+
 /// Collect the watchable directories of a tree with generated trees omitted.
 ///
 /// Runs on a blocking thread: `read_dir` over hundreds of thousands of
@@ -385,11 +403,10 @@ impl FsWatcherInner {
 	#[cfg(target_os = "linux")]
 	async fn covering_recursive_root(&self, path: &Path) -> Option<(PathBuf, WatchConfig)> {
 		let watched = self.watched_paths.read().await;
-		watched
-			.iter()
-			.find(|(root, _)| path.starts_with(*root) && root.as_path() != path)
-			.filter(|(_, state)| state.config.recursive)
-			.map(|(root, state)| (root.clone(), state.config.clone()))
+		closest_root(&watched, path, |root, state| {
+			state.config.recursive && root != path
+		})
+		.map(|(root, state)| (root.clone(), state.config.clone()))
 	}
 
 	/// Keep the OS watch set in sync with raw filesystem events (Linux).
@@ -692,10 +709,9 @@ impl FsWatcher {
 						// Check if path should be filtered
 						let should_process = if let Some(path) = raw_event.primary_path() {
 							let watched = inner.watched_paths.read().await;
-							// Find the watch config for this path
-							let config = watched.iter().find(|(watched_path, _)| {
-								path.starts_with(watched_path)
-							}).map(|(_, state)| &state.config);
+							// The filters of the deepest watch that holds the path
+							let config = closest_root(&watched, path, |_, _| true)
+								.map(|(_, state)| &state.config);
 
 							if let Some(config) = config {
 								!config.filters.should_skip(path)
@@ -757,6 +773,50 @@ impl Default for FsWatcher {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	fn state(recursive: bool) -> WatchState {
+		WatchState {
+			config: WatchConfig {
+				recursive,
+				filters: crate::config::EventFilters::default(),
+			},
+			ref_count: 1,
+		}
+	}
+
+	/// A location under folders the browser watches shallowly: whichever order the
+	/// map yields them in, a new folder in the location belongs to the location.
+	#[test]
+	fn closest_root_prefers_the_deepest_holder() {
+		for _ in 0..64 {
+			let watched = HashMap::from([
+				(PathBuf::from("/home"), state(false)),
+				(PathBuf::from("/home/user"), state(false)),
+				(PathBuf::from("/home/user/Docs"), state(true)),
+				(PathBuf::from("/srv"), state(true)),
+			]);
+			let new_dir = Path::new("/home/user/Docs/new");
+
+			let recursive = closest_root(&watched, new_dir, |root, state| {
+				state.config.recursive && root != new_dir
+			});
+			assert_eq!(
+				recursive.map(|(root, _)| root.as_path()),
+				Some(Path::new("/home/user/Docs"))
+			);
+
+			let any = closest_root(&watched, new_dir, |_, _| true);
+			assert_eq!(
+				any.map(|(root, _)| root.as_path()),
+				Some(Path::new("/home/user/Docs"))
+			);
+
+			let outside = closest_root(&watched, Path::new("/home/user/Music"), |_, state| {
+				state.config.recursive
+			});
+			assert!(outside.is_none());
+		}
+	}
 	use std::time::Duration;
 	use tempfile::TempDir;
 

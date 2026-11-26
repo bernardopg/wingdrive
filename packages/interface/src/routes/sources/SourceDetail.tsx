@@ -7,6 +7,7 @@ import {
 	DotsThree,
 	Trash,
 	ArrowSquareUp,
+	PencilSimple,
 } from "@phosphor-icons/react";
 import {
 	useCoreQuery,
@@ -20,6 +21,7 @@ import { ExpandableSearchButton } from "../explorer/components/ExpandableSearchB
 import { SourcePathBar } from "../../components/Sources/SourcePathBar";
 import { SourceDataRow } from "../../components/Sources/SourceDataRow";
 import { useTranslation } from "../../i18n";
+import { ConfigureForm, Modal } from "./Adapters";
 
 const PAGE_SIZE = 100;
 
@@ -28,6 +30,7 @@ export function SourceDetail() {
 	const { sourceId } = useParams<{ sourceId: string }>();
 	const navigate = useNavigate();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [editing, setEditing] = useState(false);
 	const [searchValue, setSearchValue] = useState("");
 	const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -275,6 +278,7 @@ export function SourceDetail() {
 									)
 								}
 								isUpdating={false}
+								onEdit={() => setEditing(true)}
 								onDelete={() => setShowDeleteConfirm(true)}
 							/>
 						</TopBarItem>
@@ -362,6 +366,24 @@ export function SourceDetail() {
 			</div>
 
 			{/* Delete confirmation */}
+			{editing && source && (
+				<Modal onClose={() => setEditing(false)}>
+					<h2 className="text-ink mb-4 text-base font-semibold">
+						{t("sources.editTitle", { name: source.name })}
+					</h2>
+					<ConfigureForm
+						adapterId={source.adapter_id}
+						adapterName={source.name}
+						sourceId={source.id}
+						sourceName={source.name}
+						onDone={() => {
+							setEditing(false);
+							void refetch();
+						}}
+					/>
+				</Modal>
+			)}
+
 			{showDeleteConfirm && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
 					<div className="border-app-line bg-app-box w-full max-w-sm rounded-xl border p-6 shadow-2xl">
@@ -412,11 +434,13 @@ function MoreActionsMenu({
 	adapterHasUpdate,
 	onUpdate,
 	isUpdating,
+	onEdit,
 	onDelete,
 }: {
 	adapterHasUpdate: boolean;
 	onUpdate: () => void;
 	isUpdating: boolean;
+	onEdit: () => void;
 	onDelete: () => void;
 }) {
 	const { t } = useTranslation("navigation");
@@ -446,6 +470,16 @@ function MoreActionsMenu({
 						{isUpdating ? t("common.updating") : t("sources.updateAdapter")}
 					</button>
 				)}
+				<button
+					onClick={() => {
+						onEdit();
+						popover.setOpen(false);
+					}}
+					className="hover:bg-app-hover text-ink flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm"
+				>
+					<PencilSimple size={16} />
+					{t("sources.edit")}
+				</button>
 				<button
 					onClick={() => {
 						onDelete();

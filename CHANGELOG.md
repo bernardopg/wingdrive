@@ -5,15 +5,63 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Added
+
+- Sources can be edited: Edit source in a source's menu changes its name and settings. A saved
+  token stays saved unless a new one is typed (`sources.update`, `sources.config`).
+
+### Fixed
+
+- Changes and deletions reach your other devices. A file deleted on one device stayed on every
+  other device, and a file that grew or changed after it was indexed kept its old size there.
+  Deletions now go out right away and are kept for devices that are offline. A file saved into a
+  location while WingDrive runs also reaches them with its content identity: before, the other
+  device held every later change to that file waiting for a record that never came.
+- Files in a folder created while WingDrive runs are seen again. Once the home folder had been
+  opened, a new folder inside a location got no watch about half the time, so nothing saved in it
+  was indexed until the daemon restarted.
+- A paired device that is offline no longer slows sync for the others. Every change waited 30
+  seconds for it before the next one went out, so with a phone switched off a change took minutes
+  to reach the server. Changes for an offline device now wait in the retry queue, which serves
+  each device on its own and no longer re-sends messages that were delivered.
+- A new device in a library gets the files the others add. Catch-up handles one peer at a time,
+  and an offline device first in the list failed every pass and was picked again, put every peer
+  in backoff and finally forced a full backfill. Backfill and catch-up now only use peers that are
+  connected.
+- Changes to shared records (a new file's content, tags) made while the device was catching up
+  with a peer go out right away. They were held and then dropped as duplicates, so the other
+  devices only got them a minute or more later, when they next pulled this device's log.
+- Joining with a pairing code no longer hangs on a device that already talks to other devices.
+  The request went to whichever connected device came first, such as the server, instead of the
+  one that showed the code, and the join waited for an answer forever. It now goes to the device
+  found through the code, and gives up after two minutes.
+- On the phone, a code generated on one tab no longer locks "Join with code" in "Processing...",
+  and a failed pairing shows why and lets you try again.
+- Pairing errors say what failed on each path, and say so when the other device was found but
+  could not be reached, instead of "initiator not found". A failed join no longer blocks the next
+  try with "Session ... already exists".
+
 ### Performance
 
+- Copying a file from another device is faster: chunks are read and written through 4 MiB buffers
+  instead of one disk call per 64 KiB, and progress updates every MiB instead of every chunk.
 - The Rust build compiles 86 fewer crates: 29 dependencies that no code used are gone, among them
   the vendored OpenSSL build of the Android core, the terminal UI stack of the command line and the
   network watchers of `wing-core`. The platform file-opening crates fetch their dependencies only on
   their own system.
 
+### Security
+
+- Secret source settings, such as an access token, are kept in WingDrive's encrypted secret store
+  instead of in plain text in the archive registry. Sources created before move theirs at their next
+  sync.
+
 ### Internal
 
+- The list of devices to reconnect is logged at debug level: every device wrote a line per paired
+  device every 30 seconds.
+- Copy logs no longer write a progress line per 64 KiB chunk, and queries log at debug level, so a
+  screen that polls every second no longer fills the log.
 - CI skips work that repeats a passed run. A version bump alone runs no build gate, no Explorer
   smoke and no Windows installer build; TypeScript checks run only for TypeScript changes, and the
   Explorer smoke only for Rust or web interface changes. A merge to `main` no longer repeats the

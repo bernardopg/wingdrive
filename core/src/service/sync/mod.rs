@@ -347,10 +347,7 @@ impl SyncService {
 						DeviceSyncState::Uninitialized => {
 							if !backfill_attempted {
 								// Get available sync partners from network (library-scoped)
-								match peer_sync.network().get_connected_sync_partners(
-									peer_sync.library_id(),
-									peer_sync.db(),
-								).await {
+								match reachable_sync_partners(&peer_sync).await {
 									Ok(partners) if !partners.is_empty() => {
 										info!("Device uninitialized - attempting automatic backfill");
 										info!("Found {} connected partners, starting backfill", partners.len());
@@ -448,10 +445,7 @@ impl SyncService {
 						DeviceSyncState::Ready => {
 							// Check for connected partners and catch up if watermarks are outdated
 							// FIX: Iterate ALL partners and check per-peer watermarks from sync.db
-							match peer_sync.network().get_connected_sync_partners(
-								peer_sync.library_id(),
-								peer_sync.db(),
-							).await {
+							match reachable_sync_partners(&peer_sync).await {
 								Ok(partners) if !partners.is_empty() => {
 									// If real-time broadcasts are happening, skip catch-up to prevent duplication.
 									// Falls through to sleep rather than `continue` to avoid busy-looping.
@@ -882,4 +876,24 @@ async fn run_metrics_persistence_task(
 			);
 		}
 	}
+}
+
+/// Library sync partners with a live connection.
+///
+/// `get_connected_sync_partners` returns every paired partner, offline ones included. Backfill
+/// and catch-up handle one peer at a time, and an offline one first in the list failed every
+/// pass: catch-up never marked it done, so it came first again, its failures put all peers in
+/// backoff and escalated to a full backfill, and a new device never got caught up with.
+async fn reachable_sync_partners(peer_sync: &PeerSync) -> anyhow::Result<Vec<Uuid>> {
+	let network = peer_sync.network();
+	let partners = network
+		.get_connected_sync_partners(peer_sync.library_id(), peer_sync.db())
+		.await?;
+	let mut reachable = Vec::with_capacity(partners.len());
+	for partner in partners {
+		if network.is_device_reachable(partner).await {
+			reachable.push(partner);
+		}
+	}
+	Ok(reachable)
 }

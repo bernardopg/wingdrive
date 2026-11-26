@@ -51,8 +51,9 @@ pub use hlc::{HLCGenerator, HLC};
 pub use peer_log::{ChangeType, PeerLog, PeerLogError, SharedChangeEntry};
 pub use peer_watermarks::PeerWatermarkStore;
 pub use registry::{
-	apply_shared_change, apply_state_change, compute_registry_sync_order, get_fk_mappings,
-	get_table_name, is_device_owned, ApplyError, SyncableInventoryEntry, SyncableModelRegistration,
+	apply_shared_change, apply_state, apply_state_change, compute_registry_sync_order,
+	deletion_state, get_fk_mappings, get_table_name, is_deletion_state, is_device_owned,
+	ApplyError, SyncableInventoryEntry, SyncableModelRegistration, DELETED_MARKER,
 };
 pub use syncable::Syncable;
 pub use time_source::{FakeTimeSource, SystemTimeSource, TimeSource};

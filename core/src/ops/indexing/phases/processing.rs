@@ -294,6 +294,8 @@ pub async fn run_processing_phase(
 		let mut bulk_self_closures: Vec<entities::entry_closure::ActiveModel> = Vec::new();
 		let mut bulk_dir_paths: Vec<entities::directory_paths::ActiveModel> = Vec::new();
 		let mut created_entries: Vec<entities::entry::Model> = Vec::new();
+		// Entries whose size or dates changed; peers still hold their old state.
+		let mut updated_entry_ids: Vec<i32> = Vec::new();
 
 		for entry in batch {
 			if let Err(e) = ctx.check_interrupt().await {
@@ -387,6 +389,7 @@ pub async fn run_processing_phase(
 								entry.path.display()
 							));
 							total_processed += 1;
+							updated_entry_ids.push(entry_id);
 
 							if mode >= IndexMode::Content && entry.kind == EntryKind::File {
 								state.entries_for_content.push((entry_id, entry.path));
@@ -529,6 +532,35 @@ pub async fn run_processing_phase(
 				} else {
 					ctx.log("Emitted resource events for created entries");
 				}
+			}
+		}
+
+		if !updated_entry_ids.is_empty() {
+			let mut updated = Vec::with_capacity(updated_entry_ids.len());
+			for chunk in updated_entry_ids.chunks(900) {
+				match entities::entry::Entity::find()
+					.filter(entities::entry::Column::Id.is_in(chunk.to_vec()))
+					.all(ctx.library_db())
+					.await
+				{
+					Ok(models) => updated.extend(models),
+					Err(e) => tracing::warn!("Failed to load updated entries for sync: {}", e),
+				}
+			}
+			if let Err(e) = ctx
+				.library()
+				.sync_models_batch(
+					&updated,
+					crate::infra::sync::ChangeType::Update,
+					ctx.library_db(),
+				)
+				.await
+			{
+				tracing::warn!(
+					"Failed to batch sync {} updated entries: {}",
+					updated.len(),
+					e
+				);
 			}
 		}
 

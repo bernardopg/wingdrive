@@ -333,7 +333,12 @@
 		"delete": "Excluir fonte",
 		"deleteConfirm": "Esta ação excluirá permanentemente {{name}} e todos os dados dessa fonte.",
 		"updateAdapter": "Atualizar adaptador",
-		"addSync": "Adicionar e sincronizar"
+		"addSync": "Adicionar e sincronizar",
+		"edit": "Editar fonte",
+		"editTitle": "Editar {{name}}",
+		"saved": "Fonte salva",
+		"saveSync": "Salvar e sincronizar",
+		"secretSaved": "Salvo. Deixe vazio para manter."
 	},
 	"network": {
 		"connectTitle": "Conectar ao servidor",

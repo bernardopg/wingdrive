@@ -551,16 +551,23 @@ impl RemoteTransferStrategy {
 				.ok_or_else(|| anyhow::anyhow!("Invalid file transfer protocol handler"))?;
 			file_transfer.stage_receive(&final_dest_path).await?
 		};
-		let mut file = fs::OpenOptions::new()
-			.write(true)
-			.open(staged.path())
-			.await?;
+		// Chunks are 64 KiB. Written one by one, each went to the blocking pool on its own,
+		// which held a pull from the homelab at 12 MB/s on a link that carries 77 MB/s.
+		let mut file = tokio::io::BufWriter::with_capacity(
+			4 * 1024 * 1024,
+			fs::OpenOptions::new()
+				.write(true)
+				.open(staged.path())
+				.await?,
+		);
 		let mut hasher = if verify_checksum {
 			Some(blake3::Hasher::new())
 		} else {
 			None
 		};
 		let mut total_bytes_received = 0u64;
+		// Progress goes out every MiB: per chunk it was 16 job updates for each MiB received.
+		let mut reported_bytes = 0u64;
 
 		ctx.log(format!(
 			"Receiving file chunks to: {}",
@@ -621,14 +628,19 @@ impl RemoteTransferStrategy {
 
 					// Progress callback
 					if let Some(cb) = progress_callback {
-						cb(total_bytes_received, file_size);
+						if total_bytes_received - reported_bytes >= 1024 * 1024
+							|| total_bytes_received == file_size
+						{
+							reported_bytes = total_bytes_received;
+							cb(total_bytes_received, file_size);
+						}
 					}
 
 					if chunk_index % 100 == 0 {
-						ctx.log(format!(
+						debug!(
 							"PULL progress: chunk {}, {} / {} bytes",
 							chunk_index, total_bytes_received, file_size
-						));
+						);
 					}
 				}
 				crate::service::network::protocol::file_transfer::FileTransferMessage::TransferComplete {

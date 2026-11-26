@@ -134,6 +134,7 @@
 	"Authenticating...": "Authenticating...",
 	"Pairing successful!": "Pairing successful!",
 	"Connected to {{device}}": "Connected to {{device}}",
+	"Pairing failed: {{reason}}": "Pairing failed: {{reason}}",
 	"Device paired": "Device paired",
 	"Failed to generate code": "Failed to generate code",
 	"Paste the full code or type the 12 words separated by hyphens": "Paste the full code or type the 12 words separated by hyphens",

@@ -51,6 +51,13 @@ wing network pair status
 
 Os dispositivos emparelhados enviam seu nome, tipo, sistema operacional e versão do aplicativo atuais sempre que se conectam, para que um dispositivo renomeado ou reinstalado apareça com a nova descrição.
 
+### Se os dispositivos se acham mas não conectam
+
+"Found the other device on the local network but could not connect to it" quer dizer que os pacotes não voltam. Duas causas comuns:
+
+- Uma VPN no celular que roteia a rede de casa, como o Tailscale com um subnet router para a sua rede local. Tire o WingDrive da VPN ou desligue as rotas de sub-rede da VPN em casa. Gerar o código no celular e digitá-lo no computador também funciona.
+- Um firewall no computador que descarta UDP de entrada quando o computador tem mais de uma conexão com a rede (cabo e Wi-Fi). Libere UDP vindo da sua rede local.
+
 ## Remova um emparelhamento
 
 ```bash
