@@ -100,7 +100,7 @@ use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
 use super::{
-	retry_queue::RetryQueue,
+	retry_queue::{RetryItem, RetryQueue},
 	state::{BufferQueue, DeviceSyncState, StateChangeMessage},
 };
 
@@ -738,32 +738,52 @@ impl PeerSync {
 				))
 				.await;
 
-				// Get messages ready for retry
 				let ready_messages = retry_queue.get_ready().await;
-
-				if !ready_messages.is_empty() {
-					debug!(count = ready_messages.len(), "Processing retry queue");
+				if ready_messages.is_empty() {
+					continue;
 				}
+				debug!(count = ready_messages.len(), "Processing retry queue");
 
-				// Attempt to send each message
-				for (target_device, message) in ready_messages {
-					match network
-						.send_sync_message(target_device, message.clone())
-						.await
+				// One lane per device, in queue order within it. A send to an offline device
+				// waits out the connect timeout; sent one by one, its messages held back every
+				// other device's retries for 30 s each.
+				let mut lanes: Vec<(Uuid, Vec<RetryItem>)> = Vec::new();
+				for item in ready_messages {
+					match lanes
+						.iter_mut()
+						.find(|(target, _)| *target == item.target_device)
 					{
-						Ok(()) => {
-							debug!(target = %target_device, "Retry successful");
-						}
-						Err(e) => {
-							warn!(
-								target = %target_device,
-								error = %e,
-								"Retry failed, will retry again"
-							);
-							// Message will be re-queued automatically by get_ready()
-						}
+						Some((_, items)) => items.push(item),
+						None => lanes.push((item.target_device, vec![item])),
 					}
 				}
+
+				futures::future::join_all(lanes.into_iter().map(|(target, items)| {
+					let network = network.clone();
+					let retry_queue = retry_queue.clone();
+					async move {
+						let mut items = items.into_iter();
+						while let Some(item) = items.next() {
+							match network
+								.send_sync_message(target, item.message.clone())
+								.await
+							{
+								Ok(()) => debug!(target = %target, "Retry successful"),
+								Err(e) => {
+									warn!(target = %target, error = %e, "Retry failed, will retry again");
+									// The device is not reachable: keep the rest for the next
+									// round instead of waiting out a timeout for each.
+									retry_queue.requeue(item).await;
+									for rest in items {
+										retry_queue.requeue(rest).await;
+									}
+									break;
+								}
+							}
+						}
+					}
+				}))
+				.await;
 			}
 
 			info!("Retry queue processor stopped");
@@ -912,8 +932,6 @@ impl PeerSync {
 											"entry": entry,
 										}),
 										&network,
-										&state,
-										&buffer,
 										&retry_queue,
 										&db,
 										&config,
@@ -1663,8 +1681,6 @@ impl PeerSync {
 		library_id: Uuid,
 		data: serde_json::Value,
 		network: &Arc<dyn NetworkTransport>,
-		state: &Arc<RwLock<DeviceSyncState>>,
-		buffer: &Arc<BufferQueue>,
 		retry_queue: &Arc<RetryQueue>,
 		db: &Arc<sea_orm::DatabaseConnection>,
 		config: &Arc<crate::infra::sync::SyncConfig>,
@@ -1683,14 +1699,11 @@ impl PeerSync {
 			"Broadcasting shared change from event"
 		);
 
-		let current_state = *state.read().await;
-		if current_state.should_buffer() {
-			debug!("Buffering own shared change during backfill");
-			buffer
-				.push(super::state::BufferedUpdate::SharedChange(entry))
-				.await;
-			return Ok(());
-		}
+		// Never buffer our OWN shared changes, as with state changes: draining the buffer
+		// applies them as if they came from a peer, our log already has them, so they were
+		// dropped as duplicates and never broadcast. Peers only got them by pulling our log on
+		// their next catch-up, a minute or more later, and catch-up runs often, since one
+		// offline peer keeps it retrying.
 
 		// Broadcast to peers (entry is already in peer_log via TransactionManager)
 		let message = SyncMessage::SharedChange {
@@ -2009,15 +2022,8 @@ impl PeerSync {
 			.await
 			.map_err(|e| anyhow::anyhow!("Failed to append to peer log: {}", e))?;
 
-		// Broadcast to peers (if ready)
-		let state = self.state().await;
-		if state.should_buffer() {
-			debug!("Buffering own shared change during backfill");
-			self.buffer
-				.push(super::state::BufferedUpdate::SharedChange(entry.clone()))
-				.await;
-			return Ok(());
-		}
+		// Broadcast right away, even during backfill: a buffered own change was dropped as a
+		// duplicate when the buffer drained (see handle_shared_change_event_static).
 
 		// Create sync message
 		let message = SyncMessage::SharedChange {
@@ -3083,8 +3089,6 @@ impl PeerSync {
 					"entry": entry,
 				}),
 				&self.network,
-				&self.state,
-				&self.buffer,
 				&self.retry_queue,
 				&self.db,
 				&self.config,
