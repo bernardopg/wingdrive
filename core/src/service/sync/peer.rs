@@ -2118,8 +2118,9 @@ impl PeerSync {
 	/// Apply state change to database (internal version without retry trigger to prevent recursion)
 	async fn apply_state_change_without_retry(&self, change: StateChangeMessage) -> Result<()> {
 		// Use the registry to route to the appropriate apply function
-		crate::infra::sync::apply_state_change(
+		crate::infra::sync::apply_state(
 			&change.model_type,
+			change.record_uuid,
 			change.data.clone(),
 			self.db.clone(),
 		)
@@ -2163,8 +2164,9 @@ impl PeerSync {
 		);
 
 		// Use the registry to route to the appropriate apply function
-		if let Err(e) = crate::infra::sync::apply_state_change(
+		if let Err(e) = crate::infra::sync::apply_state(
 			&change.model_type,
+			change.record_uuid,
 			change.data.clone(),
 			self.db.clone(),
 		)
@@ -2293,9 +2295,21 @@ impl PeerSync {
 			}
 		}
 
+		// A deletion leaves nothing to fetch: tell the UI the record is gone.
+		if crate::infra::sync::is_deletion_state(&change.data) {
+			if change.model_type == "entry" {
+				use crate::domain::{resource::EventEmitter, File};
+				File::emit_deleted(change.record_uuid, &self.event_bus);
+			} else {
+				self.event_bus.emit(Event::ResourceDeleted {
+					resource_type: change.model_type.clone(),
+					resource_id: change.record_uuid,
+				});
+			}
+		}
 		// Emit resource event for UI reactivity using ResourceManager
 		// This ensures proper resource format (Location, etc.) instead of raw DB model
-		if let Some(uuid_value) = change.data.get("uuid") {
+		else if let Some(uuid_value) = change.data.get("uuid") {
 			if let Some(uuid_str) = uuid_value.as_str() {
 				if let Ok(uuid) = Uuid::parse_str(uuid_str) {
 					let resource_manager = crate::domain::ResourceManager::new(

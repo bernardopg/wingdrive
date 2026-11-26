@@ -613,6 +613,39 @@ pub async fn apply_deletion(
 		.map_err(|e| ApplyError::DatabaseError(e.to_string()))
 }
 
+/// Field that marks a device-owned state change as a deletion.
+///
+/// Device-owned records travel as their full state, which has no way to say a record is
+/// gone. A deletion is sent as a state change whose data is
+/// `{"uuid": <record>, "_deleted": true}`, so it reaches peers in real time instead of
+/// waiting for a catch-up that the per-resource watermark may already have passed.
+pub const DELETED_MARKER: &str = "_deleted";
+
+/// The state change data that announces the deletion of `uuid`.
+pub fn deletion_state(uuid: uuid::Uuid) -> serde_json::Value {
+	serde_json::json!({ "uuid": uuid, DELETED_MARKER: true })
+}
+
+/// Whether a device-owned state change announces a deletion.
+pub fn is_deletion_state(data: &serde_json::Value) -> bool {
+	data.get(DELETED_MARKER).and_then(|v| v.as_bool()) == Some(true)
+}
+
+/// Apply a device-owned state change: an upsert, or a deletion when the data carries
+/// [`DELETED_MARKER`].
+pub async fn apply_state(
+	model_type: &str,
+	record_uuid: uuid::Uuid,
+	data: serde_json::Value,
+	db: Arc<DatabaseConnection>,
+) -> Result<(), ApplyError> {
+	if is_deletion_state(&data) {
+		apply_deletion(model_type, record_uuid, db).await
+	} else {
+		apply_state_change(model_type, data, db).await
+	}
+}
+
 /// Apply a log-based sync entry (shared model)
 ///
 /// Routes to the appropriate model's apply_shared_change function via registry.

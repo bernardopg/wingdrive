@@ -384,19 +384,31 @@ impl ChangeHandler for DatabaseAdapter {
 			.await
 			.map_err(|e| anyhow::anyhow!("Failed to update entry: {}", e))?;
 
+		let after = entities::entry::Entity::find_by_id(entry.id)
+			.one(&self.db)
+			.await?;
+
 		// A resize changes the bytes above the entry, never the counts.
-		if let Some(before) = before {
-			if let Some(after) = entities::entry::Entity::find_by_id(entry.id)
-				.one(&self.db)
-				.await?
+		if let (Some(before), Some(after)) = (&before, &after) {
+			let bytes = entry_share(after).0 - entry_share(before).0;
+			if let Err(e) = self
+				.adjust_ancestor_totals(after.id, after.parent_id, bytes, 0, 0)
+				.await
 			{
-				let bytes = entry_share(&after).0 - entry_share(&before).0;
-				if let Err(e) = self
-					.adjust_ancestor_totals(after.id, after.parent_id, bytes, 0, 0)
-					.await
-				{
-					tracing::warn!(entry_id = after.id, error = %e, "Failed to update folder totals");
-				}
+				tracing::warn!(entry_id = after.id, error = %e, "Failed to update folder totals");
+			}
+		}
+
+		// Peers hold the entry as it was when it was created: a file still being written
+		// when the watcher saw it kept its partial size on every other device.
+		if let (Some(after), Some(library)) =
+			(&after, self.context.get_library(self.library_id).await)
+		{
+			if let Err(e) = library
+				.sync_model_with_db(after, crate::infra::sync::ChangeType::Update, &self.db)
+				.await
+			{
+				tracing::warn!(entry_id = after.id, error = %e, "Failed to sync updated entry");
 			}
 		}
 

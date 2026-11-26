@@ -653,3 +653,103 @@ async fn test_content_identity_linkage() -> anyhow::Result<()> {
 
 	Ok(())
 }
+
+/// Polls `check` until it holds or `timeout` passes.
+async fn eventually<F, Fut>(timeout: Duration, mut check: F) -> bool
+where
+	F: FnMut() -> Fut,
+	Fut: std::future::Future<Output = bool>,
+{
+	let deadline = tokio::time::Instant::now() + timeout;
+	while tokio::time::Instant::now() < deadline {
+		if check().await {
+			return true;
+		}
+		tokio::time::sleep(Duration::from_millis(200)).await;
+	}
+	false
+}
+
+/// Updates and deletions of device-owned entries reach the peer in real time.
+///
+/// Entries sync as their full state. An update stayed local, so a file still being written
+/// when it was indexed kept its partial size on every peer; a deletion went out as the
+/// entry's last state, so peers kept deleted files forever.
+#[tokio::test]
+async fn test_entry_updates_and_deletions_reach_the_peer() -> anyhow::Result<()> {
+	use sea_orm::{ActiveModelTrait, Set};
+	use wing_core::infra::sync::ChangeType;
+
+	let harness = TwoDeviceHarnessBuilder::new("realtime_updates_deletions")
+		.await?
+		.build()
+		.await?;
+
+	let fixture = tempfile::tempdir()?;
+	for i in 0..3 {
+		std::fs::write(fixture.path().join(format!("note-{i}.txt")), "content")?;
+	}
+	harness
+		.add_and_index_location_alice(fixture.path().to_str().unwrap(), "fixture")
+		.await?;
+	harness.wait_for_sync(Duration::from_secs(60)).await?;
+
+	let alice = harness.library_alice.db().conn();
+	let bob = harness.library_bob.db().conn();
+	let named = |name: &str| {
+		entities::entry::Entity::find().filter(entities::entry::Column::Name.eq(name.to_string()))
+	};
+	assert!(
+		named("note-0").one(bob).await?.is_some(),
+		"note-0 never reached Bob"
+	);
+
+	// A file that grew after it was indexed.
+	let note = named("note-0").one(alice).await?.expect("note-0 indexed");
+	let mut grown: entities::entry::ActiveModel = note.into();
+	grown.size = Set(4096);
+	let grown = grown.update(alice).await?;
+	harness
+		.library_alice
+		.sync_model_with_db(&grown, ChangeType::Update, alice)
+		.await?;
+	assert!(
+		eventually(Duration::from_secs(30), || async {
+			named("note-0")
+				.one(bob)
+				.await
+				.ok()
+				.flatten()
+				.map(|e| e.size)
+				== Some(4096)
+		})
+		.await,
+		"Bob kept the old size of note-0"
+	);
+
+	// A deleted file.
+	let gone = named("note-1").one(alice).await?.expect("note-1 indexed");
+	harness
+		.library_alice
+		.sync_models_batch(std::slice::from_ref(&gone), ChangeType::Delete, alice)
+		.await?;
+	entities::entry::Entity::delete_by_id(gone.id)
+		.exec(alice)
+		.await?;
+	assert!(
+		eventually(Duration::from_secs(30), || async {
+			matches!(named("note-1").one(bob).await, Ok(None))
+		})
+		.await,
+		"Bob kept note-1 after Alice deleted it"
+	);
+	let tombstones = entities::device_state_tombstone::Entity::find()
+		.filter(entities::device_state_tombstone::Column::RecordUuid.eq(gone.uuid.unwrap()))
+		.count(alice)
+		.await?;
+	assert_eq!(tombstones, 1, "Alice recorded no tombstone for note-1");
+
+	// The untouched file is still there.
+	assert!(named("note-2").one(bob).await?.is_some());
+	Ok(())
+}

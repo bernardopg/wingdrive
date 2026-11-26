@@ -772,6 +772,8 @@ This prevents creation conflicts for system resources while allowing polymorphic
 
 **Device-owned deletions** use tombstones that sync via `StateResponse`. When you delete a location or folder with thousands of files, only the root UUID is tombstoned. Receiving devices cascade the deletion through their local tree automatically.
 
+A deletion also goes out in real time. `sync_model`, `sync_model_with_db` and `sync_models_batch` with `ChangeType::Delete` on a device-owned model record a tombstone and broadcast a `StateChange` whose data is `{"uuid": ..., "_deleted": true}` (`registry::deletion_state`); receivers route it to the model's `apply_deletion` instead of an upsert (`registry::apply_state`). The real-time path matters because applying a real-time change moves the per-resource watermark to its timestamp: a deletion or update that was not broadcast fell behind the watermark and no catch-up fetched it again. Updates to entries (a file that grew, new dates) are broadcast for the same reason, from the watcher and from rescans.
+
 **Shared resource deletions** use HLC-ordered log entries with `ChangeType::Delete`. All devices process deletions in the same order for consistency.
 
 **Pruning:** Both deletion mechanisms use acknowledgment-based pruning. Tombstones and peer log entries are removed after all devices have synced past them. A 7-day safety limit prevents offline devices from blocking pruning indefinitely.
