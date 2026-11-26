@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tracing::info;
+use tracing::{debug, info};
 use uuid::Uuid;
 
 /// Pairing type for a device relationship
@@ -340,8 +340,8 @@ impl DevicePersistence {
 				// Connection failures (Unreliable) don't prevent reconnection attempts
 				let should_reconnect = !is_expired && !is_blocked;
 
-				// Debug logging
-				info!(
+				// Runs every 30 s for every paired device: at info it filled the log.
+				debug!(
 					"[AUTO-RECONNECT] Device {}: trust={:?}, expired={}, blocked={}, include={}",
 					device.device_info.device_name,
 					device.trust_level,

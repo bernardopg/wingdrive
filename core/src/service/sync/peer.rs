@@ -697,6 +697,30 @@ impl PeerSync {
 		Ok(())
 	}
 
+	/// Queues `message` for partners without a live connection and returns the others.
+	///
+	/// A send to an offline device waits out the whole message timeout, and each broadcast
+	/// waits for its slowest partner before the next one starts: one phone left offline held
+	/// every change back 30 seconds for all the other devices. The retry processor delivers
+	/// the queued copies once the device is back.
+	async fn queue_for_unreachable(
+		network: &dyn NetworkTransport,
+		partners: Vec<Uuid>,
+		message: &SyncMessage,
+		retry_queue: &RetryQueue,
+	) -> Vec<Uuid> {
+		let mut reachable = Vec::with_capacity(partners.len());
+		for partner in partners {
+			if network.is_device_reachable(partner).await {
+				reachable.push(partner);
+			} else {
+				debug!(partner = %partner, "Partner not connected, queuing message for retry");
+				retry_queue.enqueue(partner, message.clone()).await;
+			}
+		}
+		reachable
+	}
+
 	/// Start background task to process retry queue
 	fn start_retry_processor(&self) {
 		let retry_queue = self.retry_queue.clone();
@@ -1335,6 +1359,17 @@ impl PeerSync {
 			}
 
 			// Broadcast batch to all partners in parallel
+			let connected_partners = Self::queue_for_unreachable(
+				network.as_ref(),
+				connected_partners,
+				&message,
+				&retry_queue,
+			)
+			.await;
+			if connected_partners.is_empty() {
+				continue;
+			}
+
 			use futures::future::join_all;
 
 			let timeout_secs = config.network.message_timeout_secs;
@@ -1531,6 +1566,17 @@ impl PeerSync {
 		let start_time = std::time::Instant::now();
 
 		// Broadcast to all partners in parallel
+		let connected_partners = Self::queue_for_unreachable(
+			network.as_ref(),
+			connected_partners,
+			&message,
+			&retry_queue,
+		)
+		.await;
+		if connected_partners.is_empty() {
+			return Ok(());
+		}
+
 		use futures::future::join_all;
 
 		let timeout_secs = config.network.message_timeout_secs;
@@ -1688,6 +1734,17 @@ impl PeerSync {
 		let start_time = std::time::Instant::now();
 
 		// Broadcast to all partners in parallel
+		let connected_partners = Self::queue_for_unreachable(
+			network.as_ref(),
+			connected_partners,
+			&message,
+			&retry_queue,
+		)
+		.await;
+		if connected_partners.is_empty() {
+			return Ok(());
+		}
+
 		use futures::future::join_all;
 
 		let timeout_secs = config.network.message_timeout_secs;
@@ -1843,6 +1900,17 @@ impl PeerSync {
 		let start_time = std::time::Instant::now();
 
 		// Broadcast to all partners in parallel using futures::join_all
+		let connected_partners = Self::queue_for_unreachable(
+			self.network.as_ref(),
+			connected_partners,
+			&message,
+			&self.retry_queue,
+		)
+		.await;
+		if connected_partners.is_empty() {
+			return Ok(());
+		}
+
 		use futures::future::join_all;
 
 		let send_futures: Vec<_> = connected_partners
@@ -1995,6 +2063,17 @@ impl PeerSync {
 		let start_time = std::time::Instant::now();
 
 		// Broadcast to all partners in parallel using futures::join_all
+		let connected_partners = Self::queue_for_unreachable(
+			self.network.as_ref(),
+			connected_partners,
+			&message,
+			&self.retry_queue,
+		)
+		.await;
+		if connected_partners.is_empty() {
+			return Ok(());
+		}
+
 		use futures::future::join_all;
 
 		let send_futures: Vec<_> = connected_partners
