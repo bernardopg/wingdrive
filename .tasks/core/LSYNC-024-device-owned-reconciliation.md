@@ -1,7 +1,7 @@
 ---
 id: LSYNC-024
 title: Full reconciliation of device-owned data between peers
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: LSYNC-000
 priority: High
@@ -56,10 +56,29 @@ Nothing in sync could repair that:
       tombstone, keeps her other entries and gets back an entry and content identity he never
       received (`sync_backfill_test`).
 - [x] Fetch the full shared state during a reconciliation.
-- [ ] Runtime: laptop, homelab and phone converge on one entry set after upgrading.
+- [x] Runtime: laptop, homelab and phone converge on one entry set after upgrading (2026-11-26,
+      see below).
 
 ## Acceptance Criteria
 
 - [x] A record the owner no longer has is removed from every peer by the next reconciliation.
 - [x] A record the owner created during the pass is not removed.
-- [ ] The laptop and homelab residue from before 3.8.1 is gone after the upgrade.
+- [x] The laptop and homelab residue from before 3.8.1 is gone after the upgrade.
+
+## Runtime check (2026-11-26)
+
+Branch builds on the author's laptop (daemon), homelab (`wing-server` image) and Moto G7
+(`com.wingdrive.app.review`). Entries compared per owner, by UUID and name, against the laptop:
+
+| Owner | Before | After |
+|---|---|---|
+| Laptop | homelab: 2 deleted entries kept (`l2`, `zz-probe-d1`), 4 created ones missing (`IMG_7188` to `IMG_7191`), 1 rename missing | identical on homelab and phone (2721) |
+| Homelab | laptop: 10 deleted entries kept, 1 missing, 5 renames missing; phone: 1 missing | identical on laptop and phone (428) |
+| Phone (`.review`) | identical | identical (59) |
+
+The laptop removed 10 records in its first reconciliation with the homelab and the homelab 2 in
+its first with the laptop. The 4 photos needed the full shared state: their content identities
+never entered the laptop's peer log.
+
+The release app on the same phone never holds the `.review` app's entries: the two never run at
+the same time (only the app in the foreground runs its core) and peers only send their own data.
