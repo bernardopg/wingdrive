@@ -37,44 +37,52 @@ Keep `bin/` and `lib/wingdrive/` side by side: the binaries find their libraries
 `$ORIGIN/../lib/wingdrive`. For ARM systems like Raspberry Pi, use the multi-architecture Docker
 image below.
 
-### Docker Deployment
+### Docker Compose
 
-Docker images are available for both x86_64 and ARM64 architectures. The image includes all media processing dependencies and runs as a non-root user.
+Images are published for x86_64 and ARM64 at `ghcr.io/bernardopg/wingdrive/server`. They include
+every media processing library, run as a non-root user and carry their own health check. The
+compose file in the repository is the whole install; download it and start it:
+
+```bash
+curl -O https://raw.githubusercontent.com/bernardopg/wingdrive/main/apps/server/docker-compose.yml
+WING_AUTH='me:a-long-password' docker compose up -d
+docker compose ps   # STATUS shows (healthy) once the server answers
+```
+
+Open `http://<server>:8080` and sign in with the `WING_AUTH` credentials. The file refuses to start
+without `WING_AUTH`, so the server never comes up with a default password. To index existing
+storage, uncomment the bind mount under `volumes` (for example `/mnt/storage:/media/storage`, add
+`:ro` to keep WingDrive from changing the files) and add `/media/storage` as a location in the web
+UI.
+
+The container uses **host networking**. Other devices find the server for pairing through mDNS on
+the local network, and peer-to-peer sync uses a UDP port that Iroh picks at start, so publishing
+ports with `-p` is not enough for either. Host networking is available on Linux; Docker Desktop on
+macOS and Windows does not offer it.
+
+To build the image from a checkout instead of pulling it, add the build override:
+
+```bash
+cd apps/server
+WING_AUTH='me:a-long-password' docker compose \
+  -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+The Dockerfile builds the web UI in its own stage, so a clean checkout is enough. The release build
+of `wing-server` needs about 5 GB of free memory.
+
+### Docker Run
+
+The same setup without compose:
 
 ```bash
 docker run -d \
   --name wingdrive \
-  -p 8080:8080 \
-  -p 7373:7373 \
+  --network host \
+  --restart unless-stopped \
   -v wingdrive-data:/data \
-  -e WING_AUTH=admin:your-secure-password \
+  -e WING_AUTH='me:a-long-password' \
   ghcr.io/bernardopg/wingdrive/server:latest
-```
-
-The server listens on port 8080 for HTTP traffic and port 7373 for peer-to-peer connections. Mount additional volumes to index existing storage.
-
-### Docker Compose
-
-For production deployments, use the provided compose file in the repository at `apps/server/docker-compose.yml`. This includes health checks and restart policies.
-
-```yaml
-version: '3.8'
-services:
-  wingdrive:
-    image: ghcr.io/bernardopg/wingdrive/server:latest
-    ports:
-      - "8080:8080"
-      - "7373:7373"
-    volumes:
-      - wingdrive-data:/data
-      - /mnt/media:/media:ro
-    environment:
-      WING_AUTH: "admin:your-password"
-      TZ: "America/New_York"
-    restart: unless-stopped
-
-volumes:
-  wingdrive-data:
 ```
 
 ## System Service Setup
@@ -121,7 +129,7 @@ The server accepts configuration via environment variables or command-line flags
 
 **Data directory** defaults to `/data` in Docker or a temporary directory in development. In production, always set `DATA_DIR` to a persistent location. The server creates library databases, thumbnails, and logs in this directory.
 
-**Port configuration** defaults to 8080. Change with `--port` flag or `PORT` environment variable. The P2P port (7373) is fixed and required for device sync.
+**Port configuration** defaults to 8080. Change with `--port` flag or `PORT` environment variable. `WING_HOST` (or `--host`) sets the address the web UI binds to; the default `::` listens on every interface. Peer-to-peer sync uses a UDP port chosen at start, not a fixed one. `WING_DAEMON_PORT` (default 6969) is the loopback port of the server's embedded daemon; the compose file sets 6979, because with host networking the desktop app's daemon may already own 6969 on the same machine.
 
 <Warning>
 Production deployments must set `WING_AUTH`. The server refuses to start without authentication unless explicitly disabled. This prevents accidental exposure of your libraries.
@@ -211,7 +219,7 @@ Self-hosted servers face different threats than desktop apps. Follow these guide
 
 **Enable TLS** for any internet access. Let's Encrypt provides free certificates through Caddy, Nginx, or Traefik. The server itself does not handle TLS, rely on reverse proxies.
 
-**Limit exposure** with firewall rules. Only open port 8080 to trusted networks or VPN connections. The P2P port (7373) requires UDP ingress for device sync but can be restricted to known peers.
+**Limit exposure** with firewall rules. Only open port 8080 to trusted networks or VPN connections. Peer-to-peer sync is end-to-end encrypted between paired devices and falls back to relay servers when no direct UDP path exists.
 
 **Run as non-root** user. The Docker image and systemd example both use dedicated users with minimal permissions. Never run the server as root.
 
@@ -227,7 +235,7 @@ P2P sync works between the server and other devices without additional configura
 
 ## Monitoring
 
-The server provides a health check endpoint at `/health` that returns HTTP 200 when operational. Use this for monitoring tools or container orchestration health probes.
+The server provides a health check endpoint at `/health` that returns HTTP 200 when operational. It needs no credentials, so monitoring tools and container orchestration probes can call it directly. `wing-server --health-check` probes the server configured by `WING_HOST` and `PORT` and exits with 0 when it answers; the Docker image uses it as its `HEALTHCHECK`.
 
 Logs are written to stdout and the data directory under `logs/`. Set `RUST_LOG` environment variable to `debug` for detailed output during troubleshooting.
 
@@ -247,7 +255,7 @@ Check that the data directory exists and is writable by the server user. Verify 
 
 **Authentication failures:**
 
-Ensure `WING_AUTH` format is correct. Test credentials with curl: `curl -u admin:password http://localhost:8080/health`. Browser authentication dialogs require exact username and password.
+Ensure `WING_AUTH` format is correct. Test credentials with curl against a protected route: `curl -u admin:password -X POST http://localhost:8080/rpc` answers 401 only when they are wrong. Browser authentication dialogs require exact username and password.
 
 **Clients can't connect:**
 
@@ -259,7 +267,7 @@ The server requires FFmpeg and libheif for video thumbnails and HEIF images. Doc
 
 **Sync not working:**
 
-UDP port 7373 must be accessible for P2P connections. Check NAT and firewall rules. The server attempts hole-punching for NAT traversal but may fall back to relay servers if direct connection fails.
+Peer-to-peer connections need outbound UDP, and a container needs host networking. Check NAT and firewall rules. The server attempts hole-punching for NAT traversal but may fall back to relay servers if direct connection fails.
 
 ## Performance Tuning
 
@@ -302,10 +310,7 @@ The server receives updates through new Docker image tags or binary releases. Al
 Pull the new image and recreate the container. Data persists in volumes across container replacements.
 
 ```bash
-docker pull ghcr.io/bernardopg/wingdrive/server:latest
-docker stop wingdrive
-docker rm wingdrive
-# Run docker run command with new image
+docker compose pull && docker compose up -d
 ```
 
 **Binary updates:**

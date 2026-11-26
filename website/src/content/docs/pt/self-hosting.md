@@ -9,39 +9,23 @@ group: Avançado
 
 ## Docker
 
-Há imagens para x86_64 e ARM64, executadas por um usuário sem privilégios de root.
+Há imagens para x86_64 e ARM64, executadas por um usuário sem privilégios de root e com verificação de saúde própria. O arquivo compose do repositório é a instalação inteira:
 
 ```bash
-docker run -d \
-  --name wingdrive \
-  -p 8080:8080 \
-  -p 7373:7373 \
-  -v wingdrive-data:/data \
-  -e WING_AUTH=admin:your-secure-password \
-  ghcr.io/bernardopg/wingdrive/server:latest
+curl -O https://raw.githubusercontent.com/bernardopg/wingdrive/main/apps/server/docker-compose.yml
+WING_AUTH='eu:uma-senha-longa' docker compose up -d
 ```
 
-A porta 8080 atende HTTP; a porta 7373 é usada para conexões ponto a ponto com seus dispositivos. Monte outros volumes para indexar armazenamento existente.
+Abra `http://<servidor>:8080` e entre com essas credenciais. Sem `WING_AUTH` o arquivo não inicia, então não existe senha padrão. Para indexar armazenamento existente, descomente a montagem no arquivo e adicione a pasta como local na interface web. Atualize com `docker compose pull && docker compose up -d`.
 
-## Docker Compose
+O contêiner usa a rede do host: outros dispositivos encontram o servidor para o pareamento por mDNS, e a sincronização usa uma porta UDP escolhida na inicialização, então publicar portas não basta. A rede do host só existe no Linux.
 
-```yaml
-services:
-  wingdrive:
-    image: ghcr.io/bernardopg/wingdrive/server:latest
-    ports:
-      - "8080:8080"
-      - "7373:7373"
-    volumes:
-      - wingdrive-data:/data
-      - /mnt/media:/media:ro
-    environment:
-      WING_AUTH: "admin:your-password"
-      TZ: "America/Sao_Paulo"
-    restart: unless-stopped
+Sem compose:
 
-volumes:
-  wingdrive-data:
+```bash
+docker run -d --name wingdrive --network host --restart unless-stopped \
+  -v wingdrive-data:/data -e WING_AUTH='eu:uma-senha-longa' \
+  ghcr.io/bernardopg/wingdrive/server:latest
 ```
 
 ## Arquivo da versão

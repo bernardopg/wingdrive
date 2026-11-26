@@ -91,11 +91,8 @@ O app do macOS ainda não se atualiza sozinho: baixe cada novo `.dmg` na [págin
 Execute o daemon com sua interface web em um NAS, servidor doméstico ou VPS:
 
 ```bash
-docker run -d --name wingdrive \
-  -p 8080:8080 -p 7373:7373 \
-  -v wingdrive-data:/data \
-  -e WING_AUTH=admin:change-me \
-  ghcr.io/bernardopg/wingdrive/server:latest
+curl -O https://raw.githubusercontent.com/bernardopg/wingdrive/main/apps/server/docker-compose.yml
+WING_AUTH='eu:uma-senha-longa' docker compose up -d
 ```
 
 Sem Docker, use o arquivo `wing-server-*-linux-x86_64` (`.tar.gz`, `.tar.xz` ou `.zip`): ele traz o `wing-server`, a CLI `wing` e as bibliotecas de mídia que eles carregam. Consulte [Auto-hospedagem](/pt/docs/self-hosting/) para o arquivo, Compose, systemd e proxy reverso.

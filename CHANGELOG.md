@@ -5,7 +5,27 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Added
+
+- The server installs from one file: download `apps/server/docker-compose.yml` and run
+  `WING_AUTH=user:password docker compose up -d`. It pulls the published image, uses host
+  networking so phones can pair with the server, and refuses to start without credentials.
+  `docker-compose.build.yml` builds the image from a checkout instead.
+- `WING_DAEMON_PORT` sets the loopback port of the server's own daemon (6969 by default, 6979 in
+  the compose file). With host networking on a machine that also runs the desktop app, the server
+  found the desktop's daemon on 6969 and showed the desktop's libraries instead of its own.
+- The server image checks its own health (`wing-server --health-check`), so `docker ps` shows
+  it as healthy. `/health` no longer asks for credentials, for monitoring tools.
+
+### Changed
+
+- The server image builds from a clean checkout: the Dockerfile builds the web interface itself.
+  Pull requests that change the image now build and start it.
+
 ### Fixed
+
+- The repository's compose file starts. It had tabs in its indentation, a health check that ran a
+  `curl` the image does not have, and a default password of `changeme`.
 
 - Devices now compare everything they hold from each paired device once a week, and on the first
   sync after updating, and remove what that device no longer has. Files deleted before 3.8.1 that

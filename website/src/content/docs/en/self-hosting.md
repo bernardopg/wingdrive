@@ -9,39 +9,23 @@ group: Advanced
 
 ## Docker
 
-Images exist for x86_64 and ARM64 and run as a non-root user.
+Images exist for x86_64 and ARM64, run as a non-root user and check their own health. The compose file from the repository is the whole install:
 
 ```bash
-docker run -d \
-  --name wingdrive \
-  -p 8080:8080 \
-  -p 7373:7373 \
-  -v wingdrive-data:/data \
-  -e WING_AUTH=admin:your-secure-password \
-  ghcr.io/bernardopg/wingdrive/server:latest
+curl -O https://raw.githubusercontent.com/bernardopg/wingdrive/main/apps/server/docker-compose.yml
+WING_AUTH='me:a-long-password' docker compose up -d
 ```
 
-Port 8080 serves HTTP; port 7373 is for peer-to-peer connections with your devices. Mount more volumes to index existing storage.
+Open `http://<server>:8080` and sign in with those credentials. Without `WING_AUTH` the file refuses to start, so there is no default password. To index existing storage, uncomment the bind mount in the file and add the folder as a location in the web UI. Update with `docker compose pull && docker compose up -d`.
 
-## Docker Compose
+The container uses host networking: other devices find the server for pairing through mDNS, and sync uses a UDP port picked at start, so publishing ports is not enough. Host networking exists on Linux only.
 
-```yaml
-services:
-  wingdrive:
-    image: ghcr.io/bernardopg/wingdrive/server:latest
-    ports:
-      - "8080:8080"
-      - "7373:7373"
-    volumes:
-      - wingdrive-data:/data
-      - /mnt/media:/media:ro
-    environment:
-      WING_AUTH: "admin:your-password"
-      TZ: "America/Sao_Paulo"
-    restart: unless-stopped
+Without compose:
 
-volumes:
-  wingdrive-data:
+```bash
+docker run -d --name wingdrive --network host --restart unless-stopped \
+  -v wingdrive-data:/data -e WING_AUTH='me:a-long-password' \
+  ghcr.io/bernardopg/wingdrive/server:latest
 ```
 
 ## Release archive

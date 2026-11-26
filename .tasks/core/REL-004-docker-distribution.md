@@ -1,7 +1,7 @@
 ---
 id: REL-004
 title: One-file Docker Compose install for the server, checked in CI
-status: To Do
+status: In Progress
 assignee: bernardopg
 priority: Medium
 milestone: M5
@@ -58,21 +58,33 @@ and `.git/` out of the context. What a new user meets around it is broken:
 
 ## Implementation Steps
 
-- [ ] Rewrite `apps/server/docker-compose.yml` for the published image (spaces only, host network,
-      required `WING_AUTH`, working health check, `/data` volume, commented file mounts).
-- [ ] Add `apps/server/docker-compose.build.yml` for local builds and move the web build into a
-      Dockerfile stage so `docker build` works from a clean checkout.
-- [ ] Add a `HEALTHCHECK` the runtime image can execute.
-- [ ] Remove `apps/server/.dockerignore` or move what it adds into the root `.dockerignore`.
-- [ ] CI: `docker compose config` for both files on every pull request; image build without push
-      when the Dockerfile or `apps/server` changes.
-- [ ] Docs: self-hosting (EN/PT site and `docs/overview/self-hosting.mdx`) show the one-file
-      install, `WING_AUTH`, host networking for pairing and the update command.
+- [x] Rewrite `apps/server/docker-compose.yml` for the published image (spaces only, host network,
+      required `WING_AUTH`, working health check, `/data` volume, commented file mounts). It also
+      sets `WING_DAEMON_PORT=6979`: with host networking on a machine that runs the desktop app,
+      the server found the desktop daemon on 6969 and served the desktop's libraries.
+- [x] Add `apps/server/docker-compose.build.yml` for local builds and move the web build into a
+      Dockerfile stage so `docker build` works from a clean checkout. The stage installs only the
+      web workspace (`--filter @wingdrive/web --ignore-scripts`); a full install fails on
+      `registry-js`, which needs node-gyp and Python.
+- [x] Add a `HEALTHCHECK` the runtime image can execute: `wing-server --health-check`. `/health`
+      moved outside basic auth so the probe and uptime monitors need no credentials.
+- [x] Remove `apps/server/.dockerignore` or move what it adds into the root `.dockerignore`.
+- [x] CI: `docker compose config` for both files on every pull request; image build without push
+      when the Dockerfile or `apps/server` changes. Done as the `check` job of `server.yml`, which
+      runs on pull requests touching `apps/server/**`, `.dockerignore` or the workflow, also
+      checks that a missing `WING_AUTH` is refused, and waits for the container to be healthy.
+- [x] Docs: self-hosting (EN/PT site and `docs/overview/self-hosting.mdx`) show the one-file
+      install, `WING_AUTH`, host networking for pairing and the update command. The installation
+      pages and `apps/server/README.md` dropped the unused 7373 port too.
 
 ## Acceptance Criteria
 
-- [ ] `curl -O …/docker-compose.yml && WING_AUTH=me:secret docker compose up -d` starts a healthy
-      server on a machine without the repository.
+- [x] `curl -O …/docker-compose.yml && WING_AUTH=me:secret docker compose up -d` starts a healthy
+      server on a machine without the repository. Checked on 2026-11-26 from a directory outside the
+      checkout with a locally built image: refused without `WING_AUTH`, `healthy` after about a
+      minute, its own daemon on 127.0.0.1:6979 next to the desktop daemon on 6969. In bridge mode
+      `/health` answered 200 without credentials and `/rpc` 401.
 - [ ] A phone on the same network pairs with that server.
-- [ ] Restarting the container keeps the library loaded (with CORE-026 shipped).
+- [x] Restarting the container keeps the library loaded (with CORE-026 shipped). After
+      `docker restart` the log shows `Opened library … Auto-loaded library`.
 - [ ] A pull request that breaks either compose file or the Dockerfile fails CI.

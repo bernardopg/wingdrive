@@ -1,5 +1,11 @@
 # Local build output and generated config never belong in the image context.
 .cargo/config.toml
 target/
+**/target/
 **/node_modules/
 .git/
+# The web stage of apps/server/Dockerfile builds its own bundle; a stale local
+# one would be copied next to it and embedded too.
+apps/web/dist/
+# Not part of the server image.
+website/
