@@ -13437,7 +13437,7 @@ dependencies = [
 
 [[package]]
 name = "wing-cli"
-version = "3.8.1"
+version = "3.8.2"
 dependencies = [
  "anyhow",
  "chrono",
@@ -13473,7 +13473,7 @@ dependencies = [
 
 [[package]]
 name = "wing-core"
-version = "3.8.1"
+version = "3.8.2"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -13711,7 +13711,7 @@ dependencies = [
 
 [[package]]
 name = "wing-server"
-version = "3.8.1"
+version = "3.8.2"
 dependencies = [
  "anyhow",
  "axum",
@@ -13762,7 +13762,7 @@ dependencies = [
 
 [[package]]
 name = "wing-tauri-core"
-version = "3.8.1"
+version = "3.8.2"
 dependencies = [
  "anyhow",
  "serde",
@@ -13780,7 +13780,7 @@ dependencies = [
 
 [[package]]
 name = "wingdrive"
-version = "3.8.1"
+version = "3.8.2"
 dependencies = [
  "axum",
  "blake3",
