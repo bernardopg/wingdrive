@@ -20,6 +20,15 @@ version in the workspace manifests and the matching `v*` git tag.
 - Files in a folder created while WingDrive runs are seen again. Once the home folder had been
   opened, a new folder inside a location got no watch about half the time, so nothing saved in it
   was indexed until the daemon restarted.
+- A paired device that is offline no longer slows sync for the others. Every change waited 30
+  seconds for it before the next one went out, so with a phone switched off a change took minutes
+  to reach the server. Changes for an offline device now wait in the retry queue.
+- Joining with a pairing code no longer hangs on a device that already talks to other devices.
+  The request went to whichever connected device came first, such as the server, instead of the
+  one that showed the code, and the join waited for an answer forever. It now goes to the device
+  found through the code, and gives up after two minutes.
+- On the phone, a code generated on one tab no longer locks "Join with code" in "Processing...",
+  and a failed pairing shows why and lets you try again.
 - Pairing errors say what failed on each path, and say so when the other device was found but
   could not be reached, instead of "initiator not found". A failed join no longer blocks the next
   try with "Session ... already exists".
@@ -41,6 +50,8 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Internal
 
+- The list of devices to reconnect is logged at debug level: every device wrote a line per paired
+  device every 30 seconds.
 - Copy logs no longer write a progress line per 64 KiB chunk, and queries log at debug level, so a
   screen that polls every second no longer fills the log.
 - CI skips work that repeats a passed run. A version bump alone runs no build gate, no Explorer
