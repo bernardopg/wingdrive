@@ -1034,6 +1034,8 @@ impl<'a> ProgressAggregator<'a> {
 		let error_count = self.error_count;
 		let speed_tracker = self.speed_tracker.clone();
 		let strategy_metadata = self.strategy_metadata.clone();
+		// Index of the last 100 MiB mark logged, so a copy logs once per mark.
+		let logged_mark = std::sync::atomic::AtomicU64::new(0);
 
 		Box::new(move |bytes_value: u64, signal_value: u64| {
 			// Signal: u64::MAX means a file has finished, bytes_value is its size
@@ -1094,7 +1096,13 @@ impl<'a> ProgressAggregator<'a> {
 					"File completed. Total files: {}/{}, Total bytes: {}",
 					files_completed_count, total_files, total_bytes_copied
 				));
-			} else if total_bytes_copied % (100 * 1024 * 1024) < bytes_value {
+			} else if total_bytes_copied / (100 * 1024 * 1024)
+				> logged_mark.load(std::sync::atomic::Ordering::Relaxed)
+			{
+				logged_mark.store(
+					total_bytes_copied / (100 * 1024 * 1024),
+					std::sync::atomic::Ordering::Relaxed,
+				);
 				ctx.log(format!(
 					"Progress: {} / {} bytes ({:.1}%), {}/s, ETA: {}",
 					total_bytes_copied,

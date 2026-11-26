@@ -1285,6 +1285,8 @@ impl NetworkingService {
 		let session_id_str = session_id.to_string();
 		let timeout = tokio::time::Duration::from_secs(5); // Shorter timeout for mDNS
 		let start = tokio::time::Instant::now();
+		// Set when the initiator was found but the connection to it failed.
+		let mut connect_error: Option<String> = None;
 
 		self.logger
 			.debug(&format!(
@@ -1318,6 +1320,7 @@ impl NetworkingService {
 										self.logger
 											.warn(&format!("[mDNS] Failed to connect to initiator: {}", e))
 											.await;
+										connect_error = Some(e.to_string());
 									} else {
 										self.logger.info("[mDNS] Successfully connected to initiator!").await;
 										return Ok(());
@@ -1338,7 +1341,13 @@ impl NetworkingService {
 			}
 		}
 
-		// mDNS timeout
+		// The initiator answered on the local network but could not be reached: saying it was
+		// not found sent people looking at the wrong problem.
+		if let Some(e) = connect_error {
+			return Err(NetworkingError::ConnectionFailed(format!(
+				"found the other device on the local network but could not connect to it ({e})"
+			)));
+		}
 		Err(NetworkingError::ConnectionFailed(
 			"mDNS discovery timeout - initiator not found on local network".to_string(),
 		))
@@ -1659,13 +1668,21 @@ impl NetworkingService {
 			// the first Ok and only returns an error when every branch errors.
 			use futures::future::{select_ok, FutureExt};
 
+			// Both paths' errors, so a failure names what went wrong on each.
+			let failures = std::sync::Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
 			let logger_mdns = self.logger.clone();
 			let logger_relay = self.logger.clone();
+			let failures_mdns = failures.clone();
+			let failures_relay = failures.clone();
 			let mdns_fut = self
 				.try_mdns_discovery(session_id, force_relay)
 				.inspect(move |r| {
 					let logger = logger_mdns.clone();
 					if let Err(e) = r {
+						failures_mdns
+							.lock()
+							.unwrap()
+							.push(format!("local network: {e}"));
 						let msg = format!("mDNS discovery failed: {}", e);
 						tokio::spawn(async move { logger.warn(&msg).await });
 					}
@@ -1676,6 +1693,7 @@ impl NetworkingService {
 				.inspect(move |r| {
 					let logger = logger_relay.clone();
 					if let Err(e) = r {
+						failures_relay.lock().unwrap().push(format!("relay: {e}"));
 						let msg = format!("Relay discovery failed: {}", e);
 						tokio::spawn(async move { logger.warn(&msg).await });
 					}
@@ -1687,7 +1705,9 @@ impl NetworkingService {
 					self.logger.info("Connected (dual-path discovery)").await;
 					Ok(())
 				}
-				Err(e) => Err(e),
+				Err(_) => Err(NetworkingError::ConnectionFailed(
+					failures.lock().unwrap().join("; "),
+				)),
 			}
 		};
 
@@ -1705,6 +1725,16 @@ impl NetworkingService {
 				self.logger
 					.info("Ensure both devices are on the same network or try again")
 					.await;
+				// A failed join left the session in Scanning, and the next try with the same
+				// code failed with "Session ... already exists" until it was cancelled by hand.
+				if let Err(cancel_error) = pairing_handler.cancel_session(session_id).await {
+					self.logger
+						.warn(&format!(
+							"Could not clear the failed pairing session: {}",
+							cancel_error
+						))
+						.await;
+				}
 				return Err(e);
 			}
 		}

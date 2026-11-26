@@ -1500,9 +1500,14 @@ impl FileTransferProtocolHandler {
 	) -> Result<()> {
 		use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-		let mut file = File::open(source_path).await.map_err(|e| {
-			NetworkingError::file_system_error(format!("Failed to open file: {}", e))
-		})?;
+		// Read ahead in large blocks: a 64 KiB read per chunk went to the blocking pool
+		// on its own for every chunk.
+		let mut file = tokio::io::BufReader::with_capacity(
+			4 * 1024 * 1024,
+			File::open(source_path).await.map_err(|e| {
+				NetworkingError::file_system_error(format!("Failed to open file: {}", e))
+			})?,
+		);
 
 		let chunk_size = self.config.chunk_size as usize;
 		let mut buffer = vec![0u8; chunk_size];
@@ -1511,9 +1516,17 @@ impl FileTransferProtocolHandler {
 		let mut file_hasher = blake3::Hasher::new();
 
 		loop {
-			let bytes_read = file.read(&mut buffer).await.map_err(|e| {
-				NetworkingError::file_system_error(format!("Failed to read file: {}", e))
-			})?;
+			// Fill the whole chunk so only the last one is short.
+			let mut bytes_read = 0;
+			while bytes_read < chunk_size {
+				let n = file.read(&mut buffer[bytes_read..]).await.map_err(|e| {
+					NetworkingError::file_system_error(format!("Failed to read file: {}", e))
+				})?;
+				if n == 0 {
+					break;
+				}
+				bytes_read += n;
+			}
 
 			if bytes_read == 0 {
 				break;

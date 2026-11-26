@@ -35,7 +35,8 @@ impl QueryManager {
 	) -> QueryResult<Q::Output> {
 		let query_type = std::any::type_name::<Q>();
 
-		tracing::info!(
+		// Debug, not info: screens poll queries every second, which buried every other line.
+		tracing::debug!(
 			query_type = query_type,
 			device_id = %session.auth.device_id,
 			"Executing core query"
