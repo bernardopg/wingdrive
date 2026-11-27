@@ -122,6 +122,16 @@ jobs:
         with:
           phase: wait
 
+      # The adapter confinement tests run adapters inside bubblewrap. Ubuntu 24.04's AppArmor
+      # gives unprivileged user namespaces no capabilities, so bwrap cannot bring up the
+      # loopback of its network namespace ("loopback: Failed RTM_NEWADDR: Operation not
+      # permitted"). Desktop Linux distributions allow them, and so does this runner after this.
+      - name: Allow bubblewrap's user namespaces
+        run: |
+          knob=/proc/sys/kernel/apparmor_restrict_unprivileged_userns
+          if [ -e "$knob" ]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          bwrap --unshare-all --ro-bind /usr /usr --symlink usr/lib /lib --symlink usr/lib64 /lib64 /usr/bin/true
+
       - name: Install GTK and preview tools for desktop coverage
         run: |
           packages=()
