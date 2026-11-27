@@ -200,6 +200,114 @@ async fn engine_uses_adapters_installed_outside_its_data_dir() {
 }
 
 #[tokio::test]
+async fn engine_updates_source_fields_independently_and_rejects_missing_sources() {
+	let tmp = tempfile::tempdir().unwrap();
+	let installed = tmp.path().join("echo");
+	std::fs::create_dir_all(&installed).unwrap();
+	write_adapter(&installed);
+	let engine = wing_archive::Engine::new(wing_archive::EngineConfig {
+		data_dir: tmp.path().join("library"),
+	})
+	.await
+	.unwrap();
+	engine.adapters().register(std::sync::Arc::new(
+		ScriptAdapter::from_dir(&installed).unwrap(),
+	));
+	let source = engine
+		.create_source("Original", "echo", serde_json::json!({"path": "old"}))
+		.await
+		.unwrap();
+	let renamed = engine
+		.update_source(&source.id, Some("Renamed"), None)
+		.await
+		.unwrap();
+	assert_eq!(renamed.name, "Renamed");
+	assert_eq!(renamed.config, source.config);
+	let config = serde_json::json!({"path": "new", "nested": {"enabled": true}});
+	let updated = engine
+		.update_source(&source.id, None, Some(&config))
+		.await
+		.unwrap();
+	assert_eq!(updated.name, "Renamed");
+	assert_eq!(updated.config, config);
+	let unchanged = engine.update_source(&source.id, None, None).await.unwrap();
+	assert_eq!(unchanged.config, config);
+	assert_eq!(engine.get_source(&source.id).await.unwrap().name, "Renamed");
+	assert!(matches!(
+		engine
+			.update_source("missing", Some("Name"), Some(&config))
+			.await,
+		Err(wing_archive::Error::SourceNotFound(_))
+	));
+}
+
+/// A registered adapter with no record schema, which sources cannot be created from.
+struct SchemaLess;
+
+impl Adapter for SchemaLess {
+	fn id(&self) -> &str {
+		"schemaless"
+	}
+	fn name(&self) -> &str {
+		"Schemaless"
+	}
+	fn data_type(&self) -> &str {
+		"note"
+	}
+	fn sync<'a>(
+		&'a self,
+		_db: &'a wing_archive::db::SourceDb,
+		_config: &'a serde_json::Value,
+	) -> std::pin::Pin<
+		Box<
+			dyn std::future::Future<Output = wing_archive::Result<wing_archive::SyncReport>>
+				+ Send
+				+ 'a,
+		>,
+	> {
+		Box::pin(async { Err(wing_archive::Error::AdapterSync("not used".into())) })
+	}
+}
+
+#[tokio::test]
+async fn engine_reports_unknown_adapters_and_adapters_without_a_schema() {
+	let tmp = tempfile::tempdir().unwrap();
+	let engine = wing_archive::Engine::new(wing_archive::EngineConfig {
+		data_dir: tmp.path().join("library"),
+	})
+	.await
+	.unwrap();
+	assert!(matches!(
+		engine.adapter_config_fields("missing"),
+		Err(wing_archive::Error::AdapterNotFound(id)) if id == "missing"
+	));
+	assert!(matches!(
+		engine.config_translations("missing"),
+		Err(wing_archive::Error::AdapterNotFound(_))
+	));
+	assert!(matches!(
+		engine.detect_config("missing").await,
+		Err(wing_archive::Error::AdapterNotFound(_))
+	));
+
+	engine.adapters().register(std::sync::Arc::new(SchemaLess));
+	assert!(engine
+		.adapter_config_fields("schemaless")
+		.unwrap()
+		.is_empty());
+	assert!(engine.config_translations("schemaless").unwrap().is_empty());
+	assert!(engine.detect_config("schemaless").await.unwrap().is_empty());
+	let error = engine
+		.create_source("Notes", "schemaless", serde_json::json!({}))
+		.await
+		.unwrap_err();
+	assert!(error
+		.to_string()
+		.contains("adapter 'schemaless' does not declare a record schema"));
+	assert!(engine.list_sources().await.unwrap().is_empty());
+}
+
+#[tokio::test]
 async fn detect_collects_suggestions_only_when_declared() {
 	let tmp = tempfile::tempdir().unwrap();
 	let dir = tmp.path().join("echo");

@@ -164,3 +164,60 @@ pub struct AdapterUpdateResult {
 	pub schema_changed: bool,
 	pub backup_path: String,
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	/// An adapter that implements only the required methods.
+	struct Minimal;
+
+	impl Adapter for Minimal {
+		fn id(&self) -> &str {
+			"minimal"
+		}
+		fn name(&self) -> &str {
+			"Minimal"
+		}
+		fn data_type(&self) -> &str {
+			"note"
+		}
+		fn sync<'a>(
+			&'a self,
+			_db: &'a SourceDb,
+			_config: &'a serde_json::Value,
+		) -> Pin<Box<dyn Future<Output = Result<SyncReport>> + Send + 'a>> {
+			Box::pin(async { Err(crate::error::Error::AdapterSync("not used".into())) })
+		}
+	}
+
+	#[tokio::test]
+	async fn defaults_describe_an_external_adapter_without_extras() {
+		let adapter = Minimal;
+		assert_eq!(adapter.description(), "");
+		assert_eq!(adapter.version(), "0.0.0");
+		assert_eq!(adapter.author(), "");
+		assert!(adapter.icon_svg().is_none());
+		assert_eq!(adapter.trust_tier(), TrustTier::External);
+		assert!(adapter.schema().is_none());
+		assert!(adapter.config_fields().is_empty());
+		assert!(adapter.translations().is_none());
+		assert!(adapter.detect().await.is_empty());
+	}
+
+	#[test]
+	fn the_registry_lists_and_unregisters_adapters() {
+		let registry = AdapterRegistry::default();
+		registry.register(Arc::new(Minimal));
+		let listed = registry.list();
+		assert_eq!(listed.len(), 1);
+		assert_eq!(listed[0].id, "minimal");
+		assert_eq!(listed[0].kind, AdapterKind::Native);
+		assert!(!listed[0].update_available);
+		let removed = registry.unregister("minimal").expect("registered");
+		assert_eq!(removed.id(), "minimal");
+		assert!(registry.get("minimal").is_none());
+		assert!(registry.unregister("minimal").is_none());
+		assert!(registry.list().is_empty());
+	}
+}
