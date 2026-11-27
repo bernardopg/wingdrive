@@ -34,7 +34,7 @@ printf '\n==> Test server and shared crates\n'
 cargo test --locked --lib --bins --tests \
 	-p wing-server -p wing-tauri-core -p file-opening \
 	-p wing-archive -p wing-utils -p wing-fs-watcher -p wing-task-system -p wing-crypto \
-	-p wing-actors -p wing-client -p wing-media-metadata -p wing-images
+	-p wing-actors -p wing-client -p wing-media-metadata -p wing-images -p wing-elevate
 
 cargo llvm-cov report --lcov --output-path "$out"
 printf '\nRust coverage written to %s\n' "$out"
