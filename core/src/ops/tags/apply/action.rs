@@ -304,3 +304,25 @@ pub(crate) async fn sync_tag_associations(
 	}
 	Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn action_rejects_missing_and_nil_targets() {
+		let tag = Uuid::new_v4();
+		let mut input = ApplyTagsInput::user_tags_entry(vec![], vec![tag]);
+		assert_eq!(
+			ApplyTagsAction::from_input(input.clone()).unwrap_err(),
+			"entry IDs cannot be empty"
+		);
+		input.targets = TagTargets::EntryUuid(vec![Uuid::nil()]);
+		assert_eq!(
+			ApplyTagsAction::from_input(input.clone()).unwrap_err(),
+			"entry UUIDs cannot contain nil values"
+		);
+		input.targets = TagTargets::EntryUuid(vec![Uuid::new_v4()]);
+		assert!(ApplyTagsAction::from_input(input).is_ok());
+	}
+}

@@ -276,3 +276,25 @@ async fn lookup_entry_uuid(
 		.uuid
 		.ok_or_else(|| format!("Entry {} has no UUID assigned", entry_id))
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn action_validates_tag_and_initial_targets() {
+		let mut input = CreateTagInput::simple(" ".to_string());
+		assert_eq!(
+			CreateTagAction::from_input(input.clone()).unwrap_err(),
+			"canonical_name cannot be empty"
+		);
+		input.canonical_name = "project".to_string();
+		input.apply_to = Some(ApplyToTargets::EntryUuid(vec![Uuid::nil()]));
+		assert_eq!(
+			CreateTagAction::from_input(input.clone()).unwrap_err(),
+			"apply_to entry UUIDs cannot contain nil values"
+		);
+		input.apply_to = Some(ApplyToTargets::EntryUuid(vec![Uuid::new_v4()]));
+		assert!(CreateTagAction::from_input(input).is_ok());
+	}
+}

@@ -44,6 +44,12 @@ function button(host: HTMLElement, text: string) {
 }
 
 describe('updates section', () => {
+	it('explains where updates come from on unsupported systems', async () => {
+		platform = {getUpdaterInfo: async () => ({channel: 'unsupported', current_version: '3.4.0'})};
+		const {host, root} = await render();
+		expect(host.textContent).toContain('Updates on this system come from new downloads on wingdrive.org');
+		act(() => root.unmount());
+	});
 	it('tells package-manager installs about new releases without installing them', async () => {
 		platform = {
 			getUpdaterInfo: async () => ({channel: 'package_manager', current_version: '3.4.0'}),

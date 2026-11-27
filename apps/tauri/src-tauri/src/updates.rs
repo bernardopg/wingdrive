@@ -162,6 +162,17 @@ fn notification_body(channel: UpdateChannel) -> &'static str {
 	}
 }
 
+/// Whether the user was already told about `version`.
+fn already_notified(path: &std::path::Path, version: &str) -> bool {
+	std::fs::read_to_string(path).ok().as_deref() == Some(version)
+}
+
+/// Records that the user was told about `version`, so a restart does not repeat it.
+fn remember_notified(path: &std::path::Path, version: &str) {
+	let _ = std::fs::create_dir_all(path.parent().unwrap_or(path));
+	let _ = std::fs::write(path, version);
+}
+
 /// Checks for a new release once after startup and tells the user about it with a desktop
 /// notification, once per version: a restart does not repeat it.
 pub fn spawn_startup_check<R: Runtime>(app: AppHandle<R>, enabled: bool) {
@@ -179,12 +190,11 @@ pub fn spawn_startup_check<R: Runtime>(app: AppHandle<R>, enabled: bool) {
 					.app_data_dir()
 					.ok()
 					.map(|dir| dir.join(NOTIFIED_FILE));
-				if let Some(path) = &notified {
-					if std::fs::read_to_string(path).ok().as_deref()
-						== Some(update.version.as_str())
-					{
-						return;
-					}
+				if notified
+					.as_deref()
+					.is_some_and(|path| already_notified(path, &update.version))
+				{
+					return;
 				}
 				let request = NotificationRequest {
 					title: format!("WingDrive {} is available", update.version),
@@ -196,8 +206,7 @@ pub fn spawn_startup_check<R: Runtime>(app: AppHandle<R>, enabled: bool) {
 					match notifier.send(&app, &request).await {
 						Ok(_) => {
 							if let Some(path) = &notified {
-								let _ = std::fs::create_dir_all(path.parent().unwrap_or(path));
-								let _ = std::fs::write(path, &update.version);
+								remember_notified(path, &update.version);
 							}
 						}
 						Err(error) => tracing::debug!(%error, "Update notification not shown"),
@@ -236,6 +245,23 @@ mod tests {
 	fn package_manager_installs_are_told_how_to_update() {
 		assert!(notification_body(UpdateChannel::PackageManager).contains("package manager"));
 		assert!(notification_body(UpdateChannel::SelfUpdate).contains("Settings"));
+		assert_eq!(
+			notification_body(UpdateChannel::Unsupported),
+			"Download it from wingdrive.org."
+		);
+	}
+
+	#[test]
+	fn each_version_is_announced_once() {
+		let dir = tempfile::tempdir().unwrap();
+		let path = dir.path().join("data").join(NOTIFIED_FILE);
+		assert!(!already_notified(&path, "3.9.0"));
+		remember_notified(&path, "3.9.0");
+		assert!(already_notified(&path, "3.9.0"));
+		assert!(!already_notified(&path, "3.9.1"));
+		remember_notified(&path, "3.9.1");
+		assert!(!already_notified(&path, "3.9.0"));
+		assert_eq!(std::fs::read_to_string(&path).unwrap(), "3.9.1");
 	}
 
 	#[test]

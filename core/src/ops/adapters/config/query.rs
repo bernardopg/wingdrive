@@ -127,3 +127,17 @@ impl LibraryQuery for GetAdapterConfigQuery {
 }
 
 crate::register_library_query!(GetAdapterConfigQuery, "adapters.config");
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn rejects_blank_adapter_id() {
+		let error = GetAdapterConfigQuery::from_input(GetAdapterConfigInput {
+			adapter_id: "  ".into(),
+		})
+		.unwrap_err();
+		assert!(error.to_string().contains("adapter_id cannot be empty"));
+	}
+}

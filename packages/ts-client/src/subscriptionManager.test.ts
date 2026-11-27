@@ -22,6 +22,24 @@ function createTransport() {
 }
 
 describe("SubscriptionManager", () => {
+	it("removes a failed subscription and permits a successful retry", async () => {
+		const unsubscribe = mock(() => {});
+		let attempts = 0;
+		const transport: Transport = {
+			sendRequest: mock(async () => ({})),
+			subscribe: mock(async () => {
+				if (++attempts === 1) throw new Error("subscription failed");
+				return unsubscribe;
+			}),
+		};
+		const manager = new SubscriptionManager(transport);
+		await expect(manager.subscribe({ resource_type: "file" }, () => {})).rejects.toThrow("subscription failed");
+		expect(manager.getStats().activeSubscriptions).toBe(0);
+		const cleanup = await manager.subscribe({ resource_type: "file" }, () => {});
+		expect(attempts).toBe(2);
+		cleanup();
+		expect(unsubscribe).toHaveBeenCalledTimes(1);
+	});
 	it("reuses a transport subscription for identical filters", async () => {
 		const { transport } = createTransport();
 		const manager = new SubscriptionManager(transport);

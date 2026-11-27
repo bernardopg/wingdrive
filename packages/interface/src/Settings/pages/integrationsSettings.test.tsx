@@ -3,6 +3,7 @@ import {describe, expect, it, mock} from 'bun:test';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {act, type ReactElement} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
+import type {Event} from '@wingdrive/ts-client';
 
 if (!GlobalRegistrator.isRegistered) GlobalRegistrator.register();
 (globalThis as {IS_REACT_ACT_ENVIRONMENT?: boolean}).IS_REACT_ACT_ENVIRONMENT = true;
@@ -81,6 +82,8 @@ const data: Record<string, unknown> = {
 const mutation = {mutateAsync: async () => ({}), mutate: () => {}, isPending: false};
 const mutationOverrides = new Map<string, unknown>();
 const openedUrls: string[] = [];
+let subscribe: (callback: (event: Event) => void) => Promise<() => void> = async () => () => {};
+const client = {getCurrentLibraryId: () => 'library', execute: async () => ({}), subscribe: (callback: (event: Event) => void) => subscribe(callback)};
 
 // Bun module mocks leak into other test files, so keep the real exports and override only these
 const actualContext = await import('../../contexts/WingDriveContext');
@@ -92,7 +95,7 @@ mock.module('../../contexts/WingDriveContext', () => ({
 		refetch: async () => {}
 	}),
 	useLibraryMutation: (type: string) => mutationOverrides.get(type) ?? mutation,
-	useWingDriveClient: () => ({getCurrentLibraryId: () => 'library', execute: async () => ({})})
+	useWingDriveClient: () => client
 }));
 mock.module('../../contexts/PlatformContext', () => ({
 	usePlatform: () => ({platform: 'web', openLink: (url: string) => openedUrls.push(url)})
@@ -107,6 +110,42 @@ function render(element: ReactElement) {
 }
 
 describe('integrations settings', () => {
+	it('refreshes accounts only for events in the current library and unsubscribes', async () => {
+		let listener: ((event: Event) => void) | undefined;
+		const unsubscribe = mock(() => {});
+		subscribe = async callback => { listener = callback; return unsubscribe; };
+		const queryClient = new QueryClient();
+		const invalidate = mock(async () => {});
+		queryClient.invalidateQueries = invalidate;
+		const root = createRoot(document.createElement('div'));
+		try {
+			await act(async () => root.render(<QueryClientProvider client={queryClient}><IntegrationsSettings /></QueryClientProvider>));
+			listener?.({Custom: {event_type: 'other'}});
+			listener?.({IntegrationAccountChanged: {library_id: 'other', account_id: '1'}});
+			expect(invalidate).not.toHaveBeenCalled();
+			listener?.({IntegrationAccountChanged: {library_id: 'library', account_id: '1'}});
+			expect(invalidate).toHaveBeenCalledWith({queryKey: ['integrations.accounts.list']});
+			await act(async () => root.unmount());
+			expect(unsubscribe).toHaveBeenCalledTimes(1);
+		} finally {
+			subscribe = async () => () => {};
+		}
+	});
+
+	it('cleans up a subscription that resolves after unmount', async () => {
+		let finish: ((unsubscribe: () => void) => void) | undefined;
+		const unsubscribe = mock(() => {});
+		subscribe = () => new Promise(resolve => { finish = resolve; });
+		const root = createRoot(document.createElement('div'));
+		try {
+			await act(async () => root.render(<QueryClientProvider client={new QueryClient()}><IntegrationsSettings /></QueryClientProvider>));
+			await act(async () => root.unmount());
+			await act(async () => finish?.(unsubscribe));
+			expect(unsubscribe).toHaveBeenCalledTimes(1);
+		} finally {
+			subscribe = async () => () => {};
+		}
+	});
 	it('offers every service and connection mode as a card', () => {
 		const html = render(<IntegrationsSettings />);
 		expect(html).toContain('Connect a service');

@@ -185,6 +185,7 @@ jobs:
           bun test packages/interface/src/components/WingsSidebar/reorderItems.test.ts
           bun test packages/interface/src/routes/explorer/views/ListView/listExpansion.test.ts
           bun test packages/interface/src/hooks/adminRetry.test.ts
+          bun test packages/interface/src/hooks/adminRetry.coverage.test.tsx
           bun test packages/interface/src/components/QuickPreview/pdfBinaryData.test.ts
           bun test packages/interface/src/routes/explorer/OpenFileProvider.test.tsx
           bun test packages/interface/src/routes/explorer/terminal/terminalFolder.test.ts
@@ -234,9 +235,15 @@ jobs:
         with:
           phase: wait
 
-      # The adapter confinement tests run adapters inside bubblewrap.
-      - name: Install bubblewrap
-        run: sudo apt-get install -y -qq bubblewrap
+      # The adapter tests run adapters inside bubblewrap. Ubuntu 24.04's AppArmor gives
+      # unprivileged user namespaces no capabilities, so bwrap cannot bring up the loopback of its
+      # network namespace ("loopback: Failed RTM_NEWADDR"); coverage.yml lifts it the same way.
+      - name: Install bubblewrap and allow its user namespaces
+        run: |
+          sudo apt-get install -y -qq bubblewrap
+          knob=/proc/sys/kernel/apparmor_restrict_unprivileged_userns
+          if [ -e "$knob" ]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          bwrap --unshare-all --ro-bind /usr /usr --symlink usr/lib /lib --symlink usr/lib64 /lib64 /usr/bin/true
 
       # Same script as `just ci-local`. Scoped runs lint and test only the apps that changed.
       - name: Setup Bun for bridge tests

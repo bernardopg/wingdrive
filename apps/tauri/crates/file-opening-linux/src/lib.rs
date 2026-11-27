@@ -195,6 +195,18 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn opening_a_missing_file_reports_it_and_launches_nothing() {
+		let missing = PathBuf::from("/nonexistent/wingdrive-test/missing.txt");
+		let result = LinuxFileOpener
+			.open_with_app(&missing, "wingdrive-test-no-such-app.desktop")
+			.unwrap();
+		assert!(matches!(
+			result,
+			OpenResult::FileNotFound { path } if path == missing.to_string_lossy()
+		));
+	}
+
+	#[test]
 	fn context_actions_refuse_missing_files_and_actions_that_do_not_apply() {
 		let dir = tempfile::tempdir().unwrap();
 		let file = dir.path().join("report.txt");

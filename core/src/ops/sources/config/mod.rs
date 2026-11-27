@@ -79,3 +79,22 @@ impl LibraryQuery for GetSourceConfigQuery {
 }
 
 crate::register_library_query!(GetSourceConfigQuery, "sources.config");
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn rejects_blank_source_id() {
+		let result = GetSourceConfigQuery::from_input(GetSourceConfigInput {
+			source_id: " \t".into(),
+		});
+		assert!(
+			matches!(result, Err(QueryError::Validation { field, message }) if field == "source_id" && message == "source_id cannot be empty")
+		);
+		assert!(GetSourceConfigQuery::from_input(GetSourceConfigInput {
+			source_id: "source".into(),
+		})
+		.is_ok());
+	}
+}

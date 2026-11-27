@@ -278,3 +278,71 @@ fn picks_the_archive_for_this_platform() {
 	assert!(adapter.supports_this_platform());
 	let _: PathBuf = store.installed_dir();
 }
+
+#[test]
+fn reinstall_replaces_files_and_removal_tolerates_a_missing_directory() {
+	let tmp = tempfile::tempdir().unwrap();
+	let store = test_store(tmp.path());
+	assert!(store.cached_index().unwrap().is_none());
+	let index = accepted(&store, "index");
+	let adapter = index.adapter("sample").unwrap();
+	let archive = fixture("sample-1.0.0.tar.gz");
+	store.install(adapter, &archive).unwrap();
+	let installed = store.installed_dir().join("sample");
+	std::fs::write(installed.join("stale"), b"old").unwrap();
+	store.install(adapter, &archive).unwrap();
+	assert!(!installed.join("stale").exists());
+	assert!(installed.join("adapter.toml").is_file());
+	std::fs::remove_dir_all(&installed).unwrap();
+	store.remove("sample").unwrap();
+	assert!(store.installed().unwrap().is_empty());
+	assert!(store
+		.remove("sample")
+		.unwrap_err()
+		.to_string()
+		.contains("not installed"));
+}
+
+#[test]
+fn install_rejects_unsupported_build_and_contract_without_installing() {
+	let tmp = tempfile::tempdir().unwrap();
+	let store = test_store(tmp.path());
+	let index = accepted(&store, "index");
+	let archive = fixture("sample-1.0.0.tar.gz");
+	let mut adapter = index.adapter("sample").unwrap().clone();
+	adapter.artifacts.clear();
+	assert!(store
+		.install(&adapter, &archive)
+		.unwrap_err()
+		.to_string()
+		.contains("no build"));
+	adapter = index.adapter("sample").unwrap().clone();
+	adapter.contract = u32::MAX;
+	assert!(store
+		.install(&adapter, &archive)
+		.unwrap_err()
+		.to_string()
+		.contains("newer WingDrive"));
+	assert!(store.installed().unwrap().is_empty());
+	assert!(!store.installed_dir().join("sample").exists());
+}
+
+#[test]
+fn refuses_a_signature_that_is_not_minisign_and_keys_that_do_not_parse() {
+	let index = fixture("index.json");
+	let error = store::verify_index(&index, "not a signature", &[&fixture_text("test.pub")])
+		.unwrap_err()
+		.to_string();
+	assert!(error.contains("not a minisign signature"), "{error}");
+	let error = store::verify_index(
+		&index,
+		&fixture_text("index.json.minisig"),
+		&["not a public key"],
+	)
+	.unwrap_err()
+	.to_string();
+	assert!(
+		error.contains("does not match the registry keys"),
+		"{error}"
+	);
+}
