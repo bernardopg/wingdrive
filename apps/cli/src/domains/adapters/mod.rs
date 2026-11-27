@@ -206,3 +206,25 @@ pub async fn run(ctx: &Context, cmd: AdaptersCmd) -> Result<()> {
 	}
 	Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn permissions_text_lists_only_requested_permissions() {
+		let mut permissions = StorePermissions {
+			read: vec![],
+			network: vec![],
+			secrets: vec![],
+			tools: vec![],
+		};
+		assert_eq!(permissions_text(&permissions), "no special permissions");
+		permissions.read = vec!["one".into(), "two".into()];
+		permissions.tools = vec!["python".into()];
+		assert_eq!(
+			permissions_text(&permissions),
+			"reads: one, two; runs: python"
+		);
+	}
+}

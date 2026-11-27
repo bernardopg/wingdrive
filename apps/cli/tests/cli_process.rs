@@ -332,3 +332,58 @@ fn stop_reset_honors_wing_cli_yes_without_prompting() {
 	let stderr = String::from_utf8_lossy(&out.stderr);
 	assert!(!stderr.contains("Aborted by user"), "{stderr}");
 }
+
+#[test]
+fn adapters_list_renders_states_and_permissions() {
+	let card = |id: &str,
+	            installed: Option<&str>,
+	            update: bool,
+	            revoked: Option<&str>,
+	            supported: bool,
+	            runtime: bool| {
+		serde_json::json!({
+			"id":id,"name":id,"summary":"Fixture summary","description":"Fixture","translations":{},"version":"2.0",
+			"author":"Test","license":"MIT","homepage":null,"categories":[],"trust":"community",
+			"permissions":{"read":["/fixture"],"network":["example.invalid"],"secrets":["token"],"tools":["python"]},
+			"platforms":[],"supported_here":supported,"runtime_available":runtime,"installed_version":installed,
+			"update_available":update,"update_needs_consent":false,"revoked_reason":revoked,"icon_svg":null
+		})
+	};
+	let (instance, dir, server) = json_rpc_fixture(
+		&["query:libraries.list", "query:adapters.store.list"],
+		vec![
+			serde_json::json!([]),
+			serde_json::json!({"sequence":42,"isolation":"none","generated_at":null,"updates":2,"adapters":[
+				card("available",None,false,None,true,true), card("updated",Some("1.0"),true,None,false,true),
+				card("revoked",Some("1.0"),true,Some("unsafe"),true,false), card("current",Some("2.0"),false,None,true,true)
+			]}),
+		],
+	);
+	let out = run(&[
+		"--data-dir",
+		dir.path().to_str().unwrap(),
+		"--instance",
+		&instance,
+		"adapters",
+		"list",
+	]);
+	server.join().unwrap();
+	assert!(
+		out.status.success(),
+		"{}",
+		String::from_utf8_lossy(&out.stderr)
+	);
+	let text = String::from_utf8(out.stdout).unwrap();
+	for expected in [
+		"available 2.0",
+		"installed 1.0, update to 2.0",
+		"installed 1.0, REVOKED: unsafe",
+		"installed 2.0",
+		"reads: /fixture; network: example.invalid; secrets: token; runs: python",
+		"does not run on this system",
+		"needs Python 3",
+		"Index 42",
+	] {
+		assert!(text.contains(expected), "missing {expected:?} in {text}");
+	}
+}

@@ -1981,3 +1981,5 @@ async fn integrations_cloud_sync_update_forwards_manual_interval() {
 	result.unwrap();
 	assert_eq!(requests[1]["interval_minutes"], 0);
 }
+
+mod adapters;
