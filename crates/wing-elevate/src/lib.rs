@@ -65,7 +65,9 @@ pub struct AdminResponse {
 
 impl AdminResponse {
 	pub fn completed() -> Self {
-		Self { status: AdminStatus::Completed }
+		Self {
+			status: AdminStatus::Completed,
+		}
 	}
 
 	pub fn failed(message: impl Into<String>) -> Self {
@@ -219,10 +221,7 @@ fn execute_create_folder(parent: &Path, name: &str) -> AdminResponse {
 
 fn execute_transfer(sources: &[PathBuf], destination: &Path, move_files: bool) -> AdminResponse {
 	if !destination.is_dir() {
-		return AdminResponse::failed(format!(
-			"{} is not a folder",
-			destination.display()
-		));
+		return AdminResponse::failed(format!("{} is not a folder", destination.display()));
 	}
 
 	let mut failures = Vec::new();
@@ -282,7 +281,9 @@ fn copy_entry(source: &Path, target: &Path) -> Result<(), String> {
 	} else if file_type.is_dir() {
 		copy_dir(source, target)
 	} else {
-		fs::copy(source, target).map(|_| ()).map_err(|e| e.to_string())
+		fs::copy(source, target)
+			.map(|_| ())
+			.map_err(|e| e.to_string())
 	}
 }
 
@@ -332,7 +333,8 @@ pub fn read_request(path: &Path) -> Result<AdminRequest, String> {
 
 /// Writes a response to `path` as JSON.
 pub fn write_response(path: &Path, response: &AdminResponse) -> Result<(), String> {
-	let json = serde_json::to_vec(response).map_err(|e| format!("Failed to serialize response: {e}"))?;
+	let json =
+		serde_json::to_vec(response).map_err(|e| format!("Failed to serialize response: {e}"))?;
 	fs::write(path, json).map_err(|e| format!("Failed to write response: {e}"))
 }
 
@@ -366,7 +368,9 @@ mod tests {
 		write_file(&file, "hello");
 
 		let request = AdminRequest {
-			operation: AdminOperation::Delete { paths: vec![file.clone()] },
+			operation: AdminOperation::Delete {
+				paths: vec![file.clone()],
+			},
 		};
 		fs::write(&request_path, serde_json::to_vec(&request).unwrap()).unwrap();
 
@@ -430,7 +434,9 @@ mod tests {
 		assert!(folder.is_dir());
 
 		let delete_targets = vec![renamed, folder];
-		let response = execute(&AdminOperation::Delete { paths: delete_targets.clone() });
+		let response = execute(&AdminOperation::Delete {
+			paths: delete_targets.clone(),
+		});
 		assert_eq!(response, AdminResponse::completed());
 		for path in delete_targets {
 			assert!(!path.exists());
@@ -496,5 +502,161 @@ mod tests {
 			name: "../x".into(),
 		});
 		assert!(matches!(err.status, AdminStatus::Failed { .. }));
+	}
+
+	fn failure_paths(response: &AdminResponse) -> Vec<String> {
+		match &response.status {
+			AdminStatus::Partial { failures } => failures.iter().map(|f| f.path.clone()).collect(),
+			other => panic!("expected a partial failure, got {other:?}"),
+		}
+	}
+
+	fn failed_message(response: &AdminResponse) -> String {
+		match &response.status {
+			AdminStatus::Failed { message } => message.clone(),
+			other => panic!("expected a failure, got {other:?}"),
+		}
+	}
+
+	#[test]
+	fn refuses_relative_paths_and_names_with_separators() {
+		let dir = tempdir().unwrap();
+		let message = failed_message(&execute(&AdminOperation::Delete {
+			paths: vec![PathBuf::new()],
+		}));
+		assert_eq!(message, "The path is empty");
+		let message = failed_message(&execute(&AdminOperation::Rename {
+			path: PathBuf::from("relative.txt"),
+			new_name: "b.txt".into(),
+		}));
+		assert!(message.contains("is not an absolute path"), "{message}");
+		for name in ["", ".", "..", "a/b", "a\\b", "a\0b"] {
+			let message = failed_message(&execute(&AdminOperation::CreateFolder {
+				parent: dir.path().to_path_buf(),
+				name: name.into(),
+			}));
+			assert!(
+				message.contains("is not a valid name"),
+				"{name:?}: {message}"
+			);
+		}
+		let message = failed_message(&execute(&AdminOperation::Transfer {
+			sources: vec![dir.path().join("a")],
+			destination: PathBuf::from("dest"),
+			move_files: false,
+		}));
+		assert!(message.contains("is not an absolute path"), "{message}");
+	}
+
+	#[test]
+	fn rename_and_create_folder_report_the_item_that_failed() {
+		let dir = tempdir().unwrap();
+		let missing = dir.path().join("missing.txt");
+		let response = execute(&AdminOperation::Rename {
+			path: missing.clone(),
+			new_name: "other.txt".into(),
+		});
+		assert_eq!(failure_paths(&response), [missing.display().to_string()]);
+
+		let existing = dir.path().join("existing");
+		fs::create_dir(&existing).unwrap();
+		let response = execute(&AdminOperation::CreateFolder {
+			parent: dir.path().to_path_buf(),
+			name: "existing".into(),
+		});
+		assert_eq!(failure_paths(&response), [existing.display().to_string()]);
+	}
+
+	#[test]
+	fn transfer_needs_a_folder_and_sources_with_names() {
+		let dir = tempdir().unwrap();
+		let file = dir.path().join("file.txt");
+		write_file(&file, "data");
+		let message = failed_message(&execute(&AdminOperation::Transfer {
+			sources: vec![file.clone()],
+			destination: file.clone(),
+			move_files: false,
+		}));
+		assert!(message.ends_with("is not a folder"), "{message}");
+
+		let destination = dir.path().join("dest");
+		fs::create_dir(&destination).unwrap();
+		let nameless = dir.path().join("sub").join("..");
+		let response = execute(&AdminOperation::Transfer {
+			sources: vec![nameless.clone(), dir.path().join("vanished.txt")],
+			destination,
+			move_files: false,
+		});
+		assert_eq!(
+			failure_paths(&response),
+			[
+				nameless.display().to_string(),
+				dir.path().join("vanished.txt").display().to_string()
+			]
+		);
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn copies_folders_with_links_as_links_and_moves_them_whole() {
+		let dir = tempdir().unwrap();
+		let folder = dir.path().join("folder");
+		write_file(&folder.join("nested/inner.txt"), "inner");
+		std::os::unix::fs::symlink("nested/inner.txt", folder.join("link")).unwrap();
+		let copies = dir.path().join("copies");
+		let moved = dir.path().join("moved");
+		fs::create_dir(&copies).unwrap();
+		fs::create_dir(&moved).unwrap();
+
+		let response = execute(&AdminOperation::Transfer {
+			sources: vec![folder.clone()],
+			destination: copies.clone(),
+			move_files: false,
+		});
+		assert_eq!(response, AdminResponse::completed());
+		let copy = copies.join("folder");
+		assert_eq!(
+			fs::read_to_string(copy.join("nested/inner.txt")).unwrap(),
+			"inner"
+		);
+		assert_eq!(
+			fs::read_link(copy.join("link")).unwrap(),
+			Path::new("nested/inner.txt")
+		);
+		assert!(folder.exists(), "a copy keeps the source");
+
+		let response = execute(&AdminOperation::Transfer {
+			sources: vec![folder.clone()],
+			destination: moved.clone(),
+			move_files: true,
+		});
+		assert_eq!(response, AdminResponse::completed());
+		assert!(!folder.exists(), "a move removes the source");
+		assert_eq!(
+			fs::read_to_string(moved.join("folder/nested/inner.txt")).unwrap(),
+			"inner"
+		);
+	}
+
+	#[test]
+	fn an_unreadable_request_is_answered_with_a_failure() {
+		let dir = tempdir().unwrap();
+		let response_path = dir.path().join("response.json");
+		run_request_file(&dir.path().join("missing.json"), &response_path).unwrap();
+		let response: AdminResponse =
+			serde_json::from_slice(&fs::read(&response_path).unwrap()).unwrap();
+		assert!(failed_message(&response).starts_with("Failed to read request"));
+
+		let request_path = dir.path().join("request.json");
+		fs::write(&request_path, b"not json").unwrap();
+		run_request_file(&request_path, &response_path).unwrap();
+		let response: AdminResponse =
+			serde_json::from_slice(&fs::read(&response_path).unwrap()).unwrap();
+		assert!(failed_message(&response).starts_with("Failed to parse request"));
+		assert!(
+			write_response(&dir.path().join("no/such/dir/response.json"), &response)
+				.unwrap_err()
+				.starts_with("Failed to write response")
+		);
 	}
 }
