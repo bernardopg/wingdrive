@@ -96,3 +96,37 @@ impl LibraryAction for UpdateSourceAction {
 }
 
 crate::register_library_action!(UpdateSourceAction, "sources.update");
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn validates_update_input() {
+		let input = UpdateSourceInput {
+			source_id: "source".into(),
+			name: None,
+			config: None,
+		};
+		assert!(UpdateSourceAction::from_input(input.clone()).is_ok());
+		let mut invalid = input.clone();
+		invalid.source_id = "  ".into();
+		assert!(
+			matches!(UpdateSourceAction::from_input(invalid), Err(error) if error == "source_id cannot be empty")
+		);
+		let mut invalid = input.clone();
+		invalid.name = Some(" \t".into());
+		assert!(
+			matches!(UpdateSourceAction::from_input(invalid), Err(error) if error == "Source name cannot be empty")
+		);
+		let mut invalid = input.clone();
+		invalid.config = Some(serde_json::json!([]));
+		assert!(
+			matches!(UpdateSourceAction::from_input(invalid), Err(error) if error == "config must be an object")
+		);
+		let mut valid = input;
+		valid.name = Some(" renamed ".into());
+		valid.config = Some(serde_json::json!({"field": null}));
+		assert!(UpdateSourceAction::from_input(valid).is_ok());
+	}
+}

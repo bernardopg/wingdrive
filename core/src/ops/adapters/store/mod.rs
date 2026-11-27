@@ -371,3 +371,171 @@ fn listing(store: &Store, index: Option<&StoreIndex>) -> Result<StoreListing, St
 		updates: updates.len() as u32,
 	})
 }
+
+#[cfg(test)]
+mod tests {
+	use std::io::{Read, Write};
+	use std::net::TcpListener;
+
+	use super::*;
+	use crate::infra::action::CoreAction;
+
+	fn fixture(name: &str) -> Vec<u8> {
+		std::fs::read(
+			Path::new(env!("CARGO_MANIFEST_DIR"))
+				.join("../crates/archive/tests/fixtures/store")
+				.join(name),
+		)
+		.unwrap()
+	}
+
+	#[test]
+	fn install_and_remove_reject_blank_ids() {
+		let install = InstallAdapterAction::from_input(InstallAdapterInput {
+			id: " \t".into(),
+			accept_permissions: false,
+		});
+		assert!(install.unwrap_err().contains("Adapter id cannot be empty"));
+		let remove = RemoveAdapterAction::from_input(RemoveAdapterInput { id: " ".into() });
+		assert!(remove.unwrap_err().contains("Adapter id cannot be empty"));
+	}
+
+	#[test]
+	fn signed_catalog_and_archive_reject_tampering() {
+		let tmp = tempfile::tempdir().unwrap();
+		let store = fixture_store(tmp.path());
+		let signature = String::from_utf8(fixture("index.json.minisig")).unwrap();
+		let mut catalog = fixture("index.json");
+		catalog.push(b' ');
+		assert!(store.accept_index(&catalog, &signature).is_err());
+		assert!(store.cached_index().unwrap().is_none());
+		let index = accepted(&store, "index");
+		let mut archive = fixture("sample-1.0.0.tar.gz");
+		archive[0] ^= 1;
+		assert!(store
+			.install(&index.adapters[0], &archive)
+			.unwrap_err()
+			.to_string()
+			.contains("checksum"));
+		assert!(store.installed().unwrap().is_empty());
+	}
+
+	fn fixture_store(root: &Path) -> Store {
+		Store::with_keys(root, vec![String::from_utf8(fixture("test.pub")).unwrap()]).unwrap()
+	}
+
+	fn accepted(store: &Store, name: &str) -> StoreIndex {
+		store
+			.accept_index(
+				&fixture(&format!("{name}.json")),
+				&String::from_utf8(fixture(&format!("{name}.json.minisig"))).unwrap(),
+			)
+			.unwrap()
+	}
+
+	fn serve(response: Vec<u8>) -> String {
+		let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+		let url = format!("http://{}", listener.local_addr().unwrap());
+		std::thread::spawn(move || {
+			let (mut stream, _) = listener.accept().unwrap();
+			// One read takes the whole request line; the body is never needed.
+			let mut request = [0; 2048];
+			let _ = stream.read(&mut request);
+			stream.write_all(&response).unwrap();
+		});
+		url
+	}
+
+	#[tokio::test]
+	async fn download_enforces_status_and_both_size_limits() {
+		let client = http().unwrap();
+		let url = serve(b"HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest".to_vec());
+		assert_eq!(download(&client, &url, 4).await.unwrap(), b"test");
+		let url = serve(b"HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest".to_vec());
+		assert!(download(&client, &url, 3)
+			.await
+			.unwrap_err()
+			.contains("larger than 3"));
+		let url = serve(
+			b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n4\r\ntest\r\n0\r\n\r\n".to_vec(),
+		);
+		assert!(download(&client, &url, 3)
+			.await
+			.unwrap_err()
+			.contains("larger than 3"));
+		let url = serve(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n".to_vec());
+		assert!(download(&client, &url, 10)
+			.await
+			.unwrap_err()
+			.contains("404"));
+	}
+
+	#[tokio::test]
+	async fn archive_download_checks_target_and_size() {
+		let tmp = tempfile::tempdir().unwrap();
+		let store = fixture_store(tmp.path());
+		let index = accepted(&store, "index");
+		let mut adapter = index.adapters[0].clone();
+		adapter.artifacts.clear();
+		assert!(download_archive(&adapter)
+			.await
+			.unwrap_err()
+			.contains("no build"));
+		adapter.artifacts = index.adapters[0].artifacts.clone();
+		adapter.artifacts[0].size = MAX_ARCHIVE_BYTES + 1;
+		assert!(download_archive(&adapter)
+			.await
+			.unwrap_err()
+			.contains("larger than 64 MiB"));
+		adapter.artifacts[0].size = 5;
+		adapter.artifacts[0].url =
+			serve(b"HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest".to_vec());
+		assert!(download_archive(&adapter)
+			.await
+			.unwrap_err()
+			.contains("archive is 4 bytes"));
+		adapter.artifacts[0].size = 4;
+		adapter.artifacts[0].url =
+			serve(b"HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest".to_vec());
+		assert_eq!(download_archive(&adapter).await.unwrap(), b"test");
+	}
+
+	#[test]
+	fn listing_tracks_installs_updates_revocations_and_icons() {
+		let tmp = tempfile::tempdir().unwrap();
+		let store = fixture_store(tmp.path());
+		let empty = listing(&store, None).unwrap();
+		assert!(empty.adapters.is_empty());
+		assert_eq!(empty.sequence, None);
+		let index = accepted(&store, "index");
+		let card = &listing(&store, Some(&index)).unwrap().adapters[0];
+		assert_eq!(card.id, "sample");
+		assert_eq!(card.permissions.read, ["~/Notes"]);
+		assert!(card.installed_version.is_none());
+		assert!(card.icon_svg.is_none());
+		std::fs::create_dir_all(icons_dir(&store)).unwrap();
+		std::fs::write(icon_path(&store, &index.adapters[0]), "<svg/>").unwrap();
+		store
+			.install(&index.adapters[0], &fixture("sample-1.0.0.tar.gz"))
+			.unwrap();
+		let installed = listing(&store, Some(&index)).unwrap();
+		assert_eq!(
+			installed.adapters[0].installed_version.as_deref(),
+			Some("1.0.0")
+		);
+		assert_eq!(installed.adapters[0].icon_svg.as_deref(), Some("<svg/>"));
+		let update = accepted(&store, "index-update");
+		let listed = listing(&store, Some(&update)).unwrap();
+		assert_eq!(listed.updates, 1);
+		assert!(listed.adapters[0].update_available);
+		assert_eq!(
+			listed.adapters[0].revoked_reason.as_deref(),
+			Some("fixture revocation")
+		);
+		assert!(listed.adapters[0].update_needs_consent);
+		store.remove("sample").unwrap();
+		assert!(listing(&store, Some(&update)).unwrap().adapters[0]
+			.installed_version
+			.is_none());
+	}
+}

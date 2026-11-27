@@ -388,3 +388,145 @@ impl SourceManager {
 		&self.engine
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use serde_json::json;
+
+	const MANIFEST: &str = r#"
+[adapter]
+id = "fixture"
+name = "Fixture"
+summary = "Local test adapter"
+version = "1.0.0"
+author = "WingDrive"
+license = "MIT"
+contract = 1
+platforms = ["linux", "macos", "windows"]
+
+[adapter.runtime]
+kind = "python3"
+entry = "sync.py"
+
+[[adapter.config]]
+key = "token"
+name = "Token"
+type = "string"
+secret = true
+
+[[adapter.config]]
+key = "folder"
+name = "Folder"
+type = "string"
+
+[data_type]
+id = "fixture"
+name = "Fixture"
+
+[models.note]
+fields.title = "string"
+fields.body = "text"
+
+[search]
+primary_model = "note"
+title = "title"
+preview = "body"
+search_fields = ["title", "body"]
+"#;
+
+	#[tokio::test]
+	async fn source_lifecycle_keeps_secrets_out_of_registry() {
+		let temp = tempfile::tempdir().unwrap();
+		let installed = temp.path().join("installed");
+		let adapter = installed.join("fixture");
+		std::fs::create_dir_all(&adapter).unwrap();
+		std::fs::write(adapter.join("adapter.toml"), MANIFEST).unwrap();
+		std::fs::write(adapter.join("sync.py"), "import json, sys\ndata = json.load(sys.stdin)\nprint(json.dumps({'upsert': 'note', 'external_id': 'input', 'fields': {'title': 'input', 'body': json.dumps(data['config'])}}))\n").unwrap();
+		let keys = Arc::new(
+			KeyManager::new_with_fallback(
+				temp.path().to_path_buf(),
+				Some(temp.path().join("device.key")),
+			)
+			.unwrap(),
+		);
+		let manager = SourceManager::new(
+			temp.path().join("library"),
+			installed,
+			keys.clone(),
+			Uuid::new_v4(),
+		)
+		.await
+		.unwrap();
+		assert!(manager
+			.list_adapters()
+			.iter()
+			.any(|adapter| adapter.id == "fixture"));
+		assert_eq!(manager.adapter_config_fields("fixture").unwrap().len(), 2);
+		let source = manager
+			.create_source(
+				"First",
+				"fixture",
+				json!({"token":"synthetic-token", "folder":"one", "remove":"yes"}),
+			)
+			.await
+			.unwrap();
+		assert_eq!(source.config, json!({"folder":"one", "remove":"yes"}));
+		assert_eq!(manager.list_sources().await.unwrap().len(), 1);
+		let (adapter_id, config, stored) = manager.source_config(&source.id).await.unwrap();
+		assert_eq!(adapter_id, "fixture");
+		assert_eq!(config, source.config);
+		assert_eq!(stored, vec!["token"]);
+		let updated = manager
+			.update_source(
+				&source.id,
+				Some("Renamed"),
+				Some(json!({"token":"", "folder":"two", "remove":null})),
+			)
+			.await
+			.unwrap();
+		assert_eq!(updated.name, "Renamed");
+		assert_eq!(updated.config, json!({"folder":"two"}));
+		assert_eq!(
+			keys.get_secret(&manager.secret_key(&source.id, "token"))
+				.await
+				.unwrap(),
+			b"synthetic-token"
+		);
+		assert!(manager
+			.update_source(&source.id, None, Some(json!({"token":42})))
+			.await
+			.unwrap_err()
+			.contains("must be text"));
+		assert_eq!(
+			manager.list_items(&source.id, 10, 0).await.unwrap().len(),
+			0
+		);
+		let report = manager.sync_source(&source.id).await.unwrap();
+		assert_eq!(report.error, None);
+		let items = manager.list_items(&source.id, 10, 0).await.unwrap();
+		assert_eq!(items.len(), 1);
+		let received: serde_json::Value =
+			serde_json::from_str(items[0].preview.as_deref().unwrap()).unwrap();
+		assert_eq!(
+			received,
+			json!({"token": "synthetic-token", "folder": "two"})
+		);
+		manager.delete_source(&source.id).await.unwrap();
+		assert!(manager.list_sources().await.unwrap().is_empty());
+		assert!(keys
+			.get_secret(&manager.secret_key(&source.id, "token"))
+			.await
+			.is_err());
+		assert!(manager.source_config(&source.id).await.is_err());
+		manager.unregister_adapter("fixture");
+		assert!(!manager
+			.list_adapters()
+			.iter()
+			.any(|adapter| adapter.id == "fixture"));
+		assert!(manager
+			.update_adapter("fixture")
+			.unwrap_err()
+			.contains("adapter store"));
+	}
+}
