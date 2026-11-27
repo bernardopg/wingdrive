@@ -264,6 +264,11 @@ async fn run_confined(
 fn confinement_available() -> bool {
 	match wing_archive::adapter::sandbox::isolation() {
 		Ok(wing_archive::adapter::sandbox::Isolation::Bubblewrap) => true,
+		// CI sets up bubblewrap on purpose, so a runner that cannot start it is a failure, not
+		// a reason to pass without testing confinement.
+		other if std::env::var_os("CI").is_some() => {
+			panic!("CI must run the confinement tests inside bubblewrap: {other:?}")
+		}
 		_ => {
 			eprintln!("bubblewrap is not available; skipping the confinement test");
 			false

@@ -23,12 +23,14 @@ it needs, the user sees it before install, and the daemon runs the adapter with 
 - [x] Linux: run the adapter under bubblewrap with read-only binds for declared paths, a private state directory, and no network unless hosts are declared; macOS and Windows: best-effort limits recorded in the docs (`crates/archive/src/adapter/sandbox.rs`; macOS and Windows unconfined, recorded in `docs/core/adapters.mdx` and shown in the store)
 - [x] Minimal environment (no inherited tokens), CPU time and memory limits, kill on timeout (2 GiB RLIMIT_AS, RLIMIT_CPU = runtime.timeout, killed at runtime.timeout)
 - [ ] Secrets passed per run from the secret store, never written to the source database or logs
-- [ ] The Coverage workflow runs the confinement tests. Since 2026-11-25 its `Rust tests` job fails
+- [ ] The Coverage workflow runs the confinement tests. From 2026-11-25 its `Rust tests` job failed
       five `script_adapter_test` cases with `bwrap: loopback: Failed RTM_NEWADDR: Operation not
-      permitted` (runs 45852694186 on `ce7f4ec`, and the push run on `66e0ce0c4`). `ci.yml` installs
-      bubblewrap before its Rust gates and `coverage.yml` does not; check whether that is the
-      difference or whether the runner blocks the network namespace, then either fix the runner
-      or set `WINGDRIVE_ADAPTER_SANDBOX=off` for coverage only.
+      permitted` (run 45852694186 on `ce7f4ec`). bubblewrap was installed (setup-system pulls it in);
+      Ubuntu 24.04's AppArmor gives unprivileged user namespaces no capabilities, so bwrap could not
+      bring up its loopback, and the three confinement tests skipped. `ci.yml` never runs
+      `wing-archive` tests, so only Coverage saw it. `coverage.yml` now sets
+      `kernel.apparmor_restrict_unprivileged_userns=0` and starts bwrap once, and the confinement
+      tests fail instead of skipping when `CI` is set.
 
 ## Acceptance Criteria
 
