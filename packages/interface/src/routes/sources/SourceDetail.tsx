@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -21,18 +21,40 @@ import { ExpandableSearchButton } from "../explorer/components/ExpandableSearchB
 import { SourcePathBar } from "../../components/Sources/SourcePathBar";
 import { SourceDataRow } from "../../components/Sources/SourceDataRow";
 import { useTranslation } from "../../i18n";
+import { SourceItemPanel } from "../../components/Sources/SourceItemPanel";
+import { hasSearchableWord } from "../../components/Sources/sourceSearch";
 import type { SourceItem } from "@wingdrive/ts-client";
 import { ConfigureForm, Modal } from "./Adapters";
 
 const PAGE_SIZE = 100;
+/** Hits a search inside one source asks for. */
+const SEARCH_LIMIT = 200;
+
+/** A row of the item list: a listed item, or a search hit with the text around its match. */
+interface ItemRow {
+	id: string;
+	title: string;
+	subtitle: string | null;
+	preview: string | null;
+	date: string | null;
+	snippet?: string | null;
+}
 
 export function SourceDetail() {
-	const { t } = useTranslation("navigation");
 	const { sourceId } = useParams<{ sourceId: string }>();
+	// A new source starts with fresh list, search and paging state.
+	return <SourceDetailView key={sourceId} sourceId={sourceId ?? ""} />;
+}
+
+function SourceDetailView({ sourceId }: { sourceId: string }) {
+	const { t } = useTranslation("navigation");
 	const navigate = useNavigate();
+	// `q` and `item` come from a library search hit: search those words and open that item.
+	const [searchParams, setSearchParams] = useSearchParams();
+	const selectedId = searchParams.get("item");
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [editing, setEditing] = useState(false);
-	const [searchValue, setSearchValue] = useState("");
+	const [searchValue, setSearchValue] = useState(() => searchParams.get("q") ?? "");
 	const scrollRef = useRef<HTMLDivElement>(null);
 
 	// Infinite scroll state
@@ -49,13 +71,13 @@ export function SourceDetail() {
 		isFetching,
 	} = useLibraryQuery({
 		type: "sources.get",
-		input: { source_id: sourceId ?? "" },
+		input: { source_id: sourceId },
 	});
 
 	// Initial page
 	const { data: initialItems, isLoading: itemsLoading } = useLibraryQuery({
 		type: "sources.list_items",
-		input: { source_id: sourceId ?? "", limit: PAGE_SIZE, offset: 0 },
+		input: { source_id: sourceId, limit: PAGE_SIZE, offset: 0 },
 	});
 
 	// Seed allItems from initial fetch
@@ -66,13 +88,6 @@ export function SourceDetail() {
 			setHasMore(initialItems.length >= PAGE_SIZE);
 		}
 	}, [initialItems]);
-
-	// Reset when sourceId changes
-	useEffect(() => {
-		setAllItems([]);
-		setOffset(0);
-		setHasMore(true);
-	}, [sourceId]);
 
 	const { data: store } = useCoreQuery({
 		type: "adapters.store.list",
@@ -94,17 +109,53 @@ export function SourceDetail() {
 		}
 	}, [source?.name, activeTabId, updateTabTitle]);
 
-	// Filter items by search
-	const filteredItems = useMemo(() => {
-		if (!searchValue.trim()) return allItems;
-		const q = searchValue.toLowerCase();
-		return allItems.filter(
-			(item) =>
-				item.title.toLowerCase().includes(q) ||
-				item.subtitle?.toLowerCase().includes(q) ||
-				item.preview?.toLowerCase().includes(q),
+	// Search the source's whole index, not only the pages loaded so far.
+	const searchText = searchValue.trim();
+	const indexSearch = useLibraryQuery(
+		{
+			type: "sources.search",
+			input: { query: searchText, source_id: sourceId, limit: SEARCH_LIMIT },
+		},
+		{
+			enabled: searchText.length > 0 && hasSearchableWord(searchText),
+			placeholderData: (previous) => previous,
+		},
+	);
+
+	const filteredItems = useMemo((): ItemRow[] => {
+		if (!searchText) return allItems;
+		if (indexSearch.error) {
+			// A source without a search index still filters the items already loaded.
+			const q = searchText.toLowerCase();
+			return allItems.filter(
+				(item) =>
+					item.title.toLowerCase().includes(q) ||
+					item.subtitle?.toLowerCase().includes(q) ||
+					item.preview?.toLowerCase().includes(q),
+			);
+		}
+		if (!hasSearchableWord(searchText)) return [];
+		return (indexSearch.data?.hits ?? []).map((hit) => ({
+			id: hit.id,
+			title: hit.title,
+			subtitle: hit.subtitle,
+			preview: hit.preview,
+			date: hit.date,
+			snippet: hit.snippet,
+		}));
+	}, [allItems, searchText, indexSearch.data, indexSearch.error]);
+	const searchLoading = searchText.length > 0 && indexSearch.isLoading;
+
+	const selectItem = (itemId: string | null) =>
+		setSearchParams(
+			(params) => {
+				const next = new URLSearchParams(params);
+				if (itemId) next.set("item", itemId);
+				else next.delete("item");
+				return next;
+			},
+			{ replace: true },
 		);
-	}, [allItems, searchValue]);
 
 	// Virtualizer
 	const virtualizer = useVirtualizer({
@@ -126,7 +177,7 @@ export function SourceDetail() {
 		{
 			type: "sources.list_items",
 			input: {
-				source_id: sourceId ?? "",
+				source_id: sourceId,
 				limit: PAGE_SIZE,
 				offset,
 			},
@@ -148,6 +199,18 @@ export function SourceDetail() {
 		virtualizer.getVirtualItems()[
 			virtualizer.getVirtualItems().length - 1
 		];
+
+	// Bring the item opened from a search into view once its row exists.
+	const selectedIndex = selectedId
+		? filteredItems.findIndex((item) => item.id === selectedId)
+		: -1;
+	useEffect(() => {
+		if (selectedIndex >= 0) {
+			virtualizer.scrollToIndex(selectedIndex, { align: "auto" });
+		}
+		// The virtualizer is a new object every render; scrolling once per index is enough.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedIndex]);
 
 	useEffect(() => {
 		if (
@@ -302,15 +365,16 @@ export function SourceDetail() {
 				</div>
 			)}
 
+			<div className="flex min-h-0 flex-1">
 			{/* Virtualized items list */}
-			<div ref={scrollRef} className="flex-1 overflow-y-auto">
-				{itemsLoading && (
+			<div ref={scrollRef} className="min-w-0 flex-1 overflow-y-auto">
+				{(itemsLoading || searchLoading) && (
 					<div className="text-ink-faint py-12 text-center text-sm">
 						{t("sources.loadingItems")}
 					</div>
 				)}
 
-				{!itemsLoading && filteredItems.length === 0 && (
+				{!itemsLoading && !searchLoading && filteredItems.length === 0 && (
 					<div className="text-ink-faint py-12 text-center text-sm">
 						{searchValue
 							? t("sources.noMatchingItems")
@@ -345,6 +409,9 @@ export function SourceDetail() {
 										preview={item.preview}
 										subtitle={item.subtitle}
 										date={item.date}
+										snippet={item.snippet}
+										selected={item.id === selectedId}
+										onSelect={() => selectItem(item.id)}
 									/>
 								</div>
 							);
@@ -357,6 +424,15 @@ export function SourceDetail() {
 						{t("common.loadingMore")}
 					</div>
 				)}
+			</div>
+			{selectedId && (
+				<SourceItemPanel
+					key={selectedId}
+					sourceId={source.id}
+					itemId={selectedId}
+					onClose={() => selectItem(null)}
+				/>
+			)}
 			</div>
 
 			{/* Delete confirmation */}
