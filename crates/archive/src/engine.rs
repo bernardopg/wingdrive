@@ -526,6 +526,16 @@ impl Engine {
 		db.list_items(limit, offset).await
 	}
 
+	/// One item of a source's primary model by its id.
+	pub async fn get_item(
+		&self,
+		source_id: &str,
+		item_id: &str,
+	) -> Result<Option<crate::db::ItemRow>> {
+		let db = self.sources.open(source_id).await?;
+		db.get_item(item_id).await
+	}
+
 	/// Get config fields for an adapter (from its manifest).
 	pub fn adapter_config_fields(
 		&self,

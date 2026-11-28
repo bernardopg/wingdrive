@@ -587,3 +587,177 @@ print(json.dumps({"upsert": "note", "external_id": "b", "fields": {"title": "b",
 		.iter()
 		.all(|i| i.date.is_none()));
 }
+
+/// Notes the search tests sync, with a date field so hits carry their date.
+const NOTES_SCRIPT: &str = r#"import json
+notes = [
+    ("weekly", "Weekly review", "Plan the harness work for the next sprint"),
+    ("garden", "Garden log", "Tomatoes need water"),
+    ("syntax", "Rust-lang notes", "Quotes \" and stars * are plain text"),
+]
+for external_id, title, body in notes:
+    print(json.dumps({"upsert": "note", "external_id": external_id, "fields": {"title": title, "body": body, "modified": "2026-11-20T09:00:00+00:00"}}))
+"#;
+
+async fn engine_with_notes_adapter(root: &Path) -> wing_archive::Engine {
+	let adapter_dir = root.join("notes");
+	std::fs::create_dir_all(&adapter_dir).unwrap();
+	let manifest = MANIFEST
+		.replace(
+			"id = \"echo\"\nname = \"Echo\"",
+			"id = \"notes\"\nname = \"Notes\"",
+		)
+		.replace(
+			"fields.body = \"text\"",
+			"fields.body = \"text\"\nfields.modified = \"datetime\"",
+		)
+		.replace(
+			"search_fields = [\"title\", \"body\"]",
+			"search_fields = [\"title\", \"body\"]\ndate_field = \"modified\"",
+		);
+	std::fs::write(adapter_dir.join("adapter.toml"), manifest).unwrap();
+	std::fs::write(adapter_dir.join("sync.py"), NOTES_SCRIPT).unwrap();
+	let engine = wing_archive::Engine::new(wing_archive::EngineConfig {
+		data_dir: root.join("library"),
+	})
+	.await
+	.unwrap();
+	engine.adapters().register(std::sync::Arc::new(
+		ScriptAdapter::from_dir(&adapter_dir).unwrap(),
+	));
+	engine
+}
+
+/// Search fans out to every source, takes typed text instead of FTS5 syntax, and forgets a
+/// source once it is deleted.
+#[tokio::test]
+async fn search_spans_sources_and_drops_deleted_ones() {
+	let tmp = tempfile::tempdir().unwrap();
+	let engine = engine_with_notes_adapter(tmp.path()).await;
+	assert!(engine.search("harness", None).await.unwrap().is_empty());
+
+	let first = engine
+		.create_source("Vault", "notes", serde_json::json!({}))
+		.await
+		.unwrap();
+	let second = engine
+		.create_source("Archive", "notes", serde_json::json!({}))
+		.await
+		.unwrap();
+	for source in [&first, &second] {
+		assert_eq!(engine.sync(&source.id).await.unwrap().error, None);
+	}
+
+	let hits = engine.search("harness", None).await.unwrap();
+	assert_eq!(hits.len(), 2, "a word matches in both sources: {hits:?}");
+	for hit in &hits {
+		assert_eq!(hit.external_id, "weekly");
+		assert_eq!(hit.title, "Weekly review");
+		assert_eq!(hit.adapter_id, "notes");
+		assert_eq!(hit.date.as_deref(), Some("2026-11-20T09:00:00+00:00"));
+		assert!(hit.preview.contains("harness"));
+		let snippet = hit.snippet.as_deref().unwrap();
+		assert!(
+			snippet.contains("\u{2}harness\u{3}"),
+			"the snippet marks the match: {snippet:?}"
+		);
+		let item = engine
+			.get_item(&hit.source_id, &hit.id)
+			.await
+			.unwrap()
+			.unwrap();
+		assert_eq!(item.external_id, "weekly");
+		assert_eq!(item.date, hit.date);
+	}
+	assert!(engine
+		.get_item(&first.id, "missing")
+		.await
+		.unwrap()
+		.is_none());
+	let mut names: Vec<_> = hits.iter().map(|h| h.source_name.as_str()).collect();
+	names.sort();
+	assert_eq!(names, ["Archive", "Vault"]);
+
+	// A word prefix matches, every word must match, and FTS5 operators are plain text.
+	assert_eq!(engine.search("sprin", None).await.unwrap().len(), 2);
+	assert_eq!(engine.search("weekly sprint", None).await.unwrap().len(), 2);
+	assert!(engine
+		.search("weekly tomatoes", None)
+		.await
+		.unwrap()
+		.is_empty());
+	assert_eq!(
+		engine.search("\"rust-lang\" *", None).await.unwrap().len(),
+		2
+	);
+	assert!(engine.search("  -*() ", None).await.unwrap().is_empty());
+
+	let only_first = engine
+		.search(
+			"garden",
+			Some(wing_archive::SearchFilter {
+				source_id: Some(first.id.clone()),
+				..Default::default()
+			}),
+		)
+		.await
+		.unwrap();
+	assert_eq!(only_first.len(), 1);
+	assert_eq!(only_first[0].source_id, first.id);
+
+	engine.delete_source(&second.id).await.unwrap();
+	let hits = engine.search("harness", None).await.unwrap();
+	assert_eq!(hits.len(), 1);
+	assert_eq!(hits[0].source_id, first.id);
+}
+
+/// A record the safety screening quarantined is not found, even though it is still stored.
+#[tokio::test]
+async fn search_skips_quarantined_records() {
+	let tmp = tempfile::tempdir().unwrap();
+	let engine = engine_with_notes_adapter(tmp.path()).await;
+	let source = engine
+		.create_source("Vault", "notes", serde_json::json!({}))
+		.await
+		.unwrap();
+	assert_eq!(engine.sync(&source.id).await.unwrap().error, None);
+	assert_eq!(engine.search("tomatoes", None).await.unwrap().len(), 1);
+
+	let db = engine.sources().open(&source.id).await.unwrap();
+	sqlx::query("UPDATE notes SET _safety_verdict = 'quarantined' WHERE external_id = 'garden'")
+		.execute(db.pool())
+		.await
+		.unwrap();
+	assert!(engine.search("tomatoes", None).await.unwrap().is_empty());
+	assert_eq!(engine.search("weekly", None).await.unwrap().len(), 1);
+}
+
+/// Hits from several sources come best match first: FTS5 ranks are lower for better matches.
+#[tokio::test]
+async fn search_orders_hits_best_match_first() {
+	let tmp = tempfile::tempdir().unwrap();
+	let engine = engine_with_notes_adapter(tmp.path()).await;
+	let source = engine
+		.create_source("Vault", "notes", serde_json::json!({}))
+		.await
+		.unwrap();
+	assert_eq!(engine.sync(&source.id).await.unwrap().error, None);
+	let db = engine.sources().open(&source.id).await.unwrap();
+	db.upsert(
+		"note",
+		"mention",
+		&serde_json::json!({ "title": "Errands", "body": "Buy a garden hose and a long list of other things to do this week" }),
+	)
+	.await
+	.unwrap();
+	// Records written outside a sync wait for screening; mark this one as screened.
+	sqlx::query("UPDATE notes SET _safety_verdict = 'safe' WHERE external_id = 'mention'")
+		.execute(db.pool())
+		.await
+		.unwrap();
+
+	let hits = engine.search("garden", None).await.unwrap();
+	assert_eq!(hits.len(), 2);
+	assert_eq!(hits[0].external_id, "garden", "{hits:?}");
+	assert!(hits[0].rank <= hits[1].rank);
+}
