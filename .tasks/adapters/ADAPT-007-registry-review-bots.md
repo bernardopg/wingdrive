@@ -55,7 +55,9 @@ the index and publishes it.
       is called instead of ported to Rust: the code scan reads adapter code with Python's `ast`,
       and one implementation keeps the local result and the review the same. A folder outside the
       registry is checked as a community submission, so it needs a `LICENSE`; the Python template
-      now ships one. Documented in `docs/core/adapters.mdx`, Validating before a pull request.)
+      now ships one. Documented in `docs/core/adapters.mdx`, Validating before a pull request. Run with
+      a debug build: a copy of the template passes all four rows; without `LICENSE` and with an
+      undeclared host it fails and exits 1.)
 
 ## Acceptance Criteria
 
