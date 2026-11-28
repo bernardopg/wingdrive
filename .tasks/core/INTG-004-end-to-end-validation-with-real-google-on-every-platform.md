@@ -8,7 +8,7 @@ priority: High
 milestone: M5
 sprint: S05
 tags: [integrations, google, testing, linux, windows, macos, blocked]
-last_updated: 2026-11-22
+last_updated: 2026-11-28
 related_tasks: [CLOUD-004, TAURI-012]
 ---
 
@@ -32,6 +32,24 @@ CLOUD-004 was verified against a fake Google (`core/tests/google_integration_tes
 - 2026-11-22 (DEV-008): moved to `To Do` during S05 board cleanup. Blocked on third-party/external
   access: real Google validation on Windows/macOS packages and remaining matrix need external
   accounts/machines; not actively in progress.
+- 2026-11-28: second round trip, Linux, packaged `wingdrive-bin` 3.8.2 (AUR, `/opt/wingdrive`),
+  isolated instance (`--data-dir` on disk, `--instance gtest`, not the author's daemon), bundled
+  client (`google-client show` reports `Bundled`), author's Google account.
+  - `integrations connect google --no-browser`, consent in Chrome: account chooser and consent
+    screen show "WingDrive" with the privacy and terms links and no unverified-app warning.
+    Scopes requested: `openid email profile drive.file photoslibrary.appendonly
+    photoslibrary.readonly.appcreateddata photospicker.mediaitems.readonly`.
+  - `integrations list`: one Google account, services Drive (`app_files`) and Photos, sign-in
+    "WingDrive app", `drive_picker: true`, `needs_reconnect: false`.
+  - Drive mounted on connect; `file list gdrive://<account>/` listed the root (1 item, the files
+    granted to WingDrive).
+  - `integrations photos albums`: call succeeded, 0 albums created by WingDrive in this account.
+  - Drive Picker (`integrations.google.drive.picker.start`) with a Picker-only API key restricted to
+    the referrer `http://127.0.0.1/*`: the Picker loaded on the loopback page and listed Drive;
+    cancelled, status `cancelled`.
+  - `integrations remove --yes` revoked the grant: WingDrive no longer appears in the account's
+    third-party connections. Instance stopped and its data deleted. No key or client secret in the
+    daemon log.
 
 ## Acceptance Criteria
 

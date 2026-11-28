@@ -8,7 +8,7 @@ priority: High
 milestone: M5
 sprint: S06
 tags: [cloud, integrations, google-drive, google-photos, oauth, sync]
-last_updated: 2026-11-12
+last_updated: 2026-11-28
 related_tasks: [CLOUD-003, FILE-003, INTG-000, INTG-001, INTG-002, INTG-003, INTG-004, INTG-005]
 ---
 
@@ -46,7 +46,7 @@ behavior are documented in `docs/core/integrations.mdx`.
 - [x] Disconnecting revokes the grant and removes only that account's Drive.
 - [x] The Drive volume survives a daemon restart and the volume monitor's refresh.
 - [x] Integration test against a fake Google (`core/tests/google_integration_test.rs`) and runtime check on an isolated `wing-server`.
-- [ ] Sign-in and one round trip against real Google with a WingDrive OAuth client (needs the author's Google Cloud project; see "Next").
+- [x] Sign-in and one round trip against real Google with a WingDrive OAuth client (2026-11-13 from a debug build; 2026-11-28 from the packaged 3.8.2 build, see INTG-004).
 - [ ] Checked in the packaged desktop app.
 
 ## Next
@@ -75,3 +75,8 @@ This task closes when INTG-001 to INTG-004 are Done.
   view and drag and drop for cloud folders, Drive volume opens the cloud root). Runtime check on an
   isolated `wing-server` found that deleting in a cloud folder did nothing; fixed in the delete
   strategy router.
+- 2026-11-28: real Google round trip from the packaged `wingdrive-bin` 3.8.2 (isolated CLI
+  instance, bundled client): connect, account listed, Drive mounted and listed, Photos albums
+  listed, Drive Picker opened, disconnect revoked the grant. Details in INTG-004. The desktop app UI
+  of a package was not driven in this round, so "Checked in the packaged desktop app" stays open.
+  INTG-002 and INTG-003 are Done; INTG-001 and INTG-004 remain.

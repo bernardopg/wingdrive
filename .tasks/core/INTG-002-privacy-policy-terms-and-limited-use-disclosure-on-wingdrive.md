@@ -1,13 +1,13 @@
 ---
 id: INTG-002
 title: Privacy policy, terms and Limited Use disclosure on wingdrive.org
-status: To Do
+status: Done
 assignee: bernardopg
 parent: INTG-000
 priority: High
 milestone: M5
 sprint: S05
-tags: [integrations, google, website, legal, blocked]
+tags: [integrations, google, website, legal]
 last_updated: 2026-11-28
 related_tasks: [INTG-001]
 ---
@@ -41,7 +41,14 @@ DNS propagation pending. A link from Settings > About is still to do.
 privacy policy and terms in the UI language (`settingsPages.test.tsx`). Left: the author confirms
 the domain shows as verified in Google Cloud Console.
 
+2026-11-28, checked in the browser with the author's account: the Search Console domain property
+`sc-domain:wingdrive.org` shows "verified owner" (added 2026-11-13). Cloud Console no longer has a
+separate domain verification page; Google Auth Platform > Branding lists `wingdrive.org` as the
+authorized domain and the Verification Center says "Your branding has been verified and is shown
+to users". The consent screen links https://wingdrive.org/privacy and
+https://wingdrive.org/service-terms.
+
 ## Acceptance Criteria
 
 - [x] https://wingdrive.org/privacy and /service-terms are live in both languages (checked 2026-11-28, all four pages 200).
-- [ ] The domain shows as verified in Google Cloud Console.
+- [x] The domain shows as verified in Google Cloud Console (checked 2026-11-28: Search Console lists the author as verified owner of the `wingdrive.org` domain property, and Google Auth Platform > Verification Center reports the branding as verified).
