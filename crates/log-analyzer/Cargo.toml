@@ -14,7 +14,7 @@ serde_json = "1.0"
 anyhow = "1.0"
 
 # Database
-rusqlite = { version = "0.41", features = ["bundled", "chrono"] }
+rusqlite = { version = "0.43", features = ["bundled", "chrono"] }
 
 # Utilities
 uuid = { version = "1.6", features = ["v4", "serde"] }
