@@ -1,7 +1,7 @@
 ---
-id: MOB-018
+id: MOB-021
 title: "Android background sync: keep the core connected while the app is closed"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: MOB-000
 priority: High
@@ -35,9 +35,8 @@ What the app has today:
 Measured on the moto g(7) with the 3.8.2 release (LineageOS 22.2, Android 15, cached app freezer
 off on this ROM): the app was in the background with the screen off and the device forced into
 Doze (`dumpsys deviceidle force-idle`). A file added to the laptop's `~/WingDrive` location did not
-reach the phone; the core logged 281 `error sending mDNS: Operation not permitted (os error 1)`
-lines in 90 seconds (the network policy rejects its sockets), and the laptop listed the phone as
-`Paired` instead of `Connected`. The author's belief is right.
+reach the phone within 90 seconds, and the laptop listed the phone as `Paired` instead of
+`Connected`. The author's belief is right.
 
 ## Design
 
@@ -65,15 +64,40 @@ lines in 90 seconds (the network policy rejects its sockets), and the laptop lis
 - [x] Native module: `setBackgroundSync`, `getBackgroundSync`, `openBatteryOptimizationSettings`,
       service start on launch
 - [x] Settings section with en and pt strings, unit tests for the hint logic
-- [ ] Verify on the moto g(7): app in the background, screen off, Doze, file added on the laptop
+- [x] Verify on the moto g(7): app in the background, screen off, Doze, file added on the laptop
       reaches the phone
 
 ## Acceptance Criteria
 
-- [ ] With the toggle on, the app in the background and the screen off (Doze forced), a file added
+- [x] With the toggle on, the app in the background and the screen off (Doze forced), a file added
       to a paired desktop's shared location reaches the phone without opening the app.
-- [ ] The notification shows while the service runs and disappears when the toggle is turned off.
-- [ ] With the toggle off, nothing changes from 3.8.2: no service, no notification.
+- [x] The notification shows while the service runs and disappears when the toggle is turned off.
+- [x] With the toggle off, nothing changes from 3.8.2: no service, no notification.
+
+## Checked on the moto g(7) (2026-11-28)
+
+Release build of this branch, signed with the debug key and installed as `com.wingdrive.app.review`,
+paired with a disposable desktop daemon on the laptop (`wing --data-dir <dir> --instance mobbg`)
+that shared its library and a test location with the phone. Screenshots are kept on the host, not
+committed.
+
+- Turning "Continuar em segundo plano" on asked for the notification permission, then
+  `dumpsys activity services` showed `WingCoreService` with `isForeground=true` and `types=0x10`
+  (`connectedDevice`). The silent notification reads "WingDrive em execução em segundo plano".
+- "Permitir uso de bateria sem restrições" opened the system dialog; after allowing it the row
+  disappeared. The exemption was then removed again (`dumpsys deviceidle whitelist -...`) so the
+  test below measures the service alone.
+- App in the background, screen off, battery unplugged and `deviceidle force-idle` (deep state
+  `IDLE`): a file written on the desktop at 13:51:04 was applied on the phone at 13:51:05
+  ("State change applied successfully model_type=entry"), and the desktop listed the phone as
+  `Connected` throughout. With 3.8.2 and no service, the same test delivered nothing.
+- Turning the toggle off removed the service and the notification. Turning it on, force-stopping
+  the app and opening it again started the service again.
+- In Doze the core logs `error sending mDNS: Operation not permitted` with or without the service:
+  Android blocks multicast in Doze. Paired devices stay connected through their existing
+  connection and the relay, so only discovery of new devices on the local network pauses.
+- Not checked: the service restarting the core by itself after Android kills the process; it
+  needs a low-memory kill that `adb` cannot trigger on this unrooted phone.
 
 ## Out of scope
 

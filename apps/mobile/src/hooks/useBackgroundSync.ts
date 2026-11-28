@@ -4,7 +4,7 @@ import { WingMobileCore } from "wing-mobile-core";
 import { needsNotificationPrompt } from "./backgroundSync";
 
 /**
- * Background sync on Android (MOB-018): a foreground service keeps the core syncing with
+ * Background sync on Android (MOB-021): a foreground service keeps the core syncing with
  * paired devices while the app is closed. Read again when the app returns to the
  * foreground, since battery and notification grants happen in system settings.
  */

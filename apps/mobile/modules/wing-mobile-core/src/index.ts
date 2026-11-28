@@ -24,7 +24,7 @@ type WingMobileCoreEvents = {
   WingCoreLog: (log: CoreLog) => void;
 };
 
-/** State of background sync on Android (MOB-018) */
+/** State of background sync on Android (MOB-021) */
 export interface BackgroundSyncState {
   /** False on platforms without a background service (iOS) */
   supported: boolean;

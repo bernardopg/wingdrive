@@ -3,7 +3,7 @@ import type { BackgroundSyncState } from "wing-mobile-core";
 export type BackgroundSyncHint = "battery" | "notifications";
 
 /**
- * What the user still has to allow for background sync to hold (MOB-018). Battery
+ * What the user still has to allow for background sync to hold (MOB-021). Battery
  * optimization lets some phones stop the service; without notifications Android hides
  * the notice that the app is running. Nothing to show while background sync is off.
  */

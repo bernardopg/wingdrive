@@ -88,7 +88,7 @@ class WingMobileCoreModule : Module() {
             result
         }
 
-        // Keeps sync and transfers running while the app is closed, with a notification (MOB-018).
+        // Keeps sync and transfers running while the app is closed, with a notification (MOB-021).
         Function("setBackgroundSync") { enabled: Boolean ->
             val context = appContext.reactContext ?: return@Function false
             BackgroundSyncPrefs.setEnabled(context, enabled)

@@ -79,7 +79,7 @@ adb shell dumpsys deviceidle unforce
 adb shell dumpsys battery reset
 ```
 
-Without the service the core logs `error sending mDNS: Operation not permitted` in Doze and the desktop lists the phone as Paired, not Connected.
+Without the service the file does not arrive and the desktop lists the phone as Paired, not Connected. With or without it, the core logs `error sending mDNS: Operation not permitted` in Doze, because Android blocks multicast there; connected peers are not affected.
 
 ## Debugging
 

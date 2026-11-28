@@ -18,7 +18,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 
 /**
- * Keeps the embedded core running while the app is in the background (MOB-018).
+ * Keeps the embedded core running while the app is in the background (MOB-021).
  *
  * Android freezes or kills a backgrounded app within minutes and cuts its network in Doze, so
  * sync with paired devices and incoming transfers stopped as soon as the user left the app. A
