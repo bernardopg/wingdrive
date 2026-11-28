@@ -68,7 +68,7 @@ fi
 # the `spacebot` config key.
 wingbot_matches="$({
 	git grep -niI 'spacebot' -- \
-		'core/**' 'crates/**' 'apps/**' 'packages/**' 'adapters/**' 'scripts/**' \
+		'core/**' 'crates/**' 'apps/**' 'packages/**' 'scripts/**' \
 		':!packages/interface/src/Wingbot/legacyPath.ts' \
 		':!packages/interface/src/Wingbot/legacyPath.test.ts' \
 		':!packages/interface/src/router.tsx' \

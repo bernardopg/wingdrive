@@ -1,7 +1,7 @@
 ---
 id: ADAPT-015
 title: "Retire the prototypes in `adapters/`"
-status: To Do
+status: Done
 assignee: bernardopg
 parent: ADAPT-000
 priority: Medium
@@ -9,7 +9,7 @@ milestone: M5
 sprint: S07
 tags: [adapters, cleanup]
 depends_on: [ADAPT-010, ADAPT-012, ADAPT-013, ADAPT-014]
-last_updated: 2026-11-24
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -21,10 +21,10 @@ nothing half-built reaches users.
 
 ## Implementation Steps
 
-- [ ] Move each prototype to `bernardopg/wingdrive-adapters` (`adapters/<id>/` when finished, `drafts/<id>/` otherwise) with a pointer to its old path
-- [ ] Remove `adapters/` and the code paths that read it
-- [ ] Point the docs at the registry and the template
+- [x] Move each prototype to `bernardopg/wingdrive-adapters` (`adapters/<id>/` when finished, `drafts/<id>/` otherwise) with a pointer to its old path (bernardopg/wingdrive-adapters#10: nine drafts copied unchanged from 93eb1dd, `drafts/README.md` points at the old path; Obsidian and GitHub were already finished in `adapters/`)
+- [x] Remove `adapters/` and the code paths that read it (no code read it since ADAPT-003; the labeler, the Dependabot note and the independence check named it)
+- [x] Point the docs at the registry and the template (`docs/core/design/archive-usage.md`)
 
 ## Acceptance Criteria
 
-- [ ] `adapters/` gone from the main repository; every prototype reachable in its own repository
+- [x] `adapters/` gone from the main repository; every prototype reachable in its own repository (`drafts/<id>/` in the registry)

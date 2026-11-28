@@ -1,7 +1,7 @@
 ---
 id: ADAPT-006
 title: "Catalog at wingdrive.org/adapters"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: ADAPT-000
 priority: Medium
@@ -9,7 +9,7 @@ milestone: M5
 sprint: S07
 tags: [adapters, store, website]
 depends_on: [ADAPT-001]
-last_updated: 2026-11-25
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -26,7 +26,7 @@ the published commit. The catalog also links to the publishing guide.
 
 ## Acceptance Criteria
 
-- [ ] Pages live on wingdrive.org after a registry publish
+- [x] Pages live on wingdrive.org after a registry publish (2026-11-28: the registry published index 13 with Obsidian 1.1.3 at 14:10 UTC, and https://wingdrive.org/adapters/obsidian/ showed 1.1.3 after the next site build)
 - [x] Lighthouse accessibility score of 95 or more on the list page. Both locales scored 100 in local preview.
 
 ## Verification

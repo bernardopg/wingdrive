@@ -105,86 +105,15 @@ Each library contains a `sources/` directory alongside the VDFS:
 
 ## Adapters
 
-Adapters are script-based data source connectors that communicate via stdin/stdout JSONL protocol.
+Adapters are processes that speak JSON lines on stdin and stdout. The contract is
+`docs/core/adapters.mdx`, and `docs/core/adapter-store.mdx` describes how the store installs them.
 
-### Built-in Adapters
-
-- **Gmail** - Emails, threads, labels
-- **Obsidian** - Notes, links, tags
-- **Slack** - Messages, threads, channels
-- **Chrome Bookmarks** - Bookmarks, folders
-- **Chrome History** - Browsing history
-- **Safari History** - Browsing history
-- **Apple Notes** - Notes, attachments
-- **Apple Calendar** - Events, reminders
-- **Apple Contacts** - Contacts, groups
-- **GitHub** - Issues, PRs, commits
-- **OpenCode** - Code snippets, projects
-
-### Creating an Adapter
-
-**1. Create adapter manifest (`adapters/my-adapter/adapter.toml`):**
-
-```toml
-[adapter]
-id = "my-adapter"
-name = "My Adapter"
-version = "1.0.0"
-trust_tier = "external"
-
-[sync]
-command = "python3"
-args = ["sync.py"]
-
-[schema]
-inline = """
-[type]
-name = "MyRecord"
-fields = [
-  { name = "title", type = "String", indexed = true },
-  { name = "content", type = "Text", indexed = true, embedded = true },
-  { name = "created_at", type = "DateTime" }
-]
-"""
-```
-
-**2. Create sync script (`adapters/my-adapter/sync.py`):**
-
-```python
-#!/usr/bin/env python3
-import json
-import sys
-
-def sync():
-    # Read config from stdin
-    config = json.loads(sys.stdin.readline())
-
-    # Fetch data from source
-    records = fetch_from_api(config)
-
-    # Emit records as JSONL
-    for record in records:
-        print(json.dumps({
-            "op": "upsert",
-            "id": record["id"],
-            "data": {
-                "title": record["title"],
-                "content": record["content"],
-                "created_at": record["timestamp"]
-            }
-        }))
-        sys.stdout.flush()
-
-if __name__ == "__main__":
-    sync()
-```
-
-**3. Install adapter:**
-
-```bash
-# Adapters are auto-discovered from adapters/ directory
-# Just place your adapter folder in adapters/ and restart
-```
+They live in the registry repository
+[`bernardopg/wingdrive-adapters`](https://github.com/bernardopg/wingdrive-adapters), not here:
+`adapters/` holds the published ones (Obsidian, GitHub), `drafts/` the unfinished prototypes that
+used to live in this repository (Gmail, Slack, Chrome and Safari history, Apple Notes, Calendar
+and Contacts, OpenCode), and `templates/python/` a complete adapter to start from. Its README
+explains how to check one with `wing adapter test`.
 
 ## Operations
 
@@ -297,8 +226,8 @@ cargo test -p wing-archive
 # Test core integration
 cargo test -p wing-core -- sources::
 
-# Test specific adapter
-python3 adapters/gmail/test.py
+# Test an adapter against its fixtures/<case> folders
+wing adapter test path/to/adapter
 ```
 
 ### Adding a Job
