@@ -8,7 +8,7 @@ priority: Medium
 milestone: M5
 sprint: S10
 tags: [mobile, android, release]
-last_updated: 2026-11-17
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -33,3 +33,9 @@ while the desktop is `2.0.0-alpha.18`. Coordinates with REL-001 (Google Play cre
 bump` updates them and `scripts/release/version.py` checks them against the tag. Builds without the
 release properties take `versionName` from `app.json` and derive `versionCode` with the scheme of
 `android_version.py`, instead of 1.0.0 and 1.
+
+## Note (2026-11-28)
+
+The four `WINGDRIVE_ANDROID_KEYSTORE_*` secrets exist and v3.8.2 shipped a signed APK and AAB.
+This key must become the Google Play app signing key (DIST-001), so Play and GitHub builds update
+each other.
