@@ -7,6 +7,8 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Fixed
 
+- Reading a library while its settings are being saved no longer panics with "Failed to read
+  library config for ID", which failed the sync, job or request that read it.
 - A folder that cannot be opened keeps its error on screen. When the window got focus or a change
   arrived, the Explorer showed the missing folder as empty ("0 files") for about a second and a
   half before the error came back.

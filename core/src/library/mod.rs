@@ -38,6 +38,9 @@ pub struct Library {
 	/// Root directory of the library (the .winglibrary folder)
 	path: PathBuf,
 
+	/// Library ID, copied out of the config so reading it never waits on the config lock
+	id: Uuid,
+
 	/// Library configuration
 	config: Arc<RwLock<LibraryConfig>>,
 
@@ -81,11 +84,7 @@ pub struct Library {
 impl Library {
 	/// Get the library ID
 	pub fn id(&self) -> Uuid {
-		// Config is immutable for ID, so we can use try_read
-		self.config.try_read().map(|c| c.id).unwrap_or_else(|_| {
-			// This should never happen in practice
-			panic!("Failed to read library config for ID")
-		})
+		self.id
 	}
 
 	/// Get the library name
