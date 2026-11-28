@@ -20,6 +20,7 @@ import {
 	MIN_SEARCH_LENGTH,
 	SEARCH_PAGE_SIZE,
 } from "./searchQuery";
+import { useStickyError } from "./useStickyError";
 import { useVirtualListing } from "./useVirtualListing";
 
 const RECENTS_PAGE_SIZE = 100;
@@ -418,17 +419,21 @@ export function useExplorerFiles(): ExplorerFilesResult {
 						? false
 						: directoryQuery.isLoading;
 
-	const error = isFilteredMode
-		? filteredQuery.error
+	const activeQuery = isFilteredMode
+		? filteredQuery
 		: isTagMode
-			? tagQuery.error
+			? tagQuery
 			: isRecentsMode
-				? recentsQuery.error
+				? recentsQuery
 				: isSearchMode
-					? searchQuery.error
+					? searchQuery
 					: isVirtualView
 						? null
-						: directoryQuery.error;
+						: directoryQuery;
+	const error = useStickyError(
+		activeQuery,
+		`${source}:${JSON.stringify(currentPath ?? null)}:${searchParams.toString()}`,
+	);
 
 	const searchOutput = isSearchMode
 		? (searchQuery.data as FileSearchOutput | undefined)
