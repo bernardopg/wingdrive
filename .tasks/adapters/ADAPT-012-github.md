@@ -63,7 +63,13 @@ account `bernardopg`.
       "1 deleted", the record gone; starring it again brought it back. The token was in no file of
       the instance's data folder. After the store update to 1.0.4, the next sync reused the cursor:
       "10 upserted, 0 deleted".)
-- [ ] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
+- [x] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
+      (2026-11-28: each source has its own FTS index (`harness` matches 51 items of the token
+      source). ADAPT-026: on an isolated `wing-server` with github 1.1.0 from the store, synced
+      from a local fake API (synthetic user `ana`: 3 repositories, 1 star, 4 issues and pull
+      requests), the list shows title, repository, date and text, and the Library search finds
+      `harness` in an issue and a repository; the issue opens in its source with date and
+      `issue:1101`.)
       (2026-11-28: each source has its own FTS index (`harness` matches 51 items of the token
       source), but the library search (`search.files`) does not query sources:
       `ArchiveEngine::search` has no caller in the core. ADAPT-026 adds it.)

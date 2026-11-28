@@ -7,7 +7,7 @@ priority: High
 milestone: M5
 sprint: S06
 tags: [epic, adapters, store, sources]
-last_updated: 2026-11-24
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -67,7 +67,8 @@ S07 and go through the same registry as any third party.
 | ADAPT-014 | Coding agent sessions: OpenCode, Claude Code, Codex | S07 |
 | ADAPT-015 | Retire the prototypes in `adapters/` | S07 |
 | ADAPT-020 to ADAPT-025 | Gmail, Slack export, Apple Notes, Safari history, macOS Calendar, macOS Contacts | Backlog |
-| ADAPT-026 | Library search finds adapter source items | Backlog |
+| ADAPT-026 | Library search finds adapter source items | S07 |
+| ADAPT-027 | Source search follow-ups: prefixes, scopes and freshness | Backlog |
 
 ## Acceptance Criteria
 

@@ -17,6 +17,11 @@ version in the workspace manifests and the matching `v*` git tag.
 - `wing update` also lists adapter updates, the same list as `wing adapters outdated`, when the
   daemon is running.
 - Source items show their date, from the field the adapter names as the date of its items.
+- The library search finds items of your sources (notes, GitHub issues and repositories, coding
+  sessions) next to files. With the Library scope, matches appear above the files, grouped by
+  source, with the matched words highlighted. Opening one shows the item in its source.
+- Clicking an item in a source opens it beside the list with its date, its ID in the service and
+  its whole text. The search box of a source searches all of its items, not only the ones loaded.
 - Settings > About links the privacy policy and the terms of service, in the app's language.
 - Android: Settings > Background > "Keep running in the background" keeps syncing with your paired
   devices and receiving files while the app is closed and the screen is off. WingDrive shows a
@@ -25,6 +30,8 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Fixed
 
+- Searching across sources lists the best matches first; it listed the weakest first. Quotes,
+  dashes and other punctuation in a search no longer make it find nothing.
 - Adding or editing a source refuses a folder or file that does not exist, or a required field left
   empty, and names the field. Before, the source was created and failed at its first sync.
 - Android: a device's page names each row's kind and the phone's internal storage in the app's

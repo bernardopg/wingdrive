@@ -229,6 +229,31 @@ not JSON and logs a warning for each.
 New and changed records go through the source's safety screening, which decides whether they enter
 the source's full-text index, and are embedded for semantic search.
 
+## Search
+
+Each source keeps an FTS5 index over its `[search] search_fields`. The library query
+`sources.search` asks every source of the current library, or one with `source_id`, and returns
+the hits best match first, at most `limit` (50 by default, 200 at most). A hit carries the item's
+`id`, `external_id`, `title`, `subtitle`, `date` (from `date_field`), the first 280 characters of
+its `preview`, a `snippet` of the text around the match, the `source_id`, `source_name`,
+`adapter_id` and `data_type`, and `flagged` when the safety screening flagged the record. In the
+snippet, U+0002 and U+0003 wrap each matched term. `sources.get_item` returns one item with its
+whole preview.
+
+The query is the text a person typed, not FTS5 syntax. Every word must match, as a prefix, and
+quotes, `-`, `*` and `OR` are searched as text. The index stems words with the `porter`
+tokenizer, so `garden` finds `gardens`, but a prefix is stemmed too: `harn` does not find
+`harness`, whose stem is `har`.
+
+Only records the safety screening let into the index match: a quarantined record is stored but
+never returned. A deleted source returns no hits. A library that never had a source answers with
+no hits and creates no archive.
+
+The Explorer runs `sources.search` when you search with the Library scope and lists the hits
+above the files, grouped by source. Opening a hit shows its source with the same words searched
+and the item open beside the list (`/sources/<source id>?q=<words>&item=<item id>`). The search
+box of a source page searches that source's whole index, not only the items already loaded.
+
 ## Testing
 
 `wing adapter test <folder>` runs an adapter against its test cases the way the daemon runs it:

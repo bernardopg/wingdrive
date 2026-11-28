@@ -57,7 +57,10 @@ author's machine: 527 MB, 651 MB and 1.4 GB.
       (2026-11-28, 3.8.2 isolated instance, 0.2.0 from the store: second sync "2 upserted, 0
       deleted in 1.2s", the two sessions being written at that moment. Updates in place and
       deletions: unit tests and both harness runs of each case, 3 of 3.)
-- [ ] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
+- [x] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
+      (2026-11-28, ADAPT-026: on an isolated `wing-server` with coding-sessions 0.2.0 from the
+      store and 4 synthetic Claude Code and Codex sessions, the list shows title, project folder,
+      date and text, and the Library search finds `harness` in 2 sessions.)
 - [x] Script tests with fixtures cover parsing, cursors, deletions and malformed input, and the contract harness (ADAPT-003) passes in the adapter's CI
       (23 unit tests on Python 3.9 and 3.13, Linux, macOS and Windows; harness cases `two-agents`,
       `opencode` and `no-agents`, 3 of 3, in bernardopg/wingdrive-adapters#14. The `opencode` case's

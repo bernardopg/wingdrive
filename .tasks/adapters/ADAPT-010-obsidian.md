@@ -47,7 +47,12 @@ tags, wikilinks between notes, created and modified dates. Starts from the proto
       paths are the declared `obsidian.json` files. It declares no network, so the sandbox gives it
       none; its harness cases pass that way in the registry's Validate run 46165091592)
 - [x] Sync is incremental: a second run with no changes writes nothing new, a changed item is updated in place, and an item removed upstream is removed from the source (isolated daemon, 2026-11-25: fixture vault 3 notes, then 2 read, 1 deleted, links fixed; `~/Documentos/Bitter` 50 notes, 10 links, second run 0 read)
-- [ ] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
+- [x] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
+      (2026-11-28, packaged 3.8.2: title, path and preview show, the date did not. `sources.list_items`
+      now returns the manifest's `[search] date_field` and the list shows it. ADAPT-026: on an
+      isolated `wing-server` with obsidian 1.1.4 from the store and a synthetic 10 note vault, the
+      list shows each note's date, and the Library search finds `harness` in 3 notes, highlighted,
+      next to files; a hit opens the note in its source with its whole text.)
       (2026-11-28, packaged 3.8.2: title, path and preview show, the date did not. `sources.list_items`
       now returns the manifest's `[search] date_field` and the list shows it. The library search
       (`search.files`) does not query sources at all: `ArchiveEngine::search` has no caller in the
@@ -60,7 +65,7 @@ tags, wikilinks between notes, created and modified dates. Starts from the proto
       (2026-11-28, `wingdrive-bin` 3.8.2 on an isolated instance: `wing adapters install obsidian`
       from store index 9, `~/Documentos/Bitter` synced 50 notes, the second run "0 upserted, 0
       deleted", and the desktop app lists the 50 items. Screenshots kept off the PR: they show the
-      author's notes. Left: the item dates after this PR ships, and opening an item.)
+      author's notes. Left: the item dates after this PR ships, and opening an item. Since ADAPT-026 an item opens beside the list (checked in the web UI on synthetic data).)
 - [x] Store listing on wingdrive.org/adapters and a user page (EN and PT) with setup, what is indexed and privacy notes
       (2026-11-28: wingdrive.org/adapters/obsidian and /pt/adapters/obsidian list the adapter with install
       steps (app and `wing adapters install obsidian`) and its README, with the Setup, Data and Privacy
