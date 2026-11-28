@@ -21,8 +21,8 @@ with AI assistance (`AGENTS.md`, `.agents/skills`). Decide whether to apply at a
 
 ## Implementation Steps
 
-- [ ] Read the current policy at izzyondroid.org/docs/general/AppInclusionPolicy/
-- [ ] If the author wants to apply and MOB-018, MOB-019, MOB-020 are done, open a request at codeberg.org/IzzyOnDroid/repodata and state the AI assistance plainly
+- [x] Read the current policy at izzyondroid.org/docs/general/AppInclusionPolicy/ (read for docs/design/app-store-distribution.md, 2026-11-28)
+- [x] If the author wants to apply and MOB-018, MOB-019, MOB-020 are done, open a request at codeberg.org/IzzyOnDroid/repodata and state the AI assistance plainly (not applicable: deferred)
 - [x] Otherwise close this task as not planned and record the reason (deferred, see Decision)
 
 ## Acceptance Criteria
