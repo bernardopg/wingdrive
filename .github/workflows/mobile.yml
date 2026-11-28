@@ -181,7 +181,7 @@ jobs:
           target: ${{ env.RUST_TARGET }}
           cache-key: mobile
           save-cache: ${{ github.ref == 'refs/heads/main' }}
-      - uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
+      - uses: taiki-e/install-action@18101caa61cb89118e2ee749786f33c6d1f8a8cb # v2.90.9
         with:
           tool: cargo-ndk@${{ env.CARGO_NDK_VERSION }}
       - name: Install the Android NDK
@@ -274,7 +274,7 @@ jobs:
         with:
           target: ${{ env.RUST_TARGET }}
           cache-key: mobile-release
-      - uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
+      - uses: taiki-e/install-action@18101caa61cb89118e2ee749786f33c6d1f8a8cb # v2.90.9
         with:
           tool: cargo-ndk@${{ env.CARGO_NDK_VERSION }}
       - name: Install the Android NDK
