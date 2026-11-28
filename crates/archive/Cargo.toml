@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 # Core dependencies - workspace versions
 sqlx    = { workspace = true, features = ["sqlite", "runtime-tokio", "derive"] }
-tokio   = { workspace = true, features = ["process"] }
+tokio   = { workspace = true, features = ["process", "rt"] }
 serde   = { workspace = true, features = ["derive"] }
 uuid    = { workspace = true, features = ["v4"] }
 blake3  = { workspace = true }
