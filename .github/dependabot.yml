@@ -35,6 +35,9 @@ updates:
     ignore:
       # patches/glib-0.18.5 backports GHSA-wrw7-89jp-8q8g for the GTK3 stack Tauri pins to glib 0.18.
       - dependency-name: glib
+      # core pins wasmer to =7.1.0: from 7.4 its Store holds a non-Send callback, which breaks
+      # tokio::spawn over Arc<Core>, and 7.5 drops Cranelift on Windows. CORE-027 tracks the upgrade.
+      - dependency-name: wasmer
 
   # bun.lock is Bun's own format. The npm ecosystem only edits package.json and
   # leaves bun.lock stale, which fails `bun install --frozen-lockfile` in CI.
