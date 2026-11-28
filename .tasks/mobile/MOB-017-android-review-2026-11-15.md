@@ -180,10 +180,12 @@ Evidence (screenshots/OCR in `/tmp/mob017/evidence/` on the host, not committed)
 
 ## Acceptance Criteria Status (2026-11-22)
 
-- [ ] Items 1 and 2 have tasks of their own or are closed by MOB-008, with the phone showing its
+Both were closed later, on 2026-11-28; the notes below are what was open on 2026-11-22.
+
+- [x] Items 1 and 2 have tasks of their own or are closed by MOB-008, with the phone showing its
       shared storage and a paired desktop's files. *Shared storage shows; paired desktop file
       browsing not validated while online this session; MOB-008 still tracks full SAF/locations.*
-- [ ] Items 3 to 9 fixed and checked on the moto g(7) with screenshots. *Item 7 remains open;
+- [x] Items 3 to 9 fixed and checked on the moto g(7) with screenshots. *Item 7 remains open;
       items 3,4,5,6,8,9 have prior evidence/code fixes but this session did not re-screenshot every
       item due env quota constraints; item 7 measured in debug+Metro only.*
 
