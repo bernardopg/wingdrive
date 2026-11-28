@@ -20,7 +20,6 @@
 	"Reset All Data": "Redefinir todos os dados",
 	"Quick Actions": "Ações rápidas",
 	"Pair New Device": "Parear novo dispositivo",
-	"Setup Sync": "Configurar sincronização",
 	"Add Storage": "Adicionar armazenamento",
 	"Devices": "Dispositivos",
 	"Locations": "Locais",
@@ -313,5 +312,6 @@
 	"Restore": "Restaurar",
 	"Delete permanently": "Excluir permanentemente",
 	"Could not move the item to Trash": "Não foi possível mover o item para a lixeira",
-	"Could not delete the item": "Não foi possível excluir o item"
+	"Could not delete the item": "Não foi possível excluir o item",
+	"Open a folder and choose Add as Location": "Abra uma pasta e escolha Adicionar como local"
 }

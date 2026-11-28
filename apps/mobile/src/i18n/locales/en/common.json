@@ -20,7 +20,6 @@
 	"Reset All Data": "Reset All Data",
 	"Quick Actions": "Quick Actions",
 	"Pair New Device": "Pair New Device",
-	"Setup Sync": "Setup Sync",
 	"Add Storage": "Add Storage",
 	"Devices": "Devices",
 	"Locations": "Locations",
@@ -313,5 +312,6 @@
 	"Restore": "Restore",
 	"Delete permanently": "Delete permanently",
 	"Could not move the item to Trash": "Could not move the item to Trash",
-	"Could not delete the item": "Could not delete the item"
+	"Could not delete the item": "Could not delete the item",
+	"Open a folder and choose Add as Location": "Open a folder and choose Add as Location"
 }

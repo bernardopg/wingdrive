@@ -1,7 +1,7 @@
 ---
 id: MOB-017
 title: "Android review on the moto g(7): what keeps the app from production"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: MOB-000
 priority: High
@@ -59,7 +59,8 @@ What is wrong, most important first:
 - [x] Items 1 and 2 have tasks of their own or are closed by MOB-008, with the phone showing its
       shared storage and a paired desktop's files (checked 2026-11-28 on the 3.8.2 release build,
       see "Checked on the moto g(7) (2026-11-28)").
-- [ ] Items 3 to 9 fixed and checked on the moto g(7) with screenshots.
+- [x] Items 3 to 9 fixed and checked on the moto g(7) with screenshots (2026-11-28, see "Checked
+      on the moto g(7) with main (2026-11-28)").
 
 ## Progress (2026-11-16)
 
@@ -179,10 +180,12 @@ Evidence (screenshots/OCR in `/tmp/mob017/evidence/` on the host, not committed)
 
 ## Acceptance Criteria Status (2026-11-22)
 
-- [ ] Items 1 and 2 have tasks of their own or are closed by MOB-008, with the phone showing its
+Both were closed later, on 2026-11-28; the notes below are what was open on 2026-11-22.
+
+- [x] Items 1 and 2 have tasks of their own or are closed by MOB-008, with the phone showing its
       shared storage and a paired desktop's files. *Shared storage shows; paired desktop file
       browsing not validated while online this session; MOB-008 still tracks full SAF/locations.*
-- [ ] Items 3 to 9 fixed and checked on the moto g(7) with screenshots. *Item 7 remains open;
+- [x] Items 3 to 9 fixed and checked on the moto g(7) with screenshots. *Item 7 remains open;
       items 3,4,5,6,8,9 have prior evidence/code fixes but this session did not re-screenshot every
       item due env quota constraints; item 7 measured in debug+Metro only.*
 
@@ -247,4 +250,33 @@ show the author's folders).
   library holds two device rows for the phone (slugs `motorola-moto-g-7` and
   `motorola-moto-g-7-2`, the second created 2026-11-26 03:59 and last seen 2026-11-26), left by a
   reinstall that gave the phone a new identity. There is no way to forget a stale device yet.
+
+## Checked on the moto g(7) with main (2026-11-28)
+
+Release build of `main` at `d0cbb4709`, signed with the debug key and installed as
+`com.wingdrive.app.review` beside the everyday app, Portuguese UI. Screenshots are kept on the
+host and show only test data (`/sdcard/WingDriveTest`, a disposable desktop daemon).
+
+- **#570 holds:** after adding `/sdcard/WingDriveTest` as a location, Explorar > motorola moto g(7)
+  lists "WingDriveTest · Local" and "Armazenamento interno · Volume".
+- **Item 3:** Overview and Explorar read in Portuguese ("Armazenamento total", "Arquivos
+  indexados", "usado", "Todos os dispositivos", "MINHA REDE", "LOCAIS", "Interno", "livres").
+  One leftover: the Overview's quick actions showed "Enable cloud backup and sync" and "Add a new
+  location to index" in English, and "Configurar sincronização" and "Adicionar armazenamento" did
+  nothing (both handlers were empty). Fixed in `fix/mobile-quick-actions`: the sync row is gone
+  (the phone has no sync setup screen; sharing starts on the desktop), "Adicionar armazenamento"
+  opens Explorar and says how to add a folder, and both descriptions are translated. Checked on the
+  phone with a build of that branch.
+- **Item 4:** no compute or TOPS card on the Overview.
+- **Item 5:** with the Overview scrolled, the status bar keeps its own background and the
+  "Minha biblioteca" row stays below it.
+- **Item 6:** not a bug (search opens the search screen).
+- **Item 7:** 6 tab switches recorded with `agent-device record`; ffmpeg scene changes at 3.77,
+  6.85, 9.86, 13.05, 16.05 and 19.08 s against taps logged at 3.98, 7.14, 10.22, 13.27, 16.39 and
+  19.44 s. The scene changes come first because the tap log lags the video by 0.2 to 0.35 s; the
+  screen changes in the first frames after each tap.
+- **Item 8:** the last page of Explorar shows "Criar Wing"; it asked for a name, "Teste MOB-017"
+  was created, and the empty wing explains that items are added from the desktop sidebar.
+- **Item 9:** Recentes lists the indexed test folders; Favoritos explains that items marked as
+  favorites on any device appear there.
 

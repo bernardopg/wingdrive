@@ -1,19 +1,16 @@
 import React from "react";
 import { View, Image } from "react-native";
 import MobileIcon from "@wingdrive/assets/icons/Mobile.webp";
-import CloudSyncIcon from "@wingdrive/assets/icons/CloudSync.webp";
 import NewLocationIcon from "@wingdrive/assets/icons/NewLocation.webp";
 import { SettingsGroup, SettingsLink } from "../../../components/primitive";
 
 interface ActionButtonsProps {
 	onPairDevice: () => void;
-	onSetupSync: () => void;
 	onAddStorage: () => void;
 }
 
 export function ActionButtons({
 	onPairDevice,
-	onSetupSync,
 	onAddStorage,
 }: ActionButtonsProps) {
 	return (
@@ -34,25 +31,13 @@ export function ActionButtons({
 				<SettingsLink
 					icon={
 						<Image
-							source={CloudSyncIcon}
-							className="w-6 h-6"
-							style={{ resizeMode: "contain" }}
-						/>
-					}
-					label="Setup Sync"
-					description="Enable cloud backup and sync"
-					onPress={onSetupSync}
-				/>
-				<SettingsLink
-					icon={
-						<Image
 							source={NewLocationIcon}
 							className="w-6 h-6"
 							style={{ resizeMode: "contain" }}
 						/>
 					}
 					label="Add Storage"
-					description="Add a new location to index"
+					description="Open a folder and choose Add as Location"
 					onPress={onAddStorage}
 				/>
 			</SettingsGroup>
