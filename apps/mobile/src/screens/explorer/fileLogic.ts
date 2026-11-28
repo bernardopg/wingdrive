@@ -111,3 +111,29 @@ export function pasteBlocker(
 	}
 	return null;
 }
+
+/** Catalog keys for the kind of a virtual row (a location, volume or device of a device view). */
+const VIRTUAL_TYPE_LABELS: Record<string, string> = {
+	location: "Location",
+	volume: "Volume",
+	device: "Device",
+};
+
+/** The catalog key that names a virtual row's kind, or null for an unknown kind. */
+export function virtualTypeLabel(type: string | undefined): string | null {
+	return (type && VIRTUAL_TYPE_LABELS[type]) || null;
+}
+
+/**
+ * The name to show for a row. File and folder names are user data and stay as they are. A volume's
+ * name comes from the system ("Internal storage" on Android), so it is translated when the catalog
+ * has it (MOB-017).
+ */
+export function rowDisplayName(
+	name: string,
+	virtualType: string | undefined,
+	translate: (key: string) => string | null,
+): string {
+	if (virtualType !== "volume") return name;
+	return translate(name) ?? name;
+}

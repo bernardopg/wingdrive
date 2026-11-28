@@ -11,7 +11,7 @@ import {
 } from "@wingdrive/ts-client";
 import { FileIcon } from "../components/FileIcon";
 import { useTranslation } from "react-i18next";
-import { relativeDate } from "../fileLogic";
+import { relativeDate, rowDisplayName, virtualTypeLabel } from "../fileLogic";
 
 interface ListViewProps {
 	files: File[];
@@ -43,8 +43,12 @@ function FileRow({
 	onLongPress?: () => void;
 	localPath: string | null;
 }) {
-	const { t } = useTranslation("common");
+	const { t, i18n } = useTranslation("common");
 	const virtualMetadata = getVirtualMetadata(file);
+	const typeLabel = virtualTypeLabel(virtualMetadata?.type);
+	const name = rowDisplayName(fileDisplayName(file), virtualMetadata?.type, (key) =>
+		i18n.exists(key) ? t(key) : null,
+	);
 	const isVirtual = isVirtualFile(file);
 	const modified = relativeDate(file.modified_at);
 	// A folder's own metadata size is not its contents; show it only once measured.
@@ -65,7 +69,7 @@ function FileRow({
 			<View className="flex-1">
 				{/* User data, never looked up in the catalog ("Notifications" stays as is) */}
 				<NativeText className="text-ink font-medium" numberOfLines={1}>
-					{fileDisplayName(file)}
+					{name}
 				</NativeText>
 				<View className="flex-row gap-2 mt-0.5">
 					{!isVirtual && !!size && (
@@ -81,10 +85,8 @@ function FileRow({
 							</Text>
 						</>
 					)}
-					{isVirtual && virtualMetadata?.type && (
-						<Text className="text-ink-faint text-xs capitalize">
-							{virtualMetadata.type}
-						</Text>
+					{isVirtual && typeLabel && (
+						<NativeText className="text-ink-faint text-xs">{t(typeLabel)}</NativeText>
 					)}
 				</View>
 			</View>
