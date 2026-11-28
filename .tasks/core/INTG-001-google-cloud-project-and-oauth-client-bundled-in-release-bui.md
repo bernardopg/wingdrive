@@ -53,8 +53,27 @@ Google treats a "Desktop app" client secret as not confidential, so embedding it
 - `WINGDRIVE_GOOGLE_CLIENT_ID` and `WINGDRIVE_GOOGLE_CLIENT_SECRET` set as repository secrets;
   v3.3.0 is the first release built with them.
 
-Left: logo and terms link on the consent screen, AUR `wingdrive-nightly`
-(builds from source), Docker image, Flatpak and mobile, and the CI check of the client source.
+## Progress (2026-11-28)
+
+Checked in Google Cloud Console (Google Auth Platform > Branding):
+
+- The terms link https://wingdrive.org/service-terms is set, next to the homepage, the privacy
+  policy and the authorized domain `wingdrive.org`. Google's account chooser and consent screen
+  link both pages.
+- No logo is uploaded, on purpose. The Branding page states that uploading a logo requires
+  submitting the app for verification again. Branding and Data Access are both verified today, so
+  a logo would start a new brand review for no functional gain. Upload
+  `docs/logo/wingdrive-logo-120.png` only when another verification round is needed anyway.
+- The bundled client of the packaged 3.8.2 build reports source `Bundled`
+  (`wing integrations google-client show`) and signed in against real Google (INTG-004).
+- API keys: "WingDrive Picker" (2026-11-17, Google Picker API only, no application restriction)
+  is the one in the `WINGDRIVE_GOOGLE_API_KEY` repository secret. A second key, "WingDrive Picker
+  (loopback) 2026-11-28", is restricted to the Google Picker API and to the website referrer
+  `http://127.0.0.1/*`, which matches the Picker page on any loopback port. The Picker loaded and
+  listed Drive with it on 2026-11-28. The author keeps it outside the repository.
+
+Left: AUR `wingdrive-nightly` (builds from source), Docker image, Flatpak and mobile, and the CI
+check of the client source.
 
 ## Acceptance Criteria
 

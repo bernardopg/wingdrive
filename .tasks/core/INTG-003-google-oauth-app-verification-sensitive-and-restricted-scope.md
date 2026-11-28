@@ -1,14 +1,14 @@
 ---
 id: INTG-003
 title: Google OAuth app verification (sensitive and restricted scopes)
-status: To Do
+status: Done
 assignee: bernardopg
 parent: INTG-000
 priority: High
 milestone: M5
 sprint: S05
-tags: [integrations, google, oauth, verification, security, blocked]
-last_updated: 2026-11-22
+tags: [integrations, google, oauth, verification, security]
+last_updated: 2026-11-28
 related_tasks: [INTG-001, INTG-002, INTG-011]
 ---
 
@@ -65,8 +65,19 @@ the address bar, each scope's effect in Drive and Photos). The checklist email w
 > 2026-11-22 (DEV-008): moved to `To Do` during S05 board cleanup. Blocked on third party: waiting
 > for Google's OAuth verification review response. No active internal work in this sprint.
 
+## Progress (2026-11-28)
+
+Google Auth Platform > Verification Center reports both parts verified: "Your branding has been
+verified and is shown to users" and "Your app's data access has been verified". Audience: External,
+"In production". Data Access lists `openid`, `userinfo.email`, `userinfo.profile`, `drive.file` and
+`photoslibrary.readonly.appcreateddata` as non-sensitive, `photoslibrary.appendonly` and
+`photospicker.mediaitems.readonly` as sensitive, and no restricted scope. Signing in with the
+packaged 3.8.2 build showed WingDrive's name and links, with no "Google hasn't verified this app"
+screen (INTG-004). The 100-user cap counter still shows on the Audience page; Google says it is not
+enforced for verified scopes.
+
 ## Acceptance Criteria
 
-- [ ] Any Google account signs in without the unverified-app warning.
-- [ ] Grants no longer expire after 7 days.
-- [ ] No restricted scope is requested by WingDrive's own client, so no yearly CASA assessment is needed (decision of 2026-11-16).
+- [x] Any Google account signs in without the unverified-app warning (Verification Center reports branding and data access verified; checked with the author's account on 2026-11-28).
+- [x] Grants no longer expire after 7 days (published "In production").
+- [x] No restricted scope is requested by WingDrive's own client, so no yearly CASA assessment is needed (decision of 2026-11-16).
