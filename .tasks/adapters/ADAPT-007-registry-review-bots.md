@@ -10,7 +10,7 @@ sprint: S06
 tags: [adapters, store, ci, security, automation]
 depends_on: [ADAPT-001, ADAPT-003]
 related_tasks: [ADAPT-008, ADAPT-009]
-last_updated: 2026-11-24
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -24,15 +24,37 @@ the index and publishes it.
 ## Implementation Steps
 
 - [x] Structure: entry schema, matching `adapter.toml`, icon (SVG, square, size limit), summary length, README sections, OSI license, no binaries or vendored dependencies (`wingreg validate`; icons also refuse event handlers, foreignObject, DTDs and external references)
-- [ ] Requirements: contract version supported, tests present and passing, harness passing against the adapter's fixtures, declared platforms and runtime
-- [ ] Security: declared permissions match what the code uses (network hosts, filesystem paths, secrets); no `eval`/`exec` of fetched code, no shell-outs except declared tools, no writes outside the adapter's state; dependency audit; secret scan
-- [ ] The pinned commit must be reachable from a tag in the adapter repository; updates show the diff since the last pin
+- [x] Requirements: contract version supported, tests present and passing, harness passing against the adapter's fixtures, declared platforms and runtime
+      (bernardopg/wingdrive-adapters#13, 2026-11-28: the schema checks contract, platforms and
+      runtime; `wingreg validate --run-code` runs each adapter's `tests/` and `wing-adapter-test` on
+      its `fixtures/`, both in bubblewrap without network, and every adapter needs a harness case.
+      Validate builds `wing-adapter-test` (crate `wing-archive`, #584) from the commit in
+      `WINGDRIVE_HARNESS_REF` and caches it by that commit: 2m34s cold, then a cache hit. Building
+      the `wing` CLI would compile the whole core, and no release ships the harness yet.)
+- [x] Security: declared permissions match what the code uses (network hosts, filesystem paths, secrets); no `eval`/`exec` of fetched code, no shell-outs except declared tools, no writes outside the adapter's state; dependency audit; secret scan
+      (`tools/wingreg/checks.py` in #13: hosts in string literals against `permissions.network`,
+      network modules without hosts, `~/` paths against `permissions.read`, secret config fields
+      against `permissions.secrets`, imports outside the standard library (the dependency audit:
+      adapters run with `python3 -I` and no packages), `eval`/`exec`/`pickle.loads`/
+      `importlib.import_module`, programs outside `permissions.tools`, committed credentials.
+      Writes outside the state folder are not scanned; on Linux the sandbox mounts everything else
+      read-only, and the tests and harness run under it in CI.)
+- [x] The pinned commit must be reachable from a tag in the adapter repository; updates show the diff since the last pin
+      (the tag must point at the pinned commit before anything is fetched; the report links
+      `<repository>/compare/<old>...<new>` for a git source whose commit changed, #13)
 - [ ] Compiled adapters are built by the registry's own CI from the pinned commit for each target (Linux x86_64 and aarch64, macOS aarch64, Windows x86_64), with locked dependencies; binaries uploaded by authors are never accepted, so what users install always matches reviewed source
-- [x] One report comment, updated on every push, with a pass/fail table and links to logs; labels `needs-changes`, `ready-for-review`, `approved` (`wingreg report` + Review comment workflow (`workflow_run`, no pull request code); labels not yet)
+- [x] One report comment, updated on every push, with a pass/fail table and links to logs; labels `needs-changes`, `ready-for-review`, `approved` (`wingreg report` + Review comment workflow (`workflow_run`, no pull request code); since #13 the table has Structure, Code scan, Adapter tests and Contract harness per adapter, with the failing output)
 - [x] Publish job after approval: archive, checksum, signed index, release asset, website dispatch (website dispatch pending ADAPT-006)
 - [ ] Same checks runnable locally with `wing adapter validate`
+      (2026-11-28: `cd tools && uv run --python 3.12 --with jsonschema python -m wingreg validate
+      --run-code` in the registry runs all of them locally with `wing-adapter-test` or `wing adapter
+      test` on `PATH`. A `wing adapter validate` command in the CLI is still to do.)
 
 ## Acceptance Criteria
 
-- [ ] A good submission and four bad ones (bad schema, failing tests, undeclared network use, unsigned update) behave as expected in the registry's CI
+- [x] A good submission and four bad ones (bad schema, failing tests, undeclared network use, unsigned update) behave as expected in the registry's CI
+      (`tests/test_submissions.py` in #13: the template passes all four checks; a bad version,
+      a failing test, `urllib.request` with an undeclared host, and an update whose tag does not
+      point at the pinned commit each fail with their message. Run 46165091592, "Tooling tests":
+      36 passed with the real harness.)
 - [x] Publishing an approved submission updates the signed index without manual steps (merge (or `/wingbot publish`) starts Publish; the only manual step is the `registry-publish` approval, by design)

@@ -1,7 +1,7 @@
 ---
 id: ADAPT-003
 title: "Adapter contract and test harness"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: ADAPT-000
 priority: High
@@ -52,7 +52,10 @@ reported, and how a test runs a real adapter against fixtures.
 ## Acceptance Criteria
 
 - [x] Contract doc merged and referenced from AGENTS.md (`docs/core/adapters.mdx`, AGENTS.md "Adapters (store)")
-- [ ] Harness passes on the template adapter and is used by ADAPT-007 and every adapter task
-      (template half done 2026-11-28: `templates/python` passes `wing adapter test`, 2 of 2 cases;
-      Wingbot does not run the harness yet, ADAPT-007)
+- [x] Harness passes on the template adapter and is used by ADAPT-007 and every adapter task
+      (2026-11-28: `templates/python` passes `wing adapter test`, 2 of 2 cases. The registry's
+      Validate workflow builds `wing-adapter-test` (#584) and runs it on every adapter, and an
+      adapter without a `fixtures/<case>/expected.json` fails review (bernardopg/wingdrive-adapters#13).
+      Run 46165091592: coding-sessions 2 of 2, github 5 of 5, obsidian 2 of 2, the template in
+      `tests/test_submissions.py`.)
 - [x] CI job green with the harness tests (#563: "Test the adapter contract harness" in Rust Workspace, run 46156548622, `harness_test` 4 passed; merged as 0138ac9)

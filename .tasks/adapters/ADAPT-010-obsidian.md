@@ -36,15 +36,20 @@ tags, wikilinks between notes, created and modified dates. Starts from the proto
       `path_type` folder or file that does not exist, as `config.vault_path`: "Vault: /x is not a
       folder on this device"; before, 3.8.2 created the source and failed at its first sync.
       Detection by `.obsidian` folder is in the registry PR. macOS detection is unchecked.)
-- [ ] Declares only the permissions it uses (ADAPT-009); runs with network off unless it declares hosts
+- [x] Declares only the permissions it uses (ADAPT-009); runs with network off unless it declares hosts
+      (2026-11-28: Wingbot's code scan passes on 1.1.3: no host, no program, no secret, its `~/`
+      paths are the declared `obsidian.json` files. It declares no network, so the sandbox gives it
+      none; its harness cases pass that way in the registry's Validate run 46165091592)
 - [x] Sync is incremental: a second run with no changes writes nothing new, a changed item is updated in place, and an item removed upstream is removed from the source (isolated daemon, 2026-11-25: fixture vault 3 notes, then 2 read, 1 deleted, links fixed; `~/Documentos/Bitter` 50 notes, 10 links, second run 0 read)
 - [ ] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
       (2026-11-28, packaged 3.8.2: title, path and preview show, the date did not. `sources.list_items`
-      now returns the manifest's `[search] date_field` and the list shows it. Library search not
-      checked yet.)
-- [ ] Script tests with fixtures cover parsing, cursors, deletions and malformed input, and the contract harness (ADAPT-003) passes in the adapter's CI
+      now returns the manifest's `[search] date_field` and the list shows it. The library search
+      (`search.files`) does not query sources at all: `ArchiveEngine::search` has no caller in the
+      core, so no adapter's items are found there. ADAPT-026 adds it.)
+- [x] Script tests with fixtures cover parsing, cursors, deletions and malformed input, and the contract harness (ADAPT-003) passes in the adapter's CI
       (2026-11-28: `fixtures/linked-notes` and `fixtures/missing-vault` pass `wing adapter test`, 2 of 2,
-      in bernardopg/wingdrive-adapters#11. The registry CI does not run the harness yet, ADAPT-007.)
+      in bernardopg/wingdrive-adapters#11. Since #13 there the registry's Validate runs the harness on
+      them: 2 of 2 in run 46165091592, with the 1.1.3 unit tests.)
 - [ ] Real proof on the author's machine: install from the store, sync of real data with item counts, second run idempotent, items opened in the desktop app (screenshot in the PR)
       (2026-11-28, `wingdrive-bin` 3.8.2 on an isolated instance: `wing adapters install obsidian`
       from store index 9, `~/Documentos/Bitter` synced 50 notes, the second run "0 upserted, 0
