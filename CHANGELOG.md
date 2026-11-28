@@ -11,6 +11,8 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Fixed
 
+- Android: a device's page names each row's kind and the phone's internal storage in the app's
+  language; they showed "Location", "Volume" and "Internal storage" in English.
 - Reading a library while its settings are being saved no longer panics with "Failed to read
   library config for ID", which failed the sync, job or request that read it.
 - A folder that cannot be opened keeps its error on screen. When the window got focus or a change

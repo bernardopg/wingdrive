@@ -3,7 +3,9 @@ import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View, FlatList, Pressable, Dimensions, Text as NativeText } from "react-native";
 import type { File } from "@wingdrive/ts-client";
-import { fileDisplayName, fileDisplaySize } from "@wingdrive/ts-client";
+import { fileDisplayName, fileDisplaySize, getVirtualMetadata } from "@wingdrive/ts-client";
+import { useTranslation } from "react-i18next";
+import { rowDisplayName } from "../fileLogic";
 import { FileIcon } from "../components/FileIcon";
 
 interface GridViewProps {
@@ -46,6 +48,7 @@ function FileCard({
 	onLongPress?: () => void;
 	localPath: string | null;
 }) {
+	const { t, i18n } = useTranslation("common");
 	const size = fileDisplaySize(file);
 
 	return (
@@ -62,7 +65,9 @@ function FileCard({
 
 			{/* File name: user data, never looked up in the catalog */}
 			<NativeText className="text-ink text-xs text-center" numberOfLines={2}>
-				{fileDisplayName(file)}
+				{rowDisplayName(fileDisplayName(file), getVirtualMetadata(file)?.type, (key) =>
+					i18n.exists(key) ? t(key) : null,
+				)}
 			</NativeText>
 
 			{/* File size; a folder's only once its contents were measured */}

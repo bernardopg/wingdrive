@@ -1,7 +1,7 @@
 ---
 id: MOB-017
 title: "Android review on the moto g(7): what keeps the app from production"
-status: To Do
+status: In Progress
 assignee: bernardopg
 parent: MOB-000
 priority: High
@@ -9,7 +9,7 @@ milestone: M5
 sprint: S07
 tags: [mobile, android, ui, i18n, review]
 related_tasks: [MOB-007, MOB-008, MOB-015, BRAND-003]
-last_updated: 2026-11-23
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -56,8 +56,9 @@ What is wrong, most important first:
 
 ## Acceptance Criteria
 
-- [ ] Items 1 and 2 have tasks of their own or are closed by MOB-008, with the phone showing its
-      shared storage and a paired desktop's files.
+- [x] Items 1 and 2 have tasks of their own or are closed by MOB-008, with the phone showing its
+      shared storage and a paired desktop's files (checked 2026-11-28 on the 3.8.2 release build,
+      see "Checked on the moto g(7) (2026-11-28)").
 - [ ] Items 3 to 9 fixed and checked on the moto g(7) with screenshots.
 
 ## Progress (2026-11-16)
@@ -219,3 +220,31 @@ Observed:
 
 - **AC1**: needs paired desktop online and sharing files/library visible on moto g(7). Pairing exists; runtime connectivity/file-sharing evidence still missing.
 - **AC2 item 7**: needs release-build tap/profile on moto g(7) with safe install path (signed release or separate package/debug-signable release).
+
+## Checked on the moto g(7) (2026-11-28)
+
+Release build `com.wingdrive.app` 3.8.2 (not debuggable, installed 2026-11-26), laptop and homelab
+daemons on 3.8.2. Driven with agent-device; screenshots taken in the session, not committed (they
+show the author's folders).
+
+- **Item 1:** after granting "Acesso para gerenciar todos os arquivos" from the "Permitir acesso aos
+  arquivos" card, Explorar > motorola moto g(7) > Internal storage lists `/sdcard` (Alarms, DCIM,
+  Documents, Download, Pictures, ...).
+- **Item 2:** Rede lists arch-legacy and Bitter Arch Hypr DMS as Conectado. Explorar > Bitter Arch
+  Hypr DMS lists its three locations and two volumes; opening "WingDrive (laptop)" lists the
+  laptop's files (`soak`, `synctest-200350`, `r1.txt`) in about a second.
+- **Item 7:** 8 tab switches recorded with `agent-device record` and its tap telemetry. The full
+  screen changes in the first encoded frame after each tap, within the ±0.2 s alignment error
+  of the measurement (ffmpeg scene changes at 4.29, 7.93, 11.48, 15.20, 18.96, 22.50, 26.07 and
+  29.68 s against taps at 4.26, 7.95, 11.67, 15.26, 18.91, 22.62, 26.24 and 29.74 s). The 0.8 s
+  of the debug build with Metro does not happen in the release build. Fixed.
+- **Item 3 (left over):** a device page showed "Location" and "Volume" under each row and the
+  phone's volume as "Internal storage", in English. `ListView` printed the raw virtual type and the
+  system volume name. Fixed in `fix/mobile-virtual-labels-pt`: the kind is a catalog key
+  ("Local", "Volume", "Dispositivo") and a volume's name is translated when the catalog has it.
+  Needs a check on the phone with the next APK.
+- **Not a bug, noted:** Explorar lists a second "motorola moto g(7), Desconectado". The laptop
+  library holds two device rows for the phone (slugs `motorola-moto-g-7` and
+  `motorola-moto-g-7-2`, the second created 2026-11-26 03:59 and last seen 2026-11-26), left by a
+  reinstall that gave the phone a new identity. There is no way to forget a stale device yet.
+

@@ -9,6 +9,8 @@ import {
 	pasteBlocker,
 	previewKind,
 	relativeDate,
+	rowDisplayName,
+	virtualTypeLabel,
 } from "./fileLogic";
 
 const physical = (device_slug: string, path: string) =>
@@ -172,5 +174,25 @@ describe("file clipboard", () => {
 		expect(useFileClipboard.getState().pendingPaths).toBe(current.paths);
 		expect(useFileClipboard.getState().mode).toBe("copy");
 		clipboard.finishPaste(current.paths, true);
+	});
+});
+
+describe("virtual rows (MOB-017)", () => {
+	const catalog: Record<string, string> = { "Internal storage": "Armazenamento interno" };
+	const translate = (key: string) => catalog[key] ?? null;
+
+	test("the kind of a row is a catalog key, not the raw type", () => {
+		expect(virtualTypeLabel("location")).toBe("Location");
+		expect(virtualTypeLabel("volume")).toBe("Volume");
+		expect(virtualTypeLabel("device")).toBe("Device");
+		expect(virtualTypeLabel("other")).toBeNull();
+		expect(virtualTypeLabel(undefined)).toBeNull();
+	});
+
+	test("system volume names are translated, user names are not", () => {
+		expect(rowDisplayName("Internal storage", "volume", translate)).toBe("Armazenamento interno");
+		expect(rowDisplayName("home", "volume", translate)).toBe("home");
+		expect(rowDisplayName("Internal storage", "location", translate)).toBe("Internal storage");
+		expect(rowDisplayName("Internal storage", undefined, translate)).toBe("Internal storage");
 	});
 });
