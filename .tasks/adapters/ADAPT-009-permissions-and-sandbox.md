@@ -1,7 +1,7 @@
 ---
 id: ADAPT-009
 title: "Adapter permissions and process sandbox"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: ADAPT-000
 priority: High
@@ -9,7 +9,7 @@ milestone: M5
 sprint: S06
 tags: [adapters, security, core]
 related_tasks: [ADAPT-004, ADAPT-007]
-last_updated: 2026-11-26
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -22,7 +22,13 @@ it needs, the user sees it before install, and the daemon runs the adapter with 
 - [x] Permission model in the manifest: `read` paths (with platform defaults), `network` hosts, `secrets` keys, `tools` it may run (`{config.<key>}` and `~` expansion in `read`)
 - [x] Linux: run the adapter under bubblewrap with read-only binds for declared paths, a private state directory, and no network unless hosts are declared; macOS and Windows: best-effort limits recorded in the docs (`crates/archive/src/adapter/sandbox.rs`; macOS and Windows unconfined, recorded in `docs/core/adapters.mdx` and shown in the store)
 - [x] Minimal environment (no inherited tokens), CPU time and memory limits, kill on timeout (2 GiB RLIMIT_AS, RLIMIT_CPU = runtime.timeout, killed at runtime.timeout)
-- [ ] Secrets passed per run from the secret store, never written to the source database or logs
+- [x] Secrets passed per run from the secret store, never written to the source database or logs
+      (`SourceManager` in `core/src/data/manager.rs` since `7be73afe6`: secret fields go to the
+      encrypted `KeyManager`, join the config only in `sync_source`, and sources from before move
+      out on their next sync). Tests: `secrets_reach_the_adapter_but_not_the_source_database_or_logs`
+      captures every log line at TRACE and scans the library's files for the token;
+      `sync_moves_plain_text_secrets_out_of_the_registry` covers the move. A `debug!` of the secrets
+      added on purpose made the first test fail with "the token reached the logs".
 - [x] The Coverage workflow runs the confinement tests. From 2026-11-25 its `Rust tests` job failed
       five `script_adapter_test` cases with `bwrap: loopback: Failed RTM_NEWADDR: Operation not
       permitted` (run 45852694186 on `ce7f4ec`). bubblewrap was installed (setup-system pulls it in);

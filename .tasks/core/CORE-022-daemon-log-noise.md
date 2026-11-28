@@ -1,7 +1,7 @@
 ---
 id: CORE-022
 title: Daemon and desktop logs flood with expected conditions
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: TAURI-000
 priority: Medium
@@ -9,7 +9,7 @@ milestone: M3
 sprint: S06
 tags: [core, logging, watcher, indexing, network]
 related_tasks: [CORE-021, WATCH-007, NET-007]
-last_updated: 2026-11-23
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -66,9 +66,11 @@ the author's journal never had them.
 
 ## Acceptance Criteria
 
-- [ ] An idle daemon with `/tmp` open in the Explorer writes no WARN or ERROR line in 10 minutes.
-      Smoke guards were added (daemon idle window + Explorer smoke server-log scan), but no 10-minute
-      `/tmp`-open reproduction was run in this change.
+- [x] An idle daemon with `/tmp` open in the Explorer writes no WARN or ERROR line in 10 minutes.
+      Run on 2026-11-28 on the laptop: an isolated debug `wing-server` (`--instance smoke-local`,
+      own `--data-dir`) right after four Explorer smoke runs, Chromium on `/tmp` (45 entries) from
+      05:24:05Z to 05:34:05Z without input. 15,118 log lines from 05:24:02Z to 05:35:15Z, none at
+      WARN or ERROR.
 - [x] A phone that reconnects after sleep or a network change connects without "authentication failed".
 
 ## "authentication failed" (2026-11-16)
