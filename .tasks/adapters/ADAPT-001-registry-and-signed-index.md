@@ -9,7 +9,7 @@ milestone: M5
 sprint: S06
 tags: [adapters, store, registry, security]
 related_tasks: [ADAPT-004, ADAPT-007]
-last_updated: 2026-11-24
+last_updated: 2026-11-28
 ---
 
 ## Description
