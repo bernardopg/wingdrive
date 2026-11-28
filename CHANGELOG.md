@@ -7,6 +7,8 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Added
 
+- `wing update` also lists adapter updates, the same list as `wing adapters outdated`, when the
+  daemon is running.
 - Source items show their date, from the field the adapter names as the date of its items.
 - Settings > About links the privacy policy and the terms of service, in the app's language.
 

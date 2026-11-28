@@ -76,6 +76,14 @@ fn permissions_text(p: &StorePermissions) -> String {
 	}
 }
 
+/// The adapter half of `wing update`: the same check and list as `wing adapters outdated`.
+pub async fn report_updates(ctx: &Context) -> Result<()> {
+	let listing: StoreListing = execute_core_action!(ctx, RefreshStoreInput {});
+	println!("Adapters:");
+	print_cards(&listing, true);
+	Ok(())
+}
+
 fn print_cards(listing: &StoreListing, only_outdated: bool) {
 	let Some(sequence) = listing.sequence else {
 		println!("No index yet. Run `wing adapters browse` to download it.");
