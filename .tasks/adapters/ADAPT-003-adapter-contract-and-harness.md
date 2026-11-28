@@ -55,4 +55,4 @@ reported, and how a test runs a real adapter against fixtures.
 - [ ] Harness passes on the template adapter and is used by ADAPT-007 and every adapter task
       (template half done 2026-11-28: `templates/python` passes `wing adapter test`, 2 of 2 cases;
       Wingbot does not run the harness yet, ADAPT-007)
-- [ ] CI job green with the harness tests
+- [x] CI job green with the harness tests (#563: "Test the adapter contract harness" in Rust Workspace, run 46156548622, `harness_test` 4 passed; merged as 0138ac9)
