@@ -511,44 +511,73 @@ search_fields = ["title", "body"]
 		(manager, keys)
 	}
 
-	#[tokio::test(flavor = "current_thread")]
-	async fn secrets_reach_the_adapter_but_not_the_source_database_or_logs() {
+	/// Runs alone in a child process with a global subscriber. A scoped subscriber
+	/// (`set_default`) misses events while other tests run in parallel: tracing caches each
+	/// callsite's interest for the whole process, and a callsite first hit on a thread without
+	/// a subscriber can stay silent, so the check saw no logs at all on CI.
+	#[test]
+	fn secrets_reach_the_adapter_but_not_the_source_database_or_logs() {
+		const CHILD: &str = "WING_TEST_SECRETS_LOG_CHECK";
 		const TOKEN: &str = "synthetic-token-7f3a9c";
+		if std::env::var_os(CHILD).is_none() {
+			let output = std::process::Command::new(std::env::current_exe().unwrap())
+				.args([
+					"data::manager::tests::secrets_reach_the_adapter_but_not_the_source_database_or_logs",
+					"--exact",
+					"--test-threads=1",
+				])
+				.env(CHILD, "1")
+				.output()
+				.unwrap();
+			assert!(
+				output.status.success(),
+				"the check failed in its own process:\n{}",
+				String::from_utf8_lossy(&output.stdout)
+			);
+			return;
+		}
+
 		let logs = CapturedLogs::default();
 		let subscriber = tracing_subscriber::fmt()
 			.with_max_level(tracing::Level::TRACE)
 			.with_writer(logs.clone())
 			.with_ansi(false)
 			.finish();
-		let _guard = tracing::subscriber::set_default(subscriber);
+		tracing::subscriber::set_global_default(subscriber).unwrap();
 
-		let temp = tempfile::tempdir().unwrap();
-		let (manager, _keys) = manager_with_checking_adapter(temp.path(), TOKEN).await;
-		let source = manager
-			.create_source(
-				"Checked",
-				"fixture",
-				json!({"token": TOKEN, "folder": "one"}),
-			)
-			.await
-			.unwrap();
-		manager
-			.update_source(&source.id, None, Some(json!({"token": TOKEN})))
-			.await
-			.unwrap();
-		let report = manager.sync_source(&source.id).await.unwrap();
-		assert_eq!(report.error, None);
+		tokio::runtime::Builder::new_current_thread()
+			.enable_all()
+			.build()
+			.unwrap()
+			.block_on(async {
+				let temp = tempfile::tempdir().unwrap();
+				let (manager, _keys) = manager_with_checking_adapter(temp.path(), TOKEN).await;
+				let source = manager
+					.create_source(
+						"Checked",
+						"fixture",
+						json!({"token": TOKEN, "folder": "one"}),
+					)
+					.await
+					.unwrap();
+				manager
+					.update_source(&source.id, None, Some(json!({"token": TOKEN})))
+					.await
+					.unwrap();
+				let report = manager.sync_source(&source.id).await.unwrap();
+				assert_eq!(report.error, None);
 
-		let items = manager.list_items(&source.id, 10, 0).await.unwrap();
-		assert_eq!(items[0].preview.as_deref(), Some("received"));
-		assert_eq!(
-			files_containing(&temp.path().join("library"), TOKEN.as_bytes()),
-			Vec::<std::path::PathBuf>::new(),
-			"the token was written to the library's files"
-		);
-		let logs = String::from_utf8(logs.0.lock().unwrap().clone()).unwrap();
-		assert!(!logs.is_empty(), "the subscriber captured nothing");
-		assert!(!logs.contains(TOKEN), "the token reached the logs:\n{logs}");
+				let items = manager.list_items(&source.id, 10, 0).await.unwrap();
+				assert_eq!(items[0].preview.as_deref(), Some("received"));
+				assert_eq!(
+					files_containing(&temp.path().join("library"), TOKEN.as_bytes()),
+					Vec::<std::path::PathBuf>::new(),
+					"the token was written to the library's files"
+				);
+				let logs = String::from_utf8(logs.0.lock().unwrap().clone()).unwrap();
+				assert!(!logs.is_empty(), "the subscriber captured nothing");
+				assert!(!logs.contains(TOKEN), "the token reached the logs:\n{logs}");
+			});
 	}
 
 	#[tokio::test]
