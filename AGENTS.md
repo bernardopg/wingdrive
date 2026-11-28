@@ -356,7 +356,8 @@ Adapters are processes, not WASM: the daemon starts them, writes the config and 
 JSON on stdin, and stores the JSON lines they print. The contract is `docs/core/adapters.mdx`;
 `ScriptAdapter` (`crates/archive/src/adapter/script.rs`) implements it, and a change to one needs
 the other. Official adapters live in the registry repository `bernardopg/wingdrive-adapters`, not in
-this one; the store design is `docs/design/adapter-store.md`.
+this one; the store design is `docs/design/adapter-store.md`, and the signed index, trust levels
+and install checks are in `docs/core/adapter-store.mdx` (`crates/archive/src/store.rs`).
 
 ## Code Standards
 

@@ -1,0 +1,134 @@
+---
+title: Adapter store
+sidebarTitle: Adapter store
+---
+
+The adapter store lists the adapters WingDrive can install. The registry repository
+[`bernardopg/wingdrive-adapters`](https://github.com/bernardopg/wingdrive-adapters) publishes them
+as one signed file, `index.json`. The daemon installs an adapter only if the signature on that
+file verifies against a key built into WingDrive, and only if the downloaded archive matches the
+SHA-256 the file lists. [Adapters](/core/adapters) describes the contract an installed adapter
+speaks. `docs/design/adapter-store.md` explains how publishing and review work.
+
+## Where the index lives
+
+| File | URL |
+|---|---|
+| Index | `https://github.com/bernardopg/wingdrive-adapters/releases/latest/download/index.json` |
+| Signature | `https://github.com/bernardopg/wingdrive-adapters/releases/latest/download/index.json.minisig` |
+
+The Publish workflow of the registry writes each index as the release `index-<sequence>`, together
+with its signature, the adapter archives and the icons. `crates/archive/src/store.rs` holds both
+URLs (`INDEX_URL`, `SIGNATURE_URL`). It does no networking itself: the caller downloads the bytes,
+so a local mirror and the tests go through the same checks.
+
+## Index format
+
+`index.json`, format 1. The JSON Schema is `schema/index.schema.json` in the registry.
+
+```json
+{
+  "format": 1,
+  "sequence": 9,
+  "generated_at": "2026-11-25T04:26:16Z",
+  "registry": "https://github.com/bernardopg/wingdrive-adapters",
+  "adapters": [
+    {
+      "id": "github",
+      "name": "GitHub",
+      "summary": "Search your GitHub repositories, stars, issues and pull requests next to your files.",
+      "version": "1.0.3",
+      "author": "WingDrive",
+      "license": "Apache-2.0",
+      "trust": "official",
+      "contract": 1,
+      "runtime": { "kind": "python3", "entry": "sync.py", "python": "3.9" },
+      "platforms": ["linux", "macos", "windows"],
+      "permissions": { "read": ["~/.config/gh/hosts.yml"], "network": ["api.github.com"], "secrets": ["token"] },
+      "source": { "type": "local", "path": "adapters/github", "commit": "2a80a598..." },
+      "icon": { "url": ".../github-1.0.3.svg", "sha256": "...", "png": { "url": "...", "sha256": "...", "size": 256 } },
+      "artifacts": [{ "target": "any", "url": ".../github-1.0.3.tar.gz", "sha256": "e1ad517f...", "size": 10558 }],
+      "i18n": { "pt": { "summary": "...", "description": "..." } }
+    }
+  ],
+  "revoked": [{ "id": "foo", "versions": ["1.2.0"], "reason": "Sent the token to an undeclared host", "date": "2026-12-01" }]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `format` | Always `1`. A new format gets a new number. |
+| `sequence` | Goes up by one with each publish. The daemon refuses an index with a lower `sequence` than the last one it accepted, so an old signed index cannot be replayed to hide an update or a revocation. |
+| `adapters[]` | One entry per published adapter. Most fields come from the adapter's `adapter.toml` at the pinned commit. |
+| `source` | Where the code came from. `local` means a folder of the registry (official adapters). `git` means a third-party repository, with its `repository`, `tag` and `commit`. |
+| `artifacts[]` | One archive per `target`. A Python adapter has a single `any` archive. A compiled adapter has one archive per platform, such as `x86_64-unknown-linux-gnu`, built by the registry's CI. |
+| `icon` | The SVG and a 256-pixel PNG, each with its SHA-256. |
+| `i18n` | Store texts in other languages, keyed by language code. |
+| `revoked[]` | Versions the app must stop running. See [Revocation](#revocation). |
+
+The archives need no signature of their own. The signed index carries each archive's SHA-256 and
+its pinned commit, and the daemon checks the SHA-256 before unpacking.
+
+## Trust levels
+
+Every entry has one `trust` level. The store shows it as a badge on the adapter's card and detail
+page.
+
+| Level | Who publishes | Review |
+|---|---|---|
+| `official` | The author, in `adapters/` of the registry | The registry checks and the author's approval |
+| `verified` | Third parties with two or more approved adapters and no revocation | The registry checks and a maintainer's approval |
+| `community` | Any other third party | The registry checks and a maintainer's approval |
+
+The level says who stands behind the code. It does not unlock anything: every adapter runs with the
+permissions its manifest declares, and on Linux inside the same sandbox.
+
+## Signing
+
+The registry signs `index.json` with [minisign](https://jedisct1.github.io/minisign/) (Ed25519).
+
+- WingDrive ships two public keys, `crates/archive/keys/active.pub` and `standby.pub`. An index is
+  accepted when its signature verifies against either key.
+- The private keys live only in the `registry-publish` environment of the registry repository.
+  Each publish waits for a maintainer to approve that environment. An offline copy is kept in the
+  author's password manager. No other workflow can read the keys.
+- To rotate, promote the standby key, generate a new standby key and ship its public key in the
+  next WingDrive release. Installed apps keep working through the switch because they already trust
+  both keys. `keys/` in the registry records each rotation.
+
+Check a downloaded index by hand:
+
+```bash
+minisign -V -p crates/archive/keys/active.pub -m index.json -x index.json.minisig
+```
+
+## What the daemon checks
+
+| Step | Refused when |
+|---|---|
+| Accept the index | The signature verifies against neither key, the JSON does not parse as format 1, or `sequence` is lower than the last accepted one |
+| Install or update | The id is not in the index, the version is revoked, the adapter does not list this platform, or no archive exists for this target |
+| Unpack | The SHA-256 differs from the index, the archive holds more than 5,000 entries or 64 MB unpacked, or a path escapes the install folder |
+| Validate | The index asks for a newer contract than the daemon supports, or the unpacked `adapter.toml` is missing or names another `id` or `version` than the index |
+
+The last accepted index is kept in `<data dir>/adapters/cache/`, so the store still works offline.
+Installed adapters live in `<data dir>/adapters/installed/<id>/` and are shared by every library.
+`<data dir>/adapters/adapters.lock.json` records each one's version, commit, SHA-256, trust level,
+the permissions the user accepted and when it was installed, plus the last accepted `sequence`.
+
+## Revocation
+
+A version listed in `revoked[]` is unsafe to run. `revoked.json` in the registry is the source of
+that list, and the next publish copies it into the index.
+
+- The store refuses to install a revoked version.
+- An installed revoked version shows the reason on its card and counts as a security update, even
+  when the published version is the same or older.
+- A revoked version stays revoked: `sequence` only goes up, so the daemon never goes back to an
+  index from before the revocation.
+
+## Updates
+
+An update is available when the index publishes a higher `version` than the lockfile records, or
+when the installed version is revoked. An update that declares a path, host, secret or tool the
+user has not accepted yet asks for consent again before it installs.
