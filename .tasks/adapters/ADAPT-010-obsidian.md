@@ -23,7 +23,7 @@ tags, wikilinks between notes, created and modified dates. Starts from the proto
 
 - [x] Parse YAML frontmatter, inline `#tags`, aliases and `[[wikilinks]]` (with headings and aliases) into note relations (bernardopg/wingdrive-adapters#1; Markdown links too, resolved by path, shortest name, then alias)
 - [x] Respect `.obsidian` and user exclude patterns; skip attachments but record embeds (note embeds become links; attachment embeds are skipped)
-- [ ] Detect vaults by their `.obsidian` folder to offer defaults
+- [x] Detect vaults by their `.obsidian` folder to offer defaults (bernardopg/wingdrive-adapters#11, 1.1.3: a vault Obsidian lists is offered only while its `.obsidian` folder exists)
 - [x] Incremental sync by modified time and size (a hash would mean reading every note each run); deleted and renamed notes handled
 
 ## Acceptance Criteria
@@ -43,6 +43,8 @@ tags, wikilinks between notes, created and modified dates. Starts from the proto
       now returns the manifest's `[search] date_field` and the list shows it. Library search not
       checked yet.)
 - [ ] Script tests with fixtures cover parsing, cursors, deletions and malformed input, and the contract harness (ADAPT-003) passes in the adapter's CI
+      (2026-11-28: `fixtures/linked-notes` and `fixtures/missing-vault` pass `wing adapter test`, 2 of 2,
+      in bernardopg/wingdrive-adapters#11. The registry CI does not run the harness yet, ADAPT-007.)
 - [ ] Real proof on the author's machine: install from the store, sync of real data with item counts, second run idempotent, items opened in the desktop app (screenshot in the PR)
       (2026-11-28, `wingdrive-bin` 3.8.2 on an isolated instance: `wing adapters install obsidian`
       from store index 9, `~/Documentos/Bitter` synced 50 notes, the second run "0 upserted, 0
