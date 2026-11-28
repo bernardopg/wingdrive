@@ -9,7 +9,7 @@ milestone: M5
 sprint: S07
 tags: [adapters, search, core, interface]
 depends_on: [ADAPT-004]
-related_tasks: [ADAPT-010, ADAPT-012, ADAPT-014, ADAPT-027]
+related_tasks: [ADAPT-010, ADAPT-012, ADAPT-014, ADAPT-027, ADAPT-030]
 last_updated: 2026-11-28
 ---
 
@@ -57,4 +57,4 @@ them.
       `data::manager::tests::search_spans_sources_and_forgets_removed_ones`,
       `ops::sources::search::query::tests`; bun: `components/Sources/sourceSearch.test.ts`.)
 
-Follow-ups are in ADAPT-027.
+Follow-ups are in ADAPT-030; rebuilding an index when search fields grow is ADAPT-027.

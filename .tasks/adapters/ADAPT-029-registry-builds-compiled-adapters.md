@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: ADAPT-000
 priority: Medium
 milestone: M5
+sprint: S09
 tags: [adapters, store, ci, security]
 depends_on: [ADAPT-007, ADAPT-008]
 related_tasks: [ADAPT-001]

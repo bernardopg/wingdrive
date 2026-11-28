@@ -68,7 +68,7 @@ S07 and go through the same registry as any third party.
 | ADAPT-015 | Retire the prototypes in `adapters/` | S07 |
 | ADAPT-020 to ADAPT-025 | Gmail, Slack export, Apple Notes, Safari history, macOS Calendar, macOS Contacts | Backlog |
 | ADAPT-026 | Library search finds adapter source items | S07 |
-| ADAPT-027 | Source search follow-ups: prefixes, scopes and freshness | Backlog |
+| ADAPT-030 | Source search follow-ups: prefixes, scopes and freshness | Backlog |
 
 ## Acceptance Criteria
 

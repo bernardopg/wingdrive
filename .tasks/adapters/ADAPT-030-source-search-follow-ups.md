@@ -1,11 +1,12 @@
 ---
-id: ADAPT-027
+id: ADAPT-030
 title: "Source search follow-ups: prefixes, scopes and freshness"
 status: To Do
 assignee: bernardopg
 parent: ADAPT-000
 priority: Medium
 milestone: M5
+sprint: S08
 tags: [adapters, search, core, interface]
 depends_on: [ADAPT-026]
 related_tasks: [ADAPT-010, ADAPT-012, ADAPT-014]
