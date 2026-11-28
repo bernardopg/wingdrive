@@ -11,7 +11,7 @@
 #--
 # Web UI bundle
 #--
-FROM oven/bun:1.4.4 AS web
+FROM oven/bun:1.4.5 AS web
 WORKDIR /src
 # The workspace needs every package.json it lists, so the stage takes the
 # whole context; the root .dockerignore keeps node_modules and target out.
