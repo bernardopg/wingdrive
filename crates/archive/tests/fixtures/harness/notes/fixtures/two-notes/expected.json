@@ -1,0 +1,8 @@
+{
+  "counts": {"note": 2},
+  "records": [
+    {"model": "note", "external_id": "groceries.txt", "fields": {"title": "groceries", "words": 4}},
+    {"model": "note", "external_id": "todo.txt", "fields": {"body": "Call the bank\n"}}
+  ],
+  "absent": [{"model": "note", "external_id": "ignored.md"}]
+}

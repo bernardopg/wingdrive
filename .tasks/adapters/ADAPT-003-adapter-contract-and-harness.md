@@ -9,7 +9,7 @@ milestone: M5
 sprint: S06
 tags: [adapters, testing, core]
 related_tasks: [ADAPT-007, ADAPT-008]
-last_updated: 2026-11-24
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -25,7 +25,18 @@ reported, and how a test runs a real adapter against fixtures.
 - [x] Version the contract (`contract = 1` in the manifest) so the daemon can refuse adapters it does not understand
 - [x] The contract is a process speaking JSONL on stdin and stdout, so it covers both Python scripts and compiled adapters (Rust, Go or any language); the manifest says `runtime = "python3"` or `runtime = "binary"`
 - [ ] Python helper package (`wingdrive-adapter-kit`) for config, emitting records, cursors, platform path defaults and secrets
-- [ ] Harness that runs an adapter folder through `ScriptAdapter` with a fixture config and checks the stored records; usable from Rust tests and as a command (`wing adapter test`)
+- [x] Harness that runs an adapter folder through `ScriptAdapter` with a fixture config and checks the stored records; usable from Rust tests and as a command (`wing adapter test`)
+      (`wing_archive::harness`, 2026-11-28). Cases live in `fixtures/<case>/` with `config.json`
+      (`{fixture}` is the case folder) and `expected.json` (`counts`, `records` with fields,
+      `absent`, `error`, `runs`, `idempotent`). Each case syncs into a temporary source, twice by
+      default with the cursor passed on, and the second run must keep the record counts.
+      `SourceDb::records` reads a model's fields for the comparison. The fixture adapter
+      `crates/archive/tests/fixtures/harness/notes` has a passing case and an expected error;
+      `harness_test.rs` also breaks copies of it (new ids per run, wrong fields, no cases) and
+      checks the failures. `wing adapter test [dir] [--case name]` prints one line per case and
+      exits 1 when a case fails; run on the laptop against the fixture (2 of 2 passed) and the
+      official Obsidian adapter ("has no test cases"). `scripts/ci-rust.sh` runs the harness
+      tests on Linux in the full scope. Docs: "Testing" in `docs/core/adapters.mdx`.
 - [x] The archive engine finds adapters only where the store installs them; drop the `CARGO_MANIFEST_DIR` lookups
 - [x] Contract 1 stdin carries `config`, the last `cursor` and `data_dir`; the daemon used to store cursors and never send them back
 - [x] Deleting a linked or unscreened record works (junction rows first, FTS delete trigger only for indexed rows, old trigger repaired on open)

@@ -21,6 +21,7 @@ obsidian/
 ├── sync.py        entry point (or a compiled binary)
 ├── icon.svg       square, under 64 KB, no scripts
 ├── README.md      ## Setup, ## Data, ## Privacy
+├── fixtures/      test cases for `wing adapter test` (see Testing)
 └── tests/
 ```
 
@@ -227,3 +228,47 @@ not JSON and logs a warning for each.
 
 New and changed records go through the source's safety screening, which decides whether they enter
 the source's full-text index, and are embedded for semantic search.
+
+## Testing
+
+`wing adapter test <folder>` runs an adapter against its test cases the way the daemon runs it:
+same stdin, same sandbox, the cursor of each run passed to the next. It needs no daemon. The
+template CI and the registry's review checks run the same harness
+(`wing_archive::harness::test_adapter`).
+
+Each case is a folder in `fixtures/`:
+
+```
+fixtures/
+├── two-notes/
+│   ├── config.json     the config a user would save; "{fixture}" is this folder's path
+│   ├── expected.json   what the source must hold afterwards
+│   └── folder/         any files the case points the adapter at
+└── missing-folder/
+    ├── config.json
+    └── expected.json
+```
+
+```json
+{
+  "counts": {"note": 2},
+  "records": [
+    {"model": "note", "external_id": "groceries.txt", "fields": {"title": "groceries", "words": 4}}
+  ],
+  "absent": [{"model": "note", "external_id": "ignored.md"}]
+}
+```
+
+| Key | Meaning |
+|---|---|
+| `runs` | How many times to sync. Default 2. |
+| `idempotent` | Every run after the first keeps the record counts of the first. Default `true`; set `false` when the input changes between runs. |
+| `error` | The first run must fail with an error that contains this text, as a missing folder should. |
+| `counts` | Records per model after the last run. |
+| `records` | Records that must exist, with the fields to compare. A value matches the text the database stores, so `4` matches `"4"`, and `null` matches a field the adapter left out. |
+| `absent` | Records that must not exist. |
+
+A case fails when a run fails without an `error` in `expected.json`, when the second run on the same
+input adds or drops records, or when the stored records differ from `expected.json`. Each failure
+is printed under its case, and the command exits with status 1. `--case <name>` runs one case.
+`crates/archive/tests/fixtures/harness/notes` is a small adapter with two cases to start from.

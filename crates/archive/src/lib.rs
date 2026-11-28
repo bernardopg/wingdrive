@@ -38,6 +38,7 @@ pub mod db;
 pub mod embed;
 pub mod engine;
 pub mod error;
+pub mod harness;
 pub mod registry;
 pub mod safety;
 pub mod schema;

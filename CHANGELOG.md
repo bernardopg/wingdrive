@@ -7,6 +7,9 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Added
 
+- `wing adapter test [folder]` runs an adapter against the test cases in its `fixtures/` folder the
+  way the daemon runs it, twice with the cursor passed on, and lists what the stored records got
+  wrong. It needs no daemon. The case format is in `docs/core/adapters.mdx`, under Testing.
 - `wing update` also lists adapter updates, the same list as `wing adapters outdated`, when the
   daemon is running.
 - Source items show their date, from the field the adapter names as the date of its items.

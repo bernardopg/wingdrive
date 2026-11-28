@@ -13456,6 +13456,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "uuid",
+ "wing-archive",
  "wing-core",
 ]
 
