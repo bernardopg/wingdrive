@@ -68,7 +68,6 @@
           - extensions/**
           - crates/sdk/**
           - crates/sdk-macros/**
-          - adapters/**
 
 "area: ci":
   - changed-files:

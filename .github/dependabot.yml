@@ -4,7 +4,6 @@
 # - apps/mobile/android and apps/mobile/ios: `expo prebuild --clean` regenerates them,
 #   so Expo SDK upgrades own their Gradle and CocoaPods versions.
 # - apps/server/docker-compose.yml: it builds the local Dockerfile and pins no image.
-# - adapters/*.py: standard library only, no requirements file.
 #
 # Minor and patch releases arrive grouped, one pull request per ecosystem and week.
 # Majors stay separate because they usually need code changes. The cooldown keeps a
