@@ -9,7 +9,7 @@ milestone: M5
 sprint: S07
 tags: [adapters, obsidian, notes]
 depends_on: [ADAPT-004, ADAPT-008]
-last_updated: 2026-11-24
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -32,9 +32,20 @@ tags, wikilinks between notes, created and modified dates. Starts from the proto
 - [ ] Published through a reviewed pull request that Wingbot's checks (ADAPT-007) pass, like any third-party adapter
 - [ ] Installs from the store in the desktop app and from `wing adapters install <id>`
 - [ ] Defaults: the source path or account is detected on Linux and macOS (and Windows once ADAPT-002 lands); a wrong value fails `sources.create` with a message that names the field
+      (2026-11-28: `sources.create` and `sources.update` now refuse a missing required field and a
+      `path_type` folder or file that does not exist, as `config.vault_path`: "Vault: /x is not a
+      folder on this device"; before, 3.8.2 created the source and failed at its first sync.
+      Detection by `.obsidian` folder is in the registry PR. macOS detection is unchecked.)
 - [ ] Declares only the permissions it uses (ADAPT-009); runs with network off unless it declares hosts
 - [x] Sync is incremental: a second run with no changes writes nothing new, a changed item is updated in place, and an item removed upstream is removed from the source (isolated daemon, 2026-11-25: fixture vault 3 notes, then 2 read, 1 deleted, links fixed; `~/Documentos/Bitter` 50 notes, 10 links, second run 0 read)
 - [ ] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
+      (2026-11-28, packaged 3.8.2: title, path and preview show, the date did not. `sources.list_items`
+      now returns the manifest's `[search] date_field` and the list shows it. Library search not
+      checked yet.)
 - [ ] Script tests with fixtures cover parsing, cursors, deletions and malformed input, and the contract harness (ADAPT-003) passes in the adapter's CI
 - [ ] Real proof on the author's machine: install from the store, sync of real data with item counts, second run idempotent, items opened in the desktop app (screenshot in the PR)
+      (2026-11-28, `wingdrive-bin` 3.8.2 on an isolated instance: `wing adapters install obsidian`
+      from store index 9, `~/Documentos/Bitter` synced 50 notes, the second run "0 upserted, 0
+      deleted", and the desktop app lists the 50 items. Screenshots kept off the PR: they show the
+      author's notes. Left: the item dates after this PR ships, and opening an item.)
 - [ ] Store listing on wingdrive.org/adapters and a user page (EN and PT) with setup, what is indexed and privacy notes

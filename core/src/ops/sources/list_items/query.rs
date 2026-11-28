@@ -22,6 +22,8 @@ pub struct SourceItem {
 	pub title: String,
 	pub preview: Option<String>,
 	pub subtitle: Option<String>,
+	/// The item's date as the adapter stored it (`[search] date_field`, usually RFC 3339), if any.
+	pub date: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,6 +88,7 @@ impl LibraryQuery for ListSourceItemsQuery {
 				title: item.title,
 				preview: item.preview,
 				subtitle: item.subtitle,
+				date: item.date,
 			})
 			.collect())
 	}

@@ -4036,6 +4036,8 @@ export type SourceItem = {
 	title: string,
 	preview: string | null,
 	subtitle: string | null,
+	/**  The item's date as the adapter stored it (`[search] date_field`, usually RFC 3339), if any. */
+	date: string | null,
 };
 
 /**  Speech-to-text transcription policy */

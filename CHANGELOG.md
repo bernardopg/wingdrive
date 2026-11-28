@@ -7,10 +7,13 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ### Added
 
+- Source items show their date, from the field the adapter names as the date of its items.
 - Settings > About links the privacy policy and the terms of service, in the app's language.
 
 ### Fixed
 
+- Adding or editing a source refuses a folder or file that does not exist, or a required field left
+  empty, and names the field. Before, the source was created and failed at its first sync.
 - Android: a device's page names each row's kind and the phone's internal storage in the app's
   language; they showed "Location", "Volume" and "Internal storage" in English.
 - Reading a library while its settings are being saved no longer panics with "Failed to read
