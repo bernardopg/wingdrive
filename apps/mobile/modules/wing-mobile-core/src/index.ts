@@ -24,6 +24,28 @@ type WingMobileCoreEvents = {
   WingCoreLog: (log: CoreLog) => void;
 };
 
+/** State of background sync on Android (MOB-018) */
+export interface BackgroundSyncState {
+  /** False on platforms without a background service (iOS) */
+  supported: boolean;
+  /** The user's choice, kept across restarts */
+  enabled: boolean;
+  /** Whether the foreground service runs now */
+  running: boolean;
+  /** Whether Android exempts the app from battery optimization */
+  unrestrictedBattery: boolean;
+  /** Whether the service's notification can be shown */
+  notificationsAllowed: boolean;
+}
+
+export const UNSUPPORTED_BACKGROUND_SYNC: BackgroundSyncState = {
+  supported: false,
+  enabled: false,
+  running: false,
+  unrestrictedBattery: false,
+  notificationsAllowed: false,
+};
+
 export interface CoreModule {
   initialize(dataDir?: string, deviceName?: string): Promise<number>;
   sendMessage(query: string): Promise<string>;
@@ -40,6 +62,11 @@ export interface CoreModule {
   shareFile(path: string, mimeType?: string): boolean;
   /** Whether this platform can open and share files (Android only for now) */
   canOpenFiles: boolean;
+  /** Turns background sync on or off; true when the service runs afterwards */
+  setBackgroundSync(enabled: boolean): boolean;
+  getBackgroundSync(): BackgroundSyncState;
+  /** Asks Android to stop restricting the app's battery use; false when it could not */
+  openBatteryOptimizationSettings(): boolean;
 }
 
 interface WingMobileCoreNativeModule extends NativeModule<WingMobileCoreEvents> {
@@ -55,6 +82,9 @@ interface WingMobileCoreNativeModule extends NativeModule<WingMobileCoreEvents> 
   openAllFilesAccessSettings?(): boolean;
   openFile?(path: string, mimeType: string | null): boolean;
   shareFile?(path: string, mimeType: string | null): boolean;
+  setBackgroundSync?(enabled: boolean): boolean;
+  getBackgroundSync?(): BackgroundSyncState;
+  openBatteryOptimizationSettings?(): boolean;
 }
 
 const WingMobileCoreModule =
@@ -93,4 +123,10 @@ export const WingMobileCore: CoreModule = {
   shareFile: (path: string, mimeType?: string) =>
     WingMobileCoreModule.shareFile?.(path, mimeType ?? null) ?? false,
   canOpenFiles: typeof WingMobileCoreModule.openFile === "function",
+  setBackgroundSync: (enabled: boolean) =>
+    WingMobileCoreModule.setBackgroundSync?.(enabled) ?? false,
+  getBackgroundSync: () =>
+    WingMobileCoreModule.getBackgroundSync?.() ?? UNSUPPORTED_BACKGROUND_SYNC,
+  openBatteryOptimizationSettings: () =>
+    WingMobileCoreModule.openBatteryOptimizationSettings?.() ?? false,
 };

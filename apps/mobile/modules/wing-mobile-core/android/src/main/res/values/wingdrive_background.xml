@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="wingdrive_background_channel">Background sync</string>
+  <string name="wingdrive_background_channel_description">Shown while WingDrive keeps syncing with your devices in the background.</string>
+  <string name="wingdrive_background_title">WingDrive is running in the background</string>
+  <string name="wingdrive_background_text">Sync and transfers with your devices continue.</string>
+</resources>

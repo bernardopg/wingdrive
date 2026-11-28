@@ -2,8 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <!-- The core finds devices on the local network over mDNS, which needs a multicast lock. -->
   <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+  <!-- Background sync (MOB-018): a foreground service with a notification keeps the core
+       connected to paired devices while the app is closed. -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"/>
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+  <uses-permission android:name="android.permission.WAKE_LOCK"/>
+  <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
   <application>
+    <service
+      android:name="com.wingdrive.core.WingCoreService"
+      android:exported="false"
+      android:foregroundServiceType="connectedDevice" />
     <!-- Hands files of this device to other apps when the user opens or shares them (MOB-007). -->
     <provider
       android:name="com.wingdrive.core.WingFileProvider"

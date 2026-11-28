@@ -313,5 +313,13 @@
 	"Delete permanently": "Excluir permanentemente",
 	"Could not move the item to Trash": "Não foi possível mover o item para a lixeira",
 	"Could not delete the item": "Não foi possível excluir o item",
-	"Open a folder and choose Add as Location": "Abra uma pasta e escolha Adicionar como local"
+	"Open a folder and choose Add as Location": "Abra uma pasta e escolha Adicionar como local",
+	"Background": "Segundo plano",
+	"WingDrive shows a notification while it runs in the background and uses more battery.": "O WingDrive mostra uma notificação enquanto roda em segundo plano e gasta mais bateria.",
+	"Keep running in the background": "Continuar em segundo plano",
+	"Sync and receive files from your devices while the app is closed": "Sincroniza e recebe arquivos dos seus dispositivos com o app fechado",
+	"Allow unrestricted battery use": "Permitir uso de bateria sem restrições",
+	"Some phones stop background apps to save battery": "Alguns celulares encerram apps em segundo plano para economizar bateria",
+	"Allow notifications": "Permitir notificações",
+	"Android hides that WingDrive is running without them": "Sem elas, o Android esconde que o WingDrive está rodando"
 }

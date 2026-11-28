@@ -64,6 +64,23 @@ Generate the code on the phone (Network tab, Generate Code). A phone on the same
 
 Driving the app over `adb`: `adb shell input text` does not reach a `TextInput` inside a React Native `Modal`; the key events go to the activity, where the dev menu shortcuts can open system settings. Let the phone generate the code and join from the desktop, or type on the device itself.
 
+## Background sync
+
+On Android the core runs inside the app process. Without help, Android cuts a backgrounded app's network in Doze, and stock Android 14 and later freeze and kill cached processes, so sync and transfers stop when the app leaves the screen. Settings > Background > "Keep running in the background" starts `WingCoreService` (`modules/wing-mobile-core/android`), a foreground service of type `connectedDevice` with a notification, a partial wake lock and a multicast lock. The choice is stored in the `wingdrive_background` shared preferences, and the app starts the service on every launch while it is on. When Android restarts the service without the app, the service starts the core itself with the data folder and device name the app last used.
+
+Test it with the app in the background and the device forced into Doze, then add a file to a location the desktop shares:
+
+```bash
+adb shell input keyevent KEYCODE_SLEEP
+adb shell dumpsys battery unplug
+adb shell dumpsys deviceidle force-idle
+# add the file on the desktop, then watch: adb logcat -s WingDriveCore
+adb shell dumpsys deviceidle unforce
+adb shell dumpsys battery reset
+```
+
+Without the service the core logs `error sending mDNS: Operation not permitted` in Doze and the desktop lists the phone as Paired, not Connected.
+
 ## Debugging
 
 JavaScript logs and red-box errors appear in the Metro terminal. Press `j` in Metro to open the React Native DevTools. Native logs come from logcat:

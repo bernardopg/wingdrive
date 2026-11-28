@@ -14,6 +14,10 @@ version in the workspace manifests and the matching `v*` git tag.
   daemon is running.
 - Source items show their date, from the field the adapter names as the date of its items.
 - Settings > About links the privacy policy and the terms of service, in the app's language.
+- Android: Settings > Background > "Keep running in the background" keeps syncing with your paired
+  devices and receiving files while the app is closed and the screen is off. WingDrive shows a
+  notification while it runs, and Settings asks for unrestricted battery use when the phone limits
+  it. Before, the phone stopped syncing as soon as the app left the screen.
 
 ### Fixed
 

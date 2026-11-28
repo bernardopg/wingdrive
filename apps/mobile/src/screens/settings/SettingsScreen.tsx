@@ -16,6 +16,8 @@ import { useAppReset } from "../../contexts";
 import { chooseLanguage as storeLanguageChoice, loadLanguageChoice } from "../../i18n";
 import type { LanguageChoice } from "../../i18n/language";
 import { usePreferencesStore } from "../../stores/preferences";
+import { backgroundSyncHints } from "../../hooks/backgroundSync";
+import { useBackgroundSync } from "../../hooks/useBackgroundSync";
 import { SettingsGroup, SettingsLink, SettingsOption, SettingsToggle } from "../../components/primitive";
 import { RenameDialog } from "../../components/RenameDialog";
 
@@ -48,6 +50,9 @@ export function SettingsScreen() {
 	});
 	const clearCache = useCoreAction("core.ephemeral_reset");
 	const resetData = useCoreAction("core.reset");
+
+	const background = useBackgroundSync();
+	const backgroundHints = backgroundSyncHints(background.state);
 
 	const autoSwitchOnSync = usePreferencesStore((s) => s.autoSwitchOnSync);
 	const setAutoSwitchOnSync = usePreferencesStore((s) => s.setAutoSwitchOnSync);
@@ -183,6 +188,43 @@ export function SettingsScreen() {
 						value={library?.auto_track_external_volumes ?? false}
 						onValueChange={(value) => setLibraryConfig({ auto_track_external_volumes: value })}
 					/>
+				</SettingsGroup>
+			)}
+
+			{background.state.supported && (
+				<SettingsGroup
+					header="Background"
+					footer="WingDrive shows a notification while it runs in the background and uses more battery."
+				>
+					{[
+						<SettingsToggle
+							key="enabled"
+							label="Keep running in the background"
+							description="Sync and receive files from your devices while the app is closed"
+							value={background.state.enabled}
+							onValueChange={(value) => void background.setEnabled(value)}
+						/>,
+						...(backgroundHints.includes("battery")
+							? [
+									<SettingsLink
+										key="battery"
+										label="Allow unrestricted battery use"
+										description="Some phones stop background apps to save battery"
+										onPress={background.allowUnrestrictedBattery}
+									/>,
+								]
+							: []),
+						...(backgroundHints.includes("notifications")
+							? [
+									<SettingsLink
+										key="notifications"
+										label="Allow notifications"
+										description="Android hides that WingDrive is running without them"
+										onPress={background.allowNotifications}
+									/>,
+								]
+							: []),
+					]}
 				</SettingsGroup>
 			)}
 

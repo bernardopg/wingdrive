@@ -313,5 +313,13 @@
 	"Delete permanently": "Delete permanently",
 	"Could not move the item to Trash": "Could not move the item to Trash",
 	"Could not delete the item": "Could not delete the item",
-	"Open a folder and choose Add as Location": "Open a folder and choose Add as Location"
+	"Open a folder and choose Add as Location": "Open a folder and choose Add as Location",
+	"Background": "Background",
+	"WingDrive shows a notification while it runs in the background and uses more battery.": "WingDrive shows a notification while it runs in the background and uses more battery.",
+	"Keep running in the background": "Keep running in the background",
+	"Sync and receive files from your devices while the app is closed": "Sync and receive files from your devices while the app is closed",
+	"Allow unrestricted battery use": "Allow unrestricted battery use",
+	"Some phones stop background apps to save battery": "Some phones stop background apps to save battery",
+	"Allow notifications": "Allow notifications",
+	"Android hides that WingDrive is running without them": "Android hides that WingDrive is running without them"
 }

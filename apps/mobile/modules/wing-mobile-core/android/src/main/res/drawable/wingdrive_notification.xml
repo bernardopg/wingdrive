@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The WingDrive mark from media-kit/logo/wingdrive-mark-white.svg, for the status bar. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="90"
+    android:viewportHeight="88">
+  <group android:translateX="-18" android:translateY="-20">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M22,78 C40,46 66,28 104,24 C96,46 78,62 52,70 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.72"
+        android:pathData="M26,92 C44,66 68,52 100,48 C92,66 74,79 50,85 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.44"
+        android:pathData="M30,104 C46,84 66,74 94,71 C87,85 71,95 50,99 Z" />
+  </group>
+</vector>
