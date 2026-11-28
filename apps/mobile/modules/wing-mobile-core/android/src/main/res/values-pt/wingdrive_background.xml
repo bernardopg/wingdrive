@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="wingdrive_background_channel">Sincronização em segundo plano</string>
+  <string name="wingdrive_background_channel_description">Aparece enquanto o WingDrive continua sincronizando com seus dispositivos em segundo plano.</string>
+  <string name="wingdrive_background_title">WingDrive em execução em segundo plano</string>
+  <string name="wingdrive_background_text">A sincronização e as transferências com seus dispositivos continuam.</string>
+</resources>

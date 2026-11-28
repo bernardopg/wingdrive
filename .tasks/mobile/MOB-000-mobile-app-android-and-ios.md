@@ -57,8 +57,8 @@ it shippable on Google Play, 8 to 10 make it a daily file manager.
 6. **MOB-005 manifest:** finish the hardening; check that QR pairing still opens the camera.
 7. **Play Store listing:** internal testing track first, privacy policy (the site's `/privacy`
    already covers the data), data safety form, screenshots in EN and PT.
-8. **Background sync:** a foreground service or WorkManager job so sync keeps running when the app
-   is in the background, with a notification while it transfers.
+8. **Background sync:** done on Android by MOB-021, a foreground service the user turns on in
+   Settings. Starting at boot is still open.
 9. **Crash and ANR reporting** the user can opt into, since Android is not in daily use by the
    author.
 10. **MOB-010 iOS:** dev client on a Mac or EAS once Android ships.

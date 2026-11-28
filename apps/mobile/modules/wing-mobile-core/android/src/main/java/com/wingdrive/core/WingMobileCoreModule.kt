@@ -15,14 +15,6 @@ class WingMobileCoreModule : Module() {
     // permitted" every few seconds (MOB-017). Held while the core runs.
     private var multicastLock: android.net.wifi.WifiManager.MulticastLock? = null
 
-    init {
-        try {
-            System.loadLibrary("wing_mobile_core")
-        } catch (e: UnsatisfiedLinkError) {
-            android.util.Log.e("WingMobileCore", "Failed to load native library: ${e.message}")
-        }
-    }
-
     override fun definition() = ModuleDefinition {
         Name("WingMobileCore")
 
@@ -79,12 +71,74 @@ class WingMobileCoreModule : Module() {
                 ?: throw Exception("No data directory available")
 
             acquireMulticastLock()
-            try {
+            val result = try {
                 initializeCore(dir, deviceName)
             } catch (e: Exception) {
                 android.util.Log.e("WingMobileCore", "Failed to initialize core: ${e.message}")
                 -1
             }
+            appContext.reactContext?.let { context ->
+                BackgroundSyncPrefs.rememberCoreArguments(context, dir, deviceName)
+                // The app is in the foreground here, the only time Android lets it start the
+                // background service.
+                if (result == 0 && BackgroundSyncPrefs.isEnabled(context) && !WingCoreService.running) {
+                    WingCoreService.start(context)
+                }
+            }
+            result
+        }
+
+        // Keeps sync and transfers running while the app is closed, with a notification (MOB-021).
+        Function("setBackgroundSync") { enabled: Boolean ->
+            val context = appContext.reactContext ?: return@Function false
+            BackgroundSyncPrefs.setEnabled(context, enabled)
+            if (enabled) {
+                WingCoreService.start(context)
+            } else {
+                WingCoreService.stop(context)
+                false
+            }
+        }
+
+        Function("getBackgroundSync") {
+            val context = appContext.reactContext
+            val power = context?.getSystemService(android.content.Context.POWER_SERVICE)
+                as? android.os.PowerManager
+            mapOf(
+                "supported" to (context != null),
+                "enabled" to (context?.let { BackgroundSyncPrefs.isEnabled(it) } ?: false),
+                "running" to WingCoreService.running,
+                "unrestrictedBattery" to (
+                    context != null && power?.isIgnoringBatteryOptimizations(context.packageName) == true
+                ),
+                "notificationsAllowed" to (
+                    context != null &&
+                        androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
+                ),
+            )
+        }
+
+        // Battery optimization can still stop the service on some phones; this asks Android to
+        // exempt the app, or opens the list when the direct request is unavailable.
+        Function("openBatteryOptimizationSettings") {
+            val context = appContext.reactContext ?: return@Function false
+            val direct = android.content.Intent(
+                android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                android.net.Uri.parse("package:${context.packageName}"),
+            )
+            val list = android.content.Intent(
+                android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS,
+            )
+            for (intent in listOf(direct, list)) {
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                try {
+                    context.startActivity(intent)
+                    return@Function true
+                } catch (e: Exception) {
+                    android.util.Log.w("WingMobileCore", "Battery settings unavailable: ${e.message}")
+                }
+            }
+            false
         }
 
         AsyncFunction("sendMessage") { query: String, promise: Promise ->
@@ -240,9 +294,23 @@ class WingMobileCoreModule : Module() {
     // Native methods - will throw UnsatisfiedLinkError if library not loaded
     private external fun registerCoreEventListener()
     private external fun registerCoreLogListener()
-    private external fun initializeCore(dataDir: String, deviceName: String?): Int
     private external fun handleCoreMsg(query: String, promise: WingCorePromise)
     private external fun shutdownCore()
+
+    companion object {
+        init {
+            try {
+                System.loadLibrary("wing_mobile_core")
+            } catch (e: UnsatisfiedLinkError) {
+                android.util.Log.e("WingMobileCore", "Failed to load native library: ${e.message}")
+            }
+        }
+
+        // Static so the background service can start the core when Android restarts it
+        // without the app. The JNI symbol is the same as for an instance method.
+        @JvmStatic
+        external fun initializeCore(dataDir: String, deviceName: String?): Int
+    }
 }
 
 class WingCorePromise(private val promise: Promise) {
