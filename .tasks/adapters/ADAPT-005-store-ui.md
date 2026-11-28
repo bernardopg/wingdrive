@@ -33,5 +33,5 @@ license, permissions and changelog.
 - [x] Checked in the running desktop app against the official registry (screenshots in the PR):
       2026-11-28, packaged `wingdrive-bin` 3.8.2 on an isolated instance. Sources > Adapters lists
       GitHub and Obsidian as Official from store index 9, Obsidian marked Installed, and the detail
-      sheet shows reads, hosts and secrets above Install. Screenshots in #567
+      sheet shows reads, hosts and secrets above Install. Screenshots in #568
       (`docs/public/WingAdapterStoreOfficial.webp`, `WingAdapterStoreDetail.webp`).

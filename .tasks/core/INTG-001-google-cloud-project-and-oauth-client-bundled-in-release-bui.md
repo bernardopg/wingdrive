@@ -8,7 +8,7 @@ priority: High
 milestone: M5
 sprint: S05
 tags: [integrations, google, oauth, release, ci, blocked]
-last_updated: 2026-11-22
+last_updated: 2026-11-28
 related_tasks: [CLOUD-004, REL-001]
 ---
 

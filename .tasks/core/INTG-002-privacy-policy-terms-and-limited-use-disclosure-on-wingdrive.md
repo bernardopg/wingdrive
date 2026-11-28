@@ -8,7 +8,7 @@ priority: High
 milestone: M5
 sprint: S05
 tags: [integrations, google, website, legal, blocked]
-last_updated: 2026-11-22
+last_updated: 2026-11-28
 related_tasks: [INTG-001]
 ---
 
@@ -35,7 +35,13 @@ Microsoft data WingDrive accesses, how it is used and stored, how to revoke acce
 Use sentence. The author added the Search Console TXT record for `wingdrive.org` at Hostinger;
 DNS propagation pending. A link from Settings > About is still to do.
 
+2026-11-28: the four pages answer 200 (`/privacy/`, `/service-terms/`, `/pt/privacy/`,
+`/pt/service-terms/`) and the English policy carries the Limited Use sentence. The
+`google-site-verification` TXT record resolves for `wingdrive.org`. Settings > About links the
+privacy policy and terms in the UI language (`settingsPages.test.tsx`). Left: the author confirms
+the domain shows as verified in Google Cloud Console.
+
 ## Acceptance Criteria
 
-- [ ] https://wingdrive.org/privacy and /service-terms are live in both languages.
+- [x] https://wingdrive.org/privacy and /service-terms are live in both languages (checked 2026-11-28, all four pages 200).
 - [ ] The domain shows as verified in Google Cloud Console.
