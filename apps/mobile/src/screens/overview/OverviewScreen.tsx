@@ -559,8 +559,7 @@ export function OverviewScreen() {
 				{/* Action Buttons */}
 				<ActionButtons
 					onPairDevice={() => setShowPairing(true)}
-					onSetupSync={() => {/* TODO: Open sync setup */}}
-					onAddStorage={() => {/* TODO: Open location picker */}}
+					onAddStorage={() => router.navigate("/browse")}
 				/>
 				</View>
 			</Animated.ScrollView>

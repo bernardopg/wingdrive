@@ -21,6 +21,9 @@ version in the workspace manifests and the matching `v*` git tag.
   empty, and names the field. Before, the source was created and failed at its first sync.
 - Android: a device's page names each row's kind and the phone's internal storage in the app's
   language; they showed "Location", "Volume" and "Internal storage" in English.
+- Android: the Overview's quick actions no longer show "Setup Sync", which did nothing, and "Add
+  Storage" opens Explore, where any folder can be added as a location. Their descriptions showed in
+  English in Portuguese.
 - Reading a library while its settings are being saved no longer panics with "Failed to read
   library config for ID", which failed the sync, job or request that read it.
 - A folder that cannot be opened keeps its error on screen. When the window got focus or a change
