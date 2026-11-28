@@ -170,7 +170,7 @@ O [guia do usuário em wingdrive.org](https://wingdrive.org/pt/docs/) mostra cad
 | Contribuir | [CONTRIBUTING](./CONTRIBUTING.md) · [AGENTS](./AGENTS.md) · [Ambiente de dev](./docs/core/development-environment.mdx) · [Testes](./docs/core/testing.mdx) |
 | Projeto | [Changelog](./CHANGELOG.md) · [Cobertura](./COVERAGE.md) · [Roadmap](./.tasks/ROADMAP.md) · [Segurança](./SECURITY.md) · [Créditos](./CREDITS.md) |
 
-A documentação técnica está em inglês; o planejamento em `.tasks/` está em português.
+A documentação técnica e o planejamento em `.tasks/` estão em inglês (sprints antigos ainda têm trechos em português).
 
 ## Como funciona
 

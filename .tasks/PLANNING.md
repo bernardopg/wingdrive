@@ -1,90 +1,92 @@
-# Planejamento do WingDrive
+# WingDrive Planning
 
-Fonte única de verdade para o que fazer, em que ordem e com qual progresso.
-Se algo não está aqui ou numa task de `.tasks/`, não está planejado.
+The single source of truth for what to do, in what order, and how far along it is.
+If something is not here or in a task under `.tasks/`, it is not planned.
 
-## Método
+Everything under `.tasks/` is written in English: tasks, sprints, the roadmap, logs and the bug log.
 
-**Scrumban solo**: cadência de Scrum (sprints curtos com meta, review e retro) com fluxo de
-Kanban (limite de WIP, puxar a próxima task do topo do backlog). É o modelo mais usado para
-times pequenos e devs solo porque mantém previsibilidade sem cerimônia de time grande.
+## Method
 
-- Sprint de **2 semanas**, com uma **meta** de uma frase.
-- **WIP máximo: 2 tasks** `In Progress` dentro do sprint. Termina antes de começar.
-- Roadmap no formato **Now / Next / Later** por milestone, sem datas fixas além do sprint atual.
-- Priorização do backlog: valor para o uso como file manager desktop primeiro; risco de perda
-  de dados acima de tudo.
+**Solo Scrumban**: Scrum cadence (short sprints with a goal, review and retro) with Kanban flow
+(a WIP limit, pull the next task from the top of the backlog). Small teams and solo developers use
+it most because it keeps the plan predictable without big-team ceremony.
 
-## Hierarquia
+- **Two-week** sprints, each with a one-sentence **goal**.
+- **WIP limit: 2 tasks** `In Progress` inside the sprint. Finish before starting.
+- Roadmap in **Now / Next / Later** form per milestone, with no fixed dates beyond the current sprint.
+- Backlog priority: value for daily use as a desktop file manager first; risk of data loss above
+  everything.
+
+## Hierarchy
 
 ```
 Roadmap (ROADMAP.md)
-└── Milestone  M1, M2, ...        resultado entregável (ex.: "File manager desktop Linux 1.0")
-    └── Epic   TAURI-000, EXPL-000 task com tag `epic`; agrupa por área
-        └── Task  TAURI-006, CLI-001 unidade de trabalho com critérios de aceite
-Sprint (sprints/SNN.md)           fatia de tempo; puxa tasks de um milestone
-Backlog                           tasks `To Do` de um milestone sem `sprint`
+└── Milestone  M1, M2, ...        deliverable outcome (e.g. "Linux desktop file manager 1.0")
+    └── Epic   TAURI-000, EXPL-000 task tagged `epic`; groups work by area
+        └── Task  TAURI-006, CLI-001 unit of work with acceptance criteria
+Sprint (sprints/SNN.md)           time box; pulls tasks from a milestone
+Backlog                           `To Do` tasks of a milestone without `sprint`
 ```
 
-Cada task registra a hierarquia no front matter:
+Each task records the hierarchy in its front matter:
 
 ```yaml
 parent: TAURI-000   # epic
-milestone: M1       # milestone do roadmap
-sprint: S01         # só quando comprometida num sprint
+milestone: M1       # roadmap milestone
+sprint: S01         # only once committed to a sprint
 ```
 
-## Convenção de nomes
+## Naming
 
-Nada no projeto se chama "Spacedrive" nem usa prefixo `sd`/`sd-`. Use `wingdrive` ou `wing`
-(crates, binários, pacotes, scripts, funções, tipos, variáveis de ambiente, textos). Exceção:
-atribuição legal ao upstream, centralizada em `CREDITS.md`.
+Nothing in the project is called "Spacedrive" or uses an `sd`/`sd-` prefix. Use `wingdrive` or
+`wing` (crates, binaries, packages, scripts, functions, types, environment variables, text). The
+exception is legal attribution to upstream, kept in `CREDITS.md`.
 
-## Definition of Ready (entra no sprint)
+## Definition of Ready (enters the sprint)
 
-- Critérios de aceite verificáveis escritos na task.
-- `milestone` definido e dependências resolvidas.
+- Verifiable acceptance criteria written in the task.
+- `milestone` set and dependencies resolved.
 
-## Definition of Done (sai do sprint)
+## Definition of Done (leaves the sprint)
 
-- Todos os critérios de aceite marcados `[x]` com evidência (teste, comando ou validação em runtime).
-- `cargo fmt`, `cargo clippy -D warnings` e `bun run typecheck` limpos para o que mudou.
-- Task com `status: Done` e `last_updated` atualizado; sprint file atualizado.
-- Commit no `main` com mensagem Conventional Commits.
+- Every acceptance criterion checked `[x]` with evidence (a test, a command or a runtime check).
+- `cargo fmt`, `cargo clippy -D warnings` and `bun run typecheck` clean for what changed.
+- Task at `status: Done` with `last_updated` current; sprint file updated.
+- Merged to `main` with a Conventional Commits message.
 
-## Rituais
+## Rituals
 
-| Quando | O quê | Onde registrar |
+| When | What | Where to record it |
 |---|---|---|
-| Início do sprint | Planning: meta + tasks puxadas do backlog | `sprints/SNN.md`, campo `sprint` nas tasks |
-| A cada sessão | Atualizar checkboxes e status das tasks tocadas | task file + log do sprint |
-| Fim do sprint | Review (o que entregou) + Retro (o que muda) | seção final de `sprints/SNN.md` |
-| Fim do sprint | Tasks não concluídas voltam ao backlog ou vão ao próximo sprint | campo `sprint` |
-| Fim do milestone | Atualizar `ROADMAP.md` (Now/Next/Later) | `ROADMAP.md` |
+| Sprint start | Planning: goal and tasks pulled from the backlog | `sprints/SNN.md`, `sprint` field of the tasks |
+| Every session | Update checkboxes and status of the tasks touched | task file and sprint log |
+| Sprint end | Review (what shipped) and retro (what changes) | last section of `sprints/SNN.md` |
+| Sprint end | Unfinished tasks go back to the backlog or to the next sprint | `sprint` field |
+| Milestone end | Update `ROADMAP.md` (Now/Next/Later) | `ROADMAP.md` |
 
 ## Board
 
-`just board` abre o quadro em <http://127.0.0.1:7357>: colunas To Do, In Progress e Done do sprint
-atual, arrastar entre colunas, filtros por sprint, milestone e épico, progresso por sprint e por
-milestone, e edição de status, sprint e checklist de cada task. Os agentes usam o mesmo board pelo
-servidor MCP `wingdrive-board` (`.mcp.json`). Os dois editam os arquivos daqui, então o `.md`
-continua sendo a fonte de verdade. Detalhes em [tools/board/README.md](../tools/board/README.md).
+`just board` opens the board at <http://127.0.0.1:7357>: To Do, In Progress and Done columns for the
+current sprint, drag between columns, filters by sprint, milestone and epic, progress per sprint and
+per milestone, and editing of each task's status, sprint and checklist. Agents use the same board
+through the `wingdrive-board` MCP server (`.mcp.json`). Both edit the files here, so the `.md` stays
+the source of truth. Details in [tools/board/README.md](../tools/board/README.md).
 
-As tabelas **Quadro** (em cada sprint) e **Progresso** (no ROADMAP) são geradas do front matter
-entre marcadores `<!-- board:begin … -->`. Não edite à mão: `just board-sync` as refaz, e o CI falha
-quando estão desatualizadas. O resto do sprint (meta, ordem do compromisso, log, review e retro)
-continua escrito à mão.
+The **Board** table (in each sprint) and the **Progress** table (in the roadmap) are generated from
+the front matter between `<!-- board:begin … -->` markers. Do not edit them by hand: `just
+board-sync` rebuilds them, and CI fails when they are stale. The rest of the sprint (goal,
+commitment order, log, review and retro) is written by hand.
 
-## Comandos
+## Commands
 
 ```bash
-just board-check                                                 # referências quebradas, WIP, tabelas
-just board-sync                                                  # refaz as tabelas geradas
-cargo run --bin task-validator -- list --milestone M1            # escopo do milestone
-cargo run --bin task-validator -- list --sprint S01              # quadro do sprint
-cargo run --bin task-validator -- list --milestone M1 --status "To Do"   # backlog do milestone
-cargo run --bin task-validator -- validate                       # schema das tasks staged
+just board-check                                                 # broken references, WIP, tables
+just board-sync                                                  # rebuilds the generated tables
+cargo run --bin task-validator -- list --milestone M1            # milestone scope
+cargo run --bin task-validator -- list --sprint S01              # sprint board
+cargo run --bin task-validator -- list --milestone M1 --status "To Do"   # milestone backlog
+cargo run --bin task-validator -- validate                       # schema of the staged tasks
 ```
 
-Arquivos de planejamento (`PLANNING.md`, `ROADMAP.md`, `sprints/SNN.md`) não têm hífen no
-nome, então o validator os ignora como tasks.
+Planning files (`PLANNING.md`, `ROADMAP.md`, `sprints/SNN.md`) have no hyphen in their names, so
+the validator does not treat them as tasks.

@@ -20,7 +20,7 @@ Tasks, sprints and the roadmap live only in Markdown, and the author loses track
 ## Implementation Steps
 
 - [x] `src/store.ts`: parse tasks, sprints and milestones; minimal line edits to front matter and checkboxes; next free id; integrity check.
-- [x] Generated **Quadro** table in every sprint file and **Progresso** table in `ROADMAP.md`, between `board:begin`/`board:end` markers.
+- [x] Generated **Board** table in every sprint file and **Progress** table in `ROADMAP.md`, between `board:begin`/`board:end` markers.
 - [x] Web UI on 127.0.0.1 (`just board`): columns with drag and drop, filters, sprint strip with WIP, sprints and roadmap views, task drawer, new task dialog, live updates over SSE.
 - [x] MCP server (`.mcp.json`): overview, list_tasks, get_task, update_task, set_checklist_item, create_task, sprint_log, check.
 - [x] CI and `ci-local` run the board tests and `check --strict`.

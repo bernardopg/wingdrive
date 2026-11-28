@@ -190,7 +190,7 @@ and no network unless it declares hosts, and it never sees WingDrive's own token
 | **M4** | File sync between devices, public sharing links, Wingdrop to nearby devices, Tailscale |
 | **M5** | Semantic search, WASM extensions, encryption at rest, Android beta improvements and iOS releases |
 
-The live plan, sprint by sprint, is in [`.tasks/`](./.tasks/ROADMAP.md) (Portuguese).
+The live plan, sprint by sprint, is in [`.tasks/`](./.tasks/ROADMAP.md).
 
 ## Support the project
 
