@@ -67,6 +67,7 @@ S07 and go through the same registry as any third party.
 | ADAPT-014 | Coding agent sessions: OpenCode, Claude Code, Codex | S07 |
 | ADAPT-015 | Retire the prototypes in `adapters/` | S07 |
 | ADAPT-020 to ADAPT-025 | Gmail, Slack export, Apple Notes, Safari history, macOS Calendar, macOS Contacts | Backlog |
+| ADAPT-026 | Library search finds adapter source items | Backlog |
 
 ## Acceptance Criteria
 

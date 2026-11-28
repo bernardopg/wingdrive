@@ -29,17 +29,31 @@ account `bernardopg`.
 ## Acceptance Criteria
 
 - [ ] Lives in `bernardopg/wingdrive-adapters` under `adapters/<id>/`, created from the template (ADAPT-008), with README, license, icon and tests
-- [ ] Published through a reviewed pull request that Wingbot's checks (ADAPT-007) pass, like any third-party adapter
+- [x] Published through a reviewed pull request that Wingbot's checks (ADAPT-007) pass, like any third-party adapter
+      (1.0.4 through bernardopg/wingdrive-adapters#13: Structure, Code scan, Adapter tests and
+      Contract harness pass, Wingbot's comment shows them; published in index 15)
 - [ ] Installs from the store in the desktop app and from `wing adapters install <id>`
 - [ ] Defaults: the source path or account is detected on Linux and macOS (and Windows once ADAPT-002 lands); a wrong value fails `sources.create` with a message that names the field
-- [ ] Declares only the permissions it uses (ADAPT-009); runs with network off unless it declares hosts
-- [ ] Sync is incremental: a second run with no changes writes nothing new, a changed item is updated in place, and an item removed upstream is removed from the source
+- [x] Declares only the permissions it uses (ADAPT-009); runs with network off unless it declares hosts
+      (Wingbot's code scan passes: `api.github.com` is its only host, `~/.config/gh/hosts.yml` its only
+      read path, `token` its only secret. It declares a host, so the sandbox gives it network; its
+      harness cases replay recorded answers and pass in CI without network)
+- [x] Sync is incremental: a second run with no changes writes nothing new, a changed item is updated in place, and an item removed upstream is removed from the source
       (2026-11-28, `wingdrive-bin` 3.8.2, isolated instance, account `bernardopg` without a token:
-      291 items, second run "0 upserted, 0 deleted". Update in place and removal upstream not
-      checked against real data yet.)
+      291 items, second run "0 upserted, 0 deleted". With the `gh` token, 1.0.3: first run 3994
+      upserted in 195 s, 3992 items (65 owned and 239 starred repositories, 73 issues, 3615 pull
+      requests: 45 open, 682 closed, 2961 merged); second run "10 upserted, 0 deleted" in 9.8 s:
+      repositories pushed in that minute and the last pull request again (`since` is inclusive),
+      each rewritten in place, plus one new pull request. Unstarring `earthtojake/text-to-cad`:
+      "1 deleted", the record gone; starring it again brought it back. The token was in no file of
+      the instance's data folder. After the store update to 1.0.4, the next sync reused the cursor:
+      "10 upserted, 0 deleted".)
 - [ ] Items show in Sources > source > items with title, subtitle, date and preview, and are found by the library search
-- [x] Script tests with fixtures cover parsing, cursors, deletions and malformed input, and the contract harness (ADAPT-003) passes in the adapter's CI (11 tests against a local fake API)
+      (2026-11-28: each source has its own FTS index (`harness` matches 51 items of the token
+      source), but the library search (`search.files`) does not query sources:
+      `ArchiveEngine::search` has no caller in the core. ADAPT-026 adds it.)
+- [x] Script tests with fixtures cover parsing, cursors, deletions and malformed input, and the contract harness (ADAPT-003) passes in the adapter's CI (14 tests against a local fake API; since 1.0.4, five harness cases replay recorded API answers from `fixtures/<case>/api`, 5 of 5 in the registry's Validate run 46165091592)
 - [ ] Real proof on the author's machine: install from the store, sync of real data with item counts, second run idempotent, items opened in the desktop app (screenshot in the PR)
-      (2026-11-28: `wing adapters install github` from store index 9 installed 1.0.3; the sync above.
-      Left: a token run with issues and pull requests, and the desktop screenshot.)
+      (2026-11-28: `wing adapters install github` from store index 9 installed 1.0.3; the syncs
+      above, with and without a token. Left: opening items in the desktop app and its screenshot.)
 - [ ] Store listing on wingdrive.org/adapters and a user page (EN and PT) with setup, what is indexed and privacy notes
