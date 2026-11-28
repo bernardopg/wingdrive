@@ -205,7 +205,8 @@
 		"pastMonth": "Past month",
 		"pastYear": "Past year",
 		"results_one": "{{count}} result",
-		"results_other": "{{count}} results"
+		"results_other": "{{count}} results",
+		"noFileResults": "No files match. The matches above are in your sources."
 	},
 	"pagination": {
 		"recentFilesPages": "Recent files pages",
@@ -547,5 +548,14 @@
 		"opened": "Editing a copy of the cloud file. Saved changes upload automatically.",
 		"openFailed": "Could not open the cloud file: {{error}}",
 		"noWebLink": "This service has no web page for the item."
+	},
+	"sourceResults": {
+		"title": "Matches in your sources",
+		"heading_one": "{{count}} match in your sources",
+		"heading_other": "{{count}} matches in your sources",
+		"openSource": "Open source",
+		"showAllMore_one": "Show all ({{count}} more)",
+		"showAllMore_other": "Show all ({{count}} more)",
+		"flagged": "The safety screening flagged this item"
 	}
 }

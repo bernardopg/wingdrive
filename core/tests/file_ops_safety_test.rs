@@ -5,10 +5,7 @@
 
 mod helpers;
 
-use std::{
-	path::Path,
-	sync::OnceLock,
-};
+use std::{path::Path, sync::OnceLock};
 
 use helpers::*;
 use tempfile::TempDir;
@@ -60,10 +57,7 @@ fn delete_outcome(output: &JobOutput) -> (usize, usize) {
 	}
 }
 
-async fn dispatch_action<A>(
-	harness: &IndexingHarness,
-	input: A::Input,
-) -> Result<A::Output, String>
+async fn dispatch_action<A>(harness: &IndexingHarness, input: A::Input) -> Result<A::Output, String>
 where
 	A: LibraryAction + Send + 'static,
 	A::Input: Send,
@@ -186,10 +180,7 @@ async fn create_symlink_creates_link_and_refuses_existing_name() {
 	.await
 	.unwrap_err();
 	assert!(err.contains("already exists"), "{err}");
-	assert_eq!(
-		fs::read_link(link).await.unwrap(),
-		root.join("target.txt")
-	);
+	assert_eq!(fs::read_link(link).await.unwrap(), root.join("target.txt"));
 
 	harness.shutdown().await.unwrap();
 }
@@ -380,7 +371,10 @@ async fn rename_action_renames_file_and_preserves_content() {
 	// Rename runs as a job; wait briefly for filesystem effect.
 	let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
 	while root.join("old.txt").exists() || !root.join("new.txt").exists() {
-		assert!(std::time::Instant::now() < deadline, "rename did not complete");
+		assert!(
+			std::time::Instant::now() < deadline,
+			"rename did not complete"
+		);
 		tokio::time::sleep(std::time::Duration::from_millis(50)).await;
 	}
 	assert_eq!(fs::read(root.join("new.txt")).await.unwrap(), b"content");

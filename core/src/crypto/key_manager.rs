@@ -353,7 +353,13 @@ impl KeyManager {
 	pub async fn get_secret(&self, key: &str) -> Result<Vec<u8>, KeyManagerError> {
 		let db = self.db.read().await;
 		let read_txn = db.begin_read()?;
-		let table = read_txn.open_table(SECRETS_TABLE)?;
+		// The table appears with the first secret written; until then no key has a value.
+		let table = match read_txn.open_table(SECRETS_TABLE) {
+			Err(redb::TableError::TableDoesNotExist(_)) => {
+				return Err(KeyManagerError::KeyNotFound(key.to_string()))
+			}
+			table => table?,
+		};
 
 		let encrypted_value = table
 			.get(key)?

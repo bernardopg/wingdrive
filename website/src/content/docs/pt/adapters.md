@@ -58,6 +58,24 @@ Para mudar uma fonte depois, abra-a e escolha **Editar fonte** no menu dela. Um 
 <figcaption>Um cofre do Obsidian sincronizado: cada nota com o caminho e o começo do texto.</figcaption>
 </figure>
 
+## Buscar nas suas fontes
+
+A busca com o escopo **Biblioteca** encontra os itens das suas fontes junto com os seus arquivos. No Explorador, digite na caixa de busca e escolha **Biblioteca** em *Pesquisar em*. Os resultados das fontes aparecem acima dos arquivos, agrupados por fonte, com as palavras buscadas destacadas. *Esta pasta* e *Local* buscam só arquivos.
+
+<figure class="shot">
+<a href="/img/adapters/search-pt.webp"><img src="/img/adapters/search-pt.webp" width="795" height="354" loading="lazy" alt="Uma busca por harness na biblioteca: resultados de uma fonte do GitHub e de um cofre do Obsidian acima de quatro arquivos"></a>
+<figcaption>A busca na biblioteca encontra issues do GitHub e notas do Obsidian junto com os arquivos.</figcaption>
+</figure>
+
+Clique em um resultado para abrir a fonte com o item aberto ao lado da lista: a data, o ID no serviço de origem e o texto inteiro. **Abrir fonte** mostra todos os resultados daquela fonte. A caixa de busca da página de uma fonte busca em todos os itens dela, não só nos que estão na tela.
+
+<figure class="shot">
+<a href="/img/adapters/item-open-pt.webp"><img src="/img/adapters/item-open-pt.webp" width="795" height="230" loading="lazy" alt="Uma issue do GitHub aberta pela busca, com a data, o ID issue:1101 e o texto"></a>
+<figcaption>Um item aberto pela busca.</figcaption>
+</figure>
+
+Todas as palavras digitadas precisam aparecer, e o começo de uma palavra basta: `tomat` encontra *tomatoes*. Itens que a verificação de segurança pôs em quarentena nunca aparecem.
+
 ## O que os adaptadores podem acessar
 
 Cada adaptador declara do que precisa, e a loja mostra isso antes de instalar. O quanto o WingDrive prende o adaptador a essa lista depende do sistema:

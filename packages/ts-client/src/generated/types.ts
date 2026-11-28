@@ -1826,6 +1826,12 @@ export type GetSourceInput = {
 	source_id: string,
 };
 
+export type GetSourceItemInput = {
+	source_id: string,
+	/**  The item's id in its source, as `sources.list_items` and `sources.search` return it. */
+	item_id: string,
+};
+
 /**  Input for getting sync activity summary */
 export type GetSyncActivityInput = Record<string, never>;
 
@@ -3866,6 +3872,20 @@ export type SearchScope =
 	path: WingPath,
 } });
 
+export type SearchSourcesInput = {
+	/**  Words to find. Every word must match, as a prefix; FTS5 syntax is searched as text. */
+	query: string,
+	/**  Search one source only. */
+	source_id: string | null,
+	/**  Most hits to return, `DEFAULT_SOURCE_SEARCH_LIMIT` when absent, at most `MAX_SOURCE_SEARCH_LIMIT`. */
+	limit: number | null,
+};
+
+export type SearchSourcesOutput = {
+	/**  Best match first, across every searched source. */
+	hits: SourceSearchHit[],
+};
+
 export type SearchTagsInput = {
 	/**  Search query (searches across all name variants) */
 	query: string,
@@ -4038,6 +4058,31 @@ export type SourceItem = {
 	subtitle: string | null,
 	/**  The item's date as the adapter stored it (`[search] date_field`, usually RFC 3339), if any. */
 	date: string | null,
+};
+
+/**  One item of a source that matched the search. */
+export type SourceSearchHit = {
+	/**  The item's id in its source, as `sources.list_items` and `sources.get_item` use it. */
+	id: string,
+	/**  The item's id in the service it came from. */
+	external_id: string,
+	title: string,
+	subtitle: string | null,
+	/**  The start of the item's preview text, at most `SOURCE_HIT_PREVIEW_CHARS` characters. */
+	preview: string | null,
+	/**
+	 *  Text around the match. Each matched term sits between U+0002 and U+0003, and `…` marks
+	 *  cut text.
+	 */
+	snippet: string | null,
+	/**  The item's date as the adapter stored it (`[search] date_field`), if any. */
+	date: string | null,
+	source_id: string,
+	source_name: string,
+	adapter_id: string,
+	data_type: string,
+	/**  The safety screening found something suspicious but kept the item searchable. */
+	flagged: boolean,
 };
 
 /**  Speech-to-text transcription policy */
@@ -5524,8 +5569,10 @@ export type LibraryQuery =
   |  { type: 'search.files'; input: FileSearchInput; output: FileSearchOutput }
   |  { type: 'sources.config'; input: GetSourceConfigInput; output: SourceConfig }
   |  { type: 'sources.get'; input: GetSourceInput; output: SourceInfo }
+  |  { type: 'sources.get_item'; input: GetSourceItemInput; output: SourceItem }
   |  { type: 'sources.list'; input: ListSourcesInput; output: SourceInfo[] }
   |  { type: 'sources.list_items'; input: ListSourceItemsInput; output: SourceItem[] }
+  |  { type: 'sources.search'; input: SearchSourcesInput; output: SearchSourcesOutput }
   |  { type: 'sync.activity'; input: GetSyncActivityInput; output: GetSyncActivityOutput }
   |  { type: 'sync.eventLog'; input: GetSyncEventLogInput; output: GetSyncEventLogOutput }
   |  { type: 'sync.metrics'; input: GetSyncMetricsInput; output: GetSyncMetricsOutput }
@@ -5723,8 +5770,10 @@ export const WIRE_METHODS = {
     'search.files': 'query:search.files',
     'sources.config': 'query:sources.config',
     'sources.get': 'query:sources.get',
+    'sources.get_item': 'query:sources.get_item',
     'sources.list': 'query:sources.list',
     'sources.list_items': 'query:sources.list_items',
+    'sources.search': 'query:sources.search',
     'sync.activity': 'query:sync.activity',
     'sync.eventLog': 'query:sync.eventLog',
     'sync.metrics': 'query:sync.metrics',

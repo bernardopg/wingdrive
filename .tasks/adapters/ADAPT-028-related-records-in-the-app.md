@@ -6,6 +6,7 @@ assignee: bernardopg
 parent: ADAPT-000
 priority: Medium
 milestone: M5
+sprint: S09
 tags: [adapters, interface, archive]
 depends_on: [ADAPT-004, ADAPT-005]
 related_tasks: [ADAPT-010, ADAPT-012, ADAPT-014]

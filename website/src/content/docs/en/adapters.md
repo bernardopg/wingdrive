@@ -58,6 +58,24 @@ To change a source later, open it and choose **Edit source** in its menu. A toke
 <figcaption>A synced Obsidian vault: each note with its path and the start of its text.</figcaption>
 </figure>
 
+## Search your sources
+
+Search with the **Library** scope finds the items of your sources next to your files. In the Explorer, type in the search box and pick **Library** under *Search in*. Matches from sources appear above the files, grouped by source, with the words you searched highlighted. *This Folder* and *Location* search only files.
+
+<figure class="shot">
+<a href="/img/adapters/search-en.webp"><img src="/img/adapters/search-en.webp" width="795" height="354" loading="lazy" alt="A library search for harness: matches from a GitHub source and an Obsidian vault above four matching files"></a>
+<figcaption>A library search finds GitHub issues and Obsidian notes next to files.</figcaption>
+</figure>
+
+Click a match to open its source with the item open beside the list: its date, its ID in the service it came from and its whole text. **Open source** shows every match of that source. The search box of a source page searches all of the source's items, not only the ones on screen.
+
+<figure class="shot">
+<a href="/img/adapters/item-open-en.webp"><img src="/img/adapters/item-open-en.webp" width="795" height="230" loading="lazy" alt="A GitHub issue opened from the search, with its date, its ID issue:1101 and its text"></a>
+<figcaption>An item opened from the search.</figcaption>
+</figure>
+
+Every word you type must match, and the start of a word is enough: `tomat` finds *tomatoes*. Items that the safety screening quarantined are never found.
+
 ## What adapters can access
 
 Each adapter declares what it needs, and the store shows it before you install. How strictly WingDrive holds the adapter to that list depends on the system:

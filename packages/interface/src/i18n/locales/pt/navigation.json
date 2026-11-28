@@ -338,7 +338,16 @@
 		"editTitle": "Editar {{name}}",
 		"saved": "Fonte salva",
 		"saveSync": "Salvar e sincronizar",
-		"secretSaved": "Salvo. Deixe vazio para manter."
+		"secretSaved": "Salvo. Deixe vazio para manter.",
+		"itemPanel": "Detalhes do item",
+		"closeItem": "Fechar item",
+		"itemLoadFailed": "Falha ao carregar o item: {{error}}",
+		"itemMissing": "Este item não está mais na fonte.",
+		"itemDate": "Data",
+		"itemExternalId": "ID no serviço",
+		"itemNoText": "Este item não tem texto.",
+		"itemTextCut_one": "Mostrando o primeiro {{count}} caractere.",
+		"itemTextCut_other": "Mostrando os primeiros {{count}} caracteres."
 	},
 	"network": {
 		"connectTitle": "Conectar ao servidor",

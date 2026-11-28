@@ -31,7 +31,7 @@ _Generated from the task front matter by the board (`just board-sync`). Do not e
 | M2 — Default file manager on Linux | Done | 75 | 1 | 0 | 99% |
 | M3 — Cross-platform desktop and release | Now | 12 | 19 | 3 | 35% |
 | M4 — Device integration | Later | 4 | 4 | 16 | 17% |
-| M5 — Optional | Later | 31 | 26 | 86 | 22% |
+| M5 — Optional | Later | 32 | 26 | 86 | 22% |
 
 | Sprint | Dates | Done | In Progress | Progress |
 |---|---|---|---|---|
@@ -41,9 +41,9 @@ _Generated from the task front matter by the board (`just board-sync`). Do not e
 | [S04](sprints/S04.md) | 2026-10-29 to 2026-11-11 | 37/37 | 0 | 100% |
 | [S05](sprints/S05.md) | 2026-11-12 to 2026-11-25 | 27/32 | 2 | 84% |
 | **[S06](sprints/S06.md)** (current) | 2026-11-26 to 2026-12-09 | 11/38 | 23 | 29% |
-| [S07](sprints/S07.md) | 2026-12-10 to 2026-12-23 | 5/19 | 7 | 26% |
-| [S08](sprints/S08.md) | 2026-12-24 to 2027-01-06 | 1/20 | 1 | 5% |
-| [S09](sprints/S09.md) | 2027-01-07 to 2027-01-20 | 0/23 | 12 | 0% |
+| [S07](sprints/S07.md) | 2026-12-10 to 2026-12-23 | 6/20 | 7 | 30% |
+| [S08](sprints/S08.md) | 2026-12-24 to 2027-01-06 | 1/22 | 1 | 5% |
+| [S09](sprints/S09.md) | 2027-01-07 to 2027-01-20 | 0/25 | 12 | 0% |
 | [S10](sprints/S10.md) | 2027-01-21 to 2027-02-03 | 0/15 | 5 | 0% |
 | [S11](sprints/S11.md) | 2027-02-04 to 2027-02-17 | 0/14 | 0 | 0% |
 | [S12](sprints/S12.md) | 2027-02-18 to 2027-03-03 | 0/14 | 0 | 0% |

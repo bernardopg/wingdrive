@@ -415,6 +415,38 @@ impl SourceManager {
 			.map_err(|e| format!("Failed to list items: {e}"))
 	}
 
+	/// One item of a source by its id.
+	pub async fn get_item(
+		&self,
+		source_id: &str,
+		item_id: &str,
+	) -> Result<Option<wing_archive::db::ItemRow>, String> {
+		self.engine
+			.get_item(source_id, item_id)
+			.await
+			.map_err(|e| format!("Failed to read item: {e}"))
+	}
+
+	/// Searches the items of every source, or of one, for the words in `query`.
+	pub async fn search(
+		&self,
+		query: &str,
+		source_id: Option<String>,
+		limit: usize,
+	) -> Result<Vec<wing_archive::SearchResult>, String> {
+		self.engine
+			.search(
+				query,
+				Some(wing_archive::SearchFilter {
+					source_id,
+					limit: Some(limit),
+					..Default::default()
+				}),
+			)
+			.await
+			.map_err(|e| format!("Failed to search sources: {e}"))
+	}
+
 	/// Adapters registered in this library. Updates come from the adapter store.
 	pub fn list_adapters(&self) -> Vec<wing_archive::AdapterInfo> {
 		self.engine.list_adapters_with_updates(None)
@@ -766,6 +798,74 @@ search_fields = ["title", "body"]
 				.unwrap(),
 			TOKEN.as_bytes()
 		);
+	}
+
+	/// The library search reaches every source, finds nothing in a library without sources,
+	/// and stops returning a source's items once the source is removed.
+	#[tokio::test]
+	async fn search_spans_sources_and_forgets_removed_ones() {
+		let temp = tempfile::tempdir().unwrap();
+		let installed = temp.path().join("installed");
+		let adapter = installed.join("fixture");
+		std::fs::create_dir_all(&adapter).unwrap();
+		std::fs::write(adapter.join("adapter.toml"), MANIFEST).unwrap();
+		std::fs::write(
+			adapter.join("sync.py"),
+			"import json, sys\nfolder = json.load(sys.stdin)['config']['folder']\nprint(json.dumps({'upsert': 'note', 'external_id': folder, 'fields': {'title': 'Note from ' + folder, 'body': 'The harness plan for ' + folder}}))\n",
+		)
+		.unwrap();
+		let keys = Arc::new(
+			KeyManager::new_with_fallback(temp.path().to_path_buf(), Some(temp.path().join("k")))
+				.unwrap(),
+		);
+		let manager =
+			SourceManager::new(temp.path().join("library"), installed, keys, Uuid::new_v4())
+				.await
+				.unwrap();
+		assert!(manager
+			.search("harness", None, 10)
+			.await
+			.unwrap()
+			.is_empty());
+
+		let mut sources = Vec::new();
+		for (name, folder) in [("Vault", "vault"), ("Issues", "issues")] {
+			let source = manager
+				.create_source(name, "fixture", json!({"folder": folder}))
+				.await
+				.unwrap();
+			assert_eq!(manager.sync_source(&source.id).await.unwrap().error, None);
+			sources.push(source);
+		}
+
+		let hits = manager.search("harness", None, 10).await.unwrap();
+		let mut found: Vec<_> = hits
+			.iter()
+			.map(|hit| (hit.source_name.as_str(), hit.external_id.as_str()))
+			.collect();
+		found.sort();
+		assert_eq!(found, [("Issues", "issues"), ("Vault", "vault")]);
+		assert!(hits.iter().all(|hit| hit.adapter_id == "fixture"));
+		let hit = &hits[0];
+		let item = manager
+			.get_item(&hit.source_id, &hit.id)
+			.await
+			.unwrap()
+			.unwrap();
+		assert_eq!(item.title, hit.title);
+
+		let one = manager
+			.search("harness", Some(sources[0].id.clone()), 10)
+			.await
+			.unwrap();
+		assert_eq!(one.len(), 1);
+		assert_eq!(one[0].source_id, sources[0].id);
+		assert_eq!(manager.search("harness", None, 1).await.unwrap().len(), 1);
+
+		manager.delete_source(&sources[1].id).await.unwrap();
+		let hits = manager.search("harness", None, 10).await.unwrap();
+		assert_eq!(hits.len(), 1);
+		assert_eq!(hits[0].source_name, "Vault");
 	}
 
 	#[tokio::test]

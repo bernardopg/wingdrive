@@ -12,13 +12,17 @@ use crate::safety::TrustTier;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchResult {
 	pub id: String,
+	/// The item's id in the service it came from, as the adapter stored it.
+	pub external_id: String,
 	pub title: String,
 	pub preview: String,
 	pub subtitle: Option<String>,
 	pub snippet: Option<String>,
+	/// FTS5 `bm25` rank: lower is a better match.
 	pub rank: f64,
 	pub source_id: String,
 	pub source_name: String,
+	pub adapter_id: String,
 	pub data_type: String,
 	pub data_type_icon: Option<String>,
 	pub date: Option<String>,

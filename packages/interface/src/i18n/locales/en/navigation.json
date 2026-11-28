@@ -338,7 +338,16 @@
 		"editTitle": "Edit {{name}}",
 		"saved": "Source saved",
 		"saveSync": "Save & Sync",
-		"secretSaved": "Saved. Leave empty to keep it."
+		"secretSaved": "Saved. Leave empty to keep it.",
+		"itemPanel": "Item details",
+		"closeItem": "Close item",
+		"itemLoadFailed": "Failed to load item: {{error}}",
+		"itemMissing": "This item is no longer in the source.",
+		"itemDate": "Date",
+		"itemExternalId": "ID in service",
+		"itemNoText": "This item has no text.",
+		"itemTextCut_one": "Showing the first {{count}} character.",
+		"itemTextCut_other": "Showing the first {{count}} characters."
 	},
 	"network": {
 		"connectTitle": "Connect to Server",

@@ -204,7 +204,8 @@ impl PeerLog {
 			.map_err(|e| PeerLogError::SerializationError(e.to_string()))?;
 		let created_at = chrono::Utc::now().to_rfc3339();
 
-		match self.conn
+		match self
+			.conn
 			.execute_raw(Statement::from_sql_and_values(
 				DbBackend::Sqlite,
 				r#"

@@ -9,6 +9,7 @@ use crate::db::TemporalFilter;
 use crate::embed::EmbeddingModel;
 use crate::error::Result;
 use crate::registry::Registry;
+use crate::search::fts::match_expression;
 use crate::search::{SearchFilter, SearchResult};
 use crate::source::SourceManager;
 
@@ -35,6 +36,9 @@ impl SearchRouter {
 	}
 
 	/// Search across all (or filtered) sources using FTS5.
+	///
+	/// `query` is the text a person typed, not FTS5 syntax: every word must match, as a prefix
+	/// (see [`match_expression`]). Only records the safety screening let into the index match.
 	pub async fn search(
 		&self,
 		query: &str,
@@ -42,6 +46,9 @@ impl SearchRouter {
 	) -> Result<Vec<SearchResult>> {
 		let filter = filter.unwrap_or_default();
 		let limit = filter.limit.unwrap_or(DEFAULT_LIMIT);
+		let Some(expression) = match_expression(query) else {
+			return Ok(Vec::new());
+		};
 
 		let all_sources = self.registry.list_sources().await?;
 		let sources_to_search: Vec<_> = all_sources
@@ -81,10 +88,10 @@ impl SearchRouter {
 				None
 			};
 
-			let fts_hits = match db.fts_search(query, limit, temporal).await {
+			let fts_hits = match db.fts_search(&expression, limit, temporal).await {
 				Ok(hits) => hits,
 				Err(e) => {
-					tracing::debug!(source_id = %source_info.id, error = %e, "FTS search failed");
+					tracing::warn!(source_id = %source_info.id, error = %e, "FTS search failed");
 					Vec::new()
 				}
 			};
@@ -92,13 +99,15 @@ impl SearchRouter {
 			for hit in fts_hits {
 				all_results.push(SearchResult {
 					id: hit.id,
+					external_id: hit.external_id,
 					title: hit.title,
 					preview: hit.preview.unwrap_or_default(),
 					subtitle: hit.subtitle,
-					snippet: None,
+					snippet: hit.snippet,
 					rank: hit.rank,
 					source_id: source_info.id.clone(),
 					source_name: source_info.name.clone(),
+					adapter_id: source_info.adapter_id.clone(),
 					data_type: source_info.data_type.clone(),
 					data_type_icon: None,
 					date: hit.date,
@@ -116,7 +125,8 @@ impl SearchRouter {
 				db.cmp(da)
 			});
 		} else {
-			all_results.sort_by(|a, b| b.rank.total_cmp(&a.rank));
+			// bm25 ranks are negative and lower is better.
+			all_results.sort_by(|a, b| a.rank.total_cmp(&b.rank));
 		}
 		all_results.truncate(limit);
 

@@ -1,9 +1,17 @@
+import clsx from "clsx";
 import {uiLocale} from "../../i18n";
+import { SnippetText } from "./SnippetText";
+
 interface SourceDataRowProps {
 	title: string;
 	preview?: string | null;
 	subtitle?: string | null;
 	date?: string | null;
+	/** Text around a search match, shown instead of the preview (see `sources.search`). */
+	snippet?: string | null;
+	selected?: boolean;
+	/** Makes the row a button that opens the item. */
+	onSelect?: () => void;
 }
 
 function formatDate(iso: string): string {
@@ -29,11 +37,14 @@ export function SourceDataRow({
 	preview,
 	subtitle,
 	date,
+	snippet,
+	selected = false,
+	onSelect,
 }: SourceDataRowProps) {
-	return (
-		<div className="hover:bg-app-hover flex min-w-0 flex-col gap-0.5 overflow-hidden rounded-lg px-3 py-2.5 transition-colors">
+	const content = (
+		<>
 			{/* Title row */}
-			<div className="flex min-w-0 items-baseline gap-2">
+			<span className="flex min-w-0 items-baseline gap-2">
 				<span className="text-ink min-w-0 flex-1 truncate text-sm">
 					{title}
 				</span>
@@ -42,15 +53,34 @@ export function SourceDataRow({
 						{formatDate(date)}
 					</span>
 				)}
-			</div>
+			</span>
 			{subtitle && (
-				<p className="text-ink-faint truncate text-xs">{subtitle}</p>
+				<span className="text-ink-faint truncate text-xs">{subtitle}</span>
 			)}
-			{preview && (
-				<p className="text-ink-faint/70 truncate text-xs">
-					{cleanPreview(preview)}
-				</p>
+			{snippet ? (
+				<span className="text-ink-faint/80 truncate text-xs">
+					<SnippetText snippet={snippet} />
+				</span>
+			) : (
+				preview && (
+					<span className="text-ink-faint/70 truncate text-xs">
+						{cleanPreview(preview)}
+					</span>
+				)
 			)}
-		</div>
+		</>
 	);
+	const className = clsx(
+		"flex w-full min-w-0 flex-col gap-0.5 overflow-hidden rounded-lg px-3 py-2.5 text-left transition-colors",
+		selected ? "bg-app-selected" : "hover:bg-app-hover",
+	);
+
+	if (onSelect) {
+		return (
+			<button type="button" aria-current={selected || undefined} onClick={onSelect} className={className}>
+				{content}
+			</button>
+		);
+	}
+	return <div className={className}>{content}</div>;
 }

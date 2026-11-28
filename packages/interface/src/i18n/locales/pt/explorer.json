@@ -205,7 +205,8 @@
 		"pastMonth": "Último mês",
 		"pastYear": "Último ano",
 		"results_one": "{{count}} resultado",
-		"results_other": "{{count}} resultados"
+		"results_other": "{{count}} resultados",
+		"noFileResults": "Nenhum arquivo corresponde. Os resultados acima estão nas suas fontes."
 	},
 	"pagination": {
 		"recentFilesPages": "Páginas de arquivos recentes",
@@ -547,5 +548,14 @@
 		"opened": "Editando uma cópia do arquivo da nuvem. As alterações salvas são enviadas automaticamente.",
 		"openFailed": "Não foi possível abrir o arquivo da nuvem: {{error}}",
 		"noWebLink": "Este serviço não tem página na web para o item."
+	},
+	"sourceResults": {
+		"title": "Resultados nas suas fontes",
+		"heading_one": "{{count}} resultado nas suas fontes",
+		"heading_other": "{{count}} resultados nas suas fontes",
+		"openSource": "Abrir fonte",
+		"showAllMore_one": "Ver todos (mais {{count}})",
+		"showAllMore_other": "Ver todos (mais {{count}})",
+		"flagged": "A verificação de segurança sinalizou este item"
 	}
 }

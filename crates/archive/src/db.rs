@@ -49,6 +49,28 @@ pub struct ItemRow {
 	pub date: Option<String>,
 }
 
+type ItemRowTuple = (
+	String,
+	String,
+	String,
+	Option<String>,
+	Option<String>,
+	Option<String>,
+);
+
+impl From<ItemRowTuple> for ItemRow {
+	fn from((id, external_id, title, preview, subtitle, date): ItemRowTuple) -> Self {
+		Self {
+			id,
+			external_id,
+			title,
+			preview,
+			subtitle,
+			date,
+		}
+	}
+}
+
 /// An FTS search hit.
 #[derive(Debug, Clone)]
 pub struct FtsHit {
@@ -59,9 +81,17 @@ pub struct FtsHit {
 	pub subtitle: Option<String>,
 	pub rank: f64,
 	pub date: Option<String>,
+	/// Text around the match, with each matched term between [`SNIPPET_MATCH_START`] and
+	/// [`SNIPPET_MATCH_END`], and `…` where text was cut.
+	pub snippet: Option<String>,
 	pub safety_verdict: Option<String>,
 	pub safety_score: Option<u8>,
 }
+
+/// Marks where a matched term starts in [`FtsHit::snippet`].
+pub const SNIPPET_MATCH_START: char = '\u{2}';
+/// Marks where a matched term ends in [`FtsHit::snippet`].
+pub const SNIPPET_MATCH_END: char = '\u{3}';
 
 /// Temporal filter for date range queries.
 pub struct TemporalFilter<'a> {
@@ -609,8 +639,8 @@ impl SourceDb {
 		Ok(())
 	}
 
-	/// List items from the primary model table.
-	pub async fn list_items(&self, limit: usize, offset: usize) -> Result<Vec<ItemRow>> {
+	/// The `SELECT` that reads items of the primary model as [`ItemRow`] columns, up to `FROM`.
+	fn item_select(&self) -> String {
 		let primary_table = pluralize(&self.schema.search.primary_model);
 		let title_col = &self.schema.search.title;
 		let preview_col = &self.schema.search.preview;
@@ -636,38 +666,32 @@ impl SourceDb {
 			sql.push_str("NULL AS date ");
 		}
 
-		let _ = write!(
-			sql,
-			"FROM \"{primary_table}\" t ORDER BY t.rowid DESC LIMIT ? OFFSET ?"
-		);
+		let _ = write!(sql, "FROM \"{primary_table}\" t ");
+		sql
+	}
 
-		type Row = (
-			String,
-			String,
-			String,
-			Option<String>,
-			Option<String>,
-			Option<String>,
+	/// List items from the primary model table, newest first.
+	pub async fn list_items(&self, limit: usize, offset: usize) -> Result<Vec<ItemRow>> {
+		let sql = format!(
+			"{}ORDER BY t.rowid DESC LIMIT ? OFFSET ?",
+			self.item_select()
 		);
-		let rows = sqlx::query_as::<_, Row>(sqlx::AssertSqlSafe(sql))
+		let rows = sqlx::query_as::<_, ItemRowTuple>(sqlx::AssertSqlSafe(sql))
 			.bind(limit as i64)
 			.bind(offset as i64)
 			.fetch_all(&self.pool)
 			.await?;
+		Ok(rows.into_iter().map(ItemRow::from).collect())
+	}
 
-		Ok(rows
-			.into_iter()
-			.map(
-				|(id, external_id, title, preview, subtitle, date)| ItemRow {
-					id,
-					external_id,
-					title,
-					preview,
-					subtitle,
-					date,
-				},
-			)
-			.collect())
+	/// One item of the primary model by its id, or `None` when the source has no such item.
+	pub async fn get_item(&self, id: &str) -> Result<Option<ItemRow>> {
+		let sql = format!("{}WHERE t.\"id\" = ?", self.item_select());
+		let row = sqlx::query_as::<_, ItemRowTuple>(sqlx::AssertSqlSafe(sql))
+			.bind(id)
+			.fetch_optional(&self.pool)
+			.await?;
+		Ok(row.map(ItemRow::from))
 	}
 
 	/// FTS5 search on the primary model.
@@ -680,7 +704,7 @@ impl SourceDb {
 		let primary_table = pluralize(&self.schema.search.primary_model);
 
 		let mut sql = format!(
-			"SELECT t.id, t.external_id, t.\"{}\" AS title, ",
+			"SELECT t.id, t.external_id, COALESCE(CAST(t.\"{}\" AS TEXT), '') AS title, ",
 			self.schema.search.title
 		);
 
@@ -702,17 +726,21 @@ impl SourceDb {
 		sql.push_str("rank, ");
 
 		if let Some(ref date_field) = self.schema.search.date_field {
-			sql.push_str(&format!("t.\"{}\" AS date, ", date_field));
+			sql.push_str(&format!("CAST(t.\"{}\" AS TEXT) AS date, ", date_field));
 		} else {
 			sql.push_str("NULL AS date, ");
 		}
 
-		sql.push_str("t._safety_verdict, t._safety_score ");
+		sql.push_str(
+			"snippet(search_index, -1, char(2), char(3), '…', 24) AS snippet, \
+			 t._safety_verdict, t._safety_score ",
+		);
 
 		sql.push_str(&format!(
 			"FROM \"{primary_table}\" t \
 			 JOIN search_index s ON s.rowid = t.rowid \
-			 WHERE search_index MATCH ?"
+			 WHERE search_index MATCH ? \
+			 AND t._safety_verdict IN ('safe', 'flagged')"
 		));
 
 		if let Some(ref temp) = temporal {
@@ -767,6 +795,7 @@ struct FtsHitRow {
 	subtitle: Option<String>,
 	rank: f64,
 	date: Option<String>,
+	snippet: Option<String>,
 	_safety_verdict: Option<String>,
 	_safety_score: Option<i32>,
 }
@@ -781,6 +810,7 @@ impl From<FtsHitRow> for FtsHit {
 			subtitle: row.subtitle,
 			rank: row.rank,
 			date: row.date,
+			snippet: row.snippet,
 			safety_verdict: row._safety_verdict,
 			safety_score: row._safety_score.map(|s| s as u8),
 		}
