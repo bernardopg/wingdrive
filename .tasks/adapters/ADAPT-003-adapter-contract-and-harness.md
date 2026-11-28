@@ -24,8 +24,8 @@ reported, and how a test runs a real adapter against fixtures.
 - [x] Document the manifest (`adapter.toml`), the stdin config, JSONL record, delete, cursor and error lines in `docs/core/adapters.mdx`, matching `ScriptAdapter`
 - [x] Version the contract (`contract = 1` in the manifest) so the daemon can refuse adapters it does not understand
 - [x] The contract is a process speaking JSONL on stdin and stdout, so it covers both Python scripts and compiled adapters (Rust, Go or any language); the manifest says `runtime = "python3"` or `runtime = "binary"`
-- [ ] Python helper package (`wingdrive-adapter-kit`) for config, emitting records, cursors, platform path defaults and secrets
-      In review as bernardopg/wingdrive-adapters#9 (2026-11-28). It is one file adapters copy into their
+- [x] Python helper package (`wingdrive-adapter-kit`) for config, emitting records, cursors, platform path defaults and secrets
+      Merged as bernardopg/wingdrive-adapters#9 (2026-11-28). It is one file adapters copy into their
       folder, `kit/python/wingdrive_adapter.py`, not a PyPI package, because the daemon runs
       adapters with `python3 -I` and only the standard library. It covers config fields, secrets
       (replaced by `[secret]` in logs and errors), versioned cursors, contract lines,
@@ -53,4 +53,6 @@ reported, and how a test runs a real adapter against fixtures.
 
 - [x] Contract doc merged and referenced from AGENTS.md (`docs/core/adapters.mdx`, AGENTS.md "Adapters (store)")
 - [ ] Harness passes on the template adapter and is used by ADAPT-007 and every adapter task
+      (template half done 2026-11-28: `templates/python` passes `wing adapter test`, 2 of 2 cases;
+      Wingbot does not run the harness yet, ADAPT-007)
 - [ ] CI job green with the harness tests
