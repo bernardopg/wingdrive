@@ -31,7 +31,7 @@ beforeEach(() => {
 	);
 	writeFileSync(
 		join(t, "sprints", "S01.md"),
-		"# Sprint S01 — 2026-11-10 a 2026-11-23\n\nMilestone: **M2**\n\n**Meta:** ship the\nboard.\n\n## Log\n\n- 2026-11-10: opened.\n",
+		"# Sprint S01 — 2026-11-10 to 2026-11-23\n\nMilestone: **M2**\n\n**Goal:** ship the\nboard.\n\n## Log\n\n- 2026-11-10: opened.\n",
 	);
 	writeFileSync(
 		join(t, "core", "CORE-001-epic.md"),
@@ -137,10 +137,10 @@ describe("generated blocks and checks", () => {
 		expect(syncGenerated(b).sort()).toEqual([".tasks/ROADMAP.md", ".tasks/sprints/S01.md"]);
 		expect(syncGenerated(loadBoard(root))).toEqual([]);
 		const sprint = readFileSync(join(root, ".tasks/sprints/S01.md"), "utf8");
-		expect(sprint.indexOf("<!-- board:begin quadro -->")).toBeLessThan(sprint.indexOf("## Log"));
-		expect(sprint).toContain("Progresso: **0/2 Done (0%)**");
+		expect(sprint.indexOf("<!-- board:begin board -->")).toBeLessThan(sprint.indexOf("## Log"));
+		expect(sprint).toContain("Progress: **0/2 Done (0%)**");
 		const roadmap = readFileSync(join(root, ".tasks/ROADMAP.md"), "utf8");
-		expect(roadmap.indexOf("board:begin progresso")).toBeLessThan(roadmap.indexOf("## Done — M1"));
+		expect(roadmap.indexOf("board:begin progress")).toBeLessThan(roadmap.indexOf("## Done — M1"));
 		expect(roadmap).toContain("| M2 — Second | Now | 0 | 1 | 1 | 0% |");
 	});
 

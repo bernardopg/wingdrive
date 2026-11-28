@@ -201,8 +201,8 @@ function parseSprint(root: string, path: string): Sprint | null {
 	const text = readFileSync(path, "utf8");
 	const id = basename(path, ".md");
 	if (!/^S\d+$/.test(id)) return null;
-	const head = /^# Sprint S\d+\s*[—–-]\s*(\d{4}-\d{2}-\d{2})\s+a\s+(\d{4}-\d{2}-\d{2})/m.exec(text);
-	const goal = /^\*\*Meta:\*\*\s*([\s\S]*?)(?=\n\s*\n|(?![\s\S]))/m.exec(text);
+	const head = /^# Sprint S\d+\s*[—–-]\s*(\d{4}-\d{2}-\d{2})\s+(?:to|a)\s+(\d{4}-\d{2}-\d{2})/m.exec(text);
+	const goal = /^\*\*(?:Goal|Meta):\*\*\s*([\s\S]*?)(?=\n\s*\n|(?![\s\S]))/m.exec(text);
 	const milestones = /^Milestones?:\s*(.+)$/m.exec(text);
 	return {
 		id,
@@ -505,7 +505,7 @@ export function addSprintLog(board: Board, sprintId: string, text: string): stri
 // Generated blocks: tables in sprint files and ROADMAP.md rebuilt from front matter, so the
 // status written by hand never drifts from the tasks again.
 
-const NOTE = "_Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à mão._";
+const NOTE = "_Generated from the task front matter by the board (`just board-sync`). Do not edit by hand._";
 const STATUS_ORDER: Record<Status, number> = { "In Progress": 0, "To Do": 1, Done: 2 };
 const PRIORITY_ORDER: Record<Priority, number> = { High: 0, Medium: 1, Low: 2 };
 
@@ -553,13 +553,13 @@ export function sprintBlock(board: Board, sprint: Sprint): string {
 		return `| ${link} | ${cell(t.title)} | ${t.status} | ${t.priority} | ${check} |`;
 	});
 	return [
-		"## Quadro",
+		"## Board",
 		"",
 		NOTE,
 		"",
-		`Progresso: **${c.done}/${c.total} Done (${pct(c.done, c.total)})** · ${c.doing} In Progress · ${c.todo} To Do`,
+		`Progress: **${c.done}/${c.total} Done (${pct(c.done, c.total)})** · ${c.doing} In Progress · ${c.todo} To Do`,
 		"",
-		"| Task | Título | Status | Prioridade | Checklist |",
+		"| Task | Title | Status | Priority | Checklist |",
 		"|---|---|---|---|---|",
 		...rows,
 	].join("\n");
@@ -572,20 +572,20 @@ export function roadmapBlock(board: Board): string {
 	});
 	const sprints = board.sprints.map((s) => {
 		const c = counts(board.tasks.filter((t) => t.sprint === s.id));
-		const name = s.id === board.currentSprint ? `**[${s.id}](sprints/${s.id}.md)** (atual)` : `[${s.id}](sprints/${s.id}.md)`;
-		const dates = s.start && s.end ? `${s.start} a ${s.end}` : "—";
+		const name = s.id === board.currentSprint ? `**[${s.id}](sprints/${s.id}.md)** (current)` : `[${s.id}](sprints/${s.id}.md)`;
+		const dates = s.start && s.end ? `${s.start} to ${s.end}` : "—";
 		return `| ${name} | ${dates} | ${c.done}/${c.total} | ${c.doing} | ${pct(c.done, c.total)} |`;
 	});
 	return [
-		"## Progresso",
+		"## Progress",
 		"",
 		NOTE,
 		"",
-		"| Milestone | Fase | Done | In Progress | To Do | Progresso |",
+		"| Milestone | Phase | Done | In Progress | To Do | Progress |",
 		"|---|---|---|---|---|---|",
 		...milestones,
 		"",
-		"| Sprint | Datas | Done | In Progress | Progresso |",
+		"| Sprint | Dates | Done | In Progress | Progress |",
 		"|---|---|---|---|---|",
 		...sprints,
 	].join("\n");
@@ -611,11 +611,11 @@ export function syncGenerated(board: Board): string[] {
 		}
 	};
 	for (const sprint of board.sprints) {
-		write(sprint.file, (t) => replaceBlock(t, "quadro", sprintBlock(board, sprint), beforeHeading(/^## Log\b/m)));
+		write(sprint.file, (t) => replaceBlock(t, "board", sprintBlock(board, sprint), beforeHeading(/^## Log\b/m)));
 	}
 	if (existsSync(join(tasksDir(board.root), "ROADMAP.md"))) {
 		write(".tasks/ROADMAP.md", (t) =>
-			replaceBlock(t, "progresso", roadmapBlock(board), beforeHeading(/^## (Done|Now|Next|Later) [—–-] M\d+/m)),
+			replaceBlock(t, "progress", roadmapBlock(board), beforeHeading(/^## (Done|Now|Next|Later) [—–-] M\d+/m)),
 		);
 	}
 	return changed;

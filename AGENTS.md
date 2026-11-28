@@ -843,6 +843,8 @@ Planning follows the hierarchy roadmap, milestone, epic, task, with two-week spr
 
 The `wingdrive-board` MCP server (`.mcp.json`, `tools/board/`) reads and updates tasks, checklists and sprint logs; prefer it over hand edits. `just board` opens the same data as a kanban UI for the author.
 
+Write everything under `.tasks/` in English: task files, epics, sprint goals and logs, reviews and retros, the roadmap, `PLANNING.md` and the bug log in `.tasks/testing/BUGS.md`. This holds even when the conversation with the author is in Portuguese, and it follows the [Writing Style](#writing-style) rules. Older text written in Portuguese (the closed sprints S03 to S05, parts of `BUGS.md` and of the coverage tasks) stays as it is; translate a passage when you rewrite it for another reason.
+
 ### When to Create Tasks
 
 Create tasks for work that:

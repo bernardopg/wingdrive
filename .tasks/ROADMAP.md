@@ -1,217 +1,221 @@
-# Roadmap do WingDrive
+# WingDrive Roadmap
 
-Atualizado em 2026-11-20. Método e regras em [PLANNING.md](PLANNING.md).
+Updated on 2026-11-28. Method and rules in [PLANNING.md](PLANNING.md).
 
-Foco: WingDrive como **file manager desktop** confiável (UI Tauri + CLI) antes de integrações
-entre dispositivos.
+Focus: WingDrive as a reliable **desktop file manager** (Tauri UI + CLI) before integrations
+between devices.
 
-## Calendário de sprints
+## Sprint calendar
 
-Desde 2026-11-13 toda task aberta tem sprint e toda task tem milestone e responsável (`bernardopg`).
-Os sprints futuros são um plano de backlog: ao abrir cada um, revisar a lista com o que sobrou.
+Since 2026-11-13 every open task has a sprint, and every task has a milestone and an assignee
+(`bernardopg`). Future sprints are a backlog plan: when each one opens, review the list against what
+is left.
 
-| Sprint | Datas | Milestone | Foco |
+| Sprint | Dates | Milestone | Focus |
 |---|---|---|---|
-| [S05](sprints/S05.md) | 2026-11-12 a 2026-11-25 | M2 | Fechar o M2 (DESK-051, BRAND-003, CORE-021) e release 3.4.0 |
-| [S06](sprints/S06.md) | 2026-11-26 a 2026-12-09 | M3, M5 | Updater assinado, smoke do Explorer em todo PR, Windows à mão, Google para qualquer usuário |
-| [S07](sprints/S07.md) | 2026-12-10 a 2026-12-23 | M4 | Sync de arquivos e compartilhamento |
-| [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | M4 | Fechar o M4 |
-| [S09](sprints/S09.md) a [S14](sprints/S14.md) | 2027-01-07 a 2027-03-31 | M5 | Opcionais por prioridade |
+| [S05](sprints/S05.md) | 2026-11-12 to 2026-11-25 | M2 | Close M2 (DESK-051, BRAND-003, CORE-021) and release 3.4.0 |
+| [S06](sprints/S06.md) | 2026-11-26 to 2026-12-09 | M3, M5 | Signed updater, Explorer smoke on every PR, Windows by hand, Google for any user |
+| [S07](sprints/S07.md) | 2026-12-10 to 2026-12-23 | M4 | File sync and sharing |
+| [S08](sprints/S08.md) | 2026-12-24 to 2027-01-06 | M4 | Close M4 |
+| [S09](sprints/S09.md) to [S14](sprints/S14.md) | 2027-01-07 to 2027-03-31 | M5 | Optional work by priority |
 
-<!-- board:begin progresso -->
-## Progresso
+<!-- board:begin progress -->
+## Progress
 
-_Gerado do front matter das tasks pelo board (`just board-sync`). Não edite à mão._
+_Generated from the task front matter by the board (`just board-sync`). Do not edit by hand._
 
-| Milestone | Fase | Done | In Progress | To Do | Progresso |
+| Milestone | Phase | Done | In Progress | To Do | Progress |
 |---|---|---|---|---|---|
-| M0 — Base herdada do upstream | Done | 78 | 0 | 0 | 100% |
-| M1 — File manager desktop Linux 1.0 | Done | 22 | 0 | 0 | 100% |
-| M2 — Gerenciador de arquivos padrão no Linux | Done | 75 | 1 | 0 | 99% |
-| M3 — Desktop multiplataforma e release | Now | 12 | 19 | 3 | 35% |
-| M4 — Integração entre dispositivos | Later | 4 | 4 | 16 | 17% |
-| M5 — Opcionais | Later | 31 | 26 | 86 | 22% |
+| M0 — Base inherited from upstream | Done | 78 | 0 | 0 | 100% |
+| M1 — Linux desktop file manager 1.0 | Done | 22 | 0 | 0 | 100% |
+| M2 — Default file manager on Linux | Done | 75 | 1 | 0 | 99% |
+| M3 — Cross-platform desktop and release | Now | 12 | 19 | 3 | 35% |
+| M4 — Device integration | Later | 4 | 4 | 16 | 17% |
+| M5 — Optional | Later | 31 | 26 | 86 | 22% |
 
-| Sprint | Datas | Done | In Progress | Progresso |
+| Sprint | Dates | Done | In Progress | Progress |
 |---|---|---|---|---|
-| [S01](sprints/S01.md) | 2026-10-01 a 2026-10-14 | 17/17 | 0 | 100% |
-| [S02](sprints/S02.md) | 2026-10-15 a 2026-10-28 | 3/3 | 0 | 100% |
-| [S03](sprints/S03.md) | 2026-10-07 a 2026-10-28 | 32/32 | 0 | 100% |
-| [S04](sprints/S04.md) | 2026-10-29 a 2026-11-11 | 37/37 | 0 | 100% |
-| [S05](sprints/S05.md) | 2026-11-12 a 2026-11-25 | 27/32 | 2 | 84% |
-| **[S06](sprints/S06.md)** (atual) | 2026-11-26 a 2026-12-09 | 11/38 | 23 | 29% |
-| [S07](sprints/S07.md) | 2026-12-10 a 2026-12-23 | 5/19 | 7 | 26% |
-| [S08](sprints/S08.md) | 2026-12-24 a 2027-01-06 | 1/20 | 1 | 5% |
-| [S09](sprints/S09.md) | 2027-01-07 a 2027-01-20 | 0/23 | 12 | 0% |
-| [S10](sprints/S10.md) | 2027-01-21 a 2027-02-03 | 0/15 | 5 | 0% |
-| [S11](sprints/S11.md) | 2027-02-04 a 2027-02-17 | 0/14 | 0 | 0% |
-| [S12](sprints/S12.md) | 2027-02-18 a 2027-03-03 | 0/14 | 0 | 0% |
-| [S13](sprints/S13.md) | 2027-03-04 a 2027-03-17 | 2/12 | 0 | 17% |
-| [S14](sprints/S14.md) | 2027-03-18 a 2027-03-31 | 0/10 | 0 | 0% |
-<!-- board:end progresso -->
+| [S01](sprints/S01.md) | 2026-10-01 to 2026-10-14 | 17/17 | 0 | 100% |
+| [S02](sprints/S02.md) | 2026-10-15 to 2026-10-28 | 3/3 | 0 | 100% |
+| [S03](sprints/S03.md) | 2026-10-07 to 2026-10-28 | 32/32 | 0 | 100% |
+| [S04](sprints/S04.md) | 2026-10-29 to 2026-11-11 | 37/37 | 0 | 100% |
+| [S05](sprints/S05.md) | 2026-11-12 to 2026-11-25 | 27/32 | 2 | 84% |
+| **[S06](sprints/S06.md)** (current) | 2026-11-26 to 2026-12-09 | 11/38 | 23 | 29% |
+| [S07](sprints/S07.md) | 2026-12-10 to 2026-12-23 | 5/19 | 7 | 26% |
+| [S08](sprints/S08.md) | 2026-12-24 to 2027-01-06 | 1/20 | 1 | 5% |
+| [S09](sprints/S09.md) | 2027-01-07 to 2027-01-20 | 0/23 | 12 | 0% |
+| [S10](sprints/S10.md) | 2027-01-21 to 2027-02-03 | 0/15 | 5 | 0% |
+| [S11](sprints/S11.md) | 2027-02-04 to 2027-02-17 | 0/14 | 0 | 0% |
+| [S12](sprints/S12.md) | 2027-02-18 to 2027-03-03 | 0/14 | 0 | 0% |
+| [S13](sprints/S13.md) | 2027-03-04 to 2027-03-17 | 2/12 | 0 | 17% |
+| [S14](sprints/S14.md) | 2027-03-18 to 2027-03-31 | 0/10 | 0 | 0% |
+<!-- board:end progress -->
 
-## Done — M0: Base herdada do upstream
+## Done — M0: Base inherited from upstream
 
-Tasks concluídas no Spacedrive antes do fork, sem milestone até 2026-11-13. Ficam como registro do
-que o WingDrive herdou pronto; nenhuma é revalidada aqui (o M4 revalida `NET-000` e `LSYNC-000`).
-Listar: `cargo run --bin task-validator -- list --milestone M0`.
+Tasks finished in Spacedrive before the fork, with no milestone until 2026-11-13. They stay as a
+record of what WingDrive inherited ready; none is revalidated here (M4 revalidates `NET-000` and
+`LSYNC-000`). List: `cargo run --bin task-validator -- list --milestone M0`.
 
-## Done — M1: File manager desktop Linux 1.0
+## Done — M1: Linux desktop file manager 1.0
 
-Resultado: no Linux, navegar, abrir, copiar, mover, renomear, criar pasta e apagar arquivos pela
-UI e pelo CLI, sem bug conhecido, rodando de um bundle de produção.
+Result: on Linux, browse, open, copy, move, rename, create folders and delete files from the UI and
+the CLI, with no known bug, running from a production bundle.
 
-Epics: `TAURI-000`, `EXPL-000`, `CLI-000` (estendido por `CLI-001`).
+Epics: `TAURI-000`, `EXPL-000`, `CLI-000` (extended by `CLI-001`).
 
-Concluídas no S01: WATCH-003, WATCH-004, CLI-001, EXPL-001/002/003/005/006/007, TAURI-008/009/010/011,
-DEV-003, BRAND-001 e a renomeação para `wing`. Release `v2.0.0-alpha.6` publicada no GitHub e no AUR (`wingdrive-bin`).
+Finished in S01: WATCH-003, WATCH-004, CLI-001, EXPL-001/002/003/005/006/007, TAURI-008/009/010/011,
+DEV-003, BRAND-001 and the rename to `wing`. Release `v2.0.0-alpha.6` published on GitHub and on the
+AUR (`wingdrive-bin`).
 
-Restante do M1, em ordem:
+Rest of M1, in order:
 
-| Ordem | Task | Título | Sprint |
+| Order | Task | Title | Sprint |
 |---|---|---|---|
-| 1 | TAURI-013 | Estabilização Linux: segurança de dados (Done) | S01 |
-| 2 | — | Próxima tag atualiza o AUR sem passo manual (Done) | S01 |
-| 3 | TAURI-014 | Robustez em runtime e paridade da busca (Done) | S02 |
-| 4 | TAURI-006 | Fechar a matriz de regressão Linux (Done) | S02 |
-| 5 | BRAND-002 | Wingbot, WingUI, Wingdrop e Wings (Done) | S02 |
+| 1 | TAURI-013 | Linux stabilization: data safety (Done) | S01 |
+| 2 | — | The next tag updates the AUR with no manual step (Done) | S01 |
+| 3 | TAURI-014 | Runtime robustness and search parity (Done) | S02 |
+| 4 | TAURI-006 | Close the Linux regression matrix (Done) | S02 |
+| 5 | BRAND-002 | Wingbot, WingUI, Wingdrop and Wings (Done) | S02 |
 
-Fora da ordem, já Done: licença Apache-2.0 e port de correções do upstream (#114, #115).
-Release `v2.0.0-alpha.7` sai com TAURI-013, TAURI-014 e essas correções; ver [CHANGELOG](../CHANGELOG.md).
+Out of order, already Done: the Apache-2.0 license and the port of upstream fixes (#114, #115).
+Release `v2.0.0-alpha.7` ships TAURI-013, TAURI-014 and those fixes; see the
+[CHANGELOG](../CHANGELOG.md).
 
-O M1 fecha quando essas cinco estiverem Done e uma release sair sem bug conhecido.
+M1 closes when these five are Done and a release ships with no known bug.
 
-## Done — M2: Gerenciador de arquivos padrão no Linux
+## Done — M2: Default file manager on Linux
 
-Prioridade máxima por decisão do usuário (2026-10-07). Resultado: WingDrive substitui Dolphin,
-Nautilus ou Yazi no uso diário. `xdg-open` em pastas e "Mostrar na pasta" de outros apps abrem o
-WingDrive, ele fica residente na bandeja e abre na hora, e tem as operações básicas de um file
-manager. Navegação continua gráfica; modo modal estilo Yazi fica fora.
+Top priority by the user's decision (2026-10-07). Result: WingDrive replaces Dolphin, Nautilus or
+Yazi in daily use. `xdg-open` on folders and "Show in folder" from other apps open WingDrive, it
+stays resident in the tray and opens at once, and it has the basic operations of a file manager.
+Navigation stays graphical; a Yazi-style modal mode is out of scope.
 
-Epic: `DESK-000`. Sprints S03 a S05.
+Epic: `DESK-000`. Sprints S03 to S05.
 
-| Ordem | Task | Título |
+| Order | Task | Title |
 |---|---|---|
-| 1 | DESK-001 | Integração XDG, caminhos na linha de comando e instância única |
-| 2 | DESK-003 | Segundo plano na bandeja e início com a sessão |
-| 3 | DESK-002 | Serviço D-Bus `org.freedesktop.FileManager1` |
-| 4 | DESK-004 | "Abrir com" real no Linux |
-| 5 | DESK-005 | "Abrir terminal aqui" |
-| 6 | DESK-006 | Novo arquivo vazio e link simbólico |
-| 7 | DESK-007 | Permissões e dono nas propriedades |
-| 8 | DESK-008 | Compactar e extrair |
-| 9 | DESK-009 | Rede e dispositivos via GIO/gvfs (MTP, SMB, SFTP) |
-| 10 | DESK-010 | Latência de abertura e orçamento de memória |
+| 1 | DESK-001 | XDG integration, command-line paths and single instance |
+| 2 | DESK-003 | Background in the tray and start with the session |
+| 3 | DESK-002 | D-Bus service `org.freedesktop.FileManager1` |
+| 4 | DESK-004 | Real "Open with" on Linux |
+| 5 | DESK-005 | "Open terminal here" |
+| 6 | DESK-006 | New empty file and symbolic link |
+| 7 | DESK-007 | Permissions and owner in properties |
+| 8 | DESK-008 | Compress and extract |
+| 9 | DESK-009 | Network and devices through GIO/gvfs (MTP, SMB, SFTP) |
+| 10 | DESK-010 | Startup latency and memory budget |
 
-Pré-requisito: TAURI-015 (pacote AUR com GTK/WebKit do sistema, daemon encerrado ao sair).
+Prerequisite: TAURI-015 (AUR package with the system GTK/WebKit, daemon stopped on quit).
 
-Estado em 2026-11-02: S01, S02 e S03 fechados. Done no M2: DESK-001 a DESK-012, DESK-014,
-DESK-015, DESK-018 a DESK-032, DESK-034 a DESK-040, TAURI-015, INDEX-013, INDEX-014,
-NET-005 a NET-007, SEC-010, WATCH-007, WATCH-008 e os portes do upstream (#230, #234, #235). A checagem
-no pacote de 2026-11-02 fechou 16 tasks de uma vez (log do [S04](sprints/S04.md)). O que falta para
-fechar o M2:
+State on 2026-11-02: S01, S02 and S03 closed. Done in M2: DESK-001 to DESK-012, DESK-014,
+DESK-015, DESK-018 to DESK-032, DESK-034 to DESK-040, TAURI-015, INDEX-013, INDEX-014,
+NET-005 to NET-007, SEC-010, WATCH-007, WATCH-008 and the upstream ports (#230, #234, #235). The
+check on the 2026-11-02 package closed 16 tasks at once (log of [S04](sprints/S04.md)). What was
+left to close M2:
 
-| Task | O que falta | Sprint |
+| Task | What was left | Sprint |
 |---|---|---|
-| BRAND-003 | Done em 2026-11-15: barra lateral dos Wings no desktop e sync com o moto g(7) na 3.3.1 | S05 |
-| DESK-051 | Done em 2026-11-15: login a frio com o `wingdrive-bin` 3.3.1 conferido pelo autor | S05 |
-| CORE-021 | Done em 2026-11-15: 15 rodadas do smoke do Explorer sem pasta vazia | S05 |
-| DESK-097 | Done em 2026-11-15: login com `--hidden` repassado à instância aberta não mostra a janela; setting "Iniciar minimizado na bandeja" | S05 |
-| DESK-000 | Done em 2026-11-15 | S05 |
+| BRAND-003 | Done on 2026-11-15: Wings sidebar on the desktop and sync with the moto g(7) on 3.3.1 | S05 |
+| DESK-051 | Done on 2026-11-15: cold login with `wingdrive-bin` 3.3.1 checked by the author | S05 |
+| CORE-021 | Done on 2026-11-15: 15 Explorer smoke rounds with no empty folder | S05 |
+| DESK-097 | Done on 2026-11-15: a login with `--hidden` passed to the open instance does not show the window; "Start minimized to the tray" setting | S05 |
+| DESK-000 | Done on 2026-11-15 | S05 |
 
-DESK-043 e DESK-090 fecharam em 2026-11-14: dez sessões da `v3.3.0` com 15 abas ficaram abaixo de
-550 MiB, e o modo alto do renderer não voltou nem com a `v3.0.0`.
+DESK-043 and DESK-090 closed on 2026-11-14: ten `v3.3.0` sessions with 15 tabs stayed under
+550 MiB, and the renderer's high mode did not come back even with `v3.0.0`.
 
-INDEX-010, DESK-041 e DESK-042 fecharam em 2026-11-03. DESK-017 (vários dias de uso do pacote AUR,
-relato do autor) e DESK-033 (`pkexec` e polkit reais na máquina do autor) fecharam em 2026-11-05, junto com
-WATCH-006 (conexão no login confirmada no journal), DESK-016 (painel duplo no pacote) e DESK-013
-(revisão completa do pt-BR no Crowdin e AppImage conferido no Hyprland).
+INDEX-010, DESK-041 and DESK-042 closed on 2026-11-03. DESK-017 (several days of use of the AUR
+package, reported by the author) and DESK-033 (real `pkexec` and polkit on the author's machine)
+closed on 2026-11-05, together with WATCH-006 (connection at login confirmed in the journal),
+DESK-016 (dual pane in the package) and DESK-013 (full pt-BR review on Crowdin and AppImage checked
+on Hyprland).
 
-**M2 fechado em 2026-11-15.** O DESK-051 foi conferido pelo autor com o `wingdrive-bin` `3.3.1`
-(login a frio e upload no Chrome), a BRAND-003 terminou com a barra lateral dos Wings no desktop e o
-sync com um celular na `3.3.1`, a CORE-021 passou em 15 rodadas do smoke do Explorer, e a DESK-097
-(janela aberta no login) foi corrigida. Com todas as filhas Done e o dia de uso da DESK-017, o
-DESK-000 fechou. As tasks de cobertura que estavam no M2 foram para o M3, onde ficam as metas.
+**M2 closed on 2026-11-15.** The author checked DESK-051 with `wingdrive-bin` `3.3.1` (cold login
+and upload in Chrome), BRAND-003 finished with the Wings sidebar on the desktop and sync with a phone
+on `3.3.1`, CORE-021 passed 15 Explorer smoke rounds, and DESK-097 (window shown at login) was
+fixed. With every child Done and the day of use from DESK-017, DESK-000 closed. The coverage tasks
+that were in M2 moved to M3, where their targets are.
 
-A [COV-07](testing/COV-07-desktop-native.md) foi reaberta no M2 em 2026-11-19 para a meta de
-100% de cobertura de linhas do shell desktop. A entrega do gerenciador padrão foi fechada em
-2026-11-15, e o M3 segue como foco.
+[COV-07](testing/COV-07-desktop-native.md) was reopened in M2 on 2026-11-19 for the target of 100%
+line coverage of the desktop shell. The default file manager delivery closed on 2026-11-15, and M3
+stays the focus.
 
-## Now — M3: Desktop multiplataforma e release
+## Now — M3: Cross-platform desktop and release
 
-Resultado: mesmo nível do M1 em macOS e Windows, com release público assinado.
+Result: the same level as M1 on macOS and Windows, with a signed public release.
 
-Estado em 2026-11-05: a `v3.0.0` saiu com os primeiros instaladores Windows (`.exe` e `.msi`, sem
-assinatura) ao lado dos pacotes Linux. Os jobs Windows do CI são required checks no `main`. O
-Windows está em beta: tudo passa no CI e no smoke dos instaladores, mas ninguém testou à mão numa
-máquina real. O macOS ainda só compila a partir do código.
+State on 2026-11-05: `v3.0.0` shipped the first Windows installers (`.exe` and `.msi`, unsigned)
+next to the Linux packages. The Windows CI jobs are required checks on `main`. Windows is in beta:
+everything passes in CI and in the installer smoke, but nobody has tested it by hand on a real
+machine. macOS still only builds from source.
 
-Done no M3: `TAURI-016` (base do Windows, CI e instaladores) e `FILE-007` (preflight de copiar,
-mover e apagar).
+Done in M3: `TAURI-016` (Windows base, CI and installers) and `FILE-007` (preflight for copy, move
+and delete).
 
-Estado em 2026-11-10: a `v3.1.0` leva o undo da FILE-008 para cópia, sobrescrita, movimentação e
-lixeira no core, no CLI e na web UI, e cópias que não perdem dados quando canceladas ou com falha.
+State on 2026-11-10: `v3.1.0` brings FILE-008 undo for copy, overwrite, move and trash to the core,
+the CLI and the web UI, and copies that lose no data when canceled or failed.
 
-| Ordem | Task | O que falta | Sprint |
+| Order | Task | What is left | Sprint |
 |---|---|---|---|
-| 1 | REL-001 | Credenciais e validação de Authenticode, assinatura e notarização Apple, chave do Google Play | S06 |
-| 2 | TAURI-018 | Smoke do Explorer (`scripts/release/explorer.cjs`) em todo pull request e 10 execuções agendadas; job no `ci.yml` desde 2026-11-15 | S05 |
-| 3 | CORE-022 | Logs do daemon e do app sem ruído de condições normais (`/tmp` sem permissão, arquivos temporários, teardown) | S06 |
-| 4 | TAURI-019 | Daemon no Windows sem janela de console, com ícone na bandeja (precisa de máquina Windows) | S07 |
-| 5 | TAURI-012 | Matriz de regressão à mão: rodada no Windows com as checagens que sobraram da TAURI-016; macOS quando houver um Mac | S06 |
-| 6 | CORE-014 | "Abrir com" e abrir arquivos no Windows e no macOS, conferidos na rodada da TAURI-012 | S06 |
-| 7 | TAURI-017 | Repetir como administrador no Windows via UAC; espera o certificado da REL-001 | — |
-| 8 | CLI-002 | `wing update` não acha binários nos releases do WingDrive (Done em 2026-11-05) | — |
-| 9 | FILE-008 | Done em 2026-11-12: todo undo do Explorer passa pelo journal do core (#378) | — |
-| 10 | TAURI-000 | Fecha quando REL-001, TAURI-018 e TAURI-012 fecharem | S06 |
+| 1 | REL-001 | Authenticode credentials and validation, Apple signing and notarization, Google Play key | S06 |
+| 2 | TAURI-018 | Explorer smoke (`scripts/release/explorer.cjs`) on every pull request and 10 scheduled runs; job in `ci.yml` since 2026-11-15 | S05 |
+| 3 | CORE-022 | Daemon and app logs free of noise from normal conditions (`/tmp` without permission, temporary files, teardown) | S06 |
+| 4 | TAURI-019 | Daemon on Windows without a console window, with a tray icon (needs a Windows machine) | S07 |
+| 5 | TAURI-012 | Regression matrix by hand: Windows round with the checks left from TAURI-016; macOS once there is a Mac | S06 |
+| 6 | CORE-014 | "Open with" and opening files on Windows and macOS, checked in the TAURI-012 round | S06 |
+| 7 | TAURI-017 | Retry as administrator on Windows through UAC; waits for the REL-001 certificate | — |
+| 8 | CLI-002 | `wing update` finds no binaries in WingDrive releases (Done on 2026-11-05) | — |
+| 9 | FILE-008 | Done on 2026-11-12: every Explorer undo goes through the core journal (#378) | — |
+| 10 | TAURI-000 | Closes when REL-001, TAURI-018 and TAURI-012 close | S06 |
 
-O AppImage e os instaladores Windows têm atualizações assinadas desde a `v3.4.0`. Desde a
-`v3.5.0`, a assinatura Authenticode dos instaladores Windows é habilitada quando as credenciais
-estão configuradas. Isso mantém REL-001 e a validação por plataforma em andamento.
+The AppImage and the Windows installers have signed updates since `v3.4.0`. Since `v3.5.0`,
+Authenticode signing of the Windows installers turns on when the credentials are set. That keeps
+REL-001 and the per-platform validation in progress.
 
-O M3 fecha com a TAURI-012 Done em Windows e macOS, e um release assinado em todas as plataformas
-que têm credencial.
+M3 closes with TAURI-012 Done on Windows and macOS, and a signed release on every platform that has
+a credential.
 
-### Cobertura de testes no M2 e M3
+### Test coverage in M2 and M3
 
-Por solicitação do usuário em 2026-11-03, o épico `COV-00` amplia a cobertura do core,
-desktop e CLI usando a infraestrutura da DEV-006. [Plano e metas](testing/README.md).
-As tasks `COV-01` a `COV-12` têm dependências e critérios verificáveis. Em 2026-11-10,
-COV-01 a COV-04, COV-06 e COV-07 estão In Progress, com suítes no `main` (#343, #344, #358, #359)
-e sem a medição LCOV que fecha cada meta; as demais ficam no backlog, sem alterar o compromisso
-do S04/S05 até haver capacidade no planning.
+At the user's request on 2026-11-03, epic `COV-00` widens the coverage of the core, desktop and CLI
+with the DEV-006 infrastructure. [Plan and targets](testing/README.md). Tasks `COV-01` to `COV-12`
+have dependencies and verifiable criteria. On 2026-11-10, COV-01 to COV-04, COV-06 and COV-07 are
+In Progress, with suites on `main` (#343, #344, #358, #359) and without the LCOV measurement that
+closes each target; the rest stay in the backlog, without changing the S04/S05 commitment until
+planning has capacity.
 
-No M2 entram os contratos e regressões críticas; o M3 fecha integração e gates com metas de
-50% no core, 75% no desktop, 60% no CLI e 60% na interface React, além de 80% nas linhas de
-produção alteradas. São metas futuras, verificadas pelo relatório completo, sem excluir
-código para elevar a média. O épico fecha com todas as filhas Done e evidência no main.
+Contracts and critical regressions go into M2; M3 closes integration and gates with targets of 50%
+for the core, 75% for the desktop, 60% for the CLI and 60% for the React interface, plus 80% of
+changed production lines. They are future targets, checked by the full report, with no code excluded
+to raise the average. The epic closes with every child Done and evidence on main.
 
-## Later — M4: Integração entre dispositivos
+## Later — M4: Device integration
 
-Pairing, Spacedrop, library sync e file sync confiáveis entre desktops.
+Reliable pairing, Spacedrop, library sync and file sync between desktops.
 
 - `FSYNC-000` File Sync
-- `SHARE-001` arquitetura de compartilhamento
-- Revalidar `NET-000` e `LSYNC-000` (marcados Done no upstream) em uso real
+- `SHARE-001` sharing architecture
+- Revalidate `NET-000` and `LSYNC-000` (marked Done upstream) in real use
 
-## Later — M5: Opcionais
+## Later — M5: Optional
 
-Cloud (`CLOUD-000`, `CLOUD-003`), extensões (`PLUG-000`), Spacebot (`TAURI-004`), IA (`AI-000`),
-mobile (`RES-000`, `SEC-009`). Só entram depois de M4, salvo decisão explícita.
+Cloud (`CLOUD-000`, `CLOUD-003`), extensions (`PLUG-000`), Spacebot (`TAURI-004`), AI (`AI-000`),
+mobile (`RES-000`, `SEC-009`). They come in only after M4, unless explicitly decided.
 
-Exceção decidida em 2026-11-12: integrações de nuvem de terceiros (épico `INTG-000`). A integração
-Google (`CLOUD-004`: Drive como volume, Google Fotos, sincronização de pastas com a nuvem) entrou no
-S05 a pedido do autor e fecha a parte de cópia da `FILE-003`. Para qualquer usuário conectar só com
-login faltam INTG-001 a INTG-005 (cliente OAuth embutido, política de privacidade, verificação do
-Google, validação real e reconexão), planejadas no [S06](sprints/S06.md). Depois vêm o framework de
-provedores (INTG-020) e Dropbox, OneDrive, Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA,
-Proton Drive, armazenamento de objetos, SFTP e SMB (INTG-021 a INTG-031).
+Exception decided on 2026-11-12: third-party cloud integrations (epic `INTG-000`). The Google
+integration (`CLOUD-004`: Drive as a volume, Google Photos, folder sync with the cloud) entered S05
+at the author's request and closes the copy part of `FILE-003`. For any user to connect by signing
+in alone, INTG-001 to INTG-005 are left (built-in OAuth client, privacy policy, Google verification,
+real validation and reconnection), planned in [S06](sprints/S06.md). Then come the provider
+framework (INTG-020) and Dropbox, OneDrive, Nextcloud, WebDAV, iCloud Drive, Box, pCloud, MEGA,
+Proton Drive, object storage, SFTP and SMB (INTG-021 to INTG-031).
 
-Em 2026-11-13 o login só com o botão funcionou com o Google real: cada provedor tem dois modos,
-"Conta" (cliente do WingDrive embutido no build, como o GNOME Online Accounts faz) e cliente próprio
-(Google Cloud ou Microsoft Entra), escolhidos num catálogo de cards em Configurações > Integrações
-(INTG-010). OneDrive (INTG-022) já entra por login no navegador; falta registrar o app do WingDrive
-na Microsoft. INTG-001 a INTG-004 andaram no S05.
+On 2026-11-13 signing in with the button alone worked with real Google: each provider has two
+modes, "Account" (WingDrive's client built into the release, as GNOME Online Accounts does) and an
+own client (Google Cloud or Microsoft Entra), chosen from a catalog of cards in Settings >
+Integrations (INTG-010). OneDrive (INTG-022) already signs in through the browser; the WingDrive app
+still has to be registered with Microsoft. INTG-001 to INTG-004 moved forward in S05.
 
 Exception decided on 2026-11-24: an adapter store (epic `ADAPT-000`, folder `.tasks/adapters/`).
 Sources > Add source shows "No adapters installed" on every install, because no package ships the
@@ -221,53 +225,54 @@ DankMaterialShell does with plugins. The store platform (ADAPT-001, 003, 004, 00
 enters S06; the Obsidian, GitHub, Thunderbird and coding agent session adapters and the
 wingdrive.org/adapters catalog follow in S07. The other adapters stay in the backlog.
 
-Exceção decidida em 2026-10-17: o épico mobile `MOB-000` (Android funcional, loop de dev rápido,
-paridade com o desktop) foi puxado para agora. MOB-001 a MOB-005 entram no S03.
+Exception decided on 2026-10-17: the mobile epic `MOB-000` (working Android, fast dev loop, parity
+with the desktop) was pulled forward. MOB-001 to MOB-005 enter S03.
 
-## Backlog herdado do upstream
+## Backlog inherited from upstream
 
-Tasks criadas no upstream que ainda estavam abertas; desde 2026-11-13 todas têm `bernardopg` como responsável. Na auditoria de
-2026-10-16 receberam a tag `upstream-backlog` e uma nota "WingDrive triage" no arquivo, sem apagar
-nada:
+Tasks created upstream that were still open; since 2026-11-13 all have `bernardopg` as assignee. In
+the 2026-10-16 audit they got the `upstream-backlog` tag and a "WingDrive triage" note in the file,
+with nothing deleted:
 
-- M4 (20 tasks): file sync (`FSYNC-*`), compartilhamento público (`SHARE-*`), Spacedrop e Tailscale
-  (`NET-003`, `NET-004`), sync de sidecars entre devices (`VSS-004`) e `FILE-006`.
-- M5 (45 tasks): IA, cloud, extensões, busca semântica (`SEARCH-*`), criptografia e RBAC (`SEC-*`),
-  mobile e volumes virtuais, sidecars, coleções e ingestão, épicos de interface herdados (`UI-000`,
-  `UI-001`, `MEDIA-000`, `NAV-000`, `SETS-000`, `SRCH-000`).
-- Fechadas como obsoletas: `CORE-012` (registro de tipos em Swift, sem app Swift no repositório) e
-  `CORE-013` (substituída pelo `useNormalizedQuery` do `ts-client`).
+- M4 (20 tasks): file sync (`FSYNC-*`), public sharing (`SHARE-*`), Spacedrop and Tailscale
+  (`NET-003`, `NET-004`), sidecar sync between devices (`VSS-004`) and `FILE-006`.
+- M5 (45 tasks): AI, cloud, extensions, semantic search (`SEARCH-*`), encryption and RBAC (`SEC-*`),
+  mobile and virtual volumes, sidecars, collections and ingestion, inherited interface epics
+  (`UI-000`, `UI-001`, `MEDIA-000`, `NAV-000`, `SETS-000`, `SRCH-000`).
+- Closed as obsolete: `CORE-012` (Swift type registry, no Swift app in the repository) and
+  `CORE-013` (replaced by `useNormalizedQuery` in `ts-client`).
 
-Listar: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`.
+List: `cargo run --bin task-validator -- list --milestone M5 --status "To Do"`.
 
-## Histórico
+## History
 
-| Data | Mudança |
+| Date | Change |
 |---|---|
-| 2026-11-20 | Preparação da `v3.6.0`: operações locais, favoritos, tags e lixeira no Explorer Android (MOB-007, #431), correções no desktop, CLI e core. A COV-07 continua aberta. |
-| 2026-11-17 | Release `v3.5.0`: Google Picker para contas `drive.file` e um escopo do Fotos a menos (INTG-011, INTG-003, #428), resposta à verificação OAuth do Google; correções de Windows (#420, #421) e Android (#416 a #419), logs pela bandeja (#423), Authenticode condicional (#422). |
-| 2026-11-17 | Release `v3.4.1`: Rust 1.100, dependências do dependabot e não rastreadas num PR só, alertas de code scanning resolvidos (#410), filme e media kit no site (#412), CI Rust com um conjunto de features (#413) |
-| 2026-11-16 | Release `v3.4.0`: atualizações assinadas do AppImage e do Windows (REL-001), daemon sem console no Windows (TAURI-019), `drive.file` no cliente Google do WingDrive (INTG-003, #407; verificação do Google enviada, Acesso a dados em análise), board de tasks e MCP (DEV-007, #406), CORE-022, CORE-023, MOB-017 e Wings (BRAND-003) |
-| 2026-11-15 | **M2 Done**: DESK-051 conferida pelo autor, BRAND-003 com barra lateral e sync com celular na 3.3.1, CORE-021 com 15 rodadas do smoke, DESK-097 (janela no login) corrigida; DESK-000 Done. M3 vira o Now. Tasks novas: TAURI-018 (smoke do Explorer no CI), TAURI-019 (daemon no Windows em segundo plano), CORE-022 (ruído de log), CORE-023 (full sync em loop), MOB-017 (revisão Android). Cobertura no `main`: core 53,7%, desktop 90,7%, CLI 65,9%, interface 74,5%; metas do M3 batidas e as COV abertas foram para o M3 |
-| 2026-11-15 | Release `v3.3.1` e Wings no código (#397). Plano do app desktop: o S05 fecha o M2 com BRAND-003, DESK-051 e CORE-021 (veio do S06) e solta a 3.4.0; o S06 abre com o updater assinado (REL-001), a nova TAURI-018 (smoke do Explorer em todo pull request) e a rodada Windows da TAURI-012 antes das integrações. Build Android funciona com `CFLAGS=-march=native` no host |
-| 2026-11-13 | Release `v3.3.0` (#393): login no Google com um botão pelo cliente OAuth do WingDrive embutido no build (secrets do repositório), modo com cliente próprio, OneDrive por login no navegador, catálogo de integrações, `/privacy` e `/service-terms` |
-| 2026-11-13 | Integrações: modos "Conta" e cliente próprio com catálogo de cards (INTG-010), OneDrive por login no navegador (INTG-022), projeto e cliente OAuth do WingDrive no Google com login real funcionando (INTG-001, INTG-004), `/privacy` e `/service-terms` no site (INTG-002) |
-| 2026-11-13 | Release `v3.2.0` (#383 a #389): integração Google com Drive e Fotos em várias contas (CLOUD-004), operações e edição em volumes de nuvem, cloud sync, COV-07 Done com 91,6% de cobertura do shell desktop e os bugs achados corrigidos, `sdPath` para `wdPath` (BRAND-003) |
-| 2026-11-13 | Todas as tasks com responsável `bernardopg`, milestone (M0 para as concluídas no upstream) e sprint; sprints S07 a S14 planejados |
-| 2026-11-12 | Release `v3.1.1` (#368 a #381): portal `FileChooser` (DESK-051), undo de renomear e novos itens no Tauri (FILE-008), correções DESK-090 a DESK-096, CORE-020, CLI-010, cerca de 175 testes e atualizações do Dependabot |
-| 2026-11-12 | PRs #373 a #379: site com deploy automático e Discord em inglês; FILE-008 Done; DESK-051 com o backend do portal `FileChooser` (falta conferir com navegadores e no pacote); revalidação do S03/S04 achou DESK-090 a DESK-096; coverage com CORE-020, CLI-010 e DESK-060 |
-| 2026-11-10 | Release `v3.1.0` em preparação (#347 a #360): FILE-008 com undo no core, CLI e web UI (falta o lado Tauri); COV-03 sem perda de dados em cópia cancelada; MOB-013 e MOB-014 Done; SQLite embutido atualizado (RUSTSEC-2026-0459); COV-04, COV-06 e COV-07 In Progress com 79 testes e sete bugs corrigidos |
-| 2026-11-05 | M2: WATCH-006, DESK-016 e DESK-013 Done; revisão das 2160 frases pt-BR (46 correções); dez rodadas da DESK-043 com a `v3.0.0` (estáveis, 4 de 10 abaixo de 550 MiB). Falta a DESK-043 para fechar o DESK-000 |
-| 2026-11-05 | Release `v3.0.0` com os primeiros instaladores Windows (#331 a #334). TAURI-016 Done, jobs Windows viram required checks (#336) e o README marca o Windows como beta (#335). Sobras da TAURI-016 distribuídas: checagens à mão na TAURI-012, assinatura na REL-001, UAC na nova TAURI-017. Nova CLI-002 (`wing update` sem binários no release). Tabela do M3 com ordem |
-| 2026-11-03 | COV-00 e COV-01 a COV-12: metas progressivas de cobertura, prioridade em core/desktop/CLI e critérios de evidência, sem ampliar sprints já comprometidos |
-| 2026-11-02 | WingDrive independente (#310): tasks FORK-* removidas do tracker (histórico no git); NET-007 herda o critério aberto da FORK-007, REL-001 (S05) a assinatura da FORK-002, FORK-009 descartada; levantamentos do upstream em `docs/design/history/`. S01 fechado com review e retro. Checagem no pacote fecha 16 tasks do S04 e acha DESK-039 a DESK-042; release 2.4.0 |
-| 2026-10-28 | #296 mergeado; S02 e S03 fechados com review e retro; sobras do S03 (DESK-021, DESK-023, DESK-024, WATCH-006, MOB-005, MOB-009) no S04; DESK-034 e as duas falhas da DESK-029 (emblema Git nos filhos e contagem da barra de status) entram no S04; DESK-016 ganha notas de desenho |
-| 2026-10-28 | S04: DESK-029 a DESK-033 e DESK-035 com código pronto (PRs #296 e #298), In Progress até a checagem no build Linux; visualização rápida de PDF, texto e código (#295); pdfjs-dist 6.4 fecha o alerta Dependabot 47 (#297); DESK-034 adiada |
-| 2026-10-17 | Revisão do app mobile no Moto G7 e no emulador: épico MOB-000 com 11 tasks em `.tasks/mobile/`; MOB-001 a MOB-005 puxadas para o S03 |
-| 2026-10-16 | Auditoria do `.tasks/`: quadro do S03 atualizado, S04 e S05 planejados; 65 tasks herdadas do upstream estacionadas em M4/M5; EXPL-000 e SEC-008 Done; CORE-012 e CORE-013 obsoletas |
-| 2026-10-15 | M2 quase fechado; candidatas DESK-015, DESK-016 e DESK-017 abertas; app mobile traduzido e com typecheck no CI |
-| 2026-10-07 | Novo M2 "Gerenciador de arquivos padrão no Linux" (DESK-000) como prioridade máxima; antigos M2–M4 viram M3–M5 |
-| 2026-10-06 | M1 completo: TAURI-006 e BRAND-002 Done; INDEX-010 integrada; sync multi-device corrigido |
-| 2026-10-06 | FORK-004, TAURI-014 e FORK-005 Done; licença Apache-2.0; release `v2.0.0-alpha.7` |
-| 2026-10-05 | Now atualizado: alpha.6 publicada no AUR; TAURI-013 dividida (TAURI-014); BRAND-002 e TAURI-006 no S02 |
-| 2026-10-01 | Roadmap criado; M1 definido a partir da revisão `docs/design/history/TAURI_FILEMANAGER_REVIEW_2026-09-03.md` |
+| 2026-11-28 | Planning text in English: board tables, the roadmap and the open sprints S06 to S14 translated; closed sprints S03 to S05 keep their logs as written. |
+| 2026-11-20 | `v3.6.0` preparation: local operations, favorites, tags and trash in the Android Explorer (MOB-007, #431), fixes in the desktop, CLI and core. COV-07 stays open. |
+| 2026-11-17 | Release `v3.5.0`: Google Picker for `drive.file` accounts and one fewer Photos scope (INTG-011, INTG-003, #428), reply to Google's OAuth verification; Windows (#420, #421) and Android (#416 to #419) fixes, logs from the tray (#423), conditional Authenticode (#422). |
+| 2026-11-17 | Release `v3.4.1`: Rust 1.100, Dependabot and untracked dependencies in a single PR, code scanning alerts resolved (#410), film and media kit on the site (#412), Rust CI with one feature set (#413) |
+| 2026-11-16 | Release `v3.4.0`: signed updates for the AppImage and Windows (REL-001), daemon without a console on Windows (TAURI-019), `drive.file` in WingDrive's Google client (INTG-003, #407; Google verification submitted, Data Access under review), task board and MCP (DEV-007, #406), CORE-022, CORE-023, MOB-017 and Wings (BRAND-003) |
+| 2026-11-15 | **M2 Done**: DESK-051 checked by the author, BRAND-003 with sidebar and phone sync on 3.3.1, CORE-021 with 15 smoke rounds, DESK-097 (window at login) fixed; DESK-000 Done. M3 becomes Now. New tasks: TAURI-018 (Explorer smoke in CI), TAURI-019 (Windows daemon in the background), CORE-022 (log noise), CORE-023 (full sync in a loop), MOB-017 (Android review). Coverage on `main`: core 53.7%, desktop 90.7%, CLI 65.9%, interface 74.5%; M3 targets met and the open COV tasks moved to M3 |
+| 2026-11-15 | Release `v3.3.1` and Wings in the code (#397). Desktop app plan: S05 closes M2 with BRAND-003, DESK-051 and CORE-021 (from S06) and ships 3.4.0; S06 opens with the signed updater (REL-001), the new TAURI-018 (Explorer smoke on every pull request) and the TAURI-012 Windows round before the integrations. The Android build works with `CFLAGS=-march=native` on the host |
+| 2026-11-13 | Release `v3.3.0` (#393): Google sign-in with one button through WingDrive's OAuth client built into the release (repository secrets), own-client mode, OneDrive sign-in through the browser, integration catalog, `/privacy` and `/service-terms` |
+| 2026-11-13 | Integrations: "Account" and own-client modes with a card catalog (INTG-010), OneDrive sign-in through the browser (INTG-022), WingDrive's Google project and OAuth client with real sign-in working (INTG-001, INTG-004), `/privacy` and `/service-terms` on the site (INTG-002) |
+| 2026-11-13 | Release `v3.2.0` (#383 to #389): Google integration with Drive and Photos in several accounts (CLOUD-004), operations and editing on cloud volumes, cloud sync, COV-07 Done with 91.6% coverage of the desktop shell and the bugs found fixed, `sdPath` to `wdPath` (BRAND-003) |
+| 2026-11-13 | Every task assigned to `bernardopg`, with a milestone (M0 for those finished upstream) and a sprint; sprints S07 to S14 planned |
+| 2026-11-12 | Release `v3.1.1` (#368 to #381): `FileChooser` portal (DESK-051), undo of rename and new items in Tauri (FILE-008), fixes DESK-090 to DESK-096, CORE-020, CLI-010, about 175 tests and Dependabot updates |
+| 2026-11-12 | PRs #373 to #379: site with automatic deploy and Discord in English; FILE-008 Done; DESK-051 with the `FileChooser` portal backend (browsers and the package still to check); the S03/S04 revalidation found DESK-090 to DESK-096; coverage with CORE-020, CLI-010 and DESK-060 |
+| 2026-11-10 | Release `v3.1.0` in preparation (#347 to #360): FILE-008 with undo in the core, CLI and web UI (the Tauri side is left); COV-03 with no data loss on a canceled copy; MOB-013 and MOB-014 Done; bundled SQLite updated (RUSTSEC-2026-0459); COV-04, COV-06 and COV-07 In Progress with 79 tests and seven bugs fixed |
+| 2026-11-05 | M2: WATCH-006, DESK-016 and DESK-013 Done; review of the 2160 pt-BR strings (46 fixes); ten DESK-043 rounds with `v3.0.0` (stable, 4 of 10 under 550 MiB). DESK-043 is left to close DESK-000 |
+| 2026-11-05 | Release `v3.0.0` with the first Windows installers (#331 to #334). TAURI-016 Done, Windows jobs become required checks (#336) and the README marks Windows as beta (#335). TAURI-016 leftovers spread out: checks by hand in TAURI-012, signing in REL-001, UAC in the new TAURI-017. New CLI-002 (`wing update` with no binaries in the release). M3 table with order |
+| 2026-11-03 | COV-00 and COV-01 to COV-12: progressive coverage targets, core/desktop/CLI first and evidence criteria, without widening sprints already committed |
+| 2026-11-02 | WingDrive independent (#310): FORK-* tasks removed from the tracker (history in git); NET-007 inherits the open criterion of FORK-007, REL-001 (S05) the signing from FORK-002, FORK-009 dropped; upstream surveys in `docs/design/history/`. S01 closed with review and retro. The package check closes 16 S04 tasks and finds DESK-039 to DESK-042; release 2.4.0 |
+| 2026-10-28 | #296 merged; S02 and S03 closed with review and retro; S03 leftovers (DESK-021, DESK-023, DESK-024, WATCH-006, MOB-005, MOB-009) in S04; DESK-034 and the two DESK-029 failures (Git badge on children and status bar count) enter S04; DESK-016 gets design notes |
+| 2026-10-28 | S04: DESK-029 to DESK-033 and DESK-035 with code ready (PRs #296 and #298), In Progress until the check on the Linux build; quick view of PDF, text and code (#295); pdfjs-dist 6.4 closes Dependabot alert 47 (#297); DESK-034 postponed |
+| 2026-10-17 | Review of the mobile app on the Moto G7 and the emulator: epic MOB-000 with 11 tasks in `.tasks/mobile/`; MOB-001 to MOB-005 pulled into S03 |
+| 2026-10-16 | `.tasks/` audit: S03 board updated, S04 and S05 planned; 65 tasks inherited from upstream parked in M4/M5; EXPL-000 and SEC-008 Done; CORE-012 and CORE-013 obsolete |
+| 2026-10-15 | M2 almost closed; candidates DESK-015, DESK-016 and DESK-017 opened; mobile app translated and with typecheck in CI |
+| 2026-10-07 | New M2 "Default file manager on Linux" (DESK-000) as top priority; the old M2–M4 become M3–M5 |
+| 2026-10-06 | M1 complete: TAURI-006 and BRAND-002 Done; INDEX-010 integrated; multi-device sync fixed |
+| 2026-10-06 | FORK-004, TAURI-014 and FORK-005 Done; Apache-2.0 license; release `v2.0.0-alpha.7` |
+| 2026-10-05 | Now updated: alpha.6 published on the AUR; TAURI-013 split (TAURI-014); BRAND-002 and TAURI-006 in S02 |
+| 2026-10-01 | Roadmap created; M1 defined from the review `docs/design/history/TAURI_FILEMANAGER_REVIEW_2026-09-03.md` |

@@ -19,6 +19,8 @@ This directory tracks the complete development of WingDrive. Tasks are organized
 - `testing/` - Test coverage plan and bug log (COV)
 - `adapters/` - Data source adapters (ADAPT)
 
+Write every task, sprint, roadmap entry and log line in English, whatever language the conversation uses.
+
 Tasks are always kept up-to-date, though some may need updating based on recent work. Your job is to check git history for changes, validate completed tasks against the instructions below, and update their status accordingly.
 
 ## Quick Start
