@@ -76,6 +76,19 @@ packaged 3.8.2 build showed WingDrive's name and links, with no "Google hasn't v
 screen (INTG-004). The 100-user cap counter still shows on the Audience page; Google says it is not
 enforced for verified scopes.
 
+## Logo submission (2026-11-28)
+
+The author decided to add the logo even though it triggers a new brand review. Steps on
+Google Auth Platform > Branding: uploaded `docs/logo/wingdrive-logo-120.png` (PNG, 120x120,
+4.9 KB), saved, then "Verificar marca". No form asked for scope justifications, a demo video or
+other data: the review was the automated brand check, which passed within five minutes. The
+Branding page then offered "Publicar branding" (the verified result expires after 7 days if not
+published); it was published right away. Status shown afterwards: Branding "Sua marca foi
+verificada e está aparecendo para os usuários" with the new logo; Verification Center reports
+branding verified and "O acesso aos dados do seu app foi verificado". Name, support email,
+homepage, privacy and terms links, authorized domain and developer contacts were left as they
+were; scopes, clients, secrets and API keys were not touched. The task stays Done.
+
 ## Acceptance Criteria
 
 - [x] Any Google account signs in without the unverified-app warning (Verification Center reports branding and data access verified; checked with the author's account on 2026-11-28).

@@ -72,6 +72,14 @@ Checked in Google Cloud Console (Google Auth Platform > Branding):
   `http://127.0.0.1/*`, which matches the Picker page on any loopback port. The Picker loaded and
   listed Drive with it on 2026-11-28. The author keeps it outside the repository.
 
+Logo, later the same day: the author chose to upload it after all. `docs/logo/wingdrive-logo-120.png`
+(PNG, 120x120, 4.9 KB, within Google's square 120 px and 1 MB limits) was uploaded on the Branding
+page and the brand was submitted with "Verificar marca". The automated check passed in about five
+minutes ("Sua marca foi verificada, mas ainda não está sendo mostrada aos usuários"), and
+"Publicar branding" made it live: Branding now reads "Sua marca foi verificada e está aparecendo
+para os usuários", with the logo as "Logotipo do app atual". Scopes, clients, secrets and API
+keys were not changed. INTG-003 has the verification record.
+
 Left: AUR `wingdrive-nightly` (builds from source), Docker image, Flatpak and mobile, and the CI
 check of the client source.
 
