@@ -439,8 +439,9 @@ export function useExplorerFiles(): ExplorerFilesResult {
 		? (searchQuery.data as FileSearchOutput | undefined)
 		: undefined;
 
+	// TAURI-018 deliberate break: the listing is always empty. Never merge.
 	return {
-		files,
+		files: [],
 		isLoading,
 		error,
 		source,
