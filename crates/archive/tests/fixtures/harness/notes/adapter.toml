@@ -1,0 +1,37 @@
+[adapter]
+id = "notes"
+name = "Notes"
+summary = "Reads the .txt files of a folder, one note per file."
+version = "1.0.0"
+author = "WingDrive"
+license = "Apache-2.0"
+contract = 1
+platforms = ["linux", "macos", "windows"]
+
+[adapter.runtime]
+kind = "python3"
+entry = "sync.py"
+
+[adapter.permissions]
+read = ["{config.folder}"]
+
+[[adapter.config]]
+key = "folder"
+name = "Folder"
+type = "string"
+required = true
+
+[data_type]
+id = "note"
+name = "Note"
+
+[models.note]
+fields.title = "string"
+fields.body = "text"
+fields.words = "integer"
+
+[search]
+primary_model = "note"
+title = "title"
+preview = "body"
+search_fields = ["title", "body"]

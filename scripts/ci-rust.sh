@@ -171,6 +171,13 @@ run_full_tests() {
 	cargo test --locked --no-run -p "$file_opening_crate"
 	cargo test --locked --no-run -p file-clipboard-windows
 
+	# ADAPT-003: the contract harness that the templates, the registry checks and
+	# `wing adapter test` run. Its fixture adapter is a Python script.
+	if [ "$(uname -s)" = Linux ]; then
+		step "Test the adapter contract harness"
+		cargo test --locked -p wing-archive --lib --test harness_test
+	fi
+
 	step "Test branding, key storage and legacy path resolution"
 	cargo test --locked -p wing-branding
 	cargo_test --test branding_legacy_paths

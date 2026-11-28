@@ -15,7 +15,7 @@ use crate::error::Result;
 use crate::safety::TrustTier;
 
 /// Report returned after an adapter sync completes.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SyncReport {
 	pub records_upserted: u64,
 	pub records_deleted: u64,

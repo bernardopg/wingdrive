@@ -29,6 +29,7 @@ qr2term     = "0.3"
 reqwest     = { version = "0.12", features = ["json"] }
 semver      = "1"
 wing-core     = { path = "../../core", features = ["cli"] }
+wing-archive  = { path = "../../crates/archive" }
 serde       = { version = "1", features = ["derive"] }
 serde_json  = "1"
 tokio       = { version = "1", features = ["full"] }

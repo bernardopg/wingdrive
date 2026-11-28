@@ -15,6 +15,14 @@ pub struct SourceDb {
 	schema: DataTypeSchema,
 }
 
+/// A record as a source database stores it, from [`SourceDb::records`].
+#[derive(Debug, Clone, PartialEq)]
+pub struct StoredRecord {
+	pub external_id: String,
+	/// Declared fields, each as text or `null`.
+	pub fields: serde_json::Map<String, serde_json::Value>,
+}
+
 /// A record that needs embedding.
 #[derive(Debug, Clone)]
 pub struct EmbeddingRecord {
@@ -422,6 +430,46 @@ impl SourceDb {
 		.fetch_one(&self.pool)
 		.await?;
 		Ok(row.0)
+	}
+
+	/// Every record of a model, with its declared fields as text, ordered by external ID.
+	///
+	/// Values come back as stored: the database keeps each field as the text an adapter's
+	/// JSON value turns into, so `1`, `"1"` and `true` read as `"1"`, `"1"` and `"true"`.
+	/// An absent field reads as `null`.
+	pub async fn records(&self, model: &str) -> Result<Vec<StoredRecord>> {
+		let model_def = self
+			.schema
+			.models
+			.get(model)
+			.ok_or_else(|| Error::Other(format!("unknown model: {model}")))?;
+		let table = pluralize(model);
+		let mut object = String::from("json_object(");
+		for (index, field) in model_def.fields.keys().enumerate() {
+			if index > 0 {
+				object.push_str(", ");
+			}
+			let quoted = field.replace('\'', "''");
+			let _ = write!(object, "'{quoted}', CAST(\"{field}\" AS TEXT)");
+		}
+		object.push(')');
+		let rows: Vec<(String, String)> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+			"SELECT \"external_id\", {object} FROM \"{table}\" ORDER BY \"external_id\""
+		)))
+		.fetch_all(&self.pool)
+		.await?;
+		rows.into_iter()
+			.map(|(external_id, fields)| {
+				let fields = match serde_json::from_str(&fields)? {
+					serde_json::Value::Object(fields) => fields,
+					_ => serde_json::Map::new(),
+				};
+				Ok(StoredRecord {
+					external_id,
+					fields,
+				})
+			})
+			.collect()
 	}
 
 	/// Fetch records needing embedding.

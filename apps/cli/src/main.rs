@@ -50,6 +50,7 @@ mod tests;
 
 use crate::context::{Context, OutputFormat};
 use crate::domains::{
+	adapter::{self, AdapterCmd},
 	adapters::{self, AdaptersCmd},
 	cloud, config as config_cmd,
 	daemon::{self, DaemonCmd},
@@ -234,6 +235,9 @@ enum Commands {
 	/// Adapter store: browse, install, update and remove data source adapters
 	#[command(subcommand)]
 	Adapters(AdaptersCmd),
+	/// Tools for writing an adapter: run it against its fixtures (no daemon needed)
+	#[command(subcommand)]
+	Adapter(AdapterCmd),
 	/// Volume operations
 	#[command(subcommand)]
 	Volume(VolumeCmd),
@@ -530,6 +534,10 @@ async fn main() -> Result<()> {
 					adapter_check_failure(&error.to_string())
 				);
 			}
+		}
+		Commands::Adapter(cmd) => {
+			// Adapter development runs locally, without a daemon
+			adapter::run(cmd).await?;
 		}
 		_ => {
 			run_client_command(cli.command, cli.format, data_dir, instance, socket_addr).await?;
