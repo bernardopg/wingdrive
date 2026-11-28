@@ -435,6 +435,156 @@ preview = "body"
 search_fields = ["title", "body"]
 "#;
 
+	/// Log lines written while a test runs, at every level.
+	#[derive(Clone, Default)]
+	struct CapturedLogs(Arc<std::sync::Mutex<Vec<u8>>>);
+
+	impl std::io::Write for CapturedLogs {
+		fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+			self.0.lock().unwrap().extend_from_slice(buf);
+			Ok(buf.len())
+		}
+
+		fn flush(&mut self) -> std::io::Result<()> {
+			Ok(())
+		}
+	}
+
+	impl<'a> tracing_subscriber::fmt::MakeWriter<'a> for CapturedLogs {
+		type Writer = Self;
+
+		fn make_writer(&'a self) -> Self::Writer {
+			self.clone()
+		}
+	}
+
+	/// Files below `dir` whose bytes contain `needle`.
+	fn files_containing(dir: &std::path::Path, needle: &[u8]) -> Vec<std::path::PathBuf> {
+		let mut found = Vec::new();
+		let mut pending = vec![dir.to_path_buf()];
+		while let Some(dir) = pending.pop() {
+			for entry in std::fs::read_dir(&dir).unwrap() {
+				let path = entry.unwrap().path();
+				if path.is_dir() {
+					pending.push(path);
+				} else if std::fs::read(&path)
+					.unwrap()
+					.windows(needle.len())
+					.any(|window| window == needle)
+				{
+					found.push(path);
+				}
+			}
+		}
+		found
+	}
+
+	/// Installs the fixture adapter with a sync script that checks the token it receives
+	/// and stores only whether it matched, so the source database never holds the token.
+	async fn manager_with_checking_adapter(
+		root: &std::path::Path,
+		expected_token: &str,
+	) -> (SourceManager, Arc<KeyManager>) {
+		let installed = root.join("installed");
+		let adapter = installed.join("fixture");
+		std::fs::create_dir_all(&adapter).unwrap();
+		std::fs::write(adapter.join("adapter.toml"), MANIFEST).unwrap();
+		std::fs::write(
+			adapter.join("sync.py"),
+			format!(
+				"import json, sys\ndata = json.load(sys.stdin)\nok = data['config'].get('token') == {expected_token:?}\nprint(json.dumps({{'upsert': 'note', 'external_id': 'token', 'fields': {{'title': 'token', 'body': 'received' if ok else 'missing'}}}}))\n"
+			),
+		)
+		.unwrap();
+		let keys = Arc::new(
+			KeyManager::new_with_fallback(root.to_path_buf(), Some(root.join("device.key")))
+				.unwrap(),
+		);
+		let manager = SourceManager::new(
+			root.join("library"),
+			installed,
+			keys.clone(),
+			Uuid::new_v4(),
+		)
+		.await
+		.unwrap();
+		(manager, keys)
+	}
+
+	#[tokio::test(flavor = "current_thread")]
+	async fn secrets_reach_the_adapter_but_not_the_source_database_or_logs() {
+		const TOKEN: &str = "synthetic-token-7f3a9c";
+		let logs = CapturedLogs::default();
+		let subscriber = tracing_subscriber::fmt()
+			.with_max_level(tracing::Level::TRACE)
+			.with_writer(logs.clone())
+			.with_ansi(false)
+			.finish();
+		let _guard = tracing::subscriber::set_default(subscriber);
+
+		let temp = tempfile::tempdir().unwrap();
+		let (manager, _keys) = manager_with_checking_adapter(temp.path(), TOKEN).await;
+		let source = manager
+			.create_source(
+				"Checked",
+				"fixture",
+				json!({"token": TOKEN, "folder": "one"}),
+			)
+			.await
+			.unwrap();
+		manager
+			.update_source(&source.id, None, Some(json!({"token": TOKEN})))
+			.await
+			.unwrap();
+		let report = manager.sync_source(&source.id).await.unwrap();
+		assert_eq!(report.error, None);
+
+		let items = manager.list_items(&source.id, 10, 0).await.unwrap();
+		assert_eq!(items[0].preview.as_deref(), Some("received"));
+		assert_eq!(
+			files_containing(&temp.path().join("library"), TOKEN.as_bytes()),
+			Vec::<std::path::PathBuf>::new(),
+			"the token was written to the library's files"
+		);
+		let logs = String::from_utf8(logs.0.lock().unwrap().clone()).unwrap();
+		assert!(!logs.is_empty(), "the subscriber captured nothing");
+		assert!(!logs.contains(TOKEN), "the token reached the logs:\n{logs}");
+	}
+
+	#[tokio::test]
+	async fn sync_moves_plain_text_secrets_out_of_the_registry() {
+		const TOKEN: &str = "synthetic-legacy-token";
+		let temp = tempfile::tempdir().unwrap();
+		let (manager, keys) = manager_with_checking_adapter(temp.path(), TOKEN).await;
+		// A source created before secrets left the registry.
+		let source = manager
+			.engine()
+			.create_source(
+				"Legacy",
+				"fixture",
+				json!({"token": TOKEN, "folder": "one"}),
+			)
+			.await
+			.unwrap();
+		assert_eq!(source.config["token"], TOKEN);
+		let (_, config, stored) = manager.source_config(&source.id).await.unwrap();
+		assert_eq!(config, json!({"folder": "one"}));
+		assert_eq!(stored, vec!["token"]);
+
+		let report = manager.sync_source(&source.id).await.unwrap();
+		assert_eq!(report.error, None);
+		let items = manager.list_items(&source.id, 10, 0).await.unwrap();
+		assert_eq!(items[0].preview.as_deref(), Some("received"));
+		let migrated = manager.get_source(&source.id).await.unwrap();
+		assert_eq!(migrated.config, json!({"folder": "one"}));
+		assert_eq!(
+			keys.get_secret(&manager.secret_key(&source.id, "token"))
+				.await
+				.unwrap(),
+			TOKEN.as_bytes()
+		);
+	}
+
 	#[tokio::test]
 	async fn source_lifecycle_keeps_secrets_out_of_registry() {
 		let temp = tempfile::tempdir().unwrap();
