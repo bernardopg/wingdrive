@@ -234,7 +234,14 @@ the source's full-text index, and are embedded for semantic search.
 `wing adapter test <folder>` runs an adapter against its test cases the way the daemon runs it:
 same stdin, same sandbox, the cursor of each run passed to the next. It needs no daemon. The
 template CI and the registry's review checks run the same harness
-(`wing_archive::harness::test_adapter`).
+(`wing_archive::harness::test_adapter`). The registry builds it as `wing-adapter-test`, a small
+binary of the `wing-archive` crate that takes the same arguments, so it does not compile the whole
+core:
+
+```bash
+cargo build --locked -p wing-archive --bin wing-adapter-test
+target/debug/wing-adapter-test path/to/adapter [--case <name>]
+```
 
 Each case is a folder in `fixtures/`:
 

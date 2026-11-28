@@ -136,6 +136,41 @@ pub fn case_dirs(adapter_dir: &Path) -> Result<Vec<PathBuf>> {
 	Ok(cases)
 }
 
+/// Runs the case folder named `case`, or every case when `case` is `None`.
+pub async fn test_cases(adapter_dir: &Path, case: Option<&str>) -> Result<Vec<CaseReport>> {
+	let Some(case) = case else {
+		return test_adapter(adapter_dir).await;
+	};
+	let case_dir = adapter_dir.join(FIXTURES_DIR).join(case);
+	if !case_dir.join("expected.json").is_file() {
+		return Err(Error::Other(format!(
+			"no case {case}: {} has no expected.json",
+			case_dir.display()
+		)));
+	}
+	Ok(vec![run_case(adapter_dir, &case_dir).await?])
+}
+
+/// One line per case with the failures of the cases that failed, then the totals.
+///
+/// `wing adapter test` and `wing-adapter-test` print this, so local runs and the registry's
+/// review logs read the same.
+pub fn format_reports(reports: &[CaseReport]) -> String {
+	let mut text = String::new();
+	for report in reports {
+		let runs = report.runs.len();
+		let plural = if runs == 1 { "run" } else { "runs" };
+		let status = if report.passed() { "PASS" } else { "FAIL" };
+		text.push_str(&format!("{status} {} ({runs} {plural})\n", report.name));
+		for failure in &report.failures {
+			text.push_str(&format!("  - {failure}\n"));
+		}
+	}
+	let passed = reports.iter().filter(|report| report.passed()).count();
+	text.push_str(&format!("{passed} of {} cases passed\n", reports.len()));
+	text
+}
+
 /// Runs one case folder against the adapter in `adapter_dir`.
 pub async fn run_case(adapter_dir: &Path, case_dir: &Path) -> Result<CaseReport> {
 	let case_dir = std::fs::canonicalize(case_dir)?;
@@ -376,6 +411,33 @@ mod tests {
 		assert!(!matches_stored(&json!("a"), &json!(null)));
 		assert!(!matches_stored(&json!(2), &json!("1")));
 		assert!(!matches_stored(&json!("1"), &json!("01")));
+	}
+
+	fn report(name: &str, runs: usize, failures: &[&str]) -> CaseReport {
+		CaseReport {
+			name: name.to_string(),
+			runs: vec![SyncReport::default(); runs],
+			failures: failures.iter().map(|failure| failure.to_string()).collect(),
+		}
+	}
+
+	#[test]
+	fn reports_list_each_case_and_its_failures() {
+		let text = format_reports(&[
+			report("missing-folder", 1, &[]),
+			report("two-notes", 2, &["note: 2 records, expected 3"]),
+		]);
+		assert_eq!(
+			text,
+			"PASS missing-folder (1 run)\nFAIL two-notes (2 runs)\n  - note: 2 records, expected 3\n1 of 2 cases passed\n"
+		);
+	}
+
+	#[tokio::test]
+	async fn an_unknown_case_is_an_error() {
+		let tmp = tempfile::tempdir().unwrap();
+		let error = test_cases(tmp.path(), Some("basic")).await.unwrap_err();
+		assert!(error.to_string().contains("no case basic"), "{error}");
 	}
 
 	#[test]
