@@ -25,6 +25,13 @@ reported, and how a test runs a real adapter against fixtures.
 - [x] Version the contract (`contract = 1` in the manifest) so the daemon can refuse adapters it does not understand
 - [x] The contract is a process speaking JSONL on stdin and stdout, so it covers both Python scripts and compiled adapters (Rust, Go or any language); the manifest says `runtime = "python3"` or `runtime = "binary"`
 - [ ] Python helper package (`wingdrive-adapter-kit`) for config, emitting records, cursors, platform path defaults and secrets
+      In review as bernardopg/wingdrive-adapters#9 (2026-11-28). It is one file adapters copy into their
+      folder, `kit/python/wingdrive_adapter.py`, not a PyPI package, because the daemon runs
+      adapters with `python3 -I` and only the standard library. It covers config fields, secrets
+      (replaced by `[secret]` in logs and errors), versioned cursors, contract lines,
+      `config_home()`/`data_home()` per platform and `run`. `wingreg` accepts a vendored copy only
+      when it matches `kit/python/releases.json`. The new `templates/python` ("text notes") uses it
+      and passes `wing adapter test` (2 of 2 cases) with this branch's CLI.
 - [x] Harness that runs an adapter folder through `ScriptAdapter` with a fixture config and checks the stored records; usable from Rust tests and as a command (`wing adapter test`)
       (`wing_archive::harness`, 2026-11-28). Cases live in `fixtures/<case>/` with `config.json`
       (`{fixture}` is the case folder) and `expected.json` (`counts`, `records` with fields,
