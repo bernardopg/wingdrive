@@ -5,6 +5,12 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Fixed
+
+- A folder that cannot be opened keeps its error on screen. When the window got focus or a change
+  arrived, the Explorer showed the missing folder as empty ("0 files") for about a second and a
+  half before the error came back.
+
 ## 3.8.2 — 2026-11-26
 
 This release finishes the sync work of 3.8.1 and makes the server easy to install. Devices now

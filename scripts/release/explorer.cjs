@@ -234,6 +234,15 @@ const { chromium } = require('playwright');
     await configurePage(recoveryPage);
     await recoveryPage.goto(base + urlFor(path.join(fixture, 'deleted-location')));
     const locationError = recoveryPage.getByRole('alert').filter({hasText: 'Could not open this location'});
+    await locationError.waitFor();
+    // A refetch of the failed listing (window focus, a change event) used to clear the
+    // error and show the missing folder as "0 files" until the fetch failed again.
+    // TanStack Query listens on `window`, which a bubbling event reaches as a real one does.
+    await recoveryPage.evaluate(() => document.dispatchEvent(new Event('visibilitychange', {bubbles: true})));
+    for (let i = 0; i < 15; i++) {
+      await recoveryPage.waitForTimeout(100);
+      assert(await locationError.isVisible(), 'The missing location error disappeared during a refetch');
+    }
     await locationError.getByRole('button', {name: 'Go to Overview', exact: true}).click();
     await recoveryPage.waitForURL(base + '/');
     assert.equal(errors.length, 0, errors.join('\n'));

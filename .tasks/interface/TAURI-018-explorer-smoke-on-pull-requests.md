@@ -9,7 +9,7 @@ milestone: M3
 sprint: S05
 tags: [tauri, explorer, testing, ci, playwright]
 related_tasks: [CORE-021, TAURI-006, COV-08, COV-11]
-last_updated: 2026-11-15
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -51,3 +51,11 @@ verified, builds the web interface and a debug `wing-server`, and repeats the sm
 the nightly schedule, writing "N of 10 runs passed" to the run summary. Left: fail on failed RPC
 calls (today only page errors fail the smoke), the deliberate-break check, 10 green nightly runs
 and the required check.
+
+2026-11-28: the scheduled runs of 2026-11-26 and 2026-11-27 each failed one of ten runs at the
+missing location step. The cause was in the interface (CORE-025, second cause): a refetch of the
+failed listing cleared the error for about 1.5 s. The smoke now forces that refetch with a
+`visibilitychange` and fails if the alert goes away; against a build without the fix it failed with
+"The missing location error disappeared during a refetch". RPC 5xx answers and page errors fail the
+smoke; JSON-RPC errors in a 200 answer still do not, because the missing location and superseded
+queries answer that way on purpose.
