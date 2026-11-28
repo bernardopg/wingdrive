@@ -88,3 +88,12 @@ check of the client source.
 - [ ] A release build shows "Client ... included in this build" in Settings > Integrations.
 - [ ] Building without the secrets still compiles and asks for a client.
 - [ ] The client secret never appears in logs, crash reports or `integrations.google.client` output.
+
+## API key (2026-11-28)
+
+The repository secret `WINGDRIVE_GOOGLE_API_KEY` now holds a key restricted to the Google Picker
+API and `http://127.0.0.1/*` (created 2026-11-28; a local copy is outside the repository). Releases
+up to 3.8.2 embed the older 2026-11-17 key, which has no application restriction. Left: once those
+builds are out of use, delete that key or restrict it the same way in the Cloud Console
+(APIs & Services > Credentials, project `wingdrive-514618`).
+
