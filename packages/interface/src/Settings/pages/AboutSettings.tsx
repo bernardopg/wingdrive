@@ -1,10 +1,16 @@
 import type { MouseEvent } from "react";
 import { WingDriveLogo } from "@wingdrive/assets/images";
-import { ChatsCircle, GithubLogo, Globe } from "@phosphor-icons/react";
+import { ChatsCircle, FileText, GithubLogo, Globe, ShieldCheck } from "@phosphor-icons/react";
 import contributors from "../../contributors.json";
 import { usePlatform } from "../../contexts/PlatformContext";
-import { useTranslation } from "../../i18n";
+import { i18n, useTranslation } from "../../i18n";
 import { SettingsHeader, SettingsSection, buttonClass } from "../components";
+
+/** The website's page in the UI language: Portuguese pages live under /pt. */
+function legalPage(page: "privacy" | "service-terms") {
+  const prefix = i18n.language === "pt" ? "/pt" : "";
+  return `https://wingdrive.org${prefix}/${page}/`;
+}
 
 export function AboutSettings() {
   const { t } = useTranslation();
@@ -17,6 +23,8 @@ export function AboutSettings() {
     { label: t("about.website"), icon: Globe, href: "https://wingdrive.org" },
     { label: "GitHub", icon: GithubLogo, href: "https://github.com/bernardopg/wingdrive" },
     { label: t("about.discussions"), icon: ChatsCircle, href: "https://github.com/bernardopg/wingdrive/discussions" },
+    { label: t("about.privacy"), icon: ShieldCheck, href: legalPage("privacy") },
+    { label: t("about.terms"), icon: FileText, href: legalPage("service-terms") },
   ];
 
   return (

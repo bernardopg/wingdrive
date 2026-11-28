@@ -5,6 +5,10 @@ version in the workspace manifests and the matching `v*` git tag.
 
 ## Unreleased
 
+### Added
+
+- Settings > About links the privacy policy and the terms of service, in the app's language.
+
 ### Fixed
 
 - Reading a library while its settings are being saved no longer panics with "Failed to read

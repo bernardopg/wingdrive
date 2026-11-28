@@ -47,6 +47,7 @@ const {LibrarySettings} = await import('./LibrarySettings');
 const {AppearanceSettings} = await import('./AppearanceSettings');
 const {PrivacySettings} = await import('./PrivacySettings');
 const {AdvancedSettings} = await import('./AdvancedSettings');
+const {AboutSettings} = await import('./AboutSettings');
 const {i18n} = await import('../../i18n');
 
 function render(element: ReactElement) {
@@ -137,6 +138,22 @@ describe('settings pages only offer settings with an effect', () => {
 		await i18n.changeLanguage('pt');
 		try {
 			expect(render(<AdvancedSettings />)).toContain('Incluir logs de depuração');
+		} finally {
+			await i18n.changeLanguage('en');
+		}
+	});
+
+	it('about links the privacy policy and terms in the UI language', async () => {
+		const english = render(<AboutSettings />);
+		expect(english).toContain('href="https://wingdrive.org/privacy/"');
+		expect(english).toContain('href="https://wingdrive.org/service-terms/"');
+		expect(english).toContain('Privacy policy');
+		await i18n.changeLanguage('pt');
+		try {
+			const portuguese = render(<AboutSettings />);
+			expect(portuguese).toContain('href="https://wingdrive.org/pt/privacy/"');
+			expect(portuguese).toContain('href="https://wingdrive.org/pt/service-terms/"');
+			expect(portuguese).toContain('Termos de serviço');
 		} finally {
 			await i18n.changeLanguage('en');
 		}

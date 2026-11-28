@@ -201,7 +201,9 @@
 		"description": "Projeto, código-fonte, colaboradores e licença.",
 		"overview": "Gerenciador de arquivos de código aberto para organizar, buscar e sincronizar arquivos entre dispositivos.",
 		"credits": "Colaboradores",
-		"license": "Licença"
+		"license": "Licença",
+		"privacy": "Política de privacidade",
+		"terms": "Termos de serviço"
 	},
 	"cancel": "Cancelar",
 	"restartNeeded": "Algumas alterações passam a valer após reiniciar o daemon.",

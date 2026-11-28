@@ -201,7 +201,9 @@
 		"description": "Project, source code, contributors and license.",
 		"overview": "An open-source file manager for organizing, searching and syncing files across devices.",
 		"credits": "Contributors",
-		"license": "License"
+		"license": "License",
+		"privacy": "Privacy policy",
+		"terms": "Terms of service"
 	},
 	"cancel": "Cancel",
 	"restartNeeded": "Some changes take effect after the daemon restarts.",
