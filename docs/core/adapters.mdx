@@ -279,3 +279,23 @@ A case fails when a run fails without an `error` in `expected.json`, when the se
 input adds or drops records, or when the stored records differ from `expected.json`. Each failure
 is printed under its case, and the command exits with status 1. `--case <name>` runs one case.
 `crates/archive/tests/fixtures/harness/notes` is a small adapter with two cases to start from.
+
+## Validating before a pull request
+
+`wing adapter validate [folder]` runs the checks Wingbot posts on a registry pull request: Structure
+(manifest schema, icon, README sections, license, search contract, harness cases), Code scan
+(undeclared hosts, paths, secrets and programs, packages outside the standard library, `eval`-like
+calls, committed credentials), Adapter tests (`python -m unittest` in `tests/`) and Contract harness
+(`wing adapter test`, with this same binary). `--static` skips the last two.
+
+The checks are the registry's own Python tooling (`tools/wingreg`, `python -m wingreg check`), not a
+port: the code scan reads adapter code with Python's `ast`, and one implementation keeps the local
+result and the review the same. The command keeps a shallow clone of
+[`bernardopg/wingdrive-adapters`](https://github.com/bernardopg/wingdrive-adapters) in the cache
+folder and updates it on each run; `--registry <checkout>` or `WINGDRIVE_ADAPTER_REGISTRY` uses
+another copy. It needs `git` and either [uv](https://docs.astral.sh/uv/) or Python 3.11 or later
+with `jsonschema`.
+
+A folder outside the registry's `adapters/` is checked as a community submission, so it needs a
+`LICENSE` file. The checks that only apply to a pull request, such as a tag that points at the
+pinned commit or a version raised over the published index, run in review only.

@@ -10,6 +10,10 @@ version in the workspace manifests and the matching `v*` git tag.
 - `wing adapter test [folder]` runs an adapter against the test cases in its `fixtures/` folder the
   way the daemon runs it, twice with the cursor passed on, and lists what the stored records got
   wrong. It needs no daemon. The case format is in `docs/core/adapters.mdx`, under Testing.
+- `wing adapter validate [folder]` runs the checks the adapter registry runs on a pull request:
+  structure, code scan, the adapter's tests and the contract harness. It takes them from a copy of
+  the registry kept in the cache folder, or from `--registry`, and needs `git` and either `uv` or
+  Python 3.11 with `jsonschema`.
 - `wing update` also lists adapter updates, the same list as `wing adapters outdated`, when the
   daemon is running.
 - Source items show their date, from the field the adapter names as the date of its items.

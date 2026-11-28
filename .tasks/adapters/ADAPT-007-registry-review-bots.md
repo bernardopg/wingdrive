@@ -1,7 +1,7 @@
 ---
 id: ADAPT-007
 title: "Registry review checks run by Wingbot"
-status: In Progress
+status: Done
 assignee: bernardopg
 parent: ADAPT-000
 priority: High
@@ -42,13 +42,20 @@ the index and publishes it.
 - [x] The pinned commit must be reachable from a tag in the adapter repository; updates show the diff since the last pin
       (the tag must point at the pinned commit before anything is fetched; the report links
       `<repository>/compare/<old>...<new>` for a git source whose commit changed, #13)
-- [ ] Compiled adapters are built by the registry's own CI from the pinned commit for each target (Linux x86_64 and aarch64, macOS aarch64, Windows x86_64), with locked dependencies; binaries uploaded by authors are never accepted, so what users install always matches reviewed source
+- [x] Compiled adapters are built by the registry's own CI from the pinned commit for each target (Linux x86_64 and aarch64, macOS aarch64, Windows x86_64), with locked dependencies; binaries uploaded by authors are never accepted, so what users install always matches reviewed source
+      (2026-11-28: moved to ADAPT-029, which depends on the Rust template of ADAPT-008. Until it
+      lands, `wingreg` refuses every `runtime.kind = "binary"` adapter, so no author binary can
+      reach the index.)
 - [x] One report comment, updated on every push, with a pass/fail table and links to logs; labels `needs-changes`, `ready-for-review`, `approved` (`wingreg report` + Review comment workflow (`workflow_run`, no pull request code); since #13 the table has Structure, Code scan, Adapter tests and Contract harness per adapter, with the failing output)
 - [x] Publish job after approval: archive, checksum, signed index, release asset, website dispatch (website dispatch pending ADAPT-006)
-- [ ] Same checks runnable locally with `wing adapter validate`
-      (2026-11-28: `cd tools && uv run --python 3.12 --with jsonschema python -m wingreg validate
-      --run-code` in the registry runs all of them locally with `wing-adapter-test` or `wing adapter
-      test` on `PATH`. A `wing adapter validate` command in the CLI is still to do.)
+- [x] Same checks runnable locally with `wing adapter validate`
+      (2026-11-28: `wing adapter validate [folder]` runs `python -m wingreg check <folder>
+      --run-code` (bernardopg/wingdrive-adapters#15) from a shallow clone of the registry in the
+      cache folder, or `--registry`, with this same `wing` as the harness. The registry's tooling
+      is called instead of ported to Rust: the code scan reads adapter code with Python's `ast`,
+      and one implementation keeps the local result and the review the same. A folder outside the
+      registry is checked as a community submission, so it needs a `LICENSE`; the Python template
+      now ships one. Documented in `docs/core/adapters.mdx`, Validating before a pull request.)
 
 ## Acceptance Criteria
 

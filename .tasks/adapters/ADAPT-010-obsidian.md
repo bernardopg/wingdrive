@@ -29,13 +29,19 @@ tags, wikilinks between notes, created and modified dates. Starts from the proto
 ## Acceptance Criteria
 
 - [ ] Lives in `bernardopg/wingdrive-adapters` under `adapters/<id>/`, created from the template (ADAPT-008), with README, license, icon and tests
-- [ ] Published through a reviewed pull request that Wingbot's checks (ADAPT-007) pass, like any third-party adapter
+- [x] Published through a reviewed pull request that Wingbot's checks (ADAPT-007) pass, like any third-party adapter
+      (1.1.4 through bernardopg/wingdrive-adapters#14: Structure, Code scan, Adapter tests and
+      Contract harness pass, labeled `ready-for-review`; published in index 16)
 - [ ] Installs from the store in the desktop app and from `wing adapters install <id>`
-- [ ] Defaults: the source path or account is detected on Linux and macOS (and Windows once ADAPT-002 lands); a wrong value fails `sources.create` with a message that names the field
+- [x] Defaults: the source path or account is detected on Linux and macOS (and Windows once ADAPT-002 lands); a wrong value fails `sources.create` with a message that names the field
       (2026-11-28: `sources.create` and `sources.update` now refuse a missing required field and a
       `path_type` folder or file that does not exist, as `config.vault_path`: "Vault: /x is not a
       folder on this device"; before, 3.8.2 created the source and failed at its first sync.
-      Detection by `.obsidian` folder is in the registry PR. macOS detection is unchecked.)
+      Detection by `.obsidian` folder is in the registry PR. macOS: 1.1.4,
+      bernardopg/wingdrive-adapters#14, tests detection against a fake HOME with
+      `~/Library/Application Support/obsidian/obsidian.json`, a local vault and an iCloud vault
+      under `~/Library/Mobile Documents`, most recent first; it passes on the registry's `macos-15`
+      runners with Python 3.9 and 3.13. Published in index 16.)
 - [x] Declares only the permissions it uses (ADAPT-009); runs with network off unless it declares hosts
       (2026-11-28: Wingbot's code scan passes on 1.1.3: no host, no program, no secret, its `~/`
       paths are the declared `obsidian.json` files. It declares no network, so the sandbox gives it
@@ -55,4 +61,8 @@ tags, wikilinks between notes, created and modified dates. Starts from the proto
       from store index 9, `~/Documentos/Bitter` synced 50 notes, the second run "0 upserted, 0
       deleted", and the desktop app lists the 50 items. Screenshots kept off the PR: they show the
       author's notes. Left: the item dates after this PR ships, and opening an item.)
-- [ ] Store listing on wingdrive.org/adapters and a user page (EN and PT) with setup, what is indexed and privacy notes
+- [x] Store listing on wingdrive.org/adapters and a user page (EN and PT) with setup, what is indexed and privacy notes
+      (2026-11-28: wingdrive.org/adapters/obsidian and /pt/adapters/obsidian list the adapter with install
+      steps (app and `wing adapters install obsidian`) and its README, with the Setup, Data and Privacy
+      sections in English and Configuração, Dados e Privacidade in Portuguese. The site rebuilds from
+      the latest index, so index 16 reaches it at the next build.)

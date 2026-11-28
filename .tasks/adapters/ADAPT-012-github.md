@@ -23,7 +23,17 @@ account `bernardopg`.
 
 - [x] Token from the secret store or `gh auth token`; never written to logs or the source database (secret config field; detect reads only the CLI user)
 - [x] Paginated REST or GraphQL calls with rate-limit handling and `since` cursors
-- [ ] Repositories, stars, issues, pull requests and comments as related records
+- [x] Repositories, stars, issues, pull requests and comments as related records
+      (1.1.0, bernardopg/wingdrive-adapters#14, index 16: each issue and pull request comment is a
+      `comment` record with `belongs_to = ["item"]`, and the item's `comments` field holds their
+      text for search. A changed issue has its comments listed again, so edited and deleted ones
+      are noticed (ids per issue in `data_dir/comments.json`); issues left by the rate limit or the
+      10 minute budget wait in the cursor. Harness case `issue-comments` replays recorded API
+      answers; 4 new unit tests cover writes, edits, deletions, the switch, the rate limit and the
+      budget.)
+- [ ] Review comments on lines of a pull request's diff (`/repos/{repo}/pulls/{n}/comments`), which the issue comments endpoint leaves out
+- [ ] Real sync of comments on account `bernardopg` with the `gh` token after 1.1.0: counts, requests used, second run
+- [ ] Sources created with 1.0.x search their comments after the update (ADAPT-027)
 - [x] Closed or transferred items updated, deleted ones removed (repositories re-listed each sync; issues updated by `since`)
 
 ## Acceptance Criteria
@@ -34,6 +44,11 @@ account `bernardopg`.
       Contract harness pass, Wingbot's comment shows them; published in index 15)
 - [ ] Installs from the store in the desktop app and from `wing adapters install <id>`
 - [ ] Defaults: the source path or account is detected on Linux and macOS (and Windows once ADAPT-002 lands); a wrong value fails `sources.create` with a message that names the field
+      (2026-11-28: the user name comes from the GitHub CLI's `hosts.yml`, tested with a fake HOME on
+      Linux, macOS and Windows runners. Left: `sources.create` checks paths and required fields,
+      not formats, so a user name with a space only fails at the first sync ("username is not a
+      GitHub user name"). A manifest `pattern` for string fields, checked by `sources.create`,
+      would cover it.)
 - [x] Declares only the permissions it uses (ADAPT-009); runs with network off unless it declares hosts
       (Wingbot's code scan passes: `api.github.com` is its only host, `~/.config/gh/hosts.yml` its only
       read path, `token` its only secret. It declares a host, so the sandbox gives it network; its
@@ -56,4 +71,8 @@ account `bernardopg`.
 - [ ] Real proof on the author's machine: install from the store, sync of real data with item counts, second run idempotent, items opened in the desktop app (screenshot in the PR)
       (2026-11-28: `wing adapters install github` from store index 9 installed 1.0.3; the syncs
       above, with and without a token. Left: opening items in the desktop app and its screenshot.)
-- [ ] Store listing on wingdrive.org/adapters and a user page (EN and PT) with setup, what is indexed and privacy notes
+- [x] Store listing on wingdrive.org/adapters and a user page (EN and PT) with setup, what is indexed and privacy notes
+      (2026-11-28: wingdrive.org/adapters/github and /pt/adapters/github list the adapter with install
+      steps (app and `wing adapters install github`) and its README, with the Setup, Data and Privacy
+      sections in English and Configuração, Dados e Privacidade in Portuguese. The site rebuilds from
+      the latest index, so index 16 reaches it at the next build.)
