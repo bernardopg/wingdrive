@@ -10,7 +10,7 @@ sprint: S06
 tags: [adapters, store, core, security]
 depends_on: [ADAPT-001, ADAPT-003]
 related_tasks: [ADAPT-005, ADAPT-009]
-last_updated: 2026-11-24
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -34,3 +34,8 @@ every library can use them. Installs are pinned and recorded in a lockfile, like
 - [x] Unit tests: bad signature, bad checksum, unknown contract version, path traversal in the archive, interrupted install
 - [ ] Integration test installs the template adapter from a local registry and syncs it
 - [ ] Installed AUR package installs and updates an adapter from the official registry on the author's machine
+      2026-11-28, install half done: `wingdrive-bin` 3.8.2 on the laptop (isolated instance) ran
+      `wing adapters browse` (index 9) and `wing adapters install obsidian`. Declining the
+      permission question aborts and `--yes` installs 1.1.2 with a lockfile entry (commit 2a80a59,
+      SHA-256, accepted permissions). A source made with it synced a two-note vault (2 items). The
+      update half waits for a newer published version.

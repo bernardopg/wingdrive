@@ -39,8 +39,8 @@ smokes in `release.yml` and `windows-bundle.yml`.
 
 ## Acceptance Criteria
 
-- [ ] A pull request that breaks the Explorer listing fails this job (checked with a deliberate
-      break on a throwaway branch).
+- [x] A pull request that breaks the Explorer listing fails this job (checked with a deliberate
+      break on a throwaway branch: #565, 2026-11-28).
 - [ ] 10 scheduled runs in a row pass on `main` after CORE-021 is fixed.
 - [ ] The job is a required check on `main`.
 
@@ -59,3 +59,8 @@ failed listing cleared the error for about 1.5 s. The smoke now forces that refe
 "The missing location error disappeared during a refetch". RPC 5xx answers and page errors fail the
 smoke; JSON-RPC errors in a 200 answer still do not, because the missing location and superseded
 queries answer that way on purpose.
+2026-11-28: deliberate break checked in CI. Draft #565 made `useExplorerFiles` return an empty
+listing. The Explorer smoke failed (`locator.waitFor: Timeout 90000ms exceeded`, "Explorer smoke: 0
+of 1 runs passed", run 46141480224), and the TypeScript unit tests failed too. #565 was closed
+without merging. Left: 10 green scheduled runs, the required check, and the decision on JSON-RPC
+errors in a 200 answer (see above).
