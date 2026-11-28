@@ -1,0 +1,112 @@
+{
+  "commit": "0e0072e09fc111fe2466406fe4b0eaab649aa448",
+  "generated": "2026-11-28T15:33Z",
+  "total": {
+    "files": 853,
+    "lines": 134793,
+    "covered": 84415,
+    "percent": 62.6
+  },
+  "rust": {
+    "files": 732,
+    "lines": 120204,
+    "covered": 75490,
+    "percent": 62.8
+  },
+  "frontend": {
+    "files": 121,
+    "lines": 14589,
+    "covered": 8925,
+    "percent": 61.2
+  },
+  "components": [
+    {
+      "id": "core",
+      "title": "Core: daemon, operations, sync",
+      "files": 579,
+      "lines": 94688,
+      "covered": 54654,
+      "percent": 57.7,
+      "floor_percent": 56.7,
+      "target_percent": 65.0,
+      "min_lines": 92102,
+      "floor_status": "ok"
+    },
+    {
+      "id": "desktop",
+      "title": "Desktop: Tauri shell and its crates",
+      "files": 36,
+      "lines": 8941,
+      "covered": 8210,
+      "percent": 91.8,
+      "floor_percent": 91.8,
+      "target_percent": 100.0,
+      "min_lines": 8913,
+      "floor_status": "ok"
+    },
+    {
+      "id": "cli",
+      "title": "CLI (`wing`)",
+      "files": 52,
+      "lines": 7628,
+      "covered": 6140,
+      "percent": 80.5,
+      "floor_percent": 75.0,
+      "target_percent": 75.0,
+      "min_lines": 7421,
+      "floor_status": "ok"
+    },
+    {
+      "id": "server",
+      "title": "Server (`wing-server`)",
+      "files": 1,
+      "lines": 919,
+      "covered": 755,
+      "percent": 82.2
+    },
+    {
+      "id": "mobile",
+      "title": "Mobile app (Android / iOS)",
+      "files": 5,
+      "lines": 164,
+      "covered": 164,
+      "percent": 100.0
+    },
+    {
+      "id": "crates",
+      "title": "Shared crates",
+      "files": 65,
+      "lines": 8036,
+      "covered": 5739,
+      "percent": 71.4
+    },
+    {
+      "id": "interface",
+      "title": "Interface (React)",
+      "files": 88,
+      "lines": 7543,
+      "covered": 5668,
+      "percent": 75.1,
+      "floor_percent": 60.0,
+      "target_percent": 60.0,
+      "min_lines": 7360,
+      "floor_status": "ok"
+    },
+    {
+      "id": "ts-client",
+      "title": "TypeScript client",
+      "files": 21,
+      "lines": 1878,
+      "covered": 1018,
+      "percent": 54.2
+    },
+    {
+      "id": "packages",
+      "title": "Other packages",
+      "files": 6,
+      "lines": 4996,
+      "covered": 2067,
+      "percent": 41.4
+    }
+  ]
+}

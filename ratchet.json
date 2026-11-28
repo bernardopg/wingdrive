@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "errors": [],
+  "checked_components": [
+    "cli",
+    "core",
+    "desktop",
+    "interface"
+  ],
+  "changed_lines": {
+    "considered_lines": 315,
+    "covered_lines": 277,
+    "percent": 87.9,
+    "uncovered_examples": [
+      "core/src/data/manager.rs:316",
+      "core/src/data/manager.rs:317",
+      "core/src/data/manager.rs:321",
+      "core/src/data/manager.rs:322",
+      "core/src/data/manager.rs:325",
+      "core/src/data/manager.rs:326",
+      "core/src/data/manager.rs:327",
+      "core/src/data/manager.rs:334",
+      "core/src/data/manager.rs:529",
+      "core/src/data/manager.rs:530",
+      "core/src/data/manager.rs:531",
+      "core/src/data/manager.rs:556",
+      "core/src/ops/sources/create/action.rs:53",
+      "core/src/ops/sources/create/action.rs:54",
+      "core/src/ops/sources/create/action.rs:56",
+      "core/src/ops/sources/create/action.rs:57",
+      "core/src/ops/sources/create/action.rs:58",
+      "core/src/ops/sources/list_items/query.rs:91",
+      "core/src/ops/sources/update/mod.rs:76",
+      "core/src/ops/sources/update/mod.rs:77"
+    ]
+  },
+  "summary_commit": "0e0072e09fc111fe2466406fe4b0eaab649aa448",
+  "generated": "2026-11-28T15:33Z"
+}
