@@ -10,6 +10,10 @@ file verifies against a key built into WingDrive, and only if the downloaded arc
 SHA-256 the file lists. [Adapters](/core/adapters) describes the contract an installed adapter
 speaks. `docs/design/adapter-store.md` explains how publishing and review work.
 
+<Frame>
+  <img src="/public/WingAdapterStoreOfficial.webp" alt="Sources > Adapters showing the official GitHub and Obsidian adapters from store index 9, Obsidian marked Installed" />
+</Frame>
+
 ## Where the index lives
 
 | File | URL |
@@ -126,6 +130,16 @@ that list, and the next publish copies it into the index.
   when the published version is the same or older.
 - A revoked version stays revoked: `sequence` only goes up, so the daemon never goes back to an
   index from before the revocation.
+
+## Consent
+
+Before an install, the detail sheet lists what the adapter can reach: the paths it reads, the
+hosts it connects to, the secrets it asks for and the tools it runs. The install button grants
+exactly that. `wing adapters install` asks the same question and needs `--yes` to skip it.
+
+<Frame>
+  <img src="/public/WingAdapterStoreDetail.webp" alt="GitHub adapter detail: reads ~/.config/gh/hosts.yml, connects to api.github.com, asks for a token secret, and an Install button" />
+</Frame>
 
 ## Updates
 
