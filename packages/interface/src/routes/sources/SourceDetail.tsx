@@ -21,6 +21,7 @@ import { ExpandableSearchButton } from "../explorer/components/ExpandableSearchB
 import { SourcePathBar } from "../../components/Sources/SourcePathBar";
 import { SourceDataRow } from "../../components/Sources/SourceDataRow";
 import { useTranslation } from "../../i18n";
+import type { SourceItem } from "@wingdrive/ts-client";
 import { ConfigureForm, Modal } from "./Adapters";
 
 const PAGE_SIZE = 100;
@@ -35,15 +36,7 @@ export function SourceDetail() {
 	const scrollRef = useRef<HTMLDivElement>(null);
 
 	// Infinite scroll state
-	const [allItems, setAllItems] = useState<
-		Array<{
-			id: string;
-			external_id: string;
-			title: string;
-			preview: string | null;
-			subtitle: string | null;
-		}>
-	>([]);
+	const [allItems, setAllItems] = useState<SourceItem[]>([]);
 	const [offset, setOffset] = useState(0);
 	const [hasMore, setHasMore] = useState(true);
 	const [loadingMore, setLoadingMore] = useState(false);
@@ -351,6 +344,7 @@ export function SourceDetail() {
 										title={item.title}
 										preview={item.preview}
 										subtitle={item.subtitle}
+										date={item.date}
 									/>
 								</div>
 							);

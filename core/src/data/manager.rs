@@ -8,6 +8,23 @@ use wing_archive::{Engine, EngineConfig};
 
 use crate::crypto::key_manager::{KeyManager, KeyManagerError};
 
+/// A config field a user filled wrong, named so the add source form can point at it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ConfigProblem {
+	/// The field's `key` in `[[adapter.config]]`.
+	pub key: String,
+	pub message: String,
+}
+
+impl ConfigProblem {
+	fn new(key: &str, message: String) -> Self {
+		Self {
+			key: key.to_string(),
+			message,
+		}
+	}
+}
+
 /// Manages archive data sources for a single library.
 ///
 /// Config values of fields the adapter marks `secret` (tokens, passwords) never reach the
@@ -265,6 +282,67 @@ impl SourceManager {
 	}
 
 	/// Config fields the adapter marks secret.
+	/// Checks the config a user sends for an adapter's source against its manifest: a required
+	/// field has a value, and a `path_type = "folder"` or `"file"` field names one that exists on
+	/// this machine. With `only`, just those keys are checked, as an edit that leaves the other
+	/// fields alone. Secret fields are left to the secret store.
+	pub fn check_config(
+		&self,
+		adapter_id: &str,
+		config: &serde_json::Value,
+		only: Option<&[String]>,
+	) -> Result<(), ConfigProblem> {
+		let Ok(fields) = self.engine.adapter_config_fields(adapter_id) else {
+			return Ok(());
+		};
+		for field in fields {
+			if field.secret || only.is_some_and(|keys| !keys.contains(&field.key)) {
+				continue;
+			}
+			let value = config
+				.get(&field.key)
+				.and_then(|value| value.as_str())
+				.map(str::trim)
+				.filter(|value| !value.is_empty());
+			let Some(value) = value else {
+				let missing = config.get(&field.key).is_none_or(|value| {
+					value.is_null() || value.as_str().is_some_and(|text| text.trim().is_empty())
+				});
+				if missing && field.required && field.default.is_none() {
+					return Err(ConfigProblem::new(
+						&field.key,
+						format!("{} is required", field.name),
+					));
+				}
+				continue;
+			};
+			let kind = match field.path_type.as_deref() {
+				Some("folder") => "folder",
+				Some("file") => "file",
+				_ => continue,
+			};
+			let path = match value.strip_prefix('~') {
+				Some(rest) if rest.is_empty() || rest.starts_with('/') => dirs::home_dir()
+					.map(|home| home.join(rest.trim_start_matches('/')))
+					.unwrap_or_else(|| std::path::PathBuf::from(value)),
+				_ => std::path::PathBuf::from(value),
+			};
+			let fits = path.is_absolute()
+				&& if kind == "folder" {
+					path.is_dir()
+				} else {
+					path.is_file()
+				};
+			if !fits {
+				return Err(ConfigProblem::new(
+					&field.key,
+					format!("{}: {value} is not a {kind} on this device", field.name),
+				));
+			}
+		}
+		Ok(())
+	}
+
 	fn secret_fields(&self, adapter_id: &str) -> Vec<String> {
 		self.engine
 			.adapter_config_fields(adapter_id)
@@ -314,7 +392,10 @@ impl SourceManager {
 		Ok(())
 	}
 
-	async fn get_source(&self, source_id: &str) -> Result<wing_archive::SourceInfo, String> {
+	pub(crate) async fn get_source(
+		&self,
+		source_id: &str,
+	) -> Result<wing_archive::SourceInfo, String> {
 		self.engine
 			.get_source(source_id)
 			.await
@@ -549,6 +630,79 @@ search_fields = ["title", "body"]
 		let logs = String::from_utf8(logs.0.lock().unwrap().clone()).unwrap();
 		assert!(!logs.is_empty(), "the subscriber captured nothing");
 		assert!(!logs.contains(TOKEN), "the token reached the logs:\n{logs}");
+	}
+
+	/// A wrong folder or a missing required field is refused before the source exists, with the
+	/// field named, instead of failing at the first sync.
+	#[tokio::test]
+	async fn config_checks_name_the_field_a_user_filled_wrong() {
+		let temp = tempfile::tempdir().unwrap();
+		let installed = temp.path().join("installed");
+		let adapter = installed.join("fixture");
+		std::fs::create_dir_all(&adapter).unwrap();
+		let manifest = MANIFEST.replace(
+			"key = \"folder\"\nname = \"Folder\"\ntype = \"string\"",
+			"key = \"folder\"\nname = \"Folder\"\ntype = \"string\"\npath_type = \"folder\"\nrequired = true",
+		);
+		assert!(manifest.contains("path_type"));
+		std::fs::write(adapter.join("adapter.toml"), manifest).unwrap();
+		std::fs::write(adapter.join("sync.py"), "").unwrap();
+		let keys = Arc::new(
+			KeyManager::new_with_fallback(temp.path().to_path_buf(), Some(temp.path().join("k")))
+				.unwrap(),
+		);
+		let manager =
+			SourceManager::new(temp.path().join("library"), installed, keys, Uuid::new_v4())
+				.await
+				.unwrap();
+
+		let problem = |config| manager.check_config("fixture", &config, None).unwrap_err();
+		assert_eq!(
+			problem(json!({})),
+			ConfigProblem::new("folder", "Folder is required".to_string())
+		);
+		assert_eq!(
+			problem(json!({"folder": "  "})).message,
+			"Folder is required"
+		);
+		assert_eq!(
+			problem(json!({"folder": "/does/not/exist"})).message,
+			"Folder: /does/not/exist is not a folder on this device"
+		);
+		let file = temp.path().join("note.md");
+		std::fs::write(&file, "").unwrap();
+		assert!(problem(json!({"folder": file}))
+			.message
+			.ends_with("is not a folder on this device"));
+		assert!(problem(json!({"folder": "relative/notes"}))
+			.message
+			.contains("is not a folder"));
+
+		let folder = temp.path().display().to_string();
+		manager
+			.check_config("fixture", &json!({"folder": folder}), None)
+			.unwrap();
+		// An edit checks only the fields it changes, and never the secret ones.
+		manager
+			.check_config(
+				"fixture",
+				&json!({"token": "x"}),
+				Some(&["token".to_string()]),
+			)
+			.unwrap();
+		assert_eq!(
+			manager
+				.check_config(
+					"fixture",
+					&json!({"folder": "/nope"}),
+					Some(&["folder".to_string()])
+				)
+				.unwrap_err()
+				.key,
+			"folder"
+		);
+		// An adapter that is not installed leaves the check to the engine.
+		manager.check_config("missing", &json!({}), None).unwrap();
 	}
 
 	#[tokio::test]

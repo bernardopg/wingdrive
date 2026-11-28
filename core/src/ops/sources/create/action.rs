@@ -50,6 +50,13 @@ impl LibraryAction for CreateSourceAction {
 			.source_manager()
 			.ok_or_else(|| ActionError::Internal("Source manager not available".to_string()))?;
 
+		source_manager
+			.check_config(&self.input.adapter_id, &self.input.config, None)
+			.map_err(|problem| ActionError::Validation {
+				field: format!("config.{}", problem.key),
+				message: problem.message,
+			})?;
+
 		// Create the source via wing-archive
 		let source_info = source_manager
 			.create_source(&self.input.name, &self.input.adapter_id, self.input.config)

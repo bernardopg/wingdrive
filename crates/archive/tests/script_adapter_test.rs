@@ -526,3 +526,64 @@ fn manifests_carry_translated_store_texts_and_config_labels() {
 		Some("A pasta do cofre.")
 	);
 }
+
+/// `[search] date_field` names the column the item list shows as each item's date.
+#[tokio::test]
+async fn listed_items_carry_the_search_date_field() {
+	let tmp = tempfile::tempdir().unwrap();
+	let adapter_dir = tmp.path().join("dated");
+	std::fs::create_dir_all(&adapter_dir).unwrap();
+	let manifest = MANIFEST
+		.replace(
+			"fields.body = \"text\"",
+			"fields.body = \"text\"\nfields.modified = \"datetime\"",
+		)
+		.replace(
+			"search_fields = [\"title\", \"body\"]",
+			"search_fields = [\"title\", \"body\"]\ndate_field = \"modified\"",
+		);
+	std::fs::write(adapter_dir.join("adapter.toml"), manifest).unwrap();
+	std::fs::write(
+		adapter_dir.join("sync.py"),
+		r#"import json
+print(json.dumps({"upsert": "note", "external_id": "a", "fields": {"title": "a", "body": "", "modified": "2026-11-28T12:00:00+00:00"}}))
+print(json.dumps({"upsert": "note", "external_id": "b", "fields": {"title": "b", "body": ""}}))
+"#,
+	)
+	.unwrap();
+
+	let adapter = ScriptAdapter::from_dir(&adapter_dir).unwrap();
+	let sources = SourceManager::new(tmp.path().join("sources"));
+	sources.create("s1", adapter.schema()).await.unwrap();
+	let db = sources.open("s1").await.unwrap();
+	let config = serde_json::json!({ "_data_dir": tmp.path().join("sources").join("s1") });
+	assert_eq!(adapter.sync(&db, &config).await.unwrap().error, None);
+
+	let items = db.list_items(10, 0).await.unwrap();
+	let date = |id: &str| {
+		items
+			.iter()
+			.find(|i| i.external_id == id)
+			.unwrap()
+			.date
+			.clone()
+	};
+	assert_eq!(date("a").as_deref(), Some("2026-11-28T12:00:00+00:00"));
+	assert_eq!(date("b"), None);
+
+	// Without a date field, every item lists without a date.
+	let undated = tmp.path().join("echo");
+	std::fs::create_dir_all(&undated).unwrap();
+	write_adapter(&undated);
+	let adapter = ScriptAdapter::from_dir(&undated).unwrap();
+	sources.create("s2", adapter.schema()).await.unwrap();
+	let db = sources.open("s2").await.unwrap();
+	let config = serde_json::json!({ "_data_dir": tmp.path().join("sources").join("s2") });
+	adapter.sync(&db, &config).await.unwrap();
+	assert!(db
+		.list_items(10, 0)
+		.await
+		.unwrap()
+		.iter()
+		.all(|i| i.date.is_none()));
+}

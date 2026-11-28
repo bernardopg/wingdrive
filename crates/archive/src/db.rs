@@ -37,6 +37,8 @@ pub struct ItemRow {
 	pub title: String,
 	pub preview: Option<String>,
 	pub subtitle: Option<String>,
+	/// The value of the manifest's `[search] date_field`, as stored; `None` when the adapter names none.
+	pub date: Option<String>,
 }
 
 /// An FTS search hit.
@@ -575,9 +577,15 @@ impl SourceDb {
 		}
 
 		if let Some(ref subtitle_col) = self.schema.search.subtitle {
-			let _ = write!(sql, "t.\"{subtitle_col}\" AS subtitle ");
+			let _ = write!(sql, "t.\"{subtitle_col}\" AS subtitle, ");
 		} else {
-			sql.push_str("NULL AS subtitle ");
+			sql.push_str("NULL AS subtitle, ");
+		}
+
+		if let Some(ref date_col) = self.schema.search.date_field {
+			let _ = write!(sql, "CAST(t.\"{date_col}\" AS TEXT) AS date ");
+		} else {
+			sql.push_str("NULL AS date ");
 		}
 
 		let _ = write!(
@@ -585,23 +593,32 @@ impl SourceDb {
 			"FROM \"{primary_table}\" t ORDER BY t.rowid DESC LIMIT ? OFFSET ?"
 		);
 
-		let rows = sqlx::query_as::<_, (String, String, String, Option<String>, Option<String>)>(
-			sqlx::AssertSqlSafe(sql),
-		)
-		.bind(limit as i64)
-		.bind(offset as i64)
-		.fetch_all(&self.pool)
-		.await?;
+		type Row = (
+			String,
+			String,
+			String,
+			Option<String>,
+			Option<String>,
+			Option<String>,
+		);
+		let rows = sqlx::query_as::<_, Row>(sqlx::AssertSqlSafe(sql))
+			.bind(limit as i64)
+			.bind(offset as i64)
+			.fetch_all(&self.pool)
+			.await?;
 
 		Ok(rows
 			.into_iter()
-			.map(|(id, external_id, title, preview, subtitle)| ItemRow {
-				id,
-				external_id,
-				title,
-				preview,
-				subtitle,
-			})
+			.map(
+				|(id, external_id, title, preview, subtitle, date)| ItemRow {
+					id,
+					external_id,
+					title,
+					preview,
+					subtitle,
+					date,
+				},
+			)
 			.collect())
 	}
 

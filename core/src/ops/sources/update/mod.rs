@@ -73,6 +73,29 @@ impl LibraryAction for UpdateSourceAction {
 			.source_manager()
 			.ok_or_else(|| ActionError::Internal("Source manager not available".to_string()))?;
 
+		if let Some(changes) = &self.input.config {
+			let source = source_manager
+				.get_source(&self.input.source_id)
+				.await
+				.map_err(ActionError::Internal)?;
+			let changed: Vec<String> = changes
+				.as_object()
+				.map(|object| {
+					object
+						.iter()
+						.filter(|(_, value)| !value.is_null())
+						.map(|(key, _)| key.clone())
+						.collect()
+				})
+				.unwrap_or_default();
+			source_manager
+				.check_config(&source.adapter_id, changes, Some(&changed))
+				.map_err(|problem| ActionError::Validation {
+					field: format!("config.{}", problem.key),
+					message: problem.message,
+				})?;
+		}
+
 		let source = source_manager
 			.update_source(
 				&self.input.source_id,
