@@ -196,6 +196,33 @@ async fn test_default_library_creation() {
 	assert!(lib_path.join("exports").exists());
 }
 
+/// Reading the library ID while its config is being written must not panic. Before the ID
+/// was kept outside the config lock, `id()` panicked with "Failed to read library config for
+/// ID" whenever a sync, job or event read it during `update_config`.
+#[tokio::test]
+async fn the_library_id_reads_while_the_config_is_written() {
+	let temp_dir = TempDir::new().unwrap();
+	let core = Core::new(temp_dir.path().to_path_buf()).await.unwrap();
+	let library = core
+		.libraries
+		.create_library("Busy Library", None, core.context.clone())
+		.await
+		.unwrap();
+	let id = library.config().await.id;
+
+	let mut seen = None;
+	library
+		.update_config(|config| {
+			seen = Some(library.id());
+			config.description = Some("written".to_string());
+		})
+		.await
+		.unwrap();
+
+	assert_eq!(seen, Some(id));
+	assert_eq!(library.id(), id);
+}
+
 /// A slug changed through device.update must reach the library's device row,
 /// or listings scoped to the stale slug never receive live events.
 #[tokio::test]
