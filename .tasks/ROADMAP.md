@@ -31,7 +31,7 @@ _Generated from the task front matter by the board (`just board-sync`). Do not e
 | M2 — Default file manager on Linux | Done | 75 | 1 | 0 | 99% |
 | M3 — Cross-platform desktop and release | Now | 12 | 19 | 3 | 35% |
 | M4 — Device integration | Later | 4 | 4 | 16 | 17% |
-| M5 — Optional | Later | 32 | 26 | 86 | 22% |
+| M5 — Optional | Later | 33 | 26 | 85 | 23% |
 
 | Sprint | Dates | Done | In Progress | Progress |
 |---|---|---|---|---|
@@ -46,7 +46,7 @@ _Generated from the task front matter by the board (`just board-sync`). Do not e
 | [S09](sprints/S09.md) | 2027-01-07 to 2027-01-20 | 0/25 | 12 | 0% |
 | [S10](sprints/S10.md) | 2027-01-21 to 2027-02-03 | 0/15 | 5 | 0% |
 | [S11](sprints/S11.md) | 2027-02-04 to 2027-02-17 | 0/14 | 0 | 0% |
-| [S12](sprints/S12.md) | 2027-02-18 to 2027-03-03 | 0/14 | 0 | 0% |
+| [S12](sprints/S12.md) | 2027-02-18 to 2027-03-03 | 1/14 | 0 | 7% |
 | [S13](sprints/S13.md) | 2027-03-04 to 2027-03-17 | 2/12 | 0 | 17% |
 | [S14](sprints/S14.md) | 2027-03-18 to 2027-03-31 | 0/10 | 0 | 0% |
 <!-- board:end progress -->

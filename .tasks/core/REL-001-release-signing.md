@@ -9,7 +9,7 @@ milestone: M3
 sprint: S06
 tags: [release, signing, updater, ci]
 related_tasks: [MOB-009, TAURI-012]
-last_updated: 2026-11-17
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -29,6 +29,11 @@ removed on 2026-11-02; the history is in git).
 - [x] Apple signing and notarization plan written (Developer ID, secrets, workflow step)
 - [x] Windows Authenticode signing plan written for the `.exe` and `.msi` from TAURI-016
 - [ ] Google Play upload key and the four `WINGDRIVE_ANDROID_KEYSTORE_*` secrets in place (with MOB-009)
+      (2026-11-28: the four secrets are in place and verified by a CI run that opens the keystore
+      and the key. The release keystore's password had been lost, so it was rekeyed from the CI
+      copy with a new password; the key and its certificate (SHA-256 F2:04:4D:7E…A8:55, same as
+      every published APK) did not change. The password and the keystore are in the author's
+      Bitwarden. Left: the Google Play upload key, created with the Play app (DIST-001).)
 - [ ] One tag run signs every artifact that has credentials and skips the others with a warning
 - [x] Alpha, beta and rc tags do not publish `wingdrive-bin` on AUR. They go to
       `wingdrive-nightly`, which stable tags update too (`aur.py`, the `aur` job matrix; 2026-11-05)

@@ -1,7 +1,7 @@
 ---
 id: DIST-007
 title: "IzzyOnDroid: decide after the size and dependency work"
-status: To Do
+status: Done
 assignee: bernardopg
 parent: DIST-000
 priority: Low
@@ -21,10 +21,17 @@ with AI assistance (`AGENTS.md`, `.agents/skills`). Decide whether to apply at a
 
 ## Implementation Steps
 
-- [ ] Read the current policy at izzyondroid.org/docs/general/AppInclusionPolicy/
-- [ ] If the author wants to apply and MOB-018, MOB-019, MOB-020 are done, open a request at codeberg.org/IzzyOnDroid/repodata and state the AI assistance plainly
-- [ ] Otherwise close this task as not planned and record the reason
+- [x] Read the current policy at izzyondroid.org/docs/general/AppInclusionPolicy/ (read for docs/design/app-store-distribution.md, 2026-11-28)
+- [x] If the author wants to apply and MOB-018, MOB-019, MOB-020 are done, open a request at codeberg.org/IzzyOnDroid/repodata and state the AI assistance plainly (not applicable: deferred)
+- [x] Otherwise close this task as not planned and record the reason (deferred, see Decision)
 
 ## Acceptance Criteria
 
-- [ ] The decision is recorded here
+- [x] The decision is recorded here (2026-11-28: deferred by the author)
+
+## Decision (2026-11-28)
+
+The author decided to leave IzzyOnDroid out for now. WingDrive ships through GitHub Releases
+(Obtainium), Google Play and F-Droid first (`docs/design/app-store-distribution.md`). Revisit only
+if the author asks, after MOB-018 to MOB-020 shrink the APK and drop the proprietary dependencies.
+
