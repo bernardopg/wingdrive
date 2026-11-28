@@ -293,7 +293,9 @@ wing update
 ```
 
 `wing update` never replaces binaries. Update a packaged install through its
-package manager, and a source build by checking out the new tag and rebuilding.
+package manager, and a source build by checking out the new tag and rebuilding. When the daemon is
+running, `wing update` also lists the installed adapters that have an update or a revoked version,
+as `wing adapters outdated` does; install them with `wing adapters update --all`.
 
 ### Multiple Instances
 

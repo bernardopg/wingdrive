@@ -360,3 +360,17 @@ fn top_level_aliases_and_command_shapes_parse() {
 mod rpc;
 
 mod coverage;
+
+#[test]
+fn update_explains_why_adapters_were_not_checked() {
+	assert_eq!(
+		adapter_check_failure(
+			"WingDrive daemon is not running\n\nTo start the daemon, run:\n   wing start"
+		),
+		"The daemon is not running; start it with `wing start`."
+	);
+	assert_eq!(
+		adapter_check_failure("Core operation failed: index signature\nmore"),
+		"Core operation failed: index signature"
+	);
+}

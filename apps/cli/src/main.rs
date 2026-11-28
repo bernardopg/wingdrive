@@ -515,8 +515,21 @@ async fn main() -> Result<()> {
 			daemon::run(data_dir, instance, cmd).await?;
 		}
 		Commands::Update => {
-			// Update doesn't need the client
-			update::run(data_dir).await?;
+			// The app check needs no daemon; the adapter check asks it, as `wing adapters outdated` does.
+			update::run(data_dir.clone()).await?;
+			println!();
+			let ctx = Context::new(
+				CoreClient::new(socket_addr.clone()),
+				cli.format,
+				data_dir,
+				socket_addr,
+			)?;
+			if let Err(error) = adapters::report_updates(&ctx).await {
+				println!(
+					"Adapters: not checked. {}",
+					adapter_check_failure(&error.to_string())
+				);
+			}
 		}
 		_ => {
 			run_client_command(cli.command, cli.format, data_dir, instance, socket_addr).await?;
@@ -524,6 +537,15 @@ async fn main() -> Result<()> {
 	}
 
 	Ok(())
+}
+
+/// Why `wing update` could not list adapter updates, in one line.
+fn adapter_check_failure(error: &str) -> String {
+	if error.contains("daemon is not running") {
+		"The daemon is not running; start it with `wing start`.".to_string()
+	} else {
+		error.lines().next().unwrap_or(error).to_string()
+	}
 }
 
 /// Directory where the daemon of this instance keeps its own state.

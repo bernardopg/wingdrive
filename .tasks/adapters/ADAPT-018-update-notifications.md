@@ -10,7 +10,7 @@ sprint: S06
 tags: [adapters, updates, notifications, interface]
 depends_on: [ADAPT-004]
 related_tasks: [ADAPT-005, ADAPT-001]
-last_updated: 2026-11-24
+last_updated: 2026-11-28
 ---
 
 ## Description
@@ -27,7 +27,10 @@ check at all.
 - [ ] Indicators: a badge on Sources > Adapters and on Settings > General > Updates, a tray menu entry, and one desktop notification per new version (not repeated)
 - [ ] Settings: check automatically (on by default), notify for adapters, install adapter updates automatically (off by default, never for updates that ask for more permissions)
 - [x] A revoked adapter version is disabled at once with a notification that explains why (disabled on load; the store card shows the reason)
-- [ ] `wing update` and `wing adapters outdated` report the same state
+- [x] `wing update` and `wing adapters outdated` report the same state (2026-11-28: `wing update`
+      runs the same store refresh and prints the same list; checked on an isolated 3.8.2 daemon,
+      both print "installed 1.1.0, update to 1.1.2" for an older Obsidian, and `wing update` says
+      the adapters were not checked when the daemon is down)
 
 ## Acceptance Criteria
 
